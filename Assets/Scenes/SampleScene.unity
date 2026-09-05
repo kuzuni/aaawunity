@@ -464,6 +464,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiFont: {fileID: 12800000, guid: 9ed266295f50e7dbc67d6d30ec7ff1eb, type: 3}
+  catalog: {fileID: 11400000, guid: 90052ad54ad9ad3796ca32c160cb261d, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

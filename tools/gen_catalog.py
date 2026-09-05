@@ -45,11 +45,32 @@ def sprite_fileid(png, name):
         if blk.group(1).strip() == name: return int(blk.group(2))
     raise ValueError(f'{png}: 스프라이트 «{name}» 없음 (후보: {", ".join(n for _, n in table[:20])} …)')
 
+_GUID2PATH = None
+def guid_to_path(guid):
+    """Assets 아래 .prefab.meta 를 한 번 훑어 guid → 프리팹 경로 표를 만든다 (변형 프리팹의 베이스를 따라가기 위해)."""
+    global _GUID2PATH
+    if _GUID2PATH is None:
+        _GUID2PATH = {}
+        for dp, _, fs in os.walk(os.path.join(ROOT, 'Assets')):
+            for fn in fs:
+                if fn.endswith('.prefab.meta'):
+                    full = os.path.join(dp, fn)
+                    with open(full, encoding='utf-8', errors='ignore') as f:
+                        for line in f:
+                            if line.startswith('guid:'): _GUID2PATH[line.split(':', 1)[1].strip()] = os.path.relpath(full[:-5], ROOT); break
+    return _GUID2PATH.get(guid)
+
 def prefab_root(prefab):
+    """프리팹 루트 GameObject 의 fileID. 변형(variant) 프리팹은 로컬 Transform 이 없고 루트가 PrefabInstance 라서
+    베이스 프리팹의 루트 fileID 와 인스턴스 fileID 를 XOR 한 값(유니티 규칙 · 하위 63비트)이 루트 GO 의 fileID 가 된다."""
     txt = open(os.path.join(ROOT, prefab), encoding='utf-8', errors='ignore').read()
-    # Transform/RectTransform 블록 중 m_Father: {fileID: 0} 인 것의 m_GameObject
     for m in re.finditer(r'--- !u!(4|224) &(\d+)\n(?:.*\n){0,40}?\s*m_GameObject: \{fileID: (\d+)\}(?:.*\n){0,40}?\s*m_Father: \{fileID: 0\}', txt):
         return int(m.group(3))
+    for m in re.finditer(r'--- !u!1001 &(\d+)\nPrefabInstance:(?:.*\n){0,12}?\s*m_TransformParent: \{fileID: 0\}(?:.*\n)*?\s*m_SourcePrefab: \{fileID: \d+, guid: (\w+), type: 3\}', txt):
+        inst, guid = int(m.group(1)), m.group(2)
+        base = guid_to_path(guid)
+        if not base: raise ValueError(f'{prefab}: 베이스 프리팹(guid {guid})을 못 찾았다')
+        return (prefab_root(base) ^ inst) & 0x7FFFFFFFFFFFFFFF
     raise ValueError('프리팹 루트를 못 찾았다: ' + prefab)
 
 def ref(fileid, guid, typ): return f'{{fileID: {fileid}, guid: {guid}, type: {typ}}}'

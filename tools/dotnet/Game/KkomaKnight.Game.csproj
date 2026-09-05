@@ -8,6 +8,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(RepoRoot)Assets/Scripts/Game/**/*.cs" />
+    <!-- 검사 빌드 전용 스텁(TMP) · 주인 에셋의 DOTween UI 모듈 소스(Assets/Plugins/Demigiant/DOTween/Modules) -->
+    <Compile Include="../Stubs/TMPro.cs" />
+    <Compile Include="$(RepoRoot)Assets/Plugins/Demigiant/DOTween/Modules/DOTweenModuleUI.cs" />
+    <Compile Include="$(RepoRoot)Assets/Plugins/Demigiant/DOTween/Modules/DOTweenModuleSprite.cs" />
+    <Compile Include="$(RepoRoot)Assets/Plugins/Demigiant/DOTween/Modules/DOTweenModuleUtils.cs" />
+    <Compile Include="$(RepoRoot)Assets/Plugins/Demigiant/DOTween/Modules/DOTweenModulePhysics.cs" />
+    <Compile Include="$(RepoRoot)Assets/Plugins/Demigiant/DOTween/Modules/DOTweenModulePhysics2D.cs" />
     <ProjectReference Include="../Core/KkomaKnight.Core.csproj" />
     <!-- UnityEngine 모듈 참조 어셈블리 (facade UnityEngine.dll 포함) -->
     <PackageReference Include="UnityEngine.Modules" Version="2021.3.33" />

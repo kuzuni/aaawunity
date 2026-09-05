@@ -39,21 +39,23 @@ dotnet test  tools/dotnet/Tests/KkomaKnight.Tests.csproj   # EditMode 의 순수
 dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13 --n 1000   # 이식 검증: sim.js 실험1(사다리 7점) 재현 — aaaw 의 `SEED=11 EXP1_N=1000 node sim.js 1` 과 대조
 tools/check_data_sync.sh [--sync]                          # data/*.json ↔ aaaw main 비교(·복사)
 python3 tools/gen_meta.py [--check]                        # 새 에셋의 .meta 생성 / 누락 검사
+python3 tools/gen_catalog.py [--check]                     # 에셋 카탈로그(catalog.json → AssetCatalog.asset + docs/assets-map.md) 재생성 / 경로 검사
 ```
 
 ## 구조
 
 ```
 Assets/
-  Scenes/Main.unity              Bootstrap 하나만 놓인 씬 (UI 는 전부 코드로 생성)
+  Scenes/SampleScene.unity       주인 «기본» 씬 + Bootstrap 하나 (UI 는 코드로 생성 · 그림은 주인 에셋 프리팹)
+  KkomaKnight/catalog.json       용도 키 → 주인 에셋 경로 (→ AssetCatalog.asset · docs/assets-map.md 생성) · HitFlash.mat
   Scripts/Core/                  순수 C#: MiniJson · GameData(JSON 로더) · Rng(mulberry32) · ChapterLayout · GearSystem · Perks · Battle(엔진 · sim.js 와 판 단위 일치)
-  Scripts/Game/                  MonoBehaviour: DataLoader(StreamingAssets) · Bootstrap · UiKit · (3~5단계) 화면들
+  Scripts/Game/                  MonoBehaviour: DataLoader · Bootstrap · App(화면 전환) · UiKit(GUI Pro 프리팹 스폰 · TMP→Text Jua) · BattleScreen/BattleWorld(전투) · Overlay(팝업) · Screens(로비…) · CharacterRig
   StreamingAssets/data/*.json    aaaw data/ 복사본 — CI 가 aaaw main 과 비교한다
   Fonts/Jua-Regular.ttf          Google Fonts Jua (OFL) — PLAN §2.1 의 폰트
   Tests/EditMode, PlayMode
 tools/dotnet/                    dotnet 검사 프로젝트 (Core/Game/Tests/Sim + sln)
 tools/sim/                       C# 이식 검증 하니스 소스
-tools/check_data_sync.sh · tools/gen_meta.py
+tools/check_data_sync.sh · tools/gen_meta.py · tools/gen_catalog.py
 .github/workflows/activation.yml · ci.yml
 docs/ROUTINE.md · PROGRESS.md · claims/
 ```

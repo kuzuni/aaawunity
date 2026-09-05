@@ -2,7 +2,9 @@
     "name": "KkomaKnight.Game",
     "rootNamespace": "KkomaKnight.Game",
     "references": [
-        "KkomaKnight.Core"
+        "KkomaKnight.Core",
+        "Unity.TextMeshPro",
+        "DOTween.Modules"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

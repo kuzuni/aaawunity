@@ -8,8 +8,8 @@
 |---|---|---|---|---|---|
 | T1 | 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README + 운영 문서 | ✅ 완료 (`5228daf` + 주인 «기본» `fe944b3` 합류) | sess-1516-port / 착수 세션 | 전체 뼈대 | dotnet build 0 경고 0 오류 · 순수 C# 테스트 21/21 · 레이아웃/적 스탯 420챕터 전수 = JSON 과 일치 (mulberry32 비트 동일) |
 | T2 | 전투 엔진(순수 C#) + 시드 11·12·13 이식 검증 | ✅ 완료 | sess-1516-port / 착수 세션 | Core/Battle*·Perks*·tools/sim | sim.js 실험1 사다리 7점 × 3시드 **21칸 전부 소수점까지 동일**(난수 스트림 비트 일치) · 3pick 모드도 동일 (아래 표) |
-| T3 | 레벨업 3택 + 악마의 거래 (유니티 팝업) | 미착수 (T2 뒤) | — | Game/Battle*·Overlay*·Hud* | 팝업 중 시간 정지 |
-| T4 | 로비 · 장비 · 강화 · 슬롯 · 뽑기 상자 3종 | 미착수 | — | Game/Lobby*·Gear*·Forge*·Shop*·Save* | 자동 장착 없음 · 상자 3종 |
+| T3 | 레벨업 3택 + 악마의 거래 (유니티 팝업) + 전투 화면 | ✅ 완료 (코드·에셋 배선 — 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Game/BattleScreen·BattleWorld·Overlay·UiKit·Palette·Screens·App · Assets/KkomaKnight(catalog) | 주인 지정 GUI Pro 데모 프리팹으로 팝업 6종 · CharacterMaker/Environment/CFXR 로 전투 월드 · 팝업 중 시간 정지 |
+| T4 | 로비 · 장비 · 강화 · 슬롯 · 뽑기 상자 3종 | 미착수 (로비는 T3 에서 Lobby_Default 로 뼈대만 — 챕터 ◀▶·START·탭) | — | Game/Lobby*·Gear*·Forge*·Shop*·Save* | 자동 장착 없음 · 상자 3종 |
 | T5 | UI 를 docs/ref 레이아웃에 맞추기 | 미착수 (T3·T4 뒤) | — | Game/Layout* | ref-layout.md ±3%p |
 
 ### T1 완료 기록 (2026-09-05 · 착수 세션)
@@ -59,6 +59,21 @@
 - 잡은 코드 차이 2건(수치 아님): ⓐ `perks.json` 의 «방어력 증가 I/II/III» 은 탐침 방어가 0 이라 stat 이 비어 있다 → 상수 `PERK_DEF_*` 곱연산을 코드에서 복원. ⓑ «회복 증폭» 은 탐침 축에 `healAmp` 가 없어 stat 이 비어 있다 → `PERK_AMP` 가산 복원. 둘 다 aaaw 수출기(`tools/exportData.js` PROBE_STATS) 보강 제안으로 승인 대기 10번.
 - 게이트: `dotnet build` 0/0 · `dotnet test` 30/30 · `gen_meta --check` 초록.
 
+### T3 완료 기록 (2026-09-05 · 착수 세션)
+
+- **주인이 확인할 것 (한 줄)**: WebGL 배포에서 «START → 전투가 돌고, 레벨업 때 특전 3장(초록/파랑/노랑 카드)이 뜨며 고르기 전엔 시간이 멈추는가 · 쉼터/악마/천사 노드에서 팝업이 뜨는가 · 보스를 잡으면 승리 팝업이 뜨는가».
+- 만든 것
+  - `Game/BattleScreen.cs`: 엔진을 1/30초 고정 틱으로 돌린다(sim.js dt). 팝업(Overlay)·일시정지 중엔 틱 없음. HUD 는 ref-layout ② 자(`Layout`)에 GUI Pro 부품(ResourceBar_Group · Slider_02 · Button_Pause/Info · BasicFrame 반투명 패널 · BuffSlot)을 앵커링. 스탯 8칸은 index.html `STAT_DEFS` 순서·표기 그대로(초록 = 시작값보다 오름). 배속 x1/x2. 클리어 = index.html `openClear`(보너스 `goldClear` · maxChapter/selChapter 갱신) · 사망 = `openDead`(골드 은행).
+  - `Game/BattleWorld.cs`: 월드 좌표 = `(worldX − 플레이어x)×zoom + playerX·540`(ui.json camera) → `WorldCam.ToWorld`. 캐릭터 = CharacterMaker `Character.prefab` + `CharacterRig`(파츠 스킨 cm.* · Idle/Walk/Attack/Stun/Dead1/Victory 애니 · AllIn1 HitFlash 0.1초). 지면 = Environment Field/Road 타일 스크롤 · 소품(나무·덤불·돌·버섯) 시드 배치 · 노드 = 쉼터(통+CFXR Fire+버섯) · 악마(돌기둥+죽은 나무+Souls Escape) · 천사(큰 돌+LightGlow). 투사체 = 도끼(포물선 `axeArc`)·화살·창 스프라이트 + Wind Trails · 검기 = Sword Trail. 데미지 팝 = 프레임 층 Text + DOTween(색은 ui.json popHp/popShield · 등급색).
+  - `Game/Overlay.cs`: 레벨업 3택 = **Play_Perk_Selection_02**(주인 지정 · 카드 3행 · 등급색 CardFrame_04/ItemFrame_04 Green/Blue/Yellow · 상단 스탯 8칸 · «보유 특전 N») · 보유 특전(PERKS 스크롤) · 쉼터(Popup Green · 체력 회복/경험치) · 악마(Popup Plum · 전설 카드 Yellow · 최대체력 % 차감 문구 · 수락/거절 → 악마의 선물) · 천사(Popup Yellow · 무료 +5% / 광고 3초 카운트다운 +15%) · 승리 = **Play_Result_Win_01**(주인 지정 · 골드/처치/시간 · 다음 챕터/로비로) · 사망 = Play_Result_Lose(팁 3행) · 일시정지 = **Settings**(주인 지정 · 소리 토글=Muted · 재개 · 포기하고 로비로) · 보스 경고 = Play_Warning_Boss 의 Panel_Warning 띠(시간 안 멈춤).
+  - `Game/Screens.cs`: 로비 = **Lobby_Default**(주인 지정) 뼈대 — 챕터 ◀▶ · START · 하단 탭 5칸(상점·장비·전투·대장간·설정) · 전투력. 장비/대장간/상점은 T4 자리표시(«4단계에서 채워집니다»).
+  - `Game/UiKit.cs`: 캔버스를 **1080×2337**(9:19.5) 로 — GUI Pro 데모 프리팹이 1080 폭 캔버스용이라 그대로 들어간다. `Spawn`(카탈로그 프리팹 인스턴스) → `Adopt`: **TMP → legacy Text(Jua) 변환**(GUI Pro SDF 폰트에 한글이 없음 · 크기/색/정렬 유지) · LayerLab 데모 스크립트 제거. GUI Pro 버튼 프리팹엔 Button 컴포넌트가 없어 `Clickable` 이 붙인다(DOTween 눌림).
+  - `Assets/KkomaKnight/catalog.json` → `tools/gen_catalog.py` → `AssetCatalog.asset`(292 항목) + **`docs/assets-map.md`**(무엇을 어디에 썼는지 표). 씬 `Bootstrap.catalog` 에 연결. 프리팹 변형(variant)의 루트 fileID = 베이스 루트 ⊕ 인스턴스 ID(하위 63비트) 규칙을 3표본으로 검증해 생성기에 넣었다.
+  - `Assets/KkomaKnight/HitFlash.mat`: AllIn1 URP2D 셰이더 · `HITEFFECT_ON`.
+- 게이트: `dotnet build` 0/0 · `dotnet test` 32/32 · `gen_meta --check` 초록 · 유니티 CI EditMode 32 + PlayMode 1 통과(#12).
+- 한계(정직하게): 유니티 에디터가 없어 **화면을 직접 보지 못했다**. 프리팹 자식 이름 경로는 YAML 덤프로 확인했지만 변형 프리팹의 인스턴스 이름은 두 후보(`FindAny`)로 잡았다. 첫 WebGL 배포에서 어긋난 것이 있으면 다음 세션이 고친다.
+- CI 수리 2건(주인 요청): #11 = 유니티 NUnit(3.5 포크)에 `Does.Contain(object)` 가 없어 EditMode 컴파일 오류 → `Has.No.Member` · dotnet 검사도 NUnit 3.6.1 로 고정(3.5.0 은 net8 에서 테스트 발견이 안 됨 · 3.6.1 이 Does.Contain(object) 를 거부하면서 32개를 찾는 최저 버전 — 로컬 재현 확인). #12 = 테스트 33/33 통과 뒤 unity-test-runner 의 체크 런 게시가 «Resource not accessible by integration»(토큰에 checks:write 없음) → 게시 옵션 제거. **라이선스는 두 번 다 정상 활성화됐다.**
+
 ## 주인 결정 (2026-09-05 답변 — 승인 대기 1~9 종결)
 
 - **1 유니티 버전**: 6000.3.8f1 그대로. · **2 브랜치**: `main` 만 — `claude/…` 브랜치는 더 올리지 않는다. · **4~9**: 제안한 기본값대로.
@@ -69,6 +84,7 @@
   - 타격·치명·회피·소환(도끼/화살/창/번개/검기)·레벨업 이펙트: `JMO Cartoon FX Remaster`.
   - 트윈·팝업 애니: DOTween. 스프라이트 강조(피격 플래시·아웃라인): AllIn1SpriteShader.
   - Odin·AntiCheat·Hot Reload·mcp-unity 는 안 쓴다.
+- **(추가 · 2026-09-05)** GUI Pro 의 `Prefabs~DemoLayout`·`Prefabs~DemoScenes` 를 적절히 쓸 것. 화면 지정: **Character_Hero_Equipment = 장비 창 · Lobby_Default = 로비 · Play_Perk_Selection_02 = 특전 선택 · Play_Result_Win_01 = 승리 · Settings = 설정 팝업 · Shop_Chest_Open = 장비 소환(뽑기) 팝업**. 악마·천사·쉼터는 전용 에셋이 없으니 알아서(→ Environment 소품 + CFXR 조합 · assets-map 참조).
   - 에디터 없이 프리팹을 엮으려면 .meta 의 GUID 를 읽어 씬/프리팹 YAML 에 박는다. 어떤 프리팹·스프라이트·이펙트를 어디에 썼는지 **`docs/assets-map.md`** 에 표로 남기고, 단계마다 고른 것을 보고한다(주인이 바꿀 것만 말한다).
 
 ## 주인 승인 대기 (한 번에 답해 주시면 됩니다 — 답이 없으면 아래 «기본값» 으로 진행)
@@ -91,15 +107,22 @@
 10. **aaaw 수출기 보강 제안 (aaaw 는 읽기 전용이라 여기서 못 고친다).** `tools/exportData.js` 의 `probeEffect` 가 ⓐ 탐침 방어 0 이라 «방어력 증가»(곱연산)의 효과가 비어 나오고 ⓑ `PROBE_STATS` 에 `healAmp` 가 없어 «회복 증폭» 이 비어 나온다. C# 은 상수(`PERK_DEF_M/R/L`·`PERK_AMP`)로 복원했고 sim.js 와 판 단위로 일치한다. 수출기에 탐침 방어 기본치(예: 10)와 `healAmp` 축을 넣으면 코드 특수처리를 지울 수 있다.
 11. **sim.js 의 이름 없는 리터럴 21개**(이벤트 발동 거리 95 · 보스 배치 +60 · 랜덤 타겟 범위 −30~540 · 투사체 생성/도달/적중 오프셋 14·10·16 · 적 화살 −18/+8/−60 · 화살 속도 560 · 검기 속도 470 · 적 첫 공격 0.4~1.2 · 보스 1.2 · 이동 중 타이머 상한 0.35 · 데미지 지터 0.92~1.08 · 골드 1~1.8 · 반격 0.7 · 풀피 판정 0.5 · 장비 c/f 옵션의 50%/30%/50%/10%)은 `combat.json` 에 없어 `Assets/Scripts/Core/BattleTypes.cs` 의 `EngineConst` 한 곳에 두었다(이 레포에서 유일한 코드 상수 자리). aaaw 수출기에 축이 추가되면 `CombatData` 로 옮긴다.
 
+12. **캔버스 단위를 1080×2337 로 바꿨다**(GUI Pro 데모 프리팹 = 1080 폭 캔버스). 배치는 전부 프레임 % 라 ref-layout 표는 그대로 쓴다. 되돌릴 이유가 있으면 한 줄로.
+13. **GUI Pro 글자(TMP·한글 없는 SDF 폰트)는 인스턴스화 때 legacy Text(Jua)로 바꿔 쓴다.** TMP 로 한글을 내려면 Jua SDF 폰트 에셋을 에디터에서 구워야 한다(에디터 없어 불가). 주인이 에디터로 `Jua SDF.asset` 을 만들어 커밋해 주시면 TMP 유지로 바꿀 수 있다.
+14. **쉼터/악마/천사 노드 그림**은 전용 에셋이 없어 조합했다 — 쉼터 = Environment 통(Ork)+CFXR Fire+버섯 · 악마 = 돌기둥+죽은 나무+CFXR Souls Escape · 천사 = 큰 돌+CFXR LightGlow. 바꿀 것만 말해 주시면 catalog.json 한 줄로 바뀐다.
+15. **PlayMode 테스트는 dotnet 검사가 컴파일하지 못한다**(UnityEngine.TestTools 가 NuGet 에 없음) — 유니티 CI 가 최종 확인한다. PlayMode 테스트를 늘릴 때는 이 점을 기억.
+16. **하단 탭 5칸 = 상점·장비·전투·대장간·설정** 으로 정했다(원본 index.html 은 상점·장비·전투·카드🔒·도전🔒 — 카드/도전은 PLAN 에서 폐지된 자리라 이 레포에 있는 화면으로 채웠다). 원본대로 🔒 두 칸을 원하시면 한 줄로.
+
 ## 주인 할 일
 
 - README «내가(주인) 할 일» 5단계 (활성화 워크플로 → .alf → .ulf → 시크릿 3개 → Pages 소스 gh-pages).
 
-## 게이트 현황 스냅샷 — T2 완료 직후
+## 게이트 현황 스냅샷 — T3 완료 직후
 
 | 게이트 | 결과 |
 |---|---|
 | `dotnet build tools/dotnet/KkomaKnight.sln -c Release` | 0 경고 · 0 오류 (Core · Game · Tests · Sim) |
-| `dotnet test tools/dotnet/Tests` | 30/30 (T2 뒤) |
+| `dotnet test tools/dotnet/Tests` | 32/32 (NUnit 3.6.1 — 유니티 포크와 같은 API 면 · 3.5.0 은 net8 어댑터가 테스트를 못 찾는다) |
+| 유니티 CI (#12) | EditMode 32/32 · PlayMode 1/1 |
 | `python3 tools/gen_meta.py --check` | 초록 |
 | `tools/check_data_sync.sh` | OK — aaaw main `c7ebe37` 과 동일 (`sim.js@0618225…`) |

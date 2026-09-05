@@ -8,7 +8,7 @@ namespace KkomaKnight.Game
 {
     /// <summary>
     /// 게임 루트 — 데이터·세이브·카탈로그·프레임·화면 전환·오버레이·토스트. index.html 의 «전역 + showScreen» 에 해당.
-    /// 화면(Screen) 은 각자 프레임 안에 자기 RectTransform 을 세우고, App 이 하나만 켠다.
+    /// 화면(GameScreen) 은 각자 프레임 안에 자기 RectTransform 을 세우고, App 이 하나만 켠다.
     /// </summary>
     public sealed class App : MonoBehaviour
     {
@@ -31,6 +31,7 @@ namespace KkomaKnight.Game
             var app = go.AddComponent<App>();
             I = app;
             app.Data = data; app.Assets = catalog; app.WorldCamera = worldCamera;
+            if (font == null && catalog != null) font = catalog.Font("font.ui");
             if (font != null) UiKit.DefaultFont = font;
             app.Save = SaveStore.Load(data);
             app.BuildUi();
@@ -42,15 +43,17 @@ namespace KkomaKnight.Game
             UiKit.EnsureEventSystem();
             UiCanvas = UiKit.CreateRootCanvas("UI", 10);
             Frame = UiKit.CreateFrame(UiCanvas.transform);
-            Frame.GetComponent<Image>().color = Palette.Bg;   // 프레임 밖(letterbox)은 카메라 배경, 안은 각 화면이 채운다
-            Frame.GetComponent<Image>().enabled = false;
+            Frame.GetComponent<Image>().enabled = false;   // 프레임 안은 각 화면이 채운다 · 전투는 카메라가 보인다
+            if (WorldCamera != null)
+            {
+                WorldCam.Attach(WorldCamera, Frame);
+                WorldCamera.clearFlags = CameraClearFlags.SolidColor; WorldCamera.backgroundColor = Palette.Hex("#86E4FF");   // GUI Pro 로비 배경 하늘색
+            }
             Register(new LobbyScreen()); Register(new GearScreen()); Register(new ForgeScreen()); Register(new ShopScreen()); Register(new BattleScreen());
             Overlay = new Overlay(this);
-            // 토스트 (index.html #toast — 하단 탭바 위)
-            _toastRt = UiKit.Rect(Frame, "Toast");
-            var bg = _toastRt.gameObject.AddComponent<Image>(); bg.sprite = UiKit.Round(); bg.type = Image.Type.Sliced; bg.color = new Color(0.08f, 0.08f, 0.1f, 0.92f); bg.raycastTarget = false;
-            UiKit.Pct(_toastRt, 6, 84, 88, 4.5f);
-            _toastText = UiKit.Text(_toastRt, "", 15, Palette.Ink, TextAnchor.MiddleCenter, true); UiKit.Stretch(_toastText.rectTransform, 8, 2, 8, 2);
+            // 토스트 (GUI Pro ToastMessage_01)
+            _toastRt = (RectTransform)UiKit.Spawn("ui.toast", Frame).transform; UiKit.Pct(_toastRt, 4, 84, 92, 5);
+            _toastText = _toastRt.GetComponentInChildren<Text>(true);
             _toastRt.gameObject.SetActive(false);
             ShowScreen("lobby");
         }
@@ -63,17 +66,25 @@ namespace KkomaKnight.Game
             if (_current != null && _current != s) _current.Hide();
             _current = s;
             s.Show();
-            if (WorldCamera != null) WorldCamera.gameObject.SetActive(name == "battle");
+            Overlay?.Root.SetAsLastSibling();
             _toastRt.SetAsLastSibling();
         }
         public GameScreen Current => _current;
         public T GetScreen<T>() where T : GameScreen { foreach (var s in _screens.Values) if (s is T t) return t; return null; }
 
+        public void StartBattle(int chapter)
+        {
+            chapter = Mathf.Clamp(chapter, 1, Math.Max(1, Save.MaxChapter));
+            ShowScreen("battle");
+            GetScreen<BattleScreen>().Start(chapter);
+        }
+
         public void Persist() => SaveStore.Save(Save);
 
         public void Toast(string msg)
         {
-            _toastText.text = msg; _toastRt.gameObject.SetActive(true); _toastRt.SetAsLastSibling(); _toastT = 1.8f;
+            if (_toastText != null) _toastText.text = msg;
+            _toastRt.gameObject.SetActive(true); _toastRt.SetAsLastSibling(); _toastT = 1.8f; UiKit.PopIn(_toastRt, 0.9f, 0.2f);
         }
 
         void Update()
