@@ -12,7 +12,7 @@
 | T4 | 로비 · 장비 · 강화 · 슬롯 · 뽑기 상자 3종 | ✅ 완료 (코드·에셋 배선 — 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Game/GearScreen·GearUi·ForgeScreen·ShopScreen·Screens(로비) | 자동 장착 없음 · 상자 3종(gacha.json) · 세부 팝업 = Character_Hero_Item_Detail_01 · 결과 = Shop_Chest_Open |
 | T5 | UI 를 docs/ref 레이아웃에 맞추기 | ✅ 완료 (배치 상수 = 표 · 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Core/Layout · Game/* 배치 · Tests/LayoutSpecTests | ref-layout ①~⑦ 표를 `Layout` 상수로 · 표 ↔ 상수 자동 대조 테스트 8개 · 60fps · 백그라운드 실행 · 주인 피드백 일괄(특전 카드/색/새로고침 · 공격 모션 · 발밑 체력바 · 간격 2배 · 맵 4종 순환) |
 | T6 | 로비 = Lobby_Default 그대로 (TopBar 폐기 · 캐릭터·전투력·골드·보석) | ✅ 완료 (`814d59d` · 실물 확인은 WebGL 배포에서) | sess-2034-9487 / 워커 B | Game/Screens(로비) · HeroView(신규) · TopBar 삭제 | 프리팹 요소 이동 0 · 초상 = HeroView(RenderTexture) · «25/55» = 전투력 · dotnet 0/0 · 테스트 40/40 |
-| T7 | 장비 화면 = Character_Hero_Equipment 그대로 + 장착 외형 반영 + ListItem_EquipMent | 대기 | — | Game/GearScreen · GearUi · CharacterRig · BattleWorld(스킨) · HeroView(신규) | ROUTINE §2 T7 |
+| T7 | 장비 화면 = Character_Hero_Equipment 그대로 + 장착 외형 반영 + ListItem_EquipMent | ✅ 완료 (`ff53ebb` · 실물 확인은 WebGL 배포에서) | sess-2036-27996 / 워커 C | Core/GearLook(신규) · Game/GearScreen · GearUi · CharacterRig · BattleWorld(스킨) · HeroView(T6 것 재사용) · Tests/GearLookTests | 프리팹 요소 이동 0 · 슬롯 Item 크기 그대로 · 파츠 36종 표 · dotnet 0/0 · 테스트 45/45 |
 | T8 | 대장간 정리 (인벤 전부 · 빨간 점 · 칸 비례) — T7 뒤 | 대기 | — | Game/ForgeScreen | ROUTINE §2 T8 |
 | T9 | 상점 = Shop_List 그대로 (상자 3 · 다이아 6 · 골드 3) + 뽑기 결과 = Shop_Chest_Open | 대기 | — | Game/ShopScreen · KkomaKnight/shop.json | ROUTINE §2 T9 |
 | T10 | 하단 네비 = 상점·장비·전투·탤런트·펫 + Settings 그대로 — T6 뒤 | 대기 | — | Game/Screens(NavBar) · Overlay | ROUTINE §2 T10 |
@@ -192,6 +192,20 @@
 - 게이트: `dotnet build` 0/0 · `dotnet test` 40/40 · `gen_meta --check` · `gen_catalog --check`(419) · `check_data_sync` OK(aaaw `0707999`). Sim 시드 검증은 Core 를 안 건드려 생략.
 - 워커 메모: 이 실행 환경엔 dotnet 이 없고 dot.net 설치 스크립트 호스트가 막혀 있다 — `packages.microsoft.com/ubuntu/22.04/prod/pool/main` 의 .deb(dotnet-sdk-8.0 8.0.424 · runtime/hostfxr/host/targeting-pack 8.0.30 · aspnetcore 8.0.30 · netstandard 2.1) 를 받아 `dpkg -x` 로 `~/dotnet8` 에 풀고 `DOTNET_ROOT=~/dotnet8/usr/share/dotnet` 로 게이트를 돌렸다(NuGet 은 api.nuget.org 로 됨).
 - 한계: RenderTexture 초상은 에디터 없이 짠 것 — URP 2D 에서 알파 배경·카메라 맞춤(Bounds ×1.12)이 실물에서 어긋나면 `HeroView.Fit` 의 배율 한 줄.
+
+### T7 완료 기록 (2026-09-05 · sess-2036-27996 · 워커 C)
+
+- **주인이 확인할 것 (한 줄)**: 장비 탭이 Character_Hero_Equipment 데모 그대로인가 — 장착 슬롯 6칸의 아이콘이 프리팹 크기(164 칸 · Item 그대로)이고 «갑옷·장갑…» 부위 글자가 없는가(«Lv.N» 만) / 균등 보너스 문구가 사라졌는가 / 가운데에 내 기사(Idle)가 서 있고 투구·무기·갑옷을 장착하면 **장비 화면과 전투에서 바로** 그 파츠로 바뀌는가(치명 무기 = 검 · 체력실드 = 둔기 · 회피 = 창) / 상단에 TopBar 없이 오른쪽 위 골드만 있는가 / 하단 인벤 칸이 ListItem_EquipMent(188 격자 · 등급색 · +N · 세트 다이아 아이콘)이고 장착한 장비는 리스트에서 빠지는가 / 슬롯의 빨간 점 = 인벤에 더 좋은 게 있을 때만 켜지는가.
+- 만든 것
+  - `Core/GearLook.cs`(신규 · 순수 C#): **부위(투구·무기·갑옷) × 세트(치명·체력실드·회피) × 등급(4) → 카탈로그 `cm.gear.<부위>.<세트>.<등급>` 36키** 표 하나 — 전투(`BattleWorld` 플레이어 스킨)·장비 화면/로비(`HeroView`)·장비 아이콘(`GearUi.Cell`·슬롯)이 전부 이 표를 쓴다(승인 대기 26 «워커가 고른다»). 무기는 세트별 손 슬롯: 치명 = Sword · 체력실드 = Blunt(둔기 · 아이콘도 망치) · 회피 = Spear. 목걸이·장갑·신발은 그림이 없어 외형 미반영 · 아이콘은 기존 GUI Pro `gi.*`(임시). 파일 선택은 catalog.json(→ `docs/assets-map.md` 표 · 등급이 오를수록 금/보라 등 화려한 파츠 · 세트 색 = 치명 빨강/금 · 체력실드 파랑/은 · 회피 초록/보라).
+  - `CharacterRig.PlayerSkin(D, S, shield)`: 기본 기사(cm.knight.*) 위에 장착 파츠를 덮는다. `BattleWorld.BuildPlayer` 가 이것을 쓴다(장비를 바꾸면 다음 전투부터 반영 · 전투 중 장비 변경은 없다). `HeroView.PlayerSkin(App)`(T6 의 훅) 도 여기로 연결 — 로비 초상도 자동으로 장착 외형.
+  - `GearScreen.cs`: 프리팹 **원형 그대로**(T4/T5 의 Pct 재앵커링·슬롯 축소·Group_Slot/Group_List/ScrollRect 이동 전부 걷어냄 — 자리 이동 0). 슬롯 = 프리팹 GridLayoutGroup(164 · 2열 세로 우선 → 왼쪽열 무기·목걸이·갑옷 / 오른쪽열 투구·장갑·신발 = index.html GEAR_COL) · ItemFrame_01/Item 에 스프라이트만(크기 그대로) · NormalArea 에 등급색 · 다이아 = 세트 아이콘 · `Text_Level` = «Lv.N(+강화)» 만(부위 이름 없음) · 프리팹의 `Alert_Dot_01_Red` = «인벤에 더 좋은 게 있다»(코드 도형 ↑ 폐기). Character 자리 = `HeroView`(샘플 그림 끔 · 정사각 텍스처라 AspectRatioFitter 1:1). 균등 보너스 `Text_Level` 숨김(계산 함수 `EvenBonus` 는 남김). Group = 전투력 · Group_List 3행 = 공/체/실. 상단 = 프리팹 Top 오른쪽에 ResourceBar_Group 의 **Coin 칸만**(TopBar 없음). 하단 = 프리팹 Bottom 그대로(뒤로 = 로비 · Button_02_Blue = 상점 · Button_02_Convex_Green = 합성(N)). 프리팹 루트는 탭바(⑧ y 92.6) 위까지만 차지(내부 앵커는 그대로 · 화면이 짧아질 뿐).
+  - `GearUi.Cell` = **ListItem_EquipMent**(카탈로그 `ui.equipCell` 신규 · 188×188): NormalArea 등급색 프레임(+2px 프리팹 값) · Item 아이콘(비례 유지) · Text_Level = «+N» · TypeArea 다이아 = 세트 아이콘 · 프리팹 Focus = 선택 · 프리팹 Check = 장착중(옵션) · 빨간 점 = 합성 가능(옵션 · Alert_Dot_01_Red 오른쪽 위) · NEW = 왼쪽 아래 점. `CellOpts.EquippedMark / FusableDot` 로 표기 on/off — 장비 화면은 둘 다 끔(장착분은 리스트에서 숨김), 대장간은 켬(ForgeScreen 한 줄 · T8 이 칸 비례를 마저 맞춘다). 세부 팝업·뽑기 결과도 같은 칸.
+  - `Palette.Icons.Gear` 삭제(아이콘 표가 둘이 되지 않게 · 호출자 없음).
+  - 테스트 `GearLookTests` 5개: 등급 수 = gear.json · 투구/무기/갑옷 × 세트 × 등급 36키가 catalog.json 에 실재 · 나머지 부위는 gi.* 실재 · 키 규칙 · 무기 슬롯.
+- 게이트: `dotnet build` 0/0 · `dotnet test` **45/45** · `gen_meta --check` · `gen_catalog --check`(456) · `check_data_sync` OK(aaaw `0707999`) · `GetComponent…() ??` 패턴 0건. Sim 시드 검증은 엔진을 안 건드려 생략.
+- 워커 메모: 이 환경도 dotnet 이 없고 dot.net 스크립트 호스트가 막혀 있다 — `apt-get install dotnet-sdk-8.0`(archive.ubuntu.com 은 열려 있다 · Ubuntu 24.04 자체 패키지 8.0.1xx) 로 3분 안에 설치됐다. HeroView 는 T6(워커 B)이 먼저 만들어 그것을 재사용(내 것은 버림 · PlayerSkin 훅만 채움).
+- 한계: 에디터 없이 짠 것 — 특히 ⓐ Top 오른쪽 골드 칸 위치(x −24 · 세로 가운데)가 제목과 겹치면 `GearScreen.Build` 의 anchoredPosition 한 줄 ⓑ CharacterMaker 파츠 그림을 슬롯 Item(157px)·칸 아이콘으로 쓰면 작게 보일 수 있다(preserveAspect) — 크게 원하면 catalog 의 파츠를 바꾸지 말고 `Item` 스케일 한 줄 ⓒ 둔기(Blunt)·창(Spear) 파츠는 Attack.anim 이 HandRight 를 흔드는 대로 같이 움직인다(검과 같은 궤적).
 
 ## 주인 할 일
 
