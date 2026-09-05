@@ -32,6 +32,8 @@ jobs:
         run: python3 tools/gen_meta.py --check
       - name: 코드의 카탈로그 키 ↔ catalog.json 대조 (플레이 콘솔 에러 0 게이트 · T12)
         run: python3 tools/check_catalog_keys.py
+      - name: 유니티 가짜 null 패턴 검사 («GetComponent…() ??»·«Find(…) ??» 0건 · T11)
+        run: tools/check_unity_null.sh
       - name: aaaw main 체크아웃 (수치 정본)
         uses: actions/checkout@v4
         with:
