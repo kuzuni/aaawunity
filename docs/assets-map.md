@@ -181,67 +181,127 @@
 | sprites | `env.autumn.field` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Field_Autumn.png` | fileID 21300000 | 전투 맵 «DemoScene_Autumn» 바닥(평면색 타일) — 챕터 (n-1)%4 순환: 1=autumn 2=deepForest 3=forest 4=desert (주인 지시 2026-09-05) |
 | sprites | `env.autumn.road` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_Autumn.png` | fileID 21300000 | «DemoScene_Autumn» 길 띠(발 줄) |
 | sprites | `env.autumn.roadUp` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_up_Autumn.png` | fileID 21300000 | «DemoScene_Autumn» 길 위 물결 경계(데모 씬처럼 반 겹쳐 깐다) |
-| sprites | `env.autumn.deco0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Autumn_Flower_01.png` | fileID 21300000 | «DemoScene_Autumn» 바닥 장식(풀·꽃·둔덕) — 길 위아래 흩뿌림 |
-| sprites | `env.autumn.deco1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Autumn_Flower_02.png` | fileID 21300000 |  |
-| sprites | `env.autumn.big0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Birch_Yellow_01.png` | fileID 21300000 | «DemoScene_Autumn» 큰 소품(나무) — 길 뒤 · 캐릭터보다 뒤에 그린다 |
-| sprites | `env.autumn.big1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Birch_Yellow_02.png` | fileID 21300000 |  |
-| sprites | `env.autumn.big2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Orange_01.png` | fileID 21300000 |  |
-| sprites | `env.autumn.big3` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Orange_02.png` | fileID 21300000 |  |
-| sprites | `env.autumn.big4` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Orange_06.png` | fileID 21300000 |  |
-| sprites | `env.autumn.mid0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Orange_01.png` | fileID 21300000 | «DemoScene_Autumn» 중간 소품(덤불·작은 나무·선인장) |
-| sprites | `env.autumn.mid1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Orange_03.png` | fileID 21300000 |  |
-| sprites | `env.autumn.small0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Brown_04.png` | fileID 21300000 | «DemoScene_Autumn» 작은 소품(돌·버섯) — 길 앞(캐릭터 앞) 에도 놓는다 |
-| sprites | `env.autumn.small1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Brown_07.png` | fileID 21300000 |  |
-| sprites | `env.autumn.small2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Brown_06.png` | fileID 21300000 |  |
 | sprites | `env.deepForest.field` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Field_DeepForest.png` | fileID 21300000 | 전투 맵 «DemoScene_DeepForest» 바닥(평면색 타일) — 챕터 (n-1)%4 순환: 1=autumn 2=deepForest 3=forest 4=desert (주인 지시 2026-09-05) |
 | sprites | `env.deepForest.road` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_DeepForest.png` | fileID 21300000 | «DemoScene_DeepForest» 길 띠(발 줄) |
 | sprites | `env.deepForest.roadUp` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_up_DeepForest.png` | fileID 21300000 | «DemoScene_DeepForest» 길 위 물결 경계(데모 씬처럼 반 겹쳐 깐다) |
-| sprites | `env.deepForest.deco0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/DeepForest_Grass.png` | fileID 21300000 | «DemoScene_DeepForest» 바닥 장식(풀·꽃·둔덕) — 길 위아래 흩뿌림 |
-| sprites | `env.deepForest.deco1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/DeepForest_Flower_01.png` | fileID 21300000 |  |
-| sprites | `env.deepForest.deco2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/DeepForest_Flower_02.png` | fileID 21300000 |  |
-| sprites | `env.deepForest.big0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_13.png` | fileID 21300000 | «DemoScene_DeepForest» 큰 소품(나무) — 길 뒤 · 캐릭터보다 뒤에 그린다 |
-| sprites | `env.deepForest.big1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_09.png` | fileID 21300000 |  |
-| sprites | `env.deepForest.big2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_08.png` | fileID 21300000 |  |
-| sprites | `env.deepForest.big3` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_15.png` | fileID 21300000 |  |
-| sprites | `env.deepForest.big4` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Dead_Tree_Brown_01.png` | fileID 21300000 |  |
-| sprites | `env.deepForest.mid0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Green_03.png` | fileID 21300000 | «DemoScene_DeepForest» 중간 소품(덤불·작은 나무·선인장) |
-| sprites | `env.deepForest.mid1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Green_01.png` | fileID 21300000 |  |
-| sprites | `env.deepForest.mid2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Green_01.png` | fileID 21300000 |  |
-| sprites | `env.deepForest.small0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray2_06.png` | fileID 21300000 | «DemoScene_DeepForest» 작은 소품(돌·버섯) — 길 앞(캐릭터 앞) 에도 놓는다 |
-| sprites | `env.deepForest.small1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Yellow_03.png` | fileID 21300000 |  |
-| sprites | `env.deepForest.small2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Pink_01.png` | fileID 21300000 |  |
 | sprites | `env.forest.field` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Field_Forest.png` | fileID 21300000 | 전투 맵 «DemoScene_Forest» 바닥(평면색 타일) — 챕터 (n-1)%4 순환: 1=autumn 2=deepForest 3=forest 4=desert (주인 지시 2026-09-05) |
 | sprites | `env.forest.road` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_Forest.png` | fileID 21300000 | «DemoScene_Forest» 길 띠(발 줄) |
 | sprites | `env.forest.roadUp` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_up_Forest.png` | fileID 21300000 | «DemoScene_Forest» 길 위 물결 경계(데모 씬처럼 반 겹쳐 깐다) |
-| sprites | `env.forest.deco0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Forest_Grass.png` | fileID 21300000 | «DemoScene_Forest» 바닥 장식(풀·꽃·둔덕) — 길 위아래 흩뿌림 |
-| sprites | `env.forest.deco1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Forest_Flower_01.png` | fileID 21300000 |  |
-| sprites | `env.forest.deco2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Forest_Flower_02.png` | fileID 21300000 |  |
-| sprites | `env.forest.big0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_13.png` | fileID 21300000 | «DemoScene_Forest» 큰 소품(나무) — 길 뒤 · 캐릭터보다 뒤에 그린다 |
-| sprites | `env.forest.big1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_07.png` | fileID 21300000 |  |
-| sprites | `env.forest.big2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_08.png` | fileID 21300000 |  |
-| sprites | `env.forest.big3` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_15.png` | fileID 21300000 |  |
-| sprites | `env.forest.mid0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Yellow_Green_03.png` | fileID 21300000 | «DemoScene_Forest» 중간 소품(덤불·작은 나무·선인장) |
-| sprites | `env.forest.mid1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Yellow_Green_01.png` | fileID 21300000 |  |
-| sprites | `env.forest.mid2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Yellow_Green_01.png` | fileID 21300000 |  |
-| sprites | `env.forest.small0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_06.png` | fileID 21300000 | «DemoScene_Forest» 작은 소품(돌·버섯) — 길 앞(캐릭터 앞) 에도 놓는다 |
-| sprites | `env.forest.small1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Wihte_03.png` | fileID 21300000 |  |
-| sprites | `env.forest.small2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Yellow_02.png` | fileID 21300000 |  |
 | sprites | `env.desert.field` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Field_Desert.png` | fileID 21300000 | 전투 맵 «DemoScene_Desert» 바닥(평면색 타일) — 챕터 (n-1)%4 순환: 1=autumn 2=deepForest 3=forest 4=desert (주인 지시 2026-09-05) |
 | sprites | `env.desert.road` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_Desert.png` | fileID 21300000 | «DemoScene_Desert» 길 띠(발 줄) |
 | sprites | `env.desert.roadUp` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_up_Desert.png` | fileID 21300000 | «DemoScene_Desert» 길 위 물결 경계(데모 씬처럼 반 겹쳐 깐다) |
-| sprites | `env.desert.deco0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Desert_Dune.png` | fileID 21300000 | «DemoScene_Desert» 바닥 장식(풀·꽃·둔덕) — 길 위아래 흩뿌림 |
-| sprites | `env.desert.deco1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Coconut_01.png` | fileID 21300000 |  |
-| sprites | `env.desert.deco2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Coconut_02.png` | fileID 21300000 |  |
-| sprites | `env.desert.big0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Plam_Yellow_Green_03.png` | fileID 21300000 | «DemoScene_Desert» 큰 소품(나무) — 길 뒤 · 캐릭터보다 뒤에 그린다 |
-| sprites | `env.desert.big1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Plam_Yellow_Green_02.png` | fileID 21300000 |  |
-| sprites | `env.desert.big2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Plam_Green_03.png` | fileID 21300000 |  |
-| sprites | `env.desert.big3` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Bare_01.png` | fileID 21300000 |  |
-| sprites | `env.desert.mid0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_01.png` | fileID 21300000 | «DemoScene_Desert» 중간 소품(덤불·작은 나무·선인장) |
-| sprites | `env.desert.mid1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_04.png` | fileID 21300000 |  |
-| sprites | `env.desert.mid2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_03.png` | fileID 21300000 |  |
-| sprites | `env.desert.small0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_06.png` | fileID 21300000 | «DemoScene_Desert» 작은 소품(돌·버섯) — 길 앞(캐릭터 앞) 에도 놓는다 |
-| sprites | `env.desert.small1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green1_02.png` | fileID 21300000 |  |
-| sprites | `env.desert.small2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_05.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Birch_Yellow_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Birch_Yellow_02.png` | fileID 21300000 | «DemoScene_Autumn» 소품 — tools/gen_maps.py 가 씬 배치를 그대로 MapLayouts.cs 로 굽는다 (이 테마 소품 18종 · 인스턴스 73개) |
+| sprites | `env.autumn.Small_Tree_Orange_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Orange_01.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Autumn_Flower_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Autumn_Flower_02.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Autumn_Flower_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Autumn_Flower_01.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Stone_Brown_05` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Brown_05.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Ork` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Ork.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Tree_Orange_06` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Orange_06.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Stone_Brown_07` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Brown_07.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Birch_Yellow_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Birch_Yellow_01.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Tree_Orange_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Orange_03.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Tree_Orange_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Orange_01.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Stone_Brown_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Brown_03.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Stone_Brown_04` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Brown_04.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Tree_Orange_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Orange_02.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Stone_Brown_06` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Brown_06.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Stone_Brown_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Brown_02.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Stone_Brown_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Brown_01.png` | fileID 21300000 |  |
+| sprites | `env.autumn.Small_Tree_Orange_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Orange_03.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.DeepForest_Flower_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/DeepForest_Flower_02.png` | fileID 21300000 | «DemoScene_DeepForest» 소품 — tools/gen_maps.py 가 씬 배치를 그대로 MapLayouts.cs 로 굽는다 (이 테마 소품 39종 · 인스턴스 104개) |
+| sprites | `env.deepForest.DeepForest_Grass` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/DeepForest_Grass.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Dead_Tree_Brown_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Dead_Tree_Brown_03.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Mushroom_Yellow_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Yellow_03.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Stone_Gray2_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray2_01.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.DeepForest_Flower_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/DeepForest_Flower_01.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Ork` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Ork.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Bush_Green_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Green_03.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Stone_Gray2_07` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray2_07.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Tree_Green_13` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_13.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Tree_Green_09` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_09.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Small_Tree_Yellow_Green_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Yellow_Green_02.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Bush_Green_05` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Green_05.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Dead_Tree_Brown_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Dead_Tree_Brown_01.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Bush_Green_04` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Green_04.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Tree_Green_15` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_15.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Stone_Gray2_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray2_03.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Mushroom_Yellow_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Yellow_02.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Stone_Gray2_06` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray2_06.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Stone_Gray2_04` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray2_04.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Tree_Yellow_Green_07` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_07.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Tree_Green_14` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_14.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Mushroom_Yellow_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Yellow_01.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Tree_Green_08` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_08.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Bush_Green_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Green_01.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Small_Tree_Green_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Green_01.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Mushroom_Pink_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Pink_01.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Stone_Gray2_11` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray2_11.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Stone_Gray2_08` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray2_08.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Tree_Yellow_Green_12` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_12.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Dead_Tree_Brown_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Dead_Tree_Brown_02.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Bush_Green_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Green_02.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Stone_Gray2_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray2_02.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Tree_Green_10` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_10.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Small_Tree_Green_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Green_03.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Mushroom_Pink_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Pink_02.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Tree_Green_07` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_07.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Stone_Gray2_05` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray2_05.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.Small_Tree_Yellow_Green_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Yellow_Green_01.png` | fileID 21300000 |  |
+| sprites | `env.forest.Forest_Flower_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Forest_Flower_01.png` | fileID 21300000 | «DemoScene_Forest» 소품 — tools/gen_maps.py 가 씬 배치를 그대로 MapLayouts.cs 로 굽는다 (이 테마 소품 33종 · 인스턴스 99개) |
+| sprites | `env.forest.Bush_Yellow_Green_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Yellow_Green_01.png` | fileID 21300000 |  |
+| sprites | `env.forest.Forest_Grass` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Forest_Grass.png` | fileID 21300000 |  |
+| sprites | `env.forest.Tree_Yellow_Green_15` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_15.png` | fileID 21300000 |  |
+| sprites | `env.forest.Small_Tree_Yellow_Green_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Yellow_Green_03.png` | fileID 21300000 |  |
+| sprites | `env.forest.Forest_Flower_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Forest_Flower_02.png` | fileID 21300000 |  |
+| sprites | `env.forest.Tree_Yellow_Green_07` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_07.png` | fileID 21300000 |  |
+| sprites | `env.forest.Tree_Yellow_Green_14` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_14.png` | fileID 21300000 |  |
+| sprites | `env.forest.Small_Tree_Yellow_Green_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Yellow_Green_01.png` | fileID 21300000 |  |
+| sprites | `env.forest.Stone_Gray1_11` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_11.png` | fileID 21300000 |  |
+| sprites | `env.forest.Tree_Yellow_Green_10` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_10.png` | fileID 21300000 |  |
+| sprites | `env.forest.Bush_Yellow_Green_05` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Yellow_Green_05.png` | fileID 21300000 |  |
+| sprites | `env.forest.Small_Tree_Yellow_Green_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Yellow_Green_02.png` | fileID 21300000 |  |
+| sprites | `env.forest.Stone_Gray1_06` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_06.png` | fileID 21300000 |  |
+| sprites | `env.forest.Stone_Gray1_07` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_07.png` | fileID 21300000 |  |
+| sprites | `env.forest.Tree_Yellow_Green_13` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_13.png` | fileID 21300000 |  |
+| sprites | `env.forest.Bush_Yellow_Green_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Yellow_Green_02.png` | fileID 21300000 |  |
+| sprites | `env.forest.Stone_Gray1_05` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_05.png` | fileID 21300000 |  |
+| sprites | `env.forest.Bush_Yellow_Green_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Yellow_Green_03.png` | fileID 21300000 |  |
+| sprites | `env.forest.Stone_Gray1_04` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_04.png` | fileID 21300000 |  |
+| sprites | `env.forest.Stone_Gray1_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_01.png` | fileID 21300000 |  |
+| sprites | `env.forest.Stone_Gray1_08` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_08.png` | fileID 21300000 |  |
+| sprites | `env.forest.Stone_Gray1_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_03.png` | fileID 21300000 |  |
+| sprites | `env.forest.Ork` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Ork.png` | fileID 21300000 |  |
+| sprites | `env.forest.Tree_Yellow_Green_08` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_08.png` | fileID 21300000 |  |
+| sprites | `env.forest.Stone_Gray1_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_02.png` | fileID 21300000 |  |
+| sprites | `env.forest.Tree_Yellow_Green_09` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_09.png` | fileID 21300000 |  |
+| sprites | `env.forest.Tree_Yellow_Green_12` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_12.png` | fileID 21300000 |  |
+| sprites | `env.forest.Mushroom_Wihte_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Wihte_03.png` | fileID 21300000 |  |
+| sprites | `env.forest.Bush_Yellow_Green_04` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Yellow_Green_04.png` | fileID 21300000 |  |
+| sprites | `env.forest.Mushroom_Yellow_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Yellow_02.png` | fileID 21300000 |  |
+| sprites | `env.forest.Tree_Yellow_Green_04` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_04.png` | fileID 21300000 |  |
+| sprites | `env.forest.Mushroom_Wihte_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Wihte_01.png` | fileID 21300000 |  |
+| sprites | `env.desert.Desert_Dune` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Desert_Dune.png` | fileID 21300000 | «DemoScene_Desert» 소품 — tools/gen_maps.py 가 씬 배치를 그대로 MapLayouts.cs 로 굽는다 (이 테마 소품 22종 · 인스턴스 53개) |
+| sprites | `env.desert.Stone_Gray1_07` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_07.png` | fileID 21300000 |  |
+| sprites | `env.desert.Stone_Gray1_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_03.png` | fileID 21300000 |  |
+| sprites | `env.desert.Ork` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Ork.png` | fileID 21300000 |  |
+| sprites | `env.desert.Coconut_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Coconut_02.png` | fileID 21300000 |  |
+| sprites | `env.desert.Plam_Yellow_Green_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Plam_Yellow_Green_03.png` | fileID 21300000 |  |
+| sprites | `env.desert.Coconut_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Coconut_01.png` | fileID 21300000 |  |
+| sprites | `env.desert.Tree_Bare_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Bare_01.png` | fileID 21300000 |  |
+| sprites | `env.desert.Cactus_Green2_04` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_04.png` | fileID 21300000 |  |
+| sprites | `env.desert.Stone_Gray1_05` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_05.png` | fileID 21300000 |  |
+| sprites | `env.desert.Plam_Yellow_Green_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Plam_Yellow_Green_02.png` | fileID 21300000 |  |
+| sprites | `env.desert.Plam_Yellow_Green_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Plam_Yellow_Green_01.png` | fileID 21300000 |  |
+| sprites | `env.desert.Plam_Green_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Plam_Green_03.png` | fileID 21300000 |  |
+| sprites | `env.desert.Cactus_Green2_01` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_01.png` | fileID 21300000 |  |
+| sprites | `env.desert.Plam_Green_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Plam_Green_02.png` | fileID 21300000 |  |
+| sprites | `env.desert.Stone_Gray1_12` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_12.png` | fileID 21300000 |  |
+| sprites | `env.desert.Stone_Gray1_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_02.png` | fileID 21300000 |  |
+| sprites | `env.desert.Stone_Gray1_06` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_06.png` | fileID 21300000 |  |
+| sprites | `env.desert.Cactus_Green1_02` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green1_02.png` | fileID 21300000 |  |
+| sprites | `env.desert.Cactus_Green2_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_03.png` | fileID 21300000 |  |
+| sprites | `env.desert.Cactus_Green1_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green1_03.png` | fileID 21300000 |  |
+| sprites | `env.desert.Cactus_Green2_05` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_05.png` | fileID 21300000 |  |
 | prefabs | `cm.character` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Common/Prefabs/Character.prefab` | root 1824668350962886144 |  |
 | prefabs | `fx.hit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Hit A (Red).prefab` | root 4021103657954561961 | 적 피격 (CFXR Hit A Red) |
 | prefabs | `fx.crit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Impact Glowing HDR (Blue).prefab` | root 2708598583397607911 | 치명타 피격 (Impact Glowing HDR Blue · 0.2 배) |

@@ -11,7 +11,7 @@ namespace KkomaKnight.Game
     /// ● 좌표: sim.js 월드 x(레이아웃 px) → 프레임 레이아웃 x = 플레이어 x + zoom × <see cref="Spread"/>(worldX − 플레이어 x) → <see cref="WorldCam.ToWorld"/>.
     ///   Spread 는 멈춤 거리(stopDistance) 안은 1배, 그 밖은 <see cref="Layout.WorldSpacing"/>(2배)로 벌린다(주인 지시 «적·노드 간격 2배» · 엔진 좌표 불변).
     ///   세로는 ref-layout ② 의 % (발 줄 40%).
-    /// ● 맵: Layer Lab Environment 데모 씬 4종(Autumn·DeepForest·Forest·Desert)을 챕터 (n−1)%4 로 순환 — 평면색 바닥 + 길 띠 + 물결 경계 + 풀·꽃 + 나무·덤불·돌 (<see cref="Theme"/>).
+    /// ● 맵: Layer Lab Environment 데모 씬 4종(Autumn·DeepForest·Forest·Desert)을 챕터 (n−1)%4 로 순환 — 바닥·길 띠는 데모 치수, 소품은 데모 씬 배치 그대로(<see cref="MapLayouts"/> · tools/gen_maps.py) 씬 폭마다 반복.
     /// ● 캐릭터: CharacterMaker Character.prefab + <see cref="CharacterRig"/>. 공격 모션은 끊지 않고, 데미지 연출(팝·플래시·체력바·사망)은 «칼이 내려오는 순간»(Attack.anim OnAttackHit)까지 미룬다(<see cref="Strike"/>).
     /// ● 체력바는 발밑(HpLabelY 줄) · 플레이어 실드바(파랑)는 그 아래 (주인 지시 2026-09-05).
     /// </summary>
@@ -22,7 +22,9 @@ namespace KkomaKnight.Game
         readonly float _zoom; readonly float _playerX;             // ui.json camera.zoom · playerX(프레임 폭 비율)
         const float CharBaseHeight = 0.85f;                          // Character.prefab 스케일 1 의 키(유니티 단위 · 조사값)
         const float FootY = Layout.PlayerFootY / 100f;
-        const float RoadTopY = 0.35f, RoadBotY = 0.47f;              // 길 띠(프레임 비율) — 발 줄 40% 를 품는다
+        const float RoadCenterFrac = 0.41f;                          // 데모 씬의 길 중심(y −0.402)이 놓이는 프레임 비율 — 발 줄 40% 바로 아래 · 지면 띠(30~51%) 중심
+        const float UnitFrac = WorldCam.PPU / WorldCam.LayoutH;      // 데모 씬 1u = 프레임 높이의 이 비율 (1/11.4)
+        const float RoadTopY = RoadCenterFrac - MapLayouts.RoadHeight * UnitFrac / 2f, RoadBotY = RoadCenterFrac + MapLayouts.RoadHeight * UnitFrac / 2f;   // ≈ 30.2% ~ 51.8% = ref-layout 지면 띠
         const float SpreadRamp = 150f;                               // 1배 → WorldSpacing 배로 부드럽게 넘어가는 월드 px 구간
 
         // 플레이어
@@ -56,19 +58,12 @@ namespace KkomaKnight.Game
         double _goldPrev; Vector3 _lastKillPos;
         readonly Theme _theme;
 
-        /// <summary>데모 씬 한 벌 — 카탈로그 키 접두 env.&lt;name&gt;.* (gen_catalog 가 만든 키 · 개수는 catalog.json 과 같아야 한다).</summary>
+        /// <summary>데모 씬 한 벌 — 바닥·길·물결 경계 키(env.&lt;name&gt;.*) · 소품 배치는 <see cref="MapLayouts"/>.</summary>
         public sealed class Theme
         {
-            public string Name; public int Deco, Big, Mid, Small;
+            public string Name;
             public string Field => "env." + Name + ".field"; public string Road => "env." + Name + ".road"; public string RoadUp => "env." + Name + ".roadUp";
-            public string DecoKey(int i) => "env." + Name + ".deco" + i; public string BigKey(int i) => "env." + Name + ".big" + i; public string MidKey(int i) => "env." + Name + ".mid" + i; public string SmallKey(int i) => "env." + Name + ".small" + i;
-            public static readonly Theme[] All =
-            {
-                new Theme { Name = "autumn", Deco = 2, Big = 5, Mid = 2, Small = 3 },
-                new Theme { Name = "deepForest", Deco = 3, Big = 5, Mid = 3, Small = 3 },
-                new Theme { Name = "forest", Deco = 3, Big = 4, Mid = 3, Small = 3 },
-                new Theme { Name = "desert", Deco = 3, Big = 4, Mid = 3, Small = 3 },
-            };
+            public static readonly Theme[] All = { new Theme { Name = "autumn" }, new Theme { Name = "deepForest" }, new Theme { Name = "forest" }, new Theme { Name = "desert" } };
             /// <summary>챕터 → 테마: 1=Autumn 2=DeepForest 3=Forest 4=Desert, 5=Autumn … (주인 지시 «4개 순환»).</summary>
             public static Theme ForChapter(int chapter) => All[((chapter - 1) % All.Length + All.Length) % All.Length];
         }
@@ -149,52 +144,35 @@ namespace KkomaKnight.Game
             var sr = Sprite(key, parent, order, "prop"); sr.flipX = flip; sr.transform.localScale = Vector3.one * scale;
             var p = new Prop { Sr = sr, WorldX = worldX, YFrac = yFrac }; _props.Add(p); return p;
         }
-        float HeightOf(string key) { var s = _app.Assets.Sprite(key); return s != null ? s.bounds.size.y : 1f; }
-        float WidthOf(string key) { var s = _app.Assets.Sprite(key); return s != null ? s.bounds.size.x : 1f; }
+        /// <summary>데모 씬 y(길 중심 −0.402) → 프레임 비율.</summary>
+        static float DemoY(float y) => RoadCenterFrac - (y - MapLayouts.RoadCenterY) * UnitFrac;
+        /// <summary>
+        /// 소품 — 주인 지정 데모 씬(DemoScene_Autumn/DeepForest/Forest/Desert)의 배치를 **그대로**(위치·반전·크기 · <see cref="MapLayouts"/> 표) 씬 폭마다 반복해 깐다(주인: «그 씬 배치가 맘에 들어서 그대로 복사해도 된다»).
+        /// 1 데모 유닛 = 100/zoom 월드 px. 발 줄(40%)보다 위에 뿌리를 둔 소품은 캐릭터 뒤, 아래는 앞. 길 아래 물결 경계(Road_up)는 데모의 y·피치로 길 전체에 깐다.
+        /// </summary>
         void BuildProps()
         {
             var props = new GameObject("Props").transform; props.SetParent(_root, false);
             double lastX = G.Nodes.Count > 0 ? G.Nodes[G.Nodes.Count - 1].X : 2000;
-            var rng = new System.Random(G.Chapter * 7919);
             double from = -700, to = lastX + 1400;
-            // ① 길 위 물결 경계 — 데모 씬처럼 폭의 절반씩 겹쳐 깐다(월드 x 고정 · 바닥색과 달리 무늬가 있어 Spread 로 같이 움직여야 미끄러지지 않는다)
-            float upScale = 0.6f; float upW = WidthOf(_theme.RoadUp) * upScale; double upPitch = upW * 0.55f * WorldCam.PPU / _zoom;
-            float upHFrac = HeightOf(_theme.RoadUp) * upScale / (WorldCam.LayoutH / WorldCam.PPU);   // 띠 높이(프레임 비율)
-            float upY = RoadTopY - upHFrac * 0.3f;                                                      // 길 윗변에 걸쳐 물결이 길 쪽으로 늘어진다
-            for (double x = from; x < to; x += upPitch) AddProp(props, _theme.RoadUp, x, upY, upScale, -17, false);
-            // ② 풀·꽃·둔덕 — 길 위(18~33%)·길 아래(48~60%) 흩뿌림
-            for (double x = from; x < to; x += 22 + rng.Next(0, 40))
-            {
-                string key = _theme.DecoKey(rng.Next(_theme.Deco)); float w = WidthOf(key);
-                bool wide = w > 2f;                                      // 사막 둔덕(5.3u)은 뒤 배경으로만 · 작게
-                float s = wide ? 0.45f + (float)rng.NextDouble() * 0.15f : 0.9f + (float)rng.NextDouble() * 0.3f;
-                bool below = !wide && rng.NextDouble() < 0.35;
-                float y = wide ? 0.21f + (float)rng.NextDouble() * 0.08f : below ? 0.48f + (float)rng.NextDouble() * 0.11f : 0.18f + (float)rng.NextDouble() * 0.15f;
-                AddProp(props, key, x, y, s, wide ? -16 : -15, rng.NextDouble() < 0.5);
-                if (wide) x += 220;
-            }
-            // ③ 큰 소품(나무) — 길 뒤 · 키 1.6~2.1u(데모 비율 그대로면 HUD 를 덮어 줄였다) · 중간·작은 소품은 뒤/앞
-            for (double x = from; x < to; x += 90 + rng.Next(0, 160))
-            {
-                double roll = rng.NextDouble();
-                if (roll < 0.45)
+            float unitPx = WorldCam.PPU / _zoom;                                 // 데모 1u → 월드 px
+            float footDemoY = MapLayouts.RoadCenterY + (RoadCenterFrac - FootY) / UnitFrac;   // 발 줄의 데모 y (≈ −0.29)
+            // ① 길 아래 물결 경계 — 데모 y(≈ −2.0 · 길 아랫변) · 데모 피치
+            float upY = DemoY(MapLayouts.RoadUpYOf(_theme.Name)); double upPitch = MapLayouts.RoadUpPitchOf(_theme.Name) * unitPx;
+            for (double x = from; x < to; x += upPitch) AddProp(props, _theme.RoadUp, x, upY, 1f, -17, false);
+            // ② 소품 — 씬 폭마다 반복
+            var layout = MapLayouts.Of(_theme.Name); double period = MapLayouts.WidthOf(_theme.Name) * unitPx;
+            double start = System.Math.Floor(from / period) * period;
+            for (double x0 = start; x0 < to; x0 += period)
+                foreach (var p in layout)
                 {
-                    string key = _theme.BigKey(rng.Next(_theme.Big)); float h = HeightOf(key); float target = 1.6f + (float)rng.NextDouble() * 0.5f;
-                    AddProp(props, key, x, 0.30f + (float)rng.NextDouble() * 0.045f, target / Mathf.Max(0.1f, h), -12, rng.NextDouble() < 0.5);
+                    float yf = DemoY(p.Y);
+                    if (yf < -0.15f || yf > 0.72f) continue;                        // 화면 위 밖 · HUD 패널 뒤는 만들지 않는다
+                    var sp = _app.Assets.Sprite(p.Key); bool flat = sp != null && sp.bounds.size.y * Mathf.Abs(p.Sy) < 0.35f;   // 풀·꽃(납작) 은 늘 바닥
+                    int order = flat ? -16 : p.Y > footDemoY ? Mathf.Max(-60, -12 - (int)((p.Y - footDemoY) * 3f)) : Mathf.Min(470, 381 + (int)((footDemoY - p.Y) * 5f));
+                    var pr = AddProp(props, p.Key, x0 + p.X * unitPx, yf, 1f, order, false);
+                    pr.Sr.transform.localScale = new Vector3(p.Sx, p.Sy, 1f);
                 }
-                else if (roll < 0.75)
-                {
-                    string key = _theme.MidKey(rng.Next(_theme.Mid)); float h = HeightOf(key); float target = 0.65f + (float)rng.NextDouble() * 0.3f;
-                    bool front = rng.NextDouble() < 0.3;
-                    AddProp(props, key, x, front ? 0.475f + (float)rng.NextDouble() * 0.03f : 0.31f + (float)rng.NextDouble() * 0.035f, (front ? 0.75f : 1f) * target / Mathf.Max(0.1f, h), front ? 380 : -11, rng.NextDouble() < 0.5);
-                }
-                else
-                {
-                    string key = _theme.SmallKey(rng.Next(_theme.Small)); float h = HeightOf(key); float target = 0.28f + (float)rng.NextDouble() * 0.2f;
-                    bool front = rng.NextDouble() < 0.5;
-                    AddProp(props, key, x, front ? 0.48f + (float)rng.NextDouble() * 0.04f : 0.32f + (float)rng.NextDouble() * 0.025f, target / Mathf.Max(0.1f, h), front ? 381 : -10, rng.NextDouble() < 0.5);
-                }
-            }
         }
         void BuildNodes()
         {

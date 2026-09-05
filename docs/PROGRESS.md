@@ -126,6 +126,14 @@
 - **22 간격 2배 → 그리기 배율 유지(«냅둬»)** 였으나, 에디터에서 보고 «배경 소품·적의 이동 속도가 서로 달라 부자연스럽다 · 전이 나은데» → **배율 1 로 되돌림**(예전과 같은 균일 이동). 진짜 2배는 승인 대기 24.
 - **23 맵 순서 → OK.** Autumn → DeepForest → Forest → Desert.
 
+### 2026-09-05 답변 3 — 에디터 플레이 피드백
+- **에디터 오류 `MissingComponentException (Button_02_Orange · CanvasGroup)`** → 원인은 `GetComponent() ?? AddComponent()` 패턴: 에디터의 «가짜 null»(== 만 재정의)에 `??` 가 걸리지 않아 컴포넌트가 안 붙었다. `UiKit.Ensure<T>` 로 전부 교체(6곳).
+- **«배경 소품·적 이동 속도가 달라 부자연스럽다 · 전이 나은데»** → 간격 배율 1 로 되돌림(승인 대기 24 참조).
+- **«배경은 내가 말한 씬 참고한 거 맞냐 · 그대로 복사해도 된다 · 배치가 맘에 든다»** → `tools/gen_maps.py` 가 DemoScene_Autumn/DeepForest/Forest/Desert 의 소품 인스턴스(위치·반전·크기)를 씬 파일에서 읽어 `MapLayouts.cs` 표로 굽고, `BattleWorld` 가 그 표를 씬 폭(≈27u)마다 반복해 그대로 깐다(길 중심 y −0.402 ↔ 프레임 41% · 1u = 100/zoom 월드 px). 바닥(Field)·길(Road · 2.46u 띠 = 지면 띠 30~52%)·물결 경계(Road_up · 데모 y/피치)도 데모 치수. 샘플 캐릭터만 제외.
+- **특전 카드의 빨간 «Text»** → CardFrame_04 안 `Text_Title` 잔여 글자 — 프레임 안 글자를 전부 끄고 등급 리본만 넣는다.
+- **새로고침 버튼의 «Remain : 1/1»** → 끔. 라벨은 «새로고침» 만. **더 못 하면 버튼 자체를 숨김**.
+- **플레이 진입이 느리다** → EditorSettings «Enter Play Mode Options» 켜고 도메인 리로드 끔(`m_EnterPlayModeOptions: 1` · 씬 리로드는 유지). 정적 상태는 `UiKit.ResetStatics`(SubsystemRegistration) 로 판마다 초기화.
+
 ## 주인 승인 대기 (한 번에 답해 주시면 됩니다 — 답이 없으면 아래 «기본값» 으로 진행)
 
 > 1~9 · 19~23 은 위 «주인 결정» 으로 종결됐다(이력으로 남긴다). 열린 것은 10번부터.

@@ -21,6 +21,9 @@ namespace KkomaKnight.Game
         public const float FrameW = 1080f, FrameH = 2337f;   // 1080 × (844/390)
         public static Font DefaultFont;
         static Sprite _round, _round8, _circle, _white;
+        /// <summary>에디터 «도메인 리로드 끔»(EditorSettings · 플레이 진입 속도) 에서도 정적 상태가 새 판마다 깨끗하게.</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() { _round = _round8 = _circle = _white = null; DefaultFont = null; CharacterRig.TimeScale = 1f; }
 
         public static Font FontOrBuiltin() => DefaultFont != null ? DefaultFont : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         static AssetCatalog Cat => App.I != null ? App.I.Assets : null;

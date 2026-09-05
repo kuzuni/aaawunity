@@ -81,12 +81,11 @@ namespace KkomaKnight.Game
             {
                 UiKit.Clear(frameArea); var f = UiKit.Spawn(Palette.FrameKey("ui.cardFrame", colorName), frameArea); var frt = (RectTransform)f.transform; UiKit.Stretch(frt);
                 if (colorName == "gray") UiKit.Desaturate(frt);
-                var tb = UiKit.Find(frt, "TitleBg");
-                if (tb != null)
-                {
-                    foreach (var old in tb.GetComponentsInChildren<Text>(true)) old.gameObject.SetActive(false);   // 프리팹의 남은 글자 끄기(Destroy 는 프레임 끝에 되어 아래 Find 에 잡힌다)
-                    var gl = UiKit.Text(tb, p.GradeName ?? "", 30, Palette.White, TextAnchor.MiddleCenter, true); UiKit.Stretch(gl.rectTransform, 8, 4, 8, 4);
-                }
+                foreach (var old in frt.GetComponentsInChildren<Text>(true)) old.gameObject.SetActive(false);   // 프리팹의 남은 글자("Text_Title" 등) 전부 끄기 — 주인: «Text 라고 빨간 글씨 없애줘»
+                var tb = UiKit.Find(frt, "TitleBg"); if (tb == null) tb = UiKit.Find(frt, "Text_Title");
+                var host = tb != null ? tb : frt;
+                var gl = UiKit.Text(host, p.GradeName ?? "", 30, Palette.White, TextAnchor.MiddleCenter, true);
+                if (tb != null) UiKit.Stretch(gl.rectTransform, 8, 4, 8, 4); else UiKit.Pct(gl.rectTransform, 5, 0, 40, 22);
             }
             if (itemArea != null) { UiKit.Clear(itemArea); UiKit.PerkFrame(itemArea, colorName, Icons.Perk(p.Id), 162); }
             UiKit.Hide(rt, "Focus");
@@ -142,9 +141,18 @@ namespace KkomaKnight.Game
             {
                 UiKit.Pct((RectTransform)btn, Layout.OvFoot);
                 int left = G.RerollsLeft;
-                UiKit.SetText(btn, "Text (TMP)", left > 0 ? $"새로고침 ({left})" : "새로고침 없음");
-                var b = UiKit.Clickable(btn, () => { if (G.RerollOffer()) LevelUp(G, onPick); });
-                UiKit.SetInteractable(b, left > 0);
+                if (left <= 0) btn.gameObject.SetActive(false);   // 더 못 하면 숨긴다 (주인)
+                else
+                {
+                    // 버튼 안 글자 두 개: 본 라벨 + 데모의 «Remain : 1/1» — Remain 은 끄고(주인) 본 라벨만 «새로고침»
+                    bool labeled = false;
+                    foreach (var t in btn.GetComponentsInChildren<Text>(true))
+                    {
+                        if (t.text != null && t.text.IndexOf("Remain", StringComparison.OrdinalIgnoreCase) >= 0) { t.gameObject.SetActive(false); continue; }
+                        if (!labeled) { t.text = "새로고침"; labeled = true; } else t.gameObject.SetActive(false);
+                    }
+                    UiKit.Clickable(btn, () => { if (G.RerollOffer()) LevelUp(G, onPick); });
+                }
             }
             var book = UiKit.Find(rt, "Book"); if (book != null) { UiKit.Pct((RectTransform)book, Layout.OvInfo); UiKit.SetText(book, "Text (TMP)", G.Taken.Count.ToString()); UiKit.Clickable(book, () => PerkBook(G, () => LevelUp(G, onPick))); }
             StatsRow(rt, G, Layout.OvStats);
