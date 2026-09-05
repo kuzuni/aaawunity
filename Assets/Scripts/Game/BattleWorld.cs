@@ -89,7 +89,7 @@ namespace KkomaKnight.Game
         float Spread(double d)
         {
             float stop = (float)G.C.StopDistance, mul = Layout.WorldSpacing;
-            if (d <= stop) return (float)d;
+            if (mul <= 1f || d <= stop) return (float)d;   // 배율 1 = 예전과 같은 균일 사상(모든 것이 같은 속도로 흐른다)
             float u = (float)d - stop;
             if (u <= SpreadRamp) return stop + u + (mul - 1f) * u * u / (2f * SpreadRamp);
             return stop + SpreadRamp + (mul - 1f) * SpreadRamp / 2f + mul * (u - SpreadRamp);

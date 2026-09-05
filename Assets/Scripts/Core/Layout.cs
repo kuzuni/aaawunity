@@ -47,9 +47,9 @@ namespace KkomaKnight.Core
         public const float PlayerFootBarW = 10.3f, EnemyFootBarW = 9.7f;
         /// <summary>발밑 체력바 중심 y(HpLabelY 줄 안) · 그 아래 실드바(파랑) — 주인 지시 2026-09-05 «hp바는 캐릭터 하단 · 실드바는 hp바 밑».</summary>
         public const float FootHpBarY = HpLabelY + 0.9f, FootShBarY = HpLabelY + 2.2f, FootBarH = 0.55f, FootShBarH = 0.4f;
-        /// <summary>그리기 간격 배율 — 멈춤 거리(combat.json stopDistance) 밖의 월드 x 거리를 화면에서 2배로 벌린다(적·쉼터·악마·천사 간격 2배 · 주인 지시 2026-09-05).
-        /// 엔진 좌표(enemyGap/nodeGap)는 그대로라 밸런스·시드 골든이 바뀌지 않는다. 멈춤 거리 안쪽(칼 닿는 거리)은 1배 — 승인 대기 22.</summary>
-        public const float WorldSpacing = 2.0f;
+        /// <summary>그리기 간격 배율. 2 로 두면 멈춤 거리 밖의 거리를 화면에서 2배로 벌리지만(비균일 사상), 멀리 있는 소품·적이 가까운 것과 다른 속도로 움직여 부자연스럽다(주인 2026-09-05: «전이 나은데»).
+        /// 그래서 1(= 예전 그대로 · 모든 것이 같은 속도)로 둔다. 진짜 간격 2배는 엔진 좌표(enemies.json enemyGap/nodeGap/nodeGapEvent) 를 바꿔야 하고 그건 밸런스·시드 골든이 바뀌는 일 — 승인 대기 24.</summary>
+        public const float WorldSpacing = 1.0f;
         public static readonly R HudSpeed = new R(3.0f, 65.0f, 11.0f, 4.0f);
         public static readonly R HudRound = new R(85.0f, 63.0f, 13.0f, 6.5f);
         public static readonly R HudPanel = new R(0, 69.5f, 100, 30.5f);
