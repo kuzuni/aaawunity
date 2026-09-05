@@ -131,6 +131,9 @@ namespace KkomaKnight.Game
             float step = Time.deltaTime * Mathf.Max(0f, _anim.speed) / len;
             if (st.normalizedTime + step < FreezeAt) return;
             _anim.Play(_freezeState, 0, FreezeAt); _anim.speed = 0f; _frozen = true;
+            // Animator.Play 는 다음 애니 평가 때 적용된다 — 같은 프레임에 «Frozen ⇒ 마지막 프레임» 이 성립하도록 즉시 평가(dt 0 · speed 0 이라 진행 없음).
+            // (T16 · CI #39: 코루틴이 Frozen 직후 읽은 normalizedTime 이 직전 값(0.967)이라 1초 뒤 정지점(0.999)과 달라 실패)
+            _anim.Update(0f);
         }
 
         SpriteRenderer Sr(string path) { var t = transform.Find(path); return t != null ? t.GetComponent<SpriteRenderer>() : null; }
