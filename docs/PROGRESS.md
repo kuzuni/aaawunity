@@ -13,7 +13,7 @@
 | T5 | UI 를 docs/ref 레이아웃에 맞추기 | ✅ 완료 (배치 상수 = 표 · 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Core/Layout · Game/* 배치 · Tests/LayoutSpecTests | ref-layout ①~⑦ 표를 `Layout` 상수로 · 표 ↔ 상수 자동 대조 테스트 8개 · 60fps · 백그라운드 실행 · 주인 피드백 일괄(특전 카드/색/새로고침 · 공격 모션 · 발밑 체력바 · 간격 2배 · 맵 4종 순환) |
 | T6 | 로비 = Lobby_Default 그대로 (TopBar 폐기 · 캐릭터·전투력·골드·보석) | ✅ 완료 (`814d59d` · 실물 확인은 WebGL 배포에서) | sess-2034-9487 / 워커 B | Game/Screens(로비) · HeroView(신규) · TopBar 삭제 | 프리팹 요소 이동 0 · 초상 = HeroView(RenderTexture) · «25/55» = 전투력 · dotnet 0/0 · 테스트 40/40 |
 | T7 | 장비 화면 = Character_Hero_Equipment 그대로 + 장착 외형 반영 + ListItem_EquipMent | ✅ 완료 (`ff53ebb` · 실물 확인은 WebGL 배포에서) | sess-2036-27996 / 워커 C | Core/GearLook(신규) · Game/GearScreen · GearUi · CharacterRig · BattleWorld(스킨) · HeroView(T6 것 재사용) · Tests/GearLookTests | 프리팹 요소 이동 0 · 슬롯 Item 크기 그대로 · 파츠 36종 표 · dotnet 0/0 · 테스트 45/45 |
-| T8 | 대장간 정리 (인벤 전부 · 빨간 점 · 칸 비례) — T7 뒤 | 대기 | — | Game/ForgeScreen | ROUTINE §2 T8 |
+| T8 | 대장간 정리 (인벤 전부 · 빨간 점 · 칸 비례) — T7 뒤 | ✅ 완료 (`41e524c` · 실물 확인은 WebGL/에디터에서) | sess-2113-28861 / 워커 A | Game/ForgeScreen · GearUi(Grid) · catalog(`ui.alertDot` 노트) | 인벤 격자 = 장비 화면 프리팹 격자 값 복사(188 정사각 · 5열 · 찌그러짐 0) · 재료 3칸도 본래 크기 · 빨간 점 · 장착중 Check+흐림 · 인벤 누락 원인 = 가짜 null 예외로 Refresh 중단 · dotnet 0/0 · 테스트 45/45 |
 | T9 | 상점 = Shop_List 그대로 (상자 3 · 다이아 6 · 골드 3) + 뽑기 결과 = Shop_Chest_Open | 대기 | — | Game/ShopScreen · KkomaKnight/shop.json | ROUTINE §2 T9 |
 | T10 | 하단 네비 = 상점·장비·전투·탤런트·펫 + Settings 그대로 — T6 뒤 | ✅ 완료 (`dce33d6` · 실물 확인은 WebGL 배포에서) | sess-2052-15499 / 워커 D | Game/Screens(NavBar 이사) · Overlay(Settings·TalentPet) · GearScreen(NavBar 제거) · catalog(ui.talent·ui.talentIcon·ui.petIcon) | 탭 = 상점·장비·전투·탤런트·펫 · Settings 프리팹 요소 숨김 0 · Character_Talent_02 통째로 · dotnet 0/0 · 테스트 45/45 |
 | T11 | UI 스모크 PlayMode 테스트 + 가짜 null 게이트 | 대기 | — | Tests/PlayMode · tools · ci.yml | ROUTINE §2 T11 |
@@ -221,6 +221,19 @@
 - 게이트(리베이스 뒤 T7 합류 상태에서 재실행): `dotnet build` 0/0 · `dotnet test` **45/45** · `gen_meta --check` · `gen_catalog --check`(459) · `check_data_sync` OK(aaaw `0707999`). Sim 시드 검증은 Core 를 안 건드려 생략.
 - 워커 메모: dotnet 은 T6 워커 방식(packages.microsoft.com .deb → `dpkg -x` → `~/dotnet8`) 으로 설치해 게이트를 돌렸다. lock 커밋(`90abcd3`)은 `[skip ci]` 규칙이 push 직후 ROUTINE 에 추가돼 붙이지 못했다(그 뒤 커밋부터 준수).
 - 한계: 에디터 없이 짠 것 — ⓐ Character_Talent_02 는 화면 전체 프리팹이라 Overlay 층에 Stretch 로 세웠다(로비 위를 덮음 · 실물에서 배경이 비치면 `TalentPet` 의 raycast/배경 한 줄) ⓑ Settings 의 «한국어» 버튼·약관 글자는 눌러도 아무 일 없음이 의도.
+
+### T8 완료 기록 (2026-09-05 · sess-2113-28861 · 워커 A)
+
+- **주인이 확인할 것 (한 줄)**: 장비 화면 «합성» 으로 들어간 대장간에서 — 하단 인벤에 장비가 **전부**(장착분 포함 · 장착분은 체크 표시 + 흐리게) 보이는가 / 칸이 장비 화면 인벤 칸과 **같은 크기·비례**(ListItem_EquipMent 188 정사각 · 5열 · 찌그러짐 없음)인가 / 같은 부위·종류·등급이 3개 이상인 칸 **오른쪽 위 빨간 점**이 켜지고 재료를 하나 고르면 점이 사라지는가(index.html 과 같음) / 위 재료 3칸·결과 칸도 같은 정사각 칸인가.
+- **«하단에 장비가 없다» 원인(한 줄)**: 격자·ScrollRect·Pct 겹침이 아니라 **`Refresh()` 중단** — 주인이 본 시점(e64ff41 이전)엔 인벤 루프 **앞**의 `UiKit.SetInteractable(합성 버튼)` 이 CanvasGroup 을 «GetComponent 뒤 ?? AddComponent» 로 붙이다 에디터 가짜 null 로 `MissingComponentException`(주인 로그의 «Button_02_Orange CanvasGroup» = 대장간 합성 버튼 `ui.btnOrange`) 을 던져 그 뒤 인벤 루프가 통째로 건너뛰어졌다. e64ff41(`UiKit.Ensure`) 이 예외를 없앴고, T8 은 인벤 채우기를 `Refresh()` 맨 앞으로 옮겨 같은 종류의 사고가 인벤을 다시 비우지 못하게 했다.
+- 만든 것
+  - `GearUi.Grid`: ref-layout 표 % 로 만들던 칸(18.4×7.2% = 199×168 · 정사각 프리팹이 찌그러짐) 대신 **장비 화면 프리팹(Character_Hero_Equipment) 의 Content GridLayoutGroup 값을 그대로 복사**(cellSize 188×188 · spacing.y 24.5 · padding 6/20 · 5열) — 대장간 칸이 장비 화면 칸과 같은 크기·비례가 되도록 «값을 베끼는» 방식(수치를 코드에 박지 않음). 가로 간격만 view 폭(94% = 1015px)에 맞춰 (폭 − 5×188)/4 로 재계산해 5열이 딱 들어간다 — 칸 크기는 절대 줄이지 않는다. 프리팹이 없을 때의 대체 = `ui.equipCell` 본래 한 변(정사각) → 그것도 없으면 표 % 폭의 정사각.
+  - `ForgeScreen`: 재료 3칸은 Pct(17×9.5% = 184×222) 로 늘리지 않고 슬롯 자리(`Mat0~2` · 위치는 표 그대로) **가운데에 칸 본래 크기(188)** 로 둔다. 결과 칸은 원래부터 본래 크기. 인벤: 장착중 = 프리팹 `Check` + 흐리게(재료 불가 · 토스트 그대로) · 합성 가능 = `ui.alertDot`(Alert_Dot_01_Red · 오른쪽 위 · `CellOpts.FusableDot`) — 재료를 고르는 중엔 점을 끔(index.html `renderForge` 의 `fus:!lock&&…` 그대로). `FusableKeys` 는 index.html `fusableKeys` 와 같이 장착분도 셈(정본 유지).
+  - catalog `_notes` 에 `ui.alertDot` 용도 기록(ROUTINE T8 의 «`ui.redDot`» 는 같은 에셋이라 **키를 하나 더 만들지 않고** 기존 키를 쓴다) → `docs/assets-map.md` 재생성(새 키 없음 · 459).
+- 게이트: `dotnet build` 0/0 · `dotnet test` **45/45** · `gen_meta --check` · `gen_catalog --check`(459) · `check_data_sync` OK(aaaw `0707999`) · 코드의 «GetComponent…() ??» 패턴 0건(UiKit 설명 주석 1줄만). Sim 시드 검증은 Core 를 안 건드려 생략.
+- **플레이 콘솔 에러 0 을 무엇으로 확인했는가**: PlayMode 스모크 테스트는 아직 없다(T11 대기 · `Assets/Tests/PlayMode` 미생성) → **주인이 에디터 플레이로 확인할 것 — 장비 → 합성(대장간) → 칸 클릭·자동·합성 → 콘솔 빨간 줄 0**. 코드 감사: 이번에 넣은 코드는 프리팹·자식 `Find`·GridLayoutGroup 이 없을 때 전부 대체 경로로 내려가고(null 검사) 새 카메라·RenderTexture 는 만들지 않았다. T11 워커는 스모크 테스트에 «대장간 열기 + 칸 3개 선택 + 합성» 을 넣어 주면 된다.
+- 워커 메모: 이 환경엔 dotnet 이 없다 — `apt-get update && apt-get install -y dotnet-sdk-8.0`(Ubuntu 24.04 자체 패키지 · update 없이 바로 install 하면 404) 로 설치해 게이트를 돌렸다.
+- 한계: 에디터 없이 짠 것 — ⓐ 프리팹 Content 격자의 세로 간격(24.5)·패딩을 그대로 쓰므로 표 ⑥ 의 «행 피치 7.6%» 와는 다르다(주인 «칸 비례 = 장비 화면과 같게» 가 우선) ⓑ 재료 칸(188)이 슬롯 자리 폭(184)보다 2px 씩 넘친다(보이지 않는 차이 · 거슬리면 `Layout.ForgeMat.W` 한 줄).
 
 ## 주인 콘솔 에러 보고함 (주인이 붙인 원문 — 다 고칠 때까지 남긴다 · 워커는 매 세션 읽고 작업으로 올린다)
 
