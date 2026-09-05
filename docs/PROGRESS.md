@@ -119,9 +119,16 @@
 - **(추가 · 2026-09-05)** GUI Pro 의 `Prefabs~DemoLayout`·`Prefabs~DemoScenes` 를 적절히 쓸 것. 화면 지정: **Character_Hero_Equipment = 장비 창 · Lobby_Default = 로비 · Play_Perk_Selection_02 = 특전 선택 · Play_Result_Win_01 = 승리 · Settings = 설정 팝업 · Shop_Chest_Open = 장비 소환(뽑기) 팝업**. 악마·천사·쉼터는 전용 에셋이 없으니 알아서(→ Environment 소품 + CFXR 조합 · assets-map 참조).
   - 에디터 없이 프리팹을 엮으려면 .meta 의 GUID 를 읽어 씬/프리팹 YAML 에 박는다. 어떤 프리팹·스프라이트·이펙트를 어디에 썼는지 **`docs/assets-map.md`** 에 표로 남기고, 단계마다 고른 것을 보고한다(주인이 바꿀 것만 말한다).
 
+
+### 2026-09-05 답변 2 — 승인 대기 19~23 종결
+- **19 백그라운드 실행 → «하지 말자».** `Application.runInBackground` 와 ProjectSettings `runInBackground` 를 기본값(0)으로 되돌렸다. 60fps(20)는 그대로. 화면 꺼짐 방지(NeverSleep)는 전투 중 화면이 어두워지지 않게 남겨 두었다 — 이것도 빼려면 한 줄로.
+- **21 새로고침 → 무료 · 새 특전 팝업이 뜰 때마다 1번.** 구현과 같다(`EngineConst.RerollPerLevelUp = 1` · 팝업마다 `Pending.Rerolls` 초기화 · 비용 없음).
+- **22 간격 2배 → 그리기 배율 유지(«냅둬»).** 엔진 좌표·골든 불변.
+- **23 맵 순서 → OK.** Autumn → DeepForest → Forest → Desert.
+
 ## 주인 승인 대기 (한 번에 답해 주시면 됩니다 — 답이 없으면 아래 «기본값» 으로 진행)
 
-> 1~9 는 위 «주인 결정» 으로 종결됐다(이력으로 남긴다). 열린 것은 10번부터.
+> 1~9 · 19~23 은 위 «주인 결정» 으로 종결됐다(이력으로 남긴다). 열린 것은 10번부터.
 
 
 1. **유니티 버전 = 6000.3.8f1 (주인 «기본» 커밋 `fe944b3` 을 따름).** 지시는 «2022.3 LTS 최신 패치» 였고 처음엔 2022.3.76f1 로 뼈대를 짰으나, 같은 시각에 주인이 main 에 올린 «기본» 프로젝트가 **Unity 6000.3.8f1 + URP 2D + TextMeshPro + Input System + 에셋(Layer Lab GUI Pro/CharacterMaker/Environment · Cartoon FX · AllIn1SpriteShader · DOTween · Odin · AntiCheatToolkit · Hot Reload · mcp-unity)** 이라 두 트리가 양립하지 않았다(URP 17.3·ugui 2.0 은 2022.3 에 없다). **주인 프로젝트를 기준으로 합쳤다**: ProjectSettings/Packages/에셋은 주인 것 그대로, 이 세션의 코드·데이터·CI·문서를 그 위에 얹었다. GameCI 이미지 `unityci/editor:ubuntu-6000.3.8f1-*` 는 존재한다. **2022.3 으로 되돌리길 원하시면** 에셋 패키지가 전부 6000 전용이라 주인 프로젝트를 다시 만들어야 한다 — 한 줄로 알려 주시면 그때 정한다.
@@ -148,11 +155,6 @@
 17. **장비 탭 캐릭터 그림**: 데모 프리팹의 샘플 캐릭터(Sample_Cha02_l)는 우리 기사가 아니라 숨기고 아이콘으로 대체했다. 기사(CharacterMaker)를 UI 안에 그리려면 RenderTexture 카메라 1개가 필요하다 — 원하시면 T5 에 넣는다.
 18. **상점 모의 결제 가격 ₩110,000** 은 index.html GEM_PACKS 의 표시값을 그대로 옮겼다(실결제 없음 · PLAN §11.5). 가격대는 정하신 게 1종뿐이라 나머지 5칸은 잠금으로 채웠다.
 
-19. **«백그라운드에서도 실행»** 은 `Application.runInBackground = true`(창이 포커스를 잃어도 게임 루프 지속 · WebGL 은 탭이 보일 때만 rAF 가 돈다 — 브라우저 제약)로 했다. 모바일에서 화면을 꺼도 도는 «오프라인 진행(방치 보상)» 을 뜻하셨다면 그것은 새 시스템(PLAN 밖)이라 승인이 필요하다.
-20. **60fps**: `targetFrameRate = 60`(Android) · WebGL 은 −1(브라우저 rAF · 보통 60). vSync 끔. 엔진 틱은 그대로 1/30 초(sim.js) — 그리기만 60.
-21. **레벨업 새로고침 = 팝업당 1회**(`EngineConst.RerollPerLevelUp`). 원본 index.html 에 없는 기능이라 횟수·비용(무료)은 기본값이다 — 횟수를 바꾸거나 골드/보석 비용을 붙이려면 한 줄로.
-22. **간격 2배는 그리기 배율로 했다**(`Layout.WorldSpacing = 2` · 멈춤 거리 안쪽 1배). 엔진 좌표를 2배(enemyGap 88 · nodeGap 560 · nodeGapEvent 940)로 바꾸면 한 판 걷는 시간이 늘어 밸런스와 시드 골든(BattleTests)이 깨진다 — 그쪽을 원하시면 sim.js 를 같은 값으로 고쳐 골든을 다시 뽑아야 하므로 확인 뒤 한다. 그리기 배율 방식은 «칼이 닿는 거리(74px)» 는 그대로라 근접전 모양이 안 바뀌지만, 멀리 있는 것이 다가올 때 속도가 2배→1배로 줄어드는 렌즈 효과가 있다(150px 램프로 완화).
-23. **맵 4종 순환 순서 = Autumn → DeepForest → Forest → Desert**(주인이 적은 순서). 챕터 1 이 가을이다. 다른 시작·순서를 원하시면 `BattleWorld.Theme.All` 한 줄.
 
 ## 주인 할 일
 
