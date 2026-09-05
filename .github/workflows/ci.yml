@@ -87,8 +87,8 @@ jobs:
           projectPath: .
           testMode: all
           artifactsPath: unity-test-results
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          checkName: Unity Test Results
+          # githubToken/checkName 을 주면 러너가 «체크 런»을 만들려 하는데 이 워크플로 토큰엔 checks:write 가 없어
+          # «Resource not accessible by integration» 으로 잡이 빨개진다(#12). 결과는 아래 Artifact 로 남긴다.
       - uses: actions/upload-artifact@v4
         if: always()
         with:
