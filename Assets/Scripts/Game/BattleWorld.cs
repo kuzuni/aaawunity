@@ -41,6 +41,8 @@ namespace KkomaKnight.Game
         public bool Busy => _strikes.Count > 0;
         /// <summary>배속(x1/x2) — 애니 속도와 지연 시계에 함께 건다.</summary>
         public float TimeScale = 1f;
+        /// <summary>따라잡기 중(탭 숨김 뒤 복귀) — 공격 모션·팝·이펙트를 만들지 않고 이벤트만 비운다.</summary>
+        public bool Silent;
         // 투사체
         readonly Dictionary<Projectile, GameObject> _projs = new Dictionary<Projectile, GameObject>();
         readonly Dictionary<EnemyArrow, GameObject> _arrows = new Dictionary<EnemyArrow, GameObject>();
@@ -302,6 +304,7 @@ namespace KkomaKnight.Game
         {
             _moving = G.P.WorldX > _prevPX + 1e-6;
             var P = G.P; _pStrike = null; _eStrikes.Clear();
+            if (Silent) { _pStrikeTick = P.StrikeT; foreach (var kv in _enemies) kv.Value.StrikeTick = kv.Key.StrikeT; G.Events.Clear(); return; }
             // 플레이어가 이번 틱에 휘둘렀나 → 공격 모션(간격 = 1/공속) + 연출 묶음
             if (P.StrikeT > _pStrikeTick && !G.Dead)
             {

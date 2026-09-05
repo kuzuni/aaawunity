@@ -95,7 +95,7 @@ namespace KkomaKnight.Game
             G = new BattleState(D, chapter, App.Save.CurBuild(D), rng, new InteractivePolicy(), new RunOptions { EmitEvents = true });
             BaseStats = new Dictionary<string, double>(); foreach (var d in StatDefs) BaseStats[d.Key] = d.Cur(G);
             _world?.Dispose(); _world = new BattleWorld(App, G, _pops);
-            _acc = 0; _speed = 1; _paused = false; _ended = false; _perkStripKey = ""; _buffKey = "";
+            _acc = 0; _speed = 1; _paused = false; _ended = false; _perkStripKey = ""; _buffKey = ""; _lastReal = 0;   // 새 판 첫 프레임이 «공백» 으로 잡히지 않게
             UiKit.Clear(_pops);
             RefreshHud();
         }
@@ -115,14 +115,19 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 매 프레임 ─────────────────────────
+        float _lastReal; const float CatchUpMaxSec = 600f;   // 탭이 숨겨져(브라우저 rAF 정지·앱 백그라운드) 멈춘 시간을 돌아올 때 따라잡는 상한(10분)
         public override void Tick(float dt)
         {
             if (G == null || _world == null) return;
+            // 백그라운드 따라잡기 — runInBackground 로도 못 도는 경우(탭 숨김·앱 백그라운드)엔 실제 시간 공백만큼 틱을 몰아서 돈다(연출 없이 · 팝업이 뜨면 거기서 멈춘다)
+            float now = Time.realtimeSinceStartup; float gap = _lastReal > 0 ? now - _lastReal - dt : 0; _lastReal = now;
+            int maxTicks = 8; bool catchUp = false;
+            if (gap > 1f && !App.Overlay.IsOpen && !_paused && !G.Over) { float add = Mathf.Min(gap, CatchUpMaxSec); _acc += add * _speed; maxTicks += Mathf.CeilToInt(add * _speed / (float)EngineConst.Dt); catchUp = true; _world.Silent = true; }
             if (!App.Overlay.IsOpen && !_paused && !G.Over)
             {
                 _acc += dt * _speed;
                 int guard = 0;
-                while (_acc >= EngineConst.Dt && guard++ < 8)
+                while (_acc >= EngineConst.Dt && guard++ < maxTicks)
                 {
                     // 팝업(레벨업·이벤트)은 남은 타격 연출(칼이 내려오는 순간)이 끝난 뒤 연다 — 그 동안 엔진 시간은 멈춘 채 애니만 돈다
                     if (G.Pending != null) { if (!_world.Busy) OpenPending(); _acc = 0; break; }
@@ -133,6 +138,7 @@ namespace KkomaKnight.Game
                 }
                 if (G.Pending == null && G.PendingLevelUps > 0 && !G.Over) { /* 엔진이 다음 틱에 스스로 연다 */ }
             }
+            if (catchUp) { _world.Silent = false; _acc = Math.Min(_acc, EngineConst.Dt); }
             foreach (var ev in G.Events) _world.Handle(ev);   // AfterTick 이 틱마다 비우므로 보통 비어 있다
             G.Events.Clear();
             _world.TimeScale = _speed;

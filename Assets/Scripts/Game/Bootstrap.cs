@@ -25,7 +25,7 @@ namespace KkomaKnight.Game
             // 가 유니티 권고 — 60 을 박으면 setTimeout 루프로 바뀌어 오히려 프레임이 고르지 않다.
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = Application.platform == RuntimePlatform.WebGLPlayer ? -1 : 60;
-            // 백그라운드 실행(runInBackground)은 주인 결정(2026-09-05 답변 19)으로 하지 않는다 — 기본값(포커스 잃으면 멈춤).
+            Application.runInBackground = true;   // 창/탭이 포커스를 잃어도 계속 돈다(주인: «유튜브 보면서») · 탭이 숨겨져 브라우저가 멈추면 BattleScreen 이 돌아올 때 그 시간을 따라잡는다
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
         }
 
