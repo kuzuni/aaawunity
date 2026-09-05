@@ -55,6 +55,17 @@ namespace KkomaKnight.Game
         Material[] _origMats;
         float _attackLen = 1.8333334f, _attackHitAt = 1.0f;   // Attack.anim 길이 · OnAttackHit 이벤트 시각(클립에서 읽고, 못 읽으면 조사값)
         float _speedBase = 1f, _attackEndClock = -1f, _attackHitClock = -1f, _clock;
+        // 한 번만 재생하는 상태(사망·승리·패배) — 클립은 전부 루프(m_LoopTime 1 · 주인 에셋 불변)라 끝에서 Animator 를 멈춘다(T14 · «죽은 뒤 다시 일어나는 것처럼 보임» 금지)
+        static readonly string[] OneShot = { Dead, Victory, Defeat };
+        readonly Dictionary<string, float> _clipLen = new Dictionary<string, float>();
+        string _freezeState; float _freezeLen; bool _frozen;
+        /// <summary>마지막 프레임에서 멈춰 있나(사망·승리·패배 클립이 끝난 뒤 · 다른 상태를 Play 하면 풀린다).</summary>
+        public bool Frozen => _frozen;
+        /// <summary>Animator 에 실제로 건 재생 속도(테스트·디버그용 · 멈춤이면 0).</summary>
+        public float AnimSpeed => _anim != null ? _anim.speed : 0f;
+        /// <summary>Attack 클립 길이(초 · 컨트롤러에서 읽은 값).</summary>
+        public float AttackClipLength => _attackLen;
+        const float FreezeAt = 0.999f;   // 루프 클립에서 «마지막 프레임» 의 normalizedTime (1.0 은 처음으로 감김)
         /// <summary>월드 시간 배율(배속 x2 등) — <see cref="Tick"/> 이 매 프레임 넘겨준다.</summary>
         public static float TimeScale = 1f;
         /// <summary>Attack.anim 의 OnAttackHit 이벤트가 온 횟수 — 연출 지연 큐가 «칼이 내려온 순간» 을 알아보는 데 쓴다.</summary>
@@ -69,11 +80,15 @@ namespace KkomaKnight.Game
             rig._onAttackHit = onAttackHit;
             if (rig._anim != null && rig._anim.runtimeAnimatorController != null)
                 foreach (var c in rig._anim.runtimeAnimatorController.animationClips)
-                    if (c != null && c.name == Attack)
+                {
+                    if (c == null) continue;
+                    rig._clipLen[c.name] = Mathf.Max(0.01f, c.length);   // 상태 이름 = 클립 이름(컨트롤러 조사값 · Idle/Walk/Attack/Dead1/Victory/Defeat …)
+                    if (c.name == Attack)
                     {
                         rig._attackLen = Mathf.Max(0.1f, c.length);
                         foreach (var e in c.events) if (e.functionName == nameof(OnAttackHit)) rig._attackHitAt = e.time;
                     }
+                }
             return rig;
         }
 
@@ -83,12 +98,14 @@ namespace KkomaKnight.Game
 
         /// <summary>
         /// 공격 모션 — 클립을 끊지 않고 끝까지 돌린다(주인 지시 2026-09-05). 다음 공격까지의 간격(interval·초)에 클립(1.83초)이 안 들어가면
-        /// 그만큼 빨리 돌린다(최대 ×3 · 그래도 넘치면 회수 동작만 다음 공격에 잘린다). 데미지 연출은 <see cref="HitDelay"/> 뒤(칼이 내려오는 순간)에 붙인다.
+        /// **간격 안에 끝나도록** 속도를 올린다 = 클립 길이 ÷ 간격(하한 1 · 상한 없음 · <see cref="Layout.AttackAnimSpeed"/> · T14 — 예전 상한 ×3 은 공속이 빠르면 모션이 다음 공격에 잘렸다).
+        /// 데미지 연출은 <see cref="HitDelay"/> 뒤(칼이 내려오는 순간 · 같은 배율로 앞당겨짐)에 붙인다.
         /// </summary>
         public void PlayAttack(double interval)
         {
             if (_anim == null) return;
-            float speed = Mathf.Clamp(_attackLen / Mathf.Max(0.2f, (float)interval), 1f, 3f);
+            float speed = Layout.AttackAnimSpeed(_attackLen, interval);
+            _frozen = false; _freezeState = null;
             _speedBase = speed; _anim.speed = speed * TimeScale;
             _current = Attack; _anim.Play(Attack, 0, 0f);
             _attackEndClock = _clock + _attackLen / speed; _attackHitClock = _clock + _attackHitAt / speed;
@@ -97,8 +114,24 @@ namespace KkomaKnight.Game
         public bool Attacking => _current == Attack && _clock < _attackEndClock;
         /// <summary>마지막 PlayAttack 기준, 칼이 내려오는 순간까지 남은 월드 초(음수면 지났다).</summary>
         public float HitDelay => _attackHitClock - _clock;
-        /// <summary>매 프레임(월드 dt · 배속 반영) — 내부 시계와 애니 속도 배율.</summary>
-        public void Tick(float dt) { _clock += dt; if (_anim != null) _anim.speed = _speedBase * TimeScale; }
+        /// <summary>매 프레임(월드 dt · 배속 반영) — 내부 시계와 애니 속도 배율(마지막 프레임에서 멈춘 상태면 건드리지 않는다).</summary>
+        public void Tick(float dt) { _clock += dt; if (_anim != null && !_frozen) _anim.speed = _speedBase * TimeScale; }
+
+        /// <summary>
+        /// 한 번만 재생하는 상태(사망·승리·패배)의 클립이 끝나는 순간 Animator 를 마지막 프레임에서 멈춘다(T14 · 에셋의 루프 설정은 손대지 않는다).
+        /// Animator 의 자기 시계(normalizedTime)로 판정하므로 <see cref="Tick"/> 이 안 불려도(팝업 중·배속) 정확히 클립 끝에서 멈춘다.
+        /// 이번 프레임의 진행분을 미리 더해 «감기기 전» 에 멈춰서 첫 프레임(일어선 자세)이 한 번도 안 보인다.
+        /// </summary>
+        void Update()
+        {
+            if (_frozen || _freezeState == null || _anim == null || !_anim.isActiveAndEnabled) return;
+            var st = _anim.GetCurrentAnimatorStateInfo(0);
+            if (!st.IsName(_freezeState)) return;
+            float len = _freezeLen > 0f ? _freezeLen : st.length; if (len <= 0f) return;
+            float step = Time.deltaTime * Mathf.Max(0f, _anim.speed) / len;
+            if (st.normalizedTime + step < FreezeAt) return;
+            _anim.Play(_freezeState, 0, FreezeAt); _anim.speed = 0f; _frozen = true;
+        }
 
         SpriteRenderer Sr(string path) { var t = transform.Find(path); return t != null ? t.GetComponent<SpriteRenderer>() : null; }
         void SetSprite(string path, string key)
@@ -129,10 +162,12 @@ namespace KkomaKnight.Game
             if (_anim == null) return;
             if (!restart && _current == state) return;
             _current = state; _speedBase = 1f; _anim.speed = TimeScale; _attackEndClock = -1f;
+            _frozen = false; _freezeState = System.Array.IndexOf(OneShot, state) >= 0 ? state : null;
+            _freezeLen = _freezeState != null && _clipLen.TryGetValue(_freezeState, out var len) ? len : 0f;
             _anim.Play(state, 0, 0f);
         }
         public string Current => _current;
-        public void SetSpeed(float s) { if (_anim != null) _anim.speed = s; }
+        public void SetSpeed(float s) { if (_anim != null && !_frozen) _anim.speed = s; }
 
         /// <summary>오른쪽 보기 = 프리팹 기본. 적은 왼쪽을 본다(X 스케일 반전).</summary>
         public void Face(bool right) { var s = transform.localScale; s.x = Mathf.Abs(s.x) * (right ? 1 : -1); transform.localScale = s; }

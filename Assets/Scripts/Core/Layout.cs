@@ -50,6 +50,24 @@ namespace KkomaKnight.Core
         /// <summary>그리기 간격 배율. 2 로 두면 멈춤 거리 밖의 거리를 화면에서 2배로 벌리지만(비균일 사상), 멀리 있는 소품·적이 가까운 것과 다른 속도로 움직여 부자연스럽다(주인 2026-09-05: «전이 나은데»).
         /// 그래서 1(= 예전 그대로 · 모든 것이 같은 속도)로 둔다. 진짜 간격 2배는 엔진 좌표(enemies.json enemyGap/nodeGap/nodeGapEvent) 를 바꿔야 하고 그건 밸런스·시드 골든이 바뀌는 일 — 승인 대기 24.</summary>
         public const float WorldSpacing = 1.0f;
+        /// <summary>
+        /// 전투 캐릭터 그리기 배율 (주인 지시 2026-09-05 «플레이어·적 크기 2/3» · T14). 표 상수(PlayerHeight·EnemyHeight·보스 ×BossSizeMul)는 ref-layout 표와
+        /// LayoutSpecTests 가 대조하므로 그대로 두고, 그리는 쪽(BattleWorld)이 <see cref="CharHeightPct"/> 로 이 배율을 곱한다. 발밑 체력바 폭도 같은 배율(높이는 그대로).
+        /// </summary>
+        public const float CharScale = 2f / 3f;
+        /// <summary>표의 키 %(PlayerHeight 등) → 실제로 그리는 키 % (= × <see cref="CharScale"/>).</summary>
+        public static float CharHeightPct(float tablePct) => tablePct * CharScale;
+        /// <summary>
+        /// 공격 애니 재생 속도 = 클립 길이 ÷ 공격 1회 간격 (하한 1 · 상한 없음 · T14). 간격 T 초 안에 Attack 클립(1.83초)이 끝나야 다음 공격에 모션이 잘리지 않는다.
+        /// 예전 상한 ×3 은 공속이 빠르면(간격 &lt; 0.61초) 모션이 다음 공격에 잘렸다 → 상한 폐기. 타격 순간(OnAttackHit)도 같은 배율로 앞당겨진다(CharacterRig.HitDelay 가 속도를 나눈다).
+        /// 플레이어 T = 1/공속(EffAspd) · 적 T = meleeInterval/bossInterval/rangedInterval × 슬로우 배율.
+        /// </summary>
+        public static float AttackAnimSpeed(float clipLen, double interval)
+        {
+            if (clipLen <= 0f) return 1f;
+            double iv = interval > 1e-4 ? interval : 1e-4;   // 0 나눗셈만 막는다(상한이 아니다)
+            return (float)System.Math.Max(1.0, clipLen / iv);
+        }
         public static readonly R HudSpeed = new R(3.0f, 65.0f, 11.0f, 4.0f);
         public static readonly R HudRound = new R(85.0f, 63.0f, 13.0f, 6.5f);
         public static readonly R HudPanel = new R(0, 69.5f, 100, 30.5f);

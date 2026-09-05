@@ -12,7 +12,9 @@ namespace KkomaKnight.Game
     ///   Spread 는 멈춤 거리(stopDistance) 안은 1배, 그 밖은 <see cref="Layout.WorldSpacing"/>(2배)로 벌린다(주인 지시 «적·노드 간격 2배» · 엔진 좌표 불변).
     ///   세로는 ref-layout ② 의 % (발 줄 40%).
     /// ● 맵: Layer Lab Environment 데모 씬 4종(Autumn·DeepForest·Forest·Desert)을 챕터 (n−1)%4 로 순환 — 바닥·길 띠는 데모 치수, 소품은 데모 씬 배치 그대로(<see cref="MapLayouts"/> · tools/gen_maps.py) 씬 폭마다 반복.
-    /// ● 캐릭터: CharacterMaker Character.prefab + <see cref="CharacterRig"/>. 공격 모션은 끊지 않고, 데미지 연출(팝·플래시·체력바·사망)은 «칼이 내려오는 순간»(Attack.anim OnAttackHit)까지 미룬다(<see cref="Strike"/>).
+    /// ● 캐릭터: CharacterMaker Character.prefab + <see cref="CharacterRig"/>. 키 = 표 %(PlayerHeight·EnemyHeight) × <see cref="Layout.CharScale"/>(2/3 · 발밑 바 폭도 같은 배율 · T14).
+    ///   공격 모션은 끊지 않고 간격 안에 끝나게 배속(<see cref="Layout.AttackAnimSpeed"/>), 데미지 연출(팝·플래시·체력바·사망)은 «칼이 내려오는 순간»(Attack.anim OnAttackHit)까지 미룬다(<see cref="Strike"/>).
+    ///   사망·승리 클립은 루프 에셋이라 끝에서 Animator 를 멈춘다(<see cref="CharacterRig"/> · T14).
     /// ● 체력바는 발밑(HpLabelY 줄) · 플레이어 실드바(파랑)는 그 아래 (주인 지시 2026-09-05).
     /// </summary>
     public sealed class BattleWorld
@@ -210,6 +212,7 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 캐릭터 ─────────────────────────
+        /// <summary>캐릭터 한 명 — heightPct 는 ref-layout 표의 키 %(PlayerHeight·EnemyHeight·보스 배수) · 실제 그리는 키는 × <see cref="Layout.CharScale"/>(2/3 · 주인 지시 · T14).</summary>
         CharacterRig MakeChar(string name, CharacterRig.Skin skin, float heightPct, bool faceRight)
         {
             var prefab = _app.Assets.Prefab("cm.character");
@@ -217,7 +220,7 @@ namespace KkomaKnight.Game
             go.name = name;
             var rig = CharacterRig.Attach(go);
             rig.Apply(skin);
-            rig.SetScale(ScaleForHeightPct(heightPct)); rig.Face(faceRight);
+            rig.SetScale(ScaleForHeightPct(Layout.CharHeightPct(heightPct))); rig.Face(faceRight);
             rig.Play(CharacterRig.Idle);
             return rig;
         }
@@ -252,9 +255,10 @@ namespace KkomaKnight.Game
         {
             _player = MakeChar("Player", CharacterRig.PlayerSkin(D, _app.Save, G.P.MaxSh > 0), Layout.PlayerHeight, true);   // 장착 외형 반영 — 장비 화면(HeroView)과 같은 표(GearLook)
             _player.transform.position = Pos(G.P.WorldX, FootY);
-            // 발밑 체력바(빨강) + 그 아래 실드바(파랑) — 주인 지시
-            MakeBar(_root, WorldCam.PctW(Layout.PlayerFootBarW), WorldCam.PctH(Layout.FootBarH), out _pBarBg, out _pBarFill, Palette.Red, 392);
-            MakeBar(_root, WorldCam.PctW(Layout.PlayerFootBarW), WorldCam.PctH(Layout.FootShBarH), out _pShBg, out _pShFill, Palette.Hex(D.Ui.PopShield), 392);
+            // 발밑 체력바(빨강) + 그 아래 실드바(파랑) — 주인 지시. 폭은 캐릭터와 같은 배율(2/3 · T14)
+            float pBarW = WorldCam.PctW(Layout.PlayerFootBarW) * Layout.CharScale;
+            MakeBar(_root, pBarW, WorldCam.PctH(Layout.FootBarH), out _pBarBg, out _pBarFill, Palette.Red, 392);
+            MakeBar(_root, pBarW, WorldCam.PctH(Layout.FootShBarH), out _pShBg, out _pShFill, Palette.Hex(D.Ui.PopShield), 392);
         }
         EnemyView Ensure(EnemyState e)
         {
@@ -262,7 +266,7 @@ namespace KkomaKnight.Game
             e.Skin = System.Math.Abs(e.Id * 2654435761L % 1000).GetHashCode();
             float h = e.IsBoss ? Layout.EnemyHeight * (float)D.Enemies.BossSizeMul : Layout.EnemyHeight;
             v = new EnemyView { E = e, Rig = MakeChar("Enemy" + e.Id, EnemySkin(e), h, false), StrikeTick = e.StrikeT, ShownHp = e.Hp };
-            float barW = (float)(e.IsBoss ? D.Ui.BossBarW : D.Ui.EnemyBarW) / WorldCam.PPU;
+            float barW = (float)(e.IsBoss ? D.Ui.BossBarW : D.Ui.EnemyBarW) / WorldCam.PPU * Layout.CharScale;   // 캐릭터와 같은 배율(2/3 · T14)
             MakeBar(_root, barW, WorldCam.PctH(Layout.FootBarH), out v.BarBg, out v.BarFill, e.IsBoss ? Palette.Plum : Palette.Red, 395);
             _enemies[e] = v;
             return v;
