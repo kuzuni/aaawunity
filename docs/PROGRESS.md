@@ -11,6 +11,12 @@
 | T3 | 레벨업 3택 + 악마의 거래 (유니티 팝업) + 전투 화면 | ✅ 완료 (코드·에셋 배선 — 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Game/BattleScreen·BattleWorld·Overlay·UiKit·Palette·Screens·App · Assets/KkomaKnight(catalog) | 주인 지정 GUI Pro 데모 프리팹으로 팝업 6종 · CharacterMaker/Environment/CFXR 로 전투 월드 · 팝업 중 시간 정지 |
 | T4 | 로비 · 장비 · 강화 · 슬롯 · 뽑기 상자 3종 | ✅ 완료 (코드·에셋 배선 — 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Game/GearScreen·GearUi·ForgeScreen·ShopScreen·Screens(로비) | 자동 장착 없음 · 상자 3종(gacha.json) · 세부 팝업 = Character_Hero_Item_Detail_01 · 결과 = Shop_Chest_Open |
 | T5 | UI 를 docs/ref 레이아웃에 맞추기 | ✅ 완료 (배치 상수 = 표 · 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Core/Layout · Game/* 배치 · Tests/LayoutSpecTests | ref-layout ①~⑦ 표를 `Layout` 상수로 · 표 ↔ 상수 자동 대조 테스트 8개 · 60fps · 백그라운드 실행 · 주인 피드백 일괄(특전 카드/색/새로고침 · 공격 모션 · 발밑 체력바 · 간격 2배 · 맵 4종 순환) |
+| T6 | 로비 = Lobby_Default 그대로 (TopBar 폐기 · 캐릭터·전투력·골드·보석) | 대기 | — | Game/Screens(로비) · TopBar 삭제 | ROUTINE §2 T6 |
+| T7 | 장비 화면 = Character_Hero_Equipment 그대로 + 장착 외형 반영 + ListItem_EquipMent | 대기 | — | Game/GearScreen · GearUi · CharacterRig · BattleWorld(스킨) · HeroView(신규) | ROUTINE §2 T7 |
+| T8 | 대장간 정리 (인벤 전부 · 빨간 점 · 칸 비례) — T7 뒤 | 대기 | — | Game/ForgeScreen | ROUTINE §2 T8 |
+| T9 | 상점 = Shop_List 그대로 (상자 3 · 다이아 6 · 골드 3) + 뽑기 결과 = Shop_Chest_Open | 대기 | — | Game/ShopScreen · KkomaKnight/shop.json | ROUTINE §2 T9 |
+| T10 | 하단 네비 = 상점·장비·전투·탤런트·펫 + Settings 그대로 — T6 뒤 | 대기 | — | Game/Screens(NavBar) · Overlay | ROUTINE §2 T10 |
+| T11 | UI 스모크 PlayMode 테스트 + 가짜 null 게이트 | 대기 | — | Tests/PlayMode · tools · ci.yml | ROUTINE §2 T11 |
 
 ### T1 완료 기록 (2026-09-05 · 착수 세션)
 
@@ -136,7 +142,7 @@
 
 ## 주인 승인 대기 (한 번에 답해 주시면 됩니다 — 답이 없으면 아래 «기본값» 으로 진행)
 
-> 1~9 · 19~23 은 위 «주인 결정» 으로 종결됐다(이력으로 남긴다). 열린 것은 10번부터.
+> 1~9 · 19~23 은 위 «주인 결정» 으로 종결됐다(이력으로 남긴다). 열린 것은 10번부터 · 최신 25~26.
 
 
 1. **유니티 버전 = 6000.3.8f1 (주인 «기본» 커밋 `fe944b3` 을 따름).** 지시는 «2022.3 LTS 최신 패치» 였고 처음엔 2022.3.76f1 로 뼈대를 짰으나, 같은 시각에 주인이 main 에 올린 «기본» 프로젝트가 **Unity 6000.3.8f1 + URP 2D + TextMeshPro + Input System + 에셋(Layer Lab GUI Pro/CharacterMaker/Environment · Cartoon FX · AllIn1SpriteShader · DOTween · Odin · AntiCheatToolkit · Hot Reload · mcp-unity)** 이라 두 트리가 양립하지 않았다(URP 17.3·ugui 2.0 은 2022.3 에 없다). **주인 프로젝트를 기준으로 합쳤다**: ProjectSettings/Packages/에셋은 주인 것 그대로, 이 세션의 코드·데이터·CI·문서를 그 위에 얹었다. GameCI 이미지 `unityci/editor:ubuntu-6000.3.8f1-*` 는 존재한다. **2022.3 으로 되돌리길 원하시면** 에셋 패키지가 전부 6000 전용이라 주인 프로젝트를 다시 만들어야 한다 — 한 줄로 알려 주시면 그때 정한다.
@@ -165,6 +171,9 @@
 
 
 24. **간격 2배를 제대로 하려면 엔진 좌표를 바꿔야 한다** — `enemies.json` layout 의 `enemyGap 44→88 · nodeGap 280→560 · nodeGapEvent 470→940`. 그러면 모든 것이 같은 속도로 흐르면서 간격만 2배가 되고 칼 닿는 거리(74)는 그대로다. 대신 한 판 걷는 시간이 늘어 **밸런스가 바뀐다**(원거리 적이 다가오는 동안 더 쏜다 · 판 시간 상한 900초에 가까워진다) 하고, 시드 골든(BattleTests)이 깨져 sim.js 를 같은 값으로 고쳐 골든을 다시 뽑아야 한다(Node 로 가능 · aaaw 는 건드리지 않고 사본으로). **«해» 한 줄이면 진행**, 아니면 지금처럼 1배.
+
+25. **상점 수치(주인 미지정)** — 다이아 6종의 **개수**·골드 3종의 **다이아 가격**. 기본값(`Assets/KkomaKnight/shop.json` · T9): 다이아 100·1,100·3,500·6,000·10,000·14,000 / 골드 1,000=다이아 30 · 3,000=80 · 10,000=250. 바꾸려면 숫자만.
+26. **장비 → 외형/아이콘 매핑(T7)** — 투구·무기·갑옷은 CharacterMaker 파츠(종류 × 등급 → 파츠 스프라이트 · `GearLook` 표 · `docs/assets-map.md`)로, 목걸이·장갑·신발은 그림이 없어 GUI Pro 아이콘 임시. 마음에 안 드는 파츠는 표의 한 줄로 바뀐다.
 
 ## 주인 할 일
 

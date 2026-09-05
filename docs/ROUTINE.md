@@ -5,6 +5,15 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-05 · 20:0X UTC) ⚑⚑⚑ 주인 지시 — 이제부터 대화형 세션은 직접 작업하지 않고 할 일을 등재만 한다 · 실제 작업은 병렬 루틴(워커 A~D · 매시 :05/:20/:35/:50)이 §2 의 T6 이후를 lock 으로 선점해 한다(aaaw 방식 그대로).** 이번에 등재한 작업 = **T6~T11** (§2 참조 · 범위가 겹치는 것은 순서 고정). 주인 원문 요지(전부 UI · 밸런스·엔진 무관):
+  - 장비 화면: 장착 슬롯의 장비 아이콘 크기가 **Character_Hero_Equipment 프리팹 그대로**여야 한다(지금은 너무 작다). «균등 보너스 +0% — 최저 슬롯 Lv.0 …» 문구 **삭제**. 슬롯마다 적힌 «갑옷·장갑·투구» 같은 부위 라벨 **전부 숨김**. 상단 가운데 캐릭터 자리 = **내 플레이어 프리팹(CharacterMaker)** 이 보여야 한다. **투구·무기·갑옷은 장착하면 외형에 바로 반영**(장비 화면에서도, 전투에서도). 장비 아이콘은 CharacterMaker 의 투구·무기·갑옷 파츠 그림으로, 그림이 없는 부위(목걸이·장갑·신발)는 일단 아무 그림으로 채운다. 장비 화면에서 **TopBar 를 표시하지 말고 오른쪽 상단에 골드만**. 인벤 리스트 칸은 **`Prefabs~DemoLayout/ListItem_EquipMent`**(«이게 지금 딱 레이아웃 좋다»). **장착한 장비는 하단 리스트에서 숨긴다**(«장착중» 표기 없음). 뽑기 결과 화면은 **Shop_Chest_Open 그대로**(«하라 했는데 안 했네»).
+  - 대장간: 하단에 장비들이 **다 있어야 하는데 없다**(버그) → 수정. 합성 가능한 것은 **오른쪽 위 빨간 점**. 슬롯 크기·비례가 **장비 화면 칸과 같아야** 한다(지금 찌그러짐). 대장간에서는 **장착중 표기를 한다**(재료 불가).
+  - 로비: **Lobby_Default 프리팹 그대로**(«레이아웃 좋은데 바꿔버렸다»). 기존 TopBar 폐기. 제목 «꼬마기사 키우기» 표시 안 함. 오른쪽 상단 장비 버튼 삭제. 프리팹의 왼쪽 상단 아이콘 1개·오른쪽 상단 아이콘 2개는 **그대로 두되 기능 없음**(나중 업데이트). 프리팹 상단 바의 **맨 왼쪽은 캐릭터 모습**, 그 다음 **전투력 · 골드 · 보석 순**. 전투력은 프리팹에서 «25/55» 라고 적힌 자리.
+  - 상점: **`Prefabs~DemoScenes/Shop_List` 그대로, 레이아웃 비율 그대로**(«쓰라니까 다 바꿔버리네»). `ListItem_ShopPackage` **3개 = 뽑기 상자 3종**(각각 1회 뽑기·10회 뽑기). `ListItem_ShopItem` 들은 **다이아 6개(₩1,000 · ₩10,000 · ₩30,000 · ₩50,000 · ₩80,000 · ₩110,000 · 모의 결제) + 골드 3개(1,000 · 3,000 · 10,000 골드 · 다이아 소모)**.
+  - 하단 네비: **대장간·설정 탭을 빼고 그 자리에 탤런트·펫**. 탤런트·펫은 **Character_Talent_02 프리팹 팝업만**(기능 없음). 설정 팝업은 **`Prefabs~DemoScenes/Settings` 그대로**(«그대로 좀 써»).
+  - **UI 버그가 너무 많다 → UI 테스트를 만들어라**(에디터에서 `MissingComponentException` 등 실제 예외가 났다 — 원인은 `GetComponent() ?? AddComponent()` 의 에디터 가짜 null · `UiKit.Ensure<T>` 로 고쳤다 · 같은 패턴 재발 금지 게이트 필요).
+  - 공통 원칙(주인 반복 지시): **데모 프리팹은 «그대로» 쓴다** — 내부 요소를 옮기거나 지우지 말고, 글자·그림·개수만 우리 데이터로 바꾼다. 프리팹에 없는 것을 새로 그려 넣지 않는다. 배치를 «개선» 하지 않는다.
+
 - **(2026-09-05 · T3 중)** ⑤ GUI Pro 의 `Prefabs~DemoLayout`·`Prefabs~DemoScenes` 를 적절히 쓴다. 화면 지정: Character_Hero_Equipment = 장비 창 · Lobby_Default = 로비 · Play_Perk_Selection_02 = 특전 선택 · Play_Result_Win_01 = 승리 · Settings = 설정 팝업 · Shop_Chest_Open = 장비 소환(뽑기) 팝업. 악마·천사·쉼터는 전용 에셋이 없으니 알아서. ⑥ CI 가 빨개지면 로그를 끝까지 읽고 원인(라이선스/컴파일)을 먼저 말한 뒤 고친다 — **gh-pages 가 생기는 게 최우선**.
 
 - **(2026-09-05 · 승인 대기 답변)** ① 유니티 6000.3.8f1 그대로. ② **브랜치는 main 만**(claude/ 브랜치 폐기). ③ **플레이스홀더 도형 금지 — 처음부터 주인 에셋으로**: UI = `Layer Lab/GUI Pro-MinimalGame`(Theme_Light) · 캐릭터 = `2D Minimal-CharacterMaker`(Character 프리팹 + `_Controller` 애니 · 파츠 조합) · 배경/노드 = `2D Minimal-Environment` · 이펙트 = `JMO Cartoon FX Remaster` · 트윈 = DOTween · 스프라이트 강조 = AllIn1SpriteShader. Odin·AntiCheat·Hot Reload·mcp-unity 는 안 쓴다. 프리팹은 .meta GUID 로 씬/프리팹 YAML 에 박고, **`docs/assets-map.md`** 에 무엇을 어디에 썼는지 표로 남긴다. 단계마다 고른 것을 보고한다. ④ 4~9 는 기본값.
@@ -44,7 +53,7 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
-> 주인이 정한 5단계다. 앞 단계의 산출물 위에 다음 단계가 얹힌다. T1·T2 는 끝났다 — **T3 과 T4 는 파일이 겹치지 않아 병렬 선점 가능**(«범위» 열 참조). T5 는 T3·T4 뒤.
+> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T6~T11** — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
 
 ### T1 — 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README ✅ (완료 · PROGRESS 참조)
 
@@ -78,6 +87,61 @@
 1. aaaw `docs/ui/ref-layout.md` 의 표(요소별 x/y/w/h · 프레임 %)를 배치의 단일 정본으로 코드에 옮긴다(9:19.5 레퍼런스 → 프레임 % 환산).
 2. 화면마다 요소를 그 % 자리에 앵커링한다(±3%p). 색·폰트·그림체는 점수 밖 — 배치·비율·비례만.
 3. 검증: 에디터 없이 되는 만큼 — 배치 상수가 표와 같은지 EditMode 테스트로 대조하고, 실물 확인은 WebGL 배포에서 주인이 폰으로 한다.
+
+### T6 — 로비 = Lobby_Default 그대로
+범위: `Assets/Scripts/Game/Screens.cs`(LobbyScreen) · `Assets/Scripts/Game/TopBar.cs`(삭제) · catalog(로비용 키)
+순서: 제약 없음(먼저 잡아도 됨). T10 이 이 파일(NavBar)을 뒤이어 만진다.
+1. `ui.lobby`(Lobby_Default) 인스턴스를 **원형 그대로** 둔다 — 요소를 Pct 로 옮기지 않는다(T5 의 재앵커링을 되돌린다). 프리팹 안 요소는 글자·숫자만 바꾼다.
+2. 지운다: 우리가 넣은 배너(«꼬마기사 키우기»)·`TopBar`(파일째 삭제 · 다른 화면 참조도 제거 — 장비 화면은 T7 이 골드만 남긴다) · 오른쪽 상단 «장비» 버튼(`Group_RightButtons` 의 우리 배선). 프리팹 원래의 왼쪽 상단 아이콘 1개 · 오른쪽 상단 아이콘 2개는 **보이게 두고 클릭 기능 없음**.
+3. 프리팹 상단 바: 맨 왼쪽 초상 자리 = **플레이어 모습**(CharacterMaker Character 프리팹 · 장착 외형 반영 · UI 안에 그리는 방법은 T7 과 같은 `HeroView` 헬퍼를 쓴다 — T7 이 먼저면 그것을, 아니면 여기서 만들고 T7 이 재사용) · 그 오른쪽 «25/55» 자리 = **전투력**(`GearScreen.BuildPower` 와 같은 값 · «전투력 N» 또는 숫자만) · 그 다음 **골드 · 보석**. 순서는 «캐릭터 · 전투력 · 골드 · 보석».
+4. 챕터 표시·카드·좌우 화살·START·하단 탭은 프리팹 자리 그대로(기능 유지). 챕터 이동 로직 그대로.
+5. 게이트 + PROGRESS T6 행 + «주인이 확인할 것» 한 줄. `docs/assets-map.md` 갱신(gen_catalog).
+
+### T7 — 장비 화면 = Character_Hero_Equipment 그대로 + 외형 반영
+범위: `Assets/Scripts/Game/GearScreen.cs` · `GearUi.cs` · `CharacterRig.cs`(외형 매핑 헬퍼) · `BattleWorld.cs`(플레이어 스킨 한 줄) · catalog(장비 아이콘 키)
+순서: 제약 없음. **T8 은 이 작업 뒤**(GearUi 공유).
+1. 장착 슬롯 6칸: 프리팹의 슬롯 크기·아이콘 크기 **그대로**(우리 Cell 을 억지로 축소해 넣지 않는다 — 프리팹 슬롯 안 Icon 이미지에 스프라이트만 꽂는다). 슬롯의 부위 라벨(«갑옷·장갑·투구…») 전부 비활성. «균등 보너스 …» 문구 삭제(`EvenBonus` 표시 제거 · 계산 함수는 남겨도 됨).
+2. 상단 가운데 캐릭터 = **플레이어**: `HeroView` 헬퍼(신규 · `Assets/Scripts/Game/HeroView.cs`) — RenderTexture 카메라(Culling 전용 레이어) 로 CharacterMaker Character 프리팹(Idle)을 RawImage 에 그린다. 프리팹의 샘플 캐릭터 이미지는 끈다. 로비(T6) 도 이 헬퍼를 쓴다.
+3. **장착 외형**: 투구·무기·갑옷 장비(gear.json 부위 helmet/weapon/armor 에 해당하는 것)를 장착하면 `CharacterRig.Skin` 의 Helmet/Sword(또는 Axe·Spear…)/Chest 가 바뀐다 — 매핑 표 `GearLook`(신규 · 장비 «종류(kind)» × 등급 → 카탈로그 `cm.*` 스프라이트 키) 를 한 곳에 두고, `BattleWorld.KnightSkin` 과 `HeroView` 가 같은 표를 쓴다. 등급이 오를수록 더 화려한 파츠(CharacterMaker Parts Pack 에서 고른다 · `docs/assets-map.md` 에 표로). 그림이 없는 부위(목걸이·장갑·신발)는 외형 미반영.
+4. 장비 **아이콘** = 같은 표의 파츠 스프라이트(투구·무기·갑옷). 목걸이·장갑·신발은 GUI Pro 아이콘 중 아무거나로 임시(«일단 아무거나») — 승인 대기에 «어떤 그림으로 할지» 등재.
+5. 화면 상단: **TopBar 없음 · 오른쪽 상단에 골드만**(프리팹의 재화 바 중 골드 칸만 보이게).
+6. 인벤 리스트 칸 = **`ListItem_EquipMent`**(카탈로그 `ui.equipCell` 신규) — 프리팹 비율 그대로 · 등급색·아이콘·+N 만 바꾼다. **장착 중인 장비는 리스트에서 숨긴다**(«장착중» 배지 없음).
+7. `GearUi.Cell` 은 대장간(T8)·뽑기 결과(T9)도 쓴다 — `CellOpts` 에 «장착중 표기 on/off · 합성 가능 빨간 점» 옵션을 두고 여기서는 둘 다 끈다.
+8. 게이트 + PROGRESS T7 행 + «주인이 확인할 것».
+
+### T8 — 대장간 정리 (T7 뒤)
+범위: `Assets/Scripts/Game/ForgeScreen.cs`
+순서: **T7 완료 뒤**.
+1. 하단 인벤에 장비가 **전부** 보인다(지금 안 보이는 원인 규명 — Grid/Content 크기·ScrollRect·Pct 겹침 — PROGRESS 에 원인 한 줄).
+2. 칸 = T7 의 `ListItem_EquipMent` 칸과 **같은 크기·비례**(찌그러짐 0 · 5열 격자에서 셀 aspect 고정).
+3. 합성 가능(같은 부위·종류·등급 3개 이상)한 칸은 **오른쪽 위 빨간 점**(GUI Pro 의 알림 점 스프라이트 · 카탈로그 키 `ui.redDot`).
+4. 여기서는 **장착중 표기 유지**(재료 불가 · 흐리게).
+5. 게이트 + PROGRESS T8 행.
+
+### T9 — 상점 = Shop_List 그대로 + 뽑기 결과 = Shop_Chest_Open 그대로
+범위: `Assets/Scripts/Game/ShopScreen.cs` · catalog(상점 키) · `Assets/Scripts/Core/GameData.cs`(상점 상품표 로더 — JSON 이 아니라 코드 상수 금지 → 아래 5 참조)
+순서: 제약 없음.
+1. `Shop_List` 프리팹을 **원형 그대로**(스크롤·섹션·비율). 우리가 만든 카드 레이아웃(3 상자 카드·격자)은 버린다.
+2. `ListItem_ShopPackage` ×3 = 상자 3종(gacha.json 순서) — 각 항목에 **1회 뽑기 · 10회 뽑기** 버튼(가격은 gacha.json). 프리팹에 버튼이 1개면 두 번째 버튼은 같은 프리팹의 버튼을 복제해 옆에(«그대로» 원칙의 유일한 예외 · PROGRESS 에 적는다).
+3. `ListItem_ShopItem` ×9 = **다이아 6종**(₩1,000 · ₩10,000 · ₩30,000 · ₩50,000 · ₩80,000 · ₩110,000 · 모의 결제 = 누르면 바로 지급) + **골드 3종**(1,000 · 3,000 · 10,000 골드 · 다이아 소모).
+4. 뽑기 결과 팝업 = `ui.chestOpen`(Shop_Chest_Open) **그대로** — 열린 상자 그림 + 얻은 장비 격자(칸 = T7 의 `ListItem_EquipMent` 가 준비돼 있으면 그것, 아니면 현 `GearUi.Cell`). 지금 코드가 이 프리팹을 정말 쓰는지 확인하고, 안 쓰면 바꾼다(주인: «하라 했는데 안 했네»).
+5. **수치**: 다이아 6종의 **다이아 개수**와 골드 3종의 **다이아 가격**은 주인이 안 정했다 → `Assets/StreamingAssets/data/` 는 aaaw 동기 폴더라 못 넣는다. **`Assets/KkomaKnight/shop.json`**(이 레포 전용 · 승인 대기 25 의 기본값) 을 만들어 거기서 읽는다(코드 상수 금지 규칙의 예외가 아니라 «JSON 에서 읽기» 그대로). 기본값: 다이아 100·1,100·3,500·6,000·10,000·14,000 / 골드 1,000=다이아 30 · 3,000=80 · 10,000=250. 주인이 바꾸면 파일만 고친다.
+6. 게이트 + PROGRESS T9 행 + 승인 대기 25 갱신.
+
+### T10 — 하단 네비 5칸 = 상점·장비·전투·탤런트·펫 + 설정 = Settings 그대로 (T6 뒤)
+범위: `Assets/Scripts/Game/Screens.cs`(NavBar · 새 팝업 진입) · `Assets/Scripts/Game/Overlay.cs`(Settings·Talent 팝업) · catalog(`ui.talent` = Character_Talent_02)
+순서: **T6 완료 뒤**(Screens.cs 공유).
+1. 탭 = 상점 · 장비 · 전투 · **탤런트 · 펫**(대장간·설정 탭 제거 · 대장간은 장비 화면의 «합성» 버튼으로만 진입 · 설정은 로비의 메뉴(≡) 버튼과 전투의 일시정지에서).
+2. 탤런트·펫 = `Character_Talent_02` 프리팹 팝업 **그대로**(제목만 «탤런트»/«펫» · 기능 없음 · 닫기만). 탭 아이콘은 GUI Pro 아이콘 중 탤런트/펫에 맞는 것.
+3. 설정 팝업 = `ui.settings`(Settings) **그대로** — 지금 구현이 프리팹 요소를 옮겼으면 되돌린다. 동작하는 것만 연결(사운드 토글은 값만 저장 · 나머지 버튼은 눌러도 아무 일 없음).
+4. 게이트 + PROGRESS T10 행.
+
+### T11 — UI 스모크 테스트(PlayMode) + 가짜 null 게이트
+범위: `Assets/Tests/PlayMode/` · `tools/check_unity_null.sh`(신규) · `.github/workflows/ci.yml`(게이트 한 줄) · `docs/ROUTINE.md` §3
+순서: 제약 없음(다른 작업과 파일 안 겹침). 화면 코드가 바뀌면 테스트도 따라 고친다(같은 워커가 아니어도 됨).
+1. PlayMode 테스트(유니티 CI 가 돌린다 · dotnet 은 컴파일 못 하므로 `tools/dotnet` 에 넣지 않는다): `App` 을 세우고 **모든 화면(로비·장비·대장간·상점·전투)과 팝업(레벨업·보유 특전·쉼터·악마·천사·사망·클리어·일시정지·설정·탤런트·펫·세부·뽑기 결과·슬롯)을 하나씩 연다** → ⓐ 예외·에러 로그 0(`LogAssert.NoUnexpectedReceived`) ⓑ 프리팹 잔여 글자(«Text», «Remain», «New Text», 영문 데모 문구) 가 활성 Text 에 없음 ⓒ 화면마다 핵심 요소 존재(예: 장비 슬롯 6 · 상점 상자 3 · 탭 5) ⓓ 전투는 3초 틱 뒤 예외 0.
+2. `tools/check_unity_null.sh`: `GetComponent…() ??` · `Find(...) ??` 패턴이 `Assets/Scripts` 에 0건인지(있으면 실패 · 메시지에 `UiKit.Ensure<T>` 안내). CI dotnet 잡과 §3 게이트에 추가.
+3. 게이트 + PROGRESS T11 행(테스트 수 · CI 런 번호).
 
 ### 신규 작업 등재
 - 버그·후속 작업 발견 시 PROGRESS 표에 **이미 쓰인 번호 중 가장 큰 것 +1** 로 등재 (번호 재사용 금지, 한 번호 = 한 작업).
