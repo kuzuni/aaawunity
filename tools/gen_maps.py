@@ -84,8 +84,8 @@ def main():
             if key not in S:
                 S[key] = sprite_path[r[0]]
         N[f'env.{theme}.{props[0][0]}'] = f'«{scene}» 소품 — tools/gen_maps.py 가 씬 배치를 그대로 MapLayouts.cs 로 굽는다 (이 테마 소품 {len(set(r[0] for r in props))}종 · 인스턴스 {len(props)}개)'
-        out.append(f'        public static readonly float {theme.capitalize()}Width = {width}f, {theme.capitalize()}RoadUpPitch = {up_pitch}f, {theme.capitalize()}RoadUpY = {up_y}f;')
-        out.append(f'        public static readonly P[] {theme.capitalize()} =')
+        out.append(f'        public static readonly float {(theme[0].upper() + theme[1:])}Width = {width}f, {(theme[0].upper() + theme[1:])}RoadUpPitch = {up_pitch}f, {(theme[0].upper() + theme[1:])}RoadUpY = {up_y}f;')
+        out.append(f'        public static readonly P[] {(theme[0].upper() + theme[1:])} =')
         out.append('        {')
         for r in sorted(props, key=lambda r: r[1]):
             out.append(f'            new P("env.{theme}.{r[0]}", {r[1]}f, {r[2]}f, {r[3]}f, {r[4]}f),')

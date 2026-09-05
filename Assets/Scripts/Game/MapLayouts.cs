@@ -83,8 +83,8 @@ namespace KkomaKnight.Game
             new P("env.autumn.Autumn_Flower_01", 12.73f, -3.177f, 1.0f, 1.0f),
             new P("env.autumn.Autumn_Flower_02", 12.762f, 5.175f, 1.0f, 1.0f),
         };
-        public static readonly float DeepforestWidth = 27.18f, DeepforestRoadUpPitch = 1.3f, DeepforestRoadUpY = -2.026f;
-        public static readonly P[] Deepforest =
+        public static readonly float DeepForestWidth = 27.18f, DeepForestRoadUpPitch = 1.3f, DeepForestRoadUpY = -2.026f;
+        public static readonly P[] DeepForest =
         {
             new P("env.deepForest.Bush_Green_01", -10.956f, 2.948f, 1.0f, 1.0f),
             new P("env.deepForest.Tree_Green_07", -10.152f, -4.325f, 1.0f, 1.0f),
