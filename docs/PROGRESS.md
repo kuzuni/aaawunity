@@ -140,9 +140,13 @@
 - **새로고침 버튼의 «Remain : 1/1»** → 끔. 라벨은 «새로고침» 만. **더 못 하면 버튼 자체를 숨김**.
 - **플레이 진입이 느리다** → EditorSettings «Enter Play Mode Options» 켜고 도메인 리로드 끔(`m_EnterPlayModeOptions: 1` · 씬 리로드는 유지). 정적 상태는 `UiKit.ResetStatics`(SubsystemRegistration) 로 판마다 초기화.
 
+### 2026-09-05 답변 4 — 승인 대기 25~26 «그렇게 해라»
+- **25 상점 수치**: 기본값 확정 — 다이아 100·1,100·3,500·6,000·10,000·14,000(₩1,000·1만·3만·5만·8만·11만) / 골드 1,000=다이아 30 · 3,000=80 · 10,000=250. `Assets/KkomaKnight/shop.json`(T9) 에 이 값으로.
+- **26 장비 외형/아이콘 매핑**: 워커가 CharacterMaker 파츠(종류 × 등급)로 고르고 `GearLook` 표 + `docs/assets-map.md` 에 남긴다(T7). 목걸이·장갑·신발은 GUI Pro 아이콘 임시.
+
 ## 주인 승인 대기 (한 번에 답해 주시면 됩니다 — 답이 없으면 아래 «기본값» 으로 진행)
 
-> 1~9 · 19~23 은 위 «주인 결정» 으로 종결됐다(이력으로 남긴다). 열린 것은 10번부터 · 최신 25~26.
+> 1~9 · 19~23 · 25~26 은 위 «주인 결정» 으로 종결됐다(이력으로 남긴다). 열린 것은 10번부터.
 
 
 1. **유니티 버전 = 6000.3.8f1 (주인 «기본» 커밋 `fe944b3` 을 따름).** 지시는 «2022.3 LTS 최신 패치» 였고 처음엔 2022.3.76f1 로 뼈대를 짰으나, 같은 시각에 주인이 main 에 올린 «기본» 프로젝트가 **Unity 6000.3.8f1 + URP 2D + TextMeshPro + Input System + 에셋(Layer Lab GUI Pro/CharacterMaker/Environment · Cartoon FX · AllIn1SpriteShader · DOTween · Odin · AntiCheatToolkit · Hot Reload · mcp-unity)** 이라 두 트리가 양립하지 않았다(URP 17.3·ugui 2.0 은 2022.3 에 없다). **주인 프로젝트를 기준으로 합쳤다**: ProjectSettings/Packages/에셋은 주인 것 그대로, 이 세션의 코드·데이터·CI·문서를 그 위에 얹었다. GameCI 이미지 `unityci/editor:ubuntu-6000.3.8f1-*` 는 존재한다. **2022.3 으로 되돌리길 원하시면** 에셋 패키지가 전부 6000 전용이라 주인 프로젝트를 다시 만들어야 한다 — 한 줄로 알려 주시면 그때 정한다.
