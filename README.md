@@ -10,6 +10,7 @@
 | 스펙 | aaaw `PLAN.md` · UI 배치 기준 `docs/ref/*.jpg` + `docs/ui/ref-layout.md` |
 | 코드 | `Assets/Scripts/Core` 순수 C# 엔진(UnityEngine 참조 0) · `Assets/Scripts/Game` MonoBehaviour · `Assets/Tests` EditMode/PlayMode |
 | 검사 | `tools/dotnet` — 유니티 없이 `dotnet build`/`dotnet test` (UnityEngine 참조 어셈블리는 NuGet) |
+| 에셋 | 주인 에셋만 — UI `Layer Lab/GUI Pro-MinimalGame`(Light) · 캐릭터 `2D Minimal-CharacterMaker` · 배경 `2D Minimal-Environment` · 이펙트 `Cartoon FX Remaster` · DOTween · AllIn1SpriteShader. 사용 내역은 `docs/assets-map.md` |
 | 운영 | `docs/ROUTINE.md`(작업 지시서) · `docs/PROGRESS.md`(진행표) · `docs/claims/`(lock) |
 
 ## 내가(주인) 할 일 — 한 번만

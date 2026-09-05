@@ -59,7 +59,22 @@
 - 잡은 코드 차이 2건(수치 아님): ⓐ `perks.json` 의 «방어력 증가 I/II/III» 은 탐침 방어가 0 이라 stat 이 비어 있다 → 상수 `PERK_DEF_*` 곱연산을 코드에서 복원. ⓑ «회복 증폭» 은 탐침 축에 `healAmp` 가 없어 stat 이 비어 있다 → `PERK_AMP` 가산 복원. 둘 다 aaaw 수출기(`tools/exportData.js` PROBE_STATS) 보강 제안으로 승인 대기 10번.
 - 게이트: `dotnet build` 0/0 · `dotnet test` 30/30 · `gen_meta --check` 초록.
 
+## 주인 결정 (2026-09-05 답변 — 승인 대기 1~9 종결)
+
+- **1 유니티 버전**: 6000.3.8f1 그대로. · **2 브랜치**: `main` 만 — `claude/…` 브랜치는 더 올리지 않는다. · **4~9**: 제안한 기본값대로.
+- **3 에셋(플레이스홀더 금지 · 처음부터 주인 에셋)** — 용도별 기준:
+  - UI 전부: `Layer Lab/GUI Pro-MinimalGame` **Theme_Light** (버튼·패널·팝업·탭·바·아이콘). 등급 색은 이 테마 색 중에서.
+  - 플레이어·적·보스: `Layer Lab/2D Minimal-CharacterMaker` Character 프리팹 + `_Controller` 애니(Idle/Walk/Attack/Stun/Dead…). 파츠 조합으로 구분.
+  - 배경·노드(쉼터/악마/천사): `Layer Lab/2D Minimal-Environment`.
+  - 타격·치명·회피·소환(도끼/화살/창/번개/검기)·레벨업 이펙트: `JMO Cartoon FX Remaster`.
+  - 트윈·팝업 애니: DOTween. 스프라이트 강조(피격 플래시·아웃라인): AllIn1SpriteShader.
+  - Odin·AntiCheat·Hot Reload·mcp-unity 는 안 쓴다.
+  - 에디터 없이 프리팹을 엮으려면 .meta 의 GUID 를 읽어 씬/프리팹 YAML 에 박는다. 어떤 프리팹·스프라이트·이펙트를 어디에 썼는지 **`docs/assets-map.md`** 에 표로 남기고, 단계마다 고른 것을 보고한다(주인이 바꿀 것만 말한다).
+
 ## 주인 승인 대기 (한 번에 답해 주시면 됩니다 — 답이 없으면 아래 «기본값» 으로 진행)
+
+> 1~9 는 위 «주인 결정» 으로 종결됐다(이력으로 남긴다). 열린 것은 10번부터.
+
 
 1. **유니티 버전 = 6000.3.8f1 (주인 «기본» 커밋 `fe944b3` 을 따름).** 지시는 «2022.3 LTS 최신 패치» 였고 처음엔 2022.3.76f1 로 뼈대를 짰으나, 같은 시각에 주인이 main 에 올린 «기본» 프로젝트가 **Unity 6000.3.8f1 + URP 2D + TextMeshPro + Input System + 에셋(Layer Lab GUI Pro/CharacterMaker/Environment · Cartoon FX · AllIn1SpriteShader · DOTween · Odin · AntiCheatToolkit · Hot Reload · mcp-unity)** 이라 두 트리가 양립하지 않았다(URP 17.3·ugui 2.0 은 2022.3 에 없다). **주인 프로젝트를 기준으로 합쳤다**: ProjectSettings/Packages/에셋은 주인 것 그대로, 이 세션의 코드·데이터·CI·문서를 그 위에 얹었다. GameCI 이미지 `unityci/editor:ubuntu-6000.3.8f1-*` 는 존재한다. **2022.3 으로 되돌리길 원하시면** 에셋 패키지가 전부 6000 전용이라 주인 프로젝트를 다시 만들어야 한다 — 한 줄로 알려 주시면 그때 정한다.
    - 주인 프로젝트에 손댄 것: 세로 고정(`defaultScreenOrientation 1` · 가로 자동회전 끔) · productName `KkomaKnight` · companyName `kuzuni` · Android 패키지명 `com.kuzuni.kkomaknight` · WebGL 압축 끔(Pages) · `SampleScene` 에 `Bootstrap` 오브젝트 1개 추가(주인의 Main Camera·Global Light 2D·EventSystem 은 그대로). 나머지 13,988 파일은 그대로다.

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Assets/Scripts/Adapters — 주인 에셋(Layer Lab CharacterMaker) 어댑터. dotnet 에서는 Stubs 의 서명 스텁으로 컴파일한다. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>KkomaKnight.Adapters</AssemblyName>
+    <RootNamespace>KkomaKnight.Adapters</RootNamespace>
+    <DefineConstants>$(DefineConstants);UNITY_2022_3_OR_NEWER;UNITY_5_3_OR_NEWER;DOTNET_HARNESS</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)Assets/Scripts/Adapters/**/*.cs" />
+    <Compile Include="../Stubs/LayerLabStubs.cs" />
+    <ProjectReference Include="../Core/KkomaKnight.Core.csproj" />
+    <PackageReference Include="UnityEngine.Modules" Version="2021.3.33" />
+  </ItemGroup>
+</Project>

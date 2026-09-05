@@ -1,9 +1,9 @@
 {
-    "name": "KkomaKnight.Game",
-    "rootNamespace": "KkomaKnight.Game",
+    "name": "KkomaKnight.Adapters",
+    "rootNamespace": "KkomaKnight.Adapters",
     "references": [
         "KkomaKnight.Core",
-        "KkomaKnight.Adapters"
+        "LayerLab.ArtMakerUnity"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
