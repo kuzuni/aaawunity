@@ -38,20 +38,7 @@ namespace KkomaKnight.Game
             UiKit.Button(Root, "ui.btnSmallBlue", "▶", () => Shift(1), Layout.LobbyArrowR);
             // 하단 탭 5칸: 상점 · 장비 · 전투(가운데) · 대장간 · 설정
             _tabs = UiKit.Find(rt, "Tab_01_BottomFlushMenu");
-            if (_tabs != null)
-            {
-                string[] icons = { "ui.shop", "ui.bag", "ui.battle", "ui.anvil", "ui.settings" };
-                string[] labels = { "상점", "장비", "전투", "대장간", "설정" };
-                Action[] acts = { () => App.ShowScreen("shop"), () => App.ShowScreen("gear"), () => { }, () => App.ShowScreen("forge"), () => App.Overlay.Pause(() => { }, () => { }) };
-                for (int i = 0; i < _tabs.childCount && i < 5; i++)
-                {
-                    var tab = _tabs.GetChild(i); int k = i;
-                    UiKit.SetSprite(tab, "Normal/Icon", icons[i], Palette.White); UiKit.SetSprite(tab, "Focus/Icon_Focus", icons[i], Palette.White);
-                    UiKit.SetText(tab, "Focus/Text (TMP)", labels[i]);
-                    UiKit.Show(tab, "Focus", i == 2); UiKit.Show(tab, "Normal", i != 2);
-                    UiKit.Clickable(tab, () => acts[k]());
-                }
-            }
+            if (_tabs != null) NavBar.Wire(App, _tabs, "lobby");
         }
         void Shift(int d)
         {
@@ -67,21 +54,4 @@ namespace KkomaKnight.Game
             if (_power != null) _power.text = "전투력 " + UiKit.Fmt(App.Power());
         }
     }
-
-    // 4단계에서 채운다 — 지금은 로비로 돌아가는 뼈대
-    public abstract class StubScreen : GameScreen
-    {
-        protected abstract string Title { get; }
-        protected override void Build()
-        {
-            var bg = Root.gameObject.AddComponent<Image>(); bg.color = Palette.Hex("#86E4FF"); bg.raycastTarget = true;
-            var box = UiKit.SpawnRt("ui.popup", Root, new Layout.R(8, 30, 84, 30));
-            UiKit.Label(box, 6, 12, 88, 30, Title, 48, Palette.Ink);
-            UiKit.Label(box, 6, 42, 88, 20, "4단계에서 채워집니다", 32, Palette.InkLight);
-            UiKit.Button(box, "ui.btnBlue", "로비로", () => App.ShowScreen("lobby"), new Layout.R(25, 66, 50, 24));
-        }
-    }
-    public sealed class GearScreen : StubScreen { public override string Name => "gear"; protected override string Title => "장비"; }
-    public sealed class ForgeScreen : StubScreen { public override string Name => "forge"; protected override string Title => "대장간"; }
-    public sealed class ShopScreen : StubScreen { public override string Name => "shop"; protected override string Title => "상점"; }
 }

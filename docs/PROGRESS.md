@@ -9,7 +9,7 @@
 | T1 | 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README + 운영 문서 | ✅ 완료 (`5228daf` + 주인 «기본» `fe944b3` 합류) | sess-1516-port / 착수 세션 | 전체 뼈대 | dotnet build 0 경고 0 오류 · 순수 C# 테스트 21/21 · 레이아웃/적 스탯 420챕터 전수 = JSON 과 일치 (mulberry32 비트 동일) |
 | T2 | 전투 엔진(순수 C#) + 시드 11·12·13 이식 검증 | ✅ 완료 | sess-1516-port / 착수 세션 | Core/Battle*·Perks*·tools/sim | sim.js 실험1 사다리 7점 × 3시드 **21칸 전부 소수점까지 동일**(난수 스트림 비트 일치) · 3pick 모드도 동일 (아래 표) |
 | T3 | 레벨업 3택 + 악마의 거래 (유니티 팝업) + 전투 화면 | ✅ 완료 (코드·에셋 배선 — 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Game/BattleScreen·BattleWorld·Overlay·UiKit·Palette·Screens·App · Assets/KkomaKnight(catalog) | 주인 지정 GUI Pro 데모 프리팹으로 팝업 6종 · CharacterMaker/Environment/CFXR 로 전투 월드 · 팝업 중 시간 정지 |
-| T4 | 로비 · 장비 · 강화 · 슬롯 · 뽑기 상자 3종 | 미착수 (로비는 T3 에서 Lobby_Default 로 뼈대만 — 챕터 ◀▶·START·탭) | — | Game/Lobby*·Gear*·Forge*·Shop*·Save* | 자동 장착 없음 · 상자 3종 |
+| T4 | 로비 · 장비 · 강화 · 슬롯 · 뽑기 상자 3종 | ✅ 완료 (코드·에셋 배선 — 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Game/GearScreen·GearUi·ForgeScreen·ShopScreen·Screens(로비) | 자동 장착 없음 · 상자 3종(gacha.json) · 세부 팝업 = Character_Hero_Item_Detail_01 · 결과 = Shop_Chest_Open |
 | T5 | UI 를 docs/ref 레이아웃에 맞추기 | 미착수 (T3·T4 뒤) | — | Game/Layout* | ref-layout.md ±3%p |
 
 ### T1 완료 기록 (2026-09-05 · 착수 세션)
@@ -74,6 +74,18 @@
 - 한계(정직하게): 유니티 에디터가 없어 **화면을 직접 보지 못했다**. 프리팹 자식 이름 경로는 YAML 덤프로 확인했지만 변형 프리팹의 인스턴스 이름은 두 후보(`FindAny`)로 잡았다. 첫 WebGL 배포에서 어긋난 것이 있으면 다음 세션이 고친다.
 - CI 수리 2건(주인 요청): #11 = 유니티 NUnit(3.5 포크)에 `Does.Contain(object)` 가 없어 EditMode 컴파일 오류 → `Has.No.Member` · dotnet 검사도 NUnit 3.6.1 로 고정(3.5.0 은 net8 에서 테스트 발견이 안 됨 · 3.6.1 이 Does.Contain(object) 를 거부하면서 32개를 찾는 최저 버전 — 로컬 재현 확인). #12 = 테스트 33/33 통과 뒤 unity-test-runner 의 체크 런 게시가 «Resource not accessible by integration»(토큰에 checks:write 없음) → 게시 옵션 제거. **라이선스는 두 번 다 정상 활성화됐다.**
 
+### T4 완료 기록 (2026-09-05 · 착수 세션)
+
+- **주인이 확인할 것 (한 줄)**: WebGL 에서 «상점 → 무료 보급 수령 → 희귀 상자 10회 → 결과 팝업(열린 상자 + 장비 격자) → 장비 탭에서 칸을 눌러 세부 팝업 → 장착 → 슬롯 6칸/공·체·실 숫자가 바뀌고, 같은 장비 3개면 대장간에서 합성(자동/수동)이 되는가».
+- 만든 것
+  - `Game/GearScreen.cs`: **Character_Hero_Equipment**(주인 지정) — 슬롯 6칸(격자 행 우선 = 왼쪽열 무기·목걸이·갑옷 / 오른쪽열 투구·장갑·신발 = index.html GEAR_COL) · 등급색 ItemFrame_01_Normal_* · 세트 다이아 아이콘 · «↑ 더 좋은 게 있다» · 공/체/실 3칸(`BuildPower`) · 균등 보너스 문구(`EvenBonus`·evenPer·slotLvMax 에서) · 전투력 · 인벤 격자(장착분 먼저 → 등급·강화 내림차순 · NEW · 합성가능 «3») · 하단 합성(N)/상점 · 뒤로. `NavBar` = 하단 탭 5칸을 모든 화면에 같은 배선으로.
+  - `Game/GearUi.cs`: 장비 칸 공통(장비 탭·대장간·뽑기 결과가 같은 함수) · **세부 팝업 = Character_Hero_Item_Detail_01**(주인 지정 · 등급 배지 색 · 이름/부위/세트/슬롯 Lv · 슬롯 Lv 바 · 기여 3수치 · 세트 옵션 n/7 + 잠금 조건(등급 이상 / 신화 +3·6·9 — `rarName.length` 경계) · 장착/해제/슬롯 강화(비용 `slotCost`) · 빈 슬롯 팝업(강화만).
+  - `Game/ForgeScreen.cs`: ref-layout ⑥ — 재료 3칸 → 결과 미리보기(`FuseMake` 하나만) · 전설→신화 변환 안내(`legendToMythPlus`) · 자동(`FuseAll` · 장착분 제외) · 수동 합성 · 같은 키만 선택 가능(장착분·다른 키 흐리게) · 토스트 문구는 index.html 과 동일.
+  - `Game/ShopScreen.cs`: ref-layout ⑤ — 무료 보급(일 1회 · `economy.dailyGem`) · 모의 결제 1종(`iapGem` · ₩110,000 표시 전용) + 잠금 5칸 · 상자 3종 카드(**ListItem_ShopChest** · 상자 그림 = Chest_01 Silver/Gold/Premium · 확률 문구는 rate 에서(0% 등급은 안 적음) · 천장 문구 «신화 확정까지 N회 / 전설 확정까지 N회 / 누적») · 1회/10회(`tenPull.count`) · **결과 팝업 = Shop_Chest_Open**(주인 지정 · 열린 상자 + 얻은 장비 격자 · 최고 등급 · 한 회차 2개 가능 «N개») · 자동 장착 없음.
+  - 세이브: 뽑기·합성·장착·슬롯·무료 보급이 즉시 `PlayerPrefs`(SaveStore) 에 기록 — 필드는 index.html `kkoma-knight-v2` 와 같다(T3 SaveData).
+- 게이트: `dotnet build` 0/0 · `dotnet test` 32/32 · `gen_meta --check` · `gen_catalog --check`(294) 초록.
+- 한계: 장비 탭의 캐릭터 자리는 GUI Pro 샘플 캐릭터를 숨기고 아이콘(UI_Play_Battle)을 두었다 — CharacterMaker 기사를 UI 에 그리려면 RenderTexture 카메라가 필요해 T5 후보로 남긴다(승인 대기 17).
+
 ## 주인 결정 (2026-09-05 답변 — 승인 대기 1~9 종결)
 
 - **1 유니티 버전**: 6000.3.8f1 그대로. · **2 브랜치**: `main` 만 — `claude/…` 브랜치는 더 올리지 않는다. · **4~9**: 제안한 기본값대로.
@@ -113,11 +125,14 @@
 15. **PlayMode 테스트는 dotnet 검사가 컴파일하지 못한다**(UnityEngine.TestTools 가 NuGet 에 없음) — 유니티 CI 가 최종 확인한다. PlayMode 테스트를 늘릴 때는 이 점을 기억.
 16. **하단 탭 5칸 = 상점·장비·전투·대장간·설정** 으로 정했다(원본 index.html 은 상점·장비·전투·카드🔒·도전🔒 — 카드/도전은 PLAN 에서 폐지된 자리라 이 레포에 있는 화면으로 채웠다). 원본대로 🔒 두 칸을 원하시면 한 줄로.
 
+17. **장비 탭 캐릭터 그림**: 데모 프리팹의 샘플 캐릭터(Sample_Cha02_l)는 우리 기사가 아니라 숨기고 아이콘으로 대체했다. 기사(CharacterMaker)를 UI 안에 그리려면 RenderTexture 카메라 1개가 필요하다 — 원하시면 T5 에 넣는다.
+18. **상점 모의 결제 가격 ₩110,000** 은 index.html GEM_PACKS 의 표시값을 그대로 옮겼다(실결제 없음 · PLAN §11.5). 가격대는 정하신 게 1종뿐이라 나머지 5칸은 잠금으로 채웠다.
+
 ## 주인 할 일
 
 - README «내가(주인) 할 일» 5단계 (활성화 워크플로 → .alf → .ulf → 시크릿 3개 → Pages 소스 gh-pages).
 
-## 게이트 현황 스냅샷 — T3 완료 직후
+## 게이트 현황 스냅샷 — T4 완료 직후
 
 | 게이트 | 결과 |
 |---|---|

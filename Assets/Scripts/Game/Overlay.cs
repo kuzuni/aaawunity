@@ -56,6 +56,18 @@ namespace KkomaKnight.Game
             _cur = box.gameObject;
             return box;
         }
+        /// <summary>데모 프리팹 하나를 팝업 층에 그대로 세운다(Dimmed 가 있으면 클릭 차단·페이드).</summary>
+        public GameObject OpenPrefab(string key)
+        {
+            Begin();
+            var root = UiKit.Spawn(key, Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
+            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
+            var bg = UiKit.Find(rt, "Background"); if (bg != null) { var bi = bg.GetComponent<Image>(); if (bi != null) bi.raycastTarget = true; }
+            _cur = root;
+            return root;
+        }
+        public RectTransform OpenBox(string popupKey, string titleKey, string title, Layout.R rect) => Box(popupKey, titleKey, title, rect);
+
         Text Sub(RectTransform box, string s, float y = 9, float h = 7, int size = 36, Color? c = null)
             => UiKit.Label(box, 6, y, 88, h, s, size, c ?? Palette.InkSoft, TextAnchor.MiddleCenter, true, false);
 

@@ -64,7 +64,7 @@
 2. 레벨업 3택 카드(등급색 테두리 + 등급 이름), 📘 보유 특전, 악마 카드(미리 굴린 한 장 그대로 · 최대체력 30% 차감), 쉼터(체력 260 / 경험치 26), 천사(+5% / 광고 3초 +15%). 팝업 중 `Tick` 정지.
 3. 상단 스탯 줄 8칸(공격력·방어력·공격속도·반격·치확·회피·치배·흡혈) · 버프 아이콘 열 · 특전 미리보기 줄.
 
-### T4 — 로비 · 장비 · 강화 · 슬롯 · 뽑기 상자 3종
+### T4 — 로비 · 장비 · 강화 · 슬롯 · 뽑기 상자 3종 ✅ (완료 · PROGRESS 참조 — 실물 확인은 WebGL 배포에서)
 범위: `Assets/Scripts/Game/Screens.cs`(Lobby·Gear·Forge·Shop) · 새 파일은 `Gear*.cs` · `Forge*.cs` · `Shop*.cs` · `Assets/KkomaKnight/catalog.json`(키 추가)
 > 방법(T3 에서 확립): 화면은 주인 지정 GUI Pro 데모 프리팹을 `UiKit.Spawn` 으로 세우고 자식 이름으로 글자/아이콘/버튼을 바꾼다(`docs/assets-map.md` · `/tmp` 덤프는 `python3 tools/…` 없이 prefab YAML 을 직접 읽는다). 장비 = **Character_Hero_Equipment** · 소환 결과 = **Shop_Chest_Open** · 장비 아이콘 = catalog `gi.<부위>.<세트>` · 등급 색 = `Palette.RarName`(gray/blue/yellow/plum) 의 ItemFrame_01_Normal_* 변형. 새 에셋 키는 catalog.json 에 추가하고 `python3 tools/gen_catalog.py` 로 재생성(assets-map 도 같이 갱신된다).
 1. 세이브(PlayerPrefs 에 JSON — index.html `kkoma-knight-v2` 와 같은 필드: gold·gem·maxChapter·selChapter·inv·eq·slots·gachaBoxes·uid·freeDay).
@@ -74,6 +74,7 @@
 
 ### T5 — UI 를 docs/ref 레이아웃에 맞추기
 범위: `Assets/Scripts/Game/Layout*.cs` + 각 화면의 배치 상수
+> 시작점: T3/T4 화면은 이미 `Layout` 상수(ref-layout ①~⑦ %)로 앵커링돼 있다 — 남은 것은 데모 프리팹을 통째로 세운 화면(로비 Lobby_Default · 장비 Character_Hero_Equipment · 팝업들)의 내부 요소를 표 % 로 옮기는 일과 실물(WebGL) 대조. 승인 대기 17(장비 탭 기사 RenderTexture)도 여기서.
 1. aaaw `docs/ui/ref-layout.md` 의 표(요소별 x/y/w/h · 프레임 %)를 배치의 단일 정본으로 코드에 옮긴다(9:19.5 레퍼런스 → 프레임 % 환산).
 2. 화면마다 요소를 그 % 자리에 앵커링한다(±3%p). 색·폰트·그림체는 점수 밖 — 배치·비율·비례만.
 3. 검증: 에디터 없이 되는 만큼 — 배치 상수가 표와 같은지 EditMode 테스트로 대조하고, 실물 확인은 WebGL 배포에서 주인이 폰으로 한다.
