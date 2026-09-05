@@ -2,8 +2,7 @@
     "name": "KkomaKnight.Game",
     "rootNamespace": "KkomaKnight.Game",
     "references": [
-        "KkomaKnight.Core",
-        "KkomaKnight.Adapters"
+        "KkomaKnight.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
