@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
 namespace KkomaKnight.Game
@@ -8,6 +10,12 @@ namespace KkomaKnight.Game
     /// 방법: 전용 레이어(<see cref="Layer"/>) 에 리그를 세우고, 그 레이어만 비추는 카메라가 RenderTexture 로 찍어 RawImage 에 붙인다.
     /// 월드 카메라(전투)는 이 레이어를 컬링 마스크에서 뺀다. 화면이 꺼지면(RawImage 비활성) 무대·카메라도 같이 꺼진다.
     /// 외형(스킨)은 <see cref="SetSkin"/> 으로 바꾼다 — T7 의 GearLook(장착 장비 → 파츠) 표가 여기로 스킨을 넣는다.
+    /// <para>
+    /// ⚠ URP 2D(Renderer2D · <c>m_UseDepthStencilBuffer: 1</c>) 호환(T12 · 주인 콘솔 에러 ①②): 카메라의 targetTexture 는 반드시
+    /// <b>깊이/스텐실 버퍼가 있는</b> RenderTexture 여야 한다. 깊이 0 텍스처를 주면 렌더그래프가 없는 깊이 표면을 attachment 로 붙이려다
+    /// «Renderer2D Pass: Fake or uninitialized surface is not supported for attachment 0» + «EndRenderPass: Not inside a Renderpass» 가 매 프레임 뜬다.
+    /// 런타임 카메라에는 <see cref="UniversalAdditionalCameraData"/>(Base · 후처리 없음) 를 명시적으로 붙인다.
+    /// </para>
     /// </summary>
     public sealed class HeroView : MonoBehaviour
     {
@@ -15,10 +23,16 @@ namespace KkomaKnight.Game
         public const int Layer = 30;
         const float StageX = 400f;   // 전투 월드(x ±30 안)에서 멀리 떨어진 자리
         static int _count;
+        /// <summary>에디터 «도메인 리로드 끔» 에서도 무대 번호가 새 판마다 0 부터(UiKit.ResetStatics 와 같은 규약).</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() { _count = 0; }
 
         RawImage _img; RenderTexture _tex; Camera _cam; Transform _stage; CharacterRig _rig;
         CharacterRig.Skin _skin;
         public CharacterRig Rig => _rig;
+        /// <summary>테스트/진단용 — 이 뷰가 찍는 텍스처·카메라.</summary>
+        public RenderTexture Texture => _tex;
+        public Camera Cam => _cam;
 
         /// <summary>host(프리팹의 초상 마스크 등) 안을 가득 채우는 RawImage 로 세운다. skin 이 null 이면 기본 기사 외형.</summary>
         public static HeroView Attach(RectTransform host, CharacterRig.Skin skin = null, int texSize = 512)
@@ -44,6 +58,23 @@ namespace KkomaKnight.Game
         public static CharacterRig.Skin DefaultKnightSkin()
             => new CharacterRig.Skin { Helmet = "cm.knight.helmet", HairHelmet = "cm.knight.hairHelmet", Chest = "cm.knight.chest", Sword = "cm.knight.sword" };
 
+        /// <summary>
+        /// URP 2D 카메라가 그릴 수 있는 RenderTexture — 색 ARGB32 + <b>깊이 24 · 스텐실 8</b>(Renderer2D 의 깊이/스텐실 사용 설정과 맞춤).
+        /// 플랫폼이 D24S8 을 못 주면 <see cref="GraphicsFormatUtility.GetDepthStencilFormat(int,int)"/> 가 대응 포맷(D32S8)을 고른다.
+        /// </summary>
+        public static RenderTexture CreateTargetTexture(int size, string name)
+        {
+            var desc = new RenderTextureDescriptor(size, size, RenderTextureFormat.ARGB32, 24)
+            {
+                msaaSamples = 1, useMipMap = false, autoGenerateMips = false, volumeDepth = 1, dimension = UnityEngine.Rendering.TextureDimension.Tex2D,
+            };
+            var ds = GraphicsFormatUtility.GetDepthStencilFormat(24, 8);
+            if (ds != GraphicsFormat.None) desc.depthStencilFormat = ds;
+            var tex = new RenderTexture(desc) { name = name, filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+            tex.Create();
+            return tex;
+        }
+
         void BuildStage(int texSize)
         {
             int idx = _count++;
@@ -51,17 +82,24 @@ namespace KkomaKnight.Game
             _stage.position = new Vector3(StageX + idx * 20f, 0, 0);
             var prefab = App.I != null && App.I.Assets != null ? App.I.Assets.Prefab("cm.character") : null;
             var go = prefab != null ? Instantiate(prefab, _stage) : new GameObject("Character");
-            go.name = "Hero"; go.transform.localPosition = Vector3.zero;
+            go.name = "Hero"; go.transform.SetParent(_stage, false); go.transform.localPosition = Vector3.zero;
             _rig = CharacterRig.Attach(go);
             SetLayerDeep(_stage, Layer);
 
-            _tex = new RenderTexture(texSize, texSize, 0, RenderTextureFormat.ARGB32) { name = "HeroView" + idx, antiAliasing = 1 };
-            _tex.Create();
+            _tex = CreateTargetTexture(texSize, "HeroView" + idx);
             var camGo = new GameObject("HeroCam"); camGo.transform.SetParent(_stage, false); camGo.layer = Layer;
             _cam = camGo.AddComponent<Camera>();
+            _cam.enabled = false;   // 설정을 다 넣은 뒤 켠다(반쯤 설정된 카메라가 한 프레임 그리지 않게)
             _cam.orthographic = true; _cam.cullingMask = 1 << Layer; _cam.clearFlags = CameraClearFlags.SolidColor; _cam.backgroundColor = new Color(0, 0, 0, 0);
-            _cam.targetTexture = _tex; _cam.depth = -5; _cam.nearClipPlane = 0.1f; _cam.farClipPlane = 50f; _cam.allowHDR = false; _cam.allowMSAA = false;
+            _cam.depth = -5; _cam.nearClipPlane = 0.1f; _cam.farClipPlane = 50f; _cam.allowHDR = false; _cam.allowMSAA = false; _cam.useOcclusionCulling = false;
             _cam.rect = new Rect(0, 0, 1, 1);
+            _cam.targetTexture = _tex;
+            // URP: 런타임 카메라도 Base 카메라 데이터가 있어야 파이프라인 기본값(렌더러 인덱스·후처리 등)이 명확하다 — 파이프라인이 늦게 만들어 주는 것에 기대지 않는다.
+            var urp = UiKit.Ensure<UniversalAdditionalCameraData>(camGo);
+            urp.renderType = CameraRenderType.Base; urp.renderPostProcessing = false; urp.renderShadows = false;
+            urp.requiresDepthOption = CameraOverrideOption.Off; urp.requiresColorOption = CameraOverrideOption.Off;
+            urp.antialiasing = AntialiasingMode.None;
+            _cam.enabled = true;
             // 전투 카메라는 이 레이어를 안 본다
             var world = App.I != null ? App.I.WorldCamera : null; if (world != null) world.cullingMask &= ~(1 << Layer);
             _img.texture = _tex;
@@ -73,8 +111,15 @@ namespace KkomaKnight.Game
             _skin = skin ?? DefaultKnightSkin();
             if (_rig == null) return;
             _rig.Apply(_skin); _rig.Face(true); _rig.SetScale(1f);
-            _rig.Play(CharacterRig.Idle, true); _rig.SetSpeed(1f);
+            PlayIdle();
             Fit();
+        }
+
+        /// <summary>Idle 재생 — 무대가 꺼져 있으면(화면 숨김) Animator 가 초기화 전이라 Play 가 «not playing an AnimatorController» 경고를 낼 수 있어 켜질 때(<see cref="OnEnable"/>) 다시 튼다.</summary>
+        void PlayIdle()
+        {
+            if (_rig == null || _stage == null || !_stage.gameObject.activeInHierarchy) return;
+            _rig.Play(CharacterRig.Idle, true); _rig.SetSpeed(1f);
         }
 
         /// <summary>리그의 스프라이트 경계에 카메라를 맞춘다(정사각 텍스처 · 여유 12%).</summary>
@@ -93,13 +138,16 @@ namespace KkomaKnight.Game
             for (int i = 0; i < t.childCount; i++) SetLayerDeep(t.GetChild(i), layer);
         }
 
-        void OnEnable() { if (_stage != null) _stage.gameObject.SetActive(true); }
+        void OnEnable() { if (_stage != null) { _stage.gameObject.SetActive(true); PlayIdle(); } }
         void OnDisable() { if (_stage != null) _stage.gameObject.SetActive(false); }
         void OnDestroy()
         {
-            if (_cam != null) _cam.targetTexture = null;
+            // 순서가 중요하다: 카메라를 먼저 끄고 타깃을 떼야 파이프라인이 해제된 텍스처를 그리려 들지 않는다(«EndRenderPass» 류 에러 방지).
+            if (_cam != null) { _cam.enabled = false; _cam.targetTexture = null; }
+            if (_img != null) { _img.enabled = false; _img.texture = null; }
             if (_stage != null) Destroy(_stage.gameObject);
-            if (_tex != null) { _tex.Release(); Destroy(_tex); }
+            if (_tex != null) { _tex.Release(); Destroy(_tex); _tex = null; }
+            _cam = null; _rig = null; _stage = null;
         }
     }
 }

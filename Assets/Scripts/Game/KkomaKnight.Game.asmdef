@@ -4,6 +4,7 @@
     "references": [
         "KkomaKnight.Core",
         "Unity.TextMeshPro",
+        "Unity.RenderPipelines.Universal.Runtime",
         "DOTween.Modules"
     ],
     "includePlatforms": [],

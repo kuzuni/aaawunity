@@ -30,6 +30,8 @@ jobs:
         run: dotnet test tools/dotnet/Tests/KkomaKnight.Tests.csproj -c Release --no-build --nologo --logger "trx;LogFileName=results.trx"
       - name: .meta 누락/고아 검사
         run: python3 tools/gen_meta.py --check
+      - name: 코드의 카탈로그 키 ↔ catalog.json 대조 (플레이 콘솔 에러 0 게이트 · T12)
+        run: python3 tools/check_catalog_keys.py
       - name: aaaw main 체크아웃 (수치 정본)
         uses: actions/checkout@v4
         with:
