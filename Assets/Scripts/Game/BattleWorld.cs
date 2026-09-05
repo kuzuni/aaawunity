@@ -20,7 +20,7 @@ namespace KkomaKnight.Game
         readonly App _app; readonly BattleState G; readonly GameData D;
         readonly Transform _root; readonly RectTransform _pops;
         readonly float _zoom; readonly float _playerX;             // ui.json camera.zoom · playerX(프레임 폭 비율)
-        const float CharBaseHeight = 0.85f;                          // Character.prefab 스케일 1 의 키(유니티 단위 · 조사값)
+        public const float CharBaseHeight = 0.85f;                          // Character.prefab 스케일 1 의 키(유니티 단위 · 조사값)
         const float FootY = Layout.PlayerFootY / 100f;
         const float RoadCenterFrac = 0.41f;                          // 데모 씬의 길 중심(y −0.402)이 놓이는 프레임 비율 — 발 줄 40% 바로 아래 · 지면 띠(30~51%) 중심
         const float UnitFrac = WorldCam.PPU / WorldCam.LayoutH;      // 데모 씬 1u = 프레임 높이의 이 비율 (1/11.4)
@@ -221,7 +221,6 @@ namespace KkomaKnight.Game
             rig.Play(CharacterRig.Idle);
             return rig;
         }
-        static CharacterRig.Skin KnightSkin(bool shield) => new CharacterRig.Skin { Helmet = "cm.knight.helmet", HairHelmet = "cm.knight.hairHelmet", Chest = "cm.knight.chest", Sword = "cm.knight.sword", Shield = shield ? "cm.knight.shield" : null };
         /// <summary>적 스킨 — 전부 투구를 쓴다(주인 지시 «적들은 전부 모자 쓴 상태») · 원거리는 활+화살+시위.</summary>
         static CharacterRig.Skin EnemySkin(EnemyState e)
         {
@@ -251,7 +250,7 @@ namespace KkomaKnight.Game
         }
         void BuildPlayer()
         {
-            _player = MakeChar("Player", KnightSkin(G.P.MaxSh > 0), Layout.PlayerHeight, true);
+            _player = MakeChar("Player", CharacterRig.PlayerSkin(D, _app.Save, G.P.MaxSh > 0), Layout.PlayerHeight, true);   // 장착 외형 반영 — 장비 화면(HeroView)과 같은 표(GearLook)
             _player.transform.position = Pos(G.P.WorldX, FootY);
             // 발밑 체력바(빨강) + 그 아래 실드바(파랑) — 주인 지시
             MakeBar(_root, WorldCam.PctW(Layout.PlayerFootBarW), WorldCam.PctH(Layout.FootBarH), out _pBarBg, out _pBarFill, Palette.Red, 392);

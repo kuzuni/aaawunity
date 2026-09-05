@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using KkomaKnight.Core;
 using UnityEngine;
 
 namespace KkomaKnight.Game
@@ -27,6 +28,26 @@ namespace KkomaKnight.Game
             public string Helmet, Chest, Sword, Axe, Spear, Blunt, Bow, Arrow, Shield, SubItem, Hair, HairHelmet, Beard, Eye;
             public Color SkinColor = Color.white;
             public bool BowLines;
+        }
+
+        /// <summary>
+        /// 플레이어 스킨 — 기본 기사(cm.knight.*) 위에 **장착한 투구·무기·갑옷**을 <see cref="GearLook"/> 표(cm.gear.*)로 덮는다.
+        /// 전투(<c>BattleWorld</c>)·장비 화면·로비(<c>HeroView</c>)가 전부 이 함수를 써서 외형이 같다(주인 지시 2026-09-05 «장착하면 외형에 바로 반영»).
+        /// 무기는 세트별 손 슬롯(검/둔기/창)으로 갈아 끼우고, 목걸이·장갑·신발은 그림이 없어 외형 미반영.
+        /// </summary>
+        public static Skin PlayerSkin(GameData D, SaveData S, bool shield)
+        {
+            var s = new Skin { Helmet = "cm.knight.helmet", HairHelmet = "cm.knight.hairHelmet", Chest = "cm.knight.chest", Sword = "cm.knight.sword", Shield = shield ? "cm.knight.shield" : null };
+            if (D == null || S == null) return s;
+            var h = S.EquippedGear(GearLook.Helm); if (h != null) s.Helmet = GearLook.PartKey(D, h);
+            var a = S.EquippedGear(GearLook.Armor); if (a != null) s.Chest = GearLook.PartKey(D, a);
+            var w = S.EquippedGear(GearLook.Weapon);
+            if (w != null)
+            {
+                string k = GearLook.PartKey(D, w); s.Sword = null;
+                switch (GearLook.WeaponSlot(D.Gear.SetOf(w.Type))) { case "Blunt": s.Blunt = k; break; case "Spear": s.Spear = k; break; default: s.Sword = k; break; }
+            }
+            return s;
         }
 
         Animator _anim; SpriteRenderer[] _renderers; readonly Dictionary<SpriteRenderer, int> _baseOrder = new Dictionary<SpriteRenderer, int>();

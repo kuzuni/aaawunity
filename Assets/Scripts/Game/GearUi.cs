@@ -19,7 +19,8 @@ namespace KkomaKnight.Game
         public static string SetLabel(GameData D, GearItem g) => (D.Gear.SetName.TryGetValue(Set(D, g), out var n) ? n : Set(D, g)) + " 세트";
         public static string PartName(GameData D, string part) => D.Gear.PartName.TryGetValue(part, out var n) ? n : part;
         public static string RarName(GameData D, int rar) => rar >= 0 && rar < D.Gear.RarName.Length ? D.Gear.RarName[rar] : rar.ToString();
-        public static string IconKey(GameData D, GearItem g) => Icons.Gear(g.Part, Set(D, g));
+        /// <summary>장비 아이콘 = 장착 외형과 같은 표(<see cref="GearLook"/>) — 투구·무기·갑옷은 CharacterMaker 파츠 그림, 목걸이·장갑·신발은 GUI Pro 아이콘(임시).</summary>
+        public static string IconKey(GameData D, GearItem g) => GearLook.IconKey(D, g);
         public static string SetIcon(string set) => set == "crit" ? "pi.critical" : set == "hpsh" ? "pi.heart" : "ui.dodge";
         public static string Key(GearItem g) => g.Part + "|" + g.Type + "|" + g.Rar;
 
@@ -49,28 +50,34 @@ namespace KkomaKnight.Game
             return best != null && (cur == null || GearSystem.GearScore(best) > GearSystem.GearScore(cur));
         }
 
-        public sealed class CellOpts { public bool Equipped, IsNew, Fusable, Selected, Off; public string Tag; }
+        /// <summary>칸 옵션 — Equipped/Fusable 은 «상태», EquippedMark/FusableDot 은 «표기 켬»(장비 화면은 둘 다 끔 · 대장간(T8)은 켬 — ROUTINE T7.7).</summary>
+        public sealed class CellOpts { public bool Equipped, IsNew, Fusable, Selected, Off; public bool EquippedMark, FusableDot; }
 
-        /// <summary>장비 칸 하나 — ItemFrame_01_Normal_&lt;등급색&gt; + 아이콘 + 부위 태그 + «+N» + 장착/NEW/3 뱃지. 크기는 부모가 정한다(anchors stretch).</summary>
+        /// <summary>
+        /// 장비 칸 하나 = 주인 지정 **ListItem_EquipMent**(카탈로그 <c>ui.equipCell</c> · 188×188) 그대로 — 프리팹 요소를 옮기지 않고 등급색 프레임·아이콘·«+N»·세트 다이아 아이콘만 우리 데이터로 바꾼다.
+        /// 크기는 부모가 정한다(격자 188 · 다른 자리는 anchors stretch). 장착중 = 프리팹의 Check(옵션) · 합성 가능 = 오른쪽 위 빨간 점(Alert_Dot_01_Red · 옵션) · NEW = 왼쪽 아래 점.
+        /// </summary>
         public static RectTransform Cell(Transform parent, GameData D, GearItem g, CellOpts o, Action onClick)
         {
             o = o ?? new CellOpts();
-            var cell = UiKit.Rect(parent, "gear:" + (g != null ? g.Uid.ToString() : "empty"));
-            var frame = UiKit.Spawn(g != null ? "ui.itemFrame." + Palette.RarName(g.Rar) : "ui.itemFrame.empty", cell); UiKit.Stretch((RectTransform)frame.transform);
-            if (g == null) { UiKit.Show(frame.transform, "Add_1", true); UiKit.Show(frame.transform, "Item", false); UiKit.Show(frame.transform, "Lock", false); }
-            else
+            var cell = (RectTransform)UiKit.Spawn("ui.equipCell", parent).transform; cell.name = "gear:" + (g != null ? g.Uid.ToString() : "empty");
+            var frame = UiKit.Find(cell, "ItemFrame_01");
+            if (frame != null)
             {
-                if (frame.transform.Find("Item") != null) UiKit.Hide(frame.transform, "Item");
-                var ic = UiKit.Icon(cell, "Icon", IconKey(D, g)); UiKit.Pct(ic.rectTransform, 15, 15, 70, 70);
-                var tag = UiKit.Panel(cell, "Tag", "fr.label", Palette.ByName(Palette.RarName(g.Rar))); UiKit.Pct(tag.rectTransform, 4, 4, 46, 20);
-                var tt = UiKit.Text(tag.transform, o.Tag ?? PartName(D, g.Part), 22, Palette.White, TextAnchor.MiddleCenter, true); UiKit.Stretch(tt.rectTransform, 4, 1, 4, 1);
-                if (g.Plus > 0) { var p = UiKit.Text(cell, "+" + g.Plus, 28, Palette.Yellow, TextAnchor.LowerRight); UiKit.Pct(p.rectTransform, 40, 70, 56, 26); }
-                if (o.Equipped) { var e = UiKit.Panel(cell, "Eq", "fr.label", Palette.Green); UiKit.Pct(e.rectTransform, 4, 76, 40, 20); var et = UiKit.Text(e.transform, "장착", 20, Palette.White, TextAnchor.MiddleCenter, true); UiKit.Stretch(et.rectTransform, 2, 1, 2, 1); }
-                if (o.IsNew) { var n = UiKit.Spawn("ui.alertDot", cell); var nr = (RectTransform)n.transform; nr.anchorMin = nr.anchorMax = new Vector2(1, 1); nr.anchoredPosition = new Vector2(-14, -14); nr.sizeDelta = new Vector2(44, 44); var nt = UiKit.Text(nr, "N", 22, Palette.White); UiKit.Stretch(nt.rectTransform); }
-                if (o.Fusable) { var f = UiKit.Panel(cell, "Fus", "fr.circle", Palette.Orange); UiKit.Pct(f.rectTransform, 72, 4, 24, 24); var ft = UiKit.Text(f.transform, "3", 24, Palette.White); UiKit.Stretch(ft.rectTransform); }
-                if (o.Selected) { var s = UiKit.Panel(cell, "Sel", "fr.itemFocus", Palette.Mint); UiKit.Stretch(s.rectTransform, -4, -4, -4, -4); }
-                if (o.Off) { var cg = cell.gameObject.AddComponent<CanvasGroup>(); cg.alpha = 0.4f; }
+                var area = UiKit.Find(frame, "NormalArea");
+                if (area != null) { UiKit.Clear(area); if (g != null) { var f = UiKit.Spawn("ui.itemFrame." + Palette.RarName(g.Rar), area); UiKit.Stretch((RectTransform)f.transform, -1, -1, -1, -1); } }   // 프리팹의 Normal_Plum 자리(+2px) 에 등급색 변형
+                var item = UiKit.Find(frame, "Item");
+                if (item != null) { item.gameObject.SetActive(g != null); if (g != null) { var im = UiKit.SetSprite(frame, "Item", IconKey(D, g), Palette.White); if (im != null) im.preserveAspect = true; } }   // 프리팹 Item 크기 그대로
+                UiKit.Show(frame, "Add_1", g == null); UiKit.Show(frame, "Add_2", false); UiKit.Show(frame, "Lock", false); UiKit.Show(frame, "Disable", false);
+                UiKit.Show(frame, "Focus", g != null && o.Selected);   // 프리팹의 Focus(테두리 글로우) = 선택
             }
+            UiKit.SetText(cell, "Text_Level", g != null && g.Plus > 0 ? "+" + g.Plus : "");
+            var type = UiKit.Find(cell, "TypeArea");
+            if (type != null) { type.gameObject.SetActive(g != null); if (g != null) UiKit.SetSprite(type, "Icon", SetIcon(Set(D, g)), Palette.White); }
+            UiKit.Show(cell, "Check", g != null && o.Equipped && o.EquippedMark);
+            if (g != null && o.Fusable && o.FusableDot) { var d = UiKit.Spawn("ui.alertDot", cell); var dr = (RectTransform)d.transform; d.name = "FuseDot"; dr.anchorMin = dr.anchorMax = new Vector2(1, 1); dr.pivot = new Vector2(0.5f, 0.5f); dr.anchoredPosition = new Vector2(-14, -14); dr.sizeDelta = new Vector2(47, 47); }
+            if (g != null && o.IsNew) { var n = UiKit.Spawn("ui.alertDot", cell); var nr = (RectTransform)n.transform; n.name = "New"; nr.anchorMin = nr.anchorMax = new Vector2(0, 0); nr.pivot = new Vector2(0.5f, 0.5f); nr.anchoredPosition = new Vector2(18, 18); nr.sizeDelta = new Vector2(44, 44); var nt = UiKit.Text(nr, "N", 22, Palette.White); UiKit.Stretch(nt.rectTransform); }
+            if (o.Off) { var cg = UiKit.Ensure<CanvasGroup>(cell.gameObject); cg.alpha = 0.4f; }
             if (onClick != null) UiKit.Clickable(cell, onClick);
             return cell;
         }
@@ -114,7 +121,7 @@ namespace KkomaKnight.Game
             var badge = UiKit.FindAny(rt, "Label_Tapered_01_Plum", "Label_Tapered_01");
             if (badge != null) { var br = (RectTransform)badge; UiKit.Pct(br, Layout.GdBadge.Within(B)); UiKit.SetText(badge, "Text (TMP)", RarName(D, g.Rar)); UiKit.SetSprite(badge, "Bg", null, Palette.ByName(Palette.RarName(g.Rar))); UiKit.SetSprite(badge, "Deco", null, Palette.A(Palette.White, 0.25f)); }
             var slot = UiKit.Find(rt, "Slot");
-            if (slot != null) { UiKit.Pct((RectTransform)slot, Layout.GdIcon.Within(B)); UiKit.Clear(slot); Cell(slot, D, g, new CellOpts { Tag = PartName(D, g.Part) }, null); }
+            if (slot != null) { UiKit.Pct((RectTransform)slot, Layout.GdIcon.Within(B)); UiKit.Clear(slot); Cell(slot, D, g, new CellOpts(), null); }
             var nm = UiKit.SetText(rt, "Text_ItemName", Name(D, g) + (g.Plus > 0 ? " +" + g.Plus : ""), Palette.ByName(Palette.RarName(g.Rar)));
             if (nm != null) { UiKit.Pct(nm.rectTransform, Layout.GdName.Within(B)); nm.alignment = TextAnchor.MiddleLeft; nm.resizeTextForBestFit = true; nm.resizeTextMaxSize = 48; }
             var meta = UiKit.SetText(rt, "Text_Level", $"{PartName(D, g.Part)} · {SetLabel(D, g)} · 슬롯 Lv.{lv}", Palette.InkSoft, 28);

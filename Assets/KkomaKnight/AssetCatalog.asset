@@ -65,6 +65,78 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: b6b788e66358d484884c1cb6984c0b65, type: 3}
   - key: cm.spear
     sprite: {fileID: 21300000, guid: 5dc99324ec4b8ef4391b9f7a1e048f77, type: 3}
+  - key: cm.gear.helm.crit.0
+    sprite: {fileID: 21300000, guid: ee29c20657a78274199f69ec57b61c64, type: 3}
+  - key: cm.gear.helm.crit.1
+    sprite: {fileID: 21300000, guid: f7158e75b52b5dd4aa0e838ee2dd5794, type: 3}
+  - key: cm.gear.helm.crit.2
+    sprite: {fileID: 21300000, guid: 56eb06ff6f0ddbc4c816f6d816ab6a6f, type: 3}
+  - key: cm.gear.helm.crit.3
+    sprite: {fileID: 21300000, guid: fc0c300521727fe4ba9ea6c323e24791, type: 3}
+  - key: cm.gear.helm.hpsh.0
+    sprite: {fileID: 21300000, guid: 9f38d39de9776b049a072912fc78532f, type: 3}
+  - key: cm.gear.helm.hpsh.1
+    sprite: {fileID: 21300000, guid: df39bf9a97b66f04fb02a415947da8a2, type: 3}
+  - key: cm.gear.helm.hpsh.2
+    sprite: {fileID: 21300000, guid: b671c97514fb6f143a9d8688d9e0756c, type: 3}
+  - key: cm.gear.helm.hpsh.3
+    sprite: {fileID: 21300000, guid: 1a173d2ef5e825a4381bd05c8298ed67, type: 3}
+  - key: cm.gear.helm.evade.0
+    sprite: {fileID: 21300000, guid: ab9b135518a70884795b698b97ccc5f6, type: 3}
+  - key: cm.gear.helm.evade.1
+    sprite: {fileID: 21300000, guid: 5bac006d2ba7c1041b4da3866eb348d3, type: 3}
+  - key: cm.gear.helm.evade.2
+    sprite: {fileID: 21300000, guid: 740fc78ab7037734682669e4a298edf4, type: 3}
+  - key: cm.gear.helm.evade.3
+    sprite: {fileID: 21300000, guid: 8eca7418265a6ab4ba23e282d230ab07, type: 3}
+  - key: cm.gear.weapon.crit.0
+    sprite: {fileID: 21300000, guid: cf80f4afcf2c5be42827942fb297b6db, type: 3}
+  - key: cm.gear.weapon.crit.1
+    sprite: {fileID: 21300000, guid: 843f7244975c0a24a941f8530cb8957f, type: 3}
+  - key: cm.gear.weapon.crit.2
+    sprite: {fileID: 21300000, guid: 85c35bcb0f3b17741ba706815314b3f4, type: 3}
+  - key: cm.gear.weapon.crit.3
+    sprite: {fileID: 21300000, guid: 86479e8d2fed39d41a7a725cf9be7350, type: 3}
+  - key: cm.gear.weapon.hpsh.0
+    sprite: {fileID: 21300000, guid: d909603659484d844b90fd8187e69b5f, type: 3}
+  - key: cm.gear.weapon.hpsh.1
+    sprite: {fileID: 21300000, guid: 89f850374768b934b83da285a34fe665, type: 3}
+  - key: cm.gear.weapon.hpsh.2
+    sprite: {fileID: 21300000, guid: 20ea42bf7121eed4f951ab1702911b55, type: 3}
+  - key: cm.gear.weapon.hpsh.3
+    sprite: {fileID: 21300000, guid: 4aaddee968bee7b4bbc42e2786efdd9f, type: 3}
+  - key: cm.gear.weapon.evade.0
+    sprite: {fileID: 21300000, guid: ad70dddbf1e7c154ab8ff53d99ad6b05, type: 3}
+  - key: cm.gear.weapon.evade.1
+    sprite: {fileID: 21300000, guid: 405c6d191df790a498ebdb44ae802e52, type: 3}
+  - key: cm.gear.weapon.evade.2
+    sprite: {fileID: 21300000, guid: a5345c08e88f51844b32ccd4eeac870f, type: 3}
+  - key: cm.gear.weapon.evade.3
+    sprite: {fileID: 21300000, guid: 25a899a0277bae94e9b6f19853dd5670, type: 3}
+  - key: cm.gear.armor.crit.0
+    sprite: {fileID: 21300000, guid: 1f21babcd41e41340856957dd7194afa, type: 3}
+  - key: cm.gear.armor.crit.1
+    sprite: {fileID: 21300000, guid: 1e00006a567579d4ea12b7f35867bc21, type: 3}
+  - key: cm.gear.armor.crit.2
+    sprite: {fileID: 21300000, guid: 4bbf0a5fb0da9204795bb29dbb05a728, type: 3}
+  - key: cm.gear.armor.crit.3
+    sprite: {fileID: 21300000, guid: 70383b8dfef29974389c6b1ac3e207ac, type: 3}
+  - key: cm.gear.armor.hpsh.0
+    sprite: {fileID: 21300000, guid: 9b8ca2087d87a5348841ccdf3c2c5439, type: 3}
+  - key: cm.gear.armor.hpsh.1
+    sprite: {fileID: 21300000, guid: c7d0ac52a1e79344f845fbba3f6d6542, type: 3}
+  - key: cm.gear.armor.hpsh.2
+    sprite: {fileID: 21300000, guid: fe61d40740e287b41925b144f7ab8df9, type: 3}
+  - key: cm.gear.armor.hpsh.3
+    sprite: {fileID: 21300000, guid: 217e242c9990b154cb26fd2fc048d11c, type: 3}
+  - key: cm.gear.armor.evade.0
+    sprite: {fileID: 21300000, guid: f83bc8e56fdb4ee45a37f0d1c2a8c9cd, type: 3}
+  - key: cm.gear.armor.evade.1
+    sprite: {fileID: 21300000, guid: e02640986930bc9469926bdd9866b308, type: 3}
+  - key: cm.gear.armor.evade.2
+    sprite: {fileID: 21300000, guid: 379c0f89a4c45d94fb472dd59e21297d, type: 3}
+  - key: cm.gear.armor.evade.3
+    sprite: {fileID: 21300000, guid: 25a3031ebe0b8ce49a9ed5ebaa0273f1, type: 3}
   - key: env.field
     sprite: {fileID: 21300000, guid: 53ec88f52bc969f4f9e77b078e5aabdd, type: 3}
   - key: env.road
@@ -660,6 +732,8 @@ MonoBehaviour:
     prefab: {fileID: 4146958044734260073, guid: 51a1a7722435c4c55abdb742c5ae43c0, type: 3}
   - key: ui.equipment
     prefab: {fileID: 2550204177070044198, guid: da41cf218cbb141e5b7ca734c527861b, type: 3}
+  - key: ui.equipCell
+    prefab: {fileID: 6644578971798763600, guid: 45836c803114749df9e4a0f2c18da8b1, type: 3}
   - key: ui.bossWarn
     prefab: {fileID: 8909184347632126517, guid: eb97ee65757024e4889369822c185468, type: 3}
   - key: ui.card

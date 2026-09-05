@@ -32,8 +32,13 @@ namespace KkomaKnight.Game
             return hv;
         }
 
-        /// <summary>내 플레이어의 현재 외형 — T7 이 여기서 GearLook(장착 투구·무기·갑옷 → 파츠) 표를 적용한다. 지금은 기본 기사 외형.</summary>
-        public static CharacterRig.Skin PlayerSkin(App app) => DefaultKnightSkin();
+        /// <summary>내 플레이어의 현재 외형 = <see cref="CharacterRig.PlayerSkin"/>(장착 투구·무기·갑옷 → GearLook 표 · 실드가 있으면 방패) — 전투(BattleWorld)와 같은 함수(T7).</summary>
+        public static CharacterRig.Skin PlayerSkin(App app)
+        {
+            if (app == null || app.Data == null || app.Save == null) return DefaultKnightSkin();
+            bool shield = KkomaKnight.Core.GearSystem.BuildPower(app.Data, app.Save.CurBuild(app.Data)).Sh > 0;
+            return CharacterRig.PlayerSkin(app.Data, app.Save, shield);
+        }
 
         /// <summary>장비 반영 전 기본 외형(전투의 KnightSkin 과 같은 파츠).</summary>
         public static CharacterRig.Skin DefaultKnightSkin()

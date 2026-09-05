@@ -77,7 +77,7 @@ namespace KkomaKnight.Game
             foreach (var g in GearUi.Sorted(S))
             {
                 var gi = g; bool sel = _sel.Contains(g.Uid); bool off = S.IsEquipped(g) || (lock_ != null && !sel && GearUi.Key(g) != lock_);
-                GearUi.Cell(_content, D, g, new GearUi.CellOpts { Equipped = S.IsEquipped(g), Selected = sel, Off = off, Fusable = lock_ == null && fk.Contains(GearUi.Key(g)) }, () => Toggle(gi));
+                GearUi.Cell(_content, D, g, new GearUi.CellOpts { Equipped = S.IsEquipped(g), EquippedMark = true, Selected = sel, Off = off, Fusable = lock_ == null && fk.Contains(GearUi.Key(g)), FusableDot = true }, () => Toggle(gi));
             }
         }
         static GearItem Basis(List<GearItem> mats) { var b = mats[0]; foreach (var m in mats) if (m.Plus > b.Plus) b = m; return b; }

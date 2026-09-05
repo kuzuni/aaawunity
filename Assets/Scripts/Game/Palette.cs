@@ -107,6 +107,6 @@ namespace KkomaKnight.Game
             if (s.StartsWith("nHeal")) return "pi.heart";
             return "pi.star";
         }
-        public static string Gear(string part, string set) => "gi." + part + "." + set;
+        /// <summary>장비 아이콘은 <see cref="KkomaKnight.Core.GearLook"/>.IconKey 가 유일한 표(T7) — 여기엔 두지 않는다.</summary>
     }
 }
