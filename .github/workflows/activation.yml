@@ -1,4 +1,4 @@
-# 유니티 개인 라이선스 활성화 파일(.alf) 만들기 — 수동 실행 전용.
+# 유니티 개인 라이선스 활성화 파일(.alf) 만들기 — 수동 실행 전용 (버전은 ProjectSettings/ProjectVersion.txt 에서 읽는다).
 # 절차: Actions → «Unity 라이선스 활성화 파일(.alf)» → Run workflow → 끝나면 Artifact 에서 .alf 내려받기
 #       → https://license.unity3d.com/manual 에 올려 .ulf 발급 → 시크릿 UNITY_LICENSE(.ulf 내용 전체)·UNITY_EMAIL·UNITY_PASSWORD 등록.
 # game-ci/unity-request-activation-file 은 폐기(deprecated)돼서, 같은 일을 unityci/editor 이미지에서 직접 한다.

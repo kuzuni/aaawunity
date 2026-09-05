@@ -1,11 +1,11 @@
 # 꼬마기사 키우기 — 유니티 이식 (aaawunity)
 
-[kuzuni/aaaw](https://github.com/kuzuni/aaaw) 의 HTML 게임 «꼬마기사 키우기» 를 **Unity 2022.3 LTS** 로 옮기는 레포.
+[kuzuni/aaaw](https://github.com/kuzuni/aaaw) 의 HTML 게임 «꼬마기사 키우기» 를 **Unity(6000.3.8f1 · 주인 «기본» 프로젝트 기준)** 로 옮기는 레포.
 2D · 모바일 세로(9:16) · 오토배틀 방치형. 규칙·수치의 **정본은 aaaw** 이고 이 레포는 그것을 읽어 실행한다.
 
 | 항목 | 값 |
 |---|---|
-| 유니티 | **2022.3.76f1** (`ProjectSettings/ProjectVersion.txt` · GameCI `unityci/editor` 이미지가 있는 2022.3 최신 패치) |
+| 유니티 | **6000.3.8f1** (`ProjectSettings/ProjectVersion.txt` — 주인이 main 에 올린 «기본» 프로젝트(URP 2D · TMP · Input System · Layer Lab 등 에셋) 의 버전을 그대로 따른다) |
 | 수치 | `Assets/StreamingAssets/data/*.json` = aaaw `data/` 복사본 (런타임 로드 · 손으로 고치지 않는다) |
 | 스펙 | aaaw `PLAN.md` · UI 배치 기준 `docs/ref/*.jpg` + `docs/ui/ref-layout.md` |
 | 코드 | `Assets/Scripts/Core` 순수 C# 엔진(UnityEngine 참조 0) · `Assets/Scripts/Game` MonoBehaviour · `Assets/Tests` EditMode/PlayMode |
@@ -17,7 +17,7 @@
 시크릿이 없으면 CI 는 dotnet 검사만 돌고 **초록**이다. 유니티 테스트·WebGL/Android 빌드를 켜려면:
 
 1. **Actions → «Unity 라이선스 활성화 파일(.alf)» → Run workflow** (`.github/workflows/activation.yml`).
-2. 끝나면 그 실행의 **Artifact `Unity_v2022.3.76f1.alf`** 를 내려받아 압축을 푼다.
+2. 끝나면 그 실행의 **Artifact `Unity_v6000.3.8f1.alf`** 를 내려받아 압축을 푼다.
 3. <https://license.unity3d.com/manual> 에 로그인 → `.alf` 업로드 → **Personal** 선택 → `.ulf` 다운로드.
 4. 레포 **Settings → Secrets and variables → Actions** 에 시크릿 3개 등록:
    - `UNITY_LICENSE` = `.ulf` 파일 **내용 전체**(텍스트를 그대로 붙인다)

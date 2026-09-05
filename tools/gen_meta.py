@@ -55,6 +55,10 @@ def main():
                         f.write(f"fileFormatVersion: 2\nguid: {guid(rel)}\n" + body(rel, is_dir))
         for f in filenames:
             if f.endswith('.meta') and not os.path.exists(os.path.join(dirpath, f[:-5])):
+                # 폴더 .meta 인데 폴더가 없는 것은 «빈 폴더» 다 (git 은 빈 폴더를 안 담는다) — 고아가 아니다.
+                with open(os.path.join(dirpath, f), encoding='utf-8', errors='ignore') as fh:
+                    if 'folderAsset: yes' in fh.read(400):
+                        continue
                 orphans.append(os.path.relpath(os.path.join(dirpath, f), ROOT))
                 if not check:
                     os.remove(os.path.join(dirpath, f))
