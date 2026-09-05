@@ -145,7 +145,7 @@ namespace KkomaKnight.Tests
             {
                 var o = Perks.Offer(d, taken, false, rng);
                 Assert.That(o.Count, Is.InRange(1, 3));
-                for (int a = 0; a < o.Count; a++) { Assert.That(o[a].Grade, Is.EqualTo(o[0].Grade)); for (int c = a + 1; c < o.Count; c++) Assert.That(o[a], Is.Not.SameAs(o[c])); Assert.That(taken, Does.Not.Contain(o[a])); }
+                for (int a = 0; a < o.Count; a++) { Assert.That(o[a].Grade, Is.EqualTo(o[0].Grade)); for (int c = a + 1; c < o.Count; c++) Assert.That(o[a], Is.Not.SameAs(o[c])); Assert.That(taken, Has.No.Member(o[a])); }
             }
             // 귀족의 눈: 일반 제외
             for (int i = 0; i < 100; i++) foreach (var p in Perks.Offer(d, taken, true, rng)) Assert.That(p.Grade, Is.GreaterThan(0));
