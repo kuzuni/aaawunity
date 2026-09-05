@@ -15,7 +15,7 @@
 | T7 | 장비 화면 = Character_Hero_Equipment 그대로 + 장착 외형 반영 + ListItem_EquipMent | ✅ 완료 (`ff53ebb` · 실물 확인은 WebGL 배포에서) | sess-2036-27996 / 워커 C | Core/GearLook(신규) · Game/GearScreen · GearUi · CharacterRig · BattleWorld(스킨) · HeroView(T6 것 재사용) · Tests/GearLookTests | 프리팹 요소 이동 0 · 슬롯 Item 크기 그대로 · 파츠 36종 표 · dotnet 0/0 · 테스트 45/45 |
 | T8 | 대장간 정리 (인벤 전부 · 빨간 점 · 칸 비례) — T7 뒤 | 대기 | — | Game/ForgeScreen | ROUTINE §2 T8 |
 | T9 | 상점 = Shop_List 그대로 (상자 3 · 다이아 6 · 골드 3) + 뽑기 결과 = Shop_Chest_Open | 대기 | — | Game/ShopScreen · KkomaKnight/shop.json | ROUTINE §2 T9 |
-| T10 | 하단 네비 = 상점·장비·전투·탤런트·펫 + Settings 그대로 — T6 뒤 | 대기 | — | Game/Screens(NavBar) · Overlay | ROUTINE §2 T10 |
+| T10 | 하단 네비 = 상점·장비·전투·탤런트·펫 + Settings 그대로 — T6 뒤 | ✅ 완료 (`dce33d6` · 실물 확인은 WebGL 배포에서) | sess-2052-15499 / 워커 D | Game/Screens(NavBar 이사) · Overlay(Settings·TalentPet) · GearScreen(NavBar 제거) · catalog(ui.talent·ui.talentIcon·ui.petIcon) | 탭 = 상점·장비·전투·탤런트·펫 · Settings 프리팹 요소 숨김 0 · Character_Talent_02 통째로 · dotnet 0/0 · 테스트 45/45 |
 | T11 | UI 스모크 PlayMode 테스트 + 가짜 null 게이트 | 대기 | — | Tests/PlayMode · tools · ci.yml | ROUTINE §2 T11 |
 
 ### T1 완료 기록 (2026-09-05 · 착수 세션)
@@ -206,6 +206,19 @@
 - 게이트: `dotnet build` 0/0 · `dotnet test` **45/45** · `gen_meta --check` · `gen_catalog --check`(456) · `check_data_sync` OK(aaaw `0707999`) · `GetComponent…() ??` 패턴 0건. Sim 시드 검증은 엔진을 안 건드려 생략.
 - 워커 메모: 이 환경도 dotnet 이 없고 dot.net 스크립트 호스트가 막혀 있다 — `apt-get install dotnet-sdk-8.0`(archive.ubuntu.com 은 열려 있다 · Ubuntu 24.04 자체 패키지 8.0.1xx) 로 3분 안에 설치됐다. HeroView 는 T6(워커 B)이 먼저 만들어 그것을 재사용(내 것은 버림 · PlayerSkin 훅만 채움).
 - 한계: 에디터 없이 짠 것 — 특히 ⓐ Top 오른쪽 골드 칸 위치(x −24 · 세로 가운데)가 제목과 겹치면 `GearScreen.Build` 의 anchoredPosition 한 줄 ⓑ CharacterMaker 파츠 그림을 슬롯 Item(157px)·칸 아이콘으로 쓰면 작게 보일 수 있다(preserveAspect) — 크게 원하면 catalog 의 파츠를 바꾸지 말고 `Item` 스케일 한 줄 ⓒ 둔기(Blunt)·창(Spear) 파츠는 Attack.anim 이 HandRight 를 흔드는 대로 같이 움직인다(검과 같은 궤적).
+
+### T10 완료 기록 (2026-09-05 · sess-2052-15499 · 워커 D)
+
+- **주인이 확인할 것 (한 줄)**: 하단 탭 5칸이 «상점·장비·전투·탤런트·펫» 인가(대장간·설정 탭 없음 · 대장간은 장비 화면 «합성» 버튼으로만) / 탤런트·펫 탭을 누르면 Character_Talent_02 데모 화면(배경·패스 줄·재화 바)이 그대로 뜨고 그 안 하단 탭으로 다른 화면으로 나가지는가 / 로비 메뉴(≡)와 전투 일시정지의 설정 팝업이 Settings 데모 그대로인가 — 배경음·효과음·진동·언어 4줄 + 버튼 4개 + 세이브 ID + 버전 + 약관 글자가 모두 보이고, 배경음 스위치만 켜고 끄기가 저장되며, 전투에서만 아래 두 버튼이 «재개»·«포기하고 로비로» 인가.
+- 만든 것
+  - `Screens.cs`: `NavBar` 를 GearScreen.cs 에서 이곳으로 옮김(API `Attach/Wire/Refresh` 동일 · 장비/상점 화면 호출부 그대로). 탭 = **상점 · 장비 · 전투 · 탤런트 · 펫**(프리팹 자식 순서 0~4 그대로). 탭 이동 시 팝업이 떠 있으면 닫고 간다. 로비 메뉴(≡) → `Overlay.Settings()`.
+  - `Overlay.cs`: `Settings()`(로비 · 제목 «설정») / `Pause(onResume, onGiveUp)`(전투 · 제목 «일시정지») 가 같은 `SettingsPopup` 을 쓴다 — **Settings 프리팹의 줄·버튼·글자를 하나도 끄지 않는다**(예전에 숨기던 SFX·Haptic·Language·Group_Button_1·약관 글자·UID 아이콘 전부 복원). 글자만 우리말: 배경음·효과음·진동·언어/한국어·평가하기·로그인·고객 지원·계정 삭제·개인정보 처리방침·이용약관·세이브 ID·버전. 동작하는 것 = 배경음 스위치(Save.Muted) · 닫기(X) · 전투에서만 Group_Button_2 = 재개(파랑)/포기하고 로비로(빨강). 나머지는 눌러도 아무 일 없음(주인 «나중 업데이트»).
+  - `Overlay.TalentPet(kind)`: **Character_Talent_02 프리팹 통째로**(배경 그라데이션·패턴 · ResourceBar_Group = 골드·보석 · 패스 줄 6개 데모 그대로 · 하단 탭 바). 프리팹 안 탭 바를 `NavBar.Wire` 로 배선해 켜진 탭 라벨이 «탤런트»/«펫» 이 되고, 다른 탭을 누르면 팝업이 닫히며 그 화면으로 간다. 프리팹에 닫기 버튼이 없어 **새로 그리지 않았다**(«그대로» 원칙 · 닫기 = 탭 바).
+  - catalog: `ui.talent`(Character_Talent_02) · `ui.talentIcon`(Economy_Star_01_Yellow · 워커 선택) · `ui.petIcon`(Item_Egg_01 펫 알 · 워커 선택) → `AssetCatalog.asset`·`docs/assets-map.md` 재생성(T7 것과 합쳐 459). 바꾸려면 catalog.json 경로 한 줄.
+- 기본값으로 정한 것(주인이 바꿀 것만): ⓐ 탭 아이콘 = 별(탤런트)·알(펫). ⓑ 로비 설정 팝업의 아래 버튼 2개는 데모 라벨 그대로 «고객 지원·계정 삭제»(기능 없음) — 거슬리면 한 줄로 빈 라벨/다른 글자로. ⓒ Character_Talent_02 의 패스 줄 내용(스탯 아이콘·단계 숫자)은 데모 그대로.
+- 게이트(리베이스 뒤 T7 합류 상태에서 재실행): `dotnet build` 0/0 · `dotnet test` **45/45** · `gen_meta --check` · `gen_catalog --check`(459) · `check_data_sync` OK(aaaw `0707999`). Sim 시드 검증은 Core 를 안 건드려 생략.
+- 워커 메모: dotnet 은 T6 워커 방식(packages.microsoft.com .deb → `dpkg -x` → `~/dotnet8`) 으로 설치해 게이트를 돌렸다. lock 커밋(`90abcd3`)은 `[skip ci]` 규칙이 push 직후 ROUTINE 에 추가돼 붙이지 못했다(그 뒤 커밋부터 준수).
+- 한계: 에디터 없이 짠 것 — ⓐ Character_Talent_02 는 화면 전체 프리팹이라 Overlay 층에 Stretch 로 세웠다(로비 위를 덮음 · 실물에서 배경이 비치면 `TalentPet` 의 raycast/배경 한 줄) ⓑ Settings 의 «한국어» 버튼·약관 글자는 눌러도 아무 일 없음이 의도.
 
 ## 주인 할 일
 
