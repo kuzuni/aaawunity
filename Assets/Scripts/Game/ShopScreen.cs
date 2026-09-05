@@ -13,7 +13,7 @@ namespace KkomaKnight.Game
     public sealed class ShopScreen : GameScreen
     {
         public override string Name => "shop";
-        Text _freeTxt; Button _free; RectTransform _chests; TopBar _top;
+        Text _freeTxt; Button _free; RectTransform _chests;
         readonly Dictionary<string, (Button one, Button ten, Text pity)> _box = new Dictionary<string, (Button, Button, Text)>();
         const int IapWon = 110000;   // index.html GEM_PACKS[0].won — 표시 전용 모의 가격 (PLAN §11.5)
 
@@ -23,7 +23,6 @@ namespace KkomaKnight.Game
         {
             var D = App.Data;
             var bg = Root.gameObject.AddComponent<Image>(); bg.color = Palette.Hex("#EBDEC0"); bg.raycastTarget = true;
-            _top = TopBar.Attach(Root, App);   // ⑧ 상단 바 — 모든 탭에서 같은 y3.7 h4.5
             // 무료 보급
             var freeRow = UiKit.Rect(Root, "FreeRow"); UiKit.Pct(freeRow, Layout.ShopFreeRow);
             var fc = UiKit.SpawnRt("ui.frameIvory", freeRow, new Layout.R(0, 0, 49, 100));
@@ -92,7 +91,6 @@ namespace KkomaKnight.Game
         public override void Refresh()
         {
             var D = App.Data; var S = App.Save;
-            _top?.Refresh(App);
             bool canFree = S.FreeDay != Today(); UiKit.SetInteractable(_free, canFree); if (_freeTxt != null) _freeTxt.text = canFree ? "수령" : "완료";
             foreach (var box in D.Gacha.Boxes)
             {

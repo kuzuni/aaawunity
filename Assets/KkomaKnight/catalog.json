@@ -512,14 +512,14 @@
     "ui.resultLose": "사망 팝업 (Play_Result_Lose — 팁 3행 + 골드)",
     "ui.settings": "일시정지/설정 팝업 (주인 지정 Settings — 소리 토글 · 재개 · 포기)",
     "ui.chestOpen": "장비 소환 결과 팝업 (주인 지정 Shop_Chest_Open) — 열린 상자 chest.*.open + 얻은 장비 격자",
-    "ui.lobby": "로비 (주인 지정 Lobby_Default) — 챕터 제목 · START · 하단 탭",
+    "ui.lobby": "로비 (주인 지정 Lobby_Default · T6 부터 원형 그대로 · 요소 이동 없음) — 상단 UserInfo_01 초상 = HeroView(내 플레이어 CharacterMaker) · «25 / 55» 슬라이더 자리 = 전투력 · ResourceBar_Group = 골드·보석 · 챕터 제목(«Battle 1» 자리) · START · 하단 탭. ChatBox 만 끈다",
     "ui.itemDetail": "장비 세부 팝업 (Character_Hero_Item_Detail_01) — 등급 배지 · 아이콘 · 이름 · 슬롯 Lv 바 · 기여/옵션 목록 · 장착/해제/슬롯 강화",
     "ui.shopChest": "상점 뽑기 상자 칸 (ListItem_ShopChest) — 상자 그림 chest.* · 확률/천장 문구 · 1회/10회",
     "ui.equipment": "장비 탭 (주인 지정 Character_Hero_Equipment) — 슬롯 6 · 공/체/실 · 인벤 격자 · 하단 합성/상점",
     "ui.bossWarn": "보스 경고 띠 (Play_Warning_Boss 의 Panel_Warning 만 떼어 쓴다)",
     "ui.card": "특전 카드 행(ListItem_StageBuff_02) — 등급별로 CardFrame_04_* / ItemFrame_04_* 색 교체",
     "ui.getItem": "보상 칸(아이콘+수량)",
-    "ui.resourceBar": "상단 재화 바(골드·젬) — HUD/로비",
+    "ui.resourceBar": "상단 재화 바(골드·젬) — HUD · 로비는 Lobby_Default 안에 든 인스턴스를 그대로 쓴다",
     "ui.buffSlot": "HUD 왼쪽 버프 아이콘 칸",
     "ui.toast": "토스트",
     "ui.sliderRed": "HP 바 (Slider_02 — Slider_01 은 fill 스프라이트 GUID 가 깨져 있어 안 쓴다)",
@@ -563,6 +563,7 @@
     "env.autumn.Birch_Yellow_02": "«DemoScene_Autumn» 소품 — tools/gen_maps.py 가 씬 배치를 그대로 MapLayouts.cs 로 굽는다 (이 테마 소품 18종 · 인스턴스 73개)",
     "env.deepForest.DeepForest_Flower_02": "«DemoScene_DeepForest» 소품 — tools/gen_maps.py 가 씬 배치를 그대로 MapLayouts.cs 로 굽는다 (이 테마 소품 39종 · 인스턴스 104개)",
     "env.forest.Forest_Flower_01": "«DemoScene_Forest» 소품 — tools/gen_maps.py 가 씬 배치를 그대로 MapLayouts.cs 로 굽는다 (이 테마 소품 33종 · 인스턴스 99개)",
-    "env.desert.Desert_Dune": "«DemoScene_Desert» 소품 — tools/gen_maps.py 가 씬 배치를 그대로 MapLayouts.cs 로 굽는다 (이 테마 소품 22종 · 인스턴스 53개)"
+    "env.desert.Desert_Dune": "«DemoScene_Desert» 소품 — tools/gen_maps.py 가 씬 배치를 그대로 MapLayouts.cs 로 굽는다 (이 테마 소품 22종 · 인스턴스 53개)",
+    "cm.character": "CharacterMaker Character 프리팹 — 전투의 플레이어·적(BattleWorld.MakeChar) 과 UI 초상(HeroView · RenderTexture 카메라 · 레이어 30) 이 같은 프리팹을 쓴다"
   }
 }

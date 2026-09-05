@@ -14,7 +14,7 @@ namespace KkomaKnight.Game
     public sealed class GearScreen : GameScreen
     {
         public override string Name => "gear";
-        RectTransform _rt; Transform _slots, _content; Text _power, _even, _atk, _hp, _sh, _fuseTxt; TopBar _top;
+        RectTransform _rt; Transform _slots, _content; Text _power, _even, _atk, _hp, _sh, _fuseTxt;
         static readonly string[] GridOrder = { "weapon", "helm", "neck", "glove", "armor", "boot" };   // 2열 격자 행 우선 = 왼쪽열/오른쪽열 (GEAR_COL)
 
         protected override void Build()
@@ -76,7 +76,6 @@ namespace KkomaKnight.Game
             }
             UiKit.Hide(_rt, "Bottom");   // 표 ③ 에는 하단 버튼줄이 없다 — 탭바(⑧)와 액션바(Forge)만
             var fuse = UiKit.Button(Root, "ui.btnOrange", "합성", () => App.ShowScreen("forge"), Layout.GearForgeBtn); _fuseTxt = UiKit.ButtonText(fuse);
-            _top = TopBar.Attach(Root, App);
             NavBar.Attach(this, Root, "gear");
         }
 
@@ -118,7 +117,6 @@ namespace KkomaKnight.Game
             // 합성 버튼
             var fkeys = GearUi.FusableKeys(S);
             if (_fuseTxt != null) _fuseTxt.text = fkeys.Count > 0 ? $"합성 ({fkeys.Count}) !" : "합성";
-            _top?.Refresh(App);
             // 인벤 격자
             if (_content != null)
             {
