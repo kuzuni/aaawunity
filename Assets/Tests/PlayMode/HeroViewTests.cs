@@ -90,8 +90,9 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("HeroView");
 
             app.StartBattle(1);                                 // 전투 진입 — 월드 카메라는 HeroView 레이어를 안 본다
+            // ⚠ 월드(메인) 카메라는 수동 Render() 하지 않는다 — 배치 모드에서 화면 타깃 카메라의 수동 렌더는 URP 최종 블릿 크기 불일치 에러(BlitFinalToBackBuffer …)를 스스로 만든다(CI #34 · T11 이 제거)
             float t1 = Time.realtimeSinceStartup;
-            while (Time.realtimeSinceStartup - t1 < 1.0f) { if (app.WorldCamera != null) app.WorldCamera.Render(); yield return null; }
+            while (Time.realtimeSinceStartup - t1 < 1.0f) yield return null;
             Assert.AreEqual("battle", app.Current.Name);
             if (app.WorldCamera != null) Assert.AreEqual(0, app.WorldCamera.cullingMask & (1 << HeroView.Layer), "전투 카메라는 HeroView 레이어를 보면 안 된다");
             _log.AssertNoRed("HeroView");

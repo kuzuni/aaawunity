@@ -70,14 +70,17 @@ namespace KkomaKnight.Tests.Play
             yield return Frames(3);
             _log.AssertNoRed("종료(App·캔버스 파괴 뒤)");
         }
-        /// <summary>n 프레임 — 매 프레임 살아 있는 HeroView 카메라·월드 카메라를 강제로 그린다(배치 모드에서도 URP 2D 패스가 돈다).</summary>
+        /// <summary>
+        /// n 프레임 — 매 프레임 살아 있는 HeroView 카메라(RenderTexture 타깃)를 강제로 그린다(배치 모드에서도 URP 2D 패스가 돈다).
+        /// ⚠ 메인(월드) 카메라는 수동으로 <c>Render()</c> 하지 않는다 — 배치 모드에서 화면 타깃 카메라를 수동 렌더하면 URP 최종 블릿이
+        /// «BlitFinalToBackBuffer/Draw UIToolkit/uGUI Overlay: The dimensions … do not match RenderPass specifications (461×578) vs (640×480)» 에러를 스스로 만든다(CI #34 · 도구 오탐).
+        /// </summary>
         IEnumerator Frames(int n)
         {
             for (int i = 0; i < n; i++)
             {
                 foreach (var hv in UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
                     if (hv != null && hv.Cam != null && hv.Cam.isActiveAndEnabled) hv.Cam.Render();
-                if (_app != null && _app.WorldCamera != null && _app.WorldCamera.isActiveAndEnabled) _app.WorldCamera.Render();
                 yield return null;
             }
         }
