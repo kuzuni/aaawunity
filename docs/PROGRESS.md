@@ -11,7 +11,7 @@
 | T3 | 레벨업 3택 + 악마의 거래 (유니티 팝업) + 전투 화면 | ✅ 완료 (코드·에셋 배선 — 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Game/BattleScreen·BattleWorld·Overlay·UiKit·Palette·Screens·App · Assets/KkomaKnight(catalog) | 주인 지정 GUI Pro 데모 프리팹으로 팝업 6종 · CharacterMaker/Environment/CFXR 로 전투 월드 · 팝업 중 시간 정지 |
 | T4 | 로비 · 장비 · 강화 · 슬롯 · 뽑기 상자 3종 | ✅ 완료 (코드·에셋 배선 — 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Game/GearScreen·GearUi·ForgeScreen·ShopScreen·Screens(로비) | 자동 장착 없음 · 상자 3종(gacha.json) · 세부 팝업 = Character_Hero_Item_Detail_01 · 결과 = Shop_Chest_Open |
 | T5 | UI 를 docs/ref 레이아웃에 맞추기 | ✅ 완료 (배치 상수 = 표 · 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Core/Layout · Game/* 배치 · Tests/LayoutSpecTests | ref-layout ①~⑦ 표를 `Layout` 상수로 · 표 ↔ 상수 자동 대조 테스트 8개 · 60fps · 백그라운드 실행 · 주인 피드백 일괄(특전 카드/색/새로고침 · 공격 모션 · 발밑 체력바 · 간격 2배 · 맵 4종 순환) |
-| T6 | 로비 = Lobby_Default 그대로 (TopBar 폐기 · 캐릭터·전투력·골드·보석) | 대기 | — | Game/Screens(로비) · TopBar 삭제 | ROUTINE §2 T6 |
+| T6 | 로비 = Lobby_Default 그대로 (TopBar 폐기 · 캐릭터·전투력·골드·보석) | ✅ 완료 (`71e96bb` · 실물 확인은 WebGL 배포에서) | sess-2034-9487 / 워커 B | Game/Screens(로비) · HeroView(신규) · TopBar 삭제 | 프리팹 요소 이동 0 · 초상 = HeroView(RenderTexture) · «25/55» = 전투력 · dotnet 0/0 · 테스트 40/40 |
 | T7 | 장비 화면 = Character_Hero_Equipment 그대로 + 장착 외형 반영 + ListItem_EquipMent | 대기 | — | Game/GearScreen · GearUi · CharacterRig · BattleWorld(스킨) · HeroView(신규) | ROUTINE §2 T7 |
 | T8 | 대장간 정리 (인벤 전부 · 빨간 점 · 칸 비례) — T7 뒤 | 대기 | — | Game/ForgeScreen | ROUTINE §2 T8 |
 | T9 | 상점 = Shop_List 그대로 (상자 3 · 다이아 6 · 골드 3) + 뽑기 결과 = Shop_Chest_Open | 대기 | — | Game/ShopScreen · KkomaKnight/shop.json | ROUTINE §2 T9 |
@@ -178,6 +178,20 @@
 
 25. **상점 수치(주인 미지정)** — 다이아 6종의 **개수**·골드 3종의 **다이아 가격**. 기본값(`Assets/KkomaKnight/shop.json` · T9): 다이아 100·1,100·3,500·6,000·10,000·14,000 / 골드 1,000=다이아 30 · 3,000=80 · 10,000=250. 바꾸려면 숫자만.
 26. **장비 → 외형/아이콘 매핑(T7)** — 투구·무기·갑옷은 CharacterMaker 파츠(종류 × 등급 → 파츠 스프라이트 · `GearLook` 표 · `docs/assets-map.md`)로, 목걸이·장갑·신발은 그림이 없어 GUI Pro 아이콘 임시. 마음에 안 드는 파츠는 표의 한 줄로 바뀐다.
+
+### T6 완료 기록 (2026-09-05 · sess-2034-9487 · 워커 B)
+
+- **주인이 확인할 것 (한 줄)**: 로비가 Lobby_Default 데모 그대로인가 — 상단 바 맨 왼쪽 초상이 내 기사(움직이는 Idle)·그 옆 «전투력 N»·그 위 줄이 골드·보석 순인가 / «꼬마기사 키우기» 배너·오른쪽 상단 «장비» 버튼이 사라졌고 왼쪽 위 1개·오른쪽 위 2개 아이콘은 보이되 눌러도 아무 일 없는가 / 챕터 제목이 «Battle 1» 자리에 «챕터 N» 으로, 카드 양옆 ◀▶ 로 챕터가 바뀌는가.
+- 만든 것
+  - `Screens.cs`(LobbyScreen): 프리팹 안 요소의 Pct 재앵커링(T5)을 전부 걷어냄 — 자리 이동 0. 글자만 교체: UserInfo_01 `Text_UserName` = «꼬마기사» · `Text_GuildName` = «최고 챕터 N» · `Slider_Level_01` 의 «25 / 55» = **«전투력 N»**(`App.Power()` = GearScreen.BuildPower 와 같은 값 · 게이지는 꽉 채움) · Level 배지 = 최고 챕터 · `ResourceBar_Group` Coin/Gem = 골드·보석(GemStone 칸은 프리팹처럼 꺼진 채) · `Title_LineDeco_01_Blue` «Battle 1» = «챕터 N» · «Whisperwood» = 이번 챕터 맵 이름(가을 숲/깊은 숲/숲/사막 · `BattleWorld.Theme`) · START 그대로.
+  - 왼쪽 위(Button_Ticket·Button_ADRemove 겹침 = 아이콘 1개로 보임)·오른쪽 위(Button_Mission·Button_Inventory) 아이콘: 프리팹 그대로 보이고 클릭 없음 · 영문 라벨만 «티켓·광고 제거·미션·가방». 메뉴(≡) = 일시정지/설정 팝업(T10 이 Settings 그대로 로 다듬는다).
+  - `HeroView.cs`(신규 · T7 공용): 레이어 30 무대에 CharacterMaker Character 프리팹(Idle) + 그 레이어만 찍는 RenderTexture 카메라 → 호스트(초상 마스크) 안 RawImage. 월드 카메라 컬링 마스크에서 레이어 30 제외 · 화면이 꺼지면 무대도 꺼짐. **T7 훅 = `HeroView.PlayerSkin(App)`** — 지금은 기본 기사 파츠(전투 KnightSkin 과 동일) · T7 이 이 한 함수를 GearLook 로 바꾸면 로비·장비 화면이 같이 반영된다. 로비 `Refresh()` 가 매번 `SetSkin(PlayerSkin(App))` 을 부른다.
+  - `TopBar.cs` 파일 삭제 · GearScreen/ShopScreen 의 `TopBar.Attach/Refresh` 줄 제거(장비 화면 오른쪽 위 골드는 T7 · 상점 상단은 T9 가 Shop_List 그대로).
+  - catalog `_notes`(ui.lobby · cm.character · ui.resourceBar) 갱신 → `docs/assets-map.md` 재생성(새 키 없음 · AssetCatalog.asset 변화 없음).
+- «그대로» 원칙의 예외 2건(PROGRESS 기록 규약): ① 챕터 ◀▶ 는 프리팹에 없어 카드(SampleImage_Map) 양옆에 Button_01_Blue 2개를 뒀다(챕터 선택 기능 유지 — 다른 방법 원하면 한 줄). ② 데모 채팅 줄 ChatBox 는 끔(이 게임에 채팅이 없다 · 이전부터 꺼져 있던 요소).
+- 게이트: `dotnet build` 0/0 · `dotnet test` 40/40 · `gen_meta --check` · `gen_catalog --check`(419) · `check_data_sync` OK(aaaw `0707999`). Sim 시드 검증은 Core 를 안 건드려 생략.
+- 워커 메모: 이 실행 환경엔 dotnet 이 없고 dot.net 설치 스크립트 호스트가 막혀 있다 — `packages.microsoft.com/ubuntu/22.04/prod/pool/main` 의 .deb(dotnet-sdk-8.0 8.0.424 · runtime/hostfxr/host/targeting-pack 8.0.30 · aspnetcore 8.0.30 · netstandard 2.1) 를 받아 `dpkg -x` 로 `~/dotnet8` 에 풀고 `DOTNET_ROOT=~/dotnet8/usr/share/dotnet` 로 게이트를 돌렸다(NuGet 은 api.nuget.org 로 됨).
+- 한계: RenderTexture 초상은 에디터 없이 짠 것 — URP 2D 에서 알파 배경·카메라 맞춤(Bounds ×1.12)이 실물에서 어긋나면 `HeroView.Fit` 의 배율 한 줄.
 
 ## 주인 할 일
 
