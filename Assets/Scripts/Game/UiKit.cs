@@ -23,7 +23,7 @@ namespace KkomaKnight.Game
         static Sprite _round, _round8, _circle, _white;
         /// <summary>에디터 «도메인 리로드 끔»(EditorSettings · 플레이 진입 속도) 에서도 정적 상태가 새 판마다 깨끗하게.</summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { _round = _round8 = _circle = _white = null; DefaultFont = null; CharacterRig.TimeScale = 1f; }
+        static void ResetStatics() { _round = _round8 = _circle = _white = null; _staging = null; DefaultFont = null; CharacterRig.TimeScale = 1f; }
 
         public static Font FontOrBuiltin() => DefaultFont != null ? DefaultFont : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         static AssetCatalog Cat => App.I != null ? App.I.Assets : null;
@@ -196,16 +196,40 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 주인 에셋(GUI Pro) 프리팹 다루기 ─────────────────────────
-        /// <summary>카탈로그 프리팹을 parent 밑에 인스턴스화 + <see cref="Adopt"/>. 없으면 빈 RectTransform 을 준다(로그만).</summary>
+        /// <summary>
+        /// 카탈로그 프리팹을 parent 밑에 인스턴스화 + <see cref="Adopt"/>. 없으면 빈 RectTransform 을 준다(로그만).
+        /// ⚠ T15: 활성 부모 밑에 바로 Instantiate 하면 GUI Pro 데모 스크립트(<c>LayerLab.CasualGame.PanelView.OnEnable</c> · otherPanels 미할당)가
+        /// <see cref="Adopt"/> 가 지우기 전에 돌아 <c>UnassignedReferenceException</c>(빌드에선 NRE) 을 던진다 — 설정·세부·전투 팝업을 열 때마다 콘솔 빨간 줄(CI #36 PlayMode 3건).
+        /// 그래서 **비활성 대기 오브젝트** 밑에 먼저 만들어 데모 스크립트를 떼고(OnEnable 이 한 번도 안 돈다) 그 다음 parent 로 옮긴다.
+        /// </summary>
         public static GameObject Spawn(string prefabKey, Transform parent, bool adopt = true)
         {
             var prefab = Cat != null ? Cat.Prefab(prefabKey) : null;
             GameObject go;
             if (prefab == null) { go = new GameObject(prefabKey, typeof(RectTransform)); go.transform.SetParent(parent, false); return go; }
-            go = UnityEngine.Object.Instantiate(prefab, parent, false);
+            go = UnityEngine.Object.Instantiate(prefab, Staging(), false);
             go.name = prefabKey;
+            StripDemoScripts(go);
             if (adopt) Adopt(go);
+            go.transform.SetParent(parent, false);
             return go;
+        }
+        static GameObject _staging;
+        /// <summary>인스턴스화 전용 비활성 홀더(씬 루트 · 자식은 OnEnable/Awake 가 돌지 않는다). 씬이 바뀌어 파괴되면 다시 만든다.</summary>
+        static Transform Staging()
+        {
+            if (_staging == null) { _staging = new GameObject("UiKit.Staging", typeof(RectTransform)); _staging.SetActive(false); }
+            return _staging.transform;
+        }
+        /// <summary>GUI Pro 데모 스크립트(PanelView · PanelControl) 제거 — 프리팹이 활성화되기 전에 부른다(T15).</summary>
+        static void StripDemoScripts(GameObject root)
+        {
+            foreach (var pv in root.GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                if (pv == null) continue;
+                var tn = pv.GetType().FullName;
+                if (tn == "LayerLab.CasualGame.PanelView" || tn == "LayerLab.GUIScripts.PanelControl") UnityEngine.Object.DestroyImmediate(pv);
+            }
         }
         public static RectTransform SpawnRt(string prefabKey, Transform parent, Layout.R r)
         {
@@ -215,12 +239,7 @@ namespace KkomaKnight.Game
         /// <summary>인스턴스를 이 프로젝트 규칙에 맞춘다 — TMP → Text(Jua) · LayerLab 데모 스크립트 제거 · 이미지 raycast 끔.</summary>
         public static void Adopt(GameObject root)
         {
-            foreach (var pv in root.GetComponentsInChildren<MonoBehaviour>(true))
-            {
-                if (pv == null) continue;
-                var tn = pv.GetType().FullName;
-                if (tn == "LayerLab.CasualGame.PanelView" || tn == "LayerLab.GUIScripts.PanelControl") UnityEngine.Object.DestroyImmediate(pv);
-            }
+            StripDemoScripts(root);
             foreach (var tmp in root.GetComponentsInChildren<TMP_Text>(true)) ConvertTmp(tmp);
             foreach (var g in root.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
             var rt = root.transform as RectTransform; if (rt != null) rt.localScale = Vector3.one;
