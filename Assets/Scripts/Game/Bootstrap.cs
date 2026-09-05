@@ -20,7 +20,12 @@ namespace KkomaKnight.Game
         void Awake()
         {
             if (uiFont != null) UiKit.DefaultFont = uiFont;
-            Application.targetFrameRate = 60;
+            // 주인 지시(2026-09-05): 60fps · 백그라운드에서도 실행.
+            // vSync 를 끄지 않으면 targetFrameRate 가 무시된다(Android 기본 품질 Medium = vSync 1). WebGL 은 -1(브라우저 rAF = 화면 주사율 · 60Hz 에서 60fps)
+            // 가 유니티 권고 — 60 을 박으면 setTimeout 루프로 바뀌어 오히려 프레임이 고르지 않다.
+            QualitySettings.vSyncCount = 0;
+            Application.targetFrameRate = Application.platform == RuntimePlatform.WebGLPlayer ? -1 : 60;
+            Application.runInBackground = true;   // 창/탭 포커스를 잃어도 계속 돈다 (ProjectSettings runInBackground 도 1)
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
         }
 

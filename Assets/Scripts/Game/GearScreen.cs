@@ -14,7 +14,7 @@ namespace KkomaKnight.Game
     public sealed class GearScreen : GameScreen
     {
         public override string Name => "gear";
-        RectTransform _rt; Transform _slots, _content; Text _power, _even, _atk, _hp, _sh; Transform _fuseBtn;
+        RectTransform _rt; Transform _slots, _content; Text _power, _even, _atk, _hp, _sh, _fuseTxt; TopBar _top;
         static readonly string[] GridOrder = { "weapon", "helm", "neck", "glove", "armor", "boot" };   // 2열 격자 행 우선 = 왼쪽열/오른쪽열 (GEAR_COL)
 
         protected override void Build()
@@ -23,8 +23,19 @@ namespace KkomaKnight.Game
             UiKit.Hide(_rt, "Label_Tapered_01_Yellow", "Tab_02_BoxMenu_Icon", "Character");
             var title = UiKit.Find(_rt, "Title_LineDeco_02_s"); if (title != null) UiKit.SetText(title, "Text (TMP)", "장비", Palette.Ink, 56);
             var hero = UiKit.Icon(_rt, "Hero", "ui.battle"); UiKit.Pct(hero.rectTransform, Layout.GearHero.X + 5, Layout.GearHero.Y, Layout.GearHero.W - 10, Layout.GearHero.H - 5);
+            // 슬롯 6칸 — 프리팹의 격자 레이아웃 대신 표 ③ 좌/우 슬롯열(x8.5 / x77.5 · 피치 7.3 · 14×6.3)에 직접 앵커링
             _slots = UiKit.Find(_rt, "Group_Slot");
-            var mid1 = UiKit.Find(_rt, "Middle1");
+            if (_slots != null)
+            {
+                var grid0 = _slots.GetComponent<GridLayoutGroup>(); if (grid0 != null) grid0.enabled = false;
+                _slots.SetParent(Root, false); UiKit.Stretch((RectTransform)_slots);
+                for (int i = 0; i < _slots.childCount && i < GridOrder.Length; i++)
+                {
+                    var col = i % 2 == 0 ? Layout.GearSlotColL : Layout.GearSlotColR; int row = i / 2;
+                    UiKit.Pct((RectTransform)_slots.GetChild(i), col.X, col.Y + row * Layout.GearSlotPitch, Layout.GearSlot.W, Layout.GearSlot.H);
+                }
+            }
+            var mid1 = UiKit.Find(_rt, "Middle1"); if (mid1 != null) UiKit.Pct((RectTransform)mid1, Layout.GearStage);
             if (mid1 != null)
             {
                 _even = UiKit.SetText(mid1, "Text_Level", "", Palette.InkSoft, 30);
@@ -33,6 +44,10 @@ namespace KkomaKnight.Game
             var list = UiKit.Find(_rt, "Group_List");
             if (list != null && list.childCount >= 3)
             {
+                // 스탯 요약줄(3칸) — 표 ③ x10 y36.5 w79 h4 · 칸 3개 등간격
+                foreach (var lg in list.GetComponents<LayoutGroup>()) lg.enabled = false;
+                list.SetParent(Root, false); UiKit.Pct((RectTransform)list, Layout.GearStats);
+                for (int i = 0; i < 3; i++) UiKit.Pct((RectTransform)list.GetChild(i), i * 34f, 0, 32f, 100f);
                 _atk = UiKit.SetText(list.GetChild(0), "Text (TMP)", "0", Palette.InkSoft); UiKit.SetSprite(list.GetChild(0), "Icon", "pi.attack", Palette.InkSoft);
                 _hp = UiKit.SetText(list.GetChild(1), "Text (TMP)", "0", Palette.InkSoft); UiKit.SetSprite(list.GetChild(1), "Icon", "pi.heart", Palette.Red);
                 _sh = UiKit.SetText(list.GetChild(2), "Text (TMP)", "0", Palette.InkSoft); UiKit.SetSprite(list.GetChild(2), "Icon", "pi.shield", Palette.Sky);
@@ -41,22 +56,27 @@ namespace KkomaKnight.Game
             if (_content != null)
             {
                 UiKit.Clear(_content);
+                // 인벤 격자 — 표 ③ x3 y47.5 w94 h44.5 · 5열 · 칸 18.4×7.2 · 간격 0.6 · 행 피치 7.6 (프레임 % → px)
                 var grid = _content.GetComponent<GridLayoutGroup>();
-                if (grid != null) { float cellW = UiKit.FrameW * 0.94f / Layout.GearInvCols - 12; grid.cellSize = new Vector2(cellW, cellW); grid.spacing = new Vector2(12, 14); grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount; grid.constraintCount = Layout.GearInvCols; grid.childAlignment = TextAnchor.UpperCenter; }
-                var fit = _content.GetComponent<ContentSizeFitter>() ?? _content.gameObject.AddComponent<ContentSizeFitter>(); fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-                var sr = _rt.GetComponentInChildren<ScrollRect>(true); if (sr != null) { sr.horizontal = false; sr.movementType = ScrollRect.MovementType.Clamped; sr.scrollSensitivity = 40; var vp = sr.viewport != null ? sr.viewport.GetComponent<Image>() : null; if (vp != null) vp.raycastTarget = true; }
-            }
-            var bottom = UiKit.Find(_rt, "Bottom");
-            if (bottom != null)
-            {
-                var back = UiKit.Find(bottom, "ArrowIconButton_03_Back"); if (back != null) UiKit.Clickable(back, () => App.ShowScreen("lobby"));
-                var btns = UiKit.Find(bottom, "Group_Buttons");
-                if (btns != null && btns.childCount >= 2)
+                if (grid != null)
                 {
-                    _fuseBtn = btns.GetChild(0); UiKit.Clickable(_fuseBtn, () => App.ShowScreen("forge"));
-                    UiKit.SetText(btns.GetChild(1), "Text (TMP)", "상점"); UiKit.Clickable(btns.GetChild(1), () => App.ShowScreen("shop"));
+                    grid.cellSize = new Vector2(UiKit.FrameW * Layout.GearInvCellW / 100f, UiKit.FrameH * Layout.GearInvCellH / 100f);
+                    grid.spacing = new Vector2(UiKit.FrameW * Layout.GearInvGap / 100f, UiKit.FrameH * (Layout.GearInvRowPitch - Layout.GearInvCellH) / 100f);
+                    grid.padding = new RectOffset(0, 0, (int)(UiKit.FrameH * (Layout.GearInvCell.Y - Layout.GearInv.Y) / 100f), 0);
+                    grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount; grid.constraintCount = Layout.GearInvCols; grid.childAlignment = TextAnchor.UpperLeft;
+                }
+                var fit = _content.GetComponent<ContentSizeFitter>() ?? _content.gameObject.AddComponent<ContentSizeFitter>(); fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+                var sr = _rt.GetComponentInChildren<ScrollRect>(true);
+                if (sr != null)
+                {
+                    sr.horizontal = false; sr.movementType = ScrollRect.MovementType.Clamped; sr.scrollSensitivity = 40;
+                    var vp = sr.viewport != null ? sr.viewport.GetComponent<Image>() : null; if (vp != null) vp.raycastTarget = true;
+                    sr.transform.SetParent(Root, false); UiKit.Pct((RectTransform)sr.transform, Layout.GearInv);
                 }
             }
+            UiKit.Hide(_rt, "Bottom");   // 표 ③ 에는 하단 버튼줄이 없다 — 탭바(⑧)와 액션바(Forge)만
+            var fuse = UiKit.Button(Root, "ui.btnOrange", "합성", () => App.ShowScreen("forge"), Layout.GearForgeBtn); _fuseTxt = UiKit.ButtonText(fuse);
+            _top = TopBar.Attach(Root, App);
             NavBar.Attach(this, Root, "gear");
         }
 
@@ -97,7 +117,8 @@ namespace KkomaKnight.Game
             if (_even != null) _even.text = $"균등 보너스 +{bon}% — 최저 슬롯 Lv.{mn} " + (nextEven > D.Gear.SlotLvMax ? $"(슬롯 상한 Lv.{D.Gear.SlotLvMax} — 최대)" : $"(6슬롯 전부 Lv.{nextEven} 이면 +{bon + D.Gear.EvenStep * 100:0.#}%)");
             // 합성 버튼
             var fkeys = GearUi.FusableKeys(S);
-            if (_fuseBtn != null) UiKit.SetText(_fuseBtn, "Text (TMP)", fkeys.Count > 0 ? $"합성 ({fkeys.Count}) !" : "합성");
+            if (_fuseTxt != null) _fuseTxt.text = fkeys.Count > 0 ? $"합성 ({fkeys.Count}) !" : "합성";
+            _top?.Refresh(App);
             // 인벤 격자
             if (_content != null)
             {

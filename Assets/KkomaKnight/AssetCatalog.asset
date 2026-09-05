@@ -357,6 +357,136 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: dab5de02606244d79b7fc51fedf373d4, type: 3}
   - key: fr.titleSky
     sprite: {fileID: 21300000, guid: 615b1c33e14844a43a0866420a73b874, type: 3}
+  - key: cm.meleeB.helmet
+    sprite: {fileID: 21300000, guid: 6c996b7caf56a4e47b49f6217b135b8d, type: 3}
+  - key: env.autumn.field
+    sprite: {fileID: 21300000, guid: d3381ff01a981794dbd142ea7727c5f8, type: 3}
+  - key: env.autumn.road
+    sprite: {fileID: 21300000, guid: 8981b0f67968e10478825b35372cf717, type: 3}
+  - key: env.autumn.roadUp
+    sprite: {fileID: 21300000, guid: 32433a601e577ff48b87bcaa6f4b8238, type: 3}
+  - key: env.autumn.deco0
+    sprite: {fileID: 21300000, guid: d70de8f89e2d45a42984afd969ef31df, type: 3}
+  - key: env.autumn.deco1
+    sprite: {fileID: 21300000, guid: 3d693d727a4ecbd4e85448fe60cc630c, type: 3}
+  - key: env.autumn.big0
+    sprite: {fileID: 21300000, guid: 172264f016e663649bbf743f6efd0db0, type: 3}
+  - key: env.autumn.big1
+    sprite: {fileID: 21300000, guid: 07b8b164cf5403844ae3da29fb1a9404, type: 3}
+  - key: env.autumn.big2
+    sprite: {fileID: 21300000, guid: ae247b161e7da99468abfb5fac7bb545, type: 3}
+  - key: env.autumn.big3
+    sprite: {fileID: 21300000, guid: 72ca62082ad5c904ca885d84cd91e8ff, type: 3}
+  - key: env.autumn.big4
+    sprite: {fileID: 21300000, guid: dd10ab534afb4fa41875bea7f0150143, type: 3}
+  - key: env.autumn.mid0
+    sprite: {fileID: 21300000, guid: f067bd76916d39b4ca67fd05888d0cd7, type: 3}
+  - key: env.autumn.mid1
+    sprite: {fileID: 21300000, guid: 43ffaaa6ddb21e740838a8bfce941396, type: 3}
+  - key: env.autumn.small0
+    sprite: {fileID: 21300000, guid: daa4a3a86f96f1542ab7ce822547914d, type: 3}
+  - key: env.autumn.small1
+    sprite: {fileID: 21300000, guid: b130887dde5dfed45af656f9c02c654d, type: 3}
+  - key: env.autumn.small2
+    sprite: {fileID: 21300000, guid: 71a6ca1b66908f042986f10564e6a32d, type: 3}
+  - key: env.deepForest.field
+    sprite: {fileID: 21300000, guid: 26bc7704ee34f6047962f010f1fc774c, type: 3}
+  - key: env.deepForest.road
+    sprite: {fileID: 21300000, guid: 468c6b3f22c9ce147ba12109f4e390de, type: 3}
+  - key: env.deepForest.roadUp
+    sprite: {fileID: 21300000, guid: 4f0d6d0ca3aa8d244b6891829818daed, type: 3}
+  - key: env.deepForest.deco0
+    sprite: {fileID: 21300000, guid: c059b5ac1ffb50041844f3300e4fc31d, type: 3}
+  - key: env.deepForest.deco1
+    sprite: {fileID: 21300000, guid: 345bbbf21399bf74a9245fe65543a4ae, type: 3}
+  - key: env.deepForest.deco2
+    sprite: {fileID: 21300000, guid: 0752af18fc5fcae4cb7738b97b4b2b37, type: 3}
+  - key: env.deepForest.big0
+    sprite: {fileID: 21300000, guid: ec0e87c88e3eef046bfece935b6c8d24, type: 3}
+  - key: env.deepForest.big1
+    sprite: {fileID: 21300000, guid: 6f34043099cd39043968146b96a4a5c7, type: 3}
+  - key: env.deepForest.big2
+    sprite: {fileID: 21300000, guid: 087def4e9e2ecc74d86011413b2b4d30, type: 3}
+  - key: env.deepForest.big3
+    sprite: {fileID: 21300000, guid: a737ec99f4336de40a2357fe2bb5521c, type: 3}
+  - key: env.deepForest.big4
+    sprite: {fileID: 21300000, guid: 754fe0205d141b84da3ff492417a3ea0, type: 3}
+  - key: env.deepForest.mid0
+    sprite: {fileID: 21300000, guid: e8da70ae473404d4e9244418364e5e48, type: 3}
+  - key: env.deepForest.mid1
+    sprite: {fileID: 21300000, guid: 77ed84a8dc206fe459e41f8e5214d717, type: 3}
+  - key: env.deepForest.mid2
+    sprite: {fileID: 21300000, guid: 78dfe8bec2b1e3640b65325e0b42b703, type: 3}
+  - key: env.deepForest.small0
+    sprite: {fileID: 21300000, guid: 22f42b5b6b9980f40a06c480990a6b9a, type: 3}
+  - key: env.deepForest.small1
+    sprite: {fileID: 21300000, guid: c97d17e65114c0e439189c734b3aa155, type: 3}
+  - key: env.deepForest.small2
+    sprite: {fileID: 21300000, guid: ea666b9083945fd41a480b494da793d2, type: 3}
+  - key: env.forest.field
+    sprite: {fileID: 21300000, guid: 53ec88f52bc969f4f9e77b078e5aabdd, type: 3}
+  - key: env.forest.road
+    sprite: {fileID: 21300000, guid: 1244086878ea0e945bd879b5c5134bab, type: 3}
+  - key: env.forest.roadUp
+    sprite: {fileID: 21300000, guid: 40df0aef196c6474ba5dbb94cdc63cd1, type: 3}
+  - key: env.forest.deco0
+    sprite: {fileID: 21300000, guid: bf46a6b1904b8c44ea6a143d701b6429, type: 3}
+  - key: env.forest.deco1
+    sprite: {fileID: 21300000, guid: b8252091ca292ad47950c1b627617140, type: 3}
+  - key: env.forest.deco2
+    sprite: {fileID: 21300000, guid: fabdb9a5390eb104aaff3a4b9d836c09, type: 3}
+  - key: env.forest.big0
+    sprite: {fileID: 21300000, guid: 48a68e0cd85228b4ead7216331d45616, type: 3}
+  - key: env.forest.big1
+    sprite: {fileID: 21300000, guid: 551ed639f73b99043bd413629d8c115c, type: 3}
+  - key: env.forest.big2
+    sprite: {fileID: 21300000, guid: 536cf72b942d0cb4d9a004687f536002, type: 3}
+  - key: env.forest.big3
+    sprite: {fileID: 21300000, guid: 22d2cd90888d52b41b4ba0f99c981b52, type: 3}
+  - key: env.forest.mid0
+    sprite: {fileID: 21300000, guid: b68a7a04805d4634ba98ceeb1ec41700, type: 3}
+  - key: env.forest.mid1
+    sprite: {fileID: 21300000, guid: ce635900400bcc24fad3e3daad0ca6a6, type: 3}
+  - key: env.forest.mid2
+    sprite: {fileID: 21300000, guid: e18f44543b34ff845b1e9aa3d7136d60, type: 3}
+  - key: env.forest.small0
+    sprite: {fileID: 21300000, guid: 555991fdbf802c24ca9da61ba35c2578, type: 3}
+  - key: env.forest.small1
+    sprite: {fileID: 21300000, guid: 80b469f250f41e74eab58f33de28166e, type: 3}
+  - key: env.forest.small2
+    sprite: {fileID: 21300000, guid: 6b8d11e530739664eb4129b9044326ee, type: 3}
+  - key: env.desert.field
+    sprite: {fileID: 21300000, guid: b48c8acfefa82784d89230d88f0642c9, type: 3}
+  - key: env.desert.road
+    sprite: {fileID: 21300000, guid: b1407eb2933efda4abc53c1f60022a77, type: 3}
+  - key: env.desert.roadUp
+    sprite: {fileID: 21300000, guid: 37a5970a33da508469c5ce0b6b641d5f, type: 3}
+  - key: env.desert.deco0
+    sprite: {fileID: 21300000, guid: f9ebcfb357ce8da4eb03c637eea02513, type: 3}
+  - key: env.desert.deco1
+    sprite: {fileID: 21300000, guid: 7d7f286d601d6344fa3eefa29765b4a8, type: 3}
+  - key: env.desert.deco2
+    sprite: {fileID: 21300000, guid: 74ca0b363cd39de49a50aabda543413b, type: 3}
+  - key: env.desert.big0
+    sprite: {fileID: 21300000, guid: eddd2be0cd39e324195474c3f8636ea9, type: 3}
+  - key: env.desert.big1
+    sprite: {fileID: 21300000, guid: 2c7060b621317b742af20af80fe0399a, type: 3}
+  - key: env.desert.big2
+    sprite: {fileID: 21300000, guid: 05a35c6f5a6f2884ba0ae4b2a727b280, type: 3}
+  - key: env.desert.big3
+    sprite: {fileID: 21300000, guid: 490046566f680944e9002990ea86dc40, type: 3}
+  - key: env.desert.mid0
+    sprite: {fileID: 21300000, guid: 43f029703fd39d441b97efdb3b5aecf9, type: 3}
+  - key: env.desert.mid1
+    sprite: {fileID: 21300000, guid: bdb6c0f77865a2d4aa21fa8f0fcf37fa, type: 3}
+  - key: env.desert.mid2
+    sprite: {fileID: 21300000, guid: c65b854ff67975d49af28b5a7f41fea0, type: 3}
+  - key: env.desert.small0
+    sprite: {fileID: 21300000, guid: 555991fdbf802c24ca9da61ba35c2578, type: 3}
+  - key: env.desert.small1
+    sprite: {fileID: 21300000, guid: a8b5e9abfaed9914c9e158ac6dcd298d, type: 3}
+  - key: env.desert.small2
+    sprite: {fileID: 21300000, guid: 98e1e0f44ea5f7445be9f04e01cf6f35, type: 3}
   prefabs:
   - key: cm.character
     prefab: {fileID: 1824668350962886144, guid: d6c3c650b0b379149a826b54b40b4571, type: 3}

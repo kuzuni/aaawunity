@@ -565,6 +565,17 @@ namespace KkomaKnight.Core
             Pending = null;
             if (PendingLevelUps > 0 && !Over) { PendingLevelUps--; OpenLevelUp(); }
         }
+        /// <summary>레벨업 3택 새로고침 — 같은 굴림(<see cref="Perks.Offer"/>)을 다시 한다. 팝업 1회당 <see cref="EngineConst.RerollPerLevelUp"/> 번. 성공하면 true.</summary>
+        public bool RerollOffer()
+        {
+            if (Pending == null || Pending.Kind != PendingKind.LevelUp) return false;
+            if (Pending.Rerolls >= EngineConst.RerollPerLevelUp) return false;
+            var offer = Perks.Offer(D, Taken, P.Has("p_nobleEye"), Rng);
+            if (offer.Count == 0) return false;
+            Pending.Offer = offer; Pending.Rerolls++;
+            return true;
+        }
+        public int RerollsLeft => Pending != null && Pending.Kind == PendingKind.LevelUp ? Math.Max(0, EngineConst.RerollPerLevelUp - Pending.Rerolls) : 0;
         public void ResolveLevelUp(PerkDef pick)
         {
             if (Pending == null || Pending.Kind != PendingKind.LevelUp) return;

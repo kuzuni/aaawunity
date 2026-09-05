@@ -32,6 +32,12 @@ namespace KkomaKnight.Game
         Animator _anim; SpriteRenderer[] _renderers; readonly Dictionary<SpriteRenderer, int> _baseOrder = new Dictionary<SpriteRenderer, int>();
         string _current; System.Action _onAttackHit;
         Material[] _origMats;
+        float _attackLen = 1.8333334f, _attackHitAt = 1.0f;   // Attack.anim 길이 · OnAttackHit 이벤트 시각(클립에서 읽고, 못 읽으면 조사값)
+        float _speedBase = 1f, _attackEndClock = -1f, _attackHitClock = -1f, _clock;
+        /// <summary>월드 시간 배율(배속 x2 등) — <see cref="Tick"/> 이 매 프레임 넘겨준다.</summary>
+        public static float TimeScale = 1f;
+        /// <summary>Attack.anim 의 OnAttackHit 이벤트가 온 횟수 — 연출 지연 큐가 «칼이 내려온 순간» 을 알아보는 데 쓴다.</summary>
+        public int HitCount { get; private set; }
 
         public static CharacterRig Attach(GameObject instance, System.Action onAttackHit = null)
         {
@@ -40,12 +46,38 @@ namespace KkomaKnight.Game
             rig._renderers = instance.GetComponentsInChildren<SpriteRenderer>(true);
             foreach (var r in rig._renderers) rig._baseOrder[r] = r.sortingOrder;
             rig._onAttackHit = onAttackHit;
+            if (rig._anim != null && rig._anim.runtimeAnimatorController != null)
+                foreach (var c in rig._anim.runtimeAnimatorController.animationClips)
+                    if (c != null && c.name == Attack)
+                    {
+                        rig._attackLen = Mathf.Max(0.1f, c.length);
+                        foreach (var e in c.events) if (e.functionName == nameof(OnAttackHit)) rig._attackHitAt = e.time;
+                    }
             return rig;
         }
 
         // Attack.anim 의 AnimationEvent (functionName OnAttackHit · time 1.0) — 루트의 컴포넌트가 받는다
-        public void OnAttackHit() { _onAttackHit?.Invoke(); }
-        public void OnSkillHit() { _onAttackHit?.Invoke(); }
+        public void OnAttackHit() { HitCount++; _onAttackHit?.Invoke(); }
+        public void OnSkillHit() { HitCount++; _onAttackHit?.Invoke(); }
+
+        /// <summary>
+        /// 공격 모션 — 클립을 끊지 않고 끝까지 돌린다(주인 지시 2026-09-05). 다음 공격까지의 간격(interval·초)에 클립(1.83초)이 안 들어가면
+        /// 그만큼 빨리 돌린다(최대 ×3 · 그래도 넘치면 회수 동작만 다음 공격에 잘린다). 데미지 연출은 <see cref="HitDelay"/> 뒤(칼이 내려오는 순간)에 붙인다.
+        /// </summary>
+        public void PlayAttack(double interval)
+        {
+            if (_anim == null) return;
+            float speed = Mathf.Clamp(_attackLen / Mathf.Max(0.2f, (float)interval), 1f, 3f);
+            _speedBase = speed; _anim.speed = speed * TimeScale;
+            _current = Attack; _anim.Play(Attack, 0, 0f);
+            _attackEndClock = _clock + _attackLen / speed; _attackHitClock = _clock + _attackHitAt / speed;
+        }
+        /// <summary>지금 공격 클립이 아직 끝나지 않았나 — 이 동안 Idle/Walk 로 바꾸지 않는다.</summary>
+        public bool Attacking => _current == Attack && _clock < _attackEndClock;
+        /// <summary>마지막 PlayAttack 기준, 칼이 내려오는 순간까지 남은 월드 초(음수면 지났다).</summary>
+        public float HitDelay => _attackHitClock - _clock;
+        /// <summary>매 프레임(월드 dt · 배속 반영) — 내부 시계와 애니 속도 배율.</summary>
+        public void Tick(float dt) { _clock += dt; if (_anim != null) _anim.speed = _speedBase * TimeScale; }
 
         SpriteRenderer Sr(string path) { var t = transform.Find(path); return t != null ? t.GetComponent<SpriteRenderer>() : null; }
         void SetSprite(string path, string key)
@@ -75,7 +107,7 @@ namespace KkomaKnight.Game
         {
             if (_anim == null) return;
             if (!restart && _current == state) return;
-            _current = state;
+            _current = state; _speedBase = 1f; _anim.speed = TimeScale; _attackEndClock = -1f;
             _anim.Play(state, 0, 0f);
         }
         public string Current => _current;

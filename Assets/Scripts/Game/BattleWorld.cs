@@ -8,10 +8,12 @@ namespace KkomaKnight.Game
 {
     /// <summary>
     /// 전투 월드 그리기 — 엔진(<see cref="BattleState"/>)은 숫자만 갖고, 여기서 주인 에셋으로 보여준다.
-    /// ● 좌표: sim.js 월드 x(레이아웃 px) → 프레임 레이아웃 x = (worldX − 플레이어 x) × zoom + playerX×540 (ui.json camera) → <see cref="WorldCam.ToWorld"/>.
-    ///   세로는 ref-layout ② 의 % (지면 띠 30~51% · 발 줄 40%).
-    /// ● 캐릭터: Layer Lab CharacterMaker Character.prefab + <see cref="CharacterRig"/> (스킨은 카탈로그 cm.*).
-    /// ● 배경·노드: Layer Lab Environment 스프라이트(env.*) · 이펙트: CFXR(fx.*) · 피격 플래시: AllIn1 HitFlash 머티리얼.
+    /// ● 좌표: sim.js 월드 x(레이아웃 px) → 프레임 레이아웃 x = 플레이어 x + zoom × <see cref="Spread"/>(worldX − 플레이어 x) → <see cref="WorldCam.ToWorld"/>.
+    ///   Spread 는 멈춤 거리(stopDistance) 안은 1배, 그 밖은 <see cref="Layout.WorldSpacing"/>(2배)로 벌린다(주인 지시 «적·노드 간격 2배» · 엔진 좌표 불변).
+    ///   세로는 ref-layout ② 의 % (발 줄 40%).
+    /// ● 맵: Layer Lab Environment 데모 씬 4종(Autumn·DeepForest·Forest·Desert)을 챕터 (n−1)%4 로 순환 — 평면색 바닥 + 길 띠 + 물결 경계 + 풀·꽃 + 나무·덤불·돌 (<see cref="Theme"/>).
+    /// ● 캐릭터: CharacterMaker Character.prefab + <see cref="CharacterRig"/>. 공격 모션은 끊지 않고, 데미지 연출(팝·플래시·체력바·사망)은 «칼이 내려오는 순간»(Attack.anim OnAttackHit)까지 미룬다(<see cref="Strike"/>).
+    /// ● 체력바는 발밑(HpLabelY 줄) · 플레이어 실드바(파랑)는 그 아래 (주인 지시 2026-09-05).
     /// </summary>
     public sealed class BattleWorld
     {
@@ -20,42 +22,83 @@ namespace KkomaKnight.Game
         readonly float _zoom; readonly float _playerX;             // ui.json camera.zoom · playerX(프레임 폭 비율)
         const float CharBaseHeight = 0.85f;                          // Character.prefab 스케일 1 의 키(유니티 단위 · 조사값)
         const float FootY = Layout.PlayerFootY / 100f;
+        const float RoadTopY = 0.35f, RoadBotY = 0.47f;              // 길 띠(프레임 비율) — 발 줄 40% 를 품는다
+        const float SpreadRamp = 150f;                               // 1배 → WorldSpacing 배로 부드럽게 넘어가는 월드 px 구간
 
         // 플레이어
-        CharacterRig _player; SpriteRenderer _pBarBg, _pBarFill; double _pStrikePrev; bool _pDeadShown;
+        CharacterRig _player; SpriteRenderer _pBarBg, _pBarFill, _pShBg, _pShFill; double _pStrikeTick; bool _pDeadShown; EnemyState _pTarget;
+        int _holdPlayer;                                             // 아직 «칼이 안 내려온» 적 공격 수 — 0 일 때만 표시 체력을 엔진 값으로 맞춘다
+        public double ShownHp { get; private set; } public double ShownSh { get; private set; }
         // 적
-        sealed class EnemyView { public EnemyState E; public CharacterRig Rig; public SpriteRenderer BarBg, BarFill; public double StrikePrev; public float DieT = -1; public GameObject StunFx; }
+        sealed class EnemyView { public EnemyState E; public CharacterRig Rig; public SpriteRenderer BarBg, BarFill; public double StrikeTick; public float DieT = -1; public GameObject StunFx; public double ShownHp; public int Hold; }
         readonly Dictionary<EnemyState, EnemyView> _enemies = new Dictionary<EnemyState, EnemyView>();
+        // 연출 지연 — 공격 모션의 타격 순간까지 묶어 두는 이벤트
+        sealed class Strike { public CharacterRig Rig; public int HitCount0; public float At; public EnemyState Target; public bool OnPlayer; public readonly List<BattleEvent> Evs = new List<BattleEvent>(); }
+        readonly List<Strike> _strikes = new List<Strike>();
+        Strike _pStrike; readonly Dictionary<EnemyState, Strike> _eStrikes = new Dictionary<EnemyState, Strike>();
+        float _clock;
+        /// <summary>타격 연출이 아직 남아 있나 — 화면(BattleScreen)은 이 동안 팝업(레벨업·사망)을 열지 않고 기다린다.</summary>
+        public bool Busy => _strikes.Count > 0;
+        /// <summary>배속(x1/x2) — 애니 속도와 지연 시계에 함께 건다.</summary>
+        public float TimeScale = 1f;
         // 투사체
         readonly Dictionary<Projectile, GameObject> _projs = new Dictionary<Projectile, GameObject>();
         readonly Dictionary<EnemyArrow, GameObject> _arrows = new Dictionary<EnemyArrow, GameObject>();
         // 노드 · 배경
-        sealed class NodeView { public BattleNode N; public GameObject Go; public GameObject FxGo; public bool Dimmed; public bool Warned; }
+        sealed class NodeView { public BattleNode N; public GameObject Go; public GameObject FxGo; public bool Dimmed; }
         readonly List<NodeView> _nodes = new List<NodeView>();
-        readonly List<SpriteRenderer> _fieldTiles = new List<SpriteRenderer>(), _roadTiles = new List<SpriteRenderer>(), _trimTiles = new List<SpriteRenderer>();
+        readonly List<SpriteRenderer> _fieldTiles = new List<SpriteRenderer>(), _roadTiles = new List<SpriteRenderer>();
         sealed class Prop { public SpriteRenderer Sr; public double WorldX; public float YFrac; }
         readonly List<Prop> _props = new List<Prop>();
         float _tileW; int _tileCols;
         double _goldPrev; Vector3 _lastKillPos;
+        readonly Theme _theme;
+
+        /// <summary>데모 씬 한 벌 — 카탈로그 키 접두 env.&lt;name&gt;.* (gen_catalog 가 만든 키 · 개수는 catalog.json 과 같아야 한다).</summary>
+        public sealed class Theme
+        {
+            public string Name; public int Deco, Big, Mid, Small;
+            public string Field => "env." + Name + ".field"; public string Road => "env." + Name + ".road"; public string RoadUp => "env." + Name + ".roadUp";
+            public string DecoKey(int i) => "env." + Name + ".deco" + i; public string BigKey(int i) => "env." + Name + ".big" + i; public string MidKey(int i) => "env." + Name + ".mid" + i; public string SmallKey(int i) => "env." + Name + ".small" + i;
+            public static readonly Theme[] All =
+            {
+                new Theme { Name = "autumn", Deco = 2, Big = 5, Mid = 2, Small = 3 },
+                new Theme { Name = "deepForest", Deco = 3, Big = 5, Mid = 3, Small = 3 },
+                new Theme { Name = "forest", Deco = 3, Big = 4, Mid = 3, Small = 3 },
+                new Theme { Name = "desert", Deco = 3, Big = 4, Mid = 3, Small = 3 },
+            };
+            /// <summary>챕터 → 테마: 1=Autumn 2=DeepForest 3=Forest 4=Desert, 5=Autumn … (주인 지시 «4개 순환»).</summary>
+            public static Theme ForChapter(int chapter) => All[((chapter - 1) % All.Length + All.Length) % All.Length];
+        }
 
         public BattleWorld(App app, BattleState g, RectTransform popsLayer)
         {
             _app = app; G = g; D = g.D; _pops = popsLayer;
             _zoom = (float)D.Ui.CameraZoom; _playerX = (float)(D.Ui.PlayerX * WorldCam.LayoutW);
+            _theme = Theme.ForChapter(g.Chapter);
             _root = new GameObject("World").transform;
             BuildGround(); BuildProps(); BuildNodes(); BuildPlayer();
-            _goldPrev = G.Gold;
+            _goldPrev = G.Gold; ShownHp = G.P.Hp; ShownSh = G.P.Sh;
         }
         public void Dispose() { if (_root != null) Object.Destroy(_root.gameObject); }
 
         // ───────────────────────── 좌표 ─────────────────────────
-        float LayoutX(double worldX) => (float)((worldX - G.P.WorldX) * _zoom) + _playerX;
+        /// <summary>플레이어 기준 월드 거리 → 화면용 거리. 멈춤 거리 안(칼 닿는 거리)은 1배, SpreadRamp 를 지나며 WorldSpacing 배로. 뒤(음수)는 1배.</summary>
+        float Spread(double d)
+        {
+            float stop = (float)G.C.StopDistance, mul = Layout.WorldSpacing;
+            if (d <= stop) return (float)d;
+            float u = (float)d - stop;
+            if (u <= SpreadRamp) return stop + u + (mul - 1f) * u * u / (2f * SpreadRamp);
+            return stop + SpreadRamp + (mul - 1f) * SpreadRamp / 2f + mul * (u - SpreadRamp);
+        }
+        float LayoutX(double worldX) => Spread(worldX - G.P.WorldX) * _zoom + _playerX;
         Vector3 Pos(double worldX, float yFrac, float z = 0) => WorldCam.ToWorld(LayoutX(worldX), yFrac, z);
-        Vector2 FramePos(double worldX, float yFrac) => new Vector2(LayoutX(worldX) * (UiKit.FrameW / WorldCam.LayoutW), (1f - yFrac) * UiKit.FrameH);
         static float ScaleForHeightPct(float pct) => WorldCam.PctH(pct) / CharBaseHeight;
         static int SortBase(float layoutX) => 100 + Mathf.Clamp((int)((WorldCam.LayoutW + 200 - layoutX) / 6f), 0, 180);
+        static bool OnScreen(Vector3 p, float margin = 4.5f) => p.x > -margin && p.x < margin;
 
-        // ───────────────────────── 배경 ─────────────────────────
+        // ───────────────────────── 배경 (데모 씬 구성: 평면 바닥 · 길 띠 · 물결 경계 · 풀꽃 · 소품) ─────────────────────────
         SpriteRenderer Sprite(string key, Transform parent, int order, string name = null)
         {
             var go = new GameObject(name ?? key); go.transform.SetParent(parent, false);
@@ -65,31 +108,28 @@ namespace KkomaKnight.Game
         void BuildGround()
         {
             var ground = new GameObject("Ground").transform; ground.SetParent(_root, false);
-            float bandTop = Layout.GroundBand.Y / 100f, bandBot = (Layout.GroundBand.Y + Layout.GroundBand.H) / 100f;
-            float bandH = WorldCam.PctH(Layout.GroundBand.H);
-            var field = _app.Assets.Sprite("env.field");
-            float tile = field != null ? field.bounds.size.x : 1.28f;
-            int rows = Mathf.Max(1, Mathf.RoundToInt(bandH / tile));
-            float scale = bandH / (rows * tile); _tileW = tile * scale;
+            var field = _app.Assets.Sprite(_theme.Field) ?? _app.Assets.Sprite("env.field");
+            _tileW = field != null ? field.bounds.size.x : 1.28f;
             _tileCols = Mathf.CeilToInt(WorldCam.LayoutW / WorldCam.PPU / _tileW) + 2;
-            // 지면 띠 + 그 아래(HUD 패널 뒤)까지 같은 타일을 깐다 — 아래쪽은 어둡게
-            int belowRows = Mathf.CeilToInt(WorldCam.PctH(100 - Layout.GroundBand.Y - Layout.GroundBand.H) / _tileW) + 1;
-            for (int r = 0; r < rows + belowRows; r++)
+            // 바닥은 화면 전체(데모 씬처럼) — 지면 띠 아래(HUD 패널 뒤)는 조금 어둡게
+            float top = WorldCam.ToWorld(0, 0).y; int rows = Mathf.CeilToInt(WorldCam.LayoutH / WorldCam.PPU / _tileW) + 1;
+            float bandBotY = WorldCam.ToWorld(0, (Layout.GroundBand.Y + Layout.GroundBand.H) / 100f).y;
+            for (int r = 0; r < rows; r++)
                 for (int c = 0; c < _tileCols; c++)
                 {
-                    var sr = Sprite("env.field", ground, -20, "field"); sr.transform.localScale = Vector3.one * scale;
-                    float y = WorldCam.ToWorld(0, bandTop).y - (r + 0.5f) * _tileW;
-                    sr.transform.position = new Vector3(0, y, 0); if (r >= rows) sr.color = new Color(0.55f, 0.6f, 0.5f);
+                    var sr = Sprite(_theme.Field, ground, -20, "field"); if (sr.sprite == null) sr.sprite = field;
+                    float y = top - (r + 0.5f) * _tileW;
+                    sr.transform.position = new Vector3(0, y, 0); if (y + _tileW * 0.5f < bandBotY) sr.color = new Color(0.62f, 0.62f, 0.58f);
                     _fieldTiles.Add(sr);
                 }
-            // 길(발 줄) + 위 경계 장식
-            var road = _app.Assets.Sprite("env.road"); float roadScale = road != null ? _tileW / road.bounds.size.x : scale;
+            // 길 띠 — 발 줄(40%)을 품는 35~47% (데모 씬은 화면 1/4 높이의 평면색 띠)
+            var road = _app.Assets.Sprite(_theme.Road) ?? _app.Assets.Sprite("env.road");
+            float roadH = WorldCam.PctH((RoadBotY - RoadTopY) * 100f); float roadTile = road != null ? road.bounds.size.x : 1.28f;
+            float roadScale = roadH / roadTile; float roadY = WorldCam.ToWorld(0, (RoadTopY + RoadBotY) / 2f).y;
             for (int c = 0; c < _tileCols; c++)
             {
-                var sr = Sprite("env.road", ground, -18, "road"); sr.transform.localScale = Vector3.one * roadScale;
-                sr.transform.position = new Vector3(0, WorldCam.ToWorld(0, FootY).y - _tileW * 0.15f, 0); _roadTiles.Add(sr);
-                var tr = Sprite("env.roadUp", ground, -17, "roadUp"); tr.transform.localScale = Vector3.one * roadScale * 0.5f;
-                tr.transform.position = new Vector3(0, WorldCam.ToWorld(0, FootY).y - _tileW * 0.15f + _tileW * 0.5f, 0); _trimTiles.Add(tr);
+                var sr = Sprite(_theme.Road, ground, -18, "road"); if (sr.sprite == null) sr.sprite = road;
+                sr.transform.localScale = Vector3.one * roadScale; sr.transform.position = new Vector3(0, roadY, 0); _roadTiles.Add(sr);
             }
         }
         void ScrollGround()
@@ -97,26 +137,61 @@ namespace KkomaKnight.Game
             float scroll = (float)(G.P.WorldX * _zoom / WorldCam.PPU);
             float left = WorldCam.ToWorld(0, 0).x - _tileW;
             float off = Mathf.Repeat(scroll, _tileW);
-            int cols = _tileCols;
-            for (int i = 0; i < _fieldTiles.Count; i++) { var p = _fieldTiles[i].transform.position; p.x = left + (i % cols) * _tileW - off + _tileW * 0.5f; _fieldTiles[i].transform.position = p; }
-            for (int i = 0; i < _roadTiles.Count; i++) { var p = _roadTiles[i].transform.position; p.x = left + i * _tileW - off + _tileW * 0.5f; _roadTiles[i].transform.position = p; }
-            for (int i = 0; i < _trimTiles.Count; i++) { var p = _trimTiles[i].transform.position; p.x = left + i * _tileW - off + _tileW * 0.5f; _trimTiles[i].transform.position = p; }
+            for (int i = 0; i < _fieldTiles.Count; i++) { var p = _fieldTiles[i].transform.position; p.x = left + (i % _tileCols) * _tileW - off + _tileW * 0.5f; _fieldTiles[i].transform.position = p; }
+            float rw = _roadTiles.Count > 0 && _roadTiles[0].sprite != null ? _roadTiles[0].sprite.bounds.size.x * _roadTiles[0].transform.localScale.x : _tileW;
+            float roff = Mathf.Repeat(scroll, rw);
+            for (int i = 0; i < _roadTiles.Count; i++) { var p = _roadTiles[i].transform.position; p.x = left + i * rw - roff + rw * 0.5f; _roadTiles[i].transform.position = p; }
         }
+        Prop AddProp(Transform parent, string key, double worldX, float yFrac, float scale, int order, bool flip)
+        {
+            var sr = Sprite(key, parent, order, "prop"); sr.flipX = flip; sr.transform.localScale = Vector3.one * scale;
+            var p = new Prop { Sr = sr, WorldX = worldX, YFrac = yFrac }; _props.Add(p); return p;
+        }
+        float HeightOf(string key) { var s = _app.Assets.Sprite(key); return s != null ? s.bounds.size.y : 1f; }
+        float WidthOf(string key) { var s = _app.Assets.Sprite(key); return s != null ? s.bounds.size.x : 1f; }
         void BuildProps()
         {
             var props = new GameObject("Props").transform; props.SetParent(_root, false);
             double lastX = G.Nodes.Count > 0 ? G.Nodes[G.Nodes.Count - 1].X : 2000;
             var rng = new System.Random(G.Chapter * 7919);
-            string[] back = { "env.tree", "env.bush", "env.tree", "env.stoneBig", "env.bush" };
-            string[] front = { "env.mushroom", "env.stoneSmall", "env.bush" };
-            for (double x = -600; x < lastX + 1200; x += 70 + rng.Next(0, 90))
+            double from = -700, to = lastX + 1400;
+            // ① 길 위 물결 경계 — 데모 씬처럼 폭의 절반씩 겹쳐 깐다(월드 x 고정 · 바닥색과 달리 무늬가 있어 Spread 로 같이 움직여야 미끄러지지 않는다)
+            float upScale = 0.6f; float upW = WidthOf(_theme.RoadUp) * upScale; double upPitch = upW * 0.55f * WorldCam.PPU / _zoom;
+            float upHFrac = HeightOf(_theme.RoadUp) * upScale / (WorldCam.LayoutH / WorldCam.PPU);   // 띠 높이(프레임 비율)
+            float upY = RoadTopY - upHFrac * 0.3f;                                                      // 길 윗변에 걸쳐 물결이 길 쪽으로 늘어진다
+            for (double x = from; x < to; x += upPitch) AddProp(props, _theme.RoadUp, x, upY, upScale, -17, false);
+            // ② 풀·꽃·둔덕 — 길 위(18~33%)·길 아래(48~60%) 흩뿌림
+            for (double x = from; x < to; x += 22 + rng.Next(0, 40))
             {
-                bool isFront = rng.NextDouble() < 0.35;
-                string key = isFront ? front[rng.Next(front.Length)] : back[rng.Next(back.Length)];
-                var sr = Sprite(key, props, isFront ? 380 : -12, "prop"); sr.flipX = rng.NextDouble() < 0.5;
-                float s = (isFront ? 0.55f : 0.9f) * (0.85f + (float)rng.NextDouble() * 0.3f);
-                sr.transform.localScale = Vector3.one * s;
-                _props.Add(new Prop { Sr = sr, WorldX = x, YFrac = isFront ? 0.47f + (float)rng.NextDouble() * 0.03f : 0.32f + (float)rng.NextDouble() * 0.03f });
+                string key = _theme.DecoKey(rng.Next(_theme.Deco)); float w = WidthOf(key);
+                bool wide = w > 2f;                                      // 사막 둔덕(5.3u)은 뒤 배경으로만 · 작게
+                float s = wide ? 0.45f + (float)rng.NextDouble() * 0.15f : 0.9f + (float)rng.NextDouble() * 0.3f;
+                bool below = !wide && rng.NextDouble() < 0.35;
+                float y = wide ? 0.21f + (float)rng.NextDouble() * 0.08f : below ? 0.48f + (float)rng.NextDouble() * 0.11f : 0.18f + (float)rng.NextDouble() * 0.15f;
+                AddProp(props, key, x, y, s, wide ? -16 : -15, rng.NextDouble() < 0.5);
+                if (wide) x += 220;
+            }
+            // ③ 큰 소품(나무) — 길 뒤 · 키 1.6~2.1u(데모 비율 그대로면 HUD 를 덮어 줄였다) · 중간·작은 소품은 뒤/앞
+            for (double x = from; x < to; x += 90 + rng.Next(0, 160))
+            {
+                double roll = rng.NextDouble();
+                if (roll < 0.45)
+                {
+                    string key = _theme.BigKey(rng.Next(_theme.Big)); float h = HeightOf(key); float target = 1.6f + (float)rng.NextDouble() * 0.5f;
+                    AddProp(props, key, x, 0.30f + (float)rng.NextDouble() * 0.045f, target / Mathf.Max(0.1f, h), -12, rng.NextDouble() < 0.5);
+                }
+                else if (roll < 0.75)
+                {
+                    string key = _theme.MidKey(rng.Next(_theme.Mid)); float h = HeightOf(key); float target = 0.65f + (float)rng.NextDouble() * 0.3f;
+                    bool front = rng.NextDouble() < 0.3;
+                    AddProp(props, key, x, front ? 0.475f + (float)rng.NextDouble() * 0.03f : 0.31f + (float)rng.NextDouble() * 0.035f, (front ? 0.75f : 1f) * target / Mathf.Max(0.1f, h), front ? 380 : -11, rng.NextDouble() < 0.5);
+                }
+                else
+                {
+                    string key = _theme.SmallKey(rng.Next(_theme.Small)); float h = HeightOf(key); float target = 0.28f + (float)rng.NextDouble() * 0.2f;
+                    bool front = rng.NextDouble() < 0.5;
+                    AddProp(props, key, x, front ? 0.48f + (float)rng.NextDouble() * 0.04f : 0.32f + (float)rng.NextDouble() * 0.025f, target / Mathf.Max(0.1f, h), front ? 381 : -10, rng.NextDouble() < 0.5);
+                }
             }
         }
         void BuildNodes()
@@ -167,6 +242,7 @@ namespace KkomaKnight.Game
             return rig;
         }
         static CharacterRig.Skin KnightSkin(bool shield) => new CharacterRig.Skin { Helmet = "cm.knight.helmet", HairHelmet = "cm.knight.hairHelmet", Chest = "cm.knight.chest", Sword = "cm.knight.sword", Shield = shield ? "cm.knight.shield" : null };
+        /// <summary>적 스킨 — 전부 투구를 쓴다(주인 지시 «적들은 전부 모자 쓴 상태») · 원거리는 활+화살+시위.</summary>
         static CharacterRig.Skin EnemySkin(EnemyState e)
         {
             if (e.IsBoss) return new CharacterRig.Skin { Helmet = "cm.boss.helmet", Chest = "cm.boss.chest", Axe = "cm.boss.axe", SkinColor = new Color(0.38f, 0.30f, 0.42f) };
@@ -176,16 +252,16 @@ namespace KkomaKnight.Game
             switch (e.Skin % 3)
             {
                 case 0: return new CharacterRig.Skin { Helmet = "cm.meleeA.helmet", Chest = "cm.meleeA.chest", Sword = "cm.meleeA.sword" };
-                case 1: return new CharacterRig.Skin { Chest = "cm.meleeB.chest", Axe = "cm.meleeB.axe" };
+                case 1: return new CharacterRig.Skin { Helmet = "cm.meleeB.helmet", Chest = "cm.meleeB.chest", Axe = "cm.meleeB.axe" };
                 default: return new CharacterRig.Skin { Helmet = "cm.meleeC.helmet", Chest = "cm.meleeC.chest", Sword = "cm.meleeC.sword" };
             }
         }
-        void MakeBar(Transform parent, float width, out SpriteRenderer bg, out SpriteRenderer fill, Color fillColor, int order)
+        void MakeBar(Transform parent, float width, float height, out SpriteRenderer bg, out SpriteRenderer fill, Color fillColor, int order)
         {
             var bgo = new GameObject("BarBg"); bgo.transform.SetParent(parent, false);
-            bg = bgo.AddComponent<SpriteRenderer>(); bg.sprite = UiKit.White(); bg.color = new Color(0.08f, 0.08f, 0.1f, 0.85f); bg.sortingOrder = order; bg.drawMode = SpriteDrawMode.Sliced; bg.size = new Vector2(width, 0.07f);
+            bg = bgo.AddComponent<SpriteRenderer>(); bg.sprite = UiKit.White(); bg.color = new Color(0.08f, 0.08f, 0.1f, 0.85f); bg.sortingOrder = order; bg.drawMode = SpriteDrawMode.Sliced; bg.size = new Vector2(width, height);
             var fgo = new GameObject("BarFill"); fgo.transform.SetParent(bgo.transform, false);
-            fill = fgo.AddComponent<SpriteRenderer>(); fill.sprite = UiKit.White(); fill.color = fillColor; fill.sortingOrder = order + 1; fill.drawMode = SpriteDrawMode.Sliced; fill.size = new Vector2(width - 0.02f, 0.05f);
+            fill = fgo.AddComponent<SpriteRenderer>(); fill.sprite = UiKit.White(); fill.color = fillColor; fill.sortingOrder = order + 1; fill.drawMode = SpriteDrawMode.Sliced; fill.size = new Vector2(width - 0.02f, height - 0.02f);
         }
         static void SetBar(SpriteRenderer bg, SpriteRenderer fill, double frac)
         {
@@ -197,46 +273,112 @@ namespace KkomaKnight.Game
         {
             _player = MakeChar("Player", KnightSkin(G.P.MaxSh > 0), Layout.PlayerHeight, true);
             _player.transform.position = Pos(G.P.WorldX, FootY);
-            MakeBar(_player.transform.parent, WorldCam.PctW(Layout.PlayerFootBarW), out _pBarBg, out _pBarFill, Palette.Red, 392);
-            _pBarBg.transform.SetParent(_root, false);
+            // 발밑 체력바(빨강) + 그 아래 실드바(파랑) — 주인 지시
+            MakeBar(_root, WorldCam.PctW(Layout.PlayerFootBarW), WorldCam.PctH(Layout.FootBarH), out _pBarBg, out _pBarFill, Palette.Red, 392);
+            MakeBar(_root, WorldCam.PctW(Layout.PlayerFootBarW), WorldCam.PctH(Layout.FootShBarH), out _pShBg, out _pShFill, Palette.Hex(D.Ui.PopShield), 392);
         }
         EnemyView Ensure(EnemyState e)
         {
             if (_enemies.TryGetValue(e, out var v)) return v;
             e.Skin = System.Math.Abs(e.Id * 2654435761L % 1000).GetHashCode();
-            float h = e.IsBoss ? Layout.EnemyHeight * (float)D.Enemies.BossSizeMul : (!e.Ranged && e.Skin % 3 == 1 ? Layout.EnemyHeightBald : Layout.EnemyHeight);
-            v = new EnemyView { E = e, Rig = MakeChar("Enemy" + e.Id, EnemySkin(e), h, false) };
+            float h = e.IsBoss ? Layout.EnemyHeight * (float)D.Enemies.BossSizeMul : Layout.EnemyHeight;
+            v = new EnemyView { E = e, Rig = MakeChar("Enemy" + e.Id, EnemySkin(e), h, false), StrikeTick = e.StrikeT, ShownHp = e.Hp };
             float barW = (float)(e.IsBoss ? D.Ui.BossBarW : D.Ui.EnemyBarW) / WorldCam.PPU;
-            MakeBar(_root, barW, out v.BarBg, out v.BarFill, e.IsBoss ? Palette.Plum : Palette.Red, 395);
+            MakeBar(_root, barW, WorldCam.PctH(Layout.FootBarH), out v.BarBg, out v.BarFill, e.IsBoss ? Palette.Plum : Palette.Red, 395);
             _enemies[e] = v;
             return v;
         }
+        void Remove(EnemyView v) { Object.Destroy(v.Rig.gameObject); Object.Destroy(v.BarBg.gameObject); if (v.StunFx != null) Object.Destroy(v.StunFx); _enemies.Remove(v.E); }
+
+        // ───────────────────────── 틱 훅 (BattleScreen 이 엔진 틱 전후로 부른다) ─────────────────────────
+        bool _moving, _bossWarned; double _prevPX;
+        public void BeforeTick()
+        {
+            _prevPX = G.P.WorldX;
+            // 이번 틱의 플레이어 표적 = 가장 앞(가장 작은 x)의 살아 있는 적 (Battle.Tick 의 alive[0] 과 같은 규칙)
+            _pTarget = null; foreach (var n in G.Nodes) foreach (var e in n.Enemies) if (e.Hp > 0 && (_pTarget == null || e.WorldX < _pTarget.WorldX)) _pTarget = e;
+        }
+        public void AfterTick()
+        {
+            _moving = G.P.WorldX > _prevPX + 1e-6;
+            var P = G.P; _pStrike = null; _eStrikes.Clear();
+            // 플레이어가 이번 틱에 휘둘렀나 → 공격 모션(간격 = 1/공속) + 연출 묶음
+            if (P.StrikeT > _pStrikeTick && !G.Dead)
+            {
+                _player.PlayAttack(1.0 / System.Math.Max(0.05, G.EffAspd()));
+                _pStrike = new Strike { Rig = _player, HitCount0 = _player.HitCount, At = _clock + Mathf.Max(0.02f, _player.HitDelay) + 0.05f, Target = _pTarget };
+                if (_pTarget != null) { var tv = Ensure(_pTarget); tv.Hold++; }
+                _strikes.Add(_pStrike);
+            }
+            _pStrikeTick = P.StrikeT;
+            // 적들이 이번 틱에 휘둘렀나
+            foreach (var kv in _enemies)
+            {
+                var e = kv.Key; var v = kv.Value;
+                if (e.StrikeT > v.StrikeTick && !e.Dead)
+                {
+                    double ivm = e.Slow > 0 ? G.C.SlowMul : 1;
+                    v.Rig.PlayAttack((e.IsBoss ? G.C.BossInterval : e.Ranged ? G.C.RangedInterval : G.C.MeleeInterval) * ivm);
+                    if (!e.Ranged)
+                    {   // 근접 적의 타격 연출(플레이어 피격·회피·방어막·반격)은 칼이 내려올 때 — 원거리는 화살이 따로 날아간다
+                        var s = new Strike { Rig = v.Rig, HitCount0 = v.Rig.HitCount, At = _clock + Mathf.Max(0.02f, v.Rig.HitDelay) + 0.05f, OnPlayer = true, Target = e };
+                        _eStrikes[e] = s; _strikes.Add(s); _holdPlayer++;
+                    }
+                }
+                v.StrikeTick = e.StrikeT;
+            }
+            // 이벤트 — 타격 묶음에 속하면 미루고, 아니면 바로
+            foreach (var ev in G.Events) Route(ev);
+            G.Events.Clear();
+        }
+        void Route(BattleEvent ev)
+        {
+            if (_pStrike != null && ev.Enemy != null && ev.Enemy == _pStrike.Target && (ev.Kind == EvKind.Hit || ev.Kind == EvKind.Miss || ev.Kind == EvKind.Kill || ev.Kind == EvKind.Stun)) { _pStrike.Evs.Add(ev); return; }
+            if (ev.Enemy != null && _eStrikes.TryGetValue(ev.Enemy, out var s) &&
+                (ev.Kind == EvKind.PlayerHit || ev.Kind == EvKind.PlayerEvade || ev.Kind == EvKind.Ward || ev.Kind == EvKind.Ignore || ev.Kind == EvKind.Counter || ev.Kind == EvKind.Reflect)) { s.Evs.Add(ev); return; }
+            Present(ev);
+        }
+        void FlushStrikes(bool force)
+        {
+            for (int i = _strikes.Count - 1; i >= 0; i--)
+            {
+                var s = _strikes[i];
+                bool due = force || s.Rig == null || s.Rig.HitCount > s.HitCount0 || _clock >= s.At;
+                if (!due) continue;
+                _strikes.RemoveAt(i);
+                foreach (var ev in s.Evs) Present(ev);
+                if (s.OnPlayer) _holdPlayer = System.Math.Max(0, _holdPlayer - 1);
+                else if (s.Target != null && _enemies.TryGetValue(s.Target, out var v)) v.Hold = System.Math.Max(0, v.Hold - 1);
+            }
+        }
 
         // ───────────────────────── 매 프레임 ─────────────────────────
+        /// <param name="dt">월드 초(배속 반영).</param>
         public void Sync(float dt)
         {
+            _clock += dt; CharacterRig.TimeScale = TimeScale;
+            FlushStrikes(false);
             ScrollGround();
-            foreach (var p in _props) { p.Sr.transform.position = Pos(p.WorldX, p.YFrac, 0); p.Sr.enabled = p.Sr.transform.position.x > -4f && p.Sr.transform.position.x < 4f; }
+            foreach (var p in _props) { var pos = Pos(p.WorldX, p.YFrac, 0); p.Sr.transform.position = pos; p.Sr.enabled = OnScreen(pos, 5.5f); }
             foreach (var nv in _nodes)
             {
                 nv.Go.transform.position = Pos(nv.N.X, FootY - 0.005f);
-                bool vis = nv.Go.transform.position.x > -4.5f && nv.Go.transform.position.x < 4.5f; nv.Go.SetActive(vis);
+                nv.Go.SetActive(OnScreen(nv.Go.transform.position));
                 if (nv.N.Done && !nv.Dimmed) { nv.Dimmed = true; foreach (var sr in nv.Go.GetComponentsInChildren<SpriteRenderer>()) sr.color = Palette.A(sr.color, 0.55f); if (nv.FxGo != null) { Object.Destroy(nv.FxGo); nv.FxGo = null; } }
             }
-            // 플레이어
+            // 플레이어 — 표시 체력은 «칼이 내려온 뒤» 에만 엔진 값으로
             var P = G.P;
+            if (_holdPlayer == 0) { ShownHp = P.Hp; ShownSh = P.Sh; }
+            _player.Tick(dt);
             _player.transform.position = Pos(P.WorldX, FootY);
             _player.SetSortingBase(SortBase(LayoutX(P.WorldX)));
-            if (G.Dead) { if (!_pDeadShown) { _pDeadShown = true; _player.Play(CharacterRig.Dead, true); } }
-            else if (G.Cleared) _player.Play(CharacterRig.Victory);
-            else
-            {
-                if (P.StrikeT > _pStrikePrev) _player.Play(CharacterRig.Attack, true);
-                else if (P.StrikeT <= 0) _player.Play(_moving ? CharacterRig.Walk : CharacterRig.Idle);
-            }
-            _pStrikePrev = P.StrikeT;
-            _pBarBg.transform.position = Pos(P.WorldX, FootY + 0.012f); SetBar(_pBarBg, _pBarFill, P.MaxHp > 0 ? P.Hp / P.MaxHp : 0);
-            _pBarBg.gameObject.SetActive(!G.Dead);
+            if (G.Dead) { if (!_pDeadShown && _holdPlayer == 0) { _pDeadShown = true; _player.Play(CharacterRig.Dead, true); } }
+            else if (G.Cleared) { if (!_player.Attacking) _player.Play(CharacterRig.Victory); }
+            else if (!_player.Attacking) _player.Play(_moving ? CharacterRig.Walk : CharacterRig.Idle);
+            _pBarBg.transform.position = Pos(P.WorldX, Layout.FootHpBarY / 100f); SetBar(_pBarBg, _pBarFill, P.MaxHp > 0 ? ShownHp / P.MaxHp : 0);
+            _pBarBg.gameObject.SetActive(!_pDeadShown);
+            _pShBg.transform.position = Pos(P.WorldX, Layout.FootShBarY / 100f); SetBar(_pShBg, _pShFill, P.MaxSh > 0 ? ShownSh / P.MaxSh : 0);
+            _pShBg.gameObject.SetActive(!_pDeadShown && P.MaxSh > 0);
             // 적
             var seen = new HashSet<EnemyState>();
             foreach (var n in G.Nodes) foreach (var e in n.Enemies)
@@ -244,35 +386,31 @@ namespace KkomaKnight.Game
                 float lx = LayoutX(e.WorldX);
                 if (lx > WorldCam.LayoutW + 120 || (e.Dead && !_enemies.ContainsKey(e))) continue;
                 var v = Ensure(e); seen.Add(e);
+                v.Rig.Tick(dt);
                 v.Rig.transform.position = Pos(e.WorldX, FootY);
                 v.Rig.SetSortingBase(SortBase(lx));
-                if (e.Dead)
+                if (v.Hold == 0) v.ShownHp = e.Hp;
+                if (e.Dead && v.Hold == 0)
                 {
-                    if (v.DieT < 0) { v.DieT = 0; v.Rig.Play(CharacterRig.Dead, true); _lastKillPos = v.Rig.transform.position; Fx.Spawn("fx.death", v.Rig.transform.position + Vector3.up * 0.4f, 0.8f); v.BarBg.gameObject.SetActive(false); if (v.StunFx != null) Object.Destroy(v.StunFx); }
+                    if (v.DieT < 0) { v.DieT = 0; v.Rig.Play(CharacterRig.Dead, true); _lastKillPos = v.Rig.transform.position; Fx.Spawn("fx.death", v.Rig.transform.position + Vector3.up * 0.4f, 0.8f); v.BarBg.gameObject.SetActive(false); if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } }
                     v.DieT += dt; v.Rig.SetAlpha(Mathf.Clamp01(1.2f - v.DieT * 1.5f));
-                    if (v.DieT > 0.85f) { Object.Destroy(v.Rig.gameObject); Object.Destroy(v.BarBg.gameObject); _enemies.Remove(e); }
+                    if (v.DieT > 0.85f) Remove(v);
                     continue;
                 }
-                if (e.Stun > 0) { v.Rig.Play(CharacterRig.Stun); if (v.StunFx == null) { v.StunFx = Fx.Spawn("fx.stun", Vector3.zero, 0.5f, 0, v.Rig.transform, true); if (v.StunFx != null) { v.StunFx.transform.localPosition = new Vector3(0, CharBaseHeight * 1.05f, -0.3f); v.StunFx.transform.localRotation = Quaternion.identity; } } }
-                else { if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; }
-                    if (e.StrikeT > v.StrikePrev) v.Rig.Play(CharacterRig.Attack, true); else if (e.StrikeT <= 0) v.Rig.Play(CharacterRig.Idle); }
-                v.StrikePrev = e.StrikeT;
-                var b = v.Rig.Bounds();
-                v.BarBg.transform.position = new Vector3(v.Rig.transform.position.x, b.max.y + 0.12f, 0);
-                SetBar(v.BarBg, v.BarFill, e.MaxHp > 0 ? e.Hp / e.MaxHp : 0);
+                if (e.Stun > 0 && !e.Dead) { v.Rig.Play(CharacterRig.Stun); if (v.StunFx == null) { v.StunFx = Fx.Spawn("fx.stun", Vector3.zero, 0.5f, 0, v.Rig.transform, true); if (v.StunFx != null) { v.StunFx.transform.localPosition = new Vector3(0, CharBaseHeight * 1.05f, -0.3f); v.StunFx.transform.localRotation = Quaternion.identity; } } }
+                else { if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } if (!v.Rig.Attacking) v.Rig.Play(CharacterRig.Idle); }
+                v.BarBg.transform.position = Pos(e.WorldX, Layout.FootHpBarY / 100f);
+                SetBar(v.BarBg, v.BarFill, e.MaxHp > 0 ? v.ShownHp / e.MaxHp : 0);
                 if (e.IsBoss && !_bossWarned && lx < WorldCam.LayoutW) { _bossWarned = true; _app.Overlay.BossWarn(_app.Frame); Fx.Spawn("fx.bossWarn", v.Rig.transform.position + Vector3.up * 1.2f, 0.8f, 2.5f); }
             }
-            var gone = new List<EnemyState>(); foreach (var kv in _enemies) if (!seen.Contains(kv.Key)) gone.Add(kv.Key);
-            foreach (var e in gone) { var v = _enemies[e]; Object.Destroy(v.Rig.gameObject); Object.Destroy(v.BarBg.gameObject); _enemies.Remove(e); }
+            var gone = new List<EnemyView>(); foreach (var kv in _enemies) if (!seen.Contains(kv.Key)) gone.Add(kv.Value);
+            foreach (var v in gone) Remove(v);
             // 투사체
             SyncProjectiles();
             // 골드 증가 → 팝 (엔진은 골드 이벤트를 따로 내지 않는다)
             if (G.Gold > _goldPrev + 0.5) { Pop("+" + UiKit.Fmt(G.Gold - _goldPrev) + " G", _lastKillPos + Vector3.up * 0.9f, Palette.PopGold, 34); }
             _goldPrev = G.Gold;
         }
-        bool _moving, _bossWarned; double _prevPX;
-        public void BeforeTick() { _prevPX = G.P.WorldX; }
-        public void AfterTick() { _moving = G.P.WorldX > _prevPX + 1e-6; }
 
         void SyncProjectiles()
         {
@@ -292,7 +430,7 @@ namespace KkomaKnight.Game
                     }
                     _projs[pr] = go;
                 }
-                float yf = FootY - 0.045f; float dx = 0;
+                float yf = FootY - 0.045f;
                 if (pr.Kind == ProjKind.Axe)
                 {
                     double span = System.Math.Max(1, pr.TargetX0 - pr.StartX); float t = Mathf.Clamp01((float)((pr.X - pr.StartX) / span));
@@ -300,7 +438,7 @@ namespace KkomaKnight.Game
                     go.transform.rotation = Quaternion.Euler(0, 0, -t * 720f);
                 }
                 else go.transform.rotation = Quaternion.Euler(0, 0, pr.Kind == ProjKind.Wave ? 0 : -35f);
-                go.transform.position = Pos(pr.X + dx, yf, -0.2f);
+                go.transform.position = Pos(pr.X, yf, -0.2f);
             }
             var dead = new List<Projectile>(); foreach (var kv in _projs) if (!live.Contains(kv.Key)) dead.Add(kv.Key);
             foreach (var k in dead) { Object.Destroy(_projs[k]); _projs.Remove(k); }
@@ -324,7 +462,10 @@ namespace KkomaKnight.Game
         Vector3 EnemyPos(EnemyState e, float up = 0.45f) => e != null ? Pos(e.WorldX, FootY) + Vector3.up * up : _player.transform.position + Vector3.up * up;
         Vector3 PlayerPos(float up = 0.5f) => _player.transform.position + Vector3.up * up;
 
-        public void Handle(BattleEvent ev)
+        /// <summary>BattleScreen 호환 — 이벤트는 <see cref="AfterTick"/> 이 틱마다 직접 처리한다(타격 묶음 판별에 틱 경계가 필요).</summary>
+        public void Handle(BattleEvent ev) => Route(ev);
+
+        void Present(BattleEvent ev)
         {
             var flash = _app.Assets.Material("mat.hitFlash");
             switch (ev.Kind)
@@ -338,7 +479,7 @@ namespace KkomaKnight.Game
                     break;
                 }
                 case EvKind.Miss: Pop("MISS", EnemyPos(ev.Enemy, 0.9f), Palette.PopMiss, 30); Fx.Spawn("fx.evade", EnemyPos(ev.Enemy, 0.4f), 0.5f, 1f); break;
-                case EvKind.Kill: break;   // 사망 연출은 Sync 에서 (Dead 플래그)
+                case EvKind.Kill: break;   // 사망 연출은 Sync 에서 (Dead 플래그 · Hold 가 풀린 뒤)
                 case EvKind.PlayerHit:
                 {
                     if (ev.Value > 0.5) Pop("-" + UiKit.Fmt(ev.Value), PlayerPos(1.1f) + new Vector3((float)D.Ui.PopShieldDx / WorldCam.PPU, 0.15f, 0), Palette.Hex(D.Ui.PopShield), 34);

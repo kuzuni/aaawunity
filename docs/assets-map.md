@@ -13,7 +13,7 @@
 | sprites | `cm.meleeA.helmet` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Parts/Helmet/FA_Helmet_009_Red.png` | fileID 21300000 | 근접 적 A(뾰족 투구+검) — enemies.json 근접 웨이브 스킨 0 |
 | sprites | `cm.meleeA.chest` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Parts/Chest/FA_Chest_005_Green.png` | fileID 21300000 |  |
 | sprites | `cm.meleeA.sword` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Parts/HandRight/Sword/FA_WP_Main_Sword_002_Wood.png` | fileID 21300000 |  |
-| sprites | `cm.meleeB.chest` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Parts/Chest/FA_Chest_002_Gray.png` | fileID 21300000 | 근접 적 B(맨머리+도끼) — 스킨 1 |
+| sprites | `cm.meleeB.chest` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Parts/Chest/FA_Chest_002_Gray.png` | fileID 21300000 | 근접 적 B(회색 투구+도끼) — 스킨 1 (주인 지시 2026-09-05: 적은 전부 모자를 쓴다 · 맨머리 없음) |
 | sprites | `cm.meleeB.axe` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Parts/HandRight/Axe/FA_Wp_Main_Axe_001_WoodGray.png` | fileID 21300000 |  |
 | sprites | `cm.meleeC.helmet` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Parts/Helmet/FA_Helmet_002_Brown.png` | fileID 21300000 | 근접 적 C(두건+검) — 스킨 2 |
 | sprites | `cm.meleeC.chest` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Parts/Chest/FA_Chest_002_Dark.png` | fileID 21300000 |  |
@@ -31,7 +31,7 @@
 | sprites | `cm.boss.chest` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Parts/Chest/FA_Chest_028_BlackGold.png` | fileID 21300000 |  |
 | sprites | `cm.boss.axe` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Parts/HandRight/Axe/FA_WP_Main_Axe_011_RedDark.png` | fileID 21300000 |  |
 | sprites | `cm.spear` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Parts/HandRight/Spear/FA_WP_Main_Spear_001_WoodGray.png` | fileID 21300000 | 특전 «창» 투사체 스프라이트(플레이어 무기가 아닌 투사체용) |
-| sprites | `env.field` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Field_Forest.png` | fileID 21300000 | 전투 바닥 타일(128px=1.28u) — 지면 띠(GroundBand) 를 가로로 반복 |
+| sprites | `env.field` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Field_Forest.png` | fileID 21300000 | (구) 단일 숲 바닥 — 지금은 env.<theme>.field 를 쓴다 · 폴백 |
 | sprites | `env.road` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_Forest.png` | fileID 21300000 | 바닥 위 길 타일 — 캐릭터 발 줄 |
 | sprites | `env.roadUp` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_up_Forest.png` | fileID 21300000 | 길 위 경계 장식(253×33) |
 | sprites | `env.tree` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_01.png` | fileID 21300000 | 지면 뒤 소품(나무) — 챕터마다 시드 고정 배치 |
@@ -177,6 +177,71 @@
 | sprites | `fr.titleGreen` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/Title/Title_01_NoDeco_Green.Png` | fileID 21300000 |  |
 | sprites | `fr.titleRed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/Title/Title_01_NoDeco_Red.Png` | fileID 21300000 |  |
 | sprites | `fr.titleSky` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/Title/Title_01_NoDeco_Sky.Png` | fileID 21300000 |  |
+| sprites | `cm.meleeB.helmet` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Parts/Helmet/FA_Helmet_010_Gray.png` | fileID 21300000 | 근접 적 B 투구 — FA_Helmet_010_Gray (맨머리 스킨을 없애기 위해 추가) |
+| sprites | `env.autumn.field` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Field_Autumn.png` | fileID 21300000 | 전투 맵 «DemoScene_Autumn» 바닥(평면색 타일) — 챕터 (n-1)%4 순환: 1=autumn 2=deepForest 3=forest 4=desert (주인 지시 2026-09-05) |
+| sprites | `env.autumn.road` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_Autumn.png` | fileID 21300000 | «DemoScene_Autumn» 길 띠(발 줄) |
+| sprites | `env.autumn.roadUp` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_up_Autumn.png` | fileID 21300000 | «DemoScene_Autumn» 길 위 물결 경계(데모 씬처럼 반 겹쳐 깐다) |
+| sprites | `env.autumn.deco0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Autumn_Flower_01.png` | fileID 21300000 | «DemoScene_Autumn» 바닥 장식(풀·꽃·둔덕) — 길 위아래 흩뿌림 |
+| sprites | `env.autumn.deco1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Autumn_Flower_02.png` | fileID 21300000 |  |
+| sprites | `env.autumn.big0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Birch_Yellow_01.png` | fileID 21300000 | «DemoScene_Autumn» 큰 소품(나무) — 길 뒤 · 캐릭터보다 뒤에 그린다 |
+| sprites | `env.autumn.big1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Birch_Yellow_02.png` | fileID 21300000 |  |
+| sprites | `env.autumn.big2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Orange_01.png` | fileID 21300000 |  |
+| sprites | `env.autumn.big3` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Orange_02.png` | fileID 21300000 |  |
+| sprites | `env.autumn.big4` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Orange_06.png` | fileID 21300000 |  |
+| sprites | `env.autumn.mid0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Orange_01.png` | fileID 21300000 | «DemoScene_Autumn» 중간 소품(덤불·작은 나무·선인장) |
+| sprites | `env.autumn.mid1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Orange_03.png` | fileID 21300000 |  |
+| sprites | `env.autumn.small0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Brown_04.png` | fileID 21300000 | «DemoScene_Autumn» 작은 소품(돌·버섯) — 길 앞(캐릭터 앞) 에도 놓는다 |
+| sprites | `env.autumn.small1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Brown_07.png` | fileID 21300000 |  |
+| sprites | `env.autumn.small2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Brown_06.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.field` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Field_DeepForest.png` | fileID 21300000 | 전투 맵 «DemoScene_DeepForest» 바닥(평면색 타일) — 챕터 (n-1)%4 순환: 1=autumn 2=deepForest 3=forest 4=desert (주인 지시 2026-09-05) |
+| sprites | `env.deepForest.road` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_DeepForest.png` | fileID 21300000 | «DemoScene_DeepForest» 길 띠(발 줄) |
+| sprites | `env.deepForest.roadUp` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_up_DeepForest.png` | fileID 21300000 | «DemoScene_DeepForest» 길 위 물결 경계(데모 씬처럼 반 겹쳐 깐다) |
+| sprites | `env.deepForest.deco0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/DeepForest_Grass.png` | fileID 21300000 | «DemoScene_DeepForest» 바닥 장식(풀·꽃·둔덕) — 길 위아래 흩뿌림 |
+| sprites | `env.deepForest.deco1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/DeepForest_Flower_01.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.deco2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/DeepForest_Flower_02.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.big0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_13.png` | fileID 21300000 | «DemoScene_DeepForest» 큰 소품(나무) — 길 뒤 · 캐릭터보다 뒤에 그린다 |
+| sprites | `env.deepForest.big1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_09.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.big2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_08.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.big3` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_15.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.big4` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Dead_Tree_Brown_01.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.mid0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Green_03.png` | fileID 21300000 | «DemoScene_DeepForest» 중간 소품(덤불·작은 나무·선인장) |
+| sprites | `env.deepForest.mid1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Green_01.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.mid2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Green_01.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.small0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray2_06.png` | fileID 21300000 | «DemoScene_DeepForest» 작은 소품(돌·버섯) — 길 앞(캐릭터 앞) 에도 놓는다 |
+| sprites | `env.deepForest.small1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Yellow_03.png` | fileID 21300000 |  |
+| sprites | `env.deepForest.small2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Pink_01.png` | fileID 21300000 |  |
+| sprites | `env.forest.field` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Field_Forest.png` | fileID 21300000 | 전투 맵 «DemoScene_Forest» 바닥(평면색 타일) — 챕터 (n-1)%4 순환: 1=autumn 2=deepForest 3=forest 4=desert (주인 지시 2026-09-05) |
+| sprites | `env.forest.road` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_Forest.png` | fileID 21300000 | «DemoScene_Forest» 길 띠(발 줄) |
+| sprites | `env.forest.roadUp` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_up_Forest.png` | fileID 21300000 | «DemoScene_Forest» 길 위 물결 경계(데모 씬처럼 반 겹쳐 깐다) |
+| sprites | `env.forest.deco0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Forest_Grass.png` | fileID 21300000 | «DemoScene_Forest» 바닥 장식(풀·꽃·둔덕) — 길 위아래 흩뿌림 |
+| sprites | `env.forest.deco1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Forest_Flower_01.png` | fileID 21300000 |  |
+| sprites | `env.forest.deco2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Forest_Flower_02.png` | fileID 21300000 |  |
+| sprites | `env.forest.big0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_13.png` | fileID 21300000 | «DemoScene_Forest» 큰 소품(나무) — 길 뒤 · 캐릭터보다 뒤에 그린다 |
+| sprites | `env.forest.big1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_07.png` | fileID 21300000 |  |
+| sprites | `env.forest.big2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_08.png` | fileID 21300000 |  |
+| sprites | `env.forest.big3` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Yellow_Green_15.png` | fileID 21300000 |  |
+| sprites | `env.forest.mid0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Yellow_Green_03.png` | fileID 21300000 | «DemoScene_Forest» 중간 소품(덤불·작은 나무·선인장) |
+| sprites | `env.forest.mid1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Yellow_Green_01.png` | fileID 21300000 |  |
+| sprites | `env.forest.mid2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Small_Tree_Yellow_Green_01.png` | fileID 21300000 |  |
+| sprites | `env.forest.small0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_06.png` | fileID 21300000 | «DemoScene_Forest» 작은 소품(돌·버섯) — 길 앞(캐릭터 앞) 에도 놓는다 |
+| sprites | `env.forest.small1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Wihte_03.png` | fileID 21300000 |  |
+| sprites | `env.forest.small2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Yellow_02.png` | fileID 21300000 |  |
+| sprites | `env.desert.field` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Field_Desert.png` | fileID 21300000 | 전투 맵 «DemoScene_Desert» 바닥(평면색 타일) — 챕터 (n-1)%4 순환: 1=autumn 2=deepForest 3=forest 4=desert (주인 지시 2026-09-05) |
+| sprites | `env.desert.road` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_Desert.png` | fileID 21300000 | «DemoScene_Desert» 길 띠(발 줄) |
+| sprites | `env.desert.roadUp` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_up_Desert.png` | fileID 21300000 | «DemoScene_Desert» 길 위 물결 경계(데모 씬처럼 반 겹쳐 깐다) |
+| sprites | `env.desert.deco0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Desert_Dune.png` | fileID 21300000 | «DemoScene_Desert» 바닥 장식(풀·꽃·둔덕) — 길 위아래 흩뿌림 |
+| sprites | `env.desert.deco1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Coconut_01.png` | fileID 21300000 |  |
+| sprites | `env.desert.deco2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Coconut_02.png` | fileID 21300000 |  |
+| sprites | `env.desert.big0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Plam_Yellow_Green_03.png` | fileID 21300000 | «DemoScene_Desert» 큰 소품(나무) — 길 뒤 · 캐릭터보다 뒤에 그린다 |
+| sprites | `env.desert.big1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Plam_Yellow_Green_02.png` | fileID 21300000 |  |
+| sprites | `env.desert.big2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Plam_Green_03.png` | fileID 21300000 |  |
+| sprites | `env.desert.big3` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Bare_01.png` | fileID 21300000 |  |
+| sprites | `env.desert.mid0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_01.png` | fileID 21300000 | «DemoScene_Desert» 중간 소품(덤불·작은 나무·선인장) |
+| sprites | `env.desert.mid1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_04.png` | fileID 21300000 |  |
+| sprites | `env.desert.mid2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_03.png` | fileID 21300000 |  |
+| sprites | `env.desert.small0` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_06.png` | fileID 21300000 | «DemoScene_Desert» 작은 소품(돌·버섯) — 길 앞(캐릭터 앞) 에도 놓는다 |
+| sprites | `env.desert.small1` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green1_02.png` | fileID 21300000 |  |
+| sprites | `env.desert.small2` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_05.png` | fileID 21300000 |  |
 | prefabs | `cm.character` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Common/Prefabs/Character.prefab` | root 1824668350962886144 |  |
 | prefabs | `fx.hit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Hit A (Red).prefab` | root 4021103657954561961 | 적 피격 (CFXR Hit A Red) |
 | prefabs | `fx.crit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Impact Glowing HDR (Blue).prefab` | root 2708598583397607911 | 치명타 피격 (Impact Glowing HDR Blue · 0.2 배) |

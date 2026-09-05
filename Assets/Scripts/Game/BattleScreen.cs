@@ -42,7 +42,7 @@ namespace KkomaKnight.Game
         // HUD
         Text _gold, _gem, _chapTitle, _round, _speedTxt;
         UiKit.Bar _prog, _exp, _hp, _sh;
-        RectTransform _buffBar, _perkStrip;
+        RectTransform _buffBar, _perkStrip; Text _perkCount;
         readonly Text[] _statVals = new Text[StatDefs.Length];
         string _perkStripKey = "", _buffKey = "";
 
@@ -77,7 +77,11 @@ namespace KkomaKnight.Game
                 UiKit.Label(cell, 19, 0, 46, 100, StatDefs[i].Label, 28, Palette.CreamDark, TextAnchor.MiddleLeft);
                 _statVals[i] = UiKit.Label(cell, 60, 0, 40, 100, "", 34, Palette.White, TextAnchor.MiddleRight);
             }
-            var info = UiKit.SpawnRt("ui.btnInfo", Root, Layout.HudInfo); UiKit.Clickable(info, () => { if (G != null && !App.Overlay.IsOpen) App.Overlay.PerkBook(G, null); });
+            // 보유 특전 = 책 모양 버튼(특전 선택 팝업의 Book 과 같은 그림 · 위에 개수) — 주인 지시 2026-09-05
+            var info = UiKit.Rect(Root, "PerkBook"); UiKit.Pct(info, Layout.HudInfo.X - 1, Layout.HudInfo.Y - 1.5f, Layout.HudInfo.W + 2, Layout.HudInfo.H + 3);
+            var book = UiKit.Icon(info, "Book", "ui.bookBlue"); UiKit.Stretch(book.rectTransform);
+            _perkCount = UiKit.Text(info, "0", 30, Palette.White, TextAnchor.MiddleCenter, false, true); UiKit.Pct(_perkCount.rectTransform, 45, 40, 55, 50);
+            UiKit.Clickable(info, () => { if (G != null && !App.Overlay.IsOpen) App.Overlay.PerkBook(G, null); });
             _perkStrip = UiKit.Rect(Root, "PerkStrip"); UiKit.Pct(_perkStrip, Layout.HudPerkStrip);
             var hl = _perkStrip.gameObject.AddComponent<HorizontalLayoutGroup>(); hl.childAlignment = TextAnchor.MiddleLeft; hl.spacing = 8; hl.childForceExpandWidth = false; hl.childForceExpandHeight = false; hl.childControlWidth = false; hl.childControlHeight = false;
             var stripHit = _perkStrip.gameObject.AddComponent<Image>(); stripHit.color = new Color(0, 0, 0, 0); UiKit.Clickable(_perkStrip, () => { if (G != null && !App.Overlay.IsOpen) App.Overlay.PerkBook(G, null); }, false);
@@ -120,19 +124,21 @@ namespace KkomaKnight.Game
                 int guard = 0;
                 while (_acc >= EngineConst.Dt && guard++ < 8)
                 {
-                    if (G.Pending != null) { OpenPending(); _acc = 0; break; }
+                    // 팝업(레벨업·이벤트)은 남은 타격 연출(칼이 내려오는 순간)이 끝난 뒤 연다 — 그 동안 엔진 시간은 멈춘 채 애니만 돈다
+                    if (G.Pending != null) { if (!_world.Busy) OpenPending(); _acc = 0; break; }
                     _world.BeforeTick(); G.Tick(); _world.AfterTick();
                     _acc -= EngineConst.Dt;
-                    if (G.Pending != null) { OpenPending(); _acc = 0; break; }
+                    if (G.Pending != null) { if (!_world.Busy) OpenPending(); _acc = 0; break; }
                     if (G.Over) break;
                 }
                 if (G.Pending == null && G.PendingLevelUps > 0 && !G.Over) { /* 엔진이 다음 틱에 스스로 연다 */ }
             }
-            foreach (var ev in G.Events) _world.Handle(ev);
+            foreach (var ev in G.Events) _world.Handle(ev);   // AfterTick 이 틱마다 비우므로 보통 비어 있다
             G.Events.Clear();
-            _world.Sync(dt);
+            _world.TimeScale = _speed;
+            _world.Sync(dt * _speed);
             RefreshHud();
-            if (G.Over && !_ended && !App.Overlay.IsOpen) EndRun();
+            if (G.Over && !_ended && !App.Overlay.IsOpen && !_world.Busy) EndRun();
         }
 
         void OpenPending()
@@ -188,8 +194,9 @@ namespace KkomaKnight.Game
             if (_speedTxt != null) _speedTxt.text = "x" + _speed;
             int need = D.Tune.ExpNeed(P.Level);
             _exp.Set(need > 0 ? (double)P.Exp / need : 0, $"Lv {P.Level}  {P.Exp}/{need}");
-            _hp.Set(P.MaxHp > 0 ? P.Hp / P.MaxHp : 0, $"{UiKit.Fmt(P.Hp)}/{UiKit.Fmt(P.MaxHp)}");
-            _sh.Set(P.MaxSh > 0 ? P.Sh / P.MaxSh : 0, P.MaxSh > 0 ? $"{UiKit.Fmt(P.Sh)}/{UiKit.Fmt(P.MaxSh)}" : "실드 없음");
+            double hp = _world != null ? _world.ShownHp : P.Hp, sh = _world != null ? _world.ShownSh : P.Sh;   // 표시 체력 — 칼이 내려온 순간에 깎인다
+            _hp.Set(P.MaxHp > 0 ? hp / P.MaxHp : 0, $"{UiKit.Fmt(hp)}/{UiKit.Fmt(P.MaxHp)}");
+            _sh.Set(P.MaxSh > 0 ? sh / P.MaxSh : 0, P.MaxSh > 0 ? $"{UiKit.Fmt(sh)}/{UiKit.Fmt(P.MaxSh)}" : "실드 없음");
             for (int i = 0; i < StatDefs.Length; i++) { var d = StatDefs[i]; _statVals[i].text = d.Fmt(G); _statVals[i].color = d.Up(G, BaseStats) ? Palette.Green : Palette.White; }
             RefreshPerkStrip(); RefreshBuffBar();
         }
@@ -198,6 +205,7 @@ namespace KkomaKnight.Game
             // 얻은 순서대로 · 중복은 ×N · 넘치면 +N (index.html 주인 지시 ②)
             var order = new List<string>(); var count = new Dictionary<string, int>();
             foreach (var p in G.Taken) { if (!count.ContainsKey(p.Id)) { count[p.Id] = 0; order.Add(p.Id); } count[p.Id]++; }
+            if (_perkCount != null) _perkCount.text = G.Taken.Count.ToString();
             string key = string.Join(",", order) + "|" + G.Taken.Count; if (key == _perkStripKey) return; _perkStripKey = key;
             UiKit.Clear(_perkStrip);
             const int max = 11; int shown = 0;
@@ -205,9 +213,9 @@ namespace KkomaKnight.Game
             {
                 if (shown >= max) { var more = UiKit.Text(_perkStrip, "+" + (order.Count - shown), 28, Palette.CreamDark); more.rectTransform.sizeDelta = new Vector2(70, 80); break; }
                 var perk = App.Data.Perks.Perks.Find(x => x.Id == id); if (perk == null) continue;
-                var cell = UiKit.Rect(_perkStrip, id); cell.sizeDelta = new Vector2(72, 80);
-                var ring = cell.gameObject.AddComponent<Image>(); ring.sprite = UiKit.Circle(); ring.color = Palette.PerkColor(perk);
-                var ic = UiKit.Icon(cell, "ic", Icons.Perk(id), Palette.White); UiKit.Pct(ic.rectTransform, 18, 18, 64, 64);
+                // 팔각 등급 프레임(ItemFrame_04_* · 특전 카드와 같은 모양) — 주인 지시 2026-09-05
+                var cell = UiKit.Rect(_perkStrip, id); cell.sizeDelta = new Vector2(78, 84);
+                UiKit.PerkFrame(cell, Palette.PerkGradeName(perk.Grade), Icons.Perk(id), 76);
                 if (count[id] > 1) { var n = UiKit.Text(cell, count[id].ToString(), 24, Palette.White); UiKit.Pct(n.rectTransform, 50, 50, 55, 50); }
                 shown++;
             }

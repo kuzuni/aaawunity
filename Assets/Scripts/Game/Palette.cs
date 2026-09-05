@@ -40,8 +40,11 @@ namespace KkomaKnight.Game
         public static Color PopMiss => Gray;
         public static Color PopEvade => Sky;
 
-        /// <summary>특전 등급(perks.json grade 0·1·2) → 테마 색 이름. 악마 카드는 plum.</summary>
-        public static string PerkGradeName(int grade) => grade >= 2 ? "yellow" : grade == 1 ? "blue" : "green";
+        /// <summary>특전 등급(perks.json grade 0·1·2) → 테마 색 이름: 일반=gray · 희귀=yellow · 전설=red (주인 지시 2026-09-05). 악마 카드는 plum.
+        /// CardFrame_04/ItemFrame_04 에는 Gray 변형이 없어 gray 는 green 변형을 스폰한 뒤 <see cref="UiKit.Desaturate"/> 로 무채색화한다(<see cref="FrameKey"/>).</summary>
+        public static string PerkGradeName(int grade) => grade >= 2 ? "red" : grade == 1 ? "yellow" : "gray";
+        /// <summary>색 이름 → 프리팹 변형 접미(gray 변형이 없는 프리팹은 green 을 쓰고 호출자가 Desaturate 한다).</summary>
+        public static string FrameKey(string prefix, string colorName) => prefix + "." + (colorName == "gray" ? "green" : colorName);
         public const string DevilName = "plum";
         /// <summary>장비 등급(gear.json rar 0~3) → 테마 색 이름.</summary>
         public static string RarName(int rar) => rar >= 3 ? "plum" : rar == 2 ? "yellow" : rar == 1 ? "blue" : "gray";

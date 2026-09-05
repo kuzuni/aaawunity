@@ -32,6 +32,7 @@ namespace KkomaKnight.Core
         public const double Dt = 1.0 / 30;              // 시뮬 틱 (sim.js dt=1/30)
         public const double MaxT = 900;                 // 한 판 시간 상한(초)
         public const int WaveKingPierce = 20;
+        public const int RerollPerLevelUp = 1;          // 레벨업 3택 «새로고침» 허용 횟수(팝업 1회당 · 주인 지시 2026-09-05 · 원본 index.html 에 없는 기능 → 승인 대기 21)
     }
 
     public sealed class Buff { public double T, Amt; public string Tag; }
@@ -88,6 +89,7 @@ namespace KkomaKnight.Core
     public sealed class PendingDecision
     {
         public PendingKind Kind; public PerkDef DevilPerk; public List<PerkDef> Offer;
+        public int Rerolls;   // 이 팝업에서 쓴 새로고침 수 (≤ EngineConst.RerollPerLevelUp)
     }
 
     /// <summary>결정 정책. null 을 돌려주면 «보류» — 엔진이 Pending 을 세우고 멈춘다(게임). 시뮬 정책은 즉답한다.</summary>

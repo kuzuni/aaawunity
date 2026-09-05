@@ -10,7 +10,7 @@
 | T2 | 전투 엔진(순수 C#) + 시드 11·12·13 이식 검증 | ✅ 완료 | sess-1516-port / 착수 세션 | Core/Battle*·Perks*·tools/sim | sim.js 실험1 사다리 7점 × 3시드 **21칸 전부 소수점까지 동일**(난수 스트림 비트 일치) · 3pick 모드도 동일 (아래 표) |
 | T3 | 레벨업 3택 + 악마의 거래 (유니티 팝업) + 전투 화면 | ✅ 완료 (코드·에셋 배선 — 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Game/BattleScreen·BattleWorld·Overlay·UiKit·Palette·Screens·App · Assets/KkomaKnight(catalog) | 주인 지정 GUI Pro 데모 프리팹으로 팝업 6종 · CharacterMaker/Environment/CFXR 로 전투 월드 · 팝업 중 시간 정지 |
 | T4 | 로비 · 장비 · 강화 · 슬롯 · 뽑기 상자 3종 | ✅ 완료 (코드·에셋 배선 — 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Game/GearScreen·GearUi·ForgeScreen·ShopScreen·Screens(로비) | 자동 장착 없음 · 상자 3종(gacha.json) · 세부 팝업 = Character_Hero_Item_Detail_01 · 결과 = Shop_Chest_Open |
-| T5 | UI 를 docs/ref 레이아웃에 맞추기 | 미착수 (T3·T4 뒤) | — | Game/Layout* | ref-layout.md ±3%p |
+| T5 | UI 를 docs/ref 레이아웃에 맞추기 | ✅ 완료 (배치 상수 = 표 · 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Core/Layout · Game/* 배치 · Tests/LayoutSpecTests | ref-layout ①~⑦ 표를 `Layout` 상수로 · 표 ↔ 상수 자동 대조 테스트 8개 · 60fps · 백그라운드 실행 · 주인 피드백 일괄(특전 카드/색/새로고침 · 공격 모션 · 발밑 체력바 · 간격 2배 · 맵 4종 순환) |
 
 ### T1 완료 기록 (2026-09-05 · 착수 세션)
 
@@ -86,6 +86,26 @@
 - 게이트: `dotnet build` 0/0 · `dotnet test` 32/32 · `gen_meta --check` · `gen_catalog --check`(294) 초록.
 - 한계: 장비 탭의 캐릭터 자리는 GUI Pro 샘플 캐릭터를 숨기고 아이콘(UI_Play_Battle)을 두었다 — CharacterMaker 기사를 UI 에 그리려면 RenderTexture 카메라가 필요해 T5 후보로 남긴다(승인 대기 17).
 
+### T5 완료 기록 (2026-09-05 · 착수 세션)
+
+- **주인이 확인할 것 (한 줄)**: WebGL(gh-pages) 에서 «전투 진입 → 챕터 1 은 가을(Autumn) · 2 깊은숲 · 3 숲 · 4 사막 맵인가 / 적끼리·쉼터·악마·천사 간격이 전보다 2배로 벌어졌나 / 공격 모션이 끝까지 나오고 칼이 내려오는 순간에 숫자·체력바가 깎이나 / 체력바가 발밑·실드바(파랑)가 그 아래인가 / 레벨업 카드에 «일반·희귀·전설» 리본 + 설명만(회색·노랑·빨강) · 주황 버튼이 새로고침(1회) · 오른쪽 아래 책 버튼이 보유 특전인가 / HUD 왼쪽 아래 특전 아이콘이 팔각 프레임인가 / 적이 전부 투구를 썼나».
+- 만든 것
+  - `Core/Layout.cs`(Game 에서 Core 로 이동): ref-layout ①~⑧ 의 모든 요소를 표 그대로 상수로(로비·인게임·장비·세부·상점·대장간·특전·공통). `R.Within(outer)` 로 팝업 안 상대 %.
+  - `Tests/EditMode/LayoutSpecTests.cs` + `docs/ref-layout.md`(aaaw 표 사본): 표를 파싱해 상수와 0.05 안에서 대조하는 테스트 8개(총 40).
+  - 모든 화면을 표 자리에 다시 앵커링: 로비(`TopBar` 공통 아바타+재화 · 배너 · 카드 · 시작 · 탭바) · 인게임 HUD(바 3개 · 스탯 8칸 · 배속 · 라운드) · 장비/세부 · 상점 · 대장간(⑥ 상단바 없음 · 뒤로) · 특전 3택(⑦ 배너·부제·카드 피치 13·하단 버튼·인포) · 보유 특전 · 이벤트 상자.
+  - `Bootstrap`: vSync 끔 + `targetFrameRate 60`(WebGL 은 브라우저 rAF) · `runInBackground` · 화면 꺼짐 방지 (주인 «60fps · 백그라운드»).
+  - **주인 피드백 일괄(스크린샷)**
+    - 특전 카드(`Overlay.PerkCard`): 이름 없이 등급 리본 + 설명만 · 색 일반=회색 · 희귀=노랑 · 전설=빨강(`Palette.PerkGradeName` · CardFrame/ItemFrame 에 Gray 변형이 없어 Green 을 `UiKit.Desaturate` 로 무채색화).
+    - 특전 선택의 주황 버튼 = **새로고침**(`BattleState.RerollOffer` · 같은 `Perks.Offer` 굴림 · 팝업당 `EngineConst.RerollPerLevelUp = 1`) · 보유 특전은 Book 아이콘으로.
+    - HUD 오른쪽 아래 인포 = 책 모양(`ui.bookBlue` + 개수) · 왼쪽 아래 획득 특전 = 팔각 `ItemFrame_04_*`(`UiKit.PerkFrame`).
+    - 공격 모션: `CharacterRig.PlayAttack(interval)` 이 Attack.anim(1.83초)을 끊지 않고 끝까지 돌린다(간격보다 길면 최대 ×3 배속) · 타격 연출(팝·플래시·체력바·사망)은 클립의 OnAttackHit(1.0초) 순간까지 `BattleWorld.Strike` 큐에 묶어 두고 그때 푼다(엔진 판정은 그대로 · 표시 체력 `ShownHp/ShownSh` 만 늦게 깎임 · 팝업(레벨업/사망)도 연출이 끝난 뒤 연다).
+    - 적은 전부 투구(맨머리 B 스킨에 `cm.meleeB.helmet` 추가) · 원거리 적은 활+화살+시위.
+    - 체력바는 발밑(`Layout.FootHpBarY`) · 플레이어 실드바(파랑)는 그 아래(`FootShBarY`).
+    - 적·쉼터·악마·천사 간격 2배: 그리기 배율 `Layout.WorldSpacing = 2`(멈춤 거리 74 안쪽은 1배 · 150px 램프로 부드럽게) — 엔진 좌표(enemyGap 44 · nodeGap 280 · nodeGapEvent 470)와 시드 골든은 그대로(승인 대기 22).
+    - 전투 맵 4종 순환(`BattleWorld.Theme` · 주인 지정 DemoScene_Autumn/DeepForest/Forest/Desert): 챕터 (n−1)%4 → 가을·깊은숲·숲·사막. 데모 씬 구성 그대로 — 평면색 바닥(화면 전체) · 길 띠(35~47%) · 길 윗변 물결 경계(반 겹침) · 풀·꽃·둔덕 흩뿌림 · 나무(뒤)·덤불(뒤/앞)·돌·버섯(앞). 카탈로그 `env.<theme>.*` 68키(`docs/assets-map.md`).
+- 게이트: `dotnet build` 0/0 · `dotnet test` 40/40 · `gen_meta --check` · `gen_catalog --check`(359) · `check_data_sync` OK.
+- 한계: 배치·연출은 에디터 없이 짠 것이라 실물(WebGL) 확인이 필요하다 — 특히 물결 경계의 y·큰 나무 크기(1.6~2.1u 로 줄임 · 데모 비율이면 HUD 를 덮는다)·팔각 프레임 크기.
+
 ## 주인 결정 (2026-09-05 답변 — 승인 대기 1~9 종결)
 
 - **1 유니티 버전**: 6000.3.8f1 그대로. · **2 브랜치**: `main` 만 — `claude/…` 브랜치는 더 올리지 않는다. · **4~9**: 제안한 기본값대로.
@@ -128,16 +148,22 @@
 17. **장비 탭 캐릭터 그림**: 데모 프리팹의 샘플 캐릭터(Sample_Cha02_l)는 우리 기사가 아니라 숨기고 아이콘으로 대체했다. 기사(CharacterMaker)를 UI 안에 그리려면 RenderTexture 카메라 1개가 필요하다 — 원하시면 T5 에 넣는다.
 18. **상점 모의 결제 가격 ₩110,000** 은 index.html GEM_PACKS 의 표시값을 그대로 옮겼다(실결제 없음 · PLAN §11.5). 가격대는 정하신 게 1종뿐이라 나머지 5칸은 잠금으로 채웠다.
 
+19. **«백그라운드에서도 실행»** 은 `Application.runInBackground = true`(창이 포커스를 잃어도 게임 루프 지속 · WebGL 은 탭이 보일 때만 rAF 가 돈다 — 브라우저 제약)로 했다. 모바일에서 화면을 꺼도 도는 «오프라인 진행(방치 보상)» 을 뜻하셨다면 그것은 새 시스템(PLAN 밖)이라 승인이 필요하다.
+20. **60fps**: `targetFrameRate = 60`(Android) · WebGL 은 −1(브라우저 rAF · 보통 60). vSync 끔. 엔진 틱은 그대로 1/30 초(sim.js) — 그리기만 60.
+21. **레벨업 새로고침 = 팝업당 1회**(`EngineConst.RerollPerLevelUp`). 원본 index.html 에 없는 기능이라 횟수·비용(무료)은 기본값이다 — 횟수를 바꾸거나 골드/보석 비용을 붙이려면 한 줄로.
+22. **간격 2배는 그리기 배율로 했다**(`Layout.WorldSpacing = 2` · 멈춤 거리 안쪽 1배). 엔진 좌표를 2배(enemyGap 88 · nodeGap 560 · nodeGapEvent 940)로 바꾸면 한 판 걷는 시간이 늘어 밸런스와 시드 골든(BattleTests)이 깨진다 — 그쪽을 원하시면 sim.js 를 같은 값으로 고쳐 골든을 다시 뽑아야 하므로 확인 뒤 한다. 그리기 배율 방식은 «칼이 닿는 거리(74px)» 는 그대로라 근접전 모양이 안 바뀌지만, 멀리 있는 것이 다가올 때 속도가 2배→1배로 줄어드는 렌즈 효과가 있다(150px 램프로 완화).
+23. **맵 4종 순환 순서 = Autumn → DeepForest → Forest → Desert**(주인이 적은 순서). 챕터 1 이 가을이다. 다른 시작·순서를 원하시면 `BattleWorld.Theme.All` 한 줄.
+
 ## 주인 할 일
 
 - README «내가(주인) 할 일» 5단계 (활성화 워크플로 → .alf → .ulf → 시크릿 3개 → Pages 소스 gh-pages).
 
-## 게이트 현황 스냅샷 — T4 완료 직후
+## 게이트 현황 스냅샷 — T5 완료 직후
 
 | 게이트 | 결과 |
 |---|---|
 | `dotnet build tools/dotnet/KkomaKnight.sln -c Release` | 0 경고 · 0 오류 (Core · Game · Tests · Sim) |
-| `dotnet test tools/dotnet/Tests` | 32/32 (NUnit 3.6.1 — 유니티 포크와 같은 API 면 · 3.5.0 은 net8 어댑터가 테스트를 못 찾는다) |
-| 유니티 CI (#12) | EditMode 32/32 · PlayMode 1/1 |
+| `dotnet test tools/dotnet/Tests` | 40/40 (NUnit 3.6.1 — 유니티 포크와 같은 API 면 · 3.5.0 은 net8 어댑터가 테스트를 못 찾는다) |
+| 유니티 CI (#14) | EditMode 32/32 · PlayMode 1/1 · WebGL → gh-pages · Android APK 아티팩트 (T5 커밋의 CI 는 푸시 뒤 확인) |
 | `python3 tools/gen_meta.py --check` | 초록 |
 | `tools/check_data_sync.sh` | OK — aaaw main `c7ebe37` 과 동일 (`sim.js@0618225…`) |

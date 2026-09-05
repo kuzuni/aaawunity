@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using TMPro;
+using KkomaKnight.Core;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -317,6 +318,28 @@ namespace KkomaKnight.Game
             return rt;
         }
         public static Text ButtonText(Component b) => b.GetComponentInChildren<Text>(true);
+
+        /// <summary>색 변형이 없는 프리팹(CardFrame_04/ItemFrame_04 는 Gray 가 없다)을 회색 등급용으로 — 모든 Image 색을 같은 밝기의 무채색으로 바꾼다(알파 유지 · 흰색은 그대로).</summary>
+        public static void Desaturate(Transform root)
+        {
+            foreach (var img in root.GetComponentsInChildren<Image>(true))
+            {
+                var c = img.color; float l = 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
+                if (c.r > 0.97f && c.g > 0.97f && c.b > 0.97f) continue;
+                img.color = new Color(l * 0.92f, l * 0.90f, l * 0.90f, c.a);
+            }
+        }
+        /// <summary>특전 등급 프레임(팔각 ItemFrame_04_*) 하나 — 색 이름은 <see cref="Palette.PerkGradeName"/> · gray 는 무채색화. 안에 아이콘을 넣어 돌려준다.</summary>
+        public static RectTransform PerkFrame(Transform parent, string colorName, string iconKey, float size)
+        {
+            var f = Spawn(Palette.FrameKey("ui.itemFrame4", colorName), parent); var rt = (RectTransform)f.transform;
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f); rt.anchoredPosition = Vector2.zero; rt.sizeDelta = new Vector2(size, size * 165f / 162f);
+            if (colorName == "gray") Desaturate(rt);
+            var icon = Find(rt, "Icon");
+            if (icon != null) SetSprite(rt, "Icon", iconKey, Palette.White);
+            else { var ic = Icon(rt, "Icon", iconKey, Palette.White); Pct(ic.rectTransform, 22, 22, 56, 56); }
+            return rt;
+        }
 
         public static void Destroy(Transform t) { if (t != null) UnityEngine.Object.Destroy(t.gameObject); }
         public static void Clear(Transform t) { for (int i = t.childCount - 1; i >= 0; i--) UnityEngine.Object.Destroy(t.GetChild(i).gameObject); }

@@ -84,8 +84,10 @@ namespace KkomaKnight.Game
             scroll = view.gameObject.AddComponent<ScrollRect>(); scroll.horizontal = false; scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 40;
             var content = UiKit.Rect(view, "Content"); content.anchorMin = new Vector2(0, 1); content.anchorMax = new Vector2(1, 1); content.pivot = new Vector2(0.5f, 1); content.offsetMin = Vector2.zero; content.offsetMax = Vector2.zero;
             var grid = content.gameObject.AddComponent<GridLayoutGroup>();
-            float cellW = UiKit.FrameW * rect.W / 100f / Layout.GearInvCols - 10;
-            grid.cellSize = new Vector2(cellW, cellW); grid.spacing = new Vector2(10, 12); grid.padding = new RectOffset(4, 4, 4, 4);
+            // 표 ③⑥: 칸 18.4×7.2 · 간격 0.6 · 행 피치 7.6 (장비 탭과 대장간이 같은 격자)
+            grid.cellSize = new Vector2(UiKit.FrameW * Layout.GearInvCellW / 100f, UiKit.FrameH * Layout.GearInvCellH / 100f);
+            grid.spacing = new Vector2(UiKit.FrameW * Layout.GearInvGap / 100f, UiKit.FrameH * (Layout.GearInvRowPitch - Layout.GearInvCellH) / 100f);
+            grid.padding = new RectOffset(0, 0, (int)(UiKit.FrameH * (Layout.GearInvCell.Y - Layout.GearInv.Y) / 100f), 0);
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount; grid.constraintCount = Layout.GearInvCols; grid.childAlignment = TextAnchor.UpperLeft;
             var fit = content.gameObject.AddComponent<ContentSizeFitter>(); fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             scroll.content = content; scroll.viewport = view;
@@ -106,21 +108,24 @@ namespace KkomaKnight.Game
             if (g.IsNew) { g.IsNew = false; app.Persist(); onChanged?.Invoke(); }
             int lv = S.SlotLv(g.Part); double cost = D.Gear.SlotCost(lv); bool eqd = S.IsEquipped(g); bool maxed = lv >= D.Gear.SlotLvMax;
             var root = ov.OpenPrefab("ui.itemDetail"); var rt = (RectTransform)root.transform;
-            var popup = UiKit.Find(rt, "Popup"); if (popup != null) UiKit.Pct((RectTransform)popup, Layout.GdBox.X, Layout.GdBox.Y, Layout.GdBox.W, Layout.GdBox.H + 4);
+            var popup = UiKit.Find(rt, "Popup"); if (popup != null) UiKit.Pct((RectTransform)popup, Layout.GdBox);
+            var B = Layout.GdBox;
             // 등급 배지 — Label_Tapered_01 의 Bg 를 등급색으로
             var badge = UiKit.FindAny(rt, "Label_Tapered_01_Plum", "Label_Tapered_01");
-            if (badge != null) { var br = (RectTransform)badge; br.anchorMin = br.anchorMax = new Vector2(0.5f, 1); br.anchoredPosition = new Vector2(0, 4); br.sizeDelta = new Vector2(260, 55); UiKit.SetText(badge, "Text (TMP)", RarName(D, g.Rar)); UiKit.SetSprite(badge, "Bg", null, Palette.ByName(Palette.RarName(g.Rar))); UiKit.SetSprite(badge, "Deco", null, Palette.A(Palette.White, 0.25f)); }
+            if (badge != null) { var br = (RectTransform)badge; UiKit.Pct(br, Layout.GdBadge.Within(B)); UiKit.SetText(badge, "Text (TMP)", RarName(D, g.Rar)); UiKit.SetSprite(badge, "Bg", null, Palette.ByName(Palette.RarName(g.Rar))); UiKit.SetSprite(badge, "Deco", null, Palette.A(Palette.White, 0.25f)); }
             var slot = UiKit.Find(rt, "Slot");
-            if (slot != null) { UiKit.Clear(slot); Cell(slot, D, g, new CellOpts { Tag = PartName(D, g.Part) }, null); }
-            UiKit.SetText(rt, "Text_ItemName", Name(D, g) + (g.Plus > 0 ? " +" + g.Plus : ""), Palette.ByName(Palette.RarName(g.Rar)));
-            UiKit.SetText(rt, "Text_Level", $"{PartName(D, g.Part)} · {SetLabel(D, g)} · 슬롯 Lv.{lv}", Palette.InkSoft, 30);
-            var up = UiKit.Find(rt, "Slider_Upgrade_01");
-            if (up != null) { var sl = up.GetComponentInChildren<Slider>(true); if (sl != null) { sl.minValue = 0; sl.maxValue = 1; sl.value = D.Gear.SlotLvMax > 0 ? (float)lv / D.Gear.SlotLvMax : 0; sl.interactable = false; }
-                UiKit.Hide(up, "Upgrade", "Lock"); var st = UiKit.SetText(up, "Text (TMP)", $"슬롯 Lv.{lv} / {D.Gear.SlotLvMax}"); }
-            UiKit.SetText(rt, "Text_GearStats", "이 장비의 기여 (슬롯 배율 포함)", Palette.Ink, 30);
+            if (slot != null) { UiKit.Pct((RectTransform)slot, Layout.GdIcon.Within(B)); UiKit.Clear(slot); Cell(slot, D, g, new CellOpts { Tag = PartName(D, g.Part) }, null); }
+            var nm = UiKit.SetText(rt, "Text_ItemName", Name(D, g) + (g.Plus > 0 ? " +" + g.Plus : ""), Palette.ByName(Palette.RarName(g.Rar)));
+            if (nm != null) { UiKit.Pct(nm.rectTransform, Layout.GdName.Within(B)); nm.alignment = TextAnchor.MiddleLeft; nm.resizeTextForBestFit = true; nm.resizeTextMaxSize = 48; }
+            var meta = UiKit.SetText(rt, "Text_Level", $"{PartName(D, g.Part)} · {SetLabel(D, g)} · 슬롯 Lv.{lv}", Palette.InkSoft, 28);
+            if (meta != null) { UiKit.Pct(meta.rectTransform, Layout.GdMeta.Within(B)); meta.alignment = TextAnchor.MiddleLeft; meta.resizeTextForBestFit = true; meta.resizeTextMaxSize = 28; }
+            UiKit.Hide(rt, "Slider_Upgrade_01", "Text_GearStats", "LineFrame_01_s_Brown");
             var list = UiKit.Find(rt, "Group_Buff");
             if (list != null)
             {
+                // 스탯 섹션(y39.5 h9.5) + 옵션 목록(y48 h14) 을 한 목록으로 — 줄 피치 2.4
+                var region = new Layout.R(Layout.GdStats.X, Layout.GdStats.Y, Layout.GdStats.W, Layout.GdOpts.Y + Layout.GdOpts.H - Layout.GdStats.Y);
+                UiKit.Pct((RectTransform)list, region.Within(B));
                 var tpl = list.childCount > 0 ? list.GetChild(0).gameObject : null;
                 var rows = new List<GameObject>(); for (int i = 0; i < list.childCount; i++) rows.Add(list.GetChild(i).gameObject);
                 var c = GearSystem.Contribution(D, g, lv);
@@ -137,23 +142,28 @@ namespace KkomaKnight.Game
                     bool on = i < n; string need = i < R ? $"{RarName(D, i)} 이상" : $"신화 +{(i - R + 1) * 3}강";
                     lines.Add(((on ? "◆ " : "🔒 ") + opts[i].Desc + (on ? "" : $"  ({need})"), on ? Palette.InkSoft : Palette.A(Palette.InkLight, 0.7f)));
                 }
-                if (eqd) lines.Add(($"슬롯 강화 Lv.{lv} → {(maxed ? "MAX" : "Lv." + (lv + 1))}   {(maxed ? $"상한 Lv.{D.Gear.SlotLvMax}" : "🪙 " + UiKit.Fmt(cost))}", Palette.Orange));
+                if (eqd) { var costTxt = UiKit.Label(popup != null ? (RectTransform)popup : rt, 0, 0, 0, 0, $"슬롯 강화 Lv.{lv} → {(maxed ? "MAX" : "Lv." + (lv + 1))}   {(maxed ? $"상한 Lv.{D.Gear.SlotLvMax}" : "🪙 " + UiKit.Fmt(cost))}", 28, Palette.Orange, TextAnchor.MiddleLeft, true, false); UiKit.Pct(costTxt.rectTransform, Layout.GdCost.Within(B)); }
+                float rowH = UiKit.FrameH * Layout.GdOptPitch / 100f;
                 for (int i = 0; i < lines.Count; i++)
                 {
                     GameObject row = i < rows.Count ? rows[i] : (tpl != null ? UnityEngine.Object.Instantiate(tpl, list) : null);
                     if (row == null) break;
                     row.SetActive(true);
-                    var txt = UiKit.SetText(row.transform, "Text_Buff", lines[i].Item1, lines[i].Item2, 26);
-                    if (txt != null) { txt.resizeTextForBestFit = false; txt.horizontalOverflow = HorizontalWrapMode.Wrap; txt.verticalOverflow = VerticalWrapMode.Overflow; }
-                    var le = row.GetComponent<LayoutElement>() ?? row.AddComponent<LayoutElement>(); le.preferredHeight = 40; le.minHeight = 36;
+                    var txt = UiKit.SetText(row.transform, "Text_Buff", lines[i].Item1, lines[i].Item2, 24);
+                    if (txt != null) { txt.resizeTextForBestFit = true; txt.resizeTextMinSize = 12; txt.resizeTextMaxSize = 24; txt.horizontalOverflow = HorizontalWrapMode.Wrap; txt.verticalOverflow = VerticalWrapMode.Truncate; }
+                    var le = row.GetComponent<LayoutElement>() ?? row.AddComponent<LayoutElement>(); le.preferredHeight = rowH; le.minHeight = rowH;
                 }
                 for (int i = lines.Count; i < rows.Count; i++) rows[i].SetActive(false);
-                var vl = list.GetComponent<VerticalLayoutGroup>(); if (vl != null) { vl.spacing = 2; vl.childForceExpandHeight = false; vl.childControlHeight = true; }
+                var vl = list.GetComponent<VerticalLayoutGroup>(); if (vl != null) { vl.spacing = 0; vl.padding = new RectOffset(0, 0, 0, 0); vl.childForceExpandHeight = false; vl.childControlHeight = true; vl.childAlignment = TextAnchor.UpperLeft; }
             }
             var btns = UiKit.Find(rt, "Group_Buttons");
             if (btns != null && btns.childCount >= 2)
             {
+                foreach (var lg in btns.GetComponents<LayoutGroup>()) lg.enabled = false;
+                UiKit.Pct((RectTransform)btns, Layout.GdBtns.Within(B));
                 var b1 = btns.GetChild(0); var b2 = btns.GetChild(1);
+                var l = Layout.GdBtnL.Within(Layout.GdBtns); var r = Layout.GdBtnR.Within(Layout.GdBtns);
+                UiKit.Pct((RectTransform)b1, l.X, 0, l.W, 100); UiKit.Pct((RectTransform)b2, r.X, 0, r.W, 100);
                 if (eqd)
                 {
                     UiKit.SetText(b1, "Text (TMP)", "해제"); UiKit.Clickable(b1, () => { S.Eq.Remove(g.Part); app.Persist(); ov.Close(); onChanged?.Invoke(); });
@@ -167,7 +177,8 @@ namespace KkomaKnight.Game
                     b2.gameObject.SetActive(false);
                 }
             }
-            var close = UiKit.Find(rt, "Button_Close_01"); if (close != null) UiKit.Clickable(close, () => ov.Close());
+            var close = UiKit.Find(rt, "Button_Close_01");
+            if (close != null) { close.SetParent(rt, false); UiKit.Pct((RectTransform)close, 45, Layout.GdClose.Y - 2.5f, 10, Layout.GdClose.H + 3f); UiKit.Clickable(close, () => ov.Close()); }   // 닫기는 상자 밖 y91.5
         }
 
         /// <summary>빈 부위 팝업 — 슬롯 강화만.</summary>

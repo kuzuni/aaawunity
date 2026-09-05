@@ -1,4 +1,5 @@
 using System;
+using KkomaKnight.Core;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,34 +12,33 @@ namespace KkomaKnight.Game
     public sealed class LobbyScreen : GameScreen
     {
         public override string Name => "lobby";
-        Text _gold, _gem, _chap, _sub, _power;
-        Transform _tabs;
+        Text _chap, _sub;
+        Transform _tabs; TopBar _top;
 
         protected override void Build()
         {
             var root = UiKit.Spawn("ui.lobby", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
-            _gold = UiKit.SetText(rt, "ResourceBar_Coin/Text (TMP)", "0"); _gem = UiKit.SetText(rt, "ResourceBar_Gem/Text (TMP)", "0");
-            // 유저 정보 칸 → 꼬마기사 · 전투력
-            var ui = UiKit.FindAny(rt, "UserInfo_01", "Slider_02_Yellow");
-            if (ui != null)
-            {
-                UiKit.SetText(ui, "Text_UserName", "꼬마기사"); UiKit.Hide(ui, "Icon");
-                _power = UiKit.SetText(ui, "Text_GuildName", "전투력 0", Palette.InkLight);
-                var lv = UiKit.Find(ui, "Slider_Level_01"); if (lv != null) { UiKit.SetText(lv, "Slider_02_Yellow/Text (TMP)", ""); UiKit.Hide(lv, "Icon"); UiKit.SetText(lv, "Level/Text (TMP)", ""); }
-                UiKit.SetSprite(ui, "Character", "ui.battle", Palette.White);
-            }
-            UiKit.Hide(rt, "Button_Menu", "Group_LeftButtons", "ChatBox");
+            // ⑧ 상단 바(아바타 + 골드·젬·전투력 pill) — 프리팹의 ResourceBar/UserInfo 대신 공통 TopBar 를 표 자리에
+            UiKit.Hide(rt, "ResourceBar_Group", "Group_LeftButtons", "ChatBox"); var ui = UiKit.FindAny(rt, "UserInfo_01", "Slider_02_Yellow"); if (ui != null) ui.gameObject.SetActive(false);
+            _top = TopBar.Attach(Root, App);
+            var menu = UiKit.Find(rt, "Button_Menu"); if (menu != null) { UiKit.Pct((RectTransform)menu, Layout.LobbyMenu); UiKit.Clickable(menu, () => App.Overlay.Pause(() => { }, () => { })); }
             var right = UiKit.Find(rt, "Group_RightButtons");
-            if (right != null) { UiKit.Hide(right, "Button_Mission"); var inv = UiKit.Find(right, "Button_Inventory"); if (inv != null) { UiKit.SetText(inv, "Text (TMP)", "장비"); UiKit.Clickable(inv, () => App.ShowScreen("gear")); } }
+            if (right != null) { UiKit.Pct((RectTransform)right, Layout.LobbySideR); UiKit.Hide(right, "Button_Mission"); var inv = UiKit.Find(right, "Button_Inventory"); if (inv != null) { UiKit.SetText(inv, "Text (TMP)", "장비"); UiKit.Clickable(inv, () => App.ShowScreen("gear")); } }
+            // 챕터 제목 + 밑줄 (표 ① 제목 34.7/27.2 · 밑줄 29.6/30.0 → 한 프리팹이 둘을 덮는다)
+            var title = UiKit.Find(rt, "Title_LineDeco_01_Blue");
+            if (title != null) UiKit.Pct((RectTransform)title, Layout.LobbyChapUnderline.X, Layout.LobbyChapTitle.Y, Layout.LobbyChapUnderline.W, Layout.LobbyChapUnderline.Y + Layout.LobbyChapUnderline.H - Layout.LobbyChapTitle.Y);
             _chap = UiKit.SetText(rt, "Title_LineDeco_01_Blue/Text (TMP)", "챕터 1");
-            _sub = UiKit.SetText(rt, "Text (TMP)", "꼬마기사 키우기"); if (_sub != null) { _sub.resizeTextForBestFit = true; _sub.resizeTextMaxSize = 60; }
-            var start = UiKit.FindAny(rt, "Button_03_Red", "Button_03_Convex_Red"); if (start != null) { UiKit.SetText(start, "Text (TMP)", "START"); UiKit.Clickable(start, () => App.StartBattle(App.Save.SelChapter)); }
+            // 이벤트 배너 자리(형태만) — 게임 이름
+            var banner = UiKit.SpawnRt("ui.frameIvory", rt, Layout.LobbyBanner);
+            _sub = UiKit.SetText(rt, "Text (TMP)", "꼬마기사 키우기", Palette.Ink, 40); if (_sub != null) { _sub.transform.SetParent(banner, false); UiKit.Stretch(_sub.rectTransform, 12, 4, 12, 4); _sub.resizeTextForBestFit = true; _sub.resizeTextMaxSize = 40; }
+            var map = UiKit.Find(rt, "SampleImage_Map"); if (map != null) { UiKit.Pct((RectTransform)map, Layout.LobbyCard); var mi = map.GetComponent<Image>(); if (mi != null) mi.preserveAspect = true; }
+            var start = UiKit.FindAny(rt, "Button_03_Red", "Button_03_Convex_Red"); if (start != null) { UiKit.Pct((RectTransform)start, Layout.LobbyStart); UiKit.SetText(start, "Text (TMP)", "START"); UiKit.Clickable(start, () => App.StartBattle(App.Save.SelChapter)); }
             // 챕터 ◀ ▶
             UiKit.Button(Root, "ui.btnSmallBlue", "◀", () => Shift(-1), Layout.LobbyArrowL);
             UiKit.Button(Root, "ui.btnSmallBlue", "▶", () => Shift(1), Layout.LobbyArrowR);
             // 하단 탭 5칸: 상점 · 장비 · 전투(가운데) · 대장간 · 설정
             _tabs = UiKit.Find(rt, "Tab_01_BottomFlushMenu");
-            if (_tabs != null) NavBar.Wire(App, _tabs, "lobby");
+            if (_tabs != null) { UiKit.Pct((RectTransform)_tabs, Layout.TabBar); NavBar.Wire(App, _tabs, "lobby"); }
         }
         void Shift(int d)
         {
@@ -48,10 +48,8 @@ namespace KkomaKnight.Game
         public override void Refresh()
         {
             var s = App.Save;
-            if (_gold != null) _gold.text = UiKit.Fmt(s.Gold);
-            if (_gem != null) _gem.text = UiKit.Fmt(s.Gem);
+            _top?.Refresh(App);
             if (_chap != null) _chap.text = $"챕터 {s.SelChapter}  (최고 {s.MaxChapter})";
-            if (_power != null) _power.text = "전투력 " + UiKit.Fmt(App.Power());
         }
     }
 }
