@@ -17,7 +17,7 @@
 | T9 | 상점 = Shop_List 그대로 (상자 3 · 다이아 6 · 골드 3) + 뽑기 결과 = Shop_Chest_Open | 대기 | — | Game/ShopScreen · KkomaKnight/shop.json | ROUTINE §2 T9 |
 | T10 | 하단 네비 = 상점·장비·전투·탤런트·펫 + Settings 그대로 — T6 뒤 | ✅ 완료 (`dce33d6` · 실물 확인은 WebGL 배포에서) | sess-2052-15499 / 워커 D | Game/Screens(NavBar 이사) · Overlay(Settings·TalentPet) · GearScreen(NavBar 제거) · catalog(ui.talent·ui.talentIcon·ui.petIcon) | 탭 = 상점·장비·전투·탤런트·펫 · Settings 프리팹 요소 숨김 0 · Character_Talent_02 통째로 · dotnet 0/0 · 테스트 45/45 |
 | T11 | UI 스모크 PlayMode 테스트 + 가짜 null 게이트 | 대기 | — | Tests/PlayMode · tools · ci.yml | ROUTINE §2 T11 |
-| T12 | **플레이 콘솔 에러 0** — URP 2D 렌더 에러(HeroView RenderTexture 깊이 0) 수정 + 전 화면 런타임 에러 전수 감사 (최우선) | 대기 | — | Game/HeroView(·카메라 코드) · Tests/PlayMode/HeroViewTests · tools/check_catalog_keys.py | ROUTINE §2 T12 · «주인 콘솔 에러 보고함» ① |
+| T12 | **플레이 콘솔 에러 0** — URP 2D 렌더 에러(HeroView RenderTexture 깊이 0) 수정 + 전 화면 런타임 에러 전수 감사 (최우선) | ✅ 완료 (`2203550` · 실물 확인 = CI PlayMode HeroViewTests + 주인 에디터 플레이) | sess-2121-23849 / 워커 B | Game/HeroView · Game.asmdef(URP 참조) · Tests/PlayMode/HeroViewTests(신규) · tools/check_catalog_keys.py(신규) · ci.yml(게이트 1줄) · dotnet Stubs/URP.cs | RenderTexture 깊이 24·스텐실 8 · URP Base 카메라 데이터 명시 · 파괴 순서 · PlayMode 2개(단독 렌더 · 씬 로비→장비→전투→로비 왕복) · 카탈로그 키 552개 전부 실재 · dotnet 0/0 · 테스트 45/45 |
 | T13 | 전투 HUD 특전 미리보기 줄(PerkStrip) 비례 — 아이콘이 서로 가림 · index.html 34/28/4px 비례로 · 넘침 0 · 스크린샷 아티팩트 | 대기 | — | Game/BattleScreen(RefreshPerkStrip) · Tests/PlayMode/PerkStripTests · ci.yml(아티팩트) | ROUTINE §2 T13 |
 
 ### T1 완료 기록 (2026-09-05 · 착수 세션)
@@ -235,15 +235,35 @@
 - 워커 메모: 이 환경엔 dotnet 이 없다 — `apt-get update && apt-get install -y dotnet-sdk-8.0`(Ubuntu 24.04 자체 패키지 · update 없이 바로 install 하면 404) 로 설치해 게이트를 돌렸다.
 - 한계: 에디터 없이 짠 것 — ⓐ 프리팹 Content 격자의 세로 간격(24.5)·패딩을 그대로 쓰므로 표 ⑥ 의 «행 피치 7.6%» 와는 다르다(주인 «칸 비례 = 장비 화면과 같게» 가 우선) ⓑ 재료 칸(188)이 슬롯 자리 폭(184)보다 2px 씩 넘친다(보이지 않는 차이 · 거슬리면 `Layout.ForgeMat.W` 한 줄).
 
+### T12 완료 기록 (2026-09-05 · sess-2121-23849 · 워커 B)
+
+- **주인이 확인할 것 (한 줄)**: 에디터 플레이 → 로비(초상) → 장비(가운데 캐릭터) → 전투 → 일시정지 «포기하고 로비로» → 다시 장비 — 콘솔에 `Renderer2D Pass: Fake or uninitialized surface…` / `EndRenderPass: Not inside a Renderpass` 가 **더 이상 안 뜨는지**(둘 다 사라져야 정상). 뜨면 원문을 «주인 콘솔 에러 보고함» ④ 로 붙여 주시면 된다.
+- **원인 확정 근거(한 줄)**: 프로젝트 렌더러는 `Assets/Settings/Renderer2D.asset` 하나(URP 17.3 · `m_UseDepthStencilBuffer: 1`)인데, `HeroView.BuildStage` 가 깊이 0(`depthStencilFormat None`) RenderTexture 를 런타임 카메라 타깃으로 썼다 → Renderer2D 렌더그래프가 카메라 타깃의 깊이/스텐실 표면을 attachment 로 import 하다 «없는 표면(fake)» 이라 렌더패스 시작 실패(①) → 짝이 안 맞는 End(②). 이 카메라는 로비·장비 두 화면에서 매 프레임 그리므로 «플레이하면 항상» 이 설명된다. 씬의 Main Camera 는 화면(백버퍼)에 그리므로 무관. 코드에서 RenderTexture/Camera 를 만드는 곳은 `HeroView` 뿐(감사 ⓔ).
+- 만든 것
+  - `HeroView.CreateTargetTexture(size, name)`: `RenderTextureDescriptor(ARGB32, depthBufferBits 24)` + `depthStencilFormat = GraphicsFormatUtility.GetDepthStencilFormat(24, 8)`(D24S8 · 없으면 D32S8) — 에셋 설정(`m_UseDepthStencilBuffer`)을 끄지 않고 코드가 렌더러에 맞춘다. 카메라는 설정을 다 넣은 뒤 켠다 · `UniversalAdditionalCameraData` 를 `UiKit.Ensure` 로 붙여 Base · 후처리/그림자/깊이·색 텍스처 요청 없음 · AA 없음(파이프라인이 늦게 자동 생성하는 것에 기대지 않는다). `OnDestroy` 순서 고정 · 무대가 꺼진 동안엔 `Animator.Play` 를 부르지 않고 `OnEnable` 에서 Idle 재생 · `_count` 를 `SubsystemRegistration` 에서 0 으로(도메인 리로드 끔 대비 · UiKit 규약). 로비(T6)·장비(T7) 두 인스턴스가 같은 코드.
+  - `KkomaKnight.Game.asmdef`·`Tests.PlayMode.asmdef` 에 `Unity.RenderPipelines.Universal.Runtime` 참조 · dotnet 검사 빌드용 스텁 `tools/dotnet/Stubs/URP.cs`(TMPro 스텁과 같은 방식 · 쓰는 표면만).
+  - `Assets/Tests/PlayMode/HeroViewTests.cs` **2개**: ① `StandaloneHeroViewRendersWithoutErrors` — App 없이 HeroView 를 세워 텍스처 depth>0 · depthStencilFormat≠None · URP 데이터 Base 단언 → `Camera.Render()` 3프레임 → 끄고 켜기 → 파괴, 단계마다 `LogAssert.NoUnexpectedReceived` ② `SceneLobbyGearBattleRoundTripNoErrors` — `SampleScene` 을 실제로 로드(Bootstrap → 데이터 → App) → 로비 → 장비 → 전투 1초(월드 카메라도 강제 렌더 · HeroView 레이어 제외 단언) → 로비 → 장비 → 로비 → App 파괴, 단계마다 에러 0. 배치 모드 CI 는 GameView 를 안 그리므로 `Camera.Render()` 로 URP 루프(주인 스택의 `DoRenderLoop_Internal`)를 직접 밟는다 · `WaitForEndOfFrame` 은 배치 모드에서 영영 안 돌아와 쓰지 않았다.
+  - `tools/check_catalog_keys.py`(신규 게이트 · ci.yml dotnet 잡 + ROUTINE §3): `Assets/Scripts` 의 카탈로그 키 리터럴 552개 ↔ `catalog.json` 458키 대조(접두 조립 `"env."`·`FrameKey("ui.cardFrame", 색)` 허용 · 데이터 파일 이름 제외). 지금 누락 0. 없는 키를 일부러 넣으면 잡히는 것 확인.
+- **감사 결과(ⓐ~ⓔ · `Assets/Scripts/Game` 20파일 전수)** — 새로 확인된 «정상 플레이 중 빨간 줄» 원인 **0**:
+  - ⓐ 가짜 null `?? AddComponent` 패턴 0건(e64ff41 이후). 프리팹 자식 `Find` 는 전부 null 검사 뒤 사용. `(RectTransform)` 캐스트는 uGUI 프리팹 노드라 안전. `App.Assets` 무가드 사용처(Overlay/CharacterRig/BattleWorld)는 카탈로그가 씬에 연결돼 있어 정상 플레이에선 안 터진다(미연결이면 Bootstrap 이 이미 LogError).
+  - ⓑ 카탈로그 키: 위 스크립트로 리터럴 전부 실재. 조립 키(`cm.gear.*`·`gi.*`)는 EditMode `GearLookTests` 가 표 전체를 대조.
+  - ⓒ `UnityEditor.*` 사용 0 · `Resources.Load` 는 내장 폰트 1곳(`FontOrBuiltin` · DefaultFont 가 있으면 안 탄다) · `Camera.main` 은 Bootstrap 1곳(씬에 MainCamera 태그 있음).
+  - ⓓ DOTween: `Assets/Resources/DOTweenSettings.asset` `useSafeMode: 1`(safeModeOptions.logBehaviour Warning) — 파괴된 타깃의 트윈(버튼 눌림 연출 뒤 즉시 Close · 팝업 PopIn · 데미지 팝)은 safe mode 가 자동 kill 하므로 빨간 줄 없음. 코루틴은 Bootstrap 의 데이터 로드 1개뿐(콜백은 `_status`/`_boot` null 검사 필요 없음 — 로드 중 파괴 경로 없음).
+  - ⓔ 런타임 Camera/RenderTexture 는 HeroView 뿐(수정) · `cm.character` 프리팹 Animator 에 컨트롤러 연결돼 있음(`m_Controller` 있음) · 폰트 = 씬 주입 Jua → 없으면 내장 · `mat.hitFlash` 는 null 이면 Flash 가 건너뜀.
+  - 에러 아님(참고 · 등재 안 함): `UiKit.SetText/SetSprite` 의 «글자/이미지 없음» 은 노란 경고이고 프리팹 경로가 실제로 있는지는 에디터/CI PlayMode 가 확인 — T11 스모크 테스트가 화면마다 열어 잡는다. `BattleScreen.Tick` 의 백그라운드 따라잡기(최대 600초분)는 한 프레임이 길어질 뿐 에러가 아니다.
+- 게이트: `dotnet build` 0/0 · `dotnet test` **45/45** · `gen_meta --check` · `gen_catalog --check`(459) · **`check_catalog_keys` OK(552/458)** · `check_data_sync` OK(aaaw `0707999`). Sim 시드 검증은 Core 를 안 건드려 생략.
+- **플레이 콘솔 에러 0 을 무엇으로 확인했는가**: PlayMode `HeroViewTests` 2개(위) — 코드 커밋 `2203550` 의 CI 유니티 잡(«Unity EditMode + PlayMode 테스트») 결과가 확인 수단. 이 세션은 push 뒤 약 40분 뒤 CI 를 다시 읽어 빨간 잡이면 고친다. CI 러너(xvfb · Mesa) 가 실제 URP 패스를 도는지까지는 로그로만 알 수 있으므로 **주인 에디터 플레이 확인**(위 «주인이 확인할 것»)이 최종.
+- 워커 메모: dotnet 은 `apt-get update && apt-get install -y dotnet-sdk-8.0` 로 설치(T8 워커 메모 그대로). PlayMode 테스트를 로컬에서 못 돌리므로 테스트 API 는 유니티 6(`FindObjectsByType(FindObjectsInactive, FindObjectsSortMode)` · `RenderTexture.depthStencilFormat`) 기준으로 썼다.
+
 ## 주인 콘솔 에러 보고함 (주인이 붙인 원문 — 다 고칠 때까지 남긴다 · 워커는 매 세션 읽고 작업으로 올린다)
 
 > 주인 상시 지시(2026-09-05): **플레이하면 콘솔에 빨간 에러가 항상 뜬다. 루틴이 매번 플레이 상태를 검증해 다 고쳐라. 다른 에러도 있는지 전부 확인해라.** 새 로그는 아래에 번호를 이어 붙이면 된다(원문 그대로).
 
 | # | 원문(발생 상황) | 상태 | 작업 | 원인/커밋 |
 |---|---|---|---|---|
-| ① | `Renderer2D Pass: Fake or uninitialized surface is not supported for attachment 0.`<br>`UnityEngine.Rendering.RenderPipelineManager:DoRenderLoop_Internal (UnityEngine.Rendering.RenderPipelineAsset,intptr,UnityEngine.Object,Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle)` — 에디터 플레이 중 반복 | 미해결 | T12 | 등재 진단: `HeroView.BuildStage` 의 깊이 0 RenderTexture ↔ `Renderer2D.asset` `m_UseDepthStencilBuffer: 1` (확정은 T12) |
-| ② | `EndRenderPass: Not inside a Renderpass`<br>`UnityEngine.Rendering.RenderPipelineManager:DoRenderLoop_Internal (…)` — ① 과 짝으로 매 프레임 | 미해결 | T12 | ① 과 같은 원인(렌더패스 시작 실패 뒤 End 호출) |
-| ③ | (주인: «다른 에러들도 있는지 다 확인해서 고쳐라» — 위 둘 외 미기재 항목 전수 감사) | 미해결 | T12 §3 | — |
+| ① | `Renderer2D Pass: Fake or uninitialized surface is not supported for attachment 0.`<br>`UnityEngine.Rendering.RenderPipelineManager:DoRenderLoop_Internal (UnityEngine.Rendering.RenderPipelineAsset,intptr,UnityEngine.Object,Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle)` — 에디터 플레이 중 반복 | ✅ 수정 (`2203550`) — 주인 에디터 재확인 대기 | T12 | **확정**: `HeroView.BuildStage` 가 `new RenderTexture(512, 512, 0, ARGB32)`(깊이 0 · `depthStencilFormat None`) 을 런타임 카메라 `targetTexture` 로 썼다. 프로젝트의 유일한 렌더러 `Renderer2D.asset` 은 `m_UseDepthStencilBuffer: 1` 이라 렌더그래프가 카메라 타깃의 깊이 표면을 attachment 로 import 하는데 그 표면이 없어(«Fake or uninitialized surface») 렌더패스 시작이 실패한다. 이 카메라는 로비·장비 화면에서 매 프레임 그리므로 «항상» 뜬다. 수정 = `HeroView.CreateTargetTexture`(깊이 24 + `GetDepthStencilFormat(24, 8)` = D24S8/D32S8) + `UniversalAdditionalCameraData`(Base) 명시. 회귀 방지 = `HeroViewTests.StandaloneHeroViewRendersWithoutErrors`(depth>0 · depthStencilFormat≠None 단언 + `Camera.Render()` 3프레임 `LogAssert`). |
+| ② | `EndRenderPass: Not inside a Renderpass`<br>`UnityEngine.Rendering.RenderPipelineManager:DoRenderLoop_Internal (…)` — ① 과 짝으로 매 프레임 | ✅ 수정 (`2203550`) — 주인 에디터 재확인 대기 | T12 | ① 과 같은 원인(렌더패스 시작이 실패한 뒤 End 가 불려 짝이 안 맞음) — ① 이 없어지면 같이 사라진다. 추가로 `HeroView.OnDestroy` 순서를 «카메라 끔 → targetTexture null → RawImage 끔 → 무대 파괴 → Release → Destroy» 로 고정해 해제된 텍스처를 파이프라인이 만지지 않게 했다. |
+| ③ | (주인: «다른 에러들도 있는지 다 확인해서 고쳐라» — 위 둘 외 미기재 항목 전수 감사) | ✅ 감사 완료 (`2203550` · 결과는 T12 완료 기록) — 새로 확인된 빨간 줄 원인 0 · 재발 방지 게이트 2개(`check_catalog_keys.py` · PlayMode 왕복 테스트) | T12 §3 | 감사 결과: 실제 플레이에서 빨간 줄을 내는 곳은 ①② 뿐. 나머지는 «데이터/에셋이 빠졌을 때만»(카탈로그 미연결 · 프리팹 자식 경로 오타 → 노란 경고) 이거나 DOTween safeMode(켜짐 · `useSafeMode: 1`)가 조용히 kill 하는 트윈. 프리팹 경로 경고는 T11 스모크 테스트가 화면마다 잡는다. |
 
 ## 주인 할 일
 
