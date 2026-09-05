@@ -1,0 +1,159 @@
+using System;
+using System.Collections.Generic;
+
+namespace KkomaKnight.Core
+{
+    /// <summary>장비 한 점. sim.js `{part,type,rar,plus}` + 게임의 uid/NEW 뱃지.</summary>
+    public sealed class GearItem
+    {
+        public int Uid; public string Part, Type; public int Rar, Plus; public bool IsNew;
+        public GearItem Clone() => new GearItem { Uid = Uid, Part = Part, Type = Type, Rar = Rar, Plus = Plus, IsNew = IsNew };
+        public string GroupKey => Part + "|" + Type + "|" + Rar;
+        public override string ToString() => $"{Type} r{Rar}+{Plus}";
+    }
+
+    /// <summary>빌드 = 부위별 장착 장비 + 부위별 슬롯 레벨 (sim.js `build={eq,slots}`).</summary>
+    public sealed class Build
+    {
+        public Dictionary<string, GearItem> Eq = new Dictionary<string, GearItem>();
+        public Dictionary<string, int> Slots = new Dictionary<string, int>();
+        public GearItem EqAt(string part) => Eq.TryGetValue(part, out var g) ? g : null;
+        public int SlotAt(string part) => Slots.TryGetValue(part, out var l) ? l : 0;
+    }
+
+    public struct Power { public double Atk, Hp, Sh; }
+
+    public sealed class GachaState { public int P50, P10, Pulls; }
+
+    /// <summary>장비 수식 (PLAN §11) — sim.js 와 같은 동사: buildPower · gachaPull · fuseMake · fuseAll · autoEquip.</summary>
+    public static class GearSystem
+    {
+        public static Build MkBuild(GameData D, int rar, int plus, int slotLv, int typeIdx = 0)
+        {
+            var b = new Build();
+            foreach (var pt in D.Gear.Parts)
+            {
+                b.Eq[pt] = rar < 0 ? null : new GearItem { Part = pt, Type = D.Gear.Types[pt][typeIdx], Rar = rar, Plus = plus };
+                b.Slots[pt] = slotLv;
+            }
+            return b;
+        }
+
+        public static double EvenBonus(GameData D, Build b)
+        {
+            int mn = int.MaxValue;
+            foreach (var pt in D.Gear.Parts) mn = Math.Min(mn, b.SlotAt(pt));
+            return 1 + D.Gear.EvenStep * Math.Floor((double)mn / D.Gear.EvenPer);
+        }
+
+        /// <summary>sim.js `buildPower(b)` — 부위 기여 = 등급 기여 × (1 + plusStep×강화) × 슬롯 배수, 마지막에 균등 보너스.</summary>
+        public static Power BuildPower(GameData D, Build b)
+        {
+            var G = D.Gear; var T = D.Tune;
+            double atk = 0, hp = 0, sh = 0;
+            foreach (var pt in G.Parts)
+            {
+                var g = b.EqAt(pt); if (g == null) continue;
+                double m = G.SlotMul(b.SlotAt(pt)) * (1 + G.PlusStep * g.Plus);
+                atk += G.Atk[g.Rar] * m; hp += G.Hp[g.Rar] * m; sh += G.Sh[g.Rar] * m;
+            }
+            double ev = EvenBonus(D, b);
+            return new Power { Atk = (T.PAtk0 + atk) * ev, Hp = (T.PHp0 + hp) * ev, Sh = (T.PSh0 + sh) * ev };
+        }
+
+        /// <summary>부위 하나의 기여 (세부 팝업 표시용).</summary>
+        public static Power Contribution(GameData D, GearItem g, int slotLv)
+        {
+            double m = D.Gear.SlotMul(slotLv) * (1 + D.Gear.PlusStep * g.Plus);
+            return new Power { Atk = D.Gear.Atk[g.Rar] * m, Hp = D.Gear.Hp[g.Rar] * m, Sh = D.Gear.Sh[g.Rar] * m };
+        }
+
+        /// <summary>
+        /// sim.js `gachaPull(st, box)` — 보통 1개, 신화 천장 × 전설 피티가 겹치면 2개(전설 추가). 난수는 뽑기 스트림.
+        /// </summary>
+        public static List<GearItem> GachaPull(GameData D, GachaState st, GachaBox box, IRng rng)
+        {
+            var G = D.Gear;
+            st.Pulls++; st.P50++; st.P10++;
+            bool pityM = box.PityMyth > 0 && st.P50 >= box.PityMyth, pityL = box.PityLegend > 0 && st.P10 >= box.PityLegend;
+            int rar;
+            if (pityM) rar = G.RarMyth;
+            else
+            {
+                double r = rng.Next() * 100;
+                rar = box.RarRoll(r);
+                if (pityL && rar < G.RarLegend) rar = G.RarLegend;
+            }
+            if (rar == G.RarMyth) st.P50 = 0;
+            if (rar >= G.RarLegend) st.P10 = 0;
+            GearItem Mk(int rr) { var t = G.AllTypes[(int)Math.Floor(rng.Next() * G.AllTypes.Count)]; return new GearItem { Part = t.Part, Type = t.Type, Rar = rr, Plus = 0 }; }
+            var out_ = new List<GearItem> { Mk(rar) };
+            if (pityM && pityL) out_.Add(Mk(G.RarLegend));
+            return out_;
+        }
+
+        /// <summary>sim.js `fuseMake(base)` — 같은 부위·종류·등급 3개 → 산출물 규칙 (자동·수동 공용).</summary>
+        public static GearItem FuseMake(GameData D, GearItem b)
+        {
+            var G = D.Gear;
+            if (b.Rar < G.RarLegend) return new GearItem { Part = b.Part, Type = b.Type, Rar = b.Rar + 1, Plus = 0 };
+            if (b.Rar == G.RarLegend)
+            {
+                int np = b.Plus + 1;
+                return np >= G.LegendToMythPlus
+                    ? new GearItem { Part = b.Part, Type = b.Type, Rar = G.RarMyth, Plus = 0 }
+                    : new GearItem { Part = b.Part, Type = b.Type, Rar = G.RarLegend, Plus = np };
+            }
+            return new GearItem { Part = b.Part, Type = b.Type, Rar = G.RarMyth, Plus = b.Plus + 1 };
+        }
+
+        /// <summary>재료 3개에서 base(최고 강화) 를 고르고 산출물을 만든다.</summary>
+        public static GearItem FuseThree(GameData D, IList<GearItem> mats)
+        {
+            GearItem best = null;
+            foreach (var m in mats) if (best == null || m.Plus > best.Plus) best = m;
+            return FuseMake(D, best);
+        }
+
+        /// <summary>sim.js `fuseAll(inv, equipped)` — 합성 가능한 묶음이 없어질 때까지 반복. 만든 개수 반환.</summary>
+        public static int FuseAll(GameData D, List<GearItem> inv, HashSet<GearItem> equipped, Func<GearItem, int> assignUid = null)
+        {
+            bool did = true; int count = 0;
+            while (did)
+            {
+                did = false;
+                var groups = new Dictionary<string, List<GearItem>>();
+                var order = new List<string>();
+                foreach (var g in inv)
+                {
+                    if (equipped != null && equipped.Contains(g)) continue;
+                    if (!groups.TryGetValue(g.GroupKey, out var l)) { l = new List<GearItem>(); groups[g.GroupKey] = l; order.Add(g.GroupKey); }
+                    l.Add(g);
+                }
+                foreach (var k in order)
+                {
+                    var arr = groups[k];
+                    if (arr.Count < 3) continue;
+                    arr.Sort((a, b) => b.Plus.CompareTo(a.Plus));
+                    var mats = arr.GetRange(0, 3);
+                    var made = FuseMake(D, mats[0]);
+                    foreach (var m in mats) inv.Remove(m);
+                    if (assignUid != null) made.Uid = assignUid(made);
+                    inv.Add(made); count++; did = true;
+                    break;
+                }
+            }
+            return count;
+        }
+
+        public static int GearScore(GearItem g) => g.Rar * 1000 + g.Plus;
+
+        /// <summary>sim.js `autoEquip(inv)` — 부위마다 점수 최고품 (시뮬 측정 정책 · 게임은 «↑ 표시» 에만 쓴다).</summary>
+        public static Dictionary<string, GearItem> AutoEquip(List<GearItem> inv)
+        {
+            var eq = new Dictionary<string, GearItem>();
+            foreach (var g in inv) { if (!eq.TryGetValue(g.Part, out var b) || GearScore(g) > GearScore(b)) eq[g.Part] = g; }
+            return eq;
+        }
+    }
+}

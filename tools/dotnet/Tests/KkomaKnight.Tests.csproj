@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Assets/Tests/EditMode 의 NUnit 테스트를 유니티 없이 돌린다 (순수 C# 테스트만 — UnityEngine API 금지). -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>KkomaKnight.Tests</AssemblyName>
+    <DefineConstants>$(DefineConstants);DOTNET_HARNESS</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)Assets/Tests/EditMode/**/*.cs" />
+    <ProjectReference Include="../Core/KkomaKnight.Core.csproj" />
+    <PackageReference Include="NUnit" Version="3.13.3" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+  </ItemGroup>
+</Project>

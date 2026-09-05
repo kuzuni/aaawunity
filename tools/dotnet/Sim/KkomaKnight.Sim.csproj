@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 이식 검증 하니스: sim.js 실험1(시드 11·12·13 · 사다리 7점) 을 C# 엔진으로 재현해 클리어율을 찍는다. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>KkomaKnight.Sim</AssemblyName>
+    <RootNamespace>KkomaKnight.Sim</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)tools/sim/**/*.cs" />
+    <ProjectReference Include="../Core/KkomaKnight.Core.csproj" />
+  </ItemGroup>
+</Project>

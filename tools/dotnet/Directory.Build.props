@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <!-- Unity 2022.3 = C# 9 · .NET Standard 2.1 API. 유니티 에디터 없이 컴파일을 확인하는 «검사용» 빌드다. -->
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>$(NoWarn);CS1591;NU1701;NU1603</NoWarn>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RepoRoot>$(MSBuildThisFileDirectory)../../</RepoRoot>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+</Project>

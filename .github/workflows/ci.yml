@@ -1,0 +1,166 @@
+# CI — 시크릿(UNITY_LICENSE·UNITY_EMAIL·UNITY_PASSWORD)이 없으면 dotnet 검사만 돌고 초록이어야 한다.
+# 시크릿이 있으면: PR·push 마다 EditMode/PlayMode 테스트, main 에 push 될 때만 WebGL 빌드 → gh-pages 배포 + Android APK Artifact.
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write   # gh-pages 배포
+
+jobs:
+  dotnet:
+    name: dotnet 컴파일 · 순수 C# 테스트 · 데이터 동기화 · .meta 검사
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: dotnet build (UnityEngine 참조 어셈블리 · NuGet)
+        run: dotnet build tools/dotnet/KkomaKnight.sln -c Release --nologo
+      - name: dotnet test (EditMode 의 순수 C# 테스트)
+        run: dotnet test tools/dotnet/Tests/KkomaKnight.Tests.csproj -c Release --no-build --nologo --logger "trx;LogFileName=results.trx"
+      - name: .meta 누락/고아 검사
+        run: python3 tools/gen_meta.py --check
+      - name: aaaw main 체크아웃 (수치 정본)
+        uses: actions/checkout@v4
+        with:
+          repository: kuzuni/aaaw
+          ref: main
+          path: .aaaw-src
+      - name: data/*.json 동기화 검사
+        run: tools/check_data_sync.sh .aaaw-src
+      - name: 테스트 결과 Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-test-results
+          path: tools/dotnet/Tests/TestResults/*.trx
+          if-no-files-found: ignore
+
+  gate:
+    name: 유니티 시크릿 확인
+    runs-on: ubuntu-latest
+    outputs:
+      has_license: ${{ steps.check.outputs.has }}
+    steps:
+      - id: check
+        env:
+          LIC: ${{ secrets.UNITY_LICENSE }}
+          EM: ${{ secrets.UNITY_EMAIL }}
+          PW: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          if [ -n "$LIC" ] && [ -n "$EM" ] && [ -n "$PW" ]; then echo "has=true" >> "$GITHUB_OUTPUT"; echo "유니티 시크릿 있음 → 테스트/빌드 진행";
+          else echo "has=false" >> "$GITHUB_OUTPUT"; echo "::notice::UNITY_LICENSE/UNITY_EMAIL/UNITY_PASSWORD 시크릿이 없어 유니티 단계를 건너뛴다 (README «해야 할 일» 참조)"; fi
+
+  unity-test:
+    name: Unity EditMode + PlayMode 테스트
+    needs: [dotnet, gate]
+    if: needs.gate.outputs.has_license == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-test-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-test-
+            Library-
+      - uses: game-ci/unity-test-runner@v4
+        id: tests
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: .
+          testMode: all
+          artifactsPath: unity-test-results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Unity Test Results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unity-test-results
+          path: ${{ steps.tests.outputs.artifactsPath }}
+
+  build-webgl:
+    name: WebGL 빌드 → GitHub Pages (gh-pages)
+    needs: [unity-test, gate]
+    if: needs.gate.outputs.has_license == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-WebGL-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-WebGL-
+            Library-
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: .
+          targetPlatform: WebGL
+          buildName: KkomaKnight
+          buildsPath: build
+          allowDirtyBuild: true
+      - name: gh-pages 로 배포 (Settings → Pages → Source: gh-pages / (root))
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/WebGL/KkomaKnight
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: 'WebGL 배포 ${{ github.sha }}'
+
+  build-android:
+    name: Android APK 빌드 → Artifact
+    needs: [unity-test, gate]
+    if: needs.gate.outputs.has_license == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 디스크 확보 (Android 이미지가 크다)
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android/sdk/ndk /opt/ghc /usr/local/.ghcup || true
+          df -h /
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-Android-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-Android-
+            Library-
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: .
+          targetPlatform: Android
+          buildName: KkomaKnight
+          buildsPath: build
+          androidExportType: androidPackage
+          allowDirtyBuild: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KkomaKnight-Android-apk
+          path: build/Android/*.apk
+          if-no-files-found: error

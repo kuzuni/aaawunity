@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Assets/Scripts/Core (순수 C# · UnityEngine 참조 없음) 을 그대로 컴파일한다. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>KkomaKnight.Core</AssemblyName>
+    <RootNamespace>KkomaKnight.Core</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)Assets/Scripts/Core/**/*.cs" />
+  </ItemGroup>
+</Project>

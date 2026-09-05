@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Assets/Scripts/Game (MonoBehaviour 계층) — UnityEngine 참조 어셈블리(NuGet) 로 컴파일만 확인한다. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>KkomaKnight.Game</AssemblyName>
+    <RootNamespace>KkomaKnight.Game</RootNamespace>
+    <DefineConstants>$(DefineConstants);UNITY_2022_3_OR_NEWER;UNITY_2022_3;UNITY_5_3_OR_NEWER</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)Assets/Scripts/Game/**/*.cs" />
+    <ProjectReference Include="../Core/KkomaKnight.Core.csproj" />
+    <!-- UnityEngine 모듈 참조 어셈블리 (facade UnityEngine.dll 포함) -->
+    <PackageReference Include="UnityEngine.Modules" Version="2021.3.33" />
+    <!-- uGUI 참조 어셈블리. 이 패키지가 끌어오는 단일체 Unity3D.UnityEngine 은 모듈과 타입이 겹치므로 제외한다. -->
+    <PackageReference Include="Unity3D.UnityEngine.UI" Version="2020.3.21" />
+    <PackageReference Include="Unity3D.UnityEngine" Version="2020.3.21" ExcludeAssets="all" />
+  </ItemGroup>
+</Project>

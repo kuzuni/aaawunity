@@ -1,0 +1,39 @@
+# 유니티 개인 라이선스 활성화 파일(.alf) 만들기 — 수동 실행 전용.
+# 절차: Actions → «Unity 라이선스 활성화 파일(.alf)» → Run workflow → 끝나면 Artifact 에서 .alf 내려받기
+#       → https://license.unity3d.com/manual 에 올려 .ulf 발급 → 시크릿 UNITY_LICENSE(.ulf 내용 전체)·UNITY_EMAIL·UNITY_PASSWORD 등록.
+# game-ci/unity-request-activation-file 은 폐기(deprecated)돼서, 같은 일을 unityci/editor 이미지에서 직접 한다.
+name: Unity 라이선스 활성화 파일(.alf)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  alf:
+    name: .alf 생성
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 유니티 버전 읽기 (ProjectSettings/ProjectVersion.txt)
+        id: ver
+        run: |
+          UV=$(sed -n 's/^m_EditorVersion: //p' ProjectSettings/ProjectVersion.txt | tr -d '\r')
+          echo "version=$UV" >> "$GITHUB_OUTPUT"
+          echo "Unity $UV"
+
+      - name: 활성화 파일 요청 (unity-editor -createManualActivationFile)
+        env:
+          UV: ${{ steps.ver.outputs.version }}
+        run: |
+          mkdir -p alf
+          docker run --rm -v "$PWD/alf:/alf" -w /alf "unityci/editor:ubuntu-${UV}-base-3" \
+            bash -c 'unity-editor -batchmode -nographics -logFile /dev/stdout -createManualActivationFile -quit || true; \
+                     ls -la /alf; [ -n "$(ls /alf/*.alf 2>/dev/null)" ] || find / -name "Unity_v*.alf" -exec cp {} /alf/ \; 2>/dev/null; ls -la /alf'
+          test -n "$(ls alf/*.alf 2>/dev/null)" || { echo "::error::.alf 가 생성되지 않았다 — 위 로그를 볼 것"; exit 1; }
+
+      - name: Artifact 로 올리기
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unity_v${{ steps.ver.outputs.version }}.alf
+          path: alf/*.alf
+          if-no-files-found: error
