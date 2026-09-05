@@ -10,7 +10,7 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false   # 워커 4개가 15분마다 푸시하면 취소가 이어져 WebGL 배포가 영영 안 끝난다 → 직렬 대기(gh-pages 최우선)
 
 permissions:
   contents: write   # gh-pages 배포
