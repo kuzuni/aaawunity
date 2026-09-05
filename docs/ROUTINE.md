@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-05 · 21:4X UTC) ⚑ 주인 지시 — 전투 화면 하단 «얻은 특전 미리보기 줄»(PerkStrip) 의 아이콘이 너무 커서 서로 가린다. 비례를 레퍼런스에 맞추고, 스크린샷을 찍어 가며 확인하라.** → T13 등재(수정·검증은 워커).
+
 - **(2026-09-05 · 21:2X UTC) ⚑⚑⚑ 주인 지시 — 플레이하면 유니티 콘솔에 빨간 에러가 «항상 존나» 뜬다. 루틴이 매번 플레이 상태를 검증해 콘솔 에러·예외·경고(빨간색)를 전부 찾아 고쳐라. 한 번이 아니라 상시 규칙이다.** 주인이 붙인 원문 로그(PROGRESS «주인 콘솔 에러 보고함» 에 그대로 보존):
   - `Renderer2D Pass: Fake or uninitialized surface is not supported for attachment 0.` / `EndRenderPass: Not inside a Renderpass` (둘 다 `UnityEngine.Rendering.RenderPipelineManager:DoRenderLoop_Internal`) — 플레이 중 매 프레임.
   - 등재 세션 진단(수정은 워커가 · T12): `HeroView.BuildStage` 가 `new RenderTexture(texSize, texSize, 0, ARGB32)`(깊이 0) 를 런타임 카메라 `targetTexture` 로 쓰는데, `Assets/Settings/Renderer2D.asset` 은 `m_UseDepthStencilBuffer: 1` 이라 URP 2D 렌더그래프가 없는 깊이 표면을 attachment 로 붙이려다 실패 → 두 에러가 짝으로 뜬다. 후보 수정 = RenderTexture 에 깊이 24(또는 `depthStencilFormat = D24_UNorm_S8_UInt`) 부여 · 런타임 Camera 에 `UniversalAdditionalCameraData`(Base) 보장 · `OnDestroy` 순서(카메라 비활성 → targetTexture 해제 → Release). HeroView 는 로비(T6)·장비(T7) 두 곳에서 쓰인다.
@@ -59,7 +61,7 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
-> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T6~T12** (T12 = 콘솔 에러 수정 · 최우선) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
+> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T6~T13** (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
 
 ### T1 — 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README ✅ (완료 · PROGRESS 참조)
 
@@ -157,6 +159,15 @@
 3. **다른 에러 전수 감사**(주인: «다른 에러들도 있는지 다 확인해서 고쳐라»): `Assets/Scripts` 전체에서 ⓐ 프리팹 자식 `Find`/`GetComponent` 결과를 null 검사 없이 쓰는 곳 ⓑ catalog 키가 `catalog.json` 에 없는 곳(`gen_catalog.py --check` 는 경로만 보므로 코드의 문자열 키를 추출해 대조하는 스크립트를 `tools/check_catalog_keys.py` 로 추가) ⓒ 에디터 전용 API/`Resources.Load` 실패 ⓓ 코루틴/DOTween 이 파괴된 오브젝트를 만지는 곳(화면 전환 직후 NRE) ⓔ TMP/폰트·머티리얼 누락 경고. 발견 항목은 고치거나(범위 안) 새 T 로 등재(범위 밖).
 4. 검증: PlayMode 테스트 `HeroViewTests` — `HeroView` 를 세우고 `yield return new WaitForEndOfFrame()` ×3 뒤 `LogAssert.NoUnexpectedReceived()`. dotnet 게이트는 PlayMode 를 못 돌리므로 CI(유니티) 런 번호를 PROGRESS 에 적고, CI 시크릿이 없어 유니티 잡이 안 돌면 «주인이 에디터에서 확인할 것: 플레이 → 로비·장비·전투 왕복 → 콘솔 빨간 줄 0» 을 적는다.
 5. 게이트 + PROGRESS T12 행 + «주인 콘솔 에러 보고함» 의 해당 항목에 ✅·커밋 해시·원인 한 줄.
+
+### T13 — 전투 HUD «얻은 특전 미리보기 줄»(PerkStrip) 비례 수정 — 아이콘이 서로 가림 (제약 없음)
+범위: `Assets/Scripts/Game/BattleScreen.cs`(`RefreshPerkStrip` · 85~87행 PerkStrip 생성) · `UiKit.PerkFrame`(필요시) · `Assets/Scripts/Core/Layout.cs`(`HudPerkStrip` 은 표값 — 바꾸지 않는다) · `Assets/Tests/PlayMode/PerkStripTests.cs`(신규)
+순서: 제약 없음. T11/T12 와 파일이 겹치지 않게 테스트는 별도 파일.
+1. 주인 증상: 특전을 여러 개 얻으면 하단 미리보기 아이콘이 **너무 크게 그려져 서로 겹친다**. 등재 세션 관찰(확정은 워커): 줄 = `Layout.HudPerkStrip`(높이 4.0% ≈ 93px · 폭 80% ≈ 864px) · 셀 `sizeDelta 78×84` + 간격 8 을 `HorizontalLayoutGroup(childControl* = false)` 에 최대 11개 → 11×86 = 946px > 864px 로 폭을 넘친다. 또 `UiKit.PerkFrame` 이 `ui.itemFrame4` 프리팹을 셀 안에 `size×165/162` 로 세우는데 프리팹 내부(그림자·광택 등 자식)가 셀보다 크게 뻗을 수 있다 — 실제 어느 쪽이 겹침을 만드는지 프리팹 YAML(RectTransform 트리)과 계산으로 확정해 PROGRESS 에 한 줄.
+2. 비례 정본 = aaaw `index.html` 404~415행 CSS: 줄 높이 34px · 아이콘 28×28 · 간격 4px · «+N» 은 높이 28 · 개수 배지는 오른쪽 위 14px (390×844 프레임 기준). 우리 프레임(1080×2337)에서는 **줄 높이의 28/34 = 82% 를 셀 한 변**으로, 간격은 4/34, 배지는 14/34 로 — 픽셀 상수를 박지 말고 `HudPerkStrip` 의 실제 rect 높이에서 계산한다(해상도가 달라도 비례 유지). 표시 개수 `max` 도 상수 11 이 아니라 **줄 폭 ÷ (셀+간격)** 으로 계산해 «+N» 까지 포함해서 절대 넘치지 않게 한다.
+3. 프레임 프리팹 내부가 셀을 넘으면 프리팹을 바꾸지 말고(«그대로» 원칙) 셀에 `RectMask2D` 를 두거나 프레임 rt 를 셀 크기에 맞춘다. 아이콘은 프레임 안 `Icon` 자식에 그대로.
+4. **스크린샷 확인(주인 지시)**: 워커는 에디터가 없으므로 ⓐ PlayMode 테스트 `PerkStripTests` 가 특전 12개를 강제로 얻은 상태를 만들고(`G.Taken` 에 서로 다른 id 12개 + 중복 1개) 한 프레임 뒤 **모든 셀 rect 가 서로 겹치지 않고 PerkStrip rect 안에 있는지** 를 `RectTransformUtility` 로 단언 ⓑ 같은 테스트에서 `ScreenCapture.CaptureScreenshot` 으로 PNG 를 **`Application.temporaryCachePath`/CI 아티팩트**에 남긴다(레포 커밋 금지 — `.github/workflows/ci.yml` 의 PlayMode 잡에 `actions/upload-artifact` 한 줄 · 이름 `perkstrip-screens`). PROGRESS 에 CI 런 번호와 아티팩트 이름을 적어 주인이 내려받아 보게 한다. CI 유니티 잡이 안 돌면 «주인이 에디터에서 확인할 것 — 특전 10개 이상 얻은 뒤 하단 줄이 안 겹치는지» 를 적는다.
+5. 게이트(§3 + 플레이 콘솔 에러 0) + PROGRESS T13 행.
 
 ### 신규 작업 등재
 - 버그·후속 작업 발견 시 PROGRESS 표에 **이미 쓰인 번호 중 가장 큰 것 +1** 로 등재 (번호 재사용 금지, 한 번호 = 한 작업).
