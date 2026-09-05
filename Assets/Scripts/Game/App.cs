@@ -21,8 +21,8 @@ namespace KkomaKnight.Game
         public Overlay Overlay { get; private set; }
         public Camera WorldCamera { get; private set; }
 
-        readonly Dictionary<string, Screen> _screens = new Dictionary<string, Screen>();
-        Screen _current;
+        readonly Dictionary<string, GameScreen> _screens = new Dictionary<string, GameScreen>();
+        GameScreen _current;
         RectTransform _toastRt; Text _toastText; float _toastT;
 
         public static App Create(GameData data, AssetCatalog catalog, Font font, Camera worldCamera)
@@ -55,7 +55,7 @@ namespace KkomaKnight.Game
             ShowScreen("lobby");
         }
 
-        void Register(Screen s) { s.App = this; _screens[s.Name] = s; }
+        void Register(GameScreen s) { s.App = this; _screens[s.Name] = s; }
 
         public void ShowScreen(string name)
         {
@@ -66,8 +66,8 @@ namespace KkomaKnight.Game
             if (WorldCamera != null) WorldCamera.gameObject.SetActive(name == "battle");
             _toastRt.SetAsLastSibling();
         }
-        public Screen Current => _current;
-        public T GetScreen<T>() where T : Screen { foreach (var s in _screens.Values) if (s is T t) return t; return null; }
+        public GameScreen Current => _current;
+        public T GetScreen<T>() where T : GameScreen { foreach (var s in _screens.Values) if (s is T t) return t; return null; }
 
         public void Persist() => SaveStore.Save(Save);
 
@@ -91,8 +91,8 @@ namespace KkomaKnight.Game
         }
     }
 
-    /// <summary>한 화면. Show 에서 처음 한 번 Build 하고, 이후 Refresh 로 다시 그린다.</summary>
-    public abstract class Screen
+    /// <summary>한 화면(UnityEngine.Screen 과 이름이 겹치지 않게 GameScreen). Show 에서 처음 한 번 Build 하고, 이후 Refresh 로 다시 그린다.</summary>
+    public abstract class GameScreen
     {
         public App App;
         public abstract string Name { get; }
