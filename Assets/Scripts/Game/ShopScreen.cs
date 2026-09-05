@@ -58,7 +58,7 @@ namespace KkomaKnight.Game
                 float w = (100 - 2 * 2f) / 3f; var card = UiKit.Spawn("ui.shopChest", _chests); var crt = (RectTransform)card.transform; UiKit.Pct(crt, k * (w + 2f), 0, w, 100);
                 UiKit.SetText(crt, "Text_Title", box.Name, Palette.Ink, 34);
                 UiKit.SetSprite(crt, "Icon", "chest." + box.Key, Palette.White);
-                var icon = UiKit.Find(crt, "Icon"); if (icon != null) { var ir = (RectTransform)icon; ir.anchorMin = new Vector2(0.15f, 0.42f); ir.anchorMax = new Vector2(0.85f, 0.86f); ir.offsetMin = ir.offsetMax = Vector2.zero; icon.GetComponent<Image>().preserveAspect = true; }
+                var icon = UiKit.Find(crt, "Icon"); if (icon != null) { var ir = (RectTransform)icon; ir.anchorMin = new Vector2(0.15f, 0.42f); ir.anchorMax = new Vector2(0.85f, 0.86f); ir.offsetMin = ir.offsetMax = Vector2.zero; var ii = icon.GetComponent<Image>(); if (ii != null) ii.preserveAspect = true; }
                 var pity = UiKit.SetText(crt, "Text_Limit", "", Palette.InkSoft, 20); if (pity != null) { var pr = pity.rectTransform; pr.anchorMin = new Vector2(0.03f, 0.27f); pr.anchorMax = new Vector2(0.97f, 0.43f); pr.offsetMin = pr.offsetMax = Vector2.zero; pity.resizeTextForBestFit = true; pity.resizeTextMinSize = 12; pity.resizeTextMaxSize = 20; }
                 var price = UiKit.Find(crt, "Button_Price"); Button one = null, ten = null;
                 if (price != null)

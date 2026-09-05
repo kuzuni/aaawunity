@@ -65,7 +65,7 @@ namespace KkomaKnight.Game
                     grid.padding = new RectOffset(0, 0, (int)(UiKit.FrameH * (Layout.GearInvCell.Y - Layout.GearInv.Y) / 100f), 0);
                     grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount; grid.constraintCount = Layout.GearInvCols; grid.childAlignment = TextAnchor.UpperLeft;
                 }
-                var fit = _content.GetComponent<ContentSizeFitter>() ?? _content.gameObject.AddComponent<ContentSizeFitter>(); fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+                var fit = UiKit.Ensure<ContentSizeFitter>(_content); fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
                 var sr = _rt.GetComponentInChildren<ScrollRect>(true);
                 if (sr != null)
                 {
@@ -98,7 +98,7 @@ namespace KkomaKnight.Game
                         UiKit.Show(frame, "Add_1", g == null); UiKit.Show(frame, "Add_2", false); UiKit.Show(frame, "Lock", false);
                     }
                     var dia = UiKit.FindAny(slot, "BasicFrame_Diamond_H48_NoBorder_Plum", "BasicFrame_Diamond_01_NoBorder_Plum");
-                    if (dia != null) { dia.gameObject.SetActive(g != null); if (g != null) { UiKit.SetSprite(dia, "Icon", GearUi.SetIcon(GearUi.Set(D, g)), Palette.White); var db = dia.GetComponent<Image>() ?? dia.GetComponentInChildren<Image>(); } }
+                    if (dia != null) { dia.gameObject.SetActive(g != null); if (g != null) { UiKit.SetSprite(dia, "Icon", GearUi.SetIcon(GearUi.Set(D, g)), Palette.White); } }
                     var lvl = slot.Find("Text_Level"); if (lvl != null) { lvl.gameObject.SetActive(true); var t = lvl.GetComponent<Text>(); if (t != null) { t.text = $"{GearUi.PartName(D, part)} Lv.{lv}" + (g != null && g.Plus > 0 ? $"  +{g.Plus}" : ""); t.color = Palette.White; } }
                     UiKit.Hide(slot, "Alert_Dot_01_Red");
                     var upOld = slot.Find("Up"); if (upOld != null) UnityEngine.Object.Destroy(upOld.gameObject);

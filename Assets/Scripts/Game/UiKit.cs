@@ -268,7 +268,7 @@ namespace KkomaKnight.Game
         }
         public static Text SetText(Transform root, string path, string s, Color? color = null, int? size = null)
         {
-            var t = Find(root, path); var txt = t != null ? (t.GetComponent<Text>() ?? t.GetComponentInChildren<Text>(true)) : null;
+            var t = Find(root, path); Text txt = null; if (t != null) { txt = t.GetComponent<Text>(); if (txt == null) txt = t.GetComponentInChildren<Text>(true); }
             if (txt == null) { Debug.LogWarning($"[UiKit] 글자 없음: {root.name}/{path}"); return null; }
             txt.text = s; if (color.HasValue) txt.color = color.Value; if (size.HasValue) { txt.fontSize = size.Value; txt.resizeTextMaxSize = size.Value; }
             return txt;
@@ -291,7 +291,7 @@ namespace KkomaKnight.Game
             var img = go.GetComponent<Image>();
             if (img == null) { img = go.AddComponent<Image>(); img.color = new Color(1, 1, 1, 0); }   // 투명 히트 영역
             img.raycastTarget = true;
-            var b = go.GetComponent<Button>() ?? go.AddComponent<Button>();
+            var b = Ensure<Button>(go);
             b.targetGraphic = img; b.transition = Selectable.Transition.None;
             b.onClick.RemoveAllListeners();
             b.onClick.AddListener(() =>
@@ -304,7 +304,7 @@ namespace KkomaKnight.Game
         public static void SetInteractable(Button b, bool on)
         {
             if (b == null) return; b.interactable = on;
-            var cg = b.GetComponent<CanvasGroup>() ?? b.gameObject.AddComponent<CanvasGroup>(); cg.alpha = on ? 1f : 0.5f;
+            var cg = Ensure<CanvasGroup>(b); cg.alpha = on ? 1f : 0.5f;
         }
 
         /// <summary>프리팹 버튼 하나 세우기 — 스폰 · 글자 · 클릭.</summary>
@@ -340,6 +340,10 @@ namespace KkomaKnight.Game
             else { var ic = Icon(rt, "Icon", iconKey, Palette.White); Pct(ic.rectTransform, 22, 22, 56, 56); }
             return rt;
         }
+
+        /// <summary>컴포넌트가 없으면 붙인다. ⚠ `GetComponent() ?? AddComponent()` 는 에디터에서 «가짜 null»(== 만 재정의) 때문에 AddComponent 가 안 돌아 MissingComponentException 이 난다 — 반드시 이걸 쓴다.</summary>
+        public static T Ensure<T>(GameObject go) where T : Component { var c = go.GetComponent<T>(); return c != null ? c : go.AddComponent<T>(); }
+        public static T Ensure<T>(Component on) where T : Component => Ensure<T>(on.gameObject);
 
         public static void Destroy(Transform t) { if (t != null) UnityEngine.Object.Destroy(t.gameObject); }
         public static void Clear(Transform t) { for (int i = t.childCount - 1; i >= 0; i--) UnityEngine.Object.Destroy(t.GetChild(i).gameObject); }

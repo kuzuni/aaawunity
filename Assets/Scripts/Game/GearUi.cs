@@ -151,7 +151,7 @@ namespace KkomaKnight.Game
                     row.SetActive(true);
                     var txt = UiKit.SetText(row.transform, "Text_Buff", lines[i].Item1, lines[i].Item2, 24);
                     if (txt != null) { txt.resizeTextForBestFit = true; txt.resizeTextMinSize = 12; txt.resizeTextMaxSize = 24; txt.horizontalOverflow = HorizontalWrapMode.Wrap; txt.verticalOverflow = VerticalWrapMode.Truncate; }
-                    var le = row.GetComponent<LayoutElement>() ?? row.AddComponent<LayoutElement>(); le.preferredHeight = rowH; le.minHeight = rowH;
+                    var le = UiKit.Ensure<LayoutElement>(row); le.preferredHeight = rowH; le.minHeight = rowH;
                 }
                 for (int i = lines.Count; i < rows.Count; i++) rows[i].SetActive(false);
                 var vl = list.GetComponent<VerticalLayoutGroup>(); if (vl != null) { vl.spacing = 0; vl.padding = new RectOffset(0, 0, 0, 0); vl.childForceExpandHeight = false; vl.childControlHeight = true; vl.childAlignment = TextAnchor.UpperLeft; }

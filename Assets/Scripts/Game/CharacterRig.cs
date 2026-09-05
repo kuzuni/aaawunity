@@ -41,7 +41,7 @@ namespace KkomaKnight.Game
 
         public static CharacterRig Attach(GameObject instance, System.Action onAttackHit = null)
         {
-            var rig = instance.GetComponent<CharacterRig>() ?? instance.AddComponent<CharacterRig>();
+            var rig = instance.GetComponent<CharacterRig>(); if (rig == null) rig = instance.AddComponent<CharacterRig>();
             rig._anim = instance.GetComponentInChildren<Animator>(true);
             rig._renderers = instance.GetComponentsInChildren<SpriteRenderer>(true);
             foreach (var r in rig._renderers) rig._baseOrder[r] = r.sortingOrder;

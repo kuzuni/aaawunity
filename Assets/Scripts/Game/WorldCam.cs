@@ -16,7 +16,7 @@ namespace KkomaKnight.Game
 
         public static WorldCam Attach(Camera cam, RectTransform frame)
         {
-            var wc = cam.gameObject.GetComponent<WorldCam>() ?? cam.gameObject.AddComponent<WorldCam>();
+            var wc = cam.gameObject.GetComponent<WorldCam>(); if (wc == null) wc = cam.gameObject.AddComponent<WorldCam>();
             wc._cam = cam; wc.Frame = frame;
             cam.orthographic = true; cam.orthographicSize = LayoutH / 2f / PPU;
             cam.transform.position = new Vector3(0, 0, -10);
