@@ -7,7 +7,7 @@
 | ID | 작업 | 상태 | SID / 워커 | 범위 | 핵심 |
 |---|---|---|---|---|---|
 | T1 | 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README + 운영 문서 | ✅ 완료 (`5228daf` + 주인 «기본» `fe944b3` 합류) | sess-1516-port / 착수 세션 | 전체 뼈대 | dotnet build 0 경고 0 오류 · 순수 C# 테스트 21/21 · 레이아웃/적 스탯 420챕터 전수 = JSON 과 일치 (mulberry32 비트 동일) |
-| T2 | 전투 엔진(순수 C#) + 시드 11·12·13 이식 검증 | 미착수 | — | Core/Battle*·Perks*·tools/sim | sim.js 실험1 ±2%p |
+| T2 | 전투 엔진(순수 C#) + 시드 11·12·13 이식 검증 | ✅ 완료 | sess-1516-port / 착수 세션 | Core/Battle*·Perks*·tools/sim | sim.js 실험1 사다리 7점 × 3시드 **21칸 전부 소수점까지 동일**(난수 스트림 비트 일치) · 3pick 모드도 동일 (아래 표) |
 | T3 | 레벨업 3택 + 악마의 거래 (유니티 팝업) | 미착수 (T2 뒤) | — | Game/Battle*·Overlay*·Hud* | 팝업 중 시간 정지 |
 | T4 | 로비 · 장비 · 강화 · 슬롯 · 뽑기 상자 3종 | 미착수 | — | Game/Lobby*·Gear*·Forge*·Shop*·Save* | 자동 장착 없음 · 상자 3종 |
 | T5 | UI 를 docs/ref 레이아웃에 맞추기 | 미착수 (T3·T4 뒤) | — | Game/Layout* | ref-layout.md ±3%p |
@@ -26,6 +26,39 @@
   - `docs/ROUTINE.md`(T2~T5 등재) · `docs/claims/README.md` · 이 문서.
 - 게이트: `dotnet build` 0/0 · `dotnet test` 21/21 · `gen_meta --check` 초록 · `check_data_sync.sh` OK(aaaw c7ebe37).
 
+### T2 완료 기록 (2026-09-05 · 착수 세션)
+
+- **주인이 확인할 것 (한 줄)**: `dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13 --n 1000` 의 표가 aaaw 의 `SEED=11 EXP1_N=1000 node sim.js 1`(12·13 도) 결과와 같은지 — 아래 표가 그 대조다.
+- 만든 것: `Assets/Scripts/Core/Battle.cs`(엔진 · sim.js `runChapter` 이식 · 결정은 `IBattlePolicy` · 팝업 중 `Pending` 으로 시간 정지) · `BattleTypes.cs`(상태·정책·이벤트·`EngineConst`) · `Perks.cs`(적용·3택 제시·악마 1장·시뮬 정책) · `tools/sim/Program.cs`(실험1 재현 하니스 + 트레이스) · `BattleTests.cs` 9개(황금값 = sim.js 실측).
+- **이식 검증 (실험1 · 사다리 7점 · 각 1,000판 · `LADDER_OPTS` = base10·legacy20·gearOpts 끔)** — 표의 값은 C# 이고, sim.js 가 같은 시드로 낸 값과 **21칸 전부 같다**(같은 mulberry32 수열을 같은 순서로 소비하므로 판 단위로 결과가 일치한다 — 챕터 3·7·15·30·60·100·125 에서 100~200판씩 판별 트레이스 대조: 클리어·시간·레벨·공격 수·빗맞음·특전 순서 전부 동일. 골드만 `Math.pow` 마지막 자리 차이로 1 어긋나는 판이 있다).
+
+| 조건 | 챕터 | seed 11 | seed 12 | seed 13 |
+|---|---|---|---|---|
+| 노템(장비0·슬롯0) | 3 | 11.1% | 12.6% | 12.1% |
+| 일반 풀셋(슬롯0) | 7 | 10.0% | 10.1% | 9.7% |
+| 희귀 풀셋·슬롯5 | 15 | 10.8% | 9.6% | 10.2% |
+| 전설 풀셋·슬롯15 | 30 | 10.5% | 9.7% | 10.6% |
+| 신화 풀셋·슬롯25 | 60 | 10.4% | 8.5% | 9.5% |
+| 신화+9강 풀셋·슬롯50 | 100 | 8.8% | 10.9% | 9.9% |
+| 신화+9강 풀셋·슬롯100 | 125 | 10.2% | 11.5% | 9.9% |
+
+  3택 모드(`EXP1_PERKMODE=3pick`) 대조표는 아래 «3pick» 표(같은 방식 · 21칸 동일).
+
+**3pick 모드 (`EXP1_PERKMODE=3pick` · 각 1,000판 · 3택은 시뮬 정책 «표 순서 앞선 것»)** — sim.js 와 21칸 동일.
+
+| 조건 | 챕터 | seed 11 | seed 12 | seed 13 |
+|---|---|---|---|---|
+| 노템(장비0·슬롯0) | 3 | 66.9% | 68.2% | 67.9% |
+| 일반 풀셋(슬롯0) | 7 | 58.0% | 54.8% | 58.9% |
+| 희귀 풀셋·슬롯5 | 15 | 73.7% | 71.9% | 74.1% |
+| 전설 풀셋·슬롯15 | 30 | 76.4% | 75.8% | 76.3% |
+| 신화 풀셋·슬롯25 | 60 | 82.7% | 80.5% | 81.6% |
+| 신화+9강 풀셋·슬롯50 | 100 | 70.6% | 72.7% | 71.9% |
+| 신화+9강 풀셋·슬롯100 | 125 | 78.0% | 80.0% | 79.2% |
+
+- 잡은 코드 차이 2건(수치 아님): ⓐ `perks.json` 의 «방어력 증가 I/II/III» 은 탐침 방어가 0 이라 stat 이 비어 있다 → 상수 `PERK_DEF_*` 곱연산을 코드에서 복원. ⓑ «회복 증폭» 은 탐침 축에 `healAmp` 가 없어 stat 이 비어 있다 → `PERK_AMP` 가산 복원. 둘 다 aaaw 수출기(`tools/exportData.js` PROBE_STATS) 보강 제안으로 승인 대기 10번.
+- 게이트: `dotnet build` 0/0 · `dotnet test` 30/30 · `gen_meta --check` 초록.
+
 ## 주인 승인 대기 (한 번에 답해 주시면 됩니다 — 답이 없으면 아래 «기본값» 으로 진행)
 
 1. **유니티 버전 = 6000.3.8f1 (주인 «기본» 커밋 `fe944b3` 을 따름).** 지시는 «2022.3 LTS 최신 패치» 였고 처음엔 2022.3.76f1 로 뼈대를 짰으나, 같은 시각에 주인이 main 에 올린 «기본» 프로젝트가 **Unity 6000.3.8f1 + URP 2D + TextMeshPro + Input System + 에셋(Layer Lab GUI Pro/CharacterMaker/Environment · Cartoon FX · AllIn1SpriteShader · DOTween · Odin · AntiCheatToolkit · Hot Reload · mcp-unity)** 이라 두 트리가 양립하지 않았다(URP 17.3·ugui 2.0 은 2022.3 에 없다). **주인 프로젝트를 기준으로 합쳤다**: ProjectSettings/Packages/에셋은 주인 것 그대로, 이 세션의 코드·데이터·CI·문서를 그 위에 얹었다. GameCI 이미지 `unityci/editor:ubuntu-6000.3.8f1-*` 는 존재한다. **2022.3 으로 되돌리길 원하시면** 에셋 패키지가 전부 6000 전용이라 주인 프로젝트를 다시 만들어야 한다 — 한 줄로 알려 주시면 그때 정한다.
@@ -40,15 +73,18 @@
 8. **`expNeed` 표 밖 레벨**: tune.json `expNeedTable` 은 1~30레벨이라, 그 위는 표의 등차(+5)로 연장한다(공식 `5*lv+1` 을 코드에 박지 않으려는 기본값 · 실제로는 한 판 9레벨이 상한이라 닿지 않는다).
 9. **enemies.json 의 보스 스탯은 실수 그대로**(`sim.js` 는 반올림 안 함 · `index.html` 은 반올림). 시드 검증 대상이 sim.js 이므로 엔진은 **반올림 안 함**을 따른다(체력바 표시만 정수).
 
+10. **aaaw 수출기 보강 제안 (aaaw 는 읽기 전용이라 여기서 못 고친다).** `tools/exportData.js` 의 `probeEffect` 가 ⓐ 탐침 방어 0 이라 «방어력 증가»(곱연산)의 효과가 비어 나오고 ⓑ `PROBE_STATS` 에 `healAmp` 가 없어 «회복 증폭» 이 비어 나온다. C# 은 상수(`PERK_DEF_M/R/L`·`PERK_AMP`)로 복원했고 sim.js 와 판 단위로 일치한다. 수출기에 탐침 방어 기본치(예: 10)와 `healAmp` 축을 넣으면 코드 특수처리를 지울 수 있다.
+11. **sim.js 의 이름 없는 리터럴 21개**(이벤트 발동 거리 95 · 보스 배치 +60 · 랜덤 타겟 범위 −30~540 · 투사체 생성/도달/적중 오프셋 14·10·16 · 적 화살 −18/+8/−60 · 화살 속도 560 · 검기 속도 470 · 적 첫 공격 0.4~1.2 · 보스 1.2 · 이동 중 타이머 상한 0.35 · 데미지 지터 0.92~1.08 · 골드 1~1.8 · 반격 0.7 · 풀피 판정 0.5 · 장비 c/f 옵션의 50%/30%/50%/10%)은 `combat.json` 에 없어 `Assets/Scripts/Core/BattleTypes.cs` 의 `EngineConst` 한 곳에 두었다(이 레포에서 유일한 코드 상수 자리). aaaw 수출기에 축이 추가되면 `CombatData` 로 옮긴다.
+
 ## 주인 할 일
 
 - README «내가(주인) 할 일» 5단계 (활성화 워크플로 → .alf → .ulf → 시크릿 3개 → Pages 소스 gh-pages).
 
-## 게이트 현황 스냅샷 — T1 완료 직후
+## 게이트 현황 스냅샷 — T2 완료 직후
 
 | 게이트 | 결과 |
 |---|---|
 | `dotnet build tools/dotnet/KkomaKnight.sln -c Release` | 0 경고 · 0 오류 (Core · Game · Tests · Sim) |
-| `dotnet test tools/dotnet/Tests` | 21/21 |
+| `dotnet test tools/dotnet/Tests` | 30/30 (T2 뒤) |
 | `python3 tools/gen_meta.py --check` | 초록 |
 | `tools/check_data_sync.sh` | OK — aaaw main `c7ebe37` 과 동일 (`sim.js@0618225…`) |
