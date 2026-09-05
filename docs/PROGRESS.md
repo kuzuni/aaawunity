@@ -17,6 +17,7 @@
 | T9 | 상점 = Shop_List 그대로 (상자 3 · 다이아 6 · 골드 3) + 뽑기 결과 = Shop_Chest_Open | 대기 | — | Game/ShopScreen · KkomaKnight/shop.json | ROUTINE §2 T9 |
 | T10 | 하단 네비 = 상점·장비·전투·탤런트·펫 + Settings 그대로 — T6 뒤 | ✅ 완료 (`dce33d6` · 실물 확인은 WebGL 배포에서) | sess-2052-15499 / 워커 D | Game/Screens(NavBar 이사) · Overlay(Settings·TalentPet) · GearScreen(NavBar 제거) · catalog(ui.talent·ui.talentIcon·ui.petIcon) | 탭 = 상점·장비·전투·탤런트·펫 · Settings 프리팹 요소 숨김 0 · Character_Talent_02 통째로 · dotnet 0/0 · 테스트 45/45 |
 | T11 | UI 스모크 PlayMode 테스트 + 가짜 null 게이트 | 대기 | — | Tests/PlayMode · tools · ci.yml | ROUTINE §2 T11 |
+| T12 | **플레이 콘솔 에러 0** — URP 2D 렌더 에러(HeroView RenderTexture 깊이 0) 수정 + 전 화면 런타임 에러 전수 감사 (최우선) | 대기 | — | Game/HeroView(·카메라 코드) · Tests/PlayMode/HeroViewTests · tools/check_catalog_keys.py | ROUTINE §2 T12 · «주인 콘솔 에러 보고함» ① |
 
 ### T1 완료 기록 (2026-09-05 · 착수 세션)
 
@@ -219,6 +220,16 @@
 - 게이트(리베이스 뒤 T7 합류 상태에서 재실행): `dotnet build` 0/0 · `dotnet test` **45/45** · `gen_meta --check` · `gen_catalog --check`(459) · `check_data_sync` OK(aaaw `0707999`). Sim 시드 검증은 Core 를 안 건드려 생략.
 - 워커 메모: dotnet 은 T6 워커 방식(packages.microsoft.com .deb → `dpkg -x` → `~/dotnet8`) 으로 설치해 게이트를 돌렸다. lock 커밋(`90abcd3`)은 `[skip ci]` 규칙이 push 직후 ROUTINE 에 추가돼 붙이지 못했다(그 뒤 커밋부터 준수).
 - 한계: 에디터 없이 짠 것 — ⓐ Character_Talent_02 는 화면 전체 프리팹이라 Overlay 층에 Stretch 로 세웠다(로비 위를 덮음 · 실물에서 배경이 비치면 `TalentPet` 의 raycast/배경 한 줄) ⓑ Settings 의 «한국어» 버튼·약관 글자는 눌러도 아무 일 없음이 의도.
+
+## 주인 콘솔 에러 보고함 (주인이 붙인 원문 — 다 고칠 때까지 남긴다 · 워커는 매 세션 읽고 작업으로 올린다)
+
+> 주인 상시 지시(2026-09-05): **플레이하면 콘솔에 빨간 에러가 항상 뜬다. 루틴이 매번 플레이 상태를 검증해 다 고쳐라. 다른 에러도 있는지 전부 확인해라.** 새 로그는 아래에 번호를 이어 붙이면 된다(원문 그대로).
+
+| # | 원문(발생 상황) | 상태 | 작업 | 원인/커밋 |
+|---|---|---|---|---|
+| ① | `Renderer2D Pass: Fake or uninitialized surface is not supported for attachment 0.`<br>`UnityEngine.Rendering.RenderPipelineManager:DoRenderLoop_Internal (UnityEngine.Rendering.RenderPipelineAsset,intptr,UnityEngine.Object,Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle)` — 에디터 플레이 중 반복 | 미해결 | T12 | 등재 진단: `HeroView.BuildStage` 의 깊이 0 RenderTexture ↔ `Renderer2D.asset` `m_UseDepthStencilBuffer: 1` (확정은 T12) |
+| ② | `EndRenderPass: Not inside a Renderpass`<br>`UnityEngine.Rendering.RenderPipelineManager:DoRenderLoop_Internal (…)` — ① 과 짝으로 매 프레임 | 미해결 | T12 | ① 과 같은 원인(렌더패스 시작 실패 뒤 End 호출) |
+| ③ | (주인: «다른 에러들도 있는지 다 확인해서 고쳐라» — 위 둘 외 미기재 항목 전수 감사) | 미해결 | T12 §3 | — |
 
 ## 주인 할 일
 

@@ -5,6 +5,11 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-05 · 21:2X UTC) ⚑⚑⚑ 주인 지시 — 플레이하면 유니티 콘솔에 빨간 에러가 «항상 존나» 뜬다. 루틴이 매번 플레이 상태를 검증해 콘솔 에러·예외·경고(빨간색)를 전부 찾아 고쳐라. 한 번이 아니라 상시 규칙이다.** 주인이 붙인 원문 로그(PROGRESS «주인 콘솔 에러 보고함» 에 그대로 보존):
+  - `Renderer2D Pass: Fake or uninitialized surface is not supported for attachment 0.` / `EndRenderPass: Not inside a Renderpass` (둘 다 `UnityEngine.Rendering.RenderPipelineManager:DoRenderLoop_Internal`) — 플레이 중 매 프레임.
+  - 등재 세션 진단(수정은 워커가 · T12): `HeroView.BuildStage` 가 `new RenderTexture(texSize, texSize, 0, ARGB32)`(깊이 0) 를 런타임 카메라 `targetTexture` 로 쓰는데, `Assets/Settings/Renderer2D.asset` 은 `m_UseDepthStencilBuffer: 1` 이라 URP 2D 렌더그래프가 없는 깊이 표면을 attachment 로 붙이려다 실패 → 두 에러가 짝으로 뜬다. 후보 수정 = RenderTexture 에 깊이 24(또는 `depthStencilFormat = D24_UNorm_S8_UInt`) 부여 · 런타임 Camera 에 `UniversalAdditionalCameraData`(Base) 보장 · `OnDestroy` 순서(카메라 비활성 → targetTexture 해제 → Release). HeroView 는 로비(T6)·장비(T7) 두 곳에서 쓰인다.
+  - **«다른 에러들도 있는지 다 확인해서 고쳐라»** — 위 두 개만이 아니다. 모든 화면·팝업·전투를 실제로 열었을 때 콘솔에 빨간 줄이 0 이어야 한다. 워커는 유니티 에디터가 없으므로 ⓐ PlayMode 스모크 테스트(T11 · `LogAssert.NoUnexpectedReceived` · CI 가 실행)로 잡고 ⓑ 코드 감사(런타임 카메라/RenderTexture · 프리팹 자식 `Find` 실패 · catalog 키 누락 · 가짜 null · 에디터 전용 API)로 잡고 ⓒ 주인이 붙인 로그는 «주인 콘솔 에러 보고함» 에서 매 세션 읽어 작업으로 올린다. 완료 기록에는 «플레이 콘솔 에러 0 을 무엇으로 확인했는가» 를 반드시 적는다.
+
 - **(2026-09-05 · 20:0X UTC) ⚑⚑⚑ 주인 지시 — 이제부터 대화형 세션은 직접 작업하지 않고 할 일을 등재만 한다 · 실제 작업은 병렬 루틴(워커 A~D · 매시 :05/:20/:35/:50)이 §2 의 T6 이후를 lock 으로 선점해 한다(aaaw 방식 그대로).** 이번에 등재한 작업 = **T6~T11** (§2 참조 · 범위가 겹치는 것은 순서 고정). 주인 원문 요지(전부 UI · 밸런스·엔진 무관):
   - 장비 화면: 장착 슬롯의 장비 아이콘 크기가 **Character_Hero_Equipment 프리팹 그대로**여야 한다(지금은 너무 작다). «균등 보너스 +0% — 최저 슬롯 Lv.0 …» 문구 **삭제**. 슬롯마다 적힌 «갑옷·장갑·투구» 같은 부위 라벨 **전부 숨김**. 상단 가운데 캐릭터 자리 = **내 플레이어 프리팹(CharacterMaker)** 이 보여야 한다. **투구·무기·갑옷은 장착하면 외형에 바로 반영**(장비 화면에서도, 전투에서도). 장비 아이콘은 CharacterMaker 의 투구·무기·갑옷 파츠 그림으로, 그림이 없는 부위(목걸이·장갑·신발)는 일단 아무 그림으로 채운다. 장비 화면에서 **TopBar 를 표시하지 말고 오른쪽 상단에 골드만**. 인벤 리스트 칸은 **`Prefabs~DemoLayout/ListItem_EquipMent`**(«이게 지금 딱 레이아웃 좋다»). **장착한 장비는 하단 리스트에서 숨긴다**(«장착중» 표기 없음). 뽑기 결과 화면은 **Shop_Chest_Open 그대로**(«하라 했는데 안 했네»).
   - 대장간: 하단에 장비들이 **다 있어야 하는데 없다**(버그) → 수정. 합성 가능한 것은 **오른쪽 위 빨간 점**. 슬롯 크기·비례가 **장비 화면 칸과 같아야** 한다(지금 찌그러짐). 대장간에서는 **장착중 표기를 한다**(재료 불가).
@@ -35,12 +40,13 @@
 
 1. `git fetch && git checkout -B main origin/main` (pull --rebase 금지, 로컬 잔재 위에서 작업 금지)
 2. SID 발급: `sess-HHMM-$RANDOM` (예: sess-0512-23481)
-3. aaaw `PLAN.md`(스펙) → 이 문서 → `docs/PROGRESS.md` → `docs/claims/` 순서로 읽는다. aaaw 는 `git clone --depth 1 https://github.com/kuzuni/aaaw .aaaw-src` 로 옆에 둔다(커밋 금지 폴더 · .gitignore).
+3. aaaw `PLAN.md`(스펙) → 이 문서 → `docs/PROGRESS.md` → `docs/claims/` 순서로 읽는다. **PROGRESS 의 «주인 콘솔 에러 보고함» 도 반드시 읽는다** — 아직 작업으로 안 올라간 항목이 있으면 «가장 큰 번호 +1» 로 등재하고, 그것이 선점 가능한 가장 앞 작업이 된다(콘솔 에러 수정은 UI 작업보다 우선). aaaw 는 `git clone --depth 1 https://github.com/kuzuni/aaaw .aaaw-src` 로 옆에 둔다(커밋 금지 폴더 · .gitignore).
 4. [2. 작업 목록]에서 **선점 가능한 가장 앞 작업**을 lock 으로 선점한다 (규약: `docs/claims/README.md`).
 5. 선점할 작업이 없으면(전부 lock 또는 전부 완료): 게이트(§3)를 재실행해 검증만 하고, 이상 없으면 **커밋 없이 조용히 종료**. 이상이 있으면 PROGRESS 에 등재하고 종료.
 
 ## 1. 절대 규칙
 
+- **플레이 콘솔 에러 0 (주인 상시 지시 2026-09-05).** 플레이 중 유니티 콘솔에 빨간 줄(에러·예외·Assert)이 하나라도 뜨는 상태로 작업을 «완료» 라 적지 않는다. 화면/전투/팝업 코드를 바꾼 커밋은 T11 의 PlayMode 스모크 테스트가 그 화면을 열어 `LogAssert.NoUnexpectedReceived` 로 검증해야 한다(테스트가 없으면 같은 커밋에 추가). 런타임 Camera·RenderTexture·씬 오브젝트를 새로 만들면 URP 2D(Renderer2D · 깊이/스텐실 사용) 와 호환되는지 반드시 확인한다. 주인이 붙인 콘솔 로그는 다 고칠 때까지 «주인 콘솔 에러 보고함» 에 남기고, 고친 항목에는 커밋 해시와 원인을 적는다.
 - **aaaw 레포 수정 금지.** 수치(`data/*.json`)는 `tools/check_data_sync.sh --sync` 로만 가져온다. JSON 을 손으로 고치지 않는다.
 - **코드에 게임 수치를 직접 박지 않는다** — `KkomaKnight.Core.GameData` 에서 읽는다. 상수가 JSON 에 없으면 «주인 승인 대기» 에 등재하고, 그때까지는 aaaw 의 `tools/exportData.js` 에 축을 더하는 제안을 적는다(이 레포에서 임의 상수 금지).
 - **새 콘텐츠(특전/시스템/수치 체계) 임의 추가 금지.** 원하면 PROGRESS «주인 승인 대기» 에 등재만.
@@ -53,7 +59,7 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
-> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T6~T11** — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
+> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T6~T12** (T12 = 콘솔 에러 수정 · 최우선) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
 
 ### T1 — 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README ✅ (완료 · PROGRESS 참조)
 
@@ -143,6 +149,15 @@
 2. `tools/check_unity_null.sh`: `GetComponent…() ??` · `Find(...) ??` 패턴이 `Assets/Scripts` 에 0건인지(있으면 실패 · 메시지에 `UiKit.Ensure<T>` 안내). CI dotnet 잡과 §3 게이트에 추가.
 3. 게이트 + PROGRESS T11 행(테스트 수 · CI 런 번호).
 
+### T12 — 플레이 콘솔 에러 0 : URP 2D 렌더 에러(HeroView RenderTexture) + 전 화면 런타임 에러 감사 (최우선 · 제약 없음)
+범위: `Assets/Scripts/Game/HeroView.cs` · (필요시) `WorldCam.cs`·`App.cs`·`BattleWorld.cs` 의 카메라/RenderTexture 코드 · `Assets/Tests/PlayMode/`(HeroView 렌더 1프레임 테스트 추가 — T11 과 파일이 겹치면 T11 워커와 별도 파일 `HeroViewTests.cs`)
+순서: 제약 없음 — **다른 T 보다 먼저 잡는다**(주인: 플레이할 때마다 뜬다).
+1. 주인 로그 재현 원인 확정: `Renderer2D Pass: Fake or uninitialized surface is not supported for attachment 0.` + `EndRenderPass: Not inside a Renderpass`. 등재 진단(⚑ 최신 항목)대로 `HeroView.BuildStage` 의 깊이 0 RenderTexture 가 유력 — `Renderer2D.asset` `m_UseDepthStencilBuffer: 1` 과 충돌. 확정 근거를 PROGRESS 에 한 줄.
+2. 수정(에셋 설정을 끄는 게 아니라 코드가 렌더러 설정에 맞춘다): RenderTexture 깊이 24 + `depthStencilFormat` 명시 · 런타임 Camera 에 `UniversalAdditionalCameraData` 를 `Ensure` 하고 renderType Base · `OnDisable/OnDestroy` 에서 카메라 먼저 끄고 `targetTexture=null` → `Release()` → `Destroy` 순서 · RawImage 가 해제된 텍스처를 참조하지 않게. 로비·장비 두 HeroView 인스턴스와 전투 진입/이탈 왕복 후에도 에러 0.
+3. **다른 에러 전수 감사**(주인: «다른 에러들도 있는지 다 확인해서 고쳐라»): `Assets/Scripts` 전체에서 ⓐ 프리팹 자식 `Find`/`GetComponent` 결과를 null 검사 없이 쓰는 곳 ⓑ catalog 키가 `catalog.json` 에 없는 곳(`gen_catalog.py --check` 는 경로만 보므로 코드의 문자열 키를 추출해 대조하는 스크립트를 `tools/check_catalog_keys.py` 로 추가) ⓒ 에디터 전용 API/`Resources.Load` 실패 ⓓ 코루틴/DOTween 이 파괴된 오브젝트를 만지는 곳(화면 전환 직후 NRE) ⓔ TMP/폰트·머티리얼 누락 경고. 발견 항목은 고치거나(범위 안) 새 T 로 등재(범위 밖).
+4. 검증: PlayMode 테스트 `HeroViewTests` — `HeroView` 를 세우고 `yield return new WaitForEndOfFrame()` ×3 뒤 `LogAssert.NoUnexpectedReceived()`. dotnet 게이트는 PlayMode 를 못 돌리므로 CI(유니티) 런 번호를 PROGRESS 에 적고, CI 시크릿이 없어 유니티 잡이 안 돌면 «주인이 에디터에서 확인할 것: 플레이 → 로비·장비·전투 왕복 → 콘솔 빨간 줄 0» 을 적는다.
+5. 게이트 + PROGRESS T12 행 + «주인 콘솔 에러 보고함» 의 해당 항목에 ✅·커밋 해시·원인 한 줄.
+
 ### 신규 작업 등재
 - 버그·후속 작업 발견 시 PROGRESS 표에 **이미 쓰인 번호 중 가장 큰 것 +1** 로 등재 (번호 재사용 금지, 한 번호 = 한 작업).
 
@@ -157,8 +172,10 @@ tools/check_data_sync.sh [.aaaw-src]                              # data ↔ aaa
 dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이후) 이식 검증
 ```
 
+**플레이 콘솔 에러 0 게이트(주인 상시 지시)**: 화면·전투·팝업 코드를 바꿨으면 `Assets/Tests/PlayMode` 스모크 테스트가 그 화면을 열고 `LogAssert.NoUnexpectedReceived` 를 통과해야 한다(CI 유니티 잡 · 워커는 로컬에서 못 돌리므로 CI 런 번호로 확인). 확인 수단이 없으면 완료 기록에 «주인이 에디터 플레이로 확인할 것 — 콘솔 빨간 줄 0» 을 명시한다. 주인이 붙인 콘솔 로그가 «주인 콘솔 에러 보고함» 에 미해결로 남아 있으면 게이트 미통과로 본다.
+
 ## 4. PROGRESS.md 기록 규약
 
 - 표의 자기 작업 행을 갱신: 상태(진행중/완료/대기) · SID · 워커 · 핵심 수치.
-- 완료 시 반드시: 게이트 결과(테스트 수 · 빌드 초록) + 커밋 해시 + **«주인이 확인할 것» 한 줄**.
+- 완료 시 반드시: 게이트 결과(테스트 수 · 빌드 초록) + 커밋 해시 + **«주인이 확인할 것» 한 줄**. + **«플레이 콘솔 에러 0 을 무엇으로 확인했는가»**(PlayMode 테스트 이름·CI 런 / 또는 «주인 에디터 확인 요청»).
 - 판단이 필요한 것은 «주인 승인 대기» 절에 번호를 붙여 모아 둔다(한 번에 묻기 위해). 기본값으로 진행했으면 그 기본값도 같이 적는다.
