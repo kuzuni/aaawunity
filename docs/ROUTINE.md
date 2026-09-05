@@ -61,7 +61,7 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
-> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T6~T13** (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
+> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T6~T14** (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
 
 ### T1 — 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README ✅ (완료 · PROGRESS 참조)
 
@@ -169,13 +169,14 @@
 4. **스크린샷 확인(주인 지시)**: 워커는 에디터가 없으므로 ⓐ PlayMode 테스트 `PerkStripTests` 가 특전 12개를 강제로 얻은 상태를 만들고(`G.Taken` 에 서로 다른 id 12개 + 중복 1개) 한 프레임 뒤 **모든 셀 rect 가 서로 겹치지 않고 PerkStrip rect 안에 있는지** 를 `RectTransformUtility` 로 단언 ⓑ 같은 테스트에서 `ScreenCapture.CaptureScreenshot` 으로 PNG 를 **`Application.temporaryCachePath`/CI 아티팩트**에 남긴다(레포 커밋 금지 — `.github/workflows/ci.yml` 의 PlayMode 잡에 `actions/upload-artifact` 한 줄 · 이름 `perkstrip-screens`). PROGRESS 에 CI 런 번호와 아티팩트 이름을 적어 주인이 내려받아 보게 한다. CI 유니티 잡이 안 돌면 «주인이 에디터에서 확인할 것 — 특전 10개 이상 얻은 뒤 하단 줄이 안 겹치는지» 를 적는다.
 5. 게이트(§3 + 플레이 콘솔 에러 0) + PROGRESS T13 행.
 
-### T12 — 전투 캐릭터 크기 2/3 · 공속 비례 공격 애니 · 사망 모션 루프 금지
+### T14 — 전투 캐릭터 크기 2/3 · 공속 비례 공격 애니 · 사망 모션 루프 금지
+> (등재 시 T12 로 적혔던 것을 번호 규약(«가장 큰 번호 +1» · 재사용 금지 · T12 = 콘솔 에러 수정 완료)에 따라 T14 로 바로잡음 — sess-2136-22274 · lock 은 `T14.lock`)
 범위: `Assets/Scripts/Game/BattleWorld.cs`(캐릭터 크기 · Dead 재생) · `Assets/Scripts/Game/CharacterRig.cs`(PlayAttack 속도 · Dead 비루프) · `Assets/Scripts/Core/Layout.cs`(PlayerHeight/EnemyHeight 상수 — LayoutSpecTests 가 표와 대조하므로 표 값은 두고 **배율 상수** 를 따로 둔다)
 순서: 제약 없음(T7 이 BattleWorld 의 KnightSkin 한 줄을 만진다 — 그 줄만 피한다).
 1. **플레이어·적 크기 2/3**: 지금 키(PlayerHeight 9% · EnemyHeight 9% · 보스 ×BossSizeMul)에 `Layout.CharScale = 2f/3f` 를 곱한다(표 상수는 그대로 · 테스트 유지). 발밑 체력바 폭도 같은 비율.
 2. **공격 애니 속도 = 공속 비례**: 공격 1회 간격이 T 초면 Attack 클립(1.83초)이 **T 초 안에 끝나도록** 속도를 올린다 — 속도 = 클립길이 / T (하한 1 · 상한 없음). 플레이어 T = 1/공속(EffAspd) · 적 T = meleeInterval/bossInterval/rangedInterval(슬로우 배율 포함). 지금은 상한 ×3 이라 공속이 빠르면 모션이 다음 공격에 잘린다 → 상한을 없앤다. 타격 순간(OnAttackHit 1.0초 지점)도 같은 배율로 앞당겨진다(이미 HitDelay 가 속도를 나눈다 — 확인만).
 3. **사망 모션 루프 금지**: Dead1.anim 이 루프(`m_LoopTime: 1`)라 죽은 뒤 다시 일어나는 것처럼 보인다. 에셋을 고치지 말고(주인 에셋 불변) `CharacterRig.Play(Dead)` 뒤 클립 길이만큼 지나면 **Animator 를 멈춘다**(`_anim.speed = 0` 또는 마지막 프레임에서 정지) — 플레이어·적 모두. Victory/Defeat 도 루프면 같은 처리(정지 시점 = 클립 끝).
-4. 게이트 + PROGRESS T12 행 + «주인이 확인할 것».
+4. 게이트 + PROGRESS T14 행 + «주인이 확인할 것».
 
 ### 신규 작업 등재
 - 버그·후속 작업 발견 시 PROGRESS 표에 **이미 쓰인 번호 중 가장 큰 것 +1** 로 등재 (번호 재사용 금지, 한 번호 = 한 작업).
