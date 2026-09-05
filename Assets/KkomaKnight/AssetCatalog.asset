@@ -321,6 +321,10 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 070b752d34d914f90b58c600d903f29a, type: 3}
   - key: ui.gift
     sprite: {fileID: 21300000, guid: 90036dce1bf1d4533819e564ac16e0b4, type: 3}
+  - key: ui.talentIcon
+    sprite: {fileID: 21300000, guid: cf35c75bb8a734660b08997bd0c7dcd8, type: 3}
+  - key: ui.petIcon
+    sprite: {fileID: 21300000, guid: 8a6e9c2985c5e47508866143fff1f884, type: 3}
   - key: gi.weapon.crit
     sprite: {fileID: 21300000, guid: fc848bff183734ecaa325f38410d53e8, type: 3}
   - key: gi.weapon.hpsh
@@ -878,6 +882,8 @@ MonoBehaviour:
     prefab: {fileID: 9068459138202833997, guid: e89b1aa4229f043f282a1fd2a9bc4548, type: 3}
   - key: ui.switch
     prefab: {fileID: 6431523672475112463, guid: af0e63069a99549c794486df768bf1b2, type: 3}
+  - key: ui.talent
+    prefab: {fileID: 4786098786137720783, guid: 1c013396aca1646cda930ad71b0feb62, type: 3}
   controllers:
   - key: cm.controller
     controller: {fileID: 9100000, guid: b491875454dfab744b3c79816cba2e67, type: 2}

@@ -289,33 +289,70 @@ namespace KkomaKnight.Game
             var hit = UiKit.Find(rt, "Dimmed"); if (hit != null) UiKit.Clickable(hit, () => { Close(); onLobby(); }, false);
         }
 
-        // ───────────────────────── 일시정지 / 설정 (주인 지정 Settings) ─────────────────────────
-        public void Pause(Action onResume, Action onGiveUp)
+        // ───────────────────────── 설정 / 일시정지 (주인 지정 Settings — 프리팹 «그대로» · T10) ─────────────────────────
+        /// <summary>로비 메뉴(≡)의 설정 팝업 — Settings 프리팹 원형 그대로(요소를 끄거나 옮기지 않는다). 소리 스위치만 값을 저장하고 나머지 버튼은 눌러도 아무 일 없음.</summary>
+        public void Settings() => SettingsPopup("설정", null, null);
+        /// <summary>전투 일시정지 — 같은 Settings 프리팹. 아래 버튼 2개만 «재개»·«포기하고 로비로» 로 배선한다.</summary>
+        public void Pause(Action onResume, Action onGiveUp) => SettingsPopup("일시정지", onResume, onGiveUp);
+
+        /// <summary>
+        /// Settings 프리팹을 세운다. 프리팹의 줄(BGM·SFX·Haptic·Language · 버튼 2줄 · UID · 버전 · 약관 글자)은 전부 <b>보이는 그대로</b> 두고 글자만 우리말로 바꾼다.
+        /// 동작하는 것: BGM 스위치 = 소리 켜기/끄기(값 저장) · 닫기(X) · 전투에서는 Group_Button_2 = 재개/포기. 나머지 스위치·버튼·글자는 기능 없음(주인: «나중 업데이트»).
+        /// </summary>
+        void SettingsPopup(string title, Action onResume, Action onGiveUp)
         {
             Begin();
             var root = UiKit.Spawn("ui.settings", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
             var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
-            UiKit.SetText(rt, "Title_Tapered_01_Brown/Text (TMP)", "일시정지");
+            UiKit.SetText(rt, "Title_Tapered_01_Brown/Text (TMP)", title);
+            // 스위치 줄 4개 — 글자만 우리말. BGM 만 값을 저장한다(소리 전체 = Save.Muted). SFX·진동 스위치는 눌러도 아무 일 없음.
+            Action closeAndResume = () => { Close(); onResume?.Invoke(); };
             var bgm = UiKit.Find(rt, "BGM");
             if (bgm != null)
             {
-                UiKit.SetText(bgm, "Text", "소리");
+                UiKit.SetText(bgm, "Text", "배경음");
                 var sw = UiKit.Find(bgm, "Swich_01");
                 if (sw != null) { ApplySwitch(sw, !_app.Save.Muted); UiKit.Clickable(sw, () => { _app.Save.Muted = !_app.Save.Muted; _app.Persist(); ApplySwitch(sw, !_app.Save.Muted); }, false); }
             }
-            UiKit.Hide(rt, "SFX", "Haptic", "Language", "Group_Button_1", "Text_Privacy", "Text_TermsOfService");
+            UiKit.SetText(rt, "SFX/Text", "효과음"); UiKit.SetText(rt, "Haptic/Text", "진동");
+            UiKit.SetText(rt, "Language/Text", "언어"); UiKit.SetText(rt, "Language/Button_English/Text (TMP)", "한국어");
+            // 버튼 2줄 — 프리팹 그대로 4개. 위 줄(평가·로그인)은 기능 없음. 아래 줄은 전투에서만 재개/포기, 로비에서는 기능 없음.
+            var g1 = UiKit.Find(rt, "Group_Button_1");
+            if (g1 != null && g1.childCount >= 2) { UiKit.SetText(g1.GetChild(0), "Text (TMP)", "평가하기"); UiKit.SetText(g1.GetChild(1), "Text (TMP)", "로그인"); }
             var g2 = UiKit.Find(rt, "Group_Button_2");
             if (g2 != null && g2.childCount >= 2)
             {
-                UiKit.SetText(g2.GetChild(0), "Text (TMP)", "재개"); UiKit.Clickable(g2.GetChild(0), () => { Close(); onResume(); });
-                UiKit.SetText(g2.GetChild(1), "Text (TMP)", "포기하고 로비로"); UiKit.Clickable(g2.GetChild(1), () => { Close(); onGiveUp(); });
+                if (onResume != null || onGiveUp != null)   // 자식 0 = 파랑(Support 자리) · 1 = 빨강(Account Delete 자리)
+                {
+                    UiKit.SetText(g2.GetChild(0), "Text (TMP)", "재개"); UiKit.Clickable(g2.GetChild(0), closeAndResume);
+                    UiKit.SetText(g2.GetChild(1), "Text (TMP)", "포기하고 로비로"); UiKit.Clickable(g2.GetChild(1), () => { Close(); onGiveUp?.Invoke(); });
+                }
+                else { UiKit.SetText(g2.GetChild(0), "Text (TMP)", "고객 지원"); UiKit.SetText(g2.GetChild(1), "Text (TMP)", "계정 삭제"); }
             }
-            var uid = UiKit.Find(rt, "UID"); if (uid != null) { UiKit.SetText(uid, "Text", $"세이브 ID  {_app.Save.Uid}"); UiKit.Hide(uid, "Icon"); }
+            var uid = UiKit.Find(rt, "UID"); if (uid != null) UiKit.SetText(uid, "Text", $"<color=#bb8a63>세이브 ID</color>  {_app.Save.Uid}");
             UiKit.SetText(rt, "Text_Version", "v" + Application.version);
-            var close = UiKit.Find(rt, "Button_Close_01"); if (close != null) UiKit.Clickable(close, () => { Close(); onResume(); });
+            UiKit.SetText(rt, "Text_Privacy", "개인정보 처리방침"); UiKit.SetText(rt, "Text_TermsOfService", "이용약관");
+            var close = UiKit.Find(rt, "Button_Close_01"); if (close != null) UiKit.Clickable(close, closeAndResume);
             var popup = UiKit.Find(rt, "Popup"); if (popup != null) UiKit.PopIn((RectTransform)popup);
         }
         static void ApplySwitch(Transform sw, bool on) { UiKit.Show(sw, "On", on); UiKit.Show(sw, "Off", !on); }
+
+        // ───────────────────────── 탤런트 / 펫 (주인 지정 Character_Talent_02 — 프리팹 «그대로» · 기능 없음 · T10) ─────────────────────────
+        /// <summary>
+        /// 하단 탭 «탤런트»·«펫» 팝업 — Character_Talent_02 데모 프리팹을 통째로(배경·재화 바·패스 줄·하단 탭 바) 그대로 세운다. 내용은 데모 그대로이고 기능은 없다(주인: «나중 업데이트»).
+        /// 제목 = 프리팹 안 탭 바의 켜진 탭 라벨(«Talent» 자리) 을 «탤런트»/«펫» 으로. 닫기 = 프리팹의 하단 탭 바를 <see cref="NavBar.Wire"/> 로 배선해 다른 탭을 누르면 닫히며 그 화면으로 간다(프리팹에 닫기 버튼이 없어 새로 그리지 않는다).
+        /// </summary>
+        public void TalentPet(string kind)
+        {
+            Begin();
+            var root = UiKit.Spawn("ui.talent", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
+            foreach (var g in rt.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;   // 뒤 화면으로 클릭이 새지 않게 (탭은 Clickable 이 다시 켠다)
+            var res = UiKit.Find(rt, "ResourceBar_Group");
+            if (res != null) { UiKit.SetText(res, "ResourceBar_Coin/Text (TMP)", UiKit.Fmt(_app.Save.Gold)); UiKit.SetText(res, "ResourceBar_Gem/Text (TMP)", UiKit.Fmt(_app.Save.Gem)); }
+            var tabs = UiKit.Find(rt, "Tab_01_BottomFlushMenu");
+            if (tabs != null) NavBar.Wire(_app, tabs, kind);
+            _cur = root;
+        }
 
         // ───────────────────────── 보스 경고 띠 (Play_Warning_Boss 의 Panel_Warning) — 시간 안 멈춤 ─────────────────────────
         public void BossWarn(Transform parent)

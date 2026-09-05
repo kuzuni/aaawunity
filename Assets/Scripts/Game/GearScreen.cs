@@ -127,39 +127,4 @@ namespace KkomaKnight.Game
             NavBar.Refresh(Root);
         }
     }
-
-    /// <summary>하단 탭 5칸(상점·장비·전투·대장간·설정) — 로비 프리팹의 Tab_01_BottomFlushMenu 를 다른 화면에도 같은 배선으로 세운다.</summary>
-    public static class NavBar
-    {
-        static readonly string[] Keys = { "shop", "gear", "battle", "forge", "settings" };
-        static readonly string[] IconsK = { "ui.shop", "ui.bag", "ui.battle", "ui.anvil", "ui.settings" };
-        static readonly string[] Labels = { "상점", "장비", "전투", "대장간", "설정" };
-
-        public static void Attach(GameScreen screen, RectTransform root, string current)
-        {
-            var bar = UiKit.SpawnRt("ui.tabBar", root, Layout.TabBar);
-            Wire(screen.App, bar, current);
-        }
-        public static void Wire(App app, Transform bar, string current)
-        {
-            for (int i = 0; i < bar.childCount && i < Keys.Length; i++)
-            {
-                var tab = bar.GetChild(i); int k = i;
-                UiKit.SetSprite(tab, "Normal/Icon", IconsK[i], Palette.White); UiKit.SetSprite(tab, "Focus/Icon_Focus", IconsK[i], Palette.White);
-                UiKit.SetText(tab, "Focus/Text (TMP)", Labels[i]);
-                bool on = Keys[i] == current || (Keys[i] == "battle" && current == "lobby");
-                UiKit.Show(tab, "Focus", on); UiKit.Show(tab, "Normal", !on);
-                UiKit.Clickable(tab, () =>
-                {
-                    switch (Keys[k])
-                    {
-                        case "battle": app.ShowScreen("lobby"); break;
-                        case "settings": app.Overlay.Pause(() => { }, () => { }); break;
-                        default: if (Keys[k] != current) app.ShowScreen(Keys[k]); break;
-                    }
-                });
-            }
-        }
-        public static void Refresh(RectTransform root) { var bar = UiKit.Find(root, "ui.tabBar"); if (bar != null) bar.SetAsLastSibling(); }
-    }
 }

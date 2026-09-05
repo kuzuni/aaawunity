@@ -155,6 +155,8 @@
     "ui.fire": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Misc_Fire_01_Red.png",
     "ui.potionRed": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Consumable_Potion_01_Red.png",
     "ui.gift": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Gift_01_Yellow.png",
+    "ui.talentIcon": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Star_01_Yellow.png",
+    "ui.petIcon": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Egg_01.png",
     "gi.weapon.crit": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Weapons_Sword_01.png",
     "gi.weapon.hpsh": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Weapons_Hammer_01.png",
     "gi.weapon.evade": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Weapons_Spear_01.png",
@@ -434,7 +436,8 @@
     "ui.label.red": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Label/Label_Tapered_02_Red.prefab",
     "ui.label.brown": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Label/Label_Tapered_02_Brown.prefab",
     "ui.tabBar": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Tab_01_BottomFlushMenu.prefab",
-    "ui.switch": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Control/Swich_01.prefab"
+    "ui.switch": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Control/Swich_01.prefab",
+    "ui.talent": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Character_Talent_02.prefab"
   },
   "controllers": {
     "cm.controller": "Assets/Layer Lab/2D Minimal-CharacterMaker/Common/Animations/_Controller.controller"
@@ -547,7 +550,8 @@
     "ui.perkSelect": "레벨업 3택 팝업 (주인 지정 Play_Perk_Selection_02) — 카드 3행 · 하단 버튼 → 보유 특전",
     "ui.resultWin": "챕터 클리어 팝업 (주인 지정 Play_Result_Win_01)",
     "ui.resultLose": "사망 팝업 (Play_Result_Lose — 팁 3행 + 골드)",
-    "ui.settings": "일시정지/설정 팝업 (주인 지정 Settings — 소리 토글 · 재개 · 포기)",
+    "ui.settings": "설정/일시정지 팝업 (주인 지정 Settings · T10 부터 프리팹 원형 그대로 — 줄·버튼·글자 전부 보이고 글자만 우리말) — 배경음 스위치만 값 저장(Save.Muted) · 닫기(X) · 전투에서만 아래 버튼 2개 = 재개/포기하고 로비로 · 나머지 기능 없음. 로비 메뉴(≡) 와 전투 일시정지에서 연다",
+    "ui.talent": "탤런트·펫 팝업 (주인 지정 Character_Talent_02 · T10 · 프리팹 통째로 그대로 · 기능 없음) — 하단 탭 «탤런트»·«펫» 이 연다 · 재화 바 = 골드·보석 · 프리팹 안 탭 바로 닫는다(다른 탭 → 그 화면)",
     "ui.chestOpen": "장비 소환 결과 팝업 (주인 지정 Shop_Chest_Open) — 열린 상자 chest.*.open + 얻은 장비 격자",
     "ui.lobby": "로비 (주인 지정 Lobby_Default · T6 부터 원형 그대로 · 요소 이동 없음) — 상단 UserInfo_01 초상 = HeroView(내 플레이어 CharacterMaker) · «25 / 55» 슬라이더 자리 = 전투력 · ResourceBar_Group = 골드·보석 · 챕터 제목(«Battle 1» 자리) · START · 하단 탭. ChatBox 만 끈다",
     "ui.itemDetail": "장비 세부 팝업 (Character_Hero_Item_Detail_01) — 등급 배지 · 아이콘 · 이름 · 슬롯 Lv 바 · 기여/옵션 목록 · 장착/해제/슬롯 강화",
@@ -580,7 +584,9 @@
     "ui.cardFrame.green": "특전 등급 색 — 일반=green · 희귀=blue · 전설=yellow · 악마=plum",
     "ui.itemFrame.gray": "장비 등급 색 — 일반=gray · 희귀=blue · 전설=yellow · 신화=plum (4단계)",
     "ui.label.green": "등급 라벨(pill)",
-    "ui.tabBar": "하단 탭 5칸 → 상점·장비·전투(가운데)·대장간·설정",
+    "ui.tabBar": "하단 탭 5칸 → 상점·장비·전투(가운데)·탤런트·펫 (T10 · 대장간은 장비 화면 «합성» 버튼 · 설정은 로비 메뉴(≡)/전투 일시정지)",
+    "ui.talentIcon": "하단 탭 «탤런트» 아이콘 (Economy_Star_01_Yellow — 워커 선택 · 바꾸려면 경로 한 줄)",
+    "ui.petIcon": "하단 탭 «펫» 아이콘 (Item_Egg_01 펫 알 — 워커 선택 · 바꾸려면 경로 한 줄)",
     "mat.hitFlash": "AllIn1SpriteShader(URP 2D) HITEFFECT_ON 머티리얼 — 피격 순간 0.1초 하양 플래시",
     "font.ui": "UI 글꼴 Jua (Google Fonts OFL) — GUI Pro 의 SDF 폰트에 한글이 없어 TMP 를 런타임에 legacy Text 로 바꿔 쓴다",
     "col.gray": "GUI Pro Theme_Light 팔레트 (Button_01 색 오버라이드에서 읽음) — 등급/세트/텍스트 색은 전부 여기서 고른다",

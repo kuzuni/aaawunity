@@ -151,7 +151,7 @@
 | sprites | `ui.anvil` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Anvil_01_Light.png` | fileID 21300000 | 사망 팝업 팁(합성) · 대장간 탭 |
 | sprites | `ui.hourglass` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Hourglass_01_Gold.png` | fileID 21300000 | 클리어 팝업 «걸린 시간» |
 | sprites | `ui.trophy` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Trophy_01_Gold.png` | fileID 21300000 |  |
-| sprites | `ui.settings` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_System_Setting_01.png` | fileID 21300000 | 일시정지/설정 팝업 (주인 지정 Settings — 소리 토글 · 재개 · 포기) |
+| sprites | `ui.settings` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_System_Setting_01.png` | fileID 21300000 | 설정/일시정지 팝업 (주인 지정 Settings · T10 부터 프리팹 원형 그대로 — 줄·버튼·글자 전부 보이고 글자만 우리말) — 배경음 스위치만 값 저장(Save.Muted) · 닫기(X) · 전투에서만 아래 버튼 2개 = 재개/포기하고 로비로 · 나머지 기능 없음. 로비 메뉴(≡) 와 전투 일시정지에서 연다 |
 | sprites | `ui.bag` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Common_Bag_01_Brown.png` | fileID 21300000 |  |
 | sprites | `ui.shop` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Shop_01_Red.png` | fileID 21300000 |  |
 | sprites | `ui.battle` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Battle_01_Color.png` | fileID 21300000 |  |
@@ -159,6 +159,8 @@
 | sprites | `ui.fire` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Misc_Fire_01_Red.png` | fileID 21300000 |  |
 | sprites | `ui.potionRed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Consumable_Potion_01_Red.png` | fileID 21300000 |  |
 | sprites | `ui.gift` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Gift_01_Yellow.png` | fileID 21300000 |  |
+| sprites | `ui.talentIcon` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Star_01_Yellow.png` | fileID 21300000 | 하단 탭 «탤런트» 아이콘 (Economy_Star_01_Yellow — 워커 선택 · 바꾸려면 경로 한 줄) |
+| sprites | `ui.petIcon` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Egg_01.png` | fileID 21300000 | 하단 탭 «펫» 아이콘 (Item_Egg_01 펫 알 — 워커 선택 · 바꾸려면 경로 한 줄) |
 | sprites | `gi.weapon.crit` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Weapons_Sword_01.png` | fileID 21300000 | 장비 아이콘 — 무기(치명 세트=검 / 체력실드=해머 / 회피=창). 세트별로 다른 그림 · 등급은 ItemFrame 색 |
 | sprites | `gi.weapon.hpsh` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Weapons_Hammer_01.png` | fileID 21300000 |  |
 | sprites | `gi.weapon.evade` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Weapons_Spear_01.png` | fileID 21300000 |  |
@@ -358,7 +360,7 @@
 | prefabs | `ui.perkSelect` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Play_Perk_Selection_02.prefab` | root 17609411814228231 | 레벨업 3택 팝업 (주인 지정 Play_Perk_Selection_02) — 카드 3행 · 하단 버튼 → 보유 특전 |
 | prefabs | `ui.resultWin` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Play_Result_Win_01.prefab` | root 9196921582786606425 | 챕터 클리어 팝업 (주인 지정 Play_Result_Win_01) |
 | prefabs | `ui.resultLose` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Play_Result_Lose.prefab` | root 1181429915366586777 | 사망 팝업 (Play_Result_Lose — 팁 3행 + 골드) |
-| prefabs | `ui.settings` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Settings.prefab` | root 5432435844308285772 | 일시정지/설정 팝업 (주인 지정 Settings — 소리 토글 · 재개 · 포기) |
+| prefabs | `ui.settings` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Settings.prefab` | root 5432435844308285772 | 설정/일시정지 팝업 (주인 지정 Settings · T10 부터 프리팹 원형 그대로 — 줄·버튼·글자 전부 보이고 글자만 우리말) — 배경음 스위치만 값 저장(Save.Muted) · 닫기(X) · 전투에서만 아래 버튼 2개 = 재개/포기하고 로비로 · 나머지 기능 없음. 로비 메뉴(≡) 와 전투 일시정지에서 연다 |
 | prefabs | `ui.chestOpen` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Shop_Chest_Open.prefab` | root 8655925205862286414 | 장비 소환 결과 팝업 (주인 지정 Shop_Chest_Open) — 열린 상자 chest.*.open + 얻은 장비 격자 |
 | prefabs | `ui.lobby` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Lobby_Default.prefab` | root 4248817929678912515 | 로비 (주인 지정 Lobby_Default · T6 부터 원형 그대로 · 요소 이동 없음) — 상단 UserInfo_01 초상 = HeroView(내 플레이어 CharacterMaker) · «25 / 55» 슬라이더 자리 = 전투력 · ResourceBar_Group = 골드·보석 · 챕터 제목(«Battle 1» 자리) · START · 하단 탭. ChatBox 만 끈다 |
 | prefabs | `ui.itemDetail` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Character_Hero_Item_Detail_01.prefab` | root 7414256810885239513 | 장비 세부 팝업 (Character_Hero_Item_Detail_01) — 등급 배지 · 아이콘 · 이름 · 슬롯 Lv 바 · 기여/옵션 목록 · 장착/해제/슬롯 강화 |
@@ -435,8 +437,9 @@
 | prefabs | `ui.label.plum` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Label/Label_Tapered_02_Plum.prefab` | root 1063311140513659405 |  |
 | prefabs | `ui.label.red` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Label/Label_Tapered_02_Red.prefab` | root 165765810441978131 |  |
 | prefabs | `ui.label.brown` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Label/Label_Tapered_02_Brown.prefab` | root 8612671380362345720 |  |
-| prefabs | `ui.tabBar` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Tab_01_BottomFlushMenu.prefab` | root 9068459138202833997 | 하단 탭 5칸 → 상점·장비·전투(가운데)·대장간·설정 |
+| prefabs | `ui.tabBar` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Tab_01_BottomFlushMenu.prefab` | root 9068459138202833997 | 하단 탭 5칸 → 상점·장비·전투(가운데)·탤런트·펫 (T10 · 대장간은 장비 화면 «합성» 버튼 · 설정은 로비 메뉴(≡)/전투 일시정지) |
 | prefabs | `ui.switch` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Control/Swich_01.prefab` | root 6431523672475112463 |  |
+| prefabs | `ui.talent` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Character_Talent_02.prefab` | root 4786098786137720783 | 탤런트·펫 팝업 (주인 지정 Character_Talent_02 · T10 · 프리팹 통째로 그대로 · 기능 없음) — 하단 탭 «탤런트»·«펫» 이 연다 · 재화 바 = 골드·보석 · 프리팹 안 탭 바로 닫는다(다른 탭 → 그 화면) |
 | controllers | `cm.controller` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Common/Animations/_Controller.controller` | fileID 9100000 |  |
 | materials | `mat.hitFlash` | `Assets/KkomaKnight/HitFlash.mat` | fileID 2100000 | AllIn1SpriteShader(URP 2D) HITEFFECT_ON 머티리얼 — 피격 순간 0.1초 하양 플래시 |
 | fonts | `font.ui` | `Assets/Fonts/Jua-Regular.ttf` | fileID 12800000 | UI 글꼴 Jua (Google Fonts OFL) — GUI Pro 의 SDF 폰트에 한글이 없어 TMP 를 런타임에 legacy Text 로 바꿔 쓴다 |

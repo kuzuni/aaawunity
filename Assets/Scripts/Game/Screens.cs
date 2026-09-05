@@ -51,8 +51,8 @@ namespace KkomaKnight.Game
             // 재화 = 프리팹의 ResourceBar_Group(골드 · 보석) 그대로 · 세 번째 칸(GemStone)은 프리팹처럼 꺼진 채
             var res = UiKit.Find(rt, "ResourceBar_Group");
             if (res != null) { _gold = UiKit.SetText(res, "ResourceBar_Coin/Text (TMP)", "0"); _gem = UiKit.SetText(res, "ResourceBar_Gem/Text (TMP)", "0"); }
-            // 메뉴(≡) → 일시정지/설정 팝업 (T10 이 Settings «그대로» 로 다듬는다)
-            var menu = UiKit.Find(rt, "Button_Menu"); if (menu != null) UiKit.Clickable(menu, () => App.Overlay.Pause(() => { }, () => { }));
+            // 메뉴(≡) → 설정 팝업(주인 지정 Settings 프리팹 그대로 · T10)
+            var menu = UiKit.Find(rt, "Button_Menu"); if (menu != null) UiKit.Clickable(menu, () => App.Overlay.Settings());
             // 왼쪽·오른쪽 상단 아이콘 — 프리팹 그대로 보이고 기능 없음(주인: «나중 업데이트»). 데모 영문 라벨만 우리말로.
             UiKit.SetText(rt, "Button_Ticket/Text (TMP)", "티켓"); UiKit.SetText(rt, "Button_ADRemove/Text (TMP)", "광고 제거");
             UiKit.SetText(rt, "Button_Mission/Text (TMP)", "미션"); UiKit.SetText(rt, "Button_Inventory/Text (TMP)", "가방");
@@ -67,7 +67,7 @@ namespace KkomaKnight.Game
             if (map != null) { cardCx += map.anchoredPosition.x; cardCy -= map.anchoredPosition.y; cardHalfW = map.sizeDelta.x / 2f; }
             var left = UiKit.Button(rt, "ui.btnSmallBlue", "◀", () => Shift(-1)); UiKit.Px(left, cardCx - cardHalfW - 78f, cardCy, 128f, 70f);
             var right = UiKit.Button(rt, "ui.btnSmallBlue", "▶", () => Shift(1)); UiKit.Px(right, cardCx + cardHalfW + 78f, cardCy, 128f, 70f);
-            // 하단 탭 5칸 — 프리팹 자리 그대로 (탭 구성은 T10)
+            // 하단 탭 5칸 — 프리팹 자리 그대로 (상점 · 장비 · 전투 · 탤런트 · 펫 — T10)
             _tabs = UiKit.Find(rt, "Tab_01_BottomFlushMenu");
             if (_tabs != null) NavBar.Wire(App, _tabs, "lobby");
         }
@@ -100,5 +100,49 @@ namespace KkomaKnight.Game
             if (_gem != null) _gem.text = UiKit.Fmt(s.Gem);
             _hero?.SetSkin(HeroView.PlayerSkin(App));
         }
+    }
+
+    /// <summary>
+    /// 하단 탭 5칸 = <b>상점 · 장비 · 전투 · 탤런트 · 펫</b> (주인 지시 2026-09-05 · T10 — 대장간·설정 탭은 뺐다).
+    /// 대장간은 장비 화면의 «합성» 버튼으로만 · 설정은 로비의 메뉴(≡)와 전투의 일시정지에서만 연다.
+    /// 로비 프리팹(Lobby_Default)의 Tab_01_BottomFlushMenu 를 다른 화면에도 같은 배선으로 세운다 — 탭 순서 = 프리팹 자식 순서(0~4) 그대로.
+    /// 탤런트·펫 탭 = <see cref="Overlay.TalentPet"/>(Character_Talent_02 프리팹 팝업 · 기능 없음 · 팝업 안 탭 바로 닫는다).
+    /// </summary>
+    public static class NavBar
+    {
+        public static readonly string[] Keys = { "shop", "gear", "battle", "talent", "pet" };
+        static readonly string[] IconsK = { "ui.shop", "ui.bag", "ui.battle", "ui.talentIcon", "ui.petIcon" };
+        public static readonly string[] Labels = { "상점", "장비", "전투", "탤런트", "펫" };
+
+        public static void Attach(GameScreen screen, RectTransform root, string current)
+        {
+            var bar = UiKit.SpawnRt("ui.tabBar", root, Layout.TabBar);
+            Wire(screen.App, bar, current);
+        }
+        /// <summary>탭 바(Tab_01_BottomFlushMenu 인스턴스)의 자식 5개에 아이콘·라벨·클릭을 배선한다. current = 켜 둘 탭(«lobby» 는 전투 탭).</summary>
+        public static void Wire(App app, Transform bar, string current)
+        {
+            for (int i = 0; i < bar.childCount && i < Keys.Length; i++)
+            {
+                var tab = bar.GetChild(i); int k = i;
+                UiKit.SetSprite(tab, "Normal/Icon", IconsK[i], Palette.White); UiKit.SetSprite(tab, "Focus/Icon_Focus", IconsK[i], Palette.White);
+                UiKit.SetText(tab, "Focus/Text (TMP)", Labels[i]);
+                bool on = Keys[i] == current || (Keys[i] == "battle" && current == "lobby");
+                UiKit.Show(tab, "Focus", on); UiKit.Show(tab, "Normal", !on);
+                UiKit.Clickable(tab, () => Go(app, Keys[k], current));
+            }
+        }
+        /// <summary>탭 이동 — 팝업(탤런트/펫/설정)이 떠 있으면 닫고 간다. 같은 탭은 아무 일 없음.</summary>
+        static void Go(App app, string key, string current)
+        {
+            if (key == current) return;
+            switch (key)
+            {
+                case "battle": app.Overlay.Close(); if (current != "lobby") app.ShowScreen("lobby"); break;
+                case "talent": case "pet": app.Overlay.TalentPet(key); break;
+                default: app.Overlay.Close(); app.ShowScreen(key); break;
+            }
+        }
+        public static void Refresh(RectTransform root) { var bar = UiKit.Find(root, "ui.tabBar"); if (bar != null) bar.SetAsLastSibling(); }
     }
 }
