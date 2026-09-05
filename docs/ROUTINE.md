@@ -61,7 +61,7 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
-> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T6~T14** (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
+> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T6~T15** (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
 
 ### T1 — 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README ✅ (완료 · PROGRESS 참조)
 
@@ -177,6 +177,13 @@
 2. **공격 애니 속도 = 공속 비례**: 공격 1회 간격이 T 초면 Attack 클립(1.83초)이 **T 초 안에 끝나도록** 속도를 올린다 — 속도 = 클립길이 / T (하한 1 · 상한 없음). 플레이어 T = 1/공속(EffAspd) · 적 T = meleeInterval/bossInterval/rangedInterval(슬로우 배율 포함). 지금은 상한 ×3 이라 공속이 빠르면 모션이 다음 공격에 잘린다 → 상한을 없앤다. 타격 순간(OnAttackHit 1.0초 지점)도 같은 배율로 앞당겨진다(이미 HitDelay 가 속도를 나눈다 — 확인만).
 3. **사망 모션 루프 금지**: Dead1.anim 이 루프(`m_LoopTime: 1`)라 죽은 뒤 다시 일어나는 것처럼 보인다. 에셋을 고치지 말고(주인 에셋 불변) `CharacterRig.Play(Dead)` 뒤 클립 길이만큼 지나면 **Animator 를 멈춘다**(`_anim.speed = 0` 또는 마지막 프레임에서 정지) — 플레이어·적 모두. Victory/Defeat 도 루프면 같은 처리(정지 시점 = 클립 끝).
 4. 게이트 + PROGRESS T14 행 + «주인이 확인할 것».
+
+### T15 — 플레이 콘솔 에러 0 : 데모 프리팹 스폰 시 `PanelView.OnEnable` 예외 (최우선 · 제약 없음)
+범위: `Assets/Scripts/Game/UiKit.cs`(`Spawn`) · 회귀 확인 = T11 의 PlayMode 스모크(CI)
+순서: 제약 없음(T11 워커와 파일이 겹치지 않는다 — 테스트는 손대지 않는다).
+1. 원인(CI #36 · https://github.com/kuzuni/aaawunity/actions/runs/33995378223 · `UiSmokeTests` 3건 전부 같은 스택): `UiKit.Spawn` 이 `Instantiate(prefab, parent, false)` 를 **활성 부모** 밑에 하므로 GUI Pro 데모 스크립트 `LayerLab.CasualGame.PanelView.OnEnable`(`otherPanels[i].SetActive` · 배열 미할당)이 `Adopt` 가 스크립트를 지우기 **전에** 돌아 `UnassignedReferenceException` 을 던진다(에디터 플레이에서도 설정·장비 세부·전투 팝업을 열 때마다 빨간 줄 — 빌드에선 NRE). 스택: `PanelView.OnEnable ← Object.Instantiate ← UiKit.Spawn ← Overlay.SettingsPopup`.
+2. 수정(에셋을 고치지 않는다 · 주인 에셋 불변): `Spawn` 이 **비활성 대기 오브젝트** 밑에 먼저 인스턴스화 → `Adopt`(PanelView/PanelControl 제거 · TMP 변환) → `SetParent(parent, false)` 순서로 바꿔 데모 스크립트의 OnEnable 이 한 번도 돌지 않게 한다. `adopt=false` 호출은 지금 없으므로 그 경로도 같은 순서(스크립트 제거만은 항상).
+3. 게이트 + PROGRESS T15 행 + 콘솔 에러 0 확인 수단 = 코드 커밋의 CI PlayMode(`UiSmokeTests` 3건이 초록으로).
 
 ### 신규 작업 등재
 - 버그·후속 작업 발견 시 PROGRESS 표에 **이미 쓰인 번호 중 가장 큰 것 +1** 로 등재 (번호 재사용 금지, 한 번호 = 한 작업).
