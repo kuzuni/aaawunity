@@ -587,6 +587,7 @@
     "ui.tabBar": "하단 탭 5칸 → 상점·장비·전투(가운데)·탤런트·펫 (T10 · 대장간은 장비 화면 «합성» 버튼 · 설정은 로비 메뉴(≡)/전투 일시정지)",
     "ui.talentIcon": "하단 탭 «탤런트» 아이콘 (Economy_Star_01_Yellow — 워커 선택 · 바꾸려면 경로 한 줄)",
     "ui.petIcon": "하단 탭 «펫» 아이콘 (Item_Egg_01 펫 알 — 워커 선택 · 바꾸려면 경로 한 줄)",
+    "ui.alertDot": "빨간 알림 점(Alert_Dot_01_Red 47×47) — 장비 칸의 «합성 가능» 점(대장간 · 오른쪽 위 · T8 · ROUTINE 의 ui.redDot = 이 키) · NEW 점(왼쪽 아래) · 장착 슬롯의 «인벤에 더 좋은 게 있다» 는 프리팹 자체의 같은 점",
     "mat.hitFlash": "AllIn1SpriteShader(URP 2D) HITEFFECT_ON 머티리얼 — 피격 순간 0.1초 하양 플래시",
     "font.ui": "UI 글꼴 Jua (Google Fonts OFL) — GUI Pro 의 SDF 폰트에 한글이 없어 TMP 를 런타임에 legacy Text 로 바꿔 쓴다",
     "col.gray": "GUI Pro Theme_Light 팔레트 (Button_01 색 오버라이드에서 읽음) — 등급/세트/텍스트 색은 전부 여기서 고른다",

@@ -373,7 +373,7 @@
 | prefabs | `ui.userInfo` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoLayout/UserInfo_02.prefab` | root 7349254385446408793 |  |
 | prefabs | `ui.resourceBar` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_HUD/ResourceBar_Group.prefab` | root 1683025373553149541 | 상단 재화 바(골드·젬) — HUD · 로비는 Lobby_Default 안에 든 인스턴스를 그대로 쓴다 |
 | prefabs | `ui.buffSlot` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_HUD/BuffSlot_01.prefab` | root 6338776735158097901 | HUD 왼쪽 버프 아이콘 칸 |
-| prefabs | `ui.alertDot` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_HUD/Alert_Dot_01_Red.prefab` | root 6436244074252915597 |  |
+| prefabs | `ui.alertDot` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_HUD/Alert_Dot_01_Red.prefab` | root 6436244074252915597 | 빨간 알림 점(Alert_Dot_01_Red 47×47) — 장비 칸의 «합성 가능» 점(대장간 · 오른쪽 위 · T8 · ROUTINE 의 ui.redDot = 이 키) · NEW 점(왼쪽 아래) · 장착 슬롯의 «인벤에 더 좋은 게 있다» 는 프리팹 자체의 같은 점 |
 | prefabs | `ui.toast` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_HUD/ToastMessage_01.prefab` | root 2774420329267464172 | 토스트 |
 | prefabs | `ui.sliderRed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Slider/Slider_02_Red.prefab` | root 9209254320531227673 | HP 바 (Slider_02 — Slider_01 은 fill 스프라이트 GUID 가 깨져 있어 안 쓴다) |
 | prefabs | `ui.sliderSky` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Slider/Slider_02_Sky.prefab` | root 5561013251832034622 | 경험치 바 |

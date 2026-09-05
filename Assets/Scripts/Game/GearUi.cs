@@ -82,7 +82,12 @@ namespace KkomaKnight.Game
             return cell;
         }
 
-        /// <summary>인벤 격자 — ScrollRect + GridLayout(5열 · ref-layout GearInvCols). 돌려주는 Content 에 Cell 을 채운다.</summary>
+        /// <summary>
+        /// 인벤 격자 — ScrollRect + GridLayout. 돌려주는 Content 에 Cell 을 채운다.
+        /// 격자 값(칸 188×188 · 5열 · 세로 간격 · 위아래 패딩)은 **장비 화면 프리팹(Character_Hero_Equipment) 의 Content GridLayoutGroup 에서 그대로 복사**한다 —
+        /// 대장간 칸이 장비 화면 칸(ListItem_EquipMent)과 같은 크기·비례가 되게(T8 · 찌그러짐 0). 가로 간격만 view 폭에 맞춰 5열이 딱 들어가게 다시 계산한다.
+        /// (예전엔 ref-layout 표 % 로 18.4×7.2 = 199×168 칸을 만들어 정사각 프리팹이 찌그러졌다.)
+        /// </summary>
         public static RectTransform Grid(Transform parent, Layout.R rect, out ScrollRect scroll)
         {
             var view = UiKit.Rect(parent, "InvScroll"); UiKit.Pct(view, rect);
@@ -91,14 +96,39 @@ namespace KkomaKnight.Game
             scroll = view.gameObject.AddComponent<ScrollRect>(); scroll.horizontal = false; scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 40;
             var content = UiKit.Rect(view, "Content"); content.anchorMin = new Vector2(0, 1); content.anchorMax = new Vector2(1, 1); content.pivot = new Vector2(0.5f, 1); content.offsetMin = Vector2.zero; content.offsetMax = Vector2.zero;
             var grid = content.gameObject.AddComponent<GridLayoutGroup>();
-            // 표 ③⑥: 칸 18.4×7.2 · 간격 0.6 · 행 피치 7.6 (장비 탭과 대장간이 같은 격자)
-            grid.cellSize = new Vector2(UiKit.FrameW * Layout.GearInvCellW / 100f, UiKit.FrameH * Layout.GearInvCellH / 100f);
-            grid.spacing = new Vector2(UiKit.FrameW * Layout.GearInvGap / 100f, UiKit.FrameH * (Layout.GearInvRowPitch - Layout.GearInvCellH) / 100f);
-            grid.padding = new RectOffset(0, 0, (int)(UiKit.FrameH * (Layout.GearInvCell.Y - Layout.GearInv.Y) / 100f), 0);
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount; grid.constraintCount = Layout.GearInvCols; grid.childAlignment = TextAnchor.UpperLeft;
+            CopyEquipmentGrid(grid, UiKit.FrameW * rect.W / 100f);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount; grid.childAlignment = TextAnchor.UpperLeft; grid.startCorner = GridLayoutGroup.Corner.UpperLeft; grid.startAxis = GridLayoutGroup.Axis.Horizontal;
             var fit = content.gameObject.AddComponent<ContentSizeFitter>(); fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             scroll.content = content; scroll.viewport = view;
             return content;
+        }
+        /// <summary>장비 화면 프리팹 Content 의 격자 값을 복사한다(칸·세로 간격·패딩·열 수). 프리팹이 없으면 ListItem_EquipMent 의 본래 크기(정사각)로 · 그것도 없으면 표 % 폭의 정사각. 가로 간격 = (폭 − 열×칸) / (열 − 1).</summary>
+        static void CopyEquipmentGrid(GridLayoutGroup grid, float viewW)
+        {
+            var cat = App.I != null ? App.I.Assets : null;
+            GridLayoutGroup src = null;
+            var eq = cat != null ? cat.Prefab("ui.equipment") : null;
+            if (eq != null) { var c = UiKit.Find(eq.transform, "Content"); if (c != null) src = c.GetComponent<GridLayoutGroup>(); }
+            if (src != null)
+            {
+                grid.cellSize = src.cellSize; grid.spacing = src.spacing; grid.constraintCount = src.constraintCount;
+                grid.padding = new RectOffset(src.padding.left, src.padding.right, src.padding.top, src.padding.bottom);
+            }
+            else
+            {
+                float s = CellSize(cat);
+                grid.cellSize = new Vector2(s, s); grid.spacing = new Vector2(0, UiKit.FrameH * (Layout.GearInvRowPitch - Layout.GearInvCellH) / 100f); grid.constraintCount = Layout.GearInvCols;
+                grid.padding = new RectOffset(0, 0, (int)(UiKit.FrameH * (Layout.GearInvCell.Y - Layout.GearInv.Y) / 100f), 0);
+            }
+            int cols = Mathf.Max(1, grid.constraintCount);
+            float gapX = cols > 1 ? (viewW - cols * grid.cellSize.x) / (cols - 1) : 0f;
+            grid.spacing = new Vector2(Mathf.Max(0f, gapX), grid.spacing.y);   // 5열이 폭에 딱 — 칸 크기는 절대 줄이지 않는다(비례 고정)
+        }
+        /// <summary>ListItem_EquipMent 프리팹의 본래 한 변(188). 프리팹이 없으면 ref-layout 표의 칸 폭.</summary>
+        public static float CellSize(AssetCatalog cat)
+        {
+            var cell = cat != null ? cat.Prefab("ui.equipCell") : null; var rt = cell != null ? cell.transform as RectTransform : null;
+            return rt != null && rt.sizeDelta.x > 0 ? rt.sizeDelta.x : UiKit.FrameW * Layout.GearInvCellW / 100f;
         }
         public static void Empty(Transform content, string msg)
         {
