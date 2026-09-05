@@ -185,7 +185,7 @@
 2. 수정(에셋을 고치지 않는다 · 주인 에셋 불변): `Spawn` 이 **비활성 대기 오브젝트** 밑에 먼저 인스턴스화 → `Adopt`(PanelView/PanelControl 제거 · TMP 변환) → `SetParent(parent, false)` 순서로 바꿔 데모 스크립트의 OnEnable 이 한 번도 돌지 않게 한다. `adopt=false` 호출은 지금 없으므로 그 경로도 같은 순서(스크립트 제거만은 항상).
 3. 게이트 + PROGRESS T15 행 + 콘솔 에러 0 확인 수단 = 코드 커밋의 CI PlayMode(`UiSmokeTests` 3건이 초록으로).
 
-### T16 — CI 런 #39 빨강(T14 코드 커밋 `0ee1e18`) 후속: 사망/승리 정지 `Frozen` 계약을 같은 프레임에 성립시키기 (워커 등재 · sess-2309-20883)
+### T16 — CI 런 #39 빨강(T14 코드 커밋 `0ee1e18`) 후속: 사망/승리 정지 `Frozen` 계약을 같은 프레임에 성립시키기 ✅ (완료 · `2b71ea1` · CI #40 초록 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/CharacterRig.cs`(`Update` 의 정지 1줄) · 테스트 불변(`Assets/Tests/PlayMode/CharacterRigTests.cs` 는 손대지 않는다)
 순서: 제약 없음.
 1. 원인(CI #39 · PlayMode `CharacterRigTests.PlayerDeathInBattleFreezesUnderDeadPopup` 1건 · 나머지 10건 Passed): `Animator.Play(상태, 0, 0.999)` 는 다음 애니 평가 때 적용되는데 `_frozen` 은 즉시 켜져, 코루틴이 그 프레임에 읽은 `normalizedTime` 이 직전 값(0.967)이라 1초 뒤 정지점(0.999)과 불일치. 정지 자체는 정상.
