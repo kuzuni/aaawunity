@@ -36,10 +36,11 @@ namespace KkomaKnight.Tests.Play
         static readonly string[] DemoContains = { "Remain", "Layerlab", "Touch to Continue", "Title text", "Toast Message", "Player ID", "Research Artifacts" };
 
         App _app;
+        PlayLog _log;   // 빨간 줄(Error·Exception·Assert) 수집 — LogAssert.NoUnexpectedReceived 는 Debug.Log 도 실패로 보므로 쓰지 않는다(PlayLog 주석)
         readonly List<string> _warn = new List<string>();
 
-        [SetUp] public void SetUp() { _warn.Clear(); Application.logMessageReceived += OnLog; }
-        [TearDown] public void TearDown() { Application.logMessageReceived -= OnLog; Time.timeScale = 1f; }
+        [SetUp] public void SetUp() { _warn.Clear(); _log = new PlayLog(); Application.logMessageReceived += OnLog; }
+        [TearDown] public void TearDown() { Application.logMessageReceived -= OnLog; _log?.Dispose(); _log = null; Time.timeScale = 1f; }
         void OnLog(string msg, string stack, LogType type)
         {
             if (type != LogType.Warning || msg == null) return;
@@ -59,6 +60,7 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(_app.Assets, "AssetCatalog 이 씬에 연결돼 있어야 한다");
             _warn.Clear();
             yield return Frames(2);
+            _log.AssertNoRed("부팅(Bootstrap → App → 로비)");
         }
         IEnumerator Shutdown()
         {
@@ -66,7 +68,7 @@ namespace KkomaKnight.Tests.Play
             if (_app != null) { if (_app.UiCanvas != null) UnityEngine.Object.Destroy(_app.UiCanvas.gameObject); UnityEngine.Object.Destroy(_app.gameObject); }
             _app = null;
             yield return Frames(3);
-            LogAssert.NoUnexpectedReceived();
+            _log.AssertNoRed("종료(App·캔버스 파괴 뒤)");
         }
         /// <summary>n 프레임 — 매 프레임 살아 있는 HeroView 카메라·월드 카메라를 강제로 그린다(배치 모드에서도 URP 2D 패스가 돈다).</summary>
         IEnumerator Frames(int n)
@@ -92,10 +94,10 @@ namespace KkomaKnight.Tests.Play
         IEnumerable<Text> ActiveTexts() => _app.UiCanvas.GetComponentsInChildren<Text>(false);
         bool HasText(Func<string, bool> pred) { foreach (var t in ActiveTexts()) if (pred(t.text ?? "")) return true; return false; }
 
-        /// <summary>검사 지점 — ⓐ 에러 로그 0 + 경로/키 경고 0 ⓑ 데모 잔여 글자 0 (+ 팝업 열림 여부).</summary>
+        /// <summary>검사 지점 — ⓐ 빨간 줄 0 + 경로/키 경고 0 ⓑ 데모 잔여 글자 0 (+ 팝업 열림 여부).</summary>
         void Check(string where, bool expectOverlay = false, bool demoText = true)
         {
-            LogAssert.NoUnexpectedReceived();
+            _log.AssertNoRed(where);
             if (_warn.Count > 0) { var w = string.Join("\n", _warn); _warn.Clear(); Assert.Fail($"[{where}] 프리팹 경로/카탈로그 키 경고 {w.Split('\n').Length}건(잘못된 자식 경로·없는 키 = 빈 그림/글자):\n{w}"); }
             if (demoText)
             {

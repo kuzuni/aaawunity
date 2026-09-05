@@ -14,9 +14,14 @@ namespace KkomaKnight.Tests.Play
     /// 주인 로그 «Renderer2D Pass: Fake or uninitialized surface is not supported for attachment 0» / «EndRenderPass: Not inside a Renderpass» 의 회귀 방지.
     /// 배치 모드(CI)에서는 GameView 가 안 그려지므로 <see cref="Camera.Render"/> 로 URP 렌더 루프(주인 스택의 DoRenderLoop_Internal)를 직접 밟는다.
     /// (<c>WaitForEndOfFrame</c> 은 배치 모드에서 영영 안 돌아오므로 쓰지 않는다.)
+    /// 빨간 줄 검사는 <see cref="PlayLog"/> — <c>LogAssert.NoUnexpectedReceived()</c> 는 Bootstrap 의 일반 Debug.Log 까지 실패로 봐서 CI 런 #33 에서 씬 왕복 테스트가 깨졌다(T11 이 교체).
     /// </summary>
     public class HeroViewTests
     {
+        PlayLog _log;
+        [SetUp] public void SetUp() { _log = new PlayLog(); }
+        [TearDown] public void TearDown() { _log?.Dispose(); _log = null; }
+
         static IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
 
         /// <summary>살아 있는 HeroView 카메라를 전부 강제로 한 번씩 그린다(GameView 없는 배치 모드에서도 URP 2D 패스가 실제로 돈다).</summary>
@@ -48,17 +53,17 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(CameraRenderType.Base, data.renderType);
 
             yield return RenderFrames(3);
-            LogAssert.NoUnexpectedReceived();
+            _log.AssertNoRed("HeroView");
 
             // 화면이 꺼지면 무대도 꺼진다 · 다시 켜면 살아난다
             hv.gameObject.SetActive(false); yield return Frames(2);
             Assert.IsFalse(hv.Cam.isActiveAndEnabled, "뷰가 꺼지면 카메라도 꺼져야 한다");
             hv.gameObject.SetActive(true); yield return RenderFrames(2);
-            LogAssert.NoUnexpectedReceived();
+            _log.AssertNoRed("HeroView");
 
             Object.Destroy(canvasGo);
             yield return Frames(3);
-            LogAssert.NoUnexpectedReceived();
+            _log.AssertNoRed("HeroView");
         }
 
         /// <summary>
@@ -78,27 +83,27 @@ namespace KkomaKnight.Tests.Play
             yield return RenderFrames(3);                       // 로비(HeroView 1)
             Assert.AreEqual("lobby", app.Current.Name);
             Assert.GreaterOrEqual(Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 1, "로비에 플레이어 초상(HeroView)이 있어야 한다");
-            LogAssert.NoUnexpectedReceived();
+            _log.AssertNoRed("HeroView");
 
             app.ShowScreen("gear"); yield return RenderFrames(3);   // 장비(HeroView 2)
             Assert.AreEqual("gear", app.Current.Name);
-            LogAssert.NoUnexpectedReceived();
+            _log.AssertNoRed("HeroView");
 
             app.StartBattle(1);                                 // 전투 진입 — 월드 카메라는 HeroView 레이어를 안 본다
             float t1 = Time.realtimeSinceStartup;
             while (Time.realtimeSinceStartup - t1 < 1.0f) { if (app.WorldCamera != null) app.WorldCamera.Render(); yield return null; }
             Assert.AreEqual("battle", app.Current.Name);
             if (app.WorldCamera != null) Assert.AreEqual(0, app.WorldCamera.cullingMask & (1 << HeroView.Layer), "전투 카메라는 HeroView 레이어를 보면 안 된다");
-            LogAssert.NoUnexpectedReceived();
+            _log.AssertNoRed("HeroView");
 
             app.ShowScreen("lobby"); yield return RenderFrames(3);  // 로비 복귀(HeroView 1 재활성)
             app.ShowScreen("gear"); yield return RenderFrames(3);   // 장비 재진입
             app.ShowScreen("lobby"); yield return RenderFrames(3);
-            LogAssert.NoUnexpectedReceived();
+            _log.AssertNoRed("HeroView");
 
             Object.Destroy(app.gameObject);
             yield return Frames(3);
-            LogAssert.NoUnexpectedReceived();
+            _log.AssertNoRed("HeroView");
         }
     }
 }
