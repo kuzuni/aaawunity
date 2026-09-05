@@ -17,6 +17,7 @@
 | T9 | 상점 = Shop_List 그대로 (상자 3 · 다이아 6 · 골드 3) + 뽑기 결과 = Shop_Chest_Open | 대기 | — | Game/ShopScreen · KkomaKnight/shop.json | ROUTINE §2 T9 |
 | T10 | 하단 네비 = 상점·장비·전투·탤런트·펫 + Settings 그대로 — T6 뒤 | ✅ 완료 (`dce33d6` · 실물 확인은 WebGL 배포에서) | sess-2052-15499 / 워커 D | Game/Screens(NavBar 이사) · Overlay(Settings·TalentPet) · GearScreen(NavBar 제거) · catalog(ui.talent·ui.talentIcon·ui.petIcon) | 탭 = 상점·장비·전투·탤런트·펫 · Settings 프리팹 요소 숨김 0 · Character_Talent_02 통째로 · dotnet 0/0 · 테스트 45/45 |
 | T11 | UI 스모크 PlayMode 테스트 + 가짜 null 게이트 | 대기 | — | Tests/PlayMode · tools · ci.yml | ROUTINE §2 T11 |
+| T12 | 전투 캐릭터 크기 2/3 · 공속 비례 공격 애니 속도 · 사망 모션 루프 금지 | 대기 | — | Game/BattleWorld · CharacterRig · Core/Layout(배율 상수) | ROUTINE §2 T12 |
 | T12 | **플레이 콘솔 에러 0** — URP 2D 렌더 에러(HeroView RenderTexture 깊이 0) 수정 + 전 화면 런타임 에러 전수 감사 (최우선) | ✅ 완료 (`2203550` · 실물 확인 = CI PlayMode HeroViewTests + 주인 에디터 플레이) | sess-2121-23849 / 워커 B | Game/HeroView · Game.asmdef(URP 참조) · Tests/PlayMode/HeroViewTests(신규) · tools/check_catalog_keys.py(신규) · ci.yml(게이트 1줄) · dotnet Stubs/URP.cs | RenderTexture 깊이 24·스텐실 8 · URP Base 카메라 데이터 명시 · 파괴 순서 · PlayMode 2개(단독 렌더 · 씬 로비→장비→전투→로비 왕복) · 카탈로그 키 552개 전부 실재 · dotnet 0/0 · 테스트 45/45 |
 | T13 | 전투 HUD 특전 미리보기 줄(PerkStrip) 비례 — 아이콘이 서로 가림 · index.html 34/28/4px 비례로 · 넘침 0 · 스크린샷 아티팩트 | 대기 | — | Game/BattleScreen(RefreshPerkStrip) · Tests/PlayMode/PerkStripTests · ci.yml(아티팩트) | ROUTINE §2 T13 |
 
