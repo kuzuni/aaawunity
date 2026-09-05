@@ -362,7 +362,8 @@
     "ui.chestOpen": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Shop_Chest_Open.prefab",
     "ui.lobby": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Lobby_Default.prefab",
     "ui.itemDetail": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Character_Hero_Item_Detail_01.prefab",
-    "ui.shopChest": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoLayout/ListItem_ShopChest.prefab",
+    "ui.shopList": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Shop_List.prefab",
+    "ui.shopItem": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoLayout/ListItem_ShopItem.prefab",
     "ui.equipment": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Character_Hero_Equipment.prefab",
     "ui.equipCell": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoLayout/ListItem_EquipMent.prefab",
     "ui.bossWarn": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Play_Warning_Boss.prefab",
@@ -471,7 +472,11 @@
     "col.goldFill": "#F3A80E",
     "col.slate": "#415760"
   },
+  "texts": {
+    "data.shop": "Assets/KkomaKnight/shop.json"
+  },
   "_notes": {
+    "data.shop": "상점 상품표 JSON(이 레포 전용 · 승인 대기 25 기본값 · 다이아 6종 개수 + 골드 3종 다이아 가격) — Bootstrap 이 읽어 GameData.Shop 에 올린다. 수치를 바꾸려면 이 파일만",
     "cm.knight.helmet": "플레이어(꼬마기사) 투구 — SilverBlue. Character.prefab 의 Body/Head/Helmet 슬롯",
     "cm.knight.hairHelmet": "투구 쓸 때 보이는 머리카락(Hair_Helmet 슬롯)",
     "cm.knight.chest": "플레이어 갑옷 BlueGold",
@@ -552,10 +557,11 @@
     "ui.resultLose": "사망 팝업 (Play_Result_Lose — 팁 3행 + 골드)",
     "ui.settings": "설정/일시정지 팝업 (주인 지정 Settings · T10 부터 프리팹 원형 그대로 — 줄·버튼·글자 전부 보이고 글자만 우리말) — 배경음 스위치만 값 저장(Save.Muted) · 닫기(X) · 전투에서만 아래 버튼 2개 = 재개/포기하고 로비로 · 나머지 기능 없음. 로비 메뉴(≡) 와 전투 일시정지에서 연다",
     "ui.talent": "탤런트·펫 팝업 (주인 지정 Character_Talent_02 · T10 · 프리팹 통째로 그대로 · 기능 없음) — 하단 탭 «탤런트»·«펫» 이 연다 · 재화 바 = 골드·보석 · 프리팹 안 탭 바로 닫는다(다른 탭 → 그 화면)",
-    "ui.chestOpen": "장비 소환 결과 팝업 (주인 지정 Shop_Chest_Open) — 열린 상자 chest.*.open + 얻은 장비 격자",
+    "ui.chestOpen": "장비 소환 결과 팝업 (주인 지정 Shop_Chest_Open 그대로 · T9 확인) — Title_01 리본 = «상자 N회» · Image_Chest = chest.*.open · 프리팹의 보상 칸(ItemFrame_01 · y+217) 자리에 얻은 장비 격자(칸 = ListItem_EquipMent · 4열 · 세로 가운데) · Text_TouchContionue = 터치하면 닫기",
     "ui.lobby": "로비 (주인 지정 Lobby_Default · T6 부터 원형 그대로 · 요소 이동 없음) — 상단 UserInfo_01 초상 = HeroView(내 플레이어 CharacterMaker) · «25 / 55» 슬라이더 자리 = 전투력 · ResourceBar_Group = 골드·보석 · 챕터 제목(«Battle 1» 자리) · START · 하단 탭. ChatBox 만 끈다",
     "ui.itemDetail": "장비 세부 팝업 (Character_Hero_Item_Detail_01) — 등급 배지 · 아이콘 · 이름 · 슬롯 Lv 바 · 기여/옵션 목록 · 장착/해제/슬롯 강화",
-    "ui.shopChest": "상점 뽑기 상자 칸 (ListItem_ShopChest) — 상자 그림 chest.* · 확률/천장 문구 · 1회/10회",
+    "ui.shopList": "상점 (주인 지정 Shop_List · T9 부터 프리팹 원형 그대로 · 요소 이동 없음 · 스크롤·섹션·비율 그대로) — ListItem_ShopPackage ×3(프리팹 2개 + 복제 1개) = 뽑기 상자 3종(gacha.json 순서 · 1회/10회 = Button_Price 와 그 복제) · Title_DailyDeals+Group_Item = 일일 무료 보급(Timer_01 = 자정까지) · Title_Gem+Group_Gem1/2 = 다이아 6종 · Title_Gold+Group_Gold = 골드 3종(칸은 전부 ListItem_ShopItem) · 하단 Tab_02_BoxMenu_Text 3칸 = 뽑기/다이아/골드 로 스크롤 · Tab_01_BottomFlushMenu = NavBar · ResourceBar_Group = 골드·보석. Group_Chest·Title_Silver·Group_Silver 는 끈다(이 게임에 없는 상품)",
+    "ui.shopItem": "상점 상품 칸 (주인 지정 ListItem_ShopItem · 323.78×419.78 그대로) — Text_Title 상품명 · Icon 재화 그림 · Text_ItemNum 수량 · Text_Limit 부제 · Button_Price(GroupArea Icon+Text) 가격. 다이아 6(₩ · 모의 결제) · 골드 3(다이아 소모) · 일일 무료 보급 · 추가 보급(잠김)",
     "ui.equipment": "장비 탭 (주인 지정 Character_Hero_Equipment · T7 부터 원형 그대로 · 요소 이동 없음) — 슬롯 6(프리팹 격자·Item 크기 그대로 · 부위 라벨 없음) · 가운데 Character 자리 = HeroView(장착 외형) · 전투력 · 공/체/실 · 인벤 = ListItem_EquipMent 격자(장착분 숨김) · 오른쪽 위 골드만 · 하단 상점/합성",
     "ui.bossWarn": "보스 경고 띠 (Play_Warning_Boss 의 Panel_Warning 만 떼어 쓴다)",
     "ui.card": "특전 카드 행(ListItem_StageBuff_02) — 등급별로 CardFrame_04_* / ItemFrame_04_* 색 교체",

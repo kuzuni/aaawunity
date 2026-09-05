@@ -732,8 +732,10 @@ MonoBehaviour:
     prefab: {fileID: 4248817929678912515, guid: 55b0553245b4c4fefbacc5ce73c625c4, type: 3}
   - key: ui.itemDetail
     prefab: {fileID: 7414256810885239513, guid: 30a0e5142a3be478ebc038ed64679a5b, type: 3}
-  - key: ui.shopChest
-    prefab: {fileID: 4146958044734260073, guid: 51a1a7722435c4c55abdb742c5ae43c0, type: 3}
+  - key: ui.shopList
+    prefab: {fileID: 7323211708528492628, guid: 80ad1fa13c3d74256922ee68f7e236eb, type: 3}
+  - key: ui.shopItem
+    prefab: {fileID: 7492873612176689367, guid: daf417248f8d64e79b2c8df85ca41407, type: 3}
   - key: ui.equipment
     prefab: {fileID: 2550204177070044198, guid: da41cf218cbb141e5b7ca734c527861b, type: 3}
   - key: ui.equipCell
@@ -936,3 +938,6 @@ MonoBehaviour:
     color: {r: 0.952941, g: 0.658824, b: 0.054902, a: 1}
   - key: col.slate
     color: {r: 0.254902, g: 0.341176, b: 0.376471, a: 1}
+  texts:
+  - key: data.shop
+    text: {fileID: 4900000, guid: 5edbc69efa2cdcb6b106d8355577a053, type: 3}

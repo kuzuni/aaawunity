@@ -24,5 +24,7 @@ namespace KkomaKnight.Tests
             }
         }
         public static GameData Load() => _cached ?? (_cached = GameData.LoadFromDirectory(Dir));
+        /// <summary>레포 루트(= data 폴더의 세 단계 위) 기준 파일 경로 — 이 레포 전용 JSON(Assets/KkomaKnight/shop.json 등)을 읽을 때.</summary>
+        public static string RepoFile(string relPath) => Path.GetFullPath(Path.Combine(Dir, "..", "..", "..", relPath));
     }
 }

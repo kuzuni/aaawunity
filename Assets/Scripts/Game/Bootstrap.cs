@@ -1,3 +1,4 @@
+using System;
 using KkomaKnight.Core;
 using UnityEngine;
 using UnityEngine.UI;
@@ -42,8 +43,18 @@ namespace KkomaKnight.Game
         {
             Debug.Log($"[KkomaKnight] data loaded: chapters={d.Enemies.Chapters.Count} perks={d.Perks.Perks.Count} source={d.Tune.Source}");
             if (catalog == null) Debug.LogError("[KkomaKnight] AssetCatalog 이 씬에 연결되지 않았다 — Bootstrap.catalog");
+            d.Shop = LoadShop(catalog);
             App.Create(d, catalog, uiFont, Camera.main);
             if (_boot != null) Destroy(_boot.gameObject);
+        }
+
+        /// <summary>상점 상품표 — 이 레포 전용 <c>Assets/KkomaKnight/shop.json</c>(카탈로그 텍스트 «data.shop» · T9). aaaw 동기 폴더(StreamingAssets/data)가 아니라 카탈로그 참조로 빌드에 들어간다. 못 읽으면 null(상점이 상품 없이 뜨고 에러 로그 1줄).</summary>
+        static ShopData LoadShop(AssetCatalog catalog)
+        {
+            var ta = catalog != null ? catalog.Text("data.shop") : null;
+            if (ta == null) { Debug.LogError("[KkomaKnight] shop.json 이 카탈로그(data.shop)에 없다 — 상점 상품표 없음"); return null; }
+            try { return ShopData.Parse(ta.text); }
+            catch (Exception e) { Debug.LogError("[KkomaKnight] shop.json 파싱 실패: " + e.Message); return null; }
         }
 
         void OnError(string msg)

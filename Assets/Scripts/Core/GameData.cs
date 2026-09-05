@@ -17,6 +17,8 @@ namespace KkomaKnight.Core
         public GachaData Gacha;
         public CombatData Combat;
         public UiData Ui;
+        /// <summary>상점 상품표(다이아 6 · 골드 3) — aaaw data/ 가 아니라 이 레포의 <c>Assets/KkomaKnight/shop.json</c>(카탈로그 텍스트 «data.shop»). 로드는 Bootstrap 이 따로 한다 · 없으면 null(상점이 상품 없이 뜬다).</summary>
+        public ShopData Shop;
 
         public static readonly string[] Files = { "tune.json", "enemies.json", "perks.json", "gear.json", "gacha.json", "combat.json", "ui.json" };
 
@@ -398,6 +400,28 @@ namespace KkomaKnight.Core
                 PopShieldDx = j["fx"]["popShieldDx"].Num(), PopShieldDy = j["fx"]["popShieldDy"].Num(),
                 DesignWidth = j["frame"]["designWidth"].Int(390), DesignHeight = j["frame"]["designHeight"].Int(844), MinWidth = j["frame"]["minWidth"].Int(360),
             };
+        }
+    }
+
+    /// <summary>
+    /// 상점 상품표 (<c>Assets/KkomaKnight/shop.json</c> · T9 · 승인 대기 25 의 기본값을 주인이 확정).
+    /// 다이아 상품 = 원화 모의 결제(누르면 바로 지급) · 골드 상품 = 다이아 소모. 수치는 파일에서만 온다 — 코드 상수 없음.
+    /// </summary>
+    public sealed class ShopData
+    {
+        public sealed class GemPack { public int Won; public double Gem; }
+        public sealed class GoldPack { public double Gold; public double Gem; }
+        public List<GemPack> GemPacks = new List<GemPack>();
+        public List<GoldPack> GoldPacks = new List<GoldPack>();
+
+        public static ShopData Parse(string json) => From(new JNode(MiniJson.Parse(json)));
+        public static ShopData From(JNode j)
+        {
+            var d = new ShopData();
+            foreach (var p in j["gemPacks"].Items()) d.GemPacks.Add(new GemPack { Won = (int)p["won"].ReqNum("gemPacks.won"), Gem = p["gem"].ReqNum("gemPacks.gem") });
+            foreach (var p in j["goldPacks"].Items()) d.GoldPacks.Add(new GoldPack { Gold = p["gold"].ReqNum("goldPacks.gold"), Gem = p["gem"].ReqNum("goldPacks.gem") });
+            if (d.GemPacks.Count == 0 && d.GoldPacks.Count == 0) throw new FormatException("shop.json: gemPacks/goldPacks 가 비어 있다");
+            return d;
         }
     }
 }

@@ -9,6 +9,7 @@ catalog.json 형식:
   "materials":   { "<key>": "Assets/…/X.mat", ... },
   "fonts":       { "<key>": "Assets/…/X.ttf", ... },
   "colors":      { "<key>": "#RRGGBB[AA]", ... },
+  "texts":       { "<key>": "Assets/…/X.json", ... },   # 이 레포 전용 JSON(TextAsset · fileID 4900000) — StreamingAssets 밖 파일을 빌드에 넣는 참조
   "_notes":      { "<key>": "이 에셋을 여기에 쓴 이유/자리", ... }
 }
 GUID 는 .meta 에서, 스프라이트 fileID 는 .png.meta 의 internalIDToNameTable(멀티) 또는 21300000(단일),
@@ -105,12 +106,16 @@ def main():
     def mt(key, val): return ('material', ref(2100000, meta_guid(val), 2), 'fileID 2100000')
     def fo(key, val): return ('font', ref(12800000, meta_guid(val), 3), 'fileID 12800000')
     def co(key, val): return ('color', hexcolor(val), val)
+    def tx(key, val):
+        if not os.path.exists(os.path.join(ROOT, val)): raise FileNotFoundError('텍스트 파일 없음: ' + val)
+        return ('text', ref(4900000, meta_guid(val), 3), 'fileID 4900000')
     section('sprites', spec.get('sprites', {}), sp)
     section('prefabs', spec.get('prefabs', {}), pf)
     section('controllers', spec.get('controllers', {}), ct)
     section('materials', spec.get('materials', {}), mt)
     section('fonts', spec.get('fonts', {}), fo)
     section('colors', spec.get('colors', {}), co)
+    section('texts', spec.get('texts', {}), tx)
     if check:
         print(f'catalog OK — {len(rows)} entries'); return
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f: f.write('\n'.join(y) + '\n')
