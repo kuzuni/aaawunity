@@ -112,3 +112,6 @@ InitTestScene*.unity*
 /tools/dotnet/**/obj/
 /tools/dotnet/TestResults/
 /.aaaw-src/
+
+# T13 — PlayMode PerkStripTests 가 남기는 스크린샷(CI 아티팩트 perkstrip-screens · 레포 커밋 금지)
+/perkstrip-screens/

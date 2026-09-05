@@ -98,6 +98,13 @@ jobs:
         with:
           name: unity-test-results
           path: ${{ steps.tests.outputs.artifactsPath }}
+      # T13 — PlayMode PerkStripTests 가 특전 12개를 얻은 전투 HUD 를 PNG 로 남긴다(주인이 내려받아 «하단 줄이 안 겹치는지» 확인 · 레포엔 커밋 안 함)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perkstrip-screens
+          path: perkstrip-screens/
+          if-no-files-found: ignore
 
   build-webgl:
     name: WebGL 빌드 → GitHub Pages (gh-pages)

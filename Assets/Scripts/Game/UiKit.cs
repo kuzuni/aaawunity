@@ -332,11 +332,17 @@ namespace KkomaKnight.Game
                 img.color = new Color(l * 0.92f, l * 0.90f, l * 0.90f, c.a);
             }
         }
-        /// <summary>특전 등급 프레임(팔각 ItemFrame_04_*) 하나 — 색 이름은 <see cref="Palette.PerkGradeName"/> · gray 는 무채색화. 안에 아이콘을 넣어 돌려준다.</summary>
+        /// <summary>ItemFrame_04 프리팹의 본래 폭(162 · 높이 165) — 자식(Border 162 · InnerBorder 134 · Icon 128 · Light/Shadow ±53)이 전부 가운데 앵커 고정 크기다.</summary>
+        public const float PerkFrameNativeW = 162f, PerkFrameNativeH = 165f;
+        /// <summary>특전 등급 프레임(팔각 ItemFrame_04_*) 하나 — 색 이름은 <see cref="Palette.PerkGradeName"/> · gray 는 무채색화. 안에 아이콘을 넣어 돌려준다.
+        /// size = 화면에 보일 폭. 프리팹 내부는 고정 크기라 sizeDelta 를 줄여도 테두리·아이콘이 안 줄어든다(T13 · 특전 줄에서 78px 셀에 162px 프레임이 그려져 서로 겹쳤다) → 본래 크기를 두고 <b>배율</b>로 맞춘다(프리팹 «그대로»).</summary>
         public static RectTransform PerkFrame(Transform parent, string colorName, string iconKey, float size)
         {
             var f = Spawn(Palette.FrameKey("ui.itemFrame4", colorName), parent); var rt = (RectTransform)f.transform;
-            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f); rt.anchoredPosition = Vector2.zero; rt.sizeDelta = new Vector2(size, size * 165f / 162f);
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f); rt.pivot = new Vector2(0.5f, 0.5f); rt.anchoredPosition = Vector2.zero;
+            float nativeW = rt.sizeDelta.x > 1f ? rt.sizeDelta.x : PerkFrameNativeW, nativeH = rt.sizeDelta.y > 1f ? rt.sizeDelta.y : PerkFrameNativeH;   // 프리팹이 없을 때(빈 Rect)만 기본값
+            rt.sizeDelta = new Vector2(nativeW, nativeH);
+            float s = size / nativeW; rt.localScale = new Vector3(s, s, 1f);
             if (colorName == "gray") Desaturate(rt);
             var icon = Find(rt, "Icon");
             if (icon != null) SetSprite(rt, "Icon", iconKey, Palette.White);

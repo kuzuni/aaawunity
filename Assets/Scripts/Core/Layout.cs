@@ -136,5 +136,42 @@ namespace KkomaKnight.Core
 
         // ⑧ 공통
         public const float BodyMarginX = 3.0f, PopupW = 87.0f, PopupMarginX = 6.5f;
+
+        /// <summary>
+        /// 전투 HUD «얻은 특전 미리보기 줄»(<see cref="HudPerkStrip"/>) 안 치수 — 비례 정본 = aaaw index.html #perkStrip/.pv-ic/.pv-more CSS(390×844 프레임):
+        /// 줄 높이 34px · 셀 28×28 · 간격 4 · 개수 배지 14(오른쪽 위) · «+N» 높이 28 · 좌우 안쪽 7 · 글자 12. 픽셀을 박지 않고 <b>줄의 실제 높이</b>에서 비례로 계산한다(T13 · 해상도가 달라도 유지).
+        /// 표시 개수도 상수가 아니라 줄 폭 ÷ (셀+간격) — «+N» 칸까지 넣어 절대 넘치지 않는다. 순수 C# 이라 dotnet 테스트가 검증한다.
+        /// </summary>
+        public struct PerkStripSpec
+        {
+            public const float RefRow = 34f, RefCell = 28f, RefGap = 4f, RefBadge = 14f, RefPad = 7f, RefFont = 12f, RefBadgeFont = 10f;
+            public float Width, Height, Cell, Gap, Badge, BadgeFont, Pad, Font;
+            public PerkStripSpec(float width, float height)
+            {
+                Width = width; Height = height;
+                Cell = height * (RefCell / RefRow); Gap = height * (RefGap / RefRow); Badge = height * (RefBadge / RefRow); Pad = height * (RefPad / RefRow);
+                Font = System.Math.Max(8f, (float)System.Math.Round(height * (RefFont / RefRow))); BadgeFont = System.Math.Max(8f, (float)System.Math.Round(height * (RefBadgeFont / RefRow)));
+            }
+            /// <summary>«+N» 칸 폭 — 좌우 안쪽 ×2 + 글자('+' 와 숫자 자릿수 · 글꼴 크기 ×0.62/자).</summary>
+            public float MoreWidth(int rest) => Pad * 2f + (1 + System.Math.Max(1, rest).ToString().Length) * Font * 0.62f;
+            /// <summary>줄에 셀만 채울 때 들어가는 최대 개수 — n·셀 + (n−1)·간격 ≤ 폭.</summary>
+            public int Fit => Cell + Gap <= 0 ? 0 : (int)System.Math.Floor((Width + Gap + 0.01f) / (Cell + Gap));
+            /// <summary>total 개 중 몇 개를 보이나 — 다 들어가면 전부, 아니면 «+N» 칸(남는 개수의 자릿수 기준 · 넉넉히 total 자릿수)까지 포함해 넘치지 않는 개수.</summary>
+            public int Shown(int total)
+            {
+                if (total <= 0) return 0;
+                if (total <= Fit) return total;
+                float pitch = Cell + Gap; if (pitch <= 0) return 0;
+                int shown = (int)System.Math.Floor((Width - MoreWidth(total) + 0.01f) / pitch);
+                return System.Math.Max(0, System.Math.Min(shown, total - 1));
+            }
+            /// <summary>보이는 셀 n개 + («+N» 이 있으면) 그 칸까지의 전체 폭.</summary>
+            public float UsedWidth(int total)
+            {
+                int n = Shown(total); float w = n * Cell + System.Math.Max(0, n - 1) * Gap;
+                if (n < total) w += (n > 0 ? Gap : 0) + MoreWidth(total - n);
+                return w;
+            }
+        }
     }
 }

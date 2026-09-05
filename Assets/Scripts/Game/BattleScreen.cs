@@ -42,7 +42,7 @@ namespace KkomaKnight.Game
         // HUD
         Text _gold, _gem, _chapTitle, _round, _speedTxt;
         UiKit.Bar _prog, _exp, _hp, _sh;
-        RectTransform _buffBar, _perkStrip; Text _perkCount;
+        RectTransform _buffBar, _perkStrip; Text _perkCount; HorizontalLayoutGroup _perkStripLayout;
         readonly Text[] _statVals = new Text[StatDefs.Length];
         string _perkStripKey = "", _buffKey = "";
 
@@ -83,7 +83,7 @@ namespace KkomaKnight.Game
             _perkCount = UiKit.Text(info, "0", 30, Palette.White, TextAnchor.MiddleCenter, false, true); UiKit.Pct(_perkCount.rectTransform, 45, 40, 55, 50);
             UiKit.Clickable(info, () => { if (G != null && !App.Overlay.IsOpen) App.Overlay.PerkBook(G, null); });
             _perkStrip = UiKit.Rect(Root, "PerkStrip"); UiKit.Pct(_perkStrip, Layout.HudPerkStrip);
-            var hl = _perkStrip.gameObject.AddComponent<HorizontalLayoutGroup>(); hl.childAlignment = TextAnchor.MiddleLeft; hl.spacing = 8; hl.childForceExpandWidth = false; hl.childForceExpandHeight = false; hl.childControlWidth = false; hl.childControlHeight = false;
+            var hl = _perkStripLayout = _perkStrip.gameObject.AddComponent<HorizontalLayoutGroup>(); hl.childAlignment = TextAnchor.MiddleLeft; hl.spacing = 8; hl.childForceExpandWidth = false; hl.childForceExpandHeight = false; hl.childControlWidth = false; hl.childControlHeight = false;   // spacing 은 RefreshPerkStrip 이 줄 높이에서 다시 계산
             var stripHit = _perkStrip.gameObject.AddComponent<Image>(); stripHit.color = new Color(0, 0, 0, 0); UiKit.Clickable(_perkStrip, () => { if (G != null && !App.Overlay.IsOpen) App.Overlay.PerkBook(G, null); }, false);
         }
 
@@ -212,20 +212,48 @@ namespace KkomaKnight.Game
             var order = new List<string>(); var count = new Dictionary<string, int>();
             foreach (var p in G.Taken) { if (!count.ContainsKey(p.Id)) { count[p.Id] = 0; order.Add(p.Id); } count[p.Id]++; }
             if (_perkCount != null) _perkCount.text = G.Taken.Count.ToString();
-            string key = string.Join(",", order) + "|" + G.Taken.Count; if (key == _perkStripKey) return; _perkStripKey = key;
+            // 비례(T13) = index.html #perkStrip CSS 를 줄의 «실제» 높이·폭에서 계산(Layout.PerkStripSpec · 픽셀 상수 없음). 줄 크기가 바뀌면(첫 프레임 → 레이아웃 뒤) 키가 달라져 다시 그린다.
+            var m = PerkStripMetrics(_perkStrip);
+            string key = string.Join(",", order) + "|" + G.Taken.Count + "|" + Mathf.RoundToInt(m.Width) + "x" + Mathf.RoundToInt(m.Height);
+            if (key == _perkStripKey) return; _perkStripKey = key;
             UiKit.Clear(_perkStrip);
-            const int max = 11; int shown = 0;
-            foreach (var id in order)
+            if (_perkStripLayout != null) _perkStripLayout.spacing = m.Gap;
+            int shown = m.Shown(order.Count);   // 줄 폭 ÷ (셀+간격) · «+N» 까지 포함해 넘치지 않는 개수(상수 11 폐기)
+            for (int i = 0; i < shown; i++)
             {
-                if (shown >= max) { var more = UiKit.Text(_perkStrip, "+" + (order.Count - shown), 28, Palette.CreamDark); more.rectTransform.sizeDelta = new Vector2(70, 80); break; }
+                string id = order[i];
                 var perk = App.Data.Perks.Perks.Find(x => x.Id == id); if (perk == null) continue;
-                // 팔각 등급 프레임(ItemFrame_04_* · 특전 카드와 같은 모양) — 주인 지시 2026-09-05
-                var cell = UiKit.Rect(_perkStrip, id); cell.sizeDelta = new Vector2(78, 84);
-                UiKit.PerkFrame(cell, Palette.PerkGradeName(perk.Grade), Icons.Perk(id), 76);
-                if (count[id] > 1) { var n = UiKit.Text(cell, count[id].ToString(), 24, Palette.White); UiKit.Pct(n.rectTransform, 50, 50, 55, 50); }
-                shown++;
+                // 팔각 등급 프레임(ItemFrame_04_* · 특전 카드와 같은 모양) — 주인 지시 2026-09-05. 프레임은 프리팹 본래 크기를 배율로 줄인다(UiKit.PerkFrame) — 셀 밖으로 안 나간다.
+                var cell = UiKit.Rect(_perkStrip, id); cell.sizeDelta = new Vector2(m.Cell, m.Cell);
+                UiKit.PerkFrame(cell, Palette.PerkGradeName(perk.Grade), Icons.Perk(id), m.Cell);
+                if (count[id] > 1)
+                {
+                    // 개수 배지 — 오른쪽 위 모서리(.pv-ic .cnt · 14/34). 셀 안쪽 모서리에 두어 이웃 셀·줄 밖으로 안 나간다.
+                    var n = UiKit.Text(cell, count[id].ToString(), (int)m.BadgeFont, Palette.White);
+                    var nr = n.rectTransform; nr.anchorMin = nr.anchorMax = new Vector2(1f, 1f); nr.pivot = new Vector2(1f, 1f); nr.anchoredPosition = Vector2.zero; nr.sizeDelta = new Vector2(m.Badge, m.Badge);
+                    n.horizontalOverflow = HorizontalWrapMode.Overflow;
+                }
+            }
+            if (shown < order.Count)
+            {
+                var more = UiKit.Text(_perkStrip, "+" + (order.Count - shown), (int)m.Font, Palette.CreamDark);
+                more.rectTransform.sizeDelta = new Vector2(m.MoreWidth(order.Count - shown), m.Cell); more.horizontalOverflow = HorizontalWrapMode.Overflow;
             }
         }
+
+        /// <summary>특전 줄 치수 — 폭·높이는 실제 rect 에서(레이아웃 전이면 화면 루트 → 프레임 상수 순으로 대체) · 나머지는 <see cref="Layout.PerkStripSpec"/> 비례.</summary>
+        public static Layout.PerkStripSpec PerkStripMetrics(RectTransform strip)
+        {
+            float w = strip != null ? strip.rect.width : 0, h = strip != null ? strip.rect.height : 0;
+            if (w <= 1f || h <= 1f)
+            {
+                var parent = strip != null ? strip.parent as RectTransform : null;
+                float pw = parent != null && parent.rect.width > 1f ? parent.rect.width : UiKit.FrameW, ph = parent != null && parent.rect.height > 1f ? parent.rect.height : UiKit.FrameH;
+                w = pw * Layout.HudPerkStrip.W / 100f; h = ph * Layout.HudPerkStrip.H / 100f;
+            }
+            return new Layout.PerkStripSpec(w, h);
+        }
+
         void RefreshBuffBar()
         {
             // 발동 중 버프 — 출처(특전) 별 묶음 · 등급색 테두리 + 중첩 수 (index.html renderBuffBar)
