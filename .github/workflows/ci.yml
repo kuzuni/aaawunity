@@ -120,7 +120,7 @@ jobs:
           buildName: KkomaKnight
           buildsPath: build
           allowDirtyBuild: true
-      - name: gh-pages 로 배포 (Settings → Pages → Source: gh-pages / (root))
+      - name: "gh-pages 로 배포 (Settings → Pages → Source: gh-pages, (root))"
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
