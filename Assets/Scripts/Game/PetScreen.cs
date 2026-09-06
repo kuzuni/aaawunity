@@ -52,8 +52,13 @@ namespace KkomaKnight.Game
             var band = UiKit.Spawn("ui.frameDark", Root); var brt = (RectTransform)band.transform; brt.name = "EqBand"; UiKit.Pct(brt, Layout.PetEqBand);
             var eqLabel = UiKit.Rect(Root, "EqLabel"); UiKit.Pct(eqLabel, Layout.PetEqLabel);
             {
-                var piece = UiKit.Spawn("ui.label.green", eqLabel); var prt = (RectTransform)piece.transform; UiKit.FitScale(prt, UiKit.PxSize(Layout.PetEqLabel));
-                var t = piece.GetComponentInChildren<Text>(true); if (t != null) { t.text = "장착중"; t.resizeTextForBestFit = true; t.resizeTextMinSize = 14; t.resizeTextMaxSize = Mathf.Max(t.fontSize, 20); }
+                // 조각(Label_Tapered_02)은 글자 폭에 맞춰 스스로 줄어드는 조각(HorizontalLayoutGroup + ContentSizeFitter · Bg/Border 는 stretch 9-slice) — 회차 1 감점(폭이 레퍼런스의 절반) → 자기 크기 조절을 끄고 표 칸에 꽉 채운다
+                var piece = UiKit.Spawn("ui.label.green", eqLabel); var prt = (RectTransform)piece.transform;
+                var csf = piece.GetComponent<ContentSizeFitter>(); if (csf != null) csf.enabled = false;
+                var hl = piece.GetComponent<HorizontalLayoutGroup>(); if (hl != null) hl.enabled = false;
+                UiKit.Stretch(prt);
+                var t = piece.GetComponentInChildren<Text>(true);
+                if (t != null) { t.text = "장착중"; UiKit.Pct(t.rectTransform, 8, 0, 84, 100); t.alignment = TextAnchor.MiddleCenter; t.resizeTextForBestFit = true; t.resizeTextMinSize = 14; t.resizeTextMaxSize = 44; t.horizontalOverflow = HorizontalWrapMode.Overflow; }
             }
             var slotsHost = UiKit.Rect(Root, "Slots"); UiKit.Stretch(slotsHost);
             var slots = new RectTransform[SlotCount];
@@ -68,8 +73,11 @@ namespace KkomaKnight.Game
                 }
                 else
                 {
+                    // 빈 칸 = 회색 등급 프레임 + «+»(Add_1) — ItemFrame_01 은 NormalArea 가 비어 있고 Add_1 이 기본 꺼짐이라 그대로 두면 아무것도 안 보인다(회차 1 감점 · 슬롯 3·4 빠짐)
                     var f = UiKit.Spawn("ui.itemFrame.empty", s); f.name = "ItemFrame_01"; UiKit.FitScale((RectTransform)f.transform, UiKit.PxSize(Layout.PetSlot));
-                    UiKit.Hide(f.transform, "Text_Level", "Focus", "Disable", "Lock", "Add_2", "Item");   // Add_1(+) 만 켜 둔다 = 빈 슬롯
+                    UiKit.Hide(f.transform, "Text_Level", "Focus", "Disable", "Lock", "Add_2", "Item");
+                    var area = UiKit.Find(f.transform, "NormalArea"); if (area != null) { UiKit.Clear(area); var v = UiKit.Spawn("ui.itemFrame.gray", area); UiKit.Stretch((RectTransform)v.transform); }
+                    UiKit.Show(f.transform, "Add_1", true);
                 }
                 UiKit.Clickable(s, () => { });   // 껍데기 — 눌러도 아무 일 없음
             }
