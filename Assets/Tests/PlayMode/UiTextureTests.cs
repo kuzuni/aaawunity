@@ -105,7 +105,7 @@ namespace KkomaKnight.Tests.Play
             var p0 = raw.uvRect.position; var r0 = lrt.localRotation;
             yield return RealSeconds(0.4f);
             var p1 = raw.uvRect.position;
-            Assert.Less(p1.x, p0.x, "패턴 uvRect.x 가 줄어야 무늬가 오른쪽으로 간다(결정 154)"); Assert.Less(p1.y, p0.y, "uvRect.y 가 줄어야 무늬가 위로 간다");
+            Assert.Less(p1.x, p0.x, "패턴 uvRect.x 가 줄어야 무늬가 오른쪽으로 간다(결정 157)"); Assert.Less(p1.y, p0.y, "uvRect.y 가 줄어야 무늬가 위로 간다");
             Assert.AreEqual(p0.x - p1.x, p0.y - p1.y, 0.002f, "대각선(오른쪽 위 45°)");
             float ang = Vector3.SignedAngle(r0 * Vector3.up, lrt.localRotation * Vector3.up, Vector3.forward);
             Assert.Less(ang, -1f, "빛살은 시계방향(z 각이 줄어든다) · 0.4s 에 " + ang.ToString("0.0") + "°");

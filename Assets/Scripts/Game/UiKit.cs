@@ -315,7 +315,7 @@ namespace KkomaKnight.Game
 
         // ───────────────────────── 질감 3종(T72 · 주인 2026-09-06 «Pattern_01_256 이 거의 모든 UI 에 · 아이콘 뒤 Effect_Light 천천히 회전 · 그라데이션 색감») ─────────────────────────
         // 재료 = GUI Pro Sprite_Common/~Demo/Demo_Image 의 Pattern_01_256(256² · 흰 알파 무늬 · .meta wrapU/V = 0 = Repeat · mipmap 끔) · Effect_Light_01/02_512(흰 빛살) · Gradient_Top_01/02·Gradient_Bottom(폭 4px 흰 알파 세로 띠)
-        // + Button_03_White_Gradient(버튼 아래 어둠) · CardFrame_03_White_Gradient(카드 위 밝음). 코드 도형 0 — 색은 전부 tint. 연출 상수는 밸런스가 아니라 여기 한 곳(워커 결정 기록 154~156).
+        // + Button_03_White_Gradient(버튼 아래 어둠) · CardFrame_03_White_Gradient(카드 위 밝음). 코드 도형 0 — 색은 전부 tint. 연출 상수는 밸런스가 아니라 여기 한 곳(워커 결정 기록 157~159).
         // 전부 unscaled(팝업 시간 정지 중에도 흐른다) + SetLink(T56 · 대상이 파괴되면 트윈도 죽는다). 화면 적용은 T63/T69 화면 묶음 워커가 같이(한 화면 세 번 만지지 않기).
         /// <summary>질감 조각 이름(고정 · 테스트·감사가 찾는다).</summary>
         public const string PatternName = "Pattern", LightName = "Light", LightMaskName = "LightMask", GradientTopName = "GradientTop", GradientBottomName = "GradientBottom";
@@ -336,7 +336,7 @@ namespace KkomaKnight.Game
 
         /// <summary>
         /// ① 배경 패턴(T72) — <paramref name="host"/> 에 RawImage «Pattern»(Stretch · 텍스처 = ui.pattern · Repeat 타일링 · uvRect 크기 = 사각형 ÷ <paramref name="tilePx"/> · raycast 끔) 을 <paramref name="siblingIndex"/> 자리(기본 0 = host 자신의 배경 Image 바로 위 · 배경이 자식이면 그 다음 index)에 깔고,
-        /// uvRect 를 unscaled 로 계속 움직여 무늬가 <b>오른쪽 위로</b> 흐르게 한다(한 타일 <paramref name="tileSeconds"/> 초 · 무한 · Linear). uvRect.position 은 «사각형 왼쪽 아래가 텍스처의 어느 점을 보이나» 라 값이 <b>줄어야</b> 그림이 오른쪽 위로 간다(결정 154 · 지시서의 «(+x,+y)» 는 그림 방향을 말한 것).
+        /// uvRect 를 unscaled 로 계속 움직여 무늬가 <b>오른쪽 위로</b> 흐르게 한다(한 타일 <paramref name="tileSeconds"/> 초 · 무한 · Linear). uvRect.position 은 «사각형 왼쪽 아래가 텍스처의 어느 점을 보이나» 라 값이 <b>줄어야</b> 그림이 오른쪽 위로 간다(결정 157 · 지시서의 «(+x,+y)» 는 그림 방향을 말한 것).
         /// 이미 있으면 갱신만(트윈은 다시 시작). 카탈로그에 스프라이트가 없으면 null(경고는 카탈로그가). 어두운 바탕이면 <paramref name="tint"/> = <see cref="PatternTintDark"/>.
         /// </summary>
         public static RawImage PatternBg(RectTransform host, Color? tint = null, float tileSeconds = PatternTileSeconds, int siblingIndex = 0, float tilePx = PatternTilePx)
