@@ -1440,6 +1440,17 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. **테스트**: `BorderGateTests` 20~26 구간에 `AssertItemFrameBorder` 를 더한다(던전 카드 보상 칸 · 세부 보상 칸 · 상인 상품 칸 · 도전 줄 초상) — 같은 퇴행이 다시 들어오면 빨강.
 4. 게이트 + PROGRESS T115 행 + 완료 기록(확인 = CI `BorderGateTests` + screens 20·21·26 PNG 확대에서 칸 외곽선이 다른 화면과 같은 굵기인가).
 
+### T116 — 그라데이션을 **레퍼런스 두 색**으로: 무채색 덧칠 → 계열색 보간 (주인 2026-09-07 08:4X «그라디안트 레퍼런스 부분 참고해서 **더 화려하게 색깔** 해줘» · T72 ③ 보탬을 작업으로 등재) — **🔄 1단계(자 + 실측 표 + 계약 테스트) 코드 push(`3384f38` · sess-2232-5797 · 워커 K · 로컬 게이트 전부 초록)**
+
+> **왜 «안 화려한가» 를 실측으로 밝혔다** — `tools/ref_color.py`(신규 · 레퍼런스 jpg 의 사각형을 세로 5등분해 띠마다 중앙값 색을 찍는 자)로 재 보니 규칙이 셋이다:
+> ⓐ **카드·타일**(상점 상품 09 · 특권 카드 11)은 **어두운 위 → 밝은 아래**의 **같은 계열 두 색**(다이아 `#40116D`→`#AA0CB8` · 골드 `#183D6A`→`#1683BE` · 특권 `#50A1E0`→`#5CC6F8`). 지금 `UiKit.Gradient` 는 «흰 α0.12 위 / 잉크 α0.18 아래» 라 **방향이 반대이고 무채색**이다 — 이것이 주인이 말한 «화려하지 않다» 의 정체다.
+> ⓑ **색이 있는 화면 배경**(로비)은 **밝은 위 → 어두운 아래**로 아주 은은하다(`#3C6833`→`#315529`).
+> ⓒ **버튼·팝업 패널·띠**는 레퍼런스에서도 **사실상 단색**이다(주 버튼 `#FB9F00` · 로비 배너 `#6950C8` · 팝업 패널 `#2C2829`) — 덧칠을 세게 하면 오히려 레퍼런스에서 멀어진다.
+
+1. **1단계(끝)**: `tools/ref_color.py` · `catalog.json` `col.grad.*` 7쌍(잰 자리는 `_notes` 에 한 줄씩) · `Game/GradientPalette`(표를 읽는 `Of(name)` + 표에 없는 요소용 `CardWay`/`BackgroundWay` — 계열색은 두고 밝기만 벌린다) · PlayMode `GradientPaletteTests`(카탈로그에서 읽히는가 · 두 색이 다른가 · 방향).
+2. **2단계(남은 일 · `UiKit` lock 이 풀린 워커가)**: `UiKit.Gradient` 가 «흰/잉크 덧칠» 대신 이 표의 두 색을 tint 로 쓰게 한다 — **카드류는 방향을 뒤집고**(GradientTop = 어두운 색 · GradientBottom = 밝은 색), 배경은 지금 방향 그대로, **버튼·패널은 세기를 줄인다**(레퍼런스가 단색이므로 α 0.12/0.18 → 0.06 안팎). 요소별 이름이 표에 없으면 그 칸의 바탕색으로 `CardWay`/`BackgroundWay`. 화면 코드는 한 줄도 안 바뀐다(헬퍼 한 곳).
+3. 게이트 + PROGRESS T116 행 + 완료 기록(확인 = 그 커밋 CI 의 `GradientPaletteTests`·`UiTextureTests` Passed + `screens` 01·09·11 PNG 를 레퍼런스와 나란히 눈 확인).
+
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
 2. 계정 2 에 **환경(Environment)** 이 하나 있어야 한다(기본 «Default» 면 된다 · 프록시 정책은 계정 1 과 같다고 가정 — 다르면 dotnet 설치가 막힐 수 있으니 첫 런 로그를 본다).
