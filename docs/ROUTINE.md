@@ -987,7 +987,11 @@
 5. **테스트**(Core EditMode + PlayMode): ⓐ 임의 장비 조합 100개에서 `Power` 가 **변경 전과 완전히 같음**(변경 전 값을 골든 표로 먼저 떠 놓고 대조) ⓑ 공격 부위 아이템의 Hp·Sh = 0 · 방어 부위의 Atk = 0 ⓒ 부위별 기여의 합 = 총합 ⓓ `dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13` **21칸 그대로** ⓔ 06·07 화면 단언(부위 이름 «반지» · 줄 수).
 6. 게이트 + assets-map(반지 아이콘 키 한 줄) + PROGRESS T88 행 + 완료 기록(확인 = CI PlayMode·EditMode + Sim 21칸 + screens 06·07 PNG + «주인이 확인할 것» 한 줄).
 
-### T89 — 세트 옵션 개방 등급을 한 칸 올린다: **일반 = 0개 · 희귀부터 열림 · 마지막(흡혈 +8%)은 신화 +12강** (주인 2026-09-07 · 밸런스 변경 = 주인 지시)
+### T89 — 세트 옵션 개방 등급을 한 칸 올린다: **일반 = 0개 · 희귀부터 열림 · 마지막(흡혈 +8%)은 신화 +12강** (주인 2026-09-07 · 밸런스 변경 = 주인 지시) — **🔄 코드 push(`2a666ef` · sess-1950-2102 · 워커 L · 로컬 게이트 전부 초록: build 0/0 · test 155/155 · gen_meta ✔ · gen_catalog 603 · catalog_keys 1021/602 · unity_null 0 · audio_webgl 20 · data_sync OK · 배포 스모크 `--gh-pages` ✅ errors=0) · 남은 일 = 확인뿐**
+
+> **한 일**: ⓐ `GearData.From` 이 정본 JSON 을 읽은 **뒤에** `ShiftOptionLadderOneStep` 으로 사다리를 한 칸 민다(등급 1/2/3/4 → **0/1/2/3** · 신화 강화 +3/+6/+9 → **+3/+6/+9/+12** · 줄 수 7 불변 · `data/gear.json` 은 한 글자도 안 건드렸다) ⓑ 잠긴 줄 꼬리표를 화면이 계산하던 것(«(i−등급수+1)×3»)을 **표에서 읽는 `OptTierName`** 으로 옮겼다(결정 238) ⓒ **골든 재생성 불필요** — 세트 옵션은 `RunOptions.GearOpts` 가 켜진 판에만 들어가고 T2 골든·`tools/sim` 은 꺼져 있다. 실측으로 `--seeds 11,12,13` 이 21칸 골든과 **두 표 모두 완전히 동일**(결정 239).
+>
+> **확인 = 이 코드를 담은 첫 완주 런**의 EditMode `GearOptionLadderTests` 6 + `DataLoadTests` Passed · PlayMode `GearOptionRowsTests` 2 Passed · `TextSizeGateTests` 회귀 0(**⚠ 지켜볼 것**: 일반 등급 줄이 전부 잠금 꼬리표를 달게 됐고 마지막 줄이 «+9강»→«+12강» 으로 한 글자 길어졌다 — 07 에서 잘림이 나면 T63 순서 ⓐ 줄바꿈 → ⓑ 칸 ±3%p → ⓒ 문구 줄이기) · `screens` 07 PNG.
 
 > 주인 원문(2026-09-07 05:2X): «걍 일반 등급에서는 옵션 안 열리게 할래. 그래서 신화 12강이 되면 마지막 흡혈 +8% 이거 개방되는 느낌으로 해주면 됨. 희귀에서부터 옵션 열리는 게 나은 듯.»
 
