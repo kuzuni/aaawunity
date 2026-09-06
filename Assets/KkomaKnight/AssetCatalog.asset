@@ -301,6 +301,10 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: f49bb43f8cb9a413caa4fad3bb611958, type: 3}
   - key: pi.sound
     sprite: {fileID: 21300000, guid: c22875d7f4c774e73856eeadd72c5ec2, type: 3}
+  - key: pi.music
+    sprite: {fileID: 21300000, guid: 47d2dcdb326c74df8b2bf400b2e3cc7e, type: 3}
+  - key: pi.globe
+    sprite: {fileID: 21300000, guid: 220cbdc0506e14fc8a51be6a1adb140a, type: 3}
   - key: pi.sound_mute
     sprite: {fileID: 21300000, guid: c173e0a317d014dffa3b23145389e97e, type: 3}
   - key: pi.video

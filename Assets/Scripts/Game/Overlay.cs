@@ -295,63 +295,57 @@ namespace KkomaKnight.Game
             var hit = UiKit.Find(rt, "Dimmed"); if (hit != null) UiKit.Clickable(hit, () => { Close(); onLobby(); }, false);
         }
 
-        // ───────────────────────── 설정 / 일시정지 (주인 지정 Settings — 프리팹 «그대로» · T10) ─────────────────────────
-        /// <summary>로비 메뉴(≡)의 설정 팝업 — Settings 프리팹 원형 그대로(요소를 끄거나 옮기지 않는다). 소리 스위치만 값을 저장하고 나머지 버튼은 눌러도 아무 일 없음.</summary>
+        // ───────────────────────── 설정 / 일시정지 — 레퍼런스 12_settings.jpg 구도 (T41 · 표 ⑨ · «Settings 프리팹 그대로»(T10) 는 부품 규칙으로 대체) ─────────────────────────
+        /// <summary>로비 메뉴(≡)의 설정 팝업 — 작은 패널 · 명판 «설정» · 음악/효과음 토글 · 언어 버튼(표시만) · 패널 아래 개인정보/이용약관 링크 글자(눌러도 아무 일 없음) · 그 아래 «데이터 삭제»(T29) · «탭하여 닫기».</summary>
         public void Settings() => SettingsPopup("설정", null, null);
-        /// <summary>전투 일시정지 — 같은 Settings 프리팹. 아래 버튼 2개만 «재개»·«포기하고 로비로» 로 배선한다.</summary>
+        /// <summary>전투 일시정지 — 같은 팝업. 링크 아래 줄이 «재개»(주황)·«포기하고 로비로»(회색) · 배경 탭 = 재개.</summary>
         public void Pause(Action onResume, Action onGiveUp) => SettingsPopup("일시정지", onResume, onGiveUp);
 
         /// <summary>
-        /// Settings 프리팹을 세운다. 프리팹의 줄(BGM·SFX·Haptic·Language · 버튼 2줄 · UID · 버전 · 약관 글자)은 전부 <b>보이는 그대로</b> 두고 글자만 우리말로 바꾼다.
-        /// 동작하는 것: BGM 스위치 = 소리 켜기/끄기(값 저장) · 닫기(X) · 전투에서는 Group_Button_2 = 재개/포기. 나머지 스위치·버튼·글자는 기능 없음(주인: «나중 업데이트»).
+        /// 공통 팝업 문법(<see cref="UiKit.Popup"/>) 위에 표 ⑨ 자리로 조립한다(재료 = ui.popup 패널 · ui.titleBrown 명판 · pi.music/pi.sound/pi.globe 아이콘 · ui.switch(Swich_01 · On/Off 자식) · ui.btnGray/btnRed/btnOrange).
+        /// 동작하는 것: 음악 = Save.MuteBgm · 효과음 = Save.MuteSfx(T28 · 각각 저장 + Audio 즉시 반영) · «데이터 삭제»(로비) · «재개»/«포기»(전투) · 배경 탭 = 닫기(전투에선 재개). 언어 버튼·링크 글자는 표시만.
+        /// 이름 계약(AudioTests·UiSmokeTests): 줄 «BGM»·«SFX» 안에 «Swich_01».
         /// </summary>
         void SettingsPopup(string title, Action onResume, Action onGiveUp)
         {
-            Begin();
-            var root = UiKit.Spawn("ui.settings", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
-            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
-            UiKit.SetText(rt, "Title_Tapered_01_Brown/Text (TMP)", title);
-            // 스위치 줄 4개 — 글자만 우리말. BGM = Save.MuteBgm · SFX = Save.MuteSfx (T28 · 각각 저장하고 Audio 에 바로 반영). 진동 스위치는 눌러도 아무 일 없음.
             Action closeAndResume = () => { Close(); onResume?.Invoke(); };
-            var bgm = UiKit.Find(rt, "BGM");
-            if (bgm != null)
+            var box = Box("ui.popup", "ui.titleBrown", title, Layout.SetBox, closeAndResume);
+            var rib = UiKit.Find(box, "ui.titleBrown"); if (rib != null) ((RectTransform)rib).sizeDelta = UiKit.PxSize(Layout.SetRibbon);
+            // 줄 3개(음악 · 효과음 · 언어) — 아이콘 + 라벨 + 오른쪽 끝 토글/버튼. 자리 = 표 ⑨ 를 상자 기준 % 로
+            RectTransform Row(string name, Layout.R r, string iconKey, string label)
             {
-                UiKit.SetText(bgm, "Text", "배경음");
-                var sw = UiKit.Find(bgm, "Swich_01");
-                if (sw != null) { ApplySwitch(sw, !_app.Save.MuteBgm); UiKit.Clickable(sw, () => { _app.Save.MuteBgm = !_app.Save.MuteBgm; _app.Persist(); Audio.ApplyMute(); ApplySwitch(sw, !_app.Save.MuteBgm); }, false); }
+                var row = UiKit.Rect(box, name); UiKit.Pct(row, r.Within(Layout.SetBox));
+                var ic = UiKit.Icon(row, "Icon", iconKey, Palette.Ink); UiKit.Pct(ic.rectTransform, 0, 5, 8, 90);
+                var t = UiKit.Label(row, 11, 0, 50, 100, label, 40, Palette.Ink, TextAnchor.MiddleLeft, true, false); t.name = "Text";
+                return row;
             }
-            var sfx = UiKit.Find(rt, "SFX");
-            if (sfx != null)
+            var bgm = Row("BGM", Layout.SetRowMusic, "pi.music", "음악");
+            var sfx = Row("SFX", Layout.SetRowSound, "pi.sound", "효과음");
+            var lang = Row("Language", Layout.SetRowLang, "pi.globe", "언어");
+            // 토글 = Swich_01 조각(본래 크기 그대로 · 배율로 표 «토글» 칸에) — On/Off 자식으로 상태 표시(ApplySwitch)
+            RectTransform Toggle(RectTransform row, Layout.R rowRect, Layout.R at, bool on, Action onClick)
             {
-                UiKit.SetText(sfx, "Text", "효과음");
-                var sw = UiKit.Find(sfx, "Swich_01");
-                if (sw != null) { ApplySwitch(sw, !_app.Save.MuteSfx); UiKit.Clickable(sw, () => { _app.Save.MuteSfx = !_app.Save.MuteSfx; _app.Persist(); Audio.ApplyMute(); ApplySwitch(sw, !_app.Save.MuteSfx); }, false); }
+                var host = UiKit.Rect(row, "ToggleHost"); UiKit.Pct(host, at.Within(rowRect));   // 표 «토글» 자리(프레임 %) → 줄 기준 %
+                var sw = UiKit.Spawn("ui.switch", host); var srt = (RectTransform)sw.transform; srt.name = "Swich_01";
+                UiKit.FitScale(srt, UiKit.PxSize(at));   // 조각 본래 크기 그대로 · 배율로 칸에
+                ApplySwitch(srt, on); UiKit.Clickable(srt, onClick, false);
+                return srt;
             }
-            UiKit.SetText(rt, "Haptic/Text", "진동");
-            UiKit.SetText(rt, "Language/Text", "언어"); UiKit.SetText(rt, "Language/Button_English/Text (TMP)", "한국어");
-            // 버튼 2줄 — 프리팹 그대로 4개. 위 줄(평가·로그인)은 기능 없음. 아래 줄은 전투에서만 재개/포기, 로비에서는 기능 없음.
-            var g1 = UiKit.Find(rt, "Group_Button_1");
-            if (g1 != null && g1.childCount >= 2) { UiKit.SetText(g1.GetChild(0), "Text (TMP)", "평가하기"); UiKit.SetText(g1.GetChild(1), "Text (TMP)", "로그인"); }
-            var g2 = UiKit.Find(rt, "Group_Button_2");
-            if (g2 != null && g2.childCount >= 2)
+            RectTransform bsw = null, ssw = null;
+            bsw = Toggle(bgm, Layout.SetRowMusic, Layout.SetToggle, !_app.Save.MuteBgm, () => { _app.Save.MuteBgm = !_app.Save.MuteBgm; _app.Persist(); Audio.ApplyMute(); ApplySwitch(bsw, !_app.Save.MuteBgm); });
+            var sfxToggle = new Layout.R(Layout.SetToggle.X, Layout.SetToggle.Y + Layout.SetRowPitch, Layout.SetToggle.W, Layout.SetToggle.H);
+            ssw = Toggle(sfx, Layout.SetRowSound, sfxToggle, !_app.Save.MuteSfx, () => { _app.Save.MuteSfx = !_app.Save.MuteSfx; _app.Persist(); Audio.ApplyMute(); ApplySwitch(ssw, !_app.Save.MuteSfx); });
+            // 언어 버튼 = 회색 보조 버튼 «한국어»(표시만 · 언어 시스템 없음)
+            var lb = UiKit.Button(box, "ui.btnGray", "한국어", () => { }, Layout.SetLangBtn.Within(Layout.SetBox)); lb.name = "LangBtn";
+            // 패널 밖 아래 — 링크 글자 2(눌러도 아무 일 없음) · 그 아래 줄 = 로비: «데이터 삭제»(T29) / 전투: «재개»·«포기하고 로비로»
+            var pv = UiKit.Text(Root, "개인정보 처리방침", 30, Palette.Sky, TextAnchor.MiddleCenter, true, true); pv.name = "Privacy"; UiKit.Pct(pv.rectTransform, Layout.SetPrivacy.X - 5, Layout.SetPrivacy.Y - 0.5f, Layout.SetPrivacy.W + 10, Layout.SetPrivacy.H + 1f);
+            var tm = UiKit.Text(Root, "이용약관", 30, Palette.Sky, TextAnchor.MiddleCenter, true, true); tm.name = "Terms"; UiKit.Pct(tm.rectTransform, Layout.SetTerms.X - 5, Layout.SetTerms.Y - 0.5f, Layout.SetTerms.W + 10, Layout.SetTerms.H + 1f);
+            if (onResume != null || onGiveUp != null)
             {
-                if (onResume != null || onGiveUp != null)   // 자식 0 = 파랑(Support 자리) · 1 = 빨강(Account Delete 자리)
-                {
-                    UiKit.SetText(g2.GetChild(0), "Text (TMP)", "재개"); UiKit.Clickable(g2.GetChild(0), closeAndResume);
-                    UiKit.SetText(g2.GetChild(1), "Text (TMP)", "포기하고 로비로"); UiKit.Clickable(g2.GetChild(1), () => { Close(); onGiveUp?.Invoke(); });
-                }
-                else
-                {
-                    // 로비 설정: 빨간 «Account Delete» 자리 = «데이터 삭제»(T29 · 주인 2026-09-06) → 확인 팝업 → SaveStore.Reset → 로비. 파란 «고객 지원» 은 기능 없음.
-                    UiKit.SetText(g2.GetChild(0), "Text (TMP)", "고객 지원");
-                    UiKit.SetText(g2.GetChild(1), "Text (TMP)", "데이터 삭제"); UiKit.Clickable(g2.GetChild(1), ConfirmReset);
-                }
+                UiKit.Button(Root, "ui.btnOrange", "재개", closeAndResume, Layout.SetResumeBtn);
+                UiKit.Button(Root, "ui.btnGray", "포기하고 로비로", () => { Close(); onGiveUp?.Invoke(); }, Layout.SetGiveUpBtn);
             }
-            var uid = UiKit.Find(rt, "UID"); if (uid != null) UiKit.SetText(uid, "Text", $"<color=#bb8a63>세이브 ID</color>  {_app.Save.Uid}");
-            UiKit.SetText(rt, "Text_Version", "v" + Application.version);
-            UiKit.SetText(rt, "Text_Privacy", "개인정보 처리방침"); UiKit.SetText(rt, "Text_TermsOfService", "이용약관");
-            var close = UiKit.Find(rt, "Button_Close_01"); if (close != null) UiKit.Clickable(close, closeAndResume);
-            var popup = UiKit.Find(rt, "Popup"); if (popup != null) UiKit.PopIn((RectTransform)popup);
+            else UiKit.Button(Root, "ui.btnRed", "데이터 삭제", ConfirmReset, Layout.SetReset);
         }
         static void ApplySwitch(Transform sw, bool on) { UiKit.Show(sw, "On", on); UiKit.Show(sw, "Off", !on); }
 

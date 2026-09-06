@@ -149,6 +149,8 @@
 | sprites | `pi.home` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/home.png` | fileID 21300000 |  |
 | sprites | `pi.setting` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/setting_1.png` | fileID 21300000 |  |
 | sprites | `pi.sound` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/sound.png` | fileID 21300000 |  |
+| sprites | `pi.music` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/music.png` | fileID 21300000 | 설정 팝업 «음악» 줄 아이콘(T41) |
+| sprites | `pi.globe` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/globe.png` | fileID 21300000 | 설정 팝업 «언어» 줄 아이콘(T41) |
 | sprites | `pi.sound_mute` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/sound_mute.png` | fileID 21300000 |  |
 | sprites | `pi.video` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/video.png` | fileID 21300000 |  |
 | sprites | `pi.refresh` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/refresh.png` | fileID 21300000 |  |
@@ -454,7 +456,7 @@
 | prefabs | `ui.title.green` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_01_NoDeco_Green.prefab` | root 5467225822093011633 |  |
 | prefabs | `ui.title.red` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_01_NoDeco_Red.prefab` | root 9092593472852531757 |  |
 | prefabs | `ui.title.sky` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_01_NoDeco_Sky.prefab` | root 2565615909246734251 |  |
-| prefabs | `ui.titleBrown` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_Tapered_01_Brown.prefab` | root 8538020173010104235 |  |
+| prefabs | `ui.titleBrown` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_Tapered_01_Brown.prefab` | root 8538020173010104235 | 설정/일시정지 팝업 명판(T41) |
 | prefabs | `ui.popup` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Popup/Popup_Box_02_DecoLine_Basic.prefab` | root 921659412208554214 | 팝업 상자(Popup_Box_02_DecoLine) — 색 변형은 이벤트별 |
 | prefabs | `ui.popup.green` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Popup/Popup_Box_02_DecoLine_Basic_Green.prefab` | root 568353929908025126 |  |
 | prefabs | `ui.popup.plum` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Popup/Popup_Box_02_DecoLine_Basic_Plum.prefab` | root 568353929908025126 |  |
@@ -487,7 +489,7 @@
 | prefabs | `ui.label.red` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Label/Label_Tapered_02_Red.prefab` | root 165765810441978131 |  |
 | prefabs | `ui.label.brown` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Label/Label_Tapered_02_Brown.prefab` | root 8612671380362345720 |  |
 | prefabs | `ui.tabBar` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Tab_01_BottomFlushMenu.prefab` | root 9068459138202833997 | 하단 탭 5칸 → 상점·장비·전투(가운데)·탤런트·펫 (T10 · 대장간은 장비 화면 «합성» 버튼 · 설정은 로비 메뉴(≡)/전투 일시정지) |
-| prefabs | `ui.switch` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Control/Swich_01.prefab` | root 6431523672475112463 |  |
+| prefabs | `ui.switch` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Control/Swich_01.prefab` | root 6431523672475112463 | 설정 팝업 음악/효과음 토글(Swich_01 조각 · On/Off 자식 · T41) |
 | prefabs | `ui.talent` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Character_Talent_02.prefab` | root 4786098786137720783 | 탤런트·펫 팝업 (주인 지정 Character_Talent_02 · T10 · 프리팹 통째로 그대로 · 기능 없음) — 하단 탭 «탤런트»·«펫» 이 연다 · 재화 바 = 골드·보석 · 프리팹 안 탭 바로 닫는다(다른 탭 → 그 화면) |
 | prefabs | `ui.btnStartOrange` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_03_Orange.prefab` | root 7008214384983651424 | 로비 START (Button_03_Orange · 레퍼런스 색 규칙 «주 버튼 = 주황» · LobbyStart 자리 = 카드와 같은 폭) |
 | prefabs | `ui.framePlum` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_Rectangle_06_Noborder_Plum.prefab` | root 5129137505210471693 | 로비 이벤트 배너(보라 · LobbyBanner 자리 · T44 패스 껍데기 진입) — 안에 ui.iconMedal + «시즌 패스» + ui.sliderGreen 진행바 + 레벨 배지(fr.circle) |

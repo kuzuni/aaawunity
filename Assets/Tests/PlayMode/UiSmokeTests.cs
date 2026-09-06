@@ -173,12 +173,22 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(ClickNamed(lobby, "ArrowR"), "챕터 ▶"); Assert.IsTrue(ClickNamed(lobby, "ArrowL"), "챕터 ◀"); yield return Frames(1);
             Check("로비 챕터 이동");
 
-            // 설정 (Settings 프리팹 그대로) — 배경음 스위치 · 닫기
+            // 설정 — T41 레퍼런스 12_settings.jpg 구도: 작은 패널 · 명판 «설정» · 음악/효과음 토글(Swich_01) · 언어 버튼 «한국어» · 패널 아래 링크 2 · «데이터 삭제» · «탭하여 닫기»(닫기 X 없음 · 배경 탭)
             _app.Overlay.Settings(); yield return Frames(2);
             Check("설정 팝업", expectOverlay: true);
-            Assert.IsTrue(HasText(s => s == "배경음"), "설정: 배경음 줄"); Assert.IsTrue(HasText(s => s == "설정"), "설정: 제목");
-            var sw = UiKit.Find(_app.Overlay.Root, "BGM"); if (sw != null) { ClickNamed(sw, "Swich_01"); yield return Frames(1); Assert.IsTrue(_app.Save.Muted, "배경음 스위치 = Save.Muted"); ClickNamed(sw, "Swich_01"); yield return Frames(1); }
-            Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Button_Close_01"), "설정 닫기(X)"); yield return Frames(2);
+            Assert.IsTrue(HasText(s => s == "음악"), "설정: 음악 줄"); Assert.IsTrue(HasText(s => s == "효과음"), "설정: 효과음 줄"); Assert.IsTrue(HasText(s => s == "설정"), "설정: 명판");
+            Assert.IsTrue(HasText(s => s == "언어") && HasText(s => s == "한국어"), "설정: 언어 줄 + «한국어» 버튼");
+            Assert.IsTrue(HasText(s => s == "개인정보 처리방침") && HasText(s => s == "이용약관"), "패널 아래 링크 글자 2");
+            Assert.IsTrue(HasText(s => s == "탭하여 닫기"), "탭하여 닫기 안내"); Assert.IsNull(UiKit.Find(_app.Overlay.Root, "Button_Close_01"), "닫기 X 버튼 없음(공통 팝업 문법)");
+            {
+                var bx = (RectTransform)UiKit.Find(_app.Overlay.Root, "ui.popup"); Assert.IsNotNull(bx, "설정 패널(ui.popup)");
+                Assert.AreEqual(Layout.SetBox.X, bx.anchorMin.x * 100f, 0.5f, "패널 x = 표 ⑨"); Assert.AreEqual(1f - Layout.SetBox.Y / 100f, bx.anchorMax.y, 1e-3f, "패널 y = 표 ⑨");
+                var lang = (RectTransform)UiKit.Find(_app.Overlay.Root, "Language"); var bgmRow = (RectTransform)UiKit.Find(_app.Overlay.Root, "BGM"); var sfxRow = (RectTransform)UiKit.Find(_app.Overlay.Root, "SFX");
+                Assert.IsTrue(bgmRow.anchorMax.y > sfxRow.anchorMax.y && sfxRow.anchorMax.y > lang.anchorMax.y, "줄 순서 = 음악 → 효과음 → 언어");
+                Assert.IsNotNull(UiKit.Find(bgmRow, "Swich_01"), "음악 토글"); Assert.IsNotNull(UiKit.Find(sfxRow, "Swich_01"), "효과음 토글"); Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "LangBtn"), "언어 버튼");
+            }
+            var sw = UiKit.Find(_app.Overlay.Root, "BGM"); if (sw != null) { ClickNamed(sw, "Swich_01"); yield return Frames(1); Assert.IsTrue(_app.Save.Muted, "음악 스위치 = Save.Muted"); ClickNamed(sw, "Swich_01"); yield return Frames(1); }
+            Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), "배경 탭 = 닫기"); yield return Frames(2);
             Assert.IsFalse(_app.Overlay.IsOpen, "설정이 닫혀야 한다"); Check("설정 닫힘");
 
             // T29 — «데이터 삭제»: 설정의 빨간 버튼 → 확인 팝업(«취소» = 설정으로 되돌아감 · «삭제» = 세이브 초기값 · 로비 새로 그림)
@@ -191,7 +201,7 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(HasText(s => s.StartsWith("정말 삭제")), "확인 팝업 경고 글");
                 Assert.IsTrue(Click(_app.Overlay.Root, s => s == "취소"), "«취소»"); yield return Frames(2);
                 Check("데이터 삭제 취소 → 설정", expectOverlay: true);
-                Assert.IsTrue(HasText(s => s == "배경음"), "취소하면 설정 팝업으로 되돌아간다"); Assert.AreEqual(12345, _app.Save.Gold, 1e-6, "취소는 세이브를 건드리지 않는다");
+                Assert.IsTrue(HasText(s => s == "음악"), "취소하면 설정 팝업으로 되돌아간다"); Assert.AreEqual(12345, _app.Save.Gold, 1e-6, "취소는 세이브를 건드리지 않는다");
                 Assert.IsTrue(Click(_app.Overlay.Root, s => s == "데이터 삭제"), "«데이터 삭제» 다시"); yield return Frames(1);
                 Assert.IsTrue(Click(_app.Overlay.Root, s => s == "삭제"), "«삭제»"); yield return Frames(2);
                 Assert.IsFalse(_app.Overlay.IsOpen, "삭제 뒤 팝업 닫힘"); Assert.AreEqual("lobby", _app.Current.Name, "삭제 뒤 로비");
@@ -495,11 +505,15 @@ namespace KkomaKnight.Tests.Play
             float t0 = Time.realtimeSinceStartup; while (!adDone && Time.realtimeSinceStartup - t0 < 5f) yield return Frames(1);
             Assert.IsTrue(adDone, "카운트다운이 끝나야 한다"); _app.Overlay.Close(); yield return Frames(1);
 
-            // 일시정지(Settings 프리팹) → 재개
-            _app.Overlay.Pause(() => { }, () => { }); yield return Frames(2);
+            // 일시정지(설정과 같은 팝업 · T41) → «재개» · 배경 탭도 재개
+            bool resumed = false;
+            _app.Overlay.Pause(() => resumed = true, () => { }); yield return Frames(2);
             Check("일시정지 팝업", expectOverlay: true);
-            Assert.IsTrue(HasText(s => s == "일시정지"), "제목"); Assert.IsTrue(HasText(s => s == "포기하고 로비로"), "포기 버튼");
-            Assert.IsTrue(Click(_app.Overlay.Root, s => s == "재개"), "재개"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen);
+            Assert.IsTrue(HasText(s => s == "일시정지"), "제목"); Assert.IsTrue(HasText(s => s == "포기하고 로비로"), "포기 버튼"); Assert.IsTrue(HasText(s => s == "음악"), "일시정지에도 음악 줄");
+            Assert.IsFalse(HasText(s => s == "데이터 삭제"), "전투 중엔 데이터 삭제 없음");
+            Assert.IsTrue(Click(_app.Overlay.Root, s => s == "재개"), "재개"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen); Assert.IsTrue(resumed, "재개 콜백");
+            resumed = false; _app.Overlay.Pause(() => resumed = true, () => { }); yield return Frames(1);
+            Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), "배경 탭"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen); Assert.IsTrue(resumed, "배경 탭 = 재개");
 
             // 클리어(Play_Result_Win_01) → 로비로 · 사망(Play_Result_Lose) → 로비로 (콜백은 빈 것 — 화면 전환은 아래서)
             _app.Overlay.Clear(G, false, () => { }, () => { }); yield return Frames(2);

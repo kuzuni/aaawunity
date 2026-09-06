@@ -170,6 +170,22 @@ namespace KkomaKnight.Core
         /// <summary>이벤트 팝업(쉼터·악마·천사 등) — 표에 없는 화면. ⑧ 공통 «팝업 폭 87 · 좌우 여백 6.5» 와 ④ 의 세로(y28 h44)를 따른다.</summary>
         public static readonly R EvBox = new R(6.5f, 28.0f, 87.0f, 44.0f);
 
+        // ⑨ 설정 팝업 — docs/ref/12_settings.jpg (T41 · 워커 실측 · 5% 격자 ±0.5%p · docs/ref-layout.md ⑨ 표와 같다)
+        public static readonly R SetBox = new R(5.8f, 39.6f, 88.3f, 21.0f);
+        public static readonly R SetRibbon = new R(25.0f, 37.5f, 50.0f, 4.2f);
+        public static readonly R SetRowMusic = new R(13.9f, 43.0f, 72.5f, 3.8f);
+        public static readonly R SetRowSound = new R(13.9f, 47.8f, 72.5f, 3.8f);
+        public static readonly R SetRowLang = new R(13.9f, 52.6f, 72.5f, 3.8f);
+        public const float SetRowPitch = 4.8f;
+        public static readonly R SetToggle = new R(72.9f, 43.3f, 13.5f, 3.1f);
+        public static readonly R SetLangBtn = new R(63.9f, 52.7f, 22.5f, 3.5f);
+        public static readonly R SetPrivacy = new R(39.9f, 62.6f, 20.3f, 1.9f);
+        public static readonly R SetTerms = new R(40.6f, 67.3f, 18.8f, 1.9f);
+        /// <summary>레퍼런스에 없는 줄 — T29 «데이터 삭제»(로비) / 전투 일시정지의 «재개»·«포기하고 로비로» 가 링크 아래 이 줄에 선다.</summary>
+        public static readonly R SetReset = new R(35.0f, 72.0f, 30.0f, 4.0f);
+        public static readonly R SetResumeBtn = new R(18.0f, 72.0f, 30.0f, 4.0f);
+        public static readonly R SetGiveUpBtn = new R(52.0f, 72.0f, 30.0f, 4.0f);
+
         // ⑧ 공통
         public const float BodyMarginX = 3.0f, PopupW = 87.0f, PopupMarginX = 6.5f;
 
