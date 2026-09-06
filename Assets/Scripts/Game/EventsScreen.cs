@@ -61,6 +61,10 @@ namespace KkomaKnight.Game
         static Color ArenaRed => Palette.Hex("#9F212F");
         static Color CardBlue => Palette.Hex("#4F99DE");
         static Color SoonGray => Palette.Hex("#1F1F1F");
+        /// <summary>순위 줄(ListItem_Ranking) 색 — 레퍼런스 23 의 어두운 줄(몸통 · 등수 칸 · 테두리). Theme_Light 프리팹의 크림색을 덮는다(T62 회차 1).</summary>
+        static Color RowBody => Palette.Hex("#3A3734");
+        static Color RowLeft => Palette.Hex("#302D2A");
+        static Color RowBorder => Palette.Hex("#57514A");
 
         TopBar _top; string _page = PageDungeon;
         readonly Dictionary<string, RectTransform> _pages = new Dictionary<string, RectTransform>();
@@ -186,7 +190,7 @@ namespace KkomaKnight.Game
             // 시상대 무대 = 어두운 성 안(사각 프레임 조각) + 붉은 카펫 + 양쪽 기둥(어두운 상자) + 횃불 + 갈색 턱
             var stage = UiKit.Panel(pg, "Stage", "fr.rect", Palette.Hex("#262A31")); UiKit.Pct(stage.rectTransform, Layout.AeStage); UiKit.Tag(stage.transform, "시상대 무대");
             {
-                var carpet = UiKit.Panel(stage.transform, "Carpet", "fr.rect", Palette.Hex("#7A1424")); UiKit.Pct(carpet.rectTransform, 38, 0, 24, 100);
+                var carpet = UiKit.Panel(stage.transform, "Carpet", "fr.rect", Palette.Hex("#5E1220")); UiKit.Pct(carpet.rectTransform, 39, 13, 22, 81);
                 var pl = UiKit.Spawn("ui.frameDark", stage.transform); UiKit.Pct((RectTransform)pl.transform, 2, 8, 9, 88);
                 var pr = UiKit.Spawn("ui.frameDark", stage.transform); UiKit.Pct((RectTransform)pr.transform, 89, 8, 9, 88);
                 var f1 = UiKit.Icon(stage.transform, "Torch", "ui.fire"); UiKit.Pct(f1.rectTransform, 5, 8, 8, 12);
@@ -496,7 +500,7 @@ namespace KkomaKnight.Game
             }
             piece.SetParent(b, false); piece.name = "Cloth"; UiKit.Stretch((RectTransform)piece);
             // 배너 안 두 줄 — 이름(위) · 🏆 점수(아래). 조각의 px 자리는 배너 본래 크기(296×279)용이라 표 자리 비율로 다시 잡는다.
-            var nm = UiKit.Find(piece, "Text_Name") as RectTransform; if (nm != null) UiKit.Pct(nm, 4, 8, 92, 32);
+            var nm = UiKit.Find(piece, "Text_Name") as RectTransform; if (nm != null) UiKit.Pct(nm, 4, 20, 92, 24);
             var grp = UiKit.Find(piece, "Group_Trophy") as RectTransform;
             if (grp != null)
             {
@@ -524,6 +528,7 @@ namespace KkomaKnight.Game
         static void RankItem(RectTransform row, int rank, string icon)
         {
             var item = UiKit.Spawn("ui.listRanking", row); var irt = (RectTransform)item.transform; UiKit.Stretch(irt);
+            DarkenListFrame(irt);
             UiKit.SetText(irt, "Text_RankingNum", rank.ToString(), Palette.Gray, 44, TextKind.Aux);
             var nt = UiKit.SetText(irt, "Text_Name", FoeName(rank), Palette.White, 44); if (nt != null) nt.fontStyle = FontStyle.Bold;
             UiKit.SetText(irt, "Text_Value", Dash, Palette.Yellow, 40);
@@ -538,6 +543,18 @@ namespace KkomaKnight.Game
                 var ci = UiKit.SetSprite(face, "Character", icon, Palette.White); if (ci != null) ci.preserveAspect = true;
             }
         }
+        /// <summary>
+        /// 줄 프레임 색만 어둡게(T62 회차 1 감점) — <c>ListItem_Ranking</c> 이 물고 오는 <c>ListFrame_02</c> 는 Theme_Light 의 <b>밝은 크림</b> 줄이라
+        /// 레퍼런스 23(어두운 바탕 위 어두운 줄)과 정반대이고 그 위의 흰 이름 글자가 안 읽혔다. 조각(테두리 스프라이트·9-slice)은 그대로 두고 색만 바꾼다.
+        /// </summary>
+        static void DarkenListFrame(Transform root)
+        {
+            var frame = UiKit.Find(root, "ListFrame_02"); if (frame == null) return;
+            var bg = UiKit.Find(frame, "Normal/Bg"); if (bg != null) { var im = bg.GetComponent<Image>(); if (im != null) im.color = RowBody; }
+            var left = UiKit.Find(frame, "Normal/BgLeft"); if (left != null) { var im = left.GetComponent<Image>(); if (im != null) im.color = RowLeft; }
+            var border = UiKit.Find(frame, "Normal/Border1"); if (border != null) { var im = border.GetComponent<Image>(); if (im != null) im.color = RowBorder; }
+        }
+
         static void Pill(RectTransform row, Layout.R r, string icon, string text, Color color)
         {
             var p = UiKit.Panel(row, "Pill", "fr.r12", Palette.Hex("#1E1E1E")); UiKit.Pct(p.rectTransform, r);
