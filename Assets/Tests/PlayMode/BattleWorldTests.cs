@@ -50,7 +50,8 @@ namespace KkomaKnight.Tests.Play
         sealed class Stats
         {
             public int HoldFrames, AnimHoldFrames, WalkFrames, WalkAnimFrames, DashWalkFrames, EnginePausedFrames, DeathFxFrames;
-            public double DashAdv, DashDt;
+            // DashMoveDt = DashDt 중 «엔진이 실제로 틱을 돈»(표시 원점이 전진한) 프레임의 시간만 (T65)
+            public double DashAdv, DashDt, DashMoveDt;
         }
 
         /// <summary>한 방 킬 전투를 sec 초(실시간) 돌리며 T20·T50·T51 계약을 매 프레임 단언한다.</summary>
@@ -85,7 +86,7 @@ namespace KkomaKnight.Tests.Play
                 Assert.LessOrEqual(adv, v * (Time.deltaTime + EngineConst.Dt) + 1e-6, "프레임당 이동이 원래 걷기 속도(PlayerSpeed×WalkMul" + (dashOwned ? "×DashMul" : "") + ")를 넘는다 — 따라잡기 가속 금지(T50)");
                 if (advanced && world.PlayerAnim == CharacterRig.Walk) st.WalkAnimFrames++;
                 // 대시 구간(P.Dash · 보류 아님)의 평균 속도 — 틱이 없는 프레임의 dt 도 넣어 «틱/프레임» 양자화가 평균을 부풀리지 않게
-                if (P.Dash && !hold) { st.DashDt += Time.deltaTime; st.DashAdv += adv; if (advanced) st.DashWalkFrames++; }
+                if (P.Dash && !hold) { st.DashDt += Time.deltaTime; st.DashAdv += adv; if (advanced) { st.DashWalkFrames++; st.DashMoveDt += Time.deltaTime; } }
                 // T51 ② — 사망 «펑» 이펙트 없음
                 if (GameObject.Find(DeathFxName) != null) st.DeathFxFrames++;
             }
@@ -149,7 +150,11 @@ namespace KkomaKnight.Tests.Play
             Assert.Greater(st.AnimHoldFrames, 0, "대시 특전이 있어도 킬 뒤 공격 모션 대기가 있어야 한다(T51 ① · 바로 출발 금지)");
             Assert.Greater(st.DashWalkFrames, 0, "킬 뒤 대시(P.Dash) 상태로 걷는 프레임이 있어야 한다");
             double avg = st.DashDt > 0 ? st.DashAdv / st.DashDt : 0, walk = G.C.PlayerSpeed * G.P.WalkMul;
-            Assert.Greater(avg, walk * 1.5, "대시 구간 평균 속도가 원래 걷기 속도보다 확실히 빨라야 한다(×DashMul 표시 · 틱 양자화 감안 1.5배 이상)");
+            // 아래 하한은 «엔진이 실제로 틱을 돈 프레임» 만으로 잰다(T65) — `P.Dash` 는 킬 순간에 켜지므로(Battle.cs `p_killDash`)
+            // 멈춤이 풀리는 프레임(엔진 틱 0 · 이동 0)과 «다음 적이 이미 StopDistance 안이라 대시가 한 틱 만에 꺼지는» 판까지 분모에 들어가
+            // 실시간 평균은 대시 속도가 아니라 «대시 창 안에서 걸은 시간 비율» 이 된다. 상한은 반대로 분모가 큰 쪽(전체 DashDt)이 보수적이라 그대로 둔다.
+            double moveAvg = st.DashMoveDt > 0 ? st.DashAdv / st.DashMoveDt : 0;
+            Assert.Greater(moveAvg, walk * 1.5, "대시 구간 평균 속도(엔진이 틱을 돈 프레임만)가 원래 걷기 속도보다 확실히 빨라야 한다(×DashMul 표시 · 틱 양자화 감안 1.5배 이상)");
             Assert.LessOrEqual(avg, walk * G.C.DashMul + 1e-6, "대시 구간 평균 속도는 ×DashMul 을 넘지 않는다");
             Assert.AreEqual(0, st.DeathFxFrames, "사망 «펑» 이펙트 없음(T51 ②)");
             _log.AssertNoRed("대시 전투 진행");
