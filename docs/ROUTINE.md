@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-06 · 10:4X UTC) ⚑⚑⚑ 주인 지시 — gh-pages 배포(첫 WebGL 배포 · main d6f66eb)를 폰에서 열었더니 첫 화면에서 «RangeError: Maximum call stack size exceeded»(wasm 무한 재귀). 앞으로 **항상 배포·커밋·push 전에 에러를 확인하고, 배포된 게임에 들어가 봐서도 에러가 뜨는지 확인하고 고쳐라** — 상시 규칙(§1).** → **T59**(크래시 수정 · 최우선) + **T60**(배포 스모크 게이트: headless 브라우저로 콘솔 에러 0·로비·전투 확인 뒤에만 배포) 등재(§2).
+
 - **(2026-09-06 · 09:2X UTC) ⚑⚑ 주인 지시 — 특전 설명은 «트리거: 내용» 꼴로: «처치 시: 33% 확률로 …» · «피격 시: …» · «3타마다: …».** → **T53** 등재(§2 · 표시 시점 변환 · perks.json 불변 · T52 뒤 · 루틴이 잡는다). **상시 능력치는 «패시브: …»**(09:3X 정정).
 
 - **(2026-09-06 · 09:2X UTC) ⚑⚑ 주인 지시 — 특전 글씨에 색을 섞지 않는다(수치만 연두색 = 안 읽힘). T36 «수치 초록» 취소 · 특전 설명은 한 색.** → **T52** 등재(§2 · Overlay.GreenNumbers 호출 제거 · 제약 없음 · 루틴이 잡는다).
@@ -73,6 +75,7 @@
 ## 1. 절대 규칙
 
 - **플레이 콘솔 에러 0 (주인 상시 지시 2026-09-05).** 플레이 중 유니티 콘솔에 빨간 줄(에러·예외·Assert)이 하나라도 뜨는 상태로 작업을 «완료» 라 적지 않는다. 화면/전투/팝업 코드를 바꾼 커밋은 T11 의 PlayMode 스모크 테스트(`Assets/Tests/PlayMode/UiSmokeTests.cs`)가 그 화면을 열어 빨간 줄 0 을 검증해야 한다(테스트가 없으면 같은 커밋에 추가). 검사 도우미는 `PlayLog.AssertNoRed` — **`LogAssert.NoUnexpectedReceived()` 는 쓰지 않는다**(이 프로젝트의 Test Framework 1.6 은 일반 `Debug.Log` 도 «예상 밖 로그» 로 실패시킨다 · CI #33 회귀). 런타임 Camera·RenderTexture·씬 오브젝트를 새로 만들면 URP 2D(Renderer2D · 깊이/스텐실 사용) 와 호환되는지 반드시 확인한다. **DOTween 트윈을 만들면 반드시 `.SetLink(대상 gameObject)` 를 붙인다**(T56 · 대상이 어떤 경로로 파괴돼도 «has been destroyed» 노란 경고가 안 난다 · `UiKit.Clear` 의 KillTweens 는 Clear 경로만 지킨다). 주인이 붙인 콘솔 로그는 다 고칠 때까지 «주인 콘솔 에러 보고함» 에 남기고, 고친 항목에는 커밋 해시와 원인을 적는다.
+- **배포·커밋·push 전에 에러를 확인하고, 배포된 게임(gh-pages)에 들어가 봐서도 에러가 뜨는지 확인한 뒤 고친다(주인 상시 지시 2026-09-06 · WebGL 첫 배포가 첫 화면에서 스택 오버플로로 죽었다 → T59).** 코드 커밋의 ✅ 조건 = CI 유니티 잡 초록 **+ 배포 스모크 초록**(T60 이 만드는 `tools/webgl_smoke.sh` · headless 브라우저로 gh-pages 를 열어 콘솔 에러 0 · 로비 도달 · 전투 진입). 워커는 세션마다 gh-pages 최신 빌드를 한 번 열어 보고(스크립트) 빨강이면 **자기 작업보다 먼저** 고친다(T59 방식으로 등재 · lock). 에디터/PlayMode 초록은 WebGL 초록이 아니다(스레드·System.IO·리플렉션·스택 크기가 다르다).
 - **aaaw 레포 수정 금지.** 수치(`data/*.json`)는 `tools/check_data_sync.sh --sync` 로만 가져온다. JSON 을 손으로 고치지 않는다.
 - **코드에 게임 수치를 직접 박지 않는다** — `KkomaKnight.Core.GameData` 에서 읽는다. 상수가 JSON 에 없으면 이 레포 전용 JSON(`Assets/KkomaKnight/*.json` · shop.json 방식)에 넣고 «워커 결정 기록» 에 한 줄 적는다(코드 상수 금지는 그대로).
 - **새 콘텐츠(특전/시스템/수치 체계) 임의 추가 금지.** 화면 껍데기(T42~T44)는 콘텐츠가 아니다. **주인 승인을 기다리는 일은 없다(2026-09-06)** — 판단이 필요하면 스스로 정해 적용하고 «워커 결정 기록» 에 남긴다.
@@ -85,7 +88,7 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
-> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T17~T58**(T58 = 비평 하니스 PNG 촬영 결함(UI 띠 34.8% · 월드 스프라이트 겹침 · T46 뒤) · T57 ✅ · T47 🔄(회차 1 · 로비 9.7 ✅ · 전투 8.6 ✅ 캔버스 · 남은 코드 3건) · T46 ✅(screens CI #83 · T58 열림) · T44 ✅(비평 9.5~10.0) · T41 ✅(비평 10.0) · T36 ✅(비평 9.5) · T38 ✅(비평 8.5) · T56 = 플레이 콘솔 노란 줄 0 — DOTween 세이프 모드 경고(파괴된 오브젝트 겨냥 트윈 · `SetLink`) · T55 = CI #76·#77 빨강 후속(T49 회귀 · 최우선) · T49 = 팝업 등장 연출 DOTween 순서대로 · T50 = 킬 뒤 원래 걷기 속도(⚠ `T50.lock` 은 워커 A 의 T54 가 잡고 있다 — 사라진 뒤에 잡는다) · T54 = CI #75 빨강 후속(워커 A · `faa0d30`) · T51 = 대시도 공격 모션 뒤 ×5 + 사망 펑 이펙트 제거 · T52 = 특전 글자 한 색 · T53 = 특전 설명 «트리거: 내용» 표기 · 2026-09-06) — **T34~T44 = UI 를 `docs/ref` 레퍼런스 구도로(2026-09-06 · 최우선 · «프리팹 그대로» 계열 지시를 대체 · T25 흡수 · T27·T30·T32 폐기)**. 이전 묶음: T17~T33(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
+> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T17~T60**(T59 = WebGL 배포 크래시 최우선 · T60 = 배포 스모크 게이트 · (T58 = 비평 하니스 PNG 촬영 결함(UI 띠 34.8% · 월드 스프라이트 겹침 · T46 뒤) · T57 ✅ · T47 🔄(회차 1 · 로비 9.7 ✅ · 전투 8.6 ✅ 캔버스 · 남은 코드 3건) · T46 ✅(screens CI #83 · T58 열림) · T44 ✅(비평 9.5~10.0) · T41 ✅(비평 10.0) · T36 ✅(비평 9.5) · T38 ✅(비평 8.5) · T56 = 플레이 콘솔 노란 줄 0 — DOTween 세이프 모드 경고(파괴된 오브젝트 겨냥 트윈 · `SetLink`) · T55 = CI #76·#77 빨강 후속(T49 회귀 · 최우선) · T49 = 팝업 등장 연출 DOTween 순서대로 · T50 = 킬 뒤 원래 걷기 속도(⚠ `T50.lock` 은 워커 A 의 T54 가 잡고 있다 — 사라진 뒤에 잡는다) · T54 = CI #75 빨강 후속(워커 A · `faa0d30`) · T51 = 대시도 공격 모션 뒤 ×5 + 사망 펑 이펙트 제거 · T52 = 특전 글자 한 색 · T53 = 특전 설명 «트리거: 내용» 표기 · 2026-09-06) — **T34~T44 = UI 를 `docs/ref` 레퍼런스 구도로(2026-09-06 · 최우선 · «프리팹 그대로» 계열 지시를 대체 · T25 흡수 · T27·T30·T32 폐기)**. 이전 묶음: T17~T33(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
 
 ### T1 — 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README ✅ (완료 · PROGRESS 참조)
 
@@ -545,6 +548,22 @@
 3. 수정(촬영 코드만 · 게임 코드 0): 촬영 동안 `CanvasScaler` 를 `ConstantPixelSize · scaleFactor = ShotW/FrameW(0.5)` 로 바꿨다가 되돌리거나(프레임 1080×2337 → 540×1168 꽉 참), 캔버스를 건드리지 않고 UI 전용 카메라(Overlay 캔버스는 카메라 RT 로 못 찍으므로 ScreenSpaceCamera 유지)로 2패스. 어느 쪽이든 **PNG 에서 프레임이 ≥ 95% 를 채우고 UI 가 맨 위**여야 한다. `UiShotsTests` 에 «`app.Frame` 의 픽셀 사각형(카메라 기준) 이 RT 의 ≥ 95%» 단언 1개(있으면 다음 회귀를 CI 가 잡는다).
 4. 확인 = 코드 커밋의 CI 유니티 잡 초록 → 새 `screens` 배포의 `01_lobby.png` 를 `Read` 로 봤을 때 화면 전체가 UI. 그 뒤 점수판의 «T58 뒤 다시 본다» 항목(T36 글자 덩어리 −0.5 등)을 다음 회차에서 재평가.
 5. 게이트 + PROGRESS T58 행 + 결정 기록 한 줄.
+
+### T59 — ⚑⚑⚑ WebGL 배포 크래시: 페이지 열자마자 «RangeError: Maximum call stack size exceeded»(invoke_iii → wasm 재귀) — 주인 폰 Chrome 스크린샷 2026-09-06 (최우선 · 제약 없음 · 다른 작업보다 먼저)
+범위: 원인이 있는 C# 어디든(`Assets/Scripts/Game/*` 우선) · `ProjectSettings/ProjectSettings.asset`(`webGLDebugSymbols` · `webGLExceptionSupport` 진단용) · `Assets/Tests/PlayMode`(부팅 스모크 회귀) · 필요하면 `.github/workflows/ci.yml`
+배포 상태: gh-pages `20b11aa`(10:37 UTC · **첫 WebGL 배포**) = main `d6f66eb`. 즉 WebGL 에서 게임이 돌아간 적이 아직 없다 — 에디터/PlayMode 에서만 초록이었다. 스택: `invoke_iii (KkomaKnight.framework.js:9:473704)` → `wasm-function[147169]` → `[147187]` → … 반복 = C# 쪽 **무한 재귀**(또는 WebGL 의 작은 스택을 넘는 깊은 재귀). 첫 화면(로딩 직후)에서 난다.
+1. **재현·읽을 수 있는 스택 확보**: ⓐ `webGLDebugSymbols: 1`(Embedded) 로 켜서 wasm 함수 이름이 스택에 나오게(빌드 한 번 더 · 크기 늘어나도 진단 동안은 허용) · 진단 뒤 되돌릴지는 워커 결정 기록. ⓑ 워커 환경에서 `npx playwright` + chromium headless(`--use-gl=angle --use-angle=swiftshader`)로 https://kuzuni.github.io/aaawunity/ 를 열어 `pageerror`·`console.error` 를 파일로 받는다(T60 의 `tools/webgl_smoke.sh` 를 여기서 먼저 만들어도 된다). WebGL 컨텍스트가 안 떠도 이 에러는 wasm 안이라 그대로 재현된다.
+2. **코드 감사(재귀 후보 · 스택 이름이 나오기 전에도 볼 것)**: 정적 초기화 고리(`Palette.Cat → App.I.Assets.Color → AssetCatalog.Build → …Palette`) · `AssetCatalog.Build/Prefab/Sprite` 의 «없으면 Build» 재진입 · `UiKit.Spawn` 대체 경로 · `Screens.Go ↔ Show` · `TopBar.Build` · `Overlay.Close → 콜백 → Close` · `Bootstrap.Start → DataLoader(WebGL 은 UnityWebRequest 코루틴 경로 · 에디터와 다른 분기) → OnLoaded → App.Show` · 프로퍼티가 자기 자신을 돌려주는 실수(`X => X`) · `Audio` 초기화 · DOTween `OnComplete` 안에서 같은 트윈 재시작. WebGL 은 스레드 없음·`System.IO` 없음·리플렉션 제한 — 에디터에서만 도는 분기(`#if UNITY_EDITOR` 밖의 에디터 전용 API)도 본다.
+3. **고친 뒤 회귀**: PlayMode 에 «부팅 스모크»(Bootstrap → 데이터 로드(UnityWebRequest 경로를 `file://` 로 강제) → 로비 → 전투 진입 → 팝업 1개) 가 없으면 만든다 · `LogAssert.NoUnexpectedReceived`.
+4. **확인 수단** = ⓐ CI 유니티 잡 초록 ⓑ 새 gh-pages 배포를 1 의 headless 스크립트로 열어 콘솔 에러 0 + 로비 도달 ⓒ PROGRESS 완료 기록에 «원인 한 줄(어느 함수가 어느 함수를 다시 불렀나)» 과 «배포 URL 에서 무엇으로 확인했나» 를 적는다. 주인이 폰에서 다시 열어 본다.
+
+### T60 — 배포 스모크 게이트: WebGL 빌드를 headless 브라우저로 열어 «콘솔 에러 0 · 로비 도달 · 전투 진입» 을 확인한 뒤에만 gh-pages 에 배포 (주인 상시 지시 2026-09-06 · T59 뒤 또는 T59 워커가 같이)
+범위: `.github/workflows/ci.yml`(`build-webgl` 잡 · 배포 step 앞에 스모크 step) · `tools/webgl_smoke.sh` + `tools/webgl_smoke.js`(playwright) · `Assets/Scripts/Game/App.cs`(진단 훅: 로비 준비 시 `Debug.Log("[KkomaKnight] ready lobby")` · 전투 진입 시 `ready battle` · JS 에서 `SendMessage("App","DebugGo","battle")` 로 전투 자동 진입 — 릴리스에서도 무해한 로그 한 줄) · ROUTINE §1·§3(이 커밋에서 규칙은 이미 적음)
+주인 원문(2026-09-06 · 10:4X UTC): «항상 배포나 커밋 푸시 하기 전에 에러 확인하고 겜 들어가 봐서도 에러 뜨는지 확인하고 고치고 그러라 하셈».
+1. `build-webgl` 잡: 빌드 → `python3 -m http.server` 로 `build/WebGL/KkomaKnight` 를 띄움 → `npx playwright@latest` chromium headless(swiftshader)로 열어 ⓐ `pageerror`·`console.error` 0 ⓑ Unity 로딩 완료(`unityInstance` 존재 · 로딩바 사라짐) ⓒ 콘솔에 `[KkomaKnight] ready lobby` ⓓ `SendMessage("App","DebugGo","battle")` 뒤 10초 동안 에러 0 + `ready battle` — 하나라도 실패하면 **배포 step 을 건너뛴다**(gh-pages 는 마지막 초록 빌드 유지) 그리고 잡을 빨강으로. 스크린샷 PNG 는 Actions artifact 로만(커밋 금지).
+2. 배포 뒤 같은 스크립트를 gh-pages URL 로 한 번 더(경로·압축(`webGLCompressionFormat`)·캐시 차이).
+3. 워커용: `tools/webgl_smoke.sh [URL]`(기본 = gh-pages) — 코드 커밋 전/후 워커가 직접 돌려 완료 기록에 결과 한 줄. playwright 설치가 환경에서 막히면 «워커 결정 기록» 에 남기고 CI 결과로 대신한다.
+4. 게이트 + PROGRESS T60 행.
 
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
