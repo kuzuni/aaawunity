@@ -79,6 +79,7 @@
 - **aaaw 레포 수정 금지.** 수치(`data/*.json`)는 `tools/check_data_sync.sh --sync` 로만 가져온다. JSON 을 손으로 고치지 않는다.
 - **코드에 게임 수치를 직접 박지 않는다** — `KkomaKnight.Core.GameData` 에서 읽는다. 상수가 JSON 에 없으면 이 레포 전용 JSON(`Assets/KkomaKnight/*.json` · shop.json 방식)에 넣고 «워커 결정 기록» 에 한 줄 적는다(코드 상수 금지는 그대로).
 - **새 콘텐츠(특전/시스템/수치 체계) 임의 추가 금지.** 화면 껍데기(T42~T44)는 콘텐츠가 아니다. **주인 승인을 기다리는 일은 없다(2026-09-06)** — 판단이 필요하면 스스로 정해 적용하고 «워커 결정 기록» 에 남긴다.
+- **한 줄에 문장이 여럿인 코드 줄 끝에 `// 주석` 을 붙이지 않는다**(CI #87 · 결정 기록 참조: 첫 문장만 바꾸며 주석을 붙였다가 뒤 문장 3개가 주석이 됨 · dotnet 은 못 잡고 PlayMode 만 잡는다). 주석은 윗줄에 · push 전에 `git show <해시> -- Assets | grep -E "^\+" | grep -E ";\s*//"` 로 새 줄을 훑는다.
 - **커밋 전 게이트**: `dotnet build tools/dotnet/KkomaKnight.sln -c Release` 초록 · `dotnet test tools/dotnet/Tests` 초록 · `python3 tools/gen_meta.py --check` 초록. 새 에셋을 만들면 `python3 tools/gen_meta.py` 로 .meta 를 만든다(GUID 결정적).
 - 전투 엔진(`Assets/Scripts/Core`)에는 `UnityEngine` 을 참조하지 않는다(asmdef `noEngineReferences: true` · dotnet 이 강제한다).
 - 승인 프롬프트가 뜨는 명령·대화형 편집기(`git rebase -i` 등) 금지. 캡처 PNG·대용량 바이너리 커밋 금지(예외 2개: 폰트 1개 — PLAN §2.1 · 오디오 OGG 합계 ≤ 5MB — T28 주인 지시).
