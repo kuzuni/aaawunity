@@ -1227,6 +1227,8 @@ MonoBehaviour:
     text: {fileID: 4900000, guid: d04ab71dff13776c85ad3ea24867d247, type: 3}
   - key: data.expedition
     text: {fileID: 4900000, guid: c9054aefd0de8c00ac04f5a906163432, type: 3}
+  - key: data.chapterChest
+    text: {fileID: 4900000, guid: 544bbb0c80ff9c1c26d7694624619bf2, type: 3}
   - key: data.dungeon
     text: {fileID: 4900000, guid: b0a365b4676e4d3a095949932cf7202f, type: 3}
   audio:

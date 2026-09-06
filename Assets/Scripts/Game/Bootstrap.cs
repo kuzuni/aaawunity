@@ -47,6 +47,7 @@ namespace KkomaKnight.Game
             d.DailyGift = LoadDailyGift(catalog);
             d.ArenaDummy = LoadArenaDummy(catalog);
             d.Expedition = LoadExpedition(catalog);
+            d.ChapterChest = LoadChapterChest(catalog);
             d.Dungeon = LoadDungeon(catalog);
             App.Create(d, catalog, uiFont, Camera.main);
             if (_boot != null) Destroy(_boot.gameObject);
@@ -86,6 +87,15 @@ namespace KkomaKnight.Game
             if (ta == null) { Debug.LogError("[KkomaKnight] expedition.json 이 카탈로그(data.expedition)에 없다 — 탐험 표 없음"); return null; }
             try { return ExpeditionData.Parse(ta.text); }
             catch (Exception e) { Debug.LogError("[KkomaKnight] expedition.json 파싱 실패: " + e.Message); return null; }
+        }
+
+        /// <summary>챕터 보상 수치표 — 이 레포 전용 <c>Assets/KkomaKnight/chapterChest.json</c>(카탈로그 텍스트 «data.chapterChest» · T98). 못 읽으면 null(챕터 보상 페이지가 «--» 로 뜬다).</summary>
+        static ChapterChestData LoadChapterChest(AssetCatalog catalog)
+        {
+            var ta = catalog != null ? catalog.Text("data.chapterChest") : null;
+            if (ta == null) { Debug.LogError("[KkomaKnight] chapterChest.json 이 카탈로그(data.chapterChest)에 없다 — 챕터 보상 표 없음"); return null; }
+            try { return ChapterChestData.Parse(ta.text); }
+            catch (Exception e) { Debug.LogError("[KkomaKnight] chapterChest.json 파싱 실패: " + e.Message); return null; }
         }
 
         /// <summary>아레나 더미 계수 — 이 레포 전용 <c>Assets/KkomaKnight/arenaDummy.json</c>(카탈로그 텍스트 «data.arenaDummy» · T81). 못 읽으면 null(23·24 숫자가 «—» 로 남는다).</summary>

@@ -617,6 +617,7 @@
     "data.dailyGift": "Assets/KkomaKnight/dailyGift.json",
     "data.arenaDummy": "Assets/KkomaKnight/arenaDummy.json",
     "data.expedition": "Assets/KkomaKnight/expedition.json",
+    "data.chapterChest": "Assets/KkomaKnight/chapterChest.json",
     "data.dungeon": "Assets/KkomaKnight/dungeon.json"
   },
   "audio": {
