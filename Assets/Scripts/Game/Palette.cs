@@ -71,6 +71,16 @@ namespace KkomaKnight.Game
             }
         }
         public static Color PerkColor(PerkDef p) => ByName(PerkGradeName(p.Grade));
+        /// <summary>
+        /// 특전 카드의 **등급 탭** 색(T93 · 주인 2026-09-07 «회색·노란색·빨간색 느낌이면 되는 거임») —
+        /// 프리팹(Play_Perk_Selection_02)처럼 몸통은 밝은 회색 그대로 두고 탭만 등급색으로 칠한다.
+        /// 일반은 <see cref="Gray"/> 를 조금 눌러 몸통(밝은 회색)과 값이 갈리게 한다(Desaturate 만으로는 탭이 몸통에 묻힌다).
+        /// </summary>
+        public static Color PerkTabColor(string colorName)
+        {
+            if (colorName == "gray") { var g = Gray; return new Color(g.r * 0.82f, g.g * 0.82f, g.b * 0.82f, 1f); }
+            return ByName(colorName);
+        }
         public static Color A(Color c, float a) { c.a = a; return c; }
     }
 

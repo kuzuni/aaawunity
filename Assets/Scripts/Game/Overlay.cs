@@ -141,6 +141,12 @@ namespace KkomaKnight.Game
                 foreach (var old in frt.GetComponentsInChildren<Text>(true)) old.gameObject.SetActive(false);   // 프리팹의 남은 글자("Text_Title" 등) 전부 끄기 — 주인: «Text 라고 빨간 글씨 없애줘»
                 var tb = UiKit.Find(frt, "TitleBg"); if (tb == null) tb = UiKit.Find(frt, "Text_Title");
                 var host = tb != null ? tb : frt;
+                // T93(주인 2026-09-07 «색깔이 회색·노란색·빨간색 느낌이면 되는 거임») — 등급은 **탭 색**이 알려 준다.
+                // 프리팹(Play_Perk_Selection_02)도 몸통은 밝은 회색 그대로 두고 탭만 색이 다르다(Plum/Blue) — 그런데 gray 는
+                // Desaturate 가 탭까지 몸통과 같은 값으로 만들어 «통짜 회색 판» 이 됐다(screens run 173 눈 확인).
+                // 그래서 탭 그림에만 등급색을 다시 칠한다: 일반 = 회색 · 희귀/전설 = 노랑 · 신화/악마 = 빨강.
+                var tabImg = tb != null ? tb.GetComponent<Image>() : null;
+                if (tabImg != null) tabImg.color = Palette.PerkTabColor(colorName);
                 // 등급 이름(«일반»·«희귀»·«전설») — 이제 탭 밝기와 무관하게 흰 글자 + 검은 아웃라인(T63 0항 · Palette.OnFrame · 결정 259)
                 var gl = UiKit.Text(host, p.GradeName ?? "", TextSize.Body, Palette.OnFrame(colorName), TextAnchor.MiddleCenter, true);
                 // 위아래 여백 4px 를 빼면 글자 칸이 탭(48px)보다 8px 작아져 bestFit 이 본문 40 을 못 넣고 줄인다(T63-perks · screens run 95 실측 = 흰 채움 28px ≈ 37) → 세로는 탭 전체를 쓴다
@@ -151,10 +157,17 @@ namespace KkomaKnight.Game
             var nameT = rt.Find("Text"); if (nameT != null) nameT.gameObject.SetActive(false);   // 카드 직계 "Text"(특전 이름) — 깊은 검색이면 프레임 안 글자에 잡힐 수 있어 직계로
             // 설명은 한 색(T52) · «트리거: 내용» · 상시는 «패시브: …»(T53 · 원문 perks.json 불변) · 색은 흰색 + 검은 아웃라인(T63 0항 · 잉크는 아웃라인과 겹쳐 뭉갠다 · 결정 259)
             var desc = UiKit.SetText(rt, "Text_Value", PerkText.Format(p.Desc), Palette.White, TextSize.Body);
-            if (desc != null) { desc.alignment = TextAnchor.MiddleLeft; var dr = desc.rectTransform; dr.anchorMin = new Vector2(0.24f, 0.08f); dr.anchorMax = new Vector2(0.97f, 0.92f); dr.offsetMin = dr.offsetMax = Vector2.zero; desc.resizeTextForBestFit = true; desc.resizeTextMaxSize = TextSize.Body; desc.resizeTextMinSize = TextSize.BestFitMin; desc.horizontalOverflow = HorizontalWrapMode.Wrap; }
+            // 글자 칸 좌우 = 프리팹 실측 그대로(T93 ① · ListItem_StageBuff_02 964.04px 안에서 왼쪽 여백 215.86 · 오른쪽 33.86 → 0.2239~0.9649).
+            // 세로는 프리팹이 «제목 줄 + 값 줄» 둘인데 우리는 특전 이름을 안 쓰므로(주인 2026-09-05) 한 덩어리가 두 줄 자리를 다 쓴다 — 완료 기록의 대조표 참조.
+            if (desc != null) { desc.alignment = TextAnchor.MiddleLeft; var dr = desc.rectTransform; dr.anchorMin = new Vector2(PerkDescLeft, 0.08f); dr.anchorMax = new Vector2(PerkDescRight, 0.92f); dr.offsetMin = dr.offsetMax = Vector2.zero; desc.resizeTextForBestFit = true; desc.resizeTextMaxSize = TextSize.Body; desc.resizeTextMinSize = TextSize.BestFitMin; desc.horizontalOverflow = HorizontalWrapMode.Wrap; }
             if (onClick != null) UiKit.Clickable(rt, onClick);
             return rt;
         }
+
+        /// <summary>특전 카드 설명 글자 칸의 왼쪽 끝 — 프리팹 <c>ListItem_StageBuff_02</c> 실측(964.04px 카드에서 왼쪽 여백 215.86px · T93 ①).</summary>
+        public const float PerkDescLeft = 215.86f / 964.04f;
+        /// <summary>같은 칸의 오른쪽 끝 — 프리팹 실측 오른쪽 여백 33.86px.</summary>
+        public const float PerkDescRight = (964.04f - 33.86f) / 964.04f;
 
         /// <summary>상단 스탯 «칸» 이름 앞머리(T69-overlay · 게이트가 찾는다) — 칸 하나 = <c>OvStat:&lt;스탯 키&gt;</c>.</summary>
         public const string OvStatCellPrefix = "OvStat:";
