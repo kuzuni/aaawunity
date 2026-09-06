@@ -33,8 +33,33 @@ namespace KkomaKnight.Tests
                         var key = GearLook.PartKey(part, set, r);
                         Assert.That(key, Is.Not.Null, part + "/" + set + "/" + r);
                         Assert.That(sprites.Contains(key), Is.True, "catalog.json 에 없음: " + key);
-                        Assert.That(GearLook.IconKey(part, set, r), Is.EqualTo(key));
+                        var icon = GearLook.IconKey(part, set, r);
+                        Assert.That(icon, Is.EqualTo(GearLook.IconPrefix + part + "." + set + "." + r), "아이콘 키는 cmi.* (T31)");
+                        Assert.That(sprites.Contains(icon), Is.True, "catalog.json 에 없음: " + icon);
                     }
+        }
+
+        /// <summary>T31 주인 지시 «아이콘용 그림과 입는 그림은 따로» — 착용 키(cm.gear.*)는 Parts/ 의 그림, 아이콘 키(cmi.gear.*)는 Thumbnail/ 의 **같은 이름** 그림이어야 한다(투구·무기·갑옷 × 세트 × 등급 36쌍 전부).</summary>
+        [Test]
+        public void IconKeysAreThumbnailsOfTheSameWornPart()
+        {
+            var d = TestData.Load();
+            var path = Path.GetFullPath(Path.Combine(TestData.Dir, "..", "..", "KkomaKnight", "catalog.json"));
+            var sprites = new JNode(MiniJson.Parse(File.ReadAllText(path)))["sprites"];
+            int n = 0;
+            foreach (var part in GearLook.LookParts)
+                foreach (var set in d.Gear.Sets)
+                    for (int r = 0; r < d.Gear.RarName.Length; r++)
+                    {
+                        var worn = sprites[GearLook.PartKey(part, set, r)].Str(); var icon = sprites[GearLook.IconKey(part, set, r)].Str();
+                        Assert.That(worn.Contains("/Parts Pack Base/Parts/"), Is.True, "착용 그림은 Parts/: " + worn);
+                        Assert.That(icon.Contains("/Parts Pack Base/Thumbnail/"), Is.True, "아이콘 그림은 Thumbnail/: " + icon);
+                        Assert.That(worn, Is.Not.EqualTo(icon), "아이콘과 입는 그림이 같은 파일이면 안 된다(T31)");
+                        Assert.That(Path.GetFileName(icon), Is.EqualTo(Path.GetFileName(worn)), "Thumbnail 은 입는 파츠와 같은 이름: " + worn);
+                        Assert.That(File.Exists(TestData.RepoFile(icon)), Is.True, "Thumbnail 파일 없음: " + icon);
+                        n++;
+                    }
+            Assert.That(n, Is.EqualTo(GearLook.LookParts.Length * d.Gear.Sets.Length * d.Gear.RarName.Length));
         }
 
         [Test]

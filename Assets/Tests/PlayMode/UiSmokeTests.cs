@@ -282,6 +282,15 @@ namespace KkomaKnight.Tests.Play
                     if (GearLook.HasLook(part))
                     {
                         parts++;
+                        // T31 — 아이콘은 Thumbnail(cmi.*) · 입는 파츠(cm.*)와 다른 그림 · 128×128 캔버스
+                        {
+                            var eqG = _app.Save.EquippedGear(part); Assert.IsNotNull(eqG, "슬롯 " + i + " 장착 장비");
+                            string ik = GearLook.IconKey(D, eqG), pk = GearLook.PartKey(D, eqG);
+                            Assert.IsTrue(ik.StartsWith(GearLook.IconPrefix), "아이콘 키는 cmi.*: " + ik);
+                            Assert.AreEqual(_app.Assets.Sprite(ik), im.sprite, "슬롯 " + i + " 아이콘 = 카탈로그 " + ik);
+                            Assert.AreNotEqual(_app.Assets.Sprite(pk), im.sprite, "슬롯 " + i + " 아이콘은 입는 파츠(" + pk + ")와 다른 그림(T31)");
+                            Assert.AreEqual(128f, im.sprite.rect.width, 0.5f, "Thumbnail 캔버스 128"); Assert.AreEqual(128f, im.sprite.rect.height, 0.5f, "Thumbnail 캔버스 128");
+                        }
                         // 그림 bbox(정점) 의 긴 변 × (Item 크기/rect) × localScale = 칸 한 변 × 0.72
                         var sp = im.sprite; float x0 = float.MaxValue, y0 = float.MaxValue, x1 = float.MinValue, y1 = float.MinValue;
                         foreach (var v in sp.vertices) { float px = v.x * sp.pixelsPerUnit + sp.pivot.x, py = v.y * sp.pixelsPerUnit + sp.pivot.y; x0 = Mathf.Min(x0, px); y0 = Mathf.Min(y0, py); x1 = Mathf.Max(x1, px); y1 = Mathf.Max(y1, py); }

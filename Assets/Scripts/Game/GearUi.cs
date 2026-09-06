@@ -19,7 +19,7 @@ namespace KkomaKnight.Game
         public static string SetLabel(GameData D, GearItem g) => (D.Gear.SetName.TryGetValue(Set(D, g), out var n) ? n : Set(D, g)) + " 세트";
         public static string PartName(GameData D, string part) => D.Gear.PartName.TryGetValue(part, out var n) ? n : part;
         public static string RarName(GameData D, int rar) => rar >= 0 && rar < D.Gear.RarName.Length ? D.Gear.RarName[rar] : rar.ToString();
-        /// <summary>장비 아이콘 = 장착 외형과 같은 표(<see cref="GearLook"/>) — 투구·무기·갑옷은 CharacterMaker 파츠 그림, 목걸이·장갑·신발은 GUI Pro 아이콘(임시).</summary>
+        /// <summary>장비 아이콘 = <see cref="GearLook"/> 표의 **아이콘 키**(T31 · 투구·무기·갑옷은 CharacterMaker Thumbnail <c>cmi.gear.*</c> — 입는 파츠 <c>cm.gear.*</c> 와 분리 · 목걸이·장갑·신발은 GUI Pro 아이콘(임시)).</summary>
         public static string IconKey(GameData D, GearItem g) => GearLook.IconKey(D, g);
         public static string SetIcon(string set) => set == "crit" ? "pi.critical" : set == "hpsh" ? "pi.heart" : "ui.dodge";
         public static string Key(GearItem g) => g.Part + "|" + g.Type + "|" + g.Rar;
@@ -84,8 +84,8 @@ namespace KkomaKnight.Game
 
         /// <summary>
         /// 장비 아이콘 맞춤(T17 · 주인 «투구·갑옷·무기 아이콘만 작다»). 프리팹 Item(256×256 · 스케일 0.6149)은 GUI Pro 128px 아이콘용이라 그림이 rect 의 ~85% 를 채우지만,
-        /// CharacterMaker 파츠 PNG 는 캐릭터 조립용 공통 캔버스라 그림이 캔버스의 33~70% 뿐 → 같은 rect 에서 절반 크기로 보였다.
-        /// 파츠 아이콘은 스프라이트의 **불투명 bbox**(Tight 메시 정점 · <c>Sprite.vertices</c>)가 칸의 <see cref="GearLook.PartIconFill"/>(72%) 를 채우도록 Item 의 sizeDelta·pivot 을 계산(<see cref="GearLook.FitPartIcon"/>)하고,
+        /// CharacterMaker 그림은 그림이 캔버스를 채우는 비율이 제각각(입는 파츠 33~70% · T31 의 Thumbnail 128×128 도 여백이 있다) → 같은 rect 에서 작게 보였다.
+        /// 파츠 아이콘(T31 부터 Thumbnail)은 스프라이트의 **불투명 bbox**(Tight 메시 정점 · <c>Sprite.vertices</c>)가 칸의 <see cref="GearLook.PartIconFill"/>(72%) 를 채우도록 Item 의 sizeDelta·pivot 을 계산(<see cref="GearLook.FitPartIcon"/>)하고,
         /// 회전은 하지 않는다(주인 2026-09-06 «45° 취소» · 프리팹 회전 그대로). GUI Pro 아이콘(목걸이·장갑·신발)은 프리팹 값으로 되돌린다.
         /// 장착 슬롯·인벤 칸·세부 팝업·대장간·뽑기 결과가 전부 이 함수를 거친다(Cell 과 GearScreen 슬롯). 프리팹 값은 <see cref="PartIconFit"/> 이 처음 한 번 기억해 두고 복원한다(슬롯 Item 재사용).
         /// </summary>

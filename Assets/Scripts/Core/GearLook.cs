@@ -1,9 +1,12 @@
 namespace KkomaKnight.Core
 {
     /// <summary>
-    /// 장비 «부위 × 세트 × 등급» → CharacterMaker 파츠 스프라이트 키(카탈로그 <c>cm.gear.&lt;부위&gt;.&lt;세트&gt;.&lt;등급&gt;</c>) 표.
-    /// 장착 외형(전투 <c>BattleWorld</c> · 장비 화면/로비 <c>HeroView</c>)과 장비 아이콘(<c>GearUi.Cell</c> · 슬롯)이 **같은 표**를 쓴다(주인 지시 2026-09-05 · 승인 대기 26).
-    /// 그림이 있는 부위 = 투구(helm)·무기(weapon)·갑옷(armor). 목걸이·장갑·신발은 외형 미반영 · 아이콘은 GUI Pro 아이콘(<c>gi.*</c> · «일단 아무거나»).
+    /// 장비 «부위 × 세트 × 등급» → CharacterMaker 그림 키 표. 한 항목에 키가 **둘**(T31 · 주인 2026-09-06 «아이콘용 갑옷과 실제 입는 갑옷이 다르게 — 내 게임도 그렇게»):
+    /// <list type="bullet">
+    /// <item><b>착용 키</b> <see cref="PartKey(string,string,int)"/> = <c>cm.gear.&lt;부위&gt;.&lt;세트&gt;.&lt;등급&gt;</c> → <c>Parts Pack Base/Parts/…</c>(캐릭터에 입히는 그림 · 전투 <c>BattleWorld</c> · 장비 화면/로비 <c>HeroView</c> · <c>CharacterRig.Skin</c>).</item>
+    /// <item><b>아이콘 키</b> <see cref="IconKey(string,string,int)"/> = <c>cmi.gear.&lt;부위&gt;.&lt;세트&gt;.&lt;등급&gt;</c> → <c>Parts Pack Base/Thumbnail/…</c>(같은 이름의 128×128 아이콘 그림 · <c>GearUi.Cell</c> · 장착 슬롯 · 세부 팝업 · 대장간 · 뽑기 결과).</item>
+    /// </list>
+    /// 두 키는 같은 파일 이름(파츠 ↔ Thumbnail)을 가리킨다(GearLookTests 가 대조). 그림이 있는 부위 = 투구(helm)·무기(weapon)·갑옷(armor). 목걸이·장갑·신발은 외형 미반영 · 아이콘은 GUI Pro 아이콘(<c>gi.*</c> · «일단 아무거나»).
     /// 실제 파일 선택은 <c>Assets/KkomaKnight/catalog.json</c>(→ docs/assets-map.md 표) — 등급이 오를수록 더 화려한 파츠.
     /// 무기는 전부 **근접 무기 — 검(Sword)·방망이(Blunt)·도끼(Axe) 세 계열에서**(주인 지시 T17 · 활·지팡이·완드·창 금지). 아이콘 회전은 없다(주인 2026-09-06 · 45° 취소 · T31 Thumbnail 은 정상 방향).
     /// </summary>
@@ -23,17 +26,21 @@ namespace KkomaKnight.Core
 
         public static bool HasLook(string part) => part == Helm || part == Weapon || part == Armor;
 
-        /// <summary>파츠 스프라이트 키 — 그림 없는 부위는 null.</summary>
-        public static string PartKey(string part, string set, int rar)
+        /// <summary>착용 키 접두(입는 파츠 · Parts/) 와 아이콘 키 접두(Thumbnail/) — 카탈로그 키는 <c>접두 + 부위.세트.등급</c>.</summary>
+        public const string PartPrefix = "cm.gear.", IconPrefix = "cmi.gear.";
+
+        static string Suffix(string part, string set, int rar)
         {
-            if (!HasLook(part)) return null;
             if (rar < 0) rar = 0; if (rar >= RarCount) rar = RarCount - 1;
-            return "cm.gear." + part + "." + set + "." + rar;
+            return part + "." + set + "." + rar;
         }
+
+        /// <summary>착용(입는) 파츠 스프라이트 키 <c>cm.gear.*</c> — 캐릭터 외형 전용. 그림 없는 부위는 null.</summary>
+        public static string PartKey(string part, string set, int rar) => HasLook(part) ? PartPrefix + Suffix(part, set, rar) : null;
         public static string PartKey(GameData D, GearItem g) => PartKey(g.Part, D.Gear.SetOf(g.Type), g.Rar);
 
-        /// <summary>장비 아이콘 키 — 그림 있는 부위는 파츠 스프레이트 그대로, 나머지는 GUI Pro 아이콘 <c>gi.&lt;부위&gt;.&lt;세트&gt;</c>.</summary>
-        public static string IconKey(string part, string set, int rar) => PartKey(part, set, rar) ?? ("gi." + part + "." + set);
+        /// <summary>장비 아이콘 키 — 그림 있는 부위는 같은 이름의 Thumbnail <c>cmi.gear.*</c>(T31 · 입는 파츠와 분리), 나머지는 GUI Pro 아이콘 <c>gi.&lt;부위&gt;.&lt;세트&gt;</c>.</summary>
+        public static string IconKey(string part, string set, int rar) => HasLook(part) ? IconPrefix + Suffix(part, set, rar) : ("gi." + part + "." + set);
         public static string IconKey(GameData D, GearItem g) => IconKey(g.Part, D.Gear.SetOf(g.Type), g.Rar);
 
         /// <summary>무기 세트 → Character 프리팹의 오른손 슬롯: 체력실드 = 둔기(Blunt) · 치명·회피 = 검(Sword) — 카탈로그의 해당 파츠 폴더(HandRight/Sword·Blunt·Axe)와 맞아야 한다(GearLookTests). 창(Spear)·활(Bow) 슬롯은 장비에 쓰지 않는다(T17).</summary>
