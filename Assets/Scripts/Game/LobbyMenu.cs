@@ -29,8 +29,6 @@ namespace KkomaKnight.Game
         /// <summary>메뉴 항목 — 이름(줄 오브젝트 «Menu:key») · 라벨 · 새 줄이면 아이콘 키.</summary>
         public const string ItemMail = "mail", ItemSettings = "settings", ItemDailyGift = "dailyGift", ItemQuest = "quest", ItemAttendance = "attendance", ItemPrivilege = "privilege";
 
-        /// <summary>우편함(T96-mail) 이 붙기 전까지의 자리 — 그 워커가 이 훅만 바꾸면 된다.</summary>
-        public static Action<App> Mailbox;
 
         /// <summary>메뉴를 연다 — 로비의 ≡ 버튼이 부른다(전에는 설정 팝업을 바로 열었다).</summary>
         public static void Open(App app)
@@ -73,7 +71,7 @@ namespace KkomaKnight.Game
                 && (Notify.DailyGiftClaimable(S, G.DailyGift, SaveStore.Today()) || Notify.DailyGiftAd(S, G.DailyGift, SaveStore.Today()));
             return new List<(string, string, string, Action, Func<bool>)>
             {
-                (ItemMail, "우편함", null, () => { if (Mailbox != null) Mailbox(app); else app.Toast("우편함은 준비 중입니다"); }, () => false),
+                (ItemMail, "우편함", null, () => Game.Mailbox.Open(app), () => Mailbox.Any(app)),   // T96-mail
                 (ItemSettings, "설정", null, () => app.Overlay.Settings(), () => false),
                 (ItemDailyGift, "데일리 기프트", null, () => LobbyPopups.DailyGift(app), giftDot),
                 (ItemQuest, "퀘스트", null, () => LobbyPopups.Quest(app), () => false),

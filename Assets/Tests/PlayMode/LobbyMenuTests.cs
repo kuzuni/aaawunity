@@ -19,7 +19,7 @@ namespace KkomaKnight.Tests.Play
     {
         PlayLog _log; App _app;
         [SetUp] public void SetUp() { _log = new PlayLog(); }
-        [TearDown] public void TearDown() { Time.timeScale = 1f; LobbyMenu.Mailbox = null; _log?.Dispose(); _log = null; try { PlayerPrefs.DeleteKey(SaveStore.Key); } catch { } }
+        [TearDown] public void TearDown() { Time.timeScale = 1f; _log?.Dispose(); _log = null; try { PlayerPrefs.DeleteKey(SaveStore.Key); } catch { } }
 
         static IEnumerator Frames(int n)
         {
@@ -128,11 +128,11 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual("privilege", _app.Current.Name, "특권 페이지로 간다");
             _app.ShowScreen("lobby"); yield return Frames(2); lobby = _app.Current.Root;
 
-            // 우편함 = T96-mail 훅(아직 없으면 안내 토스트) — 훅을 걸면 그것이 불린다
-            int called = 0; LobbyMenu.Mailbox = _ => called++;
+            // 우편함 = T96-mail 로 실물이 됐다(훅 폐기) — 항목을 누르면 주인 지목 프리팹 팝업이 뜬다
             ClickNamed(lobby, "Button_Menu"); yield return Frames(2);
             ClickNamed(_app.Overlay.Root, "Menu:" + LobbyMenu.ItemMail); yield return Frames(2);
-            Assert.AreEqual(1, called, "우편함 훅(T96-mail)이 불린다");
+            Assert.IsTrue(_app.Overlay.IsOpen, "우편함이 열린다");
+            Assert.IsNotNull(UiKit.FindAny(_app.Overlay.Root, "ui.mailbox", "ui.mailboxEmpty"), "우편함 = Rewards_Mailbox(_Empty) 조각(T96-mail)");
             _log.AssertNoRed("메뉴 우편함");
 
             yield return Shutdown();
