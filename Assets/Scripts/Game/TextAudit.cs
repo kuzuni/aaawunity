@@ -108,12 +108,12 @@ namespace KkomaKnight.Game
         /// 아웃라인 단언을 실제로 «틀리면 빨강» 으로 켤 것인가(T63-outline).
         /// 글자 입구 다섯 곳(<c>Text</c>·<c>SetText</c>·<c>Button</c>·<c>ConvertTmp</c>·<c>Bar.Set</c>)과 <see cref="UiKit.Adopt"/>(조각의 uGUI Text)가
         /// 전부 <see cref="UiKit.EnsureOutline"/> 를 거치므로 «없음 0» 이 나와야 정상이다.
-        /// 그래도 <b>첫 회차는 false</b> 다 — 워커 컨테이너에는 유니티가 없어 PlayMode 를 못 돌리고(컴파일만 확인한다),
-        /// 지금 gh-pages 배포가 다른 건으로 막혀 있어(T91) 여기서 main 을 또 빨갛게 만들면 안 된다.
-        /// 그 커밋 CI 로그의 «[TextOutlineGate]» 표가 «없음 0» 인 것을 눈으로 본 다음 회차에 이 한 줄을 true 로 켠다
-        /// (<see cref="ClipStrict"/>·<see cref="GlyphStrict"/> 와 같은 방식 · 결정 기록 참조).
+        /// 첫 회차(`2bd5ff8a`)는 false 로 두고 표만 찍었다 — 워커 컨테이너에는 유니티가 없어 PlayMode 를 못 돌리기 때문이다.
+        /// <b>CI [#173](https://github.com/kuzuni/aaawunity/actions/runs/34055981490) 로그에서 «어긋난 글자 0/1190 — 없음 0 ✔» 를 실측했으므로 켠다</b>
+        /// (전 화면 활성 Text 1,190개가 전부 통과 · 유니티 잡도 success · <see cref="ClipStrict"/>·<see cref="GlyphStrict"/> 와 같은 방식 · 결정 245).
+        /// 이제부터 UiKit 을 안 거치고 스스로 <c>Text</c> 를 붙이는 자리가 새로 생기면 그 커밋에서 바로 빨강이 된다.
         /// </summary>
-        public const bool OutlineStrict = false;
+        public const bool OutlineStrict = true;
 
         public static TextKind KindOf(Text t)
         {
