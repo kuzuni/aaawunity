@@ -426,6 +426,9 @@ namespace KkomaKnight.Game
             var frame = UiKit.Spawn("ui.itemFrame.empty", cell); frame.name = "ItemFrame_01"; var frt = (RectTransform)frame.transform;
             UiKit.FitScale(frt, new Vector2(w, h));
             UiKit.Hide(frt, "Text_Level", "Focus", "Disable", "Lock", "Add_1", "Add_2", "Item");   // 빈 프레임만(그림·숫자는 조각의 Icon·Text 가 그대로)
+            // 조각이 달고 오는 «장식 글자»(Text_Level 의 프리팹 자리 글자 «Text» 등)는 보상 칸에서 쓰지 않는다 — 끄기만 하면
+            // 깊은 검색(GetComponentInChildren<Text>(true))이 여전히 집어 «칸의 첫 글자 = 골드 숫자» 라는 계약이 깨진다(T91 · 배포까지 막았다) → 아예 지운다.
+            foreach (var t in frt.GetComponentsInChildren<Text>(true)) if (t != null) UnityEngine.Object.Destroy(t.gameObject);
             // ItemFrame_01 은 NormalArea 가 비어 있어 그대로 두면 아무것도 안 보인다(PetScreen 과 같은 문법) — 등급 없는 물건(골드)이라 회색 변형(T69 7항)
             var area = UiKit.Find(frt, "NormalArea");
             if (area != null) { UiKit.Clear(area); var v = UiKit.Spawn("ui.itemFrame.gray", area); UiKit.Stretch((RectTransform)v.transform); }

@@ -151,6 +151,19 @@ namespace KkomaKnight.Tests.Play
         /// 카드 안 글자는 T63-perks 몫이라 결과·이벤트 팝업의 «잘림 0» 에서 뺀다.</summary>
         const string PerkCardName = "ui.card";
         /// <summary>T63-results — 글자가 bestFit 에 눌려 하한 밑으로 그려지지 않는지 + 칸 안에 들어가는지(줄 수 포함). <paramref name="min"/> 은 종류 하한.</summary>
+        /// <summary>
+        /// 결과 팝업 보상 줄(Group_RewardItem)의 «값» 글자 — 첫 칸(GetItem_Reward)의 <b>직계</b> Text(«Text (TMP)» 자리 · 골드 숫자).
+        /// 깊은 검색(<c>GetComponentInChildren&lt;Text&gt;(true)</c>)으로 집으면 T69-overlay 가 칸 맨 뒤에 깐 `ItemFrame_01` 조각의
+        /// 장식 글자를 먼저 집는다(T91 — 그 조각의 프리팹 자리 글자가 «Text» 라 골드 값과 비교가 깨졌고 배포까지 막혔다).
+        /// </summary>
+        static Text RewardValueText(Transform group)
+        {
+            Assert.Greater(group.childCount, 0, "보상 줄에 칸");
+            var cell = group.GetChild(0);
+            for (int i = 0; i < cell.childCount; i++) { var t = cell.GetChild(i).GetComponent<Text>(); if (t != null) return t; }
+            var deep = cell.GetComponentInChildren<Text>(true); Assert.IsNotNull(deep, "보상 칸의 값 글자");
+            return deep;
+        }
         static void AssertReadable(Text t, int min, string what)
         {
             Assert.IsNotNull(t, what + " 글자가 있어야 한다");
@@ -1055,7 +1068,7 @@ namespace KkomaKnight.Tests.Play
             yield return Frames(2);
             UiKit.CompleteAllTweens(); Assert.IsFalse(_app.Overlay.Revealing, "CompleteAll 뒤 연출 끝");
             Assert.AreEqual(1f, winBtns.GetChild(0).GetComponent<CanvasGroup>().alpha, 1e-4f, "×2 버튼 α 1"); Assert.AreEqual(1f, winBtns.GetChild(1).GetComponent<CanvasGroup>().alpha, 1e-4f, "그냥 받기 α 1");
-            var rewardCell = UiKit.Find(_app.Overlay.Root, "Group_RewardItem"); Assert.IsNotNull(rewardCell, "Group_RewardItem"); Assert.AreEqual(UiKit.Fmt(G.Gold), rewardCell.GetChild(0).GetComponentInChildren<Text>(true).text, "골드 카운트업 최종값 = G.Gold");
+            var rewardCell = UiKit.Find(_app.Overlay.Root, "Group_RewardItem"); Assert.IsNotNull(rewardCell, "Group_RewardItem"); Assert.AreEqual(UiKit.Fmt(G.Gold), RewardValueText(rewardCell).text, "골드 카운트업 최종값 = G.Gold");
             Check("클리어 팝업", expectOverlay: true);
             // 기댓값에 TextGlyphs.Safe 를 씌운다 — 화면에 나갈 때 UiKit 이 «×» 를 «x» 로 바꾼다(T75 · Jua 에 글리프가 없어 폭 0 으로 사라진다)
             Assert.IsTrue(HasText(s => s == "클리어!"), "제목"); Assert.IsTrue(HasText(s => s == TextGlyphs.Safe(Overlay.ClearAdLabel)), "광고 ×2 버튼(프리팹 Get x2 자리 · T23 · 문구는 T63-results 에서 한 줄로)");
@@ -1065,7 +1078,7 @@ namespace KkomaKnight.Tests.Play
             AssertReadable(winBtns.GetChild(1).GetComponentInChildren<Text>(true), TextSize.Button, "그냥 받기 버튼");
             var unlockT = UiKit.Find(_app.Overlay.Root, "Text (1)"); Assert.IsNotNull(unlockT, "해금 줄(프리팹 «Text (1)»)");
             AssertReadable(unlockT.GetComponent<Text>(), TextSize.Body, "해금 줄");
-            AssertReadable(rewardCell.GetChild(0).GetComponentInChildren<Text>(true), TextSize.Body, "클리어 보상 골드");
+            AssertReadable(RewardValueText(rewardCell), TextSize.Body, "클리어 보상 골드");
             AssertNoTextClip("클리어 팝업", _app.Overlay.Root);
             Assert.IsTrue(Click(_app.Overlay.Root, s => s == "그냥 받기"), "그냥 받기(프리팹 Home 자리)"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen);
             Assert.IsFalse(UiKit.IsTweening(_app.Overlay.Root), "Close 뒤 연출 시퀀스 0");
