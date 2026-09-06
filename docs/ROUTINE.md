@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-06 · 11:3X UTC) ⚑⚑ 주인 지시 — 랭킹(아레나 순위 · `23`) UI 가 유난히 안 맞는다. GUI Pro 에 거의 같은 프리팹(`Social_Ranking` · `ListItem_Ranking`)이 있으니 그걸 조금 변형해서 쓰라.** → **T62** 등재(§2 · T43 뒤 · 비평 8.0). **같은 시각 주인 확인: 폰에서 게임이 «잘 된다»** — gh-pages 는 여전히 20b11aa(d6f66eb) 그대로이므로 T59 크래시는 같은 빌드에서 일시적으로 난 것 → T59 는 원인 기록 + T60 스모크 게이트로 마무리(아래 T59 메모).
+
 - **(2026-09-06 · 11:1X UTC) ⚑⚑ 주인 지시 — 특전 카드가 순서대로 등장할 때 «Shine» 효과(AllIn1SpriteShader)도 카드 순서대로.** → **T61** 등재(§2 · T49 stagger 위에 · UI 용 `AllIn1SpriteShaderUiMask` 머티리얼 · 루틴이 잡는다).
 
 - **(2026-09-06 · 10:4X UTC) ⚑⚑⚑ 주인 지시 — gh-pages 배포(첫 WebGL 배포 · main d6f66eb)를 폰에서 열었더니 첫 화면에서 «RangeError: Maximum call stack size exceeded»(wasm 무한 재귀). 앞으로 **항상 배포·커밋·push 전에 에러를 확인하고, 배포된 게임에 들어가 봐서도 에러가 뜨는지 확인하고 고쳐라** — 상시 규칙(§1).** → **T59**(크래시 수정 · 최우선) + **T60**(배포 스모크 게이트: headless 브라우저로 콘솔 에러 0·로비·전투 확인 뒤에만 배포) 등재(§2).
@@ -91,7 +93,7 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
-> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T17~T61**(T61 = 특전 카드 Shine 순서대로 · (T59 = WebGL 배포 크래시 최우선 · T60 = 배포 스모크 게이트 · (T58 = 비평 하니스 PNG 촬영 결함(UI 띠 34.8% · 월드 스프라이트 겹침 · T46 뒤) · T57 ✅ · T47 🔄(회차 1 · 로비 9.7 ✅ · 전투 8.6 ✅ 캔버스 · 남은 코드 3건) · T46 ✅(screens CI #83 · T58 열림) · T44 ✅(비평 9.5~10.0) · T41 ✅(비평 10.0) · T36 ✅(비평 9.5) · T38 ✅(비평 8.5) · T56 = 플레이 콘솔 노란 줄 0 — DOTween 세이프 모드 경고(파괴된 오브젝트 겨냥 트윈 · `SetLink`) · T55 = CI #76·#77 빨강 후속(T49 회귀 · 최우선) · T49 = 팝업 등장 연출 DOTween 순서대로 · T50 ✅(엔진 틱 보류 · 워커 H) · T54 ✅ · T51 ✅(T50 과 같은 커밋) · T52 = 특전 글자 한 색 · T53 = 특전 설명 «트리거: 내용» 표기 · 2026-09-06) — **T34~T44 = UI 를 `docs/ref` 레퍼런스 구도로(2026-09-06 · 최우선 · «프리팹 그대로» 계열 지시를 대체 · T25 흡수 · T27·T30·T32 폐기)**. 이전 묶음: T17~T33(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
+> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T17~T62**(T62 = 아레나 순위 = Social_Ranking 프리팹 변형 · (T61 = 특전 카드 Shine 순서대로 · (T59 = WebGL 배포 크래시 최우선 · T60 = 배포 스모크 게이트 · (T58 = 비평 하니스 PNG 촬영 결함(UI 띠 34.8% · 월드 스프라이트 겹침 · T46 뒤) · T57 ✅ · T47 🔄(회차 1 · 로비 9.7 ✅ · 전투 8.6 ✅ 캔버스 · 남은 코드 3건) · T46 ✅(screens CI #83 · T58 열림) · T44 ✅(비평 9.5~10.0) · T41 ✅(비평 10.0) · T36 ✅(비평 9.5) · T38 ✅(비평 8.5) · T56 = 플레이 콘솔 노란 줄 0 — DOTween 세이프 모드 경고(파괴된 오브젝트 겨냥 트윈 · `SetLink`) · T55 = CI #76·#77 빨강 후속(T49 회귀 · 최우선) · T49 = 팝업 등장 연출 DOTween 순서대로 · T50 ✅(엔진 틱 보류 · 워커 H) · T54 ✅ · T51 ✅(T50 과 같은 커밋) · T52 = 특전 글자 한 색 · T53 = 특전 설명 «트리거: 내용» 표기 · 2026-09-06) — **T34~T44 = UI 를 `docs/ref` 레퍼런스 구도로(2026-09-06 · 최우선 · «프리팹 그대로» 계열 지시를 대체 · T25 흡수 · T27·T30·T32 폐기)**. 이전 묶음: T17~T33(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
 
 ### T1 — 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README ✅ (완료 · PROGRESS 참조)
 
@@ -555,6 +557,7 @@
 ### T59 — ⚑⚑⚑ WebGL 배포 크래시: 페이지 열자마자 «RangeError: Maximum call stack size exceeded»(invoke_iii → wasm 재귀) — 주인 폰 Chrome 스크린샷 2026-09-06 (최우선 · 제약 없음 · 다른 작업보다 먼저)
 범위: 원인이 있는 C# 어디든(`Assets/Scripts/Game/*` 우선) · `ProjectSettings/ProjectSettings.asset`(`webGLDebugSymbols` · `webGLExceptionSupport` 진단용) · `Assets/Tests/PlayMode`(부팅 스모크 회귀) · 필요하면 `.github/workflows/ci.yml`
 배포 상태: gh-pages `20b11aa`(10:37 UTC · **첫 WebGL 배포**) = main `d6f66eb`. 즉 WebGL 에서 게임이 돌아간 적이 아직 없다 — 에디터/PlayMode 에서만 초록이었다. 스택: `invoke_iii (KkomaKnight.framework.js:9:473704)` → `wasm-function[147169]` → `[147187]` → … 반복 = C# 쪽 **무한 재귀**(또는 WebGL 의 작은 스택을 넘는 깊은 재귀). 첫 화면(로딩 직후)에서 난다.
+⚑ **주인 확인(11:3X UTC): «어쨌든 핸드폰으로 잘 된다».** gh-pages 배포는 그대로 `20b11aa`(d6f66eb) 라 **같은 빌드**에서 첫 로드(10:3X)엔 죽고 지금은 된다 = 일시적(첫 로드 캐시/메모리·오디오 디코드·탭 복귀 등 후보). 워커 G(sess-1042 · 헤드리스 재현 실패 · wasm 디코드까지 감)는 **이 세션 안에서** 조사 결과(재현 안 됨 · 후보 · 스택 함수 147169/147187 의 정체)를 PROGRESS 완료 기록에 남기고 T59 를 «원인 미확정 · 주인 확인으로 종결» 로 닫는다. 남는 일은 T60(배포 스모크 게이트 · 모바일 UA 포함) 과 «다시 나면 재등재». 더 파지 않는다.
 1. **재현·읽을 수 있는 스택 확보**: ⓐ `webGLDebugSymbols: 1`(Embedded) 로 켜서 wasm 함수 이름이 스택에 나오게(빌드 한 번 더 · 크기 늘어나도 진단 동안은 허용) · 진단 뒤 되돌릴지는 워커 결정 기록. ⓑ 워커 환경에서 `npx playwright` + chromium headless(`--use-gl=angle --use-angle=swiftshader`)로 https://kuzuni.github.io/aaawunity/ 를 열어 `pageerror`·`console.error` 를 파일로 받는다(T60 의 `tools/webgl_smoke.sh` 를 여기서 먼저 만들어도 된다). WebGL 컨텍스트가 안 떠도 이 에러는 wasm 안이라 그대로 재현된다.
 2. **코드 감사(재귀 후보 · 스택 이름이 나오기 전에도 볼 것)**: 정적 초기화 고리(`Palette.Cat → App.I.Assets.Color → AssetCatalog.Build → …Palette`) · `AssetCatalog.Build/Prefab/Sprite` 의 «없으면 Build» 재진입 · `UiKit.Spawn` 대체 경로 · `Screens.Go ↔ Show` · `TopBar.Build` · `Overlay.Close → 콜백 → Close` · `Bootstrap.Start → DataLoader(WebGL 은 UnityWebRequest 코루틴 경로 · 에디터와 다른 분기) → OnLoaded → App.Show` · 프로퍼티가 자기 자신을 돌려주는 실수(`X => X`) · `Audio` 초기화 · DOTween `OnComplete` 안에서 같은 트윈 재시작. WebGL 은 스레드 없음·`System.IO` 없음·리플렉션 제한 — 에디터에서만 도는 분기(`#if UNITY_EDITOR` 밖의 에디터 전용 API)도 본다.
 3. **고친 뒤 회귀**: PlayMode 에 «부팅 스모크»(Bootstrap → 데이터 로드(UnityWebRequest 경로를 `file://` 로 강제) → 로비 → 전투 진입 → 팝업 1개) 가 없으면 만든다 · `LogAssert.NoUnexpectedReceived`.
@@ -578,6 +581,17 @@
 4. **보유 특전(PerkBook)**·«새로고침» 재굴림도 같은 규칙(T49 와 같은 목록). 승리/패배 팝업엔 붙이지 않는다(카드가 아니다 · 주인이 특전만 말함).
 5. **테스트**(PlayMode `UiSmokeTests` ⑤ 확장): 3택을 연 뒤 ⓐ 카드 프레임 Image 의 material 쉐이더 이름에 `AllIn1SpriteShaderUiMask` ⓑ shine 트윈이 카드 순서대로 시작(마스터 시퀀스 안 Insert 시각이 단조 증가 — `UiKit` 이 시작 시각 목록을 돌려주게) ⓒ `CompleteAllTweens` 뒤 `_ShineLocation` 이 끝 값 ⓓ Close 뒤 머티리얼 인스턴스 0(`Resources.FindObjectsOfTypeAll<Material>` 이름 «PerkShine (Instance)» 0) ⓔ `LogAssert.NoUnexpectedReceived`. WebGL 에서 쉐이더 키워드가 빠지지 않게 머티리얼 에셋에 키워드를 박는다(런타임 `EnableKeyword` 만 쓰면 스트리핑될 수 있다 · T59 규칙: 배포 스모크에서도 확인).
 6. 게이트 + assets-map 한 줄 + PROGRESS T61 행 + 완료 기록(확인 = CI PlayMode + screens 04 PNG 는 참고 · 배포 스모크).
+
+### T62 — 아레나 «순위» 화면(`23_arena_enter.jpg` · 시상대 1·2·3위 + 순위 목록) = GUI Pro **`Social_Ranking` + `ListItem_Ranking`** 프리팹을 조금 변형해서 (주인 2026-09-06 «랭킹 UI 유난히 안 맞음 · 유사한 프리팹 있으니 거기서 변형» · T43 뒤 · 비평 ≥ 8.0)
+범위: `Assets/Scripts/Game/EventsScreen.cs`(T43 이 만든 아레나 입장(23) 페이지 · 순위 목록 부분 — 필요하면 25 «순위 보상» 의 보상 줄도 같은 ListItem 으로) · `Assets/KkomaKnight/catalog.json`(`ui.socialRanking` = `Prefabs~DemoScenes/Social_Ranking.prefab` · `ui.listRanking` = `Prefabs~DemoLayout/ListItem_Ranking.prefab`) · `docs/assets-map.md` · `Core/Layout.cs`·`docs/ref-layout.md`(23 표는 그대로 · 실측 보정만) · `Assets/Tests/PlayMode/EventsScreenTests.cs`·`UiShotsTests`(23 PNG)
+순서: T43(✅ 코드 · 비평 회차 진행 중) 뒤 — T43 비평 lock 과 겹치면 그 워커가 이어서 잡는다.
+주인 원문(2026-09-06 · 11:3X UTC): «랭킹 부분 UI 유난히 안 맞음. 사실 랭킹 부분 UI 프리팹 유사한 게 프리팹으로 있어서 거기서 조금 변형해서 쓰면 거의 똑같은데 참고해».
+1. **재료**: `Theme_Light/Prefabs/Prefabs~DemoScenes/Social_Ranking.prefab`(시상대 + 목록 데모 화면) 과 `Prefabs~DemoLayout/ListItem_Ranking.prefab`(한 줄: 등수 · 초상 · 이름 · 점수 — 데모의 RankingNum_1·2·3 그림 포함). 규칙은 ⓑ 그대로 — 통째로 세우는 게 아니라 **부품으로 뜯어 레퍼런스 23 구도에 맞춘다**. 다만 주인 말대로 이 프리팹은 23 과 거의 같으니 **조각 이동은 최소**(시상대 3자리 · 목록 줄 형식은 프리팹 그대로 두고 위치·크기만 표 ⑬(23) 에 맞춤).
+2. **시상대**: 프리팹의 1·2·3위 자리(초상 + 이름 + 배너)를 그대로 쓰고, 우리 데이터(껍데기 · 상대 초상 = `ui.iconFoe*` · 이름 «도전자 N» · 전투력)로 글자만. 1위 왕관 = `ui.iconCrownGold`(assets-map 261 행) 유지.
+3. **순위 목록**: `ListItem_Ranking` 줄을 목록 개수만큼 복제 — 등수(1~3 은 프리팹의 RankingNum 그림 · 4 이상은 숫자) · 초상 · 이름 · 전투력 · 🏆 점수(레퍼런스 23 의 줄 구성) · «나» 줄은 강조(프리팹에 Focus 변형이 있으면 그것). 스크롤은 기존 UiKit 방식.
+4. **오른쪽 위 Rewards · Merchant 아이콘 · 바닥 «Challenge 🎫x1»** 은 T43 것 유지(위치만 표대로). 25 «순위 보상» 의 «1~4위 보상 줄» 도 같은 `ListItem_Ranking` 으로 바꾸면 통일되니 워커가 보고 정한다(결정 기록).
+5. **비평**: §5 절차 — screens 브랜치 23 PNG 를 `docs/ref/23_arena_enter.jpg` 와 나란히 `Read` 로 보고 10점 채점 · 8.0 이상이 ✅. T43 회차 기록 아래에 «T62 회차» 로 잇는다.
+6. 게이트 + assets-map 두 줄 + PROGRESS T62 행 + 완료 기록(확인 = CI PlayMode `EventsScreenTests` + screens 23 PNG 점수 + 배포 스모크).
 
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
