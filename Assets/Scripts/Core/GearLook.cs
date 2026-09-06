@@ -26,6 +26,36 @@ namespace KkomaKnight.Core
 
         public static bool HasLook(string part) => part == Helm || part == Weapon || part == Armor;
 
+        /// <summary>
+        /// <b>부위</b> 아이콘 키 (T105 · 주인 2026-09-07 «무슨 장비 부위인지 알려주는 아이콘이어야 함 — 투구·갑옷·신발·무기·목걸이·반지 · 지금처럼 치명타·체력·회피 이런 거 아니고») —
+        /// 칸의 다이아 배지와 장착 슬롯의 «여기는 무슨 자리» 표시에 쓴다. <b>세트</b> 아이콘(<c>pi.critical</c>·<c>pi.heart</c>·<c>ui.dodge</c>)은 세트 옵션 줄에서만 계속 쓴다.
+        /// <para>
+        /// 그림은 <b>이미 카탈로그에 있는 것을 그대로 쓴다</b>(T105 1항 «이미 쓰는 것 우선 재사용» · 새 에셋 0 · 카탈로그 불변) — <c>gi.&lt;부위&gt;.crit</c> 여섯 개다.
+        /// 투구·무기·갑옷의 <c>gi.*</c> 는 아이템 아이콘이 CharacterMaker Thumbnail(<c>cmi.*</c>)로 바뀌면서 안 쓰이게 된 자리라 «부위를 뜻하는 일반 그림» 으로 딱 맞고,
+        /// 목걸이(룬 펜던트)·반지(<c>glove</c> · T88)·신발은 아이템 아이콘과 같은 그림이라 «그 부위» 로 바로 읽힌다.
+        /// </para>
+        /// </summary>
+        public static string PartIcon(string part)
+        {
+            // 검 · 투구 · 갑옷 · 신발 · 룬 펜던트(목걸이) · 반지(glove = T88 «장갑 → 반지» · 부위 키는 그대로)
+            switch (part)
+            {
+                case Weapon:
+                    return "gi.weapon.crit";
+                case Helm:
+                    return "gi.helm.crit";
+                case Armor:
+                    return "gi.armor.crit";
+                case "boot":
+                    return "gi.boot.crit";
+                case "neck":
+                    return "gi.neck.crit";
+                case "glove":
+                    return "gi.glove.crit";
+            }
+            return null;
+        }
+
         /// <summary>착용 키 접두(입는 파츠 · Parts/) 와 아이콘 키 접두(Thumbnail/) — 카탈로그 키는 <c>접두 + 부위.세트.등급</c>.</summary>
         public const string PartPrefix = "cm.gear.", IconPrefix = "cmi.gear.";
 

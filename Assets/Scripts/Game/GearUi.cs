@@ -12,7 +12,8 @@ namespace KkomaKnight.Game
     /// </summary>
     public static class GearUi
     {
-        public static readonly string[] ColLeft = { "weapon", "neck", "armor" }, ColRight = { "helm", "glove", "boot" };   // index.html GEAR_COL
+        /// <summary>장착 슬롯 두 열 — <b>왼쪽 = 무기·목걸이·반지(공격) · 오른쪽 = 투구·갑옷·신발(방어)</b>(T105 · 주인 2026-09-07 지정 · T88 의 역할 묶음과 같다 · 예전 index.html GEAR_COL 은 갑옷↔반지가 반대였다).</summary>
+        public static readonly string[] ColLeft = { "weapon", "neck", "glove" }, ColRight = { "helm", "armor", "boot" };
 
         public static string Name(GameData D, GearItem g) => D.Gear.TypeName.TryGetValue(g.Type, out var n) ? n : g.Type;
         public static string Set(GameData D, GearItem g) => D.Gear.SetOf(g.Type);
@@ -80,7 +81,8 @@ namespace KkomaKnight.Game
             }
             UiKit.SetText(cell, "Text_Level", g != null && g.Plus > 0 ? "+" + g.Plus : "");
             var type = UiKit.Find(cell, "TypeArea");
-            if (type != null) { type.gameObject.SetActive(g != null); if (g != null) UiKit.SetSprite(type, "Icon", SetIcon(Set(D, g)), Palette.White); }
+            // 다이아 배지 = **부위** 아이콘(T105 · 주인 «무슨 장비 부위인지 알려주는 아이콘» · 세트 아이콘은 세부 팝업 옵션 줄에서만 쓴다)
+            if (type != null) { type.gameObject.SetActive(g != null); if (g != null) UiKit.SetSprite(type, "Icon", GearLook.PartIcon(g.Part), Palette.White); }
             UiKit.Show(cell, "Check", g != null && o.Equipped && o.EquippedMark);
             if (g != null && o.Fusable && o.FusableDot) { var d = UiKit.Spawn("ui.alertDot", cell); var dr = (RectTransform)d.transform; d.name = "FuseDot"; dr.anchorMin = dr.anchorMax = new Vector2(1, 1); dr.pivot = new Vector2(0.5f, 0.5f); dr.anchoredPosition = new Vector2(-14, -14); dr.sizeDelta = new Vector2(47, 47); }
             if (g != null && o.IsNew) { var n = UiKit.Spawn("ui.alertDot", cell); var nr = (RectTransform)n.transform; n.name = "New"; nr.anchorMin = nr.anchorMax = new Vector2(0, 0); nr.pivot = new Vector2(0.5f, 0.5f); nr.anchoredPosition = new Vector2(18, 18); nr.sizeDelta = new Vector2(44, 44); var nt = UiKit.Text(nr, "N", 22, Palette.White); UiKit.Stretch(nt.rectTransform); }

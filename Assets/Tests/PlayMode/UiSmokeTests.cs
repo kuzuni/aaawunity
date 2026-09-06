@@ -728,6 +728,39 @@ namespace KkomaKnight.Tests.Play
                     else { guis++; Assert.AreEqual(0f, rot, 0.5f, $"슬롯 {i}({part}) GUI Pro 아이콘은 회전 없음"); Assert.AreEqual(new Vector2(0.5f, 0.5f), rt.pivot, $"슬롯 {i}({part}) GUI Pro 아이콘은 프리팹 pivot"); }
                 }
                 Assert.AreEqual(3, parts, "파츠 아이콘 3(투구·무기·갑옷)"); Assert.AreEqual(3, guis, "GUI Pro 아이콘 3(목걸이·장갑·신발)");
+                // T105 — 슬롯 6칸의 «부위» 아이콘: 열 순서(왼쪽 무기·목걸이·반지 / 오른쪽 투구·갑옷·신발) · 세트 아이콘이 아니다 · 빈 슬롯에도 흐리게 켜져 있다
+                {
+                    Assert.AreEqual(new[] { "weapon", "neck", "glove" }, GearUi.ColLeft, "왼쪽 열 = 무기·목걸이·반지(T105 주인 지정)");
+                    Assert.AreEqual(new[] { "helm", "armor", "boot" }, GearUi.ColRight, "오른쪽 열 = 투구·갑옷·신발(T105 주인 지정)");
+                    var setIcons = new[] { "pi.critical", "pi.heart", "ui.dodge" };
+                    for (int i = 0; i < 6; i++)
+                    {
+                        string part = i < 3 ? GearUi.ColLeft[i] : GearUi.ColRight[i - 3];
+                        var pi = UiKit.Find(slotGrp.GetChild(i), "PartIcon"); Assert.IsNotNull(pi, "슬롯 " + i + " 부위 아이콘");
+                        Assert.IsTrue(pi.gameObject.activeInHierarchy, "슬롯 " + i + "(" + part + ") 부위 아이콘은 늘 켜져 있다(T105)");
+                        var pim = pi.GetComponent<Image>();
+                        Assert.AreEqual(_app.Assets.Sprite(GearLook.PartIcon(part)), pim.sprite, "슬롯 " + i + " 부위 아이콘 = " + GearLook.PartIcon(part));
+                        foreach (var k in setIcons) Assert.AreNotEqual(_app.Assets.Sprite(k), pim.sprite, "슬롯 " + i + " 배지에 세트 아이콘(" + k + ")이 남아 있으면 안 된다(T105)");
+                        Assert.AreEqual(1f, pim.color.a, 1e-3f, "전부 장착 상태라 또렷하다");
+                    }
+                    // 하나를 빼면 그 칸만 흐려진다
+                    var offPart = GearUi.ColLeft[0]; var offUid = S.Eq[offPart]; S.Eq.Remove(offPart);
+                    _app.ShowScreen("gear"); yield return Frames(2);
+                    var grp2 = UiKit.Find(_app.Current.Root, "Group_Slot");
+                    var pi0 = UiKit.Find(grp2.GetChild(0), "PartIcon").GetComponent<Image>();
+                    Assert.IsTrue(pi0.gameObject.activeInHierarchy, "빈 슬롯에도 부위 아이콘은 켜져 있다(T105 3항)");
+                    Assert.AreEqual(GearScreen.PartIconEmptyAlpha, pi0.color.a, 1e-3f, "빈 슬롯의 부위 아이콘은 흐리다");
+                    S.Eq[offPart] = offUid; _app.ShowScreen("gear"); yield return Frames(2);
+                }
+                // T105 — 인벤 칸의 다이아 배지도 부위 아이콘이다(세트 아이콘 아님)
+                {
+                    var anyG = S.Inv.Find(x => !S.IsEquipped(x)) ?? S.Inv[0];
+                    var cell = GearUi.Cell(_app.Current.Root, D, anyG, new GearUi.CellOpts(), null); yield return Frames(1);
+                    var ta = UiKit.Find(cell, "TypeArea"); Assert.IsNotNull(ta, "칸 다이아 배지");
+                    var icon = UiKit.Find(ta, "Icon").GetComponent<Image>();
+                    Assert.AreEqual(_app.Assets.Sprite(GearLook.PartIcon(anyG.Part)), icon.sprite, "칸 배지 = 부위 아이콘(T105)");
+                    UnityEngine.Object.Destroy(cell.gameObject); yield return Frames(1);
+                }
             }
             Check("슬롯 아이콘 크기(T17)");
 

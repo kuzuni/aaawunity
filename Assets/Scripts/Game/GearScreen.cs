@@ -38,6 +38,9 @@ namespace KkomaKnight.Game
         readonly SlotUi[] _slot = new SlotUi[SlotCount];
         TopBar _top; HeroView _hero; Transform _content; Text _atk, _hp, _sh; GameObject _forgeDot;
 
+        /// <summary>빈 슬롯의 부위 아이콘 투명도(T105 3항 «비어 있어도 그 부위 아이콘을 흐리게») — 끼우면 1.0.</summary>
+        public const float PartIconEmptyAlpha = 0.45f;
+
         static string PartAt(int slotIndex) => slotIndex < 3 ? GearUi.ColLeft[slotIndex] : GearUi.ColRight[slotIndex - 3];
 
         /// <summary>무대 길 띠 가장자리(무대 % <paramref name="edgeY"/>)에 물결 경계 줄 — 줄 rect 이름 «RoadUp»/«RoadDown»(테스트 계약) · 아래 줄은 <c>localScale.y = −1</c> 로 뒤집는다 · 타일 = 스프라이트 비례(253×33)로 무대 폭을 채우는 만큼.</summary>
@@ -75,7 +78,7 @@ namespace KkomaKnight.Game
                 var host = UiKit.Rect(stage, "Hero"); UiKit.Pct(host, (Layout.GearHero.X + Layout.GearHero.W * 0.5f - hostW * 0.5f - Layout.GearStage.X) / Layout.GearStage.W * 100f, (Layout.GearHero.Y - Layout.GearStage.Y) / Layout.GearStage.H * 100f, hostW / Layout.GearStage.W * 100f, Layout.GearHero.H / Layout.GearStage.H * 100f);
                 _hero = HeroView.Attach(host, HeroView.PlayerSkin(App));
             }
-            // 슬롯 6칸 — 표의 좌열(무기·목걸이·갑옷) / 우열(투구·장갑·신발) · 칸 = ItemFrame_01 조각(본래 190px · 배율로 표 크기에) · 위 «Lv. N» · 왼쪽 위 세트 아이콘 · «+N» 노란 배지 · 오른쪽 위 빨간 점
+            // 슬롯 6칸 — 표의 좌열(무기·목걸이·반지) / 우열(투구·갑옷·신발 · T105 주인 지정 순서) · 칸 = ItemFrame_01 조각(본래 190px · 배율로 표 크기에) · 위 «Lv. N» · 왼쪽 위 세트 아이콘 · «+N» 노란 배지 · 오른쪽 위 빨간 점
             var grp = UiKit.Rect(Root, "Group_Slot"); UiKit.Stretch(grp);
             for (int i = 0; i < SlotCount; i++)
             {
@@ -88,7 +91,8 @@ namespace KkomaKnight.Game
                 // «Lv. N» = 본문 40(T63-gear · 줄 높이 49px ≤ 칸 36% = 53px · 아래 끝이 칸 위 2% 에 걸쳐 레퍼런스처럼 프레임 바로 위) · «+N» 배지 = 아이콘 위 배지라 Small(SlotBadgeSize)
                 // 배지(74~101%)와 다음 칸 «Lv. N»(−34~+2%) 은 피치 8.0(틈 40px)에서 잉크가 안 겹친다(UiSmokeTests ② 가 사각형으로 단언)
                 s.Lv = UiKit.Label(s.Root, SlotLv.X, SlotLv.Y, SlotLv.W, SlotLv.H, "Lv. 0", TextSize.Body, Palette.White, TextAnchor.LowerCenter);
-                s.PartIcon = UiKit.Icon(s.Root, "PartIcon", "pi.attack"); UiKit.Pct(s.PartIcon.rectTransform, -8, -8, 30, 30);
+                // 부위 아이콘 — 빈 슬롯에도 «여기는 무슨 자리» 로 흐리게 깔아 둔다(T105 3항 · Refresh 가 장착 여부로 색만 바꾼다)
+                s.PartIcon = UiKit.Icon(s.Root, "PartIcon", GearLook.PartIcon(part)); UiKit.Pct(s.PartIcon.rectTransform, -8, -8, 30, 30);
                 var badge = UiKit.Panel(s.Root, "PlusBadge", "fr.r12", Palette.Yellow); UiKit.Pct(badge.rectTransform, SlotBadge); s.PlusBadge = badge.gameObject;
                 s.Plus = UiKit.Text(badge.transform, "+0", SlotBadgeSize, Palette.Ink, TextAnchor.MiddleCenter, false, false, TextKind.Small); UiKit.Stretch(s.Plus.rectTransform);
                 var dot = UiKit.Spawn("ui.alertDot", s.Root); var dr = (RectTransform)dot.transform; dot.name = "Alert_Dot_01_Red"; dr.anchorMin = dr.anchorMax = new Vector2(1, 1); dr.pivot = new Vector2(0.5f, 0.5f); dr.anchoredPosition = new Vector2(-6, -6); dr.sizeDelta = new Vector2(44, 44); s.Dot = dot;
@@ -147,7 +151,8 @@ namespace KkomaKnight.Game
                 UiKit.Show(s.Frame, "Add_1", g == null);
                 if (s.Lv != null) s.Lv.text = $"Lv. {lv}";
                 if (s.PlusBadge != null) s.PlusBadge.SetActive(g != null && g.Plus > 0); if (s.Plus != null && g != null) s.Plus.text = "+" + g.Plus;
-                if (s.PartIcon != null) { s.PartIcon.gameObject.SetActive(g != null); if (g != null) { s.PartIcon.sprite = App.Assets.Sprite(GearUi.SetIcon(GearUi.Set(D, g))); s.PartIcon.color = Palette.White; } }
+                // T105 — 부위 아이콘은 **늘 켜 둔다**(빈 슬롯이면 흐리게 · 끼우면 또렷하게). 세트 아이콘이 아니다.
+                if (s.PartIcon != null) { s.PartIcon.gameObject.SetActive(true); s.PartIcon.sprite = App.Assets.Sprite(GearLook.PartIcon(s.Part)); s.PartIcon.color = g != null ? Palette.White : Palette.A(Palette.White, PartIconEmptyAlpha); }
                 if (s.Dot != null) s.Dot.SetActive(GearUi.BetterInInv(S, s.Part));
             }
             // 스탯 · 상단 바 · 대장간 ! · 캐릭터 외형
