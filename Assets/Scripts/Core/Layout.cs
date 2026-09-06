@@ -402,21 +402,25 @@ namespace KkomaKnight.Core
         public static readonly R AtDay7Cell = new R(33.1f, 62.1f, 15.5f, 7.1f);
         public const float AtDay7Pitch = 18.3f;
 
-        // ㉒ 데일리 기프트 팝업 — docs/ref/17_daily_gift.jpg (T44 · ㉒ 표와 같다 · 선물 그림이 리본 위 · 왼쪽 밖 타임라인)
+        // ㉒ 데일리 기프트 팝업 — docs/ref/17_daily_gift.jpg (T77 회차 정정 · 주인 추가 2026-09-07 00:3X «왼쪽 타임라인 없애고 행은 가운데»)
+        // 타임라인(선·점)은 없앴고, 광고 줄은 상자(8.6~91.4) 가로 중앙에 폭 74.4 = 상자 안폭의 89.9%(«~90%») — 왼쪽 여백 4.2 = 오른쪽 여백 4.2.
+        // 줄 안 요소는 옛 표에서 그대로 −6.6%p 평행 이동(제목·진행바·보상 칸)했고, 진행바만 오른쪽 여백(2.2)을 지키며 63.9 → 70.5 로 넓어졌다.
         public static readonly R GfPic = new R(13.3f, 13.1f, 73.4f, 11.9f);
         public static readonly R GfRibbon = new R(4.2f, 24.9f, 91.6f, 3.9f);
         public static readonly R GfBox = new R(8.6f, 28.8f, 82.8f, 52.6f);
         public static readonly R GfTimer = new R(34.0f, 29.2f, 28.0f, 1.6f);
         public static readonly R GfTodayCell = new R(12.8f, 31.5f, 74.4f, 8.1f);
-        public static readonly R GfRow1 = new R(19.4f, 40.1f, 67.8f, 9.3f);
-        public static readonly R GfRow2 = new R(19.4f, 50.1f, 67.8f, 9.3f);
+        public static readonly R GfRow1 = new R(12.8f, 40.1f, 74.4f, 9.3f);
+        public static readonly R GfRow2 = new R(12.8f, 50.1f, 74.4f, 9.3f);
         public const float GfRowPitch = 10.0f; public const int GfRowCount = 4;
-        public static readonly R GfRowTitle = new R(21.1f, 40.5f, 19.2f, 1.7f);
-        public static readonly R GfRowBar = new R(21.1f, 42.8f, 63.9f, 1.3f);
-        public static readonly R GfRowReward = new R(21.5f, 44.7f, 9.3f, 4.0f);
-        public static readonly R GfRowCheck = new R(66.7f, 44.9f, 9.4f, 3.3f);
-        public static readonly R GfTimeline = new R(14.0f, 44.6f, 1.5f, 30.4f);
-        public static readonly R GfTimelineDot = new R(12.2f, 43.8f, 5.0f, 2.0f);
+        public static readonly R GfRowTitle = new R(14.5f, 40.5f, 19.2f, 1.7f);
+        public static readonly R GfRowBar = new R(14.5f, 42.8f, 70.5f, 1.3f);
+        public static readonly R GfRowReward = new R(14.9f, 44.7f, 9.3f, 4.0f);
+        /// <summary>레퍼런스의 ✅ 자리 = 우리는 «광고 보기 / 받기 / 받음 / 잠금» 버튼(T77 · 기능이 생겨 표시 글리프가 버튼이 됐다).
+        /// 가운데(71.4%)는 레퍼런스 ✅ 와 같고 폭만 9.4 → 21.6(버튼 44 «광고 보기» 선호 ≈142px 의 164% · 결정 153 «≥110%»), 세로는 3.3 → 3.8(BoxHeight(44) = 61.6px = 2.64% 위).</summary>
+        public static readonly R GfRowBtn = new R(60.6f, 44.7f, 21.6f, 3.8f);
+        /// <summary>«오늘의 선물» 무료 칸의 같은 버튼 — 줄 버튼과 같은 가운데·폭(레퍼런스도 ✅ 가 같은 x).</summary>
+        public static readonly R GfTodayBtn = new R(60.6f, 34.9f, 21.6f, 3.8f);
 
         // ㉓ 7일 챌린지 팝업 — docs/ref/18_challenge7.jpg (T44 · ㉓ 표와 같다 · 빨간 리본 · 배너 그림 · 왼쪽 일차 탭 7 + 오른쪽 과제 줄)
         public static readonly R C7Ribbon = new R(3.0f, 15.9f, 94.0f, 4.3f);

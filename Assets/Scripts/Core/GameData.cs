@@ -19,6 +19,8 @@ namespace KkomaKnight.Core
         public UiData Ui;
         /// <summary>상점 상품표(다이아 6 · 골드 3) — aaaw data/ 가 아니라 이 레포의 <c>Assets/KkomaKnight/shop.json</c>(카탈로그 텍스트 «data.shop»). 로드는 Bootstrap 이 따로 한다 · 없으면 null(상점이 상품 없이 뜬다).</summary>
         public ShopData Shop;
+        /// <summary>데일리 기프트 수치표(무료 칸 + 광고 누적 줄 4) — aaaw data/ 가 아니라 이 레포의 <c>Assets/KkomaKnight/dailyGift.json</c>(카탈로그 텍스트 «data.dailyGift» · T77). 로드는 Bootstrap 이 따로 한다 · 없으면 null(데일리 기프트 팝업이 줄 없이 뜬다).</summary>
+        public DailyGiftData DailyGift;
 
         public static readonly string[] Files = { "tune.json", "enemies.json", "perks.json", "gear.json", "gacha.json", "combat.json", "ui.json" };
 

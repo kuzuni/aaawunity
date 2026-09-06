@@ -1012,6 +1012,8 @@ MonoBehaviour:
     prefab: {fileID: 4112720960120376265, guid: 39a4454b3c3214218a7d69511a514e5c, type: 3}
   - key: ui.btnSmallOrange
     prefab: {fileID: 7667054196127442761, guid: fa14f63462c874597904836bd8b028e7, type: 3}
+  - key: ui.btnSmallGray
+    prefab: {fileID: 4748574781874855554, guid: e32c16672bef946a3b8cdb9e9364f887, type: 3}
   - key: ui.btnStart
     prefab: {fileID: 1623786085314472190, guid: 6362a70a60809473caf4827a4d0ff549, type: 3}
   - key: ui.frameDark
@@ -1169,6 +1171,8 @@ MonoBehaviour:
   texts:
   - key: data.shop
     text: {fileID: 4900000, guid: 5edbc69efa2cdcb6b106d8355577a053, type: 3}
+  - key: data.dailyGift
+    text: {fileID: 4900000, guid: 63b0a8aef0b3bb050e1badca51f7e5dc, type: 3}
   audio:
   - key: bgm.lobby
     clip: {fileID: 8300000, guid: e8ab4b520cd1ceb6fa53ae0b8ce16276, type: 3}

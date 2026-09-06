@@ -39,6 +39,8 @@ namespace KkomaKnight.Game
         static readonly Layout.R CardMapImage = new Layout.R(5, -67.5f, 90, 167.5f);
 
         TopBar _top; Text _chap; Transform _tabs;
+        /// <summary>«데일리 기프트» 사이드 아이콘의 빨간 알림 점 — 지금 받을 수 있는 줄이 하나라도 있으면 켠다(T77 · <see cref="Refresh"/>).</summary>
+        GameObject _giftDot;
 
         protected override void Build()
         {
@@ -137,6 +139,12 @@ namespace KkomaKnight.Game
                 var ic = UiKit.Icon(cell, "Icon", it.icon); UiKit.Pct(ic.rectTransform, CaptionIcon);
                 var lb = UiKit.Label(cell, CaptionLabel.X, CaptionLabel.Y, CaptionLabel.W, CaptionLabel.H, it.label, TextSize.Aux, Palette.White, TextAnchor.LowerCenter, kind: TextKind.Aux);
                 lb.lineSpacing = UiKit.CaptionLineSpacing;
+                // T77 — «데일리 기프트» 칸만 빨간 알림 점(아이콘 오른쪽 위 · 받을 수 있는 줄이 있을 때만 · Refresh 가 켜고 끈다)
+                if (it.key == SideDailyGift)
+                {
+                    var dot = UiKit.Spawn("ui.alertDot", cell); dot.name = "GiftDot";
+                    var drt = (RectTransform)dot.transform; UiKit.Pct(drt, 68, 2, 26, 11); _giftDot = dot; dot.SetActive(false);
+                }
                 string key = it.key; UiKit.Clickable(cell, () => OnSide(key));
             }
             // T69-lobby — 기둥 «상자» 에 «검은 아웃라인»(레퍼런스 01 의 사이드 기둥·보조 줄·성·이벤트 전부 검은 외곽선) · 기둥 안 칸끼리는 레퍼런스도 선이 없다(칸마다는 넣지 않는다)
@@ -171,6 +179,8 @@ namespace KkomaKnight.Game
             var s = App.Save;
             if (_chap != null) _chap.text = $"챕터 {s.SelChapter}";
             _top?.Refresh();
+            // T77 — 데일리 기프트에 받을 것이 있으면 사이드 아이콘에 빨간 점
+            if (_giftDot != null) _giftDot.SetActive(Core.DailyGift.AnyClaimable(s, App.Data != null ? App.Data.DailyGift : null, SaveStore.Today()));
         }
     }
 

@@ -44,6 +44,7 @@ namespace KkomaKnight.Game
             Debug.Log($"[KkomaKnight] data loaded: chapters={d.Enemies.Chapters.Count} perks={d.Perks.Perks.Count} source={d.Tune.Source}");
             if (catalog == null) Debug.LogError("[KkomaKnight] AssetCatalog 이 씬에 연결되지 않았다 — Bootstrap.catalog");
             d.Shop = LoadShop(catalog);
+            d.DailyGift = LoadDailyGift(catalog);
             App.Create(d, catalog, uiFont, Camera.main);
             if (_boot != null) Destroy(_boot.gameObject);
         }
@@ -55,6 +56,15 @@ namespace KkomaKnight.Game
             if (ta == null) { Debug.LogError("[KkomaKnight] shop.json 이 카탈로그(data.shop)에 없다 — 상점 상품표 없음"); return null; }
             try { return ShopData.Parse(ta.text); }
             catch (Exception e) { Debug.LogError("[KkomaKnight] shop.json 파싱 실패: " + e.Message); return null; }
+        }
+
+        /// <summary>데일리 기프트 수치표 — 이 레포 전용 <c>Assets/KkomaKnight/dailyGift.json</c>(카탈로그 텍스트 «data.dailyGift» · T77). 못 읽으면 null(팝업이 줄 없이 뜨고 에러 로그 1줄).</summary>
+        static DailyGiftData LoadDailyGift(AssetCatalog catalog)
+        {
+            var ta = catalog != null ? catalog.Text("data.dailyGift") : null;
+            if (ta == null) { Debug.LogError("[KkomaKnight] dailyGift.json 이 카탈로그(data.dailyGift)에 없다 — 데일리 기프트 표 없음"); return null; }
+            try { return DailyGiftData.Parse(ta.text); }
+            catch (Exception e) { Debug.LogError("[KkomaKnight] dailyGift.json 파싱 실패: " + e.Message); return null; }
         }
 
         void OnError(string msg)

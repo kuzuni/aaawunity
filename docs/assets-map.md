@@ -504,6 +504,7 @@
 | prefabs | `ui.btnYellow` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_02_Yellow.prefab` | root 2103124822572054393 |  |
 | prefabs | `ui.btnSmallBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_01_Blue.prefab` | root 4112720960120376265 | HUD 배속(x1/x2) 작은 버튼(왼쪽 아래 · 패널 바로 위) |
 | prefabs | `ui.btnSmallOrange` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_01_Orange.prefab` | root 7667054196127442761 |  |
+| prefabs | `ui.btnSmallGray` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_01_Gray.prefab` | root 4748574781874855554 | 잠긴/이미 받은 줄의 회색 작은 버튼(Button_01_Gray) — 데일리 기프트 «잠금»(T77 · 주 = 주황 · 광고 = 파랑 · 비활성 = 회색 규칙) |
 | prefabs | `ui.btnStart` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_03_Red.prefab` | root 1623786085314472190 | 로비 START (Button_03_Red) |
 | prefabs | `ui.frameDark` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_Square_R12_NoBorder_TransperDark.prefab` | root 3811192130493240385 | HUD 하단 반투명 패널 · 스탯 8칸 상자(T35) · 로비 사이드 기둥 · T37: 장비 화면 스탯 3칸(공·❤·🛡) 상자 · T39: 대장간 화덕 상자 + 안내 문구 상자 |
 | prefabs | `ui.frameIvory` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_Rectangle_01_Border_Ivory.prefab` | root 1280354769812679374 |  |
@@ -580,6 +581,7 @@
 | colors | `col.goldFill` | `#F3A80E` | #F3A80E |  |
 | colors | `col.slate` | `#415760` | #415760 |  |
 | texts | `data.shop` | `Assets/KkomaKnight/shop.json` | fileID 4900000 | 상점 상품표 JSON(이 레포 전용 · 승인 대기 25 기본값 · 다이아 6종 개수 + 골드 3종 다이아 가격) — Bootstrap 이 읽어 GameData.Shop 에 올린다. 수치를 바꾸려면 이 파일만 |
+| texts | `data.dailyGift` | `Assets/KkomaKnight/dailyGift.json` | fileID 4900000 | 데일리 기프트 수치표 JSON(이 레포 전용 · 주인 2026-09-07 · 무료 칸 다이아 100 + 광고 누적 1/2/3/6 줄) — Bootstrap 이 읽어 GameData.DailyGift 에 올린다. 수치를 바꾸려면 이 파일만 |
 | audio | `bgm.lobby` | `Assets/Audio/bgm/lobby.ogg` | fileID 8300000 | 로비·장비·상점·대장간 배경음 — Juhani Junkala «4 Chiptunes (Adventure)» Title Screen(CC0 · 11초 루프) · Audio.Bgm 이 화면 전환마다 고른다(App.ShowScreen) |
 | audio | `bgm.battle` | `Assets/Audio/bgm/battle.ogg` | fileID 8300000 | 전투 배경음(맵 4종 공용 1곡) — Juhani Junkala «4 Chiptunes (Adventure)» Level 1(CC0 · 74초 루프) |
 | audio | `bgm.boss` | `Assets/Audio/bgm/boss.ogg` | fileID 8300000 | 보스 등장(BossWarn) 뒤 배경음 — SketchyLogic «NES Shooter Music» boss(CC0 · 34초 루프) |

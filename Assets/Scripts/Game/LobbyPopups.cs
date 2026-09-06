@@ -53,7 +53,8 @@ namespace KkomaKnight.Game
             if (area != null) { UiKit.Clear(area); var f = UiKit.Spawn("ui.itemFrame." + frameColor, area); UiKit.Stretch((RectTransform)f.transform); }
             var item = UiKit.Find(frt, "Item");
             if (item != null) { item.gameObject.SetActive(true); UiKit.SetSprite(frt, "Item", iconKey, Palette.White); }
-            if (!string.IsNullOrEmpty(qty)) { var q = UiKit.Label(cell, 24, 58, 72, 40, qty, TextSize.Aux, Palette.White, TextAnchor.LowerRight, kind: TextKind.Aux); q.name = "Qty"; q.fontStyle = FontStyle.Bold; }
+            // 수량 글자 칸 — 보조 36 의 한 줄(TextSize.BoxHeight(36) = 50.4px)이 들어가야 한다(T63 · T77 이 처음 쓴다): 칸 4.0%(93.5px)의 56% = 52.4px · 폭 76%(76px)는 «300»(≈54px)의 141%
+            if (!string.IsNullOrEmpty(qty)) { var q = UiKit.Label(cell, 20, 44, 76, 56, qty, TextSize.Aux, Palette.White, TextAnchor.LowerRight, kind: TextKind.Aux); q.name = "Qty"; q.fontStyle = FontStyle.Bold; }
             if (locked) { var lk = UiKit.Icon(cell, "Lock", "ui.iconLock"); UiKit.Pct(lk.rectTransform, 64, -16, 44, 44); }
             return cell;
         }
@@ -198,51 +199,148 @@ namespace KkomaKnight.Game
             UiKit.Tag(day7.transform, "7일 칸"); UiKit.Tag(head7.transform.parent, "7일 칸 머리"); UiKit.TagGroup(grid, "7일 보상 줄(2칸)", r7); TagClose(app);
         }
 
-        // ───────────────────────── 17 데일리 기프트 ─────────────────────────
-        static readonly int[] GiftAds = { 1, 2, 3, 6 };
-        static readonly string[] GiftIcons = { "ui.bookBlue", "ui.hourglass", "ui.potionRed", "ui.gemRed" };
+        // ───────────────────────── 17 데일리 기프트 (T77 — 껍데기 → 동작하는 기능) ─────────────────────────
 
-        /// <summary>데일리 기프트 팝업(표 ㉒) — 리본 위 선물 그림 → 노란 리본 «데일리 기프트» → 노란 테두리 박스: ⏱ 종료 줄 · «오늘의 선물» 칸(보상 + 받기) · «광고 N회 보기» 줄 4(진행바 · 보상 · 광고 버튼) · 왼쪽 노란 타임라인(선 + 점 4) → «탭하여 닫기».</summary>
+        /// <summary>데일리 기프트 줄의 오른쪽 버튼 상태 — 레퍼런스 17 의 ✅ 자리(표 ㉒ «광고 줄 버튼»).</summary>
+        enum GiftBtn
+        {
+            /// <summary>«받기»(주황 = 주 버튼 색 규칙) — 누적이 닿았고 아직 안 받은 열린 줄.</summary>
+            Claim,
+            /// <summary>«광고 보기»(파랑 = 광고/정보 색 규칙) — 열린 줄인데 누적이 모자람.</summary>
+            Ad,
+            /// <summary>이미 받음 — 레퍼런스처럼 초록 ✅(버튼이 아니다).</summary>
+            Done,
+            /// <summary>«잠금»(회색 · 비활성) — 위 줄을 아직 안 받았다(주인 추가 2026-09-07 00:3X «위에서 아래로 순서대로»).</summary>
+            Locked,
+        }
+
+        /// <summary>줄 오른쪽 버튼(또는 ✅) 한 개 — 표 ㉒ «광고 줄 버튼» 자리. 이름은 <paramref name="name"/>(스모크 테스트가 찾는다).</summary>
+        static RectTransform GiftButton(Transform parent, Layout.R parentR, Layout.R r, string name, GiftBtn st, Action onClick)
+        {
+            if (st == GiftBtn.Done)
+            {
+                var ok = UiKit.Icon(parent, name, "pi.check", Palette.Green); UiKit.Pct(ok.rectTransform, r.Within(parentR));
+                return ok.rectTransform;
+            }
+            string key = st == GiftBtn.Claim ? "ui.btnSmallOrange" : st == GiftBtn.Ad ? "ui.btnSmallBlue" : "ui.btnSmallGray";
+            string label = st == GiftBtn.Claim ? "받기" : st == GiftBtn.Ad ? "광고 보기" : "잠금";
+            var b = UiKit.Button(parent, key, label, st == GiftBtn.Locked ? (Action)(() => { }) : onClick, r.Within(parentR));
+            b.name = name;
+            if (st == GiftBtn.Locked) UiKit.SetInteractable(b.GetComponent<Button>(), false);
+            return b;
+        }
+
+        /// <summary>자정까지 남은 시간 — «종료까지 hh:mm:ss»(상점 무료 보급 줄과 같은 문법 · 표에 없는 날은 «--:--:--»).</summary>
+        static string GiftEndsIn()
+        {
+            var left = DateTime.Today.AddDays(1) - DateTime.Now; if (left.Ticks < 0) left = TimeSpan.Zero;
+            return $"종료까지 {(int)left.TotalHours:00}:{left.Minutes:00}:{left.Seconds:00}";
+        }
+
+        /// <summary>
+        /// 데일리 기프트 팝업(표 ㉒ · <b>T77 = 실제로 동작한다</b>) — 리본 위 선물 그림 → 노란 리본 «데일리 기프트» → 노란 테두리 박스:
+        /// ⏱ 자정까지 남은 시간(1초 갱신) · «오늘의 선물» 무료 1칸(다이아 <c>freeGift.gem</c> · 광고 없이 하루 1회) ·
+        /// «광고 N회 보기/선물» 줄(<c>dailyGift.json milestones</c> 개수만큼 · 진행바 <c>min(누적,N)/N</c> · 보상 칸 · 오른쪽 버튼) → «탭하여 닫기».
+        /// 줄은 <b>위에서 아래로 순서대로</b> 열린다(무료 칸 → 줄 1 → …) · 광고는 잠긴 줄에서도 누적된다 · 매일 초기화(<see cref="Core.DailyGift.Roll"/>).
+        /// 왼쪽 노란 타임라인(선 + 육각 점)은 주인 지시(2026-09-07 00:3X)로 <b>넣지 않는다</b> — 그만큼 줄이 상자 가로 중앙으로 넓어졌다(표 ㉒ 회차 정정).
+        /// </summary>
         public static void DailyGift(App app)
         {
-            var ov = app.Overlay; var B = Layout.GfBox;
+            var ov = app.Overlay; var B = Layout.GfBox; var S = app.Save;
+            var D = app.Data != null ? app.Data.DailyGift : null;
+            string today = SaveStore.Today();
+            if (D != null) Core.DailyGift.Roll(S, D, today);
+
             var box = ov.OpenBox("ui.popup.yellow", "ui.title.yellow", "데일리 기프트", B, () => ov.Close()); box.name = "DailyGiftBox";
             var rib = Ribbon(box, "ui.title.yellow", Layout.GfRibbon, B);
             var pic = UiKit.Icon(ov.Root, "GiftPic", "ui.gift"); UiKit.Pct(pic.rectTransform, Layout.GfPic); pic.transform.SetSiblingIndex(1);   // 어둠 위 · 상자 아래
-            var timer = TimerRow(box, B, Layout.GfTimer, "종료까지 " + Dashes);
-            var today = UiKit.Panel(box, "Today", "fr.r12", Palette.A(Palette.Sky, 0.55f)); UiKit.Pct(today.rectTransform, Layout.GfTodayCell.Within(B));
+            var timer = TimerRow(box, B, Layout.GfTimer, GiftEndsIn());
+            var timerTxt = timer.GetComponentInChildren<Text>(true);
+            // «Ends in» 1초 갱신 — 팝업이 열려 있는 동안만(Overlay.OnTick 은 Begin/Close 가 비운다 · 트윈이 아니라 경고 0)
+            float acc = 0f;
+            ov.OnTick = () => { acc += Time.unscaledDeltaTime; if (acc < 1f) return; acc = 0f; if (timerTxt != null) timerTxt.text = GiftEndsIn(); };
+
+            var host = UiKit.Rect(box, "GiftRows"); UiKit.Stretch(host);   // «받기» 뒤에 이 안만 다시 그린다(팝업을 다시 열지 않는다 = 열림음 1번)
+            Action refresh = null;
+            refresh = () => { UiKit.Clear(host); BuildGiftRows(app, host, B, D, today, refresh); };
+            refresh();
+
+            // 비평 이름표(표 ㉒) — 다시 그려도 자리가 같으므로 여기서 한 번(줄 조각의 이름표는 BuildGiftRows 안)
+            UiKit.Tag(pic.transform, "선물 그림"); if (rib != null) UiKit.Tag(rib, "제목 리본"); UiKit.Tag(box, "팝업 박스"); UiKit.Tag(timer, "종료 시각 줄"); TagClose(app);
+        }
+
+        /// <summary>«오늘의 선물» 칸 + 광고 줄 N개를 <paramref name="host"/> 에 그린다(상태가 바뀌면 <paramref name="refresh"/> 로 이 안만 다시 그린다).</summary>
+        static void BuildGiftRows(App app, RectTransform host, Layout.R B, DailyGiftData D, string today, Action refresh)
+        {
+            var S = app.Save; var ov = app.Overlay;
+            // ── «오늘의 선물»(무료 1칸 · 주인 확정 «무료 1칸 = 다이아 100» → dailyGift.json freeGift.gem)
+            var T = Layout.GfTodayCell;
+            var todayCell = UiKit.Panel(host, "Today", "fr.r12", Palette.A(Palette.Sky, 0.55f)); UiKit.Pct(todayCell.rectTransform, T.Within(B));
+            UiKit.Bordered(todayCell.rectTransform);   // T69 — 칸 «검은 아웃라인»
+            var th = Head(host, B, new Layout.R(T.X, T.Y, T.W, 2.4f), "오늘의 선물", Palette.A(Palette.Dim, 0.5f), "TodayHead");
+            th.alignment = TextAnchor.MiddleLeft; UiKit.Pct(th.rectTransform, 8, 0, 90, 100);
+            var gi = UiKit.Icon(th.transform.parent, "Icon", "pi.gift", Palette.Yellow); UiKit.Pct(gi.rectTransform, 1.5f, 10, 5, 80);
+            double freeGem = D != null ? D.FreeGem : 0;
+            Cell(host, B, new Layout.R(T.X + 1.6f, T.Y + 3.0f, 8.2f, 4.5f), "plum", "ui.gemRed", qty: freeGem > 0 ? UiKit.FmtQty(freeGem) : null, name: "TodayCell");
+            bool canFree = D != null && Core.DailyGift.CanFree(S, D, today);
+            GiftButton(host, B, Layout.GfTodayBtn, "TodayGetBtn", canFree ? GiftBtn.Claim : GiftBtn.Done, () =>
             {
-                var T = Layout.GfTodayCell;
-                var th = Head(box, B, new Layout.R(T.X, T.Y, T.W, 2.4f), "오늘의 선물", Palette.A(Palette.Dim, 0.5f), "TodayHead");
-                th.alignment = TextAnchor.MiddleLeft; UiKit.Pct(th.rectTransform, 8, 0, 90, 100);
-                var gi = UiKit.Icon(th.transform.parent, "Icon", "pi.gift", Palette.Yellow); UiKit.Pct(gi.rectTransform, 1.5f, 10, 5, 80);
-                Cell(box, B, new Layout.R(T.X + 1.6f, T.Y + 3.0f, 8.2f, 4.5f), "plum", "ui.gemRed");
-                var get = UiKit.Button(box, "ui.btnSmallOrange", "받기", () => { }, new Layout.R(T.X + T.W - 13.5f, T.Y + 3.2f, 12.0f, 4.0f).Within(B)); get.name = "TodayGetBtn";
-            }
-            RectTransform row1 = null, row2 = null, title1 = null, bar1 = null, reward1 = null, check1 = null;
-            for (int i = 0; i < Layout.GfRowCount; i++)
+                double g = Core.DailyGift.ClaimFree(S, D, today);
+                if (g <= 0) return;
+                app.Persist(); app.Current?.Refresh(); app.Toast($"다이아 {UiKit.FmtQty(g)} 수령!");
+                refresh(); PopReward(host, "TodayCell");
+            });
+
+            // ── 광고 누적 줄(개수·값 전부 dailyGift.json — 코드에 숫자 없음)
+            int n = D != null ? D.Milestones.Count : 0;
+            RectTransform row1 = null, row2 = null, title1 = null, bar1 = null, reward1 = null, btn1 = null;
+            for (int i = 0; i < n; i++)
             {
+                var m = D.Milestones[i];
                 float dy = i * Layout.GfRowPitch;
-                var row = UiKit.Panel(box, "Ad:" + i, "fr.r12", Palette.A(Palette.Brown, 0.75f)); UiKit.Pct(row.rectTransform, Sh(Layout.GfRow1, 0, dy).Within(B));
+                var row = UiKit.Panel(host, "Ad:" + i, "fr.r12", Palette.A(Palette.Brown, 0.75f)); UiKit.Pct(row.rectTransform, Sh(Layout.GfRow1, 0, dy).Within(B));
+                UiKit.Bordered(row.rectTransform);   // T69
+                bool locked = Core.DailyGift.Locked(S, D, i, today);
+                bool claimed = Core.DailyGift.Claimed(S, i);
+                bool canClaim = Core.DailyGift.CanClaim(S, D, i, today);
                 // 제목 칸 = 표 ㉒ 19.2×1.7%(207×40px) → 폭 GfRowTitleW 24% · 높이 LpLineH 2.2%(본문 40 «광고 6회 보기» ≈214px 가 줄바꿈되고 세로로 넘치던 것 · 이름표는 글자 덩어리를 잰다)
                 var tR = Sh(Layout.GfRowTitle, 0, dy); tR = new Layout.R(tR.X, tR.Y, Layout.GfRowTitleW, tR.H).WithH(Layout.LpLineH);
-                var title = UiKit.Label(box, 0, 0, 100, 100, $"광고 {GiftAds[i]}회 보기", TextSize.Body, Palette.White, TextAnchor.MiddleLeft); title.name = "Title"; UiKit.Pct(title.rectTransform, tR.Within(B));
-                var bar = UiKit.MakeBar(box, "ui.sliderBlue"); bar.Root.name = "Bar"; UiKit.Pct(bar.Root, Sh(Layout.GfRowBar, 0, dy).WithH(Layout.LpBarH).Within(B)); bar.Set(0, "0/" + GiftAds[i]);
-                var reward = Cell(box, B, Sh(Layout.GfRowReward, 0, dy), i % 2 == 0 ? "green" : "plum", GiftIcons[i]);
-                var ad = UiKit.Button(box, "ui.btnSmallBlue", "광고", () => { }, Sh(Layout.GfRowCheck, 0, dy).Within(B)); ad.name = "AdBtn";
-                if (i == 0) { row1 = row.rectTransform; title1 = title.rectTransform; bar1 = bar.Root; reward1 = reward; check1 = ad; } else if (i == 1) row2 = row.rectTransform;
+                string label = m.Gift ? $"광고 {m.Ads}회 선물" : $"광고 {m.Ads}회 보기";
+                var title = UiKit.Label(host, 0, 0, 100, 100, label, TextSize.Body, Palette.White, TextAnchor.MiddleLeft); title.name = "Title"; UiKit.Pct(title.rectTransform, tR.Within(B));
+                int cur = S.GiftAds < m.Ads ? S.GiftAds : m.Ads;
+                var bar = UiKit.MakeBar(host, "ui.sliderBlue"); bar.Root.name = "Bar"; UiKit.Pct(bar.Root, Sh(Layout.GfRowBar, 0, dy).WithH(Layout.LpBarH).Within(B));
+                bar.Set(m.Ads > 0 ? (double)cur / m.Ads : 0, cur + "/" + m.Ads);
+                var reward = Cell(host, B, Sh(Layout.GfRowReward, 0, dy), "plum", "ui.gemRed", qty: UiKit.FmtQty(m.Gem), locked: locked, name: "Reward:" + i);
+                var st = claimed ? GiftBtn.Done : locked ? GiftBtn.Locked : canClaim ? GiftBtn.Claim : GiftBtn.Ad;
+                int idx = i;
+                var btn = GiftButton(host, B, Sh(Layout.GfRowBtn, 0, dy), "AdBtn", st, () =>
+                {
+                    if (st == GiftBtn.Claim)
+                    {
+                        double g = Core.DailyGift.Claim(S, D, idx, today);
+                        if (g <= 0) return;
+                        app.Persist(); app.Current?.Refresh(); app.Toast($"다이아 {UiKit.FmtQty(g)} 수령!");
+                        refresh(); PopReward(host, "Reward:" + idx);
+                    }
+                    else   // 광고 보기 — 실제 광고 SDK 없음: T23 과 같은 모의 카운트다운 3초 뒤 누적 +1 (팝업을 다시 연다)
+                    {
+                        ov.AdCountdown(GiftAdSeconds, () => { Core.DailyGift.WatchAd(S, D, today); app.Persist(); app.Current?.Refresh(); DailyGift(app); });
+                    }
+                });
+                if (i == 0) { row1 = row.rectTransform; title1 = title.rectTransform; bar1 = bar.Root; reward1 = reward; btn1 = btn; } else if (i == 1) row2 = row.rectTransform;
             }
-            var line = UiKit.Panel(box, "Timeline", "fr.rect", Palette.Yellow); UiKit.Pct(line.rectTransform, Layout.GfTimeline.Within(B));
-            RectTransform dot0 = null;
-            for (int i = 0; i < Layout.GfRowCount; i++)
-            {
-                var dot = UiKit.Icon(box, "Dot:" + i, "fr.circle", Palette.Yellow); UiKit.Pct(dot.rectTransform, Sh(Layout.GfTimelineDot, 0, i * Layout.GfRowPitch).Within(B));
-                if (i == 0) dot0 = dot.rectTransform;
-            }
-            // 비평 이름표(표 ㉒)
-            UiKit.Tag(pic.transform, "선물 그림"); if (rib != null) UiKit.Tag(rib, "제목 리본"); UiKit.Tag(box, "팝업 박스"); UiKit.Tag(timer, "종료 시각 줄"); UiKit.Tag(today.transform, "오늘의 선물 칸");
-            UiKit.Tag(row1, "광고 줄 1"); UiKit.Tag(row2, "광고 줄 2"); UiKit.Tag(title1, "광고 줄 제목(1줄)", textBounds: true); UiKit.Tag(bar1, "광고 줄 진행바(1줄)"); UiKit.Tag(reward1, "광고 줄 보상 아이콘(1줄)"); UiKit.Tag(check1, "광고 줄 체크(1줄)");
-            UiKit.Tag(line.transform, "타임라인 선"); UiKit.Tag(dot0, "타임라인 점(1개)"); TagClose(app);
+            // 비평 이름표(표 ㉒ · 타임라인 두 행은 주인 지시로 삭제)
+            UiKit.Tag(todayCell.transform, "오늘의 선물 칸"); UiKit.Tag(UiKit.Find(host, "TodayGetBtn"), "오늘의 선물 버튼");
+            UiKit.Tag(row1, "광고 줄 1"); UiKit.Tag(row2, "광고 줄 2"); UiKit.Tag(title1, "광고 줄 제목(1줄)", textBounds: true); UiKit.Tag(bar1, "광고 줄 진행바(1줄)"); UiKit.Tag(reward1, "광고 줄 보상 아이콘(1줄)"); UiKit.Tag(btn1, "광고 줄 버튼(1줄)");
+        }
+
+        /// <summary>모의 광고 카운트다운 초 — T23(쉼터·천사)과 같은 3초.</summary>
+        public const int GiftAdSeconds = 3;
+
+        /// <summary>받은 보상 칸이 «팝» 하고 커졌다 돌아온다(T49 감각 · 다시 그린 뒤라 이름으로 찾는다).</summary>
+        static void PopReward(RectTransform host, string name)
+        {
+            var c = UiKit.Find(host, name); if (c != null) UiKit.PopIn((RectTransform)c, 0.7f, 0.32f);
         }
 
         // ───────────────────────── 18 7일 챌린지 ─────────────────────────

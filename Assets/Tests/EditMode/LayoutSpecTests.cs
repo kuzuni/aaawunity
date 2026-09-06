@@ -215,8 +215,15 @@ namespace KkomaKnight.Tests
 
             Same(s, "㉒", "선물 그림", Layout.GfPic); Same(s, "㉒", "제목 리본", Layout.GfRibbon); Same(s, "㉒", "팝업 박스", Layout.GfBox); Same(s, "㉒", "종료 시각 줄", Layout.GfTimer); Same(s, "㉒", "오늘의 선물 칸", Layout.GfTodayCell);
             Same(s, "㉒", "광고 줄 1", Layout.GfRow1); Same(s, "㉒", "광고 줄 2", Layout.GfRow2); Same(s, "㉒", "광고 줄 제목(1줄)", Layout.GfRowTitle); Same(s, "㉒", "광고 줄 진행바(1줄)", Layout.GfRowBar);
-            Same(s, "㉒", "광고 줄 보상 아이콘(1줄)", Layout.GfRowReward); Same(s, "㉒", "광고 줄 체크(1줄)", Layout.GfRowCheck); Same(s, "㉒", "타임라인 선", Layout.GfTimeline); Same(s, "㉒", "타임라인 점(1개)", Layout.GfTimelineDot);
+            Same(s, "㉒", "광고 줄 보상 아이콘(1줄)", Layout.GfRowReward); Same(s, "㉒", "광고 줄 버튼(1줄)", Layout.GfRowBtn); Same(s, "㉒", "오늘의 선물 버튼", Layout.GfTodayBtn);
             Assert.That(Layout.GfRow2.Y - Layout.GfRow1.Y, Is.EqualTo(Layout.GfRowPitch).Within(0.05f));
+            // T77 «행은 중앙 정렬» — 광고 줄이 팝업 박스 가로 가운데(좌우 여백 같음) · 폭은 박스 안폭의 ~90% · 오늘의 선물 칸과 같은 폭
+            Assert.That(Layout.GfRow1.X - Layout.GfBox.X, Is.EqualTo(Layout.GfBox.X + Layout.GfBox.W - (Layout.GfRow1.X + Layout.GfRow1.W)).Within(0.15f), "광고 줄 좌우 여백이 같다(중앙 정렬)");
+            Assert.That(Layout.GfRow1.W / Layout.GfBox.W, Is.EqualTo(0.90).Within(0.02), "광고 줄 폭 = 상자 안폭의 ~90%");
+            Assert.That(Layout.GfRow1.X, Is.EqualTo(Layout.GfTodayCell.X).Within(0.05f)); Assert.That(Layout.GfRow1.W, Is.EqualTo(Layout.GfTodayCell.W).Within(0.05f));
+            // 레퍼런스 ✅(66.7 + 9.4/2 = 71.4) 와 버튼 가운데가 같다 — 폭만 버튼 글자에 맞춰 넓혔다
+            Assert.That(Layout.GfRowBtn.X + Layout.GfRowBtn.W / 2f, Is.EqualTo(71.4f).Within(0.2f), "줄 버튼 가운데 = 레퍼런스 ✅ 가운데");
+            Assert.That(Layout.GfTodayBtn.X, Is.EqualTo(Layout.GfRowBtn.X).Within(0.05f)); Assert.That(Layout.GfTodayBtn.W, Is.EqualTo(Layout.GfRowBtn.W).Within(0.05f));
 
             Same(s, "㉓", "제목 리본", Layout.C7Ribbon); Same(s, "㉓", "팝업 박스", Layout.C7Box); Same(s, "㉓", "종료 시각 줄", Layout.C7Timer); Same(s, "㉓", "배너 그림", Layout.C7Banner); Same(s, "㉓", "정보 버튼", Layout.C7Info);
             Same(s, "㉓", "트랙 아이콘 줄(6칸)", Layout.C7TrackIcons); Same(s, "㉓", "트랙 아이콘(1칸)", Layout.C7TrackIcon); Same(s, "㉓", "트랙 숫자 줄", Layout.C7TrackNums);

@@ -246,7 +246,7 @@ namespace KkomaKnight.Tests.Play
 
             // T44 — 로비 사이드 껍데기 6종: 팝업 4(퀘스트·출석·데일리 기프트·7일 챌린지 = 공통 팝업 문법 · 명판 · «탭하여 닫기» · 배경 탭 닫기 · X 없음) + 페이지 2(특권 = 사이드 · 시즌 패스 = 이벤트 배너 · 상단 바 + 뒤로 ◀ · 탭 바 없음)
             {
-                (string key, string title, string mark)[] pops = { (LobbyScreen.SideQuest, "퀘스트", "새로고침까지"), (LobbyScreen.SideAttendance, "출석 보상", "7일차"), (LobbyScreen.SideDailyGift, "데일리 기프트", "광고 6회 보기"), (LobbyScreen.SideChallenge7, "7일 챌린지", "7일차") };
+                (string key, string title, string mark)[] pops = { (LobbyScreen.SideQuest, "퀘스트", "새로고침까지"), (LobbyScreen.SideAttendance, "출석 보상", "7일차"), (LobbyScreen.SideDailyGift, "데일리 기프트", "광고 1회 보기"), (LobbyScreen.SideChallenge7, "7일 챌린지", "7일차") };
                 foreach (var p in pops)
                 {
                     Assert.IsTrue(ClickNamed(lobby, "Side:" + p.key), "사이드 " + p.key); yield return Frames(2);
@@ -266,9 +266,48 @@ namespace KkomaKnight.Tests.Play
                 AssertNoTextClip("출석 팝업", _app.Overlay.Root);
                 { var rib = UiKit.Find(_app.Overlay.Root, "ui.title.yellow"); Assert.IsNotNull(rib, "출석 리본"); var rt = rib.GetComponentInChildren<Text>(true); Assert.IsNotNull(rt, "출석 리본 글자"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(rt), "리본 = 제목 종류"); Assert.GreaterOrEqual(rt.rectTransform.rect.height, rt.preferredHeight, "리본 글자 rect ≥ 선호 높이(RibbonTextFit)"); }
                 _app.Overlay.Close(); yield return Frames(1);
-                LobbyPopups.DailyGift(_app); yield return Frames(1); Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "GiftPic"), "선물 그림"); Assert.AreEqual(4, CountNamed(_app.Overlay.Root, "Ad:"), "광고 줄 4"); Assert.AreEqual(4, CountNamed(_app.Overlay.Root, "Dot:"), "타임라인 점 4");
+                // T77 — 데일리 기프트는 이제 «동작하는» 화면이다(껍데기 아님): 하루 상태를 초기화한 뒤 무료 칸 → 줄 1 순서로 연다
+                var GD = _app.Data.DailyGift; Assert.IsNotNull(GD, "dailyGift.json 이 카탈로그(data.dailyGift)로 로드됐다");
+                _app.Save.GiftDay = ""; _app.Save.GiftAds = 0; _app.Save.GiftFree = false; _app.Save.GiftClaimed.Clear();
+                KkomaKnight.Core.DailyGift.Roll(_app.Save, GD, SaveStore.Today());
+                double gem0 = _app.Save.Gem;
+                LobbyPopups.DailyGift(_app); yield return Frames(1);
+                Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "GiftPic"), "선물 그림");
+                Assert.AreEqual(GD.Milestones.Count, CountNamed(_app.Overlay.Root, "Ad:"), "광고 줄 = dailyGift.json milestones 수(코드에 개수 없음)");
+                // 주인 추가(2026-09-07 00:3X) — 왼쪽 노란 타임라인(선 + 육각 점)은 넣지 않는다 · 행은 상자 가로 중앙
+                Assert.AreEqual(0, CountNamed(_app.Overlay.Root, "Dot:"), "타임라인 점 없음"); Assert.IsNull(UiKit.Find(_app.Overlay.Root, "Timeline"), "타임라인 선 없음");
+                {
+                    // 줄은 팝업 상자 안에 놓이므로 앵커는 «상자 기준 %» — 표 ㉒ 를 Within(GfBox) 로 환산해 대조한다(좌우 여백이 같아야 = 중앙 정렬)
+                    var r0 = (RectTransform)UiKit.Find(_app.Overlay.Root, "Ad:0"); Assert.IsNotNull(r0, "광고 줄 1");
+                    var inBox = Layout.GfRow1.Within(Layout.GfBox);
+                    Assert.AreEqual(inBox.X, r0.anchorMin.x * 100f, 0.5f, "광고 줄 x = 표 ㉒(상자 기준)");
+                    Assert.AreEqual(inBox.X, 100f - (inBox.X + inBox.W), 0.5f, "광고 줄 좌우 여백이 같다(중앙 정렬 · 주인 2026-09-07)");
+                }
                 AssertNoTextClip("데일리 기프트 팝업", _app.Overlay.Root); AssertUsedAtLeast("광고 줄 제목", _app.Overlay.Root, "Title", TextSize.Body);
                 { var bar = (RectTransform)UiKit.Find(_app.Overlay.Root, "Bar"); Assert.IsNotNull(bar, "광고 줄 진행바"); Assert.AreEqual(Layout.LpBarH, (bar.anchorMax.y - bar.anchorMin.y) * ((RectTransform)bar.parent).rect.height / UiKit.FrameH * 100f, 0.05f, "진행바 높이 = LpBarH(프레임 %)"); }
+                // ① 시작 = 무료 칸만 열려 있고 줄은 전부 «잠금»(위에서 아래로 순서대로)
+                Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "TodayGetBtn"), "오늘의 선물 버튼");
+                Assert.IsTrue(HasText(s => s == "잠금"), "무료 칸 전에는 줄이 잠겨 있다");
+                Assert.IsFalse(HasText(s => s == "광고 보기"), "잠긴 줄에는 광고 버튼을 두지 않는다(한 번에 하나)");
+                // ② 무료 칸 받기 → 다이아 + freeGift.gem · 줄 1 이 열려 «광고 보기» 로 바뀐다
+                Assert.IsTrue(ClickNamed(_app.Overlay.Root, "TodayGetBtn"), "무료 칸 받기"); yield return Frames(2);
+                Assert.AreEqual(gem0 + GD.FreeGem, _app.Save.Gem, 0.001, "무료 칸 = dailyGift.json freeGift.gem");
+                Assert.IsTrue(HasText(s => s == "광고 보기"), "줄 1 이 열렸다");
+                Check("데일리 기프트 무료 칸 수령", expectOverlay: true);
+                // ③ 광고(모의 3초) → 누적 +1 → «받기» → 다이아 + milestones[0].gem
+                Assert.IsTrue(ClickNamed(_app.Overlay.Root, "AdBtn"), "광고 보기"); yield return Frames(2);
+                Assert.IsTrue(HasText(s => s == "광고 시청 중..."), "모의 광고 카운트다운(T23 과 같은 자리)");
+                { float t0g = Time.realtimeSinceStartup; while (_app.Save.GiftAds == 0 && Time.realtimeSinceStartup - t0g < 10f) yield return Frames(1); }
+                Assert.AreEqual(1, _app.Save.GiftAds, "광고 1회 누적");
+                yield return Frames(2);
+                Assert.IsTrue(HasText(s => s == "받기"), "누적이 닿아 «받기» 로 바뀐다");
+                double gem1 = _app.Save.Gem;
+                Assert.IsTrue(ClickNamed(_app.Overlay.Root, "AdBtn"), "줄 1 받기"); yield return Frames(2);
+                Assert.AreEqual(gem1 + GD.Milestones[0].Gem, _app.Save.Gem, 0.001, "줄 1 = dailyGift.json milestones[0].gem");
+                Assert.IsTrue(KkomaKnight.Core.DailyGift.Claimed(_app.Save, 0), "줄 1 수령 기록");
+                Assert.IsFalse(KkomaKnight.Core.DailyGift.CanClaim(_app.Save, GD, 0, SaveStore.Today()), "같은 줄 두 번은 못 받는다");
+                AssertNoTextClip("데일리 기프트 팝업(수령 뒤)", _app.Overlay.Root);
+                Check("데일리 기프트 광고 → 수령", expectOverlay: true);
                 _app.Overlay.Close(); yield return Frames(1);
                 LobbyPopups.Challenge7(_app); yield return Frames(1); Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Banner"), "챌린지 배너"); Assert.AreEqual(7, CountNamed(_app.Overlay.Root, "DayTab:"), "일차 탭 7"); Assert.AreEqual(4, CountNamed(_app.Overlay.Root, "Task:"), "과제 줄 4");
                 AssertNoTextClip("7일 챌린지 팝업", _app.Overlay.Root); AssertUsedAtLeast("과제 제목", _app.Overlay.Root, "Title", TextSize.Body); AssertUsedAtLeast("과제 카운터", _app.Overlay.Root, "Progress", TextSize.Body);

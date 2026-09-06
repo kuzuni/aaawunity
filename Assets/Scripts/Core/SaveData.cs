@@ -25,6 +25,15 @@ namespace KkomaKnight.Core
         public Dictionary<string, GachaState> GachaBoxes = new Dictionary<string, GachaState>();
         public int Pulls, Fuses, Uid = 1;
         public string FreeDay = "";
+        /// <summary>데일리 기프트(T77 · 주인 2026-09-07) — 누적이 살아 있는 날짜(<c>yyyy-MM-dd</c> · 비어 있으면 «아직 한 번도 안 열었다»).
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 기본값»(옛 세이브 호환 · <see cref="Speed"/>·<see cref="FreeDay"/> 와 같은 방식).</summary>
+        public string GiftDay = "";
+        /// <summary>오늘 본 광고 누적 횟수(상한 = dailyGift.json 마지막 줄).</summary>
+        public int GiftAds;
+        /// <summary>오늘 «오늘의 선물» 무료 칸을 받았는가.</summary>
+        public bool GiftFree;
+        /// <summary>줄별 수령 여부(dailyGift.json milestones 순 · 길이는 <see cref="DailyGift.Roll"/> 이 표에 맞춘다).</summary>
+        public List<bool> GiftClaimed = new List<bool>();
 
         public static SaveData NewSave(GameData D)
         {
@@ -60,6 +69,7 @@ namespace KkomaKnight.Core
             SelChapter = Math.Max(1, Math.Min(SelChapter, MaxChapter));
             Gold = Math.Max(0, Gold); Gem = Math.Max(0, Gem);
             Speed = Math.Max(SpeedMin, Math.Min(Speed, SpeedMax));
+            GiftAds = Math.Max(0, GiftAds); if (GiftClaimed == null) GiftClaimed = new List<bool>();   // 표 길이 보정은 DailyGift.Roll (표를 여기서 모른다)
             Inv.RemoveAll(g => g == null || Array.IndexOf(D.Gear.Parts, g.Part) < 0 || !D.Gear.Options.ContainsKey(g.Type) || g.Rar < 0 || g.Rar >= D.Gear.RarName.Length);
             foreach (var g in Inv) { g.Plus = Math.Max(0, g.Plus); if (g.Rar == D.Gear.RarLegend && g.Plus >= D.Gear.LegendToMythPlus) { g.Rar = D.Gear.RarMyth; g.Plus = 0; } }
             Uid = Math.Max(1, Uid);
@@ -84,7 +94,9 @@ namespace KkomaKnight.Core
             {
                 ["v"] = (double)Version, ["gold"] = Gold, ["gem"] = Gem, ["maxChapter"] = (double)MaxChapter, ["selChapter"] = (double)SelChapter,
                 ["muted"] = MuteBgm, ["muteBgm"] = MuteBgm, ["muteSfx"] = MuteSfx, ["speed"] = (double)Speed, ["pulls"] = (double)Pulls, ["fuses"] = (double)Fuses, ["uid"] = (double)Uid, ["freeDay"] = FreeDay ?? "",
+                ["giftDay"] = GiftDay ?? "", ["giftAds"] = (double)GiftAds, ["giftFree"] = GiftFree,
             };
+            var gc = new List<object>(); foreach (var b in GiftClaimed) gc.Add(b); o["giftClaimed"] = gc;
             var inv = new List<object>();
             foreach (var g in Inv)
             {
@@ -111,6 +123,8 @@ namespace KkomaKnight.Core
                     var j = new JNode(MiniJson.Parse(json));
                     s.Gold = j["gold"].Num(); s.Gem = j["gem"].Num(); s.MaxChapter = j["maxChapter"].Int(1); s.SelChapter = j["selChapter"].Int(1);
                     s.MuteBgm = j.Has("muteBgm") ? j["muteBgm"].Bool() : j["muted"].Bool(); s.MuteSfx = j["muteSfx"].Bool(); s.Speed = j["speed"].Int(SpeedMin); s.Pulls = j["pulls"].Int(); s.Fuses = j["fuses"].Int(); s.Uid = j["uid"].Int(1); s.FreeDay = j["freeDay"].Str("");
+                    s.GiftDay = j["giftDay"].Str(""); s.GiftAds = j["giftAds"].Int(); s.GiftFree = j["giftFree"].Bool();
+                    foreach (var c in j["giftClaimed"].Items()) s.GiftClaimed.Add(c.Bool());
                     foreach (var g in j["inv"].Items())
                         s.Inv.Add(new GearItem { Uid = g["u"].Int(), Part = g["part"].Str(), Type = g["type"].Str(), Rar = g["rar"].Int(), Plus = g["plus"].Int(), IsNew = g["nw"].Num() != 0 });
                     foreach (var k in j["eq"].Keys) s.Eq[k] = j["eq"][k].Int();

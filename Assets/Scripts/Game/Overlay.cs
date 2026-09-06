@@ -18,6 +18,8 @@ namespace KkomaKnight.Game
         public RectTransform Root { get; }
         GameObject _cur;
         float _countdown; Action _onCountdown; Text _countText;
+        /// <summary>열려 있는 동안 매 프레임(unscaled) 부르는 훅 — 팝업 안 «자정까지 남은 시간» 같은 1초 갱신용(T77). <see cref="Begin"/>·<see cref="Close"/> 가 비운다(다음 팝업으로 새지 않는다).</summary>
+        public Action OnTick;
         Sequence _reveal;   // 등장 연출 마스터 시퀀스(T49) — 팝업마다 Begin 에서 새로, Close 에서 Kill
         readonly List<float> _shineStarts = new List<float>();   // T61 — 이번 팝업에서 shine 이 시작하는 시각(카드 순서대로 · 테스트가 단조 증가를 단언)
         /// <summary>이번 팝업의 카드 shine 시작 시각 목록(T61 · 카드 순서 = 반짝임 순서). Begin 마다 비운다.</summary>
@@ -48,11 +50,11 @@ namespace KkomaKnight.Game
         {
             KillReveal(); UiKit.Clear(Root); _shineStarts.Clear();
             Root.gameObject.SetActive(true); Root.SetAsLastSibling();
-            _countdown = 0; _onCountdown = null; _countText = null;
+            _countdown = 0; _onCountdown = null; _countText = null; OnTick = null;
             Audio.Sfx("snd.popup");   // 팝업 열림음은 여기 한 곳(T28) — 클리어/사망은 자기 징글을 덧붙인다
         }
         /// <summary>닫기 — 연출 시퀀스와 팝업 층 자식을 겨냥한 트윈을 전부 죽인 뒤 파괴한다(T49 · 파괴된 오브젝트를 만지는 트윈 0).</summary>
-        public void Close() { KillReveal(); UiKit.Clear(Root); Root.gameObject.SetActive(false); _cur = null; _countdown = 0; }
+        public void Close() { KillReveal(); UiKit.Clear(Root); Root.gameObject.SetActive(false); _cur = null; _countdown = 0; OnTick = null; }
 
         /// <summary>어둠 + 팝업 상자(Popup_Box_02 변형) + 리본 제목 = 공통 팝업 문법(<see cref="UiKit.Popup"/> · T36). 돌려주는 RectTransform 안에서 Pct 로 내용을 배치한다.
         /// <paramref name="onTapClose"/> 를 주면 프레임 아래 «탭하여 닫기» + 배경 탭으로 닫힌다(정보 팝업) · null 이면 선택을 강제하는 이벤트 팝업(쉼터·악마·천사).</summary>
@@ -501,6 +503,7 @@ namespace KkomaKnight.Game
 
         public void Tick(float dt)
         {
+            if (IsOpen) OnTick?.Invoke();
             if (_countdown > 0)
             {
                 _countdown -= dt;

@@ -1,0 +1,11 @@
+{
+  "_note": "데일리 기프트 수치표 — 이 레포 전용(aaaw data/ 에 없는 수치 · 주인 지시 2026-09-07 «광고 1회 = 다이아 100 / 2회 = 200 / 3회 선물 = 300 / 6회 선물 = 300 · 매일 초기화» + 추가 «무료 1칸 = 다이아 100»). StreamingAssets/data 는 aaaw 동기 폴더라 여기 둔다. 코드는 카탈로그 텍스트 «data.dailyGift» 로 읽는다(개수·값 하드코딩 0). 값을 바꾸려면 이 파일만 고친다. milestones = 하루 누적 광고 횟수 표(ads = 그 줄이 열리는 누적 횟수 · gem = 받는 다이아 · gift = 레퍼런스 17 의 «선물» 줄) · freeGift = «오늘의 선물» 무료 1칸(광고 없이 하루 1회) · resetDaily = 날짜가 바뀌면 누적·수령을 초기화.",
+  "resetDaily": true,
+  "freeGift": { "gem": 100 },
+  "milestones": [
+    { "ads": 1, "gem": 100 },
+    { "ads": 2, "gem": 200 },
+    { "ads": 3, "gem": 300, "gift": true },
+    { "ads": 6, "gem": 300, "gift": true }
+  ]
+}
