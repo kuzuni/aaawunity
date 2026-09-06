@@ -529,6 +529,13 @@
 3. 확인 수단: 코드 커밋의 CI 유니티 잡 로그에서 «DOTWEEN ► … SAFE MODE ► captured N errors» 줄이 사라지거나 N 이 0 (남으면 test-case 별 원점을 PROGRESS 에 적어 다음 회차) · PlayMode 전부 Passed. dotnet build 가 실제 `DOTween.dll` 을 참조하므로 API 존재는 컴파일이 보증.
 4. 게이트 + PROGRESS T56 행 + 워커 결정 기록 한 줄.
 
+### T57 — CI #82 빨강 후속(유니티 테스트는 전부 초록): «screens 브랜치용 meta.json» 단계 «ui-screens/meta.json: Permission denied» — 첫 `screens`·gh-pages 배포가 또 막힘 (최우선 · ci.yml 한 줄) ✅ (완료 · `d399e3f` · 워커 H · 확인 = CI #83 에서 screens 브랜치 생성 · PROGRESS 참조)
+범위: `.github/workflows/ci.yml`(unity-test 잡 «screens 브랜치용 meta.json» 단계 1줄) · 코드·테스트 불변
+순서: 제약 없음(T46 lock 이 살아 있어도 T46 의 파일 범위 중 ci.yml 의 이 한 단계만 · 결정 92).
+1. 원인(CI #82 https://github.com/kuzuni/aaawunity/actions/runs/34025135763 · `262ca21` · 로그: «Test run completed. Exiting with code 0 (Ok)» 뒤 «/…/sh: line 2: ui-screens/meta.json: Permission denied» · exit 1): `game-ci/unity-test-runner` 는 docker 컨테이너(root)로 돌고 `UiShotsTests`/`PlayShot` 이 `/github/workspace/ui-screens/` 에 PNG·layout.json 을 쓴다 → 워크스페이스에 **root 소유 폴더**가 남는다. 다음 단계는 러너 사용자(runner)의 셸이라 그 폴더 안에 `meta.json` 을 못 만든다. #76 이전 런은 테스트가 빨개서 이 단계까지 오지 않아(`if: success()`) 처음 드러났다.
+2. 수정: `printf … > ui-screens/meta.json` 앞에 `sudo chown -R "$(id -u):$(id -g)" ui-screens`(GitHub 호스트 러너는 sudo 무비밀번호). peaceiris 배포는 그 폴더를 그대로 읽는다.
+3. 확인 수단 = 코드 커밋의 CI 런: unity-test 잡 초록 + «screens 브랜치로 배포» 단계 초록 → `git fetch origin screens` 가 된다(첫 PNG·layout.json·meta.json). 그러면 T47·T36~T44 비평 회차 시작.
+
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
 ```bash
