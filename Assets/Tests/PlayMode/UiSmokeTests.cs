@@ -835,6 +835,14 @@ namespace KkomaKnight.Tests.Play
                 AssertNoTextClip("뽑기 결과 팝업", _app.Overlay.Root, skipPath: "gear:");
             }
             Assert.GreaterOrEqual(S.Inv.Count, inv + 1, "뽑은 장비가 인벤에 담겨야 한다");
+            {
+                // T72 ② — 뽑기 결과의 «상자 열림» 그림과 얻은 장비 칸 그림 뒤에 빛살(주인 «상점 아이템 … 아이콘 뒤에 Effect_Light»)
+                var box = UiKit.Find(_app.Overlay.Root, "ui.popup"); Assert.IsNotNull(box, "결과 팝업 상자");
+                Assert.IsTrue(UiKit.HasLight(box), "결과 팝업 상자 그림 뒤 빛살");
+                var first = UiKit.Find(_app.Overlay.Root, "Got").GetChild(0);
+                var itemFrame = UiKit.Find(first, "Item").parent;
+                Assert.IsTrue(UiKit.HasLight(itemFrame), "얻은 장비 칸 그림 뒤 빛살(ItemFrame 안)");
+            }
             Assert.AreEqual(CountNamed(_app.Overlay.Root, "gear:"), S.Inv.Count - inv, "결과 팝업의 장비 칸 수 = 얻은 수");
             _app.Overlay.Close(); yield return Frames(1);
             inv = S.Inv.Count;

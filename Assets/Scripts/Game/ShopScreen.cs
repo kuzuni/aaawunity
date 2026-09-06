@@ -415,7 +415,17 @@ namespace KkomaKnight.Game
             var grid = UiKit.Rect(popup, "Got"); grid.anchorMin = new Vector2(0.5f, 1f); grid.anchorMax = new Vector2(0.5f, 1f); grid.pivot = new Vector2(0.5f, 1f);
             grid.sizeDelta = new Vector2(ResultCols * cs + (ResultCols - 1) * gap, rows * cs + (rows - 1) * gap); grid.anchoredPosition = new Vector2(0, -ResultBox.H / 100f * UiKit.FrameH * 0.36f);
             var gl = grid.gameObject.AddComponent<GridLayoutGroup>(); gl.cellSize = new Vector2(cs, cs); gl.spacing = new Vector2(gap, gap); gl.childAlignment = TextAnchor.UpperCenter; gl.constraint = GridLayoutGroup.Constraint.FixedColumnCount; gl.constraintCount = ResultCols;
-            foreach (var g in got) GearUi.Cell(grid, D, g, new GearUi.CellOpts { IsNew = true }, null);
+            var cells = new List<RectTransform>();
+            foreach (var g in got) cells.Add(GearUi.Cell(grid, D, g, new GearUi.CellOpts { IsNew = true }, null));
+            // T72 ② 뽑기 결과 — 상자 열림 그림 뒤(큰 조각) · 얻은 장비 칸의 그림 뒤(작은 조각 · ItemFrame 안쪽에서만 보인다)
+            // 격자 칸은 GridLayoutGroup 이 배치한 뒤에야 크기가 정해지므로 여기서도 배치를 한 번 돌리고 건다(결정 174)
+            Canvas.ForceUpdateCanvases();
+            UiKit.LightBehind(popup, chest.rectTransform, UiKit.LightKey);
+            foreach (var c in cells)
+            {
+                var item = UiKit.Find(c, "Item");
+                if (item != null && item.gameObject.activeSelf) UiKit.LightBehind((RectTransform)item.parent, (RectTransform)item, UiKit.LightKeySmall);
+            }
             UiKit.PopIn(chest.rectTransform, 0.5f, 0.5f);
         }
     }
