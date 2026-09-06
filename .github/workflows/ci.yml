@@ -34,6 +34,8 @@ jobs:
         run: python3 tools/check_catalog_keys.py
       - name: 유니티 가짜 null 패턴 검사 («GetComponent…() ??»·«Find(…) ??» 0건 · T11)
         run: tools/check_unity_null.sh
+      - name: 오디오 형식 검사 (WebGL 이 읽는 PCM/MP3/AAC 만 · T64)
+        run: python3 tools/check_audio_webgl.py
       - name: aaaw main 체크아웃 (수치 정본)
         uses: actions/checkout@v4
         with:

@@ -639,6 +639,7 @@ python3 tools/gen_meta.py --check                                 # .meta 누락
 python3 tools/gen_catalog.py --check                              # catalog.json 의 에셋 경로가 전부 실재하는가 (에셋 키를 바꿨으면 --check 대신 그냥 실행해 재생성)
 python3 tools/check_catalog_keys.py                               # 반대 방향: 코드의 카탈로그 키 리터럴이 전부 catalog.json 에 있는가 (없으면 런타임 «sprite 없음» 경고·빈 그림 — T12 · CI dotnet 잡에도 있음)
 tools/check_unity_null.sh                                         # 유니티 가짜 null 게이트: Assets/Scripts 에 «GetComponent…() ??»·«Find(…) ??» 0건 (있으면 에디터 MissingComponentException — UiKit.Ensure<T> 로 · T11 · CI dotnet 잡에도 있음)
+python3 tools/check_audio_webgl.py                                # 오디오가 WebGL 에서 읽히는 형식인가 (PCM/MP3/AAC · Vorbis·ADPCM 금지 — 브라우저가 디코드한다 · T64 · CI dotnet 잡에도 있음)
 tools/check_data_sync.sh [.aaaw-src]                              # data ↔ aaaw main
 dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이후) 이식 검증
 ```
