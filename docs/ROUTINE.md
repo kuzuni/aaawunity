@@ -5,7 +5,7 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
-- **(2026-09-06 · 12:0X UTC) ⚑⚑ 주인 지시 — UI 전체적으로 행·카드·칸마다 GUI Pro `BasicFrame_Rectangle_01~04_White_Border3` 같은 Border 스프라이트를 넣어 «검은 아웃라인» 느낌으로. 던전 행도 마찬가지.** → **T69** 등재(§2 · UiKit.Bordered 공통 헬퍼 + 카탈로그 키 먼저 · 화면 묶음은 T63 하위 lock 과 같이 · 루틴이 잡는다).
+- **(2026-09-06 · 12:0X UTC) ⚑⚑ 주인 지시 — UI 전체적으로 행·카드·칸마다 GUI Pro `BasicFrame_Rectangle_01~04_White_Border3` 같은 Border 스프라이트를 넣어 «검은 아웃라인» 느낌으로. 던전 행도 마찬가지. **추가(12:1X)**: 아이템류 칸은 전부 장비 화면의 그 프레임(`ui.itemFrame.<등급>` · ItemFrame_01)으로 통일 · 던전 보상 칸도 그 프레임 · HP·실드 바(HUD 3개 + 발밑 2단)도 Border.** → **T69** 등재(§2 · UiKit.Bordered 공통 헬퍼 + 카탈로그 키 먼저 · 화면 묶음은 T63 하위 lock 과 같이 · 루틴이 잡는다).
 
 - **(2026-09-06 · 11:5X UTC) ⚑⚑ 주인 지시 — 로비: ① 아이콘들 너무 작음 ② 상단 주인공 초상이 계속 움직임(정지) ③ 배경 Deco 별로(제거) ④ 챕터 카드는 예전 프리팹 `SampleImage_Map` 그림이 좋았음(코드 조립 카드 폐기). 웹·폰 모두 «이제 잘 된다»(T59 종결).** → **T68** 등재(§2 · T63 로비 묶음과 함께 · 루틴이 잡는다).
 
@@ -662,6 +662,9 @@
 3. **헬퍼 계약**: `UiKit.Bordered(RectTransform cell, string borderKey = "fr.rectBorder3", Color? tint = null, float inset = 0)` — cell 의 맨 뒤에 `Image(fr.rect · 바탕색 = 지금 칸 배경 그대로)` , 맨 앞에 `Image(border · tint = Ink)` 를 Stretch 로 넣고 두 장 다 `raycastTarget=false` · 9-slice(`Image.Type.Sliced` · 스프라이트 border 값은 .meta 의 spriteBorder 확인 · 0 이면 `pixelsPerUnitMultiplier` 로 굵기 조절 · 폰에서 **최소 3px** 보이게 = 프레임 기준 8px 이상). 이름 «Border» 고정(테스트·이름표가 찾는다). 배치 표(ref-layout)는 불변 — 테두리는 칸 안쪽에 그려 점수 영향 0.
 4. **레퍼런스 대조**: `docs/ref/*.jpg` 도 카드·행마다 어두운 외곽선이 있다(01 사이드 기둥·06 장비 칸·09 상품 칸·20 던전 행·23 순위 줄) — 굵기·색은 점수 밖이지만 «있음/없음» 은 §5 비평의 감점 사유로 추가(README «공통 문법» 절에 한 줄).
 5. **테스트**: PlayMode — 각 화면을 열어 «행/카드/칸» 이름표(UiTag) 를 가진 RectTransform 마다 자식 «Border» Image(스프라이트 키 `fr.*Border*`) 존재 · 색 알파 ≥ 0.8 · `raycastTarget=false` · `LogAssert.NoUnexpectedReceived`. 예외 목록(테두리 없는 게 맞는 것 · 배경·구분선) 은 테스트 안에 명시.
+7. **아이템류 프레임 통일(주인 추가 12:1X)**: 아이템(장비·재료·보상·상품·펫·특전 아이콘 칸 등 «물건» 을 담는 칸)은 **전부 장비 화면의 그 프레임** = `ui.itemFrame.<등급>`(ItemFrame_01 · 등급색 · GearUi 64~68행 · GearScreen 64행 `ui.itemFrame.empty`) 으로 통일 — 상점 상품 칸·뽑기 결과 칸·펫 격자·대장간 슬롯/인벤·세부 팝업 아이콘 칸·로비 팝업의 보상 칸·**던전 보상 칸(20·21 의 보상 아이콘들 · 주인 «던전에서 보상 주는 것들도 그 프레임»)**·아레나 보상 줄·상인 격자·승리/패배 보상 칸. 등급이 없는 물건(골드·다이아·티켓·재료)은 `ui.itemFrame.empty`(또는 회색 등급) · 등급이 있으면 등급색. 다른 프레임(CardFrame·BasicFrame 원형 등)으로 담던 «물건» 은 전부 바꾼다 — 특전 카드(CardFrame_04)는 «카드» 라 예외(팔각 아이콘은 그대로). 이 프레임에도 1 의 어두운 Border 가 이미 포함돼 있는지 확인(ItemFrame_01_White_Border 를 Ink tint) → 없으면 덧댄다.
+8. **HP·실드 바 테두리(주인 추가 12:1X)**: 전투 HUD 의 EXP·HP·실드 세 바(UI · BattleScreen) 와 **발밑 2단 바(플레이어·적 · SpriteRenderer · BattleWorld `MakeBar` 339행)** 전부 어두운 Border — UI 바는 `UiKit.Bordered` · 월드 바는 같은 스프라이트(`fr.rectBorder2/3`)를 **SpriteRenderer `drawMode = Sliced`** 로 바 위에 한 장(sortingOrder = fill + 1 · 바 폭 = 캐릭터 폭 그대로 · 표 ② «발밑 바 폭» 이름표 불변). 바 안 «현재/최대» 숫자는 T63 하한.
+9. **테스트 추가**: 7 = 모든 «물건» 칸 이름표 아래에 `ItemFrame_01` 자식 존재(등급색 키 `ui.itemFrame.*`) · 던전 20·21 보상 칸 포함 · 8 = HUD 바 3개와 발밑 바에 «Border» 존재.
 6. 게이트 + assets-map(스프라이트 키 4~5줄) + PROGRESS T69 행(+ 화면 묶음 하위 행) + 완료 기록(확인 = CI PlayMode + screens PNG 를 `Read` 로 «아웃라인 보이나» + 배포 스모크 + 주인 폰).
 
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
