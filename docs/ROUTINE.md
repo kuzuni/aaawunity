@@ -898,6 +898,17 @@
 8. 테스트(PlayMode): ⓐ 킬 특전으로 쏜 도끼·창이 **발사 뒤 0.1초 안에 스폰 위치보다 눈에 띄게 전진**한다(보류 중에도) ⓑ 창 오브젝트 `rotation.eulerAngles.z` ≈ 0(±2° · 스프라이트 보정값을 상수로 두면 그 상수 기준) ⓒ **도끼 회전 = 초당 1바퀴** — 비행 시간 1초면 각도 변화 360°±20°, 2초면 720°±40°(거리가 달라도 초당 속도는 같다 · 방향은 종전 반시계) · 화살·검기 각도는 종전 그대로 ⓓ **거리당 속도**: 가까운 적(예 200px)과 먼 적(예 600px)에 쏜 같은 종류 투사체의 **비행 시간 비가 거리 비와 같다**(±10% · 시간이 같으면 실패) — 그리고 매 프레임 이동량이 `Spd*dt` 와 일치 ⓔ 시드 골든·`BattleWorldTests` 회귀 0 ⓕ `LogAssert.NoUnexpectedReceived`.
 9. 게이트 + PROGRESS T86 행 + 완료 기록. **확인**: CI PlayMode + `screens` 02 PNG 에는 투사체가 안 찍힐 수 있으니 **배포 스모크·주인 폰이 최종 확인**이다(못 찍으면 PROGRESS 에 «눈 확인 = 주인» 이라고 적는다).
 
+### T87 — main 빨강 후속(CI #162 · PlayMode 3건): T75 글자 필터가 바꾼 «·»·«×» 를 기댓값에도 씌운다 (최우선 · 제약 없음) — **🔄 코드 push(`31acce2` · sess-1906-6443 · 워커 A · 로컬 게이트 전부 초록) · 남은 일 = 확인뿐**
+범위: `Assets/Tests/PlayMode/EventsScreenTests.cs` · `RestClearAdTests.cs` · `UiSmokeTests.cs` (런타임 코드 0줄)
+1. 사실(CI [#162](https://github.com/kuzuni/aaawunity/actions/runs/34052939776) · `bda4fa1` 실측): EditMode **123/123 초록** · PlayMode **38/41** — 빨강 3건은 전부 «Expected: True / But was: False» 이고 원인이 하나다.
+   - `EventsScreenTests.cs:98` «조건 문구» = «전설·신화 특전만 등장»
+   - `RestClearAdTests.cs:86` = `Overlay.ClearAdLabel`(«광고 보고 ×2»)
+   - `UiSmokeTests.cs:1037` = 같은 `ClearAdLabel`
+2. 원인: **T75 1단계**(`d24c461` · 결정 200)가 `UiKit.Text/SetText/Button/ConvertTmp/Bar.Set` 다섯 입구에 `TextGlyphs.Safe` 를 걸어 **화면 글자에서 «·» → «/» · «×» → «x»** 로 바뀐다. T75 워커는 특전 카드 설명 한 곳(`UiSmokeTests.cs:930`)만 기댓값에 `Safe` 를 씌웠고 위 셋을 놓쳤다. **T75 의 코드는 옳다 — 낡은 것은 기댓값뿐이다**(#161 은 취소돼 이 회귀가 안 드러났다).
+3. 처방(결정 217): **기댓값에 `TextGlyphs.Safe` 를 씌운다** — 화면 문구(`ClearAdLabel` 상수·던전 조건 문구)는 한 글자도 안 건드린다. `RestClearAdTests.cs:95`(같은 라벨로 버튼을 «찾아 누르는» 줄 · 86행에서 멈춰 안 드러났다)도 같이 고쳤다.
+4. **같은 함정을 앞으로도 의심할 것** — 화면 글자를 «원문 리터럴» 로 비교하는 단언은 T75 이후 전부 `Safe` 를 거쳐야 한다. 이번에 테스트 전체의 비교 문자열(리터럴 + `s => s == <식별자>` 형태)을 훑어 남은 자리가 없음을 확인했지만, **새로 쓰는 단언**이 «·»·«×»·«—»·«→»·«…»·이모지를 데려오면 그 커밋이 빨개진다.
+5. ✅ 조건: 이 커밋(`31acce2`)을 담은 첫 완주 런(결정 200)의 PlayMode 에서 위 세 테스트가 Passed = **main 빨강 0**. 그때 lock 을 지우고 PROGRESS 행을 ✅ 로 바꾼다.
+
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
 ```bash
