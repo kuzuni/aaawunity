@@ -88,9 +88,10 @@ namespace KkomaKnight.Tests.Play
             var forge = _app.Current.Root; var content = UiKit.Find(forge, "Content"); Assert.IsNotNull(content, "대장간 인벤 Content");
             Assert.AreEqual(S.Inv.Count, CountNamed(content, "gear:"), "대장간 인벤에 장비가 전부(장착분 포함) 보여야 한다");
 
-            // ⓐ 장착분 칸 = 배지(Check) 켜짐 · 흐림 없음(재료 가능)
+            // ⓐ 장착분 칸 = 장착중 표기(T39 레퍼런스 구도 «장착중» 글자 EquippedLabel · 예전엔 프리팹 Check 배지) 켜짐 · 흐림 없음(재료 가능)
             var cellA = UiKit.Find(content, "gear:" + a.Uid); Assert.IsNotNull(cellA, "장착분 칸");
-            var check = UiKit.Find(cellA, "Check"); Assert.IsTrue(check != null && check.gameObject.activeSelf, "장착중 배지(Check)는 유지");
+            var mark = UiKit.Find(cellA, "EquippedLabel"); if (mark == null) mark = UiKit.Find(cellA, "Check");
+            Assert.IsTrue(mark != null && mark.gameObject.activeSelf, "장착중 표기(«장착중» 글자 또는 Check 배지)는 유지");
             var cg = cellA.GetComponent<CanvasGroup>(); Assert.IsTrue(cg == null || cg.alpha >= 0.99f, "장착분을 흐리지 않는다(재료가 될 수 있으므로)");
             Assert.GreaterOrEqual(CountNamed(content, "FuseDot"), 3, "장착분 포함 같은 키 3개 → 빨간 점");
             _log.AssertNoRed("대장간(장착분 표시)");

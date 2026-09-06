@@ -432,7 +432,7 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(1f - Layout.ForgeStage.H / 100f, stage.anchorMin.y, 1e-3f, "무대 = 위 41%"); Assert.AreEqual(Layout.ForgeResult.X / 100f, result.anchorMin.x, 1e-3f, "결과 슬롯 = 표 자리");
                 Assert.AreEqual(Layout.ForgeAuto.X / 100f, autoB.anchorMin.x, 1e-3f, "자동 = 왼쪽 끝"); Assert.AreEqual((Layout.ForgeFuse.X + Layout.ForgeFuse.W) / 100f, fuseB.anchorMax.x, 1e-3f, "합성 = 오른쪽 끝"); Assert.AreEqual(autoB.anchorMax.y, fuseB.anchorMax.y, 1e-3f, "같은 줄");
                 Assert.IsFalse(fuseOn.gameObject.activeSelf, "재료 없으면 합성은 회색 버튼"); Assert.IsFalse(fuseB.GetComponent<Button>().interactable, "회색 합성은 비활성");
-                Assert.AreEqual(1f - Layout.ForgeInv.Y / 100f, inv.anchorMax.y, 1e-3f, "인벤 = 장비 탭과 같은 자리"); Assert.Less(back.anchorMin.x, 0.05f, "뒤로 = 왼쪽 아래"); Assert.Greater(back.anchorMin.y, 0.9f, "뒤로 = 왼쪽 아래");
+                Assert.AreEqual(1f - Layout.ForgeInv.Y / 100f, inv.anchorMax.y, 1e-3f, "인벤 = 장비 탭과 같은 자리"); Assert.Less(back.anchorMin.x, 0.05f, "뒤로 = 왼쪽"); Assert.Less(back.anchorMax.y, 0.1f, "뒤로 = 아래(표 ⑥ y93.5 → anchorMax.y ≈ 0.065 · anchorMin.y 는 바닥 기준이라 작을수록 아래 · CI #66 T48)");
                 Assert.IsFalse(HasText(s => s == "대장간"), "제목 글자 없음(레퍼런스)"); Assert.IsNull(UiKit.Find(forge, "TopBar"), "상단 재화 바 없음(레퍼런스)");
             }
             Check("대장간");
