@@ -154,6 +154,21 @@ namespace KkomaKnight.Game
             }
             var book = UiKit.Find(rt, "Book"); if (book != null) { UiKit.Pct((RectTransform)book, Layout.OvInfo); UiKit.SetText(book, "Text (TMP)", G.Taken.Count.ToString()); UiKit.Clickable(book, () => PerkBook(G, () => LevelUp(G, onPick))); }
             StatsRow(rt, G, Layout.OvStats);
+            // T46 이름표(표 ⑦ 선택창 행 · «요소» 글자 그대로) — 하니스가 layout.json 으로 잰다
+            if (ribbon != null) UiKit.Tag(ribbon, "배너(Level Up!)"); if (sub != null) UiKit.Tag(sub, "부제(Choose…)");
+            if (group != null) for (int i = 0; i < group.childCount && i < 3; i++)
+            {
+                var c = group.GetChild(i); UiKit.Tag(c, "특전 카드 " + (i + 1));
+                if (i == 0) { var ia = UiKit.Find(c, "ItemFrameArea"); if (ia != null) UiKit.Tag(ia, "카드 아이콘"); var tv = UiKit.Find(c, "Text_Value"); if (tv != null) UiKit.Tag(tv, "카드 문구"); }
+            }
+            if (btn != null && btn.gameObject.activeSelf) UiKit.Tag(btn, "하단 버튼"); if (book != null) UiKit.Tag(book, "인포(책) 버튼");
+            var statsRow = UiKit.Find(rt, "Stats");
+            if (statsRow != null)
+            {
+                var members = new List<RectTransform>(); foreach (Transform c in statsRow) if (c is RectTransform m) members.Add(m);   // [아이콘0, 값0, 아이콘1, 값1, …]
+                UiKit.TagGroup(statsRow, "상단 스탯 줄(8칸)", members.ToArray());
+                if (members.Count >= 2) UiKit.TagGroup(statsRow, "상단 스탯 칸(1칸)", members[0], members[1]);
+            }
         }
 
         // ───────────────────────── 보유 특전 (PERKS) ─────────────────────────
@@ -182,7 +197,10 @@ namespace KkomaKnight.Game
                 if (kv.Value > 1) { var n = UiKit.Text(card, "×" + kv.Value, 36, Palette.Yellow, TextAnchor.MiddleRight); UiKit.Pct(n.rectTransform, 80, 4, 18, 40); }
             }
             foreach (var b in G.Blessings) Sub(box, b, 93, 5, 24, Palette.Orange);
-            if (onBack != null) { var back = UiKit.Find(Root, "TapToClose"); if (back != null) { var t = back.GetComponent<Text>(); if (t != null) t.text = "탭하여 특전 선택으로"; } }   // 레벨업에서 열었으면 배경 탭 = 선택으로 복귀
+            var tap = UiKit.Find(Root, "TapToClose");
+            if (onBack != null && tap != null) { var t = tap.GetComponent<Text>(); if (t != null) t.text = "탭하여 특전 선택으로"; }   // 레벨업에서 열었으면 배경 탭 = 선택으로 복귀
+            // T46 이름표(표 ⑦ «(인포 팝업)» 행)
+            UiKit.Tag(box, "(인포 팝업) 박스"); if (rib != null) UiKit.Tag(rib, "(인포 팝업) 제목 리본"); if (content.childCount > 0) UiKit.Tag(content.GetChild(0), "(인포 팝업) 목록 카드"); if (tap != null) UiKit.Tag(tap, "(인포 팝업) 닫기 안내");
         }
 
         // ───────────────────────── 쉼터 ─────────────────────────
@@ -339,14 +357,22 @@ namespace KkomaKnight.Game
             // 언어 버튼 = 회색 보조 버튼 «한국어»(표시만 · 언어 시스템 없음)
             var lb = UiKit.Button(box, "ui.btnGray", "한국어", () => { }, Layout.SetLangBtn.Within(Layout.SetBox)); lb.name = "LangBtn";
             // 패널 밖 아래 — 링크 글자 2(눌러도 아무 일 없음) · 그 아래 줄 = 로비: «데이터 삭제»(T29) / 전투: «재개»·«포기하고 로비로»
-            var pv = UiKit.Text(Root, "개인정보 처리방침", 30, Palette.Sky, TextAnchor.MiddleCenter, true, true); pv.name = "Privacy"; UiKit.Pct(pv.rectTransform, Layout.SetPrivacy.X - 5, Layout.SetPrivacy.Y - 0.5f, Layout.SetPrivacy.W + 10, Layout.SetPrivacy.H + 1f);
-            var tm = UiKit.Text(Root, "이용약관", 30, Palette.Sky, TextAnchor.MiddleCenter, true, true); tm.name = "Terms"; UiKit.Pct(tm.rectTransform, Layout.SetTerms.X - 5, Layout.SetTerms.Y - 0.5f, Layout.SetTerms.W + 10, Layout.SetTerms.H + 1f);
+            var pv = UiKit.Text(Root, "개인정보 처리방침", 30, Palette.Sky, TextAnchor.MiddleCenter, false, true); pv.name = "Privacy"; pv.horizontalOverflow = HorizontalWrapMode.Overflow; UiKit.Pct(pv.rectTransform, Layout.SetPrivacy);   // 사각형 = 표 그대로(이름표) · 글자는 넘쳐도 된다
+            var tm = UiKit.Text(Root, "이용약관", 30, Palette.Sky, TextAnchor.MiddleCenter, false, true); tm.name = "Terms"; tm.horizontalOverflow = HorizontalWrapMode.Overflow; UiKit.Pct(tm.rectTransform, Layout.SetTerms);
+            RectTransform lastRow;
             if (onResume != null || onGiveUp != null)
             {
-                UiKit.Button(Root, "ui.btnOrange", "재개", closeAndResume, Layout.SetResumeBtn);
+                lastRow = UiKit.Button(Root, "ui.btnOrange", "재개", closeAndResume, Layout.SetResumeBtn);
                 UiKit.Button(Root, "ui.btnGray", "포기하고 로비로", () => { Close(); onGiveUp?.Invoke(); }, Layout.SetGiveUpBtn);
             }
-            else UiKit.Button(Root, "ui.btnRed", "데이터 삭제", ConfirmReset, Layout.SetReset);
+            else lastRow = UiKit.Button(Root, "ui.btnRed", "데이터 삭제", ConfirmReset, Layout.SetReset);
+            // T46 이름표(표 ⑨ «요소» 글자 그대로)
+            UiKit.Tag(box, "팝업 박스"); if (rib != null) UiKit.Tag(rib, "제목 리본(Settings)");
+            UiKit.Tag(bgm, "음악 줄"); UiKit.Tag(sfx, "효과음 줄"); UiKit.Tag(lang, "언어 줄");
+            if (bsw != null && bsw.parent != null) UiKit.Tag(bsw.parent, "토글(1개)"); UiKit.Tag(lb, "언어 버튼");
+            UiKit.Tag(pv.rectTransform, "개인정보 링크"); UiKit.Tag(tm.rectTransform, "이용약관 링크");
+            if (onResume == null && onGiveUp == null) UiKit.Tag(lastRow, "데이터 삭제 버튼");
+            var tapC = UiKit.Find(Root, "TapToClose"); if (tapC != null) UiKit.Tag(tapC, "닫기 안내");
         }
         static void ApplySwitch(Transform sw, bool on) { UiKit.Show(sw, "On", on); UiKit.Show(sw, "Off", !on); }
 

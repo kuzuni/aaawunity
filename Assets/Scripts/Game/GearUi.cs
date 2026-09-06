@@ -195,16 +195,19 @@ namespace KkomaKnight.Game
             var meta = Layout.GdMeta.Within(B);
             var p1 = Pill(box, "Pill1", new Layout.R(meta.X, meta.Y, meta.W * 0.47f, meta.H)); var t1 = UiKit.Text(p1, pill1, 28, Palette.Cream, TextAnchor.MiddleCenter, true, false); UiKit.Stretch(t1.rectTransform, 8, 2, 8, 2);
             var p2 = Pill(box, "Pill2", new Layout.R(meta.X + meta.W * 0.53f, meta.Y, meta.W * 0.47f, meta.H)); var t2 = UiKit.Text(p2, pill2, 28, Palette.Cream, TextAnchor.MiddleCenter, true, false); UiKit.Stretch(t2.rectTransform, 8, 2, 8, 2);
+            // T46 이름표(표 ④ «요소» 글자 그대로 · 하니스 layout.json)
+            UiKit.Tag(box, "팝업 박스"); if (rib != null) UiKit.Tag(rib, "등급 배지"); UiKit.Tag(slot, "아이템 아이콘(정사각)"); UiKit.Tag(nm.rectTransform, "이름줄"); UiKit.TagGroup(box, "메타줄(레벨·부위)", p1, p2);
+            var tap = UiKit.Find(ov.Root, "TapToClose"); if (tap != null) UiKit.Tag(tap, "닫기 안내");
             return box;
         }
         /// <summary>스탯 박스(GdStats) — 머리 «스탯» + 줄 3(공격력 · 체력 · 실드 · 값은 초록 «+N»). 빈 슬롯은 안내 한 줄.</summary>
-        static void StatsBox(RectTransform box, GameData D, GearItem g, int lv, bool eqd)
+        static RectTransform StatsBox(RectTransform box, GameData D, GearItem g, int lv, bool eqd)
         {
             var st = Layout.GdStats.Within(Layout.GdBox);
-            var sp = Pill(box, "Stats", st, 0.75f);
+            var sp = Pill(box, "Stats", st, 0.75f); UiKit.Tag(sp, "스탯 섹션");
             string gh = Hex(Palette.Green);
             UiKit.Label(sp, 3, 2, 60, 26, "스탯", 28, Palette.Cream, TextAnchor.MiddleLeft, true, false).fontStyle = FontStyle.Bold;
-            if (g == null) { UiKit.Label(sp, 3, 30, 94, 66, $"슬롯 1레벨당 이 부위 장비의 공격력·체력·실드 +{D.Gear.SlotStep * 100:0.#}% (상한 Lv.{D.Gear.SlotLvMax})", 24, Palette.CreamDark, TextAnchor.MiddleLeft, true, false); return; }
+            if (g == null) { UiKit.Label(sp, 3, 30, 94, 66, $"슬롯 1레벨당 이 부위 장비의 공격력·체력·실드 +{D.Gear.SlotStep * 100:0.#}% (상한 Lv.{D.Gear.SlotLvMax})", 24, Palette.CreamDark, TextAnchor.MiddleLeft, true, false); return sp; }
             var c = GearSystem.Contribution(D, g, lv);
             var rows = new (string icon, string label, double v)[] { (Icons.Stat("dmg"), "공격력", c.Atk), ("pi.heart", "체력", c.Hp), ("pi.shield", "실드", c.Sh) };
             for (int i = 0; i < rows.Length; i++)
@@ -214,6 +217,7 @@ namespace KkomaKnight.Game
                 var t = UiKit.Label(sp, 11, y, 86, 22, $"{rows[i].label}  <color=#{gh}>+{UiKit.Fmt(rows[i].v)}</color>", 26, Palette.Cream, TextAnchor.MiddleLeft, true, false); t.name = "Stat:" + i;
             }
             if (eqd) { var s2 = UiKit.Label(box, st.X + st.W * 0.55f, st.Y + st.H * 0.02f, st.W * 0.44f, st.H * 0.26f, $"슬롯 Lv당 +{D.Gear.SlotStep * 100:0.#}%", 22, Palette.CreamDark, TextAnchor.MiddleRight, true, false); s2.name = "SlotHint"; }
+            return sp;
         }
         /// <summary>옵션 줄(GdOpts · 줄 피치 ≤ 2.4%) — 해금 = 등급색 세트 아이콘 + 등급색 글자 · 잠금 = 자물쇠 + 흐린 글자 «(등급 이상)». 규칙(OptCount) 은 기존 그대로.</summary>
         static void OptionRows(RectTransform box, GameData D, GearItem g)
@@ -221,7 +225,7 @@ namespace KkomaKnight.Game
             var region = Layout.GdOpts.Within(Layout.GdBox);
             var opts = D.Gear.Options.TryGetValue(g.Type, out var ol) ? ol : new List<GearOption>();
             int n = D.Gear.OptCount(g.Rar, g.Plus); int R = D.Gear.RarName.Length;
-            var host = UiKit.Rect(box, "Options"); UiKit.Pct(host, region);
+            var host = UiKit.Rect(box, "Options"); UiKit.Pct(host, region); UiKit.Tag(host, "옵션 목록");
             if (opts.Count == 0) { UiKit.Label(host, 2, 0, 96, 100, "세트 옵션 없음", 24, Palette.InkLight); return; }
             float pitch = Mathf.Min(Layout.GdOptPitch, Layout.GdOpts.H / opts.Count);   // 프레임 % → 줄 하나가 차지하는 비율
             float rowPct = pitch / Layout.GdOpts.H * 100f;
@@ -239,7 +243,7 @@ namespace KkomaKnight.Game
         static void CostRow(RectTransform box, SaveData S, double cost, bool maxed, int maxLv)
         {
             var r = Layout.GdCost.Within(Layout.GdBox);
-            var row = Pill(box, "Cost", r, 0.75f);
+            var row = Pill(box, "Cost", r, 0.75f); UiKit.Tag(row, "비용줄");
             var ic = UiKit.Icon(row, "ic", "pi.coins"); UiKit.Pct(ic.rectTransform, 30, 8, 5, 84);
             string s = maxed ? $"슬롯 MAX (Lv.{maxLv})" : $"<color=#{Hex(S.Gold >= cost ? Palette.Green : Palette.Red)}>{UiKit.Fmt(S.Gold)}</color>/{UiKit.Fmt(cost)}";
             var t = UiKit.Label(row, 36, 0, 40, 100, s, 28, Palette.Cream, TextAnchor.MiddleLeft, true, false); t.name = "CostText";
@@ -257,14 +261,17 @@ namespace KkomaKnight.Game
             OptionRows(box, D, g);
             CostRow(box, S, cost, maxed, D.Gear.SlotLvMax);
             var B = Layout.GdBox;
-            if (eqd) UiKit.Button(box, "ui.btnBlue", "해제", () => { S.Eq.Remove(g.Part); app.Persist(); Audio.Sfx("snd.equip"); ov.Close(); onChanged?.Invoke(); }, Layout.GdBtnL.Within(B)).name = "BtnL";
-            else UiKit.Button(box, "ui.btnBlue", "장착", () => { S.Eq[g.Part] = g.Uid; g.IsNew = false; app.Persist(); Audio.Sfx("snd.equip"); ov.Close(); onChanged?.Invoke(); }, Layout.GdBtnL.Within(B)).name = "BtnL";
+            RectTransform left;
+            if (eqd) left = UiKit.Button(box, "ui.btnBlue", "해제", () => { S.Eq.Remove(g.Part); app.Persist(); Audio.Sfx("snd.equip"); ov.Close(); onChanged?.Invoke(); }, Layout.GdBtnL.Within(B));
+            else left = UiKit.Button(box, "ui.btnBlue", "장착", () => { S.Eq[g.Part] = g.Uid; g.IsNew = false; app.Persist(); Audio.Sfx("snd.equip"); ov.Close(); onChanged?.Invoke(); }, Layout.GdBtnL.Within(B));
+            left.name = "BtnL";
             var up = UiKit.Button(box, "ui.btnOrange", maxed ? "슬롯 MAX" : "슬롯 강화", () =>
             {
                 double c2 = D.Gear.SlotCost(S.SlotLv(g.Part)); if (S.Gold < c2 || S.SlotLv(g.Part) >= D.Gear.SlotLvMax) { app.Toast("골드가 부족합니다"); return; }
                 S.Gold -= c2; S.Slots[g.Part] = S.SlotLv(g.Part) + 1; app.Persist(); onChanged?.Invoke(); OpenDetail(app, g, onChanged);
             }, Layout.GdBtnR.Within(B)); up.name = "BtnR";
             UiKit.SetInteractable(up.GetComponent<Button>(), !maxed && S.Gold >= cost);
+            UiKit.TagGroup(box, "버튼 2개", left, up);
         }
 
         /// <summary>빈 부위 팝업 — 같은 구도(장비 없는 상태 · 등급 탭 = «부위 슬롯» · 빈 아이콘 칸 · 스탯 박스에 슬롯 안내 · 옵션 자리에 «장착된 장비가 없습니다» · 비용 줄 · 강화만 · 탭하여 닫기).</summary>
@@ -283,6 +290,7 @@ namespace KkomaKnight.Game
                 S.Gold -= c2; S.Slots[part] = S.SlotLv(part) + 1; app.Persist(); onChanged?.Invoke(); OpenSlot(app, part, onChanged);
             }, Layout.GdBtnR.Within(Layout.GdBox)); up.name = "BtnR";
             UiKit.SetInteractable(up.GetComponent<Button>(), !maxed && S.Gold >= cost);
+            UiKit.TagGroup(box, "버튼 2개", up);
         }
     }
 }
