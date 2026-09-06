@@ -186,6 +186,8 @@ namespace KkomaKnight.Game
                 // 그림(Environment 들판 + 길 + 소품 · 카드 1 = 붉은 사막(지옥) · 카드 2 = 흰 들판(설원))
                 var pic = UiKit.Rect(card, "Pic"); UiKit.Pct(pic, Shift(Layout.DgCardPic, dy).Within(rect));
                 Stage(pic, d.field, d.tint, d.props);
+                // T69-events: 그림 띠도 «칸» 이다 — 레퍼런스 20 의 그림은 위(제목 띠)·아래(카드 몸통)·양옆이 전부 검은 선으로 끊긴다(그림이 카드 안에서 따로 논다)
+                UiKit.Bordered(pic);
                 // «획득 가능» + 보상 아이콘(초록 프레임) 줄 · 입장(주황 · 빨간 !)
                 var fl = Shift(FoundLabel, dy).Within(rect);
                 UiKit.Label(card, fl.X, fl.Y, fl.W, fl.H, "획득 가능", TextSize.Aux, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Aux);
@@ -222,6 +224,8 @@ namespace KkomaKnight.Game
             var pic = UiKit.Rect(card, "Pic"); UiKit.Pct(pic, Layout.ArCardPic.Within(rect));
             Stage(pic, "env.desert.field", new Color(0.93f, 0.82f, 0.55f), new[] { "env.monolith", "env.stoneBig", "env.monolith", "env.desert.Stone_Gray1_05" });
             var sky = UiKit.Panel(pic, "Sky", "fr.rect", Palette.Hex("#79C8F2")); UiKit.Pct(sky.rectTransform, 0, 0, 100, 42); sky.transform.SetSiblingIndex(1);
+            // T69-events: 던전 카드와 같은 그림 띠 테두리(레퍼런스 22 의 경기장 그림도 위·아래가 검은 선으로 끊긴다) — 하늘을 끼운 «뒤»에 걸어 링이 맨 앞에 온다
+            UiKit.Bordered(pic);
             var season = UiKit.Rect(card, "Season"); UiKit.Pct(season, Layout.ArSeason.Within(rect));
             UiKit.Label(season, 0, 0, 100, 100, "시즌 종료까지: " + NoTime, TextSize.Aux, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Aux);
             var enter = UiKit.Button(card, "ui.btnOrange", "입장", () => ShowPage(PageArena), Layout.ArEnter.Within(rect)); enter.name = "EnterBtn"; AlertDot(enter);
@@ -380,6 +384,9 @@ namespace KkomaKnight.Game
                 var r = Layout.AcRow; r.Y += i * Layout.AcRowPitch;
                 var row = UiKit.Rect(box, "FoeRow:" + i); UiKit.Pct(row, r.Within(Layout.AcBox));
                 var fr = UiKit.Spawn("ui.frameDark", row); UiKit.Stretch((RectTransform)fr.transform);
+                // T69-events: 줄 자체에 Ink 링(레퍼런스 24 는 상대 5줄이 각자 검은 외곽선 상자다) — 조각 «ui.frameDark» 는 이름 그대로 NoBorder 라 링이 없었다.
+                // 게이트는 줄 안 초상 프레임(ItemFrame)의 링 때문에 이미 통과했지만 눈에는 줄 테두리가 없었다 — 결정 184 와 같은 함정이라 줄에 직접 건다.
+                UiKit.Bordered(row);
                 Portrait(row, "Face", new Layout.R(2.5f, 12, 11.5f, 76), "ui.itemFrame.yellow", Foes[i % Foes.Length], true);
                 UiKit.Label(row, 16, 6, 44, 42, FoeName(FoeRank(i)), TextSize.Body, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
                 _dummyPowerTexts.Add(new KeyValuePair<Text, int>(Pill(row, new Layout.R(16, 54, 19, 38), "ui.battle", DummyPower(FoeRank(i)), Palette.Orange), FoeRank(i)));
@@ -418,6 +425,8 @@ namespace KkomaKnight.Game
                 var r = Layout.RrRow; r.Y += i * Layout.RrRowPitch;
                 var row = UiKit.Rect(box, "RewardRow:" + i); UiKit.Pct(row, r.Within(Layout.RrBox));
                 var fr = UiKit.Spawn("ui.frameDark", row); UiKit.Stretch((RectTransform)fr.transform);
+                // T69-events: 24 의 상대 줄과 같은 이유로 보상 줄에도 Ink 링(레퍼런스 25 의 4줄은 각자 검은 외곽선 상자)
+                UiKit.Bordered(row);
                 if (i < crowns.Length) { var cr = UiKit.Icon(row, "Crown", crowns[i]); UiKit.Pct(cr.rectTransform, 2, 8, 14, 84); UiKit.Label(row, 2, 30, 14, 50, (i + 1).ToString(), TextSize.Body, Palette.White).fontStyle = FontStyle.Bold; }
                 else UiKit.Label(row, 2, 0, 14, 100, (i + 1).ToString(), TextSize.Body, Palette.White).fontStyle = FontStyle.Bold;
                 // T72 ② 보상 칸(코인·다이아) 아이콘 뒤 빛살 — 팝업이라 스크롤 제한 없이 여덟 칸이 같이 돈다(닫으면 SetLink 로 같이 죽는다)
@@ -499,6 +508,8 @@ namespace KkomaKnight.Game
                 var cell = UiKit.Rect(tabs, "Tab:" + it.key); UiKit.Pct(cell, i * 50f, on ? 0 : 14, 50, on ? 100 : 86);
                 var bg = UiKit.Panel(cell, "Bg", "fr.r12", on ? Palette.Hex("#6B6862") : Palette.Hex("#3B3936"));
                 UiKit.Stretch(bg.rectTransform, 2, 0, 2, -10); bg.raycastTarget = true;
+                // T69-events: 하단 탭 2칸도 «칸» — 레퍼런스 20·22 의 던전/PvP 탭은 각자 검은 외곽선 상자다(아이콘·라벨은 뒤에 얹혀 링 위)
+                UiKit.Bordered(bg.rectTransform);
                 var ic = UiKit.Icon(cell, "Icon", it.icon); UiKit.Pct(ic.rectTransform, 22, on ? 6 : 14, 56, on ? 56 : 72);
                 if (on) UiKit.Label(cell, 0, 62, 100, 34, it.label, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyle.Bold;
                 var dot = UiKit.Spawn("ui.alertDot", cell); var dr = (RectTransform)dot.transform; dr.anchorMin = dr.anchorMax = new Vector2(1, 1); dr.pivot = new Vector2(0.5f, 0.5f); dr.anchoredPosition = new Vector2(-14, -10); dr.sizeDelta = new Vector2(40, 40);

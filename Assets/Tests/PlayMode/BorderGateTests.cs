@@ -226,11 +226,30 @@ namespace KkomaKnight.Tests.Play
             // 20~26 던전·아레나
             EventsScreen.Open(_app, EventsScreen.PageDungeon); yield return Frames(2); yield return Check("20_dungeon");
             var ev = _app.GetScreen<EventsScreen>(); var evRoot = _app.Current.Root;
+            // T69-events(strict) — 던전 카드 2장의 그림 띠 + 하단 던전/PvP 탭 2칸(레퍼런스 20 은 그림과 탭이 각자 검은 외곽선)
+            foreach (var c in new[] { "Card:hell", "Card:expedition" })
+            {
+                var card = UiKit.Find(evRoot, c); Assert.IsNotNull(card, c);
+                Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(card, "Pic")), c + " 그림 띠에 어두운 테두리(T69-events)");
+            }
+            foreach (var t in new[] { "Tab:dungeon", "Tab:pvp" }) Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(evRoot, t)), t + " 탭 칸에 어두운 테두리(T69-events)");
             if (Press(UiKit.Find(evRoot, "Card:hell"), "EnterBtn")) { yield return Check("21_dungeon_detail"); _app.Overlay.Close(); yield return Frames(1); }
             ev.ShowPage(EventsScreen.PagePvp); yield return Check("22_arena");
+            Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(UiKit.Find(evRoot, "Card:arena"), "Pic")), "아레나 카드 그림 띠에 어두운 테두리(T69-events)");
             ev.ShowPage(EventsScreen.PageArena); yield return Check("23_arena_enter");
-            if (Press(evRoot, "ChallengeBtn")) { yield return Check("24_arena_challenge"); _app.Overlay.Close(); yield return Frames(1); }
-            if (Press(evRoot, "RewardsBtn")) { yield return Check("25_arena_rank_reward"); _app.Overlay.Close(); yield return Frames(1); }
+            // T69-events — 도전 팝업(24)의 상대 5줄과 순위 보상 팝업(25)의 4줄은 «줄 자체» 가 링을 가진다(줄 안 초상·보상 칸의 프레임으로 통과하던 결정 184 함정을 막는다)
+            if (Press(evRoot, "ChallengeBtn"))
+            {
+                yield return Check("24_arena_challenge");
+                for (int i = 0; i < 5; i++) AssertUiBarBorder(_app.Overlay.Root, "FoeRow:" + i);
+                _app.Overlay.Close(); yield return Frames(1);
+            }
+            if (Press(evRoot, "RewardsBtn"))
+            {
+                yield return Check("25_arena_rank_reward");
+                for (int i = 0; i < 4; i++) AssertUiBarBorder(_app.Overlay.Root, "RewardRow:" + i);
+                _app.Overlay.Close(); yield return Frames(1);
+            }
             ev.ShowPage(EventsScreen.PageMerchant); yield return Check("26_arena_shop");
             _app.ShowScreen("lobby"); yield return Frames(1);
 

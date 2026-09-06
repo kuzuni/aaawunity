@@ -12,7 +12,11 @@ namespace KkomaKnight.Game
     public static class BorderAudit
     {
         /// <summary>테두리 없음이 실패인 화면(묶음이 끝날 때마다 추가 · 전부 끝나면 모든 화면).</summary>
-        public static readonly HashSet<string> StrictScreens = new HashSet<string> { "02_battle", "01_lobby", "06_gear", "07_gear_detail", "08_gear_fuse", "13_pet", "14_pet_detail", "09_shop_1", "10_shop_2", "12_settings" };
+        public static readonly HashSet<string> StrictScreens = new HashSet<string>
+        {
+            "02_battle", "01_lobby", "06_gear", "07_gear_detail", "08_gear_fuse", "13_pet", "14_pet_detail", "09_shop_1", "10_shop_2", "12_settings",
+            "20_dungeon", "21_dungeon_detail", "22_arena", "23_arena_enter", "24_arena_challenge", "25_arena_rank_reward", "26_arena_shop",   // T69-events(던전·아레나 묶음)
+        };
 
         /// <summary>
         /// 테두리가 없는 게 맞는 것(ROUTINE T69 5항 «예외 목록») — 이름표 이름 또는 <see cref="UiTag.Members"/> 조각의 오브젝트 이름.
@@ -26,6 +30,11 @@ namespace KkomaKnight.Game
             "이름줄",                           // 07 세부 팝업의 장비 이름 = 패널 위 맨 글자(레퍼런스 07 «Shadow Treads» 에 상자 없음 · 아래 pill 2개가 테두리) (T69-gear)
             "합계 줄",                          // 13 펫 탭의 «+0 ❤ | +0 🛡 | +0 🗡» = 어두운 바탕 위 맨 글자(레퍼런스 13 «+168 ❤ | +165 🛡 | +74 🗡» 에 상자 없음 · 14 의 «패시브 수치 줄» 도 같은 꼴이라 «수치» 로 이미 제외) (T69-pet · 결정 171)
             "광고/무료 카드 2개",               // 09·10 작은 상자 카드 아래 «광고 + 1회 가격» 버튼 줄의 측정용 빈 rect(Box:*/Bottom · 자식 없음) — 레퍼런스 10 도 그 줄에 상자가 없고 버튼 둘이 각자 외곽선 · 카드 자체가 Ink 링 (T69-shop · 결정 195)
+            "티어 줄",                          // 22 아레나 카드 아래 «🥉 브론즈» = 카드 몸통 위 맨 아이콘+글자(레퍼런스 22 에 상자 없음 · 카드가 제 외곽선) (T69-events)
+            "티켓 줄",                          // 21 던전 세부 팝업의 «🎫 3» = 버튼 두 개 위 맨 아이콘+숫자(레퍼런스 21 에 상자 없음) (T69-events)
+            "티켓·전투력 줄",                   // 24 도전 팝업 머리줄 = 어두운 티켓 pill + 맨 «⚔ 전투력»(레퍼런스 24 에 줄 상자가 없고 pill 만 제 상자) (T69-events)
+            "상대 목록(5줄)",                   // 24 상대 5줄의 측정용 빈 rect(줄들은 팝업 상자의 형제라 자식이 없다) — 레퍼런스 24 도 5줄을 감싸는 상자가 없고 줄마다 외곽선 (T69-events)
+            "보상 목록(4줄)",                   // 25 순위 보상 4줄의 같은 꼴 담개 (T69-events)
         };
 
         /// <summary>«행·카드·칸» 으로 보는 이름표 낱말 — 이 가운데 하나가 이름에 들어가면 대상.</summary>
