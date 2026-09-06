@@ -403,6 +403,7 @@ T82 수정(`5dab93a7`)이 든 첫 완주 런. 읽는 법은 결정 172. 잡 = [1
 
 278. **옛 묶음 키(`GearItem.GroupKey`)는 남기지 않고 지운다 — 규칙이 둘이 되는 것을 막는다** (T114 · sess-1920-19253 · 워커 B) — T114 로 «합성 묶음» 은 등급을 봐야 정해지므로(전설 미만은 종류 무관) 표를 아는 `GearSystem.FuseKey(D, g)` 로 옮겼다. `GroupKey`(부위|종류|등급)를 «호환용» 으로 남겨 두면 데이터를 안 넘기는 호출부가 조용히 옛 규칙으로 묶어 «어떤 화면은 되고 어떤 화면은 안 되는» 결함이 생긴다 — 지우면 컴파일러가 남은 호출부를 전부 잡아 준다(실제로 `FuseAll` 한 곳뿐이었다). 되돌리려면 `GearItem` 에 그 프로퍼티 한 줄.
 
+288. **T113 의 CI 빨강은 «임자 없는 빨강» 으로 보고 `T113.lock` 을 새로 잡아 잇는다(내가 잡지 않은 이유는 dotnet 뿐이다)** (CI #203 실측 · sess-2157-4152 · 워커 H) · 왜 = T113 은 코드가 push 됐고 lock 은 반납된 상태인데 그 커밋이 만든 `BorderGateTests` 빨강이 남아 «유니티 잡 → `build-webgl`·`screens`» 를 통째로 막고 있다. 규약상 lock 없는 작업은 아무나 잡을 수 있으니 «main 빨강 후속 최우선» 대로 다음 dotnet 워커가 잡는 것이 맞다 — 나는 게이트를 못 돌려 코드를 못 고치므로 **어디를 볼지 세 갈래**(결과 그릇에 칸이 서는가 · 링 Image 이름·활성 · `Layout.ForgeResult` 변경 여파)만 파서 남겼다. 되돌리려면: 그 실측 절과 ROUTINE §2 머리 메모.
 287. **T110 ⓓ 폭죽은 새 파티클을 쓰지 않고 프리팹이 들고 있던 `SampleEffect_Confetti` 조각을 되살려 좌우 두 번 터뜨린다** (T110 · sess-1957-28503 · 워커 D) — 지시서가 «되살려 쓰거나 CFXR 조각» 둘 다 허용했다. 프리팹 조각을 고른 까닭: ⓐ 그 조각은 **UI Image** 라 팝업 층(ScreenSpaceCamera)에서 정렬이 확실하다 — CFXR 은 월드 파티클이라 팝업 위에 확실히 보이게 하려면 층·카메라를 손대야 하고, 그건 T58 이 고생한 자리다 ⓑ 새 에셋 0 · 카탈로그 불변. 연출 = 늦게 시작해 «펑»(0.6 → 1.05 → 1.0 · OutBack) → 아래로 흩어지며 사라짐(1.2s · unscaled · 끝나면 파괴). 두 번째 장은 같은 조각을 복제해 x 를 뒤집었다. 되돌리려면 `Overlay.Confetti`/`Burst`.
 286. **T110 ⓑ 는 «클리어» 만이 아니라 사망 팝업에서도 무늬를 뺀다 · 레벨업 3택(04)은 그대로 둔다** (T110 · sess-1957-28503 · 워커 D) — 주인 원문은 «클리어 팝업» 이지만 지시서 2항이 «클리어/결과 팝업에서만» 이라 적었고, 승리·사망은 같은 «결과 팝업» 꼴(어둠 위에 바로 조립 · Play_Result_*)이라 한쪽만 빼면 같은 화면 종류가 서로 달라 보인다. 레벨업 3택은 결과 팝업이 아니고 주인이 지적하지도 않아 T72 ① 그대로 둔다. 되돌리려면 `Overlay.Clear`·`Overlay.Dead` 의 `DimPattern(rt)` 두 줄(레벨업은 194행에 그대로 있다).
 284. **«디자인이 프리팹과 다르다» 는 지시는 코드를 읽기 전에 `screens` PNG 를 확대해서 «무엇이» 다른지부터 찾는다** (T93 · sess-2148-1691 · 워커 L) — 특전 카드는 조각(ListItem_StageBuff_02 · CardFrame_04 · ItemFrame_04)도 색 이름(gray/yellow/red)도 **이미 프리팹과 같았다**. 코드만 읽었으면 «고칠 것이 없다» 로 끝났을 것이다. run 173 의 `04_perks.png` 를 `png_crop.py --strip … 3` 으로 확대해 보고서야 «일반 카드가 통짜 회색 판 = 등급 탭이 몸통에 묻혔다» 가 보였다 — 원인은 `UiKit.Desaturate` 가 프레임 **전체**를 훑기 때문(탭도 몸통과 같은 값이 된다). 되돌리려면 `Overlay.PerkCard` 의 `tabImg.color` 한 줄.
@@ -2207,6 +2208,17 @@ CI [#148](https://github.com/kuzuni/aaawunity/actions/runs/34047447440) 유니�
 - **T69-shop ✅** — ⓐ CI #158·#162 두 런 모두 «[BorderGate]» 표 `09_shop_1` 5/5 · `10_shop_2` 5/5 · **없음 0 · strict ✔** + `BorderGateTests` Passed · ⓑ `screens` run 158 의 09·10 PNG 눈 확인(앞 회차에서 이미 기록).
 - **T69-settings ✅** — ⓐ CI **#162**(`bda4fa1`) 의 «[BorderGate]» 표 `12_settings` **6/6 · 없음 0 · strict ✔** + `BorderGateTests` **Passed**(그 런의 유니티 잡은 다른 3건 때문에 빨갛지만 이 fixture 는 통과했다 = 결정 172 의 «빨간 런에서도 내 테스트는 확정할 수 있다») · ⓑ `screens` run **173**(`c990d31` · 20:00 갱신) 의 12 PNG 눈 확인 = **음악·효과음·언어 세 줄이 저마다 검은 링 상자**로 보이고 토글(ON)·언어 버튼(한국어)은 링 «위» 에 얹혀 있다. 결정 184 함정 없음.
 - **덤으로 나온 것 → T101 등재**: 같은 12 PNG 를 레퍼런스 `docs/ref/12_settings.jpg` 와 나란히 보니 **테두리와 무관한 결함 둘**이 있다 — 어둠이 상단 재화 바·하단 탭 바·사이드 아이콘을 안 덮는 것(레퍼런스는 전부 어둡다)과 «탭하여 닫기» 가 탭 바와 겹치는 것. **T69-settings 범위(줄 테두리) 밖이고 코드 수정이 필요해 이 세션은 손대지 않았다**(결정 237).
+
+### CI #203(`9e6524f`) 실패 **2건** 실측 — 하나는 **임자 없는 빨강(T113)** (2026-09-06 22:0X UTC · sess-2157-4152 · 워커 H · 계정 2)
+
+#189 의 여섯이 둘로 줄었다(#190~#202 사이에 넷이 잡혔다). **EditMode 172/172 초록** · 빨강은 PlayMode 둘뿐이고, `screens` 배포 step 은 skipped 라 **PNG 는 아직 run 173 에 멈춰 있다**(gh-pages 도 20:15 의 `cb123d3` 그대로 — 주인 폰은 멀쩡하다).
+
+| 실패한 테스트 | 실패 원문 | 누구 것 | lock |
+|---|---|---|---|
+| `BorderGateTests.BattleBarsHaveBordersAndCellTagsAreAudited` | «**대장간 결과 슬롯** 은 어두운 테두리(ItemFrame Border → Ink) · Expected True But was **False**» (`AssertItemFrameBorder` 첫 줄 = `UiKit.HasDarkBorder`) | **T113**(`128f1e30` · 대장간 08) | **없음 ← 다음 워커가 잡을 자리** |
+| `TextSizeGateTests.EveryActiveTextMeetsTheMinimumSize` | «팝업 제목 리본의 글자 칸 높이가 제목 60 의 한 줄(84px)보다 낮다 — `[17_daily_gift] …/DailyGiftBox/ui.title.yellow/Text «데일리 기프트» rect 769×**72**» · Expected ≥ 83 But was 72 | **T75 4항**(공통 팝업 리본 높이 · 이미 «다음 회차» 로 적어 둔 그 항목) | 살아 있음(sess-1917-23930) |
+
+- **T113 자리에 대한 실측 메모(고칠 워커가 시간 아끼라고)**: T113 이 `ForgeScreen.GreenFrame` 을 없앴고 그 함수 안에 있던 **«초록 변형을 새로 스폰한 뒤 `GearUi.DarkFrame(frame)` 을 다시 부르는» 자리(결정 167)** 도 같이 사라졌다. **다만 `GearUi.Cell` 은 지금도 `g` 가 null 이든 아니든 끝에서 `DarkFrame(frame)` 을 부른다**(`GearUi.cs:80` 부근) — 그러니 «재호출이 사라져서» 라고 단정하지 말 것. 단언이 넘어지는 곳은 `AssertItemFrameBorder` 의 **첫 줄 `HasDarkBorder(cell)`** 이고 대상은 `UiKit.Find(forgeRoot, "Result")`(칸이 아니라 **칸을 담는 그릇**)이다. 그러니 볼 곳은 ⓐ 결과 그릇 안에 `gear:*` 칸이 실제로 서 있는가(3개 미만일 때의 «모루» 경로 = `ForgeScreen.cs:125`) ⓑ 링 Image 가 켜져 있고 이름이 `UiKit.BorderName` 인가 ⓒ T113 이 바꾼 `Layout.ForgeResult`/액션바 정리로 그릇이 다른 것을 담고 있지 않은가. **이 세션은 dotnet 이 없어 여기까지만 판다**(결정 206·266).
 
 ### CI #189(`ceebbb7`) 실패 6건 실측표 — 누구 것인지 · 이미 손이 갔는지 (2026-09-06 21:0X UTC · sess-2057-9230 · 워커 H · 계정 2)
 
