@@ -306,7 +306,30 @@ namespace KkomaKnight.Game
         public static void Hide(Transform root, params string[] paths) { foreach (var p in paths) { var t = Find(root, p); if (t != null) t.gameObject.SetActive(false); } }
         public static void Show(Transform root, string path, bool on) { var t = Find(root, path); if (t != null) t.gameObject.SetActive(on); }
 
-        /// <summary>GUI Pro 버튼 프리팹은 Button 컴포넌트가 없다 — 여기서 붙인다(첫 Image 가 targetGraphic · DOTween 눌림 연출).</summary>
+        /// <summary>눌림 표시 배율(T22 · 주인 «모든 버튼에 눌림 표시») — 누르는 동안 그림을 이만큼 어둡게(ColorTint pressedColor) · 그림이 없는 히트 영역은 CanvasGroup alpha 를 이만큼.</summary>
+        public const float PressedMul = 0.8f;
+        /// <summary>눌림 지속 시간(초) — 손을 떼면 이 시간 안에 원래 색으로.</summary>
+        public const float PressedFade = 0.05f;
+        /// <summary>모든 버튼 공통 ColorTint 표 — 눌림만 어둡게(×<see cref="PressedMul"/>) · highlighted/selected 는 그대로(마우스 올림·선택 잔상 없음) · disabled 는 흰색(비활성 반투명은 <see cref="SetInteractable"/> 의 CanvasGroup 이 «지금처럼» 맡는다).</summary>
+        public static ColorBlock PressColors
+        {
+            get
+            {
+                var c = ColorBlock.defaultColorBlock;
+                c.normalColor = Color.white; c.highlightedColor = Color.white; c.selectedColor = Color.white; c.disabledColor = Color.white;
+                c.pressedColor = new Color(PressedMul, PressedMul, PressedMul, 1f);
+                c.colorMultiplier = 1f; c.fadeDuration = PressedFade;
+                return c;
+            }
+        }
+
+        /// <summary>
+        /// GUI Pro 버튼 프리팹은 Button 컴포넌트가 없다 — 여기서 붙인다(DOTween 눌림 연출 + <b>눌림 표시</b> · T22).
+        /// 눌림 표시 = <see cref="Selectable.Transition.ColorTint"/>(<see cref="PressColors"/> · 누르는 동안 ×0.8 어둡게). targetGraphic 은 ⓐ 이 오브젝트의 Image 가 보이면 그것
+        /// ⓑ 투명 히트 영역(칸·카드·프리팹 버튼 루트 — 루트에 Image 가 없어 여기서 투명 Image 를 붙인 것)이면 <see cref="PressTarget"/> 이 고른 «보이는 첫 자식 Image»(버튼 배경·칸 프레임·탭 배경)
+        /// ⓒ 자식에도 그림이 없으면(어둠 배경 같은 히트 영역) <see cref="PressFeedback"/> 이 누르는 동안 CanvasGroup alpha 를 ×0.8 로. 프리팹은 손대지 않는다(«그대로» 원칙 — 색만 곱한다).
+        /// 비활성(interactable=false)은 지금처럼 <see cref="SetInteractable"/> 의 반투명(0.5) 그대로이고 눌러도 안 어두워진다.
+        /// </summary>
         public static Button Clickable(Transform t, Action onClick, bool punch = true)
         {
             var go = t.gameObject;
@@ -314,7 +337,9 @@ namespace KkomaKnight.Game
             if (img == null) { img = go.AddComponent<Image>(); img.color = new Color(1, 1, 1, 0); }   // 투명 히트 영역
             img.raycastTarget = true;
             var b = Ensure<Button>(go);
-            b.targetGraphic = img; b.transition = Selectable.Transition.None;
+            b.transition = Selectable.Transition.ColorTint; b.colors = PressColors;
+            b.targetGraphic = PressTarget(t, img);
+            Ensure<PressFeedback>(go);   // 그림이 없을 때의 CanvasGroup 눌림 + 자식이 갈아엎힌 뒤(targetGraphic 파괴)의 재선택
             b.onClick.RemoveAllListeners();
             b.onClick.AddListener(() =>
             {
@@ -322,6 +347,30 @@ namespace KkomaKnight.Game
                 onClick?.Invoke();
             });
             return b;
+        }
+        /// <summary>눌림 색을 입힐 그림 — 루트 Image 가 보이면 그것, 아니면 «보이는(켜져 있고 알파 > 0) 첫 자식 Image»(계층 순서 · 루트~자식 사이가 전부 activeSelf 인 것만 — 루트 위쪽이 아직 꺼져 있어도 고를 수 있게). 없으면 루트의 (투명) Image 를 돌려준다(ColorTint 는 보이지 않고 <see cref="PressFeedback"/> 가 대신 어둡게 한다).</summary>
+        public static Graphic PressTarget(Transform root, Image self)
+        {
+            if (self != null && self.enabled && self.color.a > 0.01f) return self;
+            foreach (var im in root.GetComponentsInChildren<Image>(true))
+            {
+                if (im == null || im == self || !im.enabled || im.color.a <= 0.01f) continue;
+                if (!ActiveUpTo(im.transform, root)) continue;
+                return im;
+            }
+            return self;
+        }
+        /// <summary>x 에서 root 바로 아래까지 모든 오브젝트가 activeSelf 인가(root 자신과 그 위는 안 본다).</summary>
+        static bool ActiveUpTo(Transform x, Transform root)
+        {
+            for (var p = x; p != null && p != root; p = p.parent) if (!p.gameObject.activeSelf) return false;
+            return true;
+        }
+        /// <summary>눌림 표시가 실제로 보이는 그림이 있는가(targetGraphic 이 살아 있고 알파 > 0) — 테스트·감사용.</summary>
+        public static bool HasVisiblePressTarget(Button b)
+        {
+            if (b == null || b.transition != Selectable.Transition.ColorTint) return false;
+            var g = b.targetGraphic; return g != null && g.enabled && g.color.a > 0.01f && g.gameObject.activeInHierarchy;
         }
         public static void SetInteractable(Button b, bool on)
         {
@@ -398,5 +447,41 @@ namespace KkomaKnight.Game
             return n.ToString("#,0");
         }
         public static string FmtQty(double n) => Math.Round(n).ToString("0");
+    }
+
+    /// <summary>
+    /// 눌림 표시 보조(T22) — <see cref="UiKit.Clickable"/> 가 모든 버튼에 붙인다.
+    /// ⓐ Button 의 targetGraphic 이 투명(그림이 없는 히트 영역)이거나 파괴됐으면(칸·줄을 갈아엎은 뒤) 누르는 순간 <see cref="UiKit.PressTarget"/> 으로 다시 고르고,
+    ///    그래도 보이는 그림이 없으면 누르는 동안 CanvasGroup alpha 를 ×<see cref="UiKit.PressedMul"/> 로 낮춘다(손을 떼거나 밖으로 나가면 복원).
+    /// ⓑ interactable=false 면 아무것도 안 한다(비활성 반투명 그대로). 프리팹·자식은 손대지 않는다.
+    /// </summary>
+    public sealed class PressFeedback : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
+    {
+        Button _btn; CanvasGroup _cg; bool _dimmed; float _baseAlpha = 1f;
+        /// <summary>지금 CanvasGroup 으로 어둡게 하는 중인가(테스트용).</summary>
+        public bool Dimmed => _dimmed;
+
+        Button Btn => _btn != null ? _btn : (_btn = GetComponent<Button>());
+
+        public void OnPointerDown(PointerEventData e)
+        {
+            var b = Btn; if (b == null || !b.IsInteractable() || e.button != PointerEventData.InputButton.Left) return;
+            if (b.transition == Selectable.Transition.ColorTint && !UiKit.HasVisiblePressTarget(b))
+            {
+                var self = GetComponent<Image>(); var g = UiKit.PressTarget(transform, self);
+                if (g != null && g != b.targetGraphic) { b.targetGraphic = g; b.OnPointerDown(e); }   // 다시 고른 그림에 pressed 색을 바로 입힌다(Selectable 은 targetGraphic 교체를 스스로 모른다)
+            }
+            if (UiKit.HasVisiblePressTarget(b)) return;   // 색으로 보이면 alpha 는 안 건드린다
+            _cg = UiKit.Ensure<CanvasGroup>(gameObject);
+            if (!_dimmed) { _baseAlpha = _cg.alpha; _cg.alpha = _baseAlpha * UiKit.PressedMul; _dimmed = true; }
+        }
+        public void OnPointerUp(PointerEventData e) => Restore();
+        public void OnPointerExit(PointerEventData e) => Restore();
+        void OnDisable() => Restore();
+        void Restore()
+        {
+            if (!_dimmed) return;
+            _dimmed = false; if (_cg != null) _cg.alpha = _baseAlpha;
+        }
     }
 }

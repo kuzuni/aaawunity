@@ -128,8 +128,8 @@ namespace KkomaKnight.Game
                 UiKit.SetSprite(tab, "Normal/Icon", IconsK[i], Palette.White); UiKit.SetSprite(tab, "Focus/Icon_Focus", IconsK[i], Palette.White);
                 UiKit.SetText(tab, "Focus/Text (TMP)", Labels[i]);
                 bool on = Keys[i] == current || (Keys[i] == "battle" && current == "lobby");
-                UiKit.Show(tab, "Focus", on); UiKit.Show(tab, "Normal", !on);
-                UiKit.Clickable(tab, () => Go(app, Keys[k], current));
+                UiKit.Show(tab, "Focus", on); UiKit.Show(tab, "Normal", !on);   // «현재 탭» 강조 = 프리팹의 Focus/Normal 전환 그대로(T22 는 손대지 않는다)
+                UiKit.Clickable(tab, () => Go(app, Keys[k], current));   // 눌림 표시(T22) = Clickable 의 ColorTint — 탭 루트는 그림이 없어 켜져 있는 쪽(Normal/Focus)의 첫 Image 가 어두워진다
             }
         }
         /// <summary>탭 이동 — 팝업(탤런트/펫/설정)이 떠 있으면 닫고 간다. 같은 탭은 아무 일 없음.</summary>
