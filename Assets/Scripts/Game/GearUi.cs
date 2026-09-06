@@ -86,11 +86,11 @@ namespace KkomaKnight.Game
         /// 장비 아이콘 맞춤(T17 · 주인 «투구·갑옷·무기 아이콘만 작다»). 프리팹 Item(256×256 · 스케일 0.6149)은 GUI Pro 128px 아이콘용이라 그림이 rect 의 ~85% 를 채우지만,
         /// CharacterMaker 파츠 PNG 는 캐릭터 조립용 공통 캔버스라 그림이 캔버스의 33~70% 뿐 → 같은 rect 에서 절반 크기로 보였다.
         /// 파츠 아이콘은 스프라이트의 **불투명 bbox**(Tight 메시 정점 · <c>Sprite.vertices</c>)가 칸의 <see cref="GearLook.PartIconFill"/>(72%) 를 채우도록 Item 의 sizeDelta·pivot 을 계산(<see cref="GearLook.FitPartIcon"/>)하고,
-        /// 무기는 <see cref="GearLook.WeaponIconAngle"/>(45°) 회전(그림 가운데 = pivot 이 축 · 칼끝 오른쪽 위). GUI Pro 아이콘(목걸이·장갑·신발)은 프리팹 값으로 되돌린다.
+        /// 회전은 하지 않는다(주인 2026-09-06 «45° 취소» · 프리팹 회전 그대로). GUI Pro 아이콘(목걸이·장갑·신발)은 프리팹 값으로 되돌린다.
         /// 장착 슬롯·인벤 칸·세부 팝업·대장간·뽑기 결과가 전부 이 함수를 거친다(Cell 과 GearScreen 슬롯). 프리팹 값은 <see cref="PartIconFit"/> 이 처음 한 번 기억해 두고 복원한다(슬롯 Item 재사용).
         /// </summary>
-        public static void FitIcon(Image im, GearItem g) => FitIcon(im, g != null && GearLook.HasLook(g.Part), g != null && g.Part == GearLook.Weapon);
-        public static void FitIcon(Image im, bool isPart, bool isWeapon)
+        public static void FitIcon(Image im, GearItem g) => FitIcon(im, g != null && GearLook.HasLook(g.Part));
+        public static void FitIcon(Image im, bool isPart)
         {
             if (im == null) return;
             var rt = im.rectTransform; var st = UiKit.Ensure<PartIconFit>(im.gameObject); st.Capture(rt);
@@ -110,7 +110,7 @@ namespace KkomaKnight.Game
             rt.pivot = new Vector2((float)fit.PivotX, (float)fit.PivotY);
             rt.sizeDelta = new Vector2((float)fit.W, (float)fit.H);
             rt.anchoredPosition = st.Pos;   // 프리팹 자리(가운데) — pivot 이 그림 가운데라 그림이 칸 가운데에 온다
-            rt.localRotation = Quaternion.Euler(0f, 0f, isWeapon ? (float)GearLook.WeaponIconAngle : 0f);
+            rt.localRotation = st.Rot;   // 프리팹 회전 그대로(무기 45° 는 주인이 취소)
         }
 
         /// <summary>

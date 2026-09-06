@@ -70,12 +70,12 @@ namespace KkomaKnight.Tests
             Assert.That(GearLook.WeaponSlot("crit"), Is.EqualTo("Sword"));
             Assert.That(GearLook.WeaponSlot("hpsh"), Is.EqualTo("Blunt"));
             Assert.That(GearLook.WeaponSlot("evade"), Is.EqualTo("Sword"));   // T17 · 창 폐기 — 근접 두 계열(검·둔기)만
-            foreach (var set in TestData.Load().Gear.Sets) Assert.That(GearLook.WeaponSlot(set), Is.EqualTo("Sword").Or.EqualTo("Blunt"), set);
+            foreach (var set in TestData.Load().Gear.Sets) Assert.That(GearLook.WeaponSlot(set), Is.EqualTo("Sword").Or.EqualTo("Blunt").Or.EqualTo("Axe"), set);
         }
 
-        /// <summary>T17 주인 지시 «무기는 전부 근접 무기 — 검(Sword)·방망이(Blunt) 두 계열만» — 무기 파츠 경로가 전부 HandRight/Sword 또는 HandRight/Blunt 폴더인가(활·지팡이·완드·창 0).</summary>
+        /// <summary>T17 주인 지시 «무기는 전부 근접 무기 — 검(Sword)·방망이(Blunt)·도끼(Axe) 세 계열에서» — 무기 파츠 경로가 전부 HandRight/Sword·Blunt·Axe 폴더인가(활·지팡이·완드·창 0) · 착용 슬롯(WeaponSlot)이 그 폴더와 같은가.</summary>
         [Test]
-        public void WeaponPartsAreSwordOrBluntOnly()
+        public void WeaponPartsAreMeleeSwordBluntAxeOnly()
         {
             var d = TestData.Load();
             var path = Path.GetFullPath(Path.Combine(TestData.Dir, "..", "..", "KkomaKnight", "catalog.json"));
@@ -85,8 +85,9 @@ namespace KkomaKnight.Tests
                 for (int r = 0; r < d.Gear.RarName.Length; r++)
                 {
                     var file = sprites[GearLook.PartKey(GearLook.Weapon, set, r)].Str();
-                    Assert.That(file.Contains("/HandRight/Sword/") || file.Contains("/HandRight/Blunt/"), Is.True, "근접 무기(검·둔기)가 아니다: " + file);
+                    Assert.That(file.Contains("/HandRight/Sword/") || file.Contains("/HandRight/Blunt/") || file.Contains("/HandRight/Axe/"), Is.True, "근접 무기(검·둔기·도끼)가 아니다: " + file);
                     Assert.That(file.Contains("/Bow/") || file.Contains("/Spear/") || file.Contains("Wand") || file.Contains("Staff"), Is.False, file);
+                    Assert.That(file.Contains("/HandRight/" + GearLook.WeaponSlot(set) + "/"), Is.True, "착용 슬롯 " + GearLook.WeaponSlot(set) + " ≠ 파츠 폴더: " + file);
                     n++;
                 }
             Assert.That(n, Is.EqualTo(d.Gear.Sets.Length * d.Gear.RarName.Length));
@@ -116,7 +117,6 @@ namespace KkomaKnight.Tests
             double guiPro = 0.85 * 256 * 0.6149 / 190;
             Assert.That(GearLook.PartIconFill, Is.EqualTo(guiPro).Within(0.05));
             Assert.That(GearLook.PartIconFill, Is.GreaterThanOrEqualTo(0.70).And.LessThanOrEqualTo(0.75), "주인 지시 70~75%");
-            Assert.That(GearLook.WeaponIconAngle, Is.EqualTo(45));
         }
 
         [Test]

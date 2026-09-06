@@ -223,7 +223,7 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(0, CountNamed(content, "gear:"), "전부 장착 → 인벤 리스트 비어야 한다");
             Assert.IsTrue(HasText(s => s.StartsWith("장착하지 않은")), "빈 인벤 안내");
             Check("전부 장착 뒤 장비 화면(외형 반영)");
-            // T17 — 슬롯 6칸의 아이콘: 파츠(투구·무기·갑옷)는 불투명 그림이 칸의 72%(±3%p) · 무기만 45° · GUI Pro 아이콘(목걸이·장갑·신발)은 프리팹 Item 그대로(회전 0)
+            // T17 — 슬롯 6칸의 아이콘: 파츠(투구·무기·갑옷)는 불투명 그림이 칸의 72%(±3%p) · 회전 0(주인이 무기 45° 취소) · GUI Pro 아이콘(목걸이·장갑·신발)은 프리팹 Item 그대로
             {
                 var slotGrp = UiKit.Find(_app.Current.Root, "Group_Slot"); Assert.IsNotNull(slotGrp, "Group_Slot");   // 바깥 범위의 slots 와 이름이 겹치면 CS0136(CI #41)
                 int parts = 0, guis = 0;
@@ -245,14 +245,14 @@ namespace KkomaKnight.Tests.Play
                         float cell = Mathf.Min(fr.rect.width, fr.rect.height);
                         Assert.AreEqual((float)GearLook.PartIconFill, shown / cell, 0.03f, $"슬롯 {i}({part}) 파츠 아이콘 그림 크기 = 칸의 72% (그림 {shown:0}px / 칸 {cell:0}px)");
                         Assert.IsTrue(shown <= cell, $"슬롯 {i}({part}) 아이콘이 칸을 넘지 않는다");
-                        Assert.AreEqual(part == GearLook.Weapon ? (float)GearLook.WeaponIconAngle : 0f, rot, 0.5f, $"슬롯 {i}({part}) 회전 — 무기만 45°");
+                        Assert.AreEqual(0f, rot, 0.5f, $"슬롯 {i}({part}) 회전 0(무기 45° 취소)");
                         Assert.IsTrue(im.preserveAspect, "preserveAspect");
                     }
                     else { guis++; Assert.AreEqual(0f, rot, 0.5f, $"슬롯 {i}({part}) GUI Pro 아이콘은 회전 없음"); Assert.AreEqual(new Vector2(0.5f, 0.5f), rt.pivot, $"슬롯 {i}({part}) GUI Pro 아이콘은 프리팹 pivot"); }
                 }
                 Assert.AreEqual(3, parts, "파츠 아이콘 3(투구·무기·갑옷)"); Assert.AreEqual(3, guis, "GUI Pro 아이콘 3(목걸이·장갑·신발)");
             }
-            Check("슬롯 아이콘 크기·회전(T17)");
+            Check("슬롯 아이콘 크기(T17)");
 
             // 빈 슬롯 팝업 — 해제 뒤 그 부위
             S.Eq.Remove(items[1].Part);
