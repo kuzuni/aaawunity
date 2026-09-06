@@ -291,7 +291,7 @@
 3. UiSmokeTests ② 가 «세부 팝업 = Character_Hero_Item_Detail_01» 인지 프리팹 이름으로 단언하도록 보강.
 4. 게이트 + PROGRESS T27 행 + «주인이 확인할 것».
 
-### T28 — 배경음(BGM) · 효과음(SFX) (주인 2026-09-06 «인터넷에서 받아서 넣어라»)
+### T28 — 배경음(BGM) · 효과음(SFX) (주인 2026-09-06 «인터넷에서 받아서 넣어라») ✅ (완료 · `9c1eb54` · CI #52(취소되면 #53) · PROGRESS 참조 — CC0 20개 GitHub 미러 · Audio/AudioManager · Settings BGM/SFX 스위치)
 범위: `Assets/Audio/`(신규 · 오디오 파일 + `LICENSES.md`) · `Assets/Scripts/Game/Audio.cs`(신규 · AudioManager) · 각 화면/팝업의 호출 한 줄씩(Screens · BattleScreen · BattleWorld(타격) · Overlay · GearUi · ShopScreen · ForgeScreen) · `SaveStore`(음소거 2개) · catalog(`bgm.*`/`snd.*`)
 순서: 제약 없음(호출은 한 줄씩이라 다른 작업과 겹쳐도 rebase 로 풀린다 — 충돌 나면 내 줄만 다시).
 1. **에셋 구하기**: 이 환경의 프록시는 kenney.nl·opengameart.org·freesound.org 를 막는다(디스패처가 확인 · 000). **GitHub 는 열려 있다** → `git clone --depth 1` 로 받을 수 있는 **CC0/퍼블릭 도메인** 팩만 쓴다(예: Kenney 의 GitHub 미러 · OpenGameArt CC0 모음 미러 · «cc0 game sfx» 검색). 라이선스가 CC0/PD 가 아니면 쓰지 않는다. 받은 파일의 출처·라이선스를 `Assets/Audio/LICENSES.md` 에 한 줄씩(URL · 원작자 · 라이선스). **GitHub 에서도 못 구하면** 오디오 시스템(2~4)만 만들고 `Assets/Audio/README.md` 에 «주인이 파일을 이 폴더에 넣으면 catalog 한 줄로 붙는다» 를 적고 PROGRESS 승인 대기 30 에 등재.
@@ -410,6 +410,13 @@
 범위: `Assets/Scripts/Game/LobbyPopups.cs`(신규) · `Screens.cs`(T34 의 `OnSide` 훅 연결 한 줄씩) · catalog
 1. 특권(11 · 페이지 · 카드 세로 나열 · «전체 받기» 바닥 바) · 퀘스트(15 · 파란 명판 · 점수 트랙 · 줄 목록 · 일일/주간/업적 탭) · 출석(16 · 노란 리본 · 3×2 + 7일 칸) · 데일리 기프트(17 · 선물 그림 · 세로 타임라인 · 광고 N회 줄 4) · 7일 챌린지(18 · 빨간 리본 · 배너 · 점수 트랙 · Days 1~7 세로 탭 + 과제 줄) · 패스(19 · 시즌 배너 · 3열 세로 트랙 · 바닥 3버튼). 각각 레퍼런스 구도 그대로, 글자는 한국어, **버튼은 눌려도 아무 일 없음 · 배경 탭으로 닫힘**.
 2. 게이트 + 스모크(6개 열고 빨간 줄 0) + PROGRESS T44 행.
+
+### T45 — CI #51 빨강(T23 코드 커밋 `9ea5d9d`) 후속: PlayMode `MapThemeTests` 사막 물결 경계 정렬 1건 — T19 회귀 (최우선 · main 빨강 = gh-pages 안 생김)
+범위: `Assets/Scripts/Game/BattleWorld.cs`(`BuildProps` 의 `flat` 판정 1줄) · 테스트 불변(`Assets/Tests/PlayMode/MapThemeTests.cs` 는 손대지 않는다)
+순서: 제약 없음.
+1. 원인(CI #51 · https://github.com/kuzuni/aaawunity/actions/runs/34017948738 · PlayMode 21건 중 `MapThemeTests.AllFourThemesMatchDemoSceneComposition` 1건 실패 · 나머지 20 + EditMode 78 Passed): 메시지 «챕터 4 (desert) 물결 경계는 길 바로 위(납작 · 데모 렌더 순서) Expected: -16 But was: 389». `BuildProps` 가 물결 경계를 «납작(스프라이트 높이 × Sy < 0.35u)» 으로 골라 -16 을 주는데, `Road_up_Desert.png` 만 **43px = 0.43u**(Autumn 34 · DeepForest 33 · Forest 33px) 라 문턱을 넘어 일반 소품 규칙(y 로 381+…)로 떨어진다. T19 커밋 `dedeffb` 의 CI #48·#50 이 뒤 push 로 취소돼 그 세션이 못 본 회귀.
+2. 수정: `flat` 판정에 **키가 `.roadUp` 이면 무조건 납작**을 더한다(물결 경계는 늘 길 바로 위 = 데모 렌더 순서 · 문턱 수치는 그대로). 에셋·테스트 불변.
+3. 게이트 + PROGRESS T45 행 + 확인 수단 = 이 코드 커밋의 CI 유니티 잡(PlayMode `MapThemeTests` 4테마 Passed) — 같은 런이 T28·T23 의 확인 수단이 된다.
 
 ### 신규 작업 등재
 - 버그·후속 작업 발견 시 PROGRESS 표에 **이미 쓰인 번호 중 가장 큰 것 +1** 로 등재 (번호 재사용 금지, 한 번호 = 한 작업).
