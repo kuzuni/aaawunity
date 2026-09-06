@@ -39,6 +39,17 @@ namespace KkomaKnight.Tests
         }
 
         [Test]
+        public void UntouchedLinesKeepTheirSpacingExactly()
+        {
+            // T75 — 전 화면에 걸면서 생긴 규칙: 바꿀 것이 없으면 겹빈칸 정리도 안 한다.
+            // 장비 세부 팝업(07) 의 스탯 박스는 «HP  +80» 처럼 두 칸으로 값을 맞춘다(GearUi) — 그걸 뭉개면 자리가 어긋난다.
+            Assert.AreEqual("HP  +80", TextGlyphs.Safe("HP  +80"));
+            Assert.AreEqual("  앞뒤 빈칸도 그대로  ", TextGlyphs.Safe("  앞뒤 빈칸도 그대로  "));
+            // 바꿀 것이 하나라도 있으면 종전대로 정리한다
+            Assert.AreEqual("HP +80", TextGlyphs.Safe("HP  🛡 +80"));
+        }
+
+        [Test]
         public void PlainKoreanAndLineBreaksSurvive()
         {
             Assert.AreEqual("골드가 부족합니다", TextGlyphs.Safe("골드가 부족합니다"));
@@ -58,6 +69,28 @@ namespace KkomaKnight.Tests
                 "가장 긴 토스트(대장간 재료 안내 · 합성 완료)가 본문 40 으로 두 줄이라 칸이 112px 이상이어야 한다 — 모자라면 bestFit 이 말없이 32 까지 줄인다");
             // 세로 중심은 전(y84 h5 → 86.5%)과 같게 둔다 — 하단 탭 바·특전 미리보기 줄과의 관계가 안 바뀐다
             Assert.AreEqual(86.5f, Layout.Toast.Y + Layout.Toast.H / 2f, 0.01f);
+        }
+
+        [Test]
+        public void CanRenderIsAsciiPlusHangulOnly()
+        {
+            foreach (char c in "ABZaz09 !?%/+-.,:()<>#=\"'*") Assert.IsTrue(TextGlyphs.CanRender(c), $"ASCII «{c}» 는 Jua 에 있다");
+            foreach (char c in "가힣한글") Assert.IsTrue(TextGlyphs.CanRender(c), $"한글 «{c}» 는 Jua 에 있다");
+            Assert.IsTrue(TextGlyphs.CanRender('\n')); Assert.IsTrue(TextGlyphs.CanRender('\t')); Assert.IsTrue(TextGlyphs.CanRender(' '));
+            foreach (char c in "·×—→…«»₩✓⛔☰") Assert.IsFalse(TextGlyphs.CanRender(c), $"«{c}» 는 Jua 에 없어 폭 0 으로 사라진다");
+        }
+
+        [Test]
+        public void MissingListsTheGlyphsThatVanishWithoutDuplicates()
+        {
+            Assert.AreEqual("", TextGlyphs.Missing("합성 (0/3)"));
+            Assert.AreEqual("", TextGlyphs.Missing(null));
+            Assert.AreEqual("·", TextGlyphs.Missing("부위·종류·등급"), "같은 글자는 한 번만 센다");
+            Assert.AreEqual("₩", TextGlyphs.Missing("₩12,000"), "대체 글자가 없는 기호는 Safe 를 거쳐도 남는다");
+            Assert.AreEqual("×·", TextGlyphs.Missing("광고 보상 ×2 · 골드"), "나온 순서대로");
+            Assert.AreEqual("", TextGlyphs.Missing(TextGlyphs.Safe("같은 부위·종류·등급만 · ×2 · 137 → 101")), "Safe 를 거치면 표에 있는 것은 남지 않는다");
+            Assert.AreEqual("", TextGlyphs.Missing(TextGlyphs.Safe("🔨 합성 완료")), "장식 이모지는 Safe 가 지운다");
+            Assert.AreEqual("", TextGlyphs.Missing("<b>투구</b> <color=#FF8800>+3</color>"), "리치 텍스트 태그는 전부 ASCII 다");
         }
 
         [Test]

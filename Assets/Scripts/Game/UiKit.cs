@@ -172,7 +172,7 @@ namespace KkomaKnight.Game
             size = TextSize.Floor(size, kind);
             var rt = Rect(parent, "Text");
             var t = rt.gameObject.AddComponent<Text>();
-            t.font = FontOrBuiltin(); t.text = s; t.fontSize = size; t.color = color; t.alignment = anchor;
+            t.font = FontOrBuiltin(); t.text = TextGlyphs.Safe(s); t.fontSize = size; t.color = color; t.alignment = anchor;
             t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Overflow;
             t.raycastTarget = false; t.supportRichText = true;
             if (bestFit) { t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitFloor(12, kind); t.resizeTextMaxSize = size; t.verticalOverflow = VerticalWrapMode.Truncate; }
@@ -196,7 +196,7 @@ namespace KkomaKnight.Game
         public sealed class Bar
         {
             public RectTransform Root; public Slider Slider; public Text Txt; public Image Cap;
-            public void Set(double frac, string txt) { if (Slider != null) Slider.value = Mathf.Clamp01((float)frac); if (Txt != null) Txt.text = txt; }
+            public void Set(double frac, string txt) { if (Slider != null) Slider.value = Mathf.Clamp01((float)frac); if (Txt != null) Txt.text = TextGlyphs.Safe(txt); }
         }
         public static Bar MakeBar(Transform parent, string sliderKey, string capIconKey = null)
         {
@@ -566,7 +566,7 @@ namespace KkomaKnight.Game
             var t = go.AddComponent<Text>();
             // 프리팹 글자도 하한(T63) — 데모 프리팹의 작은 크기(12~30)를 그대로 옮기면 폰에서 안 읽힌다 · 종류는 Body(버튼은 Button() 이 다시 올린다)
             int size = TextSize.Floor(Mathf.Max(12, Mathf.RoundToInt(fs)));
-            t.font = FontOrBuiltin(); t.text = s; t.fontSize = size; t.color = c; t.alignment = MapAlign(al);
+            t.font = FontOrBuiltin(); t.text = TextGlyphs.Safe(s); t.fontSize = size; t.color = c; t.alignment = MapAlign(al);
             t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Overflow; t.supportRichText = true; t.raycastTarget = false;
             if (auto) { t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitFloor(Mathf.Max(10, (int)mn)); t.resizeTextMaxSize = TextSize.Floor(Mathf.Max(12, (int)mx)); }
             if (outline || c.r + c.g + c.b > 2.4f) AddOutline(t, size);
@@ -606,7 +606,7 @@ namespace KkomaKnight.Game
         {
             var t = Find(root, path); Text txt = null; if (t != null) { txt = t.GetComponent<Text>(); if (txt == null) txt = t.GetComponentInChildren<Text>(true); }
             if (txt == null) { Debug.LogWarning($"[UiKit] 글자 없음: {root.name}/{path}"); return null; }
-            txt.text = s; if (color.HasValue) txt.color = color.Value;
+            txt.text = TextGlyphs.Safe(s); if (color.HasValue) txt.color = color.Value;
             if (size.HasValue) { int sz = TextSize.Floor(size.Value, kind); txt.fontSize = sz; txt.resizeTextMaxSize = sz; }
             if (txt.resizeTextForBestFit) txt.resizeTextMinSize = TextSize.BestFitFloor(txt.resizeTextMinSize, kind);
             TextAudit.Mark(txt, kind);
@@ -710,7 +710,7 @@ namespace KkomaKnight.Game
             ButtonGradient(rt);
             var txt = go.GetComponentInChildren<Text>(true);
             // 버튼 글자 하한 = TextSize.Button(44 · T63) · bestFit 최소 32
-            if (txt != null) { txt.text = label; txt.fontSize = TextSize.Floor(txt.fontSize, TextKind.Button); txt.resizeTextForBestFit = true; txt.resizeTextMinSize = TextSize.BestFitMin; txt.resizeTextMaxSize = Mathf.Max(txt.fontSize, TextSize.Button); txt.horizontalOverflow = HorizontalWrapMode.Wrap; TextAudit.Mark(txt, TextKind.Button); }
+            if (txt != null) { txt.text = TextGlyphs.Safe(label); txt.fontSize = TextSize.Floor(txt.fontSize, TextKind.Button); txt.resizeTextForBestFit = true; txt.resizeTextMinSize = TextSize.BestFitMin; txt.resizeTextMaxSize = Mathf.Max(txt.fontSize, TextSize.Button); txt.horizontalOverflow = HorizontalWrapMode.Wrap; TextAudit.Mark(txt, TextKind.Button); }
             Clickable(rt, onClick);
             return rt;
         }

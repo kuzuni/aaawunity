@@ -926,7 +926,8 @@ namespace KkomaKnight.Tests.Play
             // T36 — 레퍼런스 04 구도: «새 특전을 고르세요» · 카드 = 등급 탭 + 팔각 아이콘 + 설명(한 색 · 수치 초록은 T52 로 취소) · «새로고침 무료» + «남은 횟수 : N» · 📘 · 상단 스탯 8칸 미니
             Assert.IsTrue(HasText(s => s == "새 특전을 고르세요"), "부제"); Assert.IsTrue(HasText(s => s == "새로고침 무료"), "새로고침 버튼"); Assert.IsTrue(HasText(s => s.StartsWith("남은 횟수 : ")), "남은 횟수");
             Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Stats"), "상단 스탯 미니 줄"); Assert.AreEqual(BattleScreen.StatDefs.Length, CountNamed(UiKit.Find(_app.Overlay.Root, "Stats"), "ic"), "미니 줄 아이콘 8");
-            foreach (var p in offer) Assert.IsTrue(HasText(s => s == PerkText.Format(p.Desc)), $"카드 설명 = «트리거: 내용» 표기(T53) · 한 색(T52): {PerkText.Format(p.Desc)}");
+            // 기댓값에 TextGlyphs.Safe 를 씌운다 — 특전 설명 몇 개에 가운뎃점이 있고(perks.json «공격력의 100% · 8마리 관통»), 화면에 나갈 때 UiKit 이 «/» 로 바꾼다(T75 · Jua 에 «·» 글리프가 없어 폭 0 으로 사라진다)
+            foreach (var p in offer) Assert.IsTrue(HasText(s => s == TextGlyphs.Safe(PerkText.Format(p.Desc))), $"카드 설명 = «트리거: 내용» 표기(T53) · 한 색(T52): {TextGlyphs.Safe(PerkText.Format(p.Desc))}");
             Assert.IsFalse(HasText(s => s.IndexOf("<color", StringComparison.OrdinalIgnoreCase) >= 0 && !s.StartsWith("남은 횟수")), "특전 글자에 부분 색(<color) 없음(T52 · «남은 횟수 : N» 의 주황 N 만 예외)");
             if (!string.IsNullOrEmpty(offer[0].GradeName)) Assert.IsTrue(HasText(s => s == offer[0].GradeName), "카드 왼쪽 위 등급 탭");
             // T63-perks — 등급 탭 글자: 본문 하한(40)을 최대치로 · bestFit 최소 32 · 세로 여백 0(칸 = 탭 전체라 bestFit 이 덜 줄인다) · 밝은 탭(회색·노랑) 위는 어두운 잉크(흰 글자는 대비가 없어 안 읽혔다)

@@ -30,9 +30,23 @@ namespace KkomaKnight.Game
         /// </summary>
         public const bool ClipStrict = true;
 
+        /// <summary>
+        /// 글꼴에 없는 글자(폭 0 으로 사라지는 글자 · T75)를 실패로 셀지 — 아직 <b>보고만</b> 한다.
+        /// <para>
+        /// T75 2단계(sess-1813-10924 · 워커 A)가 <see cref="UiKit"/> 의 글자 입구 다섯 곳(<c>Text</c>·<c>SetText</c>·<c>Button</c>·<c>ConvertTmp</c>·<c>Bar.Set</c>)에
+        /// <see cref="TextGlyphs.Safe"/> 를 걸어 «UiKit 을 거치는 글자» 는 전부 걸러진다. 남는 것은 화면 코드가 <c>Text.text</c> 에 <b>직접</b> 넣는 자리(35곳)와
+        /// 대체 글자가 없는 기호(<c>₩</c> · <c>💎</c> 같은 것 — 문구를 고쳐야 한다)뿐인데, 그 파일들이 지금 전부 다른 워커의 lock 안이다.
+        /// </para>
+        /// 그래서 «[GlyphGate]» 표로 화면·경로·글자를 CI 로그에 남겨 두고(<see cref="GlyphSummary"/>), 그 화면 묶음 워커가 하나씩 0 으로 만든 뒤 이 한 줄을 true 로 켠다
+        /// (<see cref="ClipStrict"/> 와 같은 방식 · T75 5항).
+        /// </summary>
+        public const bool GlyphStrict = false;
+
         public sealed class Row
         {
             public string Screen, Path, Text;
+            /// <summary>이 줄에서 글꼴이 못 그리는 글자(중복 없이) — 빈 문자열이면 없다(<see cref="TextGlyphs.Missing"/>).</summary>
+            public string Missing;
             public TextKind Kind;
             public int FontSize, Min, BestFitMinSize, Used;
             public bool BestFit;
@@ -40,7 +54,8 @@ namespace KkomaKnight.Game
             public bool FloorBad, BestFitBad, Clipped;
             public override string ToString() =>
                 $"[{Screen}] {Path} «{Short(Text)}» {Kind} size {FontSize}(min {Min}){(BestFit ? $" bestFit {BestFitMinSize}~ used {Used}" : "")} rect {RectW:0}×{RectH:0} pref {PrefW:0}×{PrefH:0}" +
-                (FloorBad ? " ⛔하한" : "") + (BestFitBad ? " ⛔bestFit최소" : "") + (Clipped ? " ⚠잘림" : "");
+                (FloorBad ? " ⛔하한" : "") + (BestFitBad ? " ⛔bestFit최소" : "") + (Clipped ? " ⚠잘림" : "") +
+                (string.IsNullOrEmpty(Missing) ? "" : " ⚠없는글자 «" + Missing + "»");
         }
 
         static string Short(string s) { if (string.IsNullOrEmpty(s)) return ""; s = s.Replace("\n", "⏎"); return s.Length > 18 ? s.Substring(0, 18) + "…" : s; }
@@ -81,6 +96,7 @@ namespace KkomaKnight.Game
                     FontSize = t.fontSize, Min = min, BestFit = t.resizeTextForBestFit, BestFitMinSize = t.resizeTextMinSize,
                     RectW = r.width, RectH = r.height, PrefW = t.preferredWidth, PrefH = t.preferredHeight,
                 };
+                row.Missing = TextGlyphs.Missing(t.text);
                 row.Used = t.resizeTextForBestFit ? BestFitSize(t) : t.fontSize;
                 int effective = t.resizeTextForBestFit ? Mathf.Max(t.fontSize, t.resizeTextMaxSize) : t.fontSize;
                 row.FloorBad = kind != TextKind.Small && effective < min;
@@ -122,6 +138,23 @@ namespace KkomaKnight.Game
                 int minUsed = int.MaxValue, fb = 0, bb = 0, cl = 0;
                 foreach (var r in kv.Value) { if (r.Used > 0 && r.Used < minUsed) minUsed = r.Used; if (r.FloorBad) fb++; if (r.BestFitBad) bb++; if (r.Clipped) cl++; }
                 sb.AppendLine($"| {kv.Key} | {kv.Value.Count} | {(minUsed == int.MaxValue ? 0 : minUsed)} | {fb} | {bb} | {cl} |");
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>화면별 «글꼴에 없는 글자» 표(마크다운 · T75) — 그 화면 묶음 워커가 CI 로그에서 읽고 문구를 고친다.</summary>
+        public static string GlyphSummary(List<Row> rows)
+        {
+            var byScreen = new Dictionary<string, List<Row>>();
+            foreach (var r in rows) { if (string.IsNullOrEmpty(r.Missing)) continue; if (!byScreen.TryGetValue(r.Screen, out var l)) byScreen[r.Screen] = l = new List<Row>(); l.Add(r); }
+            var sb = new StringBuilder();
+            sb.AppendLine("| 화면 | 없는 글자가 있는 줄 | 글자들 |");
+            sb.AppendLine("|---|---|---|");
+            foreach (var kv in byScreen)
+            {
+                var chars = new StringBuilder();
+                foreach (var r in kv.Value) foreach (char c in r.Missing) { bool seen = false; for (int i = 0; i < chars.Length; i++) if (chars[i] == c) { seen = true; break; } if (!seen) chars.Append(c); }
+                sb.AppendLine($"| {kv.Key} | {kv.Value.Count} | {chars} |");
             }
             return sb.ToString();
         }

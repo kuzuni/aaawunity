@@ -169,17 +169,23 @@ namespace KkomaKnight.Tests.Play
 
             // 판정
             Assert.Greater(_rows.Count, 50, "활성 Text 가 거의 안 모였다(수집 실패)");
-            var floorBad = new List<string>(); var fitBad = new List<string>(); var clipped = new List<string>();
+            var floorBad = new List<string>(); var fitBad = new List<string>(); var clipped = new List<string>(); var noGlyph = new List<string>();
             foreach (var r in _rows)
             {
                 if (r.FloorBad) floorBad.Add(r.ToString());
                 if (r.BestFitBad) fitBad.Add(r.ToString());
                 if (r.Clipped) clipped.Add(r.ToString());
+                if (!string.IsNullOrEmpty(r.Missing)) noGlyph.Add(r.ToString());
             }
             var sb = new StringBuilder();
             sb.AppendLine($"[TextSizeGate] 활성 Text {_rows.Count} · 하한 미달 {floorBad.Count} · bestFit 미달 {fitBad.Count} · 잘림/넘침 {clipped.Count}(strict={TextAudit.ClipStrict})");
             sb.Append(TextAudit.Summary(_rows));
             if (clipped.Count > 0) { sb.AppendLine("[TextSizeGate] 잘림/넘침 목록(화면별 하위 행이 0 으로 만든다):"); foreach (var c in clipped) sb.AppendLine("  " + c); }
+            // T75 — 글꼴(Jua)에 글리프가 없어 «폭 0» 으로 사라지는 글자. UiKit 을 거치는 글자는 TextGlyphs.Safe 가 걸러내므로 여기 남는 것은
+            // 화면 코드가 Text.text 에 직접 넣는 자리와 대체 글자가 없는 기호(₩ 등)뿐이다 — 그 화면 묶음 워커가 문구를 고치고 GlyphStrict 를 켠다.
+            sb.AppendLine($"[GlyphGate] 없는 글자가 있는 줄 {noGlyph.Count}(strict={TextAudit.GlyphStrict} · T75)");
+            sb.Append(TextAudit.GlyphSummary(_rows));
+            if (noGlyph.Count > 0) { sb.AppendLine("[GlyphGate] 목록:"); foreach (var c in noGlyph) sb.AppendLine("  " + c); }
             Debug.Log(sb.ToString());
 
             // ⑫ T63-toast — 표를 찍은 «뒤에» 단언한다(먼저 터지면 위 표가 안 남아 다른 하위 행 워커가 자기 화면 수를 못 읽는다 · CI #119 에서 실제로 그랬다)
@@ -214,6 +220,7 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(0, floorBad.Count, "글자 하한 미달(T63 · 본문 40 · 버튼 44 · 보조 36 · 제목 60 · Small 은 명시):\n" + string.Join("\n", floorBad));
             Assert.AreEqual(0, fitBad.Count, "bestFit 최소 크기 미달(≥ 32):\n" + string.Join("\n", fitBad));
             if (TextAudit.ClipStrict) Assert.AreEqual(0, clipped.Count, "잘림/넘침(선호 크기 > rect):\n" + string.Join("\n", clipped));
+            if (TextAudit.GlyphStrict) Assert.AreEqual(0, noGlyph.Count, "글꼴에 없는 글자(폭 0 으로 사라진다 · T75):\n" + string.Join("\n", noGlyph));
             _log.AssertNoRed("글자 크기 게이트(전 화면)");
             yield return Shutdown();
         }
