@@ -362,7 +362,7 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual("battle", _app.Current.Name);
             var bs = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bs); var G = bs.G; Assert.IsNotNull(G, "전투 상태");
             Assert.Greater(G.T, 0, "3초 동안 엔진 시간이 흘러야 한다(팝업이 안 떠 있는 한)");
-            Assert.IsTrue(HasText(s => s.StartsWith("챕터")), "HUD 챕터 제목"); Assert.IsTrue(HasText(s => s.StartsWith("웨이브")), "HUD 웨이브");
+            Assert.IsTrue(HasText(s => s.StartsWith("챕터")), "HUD 챕터 제목"); Assert.IsFalse(HasText(s => s.StartsWith("웨이브")), "HUD 웨이브 수 표시는 없다(T33 주인 지시)");
             Check("전투 3초");
             // 팝업 검사 동안 엔진을 멈춘다(Time.deltaTime = 0 → 틱 없음 · 팝업 카운트다운은 unscaled) — 엔진이 스스로 띄우는 레벨업과 섞이지 않게
             Time.timeScale = 0f; _app.Overlay.Close(); G.Pending = null; yield return Frames(1);

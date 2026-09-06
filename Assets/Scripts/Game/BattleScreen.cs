@@ -42,7 +42,7 @@ namespace KkomaKnight.Game
         RectTransform _pops;
 
         // HUD
-        Text _gold, _gem, _chapTitle, _round, _speedTxt;
+        Text _gold, _gem, _chapTitle, _speedTxt;
         UiKit.Bar _prog, _exp, _hp, _sh;
         RectTransform _buffBar, _perkStrip; Text _perkCount; HorizontalLayoutGroup _perkStripLayout;
         readonly Text[] _statVals = new Text[StatDefs.Length];
@@ -61,10 +61,8 @@ namespace KkomaKnight.Game
             // 버프 바 (왼쪽 세로)
             _buffBar = UiKit.Rect(Root, "BuffBar"); UiKit.Pct(_buffBar, Layout.HudBuffBar);
             var vl = _buffBar.gameObject.AddComponent<VerticalLayoutGroup>(); vl.childAlignment = TextAnchor.UpperLeft; vl.spacing = 10; vl.childForceExpandWidth = false; vl.childForceExpandHeight = false; vl.childControlWidth = false; vl.childControlHeight = false;
-            // 배속 · 라운드
+            // 배속 (오른쪽 «웨이브 N/M» 상자는 T33 주인 지시로 만들지 않는다 — `Layout.HudRound` 는 표 대조 테스트 때문에 남긴다)
             var spd = UiKit.SpawnRt("ui.btnSmallBlue", Root, Layout.HudSpeed); _speedTxt = UiKit.ButtonText(spd); UiKit.Clickable(spd, ToggleSpeed);
-            var round = UiKit.SpawnRt("ui.frameDark", Root, Layout.HudRound);
-            _round = UiKit.Text(round, "", 30, Palette.White, TextAnchor.MiddleCenter, true); UiKit.Stretch(_round.rectTransform, 6, 6, 6, 6);
             // 하단 패널
             UiKit.SpawnRt("ui.frameDark", Root, Layout.HudPanel);
             _exp = UiKit.MakeBar(Root, "ui.sliderSky", "pi.star"); UiKit.Pct(_exp.Root, Layout.HudExp);
@@ -211,8 +209,6 @@ namespace KkomaKnight.Game
             if (_chapTitle != null) _chapTitle.text = $"챕터 {G.Chapter}";
             double lastX = G.Nodes.Count > 0 ? G.Nodes[G.Nodes.Count - 1].X : 1;
             _prog.Set(Math.Min(1, P.WorldX / Math.Max(1, lastX)), null);
-            int waves = 0, done = 0; foreach (var n in G.Nodes) if (n.Type == NodeType.Wave || n.Type == NodeType.Boss) { waves++; bool alive = false; foreach (var e in n.Enemies) if (!e.Dead) { alive = true; break; } if (!alive) done++; }
-            if (_round != null) _round.text = $"웨이브\n{Math.Min(done + 1, waves)}/{waves}";
             if (_speedTxt != null) _speedTxt.text = "x" + _speed;
             int need = D.Tune.ExpNeed(P.Level);
             _exp.Set(need > 0 ? (double)P.Exp / need : 0, $"Lv {P.Level}  {P.Exp}/{need}");
