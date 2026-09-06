@@ -100,10 +100,11 @@ namespace KkomaKnight.Core
 
         // ③ 장비 탭 — 캐릭터 장비.jpg
         public static readonly R GearStage = new R(0, 8.5f, 100, 26.5f);
-        public static readonly R GearSlotColL = new R(8.5f, 9.5f, 14.0f, 21.0f);
-        public static readonly R GearSlotColR = new R(77.5f, 9.5f, 14.0f, 21.0f);
+        // 슬롯 열 높이 21.0 → 22.3 · 칸 피치 7.3 → 8.0 (T63-gear · 표 ±3%p 보정 — 칸 위 «Lv. N»(본문 40) 과 위 칸 «+N» 배지가 24px 틈에서 겹쳤다 · docs/ref-layout.md «T63-gear 회차 정정»)
+        public static readonly R GearSlotColL = new R(8.5f, 9.5f, 14.0f, 22.3f);
+        public static readonly R GearSlotColR = new R(77.5f, 9.5f, 14.0f, 22.3f);
         public static readonly R GearSlot = new R(8.5f, 9.5f, 14.0f, 6.3f);
-        public const float GearSlotPitch = 7.3f, GearSlotH = 6.3f;
+        public const float GearSlotPitch = 8.0f, GearSlotH = 6.3f;
         public static readonly R GearHero = new R(35.0f, 14.0f, 30.0f, 19.0f);
         public static readonly R GearStats = new R(10.0f, 36.5f, 79.0f, 4.0f);
         public static readonly R GearForgeBtn = new R(70.0f, 42.3f, 27.0f, 4.2f);
@@ -112,18 +113,19 @@ namespace KkomaKnight.Core
         public const int GearInvCols = 5; public const float GearInvRowPitch = 7.6f, GearInvCellW = 18.4f, GearInvCellH = 7.2f, GearInvGap = 0.6f;
 
         // ④ 장비 세부 팝업 — 장비 세부팝업.jpg (ov-gear · 닫기는 상자 밖)
-        public static readonly R GdBox = new R(6.5f, 28.0f, 87.0f, 44.0f);
+        // T63-gear (표 ±3%p 보정 · docs/ref-layout.md «T63-gear 회차 정정»): 옵션 7줄이 본문 40 으로 한 줄씩 들어가게 옵션 목록 48/14 → 49/16 · 스탯 9.5 → 9.0 · 비용 62.5 → 65 · 버튼 66 → 68.5 · 박스 44 → 46.5
+        public static readonly R GdBox = new R(6.5f, 28.0f, 87.0f, 46.5f);
         public static readonly R GdBadge = new R(39.0f, 27.5f, 22.0f, 2.3f);
         public static readonly R GdIcon = new R(11.0f, 30.5f, 15.0f, 7.0f);
         public static readonly R GdName = new R(28.0f, 31.0f, 50.0f, 3.0f);
         public static readonly R GdMeta = new R(29.0f, 34.5f, 60.0f, 3.0f);
-        public static readonly R GdStats = new R(11.0f, 39.5f, 78.0f, 9.5f);
-        public static readonly R GdOpts = new R(11.0f, 48.0f, 78.0f, 14.0f);
+        public static readonly R GdStats = new R(11.0f, 39.5f, 78.0f, 9.0f);
+        public static readonly R GdOpts = new R(11.0f, 49.0f, 78.0f, 16.0f);
         public const float GdOptPitch = 2.4f;
-        public static readonly R GdCost = new R(11.0f, 62.5f, 78.0f, 3.0f);
-        public static readonly R GdBtns = new R(15.5f, 66.0f, 69.0f, 6.0f);
-        public static readonly R GdBtnL = new R(15.5f, 66.0f, 33.0f, 6.0f);
-        public static readonly R GdBtnR = new R(51.5f, 66.0f, 33.0f, 6.0f);
+        public static readonly R GdCost = new R(11.0f, 65.0f, 78.0f, 3.0f);
+        public static readonly R GdBtns = new R(15.5f, 68.5f, 69.0f, 6.0f);
+        public static readonly R GdBtnL = new R(15.5f, 68.5f, 33.0f, 6.0f);
+        public static readonly R GdBtnR = new R(51.5f, 68.5f, 33.0f, 6.0f);
         public static readonly R GdClose = new R(30.0f, 91.5f, 40.0f, 2.0f);
 
         // ⑤ 상점 — 상점 (1).jpg

@@ -24,6 +24,10 @@ namespace KkomaKnight.Game
         static readonly Layout.R StageRoad = new Layout.R(0, 58, 100, 24);
         static readonly Layout.R[] StageTrees = { new Layout.R(-4, -6, 22, 58), new Layout.R(16, -10, 22, 60), new Layout.R(39, -8, 22, 58), new Layout.R(61, -10, 22, 60), new Layout.R(82, -6, 22, 58) };
         static readonly Layout.R[] StageBushes = { new Layout.R(24, 44, 12, 16), new Layout.R(66, 46, 12, 16), new Layout.R(45, 84, 10, 14) };
+        /// <summary>슬롯 칸(147px) 기준 % — 위 «Lv. N» 라벨(본문 40 · 한 줄 49px 이 36% = 53px 에 들어간다 · 아래 끝 = 프레임 위 2%) · «+N» 배지(칸 아래 가장자리에 걸침 · 74~101%). T63-gear.</summary>
+        public static readonly Layout.R SlotLv = new Layout.R(-12, -34, 124, 36), SlotBadge = new Layout.R(22, 74, 56, 27);
+        /// <summary>«+N» 배지 글자 — 아이콘 위 배지는 ROUTINE T63 1항의 명시 예외(<see cref="TextKind.Small"/>) · 레퍼런스 06 의 «+1»(≈27px 상당)보다 조금 크게 · 배지 높이 40px 에 한 줄(37px).</summary>
+        public const int SlotBadgeSize = 30;
 
         sealed class SlotUi { public RectTransform Root; public Transform Frame; public Text Lv, Plus; public GameObject PlusBadge, Dot; public Image PartIcon; public string Part; }
         readonly SlotUi[] _slot = new SlotUi[SlotCount];
@@ -60,10 +64,12 @@ namespace KkomaKnight.Game
                 var frame = UiKit.Spawn("ui.itemFrame.empty", s.Root); frame.name = "ItemFrame_01"; s.Frame = frame.transform;
                 UiKit.FitScale((RectTransform)s.Frame, UiKit.PxSize(Layout.GearSlot));
                 UiKit.Hide(s.Frame, "Text_Level", "Focus", "Disable", "Lock", "Add_2");   // 조각의 데모 글자·상태 켜짐은 끈다 · Add_1(+) 은 빈 슬롯 표시
-                s.Lv = UiKit.Label(s.Root, -10, -30, 120, 28, "Lv. 0", 26, Palette.White, TextAnchor.LowerCenter);
+                // «Lv. N» = 본문 40(T63-gear · 줄 높이 49px ≤ 칸 36% = 53px · 아래 끝이 칸 위 2% 에 걸쳐 레퍼런스처럼 프레임 바로 위) · «+N» 배지 = 아이콘 위 배지라 Small(SlotBadgeSize)
+                // 배지(74~101%)와 다음 칸 «Lv. N»(−34~+2%) 은 피치 8.0(틈 40px)에서 잉크가 안 겹친다(UiSmokeTests ② 가 사각형으로 단언)
+                s.Lv = UiKit.Label(s.Root, SlotLv.X, SlotLv.Y, SlotLv.W, SlotLv.H, "Lv. 0", TextSize.Body, Palette.White, TextAnchor.LowerCenter);
                 s.PartIcon = UiKit.Icon(s.Root, "PartIcon", "pi.attack"); UiKit.Pct(s.PartIcon.rectTransform, -8, -8, 30, 30);
-                var badge = UiKit.Panel(s.Root, "PlusBadge", "fr.r12", Palette.Yellow); UiKit.Pct(badge.rectTransform, 20, 82, 60, 24); s.PlusBadge = badge.gameObject;
-                s.Plus = UiKit.Text(badge.transform, "+0", 24, Palette.Ink, TextAnchor.MiddleCenter, true, false); UiKit.Stretch(s.Plus.rectTransform);
+                var badge = UiKit.Panel(s.Root, "PlusBadge", "fr.r12", Palette.Yellow); UiKit.Pct(badge.rectTransform, SlotBadge); s.PlusBadge = badge.gameObject;
+                s.Plus = UiKit.Text(badge.transform, "+0", SlotBadgeSize, Palette.Ink, TextAnchor.MiddleCenter, false, false, TextKind.Small); UiKit.Stretch(s.Plus.rectTransform);
                 var dot = UiKit.Spawn("ui.alertDot", s.Root); var dr = (RectTransform)dot.transform; dot.name = "Alert_Dot_01_Red"; dr.anchorMin = dr.anchorMax = new Vector2(1, 1); dr.pivot = new Vector2(0.5f, 0.5f); dr.anchoredPosition = new Vector2(-6, -6); dr.sizeDelta = new Vector2(44, 44); s.Dot = dot;
                 int idx = i; UiKit.Clickable(s.Root, () => OnSlot(idx));
             }

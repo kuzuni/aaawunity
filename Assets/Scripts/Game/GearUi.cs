@@ -163,7 +163,7 @@ namespace KkomaKnight.Game
         }
         public static void Empty(Transform content, string msg)
         {
-            var t = UiKit.Text(content, msg, 30, Palette.InkLight, TextAnchor.MiddleCenter);
+            var t = UiKit.Text(content, msg, TextSize.Body, Palette.InkLight, TextAnchor.MiddleCenter);
             var le = t.gameObject.AddComponent<LayoutElement>(); le.ignoreLayout = true;
             t.rectTransform.anchorMin = new Vector2(0, 1); t.rectTransform.anchorMax = new Vector2(1, 1); t.rectTransform.pivot = new Vector2(0.5f, 1); t.rectTransform.anchoredPosition = new Vector2(0, -20); t.rectTransform.sizeDelta = new Vector2(0, 160);
         }
@@ -205,8 +205,9 @@ namespace KkomaKnight.Game
             var nmR = Layout.GdName.Within(B);
             var nm = UiKit.Label(box, nmR.X, nmR.Y, nmR.W, nmR.H, name, 44, nameColor, TextAnchor.MiddleLeft, true, true); nm.name = "Name"; nm.fontStyle = FontStyle.Bold;
             var meta = Layout.GdMeta.Within(B);
-            var p1 = Pill(box, "Pill1", new Layout.R(meta.X, meta.Y, meta.W * 0.47f, meta.H)); var t1 = UiKit.Text(p1, pill1, 28, Palette.Cream, TextAnchor.MiddleCenter, true, false); UiKit.Stretch(t1.rectTransform, 8, 2, 8, 2);
-            var p2 = Pill(box, "Pill2", new Layout.R(meta.X + meta.W * 0.53f, meta.Y, meta.W * 0.47f, meta.H)); var t2 = UiKit.Text(p2, pill2, 28, Palette.Cream, TextAnchor.MiddleCenter, true, false); UiKit.Stretch(t2.rectTransform, 8, 2, 8, 2);
+            // pill 글자 = 본문 40(T63-gear) · pill 폭 47 → 48%(«슬롯 Lv. 0/150» 40 ≈ 290px 이 안쪽 294px 에)
+            var p1 = Pill(box, "Pill1", new Layout.R(meta.X, meta.Y, meta.W * 0.48f, meta.H)); var t1 = UiKit.Text(p1, pill1, TextSize.Body, Palette.Cream, TextAnchor.MiddleCenter, true, false); UiKit.Stretch(t1.rectTransform, 8, 2, 8, 2);
+            var p2 = Pill(box, "Pill2", new Layout.R(meta.X + meta.W * 0.52f, meta.Y, meta.W * 0.48f, meta.H)); var t2 = UiKit.Text(p2, pill2, TextSize.Body, Palette.Cream, TextAnchor.MiddleCenter, true, false); UiKit.Stretch(t2.rectTransform, 8, 2, 8, 2);
             // T46 이름표(표 ④ «요소» 글자 그대로 · 하니스 layout.json)
             UiKit.Tag(box, "팝업 박스"); if (rib != null) UiKit.Tag(rib, "등급 배지"); UiKit.Tag(slot, "아이템 아이콘(정사각)"); UiKit.Tag(nm.rectTransform, "이름줄"); UiKit.TagGroup(box, "메타줄(레벨·부위)", p1, p2);
             var tap = UiKit.Find(ov.Root, "TapToClose"); if (tap != null) UiKit.Tag(tap, "닫기 안내");
@@ -218,39 +219,46 @@ namespace KkomaKnight.Game
             var st = Layout.GdStats.Within(Layout.GdBox);
             var sp = Pill(box, "Stats", st, 0.75f); UiKit.Tag(sp, "스탯 섹션");
             string gh = Hex(Palette.Green);
-            UiKit.Label(sp, 3, 2, 60, 26, "스탯", 28, Palette.Cream, TextAnchor.MiddleLeft, true, false).fontStyle = FontStyle.Bold;
-            if (g == null) { UiKit.Label(sp, 3, 30, 94, 66, $"슬롯 1레벨당 이 부위 장비의 공격력·체력·실드 +{D.Gear.SlotStep * 100:0.#}% (상한 Lv.{D.Gear.SlotLvMax})", 24, Palette.CreamDark, TextAnchor.MiddleLeft, true, false); return sp; }
+            // 글자 전부 본문 40(T63-gear) — 상자 9.0% = 210px: 머리 24%(50px) + 줄 3 × 25%(52px ≥ 한 줄 49px) = 99%
+            UiKit.Label(sp, 3, 0, 60, 24, "스탯", TextSize.Body, Palette.Cream, TextAnchor.MiddleLeft, true, false).fontStyle = FontStyle.Bold;
+            if (g == null) { UiKit.Label(sp, 3, 26, 94, 72, $"슬롯 1레벨당 이 부위 장비의 공격력·체력·실드 +{D.Gear.SlotStep * 100:0.#}% (상한 Lv.{D.Gear.SlotLvMax})", TextSize.Body, Palette.CreamDark, TextAnchor.MiddleLeft, true, false); return sp; }
             var c = GearSystem.Contribution(D, g, lv);
             var rows = new (string icon, string label, double v)[] { (Icons.Stat("dmg"), "공격력", c.Atk), ("pi.heart", "체력", c.Hp), ("pi.shield", "실드", c.Sh) };
             for (int i = 0; i < rows.Length; i++)
             {
-                float y = 28 + i * 24;
-                var ic = UiKit.Icon(sp, "ic", rows[i].icon); UiKit.Pct(ic.rectTransform, 3, y, 6, 22);
-                var t = UiKit.Label(sp, 11, y, 86, 22, $"{rows[i].label}  <color=#{gh}>+{UiKit.Fmt(rows[i].v)}</color>", 26, Palette.Cream, TextAnchor.MiddleLeft, true, false); t.name = "Stat:" + i;
+                float y = 24 + i * 25;
+                var ic = UiKit.Icon(sp, "ic", rows[i].icon); UiKit.Pct(ic.rectTransform, 3, y + 1.5f, 6, 22);
+                var t = UiKit.Label(sp, 11, y, 86, 25, $"{rows[i].label}  <color=#{gh}>+{UiKit.Fmt(rows[i].v)}</color>", TextSize.Body, Palette.Cream, TextAnchor.MiddleLeft, true, false); t.name = "Stat:" + i;
             }
-            if (eqd) { var s2 = UiKit.Label(box, st.X + st.W * 0.55f, st.Y + st.H * 0.02f, st.W * 0.44f, st.H * 0.26f, $"슬롯 Lv당 +{D.Gear.SlotStep * 100:0.#}%", 22, Palette.CreamDark, TextAnchor.MiddleRight, true, false); s2.name = "SlotHint"; }
+            if (eqd) { var s2 = UiKit.Label(box, st.X + st.W * 0.55f, st.Y, st.W * 0.44f, st.H * 0.24f, $"슬롯 Lv당 +{D.Gear.SlotStep * 100:0.#}%", TextSize.Body, Palette.CreamDark, TextAnchor.MiddleRight, true, false); s2.name = "SlotHint"; }
             return sp;
         }
-        /// <summary>옵션 줄(GdOpts · 줄 피치 ≤ 2.4%) — 해금 = 등급색 세트 아이콘 + 등급색 글자 · 잠금 = 자물쇠 + 흐린 글자 «(등급 이상)». 규칙(OptCount) 은 기존 그대로.</summary>
+        /// <summary>
+        /// 옵션 줄(GdOpts · 줄 피치 ≤ 2.4%) — 해금 = 등급색 세트 아이콘 + 등급색 글자 · 잠금 = 자물쇠 + 흐린 글자 «(등급)». 규칙(OptCount) 은 기존 그대로.
+        /// 글자 = 본문 40 한 줄(T63-gear): 7줄 × 53px 피치(16%) · 줄 94% = 50px ≥ 한 줄 49px · 문구는 <see cref="GearText.Shorten"/>(«치명타 시 50%: 도끼 1개(공격력 50%)») · 잠금 꼬리 «(희귀)»(«이상» 은 자물쇠가 대신) — 가장 긴 잠금 줄도 bestFit 36 이상.
+        /// </summary>
         static void OptionRows(RectTransform box, GameData D, GearItem g)
         {
             var region = Layout.GdOpts.Within(Layout.GdBox);
             var opts = D.Gear.Options.TryGetValue(g.Type, out var ol) ? ol : new List<GearOption>();
             int n = D.Gear.OptCount(g.Rar, g.Plus); int R = D.Gear.RarName.Length;
             var host = UiKit.Rect(box, "Options"); UiKit.Pct(host, region); UiKit.Tag(host, "옵션 목록");
-            if (opts.Count == 0) { UiKit.Label(host, 2, 0, 96, 100, "세트 옵션 없음", 24, Palette.InkLight); return; }
+            if (opts.Count == 0) { UiKit.Label(host, 2, 0, 96, 100, "세트 옵션 없음", TextSize.Body, Palette.InkLight); return; }
             float pitch = Mathf.Min(Layout.GdOptPitch, Layout.GdOpts.H / opts.Count);   // 프레임 % → 줄 하나가 차지하는 비율
             float rowPct = pitch / Layout.GdOpts.H * 100f;
             for (int i = 0; i < opts.Count; i++)
             {
                 bool on = i < n; string tier = i < R ? RarName(D, i) : $"신화 +{(i - R + 1) * 3}강";
                 var color = i < R ? Palette.ByName(Palette.RarName(i)) : Palette.Plum;
-                var row = Pill(host, "Opt:" + i, new Layout.R(0, i * rowPct, 100, rowPct * 0.92f), on ? 0.7f : 0.45f);
+                var row = Pill(host, "Opt:" + i, new Layout.R(0, i * rowPct, 100, rowPct * OptRowFill), on ? 0.7f : 0.45f);
                 var ic = UiKit.Icon(row, "ic", on ? SetIcon(Set(D, g)) : "ui.iconLock", on ? color : Palette.A(Palette.Gray, 0.9f)); UiKit.Pct(ic.rectTransform, 1.5f, 12, 5, 76);
-                var t = UiKit.Label(row, 8, 0, 90, 100, on ? opts[i].Desc : $"{opts[i].Desc}  ({tier} 이상)", 24, on ? color : Palette.A(Palette.Gray, 0.8f), TextAnchor.MiddleLeft, true, false);
+                string desc = GearText.Shorten(opts[i].Desc) + (on ? "" : GearText.LockSuffix(tier));
+                var t = UiKit.Label(row, 7.5f, 0, 91.5f, 100, desc, TextSize.Body, on ? color : Palette.A(Palette.Gray, 0.8f), TextAnchor.MiddleLeft, true, false);
                 if (!on) { var cg = UiKit.Ensure<CanvasGroup>(row.gameObject); cg.alpha = 0.75f; }
             }
         }
+        /// <summary>옵션 줄이 피치에서 차지하는 비율 — 16% ÷ 7줄 = 53px 피치 × 0.94 = 50px(본문 40 한 줄 49px 이 들어간다 · 줄 사이 3px).</summary>
+        public const float OptRowFill = 0.94f;
         /// <summary>비용 줄(GdCost) — 🪙 «보유/비용»(보유가 모자라면 빨강 · 충분하면 초록) · MAX 면 «슬롯 MAX (Lv.N)».</summary>
         static void CostRow(RectTransform box, SaveData S, double cost, bool maxed, int maxLv)
         {
@@ -258,7 +266,7 @@ namespace KkomaKnight.Game
             var row = Pill(box, "Cost", r, 0.75f); UiKit.Tag(row, "비용줄");
             var ic = UiKit.Icon(row, "ic", "pi.coins"); UiKit.Pct(ic.rectTransform, 30, 8, 5, 84);
             string s = maxed ? $"슬롯 MAX (Lv.{maxLv})" : $"<color=#{Hex(S.Gold >= cost ? Palette.Green : Palette.Red)}>{UiKit.Fmt(S.Gold)}</color>/{UiKit.Fmt(cost)}";
-            var t = UiKit.Label(row, 36, 0, 40, 100, s, 28, Palette.Cream, TextAnchor.MiddleLeft, true, false); t.name = "CostText";
+            var t = UiKit.Label(row, 36, 0, 40, 100, s, TextSize.Body, Palette.Cream, TextAnchor.MiddleLeft, true, false); t.name = "CostText";
         }
         /// <summary>표 ④ «장비 세부 팝업»: 등급 탭 → 아이콘 칸(+N) · 이름 · «슬롯 Lv. N/최대»·«부위» pill → 스탯 박스(초록 +값) → 옵션 줄(등급색 · 잠금 흐림) → 비용 줄 → 해제/장착(파랑) · 슬롯 강화(주황) → «탭하여 닫기». 규칙·수치는 예전 그대로.</summary>
         public static void OpenDetail(App app, GearItem g, Action onChanged)
@@ -294,7 +302,7 @@ namespace KkomaKnight.Game
             var box = DetailFrame(app, $"{PartName(D, part)} 슬롯", "gray", null, "비어 있음", Palette.InkLight, $"슬롯 Lv. {lv}/{D.Gear.SlotLvMax}", PartName(D, part));
             StatsBox(box, D, null, lv, false);
             var region = Layout.GdOpts.Within(Layout.GdBox);
-            UiKit.Label(box, region.X, region.Y, region.W, region.H, "장착된 장비가 없습니다\n인벤에서 이 부위의 장비를 골라 장착하세요", 28, Palette.InkLight, TextAnchor.MiddleCenter, true, false).name = "EmptyHint";
+            UiKit.Label(box, region.X, region.Y, region.W, region.H, "장착된 장비가 없습니다\n인벤에서 이 부위의 장비를 골라 장착하세요", TextSize.Body, Palette.InkLight, TextAnchor.MiddleCenter, true, false).name = "EmptyHint";
             CostRow(box, S, cost, maxed, D.Gear.SlotLvMax);
             var up = UiKit.Button(box, "ui.btnOrange", maxed ? "슬롯 MAX" : "슬롯 강화", () =>
             {

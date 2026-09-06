@@ -348,6 +348,42 @@ namespace KkomaKnight.Tests.Play
                     Assert.AreEqual(Layout.GearSlot.W, (sl.anchorMax.x - sl.anchorMin.x) * 100f, 0.5f, "슬롯 " + i + " 폭"); Assert.AreEqual(Layout.GearSlotH, (sl.anchorMax.y - sl.anchorMin.y) * 100f, 0.5f, "슬롯 " + i + " 높이");
                     Assert.IsTrue(HasText(s => s == "Lv. 0"), "슬롯 위 «Lv. N»");
                 }
+                // T63-gear — 슬롯 위 «Lv. N» 은 본문 40 한 줄(bestFit 이 안 줄임) · «+N» 배지는 Small(SlotBadgeSize) · 배지(칸 아래 가장자리)와 아래 칸의 «Lv. N» 라벨이 겹치지 않는다(CI #95 screens 06: 피치 7.3 에선 «+1» 위에 «Lv. 0» 이 얹혀 «Lv.10» 으로 읽혔다)
+                {
+                    var lvRect = new RectTransform[6]; var badgeRect = new RectTransform[6];
+                    for (int i = 0; i < 6; i++)
+                    {
+                        var sl = slots.GetChild(i);
+                        foreach (var t in sl.GetComponentsInChildren<Text>(true))
+                        {
+                            if (t.text.StartsWith("Lv.") && t.transform.parent == sl)
+                            {
+                                lvRect[i] = t.rectTransform;
+                                Assert.AreEqual(TextSize.Body, t.fontSize, "슬롯 " + i + " «Lv. N» 크기 = 본문 하한");
+                                var gs = t.GetGenerationSettings(t.rectTransform.rect.size); gs.scaleFactor = 1f;
+                                var gen = new TextGenerator(); gen.Populate(t.text, gs);
+                                Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, TextSize.Body, "슬롯 " + i + " «Lv. N» 이 칸에 40 으로 안 들어가 bestFit 이 줄였다"); Assert.AreEqual(1, gen.lineCount, "슬롯 " + i + " «Lv. N» 한 줄");
+                            }
+                            else if (t.transform.parent != null && t.transform.parent.name == "PlusBadge")
+                            {
+                                badgeRect[i] = (RectTransform)t.transform.parent;
+                                Assert.AreEqual(GearScreen.SlotBadgeSize, t.fontSize, "슬롯 " + i + " «+N» 배지 = Small 크기"); Assert.AreEqual(TextKind.Small, TextAudit.KindOf(t), "«+N» 배지는 Small 표식");
+                                Assert.LessOrEqual(t.preferredHeight, badgeRect[i].rect.height + 1f, "슬롯 " + i + " «+N» 이 배지 높이에 들어간다");
+                            }
+                        }
+                        Assert.IsNotNull(lvRect[i], "슬롯 " + i + " «Lv. N» 라벨"); Assert.IsNotNull(badgeRect[i], "슬롯 " + i + " «+N» 배지");
+                    }
+                    var c = new Vector3[4];
+                    for (int i = 0; i < 6; i++)
+                    {
+                        // 열의 마지막 칸 아래엔 칸이 없다
+                        if (i % 3 == 2) continue;
+                        badgeRect[i].GetWorldCorners(c); float badgeBottom = c[0].y;
+                        lvRect[i + 1].GetWorldCorners(c); float lvBottom = c[0].y, lvH = c[1].y - c[0].y;
+                        // «Lv. N» 은 LowerCenter 라 잉크가 rect 아래쪽 ≈70% 안에 있다 — 배지 아래 끝이 그 위여야 잉크가 안 겹친다
+                        Assert.GreaterOrEqual(badgeBottom, lvBottom + lvH * 0.7f, $"슬롯 {i} «+N» 배지가 슬롯 {i + 1} «Lv. N» 라벨과 겹친다(T63-gear)");
+                    }
+                }
                 Assert.AreEqual(3, CountNamed(gear, "Stat:"), "스탯 3칸(공·❤·🛡)");
                 var forgeB = (RectTransform)UiKit.Find(gear, "ForgeBtn"); var shopB = (RectTransform)UiKit.Find(gear, "ShopBtn"); var statA = (RectTransform)UiKit.Find(gear, "Stat:atk");
                 Assert.IsNotNull(forgeB, "«대장간» 버튼"); Assert.IsNotNull(shopB, "«상점» 버튼"); Assert.IsNotNull(statA, "스탯 칸");
@@ -376,6 +412,28 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(HasText(s => s.StartsWith("슬롯 Lv. ")), "메타 pill 글자"); Assert.IsTrue(HasText(s => s == GearUi.PartName(D, g0.Part)), "부위 pill");
                 Assert.IsNotNull(UiKit.Find(bx, "Stats"), "스탯 박스"); Assert.AreEqual(3, CountNamed(UiKit.Find(bx, "Stats"), "Stat:"), "스탯 줄 3(공격력·체력·실드)");
                 var opts = UiKit.Find(bx, "Options"); Assert.IsNotNull(opts, "옵션 목록"); Assert.AreEqual(D.Gear.Options.TryGetValue(g0.Type, out var ol0) ? ol0.Count : 0, CountNamed(opts, "Opt:"), "옵션 줄 수 = 세트 옵션 수");
+                // T63-gear — 스탯 줄 3 · 옵션 줄 전부 본문 40 이 «한 줄» 로(옵션은 긴 잠금 줄만 bestFit 32~40 허용 · 스탯은 40 그대로) · 스탯 상자와 옵션 목록이 안 겹친다(전엔 39.5+9.5 = 49.0 > 48.0)
+                {
+                    int statRows = 0, optRows = 0;
+                    foreach (var t in UiKit.Find(bx, "Stats").GetComponentsInChildren<Text>(false))
+                    {
+                        if (!t.name.StartsWith("Stat:")) continue; statRows++;
+                        Assert.AreEqual(TextSize.Body, t.fontSize, "스탯 줄 «" + t.text + "» 크기 = 본문 하한");
+                        var gs = t.GetGenerationSettings(t.rectTransform.rect.size); gs.scaleFactor = 1f; var gen = new TextGenerator(); gen.Populate(t.text, gs);
+                        Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, TextSize.Body, "스탯 줄 «" + t.text + "» 가 40 으로 안 들어간다"); Assert.AreEqual(1, gen.lineCount, "스탯 줄 한 줄");
+                    }
+                    foreach (var t in opts.GetComponentsInChildren<Text>(false))
+                    {
+                        if (t.transform.parent == null || !t.transform.parent.name.StartsWith("Opt:")) continue; optRows++;
+                        Assert.AreEqual(TextSize.Body, t.fontSize, "옵션 줄 «" + t.text + "» 크기 = 본문 하한");
+                        var gs = t.GetGenerationSettings(t.rectTransform.rect.size); gs.scaleFactor = 1f; var gen = new TextGenerator(); gen.Populate(t.text, gs);
+                        Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, TextSize.BestFitMin, "옵션 줄 «" + t.text + "» 가 bestFit 최소(32) 아래로"); Assert.AreEqual(1, gen.lineCount, "옵션 줄 «" + t.text + "» 는 한 줄(문구 줄이기 = GearText.Shorten)");
+                        Assert.IsFalse(t.text.Contains(" 이상)"), "잠금 꼬리는 «(등급)» 으로 줄인다: " + t.text);
+                    }
+                    Assert.AreEqual(3, statRows, "스탯 줄 3"); Assert.AreEqual(CountNamed(opts, "Opt:"), optRows, "옵션 줄마다 글자 하나");
+                    var st = (RectTransform)UiKit.Find(bx, "Stats"); var op = (RectTransform)opts;
+                    Assert.GreaterOrEqual(st.anchorMin.y, op.anchorMax.y - 1e-3f, "스탯 상자 아래 끝이 옵션 목록 위 끝보다 위(겹침 0)");
+                }
                 Assert.IsNotNull(UiKit.Find(bx, "Cost"), "비용 줄"); Assert.IsNotNull(UiKit.Find(bx, "BtnL"), "왼쪽 버튼(장착/해제)"); Assert.IsNotNull(UiKit.Find(bx, "BtnR"), "오른쪽 버튼(슬롯 강화)");
                 Assert.IsTrue(HasText(s => s == GearUi.RarName(D, g0.Rar)), "등급 탭 글자"); Assert.IsTrue(HasText(s => s == "탭하여 닫기"), "탭하여 닫기"); Assert.IsNull(UiKit.Find(ovr, "Button_Close_01"), "닫기 X 없음");
                 var l = (RectTransform)UiKit.Find(bx, "BtnL"); var r = (RectTransform)UiKit.Find(bx, "BtnR"); Assert.Less(l.anchorMax.x, r.anchorMin.x + 1e-3f, "버튼 2 = 왼쪽 파랑 · 오른쪽 주황");
