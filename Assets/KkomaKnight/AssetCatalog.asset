@@ -325,6 +325,30 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: cf35c75bb8a734660b08997bd0c7dcd8, type: 3}
   - key: ui.petIcon
     sprite: {fileID: 21300000, guid: 8a6e9c2985c5e47508866143fff1f884, type: 3}
+  - key: ui.iconGiftRed
+    sprite: {fileID: 21300000, guid: d11d142fa23624c8ca2cca3dc0d498f6, type: 3}
+  - key: ui.iconCrown
+    sprite: {fileID: 21300000, guid: ad8f246e673514e71807a8a2c73b3b48, type: 3}
+  - key: ui.iconTarget
+    sprite: {fileID: 21300000, guid: fb92d5617357a4934a67f922ef89cf07, type: 3}
+  - key: ui.iconCalendar
+    sprite: {fileID: 21300000, guid: 3123ce7c3012548cda5d791cbade0e6f, type: 3}
+  - key: ui.iconBalloon
+    sprite: {fileID: 21300000, guid: 41fdb12b33c864ced8656706a027a5f6, type: 3}
+  - key: ui.iconQuest
+    sprite: {fileID: 21300000, guid: 0fe96ef59f58548edae7b1efa8f9040e, type: 3}
+  - key: ui.iconMap
+    sprite: {fileID: 21300000, guid: 2e7e98d439abc470ebb0f3f42c2a2ec2, type: 3}
+  - key: ui.iconChestRed
+    sprite: {fileID: 21300000, guid: abcec3f85518143dc91868b316fb4415, type: 3}
+  - key: ui.iconHome
+    sprite: {fileID: 21300000, guid: 9bf44469833864b36b623dcda89dd62d, type: 3}
+  - key: ui.iconLock
+    sprite: {fileID: 21300000, guid: 95defe4ba3d184579a40c0ece4a15e0b, type: 3}
+  - key: ui.iconDungeon
+    sprite: {fileID: 21300000, guid: 0ac432b084ff641f998f683220b5c055, type: 3}
+  - key: ui.iconMedal
+    sprite: {fileID: 21300000, guid: 385a72080942a4866a59bef14ba4513b, type: 3}
   - key: gi.weapon.crit
     sprite: {fileID: 21300000, guid: fc848bff183734ecaa325f38410d53e8, type: 3}
   - key: gi.weapon.hpsh
@@ -886,6 +910,12 @@ MonoBehaviour:
     prefab: {fileID: 6431523672475112463, guid: af0e63069a99549c794486df768bf1b2, type: 3}
   - key: ui.talent
     prefab: {fileID: 4786098786137720783, guid: 1c013396aca1646cda930ad71b0feb62, type: 3}
+  - key: ui.btnStartOrange
+    prefab: {fileID: 7008214384983651424, guid: c8f1f9899eba141319e27f20899a1adb, type: 3}
+  - key: ui.framePlum
+    prefab: {fileID: 5129137505210471693, guid: 540c65f25596c43c19b8e6ac4f24c199, type: 3}
+  - key: ui.userInfoSlider
+    prefab: {fileID: 3948410254394711559, guid: b79be41b82c304d6a8ddae49ef1b54c8, type: 3}
   controllers:
   - key: cm.controller
     controller: {fileID: 9100000, guid: b491875454dfab744b3c79816cba2e67, type: 2}

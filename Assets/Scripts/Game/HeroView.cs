@@ -29,6 +29,7 @@ namespace KkomaKnight.Game
 
         RawImage _img; RenderTexture _tex; Camera _cam; Transform _stage; CharacterRig _rig;
         CharacterRig.Skin _skin;
+        float _zoom = 1f, _yBias = 0f;
         public CharacterRig Rig => _rig;
         /// <summary>테스트/진단용 — 이 뷰가 찍는 텍스처·카메라.</summary>
         public RenderTexture Texture => _tex;
@@ -122,14 +123,20 @@ namespace KkomaKnight.Game
             _rig.Play(CharacterRig.Idle, true); _rig.SetSpeed(1f);
         }
 
-        /// <summary>리그의 스프라이트 경계에 카메라를 맞춘다(정사각 텍스처 · 여유 12%).</summary>
+        /// <summary>
+        /// 카메라 프레이밍(T34 · 로비 상단 바의 정사각 초상은 전신이 아니라 <b>가슴 위</b>가 보여야 레퍼런스 아바타처럼 보인다).
+        /// zoom = 전신 맞춤 대비 확대 배율(1 = 전신 · 1.6 ≈ 가슴 위) · yBias = 카메라 중심을 몸 높이의 이 비율만큼 위로(0 = 몸 가운데 · 0.45 ≈ 머리 쪽). 장비 화면은 기본값(전신) 그대로.
+        /// </summary>
+        public void SetFraming(float zoom, float yBias) { _zoom = Mathf.Max(0.1f, zoom); _yBias = yBias; Fit(); }
+
+        /// <summary>리그의 스프라이트 경계에 카메라를 맞춘다(정사각 텍스처 · 여유 12% · <see cref="SetFraming"/> 배율/편향 반영).</summary>
         void Fit()
         {
             if (_cam == null || _rig == null) return;
             var b = _rig.Bounds();
-            float half = Mathf.Max(b.extents.x, b.extents.y, 0.2f) * 1.12f;
+            float half = Mathf.Max(b.extents.x, b.extents.y, 0.2f) * 1.12f / _zoom;
             _cam.orthographicSize = half;
-            _cam.transform.position = new Vector3(b.center.x, b.center.y, b.center.z - 10f);
+            _cam.transform.position = new Vector3(b.center.x, b.center.y + b.extents.y * _yBias, b.center.z - 10f);
         }
 
         static void SetLayerDeep(Transform t, int layer)

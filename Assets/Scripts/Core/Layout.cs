@@ -33,6 +33,15 @@ namespace KkomaKnight.Core
         public static readonly R LobbyStart = new R(27.9f, 70.7f, 44.5f, 7.0f);
         public static readonly R TabBar = new R(0, 92.6f, 100, 7.4f);
         public const float TabCenterRaise = 0.6f;
+        // ① 표 밖 — 01_lobby.jpg 에서 워커가 직접 잰 값 (T34 · 5% 격자 ±3%p). 재화 pill 줄(LobbyPills)을 세 칸으로 나눈 것과 아래 두 모서리 버튼.
+        /// <summary>전투력 칸(칼 아이콘 + 주황 큰 숫자) — 아바타 바로 오른쪽(jpg x 14.6~34%).</summary>
+        public static readonly R LobbyPower = new R(13.2f, 4.5f, 22.0f, 2.9f);
+        /// <summary>골드 pill(jpg x 39.3~68%) · 보석 pill(jpg x 69.4~97.9%).</summary>
+        public static readonly R LobbyGoldPill = new R(38.5f, 4.5f, 29.5f, 2.9f);
+        public static readonly R LobbyGemPill = new R(69.5f, 4.5f, 29.0f, 2.9f);
+        /// <summary>왼쪽 아래 «성»(잠금 · jpg x 0~18% · y 70.5~78%) · 오른쪽 아래 «이벤트»(방패 · x 82~100%) — START 와 같은 줄, 프레임 가장자리에 붙는다.</summary>
+        public static readonly R LobbyCastle = new R(0, 70.5f, 17.0f, 7.5f);
+        public static readonly R LobbyEvents = new R(83.0f, 70.5f, 17.0f, 7.5f);
 
         // ② 인게임 — 메인 게임화면.jpg
         public static readonly R HudPills = new R(2.0f, 5.2f, 36.0f, 2.8f);

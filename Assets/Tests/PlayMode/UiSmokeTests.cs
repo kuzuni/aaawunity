@@ -138,17 +138,39 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual("lobby", _app.Current.Name);
             var lobby = _app.Current.Root;
             var tabs = UiKit.Find(lobby, "Tab_01_BottomFlushMenu");
-            Assert.IsNotNull(tabs, "로비 프리팹(Lobby_Default)의 하단 탭 바가 있어야 한다");
+            Assert.IsNotNull(tabs, "로비 프리팹(Lobby_Default)의 하단 탭 바 조각이 표 자리(TabBar)에 있어야 한다");
             Assert.GreaterOrEqual(tabs.childCount, NavBar.Keys.Length, "하단 탭 5칸");
             Assert.AreEqual(5, NavBar.Keys.Length, "탭 = 상점·장비·전투·탤런트·펫");
-            Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 1, "로비 초상(HeroView)");
+            Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 1, "로비 초상(HeroView · 상단 바 아바타)");
             Assert.IsTrue(HasText(s => s == "START"), "START 버튼");
-            Assert.IsTrue(HasText(s => s.StartsWith("전투력")), "전투력 표시");
             Assert.IsTrue(HasText(s => s.StartsWith("챕터")), "챕터 제목");
+            // T34 — 레퍼런스 01_lobby.jpg 구도 단언: 상단 바(아바타·전투력·골드·보석) · 배너+메뉴 · 사이드 3+3 · 카드+◀▶ · 보조 2 · START · 성·이벤트 · 탭 5
+            {
+                var top = UiKit.Find(lobby, "TopBar"); Assert.IsNotNull(top, "상단 재화 바(TopBar)");
+                Assert.IsNotNull(UiKit.Find(top, "Avatar"), "상단 바 아바타 칸"); Assert.IsNotNull(UiKit.Find(top, "Power"), "상단 바 전투력 숫자");
+                Assert.IsNotNull(UiKit.Find(top, "ResourceBar_Coin"), "골드 pill"); Assert.IsNotNull(UiKit.Find(top, "ResourceBar_Gem"), "보석 pill");
+                Assert.IsNotNull(UiKit.Find(lobby, "Banner"), "이벤트 배너"); Assert.IsNotNull(UiKit.Find(lobby, "Button_Menu"), "메뉴(≡)");
+                var sideL = UiKit.Find(lobby, "SideL"); var sideR = UiKit.Find(lobby, "SideR");
+                Assert.IsNotNull(sideL, "왼쪽 사이드 기둥"); Assert.IsNotNull(sideR, "오른쪽 사이드 기둥");
+                Assert.AreEqual(3, CountNamed(sideL, "Side:"), "왼쪽 사이드 아이콘 3"); Assert.AreEqual(3, CountNamed(sideR, "Side:"), "오른쪽 사이드 아이콘 3");
+                Assert.IsNotNull(UiKit.Find(lobby, "ChapterCard"), "챕터 카드"); Assert.IsNotNull(UiKit.Find(lobby, "ArrowL"), "◀"); Assert.IsNotNull(UiKit.Find(lobby, "ArrowR"), "▶");
+                Assert.AreEqual(2, CountNamed(UiKit.Find(lobby, "SubRow"), "Side:"), "보조 버튼 2(탐험·클리어 보상)");
+                Assert.IsNotNull(UiKit.Find(lobby, "Castle"), "왼쪽 아래 성"); Assert.IsNotNull(UiKit.Find(lobby, "Events"), "오른쪽 아래 이벤트");
+                Assert.IsTrue(HasText(s => s == "스타터팩") && HasText(s => s == "퀘스트") && HasText(s => s == "탐험"), "사이드·보조 라벨은 우리말");
+                // 배치 = 표 ①(±3%p) — START 는 카드와 같은 x·폭, 탭 바는 맨 아래
+                var frame = _app.Frame; var start = (RectTransform)UiKit.Find(lobby, "Start"); var card = (RectTransform)UiKit.Find(lobby, "ChapterCard");
+                Assert.AreEqual(Layout.LobbyStart.X, start.anchorMin.x * 100f, 0.5f, "START x"); Assert.AreEqual(Layout.LobbyCard.X + Layout.LobbyCard.W, card.anchorMax.x * 100f, 0.5f, "카드 오른쪽 = START 오른쪽");
+                Assert.AreEqual(start.anchorMin.x, card.anchorMin.x, 1e-3f, "START 와 카드는 같은 x"); Assert.AreEqual(start.anchorMax.x, card.anchorMax.x, 1e-3f, "START 와 카드는 같은 폭");
+                Assert.AreEqual(1f - Layout.TabBar.Y / 100f, ((RectTransform)tabs).anchorMax.y, 1e-3f, "탭 바 = 표 자리");
+                // 사이드 아이콘·보조 버튼·배너는 눌러도 아무 일 없음(껍데기 · 팝업 안 열림 · 빨간 줄 0)
+                foreach (var key in new[] { LobbyScreen.SideStarter, LobbyScreen.SideQuest, LobbyScreen.SideExplore, LobbyScreen.SideEvents }) Assert.IsTrue(ClickNamed(lobby, "Side:" + key), "껍데기 버튼 " + key);
+                Assert.IsTrue(ClickNamed(lobby, "Banner"), "배너"); yield return Frames(1);
+                Assert.IsFalse(_app.Overlay.IsOpen, "껍데기 버튼은 팝업을 열지 않는다(T43·T44 전)");
+            }
             Check("로비");
 
             // 챕터 ◀▶ (최고 챕터 1 이라 그대로) · 탭 라벨
-            Assert.IsTrue(Click(lobby, s => s == "▶"), "챕터 ▶"); Assert.IsTrue(Click(lobby, s => s == "◀"), "챕터 ◀"); yield return Frames(1);
+            Assert.IsTrue(ClickNamed(lobby, "ArrowR"), "챕터 ▶"); Assert.IsTrue(ClickNamed(lobby, "ArrowL"), "챕터 ◀"); yield return Frames(1);
             Check("로비 챕터 이동");
 
             // 설정 (Settings 프리팹 그대로) — 배경음 스위치 · 닫기

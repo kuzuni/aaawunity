@@ -131,6 +131,19 @@ namespace KkomaKnight.Game
             rt.anchorMin = rt.anchorMax = new Vector2(0, 1); rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = new Vector2(cx, -cy); rt.sizeDelta = new Vector2(w, h); rt.localScale = Vector3.one;
         }
+        /// <summary>표의 % 사각형 → 프레임 px 크기(폭·높이). 프리팹 조각을 «본래 크기 그대로 두고 배율로» 넣을 때의 목표 크기(<see cref="FitScale"/>).</summary>
+        public static Vector2 PxSize(Layout.R r) => new Vector2(r.W / 100f * FrameW, r.H / 100f * FrameH);
+        /// <summary>
+        /// 프리팹 조각을 <b>본래 sizeDelta 그대로</b> 두고 부모 한가운데에 균일 배율로 맞춘다(<see cref="PerkFrame"/> 규약 · T13/T34) — 내부 자식이 고정 크기라 sizeDelta 를 줄이면 그림이 안 줄어드는 GUI Pro 조각용.
+        /// target = 들어갈 px 크기(보통 <see cref="PxSize"/>) · fill = 그 안에서 차지할 비율. 조각 크기를 모르면(빈 Rect) 아무것도 안 한다.
+        /// </summary>
+        public static void FitScale(RectTransform piece, Vector2 target, float fill = 1f)
+        {
+            piece.anchorMin = piece.anchorMax = new Vector2(0.5f, 0.5f); piece.pivot = new Vector2(0.5f, 0.5f); piece.anchoredPosition = Vector2.zero;
+            var sz = piece.sizeDelta; if (sz.x <= 1f || sz.y <= 1f || target.x <= 0f || target.y <= 0f) return;
+            float s = Mathf.Min(target.x / sz.x, target.y / sz.y) * fill;
+            piece.localScale = new Vector3(s, s, 1f);
+        }
 
         // ───────────────────────── 코드 생성 위젯 (글자 · 아이콘 · 게이지) ─────────────────────────
         public static Image Icon(Transform parent, string name, string spriteKey, Color? tint = null)
