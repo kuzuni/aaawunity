@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace KkomaKnight.Game
 {
@@ -76,6 +77,23 @@ namespace KkomaKnight.Game
         public string CurrentKey => _key;
         public AudioSource BgmSource => _a;
 
+        /// <summary>WebGL 에서 원본 .ogg 로 받아 온 클립(키 → 클립) — 카탈로그 클립보다 우선한다(T64).</summary>
+        readonly Dictionary<string, AudioClip> _streamed = new Dictionary<string, AudioClip>();
+        /// <summary>StreamingAssets 의 원본 .ogg 를 받아 쓰는 플랫폼인가 — WebGL 만(T64 · 그 외에는 코드가 도는 일이 없다).</summary>
+        public static bool UseStreamed => Application.platform == RuntimePlatform.WebGLPlayer;
+        /// <summary>받아 온 클립 수(테스트·로그용).</summary>
+        public int StreamedCount => _streamed.Count;
+
+        /// <summary>카탈로그 키(<c>bgm.lobby</c>·<c>snd.click</c>) → StreamingAssets 안의 파일 경로(<c>audio/bgm/lobby.ogg</c>).</summary>
+        public static string StreamedFile(string key)
+        {
+            if (string.IsNullOrEmpty(key)) return null;
+            int dot = key.IndexOf('.');
+            if (dot <= 0 || dot >= key.Length - 1) return null;
+            string folder = key.Substring(0, dot) == "bgm" ? "bgm" : "sfx";
+            return "audio/" + folder + "/" + key.Substring(dot + 1) + ".ogg";
+        }
+
         void Awake()
         {
             _a = Make("BGM A", true); _b = Make("BGM B", true); _sfx = Make("SFX", false);
@@ -89,6 +107,52 @@ namespace KkomaKnight.Game
         }
         void OnDestroy() { Audio.Release(this); }
 
+        void Start() { if (UseStreamed) StartCoroutine(LoadStreamed()); }
+
+        /// <summary>
+        /// WebGL 전용(T64): 카탈로그의 오디오 키를 돌며 <c>StreamingAssets/audio/…​.ogg</c> 원본을 받아 클립으로 만든다.
+        /// 유니티 WebGL 빌드는 임포터의 <c>compressionFormat</c> 을 반영하지 않고(회차 1 PCM · 회차 2 AAC 둘 다 무시 · PROGRESS T64)
+        /// FSB 안의 raw Vorbis 를 브라우저에 넘겨 «no supported source»·«Unable to decode audio data» 가 났다.
+        /// 원본 .ogg 는 **Ogg 컨테이너째** 넘어가므로 브라우저가 그대로 디코드한다(워커 G 가 같은 파일로 확인).
+        /// 실패해도 조용히 카탈로그 클립으로 돌아간다(빨간 줄 0 — 규칙 §1).
+        /// </summary>
+        System.Collections.IEnumerator LoadStreamed()
+        {
+            if (App == null || App.Assets == null) yield break;
+            var keys = new List<string>();
+            foreach (var e in App.Assets.audio) if (!string.IsNullOrEmpty(e.key)) keys.Add(e.key);
+            foreach (var key in keys)
+            {
+                string file = StreamedFile(key);
+                if (string.IsNullOrEmpty(file)) continue;
+                string url = Application.streamingAssetsPath + "/" + file;
+                // 형식 인자는 플랫폼마다 취급이 다르다(WebGL 은 브라우저가 판단한다는 보고가 있다) — OGGVORBIS 로 먼저, 실패하면 UNKNOWN 으로 한 번 더.
+                for (int attempt = 0; attempt < 2 && !_streamed.ContainsKey(key); attempt++)
+                {
+                    var type = attempt == 0 ? AudioType.OGGVORBIS : AudioType.UNKNOWN;
+                    using (var req = UnityWebRequestMultimedia.GetAudioClip(url, type))
+                    {
+                        yield return req.SendWebRequest();
+                        if (req.result != UnityWebRequest.Result.Success)
+                        {
+                            if (attempt == 1) Debug.Log("[Audio] 원본 ogg 받기 실패(카탈로그 클립으로) " + key + " · " + req.error);
+                            continue;
+                        }
+                        var clip = DownloadHandlerAudioClip.GetContent(req);
+                        if (clip == null) continue;
+                        clip.name = key;
+                        _streamed[key] = clip;
+                        // 지금 틀고 있는 곡이면 받아 온 클립으로 바꿔 이어 튼다(첫 로비 BGM 이 이 경우다).
+                        if (key == _key && _a != null && _a.clip != clip)
+                        {
+                            float v = _a.volume; _a.clip = clip; _a.volume = v; _a.Play();
+                        }
+                    }
+                }
+            }
+            Debug.Log("[Audio] StreamingAssets 원본 클립 " + _streamed.Count + "/" + keys.Count);
+        }
+
         bool MuteBgm => App != null && App.Save != null && App.Save.MuteBgm;
         bool MuteSfx => App != null && App.Save != null && App.Save.MuteSfx;
 
@@ -100,7 +164,12 @@ namespace KkomaKnight.Game
             if (_sfx != null) _sfx.mute = MuteSfx;
         }
 
-        AudioClip Clip(string key) => App != null && App.Assets != null ? App.Assets.Clip(key) : null;
+        /// <summary>받아 온 원본 클립(WebGL · T64)이 있으면 그것을, 없으면 카탈로그 클립을 준다.</summary>
+        AudioClip Clip(string key)
+        {
+            if (!string.IsNullOrEmpty(key) && _streamed.TryGetValue(key, out var streamed) && streamed != null) return streamed;
+            return App != null && App.Assets != null ? App.Assets.Clip(key) : null;
+        }
 
         public void PlayBgm(string key)
         {
