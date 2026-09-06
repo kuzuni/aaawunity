@@ -98,7 +98,7 @@ namespace KkomaKnight.Game
             if (castle != null) { var lk = UiKit.Icon(castle, "Lock", "ui.iconLock"); UiKit.Pct(lk.rectTransform, 30, 22, 40, 36); }
             BuildColumn(rt, "Events", Layout.LobbyEvents, true, (SideEvents, "ui.iconDungeon", "이벤트"));
 
-            // ⑦ 하단 탭 5칸 — 프리팹 탭 바 조각을 표 자리에 (상점 · 장비 · 전투 · 탤런트 · 펫 — T10 · 이름 변경은 T43)
+            // ⑦ 하단 탭 5칸 — 프리팹 탭 바 조각을 표 자리에 (상점 · 장비 · 전투 · 던전 · 펫 — T10 · «탤런트 → 던전» 은 T43)
             _tabs = UiKit.Find(rt, "Tab_01_BottomFlushMenu");
             if (_tabs != null) { var tt = (RectTransform)_tabs; tt.SetParent(rt, false); UiKit.Pct(tt, Layout.TabBar); NavBar.Wire(App, _tabs, "lobby"); UiKit.Tag(tt, "하단 탭바"); }
         }
@@ -122,8 +122,11 @@ namespace KkomaKnight.Game
             return prt;
         }
 
-        /// <summary>사이드 아이콘·배너·보조 버튼·모서리 버튼의 단일 훅 — 지금은 아무 일 없음(주인: 껍데기). T43 이 <see cref="SideEvents"/> 를, T44 가 나머지를 여기서 팝업으로 잇는다.</summary>
-        public void OnSide(string key) { }
+        /// <summary>사이드 아이콘·배너·보조 버튼·모서리 버튼의 단일 훅 — T43: <see cref="SideEvents"/>(오른쪽 아래 방패) = 아레나(PvP) 페이지. 나머지는 T44 가 여기서 팝업으로 잇는다(그때까지 아무 일 없음).</summary>
+        public void OnSide(string key)
+        {
+            if (key == SideEvents) EventsScreen.Open(App, EventsScreen.PagePvp);
+        }
 
         void Shift(int d)
         {
@@ -230,16 +233,16 @@ namespace KkomaKnight.Game
     }
 
     /// <summary>
-    /// 하단 탭 5칸 = <b>상점 · 장비 · 전투 · 탤런트 · 펫</b> (주인 지시 2026-09-05 · T10 — 대장간·설정 탭은 뺐다).
+    /// 하단 탭 5칸 = <b>상점 · 장비 · 전투 · 던전 · 펫</b> (주인 지시 2026-09-05 · T10 — 대장간·설정 탭은 뺐다 · T43: «탤런트» → «던전» = <see cref="EventsScreen"/> 던전 페이지).
     /// 대장간은 장비 화면의 «합성» 버튼으로만 · 설정은 로비의 메뉴(≡)와 전투의 일시정지에서만 연다.
     /// 로비 프리팹(Lobby_Default)의 Tab_01_BottomFlushMenu 를 다른 화면에도 같은 배선으로 세운다 — 탭 순서 = 프리팹 자식 순서(0~4) 그대로.
-    /// 탤런트 탭 = <see cref="Overlay.TalentPet"/>(Character_Talent_02 프리팹 팝업 · 기능 없음 · 팝업 안 탭 바로 닫는다 · T43 이 «던전» 으로 바꾼다) · 펫 탭 = <see cref="PetScreen"/>(레퍼런스 13 구도 껍데기 · T42).
+    /// 던전 탭 = <see cref="EventsScreen"/>(레퍼런스 20~26 구도 껍데기 · T43 · «탤런트» 를 대체) · 펫 탭 = <see cref="PetScreen"/>(레퍼런스 13 구도 껍데기 · T42).
     /// </summary>
     public static class NavBar
     {
-        public static readonly string[] Keys = { "shop", "gear", "battle", "talent", "pet" };
-        static readonly string[] IconsK = { "ui.shop", "ui.bag", "ui.battle", "ui.talentIcon", "ui.petIcon" };
-        public static readonly string[] Labels = { "상점", "장비", "전투", "탤런트", "펫" };
+        public static readonly string[] Keys = { "shop", "gear", "battle", "dungeon", "pet" };
+        static readonly string[] IconsK = { "ui.shop", "ui.bag", "ui.battle", "ui.iconDungeon", "ui.petIcon" };
+        public static readonly string[] Labels = { "상점", "장비", "전투", "던전", "펫" };
 
         public static void Attach(GameScreen screen, RectTransform root, string current)
         {
@@ -259,14 +262,14 @@ namespace KkomaKnight.Game
                 UiKit.Clickable(tab, () => Go(app, Keys[k], current));   // 눌림 표시(T22) = Clickable 의 ColorTint — 탭 루트는 그림이 없어 켜져 있는 쪽(Normal/Focus)의 첫 Image 가 어두워진다
             }
         }
-        /// <summary>탭 이동 — 팝업(탤런트/설정)이 떠 있으면 닫고 간다. 같은 탭은 아무 일 없음.</summary>
+        /// <summary>탭 이동 — 팝업(설정 등)이 떠 있으면 닫고 간다. 같은 탭은 아무 일 없음.</summary>
         static void Go(App app, string key, string current)
         {
             if (key == current) return;
             switch (key)
             {
                 case "battle": app.Overlay.Close(); if (current != "lobby") app.ShowScreen("lobby"); break;
-                case "talent": app.Overlay.TalentPet(key); break;   // 탤런트는 T43 이 «던전» 으로 바꾼다 · 펫은 T42 부터 화면(PetScreen · default 분기)
+                case "dungeon": app.Overlay.Close(); EventsScreen.Open(app, EventsScreen.PageDungeon); break;   // T43 · 펫은 T42 부터 화면(PetScreen · default 분기)
                 default: app.Overlay.Close(); app.ShowScreen(key); break;
             }
         }

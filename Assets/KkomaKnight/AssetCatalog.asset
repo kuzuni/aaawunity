@@ -493,6 +493,54 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: d3415a84312294783b64bbca7314f03d, type: 3}
   - key: ui.iconClock
     sprite: {fileID: 21300000, guid: f27a19d4a86854ed99938615072e3bcd, type: 3}
+  - key: ui.iconTicketGold
+    sprite: {fileID: 21300000, guid: ec32adfb684024d3c8a3d853e4b9a562, type: 3}
+  - key: ui.iconTicketBlue
+    sprite: {fileID: 21300000, guid: 39556f4b24e714f8ba0293fd3496008e, type: 3}
+  - key: ui.iconTokenRed
+    sprite: {fileID: 21300000, guid: d3fc3b72076fd4eb586d3e71123b6955, type: 3}
+  - key: ui.iconArenaCoin
+    sprite: {fileID: 21300000, guid: e075a33fd40034c858a571bc55f4baaf, type: 3}
+  - key: ui.iconKeyBlue
+    sprite: {fileID: 21300000, guid: 207c6ebcbdea3450dbd5d529a345de58, type: 3}
+  - key: ui.iconKeyPurple
+    sprite: {fileID: 21300000, guid: 59a7aef84e8ef41fbae5539c55c755b9, type: 3}
+  - key: ui.iconKeyGold
+    sprite: {fileID: 21300000, guid: 473aa97eba7ce41bda0aeb9e3818e9c7, type: 3}
+  - key: ui.iconScroll
+    sprite: {fileID: 21300000, guid: 834663af9e43a43228b55b050647daac, type: 3}
+  - key: ui.iconOrb
+    sprite: {fileID: 21300000, guid: 3fad3d3cdd0a644a99a23f9cfa52c61a, type: 3}
+  - key: ui.iconMedalBronze
+    sprite: {fileID: 21300000, guid: add56281722a64945b93900a5262d4b1, type: 3}
+  - key: ui.iconMedalSilver
+    sprite: {fileID: 21300000, guid: e6f37a2bd25a84df3864bf438d6db37e, type: 3}
+  - key: ui.iconGemBlue
+    sprite: {fileID: 21300000, guid: 27a59dab114bd4e238d2f3bb43620532, type: 3}
+  - key: ui.iconGemPurple
+    sprite: {fileID: 21300000, guid: 2e8fba0af7b1b4b94a3113a8f7540d23, type: 3}
+  - key: ui.iconCrownGold
+    sprite: {fileID: 21300000, guid: ad8f246e673514e71807a8a2c73b3b48, type: 3}
+  - key: ui.iconCrownSilver
+    sprite: {fileID: 21300000, guid: 84e5a2401670d4049b27ef202a20152d, type: 3}
+  - key: ui.iconCrownBronze
+    sprite: {fileID: 21300000, guid: df2d9e132ef294fd1a73e740489a68a3, type: 3}
+  - key: ui.iconPvp
+    sprite: {fileID: 21300000, guid: d8b11767c058145748aad39df5a9a801, type: 3}
+  - key: ui.iconGiftBlue
+    sprite: {fileID: 21300000, guid: 3decf037bc4dc44879511a37d8de29cf, type: 3}
+  - key: ui.iconMerchant
+    sprite: {fileID: 21300000, guid: 5aa576f5eacec4ba3b8abbfc08fafe45, type: 3}
+  - key: ui.iconRevive
+    sprite: {fileID: 21300000, guid: 405586064c6764e27a85517f8fd9da8f, type: 3}
+  - key: ui.iconFoe1
+    sprite: {fileID: 21300000, guid: 494eaf63a596b4a6397aa8c2de75146e, type: 3}
+  - key: ui.iconFoe2
+    sprite: {fileID: 21300000, guid: 96e9ef5780baa4cd18be1263775c06b7, type: 3}
+  - key: ui.iconFoe3
+    sprite: {fileID: 21300000, guid: 2f9eae816fd4140108313b73a8071911, type: 3}
+  - key: ui.iconFoe4
+    sprite: {fileID: 21300000, guid: 17c06ffdd50374a5b9e629e61d397e51, type: 3}
   - key: hud.gold
     sprite: {fileID: 21300000, guid: 1a9ecca12e9da45568bcb8fc473f7c74, type: 3}
   - key: hud.gem

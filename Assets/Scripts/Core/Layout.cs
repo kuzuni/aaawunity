@@ -217,6 +217,94 @@ namespace KkomaKnight.Core
         public static readonly R PdBtnL = new R(13.5f, 59.9f, 35.1f, 5.1f);
         public static readonly R PdBtnR = new R(51.4f, 59.9f, 35.1f, 5.1f);
 
+        // ⑫ 던전 페이지 — docs/ref/20_dungeon.jpg (T43 · 워커 B 실측 · 720×1560 사본 픽셀 런 · ±0.5%p · docs/ref-layout.md ⑫ 표와 같다)
+        public static readonly R DgTitle = new R(32.0f, 10.8f, 36.0f, 3.0f);
+        public static readonly R DgTitleLine = new R(6.0f, 14.8f, 88.0f, 0.6f);
+        public static readonly R DgSub = new R(24.0f, 16.7f, 52.0f, 1.7f);
+        public static readonly R DgCard1 = new R(3.6f, 20.4f, 92.6f, 26.4f);
+        public static readonly R DgCard2 = new R(3.6f, 47.1f, 92.6f, 26.5f);
+        public const float DgCardPitch = 26.7f;
+        public static readonly R DgCardHead = new R(3.6f, 20.4f, 92.6f, 3.6f);
+        public static readonly R DgCardPic = new R(3.6f, 24.0f, 92.6f, 15.9f);
+        public static readonly R DgEnter = new R(63.5f, 38.6f, 29.0f, 5.3f);
+        public static readonly R DgRewards = new R(5.0f, 41.1f, 20.0f, 3.4f);
+        public static readonly R DgSoon = new R(3.6f, 73.8f, 92.6f, 19.7f);
+        /// <summary>던전·아레나 화면 공통 바닥 띠(레퍼런스에 5탭 바가 없다 — 뒤로 + 2탭) · 뒤로 · 던전/PvP 2탭.</summary>
+        public static readonly R DgFoot = new R(0, 92.3f, 100, 7.7f);
+        public static readonly R DgBack = new R(3.5f, 94.0f, 16.0f, 5.3f);
+        public static readonly R DgTabs = new R(59.7f, 92.3f, 40.3f, 7.7f);
+
+        // ⑬ 던전 세부 팝업 — docs/ref/21_dungeon_detail.jpg (T43)
+        public static readonly R DdBox = new R(12.4f, 24.2f, 75.5f, 51.4f);
+        public static readonly R DdHead = new R(12.4f, 24.2f, 75.5f, 3.7f);
+        public static readonly R DdPic = new R(13.0f, 28.2f, 74.4f, 13.8f);
+        public static readonly R DdNote = new R(14.5f, 38.8f, 71.5f, 2.2f);
+        public static readonly R DdArrow = new R(21.5f, 45.0f, 6.0f, 4.0f);
+        public static readonly R DdFloor = new R(41.7f, 43.0f, 16.6f, 7.6f);
+        public static readonly R DdRewards = new R(16.1f, 52.1f, 67.7f, 10.8f);
+        public static readonly R DdRewardCells = new R(22.2f, 55.8f, 55.6f, 5.1f);
+        public static readonly R DdTicket = new R(44.0f, 64.5f, 12.0f, 2.5f);
+        public static readonly R DdBtns = new R(16.1f, 68.3f, 67.7f, 6.1f);
+
+        // ⑭ 아레나(PvP) 페이지 — docs/ref/22_arena.jpg (T43)
+        public static readonly R ArTitle = new R(40.0f, 10.8f, 20.0f, 3.0f);
+        public static readonly R ArSub = new R(27.5f, 16.7f, 45.0f, 1.7f);
+        public static readonly R ArCard = new R(3.6f, 20.3f, 92.6f, 26.5f);
+        public static readonly R ArCardHead = new R(3.6f, 20.3f, 92.6f, 3.7f);
+        public static readonly R ArCardPic = new R(3.6f, 24.0f, 92.6f, 15.7f);
+        public static readonly R ArSeason = new R(5.0f, 38.3f, 35.0f, 1.6f);
+        public static readonly R ArEnter = new R(63.5f, 38.6f, 29.0f, 5.3f);
+        public static readonly R ArTier = new R(6.0f, 41.0f, 24.0f, 3.9f);
+        public static readonly R ArSoon = new R(3.6f, 47.1f, 92.6f, 25.0f);
+
+        // ⑮ 아레나 입장 화면 — docs/ref/23_arena_enter.jpg (T43)
+        public static readonly R AeStage = new R(0, 8.0f, 100, 34.0f);
+        public static readonly R AeTier = new R(37.5f, 9.9f, 26.0f, 2.9f);
+        public static readonly R AeSeason = new R(31.0f, 13.5f, 38.0f, 1.9f);
+        public static readonly R AeSideIcons = new R(84.7f, 9.6f, 12.5f, 9.8f);
+        public static readonly R AePortrait1 = new R(41.7f, 20.2f, 16.6f, 6.4f);
+        public static readonly R AePortrait2 = new R(12.5f, 23.4f, 15.3f, 6.4f);
+        public static readonly R AePortrait3 = new R(72.2f, 23.4f, 15.3f, 6.4f);
+        public static readonly R AePortraits = new R(12.5f, 20.2f, 75.0f, 9.6f);
+        public static readonly R AeBanner1 = new R(36.8f, 27.6f, 26.4f, 9.6f);
+        public static readonly R AeBanner2 = new R(9.0f, 30.4f, 22.3f, 8.7f);
+        public static readonly R AeBanner3 = new R(68.8f, 30.4f, 22.2f, 8.7f);
+        public static readonly R AeBanners = new R(9.0f, 27.6f, 82.0f, 11.5f);
+        public static readonly R AeList = new R(2.4f, 42.3f, 95.1f, 50.0f);
+        public static readonly R AeRow = new R(2.4f, 42.3f, 95.1f, 6.7f);
+        public const float AeRowPitch = 7.6f;
+        public static readonly R AePromo = new R(0, 89.7f, 100, 2.6f);
+        public static readonly R AeChallenge = new R(33.5f, 93.6f, 33.0f, 5.6f);
+
+        // ⑯ 아레나 도전 팝업 — docs/ref/24_arena_challenge.jpg (T43)
+        public static readonly R AcBox = new R(4.7f, 20.1f, 90.6f, 60.0f);
+        public static readonly R AcHead = new R(4.7f, 20.1f, 90.6f, 4.6f);
+        public static readonly R AcInfoRow = new R(8.3f, 27.2f, 83.4f, 2.6f);
+        public static readonly R AcList = new R(8.3f, 31.7f, 83.4f, 39.6f);
+        public static readonly R AcRow = new R(8.3f, 31.7f, 83.4f, 6.6f);
+        public const float AcRowPitch = 8.2f;
+        public static readonly R AcRowBtn = new R(61.1f, 32.4f, 29.9f, 5.4f);
+        public static readonly R AcRefresh = new R(33.3f, 72.8f, 33.4f, 6.0f);
+
+        // ⑰ 아레나 순위 보상 팝업 — docs/ref/25_arena_rank_reward.jpg (T43)
+        public static readonly R RrBox = new R(4.7f, 20.6f, 90.6f, 58.9f);
+        public static readonly R RrHead = new R(4.7f, 20.6f, 90.6f, 4.8f);
+        public static readonly R RrTiers = new R(4.7f, 25.9f, 90.6f, 8.5f);
+        public static readonly R RrTimer = new R(30.0f, 35.6f, 40.0f, 2.2f);
+        public static readonly R RrNote = new R(25.0f, 38.8f, 50.0f, 1.4f);
+        public static readonly R RrList = new R(8.6f, 41.7f, 83.1f, 27.5f);
+        public static readonly R RrRow = new R(8.6f, 41.7f, 83.1f, 5.5f);
+        public const float RrRowPitch = 7.2f;
+        public static readonly R RrTabs = new R(8.6f, 72.4f, 83.1f, 7.1f);
+
+        // ⑱ 아레나 상인 페이지 — docs/ref/26_arena_shop.jpg (T43)
+        public static readonly R MeBanner = new R(0, 8.0f, 100, 15.9f);
+        public static readonly R MeTitle = new R(38.2f, 9.9f, 23.6f, 2.9f);
+        public static readonly R MeSeason = new R(2.8f, 20.2f, 38.9f, 1.6f);
+        public static readonly R MeGrid = new R(3.6f, 26.0f, 92.6f, 66.3f);
+        public static readonly R MeCard = new R(3.6f, 26.0f, 29.0f, 17.6f);
+        public const float MeColPitch = 31.9f, MeRowPitch = 18.9f;
+
         // ⑧ 공통
         public const float BodyMarginX = 3.0f, PopupW = 87.0f, PopupMarginX = 6.5f;
 

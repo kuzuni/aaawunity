@@ -209,7 +209,7 @@
 | sprites | `ui.iconChestRed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Chest_01_Red.png` | fileID 21300000 | 로비 보조 버튼 «클리어 보상» 아이콘 (껍데기 · OnSide(clearReward)) |
 | sprites | `ui.iconHome` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Common_Home_01_Blue.png` | fileID 21300000 | 로비 왼쪽 아래 «성»(잠금) 아이콘 — 팩에 성이 없어 집 아이콘 + ui.iconLock 자물쇠 겹침 (눌러도 아무 일 없음) |
 | sprites | `ui.iconLock` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Common_Lock_01_Silver.png` | fileID 21300000 | 잠금 자물쇠(성 위에 겹침 · 껍데기 화면의 잠금 표시 공용) |
-| sprites | `ui.iconDungeon` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Dungeon_01.png` | fileID 21300000 | 로비 오른쪽 아래 «이벤트» 아이콘 (레퍼런스의 방패 자리 · OnSide(events) → T43 던전/아레나) |
+| sprites | `ui.iconDungeon` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Dungeon_01.png` | fileID 21300000 | 로비 오른쪽 아래 «이벤트» 아이콘 (레퍼런스의 방패 자리 · OnSide(events) → T43 아레나 페이지) · T43: 하단 탭 «던전» 아이콘 · 던전 페이지 제목 아이콘 · 던전/PvP 2탭 |
 | sprites | `ui.iconMedal` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Medal_01_Gold.png` | fileID 21300000 | 로비 이벤트 배너 왼쪽 메달 아이콘(패스 껍데기) |
 | sprites | `gi.weapon.crit` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Weapons_Sword_01.png` | fileID 21300000 | 장비 아이콘 — 무기(치명 세트=검 / 체력실드=해머 / 회피=창). 세트별로 다른 그림 · 등급은 ItemFrame 색 |
 | sprites | `gi.weapon.hpsh` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Weapons_Hammer_01.png` | fileID 21300000 |  |
@@ -245,6 +245,30 @@
 | sprites | `shop.gold.2` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/ShopItem/2x/Gold_2.Png` | fileID 21300000 |  |
 | sprites | `shop.gold.3` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/ShopItem/2x/Gold_3.Png` | fileID 21300000 |  |
 | sprites | `ui.iconClock` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Clock_01_Gold.png` | fileID 21300000 | 상점 «무료 보급까지 hh:mm:ss» 줄의 시계 아이콘 (T40 · 레퍼런스 10 «Free in») |
+| sprites | `ui.iconTicketGold` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Shop_Ticket_01_Gold.png` | fileID 21300000 | T43 던전 카드 1 «지옥의 문» 티켓(🎫 N/M) · 던전 세부 티켓 줄 · 소탕/도전 버튼 안 티켓 |
+| sprites | `ui.iconTicketBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Shop_Ticket_01_Blue.png` | fileID 21300000 | T43 던전 카드 2 «원정» 티켓 |
+| sprites | `ui.iconTokenRed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Tokens_01_Red.png` | fileID 21300000 | T43 아레나 티켓(카드 🎫 N/N · 입장 화면 «도전 🎫x1» · 도전 팝업 티켓 pill) |
+| sprites | `ui.iconArenaCoin` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Coin_01_Goblin.png` | fileID 21300000 | T43 아레나 코인(상인 페이지 상품 가격 · 입장 화면 상단 바 보석 자리) |
+| sprites | `ui.iconKeyBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Key_02_Blue.png` | fileID 21300000 | T43 던전 카드 2 보상 «희귀 열쇠» · 상인 상품 |
+| sprites | `ui.iconKeyPurple` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Key_02_Purple.png` | fileID 21300000 | T43 «에픽 열쇠» |
+| sprites | `ui.iconKeyGold` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Key_02_Gold.png` | fileID 21300000 | T43 «전설 열쇠» |
+| sprites | `ui.iconScroll` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Scroll_01_Red.png` | fileID 21300000 | T43 «도안»(무기·갑옷·투구·신발·반지·목걸이) · 던전 카드 2 보상 «?» 자리 |
+| sprites | `ui.iconOrb` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Rune_01.png` | fileID 21300000 | T43 던전 카드 1 보상(파란 구슬 자리) · 세부 보상 칸 1 |
+| sprites | `ui.iconMedalBronze` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Medal_01_Bronze.png` | fileID 21300000 | T43 아레나 티어 «브론즈»(카드 티어 줄 · 입장 화면 제목 · 순위 보상 티어 띠) |
+| sprites | `ui.iconMedalSilver` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Medal_01_Silver.png` | fileID 21300000 | T43 순위 보상 티어 띠 «실버» |
+| sprites | `ui.iconGemBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Gem_01_Blue.png` | fileID 21300000 | T43 순위 보상 티어 띠 «플래티넘» |
+| sprites | `ui.iconGemPurple` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Gem_02_Purple.png` | fileID 21300000 | T43 순위 보상 티어 띠 «다이아» · 보상 줄 보석 칸 · 상인 «다이아» 상품 |
+| sprites | `ui.iconCrownGold` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Crown_01_Gold.png` | fileID 21300000 | T43 아레나 1위 왕관(시상대 · 순위 보상 1위 줄) |
+| sprites | `ui.iconCrownSilver` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Crown_01_Silver.png` | fileID 21300000 | T43 아레나 2위 왕관 |
+| sprites | `ui.iconCrownBronze` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Crown_01_Bronze.png` | fileID 21300000 | T43 아레나 3위 왕관 |
+| sprites | `ui.iconPvp` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Shield_03_Gold.png` | fileID 21300000 | T43 «PvP» 탭·제목 아이콘(레퍼런스의 월계관 방패 자리) |
+| sprites | `ui.iconGiftBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Gift_01_Blue.png` | fileID 21300000 | T43 아레나 입장 화면 오른쪽 위 «보상» 아이콘(→ 순위 보상 팝업) |
+| sprites | `ui.iconMerchant` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Shop_01_Green.png` | fileID 21300000 | T43 아레나 입장 화면 오른쪽 위 «상인» 아이콘(→ 상인 페이지) |
+| sprites | `ui.iconRevive` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Consumable_Potion_03_Red.png` | fileID 21300000 | T43 상인 «부활 토큰» 상품 |
+| sprites | `ui.iconFoe1` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Skull_01.png` | fileID 21300000 | T43 아레나 상대 초상 1(껍데기 · 순위 목록·도전 팝업 줄) |
+| sprites | `ui.iconFoe2` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Consumable_Food_Mushroom_02.png` | fileID 21300000 | T43 아레나 상대 초상 2 |
+| sprites | `ui.iconFoe3` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Egg_02.png` | fileID 21300000 | T43 아레나 상대 초상 3 |
+| sprites | `ui.iconFoe4` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Misc_Fist_01_Gold.png` | fileID 21300000 | T43 아레나 상대 초상 4 |
 | sprites | `hud.gold` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/ResourceBar_Icon_Gold.png` | fileID 21300000 |  |
 | sprites | `hud.gem` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/ResourceBar_Icon_Gem.png` | fileID 21300000 |  |
 | sprites | `hud.resourceBg` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/ResourceBar_Bg.png` | fileID 21300000 |  |

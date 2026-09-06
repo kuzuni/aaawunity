@@ -140,7 +140,7 @@ namespace KkomaKnight.Tests.Play
             var tabs = UiKit.Find(lobby, "Tab_01_BottomFlushMenu");
             Assert.IsNotNull(tabs, "로비 프리팹(Lobby_Default)의 하단 탭 바 조각이 표 자리(TabBar)에 있어야 한다");
             Assert.GreaterOrEqual(tabs.childCount, NavBar.Keys.Length, "하단 탭 5칸");
-            Assert.AreEqual(5, NavBar.Keys.Length, "탭 = 상점·장비·전투·탤런트·펫");
+            Assert.AreEqual(5, NavBar.Keys.Length, "탭 = 상점·장비·전투·던전·펫"); Assert.AreEqual("dungeon", NavBar.Keys[3], "넷째 탭 = 던전(T43 · 탤런트 대체)"); Assert.AreEqual("던전", NavBar.Labels[3], "넷째 탭 라벨");
             Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 1, "로비 초상(HeroView · 상단 바 아바타)");
             Assert.IsTrue(HasText(s => s == "START"), "START 버튼");
             Assert.IsTrue(HasText(s => s.StartsWith("챕터")), "챕터 제목");
@@ -162,10 +162,10 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(Layout.LobbyStart.X, start.anchorMin.x * 100f, 0.5f, "START x"); Assert.AreEqual(Layout.LobbyCard.X + Layout.LobbyCard.W, card.anchorMax.x * 100f, 0.5f, "카드 오른쪽 = START 오른쪽");
                 Assert.AreEqual(start.anchorMin.x, card.anchorMin.x, 1e-3f, "START 와 카드는 같은 x"); Assert.AreEqual(start.anchorMax.x, card.anchorMax.x, 1e-3f, "START 와 카드는 같은 폭");
                 Assert.AreEqual(1f - Layout.TabBar.Y / 100f, ((RectTransform)tabs).anchorMax.y, 1e-3f, "탭 바 = 표 자리");
-                // 사이드 아이콘·보조 버튼·배너는 눌러도 아무 일 없음(껍데기 · 팝업 안 열림 · 빨간 줄 0)
-                foreach (var key in new[] { LobbyScreen.SideStarter, LobbyScreen.SideQuest, LobbyScreen.SideExplore, LobbyScreen.SideEvents }) Assert.IsTrue(ClickNamed(lobby, "Side:" + key), "껍데기 버튼 " + key);
+                // 사이드 아이콘·보조 버튼·배너는 눌러도 아무 일 없음(껍데기 · 팝업 안 열림 · 빨간 줄 0) — 오른쪽 아래 «이벤트» 는 T43 아레나 페이지(EventsScreenTests)
+                foreach (var key in new[] { LobbyScreen.SideStarter, LobbyScreen.SideQuest, LobbyScreen.SideExplore }) Assert.IsTrue(ClickNamed(lobby, "Side:" + key), "껍데기 버튼 " + key);
                 Assert.IsTrue(ClickNamed(lobby, "Banner"), "배너"); yield return Frames(1);
-                Assert.IsFalse(_app.Overlay.IsOpen, "껍데기 버튼은 팝업을 열지 않는다(T43·T44 전)");
+                Assert.IsFalse(_app.Overlay.IsOpen, "껍데기 버튼은 팝업을 열지 않는다(T44 전)"); Assert.AreEqual("lobby", _app.Current.Name, "껍데기 버튼은 화면을 바꾸지 않는다");
             }
             Check("로비");
 
@@ -213,17 +213,7 @@ namespace KkomaKnight.Tests.Play
                 Check("데이터 삭제 뒤 로비");
             }
 
-            // 탤런트 (Character_Talent_02 통째로 · 데모 내용 그대로라 잔여 글자 검사는 뺀다 · T43 이 «던전» 으로 바꾼다)
-            foreach (var kind in new[] { "talent" })
-            {
-                _app.Overlay.TalentPet(kind); yield return Frames(2);
-                Check("팝업 " + kind, expectOverlay: true, demoText: false);
-                string label = NavBar.Labels[Array.IndexOf(NavBar.Keys, kind)];
-                Assert.IsTrue(HasText(s => s == label), $"{kind} 팝업의 켜진 탭 라벨 = {label}");
-                Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.talent"), "Character_Talent_02(ui.talent) 프리팹이 팝업 층에 있어야 한다");
-                _app.Overlay.Close(); yield return Frames(1);
-            }
-            Check("탤런트 닫힘");
+            // «탤런트» 탭·Character_Talent_02 팝업은 T43 이 «던전»(EventsScreen · EventsScreenTests) 으로 바꿨다 — 탭에서 더는 열리지 않는다
 
             // T42 — 펫 탭 = 레퍼런스 13_pet.jpg 구도(PetScreen · 껍데기): 상단 바 · 4열 격자 9칸(Lv · 진행바) · 합계 줄 · «장착중» 띠 + 슬롯 4 · 회색 2 · 주황 소환 2 · 탭 5 → 칸 클릭 = 세부 팝업(14 · 명판 없음 · 탭하여 닫기)
             {

@@ -63,6 +63,8 @@ namespace KkomaKnight.Tests.Play
             _layout[name] = PlayShot.Layout(_app);
             yield return Frames(1);
         }
+        /// <summary>이름으로 버튼을 누른다(onClick 직접 호출 · 입력 장치 없이).</summary>
+        static bool Press(Transform root, string name) { if (root == null) return false; var t = UiKit.Find(root, name); var b = t != null ? t.GetComponent<UnityEngine.UI.Button>() : null; if (b == null) return false; b.onClick.Invoke(); return true; }
         GearItem Give(string part, int rar = 0, int plus = 0)
         {
             foreach (var t in _app.Data.Gear.AllTypes) if (t.Part == part) { var g = _app.Save.NewGear(t.Part, t.Type, rar, plus); _app.Save.Inv.Add(g); return g; }
@@ -84,6 +86,17 @@ namespace KkomaKnight.Tests.Play
             // 13 펫 탭 · 14 펫 세부 (T42 껍데기)
             _app.ShowScreen("pet"); yield return Frames(3); yield return Shot("13_pet");
             (_app.Current as PetScreen)?.OpenDetail(0); yield return Frames(2); yield return Shot("14_pet_detail"); _app.Overlay.Close(); yield return Frames(1);
+
+            // 20 던전 · 21 던전 세부 · 22 PvP · 23 아레나 입장 · 24 도전 · 25 순위 보상 · 26 상인 (T43 껍데기 · 한 화면 «events» 의 페이지 4 + 팝업 3)
+            EventsScreen.Open(_app, EventsScreen.PageDungeon); yield return Frames(3); yield return Shot("20_dungeon");
+            var ev = _app.GetScreen<EventsScreen>(); var evRoot = _app.Current.Root;
+            if (Press(UiKit.Find(evRoot, "Card:hell"), "EnterBtn")) { yield return Frames(2); yield return Shot("21_dungeon_detail"); _app.Overlay.Close(); yield return Frames(1); } else _missing.Add("21_dungeon_detail (던전 카드 입장 버튼 없음)");
+            ev.ShowPage(EventsScreen.PagePvp); yield return Frames(2); yield return Shot("22_arena");
+            ev.ShowPage(EventsScreen.PageArena); yield return Frames(3); yield return Shot("23_arena_enter");
+            if (Press(evRoot, "ChallengeBtn")) { yield return Frames(2); yield return Shot("24_arena_challenge"); _app.Overlay.Close(); yield return Frames(1); } else _missing.Add("24_arena_challenge (도전 버튼 없음)");
+            if (Press(evRoot, "RewardsBtn")) { yield return Frames(2); yield return Shot("25_arena_rank_reward"); _app.Overlay.Close(); yield return Frames(1); } else _missing.Add("25_arena_rank_reward (보상 버튼 없음)");
+            ev.ShowPage(EventsScreen.PageMerchant); yield return Frames(3); yield return Shot("26_arena_shop");
+            _app.ShowScreen("lobby"); yield return Frames(1);
 
             // 06 장비(전부 장착 + 인벤 10) · 07 세부 · 08 대장간 · 09 상점
             GearItem firstFree = null;
@@ -117,8 +130,8 @@ namespace KkomaKnight.Tests.Play
             _app.Overlay.PerkBook(G, null); yield return Frames(2); yield return Shot("05_perks_list"); _app.Overlay.Close(); yield return Frames(1);
             Time.timeScale = 1f; _app.ShowScreen("lobby"); yield return Frames(2);
 
-            foreach (var n in new[] { "11_shop_special", "15_quest", "16_attendance", "17_daily_gift", "18_challenge7", "19_pass", "20_dungeon", "21_dungeon_detail", "22_arena", "23_arena_enter", "24_arena_challenge", "25_arena_rank", "26_arena_shop" })
-                _missing.Add(n + " (화면 없음 · T43~T44)");
+            foreach (var n in new[] { "11_shop_special", "15_quest", "16_attendance", "17_daily_gift", "18_challenge7", "19_pass" })
+                _missing.Add(n + " (화면 없음 · T44)");
             PlayShot.WriteLayout(_layout, _missing);
             Assert.Greater(_saved, 0, "PNG 가 하나도 안 남았다(RenderTexture 캡처 실패)");
             Assert.IsTrue(_layout.ContainsKey("01_lobby") && ((Dictionary<string, object>)_layout["01_lobby"]).Count > 0, "로비 이름표(UiTag)가 layout.json 에 있어야 한다");

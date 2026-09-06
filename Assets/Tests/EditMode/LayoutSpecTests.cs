@@ -33,7 +33,7 @@ namespace KkomaKnight.Tests
             foreach (var raw in File.ReadAllLines(SpecPath()))
             {
                 var line = raw.Trim();
-                var h = Regex.Match(line, @"^## ([①②③④⑤⑥⑦⑧⑨⑩⑪])");
+                var h = Regex.Match(line, @"^## ([①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱])");
                 if (h.Success) { sec = h.Groups[1].Value; res[sec] = new Dictionary<string, float?[]>(); continue; }
                 if (line.StartsWith("## ")) { sec = null; continue; }   // 정정 절 이하는 표가 아니다
                 if (sec == null || !line.StartsWith("|")) continue;
@@ -158,6 +158,34 @@ namespace KkomaKnight.Tests
             Same(s, "⑪", "팝업 박스", Layout.PdBox); Same(s, "⑪", "펫 칸(세부)", Layout.PdCell); Same(s, "⑪", "진행바(세부)", Layout.PdBar); Same(s, "⑪", "설명 박스", Layout.PdDesc);
             Same(s, "⑪", "패시브 제목", Layout.PdPassiveTitle); Same(s, "⑪", "패시브 수치 줄", Layout.PdPassive); Same(s, "⑪", "강화 버튼", Layout.PdBtnL); Same(s, "⑪", "장착 버튼", Layout.PdBtnR);
             SameV(s, "⑪", "닫기 안내", 1, Layout.BookClose.Y - 1.1f);   // 표 90.4 = 공통 «탭하여 닫기» 줄(BookClose 91.5) 과 1.1 차 · 팝업은 BookClose 줄을 그대로 쓴다(±3%p 안)
+        }
+        [Test]
+        public void Section12to18_DungeonArenaShellsMatchTables()
+        {
+            // ⑫~⑱ 던전·아레나 껍데기(T43) — 표 행 ↔ Layout 상수(워커 실측 · 화면 코드는 이 상수만 쓴다)
+            var s = Parse();
+            Same(s, "⑫", "상단 바", Layout.LobbyTopBar); Same(s, "⑫", "제목(Dungeons)", Layout.DgTitle); Same(s, "⑫", "제목 밑줄", Layout.DgTitleLine); Same(s, "⑫", "부제", Layout.DgSub);
+            Same(s, "⑫", "던전 카드 1", Layout.DgCard1); Same(s, "⑫", "카드 제목 띠", Layout.DgCardHead); Same(s, "⑫", "카드 그림", Layout.DgCardPic); Same(s, "⑫", "입장 버튼", Layout.DgEnter);
+            Same(s, "⑫", "보상 아이콘 줄", Layout.DgRewards); Same(s, "⑫", "던전 카드 2", Layout.DgCard2); Same(s, "⑫", "준비 중 카드", Layout.DgSoon);
+            Same(s, "⑫", "하단 바", Layout.DgFoot); Same(s, "⑫", "뒤로 버튼", Layout.DgBack); Same(s, "⑫", "던전/PvP 탭(2칸)", Layout.DgTabs);
+            Assert.That(Layout.DgCard2.Y - Layout.DgCard1.Y, Is.EqualTo(Layout.DgCardPitch).Within(0.05f));
+            Same(s, "⑬", "팝업 박스", Layout.DdBox); Same(s, "⑬", "제목 띠", Layout.DdHead); Same(s, "⑬", "그림 띠", Layout.DdPic); Same(s, "⑬", "조건 문구", Layout.DdNote);
+            Same(s, "⑬", "층수 화살표", Layout.DdArrow); Same(s, "⑬", "층수 원", Layout.DdFloor); Same(s, "⑬", "보상 박스", Layout.DdRewards); Same(s, "⑬", "보상 칸(4개)", Layout.DdRewardCells);
+            Same(s, "⑬", "티켓 줄", Layout.DdTicket); Same(s, "⑬", "버튼 2개", Layout.DdBtns);
+            Same(s, "⑭", "상단 바", Layout.LobbyTopBar); Same(s, "⑭", "제목(PvP)", Layout.ArTitle); Same(s, "⑭", "제목 밑줄", Layout.DgTitleLine); Same(s, "⑭", "부제", Layout.ArSub);
+            Same(s, "⑭", "아레나 카드", Layout.ArCard); Same(s, "⑭", "카드 제목 띠", Layout.ArCardHead); Same(s, "⑭", "카드 그림", Layout.ArCardPic); Same(s, "⑭", "시즌 타이머", Layout.ArSeason);
+            Same(s, "⑭", "입장 버튼", Layout.ArEnter); Same(s, "⑭", "티어 줄", Layout.ArTier); Same(s, "⑭", "준비 중 카드", Layout.ArSoon);
+            Same(s, "⑭", "하단 바", Layout.DgFoot); Same(s, "⑭", "뒤로 버튼", Layout.DgBack); Same(s, "⑭", "던전/PvP 탭(2칸)", Layout.DgTabs);
+            Same(s, "⑮", "상단 바", Layout.LobbyTopBar); Same(s, "⑮", "시상대 무대", Layout.AeStage); Same(s, "⑮", "티어 제목", Layout.AeTier); Same(s, "⑮", "시즌 타이머", Layout.AeSeason);
+            Same(s, "⑮", "우측 아이콘 열(2개)", Layout.AeSideIcons); Same(s, "⑮", "시상대 초상(3개)", Layout.AePortraits); Same(s, "⑮", "1위 초상", Layout.AePortrait1); Same(s, "⑮", "시상대 배너(3개)", Layout.AeBanners);
+            Same(s, "⑮", "순위 목록", Layout.AeList); Same(s, "⑮", "순위 줄(1칸)", Layout.AeRow); Same(s, "⑮", "승급 안내", Layout.AePromo);
+            Same(s, "⑮", "하단 바", Layout.DgFoot); Same(s, "⑮", "뒤로 버튼", Layout.DgBack); Same(s, "⑮", "도전 버튼", Layout.AeChallenge);
+            Same(s, "⑯", "팝업 박스", Layout.AcBox); Same(s, "⑯", "제목 띠", Layout.AcHead); Same(s, "⑯", "티켓·전투력 줄", Layout.AcInfoRow); Same(s, "⑯", "상대 목록(5줄)", Layout.AcList);
+            Same(s, "⑯", "상대 줄(1칸)", Layout.AcRow); Same(s, "⑯", "줄 도전 버튼", Layout.AcRowBtn); Same(s, "⑯", "무료 새로고침 버튼", Layout.AcRefresh);
+            Same(s, "⑰", "팝업 박스", Layout.RrBox); Same(s, "⑰", "제목 띠", Layout.RrHead); Same(s, "⑰", "티어 띠", Layout.RrTiers); Same(s, "⑰", "리셋 타이머", Layout.RrTimer);
+            Same(s, "⑰", "안내 문구", Layout.RrNote); Same(s, "⑰", "보상 목록(4줄)", Layout.RrList); Same(s, "⑰", "보상 줄(1칸)", Layout.RrRow); Same(s, "⑰", "하단 탭(2개)", Layout.RrTabs);
+            Same(s, "⑱", "상단 바", Layout.LobbyTopBar); Same(s, "⑱", "상인 배너", Layout.MeBanner); Same(s, "⑱", "제목(Merchant)", Layout.MeTitle); Same(s, "⑱", "시즌 타이머", Layout.MeSeason);
+            Same(s, "⑱", "상품 격자", Layout.MeGrid); Same(s, "⑱", "상품 카드(1칸)", Layout.MeCard); Same(s, "⑱", "하단 바", Layout.DgFoot); Same(s, "⑱", "뒤로 버튼", Layout.DgBack);
         }
         [Test]
         public void Common_TopBarAndTabBarSharedAcrossTabs()
