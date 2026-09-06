@@ -262,7 +262,7 @@
 1. 주인 «장비 부분에서 상점·합성, 공격력·체력·실드 표시하는 곳 밑에 표시되게». 지금 자리(화면 아래·탭바 위)에서 **스탯 3칸 줄 바로 아래**로 옮긴다. 프리팹(Character_Hero_Equipment)에 그 자리 버튼 줄이 있으면 그것을 쓰고, 없으면 `ui.btnGray`(상점)·`ui.btnOrange`(합성 N) 2개를 스탯 줄 밑에 같은 폭으로 나란히. 인벤 격자는 그 아래부터 시작(높이 줄어든 만큼 스크롤).
 2. 게이트 + PROGRESS T25 행.
 
-### T26 — 뽑기 확률 검증 (주인 «확률에 안 맞게 뽑히는 것 같다»)
+### T26 — 뽑기 확률 검증 (주인 «확률에 안 맞게 뽑히는 것 같다») ✅ (완료 · `9781557` · 어긋난 곳 없음 — 테스트 +6 만 · CI #49 · PROGRESS 참조)
 범위: `Assets/Scripts/Core/GearSystem.cs`(뽑기 · 천장) · `Assets/Tests/EditMode/GearTests.cs`(통계 테스트 추가) · `Assets/Scripts/Game/ShopScreen.cs`(표시 문구가 실제 확률과 같은지)
 순서: 제약 없음.
 1. 먼저 **원본**을 읽는다: aaaw `index.html` 의 뽑기(`pull`/`rollRar`/천장 `pity`)와 `data/gacha.json` 의 상자별 등급 확률·천장. 우리 `GearSystem` 의 굴림이 원본과 **같은 순서·같은 난수 소비**인지 줄 단위로 대조.
