@@ -424,6 +424,14 @@ namespace KkomaKnight.Game
         public const float GradientTopAlpha = 0.12f, GradientBottomAlpha = 0.18f;
         /// <summary>공통 팝업 상자 안 패턴을 들여 까는 여백(px) — Popup_Box_01~03_White_Bg 의 둥근 모서리 반지름 실측 8px + Bg 자신의 여백 2px(결정 164).</summary>
         public const float PopupPatternInset = 10f;
+        /// <summary>
+        /// 공통 팝업 제목 리본 크기(px · T75 4항) — 조각 원본은 656×115 인데 그 안 글자 칸이 <c>sizeDelta(−220, −35.5642)</c> 로 들여져 있어 실제 칸이 <b>436×79.4px</b> 였다.
+        /// 제목 하한 60 의 한 줄은 <see cref="TextSize.BoxHeight(int, int)"/> = 60×1.4 = <b>84px</b> 라 칸이 4.6px 낮았고, 그래서 모든 팝업 제목이 말없이 <b>56</b> 으로 줄어 그려졌다
+        /// (게이트의 «잘림» 판정에는 안 걸리는 쪽 · T63-toast 실측 · 지시서 T75 4항).
+        /// 세로를 <b>130</b> 으로 올리면 칸이 94.4px ≥ 84px 이 되어 60 이 그대로 그려진다 — 프레임 높이(2337)로 5.56%(종전 4.92% · ref-layout 표의 리본 행 4.0~4.9% 대비 ±3%p 안).
+        /// 가로(656 → 안쪽 436px)는 그대로다: 60 짜리 한글은 한 자 ≈ 60px 라 긴 제목은 <b>폭</b> 때문에 여전히 줄어드는데, 그것은 팝업마다 리본 폭을 넓히는 일이라 §5 비평 회차가 필요하다(T75 행에 남겼다).
+        /// </summary>
+        public static readonly Vector2 PopupRibbonSize = new Vector2(656f, 130f);
 
         /// <summary>
         /// ① 배경 패턴(T72) — <paramref name="host"/> 에 RawImage «Pattern»(Stretch · 텍스처 = ui.pattern · Repeat 타일링 · uvRect 크기 = 사각형 ÷ <paramref name="tilePx"/> · raycast 끔) 을 <paramref name="siblingIndex"/> 자리(기본 0 = host 자신의 배경 Image 바로 위 · 배경이 자식이면 그 다음 index)에 깔고,
@@ -579,7 +587,7 @@ namespace KkomaKnight.Game
             // 여기 한 곳이라 공통 팝업 전부가 같이 받는다(버튼 공통 적용은 결정 170 대로 계속 보류 · 결정 188).
             Gradient(box, inset: PopupPatternInset, siblingIndex: patIdx);
             var ribbon = Spawn(titleKey, box); var rr = (RectTransform)ribbon.transform;
-            rr.anchorMin = rr.anchorMax = new Vector2(0.5f, 1f); rr.pivot = new Vector2(0.5f, 0.5f); rr.sizeDelta = new Vector2(656, 115); rr.anchoredPosition = new Vector2(0, 8);
+            rr.anchorMin = rr.anchorMax = new Vector2(0.5f, 1f); rr.pivot = new Vector2(0.5f, 0.5f); rr.sizeDelta = PopupRibbonSize; rr.anchoredPosition = new Vector2(0, 8);
             var tt = SetText(rr, "Text (TMP)", title, null, TextSize.Title, TextKind.Title); if (tt != null) { tt.resizeTextForBestFit = true; tt.resizeTextMinSize = TextSize.BestFitMin; tt.resizeTextMaxSize = TextSize.Title; }
             parts.Box = box; parts.Ribbon = rr; parts.Title = tt;
             if (onTapClose != null)

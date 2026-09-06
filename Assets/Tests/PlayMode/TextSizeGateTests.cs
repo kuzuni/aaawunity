@@ -215,8 +215,9 @@ namespace KkomaKnight.Tests.Play
                 // 그 반대로 «팝업 층만 본다» 는 흰 목록이라 뒤에 어떤 화면이 깔려도 안전하다).
                 if (!r.Path.Contains("/Overlay/")) continue;
                 Assert.AreEqual(TextGlyphs.Safe(r.Text), r.Text, "글꼴에 없는 글자(«·» 등)가 그대로 남아 폭 0 으로 사라진다: " + r);
-                // 제목 리본(ui.title.*)·«탭하여 닫기» 는 UiKit.Popup 이 모든 팝업에 공통으로 다는 조각이라 이 행의 몫이 아니다 — 리본 글자 칸(656×115 의 안쪽 436×79.4)이
-                // 제목 60 의 줄(84px)보다 낮아 bestFit 이 56 으로 줄이는 것은 전 팝업 공통 결함이고 T75 로 등재했다(ClipStrict 를 켜기 전에 고쳐야 한다).
+                // 제목 리본(ui.title.*)·«탭하여 닫기» 는 UiKit.Popup 이 모든 팝업에 공통으로 다는 조각이라 «그 화면의» 몫이 아니다 —
+                // 대신 T75 4항이 리본 세로를 130 으로 올려 글자 칸이 94.4px ≥ 84px(제목 60 의 한 줄)이 되게 했고, 그 «높이» 는 아래에서 전 팝업 공통으로 단언한다.
+                // 폭(안쪽 436px)은 그대로라 긴 제목은 여전히 폭 때문에 줄어들 수 있다(팝업마다 리본 폭을 넓히는 일 = §5 비평 회차 · T75 행).
                 if (r.Path.Contains("ui.title.") || r.Path.Contains("TapToClose")) continue;
                 Assert.IsFalse(r.Clipped, "«데이터 삭제» 확인 팝업 글자가 칸을 넘친다: " + r);
                 // 하한은 그 글자의 «종류» 로 잰다(본문 40 · 버튼 44 · 보조 36 · 제목 60)
@@ -236,6 +237,19 @@ namespace KkomaKnight.Tests.Play
             if (TextAudit.OutlineStrict) Assert.AreEqual(0, noOutline.Count, "검은 아웃라인이 없거나 어긋난 글자(T63-outline · 주인 «모든 글자들 다 검정 아웃라인»):\n" + string.Join("\n", noOutline));
             // T111 ⓐ — 챕터 제목 아래 밑줄(LineDeco)은 로비·전투 둘 다 꺼져 있어야 한다(주인 2026-09-07) · 상점 섹션 헤더의 선은 살아 있어야 한다(T100 ⓒ 회귀)
             if (TextAudit.ColorStrict) Assert.AreEqual(0, darkText.Count, "검정·짙은 글자(T111 ⓑ · 주인 «검정 글씨 → 흰 글씨»):\n" + string.Join("\n", darkText));
+            // T75 4항 — 공통 팝업 제목 리본의 글자 칸 «높이» 는 제목 60 의 한 줄(84px)을 담아야 한다(리본 130 → 안쪽 94.4px).
+            // 높이가 다시 낮아지면(리본을 줄이거나 조각을 바꾸면) 모든 팝업 제목이 말없이 56 으로 줄어들므로 여기서 못 박는다.
+            {
+                int ribbons = 0;
+                foreach (var r in _rows)
+                {
+                    if (r.Path.IndexOf("ui.title.", System.StringComparison.Ordinal) < 0 || r.Kind != TextKind.Title) continue;
+                    ribbons++;
+                    Assert.GreaterOrEqual(r.RectH, TextSize.BoxHeight(TextSize.Title) - 1f,
+                        "팝업 제목 리본의 글자 칸 높이가 제목 60 의 한 줄(84px)보다 낮다 — bestFit 이 말없이 줄인다(T75 4항 · UiKit.PopupRibbonSize): " + r);
+                }
+                Assert.Greater(ribbons, 0, "표를 모은 화면 중에 공통 팝업 제목 리본이 하나는 있어야 한다(단언이 헛돌지 않게)");
+            }
             _log.AssertNoRed("글자 크기 게이트(전 화면)");
             yield return Shutdown();
         }
