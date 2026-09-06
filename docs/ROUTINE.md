@@ -547,7 +547,7 @@
 2. 수정: `printf … > ui-screens/meta.json` 앞에 `sudo chown -R "$(id -u):$(id -g)" ui-screens`(GitHub 호스트 러너는 sudo 무비밀번호). peaceiris 배포는 그 폴더를 그대로 읽는다.
 3. 확인 수단 = 코드 커밋의 CI 런: unity-test 잡 초록 + «screens 브랜치로 배포» 단계 초록 → `git fetch origin screens` 가 된다(첫 PNG·layout.json·meta.json). 그러면 T47·T36~T44 비평 회차 시작.
 
-### T58 — UI 비평 하니스 PNG 촬영 결함: UI 프레임이 PNG 가운데 188×404(34.8%) 띠로만 · 월드 스프라이트가 UI 위에 겹침 (첫 `screens` 배포 CI #83 · 26장 전부 · T46 뒤 · 같은 PlayShot.cs) — **코드 push `0a036a3`(워커 G · 원인 = CopyFrom 이 WorldCam letterbox rect 복사 · 확인 = 그 CI → 새 screens PNG · PROGRESS T58 진행 기록)
+### T58 — UI 비평 하니스 PNG 촬영 결함: UI 프레임이 PNG 가운데 188×404(34.8%) 띠로만 · 월드 스프라이트가 UI 위에 겹침 (첫 `screens` 배포 CI #83 · 26장 전부 · T46 뒤 · 같은 PlayShot.cs) ✅ (완료 · 코드 `0a036a3` · 원인 = CopyFrom 이 WorldCam letterbox rect 복사 · 확인 = CI #87 로그 fill 0.999 + CI #88 screens run 88 PNG 전체 화면 · PROGRESS T58 진행 기록)
 범위: `Assets/Tests/PlayMode/PlayShot.cs`(`Save`) · (필요 시) `UiShotsTests.cs` 단언 1개 · 코드(게임)·layout.json 계약 불변
 순서: **T46 뒤**(T46 lock 이 사라지고 PROGRESS T46 이 ✅ 된 뒤) — T46 워커 C 가 T46 안에서 고쳐도 된다(그러면 이 번호는 «T46 에 흡수» 로 닫는다).
 1. 증상(sess-0958-19455 · 워커 H 가 `git show origin/screens:01_lobby.png` 등을 `Read`): 540×1168 PNG 에서 UI 프레임(9:19.5)이 **가운데 x176~363 · y383~786(188×404 px = 프레임 폭의 34.8%)** 에만 그려지고, 나머지는 월드 카메라 그림(로비 = 하늘색 배경색 · 전투 = 주황 들판) · 전투 계열(02~05)은 나무·캐릭터 스프라이트가 UI **위에** 확대돼 겹친다. `layout.json` 은 `UiTag.Measure(app.Frame)` 의 프레임 % 라 정상(T36 회차 1 이 표 점수 10.0 으로 확인) — 눈 비평만 막힌다(임시 = `tools/png_crop.py --strip`).
