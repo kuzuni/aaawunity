@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-06 · 12:2X UTC) ⚑⚑ 주인 지시 — ① 번개 이펙트는 인터넷에서 에셋 받아서(T70) ② 장비 무대 길에 `Road_up_DeepForest` 류 물결 경계 · 전투 맵 길 아래쪽 `Road_up_*` 는 y축 반전 · 나무·소품이 아래에만 몰림 → 위·아래 골고루(T71) ③ `Pattern_01_256` 배경 패턴을 거의 모든 UI 에(로비는 오른쪽 위로 천천히 흐름 · 특별 상품도) · 상점 아이템·특별 상품 아이콘 뒤 `Effect_Light_01_512` 천천히 시계방향 회전 · 레퍼런스처럼 그라데이션 색감(T72).** → T70·T71·T72 등재(§2 · T72 는 UiKit 헬퍼 먼저 · 화면 적용은 T63/T69 묶음과 같은 워커).
+
 - **(2026-09-06 · 12:0X UTC) ⚑⚑ 주인 지시 — UI 전체적으로 행·카드·칸마다 GUI Pro `BasicFrame_Rectangle_01~04_White_Border3` 같은 Border 스프라이트를 넣어 «검은 아웃라인» 느낌으로. 던전 행도 마찬가지. **추가(12:1X)**: 아이템류 칸은 전부 장비 화면의 그 프레임(`ui.itemFrame.<등급>` · ItemFrame_01)으로 통일 · 던전 보상 칸도 그 프레임 · HP·실드 바(HUD 3개 + 발밑 2단)도 Border.** → **T69** 등재(§2 · UiKit.Bordered 공통 헬퍼 + 카탈로그 키 먼저 · 화면 묶음은 T63 하위 lock 과 같이 · 루틴이 잡는다).
 
 - **(2026-09-06 · 11:5X UTC) ⚑⚑ 주인 지시 — 로비: ① 아이콘들 너무 작음 ② 상단 주인공 초상이 계속 움직임(정지) ③ 배경 Deco 별로(제거) ④ 챕터 카드는 예전 프리팹 `SampleImage_Map` 그림이 좋았음(코드 조립 카드 폐기). 웹·폰 모두 «이제 잘 된다»(T59 종결).** → **T68** 등재(§2 · T63 로비 묶음과 함께 · 루틴이 잡는다).
@@ -666,6 +668,34 @@
 8. **HP·실드 바 테두리(주인 추가 12:1X)**: 전투 HUD 의 EXP·HP·실드 세 바(UI · BattleScreen) 와 **발밑 2단 바(플레이어·적 · SpriteRenderer · BattleWorld `MakeBar` 339행)** 전부 어두운 Border — UI 바는 `UiKit.Bordered` · 월드 바는 같은 스프라이트(`fr.rectBorder2/3`)를 **SpriteRenderer `drawMode = Sliced`** 로 바 위에 한 장(sortingOrder = fill + 1 · 바 폭 = 캐릭터 폭 그대로 · 표 ② «발밑 바 폭» 이름표 불변). 바 안 «현재/최대» 숫자는 T63 하한.
 9. **테스트 추가**: 7 = 모든 «물건» 칸 이름표 아래에 `ItemFrame_01` 자식 존재(등급색 키 `ui.itemFrame.*`) · 던전 20·21 보상 칸 포함 · 8 = HUD 바 3개와 발밑 바에 «Border» 존재.
 6. 게이트 + assets-map(스프라이트 키 4~5줄) + PROGRESS T69 행(+ 화면 묶음 하위 행) + 완료 기록(확인 = CI PlayMode + screens PNG 를 `Read` 로 «아웃라인 보이나» + 배포 스모크 + 주인 폰).
+
+### T70 — 번개 특전 이펙트 = 인터넷에서 받은 «진짜 번개» 에셋(CC0 · T28 오디오 방식) (주인 2026-09-06 · 제약 없음)
+범위: `Assets/KkomaKnight/Fx/Lightning/`(새 스프라이트 시트 또는 파티클 · .meta 는 `gen_meta.py`) · `Assets/KkomaKnight/catalog.json`(`fx.bolt` 교체 또는 `fx.lightning` 신설 · 노트) · `Assets/Scripts/Game/BattleWorld.cs`(633행 `EvKind.Bolt` · «보이는 적 전부에게 번개» 는 적마다 하나씩) · `Fx.cs`(스프라이트 시트 애니 재생 헬퍼가 없으면 추가) · `docs/assets-map.md`(출처·라이선스 URL) · `LICENSES/`(라이선스 원문)
+주인 원문(2026-09-06 · 12:2X UTC): «번개 이펙트 뭐 인터넷에서 에셋 다운받아서 되게 해줘».
+지금: `fx.bolt` = CFXR3 Hit Electric C(Air) — «전기 튀김» 이지 하늘에서 내리꽂는 번개가 아니다.
+1. **에셋 확보**(T28 과 같은 규칙 · 주인 허가 있음): CC0/OFL 급 라이선스의 2D 번개 스프라이트 시트(하늘→땅 수직 볼트 · 6~12 프레임 · 세로 긴 PNG) 를 GitHub 미러/OpenGameArt/Kenney 류에서 `curl` 로 받는다 · 합계 ≤ 1MB · PNG 는 **이 예외(주인 지시)** 로 커밋 허용(§1 «캡처 PNG 금지» 와 다름 · 에셋임) · 출처·라이선스를 assets-map + LICENSES 에 남긴다. 후보가 여럿이면 «굵은 흰-노랑 볼트 + 가지» 형태를 고른다(카툰 · 레퍼런스 03 전투 느낌).
+2. **연출**: 적 머리 위 화면 상단(HUD 아래)에서 적 발밑까지 볼트가 한 번 내리꽂힘(0.25~0.35s · 프레임 애니) + 맞는 순간 기존 `fx.bolt`(전기 튀김) 작게 + 화면 흔들림 없이 + `snd.bolt`(있으면). «보이는 적 전부 번개 1회씩» 은 적마다 볼트 하나(짧은 시차 0.05s · T49 stagger 감각). 정렬 = 적 리그 앞(sortingOrder +1) · 크기 = 적 키의 1.5~2배.
+3. **구현**: 파티클이면 CFXR 처럼 `Fx.Spawn` · 스프라이트 시트면 `Fx.PlaySheet(key, frames, fps, pos, scale)` 헬퍼(SpriteRenderer + 코루틴/DOTween · 끝나면 파괴 · 콘솔 경고 0). WebGL 스트리핑·압축 확인(T60 스모크).
+4. 테스트: PlayMode — Bolt 이벤트 후 «Lightning» 오브젝트 생성·소멸 · `LogAssert.NoUnexpectedReceived`. 게이트 + PROGRESS T70 행.
+
+### T71 — 전투 맵 3건 + 장비 무대 도로(주인 2026-09-06 · T19 «데모 씬 그대로» 일부 뒤집음): ① 길 아래쪽 `Road_up_*` 물결 경계는 **y축 반전** ② 나무·소품을 위·아래 **골고루** ③ 장비 화면 무대에 `Road_up_DeepForest` 류 물결 경계 넣기 (T19·T37 뒤 · 제약 없음)
+범위: `Assets/Scripts/Game/BattleWorld.cs`(`BuildProps` 254~275행 · `AddProp` 의 flip · 소품 표 `MapLayouts`) · `MapLayouts.cs`(테마 4종 소품 표 — 위쪽 분포 보강) · `Assets/Scripts/Game/GearScreen.cs`(46~52행 무대 · `StageRoad` 24행) · `Assets/KkomaKnight/catalog.json`(env.*.roadUp 은 있음) · `Assets/Tests/PlayMode/MapThemeTests.cs`(T19 단언 갱신)·`UiSmokeTests`(장비 무대)
+주인 원문(2026-09-06 · 12:2X UTC): «장비 부분에 Road 부분이 Road_up_DeepForest 이런 게 들어가야 함» · «전투씬에 보니까 Road_up_DeepForest 이런 것들 아래에 있는 것들은 y축 반전시켜야 함» · «전투씬 보니까 아래에는 나무는 존나 많고 위 부분에는 나무 같은 게 존나 적더라. 좀 골고루 있게».
+1. **물결 경계 반전**: 길 띠의 **위 가장자리** 물결(`env.<theme>.roadUp`)은 그대로, **아래 가장자리**(길보다 y 가 낮은 것)는 `SpriteRenderer.flipY = true`(또는 scale.y −1) 로 뒤집어 물결이 길 바깥을 향하게. T19 의 «씬에는 세로 반전이 없다» 판단은 주인 지시로 대체 — `MapThemeTests` 의 해당 단언(데모 구성 그대로)을 «아래 경계 = flipY» 로 바꾼다. 4 테마 전부.
+2. **소품 골고루**: 지금 소품 표(`MapLayouts.Of`)는 데모 씬 그대로라 길 아래(화면 아래)에 나무가 몰리고 위쪽(길 위 · HUD 아래 띠)은 비었다 → 길 **위쪽 영역에도 아래와 비슷한 밀도**로 나무·덤불·돌을 둔다. 방법 = 각 테마 표에 «위쪽 행» 을 데모 소품(같은 스프라이트·같은 크기)으로 **미러 배치**(아래 소품의 y 를 길 중심 기준으로 대칭 + x 는 반주기 어긋나게 · 겹침 없이) · `BuildProps` 의 `yf < -0.15` 컷은 HUD 패널 뒤만 남기고 위쪽 띠는 살린다 · 정렬(order)은 기존 식 그대로(길 위 소품은 캐릭터 뒤). 밀도 목표: 위/아래 나무 수 비 0.8~1.2.
+3. **장비 무대 도로**: `GearScreen` 무대의 길 띠(`env.road` · StageRoad 0/58/100/24)에 **위 가장자리 `env.deepForest.roadUp`(테마 = 현재 장비 무대 테마 · 지금 forest 면 forest 것) + 아래 가장자리 같은 스프라이트 flipY** 를 붙여 전투 맵과 같은 물결 경계로. `preserveAspect=false` 가로 늘림 · RectMask2D 안. 이름 «RoadUp»/«RoadDown»(테스트).
+4. 테스트: `MapThemeTests` — 아래 경계 flipY · 위/아래 나무 수 비 0.8~1.2 · 겹침 없음 · `UiSmokeTests` 장비 무대에 RoadUp/RoadDown 존재. 게이트 + PROGRESS T71 행 + 완료 기록(확인 = CI PlayMode + screens 02/06 PNG `Read` + 배포 스모크).
+
+### T72 — ⚑⚑ UI «질감» 3종을 레퍼런스처럼 전 화면에: ① 배경 패턴 `Pattern_01_256`(천천히 오른쪽 위로 흐름) ② 아이콘 뒤 `Effect_Light_01_512` 빛살(천천히 시계방향 회전) ③ 그라데이션 색감(GUI Pro Gradient 스프라이트) (주인 2026-09-06 · T63·T69 화면 묶음과 같은 워커가 같이)
+범위: `Assets/Scripts/Game/UiKit.cs`(**공통 헬퍼 3개** `UiKit.PatternBg(rt, tint, speed)` · `UiKit.LightBehind(rt, key, rpm)` · `UiKit.Gradient(rt, key, top, bottom)`) · `Assets/KkomaKnight/catalog.json`(`ui.pattern` = `Shared/Sprite_Common/~Demo/Demo_Image/Pattern_01_256.png` · `ui.light1/2` = `Effect_Light_01/02_512.png` · `ui.glowCircle1/2` · `ui.gradTop1/2`·`ui.gradBottom` = `Gradient_Top_01/02·Gradient_Bottom.png` · `fr.gradient1/2` = `BasicFrame_Gradient_01/02_White.png` · `ui.btnGradient` = `Button_03_White_Gradient.png` · `fr.cardGradient3` = `CardFrame_03_White_Gradient.png`) · **`Pattern_01_256.png.meta`**(wrapU/V = Repeat · 타일링용) · 화면 코드 전부 · `docs/assets-map.md` · `docs/ref/README.md`(«공통 문법» 에 3종 추가) · `Assets/Tests/PlayMode`
+순서: 헬퍼 + 카탈로그 + .meta 는 **맨 먼저 한 커밋**. 화면 적용은 T63/T69 하위 lock(화면 묶음) 과 같은 워커가 **같이**(한 화면 세 번 만지지 않기).
+주인 원문(2026-09-06 · 12:2X UTC): «Pattern_01_256 이거들이 모든 UI 에 다 있어야 함, 거의. 이미지 레퍼런스에도 다 있음. 예를 들어 로비에는 배경 부분에 이 패턴이 있는데 오른쪽 상단으로 천천히 올라가고 그럼. 특별 상품들도 마찬가지고.» · «상점 아이템, 특별 상품 이런 것들 아이콘 뒤에 Effect_Light_01_512 이런 거 있어야 하고 천천히 오른쪽으로 회전하는 느낌» · «UI 들 보면 그라데이션으로 돼 있는 거 존나 많은데 레퍼런스 보면 그런 거 참고해서 그라데이션으로 된 색감으로».
+1. **패턴 배경**(`PatternBg`): `RawImage`(텍스처 = Pattern_01_256 · wrap Repeat · `uvRect` 를 화면 비례로 타일링) 를 배경 색 Image **바로 위**에 알파 0.08~0.15(레퍼런스 01 의 은은한 무늬 정도 · 워커가 PNG 보고 정함)로 깔고, `uvRect.position` 을 DOTween 으로 **(+x, +y) 방향 = 오른쪽 위**로 아주 천천히(한 타일 지나는 데 20~30s · 무한 · `SetUpdate(true)` · 팝업 시간 정지 중에도 흐름) 움직인다. 적용: 로비 배경 · 장비·대장간·상점·펫·던전·아레나 풀스크린 배경 · 팝업 상자 안 배경(ui.popup 안쪽) · **특별 상품 카드(상점 최상위 상자 큰 카드 · 패키지)** · 승리/패배 팝업 배경. 전투 월드에는 안 깐다(맵이 배경). raycast 끔 · 이름 «Pattern»(테스트).
+2. **아이콘 뒤 빛살**(`LightBehind`): 상점 상품 칸·특별 상품·뽑기 결과·보상 칸(승리/던전/아레나)·펫 세부의 아이콘 **뒤**에 `Effect_Light_01_512`(큰 것) 또는 `_02`(작은 칸) Image 를 아이콘의 1.6~2.2배 크기로 두고 `DORotate(0,0,-360)` 로 **시계방향**(주인 «오른쪽으로») 한 바퀴 12~20s 무한(`RotateMode.FastBeyond360` · `SetUpdate(true)` · 카드 파괴 시 Kill · 콘솔 경고 0). 색 = 흰색 또는 등급색 알파 0.5~0.7. 프레임(ItemFrame · T69 7항) **안쪽**에서만 보이게 RectMask2D. 이름 «Light».
+3. **그라데이션 색감**(`Gradient`): 레퍼런스의 패널·버튼·카드·상단 띠는 위→아래 밝음→어둠 그라데이션 — 코드로 그리지 않고 GUI Pro 그라데이션 스프라이트(`Gradient_Top_01/02` · `Gradient_Bottom` · `BasicFrame_Gradient_01/02_White` · `Button_03_White_Gradient` · `CardFrame_03_White_Gradient`) 를 **tint 해서 덧댄다**(색은 점수 밖이지만 «느낌» 규칙 ⓐ). 적용 우선순위: 주황/파랑/회색 버튼(밝은 위 + 어두운 아래) · 팝업 명판·리본 · 카드 프레임 · 상단 재화 바·탭 바 · 화면 배경(위 밝고 아래 어두운 `Gradient_Top`+`Gradient_Bottom` 두 장). 팔레트: 기존 Palette 색을 기준색으로 위 +12% 밝기 · 아래 −18% (워커가 레퍼런스 PNG 와 나란히 보고 조정 · 결정 기록).
+4. **성능·WebGL**: 회전·스크롤 트윈은 화면당 개수 제한(빛살은 보이는 칸만 · 스크롤 밖 칸은 정지) · `Pattern_01_256` 텍스처 import = Repeat + mipmap off · 폰에서 프레임 저하 없게 T60 스모크에서 10초 FPS 로그 한 줄.
+5. **테스트**: 각 풀스크린 화면·팝업에 «Pattern» RawImage 존재 + uvRect 가 시간에 따라 증가(방향 +x+y) · 상품 칸마다 «Light» 존재 + 회전 각이 감소(시계방향) · 버튼/명판에 Gradient 스프라이트 자식 존재 · Close 뒤 트윈 0 · `LogAssert.NoUnexpectedReceived`.
+6. 게이트 + assets-map(스프라이트 키 8~10줄) + PROGRESS T72 행(+ 화면 묶음 하위 행) + 완료 기록(확인 = CI PlayMode + screens PNG 를 ref 와 나란히 `Read` + 배포 스모크 + 주인 폰).
 
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
