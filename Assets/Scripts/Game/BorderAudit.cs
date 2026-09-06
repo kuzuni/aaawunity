@@ -17,6 +17,7 @@ namespace KkomaKnight.Game
             "02_battle", "01_lobby", "06_gear", "07_gear_detail", "08_gear_fuse", "13_pet", "14_pet_detail", "09_shop_1", "10_shop_2", "12_settings",
             "20_dungeon", "21_dungeon_detail", "22_arena", "23_arena_enter", "24_arena_challenge", "25_arena_rank_reward", "26_arena_shop",   // T69-events(던전·아레나 묶음)
             "04_perks", "05_perks_list", "res_win", "res_lose",   // T69-overlay(특전 카드 · 결과 팝업 묶음)
+            "15_quest", "16_attendance",   // T69-lobbypopups(로비 팝업 묶음 · 11_shop_special 은 T72 특권 워커가 끝낸 뒤에 넣는다)
         };
 
         /// <summary>
@@ -36,6 +37,11 @@ namespace KkomaKnight.Game
             "티켓·전투력 줄",                   // 24 도전 팝업 머리줄 = 어두운 티켓 pill + 맨 «⚔ 전투력»(레퍼런스 24 에 줄 상자가 없고 pill 만 제 상자) (T69-events)
             "상대 목록(5줄)",                   // 24 상대 5줄의 측정용 빈 rect(줄들은 팝업 상자의 형제라 자식이 없다) — 레퍼런스 24 도 5줄을 감싸는 상자가 없고 줄마다 외곽선 (T69-events)
             "보상 목록(4줄)",                   // 25 순위 보상 4줄의 같은 꼴 담개 (T69-events)
+            "트랙 아이콘(1칸)",                 // 15 점수 트랙의 첫 칸 = 메달 하나뿐(레퍼런스 15 «60» 은 맨몸 메달 · 뒤따르는 보상 칸 5개만 상자다) (T69-lobbypopups)
+            "TrackScore",                       // 같은 칸이 «트랙 아이콘 줄(6칸)» 의 조각으로도 세어진다 — 조각 이름으로 한 번 더 뺀다(Track 헬퍼의 첫 칸 전용 이름) (T69-lobbypopups)
+            "새로고침 줄",                      // 15 «⏱ 새로고침까지 --:--:--» = 트랙 상자와 목록 상자 «사이» 의 맨 글자 줄(레퍼런스 15 에 상자 없음 · «티켓 줄»·«티어 줄» 과 같은 꼴 · 글자 칸이 줄 rect 보다 넓어 링을 그리면 글자를 가로지른다) (T69-lobbypopups)
+            "칸 머리(1칸)",                     // 16 하루 칸의 «N일차» 자주색 띠 = 칸 «안» 의 머리 구역(레퍼런스 16 도 칸 하나가 통째로 외곽선이고 머리는 그 위쪽 구역일 뿐 · 칸 자체는 DayFrame 이 Bordered) (T69-lobbypopups)
+            "7일 칸 머리",                      // 16 7일차 넓은 칸의 같은 꼴 (T69-lobbypopups)
         };
 
         /// <summary>«행·카드·칸» 으로 보는 이름표 낱말 — 이 가운데 하나가 이름에 들어가면 대상.</summary>

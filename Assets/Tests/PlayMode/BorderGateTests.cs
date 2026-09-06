@@ -244,8 +244,28 @@ namespace KkomaKnight.Tests.Play
             // 11 특권 · 15~19 로비 팝업
             // T78(주인 2026-09-07) — 18_challenge7 · 19_pass 는 화면째 삭제돼 게이트 대상이 아니다
             _app.ShowScreen("privilege"); yield return Frames(2); yield return Check("11_shop_special"); _app.ShowScreen("lobby"); yield return Frames(1);
-            LobbyPopups.Quest(_app); yield return Check("15_quest"); _app.Overlay.Close(); yield return Frames(1);
-            LobbyPopups.Attendance(_app); yield return Check("16_attendance"); _app.Overlay.Close(); yield return Frames(1);
+            // 15 퀘스트(T69-lobbypopups · strict) — 레퍼런스 15 는 아래 탭 3칸이 각자 어두운 외곽선이다(트랙 첫 메달·새로고침 줄은 상자가 없어 담개 = BorderAudit.Exempt)
+            LobbyPopups.Quest(_app); yield return Check("15_quest");
+            {
+                var qov = _app.Overlay.Root;
+                for (int i = 0; i < 3; i++) AssertUiBarBorder(qov, "Tab:" + i);
+                var qTrack = UiKit.Find(qov, "Track"); Assert.IsNotNull(qTrack, "퀘스트 점수 트랙");
+                Assert.IsNotNull(UiKit.Find(qTrack, "TrackScore"), "트랙 첫 칸은 «TrackScore»(담개 이름 · BorderAudit.Exempt 가 이 이름으로 뺀다)");
+                for (int i = 1; i < Layout.QsTrackCount; i++) AssertItemFrameBorder(UiKit.Find(qTrack, "Track:" + i), "퀘스트 트랙 보상 칸 " + i);
+                var refresh = UiKit.Find(qov, "Refresh"); Assert.IsNotNull(refresh, "새로고침 줄");
+                Assert.IsFalse(UiKit.HasDarkBorder(refresh), "새로고침 줄에는 링을 걸지 않는다(레퍼런스 15 에 상자가 없고 글자 칸이 줄 rect 보다 넓어 링이 글자를 가로지른다 · 담개)");
+            }
+            _app.Overlay.Close(); yield return Frames(1);
+            // 16 출석(T69-lobbypopups · strict) — 레퍼런스 16 은 하루 칸 하나가 통째로 외곽선(머리 띠는 그 안의 구역 = 담개)
+            LobbyPopups.Attendance(_app); yield return Check("16_attendance");
+            {
+                var aov = _app.Overlay.Root;
+                for (int i = 1; i <= 6; i++) { var day = UiKit.Find(aov, "Day:" + i); Assert.IsNotNull(day, "출석 칸 " + i); Assert.IsTrue(UiKit.HasDarkBorder(day), "출석 칸 " + i + " 은 어두운 테두리(DayFrame 의 UiKit.Bordered)"); }
+                var d7 = UiKit.Find(aov, "Day:7"); Assert.IsNotNull(d7, "7일 칸"); Assert.IsTrue(UiKit.HasDarkBorder(d7), "7일 칸은 어두운 테두리");
+                var head1 = UiKit.Find(aov, "Day:1/Head"); Assert.IsNotNull(head1, "1일차 머리 띠");
+                Assert.IsFalse(UiKit.HasDarkBorder(head1), "머리 띠에는 링을 따로 걸지 않는다(레퍼런스 16 · 칸 하나가 통째로 외곽선 · 담개)");
+            }
+            _app.Overlay.Close(); yield return Frames(1);
             LobbyPopups.DailyGift(_app); yield return Check("17_daily_gift"); _app.Overlay.Close(); yield return Frames(1);
 
             // 13 펫 · 14 펫 세부 (T69-pet · strict) — 격자 칸·빈 장착 슬롯·세부 칸 = ItemFrame Border → Ink 8px(7항) · 잠금 슬롯 = 굵은 원형 조각 · 합계 줄은 맨 글자(Exempt) · T72 ①② 는 있음만

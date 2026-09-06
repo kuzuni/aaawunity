@@ -81,7 +81,8 @@ namespace KkomaKnight.Game
             for (int i = 0; i < count; i++)
             {
                 var r = Sh(icon1, i * pitch, 0);
-                if (i == 0) { var c = UiKit.Rect(host, "Score"); UiKit.Pct(c, r.Within(parentR)); var ic = UiKit.Icon(c, "Icon", icons[0]); UiKit.Stretch(ic.rectTransform); cells[i] = c; }
+                // 첫 칸 = 점수 메달 하나(상자 없음) — 레퍼런스 15 도 «60» 메달만 맨몸이라 T69 테두리 담개다(BorderAudit.Exempt «TrackScore»)
+                if (i == 0) { var c = UiKit.Rect(host, "TrackScore"); UiKit.Pct(c, r.Within(parentR)); var ic = UiKit.Icon(c, "Icon", icons[0]); UiKit.Stretch(ic.rectTransform); cells[i] = c; }
                 else cells[i] = Cell(host, parentR, r, i % 2 == 1 ? "green" : "plum", icons[i % icons.Length], null, false, "Track:" + i);
             }
             var numsRow = UiKit.Rect(host, "Nums"); UiKit.Pct(numsRow, numsR.Within(parentR));
@@ -222,6 +223,8 @@ namespace KkomaKnight.Game
             {
                 var t = tabs[i] = UiKit.Button(ov.Root, "ui.btnGray", tabNames[i], () => { }, Sh(Layout.QsTab, i * Layout.QsTabPitch, 0)); t.name = "Tab:" + i;
                 if (i > 0) foreach (var im in t.GetComponentsInChildren<Image>(true)) im.color = Color.Lerp(im.color, Palette.Dim, 0.45f);   // 비활성 탭은 어둡게(첫 탭 «일일» 활성)
+                // T69-lobbypopups — 탭마다 «검은 아웃라인»(레퍼런스 15 도 세 탭이 각자 어두운 외곽선이다) · 어둡게 칠한 «뒤» 에 걸어야 링이 Dim 쪽으로 섞이지 않는다
+                UiKit.Bordered(t);
             }
             // 비평 이름표(표 ⑳)
             if (band != null) UiKit.Tag(band, "제목 리본"); UiKit.Tag(box, "팝업 박스"); UiKit.Tag(trackBox.transform, "점수 트랙 상자"); UiKit.Tag(refresh, "새로고침 줄"); UiKit.Tag(listBox.transform, "목록 상자");
