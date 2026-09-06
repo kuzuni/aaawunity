@@ -177,6 +177,8 @@ namespace KkomaKnight.Tests.Play
                 // 제목 리본(ui.title.*)·«탭하여 닫기» 는 UiKit.Popup 이 모든 팝업에 공통으로 다는 조각이라 이 행의 몫이 아니다 — 리본 글자 칸(656×115 의 안쪽 436×79.4)이
                 // 제목 60 의 줄(84px)보다 낮아 bestFit 이 56 으로 줄이는 것은 전 팝업 공통 결함이고 T75 로 등재했다(ClipStrict 를 켜기 전에 고쳐야 한다).
                 if (r.Path.Contains("ui.title.") || r.Path.Contains("TapToClose")) continue;
+                // 팝업 뒤에 살아 있는 화면(로비 «Screen:lobby» 의 사이드 라벨 = 보조 36 · T63-lobby 몫)은 이 행의 몫이 아니다 — CI #119 «스타터팩 Aux 36 < 40» (T79)
+                if (r.Path.Contains("Screen:")) continue;
                 Assert.IsFalse(r.Clipped, "«데이터 삭제» 확인 팝업 글자가 칸을 넘친다: " + r);
                 Assert.GreaterOrEqual(r.Used, TextSize.Body, "확인 팝업 글자가 본문 하한(40)보다 작게 그려진다: " + r);
             }
