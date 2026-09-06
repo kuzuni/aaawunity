@@ -8,9 +8,12 @@
   · 그런데 이 프로젝트의 WebGL 빌드는 임포터의 `compressionFormat` 을 **반영하지 않는다** — 회차 1(PCM 0)·회차 2(AAC 7)
     둘 다 무시되고 소스 Vorbis 가 그대로 실렸다(`loadType` 만 반영됐다 = 재임포트는 되고 있다).
     FSB 안의 raw Vorbis 는 Ogg 프레이밍이 없어 브라우저가 못 읽는다 → «no supported source» · «Unable to decode audio data».
-  · 그래서 회차 3 은 유니티 오디오 파이프라인을 **우회**한다: `Assets/StreamingAssets/audio/**.ogg` 원본을 런타임에
-    `UnityWebRequestMultimedia` 로 받아(브라우저가 **Ogg 컨테이너째** 디코드한다) 카탈로그 클립 대신 쓴다
-    (`Game/Audio.cs` 의 `AudioManager.LoadStreamed` · WebGL 에서만 돈다).
+  · 그래서 회차 3 은 유니티 오디오 파이프라인을 **우회**했다: `Assets/StreamingAssets/audio/**.ogg` 원본을 런타임에
+    `UnityWebRequestMultimedia` 로 받아 카탈로그 클립 대신 쓴다(`Game/Audio.cs` 의 `AudioManager.LoadStreamed`).
+  · **회차 4 에서 그 경로는 껐다**(결정 217) — 유니티 WebGL 네이티브가 ogg **스트리밍**을 거부해
+    «Streaming of 'ogg' on this platform is not supported» 를 키 20 × 시도 2 = 40건 **빨간 줄**로 찍고(CI #155·#158)
+    받아 온 클립은 0/20 이었다. 즉 소리에는 보탬이 0 인데 배포 게이트만 막았다.
+    원본과 이 게이트는 남겨 둔다 — 브라우저 `decodeAudioData` 를 .jslib 로 직접 부르는 다음 길의 재료다.
 
 이 게이트가 지키는 것: **카탈로그의 `bgm.*`·`snd.*` 키마다 StreamingAssets 원본 파일이 있어야 한다**
 (`Audio.cs` 의 `StreamedFile()` 과 같은 규칙: `bgm.lobby` → `audio/bgm/lobby.ogg` · `snd.click` → `audio/sfx/click.ogg`).
@@ -84,7 +87,7 @@ def main():
         for b in bad:
             print('  - ' + b)
         return 1
-    msg = '✓ check_audio_webgl: 카탈로그 오디오 %d개 전부 StreamingAssets 원본 있음 (T64 · WebGL 은 이 원본을 받아 쓴다)' % len(keys)
+    msg = '✓ check_audio_webgl: 카탈로그 오디오 %d개 전부 StreamingAssets 원본 있음 (T64 · 회차 4 에서 런타임 사용은 껐고 원본만 지킨다)' % len(keys)
     if extra:
         msg += '\n  · 참고(실패는 아님): 카탈로그에 없는 원본 %d개 — %s' % (len(extra), ' · '.join(extra))
     print(msg)

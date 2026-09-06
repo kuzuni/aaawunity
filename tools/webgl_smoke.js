@@ -2,8 +2,14 @@
 // 사용: node tools/webgl_smoke.js <URL> [--battle] [--require-marker] [--strict-audio] [--strict-net] [--no-fps] [--timeout SEC] [--shot out.png] [--log out.txt]
 // 판정(종료 코드 0 = 초록):
 //   ⓐ pageerror · console.error 0 — 유니티 로더의 «Invoking error handler»(RangeError · 예외) · 빨간 Debug.LogError 전부.
-//      단 오디오 매체 에러(NotSupportedError «no supported source» · EncodingError «Unable to decode audio data» · «Loading FSB failed»)는
-//      **T64(WebGL 오디오)** 이 닫힐 때까지 ⚠ 경고로만 센다(--strict-audio 면 에러) — 결정 110(PROGRESS).
+//      단 **오디오 문구는 빨강 사유가 아니다 — 주인 종결 지시(2026-09-07 04:3X «webgl 오디오 잘 들리는데 뭐 자꾸 안 된다 카냐»)**.
+//      «no supported source» · «Unable to decode audio data» · «Loading FSB failed» · «playSoundClip error» ·
+//      «Streaming of 'ogg' on this platform is not supported» 는 `AUDIO⚠` 로 로그에만 남기고 종료 코드에 안 넣는다
+//      (--strict-audio 를 **명시**해야 에러 · 결정 110 → 219). 판정 정본은 주인 실기다 — 주인 폰·데스크톱 Chrome 에서는 소리가 난다.
+//      headless 가 유독 못 읽는 까닭도 실측됐다(결정 218): playwright 의 chromium 은 독점 코덱이 없어
+//      `canPlayType('audio/mp4; codecs="mp4a.40.2"')` · `audio/aac` 에 «no» 를 준다(ogg·mpeg 는 «probably»).
+//      유니티 WebGL 은 MP3·WAV 가 아닌 클립을 전부 audio/mp4 로 넘기므로(framework.js `jsAudioGetMimeTypeFromType`)
+//      이 브라우저에서만 «못 읽는다» 가 난다 — 게임의 결함이 아니라 실행 환경이다(T83 의 «망» 과 같은 갈래).
 //      또 **게임 밖 호스트로 나가는 요청이 «망» 때문에 막힌 것**(프록시·DNS·오프라인 · net::ERR_TUNNEL_CONNECTION_FAILED 류)은
 //      게임 결함이 아니라 실행 환경이라 ⚠ 경고로만 센다(--strict-net 이면 에러) — T83 · 주인 IAP/Unity Services 커밋 뒤
 //      WebGL 이 Unity Analytics(config.uca.cloud.unity3d.com · cdp.cloud.unity3d.com)로 나가는데 워커 컨테이너의 프록시가 그걸 막는다.
@@ -24,7 +30,9 @@ if (!url) { console.error('usage: node tools/webgl_smoke.js <URL> [--battle] [--
 const timeoutSec = parseInt(opt('timeout', '180'), 10);
 const wantBattle = flag('battle'), requireMarker = flag('require-marker'), strictAudio = flag('strict-audio'), strictNet = flag('strict-net');
 const shotPath = opt('shot', ''), logPath = opt('log', '');
-const AUDIO_RE = /no supported source was found|Unable to decode audio data|Loading FSB failed|playSoundClip error/;
+// 오디오 문구(주인 종결 지시 2026-09-07 · 결정 219) — 「Streaming of 'ogg' … not supported」 는 유니티 WebGL 네이티브가
+// UnityWebRequestMultimedia 의 ogg 스트리밍을 거부하며 찍는 줄이라 위 넷과 같은 갈래로 본다.
+const AUDIO_RE = /no supported source was found|Unable to decode audio data|Loading FSB failed|playSoundClip error|Streaming of '[^']*' on this platform is not supported/;
 // 망 때문에 못 간 요청(프록시·DNS·오프라인) — 서버가 준 4xx/5xx 는 여기 없다(그건 아래 response 훅이 에러로 센다)
 const NET_RE = /Failed to load resource: net::(ERR_TUNNEL_CONNECTION_FAILED|ERR_PROXY_CONNECTION_FAILED|ERR_NAME_NOT_RESOLVED|ERR_INTERNET_DISCONNECTED|ERR_CONNECTION_(REFUSED|TIMED_OUT|RESET|CLOSED)|ERR_ADDRESS_UNREACHABLE|ERR_CERT_[A-Z_]+)/;
 const pageOrigin = (() => { try { return new URL(url).origin; } catch (e) { return null; } })();
@@ -128,8 +136,14 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
   const markerOk = readyLobby || !requireMarker;
   const ok = errors.length === 0 && loaded && markerOk && (!wantBattle || readyBattle);
   const netTail = netWarn.length ? ` · 망 경고 ${netWarn.length}(게임 밖 호스트 · T83)` : '';
-  console.log(ok ? `[smoke] ✅ 초록: 콘솔 에러 0 · 로딩 완료 · ${readyLobby ? '로비 도달' : '로비 마커 없음(구 빌드 · ⚠)'}${wantBattle ? ' · 전투 진입' : ''}${audioWarn.length ? ` · 오디오 경고 ${audioWarn.length}(T64)` : ''}${netTail}`
+  console.log(ok ? `[smoke] ✅ 초록: 콘솔 에러 0 · 로딩 완료 · ${readyLobby ? '로비 도달' : '로비 마커 없음(구 빌드 · ⚠)'}${wantBattle ? ' · 전투 진입' : ''}${audioWarn.length ? ` · 오디오 경고 ${audioWarn.length}(판정 밖 · 주인 실기가 정본)` : ''}${netTail}`
                  : `[smoke] ❌ 빨강: errors=${errors.length} loaded=${loaded} readyLobby=${readyLobby}${wantBattle ? ` readyBattle=${readyBattle}` : ''} audioWarn=${audioWarn.length}${netTail}`);
+  // 오디오 경고는 같은 문구가 수십 줄 반복되므로 «문구 ×N» 으로 묶어 찍는다(주인 지시 2026-09-07 · 결정 219).
+  if (audioWarn.length) {
+    const tally = new Map();
+    for (const w of audioWarn) { const k = w.split('\n')[0].slice(0, 160); tally.set(k, (tally.get(k) || 0) + 1); }
+    for (const [k, n] of [...tally.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10)) console.log(`   ⚠ 오디오 ${k} ×${n}`);
+  }
   for (const w of netWarn.slice(0, 10)) console.log('   ⚠ 망 ' + w.slice(0, 200));
   for (const e of errors.slice(0, 20)) console.log('   - ' + e.split('\n').slice(0, 8).join('\n     '));
   process.exit(ok ? 0 : 1);

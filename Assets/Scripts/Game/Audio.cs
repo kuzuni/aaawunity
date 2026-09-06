@@ -79,8 +79,15 @@ namespace KkomaKnight.Game
 
         /// <summary>WebGL 에서 원본 .ogg 로 받아 온 클립(키 → 클립) — 카탈로그 클립보다 우선한다(T64).</summary>
         readonly Dictionary<string, AudioClip> _streamed = new Dictionary<string, AudioClip>();
-        /// <summary>StreamingAssets 의 원본 .ogg 를 받아 쓰는 플랫폼인가 — WebGL 만(T64 · 그 외에는 코드가 도는 일이 없다).</summary>
-        public static bool UseStreamed => Application.platform == RuntimePlatform.WebGLPlayer;
+        /// <summary>
+        /// StreamingAssets 의 원본 .ogg 를 받아 쓰는가 — <b>지금은 어느 플랫폼에서도 안 쓴다</b>(T64 회차 4 · 결정 217).
+        /// 회차 3 은 WebGL 에서 이 경로를 켰는데, 유니티 WebGL 네이티브가 ogg <b>스트리밍</b>을 아예 거부하고
+        /// «Streaming of 'ogg' on this platform is not supported» 를 빨간 줄(console.error)로 찍는다 —
+        /// 키 20 × 시도 2 = 40건(CI #155·#158 의 배포 스모크 실측 · 받아 온 클립은 0/20 이라 소리에는 보탬이 0 이었다).
+        /// 규칙 §1 «플레이 콘솔 에러 0» 과 배포 게이트를 같이 깨서 17:1X 이후 모든 작업이 gh-pages 에 못 올라갔다 → 껐다.
+        /// StreamingAssets 원본과 아래 코드는 남겨 둔다 — 브라우저 <c>decodeAudioData</c> 를 .jslib 로 부르는 다음 길의 재료다.
+        /// </summary>
+        public static bool UseStreamed => false;
         /// <summary>받아 온 클립 수(테스트·로그용).</summary>
         public int StreamedCount => _streamed.Count;
 
