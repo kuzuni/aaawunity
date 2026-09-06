@@ -498,7 +498,7 @@
 4. 테스트: `UiSmokeTests` 582행 단언을 «설명 텍스트에 `<color` 없음 · 원문 `p.Desc` 그대로» 로 바꾼다 · `LogAssert.NoUnexpectedReceived`.
 5. 게이트 + PROGRESS T52 행 + 완료 기록(확인 수단 = CI PlayMode + screens 브랜치 04/05 PNG 를 `Read` 로 한 번 보고 «글자 한 색» 확인).
 
-### T53 — 특전 설명 표기 = «트리거: 내용» (예: «처치 시: 33% 확률로 …» · «피격 시: …» · «3타마다: …») (주인 2026-09-06 · T52 뒤 · 같은 Overlay 파일)
+### T53 — 특전 설명 표기 = «트리거: 내용» (예: «처치 시: 33% 확률로 …» · «피격 시: …» · «3타마다: …») (주인 2026-09-06 · T52 뒤 · 같은 Overlay 파일) ✅ (완료 · `574ae4f` + `6e2d9cc` · Core/PerkText · 트리거 76 · 패시브 24 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/Overlay.cs`(`PerkCard` 의 설명 문자열 가공 · T52 가 만든 «한 색» 자리) 또는 `UiKit`/새 정적 헬퍼 `PerkText.Format(desc)` · 이 레포 전용 JSON 이 필요하면 `Assets/KkomaKnight/perkText.json`(shop.json 방식) · `Assets/Tests/EditMode`(순수 문자열 변환 테스트 · 100개 전수) · `Assets/Tests/PlayMode/UiSmokeTests`
 순서: **T52 뒤**(같은 `PerkCard` 설명 줄) — T52 워커가 이어서 잡아도 된다.
 주인 원문(2026-09-06 · 09:2X UTC): «처치시: 33퍼 확률로 어쩌구저쩌구 / 피격시: 33퍼 확률로 어쩌구저쩌구 / 3타마다: 어쩌구저쩌구 이런 식으로 표기하기».
