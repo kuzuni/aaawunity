@@ -993,6 +993,20 @@
 5. 테스트: Core EditMode — 표에 든 스탯의 포맷 결과에 `%` 포함 · 아닌 스탯(공격력·체력·실드 같은 절대값)에는 안 붙음. PlayMode — 07 팝업·특전 카드·강화 안내에서 «회피/치명/흡혈» 줄에 `%` 존재.
 6. 게이트 + PROGRESS T90 행 + 완료 기록(확인 = CI + «[PercentGate]» 표 0 + screens 04·05·07·08 PNG).
 
+### T91 — main 빨강 후속(CI #166) · **지금 배포를 막는 마지막 하나**: 클리어 팝업 «골드 카운트업 최종값» 단언이 프레임의 «Text» 를 집는다 (T64 워커 E 가 실측·등재 2026-09-06 19:3X · **범위가 `T69-overlay` 안이므로 그 lock 워커가 이어서 · 규약대로 뒤 번호가 기다린다**)
+
+> **왜 최우선인가**: `build-webgl` 은 `needs: [unity-test]` 라 **PlayMode 가 빨가면 WebGL 빌드도 배포도 아예 안 돈다**. T64 회차 4(`92c0b7b`)로 «배포 스모크» 쪽 사유는 풀었지만, 이 한 건이 남아 있는 한 gh-pages 는 계속 `0469d7b`(CI #148)에 멈춰 있다 — 17:1X 이후 모든 묶음의 «주인 폰 확인» 이 이것 하나에 걸려 있다.
+
+1. **실측(CI [#166](https://github.com/kuzuni/aaawunity/actions/runs/34054305608) 의 PlayMode XML)** — EditMode 는 123/123 초록이고 T87(`31acce2`)이 고친 글자 단언 3건도 다 Passed 인데, `UiSmokeTests.BattleTicksAndAllBattlePopups` 1건만 남았다:
+   ```
+   골드 카운트업 최종값 = G.Gold
+   Expected: "0"   But was: "Text"        (Assets/Tests/PlayMode/UiSmokeTests.cs:1035)
+   ```
+2. **원인(코드 대조로 확정)** — T69-overlay(`fe60608`)가 결과 팝업 보상 칸에 프레임을 깔면서(`Overlay.RewardFrame(goldCell)` · `Overlay.cs:406`) 조각 `ItemFrame_01` 이 **`goldCell` 의 첫 자식**으로 들어갔다(주석 그대로 «형제 = [프레임 · 빛살 · 아이콘 · 숫자]»). 단언은 `rewardCell.GetChild(0).GetComponentInChildren<Text>(true)` 로 **깊이 우선 첫 `Text`** 를 집으므로, 이제 골드 숫자가 아니라 **프레임 조각이 달고 온 프리팹 `Text`(글자가 문자 그대로 «Text»)** 를 집는다. 골드 카운트업 자체는 멀쩡하다 — 잘못 집는 것뿐이다(테스트가 옳게 실패했다).
+3. **처방(둘 중 하나 · 워커가 정한다)** — ⓐ `RewardFrame` 이 깔아 주는 프레임 조각 안의 **빈 `Text`·라벨을 끄거나 지운다**(프레임은 그림이지 글자가 아니다 · 다른 칸에도 같은 함정이 있는지 `ItemFrame_01` 을 쓰는 15개 칸을 같이 본다 = 결정 184 계열) ⓑ 단언이 **골드 숫자를 이름으로 집게** 한다(`Overlay` 가 `goldText` 에 이름표를 달고 테스트가 그것으로 찾는다). ⓐ 가 근본이고 ⓑ 는 테스트만 고치는 것이라, **ⓐ 를 기본**으로 하되 ⓐ 로 «없어지면 안 되는 글자» 가 드러나면 ⓑ.
+4. ✅ = 그 커밋이 든 CI 런에서 `UiSmokeTests.BattleTicksAndAllBattlePopups` Passed → **PlayMode 전부 초록 → `build-webgl` 이 돌아 gh-pages 가 움직인다**(그 순간 T64 도 ✅ 로 닫힌다 · PROGRESS T64 행).
+
+
 
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
