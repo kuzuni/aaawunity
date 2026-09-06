@@ -94,28 +94,40 @@ namespace KkomaKnight.Game
         /// <summary>아이템 프레임 조각(ItemFrame_01 · 등급 변형 ItemFrame_01_Normal_*)의 테두리 링 스프라이트 이름 앞머리 — <c>ItemFrame_01_White_Border</c>(79×79 · 9-slice 39/40 · 선 5px 실측). FocusBorder 는 다른 이름이라 안 걸린다.</summary>
         public const string ItemBorderSprite = "ItemFrame_01_White_Border";
         /// <summary>
-        /// 아이템 프레임의 «Border» 링을 «검은 아웃라인» 으로(T69 7항 · 주인 «아이템류 칸은 전부 장비 화면의 그 프레임» + 1항 «ItemFrame_01_White_Border 를 Ink tint») — 새 Image 를 덧대지 않고 조각 자체의 Border 자식
-        /// (등급 변형은 짙은 갈색 0.18/0.11/0.09 · 빈 칸 Add_1 은 연한 갈색 0.75/0.59/0.43)을 <see cref="UiKit.BorderInk"/> 로 칠하고 선을 프레임 <see cref="UiKit.BorderPx"/>(8px · 폰 3px) 이상으로 굵힌다(원본 5px → 9-slice multiplier · 결정 149 와 같은 방식).
-        /// 조각이 <paramref name="scale"/> 로 축소돼 있으면(장착 슬롯 FitScale 0.8) 그만큼 더 굵게 → 화면에서는 같은 8px. 등급색은 Bg·InnerBorder1·Glow 가 그대로 낸다(레퍼런스 06: 파랑/보라 속 + 검은 외곽선). 비활성 자식(Add_1 등)도 미리 칠해 둔다(상태가 바뀌어 켜질 때 그대로 어둡다).
-        /// 장착 슬롯(GearScreen) · 인벤/대장간/뽑기 결과/세부 팝업 칸(<see cref="Cell"/>) · 빈 슬롯 팝업(<see cref="OpenSlot"/>)이 전부 이 함수를 거친다.
+        /// 아이템 칸 조각(<c>ItemFrame_01_Normal_*</c>)을 «보이게만» 손질한다 — <b>색·굵기는 조각 그대로 둔다</b>.
         /// <para>
-        /// 결정 184(T69-forge · 대장간 08 PNG 눈 확인): 칠하기만 해서는 «단언은 통과하는데 눈에는 안 보이는» 칸이 나온다 — 조각의 형제 순서가 링을 덮기 때문이다.
-        /// 빈 칸 <c>Add_1</c> 은 (Bg2 · Border · InnerBorder3 · Icon) 이라 링 위에 InnerBorder3 가 그려지고, 등급 변형은 (Bg · InnerBorder1 · Border · Glow · SpecialBorder) 라 링 위에 Glow·하이라이트가 덮인다.
-        /// → 칠한 링을 <c>SetAsLastSibling</c> 으로 자기 부모의 맨 뒤(맨 위)에 둔다. 링은 9-slice 가운데가 0px(79 = 39+40)라 <c>fillCenter</c> 를 꺼 두면 아이콘·«+» 를 가리지 않고,
-        /// raycast 도 꺼서 칸을 누르는 것을 막지 않는다(<see cref="UiKit.Bordered"/> 가 덧대는 링과 같은 계약).
+        /// ⚑ T103(주인 2026-09-07 06:4X «<c>Character_Hero_Item_Detail_03</c> 의 <c>ItemFrame_01_Normal_Red</c> 기준으로 · <b>여기서 색깔만 바뀌는 식이면 딱 맞는 거임</b>»):
+        /// 전에는 이 함수가 조각의 «Border» 링을 <see cref="UiKit.BorderInk"/> 로 덮어칠하고 선을 8px 로 굵혔다(T69 7항 · 결정 163).
+        /// 주인이 «조각 그대로 · 색 변형만» 을 정본으로 못 박았으므로 <b>덧칠과 굵히기를 뺐다</b> — 등급은 <c>ui.itemFrame.&lt;색&gt;</c> 조각을 갈아 끼우는 것으로만 나타난다.
         /// </para>
+        /// <para>
+        /// 남긴 것은 결정 184(«단언은 통과하는데 눈에는 없다» 를 막는 세 가지)뿐이라 조각 그림을 바꾸지 않는다:
+        /// 링을 자기 부모의 <b>맨 뒤(맨 위)</b>로 올려 형제(<c>InnerBorder3</c>·<c>Glow</c>)에 가려지지 않게 하고, 9-slice 가운데를 비워 아이콘·«+» 를 덮지 않게 하고, raycast 를 꺼 칸 클릭을 막지 않는다.
+        /// </para>
+        /// 장착 슬롯(GearScreen) · 인벤/대장간/뽑기 결과/세부 팝업 칸(<see cref="Cell"/>) · 빈 슬롯 팝업(<see cref="OpenSlot"/>) · 펫·상점·던전·아레나·로비 팝업의 물건 칸이 전부 이 함수를 거친다.
+        /// <paramref name="scale"/> 는 굵히기를 하던 시절의 인자다 — 호출부 열세 곳을 건드리지 않으려고 자리만 남겼다(T103 · 워커 결정 기록).
         /// </summary>
         public static void DarkFrame(Transform frame, float scale = 1f)
         {
             if (frame == null) return;
-            float px = UiKit.BorderPx / Mathf.Max(0.05f, scale);
             foreach (var im in frame.GetComponentsInChildren<Image>(true))
             {
                 if (im == null || im.name != UiKit.BorderName || im.sprite == null || !im.sprite.name.StartsWith(ItemBorderSprite, StringComparison.Ordinal)) continue;
-                im.color = UiKit.BorderInk; im.type = Image.Type.Sliced; im.pixelsPerUnitMultiplier = UiKit.BorderMultiplier("fr.itemBorder", px);
-                // 결정 184: 링이 형제(InnerBorder3 · Glow · 하이라이트)에 가려지지 않게 맨 위로 · 가운데는 비우고 raycast 는 끈다
+                im.type = Image.Type.Sliced;
                 im.fillCenter = false; im.raycastTarget = false; im.transform.SetAsLastSibling();
             }
+        }
+
+        /// <summary>
+        /// 이 칸이 «아이템 칸»(<c>ItemFrame_01</c> 조각을 쓰는 물건 칸)인가 — 켜진 «Border» 링의 스프라이트가 조각의 것(<see cref="ItemBorderSprite"/>)이면 그렇다.
+        /// T69 «검은 아웃라인» 감사는 이 칸을 <b>면제</b>한다(T103 3항 ⓐ · 주인 최신 지시가 T69 보다 뒤다) — 조각 제 링이 등급색·밝기 그대로여야 «색깔만 바뀌는 식» 이 성립하기 때문이다.
+        /// </summary>
+        public static bool HasItemFrame(Transform cell)
+        {
+            if (cell == null) return false;
+            foreach (var im in cell.GetComponentsInChildren<Image>(false))
+                if (im != null && im.enabled && im.name == UiKit.BorderName && im.sprite != null && im.sprite.name.StartsWith(ItemBorderSprite, StringComparison.Ordinal)) return true;
+            return false;
         }
 
         /// <summary>

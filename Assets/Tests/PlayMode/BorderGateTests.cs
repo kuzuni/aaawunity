@@ -122,30 +122,42 @@ namespace KkomaKnight.Tests.Play
             if (icon != null && icon.parent == pill) Assert.Greater(icon.GetSiblingIndex(), bt.GetSiblingIndex(), label + " 아이콘은 테두리 위(형제 순서 뒤)");
         }
 
-        /// <summary>아이템 프레임 칸(ItemFrame_01 조각 · T69 7항)의 테두리 계약(T69-gear) — 조각 자체의 «Border» 링(스프라이트 ItemFrame_01_White_Border)이 켜져 있고 Ink(어둡고 α ≥ 0.8)이며, 선이 화면에서 프레임 8px 이상(원본 5px ÷ multiplier × 조각 축소 배율). 새 Image 를 덧대지 않는다.</summary>
+        /// <summary>칸 안 등급 조각(<c>ItemFrame_01_Normal_&lt;색&gt;</c>)의 바탕 스프라이트 이름 — T103 2항 «등급 = 색 변형 교체» 를 재는 자.</summary>
+        static string GradeSprite(Transform cell)
+        {
+            var area = cell != null ? UiKit.Find(cell, "NormalArea") : null; if (area == null) return null;
+            foreach (var im in area.GetComponentsInChildren<Image>(false))
+                if (im != null && im.sprite != null && im.sprite.name.StartsWith("ItemFrame_01_Normal", System.StringComparison.Ordinal)) return im.sprite.name;
+            return null;
+        }
+
+        /// <summary>
+        /// 아이템 프레임 칸(<c>ItemFrame_01</c> 조각)의 계약 — ⚑ T103(주인 2026-09-07 «<c>ItemFrame_01_Normal_Red</c> 기준 · 여기서 <b>색깔만 바뀌는 식</b>») 으로 바뀌었다:
+        /// 전에는 «링이 Ink 이고 선이 8px 이상» 을 요구했지만(T69 7항 · 결정 163), 이제는 <b>조각 그대로</b>가 정본이라 색·굵기를 재지 않는다.
+        /// 남는 계약은 «조각이 있고 · 그 링이 눈에 보인다»(결정 184) — 켜진 <c>ItemFrame_01_White_Border</c> 링 · 9-slice · 가운데 비움 · raycast 끔 · 링이 형제 맨 뒤 · <b>굵기 배수 1(덧칠·굵히기 없음)</b> ·
+        /// 조각의 바탕(<c>Bg</c>)이 살아 있음(T103 1항 «조각의 자식을 끄거나 덧대지 말고 그대로»).
+        /// </summary>
         static void AssertItemFrameBorder(Transform cell, string label)
         {
             Assert.IsNotNull(cell, label);
-            Assert.IsTrue(UiKit.HasDarkBorder(cell), label + " 은 어두운 테두리(ItemFrame Border → Ink)");
+            Assert.IsTrue(GearUi.HasItemFrame(cell), label + " 은 아이템 칸(ItemFrame_01 조각 · T103 정본)");
             int seen = 0;
             foreach (var im in cell.GetComponentsInChildren<Image>(false))
             {
                 if (im == null || !im.enabled || im.name != UiKit.BorderName || im.sprite == null || !im.sprite.name.StartsWith(GearUi.ItemBorderSprite)) continue;
                 seen++;
-                Assert.GreaterOrEqual(im.color.a, 0.8f, label + " ItemFrame Border 알파 ≥ 0.8");
-                float lum = 0.299f * im.color.r + 0.587f * im.color.g + 0.114f * im.color.b;
-                Assert.LessOrEqual(lum, 0.35f, label + " ItemFrame Border 는 Ink(밝기 ≤ 0.35 · 지금 " + lum.ToString("0.00") + ")");
                 Assert.AreEqual(Image.Type.Sliced, im.type, label + " ItemFrame Border 는 9-slice");
                 Assert.IsFalse(im.fillCenter, label + " ItemFrame Border 는 가운데 비움(링 위로 올리므로 아이콘을 덮으면 안 된다 · 결정 184)");
                 Assert.IsFalse(im.raycastTarget, label + " ItemFrame Border raycast 끔(결정 184)");
+                Assert.AreEqual(1f, im.pixelsPerUnitMultiplier, 1e-3f, label + " ItemFrame Border 굵기는 조각 그대로여야 한다(T103 · 덧칠·굵히기 금지 · 지금 " + im.pixelsPerUnitMultiplier.ToString("0.00") + ")");
                 // 결정 184 — «있다»(단언 통과)가 «보인다» 를 보장하지 않는다: 링이 형제 뒤에 있으면 Bg/InnerBorder3/Glow 가 덮어 눈에는 테두리가 없다. 링은 자기 부모의 맨 뒤(맨 위)여야 한다.
                 var ringParent = im.transform.parent;
                 Assert.IsNotNull(ringParent, label + " ItemFrame Border 의 부모");
                 Assert.AreEqual(ringParent.childCount - 1, im.transform.GetSiblingIndex(),
                     label + " ItemFrame Border 링은 형제 맨 뒤(맨 위)여야 눈에 보인다 · 지금 " + im.transform.GetSiblingIndex() + "/" + (ringParent.childCount - 1) + " (부모 " + ringParent.name + " · 결정 184)");
-                float ratio = cell.lossyScale.x > 0f ? im.transform.lossyScale.x / cell.lossyScale.x : 1f;   // 조각이 칸 안에서 축소된 배율(장착 슬롯 FitScale 0.8)
-                float linePx = UiKit.BorderNativePx("fr.itemBorder") / Mathf.Max(0.01f, im.pixelsPerUnitMultiplier) * ratio;
-                Assert.GreaterOrEqual(linePx, UiKit.BorderPx - 0.05f, label + " ItemFrame 테두리 선 ≥ 8px(폰 3px) · 지금 " + linePx.ToString("0.0"));
+                // T103 1항 — 조각의 자식을 끄지 않는다(바탕이 살아 있어야 «색 변형 교체» 가 색으로 보인다)
+                var bg = UiKit.Find(ringParent, "Bg");
+                if (bg != null) Assert.IsTrue(bg.gameObject.activeInHierarchy, label + " 조각의 Bg 는 켜져 있어야 한다(T103 1항)");
             }
             Assert.Greater(seen, 0, label + " 에 켜진 ItemFrame_01_White_Border 링이 하나는 있어야 한다(7항 «물건 칸 = 장비 화면의 그 프레임»)");
         }
@@ -349,6 +361,20 @@ namespace KkomaKnight.Tests.Play
             foreach (var p in D.Gear.Parts) AssertItemFrameBorder(UiKit.Find(gearRoot, "Slot:" + p), "장착 슬롯 " + p);
             var invContent = UiKit.Find(gearRoot, "Content"); Assert.IsNotNull(invContent, "인벤 Content"); Assert.Greater(invContent.childCount, 0, "인벤에 미장착 장비");
             AssertItemFrameBorder(invContent.GetChild(0), "인벤 첫 칸");
+            // T103 2항 — 등급은 «조각 갈아 끼우기» 로만 나타난다(tint 로 물들이지 않는다): 등급이 다른 두 칸의 조각 스프라이트가 서로 달라야 한다
+            {
+                string first = null; string other = null; int otherAt = -1;
+                for (int i = 0; i < invContent.childCount && other == null; i++)
+                {
+                    string sp = GradeSprite(invContent.GetChild(i));
+                    if (sp == null) continue;
+                    if (first == null) first = sp;
+                    else if (sp != first) { other = sp; otherAt = i; }
+                }
+                Assert.IsNotNull(first, "인벤 첫 칸의 등급 조각");
+                Assert.IsNotNull(other, "등급이 다른 칸이 하나는 있어야 한다(인벤에 rar 0·1·2 를 넣었다)");
+                Assert.AreNotEqual(first, other, "등급이 다르면 조각 자체가 달라야 한다(T103 2항 · 칸 " + otherAt + " · " + first + " ↔ " + other + ")");
+            }
             Assert.IsTrue(UiKit.HasPattern(gearRoot), "장비 화면 배경 패턴(T72 ① · T69-gear 가 같이)");
             if (firstFree != null)
             {

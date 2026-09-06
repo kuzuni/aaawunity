@@ -83,15 +83,22 @@ namespace KkomaKnight.Game
             foreach (var tag in root.GetComponentsInChildren<UiTag>(false))
             {
                 if (tag == null || !tag.isActiveAndEnabled || !IsCellTag(tag.Name) || Exempt.Contains(tag.Name)) continue;
-                if (tag.Members.Count == 0) { rows.Add(new Row { Screen = screen, Tag = tag.Name, Path = PathOf(tag.transform, root), HasBorder = UiKit.HasDarkBorder(tag.transform) }); continue; }
+                if (tag.Members.Count == 0) { rows.Add(new Row { Screen = screen, Tag = tag.Name, Path = PathOf(tag.transform, root), HasBorder = Bordered(tag.transform) }); continue; }
                 foreach (var m in tag.Members)
                 {
                     if (m == null || !m.gameObject.activeInHierarchy || Exempt.Contains(m.name)) continue;
-                    rows.Add(new Row { Screen = screen, Tag = tag.Name, Path = PathOf(m, root), HasBorder = UiKit.HasDarkBorder(m) });
+                    rows.Add(new Row { Screen = screen, Tag = tag.Name, Path = PathOf(m, root), HasBorder = Bordered(m) });
                 }
             }
             return rows;
         }
+
+        /// <summary>
+        /// 이 칸이 T69 «테두리» 규칙을 만족하는가 — ⓐ 어두운 링이 있거나(<see cref="UiKit.HasDarkBorder"/>) ⓑ <b>아이템 칸</b>(<c>ItemFrame_01</c> 조각)이다.
+        /// ⓑ 는 T103 3항 ⓐ 의 면제다(주인 2026-09-07 «조각 그대로 · 색깔만 바뀌는 식» 이 T69 «전 화면 검은 아웃라인» 보다 뒤에 온 지시 · 워커 결정 기록):
+        /// 조각 제 링은 등급 변형이면 짙은 갈색, 빈 칸이면 옅은 갈색이라 «어둡다» 판정에 걸리지 않는데, 그 밝기가 조각의 정본이다.
+        /// </summary>
+        static bool Bordered(Transform cell) => UiKit.HasDarkBorder(cell) || GearUi.HasItemFrame(cell);
 
         static string PathOf(Transform t, Transform root)
         {
