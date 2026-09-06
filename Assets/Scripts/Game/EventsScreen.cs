@@ -203,13 +203,13 @@ namespace KkomaKnight.Game
             }
             // 티어 제목 · 시즌 타이머 · 오른쪽 위 보상/상인
             var tier = UiKit.Rect(pg, "TierTitle"); UiKit.Pct(tier, Layout.AeTier); UiKit.Tag(tier, "티어 제목");
-            { var m = UiKit.Icon(tier, "Icon", "ui.iconMedalBronze"); UiKit.Pct(m.rectTransform, 0, 0, 22, 100); UiKit.Label(tier, 26, 0, 74, 100, "브론즈", 40, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold; }
+            { var m = UiKit.Icon(tier, "Icon", "ui.iconMedalBronze"); UiKit.Pct(m.rectTransform, 0, 0, 22, 100); UiKit.Label(tier, 26, 0, 74, 100, "브론즈", TextSize.Title, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Title).fontStyle = FontStyle.Bold; }
             var season = UiKit.Rect(pg, "Season"); UiKit.Pct(season, Layout.AeSeason); UiKit.Tag(season, "시즌 타이머");
-            { var c = UiKit.Icon(season, "Icon", "ui.iconClock"); UiKit.Pct(c.rectTransform, 0, 0, 10, 100); UiKit.Label(season, 12, 0, 88, 100, "시즌 종료까지: " + NoTime, 24, Palette.White, TextAnchor.MiddleLeft); }
+            { var c = UiKit.Icon(season, "Icon", "ui.iconClock"); UiKit.Pct(c.rectTransform, 0, 0, 10, 100); UiKit.Label(season, 12, 0, 88, 100, "시즌 종료까지: " + NoTime, TextSize.Aux, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Aux); }
             var side = UiKit.Rect(pg, "SideIcons"); UiKit.Pct(side, Layout.AeSideIcons); UiKit.Tag(side, "우측 아이콘 열(2개)");
             {
-                var a = UiKit.Rect(side, "RewardsBtn"); UiKit.Pct(a, 0, 0, 100, 50); var ai = UiKit.Icon(a, "Icon", "ui.iconGiftBlue"); UiKit.Pct(ai.rectTransform, 15, 0, 70, 66); UiKit.Label(a, 0, 66, 100, 34, "보상", 22, Palette.White); UiKit.Clickable(a, OpenRankRewards);
-                var b = UiKit.Rect(side, "MerchantBtn"); UiKit.Pct(b, 0, 50, 100, 50); var bi = UiKit.Icon(b, "Icon", "ui.iconMerchant"); UiKit.Pct(bi.rectTransform, 15, 0, 70, 66); UiKit.Label(b, 0, 66, 100, 34, "상인", 22, Palette.White); UiKit.Clickable(b, () => ShowPage(PageMerchant));
+                var a = UiKit.Rect(side, "RewardsBtn"); UiKit.Pct(a, 0, 0, 100, 50); var ai = UiKit.Icon(a, "Icon", "ui.iconGiftBlue"); UiKit.Pct(ai.rectTransform, 15, 0, 70, 54); UiKit.Label(a, 0, 55, 100, 45, "보상", TextSize.Aux, Palette.White, kind: TextKind.Aux); UiKit.Clickable(a, OpenRankRewards);
+                var b = UiKit.Rect(side, "MerchantBtn"); UiKit.Pct(b, 0, 50, 100, 50); var bi = UiKit.Icon(b, "Icon", "ui.iconMerchant"); UiKit.Pct(bi.rectTransform, 15, 0, 70, 54); UiKit.Label(b, 0, 55, 100, 45, "상인", TextSize.Aux, Palette.White, kind: TextKind.Aux); UiKit.Clickable(b, () => ShowPage(PageMerchant));
             }
             // 시상대 초상 3(가운데 = 나 · HeroView 가슴 위) + 왕관 번호 · 배너 3 = Social_Ranking 조각(T62) · 맨 위에 «나» 꼬리표
             var podium = UiKit.Rect(pg, "Podium"); UiKit.Stretch(podium);
@@ -224,7 +224,7 @@ namespace KkomaKnight.Game
             var b3 = Banner(podium, "Banner:3", Layout.AeBanner3, proto, "3st", FoeName(3));
             UiKit.Destroy(proto);
             UiKit.TagGroup(podium, "시상대 배너(3개)", b1, b2, b3);
-            { var you = UiKit.Panel(podium, "You", "fr.r12", Palette.Hex("#C2223B")); UiKit.Pct(you.rectTransform, 44.2f, 26.2f, 11.4f, 2.0f); UiKit.Label(you.transform, 0, 0, 100, 100, "나", 36, Palette.White, kind: TextKind.Aux); }
+            { var you = UiKit.Panel(podium, "You", "fr.r12", Palette.Hex("#C2223B")); UiKit.Pct(you.rectTransform, 44.2f, 26.2f, 11.4f, 2.3f); UiKit.Label(you.transform, 0, 0, 100, 100, "나", 36, Palette.White, kind: TextKind.Aux); }
             // 순위 목록(4위~ · 세로 스크롤 · 바닥 띠에 가린다)
             var list = ScrollBox(pg, "RankList", Layout.AeList, RankRows * Layout.AeRowPitch, out var content); UiKit.Tag(list, "순위 목록");
             for (int i = 0; i < RankRows; i++)
@@ -235,7 +235,7 @@ namespace KkomaKnight.Game
                 if (i == 0) UiKit.Tag(row, "순위 줄(1칸)");
             }
             var promo = UiKit.Panel(pg, "Promo", "fr.rect", Palette.A(Palette.Dim, 0.85f)); UiKit.Pct(promo.rectTransform, Layout.AePromo); UiKit.Tag(promo.transform, "승급 안내");
-            UiKit.Label(promo.transform, 0, 0, 100, 100, "시즌이 끝나면 상위 순위가 승급합니다", 24, Palette.White);
+            UiKit.Label(promo.transform, 0, 0, 100, 100, "시즌이 끝나면 상위 순위가 승급합니다", TextSize.Body, Palette.White);
             // 바닥: 뒤로(→ PvP 페이지) + 도전 🎫x1(→ 도전 팝업)
             Foot(pg, null, () => ShowPage(PagePvp));
             var ch = UiKit.Button(pg, "ui.btnOrange", "도전", OpenChallenge, Layout.AeChallenge); ch.name = "ChallengeBtn"; UiKit.Tag(ch, "도전 버튼");
@@ -484,7 +484,7 @@ namespace KkomaKnight.Game
         static void Crown(RectTransform parent, Layout.R portrait, string icon, string num)
         {
             var c = UiKit.Rect(parent, "Crown:" + num); UiKit.Pct(c, portrait.X + portrait.W * 0.25f, portrait.Y - 3.0f, portrait.W * 0.5f, 2.8f);
-            var ic = UiKit.Icon(c, "Icon", icon); UiKit.Stretch(ic.rectTransform); UiKit.Label(c, 0, 25, 100, 75, num, 20, Palette.White).fontStyle = FontStyle.Bold;
+            var ic = UiKit.Icon(c, "Icon", icon); UiKit.Stretch(ic.rectTransform); UiKit.Label(c, 0, 20, 100, 80, num, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyle.Bold;
         }
         /// <summary>
         /// 시상대 배너 = GUI Pro <c>Social_Ranking</c> 의 <c>Group_RankingPodium/&lt;자리&gt;/Podium</c> 조각 그대로(펜던트 배너 슬라이스 + <c>Text_Name</c> + <c>Group_Trophy</c>(🏆 + 점수)) —

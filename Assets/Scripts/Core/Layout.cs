@@ -293,8 +293,8 @@ namespace KkomaKnight.Core
 
         // ⑮ 아레나 입장 화면 — docs/ref/23_arena_enter.jpg (T43)
         public static readonly R AeStage = new R(0, 8.0f, 100, 34.0f);
-        public static readonly R AeTier = new R(37.5f, 9.9f, 26.0f, 2.9f);
-        public static readonly R AeSeason = new R(31.0f, 13.5f, 38.0f, 1.9f);
+        public static readonly R AeTier = new R(37.5f, 9.9f, 26.0f, 3.7f);
+        public static readonly R AeSeason = new R(31.0f, 13.8f, 38.0f, 2.3f);
         public static readonly R AeSideIcons = new R(84.7f, 9.6f, 12.5f, 9.8f);
         public static readonly R AePortrait1 = new R(41.7f, 20.2f, 16.6f, 6.4f);
         public static readonly R AePortrait2 = new R(12.5f, 23.4f, 15.3f, 6.4f);

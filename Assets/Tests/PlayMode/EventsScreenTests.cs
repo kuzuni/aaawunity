@@ -186,8 +186,11 @@ namespace KkomaKnight.Tests.Play
         // ───────────────────────── T63-events: 글자 가독성 ─────────────────────────
 
         /// <summary>한 화면의 활성 글자를 모아 «실제로 그려지는 크기»(bestFit 결과)가 보조 하한(36) 밑으로 내려가지 않는지 · 선호 크기가 칸을 안 넘는지 본다.
-        /// <paramref name="skip"/> 로 시작하는 경로는 다른 하위 행 담당이라 뺀다(TopBar = T63-lobby · TapToClose = T63-toast).</summary>
-        void Readable(string screen, Transform root, params string[] skip)
+        /// <paramref name="skip"/> 로 시작하는 경로는 다른 하위 행 담당이라 아예 뺀다(TopBar = T63-lobby · TapToClose = T63-toast).</summary>
+        void Readable(string screen, Transform root, params string[] skip) => Readable(screen, root, null, skip);
+
+        /// <summary><paramref name="clipSkip"/> 로 시작하는 경로는 «크기» 만 보고 «잘림» 은 안 본다 — 칸이 프리팹 안에 있어 이 작업이 못 정하는 자리(23 의 `Social_Ranking`·`ListItem_Ranking` 조각 = T62).</summary>
+        void Readable(string screen, Transform root, string[] clipSkip, params string[] skip)
         {
             Canvas.ForceUpdateCanvases();
             var rows = TextAudit.Collect(screen, root);
@@ -199,7 +202,9 @@ namespace KkomaKnight.Tests.Play
                 foreach (var sk in skip) if (r.Path != null && r.Path.StartsWith(sk)) { skipIt = true; break; }
                 if (skipIt) continue;
                 if (r.Used < TextSize.Aux) small.Add(r.ToString());
-                if (r.Clipped) clipped.Add(r.ToString());
+                bool clipExempt = false;
+                if (clipSkip != null) foreach (var ck in clipSkip) if (r.Path != null && r.Path.StartsWith(ck)) { clipExempt = true; break; }
+                if (r.Clipped && !clipExempt) clipped.Add(r.ToString());
             }
             Assert.AreEqual(0, small.Count, $"[{screen}] 실제 그려지는 크기가 보조 36 미만(T63 · 주인 «글씨가 너무 작아 안 읽힌다»):\n" + string.Join("\n", small));
             Assert.AreEqual(0, clipped.Count, $"[{screen}] 잘림/넘침(선호 크기 > 칸 · 칸 h ≥ 크기 × 1.4 로 잡는다):\n" + string.Join("\n", clipped));
@@ -214,8 +219,8 @@ namespace KkomaKnight.Tests.Play
         static int MaxSize(Text t) => t.resizeTextForBestFit ? Mathf.Max(t.fontSize, t.resizeTextMaxSize) : t.fontSize;
 
         /// <summary>
-        /// T63-events(⑨ 던전·아레나 20~26) — 20·21·22·24·25·26 의 모든 활성 글자가 «실제 36 이상 · 잘림 0» 인지.
-        /// 23(아레나 입장)은 T62(순위 화면 = <c>Social_Ranking</c> 프리팹 변형)가 잡고 있어 이 회차에서 뺐다(PROGRESS T63-events 행 비고 «23 은 T62 뒤»).
+        /// T63-events(⑨ 던전·아레나 20~26) — 20·21·22·23·24·25·26 의 모든 활성 글자가 «실제 36 이상 · 잘림 0» 인지.
+        /// 23(아레나 입장)은 T62(순위 화면 = <c>Social_Ranking</c> 프리팹 변형)가 ✅ 로 닫힌 뒤 회차 2 에서 넣었다 — 프리팹 조각 안 칸(순위 줄·시상대 배너)은 «잘림» 면제.
         /// 자리 수치는 <c>Layout</c> ⑫~⑱ 와 `docs/ref-layout.md` ⚑ T63-events 회차 정정(칸 h ≥ 글자 크기 × 1.4)이 정본.
         /// </summary>
         [UnityTest]
@@ -244,8 +249,14 @@ namespace KkomaKnight.Tests.Play
             ev.ShowPage(EventsScreen.PagePvp); yield return Frames(3);
             Readable("22_arena", UiKit.Find(root, "Page:" + EventsScreen.PagePvp));
 
-            // 24 도전 팝업 · 25 순위 보상 팝업 (23 은 T62 담당이라 페이지만 지나간다)
+            // 23 아레나 입장 — 티어 제목 60 · 시즌 타이머 36 · 오른쪽 «보상»·«상인» 36 · 왕관 번호 36 · «나» 꼬리표 36 · 승급 안내 40
+            // 순위 줄·시상대 배너의 글자 칸은 T62 가 쓰는 프리팹 조각(ListItem_Ranking · Social_Ranking) 안이라 «잘림» 은 면제하고 크기만 본다.
             ev.ShowPage(EventsScreen.PageArena); yield return Frames(3);
+            var ae = UiKit.Find(root, "Page:" + EventsScreen.PageArena);
+            Readable("23_arena_enter", ae, new[] { "RankList", "Podium/Banner" });
+            Assert.AreEqual(TextSize.Title, MaxSize(FindText(ae, "TierTitle")), "아레나 티어 제목 = 제목 60");
+
+            // 24 도전 팝업 · 25 순위 보상 팝업
             Assert.IsTrue(ClickNamed(root, "ChallengeBtn"), "도전 버튼"); yield return Frames(3);
             Readable("24_arena_challenge", _app.Overlay.Root, "TapToClose");
             _app.Overlay.Close(); yield return Frames(2);
@@ -258,7 +269,7 @@ namespace KkomaKnight.Tests.Play
             var me = UiKit.Find(root, "Page:" + EventsScreen.PageMerchant);
             Readable("26_arena_shop", me);
             Assert.AreEqual(TextSize.Title, MaxSize(FindText(me, "Title")), "상인 제목 = 제목 60");
-            _log.AssertNoRed("글자 가독성(20·21·22·24·25·26)");
+            _log.AssertNoRed("글자 가독성(20·21·22·23·24·25·26)");
             yield return Shutdown();
         }
     }
