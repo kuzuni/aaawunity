@@ -425,6 +425,7 @@
 - 게이트: `dotnet build` 0/0 · `dotnet test` 64/64 · `gen_meta --check` · `gen_catalog --check`(461) · `check_catalog_keys` OK(546/460) · `check_unity_null` 0건 · `check_data_sync` OK(aaaw `0707999`) · Sim 시드 11·12·13 사다리·3pick 42칸 = T2 표와 동일. (이 환경엔 dotnet 이 없어 `apt-get update && apt-get install dotnet-sdk-8.0` — update 없이 install 만 하면 404.)
 - **플레이 콘솔 에러 0 확인 수단**: 코드 커밋 `73e38de` 의 **CI 런 #45**(https://github.com/kuzuni/aaawunity/actions/runs/34015927886) 유니티 잡 — PlayMode `SpeedMemoryTests` 1건(전투 진입·재진입·App 재생성 지점마다 빨간 줄 0) + 기존 `UiSmokeTests.BattleTicksAndAllBattlePopups`(전투 화면). 이 워커(A)는 :05 슬롯이라 다음 세션(sess 다름)이 읽거나, 이 세션의 후속 체크인이 읽는다 — 빨가면 `result="Failed"` 메시지를 여기 붙이고 고친다. **주의(워커 D · T22)**: 이 push 로 CI 런 #44(T22 `f748948`)가 concurrency 로 **취소**됐다 — #45 가 `f748948` 을 포함하므로 **#45 유니티 잡이 T22(`PressFeedbackTests` 4)·T18 둘 다의 확인 수단**이다(#43 T17 은 별개로 진행 중이었음).
 - **주인이 확인할 것 (한 줄)**: 전투에서 x2 로 바꾼 뒤 «클리어 → 다음 챕터» 나 «로비 → START» 로 다시 들어가도, 앱을 껐다 켜도 배속 버튼이 x2 로 시작하는가 / x1 로 돌려 놓으면 그것도 기억되는가.
+- **종결(07:40 체크인 · 같은 세션)**: **CI #45 유니티 잡 초록**(06:29 완료 · 취소 안 됨 · WebGL→gh-pages·APK 도 초록) — `SpeedMemoryTests` 포함 PlayMode 전부 Passed(워커 D 의 T22 종결 기록 «PlayMode 18/18» 과 동일 런). 그 뒤 **CI #53**(`11a737d`) 유니티 잡도 초록(PlayMode 23/23)이라 재확인됐다. «다음 챕터» 버튼은 T23 에서 없어졌고 로비 재진입·앱 재시작 경로는 그대로 검증됨.
 
 ### T24 완료 기록 (2026-09-06 · sess-0620-18959 · 워커 B) — 코드 `920fe0b` · CI #46
 
@@ -451,8 +452,7 @@
 - 게이트: `dotnet build` 0/0 · `dotnet test` 64/64 · `gen_meta --check` · `gen_catalog --check`(461) · `check_catalog_keys` OK(631/460) · `check_unity_null` 0건 · `check_data_sync` OK(aaaw `0707999`) · Sim 시드 11·12·13 사다리·3pick 42칸 = T2 표와 동일.
 - **플레이 콘솔 에러 0 확인 수단**: 코드 커밋 `dedeffb` 의 **CI 런 #48**(https://github.com/kuzuni/aaawunity/actions/runs/34017342273) 유니티 잡 — PlayMode `MapThemeTests` 1(테마 4종 · 지점마다 빨간 줄 0) + `UiSmokeTests.BattleTicksAndAllBattlePopups` + `BattleWorldTests`. 이 세션의 후속 체크인이 읽는다(빨가면 `result="Failed"` 메시지를 여기 붙이고 고친다). **주의(워커 B · T17)**: 이 push(06:45) 시각에 #47(T17 `ec1a91a`)이 진행 중이었다 — concurrency 로 취소됐다면 **#48 이 T17 의 확인 수단도 된다**(#48 은 `ec1a91a` 를 포함).
 - **주인이 확인할 것 (한 줄)**: 전투(챕터 1 가을 · 2 깊은숲 · 3 숲 · 4 사막)의 배경이 DemoScene_* 씬 그림처럼 보이는가 — 길 띠 위·아래 양쪽에 물결 풀 경계 · 위쪽 들판과 아래쪽 들판 모두 나무·돌·통·꽃이 빽빽함(전보다 소품이 작고 많다) · 사막은 모래언덕이 큼직하게 · 바닥 아래쪽이 어둡지 않음 / 캐릭터가 길 띠 안에 서 있는가.
-
-### T26 완료 기록 (2026-09-06 · sess-0636-8590 · 워커 C) — 코드 `9781557`(테스트만) · CI #49
+- **종결(07:40 체크인 · 같은 세션)**: #48·#50 은 뒤 push 에 취소. **CI #51 유니티 잡 빨강 = 이 작업의 회귀 1건** — `MapThemeTests` 사막: `Road_up_Desert` 만 43px(0.43u) 라 «납작» 문턱 0.35u 를 넘어 물결 경계가 길 바로 위(−16)가 아니라 소품 정렬(389)로 떨어졌다(내 비교 렌더는 정렬 규칙을 같은 문턱으로 흉내 내서 못 잡았다 · 사막 렌더에서 물결이 소품 위에 그려진 것을 지나침). 워커 D 가 **T45**(`11a737d` · BuildProps 의 flat 판정 1줄: `roadUp` 키는 높이와 무관하게 납작)로 고쳤고 **CI #53 유니티 잡 초록**(PlayMode 23/23 · `MapThemeTests` 4테마 Passed · EditMode 79/79 · WebGL→gh-pages·APK 초록 07:40) — T19 의 최종 확인 수단 = **#53**. 로컬 비교 렌더 도구(`render_our_map.py`)의 flat 판정도 같은 규칙으로 맞춰야 한다(후속 · 문서만). (2026-09-06 · sess-0636-8590 · 워커 C) — 코드 `9781557`(테스트만) · CI #49
 
 - **무엇을**: 주인 «확률에 안 맞게 뽑히는 것 같다». 원본 = index.html `gachaPull(st, box)`(1193~1211행 · `grand = Math.random`) + `GT.mkCum/rarRoll`(915~921행) · `data/gacha.json`(우리 동기본과 byte 동일 · `check_data_sync` OK).
 - **원본 대조(줄 단위)**: `GearSystem.GachaPull` 은 원본과 같은 순서 — ⓐ `pulls/p50/p10` 먼저 +1 ⓑ 천장(`p50 ≥ pityM`)·피티(`p10 ≥ pityL`) 판정 ⓒ 천장이면 신화 확정(굴림 소비 없음), 아니면 `r = rng()*100` 1회 → `rarRoll`(높은 등급부터 `r < cum[i]`) → 피티면 전설로 승격 ⓓ 신화면 p50=0 · 전설 이상이면 p10=0 ⓔ 종류 = `allTypes[floor(rng()*len)]` 1회 ⓕ 천장×피티 겹침이면 전설 1개 추가(종류 굴림 1회 더). `cum` 은 JSON 값 그대로(`DataLoadTests.GachaCumulativeThresholdsMatchRates` 가 rate 누적과 대조). 난수 소비 개수·순서 동일. **차이는 하나** — 원본은 지속 `Math.random`, 우리 `ShopScreen.Pull` 은 뽑을 때마다 `Mulberry32(TickCount ^ 0x5bd1e995)` 를 새로 만든다 → 아래 ⑤ 로 편향 없음을 확인했으니 그대로 둔다.
@@ -472,6 +472,7 @@
 - 게이트: `dotnet build` 0/0 · `dotnet test` 70/70 · `gen_meta --check` 초록 · 나머지 게이트는 T19(같은 세션 · 30분 전)와 동일(코드 변경 없음).
 - **플레이 콘솔 에러 0 확인 수단**: 화면·전투 코드 변경 없음(테스트만). CI 런 #50(https://github.com/kuzuni/aaawunity/actions/runs/34017536820) 의 dotnet 잡(EditMode 70). **주의**: #50 push(06:50) 가 #49(T26 `9781557` · 워커 C)를 concurrency 로 취소했고, #48(T19)도 #49 에 취소됐을 수 있다 — **#50 은 `dedeffb`(T19)·`9781557`(T26)을 포함하므로 #50 유니티 잡이 T19·T26 의 확인 수단이 된다**(이 세션의 07:15 체크인이 읽는다).
 - **주인이 확인할 것 (한 줄)**: 도끼·화살·번개가 웨이브 안 여러 적에게 흩어져 날아가는가(맨 앞만이 아니라) — 단, 적 간격이 좁아 한 덩어리로 보이면 그것은 표적이 아니라 간격(승인 대기 24 «간격 2배 = 엔진 좌표 변경») 문제다.
+- **종결(07:40 체크인 · 같은 세션)**: #50 은 T23 push 에 취소. **CI #53**(`11a737d` · `39f4d1b` 포함) dotnet 잡 초록(EditMode `ProjectileTargetTests` 2 포함 79/79) · 유니티 잡 초록(EditMode 79/79) — 확인 수단 = **#53**.
 
 ### T23 완료 기록 (2026-09-06 · sess-0607-19950 · 워커 A) — 코드 `9ea5d9d` · CI #51
 
@@ -481,6 +482,7 @@
 - 게이트: `dotnet build` 0/0 · `dotnet test` 78/78 · `gen_meta --check` · `gen_catalog --check`(461) · `check_catalog_keys` OK(631/460) · `check_unity_null` 0건 · `check_data_sync` OK(aaaw `0707999`) · Sim 시드 11·12·13 사다리·3pick 42칸 = T2 표와 동일.
 - **플레이 콘솔 에러 0 확인 수단**: 코드 커밋 `9ea5d9d` 의 **CI 런 #51**(https://github.com/kuzuni/aaawunity/actions/runs/34017948738) 유니티 잡 — PlayMode `RestClearAdTests` 1 + `UiSmokeTests.BattleTicksAndAllBattlePopups`(쉼터·클리어 팝업). **주의**: 이 push(06:59)가 #50(T21 · T19·T26 공용)을 concurrency 로 취소했다 — #51 이 `dedeffb`(T19)·`39f4d1b`(T21)·`9781557`(T26)·T17 `ec1a91a`·T24 `920fe0b` 를 전부 포함하므로 **#51 유니티 잡이 그 작업들의 확인 수단**이다(이 세션의 07:40 체크인이 읽고 각 기록에 한 줄씩 적는다 · 그 전에 다른 워커 push 가 #51 을 취소하면 그 다음 완료 런).
 - **CI #51 결과(워커 D · sess-0650-14670 이 읽음)**: 유니티 잡 **빨강** — 그러나 실패 1건은 T19 의 `MapThemeTests`(사막 물결 경계 정렬 · T45) 이고 T23 의 `RestClearAdTests` 1/1 · `RestBothTests` 2/2 는 Passed. T45 수정 `11a737d` 의 **CI #53 유니티 잡 초록**(PlayMode 23/23 · EditMode 79/79)이 T23 의 최종 확인 수단.
+- **종결(07:40 체크인 · 워커 A 확인)**: 위 워커 D 의 판독을 잡 목록으로 재확인 — **#53 «Unity EditMode + PlayMode 테스트» 잡 success(07:23 완료)** · WebGL→gh-pages 07:40 배포 성공 · APK 성공. `RestClearAdTests`·`RestBothTests` 포함. T23 종결.
 - **주인이 확인할 것 (한 줄)**: 쉼터에서 세 번째 주황 버튼 «광고 보고 둘 다 얻기» → 3초 뒤 체력과 경험치가 둘 다 오르는가 / 보스를 잡으면 클리어 팝업에 보상이 골드 하나만 보이고, «광고 보고 보상 ×2 받기» 를 누르면 3초 뒤 골드가 한 번 더 들어와 로비로, «그냥 받기» 는 그대로 로비로 가는가 / 로비에서 다음 챕터가 선택돼 있는가.
 
 ### T28 완료 기록 (2026-09-06 · sess-0650-14670 · 워커 D) — 코드 `9c1eb54` · CI #52

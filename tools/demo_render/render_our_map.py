@@ -53,7 +53,7 @@ for theme in ['autumn', 'deepForest', 'forest', 'desert']:
                 if xp < -400 or xp > W + 400: continue
                 yf = (demo_y_px(y)) / H
                 if yf < -0.15 or yf > 0.72: continue
-                p = cat[k]; w, h = png_size(os.path.join(ROOT, p)); flat = h / 100 * abs(sy) < 0.35
+                p = cat[k]; w, h = png_size(os.path.join(ROOT, p)); flat = k.endswith('.roadUp') or h / 100 * abs(sy) < 0.35   # T45: 물결 경계는 높이와 무관하게 납작(Road_up_Desert 43px)
                 order = -16 if flat else (max(-60, -12 - int((y - foot_demo_y) * 3)) if y > foot_demo_y else min(470, 381 + int((foot_demo_y - y) * 5)))
                 items.append((order, -y, k, xp, demo_y_px(y), sx, sy))
         vis = sum(1 for it in items if 0 <= it[3] <= W and HUD_TOP * H <= it[4] <= HUD_BOT * H and not it[2].endswith('.roadUp'))
