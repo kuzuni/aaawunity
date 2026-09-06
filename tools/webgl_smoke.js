@@ -1,9 +1,13 @@
 // WebGL 배포 스모크 판정기 (T59·T60 · 주인 상시 지시 2026-09-06 «배포·push 전 에러 확인 · 게임 들어가 확인»). 셸 래퍼 = tools/webgl_smoke.sh
-// 사용: node tools/webgl_smoke.js <URL> [--battle] [--require-marker] [--strict-audio] [--no-fps] [--timeout SEC] [--shot out.png] [--log out.txt]
+// 사용: node tools/webgl_smoke.js <URL> [--battle] [--require-marker] [--strict-audio] [--strict-net] [--no-fps] [--timeout SEC] [--shot out.png] [--log out.txt]
 // 판정(종료 코드 0 = 초록):
 //   ⓐ pageerror · console.error 0 — 유니티 로더의 «Invoking error handler»(RangeError · 예외) · 빨간 Debug.LogError 전부.
 //      단 오디오 매체 에러(NotSupportedError «no supported source» · EncodingError «Unable to decode audio data» · «Loading FSB failed»)는
 //      **T64(WebGL 오디오)** 이 닫힐 때까지 ⚠ 경고로만 센다(--strict-audio 면 에러) — 결정 110(PROGRESS).
+//      또 **게임 밖 호스트로 나가는 요청이 «망» 때문에 막힌 것**(프록시·DNS·오프라인 · net::ERR_TUNNEL_CONNECTION_FAILED 류)은
+//      게임 결함이 아니라 실행 환경이라 ⚠ 경고로만 센다(--strict-net 이면 에러) — T83 · 주인 IAP/Unity Services 커밋 뒤
+//      WebGL 이 Unity Analytics(config.uca.cloud.unity3d.com · cdp.cloud.unity3d.com)로 나가는데 워커 컨테이너의 프록시가 그걸 막는다.
+//      **같은 출처(빌드가 서비스되는 origin)의 파일이 못 읽히면 그건 그대로 에러다** — 게임 파일 누락을 놓치지 않는다.
 //   ⓑ 로딩 완료 = #unity-loading-bar 가 사라짐(index.html 템플릿의 then) 또는 window.unityInstance.
 //   ⓒ «[KkomaKnight] ready lobby»(App.BuildUi) — --require-marker 면 필수, 아니면 없을 때 ⚠(마커 이전 빌드).
 //   ⓓ --battle: SendMessage("App","DebugGo","battle") 뒤 «ready battle» + 10초 동안 에러 0.
@@ -16,11 +20,15 @@ const args = process.argv.slice(2);
 const url = args.find(a => !a.startsWith('--') && !/^\d+$/.test(a) && !a.endsWith('.png') && !a.endsWith('.txt'));
 const flag = n => args.includes('--' + n);
 const opt = (n, d) => { const i = args.indexOf('--' + n); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
-if (!url) { console.error('usage: node tools/webgl_smoke.js <URL> [--battle] [--require-marker] [--strict-audio] [--no-fps] [--timeout SEC] [--shot out.png] [--log out.txt]'); process.exit(2); }
+if (!url) { console.error('usage: node tools/webgl_smoke.js <URL> [--battle] [--require-marker] [--strict-audio] [--strict-net] [--no-fps] [--timeout SEC] [--shot out.png] [--log out.txt]'); process.exit(2); }
 const timeoutSec = parseInt(opt('timeout', '180'), 10);
-const wantBattle = flag('battle'), requireMarker = flag('require-marker'), strictAudio = flag('strict-audio');
+const wantBattle = flag('battle'), requireMarker = flag('require-marker'), strictAudio = flag('strict-audio'), strictNet = flag('strict-net');
 const shotPath = opt('shot', ''), logPath = opt('log', '');
 const AUDIO_RE = /no supported source was found|Unable to decode audio data|Loading FSB failed|playSoundClip error/;
+// 망 때문에 못 간 요청(프록시·DNS·오프라인) — 서버가 준 4xx/5xx 는 여기 없다(그건 아래 response 훅이 에러로 센다)
+const NET_RE = /Failed to load resource: net::(ERR_TUNNEL_CONNECTION_FAILED|ERR_PROXY_CONNECTION_FAILED|ERR_NAME_NOT_RESOLVED|ERR_INTERNET_DISCONNECTED|ERR_CONNECTION_(REFUSED|TIMED_OUT|RESET|CLOSED)|ERR_ADDRESS_UNREACHABLE|ERR_CERT_[A-Z_]+)/;
+const pageOrigin = (() => { try { return new URL(url).origin; } catch (e) { return null; } })();
+const isOffOrigin = (u) => { if (!u) return false; try { return new URL(u).origin !== pageOrigin; } catch (e) { return false; } };
 
 let chromium;
 try { ({ chromium } = require('playwright')); }
@@ -38,13 +46,18 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
     args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--no-sandbox', '--disable-dev-shm-usage', '--autoplay-policy=no-user-gesture-required'],
   });
   const page = await browser.newPage({ viewport: { width: 540, height: 1170 } });
-  const errors = [], audioWarn = [];
+  const errors = [], audioWarn = [], netWarn = [];
   let readyLobby = false, readyBattle = false, loaded = false;
-  const noteError = (text) => { if (!strictAudio && AUDIO_RE.test(text)) { audioWarn.push(text); log('AUDIO⚠', text); } else { errors.push(text); log('ERROR', text); } };
+  // where = 그 console 메시지가 가리키는 자원 URL(«Failed to load resource» 는 막힌 그 파일을 가리킨다)
+  const noteError = (text, where) => {
+    if (!strictAudio && AUDIO_RE.test(text)) { audioWarn.push(text); log('AUDIO⚠', text); return; }
+    if (!strictNet && NET_RE.test(text) && isOffOrigin(where)) { netWarn.push(where + ' · ' + text); log('NET⚠', where + ' · ' + text); return; }
+    errors.push(text); log('ERROR', text);
+  };
   page.on('pageerror', e => noteError('pageerror: ' + (e.stack || e.message)));
   page.on('console', m => {
     const t = m.type(), text = m.text();
-    if (t === 'error') noteError('console.error: ' + text);
+    if (t === 'error') noteError('console.error: ' + text, (m.location() || {}).url);
     else if (t === 'warning') log('warn', text.slice(0, 300));
     else log('log', text.slice(0, 300));
     if (text.includes('[KkomaKnight] ready lobby')) readyLobby = true;
@@ -77,7 +90,7 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
     if (errors.some(e => /Maximum call stack|RangeError|abort\(|Uncaught|unity error handler/.test(e))) break;
     await page.waitForTimeout(500);
   }
-  log('state', `loaded=${loaded} readyLobby=${readyLobby} errors=${errors.length} audioWarn=${audioWarn.length}`);
+  log('state', `loaded=${loaded} readyLobby=${readyLobby} errors=${errors.length} audioWarn=${audioWarn.length} netWarn=${netWarn.length}`);
 
   // T72 4항 — 질감 트윈(패턴 uvRect 흐름 · 아이콘 뒤 빛살 회전)이 프레임을 갉지 않는지 «배포된 화면에서 10초» 재서 한 줄 남긴다.
   // 판정에는 안 쓴다(headless SwiftShader 는 폰 GPU 가 아니다 · 회차 사이 비교용 수치) — --no-fps 로 끌 수 있다.
@@ -106,7 +119,7 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
     const d2 = Date.now() + 20000;
     while (Date.now() < d2 && !readyBattle) await page.waitForTimeout(250);
     await page.waitForTimeout(10000);   // 전투 10초 동안 에러 0
-    log('state', `readyBattle=${readyBattle} errors=${errors.length} audioWarn=${audioWarn.length}`);
+    log('state', `readyBattle=${readyBattle} errors=${errors.length} audioWarn=${audioWarn.length} netWarn=${netWarn.length}`);
   }
   if (shotPath) { try { fs.mkdirSync(require('path').dirname(shotPath), { recursive: true }); await page.screenshot({ path: shotPath }); log('shot', shotPath); } catch (e) { log('shot-fail', e.message); } }
   await browser.close();
@@ -114,8 +127,10 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
 
   const markerOk = readyLobby || !requireMarker;
   const ok = errors.length === 0 && loaded && markerOk && (!wantBattle || readyBattle);
-  console.log(ok ? `[smoke] ✅ 초록: 콘솔 에러 0 · 로딩 완료 · ${readyLobby ? '로비 도달' : '로비 마커 없음(구 빌드 · ⚠)'}${wantBattle ? ' · 전투 진입' : ''}${audioWarn.length ? ` · 오디오 경고 ${audioWarn.length}(T64)` : ''}`
-                 : `[smoke] ❌ 빨강: errors=${errors.length} loaded=${loaded} readyLobby=${readyLobby}${wantBattle ? ` readyBattle=${readyBattle}` : ''} audioWarn=${audioWarn.length}`);
+  const netTail = netWarn.length ? ` · 망 경고 ${netWarn.length}(게임 밖 호스트 · T83)` : '';
+  console.log(ok ? `[smoke] ✅ 초록: 콘솔 에러 0 · 로딩 완료 · ${readyLobby ? '로비 도달' : '로비 마커 없음(구 빌드 · ⚠)'}${wantBattle ? ' · 전투 진입' : ''}${audioWarn.length ? ` · 오디오 경고 ${audioWarn.length}(T64)` : ''}${netTail}`
+                 : `[smoke] ❌ 빨강: errors=${errors.length} loaded=${loaded} readyLobby=${readyLobby}${wantBattle ? ` readyBattle=${readyBattle}` : ''} audioWarn=${audioWarn.length}${netTail}`);
+  for (const w of netWarn.slice(0, 10)) console.log('   ⚠ 망 ' + w.slice(0, 200));
   for (const e of errors.slice(0, 20)) console.log('   - ' + e.split('\n').slice(0, 8).join('\n     '));
   process.exit(ok ? 0 : 1);
 })().catch(e => { console.error('[smoke] 실행 실패: ' + (e.stack || e.message)); process.exit(4); });
