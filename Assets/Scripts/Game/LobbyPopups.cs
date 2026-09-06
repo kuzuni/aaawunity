@@ -55,6 +55,9 @@ namespace KkomaKnight.Game
             if (area != null) { UiKit.Clear(area); var f = UiKit.Spawn("ui.itemFrame." + frameColor, area); UiKit.Stretch((RectTransform)f.transform); }
             var item = UiKit.Find(frt, "Item");
             if (item != null) { item.gameObject.SetActive(true); UiKit.SetSprite(frt, "Item", iconKey, Palette.White); }
+            // T69 7항 — 물건 칸은 전부 «장비 화면의 그 프레임» + 공용 DarkFrame 을 거친다(PetScreen·Overlay 보상 칸과 같은 문법).
+            // 안 거치면 조각의 제 Border(짙은 갈색 · 선 5px · 가운데 채움)로 «어두운 테두리» 감사만 우연히 통과하고 굵기·결정 184 계약은 안 선다(CI #189 실측).
+            GearUi.DarkFrame(frt, frt.localScale.x);
             // 수량 글자 칸 — 보조 36 의 한 줄(TextSize.BoxHeight(36) = 50.4px)이 들어가야 한다(T63 · T77 이 처음 쓴다): 칸 4.0%(93.5px)의 56% = 52.4px · 폭 76%(76px)는 «300»(≈54px)의 141%
             if (!string.IsNullOrEmpty(qty)) { var q = UiKit.Label(cell, 20, 44, 76, 56, qty, TextSize.Aux, Palette.White, TextAnchor.LowerRight, kind: TextKind.Aux); q.name = "Qty"; q.fontStyle = FontStyle.Bold; }
             if (locked) { var lk = UiKit.Icon(cell, "Lock", "ui.iconLock"); UiKit.Pct(lk.rectTransform, 64, -16, 44, 44); }
