@@ -239,7 +239,8 @@ namespace KkomaKnight.Game
                 if (mi != null) { UiKit.Pct(mi, 0, 0, 100, 100); var img = UiKit.SetSprite(medal, "Icon", "ui.iconMedal"); if (img != null) { img.preserveAspect = true; img.color = Color.white; } }
                 // 점수 숫자 = 메달 아래(칸 높이의 72% · 본문 40 한 줄이 안 줄고 들어간다 — 전 코드와 같은 값)
                 var mt = UiKit.SetText(medal, "Text (TMP)", QuestScores[i], Palette.Yellow, TextSize.Body);
-                if (mt != null) { UiKit.Pct(mt.rectTransform, -20, 98, 140, 72); mt.alignment = TextAnchor.MiddleCenter; }
+                // 전 코드(UiKit.Label(medal, -20, 98, 140, 72, …))와 같은 자리·규격 — 메달 아래 점수 한 줄
+                if (mt != null) { UiKit.Pct(mt.rectTransform, -20, 98, 140, 72); mt.alignment = TextAnchor.MiddleCenter; mt.resizeTextForBestFit = true; mt.resizeTextMinSize = TextSize.BestFitMin; mt.resizeTextMaxSize = TextSize.Body; mt.horizontalOverflow = HorizontalWrapMode.Overflow; }
                 parts.Medal = medal;
             }
             // 제목 — 줄의 밝은 바탕 위라 잉크색(T63 1항)
@@ -248,6 +249,9 @@ namespace KkomaKnight.Game
             {
                 var tr = title.rectTransform; UiKit.Pct(tr, Layout.QsRowTitle.WithH(Layout.LpLineH).Within(Layout.QsRow1));
                 title.alignment = TextAnchor.MiddleLeft; title.name = "Title"; parts.Title = tr;
+                // 글자 규격은 전 코드(UiKit.Label)와 같게 — 프리팹에서 온 Text 라 bestFit 설정이 데모 값(10~30)일 수 있다
+                title.resizeTextForBestFit = true; title.resizeTextMinSize = TextSize.BestFitMin; title.resizeTextMaxSize = TextSize.Body;
+                title.horizontalOverflow = HorizontalWrapMode.Wrap; title.verticalOverflow = VerticalWrapMode.Truncate;
             }
             // 진행바(프리팹 Slider_02_Yellow) — 자리·값·글자만
             var slider = item.GetComponentInChildren<Slider>(true);
@@ -257,7 +261,8 @@ namespace KkomaKnight.Game
                 UiKit.Pct(sr, Layout.QsRowBar.WithH(Layout.LpBarH).Within(Layout.QsRow1));
                 slider.value = done ? 1f : 0f;
                 var st = sr.GetComponentInChildren<Text>(true);
-                if (st != null) { st.text = (done ? QuestGoals[i] : 0) + "/" + QuestGoals[i]; st.fontSize = TextSize.Body; st.resizeTextMaxSize = TextSize.Body; TextAudit.Mark(st, TextKind.Body); }
+                // 바 안 숫자는 UiKit.MakeBar 와 같은 규격(bestFit 32~40 · 가로 넘침 허용) — 바 칸(LpBarH 44px)이 40 한 줄(55px)보다 낮다
+                if (st != null) { st.text = (done ? QuestGoals[i] : 0) + "/" + QuestGoals[i]; st.fontSize = TextSize.Body; st.resizeTextForBestFit = true; st.resizeTextMinSize = TextSize.BestFitMin; st.resizeTextMaxSize = TextSize.Body; st.horizontalOverflow = HorizontalWrapMode.Overflow; TextAudit.Mark(st, TextKind.Body); }
                 parts.Bar = sr;
             }
             // 받기 표시 / 이동 버튼 — Check 는 프리팹에서 슬라이더 밑에 있어 줄 오른쪽으로 옮긴다
