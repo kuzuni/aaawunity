@@ -154,7 +154,7 @@ jobs:
       # T60 — 배포 스모크 게이트(주인 상시 지시 2026-09-06 «배포·push 전 에러 확인 · 게임 들어가 봐서 확인»): 빌드를 headless chromium 으로 열어
       # 콘솔 에러 0 · 로딩 완료 · «[KkomaKnight] ready lobby» · DebugGo("battle") → «ready battle» + 10초 에러 0 을 본다. 하나라도 빨강이면 이 step 이 실패해
       # 아래 배포 step 이 돌지 않는다(gh-pages 는 마지막 초록 빌드 유지). 스크린샷·로그는 Artifact «webgl-smoke» 로만(PNG 커밋 금지).
-      # 오디오 매체 에러(Vorbis 데이터 «no supported source»·«Unable to decode audio data»)는 T61 이 닫힐 때까지 경고로만 센다(tools/webgl_smoke.js · 결정 108).
+      # 오디오 매체 에러(Vorbis 데이터 «no supported source»·«Unable to decode audio data»)는 T64 가 닫힐 때까지 경고로만 센다(tools/webgl_smoke.js · 결정 110).
       - name: "배포 스모크 (T60 · headless chromium · 콘솔 에러 0 · 로비 · 전투) — 빨강이면 배포 안 함"
         run: |
           sudo chown -R "$(id -u):$(id -g)" build || true

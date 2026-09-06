@@ -3,7 +3,7 @@
 // 판정(종료 코드 0 = 초록):
 //   ⓐ pageerror · console.error 0 — 유니티 로더의 «Invoking error handler»(RangeError · 예외) · 빨간 Debug.LogError 전부.
 //      단 오디오 매체 에러(NotSupportedError «no supported source» · EncodingError «Unable to decode audio data» · «Loading FSB failed»)는
-//      **T61(WebGL 오디오)** 이 닫힐 때까지 ⚠ 경고로만 센다(--strict-audio 면 에러) — 결정 108(PROGRESS).
+//      **T64(WebGL 오디오)** 이 닫힐 때까지 ⚠ 경고로만 센다(--strict-audio 면 에러) — 결정 110(PROGRESS).
 //   ⓑ 로딩 완료 = #unity-loading-bar 가 사라짐(index.html 템플릿의 then) 또는 window.unityInstance.
 //   ⓒ «[KkomaKnight] ready lobby»(App.BuildUi) — --require-marker 면 필수, 아니면 없을 때 ⚠(마커 이전 빌드).
 //   ⓓ --battle: SendMessage("App","DebugGo","battle") 뒤 «ready battle» + 10초 동안 에러 0.
@@ -98,7 +98,7 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
 
   const markerOk = readyLobby || !requireMarker;
   const ok = errors.length === 0 && loaded && markerOk && (!wantBattle || readyBattle);
-  console.log(ok ? `[smoke] ✅ 초록: 콘솔 에러 0 · 로딩 완료 · ${readyLobby ? '로비 도달' : '로비 마커 없음(구 빌드 · ⚠)'}${wantBattle ? ' · 전투 진입' : ''}${audioWarn.length ? ` · 오디오 경고 ${audioWarn.length}(T61)` : ''}`
+  console.log(ok ? `[smoke] ✅ 초록: 콘솔 에러 0 · 로딩 완료 · ${readyLobby ? '로비 도달' : '로비 마커 없음(구 빌드 · ⚠)'}${wantBattle ? ' · 전투 진입' : ''}${audioWarn.length ? ` · 오디오 경고 ${audioWarn.length}(T64)` : ''}`
                  : `[smoke] ❌ 빨강: errors=${errors.length} loaded=${loaded} readyLobby=${readyLobby}${wantBattle ? ` readyBattle=${readyBattle}` : ''} audioWarn=${audioWarn.length}`);
   for (const e of errors.slice(0, 20)) console.log('   - ' + e.split('\n').slice(0, 8).join('\n     '));
   process.exit(ok ? 0 : 1);
