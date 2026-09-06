@@ -1137,6 +1137,8 @@
 
 ### T95 — 소환(뽑기) 결과 창 = `Shop_Chest_Open.prefab` **그대로** + 찰진 등장 애니메이션 (주인 2026-09-07 · 화면·연출만 · 확률·수치 불변)
 
+> **🔄 1단계 코드 push(`7a34c71` · sess-1842-31994 · 워커 G)** — 조각으로 되돌렸다(`Overlay.OpenPrefab("ui.chestOpen")`) + «찰지게» 연출(흔들림 → 빛 폭발 → 칸 하나씩 오버슛 → 최고 등급 한 번 더 → 제목·안내·터치). **1항 정정: 이 조각에는 격자가 없다**(실측 = Background/Pattern · Text_TouchContionue · Chest{Shadow·Image_Chest·Light·SampleEffect×4}) → 얻은 장비 칸·제목·안내만 상자 «위» 에 얹었다(결정 312). 남은 것: 4항 §5 표 행(«프리팹 그대로» 명시)과 주인 폰에서 «찰진가» 확인.
+
 > 주인 원문(2026-09-07 05:4X): «소환 결과 창이 `Shop_Chest_Open.prefab` 이거로 돼야 하는데 안 됐더라. 수정하라 하셈. **애니메이션 찰지게** 해서 하라 그래.»
 
 **왜 안 돼 있나(실측)**: 카탈로그 키 `ui.chestOpen`(= `Theme_Light/Prefabs/Prefabs~DemoScenes/Shop_Chest_Open.prefab`)은 살아 있지만, `catalog.json` 주석에 «**T40 부터 상점이 쓰지 않음** — 뽑기 결과는 공통 팝업 문법(`UiKit.Popup` · 명판 «상자 N회» · 열린 상자 그림 · 격자 4열)» 이라고 적혀 있다. 즉 **우리가 프리팹을 버리고 다시 조립**해 놨다 → 주인 지시는 **원래대로 그 프리팹을 쓰라**는 것.
