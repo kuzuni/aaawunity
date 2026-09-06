@@ -6,13 +6,14 @@ using UnityEngine.UI;
 namespace KkomaKnight.Game
 {
     /// <summary>
-    /// 로비 사이드 팝업 껍데기 6종 (T44 · 주인 2026-09-06 «UI 는 무조건 레퍼런스 기준» · ⓔ «시스템이 없는 화면은 레이아웃 껍데기»):
-    /// 퀘스트(<c>docs/ref/15_quest.jpg</c> · 표 ⑳) · 출석(<c>16</c> · ㉑) · 데일리 기프트(<c>17</c> · ㉒) · 7일 챌린지(<c>18</c> · ㉓) 는 <b>팝업</b>(공통 팝업 문법 <see cref="UiKit.Popup"/> · 배경 탭 = 닫기),
-    /// 특권(<c>11</c> · ⑲ · <see cref="PrivilegeScreen"/>) · 시즌 패스(<c>19</c> · ㉔ · <see cref="PassScreen"/>) 는 <b>페이지</b>(상단 재화 바 + 뒤로 ◀ · 탭 바 없음).
+    /// 로비 사이드 팝업 껍데기 (T44 · 주인 2026-09-06 «UI 는 무조건 레퍼런스 기준» · ⓔ «시스템이 없는 화면은 레이아웃 껍데기»):
+    /// 퀘스트(<c>docs/ref/15_quest.jpg</c> · 표 ⑳) · 출석(<c>16</c> · ㉑) · 데일리 기프트(<c>17</c> · ㉒) 는 <b>팝업</b>(공통 팝업 문법 <see cref="UiKit.Popup"/> · 배경 탭 = 닫기),
+    /// 특권(<c>11</c> · ⑲ · <see cref="PrivilegeScreen"/>) 은 <b>페이지</b>(상단 재화 바 + 뒤로 ◀ · 탭 바 없음).
+    /// <b>T78(주인 2026-09-07)</b>: 7일 챌린지(18 · ㉓) 팝업과 시즌 패스(19 · ㉔) 페이지는 삭제 · 퀘스트 팝업은 GUI Pro <c>Progression_Mission_02</c> 프리팹으로 교체했다.
     /// 시스템이 없으므로 <b>전부 표시만</b> — 버튼은 눌러도 아무 일 없음 · 숫자는 0(레퍼런스 숫자를 베끼지 않는다 · 타이머는 «--:--:--») · 글자는 레퍼런스 글자를 우리말로.
     /// 재료 = GUI Pro 조각만(ui.popup 패널 · Title_01 리본 · ItemFrame_01 칸 · fr.r12/fr.rect 9-slice · 아이콘 · 버튼 · 슬라이더 · Environment 들판/길/나무) · 코드 도형 0 · 새 그림 0.
     /// 배치 = <see cref="Layout"/> ⑲~㉔ 상수(프레임 % · ±3%p) · 비평 이름표(T46)는 표의 «요소» 글자 그대로.
-    /// 진입 = <see cref="LobbyScreen.OnSide"/>(사이드 아이콘 6 + 이벤트 배너). 시스템이 생기면 각 함수의 글자·숫자 자리에 데이터를 넣는다(배치는 그대로).
+    /// 진입 = <see cref="LobbyScreen.OnSide"/>(사이드 아이콘 4 · T78 로 배너·성·스타터팩·7일 챌린지 진입은 사라졌다). 시스템이 생기면 각 함수의 글자·숫자 자리에 데이터를 넣는다(배치는 그대로).
     /// </summary>
     public static class LobbyPopups
     {
@@ -343,55 +344,7 @@ namespace KkomaKnight.Game
             var c = UiKit.Find(host, name); if (c != null) UiKit.PopIn((RectTransform)c, 0.7f, 0.32f);
         }
 
-        // ───────────────────────── 18 7일 챌린지 ─────────────────────────
-        static readonly string[] ChallengeTitles = { "챕터 30 클리어", "상자 15개 열기", "적 1000마리 처치", "전투력 8000 달성" };
-        static readonly int[] ChallengeGoals = { 30, 15, 1000, 8000 };
-        static readonly string[] ChallengeNums = { "0", "40", "150", "270", "390", "500" };
-
-        /// <summary>7일 챌린지 팝업(표 ㉓) — 빨간 리본 «7일 챌린지» → 긴 박스: ⏱ 종료 줄 · 배너 그림(들판·길·나무·트로피 + (i)) · 점수 트랙(빨간 줄) · 왼쪽 «N일차» 탭 7(1일차 활성) + 오른쪽 과제 목록(줄 4 · 스크롤 · 제목·(0/N)·보상 2·«이동») → «탭하여 닫기».</summary>
-        public static void Challenge7(App app)
-        {
-            var ov = app.Overlay; var B = Layout.C7Box;
-            var box = ov.OpenBox("ui.popup", "ui.title.red", "7일 챌린지", B, () => ov.Close()); box.name = "Challenge7Box";
-            var rib = Ribbon(box, "ui.title.red", Layout.C7Ribbon, B);
-            var timer = TimerRow(box, B, Layout.C7Timer, "종료까지 " + Dashes);
-            var banner = UiKit.Rect(box, "Banner"); UiKit.Pct(banner, Layout.C7Banner.Within(B)); UiKit.Ensure<RectMask2D>(banner.gameObject);
-            {
-                var field = UiKit.Icon(banner, "Field", "env.field"); field.preserveAspect = false; UiKit.Stretch(field.rectTransform);
-                var road = UiKit.Icon(banner, "Road", "env.road"); road.preserveAspect = false; UiKit.Pct(road.rectTransform, 0, 62, 100, 22);
-                var t1 = UiKit.Icon(banner, "Tree1", "env.tree"); UiKit.Pct(t1.rectTransform, 2, 20, 22, 50);
-                var t2 = UiKit.Icon(banner, "Tree2", "env.tree"); UiKit.Pct(t2.rectTransform, 74, 30, 20, 46);
-                var tr = UiKit.Icon(banner, "Trophy", "ui.trophy"); UiKit.Pct(tr.rectTransform, 60, 6, 18, 40);
-            }
-            var info = UiKit.Spawn("ui.btnInfo", box); var irt = (RectTransform)info.transform; irt.name = "InfoBtn"; UiKit.Pct(irt, Layout.C7Info.Within(B)); UiKit.Clickable(irt, () => { });
-            Track(box, B, Layout.C7TrackIcon, Layout.C7TrackPitch, Layout.C7TrackCount, Layout.C7TrackNums, Palette.Red, TrackIcons, ChallengeNums, "트랙 아이콘 줄(6칸)", "트랙 아이콘(1칸)");
-            var tabs = new RectTransform[Layout.C7DayCount];
-            for (int i = 0; i < Layout.C7DayCount; i++)
-            {
-                var t = tabs[i] = UiKit.Button(box, i == 0 ? "ui.btnRed" : "ui.btnGray", (i + 1) + "일차", () => { }, Sh(Layout.C7DayTab, 0, i * Layout.C7DayPitch).Within(B)); t.name = "DayTab:" + (i + 1);
-            }
-            var listBox = UiKit.Panel(box, "ListBox", "fr.r12", Palette.A(Palette.Dim, 0.55f)); UiKit.Pct(listBox.rectTransform, Layout.C7ListBox.Within(B));
-            var viewR = new Layout.R(Layout.C7Row1.X, Layout.C7Row1.Y, Layout.C7Row1.W, Layout.C7ListBox.Y + Layout.C7ListBox.H - 0.6f - Layout.C7Row1.Y);
-            var content = Scroll(box, B, viewR, Layout.C7RowCount * Layout.C7RowPitch, out var C, out _);
-            RectTransform row1 = null, row2 = null, title1 = null, go1 = null; var rewards1 = new RectTransform[2];
-            for (int i = 0; i < Layout.C7RowCount; i++)
-            {
-                float dy = i * Layout.C7RowPitch;
-                var row = UiKit.Panel(content, "Task:" + i, "fr.r12", Palette.Cream); UiKit.Pct(row.rectTransform, Sh(Layout.C7Row1, 0, dy).Within(C));
-                // 제목·카운터 칸 = 표 ㉓ 1.6%(37px) → LpLineH 2.2%(51px) · 색은 Ink/InkSoft(크림 줄 위 InkSoft/InkLight 는 대비가 약하다 · T63 1항)
-                var tR = Sh(Layout.C7RowTitle, 0, dy).WithH(Layout.LpLineH);
-                var title = UiKit.Label(content, 0, 0, 100, 100, ChallengeTitles[i], TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft); title.name = "Title"; UiKit.Pct(title.rectTransform, tR.Within(C));
-                var prog = UiKit.Label(content, 0, 0, 100, 100, $"(0/{ChallengeGoals[i]})", TextSize.Body, Palette.InkSoft, TextAnchor.MiddleRight); prog.name = "Progress";
-                UiKit.Pct(prog.rectTransform, new Layout.R(Layout.C7RowGo.X, tR.Y, Layout.C7RowGo.W, tR.H).Within(C));
-                var c1 = Cell(content, C, Sh(Layout.C7RowReward, 0, dy), "blue", "ui.coin"); var c2 = Cell(content, C, Sh(Layout.C7RowReward, Layout.C7RowRewardPitch, dy), "plum", "ui.gemRed");
-                var go = UiKit.Button(content, "ui.btnOrange", "이동", () => { }, Sh(Layout.C7RowGo, 0, dy).Within(C)); go.name = "GoBtn";
-                if (i == 0) { row1 = row.rectTransform; title1 = title.rectTransform; go1 = go; rewards1[0] = c1; rewards1[1] = c2; } else if (i == 1) row2 = row.rectTransform;
-            }
-            // 비평 이름표(표 ㉓)
-            if (rib != null) UiKit.Tag(rib, "제목 리본"); UiKit.Tag(box, "팝업 박스"); UiKit.Tag(timer, "종료 시각 줄"); UiKit.Tag(banner, "배너 그림"); UiKit.Tag(irt, "정보 버튼");
-            UiKit.TagGroup(box, "일차 탭 열(7칸)", tabs); UiKit.Tag(tabs[0], "일차 탭(1칸)"); UiKit.Tag(listBox.transform, "과제 목록 상자");
-            UiKit.Tag(row1, "과제 줄 1"); UiKit.Tag(row2, "과제 줄 2"); UiKit.Tag(title1, "과제 제목(1줄)"); UiKit.TagGroup(content, "과제 보상 줄(1줄)", rewards1); UiKit.Tag(go1, "이동 버튼(1줄)"); TagClose(app);
-        }
+        // ───────────────────────── 18 7일 챌린지 — T78(주인 2026-09-07 «7일 챌린지 걍 안 하고 싶음»)로 팝업째 삭제 ─────────────────────────
     }
 
     /// <summary>
@@ -481,93 +434,6 @@ namespace KkomaKnight.Game
             var ic = UiKit.Icon(head, "Icon", icon); UiKit.Pct(ic.rectTransform, 2, 10, 8, 80);
             var t = UiKit.Label(head, 11, 0, 50, 100, name, TextSize.Body, Palette.White, TextAnchor.MiddleLeft); t.fontStyle = FontStyle.Bold;
             UiKit.Label(head, 62, 0, 36, 100, right, TextSize.Body, Palette.White, TextAnchor.MiddleRight);
-        }
-
-        public override void Refresh() { _top?.Refresh(); }
-    }
-
-    /// <summary>
-    /// 시즌 패스 페이지 = <c>docs/ref/19_pass.jpg</c> 구도(T44 · 표 ㉔ · 껍데기): 상단 재화 바 → 시즌 배너(들판 그림 · 제목 · 남은 기간 · 진행바 + 메달 · 레벨 배지 · 안내 띠) → 갈색 띠 → 3열 세로 트랙(무료 파랑 · 유료1 주황 · 유료2 보라 · 가운데 노란 레벨 줄 + 육각 뱃지 · 칸은 자물쇠 · 스크롤) → 트랙 위 «현재 레벨» pill → 바닥 버튼 3(전체 받기 · 패스 2) → 뒤로 ◀ + 오른쪽 아래 배너 탭. 탭 바 없음.
-    /// 전부 표시만(패스 시스템 없음 · 레벨 1 · 진행 «준비 중» · 가격 데이터 없음 → «준비 중»). 이름 계약(스모크): <c>BackBtn</c> · <c>ClaimAllBtn</c> · <c>Buy1Btn/Buy2Btn</c> · <c>Row:N</c>.
-    /// </summary>
-    public sealed class PassScreen : GameScreen
-    {
-        public override string Name => "pass";
-        TopBar _top;
-        static Layout.R Sh(Layout.R r, float dx, float dy) => new Layout.R(r.X + dx, r.Y + dy, r.W, r.H);
-        static readonly string[] FreeIcons = { "ui.coin", "ui.bookBlue", "ui.coin", "ui.potionRed", "ui.coin", "ui.bookBlue", "ui.coin", "ui.hourglass" };
-        static readonly string[] PaidIcons = { "ui.bookBlue", "ui.gemRed", "ui.bookBlue", "pi.magic", "ui.bookBlue", "ui.gemRed", "ui.bookBlue", "pi.magic" };
-
-        protected override void Build()
-        {
-            var bg = UiKit.Ensure<Image>(Root.gameObject); bg.color = Color.Lerp(Palette.Slate, Palette.Dim, 0.6f); bg.raycastTarget = true;
-            _top = TopBar.Build(App, Root);
-            // 시즌 배너 — Environment 들판 + 나무(성·무지개 조각은 팩에 없다) · 제목 · 남은 기간 · 진행바(메달) · 레벨 배지 · 안내 띠
-            var banner = UiKit.Rect(Root, "Banner"); UiKit.Pct(banner, Layout.PsBanner); UiKit.Ensure<RectMask2D>(banner.gameObject);
-            {
-                var field = UiKit.Icon(banner, "Field", "env.field"); field.preserveAspect = false; UiKit.Stretch(field.rectTransform);
-                var road = UiKit.Icon(banner, "Road", "env.road"); road.preserveAspect = false; UiKit.Pct(road.rectTransform, 55, 55, 45, 30);
-                var t1 = UiKit.Icon(banner, "Tree1", "env.tree"); UiKit.Pct(t1.rectTransform, 0, 30, 18, 60);
-                var t2 = UiKit.Icon(banner, "Tree2", "env.tree"); UiKit.Pct(t2.rectTransform, 14, 45, 14, 45);
-                var t3 = UiKit.Icon(banner, "Tree3", "env.tree"); UiKit.Pct(t3.rectTransform, 84, 20, 16, 55);
-            }
-            // 시즌 제목 = 제목 종류 60(전 52) · 칸 표 ㉔ 2.6%(61px) → LpTitleH 3.2%(75px · 세로 중심 그대로) / 남은 기간 = 본문 40 · 칸 1.4%(33px · bestFit 이 32 로 줄이고도 잘리던 것) → LpLineH 2.2%
-            var title = UiKit.Label(Root, 0, 0, 100, 100, "시즌 패스", TextSize.Title, Palette.White, kind: TextKind.Title); title.name = "SeasonTitle"; title.fontStyle = FontStyle.Bold; UiKit.Pct(title.rectTransform, Layout.PsTitle.WithH(Layout.LpTitleH));
-            var remain = UiKit.Label(Root, 0, 0, 100, 100, "시즌 종료까지 " + LobbyPopups.Dashes, TextSize.Body, Palette.White); remain.name = "Remain"; UiKit.Pct(remain.rectTransform, Layout.PsRemain.WithH(Layout.LpLineH));
-            var bar = UiKit.MakeBar(Root, "ui.sliderGreen"); bar.Root.name = "SeasonBar"; UiKit.Pct(bar.Root, Layout.PsBar); bar.Set(0, "준비 중");
-            var medal = UiKit.Icon(Root, "BarIcon", "ui.iconMedal"); UiKit.Pct(medal.rectTransform, Layout.PsBarIcon);
-            var badge = UiKit.Panel(Root, "LevelBadge", "fr.circle", Palette.Ink); UiKit.Pct(badge.rectTransform, Layout.PsLevelBadge);
-            UiKit.Label(badge.transform, 0, 0, 100, 100, "1", TextSize.Body, Palette.White);
-            var hint = UiKit.Panel(Root, "Hint", "fr.rect", Palette.A(Palette.Dim, 0.75f)); UiKit.Pct(hint.rectTransform, Layout.PsHint);
-            UiKit.Label(hint.transform, 4, 0, 92, 100, "일일 퀘스트를 완료해 보상을 해금하세요!", TextSize.Body, Palette.White);
-            var brown = UiKit.Panel(Root, "BrownBand", "fr.rect", Palette.A(Palette.InkSoft, 0.9f)); UiKit.Pct(brown.rectTransform, Layout.PsBrownBand);
-            // 트랙 — 열 배경 3 + 노란 레벨 줄은 창에 고정 · 칸·뱃지만 스크롤
-            var view = UiKit.Rect(Root, "Track"); UiKit.Pct(view, Layout.PsTrack); UiKit.Ensure<RectMask2D>(view.gameObject);
-            var vimg = view.gameObject.AddComponent<Image>(); vimg.color = new Color(0, 0, 0, 0); vimg.raycastTarget = true;
-            var T = Layout.PsTrack;
-            var colF = UiKit.Panel(view, "ColFree", "fr.rect", Palette.A(Palette.Blue, 0.9f)); UiKit.Pct(colF.rectTransform, Layout.PsColFree.Within(T));
-            var colP1 = UiKit.Panel(view, "ColPaid1", "fr.rect", Palette.A(Palette.Orange, 0.9f)); UiKit.Pct(colP1.rectTransform, Layout.PsColPaid1.Within(T));
-            var colP2 = UiKit.Panel(view, "ColPaid2", "fr.rect", Palette.A(Palette.Plum, 0.9f)); UiKit.Pct(colP2.rectTransform, Layout.PsColPaid2.Within(T));
-            var line = UiKit.Panel(view, "LevelLine", "fr.rect", Palette.Yellow); UiKit.Pct(line.rectTransform, Layout.PsLevelLine.Within(T));
-            var sr = view.gameObject.AddComponent<ScrollRect>(); sr.horizontal = false; sr.movementType = ScrollRect.MovementType.Clamped; sr.scrollSensitivity = 40;
-            var content = UiKit.Rect(view, "Content"); content.anchorMin = new Vector2(0, 1); content.anchorMax = new Vector2(1, 1); content.pivot = new Vector2(0.5f, 1);
-            float contentH = Layout.PsRowCount * Layout.PsRowPitch + (Layout.PsRow1.Y - T.Y);
-            content.offsetMin = Vector2.zero; content.offsetMax = Vector2.zero; content.sizeDelta = new Vector2(0, contentH / 100f * UiKit.FrameH);
-            sr.content = content; sr.viewport = view;
-            var C = new Layout.R(T.X, T.Y, T.W, contentH);
-            RectTransform badge1 = null, free1 = null, paid1 = null; var row1 = new RectTransform[3];
-            for (int i = 0; i < Layout.PsRowCount; i++)
-            {
-                float dy = i * Layout.PsRowPitch;
-                var row = UiKit.Rect(content, "Row:" + (i + 1)); UiKit.Stretch(row);
-                var b = UiKit.Panel(row, "Badge", "fr.circle", Palette.Yellow); UiKit.Pct(b.rectTransform, Sh(Layout.PsLevelBadgeRow, 0, dy).Within(C));
-                var bt = UiKit.Label(b.transform, 0, 0, 100, 100, (i + 1).ToString(), TextSize.Body, Palette.Ink); bt.fontStyle = FontStyle.Bold;
-                var f = LobbyPopups.Cell(row, C, Sh(Layout.PsCellFree, 0, dy), "gray", FreeIcons[i % FreeIcons.Length], null, i > 0, "Free");
-                var p1 = LobbyPopups.Cell(row, C, Sh(Layout.PsCellFree, Layout.PsColPitch, dy), "yellow", PaidIcons[i % PaidIcons.Length], null, true, "Paid1");
-                var p2 = LobbyPopups.Cell(row, C, Sh(Layout.PsCellFree, 2 * Layout.PsColPitch, dy), "plum", PaidIcons[i % PaidIcons.Length], null, true, "Paid2");
-                if (i == 0) { badge1 = b.rectTransform; free1 = f; paid1 = p1; row1[0] = f; row1[1] = p1; row1[2] = p2; }
-            }
-            // «현재 레벨» 구분선 + pill(💎 준비 중) — 표 자리 그대로(레벨 데이터 없음)
-            var sep = UiKit.Panel(content, "CurLine", "fr.rect", Palette.Yellow); UiKit.Pct(sep.rectTransform, new Layout.R(T.X, Layout.PsCurPill.Y + Layout.PsCurPill.H * 0.55f, T.W, 0.6f).Within(C));
-            var pill = UiKit.Panel(content, "CurPill", "fr.r12", Palette.Yellow); UiKit.Pct(pill.rectTransform, Layout.PsCurPill.Within(C));
-            var pg = UiKit.Icon(pill.transform, "Gem", "ui.gemRed"); UiKit.Pct(pg.rectTransform, 6, 12, 22, 76);
-            UiKit.Label(pill.transform, 30, 0, 66, 100, "준비 중", TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft, true, false);
-            // 바닥 버튼 3(트랙 위에 겹친다) · 하단 띠 · 뒤로 · 배너 탭 — 버튼 문구의 가운뎃점(U+00B7)은 Jua 에 글리프가 없어(WebGL 은 대체 폰트가 없다 · T63-shop 의 💎 와 같은 부류) 빈칸 없이 «패스 준비 중»
-            var claim = UiKit.Button(Root, "ui.btnGray", "전체 받기", () => { }, Layout.PsClaimAll); claim.name = "ClaimAllBtn";
-            var buy1 = UiKit.Button(Root, "ui.btnOrange", "패스 준비 중", () => { }, Layout.PsBuy1); buy1.name = "Buy1Btn";
-            var buy2 = UiKit.Button(Root, "ui.btnPlum", "패스+ 준비 중", () => { }, Layout.PsBuy2); buy2.name = "Buy2Btn";
-            var foot = UiKit.Panel(Root, "FootBand", "fr.rect", Palette.A(Palette.Dim, 0.9f)); UiKit.Pct(foot.rectTransform, Layout.PsFootBand);
-            var back = UiKit.Button(Root, "ui.btnGray", "", () => App.ShowScreen("lobby"), Layout.PsBack); back.name = "BackBtn";
-            var bi = UiKit.Icon(back, "Icon", "pi.arrow_left", Palette.Ink); UiKit.Pct(bi.rectTransform, 30, 18, 40, 64);
-            var tab = UiKit.Panel(Root, "BannerTab", "fr.r12", Palette.A(Palette.InkSoft, 0.9f)); UiKit.Pct(tab.rectTransform, Layout.PsBannerTab);
-            var tabIc = UiKit.Icon(tab.transform, "Icon", "ui.iconMedal"); UiKit.Pct(tabIc.rectTransform, 22, 4, 56, 56);
-            UiKit.Label(tab.transform, 2, 60, 96, 38, "시즌 패스", TextSize.Body, Palette.White, TextAnchor.UpperCenter);
-            UiKit.Clickable(tab.rectTransform, () => { });
-            // 비평 이름표(표 ㉔)
-            UiKit.Tag(_top.Root, "상단 바"); UiKit.Tag(banner, "시즌 배너"); UiKit.Tag(title.transform, "시즌 제목"); UiKit.Tag(remain.transform, "남은 기간 줄"); UiKit.Tag(bar.Root, "시즌 진행바");
-            UiKit.Tag(badge.transform, "배너 레벨 배지"); UiKit.Tag(hint.transform, "안내 줄"); UiKit.Tag(brown.transform, "갈색 띠 (참고·컨테이너)"); UiKit.Tag(view, "트랙 영역(3열)"); UiKit.Tag(line.transform, "레벨 줄");
-            UiKit.Tag(badge1, "레벨 뱃지(1개)"); UiKit.TagGroup(content, "트랙 줄 1(3칸)", row1); UiKit.Tag(free1, "트랙 칸(무료 1칸)"); UiKit.Tag(paid1, "트랙 칸(유료 1칸)"); UiKit.Tag(pill.transform, "현재 레벨 pill");
-            UiKit.Tag(claim, "전체 받기 버튼"); UiKit.Tag(buy1, "패스 구매 버튼 1"); UiKit.Tag(buy2, "패스 구매 버튼 2"); UiKit.Tag(back, "뒤로 버튼"); UiKit.Tag(tab.transform, "배너 탭"); UiKit.Tag(foot.transform, "하단 띠 (참고·컨테이너)");
         }
 
         public override void Refresh() { _top?.Refresh(); }

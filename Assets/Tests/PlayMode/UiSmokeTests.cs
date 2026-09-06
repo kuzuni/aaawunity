@@ -182,15 +182,16 @@ namespace KkomaKnight.Tests.Play
             Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 1, "로비 초상(HeroView · 상단 바 아바타)");
             Assert.IsTrue(HasText(s => s == "START"), "START 버튼");
             Assert.IsTrue(HasText(s => s.StartsWith("챕터")), "챕터 제목");
-            // T34 — 레퍼런스 01_lobby.jpg 구도 단언: 상단 바(아바타·전투력·골드·보석) · 배너+메뉴 · 사이드 3+3 · 카드+◀▶ · 보조 2 · START · 성·이벤트 · 탭 5
+            // T34 — 레퍼런스 01_lobby.jpg 구도 단언: 상단 바(아바타·전투력·골드·보석) · 메뉴 · 사이드 1+3 · 카드+◀▶ · 보조 2 · START · 이벤트 · 탭 5 (T78 로 배너·성·스타터팩·7일 챌린지 삭제)
             {
                 var top = UiKit.Find(lobby, "TopBar"); Assert.IsNotNull(top, "상단 재화 바(TopBar)");
                 Assert.IsNotNull(UiKit.Find(top, "Avatar"), "상단 바 아바타 칸"); Assert.IsNotNull(UiKit.Find(top, "Power"), "상단 바 전투력 숫자");
                 Assert.IsNotNull(UiKit.Find(top, "ResourceBar_Coin"), "골드 pill"); Assert.IsNotNull(UiKit.Find(top, "ResourceBar_Gem"), "보석 pill");
-                Assert.IsNotNull(UiKit.Find(lobby, "Banner"), "이벤트 배너"); Assert.IsNotNull(UiKit.Find(lobby, "Button_Menu"), "메뉴(≡)");
+                // T78 — 이벤트 배너(시즌 패스)는 삭제 · 그 자리는 비워 둔다
+                Assert.IsNull(UiKit.Find(lobby, "Banner"), "이벤트 배너는 삭제됐다(T78)"); Assert.IsNotNull(UiKit.Find(lobby, "Button_Menu"), "메뉴(≡)");
                 var sideL = UiKit.Find(lobby, "SideL"); var sideR = UiKit.Find(lobby, "SideR");
                 Assert.IsNotNull(sideL, "왼쪽 사이드 기둥"); Assert.IsNotNull(sideR, "오른쪽 사이드 기둥");
-                Assert.AreEqual(3, CountNamed(sideL, "Side:"), "왼쪽 사이드 아이콘 3"); Assert.AreEqual(3, CountNamed(sideR, "Side:"), "오른쪽 사이드 아이콘 3");
+                Assert.AreEqual(1, CountNamed(sideL, "Side:"), "왼쪽 사이드 아이콘 1(특권 · T78)"); Assert.AreEqual(3, CountNamed(sideR, "Side:"), "오른쪽 사이드 아이콘 3");
                 Assert.IsNotNull(UiKit.Find(lobby, "ChapterCard"), "챕터 카드"); Assert.IsNotNull(UiKit.Find(lobby, "ArrowL"), "◀"); Assert.IsNotNull(UiKit.Find(lobby, "ArrowR"), "▶");
                 // T68 ④ 카드 = 프리팹 SampleImage_Map 그림(활성 · 카드 자리 밑 · 스프라이트 있음) · 코드 조립 카드(Stage/Field/Road/Prop) 없음
                 {
@@ -207,9 +208,10 @@ namespace KkomaKnight.Tests.Play
                     Assert.IsTrue(hv.Still, "상단 초상 = 정지(T68 ②)"); Assert.AreEqual(0f, hv.Rig.AnimSpeed, 1e-3f, "상단 초상 Animator 속도 0");
                 }
                 Assert.AreEqual(2, CountNamed(UiKit.Find(lobby, "SubRow"), "Side:"), "보조 버튼 2(탐험·클리어 보상)");
-                Assert.IsNotNull(UiKit.Find(lobby, "Castle"), "왼쪽 아래 성"); Assert.IsNotNull(UiKit.Find(lobby, "Events"), "오른쪽 아래 이벤트");
-                Assert.IsTrue(HasText(s => s == "스타터팩") && HasText(s => s == "퀘스트") && HasText(s => s == "탐험"), "사이드·보조 라벨은 우리말");
-                // T63-lobby — 아이콘 라벨 11개(사이드 6 · 보조 2 · 성 · 이벤트)는 본문 하한(40)으로 2줄까지 잘림 없이: bestFit 이 줄이지 않고(TextGenerator 로 직접 굴려 40) · 선호 높이 ≤ 칸 · «시즌 패스» 도 같음
+                Assert.IsNull(UiKit.Find(lobby, "Castle"), "왼쪽 아래 «성» 은 삭제됐다(T78)"); Assert.IsNotNull(UiKit.Find(lobby, "Events"), "오른쪽 아래 이벤트");
+                Assert.IsTrue(HasText(s => s == "특권") && HasText(s => s == "퀘스트") && HasText(s => s == "탐험"), "사이드·보조 라벨은 우리말");
+                Assert.IsFalse(HasText(s => s == "스타터팩") || HasText(s => s == "7일 챌린지") || HasText(s => s == "시즌 패스") || HasText(s => s == "성"), "T78 삭제분 라벨 0");
+                // T63-lobby — 아이콘 라벨(사이드 4 · 보조 2 · 이벤트)은 보조 하한(36)으로 2줄까지 잘림 없이: bestFit 이 줄이지 않고(TextGenerator 로 직접 굴려 36) · 선호 높이 ≤ 칸
                 {
                     int captions = 0;
                     foreach (var t in lobby.GetComponentsInChildren<Text>(false))
@@ -226,27 +228,24 @@ namespace KkomaKnight.Tests.Play
                         var cell = (RectTransform)t.transform.parent; var icon = (RectTransform)UiKit.Find(cell, "Icon"); Assert.IsNotNull(icon, $"칸 {cell.name} 아이콘");
                         Assert.GreaterOrEqual(icon.rect.width, cell.rect.width * LobbyScreen.CaptionIconMinW - 1f, $"칸 {cell.name} 아이콘 폭 ≥ 칸 폭 75%");
                     }
-                    // T67(CI #98 빨강 후속): «Side:*» 칸은 사이드 6 + 보조 2 + 성 + 이벤트 = 10 — 배너 «시즌 패스» 는 Banner 밑이라 따로 본다
-                    Assert.AreEqual(10, captions, "아이콘 라벨 = 사이드 6 + 보조 2 + 성 + 이벤트");
-                    Text passLb = null;
-                    foreach (var t in UiKit.Find(lobby, "Banner").GetComponentsInChildren<Text>(false)) if (t.text == "시즌 패스") passLb = t;
-                    Assert.IsNotNull(passLb, "배너 «시즌 패스» 라벨"); Assert.AreEqual(TextSize.Body, passLb.fontSize, "배너 «시즌 패스» 크기 = 본문 하한");
+                    // T67(CI #98 빨강 후속) · T78: «Side:*» 칸은 사이드 4(특권 + 오른쪽 3) + 보조 2 + 이벤트 = 7 (배너·성 삭제)
+                    Assert.AreEqual(7, captions, "아이콘 라벨 = 사이드 4 + 보조 2 + 이벤트");
                 }
                 // 배치 = 표 ①(±3%p) — START 는 카드와 같은 x·폭, 탭 바는 맨 아래
                 var frame = _app.Frame; var start = (RectTransform)UiKit.Find(lobby, "Start"); var card = (RectTransform)UiKit.Find(lobby, "ChapterCard");
                 Assert.AreEqual(Layout.LobbyStart.X, start.anchorMin.x * 100f, 0.5f, "START x"); Assert.AreEqual(Layout.LobbyCard.X + Layout.LobbyCard.W, card.anchorMax.x * 100f, 0.5f, "카드 오른쪽 = START 오른쪽");
                 Assert.AreEqual(start.anchorMin.x, card.anchorMin.x, 1e-3f, "START 와 카드는 같은 x"); Assert.AreEqual(start.anchorMax.x, card.anchorMax.x, 1e-3f, "START 와 카드는 같은 폭");
                 Assert.AreEqual(1f - Layout.TabBar.Y / 100f, ((RectTransform)tabs).anchorMax.y, 1e-3f, "탭 바 = 표 자리");
-                // 스타터팩·보조 버튼·성·이벤트는 눌러도 아무 일 없음(껍데기 · 팝업 안 열림 · 빨간 줄 0 · 오른쪽 아래 «이벤트» 는 T43 아레나 페이지(EventsScreenTests))
-                foreach (var key in new[] { LobbyScreen.SideStarter, LobbyScreen.SideExplore, LobbyScreen.SideClearReward, LobbyScreen.SideCastle }) Assert.IsTrue(ClickNamed(lobby, "Side:" + key), "껍데기 버튼 " + key);
+                // 보조 버튼 2개는 눌러도 아무 일 없음(껍데기 · 팝업 안 열림 · 빨간 줄 0 · 오른쪽 아래 «이벤트» 는 T43 아레나 페이지(EventsScreenTests))
+                foreach (var key in new[] { LobbyScreen.SideExplore, LobbyScreen.SideClearReward }) Assert.IsTrue(ClickNamed(lobby, "Side:" + key), "껍데기 버튼 " + key);
                 yield return Frames(1);
                 Assert.IsFalse(_app.Overlay.IsOpen, "껍데기 버튼은 팝업을 열지 않는다"); Assert.AreEqual("lobby", _app.Current.Name, "껍데기 버튼은 화면을 바꾸지 않는다");
             }
             Check("로비");
 
-            // T44 — 로비 사이드 껍데기 6종: 팝업 4(퀘스트·출석·데일리 기프트·7일 챌린지 = 공통 팝업 문법 · 명판 · «탭하여 닫기» · 배경 탭 닫기 · X 없음) + 페이지 2(특권 = 사이드 · 시즌 패스 = 이벤트 배너 · 상단 바 + 뒤로 ◀ · 탭 바 없음)
+            // T44 — 로비 사이드 껍데기: 팝업 3(퀘스트·출석·데일리 기프트 = 공통 팝업 문법 · 명판 · «탭하여 닫기» · 배경 탭 닫기 · X 없음) + 페이지 1(특권 · 상단 바 + 뒤로 ◀ · 탭 바 없음) — T78 로 7일 챌린지 팝업·시즌 패스 페이지는 삭제
             {
-                (string key, string title, string mark)[] pops = { (LobbyScreen.SideQuest, "퀘스트", "새로고침까지"), (LobbyScreen.SideAttendance, "출석 보상", "7일차"), (LobbyScreen.SideDailyGift, "데일리 기프트", "광고 1회 보기"), (LobbyScreen.SideChallenge7, "7일 챌린지", "7일차") };
+                (string key, string title, string mark)[] pops = { (LobbyScreen.SideQuest, "퀘스트", "새로고침까지"), (LobbyScreen.SideAttendance, "출석 보상", "7일차"), (LobbyScreen.SideDailyGift, "데일리 기프트", "광고 1회 보기") };
                 foreach (var p in pops)
                 {
                     Assert.IsTrue(ClickNamed(lobby, "Side:" + p.key), "사이드 " + p.key); yield return Frames(2);
@@ -255,7 +254,7 @@ namespace KkomaKnight.Tests.Play
                     Assert.IsTrue(HasText(s => s == "탭하여 닫기"), p.title + ": 탭하여 닫기"); Assert.IsNull(UiKit.Find(_app.Overlay.Root, "Button_Close_01"), p.title + ": 닫기 X 없음");
                     Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), p.title + ": 배경 탭"); yield return Frames(2); Assert.IsFalse(_app.Overlay.IsOpen, p.title + " 닫힘");
                 }
-                // 구도 단언 — 퀘스트: 박스 = 표 ⑬ · 줄 6 · 탭 3 · 트랙 보상 칸 5 / 출석: 칸 7 / 데일리: 선물 그림 · 광고 줄 4 · 타임라인 점 4 / 7일: 배너 · 일차 탭 7 · 과제 줄 4
+                // 구도 단언 — 퀘스트: 박스 = 표 ⑳ · 줄 6 · 탭 3 · 트랙 보상 칸 5 / 출석: 칸 7 / 데일리: 선물 그림 · 광고 줄 4 · 타임라인 점 4
                 LobbyPopups.Quest(_app); yield return Frames(1);
                 Assert.AreEqual(6, CountNamed(_app.Overlay.Root, "Quest:"), "퀘스트 줄 6"); Assert.AreEqual(3, CountNamed(_app.Overlay.Root, "Tab:"), "퀘스트 탭 3"); Assert.AreEqual(5, CountNamed(_app.Overlay.Root, "Track:"), "트랙 보상 칸 5(+메달)");
                 { var bx = (RectTransform)UiKit.Find(_app.Overlay.Root, "QuestBox"); Assert.IsNotNull(bx, "퀘스트 박스"); Assert.AreEqual(Layout.QsBox.X, bx.anchorMin.x * 100f, 0.5f, "퀘스트 박스 x = 표 ⑬"); Assert.AreEqual(1f - Layout.QsBox.Y / 100f, bx.anchorMax.y, 1e-3f, "퀘스트 박스 y = 표 ⑬"); }
@@ -309,11 +308,8 @@ namespace KkomaKnight.Tests.Play
                 AssertNoTextClip("데일리 기프트 팝업(수령 뒤)", _app.Overlay.Root);
                 Check("데일리 기프트 광고 → 수령", expectOverlay: true);
                 _app.Overlay.Close(); yield return Frames(1);
-                LobbyPopups.Challenge7(_app); yield return Frames(1); Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Banner"), "챌린지 배너"); Assert.AreEqual(7, CountNamed(_app.Overlay.Root, "DayTab:"), "일차 탭 7"); Assert.AreEqual(4, CountNamed(_app.Overlay.Root, "Task:"), "과제 줄 4");
-                AssertNoTextClip("7일 챌린지 팝업", _app.Overlay.Root); AssertUsedAtLeast("과제 제목", _app.Overlay.Root, "Title", TextSize.Body); AssertUsedAtLeast("과제 카운터", _app.Overlay.Root, "Progress", TextSize.Body);
-                _app.Overlay.Close(); yield return Frames(1);
-                Check("사이드 팝업 4종 열고 닫음");
-                // 페이지 2
+                Check("사이드 팝업 3종 열고 닫음");
+                // 페이지 1(특권)
                 Assert.IsTrue(ClickNamed(lobby, "Side:" + LobbyScreen.SidePrivilege), "특권 아이콘"); yield return Frames(3);
                 Assert.AreEqual("privilege", _app.Current.Name, "특권 페이지"); var pv = _app.Current.Root;
                 Assert.IsNotNull(UiKit.Find(pv, "TopBar"), "특권: 상단 바"); Assert.AreEqual(4, CountNamed(pv, "Card:"), "특권 카드 4"); Assert.IsTrue(HasText(s => s == "특권") && HasText(s => s == "전체 받기"), "특권: 제목 · 전체 받기");
@@ -323,17 +319,8 @@ namespace KkomaKnight.Tests.Play
                 { Text pt = null; foreach (var t in pv.GetComponentsInChildren<Text>(false)) if (t.text == "특권") pt = t; Assert.IsNotNull(pt, "«특권» 글자"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(pt), "«특권» = 제목 종류"); Assert.GreaterOrEqual(TextAudit.BestFitSize(pt), TextSize.Title, "«특권» 실제 크기 ≥ 60"); }
                 Check("특권 페이지");
                 Assert.IsTrue(ClickNamed(pv, "BackBtn"), "특권 뒤로"); yield return Frames(2); Assert.AreEqual("lobby", _app.Current.Name, "뒤로 → 로비");
-                Assert.IsTrue(ClickNamed(lobby, "Banner"), "이벤트 배너 → 시즌 패스"); yield return Frames(3);
-                Assert.AreEqual("pass", _app.Current.Name, "패스 페이지"); var ps = _app.Current.Root;
-                Assert.IsNotNull(UiKit.Find(ps, "TopBar"), "패스: 상단 바"); Assert.AreEqual(Layout.PsRowCount, CountNamed(ps, "Row:"), "패스 트랙 줄"); Assert.IsTrue(HasText(s => s == "시즌 패스") && HasText(s => s == "전체 받기"), "패스: 제목 · 전체 받기");
-                Assert.IsNotNull(UiKit.Find(ps, "Buy1Btn"), "패스 구매 버튼 1"); Assert.IsNotNull(UiKit.Find(ps, "Buy2Btn"), "패스 구매 버튼 2"); Assert.IsNull(UiKit.Find(ps, "ui.tabBar"), "패스: 탭 바 없음");
-                { var tr = (RectTransform)UiKit.Find(ps, "Track"); Assert.IsNotNull(tr, "트랙"); Assert.AreEqual(Layout.PsTrack.X, tr.anchorMin.x * 100f, 0.5f, "트랙 x = 표 ⑰"); Assert.AreEqual(1f - Layout.PsTrack.Y / 100f, tr.anchorMax.y, 1e-3f, "트랙 y = 표 ⑰"); }
-                // T63-lobbypopups — 패스: 잘림 0 · 남은 기간 40 안 줄어듦 · 시즌 제목 = 제목 종류 60(칸 LpTitleH) · 버튼 문구에 Jua 에 없는 가운뎃점(U+00B7) 없음
-                AssertNoTextClip("패스 페이지", ps); AssertUsedAtLeast("패스 남은 기간", ps, "Remain", TextSize.Body);
-                { var st = UiKit.Find(ps, "SeasonTitle"); Assert.IsNotNull(st, "시즌 제목"); var t = st.GetComponent<Text>(); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(t), "시즌 제목 = 제목 종류"); Assert.GreaterOrEqual(TextAudit.BestFitSize(t), TextSize.Title, "시즌 제목 실제 크기 ≥ 60"); }
-                foreach (var t in ps.GetComponentsInChildren<Text>(false)) Assert.IsFalse(t.text.Contains("·"), "패스 페이지 글자에 가운뎃점(Jua 글리프 없음): " + t.text);
-                Check("패스 페이지");
-                Assert.IsTrue(ClickNamed(ps, "BackBtn"), "패스 뒤로"); yield return Frames(2); Assert.AreEqual("lobby", _app.Current.Name, "뒤로 → 로비"); Check("로비 복귀");
+                // T78 — 시즌 패스 페이지(이벤트 배너 진입)는 삭제됐다
+                Check("로비 복귀");
             }
 
             // 챕터 ◀▶ (최고 챕터 1 이라 그대로) · 탭 라벨

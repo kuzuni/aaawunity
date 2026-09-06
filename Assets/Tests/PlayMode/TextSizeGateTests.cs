@@ -94,12 +94,11 @@ namespace KkomaKnight.Tests.Play
             _app.Overlay.Settings(); yield return Check("12_settings"); _app.Overlay.Close(); yield return Frames(1);
 
             // 11 특권 · 15 퀘스트 · 16 출석 · 17 데일리 기프트 · 18 7일 챌린지 · 19 시즌 패스
+            // T78(주인 2026-09-07) — 18_challenge7 · 19_pass 는 화면째 삭제돼 게이트 대상이 아니다
             _app.ShowScreen("privilege"); yield return Frames(2); yield return Check("11_shop_special"); _app.ShowScreen("lobby"); yield return Frames(1);
             LobbyPopups.Quest(_app); yield return Check("15_quest"); _app.Overlay.Close(); yield return Frames(1);
             LobbyPopups.Attendance(_app); yield return Check("16_attendance"); _app.Overlay.Close(); yield return Frames(1);
             LobbyPopups.DailyGift(_app); yield return Check("17_daily_gift"); _app.Overlay.Close(); yield return Frames(1);
-            LobbyPopups.Challenge7(_app); yield return Check("18_challenge7"); _app.Overlay.Close(); yield return Frames(1);
-            _app.ShowScreen("pass"); yield return Frames(2); yield return Check("19_pass"); _app.ShowScreen("lobby"); yield return Frames(1);
 
             // 13 펫 · 14 펫 세부
             _app.ShowScreen("pet"); yield return Frames(2); yield return Check("13_pet");

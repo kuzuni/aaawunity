@@ -70,8 +70,9 @@ namespace KkomaKnight.Tests
         {
             var s = Parse();
             Same(s, "①", "상단 바(아바타+재화 줄 전체)", Layout.LobbyTopBar); Same(s, "①", "아바타(정사각)", Layout.LobbyAvatar); Same(s, "①", "재화 pill 줄", Layout.LobbyPills);
-            Same(s, "①", "이벤트 배너", Layout.LobbyBanner); Same(s, "①", "메뉴(☰) 버튼", Layout.LobbyMenu);
-            Same(s, "①", "좌 사이드 아이콘 열(3개)", Layout.LobbySideL); Same(s, "①", "우 사이드 아이콘 열(3개)", Layout.LobbySideR);
+            Same(s, "①", "메뉴(☰) 버튼", Layout.LobbyMenu);
+            // T78 — 이벤트 배너·성 버튼 행은 표 ① 에서 삭제 · 왼쪽 기둥은 «특권» 1칸(높이 8.0 = 3칸 24.0 의 1/3)
+            Same(s, "①", "좌 사이드 아이콘 열(1개)", Layout.LobbySideL); Same(s, "①", "우 사이드 아이콘 열(3개)", Layout.LobbySideR);
             Same(s, "①", "챕터 제목", Layout.LobbyChapTitle); Same(s, "①", "챕터 밑줄·선택 화살표", Layout.LobbyChapUnderline); Same(s, "①", "챕터 카드(스테이지 그림)", Layout.LobbyCard);
             Same(s, "①", "좌 화살표", Layout.LobbyArrowL); Same(s, "①", "우 화살표", Layout.LobbyArrowR); Same(s, "①", "보조 버튼 2개 줄", Layout.LobbySubRow);
             Same(s, "①", "START 버튼", Layout.LobbyStart); Same(s, "①", "하단 탭바", Layout.TabBar);
@@ -225,23 +226,7 @@ namespace KkomaKnight.Tests
             Assert.That(Layout.GfRowBtn.X + Layout.GfRowBtn.W / 2f, Is.EqualTo(71.4f).Within(0.2f), "줄 버튼 가운데 = 레퍼런스 ✅ 가운데");
             Assert.That(Layout.GfTodayBtn.X, Is.EqualTo(Layout.GfRowBtn.X).Within(0.05f)); Assert.That(Layout.GfTodayBtn.W, Is.EqualTo(Layout.GfRowBtn.W).Within(0.05f));
 
-            Same(s, "㉓", "제목 리본", Layout.C7Ribbon); Same(s, "㉓", "팝업 박스", Layout.C7Box); Same(s, "㉓", "종료 시각 줄", Layout.C7Timer); Same(s, "㉓", "배너 그림", Layout.C7Banner); Same(s, "㉓", "정보 버튼", Layout.C7Info);
-            Same(s, "㉓", "트랙 아이콘 줄(6칸)", Layout.C7TrackIcons); Same(s, "㉓", "트랙 아이콘(1칸)", Layout.C7TrackIcon); Same(s, "㉓", "트랙 숫자 줄", Layout.C7TrackNums);
-            Same(s, "㉓", "일차 탭 열(7칸)", Layout.C7DayTabs); Same(s, "㉓", "일차 탭(1칸)", Layout.C7DayTab); Same(s, "㉓", "과제 목록 상자", Layout.C7ListBox);
-            Same(s, "㉓", "과제 줄 1", Layout.C7Row1); Same(s, "㉓", "과제 줄 2", Layout.C7Row2); Same(s, "㉓", "과제 제목(1줄)", Layout.C7RowTitle); Same(s, "㉓", "과제 보상 줄(1줄)", Layout.C7RowRewards); Same(s, "㉓", "이동 버튼(1줄)", Layout.C7RowGo);
-            Assert.That(Layout.C7Row2.Y - Layout.C7Row1.Y, Is.EqualTo(Layout.C7RowPitch).Within(0.05f));
-            Assert.That(Layout.C7DayTab.Y + 6 * Layout.C7DayPitch + Layout.C7DayTab.H, Is.EqualTo(Layout.C7DayTabs.Y + Layout.C7DayTabs.H).Within(0.15f));
-            Assert.That(Layout.C7TrackIcon.X + 5 * Layout.C7TrackPitch + Layout.C7TrackIcon.W, Is.EqualTo(Layout.C7TrackIcons.X + Layout.C7TrackIcons.W).Within(0.15f));
-            Assert.That(Layout.C7RowReward.X + Layout.C7RowRewardPitch + Layout.C7RowReward.W, Is.EqualTo(Layout.C7RowRewards.X + Layout.C7RowRewards.W).Within(0.15f));
-
-            Same(s, "㉔", "상단 바", Layout.LobbyTopBar); Same(s, "㉔", "시즌 배너", Layout.PsBanner); Same(s, "㉔", "시즌 제목", Layout.PsTitle); Same(s, "㉔", "남은 기간 줄", Layout.PsRemain); Same(s, "㉔", "시즌 진행바", Layout.PsBar);
-            Same(s, "㉔", "배너 레벨 배지", Layout.PsLevelBadge); Same(s, "㉔", "안내 줄", Layout.PsHint); Same(s, "㉔", "갈색 띠 (참고·컨테이너)", Layout.PsBrownBand); Same(s, "㉔", "트랙 영역(3열)", Layout.PsTrack);
-            Same(s, "㉔", "레벨 줄", Layout.PsLevelLine); Same(s, "㉔", "레벨 뱃지(1개)", Layout.PsLevelBadgeRow); Same(s, "㉔", "트랙 줄 1(3칸)", Layout.PsRow1); Same(s, "㉔", "트랙 칸(무료 1칸)", Layout.PsCellFree); Same(s, "㉔", "트랙 칸(유료 1칸)", Layout.PsCellPaid);
-            Same(s, "㉔", "현재 레벨 pill", Layout.PsCurPill); Same(s, "㉔", "전체 받기 버튼", Layout.PsClaimAll); Same(s, "㉔", "패스 구매 버튼 1", Layout.PsBuy1); Same(s, "㉔", "패스 구매 버튼 2", Layout.PsBuy2);
-            Same(s, "㉔", "뒤로 버튼", Layout.PsBack); Same(s, "㉔", "배너 탭", Layout.PsBannerTab); Same(s, "㉔", "하단 띠 (참고·컨테이너)", Layout.PsFootBand);
-            Assert.That(Layout.PsCellFree.X + 2 * Layout.PsColPitch + Layout.PsCellFree.W, Is.EqualTo(Layout.PsRow1.X + Layout.PsRow1.W).Within(0.15f));
-            Assert.That(Layout.PsCellFree.X + Layout.PsColPitch, Is.EqualTo(Layout.PsCellPaid.X).Within(0.3f));   // 실측 43.8 · 피치 32.5(세 칸 평균) → 43.6 · 판독 오차 안
-            Assert.That(Layout.PsColFree.X + Layout.PsColFree.W, Is.EqualTo(Layout.PsLevelLine.X).Within(0.05f)); Assert.That(Layout.PsLevelLine.X + Layout.PsLevelLine.W, Is.EqualTo(Layout.PsColPaid1.X).Within(0.05f));
+            // ㉓ 7일 챌린지 · ㉔ 패스 — T78(주인 2026-09-07)로 화면째 삭제 · 표도 폐기
         }
         [Test]
         public void Common_TopBarAndTabBarSharedAcrossTabs()

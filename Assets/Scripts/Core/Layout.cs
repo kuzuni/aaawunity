@@ -22,10 +22,11 @@ namespace KkomaKnight.Core
         public static readonly R LobbyTopBar = new R(0, 3.7f, 100, 4.5f);
         public static readonly R LobbyAvatar = new R(2.5f, 3.8f, 10.2f, 4.4f);
         public static readonly R LobbyPills = new R(13.2f, 4.5f, 85.4f, 2.9f);
-        public static readonly R LobbyBanner = new R(24.5f, 9.2f, 51.6f, 5.6f);
+        // T78(주인 2026-09-07) — 이벤트 배너(시즌 패스)는 삭제 · 표 ① 의 그 자리(24.5/9.2/51.6/5.6)는 비워 둔다(다른 요소를 끌어올리지 않는다)
         public static readonly R LobbyMenu = new R(88.3f, 9.2f, 9.0f, 4.1f);
         // 사이드 기둥 · 보조 줄은 T68(아이콘 1.5~1.8배 · 칸 폭 ≥75%) + T63-lobby(라벨 36 · 2줄) 가 레퍼런스(16.4×21.5 · 37.2×7.0)에서 ±3%p 안으로 키운 값 — ref-layout ① «⚑ T68 회차 정정»
-        public static readonly R LobbySideL = new R(1.4f, 16.0f, 19.0f, 24.0f);
+        /// <summary>왼쪽 사이드 기둥 — T78(주인 2026-09-07)로 «특권» 1칸만 남아 높이가 3칸(24.0)의 1/3 = 8.0 이다(x·y·폭·칸 크기는 오른쪽 기둥과 같게 유지 · 위 정렬).</summary>
+        public static readonly R LobbySideL = new R(1.4f, 16.0f, 19.0f, 8.0f);
         public static readonly R LobbySideR = new R(79.6f, 16.0f, 19.0f, 24.0f);
         public static readonly R LobbyChapTitle = new R(34.7f, 27.2f, 31.3f, 2.3f);
         public static readonly R LobbyChapUnderline = new R(29.6f, 30.0f, 41.0f, 0.9f);
@@ -44,7 +45,7 @@ namespace KkomaKnight.Core
         public static readonly R LobbyGemPill = new R(69.5f, 4.5f, 29.0f, 2.9f);
         /// <summary>왼쪽 아래 «성»(잠금 · jpg x 0~18% · y 70.5~78%) · 오른쪽 아래 «이벤트»(방패 · x 82~100%) — START 와 같은 줄, 프레임 가장자리에 붙는다.</summary>
         // 모서리 2개(표 밖) — T68 ① 로 17.0×7.5 → 20.0×8.5(아이콘 1.57배 · START 27.9~72.4 와 안 겹침 · 탭 바 92.6 위)
-        public static readonly R LobbyCastle = new R(0, 70.0f, 20.0f, 8.5f);
+        // T78(주인 2026-09-07) — 왼쪽 아래 «성»(잠금) 삭제 · 그 자리(0/70.0/20.0/8.5)는 비워 둔다
         public static readonly R LobbyEvents = new R(80.0f, 70.0f, 20.0f, 8.5f);
 
         // ② 인게임 — 메인 게임화면.jpg
@@ -422,56 +423,7 @@ namespace KkomaKnight.Core
         /// <summary>«오늘의 선물» 무료 칸의 같은 버튼 — 줄 버튼과 같은 가운데·폭(레퍼런스도 ✅ 가 같은 x).</summary>
         public static readonly R GfTodayBtn = new R(60.6f, 34.9f, 21.6f, 3.8f);
 
-        // ㉓ 7일 챌린지 팝업 — docs/ref/18_challenge7.jpg (T44 · ㉓ 표와 같다 · 빨간 리본 · 배너 그림 · 왼쪽 일차 탭 7 + 오른쪽 과제 줄)
-        public static readonly R C7Ribbon = new R(3.0f, 15.9f, 94.0f, 4.3f);
-        public static readonly R C7Box = new R(6.4f, 20.2f, 87.2f, 61.2f);
-        public static readonly R C7Timer = new R(36.0f, 20.8f, 28.0f, 1.6f);
-        public static readonly R C7Banner = new R(6.4f, 23.4f, 87.2f, 16.2f);
-        public static readonly R C7Info = new R(86.1f, 24.2f, 5.6f, 2.6f);
-        public static readonly R C7TrackIcons = new R(12.8f, 41.3f, 74.4f, 3.6f);
-        public static readonly R C7TrackIcon = new R(12.8f, 41.3f, 7.3f, 3.6f);
-        public const int C7TrackCount = 6; public const float C7TrackPitch = 13.42f;
-        public static readonly R C7TrackNums = new R(12.8f, 45.2f, 74.4f, 1.5f);
-        public static readonly R C7DayTabs = new R(10.6f, 48.7f, 15.0f, 30.8f);
-        public static readonly R C7DayTab = new R(10.6f, 48.7f, 15.0f, 3.5f);
-        public const int C7DayCount = 7; public const float C7DayPitch = 4.55f;
-        public static readonly R C7ListBox = new R(30.0f, 48.1f, 60.3f, 32.0f);
-        public static readonly R C7Row1 = new R(30.6f, 48.7f, 59.0f, 8.0f);
-        public static readonly R C7Row2 = new R(30.6f, 57.6f, 59.0f, 8.0f);
-        public const float C7RowPitch = 8.9f; public const int C7RowCount = 4;
-        public static readonly R C7RowTitle = new R(33.3f, 49.0f, 29.2f, 1.6f);
-        public static readonly R C7RowRewards = new R(33.3f, 51.8f, 19.2f, 4.5f);
-        public static readonly R C7RowReward = new R(33.3f, 51.8f, 9.1f, 4.5f);
-        public const float C7RowRewardPitch = 10.0f;
-        public static readonly R C7RowGo = new R(66.7f, 52.2f, 20.1f, 3.6f);
-
-        // ㉔ 패스 페이지 — docs/ref/19_pass.jpg (T44 · ㉔ 표와 같다 · 상단 바 = LobbyTopBar · 탭 바 없음 · 3열 세로 트랙 스크롤)
-        public static readonly R PsBanner = new R(0, 8.3f, 100, 19.6f);
-        public static readonly R PsTitle = new R(26.4f, 12.8f, 47.2f, 2.6f);
-        public static readonly R PsRemain = new R(33.0f, 19.6f, 34.0f, 1.4f);
-        public static readonly R PsBar = new R(23.6f, 21.3f, 47.4f, 1.9f);
-        public static readonly R PsBarIcon = new R(16.0f, 20.6f, 7.6f, 3.1f);
-        public static readonly R PsLevelBadge = new R(76.4f, 20.5f, 7.6f, 3.2f);
-        public static readonly R PsHint = new R(0, 24.4f, 100, 2.5f);
-        public static readonly R PsBrownBand = new R(0, 27.9f, 100, 3.5f);
-        public static readonly R PsTrack = new R(2.0f, 31.4f, 96.0f, 60.9f);
-        /// <summary>3열 x 경계(프레임 %): 무료 1.9~32.4 · 노란 레벨 줄 32.4~35.4 · 유료1 35.4~66.0 · 유료2 66.0~98.0.</summary>
-        public static readonly R PsColFree = new R(1.9f, 31.4f, 30.5f, 60.9f);
-        public static readonly R PsColPaid1 = new R(35.4f, 31.4f, 30.6f, 60.9f);
-        public static readonly R PsColPaid2 = new R(66.0f, 31.4f, 32.0f, 60.9f);
-        public static readonly R PsLevelLine = new R(32.4f, 31.4f, 3.0f, 60.9f);
-        public static readonly R PsLevelBadgeRow = new R(29.4f, 36.5f, 7.8f, 3.6f);
-        public static readonly R PsRow1 = new R(11.1f, 35.4f, 77.5f, 5.8f);
-        public static readonly R PsCellFree = new R(11.1f, 35.4f, 12.5f, 5.8f);
-        public static readonly R PsCellPaid = new R(43.8f, 35.4f, 12.5f, 5.8f);
-        public const float PsColPitch = 32.5f, PsRowPitch = 10.3f; public const int PsRowCount = 8;
-        public static readonly R PsCurPill = new R(24.3f, 72.6f, 18.1f, 3.0f);
-        public static readonly R PsClaimAll = new R(3.9f, 86.2f, 27.8f, 4.8f);
-        public static readonly R PsBuy1 = new R(35.8f, 86.2f, 28.4f, 4.8f);
-        public static readonly R PsBuy2 = new R(68.1f, 86.2f, 28.4f, 4.8f);
-        public static readonly R PsBack = new R(2.5f, 93.7f, 16.9f, 5.3f);
-        public static readonly R PsBannerTab = new R(80.6f, 92.3f, 18.3f, 7.7f);
-        public static readonly R PsFootBand = new R(0, 92.3f, 100, 7.7f);
+        // ㉓ 7일 챌린지 팝업 · ㉔ 패스 페이지 — T78(주인 2026-09-07 «7일 챌린지 걍 안 하고 싶음» · «시즌 패스도 삭제»)로 화면째 삭제 · 표 ㉓·㉔ 도 폐기
 
         // ⑧ 공통
         public const float BodyMarginX = 3.0f, PopupW = 87.0f, PopupMarginX = 6.5f;

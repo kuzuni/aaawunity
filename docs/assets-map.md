@@ -199,15 +199,15 @@
 | sprites | `ui.gift` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Gift_01_Yellow.png` | fileID 21300000 |  |
 | sprites | `ui.talentIcon` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Star_01_Yellow.png` | fileID 21300000 | 하단 탭 «탤런트» 아이콘 (Economy_Star_01_Yellow — 워커 선택 · 바꾸려면 경로 한 줄) |
 | sprites | `ui.petIcon` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Egg_01.png` | fileID 21300000 | 하단 탭 «펫» 아이콘 (Item_Egg_01 펫 알 — 워커 선택 · 바꾸려면 경로 한 줄) |
-| sprites | `ui.iconGiftRed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Gift_01_Red.png` | fileID 21300000 | 로비 왼쪽 사이드 «스타터팩» 아이콘 (껍데기 · OnSide(starter) · T44) |
+| sprites | `ui.iconGiftRed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Gift_01_Red.png` | fileID 21300000 | 특권 페이지 «일일 선물» 카드 머리 아이콘 (T78 로 로비 «스타터팩» 사이드 아이콘은 삭제 — 특권 카드 쪽만 남았다) |
 | sprites | `ui.iconCrown` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Crown_01_Gold.png` | fileID 21300000 | 로비 왼쪽 사이드 «특권» 아이콘 (껍데기 · OnSide(privilege) · T44 특권 페이지) |
-| sprites | `ui.iconTarget` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_ETC_Target_01.png` | fileID 21300000 | 로비 왼쪽 사이드 «7일 챌린지» 아이콘 (껍데기 · OnSide(challenge7) · T44) |
+| sprites | `ui.iconTarget` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_ETC_Target_01.png` | fileID 21300000 | **미사용(T78 · 주인 2026-09-07 «7일 챌린지 걍 안 하고 싶음»)** — 로비 왼쪽 사이드 «7일 챌린지» 아이콘이었다 |
 | sprites | `ui.iconCalendar` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Common_Calendar_01_Green.png` | fileID 21300000 | 로비 오른쪽 사이드 «출석» 아이콘 (껍데기 · OnSide(attendance) · T44) |
 | sprites | `ui.iconBalloon` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Misc_Baloon_01.png` | fileID 21300000 | 로비 오른쪽 사이드 «데일리 기프트» 아이콘 (레퍼런스의 파티 폭죽 대신 풍선 · OnSide(dailyGift) · T44) |
 | sprites | `ui.iconQuest` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Common_Quest_01.png` | fileID 21300000 | 로비 오른쪽 사이드 «퀘스트» 아이콘 (껍데기 · OnSide(quest) · T44) |
 | sprites | `ui.iconMap` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Map_01.png` | fileID 21300000 | 로비 보조 버튼 «탐험» 아이콘 (껍데기 · OnSide(explore)) |
 | sprites | `ui.iconChestRed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Chest_01_Red.png` | fileID 21300000 | 로비 보조 버튼 «클리어 보상» 아이콘 (껍데기 · OnSide(clearReward)) |
-| sprites | `ui.iconHome` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Common_Home_01_Blue.png` | fileID 21300000 | 로비 왼쪽 아래 «성»(잠금) 아이콘 — 팩에 성이 없어 집 아이콘 + ui.iconLock 자물쇠 겹침 (눌러도 아무 일 없음) |
+| sprites | `ui.iconHome` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Common_Home_01_Blue.png` | fileID 21300000 | **미사용(T78 · 주인 2026-09-07 «성 버튼도 삭제»)** — 로비 왼쪽 아래 «성»(잠금) 아이콘이었다 |
 | sprites | `ui.iconLock` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Common_Lock_01_Silver.png` | fileID 21300000 | 잠금 자물쇠(성 위에 겹침 · 껍데기 화면의 잠금 표시 공용) |
 | sprites | `ui.iconDungeon` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Dungeon_01.png` | fileID 21300000 | 로비 오른쪽 아래 «이벤트» 아이콘 (레퍼런스의 방패 자리 · OnSide(events) → T43 아레나 페이지) · T43: 하단 탭 «던전» 아이콘 · 던전 페이지 제목 아이콘 · 던전/PvP 2탭 |
 | sprites | `ui.iconMedal` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Medal_01_Gold.png` | fileID 21300000 | 로비 이벤트 배너 왼쪽 메달 아이콘(패스 껍데기) |
@@ -553,7 +553,7 @@
 | prefabs | `ui.switch` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Control/Swich_01.prefab` | root 6431523672475112463 | 설정 팝업 음악/효과음 토글(Swich_01 조각 · On/Off 자식 · T41) |
 | prefabs | `ui.talent` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Character_Talent_02.prefab` | root 4786098786137720783 | 탤런트·펫 팝업 (주인 지정 Character_Talent_02 · T10 · 프리팹 통째로 그대로 · 기능 없음) — 하단 탭 «탤런트»·«펫» 이 연다 · 재화 바 = 골드·보석 · 프리팹 안 탭 바로 닫는다(다른 탭 → 그 화면) |
 | prefabs | `ui.btnStartOrange` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_03_Orange.prefab` | root 7008214384983651424 | 로비 START (Button_03_Orange · 레퍼런스 색 규칙 «주 버튼 = 주황» · LobbyStart 자리 = 카드와 같은 폭) |
-| prefabs | `ui.framePlum` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_Rectangle_06_Noborder_Plum.prefab` | root 5129137505210471693 | 로비 이벤트 배너(보라 · LobbyBanner 자리 · T44 패스 껍데기 진입) — 안에 ui.iconMedal + «시즌 패스» + ui.sliderGreen 진행바 + 레벨 배지(fr.circle) |
+| prefabs | `ui.framePlum` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_Rectangle_06_Noborder_Plum.prefab` | root 5129137505210471693 | **미사용(T78 · 주인 2026-09-07 «시즌 패스도 삭제»)** — 로비 이벤트 배너(보라)였다. 다른 보라 상자가 필요하면 이 키를 쓰면 된다 |
 | prefabs | `ui.userInfoSlider` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoLayout/UserInfo_01_Slider.prefab` | root 3948410254394711559 | 상단 재화 바 아바타 — UserInfo_01_Slider 의 ProfileFrame_02_Yellow(노란 테두리 정사각 초상 · 177px 을 LobbyAvatar 자리에 배율로) 조각만 쓴다 · 나머지(이름·길드·슬라이더·프레임)는 끔 · 마스크 안 = HeroView(가슴 위 확대 1.6) |
 | controllers | `cm.controller` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Common/Animations/_Controller.controller` | fileID 9100000 |  |
 | materials | `mat.hitFlash` | `Assets/KkomaKnight/HitFlash.mat` | fileID 2100000 | AllIn1SpriteShader(URP 2D) HITEFFECT_ON 머티리얼 — 피격 순간 0.1초 하양 플래시 |

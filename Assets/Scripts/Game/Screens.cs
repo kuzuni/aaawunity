@@ -12,17 +12,17 @@ namespace KkomaKnight.Game
     /// (배경+Deco · 메뉴(≡) · 챕터 제목 조각 · 탭 바를 뜯어 표 자리에 놓고, 나머지 조각은 끈다 · 코드 도형 없음).
     /// <list type="bullet">
     /// <item>상단 재화 바 = <see cref="TopBar"/>(아바타 = HeroView 가슴 위 · 전투력(칼 + 주황 숫자) · 골드 pill · 보석 pill) — 장비·상점·펫·던전 화면(T37·T40·T42·T43)도 같은 헬퍼를 쓴다.</item>
-    /// <item>이벤트 배너(보라 · 진행바 · 레벨 배지 · 패스 껍데기) + 메뉴(≡ = 설정 팝업).</item>
-    /// <item>왼쪽 세로 아이콘 3(스타터팩·특권·7일 챌린지) / 오른쪽 3(출석·데일리 기프트·퀘스트) — 어두운 반투명 기둥 + 아이콘 + 라벨 · 전부 <see cref="OnSide"/> 훅 하나로(T44 가 채울 때까지 아무 일 없음).</item>
-    /// <item>«챕터 N» 제목(프리팹 Title_LineDeco 조각 · 밑줄 포함) → 챕터 카드(어두운 테두리 + 이번 챕터 전투 맵 테마의 Environment 바닥·길·소품) + ◀▶ → 보조 버튼 2(탐험·클리어 보상 · 껍데기) → START(주황 · 카드와 같은 폭) → 왼쪽 아래 성(잠금) · 오른쪽 아래 이벤트(T43 진입) → 탭 바.</item>
+    /// <item>메뉴(≡ = 설정 팝업). <b>이벤트 배너(시즌 패스)는 주인 2026-09-07 지시로 삭제 — 그 자리는 비워 둔다</b>(T78 · 다른 요소를 끌어올리지 않는다).</item>
+    /// <item>왼쪽 세로 아이콘 <b>1</b>(특권 · T78 로 스타터팩·7일 챌린지 삭제) / 오른쪽 3(출석·데일리 기프트·퀘스트) — 어두운 반투명 기둥 + 아이콘 + 라벨 · 전부 <see cref="OnSide"/> 훅 하나로.</item>
+    /// <item>«챕터 N» 제목(프리팹 Title_LineDeco 조각 · 밑줄 포함) → 챕터 카드(어두운 테두리 + 이번 챕터 전투 맵 테마의 Environment 바닥·길·소품) + ◀▶ → 보조 버튼 2(탐험·클리어 보상 · 껍데기) → START(주황 · 카드와 같은 폭) → 오른쪽 아래 이벤트(T43 진입) → 탭 바. <b>왼쪽 아래 «성»(잠금)은 주인 2026-09-07 지시로 삭제</b>(T78).</item>
     /// </list>
     /// </summary>
     public sealed class LobbyScreen : GameScreen
     {
         public override string Name => "lobby";
-        /// <summary>사이드·보조·모서리 버튼 키 — T43(events) · T44(나머지) 가 <see cref="OnSide"/> 에서 이어받는다.</summary>
-        public const string SideStarter = "starter", SidePrivilege = "privilege", SideChallenge7 = "challenge7", SideAttendance = "attendance", SideDailyGift = "dailyGift", SideQuest = "quest";
-        public const string SidePass = "pass", SideExplore = "explore", SideClearReward = "clearReward", SideCastle = "castle", SideEvents = "events";
+        /// <summary>사이드·보조·모서리 버튼 키 — T43(events) · T44(나머지) 가 <see cref="OnSide"/> 에서 이어받는다. T78(주인 2026-09-07)로 <c>starter</c>·<c>challenge7</c>·<c>pass</c>·<c>castle</c> 네 키는 삭제됐다.</summary>
+        public const string SidePrivilege = "privilege", SideAttendance = "attendance", SideDailyGift = "dailyGift", SideQuest = "quest";
+        public const string SideExplore = "explore", SideClearReward = "clearReward", SideEvents = "events";
         /// <summary>
         /// 아이콘 라벨 칸(사이드·보조·모서리 · <see cref="BuildColumn"/>) 안의 아이콘 자리 / 글자 띠 자리(칸 %) — T68 ①(주인 «아이콘 너무 작음» · 1.5~1.8배 · 칸 폭의 ≥ 75%) + T63-lobby(라벨 보조 36 · 2줄 · 잘림 0).
         /// 아이콘이 칸 위 82% 를 차지하고 글자 띠(아래 50%)가 아이콘 아랫부분에 겹친다 — 레퍼런스 01 도 «Daily Gifts»·«7-Day Challenge» 가 아이콘 밑단 위에 얹혀 있다(외곽선 글자).
@@ -59,28 +59,13 @@ namespace KkomaKnight.Game
             _top = TopBar.Build(App, rt);
             UiKit.Tag(_top.Root, "상단 바(아바타+재화 줄 전체)"); UiKit.Tag(_top.Avatar, "아바타(정사각)"); UiKit.TagGroup(_top.Root, "재화 pill 줄", _top.PowerCell, _top.GoldPill, _top.GemPill);
 
-            // ② 이벤트 배너(보라 · 패스 껍데기) + 메뉴(≡)
-            var banner = UiKit.Spawn("ui.framePlum", rt); var brt = (RectTransform)banner.transform; brt.name = "Banner"; UiKit.Pct(brt, Layout.LobbyBanner);
-            {
-                var medal = UiKit.Icon(brt, "Icon", "ui.iconMedal"); UiKit.Pct(medal.rectTransform, 3, 12, 17, 76);
-                // T63-lobby — 본문 40 한 줄(55px)이 들어가게 띠 46%(60px) · 크기는 하한 상수
-                UiKit.Label(brt, 22, 4, 58, 46, "시즌 패스", TextSize.Body, Palette.White, TextAnchor.MiddleLeft);
-                var bar = UiKit.MakeBar(brt, "ui.sliderGreen"); UiKit.Pct(bar.Root, 22, 54, 56, 36); bar.Set(0, "준비 중");
-                var badge = UiKit.Panel(brt, "Badge", "fr.circle", Palette.Ink); UiKit.Pct(badge.rectTransform, 82, 10, 15, 80);
-                // 배지는 배너 오른쪽 끝(레퍼런스 «22» 자리) — FitInParent 는 앵커를 지워 배너 가운데로 보내 «시즌 패스» 글자를 덮었다(T47 회차 3 감점 · 결정 103 과 같은 함정) → 높이에서 폭만 정사각으로
-                var arf = UiKit.Ensure<AspectRatioFitter>(badge.gameObject); arf.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth; arf.aspectRatio = 1f;
-                UiKit.Label(badge.transform, 0, 0, 100, 100, "1", 40, Palette.White);
-                UiKit.Clickable(brt, () => OnSide(SidePass));
-                // T69-lobby — 배너 상자와 그 안 진행바에 «검은 아웃라인»(레퍼런스 01 의 보라 배너·초록 바 둘 다 검은 외곽선) · 배지는 이미 Ink 라 테두리를 얹어도 안 보인다(넣지 않음)
-                UiKit.Bordered(brt);
-                UiKit.Bordered(bar.Root, UiKit.BorderKeySmall);
-                UiKit.Tag(brt, "이벤트 배너");
-            }
+            // ② 메뉴(≡) — 이벤트 배너(시즌 패스)는 T78(주인 2026-09-07 «시즌 패스도 삭제»)로 없앴다 · 표 ① 의 배너 자리(24.5/9.2/51.6/5.6)는 비워 두고 아래 요소를 끌어올리지 않는다
             var menu = UiKit.Find(rt, "Button_Menu");
             if (menu != null) { var mrt = (RectTransform)menu; mrt.SetParent(rt, false); UiKit.Pct(mrt, Layout.LobbyMenu); UiKit.Clickable(mrt, () => App.Overlay.Settings()); UiKit.Tag(mrt, "메뉴(☰) 버튼"); }
 
             // ③ 사이드 아이콘 기둥 — 왼쪽 3 · 오른쪽 3 (레퍼런스 순서)
-            UiKit.Tag(BuildColumn(rt, "SideL", Layout.LobbySideL, false, (SideStarter, "ui.iconGiftRed", "스타터팩"), (SidePrivilege, "ui.iconCrown", "특권"), (SideChallenge7, "ui.iconTarget", "7일 챌린지")), "좌 사이드 아이콘 열(3개)");
+            // T78 — 왼쪽 기둥은 «특권» 1칸(스타터팩·7일 챌린지 삭제) · 칸 하나의 높이(오른쪽 3칸 기둥의 1/3)로 줄이고 위 정렬(y 는 그대로) · 오른쪽 3칸은 불변
+            UiKit.Tag(BuildColumn(rt, "SideL", Layout.LobbySideL, false, (SidePrivilege, "ui.iconCrown", "특권")), "좌 사이드 아이콘 열(1개)");
             UiKit.Tag(BuildColumn(rt, "SideR", Layout.LobbySideR, false, (SideAttendance, "ui.iconCalendar", "출석"), (SideDailyGift, "ui.iconBalloon", "데일리 기프트"), (SideQuest, "ui.iconQuest", "퀘스트")), "우 사이드 아이콘 열(3개)");
 
             // ④ 챕터 제목(프리팹 Title_LineDeco 조각 = 글자 + 밑줄 장식 · 표의 제목 행 ∪ 밑줄 행 자리)
@@ -111,11 +96,10 @@ namespace KkomaKnight.Game
             var left = UiKit.Icon(rt, "ArrowL", "pi.arrow_left", Palette.Cream); UiKit.Pct(left.rectTransform, Layout.LobbyArrowL); UiKit.Clickable(left.rectTransform, () => Shift(-1)); UiKit.Tag(left.transform, "좌 화살표");
             var right = UiKit.Icon(rt, "ArrowR", "pi.arrow_right", Palette.Cream); UiKit.Pct(right.rectTransform, Layout.LobbyArrowR); UiKit.Clickable(right.rectTransform, () => Shift(1)); UiKit.Tag(right.transform, "우 화살표");
 
-            // ⑥ 보조 버튼 2(탐험 · 클리어 보상 — 껍데기) → START(주황 · 카드 폭) → 모서리(성 잠금 · 이벤트)
+            // ⑥ 보조 버튼 2(탐험 · 클리어 보상 — 껍데기) → START(주황 · 카드 폭) → 모서리(이벤트 · T78 로 «성» 삭제)
             UiKit.Tag(BuildColumn(rt, "SubRow", Layout.LobbySubRow, true, (SideExplore, "ui.iconMap", "탐험"), (SideClearReward, "ui.iconChestRed", "클리어 보상")), "보조 버튼 2개 줄");
             var start = UiKit.Button(rt, "ui.btnStartOrange", "START", () => { Audio.Wake(); App.StartBattle(App.Save.SelChapter); }, Layout.LobbyStart); start.name = "Start"; UiKit.Tag(start, "START 버튼");   // Wake = WebGL 첫 터치 뒤 잠든 BGM 재개(T28)
-            var castle = BuildColumn(rt, "Castle", Layout.LobbyCastle, true, (SideCastle, "ui.iconHome", "성"));
-            if (castle != null) { var lk = UiKit.Icon(castle, "Lock", "ui.iconLock"); UiKit.Pct(lk.rectTransform, 30, 22, 40, 36); }
+            // T78 — 왼쪽 아래 «성»(집 아이콘 + 자물쇠 · 결정 32)은 주인 2026-09-07 지시로 삭제 · 오른쪽 아래 «이벤트» 는 레퍼런스 01 자리 그대로 둔다
             BuildColumn(rt, "Events", Layout.LobbyEvents, true, (SideEvents, "ui.iconDungeon", "이벤트"));
 
             // ⑦ 하단 탭 5칸 — 프리팹 탭 바 조각을 표 자리에 (상점 · 장비 · 전투 · 던전 · 펫 — T10 · «탤런트 → 던전» 은 T43)
@@ -152,18 +136,16 @@ namespace KkomaKnight.Game
             return prt;
         }
 
-        /// <summary>사이드 아이콘·배너·보조 버튼·모서리 버튼의 단일 훅 — T43: <see cref="SideEvents"/>(오른쪽 아래 방패) = 아레나(PvP) 페이지 · T44: 특권·패스 = 페이지(<see cref="PrivilegeScreen"/>·<see cref="PassScreen"/>) · 퀘스트·출석·데일리 기프트·7일 챌린지 = 팝업(<see cref="LobbyPopups"/>). 스타터팩·탐험·클리어 보상·성은 아무 일 없음(껍데기).</summary>
+        /// <summary>사이드 아이콘·보조 버튼·모서리 버튼의 단일 훅 — T43: <see cref="SideEvents"/>(오른쪽 아래 방패) = 아레나(PvP) 페이지 · T44: 특권 = 페이지(<see cref="PrivilegeScreen"/>) · 퀘스트·출석·데일리 기프트 = 팝업(<see cref="LobbyPopups"/>). 탐험·클리어 보상은 아무 일 없음(껍데기). T78 로 패스·7일 챌린지·스타터팩·성은 사라졌다.</summary>
         public void OnSide(string key)
         {
             switch (key)
             {
                 case SideEvents: EventsScreen.Open(App, EventsScreen.PagePvp); break;
                 case SidePrivilege: App.ShowScreen("privilege"); break;
-                case SidePass: App.ShowScreen("pass"); break;
                 case SideQuest: LobbyPopups.Quest(App); break;
                 case SideAttendance: LobbyPopups.Attendance(App); break;
                 case SideDailyGift: LobbyPopups.DailyGift(App); break;
-                case SideChallenge7: LobbyPopups.Challenge7(App); break;
             }
         }
 

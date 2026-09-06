@@ -53,7 +53,7 @@ namespace KkomaKnight.Game
                 WorldCamera.clearFlags = CameraClearFlags.SolidColor; WorldCamera.backgroundColor = Palette.Hex("#86E4FF");   // GUI Pro 로비 배경 하늘색
             }
             Register(new LobbyScreen()); Register(new GearScreen()); Register(new ForgeScreen()); Register(new ShopScreen()); Register(new PetScreen()); Register(new BattleScreen()); Register(new EventsScreen());
-            Register(new PrivilegeScreen()); Register(new PassScreen());   // T44 로비 사이드 페이지 2(특권 · 시즌 패스 · 껍데기)
+            Register(new PrivilegeScreen());   // T44 로비 사이드 페이지(특권 · 껍데기) · 시즌 패스 페이지는 T78(주인 2026-09-07)로 삭제
             Overlay = new Overlay(this);
             // 토스트 (GUI Pro ToastMessage_01) — 칸 세로는 본문 40 두 줄이 들어가는 Layout.Toast (T63-toast · 전 5.0% 에선 긴 문구가 bestFit 으로 32 까지 줄었다)
             _toastRt = (RectTransform)UiKit.Spawn("ui.toast", Frame).transform; UiKit.Pct(_toastRt, Layout.Toast);
