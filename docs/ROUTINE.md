@@ -613,14 +613,15 @@
 2. 고칠 방향(워커가 정한다 · 결정 기록 한 줄): ⓐ BGM 3곡 = WebGL 플랫폼 오버라이드 `loadType: 0`(DecompressOnLoad · Web Audio 가 Vorbis 를 디코드 · 메모리 ≈ 40MB) 또는 AAC(에디터 인코더가 리눅스 CI 에서 되는지 먼저 확인) ⓑ SFX 는 이미 DecompressOnLoad 인데도 실패 → `preloadAudioData`/`loadInBackground`/FSB 포장 문제 — CI 유니티 잡 로그와 새 배포 스모크(`AUDIO⚠` 줄)로 확인 ⓒ 폰(Android Chrome · iOS Safari 는 Vorbis 디코드 불가) 에서 소리가 나는지는 주인 확인.
 3. ✅ 조건: `tools/webgl_smoke.sh --gh-pages --strict-audio` 초록(오디오 예외 없이) → `webgl_smoke.js` 의 T64 예외(`AUDIO_RE` 경고 강등)를 지우고 CI 도 `--strict-audio` 로.
 
-### T65 — main 빨강 후속(CI #91·#92·#93): PlayMode `BattleWorldTests.KillDashStartsAfterAttackAnimThenWalksAtDashSpeed` 1건 — «표시 원점 = 엔진 x» 격차 4.4px (최우선 · 제약 없음 · T50 회귀) — **🔄 코드 `984f713`(워커 D · sess-1259-29943) · 확인 = 그 커밋의 CI 유니티 잡 `BattleWorldTests` 2/2 → `build-webgl` 진입 → gh-pages·screens 갱신**
+### T65 — main 빨강 후속(CI #91·#92·#93): PlayMode `BattleWorldTests.KillDashStartsAfterAttackAnimThenWalksAtDashSpeed` 1건 — «표시 원점 = 엔진 x» 격차 4.4px (최우선 · 제약 없음 · T50 회귀) — **🔄 코드 `984f713`(격차) + `de91abc`(회차 2 · 대시 평균 속도 계측 · 워커 D · sess-1259-29943) · 확인 = `de91abc` 의 CI 유니티 잡 `BattleWorldTests` 2/2 → `build-webgl` 진입 → gh-pages·screens 갱신**
 
 범위: `Assets/Scripts/Game/BattleWorld.cs`(표시 원점 · `_heldPrevFrame`) · `Assets/Tests/PlayMode/BattleWorldTests.cs`(단언 한정) · 엔진(`Assets/Scripts/Core`)은 만지지 않는다.
 
 1. 사실: 실패는 딱 1건(`BattleWorldTests.cs:75` · Expected 206.8 / But was 202.4 = **4.4px = 걷기 한 틱** 132×1/30). 이 테스트를 넣은 `07873b4`(T50·T51)의 CI #89 가 concurrency 로 취소돼 **검증된 적 없는 코드가 main 에 들어갔다**.
 2. 원인: `BattleScreen.Tick` 이 한 프레임에 엔진 틱을 여럿 돌리므로(배속·낮은 fps · 최대 8) «걷기 틱 → 킬 틱» 이 한 프레임에 같이 들어가는데, `BattleWorld.Sync` 가 그 프레임부터 표시 원점을 얼려 **킬 이전의 접근 걸음**이 격차로 남았다(풀릴 때 그만큼 튀기도 했다).
 3. 수정: 멈춤이 «시작되는» 프레임은 얼리지 않고 엔진 x 로 맞추고 다음 프레임부터 얼린다(`_heldPrevFrame`) · 테스트의 T20·T50ⓑ 단언은 «앞 프레임에도 멈춤이었을 때» 로 한정(결정 119). «격차 0»·«엔진 보류» 단언은 그대로.
-4. **이 1건이 T60 확인 · T62 회차 1 채점 · T47 회차 3 채점을 전부 막고 있었다** — 초록이 되면 그 세 개를 잇는다.
+4. 회차 2(CI #94): 격차 단언은 통과, 같은 테스트의 **다른 줄**(`:152` 대시 평균 속도 하한 · Expected > 198 / But was 169.3)이 남았다 — 그 평균의 분모가 «엔진 틱이 0 인 프레임» 까지 세고 있었고 예전엔 위 4.4px 튐이 분자를 부풀려 통과하던 것이다(결정 123 · 하한만 «틱을 돈 프레임» 으로 · 게임 코드 불변).
+5. **이 1건이 T60 확인 · T62 회차 1 채점 · T47 회차 3 채점을 전부 막고 있었다** — 초록이 되면 그 세 개를 잇는다.
 
 ### T66 — T59 진단 심볼 되돌리기: `ProjectSettings.asset` `webGLDebugSymbols: 2` → `0` (T59 종결 뒤 · 제약 없음)
 
