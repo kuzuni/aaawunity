@@ -79,7 +79,8 @@ namespace KkomaKnight.Tests.Play
             foreach (var s in _texts) { int i = s.IndexOf('\t'); if (i > 0 && s.Substring(0, i) == screen && pred(s.Substring(i + 1))) return true; }
             return false;
         }
-        static bool ClickNamed(Transform root, string name) { var t = UiKit.Find(root, name); var b = t != null ? t.GetComponent<UnityEngine.UI.Button>() : null; if (b == null) return false; b.onClick.Invoke(); return true; }
+        // 이름으로 버튼을 눌러 팝업을 연다(root 가 null 이면 조용히 넘어간다 — 화면이 그 칸을 안 만든 회차가 있다)
+        static bool ClickNamed(Transform root, string name) { if (root == null) return false; var t = UiKit.Find(root, name); var b = t != null ? t.GetComponent<UnityEngine.UI.Button>() : null; if (b == null) return false; b.onClick.Invoke(); return true; }
         GearItem Give(string part, int rar = 0, int plus = 0)
         {
             foreach (var t in _app.Data.Gear.AllTypes) if (t.Part == part) { var g = _app.Save.NewGear(t.Part, t.Type, rar, plus); _app.Save.Inv.Add(g); return g; }
@@ -93,7 +94,34 @@ namespace KkomaKnight.Tests.Play
             var S = _app.Save; var D = _app.Data;
             S.Gold = 11540; S.Gem = 543;
 
-            // 06 장비 · 07 세부(세트 옵션 7줄 = «치명타 확률 +5» 계열이 나오는 자리)
+            // ── 전 화면 순회(2회차 · T90-audit) — 순서·여는 법은 TextSizeGateTests 와 같다.
+            // 01 로비 · 12 설정 · 11 특권 · 15 퀘스트 · 16 출석 · 17 데일리 기프트 · 30 탐험 · 31 빠른 탐험
+            Assert.AreEqual("lobby", _app.Current.Name);
+            yield return Check("01_lobby");
+            _app.Overlay.Settings(); yield return Check("12_settings"); _app.Overlay.Close(); yield return Frames(1);
+            _app.ShowScreen("privilege"); yield return Frames(2); yield return Check("11_shop_special"); _app.ShowScreen("lobby"); yield return Frames(1);
+            LobbyPopups.Quest(_app); yield return Check("15_quest"); _app.Overlay.Close(); yield return Frames(1);
+            LobbyPopups.Attendance(_app); yield return Check("16_attendance"); _app.Overlay.Close(); yield return Frames(1);
+            LobbyPopups.DailyGift(_app); yield return Check("17_daily_gift"); _app.Overlay.Close(); yield return Frames(1);
+            LobbyPopups.Expedition(_app); yield return Check("30_expedition"); _app.Overlay.Close(); yield return Frames(1);
+            LobbyPopups.QuickExplore(_app, () => { }); yield return Check("31_quick_explore"); _app.Overlay.Close(); yield return Frames(1);
+
+            // 13 펫 · 14 펫 세부
+            _app.ShowScreen("pet"); yield return Frames(2); yield return Check("13_pet");
+            (_app.Current as PetScreen)?.OpenDetail(0); yield return Check("14_pet_detail"); _app.Overlay.Close(); yield return Frames(1);
+
+            // 20~26 던전·아레나(보상 줄·상대 줄에 비율 스탯이 섞일 수 있는 자리)
+            EventsScreen.Open(_app, EventsScreen.PageDungeon); yield return Frames(2); yield return Check("20_dungeon");
+            var ev = _app.GetScreen<EventsScreen>(); var evRoot = _app.Current.Root;
+            if (ClickNamed(UiKit.Find(evRoot, "Card:hell"), "EnterBtn")) { yield return Check("21_dungeon_detail"); _app.Overlay.Close(); yield return Frames(1); }
+            ev.ShowPage(EventsScreen.PagePvp); yield return Check("22_arena");
+            ev.ShowPage(EventsScreen.PageArena); yield return Check("23_arena_enter");
+            if (ClickNamed(evRoot, "ChallengeBtn")) { yield return Check("24_arena_challenge"); _app.Overlay.Close(); yield return Frames(1); }
+            if (ClickNamed(evRoot, "RewardsBtn")) { yield return Check("25_arena_rank_reward"); _app.Overlay.Close(); yield return Frames(1); }
+            ev.ShowPage(EventsScreen.PageMerchant); yield return Check("26_arena_shop");
+            _app.ShowScreen("lobby"); yield return Frames(1);
+
+            // 06 장비 · 07 세부(세트 옵션 7줄 = «치명타 확률 +5» 계열이 나오는 자리) · 08 대장간 · 09·10 상점
             GearItem firstFree = null;
             foreach (var p in D.Gear.Parts) { var g = Give(p, rar: 1, plus: 1); S.Eq[p] = g.Uid; }
             for (int i = 0; i < 6; i++) { var g = Give(D.Gear.Parts[i % D.Gear.Parts.Length], rar: 3, plus: 9); if (firstFree == null) firstFree = g; }
@@ -101,6 +129,9 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(firstFree, "인벤 장비가 하나는 있어야 세부 팝업을 연다");
             GearUi.OpenDetail(_app, firstFree, null); yield return Check("07_gear_detail");
             _app.Overlay.Close(); yield return Frames(1);
+            _app.ShowScreen("shop"); yield return Frames(2); yield return Check("10_shop_2");
+            (_app.Current as ShopScreen)?.ScrollTo(0f); yield return Check("09_shop_1");
+            _app.ShowScreen("lobby"); yield return Frames(1);
 
             // 08 대장간 — 안내 문구(«N개 더 고르세요» · 합성 결과 줄)가 화면 코드에서 조립되는 자리다(T90 2단계 · T90-gear 묶음)
             GearItem m0 = null;
@@ -133,11 +164,27 @@ namespace KkomaKnight.Tests.Play
             // 보유 특전 목록은 «퍼센트가 빠져 있던» 특전을 일부러 넣어 확인한다(정본 실측 = 회피율·치명타 확률·치명타 피해·반격률)
             foreach (var p in D.Perks.Perks) { if (StatText.Missing(p.Desc) != "" && !G.Taken.Contains(p)) G.Taken.Add(p); if (G.Taken.Count >= 12) break; }
             _app.Overlay.PerkBook(G, null); yield return Check("05_perks_list"); _app.Overlay.Close(); yield return Frames(1);
+
+            // 결과·이벤트 팝업 6종(특전 한 장이 그대로 뜨는 악마·천사 카드가 여기 있다) + 토스트·확인 팝업
+            G.Gold = 12750; G.Kills = 137;
+            _app.Overlay.Rest(G, _ => { }, () => { }); yield return Check("ev_rest"); _app.Overlay.Close(); yield return Frames(1);
+            var devilPerk = Perks.OfferDevil(D, G.Taken, rng);
+            G.Pending = new PendingDecision { Kind = PendingKind.Devil, DevilPerk = devilPerk };
+            _app.Overlay.Devil(G, _ => { }); yield return Check("ev_devil"); _app.Overlay.Close(); G.Pending = null; yield return Frames(1);
+            _app.Overlay.DevilGift(devilPerk, null); yield return Check("ev_devil_gift"); _app.Overlay.Close(); yield return Frames(1);
+            _app.Overlay.Angel(G, _ => { }); yield return Check("ev_angel"); _app.Overlay.Close(); yield return Frames(1);
+            _app.Overlay.Clear(G, false, () => { }, () => { }); yield return Check("res_win"); _app.Overlay.Close(); yield return Frames(1);
+            _app.Overlay.Dead(G, () => { }); yield return Check("res_lose"); _app.Overlay.Close(); yield return Frames(1);
+
             Time.timeScale = 1f; _app.ShowScreen("lobby"); yield return Frames(2);
+            // 토스트는 실제 문구(대장간 재료 안내 · 가장 긴 것)로 연다 — 여기서 «회피 +8» 같은 예시를 넣으면 감사 표가 «테스트가 만든 줄» 로 더러워진다
+            _app.Toast("같은 부위·종류·등급만 재료가 됩니다 (목걸이 · 체력실드 목걸이 · 신화)"); yield return Check("27_toast");
+            _app.Overlay.ConfirmReset(); yield return Check("28_confirm_reset"); _app.Overlay.Close(); yield return Frames(1);
 
             // 표(«[PercentGate]») 를 먼저 찍고 판정한다 — 먼저 터지면 다른 워커가 자기 화면 수를 못 읽는다(T63-toast 가 CI #119 에서 겪은 함정)
             var sb = new StringBuilder();
-            sb.AppendLine($"[PercentGate] % 가 빠진 줄 {_rows.Count}(strict={PercentAudit.Strict} · 실패로 세는 화면 = {string.Join(", ", StrictScreens)} · T90)");
+            int screens = 0; { var seen = new List<string>(); foreach (var s in _texts) { int i = s.IndexOf('\t'); if (i > 0 && !seen.Contains(s.Substring(0, i))) seen.Add(s.Substring(0, i)); } screens = seen.Count; }
+            sb.AppendLine($"[PercentGate] 훑은 화면 {screens} · % 가 빠진 줄 {_rows.Count}(strict={PercentAudit.Strict} · 실패로 세는 화면 = {string.Join(", ", StrictScreens)} · T90)");
             sb.Append(PercentAudit.Summary(_rows));
             if (_rows.Count > 0) { sb.AppendLine("[PercentGate] 목록(그 화면 묶음 워커가 StatText.Signed 로 고친다):"); foreach (var r in _rows) sb.AppendLine("  " + r); }
             Debug.Log(sb.ToString());
