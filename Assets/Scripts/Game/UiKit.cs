@@ -23,7 +23,7 @@ namespace KkomaKnight.Game
         static Sprite _round, _round8, _circle, _white;
         /// <summary>에디터 «도메인 리로드 끔»(EditorSettings · 플레이 진입 속도) 에서도 정적 상태가 새 판마다 깨끗하게.</summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { _round = _round8 = _circle = _white = null; _staging = null; DefaultFont = null; CharacterRig.TimeScale = 1f; }
+        static void ResetStatics() { _round = _round8 = _circle = _white = null; _staging = null; DefaultFont = null; CharacterRig.TimeScale = 1f; _worldBorders.Clear(); }
 
         public static Font FontOrBuiltin() => DefaultFont != null ? DefaultFont : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         static AssetCatalog Cat => App.I != null ? App.I.Assets : null;
@@ -212,6 +212,98 @@ namespace KkomaKnight.Game
                 rt.sizeDelta = new Vector2(58, 58); rt.anchoredPosition = new Vector2(2, 2);
             }
             return bar;
+        }
+
+        // ───────────────────────── 테두리(Border · T69 · 주인 2026-09-06 «행·카드·칸마다 검은 아웃라인») ─────────────────────────
+        // 재료 = GUI Pro BasicFrame_Rectangle_01~04_White_Border1/2/3(26×26 · 9-slice border 13 · 흰 조각이라 Ink 로 tint 하면 검은 아웃라인). 코드 도형 0.
+        // 조각의 선 굵기는 실측(alpha 행): Border1 4px · Border2 5px · Border3 5px · InnerBorder1_Px7 7px · R0_Border_Px5 5px — 폰(412css px · 프레임 1px ≈ 0.38css px)에서 3px 이상 보이려면
+        // 프레임 기준 8px 이상이어야 하므로 pixelsPerUnitMultiplier(= 원본 선 ÷ 목표 선 · < 1 이면 두꺼워진다)로 올린다. 배치 표(ref-layout)는 불변 — 테두리는 칸 «안쪽» 에 그린다.
+        /// <summary>테두리 선의 최소 굵기(프레임 px · 폰 ≈ 3px). ROUTINE T69 3항.</summary>
+        public const float BorderPx = 8f;
+        /// <summary>테두리 색 알파(Ink) — 게이트 하한 0.8 위(ROUTINE T69 5항).</summary>
+        public const float BorderAlpha = 0.9f;
+        /// <summary>테두리 오브젝트 이름(고정 · 테스트·이름표·<see cref="HasDarkBorder"/> 가 찾는다).</summary>
+        public const string BorderName = "Border";
+        /// <summary>기본 테두리 조각(굵은 Border3) — 작은 칸(아이콘·pill)은 <see cref="BorderKeySmall"/>.</summary>
+        public const string BorderKey = "fr.rectBorder3", BorderKeySmall = "fr.rectBorder2";
+        public static Color BorderInk => Palette.A(Palette.Ink, BorderAlpha);
+        /// <summary>조각의 원본 선 굵기(px · 26×26 스프라이트 실측). 모르는 키는 5.</summary>
+        public static float BorderNativePx(string key)
+        {
+            switch (key)
+            {
+                case "fr.rectBorder": return 4f;
+                case "fr.rectInner7": return 7f;
+                default: return 5f;
+            }
+        }
+        /// <summary>선이 <paramref name="thicknessPx"/> 이상 보이게 하는 Image.pixelsPerUnitMultiplier(1 이 원본 · 작을수록 두껍다 · 1 을 넘기지 않는다 = 원본보다 얇게는 안 만든다).</summary>
+        public static float BorderMultiplier(string key, float thicknessPx = BorderPx) => Mathf.Min(1f, BorderNativePx(key) / Mathf.Max(1f, thicknessPx));
+
+        /// <summary>
+        /// 칸 하나에 «검은 아웃라인»(T69) — cell 의 맨 앞에 <see cref="BorderName"/> Image(9-slice · <paramref name="borderKey"/> · tint 기본 = <see cref="BorderInk"/> · raycast 끔 · 가운데 비움)를 Stretch 로 덧댄다.
+        /// <paramref name="bg"/> 를 주면 맨 뒤에 같은 모양의 바탕(fr.rect · 그 색)도 깐다(칸에 배경이 없을 때만 — 이미 프레임/배경이 있는 조각은 null 로 두고 테두리만). <paramref name="inset"/> = 칸 안쪽으로 들어가는 px(양수).
+        /// 이미 있으면 새로 만들지 않고 그 Border 를 갱신한다. 선 굵기는 <see cref="BorderMultiplier"/> 로 프레임 <paramref name="thicknessPx"/>(기본 8) 이상. 아이콘·글자를 테두리 위에 두려면 호출 뒤 그 자식을 <c>SetAsLastSibling</c>.
+        /// </summary>
+        public static Image Bordered(RectTransform cell, string borderKey = BorderKey, Color? tint = null, float inset = 0f, Color? bg = null, float thicknessPx = BorderPx)
+        {
+            if (cell == null) return null;
+            if (bg.HasValue)
+            {
+                Image bgImg = null;
+                for (int i = 0; i < cell.childCount; i++) if (cell.GetChild(i).name == BorderName + "Bg") { bgImg = cell.GetChild(i).GetComponent<Image>(); break; }
+                if (bgImg == null) bgImg = Panel(cell, BorderName + "Bg", "fr.rect", bg.Value); else bgImg.color = bg.Value;
+                Stretch(bgImg.rectTransform, inset, inset, inset, inset); bgImg.pixelsPerUnitMultiplier = BorderMultiplier(borderKey, thicknessPx); bgImg.raycastTarget = false;
+                bgImg.transform.SetAsFirstSibling();
+            }
+            Image img = null;
+            for (int i = 0; i < cell.childCount; i++) if (cell.GetChild(i).name == BorderName) { img = cell.GetChild(i).GetComponent<Image>(); break; }
+            if (img == null) img = Panel(cell, BorderName, borderKey, tint ?? BorderInk);
+            else { img.sprite = Cat != null ? Cat.Sprite(borderKey) : img.sprite; img.type = Image.Type.Sliced; img.color = tint ?? BorderInk; }
+            Stretch(img.rectTransform, inset, inset, inset, inset);
+            img.pixelsPerUnitMultiplier = BorderMultiplier(borderKey, thicknessPx); img.fillCenter = false; img.raycastTarget = false;
+            img.transform.SetAsLastSibling();
+            return img;
+        }
+
+        // 월드(SpriteRenderer) 바 — 발밑 2단 바(BattleWorld.MakeBar · T69 8항). 같은 조각을 월드용 Sprite 로 다시 감싼다(pixelsPerUnit 을 «선 = 프레임 8px 에 해당하는 월드 길이» 로 · 텍스처는 주인 것 그대로).
+        static readonly Dictionary<string, Sprite> _worldBorders = new Dictionary<string, Sprite>();
+        /// <summary>프레임 <see cref="BorderPx"/> 에 해당하는 월드 길이(u) — 프레임 px → 레이아웃 px(× LayoutW/FrameW) → 월드(÷ PPU).</summary>
+        public static float WorldBorderLine => BorderPx * (WorldCam.LayoutW / FrameW) / WorldCam.PPU;
+        /// <summary>월드용 테두리 스프라이트(키마다 한 번 만들어 재사용 · 9-slice border 그대로 · FullRect).</summary>
+        public static Sprite WorldBorderSprite(string key = BorderKey)
+        {
+            if (_worldBorders.TryGetValue(key, out var s) && s != null) return s;
+            var src = Cat != null ? Cat.Sprite(key) : null; if (src == null) return null;
+            float ppu = BorderNativePx(key) / WorldBorderLine;
+            s = Sprite.Create(src.texture, src.rect, new Vector2(0.5f, 0.5f), ppu, 0, SpriteMeshType.FullRect, src.border);
+            s.name = src.name + " (world)";
+            _worldBorders[key] = s;
+            return s;
+        }
+        /// <summary>월드 바(SpriteRenderer) 위에 테두리 한 장 — <paramref name="bar"/> 의 자식 «Border»(Sliced · <paramref name="size"/> = 바 크기 · sortingOrder = <paramref name="order"/> · Ink). 조각이 없으면 null(경고는 카탈로그가).</summary>
+        public static SpriteRenderer WorldBorder(Transform bar, Vector2 size, int order, string key = BorderKey, Color? tint = null)
+        {
+            var sp = WorldBorderSprite(key); if (sp == null || bar == null) return null;
+            var go = new GameObject(BorderName); go.transform.SetParent(bar, false);
+            var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = sp; sr.drawMode = SpriteDrawMode.Sliced; sr.size = size; sr.color = tint ?? BorderInk; sr.sortingOrder = order;
+            return sr;
+        }
+        /// <summary>어두운 테두리가 있는가(T69 게이트) — 아래 어딘가에 이름이 «Border» 로 시작하는 활성 Image/SpriteRenderer 가 있고 스프라이트 이름에 Border 가 들어가며 색이 어둡고(밝기 ≤ 0.35) 알파 ≥ 0.8. 프리팹 자체의 Border 조각을 Ink 로 tint 한 경우도 잡힌다.</summary>
+        public static bool HasDarkBorder(Transform cell)
+        {
+            if (cell == null) return false;
+            foreach (var im in cell.GetComponentsInChildren<Image>(false))
+                if (im != null && im.enabled && im.name.StartsWith(BorderName) && IsDarkBorder(im.sprite, im.color)) return true;
+            foreach (var sr in cell.GetComponentsInChildren<SpriteRenderer>(false))
+                if (sr != null && sr.enabled && sr.name.StartsWith(BorderName) && IsDarkBorder(sr.sprite, sr.color)) return true;
+            return false;
+        }
+        static bool IsDarkBorder(Sprite sp, Color c)
+        {
+            if (sp == null || sp.name.IndexOf("Border", StringComparison.OrdinalIgnoreCase) < 0) return false;
+            float l = 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
+            return c.a >= 0.8f && l <= 0.35f;
         }
 
         // ───────────────────────── 공통 팝업 문법 (docs/ref/README.md «공통 문법» · T36 — T38·T41·T42·T44 가 같이 쓴다) ─────────────────────────

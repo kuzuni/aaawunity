@@ -278,9 +278,13 @@
 | sprites | `hud.alertAd` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/Alert_Ad_01.png` | fileID 21300000 |  |
 | sprites | `fr.rect` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_01~04_White_Bg.png` | fileID 21300000 | T37: 장비 화면 버튼 줄 뒤 갈색 띠 |
 | sprites | `fr.rectBorder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_01~04_White_Border1.png` | fileID 21300000 |  |
+| sprites | `fr.rectBorder2` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_01~04_White_Border2.png` | fileID 21300000 | T69 «검은 아웃라인» 작은 칸(아이콘·pill)용 — UiKit.Bordered(cell, "fr.rectBorder2") · 26×26 9-slice · 선 5px → pixelsPerUnitMultiplier 로 프레임 8px 이상(폰 3px) |
+| sprites | `fr.rectBorder3` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_01~04_White_Border3.png` | fileID 21300000 | T69 «검은 아웃라인» 기본 — 행·카드·칸마다 UiKit.Bordered(cell) 이 맨 앞에 Ink(α 0.9) 로 덧댄다 · 전투 HUD EXP/HP/실드 바 + 발밑 2단 바(SpriteRenderer Sliced · UiKit.WorldBorder) 도 이 조각 |
+| sprites | `fr.rectInner7` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_01~04_White_InnerBorder1_Px7.png` | fileID 21300000 | T69 안쪽 선이 필요한 칸(굵은 7px InnerBorder) — 예비 |
+| sprites | `fr.r0Border5` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_R0_Border_Px5.png` | fileID 21300000 | T69 각진 칸(모서리 반지름 0 · 5px) — 예비 |
 | sprites | `fr.r12` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_R12_Bg.png` | fileID 21300000 | EXP 바 왼쪽 «EXP» 초록 라벨 배경(T35 · 9-slice) · T37: 장비 슬롯 «+N» 노란 배지 |
 | sprites | `fr.circle` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Circle_H86_White_Bg.png` | fileID 21300000 | 전투 HUD 오른쪽 아래 펫 둥근 버튼 바탕(보라 · 껍데기 · T35) |
-| sprites | `fr.circleBorder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Circle_H70_White_Border.png` | fileID 21300000 | 펫 둥근 버튼 테두리(T35) |
+| sprites | `fr.circleBorder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Circle_H70_White_Border.png` | fileID 21300000 | 펫 둥근 버튼 테두리(T35) · T69 원형(초상·아이콘) 테두리 = 이 키를 Ink 로 tint |
 | sprites | `fr.sliderBg` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Slider/Slider_02_White_Bg.png` | fileID 21300000 |  |
 | sprites | `fr.buffSlot` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/HUD/BuffSlot_01_Bg.png` | fileID 21300000 |  |
 | sprites | `fr.toast` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/ToastMessage_01.png` | fileID 21300000 |  |

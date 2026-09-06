@@ -340,6 +340,8 @@ namespace KkomaKnight.Game
             bg = bgo.AddComponent<SpriteRenderer>(); bg.sprite = UiKit.White(); bg.color = new Color(0.08f, 0.08f, 0.1f, 0.85f); bg.sortingOrder = order; bg.drawMode = SpriteDrawMode.Sliced; bg.size = new Vector2(width, height);
             var fgo = new GameObject("BarFill"); fgo.transform.SetParent(bgo.transform, false);
             fill = fgo.AddComponent<SpriteRenderer>(); fill.sprite = UiKit.White(); fill.color = fillColor; fill.sortingOrder = order + 1; fill.drawMode = SpriteDrawMode.Sliced; fill.size = new Vector2(width - 0.02f, height - 0.02f);
+            // T69 8항(주인 «HP·실드 바도 Border») — 같은 조각(fr.rectBorder3)을 월드용 Sprite 로 감싸 바 위에 한 장(fill + 1 · 바 폭·높이 그대로 = 표 «발밑 바 폭» 이름표 불변)
+            UiKit.WorldBorder(bgo.transform, new Vector2(width, height), order + 2);
         }
         static void SetBar(SpriteRenderer bg, SpriteRenderer fill, double frac)
         {

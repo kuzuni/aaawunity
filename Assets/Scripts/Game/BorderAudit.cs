@@ -1,0 +1,80 @@
+using System.Collections.Generic;
+using System.Text;
+using UnityEngine;
+
+namespace KkomaKnight.Game
+{
+    /// <summary>
+    /// 테두리 전수 점검(T69 5항 · 주인 «행·카드·칸마다 검은 아웃라인») — 화면의 활성 <see cref="UiTag"/> 가운데 «행·카드·칸» 꼴 이름표를 모아
+    /// <see cref="UiKit.HasDarkBorder"/> 로 어두운 테두리가 있는지 판정한다. PlayMode 게이트(BorderGateTests)가 모든 화면을 열고 부른다.
+    /// 화면 묶음(T69-lobby …)이 끝난 화면만 <see cref="StrictScreens"/> 에 넣어 실패로 세고, 나머지는 «[BorderGate]» 표로 CI 로그에만 남긴다(TextAudit.ClipStrict 와 같은 방식).
+    /// </summary>
+    public static class BorderAudit
+    {
+        /// <summary>테두리 없음이 실패인 화면(묶음이 끝날 때마다 추가 · 전부 끝나면 모든 화면).</summary>
+        public static readonly HashSet<string> StrictScreens = new HashSet<string> { "02_battle" };
+
+        /// <summary>«행·카드·칸» 으로 보는 이름표 낱말 — 이 가운데 하나가 이름에 들어가면 대상.</summary>
+        static readonly string[] CellWords = { "칸", "카드", "행", "슬롯", "기둥", "줄" };
+        /// <summary>대상에서 빼는 낱말 — 글자 줄·버튼·타이머·컨테이너 같은 «칸이 아닌 것»(테두리 없는 게 맞는 것 · ROUTINE T69 5항 예외 목록).</summary>
+        static readonly string[] SkipWords = { "버튼", "문구", "숫자", "타이머", "시각", "라벨", "(참고·컨테이너)", "진행바", "그리드", "격자", "영역", "제목", "안내", "수치", "선", "점(" };
+
+        public sealed class Row
+        {
+            public string Screen, Tag, Path;
+            public bool HasBorder;
+            public override string ToString() => $"[{Screen}] «{Tag}» {Path}" + (HasBorder ? " ✓테두리" : " ⛔테두리 없음");
+        }
+
+        /// <summary>이 이름표가 «행·카드·칸» 대상인가.</summary>
+        public static bool IsCellTag(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return false;
+            foreach (var s in SkipWords) if (name.Contains(s)) return false;
+            foreach (var w in CellWords) if (name.Contains(w)) return true;
+            return false;
+        }
+
+        /// <summary>root 아래 활성 이름표를 판정한다 — 멤버(«줄(N칸)» 규약)가 있으면 멤버마다 한 줄.</summary>
+        public static List<Row> Collect(string screen, Transform root)
+        {
+            var rows = new List<Row>();
+            if (root == null) return rows;
+            foreach (var tag in root.GetComponentsInChildren<UiTag>(false))
+            {
+                if (tag == null || !tag.isActiveAndEnabled || !IsCellTag(tag.Name)) continue;
+                if (tag.Members.Count == 0) { rows.Add(new Row { Screen = screen, Tag = tag.Name, Path = PathOf(tag.transform, root), HasBorder = UiKit.HasDarkBorder(tag.transform) }); continue; }
+                foreach (var m in tag.Members)
+                {
+                    if (m == null || !m.gameObject.activeInHierarchy) continue;
+                    rows.Add(new Row { Screen = screen, Tag = tag.Name, Path = PathOf(m, root), HasBorder = UiKit.HasDarkBorder(m) });
+                }
+            }
+            return rows;
+        }
+
+        static string PathOf(Transform t, Transform root)
+        {
+            var parts = new List<string>();
+            for (var c = t; c != null && c != root && parts.Count < 7; c = c.parent) parts.Add(c.name);
+            parts.Reverse();
+            return string.Join("/", parts);
+        }
+
+        /// <summary>화면별 «대상 수 · 테두리 있음 · 없음 · strict» 표(마크다운) — CI 로그에서 묶음 워커가 읽는다.</summary>
+        public static string Summary(List<Row> rows)
+        {
+            var byScreen = new Dictionary<string, List<Row>>();
+            foreach (var r in rows) { if (!byScreen.TryGetValue(r.Screen, out var l)) byScreen[r.Screen] = l = new List<Row>(); l.Add(r); }
+            var sb = new StringBuilder();
+            sb.AppendLine("| 화면 | 행·카드·칸 | 테두리 있음 | 없음 | strict |");
+            sb.AppendLine("|---|---|---|---|---|");
+            foreach (var kv in byScreen)
+            {
+                int ok = 0; foreach (var r in kv.Value) if (r.HasBorder) ok++;
+                sb.AppendLine($"| {kv.Key} | {kv.Value.Count} | {ok} | {kv.Value.Count - ok} | {(StrictScreens.Contains(kv.Key) ? "✔" : "")} |");
+            }
+            return sb.ToString();
+        }
+    }
+}

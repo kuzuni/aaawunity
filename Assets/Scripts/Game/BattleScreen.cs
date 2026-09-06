@@ -88,6 +88,8 @@ namespace KkomaKnight.Game
             _sh = UiKit.MakeBar(Root, "ui.sliderBlue", "pi.shield"); UiKit.Pct(_sh.Root, Layout.HudSh); _sh.Root.name = "Bar:SH";
             foreach (var b in new[] { _hp, _sh }) if (b.Cap != null) { b.Cap.rectTransform.sizeDelta = new Vector2(84, 84); b.Cap.rectTransform.anchoredPosition = new Vector2(6, 2); }   // 아이콘이 바보다 조금 크게(레퍼런스)
             foreach (var b in new[] { _exp, _hp, _sh }) if (b.Txt != null) { b.Txt.color = Palette.White; b.Txt.fontStyle = FontStyle.Bold; b.Txt.alignment = TextAnchor.MiddleCenter; }
+            // T69 8항(주인 «HP·실드 바 테두리») — 세 바에 검은 아웃라인(맨 앞) · 왼쪽 캡(«EXP» 라벨 · ❤ · 🛡)은 테두리 위로 · 바 자리·크기 불변
+            foreach (var b in new[] { _exp, _hp, _sh }) { UiKit.Bordered(b.Root); var capT = UiKit.Find(b.Root, "Cap"); if (capT != null) capT.SetAsLastSibling(); }
             // 스탯 8칸 = 칸마다 어두운 상자(ui.frameDark) · 왼쪽 아이콘 · 오른쪽에 이름(보조 36 · 위) + 값(본문 40 · 아래) · 버프 중 값 초록(레퍼런스 02) — 자리 = 표(HudStats · 행 피치 5.2) · 상자 사이 틈 0.4%
             // T63-battle: 칸 높이 4.8%(112px) = 이름 46%(51px ≥ 36×1.375) + 값 52%(58px ≥ 40×1.375) — 전엔 4.6% 칸에 40%/48% 라 bestFit 이 이름을 32 · 값을 37 로 몰래 줄였다(게이트 표엔 안 걸림 · T63 진행 기록 ⚠)
             for (int i = 0; i < StatDefs.Length; i++)
@@ -98,6 +100,8 @@ namespace KkomaKnight.Game
                 var ic = UiKit.Icon(cell, "ic", Icons.Stat(StatDefs[i].Key)); UiKit.Pct(ic.rectTransform, 3, 12, 15, 76);
                 var lb = UiKit.Label(cell, 21, 1, 76, 46, StatDefs[i].Label, TextSize.Aux, Palette.CreamDark, TextAnchor.MiddleLeft, kind: TextKind.Aux); lb.name = "Label";
                 _statVals[i] = UiKit.Label(cell, 21, 47, 76, 52, "", TextSize.Body, Palette.White, TextAnchor.MiddleLeft); _statVals[i].name = "Value"; _statVals[i].fontStyle = FontStyle.Bold;
+                // T69 — 스탯 칸마다 검은 아웃라인(어두운 상자 위 · 자리 불변)
+                UiKit.Bordered(cell);
             }
             // 보유 특전 = 책 모양 버튼(특전 선택 팝업의 Book 과 같은 그림 · 위에 개수) — 주인 지시 2026-09-05
             var info = UiKit.Rect(Root, "PerkBook"); UiKit.Pct(info, Layout.HudInfo.X - 1, Layout.HudInfo.Y - 1.5f, Layout.HudInfo.W + 2, Layout.HudInfo.H + 3);
