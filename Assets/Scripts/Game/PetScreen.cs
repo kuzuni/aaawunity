@@ -12,6 +12,8 @@ namespace KkomaKnight.Game
     /// → ④ <b>«장착중» 띠</b>(어두운 패널 + 초록 라벨 + 슬롯 4 = 잠금 원 2 · 빈 칸 2) → ⑤ 회색 <b>전체 강화 · 빠른 장착</b> → ⑥ 주황 <b>소환 · 소환 x10</b>(두 줄 · 가격 자리 «준비 중») → ⑦ 탭 바.
     /// 칸을 누르면 세부 팝업(공통 팝업 문법 <see cref="UiKit.Popup"/> · 명판 없음 · 칸이 상자 윗변에 걸침 · 설명 박스 · «패시브:» 수치 줄 · 강화(회색) · 장착(주황) · «탭하여 닫기»).
     /// 글자(T63-pet · 주인 «글씨 너무 작다»): 전부 <see cref="UiKit"/> 하한(본문 40 · 버튼 44) — 직접 박은 크기는 없다. 진행바 «n/m» 만 표 높이에 안 들어가 바를 <see cref="Layout.PetBarH"/> 로 키웠다(13·14 게이트 잘림 0).
+    /// 테두리(T69-pet · 주인 «행·카드·칸마다 검은 아웃라인» + 7항 «아이템류 칸 = 장비 화면의 그 프레임»): 격자 9칸·빈 장착 슬롯·세부 칸의 ItemFrame Border 링을 <see cref="GearUi.DarkFrame"/> 로 Ink 8px · 잠금 슬롯(원)은 <see cref="CircleBorderKey"/> 굵은 원형 조각.
+    /// 합계 줄(«+0 ❤ | +0 🛡 | +0 🗡»)은 레퍼런스 13 에 상자가 없는 맨 글자라 <see cref="BorderAudit.Exempt"/>(결정 171). 13·14 는 BorderAudit strict.
     /// 이름 계약(스모크 테스트): 격자 <c>PetGrid/Pet:N</c> · 슬롯 <c>Slots/Slot:N</c> · 버튼 <c>UpgradeAllBtn/QuickEquipBtn/SummonBtn/Summon10Btn</c> · 세부 <c>PetDetailCell/PetUpgradeBtn/PetEquipBtn</c> · 탭 바 <c>ui.tabBar</c>.
     /// 펫 시스템이 생기면 <see cref="Icons"/>·«0/0»·«+0» 자리에 pets.json 값을 넣는다(배치는 그대로).
     /// </summary>
@@ -19,6 +21,9 @@ namespace KkomaKnight.Game
     {
         public override string Name => "pet";
         public const int SlotCount = 4, LockedSlots = 2;
+        /// <summary>잠금 슬롯(원)의 «검은 아웃라인» 조각(T69-pet) = <c>BasicFrame_Circle_H69_White_Border2</c>(82×84 · 선 8px = 지름의 9.8% 실측) · 슬롯 rect 보다 <see cref="CircleBorderOut"/> px 밖으로 키워 지름 ≈ 84 → 선 ≈ 8.2px(≥ <see cref="UiKit.BorderPx"/>). 원형은 9-slice 가 없어 multiplier 로는 못 굵힌다(결정 171).</summary>
+        public const string CircleBorderKey = "fr.circleBorder2";
+        public const float CircleBorderOut = 3f;
         /// <summary>격자 9칸의 아이콘(GUI Pro UniqueIcon · 카탈로그 <c>pet.*</c> · 그림은 점수 밖 · 에셋 안에 있는 것으로 · 레퍼런스 순서: 빵·불꽃·화살·망치·화살 다발·베기·멧돼지·천사·문어 자리).</summary>
         public static readonly string[] Icons = { "pet.bread", "pet.fire", "pet.bow", "pet.hammer", "pet.rocket", "pet.sickle", "pet.egg", "pet.feather", "pet.eye" };
         static readonly Layout.R Frame = new Layout.R(0, 0, 100, 100);
@@ -70,16 +75,18 @@ namespace KkomaKnight.Game
                 if (i < LockedSlots)
                 {
                     var c = UiKit.Icon(s, "Bg", "fr.circle", Palette.A(Palette.Dim, 0.7f)); UiKit.Stretch(c.rectTransform);
-                    var b = UiKit.Icon(s, "Border", "fr.circleBorder", Palette.InkLight); UiKit.Stretch(b.rectTransform);
+                    // T69-pet «검은 아웃라인»: 원형 조각은 9-slice 가 없어 multiplier 로 못 굵힌다 → 굵은 조각(Border2 · 선 9.8%)을 슬롯보다 CircleBorderOut px 크게 = 선 ≥ 8px(폰 3px) · Ink α0.9
+                    var b = UiKit.Icon(s, UiKit.BorderName, CircleBorderKey, UiKit.BorderInk); UiKit.Stretch(b.rectTransform, -CircleBorderOut, -CircleBorderOut, -CircleBorderOut, -CircleBorderOut);
                     var lk = UiKit.Icon(s, "Lock", "ui.iconLock"); UiKit.Pct(lk.rectTransform, 28, 28, 44, 44);
                 }
                 else
                 {
                     // 빈 칸 = 회색 등급 프레임 + «+»(Add_1) — ItemFrame_01 은 NormalArea 가 비어 있고 Add_1 이 기본 꺼짐이라 그대로 두면 아무것도 안 보인다(회차 1 감점 · 슬롯 3·4 빠짐)
-                    var f = UiKit.Spawn("ui.itemFrame.empty", s); f.name = "ItemFrame_01"; UiKit.FitScale((RectTransform)f.transform, UiKit.PxSize(Layout.PetSlot));
+                    var f = UiKit.Spawn("ui.itemFrame.empty", s); f.name = "ItemFrame_01"; var frt = (RectTransform)f.transform; UiKit.FitScale(frt, UiKit.PxSize(Layout.PetSlot));
                     UiKit.Hide(f.transform, "Text_Level", "Focus", "Disable", "Lock", "Add_2", "Item");
                     var area = UiKit.Find(f.transform, "NormalArea"); if (area != null) { UiKit.Clear(area); var v = UiKit.Spawn("ui.itemFrame.gray", area); UiKit.Stretch((RectTransform)v.transform); }
                     UiKit.Show(f.transform, "Add_1", true);
+                    GearUi.DarkFrame(frt, frt.localScale.x);   // T69-pet · 7항: 빈 장착 슬롯도 «물건 칸» = ItemFrame 의 Border 링을 Ink 로(조각 배율 0.41 만큼 더 굵게 · 결정 171)
                 }
                 UiKit.Clickable(s, () => { });   // 껍데기 — 눌러도 아무 일 없음
             }
@@ -111,6 +118,7 @@ namespace KkomaKnight.Game
             UiKit.Hide(frt, "Text_Level", "Focus", "Disable", "Lock", "Add_1", "Add_2");
             var area = UiKit.Find(frt, "NormalArea");
             if (area != null) { UiKit.Clear(area); var f = UiKit.Spawn("ui.itemFrame.blue", area); UiKit.Stretch((RectTransform)f.transform); }
+            GearUi.DarkFrame(frt, frt.localScale.x);   // T69-pet · 7항: 펫 칸 = 장비 화면의 그 프레임 → Border 링 Ink + 화면 8px(격자 0.89 · 세부 0.95 배율 보정 · 등급색은 파란 변형의 Bg·InnerBorder 가 그대로)
             var item = UiKit.Find(frt, "Item");
             if (item != null) { item.gameObject.SetActive(true); UiKit.SetSprite(frt, "Item", Icons[index % Icons.Length], Palette.White); }
             var lv = UiKit.Label(cell, 0, 0, 100, 100, "Lv. 0", 28, Palette.White); lv.name = "Lv"; lv.fontStyle = FontStyle.Bold; UiKit.Pct(lv.rectTransform, lvR.Within(cellR)); lvRt = lv.rectTransform;

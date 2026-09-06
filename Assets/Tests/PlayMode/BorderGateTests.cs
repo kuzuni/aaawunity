@@ -143,6 +143,22 @@ namespace KkomaKnight.Tests.Play
             Assert.Greater(seen, 0, label + " 에 켜진 ItemFrame_01_White_Border 링이 하나는 있어야 한다(7항 «물건 칸 = 장비 화면의 그 프레임»)");
         }
 
+        /// <summary>원형(잠금 슬롯) 칸의 테두리 계약(T69-pet) — «Border» Image · 원형 굵은 조각(<see cref="PetScreen.CircleBorderKey"/> · 선 = 지름의 9.8% 실측) · Ink · raycast 끔 · preserveAspect · 지름 ≥ 82 → 선 ≥ 8px(원형은 9-slice 가 없어 조각 굵기 × 지름으로 잰다) · 자물쇠는 테두리 위.</summary>
+        static void AssertCircleBorder(Transform slot, string label)
+        {
+            Assert.IsNotNull(slot, label);
+            Transform bt = null; for (int i = 0; i < slot.childCount; i++) if (slot.GetChild(i).name == UiKit.BorderName) { bt = slot.GetChild(i); break; }
+            Assert.IsNotNull(bt, label + " 에 «Border» 자식");
+            var im = bt.GetComponent<Image>(); Assert.IsNotNull(im, label + " Border 는 Image");
+            Assert.IsNotNull(im.sprite, label + " Border 스프라이트"); Assert.IsTrue(im.sprite.name.Contains("Circle") && im.sprite.name.Contains("Border2"), label + " Border 는 굵은 원형 조각(BasicFrame_Circle_H69_White_Border2 · 지금 " + im.sprite.name + ")");
+            Assert.IsTrue(im.preserveAspect, label + " Border 는 원(preserveAspect)"); Assert.IsFalse(im.raycastTarget, label + " Border raycast 끔");
+            Assert.IsTrue(UiKit.HasDarkBorder(slot), label + " 은 어두운 테두리");
+            var brt = (RectTransform)bt; float dia = Mathf.Min(brt.rect.width, brt.rect.height);
+            const float lineRatio = 8f / 82f;   // 조각 실측: 82px 지름에 선 8px
+            Assert.GreaterOrEqual(dia * lineRatio, UiKit.BorderPx - 0.05f, label + " 테두리 선 ≥ 8px(폰 3px) · 지름 " + dia.ToString("0.0") + " → 선 " + (dia * lineRatio).ToString("0.0"));
+            var lk = UiKit.Find(slot, "Lock"); if (lk != null && lk.parent == slot) Assert.Greater(lk.GetSiblingIndex(), bt.GetSiblingIndex(), label + " 자물쇠는 테두리 위(형제 순서 뒤)");
+        }
+
         [UnityTest]
         public IEnumerator BattleBarsHaveBordersAndCellTagsAreAudited()
         {
@@ -171,9 +187,24 @@ namespace KkomaKnight.Tests.Play
             LobbyPopups.Attendance(_app); yield return Check("16_attendance"); _app.Overlay.Close(); yield return Frames(1);
             LobbyPopups.DailyGift(_app); yield return Check("17_daily_gift"); _app.Overlay.Close(); yield return Frames(1);
 
-            // 13 펫 · 14 펫 세부
+            // 13 펫 · 14 펫 세부 (T69-pet · strict) — 격자 칸·빈 장착 슬롯·세부 칸 = ItemFrame Border → Ink 8px(7항) · 잠금 슬롯 = 굵은 원형 조각 · 합계 줄은 맨 글자(Exempt) · T72 ①② 는 있음만
             _app.ShowScreen("pet"); yield return Frames(2); yield return Check("13_pet");
-            (_app.Current as PetScreen)?.OpenDetail(0); yield return Check("14_pet_detail"); _app.Overlay.Close(); yield return Frames(1);
+            {
+                var petRoot = _app.Current.Root;
+                AssertItemFrameBorder(UiKit.Find(petRoot, "Pet:0"), "펫 격자 첫 칸");
+                AssertItemFrameBorder(UiKit.Find(petRoot, "Pet:" + (Layout.PetCount - 1)), "펫 격자 마지막 칸");
+                AssertCircleBorder(UiKit.Find(petRoot, "Slot:0"), "펫 잠금 슬롯 0"); AssertCircleBorder(UiKit.Find(petRoot, "Slot:1"), "펫 잠금 슬롯 1");
+                AssertItemFrameBorder(UiKit.Find(petRoot, "Slot:" + PetScreen.LockedSlots), "펫 빈 장착 슬롯(ItemFrame · Add_1)");
+                Assert.IsTrue(UiKit.HasPattern(petRoot), "펫 탭 배경 패턴(T72 ①)");
+                Assert.IsTrue(BorderAudit.Exempt.Contains("합계 줄"), "합계 줄은 맨 글자(레퍼런스 13 에 상자 없음) → 감사 예외");
+            }
+            (_app.Current as PetScreen)?.OpenDetail(0); yield return Check("14_pet_detail");
+            {
+                var pd = UiKit.Find(_app.Overlay.Root, "PetDetailCell"); AssertItemFrameBorder(pd, "펫 세부 칸");
+                var petIcon = UiKit.Find(pd, "Item"); Assert.IsNotNull(petIcon, "세부 칸 아이콘");
+                Assert.IsTrue(UiKit.HasLight(petIcon.parent), "펫 세부 아이콘 뒤 빛살(T72 ②)");
+            }
+            _app.Overlay.Close(); yield return Frames(1);
 
             // 20~26 던전·아레나
             EventsScreen.Open(_app, EventsScreen.PageDungeon); yield return Frames(2); yield return Check("20_dungeon");

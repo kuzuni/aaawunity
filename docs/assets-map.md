@@ -296,6 +296,7 @@
 | sprites | `fr.r12` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_R12_Bg.png` | fileID 21300000 | EXP 바 왼쪽 «EXP» 초록 라벨 배경(T35 · 9-slice) · T37: 장비 슬롯 «+N» 노란 배지 |
 | sprites | `fr.circle` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Circle_H86_White_Bg.png` | fileID 21300000 | 전투 HUD 오른쪽 아래 펫 둥근 버튼 바탕(보라 · 껍데기 · T35) |
 | sprites | `fr.circleBorder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Circle_H70_White_Border.png` | fileID 21300000 | 펫 둥근 버튼 테두리(T35) · T69 원형(초상·아이콘) 테두리 = 이 키를 Ink 로 tint |
+| sprites | `fr.circleBorder2` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Circle_H69_White_Border2.png` | fileID 21300000 | T69-pet «검은 아웃라인» 원형 굵은 테두리(BasicFrame_Circle_H69_White_Border2 · 82×84 · 선 8px 실측 = 9.8%) — 펫 장착 잠금 슬롯(원 · Ink tint · 슬롯보다 3px 크게 = 지름 84 → 선 8px) · 원형 조각은 9-slice 가 없어 multiplier 로 못 굵힌다 → 굵은 조각 + 지름으로 |
 | sprites | `fr.sliderBg` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Slider/Slider_02_White_Bg.png` | fileID 21300000 |  |
 | sprites | `fr.buffSlot` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/HUD/BuffSlot_01_Bg.png` | fileID 21300000 |  |
 | sprites | `fr.toast` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/ToastMessage_01.png` | fileID 21300000 |  |

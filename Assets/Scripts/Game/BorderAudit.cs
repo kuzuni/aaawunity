@@ -12,7 +12,7 @@ namespace KkomaKnight.Game
     public static class BorderAudit
     {
         /// <summary>테두리 없음이 실패인 화면(묶음이 끝날 때마다 추가 · 전부 끝나면 모든 화면).</summary>
-        public static readonly HashSet<string> StrictScreens = new HashSet<string> { "02_battle", "01_lobby", "06_gear", "07_gear_detail", "08_gear_fuse" };
+        public static readonly HashSet<string> StrictScreens = new HashSet<string> { "02_battle", "01_lobby", "06_gear", "07_gear_detail", "08_gear_fuse", "13_pet", "14_pet_detail" };
 
         /// <summary>
         /// 테두리가 없는 게 맞는 것(ROUTINE T69 5항 «예외 목록») — 이름표 이름 또는 <see cref="UiTag.Members"/> 조각의 오브젝트 이름.
@@ -24,6 +24,7 @@ namespace KkomaKnight.Game
             "PowerCell",                        // 01 전투력 = 칼 아이콘 + 주황 숫자뿐(레퍼런스 01 에 상자 없음)
             "장비 무대(캐릭터+슬롯)",           // 06 캐릭터 무대 = 들판 그림 전폭(레퍼런스 06 에 상자 없음 · 속의 슬롯 6칸이 각자 테두리) — 이름표에 «슬롯» 이 들어 걸린다(T69-gear)
             "이름줄",                           // 07 세부 팝업의 장비 이름 = 패널 위 맨 글자(레퍼런스 07 «Shadow Treads» 에 상자 없음 · 아래 pill 2개가 테두리) (T69-gear)
+            "합계 줄",                          // 13 펫 탭의 «+0 ❤ | +0 🛡 | +0 🗡» = 어두운 바탕 위 맨 글자(레퍼런스 13 «+168 ❤ | +165 🛡 | +74 🗡» 에 상자 없음 · 14 의 «패시브 수치 줄» 도 같은 꼴이라 «수치» 로 이미 제외) (T69-pet · 결정 171)
         };
 
         /// <summary>«행·카드·칸» 으로 보는 이름표 낱말 — 이 가운데 하나가 이름에 들어가면 대상.</summary>

@@ -595,6 +595,8 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 3b64137febb3444ed8117e4bc227f487, type: 3}
   - key: fr.circleBorder
     sprite: {fileID: 21300000, guid: d5444a10c5f1543889e641bf3f9c4a37, type: 3}
+  - key: fr.circleBorder2
+    sprite: {fileID: 21300000, guid: 65f499310176843f28383370c78df897, type: 3}
   - key: fr.sliderBg
     sprite: {fileID: 21300000, guid: ffb6fe45a05ac4b7f9a05950da334f7c, type: 3}
   - key: fr.buffSlot
