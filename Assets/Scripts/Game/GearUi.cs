@@ -299,15 +299,16 @@ namespace KkomaKnight.Game
         {
             var region = Layout.GdOpts.Within(Layout.GdBox);
             var opts = D.Gear.Options.TryGetValue(g.Type, out var ol) ? ol : new List<GearOption>();
-            int n = D.Gear.OptCount(g.Rar, g.Plus); int R = D.Gear.RarName.Length;
+            int n = D.Gear.OptCount(g.Rar, g.Plus);
             var host = UiKit.Rect(box, "Options"); UiKit.Pct(host, region); UiKit.Tag(host, "옵션 목록");
             if (opts.Count == 0) { UiKit.Label(host, 2, 0, 96, 100, "세트 옵션 없음", TextSize.Body, Palette.CreamDark); return; }
             float pitch = Mathf.Min(Layout.GdOptPitch, Layout.GdOpts.H / opts.Count);   // 프레임 % → 줄 하나가 차지하는 비율
             float rowPct = pitch / Layout.GdOpts.H * 100f;
             for (int i = 0; i < opts.Count; i++)
             {
-                bool on = i < n; string tier = i < R ? RarName(D, i) : $"신화 +{(i - R + 1) * 3}강";
-                var color = i < R ? Palette.ByName(Palette.RarName(i)) : Palette.Plum;
+                bool on = i < n; bool mythPlus = D.Gear.OptNeedsMythPlus(i);
+                string tier = D.Gear.OptTierName(i);                          // T89: 표(OptCountByRar·MythPlusOptAt)에서 읽는다
+                var color = mythPlus ? Palette.Plum : Palette.ByName(Palette.RarName(D.Gear.OptTierRar(i)));
                 var row = Pill(host, "Opt:" + i, new Layout.R(0, i * rowPct, 100, rowPct * OptRowFill), on ? 0.7f : 0.6f);
                 var ic = UiKit.Icon(row, "ic", on ? SetIcon(Set(D, g)) : "ui.iconLock", on ? color : Palette.A(Palette.Gray, 0.9f)); UiKit.Pct(ic.rectTransform, 1.5f, 12, 5, 76);
                 string desc = GearText.Shorten(opts[i].Desc) + (on ? "" : GearText.LockSuffix(tier));

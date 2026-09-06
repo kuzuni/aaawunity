@@ -53,9 +53,11 @@ namespace KkomaKnight.Tests
                     Assert.That(opts[i].Px.Count + opts[i].Stat.Count, Is.GreaterThan(0), ty.Type + " slot " + (i + 1) + " 효과가 비었다");
                 }
             }
-            Assert.That(g.OptCount(0, 0), Is.EqualTo(1));
-            Assert.That(g.OptCount(g.RarMyth, 0), Is.EqualTo(4));
-            Assert.That(g.OptCount(g.RarMyth, 9), Is.EqualTo(g.OptMaxCount));
+            // T89(주인 지시 2026-09-07) — 사다리가 한 칸 뒤로 밀렸다: 일반 0 · 신화 3 · 마지막 줄은 신화 +12강
+            Assert.That(g.OptCount(0, 0), Is.EqualTo(0));
+            Assert.That(g.OptCount(g.RarMyth, 0), Is.EqualTo(3));
+            Assert.That(g.OptCount(g.RarMyth, 9), Is.EqualTo(g.OptMaxCount - 1));
+            Assert.That(g.OptCount(g.RarMyth, 12), Is.EqualTo(g.OptMaxCount));
         }
 
         [Test]

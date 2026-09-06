@@ -287,6 +287,7 @@ namespace KkomaKnight.Core
                     foreach (var k in row.Keys) if (k.StartsWith("plus") && k != "plus0") mythAt.Add(int.Parse(k.Substring(4)));
             }
             d.OptCountByRar = oc.ToArray(); mythAt.Sort(); d.MythPlusOptAt = mythAt.ToArray();
+            ShiftOptionLadderOneStep(d);
             var opts = ol.Req("options");
             foreach (var ty in opts.Keys)
             {
@@ -306,6 +307,28 @@ namespace KkomaKnight.Core
             return d;
         }
 
+        /// <summary>
+        /// ⚑ 주인 지시 2026-09-07 «일반 등급에서는 옵션 안 열리게 · 희귀에서부터 · 마지막(흡혈 +8%)은 신화 12강» —
+        /// **aaaw 원본(`data/gear.json`)과 의도적으로 다르다**(정본 JSON 은 손대지 않고 여기서만 한 칸씩 뒤로 민다).
+        /// 등급 기본 개수를 하나씩 줄이고(일반 1→0 · 희귀 2→1 · 전설 3→2 · 신화 4→3)
+        /// 신화 강화 단계에 한 칸(+12)을 더해(+3/+6/+9 → +3/+6/+9/+12) 줄 수(<see cref="OptMaxCount"/> = 7)는 그대로 둔다.
+        /// 마지막 칸 간격은 표에서 읽어 더한다(코드에 수치를 박지 않는다 · §1).
+        /// 세트 옵션은 <see cref="RunOptions.GearOpts"/> 가 켜진 판에만 들어가고 T2 시드 골든은 그 스위치가 꺼져 있어 흔들리지 않는다.
+        /// </summary>
+        static void ShiftOptionLadderOneStep(GearData d)
+        {
+            if (d.OptCountByRar == null || d.OptCountByRar.Length == 0) return;
+            if (d.OptCountByRar[0] <= 0) return;                       // 원본이 이미 «일반 0» 이면 그대로 둔다(두 번 밀지 않는다)
+            for (int r = 0; r < d.OptCountByRar.Length; r++) d.OptCountByRar[r] = Math.Max(0, d.OptCountByRar[r] - 1);
+            var at = new List<int>(d.MythPlusOptAt);
+            if (at.Count > 0)
+            {
+                int step = at.Count >= 2 ? at[at.Count - 1] - at[at.Count - 2] : at[0];
+                at.Add(at[at.Count - 1] + step);
+            }
+            d.MythPlusOptAt = at.ToArray();
+        }
+
         public string SetOf(string type) => type.Substring(0, type.IndexOf('_'));
         public double SlotMul(int L) => 1 + SlotStep * Math.Min(L, SlotLvMax);
         public double SlotCost(int L) => L < SlotCostTable.Length ? SlotCostTable[L] : Math.Floor(SlotCostBase * Math.Pow(SlotCostG, L));
@@ -315,6 +338,24 @@ namespace KkomaKnight.Core
             int n = OptCountByRar[rar];
             if (rar == RarMyth) foreach (var at in MythPlusOptAt) if (plus >= at) n++;
             return n;
+        }
+        /// <summary>옵션 줄 i 가 열리는 등급 index — 신화 강화에서야 열리는 줄이면 <see cref="RarMyth"/>.</summary>
+        public int OptTierRar(int i)
+        {
+            for (int r = 0; r < OptCountByRar.Length; r++) if (OptCountByRar[r] > i) return r;
+            return RarMyth;
+        }
+        /// <summary>옵션 줄 i 가 신화 «강화» 단계에서야 열리는 줄인가(= 등급만으로는 안 열린다).</summary>
+        public bool OptNeedsMythPlus(int i) => i >= OptCountByRar[RarMyth];
+        /// <summary>
+        /// 옵션 줄 i 의 개방 단계 이름 — «희귀» 같은 등급 이름이거나 «신화 +12강».
+        /// 강화 칸은 <see cref="MythPlusOptAt"/> 표에서 읽는다(예전처럼 «(i−등급수+1)×3» 으로 계산하지 않는다 · T89).
+        /// </summary>
+        public string OptTierName(int i)
+        {
+            if (!OptNeedsMythPlus(i)) return RarName[OptTierRar(i)];
+            int k = i - OptCountByRar[RarMyth];
+            return k >= 0 && k < MythPlusOptAt.Length ? RarName[RarMyth] + " +" + MythPlusOptAt[k] + "강" : "";
         }
     }
     public sealed class GearOption
