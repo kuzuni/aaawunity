@@ -135,10 +135,11 @@ namespace KkomaKnight.Game
         // 장착분 표기 «장착중» = 레퍼런스 08 의 «Equipped» — 어두운 띠 위 흰 글자(T63-forge).
         // 띠가 없으면 본문 하한(40)으로 올라간 글자가 장비 그림 위에 그대로 얹혀 안 읽힌다(screens run 95 `08_gear_fuse.png` 실측 — 6칸 전부 뭉갬).
         // 글자 크기 게이트의 «잘림/넘침» 은 «선호 크기 > rect» 만 보므로 이 겹침은 표에 안 나온다(ROUTINE T63 2단계 ⚠).
+        // 회차 2(screens run 106): 알파 0.82 로는 장비 그림이 절반쯤 비쳐 여전히 뭉갰다 → 레퍼런스 08 의 «Equipped» 띠처럼 거의 불투명(0.94 · 한 단계 더 어둡게).
         const float TagY = 44, TagH = 32;
         static void EquippedTag(Transform cell)
         {
-            var plate = UiKit.Panel(cell, "EquippedPlate", "fr.rect", Palette.A(Palette.Dim, 0.82f));
+            var plate = UiKit.Panel(cell, "EquippedPlate", "fr.rect", Palette.A(Color.Lerp(Palette.Dim, Color.black, 0.35f), 0.94f));
             UiKit.Pct(plate.rectTransform, 2, TagY, 96, TagH);
             var lb = UiKit.Label(cell, 4, TagY, 92, TagH, "장착중", TextSize.Body, Palette.White, TextAnchor.MiddleCenter);
             lb.name = "EquippedLabel";

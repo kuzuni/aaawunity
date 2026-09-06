@@ -618,7 +618,7 @@ namespace KkomaKnight.Tests.Play
                 Assert.LessOrEqual(pr.anchorMin.x, lr.anchorMin.x + 1e-3f, "띠가 글자보다 왼쪽까지"); Assert.GreaterOrEqual(pr.anchorMax.x, lr.anchorMax.x - 1e-3f, "띠가 글자보다 오른쪽까지");
                 Assert.LessOrEqual(pr.anchorMin.y, lr.anchorMin.y + 1e-3f, "띠가 글자보다 아래까지"); Assert.GreaterOrEqual(pr.anchorMax.y, lr.anchorMax.y - 1e-3f, "띠가 글자보다 위까지");
                 Assert.Less(plate.GetSiblingIndex(), eqLb.transform.GetSiblingIndex(), "띠가 글자보다 먼저(= 글자가 띠 위에) 그려져야 한다");
-                Assert.Greater(plate.GetComponent<Image>().color.a, 0.6f, "띠는 그림을 가릴 만큼 불투명해야 한다");
+                Assert.Greater(plate.GetComponent<Image>().color.a, 0.9f, "띠는 장비 그림이 안 비칠 만큼 불투명해야 한다(0.82 로는 절반쯤 비쳤다 — screens run 106)");
             }
             // T39 — 레퍼런스 08_gear_fuse.jpg 구도 단언: 무대(위 41%) · 결과 슬롯(좌상) · 액션바(자동 왼쪽 끝 · 합성 오른쪽 끝 · 회색) · 인벤 = 장비 탭과 같은 자리 · 뒤로 버튼(왼쪽 아래) · 제목 글자·상단 재화 바 없음
             {
