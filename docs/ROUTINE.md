@@ -227,7 +227,7 @@
 2. 하단 탭(NavBar)의 «현재 탭» 강조는 그대로 두고 눌림만 추가.
 3. 게이트 + PROGRESS T22 행.
 
-### T23 — 쉼터 «광고 보고 둘 다 얻기» · 클리어 팝업 = 골드만 + «광고 보고 보상 ×2 받기» (번호 정정: 구 T16)
+### T23 — 쉼터 «광고 보고 둘 다 얻기» · 클리어 팝업 = 골드만 + «광고 보고 보상 ×2 받기» (번호 정정: 구 T16) ✅ (완료 · `9ea5d9d` · CI #51 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/Overlay.cs`(Rest · Clear) · `Assets/Scripts/Core/Battle.cs`(`ResolveRest` 에 «둘 다» 경로 1개 — 대화형 전용 · SimPolicy 는 절대 고르지 않으므로 시드 골든 불변) · `BattleScreen.cs`(EndRun 보상)
 순서: T21 뒤(Battle.cs 공유).
 1. **쉼터**: 기존 두 버튼(체력 회복 / 경험치) 아래에 **«광고 보고 둘 다 얻기»**(`ui.btnOrange` · 광고 카운트다운은 천사의 `AdCountdown` 재사용) → `G.ResolveRest(both)` = 회복 + 경험치 둘 다. 엔진에 `ResolveRestBoth()` 를 추가하되 `ResolveRest(bool)` 은 그대로.
