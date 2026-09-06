@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-07 · 01:5X UTC) ⚑⚑⚑ 워커가 죽어 있었다 — Fable 사용량 한도.** 계정 1 의 A~D 정규 실행이 **09:50 UTC 무렵부터 매번 15초 만에 실패**했다(런 로그: `rate_limit: rejected (seven_day_overage_included)` → «You've reached your Fable limit»). 그동안 커밋을 올린 것은 예약(send_later)으로 깨어난 세션들과 계정 2 뿐이다. **조치(주인 지시): A~D 의 모델을 `claude-fable-5-1` → `claude-opus-5` 로 바꾸고 이름 끝에 «· Opus» 를 붙였다. cron 시각(:05/:20/:35/:50)·프롬프트·환경은 그대로** — 주인 지시 «시간을 새로 잡지 마라, 다른 계정과 엇갈린 배치가 깨진다»(계정 2 E~H = :12/:27/:42/:57 유지). **계정 2 의 E~H 도 같은 Fable 한도에 걸렸을 수 있다 — 그 계정에서 런 로그를 보고 같은 조치(모델 Opus)를 한다**(§6 ⑤ 아래). 워커는 자기 모델이 무엇이든 지시서를 그대로 따르면 된다.
+
 - **(2026-09-07 · 01:4X UTC) ⚑⚑ 주인 지시 — 루틴이 실행마다 «대화창»(클라우드 세션)을 줄줄이 새로 만들지 말고 자기 세션 안에서 이어서 처리하게.** 등재 세션이 **A~D 루틴 4개를 `persist_session: true` 로 바꿨다**(RemoteTrigger update · 다음 정각부터 같은 세션에 이어붙는다 · 창은 워커당 1개). 계정 2 의 **E~H 는 그 계정에서 같은 설정을 해야 한다**(§6 ⑤). 이에 따른 워커 규칙 변경: **ⓐ CI 확인용 예약(`send_later`·reminder 트리거)을 새로 만들지 않는다** — 세션이 유지되므로 «다음 정규 실행에서 이어서 확인» 하면 된다(그때 이전 대화가 그대로 있다). 이미 만든 것은 다 쓰면 비활성으로 두고 새로 만들지 않는다. 꼭 필요한 예외(다음 실행까지 90분 넘게 기다려야 하는데 lock 이 걸려 있는 경우)만 하나, 이유를 PROGRESS «워커 결정 기록» 에 한 줄. **ⓑ 세션이 이어지므로 매 실행마다 처음부터 다시 읽지 말고**, 이전 회차에서 무엇을 기다리는지(내 lock · 확인할 CI 런) 를 먼저 떠올리고 그것부터 마무리한다. 그래도 §0 «세션 시작 절차»(git fetch → lock 확인)는 매번 한다.
 
 - **(2026-09-07 · 01:3X UTC) ⚑ 주인 작업(로컬 에디터) — Unity IAP(In-App Purchasing 5.4.3) 를 프로젝트에 넣었다: `com.unity.purchasing` + `com.unity.services.core` · `Assets/Resources/BillingMode.json`(GooglePlay) · Purchasing/Analytics 서비스 켬 · Unity 프로젝트 연결(cloudProjectId·projectName KkomaKnight). 커밋 `08acba68`(등재 세션이 대행 · 게이트 초록).** 워커는 이 패키지·설정을 **되돌리지 않는다**. 이 커밋의 CI 유니티 잡이 빨개지면(패키지 복원·WebGL/Android 빌드) **최우선으로 고친다**(WebGL 에서 IAP 는 스토어가 없으니 `#if UNITY_ANDROID` 류 분기·스트리핑 주의). **실제 결제 붙이기(상점 «모의 결제» → Google Play 상품)는 아직 주인 지시가 없다 — 시키기 전엔 만들지 않는다.**
@@ -883,6 +885,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 - 루틴은 기본값(`persist_session: false`)이면 **실행마다 새 클라우드 세션(대화창)** 을 만든다 → 하루면 수십 개가 쌓인다. 주인이 이를 싫어해 **A~D 는 2026-09-07 에 `true` 로 바꿨다**(등재 세션 · RemoteTrigger update `{"persist_session": true}`).
 - **계정 2 의 E~H 도 같게 해야 한다** — 계정 2 의 Claude Code 세션에서 `RemoteTrigger` 로 네 개에 각각 `{"persist_session": true}` 를 update 한다(routine ID 는 ③ 표). 다른 계정의 루틴은 서로 못 만진다(등재 세션이 계정 2 것을 부르면 404).
 - 세션이 유지되면 이전 회차 대화가 남으므로 **확인용 예약 트리거(send_later)를 만들 필요가 없다**(⚑ 2026-09-07 규칙 ⓐ).
+- **모델(2026-09-07)**: 계정 1 A~D 는 **Opus**(`claude-opus-5` · Fable 7일 한도 초과로 전환 · 이름 «… (:05 · Opus)»). 계정 2 E~H 는 아직 `claude-fable-5-1` — 그 계정에서 런 로그에 «Fable limit» 이 보이면 같은 방식으로 모델만 Opus 로 바꾸고 **cron 시각(:12/:27/:42/:57)은 절대 바꾸지 않는다**(두 계정이 엇갈려 도는 배치를 유지). update 는 `job_config` 를 통째로 보내야 하며(`environment_id` 필수) `events`(프롬프트)를 반드시 같이 실어야 지워지지 않는다.
 
 ## 4. PROGRESS.md 기록 규약
 
