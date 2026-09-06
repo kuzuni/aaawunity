@@ -13,7 +13,7 @@
 | T5 | UI 를 docs/ref 레이아웃에 맞추기 | ✅ 완료 (배치 상수 = 표 · 실물 확인은 WebGL 배포에서) | sess-1516-port / 착수 세션 | Core/Layout · Game/* 배치 · Tests/LayoutSpecTests | ref-layout ①~⑦ 표를 `Layout` 상수로 · 표 ↔ 상수 자동 대조 테스트 8개 · 60fps · 백그라운드 실행 · 주인 피드백 일괄(특전 카드/색/새로고침 · 공격 모션 · 발밑 체력바 · 간격 2배 · 맵 4종 순환) |
 | T6 | 로비 = Lobby_Default 그대로 (TopBar 폐기 · 캐릭터·전투력·골드·보석) | ✅ 완료 (`814d59d` · 실물 확인은 WebGL 배포에서) | sess-2034-9487 / 워커 B | Game/Screens(로비) · HeroView(신규) · TopBar 삭제 | 프리팹 요소 이동 0 · 초상 = HeroView(RenderTexture) · «25/55» = 전투력 · dotnet 0/0 · 테스트 40/40 |
 | T7 | 장비 화면 = Character_Hero_Equipment 그대로 + 장착 외형 반영 + ListItem_EquipMent | ✅ 완료 (`ff53ebb` · 실물 확인은 WebGL 배포에서) | sess-2036-27996 / 워커 C | Core/GearLook(신규) · Game/GearScreen · GearUi · CharacterRig · BattleWorld(스킨) · HeroView(T6 것 재사용) · Tests/GearLookTests | 프리팹 요소 이동 0 · 슬롯 Item 크기 그대로 · 파츠 36종 표 · dotnet 0/0 · 테스트 45/45 |
-| T8 | 대장간 정리 (인벤 전부 · 빨간 점 · 칸 비례) — T7 뒤 | ✅ 완료 (`41e524c` · 실물 확인은 WebGL/에디터에서) | sess-2113-28861 / 워커 A | Game/ForgeScreen · GearUi(Grid) · catalog(`ui.alertDot` 노트) | 인벤 격자 = 장비 화면 프리팹 격자 값 복사(188 정사각 · 5열 · 찌그러짐 0) · 재료 3칸도 본래 크기 · 빨간 점 · 장착중 Check+흐림 · 인벤 누락 원인 = 가짜 null 예외로 Refresh 중단 · dotnet 0/0 · 테스트 45/45 |
+| T8 | 대장간 정리 (인벤 전부 · 빨간 점 · 칸 비례 · **장착분도 재료 가능**) — T7 뒤 | ✅ 완료 (`41e524c` · 실물 확인은 WebGL/에디터에서) | sess-2113-28861 / 워커 A | Game/ForgeScreen · GearUi(Grid) · catalog(`ui.alertDot` 노트) | 인벤 격자 = 장비 화면 프리팹 격자 값 복사(188 정사각 · 5열 · 찌그러짐 0) · 재료 3칸도 본래 크기 · 빨간 점 · 장착중 Check+흐림 · 인벤 누락 원인 = 가짜 null 예외로 Refresh 중단 · dotnet 0/0 · 테스트 45/45 |
 | T9 | 상점 = Shop_List 그대로 (상자 3 · 다이아 6 · 골드 3) + 뽑기 결과 = Shop_Chest_Open | ✅ 완료 (`4506ed4` · 실물 확인은 WebGL/에디터에서) | sess-2136-22274 / 워커 C | Game/ShopScreen · Core/GameData(ShopData) · Game/AssetCatalog(texts) · Bootstrap · KkomaKnight/shop.json(신규) · catalog(ui.shopList·ui.shopItem·data.shop) · tools/gen_catalog·check_catalog_keys · Tests/ShopDataTests | 프리팹 요소 이동 0 · ShopPackage ×3 = 상자(1회/10회 · 등급 확률 3칸 · 천장 배지) · ShopItem ×(2+6+3) = 무료 보급·다이아·골드 · 소탭 3칸 스크롤 · 결과 격자 = ListItem_EquipMent · dotnet 0/0 · 테스트 50/50 |
 | T10 | 하단 네비 = 상점·장비·전투·탤런트·펫 + Settings 그대로 — T6 뒤 | ✅ 완료 (`dce33d6` · 실물 확인은 WebGL 배포에서) | sess-2052-15499 / 워커 D | Game/Screens(NavBar 이사) · Overlay(Settings·TalentPet) · GearScreen(NavBar 제거) · catalog(ui.talent·ui.talentIcon·ui.petIcon) | 탭 = 상점·장비·전투·탤런트·펫 · Settings 프리팹 요소 숨김 0 · Character_Talent_02 통째로 · dotnet 0/0 · 테스트 45/45 |
 | T11 | UI 스모크 PlayMode 테스트 + 가짜 null 게이트 | ✅ 완료 (`bddcf98` + `ab9b192` + `bb196d1` · 실물 확인 = CI 런 #38 유니티 잡 초록 — PlayMode 전부 통과 · UiSmokeTests 5/5 · HeroViewTests 2/2) | sess-2150-31726 / 워커 D | Tests/PlayMode/UiSmokeTests·PlayLog(신규) · HeroViewTests(검사 도우미 교체) · tools/check_unity_null.sh(신규) · ci.yml(게이트 1줄) · ROUTINE §1·§3 | 화면 5 + 팝업 17종을 실제 씬에서 열어 화면마다 빨간 줄 0·경로/키 경고 0·데모 잔여 글자 0·핵심 요소(슬롯 6·상자 3·탭 5) · 전투 3초 틱 · 가짜 null 패턴 0건 게이트(CI) · **CI #33 회귀 원인 확정·수정**(NoUnexpectedReceived 가 Debug.Log 도 실패로 봄) · dotnet 0/0 · 테스트 50/50 |
@@ -359,6 +359,8 @@
 
 27. **투사체 표적 규칙(T14)** — 주인은 «웨이브 안 무작위» 를 원한다. 원본 sim.js 가 이미 그렇다면 문제 없음(연출만 고침). 원본이 «맨 앞만» 이면 규칙 변경이라 골든 재생성이 필요 — 워커가 sim.js 를 읽고 결과를 여기 적는다.
 28. **클리어 팝업 «그냥 받기» 버튼(T16)** — «광고 보고 보상 ×2» 만 두면 광고 없이는 못 나간다. 작은 «그냥 받기»(1배) 를 기본값으로 둔다. 빼길 원하면 한 줄.
+
+29. **장착 중 장비를 합성 재료로 쓸 때(T8)** — 재료로 사라진 장착분의 슬롯은 «결과물이 같은 부위면 그것을 장착, 아니면 빈 슬롯» 을 기본값으로 둔다(자동 장착 금지 원칙의 유일한 예외 · 결과물은 재료보다 항상 좋다). 그냥 빈 슬롯으로 두길 원하면 한 줄.
 
 ## 주인 할 일
 
