@@ -34,6 +34,14 @@ namespace KkomaKnight.Core
         public bool GiftFree;
         /// <summary>줄별 수령 여부(dailyGift.json milestones 순 · 길이는 <see cref="DailyGift.Roll"/> 이 표에 맞춘다).</summary>
         public List<bool> GiftClaimed = new List<bool>();
+        /// <summary>탐험(T97 · 주인 2026-09-07) — <b>마지막 정산 시각</b>(UTC 유닉스 초 · 0 이면 «아직 한 번도 안 열었다» → 여는 순간이 시작점).
+        /// 쌓인 양을 저장하지 않고 이 시각 하나만 두므로 «켜 두든 꺼 두든»(오프라인) 같은 속도로 쌓인다(<see cref="Expedition"/>).
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 기본값»(옛 세이브 호환 · <see cref="GiftDay"/> 와 같은 방식).</summary>
+        public double ExpSettle;
+        /// <summary>빠른 탐험 횟수가 살아 있는 날짜(<c>yyyy-MM-dd</c> · 바뀌면 <see cref="ExpQuickUsed"/> 를 0 으로).</summary>
+        public string ExpQuickDay = "";
+        /// <summary>오늘 쓴 빠른 탐험 횟수(상한 = expedition.json <c>quickAdsPerDay</c>).</summary>
+        public int ExpQuickUsed;
 
         public static SaveData NewSave(GameData D)
         {
@@ -70,6 +78,7 @@ namespace KkomaKnight.Core
             Gold = Math.Max(0, Gold); Gem = Math.Max(0, Gem);
             Speed = Math.Max(SpeedMin, Math.Min(Speed, SpeedMax));
             GiftAds = Math.Max(0, GiftAds); if (GiftClaimed == null) GiftClaimed = new List<bool>();   // 표 길이 보정은 DailyGift.Roll (표를 여기서 모른다)
+            if (ExpSettle < 0) ExpSettle = 0; ExpQuickUsed = Math.Max(0, ExpQuickUsed);   // 빠른 탐험 상한은 Expedition.Roll (표를 여기서 모른다) · 시계 되돌림도 거기서
             Inv.RemoveAll(g => g == null || Array.IndexOf(D.Gear.Parts, g.Part) < 0 || !D.Gear.Options.ContainsKey(g.Type) || g.Rar < 0 || g.Rar >= D.Gear.RarName.Length);
             foreach (var g in Inv) { g.Plus = Math.Max(0, g.Plus); if (g.Rar == D.Gear.RarLegend && g.Plus >= D.Gear.LegendToMythPlus) { g.Rar = D.Gear.RarMyth; g.Plus = 0; } }
             Uid = Math.Max(1, Uid);
@@ -95,6 +104,7 @@ namespace KkomaKnight.Core
                 ["v"] = (double)Version, ["gold"] = Gold, ["gem"] = Gem, ["maxChapter"] = (double)MaxChapter, ["selChapter"] = (double)SelChapter,
                 ["muted"] = MuteBgm, ["muteBgm"] = MuteBgm, ["muteSfx"] = MuteSfx, ["speed"] = (double)Speed, ["pulls"] = (double)Pulls, ["fuses"] = (double)Fuses, ["uid"] = (double)Uid, ["freeDay"] = FreeDay ?? "",
                 ["giftDay"] = GiftDay ?? "", ["giftAds"] = (double)GiftAds, ["giftFree"] = GiftFree,
+                ["expSettle"] = ExpSettle, ["expQuickDay"] = ExpQuickDay ?? "", ["expQuickUsed"] = (double)ExpQuickUsed,
             };
             var gc = new List<object>(); foreach (var b in GiftClaimed) gc.Add(b); o["giftClaimed"] = gc;
             var inv = new List<object>();
@@ -124,6 +134,7 @@ namespace KkomaKnight.Core
                     s.Gold = j["gold"].Num(); s.Gem = j["gem"].Num(); s.MaxChapter = j["maxChapter"].Int(1); s.SelChapter = j["selChapter"].Int(1);
                     s.MuteBgm = j.Has("muteBgm") ? j["muteBgm"].Bool() : j["muted"].Bool(); s.MuteSfx = j["muteSfx"].Bool(); s.Speed = j["speed"].Int(SpeedMin); s.Pulls = j["pulls"].Int(); s.Fuses = j["fuses"].Int(); s.Uid = j["uid"].Int(1); s.FreeDay = j["freeDay"].Str("");
                     s.GiftDay = j["giftDay"].Str(""); s.GiftAds = j["giftAds"].Int(); s.GiftFree = j["giftFree"].Bool();
+                    s.ExpSettle = j["expSettle"].Num(); s.ExpQuickDay = j["expQuickDay"].Str(""); s.ExpQuickUsed = j["expQuickUsed"].Int();
                     foreach (var c in j["giftClaimed"].Items()) s.GiftClaimed.Add(c.Bool());
                     foreach (var g in j["inv"].Items())
                         s.Inv.Add(new GearItem { Uid = g["u"].Int(), Part = g["part"].Str(), Type = g["type"].Str(), Rar = g["rar"].Int(), Plus = g["plus"].Int(), IsNew = g["nw"].Num() != 0 });

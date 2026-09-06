@@ -1,0 +1,11 @@
+{
+  "_note": "탐험(방치·오프라인 보상) 수치표 — 이 레포 전용(aaaw data/ 에 없는 수치 · 주인 지시 2026-09-07 «탐험은 걍 방치 + 오프라인 보상 느낌 · 켜두거나 꺼둬도 쩄든 방치 보상 쌓이고 · 골드·다이아 쌓이게 · 빠른 탐험은 광고 보고 얻는 식»). StreamingAssets/data 는 aaaw 동기 폴더라 여기 둔다(dailyGift.json 과 같은 자리). 코드는 카탈로그 텍스트 «data.expedition» 으로 읽는다 — 코드에 숫자 하드코딩 0. 값을 바꾸려면 이 파일만 고친다.",
+  "_rate": "시간당 골드 = goldKill(진행 챕터) × goldRandAvg × goldKillsPerHour. goldKill 은 tune.json 의 결정부(goldKillBase + goldKillPer×c) × goldGrowth^(c-1) 그대로라 «뒤 챕터일수록 좋다»(레퍼런스 30 «Later chapters grant better rewards»)가 저절로 성립한다. goldKillsPerHour = 방치 1시간이 그 챕터 적 몇 마리 처치분인가(120 = 활성 플레이 몇 분치). 다이아는 챕터와 무관한 고정(레퍼런스 30 의 «10/h»).",
+  "maxHours": 8,
+  "goldKillsPerHour": 120,
+  "goldRandAvg": 1.4,
+  "gemPerHour": 10,
+  "minClaimMinutes": 1,
+  "quickHours": 5,
+  "quickAdsPerDay": 3
+}

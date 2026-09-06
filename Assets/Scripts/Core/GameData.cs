@@ -23,6 +23,8 @@ namespace KkomaKnight.Core
         public DailyGiftData DailyGift;
         /// <summary>아레나 껍데기의 상대 승점·전투력 표시용 계수 — aaaw data/ 가 아니라 이 레포의 <c>Assets/KkomaKnight/arenaDummy.json</c>(카탈로그 텍스트 «data.arenaDummy» · T81). 전투 엔진은 안 쓴다 · 없으면 null(숫자가 «—» 로 남는다).</summary>
         public ArenaDummyData ArenaDummy;
+        /// <summary>탐험(방치·오프라인 보상) 수치표 — aaaw data/ 가 아니라 이 레포의 <c>Assets/KkomaKnight/expedition.json</c>(카탈로그 텍스트 «data.expedition» · T97). 로드는 Bootstrap 이 따로 한다 · 없으면 null(탐험 팝업이 «--» 로 뜬다).</summary>
+        public ExpeditionData Expedition;
 
         public static readonly string[] Files = { "tune.json", "enemies.json", "perks.json", "gear.json", "gacha.json", "combat.json", "ui.json" };
 
