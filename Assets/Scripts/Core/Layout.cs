@@ -156,7 +156,13 @@ namespace KkomaKnight.Core
         public static readonly R ForgeMat = new R(12.0f, 27.5f, 17.0f, 9.5f);   // 레퍼런스는 1칸 · 게임은 «같은 것 3개» 라 3칸(피치 ForgeMatPitch) — ref-layout U02 ⓓ 영구 X 행
         public const float ForgeMatPitch = 19.0f;
         public static readonly R ForgeBanner = new R(45.0f, 15.0f, 45.0f, 6.0f);
-        public static readonly R ForgeActionBar = new R(0, 42.0f, 100, 5.0f);
+        /// <summary>
+        /// 대장간 액션바 — <b>장비 화면의 갈색 띠(<c>GearScreen.Band</c>)와 같은 자리·같은 크기</b>(주인 2026-09-07 08:1X
+        /// «대장간에 Action 바 부분도 장비 팝업에 Band 랑 같은 크기랑 위치로» · T113 ⓒ).
+        /// 숫자를 베껴 적지 않고 <b>같은 식</b>(스탯 줄 아래 0.5%p ~ 인벤 격자 위)으로 계산한다 — 그래야 T112 가 무대·스탯·인벤을 옮겨도
+        /// 두 화면의 띠가 저절로 같이 따라가고 «한 쪽만 어긋나는» 일이 없다(결정 274). 지금 값 = (0, 41.0, 100, 6.5).
+        /// </summary>
+        public static readonly R ForgeActionBar = new R(0, GearStats.Y + GearStats.H + 0.5f, 100, GearInv.Y - (GearStats.Y + GearStats.H + 0.5f));
         public static readonly R ForgeAuto = new R(2.0f, 42.0f, 28.0f, 4.5f);
         public static readonly R ForgeFuse = new R(70.0f, 42.0f, 27.5f, 4.5f);
         public static readonly R ForgeInv = new R(3.0f, 47.5f, 94.0f, 44.5f);

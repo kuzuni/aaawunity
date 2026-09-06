@@ -28,7 +28,6 @@ namespace KkomaKnight.Game
         static readonly Layout.R StageBarrelL = new Layout.R(-4, 70, 16, 26), StageBarrelR = new Layout.R(88, 70, 16, 26);
         static readonly Layout.R StageToolA = new Layout.R(8, 5, 9, 14), StageToolB = new Layout.R(19, 5, 9, 14);   // 벽에 걸린 연장(망치·도끼)
         /// <summary>모루 그림(프레임 %) — 결과 슬롯과 재료 슬롯 사이 왼쪽(레퍼런스 x4~36 · y21~29).</summary>
-        static readonly Layout.R Anvil = new Layout.R(3.0f, 20.5f, 33.0f, 9.0f);
         /// <summary>아래 회색 띠 — 탭바 자리(레퍼런스는 탭바 대신 회색 띠 + 뒤로 버튼).</summary>
         static readonly Layout.R BottomStrip = Layout.TabBar;
 
@@ -52,11 +51,11 @@ namespace KkomaKnight.Game
                 var bl = UiKit.Icon(stage, "BarrelL", "env.barrel"); UiKit.Pct(bl.rectTransform, StageBarrelL);
                 var br = UiKit.Icon(stage, "BarrelR", "env.barrel"); UiKit.Pct(br.rectTransform, StageBarrelR);
             }
-            // 모루 그림(GUI Pro Item_Anvil) — 결과 슬롯 아래·재료 슬롯 위 · ▲ 화살표가 그 위에 얹힌다(레퍼런스 그대로)
-            var anvil = UiKit.Icon(Root, "AnvilArt", "ui.anvil"); UiKit.Pct(anvil.rectTransform, Anvil);
+            // ⓐ 모루 그림(AnvilArt)은 주인 지시 2026-09-07 08:1X «대장간에 AnvilArt 빼셈» 으로 없앴다(T113 ⓐ) —
+            //   그 자리는 채우지 않고 비워 둔다(위아래 요소 자리 불변). 결과 칸 «안» 의 작은 모루 아이콘은 다른 것이라 그대로 둔다.
             // 결과 슬롯(초록 테두리) · ▲(초록) · 재료 슬롯 3칸(피치 19 · 레퍼런스는 «+» 1칸 — U02 ⓓ 영구 X 행)
             _result = UiKit.Rect(Root, "Result"); UiKit.Pct(_result, Layout.ForgeResult);
-            var arrow = UiKit.Icon(Root, "Arrow", "pi.arrow_right", Palette.Green); UiKit.Pct(arrow.rectTransform, Layout.ForgeArrow); arrow.rectTransform.localRotation = Quaternion.Euler(0, 0, 90);
+            var arrow = UiKit.Icon(Root, "Arrow", "pi.arrow_right", Palette.Cream); UiKit.Pct(arrow.rectTransform, Layout.ForgeArrow); arrow.rectTransform.localRotation = Quaternion.Euler(0, 0, 90);
             _mats = UiKit.Rect(Root, "Mats"); UiKit.Stretch(_mats);
             for (int i = 0; i < 3; i++) { _matSlot[i] = UiKit.Rect(_mats, "Mat" + i); UiKit.Pct(_matSlot[i], Layout.ForgeMat.X + i * Layout.ForgeMatPitch, Layout.ForgeMat.Y, Layout.ForgeMat.W, Layout.ForgeMat.H); }
             // 안내 문구 — 화덕 위 어두운 상자 + 흰 글자(레퍼런스 «Select equipment to merge»)
@@ -102,7 +101,6 @@ namespace KkomaKnight.Game
             {
                 var gi = g; bool sel = _sel.Contains(g.Uid); bool off = lock_ != null && !sel && GearUi.Key(g) != lock_; bool fus = lock_ == null && fk.Contains(GearUi.Key(g)); bool eqd = S.IsEquipped(g);
                 var cell = GearUi.Cell(_content, D, g, new GearUi.CellOpts { Equipped = eqd, EquippedMark = false, Selected = sel, Off = off, Fusable = fus, FusableDot = true }, () => Toggle(gi));
-                if (fus) GreenFrame(cell);
                 if (eqd) EquippedTag(cell);
             }
             // 재료 3칸 (ref 재료 슬롯 자리에서 피치 19) — 칸은 슬롯 자리 가운데에 ListItem_EquipMent 본래 크기(188 정사각 · 인벤 칸과 같은 크기·비례) · 빈 칸은 프리팹의 «+»
@@ -117,14 +115,14 @@ namespace KkomaKnight.Game
             if (mats.Count == 3)
             {
                 var basis = Basis(mats); var made = GearSystem.FuseMake(D, basis);
-                var cell = GearUi.Cell(_result, D, made, new GearUi.CellOpts(), null); GreenFrame(cell);
+                var cell = GearUi.Cell(_result, D, made, new GearUi.CellOpts(), null);
                 bool conv = basis.Rar == D.Gear.RarLegend && made.Rar == D.Gear.RarMyth;
                 _banner.text = $"<b>{GearUi.RarName(D, made.Rar)} {GearUi.Name(D, made)}</b>{(made.Plus > 0 ? $" <b>+{made.Plus}</b>" : "")}\n" +
                     (conv ? $"<color=#F3A80E>전설 +{D.Gear.LegendToMythPlus}강 대신 <b>신화 0강</b>으로 바뀝니다</color>\n" : "") + "<size=20>재료 3개가 사라지고 위 장비 1개가 됩니다</size>";
             }
             else
             {
-                var empty = GearUi.Cell(_result, D, null, new GearUi.CellOpts(), null); GreenFrame(empty);
+                var empty = GearUi.Cell(_result, D, null, new GearUi.CellOpts(), null);
                 var ef = UiKit.Find(empty, "ItemFrame_01"); if (ef != null) UiKit.Show(ef, "Add_1", false);   // 빈 결과 칸은 «+» 대신 모루 그림(레퍼런스)
                 var ic = UiKit.Icon(empty, "Anvil", "pi.anvil", Palette.A(Palette.Cream, 0.7f)); UiKit.Pct(ic.rectTransform, 22, 22, 56, 56);
                 _banner.text = mats.Count > 0
@@ -151,13 +149,10 @@ namespace KkomaKnight.Game
             lb.name = "EquippedLabel";
         }
 
-        // T69-forge: 초록 변형을 새로 스폰하면 Cell 이 이미 칠해 둔 «검은 아웃라인»(GearUi.DarkFrame · 등급 변형의 Border 링)이 사라지므로 교체 뒤 다시 칠한다 — 합성 가능 칸·결과 슬롯(모루 칸)도 다른 칸과 같은 8px 검은 외곽선(주인 «아이템류 칸은 전부 장비 화면의 그 프레임»).
-        static void GreenFrame(RectTransform cell)
-        {
-            var frame = UiKit.Find(cell, "ItemFrame_01"); var area = frame != null ? UiKit.Find(frame, "NormalArea") : null; if (area == null) return;
-            UiKit.Clear(area); var f = UiKit.Spawn("ui.itemFrame.green", area); UiKit.Stretch((RectTransform)f.transform, -1, -1, -1, -1);
-            GearUi.DarkFrame(frame);
-        }
+        // ⓑ 초록 프레임(GreenFrame)은 없앴다 — 주인 2026-09-07 08:1X «완성됐을 때의 슬롯 부분이 초록인데 그러지 말고 색 통일»(T113 ⓑ).
+        //   이제 결과 칸·선택 칸·«합성 가능» 칸이 다른 칸과 같은 규칙(T103 정본 = 그 아이템의 등급색 ItemFrame_01_Normal_* · 빈 칸은 ui.itemFrame.empty)으로 그려진다.
+        //   «합성 가능/완성» 은 색이 아니라 ⓐ 인벤 칸의 빨간 점(GearUi.CellOpts.FusableDot) ⓑ 액션바 «자동» 버튼의 빨간 ! + 활성 ⓒ 재료가 3개면 주황 «합성» 버튼
+        //   — 이미 다 있던 표시들로 알린다(결정 273). T69-forge 가 걸어 둔 «GreenFrame 뒤 DarkFrame 재호출»(결정 167)도 같이 사라진다 — 칸은 GearUi.Cell 이 칠한 링을 그대로 쓴다.
         static GearItem Basis(List<GearItem> mats) { var b = mats[0]; foreach (var m in mats) if (m.Plus > b.Plus) b = m; return b; }
 
         void Toggle(GearItem g)
