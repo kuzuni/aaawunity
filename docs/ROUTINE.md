@@ -630,6 +630,14 @@
 1. 결정 109 는 «크래시가 닫히면 0 으로» 였다. T59 는 닫혔지만(결정 120) 진단 심볼이 들어간 빌드가 **아직 배포된 적이 없어** 지금 되돌리면 «재발 시 이름 있는 스택» 보험만 잃는다 → **주인이 새 배포(T65 이후 gh-pages)를 폰에서 한 번 열어 본 뒤** 되돌린다(결정 121).
 2. ✅ 조건: 되돌린 커밋의 CI `build-webgl` 배포 스모크 초록.
 
+### T67 — main 빨강 후속(CI #98 · T63-lobby 코드 `afe68f5`): PlayMode `UiSmokeTests.LobbySettingsTalentPetToast` «아이콘 라벨 = 사이드 6 + 보조 2 + 성 + 이벤트 Expected: 11 But was: 10» 1건 (최우선 · 제약 없음) ✅ (완료 · 워커 G · 단언 수 11 → 10 + 배너 «시즌 패스» 라벨 40 단언 분리 · 확인 = 그 커밋의 CI 유니티 잡 초록 → screens·gh-pages 갱신 → T63-lobby·T63-gear·T62 채점)
+
+범위: `Assets/Tests/PlayMode/UiSmokeTests.cs` ①(T63-lobby 가 넣은 라벨 단언 한 줄) · 게임 코드 불변.
+
+1. 원인(CI #98 https://github.com/kuzuni/aaawunity/actions/runs/34036757504 · PlayMode 28 중 1 실패 · 나머지 27 + EditMode 전부 Passed): T63-lobby 가 넣은 단언이 «Side:*» 칸 밑 라벨을 세는데 그 칸은 사이드 6 + 보조 2 + 성 + 이벤트 = **10** 이다(«시즌 패스» 는 `Banner` 밑이라 «Side:» 로 안 잡힌다 · 기록의 «11개» 는 배너를 더한 수). 게임 화면은 정상(T63-lobby 의 라벨 40·2줄 단언 10개는 전부 통과) — 테스트 수치 오류.
+2. 수정: 기대값 10 · 배너 «시즌 패스» 라벨은 `Banner` 밑에서 따로 찾아 본문 40 단언(T63-lobby 기록의 «도 같음» 을 그대로 지킨다).
+3. 확인 = 이 커밋의 CI 유니티 잡(PlayMode 전부 Passed) → `screens`·gh-pages 배포가 다시 돌아 T63-lobby(01)·T63-gear(06·07)·T62(23) 채점 재료가 생긴다.
+
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
 ```bash

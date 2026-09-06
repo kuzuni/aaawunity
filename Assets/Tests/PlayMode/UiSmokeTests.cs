@@ -172,7 +172,11 @@ namespace KkomaKnight.Tests.Play
                         Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, TextSize.Body, $"라벨 «{t.text}» 가 칸({t.rectTransform.rect.width:0}×{t.rectTransform.rect.height:0})에 40 으로 안 들어가 bestFit 이 줄였다");
                         Assert.LessOrEqual(gen.lineCount, 2, $"라벨 «{t.text}» 는 2줄까지");
                     }
-                    Assert.AreEqual(11, captions, "아이콘 라벨 = 사이드 6 + 보조 2 + 성 + 이벤트");
+                    // T67(CI #98 빨강 후속): «Side:*» 칸은 사이드 6 + 보조 2 + 성 + 이벤트 = 10 — 배너 «시즌 패스» 는 Banner 밑이라 따로 본다
+                    Assert.AreEqual(10, captions, "아이콘 라벨 = 사이드 6 + 보조 2 + 성 + 이벤트");
+                    Text passLb = null;
+                    foreach (var t in UiKit.Find(lobby, "Banner").GetComponentsInChildren<Text>(false)) if (t.text == "시즌 패스") passLb = t;
+                    Assert.IsNotNull(passLb, "배너 «시즌 패스» 라벨"); Assert.AreEqual(TextSize.Body, passLb.fontSize, "배너 «시즌 패스» 크기 = 본문 하한");
                 }
                 // 배치 = 표 ①(±3%p) — START 는 카드와 같은 x·폭, 탭 바는 맨 아래
                 var frame = _app.Frame; var start = (RectTransform)UiKit.Find(lobby, "Start"); var card = (RectTransform)UiKit.Find(lobby, "ChapterCard");
