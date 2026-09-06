@@ -110,7 +110,9 @@ jobs:
       - name: screens 브랜치용 meta.json (커밋 sha · CI 런 번호)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
+          # T57 — unity-test-runner 는 docker(root) 로 돌아 ui-screens/ 와 그 안 PNG·layout.json 이 root 소유로 남는다 → 러너 셸(runner)이 «Permission denied»(CI #82). 소유자를 되돌린 뒤 쓴다.
           mkdir -p ui-screens
+          sudo chown -R "$(id -u):$(id -g)" ui-screens
           printf '{"sha":"%s","run":%s,"run_id":%s,"utc":"%s"}\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$GITHUB_RUN_ID" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > ui-screens/meta.json
           ls -la ui-screens
       - name: "screens 브랜치로 배포 (UI 비평 · ROUTINE §5)"
