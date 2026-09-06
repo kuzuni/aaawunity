@@ -254,7 +254,10 @@ namespace KkomaKnight.Game
                 var g = Goods[i]; var r = Layout.MeCard; r.X += (i % 3) * Layout.MeColPitch; r.Y += (i / 3) * Layout.MeRowPitch;
                 var card = Place(content, "Goods:" + i, r, Layout.MeGrid.Y);
                 var frame = UiKit.Spawn("ui.cardFrame.blue", card); UiKit.Stretch((RectTransform)frame.transform);
-                UiKit.Label(card, 4, 3, 92, 13, g.title, 26, Palette.White).fontStyle = FontStyle.Bold;
+                // 제목 = 프리팹의 Text_Title 자리(원본 CardFrame_04_BasePrefab_LightBg 의 «Text» 글자 · ShopScreen 상자 카드와 같은 식) — 따로 Label 을 얹으면 «Text» 가 활성으로 남아 T50(CI #71·#75 «[상인 페이지] 영문 데모 글자: Text»)
+                var gt = UiKit.SetText(frame.transform, "Text_Title", g.title, Palette.White, 26);
+                if (gt != null) { UiKit.Pct(gt.rectTransform, 4, 3, 92, 13); gt.alignment = TextAnchor.MiddleCenter; gt.fontStyle = FontStyle.Bold; gt.resizeTextForBestFit = true; gt.resizeTextMinSize = 14; gt.resizeTextMaxSize = 26; }
+                else UiKit.Label(card, 4, 3, 92, 13, g.title, 26, Palette.White).fontStyle = FontStyle.Bold;
                 var ic = UiKit.Rect(card, "IconCell"); UiKit.Pct(ic, 26, 20, 48, 38);
                 var f = UiKit.Spawn("ui.itemFrame.blue", ic); UiKit.Stretch((RectTransform)f.transform); var im = UiKit.Icon(ic, "Icon", g.icon); UiKit.Pct(im.rectTransform, 15, 15, 70, 70);
                 UiKit.Label(card, 4, 62, 92, 12, "한도 —", 22, Palette.White);
