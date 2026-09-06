@@ -574,7 +574,7 @@
 3. 워커용: `tools/webgl_smoke.sh [URL]`(기본 = gh-pages) — 코드 커밋 전/후 워커가 직접 돌려 완료 기록에 결과 한 줄. playwright 설치가 환경에서 막히면 «워커 결정 기록» 에 남기고 CI 결과로 대신한다.
 4. 게이트 + PROGRESS T60 행.
 
-### T61 — 특전 카드 등장 순서에 맞춘 «Shine»(AllIn1SpriteShader) — 카드가 하나씩 뜰 때 반짝임도 하나씩 (주인 2026-09-06 · T49 뒤 · 제약 없음)
+### T61 — 특전 카드 등장 순서에 맞춘 «Shine»(AllIn1SpriteShader) — 카드가 하나씩 뜰 때 반짝임도 하나씩 (주인 2026-09-06 · T49 뒤 · 제약 없음) — **🔄 코드 완료 `b12a224`(워커 E · sess-1312-24742 · `PerkShine.mat`(UiMask · SHINE_ON) + `UiKit.ShineMaterial/Shine/StaggerShine` + `MaterialOwner` · 3택·보유 특전 · 결정 123~124) → 확인 = 그 커밋의 CI PlayMode `UiSmokeTests.BattleTicksAndAllBattlePopups`(shine 단언 · Close 뒤 인스턴스 0) + 배포 스모크 → ✅(PROGRESS T61 진행 기록)**
 범위: `Assets/Scripts/Game/Overlay.cs`(LevelUp 148행 · PerkBook 224행 — T49 의 `UiKit.Stagger` 자리) · `UiKit.cs`(`Stagger`/`Reveal` 에 «드러난 뒤 shine» 훅 · shine 트윈 헬퍼) · **새 머티리얼** `Assets/KkomaKnight/PerkShine.mat`(쉐이더 = `AllIn1SpriteShaderUiMask` · SHINE_ON · 카탈로그 키 `mat.perkShine` · .meta 는 `gen_meta.py`) · `Assets/KkomaKnight/catalog.json` · `docs/assets-map.md` · `Assets/Tests/PlayMode/UiSmokeTests`
 순서: **T49 뒤**(✅ · `fdb8d35`) — 같은 stagger 코드 위에 얹는다. T52·T53 도 끝났으니 Overlay 충돌 없음(rebase 만).
 주인 원문(2026-09-06 · 11:1X UTC): «그 특전들 순서대로 등장할 때 shine 효과도 순서대로 돼야 함 · 올인원 스프라이트 쉐이더».
