@@ -23,27 +23,35 @@ namespace KkomaKnight.Game
         /// <summary>사이드·보조·모서리 버튼 키 — T43(events) · T44(나머지) 가 <see cref="OnSide"/> 에서 이어받는다.</summary>
         public const string SideStarter = "starter", SidePrivilege = "privilege", SideChallenge7 = "challenge7", SideAttendance = "attendance", SideDailyGift = "dailyGift", SideQuest = "quest";
         public const string SidePass = "pass", SideExplore = "explore", SideClearReward = "clearReward", SideCastle = "castle", SideEvents = "events";
-        /// <summary>챕터 카드 안 소품 개수(레퍼런스 카드 = 나무 2 · 돌 2 · 덤불) · 카드 안 길 띠(세로 %) · 소품 자리(카드 % · 왼쪽 위/오른쪽 위/왼쪽 아래/오른쪽 아래).</summary>
-        const int CardProps = 4;
-        /// <summary>아이콘 라벨 칸(사이드·보조·모서리 · <see cref="BuildColumn"/>) 안의 아이콘 자리 / 글자 띠 자리(칸 %) — T63-lobby: 글자 띠 60% = 본문 40px 2줄이 잘림 없이 들어가는 높이.</summary>
-        static readonly Layout.R CaptionIcon = new Layout.R(20, 2, 60, 38), CaptionLabel = new Layout.R(1, 40, 98, 60);
-        static readonly Layout.R CardRoad = new Layout.R(0, 52, 100, 20);
-        static readonly Layout.R[] CardPropSlots = { new Layout.R(6, 6, 30, 46), new Layout.R(62, 4, 32, 50), new Layout.R(10, 56, 24, 40), new Layout.R(66, 58, 26, 38) };
+        /// <summary>
+        /// 아이콘 라벨 칸(사이드·보조·모서리 · <see cref="BuildColumn"/>) 안의 아이콘 자리 / 글자 띠 자리(칸 %) — T68 ①(주인 «아이콘 너무 작음» · 1.5~1.8배 · 칸 폭의 ≥ 75%) + T63-lobby(라벨 보조 36 · 2줄 · 잘림 0).
+        /// 아이콘이 칸 위 82% 를 차지하고 글자 띠(아래 50%)가 아이콘 아랫부분에 겹친다 — 레퍼런스 01 도 «Daily Gifts»·«7-Day Challenge» 가 아이콘 밑단 위에 얹혀 있다(외곽선 글자).
+        /// 2줄 높이 = 36×1.375×(1+<see cref="UiKit.CaptionLineSpacing"/>) ≈ 87px ≤ 글자 띠(사이드 93px · 보조 111px · 모서리 99px) → bestFit 이 줄이지 않는다.
+        /// </summary>
+        static readonly Layout.R CaptionIcon = new Layout.R(12.5f, 0, 75, 82), CaptionLabel = new Layout.R(1, 50, 98, 50);
+        /// <summary>칸 폭 대비 아이콘 최소 비율(T68 ① · 스모크 테스트가 단언).</summary>
+        public const float CaptionIconMinW = 0.75f;
+        /// <summary>
+        /// 챕터 카드 그림 = 프리팹 <c>SampleImage_Map</c>(Image_Map_Forest · 573×709 세로 디오라마 · T68 ④ · 주인 «예전 프리팹 그림이 좋았음» · 결정 34 뒤집음).
+        /// 카드 자리(표 ① 27.9/41.0/44.5/13.7 · 가로 1.5:1)는 이름표·클릭 영역으로 그대로 두고, 그림은 카드 폭의 90% 로 카드 <b>바닥에 맞춰</b> 세워 나무 꼭대기가 카드 위로 넘친다(레퍼런스 01 의 디오라마도 카드 상자 위로 솟는다 · 위 끝 = 프레임 31.8% · 챕터 밑줄 30.9% 아래).
+        /// 카드 % 로: 폭 90 · 높이 90 × 709/573 = 111.4%·(481/320) ≈ 167.5 · 바닥 정렬 → y = 100 − 167.5.
+        /// </summary>
+        static readonly Layout.R CardMapImage = new Layout.R(5, -67.5f, 90, 167.5f);
 
         TopBar _top; Text _chap; Transform _tabs;
-        RectTransform _card; Image _cardField, _cardRoad; readonly Image[] _cardProps = new Image[CardProps]; string _cardTheme;
 
         protected override void Build()
         {
             var root = UiKit.Spawn("ui.lobby", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
-            // 프리팹은 부품 창고 — 쓰지 않는 조각은 끈다(상단 바·사이드 버튼·샘플 지도·빨간 START·채팅·부제)
-            UiKit.Hide(rt, "ChatBox", "Group_LeftButtons", "Group_RightButtons", "SampleImage_Map", "ResourceBar_Group");
+            // 프리팹은 부품 창고 — 쓰지 않는 조각은 끈다(상단 바·사이드 버튼·빨간 START·채팅·부제) · 샘플 지도(SampleImage_Map)는 T68 ④ 부터 챕터 카드 그림으로 쓴다
+            UiKit.Hide(rt, "ChatBox", "Group_LeftButtons", "Group_RightButtons", "ResourceBar_Group");
             var oldInfo = UiKit.FindAny(rt, "UserInfo_01", "UserInfo_01_Slider"); if (oldInfo != null) oldInfo.gameObject.SetActive(false);
             var oldStart = UiKit.FindAny(rt, "Button_03_Red", "Button_03_Convex_Red"); if (oldStart != null) oldStart.gameObject.SetActive(false);
             var subT = UiKit.Find(rt, "Text (TMP)"); if (subT != null && subT.parent == rt) subT.gameObject.SetActive(false);
-            // 배경 = 프리팹 Background(평면색 + 흐린 칼 Deco 패턴 — 레퍼런스의 초록 바탕·칼 무늬와 같은 구성) · 색만 초록으로(색은 점수 밖 · 느낌만)
+            // 배경 = 프리팹 Background 평면색만(색은 초록 · 결정 33) — 흐린 칼 무늬 Deco 15개는 끈다(T68 ③ · 주인 «데코 별로»)
             var bg = UiKit.Find(rt, "Background"); var bgImg = bg != null ? bg.GetComponent<Image>() : null;
             if (bgImg != null) { bgImg.color = Color.Lerp(Palette.Green, Palette.Ink, 0.42f); bgImg.raycastTarget = true; }
+            if (bg != null) for (int i = 0; i < bg.childCount; i++) { var c = bg.GetChild(i); if (c.name.StartsWith("Deco")) c.gameObject.SetActive(false); }
 
             // ① 상단 재화 바 (아바타 · 전투력 · 골드 · 보석) — 공용 헬퍼 · 비평 이름표(T46 · ref-layout ① 의 «요소» 이름 그대로)
             _top = TopBar.Build(App, rt);
@@ -57,7 +65,8 @@ namespace KkomaKnight.Game
                 UiKit.Label(brt, 22, 4, 58, 46, "시즌 패스", TextSize.Body, Palette.White, TextAnchor.MiddleLeft);
                 var bar = UiKit.MakeBar(brt, "ui.sliderGreen"); UiKit.Pct(bar.Root, 22, 54, 56, 36); bar.Set(0, "준비 중");
                 var badge = UiKit.Panel(brt, "Badge", "fr.circle", Palette.Ink); UiKit.Pct(badge.rectTransform, 82, 10, 15, 80);
-                var arf = UiKit.Ensure<AspectRatioFitter>(badge.gameObject); arf.aspectMode = AspectRatioFitter.AspectMode.FitInParent; arf.aspectRatio = 1f;
+                // 배지는 배너 오른쪽 끝(레퍼런스 «22» 자리) — FitInParent 는 앵커를 지워 배너 가운데로 보내 «시즌 패스» 글자를 덮었다(T47 회차 3 감점 · 결정 103 과 같은 함정) → 높이에서 폭만 정사각으로
+                var arf = UiKit.Ensure<AspectRatioFitter>(badge.gameObject); arf.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth; arf.aspectRatio = 1f;
                 UiKit.Label(badge.transform, 0, 0, 100, 100, "1", 40, Palette.White);
                 UiKit.Clickable(brt, () => OnSide(SidePass));
                 UiKit.Tag(brt, "이벤트 배너");
@@ -80,16 +89,17 @@ namespace KkomaKnight.Game
                 if (_chap != null) UiKit.Tag(_chap.transform, "챕터 제목", textBounds: true); UiKit.Tag(UiKit.Find(trt, "LineDeco"), "챕터 밑줄·선택 화살표");   // 글자 덩어리로 잰다(T47 ⓒ · 조각 rect 는 표보다 6%p 넓다)
             }
 
-            // ⑤ 챕터 카드(어두운 테두리 상자 안에 이번 챕터 테마의 바닥·길·소품) + ◀▶
-            _card = UiKit.Rect(rt, "ChapterCard"); UiKit.Pct(_card, Layout.LobbyCard);
+            // ⑤ 챕터 카드 = 프리팹 SampleImage_Map 그림(T68 ④ · 코드 조립 카드 폐기) + ◀▶ · 카드 자리(표 ①)는 이름표·클릭 영역
+            var card = UiKit.Rect(rt, "ChapterCard"); UiKit.Pct(card, Layout.LobbyCard);
             {
-                var frame = UiKit.Spawn("ui.frameDarkBorder", _card); UiKit.Stretch((RectTransform)frame.transform);
-                var inner = UiKit.Rect(_card, "Stage"); UiKit.Pct(inner, 3, 4, 94, 92); UiKit.Ensure<RectMask2D>(inner.gameObject);
-                _cardField = UiKit.Icon(inner, "Field", "env.field"); _cardField.preserveAspect = false; UiKit.Stretch(_cardField.rectTransform);
-                _cardRoad = UiKit.Icon(inner, "Road", "env.road"); _cardRoad.preserveAspect = false; UiKit.Pct(_cardRoad.rectTransform, CardRoad);
-                for (int i = 0; i < CardProps; i++) { _cardProps[i] = UiKit.Icon(inner, "Prop" + i, "env.tree"); UiKit.Pct(_cardProps[i].rectTransform, CardPropSlots[i]); }
-                UiKit.Clickable(_card, () => { Audio.Wake(); App.StartBattle(App.Save.SelChapter); });
-                UiKit.Tag(_card, "챕터 카드(스테이지 그림)");
+                var map = UiKit.Find(rt, "SampleImage_Map");
+                if (map != null)
+                {
+                    var mrt = (RectTransform)map; mrt.SetParent(card, false); map.gameObject.SetActive(true); UiKit.Pct(mrt, CardMapImage);
+                    var mi = map.GetComponent<Image>(); if (mi != null) { mi.preserveAspect = true; mi.raycastTarget = false; }
+                }
+                UiKit.Clickable(card, () => { Audio.Wake(); App.StartBattle(App.Save.SelChapter); });
+                UiKit.Tag(card, "챕터 카드(스테이지 그림)");
             }
             var left = UiKit.Icon(rt, "ArrowL", "pi.arrow_left", Palette.Cream); UiKit.Pct(left.rectTransform, Layout.LobbyArrowL); UiKit.Clickable(left.rectTransform, () => Shift(-1)); UiKit.Tag(left.transform, "좌 화살표");
             var right = UiKit.Icon(rt, "ArrowR", "pi.arrow_right", Palette.Cream); UiKit.Pct(right.rectTransform, Layout.LobbyArrowR); UiKit.Clickable(right.rectTransform, () => Shift(1)); UiKit.Tag(right.transform, "우 화살표");
@@ -118,10 +128,9 @@ namespace KkomaKnight.Game
             {
                 var it = items[i]; var cell = UiKit.Rect(prt, "Side:" + it.key);
                 if (horizontal) UiKit.Pct(cell, i * step, 0, step, 100); else UiKit.Pct(cell, 0, i * step, 100, step);
-                // T63-lobby — 라벨은 본문 하한(40)으로 2줄까지(«데일리 기프트»·«7일 챌린지»·«클리어 보상» 은 레퍼런스도 2줄) · 칸(사이드 167px · 보조 164px · 모서리 175px)의 60% 가 글자 띠, 위 38% 가 아이콘
-                // 2줄 높이 = 40×1.375 + 40×1.375×CaptionLineSpacing ≈ 96px ≤ 띠(98~105px) → bestFit 이 줄이지 않고 40 그대로 그린다(잘림 0)
+                // T68 ① 아이콘 = 칸 폭의 75%(위 82%) · T63-lobby 라벨 = 보조 하한(36 · ROUTINE T68 1항 «라벨은 T63 하한 36 이상»)으로 2줄까지(«데일리 기프트»·«7일 챌린지»·«클리어 보상» 은 레퍼런스도 2줄) · 칸 바닥에 붙여 아이콘 밑단에 얹는다(레퍼런스 01 과 같은 겹침 · 외곽선 글자)
                 var ic = UiKit.Icon(cell, "Icon", it.icon); UiKit.Pct(ic.rectTransform, CaptionIcon);
-                var lb = UiKit.Label(cell, CaptionLabel.X, CaptionLabel.Y, CaptionLabel.W, CaptionLabel.H, it.label, TextSize.Body, Palette.White, TextAnchor.UpperCenter);
+                var lb = UiKit.Label(cell, CaptionLabel.X, CaptionLabel.Y, CaptionLabel.W, CaptionLabel.H, it.label, TextSize.Aux, Palette.White, TextAnchor.LowerCenter, kind: TextKind.Aux);
                 lb.lineSpacing = UiKit.CaptionLineSpacing;
                 string key = it.key; UiKit.Clickable(cell, () => OnSide(key));
             }
@@ -149,39 +158,12 @@ namespace KkomaKnight.Game
             s.SelChapter = Mathf.Clamp(s.SelChapter + d, 1, max); App.Persist(); Refresh();
         }
 
-        /// <summary>챕터 카드 그림 = 그 챕터 전투 맵 테마(BattleWorld.Theme · (n−1)%4 순환)의 Environment 바닥·길 + 소품 4개(테마 표에서 챕터별로 고정 선택 · 물결 경계·납작한 풀꽃 제외).</summary>
-        void RefreshCard(int chapter)
-        {
-            if (_cardField == null || App.Assets == null) return;
-            var theme = BattleWorld.Theme.ForChapter(chapter);
-            if (_cardTheme == theme.Name) return;
-            _cardTheme = theme.Name;
-            _cardField.sprite = App.Assets.Sprite(theme.Field) ?? App.Assets.Sprite("env.field");
-            _cardRoad.sprite = App.Assets.Sprite(theme.Road) ?? App.Assets.Sprite("env.road");
-            var picks = new List<string>();
-            foreach (var p in MapLayouts.Of(theme.Name)) if (IsCardProp(p.Key) && !picks.Contains(p.Key)) picks.Add(p.Key);
-            for (int i = 0; i < CardProps; i++)
-            {
-                var im = _cardProps[i]; if (im == null) continue;
-                if (picks.Count == 0) { im.enabled = false; continue; }
-                string key = picks[(chapter * 7 + i * 3) % picks.Count];
-                im.sprite = App.Assets.Sprite(key); im.enabled = im.sprite != null; im.preserveAspect = true;
-            }
-        }
-        /// <summary>카드에 넣을 만한 소품 — 나무·돌·덤불·선인장·야자·버섯. 물결 경계(roadUp)·풀·꽃·모래언덕은 뺀다.</summary>
-        static bool IsCardProp(string key)
-        {
-            if (key.EndsWith(".roadUp") || key.EndsWith(".field") || key.EndsWith(".road")) return false;
-            string n = key.Substring(key.LastIndexOf('.') + 1);
-            return n.StartsWith("Tree") || n.StartsWith("Small_Tree") || n.StartsWith("Birch") || n.StartsWith("Stone") || n.StartsWith("Bush") || n.StartsWith("Cactus") || n.StartsWith("Plam") || n.StartsWith("Mushroom") || n.StartsWith("Dead_Tree");
-        }
-
+        /// <summary>챕터 카드 그림은 전 챕터 같은 그림(프리팹의 샘플 지도 스프라이트가 하나뿐 · 새 그림 금지 · T68 ④ · 결정 기록) — 바뀌는 것은 «챕터 N» 글자뿐.</summary>
         public override void Refresh()
         {
             var s = App.Save;
             if (_chap != null) _chap.text = $"챕터 {s.SelChapter}";
             _top?.Refresh();
-            RefreshCard(s.SelChapter);
         }
     }
 
@@ -219,6 +201,8 @@ namespace KkomaKnight.Game
                 tb.Hero.SetFraming(1.6f, 0.45f);   // 가슴 위(레퍼런스 아바타)
             }
             else { info.SetActive(false); tb.Hero = HeroView.Attach(slot, HeroView.PlayerSkin(app)); tb.Hero.SetFraming(1.6f, 0.45f); }
+            // 상단 초상은 정지 그림(T68 ② · 주인 «로비 주인공 아이콘이 계속 움직인다») — 장비 화면 가운데 큰 캐릭터(GearScreen)는 그대로 움직인다
+            tb.Hero.SetStill(true);
             // 전투력 — 칼 아이콘 + 주황 큰 숫자(숫자만 · 레퍼런스에 라벨 없음)
             if (showPower)
             {

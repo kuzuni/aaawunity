@@ -22,14 +22,15 @@ namespace KkomaKnight.Core
         public static readonly R LobbyPills = new R(13.2f, 4.5f, 85.4f, 2.9f);
         public static readonly R LobbyBanner = new R(24.5f, 9.2f, 51.6f, 5.6f);
         public static readonly R LobbyMenu = new R(88.3f, 9.2f, 9.0f, 4.1f);
-        public static readonly R LobbySideL = new R(1.4f, 16.0f, 16.4f, 21.5f);
-        public static readonly R LobbySideR = new R(82.5f, 16.0f, 16.4f, 21.5f);
+        // 사이드 기둥 · 보조 줄은 T68(아이콘 1.5~1.8배 · 칸 폭 ≥75%) + T63-lobby(라벨 36 · 2줄) 가 레퍼런스(16.4×21.5 · 37.2×7.0)에서 ±3%p 안으로 키운 값 — ref-layout ① «⚑ T68 회차 정정»
+        public static readonly R LobbySideL = new R(1.4f, 16.0f, 19.0f, 24.0f);
+        public static readonly R LobbySideR = new R(79.6f, 16.0f, 19.0f, 24.0f);
         public static readonly R LobbyChapTitle = new R(34.7f, 27.2f, 31.3f, 2.3f);
         public static readonly R LobbyChapUnderline = new R(29.6f, 30.0f, 41.0f, 0.9f);
         public static readonly R LobbyCard = new R(27.9f, 41.0f, 44.5f, 13.7f);
         public static readonly R LobbyArrowL = new R(17.0f, 45.7f, 6.7f, 4.3f);
         public static readonly R LobbyArrowR = new R(76.3f, 45.7f, 6.7f, 4.3f);
-        public static readonly R LobbySubRow = new R(31.3f, 60.2f, 37.2f, 7.0f);
+        public static readonly R LobbySubRow = new R(30.3f, 59.7f, 39.2f, 9.5f);
         public static readonly R LobbyStart = new R(27.9f, 70.7f, 44.5f, 7.0f);
         public static readonly R TabBar = new R(0, 92.6f, 100, 7.4f);
         public const float TabCenterRaise = 0.6f;
@@ -40,8 +41,9 @@ namespace KkomaKnight.Core
         public static readonly R LobbyGoldPill = new R(38.5f, 4.5f, 29.5f, 2.9f);
         public static readonly R LobbyGemPill = new R(69.5f, 4.5f, 29.0f, 2.9f);
         /// <summary>왼쪽 아래 «성»(잠금 · jpg x 0~18% · y 70.5~78%) · 오른쪽 아래 «이벤트»(방패 · x 82~100%) — START 와 같은 줄, 프레임 가장자리에 붙는다.</summary>
-        public static readonly R LobbyCastle = new R(0, 70.5f, 17.0f, 7.5f);
-        public static readonly R LobbyEvents = new R(83.0f, 70.5f, 17.0f, 7.5f);
+        // 모서리 2개(표 밖) — T68 ① 로 17.0×7.5 → 20.0×8.5(아이콘 1.57배 · START 27.9~72.4 와 안 겹침 · 탭 바 92.6 위)
+        public static readonly R LobbyCastle = new R(0, 70.0f, 20.0f, 8.5f);
+        public static readonly R LobbyEvents = new R(80.0f, 70.0f, 20.0f, 8.5f);
 
         // ② 인게임 — 메인 게임화면.jpg
         public static readonly R HudPills = new R(2.0f, 5.2f, 36.0f, 2.8f);

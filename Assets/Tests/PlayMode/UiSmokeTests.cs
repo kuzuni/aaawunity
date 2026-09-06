@@ -156,6 +156,20 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNotNull(sideL, "왼쪽 사이드 기둥"); Assert.IsNotNull(sideR, "오른쪽 사이드 기둥");
                 Assert.AreEqual(3, CountNamed(sideL, "Side:"), "왼쪽 사이드 아이콘 3"); Assert.AreEqual(3, CountNamed(sideR, "Side:"), "오른쪽 사이드 아이콘 3");
                 Assert.IsNotNull(UiKit.Find(lobby, "ChapterCard"), "챕터 카드"); Assert.IsNotNull(UiKit.Find(lobby, "ArrowL"), "◀"); Assert.IsNotNull(UiKit.Find(lobby, "ArrowR"), "▶");
+                // T68 ④ 카드 = 프리팹 SampleImage_Map 그림(활성 · 카드 자리 밑 · 스프라이트 있음) · 코드 조립 카드(Stage/Field/Road/Prop) 없음
+                {
+                    var map = UiKit.Find(lobby, "SampleImage_Map"); Assert.IsNotNull(map, "챕터 카드 그림 = SampleImage_Map"); Assert.IsTrue(map.gameObject.activeInHierarchy, "SampleImage_Map 활성");
+                    Assert.AreEqual("ChapterCard", map.parent.name, "SampleImage_Map 은 카드 자리 밑"); Assert.IsNotNull(map.GetComponent<Image>().sprite, "SampleImage_Map 스프라이트");
+                    Assert.IsNull(UiKit.Find(UiKit.Find(lobby, "ChapterCard"), "Stage"), "코드 조립 카드(Stage) 폐기");
+                }
+                // T68 ③ 배경 Deco(흐린 칼 무늬) 전부 비활성 · T68 ② 상단 초상은 정지(Animator 속도 0)
+                {
+                    var bg = UiKit.Find(lobby, "Background"); Assert.IsNotNull(bg, "배경"); int decoOn = 0;
+                    for (int i = 0; i < bg.childCount; i++) if (bg.GetChild(i).name.StartsWith("Deco") && bg.GetChild(i).gameObject.activeSelf) decoOn++;
+                    Assert.AreEqual(0, decoOn, "배경 Deco 는 전부 꺼진다(T68 ③)");
+                    var hv = UiKit.Find(lobby, "TopBar").GetComponentInChildren<HeroView>(true); Assert.IsNotNull(hv, "상단 초상 HeroView");
+                    Assert.IsTrue(hv.Still, "상단 초상 = 정지(T68 ②)"); Assert.AreEqual(0f, hv.Rig.AnimSpeed, 1e-3f, "상단 초상 Animator 속도 0");
+                }
                 Assert.AreEqual(2, CountNamed(UiKit.Find(lobby, "SubRow"), "Side:"), "보조 버튼 2(탐험·클리어 보상)");
                 Assert.IsNotNull(UiKit.Find(lobby, "Castle"), "왼쪽 아래 성"); Assert.IsNotNull(UiKit.Find(lobby, "Events"), "오른쪽 아래 이벤트");
                 Assert.IsTrue(HasText(s => s == "스타터팩") && HasText(s => s == "퀘스트") && HasText(s => s == "탐험"), "사이드·보조 라벨은 우리말");
@@ -166,11 +180,15 @@ namespace KkomaKnight.Tests.Play
                     {
                         if (t.transform.parent == null || !t.transform.parent.name.StartsWith("Side:")) continue;
                         captions++;
-                        Assert.AreEqual(TextSize.Body, t.fontSize, $"라벨 «{t.text}» 크기 = 본문 하한");
+                        // T68 ①: 라벨은 보조 하한(36 · ROUTINE T68 1항) — 아이콘이 칸 폭 75% 를 차지해야 하므로 본문 40 두 줄은 칸에 안 들어간다(결정 128)
+                        Assert.AreEqual(TextSize.Aux, t.fontSize, $"라벨 «{t.text}» 크기 = 보조 하한"); Assert.AreEqual(TextKind.Aux, TextAudit.KindOf(t), $"라벨 «{t.text}» 종류 = Aux");
                         var gs = t.GetGenerationSettings(t.rectTransform.rect.size); gs.scaleFactor = 1f;   // 캔버스 배율을 빼고 글자 단위로(fontSizeUsedForBestFit 은 scaleFactor 가 곱해진 값)
                         var gen = new TextGenerator(); gen.Populate(t.text, gs);
-                        Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, TextSize.Body, $"라벨 «{t.text}» 가 칸({t.rectTransform.rect.width:0}×{t.rectTransform.rect.height:0})에 40 으로 안 들어가 bestFit 이 줄였다");
+                        Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, TextSize.Aux, $"라벨 «{t.text}» 가 칸({t.rectTransform.rect.width:0}×{t.rectTransform.rect.height:0})에 36 으로 안 들어가 bestFit 이 줄였다");
                         Assert.LessOrEqual(gen.lineCount, 2, $"라벨 «{t.text}» 는 2줄까지");
+                        // T68 ① 아이콘 = 칸 폭의 ≥ 75%(주인 «아이콘 너무 작음» · 1.5~1.8배)
+                        var cell = (RectTransform)t.transform.parent; var icon = (RectTransform)UiKit.Find(cell, "Icon"); Assert.IsNotNull(icon, $"칸 {cell.name} 아이콘");
+                        Assert.GreaterOrEqual(icon.rect.width, cell.rect.width * LobbyScreen.CaptionIconMinW - 1f, $"칸 {cell.name} 아이콘 폭 ≥ 칸 폭 75%");
                     }
                     // T67(CI #98 빨강 후속): «Side:*» 칸은 사이드 6 + 보조 2 + 성 + 이벤트 = 10 — 배너 «시즌 패스» 는 Banner 밑이라 따로 본다
                     Assert.AreEqual(10, captions, "아이콘 라벨 = 사이드 6 + 보조 2 + 성 + 이벤트");
@@ -341,7 +359,8 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(1f - Layout.GearStage.Y / 100f, stage.anchorMax.y, 1e-3f, "무대 = 표 자리(y)"); Assert.AreEqual(1f - (Layout.GearStage.Y + Layout.GearStage.H) / 100f, stage.anchorMin.y, 1e-3f, "무대 높이 = 표(26.5%)");
                 Assert.IsNotNull(UiKit.Find(stage, "Field"), "무대 들판"); Assert.IsNotNull(UiKit.Find(stage, "Road"), "무대 길"); Assert.GreaterOrEqual(CountNamed(stage, "Tree"), 3, "무대 나무");
                 var hero = (RectTransform)UiKit.Find(stage, "Hero"); Assert.IsNotNull(hero, "캐릭터 호스트");
-                Assert.IsNotNull(hero.GetComponentInChildren<HeroView>(true), "캐릭터 = HeroView(플레이어 외형)");
+                var gearHv = hero.GetComponentInChildren<HeroView>(true); Assert.IsNotNull(gearHv, "캐릭터 = HeroView(플레이어 외형)");
+                Assert.IsFalse(gearHv.Still, "장비 화면 큰 캐릭터는 움직임 유지(T68 ② 는 로비 상단 초상만)"); Assert.AreEqual(1f, gearHv.Rig.AnimSpeed, 1e-3f, "장비 캐릭터 Animator 속도 1");
                 float hh = (hero.anchorMax.y - hero.anchorMin.y) * Layout.GearStage.H, hw = (hero.anchorMax.x - hero.anchorMin.x) * 100f;
                 Assert.AreEqual(Layout.GearHero.H, hh, 0.3f, "캐릭터 호스트 높이 = 표(19%)"); Assert.AreEqual(hh * UiKit.FrameH / UiKit.FrameW, hw, 0.3f, "캐릭터 호스트는 정사각(폭 = 높이 환산)");
                 Assert.AreEqual(50f, (hero.anchorMin.x + hero.anchorMax.x) * 50f, 0.5f, "캐릭터는 가운데");

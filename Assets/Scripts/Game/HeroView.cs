@@ -119,12 +119,16 @@ namespace KkomaKnight.Game
             Fit();
         }
 
-        /// <summary>Idle 재생 — 무대가 꺼져 있으면(화면 숨김) Animator 가 초기화 전이라 Play 가 «not playing an AnimatorController» 경고를 낼 수 있어 켜질 때(<see cref="OnEnable"/>) 다시 튼다.</summary>
+        /// <summary>Idle 재생 — 무대가 꺼져 있으면(화면 숨김) Animator 가 초기화 전이라 Play 가 «not playing an AnimatorController» 경고를 낼 수 있어 켜질 때(<see cref="OnEnable"/>) 다시 튼다. <see cref="Still"/> 이면 첫 프레임에서 멈춘다(속도 0).</summary>
         void PlayIdle()
         {
             if (_rig == null || _stage == null || !_stage.gameObject.activeInHierarchy) return;
-            _rig.Play(CharacterRig.Idle, true); _rig.SetSpeed(1f);
+            _rig.Play(CharacterRig.Idle, true); _rig.SetSpeed(Still ? 0f : 1f);
         }
+
+        /// <summary>정지 초상(T68 ② · 주인 «로비 상단 주인공이 계속 움직인다») — Idle 첫 프레임에서 Animator 속도 0. 장비 화면의 큰 캐릭터는 false(움직임 유지).</summary>
+        public bool Still { get; private set; }
+        public void SetStill(bool still) { Still = still; PlayIdle(); }
 
         /// <summary>
         /// 카메라 프레이밍(T34 · 로비 상단 바의 정사각 초상은 전신이 아니라 <b>가슴 위</b>가 보여야 레퍼런스 아바타처럼 보인다).
