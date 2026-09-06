@@ -191,7 +191,8 @@ namespace KkomaKnight.Game
                 {
                     float yf = DemoY(p.Y);
                     if (yf < -0.15f || yf > 0.72f) continue;                        // 화면 위 밖 · HUD 패널 뒤는 만들지 않는다
-                    var sp = _app.Assets.Sprite(p.Key); bool flat = sp != null && sp.bounds.size.y * Mathf.Abs(p.Sy) < 0.35f;   // 풀·꽃·물결 경계(납작) 은 늘 바닥 — 데모 치수 기준
+                    var sp = _app.Assets.Sprite(p.Key);
+                    bool flat = p.Key.EndsWith(".roadUp") || (sp != null && sp.bounds.size.y * Mathf.Abs(p.Sy) < 0.35f);   // 풀·꽃(납작) 은 늘 바닥 — 데모 치수 기준. 물결 경계(roadUp)는 높이와 무관하게 늘 길 바로 위(Road_up_Desert 만 43px = 0.43u 라 문턱을 넘겼다 · T45 · CI #51)
                     int order = flat ? -16 : p.Y > footDemoY ? Mathf.Max(-60, -12 - (int)((p.Y - footDemoY) * 3f)) : Mathf.Min(470, 381 + (int)((footDemoY - p.Y) * 5f));
                     var pr = AddProp(props, p.Key, x0 + p.X * unitPx, yf, 1f, order, false);
                     pr.Sr.transform.localScale = new Vector3(p.Sx * Layout.MapScale, p.Sy * Layout.MapScale, 1f);
