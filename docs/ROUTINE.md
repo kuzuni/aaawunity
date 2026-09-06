@@ -345,7 +345,7 @@
 2. 재료 = GUI Pro 조각(Lobby_Default 의 상단 바·탭 바·버튼을 뜯어 쓴다 · 세로 아이콘은 GUI Pro 아이콘 + 라벨). 사이드 아이콘·배너·보조 버튼은 T44 가 채울 때까지 **눌러도 아무 일 없음**(`LobbyScreen.OnSide(string key)` 훅 하나로 모아 둔다).
 3. 게이트 + 스모크 단언(사이드 3+3 · START · 탭 5) + PROGRESS T34 행.
 
-### T35 — 전투 HUD = `02_battle.jpg`·`03_battle_enemy.jpg` 구도 + **HP·실드 바(주인 강조)** (T33 뒤)
+### T35 — 전투 HUD = `02_battle.jpg`·`03_battle_enemy.jpg` 구도 + **HP·실드 바(주인 강조)** (T33 뒤) ✅ (완료 · `4773d23` · CI #56 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/BattleScreen.cs`(HUD 전체) · `BattleWorld.cs`(발밑 2단 바) · `Assets/Scripts/Core/Layout.cs`(HUD 상수 — 표값을 바꾸면 `ref-layout.md` ② 와 `LayoutSpecTests` 도 같이) · catalog
 순서: **T33(웨이브 수 제거 · 같은 HUD 영역) 뒤**. T19·T21·T23 과는 같은 파일이지만 다른 영역(지형·투사체·EndRun) — rebase 로 합치고 충돌 나면 뒤 번호가 다시.
 1. **바 3개 한 줄**(HUD 스탯 격자 바로 위): EXP(초록 라벨 «EXP» + 검정 바 + «0/6») · ❤ HP(빨강 바 · «1055/1055») · 🛡 실드(파랑 바 · «2258/2258») — 각 바 왼쪽에 아이콘, 바 안에 흰 숫자. 실드 = 엔진의 방어막/실드 값(없으면 0/최대).
