@@ -338,7 +338,7 @@
 2. UiSmokeTests ⑤ 의 «HUD 웨이브» 단언을 지운다.
 3. 게이트 + PROGRESS T33 행.
 
-### T34 — 로비 = `docs/ref/01_lobby.jpg` 구도 (UI 레퍼런스 · 최우선)
+### T34 — 로비 = `docs/ref/01_lobby.jpg` 구도 (UI 레퍼런스 · 최우선) ✅ (완료 · `d6d1411` · 상단 재화 바 = `TopBar` 헬퍼(Screens.cs) — T37·T40·T42·T43 은 `TopBar.Build(App, root)` 한 줄로 · 사이드/배너/모서리 버튼은 `LobbyScreen.OnSide(key)` 훅 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/Screens.cs`(LobbyScreen · NavBar 훅) · `HeroView.cs`(초상) · catalog(로비 조각 키) · `Assets/Tests/PlayMode/UiSmokeTests.cs`(로비 단언)
 순서: **T22(버튼 눌림 · Screens NavBar) 완료 뒤**. T42·T43·T44 가 이 화면의 버튼 훅을 이어 쓴다.
 1. `docs/ref/README.md` «01 로비» + `ref-layout.md` ① 표대로: 상단 재화 바(아바타 · 전투력 · 골드 · 보석) → 이벤트 배너(보라 · 진행바 · 레벨 뱃지 — 패스 껍데기 T44 진입) + 메뉴(≡ · 설정) → 왼쪽 세로 아이콘 3(스타터팩·특권·7일 챌린지) / 오른쪽 세로 3(출석·데일리 기프트·퀘스트) → «CHAPTER N» + 밑줄 화살 → 챕터 카드(1.25:1) + ◀▶ → 보조 버튼 2(탐험·클리어 보상 — 껍데기) → START(주황 · 카드 폭) → 왼쪽 아래 성(잠금) · 오른쪽 아래 이벤트(방패 — T43 던전/아레나 진입) → 탭 바(상점·장비·전투·던전·펫).

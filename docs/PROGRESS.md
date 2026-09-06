@@ -35,7 +35,7 @@
 | T31 | 장비 아이콘 = CharacterMaker Thumbnail 그림(입는 파츠와 분리) — T17 뒤 | 대기 | — | GearLook · Game/GearUi · catalog(cmi.*) | ROUTINE §2 T31 |
 | T32 | 펫 팝업 = Character_Skill 그대로 · 항목 → Character_Skill_Detail 그대로(기능 없음) | ⛔ 폐기 → T42 (2026-09-06 UI 레퍼런스 지시) | — | Game/Overlay · Screens · catalog | ROUTINE §2 T32 |
 | T33 | 전투 HUD 웨이브 수 표시 제거 | 대기 | — | Game/BattleScreen | ROUTINE §2 T33 |
-| T34 | **UI 레퍼런스** 로비 = `docs/ref/01_lobby.jpg` 구도(재화 바 · 배너 · 사이드 3+3 · 카드 · START · 탭) — T22 뒤 | 대기 | — | Game/Screens(Lobby) · HeroView · catalog · Tests/PlayMode | ROUTINE §2 T34 · 색인 `docs/ref/README.md` |
+| T34 | **UI 레퍼런스** 로비 = `docs/ref/01_lobby.jpg` 구도(재화 바 · 배너 · 사이드 3+3 · 카드 · START · 탭) — T22 뒤 | ✅ 완료 (`d6d1411` · dotnet 게이트 초록 · 실물 확인 = CI 유니티 잡 PlayMode `UiSmokeTests.LobbySettingsTalentPetToast` 구도 단언 + 주인 gh-pages/에디터 눈 확인) | sess-0706-11388 / 워커 A | Game/Screens(LobbyScreen 재조립 + `TopBar` 공용 헬퍼 신설) · HeroView(`SetFraming` 가슴 위) · UiKit(`PxSize`·`FitScale`) · Core/Layout(표 밖 5개) · catalog(키 16) · Tests/PlayMode/UiSmokeTests ① | 표 ① 자리 전부(상단 바 아바타/전투력/골드/보석 · 배너+메뉴 · 사이드 3+3 · 챕터 제목+밑줄 · 카드(테마 Environment)+◀▶ · 보조 2 · START 주황(카드 폭) · 성·이벤트 · 탭 5) · 프리팹은 부품(배경·메뉴·제목 조각·탭 바만 씀) · 껍데기 버튼 = `OnSide(key)` 훅(T43·T44) · dotnet 0/0 · 테스트 79/79 |
 | T35 | **UI 레퍼런스** 전투 HUD = `02`·`03` 구도 + **HP·실드 바 3개 한 줄 · 발밑 2단 바(주인 강조)** · 스탯 8칸 — T33 뒤 | 대기 | — | Game/BattleScreen · BattleWorld · Core/Layout · catalog | ROUTINE §2 T35 |
 | T36 | **UI 레퍼런스** 레벨업 3택 · 보유 특전 = `04`·`05` 구도 + 공통 팝업 헬퍼 | 대기 | — | Game/Overlay · UiKit · catalog | ROUTINE §2 T36 |
 | T37 | **UI 레퍼런스** 장비 = `06` 구도(무대 · 3+3 슬롯 · 스탯 3칸 · 대장간/상점 버튼 · 5열) — T17 뒤 · T25 흡수 | 대기 | — | Game/GearScreen · GearUi · HeroView · catalog | ROUTINE §2 T37 |
@@ -182,7 +182,10 @@
 
 > 형식: `번호. 무엇을 어떻게 정했는가 · 왜 · 되돌리려면 어느 파일(한 줄)`. 주인이 뒤집으면 그 줄에 ✅/❌ 를 달고 고친다. 번호는 아래 «승인 대기» 의 마지막 번호 다음부터 잇는다(31~).
 
-- (아직 없음)
+31. **로비 상단 바 전투력 = 숫자만(라벨 «전투력» 없음)** (T34 · `d6d1411`) — 레퍼런스 `01_lobby.jpg` 가 칼 아이콘 + 주황 큰 숫자뿐이라 그대로. 라벨을 원하시면 `TopBar.Build` 의 Power Label 한 줄(«전투력 N»).
+32. **로비 껍데기 요소의 글자·숫자** (T34) — 시스템이 없는 것은 레퍼런스 숫자를 베끼지 않고 «준비 중»/«1»/잠금으로: 이벤트 배너 = «시즌 패스» + 진행바 «준비 중»(0) + 배지 «1» · 사이드 타이머 글자(«1d 15h» 등)는 넣지 않음 · 성 = 집 아이콘 + 자물쇠(팩에 성이 없다) · 이벤트 = 던전 아이콘(레퍼런스 방패 자리 · T43 진입). 되돌리려면 `LobbyScreen.Build` ②·⑥ 줄.
+33. **로비 배경색** (T34) — Lobby_Default 의 Background(하늘색 평면 + 흐린 칼 Deco) 를 그대로 쓰되 색만 초록(레퍼런스 초록 바탕 · `Color.Lerp(Green, Ink, 0.42)`)으로. 색은 점수 밖이라 «느낌» 만 — 하늘색이 좋으면 `LobbyScreen.Build` 의 `bgImg.color` 한 줄 삭제.
+34. **챕터 카드 그림** (T34) — 레퍼런스의 «스테이지 그림» 은 그 챕터 전투 맵 테마(autumn/deepForest/forest/desert 순환)의 Environment 바닥·길 + 소품 4개(테마 표 `MapLayouts` 에서 챕터별 고정 선택)로. 프리팹의 샘플 지도(Image_Map_Forest)는 끔. 샘플 지도가 좋으면 `SampleImage_Map` 을 켜고 `ChapterCard` 를 지우면 된다.
 
 ## 주인 승인 대기 — **2026-09-06 폐지(이력)** · 열린 10~30 은 워커가 기다리지 않고 확정한다(주인이 원한다고 적힌 것은 실행 · 워커 제안은 «기본값») · 새 항목 추가 금지 → «워커 결정 기록»
 
@@ -485,6 +488,18 @@
 - 게이트: `dotnet build` 0/0 · `dotnet test` 79/79(T23 의 78 + 1) · `gen_meta --check` · `gen_catalog --check`(481) · `check_catalog_keys` OK(656/480) · `check_unity_null` 0건 · `check_data_sync` OK(aaaw `0707999`) · Sim 시드 11·12·13 사다리·3pick 42칸 = T2 표와 동일.
 - **플레이 콘솔 에러 0 확인 수단**: 코드 커밋 `9c1eb54` 의 **CI 런 #52**(https://github.com/kuzuni/aaawunity/actions/runs/34018388747) 유니티 잡 PlayMode `AudioTests` 2 + 기존 스모크 전부(모든 화면·팝업이 이제 소리를 낸다). **주의**: #52 는 T19 회귀(`MapThemeTests` 사막 1건 · 아래 T45)로 유니티 잡이 빨갈 수 있다 — T45 코드 push 가 #52 를 취소하면 **#53 이 T28·T45·T23 공용 확인 수단**. 배치 모드엔 오디오 장치가 없어 «소리가 났다» 는 주인이 에디터/폰에서.
 - **주인이 확인할 것 (한 줄)**: 로비에 들어가면 칩튠 배경음이 돌고 → START 로 전투에 들어가면 곡이 0.5초 만에 바뀌며 → 보스가 나오면 보스 곡 → 버튼마다 클릭음 · 팝업 열림음 · 타격/치명/빗나감/적 사망/피격/레벨업 소리 · 뽑기·합성·장착 소리 · 클리어/사망 징글이 나는가 / 설정(≡)의 배경음·효과음 스위치가 각각 따로 꺼지고 앱을 껐다 켜도 유지되는가 / 소리가 마음에 안 들면 `Assets/Audio/LICENSES.md` 표의 파일 이름을 말해 주면 그 파일만 바꾼다(다른 Kenney 팩 소리로).
+
+### T34 완료 기록 (2026-09-06 · sess-0706-11388 · 워커 A) — 코드 `d6d1411` · CI #54
+
+- **구도 = `docs/ref/01_lobby.jpg`(Read 로 직접 봄) + `Layout` ① 표** — Lobby_Default 프리팹은 «그대로 세우기» 를 버리고 **부품 창고**로: 쓰는 조각 = Background(+칼 Deco · 초록 틴트) · Button_Menu(≡ · LobbyMenu 자리) · Title_LineDeco_01_Blue(챕터 제목 + 밑줄 · 제목 행 ∪ 밑줄 행 자리) · Tab_01_BottomFlushMenu(TabBar 자리). 끄는 조각 = UserInfo_01 · ResourceBar_Group · Group_Left/RightButtons · SampleImage_Map · Button_03_Red · ChatBox · 부제. 코드 도형 0 · 새 그림 0(아이콘 12 + 프리팹 3 은 전부 GUI Pro · `docs/assets-map.md` 갱신).
+- **상단 재화 바 = `TopBar` 공용 헬퍼(Screens.cs)** — 아바타 = `UserInfo_01_Slider` 의 ProfileFrame_02_Yellow 조각만(본래 177px 을 `UiKit.FitScale` 로 LobbyAvatar 110×103px 에 배율) + 마스크 안 HeroView(`SetFraming(1.6, 0.45)` = 가슴 위 · 장비 화면은 전신 그대로) · 전투력 = `ui.battle` 칼 + 주황 큰 숫자(LobbyPower) · 골드/보석 = `ResourceBar_Group` 두 칸을 가로 레이아웃 끄고 LobbyGoldPill/LobbyGemPill 자리로. **T37·T40·T42·T43 은 `_top = TopBar.Build(App, root)` + `_top.Refresh()` 한 줄씩**.
+- **껍데기(주인 ⓔ)**: 이벤트 배너(`ui.framePlum` · 메달 · «시즌 패스» · `ui.sliderGreen` «준비 중» · 배지 «1») · 사이드 3+3(`ui.frameDark` 기둥 · 스타터팩/특권/7일 챌린지 · 출석/데일리 기프트/퀘스트) · 보조 2(탐험·클리어 보상) · 성(집+자물쇠) · 이벤트(던전 아이콘) — 전부 `LobbyScreen.OnSide(key)` 훅 하나(키 상수 `LobbyScreen.Side*`) · 지금은 아무 일 없음 · T43 이 `events`, T44 가 나머지를 잇는다. 워커 결정 31~34.
+- **챕터 카드** = `ui.frameDarkBorder` + RectMask2D 안에 그 챕터 테마의 Environment 바닥·길 + 소품 4(`MapLayouts` 표에서 나무·돌·덤불·선인장·야자만 · 챕터별 고정 선택) · 카드 클릭 = START · ◀▶ = `pi.arrow_*`(LobbyArrowL/R) · START = `Button_03_Orange`(주황 · LobbyStart = 카드와 같은 x·폭). T28 의 `Audio.Wake()` 는 START·카드 클릭에 그대로(rebase 충돌 1건 · 내 쪽 유지 + Wake 두 줄).
+- **표 밖 상수**(jpg 실측 · `Layout` 주석): LobbyPower(13.2/4.5/22/2.9) · LobbyGoldPill(38.5/4.5/29.5/2.9) · LobbyGemPill(69.5/4.5/29/2.9) · LobbyCastle(0/70.5/17/7.5) · LobbyEvents(83/70.5/17/7.5). `LayoutSpecTests` 는 표 행만 대조하므로 불변.
+- **테스트**: `UiSmokeTests.LobbySettingsTalentPetToast` ① 을 구도 단언으로 교체 — TopBar(Avatar·Power·Coin·Gem) · Banner · Button_Menu · SideL/SideR 각 3 · ChapterCard · ArrowL/R · SubRow 2 · Castle · Events · START x/폭 = 카드 · 탭 바 anchor = 표 · 라벨 우리말 · 껍데기 버튼 5개 클릭 → 팝업 안 열림 · 빨간 줄 0 · 챕터 ◀▶ 는 이름으로 클릭. PressFeedbackTests 의 «모든 버튼 눌림 표시» 는 새 버튼(칸 = 투명 루트 + 아이콘 · 카드 = 프레임) 모두 `Clickable` 이라 그대로 통과 예상.
+- 게이트: `dotnet build` 0/0 · `dotnet test` 79/79(rebase 뒤 · T28 의 SaveTests +1 포함) · `gen_meta --check` · `gen_catalog --check`(496) · `check_catalog_keys` OK(682/495) · `check_unity_null` 0건 · `check_data_sync` OK(aaaw `0707999`). dotnet SDK 는 이 컨테이너에 없어 `apt-get install dotnet-sdk-8.0`(Ubuntu 저장소 · 마이크로소프트 도메인은 프록시 차단) 으로 넣었다.
+- **플레이 콘솔 에러 0 확인 수단**: 코드 커밋 `d6d1411` 의 **CI 런 #54**(https://github.com/kuzuni/aaawunity/actions/runs/34018934612) 유니티 잡 — PlayMode `UiSmokeTests` ①(로비 구도 + 빨간 줄 0) · `HeroViewTests` 왕복 · `PressFeedbackTests`. 이 push(07:21)가 #53(T45 · CI #51 빨강 수정) 을 concurrency 로 취소할 수 있다 — **#54 가 T45·T28 의 확인 수단도 겸한다**(참고: #51·#52 는 T45 가 고친 사막 물결 경계 회귀로 빨강). 이 세션의 07:50 체크인이 #54 를 읽어 여기에 한 줄 적는다.
+- **주인이 확인할 것 (한 줄)**: 로비가 레퍼런스처럼 — 맨 위 노란 테두리 초상(내 기사 얼굴) · 칼+주황 전투력 · 골드/보석 pill → 보라 배너 + ≡ → 양옆 아이콘 3+3 → «챕터 N» + 밑줄 → 카드(챕터마다 숲/사막 그림) + ◀▶ → 탐험·클리어 보상 → 주황 START → 성(잠금)·이벤트 → 탭 5 순서로 보이는가 · 콘솔 빨간 줄 0.
 
 ## 주인 콘솔 에러 보고함 (주인이 붙인 원문 — 다 고칠 때까지 남긴다 · 워커는 매 세션 읽고 작업으로 올린다)
 
