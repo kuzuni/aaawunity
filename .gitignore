@@ -120,3 +120,4 @@ InitTestScene*.unity*
 
 # T60 — WebGL 배포 스모크가 남기는 스크린샷·로그(CI Artifact 로만 · 커밋 금지)
 /webgl-smoke/
+__pycache__/
