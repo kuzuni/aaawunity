@@ -42,6 +42,35 @@ def body(rel, is_dir):
                 "    loadType: 1\n    sampleRateSetting: 0\n    sampleRateOverride: 44100\n    compressionFormat: 1\n    quality: 0.7\n"
                 "    conversionMode: 0\n    preloadAudioData: 0\n  platformSettingOverrides: {}\n  forceToMono: 0\n  normalize: 1\n"
                 "  preloadAudioData: 0\n  loadInBackground: 0\n  ambisonic: 0\n  3D: 0\n" + TAIL)
+    if ext == '.png':
+        # 그림(T70 번개 시트) — 스프라이트 단일 모드(textureType 8 · spriteMode 1 → 스프라이트 fileID 21300000 · gen_catalog.py 가 그 값을 쓴다).
+        # 무압축(textureCompression 0): 시트가 작고(≤ 1MB) WebGL 의 DXT/ETC 알파 블록이 볼트 가장자리를 뭉갠다.
+        return ("TextureImporter:\n  internalIDToNameTable: []\n  externalObjects: {}\n  serializedVersion: 12\n"
+                "  mipmaps:\n    mipMapMode: 0\n    enableMipMap: 0\n    sRGBTexture: 1\n    linearTexture: 0\n    fadeOut: 0\n"
+                "    borderMipMap: 0\n    mipMapsPreserveCoverage: 0\n    alphaTestReferenceValue: 0.5\n"
+                "    mipMapFadeDistanceStart: 1\n    mipMapFadeDistanceEnd: 3\n"
+                "  bumpmap:\n    convertToNormalMap: 0\n    externalNormalMap: 0\n    heightScale: 0.25\n    normalMapFilter: 0\n"
+                "  isReadable: 0\n  streamingMipmaps: 0\n  streamingMipmapsPriority: 0\n  vTOnly: 0\n  ignoreMasterTextureLimit: 0\n"
+                "  grayScaleToAlpha: 0\n  generateCubemap: 6\n  cubemapConvolution: 0\n  seamlessCubemap: 0\n  textureFormat: 1\n"
+                "  maxTextureSize: 2048\n"
+                "  textureSettings:\n    serializedVersion: 2\n    filterMode: 1\n    aniso: 1\n    mipBias: 0\n"
+                "    wrapU: 1\n    wrapV: 1\n    wrapW: 1\n"
+                "  nPOTScale: 0\n  lightmap: 0\n  compressionQuality: 50\n  spriteMode: 1\n  spriteExtrude: 1\n  spriteMeshType: 1\n"
+                "  alignment: 0\n  spritePivot: {x: 0.5, y: 0.5}\n  spritePixelsToUnits: 100\n"
+                "  spriteBorder: {x: 0, y: 0, z: 0, w: 0}\n  spriteGenerateFallbackPhysicsShape: 1\n  alphaUsage: 1\n"
+                "  alphaIsTransparency: 1\n  spriteTessellationDetail: -1\n  textureType: 8\n  textureShape: 1\n"
+                "  singleChannelComponent: 0\n  flipbookRows: 1\n  flipbookColumns: 1\n  maxTextureSizeSet: 0\n"
+                "  compressionQualitySet: 0\n  textureFormatSet: 0\n  ignorePngGamma: 0\n  applyGammaDecoding: 0\n  cookieLightType: 0\n"
+                "  platformSettings:\n"
+                + ''.join(f"  - serializedVersion: 3\n    buildTarget: {t}\n    maxTextureSize: 2048\n    resizeAlgorithm: 0\n"
+                          "    textureFormat: -1\n    textureCompression: 0\n    compressionQuality: 50\n    crunchedCompression: 0\n"
+                          "    allowsAlphaSplitting: 0\n    overridden: 0\n    androidETC2FallbackOverride: 0\n"
+                          "    forceMaximumCompressionQuality_BC6H_BC7: 0\n"
+                          for t in ('DefaultTexturePlatform', 'WebGL', 'Standalone', 'Server'))
+                + "  spriteSheet:\n    serializedVersion: 2\n    sprites: []\n    outline: []\n    physicsShape: []\n    bones: []\n"
+                  "    spriteID: 5e97eb03825dee720800000000000000\n    internalID: 0\n    vertices: []\n    indices: \n    edges: []\n"
+                  "    weights: []\n    secondaryTextures: []\n    nameFileIdTable: {}\n"
+                  "  spritePackingTag: \n  pSDRemoveMatte: 0\n  pSDShowRemoveMatteOption: 0\n" + TAIL)
     return "DefaultImporter:\n  externalObjects: {}\n" + TAIL
 
 def main():

@@ -444,7 +444,8 @@
     "pet.sickle": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Weapons_Sickle_01.png",
     "pet.egg": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Egg_02.png",
     "pet.feather": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Feather_02.png",
-    "pet.eye": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Eye_01.png"
+    "pet.eye": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Eye_01.png",
+    "fx.lightning": "Assets/KkomaKnight/Fx/Lightning/lightning-bolt.png"
   },
   "prefabs": {
     "cm.character": "Assets/Layer Lab/2D Minimal-CharacterMaker/Common/Prefabs/Character.prefab",
@@ -940,6 +941,7 @@
     "ui.iconFoe1": "T43 아레나 상대 초상 1(껍데기 · 순위 목록·도전 팝업 줄)",
     "ui.iconFoe2": "T43 아레나 상대 초상 2",
     "ui.iconFoe3": "T43 아레나 상대 초상 3",
-    "ui.iconFoe4": "T43 아레나 상대 초상 4"
+    "ui.iconFoe4": "T43 아레나 상대 초상 4",
+    "fx.lightning": "번개 특전(EvKind.Bolt) 이펙트 시트 — Superpowers Asset Packs(Pixel-boy · Sparklin Labs) rpg-battle-system/fx/2.png · CC0 1.0 · 840×86 = 140×86 6칸(마지막 빈 칸 · 칸 2 는 안 쓴다) · BattleWorld.Lightning 이 Fx.PlaySheet 로 재생 · 출처 원문 Assets/KkomaKnight/Fx/Lightning/LICENSES.md"
   }
 }

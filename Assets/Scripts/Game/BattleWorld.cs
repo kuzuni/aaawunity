@@ -614,6 +614,32 @@ namespace KkomaKnight.Game
 
         // ───────────────────────── 연출 이벤트 ─────────────────────────
         Vector3 EnemyPos(EnemyState e, float up = 0.45f) => e != null ? Pos(e.WorldX, FootY) + Vector3.up * up : _player.transform.position + Vector3.up * up;
+
+        // ───────────────────────── 번개 특전(T70 · 주인 «번개 이펙트 인터넷에서 에셋 받아서 되게 해줘») ─────────────────────────
+        /// <summary>번개 한 줄기의 세로 길이 = 적 키의 이 배(지시서 T70 2항 «적 키의 1.5~2배»).</summary>
+        public const float BoltHeightMul = 1.8f;
+        /// <summary>같은 틱에 여러 적에게 떨어질 때 적마다 어긋나는 시차(초 · 지시서 T70 2항 · T49 stagger 감각).</summary>
+        public const float BoltStagger = 0.05f;
+        public const string LightningName = "Lightning";
+        float _boltClock = -1f; int _boltSeq;
+
+        /// <summary>
+        /// 적 하나에게 번개 한 줄기 — 하늘에서 발밑까지 내리꽂히고(시트 애니 · <see cref="Fx.PlaySheet"/>), 닿는 순간 종전 전기 튀김(`fx.bolt` · CFXR)을 작게.
+        /// 시트(`fx.lightning`)가 없으면 종전 그대로 튀김만 뿌린다.
+        /// </summary>
+        void Lightning(EnemyState e)
+        {
+            if (_boltClock != _clock) { _boltClock = _clock; _boltSeq = 0; }
+            float delay = _boltSeq++ * BoltStagger;
+            float hPct = e != null && e.IsBoss ? Layout.EnemyHeight * (float)D.Enemies.BossSizeMul : Layout.EnemyHeight;
+            float span = WorldCam.PctH(hPct) * BoltHeightMul;
+            var hit = EnemyPos(e, 0.5f);
+            var go = Fx.PlaySheet("fx.lightning", Fx.LightningCols, Fx.LightningFrames, Fx.LightningFps,
+                                  EnemyPos(e, 0f) + Vector3.up * (span * 0.5f), span / Fx.LightningSpanAtScale1,
+                                  Fx.LightningTiltDeg, delay, _root, LightningName,
+                                  () => { if (_root != null) Fx.Spawn("fx.bolt", hit, 0.6f, 1.2f, _root); });
+            if (go == null) Fx.Spawn("fx.bolt", hit, 0.6f, 1.2f, _root);
+        }
         Vector3 PlayerPos(float up = 0.5f) => _player.transform.position + Vector3.up * up;
 
         /// <summary>BattleScreen 호환 — 이벤트는 <see cref="AfterTick"/> 이 틱마다 직접 처리한다(타격 묶음 판별에 틱 경계가 필요).</summary>
@@ -650,7 +676,7 @@ namespace KkomaKnight.Game
                 case EvKind.Heal: Pop("+" + UiKit.Fmt(ev.Value), PlayerPos(1.05f), Palette.PopHeal, 36); Fx.Spawn("fx.heal", PlayerPos(0.4f), 0.7f, 1.5f); break;
                 case EvKind.Repair: Pop("+" + UiKit.Fmt(ev.Value), PlayerPos(1.2f) + Vector3.left * 0.2f, Palette.Hex(D.Ui.PopShield), 32); break;
                 case EvKind.Stun: Pop("스턴", EnemyPos(ev.Enemy, 1.0f), Palette.Yellow, 30); break;
-                case EvKind.Bolt: Fx.Spawn("fx.bolt", EnemyPos(ev.Enemy, 0.5f), 0.6f, 1.2f); break;
+                case EvKind.Bolt: Lightning(ev.Enemy); break;
                 case EvKind.Reflect: Pop("반사 " + UiKit.Fmt(ev.Value), EnemyPos(ev.Enemy, 0.95f), Palette.Sky, 32); break;
                 case EvKind.Counter: Pop("반격 " + UiKit.Fmt(ev.Value) + (ev.Crit ? "!" : ""), EnemyPos(ev.Enemy, 0.95f), Palette.Orange, 34); Fx.Spawn("fx.hit", EnemyPos(ev.Enemy), 0.5f, 1f); break;
                 case EvKind.LevelUp: Pop("LEVEL UP!", PlayerPos(1.3f), Palette.Yellow, 46); Fx.Spawn("fx.levelup", PlayerPos(0.5f), 1f, 2f); Audio.Sfx("snd.levelup"); break;

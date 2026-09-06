@@ -704,6 +704,7 @@
 6. 게이트 + assets-map(스프라이트 키 4~5줄) + PROGRESS T69 행(+ 화면 묶음 하위 행) + 완료 기록(확인 = CI PlayMode + screens PNG 를 `Read` 로 «아웃라인 보이나» + 배포 스모크 + 주인 폰).
 
 ### T70 — 번개 특전 이펙트 = 인터넷에서 받은 «진짜 번개» 에셋(CC0 · T28 오디오 방식) (주인 2026-09-06 · 제약 없음)
+> **🔄 코드 push 끝(2026-09-06 17:1X UTC · sess-1644-29867 · 워커 C) — 남은 것은 확인뿐.** 에셋 = `sparklinlabs/superpowers-asset-packs` `rpg-battle-system/fx/2.png` @ `e8674a0`(CC0 1.0 · Pixel-boy · 140×86 6칸) → `Assets/KkomaKnight/Fx/Lightning/lightning-bolt.png` · 카탈로그 `fx.lightning` · `Fx.PlaySheet`+`SheetAnim`(런타임 슬라이스) · `BattleWorld.Lightning`(적마다 하나 · 시차 0.05초 · 적 키 ×1.8 · 55° 로 세워 발밑까지 · 닿으면 종전 `fx.bolt`) · 칸 2(새까만 반전 섬광)는 뺐다 · `gen_meta.py` 에 `.png` 갈래 신설. **확인 = 그 커밋의 CI 유니티 잡 PlayMode `LightningTests.BoltEventDropsOneLightningPerEnemyThenSparksAndDisappears` Passed + 빨간 줄 0 + 배포 스모크**(screens 에는 안 찍힌다 — 특전을 든 판에서만 나온다). PROGRESS «T70 진행 기록» · 결정 179~183.
 범위: `Assets/KkomaKnight/Fx/Lightning/`(새 스프라이트 시트 또는 파티클 · .meta 는 `gen_meta.py`) · `Assets/KkomaKnight/catalog.json`(`fx.bolt` 교체 또는 `fx.lightning` 신설 · 노트) · `Assets/Scripts/Game/BattleWorld.cs`(633행 `EvKind.Bolt` · «보이는 적 전부에게 번개» 는 적마다 하나씩) · `Fx.cs`(스프라이트 시트 애니 재생 헬퍼가 없으면 추가) · `docs/assets-map.md`(출처·라이선스 URL) · `LICENSES/`(라이선스 원문)
 주인 원문(2026-09-06 · 12:2X UTC): «번개 이펙트 뭐 인터넷에서 에셋 다운받아서 되게 해줘».
 지금: `fx.bolt` = CFXR3 Hit Electric C(Air) — «전기 튀김» 이지 하늘에서 내리꽂는 번개가 아니다.
