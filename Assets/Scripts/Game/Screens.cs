@@ -122,10 +122,19 @@ namespace KkomaKnight.Game
             return prt;
         }
 
-        /// <summary>사이드 아이콘·배너·보조 버튼·모서리 버튼의 단일 훅 — T43: <see cref="SideEvents"/>(오른쪽 아래 방패) = 아레나(PvP) 페이지. 나머지는 T44 가 여기서 팝업으로 잇는다(그때까지 아무 일 없음).</summary>
+        /// <summary>사이드 아이콘·배너·보조 버튼·모서리 버튼의 단일 훅 — T43: <see cref="SideEvents"/>(오른쪽 아래 방패) = 아레나(PvP) 페이지 · T44: 특권·패스 = 페이지(<see cref="PrivilegeScreen"/>·<see cref="PassScreen"/>) · 퀘스트·출석·데일리 기프트·7일 챌린지 = 팝업(<see cref="LobbyPopups"/>). 스타터팩·탐험·클리어 보상·성은 아무 일 없음(껍데기).</summary>
         public void OnSide(string key)
         {
-            if (key == SideEvents) EventsScreen.Open(App, EventsScreen.PagePvp);
+            switch (key)
+            {
+                case SideEvents: EventsScreen.Open(App, EventsScreen.PagePvp); break;
+                case SidePrivilege: App.ShowScreen("privilege"); break;
+                case SidePass: App.ShowScreen("pass"); break;
+                case SideQuest: LobbyPopups.Quest(App); break;
+                case SideAttendance: LobbyPopups.Attendance(App); break;
+                case SideDailyGift: LobbyPopups.DailyGift(App); break;
+                case SideChallenge7: LobbyPopups.Challenge7(App); break;
+            }
         }
 
         void Shift(int d)

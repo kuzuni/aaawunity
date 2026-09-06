@@ -45,9 +45,10 @@ def parse_ref():
     """{기호: {'title': 제목줄, 'rows': [(이름, [x,y,w,h] or None들, 비고)]}} — 요소/x/y/w/h/비고 6열 표만."""
     tables = {}; cur = None; in_table = False
     for line in open(REF, encoding='utf-8'):
-        m = re.match(r'^## ([①-⑳])\s*(.*)$', line)
+        m = re.match(r'^## ([①-⑳㉑-㉟])\s*(.*)$', line)
         if m:
             cur = m.group(1); tables[cur] = {'title': m.group(2).strip(), 'rows': []}; in_table = False; continue
+        if line.startswith('## '): cur = None; in_table = False; continue   # 기호 없는 절(«⚑ U01 회차 정정» 등)은 표가 아니다 — 마지막 표에 그 절의 표 행이 섞이던 것을 막는다(T44)
         if cur is None: continue
         if line.startswith('|'):
             cells = [c.strip() for c in line.strip().strip('|').split('|')]

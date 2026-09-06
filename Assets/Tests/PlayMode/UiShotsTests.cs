@@ -83,6 +83,14 @@ namespace KkomaKnight.Tests.Play
             yield return Shot("01_lobby");
             _app.Overlay.Settings(); yield return Frames(2); yield return Shot("12_settings"); _app.Overlay.Close(); yield return Frames(1);
 
+            // 11 특권 · 15 퀘스트 · 16 출석 · 17 데일리 기프트 · 18 7일 챌린지 · 19 시즌 패스 (T44 로비 사이드 껍데기 — 페이지 2 + 팝업 4)
+            _app.ShowScreen("privilege"); yield return Frames(3); yield return Shot("11_shop_special"); _app.ShowScreen("lobby"); yield return Frames(1);
+            LobbyPopups.Quest(_app); yield return Frames(2); yield return Shot("15_quest"); _app.Overlay.Close(); yield return Frames(1);
+            LobbyPopups.Attendance(_app); yield return Frames(2); yield return Shot("16_attendance"); _app.Overlay.Close(); yield return Frames(1);
+            LobbyPopups.DailyGift(_app); yield return Frames(2); yield return Shot("17_daily_gift"); _app.Overlay.Close(); yield return Frames(1);
+            LobbyPopups.Challenge7(_app); yield return Frames(2); yield return Shot("18_challenge7"); _app.Overlay.Close(); yield return Frames(1);
+            _app.ShowScreen("pass"); yield return Frames(3); yield return Shot("19_pass"); _app.ShowScreen("lobby"); yield return Frames(1);
+
             // 13 펫 탭 · 14 펫 세부 (T42 껍데기)
             _app.ShowScreen("pet"); yield return Frames(3); yield return Shot("13_pet");
             (_app.Current as PetScreen)?.OpenDetail(0); yield return Frames(2); yield return Shot("14_pet_detail"); _app.Overlay.Close(); yield return Frames(1);
@@ -130,8 +138,7 @@ namespace KkomaKnight.Tests.Play
             _app.Overlay.PerkBook(G, null); yield return Frames(2); yield return Shot("05_perks_list"); _app.Overlay.Close(); yield return Frames(1);
             Time.timeScale = 1f; _app.ShowScreen("lobby"); yield return Frames(2);
 
-            foreach (var n in new[] { "11_shop_special", "15_quest", "16_attendance", "17_daily_gift", "18_challenge7", "19_pass" })
-                _missing.Add(n + " (화면 없음 · T44)");
+            // 20~26 은 T43 · 11·15~19 는 T44 가 위에서 찍는다 — 이제 «없음» 화면이 없다(_missing 은 03 조우 실패 때만)
             PlayShot.WriteLayout(_layout, _missing);
             Assert.Greater(_saved, 0, "PNG 가 하나도 안 남았다(RenderTexture 캡처 실패)");
             Assert.IsTrue(_layout.ContainsKey("01_lobby") && ((Dictionary<string, object>)_layout["01_lobby"]).Count > 0, "로비 이름표(UiTag)가 layout.json 에 있어야 한다");

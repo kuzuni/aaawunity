@@ -33,7 +33,7 @@ namespace KkomaKnight.Tests
             foreach (var raw in File.ReadAllLines(SpecPath()))
             {
                 var line = raw.Trim();
-                var h = Regex.Match(line, @"^## ([①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱])");
+                var h = Regex.Match(line, @"^## ([①-⑳㉑-㉟])");
                 if (h.Success) { sec = h.Groups[1].Value; res[sec] = new Dictionary<string, float?[]>(); continue; }
                 if (line.StartsWith("## ")) { sec = null; continue; }   // 정정 절 이하는 표가 아니다
                 if (sec == null || !line.StartsWith("|")) continue;
@@ -186,6 +186,55 @@ namespace KkomaKnight.Tests
             Same(s, "⑰", "안내 문구", Layout.RrNote); Same(s, "⑰", "보상 목록(4줄)", Layout.RrList); Same(s, "⑰", "보상 줄(1칸)", Layout.RrRow); Same(s, "⑰", "하단 탭(2개)", Layout.RrTabs);
             Same(s, "⑱", "상단 바", Layout.LobbyTopBar); Same(s, "⑱", "상인 배너", Layout.MeBanner); Same(s, "⑱", "제목(Merchant)", Layout.MeTitle); Same(s, "⑱", "시즌 타이머", Layout.MeSeason);
             Same(s, "⑱", "상품 격자", Layout.MeGrid); Same(s, "⑱", "상품 카드(1칸)", Layout.MeCard); Same(s, "⑱", "하단 바", Layout.DgFoot); Same(s, "⑱", "뒤로 버튼", Layout.DgBack);
+        }
+        [Test]
+        public void SidePopups_MatchesSpec()
+        {
+            // ⑲ 특권(11) · ⑳ 퀘스트(15) · ㉑ 출석(16) · ㉒ 데일리 기프트(17) · ㉓ 7일 챌린지(18) · ㉔ 패스(19) — T44 워커 F 실측표 ↔ Layout.Pr*/Qs*/At*/Gf*/C7*/Ps* 상수(⑫~⑱ 은 T43 던전·아레나)
+            var s = Parse();
+            Same(s, "⑲", "상단 바", Layout.LobbyTopBar); Same(s, "⑲", "제목 줄", Layout.PrTitle); Same(s, "⑲", "제목 밑줄", Layout.PrUnderline); Same(s, "⑲", "부제", Layout.PrSub);
+            Same(s, "⑲", "특권 카드 1", Layout.PrCard1); Same(s, "⑲", "카드 1 보상 칸", Layout.PrCard1Reward); Same(s, "⑲", "카드 1 버튼", Layout.PrCard1Btn);
+            Same(s, "⑲", "특권 카드 2", Layout.PrCard2); Same(s, "⑲", "카드 제목 띠(2)", Layout.PrCardTitle); Same(s, "⑲", "카드 설명 상자(2)", Layout.PrCardDesc); Same(s, "⑲", "카드 그림(2)", Layout.PrCardPic);
+            Same(s, "⑲", "카드 보상 칸(2)", Layout.PrCardReward); Same(s, "⑲", "카드 버튼(2)", Layout.PrCardBtn); Same(s, "⑲", "특권 카드 3", Layout.PrCard3); Same(s, "⑲", "특권 카드 4 (참고·컨테이너)", Layout.PrCard4);
+            Same(s, "⑲", "바닥 바", Layout.PrFootBar); Same(s, "⑲", "뒤로 버튼", Layout.PrBack); Same(s, "⑲", "전체 받기 버튼", Layout.PrClaimAll);
+
+            Same(s, "⑳", "제목 띠", Layout.QsTitleBand); Same(s, "⑳", "팝업 박스", Layout.QsBox); Same(s, "⑳", "점수 트랙 상자", Layout.QsTrackBox);
+            Same(s, "⑳", "트랙 아이콘 줄(6칸)", Layout.QsTrackIcons); Same(s, "⑳", "트랙 아이콘(1칸)", Layout.QsTrackIcon); Same(s, "⑳", "트랙 숫자 줄", Layout.QsTrackNums); Same(s, "⑳", "새로고침 줄", Layout.QsRefresh);
+            Same(s, "⑳", "목록 상자", Layout.QsListBox); Same(s, "⑳", "퀘스트 줄 1", Layout.QsRow1); Same(s, "⑳", "퀘스트 줄 2", Layout.QsRow2);
+            Same(s, "⑳", "퀘스트 보상 메달(1줄)", Layout.QsRowMedal); Same(s, "⑳", "퀘스트 제목(1줄)", Layout.QsRowTitle); Same(s, "⑳", "퀘스트 진행바(1줄)", Layout.QsRowBar); Same(s, "⑳", "이동 버튼(1줄)", Layout.QsRowGo);
+            Same(s, "⑳", "탭 줄(3칸)", Layout.QsTabs); Same(s, "⑳", "탭(1칸)", Layout.QsTab);
+            Assert.That(Layout.QsRow2.Y - Layout.QsRow1.Y, Is.EqualTo(Layout.QsRowPitch).Within(0.05f));
+            Assert.That(Layout.QsTrackIcon.X + 5 * Layout.QsTrackPitch + Layout.QsTrackIcon.W, Is.EqualTo(Layout.QsTrackIcons.X + Layout.QsTrackIcons.W).Within(0.3f));
+            Assert.That(Layout.QsTab.X + 2 * Layout.QsTabPitch + Layout.QsTab.W, Is.EqualTo(Layout.QsTabs.X + Layout.QsTabs.W).Within(0.3f));
+
+            Same(s, "㉑", "제목 리본", Layout.AtRibbon); Same(s, "㉑", "팝업 박스", Layout.AtBox); Same(s, "㉑", "출석 격자(6칸)", Layout.AtGrid); Same(s, "㉑", "출석 칸(1칸)", Layout.AtCell);
+            Same(s, "㉑", "칸 머리(1칸)", Layout.AtCellHead); Same(s, "㉑", "칸 보상 아이콘(1칸)", Layout.AtCellIcon); Same(s, "㉑", "7일 칸", Layout.AtDay7); Same(s, "㉑", "7일 칸 머리", Layout.AtDay7Head); Same(s, "㉑", "7일 보상 줄(2칸)", Layout.AtDay7Rewards);
+            Assert.That(Layout.AtCell.X + 2 * Layout.AtColPitch + Layout.AtCell.W, Is.EqualTo(Layout.AtGrid.X + Layout.AtGrid.W).Within(0.15f));
+            Assert.That(Layout.AtCell.Y + Layout.AtRowPitch + Layout.AtCell.H, Is.EqualTo(Layout.AtGrid.Y + Layout.AtGrid.H).Within(0.15f));
+            Assert.That(Layout.AtDay7Cell.X + Layout.AtDay7Pitch + Layout.AtDay7Cell.W, Is.EqualTo(Layout.AtDay7Rewards.X + Layout.AtDay7Rewards.W).Within(0.15f));
+
+            Same(s, "㉒", "선물 그림", Layout.GfPic); Same(s, "㉒", "제목 리본", Layout.GfRibbon); Same(s, "㉒", "팝업 박스", Layout.GfBox); Same(s, "㉒", "종료 시각 줄", Layout.GfTimer); Same(s, "㉒", "오늘의 선물 칸", Layout.GfTodayCell);
+            Same(s, "㉒", "광고 줄 1", Layout.GfRow1); Same(s, "㉒", "광고 줄 2", Layout.GfRow2); Same(s, "㉒", "광고 줄 제목(1줄)", Layout.GfRowTitle); Same(s, "㉒", "광고 줄 진행바(1줄)", Layout.GfRowBar);
+            Same(s, "㉒", "광고 줄 보상 아이콘(1줄)", Layout.GfRowReward); Same(s, "㉒", "광고 줄 체크(1줄)", Layout.GfRowCheck); Same(s, "㉒", "타임라인 선", Layout.GfTimeline); Same(s, "㉒", "타임라인 점(1개)", Layout.GfTimelineDot);
+            Assert.That(Layout.GfRow2.Y - Layout.GfRow1.Y, Is.EqualTo(Layout.GfRowPitch).Within(0.05f));
+
+            Same(s, "㉓", "제목 리본", Layout.C7Ribbon); Same(s, "㉓", "팝업 박스", Layout.C7Box); Same(s, "㉓", "종료 시각 줄", Layout.C7Timer); Same(s, "㉓", "배너 그림", Layout.C7Banner); Same(s, "㉓", "정보 버튼", Layout.C7Info);
+            Same(s, "㉓", "트랙 아이콘 줄(6칸)", Layout.C7TrackIcons); Same(s, "㉓", "트랙 아이콘(1칸)", Layout.C7TrackIcon); Same(s, "㉓", "트랙 숫자 줄", Layout.C7TrackNums);
+            Same(s, "㉓", "일차 탭 열(7칸)", Layout.C7DayTabs); Same(s, "㉓", "일차 탭(1칸)", Layout.C7DayTab); Same(s, "㉓", "과제 목록 상자", Layout.C7ListBox);
+            Same(s, "㉓", "과제 줄 1", Layout.C7Row1); Same(s, "㉓", "과제 줄 2", Layout.C7Row2); Same(s, "㉓", "과제 제목(1줄)", Layout.C7RowTitle); Same(s, "㉓", "과제 보상 줄(1줄)", Layout.C7RowRewards); Same(s, "㉓", "이동 버튼(1줄)", Layout.C7RowGo);
+            Assert.That(Layout.C7Row2.Y - Layout.C7Row1.Y, Is.EqualTo(Layout.C7RowPitch).Within(0.05f));
+            Assert.That(Layout.C7DayTab.Y + 6 * Layout.C7DayPitch + Layout.C7DayTab.H, Is.EqualTo(Layout.C7DayTabs.Y + Layout.C7DayTabs.H).Within(0.15f));
+            Assert.That(Layout.C7TrackIcon.X + 5 * Layout.C7TrackPitch + Layout.C7TrackIcon.W, Is.EqualTo(Layout.C7TrackIcons.X + Layout.C7TrackIcons.W).Within(0.15f));
+            Assert.That(Layout.C7RowReward.X + Layout.C7RowRewardPitch + Layout.C7RowReward.W, Is.EqualTo(Layout.C7RowRewards.X + Layout.C7RowRewards.W).Within(0.15f));
+
+            Same(s, "㉔", "상단 바", Layout.LobbyTopBar); Same(s, "㉔", "시즌 배너", Layout.PsBanner); Same(s, "㉔", "시즌 제목", Layout.PsTitle); Same(s, "㉔", "남은 기간 줄", Layout.PsRemain); Same(s, "㉔", "시즌 진행바", Layout.PsBar);
+            Same(s, "㉔", "배너 레벨 배지", Layout.PsLevelBadge); Same(s, "㉔", "안내 줄", Layout.PsHint); Same(s, "㉔", "갈색 띠 (참고·컨테이너)", Layout.PsBrownBand); Same(s, "㉔", "트랙 영역(3열)", Layout.PsTrack);
+            Same(s, "㉔", "레벨 줄", Layout.PsLevelLine); Same(s, "㉔", "레벨 뱃지(1개)", Layout.PsLevelBadgeRow); Same(s, "㉔", "트랙 줄 1(3칸)", Layout.PsRow1); Same(s, "㉔", "트랙 칸(무료 1칸)", Layout.PsCellFree); Same(s, "㉔", "트랙 칸(유료 1칸)", Layout.PsCellPaid);
+            Same(s, "㉔", "현재 레벨 pill", Layout.PsCurPill); Same(s, "㉔", "전체 받기 버튼", Layout.PsClaimAll); Same(s, "㉔", "패스 구매 버튼 1", Layout.PsBuy1); Same(s, "㉔", "패스 구매 버튼 2", Layout.PsBuy2);
+            Same(s, "㉔", "뒤로 버튼", Layout.PsBack); Same(s, "㉔", "배너 탭", Layout.PsBannerTab); Same(s, "㉔", "하단 띠 (참고·컨테이너)", Layout.PsFootBand);
+            Assert.That(Layout.PsCellFree.X + 2 * Layout.PsColPitch + Layout.PsCellFree.W, Is.EqualTo(Layout.PsRow1.X + Layout.PsRow1.W).Within(0.15f));
+            Assert.That(Layout.PsCellFree.X + Layout.PsColPitch, Is.EqualTo(Layout.PsCellPaid.X).Within(0.3f));   // 실측 43.8 · 피치 32.5(세 칸 평균) → 43.6 · 판독 오차 안
+            Assert.That(Layout.PsColFree.X + Layout.PsColFree.W, Is.EqualTo(Layout.PsLevelLine.X).Within(0.05f)); Assert.That(Layout.PsLevelLine.X + Layout.PsLevelLine.W, Is.EqualTo(Layout.PsColPaid1.X).Within(0.05f));
         }
         [Test]
         public void Common_TopBarAndTabBarSharedAcrossTabs()

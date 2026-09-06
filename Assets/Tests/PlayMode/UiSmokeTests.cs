@@ -162,12 +162,48 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(Layout.LobbyStart.X, start.anchorMin.x * 100f, 0.5f, "START x"); Assert.AreEqual(Layout.LobbyCard.X + Layout.LobbyCard.W, card.anchorMax.x * 100f, 0.5f, "카드 오른쪽 = START 오른쪽");
                 Assert.AreEqual(start.anchorMin.x, card.anchorMin.x, 1e-3f, "START 와 카드는 같은 x"); Assert.AreEqual(start.anchorMax.x, card.anchorMax.x, 1e-3f, "START 와 카드는 같은 폭");
                 Assert.AreEqual(1f - Layout.TabBar.Y / 100f, ((RectTransform)tabs).anchorMax.y, 1e-3f, "탭 바 = 표 자리");
-                // 사이드 아이콘·보조 버튼·배너는 눌러도 아무 일 없음(껍데기 · 팝업 안 열림 · 빨간 줄 0) — 오른쪽 아래 «이벤트» 는 T43 아레나 페이지(EventsScreenTests)
-                foreach (var key in new[] { LobbyScreen.SideStarter, LobbyScreen.SideQuest, LobbyScreen.SideExplore }) Assert.IsTrue(ClickNamed(lobby, "Side:" + key), "껍데기 버튼 " + key);
-                Assert.IsTrue(ClickNamed(lobby, "Banner"), "배너"); yield return Frames(1);
-                Assert.IsFalse(_app.Overlay.IsOpen, "껍데기 버튼은 팝업을 열지 않는다(T44 전)"); Assert.AreEqual("lobby", _app.Current.Name, "껍데기 버튼은 화면을 바꾸지 않는다");
+                // 스타터팩·보조 버튼·성·이벤트는 눌러도 아무 일 없음(껍데기 · 팝업 안 열림 · 빨간 줄 0 · 오른쪽 아래 «이벤트» 는 T43 아레나 페이지(EventsScreenTests))
+                foreach (var key in new[] { LobbyScreen.SideStarter, LobbyScreen.SideExplore, LobbyScreen.SideClearReward, LobbyScreen.SideCastle }) Assert.IsTrue(ClickNamed(lobby, "Side:" + key), "껍데기 버튼 " + key);
+                yield return Frames(1);
+                Assert.IsFalse(_app.Overlay.IsOpen, "껍데기 버튼은 팝업을 열지 않는다"); Assert.AreEqual("lobby", _app.Current.Name, "껍데기 버튼은 화면을 바꾸지 않는다");
             }
             Check("로비");
+
+            // T44 — 로비 사이드 껍데기 6종: 팝업 4(퀘스트·출석·데일리 기프트·7일 챌린지 = 공통 팝업 문법 · 명판 · «탭하여 닫기» · 배경 탭 닫기 · X 없음) + 페이지 2(특권 = 사이드 · 시즌 패스 = 이벤트 배너 · 상단 바 + 뒤로 ◀ · 탭 바 없음)
+            {
+                (string key, string title, string mark)[] pops = { (LobbyScreen.SideQuest, "퀘스트", "새로고침까지"), (LobbyScreen.SideAttendance, "출석 보상", "7일차"), (LobbyScreen.SideDailyGift, "데일리 기프트", "광고 6회 보기"), (LobbyScreen.SideChallenge7, "7일 챌린지", "7일차") };
+                foreach (var p in pops)
+                {
+                    Assert.IsTrue(ClickNamed(lobby, "Side:" + p.key), "사이드 " + p.key); yield return Frames(2);
+                    Check("사이드 팝업 " + p.title, expectOverlay: true);
+                    Assert.IsTrue(HasText(s => s == p.title), p.title + ": 명판"); Assert.IsTrue(HasText(s => s.Contains(p.mark)), p.title + ": 내용 «" + p.mark + "»");
+                    Assert.IsTrue(HasText(s => s == "탭하여 닫기"), p.title + ": 탭하여 닫기"); Assert.IsNull(UiKit.Find(_app.Overlay.Root, "Button_Close_01"), p.title + ": 닫기 X 없음");
+                    Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), p.title + ": 배경 탭"); yield return Frames(2); Assert.IsFalse(_app.Overlay.IsOpen, p.title + " 닫힘");
+                }
+                // 구도 단언 — 퀘스트: 박스 = 표 ⑬ · 줄 6 · 탭 3 · 트랙 보상 칸 5 / 출석: 칸 7 / 데일리: 선물 그림 · 광고 줄 4 · 타임라인 점 4 / 7일: 배너 · 일차 탭 7 · 과제 줄 4
+                LobbyPopups.Quest(_app); yield return Frames(1);
+                Assert.AreEqual(6, CountNamed(_app.Overlay.Root, "Quest:"), "퀘스트 줄 6"); Assert.AreEqual(3, CountNamed(_app.Overlay.Root, "Tab:"), "퀘스트 탭 3"); Assert.AreEqual(5, CountNamed(_app.Overlay.Root, "Track:"), "트랙 보상 칸 5(+메달)");
+                { var bx = (RectTransform)UiKit.Find(_app.Overlay.Root, "QuestBox"); Assert.IsNotNull(bx, "퀘스트 박스"); Assert.AreEqual(Layout.QsBox.X, bx.anchorMin.x * 100f, 0.5f, "퀘스트 박스 x = 표 ⑬"); Assert.AreEqual(1f - Layout.QsBox.Y / 100f, bx.anchorMax.y, 1e-3f, "퀘스트 박스 y = 표 ⑬"); }
+                _app.Overlay.Close(); yield return Frames(1);
+                LobbyPopups.Attendance(_app); yield return Frames(1); Assert.AreEqual(7, CountNamed(_app.Overlay.Root, "Day:"), "출석 칸 7"); _app.Overlay.Close(); yield return Frames(1);
+                LobbyPopups.DailyGift(_app); yield return Frames(1); Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "GiftPic"), "선물 그림"); Assert.AreEqual(4, CountNamed(_app.Overlay.Root, "Ad:"), "광고 줄 4"); Assert.AreEqual(4, CountNamed(_app.Overlay.Root, "Dot:"), "타임라인 점 4"); _app.Overlay.Close(); yield return Frames(1);
+                LobbyPopups.Challenge7(_app); yield return Frames(1); Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Banner"), "챌린지 배너"); Assert.AreEqual(7, CountNamed(_app.Overlay.Root, "DayTab:"), "일차 탭 7"); Assert.AreEqual(4, CountNamed(_app.Overlay.Root, "Task:"), "과제 줄 4"); _app.Overlay.Close(); yield return Frames(1);
+                Check("사이드 팝업 4종 열고 닫음");
+                // 페이지 2
+                Assert.IsTrue(ClickNamed(lobby, "Side:" + LobbyScreen.SidePrivilege), "특권 아이콘"); yield return Frames(3);
+                Assert.AreEqual("privilege", _app.Current.Name, "특권 페이지"); var pv = _app.Current.Root;
+                Assert.IsNotNull(UiKit.Find(pv, "TopBar"), "특권: 상단 바"); Assert.AreEqual(4, CountNamed(pv, "Card:"), "특권 카드 4"); Assert.IsTrue(HasText(s => s == "특권") && HasText(s => s == "전체 받기"), "특권: 제목 · 전체 받기");
+                Assert.IsNull(UiKit.Find(pv, "ui.tabBar"), "특권: 탭 바 없음"); Assert.IsFalse(HasText(s => s == "START"), "로비는 숨겨져 있다");
+                Check("특권 페이지");
+                Assert.IsTrue(ClickNamed(pv, "BackBtn"), "특권 뒤로"); yield return Frames(2); Assert.AreEqual("lobby", _app.Current.Name, "뒤로 → 로비");
+                Assert.IsTrue(ClickNamed(lobby, "Banner"), "이벤트 배너 → 시즌 패스"); yield return Frames(3);
+                Assert.AreEqual("pass", _app.Current.Name, "패스 페이지"); var ps = _app.Current.Root;
+                Assert.IsNotNull(UiKit.Find(ps, "TopBar"), "패스: 상단 바"); Assert.AreEqual(Layout.PsRowCount, CountNamed(ps, "Row:"), "패스 트랙 줄"); Assert.IsTrue(HasText(s => s == "시즌 패스") && HasText(s => s == "전체 받기"), "패스: 제목 · 전체 받기");
+                Assert.IsNotNull(UiKit.Find(ps, "Buy1Btn"), "패스 구매 버튼 1"); Assert.IsNotNull(UiKit.Find(ps, "Buy2Btn"), "패스 구매 버튼 2"); Assert.IsNull(UiKit.Find(ps, "ui.tabBar"), "패스: 탭 바 없음");
+                { var tr = (RectTransform)UiKit.Find(ps, "Track"); Assert.IsNotNull(tr, "트랙"); Assert.AreEqual(Layout.PsTrack.X, tr.anchorMin.x * 100f, 0.5f, "트랙 x = 표 ⑰"); Assert.AreEqual(1f - Layout.PsTrack.Y / 100f, tr.anchorMax.y, 1e-3f, "트랙 y = 표 ⑰"); }
+                Check("패스 페이지");
+                Assert.IsTrue(ClickNamed(ps, "BackBtn"), "패스 뒤로"); yield return Frames(2); Assert.AreEqual("lobby", _app.Current.Name, "뒤로 → 로비"); Check("로비 복귀");
+            }
 
             // 챕터 ◀▶ (최고 챕터 1 이라 그대로) · 탭 라벨
             Assert.IsTrue(ClickNamed(lobby, "ArrowR"), "챕터 ▶"); Assert.IsTrue(ClickNamed(lobby, "ArrowL"), "챕터 ◀"); yield return Frames(1);

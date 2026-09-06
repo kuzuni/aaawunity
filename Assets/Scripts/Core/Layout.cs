@@ -304,6 +304,127 @@ namespace KkomaKnight.Core
         public static readonly R MeGrid = new R(3.6f, 26.0f, 92.6f, 66.3f);
         public static readonly R MeCard = new R(3.6f, 26.0f, 29.0f, 17.6f);
         public const float MeColPitch = 31.9f, MeRowPitch = 18.9f;
+        // ⑲ 특권 페이지 — docs/ref/11_shop_special.jpg (T44 · 워커 F 실측 · ⑲ 표와 같다 · 껍데기) · 상단 바 = LobbyTopBar · 탭 바 없음(바닥 바)
+        public static readonly R PrTitle = new R(33.0f, 10.6f, 35.0f, 3.0f);
+        public static readonly R PrUnderline = new R(6.0f, 14.6f, 88.0f, 0.8f);
+        public static readonly R PrSub = new R(21.0f, 16.5f, 58.0f, 1.8f);
+        /// <summary>카드 4장(짧은 카드 1 + 긴 카드 3 · 세로 스크롤) — 카드 1 = 일일 선물(보상 칸 + 버튼) · 카드 2~4 = 제목 띠 + 설명 상자 + 그림 + «매일 수령» 보상 칸 + 버튼. 카드 안 요소는 카드 2 기준 프레임 %(다른 카드는 y 차만큼 옮긴다).</summary>
+        public static readonly R PrCard1 = new R(4.0f, 20.1f, 92.0f, 11.1f);
+        public static readonly R PrCard1Reward = new R(6.9f, 25.1f, 11.2f, 5.0f);
+        public static readonly R PrCard1Btn = new R(63.9f, 25.1f, 29.4f, 4.8f);
+        public static readonly R PrCard2 = new R(4.0f, 32.4f, 92.0f, 22.0f);
+        public static readonly R PrCardTitle = new R(4.0f, 32.4f, 92.0f, 4.3f);
+        public static readonly R PrCardDesc = new R(6.5f, 37.6f, 52.5f, 9.8f);
+        public static readonly R PrCardPic = new R(64.6f, 37.5f, 25.7f, 9.9f);
+        public static readonly R PrCardReward = new R(36.4f, 48.4f, 11.1f, 5.1f);
+        public static readonly R PrCardBtn = new R(63.9f, 48.5f, 29.4f, 4.8f);
+        public static readonly R PrCard3 = new R(4.0f, 55.6f, 92.0f, 22.9f);
+        public static readonly R PrCard4 = new R(4.0f, 79.8f, 92.0f, 22.9f);
+        public static readonly R PrFootBar = new R(0, 93.3f, 100, 6.7f);
+        public static readonly R PrBack = new R(2.5f, 93.9f, 16.9f, 5.1f);
+        public static readonly R PrClaimAll = new R(32.2f, 93.9f, 35.6f, 5.1f);
+
+        // ⑳ 퀘스트 팝업 — docs/ref/15_quest.jpg (T44 · ⑳ 표와 같다 · 제목은 리본이 아니라 박스 폭 파란 띠 · 탭 3 은 박스 아래 · 닫기 안내 = BookClose 줄)
+        public static readonly R QsTitleBand = new R(6.4f, 20.0f, 87.2f, 4.9f);
+        public static readonly R QsBox = new R(6.4f, 24.9f, 87.2f, 50.4f);
+        public static readonly R QsTrackBox = new R(8.6f, 26.0f, 82.8f, 7.3f);
+        public static readonly R QsTrackIcons = new R(12.8f, 27.2f, 74.4f, 3.4f);
+        public static readonly R QsTrackIcon = new R(12.8f, 27.2f, 6.9f, 3.4f);
+        public const int QsTrackCount = 6; public const float QsTrackPitch = 13.5f;
+        public static readonly R QsTrackNums = new R(12.8f, 31.0f, 74.4f, 1.4f);
+        public static readonly R QsRefresh = new R(28.5f, 34.4f, 39.0f, 1.7f);
+        public static readonly R QsListBox = new R(8.6f, 37.1f, 82.8f, 37.8f);
+        public static readonly R QsRow1 = new R(12.0f, 38.3f, 76.0f, 5.9f);
+        public static readonly R QsRow2 = new R(12.0f, 45.1f, 76.0f, 5.9f);
+        public const float QsRowPitch = 6.8f; public const int QsRowCount = 6;
+        public static readonly R QsRowMedal = new R(15.6f, 39.1f, 6.3f, 3.2f);
+        public static readonly R QsRowTitle = new R(25.4f, 39.2f, 39.9f, 1.6f);
+        public static readonly R QsRowBar = new R(25.4f, 41.3f, 39.3f, 1.8f);
+        public static readonly R QsRowGo = new R(67.2f, 39.2f, 18.4f, 4.4f);
+        public static readonly R QsTabs = new R(10.0f, 75.6f, 80.0f, 5.7f);
+        public static readonly R QsTab = new R(10.0f, 75.6f, 25.5f, 5.7f);
+        public const float QsTabPitch = 27.3f;
+
+        // ㉑ 출석 팝업 — docs/ref/16_attendance.jpg (T44 · ㉑ 표와 같다 · 노란 리본이 박스 윗변에 걸친다)
+        public static readonly R AtRibbon = new R(3.0f, 25.3f, 94.0f, 3.9f);
+        public static readonly R AtBox = new R(6.4f, 29.2f, 87.2f, 42.9f);
+        public static readonly R AtGrid = new R(9.7f, 30.6f, 80.6f, 26.3f);
+        public static readonly R AtCell = new R(9.7f, 30.6f, 25.7f, 12.7f);
+        public const int AtCols = 3; public const float AtColPitch = 27.5f, AtRowPitch = 13.6f;
+        public static readonly R AtCellHead = new R(9.7f, 30.6f, 25.7f, 2.5f);
+        public static readonly R AtCellIcon = new R(15.0f, 34.8f, 15.0f, 7.2f);
+        public static readonly R AtDay7 = new R(9.7f, 57.9f, 80.6f, 12.8f);
+        public static readonly R AtDay7Head = new R(9.7f, 57.9f, 80.6f, 2.5f);
+        public static readonly R AtDay7Rewards = new R(33.1f, 62.1f, 33.8f, 7.1f);
+        public static readonly R AtDay7Cell = new R(33.1f, 62.1f, 15.5f, 7.1f);
+        public const float AtDay7Pitch = 18.3f;
+
+        // ㉒ 데일리 기프트 팝업 — docs/ref/17_daily_gift.jpg (T44 · ㉒ 표와 같다 · 선물 그림이 리본 위 · 왼쪽 밖 타임라인)
+        public static readonly R GfPic = new R(13.3f, 13.1f, 73.4f, 11.9f);
+        public static readonly R GfRibbon = new R(4.2f, 24.9f, 91.6f, 3.9f);
+        public static readonly R GfBox = new R(8.6f, 28.8f, 82.8f, 52.6f);
+        public static readonly R GfTimer = new R(34.0f, 29.2f, 28.0f, 1.6f);
+        public static readonly R GfTodayCell = new R(12.8f, 31.5f, 74.4f, 8.1f);
+        public static readonly R GfRow1 = new R(19.4f, 40.1f, 67.8f, 9.3f);
+        public static readonly R GfRow2 = new R(19.4f, 50.1f, 67.8f, 9.3f);
+        public const float GfRowPitch = 10.0f; public const int GfRowCount = 4;
+        public static readonly R GfRowTitle = new R(21.1f, 40.5f, 19.2f, 1.7f);
+        public static readonly R GfRowBar = new R(21.1f, 42.8f, 63.9f, 1.3f);
+        public static readonly R GfRowReward = new R(21.5f, 44.7f, 9.3f, 4.0f);
+        public static readonly R GfRowCheck = new R(66.7f, 44.9f, 9.4f, 3.3f);
+        public static readonly R GfTimeline = new R(14.0f, 44.6f, 1.5f, 30.4f);
+        public static readonly R GfTimelineDot = new R(12.2f, 43.8f, 5.0f, 2.0f);
+
+        // ㉓ 7일 챌린지 팝업 — docs/ref/18_challenge7.jpg (T44 · ㉓ 표와 같다 · 빨간 리본 · 배너 그림 · 왼쪽 일차 탭 7 + 오른쪽 과제 줄)
+        public static readonly R C7Ribbon = new R(3.0f, 15.9f, 94.0f, 4.3f);
+        public static readonly R C7Box = new R(6.4f, 20.2f, 87.2f, 61.2f);
+        public static readonly R C7Timer = new R(36.0f, 20.8f, 28.0f, 1.6f);
+        public static readonly R C7Banner = new R(6.4f, 23.4f, 87.2f, 16.2f);
+        public static readonly R C7Info = new R(86.1f, 24.2f, 5.6f, 2.6f);
+        public static readonly R C7TrackIcons = new R(12.8f, 41.3f, 74.4f, 3.6f);
+        public static readonly R C7TrackIcon = new R(12.8f, 41.3f, 7.3f, 3.6f);
+        public const int C7TrackCount = 6; public const float C7TrackPitch = 13.42f;
+        public static readonly R C7TrackNums = new R(12.8f, 45.2f, 74.4f, 1.5f);
+        public static readonly R C7DayTabs = new R(10.6f, 48.7f, 15.0f, 30.8f);
+        public static readonly R C7DayTab = new R(10.6f, 48.7f, 15.0f, 3.5f);
+        public const int C7DayCount = 7; public const float C7DayPitch = 4.55f;
+        public static readonly R C7ListBox = new R(30.0f, 48.1f, 60.3f, 32.0f);
+        public static readonly R C7Row1 = new R(30.6f, 48.7f, 59.0f, 8.0f);
+        public static readonly R C7Row2 = new R(30.6f, 57.6f, 59.0f, 8.0f);
+        public const float C7RowPitch = 8.9f; public const int C7RowCount = 4;
+        public static readonly R C7RowTitle = new R(33.3f, 49.0f, 29.2f, 1.6f);
+        public static readonly R C7RowRewards = new R(33.3f, 51.8f, 19.2f, 4.5f);
+        public static readonly R C7RowReward = new R(33.3f, 51.8f, 9.1f, 4.5f);
+        public const float C7RowRewardPitch = 10.0f;
+        public static readonly R C7RowGo = new R(66.7f, 52.2f, 20.1f, 3.6f);
+
+        // ㉔ 패스 페이지 — docs/ref/19_pass.jpg (T44 · ㉔ 표와 같다 · 상단 바 = LobbyTopBar · 탭 바 없음 · 3열 세로 트랙 스크롤)
+        public static readonly R PsBanner = new R(0, 8.3f, 100, 19.6f);
+        public static readonly R PsTitle = new R(26.4f, 12.8f, 47.2f, 2.6f);
+        public static readonly R PsRemain = new R(33.0f, 19.6f, 34.0f, 1.4f);
+        public static readonly R PsBar = new R(23.6f, 21.3f, 47.4f, 1.9f);
+        public static readonly R PsBarIcon = new R(16.0f, 20.6f, 7.6f, 3.1f);
+        public static readonly R PsLevelBadge = new R(76.4f, 20.5f, 7.6f, 3.2f);
+        public static readonly R PsHint = new R(0, 24.4f, 100, 2.5f);
+        public static readonly R PsBrownBand = new R(0, 27.9f, 100, 3.5f);
+        public static readonly R PsTrack = new R(2.0f, 31.4f, 96.0f, 60.9f);
+        /// <summary>3열 x 경계(프레임 %): 무료 1.9~32.4 · 노란 레벨 줄 32.4~35.4 · 유료1 35.4~66.0 · 유료2 66.0~98.0.</summary>
+        public static readonly R PsColFree = new R(1.9f, 31.4f, 30.5f, 60.9f);
+        public static readonly R PsColPaid1 = new R(35.4f, 31.4f, 30.6f, 60.9f);
+        public static readonly R PsColPaid2 = new R(66.0f, 31.4f, 32.0f, 60.9f);
+        public static readonly R PsLevelLine = new R(32.4f, 31.4f, 3.0f, 60.9f);
+        public static readonly R PsLevelBadgeRow = new R(29.4f, 36.5f, 7.8f, 3.6f);
+        public static readonly R PsRow1 = new R(11.1f, 35.4f, 77.5f, 5.8f);
+        public static readonly R PsCellFree = new R(11.1f, 35.4f, 12.5f, 5.8f);
+        public static readonly R PsCellPaid = new R(43.8f, 35.4f, 12.5f, 5.8f);
+        public const float PsColPitch = 32.5f, PsRowPitch = 10.3f; public const int PsRowCount = 8;
+        public static readonly R PsCurPill = new R(24.3f, 72.6f, 18.1f, 3.0f);
+        public static readonly R PsClaimAll = new R(3.9f, 86.2f, 27.8f, 4.8f);
+        public static readonly R PsBuy1 = new R(35.8f, 86.2f, 28.4f, 4.8f);
+        public static readonly R PsBuy2 = new R(68.1f, 86.2f, 28.4f, 4.8f);
+        public static readonly R PsBack = new R(2.5f, 93.7f, 16.9f, 5.3f);
+        public static readonly R PsBannerTab = new R(80.6f, 92.3f, 18.3f, 7.7f);
+        public static readonly R PsFootBand = new R(0, 92.3f, 100, 7.7f);
 
         // ⑧ 공통
         public const float BodyMarginX = 3.0f, PopupW = 87.0f, PopupMarginX = 6.5f;
