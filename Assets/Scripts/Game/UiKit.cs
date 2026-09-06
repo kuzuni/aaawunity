@@ -435,8 +435,20 @@ namespace KkomaKnight.Game
         public static Color PatternTintDark => Palette.A(Palette.White, PatternAlpha);
         /// <summary>빛살 한 바퀴(초 · 12~20) · 한 변 = 아이콘 긴 변 × 배(1.6~2.2) · 알파 = 주인 확정 2026-09-07 «255 중 68»(= 68/255 ≈ 0.267 · 종전 0.6 은 아이콘을 덮었다).</summary>
         public const float LightPeriod = 16f, LightScale = 1.9f, LightAlpha = 68f / 255f;
-        /// <summary>그라데이션 tint — 위 흰 +12% 밝기 · 아래 Ink −18%(ROUTINE T72 3항 팔레트).</summary>
+        /// <summary>그라데이션 tint — 위 흰 +12% 밝기 · 아래 Ink −18%(ROUTINE T72 3항 팔레트). 화면 «배경» 은 레퍼런스도 이 방향이다(위 밝음 → 아래 어둠 · T116 실측 #3C6833 → #315529).</summary>
         public const float GradientTopAlpha = 0.12f, GradientBottomAlpha = 0.18f;
+        /// <summary>
+        /// 버튼·팝업 패널·띠의 그라데이션 세기(T116 실측) — 레퍼런스에서 이것들은 <b>사실상 단색</b>이다(주 버튼 #FB9F00 · 로비 배너 #6950C8 · 팝업 패널 #2C2829).
+        /// 덧칠이 세면 오히려 레퍼런스에서 멀어져 «칙칙해» 보이므로 배경(0.12/0.18)보다 얕게 깐다.
+        /// </summary>
+        public const float GradientFlatTopAlpha = 0.08f, GradientFlatBottomAlpha = 0.12f;
+        /// <summary>
+        /// 카드·타일 그라데이션의 색 세기(T116) — 레퍼런스 카드는 «어두운 위 → 밝은 아래» 의 <b>같은 계열 두 색</b>이라(다이아 #40116D → #AA0CB8)
+        /// 무채색 덧칠이 아니라 그 색을 그대로 얹는다. 0.55 = 조각 스프라이트의 부드러운 알파 위에 색이 읽히면서 밑그림(아이콘·글자)이 죽지 않는 세기.
+        /// </summary>
+        public const float GradientCardAlpha = 0.55f;
+        /// <summary>표에 이름도 바탕색도 없을 때 쓰는 카드 방향 무채색 세기(어두운 위 / 밝은 아래 — 방향만 레퍼런스대로).</summary>
+        public const float GradientCardTopAlpha = 0.20f, GradientCardBottomAlpha = 0.14f;
         /// <summary>공통 팝업 상자 안 패턴을 들여 까는 여백(px) — Popup_Box_01~03_White_Bg 의 둥근 모서리 반지름 실측 8px + Bg 자신의 여백 2px(결정 164).</summary>
         public const float PopupPatternInset = 10f;
         /// <summary>
@@ -568,6 +580,37 @@ namespace KkomaKnight.Game
                 if (g != null) g.transform.SetSiblingIndex(idx);
             }
         }
+        /// <summary>
+        /// ③ 그라데이션 — <b>카드·타일</b>용(T116 · 주인 «더 화려하게 색깔»). 레퍼런스의 카드는 «어두운 위 → 밝은 아래» 의 같은 계열 <b>두 색</b>이라
+        /// <see cref="Gradient"/> 의 기본(위 흰 / 아래 잉크)과 <b>방향도 색도 다르다</b> — 그래서 별도 입구로 둔다(배경·버튼은 종전 그대로).
+        /// <para>
+        /// <paramref name="paletteName"/> 가 <see cref="GradientPalette.Names"/> 에 있으면 <b>실측 두 색</b>을 그대로 쓰고(카탈로그 <c>col.grad.*</c>),
+        /// 없으면 <paramref name="baseColor"/> 에서 <see cref="GradientPalette.CardWay"/> 로 만든다(계열색 유지 · 밝기만 벌린다).
+        /// 둘 다 없으면 방향만 레퍼런스대로인 무채색(어두운 위 / 밝은 아래)이다.
+        /// </para>
+        /// 층 순서·조각·raycast·중복 방지는 <see cref="Gradient"/> 와 같다(그 함수를 그대로 부른다).
+        /// </summary>
+        public static void GradientCard(RectTransform rt, string paletteName = null, Color? baseColor = null, float inset = 0f, int siblingIndex = 0)
+        {
+            if (rt == null) return;
+            Color top, bottom;
+            if (!string.IsNullOrEmpty(paletteName) && GradientPalette.Has(paletteName))
+            {
+                var p = GradientPalette.Of(paletteName);
+                top = Palette.A(p.Top, GradientCardAlpha); bottom = Palette.A(p.Bottom, GradientCardAlpha);
+            }
+            else if (baseColor.HasValue)
+            {
+                var p = GradientPalette.CardWay(baseColor.Value);
+                top = Palette.A(p.Top, GradientCardAlpha); bottom = Palette.A(p.Bottom, GradientCardAlpha);
+            }
+            else
+            {
+                top = Palette.A(Palette.Ink, GradientCardTopAlpha); bottom = Palette.A(Palette.White, GradientCardBottomAlpha);
+            }
+            Gradient(rt, top, bottom, GradTopKey, GradBottomKey, inset, siblingIndex);
+        }
+
         static Image GradientLayer(RectTransform rt, string name, string key, Color tint, float inset)
         {
             var sp = Cat != null ? Cat.Sprite(key) : null; if (sp == null) return null;
@@ -617,7 +660,8 @@ namespace KkomaKnight.Game
             PatternBg(box, PatternTintLight, PatternTileSeconds, patIdx, PatternTilePx, PopupPatternInset);
             // T72 ③ 상자 «안» 그라데이션(위 +12% 밝음 · 아래 −18% 어둠) — 패턴 바로 위 · 테두리·리본·내용 아래(질감 층 순서 = 결정 171)
             // 여기 한 곳이라 공통 팝업 전부가 같이 받는다(버튼 공통 적용은 결정 170 대로 계속 보류 · 결정 188).
-            Gradient(box, inset: PopupPatternInset, siblingIndex: patIdx);
+            // T116 실측 — 레퍼런스의 팝업 패널도 거의 단색(#2C2829 → #201E1F)이라 배경(0.12/0.18)보다 얕게
+            Gradient(box, Palette.A(Palette.White, GradientFlatTopAlpha), Palette.A(Palette.Ink, GradientFlatBottomAlpha), inset: PopupPatternInset, siblingIndex: patIdx);
             var ribbon = Spawn(titleKey, box); var rr = (RectTransform)ribbon.transform;
             rr.anchorMin = rr.anchorMax = new Vector2(0.5f, 1f); rr.pivot = new Vector2(0.5f, 0.5f); rr.sizeDelta = PopupRibbonSize; rr.anchoredPosition = new Vector2(0, 8);
             Ensure<PopupRibbonTag>(ribbon);   // T75 4항 — 게이트가 «UiKit.Popup 이 세운 리본» 만 단언하게(화면이 스스로 세운 리본은 그 화면 워커 몫 · 결정 291)
@@ -859,7 +903,8 @@ namespace KkomaKnight.Game
             if (rt == null) return;
             var bg = PressTarget(rt, rt.GetComponent<Image>()) as Image;
             if (bg == null || !bg.enabled || bg.color.a <= 0.01f) return;
-            Gradient(bg.rectTransform, topKey: null, bottomKey: BtnGradientKey);
+            // T116 실측 — 레퍼런스의 버튼은 사실상 단색이라(START #FB9F00 · Upgrade #FB9F00 · 광고 #188AFA→#096CFD) 덧칠을 얕게 깐다
+            Gradient(bg.rectTransform, bottom: Palette.A(Palette.Ink, GradientFlatBottomAlpha), topKey: null, bottomKey: BtnGradientKey);
         }
 
         /// <summary>색 변형이 없는 프리팹(CardFrame_04/ItemFrame_04 는 Gray 가 없다)을 회색 등급용으로 — 모든 Image 색을 같은 밝기의 무채색으로 바꾼다(알파 유지 · 흰색은 그대로).</summary>

@@ -69,5 +69,53 @@ namespace KkomaKnight.Tests.Play
             if (_app != null) { if (_app.UiCanvas != null) Object.Destroy(_app.UiCanvas.gameObject); Object.Destroy(_app.gameObject); }
             yield return null;
         }
+
+        /// <summary>2단계 — <see cref="UiKit.GradientCard"/> 가 «어두운 위 → 밝은 아래» 로 실측 색을 깔고, 버튼·팝업은 얕게 깐다(레퍼런스가 단색이라).</summary>
+        [UnityTest]
+        public IEnumerator CardGradientPutsTheDarkColorOnTopAndFlatSurfacesStayFaint()
+        {
+            yield return Boot();
+            var host = UiKit.Rect(_app.Frame, "T116Host"); UiKit.Pct(host, 10f, 10f, 60f, 30f);
+            host.gameObject.AddComponent<UnityEngine.UI.Image>().color = Color.white;
+            yield return null;
+
+            // ⓐ 표 이름으로 — 실측 두 색이 그대로 tint 로 들어간다(어두운 위 · 밝은 아래)
+            UiKit.GradientCard(host, "cardGem");
+            var top = host.Find(UiKit.GradientTopName); var bottom = host.Find(UiKit.GradientBottomName);
+            Assert.IsNotNull(top, "GradientTop"); Assert.IsNotNull(bottom, "GradientBottom");
+            var ti = top.GetComponent<UnityEngine.UI.Image>(); var bi = bottom.GetComponent<UnityEngine.UI.Image>();
+            var pair = GradientPalette.Of("cardGem");
+            Assert.AreEqual(pair.Top.r, ti.color.r, 0.01f, "위 = 실측 어두운 색"); Assert.AreEqual(pair.Bottom.b, bi.color.b, 0.01f, "아래 = 실측 밝은 색");
+            Assert.Less(Luma(ti.color), Luma(bi.color), "카드는 어두운 위 → 밝은 아래(레퍼런스 방향)");
+            Assert.AreEqual(UiKit.GradientCardAlpha, ti.color.a, 0.001f, "색이 읽히는 세기");
+            Assert.IsFalse(ti.raycastTarget); Assert.IsFalse(bi.raycastTarget);
+            Assert.AreEqual(top.GetSiblingIndex() + 1, bottom.GetSiblingIndex(), "위·아래는 이웃한 형제");
+            Assert.IsTrue(UiKit.HasGradient(host), "HasGradient 는 그대로 참");
+
+            // ⓑ 표에 없는 칸 — 바탕색에서 계열색을 유지한 채 만든다(두 번 불러도 조각이 안 늘어난다)
+            UiKit.GradientCard(host, baseColor: new Color(0.30f, 0.55f, 0.35f, 1f));
+            int tops = 0, bottoms = 0;
+            for (int i = 0; i < host.childCount; i++)
+            {
+                if (host.GetChild(i).name == UiKit.GradientTopName) tops++;
+                if (host.GetChild(i).name == UiKit.GradientBottomName) bottoms++;
+            }
+            Assert.AreEqual(1, tops); Assert.AreEqual(1, bottoms);
+            ti = host.Find(UiKit.GradientTopName).GetComponent<UnityEngine.UI.Image>();
+            bi = host.Find(UiKit.GradientBottomName).GetComponent<UnityEngine.UI.Image>();
+            Assert.Less(Luma(ti.color), Luma(bi.color), "바탕색으로 만들어도 어두운 위 → 밝은 아래");
+            Assert.Greater(bi.color.g, bi.color.r, "계열색(초록)이 유지된다");
+
+            // ⓒ 버튼·팝업 패널은 레퍼런스가 단색이라 얕다 — 배경 기본(0.12/0.18)보다 작아야 한다
+            Assert.Less(UiKit.GradientFlatTopAlpha, UiKit.GradientTopAlpha, "버튼·패널 위 덧칠은 배경보다 얕다");
+            Assert.Less(UiKit.GradientFlatBottomAlpha, UiKit.GradientBottomAlpha, "버튼·패널 아래 덧칠은 배경보다 얕다");
+            Assert.Greater(UiKit.GradientFlatTopAlpha, 0.05f, "그래도 0 은 아니다(게이트 하한)");
+
+            Object.Destroy(host.gameObject);
+            yield return null;
+            _log.AssertNoRed("카드 그라데이션(T116 2단계)");
+            if (_app != null) { if (_app.UiCanvas != null) Object.Destroy(_app.UiCanvas.gameObject); Object.Destroy(_app.gameObject); }
+            yield return null;
+        }
     }
 }
