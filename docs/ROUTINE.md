@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-07 · 01:3X UTC) ⚑ 주인 작업(로컬 에디터) — Unity IAP(In-App Purchasing 5.4.3) 를 프로젝트에 넣었다: `com.unity.purchasing` + `com.unity.services.core` · `Assets/Resources/BillingMode.json`(GooglePlay) · Purchasing/Analytics 서비스 켬 · Unity 프로젝트 연결(cloudProjectId·projectName KkomaKnight). 커밋 `08acba68`(등재 세션이 대행 · 게이트 초록).** 워커는 이 패키지·설정을 **되돌리지 않는다**. 이 커밋의 CI 유니티 잡이 빨개지면(패키지 복원·WebGL/Android 빌드) **최우선으로 고친다**(WebGL 에서 IAP 는 스토어가 없으니 `#if UNITY_ANDROID` 류 분기·스트리핑 주의). **실제 결제 붙이기(상점 «모의 결제» → Google Play 상품)는 아직 주인 지시가 없다 — 시키기 전엔 만들지 않는다.**
+
 - **(2026-09-07 · 01:0X UTC) ⚑ 주인 지시 — 아레나 상대(적)들의 승점·전투력을 더미값으로 채워라.** → **T81** 등재(§2 · 결정적 더미 · 계수는 `arenaDummy.json` · 순위 23·도전 24·시상대 · 루틴이 잡는다).
 
 - **(2026-09-07 · 00:5X UTC) ⚑⚑ 주인 지시 — «가독성이 안 좋은 이유를 알겠다. 모든 글씨가 검정 아웃라인이어야 하는데 아니어서.» → 예외 없이 모든 글자에 검은 아웃라인(알파 1 · 굵기 ≥3 프레임px · 프리팹 글자 포함) + 밝은 글자색 기본.** → **T63 0항** 으로 추가(UiKit AddOutline·ConvertTmp 수정 + TextAudit 아웃라인 검사 · 첫 커밋 · 이미 잡은 화면 묶음도 재확인).
