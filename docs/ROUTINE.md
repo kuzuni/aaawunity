@@ -131,6 +131,17 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
+> **⚠⚠ (18:3X UTC · 워커 D · sess-1759-2028) 지금 gh-pages 배포가 막혀 있다 — 원인은 T64 회차 3(`9ed1c7a`)의 오디오 코드다.** CI **#155**(`22062e9`)는 **유니티 잡 초록**(EditMode 120/120 · PlayMode **37/37** · screens 도 run 155 로 갱신됐다)인데 `build-webgl` 의 **«배포 스모크» step 이 빨강(errors=40)** 이라 배포 step 이 skipped 됐다(gh-pages 는 아직 `0469d7b` = CI #148 `fc9fe35`). 실측 로그:
+>
+> ```
+> [smoke] ❌ 빨강: errors=40 loaded=true readyLobby=true readyBattle=true audioWarn=34
+>    - console.error: Streaming of 'ogg' on this platform is not supported   (× 40)
+> ```
+>
+> **40 = 오디오 키 20 × 시도 2회**(`Audio.cs` `LoadStreamed` 가 `AudioType.OGGVORBIS` → `UNKNOWN` 로 두 번 시도한다) — 즉 WebGL 은 `UnityWebRequestMultimedia.GetAudioClip` 의 ogg **스트리밍**을 거부하고, 그 거부가 **빨간 줄(console.error)** 로 나온다(§1 «플레이 콘솔 에러 0» 위반이자 배포 게이트 빨강). 게임 자체는 뜬다(`loaded=true readyLobby=true readyBattle=true`)고 스모크가 찍었고, 폴백(카탈로그 클립)은 종전대로 «Loading FSB failed» 34건이라 **소리는 여전히 안 난다**. **T64 lock 은 살아 있다**(17:45 · 워커 A) → **처방은 T64 워커 몫**이다. 후보: ⓐ `DownloadHandlerAudioClip.streamAudio = false`(WebGL 이 받아들이면 한 줄) ⓑ 스트리밍이 아예 안 되면 `UnityWebRequest` 로 **바이트만 받아** WebAudio/`AudioClip.Create` 로 얹기 ⓒ 그 사이 **빨간 줄이라도 0 으로**(시도 자체를 막거나 WebGL 에서 `LoadStreamed` 를 끄기) — ⓒ 만으로도 배포는 다시 돈다.
+>
+> **⚠ 함정: 워커의 로컬 `tools/webgl_smoke.sh --gh-pages` 는 아직 초록이다** — gh-pages 가 안 바뀌었으니 «옛 빌드»(#148)를 재고 있기 때문이다. 자기 커밋의 배포 스모크는 **그 커밋이 든 런의 `build-webgl` step** 으로 봐야 한다.
+
 > **(17:2X UTC · 워커 A · sess-1614-18779) `screens` 가 드디어 움직였다 — `97b694a1` = CI #148(`fc9fe353`).** T63-forge 는 08 PNG 눈 확인까지 끝나 **✅ 종결**(인벤 «장착중» 이 어두운 띠 위 흰 글자로 읽힌다). T69-forge 는 ⓐ 초록(«[BorderGate]» 08 없음 0 · strict)이고 결과 슬롯·모루·초록 칸에는 검은 외곽선이 보이지만 **재료 슬롯(빈 칸 «+»)만 눈에는 외곽선이 없는데 단언은 통과한다 → 결정 184**(링이 `Bg`/`Add_1` 에 가려짐 · 처방 = `DarkFrame` 이 링을 `SetAsLastSibling` + 단언에 «링이 Bg 보다 뒤» 한 줄). T69-forge lock 은 반납했다(이 세션엔 dotnet 이 없어 코드 수정 불가). **같은 함정을 다른 T69-* 묶음도 의심할 것 — «[BorderGate] 없음 0» 이 «눈에 보인다» 를 보장하지 않는다.**
 >
 > **(16:4X UTC · 워커 A · sess-1614-18779) ⚠ 지금 main 빨강은 딱 1건이고 T78 2단계(워커 C · lock 살아 있음) 다 — 그리고 `screens` 가 run 106 에서 안 움직이는 이유가 바로 이 1건이다.** CI **#139**([34045421150](https://github.com/kuzuni/aaawunity/actions/runs/34045421150) · `5dab93a7`) 실측: EditMode **120/120** · PlayMode **32/33** · 유일한 빨강 = `UiSmokeTests.LobbySettingsTalentPetToast` «**줄 = 프리팹 `ListItem_Mission_02` 조각 · Expected not null But was null**»(`UiSmokeTests.cs:265` = T78 2단계 `dd8c44f` 의 새 단언). 유니티 잡이 빨가면 `screens` 배포 step 이 **skipped** 라 T63-forge·T69-forge·T77·T81·T78·T72 의 **PNG 채점이 전부 이 1건에 묶여 있다** — T78 워커가 최우선으로 고치고, 못 이으면 다음 워커가 «가장 큰 번호 +1»(T83) 로 잡아라. 같은 런에서 «[BorderGate]» 표가 처음 찍혔다: 이름표 139 · 테두리 없음 **42** · strict 5화면(01·02·06·07·08) 전부 **0** · 남은 42 의 화면별 분포는 PROGRESS «CI #139 결과» 절(다음 T69-* 묶음 출발점). «[TextSizeGate]» 는 두 런째 34 화면 잘림 0(strict). **(16:3X · 앞 기록) main 빨강 2건이던 것(로비 «Castle» 단언 · Pattern 형제 0)은 T82(워커 E · `5dab93a7`)가 고쳤고 #139 에서 둘 다 Passed 로 확인됐다.** CI [#134](https://github.com/kuzuni/aaawunity/actions/runs/34044159331)(`9c5606a`) 실측: EditMode **113/113** · PlayMode **29/31** · 빨강은 `BorderGateTests`(«로비 «Castle» 에 어두운 테두리» = T78 이 지운 조각을 T69-lobby 단언이 아직 찾는다 · `BorderGateTests.cs:159`) 와 `UiTextureTests`(«다시 불러도 Pattern 은 형제 0 · But was 2» = `UiKit.Gradient` 가 형제 0·1 을 쓰므로 처음부터 성립 못 하는 단언 · `UiTextureTests.cs:127`) 둘뿐. **«[TextSizeGate]» 는 `strict=True` 로 34 화면 전부 잘림 0**(활성 Text 1187 · 하한 미달 0). 실패 원문을 읽는 법은 **결정 172**(아티팩트 없이 `get_job_logs … tail_lines=30000` → 파일 → grep) — 빨간 런에서도 «내 테스트가 통과했는가» 를 확정할 수 있으니 «다음 런을 기다린다» 고 적기 전에 먼저 읽어라. 화면별 결과표는 PROGRESS «CI #134 전 테스트 결과» 절.
