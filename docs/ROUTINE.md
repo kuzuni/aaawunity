@@ -85,7 +85,7 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
-> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T17~T56**(T56 = 플레이 콘솔 노란 줄 0 — DOTween 세이프 모드 경고(파괴된 오브젝트 겨냥 트윈 · `SetLink`) · T55 = CI #76·#77 빨강 후속(T49 회귀 · 최우선) · T49 = 팝업 등장 연출 DOTween 순서대로 · T50 = 킬 뒤 원래 걷기 속도(⚠ `T50.lock` 은 워커 A 의 T54 가 잡고 있다 — 사라진 뒤에 잡는다) · T54 = CI #75 빨강 후속(워커 A · `faa0d30`) · T51 = 대시도 공격 모션 뒤 ×5 + 사망 펑 이펙트 제거 · T52 = 특전 글자 한 색 · T53 = 특전 설명 «트리거: 내용» 표기 · 2026-09-06) — **T34~T44 = UI 를 `docs/ref` 레퍼런스 구도로(2026-09-06 · 최우선 · «프리팹 그대로» 계열 지시를 대체 · T25 흡수 · T27·T30·T32 폐기)**. 이전 묶음: T17~T33(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
+> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T17~T58**(T58 = 비평 하니스 PNG 촬영 결함(UI 띠 34.8% · 월드 스프라이트 겹침 · T46 뒤) · T57 ✅ · T36 ✅(비평 9.5) · T56 = 플레이 콘솔 노란 줄 0 — DOTween 세이프 모드 경고(파괴된 오브젝트 겨냥 트윈 · `SetLink`) · T55 = CI #76·#77 빨강 후속(T49 회귀 · 최우선) · T49 = 팝업 등장 연출 DOTween 순서대로 · T50 = 킬 뒤 원래 걷기 속도(⚠ `T50.lock` 은 워커 A 의 T54 가 잡고 있다 — 사라진 뒤에 잡는다) · T54 = CI #75 빨강 후속(워커 A · `faa0d30`) · T51 = 대시도 공격 모션 뒤 ×5 + 사망 펑 이펙트 제거 · T52 = 특전 글자 한 색 · T53 = 특전 설명 «트리거: 내용» 표기 · 2026-09-06) — **T34~T44 = UI 를 `docs/ref` 레퍼런스 구도로(2026-09-06 · 최우선 · «프리팹 그대로» 계열 지시를 대체 · T25 흡수 · T27·T30·T32 폐기)**. 이전 묶음: T17~T33(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
 
 ### T1 — 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README ✅ (완료 · PROGRESS 참조)
 
@@ -366,7 +366,7 @@
 4. **스탯 8칸 2열×4행**(아이콘 · 이름 작게 · 값 크게 · 버프 중 값 초록) → 맨 아래 특전 미리보기 줄(T13 비례 유지) + 오른쪽 📘(보유 특전 팝업). 왼쪽 버프 스택은 팔각 프레임(T20 그대로).
 5. 게이트 + PlayMode(전투 3초 · 바 3개 존재 · 발밑 바 2단) + PROGRESS T35 행.
 
-### T36 — 레벨업 3택 · 보유 특전 팝업 = `04_perks.jpg`·`05_perks_list.jpg` 구도 · **✅ 조건 = 비평 ≥ 8.0/10(§5)** — 코드 완료(`1a9cec4` · CI #59 · 공통 팝업 헬퍼 = `UiKit.Popup` · 비평 대기 · PROGRESS 참조)
+### T36 — 레벨업 3택 · 보유 특전 팝업 = `04_perks.jpg`·`05_perks_list.jpg` 구도 · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `1a9cec4` · CI #59 · 공통 팝업 헬퍼 = `UiKit.Popup` · **비평 회차 1 = 04 9.5 · 05 9.5**(CI #83 screens 첫 PNG · 워커 H) · PROGRESS 참조)
 범위: `Assets/Scripts/Game/Overlay.cs`(LevelUp · PerkList) · `UiKit.cs`(PerkFrame·카드·공통 팝업 헬퍼 `UiKit.Popup(title, ribbon)`) · catalog
 순서: 제약 없음(T23·T29 가 Overlay 의 다른 팝업을 만진다 — rebase). **공통 팝업 헬퍼는 여기서 먼저 만든다**(T38·T41·T42·T44 가 쓴다).
 1. 3택: 배경 어둡게 · 상단 스탯 8칸을 한 줄 미니 아이콘으로 · 노란 광선 + «Level Up!» 리본 · «새 특전을 고르세요» · **카드 3장 세로 전폭**(왼쪽 위 등급 탭 · 왼쪽 팔각 아이콘 · 오른쪽 설명 · ~~수치 초록~~ → T52 로 취소(한 색)) · 아래 «새로고침 무료» 주황 + «남은 횟수 : N» · 오른쪽 📘. 규칙(새로고침 횟수 등)은 기존 코드 그대로 — 배치만.
@@ -536,6 +536,15 @@
 2. 수정: `printf … > ui-screens/meta.json` 앞에 `sudo chown -R "$(id -u):$(id -g)" ui-screens`(GitHub 호스트 러너는 sudo 무비밀번호). peaceiris 배포는 그 폴더를 그대로 읽는다.
 3. 확인 수단 = 코드 커밋의 CI 런: unity-test 잡 초록 + «screens 브랜치로 배포» 단계 초록 → `git fetch origin screens` 가 된다(첫 PNG·layout.json·meta.json). 그러면 T47·T36~T44 비평 회차 시작.
 
+### T58 — UI 비평 하니스 PNG 촬영 결함: UI 프레임이 PNG 가운데 188×404(34.8%) 띠로만 · 월드 스프라이트가 UI 위에 겹침 (첫 `screens` 배포 CI #83 · 26장 전부 · T46 뒤 · 같은 PlayShot.cs)
+범위: `Assets/Tests/PlayMode/PlayShot.cs`(`Save`) · (필요 시) `UiShotsTests.cs` 단언 1개 · 코드(게임)·layout.json 계약 불변
+순서: **T46 뒤**(T46 lock 이 사라지고 PROGRESS T46 이 ✅ 된 뒤) — T46 워커 C 가 T46 안에서 고쳐도 된다(그러면 이 번호는 «T46 에 흡수» 로 닫는다).
+1. 증상(sess-0958-19455 · 워커 H 가 `git show origin/screens:01_lobby.png` 등을 `Read`): 540×1168 PNG 에서 UI 프레임(9:19.5)이 **가운데 x176~363 · y383~786(188×404 px = 프레임 폭의 34.8%)** 에만 그려지고, 나머지는 월드 카메라 그림(로비 = 하늘색 배경색 · 전투 = 주황 들판) · 전투 계열(02~05)은 나무·캐릭터 스프라이트가 UI **위에** 확대돼 겹친다. `layout.json` 은 `UiTag.Measure(app.Frame)` 의 프레임 % 라 정상(T36 회차 1 이 표 점수 10.0 으로 확인) — 눈 비평만 막힌다(임시 = `tools/png_crop.py --strip`).
+2. 원인 확정부터(로그 한 줄): `Save` 안에서 `Canvas.ForceUpdateCanvases()` 뒤 `canvas.pixelRect · canvas.scaleFactor · app.Frame.rect · Screen.width×height · cam.pixelRect` 를 `Debug.Log` 로 남기고 CI 로그에서 읽는다. 후보 = ⓐ `CanvasScaler(ScaleWithScreenSize · Expand)` 가 **Screen.width/height(배치 모드 화면)** 로 scaleFactor 를 정하는데 캔버스 pixelRect 는 RT 카메라(540×1168) 라 프레임(AspectRatioFitter FitInParent)이 작게 들어감 ⓑ ForceUpdateCanvases 한 번으로 AspectRatioFitter 가 새 부모 크기를 못 받음(한 프레임 더 · `LayoutRebuilder.ForceRebuildLayoutImmediate(Frame)`) ⓒ 월드 스프라이트 겹침 = 캔버스가 카메라 모드라 월드 투명 정렬에 섞임(`canvas.sortingOrder = 32767` 또는 **2패스**: 월드 카메라 → RT 먼저, 그 다음 UI 만(cullingMask = UI 층 · clearFlags Depth)).
+3. 수정(촬영 코드만 · 게임 코드 0): 촬영 동안 `CanvasScaler` 를 `ConstantPixelSize · scaleFactor = ShotW/FrameW(0.5)` 로 바꿨다가 되돌리거나(프레임 1080×2337 → 540×1168 꽉 참), 캔버스를 건드리지 않고 UI 전용 카메라(Overlay 캔버스는 카메라 RT 로 못 찍으므로 ScreenSpaceCamera 유지)로 2패스. 어느 쪽이든 **PNG 에서 프레임이 ≥ 95% 를 채우고 UI 가 맨 위**여야 한다. `UiShotsTests` 에 «`app.Frame` 의 픽셀 사각형(카메라 기준) 이 RT 의 ≥ 95%» 단언 1개(있으면 다음 회귀를 CI 가 잡는다).
+4. 확인 = 코드 커밋의 CI 유니티 잡 초록 → 새 `screens` 배포의 `01_lobby.png` 를 `Read` 로 봤을 때 화면 전체가 UI. 그 뒤 점수판의 «T58 뒤 다시 본다» 항목(T36 글자 덩어리 −0.5 등)을 다음 회차에서 재평가.
+5. 게이트 + PROGRESS T58 행 + 결정 기록 한 줄.
+
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
 ```bash
@@ -554,7 +563,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 ## 5. UI 비평 회차 (주인 지시 2026-09-06 · UI 작업의 ✅ 조건)
 
 1. **채점 대상·기준**: 레이아웃 · 비례 · 비율만(레퍼런스 `docs/ref/NN.jpg` 와 «최대한 같게»). 아이콘·그림·색·폰트는 채점 밖 — **에셋 안에 있는 것으로 채우고 새 그림은 만들지 않는다**.
-2. **회차 절차**(T46 하니스): 코드 push → CI(≈25분 · `[skip ci]` 금지) → `screens` 브랜치에 PNG·layout.json → 워커가 `tools/ui_score.py <화면>` 로 **표 점수** → PNG 와 ref jpg 를 `Read` 로 나란히 보고 **감점(최대 −2.0 · 항목당 −0.5 · 이유 한 줄)** → `최종 = 표 − 감점`. 회차를 이어갈 워커는 자기 세션이 끝나기 전에 `send_later`(T16 세션이 쓴 방식)로 CI 뒤에 다시 깨어나거나, 다음 워커가 PROGRESS 점수판의 «다음 고칠 것» 을 읽고 잇는다(같은 T 번호 · lock 규약 그대로).
+2. **회차 절차**(T46 하니스): 코드 push → CI(≈25분 · `[skip ci]` 금지) → `screens` 브랜치에 PNG·layout.json → 워커가 `tools/ui_score.py <화면>` 로 **표 점수** → PNG 와 ref jpg 를 `Read` 로 나란히 보고(하니스 PNG 가 띠로 찍히는 동안(T58)은 `python3 tools/png_crop.py --strip <png> <out.png> 3` 으로 UI 띠를 3배 확대해 본다 · PIL·ffmpeg 없이 됨 · 구도는 판독되나 글자는 안 읽힌다) **감점(최대 −2.0 · 항목당 −0.5 · 이유 한 줄)** → `최종 = 표 − 감점`. 회차를 이어갈 워커는 자기 세션이 끝나기 전에 `send_later`(T16 세션이 쓴 방식)로 CI 뒤에 다시 깨어나거나, 다음 워커가 PROGRESS 점수판의 «다음 고칠 것» 을 읽고 잇는다(같은 T 번호 · lock 규약 그대로).
 3. **✅ 조건**: 최종 **8.0 이상**. 미만이면 «다음 고칠 것» 을 적고 고친다(회차마다 점수가 올라야 한다 · 같은 점수 2회면 표 행 자체를 의심하고 `ref-layout.md` 회차 정정 절에 근거를 적는다).
 4. **점수판 형식**(PROGRESS «UI 비평 점수판» 표 한 줄): `| 화면 | T | 회차 | 커밋 · CI 런 | 표 점수(통과/행) | 감점·이유 | 최종 | 다음 고칠 것 |`. 회차 로그의 행별 대조표는 그 T 의 완료/진행 기록에 붙인다.
 5. 새 화면(설정·펫·던전·아레나·사이드 팝업 등)은 그 화면 작업자가 먼저 `docs/ref-layout.md` 에 **⑧~ 표를 추가**(jpg 에 5% 격자 기준으로 판독 · ±0.5%p 오차 명시)하고 나서 채점한다 — 표가 없으면 채점 불가 = ✅ 불가.
