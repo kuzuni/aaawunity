@@ -640,7 +640,7 @@
 2. 수정: 기대값 10 · 배너 «시즌 패스» 라벨은 `Banner` 밑에서 따로 찾아 본문 40 단언(T63-lobby 기록의 «도 같음» 을 그대로 지킨다).
 3. 확인 = 이 커밋의 CI 유니티 잡(PlayMode 전부 Passed) → `screens`·gh-pages 배포가 다시 돌아 T63-lobby(01)·T63-gear(06·07)·T62(23) 채점 재료가 생긴다.
 
-### T64 — 로비 4건(주인 2026-09-06 · 폰·웹 확인 뒤): ① 사이드·모서리 아이콘 너무 작음 ② 상단 주인공 초상이 계속 움직임(정지) ③ 배경 Deco(흐린 칼 무늬) 제거 ④ 챕터 카드 = 프리팹 `SampleImage_Map` 그림으로(T34 워커 결정 34 뒤집음) (T34 뒤 · T63 로비 묶음과 같은 워커가 같이 해도 됨)
+### T68 — 로비 4건(주인 2026-09-06 · 폰·웹 확인 뒤): ① 사이드·모서리 아이콘 너무 작음 ② 상단 주인공 초상이 계속 움직임(정지) ③ 배경 Deco(흐린 칼 무늬) 제거 ④ 챕터 카드 = 프리팹 `SampleImage_Map` 그림으로(T34 워커 결정 34 뒤집음) (T34 뒤 · T63 로비 묶음과 같은 워커가 같이 해도 됨)
 범위: `Assets/Scripts/Game/Screens.cs`(`LobbyScreen.Build` 40행 Hide 목록 · 44~46행 배경 · 69~70행 `BuildColumn` 사이드 · 84행 `ChapterCard`) · `HeroView.cs`(123행 `PlayIdle` · 로비용 정지 옵션) · `Core/Layout.cs`(`LobbySideL/R` 25~26행 · `LobbyCard` 29행 · 표 ① 보정은 ±3%p 안) · `docs/ref-layout.md` ① · `Assets/Tests/PlayMode/UiSmokeTests`(로비 단언) · `docs/assets-map.md`
 순서: T34 ✅ 뒤 · 제약 없음. T63(글자 가독성) 의 로비 묶음과 파일이 같으니 **같은 워커가 T63-로비와 함께** 잡는 것을 권장(아이콘 키우기 + 글자 키우기를 한 번에 표 보정).
 주인 원문(2026-09-06 · 11:5X UTC): «웹에서 이제 잘된다. 로비에 아이콘들 너무 작음. 주인공 아이콘 부분도 애니메이션이 계속 있어서 계속 움직이네 로비꺼. 메인 로비에 데코 있는 게 좀 별로네. 메인 로비에 챕터 카드라는 거, 예전에 프리팹으로 했던 그 SampleImage_Map 이거로 하는 게 좋았음».
@@ -649,7 +649,7 @@
 3. **배경 Deco 제거**: `LobbyScreen.Build` 44~46행 — 프리팹 Background 의 흐린 칼 무늬(Deco 자식)를 끈다 · 평면 초록 배경만(결정 33 의 색은 유지). 레퍼런스 01 의 칼 무늬는 «느낌» 이었고 주인이 별로라 함 → 점수 밖.
 4. **챕터 카드 = `SampleImage_Map`**: 40행 Hide 목록에서 `SampleImage_Map` 을 빼고 그 그림을 표 ① 의 카드 자리(`LobbyCard` = 27.9/41.0/44.5/13.7)에 놓는다 · 84행의 코드 조립 `ChapterCard`(Environment 바닥·길·소품 4개 · 결정 34)는 **폐기**(코드·테스트 정리). 챕터 번호·«챕터 N 해금» 글자·◀▶ 화살표는 그대로 카드 위/옆. 챕터마다 그림을 바꾸고 싶으면 프리팹의 샘플 지도 스프라이트만 쓴다(새 그림 금지 · 하나뿐이면 전 챕터 같은 그림 · 워커 결정 기록).
 5. **테스트**: `UiSmokeTests` 로비 — 사이드 아이콘 RectTransform 폭 ≥ 칸 폭 75% · HeroView Animator speed 0(로비) / 1(장비) · Background 밑에 Deco 비활성 · `SampleImage_Map` 활성 + 카드 자리 · 옛 `ChapterCard` 없음 · `LogAssert.NoUnexpectedReceived`. 이름표(UiTag) 는 카드 자리 그대로라 점수 불변.
-6. 게이트 + assets-map(SampleImage_Map 조각 행) + PROGRESS T64 행 + 완료 기록(확인 = CI PlayMode + screens 01 PNG(`Read` 로 폰 폭 기준 아이콘 크기 확인) + 배포 스모크 + 주인 폰).
+6. 게이트 + assets-map(SampleImage_Map 조각 행) + PROGRESS T68 행 + 완료 기록(확인 = CI PlayMode + screens 01 PNG(`Read` 로 폰 폭 기준 아이콘 크기 확인) + 배포 스모크 + 주인 폰).
 
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
@@ -660,7 +660,7 @@ python3 tools/gen_meta.py --check                                 # .meta 누락
 python3 tools/gen_catalog.py --check                              # catalog.json 의 에셋 경로가 전부 실재하는가 (에셋 키를 바꿨으면 --check 대신 그냥 실행해 재생성)
 python3 tools/check_catalog_keys.py                               # 반대 방향: 코드의 카탈로그 키 리터럴이 전부 catalog.json 에 있는가 (없으면 런타임 «sprite 없음» 경고·빈 그림 — T12 · CI dotnet 잡에도 있음)
 tools/check_unity_null.sh                                         # 유니티 가짜 null 게이트: Assets/Scripts 에 «GetComponent…() ??»·«Find(…) ??» 0건 (있으면 에디터 MissingComponentException — UiKit.Ensure<T> 로 · T11 · CI dotnet 잡에도 있음)
-python3 tools/check_audio_webgl.py                                # 오디오가 WebGL 에서 읽히는 형식인가 (PCM/MP3/AAC · Vorbis·ADPCM 금지 — 브라우저가 디코드한다 · T64 · CI dotnet 잡에도 있음)
+python3 tools/check_audio_webgl.py                                # 오디오가 WebGL 에서 읽히는 형식인가 (PCM/MP3/AAC · Vorbis·ADPCM 금지 — 브라우저가 디코드한다 · T68 · CI dotnet 잡에도 있음)
 tools/check_data_sync.sh [.aaaw-src]                              # data ↔ aaaw main
 dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이후) 이식 검증
 ```
