@@ -5,7 +5,7 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
-- **(2026-09-07 · 00:2X UTC) ⚑⚑ 주인 지시 — 데일리 기프트를 동작하게: 광고 누적 1회 = 다이아 100 · 2회 = 200 · 3회 선물 = 300 · 6회 선물 = 300 · 매일 초기화.** → **T77** 등재(§2 · 새 시스템 주인 지시 · 수치는 `Assets/KkomaKnight/dailyGift.json` · 모의 광고 · T44 껍데기 위에 · 루틴이 잡는다).
+- **(2026-09-07 · 00:2X UTC) ⚑⚑ 주인 지시 — 데일리 기프트를 동작하게: 광고 누적 1회 = 다이아 100 · 2회 = 200 · 3회 선물 = 300 · 6회 선물 = 300 · 매일 초기화. **추가(00:3X)**: 줄은 위에서 아래로 순서대로 잠금(위 줄을 받아야 아래 줄 열림) · 왼쪽 타임라인 노드 없애고 행은 중앙 정렬 · 무료 1칸 = 다이아 100.** → **T77** 등재(§2 · 새 시스템 주인 지시 · 수치는 `Assets/KkomaKnight/dailyGift.json` · 모의 광고 · T44 껍데기 위에 · 루틴이 잡는다).
 
 - **(2026-09-07 · 00:1X UTC) ⚑ 주인 지시 — 출석 보상 팝업은 GUI Pro `Rewards_Daily7_Popup` 프리팹으로.** → **T76** 등재(§2 · T44 출석 껍데기 대체 · 조각 이동 최소 · 루틴이 잡는다).
 
@@ -739,11 +739,14 @@
 범위: **`Assets/KkomaKnight/dailyGift.json`(신규 · 이 레포 전용 수치 JSON · shop.json 방식 · §1 «코드에 수치 금지»)** · `Assets/Scripts/Core/DailyGift.cs`(순수 C# 규칙 · UnityEngine 없음 · EditMode 테스트) · `Core/SaveData.cs`(`dailyGiftDay`·`dailyGiftAds`·`dailyGiftClaimed[]` 필드 · 버전 올림 · 옛 세이브 호환) · `Assets/Scripts/Game/LobbyPopups.cs`(201~ `DailyGift` 껍데기 → 실제 상태 표시 · «광고 보기» = `Overlay.AdCountdown`(T23 모의 광고 3초) · «받기» = 다이아 지급 + 저장 + TopBar 갱신) · `Screens.cs`(로비 사이드 «데일리 기프트» 아이콘 빨간 점 = 받을 수 있는 줄 있음) · `Assets/Tests/EditMode/DailyGiftTests.cs` · `Assets/Tests/PlayMode/LobbyPopupsTests`
 주인 원문(2026-09-07 · 00:2X UTC): «광고 1회 보면 다이아 100개 / 2회면 200개 / 3회 선물 300개 / 6회 선물 300개 이렇게 해주기 데일리 기프트».
 해석(등재 세션 · 레퍼런스 17 의 «Watch N ads» 줄 4개와 1:1): 하루 동안 본 광고 **누적 횟수**가 1·2·3·6 에 닿을 때마다 그 줄의 보상을 **받기**로 받는다 — 줄 1 «광고 1회» 다이아 100 · 줄 2 «광고 2회» 다이아 200 · 줄 3 «광고 3회 선물» 다이아 300 · 줄 4 «광고 6회 선물» 다이아 300(합계 하루 최대 900 · 광고 6번). 4·5회째는 진행바만 찬다. 다른 해석(회당 지급)이 맞으면 주인이 한 줄로 뒤집는다 → JSON 값만 바꾸면 되게 만든다.
-1. **수치 JSON** `dailyGift.json`: `{"resetDaily":true, "milestones":[{"ads":1,"gem":100},{"ads":2,"gem":200},{"ads":3,"gem":300,"gift":true},{"ads":6,"gem":300,"gift":true}], "freeGift":null}` — 코드는 이 표만 읽는다(개수·값 하드코딩 0). «Your Daily Gift» 무료 1칸은 **주인 미지정** → `freeGift:null` 이면 껍데기(표시만 · 눌러도 없음) 유지 · 주인이 값을 주면 JSON 에 넣는다(워커 결정 기록에 «무료 칸 미정» 한 줄).
+1. **수치 JSON** `dailyGift.json`: `{"resetDaily":true, "milestones":[{"ads":1,"gem":100},{"ads":2,"gem":200},{"ads":3,"gem":300,"gift":true},{"ads":6,"gem":300,"gift":true}], "freeGift":{"gem":100}}` — 코드는 이 표만 읽는다(개수·값 하드코딩 0). «Your Daily Gift» 무료 1칸 = 다이아 100(주인 확정 · 9항).
 2. **규칙(`Core/DailyGift`)**: `Today()`(SaveStore 29행) 가 저장된 날짜와 다르면 `ads=0`·`claimed` 전부 false 로 초기화 · `WatchAd()` → `ads++`(상한 = 마지막 milestone 의 ads) · `CanClaim(i)` = `ads ≥ milestones[i].ads && !claimed[i]` · `Claim(i)` → `Gem += gem` · `claimed[i]=true` · 저장. 시간대는 로컬(다른 화면과 동일 · SaveStore.Today).
 3. **UI(표 ㉒ 그대로 · 껍데기 조각 재사용)**: 세로 타임라인 4줄 = milestone 순 · 각 줄 «광고 N회 (선물)» 라벨 + 진행바(`min(ads,N)/N`) + 보상 칸(다이아 아이콘 + 수량 · T69 장비 프레임 + Border · T72 빛살은 «받기 가능» 줄만) + 오른쪽 버튼 상태 3가지: **«광고 보기»(파랑 · 광고/정보 색 규칙)** → `AdCountdown(3, …)` 뒤 `WatchAd()` · **«받기»(주황)** = `Claim` + 다이아 팝 연출(T49 감각) + TopBar 갱신 · **✅ 받음**(회색 · 비활성). «Ends in» = 자정까지 남은 시간(hh:mm:ss · 1초 갱신). 로비 사이드 «데일리 기프트» 아이콘에 빨간 점(받을 수 있는 줄 ≥ 1). 글자는 T63 하한.
 4. **금지·주의**: 실제 광고 SDK 없음(모의 카운트다운 · 기존 T23 과 동일) · 다이아 외 다른 보상 추가 금지 · 밸런스 수치는 JSON 에만.
 5. **테스트**: EditMode `DailyGiftTests` — 날짜 바뀌면 초기화 · 누적 1/2/3/6 에서만 받기 가능 · 중복 수령 불가 · 하루 최대 900 · 옛 세이브(필드 없음) 로드 OK · JSON 개수·값 = 주인 표(1:100 · 2:200 · 3:300 · 6:300) · PlayMode — 팝업 열기 → «광고 보기» 3초 → «받기» → Gem +100 · TopBar 숫자 갱신 · 빨간 점 · `LogAssert.NoUnexpectedReceived`.
+7. **순서 잠금(주인 추가 00:3X)**: 줄은 **위에서 아래로 순서대로**만 — 줄 i 는 줄 i−1 을 «받기» 로 받아야 열린다(`CanClaim(i) = claimed[i-1] && ads ≥ milestones[i].ads && !claimed[i]` · 줄 0 은 무료 칸을 받은 뒤). 잠긴 줄은 자물쇠 아이콘(`ui.iconLock` · GUI Pro) + 버튼 비활성(회색 «잠금») + 진행바는 그대로 찬다. 광고는 잠긴 줄에서도 볼 수 있게 하되(누적만 됨) 「광고 보기」 버튼은 **열린 줄에만** 둔다(한 번에 하나) — 워커가 보고 정함(결정 기록).
+8. **왼쪽 타임라인 제거 + 중앙 정렬(주인 추가 00:3X)**: 레퍼런스 17 의 왼쪽 노란 세로줄 + 육각 점(노드)은 **넣지 않는다**(T44 껍데기에 있으면 지운다) · 행들은 팝업 상자 **가로 중앙**에(타임라인이 차지하던 왼쪽 여백 없이 · 행 폭 = 상자 안폭의 ~90%) · 표 ㉒ 의 «타임라인» 행은 삭제하고 행 x·w 를 중앙 기준으로 보정(ref-layout ㉒ 갱신 · 이름표도).
+9. **무료 1칸 = 다이아 100(주인 확정 00:3X)**: `dailyGift.json` 의 `"freeGift": {"gem": 100}` — «Your Daily Gift» 칸은 하루 1회 «받기»(광고 없음) · 이것을 받아야 줄 1 이 열린다(7항). 1항의 «무료 칸 미정» 은 해소.
 6. 게이트 + PROGRESS T77 행 + 완료 기록(확인 = CI EditMode/PlayMode + screens 17 PNG + 배포 스모크 + 주인 폰에서 광고 1회 → 다이아 100 확인).
 
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
