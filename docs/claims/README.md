@@ -26,3 +26,5 @@
 
 - 한 작업이 만지는 파일 범위는 PROGRESS 표의 «범위» 열에 적힌 폴더다. 두 작업이 같은 파일을 만져야 하면 뒤 번호가 기다린다.
 - `Assets/StreamingAssets/data/*.json` 은 어느 작업도 손으로 고치지 않는다 — `tools/check_data_sync.sh --sync` 로만 갱신한다.
+
+계정 2 확인 2026-09-06
