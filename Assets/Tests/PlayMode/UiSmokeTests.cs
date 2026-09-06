@@ -249,10 +249,17 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(Layout.LobbyStart.X, start.anchorMin.x * 100f, 0.5f, "START x"); Assert.AreEqual(Layout.LobbyCard.X + Layout.LobbyCard.W, card.anchorMax.x * 100f, 0.5f, "카드 오른쪽 = START 오른쪽");
                 Assert.AreEqual(start.anchorMin.x, card.anchorMin.x, 1e-3f, "START 와 카드는 같은 x"); Assert.AreEqual(start.anchorMax.x, card.anchorMax.x, 1e-3f, "START 와 카드는 같은 폭");
                 Assert.AreEqual(1f - Layout.TabBar.Y / 100f, ((RectTransform)tabs).anchorMax.y, 1e-3f, "탭 바 = 표 자리");
-                // 보조 버튼 2개는 눌러도 아무 일 없음(껍데기 · 팝업 안 열림 · 빨간 줄 0 · 오른쪽 아래 «이벤트» 는 T43 아레나 페이지(EventsScreenTests))
-                foreach (var key in new[] { LobbyScreen.SideExplore, LobbyScreen.SideClearReward }) Assert.IsTrue(ClickNamed(lobby, "Side:" + key), "껍데기 버튼 " + key);
+                // 남은 껍데기 보조 버튼은 눌러도 아무 일 없음(팝업 안 열림 · 빨간 줄 0 · 오른쪽 아래 «이벤트» 는 T43 아레나 페이지(EventsScreenTests))
+                // T97 — «탐험» 은 더 이상 껍데기가 아니다(방치·오프라인 보상 팝업 · ExpeditionScreenTests 가 따로 본다) → 여기서는 «클리어 보상» 만 남는다
+                foreach (var key in new[] { LobbyScreen.SideClearReward }) Assert.IsTrue(ClickNamed(lobby, "Side:" + key), "껍데기 버튼 " + key);
                 yield return Frames(1);
                 Assert.IsFalse(_app.Overlay.IsOpen, "껍데기 버튼은 팝업을 열지 않는다"); Assert.AreEqual("lobby", _app.Current.Name, "껍데기 버튼은 화면을 바꾸지 않는다");
+                // T97 — «탐험» 은 팝업을 연다(껍데기 목록에서 빠진 것이 «눌러도 아무 일 없음» 으로 되돌아가지 않게 여기서 못 박는다)
+                Assert.IsTrue(ClickNamed(lobby, "Side:" + LobbyScreen.SideExplore), "탐험 버튼");
+                yield return Frames(1);
+                Assert.IsTrue(_app.Overlay.IsOpen, "«탐험» 은 방치 보상 팝업을 연다(T97)");
+                Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ExpeditionBox"), "탐험 팝업 상자(T97)");
+                _app.Overlay.Close(); yield return Frames(1);
             }
             Check("로비");
 
