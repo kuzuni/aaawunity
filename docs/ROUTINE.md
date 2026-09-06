@@ -420,7 +420,7 @@
 2. 수정: `flat` 판정에 **키가 `.roadUp` 이면 무조건 납작**을 더한다(물결 경계는 늘 길 바로 위 = 데모 렌더 순서 · 문턱 수치는 그대로). 에셋·테스트 불변.
 3. 게이트 + PROGRESS T45 행 + 확인 수단 = 이 코드 커밋의 CI 유니티 잡(PlayMode `MapThemeTests` 4테마 Passed) — 같은 런이 T28·T23 의 확인 수단이 된다.
 
-### T46 — UI 비평 하니스: 전 화면 스크린샷 + layout.json → `screens` 브랜치 + `tools/ui_score.py` (최우선 · 제약 없음)
+### T46 — UI 비평 하니스: 전 화면 스크린샷 + layout.json → `screens` 브랜치 + `tools/ui_score.py` (최우선 · 제약 없음) — **코드 완료(`d47a55f` · CI #62 검증 대기 · sess-0736-29402 가 08:45 UTC 쯤 재기동해 screens 브랜치 확인 → ✅ · PROGRESS T46 진행 기록)**
 범위: `Assets/Tests/PlayMode/UiShotsTests.cs`(신규) · `Assets/Tests/PlayMode/PlayShot.cs`(신규 · PerkStripTests 의 `SaveScreens` 를 옮겨 공용화) · `Assets/Scripts/Game/UiKit.cs`(`UiKit.Tag(go, "이름")` 한 함수 · 판정 요소에 이름표) · `.github/workflows/ci.yml`(unity-test 잡 끝에 «screens 브랜치 배포» 1단계) · `tools/ui_score.py`(신규) · `docs/ref-layout.md`(⑧~ 새 화면 표 자리)
 순서: 제약 없음 — **T36~T44 보다 먼저 잡는다**(이게 없으면 그 작업들이 ✅ 를 못 단다). 다른 UI 워커와 겹치는 파일은 UiKit 한 함수뿐(rebase).
 1. **PNG**: `UiShotsTests` 가 UiSmokeTests 와 같은 순서로 모든 화면·팝업(로비 · 전투 HUD(적 조우 상태 포함) · 레벨업 3택 · 보유 특전 · 장비 · 장비 세부 · 대장간 · 상점 · 설정 · 펫 · 펫 세부 · 던전 · 던전 세부 · 아레나 5종 · 사이드 팝업 6종 — 아직 없는 화면은 건너뛰고 «없음» 으로 기록)을 열어 `PlayShot.Save("lobby")` 처럼 **540×1170 PNG** 를 `ui-screens/<이름>.png` 에 남긴다(PerkStripTests 의 RenderTexture 방식 그대로 · 배치 모드에서도 됨). 파일 이름 = `docs/ref/` 번호와 같게(`01_lobby.png` · `02_battle.png` …).
