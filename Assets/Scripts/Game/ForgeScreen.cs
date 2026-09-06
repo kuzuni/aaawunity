@@ -123,7 +123,18 @@ namespace KkomaKnight.Game
             else
             {
                 var empty = GearUi.Cell(_result, D, null, new GearUi.CellOpts(), null);
-                var ef = UiKit.Find(empty, "ItemFrame_01"); if (ef != null) UiKit.Show(ef, "Add_1", false);   // 빈 결과 칸은 «+» 대신 모루 그림(레퍼런스)
+                var ef = UiKit.Find(empty, "ItemFrame_01");
+                if (ef != null)
+                {
+                    // 빈 결과 칸은 «+» 대신 모루 그림(레퍼런스)
+                    UiKit.Show(ef, "Add_1", false);
+                    // T113 후속 — «+» 를 끄면 이 칸에 켜진 그림이 하나도 안 남는다: ItemFrame_01 은 뿌리에 바탕이 없고 NormalArea 는 g == null 이라 비어 있으며,
+                    // 유일하게 켜져 있던 테두리가 Add_1 의 것이었다(= 칸이 통째로 안 보이고 BorderGateTests 의 «어두운 테두리» 도 False). 예전에는 GreenFrame 이 초록 변형을 넣어
+                    // 가려 주고 있었을 뿐이다. PetScreen 빈 슬롯·Overlay 보상 칸과 같은 문법으로 등급 없는 회색 변형을 채우고 링을 다시 칠한다(T69 7항 · 결정 184 계약).
+                    var narea = UiKit.Find(ef, "NormalArea");
+                    if (narea != null) { UiKit.Clear(narea); var gray = UiKit.Spawn("ui.itemFrame.gray", narea); UiKit.Stretch((RectTransform)gray.transform, -1, -1, -1, -1); }
+                    GearUi.DarkFrame(ef, ef.localScale.x);
+                }
                 var ic = UiKit.Icon(empty, "Anvil", "pi.anvil", Palette.A(Palette.Cream, 0.7f)); UiKit.Pct(ic.rectTransform, 22, 22, 56, 56);
                 _banner.text = mats.Count > 0
                     ? $"같은 <b>{GearUi.PartName(D, mats[0].Part)} · {GearUi.Name(D, mats[0])} · {GearUi.RarName(D, mats[0].Rar)}</b> 을(를)\n<b>{3 - mats.Count}개</b> 더 고르세요"
