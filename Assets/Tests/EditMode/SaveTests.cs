@@ -28,6 +28,24 @@ namespace KkomaKnight.Tests
         }
 
         [Test]
+        public void SpeedIsRememberedAndDefaultsToOne()
+        {
+            // T18 — 배속(x2) 기억: 왕복 유지 · 옛 세이브(필드 없음)는 1 · 범위 밖은 1~2 로 클램프
+            var d = TestData.Load();
+            var s = SaveData.NewSave(d);
+            Assert.That(s.Speed, Is.EqualTo(1), "새 세이브 = x1");
+            s.Speed = 2;
+            var back = SaveData.FromJson(s.ToJson(), d);
+            Assert.That(back.Speed, Is.EqualTo(2), "x2 가 왕복으로 남는다");
+            Assert.That(s.ToJson().Contains("\"speed\""), Is.True, "세이브 JSON 에 speed 필드");
+            var legacy = SaveData.FromJson("{\"v\":2,\"gold\":10,\"maxChapter\":3,\"selChapter\":2}", d);   // index.html 세이브에는 speed 가 없다
+            Assert.That(legacy.Speed, Is.EqualTo(1), "필드가 없으면 1"); Assert.That(legacy.Gold, Is.EqualTo(10));
+            Assert.That(SaveData.FromJson("{\"speed\":7}", d).Speed, Is.EqualTo(SaveData.SpeedMax), "상한 클램프");
+            Assert.That(SaveData.FromJson("{\"speed\":0}", d).Speed, Is.EqualTo(SaveData.SpeedMin), "하한 클램프");
+            Assert.That(SaveData.FromJson("{\"speed\":\"x2\"}", d).Speed, Is.EqualTo(1), "숫자가 아니면 1");
+        }
+
+        [Test]
         public void CorruptJsonFallsBackToFreshSave()
         {
             var d = TestData.Load();

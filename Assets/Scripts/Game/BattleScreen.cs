@@ -62,7 +62,7 @@ namespace KkomaKnight.Game
             _buffBar = UiKit.Rect(Root, "BuffBar"); UiKit.Pct(_buffBar, Layout.HudBuffBar);
             var vl = _buffBar.gameObject.AddComponent<VerticalLayoutGroup>(); vl.childAlignment = TextAnchor.UpperLeft; vl.spacing = 10; vl.childForceExpandWidth = false; vl.childForceExpandHeight = false; vl.childControlWidth = false; vl.childControlHeight = false;
             // 배속 · 라운드
-            var spd = UiKit.SpawnRt("ui.btnSmallBlue", Root, Layout.HudSpeed); _speedTxt = UiKit.ButtonText(spd); UiKit.Clickable(spd, () => { _speed = _speed == 1 ? 2 : 1; RefreshHud(); });
+            var spd = UiKit.SpawnRt("ui.btnSmallBlue", Root, Layout.HudSpeed); _speedTxt = UiKit.ButtonText(spd); UiKit.Clickable(spd, ToggleSpeed);
             var round = UiKit.SpawnRt("ui.frameDark", Root, Layout.HudRound);
             _round = UiKit.Text(round, "", 30, Palette.White, TextAnchor.MiddleCenter, true); UiKit.Stretch(_round.rectTransform, 6, 6, 6, 6);
             // 하단 패널
@@ -97,11 +97,21 @@ namespace KkomaKnight.Game
             G = new BattleState(D, chapter, App.Save.CurBuild(D), rng, new InteractivePolicy(), new RunOptions { EmitEvents = true });
             BaseStats = new Dictionary<string, double>(); foreach (var d in StatDefs) BaseStats[d.Key] = d.Cur(G);
             _world?.Dispose(); _world = new BattleWorld(App, G, _pops);
-            _acc = 0; _speed = 1; _paused = false; _ended = false; _perkStripKey = ""; _buffKey = ""; _lastReal = 0;   // 새 판 첫 프레임이 «공백» 으로 잡히지 않게
+            _acc = 0; _speed = App.Save.Speed; _paused = false; _ended = false; _perkStripKey = ""; _buffKey = ""; _lastReal = 0;   // 배속은 세이브에서(T18 · 클리어 뒤 다음 챕터도 그대로) · 새 판 첫 프레임이 «공백» 으로 잡히지 않게
             UiKit.Clear(_pops);
             RefreshHud();
         }
         protected override void OnHide() { _world?.Dispose(); _world = null; UiKit.Clear(_pops); }
+
+        /// <summary>현재 배속(x1/x2) — 테스트·진단용 읽기.</summary>
+        public int Speed => _speed;
+        /// <summary>배속 버튼 — x1 ↔ x2. 값은 세이브(<see cref="SaveData.Speed"/>)에 즉시 기록해 다음 판(클리어 뒤 다음 챕터 · 로비에서 재진입 · 앱 재시작)도 같은 배속으로 시작한다(T18).</summary>
+        public void ToggleSpeed()
+        {
+            _speed = _speed == SaveData.SpeedMin ? SaveData.SpeedMax : SaveData.SpeedMin;
+            App.Save.Speed = _speed; App.Persist();
+            RefreshHud();
+        }
 
         void EndToLobby()
         {

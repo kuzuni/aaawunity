@@ -13,6 +13,9 @@ namespace KkomaKnight.Core
         public double Gold, Gem;
         public int MaxChapter = 1, SelChapter = 1;
         public bool Muted;
+        /// <summary>전투 배속(x1/x2) 기억 — T18. index.html `kkoma-knight-v2` 에 없는 필드라 «없으면 1». 표시·연출 배속이지 게임 수치가 아니다.</summary>
+        public int Speed = SpeedMin;
+        public const int SpeedMin = 1, SpeedMax = 2;
         public List<GearItem> Inv = new List<GearItem>();
         public Dictionary<string, int> Eq = new Dictionary<string, int>();        // 부위 → uid
         public Dictionary<string, int> Slots = new Dictionary<string, int>();     // 부위 → 슬롯 레벨
@@ -53,6 +56,7 @@ namespace KkomaKnight.Core
             MaxChapter = Math.Max(1, Math.Min(MaxChapter, D.Tune.MaxChapter));
             SelChapter = Math.Max(1, Math.Min(SelChapter, MaxChapter));
             Gold = Math.Max(0, Gold); Gem = Math.Max(0, Gem);
+            Speed = Math.Max(SpeedMin, Math.Min(Speed, SpeedMax));
             Inv.RemoveAll(g => g == null || Array.IndexOf(D.Gear.Parts, g.Part) < 0 || !D.Gear.Options.ContainsKey(g.Type) || g.Rar < 0 || g.Rar >= D.Gear.RarName.Length);
             foreach (var g in Inv) { g.Plus = Math.Max(0, g.Plus); if (g.Rar == D.Gear.RarLegend && g.Plus >= D.Gear.LegendToMythPlus) { g.Rar = D.Gear.RarMyth; g.Plus = 0; } }
             Uid = Math.Max(1, Uid);
@@ -76,7 +80,7 @@ namespace KkomaKnight.Core
             var o = new Dictionary<string, object>
             {
                 ["v"] = (double)Version, ["gold"] = Gold, ["gem"] = Gem, ["maxChapter"] = (double)MaxChapter, ["selChapter"] = (double)SelChapter,
-                ["muted"] = Muted, ["pulls"] = (double)Pulls, ["fuses"] = (double)Fuses, ["uid"] = (double)Uid, ["freeDay"] = FreeDay ?? "",
+                ["muted"] = Muted, ["speed"] = (double)Speed, ["pulls"] = (double)Pulls, ["fuses"] = (double)Fuses, ["uid"] = (double)Uid, ["freeDay"] = FreeDay ?? "",
             };
             var inv = new List<object>();
             foreach (var g in Inv)
@@ -103,7 +107,7 @@ namespace KkomaKnight.Core
                 {
                     var j = new JNode(MiniJson.Parse(json));
                     s.Gold = j["gold"].Num(); s.Gem = j["gem"].Num(); s.MaxChapter = j["maxChapter"].Int(1); s.SelChapter = j["selChapter"].Int(1);
-                    s.Muted = j["muted"].Bool(); s.Pulls = j["pulls"].Int(); s.Fuses = j["fuses"].Int(); s.Uid = j["uid"].Int(1); s.FreeDay = j["freeDay"].Str("");
+                    s.Muted = j["muted"].Bool(); s.Speed = j["speed"].Int(SpeedMin); s.Pulls = j["pulls"].Int(); s.Fuses = j["fuses"].Int(); s.Uid = j["uid"].Int(1); s.FreeDay = j["freeDay"].Str("");
                     foreach (var g in j["inv"].Items())
                         s.Inv.Add(new GearItem { Uid = g["u"].Int(), Part = g["part"].Str(), Type = g["type"].Str(), Rar = g["rar"].Int(), Plus = g["plus"].Int(), IsNew = g["nw"].Num() != 0 });
                     foreach (var k in j["eq"].Keys) s.Eq[k] = j["eq"][k].Int();
