@@ -83,7 +83,8 @@ namespace KkomaKnight.Tests.Play
             float t0 = Time.realtimeSinceStartup; while (!_app.Overlay.IsOpen && Time.realtimeSinceStartup - t0 < 5f) yield return null;   // 타격 연출(Busy)이 끝나면 EndRun
             Assert.IsTrue(_app.Overlay.IsOpen, "클리어 팝업");
             Assert.IsTrue(HasText(s => s == "클리어!"), "제목");
-            Assert.IsTrue(HasText(s => s == Overlay.ClearAdLabel), "«광고 보고 ×2» 버튼(프리팹 Get x2 자리 · T63-results 로 문구를 줄였다)");
+            // 기댓값에 TextGlyphs.Safe 를 씌운다 — 화면에 나갈 때 UiKit 이 «×» 를 «x» 로 바꾼다(T75 · Jua 에 글리프가 없어 폭 0 으로 사라진다)
+            Assert.IsTrue(HasText(s => s == TextGlyphs.Safe(Overlay.ClearAdLabel)), "«광고 보고 ×2» 버튼(프리팹 Get x2 자리 · T63-results 로 문구를 줄였다)");
             Assert.IsTrue(HasText(s => s == "그냥 받기"), "«그냥 받기» 버튼(프리팹 Home 자리)");
             Assert.IsFalse(HasText(s => s == "다음 챕터"), "«다음 챕터» 버튼 없음");
             var items = UiKit.Find(_app.Overlay.Root, "Group_RewardItem"); Assert.IsNotNull(items, "Group_RewardItem");
@@ -92,7 +93,7 @@ namespace KkomaKnight.Tests.Play
             double runGold = Math.Round(G.Gold); double bank1 = _app.Save.Gold;
             Assert.GreaterOrEqual(bank1, runGold, "1배는 팝업이 뜰 때 이미 은행에 들어가 있다");
             _log.AssertNoRed("클리어 팝업");
-            Assert.IsTrue(Click(_app.Overlay.Root, s => s == Overlay.ClearAdLabel), "×2 클릭"); yield return Frames(2);
+            Assert.IsTrue(Click(_app.Overlay.Root, s => s == TextGlyphs.Safe(Overlay.ClearAdLabel)), "×2 클릭"); yield return Frames(2);
             Assert.IsTrue(HasText(s => s == "광고 시청 중..."), "광고 카운트다운");
             yield return UntilClosed(6f, "클리어 광고");
             yield return Frames(2);

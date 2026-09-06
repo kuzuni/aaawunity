@@ -1034,7 +1034,8 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(1f, winBtns.GetChild(0).GetComponent<CanvasGroup>().alpha, 1e-4f, "×2 버튼 α 1"); Assert.AreEqual(1f, winBtns.GetChild(1).GetComponent<CanvasGroup>().alpha, 1e-4f, "그냥 받기 α 1");
             var rewardCell = UiKit.Find(_app.Overlay.Root, "Group_RewardItem"); Assert.IsNotNull(rewardCell, "Group_RewardItem"); Assert.AreEqual(UiKit.Fmt(G.Gold), rewardCell.GetChild(0).GetComponentInChildren<Text>(true).text, "골드 카운트업 최종값 = G.Gold");
             Check("클리어 팝업", expectOverlay: true);
-            Assert.IsTrue(HasText(s => s == "클리어!"), "제목"); Assert.IsTrue(HasText(s => s == Overlay.ClearAdLabel), "광고 ×2 버튼(프리팹 Get x2 자리 · T23 · 문구는 T63-results 에서 한 줄로)");
+            // 기댓값에 TextGlyphs.Safe 를 씌운다 — 화면에 나갈 때 UiKit 이 «×» 를 «x» 로 바꾼다(T75 · Jua 에 글리프가 없어 폭 0 으로 사라진다)
+            Assert.IsTrue(HasText(s => s == "클리어!"), "제목"); Assert.IsTrue(HasText(s => s == TextGlyphs.Safe(Overlay.ClearAdLabel)), "광고 ×2 버튼(프리팹 Get x2 자리 · T23 · 문구는 T63-results 에서 한 줄로)");
             Assert.IsFalse(HasText(s => s == "다음 챕터"), "«다음 챕터» 버튼은 없다(T23 · 로비의 챕터 화살표로)");
             // T63-results — 프리팹 칸이 좁아 눌리던 세 곳: ×2 버튼 글자(300×100) · 해금 줄(528×61) · 보상 값 칸(여백 15→2px)
             AssertReadable(winBtns.GetChild(0).GetComponentInChildren<Text>(true), TextSize.Button, "×2 버튼");

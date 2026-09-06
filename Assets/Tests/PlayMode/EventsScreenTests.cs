@@ -95,7 +95,8 @@ namespace KkomaKnight.Tests.Play
             Check("던전 세부 팝업", expectOverlay: true);
             var ov = _app.Overlay.Root;
             Assert.IsTrue(HasText(s => s == "지옥의 문") && HasText(s => s == "층") && HasText(s => s == "보상") && HasText(s => s == "소탕") && HasText(s => s == "도전") && HasText(s => s == "탭하여 닫기"), "세부 팝업 글자(제목·층·보상·소탕·도전·탭하여 닫기)");
-            Assert.IsTrue(HasText(s => s == "전설·신화 특전만 등장"), "조건 문구");
+            // 기댓값에 TextGlyphs.Safe 를 씌운다 — 화면에 나갈 때 UiKit 이 «·» 를 «/» 로 바꾼다(T75 · Jua 에 글리프가 없어 폭 0 으로 사라진다)
+            Assert.IsTrue(HasText(s => s == TextGlyphs.Safe("전설·신화 특전만 등장")), "조건 문구");
             Assert.AreEqual(4, CountNamed(ov, "RewardCell:"), "보상 칸 4"); Assert.IsNotNull(UiKit.Find(ov, "FloorCircle"), "층수 원");
             var box = UiKit.Find(ov, "ui.popup.red") as RectTransform; Assert.IsNotNull(box, "빨간 팝업 패널"); AtX(box, Layout.DdBox, "세부 박스"); AtY(box, Layout.DdBox, "세부 박스");
             Assert.IsNull(UiKit.Find(ov, "Button_Close_01"), "닫기 X 없음");
