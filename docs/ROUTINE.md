@@ -52,7 +52,7 @@
   - CI: 시크릿 없으면 dotnet 검사만(빨개지면 안 됨) · 있으면 PR/push 마다 EditMode/PlayMode, main push 시 WebGL→gh-pages + Android APK Artifact.
   - 판단이 필요한 건 한 번에 모아서 묻고(PROGRESS «주인 승인 대기»), 나머지는 기본값으로 진행.
 
-## 0. 세션 시작 절차 (모든 워커 공통)
+## 0. 세션 시작 절차 (모든 워커 공통 · 계정 1 = A~D · 계정 2 = E~H · §6)
 
 1. `git fetch && git checkout -B main origin/main` (pull --rebase 금지, 로컬 잔재 위에서 작업 금지)
 2. SID 발급: `sess-HHMM-$RANDOM` (예: sess-0512-23481)
@@ -461,6 +461,47 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. **✅ 조건**: 최종 **8.0 이상**. 미만이면 «다음 고칠 것» 을 적고 고친다(회차마다 점수가 올라야 한다 · 같은 점수 2회면 표 행 자체를 의심하고 `ref-layout.md` 회차 정정 절에 근거를 적는다).
 4. **점수판 형식**(PROGRESS «UI 비평 점수판» 표 한 줄): `| 화면 | T | 회차 | 커밋 · CI 런 | 표 점수(통과/행) | 감점·이유 | 최종 | 다음 고칠 것 |`. 회차 로그의 행별 대조표는 그 T 의 완료/진행 기록에 붙인다.
 5. 새 화면(설정·펫·던전·아레나·사이드 팝업 등)은 그 화면 작업자가 먼저 `docs/ref-layout.md` 에 **⑧~ 표를 추가**(jpg 에 5% 격자 기준으로 판독 · ±0.5%p 오차 명시)하고 나서 채점한다 — 표가 없으면 채점 불가 = ✅ 불가.
+
+## 6. 다른 계정의 워커 합류 (E~H · 주인 지시 2026-09-06 «aaaw 처럼 루틴 다른 계정도 같이»)
+
+> 이 절은 **두 번째 claude.ai 계정에서 연 Claude Code 세션**이 그대로 따라 하면 되게 써 두었다. 그 세션은 이 절만 읽고 `/schedule` 로 루틴 4개를 만든다. 주인이 할 일은 ①뿐이다.
+
+### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
+1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
+2. 계정 2 에 **환경(Environment)** 이 하나 있어야 한다(기본 «Default» 면 된다 · 프록시 정책은 계정 1 과 같다고 가정 — 다르면 dotnet 설치가 막힐 수 있으니 첫 런 로그를 본다).
+
+### ② 계정 2 의 Claude Code 세션이 할 것 — 루틴 4개 생성 (`/schedule` → create)
+- **이름**: `꼬마기사 유니티 이식 병렬 워커 E (:12)` · `… F (:27)` · `… G (:42)` · `… H (:57)`
+- **cron(UTC · 분 슬롯)**: E `12 * * * *` · F `27 * * * *` · G `42 * * * *` · H `57 * * * *` — 계정 1 의 A~D(:05/:20/:35/:50) 사이사이에 들어가 8개가 7~8분 간격으로 돈다.
+- **레포**: `https://github.com/kuzuni/aaawunity` · **모델**: `claude-fable-5-1` · **도구**: Bash, Read, Write, Edit, Glob, Grep, Task, WebFetch · **환경**: 그 계정의 Default.
+- **프롬프트**(아래 블록을 그대로 · `X` 를 E/F/G/H 로만 바꾼다 · 계정 1 의 A~D 프롬프트와 글자까지 같다):
+
+```
+너는 «꼬마기사 키우기 유니티 이식»(kuzuni/aaawunity) 병렬 워커 X 다. 여러 워커(A~H · A~D 는 매시 :05/:20/:35/:50 · E~H 는 :12/:27/:42/:57)가 두 계정에서 동시에 돌아간다.
+1. 먼저 `git fetch && git checkout -B main origin/main` 으로 최신 상태에서 시작한다 (pull --rebase 금지). 이 환경은 detached HEAD 로 체크아웃되므로 이어서 `git branch --set-upstream-to=origin/main main` 을 해 둔다.
+2. **docs/ROUTINE.md 가 유일 지시서다.** 거기 적힌 세션 시작 절차·절대 규칙·작업 목록·게이트를 그대로 따른다. UI 작업은 docs/ref/README.md 와 docs/ref/*.jpg(주인 레퍼런스)를 Read 로 직접 보고 그 구도에 맞춘다. 참조 레포 kuzuni/aaaw 는 ROUTINE.md 의 방법대로 옆에 clone 해서 읽기만 하고 절대 수정·푸시하지 않는다. 수치(data/*.json)는 손으로 고치지 않는다. 지시서가 사라졌거나 읽을 수 없으면 아무것도 수정하지 말고 «지시서 없음» 으로 보고하고 종료한다.
+3. 작업 전 반드시 docs/claims/ 의 선점 lock 을 먼저 잡고(규약: docs/claims/README.md · lock 은 커밋·push 가 성공해야 유효), 남의 lock 이 잡은 작업은 피한다. 선점할 작업이 없으면 게이트만 재실행하고 커밋 없이 조용히 종료한다.
+4. 커밋 전 `dotnet build`·`dotnet test`·`python3 tools/gen_meta.py --check` 가 초록이어야 한다. 컴파일 안 되는 커밋 금지. 새 에셋을 만들면 .meta 를 같이 만든다.
+5. 승인 프롬프트가 뜨는 명령·대화형 편집기 금지. 캡처 PNG·대용량 바이너리 커밋 금지(ROUTINE.md 가 허용한 예외는 된다). **주인의 승인·허락을 기다리지 않는다(주인 지시 2026-09-06): 판단이 필요한 것은 네가 그 자리에서 정해 바로 적용하고, 정한 내용과 이유를 PROGRESS «워커 결정 기록» 에 한 줄 남긴다. «주인 승인 대기» 에 올려 두고 멈추는 일은 없다.** 여전히 금지인 것은 셋뿐: aaaw 레포 수정 · data/*.json 손대기 · 주인이 시키지 않은 밸런스 수치 변경.
+6. 모든 보고·커밋 메시지·PROGRESS 기록은 한국어로. 브랜치는 main 만 쓴다. 커밋 작성자는 `git -c user.name=kuzuni -c user.email=<이 계정의 이메일>` 로 하고, 커밋 제목 끝에 `(sess-HHMM-NNNNN · 워커 X)` 를 붙인다.
+```
+
+- 만든 뒤 **4개의 routine ID 와 첫 런 링크**를 이 문서 아래 «③ 등록 기록» 표에 적어 커밋한다(`[skip ci]`).
+
+### ③ 등록 기록 (계정 2 세션이 채운다)
+
+| 워커 | 슬롯 | routine ID | 계정(이메일) | 첫 런 | 비고 |
+|---|---|---|---|---|---|
+| E | :12 | | | | |
+| F | :27 | | | | |
+| G | :42 | | | | |
+| H | :57 | | | | |
+
+### ④ 규약은 계정과 무관하게 같다
+- lock·SID·90분 규약(`docs/claims/README.md`)은 그대로 — **다른 계정의 lock 도 남의 lock** 이다. SID 는 `sess-HHMM-$RANDOM` 이라 계정이 달라도 안 겹친다.
+- 문서·코드 커밋을 나눠 push 하는 규칙(`[skip ci]` · §1)도 그대로. 8개가 돌면 push 충돌이 잦으니 **push 실패 → `git fetch && git rebase origin/main` → 재push** 를 습관처럼.
+- 계정 2 워커가 잡으면 안 되는 것은 없다 — 작업표의 «순서» 만 지키면 된다.
+- 계정 2 의 환경에서 `dotnet` 이나 GitHub MCP 가 안 되면 PROGRESS «워커 결정 기록» 에 «계정 2 환경 차이: …» 한 줄을 남기고 게이트를 돌릴 수 있는 만큼만 돌린 뒤 코드 커밋은 하지 않는다(문서 작업만).
 
 ## 4. PROGRESS.md 기록 규약
 
