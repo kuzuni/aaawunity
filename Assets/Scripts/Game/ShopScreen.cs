@@ -251,11 +251,11 @@ namespace KkomaKnight.Game
         {
             var D = App.Data; var w = new BoxWidgets(); string key = box.Key;
             var frame = UiKit.Spawn(Palette.FrameKey("ui.cardFrame", BoxColor(box)), card); UiKit.Stretch((RectTransform)frame.transform);
-            // 상자 이름 = 제목(60 · T63-shop) — 칸 10% × 카드 29% = 68px ≥ 선호 59 · 확률 pill 은 그 아래(13~26% · 88px = 2줄)
+            // 상자 이름 = 제목(60 · T63-shop) — 칸 10% × 카드 29% = 68px ≥ 선호 59 · 확률 pill 은 그 아래(12.5~26.5% · 95px ≥ 2줄 88 — 회차 1 의 13% = 88px 은 딱 맞아 bestFit 이 39 로 눌렀다 · CI #110 표 «최소 크기(실제) 39»)
             var title = UiKit.SetText(frame.transform, "Text_Title", box.Name, Palette.White, TextSize.Title, TextKind.Title);
             if (title != null) { UiKit.Pct(title.rectTransform, 6, 2, 76, 10); title.alignment = TextAnchor.MiddleCenter; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = TextSize.BestFitMin; title.resizeTextMaxSize = TextSize.Title; }
             InfoButton(card, new Layout.R(84, 2, 12, 9), box);
-            Pill(card, new Layout.R(6, 13, 88, 13), RatesText(box));
+            Pill(card, new Layout.R(6, 12.5f, 88, 14), RatesText(box));
             var chest = UiKit.Icon(card, "Chest", "chest." + box.Key); UiKit.Pct(chest.rectTransform, 22, 28, 56, 37);
             w.Pills.Add(Pill(card, new Layout.R(6, 67, 88, 14), ""));
             // 광고 버튼(파랑 · 클래퍼) = 일일 무료 보급(gacha.json dailyGem · 하루 1회) — 받을 수 있으면 빨간 점

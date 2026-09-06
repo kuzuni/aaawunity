@@ -752,6 +752,11 @@ namespace KkomaKnight.Tests.Play
                     Assert.GreaterOrEqual(htx.fontSize, UiKit.FontForHeight(Layout.ShopSec1.H), "섹션 헤더 «" + hn + "» 크기 = 표 ⑤ 헤더 높이(2.5%)에서 계산");
                 }
                 Assert.GreaterOrEqual(headers, 2, "섹션 헤더 «다이아»·«골드»");
+                // bestFit 이 종류 하한 아래로 누른 글자 0 — CI #110 표의 «최소 크기(실제) 39»(작은 카드 확률 pill 88px 에 2줄 88 이 딱 맞아 눌림) 재발 방지 · 상단 바(T63-lobby)·탭 바는 제외
+                var shrunk = new List<string>();
+                foreach (var r in TextAudit.Collect("shop", shop))
+                    if (r.Kind != TextKind.Small && r.Used > 0 && r.Used < r.Min && r.Path.IndexOf("TopBar", StringComparison.Ordinal) < 0 && r.Path.IndexOf("ui.tabBar", StringComparison.Ordinal) < 0) shrunk.Add(r.ToString());
+                Assert.AreEqual(0, shrunk.Count, "상점 글자가 bestFit 으로 종류 하한 아래로 줄었다(T63-shop):\n" + string.Join("\n", shrunk));
                 var qty = UiKit.Find(UiKit.Find(content, "GemPack:0"), "Text_Title"); Assert.IsNotNull(qty, "다이아 카드 수량 글자");
                 Assert.GreaterOrEqual(qty.GetComponent<Text>().fontSize, ShopScreen.QtySize, "상품 수량 크기 = 수량 띠 높이에서 계산(≈51)");
                 AssertNoTextClip("상점", shop);
