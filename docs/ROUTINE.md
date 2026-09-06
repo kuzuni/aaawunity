@@ -369,7 +369,7 @@
 ### T36 — 레벨업 3택 · 보유 특전 팝업 = `04_perks.jpg`·`05_perks_list.jpg` 구도 · **✅ 조건 = 비평 ≥ 8.0/10(§5)** — 코드 완료(`1a9cec4` · CI #59 · 공통 팝업 헬퍼 = `UiKit.Popup` · 비평 대기 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/Overlay.cs`(LevelUp · PerkList) · `UiKit.cs`(PerkFrame·카드·공통 팝업 헬퍼 `UiKit.Popup(title, ribbon)`) · catalog
 순서: 제약 없음(T23·T29 가 Overlay 의 다른 팝업을 만진다 — rebase). **공통 팝업 헬퍼는 여기서 먼저 만든다**(T38·T41·T42·T44 가 쓴다).
-1. 3택: 배경 어둡게 · 상단 스탯 8칸을 한 줄 미니 아이콘으로 · 노란 광선 + «Level Up!» 리본 · «새 특전을 고르세요» · **카드 3장 세로 전폭**(왼쪽 위 등급 탭 · 왼쪽 팔각 아이콘 · 오른쪽 설명 · 수치 초록) · 아래 «새로고침 무료» 주황 + «남은 횟수 : N» · 오른쪽 📘. 규칙(새로고침 횟수 등)은 기존 코드 그대로 — 배치만.
+1. 3택: 배경 어둡게 · 상단 스탯 8칸을 한 줄 미니 아이콘으로 · 노란 광선 + «Level Up!» 리본 · «새 특전을 고르세요» · **카드 3장 세로 전폭**(왼쪽 위 등급 탭 · 왼쪽 팔각 아이콘 · 오른쪽 설명 · ~~수치 초록~~ → T52 로 취소(한 색)) · 아래 «새로고침 무료» 주황 + «남은 횟수 : N» · 오른쪽 📘. 규칙(새로고침 횟수 등)은 기존 코드 그대로 — 배치만.
 2. 보유 특전: 명판 «특전» + 긴 패널 + 같은 카드 형식 세로 나열(스크롤) · «탭하여 닫기».
 3. 악마·천사·쉼터 팝업은 같은 패널·명판·버튼 문법으로 통일(레퍼런스 없음 · README «공통 문법» 절).
 4. 게이트 + PROGRESS T36 행.
@@ -489,7 +489,7 @@
 3. **테스트**(PlayMode `BattleWorldTests`): ⓐ 대시 특전 상태에서 킬 뒤 공격 모션 중 표시 이동 0 · 끝난 뒤 프레임당 이동 ≈ `PlayerSpeed×WalkMul×DashMul×dt` ⓑ 적 사망 시 fx.death 인스턴스 0(Fx 스폰 카운트 또는 이름으로 `FindObjectsOfType`) ⓒ `LogAssert.NoUnexpectedReceived`.
 4. 게이트 + PROGRESS T51 행 + 완료 기록(확인 수단 = CI 유니티 잡 PlayMode 전부 Passed).
 
-### T52 — 특전 설명 글자 한 색(수치 연두색 강조 제거) (주인 2026-09-06 · 제약 없음 · T49 와 같은 Overlay 파일 → rebase)
+### T52 — 특전 설명 글자 한 색(수치 연두색 강조 제거) (주인 2026-09-06 · 제약 없음 · T49 와 같은 Overlay 파일 → rebase) ✅ (완료 · `8f78d2a` · PROGRESS 참조 · «남은 횟수 N» 주황은 유지 = 결정 88)
 범위: `Assets/Scripts/Game/Overlay.cs`(`GreenNumbers` 63~70행 · `PerkCard` 106행 `UiKit.SetText(rt, "Text_Value", GreenNumbers(p.Desc), Palette.Ink, 34)`) · `Assets/Tests/PlayMode/UiSmokeTests.cs`(582행 GreenNumbers 단언) · `docs/ref/README.md`(04 항목 «수치 초록» 문구에 «주인 취소 2026-09-06» 표기) · 특전 설명이 쓰이는 다른 자리(악마 거래·천사·보유 특전·전투 PerkStrip 툴팁 등 `<color` 를 넣는 곳 전부)
 주인 원문(2026-09-06 · 09:2X UTC): «특전들 글씨가 색깔 다르게 하는 거 하지 말기 · 연두색 섞여 있는데 존나 안 읽힌다». T36 1항 «수치 초록»(레퍼런스 04) 은 이 지시로 **취소**.
 1. 특전 카드 설명(`Text_Value`)은 **한 색**(`Palette.Ink`) 으로 — `GreenNumbers` 호출을 없애고 `p.Desc` 를 그대로 넣는다. 함수는 지우거나 남기되 호출 0(남기면 «미사용 · 주인 취소» 주석).
