@@ -512,9 +512,9 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 | 워커 | 슬롯 | routine ID | 계정(이메일) | 첫 런 | 비고 |
 |---|---|---|---|---|---|
-| E | :12 | `trig_01QJGbo5Lm88r9KXfMEcSwoz` | 계정 2 (kimmoon1995@gmail.com) | 2026-09-06 08:12 UTC 예정 · https://claude.ai/code/routines/trig_01QJGbo5Lm88r9KXfMEcSwoz | 2026-09-06 08:02 UTC 생성 · claude-fable-5-1 · env Default(env_016Xis527zoBbZPqrtAZVQ6x) · enabled |
-| F | :27 | `trig_011tPCMoYGAyWKTUjPGDeRdN` | 계정 2 (kimmoon1995@gmail.com) | 2026-09-06 08:27 UTC 예정 · https://claude.ai/code/routines/trig_011tPCMoYGAyWKTUjPGDeRdN | 동일 |
-| G | :42 | `trig_01D222YdDfLGVEVM5jba2Bbj` | 계정 2 (kimmoon1995@gmail.com) | 2026-09-06 08:42 UTC 예정 · https://claude.ai/code/routines/trig_01D222YdDfLGVEVM5jba2Bbj | 동일 |
+| E | :12 | `trig_01QJGbo5Lm88r9KXfMEcSwoz` | 계정 2 (kimmoon1995@gmail.com) | 08:12 UTC 런 https://claude.ai/code/session_01XXX3UG6B5HSq7XnQJApnD7 (T42 완료 · sess-0813-16889 · 루틴 https://claude.ai/code/routines/trig_01QJGbo5Lm88r9KXfMEcSwoz) | 2026-09-06 08:02 UTC 생성 · claude-fable-5-1 · env Default(env_016Xis527zoBbZPqrtAZVQ6x) · enabled |
+| F | :27 | `trig_011tPCMoYGAyWKTUjPGDeRdN` | 계정 2 (kimmoon1995@gmail.com) | 08:27 UTC 런 https://claude.ai/code/session_018JuWedxu25LuhVHcjw4uzu (루틴 https://claude.ai/code/routines/trig_011tPCMoYGAyWKTUjPGDeRdN) | 동일 |
+| G | :42 | `trig_01D222YdDfLGVEVM5jba2Bbj` | 계정 2 (kimmoon1995@gmail.com) | 08:42 UTC 런 https://claude.ai/code/session_0135YDfHdrRg9ydHLwBEBrV9 (루틴 https://claude.ai/code/routines/trig_01D222YdDfLGVEVM5jba2Bbj) | 동일 |
 | H | :57 | `trig_01829E6pqXt2hmUv9ZCjrg8z` | 계정 2 (kimmoon1995@gmail.com) | 2026-09-06 08:57 UTC 예정 · https://claude.ai/code/routines/trig_01829E6pqXt2hmUv9ZCjrg8z | 동일 |
 
 > 등록 시점(08:03 UTC)에는 아직 한 번도 돌지 않아 «첫 런» 열은 예정 시각 + 루틴 페이지 링크다. 실제 런 세션 링크는 그 루틴 페이지의 실행 목록에서 본다. 계정 2 push 권한 확인 커밋: 0155784.
