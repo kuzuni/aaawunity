@@ -67,7 +67,7 @@ namespace KkomaKnight.Game
                 var area = UiKit.Find(frame, "NormalArea");
                 if (area != null) { UiKit.Clear(area); if (g != null) { var f = UiKit.Spawn("ui.itemFrame." + Palette.RarName(g.Rar), area); UiKit.Stretch((RectTransform)f.transform, -1, -1, -1, -1); } }   // 프리팹의 Normal_Plum 자리(+2px) 에 등급색 변형
                 var item = UiKit.Find(frame, "Item");
-                if (item != null) { item.gameObject.SetActive(g != null); if (g != null) { var im = UiKit.SetSprite(frame, "Item", IconKey(D, g), Palette.White); if (im != null) im.preserveAspect = true; } }   // 프리팹 Item 크기 그대로
+                if (item != null) { item.gameObject.SetActive(g != null); if (g != null) { var im = UiKit.SetSprite(frame, "Item", IconKey(D, g), Palette.White); FitIcon(im, g); } }   // GUI Pro 아이콘은 프리팹 Item 크기 그대로 · 파츠 아이콘은 같은 눈높이로 맞춤(T17)
                 UiKit.Show(frame, "Add_1", g == null); UiKit.Show(frame, "Add_2", false); UiKit.Show(frame, "Lock", false); UiKit.Show(frame, "Disable", false);
                 UiKit.Show(frame, "Focus", g != null && o.Selected);   // 프리팹의 Focus(테두리 글로우) = 선택
             }
@@ -80,6 +80,37 @@ namespace KkomaKnight.Game
             if (o.Off) { var cg = UiKit.Ensure<CanvasGroup>(cell.gameObject); cg.alpha = 0.4f; }
             if (onClick != null) UiKit.Clickable(cell, onClick);
             return cell;
+        }
+
+        /// <summary>
+        /// 장비 아이콘 맞춤(T17 · 주인 «투구·갑옷·무기 아이콘만 작다»). 프리팹 Item(256×256 · 스케일 0.6149)은 GUI Pro 128px 아이콘용이라 그림이 rect 의 ~85% 를 채우지만,
+        /// CharacterMaker 파츠 PNG 는 캐릭터 조립용 공통 캔버스라 그림이 캔버스의 33~70% 뿐 → 같은 rect 에서 절반 크기로 보였다.
+        /// 파츠 아이콘은 스프라이트의 **불투명 bbox**(Tight 메시 정점 · <c>Sprite.vertices</c>)가 칸의 <see cref="GearLook.PartIconFill"/>(72%) 를 채우도록 Item 의 sizeDelta·pivot 을 계산(<see cref="GearLook.FitPartIcon"/>)하고,
+        /// 무기는 <see cref="GearLook.WeaponIconAngle"/>(45°) 회전(그림 가운데 = pivot 이 축 · 칼끝 오른쪽 위). GUI Pro 아이콘(목걸이·장갑·신발)은 프리팹 값으로 되돌린다.
+        /// 장착 슬롯·인벤 칸·세부 팝업·대장간·뽑기 결과가 전부 이 함수를 거친다(Cell 과 GearScreen 슬롯). 프리팹 값은 <see cref="PartIconFit"/> 이 처음 한 번 기억해 두고 복원한다(슬롯 Item 재사용).
+        /// </summary>
+        public static void FitIcon(Image im, GearItem g) => FitIcon(im, g != null && GearLook.HasLook(g.Part), g != null && g.Part == GearLook.Weapon);
+        public static void FitIcon(Image im, bool isPart, bool isWeapon)
+        {
+            if (im == null) return;
+            var rt = im.rectTransform; var st = UiKit.Ensure<PartIconFit>(im.gameObject); st.Capture(rt);
+            var sp = im.sprite;
+            if (!isPart || sp == null) { st.Restore(rt); return; }
+            var rect = sp.rect; float ppu = sp.pixelsPerUnit > 0 ? sp.pixelsPerUnit : 100f; var piv = sp.pivot;
+            float x0 = float.MaxValue, y0 = float.MaxValue, x1 = float.MinValue, y1 = float.MinValue;
+            var verts = sp.vertices;   // Tight 메시(파츠 .meta spriteMeshType 1) → 정점의 min/max = 불투명 bbox (rect 왼쪽아래 원점 픽셀)
+            if (verts != null && verts.Length >= 3)
+                foreach (var v in verts) { float px = v.x * ppu + piv.x, py = v.y * ppu + piv.y; if (px < x0) x0 = px; if (py < y0) y0 = py; if (px > x1) x1 = px; if (py > y1) y1 = py; }
+            else { x0 = 0; y0 = 0; x1 = rect.width; y1 = rect.height; }
+            var frame = rt.parent as RectTransform;
+            float fw = frame != null ? Mathf.Min(frame.rect.width, frame.rect.height) : 0f;
+            if (fw <= 0f) fw = CellSize(App.I != null ? App.I.Assets : null);   // 레이아웃 전이면 ListItem_EquipMent 본래 한 변(188)
+            var fit = GearLook.FitPartIcon(rect.width, rect.height, x0, y0, x1, y1, fw, GearLook.PartIconFill, rt.localScale.x);
+            im.preserveAspect = true;
+            rt.pivot = new Vector2((float)fit.PivotX, (float)fit.PivotY);
+            rt.sizeDelta = new Vector2((float)fit.W, (float)fit.H);
+            rt.anchoredPosition = st.Pos;   // 프리팹 자리(가운데) — pivot 이 그림 가운데라 그림이 칸 가운데에 온다
+            rt.localRotation = Quaternion.Euler(0f, 0f, isWeapon ? (float)GearLook.WeaponIconAngle : 0f);
         }
 
         /// <summary>

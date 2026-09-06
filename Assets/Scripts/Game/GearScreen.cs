@@ -92,7 +92,7 @@ namespace KkomaKnight.Game
                         var area = UiKit.Find(frame, "NormalArea");
                         if (area != null) { UiKit.Clear(area); if (g != null) { var f = UiKit.Spawn("ui.itemFrame." + Palette.RarName(g.Rar), area); UiKit.Stretch((RectTransform)f.transform); } }
                         var item = UiKit.Find(frame, "Item");
-                        if (item != null) { item.gameObject.SetActive(g != null); if (g != null) { var im = UiKit.SetSprite(frame, "Item", GearLook.IconKey(D, g), Palette.White); if (im != null) im.preserveAspect = true; } }
+                        if (item != null) { item.gameObject.SetActive(g != null); if (g != null) { var im = UiKit.SetSprite(frame, "Item", GearLook.IconKey(D, g), Palette.White); GearUi.FitIcon(im, g); } }   // 파츠 아이콘은 칸 72% · 무기 45°(T17) · GUI Pro 아이콘은 프리팹 크기
                         UiKit.Show(frame, "Add_1", g == null); UiKit.Show(frame, "Add_2", false); UiKit.Show(frame, "Lock", false); UiKit.Show(frame, "Focus", false); UiKit.Show(frame, "Disable", false);
                     }
                     var dia = UiKit.FindAny(slot, "BasicFrame_Diamond_01_NoBorder_Plum", "BasicFrame_Diamond_H48_NoBorder_Plum");
