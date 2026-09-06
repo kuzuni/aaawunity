@@ -22,9 +22,9 @@ namespace KkomaKnight.Tests.Play
         [SetUp] public void SetUp() { _log = new PlayLog(); }
         [TearDown] public void TearDown() { Time.timeScale = 1f; _log?.Dispose(); _log = null; }
 
-        // 구슬 한 벌(시차 + 홉 + 비행 + 도착 팝)의 상한 — RewardOrbs 상수에서 계산해 박은 값이 아니다(결정 191)
+        // 구슬 한 벌(시차 + 홉 + 머무름 + 비행 + 도착 팝)의 상한 — RewardOrbs 상수에서 계산해 박은 값이 아니다(결정 191 · T109 로 머무름이 늘었다)
         static float OrbLifeMax(int count, float speed)
-            => ((count - 1) * RewardOrbs.StepSec + RewardOrbs.HopSec + RewardOrbs.FlySecMax + RewardOrbs.PopSec) / Mathf.Max(0.5f, speed) + 0.35f;
+            => ((count - 1) * RewardOrbs.StepSec + RewardOrbs.HopSec + RewardOrbs.HoldSec + RewardOrbs.FlySecMax + RewardOrbs.PopSec) / Mathf.Max(0.5f, speed) + 0.35f;
 
         static IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
         static IEnumerator RealSeconds(float sec) { float t = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t < sec) yield return null; }
@@ -97,6 +97,84 @@ namespace KkomaKnight.Tests.Play
 
             _app.ShowScreen("lobby"); yield return Frames(2);
             _log.AssertNoRed("로비 복귀");
+            yield return Shutdown();
+        }
+
+
+        /// <summary>
+        /// T109(주인 «1초 정도 머물렀다가 랜덤 곡선 그리면서 (트레일 있어야 함) 0.8초 동안 흡수») — 구슬 하나를 직접 날려
+        /// ⓐ 머무름 ⓑ 비행 시간 ⓒ 경로가 직선이 아님 ⓓ 잔상(트레일) ⓔ 값이 정확히 한 번 지급되는 것을 잰다.
+        /// 전투를 거치지 않고 <see cref="RewardOrbs"/> 를 바로 쓰는 이유 = 킬 타이밍·배속에 흔들리지 않게(시간을 재는 시험이다).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator OrbHoversThenFliesOnACurveWithATrail()
+        {
+            yield return Boot();
+            var layer = UiKit.Rect(_app.UiCanvas.transform, "OrbTestLayer"); UiKit.Stretch(layer);
+            var target = UiKit.Rect(layer, "OrbTestTarget"); UiKit.Pct(target, 78, 8, 12, 5);
+            yield return Frames(1);
+
+            var orbs = new RewardOrbs(layer);
+            var to = orbs.TargetPos(target);
+            var from = to + new Vector2(-UiKit.FrameW * 0.55f, UiKit.FrameH * 0.45f);
+            const float size = 40f;
+            double got = 0; int arrivals = 0;
+            Assert.AreEqual(1, orbs.Fly(from, target, "pi.orb", Palette.Green, 1, 10.0, size, 1f, v => { got += v; arrivals++; }), "구슬 1개를 띄운다");
+
+            RectTransform orb = null;
+            foreach (var rt in layer.GetComponentsInChildren<RectTransform>(true)) if (rt.name == RewardOrbs.OrbName) orb = rt;
+            Assert.IsNotNull(orb, "구슬 오브젝트");
+
+            float t0 = Time.realtimeSinceStartup;
+            float tDepart = -1f, tArrive = -1f, trailSeenAt = -1f;
+            Vector2 hopPos = Vector2.zero; bool hopTaken = false;
+            Vector2 departPos = Vector2.zero, midPos = Vector2.zero; float midAt = -1f;
+            float limit = OrbLifeMax(1, 1f) + 1.5f;
+            while (Time.realtimeSinceStartup - t0 < limit)
+            {
+                yield return null;
+                if (orb == null) break;
+                float now = Time.realtimeSinceStartup - t0;
+                var p = orb.anchoredPosition;
+                // 홉이 끝난 자리(머무름의 기준점) — 홉 시간 뒤 첫 프레임에서 잡는다
+                if (!hopTaken && now >= RewardOrbs.HopSec + 0.02f) { hopPos = p; hopTaken = true; }
+                // 출발 = 그 기준점에서 눈에 띄게 벗어난 순간(머무름의 흔들림 폭 0.35×크기 보다 넉넉히 크게 잡는다)
+                if (hopTaken && tDepart < 0f && Vector2.Distance(p, hopPos) > size * 0.8f) { tDepart = now; departPos = p; }
+                if (tDepart > 0f && midAt < 0f && now - tDepart >= RewardOrbs.FlySec * 0.45f) { midAt = now; midPos = p; }
+                if (trailSeenAt < 0f)
+                    foreach (var rt in layer.GetComponentsInChildren<RectTransform>(true)) if (rt.name == RewardOrbs.TrailName) { trailSeenAt = now; break; }
+                if (tArrive < 0f && Vector2.Distance(p, to) < size * 0.6f) tArrive = now;
+                if (tArrive > 0f && orbs.Alive == 0) break;
+            }
+
+            Assert.Greater(tDepart, 0f, "구슬이 출발하는 순간을 못 봤다");
+            Assert.Greater(tArrive, 0f, "구슬이 목표에 닿는 순간을 못 봤다");
+            // ⓐ 머무름 — 홉(0.15s)이 끝나고 최소 0.8s 는 그 자리에 떠 있어야 한다(주인 «1초 정도»)
+            Assert.GreaterOrEqual(tDepart, RewardOrbs.HopSec + RewardOrbs.HoldSec * 0.8f,
+                $"구슬이 너무 빨리 출발했다 — 홉 뒤 {RewardOrbs.HoldSec}초쯤 머물러야 한다(실측 출발 {tDepart:0.00}s)");
+            // ⓑ 전체 = 홉 + 머무름 + 비행 ≈ 1.95초. «출발» 을 어디로 잡느냐(Ease.InQuad 라 처음이 느리다)에
+            //    흔들리지 않게 «닿은 시각» 으로 잰다 — 옛 값(머무름 0 · 비행 0.35~0.5)이면 0.65초라 크게 떨어진다.
+            float whole = RewardOrbs.HopSec + RewardOrbs.HoldSec + RewardOrbs.FlySec;
+            Assert.That(tArrive, Is.InRange(whole - 0.3f, whole + 0.5f),
+                $"홉+머무름+비행 = {whole:0.00}초 언저리에 닿아야 한다(실측 {tArrive:0.00}s)");
+            float flight = tArrive - tDepart;
+            Assert.Greater(flight, RewardOrbs.FlySec * 0.45f, $"비행이 너무 짧다(실측 {flight:0.00}s · 규정 {RewardOrbs.FlySec}s)");
+            Assert.LessOrEqual(tDepart, RewardOrbs.HopSec + RewardOrbs.HoldSec + RewardOrbs.FlySec * 0.6f, "머무름이 규정보다 훨씬 길다");
+            // ⓒ 직선이 아니다 — 비행 한가운데가 «출발 → 목표» 직선에서 벗어나 있다
+            Assert.Greater(midAt, 0f, "비행 한가운데를 못 봤다");
+            var ab = to - departPos; float abLen = ab.magnitude;
+            float off = abLen < 0.001f ? 0f : Mathf.Abs(ab.x * (midPos.y - departPos.y) - ab.y * (midPos.x - departPos.x)) / abLen;
+            Assert.Greater(off, size * 0.8f, $"경로가 직선에 가깝다 — 랜덤 곡선이어야 한다(직선에서 {off:0.0}px 벗어남)");
+            // ⓓ 트레일
+            Assert.Greater(trailSeenAt, 0f, $"구슬 뒤에 잔상(«{RewardOrbs.TrailName}»)이 남아야 한다(T109 3항)");
+            // ⓔ 값은 정확히 한 번, 전부
+            float tv = Time.realtimeSinceStartup;
+            while (orbs.Alive > 0 && Time.realtimeSinceStartup - tv < 2f) yield return null;
+            Assert.AreEqual(1, arrivals, "도착 콜백은 한 번");
+            Assert.AreEqual(10.0, got, 1e-9, "값은 남김없이 지급된다");
+            _log.AssertNoRed("T109 구슬 연출");
+
+            orbs.Clear(); UnityEngine.Object.Destroy(layer.gameObject); yield return Frames(2);
             yield return Shutdown();
         }
 
