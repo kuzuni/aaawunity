@@ -1246,7 +1246,7 @@
 4. 테스트: PlayMode — 21 팝업에 빨간 «DecoLine» 이 **꺼져 있음** · `Pic` 의 위 y = `DdHead` 아래 y(오차 0.1%p) · 글자 잘림 0 · `BorderGateTests` 21 구간 회귀 0.
 5. 게이트 + PROGRESS T102 행 + 완료 기록(확인 = CI + `screens` 21 PNG 확대: 빨간 선 없음 · 머리 띠와 그림 사이 빈틈 없음).
 
-### T103 — 아이템 칸의 **정본 = `Character_Hero_Item_Detail_03` 의 `ItemFrame_01_Normal_Red`** · 등급은 **색 변형만** 교체 (주인 2026-09-07 · 전 화면 · T69 7항 확정)
+### T103 — 아이템 칸의 **정본 = `Character_Hero_Item_Detail_03` 의 `ItemFrame_01_Normal_Red`** · 등급은 **색 변형만** 교체 (주인 2026-09-07 · 전 화면 · T69 7항 확정) — **🔄 코드 push(`175c82e2` · sess-2041-14225 · 워커 C · 3항은 **기본값 ⓐ** 로 정했다: 조각 링 그대로 + 아이템 칸은 T69 감사 면제 · 결정 312 · 로컬 게이트 전부 초록)**
 
 > 주인 원문(2026-09-07 06:4X): «장비들 슬롯 보더랑 뭐 배치, 글로우 뭐 아이템 아이콘 있고 그런 거 — `Character_Hero_Item_Detail_03` 이 프리팹에 **`ItemFrame_01_Normal_Red` 이 부분 기준**으로 해 달라 해. **여기서 색깔만 바뀌는 식이면 딱 맞는 거임.**»
 
