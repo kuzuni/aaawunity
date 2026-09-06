@@ -530,6 +530,23 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(S.Inv.Count, CountNamed(content, "gear:"), "대장간 인벤에 장비가 전부(장착분 포함) 보여야 한다");
             Assert.GreaterOrEqual(CountNamed(content, "FuseDot"), 3, "합성 가능한 칸의 빨간 점(같은 키 3개)");
             Assert.AreEqual(1, CountNamed(content, "EquippedLabel"), "장착분 칸의 «장착중» 글자(레퍼런스 Equipped)");
+            // T63-forge — «장착중» 이 장비 그림 위에서 읽혀야 한다: 본문 하한 40 · bestFit 이 안 줄임 · 한 줄 · 뒤에 어두운 띠(레퍼런스 08 의 «Equipped» 띠)가 글자를 덮는다
+            {
+                var eqTf = UiKit.Find(content, "EquippedLabel"); Assert.IsNotNull(eqTf, "«장착중» 글자");
+                var eqLb = eqTf.GetComponent<Text>(); Assert.IsNotNull(eqLb, "«장착중» Text 컴포넌트");
+                Assert.AreEqual(TextSize.Body, eqLb.fontSize, "«장착중» 크기 = 본문 하한");
+                var gs = eqLb.GetGenerationSettings(eqLb.rectTransform.rect.size); gs.scaleFactor = 1f;
+                var gen = new TextGenerator(); gen.Populate(eqLb.text, gs);
+                Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, TextSize.Body, "«장착중» 이 칸에 40 으로 안 들어가 bestFit 이 줄였다");
+                Assert.AreEqual(1, gen.lineCount, "«장착중» 한 줄");
+                var plate = UiKit.Find(eqLb.transform.parent, "EquippedPlate");
+                Assert.IsNotNull(plate, "«장착중» 뒤 어두운 띠(그림 위에 바로 얹으면 안 읽힌다)");
+                var pr = (RectTransform)plate; var lr = eqLb.rectTransform;
+                Assert.LessOrEqual(pr.anchorMin.x, lr.anchorMin.x + 1e-3f, "띠가 글자보다 왼쪽까지"); Assert.GreaterOrEqual(pr.anchorMax.x, lr.anchorMax.x - 1e-3f, "띠가 글자보다 오른쪽까지");
+                Assert.LessOrEqual(pr.anchorMin.y, lr.anchorMin.y + 1e-3f, "띠가 글자보다 아래까지"); Assert.GreaterOrEqual(pr.anchorMax.y, lr.anchorMax.y - 1e-3f, "띠가 글자보다 위까지");
+                Assert.Less(plate.GetSiblingIndex(), eqLb.transform.GetSiblingIndex(), "띠가 글자보다 먼저(= 글자가 띠 위에) 그려져야 한다");
+                Assert.Greater(plate.GetComponent<Image>().color.a, 0.6f, "띠는 그림을 가릴 만큼 불투명해야 한다");
+            }
             // T39 — 레퍼런스 08_gear_fuse.jpg 구도 단언: 무대(위 41%) · 결과 슬롯(좌상) · 액션바(자동 왼쪽 끝 · 합성 오른쪽 끝 · 회색) · 인벤 = 장비 탭과 같은 자리 · 뒤로 버튼(왼쪽 아래) · 제목 글자·상단 재화 바 없음
             {
                 var stage = (RectTransform)UiKit.Find(forge, "Stage"); var result = (RectTransform)UiKit.Find(forge, "Result"); var autoB = (RectTransform)UiKit.Find(forge, "AutoBtn"); var fuseB = (RectTransform)UiKit.Find(forge, "FuseBtn"); var fuseOn = UiKit.Find(forge, "FuseBtnOn"); var back = (RectTransform)UiKit.Find(forge, "BackBtn"); var inv = (RectTransform)UiKit.Find(forge, "InvScroll");

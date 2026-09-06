@@ -97,7 +97,7 @@ namespace KkomaKnight.Game
                 var gi = g; bool sel = _sel.Contains(g.Uid); bool off = lock_ != null && !sel && GearUi.Key(g) != lock_; bool fus = lock_ == null && fk.Contains(GearUi.Key(g)); bool eqd = S.IsEquipped(g);
                 var cell = GearUi.Cell(_content, D, g, new GearUi.CellOpts { Equipped = eqd, EquippedMark = false, Selected = sel, Off = off, Fusable = fus, FusableDot = true }, () => Toggle(gi));
                 if (fus) GreenFrame(cell);
-                if (eqd) { var lb = UiKit.Label(cell, 4, 30, 92, 40, "장착중", 30, Palette.White, TextAnchor.MiddleCenter); lb.name = "EquippedLabel"; }
+                if (eqd) EquippedTag(cell);
             }
             // 재료 3칸 (ref 재료 슬롯 자리에서 피치 19) — 칸은 슬롯 자리 가운데에 ListItem_EquipMent 본래 크기(188 정사각 · 인벤 칸과 같은 크기·비례) · 빈 칸은 프리팹의 «+»
             for (int i = 0; i < 3; i++)
@@ -132,6 +132,18 @@ namespace KkomaKnight.Game
             if (_fuseOn != null) { _fuseOn.gameObject.SetActive(ready); if (_fuseTxtOn != null) _fuseTxtOn.text = $"합성 ({mats.Count}/3)"; }
         }
         /// <summary>칸의 등급색 프레임을 초록(ItemFrame_01_Normal_Green)으로 바꾼다 — 레퍼런스의 «합성 가능» 칸·«선택 칸» 초록 테두리(조각 교체 · 새 그림 없음).</summary>
+        // 장착분 표기 «장착중» = 레퍼런스 08 의 «Equipped» — 어두운 띠 위 흰 글자(T63-forge).
+        // 띠가 없으면 본문 하한(40)으로 올라간 글자가 장비 그림 위에 그대로 얹혀 안 읽힌다(screens run 95 `08_gear_fuse.png` 실측 — 6칸 전부 뭉갬).
+        // 글자 크기 게이트의 «잘림/넘침» 은 «선호 크기 > rect» 만 보므로 이 겹침은 표에 안 나온다(ROUTINE T63 2단계 ⚠).
+        const float TagY = 44, TagH = 32;
+        static void EquippedTag(Transform cell)
+        {
+            var plate = UiKit.Panel(cell, "EquippedPlate", "fr.rect", Palette.A(Palette.Dim, 0.82f));
+            UiKit.Pct(plate.rectTransform, 2, TagY, 96, TagH);
+            var lb = UiKit.Label(cell, 4, TagY, 92, TagH, "장착중", TextSize.Body, Palette.White, TextAnchor.MiddleCenter);
+            lb.name = "EquippedLabel";
+        }
+
         static void GreenFrame(RectTransform cell)
         {
             var frame = UiKit.Find(cell, "ItemFrame_01"); var area = frame != null ? UiKit.Find(frame, "NormalArea") : null; if (area == null) return;
