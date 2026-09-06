@@ -705,6 +705,16 @@
 2. 수정: 헤더 조각 `Sec:다이아`·`Sec:골드` 안의 `Text (TMP)` 만 본다(글자 일치 + 크기 ≥ FontForHeight(⑤ 2.5%)).
 3. 확인 = 이 커밋의 CI 유니티 잡(PlayMode 전부 Passed) → screens·gh-pages 가 다시 돌아 T63 하위 행들의 채점 재료가 생긴다.
 
+### T75 — 글꼴에 없는 글자가 «폭 0» 으로 사라진다(전 화면) + 공통 팝업 리본 제목이 60 이 아니라 56 으로 그려진다 (T63-toast 가 실측해 등재 2026-09-06 · 제약 없음 · **`TextAudit.ClipStrict = true` 를 켜기 전에 끝나야 한다**)
+
+범위: `Assets/Scripts/Game/UiKit.cs`(`Text`/`Label`/`SetText`/`ConvertTmp` 에 `TextGlyphs.Safe` 훅 · `Popup` 의 리본 sizeDelta 한 줄) · 화면 코드의 리터럴 문구(`·`·`×`·`—`·`→`·이모지 · `₩`) · `Assets/Fonts/Jua-Regular.ttf.meta`(대안 = fallback 글꼴) · `Assets/Tests/PlayMode`
+
+1. **사실(T63-toast 가 TTF 를 직접 파싱해 확인)**: `Assets/Fonts/Jua-Regular.ttf` 의 cmap 은 U+0020~U+D79D 중 **2,519자(ASCII + 한글)** 뿐이고 `fallbackFontReferences: []` 다. Latin-1 보충 블록에서 이 글꼴이 가진 것은 **U+00A0 하나** — 가운뎃점 **`·`(U+00B7) 이 없다**. `×`·`—`·`→`·`…`·`₩`·이모지(🔨 💎 ❤ 🛡)도 없다. 유니티는 없는 글자를 **폭 0** 으로 흘리므로 글자가 그냥 붙어 나온다(빈칸조차 안 남는다). T63-shop 이 상점 «💎» 에서 PNG 로 본 것(결정 142)과 같은 결함이고, 코드 문자열 전수 조사로 **`·` 은 화면 코드 곳곳에 있다**.
+2. **한 일(T63-toast)**: `Core/TextGlyphs.Safe`(순수 C# · `TextGlyphsTests` 6개) 를 만들고 **토스트 입구(`App.Toast`)에만** 걸었다 — 그때 다른 화면들이 전부 남의 lock 이라 손댈 수 없었다. 확인 팝업 문구는 리터럴을 쉼표 열거로 고쳤다.
+3. **남은 일**: ⓐ `UiKit.Text/Label/SetText/ConvertTmp` 가 화면에 나가는 모든 글자에 `TextGlyphs.Safe` 를 걸거나, 화면별로 리터럴을 고친다(둘 중 하나 · 워커가 정해 결정 기록에 한 줄). **T63 하위 행이 전부 ✅ 된 뒤**에 하는 편이 안전하다 — 글자 폭이 바뀌면 진행 중인 묶음들의 칸 계산이 어긋난다. ⓑ `₩`(상점 가격)·`💎` 처럼 대체 글자가 없는 것은 문구를 고친다(T63-shop 이 «다이아» 로 한 방식). ⓒ 대안으로 fallback 글꼴을 붙이면 한 번에 끝나지만 폰트 에셋이 늘고 WebGL 용량이 커진다 — 워커가 재 보고 정한다.
+4. **공통 팝업 리본**: `UiKit.Popup` 이 리본을 `sizeDelta (656, 115)` 로 세우는데 `Title_01_*` 프리팹의 글자 칸 inset 이 (−220, −35.56) 이라 실제 칸이 **436×79.4px** 다. 제목 하한 60 의 줄(`TextSize.BoxHeight(60)` = 84px)이 안 들어가 bestFit 이 **56** 으로 줄인다(모든 팝업 공통 · 게이트의 잘림 표에는 안 잡히는 쪽). 리본 세로를 130 이상으로(칸 94.4 ≥ 84) 올리면 되지만 **팝업 10여 화면의 리본이 같이 커지므로** T63 하위 행이 끝난 뒤 §5 비평 회차를 한 번 돌 수 있을 때 한다.
+5. ✅ 조건 = 그 커밋의 CI 유니티 잡 초록 + `[TextSizeGate]` 표의 «최소 크기(실제)» 가 어느 화면에서도 하한 미만이 아님 + screens PNG 에서 «·» 자리가 안 붙어 보임.
+
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
 ```bash
