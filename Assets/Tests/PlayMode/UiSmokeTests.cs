@@ -564,22 +564,33 @@ namespace KkomaKnight.Tests.Play
             // 레벨업 3택 (Play_Perk_Selection_02) → 첫 카드 선택
             var offer = Perks.Offer(D, G.Taken, false, rng); Assert.Greater(offer.Count, 0, "특전 제안");
             G.Pending = new PendingDecision { Kind = PendingKind.LevelUp, Offer = offer };
-            _app.Overlay.LevelUp(G, pick => G.ResolveLevelUp(pick)); yield return Frames(2);
+            _app.Overlay.LevelUp(G, pick => G.ResolveLevelUp(pick));
+            // T49 — 등장 연출: 연 직후엔 연출 중(카드는 존재하되 α 0 · 클릭 막힘) → 배경 탭 = 스킵 → 즉시 전부 표시(α 1 · 스케일 1 · 클릭 열림)
+            Assert.IsTrue(_app.Overlay.Revealing, "연 직후엔 등장 연출 중");
+            var cards = UiKit.Find(_app.Overlay.Root, "Group_Card"); Assert.IsNotNull(cards, "Group_Card"); Assert.AreEqual(offer.Count, cards.childCount, "카드 수 = 제안 수(연출 중에도 요소는 존재)");
+            var cg0 = cards.GetChild(0).GetComponent<CanvasGroup>(); Assert.IsNotNull(cg0, "카드에 CanvasGroup(연출)"); Assert.AreEqual(0f, cg0.alpha, 1e-4f, "연 직후 첫 카드 α 0"); Assert.IsFalse(cg0.blocksRaycasts, "연출 중 카드 클릭 막힘");
+            yield return Frames(2);
+            Check("레벨업 팝업(연출 중)", expectOverlay: true);
+            var dimT = UiKit.Find(_app.Overlay.Root, "Dimmed"); var skipTap = dimT != null ? dimT.GetComponent<UiKit.Tap>() : null; Assert.IsNotNull(skipTap, "배경 탭 = 스킵 핸들러"); skipTap.Fire(); yield return Frames(1);
+            Assert.IsFalse(_app.Overlay.Revealing, "배경 탭 → 연출 스킵"); Assert.IsTrue(_app.Overlay.IsOpen, "스킵은 닫지 않는다");
+            for (int i = 0; i < cards.childCount; i++) { var c = (RectTransform)cards.GetChild(i); var cg = c.GetComponent<CanvasGroup>(); Assert.AreEqual(1f, cg.alpha, 1e-4f, $"스킵 뒤 카드 {i} α 1"); Assert.IsTrue(cg.blocksRaycasts, $"스킵 뒤 카드 {i} 클릭 열림"); Assert.AreEqual(1f, c.localScale.x, 1e-3f, $"스킵 뒤 카드 {i} 스케일 1"); }
             Check("레벨업 팝업", expectOverlay: true);
-            var cards = UiKit.Find(_app.Overlay.Root, "Group_Card"); Assert.IsNotNull(cards, "Group_Card"); Assert.AreEqual(offer.Count, cards.childCount, "카드 수 = 제안 수");
             Assert.IsTrue(HasText(s => s == "레벨 업!"), "제목");
             // T36 — 레퍼런스 04 구도: «새 특전을 고르세요» · 카드 = 등급 탭 + 팔각 아이콘 + 설명(수치 초록) · «새로고침 무료» + «남은 횟수 : N» · 📘 · 상단 스탯 8칸 미니
             Assert.IsTrue(HasText(s => s == "새 특전을 고르세요"), "부제"); Assert.IsTrue(HasText(s => s == "새로고침 무료"), "새로고침 버튼"); Assert.IsTrue(HasText(s => s.StartsWith("남은 횟수 : ")), "남은 횟수");
             Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Stats"), "상단 스탯 미니 줄"); Assert.AreEqual(BattleScreen.StatDefs.Length, CountNamed(UiKit.Find(_app.Overlay.Root, "Stats"), "ic"), "미니 줄 아이콘 8");
             foreach (var p in offer) if (Overlay.GreenNumbers(p.Desc) != p.Desc) { Assert.IsTrue(HasText(s => s == Overlay.GreenNumbers(p.Desc)), "카드 설명의 수치는 초록 리치 텍스트"); break; }
             if (!string.IsNullOrEmpty(offer[0].GradeName)) Assert.IsTrue(HasText(s => s == offer[0].GradeName), "카드 왼쪽 위 등급 탭");
+            var cardRts = new List<Transform>(); foreach (Transform c in cards) cardRts.Add(c);
             var first = cards.GetChild(0).GetComponent<Button>(); Assert.IsNotNull(first, "카드는 클릭 가능"); first.onClick.Invoke(); yield return Frames(3);
             Assert.AreEqual(1, G.Taken.Count, "특전 1개 획득"); Assert.IsFalse(_app.Overlay.IsOpen);
+            Assert.IsFalse(UiKit.IsTweening(_app.Overlay.Root), "Close 뒤 팝업 층을 겨냥한 연출 시퀀스 0(T49)"); foreach (var c in cardRts) Assert.IsFalse(UiKit.IsTweening(c), "Close 뒤 카드를 겨냥한 트윈 0");
             G.Pending = null;   // 엔진이 3초 동안 쌓아 둔 레벨업이 이어서 열렸을 수 있다 — 여기서는 팝업 하나씩만 본다
             Check("특전 선택 뒤(HUD 특전 줄 갱신)");
 
             // 보유 특전
-            _app.Overlay.PerkBook(G, null); yield return Frames(2);
+            _app.Overlay.PerkBook(G, null); Assert.IsTrue(_app.Overlay.Revealing, "보유 특전도 카드 stagger(T49)"); yield return Frames(2);
+            UiKit.CompleteAllTweens(); Assert.IsFalse(_app.Overlay.Revealing, "CompleteAll 뒤 연출 끝");
             Check("보유 특전 팝업", expectOverlay: true);
             // T36 — 레퍼런스 05 구도: 명판 «특전» · 긴 패널 · 카드 세로 나열 · «탭하여 닫기»(닫기 버튼 없음 · 배경 탭으로 닫힘)
             Assert.IsTrue(HasText(s => s == "특전"), "보유 특전 명판"); Assert.IsTrue(HasText(s => s == "탭하여 닫기"), "탭하여 닫기 안내");
@@ -627,15 +638,31 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), "배경 탭"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen); Assert.IsTrue(resumed, "배경 탭 = 재개");
 
             // 클리어(Play_Result_Win_01) → 로비로 · 사망(Play_Result_Lose) → 로비로 (콜백은 빈 것 — 화면 전환은 아래서)
-            _app.Overlay.Clear(G, false, () => { }, () => { }); yield return Frames(2);
+            _app.Overlay.Clear(G, false, () => { }, () => { });
+            // T49 — 승리 팝업도 순서대로: 연 직후 버튼은 α 0(존재는 한다) → CompleteAll 뒤 α 1 · 골드 숫자 = 최종값
+            Assert.IsTrue(_app.Overlay.Revealing, "클리어 팝업 등장 연출 중");
+            var winBtns = UiKit.Find(_app.Overlay.Root, "Group_Buttons"); Assert.IsNotNull(winBtns, "Group_Buttons"); Assert.AreEqual(0f, winBtns.GetChild(1).GetComponent<CanvasGroup>().alpha, 1e-4f, "연 직후 «그냥 받기» α 0");
+            yield return Frames(2);
+            UiKit.CompleteAllTweens(); Assert.IsFalse(_app.Overlay.Revealing, "CompleteAll 뒤 연출 끝");
+            Assert.AreEqual(1f, winBtns.GetChild(0).GetComponent<CanvasGroup>().alpha, 1e-4f, "×2 버튼 α 1"); Assert.AreEqual(1f, winBtns.GetChild(1).GetComponent<CanvasGroup>().alpha, 1e-4f, "그냥 받기 α 1");
+            var rewardCell = UiKit.Find(_app.Overlay.Root, "Group_RewardItem"); Assert.IsNotNull(rewardCell, "Group_RewardItem"); Assert.AreEqual(UiKit.Fmt(G.Gold), rewardCell.GetChild(0).GetComponentInChildren<Text>(true).text, "골드 카운트업 최종값 = G.Gold");
             Check("클리어 팝업", expectOverlay: true);
             Assert.IsTrue(HasText(s => s == "클리어!"), "제목"); Assert.IsTrue(HasText(s => s == "광고 보고 보상 ×2 받기"), "광고 ×2 버튼(프리팹 Get x2 자리 · T23)");
             Assert.IsFalse(HasText(s => s == "다음 챕터"), "«다음 챕터» 버튼은 없다(T23 · 로비의 챕터 화살표로)");
             Assert.IsTrue(Click(_app.Overlay.Root, s => s == "그냥 받기"), "그냥 받기(프리팹 Home 자리)"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen);
-            _app.Overlay.Dead(G, () => { }); yield return Frames(2);
+            Assert.IsFalse(UiKit.IsTweening(_app.Overlay.Root), "Close 뒤 연출 시퀀스 0");
+            _app.Overlay.Dead(G, () => { });
+            // T49 — 사망 팝업: 팁 3줄이 한 줄씩 · 배경 탭 = 연출 중이면 스킵(닫히지 않음) · 끝난 뒤면 로비로
+            Assert.IsTrue(_app.Overlay.Revealing, "사망 팝업 등장 연출 중");
+            var tipList = UiKit.Find(_app.Overlay.Root, "Group_List"); Assert.IsNotNull(tipList, "Group_List"); Assert.AreEqual(0f, tipList.GetChild(2).GetComponent<CanvasGroup>().alpha, 1e-4f, "연 직후 셋째 팁 α 0");
+            Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), "배경 탭(연출 중)"); yield return Frames(1);
+            Assert.IsTrue(_app.Overlay.IsOpen, "연출 중 배경 탭 = 스킵(닫히지 않는다)"); Assert.IsFalse(_app.Overlay.Revealing, "스킵 → 연출 끝");
+            for (int i = 0; i < 3 && i < tipList.childCount; i++) Assert.AreEqual(1f, tipList.GetChild(i).GetComponent<CanvasGroup>().alpha, 1e-4f, $"스킵 뒤 팁 {i} α 1");
+            yield return Frames(1);
             Check("사망 팝업", expectOverlay: true);
             Assert.IsTrue(HasText(s => s == "쓰러졌다..."), "제목");
             Assert.IsTrue(Click(_app.Overlay.Root, s => s == "로비로"), "로비로"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen);
+            Assert.IsFalse(UiKit.IsTweening(_app.Overlay.Root), "Close 뒤 연출 시퀀스 0");
             Check("전투 팝업 전부 닫힘");
 
             // 엔진 재개 0.5초 → 전투 이탈 → 로비 (월드 해제)

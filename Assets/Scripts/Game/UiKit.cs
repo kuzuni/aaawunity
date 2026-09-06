@@ -482,16 +482,76 @@ namespace KkomaKnight.Game
         public static T Ensure<T>(Component on) where T : Component => Ensure<T>(on.gameObject);
 
         public static void Destroy(Transform t) { if (t != null) UnityEngine.Object.Destroy(t.gameObject); }
-        public static void Clear(Transform t) { for (int i = t.childCount - 1; i >= 0; i--) UnityEngine.Object.Destroy(t.GetChild(i).gameObject); }
+        /// <summary>자식 전부 파괴 — 파괴 전에 그 자식들을 겨냥한 트윈을 먼저 죽인다(T49 · 파괴된 오브젝트를 만지는 트윈 = 콘솔 경고 · safeMode 가 조용히 삼키지만 남기지 않는다).</summary>
+        public static void Clear(Transform t) { for (int i = t.childCount - 1; i >= 0; i--) { var c = t.GetChild(i); KillTweens(c); UnityEngine.Object.Destroy(c.gameObject); } }
+        /// <summary>root 와 그 아래 모든 Transform·CanvasGroup·Graphic 을 겨냥한 트윈을 죽인다(완료 콜백 없이). 시퀀스는 <c>SetTarget</c> 으로 묶은 대상이 있을 때만 잡힌다 — Overlay 는 자기 마스터 시퀀스를 따로 Kill 한다.</summary>
+        public static void KillTweens(Transform root)
+        {
+            if (root == null) return;
+            foreach (var tr in root.GetComponentsInChildren<Transform>(true)) DOTween.Kill(tr);
+            foreach (var cg in root.GetComponentsInChildren<CanvasGroup>(true)) DOTween.Kill(cg);
+            foreach (var g in root.GetComponentsInChildren<Graphic>(true)) DOTween.Kill(g);
+        }
 
         // ───────────────────────── 연출 ─────────────────────────
-        public static void PopIn(RectTransform rt, float from = 0.82f, float dur = 0.28f)
+        // T49(주인 2026-09-06 «팝업 뜰 때 순서대로 DOTween») — 등장 연출 타이밍 상수는 여기 한 곳(밸런스 수치가 아니라 연출 상수 · 워커 결정 기록 83).
+        /// <summary>요소 하나가 뜨는 시간(초 · unscaled).</summary>
+        public const float RevealDur = 0.22f;
+        /// <summary>등장 시작 스케일(→ 1 · OutBack).</summary>
+        public const float RevealFrom = 0.86f;
+        /// <summary>카드/줄이 하나씩 뜨는 간격(초). 3택 = 0.22 + 2×0.11 + 0.22 = 0.66s 에 마지막 카드가 다 뜬다.</summary>
+        public const float RevealStep = 0.11f;
+        /// <summary>팝업 연출 총 길이 상한 — 3택 0.8s · 승/패 1.0s(ROUTINE T49.5 «길면 답답»).</summary>
+        public const float RevealMaxPick = 0.8f, RevealMaxResult = 1.0f;
+
+        public static void PopIn(RectTransform rt, float from = 0.82f, float dur = 0.28f, float delay = 0f)
         {
-            rt.DOKill(); rt.localScale = Vector3.one * from; rt.DOScale(1f, dur).SetEase(Ease.OutBack).SetUpdate(true);
+            rt.DOKill(); rt.localScale = Vector3.one * from; rt.DOScale(1f, dur).SetEase(Ease.OutBack).SetDelay(delay).SetUpdate(true);
         }
-        public static void FadeIn(Graphic g, float to, float dur = 0.25f)
+        public static void FadeIn(Graphic g, float to, float dur = 0.25f, float delay = 0f)
         {
-            var c = g.color; g.color = new Color(c.r, c.g, c.b, 0); g.DOFade(to, dur).SetUpdate(true);
+            var c = g.color; g.color = new Color(c.r, c.g, c.b, 0); g.DOFade(to, dur).SetDelay(delay).SetUpdate(true);
+        }
+        /// <summary>
+        /// 요소 하나의 «등장» 트윈(T49) — 지금 바로 안 보이게(CanvasGroup α 0 · 스케일 <paramref name="from"/> · 클릭 막음) 만들고, 재생되면 α 0→1 + 스케일 →1(OutBack) 뒤 클릭을 연다.
+        /// 돌려준 Sequence 를 마스터 시퀀스에 <c>Insert(시각, …)</c> 하면 그 시각에 뜬다(Overlay.At) · 그냥 두면 즉시 재생(unscaled). 완료 콜백(클릭 열기)은 <c>Complete(true)</c>/정상 완료 때 돈다 — Kill 이면 안 돌지만 그때는 오브젝트도 사라진다.
+        /// </summary>
+        public static Sequence Reveal(RectTransform rt, float from = RevealFrom, float dur = RevealDur)
+        {
+            var cg = Ensure<CanvasGroup>(rt.gameObject); cg.alpha = 0f; cg.blocksRaycasts = false;
+            rt.DOKill(); rt.localScale = Vector3.one * from;
+            var s = DOTween.Sequence().SetUpdate(true).SetTarget(rt);
+            s.Insert(0, cg.DOFade(1f, dur)); s.Insert(0, rt.DOScale(1f, dur).SetEase(Ease.OutBack));
+            s.OnComplete(() => { if (cg != null) { cg.alpha = 1f; cg.blocksRaycasts = true; } if (rt != null) rt.localScale = Vector3.one; });
+            return s;
+        }
+        /// <summary><paramref name="items"/> 를 <paramref name="start"/> 부터 <paramref name="step"/> 간격으로 하나씩 <see cref="Reveal"/> — 마스터 시퀀스에 Insert. 돌려주는 값 = 마지막 요소가 다 뜨는 시각.</summary>
+        public static float Stagger(Sequence master, IList<RectTransform> items, float start, float step, float from = RevealFrom, float dur = RevealDur)
+        {
+            float t = start, end = start;
+            for (int i = 0; i < items.Count; i++)
+            {
+                var rt = items[i]; if (rt == null) continue;
+                master.Insert(t, Reveal(rt, from, dur)); end = t + dur; t += step;
+            }
+            return end;
+        }
+        /// <summary>도는 트윈 전부 완료(완료 콜백 포함) — 테스트·비평 스크린샷(PlayShot)이 연출 중간을 보지 않게(T49). PlayMode 테스트 어셈블리는 DOTween 을 직접 참조하지 않아 여기로.</summary>
+        public static int CompleteAllTweens() => DOTween.CompleteAll(true);
+        /// <summary><paramref name="target"/> 을 겨냥한 살아 있는 트윈/시퀀스가 있는가(테스트용 · Close 뒤 0 계약).</summary>
+        public static bool IsTweening(object target) => target != null && DOTween.IsTweening(target);
+        /// <summary>소리·눌림 없는 탭 영역(연출 스킵용 · T49) — Button 을 만들지 않는다(PressFeedbackTests 의 «모든 Button 은 눌림 표시» 계약 밖). 테스트는 <see cref="Tap.Fire"/> 로 누른다.</summary>
+        public static Tap OnTap(Transform t, Action onTap)
+        {
+            var img = t.GetComponent<Image>(); if (img == null) { img = t.gameObject.AddComponent<Image>(); img.color = new Color(1, 1, 1, 0); }
+            img.raycastTarget = true;
+            var tap = Ensure<Tap>(t.gameObject); tap.Handler = onTap; return tap;
+        }
+        public sealed class Tap : MonoBehaviour, IPointerClickHandler
+        {
+            public Action Handler;
+            public void OnPointerClick(PointerEventData e) { if (e.button == PointerEventData.InputButton.Left) Fire(); }
+            public void Fire() => Handler?.Invoke();
         }
 
         // ───────────────────────── 숫자 표기 ─────────────────────────

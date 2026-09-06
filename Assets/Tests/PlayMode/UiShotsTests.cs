@@ -54,9 +54,10 @@ namespace KkomaKnight.Tests.Play
         }
         IEnumerator RealSeconds(float sec) { float t = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t < sec) yield return Frames(1); }
 
-        /// <summary>한 장 — 레이아웃을 한 번 더 굳히고(2프레임) PNG + 이름표 사각형.</summary>
+        /// <summary>한 장 — 등장 연출을 끝까지 돌리고(T49 · 비평 PNG 가 연출 중간을 찍지 않게) 레이아웃을 한 번 더 굳힌 뒤(2프레임) PNG + 이름표 사각형.</summary>
         IEnumerator Shot(string name)
         {
+            UiKit.CompleteAllTweens();
             yield return Frames(2);
             Canvas.ForceUpdateCanvases();
             if (PlayShot.Save(_app, name)) _saved++;

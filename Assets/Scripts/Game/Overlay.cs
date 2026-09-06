@@ -18,7 +18,20 @@ namespace KkomaKnight.Game
         public RectTransform Root { get; }
         GameObject _cur;
         float _countdown; Action _onCountdown; Text _countText;
+        Sequence _reveal;   // 등장 연출 마스터 시퀀스(T49) — 팝업마다 Begin 에서 새로, Close 에서 Kill
         public bool IsOpen => Root.gameObject.activeSelf;
+        /// <summary>등장 연출이 아직 도는 중인가(T49). 테스트는 <c>DOTween.CompleteAll(true)</c> 또는 <see cref="Skip"/> 뒤에 알파/스케일을 단언한다.</summary>
+        public bool Revealing => _reveal != null && _reveal.IsActive() && !_reveal.IsComplete();
+        /// <summary>연출 스킵 = 즉시 전부 표시(완료 콜백까지 · 클릭 열림).</summary>
+        public void Skip() { if (_reveal != null && _reveal.IsActive()) _reveal.Complete(true); }
+        Sequence Seq() { if (_reveal == null || !_reveal.IsActive()) _reveal = DOTween.Sequence().SetUpdate(true).SetTarget(Root); return _reveal; }
+        void KillReveal() { if (_reveal != null && _reveal.IsActive()) _reveal.Kill(); _reveal = null; }
+        /// <summary><paramref name="rt"/> 를 <paramref name="t"/> 초에 뜨게 한다(마스터 시퀀스에 Insert). 돌려주는 값 = 다 뜨는 시각.</summary>
+        float At(float t, Transform rt, float from = UiKit.RevealFrom)
+        {
+            if (rt == null) return t;
+            Seq().Insert(t, UiKit.Reveal((RectTransform)rt, from)); return t + UiKit.RevealDur;
+        }
 
         public Overlay(App app)
         {
@@ -30,12 +43,13 @@ namespace KkomaKnight.Game
         // ───────────────────────── 공통 ─────────────────────────
         void Begin()
         {
-            UiKit.Clear(Root);
+            KillReveal(); UiKit.Clear(Root);
             Root.gameObject.SetActive(true); Root.SetAsLastSibling();
             _countdown = 0; _onCountdown = null; _countText = null;
             Audio.Sfx("snd.popup");   // 팝업 열림음은 여기 한 곳(T28) — 클리어/사망은 자기 징글을 덧붙인다
         }
-        public void Close() { UiKit.Clear(Root); Root.gameObject.SetActive(false); _cur = null; _countdown = 0; }
+        /// <summary>닫기 — 연출 시퀀스와 팝업 층 자식을 겨냥한 트윈을 전부 죽인 뒤 파괴한다(T49 · 파괴된 오브젝트를 만지는 트윈 0).</summary>
+        public void Close() { KillReveal(); UiKit.Clear(Root); Root.gameObject.SetActive(false); _cur = null; _countdown = 0; }
 
         /// <summary>어둠 + 팝업 상자(Popup_Box_02 변형) + 리본 제목 = 공통 팝업 문법(<see cref="UiKit.Popup"/> · T36). 돌려주는 RectTransform 안에서 Pct 로 내용을 배치한다.
         /// <paramref name="onTapClose"/> 를 주면 프레임 아래 «탭하여 닫기» + 배경 탭으로 닫힌다(정보 팝업) · null 이면 선택을 강제하는 이벤트 팝업(쉼터·악마·천사).</summary>
@@ -110,12 +124,16 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 레벨 업 3택 (주인 지정 Play_Perk_Selection_02) ─────────────────────────
+        /// <summary>
+        /// 레벨업 3택. 등장 연출(T49 · 주인 «특전 뜰 때 순서대로 DOTween»): 배경 페이드 → 리본 «레벨 업!»(0.05s) → 부제(0.15s) → <b>카드 3장이 위에서 아래로 하나씩</b>(0.22s 부터 0.11s 간격 · 스케일 0.86→1 + α 0→1 · OutBack)
+        /// → 마지막에 «새로고침 무료»·«남은 횟수»·📘(0.55s) — 전부 0.77s 안(≤ 0.8s). 연출 중엔 카드가 클릭을 안 받고(<see cref="UiKit.Reveal"/> 가 raycast 를 막는다) <b>배경 탭 = 스킵</b>(즉시 전부 표시 · 워커 결정 83) · 연출이 끝나면 카드 선택. «새로고침» 도 같은 연출.
+        /// </summary>
         public void LevelUp(BattleState G, Action<PerkDef> onPick)
         {
             Begin();
             var offer = G.Pending?.Offer ?? new List<PerkDef>();
             var root = UiKit.Spawn("ui.perkSelect", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
-            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
+            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
             // 표 ⑦ 선택창 — 상자 없음 · 배너 20/26.5 · 부제 30/31.5 · 카드 x5.5 w89 h11 피치 13 · 하단 버튼 31/79 · 인포 86/79.5
             var ribbon = UiKit.Find(rt, "Title_01_NoDeco_Tangerine"); if (ribbon != null) UiKit.Pct((RectTransform)ribbon, Layout.OvBanner.X, Layout.OvBanner.Y - 0.7f, Layout.OvBanner.W, Layout.OvBanner.H + 1.4f);
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "레벨 업!");
@@ -126,14 +144,18 @@ namespace KkomaKnight.Game
                 UiKit.Clear(group); UiKit.Pct((RectTransform)group, Layout.OvCards);
                 var vl = group.GetComponent<VerticalLayoutGroup>();
                 if (vl != null) { vl.padding = new RectOffset(0, 0, 0, 0); vl.spacing = UiKit.FrameH * (Layout.OvCardPitch - Layout.OvCard1.H) / 100f; vl.childAlignment = TextAnchor.UpperCenter; vl.childForceExpandHeight = false; vl.childControlHeight = true; vl.childControlWidth = true; vl.childForceExpandWidth = true; }
+                var cards = new List<RectTransform>();
                 foreach (var p in offer)
                 {
                     var perk = p;
                     var card = PerkCard(group, perk, Palette.PerkGradeName(perk.Grade), () => { Close(); onPick(perk); });
                     var le = card.gameObject.AddComponent<LayoutElement>(); le.preferredHeight = UiKit.FrameH * Layout.OvCard1.H / 100f;
-                    UiKit.PopIn(card, 0.9f, 0.3f);
+                    cards.Add(card);
                 }
+                UiKit.Stagger(Seq(), cards, 2 * UiKit.RevealStep, UiKit.RevealStep);   // 카드 = 0.22 · 0.33 · 0.44 → 0.66s 에 마지막이 다 뜬다
             }
+            At(0.05f, ribbon); At(0.15f, sub);
+            float foot = 5 * UiKit.RevealStep;   // 0.55s — 하단 버튼·남은 횟수·📘 은 마지막 카드와 겹쳐 뜨며 0.77s 에 끝난다(≤ RevealMaxPick)
             // 주황 버튼 = «새로고침 무료»(3장 다시 굴림 · 팝업당 EngineConst.RerollPerLevelUp 번) + 그 아래 «남은 횟수 : N»(프리팹의 Remain 글자 자리 · 레퍼런스 04 «Refresh Free / Remain : 1» · T36). 보유 특전은 오른쪽 Book 으로.
             var btn = UiKit.Find(rt, "Button_02_Orange");
             if (btn != null)
@@ -150,9 +172,10 @@ namespace KkomaKnight.Game
                         if (!labeled) { t.text = "새로고침 무료"; labeled = true; } else t.gameObject.SetActive(false);
                     }
                     UiKit.Clickable(btn, () => { if (G.RerollOffer()) LevelUp(G, onPick); });
+                    At(foot, btn);
                 }
             }
-            var book = UiKit.Find(rt, "Book"); if (book != null) { UiKit.Pct((RectTransform)book, Layout.OvInfo); UiKit.SetText(book, "Text (TMP)", G.Taken.Count.ToString()); UiKit.Clickable(book, () => PerkBook(G, () => LevelUp(G, onPick))); }
+            var book = UiKit.Find(rt, "Book"); if (book != null) { UiKit.Pct((RectTransform)book, Layout.OvInfo); UiKit.SetText(book, "Text (TMP)", G.Taken.Count.ToString()); UiKit.Clickable(book, () => PerkBook(G, () => LevelUp(G, onPick))); At(foot, book); }
             StatsRow(rt, G, Layout.OvStats);
             // T46 이름표(표 ⑦ 선택창 행 · «요소» 글자 그대로) — 하니스가 layout.json 으로 잰다
             if (ribbon != null) UiKit.Tag(ribbon, "배너(Level Up!)"); if (sub != null) UiKit.Tag(sub, "부제(Choose…)");
@@ -190,11 +213,23 @@ namespace KkomaKnight.Game
             var fit = content.gameObject.AddComponent<ContentSizeFitter>(); fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             sr.content = content; sr.viewport = view;
             if (groups.Count == 0) Sub(box, "아직 획득한 특전이 없습니다", 40, 8, 34, Palette.InkLight);
+            var cards = new List<RectTransform>();
             foreach (var kv in groups)
             {
                 var card = PerkCard(content, kv.Key, Palette.PerkGradeName(kv.Key.Grade), null);
                 var le = card.gameObject.AddComponent<LayoutElement>(); le.preferredHeight = UiKit.FrameH * Layout.BookCard.H / 100f;
                 if (kv.Value > 1) { var n = UiKit.Text(card, "×" + kv.Value, 36, Palette.Yellow, TextAnchor.MiddleRight); UiKit.Pct(n.rectTransform, 80, 4, 18, 40); }
+                cards.Add(card);
+            }
+            // T49 — 3택과 같은 stagger · 첫 화면(뷰포트 안)에 보이는 카드만 순서대로, 스크롤 밖은 즉시 표시. 상자 PopIn(0.28s) 뒤 0.15s 부터 · 전체 ≤ 0.8s 가 되게 간격을 줄인다.
+            {
+                float viewPx = UiKit.FrameH * Layout.BookBox.H / 100f * (100 - cardIn.Y - 4) / 100f, pitchPx = UiKit.FrameH * Layout.BookCard.H / 100f + vl.spacing;
+                int visible = Mathf.Min(Mathf.FloorToInt(viewPx / pitchPx) + 1, cards.Count);
+                if (visible > 0)
+                {
+                    float start = 0.15f, step = Mathf.Min(UiKit.RevealStep, (UiKit.RevealMaxPick - start - UiKit.RevealDur) / Mathf.Max(1, visible - 1));
+                    UiKit.Stagger(Seq(), cards.GetRange(0, visible), start, step);
+                }
             }
             foreach (var b in G.Blessings) Sub(box, b, 93, 5, 24, Palette.Orange);
             var tap = UiKit.Find(Root, "TapToClose");
@@ -272,19 +307,20 @@ namespace KkomaKnight.Game
         /// 클리어 팝업(Play_Result_Win_01 그대로) — T23(주인): 보상 표시는 <b>골드만</b>(프리팹의 나머지 두 보상 칸은 끈다) · 프리팹의 «Get x2»(광고 아이콘) 버튼 = «광고 보고 보상 ×2 받기»
         /// (광고 카운트다운 뒤 <paramref name="onDouble"/> → 골드 2배 · 로비로) · 프리팹의 «Home» 버튼 = «그냥 받기»(1배 · 로비로 · 승인 대기 28 기본값). «다음 챕터» 진입은 로비의 챕터 화살표로.
         /// </summary>
+        /// <remarks>등장 연출(T49 · 주인 «이겼을 때 팝업도 같은 식»): 배경 → 제목 «클리어!»(0.05s · 스케일 0.6→1) → «챕터 N»·해금 문구(0.2s) → 보상 띠 + 골드 칸(0.35s · 숫자 0→G.Gold 카운트업 0.4s) → 버튼 2개가 <b>순서대로</b>(광고 ×2 0.6s · 그냥 받기 0.72s · 스케일+페이드 — 버튼 줄은 HorizontalLayoutGroup 이라 위치 트윈 대신 · 워커 결정 84) → 0.94s 에 끝(≤ 1.0s). 배경 탭 = 연출 중이면 스킵(닫히지는 않는다 — 선택 강제). 컨페티는 그대로 숨김.</remarks>
         public void Clear(BattleState G, bool last, Action onDouble, Action onLobby)
         {
             Begin(); Audio.Sfx("snd.clear");
             var root = UiKit.Spawn("ui.resultWin", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
-            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
-            UiKit.SetText(rt, "Text", $"챕터 {G.Chapter}");
-            UiKit.SetText(rt, "Text (1)", last ? "모든 챕터를 클리어했습니다!" : $"챕터 {G.Chapter + 1} 해금!");
+            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
+            var chap = UiKit.SetText(rt, "Text", $"챕터 {G.Chapter}");
+            var unlock = UiKit.SetText(rt, "Text (1)", last ? "모든 챕터를 클리어했습니다!" : $"챕터 {G.Chapter + 1} 해금!");
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "클리어!");
             UiKit.SetText(rt, "Title_LineDeco_01_s_White/Text (TMP)", "클리어 보상");
-            var items = UiKit.Find(rt, "Group_RewardItem");
+            var items = UiKit.Find(rt, "Group_RewardItem"); Text goldText = null;
             if (items != null && items.childCount >= 1)
             {
-                Reward(items.GetChild(0), "ui.coin", UiKit.Fmt(G.Gold));
+                goldText = Reward(items.GetChild(0), "ui.coin", UiKit.Fmt(G.Gold));
                 for (int i = 1; i < items.childCount; i++) items.GetChild(i).gameObject.SetActive(false);   // 골드만(주인 T23) — 프리팹 칸을 옮기지 않고 끈다
             }
             UiKit.Hide(rt, "Text_TouchContionue");
@@ -292,12 +328,22 @@ namespace KkomaKnight.Game
             var b1 = grp != null && grp.childCount > 0 ? grp.GetChild(0) : null; var b2 = grp != null && grp.childCount > 1 ? grp.GetChild(1) : null;
             if (b1 != null) { UiKit.SetText(b1, "Text (TMP)", "광고 보고 보상 ×2 받기"); UiKit.Clickable(b1, () => AdCountdown(3, () => { Close(); onDouble(); })); }
             if (b2 != null) { UiKit.SetText(b2, "Text (TMP)", "그냥 받기"); UiKit.Clickable(b2, () => { Close(); onLobby(); }); }
-            var title = UiKit.Find(rt, "Title"); if (title != null) UiKit.PopIn((RectTransform)title, 0.6f, 0.45f);
             UiKit.Hide(rt, "SampleEffect_Confetti");
+            // 순서 — 제목 → 챕터/해금 → 보상(카운트업) → 버튼 2 순서대로
+            At(0.05f, UiKit.Find(rt, "Title"), 0.6f);
+            if (chap != null) At(0.2f, chap.transform); if (unlock != null) At(0.2f, unlock.transform);
+            At(0.35f, UiKit.Find(rt, "Title_LineDeco_01_s_White")); if (items != null) At(0.35f, items);
+            if (goldText != null && G.Gold > 0)
+            {
+                double v = 0, target = Math.Round(G.Gold); goldText.text = UiKit.Fmt(0);
+                Seq().Insert(0.35f, DOTween.To(() => v, x => { v = x; if (goldText != null) goldText.text = UiKit.Fmt(x); }, target, 0.4f).SetEase(Ease.OutQuad).SetTarget(goldText));
+            }
+            At(0.6f, b1); At(0.72f, b2);
         }
-        static void Reward(Transform cell, string iconKey, string value) { UiKit.SetSprite(cell, "Icon", iconKey, Palette.White); UiKit.SetText(cell, "Text (TMP)", value); }
+        static Text Reward(Transform cell, string iconKey, string value) { UiKit.SetSprite(cell, "Icon", iconKey, Palette.White); return UiKit.SetText(cell, "Text (TMP)", value); }
 
         // ───────────────────────── 사망 (Play_Result_Lose) ─────────────────────────
+        /// <summary>사망 팝업. 등장 연출(T49 · 주인 «졌을 때 팝업도»): 배경 → «쓰러졌다...»(0.05s) → 보상 골드(0.2s) → 팁 3줄이 <b>한 줄씩</b>(0.35 · 0.46 · 0.57s) → «로비로»(0.68s) → «터치하면 로비로»(0.76s) → 0.98s 에 끝(≤ 1.0s). <b>배경 탭 = 연출 중이면 스킵</b>(즉시 전부 표시) · 끝난 뒤면 로비로.</summary>
         public void Dead(BattleState G, Action onLobby)
         {
             Begin(); Audio.Sfx("snd.fail");
@@ -308,10 +354,15 @@ namespace KkomaKnight.Game
             var list = UiKit.Find(rt, "Group_List");
             string[] tips = { $"처치 {G.Kills} · 골드 {UiKit.Fmt(G.Gold)} 획득", "골드로 장비 슬롯을 강화하고 다시 도전하세요!", "장비 3개를 합성하면 등급이 오릅니다" };
             string[] icons = { "ui.skull", "ui.anvil", "ui.bookRed" };
-            if (list != null) for (int i = 0; i < list.childCount && i < tips.Length; i++) { UiKit.SetText(list.GetChild(i), "Text (TMP)", tips[i]); UiKit.SetSprite(list.GetChild(i), "Icon", icons[i], Palette.White); }
-            UiKit.SetText(rt, "Text_TouchContionue", "터치하면 로비로");
-            UiKit.Button(rt, "ui.btnBlue", "로비로", () => { Close(); onLobby(); }, new Layout.R(30, 80, 40, 6));
-            var hit = UiKit.Find(rt, "Dimmed"); if (hit != null) UiKit.Clickable(hit, () => { Close(); onLobby(); }, false);
+            var rows = new List<RectTransform>();
+            if (list != null) for (int i = 0; i < list.childCount && i < tips.Length; i++) { UiKit.SetText(list.GetChild(i), "Text (TMP)", tips[i]); UiKit.SetSprite(list.GetChild(i), "Icon", icons[i], Palette.White); rows.Add((RectTransform)list.GetChild(i)); }
+            var touch = UiKit.SetText(rt, "Text_TouchContionue", "터치하면 로비로");
+            var lobbyBtn = UiKit.Button(rt, "ui.btnBlue", "로비로", () => { Close(); onLobby(); }, new Layout.R(30, 80, 40, 6));
+            var hit = UiKit.Find(rt, "Dimmed"); if (hit != null) UiKit.Clickable(hit, () => { if (Revealing) Skip(); else { Close(); onLobby(); } }, false);
+            // 순서 — 제목 → 보상 → 팁 한 줄씩 → 로비로 → 터치 안내
+            At(0.05f, UiKit.Find(rt, "Title_LineDeco_01_s_White")); At(0.2f, reward);
+            float tipsEnd = UiKit.Stagger(Seq(), rows, 0.35f, UiKit.RevealStep);   // 0.35 · 0.46 · 0.57 → 0.79
+            At(tipsEnd - UiKit.RevealStep, lobbyBtn); if (touch != null) At(tipsEnd - 0.03f, touch.transform);
         }
 
         // ───────────────────────── 설정 / 일시정지 — 레퍼런스 12_settings.jpg 구도 (T41 · 표 ⑨ · «Settings 프리팹 그대로»(T10) 는 부품 규칙으로 대체) ─────────────────────────
