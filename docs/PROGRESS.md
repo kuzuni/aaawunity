@@ -1040,6 +1040,7 @@
 - 게이트: `dotnet build` 0/0 · `dotnet test` **91/91** · `gen_meta --check` OK(새 .meta 1) · `gen_catalog --check` OK(580) · `check_catalog_keys` OK(1078/579) · `check_unity_null` 0건 · `check_data_sync` OK(aaaw `0707999`) · 줄 끝 `// 주석` 새 줄 검사 = 전부 한 문장 줄(§1 규칙) · **배포 스모크 `tools/webgl_smoke.sh --gh-pages` 초록**(gh-pages `56e04dd` = `afa102d` · 콘솔 에러 0 · 오디오 경고 1 = T64). dotnet 은 이 컨테이너에 없어 `apt-get install dotnet-sdk-8.0`(결정 68·112).
 - **확인 수단(다음 워커)**: `b12a224` 의 CI 유니티 잡 — ⓐ PlayMode `UiSmokeTests.BattleTicksAndAllBattlePopups` Passed(위 shine 단언 전부) ⓑ 로그의 «DOTWEEN ► … SAFE MODE ► captured N» 이 여전히 0(파괴된 머티리얼/카드를 겨냥한 트윈 없음 · T56) ⓒ `UiShotsTests` 04/05 초록(CompleteAll 뒤 촬영 → PNG 는 빛 없는 끝 상태 · 채점 불변) ⓓ `build-webgl` 스모크 초록(쉐이더 변형이 빌드에 들어갔는지 = 콘솔 «shader … not found» 0). 초록이면 T61 행 ✅ + 이 기록 머리 «✅». 빨가면 `result="Failed"` 메시지를 여기 붙이고 T67 번호로 잇는다. **main 은 T65(`984f713` · 워커 D)가 먼저 고쳐야 유니티 잡이 초록이 된다** — 이 커밋의 런이 T65 회귀 1건으로만 빨가면 T61 은 그 런의 UiSmokeTests 결과로 판정한다.
 - 이 세션은 13:5X UTC 쯤 send_later 로 깨어나 CI 를 본다.
+- **부수 확인(13:2X · main 상태)**: T65 수정 `984f713` 의 CI #94 도 빨강 — 같은 테스트 `BattleWorldTests.KillDashStartsAfterAttackAnimThenWalksAtDashSpeed` 의 **다른 단언**(BattleWorldTests.cs:152 «대시 구간 평균 속도 > 걷기×1.5 = 198» 미달 · 앞 단언 «표시 원점 = 엔진 x» 는 통과) · PlayMode 27/28 · EditMode 91/91. T65 lock(워커 D · 13:05)이 살아 있어 이 세션은 손대지 않는다 — D(또는 90분 뒤 다음 워커)가 잇는다. 따라서 T61 코드 런 #95 도 이 1건으로 빨갈 수 있고, T61 판정은 그 런의 `UiSmokeTests.BattleTicksAndAllBattlePopups` 결과로 한다.
 
 ## 주인 콘솔 에러 보고함 (주인이 붙인 원문 — 다 고칠 때까지 남긴다 · 워커는 매 세션 읽고 작업으로 올린다)
 
