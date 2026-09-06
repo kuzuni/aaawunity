@@ -208,7 +208,7 @@
 3. 원본 자체가 «맨 앞만» 이라면 주인이 원하는 «웨이브 안 무작위» 는 규칙 변경이라 **승인 대기 27** 로 올리고(골든 재생성 필요) 기본값은 원본 유지.
 4. 게이트 + PROGRESS T21 행.
 
-### T22 — 모든 버튼에 눌림 표시 (번호 정정: 구 T15) 🔄 진행중 (코드 `f748948` · CI #44 대기 · PROGRESS 참조)
+### T22 — 모든 버튼에 눌림 표시 (번호 정정: 구 T15) ✅ (완료 · `f748948` · CI #45 초록(#44 는 취소) · PROGRESS 참조)
 범위: `Assets/Scripts/Game/UiKit.cs`(Clickable · Button) · `Screens.cs`(NavBar 탭)
 순서: 제약 없음(T10 이 Screens.cs 를 만지면 NavBar 부분은 T10 뒤).
 1. `UiKit.Clickable` 로 만드는 **모든** 버튼(프리팹 버튼·탭·카드·칸)에 눌림 피드백: `Button.transition = ColorTint`(pressedColor 는 어둡게 ≈ ×0.8 · highlighted 는 그대로) + 이미 있는 DOPunchScale. targetGraphic 이 투명 히트 영역이면(칸·카드) 자식의 첫 Image 를 targetGraphic 으로 잡거나 CanvasGroup alpha 로 눌림을 보여 준다. 비활성(interactable=false)은 지금처럼 반투명.
