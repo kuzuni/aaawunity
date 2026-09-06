@@ -640,7 +640,7 @@
 2. 수정: 기대값 10 · 배너 «시즌 패스» 라벨은 `Banner` 밑에서 따로 찾아 본문 40 단언(T63-lobby 기록의 «도 같음» 을 그대로 지킨다).
 3. 확인 = 이 커밋의 CI 유니티 잡(PlayMode 전부 Passed) → `screens`·gh-pages 배포가 다시 돌아 T63-lobby(01)·T63-gear(06·07)·T62(23) 채점 재료가 생긴다.
 
-### T68 — 로비 4건(주인 2026-09-06 · 폰·웹 확인 뒤): ① 사이드·모서리 아이콘 너무 작음 ② 상단 주인공 초상이 계속 움직임(정지) ③ 배경 Deco(흐린 칼 무늬) 제거 ④ 챕터 카드 = 프리팹 `SampleImage_Map` 그림으로(T34 워커 결정 34 뒤집음) (T34 뒤 · T63 로비 묶음과 같은 워커가 같이 해도 됨)
+### T68 — 로비 4건(주인 2026-09-06 · 폰·웹 확인 뒤): ① 사이드·모서리 아이콘 너무 작음 ② 상단 주인공 초상이 계속 움직임(정지) ③ 배경 Deco(흐린 칼 무늬) 제거 ④ 챕터 카드 = 프리팹 `SampleImage_Map` 그림으로(T34 워커 결정 34 뒤집음) (T34 뒤 · T63 로비 묶음과 같은 워커가 같이 해도 됨) — **🔄 코드 push `8f6ae8c`(워커 F · T63-lobby 와 같은 워커 · 사이드 19.0×24.0 · 보조 39.2×9.5 · 모서리 20×8.5 · 아이콘 칸 폭 75% · 라벨 보조 36 두 줄 · `HeroView.SetStill` · Deco 15개 끔 · SampleImage_Map 카드 바닥 정렬 · 확인 = 그 CI 의 UiSmokeTests ①·② + screens 01 PNG · PROGRESS T68 진행 기록)**
 범위: `Assets/Scripts/Game/Screens.cs`(`LobbyScreen.Build` 40행 Hide 목록 · 44~46행 배경 · 69~70행 `BuildColumn` 사이드 · 84행 `ChapterCard`) · `HeroView.cs`(123행 `PlayIdle` · 로비용 정지 옵션) · `Core/Layout.cs`(`LobbySideL/R` 25~26행 · `LobbyCard` 29행 · 표 ① 보정은 ±3%p 안) · `docs/ref-layout.md` ① · `Assets/Tests/PlayMode/UiSmokeTests`(로비 단언) · `docs/assets-map.md`
 순서: T34 ✅ 뒤 · 제약 없음. T63(글자 가독성) 의 로비 묶음과 파일이 같으니 **같은 워커가 T63-로비와 함께** 잡는 것을 권장(아이콘 키우기 + 글자 키우기를 한 번에 표 보정).
 주인 원문(2026-09-06 · 11:5X UTC): «웹에서 이제 잘된다. 로비에 아이콘들 너무 작음. 주인공 아이콘 부분도 애니메이션이 계속 있어서 계속 움직이네 로비꺼. 메인 로비에 데코 있는 게 좀 별로네. 메인 로비에 챕터 카드라는 거, 예전에 프리팹으로 했던 그 SampleImage_Map 이거로 하는 게 좋았음».
