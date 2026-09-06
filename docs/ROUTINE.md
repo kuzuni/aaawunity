@@ -641,7 +641,7 @@
 4. 회차 2(CI #94): 격차 단언은 통과, 같은 테스트의 **다른 줄**(`:152` 대시 평균 속도 하한 · Expected > 198 / But was 169.3)이 남았다 — 그 평균의 분모가 «엔진 틱이 0 인 프레임» 까지 세고 있었고 예전엔 위 4.4px 튐이 분자를 부풀려 통과하던 것이다(결정 123 · 하한만 «틱을 돈 프레임» 으로 · 게임 코드 불변).
 5. **이 1건이 T60 확인 · T62 회차 1 채점 · T47 회차 3 채점을 전부 막고 있었다** — 초록이 되면 그 세 개를 잇는다.
 
-### T66 — T59 진단 심볼 되돌리기: `ProjectSettings.asset` `webGLDebugSymbols: 2` → `0` (T59 종결 뒤 · 제약 없음) — **🔄 코드 push(워커 H · sess-1557-2521 · 결정 164 · 조건 = 주인이 심볼 빌드 gh-pages `c1f9c05` 를 열어 봄(T64 메모) · 확인 = 그 커밋의 CI build-webgl 배포 스모크 초록 → 다음 워커가 ✅)**
+### T66 — T59 진단 심볼 되돌리기: `ProjectSettings.asset` `webGLDebugSymbols: 2` → `0` (T59 종결 뒤 · 제약 없음) — **🔄 코드 push(워커 H · sess-1557-2521 · 결정 166 · 조건 = 주인이 심볼 빌드 gh-pages `c1f9c05` 를 열어 봄(T64 메모) · 확인 = 그 커밋의 CI build-webgl 배포 스모크 초록 → 다음 워커가 ✅)**
 
 범위: `ProjectSettings/ProjectSettings.asset` 한 줄.
 
