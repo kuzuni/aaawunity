@@ -168,103 +168,121 @@ namespace KkomaKnight.Game
             t.rectTransform.anchorMin = new Vector2(0, 1); t.rectTransform.anchorMax = new Vector2(1, 1); t.rectTransform.pivot = new Vector2(0.5f, 1); t.rectTransform.anchoredPosition = new Vector2(0, -20); t.rectTransform.sizeDelta = new Vector2(0, 160);
         }
 
-        // ───────────────────────── 장비 세부 팝업 (주인 지정 Character_Hero_Item_Detail_01 · 참고 장비 세부팝업.jpg) ─────────────────────────
+        // ───────────────────────── 장비 세부 팝업 — 레퍼런스 docs/ref/07_gear_detail.jpg 구도(표 ④ · 공통 팝업 문법 UiKit.Popup · T38 · T27 «Character_Hero_Item_Detail_01 그대로» 폐기) ─────────────────────────
+        /// <summary>등급 색 이름 → 박스 윗변 등급 탭(Title_01 명판 변형) 키 — gray(일반)는 갈색 명판.</summary>
+        static string BadgeKey(string colorName) => colorName == "gray" ? "ui.titleBrown" : "ui.title." + colorName;
+        static string Hex(Color c) => ColorUtility.ToHtmlStringRGB(c);
+        /// <summary>어두운 pill(fr.r12 · 잉크색) + 글자 — 메타줄 «슬롯 Lv. N/최대»·«부위», 스탯 박스, 옵션 줄, 비용 줄이 같은 조각을 쓴다.</summary>
+        static RectTransform Pill(RectTransform parent, string name, Layout.R r, float alpha = 0.85f)
+        {
+            var p = UiKit.Panel(parent, name, "fr.r12", Palette.A(Palette.Ink, alpha)); UiKit.Pct(p.rectTransform, r); return p.rectTransform;
+        }
+        /// <summary>
+        /// 표 ④ 의 공통 뼈대: 어둠 + 패널(GdBox) + 박스 윗변 <b>등급 탭</b>(GdBadge · 등급색 명판) → 왼쪽 <b>아이콘 칸</b>(GdIcon · 장비 칸 Cell «+N» 포함 · 빈 슬롯은 빈 프레임) · 오른쪽 <b>이름 굵게</b>(GdName) + <b>pill 2</b>(GdMeta · «슬롯 Lv. N/최대» · «부위») → «탭하여 닫기»(배경 탭 = 닫기 · 닫기 X 없음).
+        /// 돌려주는 box 안에 스탯 박스(GdStats) · 옵션 줄(GdOpts) · 비용 줄(GdCost) · 버튼 2(GdBtnL/R) 를 Pct 로 놓는다(<see cref="OpenDetail"/> · <see cref="OpenSlot"/>).
+        /// </summary>
+        static RectTransform DetailFrame(App app, string badge, string colorName, GearItem g, string name, Color nameColor, string pill1, string pill2)
+        {
+            var ov = app.Overlay; var B = Layout.GdBox;
+            string bk = BadgeKey(colorName);
+            var box = ov.OpenBox("ui.popup", bk, badge, B, () => ov.Close());
+            var rib = UiKit.Find(box, bk); if (rib != null) { var rr = (RectTransform)rib; rr.sizeDelta = UiKit.PxSize(Layout.GdBadge) + new Vector2(70, 36); rr.anchoredPosition = new Vector2(0, 6); }   // 등급 탭 = 표 배지 크기(글자 여유만)
+            var slot = UiKit.Rect(box, "IconSlot"); UiKit.Pct(slot, Layout.GdIcon.Within(B));
+            if (g != null) { var cell = Cell(slot, app.Data, g, new CellOpts(), null); UiKit.Stretch(cell); }
+            else { var e = UiKit.Panel(slot, "Empty", "fr.itemBg", Palette.A(Palette.Gray, 0.55f)); UiKit.Stretch(e.rectTransform); }
+            var nmR = Layout.GdName.Within(B);
+            var nm = UiKit.Label(box, nmR.X, nmR.Y, nmR.W, nmR.H, name, 44, nameColor, TextAnchor.MiddleLeft, true, true); nm.name = "Name"; nm.fontStyle = FontStyle.Bold;
+            var meta = Layout.GdMeta.Within(B);
+            var p1 = Pill(box, "Pill1", new Layout.R(meta.X, meta.Y, meta.W * 0.47f, meta.H)); var t1 = UiKit.Text(p1, pill1, 28, Palette.Cream, TextAnchor.MiddleCenter, true, false); UiKit.Stretch(t1.rectTransform, 8, 2, 8, 2);
+            var p2 = Pill(box, "Pill2", new Layout.R(meta.X + meta.W * 0.53f, meta.Y, meta.W * 0.47f, meta.H)); var t2 = UiKit.Text(p2, pill2, 28, Palette.Cream, TextAnchor.MiddleCenter, true, false); UiKit.Stretch(t2.rectTransform, 8, 2, 8, 2);
+            return box;
+        }
+        /// <summary>스탯 박스(GdStats) — 머리 «스탯» + 줄 3(공격력 · 체력 · 실드 · 값은 초록 «+N»). 빈 슬롯은 안내 한 줄.</summary>
+        static void StatsBox(RectTransform box, GameData D, GearItem g, int lv, bool eqd)
+        {
+            var st = Layout.GdStats.Within(Layout.GdBox);
+            var sp = Pill(box, "Stats", st, 0.75f);
+            string gh = Hex(Palette.Green);
+            UiKit.Label(sp, 3, 2, 60, 26, "스탯", 28, Palette.Cream, TextAnchor.MiddleLeft, true, false).fontStyle = FontStyle.Bold;
+            if (g == null) { UiKit.Label(sp, 3, 30, 94, 66, $"슬롯 1레벨당 이 부위 장비의 공격력·체력·실드 +{D.Gear.SlotStep * 100:0.#}% (상한 Lv.{D.Gear.SlotLvMax})", 24, Palette.CreamDark, TextAnchor.MiddleLeft, true, false); return; }
+            var c = GearSystem.Contribution(D, g, lv);
+            var rows = new (string icon, string label, double v)[] { (Icons.Stat("dmg"), "공격력", c.Atk), ("pi.heart", "체력", c.Hp), ("pi.shield", "실드", c.Sh) };
+            for (int i = 0; i < rows.Length; i++)
+            {
+                float y = 28 + i * 24;
+                var ic = UiKit.Icon(sp, "ic", rows[i].icon); UiKit.Pct(ic.rectTransform, 3, y, 6, 22);
+                var t = UiKit.Label(sp, 11, y, 86, 22, $"{rows[i].label}  <color=#{gh}>+{UiKit.Fmt(rows[i].v)}</color>", 26, Palette.Cream, TextAnchor.MiddleLeft, true, false); t.name = "Stat:" + i;
+            }
+            if (eqd) { var s2 = UiKit.Label(box, st.X + st.W * 0.55f, st.Y + st.H * 0.02f, st.W * 0.44f, st.H * 0.26f, $"슬롯 Lv당 +{D.Gear.SlotStep * 100:0.#}%", 22, Palette.CreamDark, TextAnchor.MiddleRight, true, false); s2.name = "SlotHint"; }
+        }
+        /// <summary>옵션 줄(GdOpts · 줄 피치 ≤ 2.4%) — 해금 = 등급색 세트 아이콘 + 등급색 글자 · 잠금 = 자물쇠 + 흐린 글자 «(등급 이상)». 규칙(OptCount) 은 기존 그대로.</summary>
+        static void OptionRows(RectTransform box, GameData D, GearItem g)
+        {
+            var region = Layout.GdOpts.Within(Layout.GdBox);
+            var opts = D.Gear.Options.TryGetValue(g.Type, out var ol) ? ol : new List<GearOption>();
+            int n = D.Gear.OptCount(g.Rar, g.Plus); int R = D.Gear.RarName.Length;
+            var host = UiKit.Rect(box, "Options"); UiKit.Pct(host, region);
+            if (opts.Count == 0) { UiKit.Label(host, 2, 0, 96, 100, "세트 옵션 없음", 24, Palette.InkLight); return; }
+            float pitch = Mathf.Min(Layout.GdOptPitch, Layout.GdOpts.H / opts.Count);   // 프레임 % → 줄 하나가 차지하는 비율
+            float rowPct = pitch / Layout.GdOpts.H * 100f;
+            for (int i = 0; i < opts.Count; i++)
+            {
+                bool on = i < n; string tier = i < R ? RarName(D, i) : $"신화 +{(i - R + 1) * 3}강";
+                var color = i < R ? Palette.ByName(Palette.RarName(i)) : Palette.Plum;
+                var row = Pill(host, "Opt:" + i, new Layout.R(0, i * rowPct, 100, rowPct * 0.92f), on ? 0.7f : 0.45f);
+                var ic = UiKit.Icon(row, "ic", on ? SetIcon(Set(D, g)) : "ui.iconLock", on ? color : Palette.A(Palette.Gray, 0.9f)); UiKit.Pct(ic.rectTransform, 1.5f, 12, 5, 76);
+                var t = UiKit.Label(row, 8, 0, 90, 100, on ? opts[i].Desc : $"{opts[i].Desc}  ({tier} 이상)", 24, on ? color : Palette.A(Palette.Gray, 0.8f), TextAnchor.MiddleLeft, true, false);
+                if (!on) { var cg = UiKit.Ensure<CanvasGroup>(row.gameObject); cg.alpha = 0.75f; }
+            }
+        }
+        /// <summary>비용 줄(GdCost) — 🪙 «보유/비용»(보유가 모자라면 빨강 · 충분하면 초록) · MAX 면 «슬롯 MAX (Lv.N)».</summary>
+        static void CostRow(RectTransform box, SaveData S, double cost, bool maxed, int maxLv)
+        {
+            var r = Layout.GdCost.Within(Layout.GdBox);
+            var row = Pill(box, "Cost", r, 0.75f);
+            var ic = UiKit.Icon(row, "ic", "pi.coins"); UiKit.Pct(ic.rectTransform, 30, 8, 5, 84);
+            string s = maxed ? $"슬롯 MAX (Lv.{maxLv})" : $"<color=#{Hex(S.Gold >= cost ? Palette.Green : Palette.Red)}>{UiKit.Fmt(S.Gold)}</color>/{UiKit.Fmt(cost)}";
+            var t = UiKit.Label(row, 36, 0, 40, 100, s, 28, Palette.Cream, TextAnchor.MiddleLeft, true, false); t.name = "CostText";
+        }
+        /// <summary>표 ④ «장비 세부 팝업»: 등급 탭 → 아이콘 칸(+N) · 이름 · «슬롯 Lv. N/최대»·«부위» pill → 스탯 박스(초록 +값) → 옵션 줄(등급색 · 잠금 흐림) → 비용 줄 → 해제/장착(파랑) · 슬롯 강화(주황) → «탭하여 닫기». 규칙·수치는 예전 그대로.</summary>
         public static void OpenDetail(App app, GearItem g, Action onChanged)
         {
             var D = app.Data; var S = app.Save; var ov = app.Overlay;
             if (g == null) { ov.Close(); return; }
             if (g.IsNew) { g.IsNew = false; app.Persist(); onChanged?.Invoke(); }
             int lv = S.SlotLv(g.Part); double cost = D.Gear.SlotCost(lv); bool eqd = S.IsEquipped(g); bool maxed = lv >= D.Gear.SlotLvMax;
-            var root = ov.OpenPrefab("ui.itemDetail"); var rt = (RectTransform)root.transform;
-            var popup = UiKit.Find(rt, "Popup"); if (popup != null) UiKit.Pct((RectTransform)popup, Layout.GdBox);
+            string colorName = Palette.RarName(g.Rar);
+            var box = DetailFrame(app, RarName(D, g.Rar), colorName, g, Name(D, g) + (g.Plus > 0 ? " +" + g.Plus : ""), Palette.ByName(colorName), $"슬롯 Lv. {lv}/{D.Gear.SlotLvMax}", PartName(D, g.Part));
+            StatsBox(box, D, g, lv, eqd);
+            OptionRows(box, D, g);
+            CostRow(box, S, cost, maxed, D.Gear.SlotLvMax);
             var B = Layout.GdBox;
-            // 등급 배지 — Label_Tapered_01 의 Bg 를 등급색으로
-            var badge = UiKit.FindAny(rt, "Label_Tapered_01_Plum", "Label_Tapered_01");
-            if (badge != null) { var br = (RectTransform)badge; UiKit.Pct(br, Layout.GdBadge.Within(B)); UiKit.SetText(badge, "Text (TMP)", RarName(D, g.Rar)); UiKit.SetSprite(badge, "Bg", null, Palette.ByName(Palette.RarName(g.Rar))); UiKit.SetSprite(badge, "Deco", null, Palette.A(Palette.White, 0.25f)); }
-            var slot = UiKit.Find(rt, "Slot");
-            if (slot != null) { UiKit.Pct((RectTransform)slot, Layout.GdIcon.Within(B)); UiKit.Clear(slot); Cell(slot, D, g, new CellOpts(), null); }
-            var nm = UiKit.SetText(rt, "Text_ItemName", Name(D, g) + (g.Plus > 0 ? " +" + g.Plus : ""), Palette.ByName(Palette.RarName(g.Rar)));
-            if (nm != null) { UiKit.Pct(nm.rectTransform, Layout.GdName.Within(B)); nm.alignment = TextAnchor.MiddleLeft; nm.resizeTextForBestFit = true; nm.resizeTextMaxSize = 48; }
-            var meta = UiKit.SetText(rt, "Text_Level", $"{PartName(D, g.Part)} · {SetLabel(D, g)} · 슬롯 Lv.{lv}", Palette.InkSoft, 28);
-            if (meta != null) { UiKit.Pct(meta.rectTransform, Layout.GdMeta.Within(B)); meta.alignment = TextAnchor.MiddleLeft; meta.resizeTextForBestFit = true; meta.resizeTextMaxSize = 28; }
-            UiKit.Hide(rt, "Slider_Upgrade_01", "Text_GearStats", "LineFrame_01_s_Brown");
-            var list = UiKit.Find(rt, "Group_Buff");
-            if (list != null)
+            if (eqd) UiKit.Button(box, "ui.btnBlue", "해제", () => { S.Eq.Remove(g.Part); app.Persist(); Audio.Sfx("snd.equip"); ov.Close(); onChanged?.Invoke(); }, Layout.GdBtnL.Within(B)).name = "BtnL";
+            else UiKit.Button(box, "ui.btnBlue", "장착", () => { S.Eq[g.Part] = g.Uid; g.IsNew = false; app.Persist(); Audio.Sfx("snd.equip"); ov.Close(); onChanged?.Invoke(); }, Layout.GdBtnL.Within(B)).name = "BtnL";
+            var up = UiKit.Button(box, "ui.btnOrange", maxed ? "슬롯 MAX" : "슬롯 강화", () =>
             {
-                // 스탯 섹션(y39.5 h9.5) + 옵션 목록(y48 h14) 을 한 목록으로 — 줄 피치 2.4
-                var region = new Layout.R(Layout.GdStats.X, Layout.GdStats.Y, Layout.GdStats.W, Layout.GdOpts.Y + Layout.GdOpts.H - Layout.GdStats.Y);
-                UiKit.Pct((RectTransform)list, region.Within(B));
-                var tpl = list.childCount > 0 ? list.GetChild(0).gameObject : null;
-                var rows = new List<GameObject>(); for (int i = 0; i < list.childCount; i++) rows.Add(list.GetChild(i).gameObject);
-                var c = GearSystem.Contribution(D, g, lv);
-                var lines = new List<(string, Color)>
-                {
-                    ($"공격력 +{UiKit.Fmt(c.Atk)}    체력 +{UiKit.Fmt(c.Hp)}    실드 +{UiKit.Fmt(c.Sh)}", Palette.Ink),
-                };
-                if (eqd) lines.Add(($"슬롯 1레벨당 이 부위 장비의 공격력·체력·실드 +{D.Gear.SlotStep * 100:0.#}% (상한 Lv.{D.Gear.SlotLvMax})", Palette.InkLight));
-                var opts = D.Gear.Options.TryGetValue(g.Type, out var ol) ? ol : new List<GearOption>();
-                int n = D.Gear.OptCount(g.Rar, g.Plus); int R = D.Gear.RarName.Length;
-                lines.Add(($"세트 옵션 ({n}/{opts.Count} 해금)", Palette.Ink));
-                for (int i = 0; i < opts.Count; i++)
-                {
-                    bool on = i < n; string need = i < R ? $"{RarName(D, i)} 이상" : $"신화 +{(i - R + 1) * 3}강";
-                    lines.Add(((on ? "◆ " : "🔒 ") + opts[i].Desc + (on ? "" : $"  ({need})"), on ? Palette.InkSoft : Palette.A(Palette.InkLight, 0.7f)));
-                }
-                if (eqd) { var costTxt = UiKit.Label(popup != null ? (RectTransform)popup : rt, 0, 0, 0, 0, $"슬롯 강화 Lv.{lv} → {(maxed ? "MAX" : "Lv." + (lv + 1))}   {(maxed ? $"상한 Lv.{D.Gear.SlotLvMax}" : "🪙 " + UiKit.Fmt(cost))}", 28, Palette.Orange, TextAnchor.MiddleLeft, true, false); UiKit.Pct(costTxt.rectTransform, Layout.GdCost.Within(B)); }
-                float rowH = UiKit.FrameH * Layout.GdOptPitch / 100f;
-                for (int i = 0; i < lines.Count; i++)
-                {
-                    GameObject row = i < rows.Count ? rows[i] : (tpl != null ? UnityEngine.Object.Instantiate(tpl, list) : null);
-                    if (row == null) break;
-                    row.SetActive(true);
-                    var txt = UiKit.SetText(row.transform, "Text_Buff", lines[i].Item1, lines[i].Item2, 24);
-                    if (txt != null) { txt.resizeTextForBestFit = true; txt.resizeTextMinSize = 12; txt.resizeTextMaxSize = 24; txt.horizontalOverflow = HorizontalWrapMode.Wrap; txt.verticalOverflow = VerticalWrapMode.Truncate; }
-                    var le = UiKit.Ensure<LayoutElement>(row); le.preferredHeight = rowH; le.minHeight = rowH;
-                }
-                for (int i = lines.Count; i < rows.Count; i++) rows[i].SetActive(false);
-                var vl = list.GetComponent<VerticalLayoutGroup>(); if (vl != null) { vl.spacing = 0; vl.padding = new RectOffset(0, 0, 0, 0); vl.childForceExpandHeight = false; vl.childControlHeight = true; vl.childAlignment = TextAnchor.UpperLeft; }
-            }
-            var btns = UiKit.Find(rt, "Group_Buttons");
-            if (btns != null && btns.childCount >= 2)
-            {
-                foreach (var lg in btns.GetComponents<LayoutGroup>()) lg.enabled = false;
-                UiKit.Pct((RectTransform)btns, Layout.GdBtns.Within(B));
-                var b1 = btns.GetChild(0); var b2 = btns.GetChild(1);
-                var l = Layout.GdBtnL.Within(Layout.GdBtns); var r = Layout.GdBtnR.Within(Layout.GdBtns);
-                UiKit.Pct((RectTransform)b1, l.X, 0, l.W, 100); UiKit.Pct((RectTransform)b2, r.X, 0, r.W, 100);
-                if (eqd)
-                {
-                    UiKit.SetText(b1, "Text (TMP)", "해제"); UiKit.Clickable(b1, () => { S.Eq.Remove(g.Part); app.Persist(); Audio.Sfx("snd.equip"); ov.Close(); onChanged?.Invoke(); });
-                    UiKit.SetText(b2, "Text_Title", maxed ? "슬롯 MAX" : "슬롯 강화"); UiKit.SetText(b2, "Text", maxed ? $"Lv.{D.Gear.SlotLvMax}" : UiKit.Fmt(cost));
-                    var bb = UiKit.Clickable(b2, () => { double c2 = D.Gear.SlotCost(S.SlotLv(g.Part)); if (S.Gold < c2 || S.SlotLv(g.Part) >= D.Gear.SlotLvMax) { app.Toast("골드가 부족합니다"); return; } S.Gold -= c2; S.Slots[g.Part] = S.SlotLv(g.Part) + 1; app.Persist(); onChanged?.Invoke(); OpenDetail(app, g, onChanged); });
-                    UiKit.SetInteractable(bb, !maxed && S.Gold >= cost);
-                }
-                else
-                {
-                    UiKit.SetText(b1, "Text (TMP)", "장착"); UiKit.Clickable(b1, () => { S.Eq[g.Part] = g.Uid; g.IsNew = false; app.Persist(); Audio.Sfx("snd.equip"); ov.Close(); onChanged?.Invoke(); });
-                    b2.gameObject.SetActive(false);
-                }
-            }
-            var close = UiKit.Find(rt, "Button_Close_01");
-            if (close != null) { close.SetParent(rt, false); UiKit.Pct((RectTransform)close, 45, Layout.GdClose.Y - 2.5f, 10, Layout.GdClose.H + 3f); UiKit.Clickable(close, () => ov.Close()); }   // 닫기는 상자 밖 y91.5
+                double c2 = D.Gear.SlotCost(S.SlotLv(g.Part)); if (S.Gold < c2 || S.SlotLv(g.Part) >= D.Gear.SlotLvMax) { app.Toast("골드가 부족합니다"); return; }
+                S.Gold -= c2; S.Slots[g.Part] = S.SlotLv(g.Part) + 1; app.Persist(); onChanged?.Invoke(); OpenDetail(app, g, onChanged);
+            }, Layout.GdBtnR.Within(B)); up.name = "BtnR";
+            UiKit.SetInteractable(up.GetComponent<Button>(), !maxed && S.Gold >= cost);
         }
 
-        /// <summary>빈 부위 팝업 — 슬롯 강화만.</summary>
+        /// <summary>빈 부위 팝업 — 같은 구도(장비 없는 상태 · 등급 탭 = «부위 슬롯» · 빈 아이콘 칸 · 스탯 박스에 슬롯 안내 · 옵션 자리에 «장착된 장비가 없습니다» · 비용 줄 · 강화만 · 탭하여 닫기).</summary>
         public static void OpenSlot(App app, string part, Action onChanged)
         {
             var D = app.Data; var S = app.Save; var ov = app.Overlay;
             int lv = S.SlotLv(part); double cost = D.Gear.SlotCost(lv); bool maxed = lv >= D.Gear.SlotLvMax;
-            var box = ov.OpenBox("ui.popup", "ui.title.tangerine", $"{PartName(D, part)} 슬롯", new Layout.R(8, 32, 84, 34));
-            UiKit.Label(box, 6, 12, 88, 10, "장착된 장비가 없습니다", 32, Palette.InkSoft);
-            UiKit.Label(box, 6, 26, 88, 12, $"슬롯 강화 Lv.{lv} → {(maxed ? "MAX" : "Lv." + (lv + 1))}   {(maxed ? $"상한 Lv.{D.Gear.SlotLvMax}" : "🪙 " + UiKit.Fmt(cost))}", 30, Palette.Orange);
-            UiKit.Label(box, 6, 40, 88, 14, $"슬롯 1레벨당 이 부위 장비의 공격력·체력·실드 +{D.Gear.SlotStep * 100:0.#}% (상한 Lv.{D.Gear.SlotLvMax})", 24, Palette.InkLight);
-            var up = UiKit.Button(box, "ui.btnGreen", maxed ? "슬롯 MAX" : $"슬롯 강화 🪙{UiKit.Fmt(cost)}", () =>
+            var box = DetailFrame(app, $"{PartName(D, part)} 슬롯", "gray", null, "비어 있음", Palette.InkLight, $"슬롯 Lv. {lv}/{D.Gear.SlotLvMax}", PartName(D, part));
+            StatsBox(box, D, null, lv, false);
+            var region = Layout.GdOpts.Within(Layout.GdBox);
+            UiKit.Label(box, region.X, region.Y, region.W, region.H, "장착된 장비가 없습니다\n인벤에서 이 부위의 장비를 골라 장착하세요", 28, Palette.InkLight, TextAnchor.MiddleCenter, true, false).name = "EmptyHint";
+            CostRow(box, S, cost, maxed, D.Gear.SlotLvMax);
+            var up = UiKit.Button(box, "ui.btnOrange", maxed ? "슬롯 MAX" : "슬롯 강화", () =>
             {
                 double c2 = D.Gear.SlotCost(S.SlotLv(part)); if (S.Gold < c2 || S.SlotLv(part) >= D.Gear.SlotLvMax) { app.Toast("골드가 부족합니다"); return; }
                 S.Gold -= c2; S.Slots[part] = S.SlotLv(part) + 1; app.Persist(); onChanged?.Invoke(); OpenSlot(app, part, onChanged);
-            }, new Layout.R(10, 58, 52, 18));
+            }, Layout.GdBtnR.Within(Layout.GdBox)); up.name = "BtnR";
             UiKit.SetInteractable(up.GetComponent<Button>(), !maxed && S.Gold >= cost);
-            UiKit.Button(box, "ui.btnGray", "닫기", () => ov.Close(), new Layout.R(66, 58, 26, 18));
         }
     }
 }

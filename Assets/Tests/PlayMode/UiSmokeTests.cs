@@ -285,7 +285,21 @@ namespace KkomaKnight.Tests.Play
             var g0 = items[0];
             GearUi.OpenDetail(_app, g0, _app.Current.Refresh); yield return Frames(2);
             Check("장비 세부 팝업", expectOverlay: true);
-            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.itemDetail"), "세부 팝업 = Character_Hero_Item_Detail_01(ui.itemDetail)");
+            // T38 — 레퍼런스 07 구도(표 ④): 패널 = GdBox · 등급 탭 · 아이콘 칸 · 이름 · pill 2 · 스탯 박스(초록) · 옵션 줄 · 비용 줄 · 버튼 2 · «탭하여 닫기»(X 없음) — Character_Hero_Item_Detail_01 통째 스폰 0
+            {
+                var ovr = _app.Overlay.Root;
+                Assert.IsNull(UiKit.Find(ovr, "ui.itemDetail"), "세부 팝업은 프리팹 통째가 아니다(T38)");
+                var bx = (RectTransform)UiKit.Find(ovr, "ui.popup"); Assert.IsNotNull(bx, "세부 패널(ui.popup)");
+                Assert.AreEqual(Layout.GdBox.X, bx.anchorMin.x * 100f, 0.5f, "패널 x = 표 ④"); Assert.AreEqual(1f - Layout.GdBox.Y / 100f, bx.anchorMax.y, 1e-3f, "패널 y = 표 ④"); Assert.AreEqual(Layout.GdBox.H, (bx.anchorMax.y - bx.anchorMin.y) * 100f, 0.5f, "패널 높이 = 표 ④");
+                Assert.IsNotNull(UiKit.Find(bx, "IconSlot"), "아이콘 칸"); Assert.IsNotNull(UiKit.Find(bx, "gear:" + g0.Uid), "아이콘 칸 = 장비 칸(Cell)");
+                Assert.IsNotNull(UiKit.Find(bx, "Name"), "이름줄"); Assert.IsNotNull(UiKit.Find(bx, "Pill1"), "pill «슬롯 Lv»"); Assert.IsNotNull(UiKit.Find(bx, "Pill2"), "pill «부위»");
+                Assert.IsTrue(HasText(s => s.StartsWith("슬롯 Lv. ")), "메타 pill 글자"); Assert.IsTrue(HasText(s => s == GearUi.PartName(D, g0.Part)), "부위 pill");
+                Assert.IsNotNull(UiKit.Find(bx, "Stats"), "스탯 박스"); Assert.AreEqual(3, CountNamed(UiKit.Find(bx, "Stats"), "Stat:"), "스탯 줄 3(공격력·체력·실드)");
+                var opts = UiKit.Find(bx, "Options"); Assert.IsNotNull(opts, "옵션 목록"); Assert.AreEqual(D.Gear.Options.TryGetValue(g0.Type, out var ol0) ? ol0.Count : 0, CountNamed(opts, "Opt:"), "옵션 줄 수 = 세트 옵션 수");
+                Assert.IsNotNull(UiKit.Find(bx, "Cost"), "비용 줄"); Assert.IsNotNull(UiKit.Find(bx, "BtnL"), "왼쪽 버튼(장착/해제)"); Assert.IsNotNull(UiKit.Find(bx, "BtnR"), "오른쪽 버튼(슬롯 강화)");
+                Assert.IsTrue(HasText(s => s == GearUi.RarName(D, g0.Rar)), "등급 탭 글자"); Assert.IsTrue(HasText(s => s == "탭하여 닫기"), "탭하여 닫기"); Assert.IsNull(UiKit.Find(ovr, "Button_Close_01"), "닫기 X 없음");
+                var l = (RectTransform)UiKit.Find(bx, "BtnL"); var r = (RectTransform)UiKit.Find(bx, "BtnR"); Assert.Less(l.anchorMax.x, r.anchorMin.x + 1e-3f, "버튼 2 = 왼쪽 파랑 · 오른쪽 주황");
+            }
             Assert.IsTrue(Click(_app.Overlay.Root, s => s == "장착"), "«장착» 버튼"); yield return Frames(2);
             Assert.IsTrue(S.IsEquipped(g0), "장착됐어야 한다"); Assert.IsFalse(_app.Overlay.IsOpen);
             Assert.AreEqual(items.Count - 1, CountNamed(content, "gear:"), "장착한 장비는 인벤 리스트에서 숨긴다");
@@ -297,7 +311,7 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(HasText(s => s == "해제"), "«해제» 버튼"); Assert.IsTrue(HasText(s => s.StartsWith("슬롯 강화") || s == "슬롯 MAX"), "슬롯 강화 버튼");
             Assert.IsTrue(Click(_app.Overlay.Root, s => s == "슬롯 강화"), "슬롯 강화 클릭"); yield return Frames(2);
             Assert.AreEqual(1, S.SlotLv(g0.Part), "슬롯 Lv 0 → 1"); Check("슬롯 강화 뒤(팝업 다시 열림)", expectOverlay: true);
-            Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Button_Close_01"), "세부 팝업 닫기(X)"); yield return Frames(1);
+            Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), "세부 팝업 배경 탭 = 닫기(T38)"); yield return Frames(1);
             Assert.IsFalse(_app.Overlay.IsOpen);
 
             // 투구·무기·갑옷 전부 장착 → 외형(GearLook) 반영 · 슬롯 아이콘
@@ -350,8 +364,10 @@ namespace KkomaKnight.Tests.Play
             S.Eq.Remove(items[1].Part);
             GearUi.OpenSlot(_app, items[1].Part, _app.Current.Refresh); yield return Frames(2);
             Check("슬롯 팝업", expectOverlay: true);
-            Assert.IsTrue(HasText(s => s.EndsWith("슬롯")), "슬롯 팝업 제목");
-            Assert.IsTrue(Click(_app.Overlay.Root, s => s == "닫기"), "슬롯 팝업 닫기"); yield return Frames(1);
+            Assert.IsTrue(HasText(s => s.EndsWith("슬롯")), "슬롯 팝업 등급 탭 = «부위 슬롯»");
+            Assert.IsTrue(HasText(s => s == "비어 있음") && HasText(s => s.StartsWith("장착된 장비가 없습니다")), "빈 슬롯 = 같은 구도(이름 «비어 있음» · 옵션 자리 안내)");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "BtnR"), "강화 버튼만"); Assert.IsNull(UiKit.Find(_app.Overlay.Root, "BtnL"), "빈 슬롯엔 장착/해제 없음");
+            Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), "슬롯 팝업 배경 탭 = 닫기"); yield return Frames(1);
             Assert.IsFalse(_app.Overlay.IsOpen); Check("슬롯 팝업 닫힘");
             yield return Shutdown();
         }

@@ -649,7 +649,7 @@
     "ui.iconLock": "잠금 자물쇠(성 위에 겹침 · 껍데기 화면의 잠금 표시 공용)",
     "ui.iconDungeon": "로비 오른쪽 아래 «이벤트» 아이콘 (레퍼런스의 방패 자리 · OnSide(events) → T43 던전/아레나)",
     "ui.iconMedal": "로비 이벤트 배너 왼쪽 메달 아이콘(패스 껍데기)",
-    "ui.itemDetail": "장비 세부 팝업 (Character_Hero_Item_Detail_01) — 등급 배지 · 아이콘 · 이름 · 슬롯 Lv 바 · 기여/옵션 목록 · 장착/해제/슬롯 강화",
+    "ui.itemDetail": "(T38 부터 세부 팝업은 공통 팝업 문법으로 조립 · 이 프리팹은 안 씀 · 예비)",
     "ui.shopList": "상점 (주인 지정 Shop_List · T9 부터 프리팹 원형 그대로 · 요소 이동 없음 · 스크롤·섹션·비율 그대로) — ListItem_ShopPackage ×3(프리팹 2개 + 복제 1개) = 뽑기 상자 3종(gacha.json 순서 · 1회/10회 = Button_Price 와 그 복제) · Title_DailyDeals+Group_Item = 일일 무료 보급(Timer_01 = 자정까지) · Title_Gem+Group_Gem1/2 = 다이아 6종 · Title_Gold+Group_Gold = 골드 3종(칸은 전부 ListItem_ShopItem) · 하단 Tab_02_BoxMenu_Text 3칸 = 뽑기/다이아/골드 로 스크롤 · Tab_01_BottomFlushMenu = NavBar · ResourceBar_Group = 골드·보석. Group_Chest·Title_Silver·Group_Silver 는 끈다(이 게임에 없는 상품)",
     "ui.shopItem": "상점 상품 칸 (주인 지정 ListItem_ShopItem · 323.78×419.78 그대로) — Text_Title 상품명 · Icon 재화 그림 · Text_ItemNum 수량 · Text_Limit 부제 · Button_Price(GroupArea Icon+Text) 가격. 다이아 6(₩ · 모의 결제) · 골드 3(다이아 소모) · 일일 무료 보급 · 추가 보급(잠김)",
     "ui.equipment": "장비 화면 인벤 격자 값의 원본(GearUi.CopyEquipmentGrid 가 Content 의 GridLayoutGroup 만 읽는다). T37(레퍼런스 06_gear.jpg 구도)부터 화면에는 세우지 않는다 — 슬롯·스탯·버튼은 조각으로 재조립",

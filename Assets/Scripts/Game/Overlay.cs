@@ -64,7 +64,7 @@ namespace KkomaKnight.Game
             _cur = root;
             return root;
         }
-        public RectTransform OpenBox(string popupKey, string titleKey, string title, Layout.R rect) => Box(popupKey, titleKey, title, rect);
+        public RectTransform OpenBox(string popupKey, string titleKey, string title, Layout.R rect, Action onTapClose = null) => Box(popupKey, titleKey, title, rect, onTapClose);
 
         Text Sub(RectTransform box, string s, float y = 9, float h = 7, int size = 36, Color? c = null)
             => UiKit.Label(box, 6, y, 88, h, s, size, c ?? Palette.InkSoft, TextAnchor.MiddleCenter, true, false);
