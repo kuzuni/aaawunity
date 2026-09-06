@@ -208,6 +208,41 @@ namespace KkomaKnight.Game
             return bar;
         }
 
+        // ───────────────────────── 공통 팝업 문법 (docs/ref/README.md «공통 문법» · T36 — T38·T41·T42·T44 가 같이 쓴다) ─────────────────────────
+        /// <summary><see cref="Popup"/> 이 만든 조각들 — 안의 내용은 <see cref="Box"/> 에 <see cref="Pct"/> 로 배치한다.</summary>
+        public sealed class PopupParts { public RectTransform Dim, Box, Ribbon; public Text Title, TapClose; }
+        /// <summary>
+        /// 레퍼런스 공통 팝업: <b>어두운 반투명 배경</b> 위 <b>둥근 패널</b>(Popup_Box 변형 · <paramref name="popupKey"/>) · 제목은 패널 윗변에 걸친 <b>리본/명판</b>(<paramref name="titleKey"/> · 가운데) ·
+        /// 프레임 밖 아래 가운데 <b>«탭하여 닫기»</b> 흰 글자(<see cref="Layout.BookClose"/> 줄 · 닫기 X 버튼 없음 · <b>배경 탭으로 닫힘</b> = <paramref name="onTapClose"/>). onTapClose 가 null 이면 닫기 글자·배경 탭 없음(선택을 강제하는 이벤트 팝업).
+        /// 조각은 전부 GUI Pro 프리팹 · 코드 도형 0. 상자 안 배치는 돌려준 <see cref="PopupParts.Box"/> 에 Pct 로.
+        /// </summary>
+        public static PopupParts Popup(Transform layer, string title, Layout.R rect, Action onTapClose, string popupKey = "ui.popup", string titleKey = "ui.title.tangerine", bool dim = true)
+        {
+            var parts = new PopupParts();
+            if (dim)
+            {
+                var d = Rect(layer, "Dimmed"); Stretch(d);
+                var di = d.gameObject.AddComponent<Image>(); di.color = Palette.A(Palette.Dim, 0.85f); di.raycastTarget = true;
+                FadeIn(di, 0.85f);
+                parts.Dim = d;
+            }
+            var box = SpawnRt(popupKey, layer, rect);
+            foreach (var g in box.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;   // 상자 뒤로 클릭이 새지 않게
+            var ribbon = Spawn(titleKey, box); var rr = (RectTransform)ribbon.transform;
+            rr.anchorMin = rr.anchorMax = new Vector2(0.5f, 1f); rr.pivot = new Vector2(0.5f, 0.5f); rr.sizeDelta = new Vector2(656, 115); rr.anchoredPosition = new Vector2(0, 8);
+            var tt = SetText(rr, "Text (TMP)", title); if (tt != null) { tt.resizeTextForBestFit = true; tt.resizeTextMinSize = 20; tt.resizeTextMaxSize = 52; }
+            parts.Box = box; parts.Ribbon = rr; parts.Title = tt;
+            if (onTapClose != null)
+            {
+                var tc = Text(layer, "탭하여 닫기", 40, Palette.White, TextAnchor.MiddleCenter, false, true); tc.name = "TapToClose"; tc.fontStyle = FontStyle.Bold;
+                Pct(tc.rectTransform, Layout.BookClose.X, Layout.BookClose.Y - 1.5f, Layout.BookClose.W, Layout.BookClose.H + 3f);
+                parts.TapClose = tc;
+                if (parts.Dim != null) Clickable(parts.Dim, onTapClose, false);
+            }
+            PopIn(box);
+            return parts;
+        }
+
         // ───────────────────────── 주인 에셋(GUI Pro) 프리팹 다루기 ─────────────────────────
         /// <summary>
         /// 카탈로그 프리팹을 parent 밑에 인스턴스화 + <see cref="Adopt"/>. 없으면 빈 RectTransform 을 준다(로그만).

@@ -418,6 +418,11 @@ namespace KkomaKnight.Tests.Play
             Check("레벨업 팝업", expectOverlay: true);
             var cards = UiKit.Find(_app.Overlay.Root, "Group_Card"); Assert.IsNotNull(cards, "Group_Card"); Assert.AreEqual(offer.Count, cards.childCount, "카드 수 = 제안 수");
             Assert.IsTrue(HasText(s => s == "레벨 업!"), "제목");
+            // T36 — 레퍼런스 04 구도: «새 특전을 고르세요» · 카드 = 등급 탭 + 팔각 아이콘 + 설명(수치 초록) · «새로고침 무료» + «남은 횟수 : N» · 📘 · 상단 스탯 8칸 미니
+            Assert.IsTrue(HasText(s => s == "새 특전을 고르세요"), "부제"); Assert.IsTrue(HasText(s => s == "새로고침 무료"), "새로고침 버튼"); Assert.IsTrue(HasText(s => s.StartsWith("남은 횟수 : ")), "남은 횟수");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Stats"), "상단 스탯 미니 줄"); Assert.AreEqual(BattleScreen.StatDefs.Length, CountNamed(UiKit.Find(_app.Overlay.Root, "Stats"), "ic"), "미니 줄 아이콘 8");
+            foreach (var p in offer) if (Overlay.GreenNumbers(p.Desc) != p.Desc) { Assert.IsTrue(HasText(s => s == Overlay.GreenNumbers(p.Desc)), "카드 설명의 수치는 초록 리치 텍스트"); break; }
+            if (!string.IsNullOrEmpty(offer[0].GradeName)) Assert.IsTrue(HasText(s => s == offer[0].GradeName), "카드 왼쪽 위 등급 탭");
             var first = cards.GetChild(0).GetComponent<Button>(); Assert.IsNotNull(first, "카드는 클릭 가능"); first.onClick.Invoke(); yield return Frames(3);
             Assert.AreEqual(1, G.Taken.Count, "특전 1개 획득"); Assert.IsFalse(_app.Overlay.IsOpen);
             G.Pending = null;   // 엔진이 3초 동안 쌓아 둔 레벨업이 이어서 열렸을 수 있다 — 여기서는 팝업 하나씩만 본다
@@ -426,8 +431,11 @@ namespace KkomaKnight.Tests.Play
             // 보유 특전
             _app.Overlay.PerkBook(G, null); yield return Frames(2);
             Check("보유 특전 팝업", expectOverlay: true);
-            Assert.IsTrue(HasText(s => s.StartsWith("이번 원정에서 얻은 특전")), "보유 특전 부제");
-            Assert.IsTrue(Click(_app.Overlay.Root, s => s == "닫기"), "닫기"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen);
+            // T36 — 레퍼런스 05 구도: 명판 «특전» · 긴 패널 · 카드 세로 나열 · «탭하여 닫기»(닫기 버튼 없음 · 배경 탭으로 닫힘)
+            Assert.IsTrue(HasText(s => s == "특전"), "보유 특전 명판"); Assert.IsTrue(HasText(s => s == "탭하여 닫기"), "탭하여 닫기 안내");
+            Assert.IsFalse(HasText(s => s == "닫기"), "닫기 버튼 없음(공통 팝업 문법)");
+            Assert.AreEqual(1, UiKit.Find(_app.Overlay.Root, "Content").childCount, "얻은 특전 1개 = 카드 1장");
+            Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), "배경 탭"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen, "배경 탭으로 닫힌다");
 
             // 쉼터
             G.Pending = new PendingDecision { Kind = PendingKind.Rest };

@@ -37,25 +37,22 @@ namespace KkomaKnight.Game
         }
         public void Close() { UiKit.Clear(Root); Root.gameObject.SetActive(false); _cur = null; _countdown = 0; }
 
-        /// <summary>어둠 + 팝업 상자(Popup_Box_02 변형) + 리본 제목. 돌려주는 RectTransform 안에서 Pct 로 내용을 배치한다.</summary>
-        RectTransform Box(string popupKey, string titleKey, string title, Layout.R rect, bool dim = true)
+        /// <summary>어둠 + 팝업 상자(Popup_Box_02 변형) + 리본 제목 = 공통 팝업 문법(<see cref="UiKit.Popup"/> · T36). 돌려주는 RectTransform 안에서 Pct 로 내용을 배치한다.
+        /// <paramref name="onTapClose"/> 를 주면 프레임 아래 «탭하여 닫기» + 배경 탭으로 닫힌다(정보 팝업) · null 이면 선택을 강제하는 이벤트 팝업(쉼터·악마·천사).</summary>
+        RectTransform Box(string popupKey, string titleKey, string title, Layout.R rect, Action onTapClose = null)
         {
             Begin();
-            if (dim)
-            {
-                var d = UiKit.Rect(Root, "Dimmed"); UiKit.Stretch(d);
-                var di = d.gameObject.AddComponent<Image>(); di.color = Palette.A(Palette.Dim, 0.85f); di.raycastTarget = true;
-                UiKit.FadeIn(di, 0.85f);
-            }
-            var box = UiKit.SpawnRt(popupKey, Root, rect);
-            foreach (var g in box.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;   // 상자 뒤로 클릭이 새지 않게
-            var ribbon = UiKit.Spawn(titleKey, box);
-            var rr = (RectTransform)ribbon.transform;
-            rr.anchorMin = rr.anchorMax = new Vector2(0.5f, 1f); rr.pivot = new Vector2(0.5f, 0.5f); rr.sizeDelta = new Vector2(656, 115); rr.anchoredPosition = new Vector2(0, 8);
-            var tt = UiKit.SetText(rr, "Text (TMP)", title); if (tt != null) { tt.resizeTextForBestFit = true; tt.resizeTextMinSize = 20; tt.resizeTextMaxSize = 52; }
-            UiKit.PopIn(box);
-            _cur = box.gameObject;
-            return box;
+            var parts = UiKit.Popup(Root, title, rect, onTapClose, popupKey, titleKey);
+            _cur = parts.Box.gameObject;
+            return parts.Box;
+        }
+        /// <summary>설명 글의 숫자(«+30%» · «33%» · «2초» …)만 초록으로(레퍼런스 04 «수치 초록» · T36). 리치 텍스트가 이미 있으면 그대로.</summary>
+        static readonly System.Text.RegularExpressions.Regex NumRx = new System.Text.RegularExpressions.Regex(@"[+\-−]?\d[\d,]*(\.\d+)?(%|초|배|회|칸|x)?");
+        public static string GreenNumbers(string s)
+        {
+            if (string.IsNullOrEmpty(s) || s.IndexOf('<') >= 0) return s;
+            string hex = ColorUtility.ToHtmlStringRGB(Palette.Green);
+            return NumRx.Replace(s, m => $"<color=#{hex}>{m.Value}</color>");
         }
         /// <summary>데모 프리팹 하나를 팝업 층에 그대로 세운다(Dimmed 가 있으면 클릭 차단·페이드).</summary>
         public GameObject OpenPrefab(string key)
@@ -91,7 +88,7 @@ namespace KkomaKnight.Game
             if (itemArea != null) { UiKit.Clear(itemArea); UiKit.PerkFrame(itemArea, colorName, Icons.Perk(p.Id), 162); }
             UiKit.Hide(rt, "Focus");
             var nameT = rt.Find("Text"); if (nameT != null) nameT.gameObject.SetActive(false);   // 카드 직계 "Text"(특전 이름) — 깊은 검색이면 프레임 안 글자에 잡힐 수 있어 직계로
-            var desc = UiKit.SetText(rt, "Text_Value", p.Desc, Palette.Ink, 34);
+            var desc = UiKit.SetText(rt, "Text_Value", GreenNumbers(p.Desc), Palette.Ink, 34);   // 수치만 초록(레퍼런스 04 · T36)
             if (desc != null) { desc.alignment = TextAnchor.MiddleLeft; var dr = desc.rectTransform; dr.anchorMin = new Vector2(0.24f, 0.08f); dr.anchorMax = new Vector2(0.97f, 0.92f); dr.offsetMin = dr.offsetMax = Vector2.zero; desc.resizeTextForBestFit = true; desc.resizeTextMaxSize = 34; desc.resizeTextMinSize = 18; desc.horizontalOverflow = HorizontalWrapMode.Wrap; }
             if (onClick != null) UiKit.Clickable(rt, onClick);
             return rt;
@@ -121,7 +118,7 @@ namespace KkomaKnight.Game
             // 표 ⑦ 선택창 — 상자 없음 · 배너 20/26.5 · 부제 30/31.5 · 카드 x5.5 w89 h11 피치 13 · 하단 버튼 31/79 · 인포 86/79.5
             var ribbon = UiKit.Find(rt, "Title_01_NoDeco_Tangerine"); if (ribbon != null) UiKit.Pct((RectTransform)ribbon, Layout.OvBanner.X, Layout.OvBanner.Y - 0.7f, Layout.OvBanner.W, Layout.OvBanner.H + 1.4f);
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "레벨 업!");
-            var sub = UiKit.Find(rt, "Text (TMP)"); if (sub != null) { UiKit.Pct((RectTransform)sub, Layout.OvSub); UiKit.SetText(rt, "Text (TMP)", "특전 하나를 고르세요"); }
+            var sub = UiKit.Find(rt, "Text (TMP)"); if (sub != null) { UiKit.Pct((RectTransform)sub, Layout.OvSub); UiKit.SetText(rt, "Text (TMP)", "새 특전을 고르세요"); }   // 레퍼런스 04 «Choose a New Perk»
             var group = UiKit.Find(rt, "Group_Card");
             if (group != null)
             {
@@ -136,7 +133,7 @@ namespace KkomaKnight.Game
                     UiKit.PopIn(card, 0.9f, 0.3f);
                 }
             }
-            // 주황 버튼 = 새로고침(3장 다시 굴림 · 팝업당 EngineConst.RerollPerLevelUp 번) — 주인 지시 2026-09-05. 보유 특전은 오른쪽 Book 으로.
+            // 주황 버튼 = «새로고침 무료»(3장 다시 굴림 · 팝업당 EngineConst.RerollPerLevelUp 번) + 그 아래 «남은 횟수 : N»(프리팹의 Remain 글자 자리 · 레퍼런스 04 «Refresh Free / Remain : 1» · T36). 보유 특전은 오른쪽 Book 으로.
             var btn = UiKit.Find(rt, "Button_02_Orange");
             if (btn != null)
             {
@@ -145,12 +142,11 @@ namespace KkomaKnight.Game
                 if (left <= 0) btn.gameObject.SetActive(false);   // 더 못 하면 숨긴다 (주인)
                 else
                 {
-                    // 버튼 안 글자 두 개: 본 라벨 + 데모의 «Remain : 1/1» — Remain 은 끄고(주인) 본 라벨만 «새로고침»
-                    bool labeled = false;
+                    bool labeled = false; string hex = ColorUtility.ToHtmlStringRGB(Palette.Orange);
                     foreach (var t in btn.GetComponentsInChildren<Text>(true))
                     {
-                        if (t.text != null && t.text.IndexOf("Remain", StringComparison.OrdinalIgnoreCase) >= 0) { t.gameObject.SetActive(false); continue; }
-                        if (!labeled) { t.text = "새로고침"; labeled = true; } else t.gameObject.SetActive(false);
+                        if (t.text != null && t.text.IndexOf("Remain", StringComparison.OrdinalIgnoreCase) >= 0) { t.text = $"남은 횟수 : <color=#{hex}>{left}</color>"; t.supportRichText = true; t.gameObject.SetActive(true); continue; }
+                        if (!labeled) { t.text = "새로고침 무료"; labeled = true; } else t.gameObject.SetActive(false);
                     }
                     UiKit.Clickable(btn, () => { if (G.RerollOffer()) LevelUp(G, onPick); });
                 }
@@ -160,11 +156,11 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 보유 특전 (PERKS) ─────────────────────────
+        /// <summary>보유 특전 — 레퍼런스 05 구도(T36): 명판 «특전» + 긴 패널(BookBox) + 같은 카드 형식 세로 나열(스크롤) + 프레임 아래 «탭하여 닫기»(배경 탭 = 닫기 → <paramref name="onBack"/> · 닫기 버튼 없음). 같은 특전은 ×N.</summary>
         public void PerkBook(BattleState G, Action onBack)
         {
-            var box = Box("ui.popup.blue", "ui.title.sky", "PERKS", Layout.BookBox);   // 표 ⑦ 인포 팝업 y23 h52.5 · 리본 25/21.5 w50 h4
+            var box = Box("ui.popup.blue", "ui.title.sky", "특전", Layout.BookBox, () => { Close(); onBack?.Invoke(); });   // 표 ⑦ 인포 팝업 y23 h52.5 · 리본 25/21.5 w50 h4 · 닫기 안내 y91.5(상자 밖)
             var rib = UiKit.Find(box, "ui.title.sky"); if (rib != null) { var rr = (RectTransform)rib; rr.sizeDelta = new Vector2(UiKit.FrameW * Layout.BookRibbon.W / 100f, UiKit.FrameH * Layout.BookRibbon.H / 100f + 20); }
-            Sub(box, $"이번 원정에서 얻은 특전 ({G.Taken.Count})", 5, 4, 30);
             // 목록 — 같은 특전은 묶어 ×N
             var groups = new List<KeyValuePair<PerkDef, int>>();
             foreach (var p in G.Taken) { int i = groups.FindIndex(k => k.Key.Id == p.Id); if (i >= 0) groups[i] = new KeyValuePair<PerkDef, int>(p, groups[i].Value + 1); else groups.Add(new KeyValuePair<PerkDef, int>(p, 1)); }
@@ -185,7 +181,7 @@ namespace KkomaKnight.Game
                 if (kv.Value > 1) { var n = UiKit.Text(card, "×" + kv.Value, 36, Palette.Yellow, TextAnchor.MiddleRight); UiKit.Pct(n.rectTransform, 80, 4, 18, 40); }
             }
             foreach (var b in G.Blessings) Sub(box, b, 93, 5, 24, Palette.Orange);
-            UiKit.Button(Root, "ui.btnBlue", onBack != null ? "← 특전 선택으로" : "닫기", () => { Close(); onBack?.Invoke(); }, new Layout.R(Layout.BookClose.X, Layout.BookClose.Y - 2.5f, Layout.BookClose.W, Layout.BookClose.H + 3f));   // 닫기는 상자 밖 y91.5
+            if (onBack != null) { var back = UiKit.Find(Root, "TapToClose"); if (back != null) { var t = back.GetComponent<Text>(); if (t != null) t.text = "탭하여 특전 선택으로"; } }   // 레벨업에서 열었으면 배경 탭 = 선택으로 복귀
         }
 
         // ───────────────────────── 쉼터 ─────────────────────────
