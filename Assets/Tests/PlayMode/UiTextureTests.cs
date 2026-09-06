@@ -354,5 +354,85 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("T72 화면 적용(던전·아레나)");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T72 2단계 4차(결과 팝업 + 공통 팝업 그라데이션) — ⓐ 상자 없이 어둠 위에 조립되는 프리팹 팝업(레벨업 3택 04 · 승리 · 사망)의 어둠 «바로 위» 배경 무늬(흰 무늬 · 오른쪽 위로)
+        /// ⓑ 승리·사망 팝업 보상 칸의 골드 그림 뒤 빛살(시계방향 · 아이콘 «뒤» 형제 · 한 변 &gt; 0 = 배치가 끝난 뒤에 걸었다는 뜻 · 결정 174)
+        /// ⓒ ③ 그라데이션을 <see cref="UiKit.Popup"/> 한 곳에서 공통 팝업 상자에 깐다(패턴 «위» · 층 순서 결정 171). 팝업 시간 정지(timeScale 0) 중에도 흐르고 돈다. 빨간 줄 0.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ResultPopupsCarryPatternAndRewardLights()
+        {
+            yield return Boot();
+            _app.StartBattle(1); yield return Frames(2);
+            var bs = _app.GetScreen<BattleScreen>(); var G = bs != null ? bs.G : null; Assert.IsNotNull(G, "전투 상태");
+            Time.timeScale = 0f;
+            if (_app.Overlay.IsOpen) { _app.Overlay.Close(); G.Pending = null; yield return Frames(1); }
+            G.Gold = 12750; G.Kills = 137;
+
+            // ⓐⓑ 승리 팝업 — 어둠 바로 위 무늬 + 보상(골드) 칸 빛살
+            _app.Overlay.Clear(G, false, () => { }, () => { }); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var win = UiKit.Find(_app.Overlay.Root, "ui.resultWin"); Assert.IsNotNull(win, "승리 팝업 조각(Play_Result_Win_01)");
+            Assert.IsTrue(UiKit.HasPattern(win), "승리 팝업 배경에 패턴(T72 ①)");
+            var wpat = win.Find(UiKit.PatternName); var wdim = win.Find("Dimmed"); Assert.IsNotNull(wdim, "어둠 조각");
+            Assert.AreEqual(wdim.GetSiblingIndex() + 1, wpat.GetSiblingIndex(), "무늬는 어둠 «바로 위»(글자·보상·버튼 아래)");
+            var wraw = wpat.GetComponent<RawImage>();
+            Assert.AreEqual(1f, wraw.color.r, 0.001f, "어두운 바탕이라 흰 무늬(PatternTintDark)");
+            Assert.IsFalse(wraw.raycastTarget, "무늬는 클릭을 안 먹는다(배경 탭 = 연출 스킵 그대로)");
+            var items = UiKit.Find(win, "Group_RewardItem"); Assert.IsNotNull(items, "보상 줄");
+            var goldCell = items.GetChild(0);
+            Assert.IsTrue(UiKit.HasLight(goldCell), "클리어 보상(골드) 그림 뒤 빛살(T72 ②)");
+            var wlight = (RectTransform)goldCell.Find(UiKit.LightMaskName + "/" + UiKit.LightName);
+            Assert.Greater(wlight.rect.width, 1f, "빛살 한 변 > 0 — 배치가 끝난 뒤에 걸었다(결정 174)");
+            // 팝업 시간 정지 중에도(unscaled) 무늬는 오른쪽 위로 흐르고 빛살은 시계방향으로 돈다
+            var wp0 = wraw.uvRect.position; var wr0 = wlight.localRotation;
+            yield return RealSeconds(0.4f);
+            Assert.Less(wraw.uvRect.position.x, wp0.x, "승리 팝업 무늬도 오른쪽 위로 흐른다(시간 정지 중에도)");
+            Assert.Less(Vector3.SignedAngle(wr0 * Vector3.up, wlight.localRotation * Vector3.up, Vector3.forward), -0.5f, "보상 빛살은 시계방향");
+            _app.Overlay.Close(); yield return Frames(2);
+            Assert.IsFalse(UiKit.IsTweening(wlight), "팝업이 닫히면 빛살 트윈도 없다(SetLink · T56)");
+
+            // ⓐⓑ 사망 팝업 — 같은 두 가지
+            _app.Overlay.Dead(G, () => { }); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var lose = UiKit.Find(_app.Overlay.Root, "ui.resultLose"); Assert.IsNotNull(lose, "사망 팝업 조각(Play_Result_Lose)");
+            Assert.IsTrue(UiKit.HasPattern(lose), "사망 팝업 배경에 패턴(T72 ①)");
+            var ldim = lose.Find("Dimmed"); Assert.IsNotNull(ldim, "어둠 조각");
+            Assert.AreEqual(ldim.GetSiblingIndex() + 1, lose.Find(UiKit.PatternName).GetSiblingIndex(), "무늬는 어둠 «바로 위»");
+            var reward = UiKit.Find(lose, "Reward"); Assert.IsNotNull(reward, "사망 보상 칸");
+            Assert.IsTrue(UiKit.HasLight(reward), "사망 보상(골드) 그림 뒤 빛살(T72 ②)");
+            var icon = reward.Find("Icon"); Assert.IsNotNull(icon, "보상 아이콘");
+            Assert.Less(reward.Find(UiKit.LightMaskName).GetSiblingIndex(), icon.GetSiblingIndex(), "빛살은 아이콘 «뒤»(형제 순서 앞)");
+            _app.Overlay.Close(); yield return Frames(2);
+
+            // ⓐ 레벨업 3택(04)도 어둠 위 무늬를 받는다
+            var offer = Perks.Offer(_app.Data, G.Taken, false, new Mulberry32(7u));
+            if (offer.Count > 0)
+            {
+                G.Pending = new PendingDecision { Kind = PendingKind.LevelUp, Offer = offer };
+                _app.Overlay.LevelUp(G, _ => { }); yield return Frames(2);
+                var perk = UiKit.Find(_app.Overlay.Root, "ui.perkSelect"); Assert.IsNotNull(perk, "레벨업 3택 조각");
+                Assert.IsTrue(UiKit.HasPattern(perk), "레벨업 3택(04) 배경에도 패턴(T72 ①)");
+                _app.Overlay.Close(); G.Pending = null; yield return Frames(1);
+            }
+
+            // ⓒ 공통 팝업 상자 = 패턴 «위» 그라데이션(한 곳에서 팝업 전부가 받는다)
+            _app.Overlay.PerkBook(G, null); yield return Frames(2);
+            var box = UiKit.Find(_app.Overlay.Root, "ui.popup.blue"); Assert.IsNotNull(box, "보유 특전 = 공통 팝업 상자");
+            Assert.IsTrue(UiKit.HasGradient(box), "공통 팝업 상자에 그라데이션(T72 ③ · UiKit.Popup 한 곳)");
+            var pat = box.Find(UiKit.PatternName); var top = box.Find(UiKit.GradientTopName); var bottom = box.Find(UiKit.GradientBottomName);
+            Assert.IsNotNull(pat, "상자 안 패턴"); Assert.IsNotNull(top, "GradientTop"); Assert.IsNotNull(bottom, "GradientBottom");
+            Assert.Less(pat.GetSiblingIndex(), top.GetSiblingIndex(), "그라데이션은 패턴 «위»(질감 층 순서 · 결정 171)");
+            Assert.Less(top.GetSiblingIndex(), bottom.GetSiblingIndex(), "위 밝음 → 아래 어둠 순서");
+            var border = box.Find(UiKit.BorderName); if (border != null) Assert.Less(bottom.GetSiblingIndex(), border.GetSiblingIndex(), "그라데이션은 테두리 아래");
+            var ribbon = UiKit.Find(box, "ui.title.sky"); if (ribbon != null) Assert.Less(bottom.GetSiblingIndex(), ribbon.GetSiblingIndex(), "그라데이션은 리본 아래(제목이 안 가려진다)");
+            Assert.IsFalse(top.GetComponent<Image>().raycastTarget, "그라데이션은 클릭을 안 먹는다(배경 탭으로 닫기 그대로)");
+            var brt = (RectTransform)box; var trt = (RectTransform)top;
+            Assert.AreEqual(brt.rect.width - 2f * UiKit.PopupPatternInset, trt.rect.width, 1f, "둥근 모서리 안쪽으로 " + UiKit.PopupPatternInset + "px 들여 덧댄다");
+            _app.Overlay.Close(); yield return Frames(2);
+            Time.timeScale = 1f;
+
+            _log.AssertNoRed("T72 화면 적용(승리·사망·레벨업 · 공통 팝업 그라데이션)");
+            yield return Shutdown();
+        }
     }
 }

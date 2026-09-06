@@ -65,6 +65,25 @@ namespace KkomaKnight.Game
             _cur = parts.Box.gameObject;
             return parts.Box;
         }
+        /// <summary>
+        /// 상자 없이 어둠 위에 바로 조립되는 <b>프리팹 팝업</b>(레벨업 3택 · 승리 · 사망)의 배경 무늬(T72 ①) — 어둠 조각 «Dimmed» 바로 위 형제에 흰 무늬를 깐다(어두운 바탕 = <see cref="UiKit.PatternTintDark"/>).
+        /// 공통 팝업 상자는 <see cref="UiKit.Popup"/> 이 상자 «안» 에 깔아 주므로 여기서 부르지 않는다(무늬가 겹치지 않는다).
+        /// </summary>
+        static void DimPattern(RectTransform rt)
+        {
+            if (rt == null) return;
+            int idx = 0;
+            for (int i = 0; i < rt.childCount; i++) if (rt.GetChild(i).name == "Dimmed") { idx = i + 1; break; }
+            UiKit.PatternBg(rt, UiKit.PatternTintDark, UiKit.PatternTileSeconds, idx);
+        }
+        /// <summary>보상 칸 그림 뒤 빛살(T72 ② · 작은 조각 <see cref="UiKit.LightKeySmall"/>) — 조각 rect 가 다 잡힌 <b>뒤</b>에 건다(그 전에는 한 변이 0 이 된다 · 결정 174).</summary>
+        static void RewardLight(Transform cell)
+        {
+            if (cell == null) return;
+            Canvas.ForceUpdateCanvases();
+            UiKit.LightBehind((RectTransform)cell, UiKit.Find(cell, "Icon") as RectTransform, UiKit.LightKeySmall);
+        }
+
         // (T36 의 «수치만 초록» GreenNumbers 는 주인 취소(2026-09-06 «연두색 섞여 있으면 안 읽힌다» · T52) — 특전 설명은 한 색(Palette.Ink) · 리치 텍스트 부분 색 없음)
         /// <summary>데모 프리팹 하나를 팝업 층에 그대로 세운다(Dimmed 가 있으면 클릭 차단·페이드).</summary>
         public GameObject OpenPrefab(string key)
@@ -136,6 +155,7 @@ namespace KkomaKnight.Game
             var offer = G.Pending?.Offer ?? new List<PerkDef>();
             var root = UiKit.Spawn("ui.perkSelect", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
             var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
+            DimPattern(rt);
             // 표 ⑦ 선택창 — 상자 없음 · 배너 20/26.5 · 부제 30/31.5 · 카드 x5.5 w89 h11 피치 13 · 하단 버튼 31/79 · 인포 86/79.5
             var ribbon = UiKit.Find(rt, "Title_01_NoDeco_Tangerine"); if (ribbon != null) UiKit.Pct((RectTransform)ribbon, Layout.OvBanner.X, Layout.OvBanner.Y - 0.7f, Layout.OvBanner.W, Layout.OvBanner.H + 1.4f);
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "레벨 업!");
@@ -329,14 +349,16 @@ namespace KkomaKnight.Game
             Begin(); Audio.Sfx("snd.clear");
             var root = UiKit.Spawn("ui.resultWin", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
             var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
+            DimPattern(rt);
             var chap = UiKit.SetText(rt, "Text", $"챕터 {G.Chapter}");
             var unlock = UiKit.SetText(rt, "Text (1)", last ? "모든 챕터 클리어!" : $"챕터 {G.Chapter + 1} 해금!");   // 프리팹 칸 528×61 — 본문 40 한 줄에 들어가는 길이로(T63-results)
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "클리어!");
             UiKit.SetText(rt, "Title_LineDeco_01_s_White/Text (TMP)", "클리어 보상");
-            var items = UiKit.Find(rt, "Group_RewardItem"); Text goldText = null;
+            var items = UiKit.Find(rt, "Group_RewardItem"); Text goldText = null; Transform goldCell = null;
             if (items != null && items.childCount >= 1)
             {
-                goldText = Reward(items.GetChild(0), "ui.coin", UiKit.Fmt(G.Gold));
+                goldCell = items.GetChild(0);
+                goldText = Reward(goldCell, "ui.coin", UiKit.Fmt(G.Gold));
                 for (int i = 1; i < items.childCount; i++) items.GetChild(i).gameObject.SetActive(false);   // 골드만(주인 T23) — 프리팹 칸을 옮기지 않고 끈다
             }
             UiKit.Hide(rt, "Text_TouchContionue");
@@ -355,6 +377,8 @@ namespace KkomaKnight.Game
                 Seq().Insert(0.35f, DOTween.To(() => v, x => { v = x; if (goldText != null) goldText.text = UiKit.Fmt(x); }, target, 0.4f).SetEase(Ease.OutQuad).SetTarget(goldText).SetLink(goldText.gameObject));
             }
             At(0.6f, b1); At(0.72f, b2);
+            // T72 ② 클리어 보상(골드) 그림 뒤 빛살 — 배치가 끝난 뒤(결정 174)
+            RewardLight(goldCell);
         }
         static Text Reward(Transform cell, string iconKey, string value)
         {
@@ -372,6 +396,7 @@ namespace KkomaKnight.Game
             Begin(); Audio.Sfx("snd.fail");
             var root = UiKit.Spawn("ui.resultLose", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
             var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
+            DimPattern(rt);
             UiKit.SetText(rt, "Title_LineDeco_01_s_White/Text (TMP)", "쓰러졌다...");
             var reward = UiKit.Find(rt, "Reward"); if (reward != null) Reward(reward, "ui.coin", UiKit.Fmt(G.Gold));
             var list = UiKit.Find(rt, "Group_List");
@@ -386,6 +411,8 @@ namespace KkomaKnight.Game
             At(0.05f, UiKit.Find(rt, "Title_LineDeco_01_s_White")); At(0.2f, reward);
             float tipsEnd = UiKit.Stagger(Seq(), rows, 0.35f, UiKit.RevealStep);   // 0.35 · 0.46 · 0.57 → 0.79
             At(tipsEnd - UiKit.RevealStep, lobbyBtn); if (touch != null) At(tipsEnd - 0.03f, touch.transform);
+            // T72 ② 사망 보상(골드) 그림 뒤 빛살 — 배치가 끝난 뒤(결정 174)
+            RewardLight(reward);
         }
 
         // ───────────────────────── 설정 / 일시정지 — 레퍼런스 12_settings.jpg 구도 (T41 · 표 ⑨ · «Settings 프리팹 그대로»(T10) 는 부품 규칙으로 대체) ─────────────────────────

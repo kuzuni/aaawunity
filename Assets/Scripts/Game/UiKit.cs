@@ -486,6 +486,9 @@ namespace KkomaKnight.Game
             // 여기 한 곳이라 모든 공통 팝업(Overlay.Box · LobbyPopups · 화면 세부 팝업)이 같이 받는다 — 화면 코드는 한 줄도 안 만진다.
             int patIdx = 0; for (int i = 0; i < box.childCount; i++) if (box.GetChild(i).name == "Bg") { patIdx = i + 1; break; }
             PatternBg(box, PatternTintLight, PatternTileSeconds, patIdx, PatternTilePx, PopupPatternInset);
+            // T72 ③ 상자 «안» 그라데이션(위 +12% 밝음 · 아래 −18% 어둠) — 패턴 바로 위 · 테두리·리본·내용 아래(질감 층 순서 = 결정 171)
+            // 여기 한 곳이라 공통 팝업 전부가 같이 받는다(버튼 공통 적용은 결정 170 대로 계속 보류 · 결정 188).
+            Gradient(box, inset: PopupPatternInset, siblingIndex: patIdx);
             var ribbon = Spawn(titleKey, box); var rr = (RectTransform)ribbon.transform;
             rr.anchorMin = rr.anchorMax = new Vector2(0.5f, 1f); rr.pivot = new Vector2(0.5f, 0.5f); rr.sizeDelta = new Vector2(656, 115); rr.anchoredPosition = new Vector2(0, 8);
             var tt = SetText(rr, "Text (TMP)", title, null, TextSize.Title, TextKind.Title); if (tt != null) { tt.resizeTextForBestFit = true; tt.resizeTextMinSize = TextSize.BestFitMin; tt.resizeTextMaxSize = TextSize.Title; }
