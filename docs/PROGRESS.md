@@ -26,15 +26,26 @@
 | T18 | 배속(x2) 기억 — 세이브 필드 | ✅ 완료 (`73e38de` · dotnet 게이트 초록 · 실물 확인 = **CI 런 #45** PlayMode `SpeedMemoryTests` + 주인 에디터 플레이) | sess-0607-19950 / 워커 A | Core/SaveData(`Speed` 필드 · 직렬화 · 정규화) · Game/BattleScreen(`ToggleSpeed` · Start 가 세이브 값으로) · Tests/EditMode/SaveTests(+1) · Tests/PlayMode/SpeedMemoryTests(신규 1) | 배속 버튼 → `Save.Speed` 즉시 Persist · 전투 시작 = 세이브 값(클리어 뒤 다음 챕터·로비 재진입·앱 재시작 모두 유지) · 옛 세이브(필드 없음)는 1 · 1~2 클램프 · 프리팹·수치 불변 · dotnet 0/0 · 테스트 64/64 · 시뮬 42칸 동일 |
 | T19 | 전투 맵 = 데모 씬 그림 그대로(0.6배 · 물결 양쪽 · 밀도) — T20 뒤 · T21 앞 | ✅ 완료 (`dedeffb` · dotnet 게이트 초록 · 실물 확인 = **CI 런 #48** PlayMode `MapThemeTests` + 비교 렌더 PNG(로컬 · 커밋 안 함) + 주인 에디터/gh-pages) | sess-0607-19950 / 워커 A | Core/Layout(`MapScale` 0.6) · Game/BattleWorld(BuildGround·BuildProps · `Root`/`MapTheme` 접근자) · tools/gen_maps(부모 합성 · Road_up 표 편입 · Field/Road 상수 · 주기 = 행 피치 배수) · MapLayouts(재생성 · 409행) · catalog/assets-map(재생성) · Tests/PlayMode/MapThemeTests(신규 1) · tools/demo_render/render_our_map.py·shot_our.js(신규 · 비교 렌더) | 데모 구성 통째로 ×0.6 · 물결 경계 길 위·아래 양쪽(씬 Road_Up/Road_Down 그룹 · 반전 없음 · Desert 는 x 2.92 늘림) · 바닥/길 = 씬 인스턴스 스케일 × 0.6 · 어둡게 안 함 · 주기 이음새 0 · 5.4u 창 소품 8~24개(전 2~4) · dotnet 0/0 · 테스트 64/64 · 시뮬 42칸 동일 |
 | T24 | 대장간: 장착 중 장비도 합성 재료(주인 · 승인 대기 29 기본값 = 산출물을 그 슬롯에) | ✅ 완료 (`920fe0b` · dotnet 게이트 초록 · 실물 확인 = **CI 런 #46** PlayMode `ForgeEquippedFuseTests` + 주인 에디터 플레이) | sess-0620-18959 / 워커 B | Core/GearSystem(`FuseAll` onFused 콜백 · `ReEquipAfterFuse` 신규) · Game/ForgeScreen(장착분 거부·흐림 제거) · Tests/EditMode/GearTests(+4) · Tests/PlayMode/ForgeEquippedFuseTests(신규 1) | 장착분 = 재료 가능(배지 Check 유지 · 흐림 없음 · 토스트 없음) · 수동·자동 모두 장착분 포함 · 재료가 된 장착분 슬롯엔 산출물(같은 부위) 장착, 부위 다르면 빈 슬롯 · 재료 아닌 장착분은 불변 · GearUi 불변 · dotnet 0/0 · 테스트 68/68 · 시뮬 42칸 동일 |
-| T25 | 장비 화면: 캐릭터 크기 = 프리팹 샘플 자리 그대로(너무 작음) · 상점·합성 버튼을 스탯 3칸 바로 아래로 — T17 뒤 | 대기 | — | Game/GearScreen | ROUTINE §2 T25 |
+| T25 | 장비 화면: 캐릭터 크기 = 프리팹 샘플 자리 그대로(너무 작음) · 상점·합성 버튼을 스탯 3칸 바로 아래로 — T17 뒤 | ⛔ T37 에 흡수 (2026-09-06 UI 레퍼런스 지시) | — | Game/GearScreen | ROUTINE §2 T25 |
 | T26 | 뽑기 확률 검증(원본 대조 + 10,000회 통계 테스트 · 천장) | ✅ 완료 (`9781557` · dotnet 게이트 초록 · **결론: 어긋난 곳 없음 — 엔진·수치·상점 수정 0** · 유니티 EditMode 재확인 = **CI 런 #50**(#49 는 T21 push 로 취소)) | sess-0636-8590 / 워커 C | Tests/EditMode/GearTests(+6 · 코드 수정 없음) | index.html `gachaPull` 과 줄 단위 동일(난수 소비 순서 포함) · 상자 3종 자연 굴림 10,000회 전부 표 ±1.5%p · 천장 50/피티 10 정확히 그 회차·넘김 0·겹침 = 2개 · 10연차 = 1회×10 · 새 카운터 10연차마다 전설 이상 ≥1 · ShopScreen 의 시계 시드(1ms/16ms 간격) 편향 0 · 종류 균등 · «안 맞게 보이는» 이유 = 표본 + 피티 실효 확률(전설 이상 4%→11.9%) · dotnet 0/0 · 테스트 74/74 · 시뮬 42칸 동일 |
-| T27 | 장비 정보 팝업 = Character_Hero_Item_Detail_01 그대로 — T17 뒤 | 대기 | — | Game/GearUi | ROUTINE §2 T27 |
+| T27 | 장비 정보 팝업 = Character_Hero_Item_Detail_01 그대로 — T17 뒤 | ⛔ 폐기 → T38 (2026-09-06 UI 레퍼런스 지시) | — | Game/GearUi | ROUTINE §2 T27 |
 | T28 | 배경음·효과음 — CC0 팩을 GitHub 에서 받아(프록시가 kenney/opengameart/freesound 차단) OGG ≤5MB · AudioManager · 설정 스위치 | 대기 | — | Assets/Audio · Game/Audio(신규) · 화면 호출 한 줄씩 · SaveStore | ROUTINE §2 T28 |
 | T29 | 설정 팝업에 «데이터 삭제»(확인 팝업 → 세이브 초기화 → 로비) | 대기 | — | Game/Overlay(Settings) · SaveStore | ROUTINE §2 T29 |
-| T30 | 탭 «탤런트» → «던전»(World_Dungeon_List → 항목별 World_Dungeon_Start1/2 · 기능 없음) | 대기 | — | Game/Screens(NavBar) · Overlay · catalog | ROUTINE §2 T30 |
+| T30 | 탭 «탤런트» → «던전»(World_Dungeon_List → 항목별 World_Dungeon_Start1/2 · 기능 없음) | ⛔ 폐기 → T43 (2026-09-06 UI 레퍼런스 지시) | — | Game/Screens(NavBar) · Overlay · catalog | ROUTINE §2 T30 |
 | T31 | 장비 아이콘 = CharacterMaker Thumbnail 그림(입는 파츠와 분리) — T17 뒤 | 대기 | — | GearLook · Game/GearUi · catalog(cmi.*) | ROUTINE §2 T31 |
-| T32 | 펫 팝업 = Character_Skill 그대로 · 항목 → Character_Skill_Detail 그대로(기능 없음) | 대기 | — | Game/Overlay · Screens · catalog | ROUTINE §2 T32 |
+| T32 | 펫 팝업 = Character_Skill 그대로 · 항목 → Character_Skill_Detail 그대로(기능 없음) | ⛔ 폐기 → T42 (2026-09-06 UI 레퍼런스 지시) | — | Game/Overlay · Screens · catalog | ROUTINE §2 T32 |
 | T33 | 전투 HUD 웨이브 수 표시 제거 | 대기 | — | Game/BattleScreen | ROUTINE §2 T33 |
+| T34 | **UI 레퍼런스** 로비 = `docs/ref/01_lobby.jpg` 구도(재화 바 · 배너 · 사이드 3+3 · 카드 · START · 탭) — T22 뒤 | 대기 | — | Game/Screens(Lobby) · HeroView · catalog · Tests/PlayMode | ROUTINE §2 T34 · 색인 `docs/ref/README.md` |
+| T35 | **UI 레퍼런스** 전투 HUD = `02`·`03` 구도 + **HP·실드 바 3개 한 줄 · 발밑 2단 바(주인 강조)** · 스탯 8칸 — T33 뒤 | 대기 | — | Game/BattleScreen · BattleWorld · Core/Layout · catalog | ROUTINE §2 T35 |
+| T36 | **UI 레퍼런스** 레벨업 3택 · 보유 특전 = `04`·`05` 구도 + 공통 팝업 헬퍼 | 대기 | — | Game/Overlay · UiKit · catalog | ROUTINE §2 T36 |
+| T37 | **UI 레퍼런스** 장비 = `06` 구도(무대 · 3+3 슬롯 · 스탯 3칸 · 대장간/상점 버튼 · 5열) — T17 뒤 · T25 흡수 | 대기 | — | Game/GearScreen · GearUi · HeroView · catalog | ROUTINE §2 T37 |
+| T38 | **UI 레퍼런스** 장비 세부 = `07` 구도 — T37 뒤 · T27 대체 | 대기 | — | Game/GearUi(Detail) | ROUTINE §2 T38 |
+| T39 | **UI 레퍼런스** 대장간 = `08` 구도 — T37 뒤 | 대기 | — | Game/ForgeScreen | ROUTINE §2 T39 |
+| T40 | **UI 레퍼런스** 상점 = `09`·`10` 구도(큰 카드 + 2칸 · 다이아 3×2 · 골드 3×1) | 대기 | — | Game/ShopScreen · catalog | ROUTINE §2 T40 |
+| T41 | **UI 레퍼런스** 설정 = `12` 구도(토글 2 · 언어 · 링크 2 · 데이터 삭제) — T29 뒤 | 대기 | — | Game/Overlay(Settings) | ROUTINE §2 T41 |
+| T42 | **UI 레퍼런스** 펫 탭 = `13` + 세부 `14` 껍데기(4열 격자 · 장착 슬롯 4 · 소환 2) — T32 대체 | 대기 | — | Game/PetScreen(신규) · Screens(펫 탭) · catalog | ROUTINE §2 T42 |
+| T43 | **UI 레퍼런스** 던전 탭(탤런트→던전) = 던전 `20`·`21` + 아레나 `22`~`26` 껍데기 — T30 대체 | 대기 | — | Game/EventsScreen(신규) · Screens(NavBar·이벤트 버튼) · catalog | ROUTINE §2 T43 |
+| T44 | **UI 레퍼런스** 로비 사이드 팝업 껍데기 6종(특권 `11` · 퀘스트 `15` · 출석 `16` · 데일리 기프트 `17` · 7일 챌린지 `18` · 패스 `19`) — T34 뒤 | 대기 | — | Game/LobbyPopups(신규) · Screens(훅) · catalog | ROUTINE §2 T44 |
 | T13 | 전투 HUD 특전 미리보기 줄(PerkStrip) 비례 — 아이콘이 서로 가림 · index.html 34/28/4px 비례로 · 넘침 0 · 스크린샷 아티팩트 | ✅ 완료 (`50860f2` · **CI 런 #38 유니티 잡 초록** — PlayMode `PerkStripTests` 통과 · 아티팩트 `perkstrip-screens`(PNG 2장) 업로드 확인 · 최종은 주인 에디터) | sess-2206-21029 / 워커 A | Core/Layout(`PerkStripSpec` 순수 계산 · 표값 불변) · Game/BattleScreen(RefreshPerkStrip) · Game/UiKit(PerkFrame 배율) · Tests/EditMode/PerkStripSpecTests(신규 5) · Tests/PlayMode/PerkStripTests(신규 1) · ci.yml(아티팩트 1단계) · .gitignore | **원인 확정 = 프리팹 내부 고정 크기**(ItemFrame_04 자식 Border 162·Icon 128 이 가운데 앵커라 sizeDelta 축소가 안 먹음 → 78px 셀에 162px 프레임) → 배율로 · 셀 = 줄 높이 28/34 · 간격 4/34 · 배지 14/34 · «+N» 12/34 · 개수 = 폭 ÷ 피치(상수 11 폐기 · 넘침 0) · dotnet 0/0 · 테스트 55/55 · 시뮬 21칸 동일 |
 | T14 | 전투 캐릭터 크기 2/3 · 공속 비례 공격 애니 속도(상한 없음) · 사망/승리 모션 루프 금지 | ✅ 완료 (`0ee1e18` · 실물 확인 = CI PlayMode `CharacterRigTests` 3개 + 주인 에디터 플레이) | sess-2220-32398 / 워커 B | Core/Layout(`CharScale`·`CharHeightPct`·`AttackAnimSpeed` · 표값 불변) · Game/BattleWorld(키·발밑 바 폭 배율) · Game/CharacterRig(공격 속도 · 사망/승리/패배 클립 끝 정지) · Tests/EditMode/CharScaleAnimTests(신규 4) · Tests/PlayMode/CharacterRigTests(신규 3) | 키 = 표 % × 2/3(플레이어·적·보스 ×sizeMul) · 바 폭 × 2/3 · 공격 속도 = 클립 ÷ 간격(하한 1 · 상한 ×3 폐기) · Dead1/Victory/Defeat(루프 에셋 불변)는 Animator 자기 시계로 마지막 프레임(0.999)에서 speed 0 · dotnet 0/0 · 테스트 59/59 · 시뮬 21칸 동일 |
 | T15 | **플레이 콘솔 에러 0** — 데모 프리팹 스폰 시 `PanelView.OnEnable` 예외(UnassignedReferenceException · `UiKit.Spawn` 의 Instantiate 중 · 설정/장비 세부/전투 팝업) — CI #36 PlayMode 3건 실패 원인 | ✅ 완료 (`b001d5f` · 실물 확인 = CI 런 #38 유니티 잡 초록 · UiSmokeTests 5/5 · PlayMode 9/9 · gh-pages 배포까지 성공) | sess-2136-22274 / 워커 C | Game/UiKit(Spawn·Staging·StripDemoScripts) | Instantiate 를 비활성 홀더 밑에서 → 데모 스크립트 제거 → parent 이동(OnEnable 0회) · dotnet 0/0 · 테스트 55/55 |
@@ -166,7 +177,13 @@
 - **25 상점 수치**: 기본값 확정 — 다이아 100·1,100·3,500·6,000·10,000·14,000(₩1,000·1만·3만·5만·8만·11만) / 골드 1,000=다이아 30 · 3,000=80 · 10,000=250. `Assets/KkomaKnight/shop.json`(T9) 에 이 값으로.
 - **26 장비 외형/아이콘 매핑**: 워커가 CharacterMaker 파츠(종류 × 등급)로 고르고 `GearLook` 표 + `docs/assets-map.md` 에 남긴다(T7). 목걸이·장갑·신발은 GUI Pro 아이콘 임시.
 
-## 주인 승인 대기 (한 번에 답해 주시면 됩니다 — 답이 없으면 아래 «기본값» 으로 진행)
+## 워커 결정 기록 (2026-09-06 주인 지시 «승인 기다리지 말고 알아서 정해 고쳐라» — 승인 대기 대신 여기에 남긴다)
+
+> 형식: `번호. 무엇을 어떻게 정했는가 · 왜 · 되돌리려면 어느 파일(한 줄)`. 주인이 뒤집으면 그 줄에 ✅/❌ 를 달고 고친다. 번호는 아래 «승인 대기» 의 마지막 번호 다음부터 잇는다(31~).
+
+- (아직 없음)
+
+## 주인 승인 대기 — **2026-09-06 폐지(이력)** · 열린 10~30 은 워커가 기다리지 않고 확정한다(주인이 원한다고 적힌 것은 실행 · 워커 제안은 «기본값») · 새 항목 추가 금지 → «워커 결정 기록»
 
 > 1~9 · 19~23 · 25~26 은 위 «주인 결정» 으로 종결됐다(이력으로 남긴다). 열린 것은 10번부터.
 
