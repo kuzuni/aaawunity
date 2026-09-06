@@ -179,6 +179,32 @@ namespace KkomaKnight.Game
         readonly App _app;
         TopBar(App app) { _app = app; }
 
+        /// <summary>칸 바탕 오브젝트 이름(고정 · T72 7항 게이트가 찾는다).</summary>
+        public const string CellBgName = "CellBg";
+        /// <summary>탑바 띠·칸 바탕 색 — 레퍼런스 <c>01_lobby.jpg</c> 상단 바의 «검은 pill» 과 같은 어두운 색(<see cref="Palette.Dim"/>) 을 <b>불투명</b>(알파 1)으로. 반투명이면 뒤의 배경 패턴이 비친다.</summary>
+        public static Color BandColor => Palette.A(Palette.Dim, 1f);
+
+        /// <summary>
+        /// 칸 하나에 <b>불투명</b> 바탕(T72 7항 · 주인 재차 2026-09-07 «탑바를 프레임으로 감싸서 패턴이 침범하지 않는 것처럼») —
+        /// 조각이 제 바탕(직계 «Bg» · 재화 pill 의 캡슐)을 가진 칸은 <b>모양을 지키려고 그 알파만 1 로</b> 올리고(GUI Pro 원본은 0.749 = 반투명이라 무늬가 비쳤다),
+        /// 바탕이 없는 칸(아바타·전투력)은 <see cref="CellBgName"/> 이름의 fr.rect 를 맨 뒤에 깐다. raycast 는 끈다.
+        /// </summary>
+        static void Opaque(RectTransform cell)
+        {
+            if (cell == null) return;
+            for (int i = 0; i < cell.childCount; i++)
+            {
+                if (cell.GetChild(i).name != "Bg") continue;
+                var own = cell.GetChild(i).GetComponent<Image>();
+                if (own == null) continue;
+                var c = own.color; c.a = 1f; own.color = c;
+                return;
+            }
+            var bg = UiKit.Panel(cell, CellBgName, "fr.rect", BandColor);
+            UiKit.Stretch(bg.rectTransform);
+            bg.transform.SetAsFirstSibling();
+        }
+
         /// <summary>parent(프레임 크기 화면 루트) 안에 표 ① 자리로 세운다. showPower=false 면 전투력 칸을 뺀다(레퍼런스에 전투력이 없는 화면용).</summary>
         public static TopBar Build(App app, RectTransform parent, bool showPower = true)
         {
@@ -187,6 +213,7 @@ namespace KkomaKnight.Game
             var top = Layout.LobbyTopBar;
             // 아바타 — UserInfo_01_Slider 에서 ProfileFrame_02_Yellow 조각만(나머지 이름·길드·슬라이더·바탕 프레임은 끔) · 조각은 본래 크기 그대로 두고 아바타 칸에 배율로
             var slot = UiKit.Rect(root, "Avatar"); UiKit.Pct(slot, Layout.LobbyAvatar.Within(top)); tb.Avatar = slot;
+            Opaque(slot);   // T72 7항 ⓑ — 칸 제 불투명 바탕(노란 초상 프레임 뒤로 패턴이 비치지 않게)
             var info = UiKit.Spawn("ui.userInfoSlider", slot); var irt = (RectTransform)info.transform;
             var frame = UiKit.FindAny(irt, "ProfileFrame_02_Yellow", "ProfileFrame_02");
             if (frame != null)
@@ -206,6 +233,8 @@ namespace KkomaKnight.Game
             if (showPower)
             {
                 var pw = UiKit.Rect(root, "PowerCell"); UiKit.Pct(pw, Layout.LobbyPower.Within(top)); tb.PowerCell = pw;
+                // T72 7항 ⓑ — 전투력 칸도 제 불투명 pill 바탕 + 캡슐 테두리(재화 pill 과 같은 조각·같은 8px)
+                Opaque(pw); UiKit.Bordered(pw, UiKit.BorderKeyPill);
                 var ic = UiKit.Icon(pw, "Icon", "ui.battle"); UiKit.Pct(ic.rectTransform, 0, 0, 26, 100);
                 tb.Power = UiKit.Label(pw, 28, 0, 72, 100, "0", 46, Palette.Orange, TextAnchor.MiddleLeft); tb.Power.name = "Power";
             }
@@ -221,10 +250,14 @@ namespace KkomaKnight.Game
             foreach (var pill in new[] { tb.GoldPill, tb.GemPill })
             {
                 if (pill == null) continue;
+                Opaque(pill);   // T72 7항 ⓑ — 조각의 캡슐 바탕을 불투명으로(원본 알파 0.749 → 1 · 무늬가 숫자 뒤에서 어른거리던 곳)
                 UiKit.Bordered(pill, UiKit.BorderKeyPill);
                 var picon = UiKit.Find(pill, "Icon");
                 if (picon != null) picon.SetAsLastSibling();
             }
+            // T72 7항 ⓐ(주인 재차 2026-09-07 «탑바를 프레임으로 감싸서 움직이는 패턴이 그 부분을 침범하지 않는 것처럼 보이게») —
+            // 줄 전체를 불투명 띠(BorderBg · 맨 뒤)로 깔고 T69 검은 Border 8px 로 두른다. 맨 끝에서 부르므로 링이 칸들 위(형제 맨 뒤)에 온다.
+            UiKit.Bordered(root, UiKit.BorderKey, bg: BandColor);
             tb.Refresh();
             return tb;
         }

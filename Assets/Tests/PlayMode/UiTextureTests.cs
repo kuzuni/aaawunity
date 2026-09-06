@@ -488,5 +488,83 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("T72 ③ 버튼 그라데이션");
             yield return Shutdown();
         }
+
+        /// <summary>이 칸의 «불투명 바탕» Image — 직계 자식 중 <see cref="TopBar.CellBgName"/>·«Bg»·«BorderBg» 중 먼저 걸리는 것.</summary>
+        static Image CellBackdrop(Transform cell)
+        {
+            if (cell == null) return null;
+            for (int i = 0; i < cell.childCount; i++)
+            {
+                var c = cell.GetChild(i);
+                if (c.name != TopBar.CellBgName && c.name != "Bg" && c.name != UiKit.BorderName + "Bg") continue;
+                var im = c.GetComponent<Image>(); if (im != null && im.enabled) return im;
+            }
+            return null;
+        }
+        /// <summary>이 사각형 «안 어디에도» 배경 패턴이 없다(자기 자식이든 손자든) — 탑바 판정.</summary>
+        static bool AnyPatternInside(Transform host)
+        {
+            foreach (var raw in host.GetComponentsInChildren<RawImage>(true))
+                if (raw != null && raw.name == UiKit.PatternName) return true;
+            return false;
+        }
+
+        /// <summary>
+        /// T72 7항(주인 재차 지시 2026-09-07 «상단에 전투력·골드·다이아 보여주는 부분을 프레임으로 감싸서 패턴들이 움직이는 게 그 부분을 침범하지 않는 것처럼 보이게») —
+        /// <see cref="TopBar.Build"/> 한 곳을 쓰는 화면(01 로비 · 06 장비 · 09 상점 · 13 펫 · 20 던전) 전부에서
+        /// ⓐ 탑바 줄 전체가 <b>불투명 띠</b>(BorderBg · 형제 맨 뒤 · 알파 1) + T69 검은 Border 8px 로 감싸여 있고
+        /// ⓑ 칸마다(아바타 · 전투력 · 골드 pill · 보석 pill) 제 <b>불투명</b> 바탕(알파 ≥ 0.9)이 있으며
+        /// ⓒ 패턴 RawImage 는 <b>배경 층에만</b> 있다 = 탑바 «안» 에는 하나도 없고, 화면 배경의 패턴은 탑바보다 <b>뒤</b>(형제 순서 앞)에 깔린다.
+        /// 판정 = 이 셋 + 빨간 줄 0(눈 확인은 screens 01·06·09·13·20 PNG 의 탑바 칸 안 «무늬 0»).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator TopBarIsFramedSoThePatternCannotReachIt()
+        {
+            yield return Boot();
+            _app.Save.Gold = 11540; _app.Save.Gem = 443;
+
+            foreach (var screen in new[] { "lobby", "gear", "shop", "pet", "events" })
+            {
+                if (screen == "events") EventsScreen.Open(_app, EventsScreen.PageDungeon); else _app.ShowScreen(screen);
+                yield return Frames(3); Canvas.ForceUpdateCanvases();
+                var root = _app.Current.Root; string w = "[" + screen + "] ";
+                var top = UiKit.Find(root, "TopBar"); Assert.IsNotNull(top, w + "상단 재화 바(TopBar)");
+
+                // ⓐ 줄 전체를 감싼 불투명 띠 + 검은 테두리
+                var band = CellBackdrop(top);
+                Assert.IsNotNull(band, w + "탑바 줄 바탕 띠(BorderBg · T72 7항 ⓐ)");
+                Assert.AreEqual(0, band.transform.GetSiblingIndex(), w + "띠는 맨 뒤(칸·글자 아래)");
+                Assert.GreaterOrEqual(band.color.a, 0.9f, w + "띠는 불투명이라야 패턴이 안 비친다");
+                var ring = top.Find(UiKit.BorderName);
+                Assert.IsNotNull(ring, w + "탑바 줄을 두른 검은 Border(T69 · 8px)");
+                Assert.IsTrue(UiKit.HasDarkBorder(top), w + "그 Border 는 어두운 테두리 조각");
+                // 링은 «그림이 있는» 형제 전부보다 뒤(= 위) — 이름표 조각(Tag:*)처럼 안 그려지는 자식은 뒤에 붙어도 상관없다
+                for (int i = 0; i < top.childCount; i++)
+                {
+                    var sib = top.GetChild(i); if (sib == ring) continue;
+                    if (sib.GetComponentInChildren<Graphic>(true) == null) continue;
+                    Assert.Less(i, ring.GetSiblingIndex(), w + "링은 «" + sib.name + "» 보다 위(형제 순서 뒤)");
+                }
+
+                // ⓑ 칸마다 제 불투명 바탕
+                foreach (var cell in new[] { "Avatar", "PowerCell", "ResourceBar_Coin", "ResourceBar_Gem" })
+                {
+                    var c = UiKit.Find(top, cell);
+                    if (c == null) continue;   // 전투력 없는 화면(showPower:false)
+                    var bg = CellBackdrop(c);
+                    Assert.IsNotNull(bg, w + "«" + cell + "» 칸 바탕(T72 7항 ⓑ)");
+                    Assert.GreaterOrEqual(bg.color.a, 0.9f, w + "«" + cell + "» 칸 바탕은 불투명(GUI Pro 원본 0.749 로 두면 무늬가 비친다)");
+                    if (bg.name == TopBar.CellBgName) Assert.IsFalse(bg.raycastTarget, w + "«" + cell + "» 바탕은 클릭을 안 먹는다");
+                }
+
+                // ⓒ 패턴은 배경 층에만
+                Assert.IsFalse(AnyPatternInside(top), w + "탑바 «안» 에는 패턴이 없다(T72 7항 ⓒ)");
+                var pat = root.Find(UiKit.PatternName);
+                if (pat != null) Assert.Less(pat.GetSiblingIndex(), top.GetSiblingIndex(), w + "화면 배경 패턴은 탑바보다 뒤(형제 순서 앞)");
+            }
+
+            _log.AssertNoRed("T72 7항 탑바 프레임");
+            yield return Shutdown();
+        }
     }
 }
