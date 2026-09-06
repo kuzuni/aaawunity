@@ -282,32 +282,97 @@ namespace KkomaKnight.Game
         // ───────────────────────── 16 출석 ─────────────────────────
         static readonly string[] AttendIcons = { "ui.coin", "ui.potionRed", "ui.gemRed", "ui.bookBlue", "ui.coin", "ui.hourglass" };
         static readonly string[] AttendColors = { "green", "blue", "plum", "green", "green", "plum" };
+        /// <summary>하루 칸 보상 수량(껍데기 · 레퍼런스 16 의 숫자를 베끼지 않고 «1» 로 통일 — T44 «숫자는 표시만»).</summary>
+        const string AttendQty = "1";
 
-        /// <summary>출석 팝업(표 ㉑) — 노란 리본 «출석 보상»(박스 윗변에 걸침) → 3열×2행 칸(자주 머리 «N일차» + 보상 칸) + 7일차 넓은 칸(보상 2) → «탭하여 닫기». 받은 날 없음(시스템 없음 · ✅ 0).</summary>
+        /// <summary>
+        /// 출석 팝업(표 ㉑) — <b>주인 2026-09-07(T76): «출석 보상 Rewards_Daily7_Popup 프리팹 이거로 해줘»</b>.
+        /// 프리팹을 팝업 층에 통째로 세우고(<see cref="Overlay.OpenPrefab"/>) 조각을 표 ㉑ 자리로 <b>옮기기만</b> 한다 —
+        /// 상자(<c>Popup_Box_01</c>) · 제목 리본(<c>Title_01_Deco_Yellow</c>) · 3×2 격자(<c>Group_DailyList7</c> 의 <see cref="GridLayoutGroup"/>) ·
+        /// 하루 칸 6 + 7일차 넓은 칸(<c>DailyFrame_01_l</c> · 그 안의 상태 바탕 <c>Bg_Normal</c>/<c>Bg_Focus1</c>/<c>Bg_Disable</c> 와 ✅ <c>Check</c>)이 프리팹 구성 그대로다.
+        /// 칸 머리(«N일차» 자주 띠)와 보상 칸(장비 프레임)은 레퍼런스 16 조각을 그대로 쓴다 — 프리팹 칸에는 폭을 채우는 머리 띠가 없고(<c>Deco</c> 는 129×62 · 9-slice 없음 = 늘리면 찌그러진다),
+        /// 보상 칸은 지시서 T76 3항·T69 7항이 «장비 프레임(<c>ui.itemFrame.*</c>)» 으로 못박았다.
+        /// 껍데기 규칙(T44) 그대로 — 받은 날 없음(✅ 0) · 오늘 = 1일차만 <c>Bg_Focus1</c> 강조 · 칸을 눌러도 아무 일 없음.
+        /// </summary>
         public static void Attendance(App app)
         {
             var ov = app.Overlay; var B = Layout.AtBox;
-            var box = ov.OpenBox("ui.popup", "ui.title.yellow", "출석 보상", B, () => ov.Close()); box.name = "AttendanceBox";
-            var rib = Ribbon(box, "ui.title.yellow", Layout.AtRibbon, B);
-            var grid = UiKit.Rect(box, "Days"); UiKit.Stretch(grid);
-            var cells = new RectTransform[6]; RectTransform head0 = null, icon0 = null;
-            for (int i = 0; i < 6; i++)
+            var root = (RectTransform)ov.OpenPrefab("ui.rewardsDaily7").transform;
+            // 공통 팝업 문법 — 배경 탭 = 닫기 · 닫기 X 는 안 쓴다(프리팹 조각은 지우지 않고 끈다 · 결정 168)
+            var dim = UiKit.Find(root, "Dimmed"); if (dim != null) UiKit.Clickable(dim, () => ov.Close(), false);
+            UiKit.Hide(root, "Button_Close_01");
+            var tc = UiKit.Text(ov.Root, "탭하여 닫기", TextSize.Body, Palette.White, TextAnchor.MiddleCenter, false, true);
+            tc.name = "TapToClose"; tc.fontStyle = FontStyle.Bold; UiKit.Pct(tc.rectTransform, Layout.BookClose);
+
+            var box = (RectTransform)UiKit.Find(root, "Popup"); box.name = "AttendanceBox"; UiKit.Pct(box, B);
+            foreach (var g in box.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;
+            UiKit.PatternBg(box);   // T72 ① 팝업 배경 패턴
+            UiKit.Hide(box, "Text_Description");   // 데모 안내 문구(영문) — 레퍼런스 16 에 없다
+
+            // 제목 리본(프리팹 Title_01_Deco_Yellow) — 표 ㉑ 자리(박스 윗변에 걸친다)
+            var rib = ChildStarting(box, "Title_01_Deco");
+            if (rib != null)
             {
-                float dx = (i % Layout.AtCols) * Layout.AtColPitch, dy = (i / Layout.AtCols) * Layout.AtRowPitch;
-                var cell = UiKit.Panel(grid, "Day:" + (i + 1), "fr.r12", Palette.Cream); UiKit.Pct(cell.rectTransform, Sh(Layout.AtCell, dx, dy).Within(B));
-                var head = Head(grid, B, Sh(Layout.AtCellHead, dx, dy), (i + 1) + "일차", Palette.A(Palette.Plum, 0.8f));
-                var ic = Cell(grid, B, Sh(Layout.AtCellIcon, dx, dy), AttendColors[i], AttendIcons[i]);
-                UiKit.Clickable(cell.rectTransform, () => { });
-                cells[i] = cell.rectTransform; if (i == 0) { head0 = head.transform.parent as RectTransform; icon0 = ic; }
+                UiKit.Pct(rib, Layout.AtRibbon.Within(B));
+                var rt = UiKit.SetText(rib, "Text (TMP)", "출석 보상", null, TextSize.Title, TextKind.Title);
+                if (rt != null) { rt.resizeTextForBestFit = true; rt.resizeTextMinSize = TextSize.BestFitMin; rt.resizeTextMaxSize = TextSize.Title; RibbonTextFit(rt); }
             }
-            var day7 = UiKit.Panel(grid, "Day:7", "fr.r12", Palette.Cream); UiKit.Pct(day7.rectTransform, Layout.AtDay7.Within(B));
-            var head7 = Head(grid, B, Layout.AtDay7Head, "7일차", Palette.A(Palette.Plum, 0.8f), "Head7");
-            var r7 = new RectTransform[2];
-            r7[0] = Cell(grid, B, Layout.AtDay7Cell, "green", "ui.coin"); r7[1] = Cell(grid, B, Sh(Layout.AtDay7Cell, Layout.AtDay7Pitch, 0), "plum", "ui.gemRed");
-            UiKit.Clickable(day7.rectTransform, () => { });
+
+            // 3열×2행 격자 = 프리팹 Group_DailyList7(GridLayoutGroup) — 칸·피치는 표 ㉑
+            var group = (RectTransform)UiKit.Find(box, "Group_DailyList7");
+            var cells = new RectTransform[6]; RectTransform head0 = null, icon0 = null;
+            if (group != null)
+            {
+                UiKit.Pct(group, Layout.AtGrid.Within(B));
+                var glg = group.GetComponent<GridLayoutGroup>();
+                if (glg != null)
+                {
+                    glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount; glg.constraintCount = Layout.AtCols;
+                    glg.cellSize = UiKit.PxSize(Layout.AtCell);
+                    glg.spacing = new Vector2(UiKit.PxSize(new Layout.R(0, 0, Layout.AtColPitch - Layout.AtCell.W, 0)).x, UiKit.PxSize(new Layout.R(0, 0, 0, Layout.AtRowPitch - Layout.AtCell.H)).y);
+                    glg.padding = new RectOffset(0, 0, 0, 0); glg.childAlignment = TextAnchor.UpperLeft;
+                }
+                int n = Mathf.Min(6, group.childCount);
+                for (int i = group.childCount - 1; i >= n; i--) group.GetChild(i).gameObject.SetActive(false);
+                for (int i = 0; i < n; i++)
+                {
+                    var frame = (RectTransform)group.GetChild(i); frame.name = "Day:" + (i + 1); frame.gameObject.SetActive(true);
+                    DayFrame(frame, i == 0);
+                    var head = Head(frame, Layout.AtCell, Layout.AtCellHead, (i + 1) + "일차", Palette.A(Palette.Plum, 0.8f));
+                    var ic = Cell(frame, Layout.AtCell, Layout.AtCellIcon, AttendColors[i], AttendIcons[i], AttendQty);
+                    UiKit.Clickable(frame, () => { });
+                    cells[i] = frame; if (i == 0) { head0 = head.transform.parent as RectTransform; icon0 = ic; }
+                }
+            }
+
+            // 7일차 넓은 칸 = 프리팹의 Popup 직계 DailyFrame_01_l(격자 밖 조각)
+            var day7 = ChildStarting(box, "DailyFrame_01_l"); RectTransform head7 = null; var r7 = new RectTransform[2];
+            if (day7 != null)
+            {
+                day7.name = "Day:7"; UiKit.Pct(day7, Layout.AtDay7.Within(B)); DayFrame(day7, false);
+                head7 = Head(day7, Layout.AtDay7, Layout.AtDay7Head, "7일차", Palette.A(Palette.Plum, 0.8f), "Head7").transform.parent as RectTransform;
+                r7[0] = Cell(day7, Layout.AtDay7, Layout.AtDay7Cell, "green", "ui.coin", AttendQty);
+                r7[1] = Cell(day7, Layout.AtDay7, Sh(Layout.AtDay7Cell, Layout.AtDay7Pitch, 0), "plum", "ui.gemRed", AttendQty);
+                UiKit.Clickable(day7, () => { });
+            }
             // 비평 이름표(표 ㉑)
-            if (rib != null) UiKit.Tag(rib, "제목 리본"); UiKit.Tag(box, "팝업 박스"); UiKit.TagGroup(grid, "출석 격자(6칸)", cells); UiKit.Tag(cells[0], "출석 칸(1칸)"); UiKit.Tag(head0, "칸 머리(1칸)"); UiKit.Tag(icon0, "칸 보상 아이콘(1칸)");
-            UiKit.Tag(day7.transform, "7일 칸"); UiKit.Tag(head7.transform.parent, "7일 칸 머리"); UiKit.TagGroup(grid, "7일 보상 줄(2칸)", r7); TagClose(app);
+            if (rib != null) UiKit.Tag(rib, "제목 리본"); UiKit.Tag(box, "팝업 박스");
+            UiKit.TagGroup(box, "출석 격자(6칸)", cells); UiKit.Tag(cells[0], "출석 칸(1칸)"); UiKit.Tag(head0, "칸 머리(1칸)"); UiKit.Tag(icon0, "칸 보상 아이콘(1칸)");
+            UiKit.Tag(day7, "7일 칸"); UiKit.Tag(head7, "7일 칸 머리"); UiKit.TagGroup(box, "7일 보상 줄(2칸)", r7); TagClose(app);
+            UiKit.PopIn(box);   // 공통 팝업 등장 연출(T49)
+        }
+
+        /// <summary>
+        /// 하루 칸 하나 — 프리팹 <c>DailyFrame_01_l</c> 의 상태 바탕을 고르고(오늘 = <c>Bg_Focus1</c> · 나머지 = <c>Bg_Normal</c> · 받은 날은 없다),
+        /// 우리가 안 쓰는 데모 조각(가운데 큰 아이콘·수량·반짝임·칸 머리 장식·«DAY» 글자)은 <b>지우지 않고 끈다</b>(결정 168).
+        /// 보상 칸(장비 프레임)과 «N일차» 머리 띠는 부르는 쪽이 표 ㉑ 자리에 얹는다.
+        /// </summary>
+        static void DayFrame(RectTransform frame, bool today)
+        {
+            UiKit.Show(frame, "Bg_Normal", !today); UiKit.Show(frame, "Bg_Focus1", today);
+            UiKit.Hide(frame, "Bg_Focus2", "Bg_Focus3", "Bg_Disable", "SampleEffect", "SampleParticle", "Icon", "Text_Num", "Text_Day", "Check");
+            foreach (var deco in frame.GetComponentsInChildren<Transform>(true)) if (deco.name == "Deco") deco.gameObject.SetActive(false);
+            UiKit.Bordered(frame);   // T69 — 칸 테두리(레퍼런스 16 도 칸마다 검은 외곽선)
         }
 
         // ───────────────────────── 17 데일리 기프트 (T77 — 껍데기 → 동작하는 기능) ─────────────────────────

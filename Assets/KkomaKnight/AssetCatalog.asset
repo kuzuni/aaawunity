@@ -1044,6 +1044,8 @@ MonoBehaviour:
     prefab: {fileID: 921659412208554214, guid: e153129aeb36442f9b1f096b90975d7f, type: 3}
   - key: ui.progressionMission2
     prefab: {fileID: 8695934003370001500, guid: 029146935ecb54c509976ea050ce174a, type: 3}
+  - key: ui.rewardsDaily7
+    prefab: {fileID: 8493437398407168106, guid: 1bca89bd9f0d9456c967dab4195d9080, type: 3}
   - key: ui.popup.green
     prefab: {fileID: 568353929908025126, guid: 8bcf16550244049dfa18a3ae012ca6c6, type: 3}
   - key: ui.popup.plum

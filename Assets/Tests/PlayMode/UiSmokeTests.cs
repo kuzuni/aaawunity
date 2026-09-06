@@ -276,7 +276,19 @@ namespace KkomaKnight.Tests.Play
                 _app.Overlay.Close(); yield return Frames(1);
                 LobbyPopups.Attendance(_app); yield return Frames(1); Assert.AreEqual(7, CountNamed(_app.Overlay.Root, "Day:"), "출석 칸 7");
                 AssertNoTextClip("출석 팝업", _app.Overlay.Root);
-                { var rib = UiKit.Find(_app.Overlay.Root, "ui.title.yellow"); Assert.IsNotNull(rib, "출석 리본"); var rt = rib.GetComponentInChildren<Text>(true); Assert.IsNotNull(rt, "출석 리본 글자"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(rt), "리본 = 제목 종류"); Assert.GreaterOrEqual(rt.rectTransform.rect.height, rt.preferredHeight, "리본 글자 rect ≥ 선호 높이(RibbonTextFit)"); }
+                // T76 — 출석 팝업은 GUI Pro `Rewards_Daily7_Popup` 프리팹이다: 리본은 프리팹 Title_01_Deco_Yellow · 칸은 DailyFrame(상태 바탕) · 오늘(1일차)만 Bg_Focus1 · 받은 날 ✅ 0
+                { var rib = UiKit.Find(_app.Overlay.Root, "Title_01_Deco_Yellow"); Assert.IsNotNull(rib, "출석 리본 = 프리팹 Title_01_Deco_Yellow"); var rt = rib.GetComponentInChildren<Text>(true); Assert.IsNotNull(rt, "출석 리본 글자"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(rt), "리본 = 제목 종류"); Assert.GreaterOrEqual(rt.rectTransform.rect.height, rt.preferredHeight, "리본 글자 rect ≥ 선호 높이(RibbonTextFit)"); }
+                {
+                    var d1 = UiKit.Find(_app.Overlay.Root, "Day:1"); Assert.IsNotNull(d1, "1일차 칸");
+                    Assert.IsNotNull(UiKit.Find(d1, "Bg_Focus1"), "칸 = 프리팹 DailyFrame 조각(상태 바탕)");
+                    Assert.IsTrue(UiKit.Find(d1, "Bg_Focus1").gameObject.activeInHierarchy, "오늘(1일차)은 Focus 바탕으로 강조");
+                    var d2 = UiKit.Find(_app.Overlay.Root, "Day:2"); Assert.IsFalse(UiKit.Find(d2, "Bg_Focus1").gameObject.activeInHierarchy, "2일차는 보통 바탕");
+                    Assert.IsTrue(UiKit.Find(d2, "Bg_Normal").gameObject.activeInHierarchy, "2일차 보통 바탕 켜짐");
+                    int checks = 0; foreach (var t in _app.Overlay.Root.GetComponentsInChildren<Transform>(false)) if (t.name == "Check") checks++;
+                    Assert.AreEqual(0, checks, "받은 날 없음(시스템 없음 · ✅ 0 · T44)");
+                    Assert.IsNotNull(UiKit.Find(d1, "ItemFrame_01"), "보상 칸 = 장비 프레임(T76 3항 · T69 7항)");
+                    Assert.IsTrue(HasText(s => s == "1일차") && HasText(s => s == "7일차"), "칸 머리는 우리말");
+                }
                 _app.Overlay.Close(); yield return Frames(1);
                 // T77 — 데일리 기프트는 이제 «동작하는» 화면이다(껍데기 아님): 하루 상태를 초기화한 뒤 무료 칸 → 줄 1 순서로 연다
                 var GD = _app.Data.DailyGift; Assert.IsNotNull(GD, "dailyGift.json 이 카탈로그(data.dailyGift)로 로드됐다");
