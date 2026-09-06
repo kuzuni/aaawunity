@@ -114,7 +114,16 @@ namespace KkomaKnight.Game
         }
         void OnDestroy() { Audio.Release(this); }
 
-        void Start() { if (UseStreamed) StartCoroutine(LoadStreamed()); }
+        bool _streamStarted;
+        void Start() { EnsureStreaming(); }
+
+        /// <summary>원본 .ogg 받기를 한 번만 시작한다 — <c>Start</c> 뿐 아니라 첫 재생에서도 부른다(Start 시점에 카탈로그가 아직 없을 수 있다 · T64 회차 3 에서 요청이 0건이던 원인).</summary>
+        void EnsureStreaming()
+        {
+            if (_streamStarted || !UseStreamed) return;
+            _streamStarted = true;
+            StartCoroutine(LoadStreamed());
+        }
 
         /// <summary>
         /// WebGL 전용(T64): 카탈로그의 오디오 키를 돌며 <c>StreamingAssets/audio/…​.ogg</c> 원본을 받아 클립으로 만든다.
@@ -125,7 +134,11 @@ namespace KkomaKnight.Game
         /// </summary>
         System.Collections.IEnumerator LoadStreamed()
         {
-            if (App == null || App.Assets == null) yield break;
+            Debug.Log("[Audio] 원본 ogg 받기 시작 · platform=" + Application.platform + " · 카탈로그=" + (App != null && App.Assets != null ? "있음" : "없음"));
+            // 카탈로그가 아직 안 붙었을 수 있다(생성 순서) — 최대 10초 기다린다.
+            float wait = 0f;
+            while ((App == null || App.Assets == null) && wait < 10f) { wait += Time.unscaledDeltaTime; yield return null; }
+            if (App == null || App.Assets == null) { Debug.Log("[Audio] 카탈로그가 끝내 없어 원본 ogg 를 못 받는다"); yield break; }
             var keys = new List<string>();
             foreach (var e in App.Assets.audio) if (!string.IsNullOrEmpty(e.key)) keys.Add(e.key);
             foreach (var key in keys)
@@ -180,6 +193,7 @@ namespace KkomaKnight.Game
 
         public void PlayBgm(string key)
         {
+            EnsureStreaming();
             if (key == _key) return;   // 같은 곡이면 무시(페이드도 없음)
             var clip = string.IsNullOrEmpty(key) ? null : Clip(key);
             _key = key;
@@ -202,6 +216,7 @@ namespace KkomaKnight.Game
 
         public bool PlaySfx(string key, float volume, float pitchJitter)
         {
+            EnsureStreaming();
             if (MuteSfx) return false;
             var clip = Clip(key);
             if (clip == null || _sfx == null) return false;
