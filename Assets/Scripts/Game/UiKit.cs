@@ -483,7 +483,16 @@ namespace KkomaKnight.Game
 
         public static void Destroy(Transform t) { if (t != null) UnityEngine.Object.Destroy(t.gameObject); }
         /// <summary>자식 전부 파괴 — 파괴 전에 그 자식들을 겨냥한 트윈을 먼저 죽인다(T49 · 파괴된 오브젝트를 만지는 트윈 = 콘솔 경고 · safeMode 가 조용히 삼키지만 남기지 않는다).</summary>
-        public static void Clear(Transform t) { for (int i = t.childCount - 1; i >= 0; i--) { var c = t.GetChild(i); KillTweens(c); UnityEngine.Object.Destroy(c.gameObject); } }
+        /// <summary>자식 전부 제거 — 트윈을 먼저 죽이고(T49), **트리에서 떼어 낸 뒤** 파괴한다(T55 · 결정 80 규칙): <c>Destroy</c> 는 프레임 끝에 실제로 지우므로 같은 프레임의 <c>childCount</c>·<c>Find</c> 가 옛 자식(프리팹 샘플 카드 등)을 다시 보지 않게.</summary>
+        public static void Clear(Transform t)
+        {
+            for (int i = t.childCount - 1; i >= 0; i--)
+            {
+                var c = t.GetChild(i); KillTweens(c);
+                c.SetParent(null, false); c.gameObject.SetActive(false);
+                UnityEngine.Object.Destroy(c.gameObject);
+            }
+        }
         /// <summary>root 와 그 아래 모든 Transform·CanvasGroup·Graphic 을 겨냥한 트윈을 죽인다(완료 콜백 없이). 시퀀스는 <c>SetTarget</c> 으로 묶은 대상이 있을 때만 잡힌다 — Overlay 는 자기 마스터 시퀀스를 따로 Kill 한다.</summary>
         public static void KillTweens(Transform root)
         {
