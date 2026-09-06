@@ -170,7 +170,19 @@ namespace KkomaKnight.Game
 
         // ───────────────────────── 장비 세부 팝업 — 레퍼런스 docs/ref/07_gear_detail.jpg 구도(표 ④ · 공통 팝업 문법 UiKit.Popup · T38 · T27 «Character_Hero_Item_Detail_01 그대로» 폐기) ─────────────────────────
         /// <summary>등급 색 이름 → 박스 윗변 등급 탭(Title_01 명판 변형) 키 — gray(일반)는 갈색 명판.</summary>
-        static string BadgeKey(string colorName) => colorName == "gray" ? "ui.titleBrown" : "ui.title." + colorName;
+        static string BadgeKey(string colorName)
+        {
+            // 카탈로그에 있는 Title_01 변형만(tangerine·sky·green·plum·yellow·red · 갈색) — 문자열 조립 금지(CI #66: «ui.title.blue» 없음 → 경고 2건)
+            switch (colorName)
+            {
+                case "blue": return "ui.title.sky";
+                case "yellow": return "ui.title.yellow";
+                case "plum": return "ui.title.plum";
+                case "red": return "ui.title.red";
+                case "green": return "ui.title.green";
+                default: return "ui.titleBrown";   // gray(일반) 등
+            }
+        }
         static string Hex(Color c) => ColorUtility.ToHtmlStringRGB(c);
         /// <summary>어두운 pill(fr.r12 · 잉크색) + 글자 — 메타줄 «슬롯 Lv. N/최대»·«부위», 스탯 박스, 옵션 줄, 비용 줄이 같은 조각을 쓴다.</summary>
         static RectTransform Pill(RectTransform parent, string name, Layout.R r, float alpha = 0.85f)
