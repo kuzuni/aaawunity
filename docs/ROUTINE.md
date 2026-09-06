@@ -515,7 +515,7 @@
 1. 원인(CI #75 로그 · PlayMode 26 중 1 실패 · EditMode 83/83): 상인 페이지 상품 카드가 CardFrame_04 원본의 `Text_Title`(«Text») 을 켜 둔 채 제목 Label 을 따로 얹어 데모 잔여 글자 검사에 걸림 → ShopScreen 상자 카드처럼 `Text_Title` 자리를 제목으로 쓴다(`faa0d30`).
 2. 게이트 + PROGRESS T54 행 + 확인 수단 = `faa0d30` 이 포함된 CI 유니티 잡(PlayMode 전부 Passed → `screens`·gh-pages 첫 배포).
 
-### T55 — CI #76·#77 빨강 후속(T49 코드 `fdb8d35` 회귀): PlayMode `UiSmokeTests.BattleTicksAndAllBattlePopups` «카드 수 = 제안 수 Expected: 3 But was: 6» 1건 — main 빨강 = `screens`·gh-pages 안 생김 (최우선 · 제약 없음)
+### T55 — CI #76·#77 빨강 후속(T49 코드 `fdb8d35` 회귀): PlayMode `UiSmokeTests.BattleTicksAndAllBattlePopups` «카드 수 = 제안 수 Expected: 3 But was: 6» 1건 — main 빨강 = `screens`·gh-pages 안 생김 (최우선 · 제약 없음) ✅ (완료 · `028133e` · UiKit.Clear 떼고 파괴 · 확인 = 그 커밋의 CI 런 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/UiKit.cs`(`Clear` 한 줄) · 테스트 불변(`UiSmokeTests.cs:570` 단언은 T49 의 계약 그대로)
 1. 원인(CI #76 https://github.com/kuzuni/aaawunity/actions/runs/34023880052 · #77 https://github.com/kuzuni/aaawunity/actions/runs/34024048144 · PlayMode 26 중 1 · EditMode 83/83): T49 가 «카드 수 = 제안 수» 단언을 `Overlay.LevelUp()` **직후(같은 프레임)** 로 옮겼다(연출 중에도 요소가 존재해야 하므로). `LevelUp` 은 `UiKit.Clear(group)` 으로 프리팹(Play_Perk_Selection_02) 의 샘플 카드 3장을 지우고 3장을 새로 만드는데, `Clear` 가 `Destroy`(프레임 끝에 실제 제거)만 하므로 같은 프레임의 `childCount` 는 3 + 3 = 6. 예전 단언은 프레임을 넘긴 뒤라 3 이었다.
 2. 수정: `UiKit.Clear` 가 자식을 **트리에서 먼저 떼고**(`SetParent(null, false)` · 비활성) 파괴한다 — T48 상점 껍데기와 같은 규칙(결정 80 · `Find`/`childCount` 가 같은 프레임에 옛 것을 보지 않게). 트윈 Kill 순서는 그대로(먼저).
