@@ -121,6 +121,18 @@ namespace KkomaKnight.Tests.Play
         }
         static bool ClickNamed(Transform root, string name) { var t = UiKit.Find(root, name); var b = t != null ? t.GetComponent<Button>() : null; if (b == null) return false; b.onClick.Invoke(); return true; }
         static int CountNamed(Transform root, string prefix) { int n = 0; foreach (var t in root.GetComponentsInChildren<Transform>(false)) if (t.name.StartsWith(prefix)) n++; return n; }
+        /// <summary>T63 화면 단위 «잘림 0» 계약 — root 아래 활성 Text 를 <see cref="TextAudit.Collect"/> 로 판정해 잘림/하한 미달/bestFit 미달이 하나도 없어야 한다(전체 게이트 TextSizeGateTests 는 아직 strict 가 아니라 화면 작업자가 자기 화면을 여기서 잠근다). skipPath 가 든 경로(다른 하위 행 몫)는 제외.</summary>
+        static void AssertNoTextClip(string where, Transform root, string skipPath = null)
+        {
+            Canvas.ForceUpdateCanvases();
+            var bad = new List<string>();
+            foreach (var r in TextAudit.Collect(where, root))
+            {
+                if (skipPath != null && r.Path.IndexOf(skipPath, StringComparison.Ordinal) >= 0) continue;
+                if (r.Clipped || r.FloorBad || r.BestFitBad) bad.Add(r.ToString());
+            }
+            Assert.AreEqual(0, bad.Count, $"[{where}] 글자 잘림/넘침·하한 미달(T63 · 화면 잘림 0):\n" + string.Join("\n", bad));
+        }
         /// <summary>살아 있는 shine 머티리얼 인스턴스 수(T61 · 카드가 파괴되면 0 이어야 한다 — 에셋 «PerkShine» 자체는 이름이 달라 안 센다).</summary>
         static int CountShineInstances() { int n = 0; foreach (var m in Resources.FindObjectsOfTypeAll<Material>()) if (m != null && m.name == "PerkShine (Instance)") n++; return n; }
 
@@ -654,15 +666,46 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(freeInv + D.Gacha.DailyGem, S.Gem, 1e-6, "무료 보급 = dailyGem 지급"); Assert.IsFalse(_app.Overlay.IsOpen, "무료 보급은 팝업 없음");
                 Assert.IsTrue(ClickNamed(bigCard, "Info"), "(i) 버튼"); yield return Frames(2);
                 Check("상자 정보 팝업", expectOverlay: true); Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.popup"), "정보 팝업 = 공통 팝업 문법");
+                AssertNoTextClip("상자 정보 팝업", _app.Overlay.Root);
                 _app.Overlay.Close(); yield return Frames(1);
             }
             Check("상점");
+            // T63-shop — 글자 가독성(주인 «글씨 너무 작다»): 상자 이름 = 제목(60 · Title 표식) · 섹션 헤더 = 표 ⑤ 높이에서 계산(≈50) · 상품 수량 = 띠 높이에서 계산(≈51) · 가격 버튼 글자 = 버튼 하한(44)
+            // · 💎 글리프 0(Jua 에 없어 빈칸으로 그려짐 → hud.gem 아이콘 · 결정 142) · 상점 전 글자 잘림/하한 미달 0(TextAudit · 화면 단위 잘림 0 = 하위 행 ✅ 조건)
+            {
+                var content = UiKit.Find(shop, "Content");
+                foreach (var box in D.Gacha.Boxes)
+                {
+                    var card = UiKit.Find(content, "Box:" + box.Key); Assert.IsNotNull(card, "상자 카드 " + box.Key);
+                    Text title = null; foreach (var t in card.GetComponentsInChildren<Text>(false)) if (t.text == box.Name) title = t;
+                    Assert.IsNotNull(title, "상자 이름 글자 " + box.Name);
+                    Assert.GreaterOrEqual(title.fontSize, TextSize.Title, "상자 이름 «" + box.Name + "» = 제목 크기(60)"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(title), "상자 이름은 Title 표식");
+                    var one = UiKit.Find(card, "One"); Assert.IsNotNull(one, "«1회» 버튼 " + box.Key);
+                    Assert.IsNotNull(UiKit.Find(one, "Gem"), "«1회» 버튼 안 다이아 아이콘(hud.gem · 💎 글리프 대신) " + box.Key);
+                    int priceTexts = 0;
+                    foreach (var t in one.GetComponentsInChildren<Text>(false)) if (!string.IsNullOrEmpty(t.text)) { priceTexts++; Assert.GreaterOrEqual(t.fontSize, TextSize.Button, "«1회» 버튼 글자 «" + t.text + "» ≥ 버튼 하한(44)"); Assert.AreEqual(TextKind.Button, TextAudit.KindOf(t), "«1회» 버튼 글자 «" + t.text + "» 는 Button 표식"); }
+                    Assert.AreEqual(2, priceTexts, "«1회» 버튼 = «1회» + 가격 두 글자 " + box.Key);
+                }
+                foreach (var t in ActiveTexts()) Assert.IsFalse((t.text ?? "").Contains("💎"), "상점 글자에 💎 글리프(Jua 폰트에 없어 빈칸) — " + PathOf(t.transform) + " :: " + t.text);
+                int headers = 0;
+                foreach (var t in ActiveTexts()) if (t.text == "다이아" || t.text == "골드") { headers++; Assert.GreaterOrEqual(t.fontSize, UiKit.FontForHeight(Layout.ShopSec1.H), "섹션 헤더 «" + t.text + "» 크기 = 표 ⑤ 헤더 높이(2.5%)에서 계산"); }
+                Assert.GreaterOrEqual(headers, 2, "섹션 헤더 «다이아»·«골드»");
+                var qty = UiKit.Find(UiKit.Find(content, "GemPack:0"), "Text_Title"); Assert.IsNotNull(qty, "다이아 카드 수량 글자");
+                Assert.GreaterOrEqual(qty.GetComponent<Text>().fontSize, ShopScreen.QtySize, "상품 수량 크기 = 수량 띠 높이에서 계산(≈51)");
+                AssertNoTextClip("상점", shop);
+            }
 
             int inv = S.Inv.Count;
             Assert.IsTrue(Click(shop, s => s.Contains("1회")), "«1회» 뽑기 버튼"); yield return Frames(2);
             Check("뽑기 결과 팝업(1회)", expectOverlay: true);
             Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.popup"), "뽑기 결과 = 공통 팝업 문법(Popup_Box 패널 + 명판 + 격자 + 탭하여 닫기 · T40)");
             Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "TapToClose"), "뽑기 결과: «탭하여 닫기»");
+            {
+                // T63-shop — 결과 팝업 안내 줄은 본문 40 한 줄(문구 줄임) · 팝업 글자 잘림 0(장비 칸 «gear:» 안 글자는 T63-gear 몫이라 제외)
+                var note = UiKit.Find(_app.Overlay.Root, "Note"); Assert.IsNotNull(note, "결과 팝업 안내 줄(Note)");
+                var nt = note.GetComponent<Text>(); Assert.GreaterOrEqual(nt.fontSize, TextSize.Body, "안내 줄 = 본문 하한");
+                AssertNoTextClip("뽑기 결과 팝업", _app.Overlay.Root, skipPath: "gear:");
+            }
             Assert.GreaterOrEqual(S.Inv.Count, inv + 1, "뽑은 장비가 인벤에 담겨야 한다");
             Assert.AreEqual(CountNamed(_app.Overlay.Root, "gear:"), S.Inv.Count - inv, "결과 팝업의 장비 칸 수 = 얻은 수");
             _app.Overlay.Close(); yield return Frames(1);
