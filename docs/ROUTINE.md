@@ -447,7 +447,7 @@
 ### 신규 작업 등재
 - 버그·후속 작업 발견 시 PROGRESS 표에 **이미 쓰인 번호 중 가장 큰 것 +1** 로 등재 (번호 재사용 금지, 한 번호 = 한 작업).
 
-### T49 — 팝업 등장 연출 = DOTween «순서대로»: 레벨업 3택 특전 카드 · 승리(클리어) 팝업 · 패배(사망) 팝업 (주인 2026-09-06 · T36·T23 코드 뒤 · 제약 없음)
+### T49 — 팝업 등장 연출 = DOTween «순서대로»: 레벨업 3택 특전 카드 · 승리(클리어) 팝업 · 패배(사망) 팝업 (주인 2026-09-06 · T36·T23 코드 뒤 · 제약 없음) ✅ (완료 · `fdb8d35` · CI #76 · 3택 0.77s · 클리어 0.94s · 사망 0.98s · 배경 탭 = 스킵 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/Overlay.cs`(LevelUp · PerkBook · Clear · Dead) · `UiKit.cs`(연출 헬퍼 — 기존 `PopIn(rt, from, dur)`·`FadeIn` 에 <b>delay</b> 인자 또는 `Stagger(items, step)` 추가 · 타이밍 상수는 UiKit 한 곳) · `Assets/Tests/PlayMode/UiSmokeTests.cs`(연출 뒤 단언) · `PlayShot`(T46 스크린샷은 연출이 끝난 뒤)
 순서: 제약 없음 — T36(3택)·T23(클리어)·T41(설정) 코드는 끝났다. Overlay 를 만지는 열린 작업 = T44(LobbyPopups 신규 파일 · Screens 훅뿐) · T47(전투 HUD) — 파일이 겹치지 않는다. 다른 워커가 Overlay 를 만졌으면 rebase.
 주인 원문(2026-09-06 · 08:1X UTC): «특전 뜰 때 순서대로 dotween 으로 뜨게 애니메이션 · 졌을 때 팝업도, 이겼을 때 팝업도 그런 식 연출로».
