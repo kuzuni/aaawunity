@@ -340,6 +340,14 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(Layout.PetCount, CountNamed(UiKit.Find(pet, "PetGrid"), "Pet:"), "펫 격자 9칸"); Assert.AreEqual(PetScreen.SlotCount, CountNamed(UiKit.Find(pet, "Slots"), "Slot:"), "장착 슬롯 4");
                 Assert.AreEqual(Layout.PetCount, CountNamed(UiKit.Find(pet, "PetGrid"), "Bar"), "칸마다 진행바"); Assert.AreEqual(Layout.PetCount, CountNamed(UiKit.Find(pet, "PetGrid"), "Lv"), "칸마다 Lv 글자");
                 Assert.IsTrue(HasText(s => s == "Lv. 0") && HasText(s => s == "0/0"), "숫자는 0(레퍼런스 숫자 베끼지 않음)");
+                // T63-pet — 글자 가독성: 진행바 «0/0» 본문 40 이 바 안에 들어가고(바 높이 = Layout.PetBarH · 표 중심 유지) 펫 탭의 활성 Text 에 잘림/넘침 0(게이트 표와 같은 판정)
+                Canvas.ForceUpdateCanvases();
+                var barTxt0 = UiKit.Find(pet, "Pet:0/Bar").GetComponentInChildren<Text>(true); Assert.IsNotNull(barTxt0, "진행바 글자");
+                Assert.GreaterOrEqual(barTxt0.resizeTextMaxSize, TextSize.Body, "진행바 숫자 최대 = 본문 40"); Assert.GreaterOrEqual(TextAudit.BestFitSize(barTxt0), TextSize.Body, "진행바 숫자를 bestFit 이 안 줄인다(40 그대로)");
+                Assert.GreaterOrEqual(barTxt0.rectTransform.rect.height + 1f, barTxt0.preferredHeight, "진행바 글자 rect 높이 ≥ 선호 높이(잘림 없음)");
+                var bar0Rt = (RectTransform)UiKit.Find(pet, "Pet:0/Bar"); Assert.AreEqual(Layout.PetBarH / 100f * _app.Frame.rect.height, bar0Rt.rect.height, 1.5f, "진행바 높이 = Layout.PetBarH(프레임 %)");
+                var petClip = TextAudit.Collect("13_pet", pet).FindAll(r => r.Clipped);
+                Assert.AreEqual(0, petClip.Count, "펫 탭 잘림/넘침 0(T63-pet) — " + string.Join(" · ", petClip.ConvertAll(r => r.ToString())));
                 Assert.IsTrue(HasText(s => s == "장착중") && HasText(s => s == "전체 강화") && HasText(s => s == "빠른 장착") && HasText(s => s == "소환") && HasText(s => s == "소환 x10"), "라벨 우리말");
                 var tabs2 = UiKit.Find(pet, "ui.tabBar"); Assert.IsNotNull(tabs2, "펫 탭 바"); Assert.GreaterOrEqual(tabs2.childCount, NavBar.Keys.Length, "탭 5");
                 // 배치 = 표 ⑩(±0.5%p) — 첫 칸 · 슬롯 줄 · 버튼 2줄 · 탭 바
@@ -361,6 +369,12 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(HasText(s => s == "패시브:") && HasText(s => s == "강화") && HasText(s => s == "장착") && HasText(s => s == "탭하여 닫기"), "세부 팝업 글자");
                 var rib = UiKit.Find(ov, "ui.title.tangerine"); Assert.IsTrue(rib == null || !rib.gameObject.activeSelf, "세부 팝업은 명판 없음(레퍼런스 14)"); Assert.IsNull(UiKit.Find(ov, "Button_Close_01"), "닫기 X 없음");
                 var bx = (RectTransform)UiKit.Find(ov, "ui.popup"); Assert.IsNotNull(bx, "세부 패널(ui.popup)"); Assert.AreEqual(Layout.PdBox.X, bx.anchorMin.x * 100f, 0.5f, "패널 x = 표 ⑪"); Assert.AreEqual(1f - Layout.PdBox.Y / 100f, bx.anchorMax.y, 1e-3f, "패널 y = 표 ⑪");
+                // T63-pet — 세부 팝업 글자: 진행바 «0/0» 40 이 바 안에(PdBar 1.4% → Layout.PetBarH) · 팝업 안 활성 Text 잘림/넘침 0
+                Canvas.ForceUpdateCanvases();
+                var dBar = UiKit.Find(ov, "PetDetailCell/Bar"); Assert.IsNotNull(dBar, "세부 진행바"); var dBarTxt = dBar.GetComponentInChildren<Text>(true); Assert.IsNotNull(dBarTxt, "세부 진행바 글자");
+                Assert.GreaterOrEqual(TextAudit.BestFitSize(dBarTxt), TextSize.Body, "세부 진행바 숫자 40 그대로"); Assert.GreaterOrEqual(dBarTxt.rectTransform.rect.height + 1f, dBarTxt.preferredHeight, "세부 진행바 글자 rect 높이 ≥ 선호 높이");
+                var pdClip = TextAudit.Collect("14_pet_detail", ov).FindAll(r => r.Clipped);
+                Assert.AreEqual(0, pdClip.Count, "펫 세부 팝업 잘림/넘침 0(T63-pet) — " + string.Join(" · ", pdClip.ConvertAll(r => r.ToString())));
                 Assert.IsTrue(ClickNamed(ov, "PetUpgradeBtn") && ClickNamed(ov, "PetEquipBtn"), "세부 버튼 2"); yield return Frames(1); Assert.IsTrue(_app.Overlay.IsOpen, "껍데기 버튼은 팝업을 닫지 않는다");
                 Assert.IsTrue(ClickNamed(ov, "Dimmed"), "배경 탭 = 닫기"); yield return Frames(2); Assert.IsFalse(_app.Overlay.IsOpen, "세부 팝업 닫힘");
                 Check("펫 세부 닫힘");

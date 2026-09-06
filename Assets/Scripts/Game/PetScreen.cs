@@ -11,6 +11,7 @@ namespace KkomaKnight.Game
     /// ① 상단 재화 바(<see cref="TopBar"/>) → ② <b>4열 격자 9칸</b>(칸 = ItemFrame_01 조각 + 파란 등급 변형 + GUI Pro 아이콘 · 칸 위 «Lv. 0» · 칸 아래 진행바 «0/0») → ③ <b>합계 줄</b>(«+0 ❤ | +0 🛡 | +0 🗡»)
     /// → ④ <b>«장착중» 띠</b>(어두운 패널 + 초록 라벨 + 슬롯 4 = 잠금 원 2 · 빈 칸 2) → ⑤ 회색 <b>전체 강화 · 빠른 장착</b> → ⑥ 주황 <b>소환 · 소환 x10</b>(두 줄 · 가격 자리 «준비 중») → ⑦ 탭 바.
     /// 칸을 누르면 세부 팝업(공통 팝업 문법 <see cref="UiKit.Popup"/> · 명판 없음 · 칸이 상자 윗변에 걸침 · 설명 박스 · «패시브:» 수치 줄 · 강화(회색) · 장착(주황) · «탭하여 닫기»).
+    /// 글자(T63-pet · 주인 «글씨 너무 작다»): 전부 <see cref="UiKit"/> 하한(본문 40 · 버튼 44) — 직접 박은 크기는 없다. 진행바 «n/m» 만 표 높이에 안 들어가 바를 <see cref="Layout.PetBarH"/> 로 키웠다(13·14 게이트 잘림 0).
     /// 이름 계약(스모크 테스트): 격자 <c>PetGrid/Pet:N</c> · 슬롯 <c>Slots/Slot:N</c> · 버튼 <c>UpgradeAllBtn/QuickEquipBtn/SummonBtn/Summon10Btn</c> · 세부 <c>PetDetailCell/PetUpgradeBtn/PetEquipBtn</c> · 탭 바 <c>ui.tabBar</c>.
     /// 펫 시스템이 생기면 <see cref="Icons"/>·«0/0»·«+0» 자리에 pets.json 값을 넣는다(배치는 그대로).
     /// </summary>
@@ -112,7 +113,8 @@ namespace KkomaKnight.Game
             var item = UiKit.Find(frt, "Item");
             if (item != null) { item.gameObject.SetActive(true); UiKit.SetSprite(frt, "Item", Icons[index % Icons.Length], Palette.White); }
             var lv = UiKit.Label(cell, 0, 0, 100, 100, "Lv. 0", 28, Palette.White); lv.name = "Lv"; lv.fontStyle = FontStyle.Bold; UiKit.Pct(lv.rectTransform, lvR.Within(cellR)); lvRt = lv.rectTransform;
-            var bar = UiKit.MakeBar(cell, "ui.sliderYellow"); bar.Root.name = "Bar"; UiKit.Pct(bar.Root, barR.Within(cellR)); bar.Set(0, "0/0"); barRt = bar.Root;
+            // 진행바 «n/m» 은 본문 40 — 표 높이(1.6/1.4%)엔 안 들어가므로 표 중심을 지켜 Layout.PetBarH 로 키운다(T63-pet · 게이트 잘림 0)
+            var bar = UiKit.MakeBar(cell, "ui.sliderYellow"); bar.Root.name = "Bar"; UiKit.Pct(bar.Root, barR.WithH(Layout.PetBarH).Within(cellR)); bar.Set(0, "0/0"); barRt = bar.Root;
             if (onClick != null) UiKit.Clickable(cell, onClick);
             return cell;
         }

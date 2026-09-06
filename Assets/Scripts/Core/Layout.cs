@@ -13,6 +13,8 @@ namespace KkomaKnight.Core
             public R(float x, float y, float w, float h) { X = x; Y = y; W = w; H = h; }
             /// <summary>outer 안에 놓인 inner(둘 다 프레임 %) 를 outer 기준 % 로 — 팝업 상자 안 요소 배치용.</summary>
             public R Within(R outer) => new R((X - outer.X) / outer.W * 100f, (Y - outer.Y) / outer.H * 100f, W / outer.W * 100f, H / outer.H * 100f);
+            /// <summary>세로 중심을 지키며 높이만 h 로(글자 하한 때문에 표 칸이 모자랄 때 ±3%p 안에서 키우는 용도 · T63).</summary>
+            public R WithH(float h) => new R(X, Y + (H - h) / 2f, W, h);
             public override string ToString() => $"x{X} y{Y} w{W} h{H}";
         }
 
@@ -209,6 +211,12 @@ namespace KkomaKnight.Core
         /// <summary>칸 위에 걸친 «Lv. N» 글자(첫 칸 기준) · 칸 아래 진행바(첫 칸 기준 · 칸보다 넓다 19.2).</summary>
         public static readonly R PetLv = new R(11.5f, 10.1f, 10.6f, 1.8f);
         public static readonly R PetBar = new R(7.2f, 19.2f, 19.2f, 1.6f);
+        /// <summary>
+        /// 진행바의 실제 높이(T63-pet · 격자 9칸 + 세부 팝업 공용). 표의 1.6(⑩) / 1.4(⑪) 는 «n/m» 본문 40(선호 높이 39px)이 안 들어가는 높이다 —
+        /// 조각(Slider_02)의 글자 rect 가 바보다 2px 작아 35/31px 이 되고 CI #101 게이트가 «잘림» 19건을 셌다. 표는 그대로 두고(레퍼런스 실측 · ±3%p 안이라 ui_score ○)
+        /// 바만 표 중심을 지켜 이 높이로 키운다(44px → 글자 rect 42px ≥ 39). 되돌리려면 PetCell 의 <c>WithH</c> 호출을 빼면 표값(1.6/1.4)으로.
+        /// </summary>
+        public const float PetBarH = 1.9f;
         /// <summary>합계 줄(«+N ❤ | +N 🛡 | +N 🗡») → «장착중» 띠(어두운 패널) + 초록 «장착중» 라벨 + 장착 슬롯 4(잠금 2 · 빈 칸 2 · 피치 11.9).</summary>
         public static readonly R PetSum = new R(18.8f, 58.3f, 63.2f, 2.6f);
         public static readonly R PetEqBand = new R(8.3f, 61.9f, 83.3f, 6.6f);
