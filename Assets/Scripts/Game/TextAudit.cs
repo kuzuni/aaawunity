@@ -6,6 +6,12 @@ using UnityEngine.UI;
 
 namespace KkomaKnight.Game
 {
+    /// <summary>
+    /// 공통 팝업 제목 리본 표식(T75 4항) — <see cref="UiKit.Popup"/> 이 세운 리본에만 붙는다.
+    /// 화면이 스스로 세우고 크기를 정하는 리본(예: 데일리 기프트 17 의 <c>Layout.GfRibbon</c>)과 갈라야 게이트가 «내가 책임지는 것» 만 단언한다.
+    /// </summary>
+    public sealed class PopupRibbonTag : MonoBehaviour { }
+
     /// <summary>글자 종류 표식(T63) — <see cref="UiKit"/> 가 Body 가 아닌 종류(Button·Aux·Title·Small)로 만든 Text 에 붙인다. 하한 게이트가 이걸 보고 종류별 하한을 적용한다.</summary>
     public sealed class TextKindTag : MonoBehaviour
     {
@@ -60,6 +66,8 @@ namespace KkomaKnight.Game
             public string OutlineWhy = "";
             /// <summary>글자색 휘도(<see cref="UiKit.Luma"/>) 와 «어두운 글자» 판정(T111 ⓑ · <see cref="UiKit.TextLumaMin"/> 미만이면 참).</summary>
             public float Luma; public bool DarkBad;
+            /// <summary>이 글자가 <see cref="UiKit.Popup"/> 이 세운 제목 리본 안에 있는가(T75 4항 게이트) · 리본 안이면서 칸이 제목 60 의 한 줄(84px)보다 낮으면 참.</summary>
+            public bool PopupRibbon, RibbonShort;
             public override string ToString() =>
                 $"[{Screen}] {Path} «{Short(Text)}» {Kind} size {FontSize}(min {Min}){(BestFit ? $" bestFit {BestFitMinSize}~ used {Used}" : "")} rect {RectW:0}×{RectH:0} pref {PrefW:0}×{PrefH:0}" +
                 (FloorBad ? " ⛔하한" : "") + (BestFitBad ? " ⛔bestFit최소" : "") + (Clipped ? " ⚠잘림" : "") +
@@ -189,6 +197,8 @@ namespace KkomaKnight.Game
                 FillOutline(row, t);
                 row.Luma = UiKit.Luma(t.color);
                 row.DarkBad = t.color.a > 0.2f && row.Luma < UiKit.TextLumaMin;   // T111 ⓑ — 알파가 거의 0 인 숨긴 글자는 세지 않는다
+                row.PopupRibbon = t.GetComponentInParent<PopupRibbonTag>() != null;
+                row.RibbonShort = row.RectH < TextSize.BoxHeight(TextSize.Title) - 1f;   // T75 4항 — 제목 60 의 한 줄이 안 들어가는 리본 칸(화면이 스스로 세운 리본도 표에는 남긴다)
                 rows.Add(row);
             }
             return rows;

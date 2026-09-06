@@ -440,6 +440,22 @@ namespace KkomaKnight.Game
         public static readonly Vector2 PopupRibbonSize = new Vector2(656f, 130f);
 
         /// <summary>
+        /// 리본 세로를 «글자 칸이 제목 60 의 한 줄(84px)을 담는 높이» 로 맞춘다(T75 4항) — 조각마다 글자 칸 들여쓰기가 달라서 130 이 모든 조각에 통하지 않는다:
+        /// <c>Title_01_NoDeco_*</c> 는 세로 inset 35.56(→ 130 이면 칸 94.4 ✔) 이지만 데코가 붙은 조각은 더 들여져 있어 130 으로도 칸이 84 아래로 내려간다.
+        /// 그래서 조각의 글자 rect 를 <b>실측</b>해(Stretch 라면 <c>sizeDelta.y</c> 가 음수 inset) 필요한 높이를 계산하고, <see cref="PopupRibbonSize"/> 보다 커야 하면 그만큼 올린다(가로는 안 건드린다).
+        /// </summary>
+        static void RibbonFit(RectTransform ribbon)
+        {
+            if (ribbon == null) return;
+            var txt = ribbon.GetComponentInChildren<Text>(true); if (txt == null) return;
+            var trt = txt.rectTransform;
+            bool stretched = trt.anchorMin.y == 0f && trt.anchorMax.y == 1f;
+            float inset = stretched ? Mathf.Max(0f, -trt.sizeDelta.y) : 0f;
+            float need = TextSize.BoxHeight(TextSize.Title) + inset;
+            if (need > ribbon.sizeDelta.y) ribbon.sizeDelta = new Vector2(ribbon.sizeDelta.x, need);
+        }
+
+        /// <summary>
         /// ① 배경 패턴(T72) — <paramref name="host"/> 에 RawImage «Pattern»(Stretch · 텍스처 = ui.pattern · Repeat 타일링 · uvRect 크기 = 사각형 ÷ <paramref name="tilePx"/> · raycast 끔) 을 <paramref name="siblingIndex"/> 자리(기본 0 = host 자신의 배경 Image 바로 위 · 배경이 자식이면 그 다음 index)에 깔고,
         /// uvRect 를 unscaled 로 계속 움직여 무늬가 <b>오른쪽 위로</b> 흐르게 한다(한 타일 <paramref name="tileSeconds"/> 초 · 무한 · Linear). uvRect.position 은 «사각형 왼쪽 아래가 텍스처의 어느 점을 보이나» 라 값이 <b>줄어야</b> 그림이 오른쪽 위로 간다(결정 157 · 지시서의 «(+x,+y)» 는 그림 방향을 말한 것).
         /// 이미 있으면 갱신만(트윈은 다시 시작). 카탈로그에 스프라이트가 없으면 null(경고는 카탈로그가). 어두운 바탕이면 <paramref name="tint"/> = <see cref="PatternTintDark"/>.
@@ -595,6 +611,8 @@ namespace KkomaKnight.Game
             Gradient(box, inset: PopupPatternInset, siblingIndex: patIdx);
             var ribbon = Spawn(titleKey, box); var rr = (RectTransform)ribbon.transform;
             rr.anchorMin = rr.anchorMax = new Vector2(0.5f, 1f); rr.pivot = new Vector2(0.5f, 0.5f); rr.sizeDelta = PopupRibbonSize; rr.anchoredPosition = new Vector2(0, 8);
+            Ensure<PopupRibbonTag>(ribbon);   // T75 4항 — 게이트가 «UiKit.Popup 이 세운 리본» 만 단언하게(화면이 스스로 세운 리본은 그 화면 워커 몫 · 결정 291)
+            RibbonFit(rr);
             var tt = SetText(rr, "Text (TMP)", title, null, TextSize.Title, TextKind.Title); if (tt != null) { tt.resizeTextForBestFit = true; tt.resizeTextMinSize = TextSize.BestFitMin; tt.resizeTextMaxSize = TextSize.Title; }
             parts.Box = box; parts.Ribbon = rr; parts.Title = tt;
             if (onTapClose != null)

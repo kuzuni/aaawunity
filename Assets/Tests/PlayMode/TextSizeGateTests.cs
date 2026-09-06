@@ -240,15 +240,19 @@ namespace KkomaKnight.Tests.Play
             // T75 4항 — 공통 팝업 제목 리본의 글자 칸 «높이» 는 제목 60 의 한 줄(84px)을 담아야 한다(리본 130 → 안쪽 94.4px).
             // 높이가 다시 낮아지면(리본을 줄이거나 조각을 바꾸면) 모든 팝업 제목이 말없이 56 으로 줄어들므로 여기서 못 박는다.
             {
-                int ribbons = 0;
+                int ribbons = 0; var shortOwn = new List<string>(); var shortScreen = new List<string>();
                 foreach (var r in _rows)
                 {
-                    if (r.Path.IndexOf("ui.title.", System.StringComparison.Ordinal) < 0 || r.Kind != TextKind.Title) continue;
-                    ribbons++;
-                    Assert.GreaterOrEqual(r.RectH, TextSize.BoxHeight(TextSize.Title) - 1f,
-                        "팝업 제목 리본의 글자 칸 높이가 제목 60 의 한 줄(84px)보다 낮다 — bestFit 이 말없이 줄인다(T75 4항 · UiKit.PopupRibbonSize): " + r);
+                    if (!r.RibbonShort && !r.PopupRibbon) continue;
+                    if (r.PopupRibbon) { ribbons++; if (r.RibbonShort) shortOwn.Add(r.ToString()); }
+                    else if (r.RibbonShort && r.Kind == TextKind.Title && r.Path.IndexOf("ui.title.", System.StringComparison.Ordinal) >= 0) shortScreen.Add(r.ToString());
                 }
-                Assert.Greater(ribbons, 0, "표를 모은 화면 중에 공통 팝업 제목 리본이 하나는 있어야 한다(단언이 헛돌지 않게)");
+                // 화면이 «스스로» 세운 리본(예: 17 데일리 기프트의 Layout.GfRibbon)은 그 화면 워커 몫이라 표로만 남긴다 — T75 행에 남겨 두었다.
+                Debug.Log($"[RibbonGate] 공통 리본 {ribbons} · 칸 낮은 공통 리본 {shortOwn.Count} · 칸 낮은 «화면 제작» 리본 {shortScreen.Count}(보고만 · T75 4항)"
+                    + (shortScreen.Count > 0 ? "\n  " + string.Join("\n  ", shortScreen) : ""));
+                Assert.Greater(ribbons, 0, "표를 모은 화면 중에 공통 팝업 제목 리본(UiKit.Popup)이 하나는 있어야 한다(단언이 헛돌지 않게)");
+                Assert.AreEqual(0, shortOwn.Count,
+                    "공통 팝업 제목 리본의 글자 칸 높이가 제목 60 의 한 줄(84px)보다 낮다 — bestFit 이 말없이 줄인다(T75 4항 · UiKit.PopupRibbonSize·RibbonFit):\n" + string.Join("\n", shortOwn));
             }
             _log.AssertNoRed("글자 크기 게이트(전 화면)");
             yield return Shutdown();
