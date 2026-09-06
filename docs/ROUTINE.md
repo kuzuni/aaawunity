@@ -236,7 +236,7 @@
 1. 배속 버튼 값(x1/x2)을 세이브(`SaveData.Speed` · PlayerPrefs)에 저장하고, 전투 시작 시 그 값으로 시작한다(«2배속으로 하다가 클리어 뒤 다른 챕터 도전하면 다시 1배속» 이 안 되게). index.html `kkoma-knight-v2` 에 없는 필드라 세이브 호환은 «없으면 1».
 2. 게이트 + PROGRESS T18 행.
 
-### T19 — 전투 맵 = 데모 씬 «그림» 그대로 (T20 뒤 · 주인 재지적)
+### T19 — 전투 맵 = 데모 씬 «그림» 그대로 (T20 뒤 · 주인 재지적) ✅ (완료 · `dedeffb` · CI #48 · PROGRESS 참조 — 씬에는 세로 반전이 없고 Road_Up/Road_Down 두 그룹이 같은 스프라이트를 양쪽에 둔다)
 범위: `Assets/Scripts/Game/BattleWorld.cs`(BuildGround/BuildProps) · `tools/gen_maps.py` · `Assets/Scripts/Game/MapLayouts.cs`(재생성)
 순서: **T20 완료 뒤**(BattleWorld 공유). T21 보다 먼저.
 > 주인(2026-09-06): «맵 디자인을 DemoScene_Autumn/DeepForest/Desert/Forest 씬에 있는 거 그대로 가져와서 쓰라니까 안 쓰네? 지금 맵이 디자인 존나 다르던데». 씬을 그림으로 보려면 `python3 tools/demo_render/render_demo_scene.py <폴더>` + `node tools/demo_render/shot.js <폴더>`(Playwright · PNG 는 커밋 금지). 데모 씬의 모습: 평면색 들판 화면 전체 · 가운데 **두꺼운 길 띠(2.46u · 화면 높이의 1/4)** · 길 **위·아래 양쪽** 가장자리에 물결 풀 경계 · 길 위쪽 들판과 아래쪽 들판 모두에 나무·돌·통·꽃이 **빽빽하게**(17.8u 폭 화면에 30~60개).
