@@ -344,6 +344,7 @@ namespace KkomaKnight.Game
                 else UiKit.Label(card, 4, 2, 92, 15, g.title, TextSize.Body, Palette.White).fontStyle = FontStyle.Bold;
                 var ic = UiKit.Rect(card, "IconCell"); UiKit.Pct(ic, 26, 20, 48, 38);
                 var f = UiKit.Spawn("ui.itemFrame.blue", ic); UiKit.Stretch((RectTransform)f.transform); var im = UiKit.Icon(ic, "Icon", g.icon); UiKit.Pct(im.rectTransform, 15, 15, 70, 70);
+                GearUi.DarkFrame(f.transform);   // T115 — 워커 I 가 «우연히 통과» 로 지목한 자리(f08a7fe 커밋 메시지)
                 // T72 ② 상품 아이콘 뒤 빛살(주인 «상점 아이템 … 아이콘 뒤에 Effect_Light» · 상인 페이지도 상점이다)
                 PlanLight(ic); _goodsCells.Add(ic);
                 UiKit.Label(card, 4, 60, 92, 15, "한도 —", TextSize.Aux, Palette.Ink, kind: TextKind.Aux);
@@ -668,6 +669,7 @@ namespace KkomaKnight.Game
             {
                 var cell = UiKit.Rect(row, namePrefix + i); UiKit.Pct(cell, i * (cellW + gap), 0, cellW, 100);
                 var f = UiKit.Spawn(frameKey, cell); UiKit.Stretch((RectTransform)f.transform);
+                GearUi.DarkFrame(f.transform);   // T115 · T69 7항 — 조각 제 Border 링을 Ink 8px 로 + 결정 184 계약(가운데 비움 · raycast 끔 · 링이 형제 맨 뒤)
                 // 수량 글자가 아래 34% 를 쓰는 칸(던전 세부 보상 · T99)은 아이콘을 위로 올려 겹치지 않게 한다 — 레퍼런스 21 도 «그림 위 · 숫자 아래» 다
                 var ic = UiKit.Icon(cell, "Icon", icons[i]); UiKit.Pct(ic.rectTransform, amountBelow ? 22 : 16, amountBelow ? 4 : 16, amountBelow ? 56 : 68, amountBelow ? 56 : 68);
                 res.Add(cell);
@@ -678,6 +680,7 @@ namespace KkomaKnight.Game
         {
             var cell = UiKit.Rect(row, "Reward"); UiKit.Pct(cell, r);
             var f = UiKit.Spawn(frameKey, cell); UiKit.Stretch((RectTransform)f.transform);
+            GearUi.DarkFrame(f.transform);   // T115
             var ic = UiKit.Icon(cell, "Icon", icon); UiKit.Pct(ic.rectTransform, 16, 12, 68, 68);
             UiKit.Label(cell, 0, 50, 100, 50, "—", TextSize.Aux, Palette.White, kind: TextKind.Aux);
             return cell;
@@ -703,6 +706,7 @@ namespace KkomaKnight.Game
             // 정사각 맞춤은 HeightControlsWidth — FitInParent 는 앵커를 부모(줄) 전체로 펴고 가운데 정렬해 초상이 줄 한가운데로 갔다(T43 비평 회차 1 · 23·24 감점 원인)
             if (aspect) { var arf = UiKit.Ensure<AspectRatioFitter>(cell.gameObject); arf.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth; arf.aspectRatio = 1f; }
             var f = UiKit.Spawn(frameKey, cell); UiKit.Stretch((RectTransform)f.transform);
+            GearUi.DarkFrame(f.transform);   // T115
             var inner = UiKit.Rect(cell, "Inner"); UiKit.Pct(inner, 10, 10, 80, 80); UiKit.Ensure<RectMask2D>(inner.gameObject);
             if (icon != null) { var ic = UiKit.Icon(inner, "Icon", icon); UiKit.Stretch(ic.rectTransform); }
             return cell;

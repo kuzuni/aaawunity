@@ -298,7 +298,14 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(card, "Pic")), c + " 그림 띠에 어두운 테두리(T69-events)");
             }
             foreach (var t in new[] { "Tab:dungeon", "Tab:pvp" }) Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(evRoot, t)), t + " 탭 칸에 어두운 테두리(T69-events)");
-            if (Press(UiKit.Find(evRoot, "Card:hell"), "EnterBtn")) { yield return Check("21_dungeon_detail"); _app.Overlay.Close(); yield return Frames(1); }
+            // T115 — 던전·아레나의 «물건 칸» 도 공용 GearUi.DarkFrame 을 거쳐 7항·결정 184 계약을 지킨다(전에는 조각 제 갈색 Border 로 «우연히» 통과했다)
+            AssertItemFrameBorder(UiKit.Find(UiKit.Find(evRoot, "Card:hell"), "Cell:0"), "던전 카드 보상 칸 1");
+            if (Press(UiKit.Find(evRoot, "Card:hell"), "EnterBtn"))
+            {
+                yield return Check("21_dungeon_detail");
+                AssertItemFrameBorder(UiKit.Find(_app.Overlay.Root, "RewardCell:0"), "던전 세부 보상 칸 1");   // T115
+                _app.Overlay.Close(); yield return Frames(1);
+            }
             ev.ShowPage(EventsScreen.PagePvp); yield return Check("22_arena");
             Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(UiKit.Find(evRoot, "Card:arena"), "Pic")), "아레나 카드 그림 띠에 어두운 테두리(T69-events)");
             ev.ShowPage(EventsScreen.PageArena); yield return Check("23_arena_enter");
@@ -307,6 +314,7 @@ namespace KkomaKnight.Tests.Play
             {
                 yield return Check("24_arena_challenge");
                 for (int i = 0; i < 5; i++) AssertUiBarBorder(_app.Overlay.Root, "FoeRow:" + i);
+                AssertItemFrameBorder(UiKit.Find(UiKit.Find(_app.Overlay.Root, "FoeRow:0"), "Face"), "도전 상대 줄 초상");   // T115
                 _app.Overlay.Close(); yield return Frames(1);
             }
             if (Press(evRoot, "RewardsBtn"))
@@ -316,6 +324,7 @@ namespace KkomaKnight.Tests.Play
                 _app.Overlay.Close(); yield return Frames(1);
             }
             ev.ShowPage(EventsScreen.PageMerchant); yield return Check("26_arena_shop");
+            AssertItemFrameBorder(UiKit.Find(UiKit.Find(evRoot, "Goods:0"), "IconCell"), "상인 상품 칸 1");   // T115
             _app.ShowScreen("lobby"); yield return Frames(1);
 
             // 06 장비 · 07 세부 · 08 대장간 · 09/10 상점
