@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-06 · 12:0X UTC) ⚑⚑ 주인 지시 — UI 전체적으로 행·카드·칸마다 GUI Pro `BasicFrame_Rectangle_01~04_White_Border3` 같은 Border 스프라이트를 넣어 «검은 아웃라인» 느낌으로. 던전 행도 마찬가지.** → **T69** 등재(§2 · UiKit.Bordered 공통 헬퍼 + 카탈로그 키 먼저 · 화면 묶음은 T63 하위 lock 과 같이 · 루틴이 잡는다).
+
 - **(2026-09-06 · 11:5X UTC) ⚑⚑ 주인 지시 — 로비: ① 아이콘들 너무 작음 ② 상단 주인공 초상이 계속 움직임(정지) ③ 배경 Deco 별로(제거) ④ 챕터 카드는 예전 프리팹 `SampleImage_Map` 그림이 좋았음(코드 조립 카드 폐기). 웹·폰 모두 «이제 잘 된다»(T59 종결).** → **T68** 등재(§2 · T63 로비 묶음과 함께 · 루틴이 잡는다).
 
 - **(2026-09-06 · 11:4X UTC) ⚑⚑ 주인 지시 — 게임 전체적으로 글씨가 너무 작아 안 읽힌다. 가독성 있게 다 바꿔라.** → **T63** 등재(§2 · UiKit 최소 글자 크기 하한(본문 40 · 버튼 44 · 보조 36 · 제목 60 · bestFit min 32) + 화면별 전수 점검 + 잘림 0 게이트 · 화면 단위 하위 lock · 루틴이 잡는다).
@@ -650,6 +652,17 @@
 4. **챕터 카드 = `SampleImage_Map`**: 40행 Hide 목록에서 `SampleImage_Map` 을 빼고 그 그림을 표 ① 의 카드 자리(`LobbyCard` = 27.9/41.0/44.5/13.7)에 놓는다 · 84행의 코드 조립 `ChapterCard`(Environment 바닥·길·소품 4개 · 결정 34)는 **폐기**(코드·테스트 정리). 챕터 번호·«챕터 N 해금» 글자·◀▶ 화살표는 그대로 카드 위/옆. 챕터마다 그림을 바꾸고 싶으면 프리팹의 샘플 지도 스프라이트만 쓴다(새 그림 금지 · 하나뿐이면 전 챕터 같은 그림 · 워커 결정 기록).
 5. **테스트**: `UiSmokeTests` 로비 — 사이드 아이콘 RectTransform 폭 ≥ 칸 폭 75% · HeroView Animator speed 0(로비) / 1(장비) · Background 밑에 Deco 비활성 · `SampleImage_Map` 활성 + 카드 자리 · 옛 `ChapterCard` 없음 · `LogAssert.NoUnexpectedReceived`. 이름표(UiTag) 는 카드 자리 그대로라 점수 불변.
 6. 게이트 + assets-map(SampleImage_Map 조각 행) + PROGRESS T68 행 + 완료 기록(확인 = CI PlayMode + screens 01 PNG(`Read` 로 폰 폭 기준 아이콘 크기 확인) + 배포 스모크 + 주인 폰).
+
+### T69 — ⚑⚑ UI 전체 «테두리(Border)» 규칙: 행·카드·칸마다 GUI Pro `BasicFrame_*_Border*` 스프라이트로 **검은(어두운) 아웃라인** 느낌 — 던전 행 포함 (주인 2026-09-06 · 전 화면 · T63 과 같은 화면 묶음으로)
+범위: `Assets/Scripts/Game/UiKit.cs`(**공통 헬퍼 `UiKit.Bordered(rt, key, color)`** — 칸 뒤에 Bg + 위에 Border 스프라이트 두 장 · 9-slice · raycast 끔) · `Assets/KkomaKnight/catalog.json`(`fr.rectBorder2`·`fr.rectBorder3` = `BasicFrame_Rectangle_01~04_White_Border2/3.png` · `fr.rectInner7` = `…_InnerBorder1_Px7.png` · `fr.r0Border5` = `…_R0_Border_Px5.png` · 원형 `fr.circleBorder`(있음)) · 화면 코드 전부(목록 행·카드·격자 칸·팝업 상자 안 칸) · `docs/assets-map.md` · `Assets/Tests/PlayMode`(테두리 존재 게이트)
+순서: 제약 없음 — **T63(글자 가독성)·T68(로비)·T62(랭킹) 와 같은 파일**이므로 화면 묶음별 하위 lock(`T69-lobby` …)으로 T63 묶음을 잡은 워커가 **같이** 한다(한 화면을 두 번 만지지 않게). UiKit 헬퍼 + 카탈로그 키는 **맨 먼저 한 커밋**.
+주인 원문(2026-09-06 · 12:0X UTC): «행마다 혹은 카드마다 Border, 예를 들어 BasicFrame_Rectangle_01~04_White_Border3 이런 거 들어가서 검은색 아웃라인 같은 거 있는 느낌으로 해 줘야 함. UI 들 전체적으로.» «던전 행도 마찬가지고.»
+1. **재료**(주인 에셋 · 코드 도형 0): `Shared/Sprite_Common/Frame/BasicFrame/` 의 `BasicFrame_Rectangle_01~04_White_Border1/2/3.png`(굵기 1<2<3 · 흰 스프라이트라 **색을 어두운 Ink 로 tint** 하면 검은 아웃라인) · 안쪽 선이 필요하면 `…_InnerBorder1_Px7` · 각진 칸은 `BasicFrame_Rectangle_R0_Border_Px4/5` · 원형(초상·아이콘)은 `BasicFrame_Circle_H70_White_Border`(있음 `fr.circleBorder`). **기본 = Border3 + Palette.Ink(알파 0.85~1)** · 작은 칸(아이콘·pill)은 Border2. 이미 프레임이 있는 조각(CardFrame_04 등급 프레임 · ListItem_EquipMent 칸 · ui.frameDarkBorder)은 **그 프레임의 테두리를 어둡게 tint** 하거나 위에 Border 한 장 덧대어 같은 느낌으로 통일.
+2. **어디에**(전부): 레벨업 3택·보유 특전 카드 · 장비 인벤 칸·장착 슬롯·세부 팝업 칸 · 대장간 슬롯·인벤 · 상점 카드·상품 칸·다이아/골드 칸 · 펫 격자·장착 슬롯 · **던전 행(20·21)** · 아레나 카드·순위 줄(T62 의 ListItem_Ranking 포함)·도전 5줄·보상 줄·상인 격자 · 로비 사이드 기둥 칸·챕터 카드·상단 재화 pill · 설정 줄 · 로비 팝업 6종의 행/칸 · 승리/패배 보상 칸·팁 줄 · 토스트. 팝업 «상자(ui.popup)» 자체는 이미 테두리가 있으니 안쪽 칸만.
+3. **헬퍼 계약**: `UiKit.Bordered(RectTransform cell, string borderKey = "fr.rectBorder3", Color? tint = null, float inset = 0)` — cell 의 맨 뒤에 `Image(fr.rect · 바탕색 = 지금 칸 배경 그대로)` , 맨 앞에 `Image(border · tint = Ink)` 를 Stretch 로 넣고 두 장 다 `raycastTarget=false` · 9-slice(`Image.Type.Sliced` · 스프라이트 border 값은 .meta 의 spriteBorder 확인 · 0 이면 `pixelsPerUnitMultiplier` 로 굵기 조절 · 폰에서 **최소 3px** 보이게 = 프레임 기준 8px 이상). 이름 «Border» 고정(테스트·이름표가 찾는다). 배치 표(ref-layout)는 불변 — 테두리는 칸 안쪽에 그려 점수 영향 0.
+4. **레퍼런스 대조**: `docs/ref/*.jpg` 도 카드·행마다 어두운 외곽선이 있다(01 사이드 기둥·06 장비 칸·09 상품 칸·20 던전 행·23 순위 줄) — 굵기·색은 점수 밖이지만 «있음/없음» 은 §5 비평의 감점 사유로 추가(README «공통 문법» 절에 한 줄).
+5. **테스트**: PlayMode — 각 화면을 열어 «행/카드/칸» 이름표(UiTag) 를 가진 RectTransform 마다 자식 «Border» Image(스프라이트 키 `fr.*Border*`) 존재 · 색 알파 ≥ 0.8 · `raycastTarget=false` · `LogAssert.NoUnexpectedReceived`. 예외 목록(테두리 없는 게 맞는 것 · 배경·구분선) 은 테스트 안에 명시.
+6. 게이트 + assets-map(스프라이트 키 4~5줄) + PROGRESS T69 행(+ 화면 묶음 하위 행) + 완료 기록(확인 = CI PlayMode + screens PNG 를 `Read` 로 «아웃라인 보이나» + 배포 스모크 + 주인 폰).
 
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
