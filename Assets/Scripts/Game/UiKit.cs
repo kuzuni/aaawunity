@@ -224,8 +224,14 @@ namespace KkomaKnight.Game
         public const float BorderAlpha = 0.9f;
         /// <summary>테두리 오브젝트 이름(고정 · 테스트·이름표·<see cref="HasDarkBorder"/> 가 찾는다).</summary>
         public const string BorderName = "Border";
-        /// <summary>기본 테두리 조각(굵은 Border3) — 작은 칸(아이콘·pill)은 <see cref="BorderKeySmall"/>.</summary>
+        /// <summary>기본 테두리 조각(굵은 Border3) — 작은 칸(아이콘)은 <see cref="BorderKeySmall"/> · 캡슐(pill)은 <see cref="BorderKeyPill"/>.</summary>
         public const string BorderKey = "fr.rectBorder3", BorderKeySmall = "fr.rectBorder2";
+        /// <summary>
+        /// 캡슐(pill) 칸 테두리 조각(T69-lobby · 결정 149 가 남긴 «둥근 pill 에 사각 링이 어긋난다» 를 닫는다) — <c>BasicFrame_Rectangle_05_White_Border</c>(87×39 · 9-slice border 44/20/43/19).
+        /// 가운데 슬라이스가 0px 이라 가로로 늘리면 위·아래 선만 이어지는 «캡슐» 이 된다(pill 바탕 <c>ResourceBar_Bg</c> 31×31 · border 16/16/15/15 와 같은 방식).
+        /// 쓰는 곳: 상단 재화 pill(골드·보석 · <see cref="TopBar"/>) · 전투 HUD pill 2개(처치 수·이번 판 골드).
+        /// </summary>
+        public const string BorderKeyPill = "fr.pillBorder";
         public static Color BorderInk => Palette.A(Palette.Ink, BorderAlpha);
         /// <summary>조각의 원본 선 굵기(px · 26×26 스프라이트 실측). 모르는 키는 5.</summary>
         public static float BorderNativePx(string key)
@@ -234,6 +240,7 @@ namespace KkomaKnight.Game
             {
                 case "fr.rectBorder": return 4f;
                 case "fr.rectInner7": return 7f;
+                case BorderKeyPill: return 7f;
                 default: return 5f;
             }
         }

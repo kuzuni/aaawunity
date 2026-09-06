@@ -104,6 +104,23 @@ namespace KkomaKnight.Tests.Play
             Assert.Less(lineWorld * 2f, bg.size.y, name + " 선 2줄이 바 높이 안(위·아래 선이 겹치지 않음)");
         }
 
+        /// <summary>캡슐(pill) 칸의 테두리 계약(T69-lobby · 결정 149 마무리) — «Border» Image · 캡슐 조각(<see cref="UiKit.BorderKeyPill"/>) · 가운데 비움 · 선 ≥ 8px · 아이콘은 테두리 위(pill 왼쪽 끝에 걸친다).</summary>
+        static void AssertPillBorder(Transform pill, string label)
+        {
+            Assert.IsNotNull(pill, label);
+            Transform bt = null; for (int i = 0; i < pill.childCount; i++) if (pill.GetChild(i).name == UiKit.BorderName) { bt = pill.GetChild(i); break; }
+            Assert.IsNotNull(bt, label + " 에 «Border» 자식");
+            var im = bt.GetComponent<Image>(); Assert.IsNotNull(im, label + " Border 는 Image");
+            Assert.IsNotNull(im.sprite, label + " Border 스프라이트");
+            Assert.IsTrue(im.sprite.name.Contains("Rectangle_05"), label + " Border 는 캡슐 조각(BasicFrame_Rectangle_05_White_Border · 지금 " + im.sprite.name + ")");
+            Assert.AreEqual(Image.Type.Sliced, im.type, label + " Border 는 9-slice"); Assert.IsFalse(im.fillCenter, label + " Border 는 가운데 비움"); Assert.IsFalse(im.raycastTarget, label + " Border raycast 끔");
+            Assert.IsTrue(UiKit.HasDarkBorder(pill), label + " 은 어두운 테두리");
+            float linePx = UiKit.BorderNativePx(UiKit.BorderKeyPill) / im.pixelsPerUnitMultiplier;
+            Assert.GreaterOrEqual(linePx, UiKit.BorderPx - 0.01f, label + " 테두리 선 ≥ 8px(폰 3px) · 지금 " + linePx.ToString("0.0"));
+            var icon = UiKit.Find(pill, "Icon");
+            if (icon != null && icon.parent == pill) Assert.Greater(icon.GetSiblingIndex(), bt.GetSiblingIndex(), label + " 아이콘은 테두리 위(형제 순서 뒤)");
+        }
+
         [UnityTest]
         public IEnumerator BattleBarsHaveBordersAndCellTagsAreAudited()
         {
@@ -114,6 +131,12 @@ namespace KkomaKnight.Tests.Play
             // 01 로비 · 12 설정
             Assert.AreEqual("lobby", _app.Current.Name);
             yield return Check("01_lobby");
+            // T69-lobby(strict) — 기둥 상자 5(사이드 2·보조 줄·성·이벤트) · 배너 · 챕터 카드 · 상단 재화 pill 2(캡슐 조각)
+            var lobbyRoot = _app.Current.Root;
+            foreach (var n in new[] { "SideL", "SideR", "SubRow", "Castle", "Events", "Banner", "ChapterCard" })
+                Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(lobbyRoot, n)), "로비 «" + n + "» 에 어두운 테두리(T69-lobby)");
+            AssertPillBorder(UiKit.Find(lobbyRoot, "ResourceBar_Coin"), "로비 골드 pill");
+            AssertPillBorder(UiKit.Find(lobbyRoot, "ResourceBar_Gem"), "로비 보석 pill");
             _app.Overlay.Settings(); yield return Check("12_settings"); _app.Overlay.Close(); yield return Frames(1);
 
             // 11 특권 · 15~19 로비 팝업
@@ -157,6 +180,7 @@ namespace KkomaKnight.Tests.Play
             foreach (var n in new[] { "Bar:EXP", "Bar:HP", "Bar:SH" }) AssertUiBarBorder(bs.Root, n);
             AssertWorldBarBorder(W.PlayerHpBar, "플레이어 HP 단"); AssertWorldBarBorder(W.PlayerShBar, "플레이어 실드 단");
             foreach (var t in new[] { "stat:" + BattleScreen.StatDefs[0].Key }) Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(bs.Root, t)), t + " 스탯 칸 테두리");
+            AssertPillBorder(UiKit.Find(bs.Root, "Pill:kills"), "HUD 처치 수 pill"); AssertPillBorder(UiKit.Find(bs.Root, "Pill:gold"), "HUD 골드 pill");
             _log.AssertNoRed("전투 진입(테두리)");
             Time.timeScale = 3f;
             float t0 = Time.realtimeSinceStartup;

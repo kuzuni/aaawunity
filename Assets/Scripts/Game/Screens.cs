@@ -69,6 +69,9 @@ namespace KkomaKnight.Game
                 var arf = UiKit.Ensure<AspectRatioFitter>(badge.gameObject); arf.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth; arf.aspectRatio = 1f;
                 UiKit.Label(badge.transform, 0, 0, 100, 100, "1", 40, Palette.White);
                 UiKit.Clickable(brt, () => OnSide(SidePass));
+                // T69-lobby — 배너 상자와 그 안 진행바에 «검은 아웃라인»(레퍼런스 01 의 보라 배너·초록 바 둘 다 검은 외곽선) · 배지는 이미 Ink 라 테두리를 얹어도 안 보인다(넣지 않음)
+                UiKit.Bordered(brt);
+                UiKit.Bordered(bar.Root, UiKit.BorderKeySmall);
                 UiKit.Tag(brt, "이벤트 배너");
             }
             var menu = UiKit.Find(rt, "Button_Menu");
@@ -99,6 +102,8 @@ namespace KkomaKnight.Game
                     var mi = map.GetComponent<Image>(); if (mi != null) { mi.preserveAspect = true; mi.raycastTarget = false; }
                 }
                 UiKit.Clickable(card, () => { Audio.Wake(); App.StartBattle(App.Save.SelChapter); });
+                // T69-lobby — 카드 자리에 «검은 아웃라인»(레퍼런스 01 도 디오라마를 검은 외곽선 상자가 감싸고 나무만 위로 넘친다) · 그림 위에 그려 상자로 보이게(맨 뒤 바탕은 넣지 않는다 = T68 ④ 그대로)
+                UiKit.Bordered(card);
                 UiKit.Tag(card, "챕터 카드(스테이지 그림)");
             }
             var left = UiKit.Icon(rt, "ArrowL", "pi.arrow_left", Palette.Cream); UiKit.Pct(left.rectTransform, Layout.LobbyArrowL); UiKit.Clickable(left.rectTransform, () => Shift(-1)); UiKit.Tag(left.transform, "좌 화살표");
@@ -134,6 +139,8 @@ namespace KkomaKnight.Game
                 lb.lineSpacing = UiKit.CaptionLineSpacing;
                 string key = it.key; UiKit.Clickable(cell, () => OnSide(key));
             }
+            // T69-lobby — 기둥 «상자» 에 «검은 아웃라인»(레퍼런스 01 의 사이드 기둥·보조 줄·성·이벤트 전부 검은 외곽선) · 기둥 안 칸끼리는 레퍼런스도 선이 없다(칸마다는 넣지 않는다)
+            UiKit.Bordered(prt);
             return prt;
         }
 
@@ -217,6 +224,15 @@ namespace KkomaKnight.Game
             var coin = UiKit.Find(rrt, "ResourceBar_Coin"); if (coin != null) { UiKit.Pct((RectTransform)coin, Layout.LobbyGoldPill.Within(top)); tb.GoldPill = (RectTransform)coin; }
             var gem = UiKit.Find(rrt, "ResourceBar_Gem"); if (gem != null) { UiKit.Pct((RectTransform)gem, Layout.LobbyGemPill.Within(top)); tb.GemPill = (RectTransform)gem; }
             tb.Gold = UiKit.SetText(rrt, "ResourceBar_Coin/Text (TMP)", "0"); tb.Gem = UiKit.SetText(rrt, "ResourceBar_Gem/Text (TMP)", "0");
+            // T69-lobby — 재화 pill 2개에 «검은 아웃라인»(레퍼런스 01 의 골드·보석 pill 은 검은 외곽선) · 캡슐 조각(BorderKeyPill · 결정 149 가 남긴 «둥근 pill» 을 닫는다)
+            // 아이콘(코인·보석)은 pill 왼쪽 끝에 걸치므로 테두리 위로 올린다(전투 HUD 바의 Cap 과 같은 처리)
+            foreach (var pill in new[] { tb.GoldPill, tb.GemPill })
+            {
+                if (pill == null) continue;
+                UiKit.Bordered(pill, UiKit.BorderKeyPill);
+                var picon = UiKit.Find(pill, "Icon");
+                if (picon != null) picon.SetAsLastSibling();
+            }
             tb.Refresh();
             return tb;
         }

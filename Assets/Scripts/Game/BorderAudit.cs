@@ -12,7 +12,17 @@ namespace KkomaKnight.Game
     public static class BorderAudit
     {
         /// <summary>테두리 없음이 실패인 화면(묶음이 끝날 때마다 추가 · 전부 끝나면 모든 화면).</summary>
-        public static readonly HashSet<string> StrictScreens = new HashSet<string> { "02_battle" };
+        public static readonly HashSet<string> StrictScreens = new HashSet<string> { "02_battle", "01_lobby" };
+
+        /// <summary>
+        /// 테두리가 없는 게 맞는 것(ROUTINE T69 5항 «예외 목록») — 이름표 이름 또는 <see cref="UiTag.Members"/> 조각의 오브젝트 이름.
+        /// 레퍼런스 jpg 에 «상자» 가 없는 담개(속의 칸이 각자 테두리를 가진다)만 넣는다 — 이름표 이름은 배치 표(ref-layout)의 이름이라 바꿀 수 없어서 여기서 뺀다.
+        /// </summary>
+        public static readonly HashSet<string> Exempt = new HashSet<string>
+        {
+            "상단 바(아바타+재화 줄 전체)",   // 01·06·09·13·20 — 상단 재화 줄 «전체» 는 담개다(레퍼런스에 띠 상자가 없다 · 아바타·pill 이 각자 테두리)
+            "PowerCell",                        // 01 전투력 = 칼 아이콘 + 주황 숫자뿐(레퍼런스 01 에 상자 없음)
+        };
 
         /// <summary>«행·카드·칸» 으로 보는 이름표 낱말 — 이 가운데 하나가 이름에 들어가면 대상.</summary>
         static readonly string[] CellWords = { "칸", "카드", "행", "슬롯", "기둥", "줄" };
@@ -42,11 +52,11 @@ namespace KkomaKnight.Game
             if (root == null) return rows;
             foreach (var tag in root.GetComponentsInChildren<UiTag>(false))
             {
-                if (tag == null || !tag.isActiveAndEnabled || !IsCellTag(tag.Name)) continue;
+                if (tag == null || !tag.isActiveAndEnabled || !IsCellTag(tag.Name) || Exempt.Contains(tag.Name)) continue;
                 if (tag.Members.Count == 0) { rows.Add(new Row { Screen = screen, Tag = tag.Name, Path = PathOf(tag.transform, root), HasBorder = UiKit.HasDarkBorder(tag.transform) }); continue; }
                 foreach (var m in tag.Members)
                 {
-                    if (m == null || !m.gameObject.activeInHierarchy) continue;
+                    if (m == null || !m.gameObject.activeInHierarchy || Exempt.Contains(m.name)) continue;
                     rows.Add(new Row { Screen = screen, Tag = tag.Name, Path = PathOf(m, root), HasBorder = UiKit.HasDarkBorder(m) });
                 }
             }

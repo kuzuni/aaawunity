@@ -59,6 +59,14 @@ namespace KkomaKnight.Game
             var killPill = UiKit.Find(pills, "ResourceBar_Gem") as RectTransform; var goldPill = UiKit.Find(pills, "ResourceBar_Coin") as RectTransform;
             if (killPill != null) { killPill.name = "Pill:kills"; UiKit.Pct(killPill, 0, 0, 46, 100); UiKit.SetSprite(killPill, "Icon", "pi.skull"); _kills = UiKit.SetText(killPill, "Text (TMP)", "0"); }
             if (goldPill != null) { goldPill.name = "Pill:gold"; UiKit.Pct(goldPill, 54, 0, 46, 100); _gold = UiKit.SetText(goldPill, "Text (TMP)", "0"); }
+            // T69-lobby — HUD pill 2개도 «검은 아웃라인»(결정 149 가 «둥근 pill 에 사각 링이 어긋난다» 며 미룬 것 · 캡슐 조각 BorderKeyPill 로 닫는다 · 레퍼런스 02 의 pill 도 검은 외곽선)
+            foreach (var pill in new[] { killPill, goldPill })
+            {
+                if (pill == null) continue;
+                UiKit.Bordered(pill, UiKit.BorderKeyPill);
+                var picon = UiKit.Find(pill, "Icon");
+                if (picon != null) picon.SetAsLastSibling();
+            }
             var menu = UiKit.SpawnRt("ui.btnMenu", Root, Layout.HudMenu); menu.name = "Button_Menu"; UiKit.Clickable(menu, OnPause);   // ≡ → 일시정지 팝업(재개 · 로비로 · 설정)
             var title = UiKit.SpawnRt("ui.lineTitle", Root, new Layout.R(Layout.HudChapTitle.X - 6, Layout.HudChapTitle.Y - 1.2f, Layout.HudChapTitle.W + 12, Layout.HudChapTitle.H + 2.4f));
             _chapTitle = UiKit.SetText(title, "Text (TMP)", "챕터 1", size: UiKit.FontForHeight(Layout.HudChapTitle.H));   // 글자 높이 = 표 2.6%(T47 회차 2 에서 1.5% 로 작았다)
