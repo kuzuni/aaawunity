@@ -37,6 +37,8 @@ namespace KkomaKnight.Game
             var bg = UiKit.Ensure<Image>(Root.gameObject); bg.color = Color.Lerp(Palette.Slate, Palette.Dim, 0.45f); bg.raycastTarget = true;   // 인벤 바탕 = 어두운 남색(장비 탭과 같은 값 · 색은 점수 밖)
             // T72 ① 배경 패턴(어두운 바탕 → 흰 무늬 α0.12 · 오른쪽 위로 천천히 · 맨 뒤) — 장비 화면(GearScreen)과 같은 값 · 화면 적용은 T69-forge 묶음이 같이(ROUTINE T72 «한 화면 세 번 만지지 않기»)
             UiKit.PatternBg(Root, UiKit.PatternTintDark);
+            // T72 ③ 화면 배경 그라데이션(3항 «화면 배경 = 위 밝고 아래 어두운 두 장» · 주인 2026-09-07 «레퍼런스처럼 그라데이션 있게») — 무늬 바로 위 · 무대·슬롯·액션바·격자·띠 아래
+            UiKit.Gradient(Root);
 
             // ① 대장간 무대 — 벽(어두운 갈색) + 바닥 띠 + 화덕(어두운 상자 + 불) + 벽의 연장 2 + 통 2 · 무대 밖은 잘라낸다
             var stage = UiKit.Rect(Root, "Stage"); UiKit.Pct(stage, Layout.ForgeStage); UiKit.Ensure<RectMask2D>(stage.gameObject);
@@ -63,6 +65,7 @@ namespace KkomaKnight.Game
 
             // ② 액션바 — 갈색 띠 · 왼쪽 끝 «자동»(파랑 + 빨간 !) · 오른쪽 끝 «합성»(회색 → 재료 3개면 주황: 같은 자리에 두 버튼을 두고 하나만 보인다)
             var band = UiKit.Panel(Root, "ActionBar", "fr.rect", Palette.InkLight); UiKit.Pct(band.rectTransform, Layout.ForgeActionBar); band.raycastTarget = true;
+            UiKit.Gradient(band.rectTransform);   // T72 ③ 액션바 띠(레퍼런스 08 의 갈색 띠도 위 밝고 아래 어둡다)
             var autoRt = UiKit.Button(Root, "ui.btnBlue", "자동", OnAuto, Layout.ForgeAuto); autoRt.name = "AutoBtn"; _auto = autoRt.GetComponent<Button>();
             { var d = UiKit.Spawn("ui.alertDot", autoRt); var dr = (RectTransform)d.transform; d.name = "AutoDot"; dr.anchorMin = dr.anchorMax = new Vector2(1, 1); dr.pivot = new Vector2(0.5f, 0.5f); dr.anchoredPosition = new Vector2(-4, 4); dr.sizeDelta = new Vector2(52, 52); _autoDot = d; }
             _fuseOff = UiKit.Button(Root, "ui.btnGray", "합성 (0/3)", OnFuse, Layout.ForgeFuse); _fuseOff.name = "FuseBtn"; _fuseTxtOff = UiKit.ButtonText(_fuseOff);
@@ -72,6 +75,7 @@ namespace KkomaKnight.Game
             // ③ 인벤 5열 격자(장비 탭과 같은 자리·격자 값) → ④ 아래 회색 띠 + 왼쪽 뒤로(◀ · 아이콘만 · 레퍼런스에 글자 없음)
             _content = GearUi.Grid(Root, Layout.ForgeInv, out _);
             var strip = UiKit.Panel(Root, "BottomStrip", "fr.rect", Color.Lerp(Palette.Gray, Palette.Dim, 0.35f)); UiKit.Pct(strip.rectTransform, BottomStrip); strip.raycastTarget = true;
+            UiKit.Gradient(strip.rectTransform);   // T72 ③ 아래 띠(탭바 자리)
             var back = UiKit.Button(Root, "ui.btnGray", "", () => App.ShowScreen("gear"), Layout.ForgeBack); back.name = "BackBtn";
             { var t = UiKit.ButtonText(back); if (t != null) t.gameObject.SetActive(false); var ic = UiKit.Icon(back, "Icon", "pi.arrow_left", Palette.Cream); UiKit.Pct(ic.rectTransform, 30, 18, 40, 64); }
 

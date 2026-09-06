@@ -531,6 +531,35 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
+        /// <summary>
+        /// T72 2단계 7차(대장간 08 = T72 의 마지막 화면) — ③ 그라데이션이 ⓐ 화면 배경(무늬 «위» · 무대·슬롯·격자·띠 아래) ⓑ 액션바 띠 ⓒ 아래 띠에 깔린다.
+        /// ① 무늬는 T69-forge 가 이미 깔았으므로 여기서는 «무늬 위에 그라데이션» 층 순서만 못 박는다(결정 171). 빨간 줄 0.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ForgeScreenCarriesTheBackgroundGradient()
+        {
+            yield return Boot();
+            _app.ShowScreen("forge"); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var forge = _app.Current.Root;
+
+            Assert.IsTrue(UiKit.HasPattern(forge), "대장간 배경 무늬(T72 ① · T69-forge)");
+            Assert.IsTrue(UiKit.HasGradient(forge), "대장간 배경 그라데이션(T72 ③ 3항 «화면 배경»)");
+            var pat = forge.Find(UiKit.PatternName); var top = forge.Find(UiKit.GradientTopName); var bottom = forge.Find(UiKit.GradientBottomName);
+            Assert.Less(pat.GetSiblingIndex(), top.GetSiblingIndex(), "그라데이션은 무늬 «위»(질감 층 순서 · 결정 171)");
+            Assert.Less(top.GetSiblingIndex(), bottom.GetSiblingIndex(), "위 밝음 → 아래 어둠 순서");
+            Assert.IsFalse(top.GetComponent<Image>().raycastTarget, "그라데이션은 클릭을 안 먹는다(격자 스크롤·버튼 그대로)");
+            foreach (var n in new[] { "Stage", "Result", "ActionBar", "BottomStrip" })
+            {
+                var t = forge.Find(n); Assert.IsNotNull(t, "대장간 " + n);
+                Assert.Greater(t.GetSiblingIndex(), bottom.GetSiblingIndex(), n + " 은 질감 층보다 위(무늬·그라데이션이 내용을 덮지 않는다)");
+            }
+            foreach (var n in new[] { "ActionBar", "BottomStrip" })
+                Assert.IsTrue(UiKit.HasGradient(forge.Find(n)), n + " 띠에 그라데이션(T72 ③ · 레퍼런스 08 의 띠)");
+
+            _log.AssertNoRed("T72 화면 적용(대장간 08 그라데이션)");
+            yield return Shutdown();
+        }
+
         /// <summary>«버튼 배경 안» 그라데이션 조각을 찾는다(<see cref="UiKit.ButtonGradient"/> 는 배경 그림의 자식으로 넣는다).</summary>
         static Image BottomGradientUnder(Transform btn)
         {
