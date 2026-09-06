@@ -99,6 +99,7 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(4, CountNamed(ov, "RewardCell:"), "보상 칸 4"); Assert.IsNotNull(UiKit.Find(ov, "FloorCircle"), "층수 원");
             var box = UiKit.Find(ov, "ui.popup.red") as RectTransform; Assert.IsNotNull(box, "빨간 팝업 패널"); AtX(box, Layout.DdBox, "세부 박스"); AtY(box, Layout.DdBox, "세부 박스");
             Assert.IsNull(UiKit.Find(ov, "Button_Close_01"), "닫기 X 없음");
+            { var arrowImg = UiKit.Find(ov, "FloorPrev")?.GetComponent<Image>(); Assert.IsNotNull(arrowImg, "층수 ◀"); Assert.AreNotEqual(Palette.Cream, arrowImg.color, "층수 ◀ 는 크림 패널과 다른 색(크림이면 안 보임 · T43 비평 회차 1)"); }
             Assert.IsTrue(ClickNamed(ov, "SweepBtn") && ClickNamed(ov, "ChallengeBtn") && ClickNamed(ov, "FloorPrev"), "소탕·도전·◀ 누름"); yield return Frames(1);
             Assert.IsTrue(_app.Overlay.IsOpen && _app.Current.Name == "events", "껍데기 버튼은 아무 일 없음");
             Assert.IsTrue(ClickNamed(ov, "Dimmed"), "배경 탭"); yield return Frames(2);
@@ -119,7 +120,8 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(EventsScreen.PageArena, ev.Page);
             var ar = UiKit.Find(root, "Page:arena") as RectTransform; Assert.IsNotNull(ar, "아레나 입장 페이지"); Assert.IsTrue(ar.gameObject.activeSelf); Assert.IsFalse(pv.gameObject.activeSelf);
             Assert.IsNotNull(UiKit.Find(ar, "Podium"), "시상대"); Assert.AreEqual(3, CountNamed(ar, "Portrait:"), "시상대 초상 3"); Assert.AreEqual(3, CountNamed(ar, "Banner:"), "시상대 배너 3"); Assert.AreEqual(3, CountNamed(ar, "Crown:"), "왕관 3");
-            Assert.AreEqual(7, CountNamed(ar, "RankRow:"), "순위 줄 7(4위~10위)"); Assert.IsTrue(HasText(s => s == "나") && HasText(s => s == "브론즈") && HasText(s => s == "보상") && HasText(s => s == "상인"), "입장 화면 글자");
+            Assert.AreEqual(7, CountNamed(ar, "RankRow:"), "순위 줄 7(4위~10위)");
+            { var face = UiKit.Find(UiKit.Find(ar, "RankRow:4"), "Face") as RectTransform; Assert.IsNotNull(face, "순위 줄 초상"); Assert.Less(face.anchorMax.x, 0.35f, "순위 줄 초상은 줄 왼쪽(등수 옆 · 레퍼런스 23) — FitInParent 가 줄 가운데로 보내던 회귀(T43 비평 회차 1)"); } Assert.IsTrue(HasText(s => s == "나") && HasText(s => s == "브론즈") && HasText(s => s == "보상") && HasText(s => s == "상인"), "입장 화면 글자");
             Assert.IsTrue(HasText(s => s == "시즌이 끝나면 상위 순위가 승급합니다"), "승급 안내");
             Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 2, "HeroView 2(상단 바 아바타 + 1위 초상 «나»)");
             Assert.IsNotNull(UiKit.Find(ar, "ChallengeBtn"), "도전"); Assert.IsNotNull(UiKit.Find(ar, "RewardsBtn"), "보상"); Assert.IsNotNull(UiKit.Find(ar, "MerchantBtn"), "상인");
@@ -131,6 +133,7 @@ namespace KkomaKnight.Tests.Play
             Check("도전 팝업", expectOverlay: true); ov = _app.Overlay.Root;
             Assert.IsTrue(HasText(s => s == "도전") && HasText(s => s == "무료 새로고침") && HasText(s => s == "탭하여 닫기"), "도전 팝업 글자");
             Assert.AreEqual(5, CountNamed(ov, "FoeRow:"), "상대 줄 5"); Assert.AreEqual(5, CountNamed(ov, "FoeBtn:"), "줄 도전 버튼 5");
+            { var face = UiKit.Find(UiKit.Find(ov, "FoeRow:0"), "Face") as RectTransform; Assert.IsNotNull(face, "상대 줄 초상"); Assert.Less(face.anchorMax.x, 0.3f, "상대 줄 초상은 줄 왼쪽(레퍼런스 24) — T43 비평 회차 1 회귀"); }
             var cbox = UiKit.Find(ov, "ui.popup") as RectTransform; Assert.IsNotNull(cbox); AtX(cbox, Layout.AcBox, "도전 박스"); AtY(cbox, Layout.AcBox, "도전 박스");
             Assert.IsTrue(HasText(s => s == UiKit.Fmt(_app.Power())), "전투력 = 내 값");
             Assert.IsTrue(ClickNamed(ov, "FoeBtn:0") && ClickNamed(ov, "RefreshBtn"), "줄 도전·새로고침 누름"); yield return Frames(1);
@@ -154,7 +157,7 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(EventsScreen.PageMerchant, ev.Page);
             var me = UiKit.Find(root, "Page:merchant") as RectTransform; Assert.IsNotNull(me, "상인 페이지"); Assert.IsFalse(ar.gameObject.activeSelf);
             Assert.IsTrue(HasText(s => s == "상인") && HasText(s => s == "다이아") && HasText(s => s == "부활 토큰"), "상인 글자");
-            Assert.AreEqual(11, CountNamed(me, "Goods:"), "상품 11"); AtX((RectTransform)UiKit.Find(me, "Goods"), Layout.MeGrid, "상품 격자"); AtY((RectTransform)UiKit.Find(me, "Banner"), Layout.MeBanner, "상인 배너");
+            Assert.AreEqual(11, CountNamed(me, "Goods:"), "상품 11"); Assert.IsNotNull(UiKit.Find(me, "Goods:0").GetComponent<RectMask2D>(), "상품 카드는 카드 사각형으로 클립(CardFrame_04 고정 폭 자식이 삐져나오던 것 · T43 비평 회차 1)"); AtX((RectTransform)UiKit.Find(me, "Goods"), Layout.MeGrid, "상품 격자"); AtY((RectTransform)UiKit.Find(me, "Banner"), Layout.MeBanner, "상인 배너");
             Assert.IsTrue(ClickNamed(me, "Goods:0"), "상품 누름"); yield return Frames(1);
             Assert.IsFalse(_app.Overlay.IsOpen, "상품은 아무 일 없음");
             Check("상인 페이지");

@@ -253,6 +253,7 @@ namespace KkomaKnight.Game
             {
                 var g = Goods[i]; var r = Layout.MeCard; r.X += (i % 3) * Layout.MeColPitch; r.Y += (i / 3) * Layout.MeRowPitch;
                 var card = Place(content, "Goods:" + i, r, Layout.MeGrid.Y);
+                UiKit.Ensure<RectMask2D>(card.gameObject);   // CardFrame_04 는 964px 폭 원본이라 고정 폭 자식(제목 띠)이 29% 카드 밖으로 삐져나온다 — 옆 카드가 없는 마지막 칸에서 조각이 보였다(T43 비평 회차 1 · 26 감점 원인)
                 var frame = UiKit.Spawn("ui.cardFrame.blue", card); UiKit.Stretch((RectTransform)frame.transform);
                 // 제목 = 프리팹의 Text_Title 자리(원본 CardFrame_04_BasePrefab_LightBg 의 «Text» 글자 · ShopScreen 상자 카드와 같은 식) — 따로 Label 을 얹으면 «Text» 가 활성으로 남아 T50(CI #71·#75 «[상인 페이지] 영문 데모 글자: Text»)
                 var gt = UiKit.SetText(frame.transform, "Text_Title", g.title, Palette.White, 26);
@@ -278,7 +279,7 @@ namespace KkomaKnight.Game
             var pic = UiKit.Rect(box, "Pic"); UiKit.Pct(pic, Layout.DdPic.Within(Layout.DdBox)); Stage(pic, d.field, d.tint, d.props); UiKit.Tag(pic, "그림 띠");
             var note = UiKit.Panel(box, "Note", "fr.r12", Palette.A(Palette.Hex("#3A1216"), 0.92f)); UiKit.Pct(note.rectTransform, Layout.DdNote.Within(Layout.DdBox)); UiKit.Tag(note.transform, "조건 문구");
             UiKit.Label(note.transform, 2, 0, 96, 100, "전설·신화 특전만 등장", 22, Palette.Red);
-            var arrow = UiKit.Icon(box, "FloorPrev", "pi.arrow_left", Palette.Cream); UiKit.Pct(arrow.rectTransform, Layout.DdArrow.Within(Layout.DdBox)); UiKit.Clickable(arrow.transform, Noop); UiKit.Tag(arrow.transform, "층수 화살표");
+            var arrow = UiKit.Icon(box, "FloorPrev", "pi.arrow_left", Palette.Gray);   // 크림 패널 위라 Cream 이면 안 보인다(T43 비평 회차 1 · 21 감점 원인) · 레퍼런스도 회색 화살표 UiKit.Pct(arrow.rectTransform, Layout.DdArrow.Within(Layout.DdBox)); UiKit.Clickable(arrow.transform, Noop); UiKit.Tag(arrow.transform, "층수 화살표");
             var circle = UiKit.Panel(box, "FloorCircle", "fr.circle", Palette.Hex("#141414")); UiKit.Pct(circle.rectTransform, Layout.DdFloor.Within(Layout.DdBox)); UiKit.Tag(circle.transform, "층수 원");
             UiKit.Label(circle.transform, 0, 8, 100, 56, "1", 56, Palette.Orange).fontStyle = FontStyle.Bold; UiKit.Label(circle.transform, 0, 62, 100, 30, "층", 22, Palette.Orange);
             var rewards = UiKit.Spawn("ui.frameDark", box); var rrt = (RectTransform)rewards.transform; rrt.name = "Rewards"; UiKit.Pct(rrt, Layout.DdRewards.Within(Layout.DdBox)); UiKit.Tag(rrt, "보상 박스");
@@ -461,7 +462,8 @@ namespace KkomaKnight.Game
         static RectTransform Portrait(RectTransform parent, string name, Layout.R r, string frameKey, string icon, bool aspect = false)
         {
             var cell = UiKit.Rect(parent, name); UiKit.Pct(cell, r);
-            if (aspect) { var arf = UiKit.Ensure<AspectRatioFitter>(cell.gameObject); arf.aspectMode = AspectRatioFitter.AspectMode.FitInParent; arf.aspectRatio = 1f; }
+            // 정사각 맞춤은 HeightControlsWidth — FitInParent 는 앵커를 부모(줄) 전체로 펴고 가운데 정렬해 초상이 줄 한가운데로 갔다(T43 비평 회차 1 · 23·24 감점 원인)
+            if (aspect) { var arf = UiKit.Ensure<AspectRatioFitter>(cell.gameObject); arf.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth; arf.aspectRatio = 1f; }
             var f = UiKit.Spawn(frameKey, cell); UiKit.Stretch((RectTransform)f.transform);
             var inner = UiKit.Rect(cell, "Inner"); UiKit.Pct(inner, 10, 10, 80, 80); UiKit.Ensure<RectMask2D>(inner.gameObject);
             if (icon != null) { var ic = UiKit.Icon(inner, "Icon", icon); UiKit.Stretch(ic.rectTransform); }
