@@ -121,6 +121,7 @@ namespace KkomaKnight.Game
             BuildColumn(rt, "Events", Layout.LobbyEvents, true, (SideEvents, "ui.iconDungeon", "이벤트"));
 
             // ⑦ 하단 탭 5칸 — 프리팹 탭 바 조각을 표 자리에 (상점 · 장비 · 전투 · 던전 · 펫 — T10 · «탤런트 → 던전» 은 T43)
+            NavBar.BottomFrame(rt);   // T106 ⓓ — 로비는 탭 바를 프리팹에서 가져오므로 띠를 여기서 따로 깐다(탭 바보다 먼저 = 바 뒤)
             _tabs = UiKit.Find(rt, "Tab_01_BottomFlushMenu");
             if (_tabs != null) { var tt = (RectTransform)_tabs; tt.SetParent(rt, false); UiKit.Pct(tt, Layout.TabBar); NavBar.Wire(App, _tabs, "lobby"); UiKit.Tag(tt, "하단 탭바"); }
         }
@@ -338,13 +339,22 @@ namespace KkomaKnight.Game
 
         public static void Attach(GameScreen screen, RectTransform root, string current)
         {
-            // T106 ⓓ — 아래 SafeArea(제스처 바)·레터박스만큼 탭 바 바탕을 화면 끝까지 늘린다(버튼은 SafeArea 안 그대로 · 결정 255).
-            // 탭 바 «안» 이 아니라 형제로 둔다 — Wire 가 바의 자식 0~4 를 탭으로 배선하므로 자식을 늘리면 탭이 밀린다.
+            BottomFrame(root);
+            var bar = UiKit.SpawnRt("ui.tabBar", root, Layout.TabBar);
+            Wire(screen.App, bar, current);
+        }
+
+        /// <summary>
+        /// 하단 프레임 띠 — 아래 SafeArea(제스처 바)·레터박스만큼 탭 바 바탕을 화면 끝까지 늘린다(T106 ⓓ · 결정 255).
+        /// 탭 바 «안» 이 아니라 **형제**로 둔다(<see cref="Wire"/> 가 바의 자식 0~4 를 탭으로 배선하므로 자식을 늘리면 탭이 밀린다) ·
+        /// **탭 바보다 먼저** 불러야 띠가 바 뒤에 깔린다. 탭 바를 <see cref="Attach"/> 로 세우지 않고 프리팹 것을 쓰는 화면(로비)도 이것을 부른다.
+        /// </summary>
+        public static Image BottomFrame(RectTransform root)
+        {
             var band = UiKit.Panel(root, BottomFrameName, "fr.rect", Palette.TopFrame);
             var brt = band.rectTransform; UiKit.Pct(brt, Layout.TabBar);
             brt.offsetMin = new Vector2(-TopBar.FrameOverscan, -TopBar.FrameOverscan); brt.offsetMax = new Vector2(TopBar.FrameOverscan, 0f);
-            var bar = UiKit.SpawnRt("ui.tabBar", root, Layout.TabBar);
-            Wire(screen.App, bar, current);
+            return band;
         }
         /// <summary>탭 바(Tab_01_BottomFlushMenu 인스턴스)의 자식 5개에 아이콘·라벨·클릭을 배선한다. current = 켜 둘 탭(«lobby» 는 전투 탭).</summary>
         public static void Wire(App app, Transform bar, string current)
