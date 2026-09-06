@@ -12,7 +12,7 @@ namespace KkomaKnight.Game
     public static class BorderAudit
     {
         /// <summary>테두리 없음이 실패인 화면(묶음이 끝날 때마다 추가 · 전부 끝나면 모든 화면).</summary>
-        public static readonly HashSet<string> StrictScreens = new HashSet<string> { "02_battle", "01_lobby", "06_gear", "07_gear_detail", "08_gear_fuse", "13_pet", "14_pet_detail", "09_shop_1", "10_shop_2" };
+        public static readonly HashSet<string> StrictScreens = new HashSet<string> { "02_battle", "01_lobby", "06_gear", "07_gear_detail", "08_gear_fuse", "13_pet", "14_pet_detail", "09_shop_1", "10_shop_2", "12_settings" };
 
         /// <summary>
         /// 테두리가 없는 게 맞는 것(ROUTINE T69 5항 «예외 목록») — 이름표 이름 또는 <see cref="UiTag.Members"/> 조각의 오브젝트 이름.

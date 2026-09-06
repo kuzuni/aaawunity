@@ -178,7 +178,24 @@ namespace KkomaKnight.Tests.Play
             var topBar = UiKit.Find(lobbyRoot, "TopBar"); Assert.IsNotNull(topBar, "로비 상단 바(TopBar)");
             AssertPillBorder(UiKit.Find(topBar, "ResourceBar_Coin"), "로비 골드 pill");
             AssertPillBorder(UiKit.Find(topBar, "ResourceBar_Gem"), "로비 보석 pill");
-            _app.Overlay.Settings(); yield return Check("12_settings"); _app.Overlay.Close(); yield return Frames(1);
+            _app.Overlay.Settings(); yield return Check("12_settings");
+            {
+                // T69-settings(strict) — 줄 3(음악·효과음·언어) = UiKit.Bordered 링(Ink · 8px · 줄 rect 그대로) + 옅은 바탕 · 아이콘은 링 안쪽 · 토글·언어 버튼은 링 위(형제 순서 뒤 · 조각 제 외곽선) · 상자 안 패턴은 UiKit.Popup 이 깐다(T72)
+                var ov = _app.Overlay.Root;
+                foreach (var n in new[] { "BGM", "SFX", "Language" })
+                {
+                    AssertUiBarBorder(ov, n);
+                    var row = UiKit.Find(ov, n); var rrt = (RectTransform)row;
+                    var bgT = UiKit.Find(row, UiKit.BorderName + "Bg"); Assert.IsNotNull(bgT, n + " 줄 바탕(BorderBg)"); Assert.AreEqual(0, bgT.GetSiblingIndex(), n + " 바탕은 맨 뒤");
+                    var ic = UiKit.Find(row, "Icon") as RectTransform; Assert.IsNotNull(ic, n + " 아이콘");
+                    Assert.GreaterOrEqual(ic.anchorMin.x * rrt.rect.width, UiKit.BorderPx - 0.05f, n + " 아이콘은 링 안쪽(왼쪽 여백 ≥ 8px)");
+                    var bt = UiKit.Find(row, UiKit.BorderName);
+                    var tg = UiKit.Find(row, "ToggleHost"); if (tg != null && tg.parent == row) Assert.Greater(tg.GetSiblingIndex(), bt.GetSiblingIndex(), n + " 토글은 링 위(형제 순서 뒤)");
+                }
+                // 토글(Swich_01)·언어 버튼(Button_02)은 조각 그림 자체에 검은 외곽선이 있다(«Border» 오브젝트 없음 · 레퍼런스 12 와 같은 꼴) — 여기서는 «링 위에 있다» 만 본다
+                var popBox = UiKit.Find(ov, "BGM").parent; Assert.IsTrue(UiKit.HasPattern(popBox), "설정 팝업 상자 안 패턴(T72 · UiKit.Popup)");
+            }
+            _app.Overlay.Close(); yield return Frames(1);
 
             // 11 특권 · 15~19 로비 팝업
             // T78(주인 2026-09-07) — 18_challenge7 · 19_pass 는 화면째 삭제돼 게이트 대상이 아니다

@@ -419,6 +419,8 @@ namespace KkomaKnight.Game
         /// <summary>로비 메뉴(≡)의 설정 팝업 — 작은 패널 · 명판 «설정» · 음악/효과음 토글 · 언어 버튼(표시만) · 패널 아래 개인정보/이용약관 링크 글자(눌러도 아무 일 없음) · 그 아래 «데이터 삭제»(T29) · «탭하여 닫기».</summary>
         /// <summary>설정 줄 라벨(음악·효과음·언어) 크기 — 레퍼런스 12 는 라벨 잉크가 명판 «Settings» 와 거의 같다(720×1560 사본 실측 ≈ 39px = 프레임 ≈ 58). 본문 하한 40 은 그 2/3 라 폰에서 15px 밖에 안 된다 → 56(줄 칸 88.8px 에 한 줄 70px · 폰 ≈ 21px). T63-settings.</summary>
         public const int SetRowLabelSize = 56;
+        /// <summary>설정 줄 바탕(T69-settings) — 크림 상자 위 옅은 흰 띠(Ink 링이 «줄» 로 읽히게 · 라벨 Ink 는 그대로 읽힌다). 연출 상수 · 밸런스 아님.</summary>
+        public static Color SetRowBg => Palette.A(Palette.White, 0.45f);
 
         public void Settings() => SettingsPopup("설정", null, null);
         /// <summary>전투 일시정지 — 같은 팝업. 링크 아래 줄이 «재개»(주황)·«포기하고 로비로»(회색) · 배경 탭 = 재개.</summary>
@@ -435,11 +437,13 @@ namespace KkomaKnight.Game
             var box = Box("ui.popup", "ui.titleBrown", title, Layout.SetBox, closeAndResume);
             var rib = UiKit.Find(box, "ui.titleBrown"); if (rib != null) ((RectTransform)rib).sizeDelta = UiKit.PxSize(Layout.SetRibbon);
             // 줄 3개(음악 · 효과음 · 언어) — 아이콘 + 라벨 + 오른쪽 끝 토글/버튼. 자리 = 표 ⑨ 를 상자 기준 % 로
+            // T69-settings(주인 «행마다 검은 아웃라인» · ROUTINE T69 2항 «설정 줄»): 줄마다 UiKit.Bordered(Ink 링 8px + 옅은 흰 바탕 = 크림 상자 위 «띠») · 줄 사각형(표 ⑨ 행)은 그대로라 점수 불변 · 아이콘·라벨은 링 안쪽으로(x +1.5%) · 토글·언어 버튼은 뒤에 얹혀 링 위
             RectTransform Row(string name, Layout.R r, string iconKey, string label)
             {
                 var row = UiKit.Rect(box, name); UiKit.Pct(row, r.Within(Layout.SetBox));
-                var ic = UiKit.Icon(row, "Icon", iconKey, Palette.Ink); UiKit.Pct(ic.rectTransform, 0, 5, 8, 90);
-                var t = UiKit.Label(row, 11, 0, 50, 100, label, SetRowLabelSize, Palette.Ink, TextAnchor.MiddleLeft, true, false); t.name = "Text";
+                UiKit.Bordered(row, bg: SetRowBg);
+                var ic = UiKit.Icon(row, "Icon", iconKey, Palette.Ink); UiKit.Pct(ic.rectTransform, 1.5f, 5, 8, 90);
+                var t = UiKit.Label(row, 12.5f, 0, 50, 100, label, SetRowLabelSize, Palette.Ink, TextAnchor.MiddleLeft, true, false); t.name = "Text";
                 return row;
             }
             var bgm = Row("BGM", Layout.SetRowMusic, "pi.music", "음악");
