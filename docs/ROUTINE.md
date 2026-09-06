@@ -5,6 +5,10 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-07 · 07:2X UTC) ⚑ 주인 — «특전 **다 흰 글씨**로 써지게 해줘야 함 · **검은 아웃라인 글씨**로 되어 있기 때문에 그렇게 교체»** → T93 7항(등급색·어두운 글자 → 흰색 · 아웃라인이 대비를 만든다).
+
+- **(2026-09-07 · 07:2X UTC) ⚑ 주인 — 특전 카드 «TitleBorder» 는 **FillCenter 체크(켜짐)** 여야 한다** → T93 6항. 지금 `UiKit.InkFrameBorders`(`UiKit.cs:320`)가 이름이 걸린 링을 **전부 `fillCenter = false`** 로 만들어서 제목 띠 가운데가 뚫려 보인다 — **바깥 링(`Border`)만 false, `TitleBorder` 는 true**.
+
 - **(2026-09-07 · 07:1X UTC) ⚑⚑ 주인 — 하단 탭 재편 + 탤런트 화면 → **T107**:** «**하단에 던전 메뉴 빼셈 — 이벤트랑 어차피 중복됨.** 그리고 **이벤트 열면 무조건 던전부터 뜨게.** 던전 메뉴 빼고 **거기에 펫 넣고, 맨 오른쪽에는 탤런트** 넣으셈 걍. 그리고 **탤런트 팝업 분명히 prefab 으로 이 프로젝트에 있음 그거 쓰게** 하셈» → 프리팹은 주인이 지목: **`Character_Talent_02`**.
 
 - **(2026-09-07 · 07:0X UTC) ⚑⚑ 주인 — 상단 프레임 + **SafeArea** → **T106**(모바일 대비 · 최우선급):** ⓐ «상단에 전투력·골드·다이아를 **전부 감싸는 검은 프레임 색깔을 레퍼런스에 맞게**» ⓑ «**탑바만 감싸지 말고 탑바 위 부분까지 전부 그 프레임으로 · 화면 끝까지**» ⓒ «이 게임 **모바일로 낼 거니까 SafeArea 만들어서 그 안에서 UI 만들도록** — 카메라(노치) 때문에 UI 안 보이는 일 없게» ⓓ «**SafeArea 넘어서까지 그 프레임이 위를 다 감싸야 한다**».
@@ -797,7 +801,6 @@
 
 > **⚑ 주인 보탬 ⓖ(2026-09-07 05:1X · «장비 세부 팝업에 보면 버튼들이 팝업을 벗어나서 굉장히 보기에 불편함 · 팝업을 아래로 늘려서 버튼들이 팝업 안쪽으로 들어가 보이는 디자인으로»):** 지금 07 팝업의 버튼 2개(`GdBtnL`·`GdBtnR`)가 상자(`Layout.GdBox`) **아래 가장자리에 걸치거나 밖으로 나가 있다** → **팝업 상자 자체를 아래로 키워**(`GdBox` 의 H · 필요하면 Y 도 위로) 버튼이 **상자 안쪽 여백 안에** 온전히 들어오게 한다(버튼 아래에도 여백 한 칸). 안쪽 요소(아이콘 칸·이름줄·메타 pill·스탯 박스·옵션 줄·버튼)의 % 를 **상자가 커진 만큼 다시 나눠** 위아래가 뜨지 않게 하고, ⓔ 로 비용 줄이 빠지는 것과 **한 번에 같이 계산**한다. `docs/ref-layout.md` 표 ⑦ 과 `docs/ref/07_gear_detail.jpg` 를 다시 대조해 표를 고치고(§5 채점 기준이라 표가 정본), 07 점수는 8.5 아래로 내려가면 안 된다. 판정 = `screens` 07 PNG 확대해서 **버튼 네 변이 모두 상자 안**.
 
-
 범위: `Assets/Scripts/Game/UiKit.cs`(**공통 헬퍼 `UiKit.Bordered(rt, key, color)`** — 칸 뒤에 Bg + 위에 Border 스프라이트 두 장 · 9-slice · raycast 끔) · `Assets/KkomaKnight/catalog.json`(`fr.rectBorder2`·`fr.rectBorder3` = `BasicFrame_Rectangle_01~04_White_Border2/3.png` · `fr.rectInner7` = `…_InnerBorder1_Px7.png` · `fr.r0Border5` = `…_R0_Border_Px5.png` · 원형 `fr.circleBorder`(있음)) · 화면 코드 전부(목록 행·카드·격자 칸·팝업 상자 안 칸) · `docs/assets-map.md` · `Assets/Tests/PlayMode`(테두리 존재 게이트)
 순서: 제약 없음 — **T63(글자 가독성)·T68(로비)·T62(랭킹) 와 같은 파일**이므로 화면 묶음별 하위 lock(`T69-lobby` …)으로 T63 묶음을 잡은 워커가 **같이** 한다(한 화면을 두 번 만지지 않게). UiKit 헬퍼 + 카탈로그 키는 **맨 먼저 한 커밋**.
 주인 원문(2026-09-06 · 12:0X UTC): «행마다 혹은 카드마다 Border, 예를 들어 BasicFrame_Rectangle_01~04_White_Border3 이런 거 들어가서 검은색 아웃라인 같은 거 있는 느낌으로 해 줘야 함. UI 들 전체적으로.» «던전 행도 마찬가지고.»
@@ -936,7 +939,6 @@
 3. 테스트: `UiSmokeTests` 의 옵션 줄 순회에 «Outline 있음» + «글자 명도 ≥ 0.55» 두 단언(같은 결함이 다시 들어오면 CI 가 잡는다).
 4. 확인 = 이 커밋의 CI 유니티 잡 PlayMode `UiSmokeTests.GearScreenDetailSlotAndEquip` Passed + 그 런의 `screens` 07 PNG 를 `Read` 로(옵션 줄 7개가 읽히나) + 배포 스모크. PROGRESS «T84 진행 기록» · 결정 188.
 
-
 ### T85 — ✅ **완료** (코드 `cbea0ec` · 워커 D · **확인 = CI #158 `560d604` PlayMode 40/40 · `RewardOrbTests` 3/3 · 회귀 0** · sess-1857-8265 · 워커 H) — 적 처치 → 경험치·골드가 **날아가 HUD 에 흡수되는 연출** + 숫자·바가 차오르고, **다 찬 뒤에** 레벨업 특전창 (주인 2026-09-07 · T49·T50 연출 계열 · 엔진 불변 · 제약 없음)
 범위: `Assets/Scripts/Game/BattleWorld.cs`(적 사망 자리에서 구슬 생성 · 663행 `EvKind.Kill` · `_lastKillPos`) · `BattleScreen.cs`(HUD 표시값 = **표시용 EXP·골드**를 따로 들고 흡수 때 올린다 · 255~267행 `RefreshHud` · 194~218행 `OpenPending`/`LevelUp` 지연) · `UiKit.cs`(월드→UI 좌표 변환 + 곡선 비행 헬퍼 `FlyToUi(worldPos, targetRect, key, count, onArrive)`) · `WorldCam.cs`(월드 좌표 → 프레임 좌표) · `Assets/KkomaKnight/catalog.json`(경험치 구슬 아이콘 키 · 골드는 `ui.coin`) · `Assets/Tests/PlayMode/BattleWorldTests`·`UiSmokeTests`
 주인 원문(2026-09-07 · 02:2X UTC): «적 죽이면 경험치랑 골드가 적 죽은 거에서 나와서 각각의 UI 에 흡수되는 애니메이션 넣고, 흡수될 때 경험치랑 골드 숫자 애니메이션으로 차게. 그리고 그거 애니메이션 다 차고 나서 레벨업이면 특전창 뜨는 식으로».
@@ -1050,7 +1052,6 @@
 
 > **⚠ 실측 보탬(19:4X · 워커 E) — CI [#167](https://github.com/kuzuni/aaawunity/actions/runs/34054858183)(`92c0b7b` = T64 회차 4)에서도 빨강은 이 한 건뿐이다.** 그 런의 PlayMode XML 을 전수로 훑었다: 실패 test-case 는 `UiSmokeTests.BattleTicksAndAllBattlePopups` **하나**이고(나머지 42 케이스와 EditMode 123 은 전부 Passed) `build-webgl`·`build-android` 는 그래서 **skipped** 됐다(19:35:23). 즉 **T87 은 실질적으로 끝났고**(그 워커가 고친 세 단언 — `EventsScreenTests` · `RestClearAdTests` ×2 — 는 #166·#167 에서 다 Passed) **T91 하나만 고치면 그 다음 런에서 바로 배포가 나간다.** T69-overlay lock 워커가 이어 잡는 것이 규약이지만, **그 lock 이 90분(20:13:19Z)을 넘기면 아무 워커나 죽은 lock 규약으로 회수해 즉시 고쳐라** — 배포가 그만큼 더 멈춘다.
 
-
 ### T93 — 특전 행(카드) 디자인을 데모 프리팹 `Play_Perk_Selection_02` 와 **같게** · 색은 회색·노란색·빨간색 (주인 2026-09-07 · 화면만 · 엔진 불변)
 
 > 주인 원문(2026-09-07 05:3X): «특전 행들 디자인이 `Play_Perk_Selection_02.prefab` 에 있는 거랑 다르더라? 같게 해. 색깔이 회색·노란색·빨간색 느낌이면 되는 거임.»
@@ -1061,7 +1062,11 @@
 2. **색**: 3택 카드의 등급 색을 **회색 · 노란색 · 빨간색** 계열로(`ui.cardFrame.*`/`ui.itemFrame.*` 의 gray·yellow·red 변형 · 지금 쓰는 초록/파랑/자주 대신). 등급 이름 리본·아이콘 tint·글자 색도 그 색조에 맞춘다(밝은 프레임 위 글자는 잉크색 — T63 대비 규칙).
 3. **유지할 것**: T61 shine 등장 순서 · T49 팝업 연출 · T69-overlay 의 카드 링(Ink 8px)과 스탯 8칸 · T63 글자 하한 · 특전 이름 없이 «등급 리본 + 설명» 규칙(주인 2026-09-05).
 4. 테스트: PlayMode — 카드 3장의 프레임 키가 gray/yellow/red 계열 · 조각 구성(CardFrame+ItemFrame+Text) 존재 · `UiSmokeTests` 회귀 0. §5 비평 04·05 재채점(8.0 이상 유지 · 표 %가 바뀌면 `ref-layout.md` ⑦ 도 같이).
+
 5. 게이트 + assets-map(색 변형 키) + PROGRESS T93 행 + 완료 기록(확인 = CI + `screens` 04·05 PNG 를 프리팹 스크린샷 대신 `docs/ref/04·05.jpg` 와 나란히).
+6. **⚑ 주인 보탬(2026-09-07 07:2X · «특전 선택 부분 행에서 `TitleBorder` 이거가 **FillCenter 체크 되어 있어야 함**»)**: `UiKit.InkFrameBorders`(`UiKit.cs:315~320`)는 이름이 걸린 Image 를 전부 `type = Sliced` + **`fillCenter = false`** 로 바꾼다 — 그래서 카드 제목 띠(`TitleBorder`)의 **가운데가 뚫려** 제목 바탕이 사라진다. → **`TitleBorder` 는 `fillCenter = true`**(가운데를 채운다), **바깥 링(`Border`)만 `false`**. 헬퍼에 «가운데를 채울 이름» 을 인자로 주거나(`fillNames`) 이름별 규칙을 표로 두고, **이 헬퍼를 쓰는 다른 곳(T69-overlay 의 결과 팝업·카드)도 같은 규칙**으로. 테스트에 «`TitleBorder`.fillCenter == true · `Border`.fillCenter == false» 단언 한 줄.
+
+7. **⚑ 주인 보탬(2026-09-07 07:2X · «특전 다 흰 글씨로 써지게 해줘야 함 · 검은 아웃라인 글씨로 되어 있기 때문에»)**: 특전 카드(04)·보유 목록(05)·악마/천사 한 장의 **글자 색을 전부 흰색**으로 바꾼다 — 지금은 등급색(`OnDarkPill`/`Palette.ByName`)이나 어두운 잉크색으로 칠해 밝은 프레임 위에서 묻힌다. **검은 아웃라인(T63-outline)이 대비를 만들어 주므로 흰색이면 어디서든 읽힌다.** 등급은 **프레임·리본 색**으로 알아보게 두고 **글자는 흰색 하나**. 예외 = **T52 의 «수치 연두색 강조»** 는 그대로 둔다(밝은 강조색이라 아웃라인 위에서 잘 읽힌다 · 주인이 이것도 흰색으로 원하면 그 한 줄만 되돌린다 — 결정 기록에 남긴다). T63 대비 규칙(«밝은 프레임 위 글자는 잉크색») 중 **특전 카드에 걸린 부분은 이 지시로 대체**한다.
 
 ### T94 — 메인 로비(01): ⓐ 배경 **패턴 애니메이션 넣기** · ⓑ 로비의 **Border 는 전부 없애기** (주인 2026-09-07 · 로비만 · T69 예외)
 
@@ -1168,13 +1173,11 @@
 
 곳: `EventsScreen.OpenDungeonDetail`(`EventsScreen.cs:338~` · 조각 `ui.popup.red` + `ui.title.red` + `FlatHead(box, DdBox, DdHead, DeepRed, title)` · 그림 띠 = `Layout.DdPic`).
 
-
 1. **ⓐ 빨간 «DecoLine» 제거**: 제목 줄/머리 조각 안의 **«DecoLine»(빨간 장식 선)** 을 **끈다**(`UiKit.Find(...,"DecoLine")` → `SetActive(false)` / `UiKit.Hide` · 조각 원본 수정 금지 · 이름이 조금 다르면 `Title_LineDeco` 계열 자식 중 **빨간 선** 을 찾아서). 이 팝업(21)에서만 — 다른 화면의 `LineDeco`(상점 섹션 헤더 T100 ⓒ · 로비 챕터 제목 · 결과 팝업)는 **건드리지 않는다**.
 2. **ⓑ Pic 을 타이틀 바에 붙인다**: `Layout.DdPic` 의 y 를 **`Layout.DdHead` 의 바닥과 같게**(간격 0 · 소수점까지) 잡아 **머리 띠와 그림 띠 사이에 빈 줄이 안 보이게** 한다. 그림 띠 위 모서리는 머리 띠에 가려 각져도 된다(레퍼런스 `docs/ref/21_dungeon_detail.jpg` 를 `Read` 로 보고 맞춘다). 아래로 밀리는 요소(«전설·신화 특전만 등장» 판 · 층수 원 · 보상 줄 · 버튼)의 y 도 **같이 다시 계산**해 팝업 아래로 넘치지 않게 하고, `docs/ref-layout.md` 의 21 표를 같이 고친다(§5 · 21 점수 9.5 이 내려가면 안 된다).
 3. **T101 과 같은 워커가 이어서 해도 된다**(던전 묶음 · lock `T69-events` 가 비어 있으면 그것으로 · 아니면 새 lock `T102`).
 4. 테스트: PlayMode — 21 팝업에 빨간 «DecoLine» 이 **꺼져 있음** · `Pic` 의 위 y = `DdHead` 아래 y(오차 0.1%p) · 글자 잘림 0 · `BorderGateTests` 21 구간 회귀 0.
 5. 게이트 + PROGRESS T102 행 + 완료 기록(확인 = CI + `screens` 21 PNG 확대: 빨간 선 없음 · 머리 띠와 그림 사이 빈틈 없음).
-
 
 ### T103 — 아이템 칸의 **정본 = `Character_Hero_Item_Detail_03` 의 `ItemFrame_01_Normal_Red`** · 등급은 **색 변형만** 교체 (주인 2026-09-07 · 전 화면 · T69 7항 확정)
 
@@ -1225,7 +1228,6 @@
 6. 테스트: PlayMode — ⓐ `Screen.safeArea` 를 일부러 줄여 넣었을 때(테스트용 주입) 화면 루트가 그만큼 줄고 **탑바 글자·pill 이 safeArea 안**에 있음 · ⓑ 상단 프레임의 위 가장자리가 **캔버스 맨 위(y=화면 끝)** 까지 닿음 · ⓒ safeArea = 전체일 때 기존 배치와 **픽셀 동일**(회귀 0) · `UiSmokeTests`·`TextSizeGateTests`·`BorderGateTests` 전부 초록.
 7. 게이트 + PROGRESS T106 행 + 완료 기록(확인 = CI + `screens` 01 + **주인 폰**(노치 있는 기기에서 안 가리는지) · 안드로이드 빌드 설정에 «Render outside safe area» 관련 값이 필요하면 `ProjectSettings` 도 같이).
 
-
 ### T107 — 하단 탭 = **상점 · 장비 · 전투 · 펫 · 탤런트**(던전 탭 삭제) · 이벤트는 **던전 페이지부터** · 탤런트 화면 = `Character_Talent_02` 프리팹 (주인 2026-09-07)
 
 > 주인 원문(2026-09-07 07:1X): «쩄든 **하단에 던전 메뉴 있는 거 빼셈 — 이벤트랑 어차피 중복됨.** 그리고 **이벤트 열면 무조건 던전부터 뜨게** 하셈. **던전 메뉴 빼고 거기에 펫 넣고, 맨 오른쪽에는 탤런트** 넣으셈 걍. 그리고 **탤런트 팝업 분명히 prefab 으로 이 프로젝트에 있음 그거 쓰게** 하셈.» → 이어서 «**`Character_Talent_02` 이거 쓰면 될 듯**».
@@ -1238,7 +1240,6 @@
 4. **T96-menu 와 겹침**: 메뉴(≡) 안 항목·로비 버튼 정리와 같은 파일을 만진다 → **먼저 잡은 워커가 둘 다** 하거나, lock 을 나눠 잡되 `Screens.cs` 를 동시에 고치지 않게 한다.
 5. 테스트: PlayMode — 탭 5칸의 이름·순서가 상점·장비·전투·펫·탤런트 · 던전 탭 **없음** · 이벤트를 열면 `Page:dungeon` 이 활성 · 탤런트 화면이 `ui.talent` 조각으로 뜨고 빨간 줄 0 · 글자 잘림 0. §5 — 탤런트는 새 화면이라 `ref-layout.md` 에 표를 먼저 추가(레퍼런스 그림이 없으니 «프리팹 그대로» 기준 명시)하고 채점.
 6. 게이트 + assets-map + PROGRESS T107 행 + 완료 기록(확인 = CI + `screens` + 주인 폰).
-
 
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
@@ -1269,7 +1270,6 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 ## 6. 다른 계정의 워커 합류 (E~H · 주인 지시 2026-09-06 «aaaw 처럼 루틴 다른 계정도 같이»)
 
 > 이 절은 **두 번째 claude.ai 계정에서 연 Claude Code 세션**이 그대로 따라 하면 되게 써 두었다. 그 세션은 이 절만 읽고 `/schedule` 로 루틴 4개를 만든다. 주인이 할 일은 ①뿐이다.
-
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
@@ -1310,7 +1310,6 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 - 계정 2 워커가 잡으면 안 되는 것은 없다 — 작업표의 «순서» 만 지키면 된다.
 - 계정 2 의 환경에서 `dotnet` 이나 GitHub MCP 가 안 되면 PROGRESS «워커 결정 기록» 에 «계정 2 환경 차이: …» 한 줄을 남기고 게이트를 돌릴 수 있는 만큼만 돌린 뒤 코드 커밋은 하지 않는다(문서 작업만).
 
-
 ### ⑤ 세션 유지(`persist_session`) — 창을 하나로 (주인 지시 2026-09-07)
 - 루틴은 기본값(`persist_session: false`)이면 **실행마다 새 클라우드 세션(대화창)** 을 만든다 → 하루면 수십 개가 쌓인다. 주인이 이를 싫어해 **A~D 는 2026-09-07 에 `true` 로 바꿨다**(등재 세션 · RemoteTrigger update `{"persist_session": true}`).
 - **계정 2 의 E~H 도 같게 해야 한다** — 계정 2 의 Claude Code 세션에서 `RemoteTrigger` 로 네 개에 각각 `{"persist_session": true}` 를 update 한다(routine ID 는 ③ 표). 다른 계정의 루틴은 서로 못 만진다(등재 세션이 계정 2 것을 부르면 404).
@@ -1339,7 +1338,6 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 - 네 프롬프트 모두 첫 줄이 «여러 워커(A~D · 매시 **:05/:20/:35/:50** · 다른 계정의 E~H 는 **:12/:27/:42/:57**)» 로 들어가 있다 — 프롬프트와 실제 cron 이 일치한다(2026-09-07 03:5X 실측).
 - 이름 끝의 «· Opus» 는 새로 만들면서 빠졌다(대신 이름에 슬롯 «(:05)» 이 들어간다). 모델은 넷 다 `claude-opus-5` 가 맞다.
 - 계정이 다르면 서로의 루틴을 조회·수정할 수 없다(404). **계정 1 의 A~D 는 계정 1 세션에서만, 계정 2 의 E~H 는 계정 2 세션에서만** 고친다.
-
 
 ### ⑧ 등록 기록 — 계정 3 워커 I~L (2026-09-07 04:0X UTC · 주인 «계정 3 으로 루틴 만들어라 · 시간 엇날려서 · 오퍼스로»)
 
