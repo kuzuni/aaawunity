@@ -18,18 +18,18 @@ namespace KkomaKnight.Game
     public static class PercentAudit
     {
         /// <summary>
-        /// % 빠짐을 <b>훑은 화면 전부</b>에서 실패로 셀지 — 지금은 <b>꺼 둔다</b>.
+        /// % 빠짐을 <b>훑은 화면 전부</b>에서 실패로 셀지 — <b>켰다</b>(T90 3항 «먼저 보고만 → 0 이 되면 strict»).
         /// <para>
-        /// T90-gear 가 20:37 에 한 번 켰다가 같은 분에 들어온 <c>T90-audit</c>(워커 K · <c>8f57711</c>)과 겹쳐 **되돌렸다**:
-        /// 켤 때의 근거(CI #173 의 «% 빠진 줄 0»)는 그때 게이트가 열던 **다섯 화면**(02·04·05·06·07)에 대한 것인데,
-        /// T90-audit 이 순회를 **스무 화면 남짓**(01 로비 · 09·10 상점 · 11~17 로비 팝업 · 13·14 펫 · 20~26 던전·아레나 · 27 토스트 · 28 확인 · 30·31 탐험 …)으로 넓혔다.
-        /// 그 새 화면들의 표는 아직 CI 로그로 실측한 적이 없으므로 여기서 켜면 «본 적 없는 화면» 때문에 main 이 빨개질 수 있다.
-        /// 순서는 T90-audit 이 적어 둔 그대로다 — <b>넓힌 순회의 표가 CI 로그에서 0 인 것을 확인한 다음 회차에 켠다</b>
-        /// (<c>TextAudit.ClipStrict</c>·<c>OutlineStrict</c> 가 밟은 순서). 화면별 강제는 그때까지 <c>PercentGateTests.StrictScreens</c> 가 맡는다.
+        /// 경위: T90-gear 가 20:37 에 한 번 켰다가 같은 분에 들어온 <c>T90-audit</c>(워커 K · <c>8f57711</c>)이 순회를 다섯 화면에서
+        /// 서른 남짓으로 넓히면서 근거가 그만큼 좁아져 **되돌렸다**(<c>c2ebddb</c>). 그 넓힌 순회의 표가 이제 나왔다 —
+        /// CI [#195](https://github.com/kuzuni/aaawunity/actions/runs/34060042324) 로그:
+        /// <c>[PercentGate] 훑은 화면 33 · % 가 빠진 줄 0(strict=False …)</c>. 서른세 화면이 전부 0 이므로 켠다.
         /// </para>
+        /// 이제부터 «비율 스탯 이름 + 부호 숫자» 뒤에 <c>%</c> 를 빠뜨린 문구가 어느 화면에든 새로 들어오면
+        /// <c>PercentGateTests</c> 가 그 커밋에서 바로 빨강으로 잡고, 실패 메시지에 화면·경로·문구가 찍힌다.
         /// </summary>
         // const 가 아니라 static readonly 다 — const 면 게이트의 «if (Strict)» 가 통째로 «닿지 않는 코드»(CS0162) 경고가 된다.
-        public static readonly bool Strict = false;
+        public static readonly bool Strict = true;
 
         public sealed class Row
         {
