@@ -177,6 +177,8 @@ namespace KkomaKnight.Game
                 {
                     // 팝업(레벨업·이벤트)은 남은 타격 연출(칼이 내려오는 순간)이 끝난 뒤 연다 — 그 동안 엔진 시간은 멈춘 채 애니만 돈다
                     if (G.Pending != null) { if (!_world.Busy) OpenPending(); _acc = 0; break; }
+                    // 킬 연출(칼 내려옴 → 적 사망 → 플레이어 공격 모션 끝) 동안 엔진 틱 보류(T50) — 틱 순서 불변 · 풀리면 격차 없이 원래 걷기 속도로 출발(누적분은 버려 몰아치기 없음)
+                    if (_world.HoldEngine) { _acc = 0; break; }
                     _world.BeforeTick(); G.Tick(); _world.AfterTick();
                     _acc -= EngineConst.Dt;
                     if (G.Pending != null) { if (!_world.Busy) OpenPending(); _acc = 0; break; }

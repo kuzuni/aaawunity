@@ -658,7 +658,7 @@
     "fx.hit": "적 피격 (CFXR Hit A Red)",
     "fx.crit": "치명타 피격 (Impact Glowing HDR Blue · 0.2 배)",
     "fx.evade": "회피 연기",
-    "fx.death": "적 사망 Magic Poof",
+    "fx.death": "적 사망 Magic Poof — 미사용(T51 · 주인 2026-09-06 «죽을 때 펑 터지는 이펙트 없애기» · 키는 남김)",
     "fx.heal": "회복 (Shield Leaves)",
     "fx.bolt": "번개 특전 (Hit Electric C)",
     "fx.trail": "도끼·창 투사체 꼬리 (Wind Trails)",

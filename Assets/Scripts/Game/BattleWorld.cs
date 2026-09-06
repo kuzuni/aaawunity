@@ -15,7 +15,8 @@ namespace KkomaKnight.Game
     /// ● 캐릭터: CharacterMaker Character.prefab + <see cref="CharacterRig"/>. 키 = 표 %(PlayerHeight·EnemyHeight) × <see cref="Layout.CharScale"/>(2/3 · 발밑 바 폭도 같은 배율 · T14).
     ///   공격 모션은 끊지 않고 간격 안에 끝나게 배속(<see cref="Layout.AttackAnimSpeed"/>), 데미지 연출(팝·플래시·체력바·사망)은 «칼이 내려오는 순간»(Attack.anim OnAttackHit)까지 미룬다(<see cref="Strike"/>).
     ///   사망·승리 클립은 루프 에셋이라 끝에서 Animator 를 멈춘다(<see cref="CharacterRig"/> · T14).
-    ///   스크롤 원점은 엔진 x 가 아니라 <see cref="ShownPX"/> — 사망 연출이 아직 안 나온 적이 있으면 출발을 미룬다(T20 · 엔진 좌표 불변).
+    ///   킬 뒤에는 «칼이 내려옴 → 적 사망 연출 → 플레이어 공격 모션 끝 → 걷기 모션으로 원래 걷기 속도(PlayerSpeed×WalkMul · 대시 특전이면 ×DashMul)» 순서(주인 2026-09-06 · T50·T51).
+    ///   그 동안 엔진 틱을 보류(<see cref="HoldEngine"/> · BattleScreen.Tick)하므로 표시 원점 <see cref="ShownPX"/> 과 엔진 x 의 격차가 생기지 않는다 — T20 의 «멈춤 → 2배 따라잡기» 는 폐지. 엔진 좌표·틱 순서 불변.
     /// ● 발밑 바(T35 · 주인 강조 · `02_battle.jpg`): 빨강(HP) 위에 파랑(실드) 2단 · 각 단 안에 흰 숫자(«현재») · 바 폭 = 캐릭터 폭(2/3 배율) · 실드 0 이면 파란 단 숨김.
     ///   숫자는 월드가 아니라 팝 층(<c>_pops</c> · 프레임 px)의 uGUI Text 로 그리고 매 프레임 바 위치로 옮긴다(<see cref="FootText"/> · Pop 과 같은 월드→프레임 변환 · 픽셀 크기가 결정적).
     /// </summary>
@@ -49,15 +50,24 @@ namespace KkomaKnight.Game
         float _clock;
         /// <summary>타격 연출이 아직 남아 있나 — 화면(BattleScreen)은 이 동안 팝업(레벨업·사망)을 열지 않고 기다린다.</summary>
         public bool Busy => _strikes.Count > 0;
-        // T20 — 표시 기준 x(스크롤 원점). 엔진은 킬 다음 틱(1/30초)에 바로 다음 적으로 걷지만(Battle.Tick · alive[0] · sim.js 와 동일 · 불변),
-        // 화면은 사망 연출을 «칼이 내려오는 순간»(Strike · Hold)까지 미루므로 그대로 두면 «살아 보이는» 적을 두고 출발한다(주인 지적).
-        // → 죽었는데 아직 사망 연출이 안 나온 적(Dead && Hold>0)이 하나라도 있으면 표시 원점을 멈추고, 풀리면 걷기 속도 CatchUpMul 배로 엔진 x 를 따라잡는다. 엔진 좌표는 손대지 않는다.
+        // T20/T50 — 표시 기준 x(스크롤 원점). 엔진은 킬 다음 틱(1/30초)에 바로 다음 적으로 걷지만(Battle.Tick · alive[0] · sim.js 와 동일 · 불변),
+        // 화면은 사망 연출을 «칼이 내려오는 순간»(Strike · Hold)까지 미루고(T20), 그 뒤 플레이어 공격 모션이 끝날 때까지 서 있다가 걷기 모션으로 원래 속도로 출발해야 한다(주인 2026-09-06 · T50).
+        // T20 은 그 동안 원점만 멈추고 풀리면 걷기 2배로 엔진을 따라잡았다 → 주인이 «2배 걸음» 을 거부(T50). 지금은 화면이 멈춰 있는 동안 엔진 틱 자체를 보류한다(HoldEngine · BattleScreen.Tick):
+        // 틱 순서는 그대로라 시뮬 결과(시드 골든)는 불변이고 실시간 길이만 늘어나며, 원점은 늘 엔진 x 와 같다(격차 0 → 걷는 속도 = 엔진 속도 = PlayerSpeed×WalkMul×(Dash?DashMul:1) 그대로).
+        // 탭 복귀(Silent)·역행·SnapGap 초과(세이브 복원 등)만 즉시 맞춘다.
         double _shownPX;
-        const double CatchUpMul = 2, SnapGap = 600;                 // 따라잡기 = 걷기 2배 · 그보다 큰 격차(탭 복귀 등)는 그냥 맞춘다
-        /// <summary>화면이 쓰는 플레이어 월드 x(스크롤 원점) — 킬 연출이 걸려 있는 동안 엔진 <c>P.WorldX</c> 보다 뒤에 머문다.</summary>
+        const double SnapGap = 600;
+        bool _killAnimHold;                                          // 킬 타격(칼 내려옴)이 나온 뒤 공격 모션이 끝날 때까지 — 출발 금지 + 엔진 보류(T50)
+        /// <summary>화면이 쓰는 플레이어 월드 x(스크롤 원점) — 엔진 <c>P.WorldX</c> 와 같다(킬 연출 중에는 엔진이 보류되므로 격차가 생기지 않는다).</summary>
         public double ShownPX => _shownPX;
-        /// <summary>죽었지만 아직 사망 연출이 시작되지 않은(칼이 안 내려온) 적이 있는가 — 이 동안 화면은 출발하지 않는다.</summary>
+        /// <summary>죽었지만 아직 사망 연출이 시작되지 않은(칼이 안 내려온) 적이 있는가 — 이 동안 화면은 출발하지 않는다(T20).</summary>
         public bool KillPending { get { foreach (var kv in _enemies) if (kv.Key.Dead && kv.Value.Hold > 0) return true; return false; } }
+        /// <summary>킬 타격이 나온 뒤 플레이어 공격 모션이 아직 끝나지 않았는가 — 이 동안 화면은 출발하지 않는다(T50 · 대시 특전도 같다 · T51).</summary>
+        public bool KillAnimHold => _killAnimHold && _player != null && _player.Attacking;
+        /// <summary>엔진 틱을 보류해야 하는가 = 킬 연출 대기(<see cref="KillPending"/>) 또는 킬 뒤 공격 모션(<see cref="KillAnimHold"/>) — BattleScreen.Tick 이 이 동안 틱을 돌리지 않는다(탭 복귀 따라잡기 <see cref="Silent"/> 는 예외).</summary>
+        public bool HoldEngine => !Silent && (KillPending || KillAnimHold);
+        /// <summary>플레이어 리그의 현재 애니 상태 이름(테스트·진단용).</summary>
+        public string PlayerAnim => _player != null ? _player.Current : null;
         /// <summary>배속(x1/x2) — 애니 속도와 지연 시계에 함께 건다.</summary>
         public float TimeScale = 1f;
         /// <summary>따라잡기 중(탭 숨김 뒤 복귀) — 공격 모션·팝·이펙트를 만들지 않고 이벤트만 비운다.</summary>
@@ -450,6 +460,8 @@ namespace KkomaKnight.Game
                 foreach (var ev in s.Evs) Present(ev);
                 if (s.OnPlayer) _holdPlayer = System.Math.Max(0, _holdPlayer - 1);
                 else if (s.Target != null && _enemies.TryGetValue(s.Target, out var v)) v.Hold = System.Math.Max(0, v.Hold - 1);
+                // 킬 타격이 내려왔다 → 플레이어 공격 모션이 끝날 때까지 출발하지 않는다(T50 · Sync 가 Attacking 이 끝나면 푼다)
+                if (!s.OnPlayer && s.Rig == _player && s.Target != null && s.Target.Dead && !force) _killAnimHold = true;
             }
         }
 
@@ -470,12 +482,12 @@ namespace KkomaKnight.Game
             // 플레이어 — 표시 체력은 «칼이 내려온 뒤» 에만 엔진 값으로
             var P = G.P;
             if (_holdPlayer == 0) { ShownHp = P.Hp; ShownSh = P.Sh; }
-            // 표시 원점(T20): 사망 연출이 아직 안 나온 적이 있으면 멈춤 · 없으면 걷기 CatchUpMul 배까지로 엔진 x 를 따라잡는다(평소엔 격차 0 → 엔진 걸음 그대로)
-            double gap = P.WorldX - _shownPX; bool hold = KillPending;
-            if (Silent || gap < 0 || gap > SnapGap) _shownPX = P.WorldX;
-            else if (!hold && gap > 0) { double v = G.C.PlayerSpeed * P.WalkMul * (P.Dash ? G.C.DashMul : 1) * CatchUpMul; _shownPX = System.Math.Min(P.WorldX, _shownPX + v * dt); }
-            _moving = !hold && (_engineMoving || P.WorldX - _shownPX > 1.0);
+            // 표시 원점(T20/T50): 킬 연출 대기(칼 내려오기 전) · 킬 뒤 공격 모션 중에는 멈춤 — 그 동안 엔진도 보류(HoldEngine)되므로 풀리면 격차 없이 엔진 걸음 그대로 출발한다(따라잡기 없음 · 원래 걷기 속도)
             _player.Tick(dt);
+            if (_killAnimHold && !_player.Attacking) _killAnimHold = false;   // 공격 모션이 끝났다 → 걷기 모션과 함께 출발
+            double gap = P.WorldX - _shownPX; bool hold = KillPending || KillAnimHold;
+            if (Silent || !hold || gap < 0 || gap > SnapGap) _shownPX = P.WorldX;
+            _moving = !hold && _engineMoving;
             _player.transform.position = Pos(_shownPX, FootY);
             _player.SetSortingBase(SortBase(LayoutX(_shownPX)));
             if (G.Dead) { if (!_pDeadShown && _holdPlayer == 0) { _pDeadShown = true; _player.Play(CharacterRig.Dead, true); } }
@@ -501,7 +513,8 @@ namespace KkomaKnight.Game
                 if (v.Hold == 0) v.ShownHp = e.Hp;
                 if (e.Dead && v.Hold == 0)
                 {
-                    if (v.DieT < 0) { v.DieT = 0; v.Rig.Play(CharacterRig.Dead, true); _lastKillPos = v.Rig.transform.position; Fx.Spawn("fx.death", v.Rig.transform.position + Vector3.up * 0.4f, 0.8f); if (!Silent) Audio.Sfx("snd.kill", 0.9f); v.BarBg.gameObject.SetActive(false); PlaceFootText(v.BarTxt, Vector3.zero, "", false); if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } }
+                    // 사망 = 모션(Dead1 · 끝에서 정지) + 알파 페이드 + snd.kill — «펑» 이펙트(fx.death Magic Poof)는 주인 지시로 뿌리지 않는다(T51 · 2026-09-06)
+                    if (v.DieT < 0) { v.DieT = 0; v.Rig.Play(CharacterRig.Dead, true); _lastKillPos = v.Rig.transform.position; if (!Silent) Audio.Sfx("snd.kill", 0.9f); v.BarBg.gameObject.SetActive(false); PlaceFootText(v.BarTxt, Vector3.zero, "", false); if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } }
                     v.DieT += dt; v.Rig.SetAlpha(Mathf.Clamp01(1.2f - v.DieT * 1.5f));
                     if (v.DieT > 0.85f) Remove(v);
                     continue;

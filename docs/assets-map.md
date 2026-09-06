@@ -437,7 +437,7 @@
 | prefabs | `fx.hit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Hit A (Red).prefab` | root 4021103657954561961 | 적 피격 (CFXR Hit A Red) |
 | prefabs | `fx.crit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Impact Glowing HDR (Blue).prefab` | root 2708598583397607911 | 치명타 피격 (Impact Glowing HDR Blue · 0.2 배) |
 | prefabs | `fx.evade` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Misc/CFXR3 Hit Misc F Smoke.prefab` | root 141433446842962269 | 회피 연기 |
-| prefabs | `fx.death` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Misc/CFXR Magic Poof.prefab` | root 9157105887711914197 | 적 사망 Magic Poof |
+| prefabs | `fx.death` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Misc/CFXR Magic Poof.prefab` | root 9157105887711914197 | 적 사망 Magic Poof — 미사용(T51 · 주인 2026-09-06 «죽을 때 펑 터지는 이펙트 없애기» · 키는 남김) |
 | prefabs | `fx.heal` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Nature/CFXR3 Shield Leaves A (Lit).prefab` | root 4772634663576830964 | 회복 (Shield Leaves) |
 | prefabs | `fx.bolt` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Electric/CFXR3 Hit Electric C (Air).prefab` | root 1141330259687333427 | 번개 특전 (Hit Electric C) |
 | prefabs | `fx.trail` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Nature/CFXR4 Wind Trails.prefab` | root 3696007233179127096 | 도끼·창 투사체 꼬리 (Wind Trails) |
