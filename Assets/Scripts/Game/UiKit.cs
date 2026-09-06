@@ -121,6 +121,12 @@ namespace KkomaKnight.Game
             return (RectTransform)go.transform;
         }
 
+        /// <summary>
+        /// 팝업 어둠이 프레임 «밖»(레터박스 · 노치 띠 · T106 이 화면 끝까지 뻗어 놓은 상단·하단 프레임 띠)까지 덮는 여유(px · T104).
+        /// 어둠은 <see cref="CreateFrame"/> 안에 있어 Stretch 만 하면 프레임 사각형까지만 덮는데, 상단·하단 띠는 <see cref="TopBar.FrameOverscan"/> 만큼 그 밖으로 뻗어 있어
+        /// 팝업이 떠도 그 띠만 밝게 남는다(레퍼런스 12 는 재화 바·탭 바까지 전부 어둡다). 같은 값이라 띠와 정확히 같은 범위를 덮는다.
+        /// </summary>
+        public const float DimOverscan = TopBar.FrameOverscan;
         public static void Stretch(RectTransform rt, float l = 0, float t = 0, float r = 0, float b = 0)
         {
             rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
@@ -572,7 +578,8 @@ namespace KkomaKnight.Game
             var parts = new PopupParts();
             if (dim)
             {
-                var d = Rect(layer, "Dimmed"); Stretch(d);
+                // T104 — 어둠은 프레임 «밖»(레터박스 · 노치 · T106 이 화면 끝까지 뻗어 놓은 상단·하단 프레임 띠)까지 덮는다
+                var d = Rect(layer, "Dimmed"); Stretch(d, -DimOverscan, -DimOverscan, -DimOverscan, -DimOverscan);
                 var di = d.gameObject.AddComponent<Image>(); di.color = Palette.A(Palette.Dim, 0.85f); di.raycastTarget = true;
                 FadeIn(di, 0.85f);
                 parts.Dim = d;

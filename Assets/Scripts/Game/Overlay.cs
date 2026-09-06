@@ -66,6 +66,17 @@ namespace KkomaKnight.Game
             return parts.Box;
         }
         /// <summary>
+        /// 프리팹 팝업의 어둠 조각을 프레임 «밖»까지 늘린다(T104 · <see cref="UiKit.DimOverscan"/>) — 조각은 프리팹 그대로 Stretch 라 프레임 사각형까지만 덮는데,
+        /// T106 이 상단·하단 프레임 띠를 화면 끝(레터박스·노치)까지 뻗어 놓아 팝업이 떠도 그 띠만 밝게 남는다. 레퍼런스 12 는 재화 바·탭 바까지 전부 어둡다.
+        /// 공통 팝업(<see cref="UiKit.Popup"/>)의 어둠은 그쪽 한 곳에서 같은 값으로 처리한다.
+        /// </summary>
+        static void DimFull(Transform dim)
+        {
+            var rt = dim as RectTransform; if (rt == null) return;
+            UiKit.Stretch(rt, -UiKit.DimOverscan, -UiKit.DimOverscan, -UiKit.DimOverscan, -UiKit.DimOverscan);
+        }
+
+        /// <summary>
         /// 상자 없이 어둠 위에 바로 조립되는 <b>프리팹 팝업</b>(레벨업 3택 · 승리 · 사망)의 배경 무늬(T72 ①) — 어둠 조각 «Dimmed» 바로 위 형제에 흰 무늬를 깐다(어두운 바탕 = <see cref="UiKit.PatternTintDark"/>).
         /// 공통 팝업 상자는 <see cref="UiKit.Popup"/> 이 상자 «안» 에 깔아 주므로 여기서 부르지 않는다(무늬가 겹치지 않는다).
         /// </summary>
@@ -90,7 +101,7 @@ namespace KkomaKnight.Game
         {
             Begin();
             var root = UiKit.Spawn(key, Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
-            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
+            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
             var bg = UiKit.Find(rt, "Background"); if (bg != null) { var bi = bg.GetComponent<Image>(); if (bi != null) bi.raycastTarget = true; }
             _cur = root;
             return root;
@@ -179,7 +190,7 @@ namespace KkomaKnight.Game
             Begin();
             var offer = G.Pending?.Offer ?? new List<PerkDef>();
             var root = UiKit.Spawn("ui.perkSelect", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
-            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
+            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
             DimPattern(rt);
             // 표 ⑦ 선택창 — 상자 없음 · 배너 20/26.5 · 부제 30/31.5 · 카드 x5.5 w89 h11 피치 13 · 하단 버튼 31/79 · 인포 86/79.5
             var ribbon = UiKit.Find(rt, "Title_01_NoDeco_Tangerine"); if (ribbon != null) UiKit.Pct((RectTransform)ribbon, Layout.OvBanner.X, Layout.OvBanner.Y - 0.7f, Layout.OvBanner.W, Layout.OvBanner.H + 1.4f);
@@ -373,7 +384,7 @@ namespace KkomaKnight.Game
         {
             Begin(); Audio.Sfx("snd.clear");
             var root = UiKit.Spawn("ui.resultWin", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
-            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
+            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
             DimPattern(rt);
             var chap = UiKit.SetText(rt, "Text", $"챕터 {G.Chapter}");
             var unlock = UiKit.SetText(rt, "Text (1)", last ? "모든 챕터 클리어!" : $"챕터 {G.Chapter + 1} 해금!");   // 프리팹 칸 528×61 — 본문 40 한 줄에 들어가는 길이로(T63-results)
@@ -453,7 +464,7 @@ namespace KkomaKnight.Game
         {
             Begin(); Audio.Sfx("snd.fail");
             var root = UiKit.Spawn("ui.resultLose", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
-            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
+            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
             DimPattern(rt);
             UiKit.SetText(rt, "Title_LineDeco_01_s_White/Text (TMP)", "쓰러졌다...");
             var reward = UiKit.Find(rt, "Reward"); if (reward != null) Reward(reward, "ui.coin", UiKit.Fmt(G.Gold));

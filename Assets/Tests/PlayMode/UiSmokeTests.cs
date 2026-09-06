@@ -152,6 +152,22 @@ namespace KkomaKnight.Tests.Play
         const string PerkCardName = "ui.card";
         /// <summary>T63-results — 글자가 bestFit 에 눌려 하한 밑으로 그려지지 않는지 + 칸 안에 들어가는지(줄 수 포함). <paramref name="min"/> 은 종류 하한.</summary>
         /// <summary>
+        /// 팝업 어둠이 프레임 «밖» 까지 덮는가(T104) — 상단·하단 프레임 띠(T106)는 프레임 사각형 밖으로 <see cref="UiKit.DimOverscan"/> 만큼 뻗어 있어
+        /// 어둠이 프레임까지만이면 팝업이 떠도 그 띠만 밝게 남는다(레퍼런스 12 는 재화 바·탭 바까지 전부 어둡다).
+        /// </summary>
+        static void AssertDimCoversFrame(Transform dim, string what)
+        {
+            Assert.IsNotNull(dim, what);
+            var rt = dim as RectTransform; Assert.IsNotNull(rt, what + " 는 RectTransform");
+            Assert.IsTrue(rt.gameObject.activeInHierarchy, what + " 는 켜져 있어야 한다");
+            var frame = App.I.Frame;
+            Assert.GreaterOrEqual(rt.rect.width, frame.rect.width + UiKit.DimOverscan, what + " 폭 = 프레임 + 밖 여유");
+            Assert.GreaterOrEqual(rt.rect.height, frame.rect.height + UiKit.DimOverscan, what + " 높이 = 프레임 + 밖 여유");
+            var img = rt.GetComponent<Image>(); Assert.IsNotNull(img, what + " 는 Image");
+            Assert.IsTrue(img.raycastTarget, what + " 는 뒤 화면 클릭을 막는다");
+        }
+
+        /// <summary>
         /// 결과 팝업 보상 줄(Group_RewardItem)의 «값» 글자 — 첫 칸(GetItem_Reward)의 <b>직계</b> Text(«Text (TMP)» 자리 · 골드 숫자).
         /// 깊은 검색(<c>GetComponentInChildren&lt;Text&gt;(true)</c>)으로 집으면 T69-overlay 가 칸 맨 뒤에 깐 `ItemFrame_01` 조각의
         /// 장식 글자를 먼저 집는다(T91 — 그 조각의 프리팹 자리 글자가 «Text» 라 골드 값과 비교가 깨졌고 배포까지 막혔다).
@@ -387,6 +403,7 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(HasText(s => s == "언어") && HasText(s => s == "한국어"), "설정: 언어 줄 + «한국어» 버튼");
             Assert.IsTrue(HasText(s => s == "개인정보 처리방침") && HasText(s => s == "이용약관"), "패널 아래 링크 글자 2");
             Assert.IsTrue(HasText(s => s == "탭하여 닫기"), "탭하여 닫기 안내"); Assert.IsNull(UiKit.Find(_app.Overlay.Root, "Button_Close_01"), "닫기 X 버튼 없음(공통 팝업 문법)");
+            AssertDimCoversFrame(UiKit.Find(_app.Overlay.Root, "Dimmed"), "설정 팝업 어둠");   // T104 — 프레임 밖(레터박스·노치·상하 프레임 띠)까지
             {
                 var bx = (RectTransform)UiKit.Find(_app.Overlay.Root, "ui.popup"); Assert.IsNotNull(bx, "설정 패널(ui.popup)");
                 Assert.AreEqual(Layout.SetBox.X, bx.anchorMin.x * 100f, 0.5f, "패널 x = 표 ⑨"); Assert.AreEqual(1f - Layout.SetBox.Y / 100f, bx.anchorMax.y, 1e-3f, "패널 y = 표 ⑨");
@@ -1140,6 +1157,7 @@ namespace KkomaKnight.Tests.Play
             yield return Frames(2);
             UiKit.CompleteAllTweens(); Assert.IsFalse(_app.Overlay.Revealing, "CompleteAll 뒤 연출 끝");
             Assert.AreEqual(1f, winBtns.GetChild(0).GetComponent<CanvasGroup>().alpha, 1e-4f, "×2 버튼 α 1"); Assert.AreEqual(1f, winBtns.GetChild(1).GetComponent<CanvasGroup>().alpha, 1e-4f, "그냥 받기 α 1");
+            AssertDimCoversFrame(UiKit.Find(_app.Overlay.Root, "Dimmed"), "클리어 팝업 어둠");   // T104 — 프리팹 팝업의 조각 어둠도 프레임 밖까지(Overlay.DimFull)
             var rewardCell = UiKit.Find(_app.Overlay.Root, "Group_RewardItem"); Assert.IsNotNull(rewardCell, "Group_RewardItem"); Assert.AreEqual(UiKit.Fmt(G.Gold), RewardValueText(rewardCell).text, "골드 카운트업 최종값 = G.Gold");
             Check("클리어 팝업", expectOverlay: true);
             // 기댓값에 TextGlyphs.Safe 를 씌운다 — 화면에 나갈 때 UiKit 이 «×» 를 «x» 로 바꾼다(T75 · Jua 에 글리프가 없어 폭 0 으로 사라진다)
