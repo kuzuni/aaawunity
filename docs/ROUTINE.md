@@ -54,14 +54,14 @@
 - **새 콘텐츠(특전/시스템/수치 체계) 임의 추가 금지.** 원하면 PROGRESS «주인 승인 대기» 에 등재만.
 - **커밋 전 게이트**: `dotnet build tools/dotnet/KkomaKnight.sln -c Release` 초록 · `dotnet test tools/dotnet/Tests` 초록 · `python3 tools/gen_meta.py --check` 초록. 새 에셋을 만들면 `python3 tools/gen_meta.py` 로 .meta 를 만든다(GUID 결정적).
 - 전투 엔진(`Assets/Scripts/Core`)에는 `UnityEngine` 을 참조하지 않는다(asmdef `noEngineReferences: true` · dotnet 이 강제한다).
-- 승인 프롬프트가 뜨는 명령·대화형 편집기(`git rebase -i` 등) 금지. 캡처 PNG·대용량 바이너리 커밋 금지(폰트 1개는 예외 — PLAN §2.1).
+- 승인 프롬프트가 뜨는 명령·대화형 편집기(`git rebase -i` 등) 금지. 캡처 PNG·대용량 바이너리 커밋 금지(예외 2개: 폰트 1개 — PLAN §2.1 · 오디오 OGG 합계 ≤ 5MB — T28 주인 지시).
 - 작업이 끝나면 lock 삭제 → PROGRESS 갱신 → 커밋 → push. **lock 만 잡는 커밋·문서만 바꾼 커밋은 제목 끝에 `[skip ci]`** 를 붙인다(코드가 안 바뀐 푸시로 25분짜리 유니티 빌드를 또 돌리지 않는다). 코드 커밋에는 절대 붙이지 않는다. **`[skip ci]` 커밋은 코드 커밋과 같은 push 에 묶지 않는다** — GitHub 은 push 의 머리 커밋에 `[skip ci]` 가 있으면 push 전체(앞의 코드 커밋까지)를 건너뛴다(T13 에서 실사고 · 코드 커밋을 먼저 push 하고 문서 커밋을 따로 push · 이미 묶였으면 Actions 의 `workflow_dispatch` 로 수동 실행). **push 실패 시 `git fetch && git rebase origin/main`** 후 재push (자기 lock 이 사라졌으면 진 것 — 작업 버리고 종료).
 - 브랜치는 `main` 하나다(주인 결정 — 다른 브랜치에 올리지 않는다). 각 단계가 끝나면 main 에 커밋·푸시하고 PROGRESS 에 «무엇을 확인하면 되는가» 한 줄을 적는다.
 - **에셋은 주인 에셋만** (위 지시 ③). 코드 생성 도형·임시 그림 금지. 새 에셋을 쓰면 `docs/assets-map.md` 표에 «용도 · 경로 · GUID(·fileID)» 를 한 줄 추가한다.
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
-> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T17~T27**(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
+> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T17~T28**(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
 
 ### T1 — 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README ✅ (완료 · PROGRESS 참조)
 
@@ -277,6 +277,16 @@
 2. 빈 슬롯 팝업(OpenSlot)도 같은 프리팹(장비 없는 상태 · 강화만).
 3. UiSmokeTests ② 가 «세부 팝업 = Character_Hero_Item_Detail_01» 인지 프리팹 이름으로 단언하도록 보강.
 4. 게이트 + PROGRESS T27 행 + «주인이 확인할 것».
+
+### T28 — 배경음(BGM) · 효과음(SFX) (주인 2026-09-06 «인터넷에서 받아서 넣어라»)
+범위: `Assets/Audio/`(신규 · 오디오 파일 + `LICENSES.md`) · `Assets/Scripts/Game/Audio.cs`(신규 · AudioManager) · 각 화면/팝업의 호출 한 줄씩(Screens · BattleScreen · BattleWorld(타격) · Overlay · GearUi · ShopScreen · ForgeScreen) · `SaveStore`(음소거 2개) · catalog(`bgm.*`/`snd.*`)
+순서: 제약 없음(호출은 한 줄씩이라 다른 작업과 겹쳐도 rebase 로 풀린다 — 충돌 나면 내 줄만 다시).
+1. **에셋 구하기**: 이 환경의 프록시는 kenney.nl·opengameart.org·freesound.org 를 막는다(디스패처가 확인 · 000). **GitHub 는 열려 있다** → `git clone --depth 1` 로 받을 수 있는 **CC0/퍼블릭 도메인** 팩만 쓴다(예: Kenney 의 GitHub 미러 · OpenGameArt CC0 모음 미러 · «cc0 game sfx» 검색). 라이선스가 CC0/PD 가 아니면 쓰지 않는다. 받은 파일의 출처·라이선스를 `Assets/Audio/LICENSES.md` 에 한 줄씩(URL · 원작자 · 라이선스). **GitHub 에서도 못 구하면** 오디오 시스템(2~4)만 만들고 `Assets/Audio/README.md` 에 «주인이 파일을 이 폴더에 넣으면 catalog 한 줄로 붙는다» 를 적고 PROGRESS 승인 대기 30 에 등재.
+2. **바이너리 예외**(§1 «대용량 바이너리 금지» 의 두 번째 예외 · 주인 지시): 형식 OGG(Vorbis) · 파일당 ≤ 300KB · BGM 은 ≤ 1MB · **합계 ≤ 5MB**. WAV 는 ffmpeg 로 OGG 변환(`ffmpeg -i in.wav -c:a libvorbis -q:a 3 out.ogg`). `.meta` 는 gen_meta 로.
+3. **필요한 소리**(카탈로그 키): BGM = `bgm.lobby` · `bgm.battle`(맵 4종 공용 1곡 · 있으면 테마별 4곡) · `bgm.boss`. SFX = `snd.click`(모든 버튼 · UiKit.Clickable 에서 한 곳) · `snd.hit` · `snd.crit` · `snd.miss` · `snd.kill` · `snd.hurt`(플레이어 피격) · `snd.levelup` · `snd.perk`(특전 선택) · `snd.coin`(골드 획득) · `snd.popup`(팝업 열림) · `snd.gacha`(상자 열림) · `snd.fuse`(합성) · `snd.equip` · `snd.clear` · `snd.fail` · `snd.arrow`/`snd.axe`(투사체 · 없으면 hit 재사용).
+4. **AudioManager**(`Audio.cs` · App 이 만든다 · AudioSource 2개: BGM 루프 1 + SFX 풀): `Audio.Bgm(key)`(같은 곡이면 무시 · 0.5초 크로스페이드) · `Audio.Sfx(key, volume=1, pitchJitter=0.05)` · 화면 전환 시 로비/전투 곡 자동 교체 · 보스 등장(BossWarn)에서 boss 곡 · 배속 x2 여도 피치 그대로. **설정 팝업(Settings 프리팹)의 BGM/SFX 스위치**에 각각 연결(`Save.MuteBgm`·`Save.MuteSfx` — 기존 `Muted` 는 BGM 으로 이관 · 세이브 호환). WebGL 은 첫 터치 뒤에 소리가 난다(브라우저 정책) — START 버튼 클릭에서 AudioContext 를 깨우는 코드 한 줄.
+5. UiSmokeTests 에 «BGM 키가 화면마다 바뀌는가 · SFX 호출이 예외 없이 도는가(클립 없어도 경고만)» 를 추가. 클립이 없을 때는 조용히 넘어간다(에러 0).
+6. 게이트 + PROGRESS T28 행 + «주인이 확인할 것»(어떤 팩을 어디서 받았는지 표).
 
 ### 신규 작업 등재
 - 버그·후속 작업 발견 시 PROGRESS 표에 **이미 쓰인 번호 중 가장 큰 것 +1** 로 등재 (번호 재사용 금지, 한 번호 = 한 작업).

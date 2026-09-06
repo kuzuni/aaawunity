@@ -29,6 +29,7 @@
 | T25 | 장비 화면: 상점·합성 버튼을 스탯 3칸 바로 아래로 — T17 뒤 | 대기 | — | Game/GearScreen | ROUTINE §2 T25 |
 | T26 | 뽑기 확률 검증(원본 대조 + 10,000회 통계 테스트 · 천장) | 대기 | — | Core/GearSystem · Tests/GearTests · Game/ShopScreen | ROUTINE §2 T26 |
 | T27 | 장비 정보 팝업 = Character_Hero_Item_Detail_01 그대로 — T17 뒤 | 대기 | — | Game/GearUi | ROUTINE §2 T27 |
+| T28 | 배경음·효과음 — CC0 팩을 GitHub 에서 받아(프록시가 kenney/opengameart/freesound 차단) OGG ≤5MB · AudioManager · 설정 스위치 | 대기 | — | Assets/Audio · Game/Audio(신규) · 화면 호출 한 줄씩 · SaveStore | ROUTINE §2 T28 |
 | T13 | 전투 HUD 특전 미리보기 줄(PerkStrip) 비례 — 아이콘이 서로 가림 · index.html 34/28/4px 비례로 · 넘침 0 · 스크린샷 아티팩트 | ✅ 완료 (`50860f2` · **CI 런 #38 유니티 잡 초록** — PlayMode `PerkStripTests` 통과 · 아티팩트 `perkstrip-screens`(PNG 2장) 업로드 확인 · 최종은 주인 에디터) | sess-2206-21029 / 워커 A | Core/Layout(`PerkStripSpec` 순수 계산 · 표값 불변) · Game/BattleScreen(RefreshPerkStrip) · Game/UiKit(PerkFrame 배율) · Tests/EditMode/PerkStripSpecTests(신규 5) · Tests/PlayMode/PerkStripTests(신규 1) · ci.yml(아티팩트 1단계) · .gitignore | **원인 확정 = 프리팹 내부 고정 크기**(ItemFrame_04 자식 Border 162·Icon 128 이 가운데 앵커라 sizeDelta 축소가 안 먹음 → 78px 셀에 162px 프레임) → 배율로 · 셀 = 줄 높이 28/34 · 간격 4/34 · 배지 14/34 · «+N» 12/34 · 개수 = 폭 ÷ 피치(상수 11 폐기 · 넘침 0) · dotnet 0/0 · 테스트 55/55 · 시뮬 21칸 동일 |
 | T14 | 전투 캐릭터 크기 2/3 · 공속 비례 공격 애니 속도(상한 없음) · 사망/승리 모션 루프 금지 | ✅ 완료 (`0ee1e18` · 실물 확인 = CI PlayMode `CharacterRigTests` 3개 + 주인 에디터 플레이) | sess-2220-32398 / 워커 B | Core/Layout(`CharScale`·`CharHeightPct`·`AttackAnimSpeed` · 표값 불변) · Game/BattleWorld(키·발밑 바 폭 배율) · Game/CharacterRig(공격 속도 · 사망/승리/패배 클립 끝 정지) · Tests/EditMode/CharScaleAnimTests(신규 4) · Tests/PlayMode/CharacterRigTests(신규 3) | 키 = 표 % × 2/3(플레이어·적·보스 ×sizeMul) · 바 폭 × 2/3 · 공격 속도 = 클립 ÷ 간격(하한 1 · 상한 ×3 폐기) · Dead1/Victory/Defeat(루프 에셋 불변)는 Animator 자기 시계로 마지막 프레임(0.999)에서 speed 0 · dotnet 0/0 · 테스트 59/59 · 시뮬 21칸 동일 |
 | T15 | **플레이 콘솔 에러 0** — 데모 프리팹 스폰 시 `PanelView.OnEnable` 예외(UnassignedReferenceException · `UiKit.Spawn` 의 Instantiate 중 · 설정/장비 세부/전투 팝업) — CI #36 PlayMode 3건 실패 원인 | ✅ 완료 (`b001d5f` · 실물 확인 = CI 런 #38 유니티 잡 초록 · UiSmokeTests 5/5 · PlayMode 9/9 · gh-pages 배포까지 성공) | sess-2136-22274 / 워커 C | Game/UiKit(Spawn·Staging·StripDemoScripts) | Instantiate 를 비활성 홀더 밑에서 → 데모 스크립트 제거 → parent 이동(OnEnable 0회) · dotnet 0/0 · 테스트 55/55 |
@@ -385,6 +386,8 @@
 28. **클리어 팝업 «그냥 받기» 버튼(T16)** — «광고 보고 보상 ×2» 만 두면 광고 없이는 못 나간다. 작은 «그냥 받기»(1배) 를 기본값으로 둔다. 빼길 원하면 한 줄.
 
 29. **장착 중 장비를 합성 재료로 쓸 때(T24)** — 재료로 사라진 장착분의 슬롯은 «결과물이 같은 부위면 그것을 장착, 아니면 빈 슬롯» 을 기본값으로 둔다(자동 장착 금지 원칙의 유일한 예외 · 결과물은 재료보다 항상 좋다). 그냥 빈 슬롯으로 두길 원하면 한 줄.
+
+30. **오디오 에셋 출처(T28)** — 이 환경은 kenney.nl·opengameart.org·freesound.org 접속이 막혀 있어(프록시) GitHub 에 미러된 CC0 팩만 받을 수 있다. GitHub 에서도 못 구하면 시스템만 만들어 두니, 주인이 원하는 팩을 `Assets/Audio/` 에 넣어 주면 카탈로그 한 줄로 붙는다.
 
 ## 주인 할 일
 
