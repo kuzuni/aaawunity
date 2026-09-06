@@ -138,6 +138,7 @@
 | sprites | `pi.crown` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/crown_1.png` | fileID 21300000 | 귀족의 눈 |
 | sprites | `pi.block` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/block.png` | fileID 21300000 | 피해 무시 · 실드 방벽 |
 | sprites | `pi.growth` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/growth.png` | fileID 21300000 | 처치 시 스택 특전 |
+| sprites | `pi.orb` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/orb.png` | fileID 21300000 | T85 경험치 구슬 — 적이 죽은 자리에서 튀어나와 HUD EXP 바로 날아가 흡수되는 초록 구슬(픽토 아이콘을 Palette.Green 으로 물들인다 · 골드는 ui.coin) |
 | sprites | `pi.skull` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/skull_1.png` | fileID 21300000 | 즉사 특전 · 사망 화면 · 전투 HUD 처치 수 pill 아이콘(T35) |
 | sprites | `pi.skull3` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/skull_3.png` | fileID 21300000 |  |
 | sprites | `pi.target` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/target_1.png` | fileID 21300000 |  |

@@ -76,6 +76,12 @@ namespace KkomaKnight.Game
         public bool HoldEngine => !Silent && (KillPending || KillAnimHold);
         /// <summary>플레이어 리그의 현재 애니 상태 이름(테스트·진단용).</summary>
         public string PlayerAnim => _player != null ? _player.Current : null;
+        /// <summary>
+        /// T85 — 적의 «사망 연출이 시작되는» 순간(칼이 내려온 뒤 · 자리 · 보스인가)을 화면에 알린다.
+        /// 엔진은 킬 틱에 이미 경험치·골드를 올렸지만(불변) 보상 구슬은 시체가 실제로 쓰러지는 이 순간에 튀어나온다.
+        /// 따라잡기(<see cref="Silent"/>) 중에는 부르지 않는다 — 그때는 화면이 표시값을 즉시 맞춘다.
+        /// </summary>
+        public System.Action<Vector3, bool> KillShown;
         /// <summary>배속(x1/x2) — 애니 속도와 지연 시계에 함께 건다.</summary>
         public float TimeScale = 1f;
         /// <summary>따라잡기 중(탭 숨김 뒤 복귀) — 공격 모션·팝·이펙트를 만들지 않고 이벤트만 비운다.</summary>
@@ -384,9 +390,7 @@ namespace KkomaKnight.Game
             if (t == null) return;
             if (t.gameObject.activeSelf != visible) t.gameObject.SetActive(visible);
             if (!visible) return;
-            float lx = (worldPos.x * WorldCam.PPU) + WorldCam.LayoutW / 2f;
-            float yFrac = 0.5f - worldPos.y * WorldCam.PPU / WorldCam.LayoutH;
-            t.rectTransform.anchoredPosition = new Vector2(lx * (UiKit.FrameW / WorldCam.LayoutW), (1f - yFrac) * UiKit.FrameH);
+            t.rectTransform.anchoredPosition = WorldCam.ToFrame(worldPos);
             if (t.text != s) t.text = s;
         }
         void BuildPlayer()
@@ -541,7 +545,7 @@ namespace KkomaKnight.Game
                 if (e.Dead && v.Hold == 0)
                 {
                     // 사망 = 모션(Dead1 · 끝에서 정지) + 알파 페이드 + snd.kill — «펑» 이펙트(fx.death Magic Poof)는 주인 지시로 뿌리지 않는다(T51 · 2026-09-06)
-                    if (v.DieT < 0) { v.DieT = 0; v.Rig.Play(CharacterRig.Dead, true); _lastKillPos = v.Rig.transform.position; if (!Silent) Audio.Sfx("snd.kill", 0.9f); v.BarBg.gameObject.SetActive(false); PlaceFootText(v.BarTxt, Vector3.zero, "", false); if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } }
+                    if (v.DieT < 0) { v.DieT = 0; v.Rig.Play(CharacterRig.Dead, true); _lastKillPos = v.Rig.transform.position; if (!Silent) Audio.Sfx("snd.kill", 0.9f); v.BarBg.gameObject.SetActive(false); PlaceFootText(v.BarTxt, Vector3.zero, "", false); if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } if (!Silent && KillShown != null) KillShown(_lastKillPos, e.IsBoss); }
                     v.DieT += dt; v.Rig.SetAlpha(Mathf.Clamp01(1.2f - v.DieT * 1.5f));
                     if (v.DieT > 0.85f) Remove(v);
                     continue;
@@ -699,10 +703,8 @@ namespace KkomaKnight.Game
             size = t.fontSize;
             t.horizontalOverflow = HorizontalWrapMode.Overflow;
             var rt = t.rectTransform; rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f); rt.sizeDelta = new Vector2(400, size * 1.5f);
-            // 월드 → 레이아웃 → 프레임 px
-            float lx = (worldPos.x * WorldCam.PPU) + WorldCam.LayoutW / 2f;
-            float yFrac = 0.5f - worldPos.y * WorldCam.PPU / WorldCam.LayoutH;
-            rt.anchoredPosition = new Vector2(lx * (UiKit.FrameW / WorldCam.LayoutW) + Random.Range(-30f, 30f), (1f - yFrac) * UiKit.FrameH);
+            // 월드 → 프레임 px(WorldCam.ToFrame) + 좌우 흔들기
+            rt.anchoredPosition = WorldCam.ToFrame(worldPos) + new Vector2(Random.Range(-30f, 30f), 0f);
             rt.localScale = Vector3.one * 0.6f;
             var seq = DOTween.Sequence().SetLink(t.gameObject);   // SetLink(T56) — 전투 종료로 팝 층이 먼저 파괴돼도 경고 0
             seq.Append(rt.DOScale(1f, 0.12f).SetEase(Ease.OutBack));

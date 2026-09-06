@@ -39,6 +39,16 @@ namespace KkomaKnight.Game
         /// <summary>프레임 안 레이아웃 좌표(x: 0~540 왼→오, yFrac: 0~1 위→아래) → 유니티 월드.</summary>
         public static Vector3 ToWorld(float layoutX, float yFrac, float z = 0)
             => new Vector3((layoutX - LayoutW / 2f) / PPU, (0.5f - yFrac) * LayoutH / PPU, z);
+        /// <summary>
+        /// 유니티 월드 좌표 → 프레임 px(<see cref="UiKit.FrameW"/>×<see cref="UiKit.FrameH"/> · 왼쪽 아래가 0,0).
+        /// 데미지 팝·발밑 숫자·보상 구슬(T85)이 월드 위치를 UI 층에 옮길 때 쓰는 하나뿐인 변환.
+        /// </summary>
+        public static Vector2 ToFrame(Vector3 worldPos)
+        {
+            float lx = worldPos.x * PPU + LayoutW / 2f;
+            float yFrac = 0.5f - worldPos.y * PPU / LayoutH;
+            return new Vector2(lx * (UiKit.FrameW / LayoutW), (1f - yFrac) * UiKit.FrameH);
+        }
         /// <summary>프레임 % 높이 → 유니티 단위.</summary>
         public static float PctH(float pct) => pct / 100f * LayoutH / PPU;
         public static float PctW(float pct) => pct / 100f * LayoutW / PPU;

@@ -47,6 +47,15 @@ namespace KkomaKnight.Game
         RectTransform _buffBar, _perkStrip; Text _perkCount; HorizontalLayoutGroup _perkStripLayout;
         readonly Text[] _statVals = new Text[StatDefs.Length];
         string _perkStripKey = "", _buffKey = "";
+        // T85 — 보상 흡수 연출: 엔진 값(G.Gold · P.Exp)은 킬 순간에 이미 올라 있고(불변), 화면은 «구슬이 도착한 만큼» 만 올린다.
+        RectTransform _goldPill, _orbLayer; RewardOrbs _orbs;
+        double _shownGold, _shownExp;        // 표시값 — 골드 · 경험치는 «누적»(레벨 경계를 넘으면 바가 다시 찬다)
+        double _goldTarget, _expTarget;      // 도착분까지 반영된 목표(카운트업이 여기로 간다)
+        double _goldRate, _expRate;          // 카운트업 속도(초당) — 목표가 늘면 다시 계산해 CountUpSec 안에 따라잡는다
+        double _flyGold, _flyExp;            // 아직 날아가는 중인 구슬이 들고 있는 값
+        float _overWait;                     // 사망·클리어에서 흡수를 기다린 시간(AbsorbMaxWaitSec 넘으면 강제 완료)
+        const float CountUpSec = 0.2f, AbsorbMaxWaitSec = 0.6f, OrbSizePx = 64f;
+        const int OrbMinCount = 3, OrbBossCount = 8;
 
         protected override void Build()
         {
@@ -58,7 +67,7 @@ namespace KkomaKnight.Game
             UiKit.Hide(pills, "ResourceBar_GemStone");
             var killPill = UiKit.Find(pills, "ResourceBar_Gem") as RectTransform; var goldPill = UiKit.Find(pills, "ResourceBar_Coin") as RectTransform;
             if (killPill != null) { killPill.name = "Pill:kills"; UiKit.Pct(killPill, 0, 0, 46, 100); UiKit.SetSprite(killPill, "Icon", "pi.skull"); _kills = UiKit.SetText(killPill, "Text (TMP)", "0"); }
-            if (goldPill != null) { goldPill.name = "Pill:gold"; UiKit.Pct(goldPill, 54, 0, 46, 100); _gold = UiKit.SetText(goldPill, "Text (TMP)", "0"); }
+            if (goldPill != null) { goldPill.name = "Pill:gold"; UiKit.Pct(goldPill, 54, 0, 46, 100); _gold = UiKit.SetText(goldPill, "Text (TMP)", "0"); _goldPill = goldPill; }
             // T69-lobby — HUD pill 2개도 «검은 아웃라인»(결정 149 가 «둥근 pill 에 사각 링이 어긋난다» 며 미룬 것 · 캡슐 조각 BorderKeyPill 로 닫는다 · 레퍼런스 02 의 pill 도 검은 외곽선)
             foreach (var pill in new[] { killPill, goldPill })
             {
@@ -128,6 +137,9 @@ namespace KkomaKnight.Game
             UiKit.Tag(_exp.Root, "EXP 바"); UiKit.Tag(_hp.Root, "HP 바"); UiKit.Tag(_sh.Root, "실드 바");
             var cells = new RectTransform[StatDefs.Length]; for (int i = 0; i < StatDefs.Length; i++) cells[i] = UiKit.Find(Root, "stat:" + StatDefs[i].Key) as RectTransform;
             UiKit.TagGroup(Root, "스탯 그리드", cells); UiKit.Tag(cells[0], "스탯칸(1칸)"); UiKit.Tag(info, "인포(책) 버튼");
+            // T85 — 보상 구슬 층은 HUD «위» (마지막 형제): 구슬이 하단 패널 안의 EXP 바까지 가려지지 않고 날아가야 한다. 글자·이름표 없음(비평 표·게이트 불변).
+            _orbLayer = UiKit.Rect(Root, "Orbs"); UiKit.Stretch(_orbLayer); _orbLayer.SetAsLastSibling();
+            _orbs = new RewardOrbs(_orbLayer);
         }
 
         // ───────────────────────── 시작 · 종료 ─────────────────────────
@@ -139,11 +151,13 @@ namespace KkomaKnight.Game
             BaseStats = new Dictionary<string, double>(); foreach (var d in StatDefs) BaseStats[d.Key] = d.Cur(G);
             _world?.Dispose(); UiKit.Clear(_pops);   // 팝 층은 새 월드를 만들기 «전에» 비운다(발밑 숫자 글자가 팝 층에 산다 · T35)
             _world = new BattleWorld(App, G, _pops);
+            _world.KillShown = OnKillShown;   // T85 — 시체가 쓰러지는 순간 그 자리에서 보상 구슬이 튀어나온다
+            SnapShown();                      // 새 판은 표시값 = 엔진 값(0)에서 시작
             _acc = 0; _speed = App.Save.Speed; _paused = false; _ended = false; _perkStripKey = ""; _buffKey = ""; _lastReal = 0;   // 배속은 세이브에서(T18 · 클리어 뒤 다음 챕터도 그대로) · 새 판 첫 프레임이 «공백» 으로 잡히지 않게
             Audio.Bgm("bgm.battle");   // 새 판(클리어 뒤 다음 챕터 포함)은 전투 곡부터 — 보스 곡이었으면 되돌린다(T28)
             RefreshHud();
         }
-        protected override void OnHide() { _world?.Dispose(); _world = null; UiKit.Clear(_pops); }
+        protected override void OnHide() { _world?.Dispose(); _world = null; UiKit.Clear(_pops); _orbs?.Clear(); _flyGold = _flyExp = 0; }
 
         /// <summary>현재 배속(x1/x2) — 테스트·진단용 읽기.</summary>
         public int Speed => _speed;
@@ -166,7 +180,7 @@ namespace KkomaKnight.Game
         {
             if (G == null) return;
             _ended = true; G = null; _paused = false;
-            _world?.Dispose(); _world = null; UiKit.Clear(_pops);
+            _world?.Dispose(); _world = null; UiKit.Clear(_pops); _orbs?.Clear(); _flyGold = _flyExp = 0;
         }
         void OnPause()
         {
@@ -191,12 +205,12 @@ namespace KkomaKnight.Game
                 while (_acc >= EngineConst.Dt && guard++ < maxTicks)
                 {
                     // 팝업(레벨업·이벤트)은 남은 타격 연출(칼이 내려오는 순간)이 끝난 뒤 연다 — 그 동안 엔진 시간은 멈춘 채 애니만 돈다
-                    if (G.Pending != null) { if (!_world.Busy) OpenPending(); _acc = 0; break; }
+                    if (G.Pending != null) { if (!_world.Busy && !Absorbing) OpenPending(); _acc = 0; break; }
                     // 킬 연출(칼 내려옴 → 적 사망 → 플레이어 공격 모션 끝) 동안 엔진 틱 보류(T50) — 틱 순서 불변 · 풀리면 격차 없이 원래 걷기 속도로 출발(누적분은 버려 몰아치기 없음)
                     if (_world.HoldEngine) { _acc = 0; break; }
                     _world.BeforeTick(); G.Tick(); _world.AfterTick();
                     _acc -= EngineConst.Dt;
-                    if (G.Pending != null) { if (!_world.Busy) OpenPending(); _acc = 0; break; }
+                    if (G.Pending != null) { if (!_world.Busy && !Absorbing) OpenPending(); _acc = 0; break; }
                     if (G.Over) break;
                 }
                 if (G.Pending == null && G.PendingLevelUps > 0 && !G.Over) { /* 엔진이 다음 틱에 스스로 연다 */ }
@@ -206,13 +220,20 @@ namespace KkomaKnight.Game
             G.Events.Clear();
             _world.TimeScale = _speed;
             _world.Sync(dt * _speed);
+            AbsorbTick(dt * _speed);   // T85 — 구슬이 도착한 만큼 표시 숫자·바가 차오른다(엔진 값 불변)
             RefreshHud();
-            if (G.Over && !_ended && !App.Overlay.IsOpen && !_world.Busy) EndRun();
+            // 사망·클리어 팝업도 흡수가 끝난 뒤에 — 다만 무한 대기 금지(AbsorbMaxWaitSec 넘으면 남은 값을 즉시 적립하고 연다)
+            if (G.Over && !_ended && !App.Overlay.IsOpen && !_world.Busy)
+            {
+                if (Absorbing && _overWait < AbsorbMaxWaitSec) _overWait += dt;
+                else { if (Absorbing) FinishAbsorb(); EndRun(); }
+            }
         }
 
         void OpenPending()
         {
             var p = G.Pending; if (p == null) return;
+            if (Absorbing) return;   // T85 — 바가 다 찬 «뒤에» 연다(주인 지시 · 여러 레벨이면 차고 → 팝업 → 다시 차고 → 팝업)
             switch (p.Kind)
             {
                 case PendingKind.LevelUp: App.Overlay.LevelUp(G, pick => G.ResolveLevelUp(pick)); break;
@@ -251,20 +272,118 @@ namespace KkomaKnight.Game
             }
         }
 
+        // ───────────────────────── T85 · 보상 흡수(표시값) ─────────────────────────
+        /// <summary>누적 경험치(레벨 1부터) — 표시값이 레벨 경계를 넘어가며 차오를 수 있게 «늘기만 하는 한 수» 로 본다. 엔진 값(P.Exp·P.Level)은 읽기만 한다.</summary>
+        public static double ExpTotal(BattleState g, GameData d)
+        {
+            if (g == null || d == null) return 0;
+            double t = g.P.Exp;
+            for (int lv = 1; lv < g.P.Level; lv++) t += d.Tune.ExpNeed(lv);
+            return t;
+        }
+        /// <summary>누적 경험치 → (이 레벨에서 찬 양 · 필요량). 흡수가 끝나면 엔진 (P.Exp · ExpNeed(P.Level)) 과 같은 값이 나온다.</summary>
+        public static void ExpBar(double total, GameData d, out double cur, out int need)
+        {
+            cur = total; need = d != null ? d.Tune.ExpNeed(1) : 0;
+            if (d == null) return;
+            for (int lv = 1; lv < 9999; lv++)
+            {
+                need = d.Tune.ExpNeed(lv);
+                if (need <= 0 || cur < need) return;
+                cur -= need;
+            }
+        }
+        /// <summary>보상 흡수가 진행 중인가 — 구슬이 날고 있거나 표시 숫자·바가 아직 차는 중. 레벨업·사망·클리어 팝업은 이것이 끝난 뒤에 연다(주인 «다 차고 나서»).</summary>
+        public bool Absorbing => (_orbs != null && _orbs.Busy) || _flyGold > 1e-4 || _flyExp > 1e-4
+            || _goldTarget - _shownGold > 1e-4 || _expTarget - _shownExp > 1e-4
+            || (G != null && (G.Gold - (_goldTarget + _flyGold) > 1e-4 || ExpTotal(G, App.Data) - (_expTarget + _flyExp) > 1e-4));   // 엔진이 이미 준 값이 아직 화면에 안 올라온 구간(칼이 안 내려온 킬)도 «차는 중» 이다
+        /// <summary>표시 골드 · 표시 누적 경험치(테스트·진단용 읽기).</summary>
+        public double ShownGold => _shownGold; public double ShownExp => _shownExp;
+        /// <summary>날아가는 중인 구슬 수(테스트·진단용 읽기).</summary>
+        public int OrbCount => _orbs != null ? _orbs.Alive : 0;
+
+        /// <summary>표시값을 엔진 값으로 즉시 맞춘다(새 판 · 화면 재진입 · 탭 복귀 따라잡기).</summary>
+        void SnapShown()
+        {
+            _orbs?.Clear();
+            _flyGold = _flyExp = 0; _goldRate = _expRate = 0; _overWait = 0;
+            _shownGold = _goldTarget = G != null ? G.Gold : 0;
+            _shownExp = _expTarget = G != null ? ExpTotal(G, App.Data) : 0;
+        }
+        /// <summary>남은 구슬을 즉시 도착시키고 카운트업도 끝낸다 — 사망·클리어 팝업이 0.6초 넘게 기다리지 않게.</summary>
+        void FinishAbsorb()
+        {
+            _orbs?.FinishNow();
+            if (G != null) { _goldTarget = G.Gold; _expTarget = ExpTotal(G, App.Data); }
+            _shownGold = _goldTarget; _shownExp = _expTarget; _flyGold = _flyExp = 0; _goldRate = _expRate = 0;
+        }
+        /// <summary>적의 사망 연출이 시작된 순간(<see cref="BattleWorld.KillShown"/>) — 그 자리에서 경험치 구슬·골드 코인이 튀어나와 EXP 바·골드 pill 로 날아간다.</summary>
+        void OnKillShown(Vector3 worldPos, bool boss)
+        {
+            if (G == null || _orbs == null) return;
+            var from = WorldCam.ToFrame(worldPos);
+            // 화면 밖에서 죽은 적(전투는 스크롤한다)은 구슬 없이 표시값만 바로 올린다
+            bool onScreen = from.x > -OrbSizePx && from.x < UiKit.FrameW + OrbSizePx && from.y > -OrbSizePx && from.y < UiKit.FrameH + OrbSizePx;
+            int n = boss ? OrbBossCount : OrbMinCount + G.Kills % 3;   // 3~5개(보스 8) · 화면 동시 상한은 RewardOrbs.MaxAlive
+            double expGap = ExpTotal(G, App.Data) - (_expTarget + _flyExp);
+            if (expGap > 1e-4)
+            {
+                int made = onScreen ? _orbs.Fly(from, _exp.Root, "pi.orb", Palette.Green, n, expGap, OrbSizePx, _speed, OnExpArrive) : 0;
+                if (made > 0) _flyExp += expGap; else _expTarget += expGap;
+            }
+            double goldGap = G.Gold - (_goldTarget + _flyGold);
+            if (goldGap > 1e-4)
+            {
+                int made = onScreen ? _orbs.Fly(from, _goldPill, "ui.coin", Palette.White, n, goldGap, OrbSizePx, _speed, OnGoldArrive) : 0;
+                if (made > 0) _flyGold += goldGap; else _goldTarget += goldGap;
+            }
+        }
+        void OnExpArrive(double v) { _flyExp = Math.Max(0, _flyExp - v); _expTarget += v; }
+        void OnGoldArrive(double v) { _flyGold = Math.Max(0, _flyGold - v); _goldTarget += v; }
+
+        /// <summary>구슬이 도착한 만큼 표시 숫자·바를 <see cref="CountUpSec"/> 안에 따라 올린다 — 표시값은 엔진 값을 넘지 않는다.</summary>
+        void AbsorbTick(float dt)
+        {
+            if (G == null) return;
+            double engineExp = ExpTotal(G, App.Data);
+            if (_world != null && _world.Silent) { SnapShown(); return; }   // 탭 복귀 따라잡기는 즉시 맞춘다(T50 SnapGap 감각)
+            // 구슬이 안 붙은 증가(화면 밖 킬 · 클리어 보너스)는 그대로 카운트업 — 단 «칼이 아직 안 내려온» 킬의 몫은 구슬이 가져가게 기다린다
+            if (_world == null || !_world.KillPending)
+            {
+                double g = G.Gold - (_goldTarget + _flyGold); if (g > 1e-4) _goldTarget += g;
+                double e = engineExp - (_expTarget + _flyExp); if (e > 1e-4) _expTarget += e;
+            }
+            if (_goldTarget > G.Gold + 1e-4) { _goldTarget = G.Gold; if (_shownGold > _goldTarget) _shownGold = _goldTarget; }
+            if (_expTarget > engineExp + 1e-4) { _expTarget = engineExp; if (_shownExp > _expTarget) _shownExp = _expTarget; }
+            CountUp(ref _shownGold, ref _goldRate, _goldTarget, dt);
+            CountUp(ref _shownExp, ref _expRate, _expTarget, dt);
+        }
+        /// <summary>남은 차이를 <see cref="CountUpSec"/> 안에 메운다 — 도착이 겹쳐 목표가 늘면 그만큼 빨라진다(도착 순서대로 «차오름» 이 이어진다).</summary>
+        static void CountUp(ref double cur, ref double rate, double target, float dt)
+        {
+            double d = target - cur;
+            if (d <= 1e-9) { cur = target; rate = 0; return; }
+            double need = d / CountUpSec;
+            if (need > rate) rate = need;
+            cur += rate * dt;
+            if (cur >= target) { cur = target; rate = 0; }
+        }
+
         // ───────────────────────── HUD ─────────────────────────
         void RefreshHud()
         {
             if (G == null) return;
             var P = G.P; var D = App.Data;
-            if (_gold != null) _gold.text = UiKit.Fmt(G.Gold);
+            if (_gold != null) _gold.text = UiKit.Fmt(_shownGold);   // T85 — 표시 골드(구슬이 도착한 만큼) · 은행에 넣는 값은 엔진 G.Gold 그대로
             if (_kills != null) _kills.text = G.Kills.ToString();
             if (_chapTitle != null) _chapTitle.text = $"챕터 {G.Chapter}";
             // 진행바(T35) = 노드(웨이브·이벤트·보스) 진행 — 끝난 노드 수 + 지금 싸우는 웨이브의 처치 비율 → 적을 잡을수록 찬다 · 적 조우 중엔 주황, 걷는 중엔 노랑(레퍼런스 03 «적 발견»)
             _prog.Set(ChapterProgress(G), null);
             if (_progFill != null) _progFill.color = _world != null && _world.Engaged ? Palette.Orange : Palette.Yellow;
             if (_speedTxt != null) _speedTxt.text = "x" + _speed;
-            int need = D.Tune.ExpNeed(P.Level);
-            _exp.Set(need > 0 ? (double)P.Exp / need : 0, $"{P.Exp}/{need}");
+            // T85 — EXP 바도 «표시 누적 경험치» 로 그린다(흡수가 끝나면 엔진 값과 정확히 같다 · 레벨 경계를 넘으면 차고 → 팝업 → 다시 찬다)
+            ExpBar(_shownExp, D, out double expCur, out int need);
+            _exp.Set(need > 0 ? expCur / need : 0, $"{(long)Math.Floor(expCur)}/{need}");
             double hp = _world != null ? _world.ShownHp : P.Hp, sh = _world != null ? _world.ShownSh : P.Sh;   // 표시 체력 — 칼이 내려온 순간에 깎인다
             _hp.Set(P.MaxHp > 0 ? hp / P.MaxHp : 0, $"{UiKit.Fmt(hp)}/{UiKit.Fmt(P.MaxHp)}");
             _sh.Set(P.MaxSh > 0 ? sh / P.MaxSh : 0, P.MaxSh > 0 ? $"{UiKit.Fmt(sh)}/{UiKit.Fmt(P.MaxSh)}" : "실드 없음");
