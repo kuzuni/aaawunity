@@ -347,12 +347,13 @@ namespace KkomaKnight.Game
             fill.size = new Vector2(Mathf.Max(0.001f, w * f), fill.size.y);
             fill.transform.localPosition = new Vector3(-(w - w * f) / 2f, 0, 0);
         }
-        /// <summary>발밑 바 안의 숫자(T35) — 팝 층의 uGUI Text(흰 글자 · 외곽선). 글자 높이는 바 높이(FootBarH % · 프레임 px)에서 잰다 — 픽셀 상수 없음.</summary>
+        /// <summary>발밑 바 안의 숫자(T35) — 팝 층의 uGUI Text(흰 글자 · 외곽선). 글자 높이는 바 높이(FootBarH % · 프레임 px)에서 재되 보조 라벨 하한(T63 · 36)을 밑돌지 않는다 — 픽셀 상수 없음. 글자 칸 높이는 «올린 뒤» 크기로(전엔 올리기 전 크기라 게이트 «잘림»).</summary>
         Text FootText(string name)
         {
             if (_pops == null) return null;
             int size = Mathf.RoundToInt(UiKit.FrameH * Layout.FootBarH / 100f * 0.8f);
-            var t = UiKit.Text(_pops, "", size, Palette.White, TextAnchor.MiddleCenter, false, true); t.name = name;
+            var t = UiKit.Text(_pops, "", size, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Aux); t.name = name;
+            size = t.fontSize;
             t.horizontalOverflow = HorizontalWrapMode.Overflow; t.fontStyle = FontStyle.Bold; t.raycastTarget = false;
             var rt = t.rectTransform; rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f); rt.sizeDelta = new Vector2(400, size * 1.4f);
             return t;
@@ -372,8 +373,8 @@ namespace KkomaKnight.Game
         {
             _player = MakeChar("Player", CharacterRig.PlayerSkin(D, _app.Save, G.P.MaxSh > 0), Layout.PlayerHeight, true);   // 장착 외형 반영 — 장비 화면(HeroView)과 같은 표(GearLook)
             _player.transform.position = Pos(_shownPX, FootY);
-            // 발밑 2단 바(T35 · 주인 강조): 빨강(HP) 위 · 파랑(실드) 아래 · 같은 높이 · 각 단 안에 흰 숫자. 폭은 캐릭터와 같은 배율(2/3 · T14)
-            float pBarW = WorldCam.PctW(Layout.PlayerFootBarW) * Layout.CharScale;
+            // 발밑 2단 바(T35 · 주인 강조): 빨강(HP) 위 · 파랑(실드) 아래 · 같은 높이 · 각 단 안에 흰 숫자. 폭 = 표 폭 × FootBarScale(T63-battle · 숫자 36px 이 들어가게 표 폭 그대로 · 결정 133)
+            float pBarW = WorldCam.PctW(Layout.PlayerFootBarW) * Layout.FootBarScale;
             MakeBar(_root, pBarW, WorldCam.PctH(Layout.FootBarH), out _pBarBg, out _pBarFill, Palette.Red, 392);
             MakeBar(_root, pBarW, WorldCam.PctH(Layout.FootShBarH), out _pShBg, out _pShFill, Palette.Hex(D.Ui.PopShield), 392);
         }
@@ -383,8 +384,8 @@ namespace KkomaKnight.Game
             e.Skin = System.Math.Abs(e.Id * 2654435761L % 1000).GetHashCode();
             float h = e.IsBoss ? Layout.EnemyHeight * (float)D.Enemies.BossSizeMul : Layout.EnemyHeight;
             v = new EnemyView { E = e, Rig = MakeChar("Enemy" + e.Id, EnemySkin(e), h, false), StrikeTick = e.StrikeT, ShownHp = e.Hp };
-            // 바 폭 = 표(ref-layout ② «적 발밑 바 폭» 9.7 · 플레이어 10.3 과 거의 같다) × 캐릭터 배율(2/3 · T14) — ui.json enemyBarW(37px = 6.9%) 를 쓰면 플레이어 바의 2/3 폭이 돼 레퍼런스와 어긋났다(T47 회차 2). 보스는 ui.json 의 보스/잡몹 비율만 빌린다.
-            float barW = WorldCam.PctW(Layout.EnemyFootBarW) * Layout.CharScale * (e.IsBoss && D.Ui.EnemyBarW > 0 ? (float)(D.Ui.BossBarW / D.Ui.EnemyBarW) : 1f);
+            // 바 폭 = 표(ref-layout ② «적 발밑 바 폭» 9.7 · 플레이어 10.3 과 거의 같다) × FootBarScale(T63-battle · 플레이어 바와 같은 자) — ui.json enemyBarW(37px = 6.9%) 를 쓰면 플레이어 바의 2/3 폭이 돼 레퍼런스와 어긋났다(T47 회차 2). 보스는 ui.json 의 보스/잡몹 비율만 빌린다.
+            float barW = WorldCam.PctW(Layout.EnemyFootBarW) * Layout.FootBarScale * (e.IsBoss && D.Ui.EnemyBarW > 0 ? (float)(D.Ui.BossBarW / D.Ui.EnemyBarW) : 1f);
             MakeBar(_root, barW, WorldCam.PctH(Layout.FootBarH), out v.BarBg, out v.BarFill, e.IsBoss ? Palette.Plum : Palette.Red, 395);
             v.BarTxt = FootText("FootTxt:Enemy" + e.Id);   // 적은 실드가 없으므로(엔진 EnemyState 에 Sh 없음) 빨간 단 하나 + 숫자(레퍼런스 03 «2555»)
             _enemies[e] = v;
@@ -643,13 +644,15 @@ namespace KkomaKnight.Game
             }
         }
 
-        /// <summary>데미지 팝 — 프레임(UI) 층에 Text 를 띄우고 DOTween 으로 올라가며 사라진다.</summary>
+        /// <summary>데미지 팝 — 프레임(UI) 층에 Text 를 띄우고 DOTween 으로 올라가며 사라진다. 크기는 호출부 값 × <see cref="TextSize.BattleNumberMul"/>(1.3 · T63 «데미지 팝·전투 숫자는 지금보다 1.3배») 뒤 본문 하한.</summary>
         public void Pop(string s, Vector3 worldPos, Color color, int size)
         {
             if (_pops == null) return;
+            size = Mathf.RoundToInt(size * TextSize.BattleNumberMul);
             var t = UiKit.Text(_pops, s, size, color, TextAnchor.MiddleCenter, false, true);
+            size = t.fontSize;
             t.horizontalOverflow = HorizontalWrapMode.Overflow;
-            var rt = t.rectTransform; rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f); rt.sizeDelta = new Vector2(400, 80);
+            var rt = t.rectTransform; rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f); rt.sizeDelta = new Vector2(400, size * 1.5f);
             // 월드 → 레이아웃 → 프레임 px
             float lx = (worldPos.x * WorldCam.PPU) + WorldCam.LayoutW / 2f;
             float yFrac = 0.5f - worldPos.y * WorldCam.PPU / WorldCam.LayoutH;

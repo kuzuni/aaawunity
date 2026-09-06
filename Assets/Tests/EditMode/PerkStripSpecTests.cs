@@ -23,7 +23,7 @@ namespace KkomaKnight.Tests
             Assert.That(m.Gap / m.Height, Is.EqualTo(4f / 34f).Within(1e-4), "간격 = 4/34");
             Assert.That(m.Badge / m.Height, Is.EqualTo(14f / 34f).Within(1e-4), "개수 배지 = 14/34");
             Assert.That(m.Pad / m.Height, Is.EqualTo(7f / 34f).Within(1e-4), "«+N» 안쪽 여백 = 7/34");
-            Assert.That(m.Font, Is.EqualTo(System.Math.Round(m.Height * 12f / 34f)).Within(0.5), "«+N» 글자 = 12/34");
+            Assert.That(m.Font, Is.EqualTo(System.Math.Max(TextSize.Aux, System.Math.Round(m.Height * 12f / 34f))).Within(0.5), "«+N» 글자 = 12/34 · 보조 하한(36) 이상(T63)");
             Assert.That(m.Cell, Is.LessThan(m.Height), "셀은 줄보다 낮다(세로로 안 넘침)");
             // 종전 상수(78×84 셀 · 간격 8 · 최대 11개 = 938px) 가 864px 줄을 넘쳤던 것과 달리, 셀은 줄 높이(≈93px)의 82% ≈ 77px
             Assert.That(m.Cell, Is.EqualTo(93.48f * 28f / 34f).Within(0.5f));
@@ -38,7 +38,7 @@ namespace KkomaKnight.Tests
             Assert.That(b.Gap, Is.EqualTo(a.Gap / 2f).Within(1e-3));
             Assert.That(b.Badge, Is.EqualTo(a.Badge / 2f).Within(1e-3));
             var css = new Layout.PerkStripSpec(390f * 0.8f, 34f);   // 레퍼런스 프레임 자체
-            Assert.That(css.Cell, Is.EqualTo(28f).Within(1e-4)); Assert.That(css.Gap, Is.EqualTo(4f).Within(1e-4)); Assert.That(css.Badge, Is.EqualTo(14f).Within(1e-4)); Assert.That(css.Font, Is.EqualTo(12f).Within(1e-4));
+            Assert.That(css.Cell, Is.EqualTo(28f).Within(1e-4)); Assert.That(css.Gap, Is.EqualTo(4f).Within(1e-4)); Assert.That(css.Badge, Is.EqualTo(14f).Within(1e-4)); Assert.That(css.Font, Is.EqualTo(System.Math.Max(12f, (float)TextSize.Aux)).Within(1e-4), "글자만은 보조 하한(T63)이 비례를 이긴다");
         }
 
         [Test]

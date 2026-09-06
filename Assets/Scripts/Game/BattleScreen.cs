@@ -88,15 +88,16 @@ namespace KkomaKnight.Game
             _sh = UiKit.MakeBar(Root, "ui.sliderBlue", "pi.shield"); UiKit.Pct(_sh.Root, Layout.HudSh); _sh.Root.name = "Bar:SH";
             foreach (var b in new[] { _hp, _sh }) if (b.Cap != null) { b.Cap.rectTransform.sizeDelta = new Vector2(84, 84); b.Cap.rectTransform.anchoredPosition = new Vector2(6, 2); }   // 아이콘이 바보다 조금 크게(레퍼런스)
             foreach (var b in new[] { _exp, _hp, _sh }) if (b.Txt != null) { b.Txt.color = Palette.White; b.Txt.fontStyle = FontStyle.Bold; b.Txt.alignment = TextAnchor.MiddleCenter; }
-            // 스탯 8칸 = 칸마다 어두운 상자(ui.frameDark) · 왼쪽 아이콘 · 오른쪽에 이름(작게 · 위) + 값(크게 · 아래) · 버프 중 값 초록(레퍼런스 02) — 자리 = 표(HudStats · 행 피치 5.2) · 상자 사이 틈만 살짝
+            // 스탯 8칸 = 칸마다 어두운 상자(ui.frameDark) · 왼쪽 아이콘 · 오른쪽에 이름(보조 36 · 위) + 값(본문 40 · 아래) · 버프 중 값 초록(레퍼런스 02) — 자리 = 표(HudStats · 행 피치 5.2) · 상자 사이 틈 0.4%
+            // T63-battle: 칸 높이 4.8%(112px) = 이름 46%(51px ≥ 36×1.375) + 값 52%(58px ≥ 40×1.375) — 전엔 4.6% 칸에 40%/48% 라 bestFit 이 이름을 32 · 값을 37 로 몰래 줄였다(게이트 표엔 안 걸림 · T63 진행 기록 ⚠)
             for (int i = 0; i < StatDefs.Length; i++)
             {
                 int col = i % 2, row = i / 2;
-                var cell = UiKit.SpawnRt("ui.frameDark", Root, new Layout.R(Layout.HudStats.X + col * Layout.HudStatColR + 0.4f, Layout.HudStats.Y + row * Layout.HudStatRowPitch + 0.3f, Layout.HudStatCellW - 0.8f, Layout.HudStatCellH - 0.6f));
+                var cell = UiKit.SpawnRt("ui.frameDark", Root, new Layout.R(Layout.HudStats.X + col * Layout.HudStatColR + 0.4f, Layout.HudStats.Y + row * Layout.HudStatRowPitch + 0.2f, Layout.HudStatCellW - 0.8f, Layout.HudStatCellH - 0.4f));
                 cell.name = "stat:" + StatDefs[i].Key;
                 var ic = UiKit.Icon(cell, "ic", Icons.Stat(StatDefs[i].Key)); UiKit.Pct(ic.rectTransform, 3, 12, 15, 76);
-                var lb = UiKit.Label(cell, 21, 6, 76, 40, StatDefs[i].Label, 24, Palette.CreamDark, TextAnchor.MiddleLeft); lb.name = "Label";
-                _statVals[i] = UiKit.Label(cell, 21, 46, 76, 48, "", 38, Palette.White, TextAnchor.MiddleLeft); _statVals[i].name = "Value"; _statVals[i].fontStyle = FontStyle.Bold;
+                var lb = UiKit.Label(cell, 21, 1, 76, 46, StatDefs[i].Label, TextSize.Aux, Palette.CreamDark, TextAnchor.MiddleLeft, kind: TextKind.Aux); lb.name = "Label";
+                _statVals[i] = UiKit.Label(cell, 21, 47, 76, 52, "", TextSize.Body, Palette.White, TextAnchor.MiddleLeft); _statVals[i].name = "Value"; _statVals[i].fontStyle = FontStyle.Bold;
             }
             // 보유 특전 = 책 모양 버튼(특전 선택 팝업의 Book 과 같은 그림 · 위에 개수) — 주인 지시 2026-09-05
             var info = UiKit.Rect(Root, "PerkBook"); UiKit.Pct(info, Layout.HudInfo.X - 1, Layout.HudInfo.Y - 1.5f, Layout.HudInfo.W + 2, Layout.HudInfo.H + 3);
@@ -293,14 +294,14 @@ namespace KkomaKnight.Game
                 if (count[id] > 1)
                 {
                     // 개수 배지 — 오른쪽 위 모서리(.pv-ic .cnt · 14/34). 셀 안쪽 모서리에 두어 이웃 셀·줄 밖으로 안 나간다.
-                    var n = UiKit.Text(cell, count[id].ToString(), (int)m.BadgeFont, Palette.White);
+                    var n = UiKit.Text(cell, count[id].ToString(), (int)m.BadgeFont, Palette.White, kind: TextKind.Small);   // 아이콘 위 개수 배지 = 지시서 T63 의 «정말 작아야 하는 배지»(14/34 비례 그대로)
                     var nr = n.rectTransform; nr.anchorMin = nr.anchorMax = new Vector2(1f, 1f); nr.pivot = new Vector2(1f, 1f); nr.anchoredPosition = Vector2.zero; nr.sizeDelta = new Vector2(m.Badge, m.Badge);
                     n.horizontalOverflow = HorizontalWrapMode.Overflow;
                 }
             }
             if (shown < order.Count)
             {
-                var more = UiKit.Text(_perkStrip, "+" + (order.Count - shown), (int)m.Font, Palette.CreamDark);
+                var more = UiKit.Text(_perkStrip, "+" + (order.Count - shown), (int)m.Font, Palette.CreamDark, kind: TextKind.Aux);   // m.Font 는 이미 보조 하한(36) 이상(PerkStripSpec)
                 more.rectTransform.sizeDelta = new Vector2(m.MoreWidth(order.Count - shown), m.Cell); more.horizontalOverflow = HorizontalWrapMode.Overflow;
             }
         }
@@ -339,7 +340,7 @@ namespace KkomaKnight.Game
                 string icon = perk != null ? Icons.Perk(perk.Id) : Icons.Stat(g.Key.TrimStart('#') == "atk" ? "dmg" : g.Key.TrimStart('#'));
                 UiKit.PerkFrame(cell, perk != null ? Palette.PerkGradeName(perk.Grade) : "gray", icon, cell.sizeDelta.x);
                 // 스택 수는 그대로 오른쪽 아래(프레임 위에 그려지도록 뒤에 만든다)
-                if (g.Value > 1) { var n = UiKit.Text(cell, g.Value.ToString(), 24, Palette.White); UiKit.Pct(n.rectTransform, 55, 55, 45, 45); }
+                if (g.Value > 1) { var n = UiKit.Text(cell, g.Value.ToString(), TextSize.Aux, Palette.White, kind: TextKind.Aux); UiKit.Pct(n.rectTransform, 45, 45, 55, 55); n.horizontalOverflow = HorizontalWrapMode.Overflow; }   // 중첩 수 = 보조 36(전 24) · 칸 48px(T63-battle)
             }
         }
     }

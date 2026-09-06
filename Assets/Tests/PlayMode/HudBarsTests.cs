@@ -78,7 +78,11 @@ namespace KkomaKnight.Tests.Play
             if (P.MaxSh > 0) { Assert.IsTrue(W.PlayerShText.gameObject.activeSelf, "실드 숫자 보임"); Assert.AreEqual(UiKit.Fmt(System.Math.Ceiling(W.ShownSh)), W.PlayerShText.text, "실드 단 숫자"); }
             else Assert.IsTrue(W.PlayerShText == null || !W.PlayerShText.gameObject.activeSelf, "실드 0 이면 파란 단의 숫자도 숨김");
             Assert.Less(W.PlayerShBar.transform.position.y, W.PlayerHpBar.transform.position.y, "파란 단은 빨간 단 아래");
-            Assert.AreEqual(WorldCam.PctW(Layout.PlayerFootBarW) * Layout.CharScale, W.PlayerHpBar.size.x, 1e-3f, "HP 단 폭 = 표 폭 × 2/3(T14)");
+            Assert.AreEqual(WorldCam.PctW(Layout.PlayerFootBarW) * Layout.FootBarScale, W.PlayerHpBar.size.x, 1e-3f, "HP 단 폭 = 표 폭 × FootBarScale(T63-battle · 숫자 36 이 들어가게)");
+            // 발밑 숫자(T63-battle): 보조 하한(36) 이상 · 글자 칸 높이 ≥ 선호 높이(게이트 «잘림» 0) · 선호 폭이 바 폭 안(레퍼런스 03 «2555» 처럼 바 안에 들어감)
+            Assert.GreaterOrEqual(W.PlayerHpText.fontSize, TextSize.Aux, "발밑 숫자 = 보조 하한 이상");
+            Assert.GreaterOrEqual(W.PlayerHpText.rectTransform.rect.height, W.PlayerHpText.preferredHeight - 1f, "발밑 숫자 칸 높이 ≥ 선호 높이(잘림 0)");
+            Assert.LessOrEqual(W.PlayerHpText.preferredWidth, W.PlayerHpBar.size.x * WorldCam.PPU * (UiKit.FrameW / WorldCam.LayoutW) + 1f, "발밑 숫자 «" + W.PlayerHpText.text + "» 가 바 폭 안에");
             Assert.AreEqual(W.PlayerHpBar.size.x, W.PlayerShBar.size.x, 1e-3f, "두 단은 같은 폭"); Assert.AreEqual(W.PlayerHpBar.size.y, W.PlayerShBar.size.y, 1e-3f, "두 단은 같은 높이");
             Assert.AreEqual(WorldCam.PctH(Layout.FootBarH), W.PlayerHpBar.size.y, 1e-3f, "단 높이 = FootBarH");
             // 숫자 글자는 바 한가운데(프레임 px ↔ 월드 변환이 Pop 과 같음)

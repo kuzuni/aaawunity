@@ -76,17 +76,17 @@ namespace KkomaKnight.Tests.Play
             }
             Assert.Greater(enemies, 0, "1초 뒤 화면 안에 적이 있어야 한다(첫 웨이브)");
 
-            // 발밑 바 폭 — 플레이어 = 표 폭(10.3) × 2/3 · 적 = 표 폭(9.7 · ref-layout ②) × 2/3 (T47 회차 3 · 예전 ui.json enemyBarW 37px 는 플레이어 바의 2/3 이라 레퍼런스와 어긋났다 · 높이는 그대로)
-            float pBar = WorldCam.PctW(Layout.PlayerFootBarW) * Layout.CharScale, eBar = WorldCam.PctW(Layout.EnemyFootBarW) * Layout.CharScale;
+            // 발밑 바 폭 — 플레이어 = 표 폭(10.3) × FootBarScale · 적 = 표 폭(9.7 · ref-layout ②) × FootBarScale (T47 회차 3 · 예전 ui.json enemyBarW 37px 는 플레이어 바의 2/3 이라 레퍼런스와 어긋났다 · T63-battle 이 배율을 CharScale 에서 FootBarScale(표 폭) 로 · 결정 133)
+            float pBar = WorldCam.PctW(Layout.PlayerFootBarW) * Layout.FootBarScale, eBar = WorldCam.PctW(Layout.EnemyFootBarW) * Layout.FootBarScale;
             bool foundP = false, foundE = false;
             foreach (var sr in Object.FindObjectsByType<SpriteRenderer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
             {
                 if (sr == null || sr.name != "BarBg") continue;
                 if (Mathf.Abs(sr.size.x - pBar) < 1e-4f) foundP = true;
                 if (Mathf.Abs(sr.size.x - eBar) < 1e-4f) foundE = true;
-                Assert.IsFalse(Mathf.Abs(sr.size.x - WorldCam.PctW(Layout.PlayerFootBarW)) < 1e-4f, "예전(배율 1) 플레이어 바 폭이 남아 있으면 안 된다");
+                Assert.IsFalse(Mathf.Abs(sr.size.x - WorldCam.PctW(Layout.PlayerFootBarW) * Layout.CharScale) < 1e-4f, "예전(캐릭터 배율 2/3 · 숫자가 넘치던) 플레이어 바 폭이 남아 있으면 안 된다");
             }
-            Assert.IsTrue(foundP, "플레이어 발밑 바 폭 = 10.3% × 2/3"); Assert.IsTrue(foundE, "적 발밑 바 폭 = enemyBarW × 2/3");
+            Assert.IsTrue(foundP, "플레이어 발밑 바 폭 = 10.3% × FootBarScale"); Assert.IsTrue(foundE, "적 발밑 바 폭 = 9.7% × FootBarScale");
             _log.AssertNoRed("전투 1초(크기·바)");
 
             _app.ShowScreen("lobby"); yield return Frames(2);
