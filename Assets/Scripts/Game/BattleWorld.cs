@@ -577,7 +577,9 @@ namespace KkomaKnight.Game
             // 투사체
             SyncProjectiles(dt);
             // 골드 증가 → 팝 (엔진은 골드 이벤트를 따로 내지 않는다)
-            if (G.Gold > _goldPrev + 0.5) { Pop("+" + UiKit.Fmt(G.Gold - _goldPrev) + " G", _lastKillPos + Vector3.up * 0.9f, Palette.PopGold, 34); if (!Silent) Audio.Sfx("snd.coin", 0.7f); }
+            // T110 ⓐ(주인 2026-09-07 «골드 +49G 이런 거 데미지 텍스트처럼 뜨는 거 하면 안 됨») — 골드 팝 «글자» 는 없앴다.
+            // 골드가 는 것은 T85·T109 의 흡수 구슬 + 상단 골드 pill 카운트업으로만 보여 준다(동전 소리는 그대로 · 주인 지적은 글자다).
+            if (G.Gold > _goldPrev + 0.5 && !Silent) Audio.Sfx("snd.coin", 0.7f);
             _goldPrev = G.Gold;
         }
 

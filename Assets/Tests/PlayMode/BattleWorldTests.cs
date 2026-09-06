@@ -51,6 +51,8 @@ namespace KkomaKnight.Tests.Play
         sealed class Stats
         {
             public int HoldFrames, AnimHoldFrames, WalkFrames, WalkAnimFrames, DashWalkFrames, EnginePausedFrames, DeathFxFrames;
+            /// <summary>T110 ⓐ — 화면에 뜬 «+N G» 골드 팝 글자 수(주인 «골드 +49G 이런 거 데미지 텍스트처럼 뜨는 거 하면 안 됨» → 0 이어야 한다).</summary>
+            public int GoldPopFrames, DamagePopFrames;
             // DashMoveDt = DashDt 중 «엔진이 실제로 틱을 돈»(표시 원점이 전진한) 프레임의 시간만 (T65)
             public double DashAdv, DashDt, DashMoveDt;
         }
@@ -90,6 +92,13 @@ namespace KkomaKnight.Tests.Play
                 if (P.Dash && !hold) { st.DashDt += Time.deltaTime; st.DashAdv += adv; if (advanced) { st.DashWalkFrames++; st.DashMoveDt += Time.deltaTime; } }
                 // T51 ② — 사망 «펑» 이펙트 없음
                 if (GameObject.Find(DeathFxName) != null) st.DeathFxFrames++;
+                // T110 ⓐ — 골드 팝 «글자» 는 뜨지 않는다(데미지 숫자는 그대로 떠야 한다)
+                foreach (var txt in _app.Frame.GetComponentsInChildren<UnityEngine.UI.Text>(false))
+                {
+                    if (txt == null || string.IsNullOrEmpty(txt.text)) continue;
+                    if (txt.text.EndsWith(" G", StringComparison.Ordinal)) st.GoldPopFrames++;
+                    else if (txt.text.Length > 0 && char.IsDigit(txt.text[0]) && txt.transform.parent != null && txt.transform.parent.name == "Pops") st.DamagePopFrames++;
+                }
             }
         }
 
@@ -123,6 +132,9 @@ namespace KkomaKnight.Tests.Play
             Assert.Greater(G.Kills, 0, "킬이 있어야 사망 이펙트 시험이 성립한다");
             Assert.AreEqual(0, st.DeathFxFrames, "적 사망 «펑» 이펙트(fx.death · Magic Poof)를 뿌리면 안 된다(T51 ② · 주인 지시)");
             Assert.AreEqual(0, st.DashWalkFrames, "대시 특전이 없으면 대시 걸음이 없다");
+            // T110 ⓐ(주인 2026-09-07) — 골드는 데미지 텍스트처럼 뜨지 않는다. 데미지 팝은 그대로 뜬다(연출을 통째로 끈 것이 아니라는 증거).
+            Assert.AreEqual(0, st.GoldPopFrames, "«+N G» 골드 팝 글자가 뜨면 안 된다(T110 ⓐ · 주인 지시)");
+            Assert.Greater(st.DamagePopFrames, 0, "데미지 숫자 팝은 그대로 떠야 한다(골드 팝만 없앤 것)");
             _log.AssertNoRed("전투 진행(킬 → 공격 모션 끝 → 걷기)");
 
             _app.ShowScreen("lobby"); yield return Frames(2);

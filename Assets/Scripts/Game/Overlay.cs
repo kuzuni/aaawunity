@@ -87,6 +87,56 @@ namespace KkomaKnight.Game
             for (int i = 0; i < rt.childCount; i++) if (rt.GetChild(i).name == "Dimmed") { idx = i + 1; break; }
             UiKit.PatternBg(rt, UiKit.PatternTintDark, UiKit.PatternTileSeconds, idx);
         }
+        /// <summary>결과 팝업 제목 조각 안의 빛살(<c>SampleEffect</c>) 회전 주기(초 · T110 ⓒ · T72 ② 와 같은 시계방향·unscaled).</summary>
+        public const float TitleEffectPeriod = 14f;
+        /// <summary>등장 폭죽(<c>SampleEffect_Confetti</c>) 한 번이 도는 시간(초 · T110 ⓓ).</summary>
+        public const float ConfettiSec = 1.2f;
+
+        /// <summary>
+        /// T110 ⓒ — 제목 조각(<c>Title_01_NoDeco_*</c>) 안의 <c>SampleEffect</c>(빛살)를 켜고 <b>천천히 시계방향으로</b> 돌린다(주인 «타이틀에 있는 거 이것도 회전»).
+        /// <see cref="UiKit.LightBehind"/> 와 같은 문법(unscaled · 무한 · <c>SetLink</c>) — 조각을 옮기거나 크기를 바꾸지 않는다.
+        /// </summary>
+        static void SpinTitleEffect(RectTransform rt)
+        {
+            var fx = UiKit.Find(rt, "SampleEffect"); if (fx == null) return;
+            fx.gameObject.SetActive(true);
+            fx.localRotation = Quaternion.identity;
+            DOTween.Kill(fx, false);
+            fx.DOLocalRotate(new Vector3(0, 0, -360f), TitleEffectPeriod, RotateMode.FastBeyond360)
+              .SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart).SetUpdate(true).SetTarget(fx).SetLink(fx.gameObject);
+        }
+
+        /// <summary>
+        /// T110 ⓓ — 팝업이 뜨는 순간 «빵빠레»: 프리팹이 들고 있던 <c>SampleEffect_Confetti</c> 조각(여태 <see cref="UiKit.Hide"/> 로 꺼 두던 것)을 되살려
+        /// <b>좌우로 두 번</b> 터뜨린다(같은 조각을 한 장 복제해 좌우 반전 · 새 그림·새 파티클 0). 튀어 오르며 커졌다가 아래로 흩어지며 사라진다 · unscaled(팝업 중 시간이 멈춰도 돈다).
+        /// </summary>
+        void Confetti(RectTransform rt)
+        {
+            var src = UiKit.Find(rt, "SampleEffect_Confetti") as RectTransform; if (src == null) return;
+            src.gameObject.SetActive(true);
+            var mirror = UnityEngine.Object.Instantiate(src.gameObject, src.parent).GetComponent<RectTransform>();
+            mirror.name = "SampleEffect_Confetti_R";
+            mirror.anchorMin = src.anchorMin; mirror.anchorMax = src.anchorMax; mirror.pivot = src.pivot; mirror.sizeDelta = src.sizeDelta;
+            mirror.anchoredPosition = new Vector2(-src.anchoredPosition.x, src.anchoredPosition.y);
+            Burst(src, 0.10f, 1f); Burst(mirror, 0.22f, -1f);
+        }
+        /// <summary>폭죽 한 장 — 늦게 시작해 «펑»(0.6 → 1.05 → 1.0) 하고, 아래로 흩어지며 사라진다(끝나면 파괴 · 트윈은 <c>SetLink</c>).</summary>
+        void Burst(RectTransform t, float delay, float dir)
+        {
+            var cg = UiKit.Ensure<CanvasGroup>(t); cg.alpha = 0f; cg.blocksRaycasts = false; cg.interactable = false;
+            var p0 = t.anchoredPosition;
+            t.localScale = Vector3.one * 0.6f;
+            t.localScale = new Vector3(0.6f * dir, 0.6f, 1f);
+            var seq = DOTween.Sequence().SetUpdate(true).SetTarget(t).SetLink(t.gameObject);
+            seq.AppendInterval(delay);
+            seq.Append(cg.DOFade(1f, 0.12f).SetUpdate(true));
+            seq.Join(t.DOScale(new Vector3(1.05f * dir, 1.05f, 1f), 0.18f).SetEase(Ease.OutBack).SetUpdate(true));
+            seq.Append(t.DOScale(new Vector3(1f * dir, 1f, 1f), 0.08f).SetUpdate(true));
+            seq.Append(t.DOAnchorPos(p0 + new Vector2(0f, -60f), ConfettiSec).SetEase(Ease.InQuad).SetUpdate(true));
+            seq.Join(cg.DOFade(0f, ConfettiSec).SetEase(Ease.InQuad).SetUpdate(true));
+            seq.OnComplete(() => { if (t != null) UnityEngine.Object.Destroy(t.gameObject); });
+        }
+
         /// <summary>보상 칸 그림 뒤 빛살(T72 ② · 작은 조각 <see cref="UiKit.LightKeySmall"/>) — 조각 rect 가 다 잡힌 <b>뒤</b>에 건다(그 전에는 한 변이 0 이 된다 · 결정 174).</summary>
         static void RewardLight(Transform cell)
         {
@@ -398,7 +448,8 @@ namespace KkomaKnight.Game
             Begin(); Audio.Sfx("snd.clear");
             var root = UiKit.Spawn("ui.resultWin", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
             var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
-            DimPattern(rt);
+            // T110 ⓑ(주인 2026-09-07 «클리어 팝업에는 패턴으로 움직이는 그거 있으면 안 됨») — 결과 팝업(승리·사망)에는 어둠 위 흐르는 무늬를 깔지 않는다.
+            // T72 ① 패턴은 다른 화면·다른 팝업(레벨업 3택 포함) 그대로다.
             var chap = UiKit.SetText(rt, "Text", $"챕터 {G.Chapter}");
             var unlock = UiKit.SetText(rt, "Text (1)", last ? "모든 챕터 클리어!" : $"챕터 {G.Chapter + 1} 해금!");   // 프리팹 칸 528×61 — 본문 40 한 줄에 들어가는 길이로(T63-results)
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "클리어!");
@@ -415,7 +466,8 @@ namespace KkomaKnight.Game
             var b1 = grp != null && grp.childCount > 0 ? grp.GetChild(0) : null; var b2 = grp != null && grp.childCount > 1 ? grp.GetChild(1) : null;
             if (b1 != null) { UiKit.SetText(b1, "Text (TMP)", ClearAdLabel); UiKit.Clickable(b1, () => AdCountdown(3, () => { Close(); onDouble(); })); }
             if (b2 != null) { UiKit.SetText(b2, "Text (TMP)", "그냥 받기"); UiKit.Clickable(b2, () => { Close(); onLobby(); }); }
-            UiKit.Hide(rt, "SampleEffect_Confetti");
+            SpinTitleEffect(rt);   // T110 ⓒ — 제목 빛살은 계속 시계방향으로 돈다
+            Confetti(rt);          // T110 ⓓ — 등장 폭죽(프리팹 조각을 되살려 좌우 두 번 · 새 에셋 0)
             // 순서 — 제목 → 챕터/해금 → 보상(카운트업) → 버튼 2 순서대로
             At(0.05f, UiKit.Find(rt, "Title"), 0.6f);
             if (chap != null) At(0.2f, chap.transform); if (unlock != null) At(0.2f, unlock.transform);
@@ -478,7 +530,7 @@ namespace KkomaKnight.Game
             Begin(); Audio.Sfx("snd.fail");
             var root = UiKit.Spawn("ui.resultLose", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
             var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
-            DimPattern(rt);
+            // T110 ⓑ — 결과 팝업(승리·사망)은 흐르는 무늬 없음(주인 지적은 클리어였고 사망도 같은 «결과 팝업» 이라 함께 뺀다 · 결정 기록)
             UiKit.SetText(rt, "Title_LineDeco_01_s_White/Text (TMP)", "쓰러졌다...");
             var reward = UiKit.Find(rt, "Reward"); if (reward != null) Reward(reward, "ui.coin", UiKit.Fmt(G.Gold));
             var list = UiKit.Find(rt, "Group_List");

@@ -374,31 +374,37 @@ namespace KkomaKnight.Tests.Play
             // ⓐⓑ 승리 팝업 — 어둠 바로 위 무늬 + 보상(골드) 칸 빛살
             _app.Overlay.Clear(G, false, () => { }, () => { }); yield return Frames(2); Canvas.ForceUpdateCanvases();
             var win = UiKit.Find(_app.Overlay.Root, "ui.resultWin"); Assert.IsNotNull(win, "승리 팝업 조각(Play_Result_Win_01)");
-            Assert.IsTrue(UiKit.HasPattern(win), "승리 팝업 배경에 패턴(T72 ①)");
-            var wpat = win.Find(UiKit.PatternName); var wdim = win.Find("Dimmed"); Assert.IsNotNull(wdim, "어둠 조각");
-            Assert.AreEqual(wdim.GetSiblingIndex() + 1, wpat.GetSiblingIndex(), "무늬는 어둠 «바로 위»(글자·보상·버튼 아래)");
-            var wraw = wpat.GetComponent<RawImage>();
-            Assert.AreEqual(1f, wraw.color.r, 0.001f, "어두운 바탕이라 흰 무늬(PatternTintDark)");
-            Assert.IsFalse(wraw.raycastTarget, "무늬는 클릭을 안 먹는다(배경 탭 = 연출 스킵 그대로)");
+            // T110 ⓑ(주인 2026-09-07 «클리어 팝업에는 패턴으로 움직이는 그거 있으면 안 됨») — 결과 팝업은 이제 무늬가 «없어야» 한다(T72 ① 은 다른 화면 그대로)
+            Assert.IsFalse(UiKit.HasPattern(win), "승리 팝업에는 흐르는 무늬가 없다(T110 ⓑ · 주인 지시로 T72 ① 에서 뺐다)");
+            var wdim = win.Find("Dimmed"); Assert.IsNotNull(wdim, "어둠 조각");
+            // T110 ⓒ — 제목 조각 안 빛살(SampleEffect)은 켜져 있고 시계방향으로 돈다(unscaled · 팝업 중 시간이 멈춰도)
+            var tfx = UiKit.Find(win, "SampleEffect"); Assert.IsNotNull(tfx, "제목 빛살 조각(SampleEffect)");
+            Assert.IsTrue(tfx.gameObject.activeInHierarchy, "제목 빛살은 켜져 있다(T110 ⓒ)");
+            var tr0 = tfx.localRotation;
+            // T110 ⓓ — 등장 폭죽 두 장(프리팹 조각 + 좌우 반전 복제)이 생겼다가 사라진다
+            var cfL = UiKit.Find(win, "SampleEffect_Confetti"); var cfR = UiKit.Find(win, "SampleEffect_Confetti_R");
+            Assert.IsNotNull(cfL, "폭죽 왼쪽(T110 ⓓ)"); Assert.IsNotNull(cfR, "폭죽 오른쪽(좌우 반전 복제)");
+            Assert.IsTrue(cfL.gameObject.activeInHierarchy, "폭죽은 켜져 있다(여태 Hide 로 꺼 두던 조각)");
             var items = UiKit.Find(win, "Group_RewardItem"); Assert.IsNotNull(items, "보상 줄");
             var goldCell = items.GetChild(0);
             Assert.IsTrue(UiKit.HasLight(goldCell), "클리어 보상(골드) 그림 뒤 빛살(T72 ②)");
             var wlight = (RectTransform)goldCell.Find(UiKit.LightMaskName + "/" + UiKit.LightName);
             Assert.Greater(wlight.rect.width, 1f, "빛살 한 변 > 0 — 배치가 끝난 뒤에 걸었다(결정 174)");
-            // 팝업 시간 정지 중에도(unscaled) 무늬는 오른쪽 위로 흐르고 빛살은 시계방향으로 돈다
-            var wp0 = wraw.uvRect.position; var wr0 = wlight.localRotation;
+            // 팝업 시간 정지 중에도(unscaled) 보상 빛살과 제목 빛살이 시계방향으로 돈다
+            var wr0 = wlight.localRotation;
             yield return RealSeconds(0.4f);
-            Assert.Less(wraw.uvRect.position.x, wp0.x, "승리 팝업 무늬도 오른쪽 위로 흐른다(시간 정지 중에도)");
             Assert.Less(Vector3.SignedAngle(wr0 * Vector3.up, wlight.localRotation * Vector3.up, Vector3.forward), -0.5f, "보상 빛살은 시계방향");
+            Assert.Less(Vector3.SignedAngle(tr0 * Vector3.up, tfx.localRotation * Vector3.up, Vector3.forward), -0.5f, "제목 빛살도 시계방향으로 돈다(T110 ⓒ)");
+            yield return RealSeconds(Overlay.ConfettiSec + 0.6f);
+            Assert.IsTrue(UiKit.Find(win, "SampleEffect_Confetti_R") == null || !UiKit.Find(win, "SampleEffect_Confetti_R").gameObject.activeInHierarchy, "폭죽은 다 터지면 사라진다(T110 ⓓ)");
             _app.Overlay.Close(); yield return Frames(2);
             Assert.IsFalse(UiKit.IsTweening(wlight), "팝업이 닫히면 빛살 트윈도 없다(SetLink · T56)");
 
             // ⓐⓑ 사망 팝업 — 같은 두 가지
             _app.Overlay.Dead(G, () => { }); yield return Frames(2); Canvas.ForceUpdateCanvases();
             var lose = UiKit.Find(_app.Overlay.Root, "ui.resultLose"); Assert.IsNotNull(lose, "사망 팝업 조각(Play_Result_Lose)");
-            Assert.IsTrue(UiKit.HasPattern(lose), "사망 팝업 배경에 패턴(T72 ①)");
+            Assert.IsFalse(UiKit.HasPattern(lose), "사망 팝업에도 흐르는 무늬가 없다(T110 ⓑ · 같은 «결과 팝업»)");
             var ldim = lose.Find("Dimmed"); Assert.IsNotNull(ldim, "어둠 조각");
-            Assert.AreEqual(ldim.GetSiblingIndex() + 1, lose.Find(UiKit.PatternName).GetSiblingIndex(), "무늬는 어둠 «바로 위»");
             var reward = UiKit.Find(lose, "Reward"); Assert.IsNotNull(reward, "사망 보상 칸");
             Assert.IsTrue(UiKit.HasLight(reward), "사망 보상(골드) 그림 뒤 빛살(T72 ②)");
             var icon = reward.Find("Icon"); Assert.IsNotNull(icon, "보상 아이콘");
