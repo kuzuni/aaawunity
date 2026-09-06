@@ -349,6 +349,15 @@ namespace KkomaKnight.Core
         public static readonly R PrBack = new R(2.5f, 93.9f, 16.9f, 5.1f);
         public static readonly R PrClaimAll = new R(32.2f, 93.9f, 35.6f, 5.1f);
 
+        // T63-lobbypopups — 로비 팝업 6종(11·15~19)의 글자 칸 보정(표 ⑲~㉔ 값은 그대로 · 쓰는 자리에서 WithH · ±3%p 안):
+        /// <summary>목록 줄의 제목·카운터·남은 기간·부제 칸 높이 — 본문 40 한 줄(선호 ≈ 39~44px)이 들어가게 2.2% = 51px(표의 1.4~1.8% = 33~42px 는 레퍼런스의 작은 글자 기준 높이).</summary>
+        public const float LpLineH = 2.2f;
+        /// <summary>목록 줄 진행바 높이 — <see cref="PetBarH"/> 와 같은 이유(Slider_02 조각의 글자 rect 가 바보다 2px 작다 · 44px → 42 ≥ 39).</summary>
+        public const float LpBarH = 1.9f;
+        /// <summary>페이지 제목(특권 «특권» · 패스 «시즌 패스»)은 제목 종류 60 → 칸 3.2% = 75px(표 ㉔ 2.6% 는 61px 라 모자란다).</summary>
+        public const float LpTitleH = 3.2f;
+        /// <summary>데일리 기프트 «광고 N회 보기» 제목 칸 폭 — 표 ㉒ 19.2%(207px)가 Jua 40 의 «광고 6회 보기»(≈214px)보다 좁아 줄바꿈되던 것 → 24%(259px · 이름표는 글자 덩어리를 잰다).</summary>
+        public const float GfRowTitleW = 24.0f;
         // ⑳ 퀘스트 팝업 — docs/ref/15_quest.jpg (T44 · ⑳ 표와 같다 · 제목은 리본이 아니라 박스 폭 파란 띠 · 탭 3 은 박스 아래 · 닫기 안내 = BookClose 줄)
         public static readonly R QsTitleBand = new R(6.4f, 20.0f, 87.2f, 4.9f);
         public static readonly R QsBox = new R(6.4f, 24.9f, 87.2f, 50.4f);

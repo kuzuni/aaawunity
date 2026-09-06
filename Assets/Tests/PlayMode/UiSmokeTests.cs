@@ -133,6 +133,20 @@ namespace KkomaKnight.Tests.Play
             }
             Assert.AreEqual(0, bad.Count, $"[{where}] 글자 잘림/넘침·하한 미달(T63 · 화면 잘림 0):\n" + string.Join("\n", bad));
         }
+        /// <summary>T63 «bestFit 이 안 줄임» 계약 — root 아래 이름이 <paramref name="name"/> 인 활성 Text 전부의 실제 크기(<see cref="TextAudit.BestFitSize"/> · bestFit 이 아니면 fontSize)가 <paramref name="min"/> 이상. 하나도 없으면 실패(이름 계약이 깨진 것).</summary>
+        static void AssertUsedAtLeast(string where, Transform root, string name, int min)
+        {
+            Canvas.ForceUpdateCanvases();
+            int n = 0; var bad = new List<string>();
+            foreach (var t in root.GetComponentsInChildren<Text>(false))
+            {
+                if (t.name != name || !t.isActiveAndEnabled || string.IsNullOrWhiteSpace(t.text)) continue;
+                n++; int used = t.resizeTextForBestFit ? TextAudit.BestFitSize(t) : t.fontSize;
+                if (used < min) bad.Add($"«{t.text}» 실제 {used} < {min} (rect {t.rectTransform.rect.width:0}×{t.rectTransform.rect.height:0} · pref {t.preferredWidth:0}×{t.preferredHeight:0})");
+            }
+            Assert.Greater(n, 0, $"[{where}] 이름 «{name}» 인 활성 Text 가 없다");
+            Assert.AreEqual(0, bad.Count, $"[{where}] «{name}» 글자가 {min} 아래로 줄었다(T63):\n" + string.Join("\n", bad));
+        }
         /// <summary>살아 있는 shine 머티리얼 인스턴스 수(T61 · 카드가 파괴되면 0 이어야 한다 — 에셋 «PerkShine» 자체는 이름이 달라 안 센다).</summary>
         static int CountShineInstances() { int n = 0; foreach (var m in Resources.FindObjectsOfTypeAll<Material>()) if (m != null && m.name == "PerkShine (Instance)") n++; return n; }
 
@@ -235,16 +249,29 @@ namespace KkomaKnight.Tests.Play
                 LobbyPopups.Quest(_app); yield return Frames(1);
                 Assert.AreEqual(6, CountNamed(_app.Overlay.Root, "Quest:"), "퀘스트 줄 6"); Assert.AreEqual(3, CountNamed(_app.Overlay.Root, "Tab:"), "퀘스트 탭 3"); Assert.AreEqual(5, CountNamed(_app.Overlay.Root, "Track:"), "트랙 보상 칸 5(+메달)");
                 { var bx = (RectTransform)UiKit.Find(_app.Overlay.Root, "QuestBox"); Assert.IsNotNull(bx, "퀘스트 박스"); Assert.AreEqual(Layout.QsBox.X, bx.anchorMin.x * 100f, 0.5f, "퀘스트 박스 x = 표 ⑬"); Assert.AreEqual(1f - Layout.QsBox.Y / 100f, bx.anchorMax.y, 1e-3f, "퀘스트 박스 y = 표 ⑬"); }
+                // T63-lobbypopups — 글자 잘림 0 + 제목/카운터가 본문 40 아래로 안 줄어듦(팝업 4종) · 리본 명판 60 이 안 잘림
+                AssertNoTextClip("퀘스트 팝업", _app.Overlay.Root); AssertUsedAtLeast("퀘스트 제목", _app.Overlay.Root, "Title", TextSize.Body);
                 _app.Overlay.Close(); yield return Frames(1);
-                LobbyPopups.Attendance(_app); yield return Frames(1); Assert.AreEqual(7, CountNamed(_app.Overlay.Root, "Day:"), "출석 칸 7"); _app.Overlay.Close(); yield return Frames(1);
-                LobbyPopups.DailyGift(_app); yield return Frames(1); Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "GiftPic"), "선물 그림"); Assert.AreEqual(4, CountNamed(_app.Overlay.Root, "Ad:"), "광고 줄 4"); Assert.AreEqual(4, CountNamed(_app.Overlay.Root, "Dot:"), "타임라인 점 4"); _app.Overlay.Close(); yield return Frames(1);
-                LobbyPopups.Challenge7(_app); yield return Frames(1); Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Banner"), "챌린지 배너"); Assert.AreEqual(7, CountNamed(_app.Overlay.Root, "DayTab:"), "일차 탭 7"); Assert.AreEqual(4, CountNamed(_app.Overlay.Root, "Task:"), "과제 줄 4"); _app.Overlay.Close(); yield return Frames(1);
+                LobbyPopups.Attendance(_app); yield return Frames(1); Assert.AreEqual(7, CountNamed(_app.Overlay.Root, "Day:"), "출석 칸 7");
+                AssertNoTextClip("출석 팝업", _app.Overlay.Root);
+                { var rib = UiKit.Find(_app.Overlay.Root, "ui.title.yellow"); Assert.IsNotNull(rib, "출석 리본"); var rt = rib.GetComponentInChildren<Text>(true); Assert.IsNotNull(rt, "출석 리본 글자"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(rt), "리본 = 제목 종류"); Assert.GreaterOrEqual(rt.rectTransform.rect.height, rt.preferredHeight, "리본 글자 rect ≥ 선호 높이(RibbonTextFit)"); }
+                _app.Overlay.Close(); yield return Frames(1);
+                LobbyPopups.DailyGift(_app); yield return Frames(1); Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "GiftPic"), "선물 그림"); Assert.AreEqual(4, CountNamed(_app.Overlay.Root, "Ad:"), "광고 줄 4"); Assert.AreEqual(4, CountNamed(_app.Overlay.Root, "Dot:"), "타임라인 점 4");
+                AssertNoTextClip("데일리 기프트 팝업", _app.Overlay.Root); AssertUsedAtLeast("광고 줄 제목", _app.Overlay.Root, "Title", TextSize.Body);
+                { var bar = (RectTransform)UiKit.Find(_app.Overlay.Root, "Bar"); Assert.IsNotNull(bar, "광고 줄 진행바"); Assert.AreEqual(Layout.LpBarH, (bar.anchorMax.y - bar.anchorMin.y) * ((RectTransform)bar.parent).rect.height / UiKit.FrameH * 100f, 0.05f, "진행바 높이 = LpBarH(프레임 %)"); }
+                _app.Overlay.Close(); yield return Frames(1);
+                LobbyPopups.Challenge7(_app); yield return Frames(1); Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Banner"), "챌린지 배너"); Assert.AreEqual(7, CountNamed(_app.Overlay.Root, "DayTab:"), "일차 탭 7"); Assert.AreEqual(4, CountNamed(_app.Overlay.Root, "Task:"), "과제 줄 4");
+                AssertNoTextClip("7일 챌린지 팝업", _app.Overlay.Root); AssertUsedAtLeast("과제 제목", _app.Overlay.Root, "Title", TextSize.Body); AssertUsedAtLeast("과제 카운터", _app.Overlay.Root, "Progress", TextSize.Body);
+                _app.Overlay.Close(); yield return Frames(1);
                 Check("사이드 팝업 4종 열고 닫음");
                 // 페이지 2
                 Assert.IsTrue(ClickNamed(lobby, "Side:" + LobbyScreen.SidePrivilege), "특권 아이콘"); yield return Frames(3);
                 Assert.AreEqual("privilege", _app.Current.Name, "특권 페이지"); var pv = _app.Current.Root;
                 Assert.IsNotNull(UiKit.Find(pv, "TopBar"), "특권: 상단 바"); Assert.AreEqual(4, CountNamed(pv, "Card:"), "특권 카드 4"); Assert.IsTrue(HasText(s => s == "특권") && HasText(s => s == "전체 받기"), "특권: 제목 · 전체 받기");
                 Assert.IsNull(UiKit.Find(pv, "ui.tabBar"), "특권: 탭 바 없음"); Assert.IsFalse(HasText(s => s == "START"), "로비는 숨겨져 있다");
+                // T63-lobbypopups — 특권: 잘림 0 · 부제 40 안 줄어듦(문구 «활성화해») · 제목 «특권» 은 제목 종류 60
+                AssertNoTextClip("특권 페이지", pv); AssertUsedAtLeast("특권 부제", pv, "Sub", TextSize.Body);
+                { Text pt = null; foreach (var t in pv.GetComponentsInChildren<Text>(false)) if (t.text == "특권") pt = t; Assert.IsNotNull(pt, "«특권» 글자"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(pt), "«특권» = 제목 종류"); Assert.GreaterOrEqual(TextAudit.BestFitSize(pt), TextSize.Title, "«특권» 실제 크기 ≥ 60"); }
                 Check("특권 페이지");
                 Assert.IsTrue(ClickNamed(pv, "BackBtn"), "특권 뒤로"); yield return Frames(2); Assert.AreEqual("lobby", _app.Current.Name, "뒤로 → 로비");
                 Assert.IsTrue(ClickNamed(lobby, "Banner"), "이벤트 배너 → 시즌 패스"); yield return Frames(3);
@@ -252,6 +279,10 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNotNull(UiKit.Find(ps, "TopBar"), "패스: 상단 바"); Assert.AreEqual(Layout.PsRowCount, CountNamed(ps, "Row:"), "패스 트랙 줄"); Assert.IsTrue(HasText(s => s == "시즌 패스") && HasText(s => s == "전체 받기"), "패스: 제목 · 전체 받기");
                 Assert.IsNotNull(UiKit.Find(ps, "Buy1Btn"), "패스 구매 버튼 1"); Assert.IsNotNull(UiKit.Find(ps, "Buy2Btn"), "패스 구매 버튼 2"); Assert.IsNull(UiKit.Find(ps, "ui.tabBar"), "패스: 탭 바 없음");
                 { var tr = (RectTransform)UiKit.Find(ps, "Track"); Assert.IsNotNull(tr, "트랙"); Assert.AreEqual(Layout.PsTrack.X, tr.anchorMin.x * 100f, 0.5f, "트랙 x = 표 ⑰"); Assert.AreEqual(1f - Layout.PsTrack.Y / 100f, tr.anchorMax.y, 1e-3f, "트랙 y = 표 ⑰"); }
+                // T63-lobbypopups — 패스: 잘림 0 · 남은 기간 40 안 줄어듦 · 시즌 제목 = 제목 종류 60(칸 LpTitleH) · 버튼 문구에 Jua 에 없는 가운뎃점(U+00B7) 없음
+                AssertNoTextClip("패스 페이지", ps); AssertUsedAtLeast("패스 남은 기간", ps, "Remain", TextSize.Body);
+                { var st = UiKit.Find(ps, "SeasonTitle"); Assert.IsNotNull(st, "시즌 제목"); var t = st.GetComponent<Text>(); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(t), "시즌 제목 = 제목 종류"); Assert.GreaterOrEqual(TextAudit.BestFitSize(t), TextSize.Title, "시즌 제목 실제 크기 ≥ 60"); }
+                foreach (var t in ps.GetComponentsInChildren<Text>(false)) Assert.IsFalse(t.text.Contains("·"), "패스 페이지 글자에 가운뎃점(Jua 글리프 없음): " + t.text);
                 Check("패스 페이지");
                 Assert.IsTrue(ClickNamed(ps, "BackBtn"), "패스 뒤로"); yield return Frames(2); Assert.AreEqual("lobby", _app.Current.Name, "뒤로 → 로비"); Check("로비 복귀");
             }

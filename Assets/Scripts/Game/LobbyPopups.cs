@@ -30,8 +30,16 @@ namespace KkomaKnight.Game
             float cy = (boxR.Y - (ribbonR.Y + ribbonR.H / 2f)) / 100f * UiKit.FrameH;
             rr.anchoredPosition = new Vector2(cx, cy);
             // 명판 글자 = 제목 종류(T63 · 60 · 리본이 좁으면 bestFit 으로 32 까지)
-            var t = rr.GetComponentInChildren<Text>(true); if (t != null) { t.fontSize = TextSize.Title; t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitMin; t.resizeTextMaxSize = TextSize.Title; TextAudit.Mark(t, TextKind.Title); }
+            var t = rr.GetComponentInChildren<Text>(true); if (t != null) { t.fontSize = TextSize.Title; t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitMin; t.resizeTextMaxSize = TextSize.Title; TextAudit.Mark(t, TextKind.Title); RibbonTextFit(t); }
             return rr;
+        }
+
+        /// <summary>리본 조각(Title_01)의 글자 rect 는 3.9% 리본에서 56px 인데 제목 60 의 한 줄 선호 높이가 58px 라 위아래 1px 씩 넘쳤다(CI #106 게이트 «출석 보상»·«데일리 기프트» 잘림) → 글자 rect 만 세로로 늘린다(리본 크기·자리 불변 · 글자는 가운데 정렬 그대로).</summary>
+        public static void RibbonTextFit(Text t)
+        {
+            float need = TextSize.Title * 1.2f;
+            var tr = t.rectTransform; float h = tr.rect.height;
+            if (h > 0f && h < need) tr.sizeDelta = new Vector2(tr.sizeDelta.x, tr.sizeDelta.y + (need - h));
         }
 
         /// <summary>보상 칸 — ItemFrame_01 조각(본래 190px · 배율로 표 칸에) + 등급색 변형 + 아이콘 (+ 오른쪽 아래 수량 · 오른쪽 위 자물쇠). PetScreen 의 칸과 같은 문법.</summary>
@@ -45,17 +53,17 @@ namespace KkomaKnight.Game
             if (area != null) { UiKit.Clear(area); var f = UiKit.Spawn("ui.itemFrame." + frameColor, area); UiKit.Stretch((RectTransform)f.transform); }
             var item = UiKit.Find(frt, "Item");
             if (item != null) { item.gameObject.SetActive(true); UiKit.SetSprite(frt, "Item", iconKey, Palette.White); }
-            if (!string.IsNullOrEmpty(qty)) { var q = UiKit.Label(cell, 24, 58, 72, 40, qty, 26, Palette.White, TextAnchor.LowerRight); q.name = "Qty"; q.fontStyle = FontStyle.Bold; }
+            if (!string.IsNullOrEmpty(qty)) { var q = UiKit.Label(cell, 24, 58, 72, 40, qty, TextSize.Aux, Palette.White, TextAnchor.LowerRight, kind: TextKind.Aux); q.name = "Qty"; q.fontStyle = FontStyle.Bold; }
             if (locked) { var lk = UiKit.Icon(cell, "Lock", "ui.iconLock"); UiKit.Pct(lk.rectTransform, 64, -16, 44, 44); }
             return cell;
         }
 
-        /// <summary>⏱ + 글자 한 줄(타이머 자리 · 시스템 없음 → «--:--:--»).</summary>
+        /// <summary>⏱ + 글자 한 줄(타이머 자리 · 시스템 없음 → «--:--:--»). 글자 칸은 줄 rect(표 28~39%)보다 오른쪽으로 더 넓게(115%) — 본문 40 의 «종료까지 --:--:--»(≈270px)가 표 폭 28%(302px)의 89% 안에 안 들어가 줄바꿈되던 것(T63 · 줄에는 배경이 없어 이름표 rect 는 그대로).</summary>
         static RectTransform TimerRow(Transform parent, Layout.R parentR, Layout.R r, string text, string name = "Timer")
         {
             var row = UiKit.Rect(parent, name); UiKit.Pct(row, r.Within(parentR));
             var ic = UiKit.Icon(row, "Icon", "pi.time", Palette.White); UiKit.Pct(ic.rectTransform, 0, -10, 9, 120);
-            UiKit.Label(row, 11, -20, 89, 140, text, 30, Palette.White, TextAnchor.MiddleLeft);
+            UiKit.Label(row, 11, -20, 115, 140, text, TextSize.Body, Palette.White, TextAnchor.MiddleLeft);
             return row;
         }
 
@@ -77,7 +85,7 @@ namespace KkomaKnight.Game
             for (int i = 0; i < count; i++)
             {
                 var r = Sh(icon1, i * pitch, 0); float cx = (r.X + r.W / 2f - numsR.X) / numsR.W * 100f;
-                UiKit.Label(numsRow, cx - 9, -30, 18, 160, nums[i % nums.Length], 30, Palette.Yellow);
+                UiKit.Label(numsRow, cx - 9, -30, 18, 160, nums[i % nums.Length], TextSize.Body, Palette.Yellow);
             }
             UiKit.TagGroup(host, tagRow, cells); UiKit.Tag(cells[0], tagCell); UiKit.Tag(numsRow, tagRow.StartsWith("트랙") ? "트랙 숫자 줄" : "숫자 줄");
             return host;
@@ -106,7 +114,7 @@ namespace KkomaKnight.Game
         static Text Head(Transform parent, Layout.R parentR, Layout.R r, string text, Color band, string name = "Head")
         {
             var p = UiKit.Panel(parent, name, "fr.r12", band); UiKit.Pct(p.rectTransform, r.Within(parentR));
-            return UiKit.Label(p.transform, 4, 0, 92, 100, text, 30, Palette.White);
+            return UiKit.Label(p.transform, 4, 0, 92, 100, text, TextSize.Body, Palette.White);
         }
         static void TagClose(App app)
         {
@@ -139,9 +147,11 @@ namespace KkomaKnight.Game
                 var rr = row.rectTransform;
                 var medal = UiKit.Rect(content, "Medal"); UiKit.Pct(medal, Sh(Layout.QsRowMedal, 0, dy).Within(C));
                 var mi = UiKit.Icon(medal, "Icon", "ui.iconMedal"); UiKit.Stretch(mi.rectTransform);
-                UiKit.Label(medal, -20, 100, 140, 60, "20", 24, Palette.Yellow);
-                var title = UiKit.Label(content, 0, 0, 100, 100, QuestTitles[i], 30, Palette.InkSoft, TextAnchor.MiddleLeft); title.name = "Title"; UiKit.Pct(title.rectTransform, Sh(Layout.QsRowTitle, 0, dy).Within(C));
-                var bar = UiKit.MakeBar(content, "ui.sliderGreen"); bar.Root.name = "Bar"; UiKit.Pct(bar.Root, Sh(Layout.QsRowBar, 0, dy).Within(C)); bar.Set(0, "0/" + QuestGoals[i]);
+                // 메달 숫자 칸 = 메달 높이의 72%(54px) — 본문 40 한 줄이 안 줄고 들어간다(전 60% = 45px)
+                UiKit.Label(medal, -20, 98, 140, 72, "20", TextSize.Body, Palette.Yellow);
+                // 제목 칸 = 표 ⑳ 1.6%(37px) → LpLineH 2.2%(51px · 세로 중심 그대로) · 글자 = Ink(크림 줄 위 InkSoft 는 대비가 약하다 · T63 1항)
+                var title = UiKit.Label(content, 0, 0, 100, 100, QuestTitles[i], TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft); title.name = "Title"; UiKit.Pct(title.rectTransform, Sh(Layout.QsRowTitle, 0, dy).WithH(Layout.LpLineH).Within(C));
+                var bar = UiKit.MakeBar(content, "ui.sliderGreen"); bar.Root.name = "Bar"; UiKit.Pct(bar.Root, Sh(Layout.QsRowBar, 0, dy).WithH(Layout.LpBarH).Within(C)); bar.Set(0, "0/" + QuestGoals[i]);
                 var go = UiKit.Button(content, "ui.btnOrange", "이동", () => { }, Sh(Layout.QsRowGo, 0, dy).Within(C)); go.name = "GoBtn";
                 if (i == 0) { row1 = rr; medal1 = medal; title1 = title.rectTransform; bar1 = bar.Root; go1 = go; } else if (i == 1) row2 = rr;
             }
@@ -214,8 +224,10 @@ namespace KkomaKnight.Game
             {
                 float dy = i * Layout.GfRowPitch;
                 var row = UiKit.Panel(box, "Ad:" + i, "fr.r12", Palette.A(Palette.Brown, 0.75f)); UiKit.Pct(row.rectTransform, Sh(Layout.GfRow1, 0, dy).Within(B));
-                var title = UiKit.Label(box, 0, 0, 100, 100, $"광고 {GiftAds[i]}회 보기", 30, Palette.White, TextAnchor.MiddleLeft); title.name = "Title"; UiKit.Pct(title.rectTransform, Sh(Layout.GfRowTitle, 0, dy).Within(B));
-                var bar = UiKit.MakeBar(box, "ui.sliderBlue"); bar.Root.name = "Bar"; UiKit.Pct(bar.Root, Sh(Layout.GfRowBar, 0, dy).Within(B)); bar.Set(0, "0/" + GiftAds[i]);
+                // 제목 칸 = 표 ㉒ 19.2×1.7%(207×40px) → 폭 GfRowTitleW 24% · 높이 LpLineH 2.2%(본문 40 «광고 6회 보기» ≈214px 가 줄바꿈되고 세로로 넘치던 것 · 이름표는 글자 덩어리를 잰다)
+                var tR = Sh(Layout.GfRowTitle, 0, dy); tR = new Layout.R(tR.X, tR.Y, Layout.GfRowTitleW, tR.H).WithH(Layout.LpLineH);
+                var title = UiKit.Label(box, 0, 0, 100, 100, $"광고 {GiftAds[i]}회 보기", TextSize.Body, Palette.White, TextAnchor.MiddleLeft); title.name = "Title"; UiKit.Pct(title.rectTransform, tR.Within(B));
+                var bar = UiKit.MakeBar(box, "ui.sliderBlue"); bar.Root.name = "Bar"; UiKit.Pct(bar.Root, Sh(Layout.GfRowBar, 0, dy).WithH(Layout.LpBarH).Within(B)); bar.Set(0, "0/" + GiftAds[i]);
                 var reward = Cell(box, B, Sh(Layout.GfRowReward, 0, dy), i % 2 == 0 ? "green" : "plum", GiftIcons[i]);
                 var ad = UiKit.Button(box, "ui.btnSmallBlue", "광고", () => { }, Sh(Layout.GfRowCheck, 0, dy).Within(B)); ad.name = "AdBtn";
                 if (i == 0) { row1 = row.rectTransform; title1 = title.rectTransform; bar1 = bar.Root; reward1 = reward; check1 = ad; } else if (i == 1) row2 = row.rectTransform;
@@ -229,7 +241,7 @@ namespace KkomaKnight.Game
             }
             // 비평 이름표(표 ㉒)
             UiKit.Tag(pic.transform, "선물 그림"); if (rib != null) UiKit.Tag(rib, "제목 리본"); UiKit.Tag(box, "팝업 박스"); UiKit.Tag(timer, "종료 시각 줄"); UiKit.Tag(today.transform, "오늘의 선물 칸");
-            UiKit.Tag(row1, "광고 줄 1"); UiKit.Tag(row2, "광고 줄 2"); UiKit.Tag(title1, "광고 줄 제목(1줄)"); UiKit.Tag(bar1, "광고 줄 진행바(1줄)"); UiKit.Tag(reward1, "광고 줄 보상 아이콘(1줄)"); UiKit.Tag(check1, "광고 줄 체크(1줄)");
+            UiKit.Tag(row1, "광고 줄 1"); UiKit.Tag(row2, "광고 줄 2"); UiKit.Tag(title1, "광고 줄 제목(1줄)", textBounds: true); UiKit.Tag(bar1, "광고 줄 진행바(1줄)"); UiKit.Tag(reward1, "광고 줄 보상 아이콘(1줄)"); UiKit.Tag(check1, "광고 줄 체크(1줄)");
             UiKit.Tag(line.transform, "타임라인 선"); UiKit.Tag(dot0, "타임라인 점(1개)"); TagClose(app);
         }
 
@@ -268,9 +280,11 @@ namespace KkomaKnight.Game
             {
                 float dy = i * Layout.C7RowPitch;
                 var row = UiKit.Panel(content, "Task:" + i, "fr.r12", Palette.Cream); UiKit.Pct(row.rectTransform, Sh(Layout.C7Row1, 0, dy).Within(C));
-                var title = UiKit.Label(content, 0, 0, 100, 100, ChallengeTitles[i], 28, Palette.InkSoft, TextAnchor.MiddleLeft); title.name = "Title"; UiKit.Pct(title.rectTransform, Sh(Layout.C7RowTitle, 0, dy).Within(C));
-                var prog = UiKit.Label(content, 0, 0, 100, 100, $"(0/{ChallengeGoals[i]})", 24, Palette.InkLight, TextAnchor.MiddleRight); prog.name = "Progress";
-                UiKit.Pct(prog.rectTransform, new Layout.R(Layout.C7RowGo.X, Layout.C7RowTitle.Y + dy, Layout.C7RowGo.W, Layout.C7RowTitle.H).Within(C));
+                // 제목·카운터 칸 = 표 ㉓ 1.6%(37px) → LpLineH 2.2%(51px) · 색은 Ink/InkSoft(크림 줄 위 InkSoft/InkLight 는 대비가 약하다 · T63 1항)
+                var tR = Sh(Layout.C7RowTitle, 0, dy).WithH(Layout.LpLineH);
+                var title = UiKit.Label(content, 0, 0, 100, 100, ChallengeTitles[i], TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft); title.name = "Title"; UiKit.Pct(title.rectTransform, tR.Within(C));
+                var prog = UiKit.Label(content, 0, 0, 100, 100, $"(0/{ChallengeGoals[i]})", TextSize.Body, Palette.InkSoft, TextAnchor.MiddleRight); prog.name = "Progress";
+                UiKit.Pct(prog.rectTransform, new Layout.R(Layout.C7RowGo.X, tR.Y, Layout.C7RowGo.W, tR.H).Within(C));
                 var c1 = Cell(content, C, Sh(Layout.C7RowReward, 0, dy), "blue", "ui.coin"); var c2 = Cell(content, C, Sh(Layout.C7RowReward, Layout.C7RowRewardPitch, dy), "plum", "ui.gemRed");
                 var go = UiKit.Button(content, "ui.btnOrange", "이동", () => { }, Sh(Layout.C7RowGo, 0, dy).Within(C)); go.name = "GoBtn";
                 if (i == 0) { row1 = row.rectTransform; title1 = title.rectTransform; go1 = go; rewards1[0] = c1; rewards1[1] = c2; } else if (i == 1) row2 = row.rectTransform;
@@ -300,9 +314,11 @@ namespace KkomaKnight.Game
             // 제목(⭐ 특권) + 밑줄 + 부제
             var title = UiKit.Rect(Root, "Title"); UiKit.Pct(title, Layout.PrTitle);
             var star = UiKit.Icon(title, "Icon", "pi.star", Palette.Yellow); UiKit.Pct(star.rectTransform, 0, 0, 22, 100);
-            var tt = UiKit.Label(title, 25, -10, 75, 120, "특권", 52, Palette.White, TextAnchor.MiddleLeft); tt.fontStyle = FontStyle.Bold;
+            // 페이지 제목 = 제목 종류 60(전 52 · 칸 3.0%×120% = 84px ≥ 한 줄 ≈66px)
+            var tt = UiKit.Label(title, 25, -10, 75, 120, "특권", TextSize.Title, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Title); tt.fontStyle = FontStyle.Bold;
             var line = UiKit.Icon(Root, "Underline", "fr.lineDeco", Palette.A(Palette.White, 0.45f)); line.preserveAspect = false; UiKit.Pct(line.rectTransform, Layout.PrUnderline);
-            var sub = UiKit.Label(Root, 0, 0, 100, 100, "특권을 활성화하고 놀라운 보상을 받으세요!", 28, Palette.CreamDark); sub.name = "Sub"; UiKit.Pct(sub.rectTransform, Layout.PrSub);
+            // 부제 = 본문 40 · 칸 표 ⑲ 1.8%(42px) → LpLineH 2.2% · 문구는 «활성화하고»→«활성화해»(40 이면 628px 로 칸 폭 58%(626px)를 1~2px 넘겨 두 줄이 되던 것 · T63 2항 ⓒ 문구 줄이기)
+            var sub = UiKit.Label(Root, 0, 0, 100, 100, "특권을 활성화해 놀라운 보상을 받으세요!", TextSize.Body, Palette.CreamDark); sub.name = "Sub"; UiKit.Pct(sub.rectTransform, Layout.PrSub.WithH(Layout.LpLineH));
             // 카드 4장 — 세로 스크롤(카드 4 는 바닥 바에 잘린다 · 레퍼런스 그대로)
             float top = Layout.PrCard1.Y, bottom = Layout.PrCard4.Y + Layout.PrCard4.H + 1.5f;
             var view = UiKit.Rect(Root, "Scroll"); UiKit.Pct(view, new Layout.R(0, top, 100, Layout.PrFootBar.Y - top)); UiKit.Ensure<RectMask2D>(view.gameObject);
@@ -338,10 +354,10 @@ namespace KkomaKnight.Game
                 {
                     float ly = 4 + i * lh * 0.92f;
                     var bullet = UiKit.Icon(desc.transform, "Bullet", "pi.star", Palette.Yellow); UiKit.Pct(bullet.rectTransform, 4, ly + lh * 0.2f, 6, lh * 0.5f);   // 글머리 = 작은 노란 별(레퍼런스 금색 마름모 자리 · 글자 아님)
-                    UiKit.Label(desc.transform, 12, ly, 86, lh * 0.9f, L.lines[i], 26, Palette.White, TextAnchor.MiddleLeft);
+                    UiKit.Label(desc.transform, 12, ly, 86, lh * 0.9f, L.lines[i], TextSize.Body, Palette.White, TextAnchor.MiddleLeft);
                 }
                 var pic = UiKit.Icon(content, "Pic:" + (k + 2), L.pic); UiKit.Pct(pic.rectTransform, Sh(Layout.PrCardPic, 0, dy).Within(C));
-                var daily = UiKit.Label(content, 0, 0, 100, 100, "매일 수령", 30, Palette.Yellow, TextAnchor.MiddleLeft); daily.name = "Daily"; daily.fontStyle = FontStyle.Bold;
+                var daily = UiKit.Label(content, 0, 0, 100, 100, "매일 수령", TextSize.Body, Palette.Yellow, TextAnchor.MiddleLeft); daily.name = "Daily"; daily.fontStyle = FontStyle.Bold;
                 UiKit.Pct(daily.rectTransform, new Layout.R(8.6f, Layout.PrCardReward.Y + dy, 26.0f, Layout.PrCardReward.H).Within(C));
                 var reward = LobbyPopups.Cell(content, C, Sh(Layout.PrCardReward, 0, dy), "plum", "ui.gemRed");
                 var btn = UiKit.Button(content, L.btnKey, L.btnLabel, () => { }, Sh(Layout.PrCardBtn, 0, dy).Within(C)); btn.name = "CardBtn:" + (k + 2);
@@ -365,8 +381,8 @@ namespace KkomaKnight.Game
         static void CardHead(Transform head, string icon, string name, string right)
         {
             var ic = UiKit.Icon(head, "Icon", icon); UiKit.Pct(ic.rectTransform, 2, 10, 8, 80);
-            var t = UiKit.Label(head, 11, 0, 50, 100, name, 36, Palette.White, TextAnchor.MiddleLeft); t.fontStyle = FontStyle.Bold;
-            UiKit.Label(head, 62, 0, 36, 100, right, 26, Palette.White, TextAnchor.MiddleRight);
+            var t = UiKit.Label(head, 11, 0, 50, 100, name, TextSize.Body, Palette.White, TextAnchor.MiddleLeft); t.fontStyle = FontStyle.Bold;
+            UiKit.Label(head, 62, 0, 36, 100, right, TextSize.Body, Palette.White, TextAnchor.MiddleRight);
         }
 
         public override void Refresh() { _top?.Refresh(); }
@@ -397,14 +413,15 @@ namespace KkomaKnight.Game
                 var t2 = UiKit.Icon(banner, "Tree2", "env.tree"); UiKit.Pct(t2.rectTransform, 14, 45, 14, 45);
                 var t3 = UiKit.Icon(banner, "Tree3", "env.tree"); UiKit.Pct(t3.rectTransform, 84, 20, 16, 55);
             }
-            var title = UiKit.Label(Root, 0, 0, 100, 100, "시즌 패스", 52, Palette.White); title.name = "SeasonTitle"; title.fontStyle = FontStyle.Bold; UiKit.Pct(title.rectTransform, Layout.PsTitle);
-            var remain = UiKit.Label(Root, 0, 0, 100, 100, "시즌 종료까지 " + LobbyPopups.Dashes, 28, Palette.White); remain.name = "Remain"; UiKit.Pct(remain.rectTransform, Layout.PsRemain);
+            // 시즌 제목 = 제목 종류 60(전 52) · 칸 표 ㉔ 2.6%(61px) → LpTitleH 3.2%(75px · 세로 중심 그대로) / 남은 기간 = 본문 40 · 칸 1.4%(33px · bestFit 이 32 로 줄이고도 잘리던 것) → LpLineH 2.2%
+            var title = UiKit.Label(Root, 0, 0, 100, 100, "시즌 패스", TextSize.Title, Palette.White, kind: TextKind.Title); title.name = "SeasonTitle"; title.fontStyle = FontStyle.Bold; UiKit.Pct(title.rectTransform, Layout.PsTitle.WithH(Layout.LpTitleH));
+            var remain = UiKit.Label(Root, 0, 0, 100, 100, "시즌 종료까지 " + LobbyPopups.Dashes, TextSize.Body, Palette.White); remain.name = "Remain"; UiKit.Pct(remain.rectTransform, Layout.PsRemain.WithH(Layout.LpLineH));
             var bar = UiKit.MakeBar(Root, "ui.sliderGreen"); bar.Root.name = "SeasonBar"; UiKit.Pct(bar.Root, Layout.PsBar); bar.Set(0, "준비 중");
             var medal = UiKit.Icon(Root, "BarIcon", "ui.iconMedal"); UiKit.Pct(medal.rectTransform, Layout.PsBarIcon);
             var badge = UiKit.Panel(Root, "LevelBadge", "fr.circle", Palette.Ink); UiKit.Pct(badge.rectTransform, Layout.PsLevelBadge);
-            UiKit.Label(badge.transform, 0, 0, 100, 100, "1", 34, Palette.White);
+            UiKit.Label(badge.transform, 0, 0, 100, 100, "1", TextSize.Body, Palette.White);
             var hint = UiKit.Panel(Root, "Hint", "fr.rect", Palette.A(Palette.Dim, 0.75f)); UiKit.Pct(hint.rectTransform, Layout.PsHint);
-            UiKit.Label(hint.transform, 4, 0, 92, 100, "일일 퀘스트를 완료해 보상을 해금하세요!", 28, Palette.White);
+            UiKit.Label(hint.transform, 4, 0, 92, 100, "일일 퀘스트를 완료해 보상을 해금하세요!", TextSize.Body, Palette.White);
             var brown = UiKit.Panel(Root, "BrownBand", "fr.rect", Palette.A(Palette.InkSoft, 0.9f)); UiKit.Pct(brown.rectTransform, Layout.PsBrownBand);
             // 트랙 — 열 배경 3 + 노란 레벨 줄은 창에 고정 · 칸·뱃지만 스크롤
             var view = UiKit.Rect(Root, "Track"); UiKit.Pct(view, Layout.PsTrack); UiKit.Ensure<RectMask2D>(view.gameObject);
@@ -426,7 +443,7 @@ namespace KkomaKnight.Game
                 float dy = i * Layout.PsRowPitch;
                 var row = UiKit.Rect(content, "Row:" + (i + 1)); UiKit.Stretch(row);
                 var b = UiKit.Panel(row, "Badge", "fr.circle", Palette.Yellow); UiKit.Pct(b.rectTransform, Sh(Layout.PsLevelBadgeRow, 0, dy).Within(C));
-                var bt = UiKit.Label(b.transform, 0, 0, 100, 100, (i + 1).ToString(), 30, Palette.Ink); bt.fontStyle = FontStyle.Bold;
+                var bt = UiKit.Label(b.transform, 0, 0, 100, 100, (i + 1).ToString(), TextSize.Body, Palette.Ink); bt.fontStyle = FontStyle.Bold;
                 var f = LobbyPopups.Cell(row, C, Sh(Layout.PsCellFree, 0, dy), "gray", FreeIcons[i % FreeIcons.Length], null, i > 0, "Free");
                 var p1 = LobbyPopups.Cell(row, C, Sh(Layout.PsCellFree, Layout.PsColPitch, dy), "yellow", PaidIcons[i % PaidIcons.Length], null, true, "Paid1");
                 var p2 = LobbyPopups.Cell(row, C, Sh(Layout.PsCellFree, 2 * Layout.PsColPitch, dy), "plum", PaidIcons[i % PaidIcons.Length], null, true, "Paid2");
@@ -436,17 +453,17 @@ namespace KkomaKnight.Game
             var sep = UiKit.Panel(content, "CurLine", "fr.rect", Palette.Yellow); UiKit.Pct(sep.rectTransform, new Layout.R(T.X, Layout.PsCurPill.Y + Layout.PsCurPill.H * 0.55f, T.W, 0.6f).Within(C));
             var pill = UiKit.Panel(content, "CurPill", "fr.r12", Palette.Yellow); UiKit.Pct(pill.rectTransform, Layout.PsCurPill.Within(C));
             var pg = UiKit.Icon(pill.transform, "Gem", "ui.gemRed"); UiKit.Pct(pg.rectTransform, 6, 12, 22, 76);
-            UiKit.Label(pill.transform, 30, 0, 66, 100, "준비 중", 30, Palette.Ink, TextAnchor.MiddleLeft, true, false);
-            // 바닥 버튼 3(트랙 위에 겹친다) · 하단 띠 · 뒤로 · 배너 탭
+            UiKit.Label(pill.transform, 30, 0, 66, 100, "준비 중", TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft, true, false);
+            // 바닥 버튼 3(트랙 위에 겹친다) · 하단 띠 · 뒤로 · 배너 탭 — 버튼 문구의 가운뎃점(U+00B7)은 Jua 에 글리프가 없어(WebGL 은 대체 폰트가 없다 · T63-shop 의 💎 와 같은 부류) 빈칸 없이 «패스 준비 중»
             var claim = UiKit.Button(Root, "ui.btnGray", "전체 받기", () => { }, Layout.PsClaimAll); claim.name = "ClaimAllBtn";
-            var buy1 = UiKit.Button(Root, "ui.btnOrange", "패스 · 준비 중", () => { }, Layout.PsBuy1); buy1.name = "Buy1Btn";
-            var buy2 = UiKit.Button(Root, "ui.btnPlum", "패스+ · 준비 중", () => { }, Layout.PsBuy2); buy2.name = "Buy2Btn";
+            var buy1 = UiKit.Button(Root, "ui.btnOrange", "패스 준비 중", () => { }, Layout.PsBuy1); buy1.name = "Buy1Btn";
+            var buy2 = UiKit.Button(Root, "ui.btnPlum", "패스+ 준비 중", () => { }, Layout.PsBuy2); buy2.name = "Buy2Btn";
             var foot = UiKit.Panel(Root, "FootBand", "fr.rect", Palette.A(Palette.Dim, 0.9f)); UiKit.Pct(foot.rectTransform, Layout.PsFootBand);
             var back = UiKit.Button(Root, "ui.btnGray", "", () => App.ShowScreen("lobby"), Layout.PsBack); back.name = "BackBtn";
             var bi = UiKit.Icon(back, "Icon", "pi.arrow_left", Palette.Ink); UiKit.Pct(bi.rectTransform, 30, 18, 40, 64);
             var tab = UiKit.Panel(Root, "BannerTab", "fr.r12", Palette.A(Palette.InkSoft, 0.9f)); UiKit.Pct(tab.rectTransform, Layout.PsBannerTab);
             var tabIc = UiKit.Icon(tab.transform, "Icon", "ui.iconMedal"); UiKit.Pct(tabIc.rectTransform, 22, 4, 56, 56);
-            UiKit.Label(tab.transform, 2, 60, 96, 38, "시즌 패스", 24, Palette.White, TextAnchor.UpperCenter);
+            UiKit.Label(tab.transform, 2, 60, 96, 38, "시즌 패스", TextSize.Body, Palette.White, TextAnchor.UpperCenter);
             UiKit.Clickable(tab.rectTransform, () => { });
             // 비평 이름표(표 ㉔)
             UiKit.Tag(_top.Root, "상단 바"); UiKit.Tag(banner, "시즌 배너"); UiKit.Tag(title.transform, "시즌 제목"); UiKit.Tag(remain.transform, "남은 기간 줄"); UiKit.Tag(bar.Root, "시즌 진행바");
