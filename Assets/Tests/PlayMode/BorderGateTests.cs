@@ -264,7 +264,7 @@ namespace KkomaKnight.Tests.Play
             _app.ShowScreen("shop"); yield return Frames(2); yield return Check("10_shop_2");
             (_app.Current as ShopScreen)?.ScrollTo(0f); yield return Check("09_shop_1");
             {
-                // T69-shop(09·10 strict) — 상자 카드(대형 배너 1 + 작은 2) · 다이아/골드 상품 카드 = 카드 위에 UiKit.Bordered 한 장(Ink · 8px · 표 % 불변) · «광고/무료 카드 2개» 는 측정용 빈 rect(Exempt · 결정 191) · T72 ① 패턴은 있음만
+                // T69-shop(09·10 strict) — 상자 카드(대형 배너 1 + 작은 2) · 다이아/골드 상품 카드 = 카드 위에 UiKit.Bordered 한 장(Ink · 8px · 표 % 불변) · «광고/무료 카드 2개» 는 측정용 빈 rect(Exempt · 결정 195) · T72 ① 패턴은 있음만
                 var shopRoot = _app.Current.Root; var shopContent = UiKit.Find(shopRoot, "Content"); Assert.IsNotNull(shopContent, "상점 스크롤 Content");
                 int boxes = 0;
                 for (int i = 0; i < shopContent.childCount; i++) { var c = shopContent.GetChild(i); if (!c.name.StartsWith("Box:")) continue; boxes++; AssertUiBarBorder(shopContent, c.name); }
