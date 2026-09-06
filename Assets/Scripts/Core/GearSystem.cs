@@ -61,12 +61,54 @@ namespace KkomaKnight.Core
             return new Power { Atk = (T.PAtk0 + atk) * ev, Hp = (T.PHp0 + hp) * ev, Sh = (T.PSh0 + sh) * ev };
         }
 
-        /// <summary>부위 하나의 기여 (세부 팝업 표시용).</summary>
+        /// <summary>부위 하나의 «날» 기여 — 등급 기여 × 강화 × 슬롯(재분배 전 · <see cref="BuildPower"/> 가 더하는 그 값).</summary>
         public static Power Contribution(GameData D, GearItem g, int slotLv)
         {
             double m = D.Gear.SlotMul(slotLv) * (1 + D.Gear.PlusStep * g.Plus);
             return new Power { Atk = D.Gear.Atk[g.Rar] * m, Hp = D.Gear.Hp[g.Rar] * m, Sh = D.Gear.Sh[g.Rar] * m };
         }
+
+        static Power RawAt(GameData D, Build b, string part)
+        {
+            var g = b.EqAt(part); if (g == null) return new Power();
+            return Contribution(D, g, b.SlotAt(part));
+        }
+
+        /// <summary>
+        /// 부위 하나의 <b>보여 주는</b> 기여 (T88 재분배 · 세부 팝업 07 의 스탯 박스). 주인 지시대로 공격 부위(무기·목걸이·반지)는 <b>공격력만</b>,
+        /// 방어 부위(투구·갑옷·신발)는 <b>체력·실드만</b> 갖는다 — 없어지는 몫은 사라지지 않고 <b>같은 역할의 부위들이 원래 비율대로 나눠 갖는다</b>.
+        /// 그래서 «부위별 기여의 합 = 재분배 전의 합» 이 정확히 성립하고(마지막 부위가 나머지를 받아 반올림 오차도 0),
+        /// 전투에 들어가는 <see cref="BuildPower"/> 는 애초에 건드리지 않으므로 T2 시드 골든이 그대로다.
+        /// 같은 역할의 장착 부위가 하나도 없으면(예: 공격 부위 전부 빈 슬롯) 그 몫은 표시할 자리가 없다 — 총합 표시(장비 화면 06 의 3칸)는 여전히 <see cref="BuildPower"/> 라 정확하다.
+        /// </summary>
+        public static Power ContributionIn(GameData D, Build b, string part)
+        {
+            if (D == null || b == null || part == null || b.EqAt(part) == null) return new Power();
+            var G = D.Gear;
+            bool atk = GearRole.IsAttack(part);
+            var peers = new List<string>();
+            foreach (var pt in G.Parts) if (b.EqAt(pt) != null && GearRole.IsAttack(pt) == atk) peers.Add(pt);
+            double tAtk = 0, tHp = 0, tSh = 0;
+            foreach (var pt in G.Parts) { var c = RawAt(D, b, pt); tAtk += c.Atk; tHp += c.Hp; tSh += c.Sh; }
+            if (atk) return new Power { Atk = ShareOf(peers, part, tAtk, p => RawAt(D, b, p).Atk) };
+            return new Power
+            {
+                Hp = ShareOf(peers, part, tHp, p => RawAt(D, b, p).Hp),
+                Sh = ShareOf(peers, part, tSh, p => RawAt(D, b, p).Sh),
+            };
+        }
+
+        /// <summary>총합 <paramref name="total"/> 을 <paramref name="peers"/> 가 무게대로 나눌 때 <paramref name="part"/> 의 몫. 무게 합이 0 이면 균등 · 마지막 부위는 «총합 − 앞의 합» 이라 합이 정확히 총합이 된다.</summary>
+        static double ShareOf(List<string> peers, string part, double total, Func<string, double> weight)
+        {
+            int n = peers.Count; if (n == 0) return 0;
+            int idx = peers.IndexOf(part); if (idx < 0) return 0;
+            double sw = 0; foreach (var p in peers) sw += weight(p);
+            if (idx < n - 1) return Portion(peers[idx], total, sw, n, weight);
+            double acc = 0; for (int i = 0; i < n - 1; i++) acc += Portion(peers[i], total, sw, n, weight);
+            return total - acc;
+        }
+        static double Portion(string p, double total, double sw, int n, Func<string, double> weight) => sw > 0 ? total * weight(p) / sw : total / n;
 
         /// <summary>
         /// sim.js `gachaPull(st, box)` — 보통 1개, 신화 천장 × 전설 피티가 겹치면 2개(전설 추가). 난수는 뽑기 스트림.

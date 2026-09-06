@@ -593,7 +593,11 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNotNull(UiKit.Find(bx, "IconSlot"), "아이콘 칸"); Assert.IsNotNull(UiKit.Find(bx, "gear:" + g0.Uid), "아이콘 칸 = 장비 칸(Cell)");
                 Assert.IsNotNull(UiKit.Find(bx, "Name"), "이름줄"); Assert.IsNotNull(UiKit.Find(bx, "Pill1"), "pill «슬롯 Lv»"); Assert.IsNotNull(UiKit.Find(bx, "Pill2"), "pill «부위»");
                 Assert.IsTrue(HasText(s => s.StartsWith("슬롯 Lv. ")), "메타 pill 글자"); Assert.IsTrue(HasText(s => s == GearUi.PartName(D, g0.Part)), "부위 pill");
-                Assert.IsNotNull(UiKit.Find(bx, "Stats"), "스탯 박스"); Assert.AreEqual(3, CountNamed(UiKit.Find(bx, "Stats"), "Stat:"), "스탯 줄 3(공격력·체력·실드)");
+                // T88 — 스탯 줄은 부위 역할에 따라: 공격 부위(무기·목걸이·반지) = «공격력» 한 줄 · 방어 부위(투구·갑옷·신발) = «체력»·«실드» 두 줄(빈 줄 없음)
+                Assert.IsNotNull(UiKit.Find(bx, "Stats"), "스탯 박스");
+                Assert.AreEqual(GearRole.IsAttack(g0.Part) ? 1 : 2, CountNamed(UiKit.Find(bx, "Stats"), "Stat:"), "스탯 줄 = 부위 역할(T88)");
+                Assert.IsTrue(HasText(s => s.StartsWith(GearRole.IsAttack(g0.Part) ? "공격력" : "체력")), "스탯 줄 라벨 = 부위 역할(T88)");
+                if (GearRole.IsAttack(g0.Part)) Assert.IsFalse(HasText(s => s.StartsWith("실드  ")), "공격 부위엔 실드 줄이 없다(T88)");
                 var opts = UiKit.Find(bx, "Options"); Assert.IsNotNull(opts, "옵션 목록"); Assert.AreEqual(D.Gear.Options.TryGetValue(g0.Type, out var ol0) ? ol0.Count : 0, CountNamed(opts, "Opt:"), "옵션 줄 수 = 세트 옵션 수");
                 // T63-gear — 스탯 줄 3 · 옵션 줄 전부 본문 40 이 «한 줄» 로(옵션은 긴 잠금 줄만 bestFit 32~40 허용 · 스탯은 40 그대로) · 스탯 상자와 옵션 목록이 안 겹친다(전엔 39.5+9.5 = 49.0 > 48.0)
                 {
@@ -616,7 +620,7 @@ namespace KkomaKnight.Tests.Play
                         Assert.IsNotNull(t.GetComponent<Outline>(), "옵션 줄 «" + t.text + "» 에 검은 아웃라인(T63 0항 «예외 없이»)");
                         Assert.GreaterOrEqual(t.color.grayscale, 0.55f, "옵션 줄 «" + t.text + "» 글자가 어두운 pill 에서 읽힐 만큼 밝아야 한다(T84)");
                     }
-                    Assert.AreEqual(3, statRows, "스탯 줄 3"); Assert.AreEqual(CountNamed(opts, "Opt:"), optRows, "옵션 줄마다 글자 하나");
+                    Assert.AreEqual(GearRole.IsAttack(g0.Part) ? 1 : 2, statRows, "스탯 줄 = 부위 역할(T88)"); Assert.AreEqual(CountNamed(opts, "Opt:"), optRows, "옵션 줄마다 글자 하나");
                     var st = (RectTransform)UiKit.Find(bx, "Stats"); var op = (RectTransform)opts;
                     Assert.GreaterOrEqual(st.anchorMin.y, op.anchorMax.y - 1e-3f, "스탯 상자 아래 끝이 옵션 목록 위 끝보다 위(겹침 0)");
                 }
@@ -637,6 +641,25 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(1, S.SlotLv(g0.Part), "슬롯 Lv 0 → 1"); Check("슬롯 강화 뒤(팝업 다시 열림)", expectOverlay: true);
             Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), "세부 팝업 배경 탭 = 닫기(T38)"); yield return Frames(1);
             Assert.IsFalse(_app.Overlay.IsOpen);
+
+            // T88 — 부위 재편: 방어 부위(갑옷)는 «체력»·«실드» 두 줄이고 공격력 줄이 없다 · «장갑» 부위는 이름이 «반지»
+            {
+                var gArmor = items.Find(x => x.Part == "armor"); Assert.IsNotNull(gArmor, "갑옷 장비");
+                GearUi.OpenDetail(_app, gArmor, _app.Current.Refresh); yield return Frames(2);
+                var bx2 = (RectTransform)UiKit.Find(_app.Overlay.Root, "ui.popup");
+                Assert.AreEqual(2, CountNamed(UiKit.Find(bx2, "Stats"), "Stat:"), "방어 부위 = 체력·실드 두 줄(T88)");
+                Assert.IsTrue(HasText(s => s.StartsWith("체력  ")) && HasText(s => s.StartsWith("실드  ")), "방어 부위 줄 라벨 = 체력·실드(T88)");
+                Assert.IsFalse(HasText(s => s.StartsWith("공격력  ")), "방어 부위엔 공격력 줄이 없다(T88)");
+                Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), "닫기"); yield return Frames(1);
+
+                var gRing = items.Find(x => x.Part == "glove"); Assert.IsNotNull(gRing, "반지(glove) 장비");
+                GearUi.OpenDetail(_app, gRing, _app.Current.Refresh); yield return Frames(2);
+                Assert.IsTrue(HasText(s => s == "반지"), "부위 pill = «반지»(T88 · gear.json 의 «장갑» 을 표시에서만 덮는다)");
+                Assert.IsFalse(HasText(s => s == "장갑"), "«장갑» 이 화면에 남아 있으면 안 된다(T88)");
+                Assert.AreEqual(1, CountNamed(UiKit.Find((RectTransform)UiKit.Find(_app.Overlay.Root, "ui.popup"), "Stats"), "Stat:"), "반지 = 공격력 한 줄(T88)");
+                Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), "닫기"); yield return Frames(1);
+                Check("T88 부위 재편 뒤 장비 화면");
+            }
 
             // 투구·무기·갑옷 전부 장착 → 외형(GearLook) 반영 · 슬롯 아이콘
             foreach (var g in items) S.Eq[g.Part] = g.Uid;

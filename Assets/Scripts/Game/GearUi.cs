@@ -17,7 +17,8 @@ namespace KkomaKnight.Game
         public static string Name(GameData D, GearItem g) => D.Gear.TypeName.TryGetValue(g.Type, out var n) ? n : g.Type;
         public static string Set(GameData D, GearItem g) => D.Gear.SetOf(g.Type);
         public static string SetLabel(GameData D, GearItem g) => (D.Gear.SetName.TryGetValue(Set(D, g), out var n) ? n : Set(D, g)) + " 세트";
-        public static string PartName(GameData D, string part) => D.Gear.PartName.TryGetValue(part, out var n) ? n : part;
+        /// <summary>부위 이름 — T88 덮어쓰기(장갑 → «반지» · gear.json 은 aaaw 정본이라 불변)를 거친다.</summary>
+        public static string PartName(GameData D, string part) => GearRole.DisplayName(D, part);
         public static string RarName(GameData D, int rar) => rar >= 0 && rar < D.Gear.RarName.Length ? D.Gear.RarName[rar] : rar.ToString();
         /// <summary>장비 아이콘 = <see cref="GearLook"/> 표의 **아이콘 키**(T31 · 투구·무기·갑옷은 CharacterMaker Thumbnail <c>cmi.gear.*</c> — 입는 파츠 <c>cm.gear.*</c> 와 분리 · 목걸이·장갑·신발은 GUI Pro 아이콘(임시)).</summary>
         public static string IconKey(GameData D, GearItem g) => GearLook.IconKey(D, g);
@@ -255,22 +256,37 @@ namespace KkomaKnight.Game
             var tap = UiKit.Find(ov.Root, "TapToClose"); if (tap != null) UiKit.Tag(tap, "닫기 안내");
             return box;
         }
-        /// <summary>스탯 박스(GdStats) — 머리 «스탯» + 줄 3(공격력 · 체력 · 실드 · 값은 초록 «+N»). 빈 슬롯은 안내 한 줄.</summary>
-        static RectTransform StatsBox(RectTransform box, GameData D, GearItem g, int lv, bool eqd)
+        /// <summary>
+        /// 스탯 박스(GdStats) — 머리 «스탯» + 부위 역할에 맞는 줄(T88 · 공격 부위 = «공격력» 한 줄 · 방어 부위 = «체력»·«실드» 두 줄 · 값은 초록 «+N»). 빈 슬롯은 안내 한 줄.
+        /// 값은 <see cref="GearSystem.ContributionIn"/> 재분배 결과 — 이 장비를 그 부위에 넣은 빌드에서 «같은 역할끼리 원래 비율대로 나눠 가진» 몫이라 합계는 그대로다.
+        /// 줄 수가 달라지므로 남은 높이(76%)를 줄 수로 다시 나눈다(빈 줄 없음 · 아이콘 크기는 그대로 두고 줄 가운데에).
+        /// </summary>
+        static RectTransform StatsBox(RectTransform box, GameData D, SaveData S, GearItem g, string part, int lv, bool eqd)
         {
             var st = Layout.GdStats.Within(Layout.GdBox);
             var sp = Pill(box, "Stats", st, 0.75f); UiKit.Tag(sp, "스탯 섹션");
             string gh = Hex(Palette.Green);
             // 글자 전부 본문 40(T63-gear) — 상자 9.0% = 210px: 머리 24%(50px) + 줄 3 × 25%(52px ≥ 한 줄 49px) = 99%
             UiKit.Label(sp, 3, 0, 60, 24, "스탯", TextSize.Body, Palette.Cream, TextAnchor.MiddleLeft, true, true).fontStyle = FontStyle.Bold;
-            if (g == null) { UiKit.Label(sp, 3, 26, 94, 72, $"슬롯 1레벨당 이 부위 장비의 공격력·체력·실드 +{D.Gear.SlotStep * 100:0.#}% (상한 Lv.{D.Gear.SlotLvMax})", TextSize.Body, Palette.CreamDark, TextAnchor.MiddleLeft, true, true); return sp; }
-            var c = GearSystem.Contribution(D, g, lv);
-            var rows = new (string icon, string label, double v)[] { (Icons.Stat("dmg"), "공격력", c.Atk), ("pi.heart", "체력", c.Hp), ("pi.shield", "실드", c.Sh) };
+            if (g == null)
+            {
+                string what = GearRole.IsAttack(part) ? "공격력" : "체력·실드";   // T88 — 부위 역할에 맞는 안내
+                UiKit.Label(sp, 3, 26, 94, 72, $"슬롯 1레벨당 이 부위 장비의 {what} +{D.Gear.SlotStep * 100:0.#}% (상한 Lv.{D.Gear.SlotLvMax})", TextSize.Body, Palette.CreamDark, TextAnchor.MiddleLeft, true, true);
+                return sp;
+            }
+            // 이 장비를 자기 부위에 넣은 빌드에서 재분배한 몫(장착중이면 실제 기여 그대로 · 인벤 장비면 «끼우면 이만큼» )
+            var b = S != null ? S.CurBuild(D) : new Build();
+            b.Eq[g.Part] = g; b.Slots[g.Part] = lv;
+            var c = GearSystem.ContributionIn(D, b, g.Part);
+            var rows = GearRole.IsAttack(g.Part)
+                ? new (string icon, string label, double v)[] { (Icons.Stat("dmg"), "공격력", c.Atk) }
+                : new (string icon, string label, double v)[] { ("pi.heart", "체력", c.Hp), ("pi.shield", "실드", c.Sh) };
+            float rh = 76f / rows.Length;   // 머리 24% 아래를 줄 수로 나눈다(빈 줄 남기지 않기 · T88 4항)
             for (int i = 0; i < rows.Length; i++)
             {
-                float y = 24 + i * 25;
-                var ic = UiKit.Icon(sp, "ic", rows[i].icon); UiKit.Pct(ic.rectTransform, 3, y + 1.5f, 6, 22);
-                var t = UiKit.Label(sp, 11, y, 86, 25, $"{rows[i].label}  <color=#{gh}>+{UiKit.Fmt(rows[i].v)}</color>", TextSize.Body, Palette.Cream, TextAnchor.MiddleLeft, true, true); t.name = "Stat:" + i;
+                float y = 24 + i * rh;
+                var ic = UiKit.Icon(sp, "ic", rows[i].icon); UiKit.Pct(ic.rectTransform, 3, y + (rh - 22) * 0.5f, 6, 22);
+                var t = UiKit.Label(sp, 11, y, 86, rh, $"{rows[i].label}  <color=#{gh}>+{UiKit.Fmt(rows[i].v)}</color>", TextSize.Body, Palette.Cream, TextAnchor.MiddleLeft, true, true); t.name = "Stat:" + i;
             }
             if (eqd) { var s2 = UiKit.Label(box, st.X + st.W * 0.55f, st.Y, st.W * 0.44f, st.H * 0.24f, $"슬롯 Lv당 +{D.Gear.SlotStep * 100:0.#}%", TextSize.Body, Palette.CreamDark, TextAnchor.MiddleRight, true, true); s2.name = "SlotHint"; }
             return sp;
@@ -319,7 +335,7 @@ namespace KkomaKnight.Game
             int lv = S.SlotLv(g.Part); double cost = D.Gear.SlotCost(lv); bool eqd = S.IsEquipped(g); bool maxed = lv >= D.Gear.SlotLvMax;
             string colorName = Palette.RarName(g.Rar);
             var box = DetailFrame(app, RarName(D, g.Rar), colorName, g, Name(D, g) + (g.Plus > 0 ? " +" + g.Plus : ""), OnCream(Palette.ByName(colorName)), $"슬롯 Lv. {lv}/{D.Gear.SlotLvMax}", PartName(D, g.Part));
-            StatsBox(box, D, g, lv, eqd);
+            StatsBox(box, D, S, g, g.Part, lv, eqd);
             OptionRows(box, D, g);
             CostRow(box, S, cost, maxed, D.Gear.SlotLvMax);
             var B = Layout.GdBox;
@@ -342,7 +358,7 @@ namespace KkomaKnight.Game
             var D = app.Data; var S = app.Save; var ov = app.Overlay;
             int lv = S.SlotLv(part); double cost = D.Gear.SlotCost(lv); bool maxed = lv >= D.Gear.SlotLvMax;
             var box = DetailFrame(app, $"{PartName(D, part)} 슬롯", "gray", null, "비어 있음", Palette.InkLight, $"슬롯 Lv. {lv}/{D.Gear.SlotLvMax}", PartName(D, part));
-            StatsBox(box, D, null, lv, false);
+            StatsBox(box, D, S, null, part, lv, false);
             var region = Layout.GdOpts.Within(Layout.GdBox);
             UiKit.Label(box, region.X, region.Y, region.W, region.H, "장착된 장비가 없습니다\n인벤에서 이 부위의 장비를 골라 장착하세요", TextSize.Body, Palette.InkLight, TextAnchor.MiddleCenter, true, false).name = "EmptyHint";
             CostRow(box, S, cost, maxed, D.Gear.SlotLvMax);
