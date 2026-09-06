@@ -313,6 +313,148 @@ namespace KkomaKnight.Game
             return c.a >= 0.8f && l <= 0.35f;
         }
 
+        // ───────────────────────── 질감 3종(T72 · 주인 2026-09-06 «Pattern_01_256 이 거의 모든 UI 에 · 아이콘 뒤 Effect_Light 천천히 회전 · 그라데이션 색감») ─────────────────────────
+        // 재료 = GUI Pro Sprite_Common/~Demo/Demo_Image 의 Pattern_01_256(256² · 흰 알파 무늬 · .meta wrapU/V = 0 = Repeat · mipmap 끔) · Effect_Light_01/02_512(흰 빛살) · Gradient_Top_01/02·Gradient_Bottom(폭 4px 흰 알파 세로 띠)
+        // + Button_03_White_Gradient(버튼 아래 어둠) · CardFrame_03_White_Gradient(카드 위 밝음). 코드 도형 0 — 색은 전부 tint. 연출 상수는 밸런스가 아니라 여기 한 곳(워커 결정 기록 154~156).
+        // 전부 unscaled(팝업 시간 정지 중에도 흐른다) + SetLink(T56 · 대상이 파괴되면 트윈도 죽는다). 화면 적용은 T63/T69 화면 묶음 워커가 같이(한 화면 세 번 만지지 않기).
+        /// <summary>질감 조각 이름(고정 · 테스트·감사가 찾는다).</summary>
+        public const string PatternName = "Pattern", LightName = "Light", LightMaskName = "LightMask", GradientTopName = "GradientTop", GradientBottomName = "GradientBottom";
+        public const string PatternKey = "ui.pattern", LightKey = "ui.light1", LightKeySmall = "ui.light2", GradTopKey = "ui.gradTop1", GradBottomKey = "ui.gradBottom";
+        /// <summary>패턴 한 타일이 지나가는 시간(초 · ROUTINE T72 1항 20~30).</summary>
+        public const float PatternTileSeconds = 25f;
+        /// <summary>패턴 타일 한 변(프레임 px) — 텍스처 256px 그대로(레퍼런스 01 의 무늬 주기 ≈ 프레임 폭의 1/4).</summary>
+        public const float PatternTilePx = 256f;
+        /// <summary>패턴 알파(0.08~0.15 · 레퍼런스 01 «은은한 무늬» · 무늬 픽셀은 알파 255 라 = 그 자리만 12% 어둡거나 밝다).</summary>
+        public const float PatternAlpha = 0.12f;
+        /// <summary>밝은 바탕(초록 로비 · 크림 패널) 용 tint = Ink(레퍼런스 01 은 바탕보다 어두운 무늬) · 어두운 바탕(상점 회색 · 팝업 어둠) 용 = White(레퍼런스 09 는 밝은 무늬).</summary>
+        public static Color PatternTintLight => Palette.A(Palette.Ink, PatternAlpha);
+        public static Color PatternTintDark => Palette.A(Palette.White, PatternAlpha);
+        /// <summary>빛살 한 바퀴(초 · 12~20) · 한 변 = 아이콘 긴 변 × 배(1.6~2.2) · 알파(0.5~0.7).</summary>
+        public const float LightPeriod = 16f, LightScale = 1.9f, LightAlpha = 0.6f;
+        /// <summary>그라데이션 tint — 위 흰 +12% 밝기 · 아래 Ink −18%(ROUTINE T72 3항 팔레트).</summary>
+        public const float GradientTopAlpha = 0.12f, GradientBottomAlpha = 0.18f;
+
+        /// <summary>
+        /// ① 배경 패턴(T72) — <paramref name="host"/> 에 RawImage «Pattern»(Stretch · 텍스처 = ui.pattern · Repeat 타일링 · uvRect 크기 = 사각형 ÷ <paramref name="tilePx"/> · raycast 끔) 을 <paramref name="siblingIndex"/> 자리(기본 0 = host 자신의 배경 Image 바로 위 · 배경이 자식이면 그 다음 index)에 깔고,
+        /// uvRect 를 unscaled 로 계속 움직여 무늬가 <b>오른쪽 위로</b> 흐르게 한다(한 타일 <paramref name="tileSeconds"/> 초 · 무한 · Linear). uvRect.position 은 «사각형 왼쪽 아래가 텍스처의 어느 점을 보이나» 라 값이 <b>줄어야</b> 그림이 오른쪽 위로 간다(결정 154 · 지시서의 «(+x,+y)» 는 그림 방향을 말한 것).
+        /// 이미 있으면 갱신만(트윈은 다시 시작). 카탈로그에 스프라이트가 없으면 null(경고는 카탈로그가). 어두운 바탕이면 <paramref name="tint"/> = <see cref="PatternTintDark"/>.
+        /// </summary>
+        public static RawImage PatternBg(RectTransform host, Color? tint = null, float tileSeconds = PatternTileSeconds, int siblingIndex = 0, float tilePx = PatternTilePx)
+        {
+            if (host == null) return null;
+            var sp = Cat != null ? Cat.Sprite(PatternKey) : null; if (sp == null || sp.texture == null) return null;
+            RawImage raw = null;
+            for (int i = 0; i < host.childCount; i++) if (host.GetChild(i).name == PatternName) { raw = host.GetChild(i).GetComponent<RawImage>(); break; }
+            if (raw == null) { var rt = Rect(host, PatternName); raw = rt.gameObject.AddComponent<RawImage>(); }
+            raw.texture = sp.texture; raw.color = tint ?? PatternTintLight; raw.raycastTarget = false;
+            Stretch(raw.rectTransform);
+            raw.transform.SetSiblingIndex(Mathf.Clamp(siblingIndex, 0, Mathf.Max(0, host.childCount - 1)));
+            float px = Mathf.Max(1f, tilePx); var rr = raw.rectTransform;
+            DOTween.Kill(raw);
+            float p = 0f;
+            void Apply(float v) { p = v; if (raw != null) raw.uvRect = new Rect(1f - v, 1f - v, Mathf.Max(0.01f, rr.rect.width / px), Mathf.Max(0.01f, rr.rect.height / px)); }
+            Apply(0f);
+            DOTween.To(() => p, Apply, 1f, Mathf.Max(0.1f, tileSeconds)).SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart).SetUpdate(true).SetTarget(raw).SetLink(raw.gameObject);
+            return raw;
+        }
+
+        /// <summary>
+        /// ② 아이콘 뒤 빛살(T72) — <paramref name="cell"/> 안에 «LightMask»(RectMask2D · Stretch · 프레임 안쪽 <paramref name="inset"/> · 빛살이 칸 밖으로 안 나간다) 를 <paramref name="icon"/> 바로 앞 형제(아이콘이 cell 의 자식이 아니면 맨 뒤 = 0)에 두고, 그 안에 «Light» Image(<paramref name="key"/> · 정사각 · 한 변 = 아이콘 긴 변(없으면 칸 긴 변) × <paramref name="scale"/> · 아이콘 중심(없으면 칸 중심) · raycast 끔 · tint 기본 흰 α <see cref="LightAlpha"/> · 등급색을 주면 그 색)를 넣고
+        /// DOLocalRotate(0,0,−360 · FastBeyond360 · Linear · 무한 · unscaled · SetLink) 로 <b>시계방향</b>(주인 «오른쪽으로») 한 바퀴 <paramref name="period"/> 초. 이미 있으면 갱신만. 스크롤 밖 칸은 <see cref="SetLightSpinning"/> 으로 멈춘다(T72 4항 개수 제한).
+        /// </summary>
+        public static Image LightBehind(RectTransform cell, RectTransform icon = null, string key = LightKey, float period = LightPeriod, Color? tint = null, float scale = LightScale, float inset = 0f)
+        {
+            if (cell == null) return null;
+            var sp = Cat != null ? Cat.Sprite(key) : null; if (sp == null) return null;
+            RectTransform mask = null;
+            for (int i = 0; i < cell.childCount; i++) if (cell.GetChild(i).name == LightMaskName) { mask = (RectTransform)cell.GetChild(i); break; }
+            if (mask == null) mask = Rect(cell, LightMaskName);
+            Ensure<RectMask2D>(mask.gameObject);
+            Stretch(mask, inset, inset, inset, inset);
+            int target = icon != null && icon.parent == cell ? icon.GetSiblingIndex() : 0;
+            if (mask.GetSiblingIndex() < target) target--;
+            mask.SetSiblingIndex(Mathf.Max(0, target));
+            var lt = mask.Find(LightName) as RectTransform;
+            Image img;
+            if (lt == null) { lt = Rect(mask, LightName); img = lt.gameObject.AddComponent<Image>(); } else img = Ensure<Image>(lt.gameObject);
+            img.sprite = sp; img.type = Image.Type.Simple; img.preserveAspect = true; img.raycastTarget = false; img.color = tint ?? Palette.A(Palette.White, LightAlpha);
+            lt.anchorMin = lt.anchorMax = new Vector2(0.5f, 0.5f); lt.pivot = new Vector2(0.5f, 0.5f);
+            Vector2 refSize = icon != null ? icon.rect.size : cell.rect.size;
+            float side = Mathf.Max(refSize.x, refSize.y); if (side <= 1f) side = Mathf.Max(cell.rect.width, cell.rect.height);
+            lt.sizeDelta = new Vector2(side * scale, side * scale);
+            Vector2 center = Vector2.zero;
+            if (icon != null) { var c = mask.InverseTransformPoint(icon.TransformPoint(icon.rect.center)); center = new Vector2(c.x, c.y) - mask.rect.center; }
+            lt.anchoredPosition = center;
+            DOTween.Kill(lt); lt.localRotation = Quaternion.identity;
+            lt.DOLocalRotate(new Vector3(0f, 0f, -360f), Mathf.Max(0.1f, period), RotateMode.FastBeyond360).SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart).SetUpdate(true).SetLink(lt.gameObject);
+            return img;
+        }
+        /// <summary>빛살 회전 켜기/끄기(스크롤 밖 칸은 끈다 · T72 4항 «보이는 칸만») — 그 칸의 «LightMask/Light» 트윈을 Play/Pause. 없으면 아무 일 없음.</summary>
+        public static void SetLightSpinning(RectTransform cell, bool on)
+        {
+            var lt = cell != null ? cell.Find(LightMaskName + "/" + LightName) : null; if (lt == null) return;
+            if (on) DOTween.Play(lt); else DOTween.Pause(lt);
+        }
+        /// <summary>이 칸에 도는 빛살이 있는가(테스트·감사용) — «LightMask/Light» 가 활성이고 스프라이트 이름에 Effect_Light.</summary>
+        public static bool HasLight(Transform cell)
+        {
+            var lt = cell != null ? cell.Find(LightMaskName + "/" + LightName) : null; if (lt == null || !lt.gameObject.activeInHierarchy) return false;
+            var img = lt.GetComponent<Image>(); return img != null && img.enabled && img.sprite != null && img.sprite.name.StartsWith("Effect_Light");
+        }
+        /// <summary>이 사각형 바로 아래에 패턴 배경이 있는가(테스트·감사용) — 자식 «Pattern» RawImage 가 활성이고 텍스처 이름 Pattern_01_256.</summary>
+        public static bool HasPattern(Transform host)
+        {
+            if (host == null) return false;
+            for (int i = 0; i < host.childCount; i++)
+            {
+                var c = host.GetChild(i); if (c.name != PatternName || !c.gameObject.activeInHierarchy) continue;
+                var raw = c.GetComponent<RawImage>(); if (raw != null && raw.enabled && raw.texture != null && raw.texture.name.StartsWith("Pattern_01")) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// ③ 그라데이션 색감(T72) — <paramref name="rt"/> 안에 «GradientTop»(<paramref name="topKey"/> · tint <paramref name="top"/> 기본 흰 α <see cref="GradientTopAlpha"/> = 위 +12% 밝기) 와 «GradientBottom»(<paramref name="bottomKey"/> · <paramref name="bottom"/> 기본 Ink α <see cref="GradientBottomAlpha"/> = 아래 −18%) 두 장을
+        /// Stretch(안쪽 <paramref name="inset"/> · 둥근 모서리 조각이면 모서리 반지름만큼) · raycast 끔 · 조각에 9-slice border 가 있으면 Sliced 아니면 Simple 로 <paramref name="siblingIndex"/> 자리(기본 0 = rt 자신의 배경 그림 바로 위 · 글자·아이콘 자식은 그 위에 남는다)에 덧댄다.
+        /// 한쪽만 원하면 그 키에 null — 버튼은 (null, "ui.btnGradient") 아래 어둠만, 카드는 ("fr.cardGradient3", …). 이미 있으면 갱신만. 코드 도형 0 — 색은 tint 뿐(색은 점수 밖 · «느낌» 규칙 ⓐ).
+        /// </summary>
+        public static void Gradient(RectTransform rt, Color? top = null, Color? bottom = null, string topKey = GradTopKey, string bottomKey = GradBottomKey, float inset = 0f, int siblingIndex = 0)
+        {
+            if (rt == null) return;
+            int idx = Mathf.Clamp(siblingIndex, 0, Mathf.Max(0, rt.childCount));
+            if (!string.IsNullOrEmpty(topKey))
+            {
+                var g = GradientLayer(rt, GradientTopName, topKey, top ?? Palette.A(Palette.White, GradientTopAlpha), inset);
+                if (g != null) { g.transform.SetSiblingIndex(idx); idx = g.transform.GetSiblingIndex() + 1; }
+            }
+            if (!string.IsNullOrEmpty(bottomKey))
+            {
+                var g = GradientLayer(rt, GradientBottomName, bottomKey, bottom ?? Palette.A(Palette.Ink, GradientBottomAlpha), inset);
+                if (g != null) g.transform.SetSiblingIndex(idx);
+            }
+        }
+        static Image GradientLayer(RectTransform rt, string name, string key, Color tint, float inset)
+        {
+            var sp = Cat != null ? Cat.Sprite(key) : null; if (sp == null) return null;
+            Image img = null;
+            for (int i = 0; i < rt.childCount; i++) if (rt.GetChild(i).name == name) { img = rt.GetChild(i).GetComponent<Image>(); break; }
+            if (img == null) { var r = Rect(rt, name); img = r.gameObject.AddComponent<Image>(); }
+            img.sprite = sp; img.type = sp.border.sqrMagnitude > 0f ? Image.Type.Sliced : Image.Type.Simple; img.preserveAspect = false; img.color = tint; img.raycastTarget = false;
+            Stretch(img.rectTransform, inset, inset, inset, inset);
+            return img;
+        }
+        /// <summary>그라데이션 조각이 있는가(테스트·감사용) — 자식 «GradientTop» 또는 «GradientBottom» 이 활성이고 스프라이트 이름에 Gradient.</summary>
+        public static bool HasGradient(Transform rt)
+        {
+            if (rt == null) return false;
+            for (int i = 0; i < rt.childCount; i++)
+            {
+                var c = rt.GetChild(i); if ((c.name != GradientTopName && c.name != GradientBottomName) || !c.gameObject.activeInHierarchy) continue;
+                var img = c.GetComponent<Image>(); if (img != null && img.enabled && img.sprite != null && img.sprite.name.IndexOf("Gradient", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            }
+            return false;
+        }
+
         // ───────────────────────── 공통 팝업 문법 (docs/ref/README.md «공통 문법» · T36 — T38·T41·T42·T44 가 같이 쓴다) ─────────────────────────
         /// <summary><see cref="Popup"/> 이 만든 조각들 — 안의 내용은 <see cref="Box"/> 에 <see cref="Pct"/> 로 배치한다.</summary>
         public sealed class PopupParts { public RectTransform Dim, Box, Ribbon; public Text Title, TapClose; }

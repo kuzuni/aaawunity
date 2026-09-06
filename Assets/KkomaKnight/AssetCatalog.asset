@@ -569,6 +569,26 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 915a77bcc735f4a02ac775277801eed8, type: 3}
   - key: fr.pillBorder
     sprite: {fileID: 21300000, guid: 3cf89f4959c424b76bee0c14e4c91472, type: 3}
+  - key: ui.pattern
+    sprite: {fileID: 21300000, guid: 681031a918d5b41e08799ad7252df563, type: 3}
+  - key: ui.light1
+    sprite: {fileID: 21300000, guid: 322a6e9ee66794e879b02bdaeef29c00, type: 3}
+  - key: ui.light2
+    sprite: {fileID: 21300000, guid: 166e683030d2d45f1b931f91e5bc4497, type: 3}
+  - key: ui.gradTop1
+    sprite: {fileID: 21300000, guid: 387b21f476d2b47b98fd1b94b28e78d3, type: 3}
+  - key: ui.gradTop2
+    sprite: {fileID: 21300000, guid: 7d8be6db19fc84585945d29a3e21282b, type: 3}
+  - key: ui.gradBottom
+    sprite: {fileID: 21300000, guid: 4915b2ec506ee4097b84cbd154ce3abc, type: 3}
+  - key: fr.gradient1
+    sprite: {fileID: 21300000, guid: f187a09999bfc46b5b0ac3d340037365, type: 3}
+  - key: fr.gradient2
+    sprite: {fileID: 21300000, guid: ed32e8f263d4245b2be1a9d61358a391, type: 3}
+  - key: ui.btnGradient
+    sprite: {fileID: 21300000, guid: 2dd769ba292cd4e368a4e507f88253f6, type: 3}
+  - key: fr.cardGradient3
+    sprite: {fileID: 21300000, guid: f0bc35a8dfc87450bbd2f9b84e4d3712, type: 3}
   - key: fr.r12
     sprite: {fileID: 21300000, guid: 3361aebefe38341a0a88a10631ed61ac, type: 3}
   - key: fr.circle
