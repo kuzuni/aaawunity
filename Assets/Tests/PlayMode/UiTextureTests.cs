@@ -502,7 +502,12 @@ namespace KkomaKnight.Tests.Play
                     {
                         picLights++;
                         Assert.IsTrue(UiKit.HasLight(c), c.name + " 그림 뒤 빛살(T72 ②)");
-                        Assert.AreEqual(c.childCount - 1, mask.GetSiblingIndex(), c.name + " 빛살은 카드 안 질감층(무늬·그라데이션) 위");
+                        // 빛살은 질감층(무늬·그라데이션) «위» 여야 한다(결정 224). 전에는 «형제 맨 뒤» 로 잰다 — 그런데 T69-lobbypopups 가
+                        // 그 뒤에 검은 링(«Border»)을 카드 맨 위에 덧대므로(결정 301) 이제 맨 뒤는 링이다 → «질감층보다 위» 로 잰다(결정 303).
+                        var cgrad = c.Find(UiKit.GradientBottomName); Assert.IsNotNull(cgrad, c.name + " 카드 아래 어둠(그라데이션)");
+                        Assert.Greater(mask.GetSiblingIndex(), cgrad.GetSiblingIndex(), c.name + " 빛살은 카드 안 질감층(무늬·그라데이션) 위");
+                        var cring = c.Find(UiKit.BorderName);
+                        if (cring != null) Assert.Greater(cring.GetSiblingIndex(), mask.GetSiblingIndex(), c.name + " 검은 링은 빛살보다 위(T69 · 결정 301)");
                         lastPicLight = (RectTransform)mask.Find(UiKit.LightName);
                     }
                 }
