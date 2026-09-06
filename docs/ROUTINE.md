@@ -200,7 +200,7 @@
 2. HUD 왼쪽 버프 바(발동 중 스택)의 칸을 `ui.buffSlot`(엉뚱한 프레임) 대신 **특전과 같은 팔각 `ItemFrame_04_*`(`UiKit.PerkFrame` · 등급색)** 로. 스택 수 글자는 그대로 오른쪽 아래.
 3. 게이트 + PROGRESS T20 행.
 
-### T21 — 투사체(도끼·화살·창·번개) 표적 = 웨이브 안 무작위 적 (번호 정정: 구 T14)
+### T21 — 투사체(도끼·화살·창·번개) 표적 = 웨이브 안 무작위 적 (번호 정정: 구 T14) ✅ (완료 · `39f4d1b` · 원본이 이미 무작위(−30~540px) · 엔진·그리기 변경 없음 · 승인 대기 27 종결 · PROGRESS 참조)
 범위: `Assets/Scripts/Core/Battle.cs`(FireAxe/FireArrows/FireSpear/FireBolts · RandTarget) · `Assets/Scripts/Game/BattleWorld.cs`(투사체 그리기 — T20·T19 와 겹친다)
 순서: **T20·T19 완료 뒤**.
 1. 먼저 aaaw `sim.js` 의 `randTarget`/`fireAxe`/`fireArrows`/`fireSpear`/`fireBolts` 를 읽고 **원본이 무엇을 표적으로 삼는지** 적는다(무작위 범위 −30~540 · 관통 등). 우리 엔진이 원본과 다르면 엔진을 원본에 맞춘다(시드 골든 BattleTests 가 통과해야 한다 — 골든이 깨지면 엔진이 아니라 내가 틀린 것).
