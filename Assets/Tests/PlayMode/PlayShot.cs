@@ -73,13 +73,14 @@ namespace KkomaKnight.Tests.Play
             return ok;
         }
 
-        /// <summary>활성 이름표 전부 → {요소 이름: [x,y,w,h]}(프레임 % · 소수 1자리). 같은 이름이 둘이면 먼저 만난 것만(경고 1줄).</summary>
+        /// <summary>활성 이름표 전부 → {요소 이름: [x,y,w,h]}(프레임 % · 소수 1자리). 팝업이 열려 있으면 <b>팝업 층(Overlay)만</b> 잰다 — 뒤 화면(전투 HUD 등)의 이름표가 섞이면 «인포(책) 버튼» 처럼 같은 이름이 둘이 된다(CI #68 로그). 같은 이름이 둘이면 먼저 만난 것만(경고 1줄).</summary>
         public static Dictionary<string, object> Layout(App app)
         {
             var d = new Dictionary<string, object>();
             if (app == null || app.UiCanvas == null || app.Frame == null) return d;
             Canvas.ForceUpdateCanvases();
-            foreach (var tag in app.UiCanvas.GetComponentsInChildren<UiTag>(false))
+            var scope = app.Overlay != null && app.Overlay.IsOpen ? (Component)app.Overlay.Root : app.UiCanvas;
+            foreach (var tag in scope.GetComponentsInChildren<UiTag>(false))
             {
                 if (tag == null || string.IsNullOrEmpty(tag.Name)) continue;
                 var r = tag.Measure(app.Frame); if (r == null) continue;
