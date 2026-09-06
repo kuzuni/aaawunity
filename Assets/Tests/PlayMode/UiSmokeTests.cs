@@ -576,10 +576,11 @@ namespace KkomaKnight.Tests.Play
             for (int i = 0; i < cards.childCount; i++) { var c = (RectTransform)cards.GetChild(i); var cg = c.GetComponent<CanvasGroup>(); Assert.AreEqual(1f, cg.alpha, 1e-4f, $"스킵 뒤 카드 {i} α 1"); Assert.IsTrue(cg.blocksRaycasts, $"스킵 뒤 카드 {i} 클릭 열림"); Assert.AreEqual(1f, c.localScale.x, 1e-3f, $"스킵 뒤 카드 {i} 스케일 1"); }
             Check("레벨업 팝업", expectOverlay: true);
             Assert.IsTrue(HasText(s => s == "레벨 업!"), "제목");
-            // T36 — 레퍼런스 04 구도: «새 특전을 고르세요» · 카드 = 등급 탭 + 팔각 아이콘 + 설명(수치 초록) · «새로고침 무료» + «남은 횟수 : N» · 📘 · 상단 스탯 8칸 미니
+            // T36 — 레퍼런스 04 구도: «새 특전을 고르세요» · 카드 = 등급 탭 + 팔각 아이콘 + 설명(한 색 · 수치 초록은 T52 로 취소) · «새로고침 무료» + «남은 횟수 : N» · 📘 · 상단 스탯 8칸 미니
             Assert.IsTrue(HasText(s => s == "새 특전을 고르세요"), "부제"); Assert.IsTrue(HasText(s => s == "새로고침 무료"), "새로고침 버튼"); Assert.IsTrue(HasText(s => s.StartsWith("남은 횟수 : ")), "남은 횟수");
             Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Stats"), "상단 스탯 미니 줄"); Assert.AreEqual(BattleScreen.StatDefs.Length, CountNamed(UiKit.Find(_app.Overlay.Root, "Stats"), "ic"), "미니 줄 아이콘 8");
-            foreach (var p in offer) if (Overlay.GreenNumbers(p.Desc) != p.Desc) { Assert.IsTrue(HasText(s => s == Overlay.GreenNumbers(p.Desc)), "카드 설명의 수치는 초록 리치 텍스트"); break; }
+            foreach (var p in offer) Assert.IsTrue(HasText(s => s == p.Desc), $"카드 설명은 원문 그대로 한 색(T52 · 주인 «색 섞지 말기»): {p.Desc}");
+            Assert.IsFalse(HasText(s => s.IndexOf("<color", StringComparison.OrdinalIgnoreCase) >= 0 && !s.StartsWith("남은 횟수")), "특전 글자에 부분 색(<color) 없음(T52 · «남은 횟수 : N» 의 주황 N 만 예외)");
             if (!string.IsNullOrEmpty(offer[0].GradeName)) Assert.IsTrue(HasText(s => s == offer[0].GradeName), "카드 왼쪽 위 등급 탭");
             var cardRts = new List<Transform>(); foreach (Transform c in cards) cardRts.Add(c);
             var first = cards.GetChild(0).GetComponent<Button>(); Assert.IsNotNull(first, "카드는 클릭 가능"); first.onClick.Invoke(); yield return Frames(3);

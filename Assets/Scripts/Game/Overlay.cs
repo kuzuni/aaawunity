@@ -60,14 +60,7 @@ namespace KkomaKnight.Game
             _cur = parts.Box.gameObject;
             return parts.Box;
         }
-        /// <summary>설명 글의 숫자(«+30%» · «33%» · «2초» …)만 초록으로(레퍼런스 04 «수치 초록» · T36). 리치 텍스트가 이미 있으면 그대로.</summary>
-        static readonly System.Text.RegularExpressions.Regex NumRx = new System.Text.RegularExpressions.Regex(@"[+\-−]?\d[\d,]*(\.\d+)?(%|초|배|회|칸|x)?");
-        public static string GreenNumbers(string s)
-        {
-            if (string.IsNullOrEmpty(s) || s.IndexOf('<') >= 0) return s;
-            string hex = ColorUtility.ToHtmlStringRGB(Palette.Green);
-            return NumRx.Replace(s, m => $"<color=#{hex}>{m.Value}</color>");
-        }
+        // (T36 의 «수치만 초록» GreenNumbers 는 주인 취소(2026-09-06 «연두색 섞여 있으면 안 읽힌다» · T52) — 특전 설명은 한 색(Palette.Ink) · 리치 텍스트 부분 색 없음)
         /// <summary>데모 프리팹 하나를 팝업 층에 그대로 세운다(Dimmed 가 있으면 클릭 차단·페이드).</summary>
         public GameObject OpenPrefab(string key)
         {
@@ -103,7 +96,7 @@ namespace KkomaKnight.Game
             if (itemArea != null) { UiKit.Clear(itemArea); UiKit.PerkFrame(itemArea, colorName, Icons.Perk(p.Id), 162); }
             UiKit.Hide(rt, "Focus");
             var nameT = rt.Find("Text"); if (nameT != null) nameT.gameObject.SetActive(false);   // 카드 직계 "Text"(특전 이름) — 깊은 검색이면 프레임 안 글자에 잡힐 수 있어 직계로
-            var desc = UiKit.SetText(rt, "Text_Value", GreenNumbers(p.Desc), Palette.Ink, 34);   // 수치만 초록(레퍼런스 04 · T36)
+            var desc = UiKit.SetText(rt, "Text_Value", p.Desc, Palette.Ink, 34);   // 설명은 한 색 — 수치 초록(T36)은 주인 취소(T52)
             if (desc != null) { desc.alignment = TextAnchor.MiddleLeft; var dr = desc.rectTransform; dr.anchorMin = new Vector2(0.24f, 0.08f); dr.anchorMax = new Vector2(0.97f, 0.92f); dr.offsetMin = dr.offsetMax = Vector2.zero; desc.resizeTextForBestFit = true; desc.resizeTextMaxSize = 34; desc.resizeTextMinSize = 18; desc.horizontalOverflow = HorizontalWrapMode.Wrap; }
             if (onClick != null) UiKit.Clickable(rt, onClick);
             return rt;
