@@ -119,7 +119,10 @@ namespace KkomaKnight.Tests.Play
 
             // ⓓ 자동 — 산출물(장착 중)에 같은 키 2개를 더해 3개 → «자동» 이 장착분을 포함해 합성하고 슬롯을 잇는다
             Give(part, rar: made.Rar); Give(part, rar: made.Rar); _app.Current.Refresh(); yield return Frames(1);
-            Assert.IsTrue(HasText(s => s.StartsWith("자동 (")), "합성 가능 조합이 있으면 «자동 (N) !»");
+            // T39 레퍼런스 구도: «자동» 글자는 고정 · 조합이 있으면 버튼 오른쪽 위 빨간 점(AutoDot) 이 켜지고 버튼이 활성(예전엔 «자동 (N) !» 글자)
+            var autoDot = UiKit.Find(forge, "AutoDot"); var autoBtn = UiKit.Find(forge, "AutoBtn");
+            Assert.IsTrue(autoDot != null && autoDot.gameObject.activeSelf, "합성 가능 조합이 있으면 «자동» 의 빨간 점(AutoDot)");
+            Assert.IsTrue(autoBtn != null && autoBtn.GetComponent<Button>().interactable, "합성 가능 조합이 있으면 «자동» 버튼 활성");
             Assert.IsTrue(Click(forge, s => s.StartsWith("자동")), "자동 버튼"); yield return Frames(2);
             Assert.AreEqual(2, S.Fuses, "자동 합성 1회");
             var made2 = S.EquippedGear(part);
