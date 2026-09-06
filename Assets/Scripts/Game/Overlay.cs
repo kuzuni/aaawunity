@@ -96,7 +96,7 @@ namespace KkomaKnight.Game
             if (itemArea != null) { UiKit.Clear(itemArea); UiKit.PerkFrame(itemArea, colorName, Icons.Perk(p.Id), 162); }
             UiKit.Hide(rt, "Focus");
             var nameT = rt.Find("Text"); if (nameT != null) nameT.gameObject.SetActive(false);   // 카드 직계 "Text"(특전 이름) — 깊은 검색이면 프레임 안 글자에 잡힐 수 있어 직계로
-            var desc = UiKit.SetText(rt, "Text_Value", p.Desc, Palette.Ink, 34);   // 설명은 한 색 — 수치 초록(T36)은 주인 취소(T52)
+            var desc = UiKit.SetText(rt, "Text_Value", PerkText.Format(p.Desc), Palette.Ink, 34);   // 설명은 한 색(T52) · «트리거: 내용» 표기(T53 · 원문 perks.json 불변)
             if (desc != null) { desc.alignment = TextAnchor.MiddleLeft; var dr = desc.rectTransform; dr.anchorMin = new Vector2(0.24f, 0.08f); dr.anchorMax = new Vector2(0.97f, 0.92f); dr.offsetMin = dr.offsetMax = Vector2.zero; desc.resizeTextForBestFit = true; desc.resizeTextMaxSize = 34; desc.resizeTextMinSize = 18; desc.horizontalOverflow = HorizontalWrapMode.Wrap; }
             if (onClick != null) UiKit.Clickable(rt, onClick);
             return rt;
