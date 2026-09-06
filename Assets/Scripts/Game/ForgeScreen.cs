@@ -10,7 +10,7 @@ namespace KkomaKnight.Game
     /// 대장간(합성) = 레퍼런스 <c>docs/ref/08_gear_fuse.jpg</c> 구도(T39 · 주인 2026-09-06 «UI 는 무조건 레퍼런스 기준»). ref-layout ⑥ 표(<see cref="Layout.ForgeStage"/> …) 자리에 GUI Pro·Environment 조각을 조립한다:
     /// ① <b>대장간 무대</b>(위 41% · 어두운 벽 + 바닥 띠 + 화덕(어두운 상자 + 불) + 벽의 연장 + 통) 위에 <b>결과 슬롯</b>(초록 테두리 · 비었을 땐 모루 그림) → ▲(초록) → <b>재료 슬롯</b>(«+» 칸 · 규칙이 «같은 것 3개» 라 3칸 · U02 ⓓ) · 왼쪽 모루 그림 · 오른쪽 <b>안내 문구</b>(어두운 상자 · 흰 글자)
     /// → ② <b>액션바</b>(갈색 띠 · 왼쪽 끝 «자동» 파랑 + 빨간 ! · 오른쪽 끝 «합성» 회색 → 재료 3개면 주황) → ③ <b>인벤 5열 격자</b>(<see cref="GearUi.Grid"/> · 장비 탭과 같은 자리 · 합성 가능 = 초록 프레임 + 빨간 점 · 장착 = «장착중» 글자 · 재료 가능(T24)) → ④ 아래 회색 띠 + 왼쪽 <b>뒤로(◀)</b>.
-    /// 규칙은 그대로: 같은 부위·종류·등급 3개 → <see cref="GearSystem.FuseMake"/> 하나만(자동 = FuseAll 도 같은 함수). **장착 중인 장비도 재료다**(T24 · 주인 «대장간에 장착중인 거도 합성 가능하게» — aaaw T125 를 주인이 뒤집음). 장착분이 재료로 사라지면 <see cref="GearSystem.ReEquipAfterFuse"/>(같은 부위면 산출물을 그 슬롯에 · 승인 대기 29 기본값).
+    /// 규칙(T114 · 주인 2026-09-07): <b>전설 미만은 «같은 부위·등급» 3개면 종류가 달라도</b> · 전설 이상은 종전대로 «같은 부위·종류·등급» 3개 → <see cref="GearSystem.FuseMake"/> 하나만(자동 = FuseAll 도 같은 함수 · 묶음 키는 <see cref="GearSystem.FuseKey"/>). **장착 중인 장비도 재료다**(T24 · 주인 «대장간에 장착중인 거도 합성 가능하게» — aaaw T125 를 주인이 뒤집음). 장착분이 재료로 사라지면 <see cref="GearSystem.ReEquipAfterFuse"/>(같은 부위면 산출물을 그 슬롯에 · 승인 대기 29 기본값).
     /// 칸은 전부 장비 화면과 같은 ListItem_EquipMent 본래 크기(188 정사각 · T8) — 재료 3칸은 슬롯 자리 가운데에 본래 크기로. 제목 글자·상단 재화 바는 없다(레퍼런스에 없음).
     /// 이름 계약(스모크 테스트): 무대 <c>Stage</c> · 결과 <c>Result</c> · 인벤 <c>Content</c> · 버튼 <c>AutoBtn</c>/<c>FuseBtn</c>(회색)/<c>FuseBtnOn</c>(주황)/<c>BackBtn</c> · 합성 가능 칸의 빨간 점 <c>FuseDot</c> · 장착 글자 <c>EquippedLabel</c>.
     /// </summary>
@@ -90,8 +90,8 @@ namespace KkomaKnight.Game
         {
             var D = App.Data; var S = App.Save;
             var mats = Mats(); if (mats.Count != _sel.Count) { _sel.Clear(); foreach (var g in mats) _sel.Add(g.Uid); }
-            string lock_ = mats.Count > 0 ? GearUi.Key(mats[0]) : null;
-            var fk = GearUi.FusableKeys(S);
+            string lock_ = mats.Count > 0 ? GearUi.Key(D, mats[0]) : null;
+            var fk = GearUi.FusableKeys(D, S);
             // 인벤 — 선택 = 프리팹 Focus · 다른 키만 흐리게(장착분은 흐리지 않는다 — T24 재료 가능) · 합성 가능 = 초록 프레임 + 빨간 점(재료를 고르는 중엔 끔 — index.html renderForge `fus:!lock&&…` 그대로) · 장착중 = «장착중» 글자(레퍼런스 «Equipped»)
             // ⚠ 인벤을 맨 먼저 채운다 — 예전(e64ff41 이전)엔 아래 버튼 처리(SetInteractable 의 CanvasGroup «GetComponent 뒤 ?? AddComponent» 패턴)가 에디터 가짜 null 로
             //   MissingComponentException 을 던져 그 뒤의 인벤 루프가 통째로 건너뛰어졌다(«하단에 장비가 없다» 의 원인). 지금은 UiKit.Ensure 로 고쳐졌지만 순서도 인벤 우선으로 둔다.
@@ -99,7 +99,7 @@ namespace KkomaKnight.Game
             if (S.Inv.Count == 0) GearUi.Empty(_content, "장비가 없습니다.\n상점에서 뽑기로 장비를 얻으세요.");
             foreach (var g in GearUi.Sorted(S))
             {
-                var gi = g; bool sel = _sel.Contains(g.Uid); bool off = lock_ != null && !sel && GearUi.Key(g) != lock_; bool fus = lock_ == null && fk.Contains(GearUi.Key(g)); bool eqd = S.IsEquipped(g);
+                var gi = g; bool sel = _sel.Contains(g.Uid); bool off = lock_ != null && !sel && GearUi.Key(D, g) != lock_; bool fus = lock_ == null && fk.Contains(GearUi.Key(D, g)); bool eqd = S.IsEquipped(g);
                 var cell = GearUi.Cell(_content, D, g, new GearUi.CellOpts { Equipped = eqd, EquippedMark = false, Selected = sel, Off = off, Fusable = fus, FusableDot = true }, () => Toggle(gi));
                 if (eqd) EquippedTag(cell);
             }
@@ -160,7 +160,16 @@ namespace KkomaKnight.Game
             var D = App.Data; var S = App.Save; var mats = Mats();
             if (_sel.Contains(g.Uid)) { _sel.Remove(g.Uid); Refresh(); return; }
             // 장착 중인 장비도 재료가 된다(T24) — 예전의 «먼저 해제하세요» 토스트 없음
-            if (mats.Count > 0 && GearUi.Key(g) != GearUi.Key(mats[0])) { App.Toast($"같은 부위·종류·등급만 재료가 됩니다 ({GearUi.PartName(D, mats[0].Part)} · {GearUi.Name(D, mats[0])} · {GearUi.RarName(D, mats[0].Rar)})"); return; }
+            // T114 — 전설 미만은 «같은 부위·등급» 이면 종류가 달라도 재료가 된다(주인 2026-09-07). 안내 문구도 그 규칙대로 갈라 적는다.
+            if (mats.Count > 0 && GearUi.Key(D, g) != GearUi.Key(D, mats[0]))
+            {
+                var b = mats[0];
+                bool loose = D != null && D.Gear != null && b.Rar < D.Gear.RarLegend;
+                App.Toast(loose
+                    ? $"같은 부위·등급만 재료가 됩니다 ({GearUi.PartName(D, b.Part)} · {GearUi.RarName(D, b.Rar)})"
+                    : $"같은 부위·종류·등급만 재료가 됩니다 ({GearUi.PartName(D, b.Part)} · {GearUi.Name(D, b)} · {GearUi.RarName(D, b.Rar)})");
+                return;
+            }
             if (_sel.Count >= 3) { App.Toast("재료는 3개까지입니다"); return; }
             _sel.Add(g.Uid); Refresh();
         }

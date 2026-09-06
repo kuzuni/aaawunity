@@ -8,7 +8,7 @@ namespace KkomaKnight.Core
     {
         public int Uid; public string Part, Type; public int Rar, Plus; public bool IsNew;
         public GearItem Clone() => new GearItem { Uid = Uid, Part = Part, Type = Type, Rar = Rar, Plus = Plus, IsNew = IsNew };
-        public string GroupKey => Part + "|" + Type + "|" + Rar;
+        // 합성 묶음 키는 등급에 따라 달라지므로(T114) 표를 아는 GearSystem.FuseKey(D, g) 한 곳에 있다 — 여기 있던 GroupKey(부위|종류|등급)는 그 함수가 대신한다.
         public override string ToString() => $"{Type} r{Rar}+{Plus}";
     }
 
@@ -149,6 +149,21 @@ namespace KkomaKnight.Core
             return new GearItem { Part = b.Part, Type = b.Type, Rar = G.RarMyth, Plus = b.Plus + 1 };
         }
 
+        /// <summary>
+        /// 합성 묶음 키(T114 · 주인 2026-09-07 «대장간 합성할 때 전설 전까지는 같은 부위 장비면 합성 가능하게 · 개수만 맞으면 되게») —
+        /// 재료 등급이 <b>전설 미만</b>(일반·희귀)이면 <b>부위 + 등급</b>만 보고(종류 무관 · 키의 종류 자리에 «*»), <b>전설 이상</b>(전설·신화)은 종전대로 <b>부위 + 종류 + 등급</b>.
+        /// 개수 규칙(3개)은 그대로다. 산출물의 종류는 <see cref="FuseMake"/> 가 base(강화가 가장 높은 재료 · 동률이면 목록에서 먼저 나온 것)의 종류를 따른다.
+        /// <b>⚑ 이 규칙은 aaaw <c>sim.js</c> 의 <c>fuseAll</c>(항상 부위·종류·등급)과 다르다 — 주인 지시로 유니티 쪽만 바꿨다</b>(<c>data/*.json</c> 은 불변 · PROGRESS 결정 기록).
+        /// 화면(대장간 재료 고르기·«합성 가능» 빨간 점·자동 합성)은 전부 이 함수 하나만 본다(<see cref="Game"/> 층의 <c>GearUi.Key</c> 도 여기로 넘긴다).
+        /// <paramref name="D"/> 가 없으면(부팅 전 등) 종전 규칙으로 둔다 — 규칙을 «완화하는» 쪽이 기본값이 되지 않게.
+        /// </summary>
+        public static string FuseKey(GameData D, GearItem g)
+        {
+            if (g == null) return "";
+            int legend = D != null && D.Gear != null ? D.Gear.RarLegend : -1;
+            return g.Rar < legend ? g.Part + "|*|" + g.Rar : g.Part + "|" + g.Type + "|" + g.Rar;
+        }
+
         /// <summary>재료 3개에서 base(최고 강화) 를 고르고 산출물을 만든다.</summary>
         public static GearItem FuseThree(GameData D, IList<GearItem> mats)
         {
@@ -158,7 +173,7 @@ namespace KkomaKnight.Core
         }
 
         /// <summary>
-        /// sim.js `fuseAll(inv, equipped)` — 합성 가능한 묶음이 없어질 때까지 반복. 만든 개수 반환.
+        /// sim.js `fuseAll(inv, equipped)` — 합성 가능한 묶음이 없어질 때까지 반복. 만든 개수 반환. 묶음 키는 <see cref="FuseKey"/>(T114 로 전설 미만은 종류 무관).
         /// <paramref name="equipped"/> 는 재료에서 뺄 집합(null/빈 집합 = 장착분도 재료 · T24 주인 «대장간에 장착중인 거도 합성 가능하게»).
         /// <paramref name="onFused"/> 는 합성 1회마다(재료 3개 · 산출물 — uid 부여 뒤) 불린다 — 게임은 여기서 <see cref="ReEquipAfterFuse"/> 로 장착 슬롯을 정리한다.
         /// </summary>
@@ -173,7 +188,8 @@ namespace KkomaKnight.Core
                 foreach (var g in inv)
                 {
                     if (equipped != null && equipped.Contains(g)) continue;
-                    if (!groups.TryGetValue(g.GroupKey, out var l)) { l = new List<GearItem>(); groups[g.GroupKey] = l; order.Add(g.GroupKey); }
+                    var key = FuseKey(D, g);   // T114 — 전설 미만은 부위·등급만(종류 무관)
+                    if (!groups.TryGetValue(key, out var l)) { l = new List<GearItem>(); groups[key] = l; order.Add(key); }
                     l.Add(g);
                 }
                 foreach (var k in order)
@@ -195,7 +211,7 @@ namespace KkomaKnight.Core
 
         /// <summary>
         /// 합성 뒤 장착 슬롯 정리(T24 · 승인 대기 29 기본값): 재료로 사라진 장비가 장착 중이었으면 **산출물이 같은 부위면 그 슬롯에 장착**, 아니면 슬롯을 비운다.
-        /// (같은 부위·종류·등급 3개 규칙이라 산출물은 항상 같은 부위 — 자동 장착 금지 원칙의 유일한 예외 · 산출물은 재료보다 항상 좋다.)
+        /// (합성 묶음은 언제나 «같은 부위» 라 산출물도 항상 같은 부위다 — T114 로 전설 미만은 종류만 무관해졌고 부위 규칙은 그대로 — 자동 장착 금지 원칙의 유일한 예외 · 산출물은 재료보다 항상 좋다.)
         /// 재료가 장착 중이 아니었으면 아무것도 바꾸지 않는다(자동 장착 없음 · aaaw T125 ①-c 그대로). 순수 C# — 수동(FuseMake)·자동(FuseAll onFused) 둘 다 이 함수 하나만 쓴다.
         /// </summary>
         public static void ReEquipAfterFuse(SaveData S, IList<GearItem> mats, GearItem made)

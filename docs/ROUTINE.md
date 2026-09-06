@@ -1375,6 +1375,8 @@ T85(적 처치 → 경험치·골드가 EXP 바·골드 pill 로 날아가 흡�
 
 ### T114 — 합성 조건: **전설 미만은 «같은 부위 + 개수» 만 맞으면 합성**(종류 무관) (주인 2026-09-07 · 규칙 변경 = 주인 지시 · aaaw 원본과 달라짐)
 
+> **🔄 (21:3X UTC · 워커 B · sess-1920-19253) 1~5항 코드 push — 남은 것은 확인이다.** 판정은 **`GearSystem.FuseKey(D, g)` 한 곳**(등급 < `RarLegend` → `부위|*|등급` · 아니면 `부위|종류|등급`)이고 `FuseAll`·대장간·«합성 가능» 점이 전부 그것만 본다. 옛 `GearItem.GroupKey` 는 **지웠다**(규칙이 둘이 되는 것을 막는다 · 결정 278). 화면은 `GearUi.Key`/`FusableKeys` 에 데이터를 받는 짝을 더해 고쳤고 **`GearScreen.cs` 는 한 줄도 안 건드렸다**(살아 있는 `T90-gear` lock 회피 · 결정 279). 산출물 종류 = base(강화 최고 · 동률이면 먼저 나온 것) 그대로. **골든 불변을 실측했다** — `Sim --seeds 11,12,13` 21칸 두 표 모두 동일. EditMode `GearFuseKeyTests` 4건이 지시서 5항 ⓐ~ⓔ 를 전부 못 박는다. **남은 것 = 6항 확인**: 그 커밋 CI 의 EditMode 새 4건 Passed + `GearTests`·PlayMode `ForgeEquippedFuseTests`·`UiSmokeTests` 회귀 0 + 주인 폰(종류가 다른 일반 3개가 합성되고 전설은 안 되는가).
+
 > 주인 원문(2026-09-07 08:2X): «그리고 대장간 합성할 때 **전설 전까지는 같은 부위 장비면 합성 가능**하게 해줘. **개수만 맞으면 되게.**»
 
 **지금**: 묶음 키가 `GearItem.GroupKey = Part | Type | Rar`(`GearSystem.cs:11` · `FuseAll` 이 이 키로 3개씩 묶는다 `GearSystem.cs:176`) — **부위·종류·등급이 전부 같아야** 3개가 모인다.

@@ -23,7 +23,10 @@ namespace KkomaKnight.Game
         /// <summary>장비 아이콘 = <see cref="GearLook"/> 표의 **아이콘 키**(T31 · 투구·무기·갑옷은 CharacterMaker Thumbnail <c>cmi.gear.*</c> — 입는 파츠 <c>cm.gear.*</c> 와 분리 · 목걸이·장갑·신발은 GUI Pro 아이콘(임시)).</summary>
         public static string IconKey(GameData D, GearItem g) => GearLook.IconKey(D, g);
         public static string SetIcon(string set) => set == "crit" ? "pi.critical" : set == "hpsh" ? "pi.heart" : "ui.dodge";
-        public static string Key(GearItem g) => g.Part + "|" + g.Type + "|" + g.Rar;
+        /// <summary>합성 묶음 키 — 판정은 <see cref="GearSystem.FuseKey"/> 한 곳에 있다(T114 · 전설 미만은 부위·등급만 = 종류 무관). 표(등급 경계)가 필요하므로 데이터를 받는다.</summary>
+        public static string Key(GameData D, GearItem g) => GearSystem.FuseKey(D, g);
+        /// <summary>데이터를 안 넘기는 호출부(기존 화면·테스트)용 — 지금 돌고 있는 <see cref="App"/> 의 데이터를 쓴다.</summary>
+        public static string Key(GearItem g) => GearSystem.FuseKey(App.I != null ? App.I.Data : null, g);
 
         /// <summary>인벤 정렬 — 장착분 먼저, 그다음 등급·강화 내림차순, 부위 이름.</summary>
         public static List<GearItem> Sorted(SaveData S)
@@ -37,12 +40,14 @@ namespace KkomaKnight.Game
             });
             return list;
         }
-        /// <summary>같은 부위·종류·등급이 3개 이상인 키.</summary>
-        public static HashSet<string> FusableKeys(SaveData S)
+        /// <summary>합성 묶음(<see cref="Key(GameData, GearItem)"/>)이 3개 이상인 키 — T114 로 전설 미만은 «같은 부위·등급» 3개면 종류가 달라도 걸린다.</summary>
+        public static HashSet<string> FusableKeys(GameData D, SaveData S)
         {
-            var cnt = new Dictionary<string, int>(); foreach (var g in S.Inv) { var k = Key(g); cnt[k] = (cnt.TryGetValue(k, out var c) ? c : 0) + 1; }
+            var cnt = new Dictionary<string, int>(); foreach (var g in S.Inv) { var k = Key(D, g); cnt[k] = (cnt.TryGetValue(k, out var c) ? c : 0) + 1; }
             var set = new HashSet<string>(); foreach (var kv in cnt) if (kv.Value >= 3) set.Add(kv.Key); return set;
         }
+        /// <summary>데이터를 안 넘기는 호출부(장비 화면의 «합성 가능» 빨간 !)용.</summary>
+        public static HashSet<string> FusableKeys(SaveData S) => FusableKeys(App.I != null ? App.I.Data : null, S);
         /// <summary>인벤에 더 좋은 게 있다(↑) — 자동 장착은 없고 표시만.</summary>
         public static bool BetterInInv(SaveData S, string part)
         {
