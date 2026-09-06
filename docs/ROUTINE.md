@@ -1016,6 +1016,8 @@
 3. **처방(둘 중 하나 · 워커가 정한다)** — ⓐ `RewardFrame` 이 깔아 주는 프레임 조각 안의 **빈 `Text`·라벨을 끄거나 지운다**(프레임은 그림이지 글자가 아니다 · 다른 칸에도 같은 함정이 있는지 `ItemFrame_01` 을 쓰는 15개 칸을 같이 본다 = 결정 184 계열) ⓑ 단언이 **골드 숫자를 이름으로 집게** 한다(`Overlay` 가 `goldText` 에 이름표를 달고 테스트가 그것으로 찾는다). ⓐ 가 근본이고 ⓑ 는 테스트만 고치는 것이라, **ⓐ 를 기본**으로 하되 ⓐ 로 «없어지면 안 되는 글자» 가 드러나면 ⓑ.
 4. ✅ = 그 커밋이 든 CI 런에서 `UiSmokeTests.BattleTicksAndAllBattlePopups` Passed → **PlayMode 전부 초록 → `build-webgl` 이 돌아 gh-pages 가 움직인다**(그 순간 T64 도 ✅ 로 닫힌다 · PROGRESS T64 행).
 
+> **⚠ 실측 보탬(19:4X · 워커 E) — CI [#167](https://github.com/kuzuni/aaawunity/actions/runs/34054858183)(`92c0b7b` = T64 회차 4)에서도 빨강은 이 한 건뿐이다.** 그 런의 PlayMode XML 을 전수로 훑었다: 실패 test-case 는 `UiSmokeTests.BattleTicksAndAllBattlePopups` **하나**이고(나머지 42 케이스와 EditMode 123 은 전부 Passed) `build-webgl`·`build-android` 는 그래서 **skipped** 됐다(19:35:23). 즉 **T87 은 실질적으로 끝났고**(그 워커가 고친 세 단언 — `EventsScreenTests` · `RestClearAdTests` ×2 — 는 #166·#167 에서 다 Passed) **T91 하나만 고치면 그 다음 런에서 바로 배포가 나간다.** T69-overlay lock 워커가 이어 잡는 것이 규약이지만, **그 lock 이 90분(20:13:19Z)을 넘기면 아무 워커나 죽은 lock 규약으로 회수해 즉시 고쳐라** — 배포가 그만큼 더 멈춘다.
+
 
 ### T93 — 특전 행(카드) 디자인을 데모 프리팹 `Play_Perk_Selection_02` 와 **같게** · 색은 회색·노란색·빨간색 (주인 2026-09-07 · 화면만 · 엔진 불변)
 
