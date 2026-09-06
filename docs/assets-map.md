@@ -221,14 +221,14 @@
 | sprites | `gi.armor.crit` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Chest_01.png` | fileID 21300000 |  |
 | sprites | `gi.armor.hpsh` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Shield_03_Blue.png` | fileID 21300000 |  |
 | sprites | `gi.armor.evade` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Belt_03.png` | fileID 21300000 |  |
-| sprites | `gi.glove.crit` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Glove_02_Red.png` | fileID 21300000 |  |
-| sprites | `gi.glove.hpsh` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Glove_02_Blue.png` | fileID 21300000 |  |
-| sprites | `gi.glove.evade` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Glove_02_Blue.png` | fileID 21300000 |  |
+| sprites | `gi.glove.crit` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Ring_01_Gold.png` | fileID 21300000 | T88 «장갑 → 반지»(주인 2026-09-07): 부위 키는 glove 그대로, 그림만 반지(Gear_Ring_01_Gold/Silver) · 표시 이름은 GearRole.DisplayName 이 «반지» 로 덮는다 |
+| sprites | `gi.glove.hpsh` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Ring_01_Silver.png` | fileID 21300000 |  |
+| sprites | `gi.glove.evade` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Ring_01_Gold.png` | fileID 21300000 |  |
 | sprites | `gi.boot.crit` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Boots_01.png` | fileID 21300000 |  |
 | sprites | `gi.boot.hpsh` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Boots_02.png` | fileID 21300000 |  |
 | sprites | `gi.boot.evade` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Boots_01.png` | fileID 21300000 |  |
-| sprites | `gi.neck.crit` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Ring_01_Gold.png` | fileID 21300000 | 목걸이 아이콘이 팩에 없어 반지/룬으로 대체 |
-| sprites | `gi.neck.hpsh` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Ring_01_Silver.png` | fileID 21300000 |  |
+| sprites | `gi.neck.crit` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Rune_01.png` | fileID 21300000 | 목걸이 아이콘이 팩에 없어 룬 펜던트(Economy_Rune_01/02)로 대체 — T88 에서 반지(glove)에 반지 그림을 주면서 옮겼다 |
+| sprites | `gi.neck.hpsh` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Rune_02.png` | fileID 21300000 |  |
 | sprites | `gi.neck.evade` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Rune_01.png` | fileID 21300000 |  |
 | sprites | `chest.rare` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/Chest/Chest_01_Silver.Png` | fileID 21300000 | 상점 «희귀 상자» = 은 상자 · 전설 = 금 · 신화 = 프리미엄 (카드 그림 chest.<key> · 뽑기 결과 팝업엔 *_Open · T40) |
 | sprites | `chest.rare.open` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/Chest/Chest_01_Silver_Open.Png` | fileID 21300000 |  |
