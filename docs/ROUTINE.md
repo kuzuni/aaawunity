@@ -72,7 +72,7 @@
 
 ## 1. 절대 규칙
 
-- **플레이 콘솔 에러 0 (주인 상시 지시 2026-09-05).** 플레이 중 유니티 콘솔에 빨간 줄(에러·예외·Assert)이 하나라도 뜨는 상태로 작업을 «완료» 라 적지 않는다. 화면/전투/팝업 코드를 바꾼 커밋은 T11 의 PlayMode 스모크 테스트(`Assets/Tests/PlayMode/UiSmokeTests.cs`)가 그 화면을 열어 빨간 줄 0 을 검증해야 한다(테스트가 없으면 같은 커밋에 추가). 검사 도우미는 `PlayLog.AssertNoRed` — **`LogAssert.NoUnexpectedReceived()` 는 쓰지 않는다**(이 프로젝트의 Test Framework 1.6 은 일반 `Debug.Log` 도 «예상 밖 로그» 로 실패시킨다 · CI #33 회귀). 런타임 Camera·RenderTexture·씬 오브젝트를 새로 만들면 URP 2D(Renderer2D · 깊이/스텐실 사용) 와 호환되는지 반드시 확인한다. 주인이 붙인 콘솔 로그는 다 고칠 때까지 «주인 콘솔 에러 보고함» 에 남기고, 고친 항목에는 커밋 해시와 원인을 적는다.
+- **플레이 콘솔 에러 0 (주인 상시 지시 2026-09-05).** 플레이 중 유니티 콘솔에 빨간 줄(에러·예외·Assert)이 하나라도 뜨는 상태로 작업을 «완료» 라 적지 않는다. 화면/전투/팝업 코드를 바꾼 커밋은 T11 의 PlayMode 스모크 테스트(`Assets/Tests/PlayMode/UiSmokeTests.cs`)가 그 화면을 열어 빨간 줄 0 을 검증해야 한다(테스트가 없으면 같은 커밋에 추가). 검사 도우미는 `PlayLog.AssertNoRed` — **`LogAssert.NoUnexpectedReceived()` 는 쓰지 않는다**(이 프로젝트의 Test Framework 1.6 은 일반 `Debug.Log` 도 «예상 밖 로그» 로 실패시킨다 · CI #33 회귀). 런타임 Camera·RenderTexture·씬 오브젝트를 새로 만들면 URP 2D(Renderer2D · 깊이/스텐실 사용) 와 호환되는지 반드시 확인한다. **DOTween 트윈을 만들면 반드시 `.SetLink(대상 gameObject)` 를 붙인다**(T56 · 대상이 어떤 경로로 파괴돼도 «has been destroyed» 노란 경고가 안 난다 · `UiKit.Clear` 의 KillTweens 는 Clear 경로만 지킨다). 주인이 붙인 콘솔 로그는 다 고칠 때까지 «주인 콘솔 에러 보고함» 에 남기고, 고친 항목에는 커밋 해시와 원인을 적는다.
 - **aaaw 레포 수정 금지.** 수치(`data/*.json`)는 `tools/check_data_sync.sh --sync` 로만 가져온다. JSON 을 손으로 고치지 않는다.
 - **코드에 게임 수치를 직접 박지 않는다** — `KkomaKnight.Core.GameData` 에서 읽는다. 상수가 JSON 에 없으면 이 레포 전용 JSON(`Assets/KkomaKnight/*.json` · shop.json 방식)에 넣고 «워커 결정 기록» 에 한 줄 적는다(코드 상수 금지는 그대로).
 - **새 콘텐츠(특전/시스템/수치 체계) 임의 추가 금지.** 화면 껍데기(T42~T44)는 콘텐츠가 아니다. **주인 승인을 기다리는 일은 없다(2026-09-06)** — 판단이 필요하면 스스로 정해 적용하고 «워커 결정 기록» 에 남긴다.
@@ -521,7 +521,7 @@
 2. 수정: `UiKit.Clear` 가 자식을 **트리에서 먼저 떼고**(`SetParent(null, false)` · 비활성) 파괴한다 — T48 상점 껍데기와 같은 규칙(결정 80 · `Find`/`childCount` 가 같은 프레임에 옛 것을 보지 않게). 트윈 Kill 순서는 그대로(먼저).
 3. 게이트 + PROGRESS T55 행 + 확인 수단 = 이 코드 커밋의 CI 유니티 잡(PlayMode 전부 Passed → `screens`·gh-pages 첫 배포).
 
-### T56 — 플레이 콘솔 노란 줄 0: DOTween 세이프 모드 경고(파괴된 오브젝트를 겨냥한 트윈 · CI #77 유니티 로그 «safe mode captured 59 errors» = missing target 47 + startup 12) — 모든 트윈에 `SetLink(gameObject)` (§1 · T12 감사 ⓓ 부류 · 제약 없음)
+### T56 — 플레이 콘솔 노란 줄 0: DOTween 세이프 모드 경고(파괴된 오브젝트를 겨냥한 트윈 · CI #77 유니티 로그 «safe mode captured 59 errors» = missing target 47 + startup 12) — 모든 트윈에 `SetLink(gameObject)` (§1 · T12 감사 ⓓ 부류 · 제약 없음) ✅ (코드 완료 · `262ca21` · 확인 = CI #82 로그의 «SAFE MODE captured N» = 0 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/UiKit.cs`(Clickable 눌림 punch · PopIn · FadeIn · Reveal — **`Clear` 는 T55 몫 · 손대지 않는다**) · `Overlay.cs`(마스터 시퀀스 · 골드 카운트업 · BossWarn 띠) · `BattleWorld.cs`(피격 punch · 데미지 팝) · 테스트 불변
 순서: 제약 없음(T55 와 같은 UiKit 파일이지만 다른 줄 · 한 줄씩이라 rebase 로 풀린다 · T50/T51 의 `Sync` 와도 다른 줄).
 1. 원인(CI #77 https://github.com/kuzuni/aaawunity/actions/runs/34024048144 유니티 로그 · 테스트별 경고 수: ForgeShowsAllAndFuses 26 · LobbySettingsTalentPetToast 8 · PlayerNeverWalks… 7 · DungeonArenaPagesAndPopups 6 · ForgeEquippedFuse 4 · 그 밖 8): 트윈 원점 = DOPunchScale 27(버튼 눌림 · `UiKit.Clickable`) · DOScale 11(`PopIn`/`Reveal`) · DOFade 11(`FadeIn`/`Reveal`/BossWarn) · DOAnchorPosY 5(데미지 팝) · DOPunchPosition 1(피격). 대상 오브젝트가 `UiKit.Clear`(T49 `KillTweens`) 가 아닌 경로 — 화면 루트·월드 루트·캔버스 `Destroy` · 인벤/셀 재구성 · 팝업 갈아끼움 — 로 파괴되면 DOTween 이 다음 갱신에서 «Target or field is missing/null»(노란 경고 · safeMode 가 조용히 kill), 시작 전에 파괴되면 «Tween startup failed» 를 찍는다. 에디터 플레이에서도 같은 경로(합성 뒤 인벤 재구성 · 전투 종료 · 팝업 갈아끼움)에서 노란 줄이 뜬다 — T49 완료 기록이 «파괴된 오브젝트를 만지는 트윈 경고 = §1 콘솔 줄» 이라 적은 그 부류.
