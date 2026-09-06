@@ -277,5 +277,75 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("로비 복귀");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T108(주인 2026-09-07 «창이 스무스하게 나가지 않고 멈춰 있는 현상 · 창 발사하면 그냥 멈추지 말고 쭉 지나가면서 다 데미지 주고 지나가야 함 · 쩄든 뭐든 멈추면 안 됨»).
+        /// T86 이 «킬 연출 중에도 간다» 를 넣었는데도 주인 눈에 멈춰 보인 까닭은 <b>관통형의 «다음에 꿸 적» 걸림쇠</b>였다 —
+        /// 엔진이 보류되면 그 걸림쇠도 같이 멎어서 창이 적 앞에 붙어 선다(결정 246). 여기서 재는 것:
+        /// ⓐ 적을 <b>줄줄이 세워 둔</b> 채 엔진이 보류돼도 창의 표시 x 가 <b>한 프레임도 안 멈추고</b> 간다
+        /// ⓑ <b>좌표 점프가 없다</b>(프레임 간 이동량 ≤ 속도 × dt × 배속 × <see cref="BattleWorld.ProjCatchUpMul"/> · T108 2항 «스냅 금지»)
+        /// ⓒ 창은 첫 적을 <b>지나쳐</b> 간다(거기서 서지 않는다).
+        /// 엔진의 관통 판정 자체는 이미 aaaw <c>sim.js</c> 와 같다(<c>fireSpear</c> 의 <c>pierce:SPEAR_PIERCE</c> = 8) — 그래서 여기서는 그림만 본다.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator SpearNeverStallsAndFliesThroughEnemiesWithoutSnapping()
+        {
+            yield return Boot();
+            _app.StartBattle(1);
+            var bs = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bs); var G = bs.G; Assert.IsNotNull(G, "전투 상태");
+            var world = bs.World; Assert.IsNotNull(world, "BattleWorld");
+            Arm(G);
+            Time.timeScale = 3f;
+            float t0 = Time.realtimeSinceStartup;
+            while (!world.HoldEngine && Time.realtimeSinceStartup - t0 < 30f && !G.Over && !_app.Overlay.IsOpen) yield return null;
+            Time.timeScale = 1f;
+            Assert.IsTrue(world.HoldEngine, "킬 연출로 엔진이 보류되는 순간이 있어야 시험이 성립한다(T50)");
+
+            // 살아 있는 적이 «창의 길 위에» 있는 상태로 만든다 — 예전 걸림쇠라면 그 적 앞에서 바로 섰다.
+            var alive = G.AliveList();
+            Assert.Greater(alive.Count, 0, "전투 중이라 살아 있는 적이 있어야 한다");
+            EnemyState ahead = null;
+            foreach (var e in alive) if (e.WorldX > G.P.WorldX && (ahead == null || e.WorldX < ahead.WorldX)) ahead = e;
+            Assert.IsNotNull(ahead, "앞에 있는 적");
+            double x0 = G.P.WorldX + EngineConst.ProjSpawnDx;
+            // 그 적을 한참 지나치는 사거리
+            double reach = (ahead.WorldX - x0) + 1200;
+            var spear = Ghost(G, ProjKind.Spear, ahead.Wave, ahead, x0, reach);
+            G.Projs.Add(spear);
+            yield return null;
+
+            // ⓒ 걸림쇠가 사거리 끝뿐인가 — 앞에 살아 있는 적이 있어도 그 적 자리로 깎이면 안 된다(결정 246 · 이것이 «멈춰 있는 현상» 의 원인이었다)
+            Assert.Greater(ahead.WorldX, x0, "적이 창보다 앞에 있어야 시험이 성립한다");
+            Assert.Less(ahead.WorldX, spear.MaxX, "적이 창의 사거리 안에 있어야 시험이 성립한다");
+            Assert.AreEqual(spear.MaxX, world.ProjLimit(spear), 1e-6,
+                "관통형(창·검기)의 표시 걸림쇠는 «사거리 끝» 뿐이어야 한다 — 앞의 적 자리로 깎이면 엔진이 보류된 동안 그 적 앞에 붙어 선다(T108 3항 · 주인 «쭉 지나가면서»)");
+
+            int frames = 0, stalled = 0; double prev = world.ProjShownX(spear); double worstStep = 0;
+            float t1 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t1 < 0.8f && !G.Over && !_app.Overlay.IsOpen && G.Projs.Contains(spear))
+            {
+                float dt = Time.deltaTime;
+                // 팝업·일시정지·판 종료 프레임은 «게임 전체가 멈춘» 것이라 세지 않는다(지시서 T108 1항의 유일한 예외)
+                bool running = world.EngineRunning;
+                yield return null;
+                double shown = world.ProjShownX(spear); double step = shown - prev;
+                if (!running || !world.EngineRunning) { prev = shown; continue; }
+                frames++;
+                if (step <= 1e-9) stalled++;
+                // 한 프레임에 «속도 × dt × 배속 × 배율» 보다 더 갔으면 그것이 스냅(튐)이다
+                double cap = spear.Spd * Math.Max(dt, 1e-4) * Math.Max(1, bs.Speed) * BattleWorld.ProjCatchUpMul + 1.0;
+                if (step > cap) worstStep = Math.Max(worstStep, step - cap);
+                prev = shown;
+            }
+            Assert.Greater(frames, 10, "재는 프레임이 있어야 한다");
+            Assert.AreEqual(0, stalled, "창은 어떤 상태에서도 멈추면 안 된다 — 멈춘 프레임 " + stalled + "/" + frames + " (T108 1항 · 주인 «쩄든 뭐든 멈추면 안 됨»)");
+            Assert.AreEqual(0.0, worstStep, 1e-6, "표시 좌표가 튀었다(스냅) — 초과 이동량 " + worstStep.ToString("0.0") + "px (T108 2항)");
+            _log.AssertNoRed("창 관통 비행");
+
+            G.Projs.Remove(spear); yield return Frames(2);
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            _log.AssertNoRed("로비 복귀");
+            yield return Shutdown();
+        }
     }
 }

@@ -91,6 +91,12 @@ namespace KkomaKnight.Game
         /// T86 ⓐ: 투사체 표시 x 는 이 동안에만 전진한다(킬 연출로 엔진 틱이 보류된 <see cref="HoldEngine"/> 프레임도 «흐르는 중» 이다 — 그래서 도끼·창이 제자리에 뜨지 않는다).
         /// </summary>
         public bool EngineRunning = true;
+        /// <summary>
+        /// 전투 배속(x1/x2 · <see cref="BattleScreen"/> 이 매 프레임 넣어 준다 · T108).
+        /// 엔진 배속은 <c>Time.timeScale</c> 이 아니라 «한 프레임에 도는 틱 수» 라서, 표시 x 도 같은 배로 가야 엔진과 안 벌어진다
+        /// (지시서 T108 1항 «unscaled 아님 = 전투 배속은 따른다»). 예전에는 벌어진 만큼을 <c>shown = pr.X</c> 로 스냅해 메웠고 그게 «튀는 순간» 이었다.
+        /// </summary>
+        public int Speed = 1;
         // 투사체
         readonly Dictionary<Projectile, GameObject> _projs = new Dictionary<Projectile, GameObject>();
         /// <summary>투사체 표시 x(T86 ⓐ) — 엔진 x 와 «같은 px/s»(pr.Spd)로 매 프레임 전진하고, 엔진이 앞서면 엔진을 따르며, 엔진이 맞히는 자리는 앞지르지 않는다.</summary>
@@ -589,25 +595,31 @@ namespace KkomaKnight.Game
         /// <summary>투사체의 화면 오브젝트(T86 · 테스트·진단용 · 각도 확인).</summary>
         public GameObject ProjGo(Projectile pr) { if (pr != null && _projs.TryGetValue(pr, out var go)) return go; return null; }
 
-        /// <summary>엔진이 이 투사체를 «맞히는 자리» — 표시 x 는 여기를 앞지르지 않는다(T86 ⓐ).</summary>
+        /// <summary>
+        /// 엔진이 이 투사체를 «맞히는 자리» — 표시 x 는 여기를 앞지르지 않는다(T86 ⓐ).
+        /// <para>
+        /// <b>T108(주인 2026-09-07 «창 발사하면 그냥 멈추지 말고 쭉 지나가면서 다 데미지 주고 지나가야 함 · 쩄든 뭐든 멈추면 안 됨»)에서
+        /// 관통형(창·검기)의 «다음에 꿸 적» 걸림쇠를 없앴다</b>(결정 246). 그것이 주인이 본 «멈춰 있는 현상» 의 원인이었다 —
+        /// 창은 대부분 처치 시 특전이 쏘므로 스폰 프레임이 곧 킬 틱이고, 그동안 엔진 틱이 보류(<c>HoldEngine</c> · T50)돼 <c>pr.X</c> 가 멎는다.
+        /// 그러면 걸림쇠(= 바로 앞 적의 적중 시작 자리)도 같이 멎으므로 표시 창이 <b>그 적 앞에 붙어 선 채로</b> 엔진이 풀리기를 기다렸다.
+        /// 적이 촘촘한 웨이브에서는 적마다 이 일이 되풀이돼 «끊겨 보인다».
+        /// </para>
+        /// 관통형은 이제 <b>사거리 끝(<c>MaxX</c>)까지 한 번도 안 멈추고</b> 간다 — 엔진은 판정만 하고(관통·피해·마릿수 상한은 그대로),
+        /// 표시가 적을 살짝 먼저 지나가도 엔진이 곧 같은 적을 꿰므로 그림과 판정이 어긋나 보이지 않는다.
+        /// 유도형(도끼·화살)은 «맞는 순간 사라지는» 것이라 목표 자리 걸림쇠를 그대로 둔다(그걸 풀면 목표를 지나쳐 날아가 버린다).
+        /// </summary>
         public double ProjLimit(Projectile pr)
         {
-            if (pr.Kind == ProjKind.Spear || pr.Kind == ProjKind.Wave)
-            {
-                double lim = pr.MaxX;   // 관통형: 다음에 꿸 적(아직 안 맞은 · 같은 웨이브)의 적중 시작 자리 · 없으면 사거리 끝
-                foreach (var kv in _enemies)
-                {
-                    var e = kv.Key;
-                    if (e.Dead || e.Hp <= 0) continue;
-                    if (pr.Node != null && e.Wave != pr.Node) continue;
-                    if (pr.Hit != null && pr.Hit.Contains(e)) continue;
-                    double x = e.WorldX - EngineConst.ProjHitTol;
-                    if (x > pr.X && x < lim) lim = x;
-                }
-                return lim;
-            }
+            if (pr.Kind == ProjKind.Spear || pr.Kind == ProjKind.Wave) return pr.MaxX;
             return pr.Target != null && pr.Target.Hp > 0 ? pr.Target.WorldX - EngineConst.ProjArriveDx : pr.X;   // 유도형(도끼·화살): 도달 판정 자리
         }
+
+        /// <summary>
+        /// 표시 x 가 엔진 x 를 따라잡을 때 한 프레임에 갈 수 있는 최대 배율(T108 2항 «스냅 금지»).
+        /// 엔진이 앞서 있으면 예전에는 <c>shown = pr.X</c> 로 <b>툭 끌어당겼다</b> — 킬 연출이 풀리는 순간 창이 순간이동한 것이 그것이다.
+        /// 이제는 평소 속도의 이 배까지만 더 가며 부드럽게 좁힌다(게이트도 이 값으로 «프레임 간 이동량 ≤ 속도 × dt × 1.5» 를 단언한다).
+        /// </summary>
+        public const float ProjCatchUpMul = 1.5f;
 
         void SyncProjectiles(float dt)
         {
@@ -633,8 +645,14 @@ namespace KkomaKnight.Game
                 if (Silent) shown = pr.X;
                 else
                 {
-                    if (EngineRunning) shown += pr.Spd * dt;
-                    if (shown < pr.X) shown = pr.X;
+                    // 팝업·일시정지·판 종료(EngineRunning=false)일 때만 선다 — 킬 연출로 엔진이 보류된 동안에도 간다(T108 1항)
+                    if (EngineRunning)
+                    {
+                        double step = pr.Spd * dt * System.Math.Max(1, Speed);
+                        // 엔진이 앞서 있으면 스냅하지 않고 «조금 더 빨리» 좁힌다(T108 2항 · 최대 ProjCatchUpMul 배)
+                        if (shown < pr.X) step = System.Math.Min(pr.X - shown, step * ProjCatchUpMul);
+                        shown += step;
+                    }
                     double lim = ProjLimit(pr); if (shown > lim) shown = System.Math.Max(pr.X, lim);
                 }
                 _projX[pr] = shown;

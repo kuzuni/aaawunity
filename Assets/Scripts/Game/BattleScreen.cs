@@ -222,6 +222,8 @@ namespace KkomaKnight.Game
             _world.TimeScale = _speed;
             // T86 ⓐ — 엔진 시간이 «흐르는» 프레임인가(팝업·일시정지·판 종료면 아니다). 킬 연출로 틱만 보류된 프레임(HoldEngine)은 «흐르는 중» 이라 투사체가 계속 난다.
             _world.EngineRunning = !App.Overlay.IsOpen && !_paused && !G.Over;
+            // 표시 투사체도 같은 배속으로(T108 · 스냅 없이 엔진과 붙어 간다)
+            _world.Speed = _speed;
             _world.Sync(dt * _speed);
             AbsorbTick(dt * _speed);   // T85 — 구슬이 도착한 만큼 표시 숫자·바가 차오른다(엔진 값 불변)
             RefreshHud();
