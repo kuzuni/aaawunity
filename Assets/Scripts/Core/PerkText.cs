@@ -4,7 +4,7 @@ namespace KkomaKnight.Core
 {
     /// <summary>
     /// 특전 설명 표기 «트리거: 내용» (주인 2026-09-06 · T53) — «처치 시 33% 확률로 …» → «처치 시: 33% 확률로 …».
-    /// 원문은 aaaw 정본 perks.json 의 desc(불변) · 표시 시점에만 바꾼다(엔진·데이터 불변). 트리거 구가 없는 상시 능력치(«공격력 +30%» 등)는 원문 그대로.
+    /// 원문은 aaaw 정본 perks.json 의 desc(불변) · 표시 시점에만 바꾼다(엔진·데이터 불변). 트리거 구가 없는 상시 능력치(«공격력 +30%» 등)는 «패시브: 공격력 +30%»(주인 정정 09:3X).
     /// 규칙은 아래 표 한 곳 — 앞머리 트리거 구를 떼어 «트리거: 나머지» 로. 이미 콜론이 붙어 있으면(«처치 시: …») 다시 안 붙는다(멱등).
     /// 색·굵기는 넣지 않는다(T52 «특전 글자 한 색»).
     /// </summary>
@@ -24,7 +24,11 @@ namespace KkomaKnight.Core
             new Rule(@"^평타 적중마다 ", "평타 적중마다: "),
         };
 
-        /// <summary>표시용 설명 — 트리거 구가 있으면 «트리거: 내용», 없으면 원문 그대로. null/빈 문자열은 그대로 돌려준다.</summary>
+        /// <summary>상시 능력치 접두어(주인 정정 09:3X «상시 같은 거는 패시브:») — 100개 전부 «무언가: » 로 시작하게 된다.</summary>
+        public const string PassivePrefix = "패시브: ";
+        static readonly Regex AlreadyRx = new Regex(@"^[^:]{1,24}: ", RegexOptions.CultureInvariant);   // 이미 «트리거: » 꼴(멱등)
+
+        /// <summary>표시용 설명 — 트리거 구가 있으면 «트리거: 내용», 없으면 «패시브: 원문». null/빈 문자열은 그대로 돌려준다.</summary>
         public static string Format(string desc)
         {
             if (string.IsNullOrEmpty(desc)) return desc;
@@ -33,10 +37,16 @@ namespace KkomaKnight.Core
                 var m = r.Rx.Match(desc);
                 if (m.Success) return r.Rx.Replace(desc, r.To, 1);
             }
-            return desc;
+            if (AlreadyRx.IsMatch(desc)) return desc;
+            return PassivePrefix + desc;
         }
 
-        /// <summary>트리거 구가 있는 설명인가(= Format 이 원문을 바꾸는가) — 테스트·진단용.</summary>
-        public static bool HasTrigger(string desc) => !string.IsNullOrEmpty(desc) && Format(desc) != desc;
+        /// <summary>원문에 트리거 구가 있는가(«처치 시 …» 등 · Rules 에 걸리는가) — 없으면 «패시브: » 가 붙는다. 테스트·진단용.</summary>
+        public static bool HasTrigger(string desc)
+        {
+            if (string.IsNullOrEmpty(desc)) return false;
+            foreach (var r in Rules) if (r.Rx.IsMatch(desc)) return true;
+            return false;
+        }
     }
 }
