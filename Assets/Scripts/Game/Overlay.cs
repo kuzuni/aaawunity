@@ -459,8 +459,9 @@ namespace KkomaKnight.Game
         public void ConfirmReset()
         {
             var box = Box("ui.popup.red", "ui.title.red", "데이터 삭제", new Layout.R(6, 32, 88, 36));
-            Sub(box, "정말 삭제할까요?", 16, 12, 40, Palette.Ink);
-            Sub(box, "장비·골드·보석·진행이 모두 사라집니다.\n되돌릴 수 없습니다.", 34, 22, 30);
+            // 크기는 종류로만(§1) · 가운뎃점 «·» 은 Jua 에 글리프가 없어 폭 0 으로 사라진다(«장비골드보석진행이…») → 쉼표 열거로(T63-toast)
+            Sub(box, "정말 삭제할까요?", 16, 12, TextSize.Body, Palette.Ink);
+            Sub(box, "장비, 골드, 보석, 진행이 모두 사라집니다.\n되돌릴 수 없습니다.", 34, 22, TextSize.Body);
             UiKit.Button(box, "ui.btnRed", "삭제", () => _app.ResetSave(), new Layout.R(8, 66, 40, 18));
             UiKit.Button(box, "ui.btnGray", "취소", () => Settings(), new Layout.R(52, 66, 40, 18));
         }
@@ -491,7 +492,8 @@ namespace KkomaKnight.Game
             panel.SetParent(parent, false); UnityEngine.Object.Destroy(whole);
             var prt = (RectTransform)panel; UiKit.Stretch(prt); prt.SetAsLastSibling();
             foreach (var g in panel.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
-            UiKit.SetText(panel, "Text (TMP)", "BOSS");
+            // 영문 데모 문구 0(T34 ⓒ) · 제목 종류로 표식(게이트 판정) — 프리팹 크기 100 은 그대로 두고, 글자 칸 445.7×141.9 에 «보스» 한 줄(159×140px)이 든다
+            UiKit.SetText(panel, "Text (TMP)", "보스", kind: TextKind.Title);
             var cg = panel.gameObject.AddComponent<CanvasGroup>(); cg.alpha = 0; cg.blocksRaycasts = false;
             DOTween.Sequence().Append(cg.DOFade(1, 0.2f)).AppendInterval(1.4f).Append(cg.DOFade(0, 0.4f)).OnComplete(() => UnityEngine.Object.Destroy(panel.gameObject)).SetUpdate(true).SetLink(panel.gameObject);   // SetLink(T56) — 전투가 먼저 끝나 HUD 가 파괴되면 띠 트윈도 같이
             var w = UiKit.Find(panel, "Warning"); if (w != null) UiKit.PopIn((RectTransform)w, 1.3f, 0.35f);

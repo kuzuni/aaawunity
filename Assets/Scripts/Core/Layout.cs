@@ -185,6 +185,15 @@ namespace KkomaKnight.Core
         /// <summary>이벤트 팝업(쉼터·악마·천사 등) — 표에 없는 화면. ⑧ 공통 «팝업 폭 87 · 좌우 여백 6.5» 와 ④ 의 세로(y28 h44)를 따른다.</summary>
         public static readonly R EvBox = new R(6.5f, 28.0f, 87.0f, 44.0f);
 
+        /// <summary>
+        /// 토스트 띠(ToastMessage_01) — 레퍼런스에 없는 요소라 자는 글자다. 프리팹은 글자 칸을 상자보다 세로 17.3px 작게 잡으므로
+        /// 본문 40 <b>두 줄</b>(<see cref="TextSize.BoxHeight"/> = 112px)이 들어가려면 상자가 129.3px 이상이어야 한다 — 전 5.0%(116.9px · 칸 99.6px)에선
+        /// 긴 문구(대장간 재료 안내 · 합성 완료)가 bestFit 으로 32 까지 말없이 줄었다. 6.0%(140.2px · 칸 123.0px) 로 올리고 <b>세로 중심(86.5%)은 그대로</b> 둔다(T63-toast).
+        /// </summary>
+        public static readonly R Toast = new R(4.0f, 83.5f, 92.0f, 6.0f);
+        /// <summary>토스트 프리팹이 글자 칸에서 빼는 세로(ToastMessage_01 의 «Text (TMP)» sizeDelta.y) — 칸 세로 계산·테스트에 쓴다.</summary>
+        public const float ToastTextInsetY = 17.2571f;
+
         // ⑨ 설정 팝업 — docs/ref/12_settings.jpg (T41 · 워커 실측 · 5% 격자 ±0.5%p · docs/ref-layout.md ⑨ 표와 같다)
         public static readonly R SetBox = new R(5.8f, 39.6f, 88.3f, 21.0f);
         public static readonly R SetRibbon = new R(25.0f, 37.5f, 50.0f, 4.2f);

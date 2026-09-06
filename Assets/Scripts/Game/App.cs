@@ -55,8 +55,8 @@ namespace KkomaKnight.Game
             Register(new LobbyScreen()); Register(new GearScreen()); Register(new ForgeScreen()); Register(new ShopScreen()); Register(new PetScreen()); Register(new BattleScreen()); Register(new EventsScreen());
             Register(new PrivilegeScreen()); Register(new PassScreen());   // T44 로비 사이드 페이지 2(특권 · 시즌 패스 · 껍데기)
             Overlay = new Overlay(this);
-            // 토스트 (GUI Pro ToastMessage_01)
-            _toastRt = (RectTransform)UiKit.Spawn("ui.toast", Frame).transform; UiKit.Pct(_toastRt, 4, 84, 92, 5);
+            // 토스트 (GUI Pro ToastMessage_01) — 칸 세로는 본문 40 두 줄이 들어가는 Layout.Toast (T63-toast · 전 5.0% 에선 긴 문구가 bestFit 으로 32 까지 줄었다)
+            _toastRt = (RectTransform)UiKit.Spawn("ui.toast", Frame).transform; UiKit.Pct(_toastRt, Layout.Toast);
             _toastText = _toastRt.GetComponentInChildren<Text>(true);
             _toastRt.gameObject.SetActive(false);
             Debug.Log("[KkomaKnight] boot: ui");
@@ -118,9 +118,13 @@ namespace KkomaKnight.Game
             Toast("데이터를 삭제했습니다");
         }
 
+        /// <summary>
+        /// 화면 아래 토스트 한 줄. 문구는 <see cref="TextGlyphs.Safe"/> 로 거른다 — Jua 에 없는 «·»·«×»·«→»·이모지는 유니티가 <b>폭 0</b> 으로 흘려
+        /// «같은 부위·종류·등급만» 이 «같은 부위종류등급만» 으로 붙어 나왔다(T63-toast). 문구 자체는 부르는 화면 코드의 것이라 여기서 한 번에 거른다.
+        /// </summary>
         public void Toast(string msg)
         {
-            if (_toastText != null) _toastText.text = msg;
+            if (_toastText != null) _toastText.text = TextGlyphs.Safe(msg);
             _toastRt.gameObject.SetActive(true); _toastRt.SetAsLastSibling(); _toastT = 1.8f; UiKit.PopIn(_toastRt, 0.9f, 0.2f);
         }
 

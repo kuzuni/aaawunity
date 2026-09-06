@@ -18,7 +18,15 @@ namespace KkomaKnight.Game
     /// </summary>
     public static class TextAudit
     {
-        /// <summary>잘림/넘침을 실패로 셀지 — 화면 12묶음 전수 점검(T63 3항)이 끝나면 true 로.</summary>
+        /// <summary>
+        /// 잘림/넘침을 실패로 셀지 — 화면 12묶음 전수 점검(T63 3항)이 <b>전부</b> ✅ 가 된 뒤 마지막 묶음(T63-toast)이 true 로 켠다.
+        /// <para>
+        /// 2026-09-06 14:5X 현재 아직 false 다: ⑩ 로비 팝업(T63-lobbypopups)·⑪ 결과 팝업(T63-results) 이 «대기» 이고 ①③⑤⑥⑦⑧⑨ 는 🔄(코드는 올렸지만 CI 게이트 로그로
+        /// 잘림 0 이 확인되기 전) 이다. 여기서 켜면 그 화면들의 잘림이 곧바로 main 빨강이 되고, main 이 빨가면 <c>screens</c>·gh-pages 배포가 멈춰
+        /// 남은 묶음들이 자기 화면을 채점할 재료(PNG)를 못 받는다(결정 114 와 같은 이유). 켜는 조건 = 12묶음 전부 ✅ + 그 CI 로그의
+        /// «[TextSizeGate] … 잘림/넘침 0».
+        /// </para>
+        /// </summary>
         public const bool ClipStrict = false;
 
         public sealed class Row

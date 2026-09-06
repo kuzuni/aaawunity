@@ -31,6 +31,15 @@ namespace KkomaKnight.Core
         /// <summary>데미지 팝·전투 숫자 — 지금보다 1.3배(전투 화면 하위 행이 쓴다).</summary>
         public const float BattleNumberMul = 1.3f;
 
+        /// <summary>
+        /// «글자 칸 세로 = 크기 × 1.4» (결정 141 · T63-events 가 Jua 로 실측해 정한 규격 — 잉크 ≈ 크기×0.75+2 에 줄 사이 여백까지).
+        /// 칸이 이보다 낮으면 잘리거나 bestFit 이 <see cref="BestFitMin"/> 까지 말없이 줄인다(게이트 표에는 안 잡히는 쪽).
+        /// </summary>
+        public const float LineBox = 1.4f;
+
+        /// <summary>글자 <paramref name="size"/> 로 <paramref name="lines"/> 줄을 담으려면 칸 세로가 최소 얼마여야 하나(px).</summary>
+        public static float BoxHeight(int size, int lines = 1) => size * LineBox * (lines < 1 ? 1 : lines);
+
         public static int Min(TextKind kind)
         {
             switch (kind)

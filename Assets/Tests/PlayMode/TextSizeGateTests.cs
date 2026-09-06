@@ -61,6 +61,17 @@ namespace KkomaKnight.Tests.Play
                 if (cv != null && cv.isRootCanvas) _rows.AddRange(TextAudit.Collect(name, cv.transform));
             yield return Frames(1);
         }
+        /// <summary>트윈을 끝내지 않고 모은다 — 보스 경고 띠(<see cref="Overlay.BossWarn"/>)는 트윈이 끝나면 <c>OnComplete</c> 로 스스로 파괴돼 <see cref="Check"/> 로는 못 잡는다(T63-toast).</summary>
+        IEnumerator CheckLive(string name)
+        {
+            yield return Frames(2);
+            Canvas.ForceUpdateCanvases();
+            foreach (var cv in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+                if (cv != null && cv.isRootCanvas) _rows.AddRange(TextAudit.Collect(name, cv.transform));
+            yield return Frames(1);
+        }
+        List<TextAudit.Row> Rows(string screen) { var l = new List<TextAudit.Row>(); foreach (var r in _rows) if (r.Screen == screen) l.Add(r); return l; }
+
         static bool Press(Transform root, string name) { if (root == null) return false; var t = UiKit.Find(root, name); var b = t != null ? t.GetComponent<UnityEngine.UI.Button>() : null; if (b == null) return false; b.onClick.Invoke(); return true; }
         GearItem Give(string part, int rar = 0, int plus = 0)
         {
@@ -146,6 +157,37 @@ namespace KkomaKnight.Tests.Play
             _app.Overlay.Dead(G, () => { }); yield return Check("res_lose"); _app.Overlay.Close(); yield return Frames(1);
 
             Time.timeScale = 1f; _app.ShowScreen("lobby"); yield return Frames(2);
+
+            // ⑫ 27 토스트 · 28 «데이터 삭제» 확인 팝업 · 29 보스 경고 띠 (T63-toast — 앞서 어느 화면에서도 안 열리던 셋)
+            // 가장 긴 실제 토스트(ForgeScreen 재료 안내 · 최악의 이름 = «체력실드 목걸이») — 본문 40 으로 두 줄이라 칸이 모자라면 bestFit 이 말없이 줄인다
+            const string longToast = "같은 부위·종류·등급만 재료가 됩니다 (목걸이 · 체력실드 목걸이 · 신화)";
+            _app.Toast(longToast); yield return Check("27_toast");
+            foreach (var r in Rows("27_toast"))
+            {
+                if (r.Path.IndexOf("ui.toast", System.StringComparison.Ordinal) < 0) continue;
+                Assert.GreaterOrEqual(r.Used, TextSize.Body, "토스트 글자가 본문 하한(40)보다 작게 그려진다 — 칸(Layout.Toast)이 두 줄을 못 담는다: " + r);
+                Assert.IsFalse(r.Clipped, "토스트 글자가 칸을 넘친다: " + r);
+                Assert.IsFalse(r.Text.Contains("·"), "토스트 문구가 TextGlyphs.Safe 를 안 거쳤다 — Jua 에 «·» 글리프가 없어 폭 0 으로 사라진다: " + r);
+                Assert.IsTrue(r.Text.Contains("부위/종류/등급"), "가운뎃점이 «/» 로 바뀌어야 한다: " + r);
+            }
+            _app.Overlay.ConfirmReset(); yield return Check("28_confirm_reset");
+            foreach (var r in Rows("28_confirm_reset"))
+            {
+                Assert.AreEqual(TextGlyphs.Safe(r.Text), r.Text, "글꼴에 없는 글자(«·» 등)가 그대로 남아 폭 0 으로 사라진다: " + r);
+                // 제목 리본(ui.title.*)·«탭하여 닫기» 는 UiKit.Popup 이 모든 팝업에 공통으로 다는 조각이라 이 행의 몫이 아니다 — 리본 글자 칸(656×115 의 안쪽 436×79.4)이
+                // 제목 60 의 줄(84px)보다 낮아 bestFit 이 56 으로 줄이는 것은 전 팝업 공통 결함이고 T70 으로 등재했다(ClipStrict 를 켜기 전에 고쳐야 한다).
+                if (r.Path.Contains("ui.title.") || r.Path.Contains("TapToClose")) continue;
+                Assert.IsFalse(r.Clipped, "«데이터 삭제» 확인 팝업 글자가 칸을 넘친다: " + r);
+                Assert.GreaterOrEqual(r.Used, TextSize.Body, "확인 팝업 글자가 본문 하한(40)보다 작게 그려진다: " + r);
+            }
+            _app.Overlay.Close(); yield return Frames(1);
+            _app.Overlay.BossWarn(_app.Frame); yield return CheckLive("29_boss_warn");
+            var warn = Rows("29_boss_warn").Find(r => r.Text == "보스");
+            Assert.IsNotNull(warn, "보스 경고 띠에 «보스» 글자가 있어야 한다(영문 데모 문구 0 — T34 ⓒ)");
+            Assert.AreEqual(TextKind.Title, warn.Kind, "보스 경고 띠 글자는 제목 종류다: " + warn);
+            Assert.GreaterOrEqual(warn.Used, TextSize.Title, "보스 경고 띠 글자가 제목 하한(60)보다 작게 그려진다: " + warn);
+            Assert.IsFalse(warn.Clipped, "보스 경고 띠 글자가 칸을 넘친다: " + warn);
+            UiKit.CompleteAllTweens(); yield return Frames(2);
 
             // 판정
             Assert.Greater(_rows.Count, 50, "활성 Text 가 거의 안 모였다(수집 실패)");
