@@ -89,7 +89,7 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
-> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T17~T60**(T59 = WebGL 배포 크래시 최우선 · T60 = 배포 스모크 게이트 · (T58 = 비평 하니스 PNG 촬영 결함(UI 띠 34.8% · 월드 스프라이트 겹침 · T46 뒤) · T57 ✅ · T47 🔄(회차 1 · 로비 9.7 ✅ · 전투 8.6 ✅ 캔버스 · 남은 코드 3건) · T46 ✅(screens CI #83 · T58 열림) · T44 ✅(비평 9.5~10.0) · T41 ✅(비평 10.0) · T36 ✅(비평 9.5) · T38 ✅(비평 8.5) · T56 = 플레이 콘솔 노란 줄 0 — DOTween 세이프 모드 경고(파괴된 오브젝트 겨냥 트윈 · `SetLink`) · T55 = CI #76·#77 빨강 후속(T49 회귀 · 최우선) · T49 = 팝업 등장 연출 DOTween 순서대로 · T50 = 킬 뒤 원래 걷기 속도(⚠ `T50.lock` 은 워커 A 의 T54 가 잡고 있다 — 사라진 뒤에 잡는다) · T54 = CI #75 빨강 후속(워커 A · `faa0d30`) · T51 = 대시도 공격 모션 뒤 ×5 + 사망 펑 이펙트 제거 · T52 = 특전 글자 한 색 · T53 = 특전 설명 «트리거: 내용» 표기 · 2026-09-06) — **T34~T44 = UI 를 `docs/ref` 레퍼런스 구도로(2026-09-06 · 최우선 · «프리팹 그대로» 계열 지시를 대체 · T25 흡수 · T27·T30·T32 폐기)**. 이전 묶음: T17~T33(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
+> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T17~T60**(T59 = WebGL 배포 크래시 최우선 · T60 = 배포 스모크 게이트 · (T58 = 비평 하니스 PNG 촬영 결함(UI 띠 34.8% · 월드 스프라이트 겹침 · T46 뒤) · T57 ✅ · T47 🔄(회차 1 · 로비 9.7 ✅ · 전투 8.6 ✅ 캔버스 · 남은 코드 3건) · T46 ✅(screens CI #83 · T58 열림) · T44 ✅(비평 9.5~10.0) · T41 ✅(비평 10.0) · T36 ✅(비평 9.5) · T38 ✅(비평 8.5) · T56 = 플레이 콘솔 노란 줄 0 — DOTween 세이프 모드 경고(파괴된 오브젝트 겨냥 트윈 · `SetLink`) · T55 = CI #76·#77 빨강 후속(T49 회귀 · 최우선) · T49 = 팝업 등장 연출 DOTween 순서대로 · T50 ✅(엔진 틱 보류 · 워커 H) · T54 ✅ · T51 ✅(T50 과 같은 커밋) · T52 = 특전 글자 한 색 · T53 = 특전 설명 «트리거: 내용» 표기 · 2026-09-06) — **T34~T44 = UI 를 `docs/ref` 레퍼런스 구도로(2026-09-06 · 최우선 · «프리팹 그대로» 계열 지시를 대체 · T25 흡수 · T27·T30·T32 폐기)**. 이전 묶음: T17~T33(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
 
 ### T1 — 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README ✅ (완료 · PROGRESS 참조)
 
@@ -472,7 +472,7 @@
 6. **테스트**: PlayMode `UiSmokeTests` — 팝업 연 직후에도 요소는 <b>존재</b>(개수·이름 단언은 그대로 · 알파/스케일 단언은 `DOTween.CompleteAll()` 뒤) · `LogAssert.NoUnexpectedReceived` · Close 뒤 해당 오브젝트를 겨냥한 트윈 0. `PlayShot`(T46) 은 `DOTween.CompleteAll()` 뒤에 찍어 비평 PNG 가 연출 중간을 찍지 않게.
 7. 게이트 + PROGRESS T49 행 + 완료 기록(«무엇으로 확인했는가» = CI 유니티 잡 PlayMode 전부 Passed).
 
-### T50 — 킬 뒤 이동 = «공격 모션 끝 → 걷기 모션 → 원래 걷기 속도(132·walkMul)로 다음 적» · 2배 따라잡기 폐지 (주인 2026-09-06 · T20 연출 수정 · 화면만 · 엔진 불변)
+### T50 — 킬 뒤 이동 = «공격 모션 끝 → 걷기 모션 → 원래 걷기 속도(132·walkMul)로 다음 적» · 2배 따라잡기 폐지 (주인 2026-09-06 · T20 연출 수정 · 화면만 · 엔진 불변) ✅ (완료 · `07873b4` · 워커 H · 격차 대신 엔진 틱 보류(`HoldEngine` · 결정 107) · 확인 = 그 커밋의 CI PlayMode `BattleWorldTests` · PROGRESS 참조)
 범위: `Assets/Scripts/Game/BattleWorld.cs`(`Sync` 의 표시 원점 `_shownPX` · `CatchUpMul`·`KillPending`·`_moving` · 플레이어 공격 모션 상태) · `CharacterRig.cs`(공격 중 여부 노출이 모자라면) · `Assets/Tests/PlayMode/BattleWorldTests.cs`(T20 테스트 갱신)
 순서: 제약 없음 — T47(전투 HUD 비평)이 BattleScreen/BattleWorld 를 만질 수 있으니 rebase. **엔진(`Core/Battle.cs` 671행 · `P.WorldX += PlayerSpeed*WalkMul*(Dash?DashMul:1)*dt`)은 손대지 않는다** — sim.js 와 1:1 이고 시드 골든이 걸려 있다.
 주인 원문(2026-09-06 · 09:0X UTC): «킬하고 나서 공격 모션 끝나고 나서 걸어가는 모션 나오면서 원래 걷기 속도로 다음 적 가야 함. 특전 부분은 그대로.»
@@ -485,7 +485,7 @@
 6. **테스트**(PlayMode `BattleWorldTests` · T20 것 갱신): ⓐ 킬 뒤 표시 원점의 프레임당 이동량 ≤ `PlayerSpeed×WalkMul×dt`(대시 아닐 때 2배 구간 0) ⓑ 공격 모션 중(`Attacking`)에는 표시 원점 이동 0 ⓒ 다음 적 앞에서 격차가 0 으로 수렴(엔진 정지 중) ⓓ `LogAssert.NoUnexpectedReceived`. 시드 골든(EditMode)은 건드릴 이유가 없다 — 바뀌면 엔진을 건드린 것이므로 되돌린다.
 7. 게이트 + PROGRESS T50 행 + 완료 기록(«무엇으로 확인했는가» = CI 유니티 잡 PlayMode 전부 Passed · 가능하면 T46 하니스 전투 PNG 는 참고만).
 
-### T51 — ① 특전 «처치 시 대시»도 «공격 모션 끝 → 그다음 ×5 로 걷기» · ② 적 사망 «펑» 이펙트(fx.death Magic Poof) 제거 (주인 2026-09-06 · T50 뒤 · 같은 파일)
+### T51 — ① 특전 «처치 시 대시»도 «공격 모션 끝 → 그다음 ×5 로 걷기» · ② 적 사망 «펑» 이펙트(fx.death Magic Poof) 제거 (주인 2026-09-06 · T50 뒤 · 같은 파일) ✅ (완료 · `07873b4` · T50 과 같은 커밋 · 워커 H · PROGRESS 참조)
 범위: `Assets/Scripts/Game/BattleWorld.cs`(`Sync` 표시 원점 — T50 이 만든 «공격 모션 끝까지 정지» 규칙에 대시도 포함 · 454행 `Fx.Spawn("fx.death", …)` 제거) · `Assets/Tests/PlayMode/BattleWorldTests.cs` · `docs/assets-map.md`(fx.death 행 «미사용» 표기 · catalog 키는 남겨도 된다)
 순서: **T50 뒤**(같은 `Sync` 코드 · T50 lock 이 풀리고 PROGRESS T50 이 ✅ 된 뒤) — T50 워커가 아직 작업 중이면 그 워커가 이어서 잡아도 된다.
 주인 원문(2026-09-06 · 09:1X UTC): «특전 부분도 생각해 보니까 킬하고 나서 공격 모션 끝나고 5배로 걷는 속도 되어야 하는 거임» · «죽을 때 펑 하고 터지는 이펙트 없애기».
@@ -514,7 +514,7 @@
 4. 같은 표기를 특전 설명이 보이는 모든 자리에(3택 · 보유 특전 · 악마 거래 · 천사 · PerkStrip 툴팁 등 · T52 와 같은 목록).
 5. 게이트 + PROGRESS T53 행 + 완료 기록(확인 = EditMode 전수 테스트 + CI PlayMode + screens 04/05 PNG 한 번 보기).
 
-### T54 — CI #75(·#71) 빨강 후속: PlayMode `EventsScreenTests.DungeonArenaPagesAndPopups` «[상인 페이지] 영문 데모 글자: Text» 1건 (최우선 · 제약 없음 · 워커 A · lock 파일은 `T50.lock` · 코드 `faa0d30`)
+### T54 — CI #75(·#71) 빨강 후속: PlayMode `EventsScreenTests.DungeonArenaPagesAndPopups` «[상인 페이지] 영문 데모 글자: Text» 1건 (최우선 · 제약 없음 · 워커 A · lock 파일은 `T50.lock` · 코드 `faa0d30`) ✅ (완료 · CI #77·#82 초록 · lock 은 90분 경과로 워커 H 가 인계하며 종결 · 결정 108)
 범위: `Assets/Scripts/Game/EventsScreen.cs`(상인 페이지 상품 카드의 CardFrame_04 `Text_Title`)
 > 번호: A 가 09:09 에 `T50.lock` 으로 선점했는데 09:14 등재 세션이 같은 번호로 «킬 뒤 이동» 을 올렸다(그 뒤 T51~T53 이 그 번호 기준으로 이어짐) → 규약 «최대 +1» 대로 A 의 후속에 T54 를 준다(PROGRESS 워커 결정 87). A 가 끝나며 `T50.lock` 을 지우면 그때 T50 을 잡는다.
 1. 원인(CI #75 로그 · PlayMode 26 중 1 실패 · EditMode 83/83): 상인 페이지 상품 카드가 CardFrame_04 원본의 `Text_Title`(«Text») 을 켜 둔 채 제목 Label 을 따로 얹어 데모 잔여 글자 검사에 걸림 → ShopScreen 상자 카드처럼 `Text_Title` 자리를 제목으로 쓴다(`faa0d30`).
