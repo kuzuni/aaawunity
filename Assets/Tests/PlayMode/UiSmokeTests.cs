@@ -1003,7 +1003,7 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNotNull(gt, $"카드 {i} 등급 탭 글자 «{grade}»");
                 Assert.AreEqual(TextSize.Body, gt.resizeTextMaxSize, $"카드 {i} 등급 글자 최대 = 본문 하한 40(T63)");
                 Assert.GreaterOrEqual(gt.resizeTextMinSize, TextSize.BestFitMin, $"카드 {i} 등급 글자 bestFit 최소 ≥ 32");
-                Assert.IsTrue(gt.color == Palette.OnFrame(Palette.PerkGradeName(offer[i].Grade)), $"카드 {i} 등급 글자색 = 탭 밝기에 맞는 색(밝은 탭이면 잉크): {gt.color}");
+                Assert.IsTrue(gt.color == Palette.OnFrame(Palette.PerkGradeName(offer[i].Grade)), $"카드 {i} 등급 글자색 = Palette.OnFrame(밝은 글자 + 검은 아웃라인 · T63 0항 · 결정 259): {gt.color}");
                 var host = gt.rectTransform.parent as RectTransform;
                 Assert.IsNotNull(host, $"카드 {i} 등급 글자 부모(탭)");
                 // 탭(TitleBg/Text_Title) 안으로 Stretch 한 경로일 때만 — 탭 조각이 없는 프레임은 Pct 로 자리를 잡으므로 높이가 같을 수 없다

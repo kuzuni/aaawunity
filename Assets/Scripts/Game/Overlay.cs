@@ -130,7 +130,7 @@ namespace KkomaKnight.Game
                 foreach (var old in frt.GetComponentsInChildren<Text>(true)) old.gameObject.SetActive(false);   // 프리팹의 남은 글자("Text_Title" 등) 전부 끄기 — 주인: «Text 라고 빨간 글씨 없애줘»
                 var tb = UiKit.Find(frt, "TitleBg"); if (tb == null) tb = UiKit.Find(frt, "Text_Title");
                 var host = tb != null ? tb : frt;
-                // 등급 이름(«일반»·«희귀»·«전설») — 밝은 탭(회색·노랑) 위 흰 글자는 대비가 없어 안 읽혔다(T63-perks · screens run 95 04/05) → 탭 밝기로 잉크/흰색
+                // 등급 이름(«일반»·«희귀»·«전설») — 이제 탭 밝기와 무관하게 흰 글자 + 검은 아웃라인(T63 0항 · Palette.OnFrame · 결정 259)
                 var gl = UiKit.Text(host, p.GradeName ?? "", TextSize.Body, Palette.OnFrame(colorName), TextAnchor.MiddleCenter, true);
                 // 위아래 여백 4px 를 빼면 글자 칸이 탭(48px)보다 8px 작아져 bestFit 이 본문 40 을 못 넣고 줄인다(T63-perks · screens run 95 실측 = 흰 채움 28px ≈ 37) → 세로는 탭 전체를 쓴다
                 if (tb != null) UiKit.Stretch(gl.rectTransform, 8, 0, 8, 0); else UiKit.Pct(gl.rectTransform, 5, 0, 40, 22);
@@ -138,7 +138,8 @@ namespace KkomaKnight.Game
             if (itemArea != null) { UiKit.Clear(itemArea); UiKit.PerkFrame(itemArea, colorName, Icons.Perk(p.Id), 162); }
             UiKit.Hide(rt, "Focus");
             var nameT = rt.Find("Text"); if (nameT != null) nameT.gameObject.SetActive(false);   // 카드 직계 "Text"(특전 이름) — 깊은 검색이면 프레임 안 글자에 잡힐 수 있어 직계로
-            var desc = UiKit.SetText(rt, "Text_Value", PerkText.Format(p.Desc), Palette.Ink, TextSize.Body);   // 설명은 한 색(T52) · «트리거: 내용» · 상시는 «패시브: …»(T53 · 원문 perks.json 불변)
+            // 설명은 한 색(T52) · «트리거: 내용» · 상시는 «패시브: …»(T53 · 원문 perks.json 불변) · 색은 흰색 + 검은 아웃라인(T63 0항 · 잉크는 아웃라인과 겹쳐 뭉갠다 · 결정 259)
+            var desc = UiKit.SetText(rt, "Text_Value", PerkText.Format(p.Desc), Palette.White, TextSize.Body);
             if (desc != null) { desc.alignment = TextAnchor.MiddleLeft; var dr = desc.rectTransform; dr.anchorMin = new Vector2(0.24f, 0.08f); dr.anchorMax = new Vector2(0.97f, 0.92f); dr.offsetMin = dr.offsetMax = Vector2.zero; desc.resizeTextForBestFit = true; desc.resizeTextMaxSize = TextSize.Body; desc.resizeTextMinSize = TextSize.BestFitMin; desc.horizontalOverflow = HorizontalWrapMode.Wrap; }
             if (onClick != null) UiKit.Clickable(rt, onClick);
             return rt;
@@ -272,7 +273,7 @@ namespace KkomaKnight.Game
                 var card = PerkCard(content, kv.Key, Palette.PerkGradeName(kv.Key.Grade), null, shine: true);
                 var le = card.gameObject.AddComponent<LayoutElement>(); le.preferredHeight = UiKit.FrameH * Layout.BookCard.H / 100f;
                 // ×N 은 밝은 회색 카드 위 — 노랑은 대비가 없어 안 읽힌다(T63-perks)
-                if (kv.Value > 1) { var n = UiKit.Text(card, "×" + kv.Value, TextSize.Body, Palette.Ink, TextAnchor.MiddleRight); UiKit.Pct(n.rectTransform, 80, 4, 18, 40); }
+                if (kv.Value > 1) { var n = UiKit.Text(card, "×" + kv.Value, TextSize.Body, Palette.White, TextAnchor.MiddleRight); UiKit.Pct(n.rectTransform, 80, 4, 18, 40); }
                 cards.Add(card);
             }
             // T49 — 3택과 같은 stagger · 첫 화면(뷰포트 안)에 보이는 카드만 순서대로, 스크롤 밖은 즉시 표시. 상자 PopIn(0.28s) 뒤 0.15s 부터 · 전체 ≤ 0.8s 가 되게 간격을 줄인다.

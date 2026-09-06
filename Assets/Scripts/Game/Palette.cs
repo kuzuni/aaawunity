@@ -51,8 +51,12 @@ namespace KkomaKnight.Game
         public static string FrameKey(string prefix, string colorName) => prefix + "." + (colorName == "gray" ? "green" : colorName);
         /// <summary>밝은 프레임(회색·노랑) 위인가 — 그 위 흰 글자는 대비가 없어 안 읽힌다(T63-perks · 레퍼런스 04 의 «Legendary» 탭도 밝은 바탕에 어두운 글자다).</summary>
         public static bool IsLightFrame(string colorName) => colorName == "gray" || colorName == "yellow";
-        /// <summary>프레임 탭 위 글자색 — 밝은 탭이면 진한 잉크, 어두운 탭이면 흰색(T63-perks · 주인 «글씨가 안 읽힌다»).</summary>
-        public static Color OnFrame(string colorName) => IsLightFrame(colorName) ? Ink : White;
+        /// <summary>
+        /// 프레임 탭 위 글자색 — **밝기와 무관하게 흰색**(주인 2026-09-07 00:5X «모든 글자에 검은 아웃라인 + 밝은 글자색 기본» = T63 0항).
+        /// T63-perks 때는 아웃라인이 없어 «밝은 탭 위 흰 글자» 가 안 읽혀 잉크를 썼지만, T63-outline 이 모든 글자에 검은 아웃라인을 보장한 뒤로는
+        /// 잉크 + 검은 아웃라인이 오히려 «까만 덩어리» 가 된다(screens run 173 의 04·05 에서 «일반» 탭·카드 설명이 그랬다 · 결정 259).
+        /// </summary>
+        public static Color OnFrame(string colorName) => White;
         public const string DevilName = "plum";
         /// <summary>장비 등급(gear.json rar 0~3) → 테마 색 이름.</summary>
         public static string RarName(int rar) => rar >= 3 ? "plum" : rar == 2 ? "yellow" : rar == 1 ? "blue" : "gray";
