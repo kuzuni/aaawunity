@@ -634,7 +634,13 @@ namespace KkomaKnight.Game
             var plate = Plate(box, B, Layout.ExPlate, "탐험 보상");
             var info = UiKit.Icon(box, "InfoBtn", "pi.info", Palette.White); UiKit.Pct(info.rectTransform, Layout.ExInfoBtn.Within(B));
             var subR = Layout.ExSub.Within(B);
-            UiKit.Label(box, subR.X, subR.Y, subR.W, subR.H, "시간이 지나면 저절로 쌓입니다", TextSize.Aux, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Aux).name = "Sub";
+            // 레퍼런스 30 은 글자 구역이 «어두운 띠» 다 — 우리 상자(ui.popup)는 크림이라 흰 글자가 묻힌다(T63 0항 «밝은 글자 + 검은 아웃라인» 의 짝).
+            // 부제~시간당 pill 을 한 장의 어두운 띠 위에 얹는다(자리·크기는 표 그대로 · 띠는 이름표를 달지 않아 채점 밖).
+            var infoBand = UiKit.Panel(box, "InfoBand", "fr.r12", Palette.A(Palette.Dim, 0.55f));
+            UiKit.Pct(infoBand.rectTransform, new Layout.R(Layout.ExSub.X, Layout.ExSub.Y - 0.6f, Layout.ExSub.W, (Layout.ExRatePill1.Y + Layout.ExRatePill1.H + 0.8f) - Layout.ExSub.Y).Within(B));
+            UiKit.Bordered(infoBand.rectTransform);
+            var sub = UiKit.Label(box, subR.X, subR.Y, subR.W, subR.H, "시간이 지나면 저절로 쌓입니다", TextSize.Aux, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Aux);
+            sub.name = "Sub"; UiKit.Tag(sub.rectTransform, "부제");
 
             var host = UiKit.Rect(box, "ExpRows"); UiKit.Stretch(host);   // «받기» 뒤에 이 안만 다시 그린다(팝업을 다시 열지 않는다 = 열림음 1번)
             Action refresh = null;
@@ -669,6 +675,8 @@ namespace KkomaKnight.Game
 
             var capR = Layout.ExCapNote.Within(B);
             double maxH = D != null ? D.MaxHours : 0;
+            var capBand = UiKit.Panel(host, "CapBand", "fr.r12", Palette.A(Palette.Dim, 0.55f));
+            UiKit.Pct(capBand.rectTransform, Layout.ExCapNote.Within(B)); UiKit.Bordered(capBand.rectTransform);
             var cap = UiKit.Label(host, capR.X, capR.Y, capR.W, capR.H,
                 $"최대 탐험 시간: {UiKit.FmtQty(maxH)}시간\n뒤 챕터일수록 보상이 좋습니다", TextSize.Aux, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Aux);
             cap.name = "CapNote";
@@ -729,9 +737,14 @@ namespace KkomaKnight.Game
             var rib = ChildStarting(box, "Title_01"); if (rib != null) rib.gameObject.SetActive(false);
             var plate = Plate(box, B, Layout.QxPlate, "빠른 탐험", "QxPlate");
             var subR = Layout.QxSub.Within(B);
-            UiKit.Label(box, subR.X, subR.Y, subR.W, subR.H, "탐험 보상을 한 번에 받습니다", TextSize.Aux, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Aux).name = "QxSub";
+            var qxBand = UiKit.Panel(box, "QxBand", "fr.r12", Palette.A(Palette.Dim, 0.55f));
+            UiKit.Pct(qxBand.rectTransform, new Layout.R(Layout.QxSub.X, Layout.QxSub.Y - 0.5f, Layout.QxSub.W, (Layout.QxTitle.Y + Layout.QxTitle.H + 0.5f) - Layout.QxSub.Y).Within(B));
+            UiKit.Bordered(qxBand.rectTransform);
+            var qsub = UiKit.Label(box, subR.X, subR.Y, subR.W, subR.H, "탐험 보상을 한 번에 받습니다", TextSize.Aux, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Aux);
+            qsub.name = "QxSub"; UiKit.Tag(qsub.rectTransform, "부제");
             var ttR = Layout.QxTitle.Within(B);
             var tt = UiKit.Label(box, ttR.X, ttR.Y, ttR.W, ttR.H, "받을 보상", TextSize.Body, Palette.White, TextAnchor.MiddleCenter); tt.name = "QxTitle"; tt.fontStyle = FontStyle.Bold;
+            UiKit.Tag(tt.rectTransform, "«받을 보상» 제목");
 
             var gridBg = UiKit.Panel(box, "QxGridBg", "fr.r12", Palette.A(Palette.Dim, 0.55f));
             UiKit.Pct(gridBg.rectTransform, Layout.QxGridBg.Within(B)); UiKit.Bordered(gridBg.rectTransform);
