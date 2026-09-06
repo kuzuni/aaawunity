@@ -25,6 +25,8 @@ namespace KkomaKnight.Game
         public const string SidePass = "pass", SideExplore = "explore", SideClearReward = "clearReward", SideCastle = "castle", SideEvents = "events";
         /// <summary>챕터 카드 안 소품 개수(레퍼런스 카드 = 나무 2 · 돌 2 · 덤불) · 카드 안 길 띠(세로 %) · 소품 자리(카드 % · 왼쪽 위/오른쪽 위/왼쪽 아래/오른쪽 아래).</summary>
         const int CardProps = 4;
+        /// <summary>아이콘 라벨 칸(사이드·보조·모서리 · <see cref="BuildColumn"/>) 안의 아이콘 자리 / 글자 띠 자리(칸 %) — T63-lobby: 글자 띠 60% = 본문 40px 2줄이 잘림 없이 들어가는 높이.</summary>
+        static readonly Layout.R CaptionIcon = new Layout.R(20, 2, 60, 38), CaptionLabel = new Layout.R(1, 40, 98, 60);
         static readonly Layout.R CardRoad = new Layout.R(0, 52, 100, 20);
         static readonly Layout.R[] CardPropSlots = { new Layout.R(6, 6, 30, 46), new Layout.R(62, 4, 32, 50), new Layout.R(10, 56, 24, 40), new Layout.R(66, 58, 26, 38) };
 
@@ -51,7 +53,8 @@ namespace KkomaKnight.Game
             var banner = UiKit.Spawn("ui.framePlum", rt); var brt = (RectTransform)banner.transform; brt.name = "Banner"; UiKit.Pct(brt, Layout.LobbyBanner);
             {
                 var medal = UiKit.Icon(brt, "Icon", "ui.iconMedal"); UiKit.Pct(medal.rectTransform, 3, 12, 17, 76);
-                UiKit.Label(brt, 22, 6, 58, 42, "시즌 패스", 34, Palette.White, TextAnchor.MiddleLeft);
+                // T63-lobby — 본문 40 한 줄(55px)이 들어가게 띠 46%(60px) · 크기는 하한 상수
+                UiKit.Label(brt, 22, 4, 58, 46, "시즌 패스", TextSize.Body, Palette.White, TextAnchor.MiddleLeft);
                 var bar = UiKit.MakeBar(brt, "ui.sliderGreen"); UiKit.Pct(bar.Root, 22, 54, 56, 36); bar.Set(0, "준비 중");
                 var badge = UiKit.Panel(brt, "Badge", "fr.circle", Palette.Ink); UiKit.Pct(badge.rectTransform, 82, 10, 15, 80);
                 var arf = UiKit.Ensure<AspectRatioFitter>(badge.gameObject); arf.aspectMode = AspectRatioFitter.AspectMode.FitInParent; arf.aspectRatio = 1f;
@@ -115,8 +118,11 @@ namespace KkomaKnight.Game
             {
                 var it = items[i]; var cell = UiKit.Rect(prt, "Side:" + it.key);
                 if (horizontal) UiKit.Pct(cell, i * step, 0, step, 100); else UiKit.Pct(cell, 0, i * step, 100, step);
-                var ic = UiKit.Icon(cell, "Icon", it.icon); UiKit.Pct(ic.rectTransform, 14, 6, 72, 58);
-                UiKit.Label(cell, 2, 62, 96, 34, it.label, 26, Palette.White, TextAnchor.UpperCenter);
+                // T63-lobby — 라벨은 본문 하한(40)으로 2줄까지(«데일리 기프트»·«7일 챌린지»·«클리어 보상» 은 레퍼런스도 2줄) · 칸(사이드 167px · 보조 164px · 모서리 175px)의 60% 가 글자 띠, 위 38% 가 아이콘
+                // 2줄 높이 = 40×1.375 + 40×1.375×CaptionLineSpacing ≈ 96px ≤ 띠(98~105px) → bestFit 이 줄이지 않고 40 그대로 그린다(잘림 0)
+                var ic = UiKit.Icon(cell, "Icon", it.icon); UiKit.Pct(ic.rectTransform, CaptionIcon);
+                var lb = UiKit.Label(cell, CaptionLabel.X, CaptionLabel.Y, CaptionLabel.W, CaptionLabel.H, it.label, TextSize.Body, Palette.White, TextAnchor.UpperCenter);
+                lb.lineSpacing = UiKit.CaptionLineSpacing;
                 string key = it.key; UiKit.Clickable(cell, () => OnSide(key));
             }
             return prt;

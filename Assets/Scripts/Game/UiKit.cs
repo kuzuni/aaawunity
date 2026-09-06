@@ -366,6 +366,8 @@ namespace KkomaKnight.Game
         public static void Hide(Transform root, params string[] paths) { foreach (var p in paths) { var t = Find(root, p); if (t != null) t.gameObject.SetActive(false); } }
         public static void Show(Transform root, string path, bool on) { var t = Find(root, path); if (t != null) t.gameObject.SetActive(on); }
 
+        /// <summary>아이콘 밑 라벨처럼 2줄로 접히는 짧은 글자의 줄 간격(<c>Text.lineSpacing</c> · T63) — Jua 의 줄 높이가 크기의 1.375 배라 1.0 이면 2줄이 칸을 넘친다 · 0.75 면 2줄 ≈ 크기 × 2.4.</summary>
+        public const float CaptionLineSpacing = 0.75f;
         /// <summary>눌림 표시 배율(T22 · 주인 «모든 버튼에 눌림 표시») — 누르는 동안 그림을 이만큼 어둡게(ColorTint pressedColor) · 그림이 없는 히트 영역은 CanvasGroup alpha 를 이만큼.</summary>
         public const float PressedMul = 0.8f;
         /// <summary>눌림 지속 시간(초) — 손을 떼면 이 시간 안에 원래 색으로.</summary>

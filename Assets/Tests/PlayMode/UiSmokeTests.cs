@@ -159,6 +159,21 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(2, CountNamed(UiKit.Find(lobby, "SubRow"), "Side:"), "보조 버튼 2(탐험·클리어 보상)");
                 Assert.IsNotNull(UiKit.Find(lobby, "Castle"), "왼쪽 아래 성"); Assert.IsNotNull(UiKit.Find(lobby, "Events"), "오른쪽 아래 이벤트");
                 Assert.IsTrue(HasText(s => s == "스타터팩") && HasText(s => s == "퀘스트") && HasText(s => s == "탐험"), "사이드·보조 라벨은 우리말");
+                // T63-lobby — 아이콘 라벨 11개(사이드 6 · 보조 2 · 성 · 이벤트)는 본문 하한(40)으로 2줄까지 잘림 없이: bestFit 이 줄이지 않고(TextGenerator 로 직접 굴려 40) · 선호 높이 ≤ 칸 · «시즌 패스» 도 같음
+                {
+                    int captions = 0;
+                    foreach (var t in lobby.GetComponentsInChildren<Text>(false))
+                    {
+                        if (t.transform.parent == null || !t.transform.parent.name.StartsWith("Side:")) continue;
+                        captions++;
+                        Assert.AreEqual(TextSize.Body, t.fontSize, $"라벨 «{t.text}» 크기 = 본문 하한");
+                        var gs = t.GetGenerationSettings(t.rectTransform.rect.size); gs.scaleFactor = 1f;   // 캔버스 배율을 빼고 글자 단위로(fontSizeUsedForBestFit 은 scaleFactor 가 곱해진 값)
+                        var gen = new TextGenerator(); gen.Populate(t.text, gs);
+                        Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, TextSize.Body, $"라벨 «{t.text}» 가 칸({t.rectTransform.rect.width:0}×{t.rectTransform.rect.height:0})에 40 으로 안 들어가 bestFit 이 줄였다");
+                        Assert.LessOrEqual(gen.lineCount, 2, $"라벨 «{t.text}» 는 2줄까지");
+                    }
+                    Assert.AreEqual(11, captions, "아이콘 라벨 = 사이드 6 + 보조 2 + 성 + 이벤트");
+                }
                 // 배치 = 표 ①(±3%p) — START 는 카드와 같은 x·폭, 탭 바는 맨 아래
                 var frame = _app.Frame; var start = (RectTransform)UiKit.Find(lobby, "Start"); var card = (RectTransform)UiKit.Find(lobby, "ChapterCard");
                 Assert.AreEqual(Layout.LobbyStart.X, start.anchorMin.x * 100f, 0.5f, "START x"); Assert.AreEqual(Layout.LobbyCard.X + Layout.LobbyCard.W, card.anchorMax.x * 100f, 0.5f, "카드 오른쪽 = START 오른쪽");

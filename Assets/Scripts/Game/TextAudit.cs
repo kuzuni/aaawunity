@@ -72,7 +72,7 @@ namespace KkomaKnight.Game
                     FontSize = t.fontSize, Min = min, BestFit = t.resizeTextForBestFit, BestFitMinSize = t.resizeTextMinSize,
                     RectW = r.width, RectH = r.height, PrefW = t.preferredWidth, PrefH = t.preferredHeight,
                 };
-                row.Used = t.resizeTextForBestFit ? Mathf.Max(t.cachedTextGenerator.fontSizeUsedForBestFit, 0) : t.fontSize;
+                row.Used = t.resizeTextForBestFit ? BestFitSize(t) : t.fontSize;
                 int effective = t.resizeTextForBestFit ? Mathf.Max(t.fontSize, t.resizeTextMaxSize) : t.fontSize;
                 row.FloorBad = kind != TextKind.Small && effective < min;
                 row.BestFitBad = kind != TextKind.Small && t.resizeTextForBestFit && t.resizeTextMinSize < TextSize.BestFitMin;
@@ -82,6 +82,14 @@ namespace KkomaKnight.Game
                 rows.Add(row);
             }
             return rows;
+        }
+
+        /// <summary>bestFit 이 실제로 고른 크기(글자 단위) — <c>cachedTextGenerator.fontSizeUsedForBestFit</c> 는 캔버스 scaleFactor 가 곱해진 값이라(CI #94 표의 «최소 크기(실제) 6~8») scaleFactor 1 로 다시 굴린다(T63-lobby).</summary>
+        public static int BestFitSize(Text t)
+        {
+            var s = t.GetGenerationSettings(t.rectTransform.rect.size); s.scaleFactor = 1f;
+            var g = new TextGenerator(); g.Populate(t.text, s);
+            return Mathf.Max(g.fontSizeUsedForBestFit, 0);
         }
 
         static string PathOf(Transform t, Transform root)
