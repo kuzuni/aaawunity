@@ -86,6 +86,7 @@
 - **코드에 게임 수치를 직접 박지 않는다** — `KkomaKnight.Core.GameData` 에서 읽는다. 상수가 JSON 에 없으면 이 레포 전용 JSON(`Assets/KkomaKnight/*.json` · shop.json 방식)에 넣고 «워커 결정 기록» 에 한 줄 적는다(코드 상수 금지는 그대로).
 - **새 콘텐츠(특전/시스템/수치 체계) 임의 추가 금지.** 화면 껍데기(T42~T44)는 콘텐츠가 아니다. **주인 승인을 기다리는 일은 없다(2026-09-06)** — 판단이 필요하면 스스로 정해 적용하고 «워커 결정 기록» 에 남긴다.
 - **한 줄에 문장이 여럿인 코드 줄 끝에 `// 주석` 을 붙이지 않는다**(CI #87 · 결정 기록 참조: 첫 문장만 바꾸며 주석을 붙였다가 뒤 문장 3개가 주석이 됨 · dotnet 은 못 잡고 PlayMode 만 잡는다). 주석은 윗줄에 · push 전에 `git show <해시> -- Assets | grep -E "^\+" | grep -E ";\s*//"` 로 새 줄을 훑는다.
+- **글자 크기는 직접 박지 않는다(T63 · 주인 «글씨 너무 작다»)** — `UiKit.Text/Label/SetText/Button` 이 `Core/TextSize` 하한(본문 40 · 버튼 44 · 보조 36 · 제목 60 · bestFit 최소 32)으로 올린다 · `fontSize`/`resizeTextMinSize` 를 코드에 숫자로 쓰지 말고 종류(`TextKind`)를 준다 · 정말 작아야 하는 배지만 `TextKind.Small`. PlayMode `TextSizeGateTests` 가 전 화면을 단언한다(§3).
 - **커밋 전 게이트**: `dotnet build tools/dotnet/KkomaKnight.sln -c Release` 초록 · `dotnet test tools/dotnet/Tests` 초록 · `python3 tools/gen_meta.py --check` 초록. 새 에셋을 만들면 `python3 tools/gen_meta.py` 로 .meta 를 만든다(GUID 결정적).
 - 전투 엔진(`Assets/Scripts/Core`)에는 `UnityEngine` 을 참조하지 않는다(asmdef `noEngineReferences: true` · dotnet 이 강제한다).
 - 승인 프롬프트가 뜨는 명령·대화형 편집기(`git rebase -i` 등) 금지. 캡처 PNG·대용량 바이너리 커밋 금지(예외 2개: 폰트 1개 — PLAN §2.1 · 오디오 OGG 합계 ≤ 5MB — T28 주인 지시).
@@ -595,7 +596,7 @@
 5. **비평**: §5 절차 — screens 브랜치 23 PNG 를 `docs/ref/23_arena_enter.jpg` 와 나란히 `Read` 로 보고 10점 채점 · 8.0 이상이 ✅. T43 회차 기록 아래에 «T62 회차» 로 잇는다.
 6. 게이트 + assets-map 두 줄 + PROGRESS T62 행 + 완료 기록(확인 = CI PlayMode `EventsScreenTests` + screens 23 PNG 점수 + 배포 스모크).
 
-### T63 — ⚑⚑ 게임 전체 글자 가독성: «너무 작아서 안 읽히는» 글자 전부 키우기 — 최소 크기 규칙 + 화면별 전수 점검 (주인 2026-09-06 · 최우선급 · UI 화면 전부 · 비평과 함께)
+### T63 — ⚑⚑ 게임 전체 글자 가독성: «너무 작아서 안 읽히는» 글자 전부 키우기 — 최소 크기 규칙 + 화면별 전수 점검 (주인 2026-09-06 · 최우선급 · UI 화면 전부 · 비평과 함께) — **1단계(하한 규칙 + 게이트) ✅ 코드 `26716da`(워커 E · `Core/TextSize` · `UiKit` kind 인자 · `TextAudit` · PlayMode `TextSizeGateTests`) → 2단계 = PROGRESS 의 하위 행 12개(`T63-lobby` … `T63-toast` · lock 이름 그대로 · 잘림 0 을 화면마다 · 마지막이 `TextAudit.ClipStrict = true`)**
 범위: `Assets/Scripts/Game/UiKit.cs`(`Text`/`Label`/`Button`/`SetText` 헬퍼 · **최소 글자 크기 상수 + 강제 하한** · bestFit 의 min/max) · 화면 코드 전부(`Screens`·`GearScreen`·`GearUi`·`ForgeScreen`·`ShopScreen`·`PetScreen`·`EventsScreen`·`LobbyPopups`·`BattleScreen`·`BattleWorld`(데미지 팝·HP 바 숫자)·`Overlay`) · `Core/Layout.cs`·`docs/ref-layout.md`(글자 칸 높이가 모자라면 표 보정 · ±3%p 안에서) · `Assets/Tests/EditMode`·`PlayMode`(글자 크기 하한 게이트)
 순서: 제약 없음 — 다른 UI 작업(T62 · 비평 회차)과 같은 파일을 만지므로 **화면 단위로 lock 을 나눠**(T63-로비 · T63-전투 · … 식으로 PROGRESS 에 하위 행) 작은 커밋으로 rebase 하며 진행. UiKit 하한은 **맨 먼저 한 커밋**으로.
 주인 원문(2026-09-06 · 11:4X UTC): «게임 전체적으로 글씨가 너무 작아서 안 읽히는 게 많음. 가독성 있게 다 바꾸셈».
@@ -626,6 +627,8 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 ```
 
 **플레이 콘솔 에러 0 게이트(주인 상시 지시)**: 화면·전투·팝업 코드를 바꿨으면 `Assets/Tests/PlayMode/UiSmokeTests.cs` 가 그 화면을 열고 `PlayLog.AssertNoRed`(빨간 줄 0) + `[UiKit]`/`[AssetCatalog]` 경고 0 + 데모 잔여 글자 0 을 통과해야 한다(CI 유니티 잡 · 워커는 로컬에서 못 돌리므로 CI 런 번호로 확인 · 버튼 라벨을 바꿨으면 테스트의 라벨도 같이). 확인 수단이 없으면 완료 기록에 «주인이 에디터 플레이로 확인할 것 — 콘솔 빨간 줄 0» 을 명시한다. 주인이 붙인 콘솔 로그가 «주인 콘솔 에러 보고함» 에 미해결로 남아 있으면 게이트 미통과로 본다.
+
+**글자 크기 게이트(T63 · 주인 상시 지시 2026-09-06 «글씨 너무 작다»)**: 글자는 `UiKit.Text/Label/SetText/Button` 으로만 만들고 `fontSize`·`resizeTextMinSize` 를 직접 박지 않는다(하한 = `Core/TextSize` · 본문 40 · 버튼 44 · 보조 36 · 제목 60 · bestFit 최소 32 · 작아야 하면 `kind: TextKind.Small` 명시). PlayMode `TextSizeGateTests` 가 모든 화면의 활성 Text 를 모아 하한·bestFit 최소를 단언하고 잘림/넘침을 «[TextSizeGate]» 표로 로그에 남긴다(전수 점검이 끝나면 `TextAudit.ClipStrict = true` 로 잘림도 실패). 화면 코드를 바꿨으면 그 CI 로그의 자기 화면 잘림 수가 늘지 않았는지 본다.
 
 ## 5. UI 비평 회차 (주인 지시 2026-09-06 · UI 작업의 ✅ 조건)
 
