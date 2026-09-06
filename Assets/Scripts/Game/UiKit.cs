@@ -167,6 +167,11 @@ namespace KkomaKnight.Game
         /// 글자 하나. <paramref name="size"/> 가 종류(<paramref name="kind"/>) 하한(<see cref="TextSize"/> · T63 · 본문 40 · 버튼 44 · 보조 36 · 제목 60)보다 작으면 경고 없이 하한으로 올린다.
         /// 정말 작아야 하는 곳(아이콘 위 «+1» 배지 등)만 <see cref="TextKind.Small"/> 을 명시한다(= 지시서의 allowSmall:true). bestFit 최소는 <see cref="TextSize.BestFitMin"/>(32) 아래로 못 내려간다.
         /// </summary>
+        /// <param name="outline">
+        /// <b>더 이상 아무 일도 하지 않는다(T63-outline · 주인 04:4X «모든 글자들 다 검정 아웃라인»).</b> 아웃라인은 이제 <see cref="EnsureOutline"/> 가 무조건 붙인다.
+        /// 인자를 남겨 둔 이유는 이 자리를 <b>위치 인자로</b> 넘기는 호출부가 40여 곳이고 그 파일 대부분이 다른 워커의 살아 있는 lock 안이기 때문이다(결정 227) —
+        /// 지우면 그 파일들을 다 고쳐야 해서 규약(«같은 파일은 뒤 번호가 기다린다»)에 걸린다. lock 이 풀리는 대로 화면 워커가 자기 커밋에서 인자를 지우면 된다.
+        /// </param>
         public static Text Text(Transform parent, string s, int size, Color color, TextAnchor anchor = TextAnchor.MiddleCenter, bool bestFit = false, bool outline = true, TextKind kind = TextKind.Body)
         {
             size = TextSize.Floor(size, kind);
@@ -176,18 +181,42 @@ namespace KkomaKnight.Game
             t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Overflow;
             t.raycastTarget = false; t.supportRichText = true;
             if (bestFit) { t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitFloor(12, kind); t.resizeTextMaxSize = size; t.verticalOverflow = VerticalWrapMode.Truncate; }
-            if (outline) AddOutline(t, size);
+            EnsureOutline(t);
             TextAudit.Mark(t, kind);
             return t;
         }
-        static void AddOutline(Text t, float size)
+
+        /// <summary>검은 아웃라인 색(<see cref="EnsureOutline"/>) — Ink 계열 · α <see cref="OutlineAlpha"/>.</summary>
+        public static readonly Color OutlineColor = new Color(0.1f, 0.06f, 0.05f, 0.85f);
+        /// <summary>아웃라인 α(게이트가 이 값으로 단언한다).</summary>
+        public const float OutlineAlpha = 0.85f;
+        /// <summary>아웃라인 두께 = 글자 크기 × 이 비율(<see cref="OutlineMinPx"/>~<see cref="OutlineMaxPx"/> 로 자른다).</summary>
+        public const float OutlineRatio = 0.05f, OutlineMinPx = 1.5f, OutlineMaxPx = 4f;
+        /// <summary>크기에서 아웃라인 두께(프레임px) — 게이트도 같은 식을 쓴다.</summary>
+        public static float OutlineWidth(float size) => Mathf.Clamp(size * OutlineRatio, OutlineMinPx, OutlineMaxPx);
+
+        /// <summary>
+        /// 글자에 검은 아웃라인을 <b>무조건</b> 붙인다 — 주인 지시 2026-09-07 04:4X «모든 글자들 다 검정 아웃라인 있는 것으로 · 지금 어떤 건 있고 어떤 건 없고 그러네»(T63-outline).
+        /// 전에는 ⓐ <c>UiKit.Text(outline:)</c> 인자로 끌 수 있었고 ⓑ <see cref="ConvertTmp"/> 는 «TMP 머티리얼 이름에 Outline 이 있거나 글자가 밝을 때만» 붙였고
+        /// ⓒ <see cref="SetText"/>·<see cref="Button"/>·<see cref="Bar.Set"/> 로 들어온 프리팹 글자에는 아무도 안 붙여서 화면마다 있고 없고가 섞였다.
+        /// 이제 <b>글자 입구 다섯 곳이 전부 이 한 곳</b>을 거치므로 «어떤 건 없다» 가 구조적으로 불가능하다(결정 226).
+        /// 이미 있으면 컴포넌트를 또 만들지 않고 값만 갱신한다(중복 <see cref="Outline"/> 은 그림자가 겹쳐 두꺼워 보인다).
+        /// 크기를 안 주면 글자의 현재 <c>fontSize</c>(bestFit 이면 최대 크기)로 잡는다.
+        /// </summary>
+        public static Outline EnsureOutline(Text t, float size = 0f)
         {
-            var ol = t.gameObject.AddComponent<Outline>(); ol.effectColor = new Color(0.1f, 0.06f, 0.05f, 0.85f);
-            float d = Mathf.Clamp(size * 0.05f, 1.5f, 4f); ol.effectDistance = new Vector2(d, -d); ol.useGraphicAlpha = true;
+            if (t == null) return null;
+            if (size <= 0f) size = t.resizeTextForBestFit ? Mathf.Max(t.resizeTextMaxSize, t.fontSize) : t.fontSize;
+            var ol = Ensure<Outline>(t.gameObject);
+            ol.effectColor = OutlineColor;
+            float d = OutlineWidth(size);
+            ol.effectDistance = new Vector2(d, -d); ol.useGraphicAlpha = true;
+            return ol;
         }
+        /// <param name="outline">아무 일도 하지 않는다 — <see cref="Text"/> 의 같은 인자 설명 참조(T63-outline · 결정 227).</param>
         public static Text Label(Transform parent, float x, float y, float w, float h, string s, int size, Color color, TextAnchor anchor = TextAnchor.MiddleCenter, bool bestFit = true, bool outline = true, TextKind kind = TextKind.Body)
         {
-            var t = Text(parent, s, size, color, anchor, bestFit, outline, kind);
+            var t = Text(parent, s, size, color, anchor, bestFit, true, kind);
             Pct(t.rectTransform, x, y, w, h);
             return t;
         }
@@ -196,7 +225,7 @@ namespace KkomaKnight.Game
         public sealed class Bar
         {
             public RectTransform Root; public Slider Slider; public Text Txt; public Image Cap;
-            public void Set(double frac, string txt) { if (Slider != null) Slider.value = Mathf.Clamp01((float)frac); if (Txt != null) Txt.text = TextGlyphs.Safe(txt); }
+            public void Set(double frac, string txt) { if (Slider != null) Slider.value = Mathf.Clamp01((float)frac); if (Txt != null) { Txt.text = TextGlyphs.Safe(txt); EnsureOutline(Txt); } }
         }
         public static Bar MakeBar(Transform parent, string sliderKey, string capIconKey = null)
         {
@@ -574,6 +603,8 @@ namespace KkomaKnight.Game
         {
             StripDemoScripts(root);
             foreach (var tmp in root.GetComponentsInChildren<TMP_Text>(true)) ConvertTmp(tmp);
+            // 조각이 TMP 가 아니라 처음부터 uGUI Text 로 만들어 둔 자리도 있다 — 그런 글자는 어떤 입구도 안 거치므로 여기서 같이 붙인다(T63-outline)
+            foreach (var t in root.GetComponentsInChildren<Text>(true)) EnsureOutline(t);
             foreach (var g in root.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
             var rt = root.transform as RectTransform; if (rt != null) rt.localScale = Vector3.one;
         }
@@ -583,7 +614,6 @@ namespace KkomaKnight.Game
             var go = tmp.gameObject;
             string s = tmp.text; float fs = tmp.fontSize; Color c = tmp.color; var al = tmp.alignment;
             bool auto = tmp.enableAutoSizing; float mn = tmp.fontSizeMin, mx = tmp.fontSizeMax;
-            bool outline = tmp.fontSharedMaterial != null && tmp.fontSharedMaterial.name.IndexOf("Outline", StringComparison.OrdinalIgnoreCase) >= 0;
             UnityEngine.Object.DestroyImmediate(tmp);
             var t = go.AddComponent<Text>();
             // 프리팹 글자도 하한(T63) — 데모 프리팹의 작은 크기(12~30)를 그대로 옮기면 폰에서 안 읽힌다 · 종류는 Body(버튼은 Button() 이 다시 올린다)
@@ -591,7 +621,8 @@ namespace KkomaKnight.Game
             t.font = FontOrBuiltin(); t.text = TextGlyphs.Safe(s); t.fontSize = size; t.color = c; t.alignment = MapAlign(al);
             t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Overflow; t.supportRichText = true; t.raycastTarget = false;
             if (auto) { t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitFloor(Mathf.Max(10, (int)mn)); t.resizeTextMaxSize = TextSize.Floor(Mathf.Max(12, (int)mx)); }
-            if (outline || c.r + c.g + c.b > 2.4f) AddOutline(t, size);
+            // 조건 없이 붙인다 — 전에는 «머티리얼 이름에 Outline» 이거나 «밝은 글자» 일 때만이라 프리팹 글자가 화면마다 갈렸다(주인 04:4X · T63-outline)
+            EnsureOutline(t, size);
             return t;
         }
         static TextAnchor MapAlign(TextAlignmentOptions a)
@@ -631,6 +662,7 @@ namespace KkomaKnight.Game
             txt.text = TextGlyphs.Safe(s); if (color.HasValue) txt.color = color.Value;
             if (size.HasValue) { int sz = TextSize.Floor(size.Value, kind); txt.fontSize = sz; txt.resizeTextMaxSize = sz; }
             if (txt.resizeTextForBestFit) txt.resizeTextMinSize = TextSize.BestFitFloor(txt.resizeTextMinSize, kind);
+            EnsureOutline(txt);
             TextAudit.Mark(txt, kind);
             return txt;
         }
@@ -732,7 +764,7 @@ namespace KkomaKnight.Game
             ButtonGradient(rt);
             var txt = go.GetComponentInChildren<Text>(true);
             // 버튼 글자 하한 = TextSize.Button(44 · T63) · bestFit 최소 32
-            if (txt != null) { txt.text = TextGlyphs.Safe(label); txt.fontSize = TextSize.Floor(txt.fontSize, TextKind.Button); txt.resizeTextForBestFit = true; txt.resizeTextMinSize = TextSize.BestFitMin; txt.resizeTextMaxSize = Mathf.Max(txt.fontSize, TextSize.Button); txt.horizontalOverflow = HorizontalWrapMode.Wrap; TextAudit.Mark(txt, TextKind.Button); }
+            if (txt != null) { txt.text = TextGlyphs.Safe(label); txt.fontSize = TextSize.Floor(txt.fontSize, TextKind.Button); txt.resizeTextForBestFit = true; txt.resizeTextMinSize = TextSize.BestFitMin; txt.resizeTextMaxSize = Mathf.Max(txt.fontSize, TextSize.Button); txt.horizontalOverflow = HorizontalWrapMode.Wrap; EnsureOutline(txt); TextAudit.Mark(txt, TextKind.Button); }
             Clickable(rt, onClick);
             return rt;
         }

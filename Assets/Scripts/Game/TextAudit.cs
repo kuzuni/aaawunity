@@ -52,13 +52,68 @@ namespace KkomaKnight.Game
             public bool BestFit;
             public float RectW, RectH, PrefW, PrefH;
             public bool FloorBad, BestFitBad, Clipped;
+            /// <summary>이 글자에 붙은 <see cref="Outline"/> 수(0 = 없다 · 2 이상 = 그림자가 겹쳐 두꺼워 보인다 · T63-outline).</summary>
+            public int Outlines;
+            /// <summary>아웃라인이 규칙(<see cref="UiKit.OutlineColor"/> · 두께 <see cref="UiKit.OutlineWidth"/>)과 어긋나는가 — 없거나 겹치거나 색·두께가 다르면 참.</summary>
+            public bool OutlineBad;
+            /// <summary>어긋난 까닭 한 마디(«없음» · «2개» · «색» · «두께 2.0≠3.0») — 없으면 빈 문자열.</summary>
+            public string OutlineWhy = "";
             public override string ToString() =>
                 $"[{Screen}] {Path} «{Short(Text)}» {Kind} size {FontSize}(min {Min}){(BestFit ? $" bestFit {BestFitMinSize}~ used {Used}" : "")} rect {RectW:0}×{RectH:0} pref {PrefW:0}×{PrefH:0}" +
                 (FloorBad ? " ⛔하한" : "") + (BestFitBad ? " ⛔bestFit최소" : "") + (Clipped ? " ⚠잘림" : "") +
-                (string.IsNullOrEmpty(Missing) ? "" : " ⚠없는글자 «" + Missing + "»");
+                (string.IsNullOrEmpty(Missing) ? "" : " ⚠없는글자 «" + Missing + "»") +
+                (OutlineBad ? " ⛔아웃라인 " + OutlineWhy : "");
         }
 
         static string Short(string s) { if (string.IsNullOrEmpty(s)) return ""; s = s.Replace("\n", "⏎"); return s.Length > 18 ? s.Substring(0, 18) + "…" : s; }
+
+        /// <summary>
+        /// 아웃라인 판정(T63-outline · 주인 04:4X «모든 글자들 다 검정 아웃라인 · 어떤 건 있고 어떤 건 없고») —
+        /// <see cref="Outline"/> 이 정확히 1개이고 색이 <see cref="UiKit.OutlineColor"/> 이며 두께가 <see cref="UiKit.OutlineWidth"/> 와 맞아야 통과.
+        /// 두께는 «쓰이는 크기»(bestFit 이면 최대 크기)로 재는데, <see cref="UiKit.EnsureOutline"/> 가 붙일 때 쓰는 크기와 같은 식이다.
+        /// </summary>
+        static void FillOutline(Row row, Text t)
+        {
+            var ols = t.GetComponents<Outline>();
+            row.Outlines = ols.Length;
+            if (ols.Length == 0) { row.OutlineBad = true; row.OutlineWhy = "없음"; return; }
+            if (ols.Length > 1) { row.OutlineBad = true; row.OutlineWhy = ols.Length + "개"; return; }
+            var ol = ols[0];
+            var c = ol.effectColor;
+            if (Mathf.Abs(c.r - UiKit.OutlineColor.r) > 0.02f || Mathf.Abs(c.g - UiKit.OutlineColor.g) > 0.02f ||
+                Mathf.Abs(c.b - UiKit.OutlineColor.b) > 0.02f || Mathf.Abs(c.a - UiKit.OutlineColor.a) > 0.02f)
+            { row.OutlineBad = true; row.OutlineWhy = $"색 {c.r:0.00},{c.g:0.00},{c.b:0.00},{c.a:0.00}"; return; }
+            float want = UiKit.OutlineWidth(t.resizeTextForBestFit ? Mathf.Max(t.resizeTextMaxSize, t.fontSize) : t.fontSize);
+            float got = Mathf.Abs(ol.effectDistance.x);
+            if (Mathf.Abs(got - want) > 0.26f) { row.OutlineBad = true; row.OutlineWhy = $"두께 {got:0.0}≠{want:0.0}"; }
+        }
+
+        /// <summary>
+        /// «[TextOutlineGate]» 표 — 아웃라인이 없거나 어긋난 줄만 화면·경로·글자·까닭으로 찍는다(T63-outline).
+        /// 0 줄이면 «없음 0» 한 줄. <see cref="OutlineStrict"/> 가 켜지면 PlayMode 게이트가 이 목록으로 단언한다.
+        /// </summary>
+        public static string OutlineSummary(List<Row> rows)
+        {
+            var sb = new StringBuilder();
+            var bad = new List<Row>();
+            foreach (var r in rows) if (r.OutlineBad) bad.Add(r);
+            sb.Append("[TextOutlineGate] 아웃라인 어긋난 글자 ").Append(bad.Count).Append('/').Append(rows.Count);
+            if (bad.Count == 0) { sb.Append(" — 없음 0 ✔"); return sb.ToString(); }
+            foreach (var r in bad) sb.Append('\n').Append("  · [").Append(r.Screen).Append("] ").Append(r.Path)
+                .Append(" «").Append(Short(r.Text)).Append("» ").Append(r.OutlineWhy);
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// 아웃라인 단언을 실제로 «틀리면 빨강» 으로 켤 것인가(T63-outline).
+        /// 글자 입구 다섯 곳(<c>Text</c>·<c>SetText</c>·<c>Button</c>·<c>ConvertTmp</c>·<c>Bar.Set</c>)과 <see cref="UiKit.Adopt"/>(조각의 uGUI Text)가
+        /// 전부 <see cref="UiKit.EnsureOutline"/> 를 거치므로 «없음 0» 이 나와야 정상이다.
+        /// 그래도 <b>첫 회차는 false</b> 다 — 워커 컨테이너에는 유니티가 없어 PlayMode 를 못 돌리고(컴파일만 확인한다),
+        /// 지금 gh-pages 배포가 다른 건으로 막혀 있어(T91) 여기서 main 을 또 빨갛게 만들면 안 된다.
+        /// 그 커밋 CI 로그의 «[TextOutlineGate]» 표가 «없음 0» 인 것을 눈으로 본 다음 회차에 이 한 줄을 true 로 켠다
+        /// (<see cref="ClipStrict"/>·<see cref="GlyphStrict"/> 와 같은 방식 · 결정 기록 참조).
+        /// </summary>
+        public const bool OutlineStrict = false;
 
         public static TextKind KindOf(Text t)
         {
@@ -104,6 +159,7 @@ namespace KkomaKnight.Game
                 bool wideBad = t.horizontalOverflow == HorizontalWrapMode.Overflow && row.PrefW > row.RectW + 1f;
                 bool tallBad = row.PrefH > row.RectH + 1f;
                 row.Clipped = wideBad || tallBad;
+                FillOutline(row, t);
                 rows.Add(row);
             }
             return rows;
