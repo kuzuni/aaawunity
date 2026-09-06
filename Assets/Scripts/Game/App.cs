@@ -50,7 +50,7 @@ namespace KkomaKnight.Game
                 WorldCam.Attach(WorldCamera, Frame);
                 WorldCamera.clearFlags = CameraClearFlags.SolidColor; WorldCamera.backgroundColor = Palette.Hex("#86E4FF");   // GUI Pro 로비 배경 하늘색
             }
-            Register(new LobbyScreen()); Register(new GearScreen()); Register(new ForgeScreen()); Register(new ShopScreen()); Register(new BattleScreen());
+            Register(new LobbyScreen()); Register(new GearScreen()); Register(new ForgeScreen()); Register(new ShopScreen()); Register(new PetScreen()); Register(new BattleScreen());
             Overlay = new Overlay(this);
             // 토스트 (GUI Pro ToastMessage_01)
             _toastRt = (RectTransform)UiKit.Spawn("ui.toast", Frame).transform; UiKit.Pct(_toastRt, 4, 84, 92, 5);

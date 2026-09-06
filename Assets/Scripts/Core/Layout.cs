@@ -186,6 +186,37 @@ namespace KkomaKnight.Core
         public static readonly R SetResumeBtn = new R(18.0f, 72.0f, 30.0f, 4.0f);
         public static readonly R SetGiveUpBtn = new R(52.0f, 72.0f, 30.0f, 4.0f);
 
+        // ⑩ 펫 탭 — docs/ref/13_pet.jpg (T42 · 워커 E 실측 · 720×1560 사본 · ±0.5%p · docs/ref-layout.md ⑩ 표와 같다) · 상단 바 = LobbyTopBar · 탭 바 = TabBar
+        /// <summary>펫 격자 = 4열 × 3행 아이콘 칸 9개의 합집합(Lv 라벨·진행바 제외). 칸 = 정사각 15.6×7.2 · 열 피치 22.1 · 행 피치 11.5(칸 위 «Lv. N» · 칸 아래 진행바 포함).</summary>
+        public static readonly R PetGrid = new R(9.0f, 10.6f, 81.9f, 30.3f);
+        public static readonly R PetCell = new R(9.0f, 10.6f, 15.6f, 7.2f);
+        public const int PetCols = 4, PetCount = 9; public const float PetColPitch = 22.1f, PetRowPitch = 11.5f;
+        /// <summary>칸 위에 걸친 «Lv. N» 글자(첫 칸 기준) · 칸 아래 진행바(첫 칸 기준 · 칸보다 넓다 19.2).</summary>
+        public static readonly R PetLv = new R(11.5f, 10.1f, 10.6f, 1.8f);
+        public static readonly R PetBar = new R(7.2f, 19.2f, 19.2f, 1.6f);
+        /// <summary>합계 줄(«+N ❤ | +N 🛡 | +N 🗡») → «장착중» 띠(어두운 패널) + 초록 «장착중» 라벨 + 장착 슬롯 4(잠금 2 · 빈 칸 2 · 피치 11.9).</summary>
+        public static readonly R PetSum = new R(18.8f, 58.3f, 63.2f, 2.6f);
+        public static readonly R PetEqBand = new R(8.3f, 61.9f, 83.3f, 6.6f);
+        public static readonly R PetEqLabel = new R(7.2f, 63.8f, 23.6f, 2.4f);
+        public static readonly R PetSlots = new R(43.9f, 63.5f, 42.9f, 3.4f);
+        public static readonly R PetSlot = new R(43.9f, 63.5f, 7.2f, 3.4f);
+        public const float PetSlotPitch = 11.9f;
+        /// <summary>회색 «전체 강화»·«빠른 장착» 한 줄 → 주황 «소환»·«소환 x10» 한 줄(가격 줄 포함 · 더 크다).</summary>
+        public static readonly R PetUpgradeAll = new R(11.4f, 72.8f, 36.5f, 6.0f);
+        public static readonly R PetQuickEquip = new R(52.1f, 72.8f, 36.5f, 6.0f);
+        public static readonly R PetSummon = new R(9.0f, 83.3f, 39.3f, 7.7f);
+        public static readonly R PetSummon10 = new R(51.7f, 83.3f, 39.3f, 7.7f);
+
+        // ⑪ 펫 세부 팝업 — docs/ref/14_pet_detail.jpg (T42 · 워커 E 실측 · ⑪ 표와 같다 · 명판 없음 · 칸이 상자 윗변에 걸친다 · 닫기 안내 = BookClose 줄)
+        public static readonly R PdBox = new R(7.6f, 34.9f, 84.7f, 31.7f);
+        public static readonly R PdCell = new R(41.7f, 32.4f, 16.7f, 7.7f);
+        public static readonly R PdBar = new R(39.2f, 41.5f, 21.7f, 1.4f);
+        public static readonly R PdDesc = new R(11.1f, 44.9f, 77.8f, 8.0f);
+        public static readonly R PdPassiveTitle = new R(42.4f, 54.2f, 15.3f, 2.2f);
+        public static readonly R PdPassive = new R(34.7f, 56.7f, 31.3f, 2.6f);
+        public static readonly R PdBtnL = new R(13.5f, 59.9f, 35.1f, 5.1f);
+        public static readonly R PdBtnR = new R(51.4f, 59.9f, 35.1f, 5.1f);
+
         // ⑧ 공통
         public const float BodyMarginX = 3.0f, PopupW = 87.0f, PopupMarginX = 6.5f;
 

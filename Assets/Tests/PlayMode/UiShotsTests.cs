@@ -81,6 +81,10 @@ namespace KkomaKnight.Tests.Play
             yield return Shot("01_lobby");
             _app.Overlay.Settings(); yield return Frames(2); yield return Shot("12_settings"); _app.Overlay.Close(); yield return Frames(1);
 
+            // 13 펫 탭 · 14 펫 세부 (T42 껍데기)
+            _app.ShowScreen("pet"); yield return Frames(3); yield return Shot("13_pet");
+            (_app.Current as PetScreen)?.OpenDetail(0); yield return Frames(2); yield return Shot("14_pet_detail"); _app.Overlay.Close(); yield return Frames(1);
+
             // 06 장비(전부 장착 + 인벤 10) · 07 세부 · 08 대장간 · 09 상점
             GearItem firstFree = null;
             foreach (var p in D.Gear.Parts) { var g = Give(p, rar: 1, plus: 1); S.Eq[p] = g.Uid; }
@@ -113,8 +117,8 @@ namespace KkomaKnight.Tests.Play
             _app.Overlay.PerkBook(G, null); yield return Frames(2); yield return Shot("05_perks_list"); _app.Overlay.Close(); yield return Frames(1);
             Time.timeScale = 1f; _app.ShowScreen("lobby"); yield return Frames(2);
 
-            foreach (var n in new[] { "11_shop_special", "13_pet", "14_pet_detail", "15_quest", "16_attendance", "17_daily_gift", "18_challenge7", "19_pass", "20_dungeon", "21_dungeon_detail", "22_arena", "23_arena_enter", "24_arena_challenge", "25_arena_rank", "26_arena_shop" })
-                _missing.Add(n + " (화면 없음 · T42~T44)");
+            foreach (var n in new[] { "11_shop_special", "15_quest", "16_attendance", "17_daily_gift", "18_challenge7", "19_pass", "20_dungeon", "21_dungeon_detail", "22_arena", "23_arena_enter", "24_arena_challenge", "25_arena_rank", "26_arena_shop" })
+                _missing.Add(n + " (화면 없음 · T43~T44)");
             PlayShot.WriteLayout(_layout, _missing);
             Assert.Greater(_saved, 0, "PNG 가 하나도 안 남았다(RenderTexture 캡처 실패)");
             Assert.IsTrue(_layout.ContainsKey("01_lobby") && ((Dictionary<string, object>)_layout["01_lobby"]).Count > 0, "로비 이름표(UiTag)가 layout.json 에 있어야 한다");

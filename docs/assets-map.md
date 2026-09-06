@@ -400,6 +400,15 @@
 | sprites | `env.desert.Cactus_Green2_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_03.png` | fileID 21300000 |  |
 | sprites | `env.desert.Cactus_Green1_03` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green1_03.png` | fileID 21300000 |  |
 | sprites | `env.desert.Cactus_Green2_05` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_05.png` | fileID 21300000 |  |
+| sprites | `pet.bread` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Consumable_Food_Bread_01.png` | fileID 21300000 | 펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 1(빵 — 레퍼런스 13 첫 칸과 같은 빵) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체 |
+| sprites | `pet.fire` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Misc_Fire_01_Red.png` | fileID 21300000 | 펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 2(불꽃 정령 자리) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체 |
+| sprites | `pet.bow` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Bow_01.png` | fileID 21300000 | 펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 3(화살 자리) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체 |
+| sprites | `pet.hammer` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Weapons_Hammer_01.png` | fileID 21300000 | 펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 4(망치) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체 |
+| sprites | `pet.rocket` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Misc_Rocket_01_Red.png` | fileID 21300000 | 펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 5(화살 다발 자리) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체 |
+| sprites | `pet.sickle` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Weapons_Sickle_01.png` | fileID 21300000 | 펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 6(붉은 베기 자리) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체 |
+| sprites | `pet.egg` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Egg_02.png` | fileID 21300000 | 펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 7(멧돼지 자리 — 알) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체 |
+| sprites | `pet.feather` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Feather_02.png` | fileID 21300000 | 펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 8(천사 자리 — 깃털) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체 |
+| sprites | `pet.eye` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Eye_01.png` | fileID 21300000 | 펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 9(문어 자리 — 눈) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체 |
 | prefabs | `cm.character` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Common/Prefabs/Character.prefab` | root 1824668350962886144 | CharacterMaker Character 프리팹 — 전투의 플레이어·적(BattleWorld.MakeChar) 과 UI 초상(HeroView · RenderTexture 카메라 · 레이어 30) 이 같은 프리팹을 쓴다 |
 | prefabs | `fx.hit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Hit A (Red).prefab` | root 4021103657954561961 | 적 피격 (CFXR Hit A Red) |
 | prefabs | `fx.crit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Impact Glowing HDR (Blue).prefab` | root 2708598583397607911 | 치명타 피격 (Impact Glowing HDR Blue · 0.2 배) |

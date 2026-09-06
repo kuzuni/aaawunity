@@ -803,6 +803,24 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 7f3ad81ccfc2b0141bb9eaf1a9172eea, type: 3}
   - key: env.desert.Cactus_Green2_05
     sprite: {fileID: 21300000, guid: 98e1e0f44ea5f7445be9f04e01cf6f35, type: 3}
+  - key: pet.bread
+    sprite: {fileID: 21300000, guid: 3bdb82d6a3ba347a1880b1cf9b0ac3a6, type: 3}
+  - key: pet.fire
+    sprite: {fileID: 21300000, guid: 61cc68b7d221b421488da7f73c6c684a, type: 3}
+  - key: pet.bow
+    sprite: {fileID: 21300000, guid: 1785ad2f3cf9b42959b3e543f13d91ca, type: 3}
+  - key: pet.hammer
+    sprite: {fileID: 21300000, guid: 6f42181120f954148aec331d618ff465, type: 3}
+  - key: pet.rocket
+    sprite: {fileID: 21300000, guid: 43db5de2223834eb8a6eb1ebb0c43244, type: 3}
+  - key: pet.sickle
+    sprite: {fileID: 21300000, guid: 1253f999b691a4ddc9fdbb3c2730853f, type: 3}
+  - key: pet.egg
+    sprite: {fileID: 21300000, guid: 2f9eae816fd4140108313b73a8071911, type: 3}
+  - key: pet.feather
+    sprite: {fileID: 21300000, guid: 704f99bddab2b4838b02a5883b2b8bf9, type: 3}
+  - key: pet.eye
+    sprite: {fileID: 21300000, guid: 60bf2486006834a1bb14473682285362, type: 3}
   prefabs:
   - key: cm.character
     prefab: {fileID: 1824668350962886144, guid: d6c3c650b0b379149a826b54b40b4571, type: 3}

@@ -213,8 +213,8 @@ namespace KkomaKnight.Tests.Play
                 Check("데이터 삭제 뒤 로비");
             }
 
-            // 탤런트 · 펫 (Character_Talent_02 통째로 · 데모 내용 그대로라 잔여 글자 검사는 뺀다)
-            foreach (var kind in new[] { "talent", "pet" })
+            // 탤런트 (Character_Talent_02 통째로 · 데모 내용 그대로라 잔여 글자 검사는 뺀다 · T43 이 «던전» 으로 바꾼다)
+            foreach (var kind in new[] { "talent" })
             {
                 _app.Overlay.TalentPet(kind); yield return Frames(2);
                 Check("팝업 " + kind, expectOverlay: true, demoText: false);
@@ -223,7 +223,44 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.talent"), "Character_Talent_02(ui.talent) 프리팹이 팝업 층에 있어야 한다");
                 _app.Overlay.Close(); yield return Frames(1);
             }
-            Check("탤런트/펫 닫힘");
+            Check("탤런트 닫힘");
+
+            // T42 — 펫 탭 = 레퍼런스 13_pet.jpg 구도(PetScreen · 껍데기): 상단 바 · 4열 격자 9칸(Lv · 진행바) · 합계 줄 · «장착중» 띠 + 슬롯 4 · 회색 2 · 주황 소환 2 · 탭 5 → 칸 클릭 = 세부 팝업(14 · 명판 없음 · 탭하여 닫기)
+            {
+                _app.ShowScreen("pet"); yield return Frames(2);
+                Assert.AreEqual("pet", _app.Current.Name, "펫 탭은 팝업이 아니라 화면(PetScreen)"); Assert.IsFalse(_app.Overlay.IsOpen, "펫 탭 진입에 팝업 없음");
+                var pet = _app.Current.Root;
+                Check("펫 탭");
+                Assert.IsNotNull(UiKit.Find(pet, "TopBar"), "펫 탭 상단 재화 바"); Assert.IsNull(UiKit.Find(pet, "ui.talent"), "Character_Talent_02 통째 스폰 0(부품 규칙)");
+                Assert.AreEqual(Layout.PetCount, CountNamed(UiKit.Find(pet, "PetGrid"), "Pet:"), "펫 격자 9칸"); Assert.AreEqual(PetScreen.SlotCount, CountNamed(UiKit.Find(pet, "Slots"), "Slot:"), "장착 슬롯 4");
+                Assert.AreEqual(Layout.PetCount, CountNamed(UiKit.Find(pet, "PetGrid"), "Bar"), "칸마다 진행바"); Assert.AreEqual(Layout.PetCount, CountNamed(UiKit.Find(pet, "PetGrid"), "Lv"), "칸마다 Lv 글자");
+                Assert.IsTrue(HasText(s => s == "Lv. 0") && HasText(s => s == "0/0"), "숫자는 0(레퍼런스 숫자 베끼지 않음)");
+                Assert.IsTrue(HasText(s => s == "장착중") && HasText(s => s == "전체 강화") && HasText(s => s == "빠른 장착") && HasText(s => s == "소환") && HasText(s => s == "소환 x10"), "라벨 우리말");
+                var tabs2 = UiKit.Find(pet, "ui.tabBar"); Assert.IsNotNull(tabs2, "펫 탭 바"); Assert.GreaterOrEqual(tabs2.childCount, NavBar.Keys.Length, "탭 5");
+                // 배치 = 표 ⑩(±0.5%p) — 첫 칸 · 슬롯 줄 · 버튼 2줄 · 탭 바
+                var c0 = (RectTransform)UiKit.Find(pet, "Pet:0"); Assert.AreEqual(Layout.PetCell.X, c0.anchorMin.x * 100f, 0.5f, "첫 칸 x"); Assert.AreEqual(1f - Layout.PetCell.Y / 100f, c0.anchorMax.y, 1e-3f, "첫 칸 y");
+                var c8 = (RectTransform)UiKit.Find(pet, "Pet:8"); Assert.AreEqual(Layout.PetCell.X, c8.anchorMin.x * 100f, 0.5f, "9번째 칸 = 3행 첫 열"); Assert.IsTrue(c8.anchorMax.y < c0.anchorMin.y, "3행은 1행 아래");
+                var s0 = (RectTransform)UiKit.Find(pet, "Slot:0"); Assert.AreEqual(Layout.PetSlot.X, s0.anchorMin.x * 100f, 0.5f, "첫 슬롯 x");
+                var ua = (RectTransform)UiKit.Find(pet, "UpgradeAllBtn"); var sm = (RectTransform)UiKit.Find(pet, "SummonBtn"); var sm10 = (RectTransform)UiKit.Find(pet, "Summon10Btn");
+                Assert.IsTrue(ua.anchorMin.y > sm.anchorMax.y, "회색 줄이 소환 줄 위"); Assert.IsTrue(sm10.anchorMin.x > sm.anchorMax.x, "소환 x10 은 소환 오른쪽");
+                Assert.AreEqual(Layout.PetSummon.X, sm.anchorMin.x * 100f, 0.5f, "소환 x"); Assert.AreEqual(1f - Layout.TabBar.Y / 100f, ((RectTransform)tabs2).anchorMax.y, 1e-3f, "탭 바 = 표 자리");
+                // 껍데기 버튼·슬롯 — 눌러도 아무 일 없음(팝업 안 열림 · 화면 그대로 · 빨간 줄 0)
+                foreach (var n in new[] { "UpgradeAllBtn", "QuickEquipBtn", "SummonBtn", "Summon10Btn", "Slot:0", "Slot:3" }) Assert.IsTrue(ClickNamed(pet, n), "껍데기 " + n);
+                yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen, "껍데기 버튼은 팝업을 열지 않는다"); Assert.AreEqual("pet", _app.Current.Name, "화면 그대로");
+                Check("펫 껍데기 버튼");
+                // 세부 팝업(14) — 칸 클릭 → 명판 없음 · 세부 칸 · «패시브:» · 강화/장착(껍데기) · «탭하여 닫기» · 배경 탭으로 닫힘
+                Assert.IsTrue(ClickNamed(pet, "Pet:0"), "펫 칸 클릭"); yield return Frames(2);
+                Check("펫 세부 팝업", expectOverlay: true);
+                var ov = _app.Overlay.Root;
+                Assert.IsNotNull(UiKit.Find(ov, "PetDetailCell"), "세부 칸"); Assert.IsNotNull(UiKit.Find(ov, "Desc"), "설명 박스"); Assert.IsNotNull(UiKit.Find(ov, "PassiveRow"), "패시브 수치 줄");
+                Assert.IsTrue(HasText(s => s == "패시브:") && HasText(s => s == "강화") && HasText(s => s == "장착") && HasText(s => s == "탭하여 닫기"), "세부 팝업 글자");
+                var rib = UiKit.Find(ov, "ui.title.tangerine"); Assert.IsTrue(rib == null || !rib.gameObject.activeSelf, "세부 팝업은 명판 없음(레퍼런스 14)"); Assert.IsNull(UiKit.Find(ov, "Button_Close_01"), "닫기 X 없음");
+                var bx = (RectTransform)UiKit.Find(ov, "ui.popup"); Assert.IsNotNull(bx, "세부 패널(ui.popup)"); Assert.AreEqual(Layout.PdBox.X, bx.anchorMin.x * 100f, 0.5f, "패널 x = 표 ⑪"); Assert.AreEqual(1f - Layout.PdBox.Y / 100f, bx.anchorMax.y, 1e-3f, "패널 y = 표 ⑪");
+                Assert.IsTrue(ClickNamed(ov, "PetUpgradeBtn") && ClickNamed(ov, "PetEquipBtn"), "세부 버튼 2"); yield return Frames(1); Assert.IsTrue(_app.Overlay.IsOpen, "껍데기 버튼은 팝업을 닫지 않는다");
+                Assert.IsTrue(ClickNamed(ov, "Dimmed"), "배경 탭 = 닫기"); yield return Frames(2); Assert.IsFalse(_app.Overlay.IsOpen, "세부 팝업 닫힘");
+                Check("펫 세부 닫힘");
+                _app.ShowScreen("lobby"); yield return Frames(1); Check("펫 → 로비");
+            }
 
             // 토스트
             _app.Toast("스모크 테스트"); yield return Frames(2);

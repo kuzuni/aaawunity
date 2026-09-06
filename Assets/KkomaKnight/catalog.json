@@ -395,7 +395,16 @@
     "env.desert.Cactus_Green1_02": "Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green1_02.png",
     "env.desert.Cactus_Green2_03": "Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_03.png",
     "env.desert.Cactus_Green1_03": "Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green1_03.png",
-    "env.desert.Cactus_Green2_05": "Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_05.png"
+    "env.desert.Cactus_Green2_05": "Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Cactus/Cactus_Green2_05.png",
+    "pet.bread": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Consumable_Food_Bread_01.png",
+    "pet.fire": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Misc_Fire_01_Red.png",
+    "pet.bow": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Bow_01.png",
+    "pet.hammer": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Weapons_Hammer_01.png",
+    "pet.rocket": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Misc_Rocket_01_Red.png",
+    "pet.sickle": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Weapons_Sickle_01.png",
+    "pet.egg": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Egg_02.png",
+    "pet.feather": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Feather_02.png",
+    "pet.eye": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Eye_01.png"
   },
   "prefabs": {
     "cm.character": "Assets/Layer Lab/2D Minimal-CharacterMaker/Common/Prefabs/Character.prefab",
@@ -826,6 +835,15 @@
     "pi.anvil": "T39: 대장간 빈 결과 슬롯 안 모루 실루엣(레퍼런스 08 «선택 칸»)",
     "pi.hammer": "T39: 대장간 벽에 걸린 연장",
     "ui.itemFrame.green": "T39: 대장간 «합성 가능» 칸·결과 슬롯의 초록 테두리(등급색 프레임을 교체)",
-    "pi.arrow_left": "T39: 대장간 뒤로 버튼(◀ · 글자 없음)"
+    "pi.arrow_left": "T39: 대장간 뒤로 버튼(◀ · 글자 없음)",
+    "pet.bread": "펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 1(빵 — 레퍼런스 13 첫 칸과 같은 빵) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체",
+    "pet.fire": "펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 2(불꽃 정령 자리) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체",
+    "pet.bow": "펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 3(화살 자리) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체",
+    "pet.hammer": "펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 4(망치) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체",
+    "pet.rocket": "펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 5(화살 다발 자리) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체",
+    "pet.sickle": "펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 6(붉은 베기 자리) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체",
+    "pet.egg": "펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 7(멧돼지 자리 — 알) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체",
+    "pet.feather": "펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 8(천사 자리 — 깃털) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체",
+    "pet.eye": "펫 탭 껍데기(T42 · 13_pet.jpg 4열 격자) 아이콘 — 펫 9(문어 자리 — 눈) · 펫 시스템이 생기면 pets.json 의 아이콘 키로 대체"
   }
 }
