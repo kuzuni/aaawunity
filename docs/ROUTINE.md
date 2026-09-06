@@ -230,7 +230,7 @@
 3. **무기는 전부 근접 무기** — 활·지팡이·완드·창 계열 금지. `GearLook` 표에서 무기 종류 × 등급을 **검(Sword)·방망이(Blunt)·도끼(Axe)** 세 계열의 파츠에서 고른다(주인 2026-09-06 «Axe, Blunt, Sword 중에 골라서» · 등급이 오를수록 화려한 것 · 착용 파츠 슬롯은 HandRight/Sword·Blunt·Axe 중 종류에 맞는 것). 카탈로그 키·`docs/assets-map.md` 갱신.
 4. 게이트 + PROGRESS T17 행.
 
-### T18 — 배속(x2) 기억
+### T18 — 배속(x2) 기억 ✅ (완료 · `73e38de` · CI #45 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/BattleScreen.cs`(_speed) · `SaveStore.cs`/`SaveData`(필드 1개)
 순서: 제약 없음.
 1. 배속 버튼 값(x1/x2)을 세이브(`SaveData.Speed` · PlayerPrefs)에 저장하고, 전투 시작 시 그 값으로 시작한다(«2배속으로 하다가 클리어 뒤 다른 챕터 도전하면 다시 1배속» 이 안 되게). index.html `kkoma-knight-v2` 에 없는 필드라 세이브 호환은 «없으면 1».
