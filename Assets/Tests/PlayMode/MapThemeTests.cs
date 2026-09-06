@@ -87,26 +87,42 @@ namespace KkomaKnight.Tests.Play
                 // ⓑ 물결 경계 위·아래 · ⓒ 스케일 · ⓓ 밀도
                 var props = Under(root, "Props"); Assert.Greater(props.Count, 0, where + " 소품");
                 var table = MapLayouts.Of(theme.Name); var sys = new HashSet<float>(); foreach (var p in table) sys.Add(Mathf.Abs(p.Sy));
-                int upAbove = 0, upBelow = 0, visible = 0, visibleRoadUp = 0;
+                int upAbove = 0, upBelow = 0, visible = 0, visibleRoadUp = 0, tallAbove = 0, tallBelow = 0;
+                float upperEdgeY = WorldCam.ToWorld(0, BattleWorld.DemoY(BattleWorld.UpperRoadEdgeY(table))).y;   // 위 경계 자리 · 아래 경계는 길 중심 대칭(T71 ①)
                 foreach (var sr in props)
                 {
                     Assert.IsNotNull(sr.sprite, where + " 소품 그림 없음: " + sr.name);
                     float sy = Mathf.Abs(sr.transform.localScale.y) / Layout.MapScale; bool known = false;
                     foreach (var s in sys) if (Mathf.Abs(s - sy) < 1e-3f) { known = true; break; }
                     Assert.IsTrue(known, $"{where} 소품 세로 스케일 {sr.transform.localScale.y} 가 표 × MapScale 이 아니다 ({sr.sprite.name})");
-                    bool onScreen = Mathf.Abs(sr.transform.position.x) < halfW && sr.transform.position.y < bandTop && sr.transform.position.y > bandBot;
+                    bool inBand = sr.transform.position.y < bandTop && sr.transform.position.y > bandBot;
+                    bool onScreen = Mathf.Abs(sr.transform.position.x) < halfW && inBand;
                     if (sr.sprite.name.StartsWith("Road_up"))
                     {
-                        if (sr.transform.position.y > roadB.center.y) upAbove++; else upBelow++;
+                        bool above = sr.transform.position.y > roadB.center.y;
+                        if (above) upAbove++; else upBelow++;
                         if (onScreen) visibleRoadUp++;
-                        Assert.AreEqual(-16, sr.sortingOrder, where + " 물결 경계는 길 바로 위(납작 · 데모 렌더 순서)");
+                        Assert.AreEqual(BattleWorld.OrderFlat, sr.sortingOrder, where + " 물결 경계는 길 바로 위(납작 · 데모 렌더 순서)");
+                        // T71 ① — 아래쪽 경계는 y 반전 + 위 경계의 길 중심 대칭 자리 · 위쪽은 그대로
+                        Assert.AreEqual(!above, sr.flipY, where + (above ? " 위쪽 물결 경계는 반전 없음" : " 아래쪽 물결 경계는 y 반전(flipY)"));
+                        if (!above) Assert.AreEqual(2f * roadB.center.y - upperEdgeY, sr.transform.position.y, 0.03f, where + " 아래 경계 y = 위 경계의 길 중심 대칭");
                     }
-                    else if (onScreen) visible++;
+                    else
+                    {
+                        if (onScreen) visible++;
+                        // T71 ② — 어떤 소품도 바닥·길 뒤로 숨지 않는다(예전 위쪽 하한 −60 < 바닥 −20 회귀 방지) · 납작이 아닌 소품은 납작(물결·풀꽃)보다 앞
+                        Assert.Greater(sr.sortingOrder, BattleWorld.OrderRoad, $"{where} 소품이 길·바닥 뒤에 있다: {sr.sprite.name} order {sr.sortingOrder}");
+                        if (sr.sortingOrder != BattleWorld.OrderFlat && inBand) { if (sr.transform.position.y > roadB.center.y) tallAbove++; else tallBelow++; }
+                    }
                 }
                 Assert.Greater(upAbove, 0, where + " 물결 경계가 길 위쪽에도 있어야 한다(데모 Road_Up 그룹 y +1.17)");
                 Assert.Greater(upBelow, 0, where + " 물결 경계가 길 아래쪽에 있어야 한다(데모 Road_Down 그룹 y −1.97)");
                 Assert.GreaterOrEqual(visibleRoadUp, 2, where + " 시작 화면 창(5.4u)에 물결 경계가 위·아래로 보인다");
                 Assert.GreaterOrEqual(visible, 6, $"{where} 시작 화면 창(5.4u × HUD 사이 띠)에 소품이 {visible}개 — 데모 밀도(17.8u 창에 30~60개 = 5.4u 에 ≥ 6)여야 한다(«휑하다» 재발)");
+                // T71 ② — HUD 사이 띠 안에서 큰 소품(나무·바위·선인장)이 길 위·아래에 골고루: 둘 다 있고 비 0.5~2.0(표 실측 = 위 10~20 / 아래 6~11 · 결정 157)
+                Assert.Greater(tallAbove, 0, where + " 길 위쪽 띠에 큰 소품"); Assert.Greater(tallBelow, 0, where + " 길 아래쪽 띠에 큰 소품");
+                float ratio = (float)tallAbove / tallBelow;
+                Assert.IsTrue(ratio >= 0.5f && ratio <= 2.0f, $"{where} 큰 소품 위/아래 = {tallAbove}/{tallBelow} = {ratio:0.00} — 0.5~2.0 이어야 한다(«아래에만 나무가 몰림» 재발)");
                 _log.AssertNoRed(where);
                 _app.Overlay.Close(); _app.ShowScreen("lobby"); yield return Frames(2);
                 _log.AssertNoRed(where + " → 로비");

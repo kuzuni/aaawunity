@@ -30,7 +30,12 @@ namespace KkomaKnight.Game
         const float RoadCenterFrac = 0.41f;                          // 데모 씬의 길 중심(y −0.402)이 놓이는 프레임 비율 — 발 줄 40% 을 품는다(길 띠 1.48u = ±6.5% · 34.5~47.5% · ref-layout 지면 띠 30~51% 안)
         /// <summary>데모 씬 1u 가 화면에서 차지하는 프레임 높이 비율 — 데모 구성을 통째로 <see cref="Layout.MapScale"/>(0.6) 배로 그린다(T19 · 1u → 0.6 유니티 단위 = 프레임의 1/19).</summary>
         const float UnitFrac = WorldCam.PPU * Layout.MapScale / WorldCam.LayoutH;
-        const float SpreadRamp = 150f;                               // 1배 → WorldSpacing 배로 부드럽게 넘어가는 월드 px 구간
+        /// <summary>
+        /// 월드 정렬 층(T71) — 바닥 &lt; 길 &lt; 납작(물결 경계·풀꽃) &lt; 길 위쪽 소품(멀수록 뒤 · <see cref="OrderNearProp"/> 에서 1u 당 −3 · 하한 <see cref="OrderFarProp"/>) &lt; 캐릭터 &lt; 길 아래쪽 소품(381~).
+        /// 예전엔 바닥 −20 · 위쪽 소품 하한 −60 이라 발 줄에서 2.7u 이상 위(y ≥ 2.46 · 테마마다 큰 나무 5~10그루)의 소품이 바닥 뒤로 숨었다 — 주인 «위쪽엔 나무가 적다» 의 원인.
+        /// </summary>
+        public const int OrderField = -40, OrderRoad = -38, OrderFlat = -36, OrderFarProp = -35, OrderNearProp = -12;
+        const float SpreadRamp = 150f;                              // 1배 → WorldSpacing 배로 부드럽게 넘어가는 월드 px 구간
 
         // 플레이어
         CharacterRig _player; SpriteRenderer _pBarBg, _pBarFill, _pShBg, _pShFill; Text _pHpTxt, _pShTxt; double _pStrikeTick; bool _pDeadShown; EnemyState _pTarget;
@@ -211,7 +216,7 @@ namespace KkomaKnight.Game
             for (int r = 0; r < rows; r++)
                 for (int c = 0; c < _tileCols; c++)
                 {
-                    var sr = Sprite(_theme.Field, ground, -20, "field"); if (sr.sprite == null) sr.sprite = field;
+                    var sr = Sprite(_theme.Field, ground, OrderField, "field"); if (sr.sprite == null) sr.sprite = field;
                     sr.transform.localScale = fieldScale;
                     sr.transform.position = new Vector3(0, fieldY + (r - (rows - 1) * 0.5f) * tileH, 0);
                     _fieldTiles.Add(sr);
@@ -222,7 +227,7 @@ namespace KkomaKnight.Game
             float roadW = (road != null ? road.bounds.size.x : 1.28f) * roadScale.x; int roadCols = Mathf.CeilToInt(WorldCam.LayoutW / WorldCam.PPU / roadW) + 2;
             for (int c = 0; c < roadCols; c++)
             {
-                var sr = Sprite(_theme.Road, ground, -18, "road"); if (sr.sprite == null) sr.sprite = road;
+                var sr = Sprite(_theme.Road, ground, OrderRoad, "road"); if (sr.sprite == null) sr.sprite = road;
                 sr.transform.localScale = roadScale; sr.transform.position = new Vector3(0, roadY, 0); _roadTiles.Add(sr);
             }
         }
@@ -248,8 +253,10 @@ namespace KkomaKnight.Game
         /// <summary>
         /// 소품 · 물결 경계 — 주인 지정 데모 씬(DemoScene_Autumn/DeepForest/Forest/Desert)의 인스턴스를 **그대로**(위치·반전·크기 · 부모 그룹 합성 · <see cref="MapLayouts"/> 표) 씬 폭마다 반복해 깐다
         /// (주인: «그 씬 배치가 맘에 들어서 그대로 복사해도 된다» · 2026-09-06 «맵 디자인을 데모 씬에 있는 거 그대로»). 전체를 <see cref="Layout.MapScale"/>(0.6) 배로: 위치 × 0.6 · 스프라이트 스케일 × 0.6.
-        /// 물결 경계(Road_up)는 씬처럼 길 위(y ≈ +1.13)·아래(≈ −2.0) 양쪽 — 표에 소품과 똑같이 들어 있어 따로 처리하지 않는다(T19).
-        /// 정렬: 발 줄(40%)보다 위에 뿌리를 둔 소품은 캐릭터 뒤, 아래는 앞 · 납작한 것(풀·꽃·물결 경계)은 늘 바닥(길 바로 위) — 데모 렌더 순서(Field &lt; Road &lt; Road_up &lt; 나머지 y 내림차순)와 같다.
+        /// 물결 경계(Road_up)는 씬처럼 길 위(y ≈ +1.13)·아래 양쪽 — 표에 소품과 똑같이 들어 있다(T19). **아래쪽 것은 y 반전(flipY)** 하고 위쪽 것을 길 중심에 대칭시킨 자리(y = 2·RoadCenterY − 위 y ≈ −1.94)에 둔다(주인 2026-09-06 · T71 ①):
+        /// Road_up 은 위가 평평하고 아래가 물결(길 위로 늘어진 풀)이라 아래쪽 것을 그대로 두면 물결이 길 밖(들판)을 향해 «직선 경계 + 밑에 점선» 으로 보였다 → 뒤집으면 위 경계와 같은 물결이 길 안쪽을 향한다.
+        /// 정렬: 발 줄(40%)보다 위에 뿌리를 둔 소품은 캐릭터 뒤(<see cref="OrderNearProp"/> → 멀수록 뒤 · 하한 <see cref="OrderFarProp"/> = 바닥·길·납작보다 앞), 아래는 앞 · 납작한 것(풀·꽃·물결 경계)은 늘 바닥(길 바로 위 · <see cref="OrderFlat"/>) — 데모 렌더 순서(Field &lt; Road &lt; Road_up &lt; 나머지 y 내림차순)와 같다.
+        /// T71 ② «위쪽에 나무가 적다» 의 원인은 표가 아니라 이 정렬이었다(위쪽 하한이 −60 이라 y ≥ 2.46 소품이 바닥 −20 뒤로 숨음 · 테마마다 5~10개) — 표는 데모 그대로 두고 하한만 바닥 앞으로 올렸다(미러 배치는 안 한다 · PROGRESS 결정 157).
         /// </summary>
         void BuildProps()
         {
@@ -260,17 +267,28 @@ namespace KkomaKnight.Game
             float footDemoY = MapLayouts.RoadCenterY + (RoadCenterFrac - FootY) / UnitFrac;   // 발 줄의 데모 y (≈ −0.21)
             var layout = MapLayouts.Of(_theme.Name); double period = MapLayouts.WidthOf(_theme.Name) * unitPx;
             double start = System.Math.Floor(from / period) * period;
+            float upperEdgeY = UpperRoadEdgeY(layout);
             for (double x0 = start; x0 < to; x0 += period)
                 foreach (var p in layout)
                 {
-                    float yf = DemoY(p.Y);
+                    bool roadUp = p.Key.EndsWith(".roadUp"); bool lowerEdge = roadUp && p.Y < MapLayouts.RoadCenterY;
+                    float y = lowerEdge ? 2f * MapLayouts.RoadCenterY - upperEdgeY : p.Y;    // 아래 경계 = 위 경계의 길 중심 대칭 자리(T71 ①)
+                    float yf = DemoY(y);
                     if (yf < -0.15f || yf > 0.72f) continue;                        // 화면 위 밖 · HUD 패널 뒤는 만들지 않는다
                     var sp = _app.Assets.Sprite(p.Key);
-                    bool flat = p.Key.EndsWith(".roadUp") || (sp != null && sp.bounds.size.y * Mathf.Abs(p.Sy) < 0.35f);   // 풀·꽃(납작) 은 늘 바닥 — 데모 치수 기준. 물결 경계(roadUp)는 높이와 무관하게 늘 길 바로 위(Road_up_Desert 만 43px = 0.43u 라 문턱을 넘겼다 · T45 · CI #51)
-                    int order = flat ? -16 : p.Y > footDemoY ? Mathf.Max(-60, -12 - (int)((p.Y - footDemoY) * 3f)) : Mathf.Min(470, 381 + (int)((footDemoY - p.Y) * 5f));
+                    bool flat = roadUp || (sp != null && sp.bounds.size.y * Mathf.Abs(p.Sy) < 0.35f);   // 풀·꽃(납작) 은 늘 바닥 — 데모 치수 기준. 물결 경계(roadUp)는 높이와 무관하게 늘 길 바로 위(Road_up_Desert 만 43px = 0.43u 라 문턱을 넘겼다 · T45 · CI #51)
+                    int order = flat ? OrderFlat : p.Y > footDemoY ? Mathf.Max(OrderFarProp, OrderNearProp - (int)((p.Y - footDemoY) * 3f)) : Mathf.Min(470, 381 + (int)((footDemoY - p.Y) * 5f));
                     var pr = AddProp(props, p.Key, x0 + p.X * unitPx, yf, 1f, order, false);
                     pr.Sr.transform.localScale = new Vector3(p.Sx * Layout.MapScale, p.Sy * Layout.MapScale, 1f);
+                    pr.Sr.flipY = lowerEdge;                                        // T71 ① — 아래쪽 물결 경계는 y 반전
                 }
+        }
+        /// <summary>표에서 길 위쪽 물결 경계(Road_up · y &gt; 길 중심) 행의 y — 아래쪽 경계를 이 값의 길 중심 대칭에 둔다(T71 ①). 표에 없으면 데모 값 1.134.</summary>
+        public static float UpperRoadEdgeY(MapLayouts.P[] layout)
+        {
+            float y = float.MinValue;
+            foreach (var p in layout) if (p.Key.EndsWith(".roadUp") && p.Y > MapLayouts.RoadCenterY) y = Mathf.Max(y, p.Y);
+            return y > float.MinValue ? y : 1.134f;
         }
         void BuildNodes()
         {

@@ -453,6 +453,16 @@ namespace KkomaKnight.Tests.Play
                 var stage = (RectTransform)UiKit.Find(gear, "Stage"); Assert.IsNotNull(stage, "캐릭터 무대");
                 Assert.AreEqual(1f - Layout.GearStage.Y / 100f, stage.anchorMax.y, 1e-3f, "무대 = 표 자리(y)"); Assert.AreEqual(1f - (Layout.GearStage.Y + Layout.GearStage.H) / 100f, stage.anchorMin.y, 1e-3f, "무대 높이 = 표(26.5%)");
                 Assert.IsNotNull(UiKit.Find(stage, "Field"), "무대 들판"); Assert.IsNotNull(UiKit.Find(stage, "Road"), "무대 길"); Assert.GreaterOrEqual(CountNamed(stage, "Tree"), 3, "무대 나무");
+                {
+                    // T71 ③ — 길 띠 위·아래 물결 경계(Road_up · 아래는 y 반전) · 줄이 길 가장자리에 걸친다 · 타일 여러 장(스프라이트 비례)
+                    var road = (RectTransform)UiKit.Find(stage, "Road"); var ru = (RectTransform)UiKit.Find(stage, "RoadUp"); var rd = (RectTransform)UiKit.Find(stage, "RoadDown");
+                    Assert.IsNotNull(ru, "무대 길 위 물결 경계 RoadUp"); Assert.IsNotNull(rd, "무대 길 아래 물결 경계 RoadDown");
+                    Assert.Greater(ru.localScale.y, 0f, "위 경계는 반전 없음"); Assert.Less(rd.localScale.y, 0f, "아래 경계는 y 반전(localScale.y −1)");
+                    Assert.IsTrue(ru.anchorMin.y < road.anchorMax.y && ru.anchorMax.y > road.anchorMax.y, "RoadUp 이 길 위 가장자리에 걸친다");
+                    Assert.IsTrue(rd.anchorMin.y < road.anchorMin.y && rd.anchorMax.y > road.anchorMin.y, "RoadDown 이 길 아래 가장자리에 걸친다");
+                    Assert.GreaterOrEqual(ru.childCount, 2, "RoadUp 타일 여러 장"); Assert.AreEqual(ru.childCount, rd.childCount, "위·아래 타일 수 같음");
+                    var tile = ru.GetChild(0).GetComponent<Image>(); Assert.IsNotNull(tile != null ? tile.sprite : null, "물결 경계 타일 스프라이트(env.roadUp)"); Assert.IsFalse(tile.preserveAspect, "타일은 줄 높이에 맞춰 늘린다");
+                }
                 var hero = (RectTransform)UiKit.Find(stage, "Hero"); Assert.IsNotNull(hero, "캐릭터 호스트");
                 var gearHv = hero.GetComponentInChildren<HeroView>(true); Assert.IsNotNull(gearHv, "캐릭터 = HeroView(플레이어 외형)");
                 Assert.IsFalse(gearHv.Still, "장비 화면 큰 캐릭터는 움직임 유지(T68 ② 는 로비 상단 초상만)"); Assert.AreEqual(1f, gearHv.Rig.AnimSpeed, 1e-3f, "장비 캐릭터 Animator 속도 1");

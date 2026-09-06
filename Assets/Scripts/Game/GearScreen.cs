@@ -22,6 +22,11 @@ namespace KkomaKnight.Game
         public static readonly Layout.R Band = new Layout.R(0, Layout.GearStats.Y + Layout.GearStats.H + 0.5f, 100, Layout.GearInv.Y - (Layout.GearStats.Y + Layout.GearStats.H + 0.5f));
         /// <summary>무대 안 길 띠(무대 % · 레퍼런스: 아래 1/3 이 흙길) · 나무 5그루(무대 위쪽 가장자리) · 덤불 3.</summary>
         static readonly Layout.R StageRoad = new Layout.R(0, 58, 100, 24);
+        /// <summary>무대 길 띠의 위·아래 물결 경계(주인 2026-09-06 «장비 Road 에 Road_up_DeepForest 류가 들어가야» · T71 ③) — 전투 맵(<see cref="BattleWorld"/>)과 같은 Road_up 스프라이트(<c>env.roadUp</c> = 무대 바닥·길과 같은 Forest 것) ·
+        /// 높이 = 데모 비례(Road_up 0.33u ÷ Road 3.15u = 길 띠의 10.5%) · 데모처럼 띠 밖 62% / 안 38% 로 가장자리에 걸친다 · 아래 경계는 y 반전(T71 ① 과 같은 규칙) · 스프라이트 비례 그대로 가로로 이어 붙인다(Image.Tiled 는 wrap 경고를 낸다).</summary>
+        public const float StageEdgeH = 24f * 0.105f, StageEdgeOutside = 0.62f;
+        public const string StageEdgeKey = "env.roadUp";
+        const float StageEdgeAspect = 253f / 33f;
         static readonly Layout.R[] StageTrees = { new Layout.R(-4, -6, 22, 58), new Layout.R(16, -10, 22, 60), new Layout.R(39, -8, 22, 58), new Layout.R(61, -10, 22, 60), new Layout.R(82, -6, 22, 58) };
         static readonly Layout.R[] StageBushes = { new Layout.R(24, 44, 12, 16), new Layout.R(66, 46, 12, 16), new Layout.R(45, 84, 10, 14) };
         /// <summary>슬롯 칸(147px) 기준 % — 위 «Lv. N» 라벨(본문 40 · 한 줄 49px 이 36% = 53px 에 들어간다 · 아래 끝 = 프레임 위 2%) · «+N» 배지(칸 아래 가장자리에 걸침 · 74~101%). T63-gear.</summary>
@@ -34,6 +39,20 @@ namespace KkomaKnight.Game
         TopBar _top; HeroView _hero; Transform _content; Text _atk, _hp, _sh; GameObject _forgeDot;
 
         static string PartAt(int slotIndex) => slotIndex < 3 ? GearUi.ColLeft[slotIndex] : GearUi.ColRight[slotIndex - 3];
+
+        /// <summary>무대 길 띠 가장자리(무대 % <paramref name="edgeY"/>)에 물결 경계 줄 — 줄 rect 이름 «RoadUp»/«RoadDown»(테스트 계약) · 아래 줄은 <c>localScale.y = −1</c> 로 뒤집는다 · 타일 = 스프라이트 비례(253×33)로 무대 폭을 채우는 만큼.</summary>
+        void BuildStageEdge(RectTransform stage, string name, float edgeY, bool flip)
+        {
+            var row = UiKit.Rect(stage, name);
+            float h = StageEdgeH; float y = flip ? edgeY - h * (1f - StageEdgeOutside) : edgeY - h * StageEdgeOutside;
+            UiKit.Pct(row, 0, y, 100, h);
+            if (flip) row.localScale = new Vector3(1f, -1f, 1f);
+            var sp = App != null && App.Assets != null ? App.Assets.Sprite(StageEdgeKey) : null;
+            float aspect = sp != null && sp.rect.height > 0 ? sp.rect.width / sp.rect.height : StageEdgeAspect;
+            float hPx = h / 100f * Layout.GearStage.H / 100f * UiKit.FrameH; float wPct = Mathf.Max(1f, hPx * aspect / UiKit.FrameW * 100f);
+            int n = Mathf.CeilToInt(100f / wPct);
+            for (int i = 0; i < n; i++) { var t = UiKit.Icon(row, "Tile" + i, StageEdgeKey); t.preserveAspect = false; UiKit.Pct(t.rectTransform, i * wPct, 0, wPct, 100); }
+        }
 
         protected override void Build()
         {
@@ -48,6 +67,7 @@ namespace KkomaKnight.Game
                 var field = UiKit.Icon(stage, "Field", "env.field"); field.preserveAspect = false; UiKit.Stretch(field.rectTransform);
                 for (int i = 0; i < StageTrees.Length; i++) { var t = UiKit.Icon(stage, "Tree" + i, "env.tree"); UiKit.Pct(t.rectTransform, StageTrees[i]); }
                 var road = UiKit.Icon(stage, "Road", "env.road"); road.preserveAspect = false; UiKit.Pct(road.rectTransform, StageRoad);
+                BuildStageEdge(stage, "RoadUp", StageRoad.Y, false); BuildStageEdge(stage, "RoadDown", StageRoad.Y + StageRoad.H, true);   // T71 ③ 물결 경계 위·아래(아래는 y 반전)
                 for (int i = 0; i < StageBushes.Length; i++) { var b = UiKit.Icon(stage, "Bush" + i, "env.bush"); UiKit.Pct(b.rectTransform, StageBushes[i]); }
                 // 가운데 큰 플레이어 — 표의 «캐릭터» 행 높이(19%)의 정사각 호스트(텍스처가 정사각이라 찌그러지지 않게 · 폭은 높이에서 환산) · 기본 프레이밍이면 몸이 호스트 세로의 ≈89%(T25 «85~90%»)
                 float hostW = Layout.GearHero.H * UiKit.FrameH / UiKit.FrameW;

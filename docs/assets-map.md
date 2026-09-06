@@ -105,7 +105,7 @@
 | sprites | `cmi.gear.armor.evade.3` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Thumbnail/Chest/FA_Chest_029_Purple.png` | fileID 21300000 | 장비 아이콘(GearLook.IconKey · T31 · 주인 «아이콘용 그림과 입는 그림은 따로») — 갑옷 · 회피 세트 · 신화(3) → 같은 이름의 Thumbnail(128×128) · 칸·슬롯·세부·대장간·뽑기 결과 |
 | sprites | `env.field` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Field_Forest.png` | fileID 21300000 | (구) 단일 숲 바닥 — 지금은 env.<theme>.field 를 쓴다 · 폴백 · T37: 장비 화면 무대(GearStage) 바닥 |
 | sprites | `env.road` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_Forest.png` | fileID 21300000 | 바닥 위 길 타일 — 캐릭터 발 줄 · T37: 장비 화면 무대 아래 1/3 길 띠 |
-| sprites | `env.roadUp` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_up_Forest.png` | fileID 21300000 | 길 위 경계 장식(253×33) |
+| sprites | `env.roadUp` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_up_Forest.png` | fileID 21300000 | 길 위 경계 장식(253×33) · T71: 장비 화면 무대 길 띠의 위·아래 물결 경계(아래는 y 반전 · GearScreen.BuildStageEdge) |
 | sprites | `env.tree` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_01.png` | fileID 21300000 | 지면 뒤 소품(나무) — 챕터마다 시드 고정 배치 · T37: 장비 화면 무대 위 가장자리 나무 5 |
 | sprites | `env.bush` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Green_01.png` | fileID 21300000 | 지면 소품(덤불) · T37: 장비 화면 무대 덤불 3 |
 | sprites | `env.mushroom` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Pink_01.png` | fileID 21300000 | 쉼터 노드 옆 버섯 · 지면 소품 |
