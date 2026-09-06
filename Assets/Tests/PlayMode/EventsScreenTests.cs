@@ -182,5 +182,84 @@ namespace KkomaKnight.Tests.Play
             Check("이벤트 버튼 왕복");
             yield return Shutdown();
         }
+
+        // ───────────────────────── T63-events: 글자 가독성 ─────────────────────────
+
+        /// <summary>한 화면의 활성 글자를 모아 «실제로 그려지는 크기»(bestFit 결과)가 보조 하한(36) 밑으로 내려가지 않는지 · 선호 크기가 칸을 안 넘는지 본다.
+        /// <paramref name="skip"/> 로 시작하는 경로는 다른 하위 행 담당이라 뺀다(TopBar = T63-lobby · TapToClose = T63-toast).</summary>
+        void Readable(string screen, Transform root, params string[] skip)
+        {
+            Canvas.ForceUpdateCanvases();
+            var rows = TextAudit.Collect(screen, root);
+            Assert.Greater(rows.Count, 3, $"[{screen}] 글자가 거의 안 모였다(수집 실패)");
+            var small = new List<string>(); var clipped = new List<string>();
+            foreach (var r in rows)
+            {
+                bool skipIt = false;
+                foreach (var sk in skip) if (r.Path != null && r.Path.StartsWith(sk)) { skipIt = true; break; }
+                if (skipIt) continue;
+                if (r.Used < TextSize.Aux) small.Add(r.ToString());
+                if (r.Clipped) clipped.Add(r.ToString());
+            }
+            Assert.AreEqual(0, small.Count, $"[{screen}] 실제 그려지는 크기가 보조 36 미만(T63 · 주인 «글씨가 너무 작아 안 읽힌다»):\n" + string.Join("\n", small));
+            Assert.AreEqual(0, clipped.Count, $"[{screen}] 잘림/넘침(선호 크기 > 칸 · 칸 h ≥ 크기 × 1.4 로 잡는다):\n" + string.Join("\n", clipped));
+        }
+
+        static Text FindText(Transform root, string path)
+        {
+            var t = UiKit.Find(root, path); Assert.IsNotNull(t, $"«{path}» 를 못 찾음");
+            var txt = t.GetComponent<Text>(); if (txt == null) txt = t.GetComponentInChildren<Text>(true);
+            Assert.IsNotNull(txt, $"«{path}» 안에 글자가 없음"); return txt;
+        }
+        static int MaxSize(Text t) => t.resizeTextForBestFit ? Mathf.Max(t.fontSize, t.resizeTextMaxSize) : t.fontSize;
+
+        /// <summary>
+        /// T63-events(⑨ 던전·아레나 20~26) — 20·21·22·24·25·26 의 모든 활성 글자가 «실제 36 이상 · 잘림 0» 인지.
+        /// 23(아레나 입장)은 T62(순위 화면 = <c>Social_Ranking</c> 프리팹 변형)가 잡고 있어 이 회차에서 뺐다(PROGRESS T63-events 행 비고 «23 은 T62 뒤»).
+        /// 자리 수치는 <c>Layout</c> ⑫~⑱ 와 `docs/ref-layout.md` ⚑ T63-events 회차 정정(칸 h ≥ 글자 크기 × 1.4)이 정본.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator EventsTextsAreReadable()
+        {
+            yield return Boot();
+            EventsScreen.Open(_app, EventsScreen.PageDungeon); yield return Frames(3);
+            var ev = _app.GetScreen<EventsScreen>(); var root = _app.Current.Root;
+
+            // 20 던전 — 제목 60 · 부제 40 · 카드 제목 48 · «획득 가능» 36 · 탭 라벨 36 · «준비 중» 60
+            var pg = UiKit.Find(root, "Page:" + EventsScreen.PageDungeon);
+            Readable("20_dungeon", pg);
+            Assert.AreEqual(TextSize.Title, MaxSize(FindText(pg, "Title")), "던전 제목 = 제목 60");
+            Assert.GreaterOrEqual(MaxSize(FindText(UiKit.Find(pg, "Card:hell"), "Head")), TextSize.Body, "카드 제목 띠(48)는 본문 40 하한 위");
+            Assert.AreEqual(TextSize.Title, MaxSize(FindText(UiKit.Find(pg, "SoonCard"), "Text")), "«준비 중» = 제목 60");
+            Assert.Greater(FindText(UiKit.Find(pg, "SoonCard"), "Text").color.r, 0.4f, "«준비 중» 글자색이 어두운 판 위에서 보여야 한다");
+
+            // 21 던전 세부 팝업 — 제목 띠 60 · 조건 문구 40 · «첫 클리어» 배지 36 · 티켓 수 = 크림 패널 위라 잉크색
+            Assert.IsTrue(ClickNamed(UiKit.Find(pg, "Card:hell"), "EnterBtn"), "던전 입장"); yield return Frames(3);
+            Readable("21_dungeon_detail", _app.Overlay.Root, "TapToClose");
+            var ticket = FindText(_app.Overlay.Root, "Ticket");
+            Assert.Less(ticket.color.r + ticket.color.g + ticket.color.b, 1.5f, "크림 패널 위 티켓 수는 어두운 글자여야 한다");
+            _app.Overlay.Close(); yield return Frames(2);
+
+            // 22 PvP — 시즌 타이머 36(칸 h2.3) · 티어 줄 40
+            ev.ShowPage(EventsScreen.PagePvp); yield return Frames(3);
+            Readable("22_arena", UiKit.Find(root, "Page:" + EventsScreen.PagePvp));
+
+            // 24 도전 팝업 · 25 순위 보상 팝업 (23 은 T62 담당이라 페이지만 지나간다)
+            ev.ShowPage(EventsScreen.PageArena); yield return Frames(3);
+            Assert.IsTrue(ClickNamed(root, "ChallengeBtn"), "도전 버튼"); yield return Frames(3);
+            Readable("24_arena_challenge", _app.Overlay.Root, "TapToClose");
+            _app.Overlay.Close(); yield return Frames(2);
+            Assert.IsTrue(ClickNamed(root, "RewardsBtn"), "보상 버튼"); yield return Frames(3);
+            Readable("25_arena_rank_reward", _app.Overlay.Root, "TapToClose");
+            _app.Overlay.Close(); yield return Frames(2);
+
+            // 26 상인 — 제목 60 · 타이머 36 · 카드 제목 40 · «한도» 는 크림 카드 위라 잉크색
+            ev.ShowPage(EventsScreen.PageMerchant); yield return Frames(3);
+            var me = UiKit.Find(root, "Page:" + EventsScreen.PageMerchant);
+            Readable("26_arena_shop", me);
+            Assert.AreEqual(TextSize.Title, MaxSize(FindText(me, "Title")), "상인 제목 = 제목 60");
+            _log.AssertNoRed("글자 가독성(20·21·22·24·25·26)");
+            yield return Shutdown();
+        }
     }
 }

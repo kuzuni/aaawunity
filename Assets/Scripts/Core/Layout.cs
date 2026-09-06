@@ -240,10 +240,12 @@ namespace KkomaKnight.Core
         public static readonly R PdBtnL = new R(13.5f, 59.9f, 35.1f, 5.1f);
         public static readonly R PdBtnR = new R(51.4f, 59.9f, 35.1f, 5.1f);
 
+        // ⑫~⑱ 던전·아레나 — ⚑ T63-events(글자 가독성 · 2026-09-06): 글자가 든 칸 10개의 h 를 «크기 × 1.4» 이상으로 올렸다(제목 3.0/2.9→3.7 = 제목 60 · 부제 1.7→2.5 = 본문 40 ·
+        // 시즌 타이머 1.6→2.3 · 조건 문구 2.2→2.6 · 리셋 타이머 2.2→2.6 · 안내 문구 1.4→2.3). 레퍼런스 % 자체는 그대로고 게임 칸만 +0.4~0.9%p(ui_score PASS 3.0%p 안 · ref-layout ⚑ T63-events 회차 정정).
         // ⑫ 던전 페이지 — docs/ref/20_dungeon.jpg (T43 · 워커 B 실측 · 720×1560 사본 픽셀 런 · ±0.5%p · docs/ref-layout.md ⑫ 표와 같다)
-        public static readonly R DgTitle = new R(32.0f, 10.8f, 36.0f, 3.0f);
+        public static readonly R DgTitle = new R(32.0f, 10.8f, 36.0f, 3.7f);
         public static readonly R DgTitleLine = new R(6.0f, 14.8f, 88.0f, 0.6f);
-        public static readonly R DgSub = new R(24.0f, 16.7f, 52.0f, 1.7f);
+        public static readonly R DgSub = new R(24.0f, 16.7f, 52.0f, 2.5f);
         public static readonly R DgCard1 = new R(3.6f, 20.4f, 92.6f, 26.4f);
         public static readonly R DgCard2 = new R(3.6f, 47.1f, 92.6f, 26.5f);
         public const float DgCardPitch = 26.7f;
@@ -261,7 +263,7 @@ namespace KkomaKnight.Core
         public static readonly R DdBox = new R(12.4f, 24.2f, 75.5f, 51.4f);
         public static readonly R DdHead = new R(12.4f, 24.2f, 75.5f, 3.7f);
         public static readonly R DdPic = new R(13.0f, 28.2f, 74.4f, 13.8f);
-        public static readonly R DdNote = new R(14.5f, 38.8f, 71.5f, 2.2f);
+        public static readonly R DdNote = new R(14.5f, 38.8f, 71.5f, 2.6f);
         public static readonly R DdArrow = new R(21.5f, 45.0f, 6.0f, 4.0f);
         public static readonly R DdFloor = new R(41.7f, 43.0f, 16.6f, 7.6f);
         public static readonly R DdRewards = new R(16.1f, 52.1f, 67.7f, 10.8f);
@@ -270,12 +272,12 @@ namespace KkomaKnight.Core
         public static readonly R DdBtns = new R(16.1f, 68.3f, 67.7f, 6.1f);
 
         // ⑭ 아레나(PvP) 페이지 — docs/ref/22_arena.jpg (T43)
-        public static readonly R ArTitle = new R(40.0f, 10.8f, 20.0f, 3.0f);
-        public static readonly R ArSub = new R(27.5f, 16.7f, 45.0f, 1.7f);
+        public static readonly R ArTitle = new R(40.0f, 10.8f, 20.0f, 3.7f);
+        public static readonly R ArSub = new R(27.5f, 16.7f, 45.0f, 2.5f);
         public static readonly R ArCard = new R(3.6f, 20.3f, 92.6f, 26.5f);
         public static readonly R ArCardHead = new R(3.6f, 20.3f, 92.6f, 3.7f);
         public static readonly R ArCardPic = new R(3.6f, 24.0f, 92.6f, 15.7f);
-        public static readonly R ArSeason = new R(5.0f, 38.3f, 35.0f, 1.6f);
+        public static readonly R ArSeason = new R(5.0f, 38.3f, 35.0f, 2.3f);
         public static readonly R ArEnter = new R(63.5f, 38.6f, 29.0f, 5.3f);
         public static readonly R ArTier = new R(6.0f, 41.0f, 24.0f, 3.9f);
         public static readonly R ArSoon = new R(3.6f, 47.1f, 92.6f, 25.0f);
@@ -313,8 +315,8 @@ namespace KkomaKnight.Core
         public static readonly R RrBox = new R(4.7f, 20.6f, 90.6f, 58.9f);
         public static readonly R RrHead = new R(4.7f, 20.6f, 90.6f, 4.8f);
         public static readonly R RrTiers = new R(4.7f, 25.9f, 90.6f, 8.5f);
-        public static readonly R RrTimer = new R(30.0f, 35.6f, 40.0f, 2.2f);
-        public static readonly R RrNote = new R(25.0f, 38.8f, 50.0f, 1.4f);
+        public static readonly R RrTimer = new R(30.0f, 35.6f, 40.0f, 2.6f);
+        public static readonly R RrNote = new R(25.0f, 38.8f, 50.0f, 2.3f);
         public static readonly R RrList = new R(8.6f, 41.7f, 83.1f, 27.5f);
         public static readonly R RrRow = new R(8.6f, 41.7f, 83.1f, 5.5f);
         public const float RrRowPitch = 7.2f;
@@ -322,8 +324,8 @@ namespace KkomaKnight.Core
 
         // ⑱ 아레나 상인 페이지 — docs/ref/26_arena_shop.jpg (T43)
         public static readonly R MeBanner = new R(0, 8.0f, 100, 15.9f);
-        public static readonly R MeTitle = new R(38.2f, 9.9f, 23.6f, 2.9f);
-        public static readonly R MeSeason = new R(2.8f, 20.2f, 38.9f, 1.6f);
+        public static readonly R MeTitle = new R(38.2f, 9.9f, 23.6f, 3.7f);
+        public static readonly R MeSeason = new R(2.8f, 20.2f, 38.9f, 2.3f);
         public static readonly R MeGrid = new R(3.6f, 26.0f, 92.6f, 66.3f);
         public static readonly R MeCard = new R(3.6f, 26.0f, 29.0f, 17.6f);
         public const float MeColPitch = 31.9f, MeRowPitch = 18.9f;
