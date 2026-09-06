@@ -463,7 +463,9 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(bgT.GetSiblingIndex() + 1, pat.GetSiblingIndex(), "무늬는 배경 조각 «바로 위»");
             var praw = pat.GetComponent<RawImage>();
             Assert.Less(praw.color.r, 0.5f, "초록 바탕이라 어두운 무늬(PatternTintLight = Ink · 레퍼런스 01)");
-            Assert.AreEqual(UiKit.PatternAlpha, praw.color.a, 0.001f, "무늬 알파 = 3/255(주인 확정 2026-09-07)");
+            // T94 ⓐ — 로비만 18/255(주인이 두 번 «로비에 패턴이 없다» 고 했다 · 공용 3/255 는 이 어두운 초록 바탕에서 안 보인다) · 다른 화면은 3/255 그대로
+            Assert.AreEqual(UiKit.PatternAlphaLobby, praw.color.a, 0.001f, "로비 무늬 알파 = 18/255(T94 ⓐ)");
+            Assert.Greater(UiKit.PatternAlphaLobby, UiKit.PatternAlpha, "로비 무늬는 공용보다 진하다");
             Assert.IsFalse(praw.raycastTarget, "무늬는 클릭을 안 먹는다(카드·버튼 그대로)");
             Assert.IsTrue(UiKit.HasGradient(lobby), "로비 배경 그라데이션(T72 ③ 3항 «화면 배경»)");
             var gtop = lobby.Find(UiKit.GradientTopName); var gbot = lobby.Find(UiKit.GradientBottomName);

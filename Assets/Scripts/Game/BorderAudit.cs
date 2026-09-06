@@ -12,9 +12,13 @@ namespace KkomaKnight.Game
     public static class BorderAudit
     {
         /// <summary>테두리 없음이 실패인 화면(묶음이 끝날 때마다 추가 · 전부 끝나면 모든 화면).</summary>
+        /// <summary>
+        /// ⚑ T94 ⓑ(주인 2026-09-07 05:3X «메인 로비에 Border 있는 것들은 걍 없애셈») — **<c>01_lobby</c> 는 strict 목록에서 뺐다**.
+        /// 로비만 예외이고 다른 화면의 T69 테두리는 그대로다. 로비는 «[BorderGate]» 표에만 남아 보고된다(실패로 세지 않는다).
+        /// </summary>
         public static readonly HashSet<string> StrictScreens = new HashSet<string>
         {
-            "02_battle", "01_lobby", "06_gear", "07_gear_detail", "08_gear_fuse", "13_pet", "14_pet_detail", "09_shop_1", "10_shop_2", "12_settings",
+            "02_battle", "06_gear", "07_gear_detail", "08_gear_fuse", "13_pet", "14_pet_detail", "09_shop_1", "10_shop_2", "12_settings",
             "20_dungeon", "21_dungeon_detail", "22_arena", "23_arena_enter", "24_arena_challenge", "25_arena_rank_reward", "26_arena_shop",   // T69-events(던전·아레나 묶음)
             "04_perks", "05_perks_list", "res_win", "res_lose",   // T69-overlay(특전 카드 · 결과 팝업 묶음)
             "15_quest", "16_attendance",   // T69-lobbypopups(로비 팝업 묶음 · 11_shop_special 은 T72 특권 워커가 끝낸 뒤에 넣는다)

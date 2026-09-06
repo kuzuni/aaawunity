@@ -422,6 +422,15 @@ namespace KkomaKnight.Game
         /// <summary>패턴 알파 — 주인 확정 2026-09-07 «255 중 3»(= 3/255 ≈ 0.012 · «아주 은은하게» · 종전 0.12 는 레퍼런스보다 진했다). 무늬 픽셀은 알파 255 라 = 그 자리만 1.2% 어둡거나 밝다.</summary>
         public const float PatternAlpha = 3f / 255f;
         /// <summary>밝은 바탕(초록 로비 · 크림 패널) 용 tint = Ink(레퍼런스 01 은 바탕보다 어두운 무늬) · 어두운 바탕(상점 회색 · 팝업 어둠) 용 = White(레퍼런스 09 는 밝은 무늬).</summary>
+        /// <summary>
+        /// ⚑ 로비(01)만 쓰는 배경 무늬 알파 — 주인이 **두 번** «메인 로비에도 패턴 애니메이션 있어야 하는데 없더라 · 있게 해»(2026-09-07 05:3X · T94 ⓐ) 라고 했다.
+        /// 무늬는 이미 깔려 있었지만(T72 6차 `95069e5` · 배포된 빌드에도 들어 있다) 공용 알파 <see cref="PatternAlpha"/> = 3/255 가
+        /// 로비의 어두운 초록 바탕에서는 **눈에 안 보인다** — 주인의 «없다» 는 그 뜻으로 본다.
+        /// 그래서 **로비에서만** 18/255 로 올린다(다른 화면은 주인이 02:0X 에 확정한 3/255 그대로 · 결정 기록).
+        /// </summary>
+        public const float PatternAlphaLobby = 18f / 255f;
+        /// <summary>로비 배경 무늬 색(어두운 초록 바탕 위 = Ink 무늬 · <see cref="PatternAlphaLobby"/>).</summary>
+        public static Color PatternTintLobby => Palette.A(Palette.Ink, PatternAlphaLobby);
         public static Color PatternTintLight => Palette.A(Palette.Ink, PatternAlpha);
         public static Color PatternTintDark => Palette.A(Palette.White, PatternAlpha);
         /// <summary>빛살 한 바퀴(초 · 12~20) · 한 변 = 아이콘 긴 변 × 배(1.6~2.2) · 알파 = 주인 확정 2026-09-07 «255 중 68»(= 68/255 ≈ 0.267 · 종전 0.6 은 아이콘을 덮었다).</summary>

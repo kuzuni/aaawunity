@@ -61,7 +61,7 @@ namespace KkomaKnight.Game
             // T72 ① 배경 패턴 + ③ 배경 그라데이션 (주인 «로비 배경에 이 패턴이 오른쪽 상단으로 천천히 올라간다» · 레퍼런스 01 은 초록보다 «어두운» 칼 무늬 → Ink 무늬)
             // 자리는 배경 조각 «바로 위» 형제 = 7항 «패턴은 배경 층에만»(상단 재화 바·사이드 기둥·챕터 카드·START·탭 바는 전부 뒤에 오는 형제라 무늬가 그 안으로 비치지 않는다)
             int bgIdx = bg != null && bg.parent == rt ? bg.GetSiblingIndex() + 1 : 0;
-            UiKit.PatternBg(rt, UiKit.PatternTintLight, UiKit.PatternTileSeconds, bgIdx);
+            UiKit.PatternBg(rt, UiKit.PatternTintLobby, UiKit.PatternTileSeconds, bgIdx);   // T94 ⓐ — 로비만 18/255(공용 3/255 는 이 바탕에서 안 보인다)
             UiKit.Gradient(rt, siblingIndex: bgIdx);   // 위 +12% 밝음 · 아래 −18% 어둠(3항 «화면 배경» · 헬퍼가 패턴 위로 넣는다)
 
             // ① 상단 재화 바 (아바타 · 전투력 · 골드 · 보석) — 공용 헬퍼 · 비평 이름표(T46 · ref-layout ① 의 «요소» 이름 그대로)
@@ -107,8 +107,8 @@ namespace KkomaKnight.Game
                     var mi = map.GetComponent<Image>(); if (mi != null) { mi.preserveAspect = true; mi.raycastTarget = false; }
                 }
                 UiKit.Clickable(card, () => { Audio.Wake(); App.StartBattle(App.Save.SelChapter); });
-                // T69-lobby — 카드 자리에 «검은 아웃라인»(레퍼런스 01 도 디오라마를 검은 외곽선 상자가 감싸고 나무만 위로 넘친다) · 그림 위에 그려 상자로 보이게(맨 뒤 바탕은 넣지 않는다 = T68 ④ 그대로)
-                UiKit.Bordered(card);
+                // T94 ⓑ(주인 2026-09-07 05:3X «메인 로비에 Border 있는 것들은 걍 없애셈») — T69-lobby 가 넣었던 카드 검은 링을 뺀다.
+                // 로비만 예외이고 다른 화면의 T69 테두리는 그대로다(BorderAudit.StrictScreens 에서 01_lobby 만 뺐다).
                 UiKit.Tag(card, "챕터 카드(스테이지 그림)");
             }
             var left = UiKit.Icon(rt, "ArrowL", "pi.arrow_left", Palette.Cream); UiKit.Pct(left.rectTransform, Layout.LobbyArrowL); UiKit.Clickable(left.rectTransform, () => Shift(-1)); UiKit.Tag(left.transform, "좌 화살표");
@@ -155,8 +155,7 @@ namespace KkomaKnight.Game
                 }
                 string key = it.key; UiKit.Clickable(cell, () => OnSide(key));
             }
-            // T69-lobby — 기둥 «상자» 에 «검은 아웃라인»(레퍼런스 01 의 사이드 기둥·보조 줄·성·이벤트 전부 검은 외곽선) · 기둥 안 칸끼리는 레퍼런스도 선이 없다(칸마다는 넣지 않는다)
-            UiKit.Bordered(prt);
+            // T94 ⓑ — 기둥 «상자» 의 검은 링도 뺀다(주인 «로비에 Border 있는 것들은 걍 없애셈» · 위 카드와 같은 까닭).
             return prt;
         }
 

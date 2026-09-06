@@ -216,9 +216,11 @@ namespace KkomaKnight.Tests.Play
             // T69-lobby(strict) — 기둥 상자 4(사이드 2·보조 줄·이벤트) · 챕터 카드 · 상단 재화 pill 2(캡슐 조각)
             // T78(주인 2026-09-07 «시즌 패스도 삭제»·«성 버튼도 삭제») 이 «Banner»(이벤트 배너)·«Castle»(성) 을 로비에서 지웠다 — 없는 조각을 재던 두 줄이 main 빨강이었다(T82)
             var lobbyRoot = _app.Current.Root;
-            // T96-menu — 사이드 기둥 둘은 메뉴로 옮겨 사라졌다(남는 상자 = 보조 줄 · 이벤트 · 챕터 카드)
+            // T94 ⓑ(주인 2026-09-07 «메인 로비에 Border 있는 것들은 걍 없애셈») — 로비만 **반대 방향** 단언이다: 검은 링이 없어야 한다.
+            // (T96-menu 로 사이드 기둥 둘은 사라졌고 남는 상자는 보조 줄 · 이벤트 · 챕터 카드뿐이다.)
             foreach (var n in new[] { "SubRow", "Events", "ChapterCard" })
-                Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(lobbyRoot, n)), "로비 «" + n + "» 에 어두운 테두리(T69-lobby)");
+                Assert.IsFalse(UiKit.HasDarkBorder(UiKit.Find(lobbyRoot, n)), "로비 «" + n + "» 에는 검은 테두리가 없어야 한다(T94 ⓑ)");
+            // 상단 재화 바는 예외 — 주인 07:0X 지시(T106 «탑바를 프레임으로 감싸라»)가 더 최신이라 띠·pill 테두리는 남긴다(결정 기록).
             // pill 은 «TopBar 안» 에서 찾는다 — 로비 프리팹에도 꺼진 ResourceBar_Group 조각이 남아 있고 UiKit.Find 는 꺼진 것도 먼저 집는다(결정 162)
             var topBar = UiKit.Find(lobbyRoot, "TopBar"); Assert.IsNotNull(topBar, "로비 상단 바(TopBar)");
             AssertPillBorder(UiKit.Find(topBar, "ResourceBar_Coin"), "로비 골드 pill");
