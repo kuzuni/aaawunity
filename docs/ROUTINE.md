@@ -61,7 +61,7 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
-> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T6~T19** (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
+> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T17~T25**(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
 
 ### T1 — 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README ✅ (완료 · PROGRESS 참조)
 
@@ -193,34 +193,34 @@
 2. 수정: Play 직후 `_anim.Update(0f)` 즉시 평가(코드 커밋 `2b71ea1`). 확인 수단 = CI 런 #40 유니티 잡(PlayMode 11/11). 빨가면 로그의 `result="Failed"` test-case 메시지를 PROGRESS T16 기록에 붙이고 다시 고친다.
 3. 게이트 + PROGRESS T16 행 ✅ + lock 삭제.
 
-### T13 — 웨이브 출발 버그 · 버프 스택 표시 = 팔각 프레임 (T12 뒤)
+### T20 — 웨이브 출발 버그 · 버프 스택 표시 = 팔각 프레임 (번호 정정: 구 T13)
 범위: `Assets/Scripts/Game/BattleWorld.cs` · `BattleScreen.cs`(RefreshBuffBar)
-순서: **T12 완료 뒤**(같은 파일).
+순서: 제약 없음(T14 캐릭터 크기·T16 정지는 끝났다).
 1. **주인 지적 «웨이브 내 적을 다 안 죽였는데 출발함»** — 원인부터 규명해 PROGRESS 에 한 줄: ⓐ 엔진(Battle.Tick: alive[0] 까지 걷는다 · sim.js 와 동일해야 하므로 엔진은 못 바꾼다) ⓑ 연출(사망 표시를 Strike 큐가 미루는 동안 엔진은 이미 다음 적으로 걷는다 · 죽은 적이 Dead 루프로 서 있다 · 화면 밖 적) 중 어느 것인지. 고치는 쪽은 **연출**이다: 플레이어가 걷기 시작하는 순간 화면에 «살아 보이는» 적이 남아 있으면 안 된다(사망 연출을 즉시 시작하거나, Walk 전환을 사망 연출이 끝날 때까지 미룬다 — 엔진 좌표는 그대로 두고 표시만).
 2. HUD 왼쪽 버프 바(발동 중 스택)의 칸을 `ui.buffSlot`(엉뚱한 프레임) 대신 **특전과 같은 팔각 `ItemFrame_04_*`(`UiKit.PerkFrame` · 등급색)** 로. 스택 수 글자는 그대로 오른쪽 아래.
-3. 게이트 + PROGRESS T13 행.
+3. 게이트 + PROGRESS T20 행.
 
-### T14 — 투사체(도끼·화살·창·번개) 표적 = 웨이브 안 무작위 적
-범위: `Assets/Scripts/Core/Battle.cs`(FireAxe/FireArrows/FireSpear/FireBolts · RandTarget) · `Assets/Scripts/Game/BattleWorld.cs`(투사체 그리기 — T12/T13 과 겹치므로 그 둘 뒤)
-순서: **T13 완료 뒤**.
+### T21 — 투사체(도끼·화살·창·번개) 표적 = 웨이브 안 무작위 적 (번호 정정: 구 T14)
+범위: `Assets/Scripts/Core/Battle.cs`(FireAxe/FireArrows/FireSpear/FireBolts · RandTarget) · `Assets/Scripts/Game/BattleWorld.cs`(투사체 그리기 — T20·T19 와 겹친다)
+순서: **T20·T19 완료 뒤**.
 1. 먼저 aaaw `sim.js` 의 `randTarget`/`fireAxe`/`fireArrows`/`fireSpear`/`fireBolts` 를 읽고 **원본이 무엇을 표적으로 삼는지** 적는다(무작위 범위 −30~540 · 관통 등). 우리 엔진이 원본과 다르면 엔진을 원본에 맞춘다(시드 골든 BattleTests 가 통과해야 한다 — 골든이 깨지면 엔진이 아니라 내가 틀린 것).
 2. 엔진이 원본과 같은데도 화면에서 «맨 앞 적만 맞는 것처럼» 보이면 그리기 문제다: 투사체를 `pr.Target` 의 실제 x 로 날리고 적중 이펙트도 그 적 위치에.
 3. 원본 자체가 «맨 앞만» 이라면 주인이 원하는 «웨이브 안 무작위» 는 규칙 변경이라 **승인 대기 27** 로 올리고(골든 재생성 필요) 기본값은 원본 유지.
-4. 게이트 + PROGRESS T14 행.
+4. 게이트 + PROGRESS T21 행.
 
-### T15 — 모든 버튼에 눌림 표시
+### T22 — 모든 버튼에 눌림 표시 (번호 정정: 구 T15)
 범위: `Assets/Scripts/Game/UiKit.cs`(Clickable · Button) · `Screens.cs`(NavBar 탭)
 순서: 제약 없음(T10 이 Screens.cs 를 만지면 NavBar 부분은 T10 뒤).
 1. `UiKit.Clickable` 로 만드는 **모든** 버튼(프리팹 버튼·탭·카드·칸)에 눌림 피드백: `Button.transition = ColorTint`(pressedColor 는 어둡게 ≈ ×0.8 · highlighted 는 그대로) + 이미 있는 DOPunchScale. targetGraphic 이 투명 히트 영역이면(칸·카드) 자식의 첫 Image 를 targetGraphic 으로 잡거나 CanvasGroup alpha 로 눌림을 보여 준다. 비활성(interactable=false)은 지금처럼 반투명.
 2. 하단 탭(NavBar)의 «현재 탭» 강조는 그대로 두고 눌림만 추가.
-3. 게이트 + PROGRESS T15 행.
+3. 게이트 + PROGRESS T22 행.
 
-### T16 — 쉼터 «광고 보고 둘 다 얻기» · 클리어 팝업 = 골드만 + «광고 보고 보상 ×2 받기»
+### T23 — 쉼터 «광고 보고 둘 다 얻기» · 클리어 팝업 = 골드만 + «광고 보고 보상 ×2 받기» (번호 정정: 구 T16)
 범위: `Assets/Scripts/Game/Overlay.cs`(Rest · Clear) · `Assets/Scripts/Core/Battle.cs`(`ResolveRest` 에 «둘 다» 경로 1개 — 대화형 전용 · SimPolicy 는 절대 고르지 않으므로 시드 골든 불변) · `BattleScreen.cs`(EndRun 보상)
-순서: T14 뒤(Battle.cs 공유).
+순서: T21 뒤(Battle.cs 공유).
 1. **쉼터**: 기존 두 버튼(체력 회복 / 경험치) 아래에 **«광고 보고 둘 다 얻기»**(`ui.btnOrange` · 광고 카운트다운은 천사의 `AdCountdown` 재사용) → `G.ResolveRest(both)` = 회복 + 경험치 둘 다. 엔진에 `ResolveRestBoth()` 를 추가하되 `ResolveRest(bool)` 은 그대로.
 2. **클리어 팝업(Play_Result_Win_01)**: 보상 표시는 **골드만**(프리팹의 다른 두 보상 칸은 끈다). 버튼은 «다음 챕터» 대신 **«광고 보고 보상 ×2 받기»**(광고 카운트다운 뒤 클리어 골드를 2배로 지급하고 로비로). 그 아래 작은 글자 버튼 **«그냥 받기»**(1배 · 로비로) 를 둔다 — 광고를 안 보면 못 나가는 것을 막기 위한 기본값(승인 대기 28). «다음 챕터» 진입은 로비의 챕터 화살표로.
-3. 게이트 + PROGRESS T16 행 + 승인 대기 28.
+3. 게이트 + PROGRESS T23 행 + 승인 대기 28.
 
 ### T17 — 장비 아이콘 마무리 (투구·갑옷·무기 크기 · 무기 45° · 근접 무기만) (T7 뒤)
 범위: `Assets/Scripts/Game/GearUi.cs`(Cell 아이콘) · `GearScreen.cs`(슬롯 아이콘) · `GearLook` 표(T7 이 만든 것) · catalog
@@ -236,16 +236,30 @@
 1. 배속 버튼 값(x1/x2)을 세이브(`SaveData.Speed` · PlayerPrefs)에 저장하고, 전투 시작 시 그 값으로 시작한다(«2배속으로 하다가 클리어 뒤 다른 챕터 도전하면 다시 1배속» 이 안 되게). index.html `kkoma-knight-v2` 에 없는 필드라 세이브 호환은 «없으면 1».
 2. 게이트 + PROGRESS T18 행.
 
-### T19 — 전투 맵 = 데모 씬 «그림» 그대로 (T13 뒤 · 주인 재지적)
+### T19 — 전투 맵 = 데모 씬 «그림» 그대로 (T20 뒤 · 주인 재지적)
 범위: `Assets/Scripts/Game/BattleWorld.cs`(BuildGround/BuildProps) · `tools/gen_maps.py` · `Assets/Scripts/Game/MapLayouts.cs`(재생성)
-순서: **T13 완료 뒤**(BattleWorld 공유). T14 보다 먼저.
+순서: **T20 완료 뒤**(BattleWorld 공유). T21 보다 먼저.
 > 주인(2026-09-06): «맵 디자인을 DemoScene_Autumn/DeepForest/Desert/Forest 씬에 있는 거 그대로 가져와서 쓰라니까 안 쓰네? 지금 맵이 디자인 존나 다르던데». 씬을 그림으로 보려면 `python3 tools/demo_render/render_demo_scene.py <폴더>` + `node tools/demo_render/shot.js <폴더>`(Playwright · PNG 는 커밋 금지). 데모 씬의 모습: 평면색 들판 화면 전체 · 가운데 **두꺼운 길 띠(2.46u · 화면 높이의 1/4)** · 길 **위·아래 양쪽** 가장자리에 물결 풀 경계 · 길 위쪽 들판과 아래쪽 들판 모두에 나무·돌·통·꽃이 **빽빽하게**(17.8u 폭 화면에 30~60개).
 1. **왜 다른가를 먼저 적는다**(PROGRESS 한 줄). 지금 코드가 틀린 점: ⓐ 물결 경계(Road_up)를 길 **아래쪽만** 깔았다 — 씬에는 위·아래 양쪽(세로 반전 인스턴스 · `m_LocalScale.y = -1`)이다 ⓑ 세로 잘림 — 우리 화면에서 월드가 보이는 띠는 HUD 위(17%)~HUD 패널(69.5%) = 6u 인데 데모는 10u 를 보여 준다 → 데모 y 범위 −5~+5 의 소품 대부분이 잘리거나 HUD 뒤에 숨는다 ⓒ 가로도 5.4u 슬라이스라 한 화면에 소품이 2~4개뿐 → «휑하다».
-2. 고치는 법: **데모 구성을 통째로 0.6배**(`Layout.MapScale = 0.6f`)로 그린다 — 길 띠 2.46u→1.48u(발 줄 40% 을 품게 중심 41%), 소품 위치·크기 모두 ×0.6 (씬 폭 27u→16u · 우리 5.4u 창에 데모 화면의 1/3 이 보인다 = 데모 창(17.8u)이 씬의 2/3 을 보이는 것과 같은 밀도). 캐릭터 키는 T12 의 2/3 배율 그대로(0.69u · 길 띠 1.48u 안에 서면 데모의 샘플 캐릭터 비율과 비슷).
+2. 고치는 법: **데모 구성을 통째로 0.6배**(`Layout.MapScale = 0.6f`)로 그린다 — 길 띠 2.46u→1.48u(발 줄 40% 을 품게 중심 41%), 소품 위치·크기 모두 ×0.6 (씬 폭 27u→16u · 우리 5.4u 창에 데모 화면의 1/3 이 보인다 = 데모 창(17.8u)이 씬의 2/3 을 보이는 것과 같은 밀도). 캐릭터 키는 T14 의 2/3 배율 그대로(0.69u · 길 띠 1.48u 안에 서면 데모의 샘플 캐릭터 비율과 비슷).
 3. `tools/gen_maps.py`: Road_up 을 특수 처리하지 말고 **다른 소품과 똑같이 인스턴스 그대로**(x·y·sx·sy · 세로 반전 포함) 표에 넣는다 → 위·아래 양쪽 물결이 씬대로 나온다. 씬 폭 반복은 그대로.
 4. 정렬: 소품의 뿌리 y 가 발 줄보다 위면 캐릭터 뒤, 아래면 앞(지금 규칙) — 길 띠 안(캐릭터 줄)에는 소품이 없다.
 5. 검증: 워커는 WebGL 을 못 돌리므로, `tools/demo_render` 의 방식으로 **우리 배치 표(MapLayouts × 0.6 · 5.4u 창)** 를 같은 HTML 로 그려 데모 그림과 나란히 보고(PNG 커밋 금지) PROGRESS 에 «같다/다른 점» 한 줄. 대화형 세션이 gh-pages 스크린샷으로 최종 확인한다.
 6. 게이트 + PROGRESS T19 행.
+
+### T24 — 대장간: 장착 중 장비도 합성 재료 (T8 뒤 · 주인 2026-09-06)
+범위: `Assets/Scripts/Game/ForgeScreen.cs` · `GearUi.cs`(Cell 흐림 옵션) · `Assets/Scripts/Core/GearSystem.cs`(FuseAll 장착 제외 인자)
+순서: 제약 없음(T8 ✅ · T17 이 GearUi 아이콘 부분을 만지므로 Cell 의 «흐림» 한 줄만 조심).
+1. 주인 «대장간에 장착중인 거도 합성 가능하게». `ForgeScreen.Toggle` 의 장착분 거부(토스트)·흐림을 없애고 장착중 배지(Check)는 유지. «자동» 도 장착분을 포함해 합성(`FuseAll` 호출에서 `EquippedSet` 제외를 뺀다 — 함수 시그니처는 두고 빈 집합을 넘겨도 된다).
+2. 장착 중이던 것이 재료로 사라지면: 결과물이 **같은 부위면 그 슬롯에 장착**, 아니면 슬롯 비움(승인 대기 29 기본값). 세이브 갱신·전투력 재계산·외형(GearLook) 갱신까지.
+3. aaaw T125(«장착분은 재료가 아니다»)는 주인이 뒤집었다 — PROGRESS 한 줄. UiSmokeTests ③ 의 «장착분 재료 불가» 가정이 있으면 새 규칙으로 고친다.
+4. 게이트 + PROGRESS T24 행.
+
+### T25 — 장비 화면: «상점»·«합성» 버튼을 공격력·체력·실드 3칸 바로 아래로 (T7 뒤 · 주인 2026-09-06)
+범위: `Assets/Scripts/Game/GearScreen.cs`
+순서: **T17 완료 뒤**(GearScreen 공유).
+1. 주인 «장비 부분에서 상점·합성, 공격력·체력·실드 표시하는 곳 밑에 표시되게». 지금 자리(화면 아래·탭바 위)에서 **스탯 3칸 줄 바로 아래**로 옮긴다. 프리팹(Character_Hero_Equipment)에 그 자리 버튼 줄이 있으면 그것을 쓰고, 없으면 `ui.btnGray`(상점)·`ui.btnOrange`(합성 N) 2개를 스탯 줄 밑에 같은 폭으로 나란히. 인벤 격자는 그 아래부터 시작(높이 줄어든 만큼 스크롤).
+2. 게이트 + PROGRESS T25 행.
 
 ### 신규 작업 등재
 - 버그·후속 작업 발견 시 PROGRESS 표에 **이미 쓰인 번호 중 가장 큰 것 +1** 로 등재 (번호 재사용 금지, 한 번호 = 한 작업).
