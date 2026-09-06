@@ -1440,6 +1440,11 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. **테스트**: `BorderGateTests` 20~26 구간에 `AssertItemFrameBorder` 를 더한다(던전 카드 보상 칸 · 세부 보상 칸 · 상인 상품 칸 · 도전 줄 초상) — 같은 퇴행이 다시 들어오면 빨강.
 4. 게이트 + PROGRESS T115 행 + 완료 기록(확인 = CI `BorderGateTests` + screens 20·21·26 PNG 확대에서 칸 외곽선이 다른 화면과 같은 굵기인가).
 
+### T117 — main 빨강 후속(CI #209 `3a6f79c`): 이벤트 진입이 «던전부터» 로 바뀐 것을 `EventsScreenTests` 기댓값에도 (T107 뒤 · 테스트만)
+
+> **✅ 완료(2026-09-06 22:4X · sess-1842-31994 · 워커 G) — 코드 `0c0aa22`(게임 코드 0줄 · 테스트 기댓값 세 줄).** CI #209 PlayMode 빨강 2건 중 하나 = `EventsScreenTests.DungeonArenaPagesAndPopups` 의 «이벤트 버튼 = PvP 페이지»(`Expected "pvp" · But was "dungeon"` · NUnit XML 실측). T107(워커 B)이 주인 지시(«이벤트 열면 무조건 던전부터»)대로 로비 «이벤트» 버튼을 던전 페이지로 바꿨는데 그 화면을 왕복하는 ⑨ 블록의 기댓값이 예전 순서 그대로였다 — 게임이 옳고 테스트가 낡았다. 이벤트 버튼 뒤 = `PageDungeon` · 이어지는 왕복은 던전에서 «Tab:pvp» → PvP → «BackBtn» → 로비로 뒤집었다. T107 은 lock 이 반납돼 있어 main 빨강 규약대로 다음 워커가 잡았다. 같은 런의 다른 빨강(`TextSizeGateTests` 공통 팝업 리본 칸 높이 · 12·17·07·05)은 T75(워커 J) lock 안이라 손대지 않았다. **확인 = 이 커밋을 담은 첫 완주 런의 그 테스트 Passed.**
+범위: `Assets/Tests/PlayMode/EventsScreenTests.cs`(⑨ 블록 세 줄)
+
 ### T116 — 그라데이션을 **레퍼런스 두 색**으로: 무채색 덧칠 → 계열색 보간 (주인 2026-09-07 08:4X «그라디안트 레퍼런스 부분 참고해서 **더 화려하게 색깔** 해줘» · T72 ③ 보탬을 작업으로 등재) — **🔄 1단계(자 + 실측 표 + 계약 테스트) 코드 push(`3384f38` · sess-2232-5797 · 워커 K · 로컬 게이트 전부 초록)**
 
 > **왜 «안 화려한가» 를 실측으로 밝혔다** — `tools/ref_color.py`(신규 · 레퍼런스 jpg 의 사각형을 세로 5등분해 띠마다 중앙값 색을 찍는 자)로 재 보니 규칙이 셋이다:
