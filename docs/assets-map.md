@@ -109,7 +109,7 @@
 | sprites | `env.tree` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_01.png` | fileID 21300000 | 지면 뒤 소품(나무) — 챕터마다 시드 고정 배치 · T37: 장비 화면 무대 위 가장자리 나무 5 |
 | sprites | `env.bush` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Green_01.png` | fileID 21300000 | 지면 소품(덤불) · T37: 장비 화면 무대 덤불 3 |
 | sprites | `env.mushroom` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Pink_01.png` | fileID 21300000 | 쉼터 노드 옆 버섯 · 지면 소품 |
-| sprites | `env.barrel` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Ork.png` | fileID 21300000 | 쉼터 노드 — 통(Ork) + CFXR Fire(모닥불) + 버섯 (Environment 팩에 모닥불이 없어 이렇게 조합 · 주인 «알아서») |
+| sprites | `env.barrel` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Ork.png` | fileID 21300000 | 쉼터 노드 — 통(Ork) + CFXR Fire(모닥불) + 버섯 (Environment 팩에 모닥불이 없어 이렇게 조합 · 주인 «알아서») · T39: 대장간 무대 양쪽 아래 통 2 |
 | sprites | `env.monolith` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_11.png` | fileID 21300000 | 악마 노드 — 회색 돌기둥 + CFXR2 Souls Escape + 죽은 나무 |
 | sprites | `env.stoneBig` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_12.png` | fileID 21300000 | 천사 노드 — 큰 돌 + CFXR3 LightGlow A(Loop) |
 | sprites | `env.deadTree` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Dead_Tree_Brown_03.png` | fileID 21300000 | 악마 노드 옆 죽은 나무 |
@@ -127,7 +127,7 @@
 | sprites | `pi.shield` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/shield.png` | fileID 21300000 | 실드 바 캡 · 수리/방어막 특전 |
 | sprites | `pi.star` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/star_1.png` | fileID 21300000 | 경험치 바 캡 · 수집가 특전 |
 | sprites | `pi.thunder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/thunder.png` | fileID 21300000 | 번개 특전 |
-| sprites | `pi.axe` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/axe_1.png` | fileID 21300000 | 도끼 특전 |
+| sprites | `pi.axe` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/axe_1.png` | fileID 21300000 | 도끼 특전 · T39: 대장간 벽에 걸린 연장(망치·도끼 · 반투명) |
 | sprites | `pi.arrowhead` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/arrowhead.png` | fileID 21300000 | 화살 특전 |
 | sprites | `pi.dagger` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/dagger_1.png` | fileID 21300000 | 창 특전(픽토 아이콘에 창이 없어 단검으로 대체) |
 | sprites | `pi.dagger2` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/dagger_2.png` | fileID 21300000 |  |
@@ -157,7 +157,7 @@
 | sprites | `pi.cancle` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/cancle.png` | fileID 21300000 |  |
 | sprites | `pi.check` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/check.png` | fileID 21300000 |  |
 | sprites | `pi.lock` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/lock.png` | fileID 21300000 |  |
-| sprites | `pi.anvil` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/anvil.png` | fileID 21300000 |  |
+| sprites | `pi.anvil` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/anvil.png` | fileID 21300000 | T39: 대장간 빈 결과 슬롯 안 모루 실루엣(레퍼런스 08 «선택 칸») |
 | sprites | `pi.chest` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/chest.png` | fileID 21300000 |  |
 | sprites | `pi.bag` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/bag_1.png` | fileID 21300000 |  |
 | sprites | `pi.shop` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/shop.png` | fileID 21300000 |  |
@@ -165,7 +165,7 @@
 | sprites | `pi.coins` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/coins_1.png` | fileID 21300000 |  |
 | sprites | `pi.gem` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/gem_3.png` | fileID 21300000 |  |
 | sprites | `pi.exit` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/exit_1.png` | fileID 21300000 |  |
-| sprites | `pi.arrow_left` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/arrow_left.png` | fileID 21300000 |  |
+| sprites | `pi.arrow_left` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/arrow_left.png` | fileID 21300000 | T39: 대장간 뒤로 버튼(◀ · 글자 없음) |
 | sprites | `pi.arrow_right` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/arrow_right.png` | fileID 21300000 |  |
 | sprites | `pi.time` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/time_1.png` | fileID 21300000 |  |
 | sprites | `pi.boss` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/boss.png` | fileID 21300000 |  |
@@ -173,7 +173,7 @@
 | sprites | `pi.heart_break` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/heart_break.png` | fileID 21300000 |  |
 | sprites | `pi.sleep` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/sleep.png` | fileID 21300000 |  |
 | sprites | `pi.leaf` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/leaf.png` | fileID 21300000 |  |
-| sprites | `pi.hammer` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/hammer_1.png` | fileID 21300000 |  |
+| sprites | `pi.hammer` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/hammer_1.png` | fileID 21300000 | T39: 대장간 벽에 걸린 연장 |
 | sprites | `pi.gift` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/gift.png` | fileID 21300000 |  |
 | sprites | `pi.potion` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/potion_1.png` | fileID 21300000 |  |
 | sprites | `pi.wand` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/wand_star.png` | fileID 21300000 |  |
@@ -186,7 +186,7 @@
 | sprites | `ui.gemRed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Gem_04_Red.png` | fileID 21300000 |  |
 | sprites | `ui.bookBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Book_01_Blue.png` | fileID 21300000 | 사망 팝업 팁 행 아이콘 |
 | sprites | `ui.bookRed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Book_03_Red.png` | fileID 21300000 |  |
-| sprites | `ui.anvil` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Anvil_01_Light.png` | fileID 21300000 | 사망 팝업 팁(합성) · 대장간 탭 |
+| sprites | `ui.anvil` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Anvil_01_Light.png` | fileID 21300000 | 사망 팝업 팁(합성) · 대장간 탭 · T39: 대장간 무대 왼쪽 모루 그림(결과 슬롯과 재료 슬롯 사이 · 레퍼런스 08) |
 | sprites | `ui.hourglass` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Hourglass_01_Gold.png` | fileID 21300000 | 클리어 팝업 «걸린 시간» |
 | sprites | `ui.trophy` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Trophy_01_Gold.png` | fileID 21300000 |  |
 | sprites | `ui.settings` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_System_Setting_01.png` | fileID 21300000 | 설정/일시정지 팝업 (주인 지정 Settings · T10 부터 프리팹 원형 그대로 — 줄·버튼·글자 전부 보이고 글자만 우리말) — 배경음 스위치만 값 저장(Save.Muted) · 닫기(X) · 전투에서만 아래 버튼 2개 = 재개/포기하고 로비로 · 나머지 기능 없음. 로비 메뉴(≡) 와 전투 일시정지에서 연다 |
@@ -194,7 +194,7 @@
 | sprites | `ui.shop` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Shop_01_Red.png` | fileID 21300000 |  |
 | sprites | `ui.battle` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Battle_01_Color.png` | fileID 21300000 |  |
 | sprites | `ui.ad` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Common_AD_01_Yellow.png` | fileID 21300000 |  |
-| sprites | `ui.fire` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Misc_Fire_01_Red.png` | fileID 21300000 |  |
+| sprites | `ui.fire` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Misc_Fire_01_Red.png` | fileID 21300000 | T39: 대장간 무대 화덕 안 불(ui.frameDark 상자 위) |
 | sprites | `ui.potionRed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Consumable_Potion_01_Red.png` | fileID 21300000 |  |
 | sprites | `ui.gift` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Gift_01_Yellow.png` | fileID 21300000 |  |
 | sprites | `ui.talentIcon` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Star_01_Yellow.png` | fileID 21300000 | 하단 탭 «탤런트» 아이콘 (Economy_Star_01_Yellow — 워커 선택 · 바꾸려면 경로 한 줄) |
@@ -455,7 +455,7 @@
 | prefabs | `ui.btnSmallBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_01_Blue.prefab` | root 4112720960120376265 | HUD 배속(x1/x2) 작은 버튼(왼쪽 아래 · 패널 바로 위) |
 | prefabs | `ui.btnSmallOrange` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_01_Orange.prefab` | root 7667054196127442761 |  |
 | prefabs | `ui.btnStart` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_03_Red.prefab` | root 1623786085314472190 | 로비 START (Button_03_Red) |
-| prefabs | `ui.frameDark` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_Square_R12_NoBorder_TransperDark.prefab` | root 3811192130493240385 | HUD 하단 반투명 패널 · 스탯 8칸 상자(T35) · 로비 사이드 기둥 · T37: 장비 화면 스탯 3칸(공·❤·🛡) 상자 |
+| prefabs | `ui.frameDark` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_Square_R12_NoBorder_TransperDark.prefab` | root 3811192130493240385 | HUD 하단 반투명 패널 · 스탯 8칸 상자(T35) · 로비 사이드 기둥 · T37: 장비 화면 스탯 3칸(공·❤·🛡) 상자 · T39: 대장간 화덕 상자 + 안내 문구 상자 |
 | prefabs | `ui.frameIvory` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_Rectangle_01_Border_Ivory.prefab` | root 1280354769812679374 |  |
 | prefabs | `ui.frameDarkBorder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_SquareSharpEdge_01_l_Border_TransperDark.prefab` | root 450577865911699251 |  |
 | prefabs | `ui.lineTitle` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_LineDeco_01_s.prefab` | root 7786740578430808921 | 챕터 제목 밑줄 장식 (Title_LineDeco_01_s) |
@@ -490,7 +490,7 @@
 | prefabs | `ui.itemFrame.yellow` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01_Normal_Yellow.prefab` | root 4448737683355882266 |  |
 | prefabs | `ui.itemFrame.plum` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01_Normal_Plum.prefab` | root 2235254707959506410 |  |
 | prefabs | `ui.itemFrame.red` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01_Normal_Red.prefab` | root 6024362918899194262 |  |
-| prefabs | `ui.itemFrame.green` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01_Normal_Green.prefab` | root 6172468895370388958 |  |
+| prefabs | `ui.itemFrame.green` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01_Normal_Green.prefab` | root 6172468895370388958 | T39: 대장간 «합성 가능» 칸·결과 슬롯의 초록 테두리(등급색 프레임을 교체) |
 | prefabs | `ui.itemFrame.empty` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01.prefab` | root 8001034410668339735 | ItemFrame_01(빈 칸 · 190px) · T37: 장비 화면 장착 슬롯 6칸의 조각(본래 190px · FitScale 로 표 «슬롯 1칸» 크기에 · NormalArea 에 등급색 변형 · Item 에 아이콘 · Add_1 = 빈 슬롯 +) |
 | prefabs | `ui.label.green` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Label/Label_Tapered_02_Green.prefab` | root 8545814299521033444 | 등급 라벨(pill) |
 | prefabs | `ui.label.blue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Label/Label_Tapered_02_Blue.prefab` | root 132865572412744726 |  |

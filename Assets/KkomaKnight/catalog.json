@@ -581,7 +581,7 @@
     "env.tree": "지면 뒤 소품(나무) — 챕터마다 시드 고정 배치 · T37: 장비 화면 무대 위 가장자리 나무 5",
     "env.bush": "지면 소품(덤불) · T37: 장비 화면 무대 덤불 3",
     "env.mushroom": "쉼터 노드 옆 버섯 · 지면 소품",
-    "env.barrel": "쉼터 노드 — 통(Ork) + CFXR Fire(모닥불) + 버섯 (Environment 팩에 모닥불이 없어 이렇게 조합 · 주인 «알아서»)",
+    "env.barrel": "쉼터 노드 — 통(Ork) + CFXR Fire(모닥불) + 버섯 (Environment 팩에 모닥불이 없어 이렇게 조합 · 주인 «알아서») · T39: 대장간 무대 양쪽 아래 통 2",
     "env.monolith": "악마 노드 — 회색 돌기둥 + CFXR2 Souls Escape + 죽은 나무",
     "env.stoneBig": "천사 노드 — 큰 돌 + CFXR3 LightGlow A(Loop)",
     "env.deadTree": "악마 노드 옆 죽은 나무",
@@ -598,7 +598,7 @@
     "pi.shield": "실드 바 캡 · 수리/방어막 특전",
     "pi.star": "경험치 바 캡 · 수집가 특전",
     "pi.thunder": "번개 특전",
-    "pi.axe": "도끼 특전",
+    "pi.axe": "도끼 특전 · T39: 대장간 벽에 걸린 연장(망치·도끼 · 반투명)",
     "pi.arrowhead": "화살 특전",
     "pi.dagger": "창 특전(픽토 아이콘에 창이 없어 단검으로 대체)",
     "pi.stun": "스턴 특전",
@@ -618,7 +618,7 @@
     "ui.skull": "클리어 팝업 «처치 수»",
     "ui.hourglass": "클리어 팝업 «걸린 시간»",
     "ui.bookBlue": "사망 팝업 팁 행 아이콘",
-    "ui.anvil": "사망 팝업 팁(합성) · 대장간 탭",
+    "ui.anvil": "사망 팝업 팁(합성) · 대장간 탭 · T39: 대장간 무대 왼쪽 모루 그림(결과 슬롯과 재료 슬롯 사이 · 레퍼런스 08)",
     "gi.weapon.crit": "장비 아이콘 — 무기(치명 세트=검 / 체력실드=해머 / 회피=창). 세트별로 다른 그림 · 등급은 ItemFrame 색",
     "gi.neck.crit": "목걸이 아이콘이 팩에 없어 반지/룬으로 대체",
     "chest.rare": "상점 «희귀 상자» = 은 상자 · 전설 = 금 · 신화 = 프리미엄 (카드 그림 chest.<key> · 뽑기 결과 팝업엔 *_Open · T40)",
@@ -686,7 +686,7 @@
     "ui.btnGray": "거절 · T37: 장비 화면 «상점»(보조 = 회색 · 스탯 줄 아래 왼쪽)",
     "ui.btnSmallBlue": "HUD 배속(x1/x2) 작은 버튼(왼쪽 아래 · 패널 바로 위)",
     "ui.btnStart": "로비 START (Button_03_Red)",
-    "ui.frameDark": "HUD 하단 반투명 패널 · 스탯 8칸 상자(T35) · 로비 사이드 기둥 · T37: 장비 화면 스탯 3칸(공·❤·🛡) 상자",
+    "ui.frameDark": "HUD 하단 반투명 패널 · 스탯 8칸 상자(T35) · 로비 사이드 기둥 · T37: 장비 화면 스탯 3칸(공·❤·🛡) 상자 · T39: 대장간 화덕 상자 + 안내 문구 상자",
     "ui.lineTitle": "챕터 제목 밑줄 장식 (Title_LineDeco_01_s)",
     "ui.title.tangerine": "팝업 리본 제목(기본) · plum=악마 · yellow=천사/클리어 · green=쉼터 · red=사망 · sky=보유 특전",
     "ui.popup": "팝업 상자(Popup_Box_02_DecoLine) — 색 변형은 이벤트별",
@@ -821,6 +821,11 @@
     "snd.arrow": "투사체(화살·창·검기·적 화살) 발사 — BattleWorld.SyncProjectiles(Kenney RPG drawKnife2)",
     "snd.axe": "투사체(도끼) 발사 — BattleWorld.SyncProjectiles(Kenney RPG chop)",
     "ui.itemFrame.empty": "ItemFrame_01(빈 칸 · 190px) · T37: 장비 화면 장착 슬롯 6칸의 조각(본래 190px · FitScale 로 표 «슬롯 1칸» 크기에 · NormalArea 에 등급색 변형 · Item 에 아이콘 · Add_1 = 빈 슬롯 +)",
-    "fr.rect": "T37: 장비 화면 버튼 줄 뒤 갈색 띠"
+    "fr.rect": "T37: 장비 화면 버튼 줄 뒤 갈색 띠",
+    "ui.fire": "T39: 대장간 무대 화덕 안 불(ui.frameDark 상자 위)",
+    "pi.anvil": "T39: 대장간 빈 결과 슬롯 안 모루 실루엣(레퍼런스 08 «선택 칸»)",
+    "pi.hammer": "T39: 대장간 벽에 걸린 연장",
+    "ui.itemFrame.green": "T39: 대장간 «합성 가능» 칸·결과 슬롯의 초록 테두리(등급색 프레임을 교체)",
+    "pi.arrow_left": "T39: 대장간 뒤로 버튼(◀ · 글자 없음)"
   }
 }

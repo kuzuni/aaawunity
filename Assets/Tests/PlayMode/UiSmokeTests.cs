@@ -372,14 +372,14 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
-        // ───────────────────────── ③ 대장간 — 인벤 전부 · 빨간 점 · 재료 3개 → 합성 ─────────────────────────
+        // ───────────────────────── ③ 대장간 — 레퍼런스 08 구도(무대 · 결과 슬롯 · 액션바 · 인벤 · 뒤로) · 인벤 전부 · 빨간 점 · 재료 3개 → 합성 ─────────────────────────
         [UnityTest]
         public IEnumerator ForgeShowsAllAndFuses()
         {
             yield return Boot();
             var S = _app.Save; var D = _app.Data;
             var a = Give(D.Gear.Parts[0]); var b = Give(D.Gear.Parts[0]); var c = Give(D.Gear.Parts[0]);
-            var other = Give(D.Gear.Parts[1], rar: 1); S.Eq[other.Part] = other.Uid;   // 장착분도 대장간엔 보인다(체크 + 흐림)
+            var other = Give(D.Gear.Parts[1], rar: 1); S.Eq[other.Part] = other.Uid;   // 장착분도 대장간엔 보인다(«장착중» 글자 · 흐리지 않음 · 재료 가능 T24)
             Assert.AreEqual(GearUi.Key(a), GearUi.Key(b)); Assert.AreEqual(GearUi.Key(a), GearUi.Key(c));
             _app.ShowScreen("gear"); yield return Frames(1);
             _app.ShowScreen("forge"); yield return Frames(2);
@@ -387,11 +387,22 @@ namespace KkomaKnight.Tests.Play
             var forge = _app.Current.Root; var content = UiKit.Find(forge, "Content"); Assert.IsNotNull(content, "대장간 인벤 Content");
             Assert.AreEqual(S.Inv.Count, CountNamed(content, "gear:"), "대장간 인벤에 장비가 전부(장착분 포함) 보여야 한다");
             Assert.GreaterOrEqual(CountNamed(content, "FuseDot"), 3, "합성 가능한 칸의 빨간 점(같은 키 3개)");
-            Assert.IsTrue(HasText(s => s == "대장간"), "제목");
+            Assert.AreEqual(1, CountNamed(content, "EquippedLabel"), "장착분 칸의 «장착중» 글자(레퍼런스 Equipped)");
+            // T39 — 레퍼런스 08_gear_fuse.jpg 구도 단언: 무대(위 41%) · 결과 슬롯(좌상) · 액션바(자동 왼쪽 끝 · 합성 오른쪽 끝 · 회색) · 인벤 = 장비 탭과 같은 자리 · 뒤로 버튼(왼쪽 아래) · 제목 글자·상단 재화 바 없음
+            {
+                var stage = (RectTransform)UiKit.Find(forge, "Stage"); var result = (RectTransform)UiKit.Find(forge, "Result"); var autoB = (RectTransform)UiKit.Find(forge, "AutoBtn"); var fuseB = (RectTransform)UiKit.Find(forge, "FuseBtn"); var fuseOn = UiKit.Find(forge, "FuseBtnOn"); var back = (RectTransform)UiKit.Find(forge, "BackBtn"); var inv = (RectTransform)UiKit.Find(forge, "InvScroll");
+                Assert.IsNotNull(stage, "무대"); Assert.IsNotNull(result, "결과 슬롯"); Assert.IsNotNull(autoB, "«자동»"); Assert.IsNotNull(fuseB, "«합성»(회색)"); Assert.IsNotNull(fuseOn, "«합성»(주황)"); Assert.IsNotNull(back, "뒤로"); Assert.IsNotNull(inv, "인벤");
+                Assert.AreEqual(1f - Layout.ForgeStage.H / 100f, stage.anchorMin.y, 1e-3f, "무대 = 위 41%"); Assert.AreEqual(Layout.ForgeResult.X / 100f, result.anchorMin.x, 1e-3f, "결과 슬롯 = 표 자리");
+                Assert.AreEqual(Layout.ForgeAuto.X / 100f, autoB.anchorMin.x, 1e-3f, "자동 = 왼쪽 끝"); Assert.AreEqual((Layout.ForgeFuse.X + Layout.ForgeFuse.W) / 100f, fuseB.anchorMax.x, 1e-3f, "합성 = 오른쪽 끝"); Assert.AreEqual(autoB.anchorMax.y, fuseB.anchorMax.y, 1e-3f, "같은 줄");
+                Assert.IsFalse(fuseOn.gameObject.activeSelf, "재료 없으면 합성은 회색 버튼"); Assert.IsFalse(fuseB.GetComponent<Button>().interactable, "회색 합성은 비활성");
+                Assert.AreEqual(1f - Layout.ForgeInv.Y / 100f, inv.anchorMax.y, 1e-3f, "인벤 = 장비 탭과 같은 자리"); Assert.Less(back.anchorMin.x, 0.05f, "뒤로 = 왼쪽 아래"); Assert.Greater(back.anchorMin.y, 0.9f, "뒤로 = 왼쪽 아래");
+                Assert.IsFalse(HasText(s => s == "대장간"), "제목 글자 없음(레퍼런스)"); Assert.IsNull(UiKit.Find(forge, "TopBar"), "상단 재화 바 없음(레퍼런스)");
+            }
             Check("대장간");
 
             foreach (var g in new[] { a, b, c }) { Assert.IsTrue(ClickNamed(content, "gear:" + g.Uid), "재료 칸 클릭 " + g.Uid); yield return Frames(1); }
             Assert.IsTrue(HasText(s => s == "합성 (3/3)"), "재료 3개 고르면 «합성 (3/3)»");
+            Assert.IsTrue(UiKit.Find(forge, "FuseBtnOn").gameObject.activeSelf && !UiKit.Find(forge, "FuseBtn").gameObject.activeSelf, "재료 3개면 합성이 주황 버튼으로");
             Check("재료 3개 선택");
             int before = S.Inv.Count;
             Assert.IsTrue(Click(forge, s => s == "합성 (3/3)"), "합성 버튼"); yield return Frames(2);
@@ -400,7 +411,7 @@ namespace KkomaKnight.Tests.Play
             Check("합성 뒤");
             Assert.IsTrue(Click(forge, s => s == "자동"), "자동 버튼(조합 없음 → 토스트)"); yield return Frames(2);
             Check("자동 합성(조합 없음)");
-            Assert.IsTrue(Click(forge, s => s == "← 장비"), "뒤로"); yield return Frames(2);
+            Assert.IsTrue(ClickNamed(forge, "BackBtn"), "뒤로(◀ 아이콘 · 글자 없음)"); yield return Frames(2);
             Assert.AreEqual("gear", _app.Current.Name); Check("대장간 → 장비");
             yield return Shutdown();
         }
