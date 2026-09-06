@@ -110,7 +110,9 @@ namespace KkomaKnight.Core
         public static readonly R HudPerkStrip = new R(3.0f, 94.5f, 80.0f, 4.0f);   // 주인 지시 ② (표 밖 · 인포 버튼 행 왼쪽)
 
         // ③ 장비 탭 — 캐릭터 장비.jpg
-        public static readonly R GearStage = new R(0, 8.5f, 100, 26.5f);
+        /// <summary>장비 무대 — 아래 끝이 갈색 띠(<c>GearScreen.Band</c> 위 = 41.0%)와 맞닿는다(T112 ⓐ · 주인 2026-09-07 «Stage 아래가 Band 랑 맞닿을 정도로 늘려서 스탯이 Stage 내부에 있는 느낌»).
+        /// 그림(길·나무·덤불)은 <c>GearScreen.StageArtH</c> 로 환산해 늘리기 전과 <b>같은 자리·같은 크기</b>로 남는다 — 늘어난 만큼 들판이 스탯 줄 뒤까지 이어질 뿐이다.</summary>
+        public static readonly R GearStage = new R(0, 8.5f, 100, 32.5f);
         // 슬롯 열 높이 21.0 → 22.3 · 칸 피치 7.3 → 8.0 (T63-gear · 표 ±3%p 보정 — 칸 위 «Lv. N»(본문 40) 과 위 칸 «+N» 배지가 24px 틈에서 겹쳤다 · docs/ref-layout.md «T63-gear 회차 정정»)
         public static readonly R GearSlotColL = new R(8.5f, 9.5f, 14.0f, 22.3f);
         public static readonly R GearSlotColR = new R(77.5f, 9.5f, 14.0f, 22.3f);

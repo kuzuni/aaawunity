@@ -41,13 +41,22 @@ namespace KkomaKnight.Game
         /// <summary>빈 슬롯의 부위 아이콘 투명도(T105 3항 «비어 있어도 그 부위 아이콘을 흐리게») — 끼우면 1.0.</summary>
         public const float PartIconEmptyAlpha = 0.45f;
 
+        /// <summary>
+        /// 무대 «그림»(길 띠·나무·덤불·물결 경계)을 잰 기준 무대 높이(%) — T112 ⓐ 로 무대를 41.0% 까지 늘리기 전 값이다.
+        /// 그림 rect 는 무대 % 라 무대가 커지면 같이 내려가고 커지므로, <see cref="Art"/> 로 환산해 <b>화면에서는 늘리기 전과 똑같은 자리·크기</b>로 그린다
+        /// (주인 지시는 «스탯이 무대 안에 있는 느낌» 이지 «풍경을 키워라» 가 아니다 · 늘어난 아래쪽은 들판(Field)이 채운다).
+        /// </summary>
+        public const float StageArtH = 26.5f;
+        static float ArtY(float v) => v * StageArtH / Layout.GearStage.H;
+        static Layout.R Art(Layout.R r) => new Layout.R(r.X, ArtY(r.Y), r.W, ArtY(r.H));
+
         static string PartAt(int slotIndex) => slotIndex < 3 ? GearUi.ColLeft[slotIndex] : GearUi.ColRight[slotIndex - 3];
 
         /// <summary>무대 길 띠 가장자리(무대 % <paramref name="edgeY"/>)에 물결 경계 줄 — 줄 rect 이름 «RoadUp»/«RoadDown»(테스트 계약) · 아래 줄은 <c>localScale.y = −1</c> 로 뒤집는다 · 타일 = 스프라이트 비례(253×33)로 무대 폭을 채우는 만큼.</summary>
         void BuildStageEdge(RectTransform stage, string name, float edgeY, bool flip)
         {
             var row = UiKit.Rect(stage, name);
-            float h = StageEdgeH; float y = flip ? edgeY - h * (1f - StageEdgeOutside) : edgeY - h * StageEdgeOutside;
+            float h = ArtY(StageEdgeH); float y = flip ? edgeY - h * (1f - StageEdgeOutside) : edgeY - h * StageEdgeOutside;
             UiKit.Pct(row, 0, y, 100, h);
             if (flip) row.localScale = new Vector3(1f, -1f, 1f);
             var sp = App != null && App.Assets != null ? App.Assets.Sprite(StageEdgeKey) : null;
@@ -69,10 +78,11 @@ namespace KkomaKnight.Game
             var stage = UiKit.Rect(Root, "Stage"); UiKit.Pct(stage, Layout.GearStage); UiKit.Ensure<RectMask2D>(stage.gameObject);
             {
                 var field = UiKit.Icon(stage, "Field", "env.field"); field.preserveAspect = false; UiKit.Stretch(field.rectTransform);
-                for (int i = 0; i < StageTrees.Length; i++) { var t = UiKit.Icon(stage, "Tree" + i, "env.tree"); UiKit.Pct(t.rectTransform, StageTrees[i]); }
-                var road = UiKit.Icon(stage, "Road", "env.road"); road.preserveAspect = false; UiKit.Pct(road.rectTransform, StageRoad);
-                BuildStageEdge(stage, "RoadUp", StageRoad.Y, false); BuildStageEdge(stage, "RoadDown", StageRoad.Y + StageRoad.H, true);   // T71 ③ 물결 경계 위·아래(아래는 y 반전)
-                for (int i = 0; i < StageBushes.Length; i++) { var b = UiKit.Icon(stage, "Bush" + i, "env.bush"); UiKit.Pct(b.rectTransform, StageBushes[i]); }
+                for (int i = 0; i < StageTrees.Length; i++) { var t = UiKit.Icon(stage, "Tree" + i, "env.tree"); UiKit.Pct(t.rectTransform, Art(StageTrees[i])); }
+                var road = UiKit.Icon(stage, "Road", "env.road"); road.preserveAspect = false; UiKit.Pct(road.rectTransform, Art(StageRoad));
+                // T71 ③ 물결 경계 위·아래(아래는 y 반전) — §1 «한 줄에 문장이 여럿이면 줄 끝 주석 금지» 라 주석을 위로 올렸다
+                BuildStageEdge(stage, "RoadUp", ArtY(StageRoad.Y), false); BuildStageEdge(stage, "RoadDown", ArtY(StageRoad.Y + StageRoad.H), true);
+                for (int i = 0; i < StageBushes.Length; i++) { var b = UiKit.Icon(stage, "Bush" + i, "env.bush"); UiKit.Pct(b.rectTransform, Art(StageBushes[i])); }
                 // 가운데 큰 플레이어 — 표의 «캐릭터» 행 높이(19%)의 정사각 호스트(텍스처가 정사각이라 찌그러지지 않게 · 폭은 높이에서 환산) · 기본 프레이밍이면 몸이 호스트 세로의 ≈89%(T25 «85~90%»)
                 float hostW = Layout.GearHero.H * UiKit.FrameH / UiKit.FrameW;
                 var host = UiKit.Rect(stage, "Hero"); UiKit.Pct(host, (Layout.GearHero.X + Layout.GearHero.W * 0.5f - hostW * 0.5f - Layout.GearStage.X) / Layout.GearStage.W * 100f, (Layout.GearHero.Y - Layout.GearStage.Y) / Layout.GearStage.H * 100f, hostW / Layout.GearStage.W * 100f, Layout.GearHero.H / Layout.GearStage.H * 100f);

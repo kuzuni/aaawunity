@@ -630,9 +630,41 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(Layout.GearForgeBtn.X + Layout.GearForgeBtn.W, forgeB.anchorMax.x * 100f, 0.5f, "대장간 = 오른쪽 끝(표 액션바)");
                 Assert.Less(forgeB.anchorMax.y, statA.anchorMin.y, "버튼 줄은 스탯 줄 아래"); Assert.AreEqual(forgeB.anchorMax.y, shopB.anchorMax.y, 1e-3f, "상점·대장간 같은 줄");
                 Assert.IsTrue(HasText(s => s == "대장간") && HasText(s => s == "상점"), "버튼 라벨 우리말");
+                // T112 — ⓐ 무대가 갈색 띠까지 내려와 스탯 3칸이 무대 «안» 에 있고, 무대 그림은 늘리기 전과 같은 자리
+                {
+                    Assert.GreaterOrEqual(Layout.GearStage.Y + Layout.GearStage.H, GearScreen.Band.Y - 0.3f, "무대 아래 끝이 갈색 띠 위와 맞닿는다(T112 ⓐ)");
+                    var stageRt = (RectTransform)UiKit.Find(gear, "Stage"); Assert.IsNotNull(stageRt, "무대");
+                    var sc = new Vector3[4]; stageRt.GetWorldCorners(sc);
+                    float stageH = sc[1].y - sc[0].y;
+                    foreach (var n in new[] { "Stat:atk", "Stat:hp", "Stat:sh" })
+                    {
+                        var cell = (RectTransform)UiKit.Find(gear, n); Assert.IsNotNull(cell, n);
+                        var cc = new Vector3[4]; cell.GetWorldCorners(cc);
+                        Assert.LessOrEqual(cc[1].y, sc[1].y + 1f, n + " 스탯 칸 위 끝이 무대 안");
+                        Assert.GreaterOrEqual(cc[0].y, sc[0].y - 1f, n + " 스탯 칸 아래 끝이 무대 안(T112 ⓐ)");
+                    }
+                    // 길 띠가 화면에서 차지하는 높이(프레임 %) = 옛 무대 높이 기준 값 그대로 — 무대를 늘려도 풍경은 안 커진다
+                    var roadRt = (RectTransform)UiKit.Find(stageRt, "Road"); Assert.IsNotNull(roadRt, "무대 길 띠");
+                    var rc = new Vector3[4]; roadRt.GetWorldCorners(rc);
+                    float roadPct = (rc[1].y - rc[0].y) / stageH * Layout.GearStage.H;
+                    Assert.AreEqual(24f * GearScreen.StageArtH / 100f, roadPct, 0.3f, "길 띠 높이(프레임 %)는 무대를 늘려도 그대로(T112 ⓐ · StageArtH 환산)");
+                }
                 var inv = (RectTransform)UiKit.Find(gear, "InvScroll"); Assert.IsNotNull(inv, "인벤 스크롤");
                 Assert.AreEqual(1f - Layout.GearInv.Y / 100f, inv.anchorMax.y, 1e-3f, "인벤 = 표 자리"); Assert.Less(inv.anchorMax.y, forgeB.anchorMin.y + 1e-3f, "인벤은 버튼 줄 아래");
                 var grid = content.GetComponent<GridLayoutGroup>(); Assert.IsNotNull(grid, "인벤 격자"); Assert.AreEqual(Layout.GearInvCols, grid.constraintCount, "5열");
+                // T112 ⓑ — 인벤 첫 줄이 갈색 띠에 붙지 않는다(주인 «Content 에 탑에 패딩 20 정도»)
+                {
+                    Assert.GreaterOrEqual(grid.padding.top, GearUi.InvTopPadPx, "인벤 격자 위 패딩 ≥ " + GearUi.InvTopPadPx + "px(T112 ⓑ)");
+                    var firstCell = content.childCount > 0 ? (RectTransform)content.GetChild(0) : null;
+                    if (firstCell != null)
+                    {
+                        var fc = new Vector3[4]; firstCell.GetWorldCorners(fc);
+                        var bandBottomPct = GearScreen.Band.Y + GearScreen.Band.H;
+                        var invRt = (RectTransform)UiKit.Find(gear, "InvScroll"); var ic = new Vector3[4]; invRt.GetWorldCorners(ic);
+                        Assert.LessOrEqual(fc[1].y, ic[1].y - GearUi.InvTopPadPx * (ic[1].y - ic[0].y) / (UiKit.FrameH * Layout.GearInv.H / 100f) + 1f,
+                            "첫 줄 칸 위 끝이 인벤 위 끝에서 패딩만큼 내려와 있다(T112 ⓑ · 띠 아래 " + bandBottomPct.ToString("0.#") + "%)");
+                    }
+                }
                 Assert.AreEqual(0, CountNamed(gear, "ui.equipment"), "Character_Hero_Equipment 를 통째로 세우지 않는다(T37)");
             }
             Check("장비 화면");

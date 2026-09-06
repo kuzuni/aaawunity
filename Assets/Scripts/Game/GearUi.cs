@@ -169,6 +169,12 @@ namespace KkomaKnight.Game
             scroll.content = content; scroll.viewport = view;
             return content;
         }
+        /// <summary>
+        /// 인벤 격자 위쪽 여백(프레임 px) — 주인 2026-09-07 «아래에 장비 아이템들이 Band 에 너무 딱 붙어 있음 · Content 에 탑에 패딩 20 정도»(T112 ⓑ).
+        /// 장비 화면(06)과 대장간(08)이 같은 <see cref="Grid"/> 를 쓰므로 한 곳에서 둘 다 받는다.
+        /// </summary>
+        public const int InvTopPadPx = 20;
+
         /// <summary>장비 화면 프리팹 Content 의 격자 값을 복사한다(칸·세로 간격·패딩·열 수). 프리팹이 없으면 ListItem_EquipMent 의 본래 크기(정사각)로 · 그것도 없으면 표 % 폭의 정사각. 가로 간격 = (폭 − 열×칸) / (열 − 1).</summary>
         static void CopyEquipmentGrid(GridLayoutGroup grid, float viewW)
         {
@@ -179,13 +185,13 @@ namespace KkomaKnight.Game
             if (src != null)
             {
                 grid.cellSize = src.cellSize; grid.spacing = src.spacing; grid.constraintCount = src.constraintCount;
-                grid.padding = new RectOffset(src.padding.left, src.padding.right, src.padding.top, src.padding.bottom);
+                grid.padding = new RectOffset(src.padding.left, src.padding.right, src.padding.top + InvTopPadPx, src.padding.bottom);
             }
             else
             {
                 float s = CellSize(cat);
                 grid.cellSize = new Vector2(s, s); grid.spacing = new Vector2(0, UiKit.FrameH * (Layout.GearInvRowPitch - Layout.GearInvCellH) / 100f); grid.constraintCount = Layout.GearInvCols;
-                grid.padding = new RectOffset(0, 0, (int)(UiKit.FrameH * (Layout.GearInvCell.Y - Layout.GearInv.Y) / 100f), 0);
+                grid.padding = new RectOffset(0, 0, (int)(UiKit.FrameH * (Layout.GearInvCell.Y - Layout.GearInv.Y) / 100f) + InvTopPadPx, 0);
             }
             int cols = Mathf.Max(1, grid.constraintCount);
             float gapX = cols > 1 ? (viewW - cols * grid.cellSize.x) / (cols - 1) : 0f;
