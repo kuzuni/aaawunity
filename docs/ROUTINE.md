@@ -226,7 +226,7 @@
 범위: `Assets/Scripts/Game/GearUi.cs`(Cell 아이콘) · `GearScreen.cs`(슬롯 아이콘) · `GearLook` 표(T7 이 만든 것) · catalog
 순서: **T7 완료 뒤**(같은 파일·표).
 1. **주인 지적 «투구·갑옷·무기 아이콘만 작다»** — CharacterMaker 파츠 스프라이트는 GUI Pro 아이콘(128px)보다 작아 같은 칸에서 작게 보인다. 파츠 아이콘은 칸 안에서 다른 부위 아이콘과 **같은 시각 크기**로(스프라이트 bounds 기준으로 칸의 70~75% 를 채우도록 스케일 · preserveAspect). 장착 슬롯·인벤 칸·세부 팝업·대장간·뽑기 결과 전부.
-2. **무기 아이콘은 45° 로 오른쪽 위를 향하게**(RectTransform rotation z = 45 · 칼끝이 오른쪽 위). 전투 캐릭터 손의 무기는 그대로.
+2. ~~무기 아이콘 45° 회전~~ — **취소**(주인 2026-09-06: Thumbnail 그림을 쓰면 투구·무기·갑옷 전부 정상 방향이라 기울일 필요 없다 · T31). 회전 0.
 3. **무기는 전부 근접 무기** — 활·지팡이·완드 계열 금지. `GearLook` 표에서 무기 종류 × 등급을 **검(Sword)·방망이(Blunt)** 두 계열의 파츠로만 채운다(등급이 오를수록 화려한 것). 카탈로그 키·`docs/assets-map.md` 갱신.
 4. 게이트 + PROGRESS T17 행.
 
@@ -308,7 +308,7 @@
 범위: `GearLook` 표 · `Assets/Scripts/Game/GearUi.cs`(아이콘 키) · catalog(`cmi.*` 신규 키)
 순서: **T17 완료 뒤**(같은 표·파일). T25·T27 과는 줄이 다르다.
 1. CharacterMaker 팩은 파츠마다 **입는 그림**(`Extenstions/Parts Pack Base/Parts/<부위>/<이름>.png`)과 **아이콘용 그림**(`…/Thumbnail/<부위>/<같은 이름>.png` · Helmet·Chest·Sword·Blunt·Axe·Spear·Bow·Shield 등)이 따로 있다. 주인: «막상 장착 아이콘용 갑옷이랑 실제 입는 갑옷이 다르게 돼 있는데 내 게임도 그렇게». → `GearLook` 표의 각 항목에 **아이콘 키(Thumbnail)** 와 **착용 키(Parts)** 를 둘 다 두고, 장비 칸·슬롯·세부 팝업·뽑기 결과·대장간의 아이콘은 **Thumbnail** 을, 캐릭터(HeroView·전투)는 **Parts** 를 쓴다. 카탈로그 키는 `cmi.<part>.<name>`(Thumbnail) / 기존 `cm.*`(Parts). 같은 이름이 Thumbnail 에 없으면 PROGRESS 에 목록으로 남기고 Parts 그림을 임시로.
-2. T17 의 «파츠 아이콘 크기 통일 · 무기 45°» 는 Thumbnail 기준으로 다시 맞춘다(Thumbnail 은 정사각 아이콘이라 대개 회전이 필요 없다 — 무기 Thumbnail 이 이미 기울어져 있으면 45° 회전을 뺀다 · 주인 «45° 오른쪽 위» 는 그림이 그렇게 보이면 된다는 뜻).
+2. T17 의 «파츠 아이콘 크기 통일» 은 Thumbnail 기준으로 다시 맞춘다. **회전은 0**(주인 확정: Thumbnail 은 투구·무기·갑옷 전부 정상 방향 — 45° 는 취소).
 3. `docs/assets-map.md` 갱신(gen_catalog).
 4. 게이트 + PROGRESS T31 행 + «주인이 확인할 것».
 
