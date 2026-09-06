@@ -57,6 +57,7 @@ namespace KkomaKnight.Game
         protected override void Build()
         {
             var bg = UiKit.Ensure<Image>(Root.gameObject); bg.color = Color.Lerp(Palette.Slate, Palette.Dim, 0.45f); bg.raycastTarget = true;   // 인벤 바탕 = 어두운 남색(레퍼런스 · 색은 점수 밖)
+            UiKit.PatternBg(Root, UiKit.PatternTintDark);   // T72 ① 배경 패턴(어두운 바탕 → 흰 무늬 α0.12 · 오른쪽 위로 천천히 · 맨 뒤) — 화면 적용은 T69-gear 묶음이 같이(ROUTINE T72 «한 화면 세 번 만지지 않기»)
 
             // ① 상단 재화 바 — 공용 헬퍼(아바타 · 전투력 · 골드 · 보석)
             _top = TopBar.Build(App, Root);
@@ -118,6 +119,7 @@ namespace KkomaKnight.Game
         {
             var r = Layout.GearStats; float gap = 2f, w = (r.W - gap * 2) / 3f;
             var cell = UiKit.Spawn("ui.frameDark", Root); var crt = (RectTransform)cell.transform; crt.name = "Stat:" + key; UiKit.Pct(crt, r.X + i * (w + gap), r.Y, w, r.H);
+            UiKit.Bordered(crt);   // T69-gear: 레퍼런스 06 의 스탯 3칸은 검은 외곽선 상자 — 아이콘·숫자는 이 뒤에 얹혀 테두리 위
             var ic = UiKit.Icon(crt, "Icon", icon, tint); UiKit.Pct(ic.rectTransform, 6, 14, 20, 72);
             value = UiKit.Label(crt, 28, 0, 66, 100, "0", 40, Palette.White, TextAnchor.MiddleCenter);
             return crt;
@@ -139,6 +141,7 @@ namespace KkomaKnight.Game
                 var g = S.EquippedGear(s.Part); int lv = S.SlotLv(s.Part);
                 var area = UiKit.Find(s.Frame, "NormalArea");
                 if (area != null) { UiKit.Clear(area); if (g != null) { var f = UiKit.Spawn("ui.itemFrame." + Palette.RarName(g.Rar), area); UiKit.Stretch((RectTransform)f.transform); } }
+                GearUi.DarkFrame(s.Frame, s.Frame.localScale.x);   // T69-gear · 7항: 등급 변형(막 스폰)·빈 칸 Add_1 의 테두리 링을 검은 아웃라인으로 · 슬롯은 FitScale 0.8 이라 선을 그만큼 더 굵게(화면 8px)
                 var item = UiKit.Find(s.Frame, "Item");
                 if (item != null) { item.gameObject.SetActive(g != null); if (g != null) { var im = UiKit.SetSprite(s.Frame, "Item", GearLook.IconKey(D, g), Palette.White); GearUi.FitIcon(im, g); } }
                 UiKit.Show(s.Frame, "Add_1", g == null);

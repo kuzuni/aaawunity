@@ -70,6 +70,7 @@ namespace KkomaKnight.Game
                 if (item != null) { item.gameObject.SetActive(g != null); if (g != null) { var im = UiKit.SetSprite(frame, "Item", IconKey(D, g), Palette.White); FitIcon(im, g); } }   // GUI Pro 아이콘은 프리팹 Item 크기 그대로 · 파츠 아이콘은 같은 눈높이로 맞춤(T17)
                 UiKit.Show(frame, "Add_1", g == null); UiKit.Show(frame, "Add_2", false); UiKit.Show(frame, "Lock", false); UiKit.Show(frame, "Disable", false);
                 UiKit.Show(frame, "Focus", g != null && o.Selected);   // 프리팹의 Focus(테두리 글로우) = 선택
+                DarkFrame(frame);   // T69-gear · 7항: 아이템 칸의 테두리 링 = 검은 아웃라인(등급색은 Bg·InnerBorder 가 낸다)
             }
             UiKit.SetText(cell, "Text_Level", g != null && g.Plus > 0 ? "+" + g.Plus : "");
             var type = UiKit.Find(cell, "TypeArea");
@@ -80,6 +81,25 @@ namespace KkomaKnight.Game
             if (o.Off) { var cg = UiKit.Ensure<CanvasGroup>(cell.gameObject); cg.alpha = 0.4f; }
             if (onClick != null) UiKit.Clickable(cell, onClick);
             return cell;
+        }
+
+        /// <summary>아이템 프레임 조각(ItemFrame_01 · 등급 변형 ItemFrame_01_Normal_*)의 테두리 링 스프라이트 이름 앞머리 — <c>ItemFrame_01_White_Border</c>(79×79 · 9-slice 39/40 · 선 5px 실측). FocusBorder 는 다른 이름이라 안 걸린다.</summary>
+        public const string ItemBorderSprite = "ItemFrame_01_White_Border";
+        /// <summary>
+        /// 아이템 프레임의 «Border» 링을 «검은 아웃라인» 으로(T69 7항 · 주인 «아이템류 칸은 전부 장비 화면의 그 프레임» + 1항 «ItemFrame_01_White_Border 를 Ink tint») — 새 Image 를 덧대지 않고 조각 자체의 Border 자식
+        /// (등급 변형은 짙은 갈색 0.18/0.11/0.09 · 빈 칸 Add_1 은 연한 갈색 0.75/0.59/0.43)을 <see cref="UiKit.BorderInk"/> 로 칠하고 선을 프레임 <see cref="UiKit.BorderPx"/>(8px · 폰 3px) 이상으로 굵힌다(원본 5px → 9-slice multiplier · 결정 149 와 같은 방식).
+        /// 조각이 <paramref name="scale"/> 로 축소돼 있으면(장착 슬롯 FitScale 0.8) 그만큼 더 굵게 → 화면에서는 같은 8px. 등급색은 Bg·InnerBorder1·Glow 가 그대로 낸다(레퍼런스 06: 파랑/보라 속 + 검은 외곽선). 비활성 자식(Add_1 등)도 미리 칠해 둔다(상태가 바뀌어 켜질 때 그대로 어둡다).
+        /// 장착 슬롯(GearScreen) · 인벤/대장간/뽑기 결과/세부 팝업 칸(<see cref="Cell"/>) · 빈 슬롯 팝업(<see cref="OpenSlot"/>)이 전부 이 함수를 거친다.
+        /// </summary>
+        public static void DarkFrame(Transform frame, float scale = 1f)
+        {
+            if (frame == null) return;
+            float px = UiKit.BorderPx / Mathf.Max(0.05f, scale);
+            foreach (var im in frame.GetComponentsInChildren<Image>(true))
+            {
+                if (im == null || im.name != UiKit.BorderName || im.sprite == null || !im.sprite.name.StartsWith(ItemBorderSprite, StringComparison.Ordinal)) continue;
+                im.color = UiKit.BorderInk; im.type = Image.Type.Sliced; im.pixelsPerUnitMultiplier = UiKit.BorderMultiplier("fr.itemBorder", px);
+            }
         }
 
         /// <summary>
@@ -184,10 +204,10 @@ namespace KkomaKnight.Game
             }
         }
         static string Hex(Color c) => ColorUtility.ToHtmlStringRGB(c);
-        /// <summary>어두운 pill(fr.r12 · 잉크색) + 글자 — 메타줄 «슬롯 Lv. N/최대»·«부위», 스탯 박스, 옵션 줄, 비용 줄이 같은 조각을 쓴다.</summary>
+        /// <summary>어두운 pill(fr.r12 · 잉크색) + 글자 — 메타줄 «슬롯 Lv. N/최대»·«부위», 스탯 박스, 옵션 줄, 비용 줄이 같은 조각을 쓴다. 전부 «검은 아웃라인»(T69-gear · 레퍼런스 07 의 pill·스탯 상자·옵션 줄·비용 줄은 모두 검은 외곽선) — <see cref="UiKit.Bordered"/> 를 먼저 덧대고 글자·아이콘은 그 뒤에 얹혀 테두리 위에 온다.</summary>
         static RectTransform Pill(RectTransform parent, string name, Layout.R r, float alpha = 0.85f)
         {
-            var p = UiKit.Panel(parent, name, "fr.r12", Palette.A(Palette.Ink, alpha)); UiKit.Pct(p.rectTransform, r); return p.rectTransform;
+            var p = UiKit.Panel(parent, name, "fr.r12", Palette.A(Palette.Ink, alpha)); UiKit.Pct(p.rectTransform, r); UiKit.Bordered(p.rectTransform); return p.rectTransform;
         }
         /// <summary>
         /// 표 ④ 의 공통 뼈대: 어둠 + 패널(GdBox) + 박스 윗변 <b>등급 탭</b>(GdBadge · 등급색 명판) → 왼쪽 <b>아이콘 칸</b>(GdIcon · 장비 칸 Cell «+N» 포함 · 빈 슬롯은 빈 프레임) · 오른쪽 <b>이름 굵게</b>(GdName) + <b>pill 2</b>(GdMeta · «슬롯 Lv. N/최대» · «부위») → «탭하여 닫기»(배경 탭 = 닫기 · 닫기 X 없음).
@@ -201,7 +221,14 @@ namespace KkomaKnight.Game
             var rib = UiKit.Find(box, bk); if (rib != null) { var rr = (RectTransform)rib; rr.sizeDelta = UiKit.PxSize(Layout.GdBadge) + new Vector2(70, 36); rr.anchoredPosition = new Vector2(0, 6); }   // 등급 탭 = 표 배지 크기(글자 여유만)
             var slot = UiKit.Rect(box, "IconSlot"); UiKit.Pct(slot, Layout.GdIcon.Within(B));
             if (g != null) { var cell = Cell(slot, app.Data, g, new CellOpts(), null); UiKit.Stretch(cell); }
-            else { var e = UiKit.Panel(slot, "Empty", "fr.itemBg", Palette.A(Palette.Gray, 0.55f)); UiKit.Stretch(e.rectTransform); }
+            else
+            {
+                // 빈 슬롯도 «물건 칸» 이라 장비 화면의 그 프레임(ItemFrame_01 · Add_1 = 빈 칸 «+» · T69 7항 통일) — 예전 fr.itemBg 회색 판은 폐기 · 검은 아웃라인은 DarkFrame
+                var e = UiKit.Spawn("ui.itemFrame.empty", slot); e.name = "Empty"; var ert = (RectTransform)e.transform;
+                UiKit.FitScale(ert, UiKit.PxSize(Layout.GdIcon));
+                UiKit.Hide(ert, "Item", "Text_Level", "Focus", "Disable", "Lock", "Add_2"); UiKit.Show(ert, "Add_1", true);
+                DarkFrame(ert, ert.localScale.x);
+            }
             var nmR = Layout.GdName.Within(B);
             var nm = UiKit.Label(box, nmR.X, nmR.Y, nmR.W, nmR.H, name, 44, nameColor, TextAnchor.MiddleLeft, true, true); nm.name = "Name"; nm.fontStyle = FontStyle.Bold;
             var meta = Layout.GdMeta.Within(B);

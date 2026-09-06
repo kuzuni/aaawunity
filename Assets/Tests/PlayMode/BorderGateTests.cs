@@ -122,6 +122,27 @@ namespace KkomaKnight.Tests.Play
             if (icon != null && icon.parent == pill) Assert.Greater(icon.GetSiblingIndex(), bt.GetSiblingIndex(), label + " 아이콘은 테두리 위(형제 순서 뒤)");
         }
 
+        /// <summary>아이템 프레임 칸(ItemFrame_01 조각 · T69 7항)의 테두리 계약(T69-gear) — 조각 자체의 «Border» 링(스프라이트 ItemFrame_01_White_Border)이 켜져 있고 Ink(어둡고 α ≥ 0.8)이며, 선이 화면에서 프레임 8px 이상(원본 5px ÷ multiplier × 조각 축소 배율). 새 Image 를 덧대지 않는다.</summary>
+        static void AssertItemFrameBorder(Transform cell, string label)
+        {
+            Assert.IsNotNull(cell, label);
+            Assert.IsTrue(UiKit.HasDarkBorder(cell), label + " 은 어두운 테두리(ItemFrame Border → Ink)");
+            int seen = 0;
+            foreach (var im in cell.GetComponentsInChildren<Image>(false))
+            {
+                if (im == null || !im.enabled || im.name != UiKit.BorderName || im.sprite == null || !im.sprite.name.StartsWith(GearUi.ItemBorderSprite)) continue;
+                seen++;
+                Assert.GreaterOrEqual(im.color.a, 0.8f, label + " ItemFrame Border 알파 ≥ 0.8");
+                float lum = 0.299f * im.color.r + 0.587f * im.color.g + 0.114f * im.color.b;
+                Assert.LessOrEqual(lum, 0.35f, label + " ItemFrame Border 는 Ink(밝기 ≤ 0.35 · 지금 " + lum.ToString("0.00") + ")");
+                Assert.AreEqual(Image.Type.Sliced, im.type, label + " ItemFrame Border 는 9-slice");
+                float ratio = cell.lossyScale.x > 0f ? im.transform.lossyScale.x / cell.lossyScale.x : 1f;   // 조각이 칸 안에서 축소된 배율(장착 슬롯 FitScale 0.8)
+                float linePx = UiKit.BorderNativePx("fr.itemBorder") / Mathf.Max(0.01f, im.pixelsPerUnitMultiplier) * ratio;
+                Assert.GreaterOrEqual(linePx, UiKit.BorderPx - 0.05f, label + " ItemFrame 테두리 선 ≥ 8px(폰 3px) · 지금 " + linePx.ToString("0.0"));
+            }
+            Assert.Greater(seen, 0, label + " 에 켜진 ItemFrame_01_White_Border 링이 하나는 있어야 한다(7항 «물건 칸 = 장비 화면의 그 프레임»)");
+        }
+
         [UnityTest]
         public IEnumerator BattleBarsHaveBordersAndCellTagsAreAudited()
         {
@@ -170,7 +191,28 @@ namespace KkomaKnight.Tests.Play
             foreach (var p in D.Gear.Parts) { var g = Give(p, rar: 1, plus: 1); S.Eq[p] = g.Uid; }
             for (int i = 0; i < 10; i++) { var g = Give(D.Gear.Parts[i % D.Gear.Parts.Length], rar: i % 3, plus: i % 2); if (firstFree == null) firstFree = g; }
             _app.ShowScreen("gear"); yield return Frames(2); yield return Check("06_gear");
-            if (firstFree != null) { GearUi.OpenDetail(_app, firstFree, null); yield return Check("07_gear_detail"); _app.Overlay.Close(); yield return Frames(1); }
+            // T69-gear(strict) — 스탯 3칸 Bordered · 장착 슬롯(변형 프레임 + 빈 칸)·인벤 첫 칸 = ItemFrame Border → Ink(7항) · T72 ① 패턴 배경
+            var gearRoot = _app.Current.Root;
+            foreach (var n in new[] { "Stat:atk", "Stat:hp", "Stat:sh" }) Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(gearRoot, n)), "장비 «" + n + "» 스탯 칸에 어두운 테두리(T69-gear)");
+            foreach (var p in D.Gear.Parts) AssertItemFrameBorder(UiKit.Find(gearRoot, "Slot:" + p), "장착 슬롯 " + p);
+            var invContent = UiKit.Find(gearRoot, "Content"); Assert.IsNotNull(invContent, "인벤 Content"); Assert.Greater(invContent.childCount, 0, "인벤에 미장착 장비");
+            AssertItemFrameBorder(invContent.GetChild(0), "인벤 첫 칸");
+            Assert.IsTrue(UiKit.HasPattern(gearRoot), "장비 화면 배경 패턴(T72 ① · T69-gear 가 같이)");
+            if (firstFree != null)
+            {
+                GearUi.OpenDetail(_app, firstFree, null); yield return Check("07_gear_detail");
+                var bx = _app.Overlay.Root;
+                foreach (var n in new[] { "Pill1", "Pill2", "Stats", "Cost" }) Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(bx, n)), "세부 팝업 «" + n + "» 에 어두운 테두리(T69-gear)");
+                var opt0 = UiKit.Find(bx, "Opt:0"); if (opt0 != null) Assert.IsTrue(UiKit.HasDarkBorder(opt0), "세부 팝업 옵션 줄 0 에 어두운 테두리(T69-gear)");
+                AssertItemFrameBorder(UiKit.Find(bx, "IconSlot"), "세부 팝업 아이콘 칸");
+                _app.Overlay.Close(); yield return Frames(1);
+                // 빈 슬롯 팝업 — 물건 칸은 ItemFrame_01(7항) · 검은 아웃라인
+                S.Eq.Remove(D.Gear.Parts[0]); GearUi.OpenSlot(_app, D.Gear.Parts[0], null); yield return Frames(2);
+                var eb = _app.Overlay.Root; Assert.IsNotNull(UiKit.Find(eb, "IconSlot/Empty"), "빈 슬롯 팝업의 아이콘 칸 = ItemFrame_01(Empty)");
+                AssertItemFrameBorder(UiKit.Find(eb, "IconSlot"), "빈 슬롯 팝업 아이콘 칸");
+                foreach (var n in new[] { "Pill1", "Pill2", "Stats", "Cost" }) Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(eb, n)), "빈 슬롯 팝업 «" + n + "» 에 어두운 테두리(T69-gear)");
+                _app.Overlay.Close(); yield return Frames(1);
+            }
             _app.ShowScreen("forge"); yield return Frames(2); yield return Check("08_gear_fuse");
             _app.ShowScreen("shop"); yield return Frames(2); yield return Check("10_shop_2");
             (_app.Current as ShopScreen)?.ScrollTo(0f); yield return Check("09_shop_1");
