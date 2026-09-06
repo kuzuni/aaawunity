@@ -108,6 +108,7 @@ namespace KkomaKnight.Tests.Play
         static void AssertPillBorder(Transform pill, string label)
         {
             Assert.IsNotNull(pill, label);
+            Assert.IsTrue(pill.gameObject.activeInHierarchy, label + " 는 켜진 조각이어야 한다(UiKit.Find 는 꺼진 조각도 찾는다 · 결정 157)");
             Transform bt = null; for (int i = 0; i < pill.childCount; i++) if (pill.GetChild(i).name == UiKit.BorderName) { bt = pill.GetChild(i); break; }
             Assert.IsNotNull(bt, label + " 에 «Border» 자식");
             var im = bt.GetComponent<Image>(); Assert.IsNotNull(im, label + " Border 는 Image");
@@ -135,8 +136,10 @@ namespace KkomaKnight.Tests.Play
             var lobbyRoot = _app.Current.Root;
             foreach (var n in new[] { "SideL", "SideR", "SubRow", "Castle", "Events", "Banner", "ChapterCard" })
                 Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(lobbyRoot, n)), "로비 «" + n + "» 에 어두운 테두리(T69-lobby)");
-            AssertPillBorder(UiKit.Find(lobbyRoot, "ResourceBar_Coin"), "로비 골드 pill");
-            AssertPillBorder(UiKit.Find(lobbyRoot, "ResourceBar_Gem"), "로비 보석 pill");
+            // pill 은 «TopBar 안» 에서 찾는다 — 로비 프리팹에도 꺼진 ResourceBar_Group 조각이 남아 있고 UiKit.Find 는 꺼진 것도 먼저 집는다(결정 157)
+            var topBar = UiKit.Find(lobbyRoot, "TopBar"); Assert.IsNotNull(topBar, "로비 상단 바(TopBar)");
+            AssertPillBorder(UiKit.Find(topBar, "ResourceBar_Coin"), "로비 골드 pill");
+            AssertPillBorder(UiKit.Find(topBar, "ResourceBar_Gem"), "로비 보석 pill");
             _app.Overlay.Settings(); yield return Check("12_settings"); _app.Overlay.Close(); yield return Frames(1);
 
             // 11 특권 · 15~19 로비 팝업
