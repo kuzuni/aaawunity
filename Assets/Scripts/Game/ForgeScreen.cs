@@ -35,6 +35,8 @@ namespace KkomaKnight.Game
         protected override void Build()
         {
             var bg = UiKit.Ensure<Image>(Root.gameObject); bg.color = Color.Lerp(Palette.Slate, Palette.Dim, 0.45f); bg.raycastTarget = true;   // 인벤 바탕 = 어두운 남색(장비 탭과 같은 값 · 색은 점수 밖)
+            // T72 ① 배경 패턴(어두운 바탕 → 흰 무늬 α0.12 · 오른쪽 위로 천천히 · 맨 뒤) — 장비 화면(GearScreen)과 같은 값 · 화면 적용은 T69-forge 묶음이 같이(ROUTINE T72 «한 화면 세 번 만지지 않기»)
+            UiKit.PatternBg(Root, UiKit.PatternTintDark);
 
             // ① 대장간 무대 — 벽(어두운 갈색) + 바닥 띠 + 화덕(어두운 상자 + 불) + 벽의 연장 2 + 통 2 · 무대 밖은 잘라낸다
             var stage = UiKit.Rect(Root, "Stage"); UiKit.Pct(stage, Layout.ForgeStage); UiKit.Ensure<RectMask2D>(stage.gameObject);
@@ -145,10 +147,12 @@ namespace KkomaKnight.Game
             lb.name = "EquippedLabel";
         }
 
+        // T69-forge: 초록 변형을 새로 스폰하면 Cell 이 이미 칠해 둔 «검은 아웃라인»(GearUi.DarkFrame · 등급 변형의 Border 링)이 사라지므로 교체 뒤 다시 칠한다 — 합성 가능 칸·결과 슬롯(모루 칸)도 다른 칸과 같은 8px 검은 외곽선(주인 «아이템류 칸은 전부 장비 화면의 그 프레임»).
         static void GreenFrame(RectTransform cell)
         {
             var frame = UiKit.Find(cell, "ItemFrame_01"); var area = frame != null ? UiKit.Find(frame, "NormalArea") : null; if (area == null) return;
             UiKit.Clear(area); var f = UiKit.Spawn("ui.itemFrame.green", area); UiKit.Stretch((RectTransform)f.transform, -1, -1, -1, -1);
+            GearUi.DarkFrame(frame);
         }
         static GearItem Basis(List<GearItem> mats) { var b = mats[0]; foreach (var m in mats) if (m.Plus > b.Plus) b = m; return b; }
 

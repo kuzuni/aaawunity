@@ -212,7 +212,23 @@ namespace KkomaKnight.Tests.Play
                 foreach (var n in new[] { "Pill1", "Pill2", "Stats", "Cost" }) Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(eb, n)), "빈 슬롯 팝업 «" + n + "» 에 어두운 테두리(T69-gear)");
                 _app.Overlay.Close(); yield return Frames(1);
             }
+            // 08 대장간(T69-forge · strict) — 같은 키 3개를 만들어 «합성 가능» 칸(초록 프레임 교체)이 하나는 있게 한다: 위 10개 가운데 Parts[0]·rar 0·plus 0 이 이미 2개(i = 0, 6)
+            Give(D.Gear.Parts[0], rar: 0, plus: 0);
             _app.ShowScreen("forge"); yield return Frames(2); yield return Check("08_gear_fuse");
+            {
+                var forgeRoot = _app.Current.Root;
+                // 결과 슬롯(초록 프레임 + 모루 · GreenFrame 이 변형을 새로 스폰한 뒤에도 Border 링이 Ink) · 재료 슬롯 첫 칸(빈 칸 Add_1) · 인벤 첫 칸 = 전부 ItemFrame Border → Ink 8px(7항)
+                AssertItemFrameBorder(UiKit.Find(forgeRoot, "Result"), "대장간 결과 슬롯(초록 프레임·모루)");
+                AssertItemFrameBorder(UiKit.Find(forgeRoot, "Mat0"), "대장간 재료 슬롯 0(빈 칸)");
+                var forgeInv = UiKit.Find(forgeRoot, "Content"); Assert.IsNotNull(forgeInv, "대장간 인벤 Content"); Assert.Greater(forgeInv.childCount, 0, "대장간 인벤에 장비");
+                AssertItemFrameBorder(forgeInv.GetChild(0), "대장간 인벤 첫 칸");
+                Transform fusable = null;
+                for (int i = 0; i < forgeInv.childCount; i++) { var c = forgeInv.GetChild(i); if (c.gameObject.activeSelf && c.Find("FuseDot") != null) { fusable = c; break; } }
+                Assert.IsNotNull(fusable, "합성 가능 칸(빨간 점 · 같은 키 3개)이 하나는 있어야 한다");
+                Assert.IsNotNull(UiKit.Find(fusable, "ui.itemFrame.green"), "합성 가능 칸은 초록 변형 프레임(T39 · UiKit.Spawn 은 카탈로그 키를 이름으로 둔다)");
+                AssertItemFrameBorder(fusable, "대장간 합성 가능 칸(초록 프레임)");
+                Assert.IsTrue(UiKit.HasPattern(forgeRoot), "대장간 배경 패턴(T72 ① · T69-forge 가 같이)");
+            }
             _app.ShowScreen("shop"); yield return Frames(2); yield return Check("10_shop_2");
             (_app.Current as ShopScreen)?.ScrollTo(0f); yield return Check("09_shop_1");
             _log.AssertNoRed("화면 순회(테두리 감사)");
