@@ -844,9 +844,11 @@ namespace KkomaKnight.Game
                 // T72 ② 카드 그림 뒤 빛살(주인 «특별 상품 … 아이콘 뒤에 Effect_Light 천천히 회전») — 그림은 카드의 «형제» 라 빛살은 카드 안(칸 밖으로 안 나가게 RectMask2D)에 걸고 그림은 그 위에 그대로 남는다
                 _lightPlan.Add((card.rectTransform, pic.rectTransform, UiKit.LightKey));
                 var btn = UiKit.Button(content, L.btnKey, L.btnLabel, () => { }, Sh(Layout.PrCardBtn, 0, dy).Within(C)); btn.name = "CardBtn:" + (k + 2);
+                _prBordered.Add(card.rectTransform); _prBordered.Add(desc.rectTransform);
                 if (k == 0) { card2 = card.rectTransform; cardTitle2 = head.rectTransform; desc2 = desc.rectTransform; pic2 = pic.rectTransform; reward2 = reward; btn2 = btn; }
                 else if (k == 1) card3 = card.rectTransform; else card4 = card.rectTransform;
             }
+            _prBordered.Add(card1.rectTransform);
             // 바닥 바(뒤로 · 전체 받기)
             var foot = UiKit.Panel(Root, "FootBar", "fr.rect", Palette.A(Palette.Dim, 0.9f)); UiKit.Pct(foot.rectTransform, Layout.PrFootBar);
             var back = UiKit.Button(Root, "ui.btnGray", "", () => App.ShowScreen("lobby"), Layout.PrBack); back.name = "BackBtn";
@@ -859,7 +861,14 @@ namespace KkomaKnight.Game
             UiKit.Tag(card3, "특권 카드 3"); UiKit.Tag(card4, "특권 카드 4 (참고·컨테이너)");
             UiKit.Tag(foot.transform, "바닥 바"); UiKit.Tag(back, "뒤로 버튼"); UiKit.Tag(claim, "전체 받기 버튼");
             ApplyLights();
+            // T69-lobbypopups(11) — 카드 4장과 설명 상자에 «검은 아웃라인»(레퍼런스 11 도 카드마다·설명 상자마다 외곽선이다).
+            // 질감(무늬·그라데이션)과 빛살을 다 건 «뒤» 에 걸어야 링이 그 층들 위에 남는다(빛살은 ApplyLights 가 카드 안에 끼워 넣는다 · 결정 224).
+            // 카드 그림(Pic)은 카드의 형제로 떠 있는 그림이고 레퍼런스에도 상자가 없어 담개다(BorderAudit.Exempt).
+            foreach (var rt in _prBordered) if (rt != null) UiKit.Bordered(rt);
+            _prBordered.Clear();
         }
+        /// <summary>특권 카드·설명 상자 — 질감·빛살을 다 건 뒤에 테두리를 걸려고 모아 둔다(T69-lobbypopups).</summary>
+        readonly List<RectTransform> _prBordered = new List<RectTransform>();
 
         /// <summary>T72 ①③ 특권 카드 안 질감 — 카드 조각 위에 무늬 한 장(밝은 색 카드라 흰 무늬 · 레퍼런스 11 의 카드 안에도 무늬가 어른거린다) + 그라데이션 두 장(위 밝음 → 아래 어둠). 카드의 내용(제목 띠·설명·그림·보상·버튼)은 카드의 <b>형제</b> 라 이 두 층 위에 그대로 남는다.</summary>
         static void CardTexture(RectTransform card)

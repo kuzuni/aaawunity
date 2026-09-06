@@ -21,7 +21,7 @@ namespace KkomaKnight.Game
             "02_battle", "06_gear", "07_gear_detail", "08_gear_fuse", "13_pet", "14_pet_detail", "09_shop_1", "10_shop_2", "12_settings",
             "20_dungeon", "21_dungeon_detail", "22_arena", "23_arena_enter", "24_arena_challenge", "25_arena_rank_reward", "26_arena_shop",   // T69-events(던전·아레나 묶음)
             "04_perks", "05_perks_list", "res_win", "res_lose",   // T69-overlay(특전 카드 · 결과 팝업 묶음)
-            "15_quest", "16_attendance",   // T69-lobbypopups(로비 팝업 묶음 · 11_shop_special 은 T72 특권 워커가 끝낸 뒤에 넣는다)
+            "15_quest", "16_attendance", "11_shop_special",   // T69-lobbypopups(로비 팝업 묶음 · 11 은 T72 lock 이 풀린 뒤 같은 묶음이 마저 닫았다)
         };
 
         /// <summary>
@@ -46,6 +46,7 @@ namespace KkomaKnight.Game
             "새로고침 줄",                      // 15 «⏱ 새로고침까지 --:--:--» = 트랙 상자와 목록 상자 «사이» 의 맨 글자 줄(레퍼런스 15 에 상자 없음 · «티켓 줄»·«티어 줄» 과 같은 꼴 · 글자 칸이 줄 rect 보다 넓어 링을 그리면 글자를 가로지른다) (T69-lobbypopups)
             "칸 머리(1칸)",                     // 16 하루 칸의 «N일차» 자주색 띠 = 칸 «안» 의 머리 구역(레퍼런스 16 도 칸 하나가 통째로 외곽선이고 머리는 그 위쪽 구역일 뿐 · 칸 자체는 DayFrame 이 Bordered) (T69-lobbypopups)
             "7일 칸 머리",                      // 16 7일차 넓은 칸의 같은 꼴 (T69-lobbypopups)
+            "카드 그림(2)",                     // 11 특권 카드의 그림(영사기·티켓)은 카드의 «형제» 로 떠 있는 그림이다 — 레퍼런스 11 도 그림에 상자가 없고 카드가 제 외곽선을 낸다 (T69-lobbypopups)
         };
 
         /// <summary>«행·카드·칸» 으로 보는 이름표 낱말 — 이 가운데 하나가 이름에 들어가면 대상.</summary>

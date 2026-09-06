@@ -246,7 +246,16 @@ namespace KkomaKnight.Tests.Play
 
             // 11 특권 · 15~19 로비 팝업
             // T78(주인 2026-09-07) — 18_challenge7 · 19_pass 는 화면째 삭제돼 게이트 대상이 아니다
-            _app.ShowScreen("privilege"); yield return Frames(2); yield return Check("11_shop_special"); _app.ShowScreen("lobby"); yield return Frames(1);
+            // 11 특권(T69-lobbypopups · strict) — 레퍼런스 11 은 카드 4장과 카드 «안» 설명 상자가 각자 어두운 외곽선이다(카드 그림은 상자가 없어 담개 = BorderAudit.Exempt)
+            _app.ShowScreen("privilege"); yield return Frames(2); yield return Check("11_shop_special");
+            {
+                var prRoot = _app.Current.Root;
+                for (int i = 1; i <= 4; i++) AssertUiBarBorder(prRoot, "Card:" + i);
+                for (int i = 2; i <= 4; i++) AssertUiBarBorder(prRoot, "Desc:" + i);
+                var pic2t = UiKit.Find(prRoot, "Pic:2"); Assert.IsNotNull(pic2t, "카드 그림(2)");
+                Assert.IsFalse(UiKit.HasDarkBorder(pic2t), "카드 그림에는 링을 걸지 않는다(레퍼런스 11 · 그림은 카드 위에 떠 있고 카드가 제 외곽선을 낸다 · 담개)");
+            }
+            _app.ShowScreen("lobby"); yield return Frames(1);
             // 15 퀘스트(T69-lobbypopups · strict) — 레퍼런스 15 는 아래 탭 3칸이 각자 어두운 외곽선이다(트랙 첫 메달·새로고침 줄은 상자가 없어 담개 = BorderAudit.Exempt)
             LobbyPopups.Quest(_app); yield return Check("15_quest");
             {
