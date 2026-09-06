@@ -26,7 +26,7 @@
 | T18 | 배속(x2) 기억 — 세이브 필드 | 대기 | — | Game/BattleScreen · SaveStore | ROUTINE §2 T18 |
 | T19 | 전투 맵 = 데모 씬 그림 그대로(0.6배 · 물결 양쪽 · 밀도) — T20 뒤 · T21 앞 | 대기 | — | Game/BattleWorld · tools/gen_maps · MapLayouts | ROUTINE §2 T19 |
 | T24 | 대장간: 장착 중 장비도 합성 재료(주인 · 승인 대기 29) | 대기 | — | Game/ForgeScreen · GearUi · Core/GearSystem | ROUTINE §2 T24 |
-| T25 | 장비 화면: 상점·합성 버튼을 스탯 3칸 바로 아래로 — T17 뒤 | 대기 | — | Game/GearScreen | ROUTINE §2 T25 |
+| T25 | 장비 화면: 캐릭터 크기 = 프리팹 샘플 자리 그대로(너무 작음) · 상점·합성 버튼을 스탯 3칸 바로 아래로 — T17 뒤 | 대기 | — | Game/GearScreen | ROUTINE §2 T25 |
 | T26 | 뽑기 확률 검증(원본 대조 + 10,000회 통계 테스트 · 천장) | 대기 | — | Core/GearSystem · Tests/GearTests · Game/ShopScreen | ROUTINE §2 T26 |
 | T27 | 장비 정보 팝업 = Character_Hero_Item_Detail_01 그대로 — T17 뒤 | 대기 | — | Game/GearUi | ROUTINE §2 T27 |
 | T28 | 배경음·효과음 — CC0 팩을 GitHub 에서 받아(프록시가 kenney/opengameart/freesound 차단) OGG ≤5MB · AudioManager · 설정 스위치 | 대기 | — | Assets/Audio · Game/Audio(신규) · 화면 호출 한 줄씩 · SaveStore | ROUTINE §2 T28 |

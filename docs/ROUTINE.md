@@ -255,9 +255,10 @@
 3. aaaw T125(«장착분은 재료가 아니다»)는 주인이 뒤집었다 — PROGRESS 한 줄. UiSmokeTests ③ 의 «장착분 재료 불가» 가정이 있으면 새 규칙으로 고친다.
 4. 게이트 + PROGRESS T24 행.
 
-### T25 — 장비 화면: «상점»·«합성» 버튼을 공격력·체력·실드 3칸 바로 아래로 (T7 뒤 · 주인 2026-09-06)
-범위: `Assets/Scripts/Game/GearScreen.cs`
+### T25 — 장비 화면: «상점»·«합성» 버튼을 공격력·체력·실드 3칸 바로 아래로 + 캐릭터 크기 (T7 뒤 · 주인 2026-09-06)
+범위: `Assets/Scripts/Game/GearScreen.cs` · `HeroView.cs`(렌더 카메라 크기)
 순서: **T17 완료 뒤**(GearScreen 공유).
+0. **캐릭터가 너무 작다**(주인). Character_Hero_Equipment 프리팹의 샘플 캐릭터(Sample_Cha02_l 자리)가 차지하는 **RectTransform 크기 그대로** HeroView 의 RawImage 를 맞추고, 렌더 카메라의 orthographicSize 를 캐릭터(Character.prefab 키 0.85u)가 그 사각형의 세로 **85~90%** 를 채우도록 잡는다(발이 사각형 아래에서 5% 위 · 머리·투구 위 여백 5%). 로비 초상(T6 의 HeroView 재사용)은 자기 사각형 기준으로 같은 규칙(따로 배율 인자). 근거 수치(프리팹 사각형 px · 카메라 size)를 PROGRESS 에 한 줄.
 1. 주인 «장비 부분에서 상점·합성, 공격력·체력·실드 표시하는 곳 밑에 표시되게». 지금 자리(화면 아래·탭바 위)에서 **스탯 3칸 줄 바로 아래**로 옮긴다. 프리팹(Character_Hero_Equipment)에 그 자리 버튼 줄이 있으면 그것을 쓰고, 없으면 `ui.btnGray`(상점)·`ui.btnOrange`(합성 N) 2개를 스탯 줄 밑에 같은 폭으로 나란히. 인벤 격자는 그 아래부터 시작(높이 줄어든 만큼 스크롤).
 2. 게이트 + PROGRESS T25 행.
 
