@@ -438,7 +438,7 @@
 1. §5 대로 로비·전투 두 화면을 채점한다(표 + 눈). 8.0 미만이면 고치고 push → 다음 CI → 다시 채점. 8.0 이 될 때까지 회차를 잇는다(회차마다 점수판에 한 줄).
 2. 8.0 이상이면 PROGRESS T34·T35 행에 «비평 N.N ✅(회차 k)» 를 붙이고 T47 을 ✅.
 
-### T48 — CI #66 빨강(`48d05a6` · T39 코드 push) 후속: PlayMode 4건(T39 대장간 2 · T40 상점 2) — main 빨강 = gh-pages·screens 브랜치 안 생김 (최우선 · 제약 없음)
+### T48 — CI #66 빨강(`48d05a6` · T39 코드 push) 후속: PlayMode 4건(T39 대장간 2 · T40 상점 2) — main 빨강 = gh-pages·screens 브랜치 안 생김 (최우선 · 제약 없음) ✅ (완료 · 대장간 = B `07c044d` + A `b13ac22`(ⓓ) · 상점 = D `d2df257` + ⓔ `353527e` · 확인 CI #75 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/ForgeScreen.cs` · `ShopScreen.cs` · `Screens.cs`(NavBar) · 테스트는 «구도 단언이 새 구도와 어긋난 것» 만 고친다(규칙을 지우지 않는다)
 순서: 제약 없음 — T39·T40 을 만든 워커가 있으면 그가, 없으면 다음 워커가 잡는다.
 1. 로그(https://github.com/kuzuni/aaawunity/actions/runs/34021396912 · PlayMode 25 중 5 실패 · 5번째 장비 세부 `ui.title.blue` 는 T38 이 `bb51e3e` 로 고침): ⓐ `UiSmokeTests.ForgeShowsAllAndFuses` «뒤로 = 왼쪽 아래 Expected: greater than 0.9 But was: 0.015»(UiSmokeTests.cs:398 — 뒤로 버튼 anchor 를 보는 단언 · T39 가 뒤로를 «아래 회색 띠 + ◀» 로 바꿈) ⓑ `ForgeEquippedFuseTests.EquippedGearIsAMaterialAndTheProductTakesItsSlot` «장착중 배지(Check)는 유지 Expected: True But was: False»(ForgeEquippedFuseTests.cs:93 — T39 가 «장착중» 글자로 바꿔 Check 배지가 꺼짐 → 테스트를 «장착중 표기(Check 또는 글자)» 로) ⓒ `UiSmokeTests.ShopBoxesAndChestOpenPopup` «상자 카드 3 Expected: 3 But was: 0»(UiSmokeTests.cs:437 — T40 재조립 뒤 이름/개수 계약) ⓓ `PressFeedbackTests.EveryButtonOnEveryScreenHasPressFeedback` «[shop] 탭 0 에 Button Expected: not null»(PressFeedbackTests.cs:198 — 상점 화면 탭 바에 Clickable 이 안 붙음).
