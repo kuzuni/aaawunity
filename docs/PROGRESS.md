@@ -1586,6 +1586,7 @@ T82 수정(`5dab93a7`)이 든 첫 완주 런. 읽는 법은 결정 172. 잡 = [1
 - 테스트: `UiTextureTests.ShopScreenCarriesPatternAndItemLights`(신규 · 패턴 형제 1·흰 tint·raycast 끔 · 상자 3 + 상품 칸 9 전부 빛살 · 빛살이 아이콘 «뒤» · 시계방향 · 패턴이 오른쪽 위로 · 맨 위에서 맨 아래 골드 칸 정지 → 내리면 다시 회전) + `UiSmokeTests.ShopBoxesAndChestOpenPopup` 뽑기 구간 두 줄(결과 팝업 상자·첫 장비 칸 빛살).
 - 안 한 것(그 화면 lock 워커 몫): 로비 · 대장간 08(T69-forge 가 이미 패턴은 깔았다) · 던전/아레나 · 특권 11 카드 · 승리/패배 팝업 보상 칸 · **③ 그라데이션 전면 적용**(결정 167·170 대로 버튼 공통 적용은 `PressTarget` 문제로 보류).
 - lock 은 반납한다 — 남은 것은 위 «안 한 것» 이고 전부 남의 화면이라, 이 세션이 더 잡고 있을 이유가 없다.
+- **CI #145(`2ca761f`) 결과 · 후속 `91b4362`**: PlayMode 34 중 32 Passed. `UiSmokeTests.ShopBoxesAndChestOpenPopup`(뽑기 결과 빛살 두 줄) · `UiTextureTests` 앞 두 개는 Passed 였고, 새 테스트 `ShopScreenCarriesPatternAndItemLights` 가 **마지막 단언 하나**로 빨갰다(«스크롤 밖 칸은 멈춘다 · Expected False But was True»). 원인 둘 — ⓐ **단언이 틀렸다**: `DOTween.IsTweening(target)` 은 멈춘(Pause) 트윈도 «활성» 으로 참을 준다 → 0.4초 «각도 변화 0» 으로 바꿨다(더 엄격해졌다) ⓑ **코드도 한 곳 모자랐다**: `ScrollTo` 로 위치를 코드로 옮기면 값이 그대로일 때 `onValueChanged` 가 안 울려 회전 상태가 낡은 채 남는다(비평 스크린샷 `UiShotsTests` 도 이 길로 09/10 을 찍는다) → `ScrollTo` 끝에서 `UpdateLightSpin()` 직접 호출. **결정 176 보강** · 다음 확인 = `91b4362` 를 담은 런의 `UiTextureTests` 2개 Passed(그 런의 남은 빨강은 T78 퀘스트 1건).
 
 ### T72 진행 기록 · 2단계 1차 (2026-09-06 · sess-1604-19072) — 팝업 공통 패턴 + 펫(13·14) + 4항 FPS 로그 코드 push · **확인 대기(그 커밋의 CI 유니티 잡 PlayMode `UiTextureTests.PopupBoxAndPetScreenCarryTheTexture` Passed + 배포 스모크 로그의 `fps` 줄)**
 
