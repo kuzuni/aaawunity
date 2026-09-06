@@ -30,6 +30,7 @@ namespace KkomaKnight.Game
         protected override void Build()
         {
             var bg = UiKit.Ensure<Image>(Root.gameObject); bg.color = Color.Lerp(Palette.Slate, Palette.Dim, 0.6f); bg.raycastTarget = true;   // 어두운 바탕(레퍼런스 · 색은 점수 밖)
+            UiKit.PatternBg(Root, UiKit.PatternTintDark);   // T72 ① 배경 패턴(어두운 바탕 → 흰 무늬 α0.12 · 오른쪽 위로 천천히 · 바탕 바로 위 = 형제 0)
 
             // ① 상단 재화 바 — 공용 헬퍼(아바타 · 전투력 · 골드 · 보석)
             _top = TopBar.Build(App, Root);
@@ -144,6 +145,9 @@ namespace KkomaKnight.Game
             var ribbon = UiKit.Find(box, "ui.title.tangerine"); if (ribbon != null) ribbon.gameObject.SetActive(false);   // 레퍼런스 14 는 명판이 없다
             var lvR = new Layout.R(Layout.PdCell.X + Layout.PdCell.W * 0.15f, Layout.PdCell.Y - 0.9f, Layout.PdCell.W * 0.7f, 1.8f);
             var cell = PetCell(box, Layout.PdBox, Layout.PdCell, lvR, Layout.PdBar, index, null, out _, out var bar); cell.name = "PetDetailCell";
+            // T72 ② 펫 아이콘 뒤 빛살(ROUTINE T72 2항 «펫 세부의 아이콘») — 조각 안 «Item» 바로 뒤(NormalArea 등급판 위) · 칸 하나뿐이라 개수 제한(4항)에 걸리지 않는다
+            var petIcon = UiKit.Find(cell, "Item");
+            if (petIcon != null) UiKit.LightBehind((RectTransform)petIcon.parent, (RectTransform)petIcon);
             var desc = UiKit.Panel(box, "Desc", "fr.r12", Palette.A(Palette.Dim, 0.6f)); UiKit.Pct(desc.rectTransform, Layout.PdDesc.Within(Layout.PdBox));
             UiKit.Label(desc.transform, 4, 8, 92, 84, "펫 시스템은 준비 중입니다.\n업데이트로 만나요.", 32, Palette.White);
             var pt = UiKit.Label(box, 0, 0, 100, 100, "패시브:", 34, Palette.Cream); pt.name = "PassiveTitle"; pt.fontStyle = FontStyle.Bold; UiKit.Pct(pt.rectTransform, Layout.PdPassiveTitle.Within(Layout.PdBox));

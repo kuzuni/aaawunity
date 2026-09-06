@@ -6,7 +6,7 @@
 #   tools/webgl_smoke.sh --gh-pages [옵션]          # origin/gh-pages 를 git 으로 받아 로컬 http.server 로 띄워 연다(워커 기본 · 이 환경은 프록시가 kuzuni.github.io 를 403 으로 막는다)
 #   tools/webgl_smoke.sh --dir build/WebGL/KkomaKnight [옵션]   # 로컬 빌드 폴더(CI build-webgl 잡)
 #   tools/webgl_smoke.sh https://kuzuni.github.io/aaawunity/ [옵션]  # URL 직접(CI 배포 뒤 재확인)
-# 옵션(그대로 webgl_smoke.js 로): --battle · --require-marker · --strict-audio · --timeout SEC · --shot out.png · --log out.txt
+# 옵션(그대로 webgl_smoke.js 로): --battle · --require-marker · --strict-audio · --no-fps · --timeout SEC · --shot out.png · --log out.txt
 #   --retries N  : URL 모드에서 N번(60초 간격) 재시도 — gh-pages CDN 반영 지연용
 # 종료 코드 = webgl_smoke.js 그대로(0 초록 · 1 빨강 · 3 playwright 없음 · 4 실행 실패).
 set -u

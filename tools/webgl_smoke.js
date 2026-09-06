@@ -1,5 +1,5 @@
 // WebGL 배포 스모크 판정기 (T59·T60 · 주인 상시 지시 2026-09-06 «배포·push 전 에러 확인 · 게임 들어가 확인»). 셸 래퍼 = tools/webgl_smoke.sh
-// 사용: node tools/webgl_smoke.js <URL> [--battle] [--require-marker] [--strict-audio] [--timeout SEC] [--shot out.png] [--log out.txt]
+// 사용: node tools/webgl_smoke.js <URL> [--battle] [--require-marker] [--strict-audio] [--no-fps] [--timeout SEC] [--shot out.png] [--log out.txt]
 // 판정(종료 코드 0 = 초록):
 //   ⓐ pageerror · console.error 0 — 유니티 로더의 «Invoking error handler»(RangeError · 예외) · 빨간 Debug.LogError 전부.
 //      단 오디오 매체 에러(NotSupportedError «no supported source» · EncodingError «Unable to decode audio data» · «Loading FSB failed»)는
@@ -7,6 +7,7 @@
 //   ⓑ 로딩 완료 = #unity-loading-bar 가 사라짐(index.html 템플릿의 then) 또는 window.unityInstance.
 //   ⓒ «[KkomaKnight] ready lobby»(App.BuildUi) — --require-marker 면 필수, 아니면 없을 때 ⚠(마커 이전 빌드).
 //   ⓓ --battle: SendMessage("App","DebugGo","battle") 뒤 «ready battle» + 10초 동안 에러 0.
+//   ⓔ 로딩 뒤 10초 FPS 한 줄(T72 4항 «질감 트윈이 프레임을 갉지 않는가» · 판정에는 안 쓴다 · --no-fps 로 끔).
 // playwright 는 전역(npm i -g playwright@1.56.1 · npx playwright install --with-deps chromium) — 없으면 exit 3.
 'use strict';
 const fs = require('fs');
@@ -15,7 +16,7 @@ const args = process.argv.slice(2);
 const url = args.find(a => !a.startsWith('--') && !/^\d+$/.test(a) && !a.endsWith('.png') && !a.endsWith('.txt'));
 const flag = n => args.includes('--' + n);
 const opt = (n, d) => { const i = args.indexOf('--' + n); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
-if (!url) { console.error('usage: node tools/webgl_smoke.js <URL> [--battle] [--require-marker] [--strict-audio] [--timeout SEC] [--shot out.png] [--log out.txt]'); process.exit(2); }
+if (!url) { console.error('usage: node tools/webgl_smoke.js <URL> [--battle] [--require-marker] [--strict-audio] [--no-fps] [--timeout SEC] [--shot out.png] [--log out.txt]'); process.exit(2); }
 const timeoutSec = parseInt(opt('timeout', '180'), 10);
 const wantBattle = flag('battle'), requireMarker = flag('require-marker'), strictAudio = flag('strict-audio');
 const shotPath = opt('shot', ''), logPath = opt('log', '');
@@ -77,6 +78,21 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
     await page.waitForTimeout(500);
   }
   log('state', `loaded=${loaded} readyLobby=${readyLobby} errors=${errors.length} audioWarn=${audioWarn.length}`);
+
+  // T72 4항 — 질감 트윈(패턴 uvRect 흐름 · 아이콘 뒤 빛살 회전)이 프레임을 갉지 않는지 «배포된 화면에서 10초» 재서 한 줄 남긴다.
+  // 판정에는 안 쓴다(headless SwiftShader 는 폰 GPU 가 아니다 · 회차 사이 비교용 수치) — --no-fps 로 끌 수 있다.
+  if (loaded && !flag('no-fps')) {
+    const fps = await page.evaluate(() => new Promise(res => {
+      const t0 = performance.now(); let n = 0, prev = t0, worst = Infinity;
+      const step = t => {
+        n++; const dt = t - prev; prev = t;
+        if (n > 1 && dt > 0) worst = Math.min(worst, 1000 / dt);
+        if (t - t0 < 10000) requestAnimationFrame(step); else res({ avg: n / ((t - t0) / 1000), min: worst === Infinity ? 0 : worst });
+      };
+      requestAnimationFrame(step);
+    })).catch(e => { log('fps-fail', e.message); return null; });
+    if (fps) log('fps', `로비 10초 · 평균 ${fps.avg.toFixed(1)} fps · 최저 ${fps.min.toFixed(1)} fps (T72 질감 트윈 · headless SwiftShader 기준)`);
+  }
   if (loaded && wantBattle) {
     // 템플릿은 unityInstance 를 지역 변수로만 두므로 SendMessage 는 Module(unityFramework) 경유가 안 되면 실패 — App 이 없으면 에러 1건
     const sent = await page.evaluate(() => {

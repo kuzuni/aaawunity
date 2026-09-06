@@ -136,5 +136,57 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("T72 질감 헬퍼");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T72 2단계(화면 적용) — ⓐ <b>공통 팝업 상자 안</b>에 패턴이 깔린다(<see cref="UiKit.Popup"/> 한 곳이라 팝업 20여 개가 같이 · 조각의 «Bg» 바로 위 · «Border»·«DecoLine» 아래 · 둥근 모서리 안쪽 <see cref="UiKit.PopupPatternInset"/>)
+        /// ⓑ <b>펫 탭(13)</b> 풀스크린 배경에 패턴(어두운 바탕 → 흰 무늬) ⓒ <b>펫 세부(14)</b> 아이콘 뒤 빛살(ROUTINE T72 2항 «펫 세부의 아이콘» · 조각 안 «Item» 바로 뒤). 빨간 줄 0.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator PopupBoxAndPetScreenCarryTheTexture()
+        {
+            yield return Boot();
+
+            // ⓑ 펫 탭 = 풀스크린 배경 패턴(바탕 Image 바로 위 = 형제 0 · 상단 바·격자·탭 바 아래)
+            _app.ShowScreen("pet"); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var pet = _app.Current.Root;
+            Assert.IsTrue(UiKit.HasPattern(pet), "펫 탭(13) 배경에 패턴(T72 ①)");
+            var petPat = pet.Find(UiKit.PatternName);
+            Assert.AreEqual(0, petPat.GetSiblingIndex(), "패턴은 바탕 바로 위(형제 0) — 상단 바·격자·탭 바 아래");
+            Assert.AreEqual(1f, petPat.GetComponent<RawImage>().color.r, 0.001f, "어두운 바탕이라 흰 무늬(PatternTintDark)");
+
+            // ⓐ·ⓒ 펫 세부 팝업(14) — 공통 팝업 상자 안 패턴 + 아이콘 뒤 빛살
+            _app.GetScreen<PetScreen>().OpenDetail(0); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var box = UiKit.Find(_app.Overlay.Root, "ui.popup");
+            Assert.IsNotNull(box, "펫 세부 = 공통 팝업 상자(ui.popup)");
+            Assert.IsTrue(UiKit.HasPattern(box), "팝업 상자 «안» 에 패턴(T72 ① · UiKit.Popup 한 곳)");
+            var pat = box.Find(UiKit.PatternName); var bgc = box.Find("Bg"); var border = box.Find("Border");
+            Assert.IsNotNull(bgc, "팝업 조각의 Bg");
+            Assert.AreEqual(bgc.GetSiblingIndex() + 1, pat.GetSiblingIndex(), "패턴은 조각의 Bg 바로 위");
+            if (border != null) Assert.Less(pat.GetSiblingIndex(), border.GetSiblingIndex(), "패턴은 테두리 아래(테두리가 무늬에 안 가린다)");
+            var prt = (RectTransform)pat; var brt = (RectTransform)box;
+            Assert.AreEqual(brt.rect.width - 2f * UiKit.PopupPatternInset, prt.rect.width, 1f, "둥근 모서리 안쪽으로 " + UiKit.PopupPatternInset + "px 들여 깐다(사각 무늬가 모서리 밖으로 안 나간다)");
+            Assert.IsFalse(prt.GetComponent<RawImage>().raycastTarget, "패턴은 클릭을 안 먹는다(배경 탭으로 닫기 그대로)");
+
+            var cell = UiKit.Find(box, "PetDetailCell"); Assert.IsNotNull(cell, "펫 칸(세부)");
+            var item = UiKit.Find(cell, "Item"); Assert.IsNotNull(item, "펫 아이콘(조각의 Item)");
+            var frame = item.parent;
+            Assert.IsTrue(UiKit.HasLight(frame), "펫 세부 아이콘 뒤 빛살(T72 ②)");
+            Assert.Less(frame.Find(UiKit.LightMaskName).GetSiblingIndex(), item.GetSiblingIndex(), "빛살은 아이콘 «뒤»(형제 순서 앞)");
+
+            // 시간이 멈춘 팝업 중에도 흐르고 돈다(unscaled) — 화면 적용도 헬퍼 계약 그대로
+            Time.timeScale = 0f;
+            var lrt = (RectTransform)frame.Find(UiKit.LightMaskName + "/" + UiKit.LightName);
+            var praw = pat.GetComponent<RawImage>(); var p0 = praw.uvRect.position; var r0 = lrt.localRotation;
+            yield return RealSeconds(0.4f);
+            Assert.Less(praw.uvRect.position.x, p0.x, "팝업 패턴도 오른쪽 위로 흐른다(팝업 시간 정지 중에도)");
+            Assert.Less(Vector3.SignedAngle(r0 * Vector3.up, lrt.localRotation * Vector3.up, Vector3.forward), -0.5f, "팝업 빛살도 시계방향으로 돈다");
+            Time.timeScale = 1f;
+
+            _app.Overlay.Close(); yield return Frames(2);
+            Assert.IsFalse(_app.Overlay.IsOpen, "닫힘");
+            Assert.IsFalse(UiKit.IsTweening(lrt), "팝업이 닫히면 빛살 트윈도 없다(SetLink · T56)");
+            _log.AssertNoRed("T72 화면 적용(팝업 · 펫)");
+            yield return Shutdown();
+        }
     }
 }

@@ -333,13 +333,16 @@ namespace KkomaKnight.Game
         public const float LightPeriod = 16f, LightScale = 1.9f, LightAlpha = 0.6f;
         /// <summary>그라데이션 tint — 위 흰 +12% 밝기 · 아래 Ink −18%(ROUTINE T72 3항 팔레트).</summary>
         public const float GradientTopAlpha = 0.12f, GradientBottomAlpha = 0.18f;
+        /// <summary>공통 팝업 상자 안 패턴을 들여 까는 여백(px) — Popup_Box_01~03_White_Bg 의 둥근 모서리 반지름 실측 8px + Bg 자신의 여백 2px(결정 164).</summary>
+        public const float PopupPatternInset = 10f;
 
         /// <summary>
         /// ① 배경 패턴(T72) — <paramref name="host"/> 에 RawImage «Pattern»(Stretch · 텍스처 = ui.pattern · Repeat 타일링 · uvRect 크기 = 사각형 ÷ <paramref name="tilePx"/> · raycast 끔) 을 <paramref name="siblingIndex"/> 자리(기본 0 = host 자신의 배경 Image 바로 위 · 배경이 자식이면 그 다음 index)에 깔고,
         /// uvRect 를 unscaled 로 계속 움직여 무늬가 <b>오른쪽 위로</b> 흐르게 한다(한 타일 <paramref name="tileSeconds"/> 초 · 무한 · Linear). uvRect.position 은 «사각형 왼쪽 아래가 텍스처의 어느 점을 보이나» 라 값이 <b>줄어야</b> 그림이 오른쪽 위로 간다(결정 157 · 지시서의 «(+x,+y)» 는 그림 방향을 말한 것).
         /// 이미 있으면 갱신만(트윈은 다시 시작). 카탈로그에 스프라이트가 없으면 null(경고는 카탈로그가). 어두운 바탕이면 <paramref name="tint"/> = <see cref="PatternTintDark"/>.
+        /// <paramref name="inset"/> 은 둥근 모서리 조각(팝업 상자 · 카드) 안쪽으로 들여 까는 여백(px) — 사각형 무늬가 둥근 모서리 밖으로 삐져나오지 않게 한다(T72 2단계).
         /// </summary>
-        public static RawImage PatternBg(RectTransform host, Color? tint = null, float tileSeconds = PatternTileSeconds, int siblingIndex = 0, float tilePx = PatternTilePx)
+        public static RawImage PatternBg(RectTransform host, Color? tint = null, float tileSeconds = PatternTileSeconds, int siblingIndex = 0, float tilePx = PatternTilePx, float inset = 0f)
         {
             if (host == null) return null;
             var sp = Cat != null ? Cat.Sprite(PatternKey) : null; if (sp == null || sp.texture == null) return null;
@@ -347,7 +350,7 @@ namespace KkomaKnight.Game
             for (int i = 0; i < host.childCount; i++) if (host.GetChild(i).name == PatternName) { raw = host.GetChild(i).GetComponent<RawImage>(); break; }
             if (raw == null) { var rt = Rect(host, PatternName); raw = rt.gameObject.AddComponent<RawImage>(); }
             raw.texture = sp.texture; raw.color = tint ?? PatternTintLight; raw.raycastTarget = false;
-            Stretch(raw.rectTransform);
+            Stretch(raw.rectTransform, inset, inset, inset, inset);
             raw.transform.SetSiblingIndex(Mathf.Clamp(siblingIndex, 0, Mathf.Max(0, host.childCount - 1)));
             float px = Mathf.Max(1f, tilePx); var rr = raw.rectTransform;
             DOTween.Kill(raw);
@@ -475,6 +478,10 @@ namespace KkomaKnight.Game
             }
             var box = SpawnRt(popupKey, layer, rect);
             foreach (var g in box.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;   // 상자 뒤로 클릭이 새지 않게
+            // T72 ① 팝업 상자 «안» 배경 패턴(ROUTINE T72 1항 적용 목록) — 조각의 «Bg» 바로 위(DecoLine·Border 아래) · 둥근 모서리 안쪽 · 크림 바탕이라 Ink 무늬.
+            // 여기 한 곳이라 모든 공통 팝업(Overlay.Box · LobbyPopups · 화면 세부 팝업)이 같이 받는다 — 화면 코드는 한 줄도 안 만진다.
+            int patIdx = 0; for (int i = 0; i < box.childCount; i++) if (box.GetChild(i).name == "Bg") { patIdx = i + 1; break; }
+            PatternBg(box, PatternTintLight, PatternTileSeconds, patIdx, PatternTilePx, PopupPatternInset);
             var ribbon = Spawn(titleKey, box); var rr = (RectTransform)ribbon.transform;
             rr.anchorMin = rr.anchorMax = new Vector2(0.5f, 1f); rr.pivot = new Vector2(0.5f, 0.5f); rr.sizeDelta = new Vector2(656, 115); rr.anchoredPosition = new Vector2(0, 8);
             var tt = SetText(rr, "Text (TMP)", title, null, TextSize.Title, TextKind.Title); if (tt != null) { tt.resizeTextForBestFit = true; tt.resizeTextMinSize = TextSize.BestFitMin; tt.resizeTextMaxSize = TextSize.Title; }
