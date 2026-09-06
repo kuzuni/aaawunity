@@ -391,7 +391,7 @@ namespace KkomaKnight.Game
             b.onClick.RemoveAllListeners();
             b.onClick.AddListener(() =>
             {
-                if (punch) { t.DOKill(true); t.localScale = Vector3.one; t.DOPunchScale(new Vector3(-0.08f, -0.08f, 0), 0.18f, 1, 0.5f).SetUpdate(true); }
+                if (punch) { t.DOKill(true); t.localScale = Vector3.one; t.DOPunchScale(new Vector3(-0.08f, -0.08f, 0), 0.18f, 1, 0.5f).SetUpdate(true).SetLink(go); }   // SetLink = 버튼이 클릭 직후 파괴돼도(인벤 재구성·팝업 갈아끼움) DOTween 이 먼저 죽인다(T56 · 콘솔 노란 줄 0)
                 Audio.Sfx("snd.click");   // 모든 버튼의 클릭음은 여기 한 곳(T28)
                 onClick?.Invoke();
             });
@@ -515,11 +515,11 @@ namespace KkomaKnight.Game
 
         public static void PopIn(RectTransform rt, float from = 0.82f, float dur = 0.28f, float delay = 0f)
         {
-            rt.DOKill(); rt.localScale = Vector3.one * from; rt.DOScale(1f, dur).SetEase(Ease.OutBack).SetDelay(delay).SetUpdate(true);
+            rt.DOKill(); rt.localScale = Vector3.one * from; rt.DOScale(1f, dur).SetEase(Ease.OutBack).SetDelay(delay).SetUpdate(true).SetLink(rt.gameObject);
         }
         public static void FadeIn(Graphic g, float to, float dur = 0.25f, float delay = 0f)
         {
-            var c = g.color; g.color = new Color(c.r, c.g, c.b, 0); g.DOFade(to, dur).SetDelay(delay).SetUpdate(true);
+            var c = g.color; g.color = new Color(c.r, c.g, c.b, 0); g.DOFade(to, dur).SetDelay(delay).SetUpdate(true).SetLink(g.gameObject);
         }
         /// <summary>
         /// 요소 하나의 «등장» 트윈(T49) — 지금 바로 안 보이게(CanvasGroup α 0 · 스케일 <paramref name="from"/> · 클릭 막음) 만들고, 재생되면 α 0→1 + 스케일 →1(OutBack) 뒤 클릭을 연다.
@@ -529,7 +529,7 @@ namespace KkomaKnight.Game
         {
             var cg = Ensure<CanvasGroup>(rt.gameObject); cg.alpha = 0f; cg.blocksRaycasts = false;
             rt.DOKill(); rt.localScale = Vector3.one * from;
-            var s = DOTween.Sequence().SetUpdate(true).SetTarget(rt);
+            var s = DOTween.Sequence().SetUpdate(true).SetTarget(rt).SetLink(rt.gameObject);   // SetLink(T56) — 마스터에 Insert 되면 마스터의 링크·Kill 이 대신 지킨다 · 단독 재생이면 이 링크가
             s.Insert(0, cg.DOFade(1f, dur)); s.Insert(0, rt.DOScale(1f, dur).SetEase(Ease.OutBack));
             s.OnComplete(() => { if (cg != null) { cg.alpha = 1f; cg.blocksRaycasts = true; } if (rt != null) rt.localScale = Vector3.one; });
             return s;

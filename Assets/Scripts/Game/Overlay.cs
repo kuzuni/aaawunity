@@ -24,7 +24,7 @@ namespace KkomaKnight.Game
         public bool Revealing => _reveal != null && _reveal.IsActive() && !_reveal.IsComplete();
         /// <summary>연출 스킵 = 즉시 전부 표시(완료 콜백까지 · 클릭 열림).</summary>
         public void Skip() { if (_reveal != null && _reveal.IsActive()) _reveal.Complete(true); }
-        Sequence Seq() { if (_reveal == null || !_reveal.IsActive()) _reveal = DOTween.Sequence().SetUpdate(true).SetTarget(Root); return _reveal; }
+        Sequence Seq() { if (_reveal == null || !_reveal.IsActive()) _reveal = DOTween.Sequence().SetUpdate(true).SetTarget(Root).SetLink(Root.gameObject); return _reveal; }   // SetLink(T56) — 팝업 층이 통째로 파괴돼도(앱 종료) 경고 0
         void KillReveal() { if (_reveal != null && _reveal.IsActive()) _reveal.Kill(); _reveal = null; }
         /// <summary><paramref name="rt"/> 를 <paramref name="t"/> 초에 뜨게 한다(마스터 시퀀스에 Insert). 돌려주는 값 = 다 뜨는 시각.</summary>
         float At(float t, Transform rt, float from = UiKit.RevealFrom)
@@ -329,7 +329,7 @@ namespace KkomaKnight.Game
             if (goldText != null && G.Gold > 0)
             {
                 double v = 0, target = Math.Round(G.Gold); goldText.text = UiKit.Fmt(0);
-                Seq().Insert(0.35f, DOTween.To(() => v, x => { v = x; if (goldText != null) goldText.text = UiKit.Fmt(x); }, target, 0.4f).SetEase(Ease.OutQuad).SetTarget(goldText));
+                Seq().Insert(0.35f, DOTween.To(() => v, x => { v = x; if (goldText != null) goldText.text = UiKit.Fmt(x); }, target, 0.4f).SetEase(Ease.OutQuad).SetTarget(goldText).SetLink(goldText.gameObject));
             }
             At(0.6f, b1); At(0.72f, b2);
         }
@@ -461,7 +461,7 @@ namespace KkomaKnight.Game
             foreach (var g in panel.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
             UiKit.SetText(panel, "Text (TMP)", "BOSS");
             var cg = panel.gameObject.AddComponent<CanvasGroup>(); cg.alpha = 0; cg.blocksRaycasts = false;
-            DOTween.Sequence().Append(cg.DOFade(1, 0.2f)).AppendInterval(1.4f).Append(cg.DOFade(0, 0.4f)).OnComplete(() => UnityEngine.Object.Destroy(panel.gameObject)).SetUpdate(true);
+            DOTween.Sequence().Append(cg.DOFade(1, 0.2f)).AppendInterval(1.4f).Append(cg.DOFade(0, 0.4f)).OnComplete(() => UnityEngine.Object.Destroy(panel.gameObject)).SetUpdate(true).SetLink(panel.gameObject);   // SetLink(T56) — 전투가 먼저 끝나 HUD 가 파괴되면 띠 트윈도 같이
             var w = UiKit.Find(panel, "Warning"); if (w != null) UiKit.PopIn((RectTransform)w, 1.3f, 0.35f);
         }
 
