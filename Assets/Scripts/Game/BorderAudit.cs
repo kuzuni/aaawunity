@@ -16,6 +16,7 @@ namespace KkomaKnight.Game
         {
             "02_battle", "01_lobby", "06_gear", "07_gear_detail", "08_gear_fuse", "13_pet", "14_pet_detail", "09_shop_1", "10_shop_2", "12_settings",
             "20_dungeon", "21_dungeon_detail", "22_arena", "23_arena_enter", "24_arena_challenge", "25_arena_rank_reward", "26_arena_shop",   // T69-events(던전·아레나 묶음)
+            "04_perks", "05_perks_list", "res_win", "res_lose",   // T69-overlay(특전 카드 · 결과 팝업 묶음)
         };
 
         /// <summary>

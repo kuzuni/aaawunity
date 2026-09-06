@@ -273,6 +273,28 @@ namespace KkomaKnight.Game
             return img;
         }
 
+        /// <summary>
+        /// 조각이 <b>제 «Border» 자식을 이미 가진</b> 프레임(특전 카드 <c>CardFrame_04</c> 의 «Border»·«TitleBorder» 처럼)의 링을 «검은 아웃라인» 으로(T69 1항 «이미 프레임이 있는 조각은 그 프레임의 테두리를 어둡게 tint») —
+        /// 새 Image 를 덧대지 않고 <paramref name="names"/> 에 든 이름의 Image 를 <see cref="BorderInk"/> 로 칠하고 9-slice 선을 프레임 <see cref="BorderPx"/>(8px · 폰 3px) 이상으로 굵힌다(<see cref="GearUi.DarkFrame"/> 이 ItemFrame 에 하는 것과 같은 방식).
+        /// 조각이 <paramref name="scale"/> 로 축소돼 있으면 그만큼 더 굵게(화면에서 같은 8px). 안쪽 밝은 선(«InnerBorder»)은 이름을 안 주면 안 건드린다. 돌려주는 값 = 칠한 개수(0 이면 조각 구성이 바뀐 것).
+        /// </summary>
+        public static int InkFrameBorders(Transform frame, float nativePx = 5f, float scale = 1f, params string[] names)
+        {
+            if (frame == null || names == null || names.Length == 0) return 0;
+            int n = 0; float px = BorderPx / Mathf.Max(0.05f, scale);
+            foreach (var im in frame.GetComponentsInChildren<Image>(true))
+            {
+                if (im == null || im.sprite == null) continue;
+                bool hit = false;
+                foreach (var nm in names) if (im.name == nm) { hit = true; break; }
+                if (!hit || im.sprite.name.IndexOf("Border", StringComparison.OrdinalIgnoreCase) < 0) continue;
+                im.color = BorderInk; im.type = Image.Type.Sliced; im.fillCenter = false; im.raycastTarget = false;
+                im.pixelsPerUnitMultiplier = Mathf.Min(1f, nativePx / Mathf.Max(1f, px));
+                n++;
+            }
+            return n;
+        }
+
         // 월드(SpriteRenderer) 바 — 발밑 2단 바(BattleWorld.MakeBar · T69 8항). 같은 조각을 월드용 Sprite 로 다시 감싼다(pixelsPerUnit 을 «선 = 프레임 8px 에 해당하는 월드 길이» 로 · 텍스처는 주인 것 그대로).
         static readonly Dictionary<string, Sprite> _worldBorders = new Dictionary<string, Sprite>();
         /// <summary>프레임 <see cref="BorderPx"/> 에 해당하는 월드 길이(u) — 프레임 px → 레이아웃 px(× LayoutW/FrameW) → 월드(÷ PPU).</summary>

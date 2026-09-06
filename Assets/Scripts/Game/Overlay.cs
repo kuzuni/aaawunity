@@ -101,6 +101,16 @@ namespace KkomaKnight.Game
         Text Sub(RectTransform box, string s, float y = 9, float h = 7, int size = 36, Color? c = null)
             => UiKit.Label(box, 6, y, 88, h, s, size, c ?? Palette.InkSoft, TextAnchor.MiddleCenter, true, false);
 
+        /// <summary>특전 카드 조각(CardFrame_04)의 테두리 링 원본 선 굵기(px · <c>CardFrame_04_White_Border.png</c> 74×79 실측 5px · 9-slice 38/41/36/38). T69-overlay.</summary>
+        public const float CardBorderNativePx = 5f;
+        /// <summary>이름이 같은 직계 자식(깊은 <see cref="UiKit.Find"/> 는 조각 «안»의 같은 이름(ItemFrame_01 의 Add_1/Lock 밑 «Icon»)을 먼저 집는다 · T69-overlay).</summary>
+        static Transform Kid(Transform t, string name)
+        {
+            if (t == null) return null;
+            for (int i = 0; i < t.childCount; i++) if (t.GetChild(i).name == name) return t.GetChild(i);
+            return null;
+        }
+
         /// <summary>특전 카드 한 장(ListItem_StageBuff_02) — 등급 색으로 CardFrame_04/ItemFrame_04 를 갈아 끼운다(gray 는 무채색화).
         /// 글자는 등급 이름(리본)과 설명만 — 특전 이름은 넣지 않는다(주인 지시 2026-09-05 «제목은 빼고 일반 이라고만 · 내용만»).
         /// <paramref name="shine"/> = 프레임 조각에 T61 shine 머티리얼 인스턴스(순서대로 뜨는 3택·보유 특전 카드만 · 악마/천사의 한 장은 안 붙인다).</summary>
@@ -108,10 +118,14 @@ namespace KkomaKnight.Game
         {
             var card = UiKit.Spawn("ui.card", parent); var rt = (RectTransform)card.transform;
             var frameArea = UiKit.Find(rt, "CardFrameArea"); var itemArea = UiKit.Find(rt, "ItemFrameArea");
+            if (frameArea == null) UiKit.Bordered(rt);   // 조각 구성이 바뀌어 프레임 자리가 없으면 카드 rect 에 링 한 장(T69 «카드마다 아웃라인» 은 빠지지 않게)
             if (frameArea != null)
             {
                 UiKit.Clear(frameArea); var f = UiKit.Spawn(Palette.FrameKey("ui.cardFrame", colorName), frameArea); var frt = (RectTransform)f.transform; UiKit.Stretch(frt);
                 if (colorName == "gray") UiKit.Desaturate(frt);
+                // T69-overlay(주인 «카드마다 검은 아웃라인» · 1항) — 조각 제 링(CardFrame_04_White_Border 회색 0.23 · 제목 탭 TitleBorder 0.42)을 Ink 로 칠하고 선을 프레임 8px 로(레퍼런스 04 의 카드 외곽선)
+                // Desaturate 뒤에 부른다(gray 등급도 링은 Ink) · 안쪽 밝은 선(InnerBorder)은 그대로 둔다
+                UiKit.InkFrameBorders(frt, CardBorderNativePx, 1f, UiKit.BorderName, "TitleBorder");
                 if (shine) UiKit.ShineMaterial(frt, rt);   // T61 — 프레임 그림(Border·Bg·InnerBorder·제목 탭)에만 · 글자·아이콘은 그대로
                 foreach (var old in frt.GetComponentsInChildren<Text>(true)) old.gameObject.SetActive(false);   // 프리팹의 남은 글자("Text_Title" 등) 전부 끄기 — 주인: «Text 라고 빨간 글씨 없애줘»
                 var tb = UiKit.Find(frt, "TitleBg"); if (tb == null) tb = UiKit.Find(frt, "Text_Title");
@@ -130,18 +144,28 @@ namespace KkomaKnight.Game
             return rt;
         }
 
-        /// <summary>상단 스탯 줄(8칸) — index.html STAT_DEFS 순서 · HUD 와 같은 아이콘·값 (ref-layout ⑦ OvStats).</summary>
-        void StatsRow(RectTransform parent, BattleState G, Layout.R r)
+        /// <summary>상단 스탯 «칸» 이름 앞머리(T69-overlay · 게이트가 찾는다) — 칸 하나 = <c>OvStat:&lt;스탯 키&gt;</c>.</summary>
+        public const string OvStatCellPrefix = "OvStat:";
+        /// <summary>스탯 칸 링이 칸 안쪽으로 들어가는 px(T69-overlay) — 8칸이 맞붙어 있어 링을 칸 변에 딱 붙이면 이웃과 겹쳐 16px 로 보인다. 4px 씩 들여 칸 사이에 8px 틈(레퍼런스 04 의 «떨어진 상자 8개»). 배치 표의 칸 사각형(12.5%)은 그대로.</summary>
+        public const float OvStatInset = 4f;
+        /// <summary>상단 스탯 줄(8칸) — index.html STAT_DEFS 순서 · HUD 와 같은 아이콘·값 (ref-layout ⑦ OvStats). 칸마다 «검은 아웃라인»(T69 2항 · 레퍼런스 04 는 스탯 8칸이 각자 어두운 상자다). 돌려주는 값 = 칸 8개(이름표 멤버).</summary>
+        List<RectTransform> StatsRow(RectTransform parent, BattleState G, Layout.R r)
         {
             var row = UiKit.Rect(parent, "Stats"); UiKit.Pct(row, r);
             var bg = row.gameObject.AddComponent<Image>(); bg.sprite = App.I.Assets.Sprite("fr.r12"); bg.type = Image.Type.Sliced; bg.color = Palette.A(Palette.Dim, 0.6f); bg.raycastTarget = false;
             var defs = BattleScreen.StatDefs; float cw = 100f / defs.Length;
+            var cells = new List<RectTransform>();
             for (int i = 0; i < defs.Length; i++)
             {
                 var d = defs[i];
-                var ic = UiKit.Icon(row, "ic", Icons.Stat(d.Key)); UiKit.Pct(ic.rectTransform, i * cw + cw * 0.22f, 8, cw * 0.56f, 44);
-                var v = UiKit.Label(row, i * cw, 54, cw, 40, d.Fmt(G), TextSize.Body, d.Up(G, _app.GetScreen<BattleScreen>()?.BaseStats) ? Palette.Green : Palette.White);
+                // 칸 = 줄을 8등분한 사각형 그대로(표 ⑦ «상단 스탯 칸(1칸)» x i×12.5 w12.5 h100) — 아이콘·값은 그 안으로 옮겨 담는다(절대 자리 불변)
+                var cell = UiKit.Rect(row, OvStatCellPrefix + d.Key); UiKit.Pct(cell, i * cw, 0, cw, 100);
+                UiKit.Bordered(cell, UiKit.BorderKeySmall, inset: OvStatInset);
+                var ic = UiKit.Icon(cell, "ic", Icons.Stat(d.Key)); UiKit.Pct(ic.rectTransform, 22, 8, 56, 44);
+                var v = UiKit.Label(cell, 0, 54, 100, 40, d.Fmt(G), TextSize.Body, d.Up(G, _app.GetScreen<BattleScreen>()?.BaseStats) ? Palette.Green : Palette.White);
+                cells.Add(cell);
             }
+            return cells;
         }
 
         // ───────────────────────── 레벨 업 3택 (주인 지정 Play_Perk_Selection_02) ─────────────────────────
@@ -205,7 +229,7 @@ namespace KkomaKnight.Game
                 }
             }
             var book = UiKit.Find(rt, "Book"); if (book != null) { UiKit.Pct((RectTransform)book, Layout.OvInfo); UiKit.SetText(book, "Text (TMP)", G.Taken.Count.ToString()); UiKit.Clickable(book, () => PerkBook(G, () => LevelUp(G, onPick))); At(foot, book); }
-            StatsRow(rt, G, Layout.OvStats);
+            var statCells = StatsRow(rt, G, Layout.OvStats);
             // T46 이름표(표 ⑦ 선택창 행 · «요소» 글자 그대로) — 하니스가 layout.json 으로 잰다
             if (ribbon != null) UiKit.Tag(ribbon, "배너(Level Up!)"); if (sub != null) UiKit.Tag(sub, "부제(Choose…)");
             if (group != null) for (int i = 0; i < group.childCount && i < 3; i++)
@@ -215,11 +239,11 @@ namespace KkomaKnight.Game
             }
             if (btn != null && btn.gameObject.activeSelf) UiKit.Tag(btn, "하단 버튼"); if (book != null) UiKit.Tag(book, "인포(책) 버튼");
             var statsRow = UiKit.Find(rt, "Stats");
-            if (statsRow != null)
+            if (statsRow != null && statCells.Count > 0)
             {
-                var members = new List<RectTransform>(); foreach (Transform c in statsRow) if (c is RectTransform m) members.Add(m);   // [아이콘0, 값0, 아이콘1, 값1, …]
-                UiKit.TagGroup(statsRow, "상단 스탯 줄(8칸)", members.ToArray());
-                if (members.Count >= 2) UiKit.TagGroup(statsRow, "상단 스탯 칸(1칸)", members[0], members[1]);
+                // 멤버 = 칸 8개(T69-overlay 전에는 [아이콘0, 값0, 아이콘1, …] 16개였다 — 이제 칸이 실물이라 줄 = 칸 8개의 합집합 · 표 ⑦ 값(x0 y4 w100 h6 · 칸 w12.5)과 그대로 맞는다)
+                UiKit.TagGroup(statsRow, "상단 스탯 줄(8칸)", statCells.ToArray());
+                UiKit.TagGroup(statsRow, "상단 스탯 칸(1칸)", statCells[0]);
             }
         }
 
@@ -377,8 +401,38 @@ namespace KkomaKnight.Game
                 Seq().Insert(0.35f, DOTween.To(() => v, x => { v = x; if (goldText != null) goldText.text = UiKit.Fmt(x); }, target, 0.4f).SetEase(Ease.OutQuad).SetTarget(goldText).SetLink(goldText.gameObject));
             }
             At(0.6f, b1); At(0.72f, b2);
-            // T72 ② 클리어 보상(골드) 그림 뒤 빛살 — 배치가 끝난 뒤(결정 174)
+            // T72 ② 그림 뒤 빛살 → T69 7항 보상 칸 = 장비 프레임 + 검은 아웃라인 — 둘 다 조각 rect 가 다 잡힌 뒤(결정 174)
+            // 순서가 중요하다: 빛살이 먼저다(프레임을 먼저 깔면 RewardLight 의 깊은 «Icon» 찾기가 프레임 안 아이콘을 집는다) · 형제 = [프레임 · 빛살 · 아이콘 · 숫자]
             RewardLight(goldCell);
+            RewardFrame(goldCell);
+            if (goldCell != null) UiKit.Tag(goldCell, "클리어 보상 칸");   // T69 감사 대상(«칸») — 결과 팝업은 레퍼런스 jpg 가 없어 표(ref-layout) 행은 없다
+        }
+        /// <summary>결과 팝업 보상 칸의 아이콘이 프레임 안쪽에 들어가는 비율(T69-overlay) — 조각(GetItem_Reward)은 칸 151px 에 아이콘 128px(85%) 라 프레임 링을 깔면 그림이 링을 넘는다. ItemFrame_01 의 속(안쪽 사각) 비율에 맞춰 74%.</summary>
+        public const float RewardIconFill = 0.74f;
+        /// <summary>보상 칸 조각(<c>GetItem_Reward</c>)의 본래 칸 크기(px · 151×151) — 레이아웃이 아직 안 잡혀 rect 가 0 일 때의 대체값.</summary>
+        public const float RewardCellNativePx = 151f;
+        /// <summary>
+        /// 결과 팝업(승리·패배) 보상 칸에 <b>장비 화면의 그 프레임</b>(ItemFrame_01 · T69 7항 «승리/패배 보상 칸» · 주인 «아이템류 칸은 전부 장비 화면의 그 프레임») 을 깐다 —
+        /// 조각 <c>GetItem_Reward</c> 는 아이콘 + 숫자뿐이라 상자가 없었다. 프레임은 칸 맨 뒤(아이콘·숫자는 그 위) · 크기는 칸에 맞춰 배율 · <see cref="GearUi.DarkFrame"/> 로 링을 Ink 8px(검은 아웃라인).
+        /// </summary>
+        static void RewardFrame(Transform cell)
+        {
+            if (cell == null || Kid(cell, "ItemFrame_01") != null) return;   // 두 번 깔지 않는다(Clear 가 다시 열려도)
+            var crt = cell as RectTransform; if (crt == null) return;
+            Canvas.ForceUpdateCanvases();
+            float w = crt.rect.width > 1f ? crt.rect.width : crt.sizeDelta.x, h = crt.rect.height > 1f ? crt.rect.height : crt.sizeDelta.y;
+            // 레이아웃이 아직 안 잡혔으면 조각 본래 크기로(칸이 프레임 없이 남지 않게)
+            if (w <= 1f || h <= 1f) { w = RewardCellNativePx; h = RewardCellNativePx; }
+            var frame = UiKit.Spawn("ui.itemFrame.empty", cell); frame.name = "ItemFrame_01"; var frt = (RectTransform)frame.transform;
+            UiKit.FitScale(frt, new Vector2(w, h));
+            UiKit.Hide(frt, "Text_Level", "Focus", "Disable", "Lock", "Add_1", "Add_2", "Item");   // 빈 프레임만(그림·숫자는 조각의 Icon·Text 가 그대로)
+            // ItemFrame_01 은 NormalArea 가 비어 있어 그대로 두면 아무것도 안 보인다(PetScreen 과 같은 문법) — 등급 없는 물건(골드)이라 회색 변형(T69 7항)
+            var area = UiKit.Find(frt, "NormalArea");
+            if (area != null) { UiKit.Clear(area); var v = UiKit.Spawn("ui.itemFrame.gray", area); UiKit.Stretch((RectTransform)v.transform); }
+            frt.SetAsFirstSibling();
+            GearUi.DarkFrame(frt, frt.localScale.x);
+            var ic = Kid(cell, "Icon") as RectTransform;
+            if (ic != null && ic.sizeDelta.x > w * RewardIconFill) ic.sizeDelta = new Vector2(w * RewardIconFill, h * RewardIconFill);   // 링 안쪽으로(자리·앵커는 조각 그대로)
         }
         static Text Reward(Transform cell, string iconKey, string value)
         {
@@ -403,7 +457,14 @@ namespace KkomaKnight.Game
             string[] tips = { $"처치 {G.Kills} · 골드 {UiKit.Fmt(G.Gold)} 획득", "골드로 장비를 강화해 다시 도전!", "장비 3개를 합성하면 등급이 오릅니다" };   // 줄 글자 칸 730×82 — 셋 다 본문 40 한 줄(T63-results)
             string[] icons = { "ui.skull", "ui.anvil", "ui.bookRed" };
             var rows = new List<RectTransform>();
-            if (list != null) for (int i = 0; i < list.childCount && i < tips.Length; i++) { UiKit.SetText(list.GetChild(i), "Text (TMP)", tips[i]); UiKit.SetSprite(list.GetChild(i), "Icon", icons[i], Palette.White); rows.Add((RectTransform)list.GetChild(i)); }
+            if (list != null) for (int i = 0; i < list.childCount && i < tips.Length; i++)
+            {
+                var row = (RectTransform)list.GetChild(i);
+                UiKit.SetText(row, "Text (TMP)", tips[i]); UiKit.SetSprite(row, "Icon", icons[i], Palette.White);
+                UiKit.Bordered(row);   // T69 2항 «팁 줄» — 줄마다 검은 아웃라인(조각에는 링이 없다 · 줄 사각형은 그대로라 자리 불변)
+                UiKit.Tag(row, "팁 줄 " + (i + 1));
+                rows.Add(row);
+            }
             var touch = UiKit.SetText(rt, "Text_TouchContionue", "터치하면 로비로");
             var lobbyBtn = UiKit.Button(rt, "ui.btnBlue", "로비로", () => { Close(); onLobby(); }, new Layout.R(30, 80, 40, 6));
             var hit = UiKit.Find(rt, "Dimmed"); if (hit != null) UiKit.Clickable(hit, () => { if (Revealing) Skip(); else { Close(); onLobby(); } }, false);
@@ -411,8 +472,10 @@ namespace KkomaKnight.Game
             At(0.05f, UiKit.Find(rt, "Title_LineDeco_01_s_White")); At(0.2f, reward);
             float tipsEnd = UiKit.Stagger(Seq(), rows, 0.35f, UiKit.RevealStep);   // 0.35 · 0.46 · 0.57 → 0.79
             At(tipsEnd - UiKit.RevealStep, lobbyBtn); if (touch != null) At(tipsEnd - 0.03f, touch.transform);
-            // T72 ② 사망 보상(골드) 그림 뒤 빛살 — 배치가 끝난 뒤(결정 174)
+            // T72 ② 사망 보상(골드) 그림 뒤 빛살 → T69 7항 보상 칸 = 장비 프레임 + 검은 아웃라인 — 배치가 끝난 뒤(결정 174) · 빛살이 먼저(위 Clear 와 같은 이유)
             RewardLight(reward);
+            RewardFrame(reward);
+            if (reward != null) UiKit.Tag(reward, "패배 보상 칸");
         }
 
         // ───────────────────────── 설정 / 일시정지 — 레퍼런스 12_settings.jpg 구도 (T41 · 표 ⑨ · «Settings 프리팹 그대로»(T10) 는 부품 규칙으로 대체) ─────────────────────────

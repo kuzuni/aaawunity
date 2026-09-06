@@ -159,6 +159,43 @@ namespace KkomaKnight.Tests.Play
             var lk = UiKit.Find(slot, "Lock"); if (lk != null && lk.parent == slot) Assert.Greater(lk.GetSiblingIndex(), bt.GetSiblingIndex(), label + " 자물쇠는 테두리 위(형제 순서 뒤)");
         }
 
+        /// <summary>덧댄 링(<see cref="UiKit.Bordered"/>)의 계약(T69-overlay · 스탯 칸·팁 줄) — 직계 «Border» Image · 9-slice · 가운데 비움 · raycast 끔 · Ink(α ≥ 0.8) · 선 ≥ 8px · 사각형 = 칸 rect − 안쪽 여백 2× <paramref name="inset"/>.</summary>
+        static void AssertRingBorder(Transform cell, string label, string key, float inset = 0f)
+        {
+            Assert.IsNotNull(cell, label);
+            Transform bt = null; for (int i = 0; i < cell.childCount; i++) if (cell.GetChild(i).name == UiKit.BorderName) { bt = cell.GetChild(i); break; }
+            Assert.IsNotNull(bt, label + " 에 «Border» 자식");
+            var im = bt.GetComponent<Image>(); Assert.IsNotNull(im, label + " Border 는 Image");
+            Assert.IsNotNull(im.sprite, label + " Border 스프라이트"); Assert.IsTrue(im.sprite.name.Contains("Border"), label + " Border 스프라이트 = BasicFrame *Border* (" + im.sprite.name + ")");
+            Assert.AreEqual(Image.Type.Sliced, im.type, label + " Border 는 9-slice"); Assert.IsFalse(im.fillCenter, label + " Border 는 가운데 비움"); Assert.IsFalse(im.raycastTarget, label + " Border raycast 끔");
+            Assert.GreaterOrEqual(im.color.a, 0.8f, label + " Border 알파 ≥ 0.8"); Assert.IsTrue(UiKit.HasDarkBorder(cell), label + " 은 어두운 테두리");
+            float linePx = UiKit.BorderNativePx(key) / im.pixelsPerUnitMultiplier;
+            Assert.GreaterOrEqual(linePx, UiKit.BorderPx - 0.01f, label + " 테두리 선 ≥ 8px(폰 3px) · 지금 " + linePx.ToString("0.0"));
+            var brt = (RectTransform)bt; var prt = (RectTransform)cell;
+            Assert.AreEqual(prt.rect.width - inset * 2f, brt.rect.width, 0.5f, label + " Border 폭 = 칸 폭 − 안쪽 여백");
+            Assert.AreEqual(prt.rect.height - inset * 2f, brt.rect.height, 0.5f, label + " Border 높이 = 칸 높이 − 안쪽 여백");
+        }
+
+        /// <summary>특전 카드(CardFrame_04 조각)의 테두리 계약(T69-overlay) — 조각 제 «Border» 링(스프라이트 CardFrame_04_White_Border)이 Ink(밝기 ≤ 0.35 · α ≥ 0.8)이고 선이 프레임 8px 이상. 새 Image 를 덧대지 않는다(1항).</summary>
+        static void AssertCardBorder(Transform card, string label)
+        {
+            Assert.IsNotNull(card, label);
+            Assert.IsTrue(UiKit.HasDarkBorder(card), label + " 은 어두운 테두리(CardFrame Border → Ink)");
+            int seen = 0;
+            foreach (var im in card.GetComponentsInChildren<Image>(false))
+            {
+                if (im == null || !im.enabled || im.name != UiKit.BorderName || im.sprite == null || !im.sprite.name.StartsWith("CardFrame_04_White_Border")) continue;
+                seen++;
+                Assert.GreaterOrEqual(im.color.a, 0.8f, label + " 카드 Border 알파 ≥ 0.8");
+                float lum = 0.299f * im.color.r + 0.587f * im.color.g + 0.114f * im.color.b;
+                Assert.LessOrEqual(lum, 0.35f, label + " 카드 Border 는 Ink(밝기 ≤ 0.35 · 지금 " + lum.ToString("0.00") + ")");
+                Assert.AreEqual(Image.Type.Sliced, im.type, label + " 카드 Border 는 9-slice");
+                float linePx = Overlay.CardBorderNativePx / Mathf.Max(0.01f, im.pixelsPerUnitMultiplier);
+                Assert.GreaterOrEqual(linePx, UiKit.BorderPx - 0.05f, label + " 카드 테두리 선 ≥ 8px(폰 3px) · 지금 " + linePx.ToString("0.0"));
+            }
+            Assert.Greater(seen, 0, label + " 에 켜진 CardFrame_04_White_Border 링이 하나는 있어야 한다(T69 1항)");
+        }
+
         [UnityTest]
         public IEnumerator BattleBarsHaveBordersAndCellTagsAreAudited()
         {
@@ -332,6 +369,55 @@ namespace KkomaKnight.Tests.Play
             if (_app.Overlay.IsOpen) { _app.Overlay.Close(); G.Pending = null; yield return Frames(1); }
             yield return Check("02_battle");
             _log.AssertNoRed("적 조우(테두리)");
+
+            // 04 레벨업 3택 · 05 보유 특전 · 결과 팝업 2종 (T69-overlay · strict) — 레퍼런스 04 의 «카드마다·스탯 8칸마다 어두운 상자»
+            var rngB = new Mulberry32(7u);
+            var offer = Perks.Offer(D, G.Taken, false, rngB);
+            Assert.Greater(offer.Count, 0, "3택 후보(특전 표)");
+            G.Pending = new PendingDecision { Kind = PendingKind.LevelUp, Offer = offer };
+            _app.Overlay.LevelUp(G, pick => G.ResolveLevelUp(pick)); yield return Check("04_perks");
+            {
+                var ov = _app.Overlay.Root;
+                var group = UiKit.Find(ov, "Group_Card"); Assert.IsNotNull(group, "3택 카드 묶음(Group_Card)");
+                Assert.Greater(group.childCount, 0, "특전 카드가 하나는 있어야 한다");
+                for (int i = 0; i < group.childCount; i++) AssertCardBorder(group.GetChild(i), "3택 특전 카드 " + (i + 1));
+                var stats = UiKit.Find(ov, "Stats"); Assert.IsNotNull(stats, "상단 스탯 줄(Stats)");
+                foreach (var d in BattleScreen.StatDefs)
+                {
+                    var cellT = UiKit.Find(stats, Overlay.OvStatCellPrefix + d.Key);
+                    AssertRingBorder(cellT, "상단 스탯 칸 " + d.Key, UiKit.BorderKeySmall, Overlay.OvStatInset);
+                }
+            }
+            _app.Overlay.Close(); G.Pending = null; yield return Frames(1);
+            for (int i = 0; i < offer.Count && i < 3; i++) G.Taken.Add(offer[i]);
+            _app.Overlay.PerkBook(G, null); yield return Check("05_perks_list");
+            {
+                var content = UiKit.Find(_app.Overlay.Root, "Content"); Assert.IsNotNull(content, "보유 특전 목록(Content)");
+                Assert.Greater(content.childCount, 0, "보유 특전 카드");
+                AssertCardBorder(content.GetChild(0), "보유 특전 첫 카드");
+            }
+            _app.Overlay.Close(); yield return Frames(1);
+            G.Gold = 12750; G.Kills = 137;
+            _app.Overlay.Clear(G, false, () => { }, () => { }); yield return Check("res_win");
+            var winFrame = UiKit.Find(_app.Overlay.Root, "ItemFrame_01"); Assert.IsNotNull(winFrame, "클리어 보상 칸에 ItemFrame_01 조각(T69 7항)");
+            AssertItemFrameBorder(winFrame.parent, "클리어 보상 칸(골드)");
+            _app.Overlay.Close(); yield return Frames(1);
+            _app.Overlay.Dead(G, () => { }); yield return Check("res_lose");
+            {
+                var ov = _app.Overlay.Root;
+                AssertItemFrameBorder(UiKit.Find(ov, "Reward"), "패배 보상 칸(골드)");
+                var list = UiKit.Find(ov, "Group_List"); Assert.IsNotNull(list, "패배 팝업 팁 줄 묶음(Group_List)");
+                int tipRows = 0;
+                for (int i = 0; i < list.childCount; i++)
+                {
+                    var row = list.GetChild(i); if (!row.gameObject.activeInHierarchy || UiKit.Find(row, UiKit.BorderName) == null) continue;
+                    AssertRingBorder(row, "패배 팁 줄 " + (i + 1), UiKit.BorderKey); tipRows++;
+                }
+                Assert.Greater(tipRows, 0, "팁 줄에 링이 하나는 있어야 한다(T69 2항)");
+            }
+            _app.Overlay.Close(); yield return Frames(1);
+            _log.AssertNoRed("특전·결과 팝업(테두리)");
+
             Time.timeScale = 1f; _app.ShowScreen("lobby"); yield return Frames(2);
 
             // 판정 — strict 화면만 실패 · 나머지는 표
