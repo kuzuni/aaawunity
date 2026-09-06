@@ -83,7 +83,9 @@ namespace KkomaKnight.Game
                 var t = Layout.LobbyChapTitle; var u = Layout.LobbyChapUnderline;
                 UiKit.Pct(trt, u.X, t.Y, u.W, u.Y + u.H - t.Y);
                 _chap = UiKit.SetText(trt, "Text (TMP)", "챕터 1", size: UiKit.FontForHeight(t.H));   // 글자 높이 = 표 2.3%(레퍼런스 «CHAPTER 22» 덩어리 · T47 회차 2 에서 1.5% 로 작았다)
-                if (_chap != null) UiKit.Tag(_chap.transform, "챕터 제목", textBounds: true); UiKit.Tag(UiKit.Find(trt, "LineDeco"), "챕터 밑줄·선택 화살표");   // 글자 덩어리로 잰다(T47 ⓒ · 조각 rect 는 표보다 6%p 넓다)
+                // T111 ⓐ — 주인 2026-09-07 «챕터 아래에 LineDeco 들은 없애줘 · 로비, 전투 화면 둘 다»: 조각 안의 밑줄 장식만 끈다(글자·자리는 그대로 · 이름표도 없앤다 = 채점 행이 사라진다)
+                UiKit.Show(trt, "LineDeco", false);
+                if (_chap != null) UiKit.Tag(_chap.transform, "챕터 제목", textBounds: true);   // 글자 덩어리로 잰다(T47 ⓒ · 조각 rect 는 표보다 6%p 넓다)
             }
 
             // ⑤ 챕터 카드 = 프리팹 SampleImage_Map 그림(T68 ④ · 코드 조립 카드 폐기) + ◀▶ · 카드 자리(표 ①)는 이름표·클릭 영역

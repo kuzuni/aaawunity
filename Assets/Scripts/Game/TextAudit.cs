@@ -58,11 +58,13 @@ namespace KkomaKnight.Game
             public bool OutlineBad;
             /// <summary>어긋난 까닭 한 마디(«없음» · «2개» · «색» · «두께 2.0≠3.0») — 없으면 빈 문자열.</summary>
             public string OutlineWhy = "";
+            /// <summary>글자색 휘도(<see cref="UiKit.Luma"/>) 와 «어두운 글자» 판정(T111 ⓑ · <see cref="UiKit.TextLumaMin"/> 미만이면 참).</summary>
+            public float Luma; public bool DarkBad;
             public override string ToString() =>
                 $"[{Screen}] {Path} «{Short(Text)}» {Kind} size {FontSize}(min {Min}){(BestFit ? $" bestFit {BestFitMinSize}~ used {Used}" : "")} rect {RectW:0}×{RectH:0} pref {PrefW:0}×{PrefH:0}" +
                 (FloorBad ? " ⛔하한" : "") + (BestFitBad ? " ⛔bestFit최소" : "") + (Clipped ? " ⚠잘림" : "") +
                 (string.IsNullOrEmpty(Missing) ? "" : " ⚠없는글자 «" + Missing + "»") +
-                (OutlineBad ? " ⛔아웃라인 " + OutlineWhy : "");
+                (OutlineBad ? " ⛔아웃라인 " + OutlineWhy : "") + (DarkBad ? $" ⛔검정글씨 휘도 {Luma:0.00}" : "");
         }
 
         static string Short(string s) { if (string.IsNullOrEmpty(s)) return ""; s = s.Replace("\n", "⏎"); return s.Length > 18 ? s.Substring(0, 18) + "…" : s; }
@@ -115,6 +117,30 @@ namespace KkomaKnight.Game
         /// </summary>
         public const bool OutlineStrict = true;
 
+        /// <summary>
+        /// «[TextColorGate]» 표 — 검정·짙은 글자(<see cref="UiKit.TextLumaMin"/> 미만)만 화면·경로·글자·휘도로 찍는다(T111 ⓑ ·
+        /// 주인 2026-09-07 07:5X «모든 글씨 중에 검정 글씨 → 흰 글씨로»). 0 줄이면 «없음 0 ✔» 한 줄.
+        /// </summary>
+        public static string ColorSummary(List<Row> rows)
+        {
+            var sb = new StringBuilder();
+            var bad = new List<Row>();
+            foreach (var r in rows) if (r.DarkBad) bad.Add(r);
+            sb.Append("[TextColorGate] 검정·짙은 글자 ").Append(bad.Count).Append('/').Append(rows.Count);
+            if (bad.Count == 0) { sb.Append(" — 없음 0 ✔"); return sb.ToString(); }
+            foreach (var r in bad) sb.Append('\n').Append("  · [").Append(r.Screen).Append("] ").Append(r.Path)
+                .Append(" «").Append(Short(r.Text)).Append("» 휘도 ").Append(r.Luma.ToString("0.00"));
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// 검정 글씨 단언을 «틀리면 빨강» 으로 켤 것인가(T111 ⓑ) — 글자 입구 다섯 곳과 <see cref="UiKit.Adopt"/> 가 전부
+        /// <see cref="UiKit.EnsureOutline"/>(→ <see cref="UiKit.EnsureBright"/>) 를 거치므로 «없음 0» 이 나와야 정상이다.
+        /// 첫 회차는 <b>표만 찍는다</b>(false) — 워커 컨테이너에는 유니티가 없어 PlayMode 를 못 돌리므로, CI 로그에서 «없음 0» 을 실측한 뒤 켠다
+        /// (<see cref="OutlineStrict"/> 가 결정 245 에서 밟은 순서 그대로).
+        /// </summary>
+        public const bool ColorStrict = false;
+
         public static TextKind KindOf(Text t)
         {
             var tag = t != null ? t.GetComponent<TextKindTag>() : null;
@@ -160,6 +186,8 @@ namespace KkomaKnight.Game
                 bool tallBad = row.PrefH > row.RectH + 1f;
                 row.Clipped = wideBad || tallBad;
                 FillOutline(row, t);
+                row.Luma = UiKit.Luma(t.color);
+                row.DarkBad = t.color.a > 0.2f && row.Luma < UiKit.TextLumaMin;   // T111 ⓑ — 알파가 거의 0 인 숨긴 글자는 세지 않는다
                 rows.Add(row);
             }
             return rows;

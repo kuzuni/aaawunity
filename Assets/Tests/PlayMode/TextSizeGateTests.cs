@@ -170,6 +170,7 @@ namespace KkomaKnight.Tests.Play
             // 판정
             Assert.Greater(_rows.Count, 50, "활성 Text 가 거의 안 모였다(수집 실패)");
             var floorBad = new List<string>(); var fitBad = new List<string>(); var clipped = new List<string>(); var noGlyph = new List<string>(); var noOutline = new List<string>();
+            var darkText = new List<string>();
             foreach (var r in _rows)
             {
                 if (r.FloorBad) floorBad.Add(r.ToString());
@@ -177,6 +178,7 @@ namespace KkomaKnight.Tests.Play
                 if (r.Clipped) clipped.Add(r.ToString());
                 if (!string.IsNullOrEmpty(r.Missing)) noGlyph.Add(r.ToString());
                 if (r.OutlineBad) noOutline.Add(r.ToString());
+                if (r.DarkBad) darkText.Add(r.ToString());
             }
             var sb = new StringBuilder();
             sb.AppendLine($"[TextSizeGate] 활성 Text {_rows.Count} · 하한 미달 {floorBad.Count} · bestFit 미달 {fitBad.Count} · 잘림/넘침 {clipped.Count}(strict={TextAudit.ClipStrict})");
@@ -191,6 +193,10 @@ namespace KkomaKnight.Tests.Play
             // 글자 입구 다섯 곳이 전부 UiKit.EnsureOutline 을 거치므로, 여기 남는 줄은 «UiKit 을 안 거치고 스스로 Text 를 붙인 자리» 뿐이다.
             sb.AppendLine($"[TextOutlineGate] 아웃라인 어긋난 줄 {noOutline.Count}(strict={TextAudit.OutlineStrict} · T63-outline)");
             sb.Append(TextAudit.OutlineSummary(_rows));
+            // T111 ⓑ — 주인 «모든 글씨 중에 검정 글씨 → 흰 글씨로 바꿔야 함 · 검정 아웃라인으로 통일시켰기 때문에».
+            // 입구 다섯 곳이 UiKit.EnsureBright 를 거치므로 여기 남는 줄은 «스스로 Text.color 를 어둡게 덮어쓴 자리» 뿐이다.
+            sb.AppendLine($"\n[TextColorGate] 검정·짙은 글자 {darkText.Count}(strict={TextAudit.ColorStrict} · T111 · 기준 휘도 {UiKit.TextLumaMin:0.00})");
+            sb.Append(TextAudit.ColorSummary(_rows));
             Debug.Log(sb.ToString());
 
             // ⑫ T63-toast — 표를 찍은 «뒤에» 단언한다(먼저 터지면 위 표가 안 남아 다른 하위 행 워커가 자기 화면 수를 못 읽는다 · CI #119 에서 실제로 그랬다)
@@ -228,6 +234,8 @@ namespace KkomaKnight.Tests.Play
             if (TextAudit.GlyphStrict) Assert.AreEqual(0, noGlyph.Count, "글꼴에 없는 글자(폭 0 으로 사라진다 · T75):\n" + string.Join("\n", noGlyph));
             // 아웃라인 = 있고 · 1개고 · 색이 Ink 고 · 두께가 크기 규칙과 맞아야 한다(T63-outline · 주인 04:4X)
             if (TextAudit.OutlineStrict) Assert.AreEqual(0, noOutline.Count, "검은 아웃라인이 없거나 어긋난 글자(T63-outline · 주인 «모든 글자들 다 검정 아웃라인»):\n" + string.Join("\n", noOutline));
+            // T111 ⓐ — 챕터 제목 아래 밑줄(LineDeco)은 로비·전투 둘 다 꺼져 있어야 한다(주인 2026-09-07) · 상점 섹션 헤더의 선은 살아 있어야 한다(T100 ⓒ 회귀)
+            if (TextAudit.ColorStrict) Assert.AreEqual(0, darkText.Count, "검정·짙은 글자(T111 ⓑ · 주인 «검정 글씨 → 흰 글씨»):\n" + string.Join("\n", darkText));
             _log.AssertNoRed("글자 크기 게이트(전 화면)");
             yield return Shutdown();
         }

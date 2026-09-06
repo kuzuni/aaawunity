@@ -79,6 +79,7 @@ namespace KkomaKnight.Game
             var menu = UiKit.SpawnRt("ui.btnMenu", Root, Layout.HudMenu); menu.name = "Button_Menu"; UiKit.Clickable(menu, OnPause);   // ≡ → 일시정지 팝업(재개 · 로비로 · 설정)
             var title = UiKit.SpawnRt("ui.lineTitle", Root, new Layout.R(Layout.HudChapTitle.X - 6, Layout.HudChapTitle.Y - 1.2f, Layout.HudChapTitle.W + 12, Layout.HudChapTitle.H + 2.4f));
             _chapTitle = UiKit.SetText(title, "Text (TMP)", "챕터 1", size: UiKit.FontForHeight(Layout.HudChapTitle.H));   // 글자 높이 = 표 2.6%(T47 회차 2 에서 1.5% 로 작았다)
+            UiKit.Show(title, "LineDeco", false);   // T111 ⓐ — 주인 2026-09-07 «챕터 아래에 LineDeco 들은 없애줘 · 로비, 전투 화면 둘 다»(글자·자리는 그대로)
             // 진행바 = 검정 홈에 주황이 차는 바(레퍼런스 02·03) — 값은 노드(웨이브) 진행(RefreshHud) · 숫자 없음(T33) · 적 조우 중엔 주황, 걷는 중엔 노랑
             _prog = UiKit.MakeBar(Root, "ui.sliderYellow"); UiKit.Pct(_prog.Root, Layout.HudProgress); _prog.Root.name = "Bar:Progress"; if (_prog.Txt != null) _prog.Txt.gameObject.SetActive(false);
             _progFill = _prog.Slider != null && _prog.Slider.fillRect != null ? _prog.Slider.fillRect.GetComponent<Image>() : null;

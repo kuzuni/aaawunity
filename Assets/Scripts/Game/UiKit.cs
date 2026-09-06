@@ -203,9 +203,32 @@ namespace KkomaKnight.Game
         /// 이미 있으면 컴포넌트를 또 만들지 않고 값만 갱신한다(중복 <see cref="Outline"/> 은 그림자가 겹쳐 두꺼워 보인다).
         /// 크기를 안 주면 글자의 현재 <c>fontSize</c>(bestFit 이면 최대 크기)로 잡는다.
         /// </summary>
+        /// <summary>
+        /// 글자색 «밝음» 기준(상대 휘도 0~1 · 이 값 미만이면 <see cref="EnsureBright"/> 가 흰색으로 올린다) — T111 ⓑ(주인 2026-09-07 07:5X
+        /// «모든 글씨 중에 검정 글씨 → 흰 글씨로 바꿔야 함 · 검정 아웃라인으로 통일시켰기 때문에»).
+        /// 0.45 = 잉크 계열(Ink 0.13 · InkSoft 0.28 · InkLight 0.41 · Dim 0.08 · Slate 0.32)만 걸리고
+        /// 우리 색 코딩(회색 0.62 · 갈색 0.54 · 초록 0.67 · 하늘 0.55 · 주황·노랑·빨강·자수정 0.53~0.80)은 그대로 남는 선이다(결정 250).
+        /// </summary>
+        public const float TextLumaMin = 0.45f;
+        /// <summary>상대 휘도(0.299R + 0.587G + 0.114B) — 게이트(<see cref="TextAudit"/>)도 같은 식을 쓴다.</summary>
+        public static float Luma(Color c) => 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
+        /// <summary>어두운 글자색을 흰색으로 올린 값(알파는 그대로) — 밝으면 그대로 돌려준다.</summary>
+        public static Color BrightText(Color c) => Luma(c) >= TextLumaMin ? c : new Color(1f, 1f, 1f, c.a);
+        /// <summary>
+        /// 어두운 글자를 흰 글자로(T111 ⓑ) — <see cref="EnsureOutline"/> 안에서 부르므로 <b>글자 입구 다섯 곳</b>(Text·SetText·Button·ConvertTmp·Bar.Set)과
+        /// <see cref="Adopt"/>(조각의 uGUI Text)가 전부 자동으로 받는다. 화면 파일을 한 줄도 안 고치므로 남의 lock 을 침범하지 않는다(결정 250).
+        /// 리치 텍스트의 <c>&lt;color=…&gt;</c> 조각(등급색·수치 색)은 <c>Text.color</c> 가 아니라 태그가 정하므로 그대로 남는다.
+        /// </summary>
+        public static void EnsureBright(Text t)
+        {
+            if (t == null) return;
+            t.color = BrightText(t.color);
+        }
+
         public static Outline EnsureOutline(Text t, float size = 0f)
         {
             if (t == null) return null;
+            EnsureBright(t);   // T111 ⓑ — 아웃라인과 글자색은 짝이다(검은 아웃라인 + 밝은 글자) · 입구 다섯 곳이 전부 이 함수를 거친다
             if (size <= 0f) size = t.resizeTextForBestFit ? Mathf.Max(t.resizeTextMaxSize, t.fontSize) : t.fontSize;
             var ol = Ensure<Outline>(t.gameObject);
             ol.effectColor = OutlineColor;
