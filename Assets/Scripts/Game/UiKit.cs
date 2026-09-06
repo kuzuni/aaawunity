@@ -420,11 +420,15 @@ namespace KkomaKnight.Game
         /// ③ 그라데이션 색감(T72) — <paramref name="rt"/> 안에 «GradientTop»(<paramref name="topKey"/> · tint <paramref name="top"/> 기본 흰 α <see cref="GradientTopAlpha"/> = 위 +12% 밝기) 와 «GradientBottom»(<paramref name="bottomKey"/> · <paramref name="bottom"/> 기본 Ink α <see cref="GradientBottomAlpha"/> = 아래 −18%) 두 장을
         /// Stretch(안쪽 <paramref name="inset"/> · 둥근 모서리 조각이면 모서리 반지름만큼) · raycast 끔 · 조각에 9-slice border 가 있으면 Sliced 아니면 Simple 로 <paramref name="siblingIndex"/> 자리(기본 0 = rt 자신의 배경 그림 바로 위 · 글자·아이콘 자식은 그 위에 남는다)에 덧댄다.
         /// 한쪽만 원하면 그 키에 null — 버튼은 (null, "ui.btnGradient") 아래 어둠만, 카드는 ("fr.cardGradient3", …). 이미 있으면 갱신만. 코드 도형 0 — 색은 tint 뿐(색은 점수 밖 · «느낌» 규칙 ⓐ).
+        /// 같은 사각형에 <see cref="PatternBg"/> 가 이미 있으면 그 <b>위</b>로 들어간다(질감 층 순서 = 바탕 → 패턴 → 그라데이션 → 빛살 → 내용 · 결정 171).
         /// </summary>
         public static void Gradient(RectTransform rt, Color? top = null, Color? bottom = null, string topKey = GradTopKey, string bottomKey = GradBottomKey, float inset = 0f, int siblingIndex = 0)
         {
             if (rt == null) return;
             int idx = Mathf.Clamp(siblingIndex, 0, Mathf.Max(0, rt.childCount));
+            // 질감 층 순서 = 바탕 → «Pattern» → 그라데이션 → 빛살 → 내용. 패턴이 이미 깔려 있으면 그 위에 덧대야 한다
+            // (그냥 형제 0 으로 넣으면 패턴이 아래로 밀려 «패턴은 형제 0» 계약이 깨진다 — CI #131·#134·#135 의 T72 빨강 · T82 · 결정 171)
+            for (int i = 0; i < rt.childCount; i++) if (rt.GetChild(i).name == PatternName) { idx = Mathf.Max(idx, i + 1); break; }
             if (!string.IsNullOrEmpty(topKey))
             {
                 var g = GradientLayer(rt, GradientTopName, topKey, top ?? Palette.A(Palette.White, GradientTopAlpha), inset);
