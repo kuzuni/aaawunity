@@ -58,6 +58,10 @@ namespace KkomaKnight.Game
         Text _freeTxt; readonly List<Button> _freeBtns = new List<Button>(); readonly List<GameObject> _freeDots = new List<GameObject>();
         readonly Dictionary<string, BoxWidgets> _box = new Dictionary<string, BoxWidgets>();
         readonly List<(Button btn, Func<bool> can)> _gated = new List<(Button, Func<bool>)>();
+        /// <summary>빛살이 도는 칸(T72 ② · 4항 «보이는 칸만» — 스크롤 밖 칸은 <see cref="UiKit.SetLightSpinning"/> 으로 멈춘다).</summary>
+        readonly List<RectTransform> _lightCells = new List<RectTransform>();
+        /// <summary>빛살을 걸 자리(칸 · 아이콘 · 조각 키) — <b>배치가 끝난 뒤</b> 한꺼번에 건다(아이콘 rect 가 % 앵커라 Build 중에는 0 이고, 그러면 빛살 한 변이 0 이 된다).</summary>
+        readonly List<(RectTransform host, RectTransform icon, string key)> _lightPlan = new List<(RectTransform, RectTransform, string)>();
         float _timerT;
         sealed class BoxWidgets { public Button One, Ten; public readonly List<Text> Pills = new List<Text>(); }
 
@@ -77,6 +81,9 @@ namespace KkomaKnight.Game
             if (roof != null) { roof.SetParent(Root, false); UiKit.Pct((RectTransform)roof, RoofBand); var ri = roof.GetComponent<Image>(); if (ri != null) ri.color = Color.Lerp(Palette.Red, Palette.Ink, 0.45f); }
             // 껍데기는 «비활성으로 남기지 않고» 트리에서 떼어 파괴한다 — 비활성 자식도 UiKit.Find(깊이 검색) 에 잡혀 프리팹 안 Content·중첩 Tab_01_BottomFlushMenu 가 우리 것보다 먼저 걸린다(CI #66·#68·#69 상점 2건 · T48)
             shell.transform.SetParent(null, false); shell.SetActive(false); UnityEngine.Object.Destroy(shell);
+            // T72 ① 배경 패턴 — 어두운 회색 바탕(#2B2B30) 위 «흰» 무늬가 오른쪽 위로 천천히 흐른다(주인 «거의 모든 UI 에 · 로비 배경처럼»)
+            // 배경 조각이 Root 의 첫 자식이므로 그 «바로 위»(형제 1) — 천막·스크롤·상단 바·탭 바는 그 위에 그려진다
+            UiKit.PatternBg(Root, UiKit.PatternTintDark, UiKit.PatternTileSeconds, bg != null ? 1 : 0);
 
             // ① 스크롤 창(천막 아래 ~ 탭 바 위) — 내용은 프레임 % 로 Content 안에 놓는다(<see cref="Place"/>)
             var view = UiKit.Rect(Root, "Scroll"); UiKit.Pct(view, ScrollView); UiKit.Ensure<RectMask2D>(view.gameObject);
@@ -134,6 +141,12 @@ namespace KkomaKnight.Game
             // ⑥ 상단 재화 바(공용 헬퍼 · 스크롤 위에 그린다) + 하단 탭 5칸(상점 활성)
             _top = TopBar.Build(App, Root); UiKit.Tag(_top.Root, "상단 바");
             NavBar.Attach(this, Root, "shop"); UiKit.Tag(UiKit.Find(Root, "ui.tabBar"), "하단 탭바");
+            // T72 ② — 배치가 끝난 뒤에 빛살을 건다(아이콘 rect 가 % 앵커라 그 전에는 0)
+            Canvas.ForceUpdateCanvases();
+            foreach (var l in _lightPlan) UiKit.LightBehind(l.host, l.icon, l.key);
+            // T72 4항 — 빛살은 «보이는 칸만» 돈다(상점은 칸이 11개라 전부 돌리면 폰에서 낭비다)
+            _scroll.onValueChanged.AddListener(_ => UpdateLightSpin());
+            UpdateLightSpin();
         }
 
         /// <summary>스크롤 위치(1 = 맨 위 = 레퍼런스 10 · 0 = 맨 아래 = 레퍼런스 09). 비평 스크린샷(UiShotsTests)이 두 장을 찍을 때 쓴다.</summary>
@@ -143,6 +156,24 @@ namespace KkomaKnight.Game
             Canvas.ForceUpdateCanvases();
             _scroll.verticalNormalizedPosition = Mathf.Clamp01(normalized);
         }
+
+        /// <summary>
+        /// T72 4항 «보이는 칸만» — 스크롤 창(<c>Scroll</c>) 과 세로로 겹치는 칸의 빛살만 돌리고 나머지는 멈춘다(<see cref="UiKit.SetLightSpinning"/>).
+        /// 스크롤할 때마다 부르므로 <see cref="RectTransform.GetWorldCorners"/> 한 번씩만 쓴다(칸 11개).
+        /// </summary>
+        void UpdateLightSpin()
+        {
+            if (_scroll == null || _scroll.viewport == null) return;
+            var view = _scroll.viewport; view.GetWorldCorners(_corners);
+            float vBottom = _corners[0].y, vTop = _corners[1].y;
+            foreach (var cell in _lightCells)
+            {
+                if (cell == null) continue;
+                cell.GetWorldCorners(_corners);
+                UiKit.SetLightSpinning(cell, _corners[1].y > vBottom && _corners[0].y < vTop);
+            }
+        }
+        readonly Vector3[] _corners = new Vector3[4];
 
         // ───────────────────────── 배치 도우미 ─────────────────────────
         /// <summary>스크롤 Content 안 자리 — r 은 <b>프레임 %</b>(표값 그대로 · y 는 <see cref="ContentTop"/> 부터 아래로 이어진다). 가로는 Content 폭 % · 세로는 프레임 px.</summary>
@@ -236,6 +267,8 @@ namespace KkomaKnight.Game
             if (title != null) { UiKit.Pct(title.rectTransform, 42, 3, 49, 13); title.alignment = TextAnchor.MiddleRight; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = TextSize.BestFitMin; title.resizeTextMaxSize = TextSize.Title; }
             InfoButton(card, new Layout.R(91.5f, 4, 7, 12), box);
             var chest = UiKit.Icon(card, "Chest", "chest." + box.Key); UiKit.Pct(chest.rectTransform, 4, 8, 36, 56);
+            // T72 ② 특별 상품(대형 상자) 그림 뒤 빛살 — 큰 조각(Effect_Light_01)
+            _lightPlan.Add((card, chest.rectTransform, UiKit.LightKey)); _lightCells.Add(card);
             // 확률 줄 = 본문 40(4 등급이면 2줄 · 칸 16% × 배너 26% = 97px ≥ 2줄 88)
             UiKit.Label(card, 42, 20, 54, 16, RatesText(box), TextSize.Body, Palette.White);
             w.Pills.Add(Pill(card, new Layout.R(42, 45, 55, 10), ""));
@@ -257,6 +290,8 @@ namespace KkomaKnight.Game
             InfoButton(card, new Layout.R(84, 2, 12, 9), box);
             Pill(card, new Layout.R(6, 12.5f, 88, 14), RatesText(box));
             var chest = UiKit.Icon(card, "Chest", "chest." + box.Key); UiKit.Pct(chest.rectTransform, 22, 28, 56, 37);
+            // T72 ② 상자 카드 그림 뒤 빛살(작은 칸이라 Effect_Light_02)
+            _lightPlan.Add((card, chest.rectTransform, UiKit.LightKeySmall)); _lightCells.Add(card);
             w.Pills.Add(Pill(card, new Layout.R(6, 67, 88, 14), ""));
             // 광고 버튼(파랑 · 클래퍼) = 일일 무료 보급(gacha.json dailyGem · 하루 1회) — 받을 수 있으면 빨간 점
             var ad = UiKit.Button(card, "ui.btnBlue", "", OnFree, new Layout.R(6, 83, 42, 14)); ad.name = "Ad";
@@ -278,7 +313,13 @@ namespace KkomaKnight.Game
             // 수량 = 띠 높이에서 계산(≈51 · T63-shop) — 띠 14% × 카드 18.5% = 60px ≥ 선호 50
             var q = UiKit.SetText(crt, "Text_Title", qty, Palette.White, QtySize);
             if (q != null) { UiKit.Pct(q.rectTransform, 5, 5, 90, QtyBandH); q.fontStyle = FontStyle.Bold; q.resizeTextForBestFit = true; q.resizeTextMinSize = TextSize.BestFitMin; q.resizeTextMaxSize = QtySize; }
-            var im2 = UiKit.SetSprite(crt, "Icon", iconKey, Palette.White); if (im2 != null) { im2.preserveAspect = true; UiKit.Pct(im2.rectTransform, 14, 20, 72, 44); }
+            var im2 = UiKit.SetSprite(crt, "Icon", iconKey, Palette.White);
+            if (im2 != null)
+            {
+                im2.preserveAspect = true; UiKit.Pct(im2.rectTransform, 14, 20, 72, 44);
+                // T72 ② 상점 상품 아이콘 뒤 빛살 — 아이콘은 조각(ListItem_ShopItem)의 바로 아래 자식이라 «아이콘 앞 형제» 가 곧 «그림 뒤»
+                _lightPlan.Add(((RectTransform)im2.rectTransform.parent, im2.rectTransform, UiKit.LightKeySmall)); _lightCells.Add(crt);
+            }
             var nm = UiKit.SetText(crt, "Text_Limit", name, Palette.White, TextSize.Body); if (nm != null) { UiKit.Pct(nm.rectTransform, 4, 66, 92, 11); nm.resizeTextForBestFit = true; nm.resizeTextMinSize = TextSize.BestFitMin; nm.resizeTextMaxSize = TextSize.Body; }
             var btns = new List<Button>();
             var btn = UiKit.Find(crt, "Button_Price");
@@ -311,7 +352,7 @@ namespace KkomaKnight.Game
                 UiKit.SetInteractable(w.One, S.Gem >= box.Cost); UiKit.SetInteractable(w.Ten, S.Gem >= box.Cost * D.Gacha.TenPullCount);
             }
             foreach (var g in _gated) UiKit.SetInteractable(g.btn, g.can());
-            UpdateTimer();
+            UpdateTimer(); UpdateLightSpin();
         }
         public override void Tick(float dt) { _timerT += dt; if (_timerT >= 1f) { _timerT = 0f; UpdateTimer(); } }
         /// <summary>«무료 보급까지 hh:mm:ss»(자정 리셋) · 받을 수 있으면 «지금 수령 가능».</summary>

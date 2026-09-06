@@ -188,5 +188,68 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("T72 화면 적용(팝업 · 펫)");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T72 2단계 2차(상점 09·10) — 주인 원문 «상점 아이템, 특별 상품 이런 것들 아이콘 뒤에 Effect_Light_01_512 이런 거 있어야 하고 천천히 오른쪽으로 회전하는 느낌» +
+        /// «Pattern_01_256 이거들이 모든 UI 에 다 있어야 함». ⓐ 상점 풀스크린 배경에 패턴(어두운 회색 바탕 → 흰 무늬 · 배경 조각 바로 위) ⓑ 대형 상자 배너·상자 카드 2·다이아 6·골드 3 의 그림 뒤 빛살 ⓒ 빛살은 <b>시계방향</b>
+        /// ⓓ T72 4항 = 스크롤 밖 칸은 멈춘다(맨 위로 올리면 아래 칸이 정지 · 내리면 다시 돈다). 빨간 줄 0.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ShopScreenCarriesPatternAndItemLights()
+        {
+            yield return Boot();
+            _app.ShowScreen("shop"); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var shop = _app.Current.Root;
+
+            // ⓐ 배경 패턴 — 배경 조각(Background)이 형제 0 이므로 패턴은 그 «바로 위» 형제 1
+            Assert.IsTrue(UiKit.HasPattern(shop), "상점 배경에 패턴(T72 ①)");
+            var pat = shop.Find(UiKit.PatternName);
+            Assert.AreEqual(1, pat.GetSiblingIndex(), "패턴은 어두운 바탕 조각 바로 위(천막·스크롤·상단 바·탭 바 아래)");
+            var praw = pat.GetComponent<RawImage>();
+            Assert.AreEqual(1f, praw.color.r, 0.001f, "어두운 바탕이라 흰 무늬(PatternTintDark)");
+            Assert.IsFalse(praw.raycastTarget, "패턴은 클릭을 안 먹는다(스크롤 그대로)");
+
+            // ⓑ 그림 뒤 빛살 — 대형 배너 1 + 상자 카드 2 + 다이아 6 + 골드 3
+            var content = UiKit.Find(shop, "Scroll/Content");
+            Assert.IsNotNull(content, "상점 스크롤 Content");
+            int boxes = 0, packs = 0; Transform firstBox = null;
+            for (int i = 0; i < content.childCount; i++)
+            {
+                var c = content.GetChild(i);
+                if (c.name.StartsWith("Box:")) { Assert.IsTrue(UiKit.HasLight(c), c.name + " 상자 그림 뒤 빛살"); if (firstBox == null) firstBox = c; boxes++; }
+                else if (c.name.StartsWith("GemPack:") || c.name.StartsWith("GoldPack:"))
+                {
+                    var cell = c.childCount > 0 ? c.GetChild(0) : null;   // 조각(ListItem_ShopItem)
+                    Assert.IsNotNull(cell, c.name + " 안의 상품 조각");
+                    Assert.IsTrue(UiKit.HasLight(cell), c.name + " 상품 아이콘 뒤 빛살");
+                    var icon = cell.Find("Icon"); Assert.IsNotNull(icon, c.name + " 아이콘");
+                    Assert.Less(cell.Find(UiKit.LightMaskName).GetSiblingIndex(), icon.GetSiblingIndex(), c.name + ": 빛살은 아이콘 «뒤»(형제 순서 앞)");
+                    packs++;
+                }
+            }
+            Assert.AreEqual(3, boxes, "상자 = 대형 배너 1 + 카드 2(레퍼런스 10)");
+            Assert.AreEqual(9, packs, "상품 칸 = 다이아 6 + 골드 3(레퍼런스 09)");
+
+            // ⓒ 시계방향 + 패턴 흐름 — 팝업이 아니어도 unscaled 로 돈다
+            var shopScreen = _app.GetScreen<ShopScreen>();
+            shopScreen.ScrollTo(1f); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var bigLight = (RectTransform)firstBox.Find(UiKit.LightMaskName + "/" + UiKit.LightName);   // 맨 위(10) 에서 보이는 대형 상자 배너
+            var p0 = praw.uvRect.position; var r0 = bigLight.localRotation;
+            yield return RealSeconds(0.4f);
+            Assert.Less(praw.uvRect.position.x, p0.x, "상점 패턴도 오른쪽 위로 흐른다");
+            Assert.Less(Vector3.SignedAngle(r0 * Vector3.up, bigLight.localRotation * Vector3.up, Vector3.forward), -0.5f, "빛살은 시계방향(주인 «오른쪽으로»)");
+
+            // ⓓ 4항 «보이는 칸만» — 맨 위(10) 에서는 맨 아래 골드 칸이 멈춰 있다
+            var lastGold = UiKit.Find(content, "GoldPack:2");
+            Assert.IsNotNull(lastGold, "골드 마지막 칸");
+            var goldLight = lastGold.GetChild(0).Find(UiKit.LightMaskName + "/" + UiKit.LightName);
+            Assert.IsFalse(UiKit.IsTweening(goldLight), "스크롤 밖 칸(맨 아래 골드)은 빛살이 멈춘다(T72 4항 · DOTween.IsTweening 은 «도는 중» 만 참)");
+            shopScreen.ScrollTo(0f); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var g1 = goldLight.localRotation; yield return RealSeconds(0.4f);
+            Assert.Less(Vector3.SignedAngle(g1 * Vector3.up, goldLight.localRotation * Vector3.up, Vector3.forward), -0.5f, "맨 아래로 내리면 그 칸 빛살이 다시 돈다");
+
+            _log.AssertNoRed("T72 화면 적용(상점)");
+            yield return Shutdown();
+        }
     }
 }
