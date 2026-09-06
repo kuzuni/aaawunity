@@ -253,5 +253,106 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("T72 화면 적용(상점)");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T72 2단계 3차(던전·아레나 20~26) — ⓐ 네 페이지가 같이 쓰는 풀스크린 배경 패턴(어두운 바탕 → 흰 무늬 · 바탕 조각 바로 위 · 오른쪽 위로) ⓑ 던전 카드 보상 아이콘(2+4)·던전 세부 팝업 보상 칸(4)·순위 보상 팝업 보상 칸(8)·상인 상품 칸(11) 아이콘 뒤 빛살(시계방향)
+        /// ⓒ 순위 보상 팝업의 붉은 티어 띠 안 무늬(레퍼런스 25) ⓓ ③ 그라데이션 = 카드·팝업 제목 띠 ⓔ T72 4항 = 상인 페이지를 안 보고 있으면 그 빛살은 멈춘다. 빨간 줄 0.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator DungeonArenaScreensCarryPatternAndRewardLights()
+        {
+            yield return Boot();
+            EventsScreen.Open(_app, EventsScreen.PageDungeon); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var ev = _app.GetScreen<EventsScreen>(); Assert.IsNotNull(ev, "던전·아레나 화면");
+            var root = ev.Root;
+
+            // ⓐ 배경 패턴 — 바탕 조각 «Bg» 가 형제 0 이므로 패턴은 형제 1(페이지·상단 바는 그 위)
+            Assert.IsTrue(UiKit.HasPattern(root), "던전·아레나 배경에 패턴(T72 ①)");
+            var pat = root.Find(UiKit.PatternName);
+            Assert.AreEqual(1, pat.GetSiblingIndex(), "패턴은 어두운 바탕 조각 바로 위");
+            var praw = pat.GetComponent<RawImage>();
+            Assert.AreEqual(1f, praw.color.r, 0.001f, "어두운 바탕이라 흰 무늬(PatternTintDark)");
+            Assert.IsFalse(praw.raycastTarget, "패턴은 클릭을 안 먹는다");
+
+            // ⓑ 던전 카드 보상 아이콘 뒤 빛살(카드 1 = 2칸 · 카드 2 = 4칸)
+            var hell = UiKit.Find(root, "Card:hell"); var exp = UiKit.Find(root, "Card:expedition");
+            Assert.IsNotNull(hell); Assert.IsNotNull(exp);
+            int cells = 0;
+            foreach (var name in new[] { "Card:hell", "Card:expedition" })
+            {
+                var rew = UiKit.Find(UiKit.Find(root, name), "Rewards"); Assert.IsNotNull(rew, name + " 보상 아이콘 줄");
+                for (int i = 0; i < rew.childCount; i++)
+                {
+                    var cell = rew.GetChild(i); if (!cell.name.StartsWith("Cell:")) continue;
+                    Assert.IsTrue(UiKit.HasLight(cell), name + "/" + cell.name + " 보상 아이콘 뒤 빛살");
+                    var icon = cell.Find("Icon"); Assert.IsNotNull(icon, cell.name + " 아이콘");
+                    Assert.Less(cell.Find(UiKit.LightMaskName).GetSiblingIndex(), icon.GetSiblingIndex(), cell.name + ": 빛살은 아이콘 «뒤»(형제 순서 앞)");
+                    cells++;
+                }
+            }
+            Assert.AreEqual(6, cells, "던전 보상 아이콘 = 카드 1 의 2 + 카드 2 의 4(레퍼런스 20)");
+
+            // ⓓ 그라데이션 = 카드 제목 띠(위 밝음 · 아래 어둠)
+            Assert.IsTrue(UiKit.HasGradient(UiKit.Find(hell, "Head")), "던전 카드 제목 띠에 그라데이션(T72 ③)");
+
+            // 패턴은 오른쪽 위로 흐르고 빛살은 시계방향
+            var firstLight = (RectTransform)UiKit.Find(hell, "Cell:0").Find(UiKit.LightMaskName + "/" + UiKit.LightName);
+            var p0 = praw.uvRect.position; var r0 = firstLight.localRotation;
+            yield return RealSeconds(0.4f);
+            Assert.Less(praw.uvRect.position.x, p0.x, "던전 배경 패턴도 오른쪽 위로 흐른다");
+            Assert.Less(Vector3.SignedAngle(r0 * Vector3.up, firstLight.localRotation * Vector3.up, Vector3.forward), -0.5f, "보상 칸 빛살은 시계방향");
+
+            // ⓑ 던전 세부 팝업(21) 보상 칸 4개 + 제목 띠 그라데이션
+            var enter = UiKit.Find(hell, "EnterBtn").GetComponent<Button>(); Assert.IsNotNull(enter, "입장 버튼");
+            enter.onClick.Invoke(); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var ov = _app.Overlay.Root;
+            int rcells = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                var cell = UiKit.Find(ov, "RewardCell:" + i); Assert.IsNotNull(cell, "세부 팝업 보상 칸 " + i);
+                Assert.IsTrue(UiKit.HasLight(cell), "세부 팝업 보상 칸 " + i + " 아이콘 뒤 빛살"); rcells++;
+            }
+            Assert.AreEqual(4, rcells, "세부 팝업 보상 칸 4(레퍼런스 21)");
+            Assert.IsTrue(UiKit.HasGradient(UiKit.Find(ov, "Head")), "팝업 제목 띠에 그라데이션(T72 ③)");
+            _app.Overlay.Close(); yield return Frames(2);
+
+            // ⓒ 순위 보상 팝업(25) — 붉은 티어 띠 안 무늬 + 보상 칸 8개 빛살
+            ev.ShowPage(EventsScreen.PageArena); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var rewardsBtn = UiKit.Find(root, "RewardsBtn").GetComponent<Button>(); Assert.IsNotNull(rewardsBtn, "아레나 «보상» 버튼");
+            rewardsBtn.onClick.Invoke(); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            ov = _app.Overlay.Root;
+            var band = UiKit.Find(ov, "Tiers"); Assert.IsNotNull(band, "티어 띠");
+            Assert.IsTrue(UiKit.HasPattern(band), "붉은 티어 띠 안에도 무늬(레퍼런스 25)");
+            int rr = 0;
+            foreach (var t in ov.GetComponentsInChildren<Transform>(false))
+                if (t.name == "Reward" && UiKit.HasLight(t)) rr++;
+            Assert.AreEqual(8, rr, "순위 보상 칸 = 4줄 × (코인·다이아) 전부 빛살");
+            _app.Overlay.Close(); yield return Frames(2);
+
+            // ⓑⓔ 상인 페이지(26) 상품 11칸 + T72 4항 «안 보는 페이지는 멈춘다»
+            ev.ShowPage(EventsScreen.PageMerchant); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var me = UiKit.Find(root, "Page:merchant"); Assert.IsNotNull(me, "상인 페이지");
+            int goods = 0; Transform firstGoods = null;
+            for (int i = 0; i < 11; i++)
+            {
+                var card = UiKit.Find(me, "Goods:" + i); Assert.IsNotNull(card, "상품 카드 " + i);
+                var ic = card.Find("IconCell"); Assert.IsNotNull(ic, "상품 " + i + " 아이콘 칸");
+                Assert.IsTrue(UiKit.HasLight(ic), "상품 " + i + " 아이콘 뒤 빛살"); if (firstGoods == null) firstGoods = ic; goods++;
+            }
+            Assert.AreEqual(11, goods, "상인 상품 11칸 전부(레퍼런스 26)");
+            var gl = (RectTransform)firstGoods.Find(UiKit.LightMaskName + "/" + UiKit.LightName);
+            var g0 = gl.localRotation; yield return RealSeconds(0.4f);
+            Assert.Less(Vector3.SignedAngle(g0 * Vector3.up, gl.localRotation * Vector3.up, Vector3.forward), -0.5f, "보고 있는 상인 페이지의 상품 빛살은 돈다");
+            // 멈춤은 «트윈이 없다» 가 아니라 «각이 안 변한다» 로 잰다(DOTween.IsTweening 은 멈춘 트윈도 참 · CI #145)
+            ev.ShowPage(EventsScreen.PageArena); yield return Frames(2);
+            var g1 = gl.localRotation; yield return RealSeconds(0.4f);
+            Assert.AreEqual(0f, Quaternion.Angle(g1, gl.localRotation), 0.01f, "다른 페이지로 가면 상인 상품 빛살은 멈춘다(T72 4항)");
+            ev.ShowPage(EventsScreen.PageMerchant); yield return Frames(2);
+            var g2 = gl.localRotation; yield return RealSeconds(0.4f);
+            Assert.Less(Vector3.SignedAngle(g2 * Vector3.up, gl.localRotation * Vector3.up, Vector3.forward), -0.5f, "돌아오면 다시 돈다");
+
+            _log.AssertNoRed("T72 화면 적용(던전·아레나)");
+            yield return Shutdown();
+        }
     }
 }
