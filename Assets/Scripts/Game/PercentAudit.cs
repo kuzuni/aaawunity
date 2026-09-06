@@ -18,14 +18,18 @@ namespace KkomaKnight.Game
     public static class PercentAudit
     {
         /// <summary>
-        /// % 빠짐을 실패로 셀지 — <b>T90-gear(2단계)에서 켰다</b>(T90 3항 «먼저 보고만 → 0 이 되면 strict»).
-        /// 근거: CI #173 로그의 «[PercentGate] % 가 빠진 줄 <b>0</b>» + 화면 코드 전수 확인(비율 스탯 이름을 글자로 쓰는 자리는
-        /// <c>BattleScreen</c> 스탯 8칸·<c>Overlay</c> 쉼터/악마 문구뿐이고 전부 이미 <c>%</c> 를 직접 붙인다) +
-        /// 데이터 문구는 <see cref="PerkText.Format"/>·<see cref="GearText.Shorten"/> 이 <see cref="StatText.Percent"/> 를 거쳐 내보낸다
-        /// (EditMode <c>StatTextTests</c> 가 perks.json·gear.json 의 desc 를 전수로 대조한다).
+        /// % 빠짐을 <b>훑은 화면 전부</b>에서 실패로 셀지 — 지금은 <b>꺼 둔다</b>.
+        /// <para>
+        /// T90-gear 가 20:37 에 한 번 켰다가 같은 분에 들어온 <c>T90-audit</c>(워커 K · <c>8f57711</c>)과 겹쳐 **되돌렸다**:
+        /// 켤 때의 근거(CI #173 의 «% 빠진 줄 0»)는 그때 게이트가 열던 **다섯 화면**(02·04·05·06·07)에 대한 것인데,
+        /// T90-audit 이 순회를 **스무 화면 남짓**(01 로비 · 09·10 상점 · 11~17 로비 팝업 · 13·14 펫 · 20~26 던전·아레나 · 27 토스트 · 28 확인 · 30·31 탐험 …)으로 넓혔다.
+        /// 그 새 화면들의 표는 아직 CI 로그로 실측한 적이 없으므로 여기서 켜면 «본 적 없는 화면» 때문에 main 이 빨개질 수 있다.
+        /// 순서는 T90-audit 이 적어 둔 그대로다 — <b>넓힌 순회의 표가 CI 로그에서 0 인 것을 확인한 다음 회차에 켠다</b>
+        /// (<c>TextAudit.ClipStrict</c>·<c>OutlineStrict</c> 가 밟은 순서). 화면별 강제는 그때까지 <c>PercentGateTests.StrictScreens</c> 가 맡는다.
+        /// </para>
         /// </summary>
         // const 가 아니라 static readonly 다 — const 면 게이트의 «if (Strict)» 가 통째로 «닿지 않는 코드»(CS0162) 경고가 된다.
-        public static readonly bool Strict = true;
+        public static readonly bool Strict = false;
 
         public sealed class Row
         {

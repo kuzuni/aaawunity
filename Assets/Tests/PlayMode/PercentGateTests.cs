@@ -22,10 +22,11 @@ namespace KkomaKnight.Tests.Play
         readonly List<PercentAudit.Row> _rows = new List<PercentAudit.Row>();
         readonly List<string> _texts = new List<string>();
         /// <summary>
-        /// % 가 빠지면 실패인 화면. <b>T90-gear(2단계)에서 06·08·02 를 보태 <see cref="PercentAudit.Strict"/> 를 켰다</b> —
-        /// 이 목록은 이제 «표가 0 이 아니어도 반드시 실패하는» 화면을 적어 두는 기록에 가깝다(Strict 가 켜져 있으면 훑은 화면 전부가 0 이어야 한다).
+        /// % 가 빠지면 실패인 화면 — <b>CI 로그에서 «0» 을 실측한 화면만</b> 넣는다.
+        /// T90-gear(2단계)가 CI [#173] 실측(그 런이 훑은 다섯 화면 전부 0)을 근거로 <b>02·06</b> 을 보탰다.
+        /// 08 대장간과 T90-audit 이 새로 넓힌 화면들은 아직 표를 못 봤으므로 여기 넣지 않는다 — 다음 런의 «[PercentGate]» 표를 보고 보탠다.
         /// </summary>
-        static readonly string[] StrictScreens = { "02_battle", "04_perks", "05_perks_list", "06_gear", "07_gear_detail", "08_gear_fuse" };
+        static readonly string[] StrictScreens = { "02_battle", "04_perks", "05_perks_list", "06_gear", "07_gear_detail" };
 
         [SetUp] public void SetUp() { _log = new PlayLog(); _rows.Clear(); _texts.Clear(); }
         [TearDown] public void TearDown() { _log?.Dispose(); _log = null; Time.timeScale = 1f; }
