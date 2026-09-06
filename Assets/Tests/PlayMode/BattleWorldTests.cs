@@ -324,7 +324,7 @@ namespace KkomaKnight.Tests.Play
             float t1 = Time.realtimeSinceStartup;
             while (Time.realtimeSinceStartup - t1 < 0.8f && !G.Over && !_app.Overlay.IsOpen && G.Projs.Contains(spear))
             {
-                float dt = Time.deltaTime;
+                float dtBefore = Time.deltaTime;
                 // 팝업·일시정지·판 종료 프레임은 «게임 전체가 멈춘» 것이라 세지 않는다(지시서 T108 1항의 유일한 예외)
                 bool running = world.EngineRunning;
                 yield return null;
@@ -332,7 +332,11 @@ namespace KkomaKnight.Tests.Play
                 if (!running || !world.EngineRunning) { prev = shown; continue; }
                 frames++;
                 if (step <= 1e-9) stalled++;
-                // 한 프레임에 «속도 × dt × 배속 × 배율» 보다 더 갔으면 그것이 스냅(튐)이다
+                // 한 프레임에 «속도 × dt × 배속 × 배율» 보다 더 갔으면 그것이 스냅(튐)이다.
+                // dt 는 «둘 중 큰 것» 으로 잰다 — 코루틴이 App.Update 보다 먼저 깨는지 나중에 깨는지는 스크립트 실행 순서에 달렸고(둘 다 Update 단계),
+                // 그래서 이 걸음을 만든 Sync 의 dt 가 yield «앞» 프레임의 것일 수도 «뒤» 프레임의 것일 수도 있다. 한쪽만 쓰면 프레임 시간이 튄 순간
+                // (CI headless 의 GC·로드)에 멀쩡한 걸음이 «스냅» 으로 잡힌다 — CI #187 의 13.1px 이 그것이었다(T108 확인 회차 · 워커 D).
+                double dt = Math.Max(dtBefore, Time.deltaTime);
                 double cap = spear.Spd * Math.Max(dt, 1e-4) * Math.Max(1, bs.Speed) * BattleWorld.ProjCatchUpMul + 1.0;
                 if (step > cap) worstStep = Math.Max(worstStep, step - cap);
                 prev = shown;

@@ -646,6 +646,7 @@ namespace KkomaKnight.Game
                 else
                 {
                     // 팝업·일시정지·판 종료(EngineRunning=false)일 때만 선다 — 킬 연출로 엔진이 보류된 동안에도 간다(T108 1항)
+                    double frameStep = pr.Spd * dt * System.Math.Max(1, Speed) * ProjCatchUpMul;   // 이 프레임에 화면이 움직일 수 있는 최대(스냅 금지의 상한)
                     if (EngineRunning)
                     {
                         double step = pr.Spd * dt * System.Math.Max(1, Speed);
@@ -653,7 +654,9 @@ namespace KkomaKnight.Game
                         if (shown < pr.X) step = System.Math.Min(pr.X - shown, step * ProjCatchUpMul);
                         shown += step;
                     }
-                    double lim = ProjLimit(pr); if (shown > lim) shown = System.Math.Max(pr.X, lim);
+                    // 적중 자리(ProjLimit)를 앞질렀으면 되돌리되 «한 프레임 걸음» 까지만 — 여기서 바로 끌어당기면 그것도 스냅이다(T108 2항 · 표적이 걸어오면 유도형의 상한이 뒤로 밀린다).
+                    double lim = ProjLimit(pr);
+                    if (shown > lim) { double target = System.Math.Max(pr.X, lim); shown = target >= shown ? target : System.Math.Max(target, shown - frameStep); }
                 }
                 _projX[pr] = shown;
                 float yf = FootY - 0.045f;

@@ -95,6 +95,10 @@ namespace KkomaKnight.Tests.Play
             LobbyPopups.Quest(_app); yield return Frames(2); yield return Shot("15_quest"); _app.Overlay.Close(); yield return Frames(1);
             LobbyPopups.Attendance(_app); yield return Frames(2); yield return Shot("16_attendance"); _app.Overlay.Close(); yield return Frames(1);
             LobbyPopups.DailyGift(_app); yield return Frames(2); yield return Shot("17_daily_gift"); _app.Overlay.Close(); yield return Frames(1);
+            // 30 탐험 · 31 빠른 탐험 (T97 — 방치·오프라인 보상 · 표 ㉕·㉖) — 8시간이 쌓인 상태로 찍어야 칸 숫자·«받기» 가 레퍼런스처럼 보인다
+            if (_app.Data != null && _app.Data.Expedition != null) _app.Save.ExpSettle = LobbyPopups.NowSec() - _app.Data.Expedition.MaxHours * 3600.0;
+            LobbyPopups.Expedition(_app); yield return Frames(2); yield return Shot("30_expedition");
+            LobbyPopups.QuickExplore(_app, null); yield return Frames(2); yield return Shot("31_expedition_fast"); _app.Overlay.Close(); yield return Frames(1);
 
             // 13 펫 탭 · 14 펫 세부 (T42 껍데기)
             _app.ShowScreen("pet"); yield return Frames(3); yield return Shot("13_pet");

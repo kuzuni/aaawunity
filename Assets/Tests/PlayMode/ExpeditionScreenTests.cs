@@ -55,13 +55,24 @@ namespace KkomaKnight.Tests.Play
             var q = Find(c, "Qty"); var t = q != null ? q.GetComponent<Text>() : null;
             return t != null ? t.text : null;
         }
-        /// <summary>화면의 모든 활성 글자에서 «영문 데모 글자»(우리 문구는 전부 한국어·숫자·기호)를 찾는다 — T44 규칙.</summary>
+        /// <summary>
+        /// 화면의 모든 활성 글자에서 «영문 데모 글자»(우리 문구는 전부 한국어·숫자·기호)를 찾는다 — T44 규칙.
+        /// 단위 꼬리표(<see cref="UiKit.Fmt"/> 의 «12.9K»·«3.4M»)는 우리 숫자 표기라 영문으로 세지 않는다 — 숫자 뒤에 붙은 K/M/B 한 글자만 봐준다(CI #187 실측).
+        /// </summary>
         static string EnglishLeftOver(Transform root)
         {
             foreach (var t in root.GetComponentsInChildren<Text>(true))
             {
                 if (t == null || !t.gameObject.activeInHierarchy || string.IsNullOrEmpty(t.text)) continue;
-                foreach (var ch in t.text) if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')) return t.name + " «" + t.text + "»";
+                string s = t.text;
+                for (int i = 0; i < s.Length; i++)
+                {
+                    char ch = s[i];
+                    if (!((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'))) continue;
+                    bool unitTail = (ch == 'K' || ch == 'M' || ch == 'B') && i > 0 && (char.IsDigit(s[i - 1]) || s[i - 1] == '.');
+                    if (unitTail) continue;
+                    return t.name + " «" + s + "»";
+                }
             }
             return null;
         }
