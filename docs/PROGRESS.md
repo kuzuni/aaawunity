@@ -1921,6 +1921,7 @@ CI [#148](https://github.com/kuzuni/aaawunity/actions/runs/34047447440) 유니�
   2. `ProjectileFlightTimeGrowsWithDistanceNotFixedDuration` — 사거리 300px·900px 창을 같은 순간에 쏘고 **엔진이 실제로 시간을 흘린 프레임만** 세어 비행 시간을 잰다 → 300px ≈ 300/spearSpeed(±0.12s) · 900/300 시간 비 = **3.0±0.3**(«시간 고정» 이면 1 이 나온다).
   - 진단용 접근자 둘을 열었다: `BattleWorld.ProjShownX(pr)`·`ProjGo(pr)`·`ProjLimit(pr)`.
 - **게이트(로컬 · 전부 초록)**: `dotnet build` 0 경고/0 오류 · `dotnet test` **123/123** · PlayMode 임시 csproj 컴파일 **0 오류**(결정 143) · `gen_meta --check` · `gen_catalog --check`(603) · `check_catalog_keys`(1018/602) · `check_unity_null` 0 · `check_audio_webgl` 20 · `check_data_sync` OK(aaaw `0707999`) · **`Sim --seeds 11,12,13` 표 그대로**(엔진 불변 증거) · **배포 스모크 `--gh-pages` 초록**(errors=0 · loaded · 로비 · 오디오 경고 35 = T64 · 망 경고 4 = T83 · fps 39.8).
+- **확인 런 메모**: 내 push 가 만든 CI **#164**(`1d98939`)는 3초 뒤 워커 I 의 push(#165)에 밀려 **취소**됐다 — 내 커밋은 그 뒤 런들의 트리에 들어 있으니 **`1d98939` 를 포함한 다음 완주 런**의 유니티 잡에서 확인하면 된다(결정 172 의 `get_job_logs` 로 XML 을 바로 읽는다). 같은 시각 main 은 **T87**(워커 A · T75 글자 필터가 바꾼 문구 때문에 PlayMode 단언 3건 빨강)이 잡혀 있어 그 런이 빨갈 수 있다 — 내 두 테스트의 Passed 여부만 XML 에서 골라 본다.
 - **확인 수단(다음 워커·주인)**: ⓐ 이 커밋을 담은 CI 유니티 잡의 PlayMode 새 2건 Passed ⓑ 같은 런에서 `BattleWorldTests` 기존 2건(T50·T51·T65)과 `RewardOrbTests`(T85) 회귀 0 ⓒ 배포 스모크 ⓓ **눈 확인은 주인**(screens 02 PNG 에는 투사체가 안 찍힐 수 있다 — 특전을 든 판에서만 난다): 도끼·창이 쏘자마자 끊김 없이 날아가고 · 창이 누워서 일자로 가고 · 도끼가 1초에 한 바퀴 돈다.
 - **안 한 것**: 엔진 속도값(`combat.json`)·판정·`HoldEngine` 규칙은 그대로 · 화살 각·검기(Wave) 연출 불변 · 적 화살(`EnemyArrow`)은 지적 밖이라 손대지 않았다.
 
