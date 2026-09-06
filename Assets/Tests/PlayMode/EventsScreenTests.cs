@@ -84,7 +84,26 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(hell, "던전 카드 1"); Assert.IsNotNull(exp, "던전 카드 2"); Assert.IsTrue(HasText(s => s == "지옥의 문") && HasText(s => s == "원정"), "카드 제목 우리말");
             Assert.AreEqual(2, CountNamed(pg, "EnterBtn"), "입장 버튼 2"); Assert.IsTrue(HasText(s => s == "획득 가능"), "«획득 가능»");
             Assert.AreEqual(2, CountNamed(hell, "Cell:"), "카드 1 보상 아이콘 2"); Assert.AreEqual(4, CountNamed(exp, "Cell:"), "카드 2 보상 아이콘 4");
-            Assert.IsNotNull(UiKit.Find(pg, "SoonCard"), "준비 중 카드"); Assert.IsTrue(HasText(s => s == "준비 중"), "«준비 중»");
+            // T101 ⓑ(주인 «준비 중이라 써 있는 거 없애줘») — 20·22 두 페이지에서 사라졌다
+            Assert.IsNull(UiKit.Find(pg, "SoonCard"), "준비 중 카드는 없어야 한다(T101 ⓑ)"); Assert.IsFalse(HasText(s => s == "준비 중"), "«준비 중» 글자도 없다");
+            // T101 ⓐ — 두 카드 사이에 눈에 보이는 빈칸(카드 높이의 6% 이상)
+            Assert.GreaterOrEqual(Layout.DgCard2.Y - (Layout.DgCard1.Y + Layout.DgCard1.H), Layout.DgCard1.H * 0.06f, "카드 1·2 사이 간격 ≥ 카드 높이의 6%(T101 ⓐ)");
+            // T101 ⓒ — 카드 자체를 감싸는 직사각형 링(그림 띠만이 아니라 네 변)
+            foreach (var c in new[] { hell, exp })
+            {
+                Transform ring = null; for (int i = 0; i < c.childCount; i++) if (c.GetChild(i).name == UiKit.BorderName) ring = c.GetChild(i);
+                Assert.IsNotNull(ring, "카드 rect 에 «Border» 링(T101 ⓒ)");
+                var ri = ring.GetComponent<Image>(); Assert.IsNotNull(ri, "링은 Image");
+                Assert.IsTrue(ri.sprite != null && ri.sprite.name.Contains("Rectangle"), "직사각형 조각이어야 한다(지금 " + (ri.sprite != null ? ri.sprite.name : "null") + ")");
+                Assert.IsFalse(ri.fillCenter, "링은 가운데 비움"); Assert.IsFalse(ri.raycastTarget, "링 raycast 끔");
+            }
+            // T101 ⓓ — 제목 줄이 가운데(아이콘 + 글자 덩어리의 좌우 여백 차 ≤ 2%p)
+            {
+                var trow = UiKit.Find(pg, "Title") as RectTransform; Assert.IsNotNull(trow, "제목 줄");
+                var tic = UiKit.Find(trow, "Icon") as RectTransform; var ttx = FindText(trow, "Text"); Assert.IsNotNull(tic, "제목 아이콘"); Assert.IsNotNull(ttx, "제목 글자");
+                float left = tic.anchorMin.x * 100f, right = 100f - ttx.rectTransform.anchorMax.x * 100f;
+                Assert.AreEqual(left, right, 2.0f, "제목 덩어리가 가운데(왼쪽 여백 " + left.ToString("0.0") + " ↔ 오른쪽 " + right.ToString("0.0") + " · T101 ⓓ)");
+            }
             Assert.IsNotNull(UiKit.Find(pg, "BackBtn"), "뒤로"); Assert.IsNotNull(UiKit.Find(pg, "Tab:dungeon"), "던전 탭"); Assert.IsNotNull(UiKit.Find(pg, "Tab:pvp"), "PvP 탭");
             Assert.IsNull(UiKit.Find(root, "ui.tabBar"), "5탭 바 없음(레퍼런스 20 = 뒤로 + 2탭)");
             AtX(hell, Layout.DgCard1, "카드 1"); AtY(hell, Layout.DgCard1, "카드 1"); AtY(exp, Layout.DgCard2, "카드 2");
@@ -98,6 +117,12 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(HasText(s => s == "지옥의 문") && HasText(s => s == "층") && HasText(s => s == "보상") && HasText(s => s == "소탕") && HasText(s => s == "도전") && HasText(s => s == "탭하여 닫기"), "세부 팝업 글자(제목·층·보상·소탕·도전·탭하여 닫기)");
             // 기댓값에 TextGlyphs.Safe 를 씌운다 — 화면에 나갈 때 UiKit 이 «·» 를 «/» 로 바꾼다(T75 · Jua 에 글리프가 없어 폭 0 으로 사라진다)
             Assert.IsTrue(HasText(s => s == TextGlyphs.Safe("전설·신화 특전만 등장")), "조건 문구");
+            // T102 ⓐ — 조각이 달고 오던 빨간 장식 선은 꺼져 있다 · ⓑ — 그림 띠가 제목 띠 바닥에 딱 붙는다
+            foreach (var t in ov.GetComponentsInChildren<Transform>(true))
+                if (t.name.Contains("DecoLine") || t.name.Contains("LineDeco"))
+                    Assert.IsFalse(t.gameObject.activeInHierarchy, "세부 팝업의 장식 선은 꺼져 있어야 한다(T102 ⓐ · " + t.name + ")");
+            Assert.AreEqual(Layout.DdHead.Y + Layout.DdHead.H, Layout.DdPic.Y, 0.1f, "그림 띠 y = 제목 띠 바닥(T102 ⓑ)");
+            { var picRt = UiKit.Find(ov, "Pic") as RectTransform; Assert.IsNotNull(picRt, "그림 띠"); AtY(picRt, Layout.DdPic.Within(Layout.DdBox), "그림 띠"); }
             Assert.AreEqual(4, CountNamed(ov, "RewardCell:"), "보상 칸 4"); Assert.IsNotNull(UiKit.Find(ov, "FloorCircle"), "층수 원");
             var box = UiKit.Find(ov, "ui.popup.red") as RectTransform; Assert.IsNotNull(box, "빨간 팝업 패널"); AtX(box, Layout.DdBox, "세부 박스"); AtY(box, Layout.DdBox, "세부 박스");
             Assert.IsNull(UiKit.Find(ov, "Button_Close_01"), "닫기 X 없음");
@@ -111,7 +136,7 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(ClickNamed(pg, "Tab:pvp"), "PvP 탭"); yield return Frames(2);
             Assert.AreEqual(EventsScreen.PagePvp, ev.Page); Assert.IsFalse(pg.gameObject.activeSelf, "던전 페이지 꺼짐");
             var pv = UiKit.Find(root, "Page:pvp") as RectTransform; Assert.IsNotNull(pv, "PvP 페이지"); Assert.IsTrue(pv.gameObject.activeSelf);
-            Assert.IsTrue(HasText(s => s == "PvP") && HasText(s => s == "아레나") && HasText(s => s == "브론즈") && HasText(s => s == "준비 중"), "PvP 페이지 글자");
+            Assert.IsTrue(HasText(s => s == "PvP") && HasText(s => s == "아레나") && HasText(s => s == "브론즈"), "PvP 페이지 글자"); Assert.IsFalse(HasText(s => s == "준비 중"), "«준비 중» 은 22 에서도 삭제(T101 ⓑ)");
             Assert.IsTrue(HasText(s => s.StartsWith("시즌 종료까지")), "시즌 타이머");
             var arenaCard = UiKit.Find(pv, "Card:arena") as RectTransform; Assert.IsNotNull(arenaCard, "아레나 카드"); AtX(arenaCard, Layout.ArCard, "아레나 카드"); AtY(arenaCard, Layout.ArCard, "아레나 카드");
             Assert.IsNotNull(UiKit.Find(pv, "Tab:pvp"), "PvP 탭(켜짐)");
@@ -232,13 +257,11 @@ namespace KkomaKnight.Tests.Play
             EventsScreen.Open(_app, EventsScreen.PageDungeon); yield return Frames(3);
             var ev = _app.GetScreen<EventsScreen>(); var root = _app.Current.Root;
 
-            // 20 던전 — 제목 60 · 부제 40 · 카드 제목 48 · «획득 가능» 36 · 탭 라벨 36 · «준비 중» 60
+            // 20 던전 — 제목 60 · 부제 40 · 카드 제목 48 · «획득 가능» 36 · 탭 라벨 36 (T101 ⓑ 로 «준비 중» 은 없어졌다)
             var pg = UiKit.Find(root, "Page:" + EventsScreen.PageDungeon);
             Readable("20_dungeon", pg);
             Assert.AreEqual(TextSize.Title, MaxSize(FindText(pg, "Title")), "던전 제목 = 제목 60");
             Assert.GreaterOrEqual(MaxSize(FindText(UiKit.Find(pg, "Card:hell"), "Head")), TextSize.Body, "카드 제목 띠(48)는 본문 40 하한 위");
-            Assert.AreEqual(TextSize.Title, MaxSize(FindText(UiKit.Find(pg, "SoonCard"), "Text")), "«준비 중» = 제목 60");
-            Assert.Greater(FindText(UiKit.Find(pg, "SoonCard"), "Text").color.r, 0.4f, "«준비 중» 글자색이 어두운 판 위에서 보여야 한다");
 
             // 21 던전 세부 팝업 — 제목 띠 60 · 조건 문구 40 · «첫 클리어» 배지 36 · 티켓 수 = 흰 글자 + 검은 아웃라인(T111 ⓑ)
             Assert.IsTrue(ClickNamed(UiKit.Find(pg, "Card:hell"), "EnterBtn"), "던전 입장"); yield return Frames(3);

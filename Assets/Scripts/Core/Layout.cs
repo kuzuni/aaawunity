@@ -265,13 +265,13 @@ namespace KkomaKnight.Core
         public static readonly R DgTitleLine = new R(6.0f, 14.8f, 88.0f, 0.6f);
         public static readonly R DgSub = new R(24.0f, 16.7f, 52.0f, 2.5f);
         public static readonly R DgCard1 = new R(3.6f, 20.4f, 92.6f, 26.4f);
-        public static readonly R DgCard2 = new R(3.6f, 47.1f, 92.6f, 26.5f);
-        public const float DgCardPitch = 26.7f;
+        // T101 ⓐ(주인 2026-09-07 «카드들이 간격 없이 너무 딱 달라붙어 있어서 구분이 안 감») — 카드 1 바닥 46.8 과 카드 2 사이에 2.0%p 빈칸(카드 높이 26.4 의 7.6% · 레퍼런스 20 의 두 카드 사이 여백과 같은 정도)
+        public static readonly R DgCard2 = new R(3.6f, 48.8f, 92.6f, 26.4f);
+        public const float DgCardPitch = 28.4f;
         public static readonly R DgCardHead = new R(3.6f, 20.4f, 92.6f, 3.6f);
         public static readonly R DgCardPic = new R(3.6f, 24.0f, 92.6f, 15.9f);
         public static readonly R DgEnter = new R(63.5f, 38.6f, 29.0f, 5.3f);
         public static readonly R DgRewards = new R(5.0f, 41.1f, 20.0f, 3.4f);
-        public static readonly R DgSoon = new R(3.6f, 73.8f, 92.6f, 19.7f);
         /// <summary>던전·아레나 화면 공통 바닥 띠(레퍼런스에 5탭 바가 없다 — 뒤로 + 2탭) · 뒤로 · 던전/PvP 2탭.</summary>
         public static readonly R DgFoot = new R(0, 92.3f, 100, 7.7f);
         public static readonly R DgBack = new R(3.5f, 94.0f, 16.0f, 5.3f);
@@ -280,7 +280,7 @@ namespace KkomaKnight.Core
         // ⑬ 던전 세부 팝업 — docs/ref/21_dungeon_detail.jpg (T43)
         public static readonly R DdBox = new R(12.4f, 24.2f, 75.5f, 51.4f);
         public static readonly R DdHead = new R(12.4f, 24.2f, 75.5f, 3.7f);
-        public static readonly R DdPic = new R(13.0f, 28.2f, 74.4f, 13.8f);
+        public static readonly R DdPic = new R(13.0f, 27.9f, 74.4f, 14.1f);   // T102 ⓑ — y = DdHead 바닥(24.2+3.7) · 아래 끝(42.0)은 그대로
         public static readonly R DdNote = new R(14.5f, 38.8f, 71.5f, 2.6f);
         public static readonly R DdArrow = new R(21.5f, 45.0f, 6.0f, 4.0f);
         public static readonly R DdFloor = new R(41.7f, 43.0f, 16.6f, 7.6f);
@@ -298,7 +298,6 @@ namespace KkomaKnight.Core
         public static readonly R ArSeason = new R(5.0f, 38.3f, 35.0f, 2.3f);
         public static readonly R ArEnter = new R(63.5f, 38.6f, 29.0f, 5.3f);
         public static readonly R ArTier = new R(6.0f, 41.0f, 24.0f, 3.9f);
-        public static readonly R ArSoon = new R(3.6f, 47.1f, 92.6f, 25.0f);
 
         // ⑮ 아레나 입장 화면 — docs/ref/23_arena_enter.jpg (T43)
         public static readonly R AeStage = new R(0, 8.0f, 100, 34.0f);

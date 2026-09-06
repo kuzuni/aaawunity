@@ -166,7 +166,7 @@ namespace KkomaKnight.Tests
             var s = Parse();
             Same(s, "⑫", "상단 바", Layout.LobbyTopBar); Same(s, "⑫", "제목(Dungeons)", Layout.DgTitle); Same(s, "⑫", "제목 밑줄", Layout.DgTitleLine); Same(s, "⑫", "부제", Layout.DgSub);
             Same(s, "⑫", "던전 카드 1", Layout.DgCard1); Same(s, "⑫", "카드 제목 띠", Layout.DgCardHead); Same(s, "⑫", "카드 그림", Layout.DgCardPic); Same(s, "⑫", "입장 버튼", Layout.DgEnter);
-            Same(s, "⑫", "보상 아이콘 줄", Layout.DgRewards); Same(s, "⑫", "던전 카드 2", Layout.DgCard2); Same(s, "⑫", "준비 중 카드", Layout.DgSoon);
+            Same(s, "⑫", "보상 아이콘 줄", Layout.DgRewards); Same(s, "⑫", "던전 카드 2", Layout.DgCard2);   // «준비 중 카드» 는 주인 지시로 삭제(T101 ⓑ)
             Same(s, "⑫", "하단 바", Layout.DgFoot); Same(s, "⑫", "뒤로 버튼", Layout.DgBack); Same(s, "⑫", "던전/PvP 탭(2칸)", Layout.DgTabs);
             Assert.That(Layout.DgCard2.Y - Layout.DgCard1.Y, Is.EqualTo(Layout.DgCardPitch).Within(0.05f));
             Same(s, "⑬", "팝업 박스", Layout.DdBox); Same(s, "⑬", "제목 띠", Layout.DdHead); Same(s, "⑬", "그림 띠", Layout.DdPic); Same(s, "⑬", "조건 문구", Layout.DdNote);
@@ -174,7 +174,7 @@ namespace KkomaKnight.Tests
             Same(s, "⑬", "티켓 줄", Layout.DdTicket); Same(s, "⑬", "버튼 2개", Layout.DdBtns);
             Same(s, "⑭", "상단 바", Layout.LobbyTopBar); Same(s, "⑭", "제목(PvP)", Layout.ArTitle); Same(s, "⑭", "제목 밑줄", Layout.DgTitleLine); Same(s, "⑭", "부제", Layout.ArSub);
             Same(s, "⑭", "아레나 카드", Layout.ArCard); Same(s, "⑭", "카드 제목 띠", Layout.ArCardHead); Same(s, "⑭", "카드 그림", Layout.ArCardPic); Same(s, "⑭", "시즌 타이머", Layout.ArSeason);
-            Same(s, "⑭", "입장 버튼", Layout.ArEnter); Same(s, "⑭", "티어 줄", Layout.ArTier); Same(s, "⑭", "준비 중 카드", Layout.ArSoon);
+            Same(s, "⑭", "입장 버튼", Layout.ArEnter); Same(s, "⑭", "티어 줄", Layout.ArTier);
             Same(s, "⑭", "하단 바", Layout.DgFoot); Same(s, "⑭", "뒤로 버튼", Layout.DgBack); Same(s, "⑭", "던전/PvP 탭(2칸)", Layout.DgTabs);
             Same(s, "⑮", "상단 바", Layout.LobbyTopBar); Same(s, "⑮", "시상대 무대", Layout.AeStage); Same(s, "⑮", "티어 제목", Layout.AeTier); Same(s, "⑮", "시즌 타이머", Layout.AeSeason);
             Same(s, "⑮", "우측 아이콘 열(2개)", Layout.AeSideIcons); Same(s, "⑮", "시상대 초상(3개)", Layout.AePortraits); Same(s, "⑮", "1위 초상", Layout.AePortrait1); Same(s, "⑮", "시상대 배너(3개)", Layout.AeBanners);
