@@ -103,11 +103,11 @@
 | sprites | `cmi.gear.armor.evade.2` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Thumbnail/Chest/FA_Chest_015_GreenSilver.png` | fileID 21300000 | 장비 아이콘(GearLook.IconKey · T31 · 주인 «아이콘용 그림과 입는 그림은 따로») — 갑옷 · 회피 세트 · 전설(2) → 같은 이름의 Thumbnail(128×128) · 칸·슬롯·세부·대장간·뽑기 결과 |
 | sprites | `cm.gear.armor.evade.3` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Parts/Chest/FA_Chest_029_Purple.png` | fileID 21300000 | 장착 외형 = 입는 파츠(GearLook.PartKey · T7 · 아이콘은 cmi.* Thumbnail · T31) — 갑옷 · 회피 세트 · 신화(3) → Character 프리팹 Body/Chest |
 | sprites | `cmi.gear.armor.evade.3` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Extenstions/Parts Pack Base/Thumbnail/Chest/FA_Chest_029_Purple.png` | fileID 21300000 | 장비 아이콘(GearLook.IconKey · T31 · 주인 «아이콘용 그림과 입는 그림은 따로») — 갑옷 · 회피 세트 · 신화(3) → 같은 이름의 Thumbnail(128×128) · 칸·슬롯·세부·대장간·뽑기 결과 |
-| sprites | `env.field` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Field_Forest.png` | fileID 21300000 | (구) 단일 숲 바닥 — 지금은 env.<theme>.field 를 쓴다 · 폴백 |
-| sprites | `env.road` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_Forest.png` | fileID 21300000 | 바닥 위 길 타일 — 캐릭터 발 줄 |
+| sprites | `env.field` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Field_Forest.png` | fileID 21300000 | (구) 단일 숲 바닥 — 지금은 env.<theme>.field 를 쓴다 · 폴백 · T37: 장비 화면 무대(GearStage) 바닥 |
+| sprites | `env.road` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_Forest.png` | fileID 21300000 | 바닥 위 길 타일 — 캐릭터 발 줄 · T37: 장비 화면 무대 아래 1/3 길 띠 |
 | sprites | `env.roadUp` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Field/Road_up_Forest.png` | fileID 21300000 | 길 위 경계 장식(253×33) |
-| sprites | `env.tree` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_01.png` | fileID 21300000 | 지면 뒤 소품(나무) — 챕터마다 시드 고정 배치 |
-| sprites | `env.bush` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Green_01.png` | fileID 21300000 | 지면 소품(덤불) |
+| sprites | `env.tree` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Tree_Green_01.png` | fileID 21300000 | 지면 뒤 소품(나무) — 챕터마다 시드 고정 배치 · T37: 장비 화면 무대 위 가장자리 나무 5 |
+| sprites | `env.bush` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Bush/Bush_Green_01.png` | fileID 21300000 | 지면 소품(덤불) · T37: 장비 화면 무대 덤불 3 |
 | sprites | `env.mushroom` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Mushroom/Mushroom_Pink_01.png` | fileID 21300000 | 쉼터 노드 옆 버섯 · 지면 소품 |
 | sprites | `env.barrel` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Etc/Ork.png` | fileID 21300000 | 쉼터 노드 — 통(Ork) + CFXR Fire(모닥불) + 버섯 (Environment 팩에 모닥불이 없어 이렇게 조합 · 주인 «알아서») |
 | sprites | `env.monolith` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_11.png` | fileID 21300000 | 악마 노드 — 회색 돌기둥 + CFXR2 Souls Escape + 죽은 나무 |
@@ -240,9 +240,9 @@
 | sprites | `hud.gradeGem` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/Grade_Gem_01.png` | fileID 21300000 |  |
 | sprites | `hud.gradeGemEmpty` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/Grade_Gem_01_Empty.png` | fileID 21300000 |  |
 | sprites | `hud.alertAd` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/Alert_Ad_01.png` | fileID 21300000 |  |
-| sprites | `fr.rect` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_01~04_White_Bg.png` | fileID 21300000 |  |
+| sprites | `fr.rect` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_01~04_White_Bg.png` | fileID 21300000 | T37: 장비 화면 버튼 줄 뒤 갈색 띠 |
 | sprites | `fr.rectBorder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_01~04_White_Border1.png` | fileID 21300000 |  |
-| sprites | `fr.r12` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_R12_Bg.png` | fileID 21300000 | EXP 바 왼쪽 «EXP» 초록 라벨 배경(T35 · 9-slice) |
+| sprites | `fr.r12` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_R12_Bg.png` | fileID 21300000 | EXP 바 왼쪽 «EXP» 초록 라벨 배경(T35 · 9-slice) · T37: 장비 슬롯 «+N» 노란 배지 |
 | sprites | `fr.circle` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Circle_H86_White_Bg.png` | fileID 21300000 | 전투 HUD 오른쪽 아래 펫 둥근 버튼 바탕(보라 · 껍데기 · T35) |
 | sprites | `fr.circleBorder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Circle_H70_White_Border.png` | fileID 21300000 | 펫 둥근 버튼 테두리(T35) |
 | sprites | `fr.sliderBg` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Slider/Slider_02_White_Bg.png` | fileID 21300000 |  |
@@ -414,7 +414,7 @@
 | prefabs | `ui.itemDetail` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Character_Hero_Item_Detail_01.prefab` | root 7414256810885239513 | 장비 세부 팝업 (Character_Hero_Item_Detail_01) — 등급 배지 · 아이콘 · 이름 · 슬롯 Lv 바 · 기여/옵션 목록 · 장착/해제/슬롯 강화 |
 | prefabs | `ui.shopList` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Shop_List.prefab` | root 7323211708528492628 | 상점 (주인 지정 Shop_List · T9 부터 프리팹 원형 그대로 · 요소 이동 없음 · 스크롤·섹션·비율 그대로) — ListItem_ShopPackage ×3(프리팹 2개 + 복제 1개) = 뽑기 상자 3종(gacha.json 순서 · 1회/10회 = Button_Price 와 그 복제) · Title_DailyDeals+Group_Item = 일일 무료 보급(Timer_01 = 자정까지) · Title_Gem+Group_Gem1/2 = 다이아 6종 · Title_Gold+Group_Gold = 골드 3종(칸은 전부 ListItem_ShopItem) · 하단 Tab_02_BoxMenu_Text 3칸 = 뽑기/다이아/골드 로 스크롤 · Tab_01_BottomFlushMenu = NavBar · ResourceBar_Group = 골드·보석. Group_Chest·Title_Silver·Group_Silver 는 끈다(이 게임에 없는 상품) |
 | prefabs | `ui.shopItem` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoLayout/ListItem_ShopItem.prefab` | root 7492873612176689367 | 상점 상품 칸 (주인 지정 ListItem_ShopItem · 323.78×419.78 그대로) — Text_Title 상품명 · Icon 재화 그림 · Text_ItemNum 수량 · Text_Limit 부제 · Button_Price(GroupArea Icon+Text) 가격. 다이아 6(₩ · 모의 결제) · 골드 3(다이아 소모) · 일일 무료 보급 · 추가 보급(잠김) |
-| prefabs | `ui.equipment` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Character_Hero_Equipment.prefab` | root 2550204177070044198 | 장비 탭 (주인 지정 Character_Hero_Equipment · T7 부터 원형 그대로 · 요소 이동 없음) — 슬롯 6(프리팹 격자·Item 크기 그대로 · 부위 라벨 없음) · 가운데 Character 자리 = HeroView(장착 외형) · 전투력 · 공/체/실 · 인벤 = ListItem_EquipMent 격자(장착분 숨김) · 오른쪽 위 골드만 · 하단 상점/합성 |
+| prefabs | `ui.equipment` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Character_Hero_Equipment.prefab` | root 2550204177070044198 | 장비 화면 인벤 격자 값의 원본(GearUi.CopyEquipmentGrid 가 Content 의 GridLayoutGroup 만 읽는다). T37(레퍼런스 06_gear.jpg 구도)부터 화면에는 세우지 않는다 — 슬롯·스탯·버튼은 조각으로 재조립 |
 | prefabs | `ui.equipCell` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoLayout/ListItem_EquipMent.prefab` | root 6644578971798763600 | 장비 칸(주인 지정 ListItem_EquipMent · 188×188 «이게 지금 딱 레이아웃 좋다») — 장비 화면 인벤 · 대장간 · 뽑기 결과 · 세부 팝업이 같은 칸(GearUi.Cell). NormalArea 에 등급색 ItemFrame_01_Normal_* · Item 에 아이콘 · Text_Level 에 +N · TypeArea 에 세트 아이콘 · Check = 장착중(대장간만) |
 | prefabs | `ui.bossWarn` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Play_Warning_Boss.prefab` | root 8909184347632126517 | 보스 경고 띠 (Play_Warning_Boss 의 Panel_Warning 만 떼어 쓴다) |
 | prefabs | `ui.card` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoLayout/ListItem_StageBuff_02.prefab` | root 4696827470629324998 | 특전 카드 행(ListItem_StageBuff_02) — 등급별로 CardFrame_04_* / ItemFrame_04_* 색 교체 |
@@ -433,17 +433,17 @@
 | prefabs | `ui.btnInfo` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_Info.prefab` | root 5447371863407438132 | HUD 보유 특전(인포) |
 | prefabs | `ui.btnMenu` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_Menu.prefab` | root 2270988460478775910 | 전투 HUD 오른쪽 위 메뉴(≡ → 일시정지 팝업 · T35) · 로비 메뉴 |
 | prefabs | `ui.btnClose` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_Close_Square_01.prefab` | root 6286116089868610410 | 팝업 닫기(빨간 X) |
-| prefabs | `ui.btnOrange` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_02_Orange.prefab` | root 5376548450129869775 | 주 버튼(계속·다음 챕터·광고) |
+| prefabs | `ui.btnOrange` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_02_Orange.prefab` | root 5376548450129869775 | 주 버튼(계속·다음 챕터·광고) · T37: 장비 화면 «대장간»(주 = 주황 · 표 «액션바(Forge)» 자리 · 합성 가능하면 ui.alertDot) |
 | prefabs | `ui.btnBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_02_Blue.prefab` | root 3169995017952804435 | 보조 버튼(로비로·경험치·재개) |
 | prefabs | `ui.btnGreen` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_02_Green.prefab` | root 9150553914163084570 | 회복·무료 축복 |
 | prefabs | `ui.btnRed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_02_Red.prefab` | root 7765488801804226672 | 악마 거래 수락 · 포기 |
-| prefabs | `ui.btnGray` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_02_Gray.prefab` | root 1107728591113721123 | 거절 |
+| prefabs | `ui.btnGray` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_02_Gray.prefab` | root 1107728591113721123 | 거절 · T37: 장비 화면 «상점»(보조 = 회색 · 스탯 줄 아래 왼쪽) |
 | prefabs | `ui.btnPlum` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_02_Plum.prefab` | root 1483688008532254904 |  |
 | prefabs | `ui.btnYellow` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_02_Yellow.prefab` | root 2103124822572054393 |  |
 | prefabs | `ui.btnSmallBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_01_Blue.prefab` | root 4112720960120376265 | HUD 배속(x1/x2) 작은 버튼(왼쪽 아래 · 패널 바로 위) |
 | prefabs | `ui.btnSmallOrange` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_01_Orange.prefab` | root 7667054196127442761 |  |
 | prefabs | `ui.btnStart` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_03_Red.prefab` | root 1623786085314472190 | 로비 START (Button_03_Red) |
-| prefabs | `ui.frameDark` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_Square_R12_NoBorder_TransperDark.prefab` | root 3811192130493240385 | HUD 하단 반투명 패널 · 스탯 8칸 상자(T35) · 로비 사이드 기둥 |
+| prefabs | `ui.frameDark` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_Square_R12_NoBorder_TransperDark.prefab` | root 3811192130493240385 | HUD 하단 반투명 패널 · 스탯 8칸 상자(T35) · 로비 사이드 기둥 · T37: 장비 화면 스탯 3칸(공·❤·🛡) 상자 |
 | prefabs | `ui.frameIvory` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_Rectangle_01_Border_Ivory.prefab` | root 1280354769812679374 |  |
 | prefabs | `ui.frameDarkBorder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_SquareSharpEdge_01_l_Border_TransperDark.prefab` | root 450577865911699251 |  |
 | prefabs | `ui.lineTitle` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_LineDeco_01_s.prefab` | root 7786740578430808921 | 챕터 제목 밑줄 장식 (Title_LineDeco_01_s) |
@@ -479,7 +479,7 @@
 | prefabs | `ui.itemFrame.plum` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01_Normal_Plum.prefab` | root 2235254707959506410 |  |
 | prefabs | `ui.itemFrame.red` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01_Normal_Red.prefab` | root 6024362918899194262 |  |
 | prefabs | `ui.itemFrame.green` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01_Normal_Green.prefab` | root 6172468895370388958 |  |
-| prefabs | `ui.itemFrame.empty` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01.prefab` | root 8001034410668339735 |  |
+| prefabs | `ui.itemFrame.empty` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01.prefab` | root 8001034410668339735 | ItemFrame_01(빈 칸 · 190px) · T37: 장비 화면 장착 슬롯 6칸의 조각(본래 190px · FitScale 로 표 «슬롯 1칸» 크기에 · NormalArea 에 등급색 변형 · Item 에 아이콘 · Add_1 = 빈 슬롯 +) |
 | prefabs | `ui.label.green` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Label/Label_Tapered_02_Green.prefab` | root 8545814299521033444 | 등급 라벨(pill) |
 | prefabs | `ui.label.blue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Label/Label_Tapered_02_Blue.prefab` | root 132865572412744726 |  |
 | prefabs | `ui.label.yellow` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Label/Label_Tapered_02_Yellow.prefab` | root 4492099945815703624 |  |

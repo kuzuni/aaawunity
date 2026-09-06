@@ -6,111 +6,120 @@ using UnityEngine.UI;
 namespace KkomaKnight.Game
 {
     /// <summary>
-    /// 장비 탭 = 주인 지정 GUI Pro 데모 프리팹 **Character_Hero_Equipment 그대로**(T7 · 주인 지시 2026-09-05).
-    /// 프리팹 요소를 옮기거나 지우지 않고 글자·그림·개수만 바꾼다: 슬롯 6칸(프리팹 격자 164px 그대로 · 부위 라벨 없음 · «Lv.N» 만) ·
-    /// 가운데 캐릭터 = 플레이어 프리팹(<see cref="HeroView"/> · 장착 외형 반영) · 전투력 · 공/체/실 3칸 · 인벤 = ListItem_EquipMent 격자(장착분 숨김) ·
-    /// 상단은 TopBar 없이 오른쪽 위 골드만 · 하단 버튼 = 상점 / 합성(대장간). «균등 보너스» 문구 없음. 자동 장착 없음(«↑» 대신 프리팹의 빨간 점).
+    /// 장비 탭 = 레퍼런스 <c>docs/ref/06_gear.jpg</c> 구도(T37 · 주인 2026-09-06 «UI 는 무조건 레퍼런스 기준» · T25 흡수). ref-layout ③ 표(<see cref="Layout.GearStage"/> …) 자리에 GUI Pro 조각을 다시 조립한다:
+    /// ① 상단 재화 바(<see cref="TopBar"/> · 아바타·전투력·골드·보석) → ② <b>캐릭터 무대</b>(Environment 들판·길·나무 · 가운데 큰 플레이어 <see cref="HeroView"/> · 좌 3 / 우 3 슬롯 = ItemFrame_01 조각 + 위 «Lv. N» + 왼쪽 위 부위(세트) 아이콘 + «+N» 배지 + 빨간 점)
+    /// → ③ <b>스탯 3칸 한 줄</b>(공 · ❤ · 🛡 · 어두운 상자) → ④ 갈색 띠 위 <b>«상점»(회색 · 왼쪽) · «대장간»(주황 · 오른쪽 · 합성 가능하면 빨간 !)</b> → ⑤ <b>인벤 5열 격자</b>(<see cref="GearUi.Grid"/> · 장착분 숨김 · 칸 = ListItem_EquipMent) → ⑥ 탭 바.
+    /// Character_Hero_Equipment 프리팹은 더 이상 통째로 세우지 않는다(격자 값의 원본으로만 · <see cref="GearUi.CopyEquipmentGrid"/>). 규칙·수치는 그대로(자동 장착 없음 · «균등 보너스» 문구 없음).
+    /// 이름 계약(스모크 테스트): 슬롯 묶음 <c>Group_Slot</c> → 자식 6 → 각각 <c>ItemFrame_01/Item</c> · 인벤 <c>Content</c> · 탭 바 <c>ui.tabBar</c> · 무대 <c>Stage</c> · 스탯 <c>Stat:*</c> · 버튼 <c>ShopBtn</c>/<c>ForgeBtn</c>.
     /// </summary>
     public sealed class GearScreen : GameScreen
     {
         public override string Name => "gear";
-        RectTransform _rt; Transform _slots, _content; Text _power, _atk, _hp, _sh, _fuseTxt, _gold; HeroView _hero;
         const int SlotCount = 6;
+        /// <summary>«상점» 버튼 자리 — 표에는 «액션바(Forge)» 만 있어(오른쪽 끝) 왼쪽 끝을 같은 줄·같은 크기로 대칭(주인 T25: «상점·합성 버튼을 스탯 3칸 바로 아래로»).</summary>
+        public static readonly Layout.R ShopBtn = new Layout.R(100f - Layout.GearForgeBtn.X - Layout.GearForgeBtn.W, Layout.GearForgeBtn.Y, Layout.GearForgeBtn.W, Layout.GearForgeBtn.H);
+        /// <summary>버튼 줄 뒤 갈색 띠 — 스탯 줄 아래(40.5%)부터 인벤 격자 위(47.5%)까지.</summary>
+        public static readonly Layout.R Band = new Layout.R(0, Layout.GearStats.Y + Layout.GearStats.H + 0.5f, 100, Layout.GearInv.Y - (Layout.GearStats.Y + Layout.GearStats.H + 0.5f));
+        /// <summary>무대 안 길 띠(무대 % · 레퍼런스: 아래 1/3 이 흙길) · 나무 5그루(무대 위쪽 가장자리) · 덤불 3.</summary>
+        static readonly Layout.R StageRoad = new Layout.R(0, 58, 100, 24);
+        static readonly Layout.R[] StageTrees = { new Layout.R(-4, -6, 22, 58), new Layout.R(16, -10, 22, 60), new Layout.R(39, -8, 22, 58), new Layout.R(61, -10, 22, 60), new Layout.R(82, -6, 22, 58) };
+        static readonly Layout.R[] StageBushes = { new Layout.R(24, 44, 12, 16), new Layout.R(66, 46, 12, 16), new Layout.R(45, 84, 10, 14) };
+
+        sealed class SlotUi { public RectTransform Root; public Transform Frame; public Text Lv, Plus; public GameObject PlusBadge, Dot; public Image PartIcon; public string Part; }
+        readonly SlotUi[] _slot = new SlotUi[SlotCount];
+        TopBar _top; HeroView _hero; Transform _content; Text _atk, _hp, _sh; GameObject _forgeDot;
+
+        static string PartAt(int slotIndex) => slotIndex < 3 ? GearUi.ColLeft[slotIndex] : GearUi.ColRight[slotIndex - 3];
 
         protected override void Build()
         {
-            var bg = UiKit.Ensure<Image>(Root.gameObject); bg.color = Palette.Hex("#EBDEC0"); bg.raycastTarget = true;   // 탭바 뒤까지 프리팹 Background 색
-            var root = UiKit.Spawn("ui.equipment", Root); _rt = (RectTransform)root.transform;
-            UiKit.Pct(_rt, 0, 0, 100, Layout.TabBar.Y);   // 프리팹 통째로 — 아래 탭바(⑧) 위까지. 내부 요소는 프리팹 값 그대로
-            UiKit.Hide(_rt, "Label_Tapered_01_Yellow", "Tab_02_BoxMenu_Icon");
-            var title = UiKit.Find(_rt, "Title_LineDeco_02_s"); if (title != null) UiKit.SetText(title, "Text (TMP)", "장비");
-            // 상단: TopBar 없음 · 오른쪽 위 골드만 (ResourceBar_Group 의 Coin 칸만 보이게)
-            var top = UiKit.Find(_rt, "Top");
-            if (top != null)
+            var bg = UiKit.Ensure<Image>(Root.gameObject); bg.color = Color.Lerp(Palette.Slate, Palette.Dim, 0.45f); bg.raycastTarget = true;   // 인벤 바탕 = 어두운 남색(레퍼런스 · 색은 점수 밖)
+
+            // ① 상단 재화 바 — 공용 헬퍼(아바타 · 전투력 · 골드 · 보석)
+            _top = TopBar.Build(App, Root);
+
+            // ② 캐릭터 무대 — Environment 들판(전체) + 나무(위 가장자리) + 덤불 + 길 띠(아래 1/3) · 무대 밖은 잘라낸다
+            var stage = UiKit.Rect(Root, "Stage"); UiKit.Pct(stage, Layout.GearStage); UiKit.Ensure<RectMask2D>(stage.gameObject);
             {
-                var bar = UiKit.Spawn("ui.resourceBar", top); var br = (RectTransform)bar.transform;
-                var hl = bar.GetComponent<HorizontalLayoutGroup>(); if (hl != null) hl.enabled = false;
-                UiKit.Hide(br, "ResourceBar_Gem", "ResourceBar_GemStone");
-                br.anchorMin = br.anchorMax = new Vector2(1, 0.5f); br.pivot = new Vector2(1, 0.5f); br.sizeDelta = new Vector2(250, 65.1f); br.anchoredPosition = new Vector2(-24, 0);
-                var coin = UiKit.Find(br, "ResourceBar_Coin"); if (coin != null) UiKit.Stretch((RectTransform)coin);
-                _gold = UiKit.SetText(br, "ResourceBar_Coin/Text (TMP)", "0");
+                var field = UiKit.Icon(stage, "Field", "env.field"); field.preserveAspect = false; UiKit.Stretch(field.rectTransform);
+                for (int i = 0; i < StageTrees.Length; i++) { var t = UiKit.Icon(stage, "Tree" + i, "env.tree"); UiKit.Pct(t.rectTransform, StageTrees[i]); }
+                var road = UiKit.Icon(stage, "Road", "env.road"); road.preserveAspect = false; UiKit.Pct(road.rectTransform, StageRoad);
+                for (int i = 0; i < StageBushes.Length; i++) { var b = UiKit.Icon(stage, "Bush" + i, "env.bush"); UiKit.Pct(b.rectTransform, StageBushes[i]); }
+                // 가운데 큰 플레이어 — 표의 «캐릭터» 행 높이(19%)의 정사각 호스트(텍스처가 정사각이라 찌그러지지 않게 · 폭은 높이에서 환산) · 기본 프레이밍이면 몸이 호스트 세로의 ≈89%(T25 «85~90%»)
+                float hostW = Layout.GearHero.H * UiKit.FrameH / UiKit.FrameW;
+                var host = UiKit.Rect(stage, "Hero"); UiKit.Pct(host, (Layout.GearHero.X + Layout.GearHero.W * 0.5f - hostW * 0.5f - Layout.GearStage.X) / Layout.GearStage.W * 100f, (Layout.GearHero.Y - Layout.GearStage.Y) / Layout.GearStage.H * 100f, hostW / Layout.GearStage.W * 100f, Layout.GearHero.H / Layout.GearStage.H * 100f);
+                _hero = HeroView.Attach(host, HeroView.PlayerSkin(App));
             }
-            // 슬롯 격자 — 프리팹 GridLayoutGroup(164×164 · 2열 · 세로 우선) 그대로 → 왼쪽열 0~2 = 무기·목걸이·갑옷 · 오른쪽열 3~5 = 투구·장갑·신발 (index.html GEAR_COL)
-            _slots = UiKit.Find(_rt, "Group_Slot");
-            // 가운데 캐릭터 = 플레이어 프리팹 (샘플 그림은 끄고 같은 자리에 HeroView)
-            var character = UiKit.Find(_rt, "Character");
-            if (character != null) { var ci = character.GetComponent<Image>(); if (ci != null) ci.enabled = false; _hero = HeroView.Attach((RectTransform)character, HeroView.PlayerSkin(App)); var arf = UiKit.Ensure<AspectRatioFitter>(_hero.gameObject); arf.aspectMode = AspectRatioFitter.AspectMode.FitInParent; arf.aspectRatio = 1f; }   // 정사각 텍스처 — 314×398 자리에서 찌그러지지 않게
-            var mid1 = UiKit.Find(_rt, "Middle1");
-            if (mid1 != null)
+            // 슬롯 6칸 — 표의 좌열(무기·목걸이·갑옷) / 우열(투구·장갑·신발) · 칸 = ItemFrame_01 조각(본래 190px · 배율로 표 크기에) · 위 «Lv. N» · 왼쪽 위 세트 아이콘 · «+N» 노란 배지 · 오른쪽 위 빨간 점
+            var grp = UiKit.Rect(Root, "Group_Slot"); UiKit.Stretch(grp);
+            for (int i = 0; i < SlotCount; i++)
             {
-                UiKit.Hide(mid1, "Text_Level");   // 프리팹의 «Lv.9» 자리 — 이 게임엔 캐릭터 레벨이 없다(균등 보너스 문구도 넣지 않는다)
-                var grp = UiKit.Find(mid1, "Group"); if (grp != null) { _power = UiKit.SetText(grp, "Text", "0"); UiKit.SetSprite(grp, "Icon", "ui.battle", Palette.White); }
+                var col = i < 3 ? Layout.GearSlotColL : Layout.GearSlotColR; int row = i % 3; string part = PartAt(i);
+                var s = _slot[i] = new SlotUi { Part = part };
+                s.Root = UiKit.Rect(grp, "Slot:" + part); UiKit.Pct(s.Root, col.X, col.Y + row * Layout.GearSlotPitch, Layout.GearSlot.W, Layout.GearSlotH);
+                var frame = UiKit.Spawn("ui.itemFrame.empty", s.Root); frame.name = "ItemFrame_01"; s.Frame = frame.transform;
+                UiKit.FitScale((RectTransform)s.Frame, UiKit.PxSize(Layout.GearSlot));
+                UiKit.Hide(s.Frame, "Text_Level", "Focus", "Disable", "Lock", "Add_2");   // 조각의 데모 글자·상태 켜짐은 끈다 · Add_1(+) 은 빈 슬롯 표시
+                s.Lv = UiKit.Label(s.Root, -10, -30, 120, 28, "Lv. 0", 26, Palette.White, TextAnchor.LowerCenter);
+                s.PartIcon = UiKit.Icon(s.Root, "PartIcon", "pi.attack"); UiKit.Pct(s.PartIcon.rectTransform, -8, -8, 30, 30);
+                var badge = UiKit.Panel(s.Root, "PlusBadge", "fr.r12", Palette.Yellow); UiKit.Pct(badge.rectTransform, 20, 82, 60, 24); s.PlusBadge = badge.gameObject;
+                s.Plus = UiKit.Text(badge.transform, "+0", 24, Palette.Ink, TextAnchor.MiddleCenter, true, false); UiKit.Stretch(s.Plus.rectTransform);
+                var dot = UiKit.Spawn("ui.alertDot", s.Root); var dr = (RectTransform)dot.transform; dot.name = "Alert_Dot_01_Red"; dr.anchorMin = dr.anchorMax = new Vector2(1, 1); dr.pivot = new Vector2(0.5f, 0.5f); dr.anchoredPosition = new Vector2(-6, -6); dr.sizeDelta = new Vector2(44, 44); s.Dot = dot;
+                int idx = i; UiKit.Clickable(s.Root, () => OnSlot(idx));
             }
-            // 공/체/실 3칸 — 프리팹 Group_List 의 3행 그대로
-            var list = UiKit.Find(_rt, "Group_List");
-            if (list != null && list.childCount >= 3)
-            {
-                _atk = UiKit.SetText(list.GetChild(0), "Text (TMP)", "0"); UiKit.SetSprite(list.GetChild(0), "Icon", "pi.attack", Palette.InkSoft);
-                _hp = UiKit.SetText(list.GetChild(1), "Text (TMP)", "0"); UiKit.SetSprite(list.GetChild(1), "Icon", "pi.heart", Palette.Red);
-                _sh = UiKit.SetText(list.GetChild(2), "Text (TMP)", "0"); UiKit.SetSprite(list.GetChild(2), "Icon", "pi.shield", Palette.Sky);
-            }
-            // 인벤 격자 — 프리팹 ScrollRect/Content(188 칸 · 5열) 그대로 · 칸은 ListItem_EquipMent
-            _content = UiKit.Find(_rt, "Content");
-            if (_content != null)
-            {
-                UiKit.Clear(_content);
-                var sr = _rt.GetComponentInChildren<ScrollRect>(true);
-                if (sr != null) { sr.scrollSensitivity = 40; var vp = sr.viewport != null ? sr.viewport.GetComponent<Image>() : null; if (vp != null) vp.raycastTarget = true; }
-            }
-            // 하단 — 뒤로(로비) · 상점 · 합성(대장간)
-            var back = UiKit.Find(_rt, "ArrowIconButton_03_Back"); if (back != null) UiKit.Clickable(back, () => App.ShowScreen("lobby"));
-            var btns = UiKit.Find(_rt, "Group_Buttons");
-            if (btns != null)
-            {
-                var shop = UiKit.FindAny(btns, "Button_02_Blue"); if (shop == null && btns.childCount > 0) shop = btns.GetChild(0);
-                var fuse = UiKit.FindAny(btns, "Button_02_Convex_Green"); if (fuse == null && btns.childCount > 1) fuse = btns.GetChild(1);
-                if (shop != null) { var t = shop.GetComponentInChildren<Text>(true); if (t != null) t.text = "상점"; UiKit.Clickable(shop, () => App.ShowScreen("shop")); }
-                if (fuse != null) { _fuseTxt = fuse.GetComponentInChildren<Text>(true); if (_fuseTxt != null) _fuseTxt.text = "합성"; UiKit.Clickable(fuse, () => App.ShowScreen("forge")); }
-            }
+
+            // ③ 스탯 3칸 한 줄 — 공 · ❤ · 🛡 (어두운 상자 · 왼쪽 아이콘 · 큰 숫자)
+            _atk = StatCell(0, "atk", "pi.attack", Palette.White); _hp = StatCell(1, "hp", "pi.heart", Palette.Red); _sh = StatCell(2, "sh", "pi.shield", Palette.Sky);
+
+            // ④ 갈색 띠 + «상점»(회색 · 왼쪽) · «대장간»(주황 · 오른쪽 · 빨간 !) — 스탯 3칸 바로 아래(주인 T25)
+            var band = UiKit.Panel(Root, "Band", "fr.rect", Palette.InkLight); UiKit.Pct(band.rectTransform, Band); band.raycastTarget = true;
+            var shop = UiKit.Button(Root, "ui.btnGray", "상점", () => App.ShowScreen("shop"), ShopBtn); shop.name = "ShopBtn";
+            var forge = UiKit.Button(Root, "ui.btnOrange", "대장간", () => App.ShowScreen("forge"), Layout.GearForgeBtn); forge.name = "ForgeBtn";
+            { var d = UiKit.Spawn("ui.alertDot", forge); var dr = (RectTransform)d.transform; d.name = "ForgeDot"; dr.anchorMin = dr.anchorMax = new Vector2(1, 1); dr.pivot = new Vector2(0.5f, 0.5f); dr.anchoredPosition = new Vector2(-4, 4); dr.sizeDelta = new Vector2(52, 52); _forgeDot = d; }
+
+            // ⑤ 인벤 5열 격자(장비 화면 프리팹의 격자 값 · 칸 = ListItem_EquipMent) → ⑥ 탭 바
+            _content = GearUi.Grid(Root, Layout.GearInv, out _);
             NavBar.Attach(this, Root, "gear");
         }
 
-        static string PartAt(int slotIndex) => slotIndex < 3 ? GearUi.ColLeft[slotIndex] : GearUi.ColRight[slotIndex - 3];
+        /// <summary>스탯 칸 하나 — 표의 «스탯 요약줄» 을 3등분(칸 사이 2%) · 어두운 상자 + 왼쪽 아이콘 + 숫자. 이름 <c>Stat:&lt;key&gt;</c>.</summary>
+        Text StatCell(int i, string key, string icon, Color tint)
+        {
+            var r = Layout.GearStats; float gap = 2f, w = (r.W - gap * 2) / 3f;
+            var cell = UiKit.Spawn("ui.frameDark", Root); var crt = (RectTransform)cell.transform; crt.name = "Stat:" + key; UiKit.Pct(crt, r.X + i * (w + gap), r.Y, w, r.H);
+            var ic = UiKit.Icon(crt, "Icon", icon, tint); UiKit.Pct(ic.rectTransform, 6, 14, 20, 72);
+            return UiKit.Label(crt, 28, 0, 66, 100, "0", 40, Palette.White, TextAnchor.MiddleCenter);
+        }
+
+        void OnSlot(int i)
+        {
+            var s = _slot[i]; var g = App.Save.EquippedGear(s.Part);
+            if (g != null) GearUi.OpenDetail(App, g, Refresh); else GearUi.OpenSlot(App, s.Part, Refresh);
+        }
 
         public override void Refresh()
         {
             var D = App.Data; var S = App.Save;
-            // 슬롯 6칸 — 프리팹 슬롯의 ItemFrame_01/Item 에 스프라이트만 꽂는다(크기 그대로)
-            if (_slots != null)
+            // 슬롯 6칸 — 등급색 프레임 · 아이콘(T31 Thumbnail · T17 72% 맞춤) · «Lv. N»(슬롯 레벨) · «+N» · 세트 아이콘 · 빨간 점(인벤에 더 좋은 게 있다 · 자동 장착 없음)
+            for (int i = 0; i < SlotCount; i++)
             {
-                for (int i = 0; i < _slots.childCount && i < SlotCount; i++)
-                {
-                    var slot = _slots.GetChild(i); string part = PartAt(i); var g = S.EquippedGear(part); int lv = S.SlotLv(part);
-                    var frame = UiKit.Find(slot, "ItemFrame_01");
-                    if (frame != null)
-                    {
-                        var area = UiKit.Find(frame, "NormalArea");
-                        if (area != null) { UiKit.Clear(area); if (g != null) { var f = UiKit.Spawn("ui.itemFrame." + Palette.RarName(g.Rar), area); UiKit.Stretch((RectTransform)f.transform); } }
-                        var item = UiKit.Find(frame, "Item");
-                        if (item != null) { item.gameObject.SetActive(g != null); if (g != null) { var im = UiKit.SetSprite(frame, "Item", GearLook.IconKey(D, g), Palette.White); GearUi.FitIcon(im, g); } }   // 파츠 아이콘은 칸 72%(T17) · GUI Pro 아이콘은 프리팹 크기
-                        UiKit.Show(frame, "Add_1", g == null); UiKit.Show(frame, "Add_2", false); UiKit.Show(frame, "Lock", false); UiKit.Show(frame, "Focus", false); UiKit.Show(frame, "Disable", false);
-                    }
-                    var dia = UiKit.FindAny(slot, "BasicFrame_Diamond_01_NoBorder_Plum", "BasicFrame_Diamond_H48_NoBorder_Plum");
-                    if (dia != null) { dia.gameObject.SetActive(g != null); if (g != null) UiKit.SetSprite(dia, "Icon", GearUi.SetIcon(GearUi.Set(D, g)), Palette.White); }
-                    var lvl = slot.Find("Text_Level");   // 부위 이름(«갑옷·장갑·투구…»)은 적지 않는다 — 슬롯 레벨(+강화)만
-                    if (lvl != null) { lvl.gameObject.SetActive(true); var t = lvl.GetComponent<Text>(); if (t != null) t.text = $"Lv.{lv}" + (g != null && g.Plus > 0 ? $" +{g.Plus}" : ""); }
-                    UiKit.Show(slot, "Alert_Dot_01_Red", GearUi.BetterInInv(S, part));   // 프리팹의 빨간 점 = 인벤에 더 좋은 게 있다(자동 장착 없음)
-                    string p = part; var gg = g;
-                    UiKit.Clickable(slot, () => { if (gg != null) GearUi.OpenDetail(App, gg, Refresh); else GearUi.OpenSlot(App, p, Refresh); });
-                }
+                var s = _slot[i]; if (s == null || s.Frame == null) continue;
+                var g = S.EquippedGear(s.Part); int lv = S.SlotLv(s.Part);
+                var area = UiKit.Find(s.Frame, "NormalArea");
+                if (area != null) { UiKit.Clear(area); if (g != null) { var f = UiKit.Spawn("ui.itemFrame." + Palette.RarName(g.Rar), area); UiKit.Stretch((RectTransform)f.transform); } }
+                var item = UiKit.Find(s.Frame, "Item");
+                if (item != null) { item.gameObject.SetActive(g != null); if (g != null) { var im = UiKit.SetSprite(s.Frame, "Item", GearLook.IconKey(D, g), Palette.White); GearUi.FitIcon(im, g); } }
+                UiKit.Show(s.Frame, "Add_1", g == null);
+                if (s.Lv != null) s.Lv.text = $"Lv. {lv}";
+                if (s.PlusBadge != null) s.PlusBadge.SetActive(g != null && g.Plus > 0); if (s.Plus != null && g != null) s.Plus.text = "+" + g.Plus;
+                if (s.PartIcon != null) { s.PartIcon.gameObject.SetActive(g != null); if (g != null) { s.PartIcon.sprite = App.Assets.Sprite(GearUi.SetIcon(GearUi.Set(D, g))); s.PartIcon.color = Palette.White; } }
+                if (s.Dot != null) s.Dot.SetActive(GearUi.BetterInInv(S, s.Part));
             }
-            // 스탯 · 전투력 · 골드 · 합성 버튼 · 캐릭터 외형
+            // 스탯 · 상단 바 · 대장간 ! · 캐릭터 외형
             var pw = GearSystem.BuildPower(D, S.CurBuild(D));
             if (_atk != null) _atk.text = UiKit.Fmt(Math.Round(pw.Atk)); if (_hp != null) _hp.text = UiKit.Fmt(Math.Round(pw.Hp)); if (_sh != null) _sh.text = UiKit.Fmt(Math.Round(pw.Sh));
-            if (_power != null) _power.text = UiKit.Fmt(App.Power());
-            if (_gold != null) _gold.text = UiKit.Fmt(S.Gold);
-            var fkeys = GearUi.FusableKeys(S);
-            if (_fuseTxt != null) _fuseTxt.text = fkeys.Count > 0 ? $"합성 ({fkeys.Count}) !" : "합성";
+            _top?.Refresh();
+            if (_forgeDot != null) _forgeDot.SetActive(GearUi.FusableKeys(S).Count > 0);
             _hero?.SetSkin(HeroView.PlayerSkin(App));
             // 인벤 격자 — 장착 중인 장비는 숨긴다(«장착중» 배지 없음 · 합성 점도 여기서는 끔)
             if (_content != null)

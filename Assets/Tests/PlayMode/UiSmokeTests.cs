@@ -240,6 +240,35 @@ namespace KkomaKnight.Tests.Play
             var content = UiKit.Find(gear, "Content"); Assert.IsNotNull(content, "인벤 Content");
             Assert.AreEqual(items.Count, CountNamed(content, "gear:"), "인벤 칸 = 장비 수(장착 없음)");
             Assert.IsTrue(HasText(s => s == "장비"), "제목 «장비»");
+            // T37 — 레퍼런스 06_gear.jpg 구도 단언: 상단 재화 바 · 무대(들판·길·나무 · 정사각 캐릭터 호스트) · 슬롯 6 = 표 자리(좌 3 / 우 3 · ±0.5%p) · 스탯 3칸 · 상점/대장간 버튼(스탯 줄 아래 · 대장간 오른쪽 끝) · 인벤 5열 · 탭 바
+            {
+                var top = UiKit.Find(gear, "TopBar"); Assert.IsNotNull(top, "장비 화면 상단 재화 바"); Assert.IsNotNull(UiKit.Find(top, "Avatar"), "아바타"); Assert.IsNotNull(UiKit.Find(top, "ResourceBar_Gem"), "보석 pill");
+                var stage = (RectTransform)UiKit.Find(gear, "Stage"); Assert.IsNotNull(stage, "캐릭터 무대");
+                Assert.AreEqual(1f - Layout.GearStage.Y / 100f, stage.anchorMax.y, 1e-3f, "무대 = 표 자리(y)"); Assert.AreEqual(1f - (Layout.GearStage.Y + Layout.GearStage.H) / 100f, stage.anchorMin.y, 1e-3f, "무대 높이 = 표(26.5%)");
+                Assert.IsNotNull(UiKit.Find(stage, "Field"), "무대 들판"); Assert.IsNotNull(UiKit.Find(stage, "Road"), "무대 길"); Assert.GreaterOrEqual(CountNamed(stage, "Tree"), 3, "무대 나무");
+                var hero = (RectTransform)UiKit.Find(stage, "Hero"); Assert.IsNotNull(hero, "캐릭터 호스트");
+                Assert.IsNotNull(hero.GetComponentInChildren<HeroView>(true), "캐릭터 = HeroView(플레이어 외형)");
+                float hh = (hero.anchorMax.y - hero.anchorMin.y) * Layout.GearStage.H, hw = (hero.anchorMax.x - hero.anchorMin.x) * 100f;
+                Assert.AreEqual(Layout.GearHero.H, hh, 0.3f, "캐릭터 호스트 높이 = 표(19%)"); Assert.AreEqual(hh * UiKit.FrameH / UiKit.FrameW, hw, 0.3f, "캐릭터 호스트는 정사각(폭 = 높이 환산)");
+                Assert.AreEqual(50f, (hero.anchorMin.x + hero.anchorMax.x) * 50f, 0.5f, "캐릭터는 가운데");
+                for (int i = 0; i < 6; i++)
+                {
+                    var sl = (RectTransform)slots.GetChild(i); var col = i < 3 ? Layout.GearSlotColL : Layout.GearSlotColR; float y = col.Y + (i % 3) * Layout.GearSlotPitch;
+                    Assert.AreEqual(col.X, sl.anchorMin.x * 100f, 0.5f, "슬롯 " + i + " x"); Assert.AreEqual(y, (1f - sl.anchorMax.y) * 100f, 0.5f, "슬롯 " + i + " y");
+                    Assert.AreEqual(Layout.GearSlot.W, (sl.anchorMax.x - sl.anchorMin.x) * 100f, 0.5f, "슬롯 " + i + " 폭"); Assert.AreEqual(Layout.GearSlotH, (sl.anchorMax.y - sl.anchorMin.y) * 100f, 0.5f, "슬롯 " + i + " 높이");
+                    Assert.IsTrue(HasText(s => s == "Lv. 0"), "슬롯 위 «Lv. N»");
+                }
+                Assert.AreEqual(3, CountNamed(gear, "Stat:"), "스탯 3칸(공·❤·🛡)");
+                var forgeB = (RectTransform)UiKit.Find(gear, "ForgeBtn"); var shopB = (RectTransform)UiKit.Find(gear, "ShopBtn"); var statA = (RectTransform)UiKit.Find(gear, "Stat:atk");
+                Assert.IsNotNull(forgeB, "«대장간» 버튼"); Assert.IsNotNull(shopB, "«상점» 버튼"); Assert.IsNotNull(statA, "스탯 칸");
+                Assert.AreEqual(Layout.GearForgeBtn.X + Layout.GearForgeBtn.W, forgeB.anchorMax.x * 100f, 0.5f, "대장간 = 오른쪽 끝(표 액션바)");
+                Assert.Less(forgeB.anchorMax.y, statA.anchorMin.y, "버튼 줄은 스탯 줄 아래"); Assert.AreEqual(forgeB.anchorMax.y, shopB.anchorMax.y, 1e-3f, "상점·대장간 같은 줄");
+                Assert.IsTrue(HasText(s => s == "대장간") && HasText(s => s == "상점"), "버튼 라벨 우리말");
+                var inv = (RectTransform)UiKit.Find(gear, "InvScroll"); Assert.IsNotNull(inv, "인벤 스크롤");
+                Assert.AreEqual(1f - Layout.GearInv.Y / 100f, inv.anchorMax.y, 1e-3f, "인벤 = 표 자리"); Assert.Less(inv.anchorMax.y, forgeB.anchorMin.y + 1e-3f, "인벤은 버튼 줄 아래");
+                var grid = content.GetComponent<GridLayoutGroup>(); Assert.IsNotNull(grid, "인벤 격자"); Assert.AreEqual(Layout.GearInvCols, grid.constraintCount, "5열");
+                Assert.AreEqual(0, CountNamed(gear, "ui.equipment"), "Character_Hero_Equipment 를 통째로 세우지 않는다(T37)");
+            }
             Check("장비 화면");
 
             // 세부 팝업(미장착) → 장착
