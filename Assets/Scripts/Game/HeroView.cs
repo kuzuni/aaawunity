@@ -34,6 +34,8 @@ namespace KkomaKnight.Game
         /// <summary>테스트/진단용 — 이 뷰가 찍는 텍스처·카메라.</summary>
         public RenderTexture Texture => _tex;
         public Camera Cam => _cam;
+        /// <summary>RawImage 안에서 <b>몸(리그 스프라이트 경계)이 실제로 보이는 사각형</b> — 그림 없는 빈 Rect(앵커 = 텍스처 정규 좌표 · <see cref="Fit"/> 마다 갱신). UI 비평 이름표(«캐릭터» 행 · T46)가 이걸 잰다.</summary>
+        public RectTransform Body { get; private set; }
 
         /// <summary>host(프리팹의 초상 마스크 등) 안을 가득 채우는 RawImage 로 세운다. skin 이 null 이면 기본 기사 외형.</summary>
         public static HeroView Attach(RectTransform host, CharacterRig.Skin skin = null, int texSize = 512)
@@ -42,6 +44,7 @@ namespace KkomaKnight.Game
             var img = UiKit.Ensure<RawImage>(rt.gameObject); img.raycastTarget = false; img.color = Color.white;
             var hv = UiKit.Ensure<HeroView>(rt.gameObject);
             hv._img = img;
+            hv.Body = UiKit.Rect(rt, "Body"); UiKit.Stretch(hv.Body);
             hv.BuildStage(texSize);
             hv.SetSkin(skin ?? DefaultKnightSkin());
             return hv;
@@ -137,6 +140,14 @@ namespace KkomaKnight.Game
             float half = Mathf.Max(b.extents.x, b.extents.y, 0.2f) * 1.12f / _zoom;
             _cam.orthographicSize = half;
             _cam.transform.position = new Vector3(b.center.x, b.center.y + b.extents.y * _yBias, b.center.z - 10f);
+            if (Body != null && half > 0f)
+            {
+                // 정사각 텍스처에서 몸이 차지하는 정규 사각형(0~1 · 카메라 중심이 0.5) — RawImage 가 host 를 채우므로 그대로 RawImage 안 앵커가 된다
+                var c = _cam.transform.position; float s = 2f * half;
+                Body.anchorMin = new Vector2(Mathf.Clamp01((b.min.x - c.x) / s + 0.5f), Mathf.Clamp01((b.min.y - c.y) / s + 0.5f));
+                Body.anchorMax = new Vector2(Mathf.Clamp01((b.max.x - c.x) / s + 0.5f), Mathf.Clamp01((b.max.y - c.y) / s + 0.5f));
+                Body.offsetMin = Body.offsetMax = Vector2.zero;
+            }
         }
 
         static void SetLayerDeep(Transform t, int layer)

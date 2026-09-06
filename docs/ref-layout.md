@@ -1,6 +1,8 @@
 <!-- aaaw docs/ui/ref-layout.md 의 사본 (aaaw main c7ebe37 · 2026-09-05). 배치의 단일 정본 — 원본은 aaaw 에서만 고친다. Assets/Tests/EditMode/LayoutSpecTests.cs 가 이 표의 ①~⑦ 행을 Layout 상수와 대조한다. -->
 # 레퍼런스 레이아웃 실측표 (T116 · 자)
 
+> **채점 = `tools/ui_score.py <화면> [layout.json]`** (T46 · ROUTINE §5). 게임 쪽 % 는 PlayMode `UiShotsTests` 가 활성 `UiTag`(`UiKit.Tag(t, "요소 이름")` · «줄(N칸)» 은 `UiKit.TagGroup` 의 합집합)를 재서 `screens` 브랜치의 `layout.json` 에 쓴다 — 이름표는 이 표의 «요소» 열과 **글자까지 같아야** 한다. ①~⑦ 은 `ui_score.py` 의 SCREENS 표가 화면(01_lobby · 02_battle · 06_gear · 07_gear_detail · 08_gear_fuse · 09_shop_1/10_shop_2 · 04_perks/05_perks_list)에 고정 매핑 · **새 화면 표는 «## ⑨ 화면 이름 — `NN_name.jpg`» 형식으로 이 파일에 추가**(⑧ 공통 표는 화면이 아니다 · 제목의 백틱 파일명 `NN_` 접두로 찾는다). 아래 하니스 이야기(`tools/t3/shots.js` · CSS 선택자)는 aaaw(HTML) 것 — 규약(⊕ 합집합 · «(참고·컨테이너)» 제외 · ±3%p)만 그대로 쓴다.
+
 > **⚑ 주인 지시(12:0X·12:1X) — 채점은 배치·비율·비례만.** 이 표가 «자» 다. 회차 워커도 비평가도
 > 이 표의 % 와 `tools/t3/shots.js` 가 낸 `layout.json` 의 % 를 나란히 놓고 **±3%p(프레임 기준)** 로 판정한다.
 > 색·폰트·아이콘·그림체는 **이 표에 없다** — 점수 밖이기 때문이다.

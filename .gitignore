@@ -115,3 +115,5 @@ InitTestScene*.unity*
 
 # T13 — PlayMode PerkStripTests 가 남기는 스크린샷(CI 아티팩트 perkstrip-screens · 레포 커밋 금지)
 /perkstrip-screens/
+# T46 — PlayMode UiShotsTests 가 남기는 전 화면 PNG + layout.json(CI 가 screens 브랜치로만 올린다 · main 커밋 금지)
+/ui-screens/

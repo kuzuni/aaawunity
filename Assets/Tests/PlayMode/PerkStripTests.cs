@@ -134,59 +134,14 @@ namespace KkomaKnight.Tests.Play
             return (cells, more);
         }
 
-        // ───────────────────────── 스크린샷 ─────────────────────────
-        static IEnumerable<string> ScreenDirs()
-        {
-            yield return Path.Combine(Application.temporaryCachePath, "perkstrip-screens");
-            string root = null; try { root = Path.GetFullPath(Path.Combine(Application.dataPath, "..")); } catch { }
-            if (!string.IsNullOrEmpty(root)) yield return Path.Combine(root, "perkstrip-screens");   // CI 워크스페이스 → actions/upload-artifact «perkstrip-screens»
-        }
-        /// <summary>UI 캔버스를 잠시 카메라 모드로 돌려 RenderTexture 에 그린 뒤 PNG 로 — 배치 모드에서도 된다. 실패해도 테스트는 안 깨진다(경고 1줄).</summary>
+        // ───────────────────────── 스크린샷 (T46 부터 공용 PlayShot · perkstrip-screens 폴더 = CI 아티팩트) ─────────────────────────
         IEnumerator SaveScreens(string name)
         {
-            var canvas = _app != null ? _app.UiCanvas : null; if (canvas == null) yield break;
-            int w = 540, h = Mathf.RoundToInt(540f * UiKit.FrameH / UiKit.FrameW);
-            var oldMode = canvas.renderMode; var oldCam = canvas.worldCamera; float oldPlane = canvas.planeDistance;
-            RenderTexture rt = null; GameObject camGo = null; Texture2D tex = null; byte[] png = null;
-            try
-            {
-                // HeroView.CreateTargetTexture 와 같은 규칙(색 ARGB32 + 깊이 24·스텐실 8 = Renderer2D 설정과 맞춤 · 주인 콘솔 에러 ①②) — 세로 화면이라 정사각이 아닐 뿐
-                var desc = new RenderTextureDescriptor(w, h, RenderTextureFormat.ARGB32, 24) { msaaSamples = 1, useMipMap = false, autoGenerateMips = false, volumeDepth = 1, dimension = UnityEngine.Rendering.TextureDimension.Tex2D };
-                var ds = GraphicsFormatUtility.GetDepthStencilFormat(24, 8); if (ds != GraphicsFormat.None) desc.depthStencilFormat = ds;
-                rt = new RenderTexture(desc) { name = "PerkStripShot" }; rt.Create();
-                camGo = new GameObject("PerkStripShotCam", typeof(Camera)); var cam = camGo.GetComponent<Camera>();
-                var world = _app.WorldCamera;
-                if (world != null) { cam.CopyFrom(world); camGo.transform.SetPositionAndRotation(world.transform.position, world.transform.rotation); }
-                else { cam.orthographic = true; cam.clearFlags = CameraClearFlags.SolidColor; cam.backgroundColor = Color.black; cam.cullingMask = 0; }
-                cam.targetTexture = rt;
-                var urp = UiKit.Ensure<UniversalAdditionalCameraData>(camGo); urp.renderType = CameraRenderType.Base; urp.renderPostProcessing = false;
-                canvas.renderMode = RenderMode.ScreenSpaceCamera; canvas.worldCamera = cam; canvas.planeDistance = Mathf.Clamp(1f, cam.nearClipPlane + 0.01f, cam.farClipPlane - 0.01f);
-                Canvas.ForceUpdateCanvases();
-                cam.Render();
-                var prev = RenderTexture.active; RenderTexture.active = rt;
-                tex = new Texture2D(rt.width, rt.height, TextureFormat.RGBA32, false); tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0); tex.Apply();
-                RenderTexture.active = prev;
-                png = tex.EncodeToPNG();
-            }
-            catch (Exception e) { Debug.LogWarning("[PerkStripTests] 스크린샷(RenderTexture) 실패 — 기하 단언은 별도로 통과했다: " + e.Message); }
-            finally
-            {
-                canvas.renderMode = oldMode; canvas.worldCamera = oldCam; canvas.planeDistance = oldPlane;
-                if (camGo != null) { var c = camGo.GetComponent<Camera>(); if (c != null) { c.enabled = false; c.targetTexture = null; } UnityEngine.Object.Destroy(camGo); }
-                if (tex != null) UnityEngine.Object.Destroy(tex);
-                if (rt != null) { rt.Release(); UnityEngine.Object.Destroy(rt); }
-                Canvas.ForceUpdateCanvases();
-            }
-            if (png != null)
-                foreach (var dir in ScreenDirs())
-                {
-                    try { Directory.CreateDirectory(dir); var p = Path.Combine(dir, name + ".png"); File.WriteAllBytes(p, png); Debug.Log("[PerkStripTests] 스크린샷 저장: " + p); }
-                    catch (Exception e) { Debug.LogWarning("[PerkStripTests] 스크린샷 저장 실패(" + dir + "): " + e.Message); }
-                }
+            PlayShot.Save(_app, name, "perkstrip-screens");
             if (!Application.isBatchMode)
             {
                 // 에디터·플레이어에선 GameView 그대로도 남긴다(주인 확인용 · 끝 프레임에 찍힌다)
-                foreach (var dir in ScreenDirs()) { try { Directory.CreateDirectory(dir); ScreenCapture.CaptureScreenshot(Path.Combine(dir, name + "-gameview.png")); break; } catch { } }
+                foreach (var dir in PlayShot.Dirs("perkstrip-screens")) { try { Directory.CreateDirectory(dir); ScreenCapture.CaptureScreenshot(Path.Combine(dir, name + "-gameview.png")); break; } catch { } }
                 yield return Frames(2);
             }
             yield return Frames(1);

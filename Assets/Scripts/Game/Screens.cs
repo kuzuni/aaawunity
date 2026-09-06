@@ -43,8 +43,9 @@ namespace KkomaKnight.Game
             var bg = UiKit.Find(rt, "Background"); var bgImg = bg != null ? bg.GetComponent<Image>() : null;
             if (bgImg != null) { bgImg.color = Color.Lerp(Palette.Green, Palette.Ink, 0.42f); bgImg.raycastTarget = true; }
 
-            // ① 상단 재화 바 (아바타 · 전투력 · 골드 · 보석) — 공용 헬퍼
+            // ① 상단 재화 바 (아바타 · 전투력 · 골드 · 보석) — 공용 헬퍼 · 비평 이름표(T46 · ref-layout ① 의 «요소» 이름 그대로)
             _top = TopBar.Build(App, rt);
+            UiKit.Tag(_top.Root, "상단 바(아바타+재화 줄 전체)"); UiKit.Tag(_top.Avatar, "아바타(정사각)"); UiKit.TagGroup(_top.Root, "재화 pill 줄", _top.PowerCell, _top.GoldPill, _top.GemPill);
 
             // ② 이벤트 배너(보라 · 패스 껍데기) + 메뉴(≡)
             var banner = UiKit.Spawn("ui.framePlum", rt); var brt = (RectTransform)banner.transform; brt.name = "Banner"; UiKit.Pct(brt, Layout.LobbyBanner);
@@ -56,13 +57,14 @@ namespace KkomaKnight.Game
                 var arf = UiKit.Ensure<AspectRatioFitter>(badge.gameObject); arf.aspectMode = AspectRatioFitter.AspectMode.FitInParent; arf.aspectRatio = 1f;
                 UiKit.Label(badge.transform, 0, 0, 100, 100, "1", 40, Palette.White);
                 UiKit.Clickable(brt, () => OnSide(SidePass));
+                UiKit.Tag(brt, "이벤트 배너");
             }
             var menu = UiKit.Find(rt, "Button_Menu");
-            if (menu != null) { var mrt = (RectTransform)menu; mrt.SetParent(rt, false); UiKit.Pct(mrt, Layout.LobbyMenu); UiKit.Clickable(mrt, () => App.Overlay.Settings()); }
+            if (menu != null) { var mrt = (RectTransform)menu; mrt.SetParent(rt, false); UiKit.Pct(mrt, Layout.LobbyMenu); UiKit.Clickable(mrt, () => App.Overlay.Settings()); UiKit.Tag(mrt, "메뉴(☰) 버튼"); }
 
             // ③ 사이드 아이콘 기둥 — 왼쪽 3 · 오른쪽 3 (레퍼런스 순서)
-            BuildColumn(rt, "SideL", Layout.LobbySideL, false, (SideStarter, "ui.iconGiftRed", "스타터팩"), (SidePrivilege, "ui.iconCrown", "특권"), (SideChallenge7, "ui.iconTarget", "7일 챌린지"));
-            BuildColumn(rt, "SideR", Layout.LobbySideR, false, (SideAttendance, "ui.iconCalendar", "출석"), (SideDailyGift, "ui.iconBalloon", "데일리 기프트"), (SideQuest, "ui.iconQuest", "퀘스트"));
+            UiKit.Tag(BuildColumn(rt, "SideL", Layout.LobbySideL, false, (SideStarter, "ui.iconGiftRed", "스타터팩"), (SidePrivilege, "ui.iconCrown", "특권"), (SideChallenge7, "ui.iconTarget", "7일 챌린지")), "좌 사이드 아이콘 열(3개)");
+            UiKit.Tag(BuildColumn(rt, "SideR", Layout.LobbySideR, false, (SideAttendance, "ui.iconCalendar", "출석"), (SideDailyGift, "ui.iconBalloon", "데일리 기프트"), (SideQuest, "ui.iconQuest", "퀘스트")), "우 사이드 아이콘 열(3개)");
 
             // ④ 챕터 제목(프리팹 Title_LineDeco 조각 = 글자 + 밑줄 장식 · 표의 제목 행 ∪ 밑줄 행 자리)
             var title = UiKit.FindAny(rt, "Title_LineDeco_01_Blue", "Title_LineDeco_01_l");
@@ -72,6 +74,7 @@ namespace KkomaKnight.Game
                 var t = Layout.LobbyChapTitle; var u = Layout.LobbyChapUnderline;
                 UiKit.Pct(trt, u.X, t.Y, u.W, u.Y + u.H - t.Y);
                 _chap = UiKit.SetText(trt, "Text (TMP)", "챕터 1");
+                if (_chap != null) UiKit.Tag(_chap.transform, "챕터 제목"); UiKit.Tag(UiKit.Find(trt, "LineDeco"), "챕터 밑줄·선택 화살표");
             }
 
             // ⑤ 챕터 카드(어두운 테두리 상자 안에 이번 챕터 테마의 바닥·길·소품) + ◀▶
@@ -83,20 +86,21 @@ namespace KkomaKnight.Game
                 _cardRoad = UiKit.Icon(inner, "Road", "env.road"); _cardRoad.preserveAspect = false; UiKit.Pct(_cardRoad.rectTransform, CardRoad);
                 for (int i = 0; i < CardProps; i++) { _cardProps[i] = UiKit.Icon(inner, "Prop" + i, "env.tree"); UiKit.Pct(_cardProps[i].rectTransform, CardPropSlots[i]); }
                 UiKit.Clickable(_card, () => { Audio.Wake(); App.StartBattle(App.Save.SelChapter); });
+                UiKit.Tag(_card, "챕터 카드(스테이지 그림)");
             }
-            var left = UiKit.Icon(rt, "ArrowL", "pi.arrow_left", Palette.Cream); UiKit.Pct(left.rectTransform, Layout.LobbyArrowL); UiKit.Clickable(left.rectTransform, () => Shift(-1));
-            var right = UiKit.Icon(rt, "ArrowR", "pi.arrow_right", Palette.Cream); UiKit.Pct(right.rectTransform, Layout.LobbyArrowR); UiKit.Clickable(right.rectTransform, () => Shift(1));
+            var left = UiKit.Icon(rt, "ArrowL", "pi.arrow_left", Palette.Cream); UiKit.Pct(left.rectTransform, Layout.LobbyArrowL); UiKit.Clickable(left.rectTransform, () => Shift(-1)); UiKit.Tag(left.transform, "좌 화살표");
+            var right = UiKit.Icon(rt, "ArrowR", "pi.arrow_right", Palette.Cream); UiKit.Pct(right.rectTransform, Layout.LobbyArrowR); UiKit.Clickable(right.rectTransform, () => Shift(1)); UiKit.Tag(right.transform, "우 화살표");
 
             // ⑥ 보조 버튼 2(탐험 · 클리어 보상 — 껍데기) → START(주황 · 카드 폭) → 모서리(성 잠금 · 이벤트)
-            BuildColumn(rt, "SubRow", Layout.LobbySubRow, true, (SideExplore, "ui.iconMap", "탐험"), (SideClearReward, "ui.iconChestRed", "클리어 보상"));
-            var start = UiKit.Button(rt, "ui.btnStartOrange", "START", () => { Audio.Wake(); App.StartBattle(App.Save.SelChapter); }, Layout.LobbyStart); start.name = "Start";   // Wake = WebGL 첫 터치 뒤 잠든 BGM 재개(T28)
+            UiKit.Tag(BuildColumn(rt, "SubRow", Layout.LobbySubRow, true, (SideExplore, "ui.iconMap", "탐험"), (SideClearReward, "ui.iconChestRed", "클리어 보상")), "보조 버튼 2개 줄");
+            var start = UiKit.Button(rt, "ui.btnStartOrange", "START", () => { Audio.Wake(); App.StartBattle(App.Save.SelChapter); }, Layout.LobbyStart); start.name = "Start"; UiKit.Tag(start, "START 버튼");   // Wake = WebGL 첫 터치 뒤 잠든 BGM 재개(T28)
             var castle = BuildColumn(rt, "Castle", Layout.LobbyCastle, true, (SideCastle, "ui.iconHome", "성"));
             if (castle != null) { var lk = UiKit.Icon(castle, "Lock", "ui.iconLock"); UiKit.Pct(lk.rectTransform, 30, 22, 40, 36); }
             BuildColumn(rt, "Events", Layout.LobbyEvents, true, (SideEvents, "ui.iconDungeon", "이벤트"));
 
             // ⑦ 하단 탭 5칸 — 프리팹 탭 바 조각을 표 자리에 (상점 · 장비 · 전투 · 탤런트 · 펫 — T10 · 이름 변경은 T43)
             _tabs = UiKit.Find(rt, "Tab_01_BottomFlushMenu");
-            if (_tabs != null) { var tt = (RectTransform)_tabs; tt.SetParent(rt, false); UiKit.Pct(tt, Layout.TabBar); NavBar.Wire(App, _tabs, "lobby"); }
+            if (_tabs != null) { var tt = (RectTransform)_tabs; tt.SetParent(rt, false); UiKit.Pct(tt, Layout.TabBar); NavBar.Wire(App, _tabs, "lobby"); UiKit.Tag(tt, "하단 탭바"); }
         }
 
         /// <summary>
@@ -171,6 +175,8 @@ namespace KkomaKnight.Game
     public sealed class TopBar
     {
         public RectTransform Root; public HeroView Hero; public Text Power, Gold, Gem;
+        /// <summary>UI 비평 이름표용 조각(T46) — 아바타 칸 · 전투력 칸 · 골드 pill · 보석 pill. 화면이 표의 이름으로 <see cref="UiKit.Tag"/>/<see cref="UiKit.TagGroup"/> 을 단다.</summary>
+        public RectTransform Avatar, PowerCell, GoldPill, GemPill;
         readonly App _app;
         TopBar(App app) { _app = app; }
 
@@ -181,7 +187,7 @@ namespace KkomaKnight.Game
             var root = UiKit.Rect(parent, "TopBar"); UiKit.Pct(root, Layout.LobbyTopBar); tb.Root = root;
             var top = Layout.LobbyTopBar;
             // 아바타 — UserInfo_01_Slider 에서 ProfileFrame_02_Yellow 조각만(나머지 이름·길드·슬라이더·바탕 프레임은 끔) · 조각은 본래 크기 그대로 두고 아바타 칸에 배율로
-            var slot = UiKit.Rect(root, "Avatar"); UiKit.Pct(slot, Layout.LobbyAvatar.Within(top));
+            var slot = UiKit.Rect(root, "Avatar"); UiKit.Pct(slot, Layout.LobbyAvatar.Within(top)); tb.Avatar = slot;
             var info = UiKit.Spawn("ui.userInfoSlider", slot); var irt = (RectTransform)info.transform;
             var frame = UiKit.FindAny(irt, "ProfileFrame_02_Yellow", "ProfileFrame_02");
             if (frame != null)
@@ -198,7 +204,7 @@ namespace KkomaKnight.Game
             // 전투력 — 칼 아이콘 + 주황 큰 숫자(숫자만 · 레퍼런스에 라벨 없음)
             if (showPower)
             {
-                var pw = UiKit.Rect(root, "PowerCell"); UiKit.Pct(pw, Layout.LobbyPower.Within(top));
+                var pw = UiKit.Rect(root, "PowerCell"); UiKit.Pct(pw, Layout.LobbyPower.Within(top)); tb.PowerCell = pw;
                 var ic = UiKit.Icon(pw, "Icon", "ui.battle"); UiKit.Pct(ic.rectTransform, 0, 0, 26, 100);
                 tb.Power = UiKit.Label(pw, 28, 0, 72, 100, "0", 46, Palette.Orange, TextAnchor.MiddleLeft); tb.Power.name = "Power";
             }
@@ -206,8 +212,8 @@ namespace KkomaKnight.Game
             var res = UiKit.Spawn("ui.resourceBar", root); var rrt = (RectTransform)res.transform; UiKit.Stretch(rrt);
             var hl = res.GetComponent<HorizontalLayoutGroup>(); if (hl != null) hl.enabled = false;
             UiKit.Hide(rrt, "ResourceBar_GemStone");
-            var coin = UiKit.Find(rrt, "ResourceBar_Coin"); if (coin != null) UiKit.Pct((RectTransform)coin, Layout.LobbyGoldPill.Within(top));
-            var gem = UiKit.Find(rrt, "ResourceBar_Gem"); if (gem != null) UiKit.Pct((RectTransform)gem, Layout.LobbyGemPill.Within(top));
+            var coin = UiKit.Find(rrt, "ResourceBar_Coin"); if (coin != null) { UiKit.Pct((RectTransform)coin, Layout.LobbyGoldPill.Within(top)); tb.GoldPill = (RectTransform)coin; }
+            var gem = UiKit.Find(rrt, "ResourceBar_Gem"); if (gem != null) { UiKit.Pct((RectTransform)gem, Layout.LobbyGemPill.Within(top)); tb.GemPill = (RectTransform)gem; }
             tb.Gold = UiKit.SetText(rrt, "ResourceBar_Coin/Text (TMP)", "0"); tb.Gem = UiKit.SetText(rrt, "ResourceBar_Gem/Text (TMP)", "0");
             tb.Refresh();
             return tb;

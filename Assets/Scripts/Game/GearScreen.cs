@@ -69,7 +69,7 @@ namespace KkomaKnight.Game
             }
 
             // ③ 스탯 3칸 한 줄 — 공 · ❤ · 🛡 (어두운 상자 · 왼쪽 아이콘 · 큰 숫자)
-            _atk = StatCell(0, "atk", "pi.attack", Palette.White); _hp = StatCell(1, "hp", "pi.heart", Palette.Red); _sh = StatCell(2, "sh", "pi.shield", Palette.Sky);
+            var c0 = StatCell(0, "atk", "pi.attack", Palette.White, out _atk); var c1 = StatCell(1, "hp", "pi.heart", Palette.Red, out _hp); var c2 = StatCell(2, "sh", "pi.shield", Palette.Sky, out _sh);
 
             // ④ 갈색 띠 + «상점»(회색 · 왼쪽) · «대장간»(주황 · 오른쪽 · 빨간 !) — 스탯 3칸 바로 아래(주인 T25)
             var band = UiKit.Panel(Root, "Band", "fr.rect", Palette.InkLight); UiKit.Pct(band.rectTransform, Band); band.raycastTarget = true;
@@ -80,15 +80,21 @@ namespace KkomaKnight.Game
             // ⑤ 인벤 5열 격자(장비 화면 프리팹의 격자 값 · 칸 = ListItem_EquipMent) → ⑥ 탭 바
             _content = GearUi.Grid(Root, Layout.GearInv, out _);
             NavBar.Attach(this, Root, "gear");
+            // 비평 이름표(T46 · ref-layout ③ 의 «요소» 이름 그대로) — «인벤 1칸» 은 Refresh 가 첫 칸에 단다
+            UiKit.Tag(_top.Root, "상단 바"); UiKit.Tag(stage, "장비 무대(캐릭터+슬롯)");
+            UiKit.TagGroup(grp, "좌 슬롯열(3칸)", _slot[0].Root, _slot[1].Root, _slot[2].Root); UiKit.TagGroup(grp, "우 슬롯열(3칸)", _slot[3].Root, _slot[4].Root, _slot[5].Root); UiKit.Tag(_slot[0].Root, "슬롯 1칸");
+            if (_hero != null) UiKit.Tag(_hero.Body, "캐릭터");
+            UiKit.TagGroup(Root, "스탯 요약줄(3칸)", c0, c1, c2); UiKit.Tag(forge, "액션바(Forge)"); UiKit.Tag(_content.parent, "인벤 그리드"); UiKit.Tag(UiKit.Find(Root, "ui.tabBar"), "하단 탭바");
         }
 
-        /// <summary>스탯 칸 하나 — 표의 «스탯 요약줄» 을 3등분(칸 사이 2%) · 어두운 상자 + 왼쪽 아이콘 + 숫자. 이름 <c>Stat:&lt;key&gt;</c>.</summary>
-        Text StatCell(int i, string key, string icon, Color tint)
+        /// <summary>스탯 칸 하나 — 표의 «스탯 요약줄» 을 3등분(칸 사이 2%) · 어두운 상자 + 왼쪽 아이콘 + 숫자. 이름 <c>Stat:&lt;key&gt;</c>. 돌려주는 값 = 칸 사각형(이름표용) · 숫자 글자는 out.</summary>
+        RectTransform StatCell(int i, string key, string icon, Color tint, out Text value)
         {
             var r = Layout.GearStats; float gap = 2f, w = (r.W - gap * 2) / 3f;
             var cell = UiKit.Spawn("ui.frameDark", Root); var crt = (RectTransform)cell.transform; crt.name = "Stat:" + key; UiKit.Pct(crt, r.X + i * (w + gap), r.Y, w, r.H);
             var ic = UiKit.Icon(crt, "Icon", icon, tint); UiKit.Pct(ic.rectTransform, 6, 14, 20, 72);
-            return UiKit.Label(crt, 28, 0, 66, 100, "0", 40, Palette.White, TextAnchor.MiddleCenter);
+            value = UiKit.Label(crt, 28, 0, 66, 100, "0", 40, Palette.White, TextAnchor.MiddleCenter);
+            return crt;
         }
 
         void OnSlot(int i)
@@ -129,7 +135,8 @@ namespace KkomaKnight.Game
                 {
                     if (S.IsEquipped(g)) continue;
                     shown++; var gi = g;
-                    GearUi.Cell(_content, D, g, new GearUi.CellOpts { IsNew = g.IsNew }, () => GearUi.OpenDetail(App, gi, Refresh));
+                    var cell = GearUi.Cell(_content, D, g, new GearUi.CellOpts { IsNew = g.IsNew }, () => GearUi.OpenDetail(App, gi, Refresh));
+                    if (shown == 1) UiKit.Tag(cell, "인벤 1칸");   // 비평 이름표 — 첫 칸(표 «인벤 1칸» 3.0/47.8/18.4/7.2)
                 }
                 if (shown == 0) GearUi.Empty(_content, S.Inv.Count == 0 ? "장비가 없습니다.\n상점에서 뽑기로 장비를 얻으세요." : "장착하지 않은 장비가 없습니다.");
             }

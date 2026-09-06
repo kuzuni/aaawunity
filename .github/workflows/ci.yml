@@ -105,6 +105,24 @@ jobs:
           name: perkstrip-screens
           path: perkstrip-screens/
           if-no-files-found: ignore
+      # T46 — UI 비평 하니스: PlayMode UiShotsTests 가 남긴 전 화면 PNG(540×1170) + layout.json 을 «screens» 브랜치로(main push · 테스트 초록일 때만).
+      # 워커는 `git fetch origin screens && git show origin/screens:01_lobby.png > /tmp/01_lobby.png` 로 받아 본다. PNG 커밋 금지 규칙의 유일한 예외 = 이 브랜치(main 에는 절대 안 넣는다).
+      - name: screens 브랜치용 meta.json (커밋 sha · CI 런 번호)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p ui-screens
+          printf '{"sha":"%s","run":%s,"run_id":%s,"utc":"%s"}\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$GITHUB_RUN_ID" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > ui-screens/meta.json
+          ls -la ui-screens
+      - name: "screens 브랜치로 배포 (UI 비평 · ROUTINE §5)"
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ui-screens
+          publish_branch: screens
+          force_orphan: true
+          enable_jekyll: false
+          commit_message: 'UI 스크린샷 ${{ github.sha }} (CI #${{ github.run_number }})'
 
   build-webgl:
     name: WebGL 빌드 → GitHub Pages (gh-pages)
