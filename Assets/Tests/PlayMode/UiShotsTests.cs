@@ -60,7 +60,12 @@ namespace KkomaKnight.Tests.Play
             UiKit.CompleteAllTweens();
             yield return Frames(2);
             Canvas.ForceUpdateCanvases();
-            if (PlayShot.Save(_app, name)) _saved++;
+            if (PlayShot.Save(_app, name))
+            {
+                _saved++;
+                // T58: 프레임이 PNG(RenderTexture) 의 ≥ 95% 를 채워야 눈 비평이 된다 — 첫 screens 배포(CI #83)는 34.8% 띠였다(CopyFrom 이 WorldCam letterbox rect 를 복사)
+                Assert.GreaterOrEqual(PlayShot.LastFrameFill, 0.95f, name + ": 프레임이 PNG 의 95% 미만 — " + PlayShot.LastFrameInfo);
+            }
             _layout[name] = PlayShot.Layout(_app);
             yield return Frames(1);
         }
