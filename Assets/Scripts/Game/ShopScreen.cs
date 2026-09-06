@@ -63,7 +63,8 @@ namespace KkomaKnight.Game
             if (bgImg == null) bgImg = UiKit.Ensure<Image>(Root.gameObject);
             bgImg.color = Palette.Hex("#2B2B30"); bgImg.raycastTarget = true;
             if (roof != null) { roof.SetParent(Root, false); UiKit.Pct((RectTransform)roof, RoofBand); var ri = roof.GetComponent<Image>(); if (ri != null) ri.color = Color.Lerp(Palette.Red, Palette.Ink, 0.45f); }
-            shell.SetActive(false);
+            // 껍데기는 «비활성으로 남기지 않고» 트리에서 떼어 파괴한다 — 비활성 자식도 UiKit.Find(깊이 검색) 에 잡혀 프리팹 안 Content·중첩 Tab_01_BottomFlushMenu 가 우리 것보다 먼저 걸린다(CI #66·#68·#69 상점 2건 · T48)
+            shell.transform.SetParent(null, false); shell.SetActive(false); UnityEngine.Object.Destroy(shell);
 
             // ① 스크롤 창(천막 아래 ~ 탭 바 위) — 내용은 프레임 % 로 Content 안에 놓는다(<see cref="Place"/>)
             var view = UiKit.Rect(Root, "Scroll"); UiKit.Pct(view, ScrollView); UiKit.Ensure<RectMask2D>(view.gameObject);
