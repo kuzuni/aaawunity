@@ -39,7 +39,8 @@ namespace KkomaKnight.Game
         /// <summary>리본 조각(Title_01)의 글자 rect 는 3.9% 리본에서 56px 인데 제목 60 의 한 줄 선호 높이가 58px 라 위아래 1px 씩 넘쳤다(CI #106 게이트 «출석 보상»·«데일리 기프트» 잘림) → 글자 rect 만 세로로 늘린다(리본 크기·자리 불변 · 글자는 가운데 정렬 그대로).</summary>
         public static void RibbonTextFit(Text t)
         {
-            float need = TextSize.Title * 1.2f;
+            // T75 4항 게이트가 «제목 60 한 줄(BoxHeight = 60×1.4 = 84px)» 을 요구한다 — 예전 1.2배(72px)로는 bestFit 이 말없이 줄인다(CI #210 «[17_daily_gift] rect 769×72»).
+            float need = TextSize.BoxHeight(TextSize.Title);
             var tr = t.rectTransform; float h = tr.rect.height;
             if (h > 0f && h < need) tr.sizeDelta = new Vector2(tr.sizeDelta.x, tr.sizeDelta.y + (need - h));
         }

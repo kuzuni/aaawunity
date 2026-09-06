@@ -247,7 +247,7 @@ namespace KkomaKnight.Game
             var ov = app.Overlay; var B = Layout.GdBox;
             string bk = BadgeKey(colorName);
             var box = ov.OpenBox("ui.popup", bk, badge, B, () => ov.Close());
-            var rib = UiKit.Find(box, bk); if (rib != null) { var rr = (RectTransform)rib; rr.sizeDelta = UiKit.PxSize(Layout.GdBadge) + new Vector2(70, 36); rr.anchoredPosition = new Vector2(0, 6); }   // 등급 탭 = 표 배지 크기(글자 여유만)
+            var rib = UiKit.Find(box, bk); if (rib != null) { var rr = (RectTransform)rib; rr.sizeDelta = UiKit.PxSize(Layout.GdBadge) + new Vector2(70, 36); rr.anchoredPosition = new Vector2(0, 6); Overlay.FitRibbonText(rr); }   // 등급 탭 = 표 배지 크기(글자 여유만) · 글자 칸은 제목 60 한 줄(84px) 아래로 안 내려간다(T75 4항)
             var slot = UiKit.Rect(box, "IconSlot"); UiKit.Pct(slot, Layout.GdIcon.Within(B));
             if (g != null) { var cell = Cell(slot, app.Data, g, new CellOpts(), null); UiKit.Stretch(cell); }
             else

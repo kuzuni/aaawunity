@@ -87,6 +87,19 @@ namespace KkomaKnight.Game
             for (int i = 0; i < rt.childCount; i++) if (rt.GetChild(i).name == "Dimmed") { idx = i + 1; break; }
             UiKit.PatternBg(rt, UiKit.PatternTintDark, UiKit.PatternTileSeconds, idx);
         }
+        /// <summary>
+        /// 제목 리본을 «표 자리» 로 다시 잡은 뒤 <b>글자 칸이 제목 60 의 한 줄(84px)보다 낮아지지 않게</b> 올린다(T75 4항 게이트 · <c>UiKit.RibbonFit</c> 과 같은 규칙).
+        /// <see cref="UiKit.Popup"/> 이 세운 리본은 이미 그 규칙으로 높이가 잡혀 있는데, 화면이 표 % 로 크기를 다시 잡으면 그것이 풀린다 — 리본 «상자» 크기는 표 그대로 두고
+        /// 글자 rect 만 세로로 늘린다(가로·자리 불변 · 글자는 가운데 정렬이라 그림이 안 바뀐다). <c>UiKit.cs</c> 가 남의 lock 이라 같은 일을 여기 한 곳에 두고 세 화면이 부른다(결정 기록).
+        /// </summary>
+        public static void FitRibbonText(Transform ribbon)
+        {
+            var rr = ribbon as RectTransform; if (rr == null) return;
+            var t = rr.GetComponentInChildren<Text>(true); if (t == null) return;
+            var trt = t.rectTransform; float h = trt.rect.height, need = TextSize.BoxHeight(TextSize.Title);
+            if (h > 0f && h < need) trt.sizeDelta = new Vector2(trt.sizeDelta.x, trt.sizeDelta.y + (need - h));
+        }
+
         /// <summary>결과 팝업 제목 조각 안의 빛살(<c>SampleEffect</c>) 회전 주기(초 · T110 ⓒ · T72 ② 와 같은 시계방향·unscaled).</summary>
         public const float TitleEffectPeriod = 14f;
         /// <summary>등장 폭죽(<c>SampleEffect_Confetti</c>) 한 번이 도는 시간(초 · T110 ⓓ).</summary>
@@ -327,7 +340,7 @@ namespace KkomaKnight.Game
         public void PerkBook(BattleState G, Action onBack)
         {
             var box = Box("ui.popup.blue", "ui.title.sky", "특전", Layout.BookBox, () => { Close(); onBack?.Invoke(); });   // 표 ⑦ 인포 팝업 y23 h52.5 · 리본 25/21.5 w50 h4 · 닫기 안내 y91.5(상자 밖)
-            var rib = UiKit.Find(box, "ui.title.sky"); if (rib != null) { var rr = (RectTransform)rib; rr.sizeDelta = new Vector2(UiKit.FrameW * Layout.BookRibbon.W / 100f, UiKit.FrameH * Layout.BookRibbon.H / 100f + 20); }
+            var rib = UiKit.Find(box, "ui.title.sky"); if (rib != null) { var rr = (RectTransform)rib; rr.sizeDelta = new Vector2(UiKit.FrameW * Layout.BookRibbon.W / 100f, UiKit.FrameH * Layout.BookRibbon.H / 100f + 20); FitRibbonText(rr); }
             // 목록 — 같은 특전은 묶어 ×N
             var groups = new List<KeyValuePair<PerkDef, int>>();
             foreach (var p in G.Taken) { int i = groups.FindIndex(k => k.Key.Id == p.Id); if (i >= 0) groups[i] = new KeyValuePair<PerkDef, int>(p, groups[i].Value + 1); else groups.Add(new KeyValuePair<PerkDef, int>(p, 1)); }
@@ -578,7 +591,7 @@ namespace KkomaKnight.Game
         {
             Action closeAndResume = () => { Close(); onResume?.Invoke(); };
             var box = Box("ui.popup", "ui.titleBrown", title, Layout.SetBox, closeAndResume);
-            var rib = UiKit.Find(box, "ui.titleBrown"); if (rib != null) ((RectTransform)rib).sizeDelta = UiKit.PxSize(Layout.SetRibbon);
+            var rib = UiKit.Find(box, "ui.titleBrown"); if (rib != null) { ((RectTransform)rib).sizeDelta = UiKit.PxSize(Layout.SetRibbon); FitRibbonText(rib); }
             // 줄 3개(음악 · 효과음 · 언어) — 아이콘 + 라벨 + 오른쪽 끝 토글/버튼. 자리 = 표 ⑨ 를 상자 기준 % 로
             // T69-settings(주인 «행마다 검은 아웃라인» · ROUTINE T69 2항 «설정 줄»): 줄마다 UiKit.Bordered(Ink 링 8px + 옅은 흰 바탕 = 크림 상자 위 «띠») · 줄 사각형(표 ⑨ 행)은 그대로라 점수 불변 · 아이콘·라벨은 링 안쪽으로(x +1.5%) · 토글·언어 버튼은 뒤에 얹혀 링 위
             RectTransform Row(string name, Layout.R r, string iconKey, string label)
