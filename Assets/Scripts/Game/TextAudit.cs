@@ -136,10 +136,11 @@ namespace KkomaKnight.Game
         /// <summary>
         /// 검정 글씨 단언을 «틀리면 빨강» 으로 켤 것인가(T111 ⓑ) — 글자 입구 다섯 곳과 <see cref="UiKit.Adopt"/> 가 전부
         /// <see cref="UiKit.EnsureOutline"/>(→ <see cref="UiKit.EnsureBright"/>) 를 거치므로 «없음 0» 이 나와야 정상이다.
-        /// 첫 회차는 <b>표만 찍는다</b>(false) — 워커 컨테이너에는 유니티가 없어 PlayMode 를 못 돌리므로, CI 로그에서 «없음 0» 을 실측한 뒤 켠다
-        /// (<see cref="OutlineStrict"/> 가 결정 245 에서 밟은 순서 그대로).
+        /// 첫 회차는 표만 찍었고(false), <b>CI [#194](https://github.com/kuzuni/aaawunity/actions/runs/34060006084) 로그에서 «검정·짙은 글자 0/1164 — 없음 0 ✔» 를 실측했으므로 켠다</b>
+        /// (<see cref="OutlineStrict"/> 가 결정 245 에서 밟은 순서 그대로 · 결정 275).
+        /// 이제부터 화면 코드가 <c>Text.color</c> 를 어둡게 덮어쓰면 그 커밋이 바로 빨강이 된다.
         /// </summary>
-        public const bool ColorStrict = false;
+        public const bool ColorStrict = true;
 
         public static TextKind KindOf(Text t)
         {

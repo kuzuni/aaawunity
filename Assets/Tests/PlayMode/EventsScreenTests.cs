@@ -239,11 +239,15 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(TextSize.Title, MaxSize(FindText(UiKit.Find(pg, "SoonCard"), "Text")), "«준비 중» = 제목 60");
             Assert.Greater(FindText(UiKit.Find(pg, "SoonCard"), "Text").color.r, 0.4f, "«준비 중» 글자색이 어두운 판 위에서 보여야 한다");
 
-            // 21 던전 세부 팝업 — 제목 띠 60 · 조건 문구 40 · «첫 클리어» 배지 36 · 티켓 수 = 크림 패널 위라 잉크색
+            // 21 던전 세부 팝업 — 제목 띠 60 · 조건 문구 40 · «첫 클리어» 배지 36 · 티켓 수 = 흰 글자 + 검은 아웃라인(T111 ⓑ)
             Assert.IsTrue(ClickNamed(UiKit.Find(pg, "Card:hell"), "EnterBtn"), "던전 입장"); yield return Frames(3);
             Readable("21_dungeon_detail", _app.Overlay.Root, "TapToClose");
             var ticket = FindText(_app.Overlay.Root, "Ticket");
-            Assert.Less(ticket.color.r + ticket.color.g + ticket.color.b, 1.5f, "크림 패널 위 티켓 수는 어두운 글자여야 한다");
+            // 주인 2026-09-07 07:5X «모든 글씨 중에 검정 글씨 → 흰 글씨로 바꿔야 함 · 검정 아웃라인으로 통일시켰기 때문에»(T111 ⓑ) —
+            // 전에는 «크림 패널 위라 잉크색» 이 규칙이었고 이 줄이 그것을 못 박고 있었다. 이제 크림 패널 위에서도 흰 글자이고,
+            // 읽히게 하는 몫은 검은 아웃라인(T63-outline)이 맡는다 → 기댓값을 «밝은 글자 + 아웃라인 있음» 으로 뒤집는다(결정 274).
+            Assert.GreaterOrEqual(UiKit.Luma(ticket.color), UiKit.TextLumaMin, "크림 패널 위 티켓 수도 흰 글자다(T111 ⓑ)");
+            Assert.IsNotNull(ticket.GetComponent<Outline>(), "그 흰 글자에는 검은 아웃라인이 붙어 있어야 읽힌다(T63-outline)");
             _app.Overlay.Close(); yield return Frames(2);
 
             // 22 PvP — 시즌 타이머 36(칸 h2.3) · 티어 줄 40
