@@ -85,7 +85,7 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
-> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T17~T55**(T55 = CI #76·#77 빨강 후속(T49 회귀 · 최우선) · T49 = 팝업 등장 연출 DOTween 순서대로 · T50 = 킬 뒤 원래 걷기 속도(⚠ `T50.lock` 은 워커 A 의 T54 가 잡고 있다 — 사라진 뒤에 잡는다) · T54 = CI #75 빨강 후속(워커 A · `faa0d30`) · T51 = 대시도 공격 모션 뒤 ×5 + 사망 펑 이펙트 제거 · T52 = 특전 글자 한 색 · T53 = 특전 설명 «트리거: 내용» 표기 · 2026-09-06) — **T34~T44 = UI 를 `docs/ref` 레퍼런스 구도로(2026-09-06 · 최우선 · «프리팹 그대로» 계열 지시를 대체 · T25 흡수 · T27·T30·T32 폐기)**. 이전 묶음: T17~T33(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
+> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T17~T56**(T56 = 플레이 콘솔 노란 줄 0 — DOTween 세이프 모드 경고(파괴된 오브젝트 겨냥 트윈 · `SetLink`) · T55 = CI #76·#77 빨강 후속(T49 회귀 · 최우선) · T49 = 팝업 등장 연출 DOTween 순서대로 · T50 = 킬 뒤 원래 걷기 속도(⚠ `T50.lock` 은 워커 A 의 T54 가 잡고 있다 — 사라진 뒤에 잡는다) · T54 = CI #75 빨강 후속(워커 A · `faa0d30`) · T51 = 대시도 공격 모션 뒤 ×5 + 사망 펑 이펙트 제거 · T52 = 특전 글자 한 색 · T53 = 특전 설명 «트리거: 내용» 표기 · 2026-09-06) — **T34~T44 = UI 를 `docs/ref` 레퍼런스 구도로(2026-09-06 · 최우선 · «프리팹 그대로» 계열 지시를 대체 · T25 흡수 · T27·T30·T32 폐기)**. 이전 묶음: T17~T33(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
 
 ### T1 — 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README ✅ (완료 · PROGRESS 참조)
 
@@ -520,6 +520,14 @@
 1. 원인(CI #76 https://github.com/kuzuni/aaawunity/actions/runs/34023880052 · #77 https://github.com/kuzuni/aaawunity/actions/runs/34024048144 · PlayMode 26 중 1 · EditMode 83/83): T49 가 «카드 수 = 제안 수» 단언을 `Overlay.LevelUp()` **직후(같은 프레임)** 로 옮겼다(연출 중에도 요소가 존재해야 하므로). `LevelUp` 은 `UiKit.Clear(group)` 으로 프리팹(Play_Perk_Selection_02) 의 샘플 카드 3장을 지우고 3장을 새로 만드는데, `Clear` 가 `Destroy`(프레임 끝에 실제 제거)만 하므로 같은 프레임의 `childCount` 는 3 + 3 = 6. 예전 단언은 프레임을 넘긴 뒤라 3 이었다.
 2. 수정: `UiKit.Clear` 가 자식을 **트리에서 먼저 떼고**(`SetParent(null, false)` · 비활성) 파괴한다 — T48 상점 껍데기와 같은 규칙(결정 80 · `Find`/`childCount` 가 같은 프레임에 옛 것을 보지 않게). 트윈 Kill 순서는 그대로(먼저).
 3. 게이트 + PROGRESS T55 행 + 확인 수단 = 이 코드 커밋의 CI 유니티 잡(PlayMode 전부 Passed → `screens`·gh-pages 첫 배포).
+
+### T56 — 플레이 콘솔 노란 줄 0: DOTween 세이프 모드 경고(파괴된 오브젝트를 겨냥한 트윈 · CI #77 유니티 로그 «safe mode captured 59 errors» = missing target 47 + startup 12) — 모든 트윈에 `SetLink(gameObject)` (§1 · T12 감사 ⓓ 부류 · 제약 없음)
+범위: `Assets/Scripts/Game/UiKit.cs`(Clickable 눌림 punch · PopIn · FadeIn · Reveal — **`Clear` 는 T55 몫 · 손대지 않는다**) · `Overlay.cs`(마스터 시퀀스 · 골드 카운트업 · BossWarn 띠) · `BattleWorld.cs`(피격 punch · 데미지 팝) · 테스트 불변
+순서: 제약 없음(T55 와 같은 UiKit 파일이지만 다른 줄 · 한 줄씩이라 rebase 로 풀린다 · T50/T51 의 `Sync` 와도 다른 줄).
+1. 원인(CI #77 https://github.com/kuzuni/aaawunity/actions/runs/34024048144 유니티 로그 · 테스트별 경고 수: ForgeShowsAllAndFuses 26 · LobbySettingsTalentPetToast 8 · PlayerNeverWalks… 7 · DungeonArenaPagesAndPopups 6 · ForgeEquippedFuse 4 · 그 밖 8): 트윈 원점 = DOPunchScale 27(버튼 눌림 · `UiKit.Clickable`) · DOScale 11(`PopIn`/`Reveal`) · DOFade 11(`FadeIn`/`Reveal`/BossWarn) · DOAnchorPosY 5(데미지 팝) · DOPunchPosition 1(피격). 대상 오브젝트가 `UiKit.Clear`(T49 `KillTweens`) 가 아닌 경로 — 화면 루트·월드 루트·캔버스 `Destroy` · 인벤/셀 재구성 · 팝업 갈아끼움 — 로 파괴되면 DOTween 이 다음 갱신에서 «Target or field is missing/null»(노란 경고 · safeMode 가 조용히 kill), 시작 전에 파괴되면 «Tween startup failed» 를 찍는다. 에디터 플레이에서도 같은 경로(합성 뒤 인벤 재구성 · 전투 종료 · 팝업 갈아끼움)에서 노란 줄이 뜬다 — T49 완료 기록이 «파괴된 오브젝트를 만지는 트윈 경고 = §1 콘솔 줄» 이라 적은 그 부류.
+2. 수정: 트윈을 만드는 모든 자리(8곳)에 `.SetLink(대상 gameObject)`(DOTween `LinkBehaviour.KillOnDestroy` 기본 · DLL 에 API 있음) — 오브젝트가 어떤 경로로 파괴돼도 DOTween 이 그 트윈을 먼저 죽여 경고가 안 난다. 기존 `KillTweens`(T49) 는 그대로(이중 안전). 에셋·연출 타이밍·테스트 불변. 새 트윈을 만드는 규칙: **`SetLink` 를 붙인다**(§1 에 한 줄).
+3. 확인 수단: 코드 커밋의 CI 유니티 잡 로그에서 «DOTWEEN ► … SAFE MODE ► captured N errors» 줄이 사라지거나 N 이 0 (남으면 test-case 별 원점을 PROGRESS 에 적어 다음 회차) · PlayMode 전부 Passed. dotnet build 가 실제 `DOTween.dll` 을 참조하므로 API 존재는 컴파일이 보증.
+4. 게이트 + PROGRESS T56 행 + 워커 결정 기록 한 줄.
 
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
