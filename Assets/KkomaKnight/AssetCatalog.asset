@@ -1186,6 +1186,34 @@ MonoBehaviour:
     color: {r: 0.172549, g: 0.168627, b: 0.160784, a: 1}
   - key: col.topCell
     color: {r: 0.0705882, g: 0.0666667, b: 0.0588235, a: 1}
+  - key: col.grad.cardGem.top
+    color: {r: 0.25098, g: 0.0666667, b: 0.427451, a: 1}
+  - key: col.grad.cardGem.bottom
+    color: {r: 0.666667, g: 0.0470588, b: 0.721569, a: 1}
+  - key: col.grad.cardGold.top
+    color: {r: 0.0941176, g: 0.239216, b: 0.415686, a: 1}
+  - key: col.grad.cardGold.bottom
+    color: {r: 0.0862745, g: 0.513725, b: 0.745098, a: 1}
+  - key: col.grad.cardBlue.top
+    color: {r: 0.313725, g: 0.631373, b: 0.878431, a: 1}
+  - key: col.grad.cardBlue.bottom
+    color: {r: 0.360784, g: 0.776471, b: 0.972549, a: 1}
+  - key: col.grad.bgLobby.top
+    color: {r: 0.235294, g: 0.407843, b: 0.2, a: 1}
+  - key: col.grad.bgLobby.bottom
+    color: {r: 0.192157, g: 0.333333, b: 0.160784, a: 1}
+  - key: col.grad.btnBlue.top
+    color: {r: 0.0941176, g: 0.541176, b: 0.980392, a: 1}
+  - key: col.grad.btnBlue.bottom
+    color: {r: 0.0352941, g: 0.423529, b: 0.992157, a: 1}
+  - key: col.grad.btnOrange.top
+    color: {r: 0.992157, g: 0.643137, b: 0.0235294, a: 1}
+  - key: col.grad.btnOrange.bottom
+    color: {r: 0.941176, g: 0.588235, b: 0, a: 1}
+  - key: col.grad.panelDark.top
+    color: {r: 0.172549, g: 0.156863, b: 0.160784, a: 1}
+  - key: col.grad.panelDark.bottom
+    color: {r: 0.12549, g: 0.117647, b: 0.121569, a: 1}
   texts:
   - key: data.shop
     text: {fileID: 4900000, guid: 5edbc69efa2cdcb6b106d8355577a053, type: 3}

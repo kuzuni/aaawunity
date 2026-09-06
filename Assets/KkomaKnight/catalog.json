@@ -594,7 +594,21 @@
     "col.goldFill": "#F3A80E",
     "col.slate": "#415760",
     "col.topFrame": "#2C2B29",
-    "col.topCell": "#12110F"
+    "col.topCell": "#12110F",
+    "col.grad.cardGem.top": "#40116D",
+    "col.grad.cardGem.bottom": "#AA0CB8",
+    "col.grad.cardGold.top": "#183D6A",
+    "col.grad.cardGold.bottom": "#1683BE",
+    "col.grad.cardBlue.top": "#50A1E0",
+    "col.grad.cardBlue.bottom": "#5CC6F8",
+    "col.grad.bgLobby.top": "#3C6833",
+    "col.grad.bgLobby.bottom": "#315529",
+    "col.grad.btnBlue.top": "#188AFA",
+    "col.grad.btnBlue.bottom": "#096CFD",
+    "col.grad.btnOrange.top": "#FDA406",
+    "col.grad.btnOrange.bottom": "#F09600",
+    "col.grad.panelDark.top": "#2C2829",
+    "col.grad.panelDark.bottom": "#201E1F"
   },
   "texts": {
     "data.shop": "Assets/KkomaKnight/shop.json",
@@ -954,6 +968,20 @@
     "ui.iconFoe2": "T43 아레나 상대 초상 2",
     "ui.iconFoe3": "T43 아레나 상대 초상 3",
     "ui.iconFoe4": "T43 아레나 상대 초상 4",
-    "fx.lightning": "번개 특전(EvKind.Bolt) 이펙트 시트 — Superpowers Asset Packs(Pixel-boy · Sparklin Labs) rpg-battle-system/fx/2.png · CC0 1.0 · 840×86 = 140×86 6칸(마지막 빈 칸 · 칸 2 는 안 쓴다) · BattleWorld.Lightning 이 Fx.PlaySheet 로 재생 · 출처 원문 Assets/KkomaKnight/Fx/Lightning/LICENSES.md"
+    "fx.lightning": "번개 특전(EvKind.Bolt) 이펙트 시트 — Superpowers Asset Packs(Pixel-boy · Sparklin Labs) rpg-battle-system/fx/2.png · CC0 1.0 · 840×86 = 140×86 6칸(마지막 빈 칸 · 칸 2 는 안 쓴다) · BattleWorld.Lightning 이 Fx.PlaySheet 로 재생 · 출처 원문 Assets/KkomaKnight/Fx/Lightning/LICENSES.md",
+    "col.grad.cardGem.top": "상점 다이아 카드 «위» 색 — 레퍼런스 09_shop_1.jpg (40,440)~(225,645) 실측(tools/ref_color.py · T116)",
+    "col.grad.cardGem.bottom": "상점 다이아 카드 «아래» 색 — 같은 실측(어두운 위 → 밝은 아래 · 레퍼런스 카드의 방향)",
+    "col.grad.cardGold.top": "상점 골드 카드 «위» 색 — 09_shop_1.jpg (40,1130)~(225,1335) 실측",
+    "col.grad.cardGold.bottom": "상점 골드 카드 «아래» 색 — 같은 실측",
+    "col.grad.cardBlue.top": "특권 카드 «위» 색 — 11_shop_special.jpg (40,300)~(680,430) 실측",
+    "col.grad.cardBlue.bottom": "특권 카드 «아래» 색 — 같은 실측",
+    "col.grad.bgLobby.top": "로비 배경 «위» 색 — 01_lobby.jpg (40,600)~(120,700) 실측(배경만 위가 밝고 아래가 어둡다)",
+    "col.grad.bgLobby.bottom": "로비 배경 «아래» 색 — 01_lobby.jpg (40,1300)~(120,1400) 실측",
+    "col.grad.btnBlue.top": "파란(광고) 버튼 «위» — 09_shop_1.jpg (45,225)~(190,275) 실측",
+    "col.grad.btnBlue.bottom": "파란(광고) 버튼 «아래» — 같은 실측(버튼은 레퍼런스에서도 거의 단색이다)",
+    "col.grad.btnOrange.top": "주 버튼(주황) «위» — 01_lobby START(205,1103)~(515,1215)·07 Upgrade 실측이 #FB9F00 단색이라 ±3%",
+    "col.grad.btnOrange.bottom": "주 버튼(주황) «아래» — 같은 값에서 어둡게(레퍼런스는 사실상 단색)",
+    "col.grad.panelDark.top": "팝업 패널 «위» — 07_gear_detail.jpg (70,600)~(640,960) 실측(거의 단색)",
+    "col.grad.panelDark.bottom": "팝업 패널 «아래» — 같은 실측"
   }
 }

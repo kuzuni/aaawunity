@@ -589,6 +589,20 @@
 | colors | `col.slate` | `#415760` | #415760 |  |
 | colors | `col.topFrame` | `#2C2B29` | #2C2B29 |  |
 | colors | `col.topCell` | `#12110F` | #12110F |  |
+| colors | `col.grad.cardGem.top` | `#40116D` | #40116D | 상점 다이아 카드 «위» 색 — 레퍼런스 09_shop_1.jpg (40,440)~(225,645) 실측(tools/ref_color.py · T116) |
+| colors | `col.grad.cardGem.bottom` | `#AA0CB8` | #AA0CB8 | 상점 다이아 카드 «아래» 색 — 같은 실측(어두운 위 → 밝은 아래 · 레퍼런스 카드의 방향) |
+| colors | `col.grad.cardGold.top` | `#183D6A` | #183D6A | 상점 골드 카드 «위» 색 — 09_shop_1.jpg (40,1130)~(225,1335) 실측 |
+| colors | `col.grad.cardGold.bottom` | `#1683BE` | #1683BE | 상점 골드 카드 «아래» 색 — 같은 실측 |
+| colors | `col.grad.cardBlue.top` | `#50A1E0` | #50A1E0 | 특권 카드 «위» 색 — 11_shop_special.jpg (40,300)~(680,430) 실측 |
+| colors | `col.grad.cardBlue.bottom` | `#5CC6F8` | #5CC6F8 | 특권 카드 «아래» 색 — 같은 실측 |
+| colors | `col.grad.bgLobby.top` | `#3C6833` | #3C6833 | 로비 배경 «위» 색 — 01_lobby.jpg (40,600)~(120,700) 실측(배경만 위가 밝고 아래가 어둡다) |
+| colors | `col.grad.bgLobby.bottom` | `#315529` | #315529 | 로비 배경 «아래» 색 — 01_lobby.jpg (40,1300)~(120,1400) 실측 |
+| colors | `col.grad.btnBlue.top` | `#188AFA` | #188AFA | 파란(광고) 버튼 «위» — 09_shop_1.jpg (45,225)~(190,275) 실측 |
+| colors | `col.grad.btnBlue.bottom` | `#096CFD` | #096CFD | 파란(광고) 버튼 «아래» — 같은 실측(버튼은 레퍼런스에서도 거의 단색이다) |
+| colors | `col.grad.btnOrange.top` | `#FDA406` | #FDA406 | 주 버튼(주황) «위» — 01_lobby START(205,1103)~(515,1215)·07 Upgrade 실측이 #FB9F00 단색이라 ±3% |
+| colors | `col.grad.btnOrange.bottom` | `#F09600` | #F09600 | 주 버튼(주황) «아래» — 같은 값에서 어둡게(레퍼런스는 사실상 단색) |
+| colors | `col.grad.panelDark.top` | `#2C2829` | #2C2829 | 팝업 패널 «위» — 07_gear_detail.jpg (70,600)~(640,960) 실측(거의 단색) |
+| colors | `col.grad.panelDark.bottom` | `#201E1F` | #201E1F | 팝업 패널 «아래» — 같은 실측 |
 | texts | `data.shop` | `Assets/KkomaKnight/shop.json` | fileID 4900000 | 상점 상품표 JSON(이 레포 전용 · 승인 대기 25 기본값 · 다이아 6종 개수 + 골드 3종 다이아 가격) — Bootstrap 이 읽어 GameData.Shop 에 올린다. 수치를 바꾸려면 이 파일만 |
 | texts | `data.dailyGift` | `Assets/KkomaKnight/dailyGift.json` | fileID 4900000 | 데일리 기프트 수치표 JSON(이 레포 전용 · 주인 2026-09-07 · 무료 칸 다이아 100 + 광고 누적 1/2/3/6 줄) — Bootstrap 이 읽어 GameData.DailyGift 에 올린다. 수치를 바꾸려면 이 파일만 |
 | texts | `data.arenaDummy` | `Assets/KkomaKnight/arenaDummy.json` | fileID 4900000 | 아레나 껍데기의 상대 승점·전투력 표시용 계수 JSON(이 레포 전용 · 주인 2026-09-07 «아레나 부분에 적들 승점이랑 전투력 더미값으로» · T81) — 밸런스 아님 · 전투 엔진은 안 쓴다 · Core/ArenaDummy 가 읽는다 |
