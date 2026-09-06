@@ -199,13 +199,19 @@ namespace KkomaKnight.Game
 
         /// <summary>칸 바탕 오브젝트 이름(고정 · T72 7항 게이트가 찾는다).</summary>
         public const string CellBgName = "CellBg";
-        /// <summary>탑바 띠·칸 바탕 색 — 레퍼런스 <c>01_lobby.jpg</c> 상단 바의 «검은 pill» 과 같은 어두운 색(<see cref="Palette.Dim"/>) 을 <b>불투명</b>(알파 1)으로. 반투명이면 뒤의 배경 패턴이 비친다.</summary>
-        public static Color BandColor => Palette.A(Palette.Dim, 1f);
+        /// <summary>상단 프레임 띠 오브젝트 이름(고정 · T106 게이트가 찾는다).</summary>
+        public const string FrameName = "TopFrame";
+        /// <summary>
+        /// 띠가 탑바 줄 밖으로 더 뻗는 길이(프레임 px · T106 ⓑ «탑바만 감싸지 말고 탑바 위 부분까지 전부 · 화면 끝까지»).
+        /// 위로는 SafeArea(노치)와 레터박스를 넘어 화면 맨 위까지, 옆으로는 좌우 레터박스까지 덮는다 — uGUI 는 마스크가 없으면 자식을 부모 rect 밖에도 그린다.
+        /// 어떤 화면비에서도 남게 프레임 높이(2337)보다 넉넉히 잡는다(화면 밖은 어차피 안 그려진다).
+        /// </summary>
+        public const float FrameOverscan = 4000f;
 
         /// <summary>
         /// 칸 하나에 <b>불투명</b> 바탕(T72 7항 · 주인 재차 2026-09-07 «탑바를 프레임으로 감싸서 패턴이 침범하지 않는 것처럼») —
-        /// 조각이 제 바탕(직계 «Bg» · 재화 pill 의 캡슐)을 가진 칸은 <b>모양을 지키려고 그 알파만 1 로</b> 올리고(GUI Pro 원본은 0.749 = 반투명이라 무늬가 비쳤다),
-        /// 바탕이 없는 칸(아바타·전투력)은 <see cref="CellBgName"/> 이름의 fr.rect 를 맨 뒤에 깐다. raycast 는 끈다.
+        /// 조각이 제 바탕(직계 «Bg» · 재화 pill 의 캡슐)을 가진 칸은 <b>모양을 지키려고 그 조각을 그대로 두고</b> 색만 <see cref="Palette.TopCell"/>(불투명)로 칠하고
+        /// (GUI Pro 원본은 #1E1E1F 알파 0.749 = 반투명이라 무늬가 비쳤다), 바탕이 없는 칸(아바타·전투력)은 <see cref="CellBgName"/> 이름의 fr.rect 를 맨 뒤에 깐다. raycast 는 끈다.
         /// </summary>
         static void Opaque(RectTransform cell)
         {
@@ -215,12 +221,27 @@ namespace KkomaKnight.Game
                 if (cell.GetChild(i).name != "Bg") continue;
                 var own = cell.GetChild(i).GetComponent<Image>();
                 if (own == null) continue;
-                var c = own.color; c.a = 1f; own.color = c;
+                own.color = Palette.TopCell;
                 return;
             }
-            var bg = UiKit.Panel(cell, CellBgName, "fr.rect", BandColor);
+            var bg = UiKit.Panel(cell, CellBgName, "fr.rect", Palette.TopCell);
             UiKit.Stretch(bg.rectTransform);
             bg.transform.SetAsFirstSibling();
+        }
+
+        /// <summary>
+        /// T106 ⓑⓒ — 탑바 줄부터 <b>화면 맨 위까지</b> 이어지는 프레임 띠 한 장(<see cref="FrameName"/> · 형제 맨 뒤 = 칸·글자 아래 · raycast 끔).
+        /// 색은 레퍼런스 실측(<see cref="Palette.TopFrame"/>) · 위·좌·우로 <see cref="FrameOverscan"/> 만큼 뻗어 SafeArea(노치)와 레터박스를 덮는다.
+        /// T72 7항 ⓐ 의 «줄만 두르던 링» 은 여기서 뺐다 — 띠가 위로 이어지므로 링을 두면 이어진 띠 한가운데에 가로줄이 생긴다(결정 254).
+        /// </summary>
+        static void FrameBand(RectTransform root)
+        {
+            var band = UiKit.Panel(root, FrameName, "fr.rect", Palette.TopFrame);
+            var brt = band.rectTransform;
+            UiKit.Stretch(brt);
+            brt.offsetMin = new Vector2(-FrameOverscan, 0f);
+            brt.offsetMax = new Vector2(FrameOverscan, FrameOverscan);
+            band.transform.SetAsFirstSibling();
         }
 
         /// <summary>parent(프레임 크기 화면 루트) 안에 표 ① 자리로 세운다. showPower=false 면 전투력 칸을 뺀다(레퍼런스에 전투력이 없는 화면용).</summary>
@@ -273,9 +294,8 @@ namespace KkomaKnight.Game
                 var picon = UiKit.Find(pill, "Icon");
                 if (picon != null) picon.SetAsLastSibling();
             }
-            // T72 7항 ⓐ(주인 재차 2026-09-07 «탑바를 프레임으로 감싸서 움직이는 패턴이 그 부분을 침범하지 않는 것처럼 보이게») —
-            // 줄 전체를 불투명 띠(BorderBg · 맨 뒤)로 깔고 T69 검은 Border 8px 로 두른다. 맨 끝에서 부르므로 링이 칸들 위(형제 맨 뒤)에 온다.
-            UiKit.Bordered(root, UiKit.BorderKey, bg: BandColor);
+            // T72 7항 ⓐ + T106 ⓑⓒ — 줄 전체를 불투명 띠로 깔되(패턴 침범 0) 그 띠가 탑바 위 화면 끝까지 이어진다(레퍼런스 01 의 상단 띠가 그렇게 생겼다)
+            FrameBand(root);
             tb.Refresh();
             return tb;
         }
@@ -302,8 +322,16 @@ namespace KkomaKnight.Game
         static readonly string[] IconsK = { "ui.shop", "ui.bag", "ui.battle", "ui.iconDungeon", "ui.petIcon" };
         public static readonly string[] Labels = { "상점", "장비", "전투", "던전", "펫" };
 
+        /// <summary>하단 프레임 띠 오브젝트 이름(고정 · T106 ⓓ 게이트가 찾는다).</summary>
+        public const string BottomFrameName = "BottomFrame";
+
         public static void Attach(GameScreen screen, RectTransform root, string current)
         {
+            // T106 ⓓ — 아래 SafeArea(제스처 바)·레터박스만큼 탭 바 바탕을 화면 끝까지 늘린다(버튼은 SafeArea 안 그대로 · 결정 255).
+            // 탭 바 «안» 이 아니라 형제로 둔다 — Wire 가 바의 자식 0~4 를 탭으로 배선하므로 자식을 늘리면 탭이 밀린다.
+            var band = UiKit.Panel(root, BottomFrameName, "fr.rect", Palette.TopFrame);
+            var brt = band.rectTransform; UiKit.Pct(brt, Layout.TabBar);
+            brt.offsetMin = new Vector2(-TopBar.FrameOverscan, -TopBar.FrameOverscan); brt.offsetMax = new Vector2(TopBar.FrameOverscan, 0f);
             var bar = UiKit.SpawnRt("ui.tabBar", root, Layout.TabBar);
             Wire(screen.App, bar, current);
         }

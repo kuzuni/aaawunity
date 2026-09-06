@@ -585,6 +585,8 @@
 | colors | `col.expFill` | `#35A6E1` | #35A6E1 |  |
 | colors | `col.goldFill` | `#F3A80E` | #F3A80E |  |
 | colors | `col.slate` | `#415760` | #415760 |  |
+| colors | `col.topFrame` | `#2C2B29` | #2C2B29 |  |
+| colors | `col.topCell` | `#12110F` | #12110F |  |
 | texts | `data.shop` | `Assets/KkomaKnight/shop.json` | fileID 4900000 | 상점 상품표 JSON(이 레포 전용 · 승인 대기 25 기본값 · 다이아 6종 개수 + 골드 3종 다이아 가격) — Bootstrap 이 읽어 GameData.Shop 에 올린다. 수치를 바꾸려면 이 파일만 |
 | texts | `data.dailyGift` | `Assets/KkomaKnight/dailyGift.json` | fileID 4900000 | 데일리 기프트 수치표 JSON(이 레포 전용 · 주인 2026-09-07 · 무료 칸 다이아 100 + 광고 누적 1/2/3/6 줄) — Bootstrap 이 읽어 GameData.DailyGift 에 올린다. 수치를 바꾸려면 이 파일만 |
 | texts | `data.arenaDummy` | `Assets/KkomaKnight/arenaDummy.json` | fileID 4900000 | 아레나 껍데기의 상대 승점·전투력 표시용 계수 JSON(이 레포 전용 · 주인 2026-09-07 «아레나 부분에 적들 승점이랑 전투력 더미값으로» · T81) — 밸런스 아님 · 전투 엔진은 안 쓴다 · Core/ArenaDummy 가 읽는다 |

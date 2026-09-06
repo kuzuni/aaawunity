@@ -30,6 +30,10 @@ namespace KkomaKnight.Game
         public static Color CreamDark => Cat("creamDark", "#E3CDAA");
         public static Color Dim => Cat("dim", "#12131A");
         public static Color Slate => Cat("slate", "#415760");
+        /// <summary>상단 프레임 띠(탑바 줄 + 그 위 화면 끝까지 · T106) — <b>레퍼런스 실측</b>: <c>docs/ref/01_lobby.jpg</c> 상단 띠의 픽셀 평균이 #2C2B29 다(y 1~118 · 아이콘·pill 을 피한 자리 · 워커 B 가 headless chromium 으로 잼).</summary>
+        public static Color TopFrame => Cat("topFrame", "#2C2B29");
+        /// <summary>그 프레임 «안» 칸 바탕(아바타·전투력·골드 pill·보석 pill · T106) — 같은 레퍼런스에서 pill 안쪽 실측 #12110F(띠보다 한 단계 어둡다).</summary>
+        public static Color TopCell => Cat("topCell", "#12110F");
         public static readonly Color White = Color.white;
         public static readonly Color Bg = Hex("#141418");          // 프레임 밖(letterbox) — 카메라 배경과 같은 어두운 색
 

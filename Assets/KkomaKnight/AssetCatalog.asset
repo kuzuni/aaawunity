@@ -1178,6 +1178,10 @@ MonoBehaviour:
     color: {r: 0.952941, g: 0.658824, b: 0.054902, a: 1}
   - key: col.slate
     color: {r: 0.254902, g: 0.341176, b: 0.376471, a: 1}
+  - key: col.topFrame
+    color: {r: 0.172549, g: 0.168627, b: 0.160784, a: 1}
+  - key: col.topCell
+    color: {r: 0.0705882, g: 0.0666667, b: 0.0588235, a: 1}
   texts:
   - key: data.shop
     text: {fileID: 4900000, guid: 5edbc69efa2cdcb6b106d8355577a053, type: 3}

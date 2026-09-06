@@ -89,6 +89,19 @@ namespace KkomaKnight.Game
             return c;
         }
 
+        /// <summary>
+        /// T106 — 루트 캔버스 바로 아래 «SafeArea» 사각형(노치·펀치홀을 피한 영역 · <see cref="SafeAreaRoot"/> 가 매 프레임 앵커를 맞춘다).
+        /// 화면 UI(<see cref="CreateFrame"/>)는 전부 이 안에 만든다. safeArea 가 화면 전체인 곳(데스크톱·WebGL·에디터)에서는 앵커 0~1 이라 배치가 안 바뀐다.
+        /// </summary>
+        public static RectTransform CreateSafeArea(Transform canvas)
+        {
+            var rt = Rect(canvas, "SafeArea");
+            rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f);
+            Ensure<SafeAreaRoot>(rt.gameObject);
+            return rt;
+        }
+
         /// <summary>9:19.5 프레임 — index.html #frame. 화면 가운데 · 최대 크기로 letterbox.</summary>
         public static RectTransform CreateFrame(Transform canvas)
         {

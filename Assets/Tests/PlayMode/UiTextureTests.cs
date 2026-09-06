@@ -21,7 +21,7 @@ namespace KkomaKnight.Tests.Play
         App _app; PlayLog _log;
 
         [SetUp] public void SetUp() { _log = new PlayLog(); }
-        [TearDown] public void TearDown() { _log?.Dispose(); _log = null; Time.timeScale = 1f; try { PlayerPrefs.DeleteKey(SaveStore.Key); } catch { } }
+        [TearDown] public void TearDown() { _log?.Dispose(); _log = null; Time.timeScale = 1f; SafeAreaRoot.Override = null; try { PlayerPrefs.DeleteKey(SaveStore.Key); } catch { } }
 
         IEnumerator Boot()
         {
@@ -620,7 +620,7 @@ namespace KkomaKnight.Tests.Play
             for (int i = 0; i < cell.childCount; i++)
             {
                 var c = cell.GetChild(i);
-                if (c.name != TopBar.CellBgName && c.name != "Bg" && c.name != UiKit.BorderName + "Bg") continue;
+                if (c.name != TopBar.CellBgName && c.name != "Bg" && c.name != TopBar.FrameName) continue;
                 var im = c.GetComponent<Image>(); if (im != null && im.enabled) return im;
             }
             return null;
@@ -636,7 +636,7 @@ namespace KkomaKnight.Tests.Play
         /// <summary>
         /// T72 7항(주인 재차 지시 2026-09-07 «상단에 전투력·골드·다이아 보여주는 부분을 프레임으로 감싸서 패턴들이 움직이는 게 그 부분을 침범하지 않는 것처럼 보이게») —
         /// <see cref="TopBar.Build"/> 한 곳을 쓰는 화면(01 로비 · 06 장비 · 09 상점 · 13 펫 · 20 던전) 전부에서
-        /// ⓐ 탑바 줄 전체가 <b>불투명 띠</b>(BorderBg · 형제 맨 뒤 · 알파 1) + T69 검은 Border 8px 로 감싸여 있고
+        /// ⓐ 탑바 줄 전체가 <b>불투명 프레임 띠</b>(<see cref="TopBar.FrameName"/> · 형제 맨 뒤 · 알파 1 · 레퍼런스 색 <see cref="Palette.TopFrame"/> · T106 으로 화면 맨 위까지 이어진다) 로 감싸여 있고
         /// ⓑ 칸마다(아바타 · 전투력 · 골드 pill · 보석 pill) 제 <b>불투명</b> 바탕(알파 ≥ 0.9)이 있으며
         /// ⓒ 패턴 RawImage 는 <b>배경 층에만</b> 있다 = 탑바 «안» 에는 하나도 없고, 화면 배경의 패턴은 탑바보다 <b>뒤</b>(형제 순서 앞)에 깔린다.
         /// 판정 = 이 셋 + 빨간 줄 0(눈 확인은 screens 01·06·09·13·20 PNG 의 탑바 칸 안 «무늬 0»).
@@ -654,21 +654,15 @@ namespace KkomaKnight.Tests.Play
                 var root = _app.Current.Root; string w = "[" + screen + "] ";
                 var top = UiKit.Find(root, "TopBar"); Assert.IsNotNull(top, w + "상단 재화 바(TopBar)");
 
-                // ⓐ 줄 전체를 감싼 불투명 띠 + 검은 테두리
+                // ⓐ 줄 전체를 감싼 불투명 프레임 띠(T106 으로 화면 맨 위까지 이어진다 · 링은 없다 = 이어진 띠에 가로줄이 생기면 안 된다)
                 var band = CellBackdrop(top);
-                Assert.IsNotNull(band, w + "탑바 줄 바탕 띠(BorderBg · T72 7항 ⓐ)");
+                Assert.IsNotNull(band, w + "탑바 프레임 띠(" + TopBar.FrameName + " · T72 7항 ⓐ + T106 ⓑ)");
+                Assert.AreEqual(TopBar.FrameName, band.name, w + "띠 이름");
                 Assert.AreEqual(0, band.transform.GetSiblingIndex(), w + "띠는 맨 뒤(칸·글자 아래)");
                 Assert.GreaterOrEqual(band.color.a, 0.9f, w + "띠는 불투명이라야 패턴이 안 비친다");
-                var ring = top.Find(UiKit.BorderName);
-                Assert.IsNotNull(ring, w + "탑바 줄을 두른 검은 Border(T69 · 8px)");
-                Assert.IsTrue(UiKit.HasDarkBorder(top), w + "그 Border 는 어두운 테두리 조각");
-                // 링은 «그림이 있는» 형제 전부보다 뒤(= 위) — 이름표 조각(Tag:*)처럼 안 그려지는 자식은 뒤에 붙어도 상관없다
-                for (int i = 0; i < top.childCount; i++)
-                {
-                    var sib = top.GetChild(i); if (sib == ring) continue;
-                    if (sib.GetComponentInChildren<Graphic>(true) == null) continue;
-                    Assert.Less(i, ring.GetSiblingIndex(), w + "링은 «" + sib.name + "» 보다 위(형제 순서 뒤)");
-                }
+                Assert.AreEqual(Palette.TopFrame.r, band.color.r, 0.01f, w + "띠 색 = 레퍼런스 01 상단 띠 실측(T106 ⓒ)");
+                Assert.IsFalse(band.raycastTarget, w + "띠는 클릭을 안 먹는다");
+                Assert.IsNull(top.Find(UiKit.BorderName), w + "탑바 줄만 두르는 링은 없다(T106 · 이어진 띠 한가운데 가로줄 금지 · 결정 254)");
 
                 // ⓑ 칸마다 제 불투명 바탕
                 foreach (var cell in new[] { "Avatar", "PowerCell", "ResourceBar_Coin", "ResourceBar_Gem" })
@@ -688,6 +682,80 @@ namespace KkomaKnight.Tests.Play
             }
 
             _log.AssertNoRed("T72 7항 탑바 프레임");
+            yield return Shutdown();
+        }
+
+        /// <summary>사각형의 화면 좌표 사각형(ScreenSpaceOverlay 캔버스는 월드 = 화면 픽셀).</summary>
+        static Rect ScreenRect(RectTransform rt)
+        {
+            var c = new Vector3[4]; rt.GetWorldCorners(c);
+            float x0 = Mathf.Min(c[0].x, c[2].x), x1 = Mathf.Max(c[0].x, c[2].x);
+            float y0 = Mathf.Min(c[0].y, c[2].y), y1 = Mathf.Max(c[0].y, c[2].y);
+            return Rect.MinMaxRect(x0, y0, x1, y1);
+        }
+
+        /// <summary>
+        /// T106(주인 2026-09-07 «모바일로 낼 거니까 SafeArea 만들어서 그 안에서 UI 만들도록 · 카메라 때매 UI 안 보이는 일 없게 · SafeArea 넘어서까지 그 프레임이 위를 다 감싸야 한다») —
+        /// ⓐ 화면 UI(<see cref="App.Frame"/>)는 <see cref="App.SafeArea"/> 안에 있고, 노치를 흉내 내 safeArea 를 줄이면 프레임도 그만큼 줄어 <b>탑바 글자·pill 이 안전 영역 안</b>에 들어온다
+        /// ⓑ 상단 프레임 띠는 그 반대로 <b>안전 영역을 넘어 화면 맨 위</b>(그리고 좌우 끝)까지 덮는다 — 노치 자리가 그 색으로 채워진다
+        /// ⓒ 하단 탭 바 띠도 화면 <b>아래 끝</b>까지(제스처 바 자리) ⓓ safeArea 가 화면 전체면 배치가 <b>예전 그대로</b>(회귀 0). 빨간 줄 0.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator SafeAreaHoldsTheUiAndTheFrameCoversTheNotch()
+        {
+            yield return Boot();
+            _app.ShowScreen("lobby"); yield return Frames(2); Canvas.ForceUpdateCanvases();
+
+            var canvasRt = (RectTransform)_app.UiCanvas.transform;
+            var sa = _app.SafeArea; Assert.IsNotNull(sa, "SafeArea 사각형(T106)");
+            Assert.AreEqual(_app.UiCanvas.transform, sa.parent, "SafeArea 는 루트 캔버스 바로 아래");
+            Assert.AreEqual(sa, _app.Frame.parent, "화면 UI(Frame)는 SafeArea 안에 만든다");
+            var saRoot = sa.GetComponent<SafeAreaRoot>(); Assert.IsNotNull(saRoot, "SafeAreaRoot");
+
+            // ⓓ 먼저 «지금 그대로»(safeArea = 화면 전체) 를 재 둔다 — 노치를 되돌린 뒤 픽셀까지 같아야 한다(회귀 0)
+            var frameBefore = ScreenRect(_app.Frame);
+            Assert.AreEqual(0f, sa.anchorMin.y, 1e-4f, "노치가 없으면 SafeArea 는 화면 전체(아래)");
+            Assert.AreEqual(1f, sa.anchorMax.y, 1e-4f, "노치가 없으면 SafeArea 는 화면 전체(위)");
+
+            // ⓐ 노치를 흉내 낸다 — 위 12% 를 카메라가 먹었다고 치고 다시 그린다
+            float notch = Mathf.Round(Screen.height * 0.12f);
+            SafeAreaRoot.Override = new Rect(0f, 0f, Screen.width, Screen.height - notch);
+            saRoot.Apply(true); yield return Frames(2); Canvas.ForceUpdateCanvases();
+
+            var saRect = ScreenRect(sa);
+            Assert.AreEqual(Screen.height - notch, saRect.yMax, 2f, "SafeArea 위 끝이 노치만큼 내려온다");
+            var frameNotch = ScreenRect(_app.Frame);
+            Assert.LessOrEqual(frameNotch.yMax, saRect.yMax + 1f, "프레임이 안전 영역 안으로 들어온다");
+
+            var top = UiKit.Find(_app.Current.Root, "TopBar"); Assert.IsNotNull(top, "탑바");
+            foreach (var cell in new[] { "Avatar", "PowerCell", "ResourceBar_Coin", "ResourceBar_Gem" })
+            {
+                var c = UiKit.Find(top, cell) as RectTransform; if (c == null) continue;
+                Assert.LessOrEqual(ScreenRect(c).yMax, saRect.yMax + 1f, "«" + cell + "» 은 안전 영역 안(노치에 안 가린다)");
+            }
+
+            // ⓑ 프레임 띠는 안전 영역을 넘어 화면 맨 위까지
+            var band = (RectTransform)top.Find(TopBar.FrameName); Assert.IsNotNull(band, "상단 프레임 띠");
+            var bandRect = ScreenRect(band);
+            Assert.GreaterOrEqual(bandRect.yMax, Screen.height, "띠는 화면 맨 위까지(노치·레터박스를 덮는다 · 주인 «SafeArea 넘어서까지»)");
+            Assert.LessOrEqual(bandRect.xMin, 0f, "띠는 화면 왼쪽 끝까지"); Assert.GreaterOrEqual(bandRect.xMax, Screen.width, "띠는 화면 오른쪽 끝까지");
+            Assert.LessOrEqual(bandRect.yMin, ScreenRect((RectTransform)top).yMin + 1f, "띠의 아래 끝 = 탑바 줄 아래(그 아래는 화면이 보인다)");
+
+            // ⓒ 하단 탭 바 띠는 화면 아래 끝까지
+            var bottom = UiKit.Find(_app.Current.Root, NavBar.BottomFrameName) as RectTransform;
+            Assert.IsNotNull(bottom, "하단 프레임 띠(T106 ⓓ)");
+            Assert.LessOrEqual(ScreenRect(bottom).yMin, 0f, "하단 띠는 화면 아래 끝까지(제스처 바 자리)");
+
+            // ⓓ 되돌리면 예전 배치 그대로
+            SafeAreaRoot.Override = null;
+            saRoot.Apply(true); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var frameAfter = ScreenRect(_app.Frame);
+            Assert.AreEqual(frameBefore.xMin, frameAfter.xMin, 0.5f, "safeArea 가 화면 전체면 배치가 예전 그대로(x)");
+            Assert.AreEqual(frameBefore.yMin, frameAfter.yMin, 0.5f, "같음(y)");
+            Assert.AreEqual(frameBefore.width, frameAfter.width, 0.5f, "같음(폭)");
+            Assert.AreEqual(frameBefore.height, frameAfter.height, 0.5f, "같음(높이)");
+
+            _log.AssertNoRed("T106 SafeArea · 상단 프레임");
             yield return Shutdown();
         }
     }

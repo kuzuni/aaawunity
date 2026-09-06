@@ -17,6 +17,8 @@ namespace KkomaKnight.Game
         public SaveData Save { get; private set; }
         public AssetCatalog Assets { get; private set; }
         public RectTransform Frame { get; private set; }
+        /// <summary>T106 — 노치·펀치홀을 피한 영역(<see cref="SafeAreaRoot"/>). <see cref="Frame"/> 의 부모다.</summary>
+        public RectTransform SafeArea { get; private set; }
         public Canvas UiCanvas { get; private set; }
         public Overlay Overlay { get; private set; }
         public Camera WorldCamera { get; private set; }
@@ -45,7 +47,8 @@ namespace KkomaKnight.Game
         {
             UiKit.EnsureEventSystem();
             UiCanvas = UiKit.CreateRootCanvas("UI", 10);
-            Frame = UiKit.CreateFrame(UiCanvas.transform);
+            SafeArea = UiKit.CreateSafeArea(UiCanvas.transform);   // T106 — 노치를 피한 영역 · 화면 UI 는 전부 이 안(상단·하단 프레임 띠만 이 밖으로 뻗는다)
+            Frame = UiKit.CreateFrame(SafeArea);
             Frame.GetComponent<Image>().enabled = false;   // 프레임 안은 각 화면이 채운다 · 전투는 카메라가 보인다
             if (WorldCamera != null)
             {

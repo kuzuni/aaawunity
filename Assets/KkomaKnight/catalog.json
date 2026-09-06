@@ -590,7 +590,9 @@
     "col.shFill": "#5875F2",
     "col.expFill": "#35A6E1",
     "col.goldFill": "#F3A80E",
-    "col.slate": "#415760"
+    "col.slate": "#415760",
+    "col.topFrame": "#2C2B29",
+    "col.topCell": "#12110F"
   },
   "texts": {
     "data.shop": "Assets/KkomaKnight/shop.json",
