@@ -147,6 +147,16 @@ namespace KkomaKnight.Tests.Play
             Assert.Greater(n, 0, $"[{where}] 이름 «{name}» 인 활성 Text 가 없다");
             Assert.AreEqual(0, bad.Count, $"[{where}] «{name}» 글자가 {min} 아래로 줄었다(T63):\n" + string.Join("\n", bad));
         }
+        /// <summary>특전 카드의 오브젝트 이름 — <see cref="UiKit.Spawn"/> 이 카탈로그 키를 그대로 이름으로 준다(프리팹은 ListItem_StageBuff_02).
+        /// 카드 안 글자는 T63-perks 몫이라 결과·이벤트 팝업의 «잘림 0» 에서 뺀다.</summary>
+        const string PerkCardName = "ui.card";
+        /// <summary>T63-results — 글자가 bestFit 에 눌려 하한 밑으로 그려지지 않는지 + 칸 안에 들어가는지(줄 수 포함). <paramref name="min"/> 은 종류 하한.</summary>
+        static void AssertReadable(Text t, int min, string what)
+        {
+            Assert.IsNotNull(t, what + " 글자가 있어야 한다");
+            Assert.GreaterOrEqual(TextAudit.BestFitSize(t), min, $"{what} «{t.text}» 를 bestFit 이 {min} 밑으로 줄인다(실제 {TextAudit.BestFitSize(t)})");
+            Assert.LessOrEqual(t.preferredHeight, t.rectTransform.rect.height + 1f, $"{what} «{t.text}» 가 칸({t.rectTransform.rect.height:0}) 을 넘친다");
+        }
         /// <summary>살아 있는 shine 머티리얼 인스턴스 수(T61 · 카드가 파괴되면 0 이어야 한다 — 에셋 «PerkShine» 자체는 이름이 달라 안 센다).</summary>
         static int CountShineInstances() { int n = 0; foreach (var m in Resources.FindObjectsOfTypeAll<Material>()) if (m != null && m.name == "PerkShine (Instance)") n++; return n; }
 
@@ -885,6 +895,7 @@ namespace KkomaKnight.Tests.Play
             G.Pending = new PendingDecision { Kind = PendingKind.Rest };
             _app.Overlay.Rest(G, heal => G.ResolveRest(heal)); yield return Frames(2);
             Check("쉼터 팝업", expectOverlay: true);
+            AssertNoTextClip("쉼터 팝업", _app.Overlay.Root);   // T63-results
             Assert.IsTrue(Click(_app.Overlay.Root, s => s.StartsWith("경험치")), "경험치 선택"); yield return Frames(1);
             Assert.IsFalse(_app.Overlay.IsOpen); G.Pending = null;
 
@@ -893,20 +904,24 @@ namespace KkomaKnight.Tests.Play
             G.Pending = new PendingDecision { Kind = PendingKind.Devil, DevilPerk = dp };
             _app.Overlay.Devil(G, accept => G.ResolveDevil(accept)); yield return Frames(2);
             Check("악마 팝업", expectOverlay: true);
+            AssertNoTextClip("악마 팝업", _app.Overlay.Root, PerkCardName);   // T63-results — 카드 안 글자는 T63-perks 몫
             Assert.IsTrue(Click(_app.Overlay.Root, s => s == "거절"), "거절"); yield return Frames(1);
             Assert.IsFalse(_app.Overlay.IsOpen); G.Pending = null;
             _app.Overlay.DevilGift(dp, null); yield return Frames(2);
             Check("악마의 선물 팝업", expectOverlay: true);
+            AssertNoTextClip("악마의 선물 팝업", _app.Overlay.Root, PerkCardName);   // T63-results
             Assert.IsTrue(Click(_app.Overlay.Root, s => s == "계속"), "계속"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen);
 
             // 천사 → 무료 축복 · 광고 카운트다운(1초)
             G.Pending = new PendingDecision { Kind = PendingKind.Angel };
             _app.Overlay.Angel(G, m => G.ResolveAngel(m)); yield return Frames(2);
             Check("천사 팝업", expectOverlay: true);
+            AssertNoTextClip("천사 팝업", _app.Overlay.Root);   // T63-results
             Assert.IsTrue(Click(_app.Overlay.Root, s => s.StartsWith("무료 축복")), "무료 축복"); yield return Frames(1);
             Assert.IsFalse(_app.Overlay.IsOpen); G.Pending = null;
             bool adDone = false; _app.Overlay.AdCountdown(1, () => adDone = true); yield return Frames(2);
             Check("광고 카운트다운 팝업", expectOverlay: true);
+            AssertNoTextClip("광고 카운트다운 팝업", _app.Overlay.Root);   // T63-results
             float t0 = Time.realtimeSinceStartup; while (!adDone && Time.realtimeSinceStartup - t0 < 5f) yield return Frames(1);
             Assert.IsTrue(adDone, "카운트다운이 끝나야 한다"); _app.Overlay.Close(); yield return Frames(1);
 
@@ -930,8 +945,15 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(1f, winBtns.GetChild(0).GetComponent<CanvasGroup>().alpha, 1e-4f, "×2 버튼 α 1"); Assert.AreEqual(1f, winBtns.GetChild(1).GetComponent<CanvasGroup>().alpha, 1e-4f, "그냥 받기 α 1");
             var rewardCell = UiKit.Find(_app.Overlay.Root, "Group_RewardItem"); Assert.IsNotNull(rewardCell, "Group_RewardItem"); Assert.AreEqual(UiKit.Fmt(G.Gold), rewardCell.GetChild(0).GetComponentInChildren<Text>(true).text, "골드 카운트업 최종값 = G.Gold");
             Check("클리어 팝업", expectOverlay: true);
-            Assert.IsTrue(HasText(s => s == "클리어!"), "제목"); Assert.IsTrue(HasText(s => s == "광고 보고 보상 ×2 받기"), "광고 ×2 버튼(프리팹 Get x2 자리 · T23)");
+            Assert.IsTrue(HasText(s => s == "클리어!"), "제목"); Assert.IsTrue(HasText(s => s == Overlay.ClearAdLabel), "광고 ×2 버튼(프리팹 Get x2 자리 · T23 · 문구는 T63-results 에서 한 줄로)");
             Assert.IsFalse(HasText(s => s == "다음 챕터"), "«다음 챕터» 버튼은 없다(T23 · 로비의 챕터 화살표로)");
+            // T63-results — 프리팹 칸이 좁아 눌리던 세 곳: ×2 버튼 글자(300×100) · 해금 줄(528×61) · 보상 값 칸(여백 15→2px)
+            AssertReadable(winBtns.GetChild(0).GetComponentInChildren<Text>(true), TextSize.Button, "×2 버튼");
+            AssertReadable(winBtns.GetChild(1).GetComponentInChildren<Text>(true), TextSize.Button, "그냥 받기 버튼");
+            var unlockT = UiKit.Find(_app.Overlay.Root, "Text (1)"); Assert.IsNotNull(unlockT, "해금 줄(프리팹 «Text (1)»)");
+            AssertReadable(unlockT.GetComponent<Text>(), TextSize.Body, "해금 줄");
+            AssertReadable(rewardCell.GetChild(0).GetComponentInChildren<Text>(true), TextSize.Body, "클리어 보상 골드");
+            AssertNoTextClip("클리어 팝업", _app.Overlay.Root);
             Assert.IsTrue(Click(_app.Overlay.Root, s => s == "그냥 받기"), "그냥 받기(프리팹 Home 자리)"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen);
             Assert.IsFalse(UiKit.IsTweening(_app.Overlay.Root), "Close 뒤 연출 시퀀스 0");
             _app.Overlay.Dead(G, () => { });
@@ -944,6 +966,9 @@ namespace KkomaKnight.Tests.Play
             yield return Frames(1);
             Check("사망 팝업", expectOverlay: true);
             Assert.IsTrue(HasText(s => s == "쓰러졌다..."), "제목");
+            // T63-results — 팁 3줄은 프리팹 줄 글자 칸(730×82)에 «본문 40 한 줄» 로 들어가야 한다(전엔 둘째 줄이 35 로 눌렸다)
+            for (int i = 0; i < 3 && i < tipList.childCount; i++) AssertReadable(tipList.GetChild(i).GetComponentInChildren<Text>(true), TextSize.Body, $"팁 {i}");
+            AssertNoTextClip("사망 팝업", _app.Overlay.Root);
             Assert.IsTrue(Click(_app.Overlay.Root, s => s == "로비로"), "로비로"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen);
             Assert.IsFalse(UiKit.IsTweening(_app.Overlay.Root), "Close 뒤 연출 시퀀스 0");
             Check("전투 팝업 전부 닫힘");

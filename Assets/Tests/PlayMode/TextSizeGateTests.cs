@@ -130,6 +130,21 @@ namespace KkomaKnight.Tests.Play
                 for (int i = 0; i < offer.Count && i < 3; i++) G.Taken.Add(offer[i]);
             }
             _app.Overlay.PerkBook(G, null); yield return Check("05_perks_list"); _app.Overlay.Close(); yield return Frames(1);
+
+            // 결과·이벤트 팝업 5종(T63-results · 레퍼런스 jpg 가 없는 화면이라 번호 대신 이름) — 쉼터 · 악마(+선물) · 천사 · 광고 · 승리 · 패배.
+            // 여기까지 안 열어 보면 «[TextSizeGate]» 표에 이 팝업들이 아예 안 나온다(T63-toast 가 ClipStrict 를 켤 때 빈 구멍이 된다).
+            G.Gold = 12750; G.Kills = 137;
+            _app.Overlay.Rest(G, _ => { }, () => { }); yield return Check("ev_rest"); _app.Overlay.Close(); yield return Frames(1);
+            var devilPerk = Perks.OfferDevil(D, G.Taken, rng);
+            G.Pending = new PendingDecision { Kind = PendingKind.Devil, DevilPerk = devilPerk };
+            _app.Overlay.Devil(G, _ => { }); yield return Check("ev_devil"); _app.Overlay.Close(); G.Pending = null; yield return Frames(1);
+            _app.Overlay.DevilGift(devilPerk, null); yield return Check("ev_devil_gift"); _app.Overlay.Close(); yield return Frames(1);
+            _app.Overlay.Angel(G, _ => { }); yield return Check("ev_angel"); _app.Overlay.Close(); yield return Frames(1);
+            _app.Overlay.AdCountdown(9, () => { }); yield return Check("ev_ad"); _app.Overlay.Close(); yield return Frames(1);
+            _app.Overlay.Clear(G, false, () => { }, () => { }); yield return Check("res_win"); _app.Overlay.Close(); yield return Frames(1);
+            _app.Overlay.Clear(G, true, () => { }, () => { }); yield return Check("res_win_last"); _app.Overlay.Close(); yield return Frames(1);
+            _app.Overlay.Dead(G, () => { }); yield return Check("res_lose"); _app.Overlay.Close(); yield return Frames(1);
+
             Time.timeScale = 1f; _app.ShowScreen("lobby"); yield return Frames(2);
 
             // 판정

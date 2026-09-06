@@ -252,7 +252,7 @@ namespace KkomaKnight.Game
         public void Rest(BattleState G, Action<bool> onChoose, Action onBoth = null)
         {
             var box = Box("ui.popup.green", "ui.title.green", "쉼터", Layout.EvBox);
-            Sub(box, "모닥불 앞에서 잠시 쉬어갑니다", 9, 7, 34);
+            Sub(box, "모닥불 앞에서 잠시 쉬어갑니다", 9, 7, TextSize.Body);
             var ic = UiKit.Icon(box, "Fire", "ui.fire"); UiKit.Pct(ic.rectTransform, 37, 17, 26, 24);
             string heal = G.C.RestHeal <= 1 ? $"최대 체력 {Math.Round(G.C.RestHeal * 100)}%" : $"체력 {UiKit.Fmt(G.C.RestHeal)}";
             UiKit.Button(box, "ui.btnGreen", $"체력 회복 (+{heal})", () => { Close(); onChoose(true); }, new Layout.R(10, 45, 80, 11));
@@ -270,17 +270,17 @@ namespace KkomaKnight.Game
         {
             var perk = G.Pending?.DevilPerk;
             var box = Box("ui.popup.plum", "ui.title.plum", "악마의 거래", new Layout.R(4, 24, 92, 52));
-            Sub(box, "\"네 생명을 바치면... 이 힘을 주지\"", 9, 6, 32, Palette.Plum);
+            Sub(box, "\"네 생명을 바치면... 이 힘을 주지\"", 9, 6, TextSize.Body, Palette.Plum);
             if (perk != null) { var card = PerkCard(box, perk, "yellow", null); UiKit.Pct(card, 2, 18, 96, 22); }
             double cost = G.C.DevilCostMaxHp > 0 ? G.C.DevilCostMaxHp : G.PK.DevilCostMaxHp;
-            Sub(box, $"최대 체력이 {Math.Round(cost * 100)}% 줄어든 채 진행 · 위 전설 특전 1개를 획득", 43, 10, 28, Palette.InkSoft);
+            Sub(box, $"최대 체력이 {Math.Round(cost * 100)}% 줄어든 채 진행 · 위 전설 특전 1개를 획득", 43, 10, TextSize.Body, Palette.InkSoft);
             UiKit.Button(box, "ui.btnRed", "거래 수락", () => { Close(); onChoose(true); }, new Layout.R(8, 60, 40, 13));
             UiKit.Button(box, "ui.btnGray", "거절", () => { Close(); onChoose(false); }, new Layout.R(52, 60, 40, 13));
         }
         public void DevilGift(PerkDef perk, Action onOk)
         {
             var box = Box("ui.popup.plum", "ui.title.plum", "악마의 선물", new Layout.R(6, 30, 88, 40));
-            Sub(box, "전설 특전을 얻었습니다", 11, 7, 32, Palette.Plum);
+            Sub(box, "전설 특전을 얻었습니다", 11, 7, TextSize.Body, Palette.Plum);
             if (perk != null) { var card = PerkCard(box, perk, "yellow", null); UiKit.Pct(card, 2, 24, 96, 28); }
             UiKit.Button(box, "ui.btnOrange", "계속", () => { Close(); onOk?.Invoke(); }, new Layout.R(25, 66, 50, 16));
         }
@@ -289,7 +289,7 @@ namespace KkomaKnight.Game
         public void Angel(BattleState G, Action<double> onChoose)
         {
             var box = Box("ui.popup.yellow", "ui.title.yellow", "천사의 축복", Layout.EvBox);
-            Sub(box, "\"용사여, 축복을 내리노라\"", 10, 7, 34, Palette.Orange);
+            Sub(box, "\"용사여, 축복을 내리노라\"", 10, 7, TextSize.Body, Palette.Orange);
             var ic = UiKit.Icon(box, "Wing", "pi.wing", Palette.Yellow); UiKit.Pct(ic.rectTransform, 35, 20, 30, 26);
             UiKit.Button(box, "ui.btnGreen", $"무료 축복 · 공격력 +{Math.Round((SimPolicy.AngelFree - 1) * 100)}%", () => { Close(); onChoose(SimPolicy.AngelFree); }, new Layout.R(10, 54, 80, 12));
             var ad = UiKit.Button(box, "ui.btnOrange", $"광고 보고 공격력 +{Math.Round((SimPolicy.AngelAd - 1) * 100)}%", () => AdCountdown(3, () => Blessed(onChoose)), new Layout.R(10, 70, 80, 12));
@@ -299,31 +299,36 @@ namespace KkomaKnight.Game
         void Blessed(Action<double> onChoose)
         {
             var box = Box("ui.popup.yellow", "ui.title.yellow", "축복 강화!", new Layout.R(6, 32, 88, 36));
-            Sub(box, $"공격력이 {Math.Round((SimPolicy.AngelAd - 1) * 100)}% 증가했습니다", 18, 14, 36, Palette.Orange);
+            Sub(box, $"공격력이 {Math.Round((SimPolicy.AngelAd - 1) * 100)}% 증가했습니다", 18, 14, TextSize.Body, Palette.Orange);
             UiKit.Button(box, "ui.btnOrange", "계속 전진", () => { Close(); onChoose(SimPolicy.AngelAd); }, new Layout.R(25, 62, 50, 18));
         }
+        /// <summary>광고 카운트다운 숫자 크기 — 본문 하한(40)보다 «크게» 보여야 뜻이 있는 자리다(칸 30% = 196px 에 한 줄 88px). T63-results.</summary>
+        public const int AdCountSize = 72;
         /// <summary>광고 자리(모의) — 3초 카운트다운 (T3 결정 «광고는 3초 카운트다운으로 대체»).</summary>
         public void AdCountdown(int seconds, Action onDone)
         {
             var box = Box("ui.popup", "ui.title.tangerine", "광고 시청 중...", new Layout.R(10, 36, 80, 28));
             var ic = UiKit.Icon(box, "Ad", "ui.ad"); UiKit.Pct(ic.rectTransform, 38, 18, 24, 34);
-            _countText = Sub(box, seconds.ToString(), 56, 30, 72, Palette.Ink);
+            _countText = Sub(box, seconds.ToString(), 56, 30, AdCountSize, Palette.Ink);
             _countdown = seconds; _onCountdown = onDone;
         }
 
         // ───────────────────────── 클리어 (주인 지정 Play_Result_Win_01) ─────────────────────────
         /// <summary>
-        /// 클리어 팝업(Play_Result_Win_01 그대로) — T23(주인): 보상 표시는 <b>골드만</b>(프리팹의 나머지 두 보상 칸은 끈다) · 프리팹의 «Get x2»(광고 아이콘) 버튼 = «광고 보고 보상 ×2 받기»
+        /// 클리어 팝업(Play_Result_Win_01 그대로) — T23(주인): 보상 표시는 <b>골드만</b>(프리팹의 나머지 두 보상 칸은 끈다) · 프리팹의 «Get x2»(광고 아이콘) 버튼 = «광고 보고 ×2»(<see cref="ClearAdLabel"/>)
         /// (광고 카운트다운 뒤 <paramref name="onDouble"/> → 골드 2배 · 로비로) · 프리팹의 «Home» 버튼 = «그냥 받기»(1배 · 로비로 · 승인 대기 28 기본값). «다음 챕터» 진입은 로비의 챕터 화살표로.
         /// </summary>
         /// <remarks>등장 연출(T49 · 주인 «이겼을 때 팝업도 같은 식»): 배경 → 제목 «클리어!»(0.05s · 스케일 0.6→1) → «챕터 N»·해금 문구(0.2s) → 보상 띠 + 골드 칸(0.35s · 숫자 0→G.Gold 카운트업 0.4s) → 버튼 2개가 <b>순서대로</b>(광고 ×2 0.6s · 그냥 받기 0.72s · 스케일+페이드 — 버튼 줄은 HorizontalLayoutGroup 이라 위치 트윈 대신 · 워커 결정 84) → 0.94s 에 끝(≤ 1.0s). 배경 탭 = 연출 중이면 스킵(닫히지는 않는다 — 선택 강제). 컨페티는 그대로 숨김.</remarks>
+        /// <summary>클리어 팝업의 광고 ×2 버튼 글자(T23) — 프리팹 버튼 322×130 의 글자 칸이 300×100 이라 «광고 보고 보상 ×2 받기»(버튼 하한 44 로 ≈435px) 는 두 줄로 접혔다.
+        /// 글자를 줄이지 않고 문구를 줄여 한 줄에 넣는다(T63 3항 순서 ⓒ · 테스트 라벨도 이 상수를 쓴다).</summary>
+        public const string ClearAdLabel = "광고 보고 ×2";
         public void Clear(BattleState G, bool last, Action onDouble, Action onLobby)
         {
             Begin(); Audio.Sfx("snd.clear");
             var root = UiKit.Spawn("ui.resultWin", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
             var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
             var chap = UiKit.SetText(rt, "Text", $"챕터 {G.Chapter}");
-            var unlock = UiKit.SetText(rt, "Text (1)", last ? "모든 챕터를 클리어했습니다!" : $"챕터 {G.Chapter + 1} 해금!");
+            var unlock = UiKit.SetText(rt, "Text (1)", last ? "모든 챕터 클리어!" : $"챕터 {G.Chapter + 1} 해금!");   // 프리팹 칸 528×61 — 본문 40 한 줄에 들어가는 길이로(T63-results)
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "클리어!");
             UiKit.SetText(rt, "Title_LineDeco_01_s_White/Text (TMP)", "클리어 보상");
             var items = UiKit.Find(rt, "Group_RewardItem"); Text goldText = null;
@@ -335,7 +340,7 @@ namespace KkomaKnight.Game
             UiKit.Hide(rt, "Text_TouchContionue");
             var grp = UiKit.Find(rt, "Group_Buttons");
             var b1 = grp != null && grp.childCount > 0 ? grp.GetChild(0) : null; var b2 = grp != null && grp.childCount > 1 ? grp.GetChild(1) : null;
-            if (b1 != null) { UiKit.SetText(b1, "Text (TMP)", "광고 보고 보상 ×2 받기"); UiKit.Clickable(b1, () => AdCountdown(3, () => { Close(); onDouble(); })); }
+            if (b1 != null) { UiKit.SetText(b1, "Text (TMP)", ClearAdLabel); UiKit.Clickable(b1, () => AdCountdown(3, () => { Close(); onDouble(); })); }
             if (b2 != null) { UiKit.SetText(b2, "Text (TMP)", "그냥 받기"); UiKit.Clickable(b2, () => { Close(); onLobby(); }); }
             UiKit.Hide(rt, "SampleEffect_Confetti");
             // 순서 — 제목 → 챕터/해금 → 보상(카운트업) → 버튼 2 순서대로
@@ -349,7 +354,14 @@ namespace KkomaKnight.Game
             }
             At(0.6f, b1); At(0.72f, b2);
         }
-        static Text Reward(Transform cell, string iconKey, string value) { UiKit.SetSprite(cell, "Icon", iconKey, Palette.White); return UiKit.SetText(cell, "Text (TMP)", value); }
+        static Text Reward(Transform cell, string iconKey, string value)
+        {
+            UiKit.SetSprite(cell, "Icon", iconKey, Palette.White);
+            var t = UiKit.SetText(cell, "Text (TMP)", value);
+            // 값 칸은 프리팹이 좌우 15px 씩 비워 121px 뿐이라 «12.3K» 가 본문 40 에 안 들어간다(bestFit 이 30 대로 내림) → 여백만 2px 로 줄여 147px (칸 151 · 아이콘·자리 불변 · T63-results)
+            if (t != null) { var r = t.rectTransform; r.offsetMin = new Vector2(2f, r.offsetMin.y); r.offsetMax = new Vector2(-2f, r.offsetMax.y); }
+            return t;
+        }
 
         // ───────────────────────── 사망 (Play_Result_Lose) ─────────────────────────
         /// <summary>사망 팝업. 등장 연출(T49 · 주인 «졌을 때 팝업도»): 배경 → «쓰러졌다...»(0.05s) → 보상 골드(0.2s) → 팁 3줄이 <b>한 줄씩</b>(0.35 · 0.46 · 0.57s) → «로비로»(0.68s) → «터치하면 로비로»(0.76s) → 0.98s 에 끝(≤ 1.0s). <b>배경 탭 = 연출 중이면 스킵</b>(즉시 전부 표시) · 끝난 뒤면 로비로.</summary>
@@ -361,7 +373,7 @@ namespace KkomaKnight.Game
             UiKit.SetText(rt, "Title_LineDeco_01_s_White/Text (TMP)", "쓰러졌다...");
             var reward = UiKit.Find(rt, "Reward"); if (reward != null) Reward(reward, "ui.coin", UiKit.Fmt(G.Gold));
             var list = UiKit.Find(rt, "Group_List");
-            string[] tips = { $"처치 {G.Kills} · 골드 {UiKit.Fmt(G.Gold)} 획득", "골드로 장비 슬롯을 강화하고 다시 도전하세요!", "장비 3개를 합성하면 등급이 오릅니다" };
+            string[] tips = { $"처치 {G.Kills} · 골드 {UiKit.Fmt(G.Gold)} 획득", "골드로 장비를 강화해 다시 도전!", "장비 3개를 합성하면 등급이 오릅니다" };   // 줄 글자 칸 730×82 — 셋 다 본문 40 한 줄(T63-results)
             string[] icons = { "ui.skull", "ui.anvil", "ui.bookRed" };
             var rows = new List<RectTransform>();
             if (list != null) for (int i = 0; i < list.childCount && i < tips.Length; i++) { UiKit.SetText(list.GetChild(i), "Text (TMP)", tips[i]); UiKit.SetSprite(list.GetChild(i), "Icon", icons[i], Palette.White); rows.Add((RectTransform)list.GetChild(i)); }
