@@ -121,6 +121,8 @@ namespace KkomaKnight.Tests.Play
         }
         static bool ClickNamed(Transform root, string name) { var t = UiKit.Find(root, name); var b = t != null ? t.GetComponent<Button>() : null; if (b == null) return false; b.onClick.Invoke(); return true; }
         static int CountNamed(Transform root, string prefix) { int n = 0; foreach (var t in root.GetComponentsInChildren<Transform>(false)) if (t.name.StartsWith(prefix)) n++; return n; }
+        /// <summary>살아 있는 shine 머티리얼 인스턴스 수(T61 · 카드가 파괴되면 0 이어야 한다 — 에셋 «PerkShine» 자체는 이름이 달라 안 센다).</summary>
+        static int CountShineInstances() { int n = 0; foreach (var m in Resources.FindObjectsOfTypeAll<Material>()) if (m != null && m.name == "PerkShine (Instance)") n++; return n; }
 
         /// <summary>테스트용 장비 — gear.json 의 부위×종류 표(AllTypes)에서 만든다(뽑기와 같은 규칙 · 등급 0).</summary>
         GearItem Give(string part, int rar = 0, int plus = 0)
@@ -569,11 +571,29 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(_app.Overlay.Revealing, "연 직후엔 등장 연출 중");
             var cards = UiKit.Find(_app.Overlay.Root, "Group_Card"); Assert.IsNotNull(cards, "Group_Card"); Assert.AreEqual(offer.Count, cards.childCount, "카드 수 = 제안 수(연출 중에도 요소는 존재)");
             var cg0 = cards.GetChild(0).GetComponent<CanvasGroup>(); Assert.IsNotNull(cg0, "카드에 CanvasGroup(연출)"); Assert.AreEqual(0f, cg0.alpha, 1e-4f, "연 직후 첫 카드 α 0"); Assert.IsFalse(cg0.blocksRaycasts, "연출 중 카드 클릭 막힘");
+            // T61 — 카드 프레임 조각의 Image 전부에 shine 머티리얼(AllIn1SpriteShaderUiMask · SHINE_ON · 카드마다 인스턴스) · shine 시작 시각이 카드 순서대로 단조 증가 · 글자엔 안 붙음
+            {
+                var starts = _app.Overlay.ShineStarts; Assert.AreEqual(offer.Count, starts.Count, "shine 수 = 카드 수(T61)");
+                Assert.AreEqual(2 * UiKit.RevealStep + UiKit.ShineLead, starts[0], 1e-4f, "첫 shine = 첫 카드 Reveal 시작 + ShineLead");
+                for (int i = 1; i < starts.Count; i++) Assert.Greater(starts[i], starts[i - 1], $"shine {i} 는 shine {i - 1} 보다 늦게 시작(등장 순서 = 반짝임 순서)");
+                for (int i = 0; i < cards.childCount; i++)
+                {
+                    var c = cards.GetChild(i); var mo = c.GetComponent<UiKit.MaterialOwner>(); Assert.IsNotNull(mo, $"카드 {i} MaterialOwner"); Assert.IsNotNull(mo.Mat, $"카드 {i} shine 인스턴스");
+                    Assert.AreEqual("PerkShine (Instance)", mo.Mat.name, $"카드 {i} 인스턴스 이름"); Assert.IsTrue(mo.Mat.IsKeywordEnabled("SHINE_ON"), $"카드 {i} SHINE_ON 키워드(에셋에 박힘 · WebGL 스트리핑 방지)");
+                    Assert.AreEqual(UiKit.ShineFrom, mo.Mat.GetFloat(UiKit.ShineLocationId), 1e-4f, $"연 직후 카드 {i} 빛은 카드 밖(시작 값)");
+                    var frame = UiKit.Find(c, "CardFrameArea"); Assert.IsNotNull(frame, $"카드 {i} CardFrameArea");
+                    var imgs = frame.GetComponentsInChildren<Image>(true); Assert.Greater(imgs.Length, 0, $"카드 {i} 프레임 Image");
+                    foreach (var im in imgs) { Assert.AreSame(mo.Mat, im.material, $"카드 {i} 프레임 Image «{im.name}» = 그 카드의 인스턴스"); Assert.IsTrue(im.material.shader.name.Contains("AllIn1SpriteShaderUiMask"), $"카드 {i} 프레임 쉐이더 = UiMask: {im.material.shader.name}"); }
+                    var desc = UiKit.Find(c, "Text_Value"); var dt = desc != null ? desc.GetComponent<Text>() : null; Assert.IsNotNull(dt, $"카드 {i} 설명 글자"); Assert.IsFalse(dt.material != null && dt.material.shader != null && dt.material.shader.name.Contains("AllIn1"), $"카드 {i} 글자엔 shine 안 붙음(T52 한 색)");
+                    var icon = UiKit.Find(c, "ItemFrameArea"); if (icon != null) foreach (var im in icon.GetComponentsInChildren<Image>(true)) Assert.AreNotSame(mo.Mat, im.material, $"카드 {i} 아이콘 조각 «{im.name}» 엔 shine 안 붙음");
+                }
+            }
             yield return Frames(2);
             Check("레벨업 팝업(연출 중)", expectOverlay: true);
             var dimT = UiKit.Find(_app.Overlay.Root, "Dimmed"); var skipTap = dimT != null ? dimT.GetComponent<UiKit.Tap>() : null; Assert.IsNotNull(skipTap, "배경 탭 = 스킵 핸들러"); skipTap.Fire(); yield return Frames(1);
             Assert.IsFalse(_app.Overlay.Revealing, "배경 탭 → 연출 스킵"); Assert.IsTrue(_app.Overlay.IsOpen, "스킵은 닫지 않는다");
             for (int i = 0; i < cards.childCount; i++) { var c = (RectTransform)cards.GetChild(i); var cg = c.GetComponent<CanvasGroup>(); Assert.AreEqual(1f, cg.alpha, 1e-4f, $"스킵 뒤 카드 {i} α 1"); Assert.IsTrue(cg.blocksRaycasts, $"스킵 뒤 카드 {i} 클릭 열림"); Assert.AreEqual(1f, c.localScale.x, 1e-3f, $"스킵 뒤 카드 {i} 스케일 1"); }
+            foreach (Transform c in cards) { var mo = c.GetComponent<UiKit.MaterialOwner>(); Assert.AreEqual(UiKit.ShineTo, mo.Mat.GetFloat(UiKit.ShineLocationId), 1e-3f, "스킵 뒤 shine 은 끝 값(빛이 카드 밖 · T61)"); }
             Check("레벨업 팝업", expectOverlay: true);
             Assert.IsTrue(HasText(s => s == "레벨 업!"), "제목");
             // T36 — 레퍼런스 04 구도: «새 특전을 고르세요» · 카드 = 등급 탭 + 팔각 아이콘 + 설명(한 색 · 수치 초록은 T52 로 취소) · «새로고침 무료» + «남은 횟수 : N» · 📘 · 상단 스탯 8칸 미니
@@ -586,6 +606,7 @@ namespace KkomaKnight.Tests.Play
             var first = cards.GetChild(0).GetComponent<Button>(); Assert.IsNotNull(first, "카드는 클릭 가능"); first.onClick.Invoke(); yield return Frames(3);
             Assert.AreEqual(1, G.Taken.Count, "특전 1개 획득"); Assert.IsFalse(_app.Overlay.IsOpen);
             Assert.IsFalse(UiKit.IsTweening(_app.Overlay.Root), "Close 뒤 팝업 층을 겨냥한 연출 시퀀스 0(T49)"); foreach (var c in cardRts) Assert.IsFalse(UiKit.IsTweening(c), "Close 뒤 카드를 겨냥한 트윈 0");
+            Assert.AreEqual(0, CountShineInstances(), "Close 뒤 shine 머티리얼 인스턴스 0(카드 파괴 = MaterialOwner 가 인스턴스 파괴 · T61)");
             G.Pending = null;   // 엔진이 3초 동안 쌓아 둔 레벨업이 이어서 열렸을 수 있다 — 여기서는 팝업 하나씩만 본다
             Check("특전 선택 뒤(HUD 특전 줄 갱신)");
 
@@ -597,7 +618,11 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(HasText(s => s == "특전"), "보유 특전 명판"); Assert.IsTrue(HasText(s => s == "탭하여 닫기"), "탭하여 닫기 안내");
             Assert.IsFalse(HasText(s => s == "닫기"), "닫기 버튼 없음(공통 팝업 문법)");
             Assert.AreEqual(1, UiKit.Find(_app.Overlay.Root, "Content").childCount, "얻은 특전 1개 = 카드 1장");
+            // T61 — 보유 특전도 같은 규칙: 보이는 카드 1장 = shine 1 · CompleteAll 뒤 끝 값
+            Assert.AreEqual(1, _app.Overlay.ShineStarts.Count, "보유 특전 카드 1장 = shine 1(T61)");
+            { var bookMo = UiKit.Find(_app.Overlay.Root, "Content").GetChild(0).GetComponent<UiKit.MaterialOwner>(); Assert.IsNotNull(bookMo, "보유 특전 카드 MaterialOwner"); Assert.AreEqual(UiKit.ShineTo, bookMo.Mat.GetFloat(UiKit.ShineLocationId), 1e-3f, "CompleteAll 뒤 shine 끝 값"); }
             Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), "배경 탭"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen, "배경 탭으로 닫힌다");
+            yield return Frames(2); Assert.AreEqual(0, CountShineInstances(), "보유 특전 닫은 뒤 shine 인스턴스 0(T61)");
 
             // 쉼터
             G.Pending = new PendingDecision { Kind = PendingKind.Rest };

@@ -1088,6 +1088,8 @@ MonoBehaviour:
   materials:
   - key: mat.hitFlash
     material: {fileID: 2100000, guid: e641ca40f3a7f98c429535fd075519ab, type: 2}
+  - key: mat.perkShine
+    material: {fileID: 2100000, guid: 03a6d088fb1d3b68b615c19df89f47ce, type: 2}
   fonts:
   - key: font.ui
     font: {fileID: 12800000, guid: 9ed266295f50e7dbc67d6d30ec7ff1eb, type: 3}

@@ -560,6 +560,59 @@ namespace KkomaKnight.Game
             }
             return end;
         }
+
+        // ───────────────────────── Shine(T61 · 주인 2026-09-06 «특전 순서대로 등장할 때 shine 효과도 순서대로») ─────────────────────────
+        // 카드 프레임 조각(CardFrame_04_*) 의 Image 전부에 mat.perkShine(AllIn1SpriteShaderUiMask · SHINE_ON) 인스턴스를 붙이고, 카드 i 의 Reveal 시작 + ShineLead 에 _ShineLocation 을 ShineFrom→ShineTo 로 한 번 훑는다.
+        // 카드 하나 = 머티리얼 인스턴스 하나(MaterialOwner 가 카드 파괴 때 인스턴스도 Destroy · 누수·경고 0). 타이밍 상수는 연출 상수(밸런스 아님 · 워커 결정 기록).
+        /// <summary>카드 Reveal 시작 뒤 shine 이 출발하기까지(초). 3택 = 0.22+0.08 · 0.33+0.08 · 0.44+0.08 → 카드가 뜨는 중에 빛이 지나가기 시작한다.</summary>
+        public const float ShineLead = 0.08f;
+        /// <summary>빛이 카드를 한 번 훑는 시간(초 · InOutSine). 마지막 카드의 꼬리 = 0.44+0.08+0.36 = 0.88s(클릭 열림 0.66·하단 0.77 은 그대로).</summary>
+        public const float ShineDur = 0.36f;
+        /// <summary>_ShineLocation 의 시작/끝 — 폭(0.12)만큼 카드 밖에서 출발해 밖으로 나간다(0/1 이면 모서리에 빛 조각이 남는다).</summary>
+        public const float ShineFrom = -0.2f, ShineTo = 1.2f;
+        public static readonly int ShineLocationId = Shader.PropertyToID("_ShineLocation");
+        /// <summary>«이 카드의 shine 머티리얼 인스턴스» 표식 — 카드가 파괴되면 인스턴스도 파괴한다(UI Image 는 MaterialPropertyBlock 을 못 쓰므로 인스턴스가 필요하다 · 인스턴스는 자기 이름이 «PerkShine (Instance)»).</summary>
+        public sealed class MaterialOwner : MonoBehaviour
+        {
+            public Material Mat;
+            void OnDestroy() { if (Mat != null) UnityEngine.Object.Destroy(Mat); Mat = null; }
+        }
+        /// <summary><paramref name="frameRoot"/>(카드 프레임 조각) 아래 모든 Image 에 mat.perkShine 인스턴스를 붙이고 <paramref name="owner"/>(카드 루트)에 <see cref="MaterialOwner"/> 로 매단다.
+        /// 글자·아이콘엔 안 붙인다(프레임 조각 안 Image 만 · T52 «한 색» 그대로). 카탈로그에 머티리얼이 없으면 null(연출은 그대로 · 빛만 없음).</summary>
+        public static Material ShineMaterial(Transform frameRoot, Transform owner)
+        {
+            var src = App.I != null ? App.I.Assets.Material("mat.perkShine") : null;
+            if (src == null || frameRoot == null || owner == null) return null;
+            var inst = new Material(src) { name = src.name + " (Instance)" };
+            inst.SetFloat(ShineLocationId, ShineFrom);
+            foreach (var img in frameRoot.GetComponentsInChildren<Image>(true)) img.material = inst;
+            var mo = Ensure<MaterialOwner>(owner.gameObject); mo.Mat = inst;
+            return inst;
+        }
+        /// <summary><paramref name="inst"/> 의 _ShineLocation 을 <paramref name="at"/> 초부터 <see cref="ShineDur"/> 동안 <see cref="ShineFrom"/>→<see cref="ShineTo"/> 로 — 마스터 시퀀스에 Insert(스킵·CompleteAll 이면 끝 값 = 화면 밖). 돌려주는 값 = 끝나는 시각.</summary>
+        public static float Shine(Sequence master, Material inst, Transform link, float at)
+        {
+            if (inst == null || master == null) return at;
+            float v = ShineFrom; inst.SetFloat(ShineLocationId, v);
+            var tw = DOTween.To(() => v, x => { v = x; if (inst != null) inst.SetFloat(ShineLocationId, x); }, ShineTo, ShineDur).SetEase(Ease.InOutSine).SetUpdate(true).SetTarget(inst);
+            if (link != null) tw.SetLink(link.gameObject);   // SetLink(T56) — 마스터에 Insert 되면 마스터의 링크·Kill 이 대신 지킨다
+            master.Insert(at, tw);
+            return at + ShineDur;
+        }
+        /// <summary><see cref="Stagger"/> 와 같은 <paramref name="start"/>·<paramref name="step"/> 으로 카드마다 shine 을 뒤따르게 한다(카드 i = start + i·step + <see cref="ShineLead"/>) — «등장 순서 = 반짝임 순서».
+        /// 카드에 <see cref="MaterialOwner"/>(= <see cref="ShineMaterial"/>) 가 없으면 건너뛴다. <paramref name="starts"/> 에 시작 시각을 순서대로 적어 준다(테스트 · 단조 증가 계약). 돌려주는 값 = 마지막 shine 이 끝나는 시각.</summary>
+        public static float StaggerShine(Sequence master, IList<RectTransform> cards, float start, float step, IList<float> starts = null)
+        {
+            float t = start, end = start;
+            for (int i = 0; i < cards.Count; i++)
+            {
+                var rt = cards[i]; if (rt == null) continue;
+                var mo = rt.GetComponent<MaterialOwner>();
+                if (mo != null && mo.Mat != null) { float at = t + ShineLead; end = Shine(master, mo.Mat, rt, at); starts?.Add(at); }
+                t += step;
+            }
+            return end;
+        }
         /// <summary>도는 트윈 전부 완료(완료 콜백 포함) — 테스트·비평 스크린샷(PlayShot)이 연출 중간을 보지 않게(T49). PlayMode 테스트 어셈블리는 DOTween 을 직접 참조하지 않아 여기로.</summary>
         public static int CompleteAllTweens() => DOTween.CompleteAll(true);
         /// <summary><paramref name="target"/> 을 겨냥한 살아 있는 트윈/시퀀스가 있는가(테스트용 · Close 뒤 0 계약).</summary>

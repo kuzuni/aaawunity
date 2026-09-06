@@ -19,6 +19,9 @@ namespace KkomaKnight.Game
         GameObject _cur;
         float _countdown; Action _onCountdown; Text _countText;
         Sequence _reveal;   // 등장 연출 마스터 시퀀스(T49) — 팝업마다 Begin 에서 새로, Close 에서 Kill
+        readonly List<float> _shineStarts = new List<float>();   // T61 — 이번 팝업에서 shine 이 시작하는 시각(카드 순서대로 · 테스트가 단조 증가를 단언)
+        /// <summary>이번 팝업의 카드 shine 시작 시각 목록(T61 · 카드 순서 = 반짝임 순서). Begin 마다 비운다.</summary>
+        public IReadOnlyList<float> ShineStarts => _shineStarts;
         public bool IsOpen => Root.gameObject.activeSelf;
         /// <summary>등장 연출이 아직 도는 중인가(T49). 테스트는 <c>DOTween.CompleteAll(true)</c> 또는 <see cref="Skip"/> 뒤에 알파/스케일을 단언한다.</summary>
         public bool Revealing => _reveal != null && _reveal.IsActive() && !_reveal.IsComplete();
@@ -43,7 +46,7 @@ namespace KkomaKnight.Game
         // ───────────────────────── 공통 ─────────────────────────
         void Begin()
         {
-            KillReveal(); UiKit.Clear(Root);
+            KillReveal(); UiKit.Clear(Root); _shineStarts.Clear();
             Root.gameObject.SetActive(true); Root.SetAsLastSibling();
             _countdown = 0; _onCountdown = null; _countText = null;
             Audio.Sfx("snd.popup");   // 팝업 열림음은 여기 한 곳(T28) — 클리어/사망은 자기 징글을 덧붙인다
@@ -78,8 +81,9 @@ namespace KkomaKnight.Game
             => UiKit.Label(box, 6, y, 88, h, s, size, c ?? Palette.InkSoft, TextAnchor.MiddleCenter, true, false);
 
         /// <summary>특전 카드 한 장(ListItem_StageBuff_02) — 등급 색으로 CardFrame_04/ItemFrame_04 를 갈아 끼운다(gray 는 무채색화).
-        /// 글자는 등급 이름(리본)과 설명만 — 특전 이름은 넣지 않는다(주인 지시 2026-09-05 «제목은 빼고 일반 이라고만 · 내용만»).</summary>
-        public RectTransform PerkCard(Transform parent, PerkDef p, string colorName, Action onClick)
+        /// 글자는 등급 이름(리본)과 설명만 — 특전 이름은 넣지 않는다(주인 지시 2026-09-05 «제목은 빼고 일반 이라고만 · 내용만»).
+        /// <paramref name="shine"/> = 프레임 조각에 T61 shine 머티리얼 인스턴스(순서대로 뜨는 3택·보유 특전 카드만 · 악마/천사의 한 장은 안 붙인다).</summary>
+        public RectTransform PerkCard(Transform parent, PerkDef p, string colorName, Action onClick, bool shine = false)
         {
             var card = UiKit.Spawn("ui.card", parent); var rt = (RectTransform)card.transform;
             var frameArea = UiKit.Find(rt, "CardFrameArea"); var itemArea = UiKit.Find(rt, "ItemFrameArea");
@@ -87,6 +91,7 @@ namespace KkomaKnight.Game
             {
                 UiKit.Clear(frameArea); var f = UiKit.Spawn(Palette.FrameKey("ui.cardFrame", colorName), frameArea); var frt = (RectTransform)f.transform; UiKit.Stretch(frt);
                 if (colorName == "gray") UiKit.Desaturate(frt);
+                if (shine) UiKit.ShineMaterial(frt, rt);   // T61 — 프레임 그림(Border·Bg·InnerBorder·제목 탭)에만 · 글자·아이콘은 그대로
                 foreach (var old in frt.GetComponentsInChildren<Text>(true)) old.gameObject.SetActive(false);   // 프리팹의 남은 글자("Text_Title" 등) 전부 끄기 — 주인: «Text 라고 빨간 글씨 없애줘»
                 var tb = UiKit.Find(frt, "TitleBg"); if (tb == null) tb = UiKit.Find(frt, "Text_Title");
                 var host = tb != null ? tb : frt;
@@ -141,11 +146,12 @@ namespace KkomaKnight.Game
                 foreach (var p in offer)
                 {
                     var perk = p;
-                    var card = PerkCard(group, perk, Palette.PerkGradeName(perk.Grade), () => { Close(); onPick(perk); });
+                    var card = PerkCard(group, perk, Palette.PerkGradeName(perk.Grade), () => { Close(); onPick(perk); }, shine: true);
                     var le = card.gameObject.AddComponent<LayoutElement>(); le.preferredHeight = UiKit.FrameH * Layout.OvCard1.H / 100f;
                     cards.Add(card);
                 }
                 UiKit.Stagger(Seq(), cards, 2 * UiKit.RevealStep, UiKit.RevealStep);   // 카드 = 0.22 · 0.33 · 0.44 → 0.66s 에 마지막이 다 뜬다
+                UiKit.StaggerShine(Seq(), cards, 2 * UiKit.RevealStep, UiKit.RevealStep, _shineStarts);   // T61 — shine 도 같은 순서(0.30 · 0.41 · 0.52 시작 · 각 0.36s · 마지막 꼬리 0.88s)
             }
             At(0.05f, ribbon); At(0.15f, sub);
             float foot = 5 * UiKit.RevealStep;   // 0.55s — 하단 버튼·남은 횟수·📘 은 마지막 카드와 겹쳐 뜨며 0.77s 에 끝난다(≤ RevealMaxPick)
@@ -209,7 +215,7 @@ namespace KkomaKnight.Game
             var cards = new List<RectTransform>();
             foreach (var kv in groups)
             {
-                var card = PerkCard(content, kv.Key, Palette.PerkGradeName(kv.Key.Grade), null);
+                var card = PerkCard(content, kv.Key, Palette.PerkGradeName(kv.Key.Grade), null, shine: true);
                 var le = card.gameObject.AddComponent<LayoutElement>(); le.preferredHeight = UiKit.FrameH * Layout.BookCard.H / 100f;
                 if (kv.Value > 1) { var n = UiKit.Text(card, "×" + kv.Value, 36, Palette.Yellow, TextAnchor.MiddleRight); UiKit.Pct(n.rectTransform, 80, 4, 18, 40); }
                 cards.Add(card);
@@ -222,6 +228,7 @@ namespace KkomaKnight.Game
                 {
                     float start = 0.15f, step = Mathf.Min(UiKit.RevealStep, (UiKit.RevealMaxPick - start - UiKit.RevealDur) / Mathf.Max(1, visible - 1));
                     UiKit.Stagger(Seq(), cards.GetRange(0, visible), start, step);
+                    UiKit.StaggerShine(Seq(), cards.GetRange(0, visible), start, step, _shineStarts);   // T61 — 보이는 카드만 순서대로 shine(스크롤 밖 카드는 즉시 표시 · 빛 없음)
                 }
             }
             foreach (var b in G.Blessings) Sub(box, b, 93, 5, 24, Palette.Orange);
