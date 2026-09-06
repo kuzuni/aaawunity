@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using KkomaKnight.Core;
 using UnityEngine;
 using UnityEngine.UI;
@@ -552,12 +553,18 @@ namespace KkomaKnight.Game
     {
         public override string Name => "privilege";
         TopBar _top;
+        /// <summary>T72 ①③ 카드 안 질감을 들여 까는 여백(px) — 카드 조각(<c>fr.r12</c>)의 둥근 모서리 반지름 12px 의 1/3(사각 무늬·그라데이션이 모서리 밖으로 안 삐져나오는 선 · EventsScreen 제목 띠와 같은 값).</summary>
+        const float CardTextureInset = 4f;
+        /// <summary>T72 ② 빛살을 걸 자리 — 배치가 끝난 <b>뒤</b>에 한꺼번에 건다(그 전에는 % 앵커 조각의 rect 가 0 이라 빛살 한 변이 0 이 된다 · 결정 174).</summary>
+        readonly List<(RectTransform host, RectTransform icon, string key)> _lightPlan = new List<(RectTransform, RectTransform, string)>();
 
         static Layout.R Sh(Layout.R r, float dx, float dy) => new Layout.R(r.X + dx, r.Y + dy, r.W, r.H);
 
         protected override void Build()
         {
             var bg = UiKit.Ensure<Image>(Root.gameObject); bg.color = Color.Lerp(Palette.Slate, Palette.Dim, 0.6f); bg.raycastTarget = true;
+            // T72 ① 풀스크린 배경 패턴(주인 «특별 상품들도 마찬가지») — 바탕은 Root 자신의 Image 라 형제 0 = 상단 바·제목·카드·바닥 바 아래 · 어두운 바탕이라 흰 무늬(레퍼런스 11 도 어두운 회색 위 밝은 무늬)
+            UiKit.PatternBg(Root, UiKit.PatternTintDark);
             _top = TopBar.Build(App, Root);
             // 제목(⭐ 특권) + 밑줄 + 부제
             var title = UiKit.Rect(Root, "Title"); UiKit.Pct(title, Layout.PrTitle);
@@ -578,9 +585,12 @@ namespace KkomaKnight.Game
             var C = new Layout.R(0, top, 100, bottom - top);
             // 카드 1 = 일일 선물(짧은 카드)
             var card1 = UiKit.Panel(content, "Card:1", "fr.r12", Palette.Sky); UiKit.Pct(card1.rectTransform, Layout.PrCard1.Within(C));
+            CardTexture(card1.rectTransform);
             var head1 = UiKit.Panel(content, "Head:1", "fr.r12", Palette.A(Palette.Blue, 0.9f)); UiKit.Pct(head1.rectTransform, new Layout.R(Layout.PrCard1.X, Layout.PrCard1.Y, Layout.PrCard1.W, 3.6f).Within(C));
+            UiKit.Gradient(head1.rectTransform, inset: CardTextureInset);   // T72 ③ 카드 제목 띠(레퍼런스 11 의 띠도 위 밝고 아래 어둡다)
             CardHead(head1.transform, "ui.iconGiftRed", "일일 선물", "초기화까지 " + LobbyPopups.Dashes);
             var reward1 = LobbyPopups.Cell(content, C, Layout.PrCard1Reward, "plum", "ui.gemRed");
+            PlanRewardLight(reward1);
             var btn1 = UiKit.Button(content, "ui.btnGray", "받기", () => { }, Layout.PrCard1Btn.Within(C)); btn1.name = "CardBtn:1";
             // 카드 2~4 = 긴 카드
             RectTransform card2 = null, cardTitle2 = null, desc2 = null, pic2 = null, reward2 = null, btn2 = null, card3 = null, card4 = null;
@@ -594,7 +604,9 @@ namespace KkomaKnight.Game
             {
                 var L = longs[k]; float dy = L.rect.Y - Layout.PrCard2.Y;
                 var card = UiKit.Panel(content, "Card:" + (k + 2), "fr.r12", L.color); UiKit.Pct(card.rectTransform, L.rect.Within(C));
+                CardTexture(card.rectTransform);
                 var head = UiKit.Panel(content, "Head:" + (k + 2), "fr.r12", Palette.A(Palette.Dim, 0.35f)); UiKit.Pct(head.rectTransform, Sh(Layout.PrCardTitle, 0, dy).Within(C));
+                UiKit.Gradient(head.rectTransform, inset: CardTextureInset);   // T72 ③ 카드 제목 띠
                 CardHead(head.transform, L.icon, L.name, "비활성");
                 var desc = UiKit.Panel(content, "Desc:" + (k + 2), "fr.r12", Palette.A(Palette.Dim, 0.35f)); UiKit.Pct(desc.rectTransform, Sh(Layout.PrCardDesc, 0, dy).Within(C));
                 float lh = 100f / Mathf.Max(2, L.lines.Length);
@@ -608,6 +620,9 @@ namespace KkomaKnight.Game
                 var daily = UiKit.Label(content, 0, 0, 100, 100, "매일 수령", TextSize.Body, Palette.Yellow, TextAnchor.MiddleLeft); daily.name = "Daily"; daily.fontStyle = FontStyle.Bold;
                 UiKit.Pct(daily.rectTransform, new Layout.R(8.6f, Layout.PrCardReward.Y + dy, 26.0f, Layout.PrCardReward.H).Within(C));
                 var reward = LobbyPopups.Cell(content, C, Sh(Layout.PrCardReward, 0, dy), "plum", "ui.gemRed");
+                PlanRewardLight(reward);
+                // T72 ② 카드 그림 뒤 빛살(주인 «특별 상품 … 아이콘 뒤에 Effect_Light 천천히 회전») — 그림은 카드의 «형제» 라 빛살은 카드 안(칸 밖으로 안 나가게 RectMask2D)에 걸고 그림은 그 위에 그대로 남는다
+                _lightPlan.Add((card.rectTransform, pic.rectTransform, UiKit.LightKey));
                 var btn = UiKit.Button(content, L.btnKey, L.btnLabel, () => { }, Sh(Layout.PrCardBtn, 0, dy).Within(C)); btn.name = "CardBtn:" + (k + 2);
                 if (k == 0) { card2 = card.rectTransform; cardTitle2 = head.rectTransform; desc2 = desc.rectTransform; pic2 = pic.rectTransform; reward2 = reward; btn2 = btn; }
                 else if (k == 1) card3 = card.rectTransform; else card4 = card.rectTransform;
@@ -623,6 +638,37 @@ namespace KkomaKnight.Game
             UiKit.Tag(card2, "특권 카드 2"); UiKit.Tag(cardTitle2, "카드 제목 띠(2)"); UiKit.Tag(desc2, "카드 설명 상자(2)"); UiKit.Tag(pic2, "카드 그림(2)"); UiKit.Tag(reward2, "카드 보상 칸(2)"); UiKit.Tag(btn2, "카드 버튼(2)");
             UiKit.Tag(card3, "특권 카드 3"); UiKit.Tag(card4, "특권 카드 4 (참고·컨테이너)");
             UiKit.Tag(foot.transform, "바닥 바"); UiKit.Tag(back, "뒤로 버튼"); UiKit.Tag(claim, "전체 받기 버튼");
+            ApplyLights();
+        }
+
+        /// <summary>T72 ①③ 특권 카드 안 질감 — 카드 조각 위에 무늬 한 장(밝은 색 카드라 흰 무늬 · 레퍼런스 11 의 카드 안에도 무늬가 어른거린다) + 그라데이션 두 장(위 밝음 → 아래 어둠). 카드의 내용(제목 띠·설명·그림·보상·버튼)은 카드의 <b>형제</b> 라 이 두 층 위에 그대로 남는다.</summary>
+        static void CardTexture(RectTransform card)
+        {
+            if (card == null) return;
+            UiKit.PatternBg(card, UiKit.PatternTintDark, UiKit.PatternTileSeconds, 0, UiKit.PatternTilePx, CardTextureInset);
+            UiKit.Gradient(card, inset: CardTextureInset);
+        }
+
+        /// <summary>T72 ② 보상 칸(다이아) 그림 뒤 빛살 예약 — 칸 조각(ItemFrame_01) 안 «Item» 바로 뒤(프레임 안쪽에서만 보인다 · 작은 조각).</summary>
+        void PlanRewardLight(RectTransform cell)
+        {
+            var item = cell != null ? UiKit.Find(cell, "Item") : null;
+            if (item == null || !item.gameObject.activeSelf) return;
+            _lightPlan.Add(((RectTransform)item.parent, (RectTransform)item, UiKit.LightKeySmall));
+        }
+
+        /// <summary>예약해 둔 빛살을 배치가 끝난 뒤 한꺼번에 건다(결정 174) — 카드 그림 뒤 빛살은 카드 안 질감층(무늬·그라데이션) <b>위</b>로 올린다(질감 층 순서 = 바탕 → 패턴 → 그라데이션 → 빛살 → 내용 · 결정 171).</summary>
+        void ApplyLights()
+        {
+            if (_lightPlan.Count == 0) return;
+            Canvas.ForceUpdateCanvases();
+            foreach (var l in _lightPlan)
+            {
+                UiKit.LightBehind(l.host, l.icon, l.key);
+                if (l.icon != null && l.icon.parent == l.host) continue;
+                var mask = l.host.Find(UiKit.LightMaskName); if (mask != null) mask.SetAsLastSibling();
+            }
+            _lightPlan.Clear();
         }
 
         /// <summary>카드 제목 띠 안 — 왼쪽 아이콘 + 이름 · 오른쪽 상태/타이머 글자.</summary>

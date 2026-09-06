@@ -436,6 +436,101 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
+        /// <summary>
+        /// T72 2단계 6차 — 남은 두 화면(<b>로비 01</b> · <b>특권 11</b>):
+        /// ⓐ 로비 배경에 무늬(주인 원문 «로비에는 배경 부분에 이 패턴이 있는데 오른쪽 상단으로 천천히 올라가고» · 초록 바탕이라 레퍼런스 01 처럼 <b>어두운</b> Ink 무늬) + ③ 배경 그라데이션(위 밝음 → 아래 어둠)
+        /// ⓑ 두 층은 <b>배경 조각 바로 위</b> 형제라 상단 재화 바·사이드 기둥·챕터 카드·START 는 전부 그 «위» = 무늬가 정보 UI 안으로 안 비친다(T72 7항 «패턴은 배경 층에만»)
+        /// ⓒ 특권 페이지(11)는 풀스크린 무늬(어두운 바탕 → 흰 무늬) · 카드 4장은 카드 안 무늬 + 그라데이션(둥근 모서리 안쪽 4px) · 제목 띠 4 그라데이션
+        /// ⓓ 보상 칸(다이아) 4 = 조각 안 «Item» 뒤 빛살 · 긴 카드 3의 그림 뒤 빛살은 카드 안 질감층 <b>위</b> · 시계방향(시간 정지 중에도). 빨간 줄 0.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator LobbyAndPrivilegePageCarryTheTexture()
+        {
+            yield return Boot();
+
+            // ⓐⓑ 로비(01)
+            _app.ShowScreen("lobby"); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var bgT = UiKit.Find(_app.Current.Root, "Background"); Assert.IsNotNull(bgT, "로비 프리팹의 배경 조각");
+            var lobby = (RectTransform)bgT.parent;
+            Assert.IsTrue(UiKit.HasPattern(lobby), "로비 배경에 무늬(T72 ①)");
+            var pat = lobby.Find(UiKit.PatternName);
+            Assert.AreEqual(bgT.GetSiblingIndex() + 1, pat.GetSiblingIndex(), "무늬는 배경 조각 «바로 위»");
+            var praw = pat.GetComponent<RawImage>();
+            Assert.Less(praw.color.r, 0.5f, "초록 바탕이라 어두운 무늬(PatternTintLight = Ink · 레퍼런스 01)");
+            Assert.AreEqual(UiKit.PatternAlpha, praw.color.a, 0.001f, "무늬 알파 = 3/255(주인 확정 2026-09-07)");
+            Assert.IsFalse(praw.raycastTarget, "무늬는 클릭을 안 먹는다(카드·버튼 그대로)");
+            Assert.IsTrue(UiKit.HasGradient(lobby), "로비 배경 그라데이션(T72 ③ 3항 «화면 배경»)");
+            var gtop = lobby.Find(UiKit.GradientTopName); var gbot = lobby.Find(UiKit.GradientBottomName);
+            Assert.IsNotNull(gtop, "GradientTop"); Assert.IsNotNull(gbot, "GradientBottom");
+            Assert.Less(pat.GetSiblingIndex(), gtop.GetSiblingIndex(), "그라데이션은 무늬 «위»(질감 층 순서 · 결정 171)");
+            Assert.Less(gtop.GetSiblingIndex(), gbot.GetSiblingIndex(), "위 밝음 → 아래 어둠 순서");
+            foreach (var n in new[] { "TopBar", "SideL", "SideR", "ChapterCard", "Start" })
+            {
+                var t = lobby.Find(n); Assert.IsNotNull(t, "로비 " + n);
+                Assert.Greater(t.GetSiblingIndex(), gbot.GetSiblingIndex(), n + " 은 질감 층보다 위 = 무늬 침범 0(T72 7항)");
+            }
+
+            // ⓒⓓ 특권 페이지(11)
+            _app.ShowScreen("privilege"); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var pv = _app.Current.Root;
+            Assert.IsTrue(UiKit.HasPattern(pv), "특권 페이지(11) 배경에 무늬(주인 «특별 상품들도 마찬가지»)");
+            var ppat = pv.Find(UiKit.PatternName);
+            Assert.AreEqual(0, ppat.GetSiblingIndex(), "바탕은 Root 자신의 Image → 무늬는 형제 0(상단 바·카드·바닥 바 아래)");
+            Assert.AreEqual(1f, ppat.GetComponent<RawImage>().color.r, 0.001f, "어두운 바탕이라 흰 무늬(PatternTintDark · 레퍼런스 11)");
+            var content = UiKit.Find(pv, "Scroll/Content"); Assert.IsNotNull(content, "특권 스크롤 Content");
+            int cards = 0, heads = 0, cellLights = 0, picLights = 0; RectTransform lastPicLight = null;
+            for (int i = 0; i < content.childCount; i++)
+            {
+                var c = content.GetChild(i);
+                if (c.name.StartsWith("Card:"))
+                {
+                    cards++;
+                    Assert.IsTrue(UiKit.HasPattern(c), c.name + " 카드 안 무늬(T72 ①)");
+                    Assert.IsTrue(UiKit.HasGradient(c), c.name + " 카드 그라데이션(T72 ③)");
+                    var cpat = (RectTransform)c.Find(UiKit.PatternName); var crt = (RectTransform)c;
+                    Assert.AreEqual(crt.rect.width - 8f, cpat.rect.width, 1f, c.name + " 무늬는 둥근 모서리 안쪽으로 4px 들여 깐다");
+                    var mask = c.Find(UiKit.LightMaskName);
+                    if (mask != null)
+                    {
+                        picLights++;
+                        Assert.IsTrue(UiKit.HasLight(c), c.name + " 그림 뒤 빛살(T72 ②)");
+                        Assert.AreEqual(c.childCount - 1, mask.GetSiblingIndex(), c.name + " 빛살은 카드 안 질감층(무늬·그라데이션) 위");
+                        lastPicLight = (RectTransform)mask.Find(UiKit.LightName);
+                    }
+                }
+                else if (c.name.StartsWith("Head:"))
+                {
+                    heads++;
+                    Assert.IsTrue(UiKit.HasGradient(c), c.name + " 제목 띠 그라데이션(레퍼런스 11 의 띠)");
+                }
+                else if (c.name == "Cell")
+                {
+                    var item = UiKit.Find(c, "Item"); Assert.IsNotNull(item, "보상 칸 그림(조각의 Item)");
+                    var frame = item.parent;
+                    Assert.IsTrue(UiKit.HasLight(frame), "보상 칸 그림 뒤 빛살(T72 ② · 작은 조각)");
+                    Assert.Less(frame.Find(UiKit.LightMaskName).GetSiblingIndex(), item.GetSiblingIndex(), "빛살은 그림 «뒤»(형제 순서 앞)");
+                    cellLights++;
+                }
+            }
+            Assert.AreEqual(4, cards, "특권 카드 4장(레퍼런스 11)");
+            Assert.AreEqual(4, heads, "카드 제목 띠 4");
+            Assert.AreEqual(4, cellLights, "보상 칸 빛살 4(카드마다 다이아 칸 하나)");
+            Assert.AreEqual(3, picLights, "긴 카드 3장의 그림 뒤 빛살(카드 1 은 그림이 없다)");
+
+            // 시간이 멈춰도 흐르고 돈다(unscaled) — 화면 적용도 헬퍼 계약 그대로
+            Assert.IsNotNull(lastPicLight, "카드 그림 빛살 조각");
+            Time.timeScale = 0f;
+            var pvRaw = ppat.GetComponent<RawImage>(); var p0 = pvRaw.uvRect.position; var r0 = lastPicLight.localRotation;
+            yield return RealSeconds(0.4f);
+            Assert.Less(pvRaw.uvRect.position.x, p0.x, "특권 무늬도 오른쪽 위로 흐른다(시간 정지 중에도)");
+            Assert.Less(Vector3.SignedAngle(r0 * Vector3.up, lastPicLight.localRotation * Vector3.up, Vector3.forward), -0.5f, "카드 그림 빛살은 시계방향");
+            Time.timeScale = 1f;
+
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            _log.AssertNoRed("T72 화면 적용(로비 01 · 특권 11)");
+            yield return Shutdown();
+        }
+
         /// <summary>«버튼 배경 안» 그라데이션 조각을 찾는다(<see cref="UiKit.ButtonGradient"/> 는 배경 그림의 자식으로 넣는다).</summary>
         static Image BottomGradientUnder(Transform btn)
         {
