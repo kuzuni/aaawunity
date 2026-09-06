@@ -131,7 +131,7 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("자동 합성(장착분 재료)");
 
             // ⓔ 장비 화면으로 — 슬롯·전투력·외형(HeroView 스킨)이 새 장착으로 그려지며 예외 0
-            Assert.IsTrue(Click(forge, s => s == "← 장비"), "뒤로"); yield return Frames(3);
+            Assert.IsTrue(ClickNamed(forge, "BackBtn"), "뒤로(◀ 아이콘 · 글자 없음 — T39 가 «← 장비» 글자 버튼을 없앰 · UiSmokeTests ③ 과 같은 이름 계약 · T48)"); yield return Frames(3);
             Assert.AreEqual("gear", _app.Current.Name);
             var gearContent = UiKit.Find(_app.Current.Root, "Content"); Assert.IsNotNull(gearContent, "장비 화면 인벤 Content");
             Assert.AreEqual(0, CountNamed(gearContent, "gear:" + made2.Uid), "장착 중인 산출물은 장비 화면 인벤 리스트에 없다(장착분 숨김)");
