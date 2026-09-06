@@ -279,6 +279,8 @@ namespace KkomaKnight.Game
             var ten = PriceButton(card, "Ten", $"{D.Gacha.TenPullCount}회", box.Cost * D.Gacha.TenPullCount, () => Pull(D.Gacha.TenPullCount, key), new Layout.R(51.5f, 74, 46, 21), true);
             w.One = one.GetComponent<Button>(); w.Ten = ten.GetComponent<Button>();
             btnsOut.Add(one); btnsOut.Add(ten);
+            // T69-shop «검은 아웃라인» — CardFrame_04 조각의 제 외곽선은 프레임 3~4px 라 폰에서 1px 남짓(8px 규칙 미달) → 카드 위에 Ink 링 한 장(가운데 비움 · raycast 끔 · 표 % 불변)
+            UiKit.Bordered(card);
             _box[key] = w;
         }
         /// <summary>나머지 상자 작은 카드(10_shop_2.jpg 가운데) — 이름 + (i) · 확률 pill · 그림 · 천장 pill · 아래 <b>광고(파랑 · 무료 보급 수령)</b> + <b>«💎가격»(1회)</b>.</summary>
@@ -302,6 +304,8 @@ namespace KkomaKnight.Game
             _freeBtns.Add(ad.GetComponent<Button>()); _freeDots.Add(dot);
             var one = PriceButton(card, "One", "1회", box.Cost, () => Pull(1, key), new Layout.R(52, 83, 42, 14), false);
             w.One = one.GetComponent<Button>();
+            // T69-shop — 큰 카드와 같은 Ink 링(광고·가격 버튼 줄은 카드 «안» 이라 따로 상자를 두지 않는다 · 레퍼런스 10 도 그렇다 · BorderAudit.Exempt)
+            UiKit.Bordered(card);
             _box[key] = w;
         }
 
@@ -335,6 +339,9 @@ namespace KkomaKnight.Game
                 btns.Add(UiKit.Clickable(btn, onClick));
             }
             btns.Add(UiKit.Clickable(crt, onClick, false));
+            // T69-shop — 상품 카드(ListItem_ShopItem 조각)의 제 외곽선은 프레임 2px 남짓이라 폰에서 안 보인다 → 칸 위에 Ink 링 8px(레퍼런스 09 의 카드 검은 외곽선 · 표 «상품 카드» % 불변)
+            // 7항 «아이템류 칸 = ItemFrame» 은 여기엔 안 쓴다 — 레퍼런스 09 의 상품 칸은 정사각 아이템 프레임이 아니라 세로 카드(수량·그림·이름·가격 띠)다(결정 192)
+            UiKit.Bordered(slot);
             return btns;
         }
 
