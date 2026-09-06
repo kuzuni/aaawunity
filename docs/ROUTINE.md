@@ -900,7 +900,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 | 워커 | 슬롯 | routine ID | 계정(이메일) | 첫 런 | 비고 |
 |---|---|---|---|---|---|
-| E | :12 | `trig_01QJGbo5Lm88r9KXfMEcSwoz` | 계정 2 (kimmoon1995@gmail.com) | 08:12 UTC 런 https://claude.ai/code/session_01XXX3UG6B5HSq7XnQJApnD7 (T42 완료 · sess-0813-16889 · 루틴 https://claude.ai/code/routines/trig_01QJGbo5Lm88r9KXfMEcSwoz) | 2026-09-06 08:02 UTC 생성 · claude-fable-5-1 · env Default(env_016Xis527zoBbZPqrtAZVQ6x) · enabled |
+| E | :12 | `trig_01QJGbo5Lm88r9KXfMEcSwoz` | 계정 2 (kimmoon1995@gmail.com) | 08:12 UTC 런 https://claude.ai/code/session_01XXX3UG6B5HSq7XnQJApnD7 (T42 완료 · sess-0813-16889 · 루틴 https://claude.ai/code/routines/trig_01QJGbo5Lm88r9KXfMEcSwoz) | 2026-09-06 08:02 UTC 생성 · claude-fable-5-1 · env Default(env_016Xis527zoBbZPqrtAZVQ6x) · enabled · **2026-09-07 claude-opus-5 · persist_session true 로 변경** |
 | F | :27 | `trig_011tPCMoYGAyWKTUjPGDeRdN` | 계정 2 (kimmoon1995@gmail.com) | 08:27 UTC 런 https://claude.ai/code/session_018JuWedxu25LuhVHcjw4uzu (루틴 https://claude.ai/code/routines/trig_011tPCMoYGAyWKTUjPGDeRdN) | 동일 |
 | G | :42 | `trig_01D222YdDfLGVEVM5jba2Bbj` | 계정 2 (kimmoon1995@gmail.com) | 08:42 UTC 런 https://claude.ai/code/session_0135YDfHdrRg9ydHLwBEBrV9 (루틴 https://claude.ai/code/routines/trig_01D222YdDfLGVEVM5jba2Bbj) | 동일 |
 | H | :57 | `trig_01829E6pqXt2hmUv9ZCjrg8z` | 계정 2 (kimmoon1995@gmail.com) | 2026-09-06 08:57 UTC 예정 · https://claude.ai/code/routines/trig_01829E6pqXt2hmUv9ZCjrg8z | 동일 |
@@ -923,12 +923,12 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 | 계정 | 로그인 | 루틴 이름 | 슬롯 | 모델 |
 |---|---|---|---|---|
 | 계정 1 | `rudwpwjrwkdb95@gmail.com`(uuid `7029fe80…`) | «aaawunity 오퍼스 디스패처 A~D» (구 «… 병렬 워커 A~D» 는 **2026-09-07 03:2X 삭제됨** · 조회 404) | **:12 :27 :42 :57 → :05 :20 :35 :50 으로 옮기는 중**(주인이 화면에서) | Opus |
-| 계정 2 | uuid `3814117c…` | «… 병렬 워커 E~H»(③ 표) | :12 :27 :42 :57 | `claude-fable-5-1` · 세션 유지 미확인 |
+| 계정 2 | uuid `3814117c…` · kimmoon1995@gmail.com | «… 병렬 워커 E~H · Opus»(③ 표) | :12 :27 :42 :57 | **Opus**(`claude-opus-5`) · **세션 유지 켬** (2026-09-07 03:4X) |
 
 - **겹침의 정체(2026-09-07 03:2X · 주인 지적)**: 계정 1 의 디스패처를 새로 만들 때 슬롯을 :12·:27·:42·:57 로 잡는 바람에 **계정 2 의 E~H 와 정확히 겹쳤다**. 계정 1 은 원래 페이블이 쓰던 **:05 :20 :35 :50** 이어야 한다 → 디스패처 4개의 분만 12→5 · 27→20 · 42→35 · 57→50 으로 고친다. 등재 세션은 그 루틴들이 **목록 조회에 안 잡혀(최근 20개가 전부 워커의 예약 트리거) 대신 못 고친다** — 주인이 화면에서 고치거나 `trig_…` 링크를 주면 된다.
-- 2026-09-06 오전에 만든 **E~H(«… 병렬 워커 E~H»)는 계정 2 화면에 더 이상 없다** — 같은 슬롯을 «오퍼스 디스패처 A~D» 가 쓰고 있다(주인이 갈아 끼운 것으로 본다). ③ 표의 E~H routine ID 는 이력으로만 남긴다.
-- **계정 2 에서 남은 일 하나**: 디스패처 4개에 `persist_session: true`(⑤) — 안 켜면 실행마다 새 대화창이 쌓인다. 그 계정 세션에서 `RemoteTrigger update {"persist_session": true}` 넉 줄이면 된다.
-- **모델(2026-09-07)**: 계정 1 A~D 는 **Opus**(`claude-opus-5` · Fable 7일 한도 초과로 전환 · 이름 «… (:05 · Opus)»). 계정 2 E~H 는 아직 `claude-fable-5-1` — 그 계정에서 런 로그에 «Fable limit» 이 보이면 같은 방식으로 모델만 Opus 로 바꾸고 **cron 시각(:12/:27/:42/:57)은 절대 바꾸지 않는다**(두 계정이 엇갈려 도는 배치를 유지). update 는 `job_config` 를 통째로 보내야 하며(`environment_id` 필수) `events`(프롬프트)를 반드시 같이 실어야 지워지지 않는다.
+- **정정(2026-09-07 03:4X · 계정 2 세션에서 직접 조회)**: E~H 는 **살아 있다**(enabled · `get` 200). 앞서 «계정 2 화면에 더 이상 없다» 고 적은 것은 계정 1 세션에서 404 를 본 것을 잘못 옮긴 것. ③ 표의 routine ID 4개가 지금도 그대로 도는 루틴이다.
+- **계정 2 에서 남은 일 → 완료(2026-09-07 03:4X)**: E~H 넷 다 `persist_session: true` 로 켰다(⑤). 이제 워커당 대화창 1개.
+- **모델(2026-09-07) — 여덟 개 전부 Opus**: 계정 1 A~D 는 Fable 7일 한도 초과로 먼저 `claude-opus-5` 로 바꿨고, **계정 2 E~H 도 03:4X 에 같이 바꿨다**(주인 «루틴 오퍼스로 바꿔»). G(:42)·H(:57) 의 직전 런이 15초 만에 FAILED 였던 것도 같은 Fable 한도로 본다. 이름 끝에 «· Opus» 를 붙였고 **cron 시각(:12/:27/:42/:57)·프롬프트·환경은 그대로** 다(두 계정이 엇갈려 도는 배치 유지). update 는 `job_config` 를 통째로 보내야 하며(`environment_id` 필수) `events`(프롬프트)를 반드시 같이 실어야 지워지지 않는다.
 
 ## 4. PROGRESS.md 기록 규약
 
