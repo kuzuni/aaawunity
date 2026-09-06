@@ -41,9 +41,9 @@ namespace KkomaKnight.Game
         double _acc; int _speed = 1; bool _paused, _ended;
         RectTransform _pops;
 
-        // HUD
-        Text _gold, _gem, _chapTitle, _speedTxt;
-        UiKit.Bar _prog, _exp, _hp, _sh;
+        // HUD (T35 · 레퍼런스 02_battle.jpg / 03_battle_enemy.jpg 구도)
+        Text _kills, _gold, _chapTitle, _speedTxt;
+        UiKit.Bar _prog, _exp, _hp, _sh; Image _progFill;
         RectTransform _buffBar, _perkStrip; Text _perkCount; HorizontalLayoutGroup _perkStripLayout;
         readonly Text[] _statVals = new Text[StatDefs.Length];
         string _perkStripKey = "", _buffKey = "";
@@ -51,31 +51,52 @@ namespace KkomaKnight.Game
         protected override void Build()
         {
             _pops = UiKit.Rect(Root, "Pops"); UiKit.Stretch(_pops);
-            // 상단 재화 (ResourceBar_Group) · 일시정지 · 챕터 제목 · 진행도
-            var pills = UiKit.SpawnRt("ui.resourceBar", Root, new Layout.R(Layout.HudPills.X, Layout.HudPills.Y, 48, Layout.HudPills.H));
-            _gold = UiKit.SetText(pills, "ResourceBar_Coin/Text (TMP)", "0"); _gem = UiKit.SetText(pills, "ResourceBar_Gem/Text (TMP)", "0");
-            var pause = UiKit.SpawnRt("ui.btnPause", Root, Layout.HudMenu); UiKit.Clickable(pause, OnPause);
+            // ── 상단(레퍼런스 02): 왼쪽 작은 pill 2(처치 수 · 이번 판 골드) · 오른쪽 메뉴(≡) · 가운데 «챕터 N» + 진행바 ──
+            // pill 2 = ResourceBar_Group 의 Gem·Coin 두 칸을 뜯어(가로 레이아웃 끔 · 세 번째 GemStone 은 끔) HudPills 안에 나란히 — 왼쪽 칸은 아이콘만 해골(pi.skull)로 바꿔 «처치 수»
+            var pills = UiKit.SpawnRt("ui.resourceBar", Root, Layout.HudPills); pills.name = "Pills";
+            var phl = pills.GetComponent<HorizontalLayoutGroup>(); if (phl != null) phl.enabled = false;
+            UiKit.Hide(pills, "ResourceBar_GemStone");
+            var killPill = UiKit.Find(pills, "ResourceBar_Gem") as RectTransform; var goldPill = UiKit.Find(pills, "ResourceBar_Coin") as RectTransform;
+            if (killPill != null) { killPill.name = "Pill:kills"; UiKit.Pct(killPill, 0, 0, 46, 100); UiKit.SetSprite(killPill, "Icon", "pi.skull"); _kills = UiKit.SetText(killPill, "Text (TMP)", "0"); }
+            if (goldPill != null) { goldPill.name = "Pill:gold"; UiKit.Pct(goldPill, 54, 0, 46, 100); _gold = UiKit.SetText(goldPill, "Text (TMP)", "0"); }
+            var menu = UiKit.SpawnRt("ui.btnMenu", Root, Layout.HudMenu); menu.name = "Button_Menu"; UiKit.Clickable(menu, OnPause);   // ≡ → 일시정지 팝업(재개 · 로비로 · 설정)
             var title = UiKit.SpawnRt("ui.lineTitle", Root, new Layout.R(Layout.HudChapTitle.X - 6, Layout.HudChapTitle.Y - 1.2f, Layout.HudChapTitle.W + 12, Layout.HudChapTitle.H + 2.4f));
             _chapTitle = UiKit.SetText(title, "Text (TMP)", "챕터 1");
-            _prog = UiKit.MakeBar(Root, "ui.sliderYellow"); UiKit.Pct(_prog.Root, Layout.HudProgress); if (_prog.Txt != null) _prog.Txt.gameObject.SetActive(false);
-            // 버프 바 (왼쪽 세로)
+            // 진행바 = 검정 홈에 주황이 차는 바(레퍼런스 02·03) — 값은 노드(웨이브) 진행(RefreshHud) · 숫자 없음(T33) · 적 조우 중엔 주황, 걷는 중엔 노랑
+            _prog = UiKit.MakeBar(Root, "ui.sliderYellow"); UiKit.Pct(_prog.Root, Layout.HudProgress); _prog.Root.name = "Bar:Progress"; if (_prog.Txt != null) _prog.Txt.gameObject.SetActive(false);
+            _progFill = _prog.Slider != null && _prog.Slider.fillRect != null ? _prog.Slider.fillRect.GetComponent<Image>() : null;
+            // 버프 바 (왼쪽 세로 · 팔각 프레임 · T20 그대로)
             _buffBar = UiKit.Rect(Root, "BuffBar"); UiKit.Pct(_buffBar, Layout.HudBuffBar);
             var vl = _buffBar.gameObject.AddComponent<VerticalLayoutGroup>(); vl.childAlignment = TextAnchor.UpperLeft; vl.spacing = 10; vl.childForceExpandWidth = false; vl.childForceExpandHeight = false; vl.childControlWidth = false; vl.childControlHeight = false;
-            // 배속 (오른쪽 «웨이브 N/M» 상자는 T33 주인 지시로 만들지 않는다 — `Layout.HudRound` 는 표 대조 테스트 때문에 남긴다)
-            var spd = UiKit.SpawnRt("ui.btnSmallBlue", Root, Layout.HudSpeed); _speedTxt = UiKit.ButtonText(spd); UiKit.Clickable(spd, ToggleSpeed);
-            // 하단 패널
-            UiKit.SpawnRt("ui.frameDark", Root, Layout.HudPanel);
-            _exp = UiKit.MakeBar(Root, "ui.sliderSky", "pi.star"); UiKit.Pct(_exp.Root, Layout.HudExp);
-            _hp = UiKit.MakeBar(Root, "ui.sliderRed", "pi.heart"); UiKit.Pct(_hp.Root, Layout.HudHp);
-            _sh = UiKit.MakeBar(Root, "ui.sliderBlue", "pi.shield"); UiKit.Pct(_sh.Root, Layout.HudSh);
+            // ── 패널 바로 위: 왼쪽 아래 배속 «x1/x2»(T18 기억) · 오른쪽 아래 둥근 펫 버튼(껍데기 · 레퍼런스 자리 = HudRound · T33 이 비운 자리) ──
+            var spd = UiKit.SpawnRt("ui.btnSmallBlue", Root, Layout.HudSpeed); spd.name = "SpeedBtn"; _speedTxt = UiKit.ButtonText(spd); UiKit.Clickable(spd, ToggleSpeed);
+            var pet = UiKit.Rect(Root, "PetBtn"); UiKit.Pct(pet, Layout.HudRound);
+            var petBg = UiKit.Icon(pet, "Bg", "fr.circle", Palette.Plum); UiKit.Stretch(petBg.rectTransform);              // 보라 원(GUI Pro 원형 프레임 · 색은 팔레트)
+            var petBd = UiKit.Icon(pet, "Border", "fr.circleBorder", Palette.Cream); UiKit.Stretch(petBd.rectTransform);
+            var petIc = UiKit.Icon(pet, "Icon", "ui.petIcon"); UiKit.Pct(petIc.rectTransform, 24, 24, 52, 52);
+            UiKit.Clickable(pet, () => { });                                                                                 // 껍데기 — 눌러도 아무 일 없음(주인 ⓔ · 펫 시스템 없음)
+            // ── 하단 패널(30.5%): 바 3개 한 줄 → 스탯 8칸(2열×4행) → 특전 미리보기 줄 + 📘 ──
+            UiKit.SpawnRt("ui.frameDark", Root, Layout.HudPanel).name = "HudPanel";
+            // EXP = 초록 라벨 «EXP» + 바 + «현재/필요»(주인 강조 · 레벨 숫자는 레퍼런스에 없어 안 쓴다 · 워커 결정) · ❤ HP 빨강 · 🛡 실드 파랑 — 각 바 왼쪽에 아이콘, 바 안에 흰 «현재/최대»
+            _exp = UiKit.MakeBar(Root, "ui.sliderGreen"); UiKit.Pct(_exp.Root, Layout.HudExp); _exp.Root.name = "Bar:EXP";
+            {
+                var cap = UiKit.Panel(_exp.Root, "Cap", "fr.r12", Palette.Green); var crt = cap.rectTransform;
+                crt.anchorMin = crt.anchorMax = new Vector2(0, 0.5f); crt.pivot = new Vector2(0.5f, 0.5f); crt.sizeDelta = new Vector2(104, 64); crt.anchoredPosition = new Vector2(14, 2);
+                var ct = UiKit.Text(cap.transform, "EXP", 34, Palette.White, TextAnchor.MiddleCenter, false, true); ct.fontStyle = FontStyle.Bold; UiKit.Stretch(ct.rectTransform);
+            }
+            _hp = UiKit.MakeBar(Root, "ui.sliderRed", "pi.heart"); UiKit.Pct(_hp.Root, Layout.HudHp); _hp.Root.name = "Bar:HP";
+            _sh = UiKit.MakeBar(Root, "ui.sliderBlue", "pi.shield"); UiKit.Pct(_sh.Root, Layout.HudSh); _sh.Root.name = "Bar:SH";
+            foreach (var b in new[] { _hp, _sh }) if (b.Cap != null) { b.Cap.rectTransform.sizeDelta = new Vector2(84, 84); b.Cap.rectTransform.anchoredPosition = new Vector2(6, 2); }   // 아이콘이 바보다 조금 크게(레퍼런스)
+            foreach (var b in new[] { _exp, _hp, _sh }) if (b.Txt != null) { b.Txt.color = Palette.White; b.Txt.fontStyle = FontStyle.Bold; b.Txt.alignment = TextAnchor.MiddleCenter; }
+            // 스탯 8칸 = 칸마다 어두운 상자(ui.frameDark) · 왼쪽 아이콘 · 오른쪽에 이름(작게 · 위) + 값(크게 · 아래) · 버프 중 값 초록(레퍼런스 02) — 자리 = 표(HudStats · 행 피치 5.2) · 상자 사이 틈만 살짝
             for (int i = 0; i < StatDefs.Length; i++)
             {
                 int col = i % 2, row = i / 2;
-                var cell = UiKit.Rect(Root, "stat:" + StatDefs[i].Key);
-                UiKit.Pct(cell, Layout.HudStats.X + col * Layout.HudStatColR, Layout.HudStats.Y + row * Layout.HudStatRowPitch, Layout.HudStatCellW, Layout.HudStatCellH);
-                var ic = UiKit.Icon(cell, "ic", Icons.Stat(StatDefs[i].Key)); UiKit.Pct(ic.rectTransform, 2, 12, 14, 76);
-                UiKit.Label(cell, 19, 0, 46, 100, StatDefs[i].Label, 28, Palette.CreamDark, TextAnchor.MiddleLeft);
-                _statVals[i] = UiKit.Label(cell, 60, 0, 40, 100, "", 34, Palette.White, TextAnchor.MiddleRight);
+                var cell = UiKit.SpawnRt("ui.frameDark", Root, new Layout.R(Layout.HudStats.X + col * Layout.HudStatColR + 0.4f, Layout.HudStats.Y + row * Layout.HudStatRowPitch + 0.3f, Layout.HudStatCellW - 0.8f, Layout.HudStatCellH - 0.6f));
+                cell.name = "stat:" + StatDefs[i].Key;
+                var ic = UiKit.Icon(cell, "ic", Icons.Stat(StatDefs[i].Key)); UiKit.Pct(ic.rectTransform, 3, 12, 15, 76);
+                var lb = UiKit.Label(cell, 21, 6, 76, 40, StatDefs[i].Label, 24, Palette.CreamDark, TextAnchor.MiddleLeft); lb.name = "Label";
+                _statVals[i] = UiKit.Label(cell, 21, 46, 76, 48, "", 38, Palette.White, TextAnchor.MiddleLeft); _statVals[i].name = "Value"; _statVals[i].fontStyle = FontStyle.Bold;
             }
             // 보유 특전 = 책 모양 버튼(특전 선택 팝업의 Book 과 같은 그림 · 위에 개수) — 주인 지시 2026-09-05
             var info = UiKit.Rect(Root, "PerkBook"); UiKit.Pct(info, Layout.HudInfo.X - 1, Layout.HudInfo.Y - 1.5f, Layout.HudInfo.W + 2, Layout.HudInfo.H + 3);
@@ -94,9 +115,9 @@ namespace KkomaKnight.Game
             var rng = new Mulberry32((uint)Environment.TickCount ^ 0x9E3779B9u);
             G = new BattleState(D, chapter, App.Save.CurBuild(D), rng, new InteractivePolicy(), new RunOptions { EmitEvents = true });
             BaseStats = new Dictionary<string, double>(); foreach (var d in StatDefs) BaseStats[d.Key] = d.Cur(G);
-            _world?.Dispose(); _world = new BattleWorld(App, G, _pops);
+            _world?.Dispose(); UiKit.Clear(_pops);   // 팝 층은 새 월드를 만들기 «전에» 비운다(발밑 숫자 글자가 팝 층에 산다 · T35)
+            _world = new BattleWorld(App, G, _pops);
             _acc = 0; _speed = App.Save.Speed; _paused = false; _ended = false; _perkStripKey = ""; _buffKey = ""; _lastReal = 0;   // 배속은 세이브에서(T18 · 클리어 뒤 다음 챕터도 그대로) · 새 판 첫 프레임이 «공백» 으로 잡히지 않게
-            UiKit.Clear(_pops);
             Audio.Bgm("bgm.battle");   // 새 판(클리어 뒤 다음 챕터 포함)은 전투 곡부터 — 보스 곡이었으면 되돌린다(T28)
             RefreshHud();
         }
@@ -205,18 +226,33 @@ namespace KkomaKnight.Game
             if (G == null) return;
             var P = G.P; var D = App.Data;
             if (_gold != null) _gold.text = UiKit.Fmt(G.Gold);
-            if (_gem != null) _gem.text = UiKit.Fmt(App.Save.Gem);
+            if (_kills != null) _kills.text = G.Kills.ToString();
             if (_chapTitle != null) _chapTitle.text = $"챕터 {G.Chapter}";
-            double lastX = G.Nodes.Count > 0 ? G.Nodes[G.Nodes.Count - 1].X : 1;
-            _prog.Set(Math.Min(1, P.WorldX / Math.Max(1, lastX)), null);
+            // 진행바(T35) = 노드(웨이브·이벤트·보스) 진행 — 끝난 노드 수 + 지금 싸우는 웨이브의 처치 비율 → 적을 잡을수록 찬다 · 적 조우 중엔 주황, 걷는 중엔 노랑(레퍼런스 03 «적 발견»)
+            _prog.Set(ChapterProgress(G), null);
+            if (_progFill != null) _progFill.color = _world != null && _world.Engaged ? Palette.Orange : Palette.Yellow;
             if (_speedTxt != null) _speedTxt.text = "x" + _speed;
             int need = D.Tune.ExpNeed(P.Level);
-            _exp.Set(need > 0 ? (double)P.Exp / need : 0, $"Lv {P.Level}  {P.Exp}/{need}");
+            _exp.Set(need > 0 ? (double)P.Exp / need : 0, $"{P.Exp}/{need}");
             double hp = _world != null ? _world.ShownHp : P.Hp, sh = _world != null ? _world.ShownSh : P.Sh;   // 표시 체력 — 칼이 내려온 순간에 깎인다
             _hp.Set(P.MaxHp > 0 ? hp / P.MaxHp : 0, $"{UiKit.Fmt(hp)}/{UiKit.Fmt(P.MaxHp)}");
             _sh.Set(P.MaxSh > 0 ? sh / P.MaxSh : 0, P.MaxSh > 0 ? $"{UiKit.Fmt(sh)}/{UiKit.Fmt(P.MaxSh)}" : "실드 없음");
             for (int i = 0; i < StatDefs.Length; i++) { var d = StatDefs[i]; _statVals[i].text = d.Fmt(G); _statVals[i].color = d.Up(G, BaseStats) ? Palette.Green : Palette.White; }
             RefreshPerkStrip(); RefreshBuffBar();
+        }
+        /// <summary>챕터 진행 0~1 — 끝난 노드(웨이브/보스 = 적 전멸 · 이벤트 = Done) 수 + 지금 싸우는 첫 미완 웨이브의 처치 비율, ÷ 노드 수. 엔진 값만 읽는다(테스트가 같은 식으로 검산).</summary>
+        public static double ChapterProgress(BattleState G)
+        {
+            if (G == null || G.Nodes.Count == 0) return 0;
+            int total = G.Nodes.Count, done = 0; double frac = 0; bool curFound = false;
+            foreach (var n in G.Nodes)
+            {
+                bool fight = n.Type == NodeType.Wave || n.Type == NodeType.Boss;
+                bool finished = fight ? n.Enemies.Count > 0 && n.Enemies.TrueForAll(e => e.Dead) : n.Done;
+                if (finished) { done++; continue; }
+                if (!curFound && fight && n.Enemies.Count > 0) { curFound = true; int dead = 0; foreach (var e in n.Enemies) if (e.Dead) dead++; frac = (double)dead / n.Enemies.Count; }
+            }
+            return Math.Min(1, (done + frac) / total);
         }
         void RefreshPerkStrip()
         {

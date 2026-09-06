@@ -54,8 +54,11 @@ namespace KkomaKnight.Core
         public const float HpLabelY = 40.5f, HpLabelH = 3.2f;
         public const float PlayerCenterX = 16.0f, FirstEnemyCenterX = 33.4f, EnemyGapX = 16.5f;
         public const float PlayerFootBarW = 10.3f, EnemyFootBarW = 9.7f;
-        /// <summary>발밑 체력바 중심 y(HpLabelY 줄 안) · 그 아래 실드바(파랑) — 주인 지시 2026-09-05 «hp바는 캐릭터 하단 · 실드바는 hp바 밑».</summary>
-        public const float FootHpBarY = HpLabelY + 0.9f, FootShBarY = HpLabelY + 2.2f, FootBarH = 0.55f, FootShBarH = 0.4f;
+        /// <summary>
+        /// 발밑 2단 숫자 바(T35 · 주인 강조 · `02_battle.jpg`·`03_battle_enemy.jpg`): 체력 라벨 줄(HpLabelY · 높이 HpLabelH 3.2%) 안에 <b>빨강(HP) 위 · 파랑(실드) 아래</b> 같은 높이로 쌓는다 —
+        /// 각 단 1.35%(숫자가 안에 흰 글자로 들어갈 높이) · 중심 y = 줄 위에서 0.75 / 2.2. 실드 0 이면 파란 단은 숨긴다. 바 폭은 그대로(PlayerFootBarW·EnemyFootBarW × CharScale · T14).
+        /// </summary>
+        public const float FootHpBarY = HpLabelY + 0.75f, FootShBarY = HpLabelY + 2.2f, FootBarH = 1.35f, FootShBarH = 1.35f;
         /// <summary>그리기 간격 배율. 2 로 두면 멈춤 거리 밖의 거리를 화면에서 2배로 벌리지만(비균일 사상), 멀리 있는 소품·적이 가까운 것과 다른 속도로 움직여 부자연스럽다(주인 2026-09-05: «전이 나은데»).
         /// 그래서 1(= 예전 그대로 · 모든 것이 같은 속도)로 둔다. 진짜 간격 2배는 엔진 좌표(enemies.json enemyGap/nodeGap/nodeGapEvent) 를 바꿔야 하고 그건 밸런스·시드 골든이 바뀌는 일 — 승인 대기 24.</summary>
         public const float WorldSpacing = 1.0f;

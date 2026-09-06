@@ -102,7 +102,7 @@
 | sprites | `pi.crown` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/crown_1.png` | fileID 21300000 | 귀족의 눈 |
 | sprites | `pi.block` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/block.png` | fileID 21300000 | 피해 무시 · 실드 방벽 |
 | sprites | `pi.growth` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/growth.png` | fileID 21300000 | 처치 시 스택 특전 |
-| sprites | `pi.skull` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/skull_1.png` | fileID 21300000 | 즉사 특전 · 사망 화면 |
+| sprites | `pi.skull` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/skull_1.png` | fileID 21300000 | 즉사 특전 · 사망 화면 · 전투 HUD 처치 수 pill 아이콘(T35) |
 | sprites | `pi.skull3` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/skull_3.png` | fileID 21300000 |  |
 | sprites | `pi.target` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/target_1.png` | fileID 21300000 |  |
 | sprites | `pi.swirl` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/swirl.png` | fileID 21300000 |  |
@@ -206,9 +206,9 @@
 | sprites | `hud.alertAd` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/Alert_Ad_01.png` | fileID 21300000 |  |
 | sprites | `fr.rect` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_01~04_White_Bg.png` | fileID 21300000 |  |
 | sprites | `fr.rectBorder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_01~04_White_Border1.png` | fileID 21300000 |  |
-| sprites | `fr.r12` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_R12_Bg.png` | fileID 21300000 |  |
-| sprites | `fr.circle` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Circle_H86_White_Bg.png` | fileID 21300000 |  |
-| sprites | `fr.circleBorder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Circle_H70_White_Border.png` | fileID 21300000 |  |
+| sprites | `fr.r12` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_R12_Bg.png` | fileID 21300000 | EXP 바 왼쪽 «EXP» 초록 라벨 배경(T35 · 9-slice) |
+| sprites | `fr.circle` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Circle_H86_White_Bg.png` | fileID 21300000 | 전투 HUD 오른쪽 아래 펫 둥근 버튼 바탕(보라 · 껍데기 · T35) |
+| sprites | `fr.circleBorder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Circle_H70_White_Border.png` | fileID 21300000 | 펫 둥근 버튼 테두리(T35) |
 | sprites | `fr.sliderBg` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Slider/Slider_02_White_Bg.png` | fileID 21300000 |  |
 | sprites | `fr.buffSlot` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/HUD/BuffSlot_01_Bg.png` | fileID 21300000 |  |
 | sprites | `fr.toast` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/ToastMessage_01.png` | fileID 21300000 |  |
@@ -389,13 +389,13 @@
 | prefabs | `ui.alertDot` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_HUD/Alert_Dot_01_Red.prefab` | root 6436244074252915597 | 빨간 알림 점(Alert_Dot_01_Red 47×47) — 장비 칸의 «합성 가능» 점(대장간 · 오른쪽 위 · T8 · ROUTINE 의 ui.redDot = 이 키) · NEW 점(왼쪽 아래) · 장착 슬롯의 «인벤에 더 좋은 게 있다» 는 프리팹 자체의 같은 점 |
 | prefabs | `ui.toast` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_HUD/ToastMessage_01.prefab` | root 2774420329267464172 | 토스트 |
 | prefabs | `ui.sliderRed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Slider/Slider_02_Red.prefab` | root 9209254320531227673 | HP 바 (Slider_02 — Slider_01 은 fill 스프라이트 GUID 가 깨져 있어 안 쓴다) |
-| prefabs | `ui.sliderSky` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Slider/Slider_02_Sky.prefab` | root 5561013251832034622 | 경험치 바 |
+| prefabs | `ui.sliderSky` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Slider/Slider_02_Sky.prefab` | root 5561013251832034622 | (T35 부터 EXP 바는 ui.sliderGreen) 예비 |
 | prefabs | `ui.sliderBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Slider/Slider_02_Blue.prefab` | root 6735977904678686521 | 실드 바 |
-| prefabs | `ui.sliderGreen` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Slider/Slider_02_LightGreen.prefab` | root 8554564898920242427 |  |
-| prefabs | `ui.sliderYellow` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Slider/Slider_02_Yellow.prefab` | root 1587652259353826145 | 진행도 바 |
-| prefabs | `ui.btnPause` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_Pause_01.prefab` | root 4145695849633270983 | HUD 일시정지 |
+| prefabs | `ui.sliderGreen` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Slider/Slider_02_LightGreen.prefab` | root 8554564898920242427 | 전투 HUD EXP 바(초록 · 왼쪽 캡 = fr.r12 초록 라벨 «EXP» · T35) · 로비 배너 진행바 |
+| prefabs | `ui.sliderYellow` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Slider/Slider_02_Yellow.prefab` | root 1587652259353826145 | 챕터 진행바(홈 검정 · fill 은 조우 중 주황 / 걷는 중 노랑 · T35) |
+| prefabs | `ui.btnPause` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_Pause_01.prefab` | root 4145695849633270983 | (T35 부터 HUD 는 ui.btnMenu ≡ 를 쓴다) 일시정지 프리팹 — 예비 |
 | prefabs | `ui.btnInfo` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_Info.prefab` | root 5447371863407438132 | HUD 보유 특전(인포) |
-| prefabs | `ui.btnMenu` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_Menu.prefab` | root 2270988460478775910 |  |
+| prefabs | `ui.btnMenu` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_Menu.prefab` | root 2270988460478775910 | 전투 HUD 오른쪽 위 메뉴(≡ → 일시정지 팝업 · T35) · 로비 메뉴 |
 | prefabs | `ui.btnClose` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_Close_Square_01.prefab` | root 6286116089868610410 | 팝업 닫기(빨간 X) |
 | prefabs | `ui.btnOrange` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_02_Orange.prefab` | root 5376548450129869775 | 주 버튼(계속·다음 챕터·광고) |
 | prefabs | `ui.btnBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_02_Blue.prefab` | root 3169995017952804435 | 보조 버튼(로비로·경험치·재개) |
@@ -404,10 +404,10 @@
 | prefabs | `ui.btnGray` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_02_Gray.prefab` | root 1107728591113721123 | 거절 |
 | prefabs | `ui.btnPlum` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_02_Plum.prefab` | root 1483688008532254904 |  |
 | prefabs | `ui.btnYellow` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_02_Yellow.prefab` | root 2103124822572054393 |  |
-| prefabs | `ui.btnSmallBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_01_Blue.prefab` | root 4112720960120376265 | HUD 배속(x1/x2) 작은 버튼 |
+| prefabs | `ui.btnSmallBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_01_Blue.prefab` | root 4112720960120376265 | HUD 배속(x1/x2) 작은 버튼(왼쪽 아래 · 패널 바로 위) |
 | prefabs | `ui.btnSmallOrange` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_01_Orange.prefab` | root 7667054196127442761 |  |
 | prefabs | `ui.btnStart` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Button/Button_03_Red.prefab` | root 1623786085314472190 | 로비 START (Button_03_Red) |
-| prefabs | `ui.frameDark` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_Square_R12_NoBorder_TransperDark.prefab` | root 3811192130493240385 | HUD 하단 반투명 패널 · 라운드 표시 |
+| prefabs | `ui.frameDark` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_Square_R12_NoBorder_TransperDark.prefab` | root 3811192130493240385 | HUD 하단 반투명 패널 · 스탯 8칸 상자(T35) · 로비 사이드 기둥 |
 | prefabs | `ui.frameIvory` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_Rectangle_01_Border_Ivory.prefab` | root 1280354769812679374 |  |
 | prefabs | `ui.frameDarkBorder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_SquareSharpEdge_01_l_Border_TransperDark.prefab` | root 450577865911699251 |  |
 | prefabs | `ui.lineTitle` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_LineDeco_01_s.prefab` | root 7786740578430808921 | 챕터 제목 밑줄 장식 (Title_LineDeco_01_s) |

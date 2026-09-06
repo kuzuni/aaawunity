@@ -16,7 +16,8 @@ namespace KkomaKnight.Game
     ///   공격 모션은 끊지 않고 간격 안에 끝나게 배속(<see cref="Layout.AttackAnimSpeed"/>), 데미지 연출(팝·플래시·체력바·사망)은 «칼이 내려오는 순간»(Attack.anim OnAttackHit)까지 미룬다(<see cref="Strike"/>).
     ///   사망·승리 클립은 루프 에셋이라 끝에서 Animator 를 멈춘다(<see cref="CharacterRig"/> · T14).
     ///   스크롤 원점은 엔진 x 가 아니라 <see cref="ShownPX"/> — 사망 연출이 아직 안 나온 적이 있으면 출발을 미룬다(T20 · 엔진 좌표 불변).
-    /// ● 체력바는 발밑(HpLabelY 줄) · 플레이어 실드바(파랑)는 그 아래 (주인 지시 2026-09-05).
+    /// ● 발밑 바(T35 · 주인 강조 · `02_battle.jpg`): 빨강(HP) 위에 파랑(실드) 2단 · 각 단 안에 흰 숫자(«현재») · 바 폭 = 캐릭터 폭(2/3 배율) · 실드 0 이면 파란 단 숨김.
+    ///   숫자는 월드가 아니라 팝 층(<c>_pops</c> · 프레임 px)의 uGUI Text 로 그리고 매 프레임 바 위치로 옮긴다(<see cref="FootText"/> · Pop 과 같은 월드→프레임 변환 · 픽셀 크기가 결정적).
     /// </summary>
     public sealed class BattleWorld
     {
@@ -31,11 +32,15 @@ namespace KkomaKnight.Game
         const float SpreadRamp = 150f;                               // 1배 → WorldSpacing 배로 부드럽게 넘어가는 월드 px 구간
 
         // 플레이어
-        CharacterRig _player; SpriteRenderer _pBarBg, _pBarFill, _pShBg, _pShFill; double _pStrikeTick; bool _pDeadShown; EnemyState _pTarget;
+        CharacterRig _player; SpriteRenderer _pBarBg, _pBarFill, _pShBg, _pShFill; Text _pHpTxt, _pShTxt; double _pStrikeTick; bool _pDeadShown; EnemyState _pTarget;
         int _holdPlayer;                                             // 아직 «칼이 안 내려온» 적 공격 수 — 0 일 때만 표시 체력을 엔진 값으로 맞춘다
         public double ShownHp { get; private set; } public double ShownSh { get; private set; }
+        /// <summary>플레이어 발밑 2단 바(T35) — 테스트·진단용 읽기: 빨강 HP 바 · 파랑 실드 바 · 각 단 안의 숫자 글자.</summary>
+        public SpriteRenderer PlayerHpBar => _pBarBg; public SpriteRenderer PlayerShBar => _pShBg; public Text PlayerHpText => _pHpTxt; public Text PlayerShText => _pShTxt;
+        /// <summary>적과 조우 중인가(살아 있는 적이 화면 안) — HUD 상단 진행바가 이때 주황으로 찬다(T35 · 레퍼런스 03).</summary>
+        public bool Engaged { get; private set; }
         // 적
-        sealed class EnemyView { public EnemyState E; public CharacterRig Rig; public SpriteRenderer BarBg, BarFill; public double StrikeTick; public float DieT = -1; public GameObject StunFx; public double ShownHp; public int Hold; }
+        sealed class EnemyView { public EnemyState E; public CharacterRig Rig; public SpriteRenderer BarBg, BarFill; public Text BarTxt; public double StrikeTick; public float DieT = -1; public GameObject StunFx; public double ShownHp; public int Hold; }
         readonly Dictionary<EnemyState, EnemyView> _enemies = new Dictionary<EnemyState, EnemyView>();
         // 연출 지연 — 공격 모션의 타격 순간까지 묶어 두는 이벤트
         sealed class Strike { public CharacterRig Rig; public int HitCount0; public float At; public EnemyState Target; public bool OnPlayer; public readonly List<BattleEvent> Evs = new List<BattleEvent>(); }
@@ -95,7 +100,13 @@ namespace KkomaKnight.Game
             BuildGround(); BuildProps(); BuildNodes(); BuildPlayer();
             _goldPrev = G.Gold; ShownHp = G.P.Hp; ShownSh = G.P.Sh;
         }
-        public void Dispose() { if (_root != null) Object.Destroy(_root.gameObject); }
+        public void Dispose()
+        {
+            if (_root != null) Object.Destroy(_root.gameObject);
+            // 발밑 숫자는 팝 층(uGUI)에 있다 — 월드와 함께 지운다(화면이 Pops 를 통째로 비우기도 하지만 순서에 기대지 않는다)
+            if (_pHpTxt != null) Object.Destroy(_pHpTxt.gameObject); if (_pShTxt != null) Object.Destroy(_pShTxt.gameObject); _pHpTxt = _pShTxt = null;
+            foreach (var kv in _enemies) if (kv.Value.BarTxt != null) Object.Destroy(kv.Value.BarTxt.gameObject);
+        }
 
         // ───────────────────────── 좌표 ─────────────────────────
         /// <summary>플레이어 기준 월드 거리 → 화면용 거리. 멈춤 거리 안(칼 닿는 거리)은 1배, SpreadRamp 를 지나며 WorldSpacing 배로. 뒤(음수)는 1배.</summary>
@@ -273,11 +284,32 @@ namespace KkomaKnight.Game
             fill.size = new Vector2(Mathf.Max(0.001f, w * f), fill.size.y);
             fill.transform.localPosition = new Vector3(-(w - w * f) / 2f, 0, 0);
         }
+        /// <summary>발밑 바 안의 숫자(T35) — 팝 층의 uGUI Text(흰 글자 · 외곽선). 글자 높이는 바 높이(FootBarH % · 프레임 px)에서 잰다 — 픽셀 상수 없음.</summary>
+        Text FootText(string name)
+        {
+            if (_pops == null) return null;
+            int size = Mathf.RoundToInt(UiKit.FrameH * Layout.FootBarH / 100f * 0.8f);
+            var t = UiKit.Text(_pops, "", size, Palette.White, TextAnchor.MiddleCenter, false, true); t.name = name;
+            t.horizontalOverflow = HorizontalWrapMode.Overflow; t.fontStyle = FontStyle.Bold; t.raycastTarget = false;
+            var rt = t.rectTransform; rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f); rt.sizeDelta = new Vector2(400, size * 1.4f);
+            return t;
+        }
+        /// <summary>숫자 글자를 바(월드 위치)의 한가운데로 — Pop 과 같은 월드 → 레이아웃 → 프레임 px 변환. 글자는 바뀔 때만 다시 쓴다(uGUI 재구성 최소화).</summary>
+        static void PlaceFootText(Text t, Vector3 worldPos, string s, bool visible)
+        {
+            if (t == null) return;
+            if (t.gameObject.activeSelf != visible) t.gameObject.SetActive(visible);
+            if (!visible) return;
+            float lx = (worldPos.x * WorldCam.PPU) + WorldCam.LayoutW / 2f;
+            float yFrac = 0.5f - worldPos.y * WorldCam.PPU / WorldCam.LayoutH;
+            t.rectTransform.anchoredPosition = new Vector2(lx * (UiKit.FrameW / WorldCam.LayoutW), (1f - yFrac) * UiKit.FrameH);
+            if (t.text != s) t.text = s;
+        }
         void BuildPlayer()
         {
             _player = MakeChar("Player", CharacterRig.PlayerSkin(D, _app.Save, G.P.MaxSh > 0), Layout.PlayerHeight, true);   // 장착 외형 반영 — 장비 화면(HeroView)과 같은 표(GearLook)
             _player.transform.position = Pos(_shownPX, FootY);
-            // 발밑 체력바(빨강) + 그 아래 실드바(파랑) — 주인 지시. 폭은 캐릭터와 같은 배율(2/3 · T14)
+            // 발밑 2단 바(T35 · 주인 강조): 빨강(HP) 위 · 파랑(실드) 아래 · 같은 높이 · 각 단 안에 흰 숫자. 폭은 캐릭터와 같은 배율(2/3 · T14)
             float pBarW = WorldCam.PctW(Layout.PlayerFootBarW) * Layout.CharScale;
             MakeBar(_root, pBarW, WorldCam.PctH(Layout.FootBarH), out _pBarBg, out _pBarFill, Palette.Red, 392);
             MakeBar(_root, pBarW, WorldCam.PctH(Layout.FootShBarH), out _pShBg, out _pShFill, Palette.Hex(D.Ui.PopShield), 392);
@@ -290,10 +322,23 @@ namespace KkomaKnight.Game
             v = new EnemyView { E = e, Rig = MakeChar("Enemy" + e.Id, EnemySkin(e), h, false), StrikeTick = e.StrikeT, ShownHp = e.Hp };
             float barW = (float)(e.IsBoss ? D.Ui.BossBarW : D.Ui.EnemyBarW) / WorldCam.PPU * Layout.CharScale;   // 캐릭터와 같은 배율(2/3 · T14)
             MakeBar(_root, barW, WorldCam.PctH(Layout.FootBarH), out v.BarBg, out v.BarFill, e.IsBoss ? Palette.Plum : Palette.Red, 395);
+            v.BarTxt = FootText("FootTxt:Enemy" + e.Id);   // 적은 실드가 없으므로(엔진 EnemyState 에 Sh 없음) 빨간 단 하나 + 숫자(레퍼런스 03 «2555»)
             _enemies[e] = v;
             return v;
         }
-        void Remove(EnemyView v) { Object.Destroy(v.Rig.gameObject); Object.Destroy(v.BarBg.gameObject); if (v.StunFx != null) Object.Destroy(v.StunFx); _enemies.Remove(v.E); }
+        void Remove(EnemyView v) { Object.Destroy(v.Rig.gameObject); Object.Destroy(v.BarBg.gameObject); if (v.BarTxt != null) Object.Destroy(v.BarTxt.gameObject); if (v.StunFx != null) Object.Destroy(v.StunFx); _enemies.Remove(v.E); }
+        /// <summary>화면에 보이는 적 발밑 바 수 — 테스트·진단용.</summary>
+        public int EnemyBarCount { get { int n = 0; foreach (var kv in _enemies) if (kv.Value.BarBg != null && kv.Value.BarBg.gameObject.activeSelf) n++; return n; } }
+        /// <summary>보이는 적 바마다 숫자 글자가 켜져 있고 표시 체력(정수)과 같은가 — 테스트·진단용.</summary>
+        public bool EnemyBarTextsConsistent()
+        {
+            foreach (var kv in _enemies)
+            {
+                var v = kv.Value; if (v.BarBg == null || !v.BarBg.gameObject.activeSelf) continue;
+                if (v.BarTxt == null || !v.BarTxt.gameObject.activeSelf || v.BarTxt.text != UiKit.Fmt(System.Math.Ceiling(v.ShownHp))) return false;
+            }
+            return true;
+        }
 
         // ───────────────────────── 틱 훅 (BattleScreen 이 엔진 틱 전후로 부른다) ─────────────────────────
         bool _moving, _engineMoving, _bossWarned; double _prevPX;
@@ -389,9 +434,12 @@ namespace KkomaKnight.Game
             _pBarBg.transform.position = Pos(_shownPX, Layout.FootHpBarY / 100f); SetBar(_pBarBg, _pBarFill, P.MaxHp > 0 ? ShownHp / P.MaxHp : 0);
             _pBarBg.gameObject.SetActive(!_pDeadShown);
             _pShBg.transform.position = Pos(_shownPX, Layout.FootShBarY / 100f); SetBar(_pShBg, _pShFill, P.MaxSh > 0 ? ShownSh / P.MaxSh : 0);
-            _pShBg.gameObject.SetActive(!_pDeadShown && P.MaxSh > 0);
+            _pShBg.gameObject.SetActive(!_pDeadShown && P.MaxSh > 0);   // 실드 0 이면 파란 단 숨김(T35)
+            if (_pHpTxt == null) { _pHpTxt = FootText("FootTxt:PlayerHp"); _pShTxt = FootText("FootTxt:PlayerSh"); }   // 팝 층은 화면이 새 판마다 비우므로 여기서(첫 Sync) 만든다
+            PlaceFootText(_pHpTxt, _pBarBg.transform.position, UiKit.Fmt(System.Math.Ceiling(ShownHp)), _pBarBg.gameObject.activeSelf);
+            PlaceFootText(_pShTxt, _pShBg.transform.position, UiKit.Fmt(System.Math.Ceiling(ShownSh)), _pShBg.gameObject.activeSelf);
             // 적
-            var seen = new HashSet<EnemyState>();
+            var seen = new HashSet<EnemyState>(); bool engaged = false;
             foreach (var n in G.Nodes) foreach (var e in n.Enemies)
             {
                 float lx = LayoutX(e.WorldX);
@@ -403,7 +451,7 @@ namespace KkomaKnight.Game
                 if (v.Hold == 0) v.ShownHp = e.Hp;
                 if (e.Dead && v.Hold == 0)
                 {
-                    if (v.DieT < 0) { v.DieT = 0; v.Rig.Play(CharacterRig.Dead, true); _lastKillPos = v.Rig.transform.position; Fx.Spawn("fx.death", v.Rig.transform.position + Vector3.up * 0.4f, 0.8f); if (!Silent) Audio.Sfx("snd.kill", 0.9f); v.BarBg.gameObject.SetActive(false); if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } }
+                    if (v.DieT < 0) { v.DieT = 0; v.Rig.Play(CharacterRig.Dead, true); _lastKillPos = v.Rig.transform.position; Fx.Spawn("fx.death", v.Rig.transform.position + Vector3.up * 0.4f, 0.8f); if (!Silent) Audio.Sfx("snd.kill", 0.9f); v.BarBg.gameObject.SetActive(false); PlaceFootText(v.BarTxt, Vector3.zero, "", false); if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } }
                     v.DieT += dt; v.Rig.SetAlpha(Mathf.Clamp01(1.2f - v.DieT * 1.5f));
                     if (v.DieT > 0.85f) Remove(v);
                     continue;
@@ -412,10 +460,13 @@ namespace KkomaKnight.Game
                 else { if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } if (!v.Rig.Attacking) v.Rig.Play(CharacterRig.Idle); }
                 v.BarBg.transform.position = Pos(e.WorldX, Layout.FootHpBarY / 100f);
                 SetBar(v.BarBg, v.BarFill, e.MaxHp > 0 ? v.ShownHp / e.MaxHp : 0);
+                PlaceFootText(v.BarTxt, v.BarBg.transform.position, UiKit.Fmt(System.Math.Ceiling(v.ShownHp)), v.BarBg.gameObject.activeSelf);
+                if (!e.Dead && lx < WorldCam.LayoutW) engaged = true;
                 if (e.IsBoss && !_bossWarned && lx < WorldCam.LayoutW) { _bossWarned = true; _app.Overlay.BossWarn(_app.Frame); Fx.Spawn("fx.bossWarn", v.Rig.transform.position + Vector3.up * 1.2f, 0.8f, 2.5f); Audio.Bgm("bgm.boss"); }
             }
             var gone = new List<EnemyView>(); foreach (var kv in _enemies) if (!seen.Contains(kv.Key)) gone.Add(kv.Value);
             foreach (var v in gone) Remove(v);
+            Engaged = engaged;
             // 투사체
             SyncProjectiles();
             // 골드 증가 → 팝 (엔진은 골드 이벤트를 따로 내지 않는다)

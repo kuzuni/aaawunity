@@ -363,6 +363,18 @@ namespace KkomaKnight.Tests.Play
             var bs = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bs); var G = bs.G; Assert.IsNotNull(G, "전투 상태");
             Assert.Greater(G.T, 0, "3초 동안 엔진 시간이 흘러야 한다(팝업이 안 떠 있는 한)");
             Assert.IsTrue(HasText(s => s.StartsWith("챕터")), "HUD 챕터 제목"); Assert.IsFalse(HasText(s => s.StartsWith("웨이브")), "HUD 웨이브 수 표시는 없다(T33 주인 지시)");
+            // T35 — 레퍼런스 02/03 구도 단언: pill 2 · 메뉴(≡) · 진행바 · 배속 · 펫 둥근 버튼 · 바 3개 한 줄(EXP 라벨) · 스탯 8칸 · 📘 · 특전 줄 (세부 = HudBarsTests)
+            {
+                var hud = bs.Root;
+                Assert.IsNotNull(UiKit.Find(hud, "Pill:kills"), "상단 왼쪽 pill(처치 수)"); Assert.IsNotNull(UiKit.Find(hud, "Pill:gold"), "상단 왼쪽 pill(골드)");
+                Assert.IsNotNull(UiKit.Find(hud, "Button_Menu"), "상단 오른쪽 메뉴(≡)"); Assert.IsNotNull(UiKit.Find(hud, "Bar:Progress"), "챕터 진행바");
+                Assert.IsNotNull(UiKit.Find(hud, "SpeedBtn"), "왼쪽 아래 배속"); Assert.IsNotNull(UiKit.Find(hud, "PetBtn"), "오른쪽 아래 펫 둥근 버튼(껍데기)");
+                Assert.IsNotNull(UiKit.Find(hud, "Bar:EXP"), "EXP 바"); Assert.IsNotNull(UiKit.Find(hud, "Bar:HP"), "HP 바"); Assert.IsNotNull(UiKit.Find(hud, "Bar:SH"), "실드 바");
+                Assert.IsTrue(HasText(s => s == "EXP"), "EXP 초록 라벨");
+                Assert.AreEqual(BattleScreen.StatDefs.Length, CountNamed(hud, "stat:"), "스탯 8칸(2열×4행)");
+                Assert.IsNotNull(UiKit.Find(hud, "PerkBook"), "📘 보유 특전"); Assert.IsNotNull(UiKit.Find(hud, "PerkStrip"), "특전 미리보기 줄");
+                Assert.IsTrue(ClickNamed(hud, "PetBtn"), "펫 버튼 클릭"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen, "펫 버튼은 껍데기 — 팝업 안 열림");
+            }
             Check("전투 3초");
             // 팝업 검사 동안 엔진을 멈춘다(Time.deltaTime = 0 → 틱 없음 · 팝업 카운트다운은 unscaled) — 엔진이 스스로 띄우는 레벨업과 섞이지 않게
             Time.timeScale = 0f; _app.Overlay.Close(); G.Pending = null; yield return Frames(1);
