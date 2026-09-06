@@ -316,7 +316,7 @@
 3. UiSmokeTests ① 의 «탤런트» 단언을 «던전 목록 → Start1 → 닫기 → 둘째 → Start2 → 닫기» 로 바꾼다.
 4. 게이트 + PROGRESS T30 행.
 
-### T31 — 장비 아이콘 = CharacterMaker «Thumbnail» 그림 (입는 파츠와 아이콘을 분리 · 주인 2026-09-06) (T17 뒤)
+### T31 — 장비 아이콘 = CharacterMaker «Thumbnail» 그림 (입는 파츠와 아이콘을 분리 · 주인 2026-09-06) (T17 뒤) ✅ (완료 · `07bbc86` · CI #58 · PROGRESS 참조 — cm.gear.* 착용 / cmi.gear.* 아이콘 · Thumbnail 36개 전부 같은 이름 · 임시 대체 0)
 범위: `GearLook` 표 · `Assets/Scripts/Game/GearUi.cs`(아이콘 키) · catalog(`cmi.*` 신규 키)
 순서: **T17 완료 뒤**(같은 표·파일). T25·T27 과는 줄이 다르다.
 1. CharacterMaker 팩은 파츠마다 **입는 그림**(`Extenstions/Parts Pack Base/Parts/<부위>/<이름>.png`)과 **아이콘용 그림**(`…/Thumbnail/<부위>/<같은 이름>.png` · Helmet·Chest·Sword·Blunt·Axe·Spear·Bow·Shield 등)이 따로 있다. 주인: «막상 장착 아이콘용 갑옷이랑 실제 입는 갑옷이 다르게 돼 있는데 내 게임도 그렇게». → `GearLook` 표의 각 항목에 **아이콘 키(Thumbnail)** 와 **착용 키(Parts)** 를 둘 다 두고, 장비 칸·슬롯·세부 팝업·뽑기 결과·대장간의 아이콘은 **Thumbnail** 을, 캐릭터(HeroView·전투)는 **Parts** 를 쓴다. 카탈로그 키는 `cmi.<part>.<name>`(Thumbnail) / 기존 `cm.*`(Parts). 같은 이름이 Thumbnail 에 없으면 PROGRESS 에 목록으로 남기고 Parts 그림을 임시로.
