@@ -36,6 +36,8 @@ namespace KkomaKnight.Game
         public BattleState G { get; private set; }
         public Dictionary<string, double> BaseStats { get; private set; }
         BattleWorld _world;
+        /// <summary>월드 그리기(테스트·진단용 읽기 전용 — T20 PlayMode 테스트가 표시 원점·킬 연출 대기를 본다).</summary>
+        public BattleWorld World => _world;
         double _acc; int _speed = 1; bool _paused, _ended;
         RectTransform _pops;
 
@@ -271,10 +273,10 @@ namespace KkomaKnight.Game
             {
                 var perk = App.Data.Perks.Perks.Find(x => x.Id == g.Key);
                 var cell = UiKit.Rect(_buffBar, g.Key); cell.sizeDelta = new Vector2(88, 88);
-                var slot = UiKit.Spawn("ui.buffSlot", cell); UiKit.Stretch((RectTransform)slot.transform);
-                var bg = slot.GetComponentInChildren<Image>(true); if (bg != null) bg.color = perk != null ? Palette.PerkColor(perk) : Palette.Gray;
+                // 칸 = 특전과 같은 팔각 등급 프레임(ItemFrame_04_* · UiKit.PerkFrame · 배율로 셀에 맞춤 · 특전 없는 버프는 gray) — ui.buffSlot(엉뚱한 프레임) 대신(T20 · 주인 지시). 아이콘은 프레임 안 Icon 자식에.
                 string icon = perk != null ? Icons.Perk(perk.Id) : Icons.Stat(g.Key.TrimStart('#') == "atk" ? "dmg" : g.Key.TrimStart('#'));
-                var ic = UiKit.Icon(cell, "ic", icon, Palette.White); UiKit.Pct(ic.rectTransform, 20, 20, 60, 60);
+                UiKit.PerkFrame(cell, perk != null ? Palette.PerkGradeName(perk.Grade) : "gray", icon, cell.sizeDelta.x);
+                // 스택 수는 그대로 오른쪽 아래(프레임 위에 그려지도록 뒤에 만든다)
                 if (g.Value > 1) { var n = UiKit.Text(cell, g.Value.ToString(), 24, Palette.White); UiKit.Pct(n.rectTransform, 55, 55, 45, 45); }
             }
         }

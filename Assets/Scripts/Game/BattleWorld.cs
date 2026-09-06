@@ -15,6 +15,7 @@ namespace KkomaKnight.Game
     /// ● 캐릭터: CharacterMaker Character.prefab + <see cref="CharacterRig"/>. 키 = 표 %(PlayerHeight·EnemyHeight) × <see cref="Layout.CharScale"/>(2/3 · 발밑 바 폭도 같은 배율 · T14).
     ///   공격 모션은 끊지 않고 간격 안에 끝나게 배속(<see cref="Layout.AttackAnimSpeed"/>), 데미지 연출(팝·플래시·체력바·사망)은 «칼이 내려오는 순간»(Attack.anim OnAttackHit)까지 미룬다(<see cref="Strike"/>).
     ///   사망·승리 클립은 루프 에셋이라 끝에서 Animator 를 멈춘다(<see cref="CharacterRig"/> · T14).
+    ///   스크롤 원점은 엔진 x 가 아니라 <see cref="ShownPX"/> — 사망 연출이 아직 안 나온 적이 있으면 출발을 미룬다(T20 · 엔진 좌표 불변).
     /// ● 체력바는 발밑(HpLabelY 줄) · 플레이어 실드바(파랑)는 그 아래 (주인 지시 2026-09-05).
     /// </summary>
     public sealed class BattleWorld
@@ -43,6 +44,15 @@ namespace KkomaKnight.Game
         float _clock;
         /// <summary>타격 연출이 아직 남아 있나 — 화면(BattleScreen)은 이 동안 팝업(레벨업·사망)을 열지 않고 기다린다.</summary>
         public bool Busy => _strikes.Count > 0;
+        // T20 — 표시 기준 x(스크롤 원점). 엔진은 킬 다음 틱(1/30초)에 바로 다음 적으로 걷지만(Battle.Tick · alive[0] · sim.js 와 동일 · 불변),
+        // 화면은 사망 연출을 «칼이 내려오는 순간»(Strike · Hold)까지 미루므로 그대로 두면 «살아 보이는» 적을 두고 출발한다(주인 지적).
+        // → 죽었는데 아직 사망 연출이 안 나온 적(Dead && Hold>0)이 하나라도 있으면 표시 원점을 멈추고, 풀리면 걷기 속도 CatchUpMul 배로 엔진 x 를 따라잡는다. 엔진 좌표는 손대지 않는다.
+        double _shownPX;
+        const double CatchUpMul = 2, SnapGap = 600;                 // 따라잡기 = 걷기 2배 · 그보다 큰 격차(탭 복귀 등)는 그냥 맞춘다
+        /// <summary>화면이 쓰는 플레이어 월드 x(스크롤 원점) — 킬 연출이 걸려 있는 동안 엔진 <c>P.WorldX</c> 보다 뒤에 머문다.</summary>
+        public double ShownPX => _shownPX;
+        /// <summary>죽었지만 아직 사망 연출이 시작되지 않은(칼이 안 내려온) 적이 있는가 — 이 동안 화면은 출발하지 않는다.</summary>
+        public bool KillPending { get { foreach (var kv in _enemies) if (kv.Key.Dead && kv.Value.Hold > 0) return true; return false; } }
         /// <summary>배속(x1/x2) — 애니 속도와 지연 시계에 함께 건다.</summary>
         public float TimeScale = 1f;
         /// <summary>따라잡기 중(탭 숨김 뒤 복귀) — 공격 모션·팝·이펙트를 만들지 않고 이벤트만 비운다.</summary>
@@ -75,6 +85,7 @@ namespace KkomaKnight.Game
             _app = app; G = g; D = g.D; _pops = popsLayer;
             _zoom = (float)D.Ui.CameraZoom; _playerX = (float)(D.Ui.PlayerX * WorldCam.LayoutW);
             _theme = Theme.ForChapter(g.Chapter);
+            _shownPX = G.P.WorldX;
             _root = new GameObject("World").transform;
             BuildGround(); BuildProps(); BuildNodes(); BuildPlayer();
             _goldPrev = G.Gold; ShownHp = G.P.Hp; ShownSh = G.P.Sh;
@@ -91,7 +102,7 @@ namespace KkomaKnight.Game
             if (u <= SpreadRamp) return stop + u + (mul - 1f) * u * u / (2f * SpreadRamp);
             return stop + SpreadRamp + (mul - 1f) * SpreadRamp / 2f + mul * (u - SpreadRamp);
         }
-        float LayoutX(double worldX) => Spread(worldX - G.P.WorldX) * _zoom + _playerX;
+        float LayoutX(double worldX) => Spread(worldX - _shownPX) * _zoom + _playerX;   // 원점 = 표시 기준 x(T20) — 킬 연출 중에는 엔진 x 보다 뒤
         Vector3 Pos(double worldX, float yFrac, float z = 0) => WorldCam.ToWorld(LayoutX(worldX), yFrac, z);
         static float ScaleForHeightPct(float pct) => WorldCam.PctH(pct) / CharBaseHeight;
         static int SortBase(float layoutX) => 100 + Mathf.Clamp((int)((WorldCam.LayoutW + 200 - layoutX) / 6f), 0, 180);
@@ -133,7 +144,7 @@ namespace KkomaKnight.Game
         }
         void ScrollGround()
         {
-            float scroll = (float)(G.P.WorldX * _zoom / WorldCam.PPU);
+            float scroll = (float)(_shownPX * _zoom / WorldCam.PPU);
             float left = WorldCam.ToWorld(0, 0).x - _tileW;
             float off = Mathf.Repeat(scroll, _tileW);
             for (int i = 0; i < _fieldTiles.Count; i++) { var p = _fieldTiles[i].transform.position; p.x = left + (i % _tileCols) * _tileW - off + _tileW * 0.5f; _fieldTiles[i].transform.position = p; }
@@ -254,7 +265,7 @@ namespace KkomaKnight.Game
         void BuildPlayer()
         {
             _player = MakeChar("Player", CharacterRig.PlayerSkin(D, _app.Save, G.P.MaxSh > 0), Layout.PlayerHeight, true);   // 장착 외형 반영 — 장비 화면(HeroView)과 같은 표(GearLook)
-            _player.transform.position = Pos(G.P.WorldX, FootY);
+            _player.transform.position = Pos(_shownPX, FootY);
             // 발밑 체력바(빨강) + 그 아래 실드바(파랑) — 주인 지시. 폭은 캐릭터와 같은 배율(2/3 · T14)
             float pBarW = WorldCam.PctW(Layout.PlayerFootBarW) * Layout.CharScale;
             MakeBar(_root, pBarW, WorldCam.PctH(Layout.FootBarH), out _pBarBg, out _pBarFill, Palette.Red, 392);
@@ -274,7 +285,7 @@ namespace KkomaKnight.Game
         void Remove(EnemyView v) { Object.Destroy(v.Rig.gameObject); Object.Destroy(v.BarBg.gameObject); if (v.StunFx != null) Object.Destroy(v.StunFx); _enemies.Remove(v.E); }
 
         // ───────────────────────── 틱 훅 (BattleScreen 이 엔진 틱 전후로 부른다) ─────────────────────────
-        bool _moving, _bossWarned; double _prevPX;
+        bool _moving, _engineMoving, _bossWarned; double _prevPX;
         public void BeforeTick()
         {
             _prevPX = G.P.WorldX;
@@ -283,9 +294,9 @@ namespace KkomaKnight.Game
         }
         public void AfterTick()
         {
-            _moving = G.P.WorldX > _prevPX + 1e-6;
+            _engineMoving = G.P.WorldX > _prevPX + 1e-6;   // 엔진이 이번 틱에 걸었나 — 화면의 Walk 는 Sync 에서 표시 원점 기준으로 정한다(T20)
             var P = G.P; _pStrike = null; _eStrikes.Clear();
-            if (Silent) { _pStrikeTick = P.StrikeT; foreach (var kv in _enemies) kv.Value.StrikeTick = kv.Key.StrikeT; G.Events.Clear(); return; }
+            if (Silent) { _pStrikeTick = P.StrikeT; foreach (var kv in _enemies) kv.Value.StrikeTick = kv.Key.StrikeT; G.Events.Clear(); _shownPX = P.WorldX; return; }
             // 플레이어가 이번 틱에 휘둘렀나 → 공격 모션(간격 = 1/공속) + 연출 묶음
             if (P.StrikeT > _pStrikeTick && !G.Dead)
             {
@@ -353,15 +364,20 @@ namespace KkomaKnight.Game
             // 플레이어 — 표시 체력은 «칼이 내려온 뒤» 에만 엔진 값으로
             var P = G.P;
             if (_holdPlayer == 0) { ShownHp = P.Hp; ShownSh = P.Sh; }
+            // 표시 원점(T20): 사망 연출이 아직 안 나온 적이 있으면 멈춤 · 없으면 걷기 CatchUpMul 배까지로 엔진 x 를 따라잡는다(평소엔 격차 0 → 엔진 걸음 그대로)
+            double gap = P.WorldX - _shownPX; bool hold = KillPending;
+            if (Silent || gap < 0 || gap > SnapGap) _shownPX = P.WorldX;
+            else if (!hold && gap > 0) { double v = G.C.PlayerSpeed * P.WalkMul * (P.Dash ? G.C.DashMul : 1) * CatchUpMul; _shownPX = System.Math.Min(P.WorldX, _shownPX + v * dt); }
+            _moving = !hold && (_engineMoving || P.WorldX - _shownPX > 1.0);
             _player.Tick(dt);
-            _player.transform.position = Pos(P.WorldX, FootY);
-            _player.SetSortingBase(SortBase(LayoutX(P.WorldX)));
+            _player.transform.position = Pos(_shownPX, FootY);
+            _player.SetSortingBase(SortBase(LayoutX(_shownPX)));
             if (G.Dead) { if (!_pDeadShown && _holdPlayer == 0) { _pDeadShown = true; _player.Play(CharacterRig.Dead, true); } }
             else if (G.Cleared) { if (!_player.Attacking) _player.Play(CharacterRig.Victory); }
             else if (!_player.Attacking) _player.Play(_moving ? CharacterRig.Walk : CharacterRig.Idle);
-            _pBarBg.transform.position = Pos(P.WorldX, Layout.FootHpBarY / 100f); SetBar(_pBarBg, _pBarFill, P.MaxHp > 0 ? ShownHp / P.MaxHp : 0);
+            _pBarBg.transform.position = Pos(_shownPX, Layout.FootHpBarY / 100f); SetBar(_pBarBg, _pBarFill, P.MaxHp > 0 ? ShownHp / P.MaxHp : 0);
             _pBarBg.gameObject.SetActive(!_pDeadShown);
-            _pShBg.transform.position = Pos(P.WorldX, Layout.FootShBarY / 100f); SetBar(_pShBg, _pShFill, P.MaxSh > 0 ? ShownSh / P.MaxSh : 0);
+            _pShBg.transform.position = Pos(_shownPX, Layout.FootShBarY / 100f); SetBar(_pShBg, _pShFill, P.MaxSh > 0 ? ShownSh / P.MaxSh : 0);
             _pShBg.gameObject.SetActive(!_pDeadShown && P.MaxSh > 0);
             // 적
             var seen = new HashSet<EnemyState>();
