@@ -243,7 +243,9 @@ namespace KkomaKnight.Tests.Play
             var lastGold = UiKit.Find(content, "GoldPack:2");
             Assert.IsNotNull(lastGold, "골드 마지막 칸");
             var goldLight = lastGold.GetChild(0).Find(UiKit.LightMaskName + "/" + UiKit.LightName);
-            Assert.IsFalse(UiKit.IsTweening(goldLight), "스크롤 밖 칸(맨 아래 골드)은 빛살이 멈춘다(T72 4항 · DOTween.IsTweening 은 «도는 중» 만 참)");
+            // 멈춤은 «트윈이 없다» 가 아니라 «각이 안 변한다» 로 잰다 — DOTween.IsTweening 은 멈춘(Pause) 트윈도 «활성» 으로 본다(CI #145 에서 확인)
+            var stop0 = goldLight.localRotation; yield return RealSeconds(0.4f);
+            Assert.AreEqual(0f, Quaternion.Angle(stop0, goldLight.localRotation), 0.01f, "스크롤 밖 칸(맨 아래 골드)은 빛살이 멈춘다(T72 4항)");
             shopScreen.ScrollTo(0f); yield return Frames(2); Canvas.ForceUpdateCanvases();
             var g1 = goldLight.localRotation; yield return RealSeconds(0.4f);
             Assert.Less(Vector3.SignedAngle(g1 * Vector3.up, goldLight.localRotation * Vector3.up, Vector3.forward), -0.5f, "맨 아래로 내리면 그 칸 빛살이 다시 돈다");

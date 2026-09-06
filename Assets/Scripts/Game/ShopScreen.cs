@@ -155,6 +155,8 @@ namespace KkomaKnight.Game
             if (_scroll == null) return;
             Canvas.ForceUpdateCanvases();
             _scroll.verticalNormalizedPosition = Mathf.Clamp01(normalized);
+            // 코드로 옮기면 값이 그대로일 때 onValueChanged 가 안 울린다 — 빛살 회전 상태는 여기서 직접 맞춘다(T72 4항)
+            UpdateLightSpin();
         }
 
         /// <summary>
