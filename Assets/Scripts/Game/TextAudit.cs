@@ -19,15 +19,16 @@ namespace KkomaKnight.Game
     public static class TextAudit
     {
         /// <summary>
-        /// 잘림/넘침을 실패로 셀지 — 화면 12묶음 전수 점검(T63 3항)이 <b>전부</b> ✅ 가 된 뒤 마지막 묶음(T63-toast)이 true 로 켠다.
+        /// 잘림/넘침을 실패로 셀지 — 화면 12묶음 전수 점검(T63 3항)이 끝나 마지막 묶음(T63-toast)이 <b>켰다</b>(2026-09-06 15:5X).
         /// <para>
-        /// 2026-09-06 14:5X 현재 아직 false 다: ⑩ 로비 팝업(T63-lobbypopups)·⑪ 결과 팝업(T63-results) 이 «대기» 이고 ①③⑤⑥⑦⑧⑨ 는 🔄(코드는 올렸지만 CI 게이트 로그로
-        /// 잘림 0 이 확인되기 전) 이다. 여기서 켜면 그 화면들의 잘림이 곧바로 main 빨강이 되고, main 이 빨가면 <c>screens</c>·gh-pages 배포가 멈춰
-        /// 남은 묶음들이 자기 화면을 채점할 재료(PNG)를 못 받는다(결정 114 와 같은 이유). 켜는 조건 = 12묶음 전부 ✅ + 그 CI 로그의
-        /// «[TextSizeGate] … 잘림/넘침 0».
+        /// 근거 = CI #126(<c>cb6a252</c> · https://github.com/kuzuni/aaawunity/actions/runs/34043194031) 의 게이트 로그
+        /// «[TextSizeGate] 활성 Text 1298 · 하한 미달 0 · bestFit 미달 0 · <b>잘림/넘침 0</b>» — 표의 36 화면(01~29 · ev_* · res_*)이 전부 0 이다.
+        /// 그 런에서 아직 🔄 이던 묶음(⑤ 대장간 08 · ⑥ 상점 09/10 · ⑨ 던전·아레나 20~26)의 화면도 이미 0 이었다.
         /// </para>
+        /// 이제부터 글자가 칸을 넘치면 그 커밋이 빨개진다 — 실패 메시지에 «화면 / 경로 / 글자 / rect / pref» 가 그대로 찍히니 그 화면을 만진 워커가
+        /// 칸을 키우거나(표 ±3%p) 문구를 줄인다(지시서 T63 2항 순서 ⓐ 줄바꿈 → ⓑ 칸 → ⓒ 문구). 되돌릴 일이 있으면 이 한 줄을 false 로.
         /// </summary>
-        public const bool ClipStrict = false;
+        public const bool ClipStrict = true;
 
         public sealed class Row
         {
