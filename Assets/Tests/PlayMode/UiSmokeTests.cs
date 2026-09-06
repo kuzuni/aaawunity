@@ -1006,22 +1006,32 @@ namespace KkomaKnight.Tests.Play
             int inv = S.Inv.Count;
             Assert.IsTrue(Click(shop, s => s.Contains("1회")), "«1회» 뽑기 버튼"); yield return Frames(2);
             Check("뽑기 결과 팝업(1회)", expectOverlay: true);
-            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.popup"), "뽑기 결과 = 공통 팝업 문법(Popup_Box 패널 + 명판 + 격자 + 탭하여 닫기 · T40)");
-            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "TapToClose"), "뽑기 결과: «탭하여 닫기»");
+            // T95(주인 2026-09-07 «소환 결과 창이 Shop_Chest_Open 이거로 돼야 하는데 안 됐더라») — 조각 그대로 · 우리 격자는 그 위에
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.chestOpen"), "뽑기 결과 = 주인 지정 조각(Shop_Chest_Open) 그대로(T95)");
+            Assert.IsNull(UiKit.Find(_app.Overlay.Root, "ui.popup"), "공통 팝업 상자로 다시 조립하지 않는다(T95 1항)");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Image_Chest"), "조각의 열린 상자 그림");
+            Assert.IsTrue(HasText(s => s == "탭하여 닫기"), "결과 창: «탭하여 닫기»(조각의 Text_TouchContionue)");
             {
-                // T63-shop — 결과 팝업 안내 줄은 본문 40 한 줄(문구 줄임) · 팝업 글자 잘림 0(장비 칸 «gear:» 안 글자는 T63-gear 몫이라 제외)
-                var note = UiKit.Find(_app.Overlay.Root, "Note"); Assert.IsNotNull(note, "결과 팝업 안내 줄(Note)");
+                // T63-shop — 결과 창 안내 줄은 본문 40 한 줄 · 글자 잘림 0(장비 칸 «gear:» 안 글자는 T63-gear 몫이라 제외)
+                var note = UiKit.Find(_app.Overlay.Root, "Note"); Assert.IsNotNull(note, "결과 창 안내 줄(Note)");
                 var nt = note.GetComponent<Text>(); Assert.GreaterOrEqual(nt.fontSize, TextSize.Body, "안내 줄 = 본문 하한");
-                AssertNoTextClip("뽑기 결과 팝업", _app.Overlay.Root, skipPath: "gear:");
+                AssertNoTextClip("뽑기 결과 창", _app.Overlay.Root, skipPath: "gear:");
             }
             Assert.GreaterOrEqual(S.Inv.Count, inv + 1, "뽑은 장비가 인벤에 담겨야 한다");
             {
-                // T72 ② — 뽑기 결과의 «상자 열림» 그림과 얻은 장비 칸 그림 뒤에 빛살(주인 «상점 아이템 … 아이콘 뒤에 Effect_Light»)
-                var box = UiKit.Find(_app.Overlay.Root, "ui.popup"); Assert.IsNotNull(box, "결과 팝업 상자");
-                Assert.IsTrue(UiKit.HasLight(box), "결과 팝업 상자 그림 뒤 빛살");
+                // T72 ② — 얻은 장비 칸 그림 뒤 빛살(주인 «상점 아이템 … 아이콘 뒤에 Effect_Light») · 상자 그림의 빛은 조각이 제 «Light» 로 낸다(T95)
                 var first = UiKit.Find(_app.Overlay.Root, "Got").GetChild(0);
                 var itemFrame = UiKit.Find(first, "Item").parent;
                 Assert.IsTrue(UiKit.HasLight(itemFrame), "얻은 장비 칸 그림 뒤 빛살(ItemFrame 안)");
+                // T95 «찰지게» — 연출이 끝나면 모든 칸이 제 크기·불투명(트윈이 중간에 멈춘 채 남지 않는다)
+                UiKit.CompleteAllTweens(); yield return Frames(1);
+                var got = UiKit.Find(_app.Overlay.Root, "Got");
+                for (int i = 0; i < got.childCount; i++)
+                {
+                    var c = (RectTransform)got.GetChild(i);
+                    Assert.AreEqual(1f, c.localScale.x, 0.02f, $"칸 {i} 스케일 1");
+                    var cg = c.GetComponent<CanvasGroup>(); if (cg != null) Assert.AreEqual(1f, cg.alpha, 0.02f, $"칸 {i} 알파 1");
+                }
             }
             Assert.AreEqual(CountNamed(_app.Overlay.Root, "gear:"), S.Inv.Count - inv, "결과 팝업의 장비 칸 수 = 얻은 수");
             _app.Overlay.Close(); yield return Frames(1);

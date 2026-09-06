@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using KkomaKnight.Core;
 using UnityEngine;
 using UnityEngine.UI;
@@ -47,8 +48,6 @@ namespace KkomaKnight.Game
         static float Row3Y => SecGemY + (Layout.ShopCardRow3.Y - Layout.ShopSec1.Y);           // 122.0
         /// <summary>내용 끝 = 골드 행 아래 여백 3.5(레퍼런스 09 의 골드 카드 아래 ~ 탭 바 = 2.9) → 끝까지 내리면 «다이아» 헤더가 표 ⑤ 09 의 22.5 자리에 온다(= 09 스크린샷 = 스크롤 맨 아래).</summary>
         static float ContentEnd => Row3Y + Layout.ShopCardRow3.H + 3.5f;                        // 144.0
-        /// <summary>팝업 = 폭 87 · 좌우 여백 6.5(표 ⑧ 공통).</summary>
-        static readonly Layout.R ResultBox = new Layout.R(6.5f, 20.0f, 87.0f, 56.0f);
         static readonly Layout.R InfoBox = new Layout.R(6.5f, 27.0f, 87.0f, 42.0f);
         const int ResultCols = 4;
 
@@ -445,27 +444,72 @@ namespace KkomaKnight.Game
             App.Persist(); Refresh();
             Audio.Sfx("snd.gacha");   // 상자 열림(T28)
             var best = got[0]; foreach (var g in got) if (GearSystem.GearScore(g) > GearSystem.GearScore(best)) best = g;
-            var popup = App.Overlay.OpenBox("ui.popup", "ui.title.tangerine", $"{box.Name} {n}회" + (got.Count > n ? $" · {got.Count}개" : ""), ResultBox, () => { App.Overlay.Close(); Refresh(); });
-            var chest = UiKit.Icon(popup, "Chest", "chest." + box.Key + ".open"); UiKit.Pct(chest.rectTransform, 30, 5, 40, 22);
-            // 안내 한 줄 = 본문 40(T63-shop) — 칸 7% × 상자 56% = 92px · 문구를 줄여(«인벤토리에 담겼습니다» 삭제) 40 으로 한 줄(≈ 18자 · 650px ≤ 846px)
-            var note = UiKit.Label(popup, 5, 28, 90, 7, $"최고 등급 <color=#{ColorUtility.ToHtmlStringRGB(Palette.ByName(Palette.RarName(best.Rar)))}>{GearUi.RarName(D, best.Rar)}</color> · 장착은 장비 탭에서", TextSize.Body, Palette.InkSoft, TextAnchor.MiddleCenter, true, false); note.name = "Note";
-            // 격자 = ListItem_EquipMent 본래 크기(188 · 비례 고정) · 4열 — 10개면 3행이 상자 안에 들어간다
+            ChestResult(box, n, got, best);
+        }
+
+        /// <summary>결과 창 조각(<c>Shop_Chest_Open</c>)의 «상자» 묶음 자리 — 프리팹 실측(가운데에서 y −427.8 · 565×493). 격자는 그 «위» 에 놓는다(T95).</summary>
+        public const float ChestGroupY = -427.84f;
+        /// <summary>격자 맨 위가 놓이는 자리(프레임 % · 제목 아래 · 상자 그림 위) 와 안내 줄 자리(T95 · 프리팹에는 격자가 없어 우리 규칙).</summary>
+        public const float ChestGridTopPct = 24f, ChestNoteYPct = 52f;
+        /// <summary>«찰지게»(주인 2026-09-07) 연출 상수 — 상자 흔들림 · 빛 폭발 시작 · 칸이 하나씩 나오는 간격 · 시작 스케일(오버슛은 <see cref="UiKit.Reveal"/> 의 OutBack). 총 길이 ≤ <see cref="UiKit.RevealMaxResult"/>.</summary>
+        public const float ChestShake = 0.25f, ChestBurstAt = 0.18f, ChestCellStep = 0.08f, ChestCellFrom = 0.55f;
+
+        /// <summary>
+        /// 소환(뽑기) 결과 창 — <b>주인 지정 조각 <c>Shop_Chest_Open</c> 그대로</b>(T95 · 2026-09-07 «소환 결과 창이 이 프리팹으로 돼야 하는데 안 됐더라»).
+        /// 조각이 주는 것: 어둠 + 무늬 배경 · 열린 상자 그림(그림자·빛·반짝이 4) · 아래 «터치» 안내. 조각에 <b>격자는 없어서</b> 얻은 장비 칸만 우리가 상자 «위» 에 얹는다(등급색 ItemFrame · T69 7항).
+        /// 연출(«찰지게» · T49 결): 상자가 짧게 흔들리고 → 빛이 터지고 → 칸이 한 장씩 오버슛으로 튀어나오고 → 최고 등급 한 칸이 한 번 더 튀고 → 제목·안내·터치 안내. 전부 unscaled + SetLink.
+        /// 확률·천장·비용·결과 목록은 한 줄도 안 건드린다(T26 이 검증한 엔진·gacha.json · T95 3항).
+        /// </summary>
+        void ChestResult(GachaBox box, int n, List<GearItem> got, GearItem best)
+        {
+            var D = App.Data;
+            var rootGo = App.Overlay.OpenPrefab("ui.chestOpen"); var root = (RectTransform)rootGo.transform;
+            // 조각의 어둠+무늬 배경 = 프레임 밖까지(T104 와 같은 값) · 배경 탭 = 닫기
+            var bg = UiKit.Find(root, "Background") as RectTransform;
+            if (bg != null)
+            {
+                UiKit.Stretch(bg, -UiKit.DimOverscan, -UiKit.DimOverscan, -UiKit.DimOverscan, -UiKit.DimOverscan);
+                UiKit.Clickable(bg, () => { App.Overlay.Close(); Refresh(); }, false);
+            }
+            // 상자 그림만 우리 상자 종류로(자리·크기는 조각 그대로)
+            var chestGrp = UiKit.Find(root, "Chest") as RectTransform;
+            UiKit.SetSprite(root, "Image_Chest", "chest." + box.Key + ".open", Palette.White);
+            var touch = UiKit.SetText(root, "Text_TouchContionue", "탭하여 닫기");
+            var title = UiKit.Label(root, 6, 12, 88, 7, $"{box.Name} {n}회" + (got.Count > n ? $" · {got.Count}개" : ""), TextSize.Title, Palette.White, TextAnchor.MiddleCenter, true, false, kind: TextKind.Title);
+            title.name = "Title";
+            var note = UiKit.Label(root, 5, ChestNoteYPct, 90, 6, $"최고 등급 {GearUi.RarName(D, best.Rar)} · 장착은 장비 탭에서", TextSize.Body, Palette.White, TextAnchor.MiddleCenter, true, false);
+            note.name = "Note";
+            // 격자 = ListItem_EquipMent 본래 크기(188 · 비례 고정) · 4열 — 10개면 3행
             float cs = GearUi.CellSize(App.Assets), gap = 12f; int rows = Mathf.Max(1, (got.Count + ResultCols - 1) / ResultCols);
-            var grid = UiKit.Rect(popup, "Got"); grid.anchorMin = new Vector2(0.5f, 1f); grid.anchorMax = new Vector2(0.5f, 1f); grid.pivot = new Vector2(0.5f, 1f);
-            grid.sizeDelta = new Vector2(ResultCols * cs + (ResultCols - 1) * gap, rows * cs + (rows - 1) * gap); grid.anchoredPosition = new Vector2(0, -ResultBox.H / 100f * UiKit.FrameH * 0.36f);
+            var grid = UiKit.Rect(root, "Got"); grid.anchorMin = new Vector2(0.5f, 1f); grid.anchorMax = new Vector2(0.5f, 1f); grid.pivot = new Vector2(0.5f, 1f);
+            grid.sizeDelta = new Vector2(ResultCols * cs + (ResultCols - 1) * gap, rows * cs + (rows - 1) * gap);
+            grid.anchoredPosition = new Vector2(0, -UiKit.FrameH * ChestGridTopPct / 100f);
             var gl = grid.gameObject.AddComponent<GridLayoutGroup>(); gl.cellSize = new Vector2(cs, cs); gl.spacing = new Vector2(gap, gap); gl.childAlignment = TextAnchor.UpperCenter; gl.constraint = GridLayoutGroup.Constraint.FixedColumnCount; gl.constraintCount = ResultCols;
             var cells = new List<RectTransform>();
-            foreach (var g in got) cells.Add(GearUi.Cell(grid, D, g, new GearUi.CellOpts { IsNew = true }, null));
-            // T72 ② 뽑기 결과 — 상자 열림 그림 뒤(큰 조각) · 얻은 장비 칸의 그림 뒤(작은 조각 · ItemFrame 안쪽에서만 보인다)
-            // 격자 칸은 GridLayoutGroup 이 배치한 뒤에야 크기가 정해지므로 여기서도 배치를 한 번 돌리고 건다(결정 174)
+            RectTransform bestCell = null;
+            foreach (var g in got) { var c = GearUi.Cell(grid, D, g, new GearUi.CellOpts { IsNew = true }, null); cells.Add(c); if (g == best) bestCell = c; }
+            // T72 ② 얻은 장비 칸의 그림 뒤 빛살 — 격자가 배치된 뒤에 건다(결정 174)
             Canvas.ForceUpdateCanvases();
-            UiKit.LightBehind(popup, chest.rectTransform, UiKit.LightKey);
             foreach (var c in cells)
             {
                 var item = UiKit.Find(c, "Item");
                 if (item != null && item.gameObject.activeSelf) UiKit.LightBehind((RectTransform)item.parent, (RectTransform)item, UiKit.LightKeySmall);
             }
-            UiKit.PopIn(chest.rectTransform, 0.5f, 0.5f);
+            // ── 연출(«찰지게») ──
+            var seq = DOTween.Sequence().SetUpdate(true).SetTarget(root).SetLink(rootGo);
+            if (chestGrp != null) seq.Insert(0f, chestGrp.DOPunchAnchorPos(new Vector2(0f, 22f), ChestShake, 12, 1f).SetUpdate(true).SetLink(chestGrp.gameObject));
+            var light = chestGrp != null ? UiKit.Find(chestGrp, "Light") as RectTransform : null;
+            if (light != null)
+            {
+                light.localScale = Vector3.one * 0.55f;
+                seq.Insert(ChestBurstAt, light.DOScale(1f, 0.32f).SetEase(Ease.OutBack).SetUpdate(true).SetLink(light.gameObject));
+            }
+            float end = UiKit.Stagger(seq, cells, ChestShake + 0.06f, ChestCellStep, ChestCellFrom);
+            // 최고 등급 한 칸만 한 번 더 튄다(등급이 여럿이어도 하나 · 연출 길이는 그대로)
+            if (bestCell != null) seq.Insert(end, bestCell.DOPunchScale(Vector3.one * 0.12f, 0.22f, 8, 1f).SetUpdate(true).SetLink(bestCell.gameObject));
+            seq.Insert(end, UiKit.Reveal(title.rectTransform));
+            seq.Insert(end + 0.06f, UiKit.Reveal(note.rectTransform));
+            if (touch != null) seq.Insert(end + 0.12f, UiKit.Reveal(touch.rectTransform));
         }
     }
 }
