@@ -519,6 +519,7 @@
 | prefabs | `ui.title.sky` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_01_NoDeco_Sky.prefab` | root 2565615909246734251 |  |
 | prefabs | `ui.titleBrown` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_Tapered_01_Brown.prefab` | root 8538020173010104235 | 설정/일시정지 팝업 명판(T41) |
 | prefabs | `ui.popup` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Popup/Popup_Box_02_DecoLine_Basic.prefab` | root 921659412208554214 | 팝업 상자(Popup_Box_02_DecoLine) — 색 변형은 이벤트별 |
+| prefabs | `ui.progressionMission2` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Progression_Mission_02.prefab` | root 8695934003370001500 | 퀘스트 팝업(15) 통째 — 주인 2026-09-07(T78) «퀘스트는 팝업 걍 Progression_Mission_02 이거로 교체» · 상자(Popup_Box_01_Basic) + 제목 리본(Title_Tapered_01_Brown) + ScrollView(GridLayoutGroup) + 미션 줄 8(ListFrame_08 + ListItem_Mission_02 = 아이콘·제목·Slider_02_Yellow·Group_Price·Check) · 우리는 줄 6만 쓰고 나머지는 끈다 · 닫기 X 는 안 쓴다(배경 탭 = 닫기) |
 | prefabs | `ui.popup.green` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Popup/Popup_Box_02_DecoLine_Basic_Green.prefab` | root 568353929908025126 |  |
 | prefabs | `ui.popup.plum` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Popup/Popup_Box_02_DecoLine_Basic_Plum.prefab` | root 568353929908025126 |  |
 | prefabs | `ui.popup.yellow` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Popup/Popup_Box_02_DecoLine_Basic_Yellow.prefab` | root 568353929908025126 |  |

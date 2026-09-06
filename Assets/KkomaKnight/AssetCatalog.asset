@@ -1042,6 +1042,8 @@ MonoBehaviour:
     prefab: {fileID: 8538020173010104235, guid: f0b2faed36e684f10bd5482dfb04d570, type: 3}
   - key: ui.popup
     prefab: {fileID: 921659412208554214, guid: e153129aeb36442f9b1f096b90975d7f, type: 3}
+  - key: ui.progressionMission2
+    prefab: {fileID: 8695934003370001500, guid: 029146935ecb54c509976ea050ce174a, type: 3}
   - key: ui.popup.green
     prefab: {fileID: 568353929908025126, guid: 8bcf16550244049dfa18a3ae012ca6c6, type: 3}
   - key: ui.popup.plum

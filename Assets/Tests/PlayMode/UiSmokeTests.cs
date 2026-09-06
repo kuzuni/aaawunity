@@ -251,12 +251,25 @@ namespace KkomaKnight.Tests.Play
                     Assert.IsTrue(ClickNamed(lobby, "Side:" + p.key), "사이드 " + p.key); yield return Frames(2);
                     Check("사이드 팝업 " + p.title, expectOverlay: true);
                     Assert.IsTrue(HasText(s => s == p.title), p.title + ": 명판"); Assert.IsTrue(HasText(s => s.Contains(p.mark)), p.title + ": 내용 «" + p.mark + "»");
-                    Assert.IsTrue(HasText(s => s == "탭하여 닫기"), p.title + ": 탭하여 닫기"); Assert.IsNull(UiKit.Find(_app.Overlay.Root, "Button_Close_01"), p.title + ": 닫기 X 없음");
+                    // 닫기 X 없음 — 퀘스트 팝업은 프리팹(Progression_Mission_02)에 X 조각이 딸려 오므로 «지우지 않고 끈다»(T78) · UiKit.Find 는 꺼진 것도 집는다(결정 162)
+                    Assert.IsTrue(HasText(s => s == "탭하여 닫기"), p.title + ": 탭하여 닫기");
+                    { var x = UiKit.Find(_app.Overlay.Root, "Button_Close_01"); Assert.IsTrue(x == null || !x.gameObject.activeInHierarchy, p.title + ": 닫기 X 없음"); }
                     Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), p.title + ": 배경 탭"); yield return Frames(2); Assert.IsFalse(_app.Overlay.IsOpen, p.title + " 닫힘");
                 }
                 // 구도 단언 — 퀘스트: 박스 = 표 ⑳ · 줄 6 · 탭 3 · 트랙 보상 칸 5 / 출석: 칸 7 / 데일리: 선물 그림 · 광고 줄 4 · 타임라인 점 4
                 LobbyPopups.Quest(_app); yield return Frames(1);
                 Assert.AreEqual(6, CountNamed(_app.Overlay.Root, "Quest:"), "퀘스트 줄 6"); Assert.AreEqual(3, CountNamed(_app.Overlay.Root, "Tab:"), "퀘스트 탭 3"); Assert.AreEqual(5, CountNamed(_app.Overlay.Root, "Track:"), "트랙 보상 칸 5(+메달)");
+                // T78 — 줄은 GUI Pro `Progression_Mission_02` 프리팹 조각이다: 줄마다 ListItem_Mission_02(제목·Slider·Group_Price) 가 살아 있고 · 앞 3줄은 «이동» · 뒤 3줄은 프리팹 ✅ · 영문 데모 문구 0(꺼진 여분 줄 제외)
+                {
+                    var q0 = UiKit.Find(_app.Overlay.Root, "Quest:0"); Assert.IsNotNull(q0, "퀘스트 줄 0");
+                    Assert.IsNotNull(UiKit.Find(q0, "ListItem_Mission_02"), "줄 = 프리팹 ListItem_Mission_02 조각");
+                    Assert.IsNotNull(q0.GetComponentInChildren<Slider>(true), "줄 진행바 = 프리팹 Slider_02_Yellow");
+                    Assert.IsNotNull(UiKit.Find(q0, "Group_Price"), "줄 보상 칸 = 프리팹 Group_Price");
+                    Assert.AreEqual(3, CountNamed(_app.Overlay.Root, "GoBtn"), "미완 줄 «이동» 3(레퍼런스 15)");
+                    int checks = 0; foreach (var t in _app.Overlay.Root.GetComponentsInChildren<Transform>(false)) if (t.name == "Check") checks++;
+                    Assert.AreEqual(3, checks, "완료 줄 ✅ 3(프리팹 Check · 레퍼런스 15)");
+                    Assert.IsTrue(HasText(s => s == "적 50마리 처치"), "줄 제목은 우리말");
+                }
                 { var bx = (RectTransform)UiKit.Find(_app.Overlay.Root, "QuestBox"); Assert.IsNotNull(bx, "퀘스트 박스"); Assert.AreEqual(Layout.QsBox.X, bx.anchorMin.x * 100f, 0.5f, "퀘스트 박스 x = 표 ⑬"); Assert.AreEqual(1f - Layout.QsBox.Y / 100f, bx.anchorMax.y, 1e-3f, "퀘스트 박스 y = 표 ⑬"); }
                 // T63-lobbypopups — 글자 잘림 0 + 제목/카운터가 본문 40 아래로 안 줄어듦(팝업 4종) · 리본 명판 60 이 안 잘림
                 AssertNoTextClip("퀘스트 팝업", _app.Overlay.Root); AssertUsedAtLeast("퀘스트 제목", _app.Overlay.Root, "Title", TextSize.Body);

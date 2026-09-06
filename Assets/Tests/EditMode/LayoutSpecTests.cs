@@ -199,7 +199,8 @@ namespace KkomaKnight.Tests
             Same(s, "⑲", "카드 보상 칸(2)", Layout.PrCardReward); Same(s, "⑲", "카드 버튼(2)", Layout.PrCardBtn); Same(s, "⑲", "특권 카드 3", Layout.PrCard3); Same(s, "⑲", "특권 카드 4 (참고·컨테이너)", Layout.PrCard4);
             Same(s, "⑲", "바닥 바", Layout.PrFootBar); Same(s, "⑲", "뒤로 버튼", Layout.PrBack); Same(s, "⑲", "전체 받기 버튼", Layout.PrClaimAll);
 
-            Same(s, "⑳", "제목 띠", Layout.QsTitleBand); Same(s, "⑳", "팝업 박스", Layout.QsBox); Same(s, "⑳", "점수 트랙 상자", Layout.QsTrackBox);
+            // T78 — 제목 조각이 프리팹 Title_Tapered_01_Brown 으로 바뀌어 표 ⑳ 행 이름만 «제목 띠» → «제목 리본»(자리·크기는 불변)
+            Same(s, "⑳", "제목 리본", Layout.QsTitleBand); Same(s, "⑳", "팝업 박스", Layout.QsBox); Same(s, "⑳", "점수 트랙 상자", Layout.QsTrackBox);
             Same(s, "⑳", "트랙 아이콘 줄(6칸)", Layout.QsTrackIcons); Same(s, "⑳", "트랙 아이콘(1칸)", Layout.QsTrackIcon); Same(s, "⑳", "트랙 숫자 줄", Layout.QsTrackNums); Same(s, "⑳", "새로고침 줄", Layout.QsRefresh);
             Same(s, "⑳", "목록 상자", Layout.QsListBox); Same(s, "⑳", "퀘스트 줄 1", Layout.QsRow1); Same(s, "⑳", "퀘스트 줄 2", Layout.QsRow2);
             Same(s, "⑳", "퀘스트 보상 메달(1줄)", Layout.QsRowMedal); Same(s, "⑳", "퀘스트 제목(1줄)", Layout.QsRowTitle); Same(s, "⑳", "퀘스트 진행바(1줄)", Layout.QsRowBar); Same(s, "⑳", "이동 버튼(1줄)", Layout.QsRowGo);

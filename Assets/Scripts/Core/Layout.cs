@@ -368,7 +368,7 @@ namespace KkomaKnight.Core
         public const float LpTitleH = 3.2f;
         /// <summary>데일리 기프트 «광고 N회 보기» 제목 칸 폭 — 표 ㉒ 19.2%(207px)가 Jua 40 의 «광고 6회 보기»(≈214px)보다 좁아 줄바꿈되던 것 → 24%(259px · 이름표는 글자 덩어리를 잰다).</summary>
         public const float GfRowTitleW = 24.0f;
-        // ⑳ 퀘스트 팝업 — docs/ref/15_quest.jpg (T44 · ⑳ 표와 같다 · 제목은 리본이 아니라 박스 폭 파란 띠 · 탭 3 은 박스 아래 · 닫기 안내 = BookClose 줄)
+        // ⑳ 퀘스트 팝업 — docs/ref/15_quest.jpg (T44 · ⑳ 표와 같다 · 탭 3 은 박스 아래 · 닫기 안내 = BookClose 줄) · T78(주인 2026-09-07): 상자·제목·줄·보상 칸·받기 표시는 GUI Pro Progression_Mission_02 프리팹 조각 — % 는 그대로다
         public static readonly R QsTitleBand = new R(6.4f, 20.0f, 87.2f, 4.9f);
         public static readonly R QsBox = new R(6.4f, 24.9f, 87.2f, 50.4f);
         public static readonly R QsTrackBox = new R(8.6f, 26.0f, 82.8f, 7.3f);

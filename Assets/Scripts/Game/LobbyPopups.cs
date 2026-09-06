@@ -129,34 +129,79 @@ namespace KkomaKnight.Game
         static readonly string[] QuestNums = { "0", "20", "40", "60", "80", "100" };
         static readonly string[] TrackIcons = { "ui.iconMedal", "ui.coin", "ui.bookBlue", "ui.gemRed", "pi.magic", "ui.gemRed" };
 
-        /// <summary>퀘스트 팝업(표 ⑳) — 파란 제목 띠 «퀘스트»(리본이 아니라 박스 폭 · 박스 윗변에 붙음) → 점수 트랙 상자(메달 + 보상 5 · 숫자) → ⏱ 새로고침 줄 → 목록 상자(줄 6 · 스크롤 · 메달·제목·진행바·«이동») → 박스 아래 탭 3(일일 활성 · 주간 · 업적) → «탭하여 닫기».</summary>
+        /// <summary>퀘스트 보상 점수(레퍼런스 15 의 메달 숫자 — 시스템이 없어 표시만).</summary>
+        static readonly string[] QuestScores = { "20", "20", "20", "10", "20", "20" };
+
+        /// <summary>이름이 <paramref name="prefix"/> 로 시작하는 첫 «직계» 자식 — 프리팹 인스턴스가 «이름 (1)» 처럼 붙어 나올 때 쓴다.</summary>
+        static RectTransform ChildStarting(Transform root, string prefix)
+        {
+            if (root == null) return null;
+            for (int i = 0; i < root.childCount; i++) if (root.GetChild(i).name.StartsWith(prefix, StringComparison.Ordinal)) return (RectTransform)root.GetChild(i);
+            return null;
+        }
+
+        /// <summary>
+        /// 퀘스트 팝업(표 ⑳) — <b>주인 2026-09-07(T78): «퀘스트는 팝업 걍 Progression_Mission_02 이거로 교체»</b>.
+        /// GUI Pro <c>Progression_Mission_02</c> 프리팹을 팝업 층에 통째로 세우고(<see cref="Overlay.OpenPrefab"/>) 조각을 표 ⑳ 자리로 <b>옮기기만</b> 한다 —
+        /// 상자(<c>Popup_Box_01_Basic</c>) · 제목 리본(<c>Title_Tapered_01_Brown</c>) · 미션 줄(<c>ListFrame_08</c> + <c>ListItem_Mission_02</c>) ·
+        /// 보상 칸(줄 안 <c>Group_Price</c> = 아이콘 + 점수) · 받기 표시(<c>Check</c>)가 프리팹 구성 그대로다(새로 그린 조각 0).
+        /// 프리팹에 <b>없는</b> 것(점수 트랙 · 새로고침 줄 · 목록 상자 · 탭 3)은 레퍼런스 15 구도 그대로 남긴다(ROUTINE §2 T78 2항이 프리팹에서 가져올 조각을 다섯으로 못박았다).
+        /// 줄 배치는 프리팹의 <see cref="GridLayoutGroup"/> 을 1열 · 칸 = 표 ⑳ «퀘스트 줄 1» · 간격 = 피치 − 줄로 바꿔 만든다(줄마다 좌표를 박지 않는다).
+        /// 껍데기 규칙(T44)은 그대로 — 진행 0/N · «이동» 은 닫기만 · 완료 줄은 프리팹 ✅.
+        /// </summary>
         public static void Quest(App app)
         {
             var ov = app.Overlay; var B = Layout.QsBox;
-            var box = ov.OpenBox("ui.popup", "ui.title.sky", "퀘스트", B, () => ov.Close()); box.name = "QuestBox";
-            var band = Ribbon(box, "ui.title.sky", Layout.QsTitleBand, B);
+            var root = (RectTransform)ov.OpenPrefab("ui.progressionMission2").transform;
+            // 공통 팝업 문법(ROUTINE) — 배경 탭 = 닫기 · 닫기 X 는 안 쓴다(프리팹 조각은 지우지 않고 끈다)
+            var dim = UiKit.Find(root, "Dimmed"); if (dim != null) UiKit.Clickable(dim, () => ov.Close(), false);
+            UiKit.Hide(root, "Button_Close_01");
+            var tc = UiKit.Text(ov.Root, "탭하여 닫기", TextSize.Body, Palette.White, TextAnchor.MiddleCenter, false, true);
+            tc.name = "TapToClose"; tc.fontStyle = FontStyle.Bold; UiKit.Pct(tc.rectTransform, Layout.BookClose);
+
+            var box = (RectTransform)UiKit.Find(root, "Popup"); box.name = "QuestBox"; UiKit.Pct(box, B);
+            foreach (var g in box.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;   // 상자 뒤로 클릭이 새지 않게(UiKit.Popup 과 같은 처리)
+            UiKit.PatternBg(box);   // T72 ① 팝업 배경 패턴
+
+            // 제목 리본(프리팹 Title_Tapered_01_Brown) — 표 ⑳ 제목 자리(박스 윗변에 걸친다 · y 가 박스보다 위라 Within 이 음수)
+            var band = ChildStarting(box, "Title_Tapered_01");
+            if (band != null)
+            {
+                UiKit.Pct(band, Layout.QsTitleBand.Within(B));
+                var bt = UiKit.SetText(band, "Text (TMP)", "퀘스트", null, TextSize.Title, TextKind.Title);
+                if (bt != null) { bt.resizeTextForBestFit = true; bt.resizeTextMinSize = TextSize.BestFitMin; bt.resizeTextMaxSize = TextSize.Title; RibbonTextFit(bt); }
+            }
+
+            // 점수 트랙 · 새로고침 줄 · 목록 상자 = 레퍼런스 15 그대로(프리팹에 없는 조각)
             var trackBox = UiKit.Panel(box, "TrackBox", "fr.r12", Palette.A(Palette.Dim, 0.55f)); UiKit.Pct(trackBox.rectTransform, Layout.QsTrackBox.Within(B));
             Track(box, B, Layout.QsTrackIcon, Layout.QsTrackPitch, Layout.QsTrackCount, Layout.QsTrackNums, Palette.Yellow, TrackIcons, QuestNums, "트랙 아이콘 줄(6칸)", "트랙 아이콘(1칸)");
             var refresh = TimerRow(box, B, Layout.QsRefresh, "새로고침까지 " + Dashes, "Refresh");
             var listBox = UiKit.Panel(box, "ListBox", "fr.r12", Palette.A(Palette.Dim, 0.55f)); UiKit.Pct(listBox.rectTransform, Layout.QsListBox.Within(B));
+
+            // 미션 줄 = 프리팹 ScrollView/Content(GridLayoutGroup) — 1열 · 칸 = 표 ⑳ 줄 · 세로 간격 = 피치 − 줄
+            var sv = (RectTransform)UiKit.Find(box, "ScrollView");
             var viewR = new Layout.R(Layout.QsRow1.X, Layout.QsRow1.Y, Layout.QsRow1.W, Layout.QsListBox.Y + Layout.QsListBox.H - 0.8f - Layout.QsRow1.Y);
-            var content = Scroll(box, B, viewR, Layout.QsRowCount * Layout.QsRowPitch, out var C, out _);
-            RectTransform row1 = null, row2 = null, medal1 = null, title1 = null, bar1 = null, go1 = null;
-            for (int i = 0; i < Layout.QsRowCount; i++)
+            UiKit.Pct(sv, viewR.Within(B));
+            var content = (RectTransform)UiKit.Find(sv, "Content");
+            var grid = content != null ? content.GetComponent<GridLayoutGroup>() : null;
+            if (grid != null)
             {
-                float dy = i * Layout.QsRowPitch;
-                var row = UiKit.Panel(content, "Quest:" + i, "fr.r12", Palette.Cream); UiKit.Pct(row.rectTransform, Sh(Layout.QsRow1, 0, dy).Within(C));
-                var rr = row.rectTransform;
-                var medal = UiKit.Rect(content, "Medal"); UiKit.Pct(medal, Sh(Layout.QsRowMedal, 0, dy).Within(C));
-                var mi = UiKit.Icon(medal, "Icon", "ui.iconMedal"); UiKit.Stretch(mi.rectTransform);
-                // 메달 숫자 칸 = 메달 높이의 72%(54px) — 본문 40 한 줄이 안 줄고 들어간다(전 60% = 45px)
-                UiKit.Label(medal, -20, 98, 140, 72, "20", TextSize.Body, Palette.Yellow);
-                // 제목 칸 = 표 ⑳ 1.6%(37px) → LpLineH 2.2%(51px · 세로 중심 그대로) · 글자 = Ink(크림 줄 위 InkSoft 는 대비가 약하다 · T63 1항)
-                var title = UiKit.Label(content, 0, 0, 100, 100, QuestTitles[i], TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft); title.name = "Title"; UiKit.Pct(title.rectTransform, Sh(Layout.QsRowTitle, 0, dy).WithH(Layout.LpLineH).Within(C));
-                var bar = UiKit.MakeBar(content, "ui.sliderGreen"); bar.Root.name = "Bar"; UiKit.Pct(bar.Root, Sh(Layout.QsRowBar, 0, dy).WithH(Layout.LpBarH).Within(C)); bar.Set(0, "0/" + QuestGoals[i]);
-                var go = UiKit.Button(content, "ui.btnOrange", "이동", () => { }, Sh(Layout.QsRowGo, 0, dy).Within(C)); go.name = "GoBtn";
-                if (i == 0) { row1 = rr; medal1 = medal; title1 = title.rectTransform; bar1 = bar.Root; go1 = go; } else if (i == 1) row2 = rr;
+                grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount; grid.constraintCount = 1;
+                grid.cellSize = UiKit.PxSize(Layout.QsRow1);
+                grid.spacing = new Vector2(0, UiKit.PxSize(new Layout.R(0, 0, 0, Layout.QsRowPitch - Layout.QsRow1.H)).y);
+                grid.padding = new RectOffset(0, 0, 0, 0); grid.childAlignment = TextAnchor.UpperCenter;
             }
+            RectTransform row1 = null, row2 = null, medal1 = null, title1 = null, bar1 = null, go1 = null;
+            int rows = content != null ? content.childCount : 0, want = Mathf.Min(Layout.QsRowCount, rows);
+            for (int i = rows - 1; i >= want; i--) content.GetChild(i).gameObject.SetActive(false);   // 프리팹 줄이 표(6줄)보다 많으면 남는 것은 지우지 말고 끈다
+            for (int i = 0; i < want; i++)
+            {
+                var frame = (RectTransform)content.GetChild(i); frame.name = "Quest:" + i; frame.gameObject.SetActive(true);
+                var parts = QuestRow(frame, i, ov);
+                if (i == 0) { row1 = frame; medal1 = parts.Medal; title1 = parts.Title; bar1 = parts.Bar; go1 = parts.Go; } else if (i == 1) row2 = frame;
+            }
+
+            // 박스 아래 탭 3 = 레퍼런스 15 그대로
             var tabs = new RectTransform[3]; string[] tabNames = { "일일", "주간", "업적" };
             for (int i = 0; i < 3; i++)
             {
@@ -164,9 +209,74 @@ namespace KkomaKnight.Game
                 if (i > 0) foreach (var im in t.GetComponentsInChildren<Image>(true)) im.color = Color.Lerp(im.color, Palette.Dim, 0.45f);   // 비활성 탭은 어둡게(첫 탭 «일일» 활성)
             }
             // 비평 이름표(표 ⑳)
-            if (band != null) UiKit.Tag(band, "제목 띠"); UiKit.Tag(box, "팝업 박스"); UiKit.Tag(trackBox.transform, "점수 트랙 상자"); UiKit.Tag(refresh, "새로고침 줄"); UiKit.Tag(listBox.transform, "목록 상자");
+            if (band != null) UiKit.Tag(band, "제목 리본"); UiKit.Tag(box, "팝업 박스"); UiKit.Tag(trackBox.transform, "점수 트랙 상자"); UiKit.Tag(refresh, "새로고침 줄"); UiKit.Tag(listBox.transform, "목록 상자");
             UiKit.Tag(row1, "퀘스트 줄 1"); UiKit.Tag(row2, "퀘스트 줄 2"); UiKit.Tag(medal1, "퀘스트 보상 메달(1줄)"); UiKit.Tag(title1, "퀘스트 제목(1줄)"); UiKit.Tag(bar1, "퀘스트 진행바(1줄)"); UiKit.Tag(go1, "이동 버튼(1줄)");
             UiKit.TagGroup(ov.Root, "탭 줄(3칸)", tabs); UiKit.Tag(tabs[0], "탭(1칸)"); TagClose(app);
+            UiKit.PopIn(box);   // 공통 팝업 등장 연출(T49 · UiKit.Popup 이 상자에 거는 것과 같다)
+        }
+
+        struct QuestRowParts { public RectTransform Medal, Title, Bar, Go; }
+
+        /// <summary>
+        /// 미션 줄 한 개 — 프리팹 <c>ListFrame_08</c>(칸 바탕) 안의 <c>ListItem_Mission_02</c> 조각을 표 ⑳ 의 줄 안 자리로 옮긴다.
+        /// 옮기는 것: 보상(<c>Group_Price</c> = 아이콘 + 점수 · 가로 배치를 끄고 레퍼런스처럼 «아이콘 위 · 숫자 아래») · 제목 · 진행바(<c>Slider_02_Yellow</c>) · 받기 표시(<c>Check</c> · 슬라이더 밑에 있던 것을 줄 오른쪽으로).
+        /// 미완 줄(앞 3개)은 레퍼런스 15 처럼 주황 «이동» 버튼(껍데기 = 닫기만) · 완료 줄(뒤 3개)은 프리팹 ✅.
+        /// </summary>
+        static QuestRowParts QuestRow(RectTransform frame, int i, Overlay ov)
+        {
+            var parts = new QuestRowParts();
+            var item = ChildStarting(frame, "ListItem_Mission_02"); if (item == null) item = frame;
+            if (item != frame) { item.name = "ListItem_Mission_02"; UiKit.Stretch(item); }   // 프리팹 인스턴스 이름의 «(1)» 꼬리를 떼 테스트·이름표가 이름으로 찾게 한다
+            bool done = i >= 3;   // 레퍼런스 15 = 앞 3줄 «Go» · 뒤 3줄 ✅
+
+            // 보상 칸(Group_Price) — 가로 레이아웃을 끄고 아이콘 위 · 점수 아래(레퍼런스 15 의 메달 + 숫자)
+            var medal = (RectTransform)UiKit.Find(item, "Group_Price");
+            if (medal != null)
+            {
+                var hlg = medal.GetComponent<HorizontalLayoutGroup>(); if (hlg != null) hlg.enabled = false;
+                UiKit.Pct(medal, Layout.QsRowMedal.Within(Layout.QsRow1));
+                var mi = (RectTransform)UiKit.Find(medal, "Icon");
+                if (mi != null) { UiKit.Pct(mi, 0, 0, 100, 100); var img = UiKit.SetSprite(medal, "Icon", "ui.iconMedal"); if (img != null) { img.preserveAspect = true; img.color = Color.white; } }
+                // 점수 숫자 = 메달 아래(칸 높이의 72% · 본문 40 한 줄이 안 줄고 들어간다 — 전 코드와 같은 값)
+                var mt = UiKit.SetText(medal, "Text (TMP)", QuestScores[i], Palette.Yellow, TextSize.Body);
+                if (mt != null) { UiKit.Pct(mt.rectTransform, -20, 98, 140, 72); mt.alignment = TextAnchor.MiddleCenter; }
+                parts.Medal = medal;
+            }
+            // 제목 — 줄의 밝은 바탕 위라 잉크색(T63 1항)
+            var title = UiKit.SetText(item, "Text (TMP)", QuestTitles[i], Palette.Ink, TextSize.Body);
+            if (title != null)
+            {
+                var tr = title.rectTransform; UiKit.Pct(tr, Layout.QsRowTitle.WithH(Layout.LpLineH).Within(Layout.QsRow1));
+                title.alignment = TextAnchor.MiddleLeft; title.name = "Title"; parts.Title = tr;
+            }
+            // 진행바(프리팹 Slider_02_Yellow) — 자리·값·글자만
+            var slider = item.GetComponentInChildren<Slider>(true);
+            if (slider != null)
+            {
+                var sr = (RectTransform)slider.transform; sr.name = "Bar";
+                UiKit.Pct(sr, Layout.QsRowBar.WithH(Layout.LpBarH).Within(Layout.QsRow1));
+                slider.value = done ? 1f : 0f;
+                var st = sr.GetComponentInChildren<Text>(true);
+                if (st != null) { st.text = (done ? QuestGoals[i] : 0) + "/" + QuestGoals[i]; st.fontSize = TextSize.Body; st.resizeTextMaxSize = TextSize.Body; TextAudit.Mark(st, TextKind.Body); }
+                parts.Bar = sr;
+            }
+            // 받기 표시 / 이동 버튼 — Check 는 프리팹에서 슬라이더 밑에 있어 줄 오른쪽으로 옮긴다
+            var check = UiKit.Find(item, "Check");
+            if (check != null)
+            {
+                check.SetParent(item, false); UiKit.Pct((RectTransform)check, Layout.QsRowGo.Within(Layout.QsRow1));
+                check.gameObject.SetActive(done);
+                if (done) parts.Go = (RectTransform)check;
+            }
+            if (!done)
+            {
+                var go = UiKit.Button(item, "ui.btnOrange", "이동", () => ov.Close(), Layout.QsRowGo.Within(Layout.QsRow1));
+                go.name = "GoBtn"; parts.Go = go;
+            }
+            // T69 — 줄 바탕과 보상 칸에 «검은 아웃라인»(레퍼런스 15 도 줄·메달이 검은 외곽선)
+            UiKit.Bordered(frame);
+            if (parts.Medal != null) UiKit.Bordered(parts.Medal, UiKit.BorderKeySmall);
+            return parts;
         }
 
         // ───────────────────────── 16 출석 ─────────────────────────
