@@ -47,6 +47,7 @@ namespace KkomaKnight.Game
             d.DailyGift = LoadDailyGift(catalog);
             d.ArenaDummy = LoadArenaDummy(catalog);
             d.Expedition = LoadExpedition(catalog);
+            d.Dungeon = LoadDungeon(catalog);
             App.Create(d, catalog, uiFont, Camera.main);
             if (_boot != null) Destroy(_boot.gameObject);
         }
@@ -67,6 +68,15 @@ namespace KkomaKnight.Game
             if (ta == null) { Debug.LogError("[KkomaKnight] dailyGift.json 이 카탈로그(data.dailyGift)에 없다 — 데일리 기프트 표 없음"); return null; }
             try { return DailyGiftData.Parse(ta.text); }
             catch (Exception e) { Debug.LogError("[KkomaKnight] dailyGift.json 파싱 실패: " + e.Message); return null; }
+        }
+
+        /// <summary>던전 티켓·보상 수치표 — 이 레포 전용 <c>Assets/KkomaKnight/dungeon.json</c>(카탈로그 텍스트 «data.dungeon» · T99). 못 읽으면 null(티켓이 «--» 로 뜨고 보충·구매 없음).</summary>
+        static DungeonData LoadDungeon(AssetCatalog catalog)
+        {
+            var ta = catalog != null ? catalog.Text("data.dungeon") : null;
+            if (ta == null) { Debug.LogError("[KkomaKnight] dungeon.json 이 카탈로그(data.dungeon)에 없다 — 던전 티켓 표 없음"); return null; }
+            try { return DungeonData.Parse(ta.text); }
+            catch (Exception e) { Debug.LogError("[KkomaKnight] dungeon.json 파싱 실패: " + e.Message); return null; }
         }
 
         /// <summary>탐험 수치표 — 이 레포 전용 <c>Assets/KkomaKnight/expedition.json</c>(카탈로그 텍스트 «data.expedition» · T97). 못 읽으면 null(탐험 팝업이 «--» 로 뜬다).</summary>

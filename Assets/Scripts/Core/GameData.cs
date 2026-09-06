@@ -26,6 +26,9 @@ namespace KkomaKnight.Core
         /// <summary>탐험(방치·오프라인 보상) 수치표 — aaaw data/ 가 아니라 이 레포의 <c>Assets/KkomaKnight/expedition.json</c>(카탈로그 텍스트 «data.expedition» · T97). 로드는 Bootstrap 이 따로 한다 · 없으면 null(탐험 팝업이 «--» 로 뜬다).</summary>
         public ExpeditionData Expedition;
 
+        /// <summary>던전 티켓·보상 수치표 — aaaw data/ 가 아니라 이 레포의 <c>Assets/KkomaKnight/dungeon.json</c>(카탈로그 텍스트 «data.dungeon» · T99). 로드는 Bootstrap 이 따로 한다 · 없으면 null(던전 티켓이 «--» 로 뜨고 보충·구매가 없다).</summary>
+        public DungeonData Dungeon;
+
         public static readonly string[] Files = { "tune.json", "enemies.json", "perks.json", "gear.json", "gacha.json", "combat.json", "ui.json" };
 
         /// <param name="read">파일명(예: "tune.json") → 본문 텍스트. 플랫폼별 읽기(StreamingAssets·File) 는 호출부가 준다.</param>

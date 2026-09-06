@@ -591,6 +591,7 @@
 | texts | `data.dailyGift` | `Assets/KkomaKnight/dailyGift.json` | fileID 4900000 | 데일리 기프트 수치표 JSON(이 레포 전용 · 주인 2026-09-07 · 무료 칸 다이아 100 + 광고 누적 1/2/3/6 줄) — Bootstrap 이 읽어 GameData.DailyGift 에 올린다. 수치를 바꾸려면 이 파일만 |
 | texts | `data.arenaDummy` | `Assets/KkomaKnight/arenaDummy.json` | fileID 4900000 | 아레나 껍데기의 상대 승점·전투력 표시용 계수 JSON(이 레포 전용 · 주인 2026-09-07 «아레나 부분에 적들 승점이랑 전투력 더미값으로» · T81) — 밸런스 아님 · 전투 엔진은 안 쓴다 · Core/ArenaDummy 가 읽는다 |
 | texts | `data.expedition` | `Assets/KkomaKnight/expedition.json` | fileID 4900000 | 탐험(방치·오프라인 보상) 수치표 JSON(이 레포 전용 · 주인 2026-09-07 «탐험 = 방치 + 오프라인 보상 · 골드·다이아 쌓이게 · 빠른 탐험은 광고» · T97) — 상한 8h · 시간당 골드는 tune.json 의 처치 골드에서 유도 · Bootstrap 이 읽어 GameData.Expedition 에 올린다. 수치를 바꾸려면 이 파일만 |
+| texts | `data.dungeon` | `Assets/KkomaKnight/dungeon.json` | fileID 4900000 | 던전 티켓·보상 수치표 JSON(이 레포 전용 · 주인 2026-09-07 «티켓 하루 2개 보충 · 광고 1개 · 50다이아 1개 · 던전당 각 1회» + 지옥의 문·원정 보상 확정 · T99) — 값은 주인이 준 것이라 aaaw 원본과 다를 수 있다(원본 불변) · Bootstrap 이 읽어 GameData.Dungeon 에 올린다. 수치를 바꾸려면 이 파일만 |
 | audio | `bgm.lobby` | `Assets/Audio/bgm/lobby.ogg` | fileID 8300000 | 로비·장비·상점·대장간 배경음 — Juhani Junkala «4 Chiptunes (Adventure)» Title Screen(CC0 · 11초 루프) · Audio.Bgm 이 화면 전환마다 고른다(App.ShowScreen) |
 | audio | `bgm.battle` | `Assets/Audio/bgm/battle.ogg` | fileID 8300000 | 전투 배경음(맵 4종 공용 1곡) — Juhani Junkala «4 Chiptunes (Adventure)» Level 1(CC0 · 74초 루프) |
 | audio | `bgm.boss` | `Assets/Audio/bgm/boss.ogg` | fileID 8300000 | 보스 등장(BossWarn) 뒤 배경음 — SketchyLogic «NES Shooter Music» boss(CC0 · 34초 루프) |

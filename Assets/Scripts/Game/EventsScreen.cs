@@ -93,6 +93,10 @@ namespace KkomaKnight.Game
         readonly List<KeyValuePair<Text, int>> _dummyPowerTexts = new List<KeyValuePair<Text, int>>();
         readonly Dictionary<string, RectTransform> _pages = new Dictionary<string, RectTransform>();
         readonly List<Text> _powerTexts = new List<Text>();
+        /// <summary>던전 카드 제목 띠의 티켓 글자(글자, 던전 키) — 티켓이 늘면 <see cref="Refresh"/> 가 다시 쓴다(T99).</summary>
+        readonly List<KeyValuePair<Text, string>> _ticketTexts = new List<KeyValuePair<Text, string>>();
+        /// <summary>던전 카드 «입장» 버튼의 빨간 점(점, 던전 키) — «지금 할 일» 이 있을 때만 켠다(T99 6항).</summary>
+        readonly List<KeyValuePair<GameObject, string>> _ticketDots = new List<KeyValuePair<GameObject, string>>();
         HeroView _me;
         /// <summary>T72 ② 빛살을 걸 자리 — 배치가 끝난 뒤에 한꺼번에 건다(% 앵커 아이콘은 Build 중 rect 가 0 이라 빛살 한 변이 0 이 된다 · 결정 174).</summary>
         readonly List<(RectTransform host, RectTransform icon, string key)> _lightPlan = new List<(RectTransform, RectTransform, string)>();
@@ -163,12 +167,26 @@ namespace KkomaKnight.Game
                 if (kv.Key == null) { _dummyPowerTexts.RemoveAt(i); continue; }
                 kv.Key.text = DummyPower(kv.Value);
             }
+            for (int i = _ticketTexts.Count - 1; i >= 0; i--)
+            {
+                var kv = _ticketTexts[i];
+                if (kv.Key == null) { _ticketTexts.RemoveAt(i); continue; }
+                kv.Key.text = TicketText(kv.Value);
+            }
+            for (int i = _ticketDots.Count - 1; i >= 0; i--)
+            {
+                var kv = _ticketDots[i];
+                if (kv.Key == null) { _ticketDots.RemoveAt(i); continue; }
+                kv.Key.SetActive(Dun == null || DungeonTickets.Ready(App.Save, Dun, kv.Value, Today()));
+            }
             _me?.SetSkin(HeroView.PlayerSkin(App));
         }
 
         // ───────────────────────── ⑩ 던전 페이지 (20) ─────────────────────────
         void BuildDungeon(RectTransform pg)
         {
+            _ticketTexts.Clear(); _ticketDots.Clear();
+            RollTickets();   // T99 1항 — 하루가 바뀌었으면 던전마다 «2 미만이면 2로» 채운다(더하지 않는다)
             TitleRow(pg, Layout.DgTitle, "ui.iconDungeon", "던전", "제목(Dungeons)");
             UiKit.Tag(UiKit.Label(pg, Layout.DgSub.X, Layout.DgSub.Y, Layout.DgSub.W, Layout.DgSub.H, "던전 티켓은 매일 충전됩니다", TextSize.Body, Palette.Gray).transform, "부제");
             for (int i = 0; i < Dungeons.Length; i++)
@@ -182,7 +200,7 @@ namespace KkomaKnight.Game
                 var head = UiKit.Panel(card, "Head", "fr.r12", i == 0 ? DeepRed : CardBlue); UiKit.Pct(head.rectTransform, Shift(Layout.DgCardHead, dy).Within(rect));
                 UiKit.Gradient(head.rectTransform, inset: HeadGradientInset);
                 UiKit.Label(head.transform, 2.5f, 0, 60, 100, d.title, CardTitleSize, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
-                TicketPill(head.transform, new Layout.R(84, 12, 14, 76), d.ticket, "0/2");
+                _ticketTexts.Add(new KeyValuePair<Text, string>(TicketPill(head.transform, new Layout.R(84, 12, 14, 76), d.ticket, TicketText(d.key)), d.key));
                 // 그림(Environment 들판 + 길 + 소품 · 카드 1 = 붉은 사막(지옥) · 카드 2 = 흰 들판(설원))
                 var pic = UiKit.Rect(card, "Pic"); UiKit.Pct(pic, Shift(Layout.DgCardPic, dy).Within(rect));
                 Stage(pic, d.field, d.tint, d.props);
@@ -195,7 +213,10 @@ namespace KkomaKnight.Game
                 UiKit.Pct(rew, Shift(rr, dy).Within(rect));
                 // T72 ② 보상 아이콘 뒤 빛살(작은 칸이라 Effect_Light_02) — 던전 카드는 항상 보이므로 스크롤 제한 없이 돈다
                 foreach (var cell in IconRow(rew, rr, d.rewards, "ui.itemFrame.green")) PlanLight(cell);
-                var enter = UiKit.Button(card, "ui.btnOrange", "입장", Noop, Shift(Layout.DgEnter, dy).Within(rect)); enter.name = "EnterBtn"; AlertDot(enter);
+                var enter = UiKit.Button(card, "ui.btnOrange", "입장", Noop, Shift(Layout.DgEnter, dy).Within(rect)); enter.name = "EnterBtn";
+                // T99 6항 — 빨간 점은 «지금 할 일이 있을 때만»(티켓이 있거나 광고로 하나 받을 수 있다) · 상태가 바뀌면 Refresh 가 켜고 끈다
+                var dot = AlertDot(enter);
+                if (dot != null) { dot.SetActive(Dun == null || DungeonTickets.Ready(App.Save, Dun, d.key, Today())); _ticketDots.Add(new KeyValuePair<GameObject, string>(dot, d.key)); }
                 string key = d.key; UiKit.Clickable(enter, () => OpenDungeonDetail(key));
                 if (i == 0)
                 {
@@ -338,6 +359,7 @@ namespace KkomaKnight.Game
         void OpenDungeonDetail(string key)
         {
             var d = Dungeons[0]; foreach (var x in Dungeons) if (x.key == key) d = x;
+            RollTickets();
             var box = App.Overlay.OpenBox("ui.popup.red", "ui.title.red", d.title, Layout.DdBox, () => App.Overlay.Close());
             FlatHead(box, Layout.DdBox, Layout.DdHead, DeepRed, d.title);
             var pic = UiKit.Rect(box, "Pic"); UiKit.Pct(pic, Layout.DdPic.Within(Layout.DdBox)); Stage(pic, d.field, d.tint, d.props); UiKit.Tag(pic, "그림 띠");
@@ -350,17 +372,42 @@ namespace KkomaKnight.Game
             var rewards = UiKit.Spawn("ui.frameDark", box); var rrt = (RectTransform)rewards.transform; rrt.name = "Rewards"; UiKit.Pct(rrt, Layout.DdRewards.Within(Layout.DdBox)); UiKit.Tag(rrt, "보상 박스");
             UiKit.Label(rrt, 0, 3, 100, 24, "보상", TextSize.Body, Palette.White).fontStyle = FontStyle.Bold;
             var cells = UiKit.Rect(box, "RewardCells"); UiKit.Pct(cells, Layout.DdRewardCells.Within(Layout.DdBox));
-            var icons = new List<string>(d.rewards); while (icons.Count < 4) icons.Add(icons.Count == 3 ? "ui.coin" : "ui.bookBlue");
-            var cellRts = IconRow(cells, Layout.DdRewardCells, icons.ToArray(), "ui.itemFrame.green", "RewardCell:");
-            // «첫 클리어» 배지 — 칸 폭 119px 에 104% = 124px 였는데 보조 36 의 선호 폭이 122px 라 여유 2px 뿐이라 bestFit 이 35 로 눌렀다(CI #112·#114 · T74) → 114% = 136px(여유 11% · 옆 칸 배지와 27px 떨어짐)
-            for (int i = 0; i < 2 && i < cellRts.Count; i++) { var first = UiKit.Panel(cellRts[i], "First", "fr.r12", Palette.Red); UiKit.Pct(first.rectTransform, -7, -34, 114, 46); UiKit.Label(first.transform, 0, 0, 100, 100, "첫 클리어", TextSize.Aux, Palette.White, kind: TextKind.Aux); }
-            UiKit.TagGroup(box, "보상 칸(4개)", cellRts.ToArray());
+            // T99 4항 — 보상 칸은 표(dungeon.json)가 만든다: «첫 클리어 총액» 칸들(빨간 «첫 클리어» 배지) + «이후 클리어» 칸들.
+            // 지옥의 문 = 펫알 11 · 골드 1,000(첫) + 펫알 5 · 골드 1,000 = 네 칸이라 레퍼런스 21(초록 프레임 4 · 앞 두 칸에 FIRST 배지)과 같은 꼴이고 표 ⑪ 도 그대로다.
+            var rewardDefs = RewardCells(key, d.rewards);
+            var cellRts = IconRow(cells, Layout.DdRewardCells, Icons(rewardDefs), "ui.itemFrame.green", "RewardCell:", true);
+            for (int i = 0; i < cellRts.Count && i < rewardDefs.Count; i++)
+            {
+                UiKit.Label(cellRts[i], 0, 58, 100, 42, rewardDefs[i].amount, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyle.Bold;
+                // «첫 클리어» 배지 — 칸 폭 119px 에 104% = 124px 였는데 보조 36 의 선호 폭이 122px 라 여유 2px 뿐이라 bestFit 이 35 로 눌렀다(CI #112·#114 · T74) → 114% = 136px(여유 11% · 옆 칸 배지와 27px 떨어짐)
+                if (!rewardDefs[i].first) continue;
+                var badge = UiKit.Panel(cellRts[i], "First", "fr.r12", Palette.Red); UiKit.Pct(badge.rectTransform, -7, -34, 114, 46);
+                UiKit.Label(badge.transform, 0, 0, 100, 100, "첫 클리어", TextSize.Aux, Palette.White, kind: TextKind.Aux);
+            }
+            UiKit.TagGroup(box, "보상 칸(" + cellRts.Count + "개)", cellRts.ToArray());
             foreach (var cell in cellRts) PlanLight(cell);
             var ticket = UiKit.Rect(box, "Ticket"); UiKit.Pct(ticket, Layout.DdTicket.Within(Layout.DdBox)); UiKit.Tag(ticket, "티켓 줄");
-            { var ti = UiKit.Icon(ticket, "Icon", d.ticket); UiKit.Pct(ti.rectTransform, 10, 0, 34, 100); UiKit.Label(ticket, 50, 0, 50, 100, "0", TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft); }
+            { var ti = UiKit.Icon(ticket, "Icon", d.ticket); UiKit.Pct(ti.rectTransform, 10, 0, 34, 100); UiKit.Label(ticket, 50, 0, 50, 100, Dun == null ? "--" : Tickets(key).ToString(), TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft); }
             var bt = Layout.DdBtns; float half = bt.W * 0.485f;
-            var sweep = UiKit.Button(box, "ui.btnBlue", "소탕", Noop, new Layout.R(bt.X, bt.Y, half, bt.H).Within(Layout.DdBox)); sweep.name = "SweepBtn"; TicketCost(sweep, d.ticket);
-            var chal = UiKit.Button(box, "ui.btnOrange", "도전", Noop, new Layout.R(bt.X + bt.W - half, bt.Y, half, bt.H).Within(Layout.DdBox)); chal.name = "ChallengeBtn"; TicketCost(chal, d.ticket);
+            var leftRect = new Layout.R(bt.X, bt.Y, half, bt.H).Within(Layout.DdBox);
+            var rightRect = new Layout.R(bt.X + bt.W - half, bt.Y, half, bt.H).Within(Layout.DdBox);
+            RectTransform sweep, chal;
+            if (Dun == null || Tickets(key) > 0)
+            {
+                // 티켓이 있으면 레퍼런스 21 그대로 — 소탕(파랑 · 클리어한 층만)·도전(주황) · 아직 껍데기라 눌러도 아무 일 없다
+                sweep = UiKit.Button(box, "ui.btnBlue", "소탕", Noop, leftRect); sweep.name = "SweepBtn"; TicketCost(sweep, d.ticket);
+                chal = UiKit.Button(box, "ui.btnOrange", "도전", Noop, rightRect); chal.name = "ChallengeBtn"; TicketCost(chal, d.ticket);
+            }
+            else
+            {
+                // T99 3항 — 티켓이 0 이면 두 버튼이 «티켓 얻기» 로 바뀐다(왼쪽 = 광고 · 오른쪽 = 다이아). 하루치를 다 썼거나 다이아가 모자라면
+                // 꺼져 보이게(알파 0.5) 두되 클릭은 살려 이유를 토스트로 알린다(주인 «비활성(이유 토스트)» · 워커 결정 기록).
+                string dungeonKey = key;
+                sweep = UiKit.Button(box, "ui.btnBlue", "광고 보고 티켓 1개", () => AdTicket(dungeonKey), leftRect); sweep.name = "SweepBtn";
+                Dim(sweep, DungeonTickets.CanAd(App.Save, Dun, key, Today()));
+                chal = UiKit.Button(box, "ui.btnOrange", "다이아 " + UiKit.FmtQty(Dun.GemCost) + " 으로 티켓 사기", () => BuyTicket(dungeonKey), rightRect); chal.name = "ChallengeBtn";
+                Dim(chal, DungeonTickets.CanBuyGem(App.Save, Dun, key, Today()));
+            }
             UiKit.TagGroup(box, "버튼 2개", sweep, chal);
             ApplyLights();
             TagClose();
@@ -439,6 +486,84 @@ namespace KkomaKnight.Game
             ApplyLights();
             TagClose();
         }
+
+        // ───────────────────────── 던전 티켓(T99 · 주인 2026-09-07) ─────────────────────────
+        /// <summary>티켓 표(<c>dungeon.json</c>) — 없으면 null(티켓 «--» · 보충·구매 없음).</summary>
+        DungeonData Dun => App != null && App.Data != null ? App.Data.Dungeon : null;
+        /// <summary>«오늘»(출석·데일리 기프트와 같은 날짜 규칙).</summary>
+        static string Today() => SaveStore.Today();
+        /// <summary>하루가 바뀌었으면 던전마다 티켓을 보충하고(2 미만 → 2) 그날의 광고·다이아 횟수를 되돌린다 — 바뀌었으면 저장.</summary>
+        void RollTickets() { var d = Dun; if (d == null) return; if (DungeonTickets.Roll(App.Save, d, Today())) App.Persist(); }
+        int Tickets(string key) { var d = Dun; return d == null ? 0 : DungeonTickets.Tickets(App.Save, d, key, Today()); }
+        /// <summary>카드 제목 띠의 «보유/하루 보충»(표가 없으면 «--»).</summary>
+        string TicketText(string key) { var d = Dun; return d == null ? "--" : Tickets(key) + "/" + d.DailyRefill; }
+
+        /// <summary>보상 칸 한 개 — 아이콘 키 · 수량 글자 · «첫 클리어» 배지인가.</summary>
+        readonly struct RewardCellDef
+        {
+            public readonly string icon, amount; public readonly bool first;
+            public RewardCellDef(string icon, string amount, bool first) { this.icon = icon; this.amount = amount; this.first = first; }
+        }
+        /// <summary>
+        /// 던전 세부(21)의 보상 칸 목록을 표(<c>dungeon.json</c>)에서 만든다 — «첫 클리어 총액» 칸들(배지) 다음에 «이후 클리어» 칸들.
+        /// 표가 없으면 옛 껍데기 그대로(카드의 아이콘 목록을 네 칸으로 채운다 · 수량 글자 없음).
+        /// </summary>
+        List<RewardCellDef> RewardCells(string key, string[] fallbackIcons)
+        {
+            var list = new List<RewardCellDef>();
+            var e = Dun != null ? Dun.Of(key) : null;
+            if (e == null)
+            {
+                var icons = new List<string>(fallbackIcons);
+                while (icons.Count < 4) icons.Add(icons.Count == 3 ? "ui.coin" : "ui.bookBlue");
+                for (int i = 0; i < icons.Count; i++) list.Add(new RewardCellDef(icons[i], "", i < 2));
+                return list;
+            }
+            Add(list, e.First, true); Add(list, e.Clear, false);
+            return list;
+        }
+        static void Add(List<RewardCellDef> list, DungeonData.Reward r, bool first)
+        {
+            if (r == null) return;
+            if (r.PetEgg > 0) list.Add(new RewardCellDef("pet.egg", UiKit.FmtComma(r.PetEgg), first));
+            if (r.Gold > 0) list.Add(new RewardCellDef("ui.coin", UiKit.FmtComma(r.Gold), first));
+        }
+        static string[] Icons(List<RewardCellDef> cells)
+        {
+            var a = new string[cells.Count];
+            for (int i = 0; i < cells.Count; i++) a[i] = cells[i].icon;
+            return a;
+        }
+        /// <summary>«광고 보고 티켓» — 모의 광고(T23·T77 과 같은 <see cref="Overlay.AdCountdown"/>) 뒤 티켓 +1 · 팝업을 다시 연다.</summary>
+        void AdTicket(string key)
+        {
+            var d = Dun; if (d == null) return;
+            if (!DungeonTickets.CanAd(App.Save, d, key, Today())) { App.Toast("오늘 광고 티켓은 이미 받았습니다"); return; }
+            App.Overlay.AdCountdown(TicketAdSeconds, () =>
+            {
+                if (DungeonTickets.ClaimAd(App.Save, d, key, Today())) { App.Persist(); App.Toast("티켓 1개를 받았습니다"); }
+                App.Current?.Refresh();
+                OpenDungeonDetail(key);
+            });
+        }
+        /// <summary>«다이아로 티켓» — 하루치가 남고 다이아가 충분할 때만 · 산 뒤 팝업을 다시 연다.</summary>
+        void BuyTicket(string key)
+        {
+            var d = Dun; if (d == null) return;
+            if (!DungeonTickets.GemLeft(App.Save, d, key, Today())) { App.Toast("오늘 다이아 티켓은 이미 샀습니다"); return; }
+            if (App.Save.Gem < d.GemCost) { App.Toast("다이아가 모자랍니다"); return; }
+            if (DungeonTickets.BuyGem(App.Save, d, key, Today())) { App.Persist(); App.Toast("티켓 1개를 샀습니다"); }
+            App.Current?.Refresh();
+            OpenDungeonDetail(key);
+        }
+        /// <summary>«눌리기는 하되 꺼져 보이는» 버튼(알파 0.5) — 이유를 토스트로 알려야 해서 <see cref="UiKit.SetInteractable"/>(클릭까지 막는다) 대신 쓴다(워커 결정 기록).</summary>
+        static void Dim(RectTransform btn, bool on)
+        {
+            if (btn == null) return;
+            UiKit.Ensure<CanvasGroup>(btn.gameObject).alpha = on ? 1f : 0.5f;
+        }
+        /// <summary>모의 광고 카운트다운 길이(초) — 데일리 기프트(<see cref="LobbyPopups.GiftAdSeconds"/>)와 같은 값.</summary>
+        const int TicketAdSeconds = 3;
 
         // ───────────────────────── 조립 도우미 ─────────────────────────
         static void Noop() { }
@@ -525,13 +650,15 @@ namespace KkomaKnight.Game
             for (int i = 0; i < props.Length && i < PropSlots.Length; i++) { var p = UiKit.Icon(host, "Prop" + i, props[i]); UiKit.Pct(p.rectTransform, PropSlots[i]); }
         }
         /// <summary>제목 띠 안 오른쪽 티켓 pill(아이콘 + «0/2»).</summary>
-        static void TicketPill(Transform head, Layout.R r, string icon, string text)
+        static Text TicketPill(Transform head, Layout.R r, string icon, string text)
         {
             var cell = UiKit.Rect(head, "Ticket"); UiKit.Pct(cell, r);
-            var ic = UiKit.Icon(cell, "Icon", icon); UiKit.Pct(ic.rectTransform, 0, 0, 34, 100); UiKit.Label(cell, 38, 0, 62, 100, text, TextSize.Body, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
+            var ic = UiKit.Icon(cell, "Icon", icon); UiKit.Pct(ic.rectTransform, 0, 0, 34, 100);
+            var t = UiKit.Label(cell, 38, 0, 62, 100, text, TextSize.Body, Palette.White, TextAnchor.MiddleLeft); t.fontStyle = FontStyle.Bold;
+            return t;
         }
         /// <summary>정사각 아이콘 칸 줄(프레임 조각 + 아이콘) — 칸 한 변 = 줄 높이 · 왼쪽부터 · 간격은 남는 폭을 등분. rowRect = 줄의 프레임 % 사각형(정사각 환산용).</summary>
-        static List<RectTransform> IconRow(RectTransform row, Layout.R rowRect, string[] icons, string frameKey, string namePrefix = "Cell:")
+        static List<RectTransform> IconRow(RectTransform row, Layout.R rowRect, string[] icons, string frameKey, string namePrefix = "Cell:", bool amountBelow = false)
         {
             var res = new List<RectTransform>();
             float rowW = Mathf.Max(1e-3f, rowRect.W / 100f * UiKit.FrameW), rowH = Mathf.Max(1e-3f, rowRect.H / 100f * UiKit.FrameH);
@@ -541,7 +668,8 @@ namespace KkomaKnight.Game
             {
                 var cell = UiKit.Rect(row, namePrefix + i); UiKit.Pct(cell, i * (cellW + gap), 0, cellW, 100);
                 var f = UiKit.Spawn(frameKey, cell); UiKit.Stretch((RectTransform)f.transform);
-                var ic = UiKit.Icon(cell, "Icon", icons[i]); UiKit.Pct(ic.rectTransform, 16, 16, 68, 68);
+                // 수량 글자가 아래 34% 를 쓰는 칸(던전 세부 보상 · T99)은 아이콘을 위로 올려 겹치지 않게 한다 — 레퍼런스 21 도 «그림 위 · 숫자 아래» 다
+                var ic = UiKit.Icon(cell, "Icon", icons[i]); UiKit.Pct(ic.rectTransform, amountBelow ? 22 : 16, amountBelow ? 4 : 16, amountBelow ? 56 : 68, amountBelow ? 56 : 68);
                 res.Add(cell);
             }
             return res;
@@ -555,10 +683,11 @@ namespace KkomaKnight.Game
             return cell;
         }
         /// <summary>버튼 오른쪽 위 빨간 알림 점(GUI Pro 조각).</summary>
-        static void AlertDot(RectTransform btn)
+        static GameObject AlertDot(RectTransform btn)
         {
             var d = UiKit.Spawn("ui.alertDot", btn); var dr = (RectTransform)d.transform; d.name = "Dot";
             dr.anchorMin = dr.anchorMax = new Vector2(1, 1); dr.pivot = new Vector2(0.5f, 0.5f); dr.anchoredPosition = new Vector2(-4, 4); dr.sizeDelta = new Vector2(52, 52);
+            return d;
         }
         /// <summary>버튼 글자 아래 «🎫 x1» 줄(아이콘 + 글자) — 글자를 위로 올리고 아래에 작은 줄.</summary>
         static void TicketCost(RectTransform btn, string icon)

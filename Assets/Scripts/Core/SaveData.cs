@@ -42,6 +42,15 @@ namespace KkomaKnight.Core
         public string ExpQuickDay = "";
         /// <summary>오늘 쓴 빠른 탐험 횟수(상한 = expedition.json <c>quickAdsPerDay</c>).</summary>
         public int ExpQuickUsed;
+        /// <summary>던전 티켓(T99 · 주인 2026-09-07) — 티켓·하루치 횟수가 살아 있는 날짜(<c>yyyy-MM-dd</c> · 바뀌면 <see cref="DungeonTickets.Roll"/> 이 보충한다).
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 기본값»(옛 세이브 호환 · <see cref="GiftDay"/> 와 같은 방식).</summary>
+        public string DunDay = "";
+        /// <summary>던전 키(hell·expedition) → 보유 티켓 수.</summary>
+        public Dictionary<string, int> DunTickets = new Dictionary<string, int>();
+        /// <summary>던전 키 → 오늘 쓴 «광고 보고 티켓» 횟수(상한 = dungeon.json <c>adPerDay</c>).</summary>
+        public Dictionary<string, int> DunAdUsed = new Dictionary<string, int>();
+        /// <summary>던전 키 → 오늘 쓴 «다이아로 티켓» 횟수(상한 = dungeon.json <c>gemPerDay</c>).</summary>
+        public Dictionary<string, int> DunGemUsed = new Dictionary<string, int>();
 
         public static SaveData NewSave(GameData D)
         {
@@ -107,6 +116,7 @@ namespace KkomaKnight.Core
                 ["expSettle"] = ExpSettle, ["expQuickDay"] = ExpQuickDay ?? "", ["expQuickUsed"] = (double)ExpQuickUsed,
             };
             var gc = new List<object>(); foreach (var b in GiftClaimed) gc.Add(b); o["giftClaimed"] = gc;
+            o["dunDay"] = DunDay ?? "";
             var inv = new List<object>();
             foreach (var g in Inv)
             {
@@ -117,6 +127,9 @@ namespace KkomaKnight.Core
             o["inv"] = inv;
             var eq = new Dictionary<string, object>(); foreach (var kv in Eq) eq[kv.Key] = (double)kv.Value; o["eq"] = eq;
             var sl = new Dictionary<string, object>(); foreach (var kv in Slots) sl[kv.Key] = (double)kv.Value; o["slots"] = sl;
+            var dt = new Dictionary<string, object>(); foreach (var kv in DunTickets) dt[kv.Key] = (double)kv.Value; o["dunTickets"] = dt;
+            var da = new Dictionary<string, object>(); foreach (var kv in DunAdUsed) da[kv.Key] = (double)kv.Value; o["dunAdUsed"] = da;
+            var dgm = new Dictionary<string, object>(); foreach (var kv in DunGemUsed) dgm[kv.Key] = (double)kv.Value; o["dunGemUsed"] = dgm;
             var gb = new Dictionary<string, object>();
             foreach (var kv in GachaBoxes) gb[kv.Key] = new Dictionary<string, object> { ["p50"] = (double)kv.Value.P50, ["p10"] = (double)kv.Value.P10, ["pulls"] = (double)kv.Value.Pulls };
             o["gachaBoxes"] = gb;
@@ -140,6 +153,10 @@ namespace KkomaKnight.Core
                         s.Inv.Add(new GearItem { Uid = g["u"].Int(), Part = g["part"].Str(), Type = g["type"].Str(), Rar = g["rar"].Int(), Plus = g["plus"].Int(), IsNew = g["nw"].Num() != 0 });
                     foreach (var k in j["eq"].Keys) s.Eq[k] = j["eq"][k].Int();
                     foreach (var k in j["slots"].Keys) s.Slots[k] = j["slots"][k].Int();
+                    s.DunDay = j["dunDay"].Str("");
+                    foreach (var k in j["dunTickets"].Keys) s.DunTickets[k] = j["dunTickets"][k].Int();
+                    foreach (var k in j["dunAdUsed"].Keys) s.DunAdUsed[k] = j["dunAdUsed"][k].Int();
+                    foreach (var k in j["dunGemUsed"].Keys) s.DunGemUsed[k] = j["dunGemUsed"][k].Int();
                     foreach (var k in j["gachaBoxes"].Keys) s.GachaBoxes[k] = new GachaState { P50 = j["gachaBoxes"][k]["p50"].Int(), P10 = j["gachaBoxes"][k]["p10"].Int(), Pulls = j["gachaBoxes"][k]["pulls"].Int() };
                 }
                 catch (Exception) { s = new SaveData(); }
