@@ -298,7 +298,8 @@ namespace KkomaKnight.Game
             var cells = UiKit.Rect(box, "RewardCells"); UiKit.Pct(cells, Layout.DdRewardCells.Within(Layout.DdBox));
             var icons = new List<string>(d.rewards); while (icons.Count < 4) icons.Add(icons.Count == 3 ? "ui.coin" : "ui.bookBlue");
             var cellRts = IconRow(cells, Layout.DdRewardCells, icons.ToArray(), "ui.itemFrame.green", "RewardCell:");
-            for (int i = 0; i < 2 && i < cellRts.Count; i++) { var first = UiKit.Panel(cellRts[i], "First", "fr.r12", Palette.Red); UiKit.Pct(first.rectTransform, 2, -34, 104, 46); UiKit.Label(first.transform, 0, 0, 100, 100, "첫 클리어", TextSize.Aux, Palette.White, kind: TextKind.Aux); }
+            // «첫 클리어» 배지 — 칸 폭 119px 에 104% = 124px 였는데 보조 36 의 선호 폭이 122px 라 여유 2px 뿐이라 bestFit 이 35 로 눌렀다(CI #112·#114 · T74) → 114% = 136px(여유 11% · 옆 칸 배지와 27px 떨어짐)
+            for (int i = 0; i < 2 && i < cellRts.Count; i++) { var first = UiKit.Panel(cellRts[i], "First", "fr.r12", Palette.Red); UiKit.Pct(first.rectTransform, -7, -34, 114, 46); UiKit.Label(first.transform, 0, 0, 100, 100, "첫 클리어", TextSize.Aux, Palette.White, kind: TextKind.Aux); }
             UiKit.TagGroup(box, "보상 칸(4개)", cellRts.ToArray());
             var ticket = UiKit.Rect(box, "Ticket"); UiKit.Pct(ticket, Layout.DdTicket.Within(Layout.DdBox)); UiKit.Tag(ticket, "티켓 줄");
             { var ti = UiKit.Icon(ticket, "Icon", d.ticket); UiKit.Pct(ti.rectTransform, 10, 0, 34, 100); UiKit.Label(ticket, 50, 0, 50, 100, "0", TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft); }
