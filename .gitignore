@@ -117,3 +117,6 @@ InitTestScene*.unity*
 /perkstrip-screens/
 # T46 — PlayMode UiShotsTests 가 남기는 전 화면 PNG + layout.json(CI 가 screens 브랜치로만 올린다 · main 커밋 금지)
 /ui-screens/
+
+# T60 — WebGL 배포 스모크가 남기는 스크린샷·로그(CI Artifact 로만 · 커밋 금지)
+/webgl-smoke/

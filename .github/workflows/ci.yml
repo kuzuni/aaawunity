@@ -151,6 +151,22 @@ jobs:
           buildName: KkomaKnight
           buildsPath: build
           allowDirtyBuild: true
+      # T60 — 배포 스모크 게이트(주인 상시 지시 2026-09-06 «배포·push 전 에러 확인 · 게임 들어가 봐서 확인»): 빌드를 headless chromium 으로 열어
+      # 콘솔 에러 0 · 로딩 완료 · «[KkomaKnight] ready lobby» · DebugGo("battle") → «ready battle» + 10초 에러 0 을 본다. 하나라도 빨강이면 이 step 이 실패해
+      # 아래 배포 step 이 돌지 않는다(gh-pages 는 마지막 초록 빌드 유지). 스크린샷·로그는 Artifact «webgl-smoke» 로만(PNG 커밋 금지).
+      # 오디오 매체 에러(Vorbis 데이터 «no supported source»·«Unable to decode audio data»)는 T61 이 닫힐 때까지 경고로만 센다(tools/webgl_smoke.js · 결정 108).
+      - name: "배포 스모크 (T60 · headless chromium · 콘솔 에러 0 · 로비 · 전투) — 빨강이면 배포 안 함"
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" build || true
+          npm i -g playwright@1.56.1
+          npx playwright install --with-deps chromium
+          tools/webgl_smoke.sh --dir build/WebGL/KkomaKnight --battle --require-marker --timeout 240 --shot webgl-smoke/local.png --log webgl-smoke/local.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: webgl-smoke
+          path: webgl-smoke/
+          if-no-files-found: ignore
       - name: "gh-pages 로 배포 (Settings → Pages → Source: gh-pages, (root))"
         uses: peaceiris/actions-gh-pages@v4
         with:
@@ -159,6 +175,15 @@ jobs:
           publish_branch: gh-pages
           force_orphan: true
           commit_message: 'WebGL 배포 ${{ github.sha }}'
+      # T60-2 — 배포 뒤 실제 gh-pages URL 로 한 번 더(경로·캐시·CDN 반영 지연 → 60초 간격 5회 재시도). 여기가 빨강이면 잡은 빨강이지만 배포는 이미 됐다(원인은 Artifact 로그).
+      - name: "배포 뒤 gh-pages 재확인 (같은 스모크 · 재시도 5회)"
+        run: tools/webgl_smoke.sh https://kuzuni.github.io/aaawunity/ --battle --require-marker --retries 5 --timeout 240 --shot webgl-smoke/ghpages.png --log webgl-smoke/ghpages.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: webgl-smoke-ghpages
+          path: webgl-smoke/ghpages.*
+          if-no-files-found: ignore
 
   build-android:
     name: Android APK 빌드 → Artifact

@@ -34,7 +34,9 @@ namespace KkomaKnight.Game
             if (font == null && catalog != null) font = catalog.Font("font.ui");
             if (font != null) UiKit.DefaultFont = font;
             app.Save = SaveStore.Load(data);
+            Debug.Log("[KkomaKnight] boot: save");   // T59 진단 마커 — 브라우저 콘솔에서 어디까지 왔는지(WebGL 크래시 위치 좁히기 · 릴리스에서도 무해한 한 줄)
             Audio.Create(app);   // 배경음·효과음(T28) — 세이브(음소거)와 카탈로그(bgm.*/snd.*)를 읽는다 · BuildUi 의 첫 ShowScreen 이 로비 곡을 튼다
+            Debug.Log("[KkomaKnight] boot: audio");
             app.BuildUi();
             return app;
         }
@@ -57,7 +59,9 @@ namespace KkomaKnight.Game
             _toastRt = (RectTransform)UiKit.Spawn("ui.toast", Frame).transform; UiKit.Pct(_toastRt, 4, 84, 92, 5);
             _toastText = _toastRt.GetComponentInChildren<Text>(true);
             _toastRt.gameObject.SetActive(false);
+            Debug.Log("[KkomaKnight] boot: ui");
             ShowScreen("lobby");
+            Debug.Log("[KkomaKnight] ready lobby");   // T60 배포 스모크가 기다리는 마커(tools/webgl_smoke.js) — 문구 바꾸면 스크립트도 같이
         }
 
         void Register(GameScreen s) { s.App = this; _screens[s.Name] = s; }
@@ -80,6 +84,22 @@ namespace KkomaKnight.Game
             chapter = Mathf.Clamp(chapter, 1, Math.Max(1, Save.MaxChapter));
             ShowScreen("battle");
             GetScreen<BattleScreen>().Start(chapter);
+            Debug.Log("[KkomaKnight] ready battle");   // T60 배포 스모크 마커
+        }
+
+        /// <summary>
+        /// 배포 스모크 진단 훅(T60) — 브라우저 JS 가 <c>unityInstance.SendMessage("App", "DebugGo", "battle")</c> 로 부른다(GameObject 이름 = «App»).
+        /// «battle» = 선택 챕터로 전투 진입 · «lobby» = 로비. 그 외는 무시(로그 한 줄). 게임 로직은 StartBattle/ShowScreen 그대로 — 새 기능이 아니라 진입 경로만 연다.
+        /// </summary>
+        public void DebugGo(string what)
+        {
+            if (Save == null || Data == null) { Debug.LogWarning("[KkomaKnight] DebugGo: 아직 준비 전 — " + what); return; }
+            switch (what)
+            {
+                case "battle": StartBattle(Save.SelChapter); break;
+                case "lobby": Overlay?.Close(); GetScreen<BattleScreen>()?.Abort(); ShowScreen("lobby"); break;
+                default: Debug.Log("[KkomaKnight] DebugGo: 모르는 목적지 — " + what); break;
+            }
         }
 
         public void Persist() => SaveStore.Save(Save);
