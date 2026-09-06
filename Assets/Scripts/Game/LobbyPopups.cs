@@ -132,6 +132,20 @@ namespace KkomaKnight.Game
         /// <summary>퀘스트 보상 점수(레퍼런스 15 의 메달 숫자 — 시스템이 없어 표시만).</summary>
         static readonly string[] QuestScores = { "20", "20", "20", "10", "20", "20" };
 
+        /// <summary>
+        /// 프리팹에서 온 글자를 «어두운 조각 위» 에서 읽히게 — 흰 글자 + 어두운 외곽선(<see cref="UiKit.Text"/> 가 새 글자에 붙이는 것과 같은 규격).
+        /// <see cref="UiKit.SetText"/> 는 색·크기만 바꾸고 외곽선은 안 붙이므로 조각 글자에는 이걸 한 번 더 부른다(T63 1항의 반대 경우 = 바탕이 어두운 쪽).
+        /// </summary>
+        static Text OnDark(Text t, Color? color = null)
+        {
+            if (t == null) return null;
+            t.color = color ?? Palette.White;
+            var ol = UiKit.Ensure<Outline>(t.gameObject);
+            ol.effectColor = new Color(0.1f, 0.06f, 0.05f, 0.85f);
+            float d = Mathf.Clamp(t.fontSize * 0.05f, 1.5f, 4f); ol.effectDistance = new Vector2(d, -d); ol.useGraphicAlpha = true;
+            return t;
+        }
+
         /// <summary>이름이 <paramref name="prefix"/> 로 시작하는 첫 «직계» 자식 — 프리팹 인스턴스가 «이름 (1)» 처럼 붙어 나올 때 쓴다.</summary>
         static RectTransform ChildStarting(Transform root, string prefix)
         {
@@ -239,13 +253,14 @@ namespace KkomaKnight.Game
                 var mi = (RectTransform)UiKit.Find(medal, "Icon");
                 if (mi != null) { UiKit.Pct(mi, 0, 0, 100, 100); var img = UiKit.SetSprite(medal, "Icon", "ui.iconMedal"); if (img != null) { img.preserveAspect = true; img.color = Color.white; } }
                 // 점수 숫자 = 메달 아래(칸 높이의 72% · 본문 40 한 줄이 안 줄고 들어간다 — 전 코드와 같은 값)
-                var mt = UiKit.SetText(medal, "Text (TMP)", QuestScores[i], Palette.Yellow, TextSize.Body);
+                var mt = OnDark(UiKit.SetText(medal, "Text (TMP)", QuestScores[i], Palette.Yellow, TextSize.Body), Palette.Yellow);
                 // 전 코드(UiKit.Label(medal, -20, 98, 140, 72, …))와 같은 자리·규격 — 메달 아래 점수 한 줄
                 if (mt != null) { UiKit.Pct(mt.rectTransform, -20, 98, 140, 72); mt.alignment = TextAnchor.MiddleCenter; mt.resizeTextForBestFit = true; mt.resizeTextMinSize = TextSize.BestFitMin; mt.resizeTextMaxSize = TextSize.Body; mt.horizontalOverflow = HorizontalWrapMode.Overflow; }
                 parts.Medal = medal;
             }
             // 제목 — 줄의 밝은 바탕 위라 잉크색(T63 1항)
-            var title = UiKit.SetText(item, "Text (TMP)", QuestTitles[i], Palette.Ink, TextSize.Body);
+            // 줄 바탕이 프리팹 `ListFrame_08`(어두운 황갈색)이라 Ink 로는 안 읽힌다(screens run 148 눈 확인) → 흰 글자 + 외곽선
+            var title = OnDark(UiKit.SetText(item, "Text (TMP)", QuestTitles[i], Palette.White, TextSize.Body));
             if (title != null)
             {
                 var tr = title.rectTransform; UiKit.Pct(tr, Layout.QsRowTitle.WithH(Layout.LpLineH).Within(Layout.QsRow1));
@@ -263,7 +278,7 @@ namespace KkomaKnight.Game
                 slider.value = done ? 1f : 0f;
                 var st = sr.GetComponentInChildren<Text>(true);
                 // 바 안 숫자는 UiKit.MakeBar 와 같은 규격(bestFit 32~40 · 가로 넘침 허용) — 바 칸(LpBarH 44px)이 40 한 줄(55px)보다 낮다
-                if (st != null) { st.text = (done ? QuestGoals[i] : 0) + "/" + QuestGoals[i]; st.fontSize = TextSize.Body; st.resizeTextForBestFit = true; st.resizeTextMinSize = TextSize.BestFitMin; st.resizeTextMaxSize = TextSize.Body; st.horizontalOverflow = HorizontalWrapMode.Overflow; TextAudit.Mark(st, TextKind.Body); }
+                if (st != null) { st.text = (done ? QuestGoals[i] : 0) + "/" + QuestGoals[i]; st.fontSize = TextSize.Body; st.resizeTextForBestFit = true; st.resizeTextMinSize = TextSize.BestFitMin; st.resizeTextMaxSize = TextSize.Body; st.horizontalOverflow = HorizontalWrapMode.Overflow; OnDark(st); TextAudit.Mark(st, TextKind.Body); }
                 parts.Bar = sr;
             }
             // 받기 표시 / 이동 버튼 — Check 는 프리팹에서 슬라이더 밑에 있어 줄 오른쪽으로 옮긴다
@@ -313,7 +328,8 @@ namespace KkomaKnight.Game
             var box = (RectTransform)UiKit.Find(root, "Popup"); box.name = "AttendanceBox"; UiKit.Pct(box, B);
             foreach (var g in box.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;
             UiKit.PatternBg(box);   // T72 ① 팝업 배경 패턴
-            UiKit.Hide(box, "Text_Description");   // 데모 안내 문구(영문) — 레퍼런스 16 에 없다
+            // 데모 안내 문구(영문)와 격자 위에 떠 있던 타이머 라벨 — 레퍼런스 16 에 없다(라벨은 screens run 148 에서 3일차 칸을 가리는 것이 보였다)
+            UiKit.Hide(box, "Text_Description", "Label_Tail_02_Timer");
 
             // 제목 리본(프리팹 Title_01_Deco_Yellow) — 표 ㉑ 자리(박스 윗변에 걸친다)
             var rib = ChildStarting(box, "Title_01_Deco");

@@ -269,6 +269,8 @@ namespace KkomaKnight.Tests.Play
                     int checks = 0; foreach (var t in _app.Overlay.Root.GetComponentsInChildren<Transform>(false)) if (t.name == "Check") checks++;
                     Assert.AreEqual(3, checks, "완료 줄 ✅ 3(프리팹 Check · 레퍼런스 15)");
                     Assert.IsTrue(HasText(s => s == "적 50마리 처치"), "줄 제목은 우리말");
+                    // T78 — 줄 바탕(프리팹 ListFrame_08)이 어두워 제목은 흰 글자 + 외곽선이어야 읽힌다(screens run 148 눈 확인)
+                    { var t0 = UiKit.Find(q0, "Title").GetComponent<Text>(); Assert.IsNotNull(t0, "줄 제목 글자"); Assert.IsNotNull(t0.GetComponent<Outline>(), "줄 제목 외곽선"); Assert.Greater(t0.color.r + t0.color.g + t0.color.b, 2.4f, "줄 제목은 밝은 글자"); }
                 }
                 { var bx = (RectTransform)UiKit.Find(_app.Overlay.Root, "QuestBox"); Assert.IsNotNull(bx, "퀘스트 박스"); Assert.AreEqual(Layout.QsBox.X, bx.anchorMin.x * 100f, 0.5f, "퀘스트 박스 x = 표 ⑬"); Assert.AreEqual(1f - Layout.QsBox.Y / 100f, bx.anchorMax.y, 1e-3f, "퀘스트 박스 y = 표 ⑬"); }
                 // T63-lobbypopups — 글자 잘림 0 + 제목/카운터가 본문 40 아래로 안 줄어듦(팝업 4종) · 리본 명판 60 이 안 잘림
@@ -288,6 +290,8 @@ namespace KkomaKnight.Tests.Play
                     Assert.AreEqual(0, checks, "받은 날 없음(시스템 없음 · ✅ 0 · T44)");
                     Assert.IsNotNull(UiKit.Find(d1, "ItemFrame_01"), "보상 칸 = 장비 프레임(T76 3항 · T69 7항)");
                     Assert.IsTrue(HasText(s => s == "1일차") && HasText(s => s == "7일차"), "칸 머리는 우리말");
+                    // T76 — 프리팹의 타이머 라벨(격자 위에 떠 3일차 칸을 가렸다)은 꺼져 있어야 한다(screens run 148)
+                    { var tl = UiKit.Find(_app.Overlay.Root, "Label_Tail_02_Timer"); Assert.IsTrue(tl == null || !tl.gameObject.activeInHierarchy, "출석: 프리팹 타이머 라벨 잔재 꺼짐"); }
                 }
                 _app.Overlay.Close(); yield return Frames(1);
                 // T77 — 데일리 기프트는 이제 «동작하는» 화면이다(껍데기 아님): 하루 상태를 초기화한 뒤 무료 칸 → 줄 1 순서로 연다
