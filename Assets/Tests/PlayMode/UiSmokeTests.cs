@@ -727,7 +727,9 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(gt.color == Palette.OnFrame(Palette.PerkGradeName(offer[i].Grade)), $"카드 {i} 등급 글자색 = 탭 밝기에 맞는 색(밝은 탭이면 잉크): {gt.color}");
                 var host = gt.rectTransform.parent as RectTransform;
                 Assert.IsNotNull(host, $"카드 {i} 등급 글자 부모(탭)");
-                Assert.AreEqual(host.rect.height, gt.rectTransform.rect.height, 0.5f, $"카드 {i} 등급 글자 칸 높이 = 탭 높이(세로 여백 0 · bestFit 이 덜 줄인다)");
+                // 탭(TitleBg/Text_Title) 안으로 Stretch 한 경로일 때만 — 탭 조각이 없는 프레임은 Pct 로 자리를 잡으므로 높이가 같을 수 없다
+                if (gt.rectTransform.anchorMin.y == 0f && gt.rectTransform.anchorMax.y == 1f)
+                    Assert.AreEqual(host.rect.height, gt.rectTransform.rect.height, 0.5f, $"카드 {i} 등급 글자 칸 높이 = 탭 높이(세로 여백 0 · bestFit 이 덜 줄인다)");
                 Assert.GreaterOrEqual(TextAudit.BestFitSize(gt), TextSize.BestFitMin, $"카드 {i} 등급 글자 실제 크기 ≥ 32");
             }
             // T63-perks — «남은 횟수 : N» 은 레퍼런스 04 처럼 버튼 «아래»(프리팹 자리 그대로면 버튼 위에 얹혀 아랫줄이 잘리고 주황 숫자가 주황 버튼에 묻힌다)
