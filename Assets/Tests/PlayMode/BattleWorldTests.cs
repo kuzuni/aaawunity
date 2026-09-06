@@ -57,6 +57,7 @@ namespace KkomaKnight.Tests.Play
         IEnumerator Run(BattleScreen bs, BattleWorld world, BattleState G, float sec, Stats st)
         {
             double prev = world.ShownPX, prevEngine = G.P.WorldX; bool prevHold = world.HoldEngine;
+            bool prevPending = world.KillPending, prevAnimHold = world.KillAnimHold;
             float t0 = Time.realtimeSinceStartup;
             while (Time.realtimeSinceStartup - t0 < sec && !G.Over && !_app.Overlay.IsOpen && bs.World == world)
             {
@@ -68,14 +69,16 @@ namespace KkomaKnight.Tests.Play
                 if (animHold) st.AnimHoldFrames++;
                 if (advanced) st.WalkFrames++;
                 // T20 — 사망 연출이 안 나온 적이 있는데 출발하지 않는다
-                Assert.IsFalse(advanced && pending, "사망 연출이 아직 안 나온 적이 있는데 화면이 출발했다(주인 지적 재현)");
-                // T50 ⓑ — 킬 뒤 공격 모션 중에는 표시 원점 이동 0
-                Assert.IsFalse(advanced && animHold, "킬 뒤 공격 모션이 아직 안 끝났는데 화면이 출발했다(주인: 공격 모션 끝나고 걸어야 함)");
+                // (T65) «멈춤이 시작되는 프레임» 은 뺀다 — 한 프레임에 엔진 틱이 여럿 돌면 킬 틱 앞의 걷기 틱(킬 이전의 접근 걸음)이 같은 프레임에 들어 있어
+                // 그 프레임의 전진은 정상이다. 멈춤이 이미 걸려 있던(앞 프레임에도 참) 상태에서 전진하면 주인이 지적한 «살아 보이는 적 두고 출발» 이다.
+                Assert.IsFalse(advanced && pending && prevPending, "사망 연출이 아직 안 나온 적이 있는데 화면이 출발했다(주인 지적 재현)");
+                // T50 ⓑ — 킬 뒤 공격 모션 중에는 표시 원점 이동 0 (같은 이유로 시작 프레임 제외)
+                Assert.IsFalse(advanced && animHold && prevAnimHold, "킬 뒤 공격 모션이 아직 안 끝났는데 화면이 출발했다(주인: 공격 모션 끝나고 걸어야 함)");
                 // T50 ⓒ — 격차 0: 표시 원점 = 엔진 x (따라잡기 구간이 없다)
                 Assert.AreEqual(P.WorldX, now, 1e-6, "표시 원점이 엔진 x 와 같아야 한다(T50 · 따라잡기 없음 — 엔진이 보류된다)");
                 // 엔진 보류 — 앞 프레임부터 계속 hold 면 엔진 x 가 그대로
                 if (prevHold && hold) { st.EnginePausedFrames++; Assert.AreEqual(prevEngine, P.WorldX, 1e-9, "킬 연출 동안 엔진 틱이 보류돼야 한다(HoldEngine)"); }
-                prevHold = hold; prevEngine = P.WorldX;
+                prevHold = hold; prevEngine = P.WorldX; prevPending = pending; prevAnimHold = animHold;
                 // T50 ⓐ — 프레임당 이동량 ≤ 원래 걷기 속도 × (프레임 dt + 틱 1개 양자화) — 2배 구간 0 (대시 특전을 가진 판은 ×DashMul 까지 · P.Dash 는 한 프레임 안에서 꺼질 수 있어 보유 여부로 본다)
                 bool dashOwned = P.Has("p_killDash");
                 double v = G.C.PlayerSpeed * P.WalkMul * (dashOwned ? G.C.DashMul : 1);

@@ -58,6 +58,9 @@ namespace KkomaKnight.Game
         double _shownPX;
         const double SnapGap = 600;
         bool _killAnimHold;                                          // 킬 타격(칼 내려옴)이 나온 뒤 공격 모션이 끝날 때까지 — 출발 금지 + 엔진 보류(T50)
+        // T65 — 멈춤이 «시작되는» 프레임은 얼리지 않고 엔진 x 로 맞춘다. 한 프레임에 엔진 틱이 여럿 돌면(배속·낮은 fps) 킬 틱 앞에 걷기 틱이 같은 프레임에 이미 들어 있고,
+        // 그 프레임부터 얼리면 그 걸음(≤ 한 프레임 분)만큼 격차가 남는다(CI #91~#93 빨강 = 격차 4.4px = 걷기 한 틱 132×1/30). 다음 프레임부터 얼리면 격차 0 이 유지된다.
+        bool _heldPrevFrame;
         /// <summary>화면이 쓰는 플레이어 월드 x(스크롤 원점) — 엔진 <c>P.WorldX</c> 와 같다(킬 연출 중에는 엔진이 보류되므로 격차가 생기지 않는다).</summary>
         public double ShownPX => _shownPX;
         /// <summary>죽었지만 아직 사망 연출이 시작되지 않은(칼이 안 내려온) 적이 있는가 — 이 동안 화면은 출발하지 않는다(T20).</summary>
@@ -155,7 +158,7 @@ namespace KkomaKnight.Game
             _app = app; G = g; D = g.D; _pops = popsLayer;
             _zoom = (float)D.Ui.CameraZoom; _playerX = (float)(D.Ui.PlayerX * WorldCam.LayoutW);
             _theme = Theme.ForChapter(g.Chapter);
-            _shownPX = G.P.WorldX;
+            _shownPX = G.P.WorldX; _heldPrevFrame = false;
             _root = new GameObject("World").transform;
             BuildGround(); BuildProps(); BuildNodes(); BuildPlayer();
             _goldPrev = G.Gold; ShownHp = G.P.Hp; ShownSh = G.P.Sh;
@@ -413,7 +416,7 @@ namespace KkomaKnight.Game
         {
             _engineMoving = G.P.WorldX > _prevPX + 1e-6;   // 엔진이 이번 틱에 걸었나 — 화면의 Walk 는 Sync 에서 표시 원점 기준으로 정한다(T20)
             var P = G.P; _pStrike = null; _eStrikes.Clear();
-            if (Silent) { _pStrikeTick = P.StrikeT; foreach (var kv in _enemies) kv.Value.StrikeTick = kv.Key.StrikeT; G.Events.Clear(); _shownPX = P.WorldX; return; }
+            if (Silent) { _pStrikeTick = P.StrikeT; foreach (var kv in _enemies) kv.Value.StrikeTick = kv.Key.StrikeT; G.Events.Clear(); _shownPX = P.WorldX; _heldPrevFrame = false; return; }
             // 플레이어가 이번 틱에 휘둘렀나 → 공격 모션(간격 = 1/공속) + 연출 묶음
             if (P.StrikeT > _pStrikeTick && !G.Dead)
             {
@@ -487,7 +490,9 @@ namespace KkomaKnight.Game
             _player.Tick(dt);
             if (_killAnimHold && !_player.Attacking) _killAnimHold = false;   // 공격 모션이 끝났다 → 걷기 모션과 함께 출발
             double gap = P.WorldX - _shownPX; bool hold = KillPending || KillAnimHold;
-            if (Silent || !hold || gap < 0 || gap > SnapGap) _shownPX = P.WorldX;
+            // 멈춤 시작 프레임(!_heldPrevFrame)은 엔진 x 로 맞추고(그 프레임의 걷기 틱은 킬 이전의 접근 걸음이다 · T65), 그다음 프레임부터 얼린다
+            if (Silent || !hold || !_heldPrevFrame || gap < 0 || gap > SnapGap) _shownPX = P.WorldX;
+            _heldPrevFrame = hold;
             _moving = !hold && _engineMoving;
             _player.transform.position = Pos(_shownPX, FootY);
             _player.SetSortingBase(SortBase(LayoutX(_shownPX)));
