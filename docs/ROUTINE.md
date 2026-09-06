@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-06 · 11:1X UTC) ⚑⚑ 주인 지시 — 특전 카드가 순서대로 등장할 때 «Shine» 효과(AllIn1SpriteShader)도 카드 순서대로.** → **T61** 등재(§2 · T49 stagger 위에 · UI 용 `AllIn1SpriteShaderUiMask` 머티리얼 · 루틴이 잡는다).
+
 - **(2026-09-06 · 10:4X UTC) ⚑⚑⚑ 주인 지시 — gh-pages 배포(첫 WebGL 배포 · main d6f66eb)를 폰에서 열었더니 첫 화면에서 «RangeError: Maximum call stack size exceeded»(wasm 무한 재귀). 앞으로 **항상 배포·커밋·push 전에 에러를 확인하고, 배포된 게임에 들어가 봐서도 에러가 뜨는지 확인하고 고쳐라** — 상시 규칙(§1).** → **T59**(크래시 수정 · 최우선) + **T60**(배포 스모크 게이트: headless 브라우저로 콘솔 에러 0·로비·전투 확인 뒤에만 배포) 등재(§2).
 
 - **(2026-09-06 · 09:2X UTC) ⚑⚑ 주인 지시 — 특전 설명은 «트리거: 내용» 꼴로: «처치 시: 33% 확률로 …» · «피격 시: …» · «3타마다: …».** → **T53** 등재(§2 · 표시 시점 변환 · perks.json 불변 · T52 뒤 · 루틴이 잡는다). **상시 능력치는 «패시브: …»**(09:3X 정정).
@@ -89,7 +91,7 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
-> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T17~T60**(T59 = WebGL 배포 크래시 최우선 · T60 = 배포 스모크 게이트 · (T58 = 비평 하니스 PNG 촬영 결함(UI 띠 34.8% · 월드 스프라이트 겹침 · T46 뒤) · T57 ✅ · T47 🔄(회차 1 · 로비 9.7 ✅ · 전투 8.6 ✅ 캔버스 · 남은 코드 3건) · T46 ✅(screens CI #83 · T58 열림) · T44 ✅(비평 9.5~10.0) · T41 ✅(비평 10.0) · T36 ✅(비평 9.5) · T38 ✅(비평 8.5) · T56 = 플레이 콘솔 노란 줄 0 — DOTween 세이프 모드 경고(파괴된 오브젝트 겨냥 트윈 · `SetLink`) · T55 = CI #76·#77 빨강 후속(T49 회귀 · 최우선) · T49 = 팝업 등장 연출 DOTween 순서대로 · T50 ✅(엔진 틱 보류 · 워커 H) · T54 ✅ · T51 ✅(T50 과 같은 커밋) · T52 = 특전 글자 한 색 · T53 = 특전 설명 «트리거: 내용» 표기 · 2026-09-06) — **T34~T44 = UI 를 `docs/ref` 레퍼런스 구도로(2026-09-06 · 최우선 · «프리팹 그대로» 계열 지시를 대체 · T25 흡수 · T27·T30·T32 폐기)**. 이전 묶음: T17~T33(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
+> T1~T5(주인이 정한 5단계)는 끝났다. **지금 열린 작업은 T17~T61**(T61 = 특전 카드 Shine 순서대로 · (T59 = WebGL 배포 크래시 최우선 · T60 = 배포 스모크 게이트 · (T58 = 비평 하니스 PNG 촬영 결함(UI 띠 34.8% · 월드 스프라이트 겹침 · T46 뒤) · T57 ✅ · T47 🔄(회차 1 · 로비 9.7 ✅ · 전투 8.6 ✅ 캔버스 · 남은 코드 3건) · T46 ✅(screens CI #83 · T58 열림) · T44 ✅(비평 9.5~10.0) · T41 ✅(비평 10.0) · T36 ✅(비평 9.5) · T38 ✅(비평 8.5) · T56 = 플레이 콘솔 노란 줄 0 — DOTween 세이프 모드 경고(파괴된 오브젝트 겨냥 트윈 · `SetLink`) · T55 = CI #76·#77 빨강 후속(T49 회귀 · 최우선) · T49 = 팝업 등장 연출 DOTween 순서대로 · T50 ✅(엔진 틱 보류 · 워커 H) · T54 ✅ · T51 ✅(T50 과 같은 커밋) · T52 = 특전 글자 한 색 · T53 = 특전 설명 «트리거: 내용» 표기 · 2026-09-06) — **T34~T44 = UI 를 `docs/ref` 레퍼런스 구도로(2026-09-06 · 최우선 · «프리팹 그대로» 계열 지시를 대체 · T25 흡수 · T27·T30·T32 폐기)**. 이전 묶음: T17~T33(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능.
 
 ### T1 — 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README ✅ (완료 · PROGRESS 참조)
 
@@ -565,6 +567,17 @@
 2. 배포 뒤 같은 스크립트를 gh-pages URL 로 한 번 더(경로·압축(`webGLCompressionFormat`)·캐시 차이).
 3. 워커용: `tools/webgl_smoke.sh [URL]`(기본 = gh-pages) — 코드 커밋 전/후 워커가 직접 돌려 완료 기록에 결과 한 줄. playwright 설치가 환경에서 막히면 «워커 결정 기록» 에 남기고 CI 결과로 대신한다.
 4. 게이트 + PROGRESS T60 행.
+
+### T61 — 특전 카드 등장 순서에 맞춘 «Shine»(AllIn1SpriteShader) — 카드가 하나씩 뜰 때 반짝임도 하나씩 (주인 2026-09-06 · T49 뒤 · 제약 없음)
+범위: `Assets/Scripts/Game/Overlay.cs`(LevelUp 148행 · PerkBook 224행 — T49 의 `UiKit.Stagger` 자리) · `UiKit.cs`(`Stagger`/`Reveal` 에 «드러난 뒤 shine» 훅 · shine 트윈 헬퍼) · **새 머티리얼** `Assets/KkomaKnight/PerkShine.mat`(쉐이더 = `AllIn1SpriteShaderUiMask` · SHINE_ON · 카탈로그 키 `mat.perkShine` · .meta 는 `gen_meta.py`) · `Assets/KkomaKnight/catalog.json` · `docs/assets-map.md` · `Assets/Tests/PlayMode/UiSmokeTests`
+순서: **T49 뒤**(✅ · `fdb8d35`) — 같은 stagger 코드 위에 얹는다. T52·T53 도 끝났으니 Overlay 충돌 없음(rebase 만).
+주인 원문(2026-09-06 · 11:1X UTC): «그 특전들 순서대로 등장할 때 shine 효과도 순서대로 돼야 함 · 올인원 스프라이트 쉐이더».
+1. **재료** = AllIn1SpriteShader(이미 `mat.hitFlash` 로 쓰는 에셋 · 주인 에셋 규칙 ⓑ). UI Image 에는 **`AllIn1SpriteShaderUiMask`** 쉐이더(UI 마스크·RectMask2D 호환 · `_ShineLocation` 188행 · `SHINE_ON` 키워드)를 쓴 머티리얼 하나를 새로 만든다 — 프로퍼티: `_ShineColor` 흰색(알파 0.6~0.8) · `_ShineWidth` 0.10~0.15 · `_ShineRotate` 약 0.6rad(왼쪽 위 → 오른쪽 아래) · `_ShineGlow` 0~5 · `_ShineLocation` 은 코드가 0→1 로 움직인다. 머티리얼 YAML 은 `HitFlash.mat` 을 본떠 텍스트로 쓴다(키워드 `SHINE_ON` · GUID 결정적).
+2. **어디에**: 카드의 **프레임 그림**(PerkCard 의 `CardFrame_*` Image · 등급색 프레임) 에 이 머티리얼을 붙인다(글자·아이콘엔 안 붙임 · 글자는 T52 «한 색» 그대로). 카드마다 **머티리얼 인스턴스**(`new Material(mat)` 또는 `MaterialPropertyBlock` 은 UI Image 가 못 쓰니 인스턴스) — 카드가 파괴될 때 인스턴스도 `Destroy`(누수·콘솔 경고 0 · §1).
+3. **타이밍**: T49 의 `UiKit.Stagger` 가 카드 i 를 `start + i·step` 에 드러낸다(3택 = 0.22 · 0.33 · 0.44s · 각 0.28s Reveal). shine 은 **각 카드의 Reveal 이 끝나는 시점**(또는 Reveal 시작 + 0.1s · 워커가 보고 정함)에 `_ShineLocation` 0→1 을 **0.35~0.45s** 로 한 번 훑고(`DOTween.To` · `Ease.InOutSine` · `SetUpdate(true)` · 마스터 시퀀스에 `Insert`) 끝나면 `_ShineLocation` 을 화면 밖(0 또는 1)에 둔다. 카드 3장이면 shine 도 3번, 같은 간격으로 뒤따라간다 → «등장 순서 = 반짝임 순서». 스킵(탭)·`CompleteAllTweens` 때는 shine 도 끝 상태로.
+4. **보유 특전(PerkBook)**·«새로고침» 재굴림도 같은 규칙(T49 와 같은 목록). 승리/패배 팝업엔 붙이지 않는다(카드가 아니다 · 주인이 특전만 말함).
+5. **테스트**(PlayMode `UiSmokeTests` ⑤ 확장): 3택을 연 뒤 ⓐ 카드 프레임 Image 의 material 쉐이더 이름에 `AllIn1SpriteShaderUiMask` ⓑ shine 트윈이 카드 순서대로 시작(마스터 시퀀스 안 Insert 시각이 단조 증가 — `UiKit` 이 시작 시각 목록을 돌려주게) ⓒ `CompleteAllTweens` 뒤 `_ShineLocation` 이 끝 값 ⓓ Close 뒤 머티리얼 인스턴스 0(`Resources.FindObjectsOfTypeAll<Material>` 이름 «PerkShine (Instance)» 0) ⓔ `LogAssert.NoUnexpectedReceived`. WebGL 에서 쉐이더 키워드가 빠지지 않게 머티리얼 에셋에 키워드를 박는다(런타임 `EnableKeyword` 만 쓰면 스트리핑될 수 있다 · T59 규칙: 배포 스모크에서도 확인).
+6. 게이트 + assets-map 한 줄 + PROGRESS T61 행 + 완료 기록(확인 = CI PlayMode + screens 04 PNG 는 참고 · 배포 스모크).
 
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
