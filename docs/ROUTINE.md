@@ -140,6 +140,8 @@
 >
 > **40 = 오디오 키 20 × 시도 2회**(`Audio.cs` `LoadStreamed` 가 `AudioType.OGGVORBIS` → `UNKNOWN` 로 두 번 시도한다) — 즉 WebGL 은 `UnityWebRequestMultimedia.GetAudioClip` 의 ogg **스트리밍**을 거부하고, 그 거부가 **빨간 줄(console.error)** 로 나온다(§1 «플레이 콘솔 에러 0» 위반이자 배포 게이트 빨강). 게임 자체는 뜬다(`loaded=true readyLobby=true readyBattle=true`)고 스모크가 찍었고, 폴백(카탈로그 클립)은 종전대로 «Loading FSB failed» 34건이라 **소리는 여전히 안 난다**. **T64 lock 은 살아 있다**(17:45 · 워커 A) → **처방은 T64 워커 몫**이다. 후보: ⓐ `DownloadHandlerAudioClip.streamAudio = false`(WebGL 이 받아들이면 한 줄) ⓑ 스트리밍이 아예 안 되면 `UnityWebRequest` 로 **바이트만 받아** WebAudio/`AudioClip.Create` 로 얹기 ⓒ 그 사이 **빨간 줄이라도 0 으로**(시도 자체를 막거나 WebGL 에서 `LoadStreamed` 를 끄기) — ⓒ 만으로도 배포는 다시 돈다.
 >
+> **(19:0X UTC · 워커 H · sess-1857-8265) 재확인 — 두 런째 같은 빨강이다(일시적인 것이 아니다).** CI **#158**(`560d604`)도 유니티 잡은 **초록**(EditMode 120/120 · PlayMode **40/40** · `screens` run 158 갱신)인데 `build-webgl` 의 배포 스모크가 똑같이 **`errors=40` · 40건 전부 `console.error: Streaming of 'ogg' on this platform is not supported`**(`loaded=true readyLobby=true readyBattle=true audioWarn=34 · netWarn=0`)로 떨어져 배포 step 이 skipped 됐다. **gh-pages 는 여전히 `0469d7b`(CI #148)** — 17:1X 이후의 T76·T78·T84·T70·T77·T81·T72 2~5차·T69-* 묶음·T85 가 전부 주인 폰에 안 올라가 있다. T64 lock(`17:45:11Z sess-1315-10427`)은 **19:15 UTC 에 90분**이 되니, 그때까지 처방이 안 오면 다음 워커가 죽은 lock 규약으로 뺏어 ⓒ(빨간 줄만 0 으로)라도 먼저 넣어 배포를 푸는 것이 낫다.
+>
 > **⚠ 함정: 워커의 로컬 `tools/webgl_smoke.sh --gh-pages` 는 아직 초록이다** — gh-pages 가 안 바뀌었으니 «옛 빌드»(#148)를 재고 있기 때문이다. 자기 커밋의 배포 스모크는 **그 커밋이 든 런의 `build-webgl` step** 으로 봐야 한다.
 
 > **(17:2X UTC · 워커 A · sess-1614-18779) `screens` 가 드디어 움직였다 — `97b694a1` = CI #148(`fc9fe353`).** T63-forge 는 08 PNG 눈 확인까지 끝나 **✅ 종결**(인벤 «장착중» 이 어두운 띠 위 흰 글자로 읽힌다). T69-forge 는 ⓐ 초록(«[BorderGate]» 08 없음 0 · strict)이고 결과 슬롯·모루·초록 칸에는 검은 외곽선이 보이지만 **재료 슬롯(빈 칸 «+»)만 눈에는 외곽선이 없는데 단언은 통과한다 → 결정 184**(링이 `Bg`/`Add_1` 에 가려짐 · 처방 = `DarkFrame` 이 링을 `SetAsLastSibling` + 단언에 «링이 Bg 보다 뒤» 한 줄). T69-forge lock 은 반납했다(이 세션엔 dotnet 이 없어 코드 수정 불가). **같은 함정을 다른 T69-* 묶음도 의심할 것 — «[BorderGate] 없음 0» 이 «눈에 보인다» 를 보장하지 않는다.**
@@ -847,7 +849,7 @@
 4. 확인 = 이 커밋의 CI 유니티 잡 PlayMode `UiSmokeTests.GearScreenDetailSlotAndEquip` Passed + 그 런의 `screens` 07 PNG 를 `Read` 로(옵션 줄 7개가 읽히나) + 배포 스모크. PROGRESS «T84 진행 기록» · 결정 188.
 
 
-### T85 — 적 처치 → 경험치·골드가 **날아가 HUD 에 흡수되는 연출** + 숫자·바가 차오르고, **다 찬 뒤에** 레벨업 특전창 (주인 2026-09-07 · T49·T50 연출 계열 · 엔진 불변 · 제약 없음)
+### T85 — ✅ **완료** (코드 `cbea0ec` · 워커 D · **확인 = CI #158 `560d604` PlayMode 40/40 · `RewardOrbTests` 3/3 · 회귀 0** · sess-1857-8265 · 워커 H) — 적 처치 → 경험치·골드가 **날아가 HUD 에 흡수되는 연출** + 숫자·바가 차오르고, **다 찬 뒤에** 레벨업 특전창 (주인 2026-09-07 · T49·T50 연출 계열 · 엔진 불변 · 제약 없음)
 범위: `Assets/Scripts/Game/BattleWorld.cs`(적 사망 자리에서 구슬 생성 · 663행 `EvKind.Kill` · `_lastKillPos`) · `BattleScreen.cs`(HUD 표시값 = **표시용 EXP·골드**를 따로 들고 흡수 때 올린다 · 255~267행 `RefreshHud` · 194~218행 `OpenPending`/`LevelUp` 지연) · `UiKit.cs`(월드→UI 좌표 변환 + 곡선 비행 헬퍼 `FlyToUi(worldPos, targetRect, key, count, onArrive)`) · `WorldCam.cs`(월드 좌표 → 프레임 좌표) · `Assets/KkomaKnight/catalog.json`(경험치 구슬 아이콘 키 · 골드는 `ui.coin`) · `Assets/Tests/PlayMode/BattleWorldTests`·`UiSmokeTests`
 주인 원문(2026-09-07 · 02:2X UTC): «적 죽이면 경험치랑 골드가 적 죽은 거에서 나와서 각각의 UI 에 흡수되는 애니메이션 넣고, 흡수될 때 경험치랑 골드 숫자 애니메이션으로 차게. 그리고 그거 애니메이션 다 차고 나서 레벨업이면 특전창 뜨는 식으로».
 ⚠ **엔진(`Core/Battle.cs`)은 손대지 않는다** — 킬 순간 `P.Exp`·`G.Gold` 는 즉시 오른다(시드 골든 불변). 바뀌는 것은 **화면 표시값과 팝업 타이밍**뿐이다(T50 의 «표시 원점» 과 같은 방식).
