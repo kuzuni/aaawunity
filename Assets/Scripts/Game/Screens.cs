@@ -60,7 +60,7 @@ namespace KkomaKnight.Game
             _chap = UiKit.SetText(rt, "Title_LineDeco_01_Blue/Text (TMP)", "챕터 1");
             var subT = UiKit.Find(rt, "Text (TMP)"); if (subT != null && subT.parent == rt) _sub = subT.GetComponent<Text>();
             // START — 프리팹 자리 그대로
-            var start = UiKit.FindAny(rt, "Button_03_Red", "Button_03_Convex_Red"); if (start != null) { UiKit.SetText(start, "Text (TMP)", "START"); UiKit.Clickable(start, () => App.StartBattle(App.Save.SelChapter)); }
+            var start = UiKit.FindAny(rt, "Button_03_Red", "Button_03_Convex_Red"); if (start != null) { UiKit.SetText(start, "Text (TMP)", "START"); UiKit.Clickable(start, () => { Audio.Wake(); App.StartBattle(App.Save.SelChapter); }); }   // Wake = WebGL 첫 터치 뒤 잠든 BGM 재개(T28)
             // 챕터 ◀ ▶ — 프리팹에 없는 유일한 추가 · 카드(SampleImage_Map) 양옆 세로 가운데
             var map = UiKit.Find(rt, "SampleImage_Map") as RectTransform;
             float cardCx = UiKit.FrameW / 2f, cardCy = UiKit.FrameH / 2f, cardHalfW = 286f;

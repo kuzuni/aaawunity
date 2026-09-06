@@ -10,6 +10,7 @@ catalog.json 형식:
   "fonts":       { "<key>": "Assets/…/X.ttf", ... },
   "colors":      { "<key>": "#RRGGBB[AA]", ... },
   "texts":       { "<key>": "Assets/…/X.json", ... },   # 이 레포 전용 JSON(TextAsset · fileID 4900000) — StreamingAssets 밖 파일을 빌드에 넣는 참조
+  "audio":       { "<key>": "Assets/Audio/…/X.ogg", ... },   # AudioClip(fileID 8300000) — bgm.* / snd.* (T28)
   "_notes":      { "<key>": "이 에셋을 여기에 쓴 이유/자리", ... }
 }
 GUID 는 .meta 에서, 스프라이트 fileID 는 .png.meta 의 internalIDToNameTable(멀티) 또는 21300000(단일),
@@ -109,6 +110,9 @@ def main():
     def tx(key, val):
         if not os.path.exists(os.path.join(ROOT, val)): raise FileNotFoundError('텍스트 파일 없음: ' + val)
         return ('text', ref(4900000, meta_guid(val), 3), 'fileID 4900000')
+    def au(key, val):
+        if not os.path.exists(os.path.join(ROOT, val)): raise FileNotFoundError('오디오 파일 없음: ' + val)
+        return ('clip', ref(8300000, meta_guid(val), 3), 'fileID 8300000')   # AudioClip(T28) — Assets/Audio/*.ogg
     section('sprites', spec.get('sprites', {}), sp)
     section('prefabs', spec.get('prefabs', {}), pf)
     section('controllers', spec.get('controllers', {}), ct)
@@ -116,6 +120,7 @@ def main():
     section('fonts', spec.get('fonts', {}), fo)
     section('colors', spec.get('colors', {}), co)
     section('texts', spec.get('texts', {}), tx)
+    section('audio', spec.get('audio', {}), au)
     if check:
         print(f'catalog OK — {len(rows)} entries'); return
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f: f.write('\n'.join(y) + '\n')

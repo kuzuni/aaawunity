@@ -12,7 +12,10 @@ namespace KkomaKnight.Core
         public const int Version = 2;
         public double Gold, Gem;
         public int MaxChapter = 1, SelChapter = 1;
-        public bool Muted;
+        /// <summary>배경음 음소거(T28 — 옛 `muted` 를 여기로 이관 · JSON `muteBgm` · 없으면 `muted` 값) · 효과음 음소거(`muteSfx` · 없으면 false).</summary>
+        public bool MuteBgm, MuteSfx;
+        /// <summary>옛 이름(소리 전체 = BGM 스위치) — T28 이후 BGM 음소거의 별칭. 기존 호출·테스트 호환용.</summary>
+        public bool Muted { get => MuteBgm; set => MuteBgm = value; }
         /// <summary>전투 배속(x1/x2) 기억 — T18. index.html `kkoma-knight-v2` 에 없는 필드라 «없으면 1». 표시·연출 배속이지 게임 수치가 아니다.</summary>
         public int Speed = SpeedMin;
         public const int SpeedMin = 1, SpeedMax = 2;
@@ -80,7 +83,7 @@ namespace KkomaKnight.Core
             var o = new Dictionary<string, object>
             {
                 ["v"] = (double)Version, ["gold"] = Gold, ["gem"] = Gem, ["maxChapter"] = (double)MaxChapter, ["selChapter"] = (double)SelChapter,
-                ["muted"] = Muted, ["speed"] = (double)Speed, ["pulls"] = (double)Pulls, ["fuses"] = (double)Fuses, ["uid"] = (double)Uid, ["freeDay"] = FreeDay ?? "",
+                ["muted"] = MuteBgm, ["muteBgm"] = MuteBgm, ["muteSfx"] = MuteSfx, ["speed"] = (double)Speed, ["pulls"] = (double)Pulls, ["fuses"] = (double)Fuses, ["uid"] = (double)Uid, ["freeDay"] = FreeDay ?? "",
             };
             var inv = new List<object>();
             foreach (var g in Inv)
@@ -107,7 +110,7 @@ namespace KkomaKnight.Core
                 {
                     var j = new JNode(MiniJson.Parse(json));
                     s.Gold = j["gold"].Num(); s.Gem = j["gem"].Num(); s.MaxChapter = j["maxChapter"].Int(1); s.SelChapter = j["selChapter"].Int(1);
-                    s.Muted = j["muted"].Bool(); s.Speed = j["speed"].Int(SpeedMin); s.Pulls = j["pulls"].Int(); s.Fuses = j["fuses"].Int(); s.Uid = j["uid"].Int(1); s.FreeDay = j["freeDay"].Str("");
+                    s.MuteBgm = j.Has("muteBgm") ? j["muteBgm"].Bool() : j["muted"].Bool(); s.MuteSfx = j["muteSfx"].Bool(); s.Speed = j["speed"].Int(SpeedMin); s.Pulls = j["pulls"].Int(); s.Fuses = j["fuses"].Int(); s.Uid = j["uid"].Int(1); s.FreeDay = j["freeDay"].Str("");
                     foreach (var g in j["inv"].Items())
                         s.Inv.Add(new GearItem { Uid = g["u"].Int(), Part = g["part"].Str(), Type = g["type"].Str(), Rar = g["rar"].Int(), Plus = g["plus"].Int(), IsNew = g["nw"].Num() != 0 });
                     foreach (var k in j["eq"].Keys) s.Eq[k] = j["eq"][k].Int();

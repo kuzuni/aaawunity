@@ -34,6 +34,7 @@ namespace KkomaKnight.Game
             if (font == null && catalog != null) font = catalog.Font("font.ui");
             if (font != null) UiKit.DefaultFont = font;
             app.Save = SaveStore.Load(data);
+            Audio.Create(app);   // 배경음·효과음(T28) — 세이브(음소거)와 카탈로그(bgm.*/snd.*)를 읽는다 · BuildUi 의 첫 ShowScreen 이 로비 곡을 튼다
             app.BuildUi();
             return app;
         }
@@ -66,6 +67,7 @@ namespace KkomaKnight.Game
             if (_current != null && _current != s) _current.Hide();
             _current = s;
             s.Show();
+            Audio.Bgm(name == "battle" ? "bgm.battle" : "bgm.lobby");   // 화면 전환 시 로비/전투 곡 자동 교체(T28 · 같은 곡이면 무시 · 보스 곡은 BattleWorld 가)
             Overlay?.Root.SetAsLastSibling();
             _toastRt.SetAsLastSibling();
         }

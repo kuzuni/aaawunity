@@ -234,14 +234,14 @@ namespace KkomaKnight.Game
                 UiKit.Pct((RectTransform)b1, l.X, 0, l.W, 100); UiKit.Pct((RectTransform)b2, r.X, 0, r.W, 100);
                 if (eqd)
                 {
-                    UiKit.SetText(b1, "Text (TMP)", "해제"); UiKit.Clickable(b1, () => { S.Eq.Remove(g.Part); app.Persist(); ov.Close(); onChanged?.Invoke(); });
+                    UiKit.SetText(b1, "Text (TMP)", "해제"); UiKit.Clickable(b1, () => { S.Eq.Remove(g.Part); app.Persist(); Audio.Sfx("snd.equip"); ov.Close(); onChanged?.Invoke(); });
                     UiKit.SetText(b2, "Text_Title", maxed ? "슬롯 MAX" : "슬롯 강화"); UiKit.SetText(b2, "Text", maxed ? $"Lv.{D.Gear.SlotLvMax}" : UiKit.Fmt(cost));
                     var bb = UiKit.Clickable(b2, () => { double c2 = D.Gear.SlotCost(S.SlotLv(g.Part)); if (S.Gold < c2 || S.SlotLv(g.Part) >= D.Gear.SlotLvMax) { app.Toast("골드가 부족합니다"); return; } S.Gold -= c2; S.Slots[g.Part] = S.SlotLv(g.Part) + 1; app.Persist(); onChanged?.Invoke(); OpenDetail(app, g, onChanged); });
                     UiKit.SetInteractable(bb, !maxed && S.Gold >= cost);
                 }
                 else
                 {
-                    UiKit.SetText(b1, "Text (TMP)", "장착"); UiKit.Clickable(b1, () => { S.Eq[g.Part] = g.Uid; g.IsNew = false; app.Persist(); ov.Close(); onChanged?.Invoke(); });
+                    UiKit.SetText(b1, "Text (TMP)", "장착"); UiKit.Clickable(b1, () => { S.Eq[g.Part] = g.Uid; g.IsNew = false; app.Persist(); Audio.Sfx("snd.equip"); ov.Close(); onChanged?.Invoke(); });
                     b2.gameObject.SetActive(false);
                 }
             }

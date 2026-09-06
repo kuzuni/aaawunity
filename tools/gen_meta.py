@@ -36,6 +36,12 @@ def body(rel, is_dir):
                 f"  fontNames:\n  - {name}\n  fallbackFontReferences: []\n  customCharacters: \n"
                 "  fontRenderingMode: 0\n  ascentCalculationMode: 1\n  useLegacyBoundsCalculation: 0\n"
                 "  shouldRoundAdvanceValue: 1\n" + TAIL)
+    if ext in ('.ogg', '.wav', '.mp3'):
+        # 오디오(T28) — Vorbis 압축 · 메모리 압축 유지(loadType 1) · 배경음도 ≤ 1MB 라 스트리밍 불필요 · 2D
+        return ("AudioImporter:\n  externalObjects: {}\n  serializedVersion: 7\n  defaultSettings:\n    serializedVersion: 2\n"
+                "    loadType: 1\n    sampleRateSetting: 0\n    sampleRateOverride: 44100\n    compressionFormat: 1\n    quality: 0.7\n"
+                "    conversionMode: 0\n    preloadAudioData: 0\n  platformSettingOverrides: {}\n  forceToMono: 0\n  normalize: 1\n"
+                "  preloadAudioData: 0\n  loadInBackground: 0\n  ambisonic: 0\n  3D: 0\n" + TAIL)
     return "DefaultImporter:\n  externalObjects: {}\n" + TAIL
 
 def main():

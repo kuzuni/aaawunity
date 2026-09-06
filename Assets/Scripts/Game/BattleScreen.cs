@@ -99,6 +99,7 @@ namespace KkomaKnight.Game
             _world?.Dispose(); _world = new BattleWorld(App, G, _pops);
             _acc = 0; _speed = App.Save.Speed; _paused = false; _ended = false; _perkStripKey = ""; _buffKey = ""; _lastReal = 0;   // 배속은 세이브에서(T18 · 클리어 뒤 다음 챕터도 그대로) · 새 판 첫 프레임이 «공백» 으로 잡히지 않게
             UiKit.Clear(_pops);
+            Audio.Bgm("bgm.battle");   // 새 판(클리어 뒤 다음 챕터 포함)은 전투 곡부터 — 보스 곡이었으면 되돌린다(T28)
             RefreshHud();
         }
         protected override void OnHide() { _world?.Dispose(); _world = null; UiKit.Clear(_pops); }

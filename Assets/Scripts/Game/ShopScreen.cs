@@ -171,7 +171,7 @@ namespace KkomaKnight.Game
             var b = BindItem(cell, "골드", "hud.gold", UiKit.FmtQty(p.Gold), "다이아로 구매", "hud.gem", UiKit.FmtQty(p.Gem), () =>
             {
                 var S = App.Save; if (S.Gem < p.Gem) { App.Toast("💎 다이아가 부족합니다"); return; }
-                S.Gem -= p.Gem; S.Gold += p.Gold; App.Persist(); Refresh(); App.Toast($"골드 {UiKit.Fmt(p.Gold)} 구매!");
+                S.Gem -= p.Gem; S.Gold += p.Gold; App.Persist(); Refresh(); Audio.Sfx("snd.coin"); App.Toast($"골드 {UiKit.Fmt(p.Gold)} 구매!");
             });
             if (b != null) _gated.Add((b, () => App.Save.Gem >= p.Gem));
         }
@@ -241,6 +241,7 @@ namespace KkomaKnight.Game
                 S.Pulls++;
             }
             App.Persist(); Refresh();
+            Audio.Sfx("snd.gacha");   // 상자 열림(T28)
             var best = got[0]; foreach (var g in got) if (GearSystem.GearScore(g) > GearSystem.GearScore(best)) best = g;
             // 결과 팝업 — 주인 지정 Shop_Chest_Open 그대로: 리본 제목 · 열린 상자 그림 · 프리팹의 보상 칸(ItemFrame_01) 자리에 얻은 장비 격자(칸 = ListItem_EquipMent · 4열)
             var root = App.Overlay.OpenPrefab("ui.chestOpen"); var rt = (RectTransform)root.transform;

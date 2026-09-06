@@ -344,6 +344,7 @@ namespace KkomaKnight.Game
             b.onClick.AddListener(() =>
             {
                 if (punch) { t.DOKill(true); t.localScale = Vector3.one; t.DOPunchScale(new Vector3(-0.08f, -0.08f, 0), 0.18f, 1, 0.5f).SetUpdate(true); }
+                Audio.Sfx("snd.click");   // 모든 버튼의 클릭음은 여기 한 곳(T28)
                 onClick?.Invoke();
             });
             return b;

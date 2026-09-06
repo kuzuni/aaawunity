@@ -475,6 +475,28 @@
   "texts": {
     "data.shop": "Assets/KkomaKnight/shop.json"
   },
+  "audio": {
+    "bgm.lobby": "Assets/Audio/bgm/lobby.ogg",
+    "bgm.battle": "Assets/Audio/bgm/battle.ogg",
+    "bgm.boss": "Assets/Audio/bgm/boss.ogg",
+    "snd.click": "Assets/Audio/sfx/click.ogg",
+    "snd.popup": "Assets/Audio/sfx/popup.ogg",
+    "snd.hit": "Assets/Audio/sfx/hit.ogg",
+    "snd.crit": "Assets/Audio/sfx/crit.ogg",
+    "snd.miss": "Assets/Audio/sfx/miss.ogg",
+    "snd.kill": "Assets/Audio/sfx/kill.ogg",
+    "snd.hurt": "Assets/Audio/sfx/hurt.ogg",
+    "snd.levelup": "Assets/Audio/sfx/levelup.ogg",
+    "snd.perk": "Assets/Audio/sfx/perk.ogg",
+    "snd.coin": "Assets/Audio/sfx/coin.ogg",
+    "snd.gacha": "Assets/Audio/sfx/gacha.ogg",
+    "snd.fuse": "Assets/Audio/sfx/fuse.ogg",
+    "snd.equip": "Assets/Audio/sfx/equip.ogg",
+    "snd.clear": "Assets/Audio/sfx/clear.ogg",
+    "snd.fail": "Assets/Audio/sfx/fail.ogg",
+    "snd.arrow": "Assets/Audio/sfx/arrow.ogg",
+    "snd.axe": "Assets/Audio/sfx/axe.ogg"
+  },
   "_notes": {
     "data.shop": "상점 상품표 JSON(이 레포 전용 · 승인 대기 25 기본값 · 다이아 6종 개수 + 골드 3종 다이아 가격) — Bootstrap 이 읽어 GameData.Shop 에 올린다. 수치를 바꾸려면 이 파일만",
     "cm.knight.helmet": "플레이어(꼬마기사) 투구 — SilverBlue. Character.prefab 의 Body/Head/Helmet 슬롯",
@@ -651,6 +673,26 @@
     "cm.gear.armor.evade.1": "장착 외형+아이콘(GearLook 표 · T7) — 갑옷 · 회피 세트 · 희귀(1) → Character 프리팹 Body/Chest",
     "cm.gear.armor.evade.2": "장착 외형+아이콘(GearLook 표 · T7) — 갑옷 · 회피 세트 · 전설(2) → Character 프리팹 Body/Chest",
     "cm.gear.armor.evade.3": "장착 외형+아이콘(GearLook 표 · T7) — 갑옷 · 회피 세트 · 신화(3) → Character 프리팹 Body/Chest",
-    "ui.equipCell": "장비 칸(주인 지정 ListItem_EquipMent · 188×188 «이게 지금 딱 레이아웃 좋다») — 장비 화면 인벤 · 대장간 · 뽑기 결과 · 세부 팝업이 같은 칸(GearUi.Cell). NormalArea 에 등급색 ItemFrame_01_Normal_* · Item 에 아이콘 · Text_Level 에 +N · TypeArea 에 세트 아이콘 · Check = 장착중(대장간만)"
+    "ui.equipCell": "장비 칸(주인 지정 ListItem_EquipMent · 188×188 «이게 지금 딱 레이아웃 좋다») — 장비 화면 인벤 · 대장간 · 뽑기 결과 · 세부 팝업이 같은 칸(GearUi.Cell). NormalArea 에 등급색 ItemFrame_01_Normal_* · Item 에 아이콘 · Text_Level 에 +N · TypeArea 에 세트 아이콘 · Check = 장착중(대장간만)",
+    "bgm.lobby": "로비·장비·상점·대장간 배경음 — Juhani Junkala «4 Chiptunes (Adventure)» Title Screen(CC0 · 11초 루프) · Audio.Bgm 이 화면 전환마다 고른다(App.ShowScreen)",
+    "bgm.battle": "전투 배경음(맵 4종 공용 1곡) — Juhani Junkala «4 Chiptunes (Adventure)» Level 1(CC0 · 74초 루프)",
+    "bgm.boss": "보스 등장(BossWarn) 뒤 배경음 — SketchyLogic «NES Shooter Music» boss(CC0 · 34초 루프)",
+    "snd.click": "모든 버튼 클릭 — UiKit.Clickable 한 곳(Kenney UI Audio click1)",
+    "snd.popup": "팝업 열림 — Overlay.Begin 한 곳(Kenney Interface Sounds open_001)",
+    "snd.hit": "플레이어 타격(일반) — BattleWorld.Present Hit(Kenney Impact impactMetal_light_000)",
+    "snd.crit": "플레이어 타격(치명타) — BattleWorld.Present Hit(crit)(Kenney Impact impactMetal_heavy_000)",
+    "snd.miss": "빗나감 — BattleWorld.Present Miss(Kenney RPG drawKnife1)",
+    "snd.kill": "적 사망 연출 시작 — BattleWorld.Sync(Kenney Impact impactPunch_heavy_000)",
+    "snd.hurt": "플레이어 피격 — BattleWorld.Present PlayerHit(Kenney Impact impactPunch_medium_000)",
+    "snd.levelup": "레벨업 — BattleWorld.Present LevelUp(Kenney Digital powerUp1)",
+    "snd.perk": "특전 획득 — BattleWorld.Present Perk(Kenney Digital threeTone1)",
+    "snd.coin": "골드 획득(전투 골드 팝 · 상점 골드 구매) — (Kenney RPG handleCoins)",
+    "snd.gacha": "뽑기 상자 열림 — ShopScreen.Pull(Kenney RPG metalLatch)",
+    "snd.fuse": "합성 — ForgeScreen(수동·자동)(Kenney Digital zapThreeToneUp)",
+    "snd.equip": "장착/해제 — GearUi.OpenDetail(Kenney RPG metalClick)",
+    "snd.clear": "클리어 팝업 — Overlay.Clear(Kenney Music Jingles 8-bit NES00)",
+    "snd.fail": "사망 팝업 — Overlay.Dead(Kenney Music Jingles 8-bit NES13)",
+    "snd.arrow": "투사체(화살·창·검기·적 화살) 발사 — BattleWorld.SyncProjectiles(Kenney RPG drawKnife2)",
+    "snd.axe": "투사체(도끼) 발사 — BattleWorld.SyncProjectiles(Kenney RPG chop)"
   }
 }

@@ -16,7 +16,7 @@ import json, os, re, sys
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 SPEC = os.path.join(ROOT, 'Assets', 'KkomaKnight', 'catalog.json')
 SCRIPTS = os.path.join(ROOT, 'Assets', 'Scripts')
-SECTIONS = ('sprites', 'prefabs', 'controllers', 'materials', 'fonts', 'colors', 'texts')
+SECTIONS = ('sprites', 'prefabs', 'controllers', 'materials', 'fonts', 'colors', 'texts', 'audio')
 IGNORE = {'ui.json', 'tune.json', 'gear.json', 'gacha.json', 'perks.json', 'enemies.json', 'chapters.json', 'shop.json'}
 
 def load_keys():

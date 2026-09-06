@@ -46,6 +46,24 @@ namespace KkomaKnight.Tests
         }
 
         [Test]
+        public void MuteBgmAndSfxRoundTripAndLegacyMutedMigratesToBgm()
+        {
+            // T28 — 음소거 2개(배경음·효과음). 옛 세이브의 `muted`(소리 전체) 는 배경음 음소거로 이관 · muteSfx 없으면 false · Muted 별칭 = MuteBgm
+            var d = TestData.Load();
+            var s = SaveData.NewSave(d);
+            Assert.That(s.MuteBgm, Is.False); Assert.That(s.MuteSfx, Is.False); Assert.That(s.Muted, Is.False);
+            s.MuteBgm = true; s.MuteSfx = true;
+            var back = SaveData.FromJson(s.ToJson(), d);
+            Assert.That(back.MuteBgm, Is.True, "muteBgm 왕복"); Assert.That(back.MuteSfx, Is.True, "muteSfx 왕복"); Assert.That(back.Muted, Is.True, "Muted 별칭");
+            Assert.That(s.ToJson().Contains("\"muted\":true"), Is.True, "index.html 호환 필드 muted 도 같은 값으로 쓴다");
+            var legacy = SaveData.FromJson("{\"v\":2,\"muted\":true,\"gold\":5}", d);   // index.html 세이브 — muteBgm/muteSfx 없음
+            Assert.That(legacy.MuteBgm, Is.True, "옛 muted → MuteBgm"); Assert.That(legacy.MuteSfx, Is.False, "효과음은 켜진 채");
+            var newer = SaveData.FromJson("{\"v\":2,\"muted\":true,\"muteBgm\":false,\"muteSfx\":true}", d);
+            Assert.That(newer.MuteBgm, Is.False, "muteBgm 이 있으면 그것이 우선"); Assert.That(newer.MuteSfx, Is.True);
+            s.Muted = false; Assert.That(s.MuteBgm, Is.False, "Muted 쓰기 = MuteBgm 쓰기");
+        }
+
+        [Test]
         public void CorruptJsonFallsBackToFreshSave()
         {
             var d = TestData.Load();

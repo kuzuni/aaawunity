@@ -402,7 +402,7 @@ namespace KkomaKnight.Game
                 if (v.Hold == 0) v.ShownHp = e.Hp;
                 if (e.Dead && v.Hold == 0)
                 {
-                    if (v.DieT < 0) { v.DieT = 0; v.Rig.Play(CharacterRig.Dead, true); _lastKillPos = v.Rig.transform.position; Fx.Spawn("fx.death", v.Rig.transform.position + Vector3.up * 0.4f, 0.8f); v.BarBg.gameObject.SetActive(false); if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } }
+                    if (v.DieT < 0) { v.DieT = 0; v.Rig.Play(CharacterRig.Dead, true); _lastKillPos = v.Rig.transform.position; Fx.Spawn("fx.death", v.Rig.transform.position + Vector3.up * 0.4f, 0.8f); if (!Silent) Audio.Sfx("snd.kill", 0.9f); v.BarBg.gameObject.SetActive(false); if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } }
                     v.DieT += dt; v.Rig.SetAlpha(Mathf.Clamp01(1.2f - v.DieT * 1.5f));
                     if (v.DieT > 0.85f) Remove(v);
                     continue;
@@ -411,14 +411,14 @@ namespace KkomaKnight.Game
                 else { if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } if (!v.Rig.Attacking) v.Rig.Play(CharacterRig.Idle); }
                 v.BarBg.transform.position = Pos(e.WorldX, Layout.FootHpBarY / 100f);
                 SetBar(v.BarBg, v.BarFill, e.MaxHp > 0 ? v.ShownHp / e.MaxHp : 0);
-                if (e.IsBoss && !_bossWarned && lx < WorldCam.LayoutW) { _bossWarned = true; _app.Overlay.BossWarn(_app.Frame); Fx.Spawn("fx.bossWarn", v.Rig.transform.position + Vector3.up * 1.2f, 0.8f, 2.5f); }
+                if (e.IsBoss && !_bossWarned && lx < WorldCam.LayoutW) { _bossWarned = true; _app.Overlay.BossWarn(_app.Frame); Fx.Spawn("fx.bossWarn", v.Rig.transform.position + Vector3.up * 1.2f, 0.8f, 2.5f); Audio.Bgm("bgm.boss"); }
             }
             var gone = new List<EnemyView>(); foreach (var kv in _enemies) if (!seen.Contains(kv.Key)) gone.Add(kv.Value);
             foreach (var v in gone) Remove(v);
             // 투사체
             SyncProjectiles();
             // 골드 증가 → 팝 (엔진은 골드 이벤트를 따로 내지 않는다)
-            if (G.Gold > _goldPrev + 0.5) { Pop("+" + UiKit.Fmt(G.Gold - _goldPrev) + " G", _lastKillPos + Vector3.up * 0.9f, Palette.PopGold, 34); }
+            if (G.Gold > _goldPrev + 0.5) { Pop("+" + UiKit.Fmt(G.Gold - _goldPrev) + " G", _lastKillPos + Vector3.up * 0.9f, Palette.PopGold, 34); if (!Silent) Audio.Sfx("snd.coin", 0.7f); }
             _goldPrev = G.Gold;
         }
 
@@ -438,6 +438,7 @@ namespace KkomaKnight.Game
                         go.transform.localScale = Vector3.one * (pr.Kind == ProjKind.Spear ? 1.1f : 0.9f);
                         var trail = Fx.Spawn("fx.trail", Vector3.zero, 0.35f, 0, go.transform, true); if (trail != null) trail.transform.localPosition = Vector3.zero;
                     }
+                    if (!Silent) Audio.Sfx(pr.Kind == ProjKind.Axe ? "snd.axe" : "snd.arrow", 0.6f);   // 발사음(T28) — 도끼/그 외(화살·창·검기)
                     _projs[pr] = go;
                 }
                 float yf = FootY - 0.045f;
@@ -460,6 +461,7 @@ namespace KkomaKnight.Game
                     go = new GameObject("arrow"); go.transform.SetParent(_root, false);
                     var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = _app.Assets.Sprite("cm.rangedB.arrow"); sr.sortingOrder = 350; sr.flipX = true;
                     go.transform.localScale = Vector3.one * 0.85f; go.transform.rotation = Quaternion.Euler(0, 0, 200f);
+                    if (!Silent) Audio.Sfx("snd.arrow", 0.5f);
                     _arrows[a] = go;
                 }
                 go.transform.position = Pos(a.X, FootY - 0.05f, -0.2f);
@@ -485,10 +487,11 @@ namespace KkomaKnight.Game
                     var p = EnemyPos(ev.Enemy);
                     Pop(UiKit.Fmt(ev.Value) + (ev.Crit ? "!" : ""), p + Vector3.up * 0.5f, ev.Crit ? Palette.PopCrit : Palette.White, ev.Crit ? 50 : 38);
                     Fx.Spawn(ev.Crit ? "fx.crit" : "fx.hit", p, ev.Crit ? 0.25f : 0.6f, 1.2f);
+                    Audio.Sfx(ev.Crit ? "snd.crit" : "snd.hit", ev.Crit ? 1f : 0.8f);
                     if (ev.Enemy != null && _enemies.TryGetValue(ev.Enemy, out var v)) { v.Rig.Flash(flash, 0.1f); v.Rig.transform.DOKill(true); v.Rig.transform.DOPunchPosition(new Vector3(0.06f, 0, 0), 0.15f, 1, 0); }
                     break;
                 }
-                case EvKind.Miss: Pop("MISS", EnemyPos(ev.Enemy, 0.9f), Palette.PopMiss, 30); Fx.Spawn("fx.evade", EnemyPos(ev.Enemy, 0.4f), 0.5f, 1f); break;
+                case EvKind.Miss: Pop("MISS", EnemyPos(ev.Enemy, 0.9f), Palette.PopMiss, 30); Fx.Spawn("fx.evade", EnemyPos(ev.Enemy, 0.4f), 0.5f, 1f); Audio.Sfx("snd.miss", 0.6f); break;
                 case EvKind.Kill: break;   // 사망 연출은 Sync 에서 (Dead 플래그 · Hold 가 풀린 뒤)
                 case EvKind.PlayerHit:
                 {
@@ -496,6 +499,7 @@ namespace KkomaKnight.Game
                     if (ev.Value2 > 0.5) Pop("-" + UiKit.Fmt(ev.Value2), PlayerPos(1.0f), Palette.Hex(D.Ui.PopHp), 40);
                     Fx.Spawn("fx.hit", PlayerPos(0.45f), 0.5f, 1f);
                     _player.Flash(flash, 0.1f);
+                    Audio.Sfx("snd.hurt", 0.8f);
                     break;
                 }
                 case EvKind.PlayerEvade: Pop("회피", PlayerPos(1.1f), Palette.PopEvade, 34); Fx.Spawn("fx.evade", PlayerPos(0.3f), 0.5f, 1f); break;
@@ -507,11 +511,11 @@ namespace KkomaKnight.Game
                 case EvKind.Bolt: Fx.Spawn("fx.bolt", EnemyPos(ev.Enemy, 0.5f), 0.6f, 1.2f); break;
                 case EvKind.Reflect: Pop("반사 " + UiKit.Fmt(ev.Value), EnemyPos(ev.Enemy, 0.95f), Palette.Sky, 32); break;
                 case EvKind.Counter: Pop("반격 " + UiKit.Fmt(ev.Value) + (ev.Crit ? "!" : ""), EnemyPos(ev.Enemy, 0.95f), Palette.Orange, 34); Fx.Spawn("fx.hit", EnemyPos(ev.Enemy), 0.5f, 1f); break;
-                case EvKind.LevelUp: Pop("LEVEL UP!", PlayerPos(1.3f), Palette.Yellow, 46); Fx.Spawn("fx.levelup", PlayerPos(0.5f), 1f, 2f); break;
+                case EvKind.LevelUp: Pop("LEVEL UP!", PlayerPos(1.3f), Palette.Yellow, 46); Fx.Spawn("fx.levelup", PlayerPos(0.5f), 1f, 2f); Audio.Sfx("snd.levelup"); break;
                 case EvKind.Perk:
                 {
                     var perk = ev.Text != null ? D.Perks.Perks.Find(p => p.Id == ev.Text) : null;
-                    if (perk != null) Pop(perk.Name, PlayerPos(1.35f), Palette.PerkColor(perk), 34);
+                    if (perk != null) { Pop(perk.Name, PlayerPos(1.35f), Palette.PerkColor(perk), 34); Audio.Sfx("snd.perk"); }
                     break;
                 }
                 case EvKind.Proj: case EvKind.BossWarn: case EvKind.Text: default: break;

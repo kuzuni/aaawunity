@@ -466,3 +466,23 @@
 | colors | `col.goldFill` | `#F3A80E` | #F3A80E |  |
 | colors | `col.slate` | `#415760` | #415760 |  |
 | texts | `data.shop` | `Assets/KkomaKnight/shop.json` | fileID 4900000 | 상점 상품표 JSON(이 레포 전용 · 승인 대기 25 기본값 · 다이아 6종 개수 + 골드 3종 다이아 가격) — Bootstrap 이 읽어 GameData.Shop 에 올린다. 수치를 바꾸려면 이 파일만 |
+| audio | `bgm.lobby` | `Assets/Audio/bgm/lobby.ogg` | fileID 8300000 | 로비·장비·상점·대장간 배경음 — Juhani Junkala «4 Chiptunes (Adventure)» Title Screen(CC0 · 11초 루프) · Audio.Bgm 이 화면 전환마다 고른다(App.ShowScreen) |
+| audio | `bgm.battle` | `Assets/Audio/bgm/battle.ogg` | fileID 8300000 | 전투 배경음(맵 4종 공용 1곡) — Juhani Junkala «4 Chiptunes (Adventure)» Level 1(CC0 · 74초 루프) |
+| audio | `bgm.boss` | `Assets/Audio/bgm/boss.ogg` | fileID 8300000 | 보스 등장(BossWarn) 뒤 배경음 — SketchyLogic «NES Shooter Music» boss(CC0 · 34초 루프) |
+| audio | `snd.click` | `Assets/Audio/sfx/click.ogg` | fileID 8300000 | 모든 버튼 클릭 — UiKit.Clickable 한 곳(Kenney UI Audio click1) |
+| audio | `snd.popup` | `Assets/Audio/sfx/popup.ogg` | fileID 8300000 | 팝업 열림 — Overlay.Begin 한 곳(Kenney Interface Sounds open_001) |
+| audio | `snd.hit` | `Assets/Audio/sfx/hit.ogg` | fileID 8300000 | 플레이어 타격(일반) — BattleWorld.Present Hit(Kenney Impact impactMetal_light_000) |
+| audio | `snd.crit` | `Assets/Audio/sfx/crit.ogg` | fileID 8300000 | 플레이어 타격(치명타) — BattleWorld.Present Hit(crit)(Kenney Impact impactMetal_heavy_000) |
+| audio | `snd.miss` | `Assets/Audio/sfx/miss.ogg` | fileID 8300000 | 빗나감 — BattleWorld.Present Miss(Kenney RPG drawKnife1) |
+| audio | `snd.kill` | `Assets/Audio/sfx/kill.ogg` | fileID 8300000 | 적 사망 연출 시작 — BattleWorld.Sync(Kenney Impact impactPunch_heavy_000) |
+| audio | `snd.hurt` | `Assets/Audio/sfx/hurt.ogg` | fileID 8300000 | 플레이어 피격 — BattleWorld.Present PlayerHit(Kenney Impact impactPunch_medium_000) |
+| audio | `snd.levelup` | `Assets/Audio/sfx/levelup.ogg` | fileID 8300000 | 레벨업 — BattleWorld.Present LevelUp(Kenney Digital powerUp1) |
+| audio | `snd.perk` | `Assets/Audio/sfx/perk.ogg` | fileID 8300000 | 특전 획득 — BattleWorld.Present Perk(Kenney Digital threeTone1) |
+| audio | `snd.coin` | `Assets/Audio/sfx/coin.ogg` | fileID 8300000 | 골드 획득(전투 골드 팝 · 상점 골드 구매) — (Kenney RPG handleCoins) |
+| audio | `snd.gacha` | `Assets/Audio/sfx/gacha.ogg` | fileID 8300000 | 뽑기 상자 열림 — ShopScreen.Pull(Kenney RPG metalLatch) |
+| audio | `snd.fuse` | `Assets/Audio/sfx/fuse.ogg` | fileID 8300000 | 합성 — ForgeScreen(수동·자동)(Kenney Digital zapThreeToneUp) |
+| audio | `snd.equip` | `Assets/Audio/sfx/equip.ogg` | fileID 8300000 | 장착/해제 — GearUi.OpenDetail(Kenney RPG metalClick) |
+| audio | `snd.clear` | `Assets/Audio/sfx/clear.ogg` | fileID 8300000 | 클리어 팝업 — Overlay.Clear(Kenney Music Jingles 8-bit NES00) |
+| audio | `snd.fail` | `Assets/Audio/sfx/fail.ogg` | fileID 8300000 | 사망 팝업 — Overlay.Dead(Kenney Music Jingles 8-bit NES13) |
+| audio | `snd.arrow` | `Assets/Audio/sfx/arrow.ogg` | fileID 8300000 | 투사체(화살·창·검기·적 화살) 발사 — BattleWorld.SyncProjectiles(Kenney RPG drawKnife2) |
+| audio | `snd.axe` | `Assets/Audio/sfx/axe.ogg` | fileID 8300000 | 투사체(도끼) 발사 — BattleWorld.SyncProjectiles(Kenney RPG chop) |

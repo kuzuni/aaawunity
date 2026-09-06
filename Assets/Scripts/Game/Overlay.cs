@@ -33,6 +33,7 @@ namespace KkomaKnight.Game
             UiKit.Clear(Root);
             Root.gameObject.SetActive(true); Root.SetAsLastSibling();
             _countdown = 0; _onCountdown = null; _countText = null;
+            Audio.Sfx("snd.popup");   // 팝업 열림음은 여기 한 곳(T28) — 클리어/사망은 자기 징글을 덧붙인다
         }
         public void Close() { UiKit.Clear(Root); Root.gameObject.SetActive(false); _cur = null; _countdown = 0; }
 
@@ -258,7 +259,7 @@ namespace KkomaKnight.Game
         /// </summary>
         public void Clear(BattleState G, bool last, Action onDouble, Action onLobby)
         {
-            Begin();
+            Begin(); Audio.Sfx("snd.clear");
             var root = UiKit.Spawn("ui.resultWin", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
             var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
             UiKit.SetText(rt, "Text", $"챕터 {G.Chapter}");
@@ -284,7 +285,7 @@ namespace KkomaKnight.Game
         // ───────────────────────── 사망 (Play_Result_Lose) ─────────────────────────
         public void Dead(BattleState G, Action onLobby)
         {
-            Begin();
+            Begin(); Audio.Sfx("snd.fail");
             var root = UiKit.Spawn("ui.resultLose", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
             var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
             UiKit.SetText(rt, "Title_LineDeco_01_s_White/Text (TMP)", "쓰러졌다...");
@@ -314,16 +315,23 @@ namespace KkomaKnight.Game
             var root = UiKit.Spawn("ui.settings", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
             var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
             UiKit.SetText(rt, "Title_Tapered_01_Brown/Text (TMP)", title);
-            // 스위치 줄 4개 — 글자만 우리말. BGM 만 값을 저장한다(소리 전체 = Save.Muted). SFX·진동 스위치는 눌러도 아무 일 없음.
+            // 스위치 줄 4개 — 글자만 우리말. BGM = Save.MuteBgm · SFX = Save.MuteSfx (T28 · 각각 저장하고 Audio 에 바로 반영). 진동 스위치는 눌러도 아무 일 없음.
             Action closeAndResume = () => { Close(); onResume?.Invoke(); };
             var bgm = UiKit.Find(rt, "BGM");
             if (bgm != null)
             {
                 UiKit.SetText(bgm, "Text", "배경음");
                 var sw = UiKit.Find(bgm, "Swich_01");
-                if (sw != null) { ApplySwitch(sw, !_app.Save.Muted); UiKit.Clickable(sw, () => { _app.Save.Muted = !_app.Save.Muted; _app.Persist(); ApplySwitch(sw, !_app.Save.Muted); }, false); }
+                if (sw != null) { ApplySwitch(sw, !_app.Save.MuteBgm); UiKit.Clickable(sw, () => { _app.Save.MuteBgm = !_app.Save.MuteBgm; _app.Persist(); Audio.ApplyMute(); ApplySwitch(sw, !_app.Save.MuteBgm); }, false); }
             }
-            UiKit.SetText(rt, "SFX/Text", "효과음"); UiKit.SetText(rt, "Haptic/Text", "진동");
+            var sfx = UiKit.Find(rt, "SFX");
+            if (sfx != null)
+            {
+                UiKit.SetText(sfx, "Text", "효과음");
+                var sw = UiKit.Find(sfx, "Swich_01");
+                if (sw != null) { ApplySwitch(sw, !_app.Save.MuteSfx); UiKit.Clickable(sw, () => { _app.Save.MuteSfx = !_app.Save.MuteSfx; _app.Persist(); Audio.ApplyMute(); ApplySwitch(sw, !_app.Save.MuteSfx); }, false); }
+            }
+            UiKit.SetText(rt, "Haptic/Text", "진동");
             UiKit.SetText(rt, "Language/Text", "언어"); UiKit.SetText(rt, "Language/Button_English/Text (TMP)", "한국어");
             // 버튼 2줄 — 프리팹 그대로 4개. 위 줄(평가·로그인)은 기능 없음. 아래 줄은 전투에서만 재개/포기, 로비에서는 기능 없음.
             var g1 = UiKit.Find(rt, "Group_Button_1");

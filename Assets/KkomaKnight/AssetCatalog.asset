@@ -941,3 +941,44 @@ MonoBehaviour:
   texts:
   - key: data.shop
     text: {fileID: 4900000, guid: 5edbc69efa2cdcb6b106d8355577a053, type: 3}
+  audio:
+  - key: bgm.lobby
+    clip: {fileID: 8300000, guid: e8ab4b520cd1ceb6fa53ae0b8ce16276, type: 3}
+  - key: bgm.battle
+    clip: {fileID: 8300000, guid: ca0ac37e44b93f7799969f843f9dbad5, type: 3}
+  - key: bgm.boss
+    clip: {fileID: 8300000, guid: 9cd5e6d70e3da3337a5ffe4027c0b4df, type: 3}
+  - key: snd.click
+    clip: {fileID: 8300000, guid: 9858db4d747e1d0d7366f0475e40089a, type: 3}
+  - key: snd.popup
+    clip: {fileID: 8300000, guid: 6b12ed59f8240614ccdd4a83fa4a374e, type: 3}
+  - key: snd.hit
+    clip: {fileID: 8300000, guid: ac0ddbc232346a7f9ed60b1d3a3ea119, type: 3}
+  - key: snd.crit
+    clip: {fileID: 8300000, guid: f8d2c232c546c24c39827318f8bfc43a, type: 3}
+  - key: snd.miss
+    clip: {fileID: 8300000, guid: 949afcf9e442dcb3e287a3ef8ba1e623, type: 3}
+  - key: snd.kill
+    clip: {fileID: 8300000, guid: 419b8a5eaa86eaea3ec0df7c56f2e25a, type: 3}
+  - key: snd.hurt
+    clip: {fileID: 8300000, guid: db4aae796dc97739f6d3359ba7e84f05, type: 3}
+  - key: snd.levelup
+    clip: {fileID: 8300000, guid: 797c4f5736ca9564bcda442936db67bc, type: 3}
+  - key: snd.perk
+    clip: {fileID: 8300000, guid: 8c88d1399e1f440224a3e6500d646ec6, type: 3}
+  - key: snd.coin
+    clip: {fileID: 8300000, guid: 07078b760d859e6652887666fa7985b3, type: 3}
+  - key: snd.gacha
+    clip: {fileID: 8300000, guid: 7f51d4b54b0125a2f3c9eb92ba9f16b9, type: 3}
+  - key: snd.fuse
+    clip: {fileID: 8300000, guid: 1bab49d170acd49bb05c1615d007e8db, type: 3}
+  - key: snd.equip
+    clip: {fileID: 8300000, guid: 4da957770c8f65910e6026068fe75551, type: 3}
+  - key: snd.clear
+    clip: {fileID: 8300000, guid: d9ad34a23ce8c1fdffad8a0ee456f157, type: 3}
+  - key: snd.fail
+    clip: {fileID: 8300000, guid: d329fdab04d0562659837fe045bca982, type: 3}
+  - key: snd.arrow
+    clip: {fileID: 8300000, guid: c3062d56bf795e9253755116976f691b, type: 3}
+  - key: snd.axe
+    clip: {fileID: 8300000, guid: 8ea11619b92039ce95e7e7daf24fb1ce, type: 3}
