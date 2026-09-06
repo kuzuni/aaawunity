@@ -21,8 +21,11 @@ namespace KkomaKnight.Tests.Play
         App _app; PlayLog _log;
         readonly List<PercentAudit.Row> _rows = new List<PercentAudit.Row>();
         readonly List<string> _texts = new List<string>();
-        /// <summary>% 가 빠지면 실패인 화면 — 데이터 문구가 표시 함수를 거쳐 나오는 화면들.</summary>
-        static readonly string[] StrictScreens = { "04_perks", "05_perks_list", "07_gear_detail" };
+        /// <summary>
+        /// % 가 빠지면 실패인 화면. <b>T90-gear(2단계)에서 06·08·02 를 보태 <see cref="PercentAudit.Strict"/> 를 켰다</b> —
+        /// 이 목록은 이제 «표가 0 이 아니어도 반드시 실패하는» 화면을 적어 두는 기록에 가깝다(Strict 가 켜져 있으면 훑은 화면 전부가 0 이어야 한다).
+        /// </summary>
+        static readonly string[] StrictScreens = { "02_battle", "04_perks", "05_perks_list", "06_gear", "07_gear_detail", "08_gear_fuse" };
 
         [SetUp] public void SetUp() { _log = new PlayLog(); _rows.Clear(); _texts.Clear(); }
         [TearDown] public void TearDown() { _log?.Dispose(); _log = null; Time.timeScale = 1f; }
@@ -76,6 +79,7 @@ namespace KkomaKnight.Tests.Play
             foreach (var s in _texts) { int i = s.IndexOf('\t'); if (i > 0 && s.Substring(0, i) == screen && pred(s.Substring(i + 1))) return true; }
             return false;
         }
+        static bool ClickNamed(Transform root, string name) { var t = UiKit.Find(root, name); var b = t != null ? t.GetComponent<UnityEngine.UI.Button>() : null; if (b == null) return false; b.onClick.Invoke(); return true; }
         GearItem Give(string part, int rar = 0, int plus = 0)
         {
             foreach (var t in _app.Data.Gear.AllTypes) if (t.Part == part) { var g = _app.Save.NewGear(t.Part, t.Type, rar, plus); _app.Save.Inv.Add(g); return g; }
@@ -97,6 +101,18 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(firstFree, "인벤 장비가 하나는 있어야 세부 팝업을 연다");
             GearUi.OpenDetail(_app, firstFree, null); yield return Check("07_gear_detail");
             _app.Overlay.Close(); yield return Frames(1);
+
+            // 08 대장간 — 안내 문구(«N개 더 고르세요» · 합성 결과 줄)가 화면 코드에서 조립되는 자리다(T90 2단계 · T90-gear 묶음)
+            GearItem m0 = null;
+            {
+                var t0 = D.Gear.AllTypes[0];
+                for (int i = 0; i < 3; i++) { var g = S.NewGear(t0.Part, t0.Type, 0, 0); S.Inv.Add(g); if (m0 == null) m0 = g; }
+            }
+            _app.ShowScreen("forge"); yield return Frames(2);
+            Assert.AreEqual("forge", _app.Current.Name, "대장간 화면");
+            yield return Check("08_gear_fuse");
+            var forgeContent = UiKit.Find(_app.Current.Root, "Content");
+            if (forgeContent != null && m0 != null && ClickNamed(forgeContent, "gear:" + m0.Uid)) { yield return Frames(2); yield return Check("08_gear_fuse"); }
 
             // 02 전투 HUD · 04 레벨업 3택 · 05 보유 특전(«회피율 +8» 계열이 나오는 자리)
             _app.StartBattle(1); yield return RealSeconds(3f);

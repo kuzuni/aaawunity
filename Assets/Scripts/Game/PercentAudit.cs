@@ -17,9 +17,15 @@ namespace KkomaKnight.Game
     /// </summary>
     public static class PercentAudit
     {
-        /// <summary>% 빠짐을 실패로 셀지 — 표가 0 이 되면 켠다(T90 3항 «먼저 보고만 → 0 이 되면 strict»).</summary>
-        // const 가 아니라 static readonly 다 — const false 면 게이트의 «if (Strict)» 가 통째로 «닿지 않는 코드»(CS0162) 경고가 된다.
-        public static readonly bool Strict = false;
+        /// <summary>
+        /// % 빠짐을 실패로 셀지 — <b>T90-gear(2단계)에서 켰다</b>(T90 3항 «먼저 보고만 → 0 이 되면 strict»).
+        /// 근거: CI #173 로그의 «[PercentGate] % 가 빠진 줄 <b>0</b>» + 화면 코드 전수 확인(비율 스탯 이름을 글자로 쓰는 자리는
+        /// <c>BattleScreen</c> 스탯 8칸·<c>Overlay</c> 쉼터/악마 문구뿐이고 전부 이미 <c>%</c> 를 직접 붙인다) +
+        /// 데이터 문구는 <see cref="PerkText.Format"/>·<see cref="GearText.Shorten"/> 이 <see cref="StatText.Percent"/> 를 거쳐 내보낸다
+        /// (EditMode <c>StatTextTests</c> 가 perks.json·gear.json 의 desc 를 전수로 대조한다).
+        /// </summary>
+        // const 가 아니라 static readonly 다 — const 면 게이트의 «if (Strict)» 가 통째로 «닿지 않는 코드»(CS0162) 경고가 된다.
+        public static readonly bool Strict = true;
 
         public sealed class Row
         {
