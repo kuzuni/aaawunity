@@ -1419,6 +1419,15 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 > 이 절은 **두 번째 claude.ai 계정에서 연 Claude Code 세션**이 그대로 따라 하면 되게 써 두었다. 그 세션은 이 절만 읽고 `/schedule` 로 루틴 4개를 만든다. 주인이 할 일은 ①뿐이다.
 
+### T115 — 던전·아레나(20~26)의 **아이템 칸도 공용 `GearUi.DarkFrame` 을 거치게** (T69 7항 · 결정 184 계약 · 워커 I 가 실측해 등재 2026-09-06 21:0X · 화면만)
+
+> 등재 근거(워커 I · `f08a7fe` 커밋 메시지): «남은 같은 꼴 하나(내 lock 밖이라 안 건드렸다): `EventsScreen.cs:346` 이 `ui.itemFrame.blue` 를 DarkFrame 없이 세운다. 지금은 `AssertItemFrameBorder` 가 그 자리를 안 보므로 빨강은 아니지만 같은 «우연히 통과» 다 — 던전·아레나 화면을 잡는 다음 워커가 한 줄 넣으면 된다.»
+
+1. **어디가 같은 꼴인가**(`EventsScreen.cs` · 전부 `ItemFrame_01` 조각을 세우기만 한다): 상인 상품 칸(`ui.itemFrame.blue`) · 던전 카드·세부 보상 칸과 순위 보상 칸(`IconRow`·`RewardCell` 의 `ui.itemFrame.green/plum`) · 시상대·상대 줄 초상(`Portrait` 의 `ui.itemFrame.yellow/plum/green`). 조각 제 Border 가 짙은 갈색(휘도 0.125)이라 «어두운 테두리» 감사는 통과하지만, 선은 원본 5px 그대로이고 결정 184 계약(가운데 비움 · raycast 끔 · 링이 형제 맨 뒤)을 지킨 적이 없다.
+2. **처방**: 조각을 세운 자리마다 `GearUi.DarkFrame(frame)` 한 줄(축소된 조각은 배율을 같이 넘긴다). 새 Image 를 덧대지 않는다 — 조각 제 링을 칠하고 굵히는 것뿐이라 배치 표·점수는 불변.
+3. **테스트**: `BorderGateTests` 20~26 구간에 `AssertItemFrameBorder` 를 더한다(던전 카드 보상 칸 · 세부 보상 칸 · 상인 상품 칸 · 도전 줄 초상) — 같은 퇴행이 다시 들어오면 빨강.
+4. 게이트 + PROGRESS T115 행 + 완료 기록(확인 = CI `BorderGateTests` + screens 20·21·26 PNG 확대에서 칸 외곽선이 다른 화면과 같은 굵기인가).
+
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
 2. 계정 2 에 **환경(Environment)** 이 하나 있어야 한다(기본 «Default» 면 된다 · 프록시 정책은 계정 1 과 같다고 가정 — 다르면 dotnet 설치가 막힐 수 있으니 첫 런 로그를 본다).
