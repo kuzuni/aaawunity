@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
@@ -158,6 +159,119 @@ namespace KkomaKnight.Tests.Play
             Assert.LessOrEqual(avg, walk * G.C.DashMul + 1e-6, "대시 구간 평균 속도는 ×DashMul 을 넘지 않는다");
             Assert.AreEqual(0, st.DeathFxFrames, "사망 «펑» 이펙트 없음(T51 ②)");
             _log.AssertNoRed("대시 전투 진행");
+
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            _log.AssertNoRed("로비 복귀");
+            yield return Shutdown();
+        }
+
+        // ───────────────────────── T86 투사체 연출 ─────────────────────────
+        /// <summary>«어느 적도 속하지 않는» 웨이브(엔진 적중·표시 상한 밖)로 순수 비행만 재는 시험용 투사체를 만든다 — 필드는 Battle.FireAxe·FireSpear·FireArrows 와 같다.</summary>
+        static Projectile Ghost(BattleState G, ProjKind kind, BattleNode ghostWave, EnemyState ghostFoe, double x0, double reach)
+        {
+            if (kind == ProjKind.Spear || kind == ProjKind.Wave)
+                return new Projectile { Kind = kind, X = x0, StartX = x0, Ratio = G.C.RSpear, Spd = kind == ProjKind.Spear ? G.C.SpearSpeed : EngineConst.WaveSpeed, MaxX = x0 + reach, Hit = new HashSet<EnemyState>(), Pierce = 8, Node = ghostWave };
+            return new Projectile { Kind = kind, X = x0, StartX = x0, Target = ghostFoe, TargetX0 = ghostFoe.WorldX, Ratio = kind == ProjKind.Axe ? G.C.RAxe : G.C.RArrow, Spd = kind == ProjKind.Axe ? G.C.AxeSpeed : EngineConst.ArrowSpeed };
+        }
+
+        /// <summary>
+        /// T86 ⓐⓑⓒ — 주인 2026-09-07: «도끼랑 창같은거 바로 안날라간다» · «창이 누워서 일자로 가야 하는데 비스듬한 각으로 간다» · «도끼 회전 너무 빠름 — 1초에 1바퀴».
+        /// 킬 연출로 <b>엔진 틱이 보류된(T50 HoldEngine)</b> 순간에 «처치 시» 특전과 같은 도끼·창·화살을 쏘고 —
+        /// ⓐ 엔진 x 가 멎어 있는 프레임에도 표시 x 가 <b>엔진과 같은 px/s</b> 로 전진하는가(정규화 t·고정 duration 금지) ⓑ 창 각 ≈ 0° ⓒ 도끼 회전 = 초당 1바퀴 를 잰다.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ProjectilesFlyRightAwayWhileKillHoldsEngineAndSpearIsFlatAndAxeSpinsOncePerSecond()
+        {
+            yield return Boot();
+            _app.StartBattle(1);
+            var bs = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bs); var G = bs.G; Assert.IsNotNull(G, "전투 상태");
+            var world = bs.World; Assert.IsNotNull(world, "BattleWorld");
+            Arm(G);
+            Time.timeScale = 3f;   // 첫 킬(= 엔진 보류)까지 걷는 시간을 줄인다
+            float t0 = Time.realtimeSinceStartup;
+            while (!world.HoldEngine && Time.realtimeSinceStartup - t0 < 30f && !G.Over && !_app.Overlay.IsOpen) yield return null;
+            Time.timeScale = 1f;
+            Assert.IsTrue(world.HoldEngine, "킬 연출로 엔진이 보류되는 순간이 있어야 시험이 성립한다(T50)");
+
+            var ghostWave = new BattleNode();
+            var ghostFoe = new EnemyState { Hp = 1e9, MaxHp = 1e9, WorldX = G.P.WorldX + 4000, Wave = ghostWave };
+            double x0 = G.P.WorldX + EngineConst.ProjSpawnDx;
+            var axe = Ghost(G, ProjKind.Axe, ghostWave, ghostFoe, x0, 0);
+            var spear = Ghost(G, ProjKind.Spear, ghostWave, ghostFoe, x0, 4000);
+            var arrow = Ghost(G, ProjKind.Arrow, ghostWave, ghostFoe, x0, 0);
+            G.Projs.Add(axe); G.Projs.Add(spear); G.Projs.Add(arrow);
+            yield return null;   // 첫 Sync 가 오브젝트를 만든다
+            var axeGo = world.ProjGo(axe); var spearGo = world.ProjGo(spear); var arrowGo = world.ProjGo(arrow);
+            Assert.IsNotNull(axeGo, "도끼 오브젝트"); Assert.IsNotNull(spearGo, "창 오브젝트"); Assert.IsNotNull(arrowGo, "화살 오브젝트");
+
+            int holdAdvFrames = 0; float world_t = 0, spin = 0;
+            double prevShown = world.ProjShownX(axe); float prevAng = axeGo.transform.eulerAngles.z;
+            float t1 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t1 < 0.7f && !G.Over && !_app.Overlay.IsOpen)
+            {
+                bool heldBefore = world.HoldEngine; double engineBefore = axe.X;
+                yield return null;
+                world_t += Time.deltaTime * bs.Speed;
+                double shown = world.ProjShownX(axe); float ang = axeGo.transform.eulerAngles.z;
+                // ⓐ 엔진이 보류된 프레임(앞뒤 프레임 모두 보류 · 엔진 x 그대로)에도 화면은 전진한다
+                if (heldBefore && world.HoldEngine && Math.Abs(axe.X - engineBefore) < 1e-9 && shown > prevShown + 1e-9) holdAdvFrames++;
+                spin += Mathf.Abs(Mathf.DeltaAngle(prevAng, ang));
+                prevShown = shown; prevAng = ang;
+            }
+            Assert.Greater(holdAdvFrames, 0, "엔진 틱이 보류된 프레임에도 도끼가 전진해야 한다 — 주인 지적 «발사되고 바로 안 날아간다»(T86 ⓐ)");
+            // ⓐ «거리당 속도» — 표시 전진 = 속도 × 흐른 시간 (고정 duration·정규화 t 금지)
+            double flownAxe = world.ProjShownX(axe) - axe.StartX, flownSpear = world.ProjShownX(spear) - spear.StartX;
+            Assert.AreEqual(G.C.AxeSpeed * world_t, flownAxe, G.C.AxeSpeed * world_t * 0.25, "도끼 표시 전진 = axeSpeed × 흐른 시간(±25%)");
+            Assert.AreEqual(G.C.SpearSpeed * world_t, flownSpear, G.C.SpearSpeed * world_t * 0.25, "창 표시 전진 = spearSpeed × 흐른 시간(±25%)");
+            Assert.Greater(flownSpear, flownAxe, "같은 시간이면 빠른 창(520)이 도끼(430)보다 멀리 간다 — 속도는 거리당이다");
+            // ⓑ 창은 수평(0°) · 화살은 주인 지적 밖이라 종전 각(−35°)
+            Assert.LessOrEqual(Mathf.Abs(Mathf.DeltaAngle(spearGo.transform.eulerAngles.z, 0f)), 2f, "창은 수평(0°±2°)으로 누워 날아간다(T86 ⓑ · 주인 «비스듬한 각» 지적)");
+            Assert.LessOrEqual(Mathf.Abs(Mathf.DeltaAngle(arrowGo.transform.eulerAngles.z, -35f)), 2f, "화살 각은 종전 그대로(−35° · 지시서 7항)");
+            // ⓒ 도끼 회전 = 초당 1바퀴(360°/s) — 비행 거리 비율이 아니라 «날아간 시간»에서 나온다
+            Assert.AreEqual(360f * world_t, spin, 360f * world_t * 0.2f + 6f, "도끼 회전은 초당 1바퀴여야 한다(±20% · T86 ⓒ · 주인 «너무 빠름»)");
+            float expect = -360f * (float)((world.ProjShownX(axe) - axe.StartX) / axe.Spd);
+            Assert.LessOrEqual(Mathf.Abs(Mathf.DeltaAngle(axeGo.transform.eulerAngles.z, expect)), 6f, "도끼 각 = −360° × (날아간 거리 / 속도) (반시계 · 방향 종전)");
+            _log.AssertNoRed("투사체 비행(킬 연출 중)");
+
+            G.Projs.Remove(axe); G.Projs.Remove(spear); G.Projs.Remove(arrow); yield return Frames(2);
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            _log.AssertNoRed("로비 복귀");
+            yield return Shutdown();
+        }
+
+        /// <summary>
+        /// T86 ⓐ 4-1(주인 2026-09-07 보탬) — «투사체는 거리당 속도(px/s)다 · 시작~도착 시간 고정 금지».
+        /// 같은 순간에 사거리 300px·900px 짜리 창을 쏘아 <b>엔진이 실제로 시간을 흘린 만큼</b>(보류 프레임 제외) 비행 시간을 재고 그 비가 거리 비(3배)와 같은지 본다.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ProjectileFlightTimeGrowsWithDistanceNotFixedDuration()
+        {
+            yield return Boot();
+            _app.StartBattle(1);
+            var bs = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bs); var G = bs.G; Assert.IsNotNull(G, "전투 상태");
+            var world = bs.World; Assert.IsNotNull(world, "BattleWorld");
+            Arm(G);
+            yield return Frames(2);
+            var ghostWave = new BattleNode();
+            var ghostFoe = new EnemyState { Hp = 1e9, MaxHp = 1e9, WorldX = G.P.WorldX + 4000, Wave = ghostWave };
+            double x0 = G.P.WorldX + EngineConst.ProjSpawnDx;
+            var near = Ghost(G, ProjKind.Spear, ghostWave, ghostFoe, x0, 300);
+            var far = Ghost(G, ProjKind.Spear, ghostWave, ghostFoe, x0, 900);
+            G.Projs.Add(near); G.Projs.Add(far);
+            float engine_t = 0; double tNear = -1, tFar = -1; float t0 = Time.realtimeSinceStartup;
+            while ((tNear < 0 || tFar < 0) && Time.realtimeSinceStartup - t0 < 30f && !G.Over && !_app.Overlay.IsOpen)
+            {
+                bool ran = !world.HoldEngine;
+                yield return null;
+                if (ran) engine_t += Time.deltaTime * bs.Speed;   // 엔진이 보류된 프레임(킬 연출)은 엔진 시간이 흐르지 않는다
+                if (tNear < 0 && !G.Projs.Contains(near)) tNear = engine_t;
+                if (tFar < 0 && !G.Projs.Contains(far)) tFar = engine_t;
+            }
+            Assert.Greater(tNear, 0, "300px 창이 사거리 끝에 닿아 사라져야 한다");
+            Assert.Greater(tFar, 0, "900px 창이 사거리 끝에 닿아 사라져야 한다");
+            Assert.AreEqual(300.0 / G.C.SpearSpeed, tNear, 0.12, "300px 비행 시간 ≈ 300 / spearSpeed");
+            Assert.AreEqual(3.0, tFar / tNear, 0.3, "거리가 3배면 비행 시간도 3배 — «시간 고정» 이면 1배가 나온다(T86 4-1)");
+            _log.AssertNoRed("거리당 속도");
 
             _app.ShowScreen("lobby"); yield return Frames(2);
             _log.AssertNoRed("로비 복귀");

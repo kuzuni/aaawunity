@@ -219,6 +219,8 @@ namespace KkomaKnight.Game
             foreach (var ev in G.Events) _world.Handle(ev);   // AfterTick 이 틱마다 비우므로 보통 비어 있다
             G.Events.Clear();
             _world.TimeScale = _speed;
+            // T86 ⓐ — 엔진 시간이 «흐르는» 프레임인가(팝업·일시정지·판 종료면 아니다). 킬 연출로 틱만 보류된 프레임(HoldEngine)은 «흐르는 중» 이라 투사체가 계속 난다.
+            _world.EngineRunning = !App.Overlay.IsOpen && !_paused && !G.Over;
             _world.Sync(dt * _speed);
             AbsorbTick(dt * _speed);   // T85 — 구슬이 도착한 만큼 표시 숫자·바가 차오른다(엔진 값 불변)
             RefreshHud();

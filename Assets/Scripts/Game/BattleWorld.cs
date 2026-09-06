@@ -86,8 +86,15 @@ namespace KkomaKnight.Game
         public float TimeScale = 1f;
         /// <summary>따라잡기 중(탭 숨김 뒤 복귀) — 공격 모션·팝·이펙트를 만들지 않고 이벤트만 비운다.</summary>
         public bool Silent;
+        /// <summary>
+        /// 엔진 시간이 «흐르는 중» 인가 — 팝업이 떠 있거나 일시정지·판이 끝난 프레임이면 false(BattleScreen.Tick 이 매 프레임 넣어 준다).
+        /// T86 ⓐ: 투사체 표시 x 는 이 동안에만 전진한다(킬 연출로 엔진 틱이 보류된 <see cref="HoldEngine"/> 프레임도 «흐르는 중» 이다 — 그래서 도끼·창이 제자리에 뜨지 않는다).
+        /// </summary>
+        public bool EngineRunning = true;
         // 투사체
         readonly Dictionary<Projectile, GameObject> _projs = new Dictionary<Projectile, GameObject>();
+        /// <summary>투사체 표시 x(T86 ⓐ) — 엔진 x 와 «같은 px/s»(pr.Spd)로 매 프레임 전진하고, 엔진이 앞서면 엔진을 따르며, 엔진이 맞히는 자리는 앞지르지 않는다.</summary>
+        readonly Dictionary<Projectile, double> _projX = new Dictionary<Projectile, double>();
         readonly Dictionary<EnemyArrow, GameObject> _arrows = new Dictionary<EnemyArrow, GameObject>();
         // 노드 · 배경
         sealed class NodeView { public BattleNode N; public GameObject Go; public GameObject FxGo; public bool Dimmed; }
@@ -562,13 +569,47 @@ namespace KkomaKnight.Game
             foreach (var v in gone) Remove(v);
             Engaged = engaged;
             // 투사체
-            SyncProjectiles();
+            SyncProjectiles(dt);
             // 골드 증가 → 팝 (엔진은 골드 이벤트를 따로 내지 않는다)
             if (G.Gold > _goldPrev + 0.5) { Pop("+" + UiKit.Fmt(G.Gold - _goldPrev) + " G", _lastKillPos + Vector3.up * 0.9f, Palette.PopGold, 34); if (!Silent) Audio.Sfx("snd.coin", 0.7f); }
             _goldPrev = G.Gold;
         }
 
-        void SyncProjectiles()
+        // ───────────────────────── 투사체(T86) ─────────────────────────
+        // 주인 2026-09-07: ⓐ «도끼랑 창같은거 바로 안날라간다» ⓑ «창이 누워서 일자로 가야 하는데 비스듬한 각으로 간다» ⓒ «도끼 회전 너무 빠름 — 1초에 1바퀴».
+        // ⓐ 원인 = 도끼·창은 대부분 «처치 시» 특전이 쏘는데(Battle.cs:400·436) 그 킬 연출 동안 엔진 틱이 보류(HoldEngine · T50)돼 pr.X 가 멎는다 → 발사하고 제자리에 뜬다.
+        //    처방 = 엔진은 그대로 두고(판정·시드 골든 불변) «표시 x» 를 따로 든다 — 엔진과 «같은 px/s»(pr.Spd)로 매 프레임 전진(거리당 속도 · 시간 고정 금지 = 지시서 4-1),
+        //    엔진이 앞서면 즉시 엔진을 따르고(격차 0), 엔진이 맞히는 자리(ProjLimit)는 앞지르지 않는다 — 그래서 «맞기 전에 지나가 버리는» 그림이 안 나온다.
+        const float AxeSpinDegPerSec = 360f;   // ⓒ 초당 1바퀴 — 정규화 t(비행 거리 비율)가 아니라 «날아간 시간»(거리/속도)에서 뽑는다(거리가 달라도 초당 속도는 같다)
+        const float SpearAngle = 0f;           // ⓑ 창은 수평 — 스프라이트 FA_WP_Main_Spear_001 은 이미 오른쪽으로 누워 있다(PNG 실측 기울기 1.2° · 보정 불필요)
+        const float ArrowAngle = -35f;         // 화살은 주인 지적 밖이라 종전 각 그대로(지시서 7항)
+
+        /// <summary>투사체의 표시 x(T86 ⓐ · 테스트·진단용) — 화면에 없으면 엔진 x.</summary>
+        public double ProjShownX(Projectile pr) => pr != null && _projX.TryGetValue(pr, out double x) ? x : (pr != null ? pr.X : 0);
+        /// <summary>투사체의 화면 오브젝트(T86 · 테스트·진단용 · 각도 확인).</summary>
+        public GameObject ProjGo(Projectile pr) { if (pr != null && _projs.TryGetValue(pr, out var go)) return go; return null; }
+
+        /// <summary>엔진이 이 투사체를 «맞히는 자리» — 표시 x 는 여기를 앞지르지 않는다(T86 ⓐ).</summary>
+        public double ProjLimit(Projectile pr)
+        {
+            if (pr.Kind == ProjKind.Spear || pr.Kind == ProjKind.Wave)
+            {
+                double lim = pr.MaxX;   // 관통형: 다음에 꿸 적(아직 안 맞은 · 같은 웨이브)의 적중 시작 자리 · 없으면 사거리 끝
+                foreach (var kv in _enemies)
+                {
+                    var e = kv.Key;
+                    if (e.Dead || e.Hp <= 0) continue;
+                    if (pr.Node != null && e.Wave != pr.Node) continue;
+                    if (pr.Hit != null && pr.Hit.Contains(e)) continue;
+                    double x = e.WorldX - EngineConst.ProjHitTol;
+                    if (x > pr.X && x < lim) lim = x;
+                }
+                return lim;
+            }
+            return pr.Target != null && pr.Target.Hp > 0 ? pr.Target.WorldX - EngineConst.ProjArriveDx : pr.X;   // 유도형(도끼·화살): 도달 판정 자리
+        }
+
+        void SyncProjectiles(float dt)
         {
             var live = new HashSet<Projectile>(G.Projs);
             foreach (var pr in G.Projs)
@@ -585,20 +626,31 @@ namespace KkomaKnight.Game
                         var trail = Fx.Spawn("fx.trail", Vector3.zero, 0.35f, 0, go.transform, true); if (trail != null) trail.transform.localPosition = Vector3.zero;
                     }
                     if (!Silent) Audio.Sfx(pr.Kind == ProjKind.Axe ? "snd.axe" : "snd.arrow", 0.6f);   // 발사음(T28) — 도끼/그 외(화살·창·검기)
-                    _projs[pr] = go;
+                    _projs[pr] = go; _projX[pr] = pr.X;
                 }
+                // 표시 x(T86 ⓐ) — 엔진과 같은 px/s 로 전진(정규화 t·고정 duration 금지) · 엔진이 앞서면 엔진 · 적중 자리는 안 앞지른다
+                if (!_projX.TryGetValue(pr, out double shown)) shown = pr.X;
+                if (Silent) shown = pr.X;
+                else
+                {
+                    if (EngineRunning) shown += pr.Spd * dt;
+                    if (shown < pr.X) shown = pr.X;
+                    double lim = ProjLimit(pr); if (shown > lim) shown = System.Math.Max(pr.X, lim);
+                }
+                _projX[pr] = shown;
                 float yf = FootY - 0.045f;
                 if (pr.Kind == ProjKind.Axe)
                 {
-                    double span = System.Math.Max(1, pr.TargetX0 - pr.StartX); float t = Mathf.Clamp01((float)((pr.X - pr.StartX) / span));
+                    double span = System.Math.Max(1, pr.TargetX0 - pr.StartX); float t = Mathf.Clamp01((float)((shown - pr.StartX) / span));
                     yf -= (float)(D.Ui.AxeArc * span / WorldCam.LayoutW) * Mathf.Sin(t * Mathf.PI) * 0.5f;
-                    go.transform.rotation = Quaternion.Euler(0, 0, -t * 720f);
+                    float flownSec = pr.Spd > 1e-6 ? (float)((shown - pr.StartX) / pr.Spd) : 0f;      // ⓒ 날아간 «시간» × 360°/s = 초당 1바퀴(반시계 · 방향 종전 그대로)
+                    go.transform.rotation = Quaternion.Euler(0, 0, -flownSec * AxeSpinDegPerSec);
                 }
-                else go.transform.rotation = Quaternion.Euler(0, 0, pr.Kind == ProjKind.Wave ? 0 : -35f);
-                go.transform.position = Pos(pr.X, yf, -0.2f);
+                else go.transform.rotation = Quaternion.Euler(0, 0, pr.Kind == ProjKind.Wave ? 0 : pr.Kind == ProjKind.Spear ? SpearAngle : ArrowAngle);
+                go.transform.position = Pos(shown, yf, -0.2f);
             }
             var dead = new List<Projectile>(); foreach (var kv in _projs) if (!live.Contains(kv.Key)) dead.Add(kv.Key);
-            foreach (var k in dead) { Object.Destroy(_projs[k]); _projs.Remove(k); }
+            foreach (var k in dead) { Object.Destroy(_projs[k]); _projs.Remove(k); _projX.Remove(k); }
             var liveA = new HashSet<EnemyArrow>(G.Arrows);
             foreach (var a in G.Arrows)
             {

@@ -863,7 +863,7 @@
 6. **테스트**(PlayMode): ⓐ 킬 이벤트 뒤 «Orb» 오브젝트가 생기고 0.8s 안에 전부 사라진다 ⓑ 그 뒤 표시 EXP·골드 = 엔진 값 ⓒ 레벨업이 걸린 킬에서 **구슬이 남아 있는 동안 특전창이 열리지 않는다** → 다 흡수된 뒤 열린다 ⓓ 배속 2배에서도 같은 순서 ⓔ `LogAssert.NoUnexpectedReceived`.
 7. 게이트 + assets-map(구슬 아이콘 한 줄) + PROGRESS T85 행 + 완료 기록(확인 = CI PlayMode + 배포 스모크 + 주인 폰).
 
-### T86 — 투사체가 **바로 안 날아간다**(도끼·창) + **창이 비스듬히 누워 날아간다** (주인 2026-09-07 · T50·T85 연출 계열 · 엔진 판정 불변 · 제약 없음)
+### T86 — 투사체가 **바로 안 날아간다**(도끼·창) + **창이 비스듬히 누워 날아간다** (주인 2026-09-07 · T50·T85 연출 계열 · 엔진 판정 불변 · 제약 없음) — **🔄 코드 push(sess-1850-7749 · 워커 D · 로컬 게이트 전부 초록 · 배포 스모크 초록)**: ⓐ 원인 확정 = 처치 시 발사가 T50 `HoldEngine` 에 걸려 엔진 틱이 멎는다 → 지시서 ①(표시 x `BattleWorld._projX` · 엔진과 같은 px/s · 엔진이 앞서면 스냅 · `ProjLimit` 을 앞지르지 않음 · `EngineRunning` 프레임에만) ⓑ 창 `SpearAngle 0f`(PNG 실측 1.2° 라 보정 없음 · 화살 −35° 유지) ⓒ 도끼 = −360°/s × 날아간 시간(`(표시x−StartX)/Spd`) · **엔진·data 불변(Sim 시드 표 그대로)** · 테스트 = PlayMode `BattleWorldTests` 신규 2 · **확인 = 그 커밋의 CI 유니티 잡 + 주인 폰(눈 확인) · 결정 211~214**
 범위: `Assets/Scripts/Game/BattleWorld.cs`(`SyncProjectiles` 571~600행 · `HoldEngine` 76행 · 표시 원점 514행) · `Assets/Scripts/Game/BattleScreen.cs`(210행 = 보류 중 틱 건너뜀) · `Assets/Scripts/Core/Battle.cs`(**읽기만** · 723~744행 투사체 전진 · 208·211행 처치 시 발사) · `Assets/Tests/PlayMode/BattleWorldTests`
 주인 원문(2026-09-07 · 03:5X UTC): «도끼랑 창같은거 바로 안날라간다. 바로 날라가게 되라고. 그리고 창이 누워서 일자로 가야하는데 비스듬한 각으로 일자로 가더라 그거 수정하라».
 ⚠ **엔진(`Core/Battle.cs`)의 좌표·틱 순서·판정은 바꾸지 않는다** — 맞는 시점·데미지·시드 골든 불변. 바뀌는 것은 **화면에 보이는 움직임과 각도**뿐이다(T50 «표시 원점» 과 같은 방식).
