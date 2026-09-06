@@ -742,8 +742,15 @@ namespace KkomaKnight.Tests.Play
                     Assert.AreEqual(2, priceTexts, "«1회» 버튼 = «1회» + 가격 두 글자 " + box.Key);
                 }
                 foreach (var t in ActiveTexts()) Assert.IsFalse((t.text ?? "").Contains("💎"), "상점 글자에 💎 글리프(Jua 폰트에 없어 빈칸) — " + PathOf(t.transform) + " :: " + t.text);
+                // T73 — 헤더는 조각 «Sec:<이름>» 안의 글자만 본다: 글자 «골드» 로 고르면 골드 상품 카드의 이름 라벨(Text_Limit · 본문 40)까지 걸려 CI #110 이 «≥ 50 But was 40» 으로 빨갰다
                 int headers = 0;
-                foreach (var t in ActiveTexts()) if (t.text == "다이아" || t.text == "골드") { headers++; Assert.GreaterOrEqual(t.fontSize, UiKit.FontForHeight(Layout.ShopSec1.H), "섹션 헤더 «" + t.text + "» 크기 = 표 ⑤ 헤더 높이(2.5%)에서 계산"); }
+                foreach (var hn in new[] { "다이아", "골드" })
+                {
+                    var sec = UiKit.Find(content, "Sec:" + hn); Assert.IsNotNull(sec, "섹션 헤더 조각 Sec:" + hn);
+                    var ht = UiKit.Find(sec, "Text (TMP)"); var htx = ht != null ? ht.GetComponent<Text>() : null; Assert.IsNotNull(htx, "섹션 헤더 «" + hn + "» 글자");
+                    Assert.AreEqual(hn, htx.text, "섹션 헤더 글자 = " + hn); headers++;
+                    Assert.GreaterOrEqual(htx.fontSize, UiKit.FontForHeight(Layout.ShopSec1.H), "섹션 헤더 «" + hn + "» 크기 = 표 ⑤ 헤더 높이(2.5%)에서 계산");
+                }
                 Assert.GreaterOrEqual(headers, 2, "섹션 헤더 «다이아»·«골드»");
                 var qty = UiKit.Find(UiKit.Find(content, "GemPack:0"), "Text_Title"); Assert.IsNotNull(qty, "다이아 카드 수량 글자");
                 Assert.GreaterOrEqual(qty.GetComponent<Text>().fontSize, ShopScreen.QtySize, "상품 수량 크기 = 수량 띠 높이에서 계산(≈51)");
