@@ -480,6 +480,15 @@
 1. 로그(https://github.com/kuzuni/aaawunity/actions/runs/34021396912 · PlayMode 25 중 5 실패 · 5번째 장비 세부 `ui.title.blue` 는 T38 이 `bb51e3e` 로 고침): ⓐ `UiSmokeTests.ForgeShowsAllAndFuses` «뒤로 = 왼쪽 아래 Expected: greater than 0.9 But was: 0.015»(UiSmokeTests.cs:398 — 뒤로 버튼 anchor 를 보는 단언 · T39 가 뒤로를 «아래 회색 띠 + ◀» 로 바꿈) ⓑ `ForgeEquippedFuseTests.EquippedGearIsAMaterialAndTheProductTakesItsSlot` «장착중 배지(Check)는 유지 Expected: True But was: False»(ForgeEquippedFuseTests.cs:93 — T39 가 «장착중» 글자로 바꿔 Check 배지가 꺼짐 → 테스트를 «장착중 표기(Check 또는 글자)» 로) ⓒ `UiSmokeTests.ShopBoxesAndChestOpenPopup` «상자 카드 3 Expected: 3 But was: 0»(UiSmokeTests.cs:437 — T40 재조립 뒤 이름/개수 계약) ⓓ `PressFeedbackTests.EveryButtonOnEveryScreenHasPressFeedback` «[shop] 탭 0 에 Button Expected: not null»(PressFeedbackTests.cs:198 — 상점 화면 탭 바에 Clickable 이 안 붙음).
 2. 게이트 + PROGRESS T48 행 + 확인 수단 = 코드 커밋의 CI 유니티 잡(PlayMode 전부 Passed).
 
+### T82 — main 빨강 후속 (CI #131 `f25cd1a` T69-gear · #134 `9c5606a` T66 · 최우선)
+범위: 실패한 화면의 `Assets/Scripts/Game/*Screen.cs` · `Assets/Tests/PlayMode/TextSizeGateTests.cs`·`BorderGateTests.cs`. 게이트 자체를 끄거나 느슨하게 해서 초록을 만들지 않는다 — 화면을 고친다.
+순서: 제약 없음 · 최우선(main 이 빨가면 screens·gh-pages 가 안 돈다).
+1. 두 런의 유니티 잡 «Unity EditMode + PlayMode 테스트» 가 빨갛다. #134 로그에서 EditMode 는 «Run succeeded, no failures occurred» 이고 그 뒤 COMBINE_RESULTS 단계에서 Failure → **실패는 PlayMode 쪽**이다.
+2. 먼저 원인을 «확정» 한다: 두 런의 `unity-test-results` 아티팩트(또는 로그의 `[TextSizeGate]`·`[BorderGate]` 표)를 읽어 어떤 단언이 어느 화면에서 몇 건 터졌는지 적는다. 짚이는 곳 둘 —
+   - ⓐ T63-toast 가 `ea535f2` 로 **`TextAudit.ClipStrict = true`** 를 켰다. 그 근거 런(`cb6a252`) 이후 화면을 만진 커밋(T69-gear `f25cd1a` · T72 질감 · T78 `4b37cdd`)의 잘림/넘침이 이제 빨강으로 드러난다. 고치는 순서는 §2 T63 2항 그대로 = ⓐ 줄바꿈 → ⓑ 칸 ±3%p(표도 같이 고친다) → ⓒ 문구 줄이기.
+   - ⓑ T69-gear 가 새로 넣은 `BorderGateTests` 의 06·07 단언(`AssertItemFrameBorder` 8px 보정).
+3. 고친 뒤 §3 게이트 전부 초록 + PROGRESS T82 행에 «무엇이 몇 건이었고 무엇으로 고쳤는가 · 확인 = 이 커밋의 CI 유니티 잡» 을 남긴다.
+
 ### 신규 작업 등재
 - 버그·후속 작업 발견 시 PROGRESS 표에 **이미 쓰인 번호 중 가장 큰 것 +1** 로 등재 (번호 재사용 금지, 한 번호 = 한 작업).
 
