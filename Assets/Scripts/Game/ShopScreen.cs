@@ -24,13 +24,23 @@ namespace KkomaKnight.Game
         static readonly Layout.R RoofBand = new Layout.R(0, 8.0f, 100, 5.0f);
         const float ContentTop = 12.8f;
         static readonly Layout.R ScrollView = new Layout.R(0, ContentTop, 100, 92.6f - ContentTop);
-        /// <summary>표 ⑤ «(뽑기 화면) 대형 상자 배너» · «상자 카드 2개(좌우 각 45.5)» · «상자 버튼 2개(배너 안 아래)».</summary>
-        static readonly Layout.R Banner = new Layout.R(3.0f, 13.5f, 94.0f, 26.0f);
-        static readonly Layout.R ChestRow = new Layout.R(3.0f, 40.5f, 94.0f, 29.0f);
+        /// <summary>
+        /// «상자» 섹션 헤더 y (T100 · 주인 2026-09-07 «상자 부분도 다이아·골드처럼 섹션 나눠 달라») — 스크롤 맨 위(<see cref="ContentTop"/> 12.8) 바로 아래.
+        /// 헤더가 하나 늘어난 만큼 <b>아래 전부</b>가 <see cref="SecShift"/> 만큼 내려간다.
+        /// </summary>
+        const float SecBoxY = 13.5f;
+        /// <summary>헤더 → 그 아래 첫 내용까지의 간격 — «다이아» 헤더(74.0)와 첫 카드행(78.5)의 간격 그대로. T100 이 «상자» 헤더를 끼우며 아래를 이만큼 민다.</summary>
+        const float SecShift = 4.5f;
+        /// <summary>표 ⑤ «(뽑기 화면) 대형 상자 배너» · «상자 카드 2개(좌우 각 45.5)» · «상자 버튼 2개(배너 안 아래)» — T100 의 «상자» 헤더만큼(<see cref="SecShift"/>) 내려간 자리.</summary>
+        static readonly Layout.R Banner = new Layout.R(3.0f, 13.5f + SecShift, 94.0f, 26.0f);
+        static readonly Layout.R ChestRow = new Layout.R(3.0f, 40.5f + SecShift, 94.0f, 29.0f);
         const float ChestCardW = 45.5f;
-        static readonly Layout.R FreeLine = new Layout.R(3.0f, 70.3f, 94.0f, 2.8f);
-        /// <summary>«다이아» 섹션 헤더 y — 09_shop_1.jpg 의 헤더(22.5)·카드행(27 · 47.5)·둘째 헤더(66)·행(70.5) 간격을 그대로 이어 붙인다(<see cref="Layout.ShopSec1"/> 계열 표값에서 계산).</summary>
-        const float SecGemY = 74.0f;
+        static readonly Layout.R FreeLine = new Layout.R(3.0f, 70.3f + SecShift, 94.0f, 2.8f);
+        /// <summary>
+        /// «다이아» 섹션 헤더 y — 09_shop_1.jpg 의 헤더(22.5)·카드행(27 · 47.5)·둘째 헤더(66)·행(70.5) 간격을 그대로 이어 붙인다(<see cref="Layout.ShopSec1"/> 계열 표값에서 계산).
+        /// T100 의 «상자» 헤더만큼 내려가지만 <see cref="ContentEnd"/> 도 같이 내려가므로 <b>스크롤 맨 아래에서 보이는 09 화면은 한 픽셀도 안 바뀐다</b>(표 ⑤ 09 행 불변).
+        /// </summary>
+        const float SecGemY = 74.0f + SecShift;
         static float Row1Y => SecGemY + (Layout.ShopCardRow1.Y - Layout.ShopSec1.Y);          // 78.5
         static float Row2Y => Row1Y + Layout.ShopCardRowPitch;                                  // 99.0
         static float SecGoldY => SecGemY + (Layout.ShopSec2.Y - Layout.ShopSec1.Y);            // 117.5
@@ -47,8 +57,10 @@ namespace KkomaKnight.Game
         public const float QtyBandH = 14f;
         /// <summary>상품 수량 글자 = 수량 띠 높이(카드 18.5% × 14%) 에서 계산 ≈ 51(전에는 리터럴 50).</summary>
         public static int QtySize => UiKit.FontForHeight(Layout.ShopCard1.H * QtyBandH / 100f);
-        /// <summary>섹션 헤더 «다이아»·«골드» = 표 ⑤ «섹션 헤더» 높이(2.5%) 에서 계산 ≈ 50(전에는 40 — 레퍼런스 «Gem/Gold» 는 본문보다 크다).</summary>
+        /// <summary>섹션 헤더 «상자»·«다이아»·«골드» = 표 ⑤ «섹션 헤더» 높이(2.5%) 에서 계산 ≈ 50(전에는 40 — 레퍼런스 «Gem/Gold» 는 본문보다 크다).</summary>
         public static int HeaderSize => UiKit.FontForHeight(Layout.ShopSec1.H);
+        /// <summary>섹션을 나누는 라인 데코(<c>LineDeco</c>)의 알파 — <b>주인 2026-09-07 · 255 중 13</b>(T100 ⓒ). 제목 글자는 그대로 두고 선만 옅게.</summary>
+        public const float SecLineAlpha = 13f / 255f;
         /// <summary>가격 줄의 다이아 아이콘 한 변 = 버튼 글자 크기(정사각 · 글자 높이와 같게).</summary>
         public const int PriceIconSize = TextSize.Button;
         /// <summary>가격 줄 요소 간격(px).</summary>
@@ -94,6 +106,8 @@ namespace KkomaKnight.Game
             _scroll.content = _content; _scroll.viewport = view;
 
             // ② 상자 — 최상위(가장 비싼) 상자 = 큰 카드 · 나머지 2개 = 나란히(gacha.json 순서)
+            // T100 ⓑ — «상자» 섹션 헤더(주인 «상자 부분도 다이아·골드 섹션처럼»). 다른 두 헤더와 같은 조각·같은 크기다.
+            UiKit.Tag(Header(SecBoxY, "상자"), "(뽑기 화면) 상자 섹션 헤더");
             GachaBox big = null; foreach (var b in D.Gacha.Boxes) if (big == null || b.Cost > big.Cost) big = b;
             var small = new List<GachaBox>(); foreach (var b in D.Gacha.Boxes) if (b != big) small.Add(b);
             RectTransform bigCard = null; var smallCards = new List<RectTransform>(); var smallBottoms = new List<RectTransform>(); var bigBtns = new List<RectTransform>();
@@ -196,6 +210,9 @@ namespace KkomaKnight.Game
             // 헤더 글자 = 표 높이에서 계산(≈50 · T63-shop) — 조각 안 Text (TMP) 상자(높이 71px)에 한 줄이 들어간다(선호 높이 ≈ 크기 × 0.98)
             var txt = UiKit.SetText(rt, "Text (TMP)", text, Palette.White, HeaderSize); if (txt != null) { txt.fontStyle = FontStyle.Bold; txt.resizeTextForBestFit = true; txt.resizeTextMinSize = TextSize.BestFitMin; txt.resizeTextMaxSize = HeaderSize; }
             var line = UiKit.Find(rt, "LineDeco") as RectTransform; if (line != null) line.sizeDelta = new Vector2(UiKit.FrameW * 0.6f, line.sizeDelta.y);   // 선을 레퍼런스처럼 길게(조각은 그대로 · 폭만)
+            // T100 ⓒ — 섹션을 나누는 선만 아주 옅게(제목 글자는 그대로). 조각 안에 선이 여럿일 수 있어 이름이 «LineDeco» 로 시작하는 그림 전부.
+            foreach (var im in rt.GetComponentsInChildren<Image>(true))
+                if (im.name.StartsWith("LineDeco")) { var c = im.color; c.a = SecLineAlpha; im.color = c; }
             return rt;
         }
         /// <summary>어두운 반투명 pill(TransperDark 조각) + 흰 글자 — 설명·천장 줄. 글자 = 본문 하한(40 · 2줄까지 접힘 · pill 높이는 카드 % 로 2줄이 들어가게).</summary>
@@ -238,6 +255,15 @@ namespace KkomaKnight.Game
             var i = UiKit.Spawn("ui.btnInfo", card); var irt = (RectTransform)i.transform; irt.name = "Info"; UiKit.Pct(irt, r);
             UiKit.Clickable(irt, () => ShowInfo(box));
         }
+        /// <summary>
+        /// T100 ⓐ — 상자 카드 조각(CardFrame_04) 안의 제목 바탕 <c>TitleBg</c>·<c>TitleBgBorder</c> 를 끈다(주인 2026-09-07 «필요 없으니까 없애라»).
+        /// <b>이 인스턴스만</b> 끄므로 조각 원본과, 같은 조각의 <c>TitleBg</c> 를 제목 자리로 쓰는 다른 팝업(<c>Overlay.cs</c>)은 그대로다.
+        /// T69-shop 이 카드 «바깥»에 덧댄 Ink 링은 별개라 남는다 — 없애는 것은 제목 바탕뿐이다.
+        /// <para>주인이 부른 «TitleBgBorder» 는 조각(<c>CardFrame_04_BasePrefab</c>) 안에서 실제 이름이 <c>TitleBorder</c> 다(자식 = Bg · Border · InnerBorder · TitleBg · TitleBorder) — 결정 242.</para>
+        /// </summary>
+        /// <summary>주인이 «TitleBgBorder» 라 부른 조각 자식의 실제 이름(<c>CardFrame_04_BasePrefab</c> 실측 · 결정 242).</summary>
+        const string TitleBorderName = "TitleBorder";
+        static void HideCardTitleBg(Transform frame) { UiKit.Hide(frame, "TitleBg", TitleBorderName); }
         /// <summary>카드 색 = 그 상자에서 나올 수 있는 최고 등급의 등급색(CardFrame_04 변형 · 희귀 상자 blue · 전설 yellow · 신화 plum).</summary>
         static string BoxColor(GachaBox box) { int top = 0; for (int i = 0; i < box.Rate.Length; i++) if (box.Rate[i] > 0) top = i; return Palette.RarName(top); }
         /// <summary>등급 확률 한 줄(index.html gachaRateText 순서 · 높은 등급부터 · 0% 등급은 안 적는다).</summary>
@@ -264,6 +290,8 @@ namespace KkomaKnight.Game
         {
             var D = App.Data; var w = new BoxWidgets(); string key = box.Key;
             var frame = UiKit.Spawn(Palette.FrameKey("ui.cardFrame", BoxColor(box)), card); UiKit.Stretch((RectTransform)frame.transform);
+            // T100 ⓐ — 제목 바탕 끄기(§1 «문장 끝 // 주석 금지» 대로 주석은 윗줄에)
+            HideCardTitleBg(frame.transform);
             // 상자 이름 = 제목(60 · T63-shop · 레퍼런스 «Legendary Chest» 는 카드에서 가장 큰 글자) — 칸 13% × 배너 26% = 79px ≥ 선호 59
             var title = UiKit.SetText(frame.transform, "Text_Title", box.Name, Palette.Yellow, TextSize.Title, TextKind.Title);
             if (title != null) { UiKit.Pct(title.rectTransform, 42, 3, 49, 13); title.alignment = TextAnchor.MiddleRight; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = TextSize.BestFitMin; title.resizeTextMaxSize = TextSize.Title; }
@@ -288,6 +316,8 @@ namespace KkomaKnight.Game
         {
             var D = App.Data; var w = new BoxWidgets(); string key = box.Key;
             var frame = UiKit.Spawn(Palette.FrameKey("ui.cardFrame", BoxColor(box)), card); UiKit.Stretch((RectTransform)frame.transform);
+            // T100 ⓐ — 제목 바탕 끄기(§1 «문장 끝 // 주석 금지» 대로 주석은 윗줄에)
+            HideCardTitleBg(frame.transform);
             // 상자 이름 = 제목(60 · T63-shop) — 칸 10% × 카드 29% = 68px ≥ 선호 59 · 확률 pill 은 그 아래(12.5~26.5% · 95px ≥ 2줄 88 — 회차 1 의 13% = 88px 은 딱 맞아 bestFit 이 39 로 눌렀다 · CI #110 표 «최소 크기(실제) 39»)
             var title = UiKit.SetText(frame.transform, "Text_Title", box.Name, Palette.White, TextSize.Title, TextKind.Title);
             if (title != null) { UiKit.Pct(title.rectTransform, 6, 2, 76, 10); title.alignment = TextAnchor.MiddleCenter; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = TextSize.BestFitMin; title.resizeTextMaxSize = TextSize.Title; }

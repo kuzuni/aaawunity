@@ -812,6 +812,34 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNotNull(UiKit.Find(shop, "TopBar"), "상단 재화 바(TopBar)");
                 var content = UiKit.Find(shop, "Content"); Assert.IsNotNull(content, "세로 스크롤 Content");
                 Assert.AreEqual(3, CountNamed(content, "Box:"), "상자 카드 3");
+                // T100(주인 2026-09-07) — ⓐ 상자 카드의 제목 바탕 끄기 · ⓑ «상자» 섹션 헤더 · ⓒ 섹션 라인 데코 알파 13/255
+                {
+                    Assert.AreEqual(3, CountNamed(content, "Sec:"), "섹션 헤더 3(상자·다이아·골드) — T100 ⓑ");
+                    Assert.IsNotNull(UiKit.Find(content, "Sec:상자"), "«상자» 섹션 헤더 — T100 ⓑ");
+                    foreach (Transform c in content)
+                    {
+                        if (!c.name.StartsWith("Box:")) continue;
+                        foreach (var n in new[] { "TitleBg", "TitleBorder" })   // 주인이 부른 «TitleBgBorder» 의 실제 조각 이름 = TitleBorder(결정 242)
+                        {
+                            var t = UiKit.Find(c, n);
+                            if (t != null) Assert.IsFalse(t.gameObject.activeSelf, $"{c.name} 의 «{n}» 은 꺼져 있어야 한다(T100 ⓐ · 주인 «필요 없으니까 없애라»)");
+                        }
+                        bool ring = false; foreach (Transform k in c) if (k.name == "Border") ring = true;
+                        Assert.IsTrue(ring, $"{c.name} 의 T69-shop 링(카드 직계 «Border»)은 그대로 — 없애는 것은 제목 바탕뿐이다");
+                    }
+                    int lines = 0;
+                    foreach (Transform c in content)
+                    {
+                        if (!c.name.StartsWith("Sec:")) continue;
+                        foreach (var im in c.GetComponentsInChildren<Image>(true))
+                        {
+                            if (!im.name.StartsWith("LineDeco")) continue;
+                            lines++;
+                            Assert.AreEqual(ShopScreen.SecLineAlpha, im.color.a, 1f / 255f, $"{c.name}/{im.name} 라인 데코 알파 = 255 중 13(T100 ⓒ)");
+                        }
+                    }
+                    Assert.GreaterOrEqual(lines, 3, "섹션 헤더 3개가 저마다 라인 데코를 갖는다");
+                }
                 Assert.AreEqual(D.Shop.GemPacks.Count, CountNamed(content, "GemPack:"), "다이아 카드 = shop.json gemPacks 수"); Assert.AreEqual(6, D.Shop.GemPacks.Count, "다이아 6");
                 Assert.AreEqual(D.Shop.GoldPacks.Count, CountNamed(content, "GoldPack:"), "골드 카드 = shop.json goldPacks 수"); Assert.AreEqual(3, D.Shop.GoldPacks.Count, "골드 3");
                 Assert.IsNotNull(UiKit.Find(content, "FreeLine"), "«무료 보급까지» 줄");
