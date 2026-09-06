@@ -18,6 +18,8 @@ namespace KkomaKnight.Tests.Play
     public class TextSizeGateTests
     {
         App _app; PlayLog _log;
+        /// <summary>가장 긴 실제 토스트(ForgeScreen 재료 안내 · 최악의 이름 = «체력실드 목걸이») — 본문 40 으로 두 줄이다.</summary>
+        const string LongToast = "같은 부위·종류·등급만 재료가 됩니다 (목걸이 · 체력실드 목걸이 · 신화)";
         readonly List<TextAudit.Row> _rows = new List<TextAudit.Row>();
 
         [SetUp] public void SetUp() { _log = new PlayLog(); _rows.Clear(); }
@@ -160,35 +162,10 @@ namespace KkomaKnight.Tests.Play
 
             // ⑫ 27 토스트 · 28 «데이터 삭제» 확인 팝업 · 29 보스 경고 띠 (T63-toast — 앞서 어느 화면에서도 안 열리던 셋)
             // 가장 긴 실제 토스트(ForgeScreen 재료 안내 · 최악의 이름 = «체력실드 목걸이») — 본문 40 으로 두 줄이라 칸이 모자라면 bestFit 이 말없이 줄인다
-            const string longToast = "같은 부위·종류·등급만 재료가 됩니다 (목걸이 · 체력실드 목걸이 · 신화)";
-            _app.Toast(longToast); yield return Check("27_toast");
-            foreach (var r in Rows("27_toast"))
-            {
-                if (r.Path.IndexOf("ui.toast", System.StringComparison.Ordinal) < 0) continue;
-                Assert.GreaterOrEqual(r.Used, TextSize.Body, "토스트 글자가 본문 하한(40)보다 작게 그려진다 — 칸(Layout.Toast)이 두 줄을 못 담는다: " + r);
-                Assert.IsFalse(r.Clipped, "토스트 글자가 칸을 넘친다: " + r);
-                Assert.IsFalse(r.Text.Contains("·"), "토스트 문구가 TextGlyphs.Safe 를 안 거쳤다 — Jua 에 «·» 글리프가 없어 폭 0 으로 사라진다: " + r);
-                Assert.IsTrue(r.Text.Contains("부위/종류/등급"), "가운뎃점이 «/» 로 바뀌어야 한다: " + r);
-            }
+            _app.Toast(LongToast); yield return Check("27_toast");
             _app.Overlay.ConfirmReset(); yield return Check("28_confirm_reset");
-            foreach (var r in Rows("28_confirm_reset"))
-            {
-                Assert.AreEqual(TextGlyphs.Safe(r.Text), r.Text, "글꼴에 없는 글자(«·» 등)가 그대로 남아 폭 0 으로 사라진다: " + r);
-                // 제목 리본(ui.title.*)·«탭하여 닫기» 는 UiKit.Popup 이 모든 팝업에 공통으로 다는 조각이라 이 행의 몫이 아니다 — 리본 글자 칸(656×115 의 안쪽 436×79.4)이
-                // 제목 60 의 줄(84px)보다 낮아 bestFit 이 56 으로 줄이는 것은 전 팝업 공통 결함이고 T75 로 등재했다(ClipStrict 를 켜기 전에 고쳐야 한다).
-                if (r.Path.Contains("ui.title.") || r.Path.Contains("TapToClose")) continue;
-                // 팝업 뒤에 살아 있는 화면(로비 «Screen:lobby» 의 사이드 라벨 = 보조 36 · T63-lobby 몫)은 이 행의 몫이 아니다 — CI #119 «스타터팩 Aux 36 < 40» (T79)
-                if (r.Path.Contains("Screen:")) continue;
-                Assert.IsFalse(r.Clipped, "«데이터 삭제» 확인 팝업 글자가 칸을 넘친다: " + r);
-                Assert.GreaterOrEqual(r.Used, TextSize.Body, "확인 팝업 글자가 본문 하한(40)보다 작게 그려진다: " + r);
-            }
             _app.Overlay.Close(); yield return Frames(1);
             _app.Overlay.BossWarn(_app.Frame); yield return CheckLive("29_boss_warn");
-            var warn = Rows("29_boss_warn").Find(r => r.Text == "보스");
-            Assert.IsNotNull(warn, "보스 경고 띠에 «보스» 글자가 있어야 한다(영문 데모 문구 0 — T34 ⓒ)");
-            Assert.AreEqual(TextKind.Title, warn.Kind, "보스 경고 띠 글자는 제목 종류다: " + warn);
-            Assert.GreaterOrEqual(warn.Used, TextSize.Title, "보스 경고 띠 글자가 제목 하한(60)보다 작게 그려진다: " + warn);
-            Assert.IsFalse(warn.Clipped, "보스 경고 띠 글자가 칸을 넘친다: " + warn);
             UiKit.CompleteAllTweens(); yield return Frames(2);
 
             // 판정
@@ -205,6 +182,35 @@ namespace KkomaKnight.Tests.Play
             sb.Append(TextAudit.Summary(_rows));
             if (clipped.Count > 0) { sb.AppendLine("[TextSizeGate] 잘림/넘침 목록(화면별 하위 행이 0 으로 만든다):"); foreach (var c in clipped) sb.AppendLine("  " + c); }
             Debug.Log(sb.ToString());
+
+            // ⑫ T63-toast — 표를 찍은 «뒤에» 단언한다(먼저 터지면 위 표가 안 남아 다른 하위 행 워커가 자기 화면 수를 못 읽는다 · CI #119 에서 실제로 그랬다)
+            foreach (var r in Rows("27_toast"))
+            {
+                if (r.Path.IndexOf("ui.toast", System.StringComparison.Ordinal) < 0) continue;
+                Assert.GreaterOrEqual(r.Used, TextSize.Body, "토스트 글자가 본문 하한(40)보다 작게 그려진다 — 칸(Layout.Toast)이 두 줄을 못 담는다: " + r);
+                Assert.IsFalse(r.Clipped, "토스트 글자가 칸을 넘친다: " + r);
+                Assert.IsFalse(r.Text.Contains("·"), "토스트 문구가 TextGlyphs.Safe 를 안 거쳤다 — Jua 에 «·» 글리프가 없어 폭 0 으로 사라진다: " + r);
+                Assert.IsTrue(r.Text.Contains("부위/종류/등급"), "가운뎃점이 «/» 로 바뀌어야 한다: " + r);
+            }
+            foreach (var r in Rows("28_confirm_reset"))
+            {
+                // Check 는 «화면 전체»(뒤에 깔린 로비까지)를 모으므로 팝업 층(Overlay) 밑만 본다 — 뒤 로비의 아이콘 라벨은 보조 36 이 정상이라
+                // 여기서 본문 40 을 들이대면 남의 화면을 잘못 잡는다(CI #119 에서 «스타터팩» 36 으로 실제로 걸렸다 · 워커 E 가 T79 로 «Screen:» 건너뛰기로 먼저 고쳤고, 이 판은
+                // 그 반대로 «팝업 층만 본다» 는 흰 목록이라 뒤에 어떤 화면이 깔려도 안전하다).
+                if (!r.Path.Contains("/Overlay/")) continue;
+                Assert.AreEqual(TextGlyphs.Safe(r.Text), r.Text, "글꼴에 없는 글자(«·» 등)가 그대로 남아 폭 0 으로 사라진다: " + r);
+                // 제목 리본(ui.title.*)·«탭하여 닫기» 는 UiKit.Popup 이 모든 팝업에 공통으로 다는 조각이라 이 행의 몫이 아니다 — 리본 글자 칸(656×115 의 안쪽 436×79.4)이
+                // 제목 60 의 줄(84px)보다 낮아 bestFit 이 56 으로 줄이는 것은 전 팝업 공통 결함이고 T75 로 등재했다(ClipStrict 를 켜기 전에 고쳐야 한다).
+                if (r.Path.Contains("ui.title.") || r.Path.Contains("TapToClose")) continue;
+                Assert.IsFalse(r.Clipped, "«데이터 삭제» 확인 팝업 글자가 칸을 넘친다: " + r);
+                // 하한은 그 글자의 «종류» 로 잰다(본문 40 · 버튼 44 · 보조 36 · 제목 60)
+                Assert.GreaterOrEqual(r.Used, TextSize.Min(r.Kind), "확인 팝업 글자가 종류 하한보다 작게 그려진다: " + r);
+            }
+            var warn = Rows("29_boss_warn").Find(r => r.Text == "보스");
+            Assert.IsNotNull(warn, "보스 경고 띠에 «보스» 글자가 있어야 한다(영문 데모 문구 0 — T34 ⓒ)");
+            Assert.AreEqual(TextKind.Title, warn.Kind, "보스 경고 띠 글자는 제목 종류다: " + warn);
+            Assert.GreaterOrEqual(warn.Used, TextSize.Title, "보스 경고 띠 글자가 제목 하한(60)보다 작게 그려진다: " + warn);
+            Assert.IsFalse(warn.Clipped, "보스 경고 띠 글자가 칸을 넘친다: " + warn);
 
             Assert.AreEqual(0, floorBad.Count, "글자 하한 미달(T63 · 본문 40 · 버튼 44 · 보조 36 · 제목 60 · Small 은 명시):\n" + string.Join("\n", floorBad));
             Assert.AreEqual(0, fitBad.Count, "bestFit 최소 크기 미달(≥ 32):\n" + string.Join("\n", fitBad));
