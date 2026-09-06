@@ -1,0 +1,19 @@
+{
+  "_note": "아레나 껍데기의 «상대 승점·전투력» 표시용 계수 — 이 레포 전용(aaaw data/ 에 없다 · 주인 지시 2026-09-07 «아레나 부분에 적들 승점이랑 전투력 더미값으로 넣어줘라» · ROUTINE T81). 밸런스가 아니라 화면 표시용 더미다 — 전투에 쓰이지 않는다. StreamingAssets/data 는 aaaw 동기 폴더라 여기 둔다. 코드는 카탈로그 텍스트 «data.arenaDummy» 로 읽고 식만 갖는다(수치 하드코딩 0 · §1). 값을 바꾸려면 이 파일만 고친다.",
+  "meRank": 1,
+  "power": {
+    "_note": "전투력 = 내 전투력 × 계수. 계수는 1위 top → 내 순위(meRank) me → bottomRank bottom 으로 꺾은 직선이고, 그 아래 순위는 bottom 으로 눕는다. 흔들림(jitter)은 «계단 폭» 에 곱해 순위가 내려갈수록 반드시 낮아지게 한다(단조 · 시드 = 순위라 매번 같다). meRank = 1 이면 top 은 안 쓰인다(우리 껍데기는 내가 1위 = 시상대 가운데).",
+    "top": 1.6,
+    "me": 1.0,
+    "bottom": 0.6,
+    "bottomRank": 20,
+    "jitter": 0.05
+  },
+  "score": {
+    "_note": "승점(🏆) = 1위 top 에서 순위마다 stepMin~stepMax 씩 단조 감소(시드 = 순위) · min 아래로는 안 내려간다.",
+    "top": 2400,
+    "stepMin": 40,
+    "stepMax": 60,
+    "min": 0
+  }
+}

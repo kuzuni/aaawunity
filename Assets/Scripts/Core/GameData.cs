@@ -21,6 +21,8 @@ namespace KkomaKnight.Core
         public ShopData Shop;
         /// <summary>데일리 기프트 수치표(무료 칸 + 광고 누적 줄 4) — aaaw data/ 가 아니라 이 레포의 <c>Assets/KkomaKnight/dailyGift.json</c>(카탈로그 텍스트 «data.dailyGift» · T77). 로드는 Bootstrap 이 따로 한다 · 없으면 null(데일리 기프트 팝업이 줄 없이 뜬다).</summary>
         public DailyGiftData DailyGift;
+        /// <summary>아레나 껍데기의 상대 승점·전투력 표시용 계수 — aaaw data/ 가 아니라 이 레포의 <c>Assets/KkomaKnight/arenaDummy.json</c>(카탈로그 텍스트 «data.arenaDummy» · T81). 전투 엔진은 안 쓴다 · 없으면 null(숫자가 «—» 로 남는다).</summary>
+        public ArenaDummyData ArenaDummy;
 
         public static readonly string[] Files = { "tune.json", "enemies.json", "perks.json", "gear.json", "gacha.json", "combat.json", "ui.json" };
 

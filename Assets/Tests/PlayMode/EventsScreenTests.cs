@@ -272,5 +272,76 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("글자 가독성(20·21·22·23·24·25·26)");
             yield return Shutdown();
         }
+
+        // ───────────────────────── T81: 아레나 적 승점·전투력 더미값 ─────────────────────────
+
+        static readonly System.Text.RegularExpressions.Regex Commaed =
+            new System.Text.RegularExpressions.Regex(@"^\d{1,3}(,\d{3})*$");
+
+        static double ParseNum(string s, string what)
+        {
+            Assert.IsNotNull(s, what + " 글자가 없다");
+            string t = s.Trim();
+            Assert.AreNotEqual("0", t, what + " 가 아직 «0» 이다(더미값이 안 들어갔다)");
+            Assert.AreNotEqual("—", t, what + " 가 아직 «—» 다(계수 표를 못 읽었다)");
+            Assert.IsTrue(Commaed.IsMatch(t), what + " 는 천 단위 콤마 숫자여야 한다: «" + t + "»");
+            return double.Parse(t.Replace(",", ""), System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>
+        /// T81(주인 2026-09-07 «아레나 부분에 적들 승점이랑 전투력 더미값으로 넣어줘라») — 순위 목록(23)·도전 5줄(24)·시상대 배너의
+        /// 승점·전투력이 «0»·«—» 이 아니고 천 단위 콤마이며, 순위가 내려갈수록 낮아지는지. 값 규칙 자체는 EditMode <c>ArenaDummyTests</c> 가 본다.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ArenaDummyNumbersAreFilled()
+        {
+            yield return Boot();
+            Assert.IsNotNull(_app.Data.ArenaDummy, "arenaDummy.json 이 로드돼야 한다(카탈로그 data.arenaDummy)");
+            EventsScreen.Open(_app, EventsScreen.PageArena); yield return Frames(3);
+            var ev = _app.GetScreen<EventsScreen>(); var root = _app.Current.Root;
+            var ae = UiKit.Find(root, "Page:" + EventsScreen.PageArena);
+
+            // 23 순위 목록(4위~) — ⚔ 전투력(Text_GuildName) · 🏆 승점(Text_Value)
+            double prevP = double.MaxValue, prevS = double.MaxValue;
+            int rows = 0;
+            for (int rank = 4; rank <= 10; rank++)
+            {
+                var row = UiKit.Find(ae, "RankRow:" + rank); if (row == null) continue;
+                rows++;
+                double p = ParseNum(FindText(row, "Text_GuildName").text, "순위 " + rank + " 전투력");
+                double sc = ParseNum(FindText(row, "Text_Value").text, "순위 " + rank + " 승점");
+                Assert.LessOrEqual(p, prevP, "순위 " + rank + " 전투력이 위 순위보다 높다");
+                Assert.LessOrEqual(sc, prevS, "순위 " + rank + " 승점이 위 순위보다 높다");
+                prevP = p; prevS = sc;
+            }
+            Assert.Greater(rows, 3, "순위 줄을 못 찾았다");
+            Assert.Less(prevP, _app.Power(), "아래 순위 전투력은 내 전투력보다 낮아야 한다");
+
+            // 시상대 배너 1·2·3 — 🏆 승점
+            for (int i = 1; i <= 3; i++)
+            {
+                var b = UiKit.Find(ae, "Banner:" + i); Assert.IsNotNull(b, "시상대 배너 " + i);
+                ParseNum(FindText(b, "Text_Value").text, "시상대 " + i + "위 승점");
+            }
+
+            // 24 도전 팝업 — 상대 5줄(이름 «도전자 N» · ⚔ 전투력 · 🏆 승점) · 오른쪽 위 내 전투력
+            Assert.IsTrue(ClickNamed(root, "ChallengeBtn"), "도전 버튼"); yield return Frames(3);
+            var box = _app.Overlay.Root;
+            int foes = 0;
+            for (int i = 0; i < 5; i++)
+            {
+                var row = UiKit.Find(box, "FoeRow:" + i); if (row == null) continue;
+                foes++;
+                var pills = row.GetComponentsInChildren<Text>(false);
+                int found = 0; foreach (var t in pills) { string tx = (t.text ?? "").Trim(); if (Commaed.IsMatch(tx)) found++; }
+                Assert.GreaterOrEqual(found, 2, "상대 줄 " + i + " 에 전투력·승점 두 숫자가 있어야 한다");
+                Assert.IsTrue(HasText(x => x.Contains("도전자")), "상대 줄에 이름이 있어야 한다");
+            }
+            Assert.AreEqual(5, foes, "도전 팝업 상대 5줄");
+            Assert.IsTrue(HasText(x => x.Trim() == UiKit.FmtComma(_app.Power())), "도전 팝업 오른쪽 위 = 내 실제 전투력(콤마)");
+            _app.Overlay.Close(); yield return Frames(2);
+            Check("아레나 더미값", false);
+            yield return Shutdown();
+        }
     }
 }

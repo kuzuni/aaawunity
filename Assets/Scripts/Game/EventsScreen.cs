@@ -51,8 +51,24 @@ namespace KkomaKnight.Game
         /// <summary>아레나 껍데기 표시 이름 — 상대는 «도전자 N» · 내 자리는 게임 주인공 이름(저장 데이터에 플레이어 이름이 없다 · 워커 결정 기록 T62).</summary>
         const string MeName = "꼬마기사";
         static string FoeName(int rank) => "도전자 " + rank;
-        /// <summary>껍데기 숫자 자리 — 전투력·🏆 점수는 시스템이 없다(24·25 와 같은 표기 · 0 을 쓰면 실제 값처럼 보인다).</summary>
+        /// <summary>껍데기 숫자 자리 — 값을 못 만들 때만 쓴다(계수 JSON 이 없을 때 · 0 을 쓰면 실제 값처럼 보인다).</summary>
         const string Dash = "—";
+        /// <summary>도전 팝업(24)에 세우는 상대 5명의 순위 — 내가 1위(시상대 가운데)라 바로 아래 순위들이다(T81).</summary>
+        static int FoeRank(int i) => i + 2;
+
+        /// <summary>순위의 더미 전투력 글자(내 순위면 실제 전투력 · 계수 표가 없으면 «—») — T81 · 주인 2026-09-07.</summary>
+        string DummyPower(int rank)
+        {
+            var d = App != null && App.Data != null ? App.Data.ArenaDummy : null;
+            if (d == null) return Dash;
+            return UiKit.FmtComma(ArenaDummy.Power(d, App.Power(), rank));
+        }
+        /// <summary>순위의 더미 승점(🏆) 글자 — 계수 표가 없으면 «—».</summary>
+        string DummyScore(int rank)
+        {
+            var d = App != null && App.Data != null ? App.Data.ArenaDummy : null;
+            return d == null ? Dash : UiKit.FmtComma(ArenaDummy.Score(d, rank));
+        }
 
         static Color FootColor => Palette.Hex("#47443F");
         static Color BgColor => Palette.Hex("#2C2B29");
@@ -71,6 +87,8 @@ namespace KkomaKnight.Game
         static Color RowBorder => Palette.Hex("#57514A");
 
         TopBar _top; string _page = PageDungeon;
+        /// <summary>내 전투력이 바뀌면(장비·강화) 같이 다시 써야 하는 더미 전투력 글자 — (글자, 순위).</summary>
+        readonly List<KeyValuePair<Text, int>> _dummyPowerTexts = new List<KeyValuePair<Text, int>>();
         readonly Dictionary<string, RectTransform> _pages = new Dictionary<string, RectTransform>();
         readonly List<Text> _powerTexts = new List<Text>();
         HeroView _me;
@@ -119,8 +137,14 @@ namespace KkomaKnight.Game
         public override void Refresh()
         {
             _top?.Refresh();
-            string pw = UiKit.Fmt(App.Power());
+            string pw = UiKit.FmtComma(App.Power());
             foreach (var t in _powerTexts) if (t != null) t.text = pw;
+            for (int i = _dummyPowerTexts.Count - 1; i >= 0; i--)
+            {
+                var kv = _dummyPowerTexts[i];
+                if (kv.Key == null) { _dummyPowerTexts.RemoveAt(i); continue; }
+                kv.Key.text = DummyPower(kv.Value);
+            }
             _me?.SetSkin(HeroView.PlayerSkin(App));
         }
 
@@ -219,9 +243,9 @@ namespace KkomaKnight.Game
             Crown(podium, Layout.AePortrait1, "ui.iconCrownGold", "1"); Crown(podium, Layout.AePortrait2, "ui.iconCrownSilver", "2"); Crown(podium, Layout.AePortrait3, "ui.iconCrownBronze", "3");
             UiKit.TagGroup(podium, "시상대 초상(3개)", p1, p2, p3); UiKit.Tag(p1, "1위 초상");
             var proto = RankProto(pg);
-            var b1 = Banner(podium, "Banner:1", Layout.AeBanner1, proto, "1st", MeName);
-            var b2 = Banner(podium, "Banner:2", Layout.AeBanner2, proto, "2st", FoeName(2));
-            var b3 = Banner(podium, "Banner:3", Layout.AeBanner3, proto, "3st", FoeName(3));
+            var b1 = Banner(podium, "Banner:1", Layout.AeBanner1, proto, "1st", MeName, 1);
+            var b2 = Banner(podium, "Banner:2", Layout.AeBanner2, proto, "2st", FoeName(2), 2);
+            var b3 = Banner(podium, "Banner:3", Layout.AeBanner3, proto, "3st", FoeName(3), 3);
             UiKit.Destroy(proto);
             UiKit.TagGroup(podium, "시상대 배너(3개)", b1, b2, b3);
             { var you = UiKit.Panel(podium, "You", "fr.r12", Palette.Hex("#C2223B")); UiKit.Pct(you.rectTransform, 44.2f, 26.2f, 11.4f, 2.3f); UiKit.Label(you.transform, 0, 0, 100, 100, "나", 36, Palette.White, kind: TextKind.Aux); }
@@ -320,7 +344,7 @@ namespace KkomaKnight.Game
                 var pill = UiKit.Panel(info, "TicketPill", "fr.r12", Palette.Hex("#1E1E1E")); UiKit.Pct(pill.rectTransform, 0, -30, 28, 160);
                 var ti = UiKit.Icon(pill.transform, "Icon", "ui.iconTokenRed"); UiKit.Pct(ti.rectTransform, 2, 5, 24, 90); UiKit.Label(pill.transform, 30, 0, 66, 100, "0", TextSize.Body, Palette.White);
                 var pw = UiKit.Icon(info, "PowerIcon", "ui.battle"); UiKit.Pct(pw.rectTransform, 70, -30, 8, 160);
-                var pt = UiKit.Label(info, 79, -30, 21, 160, "0", TextSize.Body, Palette.Orange, TextAnchor.MiddleLeft); pt.fontStyle = FontStyle.Bold; _powerTexts.Add(pt); pt.text = UiKit.Fmt(App.Power());
+                var pt = UiKit.Label(info, 79, -30, 21, 160, "0", TextSize.Body, Palette.Orange, TextAnchor.MiddleLeft); pt.fontStyle = FontStyle.Bold; _powerTexts.Add(pt); pt.text = UiKit.FmtComma(App.Power());
             }
             var list = UiKit.Rect(box, "FoeList"); UiKit.Pct(list, Layout.AcList.Within(Layout.AcBox)); UiKit.Tag(list, "상대 목록(5줄)");
             for (int i = 0; i < FoeRows; i++)
@@ -329,8 +353,9 @@ namespace KkomaKnight.Game
                 var row = UiKit.Rect(box, "FoeRow:" + i); UiKit.Pct(row, r.Within(Layout.AcBox));
                 var fr = UiKit.Spawn("ui.frameDark", row); UiKit.Stretch((RectTransform)fr.transform);
                 Portrait(row, "Face", new Layout.R(2.5f, 12, 11.5f, 76), "ui.itemFrame.yellow", Foes[i % Foes.Length], true);
-                UiKit.Label(row, 16, 6, 44, 42, "—", TextSize.Body, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
-                Pill(row, new Layout.R(16, 54, 19, 38), "ui.battle", "0", Palette.Orange); Pill(row, new Layout.R(37, 54, 19, 38), "ui.trophy", "0", Palette.Yellow);
+                UiKit.Label(row, 16, 6, 44, 42, FoeName(FoeRank(i)), TextSize.Body, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
+                _dummyPowerTexts.Add(new KeyValuePair<Text, int>(Pill(row, new Layout.R(16, 54, 19, 38), "ui.battle", DummyPower(FoeRank(i)), Palette.Orange), FoeRank(i)));
+                Pill(row, new Layout.R(37, 54, 19, 38), "ui.trophy", DummyScore(FoeRank(i)), Palette.Yellow);
                 var br = Layout.AcRowBtn; br.Y += i * Layout.AcRowPitch;
                 var b = UiKit.Button(box, "ui.btnOrange", "도전", Noop, br.Within(Layout.AcBox)); b.name = "FoeBtn:" + i; TicketCost(b, "ui.iconTokenRed");
                 if (i == 0) { UiKit.Tag(row, "상대 줄(1칸)"); UiKit.Tag(b, "줄 도전 버튼"); }
@@ -491,7 +516,7 @@ namespace KkomaKnight.Game
         /// 표 ⑮ «시상대 배너» 자리에 늘려 넣고 글자만 우리 것으로 바꾼다(T62 · 주인 «랭킹 UI 는 그 프리팹에서 조금 변형해 쓰라»).
         /// 조각을 못 찾으면(카탈로그 미스) 색 판으로 그린다 — 화면이 비지 않게.
         /// </summary>
-        static RectTransform Banner(RectTransform parent, string name, Layout.R r, Transform proto, string seat, string who)
+        RectTransform Banner(RectTransform parent, string name, Layout.R r, Transform proto, string seat, string who, int rank)
         {
             var b = UiKit.Rect(parent, name); UiKit.Pct(b, r);
             var seatT = proto != null ? UiKit.Find(proto, seat) : null;
@@ -500,7 +525,7 @@ namespace KkomaKnight.Game
             {
                 var img = UiKit.Panel(b, "Cloth", "fr.label", DeepRed); UiKit.Stretch(img.rectTransform);
                 UiKit.Label(b, 4, 8, 92, 32, who, 40, Palette.White).fontStyle = FontStyle.Bold;
-                UiKit.Label(b, 4, 44, 92, 30, Dash, 40, Palette.Yellow).fontStyle = FontStyle.Bold;
+                UiKit.Label(b, 4, 44, 92, 30, DummyScore(rank), 40, Palette.Yellow).fontStyle = FontStyle.Bold;
                 return b;
             }
             piece.SetParent(b, false); piece.name = "Cloth"; UiKit.Stretch((RectTransform)piece);
@@ -513,7 +538,7 @@ namespace KkomaKnight.Game
                 var h = grp.GetComponent<HorizontalLayoutGroup>(); if (h != null) h.childAlignment = TextAnchor.MiddleCenter;
             }
             var nt = UiKit.SetText(piece, "Text_Name", who, Palette.White, 40); if (nt != null) nt.fontStyle = FontStyle.Bold;
-            UiKit.SetText(piece, "Text_Value", Dash, Palette.Yellow, 40);
+            UiKit.SetText(piece, "Text_Value", DummyScore(rank), Palette.Yellow, 40);
             return b;
         }
 
@@ -530,17 +555,18 @@ namespace KkomaKnight.Game
         /// 본래 크기 988×158 이 표 ⑮ «순위 줄»(95.1%×6.7% = 1027×157) 과 같아 늘려 넣기만 하면 레퍼런스 23 줄 구성이 그대로 선다(T62).
         /// 우리 것으로 바꾸는 건 글자 넷과 아이콘 둘뿐 — 길드 배지 자리는 레퍼런스의 «칼 + 전투력» 줄로 쓴다.
         /// </summary>
-        static void RankItem(RectTransform row, int rank, string icon)
+        void RankItem(RectTransform row, int rank, string icon)
         {
             var item = UiKit.Spawn("ui.listRanking", row); var irt = (RectTransform)item.transform; UiKit.Stretch(irt);
             DarkenListFrame(irt);
             UiKit.SetText(irt, "Text_RankingNum", rank.ToString(), Palette.Gray, 44, TextKind.Aux);
             var nt = UiKit.SetText(irt, "Text_Name", FoeName(rank), Palette.White, 44); if (nt != null) nt.fontStyle = FontStyle.Bold;
-            UiKit.SetText(irt, "Text_Value", Dash, Palette.Yellow, 40);
+            UiKit.SetText(irt, "Text_Value", DummyScore(rank), Palette.Yellow, 40);
             UiKit.Hide(irt, "Icon_NoGuild", "Text_NoGuild");
             UiKit.Show(irt, "Icon_GuildBadge", true); UiKit.Show(irt, "Text_GuildName", true);
             UiKit.SetSprite(irt, "Icon_GuildBadge", "ui.battle", Palette.White);
-            UiKit.SetText(irt, "Text_GuildName", Dash, Palette.Orange, 36, TextKind.Aux);
+            var gt = UiKit.SetText(irt, "Text_GuildName", DummyPower(rank), Palette.Orange, 36, TextKind.Aux);
+            if (gt != null) _dummyPowerTexts.Add(new KeyValuePair<Text, int>(gt, rank));
             var face = UiKit.Find(irt, "ProfileArea");
             if (face != null)
             {
@@ -560,10 +586,12 @@ namespace KkomaKnight.Game
             var border = UiKit.Find(frame, "Normal/Border1"); if (border != null) { var im = border.GetComponent<Image>(); if (im != null) im.color = RowBorder; }
         }
 
-        static void Pill(RectTransform row, Layout.R r, string icon, string text, Color color)
+        static Text Pill(RectTransform row, Layout.R r, string icon, string text, Color color)
         {
             var p = UiKit.Panel(row, "Pill", "fr.r12", Palette.Hex("#1E1E1E")); UiKit.Pct(p.rectTransform, r);
-            var ic = UiKit.Icon(p.transform, "Icon", icon); UiKit.Pct(ic.rectTransform, 6, 10, 26, 80); UiKit.Label(p.transform, 36, 0, 60, 100, text, TextSize.Body, color, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
+            var ic = UiKit.Icon(p.transform, "Icon", icon); UiKit.Pct(ic.rectTransform, 6, 10, 26, 80);
+            var t = UiKit.Label(p.transform, 36, 0, 60, 100, text, TextSize.Body, color, TextAnchor.MiddleLeft); t.fontStyle = FontStyle.Bold;
+            return t;
         }
         /// <summary>공통 팝업 위에 레퍼런스의 <b>평평한 제목 띠</b> — 리본(Title 조각)은 끄고 박스 윗변에 색 띠 + 굵은 흰 글자(워커 결정 기록).</summary>
         static void FlatHead(RectTransform box, Layout.R boxRect, Layout.R headRect, Color color, string title)

@@ -583,6 +583,7 @@
 | colors | `col.slate` | `#415760` | #415760 |  |
 | texts | `data.shop` | `Assets/KkomaKnight/shop.json` | fileID 4900000 | 상점 상품표 JSON(이 레포 전용 · 승인 대기 25 기본값 · 다이아 6종 개수 + 골드 3종 다이아 가격) — Bootstrap 이 읽어 GameData.Shop 에 올린다. 수치를 바꾸려면 이 파일만 |
 | texts | `data.dailyGift` | `Assets/KkomaKnight/dailyGift.json` | fileID 4900000 | 데일리 기프트 수치표 JSON(이 레포 전용 · 주인 2026-09-07 · 무료 칸 다이아 100 + 광고 누적 1/2/3/6 줄) — Bootstrap 이 읽어 GameData.DailyGift 에 올린다. 수치를 바꾸려면 이 파일만 |
+| texts | `data.arenaDummy` | `Assets/KkomaKnight/arenaDummy.json` | fileID 4900000 | 아레나 껍데기의 상대 승점·전투력 표시용 계수 JSON(이 레포 전용 · 주인 2026-09-07 «아레나 부분에 적들 승점이랑 전투력 더미값으로» · T81) — 밸런스 아님 · 전투 엔진은 안 쓴다 · Core/ArenaDummy 가 읽는다 |
 | audio | `bgm.lobby` | `Assets/Audio/bgm/lobby.ogg` | fileID 8300000 | 로비·장비·상점·대장간 배경음 — Juhani Junkala «4 Chiptunes (Adventure)» Title Screen(CC0 · 11초 루프) · Audio.Bgm 이 화면 전환마다 고른다(App.ShowScreen) |
 | audio | `bgm.battle` | `Assets/Audio/bgm/battle.ogg` | fileID 8300000 | 전투 배경음(맵 4종 공용 1곡) — Juhani Junkala «4 Chiptunes (Adventure)» Level 1(CC0 · 74초 루프) |
 | audio | `bgm.boss` | `Assets/Audio/bgm/boss.ogg` | fileID 8300000 | 보스 등장(BossWarn) 뒤 배경음 — SketchyLogic «NES Shooter Music» boss(CC0 · 34초 루프) |

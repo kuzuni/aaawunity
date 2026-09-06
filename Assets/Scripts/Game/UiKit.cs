@@ -886,6 +886,8 @@ namespace KkomaKnight.Game
             return n.ToString("#,0");
         }
         public static string FmtQty(double n) => Math.Round(n).ToString("0");
+        /// <summary>천 단위 콤마만(«11,253») — <see cref="Fmt"/> 처럼 K·M 으로 줄이지 않는다. 레퍼런스가 전체 자릿수를 그대로 보여 주는 자리에 쓴다(아레나 전투력·승점 · T81).</summary>
+        public static string FmtComma(double n) => Math.Round(n).ToString("#,0");
     }
 
     /// <summary>

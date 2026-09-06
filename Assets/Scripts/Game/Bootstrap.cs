@@ -45,6 +45,7 @@ namespace KkomaKnight.Game
             if (catalog == null) Debug.LogError("[KkomaKnight] AssetCatalog 이 씬에 연결되지 않았다 — Bootstrap.catalog");
             d.Shop = LoadShop(catalog);
             d.DailyGift = LoadDailyGift(catalog);
+            d.ArenaDummy = LoadArenaDummy(catalog);
             App.Create(d, catalog, uiFont, Camera.main);
             if (_boot != null) Destroy(_boot.gameObject);
         }
@@ -65,6 +66,15 @@ namespace KkomaKnight.Game
             if (ta == null) { Debug.LogError("[KkomaKnight] dailyGift.json 이 카탈로그(data.dailyGift)에 없다 — 데일리 기프트 표 없음"); return null; }
             try { return DailyGiftData.Parse(ta.text); }
             catch (Exception e) { Debug.LogError("[KkomaKnight] dailyGift.json 파싱 실패: " + e.Message); return null; }
+        }
+
+        /// <summary>아레나 더미 계수 — 이 레포 전용 <c>Assets/KkomaKnight/arenaDummy.json</c>(카탈로그 텍스트 «data.arenaDummy» · T81). 못 읽으면 null(23·24 숫자가 «—» 로 남는다).</summary>
+        static ArenaDummyData LoadArenaDummy(AssetCatalog catalog)
+        {
+            var ta = catalog != null ? catalog.Text("data.arenaDummy") : null;
+            if (ta == null) { Debug.LogError("[KkomaKnight] arenaDummy.json 이 카탈로그(data.arenaDummy)에 없다 — 아레나 더미 계수 없음"); return null; }
+            try { return ArenaDummyData.Parse(ta.text); }
+            catch (Exception e) { Debug.LogError("[KkomaKnight] arenaDummy.json 파싱 실패: " + e.Message); return null; }
         }
 
         void OnError(string msg)

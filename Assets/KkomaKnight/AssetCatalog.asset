@@ -1175,6 +1175,8 @@ MonoBehaviour:
     text: {fileID: 4900000, guid: 5edbc69efa2cdcb6b106d8355577a053, type: 3}
   - key: data.dailyGift
     text: {fileID: 4900000, guid: 63b0a8aef0b3bb050e1badca51f7e5dc, type: 3}
+  - key: data.arenaDummy
+    text: {fileID: 4900000, guid: d04ab71dff13776c85ad3ea24867d247, type: 3}
   audio:
   - key: bgm.lobby
     clip: {fileID: 8300000, guid: e8ab4b520cd1ceb6fa53ae0b8ce16276, type: 3}
