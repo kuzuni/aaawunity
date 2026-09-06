@@ -95,13 +95,15 @@ namespace KkomaKnight.Game
                 foreach (var old in frt.GetComponentsInChildren<Text>(true)) old.gameObject.SetActive(false);   // 프리팹의 남은 글자("Text_Title" 등) 전부 끄기 — 주인: «Text 라고 빨간 글씨 없애줘»
                 var tb = UiKit.Find(frt, "TitleBg"); if (tb == null) tb = UiKit.Find(frt, "Text_Title");
                 var host = tb != null ? tb : frt;
-                var gl = UiKit.Text(host, p.GradeName ?? "", 30, Palette.White, TextAnchor.MiddleCenter, true);
-                if (tb != null) UiKit.Stretch(gl.rectTransform, 8, 4, 8, 4); else UiKit.Pct(gl.rectTransform, 5, 0, 40, 22);
+                // 등급 이름(«일반»·«희귀»·«전설») — 밝은 탭(회색·노랑) 위 흰 글자는 대비가 없어 안 읽혔다(T63-perks · screens run 95 04/05) → 탭 밝기로 잉크/흰색
+                var gl = UiKit.Text(host, p.GradeName ?? "", TextSize.Body, Palette.OnFrame(colorName), TextAnchor.MiddleCenter, true);
+                // 위아래 여백 4px 를 빼면 글자 칸이 탭(48px)보다 8px 작아져 bestFit 이 본문 40 을 못 넣고 줄인다(T63-perks · screens run 95 실측 = 흰 채움 28px ≈ 37) → 세로는 탭 전체를 쓴다
+                if (tb != null) UiKit.Stretch(gl.rectTransform, 8, 0, 8, 0); else UiKit.Pct(gl.rectTransform, 5, 0, 40, 22);
             }
             if (itemArea != null) { UiKit.Clear(itemArea); UiKit.PerkFrame(itemArea, colorName, Icons.Perk(p.Id), 162); }
             UiKit.Hide(rt, "Focus");
             var nameT = rt.Find("Text"); if (nameT != null) nameT.gameObject.SetActive(false);   // 카드 직계 "Text"(특전 이름) — 깊은 검색이면 프레임 안 글자에 잡힐 수 있어 직계로
-            var desc = UiKit.SetText(rt, "Text_Value", PerkText.Format(p.Desc), Palette.Ink, 34);   // 설명은 한 색(T52) · «트리거: 내용» · 상시는 «패시브: …»(T53 · 원문 perks.json 불변)
+            var desc = UiKit.SetText(rt, "Text_Value", PerkText.Format(p.Desc), Palette.Ink, TextSize.Body);   // 설명은 한 색(T52) · «트리거: 내용» · 상시는 «패시브: …»(T53 · 원문 perks.json 불변)
             if (desc != null) { desc.alignment = TextAnchor.MiddleLeft; var dr = desc.rectTransform; dr.anchorMin = new Vector2(0.24f, 0.08f); dr.anchorMax = new Vector2(0.97f, 0.92f); dr.offsetMin = dr.offsetMax = Vector2.zero; desc.resizeTextForBestFit = true; desc.resizeTextMaxSize = TextSize.Body; desc.resizeTextMinSize = TextSize.BestFitMin; desc.horizontalOverflow = HorizontalWrapMode.Wrap; }
             if (onClick != null) UiKit.Clickable(rt, onClick);
             return rt;
@@ -117,7 +119,7 @@ namespace KkomaKnight.Game
             {
                 var d = defs[i];
                 var ic = UiKit.Icon(row, "ic", Icons.Stat(d.Key)); UiKit.Pct(ic.rectTransform, i * cw + cw * 0.22f, 8, cw * 0.56f, 44);
-                var v = UiKit.Label(row, i * cw, 54, cw, 40, d.Fmt(G), 26, d.Up(G, _app.GetScreen<BattleScreen>()?.BaseStats) ? Palette.Green : Palette.White);
+                var v = UiKit.Label(row, i * cw, 54, cw, 40, d.Fmt(G), TextSize.Body, d.Up(G, _app.GetScreen<BattleScreen>()?.BaseStats) ? Palette.Green : Palette.White);
             }
         }
 
@@ -167,7 +169,13 @@ namespace KkomaKnight.Game
                     bool labeled = false; string hex = ColorUtility.ToHtmlStringRGB(Palette.Orange);
                     foreach (var t in btn.GetComponentsInChildren<Text>(true))
                     {
-                        if (t.text != null && t.text.IndexOf("Remain", StringComparison.OrdinalIgnoreCase) >= 0) { t.text = $"남은 횟수 : <color=#{hex}>{left}</color>"; t.supportRichText = true; t.gameObject.SetActive(true); continue; }
+                        if (t.text != null && t.text.IndexOf("Remain", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            t.text = $"남은 횟수 : <color=#{hex}>{left}</color>"; t.supportRichText = true; t.gameObject.SetActive(true);
+                            // 레퍼런스 04 는 «Remain : 1» 이 버튼 «아래» — 프리팹 자리 그대로 두면 버튼을 표 자리(OvFoot)로 키운 뒤 글자가 버튼 위에 얹혀 아랫줄이 반쯤 잘리고 주황 숫자가 주황 버튼에 묻힌다(T63-perks)
+                            t.transform.SetParent(btn, false); UiKit.Pct(t.rectTransform, Layout.OvFootRemain); t.alignment = TextAnchor.MiddleCenter;
+                            continue;
+                        }
                         if (!labeled) { t.text = "새로고침 무료"; labeled = true; } else t.gameObject.SetActive(false);
                     }
                     UiKit.Clickable(btn, () => { if (G.RerollOffer()) LevelUp(G, onPick); });
@@ -211,13 +219,14 @@ namespace KkomaKnight.Game
             var vl = content.gameObject.AddComponent<VerticalLayoutGroup>(); vl.spacing = 12; vl.childForceExpandHeight = false; vl.childForceExpandWidth = true; vl.childControlHeight = true; vl.childControlWidth = true; vl.padding = new RectOffset(0, 0, 4, 4);
             var fit = content.gameObject.AddComponent<ContentSizeFitter>(); fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             sr.content = content; sr.viewport = view;
-            if (groups.Count == 0) Sub(box, "아직 획득한 특전이 없습니다", 40, 8, 34, Palette.InkLight);
+            if (groups.Count == 0) Sub(box, "아직 획득한 특전이 없습니다", 40, 8, TextSize.Body, Palette.Ink);   // 크림 패널 위 InkLight 는 대비가 모자란다(T63-perks · 지시서 T63 1항 «회색은 Ink 로»)
             var cards = new List<RectTransform>();
             foreach (var kv in groups)
             {
                 var card = PerkCard(content, kv.Key, Palette.PerkGradeName(kv.Key.Grade), null, shine: true);
                 var le = card.gameObject.AddComponent<LayoutElement>(); le.preferredHeight = UiKit.FrameH * Layout.BookCard.H / 100f;
-                if (kv.Value > 1) { var n = UiKit.Text(card, "×" + kv.Value, 36, Palette.Yellow, TextAnchor.MiddleRight); UiKit.Pct(n.rectTransform, 80, 4, 18, 40); }
+                // ×N 은 밝은 회색 카드 위 — 노랑은 대비가 없어 안 읽힌다(T63-perks)
+                if (kv.Value > 1) { var n = UiKit.Text(card, "×" + kv.Value, TextSize.Body, Palette.Ink, TextAnchor.MiddleRight); UiKit.Pct(n.rectTransform, 80, 4, 18, 40); }
                 cards.Add(card);
             }
             // T49 — 3택과 같은 stagger · 첫 화면(뷰포트 안)에 보이는 카드만 순서대로, 스크롤 밖은 즉시 표시. 상자 PopIn(0.28s) 뒤 0.15s 부터 · 전체 ≤ 0.8s 가 되게 간격을 줄인다.
@@ -253,7 +262,7 @@ namespace KkomaKnight.Game
                 var ad = UiKit.Button(box, "ui.btnOrange", "광고 보고 둘 다 얻기", () => AdCountdown(3, () => { Close(); onBoth(); }), new Layout.R(10, 71, 80, 12));
                 var adIc = UiKit.Icon(ad, "Ad", "hud.alertAd"); UiKit.Pct(adIc.rectTransform, 84, -22, 18, 50);
             }
-            Sub(box, "다음 레벨에 가까워집니다", 86, 6, 26, Palette.InkLight);
+            Sub(box, "다음 레벨에 가까워집니다", 86, 6, TextSize.Body, Palette.InkSoft);   // T63-perks — 밝은 패널 위 InkLight → InkSoft
         }
 
         // ───────────────────────── 악마의 거래 ─────────────────────────
@@ -285,7 +294,7 @@ namespace KkomaKnight.Game
             UiKit.Button(box, "ui.btnGreen", $"무료 축복 · 공격력 +{Math.Round((SimPolicy.AngelFree - 1) * 100)}%", () => { Close(); onChoose(SimPolicy.AngelFree); }, new Layout.R(10, 54, 80, 12));
             var ad = UiKit.Button(box, "ui.btnOrange", $"광고 보고 공격력 +{Math.Round((SimPolicy.AngelAd - 1) * 100)}%", () => AdCountdown(3, () => Blessed(onChoose)), new Layout.R(10, 70, 80, 12));
             var adIc = UiKit.Icon(ad, "Ad", "hud.alertAd"); UiKit.Pct(adIc.rectTransform, 84, -22, 18, 50);
-            Sub(box, "더 강한 축복", 85, 6, 26, Palette.InkLight);
+            Sub(box, "더 강한 축복", 85, 6, TextSize.Body, Palette.InkSoft);   // T63-perks — 밝은 패널 위 InkLight → InkSoft
         }
         void Blessed(Action<double> onChoose)
         {

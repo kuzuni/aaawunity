@@ -45,6 +45,10 @@ namespace KkomaKnight.Game
         public static string PerkGradeName(int grade) => grade >= 2 ? "red" : grade == 1 ? "yellow" : "gray";
         /// <summary>색 이름 → 프리팹 변형 접미(gray 변형이 없는 프리팹은 green 을 쓰고 호출자가 Desaturate 한다).</summary>
         public static string FrameKey(string prefix, string colorName) => prefix + "." + (colorName == "gray" ? "green" : colorName);
+        /// <summary>밝은 프레임(회색·노랑) 위인가 — 그 위 흰 글자는 대비가 없어 안 읽힌다(T63-perks · 레퍼런스 04 의 «Legendary» 탭도 밝은 바탕에 어두운 글자다).</summary>
+        public static bool IsLightFrame(string colorName) => colorName == "gray" || colorName == "yellow";
+        /// <summary>프레임 탭 위 글자색 — 밝은 탭이면 진한 잉크, 어두운 탭이면 흰색(T63-perks · 주인 «글씨가 안 읽힌다»).</summary>
+        public static Color OnFrame(string colorName) => IsLightFrame(colorName) ? Ink : White;
         public const string DevilName = "plum";
         /// <summary>장비 등급(gear.json rar 0~3) → 테마 색 이름.</summary>
         public static string RarName(int rar) => rar >= 3 ? "plum" : rar == 2 ? "yellow" : rar == 1 ? "blue" : "gray";

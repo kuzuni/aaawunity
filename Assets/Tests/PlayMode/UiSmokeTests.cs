@@ -696,6 +696,32 @@ namespace KkomaKnight.Tests.Play
             foreach (var p in offer) Assert.IsTrue(HasText(s => s == PerkText.Format(p.Desc)), $"카드 설명 = «트리거: 내용» 표기(T53) · 한 색(T52): {PerkText.Format(p.Desc)}");
             Assert.IsFalse(HasText(s => s.IndexOf("<color", StringComparison.OrdinalIgnoreCase) >= 0 && !s.StartsWith("남은 횟수")), "특전 글자에 부분 색(<color) 없음(T52 · «남은 횟수 : N» 의 주황 N 만 예외)");
             if (!string.IsNullOrEmpty(offer[0].GradeName)) Assert.IsTrue(HasText(s => s == offer[0].GradeName), "카드 왼쪽 위 등급 탭");
+            // T63-perks — 등급 탭 글자: 본문 하한(40)을 최대치로 · bestFit 최소 32 · 세로 여백 0(칸 = 탭 전체라 bestFit 이 덜 줄인다) · 밝은 탭(회색·노랑) 위는 어두운 잉크(흰 글자는 대비가 없어 안 읽혔다)
+            for (int i = 0; i < cards.childCount; i++)
+            {
+                string grade = offer[i].GradeName; if (string.IsNullOrEmpty(grade)) continue;
+                Text gt = null;
+                foreach (var t in cards.GetChild(i).GetComponentsInChildren<Text>(false)) if (t.text == grade) { gt = t; break; }
+                Assert.IsNotNull(gt, $"카드 {i} 등급 탭 글자 «{grade}»");
+                Assert.AreEqual(TextSize.Body, gt.resizeTextMaxSize, $"카드 {i} 등급 글자 최대 = 본문 하한 40(T63)");
+                Assert.GreaterOrEqual(gt.resizeTextMinSize, TextSize.BestFitMin, $"카드 {i} 등급 글자 bestFit 최소 ≥ 32");
+                Assert.IsTrue(gt.color == Palette.OnFrame(Palette.PerkGradeName(offer[i].Grade)), $"카드 {i} 등급 글자색 = 탭 밝기에 맞는 색(밝은 탭이면 잉크): {gt.color}");
+                var host = gt.rectTransform.parent as RectTransform;
+                Assert.IsNotNull(host, $"카드 {i} 등급 글자 부모(탭)");
+                Assert.AreEqual(host.rect.height, gt.rectTransform.rect.height, 0.5f, $"카드 {i} 등급 글자 칸 높이 = 탭 높이(세로 여백 0 · bestFit 이 덜 줄인다)");
+                Assert.GreaterOrEqual(TextAudit.BestFitSize(gt), TextSize.BestFitMin, $"카드 {i} 등급 글자 실제 크기 ≥ 32");
+            }
+            // T63-perks — «남은 횟수 : N» 은 레퍼런스 04 처럼 버튼 «아래»(프리팹 자리 그대로면 버튼 위에 얹혀 아랫줄이 잘리고 주황 숫자가 주황 버튼에 묻힌다)
+            {
+                var foot = UiKit.Find(_app.Overlay.Root, "Button_02_Orange"); Assert.IsNotNull(foot, "하단 주황 버튼");
+                Text remain = null;
+                foreach (var t in foot.GetComponentsInChildren<Text>(false)) if (t.text != null && t.text.StartsWith("남은 횟수")) { remain = t; break; }
+                Assert.IsNotNull(remain, "«남은 횟수» 글자");
+                var c4 = new Vector3[4]; ((RectTransform)foot).GetWorldCorners(c4); float btnBottom = c4[0].y;
+                remain.rectTransform.GetWorldCorners(c4); float remTop = c4[1].y, remBottom = c4[0].y;
+                Assert.LessOrEqual(remTop, btnBottom, "«남은 횟수» 윗변이 버튼 아래끝보다 아래 = 버튼과 안 겹친다");
+                Assert.Greater(remTop - remBottom, 0f, "«남은 횟수» 칸 높이 > 0");
+            }
             var cardRts = new List<Transform>(); foreach (Transform c in cards) cardRts.Add(c);
             var first = cards.GetChild(0).GetComponent<Button>(); Assert.IsNotNull(first, "카드는 클릭 가능"); first.onClick.Invoke(); yield return Frames(3);
             Assert.AreEqual(1, G.Taken.Count, "특전 1개 획득"); Assert.IsFalse(_app.Overlay.IsOpen);

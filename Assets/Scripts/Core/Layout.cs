@@ -170,6 +170,8 @@ namespace KkomaKnight.Core
         public static readonly R OvCardIcon = new R(8.0f, 38.0f, 14.0f, 8.0f);
         public static readonly R OvCardText = new R(25.0f, 38.5f, 68.0f, 7.0f);
         public static readonly R OvFoot = new R(31.0f, 79.0f, 38.0f, 7.5f);
+        /// <summary>«남은 횟수 : N» — 예외적으로 <b>버튼(OvFoot) 칸의 %</b> 다(그 자식이라 버튼과 같이 뜨고 같이 커진다). 레퍼런스 04 처럼 버튼 «아래»: y 104% = 버튼 아래끝에서 프레임 0.3% 띄우고, h 46% = 프레임 3.45%(80px · 본문 40 한 줄 55px 이 든다) · w 120% 는 «남은 횟수 : 1»(≈330px)이 버튼 폭 410px 안에서 한 줄로 남게 하는 여유.</summary>
+        public static readonly R OvFootRemain = new R(-10.0f, 104.0f, 120.0f, 46.0f);
         public static readonly R OvInfo = new R(86.0f, 79.5f, 9.0f, 6.0f);
         public static readonly R BookBox = new R(6.5f, 23.0f, 87.0f, 52.5f);
         public static readonly R BookRibbon = new R(25.0f, 21.5f, 50.0f, 4.0f);
