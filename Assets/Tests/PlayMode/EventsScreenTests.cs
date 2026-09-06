@@ -201,11 +201,11 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(ClickNamed(pv, "BackBtn"), "PvP 뒤로"); yield return Frames(2); Assert.AreEqual("lobby", _app.Current.Name, "PvP 뒤로 = 로비");
             Check("뒤로 → 로비");
 
-            // ⑨ 로비 오른쪽 아래 «이벤트»(방패) → PvP 페이지 · 던전 탭 → 던전 페이지
+            // ⑨ 로비 오른쪽 아래 «이벤트»(방패) → **던전 페이지**(T107 · 주인 2026-09-07 «이벤트 열면 무조건 던전부터») · 거기서 PvP 탭 → PvP 페이지
             Assert.IsTrue(ClickNamed(lobby, "Side:" + LobbyScreen.SideEvents), "로비 이벤트 버튼"); yield return Frames(2);
-            Assert.AreEqual("events", _app.Current.Name); Assert.AreEqual(EventsScreen.PagePvp, ev.Page, "이벤트 버튼 = PvP 페이지");
-            Assert.IsTrue(ClickNamed(pv, "Tab:dungeon"), "던전 탭"); yield return Frames(2); Assert.AreEqual(EventsScreen.PageDungeon, ev.Page);
-            Assert.IsTrue(ClickNamed(pg, "BackBtn"), "던전 뒤로"); yield return Frames(2); Assert.AreEqual("lobby", _app.Current.Name);
+            Assert.AreEqual("events", _app.Current.Name); Assert.AreEqual(EventsScreen.PageDungeon, ev.Page, "이벤트 버튼 = 던전 페이지(T107)");
+            Assert.IsTrue(ClickNamed(pg, "Tab:pvp"), "PvP 탭"); yield return Frames(2); Assert.AreEqual(EventsScreen.PagePvp, ev.Page);
+            Assert.IsTrue(ClickNamed(pv, "BackBtn"), "PvP 뒤로"); yield return Frames(2); Assert.AreEqual("lobby", _app.Current.Name);
             Check("이벤트 버튼 왕복");
             yield return Shutdown();
         }
