@@ -73,6 +73,8 @@ namespace KkomaKnight.Game
             // 진행바 = 검정 홈에 주황이 차는 바(레퍼런스 02·03) — 값은 노드(웨이브) 진행(RefreshHud) · 숫자 없음(T33) · 적 조우 중엔 주황, 걷는 중엔 노랑
             _prog = UiKit.MakeBar(Root, "ui.sliderYellow"); UiKit.Pct(_prog.Root, Layout.HudProgress); _prog.Root.name = "Bar:Progress"; if (_prog.Txt != null) _prog.Txt.gameObject.SetActive(false);
             _progFill = _prog.Slider != null && _prog.Slider.fillRect != null ? _prog.Slider.fillRect.GetComponent<Image>() : null;
+            // T69 8항의 «바 테두리» 규칙을 챕터 진행 바에도(레퍼런스 02 의 검정 홈 = 어두운 아웃라인) — BorderGate strict 02_battle «진행 바 Bar:Progress 테두리 없음»(CI #117·#119 · T80) · 자리·크기 불변
+            UiKit.Bordered(_prog.Root);
             // 버프 바 (왼쪽 세로 · 팔각 프레임 · T20 그대로)
             _buffBar = UiKit.Rect(Root, "BuffBar"); UiKit.Pct(_buffBar, Layout.HudBuffBar);
             var vl = _buffBar.gameObject.AddComponent<VerticalLayoutGroup>(); vl.childAlignment = TextAnchor.UpperLeft; vl.spacing = 10; vl.childForceExpandWidth = false; vl.childForceExpandHeight = false; vl.childControlWidth = false; vl.childControlHeight = false;
