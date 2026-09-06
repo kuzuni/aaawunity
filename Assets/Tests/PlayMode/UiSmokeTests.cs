@@ -207,7 +207,11 @@ namespace KkomaKnight.Tests.Play
             var tabs = UiKit.Find(lobby, "Tab_01_BottomFlushMenu");
             Assert.IsNotNull(tabs, "로비 프리팹(Lobby_Default)의 하단 탭 바 조각이 표 자리(TabBar)에 있어야 한다");
             Assert.GreaterOrEqual(tabs.childCount, NavBar.Keys.Length, "하단 탭 5칸");
-            Assert.AreEqual(5, NavBar.Keys.Length, "탭 = 상점·장비·전투·던전·펫"); Assert.AreEqual("dungeon", NavBar.Keys[3], "넷째 탭 = 던전(T43 · 탤런트 대체)"); Assert.AreEqual("던전", NavBar.Labels[3], "넷째 탭 라벨");
+            // T107(주인 2026-09-07 «던전 메뉴 빼고 거기에 펫 넣고, 맨 오른쪽에는 탤런트») — 던전 탭은 없다(이벤트와 중복)
+            Assert.AreEqual(5, NavBar.Keys.Length, "탭 = 상점·장비·전투·펫·탤런트");
+            CollectionAssert.AreEqual(new[] { "shop", "gear", "battle", "pet", "talent" }, NavBar.Keys, "탭 순서(T107)");
+            CollectionAssert.AreEqual(new[] { "상점", "장비", "전투", "펫", "탤런트" }, NavBar.Labels, "탭 라벨(T107)");
+            CollectionAssert.DoesNotContain(NavBar.Keys, "dungeon", "던전 탭 없음(T107 · 로비 «이벤트» 로만 연다)");
             Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 1, "로비 초상(HeroView · 상단 바 아바타)");
             Assert.IsTrue(HasText(s => s == "START"), "START 버튼");
             Assert.IsTrue(HasText(s => s.StartsWith("챕터")), "챕터 제목");
@@ -465,7 +469,19 @@ namespace KkomaKnight.Tests.Play
                 Check("데이터 삭제 뒤 로비");
             }
 
-            // «탤런트» 탭·Character_Talent_02 팝업은 T43 이 «던전»(EventsScreen · EventsScreenTests) 으로 바꿨다 — 탭에서 더는 열리지 않는다
+            // T107(주인 2026-09-07 «맨 오른쪽에는 탤런트 넣으셈 · 탤런트 팝업 분명히 prefab 으로 있음 그거 쓰게») —
+            // 맨 오른쪽(다섯째) 탭 = 주인이 지목한 Character_Talent_02 프리팹 팝업(껍데기 · 기능 없음). 앞 블록이 세이브를 지우며 로비를 다시 세우므로 탭 바를 새로 찾는다.
+            {
+                _app.ShowScreen("lobby"); yield return Frames(2);
+                var tabs2 = UiKit.Find(_app.Current.Root, "Tab_01_BottomFlushMenu"); Assert.IsNotNull(tabs2, "로비 탭 바(다시)");
+                var talBtn = tabs2.GetChild(4).GetComponent<Button>(); Assert.IsNotNull(talBtn, "다섯째 탭 버튼(탤런트)");
+                talBtn.onClick.Invoke(); yield return Frames(2);
+                Assert.IsTrue(_app.Overlay.IsOpen, "탤런트 탭은 팝업으로 뜬다(T107)");
+                Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.talent"), "Character_Talent_02 조각(주인 지목 프리팹 그대로)");
+                Check("탤런트 팝업", expectOverlay: true);
+                _app.Overlay.Close(); yield return Frames(2);
+                Assert.IsFalse(_app.Overlay.IsOpen, "닫힘");
+            }
 
             // T42 — 펫 탭 = 레퍼런스 13_pet.jpg 구도(PetScreen · 껍데기): 상단 바 · 4열 격자 9칸(Lv · 진행바) · 합계 줄 · «장착중» 띠 + 슬롯 4 · 회색 2 · 주황 소환 2 · 탭 5 → 칸 클릭 = 세부 팝업(14 · 명판 없음 · 탭하여 닫기)
             {

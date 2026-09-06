@@ -210,7 +210,8 @@
 | sprites | `ui.iconChestRed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Chest_01_Red.png` | fileID 21300000 | 로비 보조 버튼 «클리어 보상» 아이콘 (껍데기 · OnSide(clearReward)) |
 | sprites | `ui.iconHome` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Common_Home_01_Blue.png` | fileID 21300000 | **미사용(T78 · 주인 2026-09-07 «성 버튼도 삭제»)** — 로비 왼쪽 아래 «성»(잠금) 아이콘이었다 |
 | sprites | `ui.iconLock` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Common_Lock_01_Silver.png` | fileID 21300000 | 잠금 자물쇠(성 위에 겹침 · 껍데기 화면의 잠금 표시 공용) |
-| sprites | `ui.iconDungeon` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Dungeon_01.png` | fileID 21300000 | 로비 오른쪽 아래 «이벤트» 아이콘 (레퍼런스의 방패 자리 · OnSide(events) → T43 아레나 페이지) · T43: 하단 탭 «던전» 아이콘 · 던전 페이지 제목 아이콘 · 던전/PvP 2탭 |
+| sprites | `ui.iconDungeon` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Dungeon_01.png` | fileID 21300000 | 로비 오른쪽 아래 «이벤트» 아이콘 (레퍼런스의 방패 자리 · OnSide(events) → T107 부터 던전 페이지) · 던전 페이지 제목 아이콘 · 던전/PvP 2탭 — **하단 탭에서는 T107(주인 2026-09-07 «던전 메뉴 빼셈»)로 빠졌다** |
+| sprites | `ui.iconTalent` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Book_01_Blue.png` | fileID 21300000 | 하단 탭 «탤런트» 아이콘 (Item_Book_01_Blue 스킬북 — 팩에 탤런트 전용 그림이 없어 워커가 고름 · T107 · 바꾸려면 경로 한 줄) |
 | sprites | `ui.iconMedal` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Medal_01_Gold.png` | fileID 21300000 | 로비 이벤트 배너 왼쪽 메달 아이콘(패스 껍데기) |
 | sprites | `gi.weapon.crit` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Weapons_Sword_01.png` | fileID 21300000 | 장비 아이콘 — 무기(치명 세트=검 / 체력실드=해머 / 회피=창). 세트별로 다른 그림 · 등급은 ItemFrame 색 |
 | sprites | `gi.weapon.hpsh` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Weapons_Hammer_01.png` | fileID 21300000 |  |

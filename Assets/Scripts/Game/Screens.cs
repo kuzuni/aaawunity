@@ -165,7 +165,8 @@ namespace KkomaKnight.Game
         {
             switch (key)
             {
-                case SideEvents: EventsScreen.Open(App, EventsScreen.PagePvp); break;
+                // T107 — 주인 «이벤트 열면 무조건 던전부터 뜨게»(아레나·상인은 그 안에서 넘어간다)
+                case SideEvents: EventsScreen.Open(App, EventsScreen.PageDungeon); break;
                 case SidePrivilege: App.ShowScreen("privilege"); break;
                 case SideQuest: LobbyPopups.Quest(App); break;
                 case SideAttendance: LobbyPopups.Attendance(App); break;
@@ -323,16 +324,18 @@ namespace KkomaKnight.Game
     }
 
     /// <summary>
-    /// 하단 탭 5칸 = <b>상점 · 장비 · 전투 · 던전 · 펫</b> (주인 지시 2026-09-05 · T10 — 대장간·설정 탭은 뺐다 · T43: «탤런트» → «던전» = <see cref="EventsScreen"/> 던전 페이지).
+    /// 하단 탭 5칸 = <b>상점 · 장비 · 전투 · 펫 · 탤런트</b> (T107 · 주인 2026-09-07 «던전 메뉴 빼셈 — 이벤트랑 중복 · 거기에 펫 넣고 맨 오른쪽에는 탤런트» · 대장간·설정 탭은 T10 부터 없다).
     /// 대장간은 장비 화면의 «합성» 버튼으로만 · 설정은 로비의 메뉴(≡)와 전투의 일시정지에서만 연다.
     /// 로비 프리팹(Lobby_Default)의 Tab_01_BottomFlushMenu 를 다른 화면에도 같은 배선으로 세운다 — 탭 순서 = 프리팹 자식 순서(0~4) 그대로.
-    /// 던전 탭 = <see cref="EventsScreen"/>(레퍼런스 20~26 구도 껍데기 · T43 · «탤런트» 를 대체) · 펫 탭 = <see cref="PetScreen"/>(레퍼런스 13 구도 껍데기 · T42).
+    /// 펫 탭 = <see cref="PetScreen"/>(레퍼런스 13 구도 껍데기 · T42) · 탤런트 탭 = 주인이 지목한 <c>Character_Talent_02</c> 프리팹 팝업(<see cref="Overlay.TalentPet"/> · 껍데기 · T107).
+    /// <b>던전(이벤트)은 탭에서 빠졌다</b> — 로비 오른쪽 아래 «이벤트» 버튼으로만 열고, 열면 언제나 <see cref="EventsScreen.PageDungeon"/> 이 먼저 보인다(T107 · 주인 «이벤트 열면 무조건 던전부터»).
     /// </summary>
     public static class NavBar
     {
-        public static readonly string[] Keys = { "shop", "gear", "battle", "dungeon", "pet" };
-        static readonly string[] IconsK = { "ui.shop", "ui.bag", "ui.battle", "ui.iconDungeon", "ui.petIcon" };
-        public static readonly string[] Labels = { "상점", "장비", "전투", "던전", "펫" };
+        // T107(주인 2026-09-07 «하단에 던전 메뉴 있는 거 빼셈 — 이벤트랑 어차피 중복됨 · 던전 메뉴 빼고 거기에 펫 넣고, 맨 오른쪽에는 탤런트»)
+        public static readonly string[] Keys = { "shop", "gear", "battle", "pet", "talent" };
+        static readonly string[] IconsK = { "ui.shop", "ui.bag", "ui.battle", "ui.petIcon", "ui.iconTalent" };
+        public static readonly string[] Labels = { "상점", "장비", "전투", "펫", "탤런트" };
 
         /// <summary>하단 프레임 띠 오브젝트 이름(고정 · T106 ⓓ 게이트가 찾는다).</summary>
         public const string BottomFrameName = "BottomFrame";
@@ -376,7 +379,9 @@ namespace KkomaKnight.Game
             switch (key)
             {
                 case "battle": app.Overlay.Close(); if (current != "lobby") app.ShowScreen("lobby"); break;
-                case "dungeon": app.Overlay.Close(); EventsScreen.Open(app, EventsScreen.PageDungeon); break;   // T43 · 펫은 T42 부터 화면(PetScreen · default 분기)
+                // T107 — 맨 오른쪽 «탤런트» = 주인이 지목한 Character_Talent_02 프리팹 팝업(껍데기 · Overlay.TalentPet) · 던전은 탭에서 빠지고 로비 «이벤트» 로만 연다
+                case "talent": app.Overlay.TalentPet("talent"); break;
+                // 펫은 T42 부터 화면(PetScreen)
                 default: app.Overlay.Close(); app.ShowScreen(key); break;
             }
         }

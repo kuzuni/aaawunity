@@ -71,10 +71,11 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual("lobby", _app.Current.Name);
             var lobby = _app.Current.Root;
 
-            // ① 하단 탭 넷째(던전) → events 화면 던전 페이지
-            var tabs = UiKit.Find(lobby, "Tab_01_BottomFlushMenu"); Assert.IsNotNull(tabs, "로비 탭 바");
-            var tab = tabs.GetChild(3).GetComponent<Button>(); Assert.IsNotNull(tab, "넷째 탭 버튼(던전)"); tab.onClick.Invoke(); yield return Frames(3);
-            Assert.AreEqual("events", _app.Current.Name, "던전 탭 = events 화면");
+            // ① 로비 오른쪽 아래 «이벤트» → events 화면 던전 페이지 (T107 · 하단 탭에서 던전은 빠졌고 이벤트를 열면 언제나 던전이 먼저)
+            var evBtn = UiKit.Find(lobby, "Events"); Assert.IsNotNull(evBtn, "로비 «이벤트» 버튼");
+            var evClick = evBtn.GetComponentInChildren<Button>(true); Assert.IsNotNull(evClick, "«이벤트» 버튼의 Button"); evClick.onClick.Invoke(); yield return Frames(3);
+            Assert.AreEqual("events", _app.Current.Name, "«이벤트» = events 화면");
+            CollectionAssert.DoesNotContain(NavBar.Keys, "dungeon", "하단 탭에 던전 없음(T107)");
             var ev = _app.GetScreen<EventsScreen>(); Assert.IsNotNull(ev); Assert.AreEqual(EventsScreen.PageDungeon, ev.Page, "던전 페이지");
             var root = ev.Root; var pg = UiKit.Find(root, "Page:dungeon") as RectTransform; Assert.IsNotNull(pg, "던전 페이지 루트"); Assert.IsTrue(pg.gameObject.activeSelf);
             Assert.IsNotNull(UiKit.Find(root, "TopBar"), "상단 재화 바(공용 TopBar)");

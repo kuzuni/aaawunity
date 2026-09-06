@@ -425,6 +425,8 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 95defe4ba3d184579a40c0ece4a15e0b, type: 3}
   - key: ui.iconDungeon
     sprite: {fileID: 21300000, guid: 0ac432b084ff641f998f683220b5c055, type: 3}
+  - key: ui.iconTalent
+    sprite: {fileID: 21300000, guid: da7d40b4893a340bdbd1ab3e68b6960a, type: 3}
   - key: ui.iconMedal
     sprite: {fileID: 21300000, guid: 385a72080942a4866a59bef14ba4513b, type: 3}
   - key: gi.weapon.crit
