@@ -25,9 +25,9 @@ namespace KkomaKnight.Game
         readonly float _zoom; readonly float _playerX;             // ui.json camera.zoom · playerX(프레임 폭 비율)
         public const float CharBaseHeight = 0.85f;                          // Character.prefab 스케일 1 의 키(유니티 단위 · 조사값)
         const float FootY = Layout.PlayerFootY / 100f;
-        const float RoadCenterFrac = 0.41f;                          // 데모 씬의 길 중심(y −0.402)이 놓이는 프레임 비율 — 발 줄 40% 바로 아래 · 지면 띠(30~51%) 중심
-        const float UnitFrac = WorldCam.PPU / WorldCam.LayoutH;      // 데모 씬 1u = 프레임 높이의 이 비율 (1/11.4)
-        const float RoadTopY = RoadCenterFrac - MapLayouts.RoadHeight * UnitFrac / 2f, RoadBotY = RoadCenterFrac + MapLayouts.RoadHeight * UnitFrac / 2f;   // ≈ 30.2% ~ 51.8% = ref-layout 지면 띠
+        const float RoadCenterFrac = 0.41f;                          // 데모 씬의 길 중심(y −0.402)이 놓이는 프레임 비율 — 발 줄 40% 을 품는다(길 띠 1.48u = ±6.5% · 34.5~47.5% · ref-layout 지면 띠 30~51% 안)
+        /// <summary>데모 씬 1u 가 화면에서 차지하는 프레임 높이 비율 — 데모 구성을 통째로 <see cref="Layout.MapScale"/>(0.6) 배로 그린다(T19 · 1u → 0.6 유니티 단위 = 프레임의 1/19).</summary>
+        const float UnitFrac = WorldCam.PPU * Layout.MapScale / WorldCam.LayoutH;
         const float SpreadRamp = 150f;                               // 1배 → WorldSpacing 배로 부드럽게 넘어가는 월드 px 구간
 
         // 플레이어
@@ -70,15 +70,20 @@ namespace KkomaKnight.Game
         double _goldPrev; Vector3 _lastKillPos;
         readonly Theme _theme;
 
-        /// <summary>데모 씬 한 벌 — 바닥·길·물결 경계 키(env.&lt;name&gt;.*) · 소품 배치는 <see cref="MapLayouts"/>.</summary>
+        /// <summary>데모 씬 한 벌 — 바닥·길 키(env.&lt;name&gt;.field/road · <see cref="MapLayouts"/> 가 굽는다) · 물결 경계·소품 배치는 <see cref="MapLayouts"/> 표.</summary>
         public sealed class Theme
         {
             public string Name;
-            public string Field => "env." + Name + ".field"; public string Road => "env." + Name + ".road"; public string RoadUp => "env." + Name + ".roadUp";
+            public string Field => MapLayouts.FieldOf(Name); public string Road => MapLayouts.RoadOf(Name);
             public static readonly Theme[] All = { new Theme { Name = "autumn" }, new Theme { Name = "deepForest" }, new Theme { Name = "forest" }, new Theme { Name = "desert" } };
             /// <summary>챕터 → 테마: 1=Autumn 2=DeepForest 3=Forest 4=Desert, 5=Autumn … (주인 지시 «4개 순환»).</summary>
             public static Theme ForChapter(int chapter) => All[((chapter - 1) % All.Length + All.Length) % All.Length];
         }
+
+        /// <summary>월드 루트(Ground·Props·Nodes 의 부모) — 테스트·진단용 읽기(T19 PlayMode 맵 테스트가 바닥·길·소품 스케일을 본다).</summary>
+        public Transform Root => _root;
+        /// <summary>이 판의 맵 테마 — 테스트·진단용 읽기.</summary>
+        public Theme MapTheme => _theme;
 
         public BattleWorld(App app, BattleState g, RectTransform popsLayer)
         {
@@ -115,31 +120,36 @@ namespace KkomaKnight.Game
             var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = _app.Assets.Sprite(key); sr.sortingOrder = order;
             return sr;
         }
+        /// <summary>
+        /// 바닥·길 — 데모 씬의 Field(128px × 스케일 (22.46, 20.35) = 28.7 × 26u 평면 · y −0.4)·Road(× (22.47, 2.4624) = 28.8 × 3.15u 띠 · y −0.402) 인스턴스를 <b>같은 스케일 × MapScale</b> 로 두고 가로로만 이어 붙인다(T19 · «그림 그대로»).
+        /// 데모 씬처럼 바닥이 화면 전체(어둡게 하지 않는다) · 길 띠는 데모 치수 그대로 축소돼 발 줄(40%)을 품는다. 물결 경계(Road_up)는 소품 표에 들어 있다(<see cref="BuildProps"/>).
+        /// </summary>
         void BuildGround()
         {
             var ground = new GameObject("Ground").transform; ground.SetParent(_root, false);
             var field = _app.Assets.Sprite(_theme.Field) ?? _app.Assets.Sprite("env.field");
-            _tileW = field != null ? field.bounds.size.x : 1.28f;
+            var fieldScale = new Vector3(MapLayouts.FieldScaleX * Layout.MapScale, MapLayouts.FieldScaleY * Layout.MapScale, 1f);   // 데모: 128px × (22.46, 20.35) = 28.7 × 26.0u 평면
+            _tileW = (field != null ? field.bounds.size.x : 1.28f) * fieldScale.x;
             _tileCols = Mathf.CeilToInt(WorldCam.LayoutW / WorldCam.PPU / _tileW) + 2;
-            // 바닥은 화면 전체(데모 씬처럼) — 지면 띠 아래(HUD 패널 뒤)는 조금 어둡게
-            float top = WorldCam.ToWorld(0, 0).y; int rows = Mathf.CeilToInt(WorldCam.LayoutH / WorldCam.PPU / _tileW) + 1;
-            float bandBotY = WorldCam.ToWorld(0, (Layout.GroundBand.Y + Layout.GroundBand.H) / 100f).y;
+            float fieldY = WorldCam.ToWorld(0, DemoY(MapLayouts.FieldY)).y;
+            float tileH = (field != null ? field.bounds.size.y : 1.28f) * fieldScale.y;
+            int rows = Mathf.Max(1, Mathf.CeilToInt(WorldCam.LayoutH / WorldCam.PPU / tileH));   // 15.6u 평면 하나가 프레임(11.4u)을 다 덮는다 — 그림이 더 작으면 세로로도 이어 붙인다
             for (int r = 0; r < rows; r++)
                 for (int c = 0; c < _tileCols; c++)
                 {
                     var sr = Sprite(_theme.Field, ground, -20, "field"); if (sr.sprite == null) sr.sprite = field;
-                    float y = top - (r + 0.5f) * _tileW;
-                    sr.transform.position = new Vector3(0, y, 0); if (y + _tileW * 0.5f < bandBotY) sr.color = new Color(0.62f, 0.62f, 0.58f);
+                    sr.transform.localScale = fieldScale;
+                    sr.transform.position = new Vector3(0, fieldY + (r - (rows - 1) * 0.5f) * tileH, 0);
                     _fieldTiles.Add(sr);
                 }
-            // 길 띠 — 발 줄(40%)을 품는 35~47% (데모 씬은 화면 1/4 높이의 평면색 띠)
             var road = _app.Assets.Sprite(_theme.Road) ?? _app.Assets.Sprite("env.road");
-            float roadH = WorldCam.PctH((RoadBotY - RoadTopY) * 100f); float roadTile = road != null ? road.bounds.size.x : 1.28f;
-            float roadScale = roadH / roadTile; float roadY = WorldCam.ToWorld(0, (RoadTopY + RoadBotY) / 2f).y;
-            for (int c = 0; c < _tileCols; c++)
+            var roadScale = new Vector3(MapLayouts.RoadScaleX * Layout.MapScale, MapLayouts.RoadScaleY * Layout.MapScale, 1f);       // 데모: 128px × (22.47, 2.46) = 28.8 × 3.15u 띠
+            float roadY = WorldCam.ToWorld(0, DemoY(MapLayouts.RoadCenterY)).y;
+            float roadW = (road != null ? road.bounds.size.x : 1.28f) * roadScale.x; int roadCols = Mathf.CeilToInt(WorldCam.LayoutW / WorldCam.PPU / roadW) + 2;
+            for (int c = 0; c < roadCols; c++)
             {
                 var sr = Sprite(_theme.Road, ground, -18, "road"); if (sr.sprite == null) sr.sprite = road;
-                sr.transform.localScale = Vector3.one * roadScale; sr.transform.position = new Vector3(0, roadY, 0); _roadTiles.Add(sr);
+                sr.transform.localScale = roadScale; sr.transform.position = new Vector3(0, roadY, 0); _roadTiles.Add(sr);
             }
         }
         void ScrollGround()
@@ -157,23 +167,23 @@ namespace KkomaKnight.Game
             var sr = Sprite(key, parent, order, "prop"); sr.flipX = flip; sr.transform.localScale = Vector3.one * scale;
             var p = new Prop { Sr = sr, WorldX = worldX, YFrac = yFrac }; _props.Add(p); return p;
         }
-        /// <summary>데모 씬 y(길 중심 −0.402) → 프레임 비율.</summary>
-        static float DemoY(float y) => RoadCenterFrac - (y - MapLayouts.RoadCenterY) * UnitFrac;
+        /// <summary>데모 씬 y(길 중심 −0.402) → 프레임 비율 (× MapScale).</summary>
+        public static float DemoY(float y) => RoadCenterFrac - (y - MapLayouts.RoadCenterY) * UnitFrac;
+        /// <summary>데모 씬 1u → 월드 px(엔진 좌표 단위 · 화면에서 zoom 배가 곱해져 100 × MapScale 레이아웃 px 가 된다).</summary>
+        float UnitPx => WorldCam.PPU * Layout.MapScale / _zoom;
         /// <summary>
-        /// 소품 — 주인 지정 데모 씬(DemoScene_Autumn/DeepForest/Forest/Desert)의 배치를 **그대로**(위치·반전·크기 · <see cref="MapLayouts"/> 표) 씬 폭마다 반복해 깐다(주인: «그 씬 배치가 맘에 들어서 그대로 복사해도 된다»).
-        /// 1 데모 유닛 = 100/zoom 월드 px. 발 줄(40%)보다 위에 뿌리를 둔 소품은 캐릭터 뒤, 아래는 앞. 길 아래 물결 경계(Road_up)는 데모의 y·피치로 길 전체에 깐다.
+        /// 소품 · 물결 경계 — 주인 지정 데모 씬(DemoScene_Autumn/DeepForest/Forest/Desert)의 인스턴스를 **그대로**(위치·반전·크기 · 부모 그룹 합성 · <see cref="MapLayouts"/> 표) 씬 폭마다 반복해 깐다
+        /// (주인: «그 씬 배치가 맘에 들어서 그대로 복사해도 된다» · 2026-09-06 «맵 디자인을 데모 씬에 있는 거 그대로»). 전체를 <see cref="Layout.MapScale"/>(0.6) 배로: 위치 × 0.6 · 스프라이트 스케일 × 0.6.
+        /// 물결 경계(Road_up)는 씬처럼 길 위(y ≈ +1.13)·아래(≈ −2.0) 양쪽 — 표에 소품과 똑같이 들어 있어 따로 처리하지 않는다(T19).
+        /// 정렬: 발 줄(40%)보다 위에 뿌리를 둔 소품은 캐릭터 뒤, 아래는 앞 · 납작한 것(풀·꽃·물결 경계)은 늘 바닥(길 바로 위) — 데모 렌더 순서(Field &lt; Road &lt; Road_up &lt; 나머지 y 내림차순)와 같다.
         /// </summary>
         void BuildProps()
         {
             var props = new GameObject("Props").transform; props.SetParent(_root, false);
             double lastX = G.Nodes.Count > 0 ? G.Nodes[G.Nodes.Count - 1].X : 2000;
             double from = -700, to = lastX + 1400;
-            float unitPx = WorldCam.PPU / _zoom;                                 // 데모 1u → 월드 px
-            float footDemoY = MapLayouts.RoadCenterY + (RoadCenterFrac - FootY) / UnitFrac;   // 발 줄의 데모 y (≈ −0.29)
-            // ① 길 아래 물결 경계 — 데모 y(≈ −2.0 · 길 아랫변) · 데모 피치
-            float upY = DemoY(MapLayouts.RoadUpYOf(_theme.Name)); double upPitch = MapLayouts.RoadUpPitchOf(_theme.Name) * unitPx;
-            for (double x = from; x < to; x += upPitch) AddProp(props, _theme.RoadUp, x, upY, 1f, -17, false);
-            // ② 소품 — 씬 폭마다 반복
+            float unitPx = UnitPx;
+            float footDemoY = MapLayouts.RoadCenterY + (RoadCenterFrac - FootY) / UnitFrac;   // 발 줄의 데모 y (≈ −0.21)
             var layout = MapLayouts.Of(_theme.Name); double period = MapLayouts.WidthOf(_theme.Name) * unitPx;
             double start = System.Math.Floor(from / period) * period;
             for (double x0 = start; x0 < to; x0 += period)
@@ -181,10 +191,10 @@ namespace KkomaKnight.Game
                 {
                     float yf = DemoY(p.Y);
                     if (yf < -0.15f || yf > 0.72f) continue;                        // 화면 위 밖 · HUD 패널 뒤는 만들지 않는다
-                    var sp = _app.Assets.Sprite(p.Key); bool flat = sp != null && sp.bounds.size.y * Mathf.Abs(p.Sy) < 0.35f;   // 풀·꽃(납작) 은 늘 바닥
+                    var sp = _app.Assets.Sprite(p.Key); bool flat = sp != null && sp.bounds.size.y * Mathf.Abs(p.Sy) < 0.35f;   // 풀·꽃·물결 경계(납작) 은 늘 바닥 — 데모 치수 기준
                     int order = flat ? -16 : p.Y > footDemoY ? Mathf.Max(-60, -12 - (int)((p.Y - footDemoY) * 3f)) : Mathf.Min(470, 381 + (int)((footDemoY - p.Y) * 5f));
                     var pr = AddProp(props, p.Key, x0 + p.X * unitPx, yf, 1f, order, false);
-                    pr.Sr.transform.localScale = new Vector3(p.Sx, p.Sy, 1f);
+                    pr.Sr.transform.localScale = new Vector3(p.Sx * Layout.MapScale, p.Sy * Layout.MapScale, 1f);
                 }
         }
         void BuildNodes()

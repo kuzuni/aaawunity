@@ -55,6 +55,12 @@ namespace KkomaKnight.Core
         /// LayoutSpecTests 가 대조하므로 그대로 두고, 그리는 쪽(BattleWorld)이 <see cref="CharHeightPct"/> 로 이 배율을 곱한다. 발밑 체력바 폭도 같은 배율(높이는 그대로).
         /// </summary>
         public const float CharScale = 2f / 3f;
+        /// <summary>
+        /// 전투 맵 그리기 배율 (주인 재지적 2026-09-06 «맵 디자인을 데모 씬에 있는 거 그대로» · T19). 데모 씬(DemoScene_Autumn 등)의 구성 — 바닥 · 길 띠(2.46u) · 물결 경계 위·아래 · 소품 —
+        /// 을 <b>통째로</b> 이 배율로 그린다: 길 띠 2.46u → 1.48u(발 줄 40% 를 품는 중심 41%) · 소품 위치·크기 × 0.6 · 씬 폭 ≈27u → 16u. 우리 5.4u 창에 데모 화면(17.8u 창 · 씬의 2/3)과
+        /// 같은 밀도로 보인다. 캐릭터는 <see cref="CharScale"/> 그대로(0.69u · 길 띠 안). 표 상수(GroundBand 등)는 손대지 않는다.
+        /// </summary>
+        public const float MapScale = 0.6f;
         /// <summary>표의 키 %(PlayerHeight 등) → 실제로 그리는 키 % (= × <see cref="CharScale"/>).</summary>
         public static float CharHeightPct(float tablePct) => tablePct * CharScale;
         /// <summary>
