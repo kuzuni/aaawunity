@@ -151,6 +151,129 @@ namespace KkomaKnight.Tests
             Assert.That(cnt[1] / 20000.0 * 100, Is.EqualTo(box.Rate[1]).Within(1.5));
             Assert.That(cnt[2] + cnt[3], Is.EqualTo(0));
         }
+
+        // ───────── T26 — 뽑기 확률 검증(주인 «확률에 안 맞게 뽑히는 것 같다») · index.html gachaPull 과 줄 단위 동일 · 통계는 시드 고정 Mulberry32 ─────────
+        const int GachaSample = 10000; const double GachaTolPct = 1.5;
+
+        /// <summary>천장·피티가 절대 안 걸리게(매번 새 카운터) 뽑아 «자연 굴림» 만 센다 — 등급별 % 를 돌려준다.</summary>
+        static double[] NaturalRollPct(GameData d, GachaBox box, IRng rng, int n)
+        {
+            var cnt = new int[box.Rate.Length];
+            for (int i = 0; i < n; i++) { var got = GearSystem.GachaPull(d, new GachaState(), box, rng); Assert.That(got.Count, Is.EqualTo(1)); cnt[got[0].Rar]++; }
+            var pct = new double[cnt.Length]; for (int r = 0; r < cnt.Length; r++) pct[r] = cnt[r] * 100.0 / n; return pct;
+        }
+        static void AssertPctMatchesTable(GachaBox box, double[] pct, string what)
+        {
+            for (int r = 0; r < box.Rate.Length; r++)
+            {
+                if (box.Rate[r] <= 0) Assert.That(pct[r], Is.EqualTo(0), $"{box.Key} {what}: 확률 0 인 등급 {r} 이 나왔다");
+                else Assert.That(pct[r], Is.EqualTo(box.Rate[r]).Within(GachaTolPct), $"{box.Key} {what}: 등급 {r} 관측 {pct[r]:0.00}% ↔ 표 {box.Rate[r]}%");
+            }
+        }
+
+        [Test]
+        public void GachaNaturalRollMatchesRateTableForEveryBox()
+        {
+            var d = TestData.Load(); uint seed = 26;
+            foreach (var box in d.Gacha.Boxes)
+            {
+                var pct = NaturalRollPct(d, box, new Mulberry32(seed++), GachaSample);
+                AssertPctMatchesTable(box, pct, "자연 굴림 10,000회");
+            }
+        }
+
+        [Test]
+        public void GachaPityFiresExactlyAtTheCeilingAndNeverLater()
+        {
+            var d = TestData.Load(); var G = d.Gear;
+            foreach (var box in d.Gacha.Boxes)
+            {
+                var st = new GachaState(); var rng = new Mulberry32(2026);
+                int sinceLegend = 0, sinceMyth = 0, pityLegendHits = 0, pityMythHits = 0, overlaps = 0;
+                for (int i = 0; i < 2 * GachaSample; i++)
+                {
+                    sinceLegend++; sinceMyth++;
+                    bool expectPityL = box.PityLegend > 0 && sinceLegend >= box.PityLegend, expectPityM = box.PityMyth > 0 && sinceMyth >= box.PityMyth;
+                    if (box.PityLegend > 0) Assert.That(sinceLegend, Is.LessThanOrEqualTo(box.PityLegend), $"{box.Key}: 전설 피티가 {box.PityLegend}회를 넘겨 걸렸다");
+                    if (box.PityMyth > 0) Assert.That(sinceMyth, Is.LessThanOrEqualTo(box.PityMyth), $"{box.Key}: 신화 천장이 {box.PityMyth}회를 넘겨 걸렸다");
+                    var got = GearSystem.GachaPull(d, st, box, rng); int rar = got[0].Rar;
+                    if (expectPityM) { Assert.That(rar, Is.EqualTo(G.RarMyth), $"{box.Key}: {box.PityMyth}회째는 신화 확정"); pityMythHits++; }
+                    if (expectPityL) { Assert.That(rar, Is.GreaterThanOrEqualTo(G.RarLegend), $"{box.Key}: {box.PityLegend}회째는 전설 이상 확정"); pityLegendHits++; }
+                    if (expectPityM && expectPityL) { Assert.That(got.Count, Is.EqualTo(2)); Assert.That(got[1].Rar, Is.EqualTo(G.RarLegend)); overlaps++; }
+                    else Assert.That(got.Count, Is.EqualTo(1), $"{box.Key}: 겹침이 아닌데 2개");
+                    if (rar == G.RarMyth) sinceMyth = 0;
+                    if (rar >= G.RarLegend) sinceLegend = 0;
+                    Assert.That(st.P10, Is.EqualTo(sinceLegend)); Assert.That(st.P50, Is.EqualTo(sinceMyth)); Assert.That(st.Pulls, Is.EqualTo(i + 1));
+                }
+                if (box.PityLegend > 0) Assert.That(pityLegendHits, Is.GreaterThan(0), $"{box.Key}: 전설 피티가 한 번도 안 걸림(표본 부족?)");
+                if (box.PityMyth > 0) Assert.That(pityMythHits, Is.GreaterThan(0), $"{box.Key}: 신화 천장이 한 번도 안 걸림(표본 부족?)");
+                if (box.PityMyth > 0 && box.PityLegend > 0) Assert.That(overlaps, Is.GreaterThan(0), $"{box.Key}: 천장×피티 겹침이 한 번도 없음(표본 부족?)");
+            }
+        }
+
+        [Test]
+        public void TenPullIsTenSinglePullsAndFreshCounterGuaranteesLegendPerTen()
+        {
+            var d = TestData.Load(); var G = d.Gear; int ten = d.Gacha.TenPullCount; Assert.That(ten, Is.EqualTo(10));
+            foreach (var box in d.Gacha.Boxes)
+            {
+                // ⓐ 같은 시드·같은 상태에서 «10연차(한 스트림으로 10번)» 와 «1회 ×10(같은 스트림을 이어 씀)» 은 같은 결과 — ShopScreen.Pull(n) 은 GachaPull 을 n 번 도는 것뿐이다.
+                var a = new List<string>(); var b = new List<string>();
+                { var st = new GachaState(); var rng = new Mulberry32(99); for (int i = 0; i < ten; i++) foreach (var g in GearSystem.GachaPull(d, st, box, rng)) a.Add(g.Rar + ":" + g.Type); }
+                { var st = new GachaState(); var rng = new Mulberry32(99); for (int i = 0; i < ten; i++) { var one = GearSystem.GachaPull(d, st, box, rng); foreach (var g in one) b.Add(g.Rar + ":" + g.Type); } }
+                Assert.That(a, Is.EqualTo(b), box.Key);
+                // ⓑ 10연차 묶음(자연 굴림)의 분포도 표와 같다 — 1,000묶음 × 10 = 10,000
+                var cnt = new int[box.Rate.Length]; var rng2 = new Mulberry32(1000);
+                for (int k = 0; k < GachaSample / ten; k++) for (int i = 0; i < ten; i++) foreach (var g in GearSystem.GachaPull(d, new GachaState(), box, rng2)) cnt[g.Rar]++;
+                var pct = new double[cnt.Length]; for (int r = 0; r < cnt.Length; r++) pct[r] = cnt[r] * 100.0 / GachaSample;
+                AssertPctMatchesTable(box, pct, "10연차 1,000묶음");
+                // ⓒ 피티가 있는 상자는 카운터 0 에서 시작한 10연차마다 전설 이상이 최소 1개(10회째 피티) · 묶음 크기는 10(겹침이면 11)
+                if (box.PityLegend == ten)
+                {
+                    var rng3 = new Mulberry32(3);
+                    for (int k = 0; k < 1000; k++)
+                    {
+                        var st = new GachaState(); int legendPlus = 0, n = 0;
+                        for (int i = 0; i < ten; i++) foreach (var g in GearSystem.GachaPull(d, st, box, rng3)) { n++; if (g.Rar >= G.RarLegend) legendPlus++; }
+                        Assert.That(legendPlus, Is.GreaterThanOrEqualTo(1), $"{box.Key}: 새 카운터의 10연차 #{k} 에 전설 이상이 0개");
+                        Assert.That(n, Is.EqualTo(ten).Or.EqualTo(ten + 1), box.Key);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// ShopScreen.Pull 은 원본(index.html `grand = Math.random`)과 달리 뽑을 때마다 `Mulberry32(TickCount ^ 0x5bd1e995)` 를 새로 만든다 —
+        /// «연속 시계 시드의 첫 굴림» 이 편향되면 실제 게임의 1회 연타가 표와 어긋난다. 1ms 간격·16ms 간격(Windows 틱) 둘 다 표 ±1.5%p 여야 한다.
+        /// </summary>
+        [TestCase(1)]
+        [TestCase(16)]
+        public void GachaClockSeededSinglePullsAreUnbiased(int tickStep)
+        {
+            var d = TestData.Load(); uint tick0 = 0x12345678u;
+            foreach (var box in d.Gacha.Boxes)
+            {
+                var cnt = new int[box.Rate.Length];
+                for (int k = 0; k < GachaSample; k++)
+                {
+                    var rng = new Mulberry32((tick0 + (uint)(k * tickStep)) ^ 0x5bd1e995u);
+                    cnt[GearSystem.GachaPull(d, new GachaState(), box, rng)[0].Rar]++;
+                }
+                var pct = new double[cnt.Length]; for (int r = 0; r < cnt.Length; r++) pct[r] = cnt[r] * 100.0 / GachaSample;
+                AssertPctMatchesTable(box, pct, $"시계 시드 {tickStep}ms 간격 1회 ×10,000");
+            }
+        }
+
+        [Test]
+        public void GachaTypePickIsUniformAcrossAllTypes()
+        {
+            var d = TestData.Load(); var box = d.Gacha.Box("rare"); var types = d.Gear.AllTypes; int n = types.Count * 2000;
+            var cnt = new Dictionary<string, int>(); foreach (var t in types) cnt[t.Part + "|" + t.Type] = 0;
+            var rng = new Mulberry32(77);
+            for (int i = 0; i < n; i++) foreach (var g in GearSystem.GachaPull(d, new GachaState(), box, rng)) cnt[g.Part + "|" + g.Type]++;
+            double expect = 100.0 / types.Count;
+            foreach (var kv in cnt) Assert.That(kv.Value * 100.0 / n, Is.EqualTo(expect).Within(GachaTolPct), $"종류 {kv.Key} 관측 ↔ 균등 {expect:0.00}%");
+        }
     }
 
     static class SetExt { public static T First<T>(this HashSet<T> s) { foreach (var x in s) return x; return default; } }
