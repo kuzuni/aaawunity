@@ -25,7 +25,7 @@
 | T17 | 장비 아이콘 마무리 — 파츠 아이콘 크기 통일(칸 72%) · 무기 45° · 근접 무기(검·방망이·도끼)만 — T7 뒤 | 🔄 진행중 (코드 `6918f71` + 수정 `8c8d60e` · CI #41 빨강 = 테스트 파일 CS0136 → 고침 · **CI 런 #43 유니티 잡 대기** — 이 세션이 다시 깨어나 읽고 종결) | sess-0521-16751 / 워커 B | Core/GearLook(`FitPartIcon` 순수 계산 · `PartIconFill`·`WeaponIconAngle` · `WeaponSlot` 창 폐기) · Game/GearUi(`FitIcon`) · GearScreen(슬롯) · PartIconFit(신규) · catalog(회피 무기 4종 창→검) · Tests/EditMode/GearLookTests(+4) · Tests/PlayMode/UiSmokeTests(슬롯 아이콘 단언) | 파츠 아이콘 = 불투명 bbox(Tight 메시 정점) 긴 변이 칸의 72% · pivot = 그림 가운데 · 무기 +45°(칼끝 오른쪽 위) · GUI Pro 아이콘은 프리팹 값 복원 · 무기 12종 전부 Sword/Blunt 폴더 · dotnet 0/0 · 테스트 63/63 · 시뮬 21칸 동일 |
 | T18 | 배속(x2) 기억 — 세이브 필드 | ✅ 완료 (`73e38de` · dotnet 게이트 초록 · 실물 확인 = **CI 런 #45** PlayMode `SpeedMemoryTests` + 주인 에디터 플레이) | sess-0607-19950 / 워커 A | Core/SaveData(`Speed` 필드 · 직렬화 · 정규화) · Game/BattleScreen(`ToggleSpeed` · Start 가 세이브 값으로) · Tests/EditMode/SaveTests(+1) · Tests/PlayMode/SpeedMemoryTests(신규 1) | 배속 버튼 → `Save.Speed` 즉시 Persist · 전투 시작 = 세이브 값(클리어 뒤 다음 챕터·로비 재진입·앱 재시작 모두 유지) · 옛 세이브(필드 없음)는 1 · 1~2 클램프 · 프리팹·수치 불변 · dotnet 0/0 · 테스트 64/64 · 시뮬 42칸 동일 |
 | T19 | 전투 맵 = 데모 씬 그림 그대로(0.6배 · 물결 양쪽 · 밀도) — T20 뒤 · T21 앞 | 대기 | — | Game/BattleWorld · tools/gen_maps · MapLayouts | ROUTINE §2 T19 |
-| T24 | 대장간: 장착 중 장비도 합성 재료(주인 · 승인 대기 29) | 대기 | — | Game/ForgeScreen · GearUi · Core/GearSystem | ROUTINE §2 T24 |
+| T24 | 대장간: 장착 중 장비도 합성 재료(주인 · 승인 대기 29 기본값 = 산출물을 그 슬롯에) | ✅ 완료 (`920fe0b` · dotnet 게이트 초록 · 실물 확인 = **CI 런 #46** PlayMode `ForgeEquippedFuseTests` + 주인 에디터 플레이) | sess-0620-18959 / 워커 B | Core/GearSystem(`FuseAll` onFused 콜백 · `ReEquipAfterFuse` 신규) · Game/ForgeScreen(장착분 거부·흐림 제거) · Tests/EditMode/GearTests(+4) · Tests/PlayMode/ForgeEquippedFuseTests(신규 1) | 장착분 = 재료 가능(배지 Check 유지 · 흐림 없음 · 토스트 없음) · 수동·자동 모두 장착분 포함 · 재료가 된 장착분 슬롯엔 산출물(같은 부위) 장착, 부위 다르면 빈 슬롯 · 재료 아닌 장착분은 불변 · GearUi 불변 · dotnet 0/0 · 테스트 68/68 · 시뮬 42칸 동일 |
 | T25 | 장비 화면: 캐릭터 크기 = 프리팹 샘플 자리 그대로(너무 작음) · 상점·합성 버튼을 스탯 3칸 바로 아래로 — T17 뒤 | 대기 | — | Game/GearScreen | ROUTINE §2 T25 |
 | T26 | 뽑기 확률 검증(원본 대조 + 10,000회 통계 테스트 · 천장) | 대기 | — | Core/GearSystem · Tests/GearTests · Game/ShopScreen | ROUTINE §2 T26 |
 | T27 | 장비 정보 팝업 = Character_Hero_Item_Detail_01 그대로 — T17 뒤 | 대기 | — | Game/GearUi | ROUTINE §2 T27 |
@@ -398,6 +398,20 @@
 - **플레이 콘솔 에러 0 확인 수단**: 코드 커밋 `73e38de` 의 **CI 런 #45**(https://github.com/kuzuni/aaawunity/actions/runs/34015927886) 유니티 잡 — PlayMode `SpeedMemoryTests` 1건(전투 진입·재진입·App 재생성 지점마다 빨간 줄 0) + 기존 `UiSmokeTests.BattleTicksAndAllBattlePopups`(전투 화면). 이 워커(A)는 :05 슬롯이라 다음 세션(sess 다름)이 읽거나, 이 세션의 후속 체크인이 읽는다 — 빨가면 `result="Failed"` 메시지를 여기 붙이고 고친다. **주의(워커 D · T22)**: 이 push 로 CI 런 #44(T22 `f748948`)가 concurrency 로 **취소**됐다 — #45 가 `f748948` 을 포함하므로 **#45 유니티 잡이 T22(`PressFeedbackTests` 4)·T18 둘 다의 확인 수단**이다(#43 T17 은 별개로 진행 중이었음).
 - **주인이 확인할 것 (한 줄)**: 전투에서 x2 로 바꾼 뒤 «클리어 → 다음 챕터» 나 «로비 → START» 로 다시 들어가도, 앱을 껐다 켜도 배속 버튼이 x2 로 시작하는가 / x1 로 돌려 놓으면 그것도 기억되는가.
 
+### T24 완료 기록 (2026-09-06 · sess-0620-18959 · 워커 B) — 코드 `920fe0b` · CI #46
+
+- **무엇을**: 주인 «대장간에 장착중인 거도 합성 가능하게». aaaw T125 ①-c(index.html `renderForge` — «장착 중인 장비는 재료가 되지 않습니다 — 먼저 해제하세요» · `fuseAll(save.inv, new Set(장착분))` 로 자동도 제외)는 **주인이 뒤집었다** — 이 레포에서만 새 규칙(aaaw 는 불변 · 수치 무관 · 시드 골든 무관).
+- **수정**
+  - `ForgeScreen.Toggle`: 장착분 거부(토스트) 삭제. `Refresh`: 인벤 칸의 `Off`(흐림) 조건에서 `IsEquipped` 를 뺌 — 장착중 배지(프리팹 `Check`)는 그대로 켠다. 재료 고르는 중 «다른 키 흐림» 은 그대로.
+  - `GearSystem.FuseAll(D, inv, equipped, assignUid, onFused)`: 시그니처는 두고 5번째 인자 `onFused(재료 3개, 산출물)` 추가(uid 부여 뒤 호출). 대장간 «자동» 은 제외 집합 `null` + 콜백으로 부른다 → 장착분도 재료. 기존 4인자 호출·테스트(`FuseAllConsumesThreeAndSkipsEquipped`)는 그대로 컴파일·통과.
+  - `GearSystem.ReEquipAfterFuse(S, mats, made)`(순수 C# · 신규 · 승인 대기 29 기본값 한 곳): 재료 중 장착 중이던 것이 있으면 **산출물이 같은 부위면 그 슬롯에 장착**(같은 부위·종류·등급 3개 규칙이라 항상 같은 부위) · 부위가 다르거나 uid 가 없으면 빈 슬롯. 재료가 아닌 장착분은 건드리지 않는다(자동 장착 없음 그대로). 수동(`OnFuse`)·자동(`OnAuto` 콜백) 둘 다 이 함수만 쓴다. 자동 합성 사슬(일반→희귀→전설)에서도 슬롯이 마지막 산출물로 이어진다.
+  - 세이브·전투력·외형: `App.Persist()` 가 `S.Eq` 를 저장하고, 장비 화면 `Refresh` 가 슬롯·`BuildPower`·`HeroView.SetSkin(PlayerSkin)` 을 `S.Eq` 에서 다시 읽으므로 별도 배선 없이 갱신된다(전투도 `CharacterRig` 가 `EquippedGear` 로 읽음). 수동 합성 토스트에 «(장착 중이던 재료 자리에 장착)» 한 마디 추가.
+  - `GearUi` 는 손대지 않았다(`CellOpts.Off` 가 이미 옵션 · T17 이 같은 파일 아이콘 부분을 만지는 중이라 충돌 0).
+- **테스트**: EditMode `GearTests` +4 — 3개 중 하나 장착 → 산출물이 슬롯에 / 9개 사슬(4회) → 전설이 슬롯에 / 재료 아닌 장착분(다른 키·다른 부위)은 불변 / 부위 다름·uid 0 → 빈 슬롯 + 퇴화 입력 → dotnet **68/68**. PlayMode `ForgeEquippedFuseTests.EquippedGearIsAMaterialAndTheProductTakesItsSlot`(신규 파일 · UiSmokeTests 는 손대지 않음 — T17 이 만지는 중): 실제 씬 → 장착분 칸 Check 켜짐·CanvasGroup 흐림 없음·빨간 점 → 장착분 클릭에 거부 토스트 없이 «합성 (1/3)» → 3개 합성 → 산출물이 그 부위 슬롯(PlayerPrefs 세이브에도) · 다른 부위 장착 불변 → 같은 키 2개 추가 후 «자동 (1) !» → 슬롯이 다음 산출물로 → «← 장비» 로 돌아가 장착분 숨김 · 지점 6곳 `PlayLog.AssertNoRed`. UiSmokeTests ③ 의 주석 «(체크 + 흐림)» 은 이제 «체크만» 이 맞지만 단언은 «보인다» 뿐이라 T17 종결 뒤 한 줄만 고치면 된다(기능 영향 0).
+- 게이트: `dotnet build` 0/0 · `dotnet test` 68/68 · `gen_meta --check` · `gen_catalog --check`(461) · `check_catalog_keys` OK(546/460) · `check_unity_null` 0건 · `check_data_sync` OK(aaaw `0707999`) · Sim 시드 11·12·13 사다리·3pick 42칸 = T2 표와 동일. (이 환경엔 dotnet 이 없어 `apt-get update && apt-get install -y dotnet-sdk-8.0`.)
+- **플레이 콘솔 에러 0 확인 수단**: 코드 커밋 `920fe0b` 의 **CI 런 #46**(https://github.com/kuzuni/aaawunity/actions/runs/34016620587) 유니티 잡 — PlayMode `ForgeEquippedFuseTests` 1건 + 기존 `UiSmokeTests.ForgeShowsAllAndFuses`(대장간). 이 세션이 약 25분 뒤 다시 깨어나 읽는다(빨가면 `result="Failed"` 메시지를 여기 붙이고 고친다). **주의**: 이 push 시각(06:29)에 #45(T18 `73e38de` · T22 `f748948` 포함)가 아직 진행 중이었다 — concurrency 로 취소됐다면 **#46 이 T18·T22·T24 셋의 확인 수단**이다(#46 은 그 커밋들을 전부 포함).
+- **주인이 확인할 것 (한 줄)**: 대장간에서 장착 중인 장비(체크 표시)가 흐리지 않고, 눌러도 «먼저 해제하세요» 없이 재료 칸에 들어가는가 / 그것을 포함해 3개를 합성(또는 «자동»)하면 장비 화면의 그 부위 슬롯에 **한 등급 위 산출물이 장착돼 있고** 전투력·캐릭터 외형이 바뀌는가 / 재료로 안 쓴 다른 부위 장착은 그대로인가.
+
 ## 주인 콘솔 에러 보고함 (주인이 붙인 원문 — 다 고칠 때까지 남긴다 · 워커는 매 세션 읽고 작업으로 올린다)
 
 > 주인 상시 지시(2026-09-05): **플레이하면 콘솔에 빨간 에러가 항상 뜬다. 루틴이 매번 플레이 상태를 검증해 다 고쳐라. 다른 에러도 있는지 전부 확인해라.** 새 로그는 아래에 번호를 이어 붙이면 된다(원문 그대로).
@@ -411,7 +425,7 @@
 27. **투사체 표적 규칙(T14)** — 주인은 «웨이브 안 무작위» 를 원한다. 원본 sim.js 가 이미 그렇다면 문제 없음(연출만 고침). 원본이 «맨 앞만» 이면 규칙 변경이라 골든 재생성이 필요 — 워커가 sim.js 를 읽고 결과를 여기 적는다.
 28. **클리어 팝업 «그냥 받기» 버튼(T16)** — «광고 보고 보상 ×2» 만 두면 광고 없이는 못 나간다. 작은 «그냥 받기»(1배) 를 기본값으로 둔다. 빼길 원하면 한 줄.
 
-29. **장착 중 장비를 합성 재료로 쓸 때(T24)** — 재료로 사라진 장착분의 슬롯은 «결과물이 같은 부위면 그것을 장착, 아니면 빈 슬롯» 을 기본값으로 둔다(자동 장착 금지 원칙의 유일한 예외 · 결과물은 재료보다 항상 좋다). 그냥 빈 슬롯으로 두길 원하면 한 줄.
+29. **장착 중 장비를 합성 재료로 쓸 때(T24)** — 재료로 사라진 장착분의 슬롯은 «결과물이 같은 부위면 그것을 장착, 아니면 빈 슬롯» 을 기본값으로 둔다(자동 장착 금지 원칙의 유일한 예외 · 결과물은 재료보다 항상 좋다). 그냥 빈 슬롯으로 두길 원하면 한 줄. **→ T24 `920fe0b` 에 이 기본값 그대로 구현**(`GearSystem.ReEquipAfterFuse` 한 곳 · 수동·자동 공용 · 빈 슬롯을 원하시면 그 함수의 «같은 부위» 분기 한 줄만 지우면 된다).
 
 30. **오디오 에셋 출처(T28)** — 이 환경은 kenney.nl·opengameart.org·freesound.org 접속이 막혀 있어(프록시) GitHub 에 미러된 CC0 팩만 받을 수 있다. GitHub 에서도 못 구하면 시스템만 만들어 두니, 주인이 원하는 팩을 `Assets/Audio/` 에 넣어 주면 카탈로그 한 줄로 붙는다.
 

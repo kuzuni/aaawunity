@@ -247,7 +247,7 @@
 5. 검증: 워커는 WebGL 을 못 돌리므로, `tools/demo_render` 의 방식으로 **우리 배치 표(MapLayouts × 0.6 · 5.4u 창)** 를 같은 HTML 로 그려 데모 그림과 나란히 보고(PNG 커밋 금지) PROGRESS 에 «같다/다른 점» 한 줄. 대화형 세션이 gh-pages 스크린샷으로 최종 확인한다.
 6. 게이트 + PROGRESS T19 행.
 
-### T24 — 대장간: 장착 중 장비도 합성 재료 (T8 뒤 · 주인 2026-09-06)
+### T24 — 대장간: 장착 중 장비도 합성 재료 (T8 뒤 · 주인 2026-09-06) ✅ (완료 · `920fe0b` · PROGRESS 참조)
 범위: `Assets/Scripts/Game/ForgeScreen.cs` · `GearUi.cs`(Cell 흐림 옵션) · `Assets/Scripts/Core/GearSystem.cs`(FuseAll 장착 제외 인자)
 순서: 제약 없음(T8 ✅ · T17 이 GearUi 아이콘 부분을 만지므로 Cell 의 «흐림» 한 줄만 조심).
 1. 주인 «대장간에 장착중인 거도 합성 가능하게». `ForgeScreen.Toggle` 의 장착분 거부(토스트)·흐림을 없애고 장착중 배지(Check)는 유지. «자동» 도 장착분을 포함해 합성(`FuseAll` 호출에서 `EquippedSet` 제외를 뺀다 — 함수 시그니처는 두고 빈 집합을 넘겨도 된다).
