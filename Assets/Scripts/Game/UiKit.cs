@@ -468,8 +468,8 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>컴포넌트가 없으면 붙인다. ⚠ `GetComponent() ?? AddComponent()` 는 에디터에서 «가짜 null»(== 만 재정의) 때문에 AddComponent 가 안 돌아 MissingComponentException 이 난다 — 반드시 이걸 쓴다.</summary>
-        /// <summary>UI 비평 판정 요소 이름표(T46) — name 은 docs/ref-layout.md 표의 «요소» 열과 글자까지 같게. 자기 사각형을 잰다.</summary>
-        public static UiTag Tag(Transform t, string name) { if (t == null) return null; var tag = Ensure<UiTag>(t.gameObject); tag.Name = name; tag.Members.Clear(); return tag; }
+        /// <summary>UI 비평 판정 요소 이름표(T46) — name 은 docs/ref-layout.md 표의 «요소» 열과 글자까지 같게. 자기 사각형을 잰다. <paramref name="textBounds"/> 면 rect 대신 글자 덩어리(uGUI Text preferred 크기 · 정렬 자리)를 잰다(T47 ⓒ · «챕터 제목»).</summary>
+        public static UiTag Tag(Transform t, string name, bool textBounds = false) { if (t == null) return null; var tag = Ensure<UiTag>(t.gameObject); tag.Name = name; tag.Members.Clear(); tag.TextBounds = textBounds; return tag; }
         /// <summary>«줄(N칸)» 행의 이름표 — host 아래에 빈 Rect 를 하나 두고 members 사각형의 합집합(⊕)을 잰다(ref-layout ⚑U03 ⓒ).</summary>
         public static UiTag TagGroup(Transform host, string name, params RectTransform[] members)
         {

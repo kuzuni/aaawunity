@@ -108,7 +108,7 @@ namespace KkomaKnight.Game
             var stripHit = _perkStrip.gameObject.AddComponent<Image>(); stripHit.color = new Color(0, 0, 0, 0); UiKit.Clickable(_perkStrip, () => { if (G != null && !App.Overlay.IsOpen) App.Overlay.PerkBook(G, null); }, false);
             // 비평 이름표(T46 · ref-layout ② 의 «요소» 이름 그대로) — 월드 행(지면 띠 · 발밑 y · 캐릭터 높이 · 바 폭)은 캔버스 밖이라 여기 없다(T47 이 BattleWorld 에서 잰다)
             UiKit.TagGroup(Root, "상단 HUD pill 2개", killPill, goldPill); UiKit.Tag(menu, "메뉴(☰) 버튼");
-            if (_chapTitle != null) UiKit.Tag(_chapTitle.transform, "챕터 제목"); UiKit.Tag(_prog.Root, "진행 바");
+            if (_chapTitle != null) UiKit.Tag(_chapTitle.transform, "챕터 제목", textBounds: true); UiKit.Tag(_prog.Root, "진행 바");   // 글자 덩어리로 잰다(T47 ⓒ · 조각은 ±6/12 여유)
             UiKit.Tag(spd, "배속 버튼"); UiKit.Tag(pet, "우하단 원형 버튼"); UiKit.Tag(UiKit.Find(Root, "HudPanel"), "하단 패널");
             UiKit.Tag(_exp.Root, "EXP 바"); UiKit.Tag(_hp.Root, "HP 바"); UiKit.Tag(_sh.Root, "실드 바");
             var cells = new RectTransform[StatDefs.Length]; for (int i = 0; i < StatDefs.Length; i++) cells[i] = UiKit.Find(Root, "stat:" + StatDefs[i].Key) as RectTransform;

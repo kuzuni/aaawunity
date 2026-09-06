@@ -90,6 +90,56 @@ namespace KkomaKnight.Game
         /// <summary>이 판의 맵 테마 — 테스트·진단용 읽기.</summary>
         public Theme MapTheme => _theme;
 
+        // ───────────────────────── 비평 하니스 월드 행(T47 ⓑ · ref-layout ② 의 캔버스 밖 행) ─────────────────────────
+        /// <summary>월드 스프라이트 Bounds → 프레임 %(좌상 0 · 우하 100) [x, y, w, h]. 카메라 = 프레임과 같은 영역(WorldCam · 세로 LayoutH · 가로는 프레임 비율).</summary>
+        static float[] FrameRect(Bounds b)
+        {
+            float halfH = WorldCam.LayoutH / WorldCam.PPU / 2f, halfW = halfH * UiKit.FrameW / UiKit.FrameH;
+            float x = (b.min.x + halfW) / (2f * halfW) * 100f, y = (halfH - b.max.y) / (2f * halfH) * 100f;
+            float w = b.size.x / (2f * halfW) * 100f, h = b.size.y / (2f * halfH) * 100f;
+            return new[] { R1(x), R1(y), R1(w), R1(h) };
+        }
+        static float R1(float v) => Mathf.Round(v * 10f) / 10f;
+        static float PctX(float worldX) { float halfH = WorldCam.LayoutH / WorldCam.PPU / 2f, halfW = halfH * UiKit.FrameW / UiKit.FrameH; return R1((worldX + halfW) / (2f * halfW) * 100f); }
+        static float PctY(float worldY) { float halfH = WorldCam.LayoutH / WorldCam.PPU / 2f; return R1((halfH - worldY) / (2f * halfH) * 100f); }
+        /// <summary>
+        /// 비평 하니스(T46·T47)가 캔버스 이름표(UiTag)로 못 재는 <b>월드 행</b>을 ref-layout ② 표의 «요소» 이름 그대로 프레임 % 로 돌려준다 — 지면(길) 띠 · 플레이어 발밑 y · 적 행 y · 플레이어/적 높이 · 체력 라벨 줄 · 플레이어 중심 x · 발밑 바 폭 2.
+        /// 값은 <b>지금 그려진 것</b>(CharScale 2/3 · 데모 길 띠 × MapScale)이라 표와 다를 수 있다 — 채점이 그 차이를 그대로 보인다(ui_score.py 는 ref 에 값이 있는 축만 비교 · «플레이어 중심 x» 는 x 에 중심을 넣는다).
+        /// 적은 화면 안(LayoutW 안)의 살아 있는 적 중 가장 가까운 것 하나 · 없으면 적 행 3개는 뺀다.
+        /// </summary>
+        public Dictionary<string, float[]> MeasureLayout()
+        {
+            var d = new Dictionary<string, float[]>();
+            if (_roadTiles.Count > 0 && _roadTiles[0] != null) { var rb = _roadTiles[0].bounds; var r = FrameRect(rb); d["지면(길) 띠"] = new[] { 0f, r[1], 100f, r[3] }; }
+            if (_player != null)
+            {
+                var pb = FrameRect(_player.Bounds()); float foot = PctY(_player.transform.position.y);
+                d["플레이어 높이"] = pb;
+                d["플레이어 발밑 y"] = new[] { pb[0], foot, pb[2], 0f };
+                d["플레이어 중심 x"] = new[] { PctX(_player.transform.position.x), pb[1], pb[2], pb[3] };
+            }
+            if (_pBarBg != null && _pBarBg.gameObject.activeSelf)
+            {
+                var hb = _pBarBg.bounds; d["플레이어 발밑 바 폭"] = FrameRect(hb);
+                if (_pShBg != null && _pShBg.gameObject.activeSelf) hb.Encapsulate(_pShBg.bounds);
+                d["체력 라벨 줄"] = FrameRect(hb);
+            }
+            EnemyView near = null; float nearLx = float.MaxValue;
+            foreach (var kv in _enemies)
+            {
+                var v = kv.Value; if (v.E.Dead || v.Rig == null || v.DieT >= 0) continue;
+                float lx = LayoutX(v.E.WorldX); if (lx >= WorldCam.LayoutW || lx >= nearLx) continue;
+                near = v; nearLx = lx;
+            }
+            if (near != null)
+            {
+                var eb = FrameRect(near.Rig.Bounds());
+                d["적 높이"] = eb; d["적 행 y"] = new[] { eb[0], eb[1], eb[2], 0f };
+                if (near.BarBg != null && near.BarBg.gameObject.activeSelf) d["적 발밑 바 폭"] = FrameRect(near.BarBg.bounds);
+            }
+            return d;
+        }
+
         public BattleWorld(App app, BattleState g, RectTransform popsLayer)
         {
             _app = app; G = g; D = g.D; _pops = popsLayer;

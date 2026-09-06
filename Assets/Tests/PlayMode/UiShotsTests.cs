@@ -127,7 +127,16 @@ namespace KkomaKnight.Tests.Play
             _app.StartBattle(1); yield return RealSeconds(3f);
             Assert.AreEqual("battle", _app.Current.Name);
             var bs = _app.GetScreen<BattleScreen>(); var G = bs != null ? bs.G : null; Assert.IsNotNull(G, "전투 상태");
+            // T47 ⓐ — 3초 안에 레벨업 팝업이 뜨면 02 가 특전 카드 화면(04 와 같은 그림)으로 찍힌다(CI #83) → 03 루프와 같이 닫고 찍는다
+            Time.timeScale = 0f;   // 촬영 동안 엔진 정지 — 닫은 뒤 다음 프레임에 또 레벨업이 뜨지 않게(찍고 나서 1 로 되돌린다)
+            if (_app.Overlay.IsOpen) { _app.Overlay.Close(); G.Pending = null; yield return Frames(1); }
             yield return Shot("02_battle");
+            {   // T47 ⓑ — 월드 행이 layout.json 에 들어간다(BattleWorld.MeasureLayout · ref-layout ② 이름 그대로)
+                var l02 = (Dictionary<string, object>)_layout["02_battle"];
+                Assert.IsTrue(l02.ContainsKey("플레이어 발밑 y") && l02.ContainsKey("플레이어 높이") && l02.ContainsKey("지면(길) 띠"), "02_battle layout 에 월드 행(플레이어 발밑 y · 플레이어 높이 · 지면(길) 띠)이 있어야 한다");
+                Assert.IsTrue(l02.ContainsKey("챕터 제목") && l02.ContainsKey("HP 바"), "02_battle 은 팝업이 아니라 HUD 를 찍어야 한다(챕터 제목 · HP 바 이름표)");
+            }
+            Time.timeScale = 1f;
             bool engaged = false; float t0 = Time.realtimeSinceStartup;
             while (Time.realtimeSinceStartup - t0 < 8f) { if (bs.World != null && bs.World.Engaged && !_app.Overlay.IsOpen) { engaged = true; break; } if (_app.Overlay.IsOpen) { _app.Overlay.Close(); G.Pending = null; } yield return Frames(1); }
             if (engaged) yield return Shot("03_battle_enemy"); else _missing.Add("03_battle_enemy (8초 안에 적 조우 없음)");

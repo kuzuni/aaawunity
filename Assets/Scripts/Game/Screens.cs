@@ -74,7 +74,7 @@ namespace KkomaKnight.Game
                 var t = Layout.LobbyChapTitle; var u = Layout.LobbyChapUnderline;
                 UiKit.Pct(trt, u.X, t.Y, u.W, u.Y + u.H - t.Y);
                 _chap = UiKit.SetText(trt, "Text (TMP)", "챕터 1");
-                if (_chap != null) UiKit.Tag(_chap.transform, "챕터 제목"); UiKit.Tag(UiKit.Find(trt, "LineDeco"), "챕터 밑줄·선택 화살표");
+                if (_chap != null) UiKit.Tag(_chap.transform, "챕터 제목", textBounds: true); UiKit.Tag(UiKit.Find(trt, "LineDeco"), "챕터 밑줄·선택 화살표");   // 글자 덩어리로 잰다(T47 ⓒ · 조각 rect 는 표보다 6%p 넓다)
             }
 
             // ⑤ 챕터 카드(어두운 테두리 상자 안에 이번 챕터 테마의 바닥·길·소품) + ◀▶

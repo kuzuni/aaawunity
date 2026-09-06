@@ -116,6 +116,11 @@ namespace KkomaKnight.Tests.Play
                 if (d.ContainsKey(tag.Name)) { Debug.LogWarning("[PlayShot] 이름표 중복(먼저 것만 씀): " + tag.Name); continue; }
                 d[tag.Name] = new List<object> { (double)r[0], (double)r[1], (double)r[2], (double)r[3] };
             }
+            // T47 ⓑ — 전투 화면(팝업 없음)이면 캔버스 밖 월드 행(지면 띠 · 발밑 y · 캐릭터 높이 · 바 폭 …)을 BattleWorld 에서 재서 같은 이름으로 넣는다(ref-layout ② · ui_score.py 가 값이 있을 때만 센다)
+            var bs = app.Current as BattleScreen;
+            if (bs != null && bs.World != null && !(app.Overlay != null && app.Overlay.IsOpen))
+                foreach (var kv in bs.World.MeasureLayout())
+                    if (!d.ContainsKey(kv.Key)) d[kv.Key] = new List<object> { (double)kv.Value[0], (double)kv.Value[1], (double)kv.Value[2], (double)kv.Value[3] };
             return d;
         }
 
