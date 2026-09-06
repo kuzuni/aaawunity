@@ -136,6 +136,13 @@ namespace KkomaKnight.Tests.Play
                 float lum = 0.299f * im.color.r + 0.587f * im.color.g + 0.114f * im.color.b;
                 Assert.LessOrEqual(lum, 0.35f, label + " ItemFrame Border 는 Ink(밝기 ≤ 0.35 · 지금 " + lum.ToString("0.00") + ")");
                 Assert.AreEqual(Image.Type.Sliced, im.type, label + " ItemFrame Border 는 9-slice");
+                Assert.IsFalse(im.fillCenter, label + " ItemFrame Border 는 가운데 비움(링 위로 올리므로 아이콘을 덮으면 안 된다 · 결정 184)");
+                Assert.IsFalse(im.raycastTarget, label + " ItemFrame Border raycast 끔(결정 184)");
+                // 결정 184 — «있다»(단언 통과)가 «보인다» 를 보장하지 않는다: 링이 형제 뒤에 있으면 Bg/InnerBorder3/Glow 가 덮어 눈에는 테두리가 없다. 링은 자기 부모의 맨 뒤(맨 위)여야 한다.
+                var ringParent = im.transform.parent;
+                Assert.IsNotNull(ringParent, label + " ItemFrame Border 의 부모");
+                Assert.AreEqual(ringParent.childCount - 1, im.transform.GetSiblingIndex(),
+                    label + " ItemFrame Border 링은 형제 맨 뒤(맨 위)여야 눈에 보인다 · 지금 " + im.transform.GetSiblingIndex() + "/" + (ringParent.childCount - 1) + " (부모 " + ringParent.name + " · 결정 184)");
                 float ratio = cell.lossyScale.x > 0f ? im.transform.lossyScale.x / cell.lossyScale.x : 1f;   // 조각이 칸 안에서 축소된 배율(장착 슬롯 FitScale 0.8)
                 float linePx = UiKit.BorderNativePx("fr.itemBorder") / Mathf.Max(0.01f, im.pixelsPerUnitMultiplier) * ratio;
                 Assert.GreaterOrEqual(linePx, UiKit.BorderPx - 0.05f, label + " ItemFrame 테두리 선 ≥ 8px(폰 3px) · 지금 " + linePx.ToString("0.0"));

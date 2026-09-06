@@ -90,6 +90,12 @@ namespace KkomaKnight.Game
         /// (등급 변형은 짙은 갈색 0.18/0.11/0.09 · 빈 칸 Add_1 은 연한 갈색 0.75/0.59/0.43)을 <see cref="UiKit.BorderInk"/> 로 칠하고 선을 프레임 <see cref="UiKit.BorderPx"/>(8px · 폰 3px) 이상으로 굵힌다(원본 5px → 9-slice multiplier · 결정 149 와 같은 방식).
         /// 조각이 <paramref name="scale"/> 로 축소돼 있으면(장착 슬롯 FitScale 0.8) 그만큼 더 굵게 → 화면에서는 같은 8px. 등급색은 Bg·InnerBorder1·Glow 가 그대로 낸다(레퍼런스 06: 파랑/보라 속 + 검은 외곽선). 비활성 자식(Add_1 등)도 미리 칠해 둔다(상태가 바뀌어 켜질 때 그대로 어둡다).
         /// 장착 슬롯(GearScreen) · 인벤/대장간/뽑기 결과/세부 팝업 칸(<see cref="Cell"/>) · 빈 슬롯 팝업(<see cref="OpenSlot"/>)이 전부 이 함수를 거친다.
+        /// <para>
+        /// 결정 184(T69-forge · 대장간 08 PNG 눈 확인): 칠하기만 해서는 «단언은 통과하는데 눈에는 안 보이는» 칸이 나온다 — 조각의 형제 순서가 링을 덮기 때문이다.
+        /// 빈 칸 <c>Add_1</c> 은 (Bg2 · Border · InnerBorder3 · Icon) 이라 링 위에 InnerBorder3 가 그려지고, 등급 변형은 (Bg · InnerBorder1 · Border · Glow · SpecialBorder) 라 링 위에 Glow·하이라이트가 덮인다.
+        /// → 칠한 링을 <c>SetAsLastSibling</c> 으로 자기 부모의 맨 뒤(맨 위)에 둔다. 링은 9-slice 가운데가 0px(79 = 39+40)라 <c>fillCenter</c> 를 꺼 두면 아이콘·«+» 를 가리지 않고,
+        /// raycast 도 꺼서 칸을 누르는 것을 막지 않는다(<see cref="UiKit.Bordered"/> 가 덧대는 링과 같은 계약).
+        /// </para>
         /// </summary>
         public static void DarkFrame(Transform frame, float scale = 1f)
         {
@@ -99,6 +105,8 @@ namespace KkomaKnight.Game
             {
                 if (im == null || im.name != UiKit.BorderName || im.sprite == null || !im.sprite.name.StartsWith(ItemBorderSprite, StringComparison.Ordinal)) continue;
                 im.color = UiKit.BorderInk; im.type = Image.Type.Sliced; im.pixelsPerUnitMultiplier = UiKit.BorderMultiplier("fr.itemBorder", px);
+                // 결정 184: 링이 형제(InnerBorder3 · Glow · 하이라이트)에 가려지지 않게 맨 위로 · 가운데는 비우고 raycast 는 끈다
+                im.fillCenter = false; im.raycastTarget = false; im.transform.SetAsLastSibling();
             }
         }
 
