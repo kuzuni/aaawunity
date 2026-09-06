@@ -411,7 +411,7 @@
 1. 특권(11 · 페이지 · 카드 세로 나열 · «전체 받기» 바닥 바) · 퀘스트(15 · 파란 명판 · 점수 트랙 · 줄 목록 · 일일/주간/업적 탭) · 출석(16 · 노란 리본 · 3×2 + 7일 칸) · 데일리 기프트(17 · 선물 그림 · 세로 타임라인 · 광고 N회 줄 4) · 7일 챌린지(18 · 빨간 리본 · 배너 · 점수 트랙 · Days 1~7 세로 탭 + 과제 줄) · 패스(19 · 시즌 배너 · 3열 세로 트랙 · 바닥 3버튼). 각각 레퍼런스 구도 그대로, 글자는 한국어, **버튼은 눌려도 아무 일 없음 · 배경 탭으로 닫힘**.
 2. 게이트 + 스모크(6개 열고 빨간 줄 0) + PROGRESS T44 행.
 
-### T45 — CI #51 빨강(T23 코드 커밋 `9ea5d9d`) 후속: PlayMode `MapThemeTests` 사막 물결 경계 정렬 1건 — T19 회귀 (최우선 · main 빨강 = gh-pages 안 생김)
+### T45 — CI #51 빨강(T23 코드 커밋 `9ea5d9d`) 후속: PlayMode `MapThemeTests` 사막 물결 경계 정렬 1건 — T19 회귀 ✅ (완료 · `11a737d` · CI #53 유니티 잡 초록 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/BattleWorld.cs`(`BuildProps` 의 `flat` 판정 1줄) · 테스트 불변(`Assets/Tests/PlayMode/MapThemeTests.cs` 는 손대지 않는다)
 순서: 제약 없음.
 1. 원인(CI #51 · https://github.com/kuzuni/aaawunity/actions/runs/34017948738 · PlayMode 21건 중 `MapThemeTests.AllFourThemesMatchDemoSceneComposition` 1건 실패 · 나머지 20 + EditMode 78 Passed): 메시지 «챕터 4 (desert) 물결 경계는 길 바로 위(납작 · 데모 렌더 순서) Expected: -16 But was: 389». `BuildProps` 가 물결 경계를 «납작(스프라이트 높이 × Sy < 0.35u)» 으로 골라 -16 을 주는데, `Road_up_Desert.png` 만 **43px = 0.43u**(Autumn 34 · DeepForest 33 · Forest 33px) 라 문턱을 넘어 일반 소품 규칙(y 로 381+…)로 떨어진다. T19 커밋 `dedeffb` 의 CI #48·#50 이 뒤 push 로 취소돼 그 세션이 못 본 회귀.
