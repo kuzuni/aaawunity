@@ -11,7 +11,7 @@ namespace KkomaKnight.Tests.Play
 {
     /// <summary>
     /// T72 «질감 3종» 헬퍼 계약(주인 2026-09-06 «Pattern_01_256 거의 모든 UI 에 · 아이콘 뒤 Effect_Light 천천히 회전 · 그라데이션 색감») — 실제 씬(App) 위에 시험 칸을 세우고
-    /// ① <see cref="UiKit.PatternBg"/>: «Pattern» RawImage · 텍스처 Repeat(.meta) · uvRect 크기 = 사각형 ÷ 256 · 시간이 멈춘 중(timeScale 0)에도 uvRect.position 이 <b>줄어</b>(= 그림이 오른쪽 위로) 흐른다 · raycast 끔 · 알파 0.08~0.15
+    /// ① <see cref="UiKit.PatternBg"/>: «Pattern» RawImage · 텍스처 Repeat(.meta) · uvRect 크기 = 사각형 ÷ 256 · 시간이 멈춘 중(timeScale 0)에도 uvRect.position 이 <b>줄어</b>(= 그림이 오른쪽 위로) 흐른다 · raycast 끔 · 알파 3/255 · 한 타일 10~15초(주인 확정 2026-09-07)
     /// ② <see cref="UiKit.LightBehind"/>: «LightMask»(RectMask2D) 안 «Light» · 아이콘 <b>뒤</b>(형제 순서 앞) · 한 변 = 아이콘 긴 변 × 1.9 · 아이콘 중심 · <b>시계방향</b> 회전(unscaled) · <see cref="UiKit.SetLightSpinning"/> 으로 멈춤
     /// ③ <see cref="UiKit.Gradient"/>: «GradientTop»/«GradientBottom» 두 장 · Gradient 스프라이트 · 글자·아이콘 아래(형제 순서 앞) · raycast 끔
     /// 공통: 두 번 불러도 조각이 늘지 않고, 칸이 파괴되면 트윈이 남지 않으며(SetLink · T56), 빨간 줄 0(<see cref="PlayLog"/>). 화면별 «어디에 있나» 는 T63/T69 화면 묶음 테스트가 <see cref="UiKit.HasPattern"/>·<see cref="UiKit.HasLight"/>·<see cref="UiKit.HasGradient"/> 로 단언한다.
@@ -62,7 +62,8 @@ namespace KkomaKnight.Tests.Play
             Assert.IsFalse(raw.raycastTarget, "Pattern raycast 끔");
             Assert.IsNotNull(raw.texture, "Pattern 텍스처"); Assert.IsTrue(raw.texture.name.StartsWith("Pattern_01"), "텍스처 = Pattern_01_256 (" + raw.texture.name + ")");
             Assert.AreEqual(TextureWrapMode.Repeat, raw.texture.wrapMode, "Pattern_01_256.png.meta 는 wrapU/V = Repeat(타일링) 이어야 한다");
-            Assert.That(raw.color.a, Is.InRange(0.08f, 0.15f), "패턴 알파 0.08~0.15(은은한 무늬)");
+            Assert.AreEqual(3f / 255f, raw.color.a, 0.002f, "패턴 알파 = 주인 확정 «255 중 3»(2026-09-07 · 아주 은은하게)");
+            Assert.That(UiKit.PatternTileSeconds, Is.InRange(10f, 15f), "패턴 한 타일 10~15초(주인 확정 «속도 2배»)");
             Assert.IsTrue(UiKit.HasPattern(host), "HasPattern");
             Canvas.ForceUpdateCanvases();
             var hr = ((RectTransform)raw.transform).rect;
@@ -79,7 +80,7 @@ namespace KkomaKnight.Tests.Play
             Assert.Less(mask.GetSiblingIndex(), icon.transform.GetSiblingIndex(), "빛살은 아이콘 «뒤»(형제 순서 앞)");
             Assert.Greater(mask.GetSiblingIndex(), raw.transform.GetSiblingIndex(), "빛살은 패턴 위");
             Assert.IsFalse(light.raycastTarget, "Light raycast 끔"); Assert.IsNotNull(light.sprite); Assert.IsTrue(light.sprite.name.StartsWith("Effect_Light"), "스프라이트 = Effect_Light_01_512 (" + light.sprite.name + ")");
-            Assert.That(light.color.a, Is.InRange(0.5f, 0.7f), "빛살 알파 0.5~0.7");
+            Assert.AreEqual(68f / 255f, light.color.a, 0.01f, "빛살 알파 = 주인 확정 «255 중 68»(2026-09-07)");
             var lrt = light.rectTransform; var irt = icon.rectTransform;
             float side = Mathf.Max(irt.rect.width, irt.rect.height) * UiKit.LightScale;
             Assert.AreEqual(side, lrt.rect.width, 1f, "빛살 한 변 = 아이콘 긴 변 × " + UiKit.LightScale); Assert.AreEqual(side, lrt.rect.height, 1f, "정사각");
@@ -432,6 +433,59 @@ namespace KkomaKnight.Tests.Play
             Time.timeScale = 1f;
 
             _log.AssertNoRed("T72 화면 적용(승리·사망·레벨업 · 공통 팝업 그라데이션)");
+            yield return Shutdown();
+        }
+
+        /// <summary>«버튼 배경 안» 그라데이션 조각을 찾는다(<see cref="UiKit.ButtonGradient"/> 는 배경 그림의 자식으로 넣는다).</summary>
+        static Image BottomGradientUnder(Transform btn)
+        {
+            foreach (var im in btn.GetComponentsInChildren<Image>(true))
+                if (im != null && im.name == UiKit.GradientBottomName) return im;
+            return null;
+        }
+
+        /// <summary>
+        /// T72 2단계 5차 — ③ 그라데이션을 <see cref="UiKit.Button"/> 한 곳에서 <b>모든 프리팹 버튼</b>에(3항 우선순위 1 «주황/파랑/회색 버튼» · 레퍼런스 06 «Forge» · 13 «Summon» 이 전부 위 밝고 아래 어둡다):
+        /// ⓐ 세 색 버튼 모두 배경 그림 «안»에 «GradientBottom»(Button_03_White_Gradient · Ink · raycast 끔) 한 장 · 두 번 세워도 안 늘어난다
+        /// ⓑ 눌림 표시는 그대로 = <see cref="UiKit.PressTarget"/> 이 질감 조각(무늬·빛살·그라데이션)을 건너뛰어 <b>배경 그림</b>을 고른다(결정 170 이 ③ 을 버튼에 못 넣게 막던 이유를 여기서 푼다)
+        /// ⓒ 실제 화면(장비 06 «대장간» 주황 버튼)도 같은 그라데이션을 화면 코드 0 줄로 받는다. 빨간 줄 0.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator PrefabButtonsCarryBottomGradientAndKeepPressTint()
+        {
+            yield return Boot();
+            var host = UiKit.Rect(_app.Frame, "T72BtnHost"); UiKit.Pct(host, 10f, 10f, 80f, 40f);
+            string[] keys = { "ui.btnOrange", "ui.btnBlue", "ui.btnGray" };
+            for (int i = 0; i < keys.Length; i++)
+            {
+                var btn = UiKit.Button(host, keys[i], "시험", () => { }, new Layout.R(0, i * 33f, 100, 30f));
+                btn.name = "T72Btn:" + keys[i];
+                Canvas.ForceUpdateCanvases();
+                var grad = BottomGradientUnder(btn);
+                Assert.IsNotNull(grad, "[" + keys[i] + "] 버튼에 아래 어둠 그라데이션(T72 ③ · UiKit.Button 한 곳)");
+                Assert.IsNotNull(grad.sprite); Assert.IsTrue(grad.sprite.name.IndexOf("Gradient", System.StringComparison.OrdinalIgnoreCase) >= 0, "[" + keys[i] + "] 조각 = Gradient 스프라이트 (" + grad.sprite.name + ")");
+                Assert.IsFalse(grad.raycastTarget, "[" + keys[i] + "] 그라데이션은 클릭을 안 먹는다");
+                Assert.Greater(grad.color.a, 0.05f, "[" + keys[i] + "] 아래 어둠 알파");
+                var bg = grad.transform.parent.GetComponent<Image>();
+                Assert.IsNotNull(bg, "[" + keys[i] + "] 그라데이션은 «보이는 배경 그림» 안에 넣는다(배경 위 · 글자 아래)");
+                Assert.Greater(bg.color.a, 0.01f, "[" + keys[i] + "] 그 배경은 보이는 그림");
+
+                var b = btn.GetComponent<Button>(); Assert.IsNotNull(b, "[" + keys[i] + "] Button");
+                Assert.IsTrue(UiKit.HasVisiblePressTarget(b), "[" + keys[i] + "] 눌림 색이 보이는 그림에 입는다");
+                Assert.IsFalse(UiKit.IsTextureLayer(b.targetGraphic.name), "[" + keys[i] + "] 눌림 대상이 질감 조각이면 안 된다(결정 170 해제 조건 · 지금은 " + b.targetGraphic.name + ")");
+
+                UiKit.ButtonGradient(btn);   // 두 번 불러도 조각은 하나
+                int n = 0; foreach (var im in btn.GetComponentsInChildren<Image>(true)) if (im.name == UiKit.GradientBottomName) n++;
+                Assert.AreEqual(1, n, "[" + keys[i] + "] 다시 불러도 그라데이션은 한 장");
+            }
+
+            // ⓒ 실제 화면 — 장비(06) 의 «대장간» 주황 버튼도 화면 코드 0 줄로 같이 받는다
+            _app.ShowScreen("gear"); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var gear = _app.GetScreen<GearScreen>(); Assert.IsNotNull(gear, "장비 화면");
+            var forge = UiKit.Find(gear.Root, "ForgeBtn");
+            if (forge != null) Assert.IsNotNull(BottomGradientUnder(forge), "장비 06 «대장간» 버튼도 아래 어둠 그라데이션(레퍼런스 06 Forge)");
+
+            _log.AssertNoRed("T72 ③ 버튼 그라데이션");
             yield return Shutdown();
         }
     }

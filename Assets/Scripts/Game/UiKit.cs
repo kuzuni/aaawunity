@@ -320,17 +320,19 @@ namespace KkomaKnight.Game
         /// <summary>질감 조각 이름(고정 · 테스트·감사가 찾는다).</summary>
         public const string PatternName = "Pattern", LightName = "Light", LightMaskName = "LightMask", GradientTopName = "GradientTop", GradientBottomName = "GradientBottom";
         public const string PatternKey = "ui.pattern", LightKey = "ui.light1", LightKeySmall = "ui.light2", GradTopKey = "ui.gradTop1", GradBottomKey = "ui.gradBottom";
-        /// <summary>패턴 한 타일이 지나가는 시간(초 · ROUTINE T72 1항 20~30).</summary>
-        public const float PatternTileSeconds = 25f;
+        /// <summary>버튼 아래 어둠(Button_03_White_Gradient · 버튼 모양 9-slice) · 카드 위 밝음(CardFrame_03_White_Gradient) — ③ 그라데이션 3항 우선순위 1·3.</summary>
+        public const string BtnGradientKey = "ui.btnGradient", CardGradientKey = "fr.cardGradient3";
+        /// <summary>패턴 한 타일이 지나가는 시간(초 · 주인 확정 2026-09-07 «속도 2배» → ROUTINE T72 1항 10~15 · 종전 25).</summary>
+        public const float PatternTileSeconds = 12.5f;
         /// <summary>패턴 타일 한 변(프레임 px) — 텍스처 256px 그대로(레퍼런스 01 의 무늬 주기 ≈ 프레임 폭의 1/4).</summary>
         public const float PatternTilePx = 256f;
-        /// <summary>패턴 알파(0.08~0.15 · 레퍼런스 01 «은은한 무늬» · 무늬 픽셀은 알파 255 라 = 그 자리만 12% 어둡거나 밝다).</summary>
-        public const float PatternAlpha = 0.12f;
+        /// <summary>패턴 알파 — 주인 확정 2026-09-07 «255 중 3»(= 3/255 ≈ 0.012 · «아주 은은하게» · 종전 0.12 는 레퍼런스보다 진했다). 무늬 픽셀은 알파 255 라 = 그 자리만 1.2% 어둡거나 밝다.</summary>
+        public const float PatternAlpha = 3f / 255f;
         /// <summary>밝은 바탕(초록 로비 · 크림 패널) 용 tint = Ink(레퍼런스 01 은 바탕보다 어두운 무늬) · 어두운 바탕(상점 회색 · 팝업 어둠) 용 = White(레퍼런스 09 는 밝은 무늬).</summary>
         public static Color PatternTintLight => Palette.A(Palette.Ink, PatternAlpha);
         public static Color PatternTintDark => Palette.A(Palette.White, PatternAlpha);
-        /// <summary>빛살 한 바퀴(초 · 12~20) · 한 변 = 아이콘 긴 변 × 배(1.6~2.2) · 알파(0.5~0.7).</summary>
-        public const float LightPeriod = 16f, LightScale = 1.9f, LightAlpha = 0.6f;
+        /// <summary>빛살 한 바퀴(초 · 12~20) · 한 변 = 아이콘 긴 변 × 배(1.6~2.2) · 알파 = 주인 확정 2026-09-07 «255 중 68»(= 68/255 ≈ 0.267 · 종전 0.6 은 아이콘을 덮었다).</summary>
+        public const float LightPeriod = 16f, LightScale = 1.9f, LightAlpha = 68f / 255f;
         /// <summary>그라데이션 tint — 위 흰 +12% 밝기 · 아래 Ink −18%(ROUTINE T72 3항 팔레트).</summary>
         public const float GradientTopAlpha = 0.12f, GradientBottomAlpha = 0.18f;
         /// <summary>공통 팝업 상자 안 패턴을 들여 까는 여백(px) — Popup_Box_01~03_White_Bg 의 둥근 모서리 반지름 실측 8px + Bg 자신의 여백 2px(결정 164).</summary>
@@ -673,11 +675,15 @@ namespace KkomaKnight.Game
             foreach (var im in root.GetComponentsInChildren<Image>(true))
             {
                 if (im == null || im == self || !im.enabled || im.color.a <= 0.01f) continue;
+                if (IsTextureLayer(im.name)) continue;
                 if (!ActiveUpTo(im.transform, root)) continue;
                 return im;
             }
             return self;
         }
+        /// <summary>질감 3종(T72)이 깐 덧대기 조각인가 — 눌림 색을 여기 입히면 «버튼이 안 어두워진다»(알파 0.01~0.27 짜리 무늬·빛살·그라데이션이 targetGraphic 이 된다). 결정 170 이 ③ 을 버튼에 못 넣게 막았던 이유이고, 여기서 한 번 걸러서 푼다.</summary>
+        public static bool IsTextureLayer(string name)
+            => name == PatternName || name == LightName || name == LightMaskName || name == GradientTopName || name == GradientBottomName;
         /// <summary>x 에서 root 바로 아래까지 모든 오브젝트가 activeSelf 인가(root 자신과 그 위는 안 본다).</summary>
         static bool ActiveUpTo(Transform x, Transform root)
         {
@@ -696,11 +702,12 @@ namespace KkomaKnight.Game
             var cg = Ensure<CanvasGroup>(b); cg.alpha = on ? 1f : 0.5f;
         }
 
-        /// <summary>프리팹 버튼 하나 세우기 — 스폰 · 글자 · 클릭.</summary>
+        /// <summary>프리팹 버튼 하나 세우기 — 스폰 · 글자 · <b>③ 그라데이션</b>(T72 3항) · 클릭.</summary>
         public static RectTransform Button(Transform parent, string prefabKey, string label, Action onClick, Layout.R? rect = null)
         {
             var go = Spawn(prefabKey, parent); var rt = (RectTransform)go.transform;
             if (rect.HasValue) Pct(rt, rect.Value);
+            ButtonGradient(rt);
             var txt = go.GetComponentInChildren<Text>(true);
             // 버튼 글자 하한 = TextSize.Button(44 · T63) · bestFit 최소 32
             if (txt != null) { txt.text = label; txt.fontSize = TextSize.Floor(txt.fontSize, TextKind.Button); txt.resizeTextForBestFit = true; txt.resizeTextMinSize = TextSize.BestFitMin; txt.resizeTextMaxSize = Mathf.Max(txt.fontSize, TextSize.Button); txt.horizontalOverflow = HorizontalWrapMode.Wrap; TextAudit.Mark(txt, TextKind.Button); }
@@ -708,6 +715,20 @@ namespace KkomaKnight.Game
             return rt;
         }
         public static Text ButtonText(Component b) => b.GetComponentInChildren<Text>(true);
+
+        /// <summary>
+        /// ③ 그라데이션(T72 3항 · 우선순위 1 «주황/파랑/회색 버튼») — 프리팹 버튼의 <b>보이는 배경 그림 안쪽</b>에 아래 어둠 한 장(<see cref="BtnGradientKey"/> · Ink α <see cref="GradientBottomAlpha"/>)을 덧댄다.
+        /// 레퍼런스 06 «Forge» · 13 «Summon»·«Upgrade All» 이 전부 위는 밝고 아래로 갈수록 어둡다.
+        /// 배경 «안»(자식)에 넣는 이유 = 형제 순서를 안 건드리고도 «배경 위 · 글자 아래» 가 성립하기 때문이다(글자는 배경의 형제라 배경 서브트리 전체보다 뒤에 그려진다).
+        /// 배경 그림이 없는 투명 히트 영역(칸·카드 루트)이면 덧댈 바탕이 없어 넣지 않는다. 눌림 색은 <see cref="PressTarget"/> 이 질감 조각을 건너뛰어 그대로 배경에 입는다(결정 170 해제).
+        /// </summary>
+        public static void ButtonGradient(RectTransform rt)
+        {
+            if (rt == null) return;
+            var bg = PressTarget(rt, rt.GetComponent<Image>()) as Image;
+            if (bg == null || !bg.enabled || bg.color.a <= 0.01f) return;
+            Gradient(bg.rectTransform, topKey: null, bottomKey: BtnGradientKey);
+        }
 
         /// <summary>색 변형이 없는 프리팹(CardFrame_04/ItemFrame_04 는 Gray 가 없다)을 회색 등급용으로 — 모든 Image 색을 같은 밝기의 무채색으로 바꾼다(알파 유지 · 흰색은 그대로).</summary>
         public static void Desaturate(Transform root)
