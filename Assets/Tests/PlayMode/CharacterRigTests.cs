@@ -76,8 +76,8 @@ namespace KkomaKnight.Tests.Play
             }
             Assert.Greater(enemies, 0, "1초 뒤 화면 안에 적이 있어야 한다(첫 웨이브)");
 
-            // 발밑 바 폭 — 플레이어 = 표 폭 × 2/3 · 적 = ui.json enemyBarW × 2/3 (높이는 그대로)
-            float pBar = WorldCam.PctW(Layout.PlayerFootBarW) * Layout.CharScale, eBar = (float)D.Ui.EnemyBarW / WorldCam.PPU * Layout.CharScale;
+            // 발밑 바 폭 — 플레이어 = 표 폭(10.3) × 2/3 · 적 = 표 폭(9.7 · ref-layout ②) × 2/3 (T47 회차 3 · 예전 ui.json enemyBarW 37px 는 플레이어 바의 2/3 이라 레퍼런스와 어긋났다 · 높이는 그대로)
+            float pBar = WorldCam.PctW(Layout.PlayerFootBarW) * Layout.CharScale, eBar = WorldCam.PctW(Layout.EnemyFootBarW) * Layout.CharScale;
             bool foundP = false, foundE = false;
             foreach (var sr in Object.FindObjectsByType<SpriteRenderer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
             {

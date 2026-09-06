@@ -124,7 +124,7 @@ namespace KkomaKnight.Game
             if (_player != null)
             {
                 var pb = FrameRect(_player.Bounds()); float foot = PctY(_player.transform.position.y);
-                d["플레이어 높이"] = pb;
+                d["플레이어 높이"] = new[] { pb[0], pb[1], pb[2], R1(foot - pb[1]) };   // 표 정의 = «투구 장식 끝 ~ 발밑»(발 아래로 내려온 칼·손은 뺀다)
                 d["플레이어 발밑 y"] = new[] { pb[0], foot, pb[2], 0f };
                 d["플레이어 중심 x"] = new[] { PctX(_player.transform.position.x), pb[1], pb[2], pb[3] };
             }
@@ -143,8 +143,8 @@ namespace KkomaKnight.Game
             }
             if (near != null)
             {
-                var eb = FrameRect(near.Rig.Bounds());
-                d["적 높이"] = eb; d["적 행 y"] = new[] { eb[0], eb[1], eb[2], 0f };
+                var eb = FrameRect(near.Rig.Bounds()); float efoot = PctY(near.Rig.transform.position.y);
+                d["적 높이"] = new[] { eb[0], eb[1], eb[2], R1(efoot - eb[1]) }; d["적 행 y"] = new[] { eb[0], eb[1], eb[2], 0f };
                 if (near.BarBg != null && near.BarBg.gameObject.activeSelf) d["적 발밑 바 폭"] = FrameRect(near.BarBg.bounds);
             }
             return d;
@@ -380,7 +380,8 @@ namespace KkomaKnight.Game
             e.Skin = System.Math.Abs(e.Id * 2654435761L % 1000).GetHashCode();
             float h = e.IsBoss ? Layout.EnemyHeight * (float)D.Enemies.BossSizeMul : Layout.EnemyHeight;
             v = new EnemyView { E = e, Rig = MakeChar("Enemy" + e.Id, EnemySkin(e), h, false), StrikeTick = e.StrikeT, ShownHp = e.Hp };
-            float barW = (float)(e.IsBoss ? D.Ui.BossBarW : D.Ui.EnemyBarW) / WorldCam.PPU * Layout.CharScale;   // 캐릭터와 같은 배율(2/3 · T14)
+            // 바 폭 = 표(ref-layout ② «적 발밑 바 폭» 9.7 · 플레이어 10.3 과 거의 같다) × 캐릭터 배율(2/3 · T14) — ui.json enemyBarW(37px = 6.9%) 를 쓰면 플레이어 바의 2/3 폭이 돼 레퍼런스와 어긋났다(T47 회차 2). 보스는 ui.json 의 보스/잡몹 비율만 빌린다.
+            float barW = WorldCam.PctW(Layout.EnemyFootBarW) * Layout.CharScale * (e.IsBoss && D.Ui.EnemyBarW > 0 ? (float)(D.Ui.BossBarW / D.Ui.EnemyBarW) : 1f);
             MakeBar(_root, barW, WorldCam.PctH(Layout.FootBarH), out v.BarBg, out v.BarFill, e.IsBoss ? Palette.Plum : Palette.Red, 395);
             v.BarTxt = FootText("FootTxt:Enemy" + e.Id);   // 적은 실드가 없으므로(엔진 EnemyState 에 Sh 없음) 빨간 단 하나 + 숫자(레퍼런스 03 «2555»)
             _enemies[e] = v;
