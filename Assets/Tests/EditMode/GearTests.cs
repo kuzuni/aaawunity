@@ -69,6 +69,67 @@ namespace KkomaKnight.Tests
             Assert.That(inv.Contains(equipped.First()), Is.True);
         }
 
+        // ───────── T24 — 장착 중 장비도 합성 재료(주인 2026-09-06) · 재료가 된 장착분의 슬롯엔 산출물(같은 부위)을 장착(승인 대기 29 기본값) ─────────
+        static SaveData SaveWith(int n, string part, string type, int rar)
+        {
+            var S = new SaveData();
+            for (int i = 0; i < n; i++) S.Inv.Add(S.NewGear(part, type, rar, 0));
+            return S;
+        }
+
+        [Test]
+        public void FuseAllWithoutExclusionConsumesEquippedAndEquipsTheResult()
+        {
+            var d = TestData.Load();
+            var S = SaveWith(3, "helm", "hpsh_helm", 0);
+            S.Eq["helm"] = S.Inv[0].Uid;                                                       // 재료 중 하나가 장착 중
+            int n = GearSystem.FuseAll(d, S.Inv, null, g => S.Uid++, (mats, made) => GearSystem.ReEquipAfterFuse(S, mats, made));
+            Assert.That(n, Is.EqualTo(1));
+            Assert.That(S.Inv.Count, Is.EqualTo(1));
+            var eq = S.EquippedGear("helm");
+            Assert.That(eq, Is.Not.Null, "장착 슬롯이 비면 안 된다 — 산출물이 그 자리에");
+            Assert.That(eq.Rar, Is.EqualTo(1)); Assert.That(eq.Uid, Is.GreaterThan(0)); Assert.That(S.IsEquipped(S.Inv[0]), Is.True);
+        }
+
+        [Test]
+        public void FuseAllChainKeepsTheSlotOnTheFinalProduct()
+        {
+            var d = TestData.Load();
+            var S = SaveWith(9, "helm", "hpsh_helm", 0);                                         // 9×일반 → 3×희귀 → 1×전설
+            S.Eq["helm"] = S.Inv[4].Uid;
+            int n = GearSystem.FuseAll(d, S.Inv, null, g => S.Uid++, (mats, made) => GearSystem.ReEquipAfterFuse(S, mats, made));
+            Assert.That(n, Is.EqualTo(4));
+            Assert.That(S.Inv.Count, Is.EqualTo(1));
+            var eq = S.EquippedGear("helm");
+            Assert.That(eq, Is.Not.Null); Assert.That(eq.Rar, Is.EqualTo(d.Gear.RarLegend)); Assert.That(eq, Is.SameAs(S.Inv[0]));
+        }
+
+        [Test]
+        public void FuseDoesNotTouchSlotsWhoseGearWasNotAMaterial()
+        {
+            var d = TestData.Load();
+            var S = SaveWith(3, "helm", "hpsh_helm", 0);
+            var other = S.NewGear("helm", "hpsh_helm", 1, 0); S.Inv.Add(other); S.Eq["helm"] = other.Uid;   // 장착분은 다른 키(희귀) — 재료 아님
+            var boot = S.NewGear("boot", "crit_boot", 0, 0); S.Inv.Add(boot); S.Eq["boot"] = boot.Uid;
+            int n = GearSystem.FuseAll(d, S.Inv, null, g => S.Uid++, (mats, made) => GearSystem.ReEquipAfterFuse(S, mats, made));
+            Assert.That(n, Is.EqualTo(1));
+            Assert.That(S.Eq["helm"], Is.EqualTo(other.Uid), "재료가 아닌 장착분은 그대로(자동 장착 없음)");
+            Assert.That(S.Eq["boot"], Is.EqualTo(boot.Uid));
+        }
+
+        [Test]
+        public void ReEquipAfterFuseEmptiesTheSlotWhenTheProductIsAnotherPartOrHasNoUid()
+        {
+            var S = new SaveData();
+            var a = S.NewGear("helm", "hpsh_helm", 0, 0); S.Inv.Add(a); S.Eq["helm"] = a.Uid;
+            GearSystem.ReEquipAfterFuse(S, new List<GearItem> { a }, new GearItem { Uid = 99, Part = "armor", Type = "hpsh_armor", Rar = 1 });
+            Assert.That(S.Eq.ContainsKey("helm"), Is.False, "부위가 다르면 빈 슬롯");
+            var b = S.NewGear("helm", "hpsh_helm", 0, 0); S.Inv.Add(b); S.Eq["helm"] = b.Uid;
+            GearSystem.ReEquipAfterFuse(S, new List<GearItem> { b }, new GearItem { Uid = 0, Part = "helm", Type = "hpsh_helm", Rar = 1 });
+            Assert.That(S.Eq.ContainsKey("helm"), Is.False, "uid 없는 산출물은 가리킬 수 없다 → 빈 슬롯");
+            GearSystem.ReEquipAfterFuse(S, null, null); GearSystem.ReEquipAfterFuse(null, new List<GearItem>(), null);   // 퇴화 입력에 예외 없음
+        }
+
         [Test]
         public void GachaPityGivesMythAtCeilingAndLegendBonusWhenOverlapping()
         {

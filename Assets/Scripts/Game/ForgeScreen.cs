@@ -9,10 +9,12 @@ namespace KkomaKnight.Game
     /// <summary>
     /// 대장간(합성) — 참고 docs/ref/장비 합성 업글창.jpg · ref-layout ⑥ (상단 바 없음 · 탭바 대신 뒤로 버튼).
     /// 재료 3칸 → ▲ → 결과 미리보기 · 안내 문구 · 자동/합성 · 인벤 격자(장비 탭과 같은 자리·5열).
-    /// 규칙: 같은 부위·종류·등급 3개 → <see cref="GearSystem.FuseMake"/> 하나만 쓴다(자동 = FuseAll 도 같은 함수). 장착분은 재료가 아니다(주인 확정 T125).
+    /// 규칙: 같은 부위·종류·등급 3개 → <see cref="GearSystem.FuseMake"/> 하나만 쓴다(자동 = FuseAll 도 같은 함수).
+    /// **장착 중인 장비도 재료다**(T24 · 주인 2026-09-06 «대장간에 장착중인 거도 합성 가능하게» — aaaw T125 ①-c «장착분은 재료가 아니다» 를 주인이 뒤집음).
+    /// 장착분이 재료로 사라지면 <see cref="GearSystem.ReEquipAfterFuse"/>(같은 부위면 산출물을 그 슬롯에 · 아니면 빈 슬롯 · 승인 대기 29 기본값) — 수동·자동 공용.
     /// 레퍼런스 «재료 슬롯» 은 1칸(x12 w17)이지만 규칙이 3개라 같은 크기 3칸을 피치 19 로 놓는다(ref-layout U02 ⓓ · 영구 X 행).
     /// T8: 칸은 전부 장비 화면과 같은 **ListItem_EquipMent 본래 크기(188 정사각)** — 인벤 격자는 장비 화면 프리팹의 격자 값을 복사(<see cref="GearUi.Grid"/>) · 재료 3칸은 Pct 로 늘리지 않고 슬롯 자리 가운데에 본래 크기로.
-    /// 합성 가능(같은 키 3개 이상)한 칸 = 오른쪽 위 빨간 점(Alert_Dot_01_Red) · 장착중 = 프리팹 Check + 흐리게(재료 불가) — 장비 화면과 반대로 여기서는 둘 다 켠다.
+    /// 합성 가능(같은 키 3개 이상)한 칸 = 오른쪽 위 빨간 점(Alert_Dot_01_Red) · 장착중 = 프리팹 Check(배지만 · 흐리지 않는다 — 재료 가능) — 장비 화면과 달리 여기서는 표기를 켠다.
     /// </summary>
     public sealed class ForgeScreen : GameScreen
     {
@@ -47,14 +49,14 @@ namespace KkomaKnight.Game
             var mats = Mats(); if (mats.Count != _sel.Count) { _sel.Clear(); foreach (var g in mats) _sel.Add(g.Uid); }
             string lock_ = mats.Count > 0 ? GearUi.Key(mats[0]) : null;
             var fk = GearUi.FusableKeys(S);
-            // 인벤 — 선택 초록(프리팹 Focus) · 다른 키/장착분 흐리게 · 장착중 = 프리팹 Check · 합성 가능 = 빨간 점(재료를 고르는 중엔 끔 — index.html renderForge `fus:!lock&&…` 그대로)
+            // 인벤 — 선택 초록(프리팹 Focus) · 다른 키만 흐리게(장착분은 흐리지 않는다 — T24 재료 가능) · 장착중 = 프리팹 Check · 합성 가능 = 빨간 점(재료를 고르는 중엔 끔 — index.html renderForge `fus:!lock&&…` 그대로)
             // ⚠ 인벤을 맨 먼저 채운다 — 예전(e64ff41 이전)엔 아래 버튼 처리(SetInteractable 의 CanvasGroup «GetComponent 뒤 ?? AddComponent» 패턴)가 에디터 가짜 null 로
             //   MissingComponentException 을 던져 그 뒤의 인벤 루프가 통째로 건너뛰어졌다(«하단에 장비가 없다» 의 원인). 지금은 UiKit.Ensure 로 고쳐졌지만 순서도 인벤 우선으로 둔다.
             UiKit.Clear(_content);
             if (S.Inv.Count == 0) GearUi.Empty(_content, "장비가 없습니다.\n상점에서 뽑기로 장비를 얻으세요.");
             foreach (var g in GearUi.Sorted(S))
             {
-                var gi = g; bool sel = _sel.Contains(g.Uid); bool off = S.IsEquipped(g) || (lock_ != null && !sel && GearUi.Key(g) != lock_);
+                var gi = g; bool sel = _sel.Contains(g.Uid); bool off = lock_ != null && !sel && GearUi.Key(g) != lock_;
                 GearUi.Cell(_content, D, g, new GearUi.CellOpts { Equipped = S.IsEquipped(g), EquippedMark = true, Selected = sel, Off = off, Fusable = lock_ == null && fk.Contains(GearUi.Key(g)), FusableDot = true }, () => Toggle(gi));
             }
             // 재료 3칸 (ref 재료 슬롯 자리에서 피치 19) — 칸은 슬롯 자리 가운데에 ListItem_EquipMent 본래 크기(188 정사각 · 인벤 칸과 같은 크기·비례)
@@ -91,7 +93,7 @@ namespace KkomaKnight.Game
         {
             var D = App.Data; var S = App.Save; var mats = Mats();
             if (_sel.Contains(g.Uid)) { _sel.Remove(g.Uid); Refresh(); return; }
-            if (S.IsEquipped(g)) { App.Toast("장착 중인 장비는 재료가 되지 않습니다 — 먼저 해제하세요"); return; }
+            // 장착 중인 장비도 재료가 된다(T24) — 예전의 «먼저 해제하세요» 토스트 없음
             if (mats.Count > 0 && GearUi.Key(g) != GearUi.Key(mats[0])) { App.Toast($"같은 부위·종류·등급만 재료가 됩니다 ({GearUi.PartName(D, mats[0].Part)} · {GearUi.Name(D, mats[0])} · {GearUi.RarName(D, mats[0].Rar)})"); return; }
             if (_sel.Count >= 3) { App.Toast("재료는 3개까지입니다"); return; }
             _sel.Add(g.Uid); Refresh();
@@ -101,13 +103,16 @@ namespace KkomaKnight.Game
             var D = App.Data; var S = App.Save; var mats = Mats(); if (mats.Count != 3) return;
             var made = GearSystem.FuseMake(D, Basis(mats));
             foreach (var m in mats) S.Inv.Remove(m);
-            made.Uid = S.Uid++; S.Inv.Add(made); S.Fuses++; _sel.Clear(); App.Persist(); Refresh();
-            App.Toast($"🔨 {GearUi.RarName(D, made.Rar)} {GearUi.Name(D, made)}{(made.Plus > 0 ? $" +{made.Plus}" : "")} 완성!");
+            made.Uid = S.Uid++; S.Inv.Add(made); S.Fuses++; _sel.Clear();
+            GearSystem.ReEquipAfterFuse(S, mats, made);   // 장착분이 재료였으면 산출물을 그 슬롯에(T24 · 승인 대기 29) — 세이브·전투력·외형은 Persist/화면 Refresh 가 S.Eq 에서 다시 읽는다
+            App.Persist(); Refresh();
+            App.Toast($"🔨 {GearUi.RarName(D, made.Rar)} {GearUi.Name(D, made)}{(made.Plus > 0 ? $" +{made.Plus}" : "")} 완성!" + (S.IsEquipped(made) ? " (장착 중이던 재료 자리에 장착)" : ""));
         }
         void OnAuto()
         {
             var D = App.Data; var S = App.Save; int before = S.Inv.Count;
-            int n = GearSystem.FuseAll(D, S.Inv, S.EquippedSet(D), g => S.Uid++);
+            // 장착분도 포함해 합성(T24 · 제외 집합 없음) — 합성 1회마다 장착 슬롯 정리(산출물이 같은 부위면 그 슬롯에)
+            int n = GearSystem.FuseAll(D, S.Inv, null, g => S.Uid++, (mats, made) => GearSystem.ReEquipAfterFuse(S, mats, made));
             foreach (var g in S.Inv) if (g.Uid == 0) g.Uid = S.Uid++;
             S.Fuses += n; _sel.Clear();
             if (n > 0) { App.Persist(); Refresh(); App.Toast($"🔨 {n}회 합성 (장비 {before} → {S.Inv.Count})"); }

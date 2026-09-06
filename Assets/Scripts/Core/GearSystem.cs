@@ -115,8 +115,12 @@ namespace KkomaKnight.Core
             return FuseMake(D, best);
         }
 
-        /// <summary>sim.js `fuseAll(inv, equipped)` — 합성 가능한 묶음이 없어질 때까지 반복. 만든 개수 반환.</summary>
-        public static int FuseAll(GameData D, List<GearItem> inv, HashSet<GearItem> equipped, Func<GearItem, int> assignUid = null)
+        /// <summary>
+        /// sim.js `fuseAll(inv, equipped)` — 합성 가능한 묶음이 없어질 때까지 반복. 만든 개수 반환.
+        /// <paramref name="equipped"/> 는 재료에서 뺄 집합(null/빈 집합 = 장착분도 재료 · T24 주인 «대장간에 장착중인 거도 합성 가능하게»).
+        /// <paramref name="onFused"/> 는 합성 1회마다(재료 3개 · 산출물 — uid 부여 뒤) 불린다 — 게임은 여기서 <see cref="ReEquipAfterFuse"/> 로 장착 슬롯을 정리한다.
+        /// </summary>
+        public static int FuseAll(GameData D, List<GearItem> inv, HashSet<GearItem> equipped, Func<GearItem, int> assignUid = null, Action<IList<GearItem>, GearItem> onFused = null)
         {
             bool did = true; int count = 0;
             while (did)
@@ -140,10 +144,28 @@ namespace KkomaKnight.Core
                     foreach (var m in mats) inv.Remove(m);
                     if (assignUid != null) made.Uid = assignUid(made);
                     inv.Add(made); count++; did = true;
+                    onFused?.Invoke(mats, made);
                     break;
                 }
             }
             return count;
+        }
+
+        /// <summary>
+        /// 합성 뒤 장착 슬롯 정리(T24 · 승인 대기 29 기본값): 재료로 사라진 장비가 장착 중이었으면 **산출물이 같은 부위면 그 슬롯에 장착**, 아니면 슬롯을 비운다.
+        /// (같은 부위·종류·등급 3개 규칙이라 산출물은 항상 같은 부위 — 자동 장착 금지 원칙의 유일한 예외 · 산출물은 재료보다 항상 좋다.)
+        /// 재료가 장착 중이 아니었으면 아무것도 바꾸지 않는다(자동 장착 없음 · aaaw T125 ①-c 그대로). 순수 C# — 수동(FuseMake)·자동(FuseAll onFused) 둘 다 이 함수 하나만 쓴다.
+        /// </summary>
+        public static void ReEquipAfterFuse(SaveData S, IList<GearItem> mats, GearItem made)
+        {
+            if (S == null || mats == null) return;
+            var parts = new List<string>();
+            foreach (var kv in S.Eq) foreach (var m in mats) if (m != null && m.Uid == kv.Value && m.Part == kv.Key) { parts.Add(kv.Key); break; }
+            foreach (var part in parts)
+            {
+                if (made != null && made.Uid > 0 && made.Part == part) S.Eq[part] = made.Uid;
+                else S.Eq.Remove(part);
+            }
         }
 
         public static int GearScore(GearItem g) => g.Rar * 1000 + g.Plus;
