@@ -7,25 +7,47 @@ using UnityEngine.UI;
 namespace KkomaKnight.Game
 {
     /// <summary>
-    /// 상점 = 주인 지정 GUI Pro 데모 프리팹 **Shop_List 그대로**(T9 · 주인 지시 2026-09-05 «쓰라니까 다 바꿔버리네» — 스크롤·섹션·비율 그대로).
-    /// 프리팹 요소를 옮기거나 지우지 않고 글자·그림·개수만 바꾼다:
-    /// ● <b>ListItem_ShopPackage ×3</b>(프리팹의 2개 + 복제 1개) = 뽑기 상자 3종(gacha.json 순서) — 이름 · 3칸 = 상위 등급 확률 · 배지 = 천장 · 1회/10회(프리팹 Button_Price 와 그 복제 — «그대로» 원칙의 예외).
-    /// ● Title_DailyDeals(+Timer_01 = 자정까지) + Group_Item 의 ListItem_ShopItem = 일일 무료 보급(gacha.json economy.dailyGem) · 추가 보급(잠김 · index.html 그대로).
-    /// ● Title_Gem + Group_Gem1/Gem2 = <b>다이아 6종</b>(shop.json gemPacks · ₩ 모의 결제 · 누르면 바로 지급) · Title_Gold + Group_Gold = <b>골드 3종</b>(goldPacks · 다이아 소모) — 칸은 전부 <b>ListItem_ShopItem</b>.
-    /// ● 하단 Tab_02_BoxMenu_Text 3칸 = 뽑기·다이아·골드(그 섹션으로 스크롤) · Tab_01_BottomFlushMenu = NavBar · 상단 ResourceBar_Group = 골드·보석.
-    /// ● 끄는 것: Group_Chest(ListItem_ShopChest ×3) · Title_Silver/Group_Silver(이 게임에 없는 상품). 뽑기 결과 = <b>Shop_Chest_Open 그대로</b>(<see cref="Pull"/>). 자동 장착 없음 — 인벤에만 담긴다(NEW 뱃지).
+    /// 상점 = <b>docs/ref/09_shop_1.jpg · 10_shop_2.jpg 구도</b>(T40 · 주인 지시 2026-09-06 «UI 는 무조건 레퍼런스 jpg 기준» — «Shop_List 그대로»(T9) 를 대체).
+    /// 배치의 정본 = ref-layout.md ⑤ 표(<see cref="Layout.ShopSec1"/> 계열 · 프레임 % · ±3%p) + 표에 없는 자리는 워커가 10_shop_2.jpg 에서 잰 값(아래 상수 · 5% 격자).
+    /// 한 화면이 <b>세로 스크롤</b> 하나다(레퍼런스 두 장 = 같은 화면의 위·아래): 상단 재화 바(<see cref="TopBar"/>) → 천막 띠 → [스크롤] 최상위 상자 큰 카드 → 나머지 상자 2칸 나란히 →
+    /// «무료 보급까지 hh:mm:ss» → «다이아» 섹션(3열×2행) → «골드» 섹션(3열×1행) → 탭 바.
+    /// 그림 재료는 주인 에셋만 — 데모 프리팹은 <b>부품</b>이다: Shop_List 의 Background·Roof(천막) 조각 · CardFrame_04(상자 카드 · 등급색) · ListItem_ShopItem(다이아/골드 칸 · 레퍼런스와 같은 «수량 · 그림 · 이름 · 가격 띠» 구성) ·
+    /// Button_Info((i) · 확률·천장 팝업) · BasicFrame TransperDark(설명/천장 pill) · Title_LineDeco(섹션 제목) · GUI Pro ShopItem 의 Gem_1~6/Gold_1~3 그림(수량이 커질수록 큰 더미). 코드 도형 0.
+    /// 글자·수치는 우리 데이터(gacha.json 상자·확률·천장·무료 보급 · shop.json 다이아/골드 상품 · 표시 배치만 레퍼런스). 뽑기 결과·정보 팝업 = 공통 팝업 문법(<see cref="UiKit.Popup"/> · 명판 · 패널 · 격자 = <see cref="GearUi.Cell"/> · 탭하여 닫기).
     /// </summary>
     public sealed class ShopScreen : GameScreen
     {
         public override string Name => "shop";
-        RectTransform _rt, _content; ScrollRect _scroll;
-        Text _gold, _gem, _timer, _freeTxt, _freeSub; Button _free;
-        Transform _secGem, _secGold;
+
+        // ───────────────────────── 자리(프레임 %) — 표 ⑤ + 워커 실측(10_shop_2.jpg) ─────────────────────────
+        /// <summary>천막 띠 = 상단 바(3.7+4.5) 바로 아래 · 스크롤 창은 그 밑에서 탭 바(92.6) 까지.</summary>
+        static readonly Layout.R RoofBand = new Layout.R(0, 8.0f, 100, 5.0f);
+        const float ContentTop = 12.8f;
+        static readonly Layout.R ScrollView = new Layout.R(0, ContentTop, 100, 92.6f - ContentTop);
+        /// <summary>표 ⑤ «(뽑기 화면) 대형 상자 배너» · «상자 카드 2개(좌우 각 45.5)» · «상자 버튼 2개(배너 안 아래)».</summary>
+        static readonly Layout.R Banner = new Layout.R(3.0f, 13.5f, 94.0f, 26.0f);
+        static readonly Layout.R ChestRow = new Layout.R(3.0f, 40.5f, 94.0f, 29.0f);
+        const float ChestCardW = 45.5f;
+        static readonly Layout.R FreeLine = new Layout.R(3.0f, 70.3f, 94.0f, 2.8f);
+        /// <summary>«다이아» 섹션 헤더 y — 09_shop_1.jpg 의 헤더(22.5)·카드행(27 · 47.5)·둘째 헤더(66)·행(70.5) 간격을 그대로 이어 붙인다(<see cref="Layout.ShopSec1"/> 계열 표값에서 계산).</summary>
+        const float SecGemY = 74.0f;
+        static float Row1Y => SecGemY + (Layout.ShopCardRow1.Y - Layout.ShopSec1.Y);          // 78.5
+        static float Row2Y => Row1Y + Layout.ShopCardRowPitch;                                  // 99.0
+        static float SecGoldY => SecGemY + (Layout.ShopSec2.Y - Layout.ShopSec1.Y);            // 117.5
+        static float Row3Y => SecGemY + (Layout.ShopCardRow3.Y - Layout.ShopSec1.Y);           // 122.0
+        /// <summary>내용 끝 = 골드 행 아래 여백 3.5(레퍼런스 09 의 골드 카드 아래 ~ 탭 바 = 2.9) → 끝까지 내리면 «다이아» 헤더가 표 ⑤ 09 의 22.5 자리에 온다(= 09 스크린샷 = 스크롤 맨 아래).</summary>
+        static float ContentEnd => Row3Y + Layout.ShopCardRow3.H + 3.5f;                        // 144.0
+        /// <summary>팝업 = 폭 87 · 좌우 여백 6.5(표 ⑧ 공통).</summary>
+        static readonly Layout.R ResultBox = new Layout.R(6.5f, 20.0f, 87.0f, 56.0f);
+        static readonly Layout.R InfoBox = new Layout.R(6.5f, 27.0f, 87.0f, 42.0f);
+        const int ResultCols = 4;
+
+        TopBar _top; RectTransform _content; ScrollRect _scroll;
+        Text _freeTxt; readonly List<Button> _freeBtns = new List<Button>(); readonly List<GameObject> _freeDots = new List<GameObject>();
         readonly Dictionary<string, BoxWidgets> _box = new Dictionary<string, BoxWidgets>();
         readonly List<(Button btn, Func<bool> can)> _gated = new List<(Button, Func<bool>)>();
-        readonly List<Transform> _subTabs = new List<Transform>();
         float _timerT;
-        sealed class BoxWidgets { public Button One, Ten; public Text Title; }
+        sealed class BoxWidgets { public Button One, Ten; public readonly List<Text> Pills = new List<Text>(); }
 
         static string Today() => DateTime.Now.ToString("yyyy-MM-dd");
         static bool CanFree(SaveData S) => S.FreeDay != Today();
@@ -33,204 +55,255 @@ namespace KkomaKnight.Game
         protected override void Build()
         {
             var D = App.Data;
-            var bg = UiKit.Ensure<Image>(Root.gameObject); bg.color = Palette.Hex("#EBDEC0"); bg.raycastTarget = true;
-            var root = UiKit.Spawn("ui.shopList", Root); _rt = (RectTransform)root.transform; UiKit.Stretch(_rt);   // 프리팹 통째로(하단 탭 바까지 프리팹 것) — 내부 요소는 프리팹 값 그대로
-            // 상단 재화 = 프리팹 ResourceBar_Group(골드 · 보석 · 세 번째 GemStone 은 이 게임에 없다 — 로비와 같게 끔)
-            var res = UiKit.Find(_rt, "ResourceBar_Group");
-            if (res != null) { UiKit.Hide(res, "ResourceBar_GemStone"); _gold = UiKit.SetText(res, "ResourceBar_Coin/Text (TMP)", "0"); _gem = UiKit.SetText(res, "ResourceBar_Gem/Text (TMP)", "0"); }
-            // 스크롤 = 프리팹 ScrollRect/Viewport/Content 그대로
-            _scroll = _rt.GetComponentInChildren<ScrollRect>(true);
-            if (_scroll != null) { _scroll.scrollSensitivity = 40; var vp = _scroll.viewport != null ? _scroll.viewport.GetComponent<Image>() : null; if (vp != null) vp.raycastTarget = true; _content = _scroll.content; }
-            if (_content == null) _content = UiKit.Find(_rt, "Content") as RectTransform;
-            var top = UiKit.Find(_content, "Top"); if (top != null) UiKit.SetText(top, "Text_Title", "상점");
-            // ① 뽑기 상자 3종 = ListItem_ShopPackage — 프리팹에 2개뿐이라 마지막 것을 복제해 3개(«그대로» 원칙의 예외 · PROGRESS 기록)
-            var pkgs = new List<Transform>();
-            if (_content != null) for (int i = 0; i < _content.childCount; i++) { var c = _content.GetChild(i); if (c.name.StartsWith("ListItem_ShopPackage")) pkgs.Add(c); }
-            int need = D.Gacha.Boxes.Count;
-            while (pkgs.Count > 0 && pkgs.Count < need) { var src = pkgs[pkgs.Count - 1]; var dup = UnityEngine.Object.Instantiate(src.gameObject, src.parent, false); dup.name = src.name + " (copy)"; dup.transform.SetSiblingIndex(src.GetSiblingIndex() + 1); pkgs.Add(dup.transform); }
-            for (int i = 0; i < pkgs.Count; i++) { if (i < need) { pkgs[i].gameObject.SetActive(true); BindBox(pkgs[i], D.Gacha.Boxes[i]); } else pkgs[i].gameObject.SetActive(false); }
-            // ② 일일 무료 보급 = Title_DailyDeals(+Timer_01) · Group_Item 의 칸(ListItem_ShopItem) = 무료 보급 · 추가 보급(잠김 · index.html «준비 중») · 나머지 칸은 끔
-            var daily = UiKit.Find(_content, "Title_DailyDeals");
-            if (daily != null) { UiKit.SetText(daily, "Text (TMP)", "일일 무료 보급"); _timer = UiKit.SetText(daily, "Timer_01/Text (TMP)", ""); }
-            var grpItem = UiKit.Find(_content, "Group_Item");
-            if (grpItem != null)
+            // ⓪ 배경 + 천막 = Shop_List 프리팹의 Background·Roof 조각만(나머지 조각은 통째로 끔) · 배경은 레퍼런스의 어두운 바탕색
+            var shell = UiKit.Spawn("ui.shopList", Root); var srt = (RectTransform)shell.transform; UiKit.Stretch(srt);
+            var bg = UiKit.Find(srt, "Background"); var roof = UiKit.Find(srt, "Roof");
+            var bgImg = bg != null ? bg.GetComponent<Image>() : null;
+            if (bg != null) { bg.SetParent(Root, false); UiKit.Stretch((RectTransform)bg); bg.SetAsFirstSibling(); }
+            if (bgImg == null) bgImg = UiKit.Ensure<Image>(Root.gameObject);
+            bgImg.color = Palette.Hex("#2B2B30"); bgImg.raycastTarget = true;
+            if (roof != null) { roof.SetParent(Root, false); UiKit.Pct((RectTransform)roof, RoofBand); var ri = roof.GetComponent<Image>(); if (ri != null) ri.color = Color.Lerp(Palette.Red, Palette.Ink, 0.45f); }
+            shell.SetActive(false);
+
+            // ① 스크롤 창(천막 아래 ~ 탭 바 위) — 내용은 프레임 % 로 Content 안에 놓는다(<see cref="Place"/>)
+            var view = UiKit.Rect(Root, "Scroll"); UiKit.Pct(view, ScrollView); UiKit.Ensure<RectMask2D>(view.gameObject);
+            var vimg = view.gameObject.AddComponent<Image>(); vimg.color = new Color(0, 0, 0, 0); vimg.raycastTarget = true;
+            _scroll = view.gameObject.AddComponent<ScrollRect>(); _scroll.horizontal = false; _scroll.movementType = ScrollRect.MovementType.Clamped; _scroll.scrollSensitivity = 40;
+            _content = UiKit.Rect(view, "Content"); _content.anchorMin = new Vector2(0, 1); _content.anchorMax = new Vector2(1, 1); _content.pivot = new Vector2(0.5f, 1);
+            _content.offsetMin = Vector2.zero; _content.offsetMax = Vector2.zero; _content.sizeDelta = new Vector2(0, (ContentEnd - ContentTop) / 100f * UiKit.FrameH);
+            _scroll.content = _content; _scroll.viewport = view;
+
+            // ② 상자 — 최상위(가장 비싼) 상자 = 큰 카드 · 나머지 2개 = 나란히(gacha.json 순서)
+            GachaBox big = null; foreach (var b in D.Gacha.Boxes) if (big == null || b.Cost > big.Cost) big = b;
+            var small = new List<GachaBox>(); foreach (var b in D.Gacha.Boxes) if (b != big) small.Add(b);
+            RectTransform bigCard = null; var smallCards = new List<RectTransform>(); var smallBottoms = new List<RectTransform>(); var bigBtns = new List<RectTransform>();
+            if (big != null) { bigCard = Place(UiKit.Rect(_content, "Box:" + big.Key), Banner); BuildBigCard(bigCard, big, bigBtns); }
+            for (int i = 0; i < small.Count && i < 2; i++)
             {
-                var cells = Children(grpItem);
-                if (cells.Count > 0) { var c = cells[0]; _free = BindItem(c, "무료 보급", "hud.gem", UiKit.FmtQty(D.Gacha.DailyGem), "", null, "수령", OnFree); _freeTxt = PriceText(c); var lim = UiKit.Find(c, "Text_Limit"); _freeSub = lim != null ? lim.GetComponent<Text>() : null; }
-                if (cells.Count > 1) { var b = BindItem(cells[1], "추가 보급", "pi.lock", "", "준비 중", null, "잠김", null); UiKit.SetInteractable(b, false); }
-                for (int i = 2; i < cells.Count; i++) cells[i].gameObject.SetActive(false);
+                var card = Place(UiKit.Rect(_content, "Box:" + small[i].Key), new Layout.R(ChestRow.X + i * (ChestRow.W - ChestCardW), ChestRow.Y, ChestCardW, ChestRow.H));
+                BuildSmallCard(card, small[i]); smallCards.Add(card);
+                var bottom = UiKit.Rect(card, "Bottom"); UiKit.Pct(bottom, 0, 78, 100, 22); smallBottoms.Add(bottom);   // 카드 아래 띠(광고+가격 버튼 줄) — 09 에서 보이는 «광고/무료 카드 2개» 행의 측정 자리
             }
-            UiKit.Hide(_content, "Group_Chest", "Title_Silver", "Group_Silver");   // 이 게임에 없는 상품 줄(상자 칸은 위 ShopPackage 가 맡는다)
-            // ③ 다이아 6종 = Title_Gem + Group_Gem1/Gem2 · ④ 골드 3종 = Title_Gold + Group_Gold — 프리팹의 ListItem_ShopGem/ShopGold 는 끄고 같은 자리에 ListItem_ShopItem(주인 지정 칸)
+            // 비평 이름표(T46 · 표 ⑤) — 10 = «(뽑기 화면)» 행 3 · 09 = 스크롤 맨 아래에서 보이는 행들
+            if (bigCard != null) UiKit.Tag(bigCard, "(뽑기 화면) 대형 상자 배너");
+            if (smallCards.Count > 0) { UiKit.TagGroup(_content, "(뽑기 화면) 상자 카드 2개", smallCards.ToArray()); UiKit.TagGroup(_content, "광고/무료 카드 2개", smallBottoms.ToArray()); }
+            if (bigBtns.Count > 0) UiKit.TagGroup(_content, "(뽑기 화면) 상자 버튼 2개", bigBtns.ToArray());
+
+            // ③ «무료 보급까지 hh:mm:ss» (시계 아이콘 + 글자 · 카드 2칸 아래 왼쪽)
+            var fl = Place(UiKit.Rect(_content, "FreeLine"), FreeLine);
+            var clock = UiKit.Icon(fl, "Icon", "ui.iconClock"); UiKit.Pct(clock.rectTransform, 0, 0, 6.4f, 100);
+            _freeTxt = UiKit.Label(fl, 7.5f, 0, 92, 100, "", 28, Palette.White, TextAnchor.MiddleLeft);
+
+            // ④ «다이아» 3열×2행(shop.json gemPacks · ₩ 모의 결제 = 누르면 바로 지급) · ⑤ «골드» 3열×1행(goldPacks · 다이아 소모)
             var gems = D.Shop != null ? D.Shop.GemPacks : new List<ShopData.GemPack>();
             var golds = D.Shop != null ? D.Shop.GoldPacks : new List<ShopData.GoldPack>();
-            _secGem = UiKit.Find(_content, "Title_Gem"); if (_secGem != null) { UiKit.SetText(_secGem, "Text (TMP)", "다이아 (모의 결제 — 실결제 없음)"); _secGem.gameObject.SetActive(gems.Count > 0); }
-            FillGroup(UiKit.Find(_content, "Group_Gem1"), gems.Count, 0, (cell, i) => BindGemPack(cell, gems[i]));
-            FillGroup(UiKit.Find(_content, "Group_Gem2"), gems.Count, 3, (cell, i) => BindGemPack(cell, gems[i]));
-            _secGold = UiKit.Find(_content, "Title_Gold"); if (_secGold != null) { UiKit.SetText(_secGold, "Text (TMP)", "골드 (다이아 소모)"); _secGold.gameObject.SetActive(golds.Count > 0); }
-            FillGroup(UiKit.Find(_content, "Group_Gold"), golds.Count, 0, (cell, i) => BindGoldPack(cell, golds[i]));
-            // 하단 소탭 3칸(Tab_02_BoxMenu_Text · 데모 Special/Deal/Resources) = 뽑기 · 다이아 · 골드 — 누르면 그 섹션으로 스크롤
-            var sub = UiKit.Find(_rt, "Tab_02_BoxMenu_Text");
-            if (sub != null)
+            UiKit.Tag(Header(SecGemY, "다이아"), "섹션 헤더");
+            for (int i = 0; i < gems.Count && i < 6; i++)
             {
-                string[] labels = { "뽑기", "다이아", "골드" };
-                for (int i = 0; i < sub.childCount && i < labels.Length; i++)
+                var p = gems[i]; var slot = Place(UiKit.Rect(_content, "GemPack:" + i), CardRect(i < 3 ? Row1Y : Row2Y, i % 3));
+                if (i == 0) UiKit.Tag(slot, "상품 카드(1칸)"); else if (i == 3) UiKit.Tag(slot, "상품 카드 2행");
+                BuildPack(slot, UiKit.FmtQty(p.Gem), "shop.gem." + Mathf.Clamp(i + 1, 1, 6), "다이아 · 모의 결제", null, $"₩{p.Won:#,0}", Color.Lerp(Palette.Plum, Palette.Ink, 0.35f),
+                    () => { App.Save.Gem += p.Gem; App.Persist(); Refresh(); App.Toast($"💎 {UiKit.FmtQty(p.Gem)} 지급 (모의 결제)"); });
+            }
+            UiKit.Tag(Header(SecGoldY, "골드"), "두 번째 섹션 헤더");
+            for (int i = 0; i < golds.Count && i < 3; i++)
+            {
+                var p = golds[i]; var slot = Place(UiKit.Rect(_content, "GoldPack:" + i), CardRect(Row3Y, i));
+                if (i == 0) UiKit.Tag(slot, "두 번째 섹션 카드행");
+                var btn = BuildPack(slot, UiKit.FmtQty(p.Gold), "shop.gold." + Mathf.Clamp(i + 1, 1, 3), "골드", "hud.gem", UiKit.FmtQty(p.Gem), Color.Lerp(Palette.Sky, Palette.Ink, 0.35f), () =>
                 {
-                    var tab = sub.GetChild(i); int k = i; UiKit.SetText(tab, "Text (TMP)", labels[i]); _subTabs.Add(tab);
-                    UiKit.Clickable(tab, () => { SelectSub(k); ScrollTo(k == 1 ? _secGem : k == 2 ? _secGold : null); });
-                }
-                SelectSub(0);
+                    var S = App.Save; if (S.Gem < p.Gem) { App.Toast("💎 다이아가 부족합니다"); return; }
+                    S.Gem -= p.Gem; S.Gold += p.Gold; App.Persist(); Refresh(); Audio.Sfx("snd.coin"); App.Toast($"골드 {UiKit.Fmt(p.Gold)} 구매!");
+                });
+                foreach (var b in btn) _gated.Add((b, () => App.Save.Gem >= p.Gem));
             }
-            // 하단 탭 5칸 = 프리팹 Tab_01_BottomFlushMenu 그대로(상점 · 장비 · 전투 · 탤런트 · 펫 — T10 배선)
-            var tabs = UiKit.Find(_rt, "Tab_01_BottomFlushMenu"); if (tabs != null) NavBar.Wire(App, tabs, "shop");
+
+            // ⑥ 상단 재화 바(공용 헬퍼 · 스크롤 위에 그린다) + 하단 탭 5칸(상점 활성)
+            _top = TopBar.Build(App, Root); UiKit.Tag(_top.Root, "상단 바");
+            NavBar.Attach(this, Root, "shop"); UiKit.Tag(UiKit.Find(Root, "ui.tabBar"), "하단 탭바");
         }
 
-        static List<Transform> Children(Transform t) { var l = new List<Transform>(); if (t != null) for (int i = 0; i < t.childCount; i++) l.Add(t.GetChild(i)); return l; }
-
-        /// <summary>상품 줄(HorizontalLayoutGroup · 프리팹 칸 3개)을 우리 상품으로 — 프리팹 칸은 끄고 같은 줄에 ListItem_ShopItem 을 필요한 만큼(최대 3) 세운다. 상품이 없으면 줄을 끈다.</summary>
-        void FillGroup(Transform group, int count, int offset, Action<Transform, int> bind)
+        /// <summary>스크롤 위치(1 = 맨 위 = 레퍼런스 10 · 0 = 맨 아래 = 레퍼런스 09). 비평 스크린샷(UiShotsTests)이 두 장을 찍을 때 쓴다.</summary>
+        public void ScrollTo(float normalized)
         {
-            if (group == null) return;
-            foreach (var c in Children(group)) c.gameObject.SetActive(false);
-            int n = Mathf.Clamp(count - offset, 0, 3);
-            group.gameObject.SetActive(n > 0);
-            for (int i = 0; i < n; i++) { var cell = UiKit.Spawn("ui.shopItem", group); cell.name = "ui.shopItem:" + (offset + i); bind(cell.transform, offset + i); }
+            if (_scroll == null) return;
+            Canvas.ForceUpdateCanvases();
+            _scroll.verticalNormalizedPosition = Mathf.Clamp01(normalized);
         }
 
-        // ───────────────────────── 뽑기 상자 (ListItem_ShopPackage) ─────────────────────────
-        void BindBox(Transform pkg, GachaBox box)
+        // ───────────────────────── 배치 도우미 ─────────────────────────
+        /// <summary>스크롤 Content 안 자리 — r 은 <b>프레임 %</b>(표값 그대로 · y 는 <see cref="ContentTop"/> 부터 아래로 이어진다). 가로는 Content 폭 % · 세로는 프레임 px.</summary>
+        RectTransform Place(RectTransform rt, Layout.R r)
         {
-            var D = App.Data; var w = new BoxWidgets();
-            w.Title = UiKit.SetText(pkg, "Text_Title", box.Name);
-            if (w.Title != null) { w.Title.alignment = TextAnchor.MiddleLeft; w.Title.resizeTextForBestFit = false; w.Title.fontSize = 40; w.Title.horizontalOverflow = HorizontalWrapMode.Overflow; w.Title.verticalOverflow = VerticalWrapMode.Overflow; }
-            // 3칸(Group_Items/List) = 상위 등급 확률 — index.html gachaRateText 순서(높은 등급부터 · 0% 등급은 안 적는다) · 칸이 3개라 상위 3등급까지
-            var rates = new List<(int rar, double rate)>(); for (int i = box.Rate.Length - 1; i >= 0; i--) if (box.Rate[i] > 0) rates.Add((i, box.Rate[i]));
-            var cells = Children(UiKit.Find(pkg, "Group_Items"));
-            for (int i = 0; i < cells.Count; i++)
-            {
-                var cell = cells[i]; bool on = i < rates.Count; cell.gameObject.SetActive(on); if (!on) continue;
-                UiKit.SetSprite(cell, "Icon", "hud.gradeGem", Palette.ByName(Palette.RarName(rates[i].rar))); UiKit.Show(cell, "Icon_Infinity", false);
-                var t = UiKit.SetText(cell, "Text (TMP)", $"{GearUi.RarName(D, rates[i].rar)} {rates[i].rate:0.#}%");
-                if (t != null) { t.gameObject.SetActive(true); t.resizeTextForBestFit = true; t.resizeTextMinSize = 12; t.resizeTextMaxSize = 26; t.horizontalOverflow = HorizontalWrapMode.Wrap; }
-            }
-            // 배지(Badge · 데모 «BEST») = 천장 — 상자마다 있는 천장만(index.html pityText 규약 · 희귀 상자는 없어 배지를 끈다)
-            var badge = UiKit.Find(pkg, "Badge");
-            if (badge != null)
-            {
-                int pity = box.PityMyth > 0 ? box.PityMyth : box.PityLegend;
-                badge.gameObject.SetActive(pity > 0);
-                if (pity > 0) { var bt = badge.GetComponentInChildren<Text>(true); if (bt != null) { bt.text = $"천장\n{pity}회"; bt.resizeTextForBestFit = true; bt.resizeTextMinSize = 12; bt.resizeTextMaxSize = 30; bt.horizontalOverflow = HorizontalWrapMode.Wrap; } }
-            }
-            // 1회 · 10회 — 프리팹 Button_Price(오른쪽) = 10회, 그 복제(왼쪽) = 1회 (index.html 순서 1회 → 10회)
-            var price = UiKit.Find(pkg, "Button_Price") as RectTransform; string key = box.Key;
-            if (price != null)
-            {
-                var one = UnityEngine.Object.Instantiate(price.gameObject, price.parent, false); one.name = "Button_Price1"; var oneRt = (RectTransform)one.transform;
-                oneRt.anchoredPosition = price.anchoredPosition - new Vector2(price.sizeDelta.x + 12f, 0);
-                PriceLabel(oneRt, $"1회 💎{UiKit.FmtQty(box.Cost)}"); PriceLabel(price, $"10회 💎{UiKit.FmtQty(box.Cost * D.Gacha.TenPullCount)}");
-                w.One = UiKit.Clickable(oneRt, () => Pull(1, key)); w.Ten = UiKit.Clickable(price, () => Pull(D.Gacha.TenPullCount, key));
-            }
-            _box[box.Key] = w;
+            rt.anchorMin = new Vector2(r.X / 100f, 1f); rt.anchorMax = new Vector2((r.X + r.W) / 100f, 1f); rt.pivot = new Vector2(0.5f, 1f);
+            rt.offsetMin = new Vector2(0, -(r.Y - ContentTop + r.H) / 100f * UiKit.FrameH); rt.offsetMax = new Vector2(0, -(r.Y - ContentTop) / 100f * UiKit.FrameH);
+            rt.localScale = Vector3.one;
+            return rt;
         }
-        static void PriceLabel(Transform btn, string s) { var t = btn.GetComponentInChildren<Text>(true); if (t != null) { t.text = s; t.resizeTextForBestFit = true; t.resizeTextMinSize = 16; t.resizeTextMaxSize = 40; t.horizontalOverflow = HorizontalWrapMode.Wrap; } }
-
-        static string PityText(GachaBox box, GachaState st)
+        /// <summary>상품 카드 1칸 = 표 ⑤ «상품 카드(1칸)»(폭 30 · 높이 18.5 · 3열 · 가로 간격 2).</summary>
+        static Layout.R CardRect(float y, int col) => new Layout.R(Layout.ShopCard1.X + col * (Layout.ShopCardW + Layout.ShopCardGap), y, Layout.ShopCardW, Layout.ShopCard1.H);
+        /// <summary>섹션 제목(가운데 흰 굵은 글자 + 양옆 선 = Title_LineDeco 조각) — 표 ⑤ «섹션 헤더»(높이 2.5) 자리에 조각 비례(448×102)로.</summary>
+        RectTransform Header(float y, string text)
         {
-            var o = new List<string>();
-            if (box.PityMyth > 0) o.Add($"신화 확정 {Math.Max(0, box.PityMyth - st.P50)}회");
-            if (box.PityLegend > 0) o.Add($"전설 확정 {Math.Max(0, box.PityLegend - st.P10)}회");
-            o.Add($"누적 {st.Pulls}회");
+            var t = UiKit.Spawn("ui.lineTitle", _content); var rt = (RectTransform)t.transform; rt.name = "Sec:" + text;
+            Place(rt, new Layout.R(20, y - 0.75f, 60, Layout.ShopSec1.H + 1.5f));
+            var txt = UiKit.SetText(rt, "Text (TMP)", text, Palette.White, 40); if (txt != null) { txt.fontStyle = FontStyle.Bold; txt.resizeTextForBestFit = true; txt.resizeTextMinSize = 16; txt.resizeTextMaxSize = 40; }
+            var line = UiKit.Find(rt, "LineDeco") as RectTransform; if (line != null) line.sizeDelta = new Vector2(UiKit.FrameW * 0.6f, line.sizeDelta.y);   // 선을 레퍼런스처럼 길게(조각은 그대로 · 폭만)
+            return rt;
+        }
+        /// <summary>어두운 반투명 pill(TransperDark 조각) + 흰 글자 — 설명·천장 줄.</summary>
+        Text Pill(RectTransform card, Layout.R r, string text, int size = 26)
+        {
+            var p = UiKit.Spawn("ui.frameDark", card); var prt = (RectTransform)p.transform; prt.name = "Pill"; UiKit.Pct(prt, r);
+            return UiKit.Label(prt, 3, 0, 94, 100, text, size, Palette.White);
+        }
+        /// <summary>(i) 버튼 = Button_Info 조각 → 확률·천장 팝업.</summary>
+        void InfoButton(RectTransform card, Layout.R r, GachaBox box)
+        {
+            var i = UiKit.Spawn("ui.btnInfo", card); var irt = (RectTransform)i.transform; irt.name = "Info"; UiKit.Pct(irt, r);
+            UiKit.Clickable(irt, () => ShowInfo(box));
+        }
+        /// <summary>카드 색 = 그 상자에서 나올 수 있는 최고 등급의 등급색(CardFrame_04 변형 · 희귀 상자 blue · 전설 yellow · 신화 plum).</summary>
+        static string BoxColor(GachaBox box) { int top = 0; for (int i = 0; i < box.Rate.Length; i++) if (box.Rate[i] > 0) top = i; return Palette.RarName(top); }
+        /// <summary>등급 확률 한 줄(index.html gachaRateText 순서 · 높은 등급부터 · 0% 등급은 안 적는다).</summary>
+        string RatesText(GachaBox box)
+        {
+            var D = App.Data; var o = new List<string>();
+            for (int i = box.Rate.Length - 1; i >= 0; i--) if (box.Rate[i] > 0) o.Add($"<color=#{ColorUtility.ToHtmlStringRGB(Palette.ByName(Palette.RarName(i)))}>{GearUi.RarName(D, i)}</color> {box.Rate[i]:0.#}%");
             return string.Join(" · ", o);
         }
-
-        // ───────────────────────── 상품 칸 (ListItem_ShopItem) ─────────────────────────
-        /// <summary>칸 하나 — Text_Title 상품명 · Icon 재화 그림 · Text_ItemNum 수량 · Text_Limit 부제 · Button_Price(GroupArea Icon + Text) 가격. priceIconKey 가 null 이면 가격 아이콘을 끈다(₩ · «수령»).</summary>
-        Button BindItem(Transform cell, string title, string iconKey, string num, string sub, string priceIconKey, string price, Action onClick)
+        /// <summary>천장 줄들 — 신화 확정 · 전설 확정(있는 것만) 뒤에 «누적 N회» 로 채운다(pill 개수만큼).</summary>
+        static List<string> PityLines(GachaBox box, GachaState st, int count)
         {
-            UiKit.SetText(cell, "Text_Title", title);
-            var im = UiKit.SetSprite(cell, "Icon", iconKey, Palette.White); if (im != null) im.preserveAspect = true;
-            UiKit.SetText(cell, "Text_ItemNum", num);
-            UiKit.SetText(cell, "Text_Limit", sub);
-            var btn = UiKit.Find(cell, "Button_Price"); if (btn == null) return null;
-            var pi = UiKit.Find(btn, "GroupArea/Group/Icon"); if (pi != null) { pi.gameObject.SetActive(priceIconKey != null); if (priceIconKey != null) UiKit.SetSprite(btn, "GroupArea/Group/Icon", priceIconKey, Palette.White); }
-            var pt = PriceText(cell); if (pt != null) { pt.text = price; pt.resizeTextForBestFit = true; pt.resizeTextMinSize = 16; pt.resizeTextMaxSize = 44; pt.horizontalOverflow = HorizontalWrapMode.Overflow; }
-            var inner = UiKit.Find(btn, "Button_02_Yellow"); if (inner != null) { var it = inner.Find("Text (TMP)"); if (it != null) it.gameObject.SetActive(false); }   // 버튼 프리팹 자체의 «Button» 글자 — 값은 GroupArea 의 글자가 맡는다
-            return UiKit.Clickable(btn, onClick ?? (() => { }));
+            var o = new List<string>();
+            if (box.PityMyth > 0) o.Add($"신화 확정까지 <color=#FFCC00>{Math.Max(0, box.PityMyth - st.P50)}</color>회");
+            if (box.PityLegend > 0) o.Add($"전설 확정까지 <color=#FFCC00>{Math.Max(0, box.PityLegend - st.P10)}</color>회");
+            while (o.Count < count) o.Add($"누적 <color=#FFCC00>{st.Pulls}</color>회 열었습니다");
+            return o.GetRange(0, count);
         }
-        static Text PriceText(Transform cell) { var t = UiKit.Find(cell, "GroupArea/Group/Text (TMP)"); return t != null ? t.GetComponent<Text>() : null; }
+        GachaState State(string key) { var S = App.Save; if (!S.GachaBoxes.TryGetValue(key, out var st)) { st = new GachaState(); S.GachaBoxes[key] = st; } return st; }
 
-        void BindGemPack(Transform cell, ShopData.GemPack p)
+        // ───────────────────────── 상자 카드 ─────────────────────────
+        /// <summary>최상위 상자 큰 카드(10_shop_2.jpg 위) — 그림 왼쪽 · 오른쪽에 이름 + (i) · 확률 한 줄 · 천장 pill 2 · 아래 «1회 💎» · «10회 💎» 주황 2개(표 ⑤ «상자 버튼 2개» 자리).</summary>
+        void BuildBigCard(RectTransform card, GachaBox box, List<RectTransform> btnsOut)
         {
-            BindItem(cell, "다이아", "hud.gem", UiKit.FmtQty(p.Gem), "모의 결제", null, $"₩{p.Won:#,0}", () =>
+            var D = App.Data; var w = new BoxWidgets(); string key = box.Key;
+            var frame = UiKit.Spawn(Palette.FrameKey("ui.cardFrame", BoxColor(box)), card); UiKit.Stretch((RectTransform)frame.transform);
+            var title = UiKit.SetText(frame.transform, "Text_Title", box.Name, Palette.Yellow, 46);
+            if (title != null) { UiKit.Pct(title.rectTransform, 42, 3, 49, 13); title.alignment = TextAnchor.MiddleRight; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = 20; title.resizeTextMaxSize = 46; }
+            InfoButton(card, new Layout.R(91.5f, 4, 7, 12), box);
+            var chest = UiKit.Icon(card, "Chest", "chest." + box.Key); UiKit.Pct(chest.rectTransform, 4, 8, 36, 56);
+            UiKit.Label(card, 42, 20, 54, 16, RatesText(box), 28, Palette.White);
+            w.Pills.Add(Pill(card, new Layout.R(42, 45, 55, 10), ""));
+            w.Pills.Add(Pill(card, new Layout.R(42, 58.5f, 55, 10), ""));
+            var one = UiKit.Button(card, "ui.btnOrange", $"1회  💎{UiKit.FmtQty(box.Cost)}", () => Pull(1, key), new Layout.R(2.5f, 74, 46, 21)); one.name = "One";
+            var ten = UiKit.Button(card, "ui.btnOrange", $"10회  💎{UiKit.FmtQty(box.Cost * D.Gacha.TenPullCount)}", () => Pull(D.Gacha.TenPullCount, key), new Layout.R(51.5f, 74, 46, 21)); ten.name = "Ten";
+            w.One = one.GetComponent<Button>(); w.Ten = ten.GetComponent<Button>();
+            btnsOut.Add(one); btnsOut.Add(ten);
+            _box[key] = w;
+        }
+        /// <summary>나머지 상자 작은 카드(10_shop_2.jpg 가운데) — 이름 + (i) · 확률 pill · 그림 · 천장 pill · 아래 <b>광고(파랑 · 무료 보급 수령)</b> + <b>«💎가격»(1회)</b>.</summary>
+        void BuildSmallCard(RectTransform card, GachaBox box)
+        {
+            var D = App.Data; var w = new BoxWidgets(); string key = box.Key;
+            var frame = UiKit.Spawn(Palette.FrameKey("ui.cardFrame", BoxColor(box)), card); UiKit.Stretch((RectTransform)frame.transform);
+            var title = UiKit.SetText(frame.transform, "Text_Title", box.Name, Palette.White, 38);
+            if (title != null) { UiKit.Pct(title.rectTransform, 6, 2.5f, 76, 9); title.alignment = TextAnchor.MiddleCenter; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = 16; title.resizeTextMaxSize = 38; }
+            InfoButton(card, new Layout.R(84, 2, 12, 9), box);
+            Pill(card, new Layout.R(6, 12, 88, 14), RatesText(box), 24);
+            var chest = UiKit.Icon(card, "Chest", "chest." + box.Key); UiKit.Pct(chest.rectTransform, 22, 28, 56, 37);
+            w.Pills.Add(Pill(card, new Layout.R(6, 67, 88, 14), "", 24));
+            // 광고 버튼(파랑 · 클래퍼) = 일일 무료 보급(gacha.json dailyGem · 하루 1회) — 받을 수 있으면 빨간 점
+            var ad = UiKit.Button(card, "ui.btnBlue", "", OnFree, new Layout.R(6, 83, 42, 14)); ad.name = "Ad";
+            var adIc = UiKit.Icon(ad, "Icon", "ui.ad"); UiKit.Pct(adIc.rectTransform, 26, 12, 48, 76);
+            var dot = UiKit.Spawn("ui.alertDot", ad); var drt = (RectTransform)dot.transform; dot.name = "FreeDot"; drt.anchorMin = drt.anchorMax = new Vector2(1, 1); drt.pivot = new Vector2(0.5f, 0.5f); drt.anchoredPosition = new Vector2(-6, -2); drt.sizeDelta = new Vector2(44, 44);
+            _freeBtns.Add(ad.GetComponent<Button>()); _freeDots.Add(dot);
+            var one = UiKit.Button(card, "ui.btnOrange", $"1회  💎{UiKit.FmtQty(box.Cost)}", () => Pull(1, key), new Layout.R(52, 83, 42, 14)); one.name = "One";
+            w.One = one.GetComponent<Button>();
+            _box[key] = w;
+        }
+
+        // ───────────────────────── 상품 카드 (ListItem_ShopItem 부품 · 수량 → 그림 → 이름 → 가격 띠) ─────────────────────────
+        /// <summary>다이아/골드 카드 1칸 — 09_shop_1.jpg 카드 안 비례: 수량(위 5~19%) · 그림(20~64%) · 이름(66~77%) · 가격 띠(80~97%). 카드 전체와 가격 버튼이 같은 일을 한다. priceIconKey 가 null 이면 가격 아이콘을 끈다(₩).</summary>
+        List<Button> BuildPack(RectTransform slot, string qty, string iconKey, string name, string priceIconKey, string price, Color tint, Action onClick)
+        {
+            var cell = UiKit.Spawn("ui.shopItem", slot); var crt = (RectTransform)cell.transform; UiKit.Stretch(crt);
+            foreach (var im in cell.GetComponentsInChildren<Image>(true)) { if (im.name == "Bg(Mask)") im.color = tint; else if (im.name == "Botton") im.color = Palette.Cream; }
+            UiKit.Hide(crt, "ItemFrameArea", "Text_ItemNum");
+            var q = UiKit.SetText(crt, "Text_Title", qty, Palette.White, 50);
+            if (q != null) { UiKit.Pct(q.rectTransform, 5, 5, 90, 14); q.fontStyle = FontStyle.Bold; q.resizeTextForBestFit = true; q.resizeTextMinSize = 20; q.resizeTextMaxSize = 50; }
+            var im2 = UiKit.SetSprite(crt, "Icon", iconKey, Palette.White); if (im2 != null) { im2.preserveAspect = true; UiKit.Pct(im2.rectTransform, 14, 20, 72, 44); }
+            var nm = UiKit.SetText(crt, "Text_Limit", name, Palette.White, 26); if (nm != null) { UiKit.Pct(nm.rectTransform, 4, 66, 92, 11); nm.resizeTextForBestFit = true; nm.resizeTextMinSize = 14; nm.resizeTextMaxSize = 26; }
+            var btns = new List<Button>();
+            var btn = UiKit.Find(crt, "Button_Price");
+            if (btn != null)
             {
-                App.Save.Gem += p.Gem; App.Persist(); Refresh(); App.Toast($"💎 {UiKit.FmtQty(p.Gem)} 지급 (모의 결제)");
-            });
-        }
-        void BindGoldPack(Transform cell, ShopData.GoldPack p)
-        {
-            var b = BindItem(cell, "골드", "hud.gold", UiKit.FmtQty(p.Gold), "다이아로 구매", "hud.gem", UiKit.FmtQty(p.Gem), () =>
-            {
-                var S = App.Save; if (S.Gem < p.Gem) { App.Toast("💎 다이아가 부족합니다"); return; }
-                S.Gem -= p.Gem; S.Gold += p.Gold; App.Persist(); Refresh(); Audio.Sfx("snd.coin"); App.Toast($"골드 {UiKit.Fmt(p.Gold)} 구매!");
-            });
-            if (b != null) _gated.Add((b, () => App.Save.Gem >= p.Gem));
-        }
-
-        // ───────────────────────── 소탭 · 스크롤 ─────────────────────────
-        void SelectSub(int k) { for (int i = 0; i < _subTabs.Count; i++) { UiKit.Show(_subTabs[i], "Focus", i == k); UiKit.Show(_subTabs[i], "Normal_01", i != k); } }
-        /// <summary>섹션 제목이 뷰포트 위에 오게 스크롤. null = 맨 위(뽑기 상자).</summary>
-        void ScrollTo(Transform target)
-        {
-            if (_scroll == null || _content == null) return;
-            Canvas.ForceUpdateCanvases(); LayoutRebuilder.ForceRebuildLayoutImmediate(_content);
-            var t = target as RectTransform;
-            if (t == null || _scroll.viewport == null) { _scroll.verticalNormalizedPosition = 1f; return; }
-            float fromTop = -(_content.InverseTransformPoint(t.position).y + t.rect.height * (1f - t.pivot.y));   // Content 위 끝(pivot y=1) 에서 제목 위 끝까지
-            float max = _content.rect.height - _scroll.viewport.rect.height;
-            _scroll.verticalNormalizedPosition = max > 0 ? 1f - Mathf.Clamp01(fromTop / max) : 1f;
+                UiKit.Pct((RectTransform)btn, 6, 80, 88, 17);
+                var pi = UiKit.Find(btn, "GroupArea/Group/Icon"); if (pi != null) { pi.gameObject.SetActive(priceIconKey != null); if (priceIconKey != null) UiKit.SetSprite(btn, "GroupArea/Group/Icon", priceIconKey, Palette.White); }
+                var pt = UiKit.SetText(btn, "GroupArea/Group/Text (TMP)", price); if (pt != null) { pt.resizeTextForBestFit = true; pt.resizeTextMinSize = 16; pt.resizeTextMaxSize = 40; pt.horizontalOverflow = HorizontalWrapMode.Overflow; }
+                var inner = UiKit.Find(btn, "Button_02_Yellow"); if (inner != null) { var it = inner.Find("Text (TMP)"); if (it != null) it.gameObject.SetActive(false); }   // 버튼 프리팹 자체의 «Button» 글자 — 값은 GroupArea 의 글자가 맡는다
+                btns.Add(UiKit.Clickable(btn, onClick));
+            }
+            btns.Add(UiKit.Clickable(crt, onClick, false));
+            return btns;
         }
 
         // ───────────────────────── 갱신 ─────────────────────────
         public override void Refresh()
         {
             var D = App.Data; var S = App.Save;
-            if (_gold != null) _gold.text = UiKit.Fmt(S.Gold);
-            if (_gem != null) _gem.text = UiKit.Fmt(S.Gem);
-            bool canFree = CanFree(S); UiKit.SetInteractable(_free, canFree);
-            if (_freeTxt != null) _freeTxt.text = canFree ? "수령" : "완료";
-            if (_freeSub != null) _freeSub.text = canFree ? "오늘 수령 가능" : "내일 다시";
+            _top?.Refresh();
+            bool canFree = CanFree(S);
+            foreach (var b in _freeBtns) UiKit.SetInteractable(b, canFree);
+            foreach (var d in _freeDots) if (d != null) d.SetActive(canFree);
             foreach (var box in D.Gacha.Boxes)
             {
                 if (!_box.TryGetValue(box.Key, out var w)) continue;
-                if (!S.GachaBoxes.TryGetValue(box.Key, out var st)) { st = new GachaState(); S.GachaBoxes[box.Key] = st; }
-                if (w.Title != null) w.Title.text = $"{box.Name}\n<size=20>{PityText(box, st)}</size>";
+                var st = State(box.Key); var lines = PityLines(box, st, w.Pills.Count);
+                for (int i = 0; i < w.Pills.Count; i++) if (w.Pills[i] != null) w.Pills[i].text = lines[i];
                 UiKit.SetInteractable(w.One, S.Gem >= box.Cost); UiKit.SetInteractable(w.Ten, S.Gem >= box.Cost * D.Gacha.TenPullCount);
             }
             foreach (var g in _gated) UiKit.SetInteractable(g.btn, g.can());
             UpdateTimer();
         }
         public override void Tick(float dt) { _timerT += dt; if (_timerT >= 1f) { _timerT = 0f; UpdateTimer(); } }
-        /// <summary>Timer_01 = 다음 무료 보급(자정)까지 남은 시간 · 수령 전이면 «지금 수령 가능».</summary>
+        /// <summary>«무료 보급까지 hh:mm:ss»(자정 리셋) · 받을 수 있으면 «지금 수령 가능».</summary>
         void UpdateTimer()
         {
-            if (_timer == null) return;
-            if (CanFree(App.Save)) { _timer.text = "지금 수령 가능"; return; }
+            if (_freeTxt == null) return;
+            if (CanFree(App.Save)) { _freeTxt.text = $"무료 보급 💎{UiKit.FmtQty(App.Data.Gacha.DailyGem)} — 지금 수령 가능(광고 버튼)"; return; }
             var left = DateTime.Today.AddDays(1) - DateTime.Now; if (left.Ticks < 0) left = TimeSpan.Zero;
-            _timer.text = $"{(int)left.TotalHours:00}:{left.Minutes:00}:{left.Seconds:00}";
+            _freeTxt.text = $"무료 보급까지 {(int)left.TotalHours:00}:{left.Minutes:00}:{left.Seconds:00}";
         }
 
         void OnFree()
         {
-            var S = App.Save; if (!CanFree(S)) return;
+            var S = App.Save; if (!CanFree(S)) { App.Toast("오늘 무료 보급은 받았습니다 — 내일 다시"); return; }
             S.Gem += App.Data.Gacha.DailyGem; S.FreeDay = Today(); App.Persist(); Refresh(); App.Toast($"💎 {UiKit.FmtQty(App.Data.Gacha.DailyGem)} 수령!");
         }
 
-        // ───────────────────────── 뽑기 → 결과 팝업 = Shop_Chest_Open 그대로 ─────────────────────────
+        // ───────────────────────── 정보 팝업 (확률 · 천장) ─────────────────────────
+        void ShowInfo(GachaBox box)
+        {
+            var D = App.Data; var st = State(box.Key);
+            var b = App.Overlay.OpenBox("ui.popup", "ui.title.tangerine", box.Name, InfoBox, () => App.Overlay.Close());
+            var chest = UiKit.Icon(b, "Chest", "chest." + box.Key); UiKit.Pct(chest.rectTransform, 32, 7, 36, 30);
+            var lines = new List<string> { "<b>등급 확률</b>" };
+            for (int i = box.Rate.Length - 1; i >= 0; i--) if (box.Rate[i] > 0) lines.Add($"<color=#{ColorUtility.ToHtmlStringRGB(Palette.ByName(Palette.RarName(i)))}>{GearUi.RarName(D, i)}</color>  {box.Rate[i]:0.#}%");
+            lines.Add("");
+            if (box.PityMyth > 0) lines.Add($"신화 확정: {box.PityMyth}회마다 (남은 {Math.Max(0, box.PityMyth - st.P50)}회)");
+            if (box.PityLegend > 0) lines.Add($"전설 확정: {box.PityLegend}회마다 (남은 {Math.Max(0, box.PityLegend - st.P10)}회)");
+            if (box.PityMyth == 0 && box.PityLegend == 0) lines.Add("천장 없음");
+            lines.Add($"누적 {st.Pulls}회 · 1회 💎{UiKit.FmtQty(box.Cost)} · {D.Gacha.TenPullCount}회 💎{UiKit.FmtQty(box.Cost * D.Gacha.TenPullCount)}");
+            UiKit.Label(b, 8, 40, 84, 54, string.Join("\n", lines), 30, Palette.InkSoft, TextAnchor.UpperCenter, true, false);
+        }
+
+        // ───────────────────────── 뽑기 → 결과 팝업 (공통 팝업 문법 · 명판 · 열린 상자 · 격자 = GearUi.Cell · 탭하여 닫기) ─────────────────────────
         void Pull(int n, string boxKey)
         {
             var D = App.Data; var S = App.Save;
             GachaBox box = null; foreach (var b in D.Gacha.Boxes) if (b.Key == boxKey) box = b; if (box == null) return;
-            if (!S.GachaBoxes.TryGetValue(boxKey, out var st)) { st = new GachaState(); S.GachaBoxes[boxKey] = st; }
+            var st = State(boxKey);
             double cost = box.Cost * n; if (S.Gem < cost) { App.Toast("💎 다이아가 부족합니다"); return; }
             S.Gem -= cost;
             var rng = new Mulberry32((uint)Environment.TickCount ^ 0x5bd1e995u);
@@ -243,25 +316,16 @@ namespace KkomaKnight.Game
             App.Persist(); Refresh();
             Audio.Sfx("snd.gacha");   // 상자 열림(T28)
             var best = got[0]; foreach (var g in got) if (GearSystem.GearScore(g) > GearSystem.GearScore(best)) best = g;
-            // 결과 팝업 — 주인 지정 Shop_Chest_Open 그대로: 리본 제목 · 열린 상자 그림 · 프리팹의 보상 칸(ItemFrame_01) 자리에 얻은 장비 격자(칸 = ListItem_EquipMent · 4열)
-            var root = App.Overlay.OpenPrefab("ui.chestOpen"); var rt = (RectTransform)root.transform;
-            UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", $"{box.Name} {n}회" + (got.Count > n ? $" · {got.Count}개" : ""));
-            var slot = UiKit.Find(rt, "ItemFrame_01") as RectTransform; float cy = slot != null ? slot.anchoredPosition.y : 217f; if (slot != null) slot.gameObject.SetActive(false);
-            UiKit.SetSprite(rt, "Image_Chest", "chest." + box.Key + ".open", Palette.White);
-            float cs = GearUi.CellSize(App.Assets), gap = 14f; const int cols = 4, rows = 3;
-            var grid = UiKit.Rect(rt, "Got"); grid.anchorMin = grid.anchorMax = new Vector2(0.5f, 0.5f); grid.pivot = new Vector2(0.5f, 0.5f);
-            grid.sizeDelta = new Vector2(cols * cs + (cols - 1) * gap, rows * cs + (rows - 1) * gap); grid.anchoredPosition = new Vector2(0, cy);
-            var gl = grid.gameObject.AddComponent<GridLayoutGroup>(); gl.cellSize = new Vector2(cs, cs); gl.spacing = new Vector2(gap, gap); gl.childAlignment = TextAnchor.MiddleCenter; gl.constraint = GridLayoutGroup.Constraint.FixedColumnCount; gl.constraintCount = cols;
+            var popup = App.Overlay.OpenBox("ui.popup", "ui.title.tangerine", $"{box.Name} {n}회" + (got.Count > n ? $" · {got.Count}개" : ""), ResultBox, () => { App.Overlay.Close(); Refresh(); });
+            var chest = UiKit.Icon(popup, "Chest", "chest." + box.Key + ".open"); UiKit.Pct(chest.rectTransform, 30, 5, 40, 22);
+            UiKit.Label(popup, 5, 28, 90, 6, $"최고 등급 <color=#{ColorUtility.ToHtmlStringRGB(Palette.ByName(Palette.RarName(best.Rar)))}>{GearUi.RarName(D, best.Rar)}</color> · 인벤토리에 담겼습니다 — 장착은 장비 탭에서", 26, Palette.InkSoft, TextAnchor.MiddleCenter, true, false);
+            // 격자 = ListItem_EquipMent 본래 크기(188 · 비례 고정) · 4열 — 10개면 3행이 상자 안에 들어간다
+            float cs = GearUi.CellSize(App.Assets), gap = 12f; int rows = Mathf.Max(1, (got.Count + ResultCols - 1) / ResultCols);
+            var grid = UiKit.Rect(popup, "Got"); grid.anchorMin = new Vector2(0.5f, 1f); grid.anchorMax = new Vector2(0.5f, 1f); grid.pivot = new Vector2(0.5f, 1f);
+            grid.sizeDelta = new Vector2(ResultCols * cs + (ResultCols - 1) * gap, rows * cs + (rows - 1) * gap); grid.anchoredPosition = new Vector2(0, -ResultBox.H / 100f * UiKit.FrameH * 0.36f);
+            var gl = grid.gameObject.AddComponent<GridLayoutGroup>(); gl.cellSize = new Vector2(cs, cs); gl.spacing = new Vector2(gap, gap); gl.childAlignment = TextAnchor.UpperCenter; gl.constraint = GridLayoutGroup.Constraint.FixedColumnCount; gl.constraintCount = ResultCols;
             foreach (var g in got) GearUi.Cell(grid, D, g, new GearUi.CellOpts { IsNew = true }, null);
-            var sub = UiKit.Text(rt, $"최고 등급 <color=#{ColorUtility.ToHtmlStringRGB(Palette.ByName(Palette.RarName(best.Rar)))}>{GearUi.RarName(D, best.Rar)}</color> · 인벤토리에 담겼습니다 — 장착은 장비 탭에서", 26, Palette.White, TextAnchor.MiddleCenter, true);
-            sub.rectTransform.anchorMin = sub.rectTransform.anchorMax = new Vector2(0.5f, 0.5f); sub.rectTransform.sizeDelta = new Vector2(960, 48); sub.rectTransform.anchoredPosition = new Vector2(0, cy + grid.sizeDelta.y / 2f + 36f);
-            var names = new List<string>(); foreach (var g in got) names.Add($"{GearUi.RarName(D, g.Rar)} {GearUi.Name(D, g)}");
-            var chest = UiKit.Find(rt, "Chest") as RectTransform; float chestBottom = chest != null ? chest.anchoredPosition.y - chest.rect.height / 2f : -674f;
-            var list = UiKit.Text(rt, string.Join(" · ", names), 22, Palette.CreamDark, TextAnchor.UpperCenter, true);
-            list.rectTransform.anchorMin = list.rectTransform.anchorMax = new Vector2(0.5f, 0.5f); list.rectTransform.sizeDelta = new Vector2(960, 130); list.rectTransform.anchoredPosition = new Vector2(0, chestBottom - 100f);
-            UiKit.SetText(rt, "Text_TouchContionue", "터치하면 닫기");
-            var bgT = UiKit.Find(rt, "Background"); if (bgT != null) UiKit.Clickable(bgT, () => { App.Overlay.Close(); Refresh(); }, false);
-            if (chest != null) UiKit.PopIn(chest, 0.5f, 0.5f);
+            UiKit.PopIn(chest.rectTransform, 0.5f, 0.5f);
         }
     }
 }

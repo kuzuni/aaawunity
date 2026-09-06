@@ -64,6 +64,7 @@ namespace KkomaKnight.Game
             _cur = root;
             return root;
         }
+        /// <summary>공통 팝업 상자를 연다 — onTapClose 를 주면 «탭하여 닫기» + 배경 탭으로 닫히는 정보 팝업(상점 뽑기 결과·확률 정보 · T40).</summary>
         public RectTransform OpenBox(string popupKey, string titleKey, string title, Layout.R rect, Action onTapClose = null) => Box(popupKey, titleKey, title, rect, onTapClose);
 
         Text Sub(RectTransform box, string s, float y = 9, float h = 7, int size = 36, Color? c = null)

@@ -405,7 +405,7 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
-        // ───────────────────────── ④ 상점 — 상자 3종 · 뽑기 → Shop_Chest_Open ─────────────────────────
+        // ───────────────────────── ④ 상점 — 레퍼런스 09/10 구도(상자 3 · 다이아 6 · 골드 3) · 뽑기 → 공통 팝업 ─────────────────────────
         [UnityTest]
         public IEnumerator ShopBoxesAndChestOpenPopup()
         {
@@ -417,14 +417,35 @@ namespace KkomaKnight.Tests.Play
             var shop = _app.Current.Root;
             Assert.AreEqual(3, D.Gacha.Boxes.Count, "gacha.json 상자 3종");
             foreach (var box in D.Gacha.Boxes) Assert.IsTrue(HasText(s => s.Contains(box.Name)), "상점에 상자 이름이 보여야 한다: " + box.Name);
-            var bar = UiKit.Find(shop, "ui.tabBar"); if (bar == null) bar = UiKit.Find(shop, "Tab_01_BottomFlushMenu");   // T9 가 Shop_List 프리팹의 탭 바를 쓰면 뒤쪽 이름
+            var bar = UiKit.Find(shop, "ui.tabBar"); if (bar == null) bar = UiKit.Find(shop, "Tab_01_BottomFlushMenu");
             Assert.IsNotNull(bar, "상점 탭 바"); Assert.GreaterOrEqual(bar.childCount, 5, "탭 5");
+            // T40 — 레퍼런스 09_shop_1.jpg·10_shop_2.jpg 구도 단언: 상단 재화 바 · 스크롤 안에 상자 카드 3(큰 카드 1 = 가장 비싼 상자 · 작은 카드 2) · «무료 보급» 줄 · 다이아 6 · 골드 3 · 탭 바 = 표 자리
+            {
+                Assert.IsNotNull(UiKit.Find(shop, "TopBar"), "상단 재화 바(TopBar)");
+                var content = UiKit.Find(shop, "Content"); Assert.IsNotNull(content, "세로 스크롤 Content");
+                Assert.AreEqual(3, CountNamed(content, "Box:"), "상자 카드 3");
+                Assert.AreEqual(D.Shop.GemPacks.Count, CountNamed(content, "GemPack:"), "다이아 카드 = shop.json gemPacks 수"); Assert.AreEqual(6, D.Shop.GemPacks.Count, "다이아 6");
+                Assert.AreEqual(D.Shop.GoldPacks.Count, CountNamed(content, "GoldPack:"), "골드 카드 = shop.json goldPacks 수"); Assert.AreEqual(3, D.Shop.GoldPacks.Count, "골드 3");
+                Assert.IsNotNull(UiKit.Find(content, "FreeLine"), "«무료 보급까지» 줄");
+                Assert.IsTrue(HasText(s => s == "다이아") && HasText(s => s == "골드"), "섹션 제목 «다이아»·«골드»");
+                GachaBox big = null; foreach (var b in D.Gacha.Boxes) if (big == null || b.Cost > big.Cost) big = b;
+                var bigCard = (RectTransform)UiKit.Find(content, "Box:" + big.Key);
+                Assert.IsNotNull(UiKit.Find(bigCard, "Ten"), "큰 카드에만 «10회» 버튼");
+                Assert.AreEqual(0.03f, bigCard.anchorMin.x, 1e-3f, "큰 카드 x = 표 ⑤ 배너(3.0)"); Assert.AreEqual(0.97f, bigCard.anchorMax.x, 1e-3f, "큰 카드 폭 = 94");
+                Assert.AreEqual(1f - Layout.TabBar.Y / 100f, ((RectTransform)bar).anchorMax.y, 1e-3f, "탭 바 = 표 자리");
+                int freeInv = (int)S.Gem; Assert.IsTrue(ClickNamed(bigCard.parent, "Ad"), "작은 카드의 광고(무료 보급) 버튼"); yield return Frames(1);
+                Assert.AreEqual(freeInv + D.Gacha.DailyGem, S.Gem, 1e-6, "무료 보급 = dailyGem 지급"); Assert.IsFalse(_app.Overlay.IsOpen, "무료 보급은 팝업 없음");
+                Assert.IsTrue(ClickNamed(bigCard, "Info"), "(i) 버튼"); yield return Frames(2);
+                Check("상자 정보 팝업", expectOverlay: true); Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.popup"), "정보 팝업 = 공통 팝업 문법");
+                _app.Overlay.Close(); yield return Frames(1);
+            }
             Check("상점");
 
             int inv = S.Inv.Count;
             Assert.IsTrue(Click(shop, s => s.Contains("1회")), "«1회» 뽑기 버튼"); yield return Frames(2);
             Check("뽑기 결과 팝업(1회)", expectOverlay: true);
-            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.chestOpen"), "뽑기 결과 = Shop_Chest_Open(ui.chestOpen) 그대로 — 주인: «하라 했는데 안 했네»");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.popup"), "뽑기 결과 = 공통 팝업 문법(Popup_Box 패널 + 명판 + 격자 + 탭하여 닫기 · T40)");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "TapToClose"), "뽑기 결과: «탭하여 닫기»");
             Assert.GreaterOrEqual(S.Inv.Count, inv + 1, "뽑은 장비가 인벤에 담겨야 한다");
             Assert.AreEqual(CountNamed(_app.Overlay.Root, "gear:"), S.Inv.Count - inv, "결과 팝업의 장비 칸 수 = 얻은 수");
             _app.Overlay.Close(); yield return Frames(1);

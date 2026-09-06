@@ -88,8 +88,9 @@ namespace KkomaKnight.Tests.Play
             _app.ShowScreen("gear"); yield return Frames(3); yield return Shot("06_gear");
             if (firstFree != null) { GearUi.OpenDetail(_app, firstFree, null); yield return Frames(2); yield return Shot("07_gear_detail"); _app.Overlay.Close(); yield return Frames(1); }
             _app.ShowScreen("forge"); yield return Frames(3); yield return Shot("08_gear_fuse");
-            _app.ShowScreen("shop"); yield return Frames(3); yield return Shot("09_shop_1");
-            _missing.Add("10_shop_2 (상점은 한 화면 — 09 에 상자 배너 포함)");
+            // 상점(T40) = 세로 스크롤 한 화면 — 레퍼런스 10 = 맨 위(상자 배너 · 상자 카드 2) · 09 = 끝까지 내린 상태(다이아 · 골드)
+            _app.ShowScreen("shop"); yield return Frames(3); yield return Shot("10_shop_2");
+            (_app.Current as ShopScreen)?.ScrollTo(0f); yield return Frames(2); yield return Shot("09_shop_1");
 
             // 02 전투(3초) · 03 적 조우(8초 안에 Engaged 가 되면) · 04 레벨업 · 05 보유 특전
             _app.StartBattle(1); yield return RealSeconds(3f);

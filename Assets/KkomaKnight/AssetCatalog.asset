@@ -473,6 +473,26 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 77f35c40f78a7480aa6865d9a5ba6c70, type: 3}
   - key: chest.myth.open
     sprite: {fileID: 21300000, guid: 5d2e77ddfca0f40c9a9ae1b0dbe29b72, type: 3}
+  - key: shop.gem.1
+    sprite: {fileID: 21300000, guid: 03784746c19fe418481fa634c8981e42, type: 3}
+  - key: shop.gem.2
+    sprite: {fileID: 21300000, guid: 5f72d3abbf1a24082acd17e7f4410efb, type: 3}
+  - key: shop.gem.3
+    sprite: {fileID: 21300000, guid: fcd2f6ea832534e3cb315f5ea0fc8a8a, type: 3}
+  - key: shop.gem.4
+    sprite: {fileID: 21300000, guid: 3facfdb09c58a44f2baebbf1be072859, type: 3}
+  - key: shop.gem.5
+    sprite: {fileID: 21300000, guid: 5a21d7d5d7a1e486abcf72c562b9df64, type: 3}
+  - key: shop.gem.6
+    sprite: {fileID: 21300000, guid: 6f33c289f438f4ebbbf2125936a44e1d, type: 3}
+  - key: shop.gold.1
+    sprite: {fileID: 21300000, guid: d651cbc58b9d6430f8b5f6404488f9ed, type: 3}
+  - key: shop.gold.2
+    sprite: {fileID: 21300000, guid: 92ba44c13d77044fabba57c92da60f76, type: 3}
+  - key: shop.gold.3
+    sprite: {fileID: 21300000, guid: d3415a84312294783b64bbca7314f03d, type: 3}
+  - key: ui.iconClock
+    sprite: {fileID: 21300000, guid: f27a19d4a86854ed99938615072e3bcd, type: 3}
   - key: hud.gold
     sprite: {fileID: 21300000, guid: 1a9ecca12e9da45568bcb8fc473f7c74, type: 3}
   - key: hud.gem
