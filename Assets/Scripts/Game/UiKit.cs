@@ -240,8 +240,8 @@ namespace KkomaKnight.Game
             parts.Box = box; parts.Ribbon = rr; parts.Title = tt;
             if (onTapClose != null)
             {
-                var tc = Text(layer, "탭하여 닫기", 38, Palette.White, TextAnchor.MiddleCenter, false, true); tc.name = "TapToClose"; tc.fontStyle = FontStyle.Bold;
-                Pct(tc.rectTransform, Layout.BookClose);   // 표 «닫기 안내» 자리 그대로(y91.5 h2 · 글자는 세로로 넘쳐도 된다 · 이름표가 이 사각형을 잰다)
+                var tc = Text(layer, "탭하여 닫기", TextSize.Body, Palette.White, TextAnchor.MiddleCenter, false, true); tc.name = "TapToClose"; tc.fontStyle = FontStyle.Bold;
+                Pct(tc.rectTransform, Layout.BookClose);   // 표 «닫기 안내» 자리(y91.5 · 높이는 본문 40 의 줄 높이가 들어가는 2.4 = 56px · T63-settings · 이름표가 이 사각형을 잰다)
                 parts.TapClose = tc;
                 if (parts.Dim != null) Clickable(parts.Dim, onTapClose, false);
             }

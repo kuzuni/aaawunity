@@ -262,6 +262,34 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(bgmRow.anchorMax.y > sfxRow.anchorMax.y && sfxRow.anchorMax.y > lang.anchorMax.y, "줄 순서 = 음악 → 효과음 → 언어");
                 Assert.IsNotNull(UiKit.Find(bgmRow, "Swich_01"), "음악 토글"); Assert.IsNotNull(UiKit.Find(sfxRow, "Swich_01"), "효과음 토글"); Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "LangBtn"), "언어 버튼");
             }
+            // T63-settings — 설정 팝업 글자 가독성: 줄 라벨 3 = 56(레퍼런스 12 비례 · bestFit 이 안 줄임 · 한 줄) · 링크 2 = 본문 40 이 칸 안에 한 줄 · 언어 버튼 = 버튼 하한 이상으로 안 줄임 · «탭하여 닫기» 세로 안 잘림
+            {
+                foreach (var rowName in new[] { "BGM", "SFX", "Language" })
+                {
+                    var row = UiKit.Find(_app.Overlay.Root, rowName); Assert.IsNotNull(row, $"설정 줄 «{rowName}»");
+                    var lb = UiKit.Find(row, "Text").GetComponent<Text>(); Assert.IsNotNull(lb, $"«{rowName}» 라벨");
+                    Assert.AreEqual(Overlay.SetRowLabelSize, lb.fontSize, $"설정 라벨 «{lb.text}» 크기");
+                    var gs = lb.GetGenerationSettings(lb.rectTransform.rect.size); gs.scaleFactor = 1f;
+                    var gen = new TextGenerator(); gen.Populate(lb.text, gs);
+                    Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, Overlay.SetRowLabelSize, $"설정 라벨 «{lb.text}» 가 칸({lb.rectTransform.rect.width:0}×{lb.rectTransform.rect.height:0})에 안 들어가 bestFit 이 줄였다");
+                    Assert.AreEqual(1, gen.lineCount, $"설정 라벨 «{lb.text}» 는 한 줄");
+                }
+                foreach (var linkName in new[] { "Privacy", "Terms" })
+                {
+                    var lk = UiKit.Find(_app.Overlay.Root, linkName).GetComponent<Text>(); Assert.IsNotNull(lk, $"링크 «{linkName}»");
+                    Assert.AreEqual(TextSize.Body, lk.fontSize, $"링크 «{lk.text}» 크기 = 본문 하한");
+                    var r = lk.rectTransform.rect;
+                    Assert.LessOrEqual(lk.preferredWidth, r.width + 1f, $"링크 «{lk.text}» 가 칸({r.width:0}) 밖으로 넘친다");
+                    Assert.LessOrEqual(lk.preferredHeight, r.height + 1f, $"링크 «{lk.text}» 가 칸({r.height:0}) 위아래로 잘린다");
+                }
+                var langTxt = UiKit.ButtonText(UiKit.Find(_app.Overlay.Root, "LangBtn")); Assert.IsNotNull(langTxt, "«한국어» 버튼 글자");
+                var lgs = langTxt.GetGenerationSettings(langTxt.rectTransform.rect.size); lgs.scaleFactor = 1f;
+                var lgen = new TextGenerator(); lgen.Populate(langTxt.text, lgs);
+                Assert.GreaterOrEqual(lgen.fontSizeUsedForBestFit, TextSize.Button, $"«{langTxt.text}» 버튼 글자가 칸({langTxt.rectTransform.rect.height:0})에 안 들어가 bestFit 이 버튼 하한 밑으로 줄였다");
+                var tap = UiKit.Find(_app.Overlay.Root, "TapToClose").GetComponent<Text>();
+                Assert.AreEqual(TextSize.Body, tap.fontSize, "«탭하여 닫기» 크기 = 본문 하한");
+                Assert.LessOrEqual(tap.preferredHeight, tap.rectTransform.rect.height + 1f, "«탭하여 닫기» 가 칸 위아래로 잘린다");
+            }
             var sw = UiKit.Find(_app.Overlay.Root, "BGM"); if (sw != null) { ClickNamed(sw, "Swich_01"); yield return Frames(1); Assert.IsTrue(_app.Save.Muted, "음악 스위치 = Save.Muted"); ClickNamed(sw, "Swich_01"); yield return Frames(1); }
             Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), "배경 탭 = 닫기"); yield return Frames(2);
             Assert.IsFalse(_app.Overlay.IsOpen, "설정이 닫혀야 한다"); Check("설정 닫힘");

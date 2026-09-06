@@ -376,6 +376,9 @@ namespace KkomaKnight.Game
 
         // ───────────────────────── 설정 / 일시정지 — 레퍼런스 12_settings.jpg 구도 (T41 · 표 ⑨ · «Settings 프리팹 그대로»(T10) 는 부품 규칙으로 대체) ─────────────────────────
         /// <summary>로비 메뉴(≡)의 설정 팝업 — 작은 패널 · 명판 «설정» · 음악/효과음 토글 · 언어 버튼(표시만) · 패널 아래 개인정보/이용약관 링크 글자(눌러도 아무 일 없음) · 그 아래 «데이터 삭제»(T29) · «탭하여 닫기».</summary>
+        /// <summary>설정 줄 라벨(음악·효과음·언어) 크기 — 레퍼런스 12 는 라벨 잉크가 명판 «Settings» 와 거의 같다(720×1560 사본 실측 ≈ 39px = 프레임 ≈ 58). 본문 하한 40 은 그 2/3 라 폰에서 15px 밖에 안 된다 → 56(줄 칸 88.8px 에 한 줄 70px · 폰 ≈ 21px). T63-settings.</summary>
+        public const int SetRowLabelSize = 56;
+
         public void Settings() => SettingsPopup("설정", null, null);
         /// <summary>전투 일시정지 — 같은 팝업. 링크 아래 줄이 «재개»(주황)·«포기하고 로비로»(회색) · 배경 탭 = 재개.</summary>
         public void Pause(Action onResume, Action onGiveUp) => SettingsPopup("일시정지", onResume, onGiveUp);
@@ -395,7 +398,7 @@ namespace KkomaKnight.Game
             {
                 var row = UiKit.Rect(box, name); UiKit.Pct(row, r.Within(Layout.SetBox));
                 var ic = UiKit.Icon(row, "Icon", iconKey, Palette.Ink); UiKit.Pct(ic.rectTransform, 0, 5, 8, 90);
-                var t = UiKit.Label(row, 11, 0, 50, 100, label, 40, Palette.Ink, TextAnchor.MiddleLeft, true, false); t.name = "Text";
+                var t = UiKit.Label(row, 11, 0, 50, 100, label, SetRowLabelSize, Palette.Ink, TextAnchor.MiddleLeft, true, false); t.name = "Text";
                 return row;
             }
             var bgm = Row("BGM", Layout.SetRowMusic, "pi.music", "음악");
@@ -417,8 +420,9 @@ namespace KkomaKnight.Game
             // 언어 버튼 = 회색 보조 버튼 «한국어»(표시만 · 언어 시스템 없음)
             var lb = UiKit.Button(box, "ui.btnGray", "한국어", () => { }, Layout.SetLangBtn.Within(Layout.SetBox)); lb.name = "LangBtn";
             // 패널 밖 아래 — 링크 글자 2(눌러도 아무 일 없음) · 그 아래 줄 = 로비: «데이터 삭제»(T29) / 전투: «재개»·«포기하고 로비로»
-            var pv = UiKit.Text(Root, "개인정보 처리방침", 30, Palette.Sky, TextAnchor.MiddleCenter, false, true); pv.name = "Privacy"; pv.horizontalOverflow = HorizontalWrapMode.Overflow; UiKit.Pct(pv.rectTransform, Layout.SetPrivacy);   // 사각형 = 표 그대로(이름표) · 글자는 넘쳐도 된다
-            var tm = UiKit.Text(Root, "이용약관", 30, Palette.Sky, TextAnchor.MiddleCenter, false, true); tm.name = "Terms"; tm.horizontalOverflow = HorizontalWrapMode.Overflow; UiKit.Pct(tm.rectTransform, Layout.SetTerms);
+            // 링크 2 = 본문 하한(T63-settings · 30 이 하한으로 올라가던 것을 명시) · 사각형은 글자를 담는다(전에는 표 그대로라 «개인정보 처리방침» 268px 이 219px 칸에서 좌우로 넘쳤다 → Layout.SetPrivacy 보정)
+            var pv = UiKit.Text(Root, "개인정보 처리방침", TextSize.Body, Palette.Sky, TextAnchor.MiddleCenter, false, true); pv.name = "Privacy"; pv.horizontalOverflow = HorizontalWrapMode.Overflow; UiKit.Pct(pv.rectTransform, Layout.SetPrivacy);
+            var tm = UiKit.Text(Root, "이용약관", TextSize.Body, Palette.Sky, TextAnchor.MiddleCenter, false, true); tm.name = "Terms"; tm.horizontalOverflow = HorizontalWrapMode.Overflow; UiKit.Pct(tm.rectTransform, Layout.SetTerms);
             RectTransform lastRow;
             if (onResume != null || onGiveUp != null)
             {

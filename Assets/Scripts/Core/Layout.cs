@@ -178,7 +178,8 @@ namespace KkomaKnight.Core
         public static readonly R BookBox = new R(6.5f, 23.0f, 87.0f, 52.5f);
         public static readonly R BookRibbon = new R(25.0f, 21.5f, 50.0f, 4.0f);
         public static readonly R BookCard = new R(11.0f, 26.5f, 78.0f, 9.5f);
-        public static readonly R BookClose = new R(30.0f, 91.5f, 40.0f, 2.0f);
+        /// <summary>공통 팝업의 «탭하여 닫기» 줄 — 높이 2.0(46.7px)에는 본문 40 의 줄 높이(50px)가 안 들어가 모든 팝업에서 세로 잘림으로 잡혔다 → 2.4(56px · 표들의 2.0 과 차 0.4 · 자리 y 는 그대로). T63-settings.</summary>
+        public static readonly R BookClose = new R(30.0f, 91.5f, 40.0f, 2.4f);
         /// <summary>이벤트 팝업(쉼터·악마·천사 등) — 표에 없는 화면. ⑧ 공통 «팝업 폭 87 · 좌우 여백 6.5» 와 ④ 의 세로(y28 h44)를 따른다.</summary>
         public static readonly R EvBox = new R(6.5f, 28.0f, 87.0f, 44.0f);
 
@@ -190,9 +191,11 @@ namespace KkomaKnight.Core
         public static readonly R SetRowLang = new R(13.9f, 52.6f, 72.5f, 3.8f);
         public const float SetRowPitch = 4.8f;
         public static readonly R SetToggle = new R(72.9f, 43.3f, 13.5f, 3.1f);
-        public static readonly R SetLangBtn = new R(63.9f, 52.7f, 22.5f, 3.5f);
-        public static readonly R SetPrivacy = new R(39.9f, 62.6f, 20.3f, 1.9f);
-        public static readonly R SetTerms = new R(40.6f, 67.3f, 18.8f, 1.9f);
+        /// <summary>언어 버튼 — 표 ⑨ 는 3.5(81.8px · 조각 글자 칸은 −30 이라 51.8px)라 버튼 글자 46 의 줄 높이 57.5px 를 bestFit 이 41 로 줄였다 → 3.8(칸 58.8px · 안 줄임 · 표와 차 0.3). T63-settings.</summary>
+        public static readonly R SetLangBtn = new R(63.9f, 52.7f, 22.5f, 3.8f);
+        /// <summary>패널 밖 링크 2 — 높이는 본문 40 의 줄 높이(50px)가 들어가게 2.4(56px · 표 1.9 = 44.4px 에선 세로로 잘렸다). 개인정보 링크의 폭은 한국어 문구 실측(268px = 24.8%)에 여유를 둔 25.5(가운데 50% 고정) — 표 ⑨ 의 20.3 은 영문 «Privacy Policy» 실측이다(ref-layout ⑨ 회차 정정). T63-settings.</summary>
+        public static readonly R SetPrivacy = new R(37.2f, 62.6f, 25.5f, 2.4f);
+        public static readonly R SetTerms = new R(40.6f, 67.3f, 18.8f, 2.4f);
         /// <summary>레퍼런스에 없는 줄 — T29 «데이터 삭제»(로비) / 전투 일시정지의 «재개»·«포기하고 로비로» 가 링크 아래 이 줄에 선다.</summary>
         public static readonly R SetReset = new R(35.0f, 72.0f, 30.0f, 4.0f);
         public static readonly R SetResumeBtn = new R(18.0f, 72.0f, 30.0f, 4.0f);
