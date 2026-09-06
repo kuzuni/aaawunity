@@ -612,6 +612,9 @@ namespace KkomaKnight.Tests.Play
                         var gs = t.GetGenerationSettings(t.rectTransform.rect.size); gs.scaleFactor = 1f; var gen = new TextGenerator(); gen.Populate(t.text, gs);
                         Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, TextSize.BestFitMin, "옵션 줄 «" + t.text + "» 가 bestFit 최소(32) 아래로"); Assert.AreEqual(1, gen.lineCount, "옵션 줄 «" + t.text + "» 는 한 줄(문구 줄이기 = GearText.Shorten)");
                         Assert.IsFalse(t.text.Contains(" 이상)"), "잠금 꼬리는 «(등급)» 으로 줄인다: " + t.text);
+                        // T84 — 어두운 pill 위 글자는 밝은 색 + 검은 아웃라인이어야 읽힌다(주인 상시 지시 · screens run 148 의 07 눈 확인에서 회색 글자가 안 읽혔다)
+                        Assert.IsNotNull(t.GetComponent<Outline>(), "옵션 줄 «" + t.text + "» 에 검은 아웃라인(T63 0항 «예외 없이»)");
+                        Assert.GreaterOrEqual(t.color.grayscale, 0.55f, "옵션 줄 «" + t.text + "» 글자가 어두운 pill 에서 읽힐 만큼 밝아야 한다(T84)");
                     }
                     Assert.AreEqual(3, statRows, "스탯 줄 3"); Assert.AreEqual(CountNamed(opts, "Opt:"), optRows, "옵션 줄마다 글자 하나");
                     var st = (RectTransform)UiKit.Find(bx, "Stats"); var op = (RectTransform)opts;

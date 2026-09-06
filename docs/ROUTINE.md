@@ -822,6 +822,14 @@
 3. **테스트**: EditMode — 같은 입력이면 같은 값(결정적) · 전투력·승점 순위대로 단조 · 내 줄 전투력 = 실제 값 · JSON 계수 로드 · PlayMode — 23·24 화면의 숫자 칸이 «0» 이 아니고 콤마 형식 · `LogAssert.NoUnexpectedReceived`.
 4. 게이트 + PROGRESS T81 행 + 완료 기록(확인 = CI + screens 23·24 PNG `Read` + 배포 스모크).
 
+### T84 — 장비 세부 팝업(07)의 «어두운 pill 위 글자» 가독성 (주인 상시 지시 «모든 글자에 검은 아웃라인 + 밝은 글자색» = T63 0항 · 제약 없음) — **🔄 코드 push(sess-1644-29867 · 워커 C) · 남은 것은 확인뿐**
+범위: `Assets/Scripts/Game/GearUi.cs`(pill 2 · 스탯 박스 · 옵션 줄 · 비용 줄 · 이름줄 색) · `Assets/Tests/PlayMode/UiSmokeTests.cs`(옵션 줄 단언 2)
+1. 어떻게 찾았나: T69-gear 의 «screens 06·07 PNG 눈 확인»(CI #148 · `screens` `97b694a`) — 테두리(게이트가 재는 것)는 전부 정상인데 **옵션 줄 7개가 거의 안 읽혔다**. 원인은 `GearUi` 의 글자 호출이 **전부 `outline: false`** 였고(T63 0항 «예외 없이» 의 예외가 여기 남아 있었다) 해금 줄 글자색이 등급색 원색(일반 `#A39B9D`)이라 잉크 pill 위에서 명도차가 거의 없었다는 것. 잠금 줄은 거기에 `CanvasGroup` 0.75 까지 겹쳐 있었다.
+2. 수정: pill 2 · 스탯 박스(머리·줄 3·안내·슬롯 힌트) · 옵션 줄 · 비용 줄의 **아웃라인 켬** · 해금 줄 글자 = `OnDarkPill`(등급색을 흰 쪽으로 35%) · 잠금 줄 글자 = 크림 0.9 + `CanvasGroup` 0.75 → 0.9 · 잠금 줄 pill 진하기 0.45 → 0.6 · 이름줄 = `OnCream`(등급색을 잉크 쪽으로 45% · 크림 상자 위라 반대쪽). **자리·크기·표 % 는 한 칸도 안 바뀐다**(색·아웃라인만 · ui_score 불변).
+3. 테스트: `UiSmokeTests` 의 옵션 줄 순회에 «Outline 있음» + «글자 명도 ≥ 0.55» 두 단언(같은 결함이 다시 들어오면 CI 가 잡는다).
+4. 확인 = 이 커밋의 CI 유니티 잡 PlayMode `UiSmokeTests.GearScreenDetailSlotAndEquip` Passed + 그 런의 `screens` 07 PNG 를 `Read` 로(옵션 줄 7개가 읽히나) + 배포 스모크. PROGRESS «T84 진행 기록» · 결정 188.
+
+
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
 ```bash
