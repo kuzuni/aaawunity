@@ -34,9 +34,9 @@
 | T30 | 탭 «탤런트» → «던전»(World_Dungeon_List → 항목별 World_Dungeon_Start1/2 · 기능 없음) | ⛔ 폐기 → T43 (2026-09-06 UI 레퍼런스 지시) | — | Game/Screens(NavBar) · Overlay · catalog | ROUTINE §2 T30 |
 | T31 | 장비 아이콘 = CharacterMaker Thumbnail 그림(입는 파츠와 분리) — T17 뒤 | 대기 | — | GearLook · Game/GearUi · catalog(cmi.*) | ROUTINE §2 T31 |
 | T32 | 펫 팝업 = Character_Skill 그대로 · 항목 → Character_Skill_Detail 그대로(기능 없음) | ⛔ 폐기 → T42 (2026-09-06 UI 레퍼런스 지시) | — | Game/Overlay · Screens · catalog | ROUTINE §2 T32 |
-| T33 | 전투 HUD 웨이브 수 표시 제거 | 대기 | — | Game/BattleScreen | ROUTINE §2 T33 |
+| T33 | 전투 HUD 웨이브 수 표시 제거 | ✅ 완료 (`5938425` · dotnet 게이트 초록 · 실물 확인 = **CI 런 #55** PlayMode `UiSmokeTests.BattleTicksAndAllBattlePopups`(«웨이브» 글자 없음 단언) + 주인 에디터) | sess-0721-28002 / 워커 B | Game/BattleScreen(`_round` 상자 생성·갱신 삭제) · Tests/PlayMode/UiSmokeTests(⑤ 단언 반전) | 오른쪽 «웨이브 N/M» 상자 없음 · `Layout.HudRound` 는 표 대조 테스트 때문에 유지 · 다른 HUD 요소 불변 · dotnet 0/0 · 테스트 79/79 |
 | T34 | **UI 레퍼런스** 로비 = `docs/ref/01_lobby.jpg` 구도(재화 바 · 배너 · 사이드 3+3 · 카드 · START · 탭) — T22 뒤 | ✅ 완료 (`d6d1411` · dotnet 게이트 초록 · 실물 확인 = CI 유니티 잡 PlayMode `UiSmokeTests.LobbySettingsTalentPetToast` 구도 단언 + 주인 gh-pages/에디터 눈 확인) | sess-0706-11388 / 워커 A | Game/Screens(LobbyScreen 재조립 + `TopBar` 공용 헬퍼 신설) · HeroView(`SetFraming` 가슴 위) · UiKit(`PxSize`·`FitScale`) · Core/Layout(표 밖 5개) · catalog(키 16) · Tests/PlayMode/UiSmokeTests ① | 표 ① 자리 전부(상단 바 아바타/전투력/골드/보석 · 배너+메뉴 · 사이드 3+3 · 챕터 제목+밑줄 · 카드(테마 Environment)+◀▶ · 보조 2 · START 주황(카드 폭) · 성·이벤트 · 탭 5) · 프리팹은 부품(배경·메뉴·제목 조각·탭 바만 씀) · 껍데기 버튼 = `OnSide(key)` 훅(T43·T44) · dotnet 0/0 · 테스트 79/79 |
-| T35 | **UI 레퍼런스** 전투 HUD = `02`·`03` 구도 + **HP·실드 바 3개 한 줄 · 발밑 2단 바(주인 강조)** · 스탯 8칸 — T33 뒤 | 대기 | — | Game/BattleScreen · BattleWorld · Core/Layout · catalog | ROUTINE §2 T35 |
+| T35 | **UI 레퍼런스** 전투 HUD = `02`·`03` 구도 + **HP·실드 바 3개 한 줄 · 발밑 2단 바(주인 강조)** · 스탯 8칸 — T33 뒤 | 🔄 진행중 | sess-0721-28002 / 워커 B | Game/BattleScreen · BattleWorld · Core/Layout · catalog | ROUTINE §2 T35 |
 | T36 | **UI 레퍼런스** 레벨업 3택 · 보유 특전 = `04`·`05` 구도 + 공통 팝업 헬퍼 | 대기 | — | Game/Overlay · UiKit · catalog | ROUTINE §2 T36 |
 | T37 | **UI 레퍼런스** 장비 = `06` 구도(무대 · 3+3 슬롯 · 스탯 3칸 · 대장간/상점 버튼 · 5열) — T17 뒤 · T25 흡수 | 대기 | — | Game/GearScreen · GearUi · HeroView · catalog | ROUTINE §2 T37 |
 | T38 | **UI 레퍼런스** 장비 세부 = `07` 구도 — T37 뒤 · T27 대체 | 대기 | — | Game/GearUi(Detail) | ROUTINE §2 T38 |
@@ -509,6 +509,14 @@
 - 게이트: `dotnet build` 0/0 · `dotnet test` 79/79 · `gen_meta --check` · `gen_catalog --check`(481) · `check_catalog_keys` OK · `check_unity_null` 0건.
 - **확인 수단**: 코드 커밋 `11a737d` 의 **CI 런 #53**(https://github.com/kuzuni/aaawunity/actions/runs/34018583987) 유니티 잡 초록 — PlayMode **23/23**(`MapThemeTests` 4테마 · `AudioTests` 2 · `RestClearAdTests` 1 · 스모크 5 · 나머지) · EditMode **79/79** · WebGL→gh-pages·APK 잡은 07:23 시작(T34 push #54 가 concurrency 로 취소했을 수 있음 — **유니티 테스트 잡은 07:23:01 에 이미 완료**라 결과는 유효). #53 이 **T28 · T23 · T19(재확인)** 의 공용 확인 수단이다(#52 는 이 push 로 취소).
 - **주인이 확인할 것 (한 줄)**: 챕터 4(사막)에 들어가면 길 위·아래 물결 경계가 길에 붙어(소품 뒤가 아니라 바닥에) 그려지는가.
+
+### T33 완료 기록 (2026-09-06 · sess-0721-28002 · 워커 B) — 코드 `5938425` · CI #55
+
+- **주인 지시(2026-09-06)** «전투 HUD 웨이브 수 표시 제거» — `BattleScreen.Build` 의 오른쪽 `ui.frameDark` 라운드 상자(`Layout.HudRound` 자리)와 `_round` 텍스트 생성, `RefreshHud` 의 웨이브 계산·갱신 두 줄을 지웠다. `Layout.HudRound` 상수는 `LayoutSpecTests` 가 ref-layout ② 표와 대조하므로 남긴다(레퍼런스 `02_battle.jpg` 의 그 자리는 «펫 둥근 버튼» — T35 가 채운다). 다른 HUD 요소(챕터 제목·진행바·배속·바 3개·스탯 8칸·특전 줄) 불변.
+- **테스트**: `UiSmokeTests.BattleTicksAndAllBattlePopups` ⑤ 의 «HUD 웨이브» 단언을 «웨이브 로 시작하는 활성 글자가 **없다**» 로 반전(회귀 방지). EditMode 불변(79/79).
+- 게이트: `dotnet build` 0/0 · `dotnet test` 79/79 · `gen_meta --check` · `gen_catalog --check`(496) · `check_catalog_keys` OK(681/495) · `check_unity_null` 0건 · `check_data_sync` OK(aaaw `0707999`). dotnet SDK 는 컨테이너에 없어 T34 세션과 같이 `apt-get install dotnet-sdk-8.0` 으로 넣었다.
+- **플레이 콘솔 에러 0 확인 수단**: 코드 커밋 `5938425` 의 **CI 런 #55**(https://github.com/kuzuni/aaawunity/actions/runs/34019060057) 유니티 잡 — PlayMode `UiSmokeTests` ⑤(전투 3초 · 빨간 줄 0 · «웨이브» 글자 0). 이 push(07:24)가 #54(T34) 를 concurrency 로 취소했다 — **#55 가 T34 의 확인 수단도 겸한다**(#55 는 `d6d1411` 포함 · T45·T28·T23 은 #53 유니티 잡이 취소 전에 완료돼 그쪽으로 확정).
+- **주인이 확인할 것 (한 줄)**: 전투에 들어가면 오른쪽 아래(배속 버튼 맞은편)에 «웨이브 N/M» 상자가 더 이상 없는가 · 콘솔 빨간 줄 0.
 
 ## 주인 콘솔 에러 보고함 (주인이 붙인 원문 — 다 고칠 때까지 남긴다 · 워커는 매 세션 읽고 작업으로 올린다)
 

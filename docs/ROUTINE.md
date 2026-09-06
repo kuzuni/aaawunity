@@ -331,7 +331,7 @@
 2. UiSmokeTests ① 의 «펫» 단언을 «Character_Skill → 항목 → Character_Skill_Detail → 닫기 → 닫기» 로 바꾼다(프리팹 이름으로 단언).
 3. 게이트 + PROGRESS T32 행.
 
-### T33 — 전투 HUD 웨이브 수 표시 제거 (주인 2026-09-06)
+### T33 — 전투 HUD 웨이브 수 표시 제거 (주인 2026-09-06) ✅ (완료 · `5938425` · CI #55 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/BattleScreen.cs`(HUD `_round` · `ui.frameDark` 라운드 상자)
 순서: 제약 없음(T20 이 BattleScreen 의 버프 바를 만지면 rebase · 다른 줄).
 1. 오른쪽 «웨이브 N/M» 상자(`Layout.HudRound` 자리 · `_round`)를 만들지 않는다(코드·갱신 함께 제거 · Layout 상수는 표 대조 테스트 때문에 남긴다). 다른 HUD 요소는 그대로.
