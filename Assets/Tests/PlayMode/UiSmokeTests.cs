@@ -225,11 +225,11 @@ namespace KkomaKnight.Tests.Play
             Check("전부 장착 뒤 장비 화면(외형 반영)");
             // T17 — 슬롯 6칸의 아이콘: 파츠(투구·무기·갑옷)는 불투명 그림이 칸의 72%(±3%p) · 무기만 45° · GUI Pro 아이콘(목걸이·장갑·신발)은 프리팹 Item 그대로(회전 0)
             {
-                var slots = UiKit.Find(_app.Current.Root, "Group_Slot"); Assert.IsNotNull(slots, "Group_Slot");
+                var slotGrp = UiKit.Find(_app.Current.Root, "Group_Slot"); Assert.IsNotNull(slotGrp, "Group_Slot");   // 바깥 범위의 slots 와 이름이 겹치면 CS0136(CI #41)
                 int parts = 0, guis = 0;
-                for (int i = 0; i < slots.childCount && i < 6; i++)
+                for (int i = 0; i < slotGrp.childCount && i < 6; i++)
                 {
-                    var frame = UiKit.Find(slots.GetChild(i), "ItemFrame_01"); var item = frame != null ? UiKit.Find(frame, "Item") : null;
+                    var frame = UiKit.Find(slotGrp.GetChild(i), "ItemFrame_01"); var item = frame != null ? UiKit.Find(frame, "Item") : null;
                     Assert.IsNotNull(item, "슬롯 " + i + " Item"); Assert.IsTrue(item.gameObject.activeSelf, "슬롯 " + i + " 아이콘 켜짐(전부 장착)");
                     var im = item.GetComponent<Image>(); var rt = (RectTransform)item; var fr = (RectTransform)frame;
                     Assert.IsNotNull(im.sprite, "슬롯 " + i + " 스프라이트");
