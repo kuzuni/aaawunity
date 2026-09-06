@@ -588,6 +588,13 @@ namespace KkomaKnight.Core
             if (heal) Heal(C.RestHeal); else GainExp(C.RestExp);
             AfterResolve();
         }
+        /// <summary>쉼터 «광고 보고 둘 다 얻기»(T23 · 대화형 전용) — 회복 + 경험치 둘 다. <see cref="SimPolicy"/> 는 절대 고르지 않으므로 시드 골든 불변.</summary>
+        public void ResolveRestBoth()
+        {
+            if (Pending == null || Pending.Kind != PendingKind.Rest) return;
+            Heal(C.RestHeal); GainExp(C.RestExp);
+            AfterResolve();
+        }
         public void ResolveDevil(bool accept)
         {
             if (Pending == null || Pending.Kind != PendingKind.Devil) return;

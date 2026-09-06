@@ -402,8 +402,9 @@ namespace KkomaKnight.Tests.Play
             // 클리어(Play_Result_Win_01) → 로비로 · 사망(Play_Result_Lose) → 로비로 (콜백은 빈 것 — 화면 전환은 아래서)
             _app.Overlay.Clear(G, false, () => { }, () => { }); yield return Frames(2);
             Check("클리어 팝업", expectOverlay: true);
-            Assert.IsTrue(HasText(s => s == "클리어!"), "제목"); Assert.IsTrue(HasText(s => s == "다음 챕터"), "다음 챕터 버튼");
-            Assert.IsTrue(Click(_app.Overlay.Root, s => s == "로비로"), "로비로"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen);
+            Assert.IsTrue(HasText(s => s == "클리어!"), "제목"); Assert.IsTrue(HasText(s => s == "광고 보고 보상 ×2 받기"), "광고 ×2 버튼(프리팹 Get x2 자리 · T23)");
+            Assert.IsFalse(HasText(s => s == "다음 챕터"), "«다음 챕터» 버튼은 없다(T23 · 로비의 챕터 화살표로)");
+            Assert.IsTrue(Click(_app.Overlay.Root, s => s == "그냥 받기"), "그냥 받기(프리팹 Home 자리)"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen);
             _app.Overlay.Dead(G, () => { }); yield return Frames(2);
             Check("사망 팝업", expectOverlay: true);
             Assert.IsTrue(HasText(s => s == "쓰러졌다..."), "제목");

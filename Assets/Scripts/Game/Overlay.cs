@@ -188,15 +188,21 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 쉼터 ─────────────────────────
-        public void Rest(BattleState G, Action<bool> onChoose)
+        /// <summary>쉼터 — 체력 회복 / 경험치 / (T23) «광고 보고 둘 다 얻기»(광고 카운트다운 = 천사의 <see cref="AdCountdown"/> 재사용 → <paramref name="onBoth"/>).</summary>
+        public void Rest(BattleState G, Action<bool> onChoose, Action onBoth = null)
         {
             var box = Box("ui.popup.green", "ui.title.green", "쉼터", Layout.EvBox);
-            Sub(box, "모닥불 앞에서 잠시 쉬어갑니다", 10, 7, 34);
-            var ic = UiKit.Icon(box, "Fire", "ui.fire"); UiKit.Pct(ic.rectTransform, 35, 20, 30, 28);
+            Sub(box, "모닥불 앞에서 잠시 쉬어갑니다", 9, 7, 34);
+            var ic = UiKit.Icon(box, "Fire", "ui.fire"); UiKit.Pct(ic.rectTransform, 37, 17, 26, 24);
             string heal = G.C.RestHeal <= 1 ? $"최대 체력 {Math.Round(G.C.RestHeal * 100)}%" : $"체력 {UiKit.Fmt(G.C.RestHeal)}";
-            UiKit.Button(box, "ui.btnGreen", $"체력 회복 (+{heal})", () => { Close(); onChoose(true); }, new Layout.R(10, 56, 80, 12));
-            UiKit.Button(box, "ui.btnBlue", $"경험치 +{G.C.RestExp}", () => { Close(); onChoose(false); }, new Layout.R(10, 72, 80, 12));
-            Sub(box, "다음 레벨에 가까워집니다", 85, 6, 26, Palette.InkLight);
+            UiKit.Button(box, "ui.btnGreen", $"체력 회복 (+{heal})", () => { Close(); onChoose(true); }, new Layout.R(10, 45, 80, 11));
+            UiKit.Button(box, "ui.btnBlue", $"경험치 +{G.C.RestExp}", () => { Close(); onChoose(false); }, new Layout.R(10, 58, 80, 11));
+            if (onBoth != null)
+            {
+                var ad = UiKit.Button(box, "ui.btnOrange", "광고 보고 둘 다 얻기", () => AdCountdown(3, () => { Close(); onBoth(); }), new Layout.R(10, 71, 80, 12));
+                var adIc = UiKit.Icon(ad, "Ad", "hud.alertAd"); UiKit.Pct(adIc.rectTransform, 84, -22, 18, 50);
+            }
+            Sub(box, "다음 레벨에 가까워집니다", 86, 6, 26, Palette.InkLight);
         }
 
         // ───────────────────────── 악마의 거래 ─────────────────────────
@@ -246,7 +252,11 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 클리어 (주인 지정 Play_Result_Win_01) ─────────────────────────
-        public void Clear(BattleState G, bool last, Action onNext, Action onLobby)
+        /// <summary>
+        /// 클리어 팝업(Play_Result_Win_01 그대로) — T23(주인): 보상 표시는 <b>골드만</b>(프리팹의 나머지 두 보상 칸은 끈다) · 프리팹의 «Get x2»(광고 아이콘) 버튼 = «광고 보고 보상 ×2 받기»
+        /// (광고 카운트다운 뒤 <paramref name="onDouble"/> → 골드 2배 · 로비로) · 프리팹의 «Home» 버튼 = «그냥 받기»(1배 · 로비로 · 승인 대기 28 기본값). «다음 챕터» 진입은 로비의 챕터 화살표로.
+        /// </summary>
+        public void Clear(BattleState G, bool last, Action onDouble, Action onLobby)
         {
             Begin();
             var root = UiKit.Spawn("ui.resultWin", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
@@ -256,17 +266,16 @@ namespace KkomaKnight.Game
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "클리어!");
             UiKit.SetText(rt, "Title_LineDeco_01_s_White/Text (TMP)", "클리어 보상");
             var items = UiKit.Find(rt, "Group_RewardItem");
-            if (items != null && items.childCount >= 3)
+            if (items != null && items.childCount >= 1)
             {
                 Reward(items.GetChild(0), "ui.coin", UiKit.Fmt(G.Gold));
-                Reward(items.GetChild(1), "ui.skull", G.Kills.ToString());
-                Reward(items.GetChild(2), "ui.hourglass", Math.Round(G.T) + "s");
+                for (int i = 1; i < items.childCount; i++) items.GetChild(i).gameObject.SetActive(false);   // 골드만(주인 T23) — 프리팹 칸을 옮기지 않고 끈다
             }
             UiKit.Hide(rt, "Text_TouchContionue");
             var grp = UiKit.Find(rt, "Group_Buttons");
             var b1 = grp != null && grp.childCount > 0 ? grp.GetChild(0) : null; var b2 = grp != null && grp.childCount > 1 ? grp.GetChild(1) : null;
-            if (b1 != null) { if (last) b1.gameObject.SetActive(false); else { UiKit.SetText(b1, "Text (TMP)", "다음 챕터"); UiKit.Clickable(b1, () => { Close(); onNext(); }); } }
-            if (b2 != null) { UiKit.SetText(b2, "Text (TMP)", "로비로"); UiKit.Clickable(b2, () => { Close(); onLobby(); }); }
+            if (b1 != null) { UiKit.SetText(b1, "Text (TMP)", "광고 보고 보상 ×2 받기"); UiKit.Clickable(b1, () => AdCountdown(3, () => { Close(); onDouble(); })); }
+            if (b2 != null) { UiKit.SetText(b2, "Text (TMP)", "그냥 받기"); UiKit.Clickable(b2, () => { Close(); onLobby(); }); }
             var title = UiKit.Find(rt, "Title"); if (title != null) UiKit.PopIn((RectTransform)title, 0.6f, 0.45f);
             UiKit.Hide(rt, "SampleEffect_Confetti");
         }

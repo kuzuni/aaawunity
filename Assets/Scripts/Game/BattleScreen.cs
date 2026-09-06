@@ -165,7 +165,7 @@ namespace KkomaKnight.Game
             switch (p.Kind)
             {
                 case PendingKind.LevelUp: App.Overlay.LevelUp(G, pick => G.ResolveLevelUp(pick)); break;
-                case PendingKind.Rest: App.Overlay.Rest(G, heal => G.ResolveRest(heal)); break;
+                case PendingKind.Rest: App.Overlay.Rest(G, heal => G.ResolveRest(heal), () => G.ResolveRestBoth()); break;   // T23 — «광고 보고 둘 다 얻기»
                 case PendingKind.Devil:
                 {
                     var perk = p.DevilPerk;
@@ -187,8 +187,11 @@ namespace KkomaKnight.Game
                 bool last = G.Chapter >= D.Tune.MaxChapter;
                 int next = Math.Min(G.Chapter + 1, D.Tune.MaxChapter);
                 S.MaxChapter = Math.Min(Math.Max(S.MaxChapter, G.Chapter + 1), D.Tune.MaxChapter);
-                S.SelChapter = next; S.Gold += Math.Round(G.Gold); App.Persist();
-                App.Overlay.Clear(G, last, () => { App.Overlay.Close(); Start(next); _ended = false; }, () => { App.Overlay.Close(); App.ShowScreen("lobby"); });
+                S.SelChapter = next; S.Gold += Math.Round(G.Gold); App.Persist();   // 1배는 여기서 은행에(«그냥 받기» = 이대로 로비로)
+                // T23 — «광고 보고 보상 ×2 받기» = 광고 카운트다운 뒤 이 판의 골드(처치 + 클리어 보너스)를 한 번 더 지급 → 2배 · 로비로. «다음 챕터» 는 로비의 챕터 화살표(SelChapter = next 로 이미 맞춰 둠).
+                App.Overlay.Clear(G, last,
+                    () => { S.Gold += Math.Round(G.Gold); App.Persist(); App.Toast($"광고 보상 ×2 · +{UiKit.Fmt(Math.Round(G.Gold))} G"); App.Overlay.Close(); App.ShowScreen("lobby"); },
+                    () => { App.Overlay.Close(); App.ShowScreen("lobby"); });
             }
             else
             {
