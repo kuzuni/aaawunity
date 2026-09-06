@@ -464,7 +464,7 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(gtop, "GradientTop"); Assert.IsNotNull(gbot, "GradientBottom");
             Assert.Less(pat.GetSiblingIndex(), gtop.GetSiblingIndex(), "그라데이션은 무늬 «위»(질감 층 순서 · 결정 171)");
             Assert.Less(gtop.GetSiblingIndex(), gbot.GetSiblingIndex(), "위 밝음 → 아래 어둠 순서");
-            foreach (var n in new[] { "TopBar", "SideL", "SideR", "ChapterCard", "Start" })
+            foreach (var n in new[] { "TopBar", "SubRow", "ChapterCard", "Start" })   // T96-menu 로 사이드 기둥 둘은 없다
             {
                 var t = lobby.Find(n); Assert.IsNotNull(t, "로비 " + n);
                 Assert.Greater(t.GetSiblingIndex(), gbot.GetSiblingIndex(), n + " 은 질감 층보다 위 = 무늬 침범 0(T72 7항)");

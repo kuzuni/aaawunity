@@ -952,6 +952,8 @@ MonoBehaviour:
     prefab: {fileID: 8655925205862286414, guid: d3078038861ac4408a59f187343a5003, type: 3}
   - key: ui.lobby
     prefab: {fileID: 4248817929678912515, guid: 55b0553245b4c4fefbacc5ce73c625c4, type: 3}
+  - key: ui.lobbyMenu
+    prefab: {fileID: 5221192687263998773, guid: 6974a41c5b8f34de8ab4b2c82156659e, type: 3}
   - key: ui.itemDetail
     prefab: {fileID: 7414256810885239513, guid: 30a0e5142a3be478ebc038ed64679a5b, type: 3}
   - key: ui.shopList

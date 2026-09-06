@@ -43,6 +43,8 @@ namespace KkomaKnight.Game
         GameObject _giftDot;
         /// <summary>«탐험» 보조 버튼의 빨간 알림 점 — 받을 것이 쌓였거나 빠른 탐험 횟수가 남으면 켠다(T97 · <see cref="Refresh"/>).</summary>
         GameObject _expDot;
+        /// <summary>메뉴(≡) 버튼의 빨간 알림 점 — 메뉴가 품은 항목에 지금 받을 것이 있으면 켠다(T96 ⓔ · <see cref="Core.Notify.MenuAny"/>).</summary>
+        GameObject _menuDot;
 
         protected override void Build()
         {
@@ -68,12 +70,19 @@ namespace KkomaKnight.Game
 
             // ② 메뉴(≡) — 이벤트 배너(시즌 패스)는 T78(주인 2026-09-07 «시즌 패스도 삭제»)로 없앴다 · 표 ① 의 배너 자리(24.5/9.2/51.6/5.6)는 비워 두고 아래 요소를 끌어올리지 않는다
             var menu = UiKit.Find(rt, "Button_Menu");
-            if (menu != null) { var mrt = (RectTransform)menu; mrt.SetParent(rt, false); UiKit.Pct(mrt, Layout.LobbyMenu); UiKit.Clickable(mrt, () => App.Overlay.Settings()); UiKit.Tag(mrt, "메뉴(☰) 버튼"); }
+            if (menu != null)
+            {
+                // T96-menu(주인 2026-09-07) — ≡ 는 이제 «메뉴» 팝업(Lobby_Menu 프리팹)을 연다: 우편함 · 설정 · 데일리 기프트 · 퀘스트 · 출석 · 특권
+                var mrt = (RectTransform)menu; mrt.SetParent(rt, false); UiKit.Pct(mrt, Layout.LobbyMenu);
+                UiKit.Clickable(mrt, () => LobbyMenu.Open(App)); UiKit.Tag(mrt, "메뉴(☰) 버튼");
+                // 메뉴 안에 받을 것이 있으면 켠다(T96 ⓔ · Refresh 가 켜고 끈다)
+                var dot = UiKit.Spawn("ui.alertDot", mrt); dot.name = "MenuDot";
+                UiKit.Pct((RectTransform)dot.transform, 62, 2, 34, 34); _menuDot = dot; dot.SetActive(false);
+            }
 
-            // ③ 사이드 아이콘 기둥 — 왼쪽 3 · 오른쪽 3 (레퍼런스 순서)
-            // T78 — 왼쪽 기둥은 «특권» 1칸(스타터팩·7일 챌린지 삭제) · 칸 하나의 높이(오른쪽 3칸 기둥의 1/3)로 줄이고 위 정렬(y 는 그대로) · 오른쪽 3칸은 불변
-            UiKit.Tag(BuildColumn(rt, "SideL", Layout.LobbySideL, false, (SidePrivilege, "ui.iconCrown", "특권")), "좌 사이드 아이콘 열(1개)");
-            UiKit.Tag(BuildColumn(rt, "SideR", Layout.LobbySideR, false, (SideAttendance, "ui.iconCalendar", "출석"), (SideDailyGift, "ui.iconBalloon", "데일리 기프트"), (SideQuest, "ui.iconQuest", "퀘스트")), "우 사이드 아이콘 열(3개)");
+            // ③ 사이드 아이콘 기둥 — **T96-menu(주인 2026-09-07 «중복된 거는 메뉴 안으로 넣는 걸로»)로 지웠다.**
+            // 특권(좌 1칸)·출석·데일리 기프트·퀘스트(우 3칸)는 전부 ≡ 메뉴 안에 있으므로 로비에 두 번 나오지 않는다.
+            // 남는 것은 메뉴에 없는 것뿐 — 보조 줄(탐험 · 클리어 보상)과 오른쪽 아래 «이벤트». 자리(Layout.LobbySideL/R)는 표에 남겨 둔다(비운다).
 
             // ④ 챕터 제목(프리팹 Title_LineDeco 조각 = 글자 + 밑줄 장식 · 표의 제목 행 ∪ 밑줄 행 자리)
             var title = UiKit.FindAny(rt, "Title_LineDeco_01_Blue", "Title_LineDeco_01_l");
@@ -181,6 +190,8 @@ namespace KkomaKnight.Game
             // T97 — 탐험에 쌓인 것이 있거나 빠른 탐험 횟수가 남으면 «탐험» 보조 버튼에 빨간 점
             if (_expDot != null) _expDot.SetActive(App.Data != null && App.Data.Expedition != null
                 && Core.Expedition.AnyClaimable(App.Data, s, App.Data.Expedition, LobbyPopups.NowSec(), SaveStore.Today()));
+            // T96 ⓔ — 메뉴 안(데일리 기프트 · 광고로 받을 재화 …)에 받을 것이 있으면 ≡ 에 빨간 점
+            if (_menuDot != null) _menuDot.SetActive(Core.Notify.MenuAny(App.Data, s, LobbyPopups.NowSec(), SaveStore.Today()));
         }
     }
 

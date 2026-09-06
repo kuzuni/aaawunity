@@ -71,8 +71,7 @@ namespace KkomaKnight.Tests
             var s = Parse();
             Same(s, "①", "상단 바(아바타+재화 줄 전체)", Layout.LobbyTopBar); Same(s, "①", "아바타(정사각)", Layout.LobbyAvatar); Same(s, "①", "재화 pill 줄", Layout.LobbyPills);
             Same(s, "①", "메뉴(☰) 버튼", Layout.LobbyMenu);
-            // T78 — 이벤트 배너·성 버튼 행은 표 ① 에서 삭제 · 왼쪽 기둥은 «특권» 1칸(높이 8.0 = 3칸 24.0 의 1/3)
-            Same(s, "①", "좌 사이드 아이콘 열(1개)", Layout.LobbySideL); Same(s, "①", "우 사이드 아이콘 열(3개)", Layout.LobbySideR);
+            // T78 — 이벤트 배너·성 버튼 행은 표 ① 에서 삭제 · T96-menu — 사이드 기둥 둘(특권 · 출석/데일리/퀘스트)도 메뉴로 옮겨 표에서 뺐다
             Same(s, "①", "챕터 제목", Layout.LobbyChapTitle); Same(s, "①", "챕터 밑줄·선택 화살표", Layout.LobbyChapUnderline); Same(s, "①", "챕터 카드(스테이지 그림)", Layout.LobbyCard);
             Same(s, "①", "좌 화살표", Layout.LobbyArrowL); Same(s, "①", "우 화살표", Layout.LobbyArrowR); Same(s, "①", "보조 버튼 2개 줄", Layout.LobbySubRow);
             Same(s, "①", "START 버튼", Layout.LobbyStart); Same(s, "①", "하단 탭바", Layout.TabBar);

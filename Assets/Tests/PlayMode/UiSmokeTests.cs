@@ -202,9 +202,9 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNotNull(UiKit.Find(top, "ResourceBar_Coin"), "골드 pill"); Assert.IsNotNull(UiKit.Find(top, "ResourceBar_Gem"), "보석 pill");
                 // T78 — 이벤트 배너(시즌 패스)는 삭제 · 그 자리는 비워 둔다
                 Assert.IsNull(UiKit.Find(lobby, "Banner"), "이벤트 배너는 삭제됐다(T78)"); Assert.IsNotNull(UiKit.Find(lobby, "Button_Menu"), "메뉴(≡)");
-                var sideL = UiKit.Find(lobby, "SideL"); var sideR = UiKit.Find(lobby, "SideR");
-                Assert.IsNotNull(sideL, "왼쪽 사이드 기둥"); Assert.IsNotNull(sideR, "오른쪽 사이드 기둥");
-                Assert.AreEqual(1, CountNamed(sideL, "Side:"), "왼쪽 사이드 아이콘 1(특권 · T78)"); Assert.AreEqual(3, CountNamed(sideR, "Side:"), "오른쪽 사이드 아이콘 3");
+                // T96-menu(주인 2026-09-07 «중복된 거는 메뉴 안으로») — 사이드 기둥 둘은 삭제됐다: 특권·출석·데일리 기프트·퀘스트는 ≡ 메뉴 안에 있다
+                Assert.IsNull(UiKit.Find(lobby, "SideL"), "왼쪽 사이드 기둥은 삭제됐다(T96-menu)"); Assert.IsNull(UiKit.Find(lobby, "SideR"), "오른쪽 사이드 기둥은 삭제됐다(T96-menu)");
+                Assert.IsNotNull(UiKit.Find(UiKit.Find(lobby, "Button_Menu"), "MenuDot"), "메뉴(≡) 알림 점 자리(T96 ⓔ)");
                 Assert.IsNotNull(UiKit.Find(lobby, "ChapterCard"), "챕터 카드"); Assert.IsNotNull(UiKit.Find(lobby, "ArrowL"), "◀"); Assert.IsNotNull(UiKit.Find(lobby, "ArrowR"), "▶");
                 // T68 ④ 카드 = 프리팹 SampleImage_Map 그림(활성 · 카드 자리 밑 · 스프라이트 있음) · 코드 조립 카드(Stage/Field/Road/Prop) 없음
                 {
@@ -222,7 +222,8 @@ namespace KkomaKnight.Tests.Play
                 }
                 Assert.AreEqual(2, CountNamed(UiKit.Find(lobby, "SubRow"), "Side:"), "보조 버튼 2(탐험·클리어 보상)");
                 Assert.IsNull(UiKit.Find(lobby, "Castle"), "왼쪽 아래 «성» 은 삭제됐다(T78)"); Assert.IsNotNull(UiKit.Find(lobby, "Events"), "오른쪽 아래 이벤트");
-                Assert.IsTrue(HasText(s => s == "특권") && HasText(s => s == "퀘스트") && HasText(s => s == "탐험"), "사이드·보조 라벨은 우리말");
+                Assert.IsTrue(HasText(s => s == "탐험") && HasText(s => s == "클리어 보상") && HasText(s => s == "이벤트"), "보조·모서리 라벨은 우리말");
+                Assert.IsFalse(HasText(s => s == "특권") || HasText(s => s == "퀘스트") || HasText(s => s == "출석"), "메뉴로 옮긴 것은 로비에 두 번 안 나온다(T96-menu)");
                 Assert.IsFalse(HasText(s => s == "스타터팩") || HasText(s => s == "7일 챌린지") || HasText(s => s == "시즌 패스") || HasText(s => s == "성"), "T78 삭제분 라벨 0");
                 // T63-lobby — 아이콘 라벨(사이드 4 · 보조 2 · 이벤트)은 보조 하한(36)으로 2줄까지 잘림 없이: bestFit 이 줄이지 않고(TextGenerator 로 직접 굴려 36) · 선호 높이 ≤ 칸
                 {
@@ -241,8 +242,8 @@ namespace KkomaKnight.Tests.Play
                         var cell = (RectTransform)t.transform.parent; var icon = (RectTransform)UiKit.Find(cell, "Icon"); Assert.IsNotNull(icon, $"칸 {cell.name} 아이콘");
                         Assert.GreaterOrEqual(icon.rect.width, cell.rect.width * LobbyScreen.CaptionIconMinW - 1f, $"칸 {cell.name} 아이콘 폭 ≥ 칸 폭 75%");
                     }
-                    // T67(CI #98 빨강 후속) · T78: «Side:*» 칸은 사이드 4(특권 + 오른쪽 3) + 보조 2 + 이벤트 = 7 (배너·성 삭제)
-                    Assert.AreEqual(7, captions, "아이콘 라벨 = 사이드 4 + 보조 2 + 이벤트");
+                    // T67(CI #98 빨강 후속) · T78 · T96-menu: «Side:*» 칸은 보조 2(탐험·클리어 보상) + 이벤트 = 3 (사이드 기둥 4는 메뉴로 갔다)
+                    Assert.AreEqual(3, captions, "아이콘 라벨 = 보조 2 + 이벤트");
                 }
                 // 배치 = 표 ①(±3%p) — START 는 카드와 같은 x·폭, 탭 바는 맨 아래
                 var frame = _app.Frame; var start = (RectTransform)UiKit.Find(lobby, "Start"); var card = (RectTransform)UiKit.Find(lobby, "ChapterCard");
@@ -265,10 +266,12 @@ namespace KkomaKnight.Tests.Play
 
             // T44 — 로비 사이드 껍데기: 팝업 3(퀘스트·출석·데일리 기프트 = 공통 팝업 문법 · 명판 · «탭하여 닫기» · 배경 탭 닫기 · X 없음) + 페이지 1(특권 · 상단 바 + 뒤로 ◀ · 탭 바 없음) — T78 로 7일 챌린지 팝업·시즌 패스 페이지는 삭제
             {
-                (string key, string title, string mark)[] pops = { (LobbyScreen.SideQuest, "퀘스트", "새로고침까지"), (LobbyScreen.SideAttendance, "출석 보상", "7일차"), (LobbyScreen.SideDailyGift, "데일리 기프트", "광고 1회 보기") };
+                // T96-menu — 이제 ≡ 메뉴 안의 줄(«Menu:*»)로 연다(로비 사이드 아이콘은 삭제됐다)
+                (string key, string title, string mark)[] pops = { (LobbyMenu.ItemQuest, "퀘스트", "새로고침까지"), (LobbyMenu.ItemAttendance, "출석 보상", "7일차"), (LobbyMenu.ItemDailyGift, "데일리 기프트", "광고 1회 보기") };
                 foreach (var p in pops)
                 {
-                    Assert.IsTrue(ClickNamed(lobby, "Side:" + p.key), "사이드 " + p.key); yield return Frames(2);
+                    Assert.IsTrue(ClickNamed(lobby, "Button_Menu"), "메뉴(≡)"); yield return Frames(2);
+                    Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Menu:" + p.key), "메뉴 항목 " + p.key); yield return Frames(2);
                     Check("사이드 팝업 " + p.title, expectOverlay: true);
                     Assert.IsTrue(HasText(s => s == p.title), p.title + ": 명판"); Assert.IsTrue(HasText(s => s.Contains(p.mark)), p.title + ": 내용 «" + p.mark + "»");
                     // 닫기 X 없음 — 퀘스트 팝업은 프리팹(Progression_Mission_02)에 X 조각이 딸려 오므로 «지우지 않고 끈다»(T78) · UiKit.Find 는 꺼진 것도 집는다(결정 162)
@@ -359,7 +362,8 @@ namespace KkomaKnight.Tests.Play
                 _app.Overlay.Close(); yield return Frames(1);
                 Check("사이드 팝업 3종 열고 닫음");
                 // 페이지 1(특권)
-                Assert.IsTrue(ClickNamed(lobby, "Side:" + LobbyScreen.SidePrivilege), "특권 아이콘"); yield return Frames(3);
+                Assert.IsTrue(ClickNamed(lobby, "Button_Menu"), "메뉴(≡)"); yield return Frames(2);
+                Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Menu:" + LobbyMenu.ItemPrivilege), "메뉴 «특권»"); yield return Frames(3);
                 Assert.AreEqual("privilege", _app.Current.Name, "특권 페이지"); var pv = _app.Current.Root;
                 Assert.IsNotNull(UiKit.Find(pv, "TopBar"), "특권: 상단 바"); Assert.AreEqual(4, CountNamed(pv, "Card:"), "특권 카드 4"); Assert.IsTrue(HasText(s => s == "특권") && HasText(s => s == "전체 받기"), "특권: 제목 · 전체 받기");
                 Assert.IsNull(UiKit.Find(pv, "ui.tabBar"), "특권: 탭 바 없음"); Assert.IsFalse(HasText(s => s == "START"), "로비는 숨겨져 있다");
