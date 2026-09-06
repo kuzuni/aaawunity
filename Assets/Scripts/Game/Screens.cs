@@ -41,6 +41,8 @@ namespace KkomaKnight.Game
         TopBar _top; Text _chap; Transform _tabs;
         /// <summary>«데일리 기프트» 사이드 아이콘의 빨간 알림 점 — 지금 받을 수 있는 줄이 하나라도 있으면 켠다(T77 · <see cref="Refresh"/>).</summary>
         GameObject _giftDot;
+        /// <summary>«탐험» 보조 버튼의 빨간 알림 점 — 받을 것이 쌓였거나 빠른 탐험 횟수가 남으면 켠다(T97 · <see cref="Refresh"/>).</summary>
+        GameObject _expDot;
 
         protected override void Build()
         {
@@ -134,6 +136,11 @@ namespace KkomaKnight.Game
                     var dot = UiKit.Spawn("ui.alertDot", cell); dot.name = "GiftDot";
                     var drt = (RectTransform)dot.transform; UiKit.Pct(drt, 68, 2, 26, 11); _giftDot = dot; dot.SetActive(false);
                 }
+                if (it.key == SideExplore)
+                {
+                    var dot = UiKit.Spawn("ui.alertDot", cell); dot.name = "ExpDot";
+                    var drt = (RectTransform)dot.transform; UiKit.Pct(drt, 68, 2, 26, 11); _expDot = dot; dot.SetActive(false);
+                }
                 string key = it.key; UiKit.Clickable(cell, () => OnSide(key));
             }
             // T69-lobby — 기둥 «상자» 에 «검은 아웃라인»(레퍼런스 01 의 사이드 기둥·보조 줄·성·이벤트 전부 검은 외곽선) · 기둥 안 칸끼리는 레퍼런스도 선이 없다(칸마다는 넣지 않는다)
@@ -141,7 +148,7 @@ namespace KkomaKnight.Game
             return prt;
         }
 
-        /// <summary>사이드 아이콘·보조 버튼·모서리 버튼의 단일 훅 — T43: <see cref="SideEvents"/>(오른쪽 아래 방패) = 아레나(PvP) 페이지 · T44: 특권 = 페이지(<see cref="PrivilegeScreen"/>) · 퀘스트·출석·데일리 기프트 = 팝업(<see cref="LobbyPopups"/>). 탐험·클리어 보상은 아무 일 없음(껍데기). T78 로 패스·7일 챌린지·스타터팩·성은 사라졌다.</summary>
+        /// <summary>사이드 아이콘·보조 버튼·모서리 버튼의 단일 훅 — T43: <see cref="SideEvents"/>(오른쪽 아래 방패) = 아레나(PvP) 페이지 · T44: 특권 = 페이지(<see cref="PrivilegeScreen"/>) · 퀘스트·출석·데일리 기프트 = 팝업(<see cref="LobbyPopups"/>). «탐험» = T97 방치·오프라인 보상 팝업(껍데기 아님) · 클리어 보상은 아무 일 없음(껍데기). T78 로 패스·7일 챌린지·스타터팩·성은 사라졌다.</summary>
         public void OnSide(string key)
         {
             switch (key)
@@ -151,6 +158,7 @@ namespace KkomaKnight.Game
                 case SideQuest: LobbyPopups.Quest(App); break;
                 case SideAttendance: LobbyPopups.Attendance(App); break;
                 case SideDailyGift: LobbyPopups.DailyGift(App); break;
+                case SideExplore: LobbyPopups.Expedition(App); break;   // T97 — 방치·오프라인 보상(껍데기 아님)
             }
         }
 
@@ -168,6 +176,9 @@ namespace KkomaKnight.Game
             _top?.Refresh();
             // T77 — 데일리 기프트에 받을 것이 있으면 사이드 아이콘에 빨간 점
             if (_giftDot != null) _giftDot.SetActive(Core.DailyGift.AnyClaimable(s, App.Data != null ? App.Data.DailyGift : null, SaveStore.Today()));
+            // T97 — 탐험에 쌓인 것이 있거나 빠른 탐험 횟수가 남으면 «탐험» 보조 버튼에 빨간 점
+            if (_expDot != null) _expDot.SetActive(App.Data != null && App.Data.Expedition != null
+                && Core.Expedition.AnyClaimable(App.Data, s, App.Data.Expedition, LobbyPopups.NowSec(), SaveStore.Today()));
         }
     }
 

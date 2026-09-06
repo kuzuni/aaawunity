@@ -423,6 +423,36 @@ namespace KkomaKnight.Core
         /// <summary>«오늘의 선물» 무료 칸의 같은 버튼 — 줄 버튼과 같은 가운데·폭(레퍼런스도 ✅ 가 같은 x).</summary>
         public static readonly R GfTodayBtn = new R(60.6f, 34.9f, 21.6f, 3.8f);
 
+        // ㉕ 탐험 팝업 — docs/ref/30_expedition.jpg (T97 · 워커 D 실측 · ±0.5%p · 720×1560 격자)
+        // 상자 = 그림 띠 + 명판 + 안내/경과/시간당 pill + 보상 격자 + 상한 안내 띠 + 버튼 2개(한 줄).
+        public static readonly R ExBox = new R(4.6f, 19.6f, 91.0f, 61.7f);
+        public static readonly R ExPic = new R(4.6f, 19.6f, 91.0f, 16.9f);
+        public static readonly R ExPlate = new R(4.6f, 36.7f, 91.0f, 4.3f);
+        public static readonly R ExInfoBtn = new R(85.0f, 37.4f, 8.0f, 2.9f);
+        public static readonly R ExSub = new R(4.6f, 41.6f, 91.0f, 2.2f);          // 보조 36 한 줄(50.4px = 2.16%) — 레퍼런스 1.9 에서 +0.3%p (T63 하한)
+        public static readonly R ExTime = new R(4.6f, 44.0f, 91.0f, 3.6f);         // 제목 60 한 줄(84px = 3.6%) — 레퍼런스 2.3 에서 +1.3%p (T63 하한 · 레퍼런스도 이 줄이 가장 큰 글자다)
+        public static readonly R ExRatePill1 = new R(28.5f, 47.8f, 19.7f, 2.6f);   // 본문 40(56px = 2.4%)이 들어간다 · 경과 시간이 커진 만큼 +0.8%p 내려온다
+        public static readonly R ExRatePill2 = new R(50.1f, 47.8f, 20.4f, 2.6f);
+        public static readonly R ExGridBg = new R(4.6f, 50.3f, 91.0f, 17.2f);
+        public static readonly R ExCell = new R(11.8f, 51.3f, 11.4f, 5.4f);
+        public const float ExCellPitchX = 13.0f, ExCellPitchY = 6.1f; public const int ExCols = 6;
+        public static readonly R ExCapNote = new R(4.6f, 68.0f, 91.0f, 4.4f);      // 보조 36 두 줄(100.8px = 4.3%) — 레퍼런스 4.1 에서 +0.3%p
+        public static readonly R ExQuickBtn = new R(7.9f, 73.4f, 40.3f, 6.4f);
+        public static readonly R ExClaimBtn = new R(51.5f, 73.4f, 40.9f, 6.4f);
+        /// <summary>버튼 오른쪽 위 배지(빠른 탐험 남은 횟수 · «!») — 버튼 rect 안 비율(레퍼런스 30 의 빨간 사각 배지).</summary>
+        public static readonly R ExBtnBadge = new R(84.0f, -6.0f, 20.0f, 40.0f);
+
+        // ㉖ 빠른 탐험 팝업 — docs/ref/31_expedition_fast.jpg (T97 · 워커 D 실측 · ±0.5%p · 30 위에 겹치는 작은 상자)
+        public static readonly R QxBox = new R(5.3f, 31.4f, 89.4f, 36.5f);
+        public static readonly R QxPlate = new R(5.3f, 31.4f, 89.4f, 4.5f);
+        public static readonly R QxSub = new R(5.3f, 36.6f, 89.4f, 2.2f);          // 보조 36 한 줄 (+0.4%p)
+        public static readonly R QxTitle = new R(5.3f, 39.2f, 89.4f, 2.4f);        // 본문 40 한 줄 (+0.4%p)
+        public static readonly R QxGridBg = new R(10.8f, 41.9f, 78.2f, 15.2f);
+        public static readonly R QxCell = new R(13.9f, 43.5f, 12.2f, 5.1f);
+        public const float QxCellPitchX = 15.0f; public const int QxCellCount = 4;
+        public static readonly R QxNote = new R(5.3f, 58.4f, 89.4f, 2.4f);         // 본문 40 한 줄 (+0.4%p)
+        public static readonly R QxFreeBtn = new R(31.7f, 61.9f, 36.6f, 4.8f);
+
         // ㉓ 7일 챌린지 팝업 · ㉔ 패스 페이지 — T78(주인 2026-09-07 «7일 챌린지 걍 안 하고 싶음» · «시즌 패스도 삭제»)로 화면째 삭제 · 표 ㉓·㉔ 도 폐기
 
         // ⑧ 공통

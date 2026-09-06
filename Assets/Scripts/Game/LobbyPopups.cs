@@ -543,6 +543,219 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 18 7일 챌린지 — T78(주인 2026-09-07 «7일 챌린지 걍 안 하고 싶음»)로 팝업째 삭제 ─────────────────────────
+
+        // ───────────────────────── 30·31 탐험 · 빠른 탐험 (T97 — 방치·오프라인 보상) ─────────────────────────
+
+        /// <summary>지금(UTC 유닉스 초) — 규칙(<see cref="Core.Expedition"/>)은 순수 C# 이라 시계를 게임 층이 준다.</summary>
+        public static double NowSec() => (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+
+        /// <summary>«3시간 48분 25초»(레퍼런스 30 의 «3h 48m 25s») — 0 이면 «0초».</summary>
+        static string ExClock(double sec)
+        {
+            var t = TimeSpan.FromSeconds(sec < 0 ? 0 : sec);
+            int h = (int)t.TotalHours;
+            if (h > 0) return $"{h}시간 {t.Minutes}분 {t.Seconds}초";
+            if (t.Minutes > 0) return $"{t.Minutes}분 {t.Seconds}초";
+            return $"{t.Seconds}초";
+        }
+
+        /// <summary>«mm:ss»(레퍼런스 31 의 «Claim in: 11:21»).</summary>
+        static string Mmss(double sec)
+        {
+            var t = TimeSpan.FromSeconds(sec < 0 ? 0 : Math.Ceiling(sec));
+            return $"{(int)t.TotalMinutes:00}:{t.Seconds:00}";
+        }
+
+        /// <summary>회색 제목 명판(레퍼런스 30·31 은 리본이 아니라 상자 폭을 채우는 띠) — 조각 <c>fr.rect</c> + 가운데 제목 글자.</summary>
+        static RectTransform Plate(Transform parent, Layout.R parentR, Layout.R r, string title, string name = "Plate")
+        {
+            var p = UiKit.Panel(parent, name, "fr.rect", Palette.A(Palette.Slate, 0.85f)); var rt = p.rectTransform;
+            UiKit.Pct(rt, r.Within(parentR)); UiKit.Bordered(rt);
+            var t = UiKit.Label(rt, 6, 0, 88, 100, title, TextSize.Title, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Title);
+            t.fontStyle = FontStyle.Bold;
+            return rt;
+        }
+
+        /// <summary>시간당 비율 pill(레퍼런스 30 의 «🪙 1650/h» · «💎 10/h») — 아이콘 + 글자 한 줄.</summary>
+        static RectTransform RatePill(Transform parent, Layout.R parentR, Layout.R r, string icon, string text, string name)
+        {
+            var pill = UiKit.Panel(parent, name, "fr.r12", Palette.A(Palette.Dim, 0.75f)); var rt = pill.rectTransform;
+            UiKit.Pct(rt, r.Within(parentR)); UiKit.Bordered(rt);
+            var ic = UiKit.Icon(rt, "Icon", icon); UiKit.Pct(ic.rectTransform, 2, 8, 22, 84);
+            UiKit.Label(rt, 26, 0, 70, 100, text, TextSize.Body, Palette.White, TextAnchor.MiddleLeft);
+            return rt;
+        }
+
+        /// <summary>버튼 오른쪽 위 빨간 배지(레퍼런스 30·31 의 남은 횟수·«!») — 버튼 안 <see cref="Layout.ExBtnBadge"/> 자리.</summary>
+        static void BtnBadge(RectTransform btn, string text, string name)
+        {
+            var bg = UiKit.Panel(btn, name, "fr.r12", Palette.Red); UiKit.Pct(bg.rectTransform, Layout.ExBtnBadge);
+            UiKit.Bordered(bg.rectTransform);
+            UiKit.Label(bg.rectTransform, 0, 0, 100, 100, text, TextSize.Aux, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Aux);
+        }
+
+        /// <summary>상자 맨 위 풍경 띠(레퍼런스 30) — 전투 맵과 같은 Environment 조각(들판 · 길 · 나무 · 덤불)으로 만든 정지 그림. 새 그림 0.</summary>
+        static RectTransform Picture(Transform parent, Layout.R parentR, Layout.R r)
+        {
+            var pic = UiKit.Rect(parent, "Picture"); UiKit.Pct(pic, r.Within(parentR));
+            pic.gameObject.AddComponent<RectMask2D>();
+            var field = UiKit.Icon(pic, "Field", "env.field"); field.preserveAspect = false; UiKit.Stretch(field.rectTransform);
+            var road = UiKit.Icon(pic, "Road", "env.road"); road.preserveAspect = false; UiKit.Pct(road.rectTransform, 0, 62, 100, 38);
+            var edge = UiKit.Icon(pic, "RoadUp", "env.roadUp"); edge.preserveAspect = false; UiKit.Pct(edge.rectTransform, 0, 57, 100, 8);
+            for (int i = 0; i < 3; i++) { var t = UiKit.Icon(pic, "Tree" + i, "env.tree"); UiKit.Pct(t.rectTransform, 6 + i * 34, 12, 16, 46); }
+            var bush = UiKit.Icon(pic, "Bush", "env.bush"); UiKit.Pct(bush.rectTransform, 78, 66, 12, 22);
+            UiKit.Bordered(pic);
+            return pic;
+        }
+
+        /// <summary>
+        /// 탐험 팝업(표 ㉕ · <b>T97 = 실제로 동작한다</b>) — 주인 2026-09-07 «탐험은 걍 방치 + 오프라인 보상 · 켜두거나 꺼둬도 쩄든 쌓이고 · 골드·다이아».
+        /// 그림 띠 → «탐험 보상» 명판 → 안내 → 경과 시간(1초 갱신) → 시간당 pill 2 → 쌓인 보상 칸(골드·다이아) → 상한 안내 →
+        /// «빠른 탐험»(파랑 · 남은 횟수 배지 · <see cref="QuickExplore"/>) + «받기»(초록 · 받을 게 있으면 «!» · 없으면 «다음까지 mm:ss»).
+        /// 쌓인 양은 저장하지 않는다 — <see cref="Core.Expedition"/> 이 «마지막 정산 시각» 하나로 계산하므로 앱이 꺼져 있어도 같은 속도로 쌓인다.
+        /// </summary>
+        public static void Expedition(App app)
+        {
+            var ov = app.Overlay; var B = Layout.ExBox; var S = app.Save;
+            var G = app.Data; var D = G != null ? G.Expedition : null;
+            string today = SaveStore.Today();
+            if (D != null) Core.Expedition.Roll(S, D, NowSec(), today);
+
+            var box = ov.OpenBox("ui.popup", "ui.title.green", "", B, () => ov.Close()); box.name = "ExpeditionBox";
+            var rib = ChildStarting(box, "Title_01"); if (rib != null) rib.gameObject.SetActive(false);   // 레퍼런스 30 은 리본이 아니라 상자 폭 명판이다
+            var pic = Picture(box, B, Layout.ExPic);
+            var plate = Plate(box, B, Layout.ExPlate, "탐험 보상");
+            var info = UiKit.Icon(box, "InfoBtn", "pi.info", Palette.White); UiKit.Pct(info.rectTransform, Layout.ExInfoBtn.Within(B));
+            var subR = Layout.ExSub.Within(B);
+            UiKit.Label(box, subR.X, subR.Y, subR.W, subR.H, "시간이 지나면 저절로 쌓입니다", TextSize.Aux, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Aux).name = "Sub";
+
+            var host = UiKit.Rect(box, "ExpRows"); UiKit.Stretch(host);   // «받기» 뒤에 이 안만 다시 그린다(팝업을 다시 열지 않는다 = 열림음 1번)
+            Action refresh = null;
+            refresh = () => { UiKit.Clear(host); BuildExpedition(app, host, B, D, today, refresh); };
+            refresh();
+
+            // 비평 이름표(표 ㉕) — 다시 그려도 자리가 같은 것만 여기서(줄 조각의 이름표는 BuildExpedition 안)
+            UiKit.Tag(box, "팝업 박스"); UiKit.Tag(pic, "그림 띠"); UiKit.Tag(plate, "제목 명판"); UiKit.Tag(info.rectTransform, "안내 ⓘ"); TagClose(app);
+        }
+
+        /// <summary>탐험 팝업의 «변하는» 부분 — 경과 시간·시간당 pill·쌓인 칸·버튼 2개. 1초마다 글자만 고치고, 받은 뒤에는 통째로 다시 그린다.</summary>
+        static void BuildExpedition(App app, RectTransform host, Layout.R B, ExpeditionData D, string today, Action refresh)
+        {
+            var ov = app.Overlay; var S = app.Save; var G = app.Data;
+            double now = NowSec();
+            double perGold = Core.Expedition.GoldPerHour(G, S, D), perGem = Core.Expedition.GemPerHour(D);
+            var timeR = Layout.ExTime.Within(B);
+            var timeTxt = UiKit.Label(host, timeR.X, timeR.Y, timeR.W, timeR.H,
+                D == null ? "탐험 시간: --" : "탐험 시간: " + ExClock(Core.Expedition.ElapsedSec(S, D, now, today)),
+                TextSize.Title, Palette.Green, TextAnchor.MiddleCenter, true, true, TextKind.Title);
+            timeTxt.name = "ExpTime"; timeTxt.fontStyle = FontStyle.Bold;
+            var p1 = RatePill(host, B, Layout.ExRatePill1, "ui.coin", UiKit.Fmt(Math.Floor(perGold)) + "/시간", "RateGold");
+            var p2 = RatePill(host, B, Layout.ExRatePill2, "ui.gemRed", UiKit.FmtQty(Math.Floor(perGem)) + "/시간", "RateGem");
+
+            var gridBg = UiKit.Panel(host, "GridBg", "fr.r12", Palette.A(Palette.Dim, 0.55f));
+            UiKit.Pct(gridBg.rectTransform, Layout.ExGridBg.Within(B)); UiKit.Bordered(gridBg.rectTransform);
+
+            double gold = 0, gem = 0; if (D != null) Core.Expedition.Pending(G, S, D, now, today, out gold, out gem);
+            // 쌓인 보상 칸 — 우리 시스템의 보상은 골드·다이아 둘뿐이라 레퍼런스의 장비 조각 자리는 비워 둔다(결정 기록)
+            Cell(host, B, Layout.ExCell, "green", "ui.coin", UiKit.Fmt(gold), name: "ExpCellGold");
+            Cell(host, B, Sh(Layout.ExCell, Layout.ExCellPitchX, 0), "plum", "ui.gemRed", UiKit.FmtQty(gem), name: "ExpCellGem");
+
+            var capR = Layout.ExCapNote.Within(B);
+            double maxH = D != null ? D.MaxHours : 0;
+            var cap = UiKit.Label(host, capR.X, capR.Y, capR.W, capR.H,
+                $"최대 탐험 시간: {UiKit.FmtQty(maxH)}시간\n뒤 챕터일수록 보상이 좋습니다", TextSize.Aux, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Aux);
+            cap.name = "CapNote";
+
+            // 빠른 탐험(파랑) — 남은 횟수 배지 · 0 이면 회색 비활성
+            int left = D != null ? Core.Expedition.QuickLeft(S, D, now, today) : 0;
+            var qb = UiKit.Button(host, left > 0 ? "ui.btnBlue" : "ui.btnGray", "빠른 탐험",
+                left > 0 ? (Action)(() => QuickExplore(app, refresh)) : () => { }, Layout.ExQuickBtn.Within(B));
+            qb.name = "QuickBtn";
+            if (left <= 0) UiKit.SetInteractable(qb.GetComponent<Button>(), false); else BtnBadge(qb, left.ToString(), "QuickBadge");
+
+            // 받기(초록) — 받을 게 있으면 «!» 배지 · 없으면 회색 + «다음까지 mm:ss»
+            bool can = D != null && Core.Expedition.CanClaim(G, S, D, now, today);
+            var cb = UiKit.Button(host, can ? "ui.btnGreen" : "ui.btnGray",
+                can ? "받기" : "다음까지 " + (D != null ? Mmss(Core.Expedition.SecondsToClaim(S, D, now, today)) : "--:--"),
+                can ? (Action)(() =>
+                {
+                    Core.Expedition.Claim(G, S, D, NowSec(), today, out double gg, out double mm);
+                    app.Persist();
+                    refresh(); PopReward(host, "ExpCellGold");
+                    app.Toast($"골드 +{UiKit.Fmt(gg)} · 다이아 +{UiKit.FmtQty(mm)}");
+                }) : () => { }, Layout.ExClaimBtn.Within(B));
+            cb.name = "ClaimBtn";
+            if (!can) UiKit.SetInteractable(cb.GetComponent<Button>(), false); else BtnBadge(cb, "!", "ClaimBadge");
+
+            // 1초 갱신 — 경과 시간과 «다음까지» 만 고친다(오브젝트를 다시 만들지 않는다 · 트윈이 아니라 경고 0)
+            var claimTxt = UiKit.ButtonText(cb);
+            float acc = 0f;
+            ov.OnTick = () =>
+            {
+                acc += Time.unscaledDeltaTime; if (acc < 1f) return; acc = 0f;
+                if (D == null) return;
+                double t = NowSec();
+                if (timeTxt != null) timeTxt.text = "탐험 시간: " + ExClock(Core.Expedition.ElapsedSec(S, D, t, today));
+                bool nowCan = Core.Expedition.CanClaim(G, S, D, t, today);
+                if (nowCan != can) { refresh(); return; }                      // 받기가 열리면 버튼 색까지 바뀌므로 그때만 다시 그린다
+                if (!nowCan && claimTxt != null) claimTxt.text = "다음까지 " + Mmss(Core.Expedition.SecondsToClaim(S, D, t, today));
+            };
+
+            UiKit.Tag(timeTxt.rectTransform, "경과 시간"); UiKit.Tag(p1, "시간당 pill ①"); UiKit.Tag(p2, "시간당 pill ②");
+            UiKit.Tag(gridBg.rectTransform, "보상 격자 바탕"); UiKit.Tag(cap.rectTransform, "상한 안내 띠");
+            UiKit.Tag(qb, "빠른 탐험 버튼"); UiKit.Tag(cb, "받기 버튼");
+            var c0 = UiKit.Find(host, "ExpCellGold"); if (c0 != null) UiKit.Tag(c0, "보상 칸(1칸)");
+        }
+
+        /// <summary>
+        /// 빠른 탐험 팝업(표 ㉖ · 레퍼런스 31) — 탐험 팝업 «위에» 겹치는 작은 상자. 주인 «빠른 탐험은 광고 보고 얻는 식»:
+        /// «받을 보상» 칸(골드·다이아 = 시간당 × <c>quickHours</c>) → «🎬 무료» 버튼 → 모의 광고 3초(T23 <see cref="Overlay.AdCountdown"/>) → 즉시 지급.
+        /// 지급은 누적에 더하지 않는다(중복 수령 방지 · ROUTINE T97 4항) · 하루 횟수를 하나 쓴다.
+        /// </summary>
+        public static void QuickExplore(App app, Action after)
+        {
+            var ov = app.Overlay; var B = Layout.QxBox; var S = app.Save; var G = app.Data;
+            var D = G != null ? G.Expedition : null;
+            string today = SaveStore.Today();
+            double now = NowSec();
+            var box = ov.OpenBox("ui.popup", "ui.title.green", "", B, () => { ov.Close(); if (after != null) { LobbyPopups.Expedition(app); } }); box.name = "QuickExploreBox";
+            var rib = ChildStarting(box, "Title_01"); if (rib != null) rib.gameObject.SetActive(false);
+            var plate = Plate(box, B, Layout.QxPlate, "빠른 탐험", "QxPlate");
+            var subR = Layout.QxSub.Within(B);
+            UiKit.Label(box, subR.X, subR.Y, subR.W, subR.H, "탐험 보상을 한 번에 받습니다", TextSize.Aux, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Aux).name = "QxSub";
+            var ttR = Layout.QxTitle.Within(B);
+            var tt = UiKit.Label(box, ttR.X, ttR.Y, ttR.W, ttR.H, "받을 보상", TextSize.Body, Palette.White, TextAnchor.MiddleCenter); tt.name = "QxTitle"; tt.fontStyle = FontStyle.Bold;
+
+            var gridBg = UiKit.Panel(box, "QxGridBg", "fr.r12", Palette.A(Palette.Dim, 0.55f));
+            UiKit.Pct(gridBg.rectTransform, Layout.QxGridBg.Within(B)); UiKit.Bordered(gridBg.rectTransform);
+            double gold = 0, gem = 0; if (D != null) Core.Expedition.QuickReward(G, S, D, out gold, out gem);
+            Cell(box, B, Layout.QxCell, "green", "ui.coin", UiKit.Fmt(gold), name: "QxCellGold");
+            Cell(box, B, Sh(Layout.QxCell, Layout.QxCellPitchX, 0), "plum", "ui.gemRed", UiKit.FmtQty(gem), name: "QxCellGem");
+
+            var noteR = Layout.QxNote.Within(B);
+            var note = UiKit.Label(box, noteR.X, noteR.Y, noteR.W, noteR.H,
+                D != null ? $"{UiKit.FmtQty(D.QuickHours)}시간치를 즉시 받습니다" : "--", TextSize.Body, Palette.White, TextAnchor.MiddleCenter);
+            note.name = "QxNote";
+
+            int left = D != null ? Core.Expedition.QuickLeft(S, D, now, today) : 0;
+            var fb = UiKit.Button(box, left > 0 ? "ui.btnBlue" : "ui.btnGray", "광고 보고 무료",
+                left > 0 ? (Action)(() =>
+                {
+                    ov.AdCountdown(GiftAdSeconds, () =>
+                    {
+                        Core.Expedition.ClaimQuick(G, S, D, NowSec(), today, out double gg, out double mm);
+                        app.Persist();
+                        app.Toast($"골드 +{UiKit.Fmt(gg)} · 다이아 +{UiKit.FmtQty(mm)}");
+                        LobbyPopups.Expedition(app);   // 광고가 끝나면 탐험 팝업으로 돌아간다(남은 횟수·버튼이 갱신된다)
+                    });
+                }) : () => { }, Layout.QxFreeBtn.Within(B));
+            fb.name = "QxFreeBtn";
+            if (left <= 0) UiKit.SetInteractable(fb.GetComponent<Button>(), false); else BtnBadge(fb, left.ToString(), "QxBadge");
+
+            UiKit.Tag(box, "팝업 박스"); UiKit.Tag(plate, "제목 명판"); UiKit.Tag(gridBg.rectTransform, "보상 칸 바탕");
+            UiKit.Tag(note.rectTransform, "안내 문구"); UiKit.Tag(fb, "광고 버튼"); TagClose(app);
+            var qc = UiKit.Find(box, "QxCellGold"); if (qc != null) UiKit.Tag(qc, "보상 칸(1칸)");
+        }
     }
 
     /// <summary>
