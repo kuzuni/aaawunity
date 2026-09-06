@@ -262,7 +262,7 @@ namespace KkomaKnight.Tests.Play
                 // T78 — 줄은 GUI Pro `Progression_Mission_02` 프리팹 조각이다: 줄마다 ListItem_Mission_02(제목·Slider·Group_Price) 가 살아 있고 · 앞 3줄은 «이동» · 뒤 3줄은 프리팹 ✅ · 영문 데모 문구 0(꺼진 여분 줄 제외)
                 {
                     var q0 = UiKit.Find(_app.Overlay.Root, "Quest:0"); Assert.IsNotNull(q0, "퀘스트 줄 0");
-                    Assert.IsNotNull(UiKit.Find(q0, "ListItem_Mission_02"), "줄 = 프리팹 ListItem_Mission_02 조각");
+                    Assert.IsNotNull(UiKit.Find(q0, "ListFrame_08"), "줄 = 프리팹 ListItem_Mission_02 조각(안쪽 바탕 ListFrame_08)");
                     Assert.IsNotNull(q0.GetComponentInChildren<Slider>(true), "줄 진행바 = 프리팹 Slider_02_Yellow");
                     Assert.IsNotNull(UiKit.Find(q0, "Group_Price"), "줄 보상 칸 = 프리팹 Group_Price");
                     Assert.AreEqual(3, CountNamed(_app.Overlay.Root, "GoBtn"), "미완 줄 «이동» 3(레퍼런스 15)");

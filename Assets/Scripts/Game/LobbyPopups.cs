@@ -219,14 +219,15 @@ namespace KkomaKnight.Game
 
         /// <summary>
         /// 미션 줄 한 개 — 프리팹 <c>ListFrame_08</c>(칸 바탕) 안의 <c>ListItem_Mission_02</c> 조각을 표 ⑳ 의 줄 안 자리로 옮긴다.
+        /// 격자 칸 자신이 <c>ListItem_Mission_02</c> 이고 그 안에 바탕 <c>ListFrame_08</c> · 제목 · <c>Slider_02_Yellow</c> · <c>Group_Price</c> · <c>Check</c> 가 있다(이름은 <c>Quest:i</c> 로 바꾼다 · 프리팹 유래 증거는 안쪽 <c>ListFrame_08</c>).
         /// 옮기는 것: 보상(<c>Group_Price</c> = 아이콘 + 점수 · 가로 배치를 끄고 레퍼런스처럼 «아이콘 위 · 숫자 아래») · 제목 · 진행바(<c>Slider_02_Yellow</c>) · 받기 표시(<c>Check</c> · 슬라이더 밑에 있던 것을 줄 오른쪽으로).
         /// 미완 줄(앞 3개)은 레퍼런스 15 처럼 주황 «이동» 버튼(껍데기 = 닫기만) · 완료 줄(뒤 3개)은 프리팹 ✅.
         /// </summary>
         static QuestRowParts QuestRow(RectTransform frame, int i, Overlay ov)
         {
             var parts = new QuestRowParts();
-            var item = ChildStarting(frame, "ListItem_Mission_02"); if (item == null) item = frame;
-            if (item != frame) { item.name = "ListItem_Mission_02"; UiKit.Stretch(item); }   // 프리팹 인스턴스 이름의 «(1)» 꼬리를 떼 테스트·이름표가 이름으로 찾게 한다
+            // 격자 칸 «자신» 이 `ListItem_Mission_02` 이고 `ListFrame_08`(원본의 ListFrame_07 을 갈아 끼운 것)은 그 «안쪽 바탕» 이다 — CI #142 가 잡아 준 계층(결정 173).
+            var item = frame;
             bool done = i >= 3;   // 레퍼런스 15 = 앞 3줄 «Go» · 뒤 3줄 ✅
 
             // 보상 칸(Group_Price) — 가로 레이아웃을 끄고 아이콘 위 · 점수 아래(레퍼런스 15 의 메달 + 숫자)
