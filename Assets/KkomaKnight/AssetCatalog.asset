@@ -922,6 +922,10 @@ MonoBehaviour:
     prefab: {fileID: 7323211708528492628, guid: 80ad1fa13c3d74256922ee68f7e236eb, type: 3}
   - key: ui.shopItem
     prefab: {fileID: 7492873612176689367, guid: daf417248f8d64e79b2c8df85ca41407, type: 3}
+  - key: ui.socialRanking
+    prefab: {fileID: 3206523576632941221, guid: 6575862b1bafa4f8b9dd88b00c157516, type: 3}
+  - key: ui.listRanking
+    prefab: {fileID: 2700172831943768113, guid: 5146b883abba540d795e79d75cacaf98, type: 3}
   - key: ui.equipment
     prefab: {fileID: 2550204177070044198, guid: da41cf218cbb141e5b7ca734c527861b, type: 3}
   - key: ui.equipCell

@@ -123,6 +123,10 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(7, CountNamed(ar, "RankRow:"), "순위 줄 7(4위~10위)");
             { var face = UiKit.Find(UiKit.Find(ar, "RankRow:4"), "Face") as RectTransform; Assert.IsNotNull(face, "순위 줄 초상"); Assert.Less(face.anchorMax.x, 0.35f, "순위 줄 초상은 줄 왼쪽(등수 옆 · 레퍼런스 23) — FitInParent 가 줄 가운데로 보내던 회귀(T43 비평 회차 1)"); } Assert.IsTrue(HasText(s => s == "나") && HasText(s => s == "브론즈") && HasText(s => s == "보상") && HasText(s => s == "상인"), "입장 화면 글자");
             Assert.IsTrue(HasText(s => s == "시즌이 끝나면 상위 순위가 승급합니다"), "승급 안내");
+            // T62 — 시상대 배너 = Social_Ranking 조각(Cloth + Group_Trophy) · 순위 줄 = ListItem_Ranking 조각(Text_RankingNum + ProfileArea→Face + Group_Trophy)
+            { var b1 = UiKit.Find(ar, "Banner:1"); Assert.IsNotNull(UiKit.Find(b1, "Cloth"), "시상대 배너 조각(Social_Ranking/Podium)"); Assert.IsNotNull(UiKit.Find(b1, "Group_Trophy"), "배너 🏆 무리"); }
+            { var r4 = UiKit.Find(ar, "RankRow:4"); Assert.IsNotNull(UiKit.Find(r4, "Text_RankingNum"), "순위 줄 등수(ListItem_Ranking 조각)"); Assert.IsNotNull(UiKit.Find(r4, "Group_Trophy"), "순위 줄 🏆 무리"); Assert.IsNull(UiKit.Find(r4, "ProfileArea"), "초상 자리는 «Face» 로 이름 바꾼다"); }
+            Assert.IsTrue(HasText(s => s == "도전자 4") && HasText(s => s == "꼬마기사"), "순위 이름(껍데기 · 상대 «도전자 N» · 내 자리 «꼬마기사»)");
             Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 2, "HeroView 2(상단 바 아바타 + 1위 초상 «나»)");
             Assert.IsNotNull(UiKit.Find(ar, "ChallengeBtn"), "도전"); Assert.IsNotNull(UiKit.Find(ar, "RewardsBtn"), "보상"); Assert.IsNotNull(UiKit.Find(ar, "MerchantBtn"), "상인");
             AtY((RectTransform)UiKit.Find(ar, "Stage"), Layout.AeStage, "무대"); AtX((RectTransform)UiKit.Find(ar, "ChallengeBtn"), Layout.AeChallenge, "도전 버튼"); AtX((RectTransform)UiKit.Find(ar, "RankList"), Layout.AeList, "순위 목록");

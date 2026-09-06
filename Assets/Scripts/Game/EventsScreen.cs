@@ -48,6 +48,11 @@ namespace KkomaKnight.Game
         };
         static readonly (string label, string icon)[] Tiers = { ("브론즈", "ui.iconMedalBronze"), ("실버", "ui.iconMedalSilver"), ("골드", "ui.iconMedal"), ("플래티넘", "ui.iconGemBlue"), ("다이아", "ui.iconGemPurple") };
         const string NoTime = "--:--:--";
+        /// <summary>아레나 껍데기 표시 이름 — 상대는 «도전자 N» · 내 자리는 게임 주인공 이름(저장 데이터에 플레이어 이름이 없다 · 워커 결정 기록 T62).</summary>
+        const string MeName = "꼬마기사";
+        static string FoeName(int rank) => "도전자 " + rank;
+        /// <summary>껍데기 숫자 자리 — 전투력·🏆 점수는 시스템이 없다(24·25 와 같은 표기 · 0 을 쓰면 실제 값처럼 보인다).</summary>
+        const string Dash = "—";
 
         static Color FootColor => Palette.Hex("#47443F");
         static Color BgColor => Palette.Hex("#2C2B29");
@@ -198,30 +203,27 @@ namespace KkomaKnight.Game
                 var a = UiKit.Rect(side, "RewardsBtn"); UiKit.Pct(a, 0, 0, 100, 50); var ai = UiKit.Icon(a, "Icon", "ui.iconGiftBlue"); UiKit.Pct(ai.rectTransform, 15, 0, 70, 66); UiKit.Label(a, 0, 66, 100, 34, "보상", 22, Palette.White); UiKit.Clickable(a, OpenRankRewards);
                 var b = UiKit.Rect(side, "MerchantBtn"); UiKit.Pct(b, 0, 50, 100, 50); var bi = UiKit.Icon(b, "Icon", "ui.iconMerchant"); UiKit.Pct(bi.rectTransform, 15, 0, 70, 66); UiKit.Label(b, 0, 66, 100, 34, "상인", 22, Palette.White); UiKit.Clickable(b, () => ShowPage(PageMerchant));
             }
-            // 시상대 초상 3(가운데 = 나 · HeroView 가슴 위) + 왕관 번호 + «나» 꼬리표 · 배너 3(이름 + 🏆 점수)
+            // 시상대 초상 3(가운데 = 나 · HeroView 가슴 위) + 왕관 번호 · 배너 3 = Social_Ranking 조각(T62) · 맨 위에 «나» 꼬리표
             var podium = UiKit.Rect(pg, "Podium"); UiKit.Stretch(podium);
             var p1 = Portrait(podium, "Portrait:1", Layout.AePortrait1, "ui.itemFrame.yellow", null); _me = HeroView.Attach(UiKit.Find(p1, "Inner") as RectTransform, HeroView.PlayerSkin(App)); _me.SetFraming(1.6f, 0.45f);
             var p2 = Portrait(podium, "Portrait:2", Layout.AePortrait2, "ui.itemFrame.plum", Foes[0]);
             var p3 = Portrait(podium, "Portrait:3", Layout.AePortrait3, "ui.itemFrame.green", Foes[1]);
             Crown(podium, Layout.AePortrait1, "ui.iconCrownGold", "1"); Crown(podium, Layout.AePortrait2, "ui.iconCrownSilver", "2"); Crown(podium, Layout.AePortrait3, "ui.iconCrownBronze", "3");
-            { var you = UiKit.Panel(podium, "You", "fr.r12", Palette.Hex("#C2223B")); UiKit.Pct(you.rectTransform, 44.2f, 26.6f, 11.4f, 1.6f); UiKit.Label(you.transform, 0, 0, 100, 100, "나", 18, Palette.White); }
             UiKit.TagGroup(podium, "시상대 초상(3개)", p1, p2, p3); UiKit.Tag(p1, "1위 초상");
-            var b1 = Banner(podium, "Banner:1", Layout.AeBanner1, Palette.Hex("#8E1C2F"), "나", true);
-            var b2 = Banner(podium, "Banner:2", Layout.AeBanner2, Palette.Hex("#2E6FB5"), "—", false);
-            var b3 = Banner(podium, "Banner:3", Layout.AeBanner3, Palette.Hex("#2E8B63"), "—", false);
+            var proto = RankProto(pg);
+            var b1 = Banner(podium, "Banner:1", Layout.AeBanner1, proto, "1st", MeName);
+            var b2 = Banner(podium, "Banner:2", Layout.AeBanner2, proto, "2st", FoeName(2));
+            var b3 = Banner(podium, "Banner:3", Layout.AeBanner3, proto, "3st", FoeName(3));
+            UiKit.Destroy(proto);
             UiKit.TagGroup(podium, "시상대 배너(3개)", b1, b2, b3);
+            { var you = UiKit.Panel(podium, "You", "fr.r12", Palette.Hex("#C2223B")); UiKit.Pct(you.rectTransform, 44.2f, 26.2f, 11.4f, 2.0f); UiKit.Label(you.transform, 0, 0, 100, 100, "나", 36, Palette.White, kind: TextKind.Aux); }
             // 순위 목록(4위~ · 세로 스크롤 · 바닥 띠에 가린다)
             var list = ScrollBox(pg, "RankList", Layout.AeList, RankRows * Layout.AeRowPitch, out var content); UiKit.Tag(list, "순위 목록");
             for (int i = 0; i < RankRows; i++)
             {
                 var r = Layout.AeRow; r.Y += i * Layout.AeRowPitch;
                 var row = Place(content, "RankRow:" + (i + 4), r, Layout.AeList.Y);
-                var fr = UiKit.Spawn("ui.frameDark", row); UiKit.Stretch((RectTransform)fr.transform);
-                UiKit.Label(row, 2, 0, 9, 100, (i + 4).ToString(), 36, Palette.Gray).fontStyle = FontStyle.Bold;
-                var pf = Portrait(row, "Face", new Layout.R(13, 10, 11.5f, 80), "ui.itemFrame.yellow", Foes[i % Foes.Length], true);
-                UiKit.Label(row, 27, 6, 40, 46, "—", 32, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
-                var pw = UiKit.Icon(row, "PowerIcon", "ui.battle"); UiKit.Pct(pw.rectTransform, 27, 54, 4.5f, 40); UiKit.Label(row, 32.5f, 52, 30, 44, "0", 26, Palette.Orange, TextAnchor.MiddleLeft);
-                var tr = UiKit.Icon(row, "Trophy", "ui.trophy"); UiKit.Pct(tr.rectTransform, 76, 22, 7, 56); UiKit.Label(row, 84, 0, 14, 100, "0", 32, Palette.Yellow, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
+                RankItem(row, i + 4, Foes[i % Foes.Length]);
                 if (i == 0) UiKit.Tag(row, "순위 줄(1칸)");
             }
             var promo = UiKit.Panel(pg, "Promo", "fr.rect", Palette.A(Palette.Dim, 0.85f)); UiKit.Pct(promo.rectTransform, Layout.AePromo); UiKit.Tag(promo.transform, "승급 안내");
@@ -475,15 +477,66 @@ namespace KkomaKnight.Game
             var c = UiKit.Rect(parent, "Crown:" + num); UiKit.Pct(c, portrait.X + portrait.W * 0.25f, portrait.Y - 3.0f, portrait.W * 0.5f, 2.8f);
             var ic = UiKit.Icon(c, "Icon", icon); UiKit.Stretch(ic.rectTransform); UiKit.Label(c, 0, 25, 100, 75, num, 20, Palette.White).fontStyle = FontStyle.Bold;
         }
-        /// <summary>시상대 배너(펜던트 라벨 조각 · 틴트) — 이름 + 🏆 점수.</summary>
-        RectTransform Banner(RectTransform parent, string name, Layout.R r, Color color, string who, bool me)
+        /// <summary>
+        /// 시상대 배너 = GUI Pro <c>Social_Ranking</c> 의 <c>Group_RankingPodium/&lt;자리&gt;/Podium</c> 조각 그대로(펜던트 배너 슬라이스 + <c>Text_Name</c> + <c>Group_Trophy</c>(🏆 + 점수)) —
+        /// 표 ⑮ «시상대 배너» 자리에 늘려 넣고 글자만 우리 것으로 바꾼다(T62 · 주인 «랭킹 UI 는 그 프리팹에서 조금 변형해 쓰라»).
+        /// 조각을 못 찾으면(카탈로그 미스) 색 판으로 그린다 — 화면이 비지 않게.
+        /// </summary>
+        static RectTransform Banner(RectTransform parent, string name, Layout.R r, Transform proto, string seat, string who)
         {
             var b = UiKit.Rect(parent, name); UiKit.Pct(b, r);
-            var img = UiKit.Panel(b, "Cloth", "fr.label", color); UiKit.Stretch(img.rectTransform);
-            UiKit.Label(b, 4, 10, 92, 34, who, 26, Palette.White).fontStyle = FontStyle.Bold;
-            var tr = UiKit.Icon(b, "Trophy", "ui.trophy"); UiKit.Pct(tr.rectTransform, 22, 50, 20, 34); UiKit.Label(b, 46, 50, 40, 34, "0", 28, Palette.Yellow, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
-            if (me) { var pw = UiKit.Label(b, 4, 84, 92, 16, UiKit.Fmt(App.Power()), 16, Palette.Orange); _powerTexts.Add(pw); }
+            var seatT = proto != null ? UiKit.Find(proto, seat) : null;
+            var piece = seatT != null ? UiKit.Find(seatT, "Podium") : null;
+            if (piece == null)
+            {
+                var img = UiKit.Panel(b, "Cloth", "fr.label", DeepRed); UiKit.Stretch(img.rectTransform);
+                UiKit.Label(b, 4, 8, 92, 32, who, 40, Palette.White).fontStyle = FontStyle.Bold;
+                UiKit.Label(b, 4, 44, 92, 30, Dash, 40, Palette.Yellow).fontStyle = FontStyle.Bold;
+                return b;
+            }
+            piece.SetParent(b, false); piece.name = "Cloth"; UiKit.Stretch((RectTransform)piece);
+            // 배너 안 두 줄 — 이름(위) · 🏆 점수(아래). 조각의 px 자리는 배너 본래 크기(296×279)용이라 표 자리 비율로 다시 잡는다.
+            var nm = UiKit.Find(piece, "Text_Name") as RectTransform; if (nm != null) UiKit.Pct(nm, 4, 8, 92, 32);
+            var grp = UiKit.Find(piece, "Group_Trophy") as RectTransform;
+            if (grp != null)
+            {
+                UiKit.Pct(grp, 6, 44, 88, 30);
+                var h = grp.GetComponent<HorizontalLayoutGroup>(); if (h != null) h.childAlignment = TextAnchor.MiddleCenter;
+            }
+            var nt = UiKit.SetText(piece, "Text_Name", who, Palette.White, 40); if (nt != null) nt.fontStyle = FontStyle.Bold;
+            UiKit.SetText(piece, "Text_Value", Dash, Palette.Yellow, 40);
             return b;
+        }
+
+        /// <summary>Social_Ranking 프리팹을 <b>꺼진 채로</b> 한 번 세운다 — 시상대 배너 조각 3개를 떼어 쓰고 바로 버린다(데모 화면 전체를 켜지 않는다 · T62).</summary>
+        static Transform RankProto(RectTransform pg)
+        {
+            var hold = UiKit.Rect(pg, "RankProto"); hold.gameObject.SetActive(false);
+            UiKit.Spawn("ui.socialRanking", hold);
+            return hold;
+        }
+
+        /// <summary>
+        /// 순위 줄 = GUI Pro <c>ListItem_Ranking</c> 프리팹 그대로(어두운 줄 프레임 · 등수 · 초상 · 이름 · 아래 배지 줄 · 오른쪽 🏆) —
+        /// 본래 크기 988×158 이 표 ⑮ «순위 줄»(95.1%×6.7% = 1027×157) 과 같아 늘려 넣기만 하면 레퍼런스 23 줄 구성이 그대로 선다(T62).
+        /// 우리 것으로 바꾸는 건 글자 넷과 아이콘 둘뿐 — 길드 배지 자리는 레퍼런스의 «칼 + 전투력» 줄로 쓴다.
+        /// </summary>
+        static void RankItem(RectTransform row, int rank, string icon)
+        {
+            var item = UiKit.Spawn("ui.listRanking", row); var irt = (RectTransform)item.transform; UiKit.Stretch(irt);
+            UiKit.SetText(irt, "Text_RankingNum", rank.ToString(), Palette.Gray, 44, TextKind.Aux);
+            var nt = UiKit.SetText(irt, "Text_Name", FoeName(rank), Palette.White, 44); if (nt != null) nt.fontStyle = FontStyle.Bold;
+            UiKit.SetText(irt, "Text_Value", Dash, Palette.Yellow, 40);
+            UiKit.Hide(irt, "Icon_NoGuild", "Text_NoGuild");
+            UiKit.Show(irt, "Icon_GuildBadge", true); UiKit.Show(irt, "Text_GuildName", true);
+            UiKit.SetSprite(irt, "Icon_GuildBadge", "ui.battle", Palette.White);
+            UiKit.SetText(irt, "Text_GuildName", Dash, Palette.Orange, 36, TextKind.Aux);
+            var face = UiKit.Find(irt, "ProfileArea");
+            if (face != null)
+            {
+                face.name = "Face";
+                var ci = UiKit.SetSprite(face, "Character", icon, Palette.White); if (ci != null) ci.preserveAspect = true;
+            }
         }
         static void Pill(RectTransform row, Layout.R r, string icon, string text, Color color)
         {
