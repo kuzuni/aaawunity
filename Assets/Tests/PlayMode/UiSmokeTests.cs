@@ -181,6 +181,28 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Button_Close_01"), "설정 닫기(X)"); yield return Frames(2);
             Assert.IsFalse(_app.Overlay.IsOpen, "설정이 닫혀야 한다"); Check("설정 닫힘");
 
+            // T29 — «데이터 삭제»: 설정의 빨간 버튼 → 확인 팝업(«취소» = 설정으로 되돌아감 · «삭제» = 세이브 초기값 · 로비 새로 그림)
+            {
+                _app.Save.Gold = 12345; _app.Save.Gem = 67; _app.Save.MaxChapter = 3; _app.Save.SelChapter = 3; _app.Save.Speed = SaveData.SpeedMax; Give("weapon"); _app.Persist();
+                _app.Overlay.Settings(); yield return Frames(1);
+                Assert.IsTrue(HasText(s => s == "데이터 삭제"), "설정: «데이터 삭제» 버튼(빨간 Account Delete 자리)");
+                Assert.IsTrue(Click(_app.Overlay.Root, s => s == "데이터 삭제"), "«데이터 삭제» 누름"); yield return Frames(2);
+                Check("데이터 삭제 확인 팝업", expectOverlay: true);
+                Assert.IsTrue(HasText(s => s.StartsWith("정말 삭제")), "확인 팝업 경고 글");
+                Assert.IsTrue(Click(_app.Overlay.Root, s => s == "취소"), "«취소»"); yield return Frames(2);
+                Check("데이터 삭제 취소 → 설정", expectOverlay: true);
+                Assert.IsTrue(HasText(s => s == "배경음"), "취소하면 설정 팝업으로 되돌아간다"); Assert.AreEqual(12345, _app.Save.Gold, 1e-6, "취소는 세이브를 건드리지 않는다");
+                Assert.IsTrue(Click(_app.Overlay.Root, s => s == "데이터 삭제"), "«데이터 삭제» 다시"); yield return Frames(1);
+                Assert.IsTrue(Click(_app.Overlay.Root, s => s == "삭제"), "«삭제»"); yield return Frames(2);
+                Assert.IsFalse(_app.Overlay.IsOpen, "삭제 뒤 팝업 닫힘"); Assert.AreEqual("lobby", _app.Current.Name, "삭제 뒤 로비");
+                var S = _app.Save;
+                Assert.AreEqual(0, S.Gold, 1e-6, "골드 0"); Assert.AreEqual(0, S.Gem, 1e-6, "보석 0"); Assert.AreEqual(0, S.Inv.Count, "장비 0"); Assert.AreEqual(0, S.Eq.Count, "장착 0");
+                Assert.AreEqual(1, S.MaxChapter, "최고 챕터 1"); Assert.AreEqual(1, S.SelChapter, "선택 챕터 1"); Assert.AreEqual(SaveData.SpeedMin, S.Speed, "배속 초기화(x1)"); Assert.IsFalse(S.MuteBgm || S.MuteSfx, "음소거 해제");
+                Assert.AreEqual(0, SaveStore.Load(_app.Data).Gold, 1e-6, "PlayerPrefs 의 세이브도 초기값(키 삭제)");
+                Assert.IsTrue(HasText(s => s == "데이터를 삭제했습니다"), "토스트");
+                Check("데이터 삭제 뒤 로비");
+            }
+
             // 탤런트 · 펫 (Character_Talent_02 통째로 · 데모 내용 그대로라 잔여 글자 검사는 뺀다)
             foreach (var kind in new[] { "talent", "pet" })
             {

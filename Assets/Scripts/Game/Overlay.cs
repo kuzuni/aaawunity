@@ -344,7 +344,12 @@ namespace KkomaKnight.Game
                     UiKit.SetText(g2.GetChild(0), "Text (TMP)", "재개"); UiKit.Clickable(g2.GetChild(0), closeAndResume);
                     UiKit.SetText(g2.GetChild(1), "Text (TMP)", "포기하고 로비로"); UiKit.Clickable(g2.GetChild(1), () => { Close(); onGiveUp?.Invoke(); });
                 }
-                else { UiKit.SetText(g2.GetChild(0), "Text (TMP)", "고객 지원"); UiKit.SetText(g2.GetChild(1), "Text (TMP)", "계정 삭제"); }
+                else
+                {
+                    // 로비 설정: 빨간 «Account Delete» 자리 = «데이터 삭제»(T29 · 주인 2026-09-06) → 확인 팝업 → SaveStore.Reset → 로비. 파란 «고객 지원» 은 기능 없음.
+                    UiKit.SetText(g2.GetChild(0), "Text (TMP)", "고객 지원");
+                    UiKit.SetText(g2.GetChild(1), "Text (TMP)", "데이터 삭제"); UiKit.Clickable(g2.GetChild(1), ConfirmReset);
+                }
             }
             var uid = UiKit.Find(rt, "UID"); if (uid != null) UiKit.SetText(uid, "Text", $"<color=#bb8a63>세이브 ID</color>  {_app.Save.Uid}");
             UiKit.SetText(rt, "Text_Version", "v" + Application.version);
@@ -353,6 +358,19 @@ namespace KkomaKnight.Game
             var popup = UiKit.Find(rt, "Popup"); if (popup != null) UiKit.PopIn((RectTransform)popup);
         }
         static void ApplySwitch(Transform sw, bool on) { UiKit.Show(sw, "On", on); UiKit.Show(sw, "Off", !on); }
+
+        /// <summary>
+        /// «데이터 삭제» 확인 팝업(T29) — 빨간 Popup_Box + 리본 «데이터 삭제» + 경고 글 + «삭제»(빨강 · <see cref="App.ResetSave"/>) / «취소»(회색 · 설정 팝업으로 되돌아간다).
+        /// 설정 팝업 위에 겹치지 않고 갈아 끼운다(Box 가 팝업 층을 비운다) — 취소하면 설정을 다시 연다.
+        /// </summary>
+        public void ConfirmReset()
+        {
+            var box = Box("ui.popup.red", "ui.title.red", "데이터 삭제", new Layout.R(6, 32, 88, 36));
+            Sub(box, "정말 삭제할까요?", 16, 12, 40, Palette.Ink);
+            Sub(box, "장비·골드·보석·진행이 모두 사라집니다.\n되돌릴 수 없습니다.", 34, 22, 30);
+            UiKit.Button(box, "ui.btnRed", "삭제", () => _app.ResetSave(), new Layout.R(8, 66, 40, 18));
+            UiKit.Button(box, "ui.btnGray", "취소", () => Settings(), new Layout.R(52, 66, 40, 18));
+        }
 
         // ───────────────────────── 탤런트 / 펫 (주인 지정 Character_Talent_02 — 프리팹 «그대로» · 기능 없음 · T10) ─────────────────────────
         /// <summary>

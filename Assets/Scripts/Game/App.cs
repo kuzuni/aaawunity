@@ -83,6 +83,20 @@ namespace KkomaKnight.Game
 
         public void Persist() => SaveStore.Save(Save);
 
+        /// <summary>
+        /// «데이터 삭제»(T29) — 세이브 키 삭제 → 새 세이브로 교체 → 전투 중이면 판을 버리고(골드 은행 없음) → 로비를 새로 그린다. 설정 팝업의 확인(«삭제»)에서만 부른다.
+        /// 화면들은 전부 <see cref="Save"/> 를 매번 읽으므로(캐시 없음) 교체 뒤 <see cref="ShowScreen"/> 의 Refresh 가 새 값을 그린다. 음소거는 새 세이브(해제)로 바로 반영.
+        /// </summary>
+        public void ResetSave()
+        {
+            Overlay?.Close();
+            GetScreen<BattleScreen>()?.Abort();
+            Save = SaveStore.Reset(Data);
+            Audio.ApplyMute();
+            ShowScreen("lobby");
+            Toast("데이터를 삭제했습니다");
+        }
+
         public void Toast(string msg)
         {
             if (_toastText != null) _toastText.text = msg;

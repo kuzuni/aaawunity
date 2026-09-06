@@ -139,6 +139,13 @@ namespace KkomaKnight.Game
             App.Overlay.Close();
             App.ShowScreen("lobby");
         }
+        /// <summary>판을 버린다(T29 «데이터 삭제» — 골드를 은행에 넣지 않는다 · 로비 전환은 호출자가). 전투 중이 아니면 아무 일 없음.</summary>
+        public void Abort()
+        {
+            if (G == null) return;
+            _ended = true; G = null; _paused = false;
+            _world?.Dispose(); _world = null; UiKit.Clear(_pops);
+        }
         void OnPause()
         {
             if (G == null || G.Over || App.Overlay.IsOpen) return;
