@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-07 · 00:1X UTC) ⚑ 주인 지시 — 출석 보상 팝업은 GUI Pro `Rewards_Daily7_Popup` 프리팹으로.** → **T76** 등재(§2 · T44 출석 껍데기 대체 · 조각 이동 최소 · 루틴이 잡는다).
+
 - **(2026-09-06 · 12:2X UTC) ⚑⚑ 주인 지시 — ① 번개 이펙트는 인터넷에서 에셋 받아서(T70) ② 장비 무대 길에 `Road_up_DeepForest` 류 물결 경계 · 전투 맵 길 아래쪽 `Road_up_*` 는 y축 반전 · 나무·소품이 아래에만 몰림 → 위·아래 골고루(T71) ③ `Pattern_01_256` 배경 패턴을 거의 모든 UI 에(로비는 오른쪽 위로 천천히 흐름 · 특별 상품도) · 상점 아이템·특별 상품 아이콘 뒤 `Effect_Light_01_512` 천천히 시계방향 회전 · 레퍼런스처럼 그라데이션 색감(T72).** → T70·T71·T72 등재(§2 · T72 는 UiKit 헬퍼 먼저 · 화면 적용은 T63/T69 묶음과 같은 워커).
 
 - **(2026-09-06 · 12:0X UTC) ⚑⚑ 주인 지시 — UI 전체적으로 행·카드·칸마다 GUI Pro `BasicFrame_Rectangle_01~04_White_Border3` 같은 Border 스프라이트를 넣어 «검은 아웃라인» 느낌으로. 던전 행도 마찬가지. **추가(12:1X)**: 아이템류 칸은 전부 장비 화면의 그 프레임(`ui.itemFrame.<등급>` · ItemFrame_01)으로 통일 · 던전 보상 칸도 그 프레임 · HP·실드 바(HUD 3개 + 발밑 2단)도 Border.** → **T69** 등재(§2 · UiKit.Bordered 공통 헬퍼 + 카탈로그 키 먼저 · 화면 묶음은 T63 하위 lock 과 같이 · 루틴이 잡는다).
@@ -714,6 +716,15 @@
 3. **남은 일**: ⓐ `UiKit.Text/Label/SetText/ConvertTmp` 가 화면에 나가는 모든 글자에 `TextGlyphs.Safe` 를 걸거나, 화면별로 리터럴을 고친다(둘 중 하나 · 워커가 정해 결정 기록에 한 줄). **T63 하위 행이 전부 ✅ 된 뒤**에 하는 편이 안전하다 — 글자 폭이 바뀌면 진행 중인 묶음들의 칸 계산이 어긋난다. ⓑ `₩`(상점 가격)·`💎` 처럼 대체 글자가 없는 것은 문구를 고친다(T63-shop 이 «다이아» 로 한 방식). ⓒ 대안으로 fallback 글꼴을 붙이면 한 번에 끝나지만 폰트 에셋이 늘고 WebGL 용량이 커진다 — 워커가 재 보고 정한다.
 4. **공통 팝업 리본**: `UiKit.Popup` 이 리본을 `sizeDelta (656, 115)` 로 세우는데 `Title_01_*` 프리팹의 글자 칸 inset 이 (−220, −35.56) 이라 실제 칸이 **436×79.4px** 다. 제목 하한 60 의 줄(`TextSize.BoxHeight(60)` = 84px)이 안 들어가 bestFit 이 **56** 으로 줄인다(모든 팝업 공통 · 게이트의 잘림 표에는 안 잡히는 쪽). 리본 세로를 130 이상으로(칸 94.4 ≥ 84) 올리면 되지만 **팝업 10여 화면의 리본이 같이 커지므로** T63 하위 행이 끝난 뒤 §5 비평 회차를 한 번 돌 수 있을 때 한다.
 5. ✅ 조건 = 그 커밋의 CI 유니티 잡 초록 + `[TextSizeGate]` 표의 «최소 크기(실제)» 가 어느 화면에서도 하한 미만이 아님 + screens PNG 에서 «·» 자리가 안 붙어 보임.
+
+### T76 — 출석 보상 팝업(`16_attendance.jpg` · T44 껍데기) = GUI Pro **`Rewards_Daily7_Popup`** 프리팹으로 (주인 2026-09-07 «출석 보상 Rewards_Daily7_Popup 프리팹 이거로 해줘» · T44 뒤 · 비평 ≥ 8.0)
+범위: `Assets/Scripts/Game/LobbyPopups.cs`(170~197행 `Attendance` — 지금은 `ui.popup` 상자 + 노란 리본 + 3×2 격자를 조각으로 조립) · `Assets/KkomaKnight/catalog.json`(`ui.rewardsDaily7` = `Theme_Light/Prefabs/Prefabs~DemoScenes/Rewards_Daily7_Popup.prefab` · 필요하면 `ui.rewardsDaily7Item` = 그 안의 하루 칸 조각) · `docs/assets-map.md` · `Core/Layout.cs`·`docs/ref-layout.md`(표 ㉑ 은 그대로 · 실측 보정 ±3%p) · `Assets/Tests/PlayMode/LobbyPopupsTests`(또는 UiSmokeTests 출석 단언)·`UiShotsTests`(16 PNG)
+순서: T44 ✅ 뒤 · 제약 없음. T63/T69/T72 로비 팝업 묶음과 같은 파일이면 그 워커가 이어서.
+1. **재료**: `Rewards_Daily7_Popup.prefab`(7일 출석 팝업 데모 · 형제 `Rewards_Daily7`(풀스크린판)·`Rewards_Daily25_Popup` 은 안 씀). 규칙 ⓑ 대로 **부품으로 뜯어 레퍼런스 16 구도(표 ㉑)에 맞춘다** — 주인이 «이거로» 라 했으니 T62 랭킹처럼 **조각 이동 최소**(팝업 상자·제목 리본·하루 칸 7개(또는 레퍼런스 개수)·받기 버튼은 프리팹 구성 그대로 두고 위치·크기만 표에 맞춤). 데모 스크립트(PanelView 등)는 `UiKit.Spawn` 이 떼어 낸다.
+2. **글자·데이터**: 영문 데모 문구 0 — «출석 보상» · «N일차» · 보상 이름/수량은 우리 데이터(껍데기 · 시스템 없음 → 레퍼런스 16 의 보상을 한국어로 · 골드/다이아 아이콘은 `ui.coin`·`ui.gem`) · 오늘 칸 강조(프리팹의 Focus/Today 변형이 있으면 그것) · «받기» 버튼은 눌려도 아무 일 없음(T44 규칙 · 닫기만).
+3. **T69·T72 적용**: 하루 칸의 보상 아이콘 칸 = 장비 프레임(`ui.itemFrame.empty` · T69 7항) · 칸 테두리 Border · 팝업 안 패턴 배경(T72) — 이 팝업을 다시 만드는 김에 같이.
+4. **테스트**: 출석 팝업 열기 → 프리팹 유래 조각(이름 «Rewards_Daily7_Popup» 자식) 존재 · 하루 칸 개수 · 영문 데모 글자 0 · 닫기 동작 · `LogAssert.NoUnexpectedReceived`. 16 PNG 비평 §5 회차(8.0).
+5. 게이트 + assets-map + PROGRESS T76 행 + 완료 기록(확인 = CI PlayMode + screens 16 PNG `Read` + 배포 스모크).
 
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
