@@ -18,12 +18,12 @@ namespace KkomaKnight.Core
             new Rule(@" \(공격력의 (\d+%)\)", "(공격력 $1)"),
         };
 
-        /// <summary>표시용 옵션 설명 — 규칙에 걸리는 부분만 바꾼다(여러 규칙이 겹쳐 적용될 수 있다 · 멱등). null/빈 문자열은 그대로.</summary>
+        /// <summary>표시용 옵션 설명 — 규칙에 걸리는 부분만 바꾸고, 비율 스탯에는 <c>%</c> 를 붙인다(<see cref="StatText.Percent"/> · T90 · 여러 규칙이 겹쳐 적용될 수 있다 · 멱등). null/빈 문자열은 그대로.</summary>
         public static string Shorten(string desc)
         {
             if (string.IsNullOrEmpty(desc)) return desc;
             foreach (var r in Rules) desc = r.Rx.Replace(desc, r.To, 1);
-            return desc;
+            return StatText.Percent(desc);   // T90 — «치명타 확률 +5» → «치명타 확률 +5%»(원문 불변 · 표시 시점에만)
         }
 
         /// <summary>잠금 줄 꼬리 — «(희귀)» · «(신화 +3강)». 원문 «(희귀 이상)» 의 «이상» 은 자물쇠가 대신한다(한 줄에 들어가게).</summary>

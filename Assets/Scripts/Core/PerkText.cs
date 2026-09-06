@@ -28,10 +28,11 @@ namespace KkomaKnight.Core
         public const string PassivePrefix = "패시브: ";
         static readonly Regex AlreadyRx = new Regex(@"^[^:]{1,24}: ", RegexOptions.CultureInvariant);   // 이미 «트리거: » 꼴(멱등)
 
-        /// <summary>표시용 설명 — 트리거 구가 있으면 «트리거: 내용», 없으면 «패시브: 원문». null/빈 문자열은 그대로 돌려준다.</summary>
+        /// <summary>표시용 설명 — 트리거 구가 있으면 «트리거: 내용», 없으면 «패시브: 원문». 비율 스탯에는 <c>%</c> 를 붙인다(<see cref="StatText.Percent"/> · T90). null/빈 문자열은 그대로 돌려준다.</summary>
         public static string Format(string desc)
         {
             if (string.IsNullOrEmpty(desc)) return desc;
+            desc = StatText.Percent(desc);   // T90 — «회피율 +8» → «회피율 +8%»(원문 불변 · 표시 시점에만)
             foreach (var r in Rules)
             {
                 var m = r.Rx.Match(desc);

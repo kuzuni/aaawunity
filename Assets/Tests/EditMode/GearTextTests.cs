@@ -35,7 +35,8 @@ namespace KkomaKnight.Tests
                     total++;
                     string got = GearText.Shorten(o.Desc);
                     if (Expected.TryGetValue(o.Desc, out var exp)) { longOnes++; Assert.That(got, Is.EqualTo(exp), kv.Key + " / " + o.Desc); }
-                    else Assert.That(got, Is.EqualTo(o.Desc), "짧은 문구는 그대로: " + o.Desc);
+                    // 짧은 문구는 길이를 안 건드린다 — 비율 스탯의 % 만 붙는다(T90 · «치명타 확률 +5» → «치명타 확률 +5%»)
+                    else Assert.That(got, Is.EqualTo(StatText.Percent(o.Desc)), "짧은 문구는 % 말고 그대로: " + o.Desc);
                     Assert.That(GearText.Shorten(got), Is.EqualTo(got), "멱등: " + o.Desc);
                     Assert.That(got.Length, Is.LessThanOrEqualTo(30), "한 줄(본문 40 · 770px)에 들어가는 길이: " + got);
                 }

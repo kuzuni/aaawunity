@@ -124,7 +124,8 @@ namespace KkomaKnight.Tests
             {
                 Assert.That(Expected.ContainsKey(p.Id), Is.True, "기대값 표에 없는 특전: " + p.Id);
                 string got = PerkText.Format(p.Desc);
-                Assert.That(got, Is.EqualTo(Expected[p.Id]), p.Id + " 원문 «" + p.Desc + "»");
+                // T90 — 표는 T53 «트리거: 내용» 의 정본 그대로 두고, 비율 스탯 % 는 기댓값에도 씌운다(«회피율 +8» → «회피율 +8%» · T87 이 TextGlyphs 로 한 방식과 같다)
+                Assert.That(got, Is.EqualTo(StatText.Percent(Expected[p.Id])), p.Id + " 원문 «" + p.Desc + "»");
                 if (got.StartsWith(PerkText.PassivePrefix)) passive++; else trig++;
             }
             Assert.That(trig, Is.EqualTo(76), "트리거 구가 있는 특전 수");
@@ -141,9 +142,11 @@ namespace KkomaKnight.Tests
                 int c = got.IndexOf(": ", System.StringComparison.Ordinal);
                 Assert.That(c, Is.GreaterThan(0), p.Id + " 콜론+한 칸(100개 전부)");
                 string trigger = got.Substring(0, c), body = got.Substring(c + 2);
-                Assert.That(p.Desc.EndsWith(body), Is.True, p.Id + " 콜론 뒤는 원문의 꼬리 그대로");
+                // 원문에 T90 의 % 만 씌운 것과 대조한다 — 문구를 줄이거나 늘리지 않는다는 뜻은 그대로다
+                string src = StatText.Percent(p.Desc);
+                Assert.That(src.EndsWith(body), Is.True, p.Id + " 콜론 뒤는 원문의 꼬리 그대로");
                 if (PerkText.HasTrigger(p.Desc)) Assert.That(trigger, Is.Not.EqualTo("패시브"), p.Id + " 트리거 특전은 «패시브» 가 아니다");
-                else { Assert.That(got, Is.EqualTo(PerkText.PassivePrefix + p.Desc), p.Id + " 상시 능력치 = «패시브: 원문»"); }
+                else { Assert.That(got, Is.EqualTo(PerkText.PassivePrefix + src), p.Id + " 상시 능력치 = «패시브: 원문»"); }
                 Assert.That(trigger.Contains("<"), Is.False, p.Id + " 트리거 구에 리치 텍스트 없음(T52 한 색)");
                 Assert.That(got.Contains("<color"), Is.False, p.Id + " 부분 색 없음");
             }
