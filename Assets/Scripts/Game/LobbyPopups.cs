@@ -29,7 +29,8 @@ namespace KkomaKnight.Game
             float cx = (ribbonR.X + ribbonR.W / 2f - (boxR.X + boxR.W / 2f)) / 100f * UiKit.FrameW;
             float cy = (boxR.Y - (ribbonR.Y + ribbonR.H / 2f)) / 100f * UiKit.FrameH;
             rr.anchoredPosition = new Vector2(cx, cy);
-            var t = rr.GetComponentInChildren<Text>(true); if (t != null) { t.resizeTextMinSize = 20; t.resizeTextMaxSize = 56; }
+            // 명판 글자 = 제목 종류(T63 · 60 · 리본이 좁으면 bestFit 으로 32 까지)
+            var t = rr.GetComponentInChildren<Text>(true); if (t != null) { t.fontSize = TextSize.Title; t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitMin; t.resizeTextMaxSize = TextSize.Title; TextAudit.Mark(t, TextKind.Title); }
             return rr;
         }
 

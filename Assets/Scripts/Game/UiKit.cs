@@ -163,15 +163,21 @@ namespace KkomaKnight.Game
             return img;
         }
 
-        public static Text Text(Transform parent, string s, int size, Color color, TextAnchor anchor = TextAnchor.MiddleCenter, bool bestFit = false, bool outline = true)
+        /// <summary>
+        /// 글자 하나. <paramref name="size"/> 가 종류(<paramref name="kind"/>) 하한(<see cref="TextSize"/> · T63 · 본문 40 · 버튼 44 · 보조 36 · 제목 60)보다 작으면 경고 없이 하한으로 올린다.
+        /// 정말 작아야 하는 곳(아이콘 위 «+1» 배지 등)만 <see cref="TextKind.Small"/> 을 명시한다(= 지시서의 allowSmall:true). bestFit 최소는 <see cref="TextSize.BestFitMin"/>(32) 아래로 못 내려간다.
+        /// </summary>
+        public static Text Text(Transform parent, string s, int size, Color color, TextAnchor anchor = TextAnchor.MiddleCenter, bool bestFit = false, bool outline = true, TextKind kind = TextKind.Body)
         {
+            size = TextSize.Floor(size, kind);
             var rt = Rect(parent, "Text");
             var t = rt.gameObject.AddComponent<Text>();
             t.font = FontOrBuiltin(); t.text = s; t.fontSize = size; t.color = color; t.alignment = anchor;
             t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Overflow;
             t.raycastTarget = false; t.supportRichText = true;
-            if (bestFit) { t.resizeTextForBestFit = true; t.resizeTextMinSize = 12; t.resizeTextMaxSize = size; t.verticalOverflow = VerticalWrapMode.Truncate; }
+            if (bestFit) { t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitFloor(12, kind); t.resizeTextMaxSize = size; t.verticalOverflow = VerticalWrapMode.Truncate; }
             if (outline) AddOutline(t, size);
+            TextAudit.Mark(t, kind);
             return t;
         }
         static void AddOutline(Text t, float size)
@@ -179,9 +185,9 @@ namespace KkomaKnight.Game
             var ol = t.gameObject.AddComponent<Outline>(); ol.effectColor = new Color(0.1f, 0.06f, 0.05f, 0.85f);
             float d = Mathf.Clamp(size * 0.05f, 1.5f, 4f); ol.effectDistance = new Vector2(d, -d); ol.useGraphicAlpha = true;
         }
-        public static Text Label(Transform parent, float x, float y, float w, float h, string s, int size, Color color, TextAnchor anchor = TextAnchor.MiddleCenter, bool bestFit = true, bool outline = true)
+        public static Text Label(Transform parent, float x, float y, float w, float h, string s, int size, Color color, TextAnchor anchor = TextAnchor.MiddleCenter, bool bestFit = true, bool outline = true, TextKind kind = TextKind.Body)
         {
-            var t = Text(parent, s, size, color, anchor, bestFit, outline);
+            var t = Text(parent, s, size, color, anchor, bestFit, outline, kind);
             Pct(t.rectTransform, x, y, w, h);
             return t;
         }
@@ -198,7 +204,7 @@ namespace KkomaKnight.Game
             var bar = new Bar { Root = (RectTransform)go.transform, Slider = go.GetComponentInChildren<Slider>(true) };
             if (bar.Slider != null) { bar.Slider.interactable = false; bar.Slider.transition = Selectable.Transition.None; bar.Slider.minValue = 0; bar.Slider.maxValue = 1; foreach (var g in go.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false; }
             bar.Txt = go.GetComponentInChildren<Text>(true);
-            if (bar.Txt != null) { bar.Txt.resizeTextForBestFit = true; bar.Txt.resizeTextMinSize = 12; bar.Txt.resizeTextMaxSize = 40; bar.Txt.horizontalOverflow = HorizontalWrapMode.Overflow; }
+            if (bar.Txt != null) { bar.Txt.resizeTextForBestFit = true; bar.Txt.resizeTextMinSize = TextSize.BestFitMin; bar.Txt.resizeTextMaxSize = TextSize.Body; bar.Txt.horizontalOverflow = HorizontalWrapMode.Overflow; }
             if (!string.IsNullOrEmpty(capIconKey))
             {
                 bar.Cap = Icon(go.transform, "Cap", capIconKey);
@@ -230,7 +236,7 @@ namespace KkomaKnight.Game
             foreach (var g in box.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;   // 상자 뒤로 클릭이 새지 않게
             var ribbon = Spawn(titleKey, box); var rr = (RectTransform)ribbon.transform;
             rr.anchorMin = rr.anchorMax = new Vector2(0.5f, 1f); rr.pivot = new Vector2(0.5f, 0.5f); rr.sizeDelta = new Vector2(656, 115); rr.anchoredPosition = new Vector2(0, 8);
-            var tt = SetText(rr, "Text (TMP)", title); if (tt != null) { tt.resizeTextForBestFit = true; tt.resizeTextMinSize = 20; tt.resizeTextMaxSize = 52; }
+            var tt = SetText(rr, "Text (TMP)", title, null, TextSize.Title, TextKind.Title); if (tt != null) { tt.resizeTextForBestFit = true; tt.resizeTextMinSize = TextSize.BestFitMin; tt.resizeTextMaxSize = TextSize.Title; }
             parts.Box = box; parts.Ribbon = rr; parts.Title = tt;
             if (onTapClose != null)
             {
@@ -301,10 +307,12 @@ namespace KkomaKnight.Game
             bool outline = tmp.fontSharedMaterial != null && tmp.fontSharedMaterial.name.IndexOf("Outline", StringComparison.OrdinalIgnoreCase) >= 0;
             UnityEngine.Object.DestroyImmediate(tmp);
             var t = go.AddComponent<Text>();
-            t.font = FontOrBuiltin(); t.text = s; t.fontSize = Mathf.Max(12, Mathf.RoundToInt(fs)); t.color = c; t.alignment = MapAlign(al);
+            // 프리팹 글자도 하한(T63) — 데모 프리팹의 작은 크기(12~30)를 그대로 옮기면 폰에서 안 읽힌다 · 종류는 Body(버튼은 Button() 이 다시 올린다)
+            int size = TextSize.Floor(Mathf.Max(12, Mathf.RoundToInt(fs)));
+            t.font = FontOrBuiltin(); t.text = s; t.fontSize = size; t.color = c; t.alignment = MapAlign(al);
             t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Overflow; t.supportRichText = true; t.raycastTarget = false;
-            if (auto) { t.resizeTextForBestFit = true; t.resizeTextMinSize = Mathf.Max(10, (int)mn); t.resizeTextMaxSize = Mathf.Max(12, (int)mx); }
-            if (outline || c.r + c.g + c.b > 2.4f) AddOutline(t, fs);
+            if (auto) { t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitFloor(Mathf.Max(10, (int)mn)); t.resizeTextMaxSize = TextSize.Floor(Mathf.Max(12, (int)mx)); }
+            if (outline || c.r + c.g + c.b > 2.4f) AddOutline(t, size);
             return t;
         }
         static TextAnchor MapAlign(TextAlignmentOptions a)
@@ -336,11 +344,15 @@ namespace KkomaKnight.Game
             for (int i = 0; i < t.childCount; i++) { var r = FindByName(t.GetChild(i), name, true); if (r != null) return r; }
             return null;
         }
-        public static Text SetText(Transform root, string path, string s, Color? color = null, int? size = null)
+        /// <summary>프리팹 안 글자 바꾸기. <paramref name="size"/> 를 주면 종류 하한(T63)으로 올려 넣고, bestFit 이면 최소도 <see cref="TextSize.BestFitMin"/> 으로. <paramref name="kind"/> 는 표식으로 남는다(게이트 판정).</summary>
+        public static Text SetText(Transform root, string path, string s, Color? color = null, int? size = null, TextKind kind = TextKind.Body)
         {
             var t = Find(root, path); Text txt = null; if (t != null) { txt = t.GetComponent<Text>(); if (txt == null) txt = t.GetComponentInChildren<Text>(true); }
             if (txt == null) { Debug.LogWarning($"[UiKit] 글자 없음: {root.name}/{path}"); return null; }
-            txt.text = s; if (color.HasValue) txt.color = color.Value; if (size.HasValue) { txt.fontSize = size.Value; txt.resizeTextMaxSize = size.Value; }
+            txt.text = s; if (color.HasValue) txt.color = color.Value;
+            if (size.HasValue) { int sz = TextSize.Floor(size.Value, kind); txt.fontSize = sz; txt.resizeTextMaxSize = sz; }
+            if (txt.resizeTextForBestFit) txt.resizeTextMinSize = TextSize.BestFitFloor(txt.resizeTextMinSize, kind);
+            TextAudit.Mark(txt, kind);
             return txt;
         }
         public static Image SetSprite(Transform root, string path, string spriteKey, Color? tint = null)
@@ -433,7 +445,8 @@ namespace KkomaKnight.Game
             var go = Spawn(prefabKey, parent); var rt = (RectTransform)go.transform;
             if (rect.HasValue) Pct(rt, rect.Value);
             var txt = go.GetComponentInChildren<Text>(true);
-            if (txt != null) { txt.text = label; txt.resizeTextForBestFit = true; txt.resizeTextMinSize = 14; txt.resizeTextMaxSize = Mathf.Max(txt.fontSize, 20); txt.horizontalOverflow = HorizontalWrapMode.Wrap; }
+            // 버튼 글자 하한 = TextSize.Button(44 · T63) · bestFit 최소 32
+            if (txt != null) { txt.text = label; txt.fontSize = TextSize.Floor(txt.fontSize, TextKind.Button); txt.resizeTextForBestFit = true; txt.resizeTextMinSize = TextSize.BestFitMin; txt.resizeTextMaxSize = Mathf.Max(txt.fontSize, TextSize.Button); txt.horizontalOverflow = HorizontalWrapMode.Wrap; TextAudit.Mark(txt, TextKind.Button); }
             Clickable(rt, onClick);
             return rt;
         }

@@ -148,7 +148,7 @@ namespace KkomaKnight.Game
         {
             var t = UiKit.Spawn("ui.lineTitle", _content); var rt = (RectTransform)t.transform; rt.name = "Sec:" + text;
             Place(rt, new Layout.R(20, y - 0.75f, 60, Layout.ShopSec1.H + 1.5f));
-            var txt = UiKit.SetText(rt, "Text (TMP)", text, Palette.White, 40); if (txt != null) { txt.fontStyle = FontStyle.Bold; txt.resizeTextForBestFit = true; txt.resizeTextMinSize = 16; txt.resizeTextMaxSize = 40; }
+            var txt = UiKit.SetText(rt, "Text (TMP)", text, Palette.White, 40); if (txt != null) { txt.fontStyle = FontStyle.Bold; txt.resizeTextForBestFit = true; txt.resizeTextMinSize = TextSize.BestFitMin; txt.resizeTextMaxSize = 40; }
             var line = UiKit.Find(rt, "LineDeco") as RectTransform; if (line != null) line.sizeDelta = new Vector2(UiKit.FrameW * 0.6f, line.sizeDelta.y);   // 선을 레퍼런스처럼 길게(조각은 그대로 · 폭만)
             return rt;
         }
@@ -191,7 +191,7 @@ namespace KkomaKnight.Game
             var D = App.Data; var w = new BoxWidgets(); string key = box.Key;
             var frame = UiKit.Spawn(Palette.FrameKey("ui.cardFrame", BoxColor(box)), card); UiKit.Stretch((RectTransform)frame.transform);
             var title = UiKit.SetText(frame.transform, "Text_Title", box.Name, Palette.Yellow, 46);
-            if (title != null) { UiKit.Pct(title.rectTransform, 42, 3, 49, 13); title.alignment = TextAnchor.MiddleRight; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = 20; title.resizeTextMaxSize = 46; }
+            if (title != null) { UiKit.Pct(title.rectTransform, 42, 3, 49, 13); title.alignment = TextAnchor.MiddleRight; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = TextSize.BestFitMin; title.resizeTextMaxSize = 46; }
             InfoButton(card, new Layout.R(91.5f, 4, 7, 12), box);
             var chest = UiKit.Icon(card, "Chest", "chest." + box.Key); UiKit.Pct(chest.rectTransform, 4, 8, 36, 56);
             UiKit.Label(card, 42, 20, 54, 16, RatesText(box), 28, Palette.White);
@@ -209,7 +209,7 @@ namespace KkomaKnight.Game
             var D = App.Data; var w = new BoxWidgets(); string key = box.Key;
             var frame = UiKit.Spawn(Palette.FrameKey("ui.cardFrame", BoxColor(box)), card); UiKit.Stretch((RectTransform)frame.transform);
             var title = UiKit.SetText(frame.transform, "Text_Title", box.Name, Palette.White, 38);
-            if (title != null) { UiKit.Pct(title.rectTransform, 6, 2.5f, 76, 9); title.alignment = TextAnchor.MiddleCenter; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = 16; title.resizeTextMaxSize = 38; }
+            if (title != null) { UiKit.Pct(title.rectTransform, 6, 2.5f, 76, 9); title.alignment = TextAnchor.MiddleCenter; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = TextSize.BestFitMin; title.resizeTextMaxSize = TextSize.Body; }
             InfoButton(card, new Layout.R(84, 2, 12, 9), box);
             Pill(card, new Layout.R(6, 12, 88, 14), RatesText(box), 24);
             var chest = UiKit.Icon(card, "Chest", "chest." + box.Key); UiKit.Pct(chest.rectTransform, 22, 28, 56, 37);
@@ -232,16 +232,16 @@ namespace KkomaKnight.Game
             foreach (var im in cell.GetComponentsInChildren<Image>(true)) { if (im.name == "Bg(Mask)") im.color = tint; else if (im.name == "Botton") im.color = Palette.Cream; }
             UiKit.Hide(crt, "ItemFrameArea", "Text_ItemNum");
             var q = UiKit.SetText(crt, "Text_Title", qty, Palette.White, 50);
-            if (q != null) { UiKit.Pct(q.rectTransform, 5, 5, 90, 14); q.fontStyle = FontStyle.Bold; q.resizeTextForBestFit = true; q.resizeTextMinSize = 20; q.resizeTextMaxSize = 50; }
+            if (q != null) { UiKit.Pct(q.rectTransform, 5, 5, 90, 14); q.fontStyle = FontStyle.Bold; q.resizeTextForBestFit = true; q.resizeTextMinSize = TextSize.BestFitMin; q.resizeTextMaxSize = 50; }
             var im2 = UiKit.SetSprite(crt, "Icon", iconKey, Palette.White); if (im2 != null) { im2.preserveAspect = true; UiKit.Pct(im2.rectTransform, 14, 20, 72, 44); }
-            var nm = UiKit.SetText(crt, "Text_Limit", name, Palette.White, 26); if (nm != null) { UiKit.Pct(nm.rectTransform, 4, 66, 92, 11); nm.resizeTextForBestFit = true; nm.resizeTextMinSize = 14; nm.resizeTextMaxSize = 26; }
+            var nm = UiKit.SetText(crt, "Text_Limit", name, Palette.White, TextSize.Body); if (nm != null) { UiKit.Pct(nm.rectTransform, 4, 66, 92, 11); nm.resizeTextForBestFit = true; nm.resizeTextMinSize = TextSize.BestFitMin; nm.resizeTextMaxSize = TextSize.Body; }
             var btns = new List<Button>();
             var btn = UiKit.Find(crt, "Button_Price");
             if (btn != null)
             {
                 UiKit.Pct((RectTransform)btn, 6, 80, 88, 17);
                 var pi = UiKit.Find(btn, "GroupArea/Group/Icon"); if (pi != null) { pi.gameObject.SetActive(priceIconKey != null); if (priceIconKey != null) UiKit.SetSprite(btn, "GroupArea/Group/Icon", priceIconKey, Palette.White); }
-                var pt = UiKit.SetText(btn, "GroupArea/Group/Text (TMP)", price); if (pt != null) { pt.resizeTextForBestFit = true; pt.resizeTextMinSize = 16; pt.resizeTextMaxSize = 40; pt.horizontalOverflow = HorizontalWrapMode.Overflow; }
+                var pt = UiKit.SetText(btn, "GroupArea/Group/Text (TMP)", price); if (pt != null) { pt.resizeTextForBestFit = true; pt.resizeTextMinSize = TextSize.BestFitMin; pt.resizeTextMaxSize = 40; pt.horizontalOverflow = HorizontalWrapMode.Overflow; }
                 var inner = UiKit.Find(btn, "Button_02_Yellow"); if (inner != null) { var it = inner.Find("Text (TMP)"); if (it != null) it.gameObject.SetActive(false); }   // 버튼 프리팹 자체의 «Button» 글자 — 값은 GroupArea 의 글자가 맡는다
                 btns.Add(UiKit.Clickable(btn, onClick));
             }

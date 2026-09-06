@@ -256,9 +256,9 @@ namespace KkomaKnight.Game
                 UiKit.Ensure<RectMask2D>(card.gameObject);   // CardFrame_04 는 964px 폭 원본이라 고정 폭 자식(제목 띠)이 29% 카드 밖으로 삐져나온다 — 옆 카드가 없는 마지막 칸에서 조각이 보였다(T43 비평 회차 1 · 26 감점 원인)
                 var frame = UiKit.Spawn("ui.cardFrame.blue", card); UiKit.Stretch((RectTransform)frame.transform);
                 // 제목 = 프리팹의 Text_Title 자리(원본 CardFrame_04_BasePrefab_LightBg 의 «Text» 글자 · ShopScreen 상자 카드와 같은 식) — 따로 Label 을 얹으면 «Text» 가 활성으로 남아 T50(CI #71·#75 «[상인 페이지] 영문 데모 글자: Text»)
-                var gt = UiKit.SetText(frame.transform, "Text_Title", g.title, Palette.White, 26);
-                if (gt != null) { UiKit.Pct(gt.rectTransform, 4, 3, 92, 13); gt.alignment = TextAnchor.MiddleCenter; gt.fontStyle = FontStyle.Bold; gt.resizeTextForBestFit = true; gt.resizeTextMinSize = 14; gt.resizeTextMaxSize = 26; }
-                else UiKit.Label(card, 4, 3, 92, 13, g.title, 26, Palette.White).fontStyle = FontStyle.Bold;
+                var gt = UiKit.SetText(frame.transform, "Text_Title", g.title, Palette.White, TextSize.Body);
+                if (gt != null) { UiKit.Pct(gt.rectTransform, 4, 3, 92, 13); gt.alignment = TextAnchor.MiddleCenter; gt.fontStyle = FontStyle.Bold; gt.resizeTextForBestFit = true; gt.resizeTextMinSize = TextSize.BestFitMin; gt.resizeTextMaxSize = TextSize.Body; }
+                else UiKit.Label(card, 4, 3, 92, 13, g.title, TextSize.Body, Palette.White).fontStyle = FontStyle.Bold;
                 var ic = UiKit.Rect(card, "IconCell"); UiKit.Pct(ic, 26, 20, 48, 38);
                 var f = UiKit.Spawn("ui.itemFrame.blue", ic); UiKit.Stretch((RectTransform)f.transform); var im = UiKit.Icon(ic, "Icon", g.icon); UiKit.Pct(im.rectTransform, 15, 15, 70, 70);
                 UiKit.Label(card, 4, 62, 92, 12, "한도 —", 22, Palette.White);

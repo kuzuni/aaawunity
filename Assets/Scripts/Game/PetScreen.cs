@@ -58,7 +58,7 @@ namespace KkomaKnight.Game
                 var hl = piece.GetComponent<HorizontalLayoutGroup>(); if (hl != null) hl.enabled = false;
                 UiKit.Stretch(prt);
                 var t = piece.GetComponentInChildren<Text>(true);
-                if (t != null) { t.text = "장착중"; UiKit.Pct(t.rectTransform, 8, 0, 84, 100); t.alignment = TextAnchor.MiddleCenter; t.resizeTextForBestFit = true; t.resizeTextMinSize = 14; t.resizeTextMaxSize = 44; t.horizontalOverflow = HorizontalWrapMode.Overflow; }
+                if (t != null) { t.text = "장착중"; UiKit.Pct(t.rectTransform, 8, 0, 84, 100); t.alignment = TextAnchor.MiddleCenter; t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitMin; t.resizeTextMaxSize = 44; t.horizontalOverflow = HorizontalWrapMode.Overflow; }
             }
             var slotsHost = UiKit.Rect(Root, "Slots"); UiKit.Stretch(slotsHost);
             var slots = new RectTransform[SlotCount];
