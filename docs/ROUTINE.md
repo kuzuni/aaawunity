@@ -192,6 +192,35 @@
 2. 수정: Play 직후 `_anim.Update(0f)` 즉시 평가(코드 커밋 `2b71ea1`). 확인 수단 = CI 런 #40 유니티 잡(PlayMode 11/11). 빨가면 로그의 `result="Failed"` test-case 메시지를 PROGRESS T16 기록에 붙이고 다시 고친다.
 3. 게이트 + PROGRESS T16 행 ✅ + lock 삭제.
 
+### T13 — 웨이브 출발 버그 · 버프 스택 표시 = 팔각 프레임 (T12 뒤)
+범위: `Assets/Scripts/Game/BattleWorld.cs` · `BattleScreen.cs`(RefreshBuffBar)
+순서: **T12 완료 뒤**(같은 파일).
+1. **주인 지적 «웨이브 내 적을 다 안 죽였는데 출발함»** — 원인부터 규명해 PROGRESS 에 한 줄: ⓐ 엔진(Battle.Tick: alive[0] 까지 걷는다 · sim.js 와 동일해야 하므로 엔진은 못 바꾼다) ⓑ 연출(사망 표시를 Strike 큐가 미루는 동안 엔진은 이미 다음 적으로 걷는다 · 죽은 적이 Dead 루프로 서 있다 · 화면 밖 적) 중 어느 것인지. 고치는 쪽은 **연출**이다: 플레이어가 걷기 시작하는 순간 화면에 «살아 보이는» 적이 남아 있으면 안 된다(사망 연출을 즉시 시작하거나, Walk 전환을 사망 연출이 끝날 때까지 미룬다 — 엔진 좌표는 그대로 두고 표시만).
+2. HUD 왼쪽 버프 바(발동 중 스택)의 칸을 `ui.buffSlot`(엉뚱한 프레임) 대신 **특전과 같은 팔각 `ItemFrame_04_*`(`UiKit.PerkFrame` · 등급색)** 로. 스택 수 글자는 그대로 오른쪽 아래.
+3. 게이트 + PROGRESS T13 행.
+
+### T14 — 투사체(도끼·화살·창·번개) 표적 = 웨이브 안 무작위 적
+범위: `Assets/Scripts/Core/Battle.cs`(FireAxe/FireArrows/FireSpear/FireBolts · RandTarget) · `Assets/Scripts/Game/BattleWorld.cs`(투사체 그리기 — T12/T13 과 겹치므로 그 둘 뒤)
+순서: **T13 완료 뒤**.
+1. 먼저 aaaw `sim.js` 의 `randTarget`/`fireAxe`/`fireArrows`/`fireSpear`/`fireBolts` 를 읽고 **원본이 무엇을 표적으로 삼는지** 적는다(무작위 범위 −30~540 · 관통 등). 우리 엔진이 원본과 다르면 엔진을 원본에 맞춘다(시드 골든 BattleTests 가 통과해야 한다 — 골든이 깨지면 엔진이 아니라 내가 틀린 것).
+2. 엔진이 원본과 같은데도 화면에서 «맨 앞 적만 맞는 것처럼» 보이면 그리기 문제다: 투사체를 `pr.Target` 의 실제 x 로 날리고 적중 이펙트도 그 적 위치에.
+3. 원본 자체가 «맨 앞만» 이라면 주인이 원하는 «웨이브 안 무작위» 는 규칙 변경이라 **승인 대기 27** 로 올리고(골든 재생성 필요) 기본값은 원본 유지.
+4. 게이트 + PROGRESS T14 행.
+
+### T15 — 모든 버튼에 눌림 표시
+범위: `Assets/Scripts/Game/UiKit.cs`(Clickable · Button) · `Screens.cs`(NavBar 탭)
+순서: 제약 없음(T10 이 Screens.cs 를 만지면 NavBar 부분은 T10 뒤).
+1. `UiKit.Clickable` 로 만드는 **모든** 버튼(프리팹 버튼·탭·카드·칸)에 눌림 피드백: `Button.transition = ColorTint`(pressedColor 는 어둡게 ≈ ×0.8 · highlighted 는 그대로) + 이미 있는 DOPunchScale. targetGraphic 이 투명 히트 영역이면(칸·카드) 자식의 첫 Image 를 targetGraphic 으로 잡거나 CanvasGroup alpha 로 눌림을 보여 준다. 비활성(interactable=false)은 지금처럼 반투명.
+2. 하단 탭(NavBar)의 «현재 탭» 강조는 그대로 두고 눌림만 추가.
+3. 게이트 + PROGRESS T15 행.
+
+### T16 — 쉼터 «광고 보고 둘 다 얻기» · 클리어 팝업 = 골드만 + «광고 보고 보상 ×2 받기»
+범위: `Assets/Scripts/Game/Overlay.cs`(Rest · Clear) · `Assets/Scripts/Core/Battle.cs`(`ResolveRest` 에 «둘 다» 경로 1개 — 대화형 전용 · SimPolicy 는 절대 고르지 않으므로 시드 골든 불변) · `BattleScreen.cs`(EndRun 보상)
+순서: T14 뒤(Battle.cs 공유).
+1. **쉼터**: 기존 두 버튼(체력 회복 / 경험치) 아래에 **«광고 보고 둘 다 얻기»**(`ui.btnOrange` · 광고 카운트다운은 천사의 `AdCountdown` 재사용) → `G.ResolveRest(both)` = 회복 + 경험치 둘 다. 엔진에 `ResolveRestBoth()` 를 추가하되 `ResolveRest(bool)` 은 그대로.
+2. **클리어 팝업(Play_Result_Win_01)**: 보상 표시는 **골드만**(프리팹의 다른 두 보상 칸은 끈다). 버튼은 «다음 챕터» 대신 **«광고 보고 보상 ×2 받기»**(광고 카운트다운 뒤 클리어 골드를 2배로 지급하고 로비로). 그 아래 작은 글자 버튼 **«그냥 받기»**(1배 · 로비로) 를 둔다 — 광고를 안 보면 못 나가는 것을 막기 위한 기본값(승인 대기 28). «다음 챕터» 진입은 로비의 챕터 화살표로.
+3. 게이트 + PROGRESS T16 행 + 승인 대기 28.
+
 ### 신규 작업 등재
 - 버그·후속 작업 발견 시 PROGRESS 표에 **이미 쓰인 번호 중 가장 큰 것 +1** 로 등재 (번호 재사용 금지, 한 번호 = 한 작업).
 
