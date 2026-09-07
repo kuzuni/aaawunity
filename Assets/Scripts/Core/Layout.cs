@@ -228,29 +228,29 @@ namespace KkomaKnight.Core
         public const float ToastTextInsetY = 17.2571f;
 
         // ⑨ 설정 팝업 — docs/ref/12_settings.jpg (T41 · 워커 실측 · 5% 격자 ±0.5%p · docs/ref-layout.md ⑨ 표와 같다)
-        /// <summary>설정 상자 — T156 이 줄 둘(프로필 아이콘·닉네임)을 더해 h 21.0 → 30.6(39.6~70.2 · 마지막 줄 66.0 + 아래 여백 4.2).</summary>
-        public static readonly R SetBox = new R(5.8f, 39.6f, 88.3f, 30.6f);
-        public static readonly R SetRibbon = new R(25.0f, 37.5f, 50.0f, 4.2f);
-        public static readonly R SetRowMusic = new R(13.9f, 43.0f, 72.5f, 3.8f);
-        public static readonly R SetRowSound = new R(13.9f, 47.8f, 72.5f, 3.8f);
-        public static readonly R SetRowLang = new R(13.9f, 52.6f, 72.5f, 3.8f);
+        /// <summary>설정 상자 — T156 이 줄 둘(프로필 아이콘·닉네임)을 더해 h 21.0 → 30.6. **아래가 아니라 «위» 로 늘렸다**(y 39.6 → 30.0 · 바닥은 60.6 그대로) — 아래로 늘리면 상자 «밖» 링크가 로비 START 버튼과 겹친다(screens run 329 실측 · 결정 445). 상자 밖 셋(개인정보·이용약관·데이터 삭제)은 레퍼런스 자리 그대로다.</summary>
+        public static readonly R SetBox = new R(5.8f, 30.0f, 88.3f, 30.6f);
+        public static readonly R SetRibbon = new R(25.0f, 27.9f, 50.0f, 4.2f);
+        public static readonly R SetRowMusic = new R(13.9f, 33.4f, 72.5f, 3.8f);
+        public static readonly R SetRowSound = new R(13.9f, 38.2f, 72.5f, 3.8f);
+        public static readonly R SetRowLang = new R(13.9f, 43.0f, 72.5f, 3.8f);
         /// <summary>레퍼런스 12 에 없는 우리 줄 — 주인 T156 «설정에 프로필 아이콘 설정, 닉네임 설정 있어야함»(자리는 언어 줄에서 피치만큼 아래로).</summary>
-        public static readonly R SetRowProfile = new R(13.9f, 57.4f, 72.5f, 3.8f);
-        public static readonly R SetRowNick = new R(13.9f, 62.2f, 72.5f, 3.8f);
+        public static readonly R SetRowProfile = new R(13.9f, 47.8f, 72.5f, 3.8f);
+        public static readonly R SetRowNick = new R(13.9f, 52.6f, 72.5f, 3.8f);
         public const float SetRowPitch = 4.8f;
-        public static readonly R SetToggle = new R(72.9f, 43.3f, 13.5f, 3.1f);
+        public static readonly R SetToggle = new R(72.9f, 33.7f, 13.5f, 3.1f);
         /// <summary>언어 버튼 — 표 ⑨ 는 3.5(81.8px · 조각 글자 칸은 −30 이라 51.8px)라 버튼 글자 46 의 줄 높이 57.5px 를 bestFit 이 41 로 줄였다 → 3.8(칸 58.8px · 안 줄임 · 표와 차 0.3). T63-settings.</summary>
-        public static readonly R SetLangBtn = new R(63.9f, 52.7f, 22.5f, 3.8f);
+        public static readonly R SetLangBtn = new R(63.9f, 43.1f, 22.5f, 3.8f);
         /// <summary>새 줄 둘의 «변경» 버튼 — 언어 버튼과 같은 꼴·같은 폭에서 피치만큼 아래로(T156).</summary>
-        public static readonly R SetProfileBtn = new R(63.9f, 57.5f, 22.5f, 3.8f);
-        public static readonly R SetNickBtn = new R(63.9f, 62.3f, 22.5f, 3.8f);
+        public static readonly R SetProfileBtn = new R(63.9f, 47.9f, 22.5f, 3.8f);
+        public static readonly R SetNickBtn = new R(63.9f, 52.7f, 22.5f, 3.8f);
         /// <summary>패널 밖 링크 2 — 높이는 본문 40 의 줄 높이(50px)가 들어가게 2.4(56px · 표 1.9 = 44.4px 에선 세로로 잘렸다). 개인정보 링크의 폭은 한국어 문구 실측(268px = 24.8%)에 여유를 둔 25.5(가운데 50% 고정) — 표 ⑨ 의 20.3 은 영문 «Privacy Policy» 실측이다(ref-layout ⑨ 회차 정정). T63-settings.</summary>
-        public static readonly R SetPrivacy = new R(37.2f, 72.2f, 25.5f, 2.4f);
-        public static readonly R SetTerms = new R(40.6f, 76.9f, 18.8f, 2.4f);
-        /// <summary>레퍼런스에 없는 줄 — T29 «데이터 삭제»(로비) / 전투 일시정지의 «재개»·«포기하고 로비로» 가 링크 아래 이 줄에 선다. T156 이 줄 둘을 더해 셋 다 +9.6 내려갔다(아래 끝 85.6 < 탭 바 92.6).</summary>
-        public static readonly R SetReset = new R(35.0f, 81.6f, 30.0f, 4.0f);
-        public static readonly R SetResumeBtn = new R(18.0f, 81.6f, 30.0f, 4.0f);
-        public static readonly R SetGiveUpBtn = new R(52.0f, 81.6f, 30.0f, 4.0f);
+        public static readonly R SetPrivacy = new R(37.2f, 62.6f, 25.5f, 2.4f);
+        public static readonly R SetTerms = new R(40.6f, 67.3f, 18.8f, 2.4f);
+        /// <summary>레퍼런스에 없는 줄 — T29 «데이터 삭제»(로비) / 전투 일시정지의 «재개»·«포기하고 로비로» 가 링크 아래 이 줄에 선다. T156 회차 2 로 이 셋은 **레퍼런스 자리 그대로**다(상자를 위로 늘렸다 · 결정 445).</summary>
+        public static readonly R SetReset = new R(35.0f, 72.0f, 30.0f, 4.0f);
+        public static readonly R SetResumeBtn = new R(18.0f, 72.0f, 30.0f, 4.0f);
+        public static readonly R SetGiveUpBtn = new R(52.0f, 72.0f, 30.0f, 4.0f);
 
         // ⑩ 펫 탭 — docs/ref/13_pet.jpg (T42 · 워커 E 실측 · 720×1560 사본 · ±0.5%p · docs/ref-layout.md ⑩ 표와 같다) · 상단 바 = LobbyTopBar · 탭 바 = TabBar
         /// <summary>펫 격자 = 4열 × 3행 아이콘 칸 9개의 합집합(Lv 라벨·진행바 제외). 칸 = 정사각 15.6×7.2 · 열 피치 22.1 · 행 피치 11.5(칸 위 «Lv. N» · 칸 아래 진행바 포함).</summary>
