@@ -575,8 +575,16 @@ namespace KkomaKnight.Game
         /// <summary>로비 메뉴(≡)의 설정 팝업 — 작은 패널 · 명판 «설정» · 음악/효과음 토글 · 언어 버튼(표시만) · 패널 아래 개인정보/이용약관 링크 글자(눌러도 아무 일 없음) · 그 아래 «데이터 삭제»(T29) · «탭하여 닫기».</summary>
         /// <summary>설정 줄 라벨(음악·효과음·언어) 크기 — 레퍼런스 12 는 라벨 잉크가 명판 «Settings» 와 거의 같다(720×1560 사본 실측 ≈ 39px = 프레임 ≈ 58). 본문 하한 40 은 그 2/3 라 폰에서 15px 밖에 안 된다 → 56(줄 칸 88.8px 에 한 줄 70px · 폰 ≈ 21px). T63-settings.</summary>
         public const int SetRowLabelSize = 56;
-        /// <summary>설정 줄 바탕(T69-settings) — 크림 상자 위 옅은 흰 띠(Ink 링이 «줄» 로 읽히게 · 라벨 Ink 는 그대로 읽힌다). 연출 상수 · 밸런스 아님.</summary>
-        public static Color SetRowBg => Palette.A(Palette.White, 0.45f);
+        /// <summary>
+        /// 설정 줄 바탕(T69-settings → T121) — 크림 상자 위 <b>어두운 띠</b>. 연출 상수 · 밸런스 아님.
+        /// <para>
+        /// T121: 처음에는 «옅은 흰 띠 + 잉크 라벨» 이었는데, T111 ⓑ(<see cref="UiKit.EnsureBright"/> = 어두운 글자는 흰 글자로)가 들어오면서
+        /// <b>밝은 띠 위 흰 글자</b>가 되어 획이 서로 먹었다(screens run 218 실측 · 워커 H 등재). 레퍼런스 12 는 <b>어두운 회색 판 + 흰 글자·흰 아이콘</b>이므로
+        /// 글자를 되돌리는 것(T111 지시를 거스르고 <c>TextAudit.ColorStrict</c> 도 깬다)이 아니라 <b>띠를 레퍼런스대로 어둡게</b> 해서 대비를 세운다(결정 313).
+        /// 잉크 α 0.72 를 크림(휘도 0.90) 위에 얹으면 합성 휘도 ≈ 0.35 로 레퍼런스의 어두운 회색 판과 같은 자리다.
+        /// </para>
+        /// </summary>
+        public static Color SetRowBg => Palette.A(Palette.Ink, 0.72f);
 
         public void Settings() => SettingsPopup("설정", null, null);
         /// <summary>전투 일시정지 — 같은 팝업. 링크 아래 줄이 «재개»(주황)·«포기하고 로비로»(회색) · 배경 탭 = 재개.</summary>
@@ -598,8 +606,9 @@ namespace KkomaKnight.Game
             {
                 var row = UiKit.Rect(box, name); UiKit.Pct(row, r.Within(Layout.SetBox));
                 UiKit.Bordered(row, bg: SetRowBg);
-                var ic = UiKit.Icon(row, "Icon", iconKey, Palette.Ink); UiKit.Pct(ic.rectTransform, 1.5f, 5, 8, 90);
-                var t = UiKit.Label(row, 12.5f, 0, 50, 100, label, SetRowLabelSize, Palette.Ink, TextAnchor.MiddleLeft, true, false); t.name = "Text";
+                // T121 — 어두운 띠 위라 아이콘도 흰색(레퍼런스 12 의 음표·스피커·지구본도 흰색)
+                var ic = UiKit.Icon(row, "Icon", iconKey, Palette.White); UiKit.Pct(ic.rectTransform, 1.5f, 5, 8, 90);
+                var t = UiKit.Label(row, 12.5f, 0, 50, 100, label, SetRowLabelSize, Palette.White, TextAnchor.MiddleLeft, true, false); t.name = "Text";
                 return row;
             }
             var bgm = Row("BGM", Layout.SetRowMusic, "pi.music", "음악");
