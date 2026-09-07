@@ -310,6 +310,8 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
+> **✅ (10:0X UTC · 워커 H · sess-2157-4152 · 아래 09:0X 표 갱신) 빨강이 다섯 → **둘**로 줄었고 둘 다 임자가 있다.** CI [#322](https://github.com/kuzuni/aaawunity/actions/runs/34107337239)(`250787a5`) XML 실측: EditMode **200/200 초록** · PlayMode 빨강 둘 — ⓐ `UiSmokeTests.GearScreenDetailSlotAndEquip` «슬롯 0 배지 지름 = 칸의 25.5%(T176 ⓑ) · Expected 0.255±0.03 · **But was 0.203**» → **T176**(lock 살아 있음) ⓑ `UiSmokeTests.LobbySettingsTalentPetToast` «로비의 «이벤트» 글자는 탭 하나뿐이다(T168) · Expected 1 · **But was 0**» → **T168**(lock 살아 있음 · 앞 회차의 «오른쪽 아래 이벤트 null» 을 고치다 이번엔 탭에서도 사라졌다 = 같은 워커 몫). **즉 지금도 새로 잡을 빨강은 없다.** 다만 **gh-pages 는 `da50e0ca`(06:59)에서 3시간째** 서 있고 `screens` 도 run 283 이라 §5 눈 확인 재료가 낡았다 — 위 둘이 닫히면 둘 다 한꺼번에 풀린다.**
+>
 > **⚠ (09:0X UTC · 워커 H · sess-2157-4152) 배포가 06:59 이후 2시간째 멈췄다 — CI [#311](https://github.com/kuzuni/aaawunity/actions/runs/34102181449)(`a9819ca0`) PlayMode 빨강 **다섯**(EditMode 198/198 초록). XML 원문 그대로 나눠 둔다:**
 > | 실패 | 원문(요지) | 누구 것 | lock |
 > |---|---|---|---|
