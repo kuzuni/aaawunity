@@ -56,10 +56,10 @@ NS_TO_ASM = [
 USING_RE = re.compile(r'^\s*using\s+(?:static\s+)?([A-Za-z_][\w.]*)\s*;')
 
 
-def asmdefs():
+def asmdefs(roots=None):
     """폴더 → asmdef 내용. 파일이 놓인 폴더에서 위로 올라가며 가장 가까운 것을 쓴다."""
     out = {}
-    for root in ROOTS:
+    for root in (roots if roots is not None else ROOTS):
         for dirpath, _dirs, files in os.walk(root):
             for f in files:
                 if f.endswith(".asmdef"):
@@ -90,18 +90,10 @@ def refs_of(data):
     return out
 
 
-def main(argv):
-    table = asmdefs()
-    if "--list" in argv:
-        for d, (p, data) in sorted(table.items()):
-            print("· %s\n    참조: %s" % (p, ", ".join(sorted(refs_of(data))) or "(없음)"))
-        print("\n네임스페이스 → 어셈블리 표:")
-        for ns, asm in NS_TO_ASM:
-            print("  %-34s → %s" % (ns, asm))
-        return 0
-
+def scan(roots, table):
+    """`roots` 아래 `.cs` 를 훑어 «asmdef 참조가 빠진 using» 을 모은다 — 본 검사와 자기 검사가 **같은 코드**를 탄다."""
     bad, scanned = [], 0
-    for root in ROOTS:
+    for root in roots:
         for dirpath, _dirs, files in os.walk(root):
             for f in files:
                 if not f.endswith(".cs"):
@@ -128,6 +120,64 @@ def main(argv):
                                 bad.append((path, i, ns, asm, asmpath))
                             break
 
+    return bad, scanned
+
+
+SELF_TEST_NS, SELF_TEST_ASM = "UnityEngine.Rendering", "Unity.RenderPipelines.Core.Runtime"
+
+
+def self_test():
+    """
+    **이 자가 실제로 잡는가**를 확인한다 — 2026-09-07 의 그 파손(`PostFx.cs` 의 `Volume` · 결정 464)을
+    가짜 트리로 재현해 ⓐ 참조가 빠지면 **1** 로 끝나고 ⓑ 넣으면 **0** 인지 본다.
+    자기 검사가 없으면 «늘 초록인 자» 와 «잡는 자» 를 구별할 수 없다(T134 의 `webgl_smoke --self-test` 전례).
+    """
+    import shutil
+    import tempfile
+    tmp = tempfile.mkdtemp(prefix="check_asmdef_selftest_")
+    try:
+        d = os.path.join(tmp, "Game")
+        os.makedirs(d)
+        open(os.path.join(d, "Fake.cs"), "w", encoding="utf-8").write(
+            "using UnityEngine;\nusing %s;\nclass Fake { }\n" % SELF_TEST_NS)
+
+        def run(refs):
+            json.dump({"name": "Fake", "references": refs},
+                      open(os.path.join(d, "Fake.asmdef"), "w", encoding="utf-8"))
+            return scan([tmp], asmdefs([tmp]))
+
+        bad, scanned = run([])                       # ⓐ 참조를 뺐다 → 잡아야 한다
+        if scanned != 1 or not bad:
+            print("⛔ 자기 검사 실패 — 참조가 빠졌는데 못 잡았다(훑은 파일 %d · 걸린 것 %d)" % (scanned, len(bad)))
+            return 1
+        if bad[0][3] != SELF_TEST_ASM:
+            print("⛔ 자기 검사 실패 — 필요한 어셈블리를 «%s» 로 잘못 짚었다(«%s» 여야 한다)" % (bad[0][3], SELF_TEST_ASM))
+            return 1
+
+        bad2, _ = run([SELF_TEST_ASM])               # ⓑ 넣었다 → 조용해야 한다
+        if bad2:
+            print("⛔ 자기 검사 실패 — 참조를 넣었는데도 걸린다(거짓 경고 · %s)" % (bad2[0],))
+            return 1
+
+        print("✓ check_asmdef --self-test: 참조를 빼면 잡고(→ %s) 넣으면 조용하다" % SELF_TEST_ASM)
+        return 0
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def main(argv):
+    if "--self-test" in argv:
+        return self_test()
+    table = asmdefs()
+    if "--list" in argv:
+        for d, (p, data) in sorted(table.items()):
+            print("· %s\n    참조: %s" % (p, ", ".join(sorted(refs_of(data))) or "(없음)"))
+        print("\n네임스페이스 → 어셈블리 표:")
+        for ns, asm in NS_TO_ASM:
+            print("  %-34s → %s" % (ns, asm))
+        return 0
+
+    bad, scanned = scan(ROOTS, table)
     if not bad:
         print("✓ check_asmdef: `.cs` %d개의 using 이 전부 제 asmdef 참조 안에 있다 (표 %d줄)" % (scanned, len(NS_TO_ASM)))
         return 0

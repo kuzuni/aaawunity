@@ -34,6 +34,15 @@ jobs:
         run: python3 tools/check_catalog_keys.py
       - name: 유니티 가짜 null 패턴 검사 («GetComponent…() ??»·«Find(…) ??» 0건 · T11)
         run: tools/check_unity_null.sh
+      # T188(주인 상시 지시 2026-09-07 «컴파일 에러 항상 확인하고 해결하고 넘어가라») — asmdef 참조가 빠지면
+      # 유니티 잡이 «컴파일 단계에서» 죽어 테스트가 0개가 된다(빨간 테스트보다 나쁘고 screens·gh-pages 도 같이 막힌다).
+      # 이 잡은 유니티 라이선스가 없어도 도는 자리라 시크릿 없는 PR·포크에서도 먼저 걸린다.
+      - name: asmdef 참조 검사 (using ↔ asmdef references · T189) + 자기 검사
+        run: |
+          python3 tools/check_asmdef.py --self-test
+          python3 tools/check_asmdef.py
+      - name: 테스트 어셈블리 using 검사 (참조 없는 네임스페이스 · T188)
+        run: python3 tools/check_test_usings.py
       - name: 오디오 형식 검사 (WebGL 이 읽는 PCM/MP3/AAC 만 · T64)
         run: python3 tools/check_audio_webgl.py
       - name: aaaw main 체크아웃 (수치 정본)
