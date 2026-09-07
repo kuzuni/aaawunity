@@ -140,6 +140,18 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(left, right, 2.0f, "제목 덩어리가 가운데(왼쪽 여백 " + left.ToString("0.0") + " ↔ 오른쪽 " + right.ToString("0.0") + " · T101 ⓓ)");
             }
             Assert.IsNotNull(UiKit.Find(pg, "BackBtn"), "뒤로"); Assert.IsNotNull(UiKit.Find(pg, "Tab:dungeon"), "던전 탭"); Assert.IsNotNull(UiKit.Find(pg, "Tab:pvp"), "PvP 탭");
+            // T165 — 두 탭은 로비와 «같은 조각»(`ui.tabBar`)이고 켜진 탭만 Focus 가 켜진다(손으로 만든 판·링 방식으로 되돌아가면 빨개진다).
+            {
+                var barRt = UiKit.Find(pg, "TabBar"); Assert.IsNotNull(barRt, "탭 바 조각(T165)");
+                var dun = UiKit.Find(pg, "Tab:dungeon"); var pvp = UiKit.Find(pg, "Tab:pvp");
+                foreach (var tab in new[] { dun, pvp })
+                {
+                    Assert.IsNotNull(UiKit.Find(tab, "Normal"), "조각 칸의 Normal"); Assert.IsNotNull(UiKit.Find(tab, "Focus"), "조각 칸의 Focus");
+                }
+                Assert.IsTrue(UiKit.Find(dun, "Focus").gameObject.activeSelf, "던전 페이지에서는 던전 탭이 Focus(T165)");
+                Assert.IsFalse(UiKit.Find(pvp, "Focus").gameObject.activeSelf, "안 켜진 탭은 Normal(T165)");
+                for (int i = 2; i < barRt.childCount; i++) Assert.IsFalse(barRt.GetChild(i).gameObject.activeSelf, "조각의 남는 칸 셋은 꺼져 있다(T165)");
+            }
             Assert.IsNull(UiKit.Find(root, "ui.tabBar"), "5탭 바 없음(레퍼런스 20 = 뒤로 + 2탭)");
             AtX(hell, Layout.DgCard1, "카드 1"); AtY(hell, Layout.DgCard1, "카드 1"); AtY(exp, Layout.DgCard2, "카드 2");
             AtY((RectTransform)UiKit.Find(pg, "Foot"), Layout.DgFoot, "바닥 띠"); AtX((RectTransform)UiKit.Find(pg, "BackBtn"), Layout.DgBack, "뒤로"); AtX((RectTransform)UiKit.Find(pg, "Tabs"), Layout.DgTabs, "2탭");

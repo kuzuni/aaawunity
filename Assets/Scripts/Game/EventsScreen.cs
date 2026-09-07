@@ -679,18 +679,24 @@ namespace KkomaKnight.Game
             { var t = UiKit.ButtonText(back); if (t != null) t.gameObject.SetActive(false); var ic = UiKit.Icon(back, "Icon", "pi.arrow_left", Palette.Cream); UiKit.Pct(ic.rectTransform, 30, 18, 40, 64); }
             if (activeTab == null) return;
             var tabs = UiKit.Rect(pg, "Tabs"); UiKit.Pct(tabs, Layout.DgTabs); UiKit.Tag(tabs, "던전/PvP 탭(2칸)");
+            // T165(주인 «이벤트에 던전, pvp … 로비 하단 네비 탭들이랑 똑같은 디자인으로») — 손으로 만든 칸(판 두 색 + 링 + 아이콘)을 버리고
+            // 로비와 **같은 조각**(`ui.tabBar` = Tab_01_BottomFlushMenu)을 쓴다. 조각은 칸마다 `Normal`(어두운 아이콘)과
+            // `Focus`(밝은 아이콘 + 글자) 두 벌을 달고 오므로 «켜진 탭» 표시도 조각이 맡는다(로비 `NavBar.Wire` 와 같은 문법).
+            // 칸 다섯 중 앞 둘만 쓰고 셋은 끈다. 남긴 둘은 줄을 반씩 나눠 갖는데, 줄 폭 40.3%(435px)의 절반 = 217px 이라
+            // 로비 칸(1080/5 = 216px)과 사실상 같은 크기다 → 조각 그림이 늘거나 줄지 않는다.
+            var bar = UiKit.Spawn("ui.tabBar", tabs); var brt = (RectTransform)bar.transform; bar.name = "TabBar"; UiKit.Stretch(brt);
             (string key, string icon, string label)[] items = { (PageDungeon, "ui.iconDungeon", "던전"), (PagePvp, "ui.iconPvp", "PvP") };
-            for (int i = 0; i < items.Length; i++)
+            for (int i = brt.childCount - 1; i >= items.Length; i--) brt.GetChild(i).gameObject.SetActive(false);
+            for (int i = 0; i < items.Length && i < brt.childCount; i++)
             {
                 var it = items[i]; bool on = it.key == activeTab;
-                var cell = UiKit.Rect(tabs, "Tab:" + it.key); UiKit.Pct(cell, i * 50f, on ? 0 : 14, 50, on ? 100 : 86);
-                var bg = UiKit.Panel(cell, "Bg", "fr.r12", on ? Palette.Hex("#6B6862") : Palette.Hex("#3B3936"));
-                UiKit.Stretch(bg.rectTransform, 2, 0, 2, -10); bg.raycastTarget = true;
-                // T69-events: 하단 탭 2칸도 «칸» — 레퍼런스 20·22 의 던전/PvP 탭은 각자 검은 외곽선 상자다(아이콘·라벨은 뒤에 얹혀 링 위)
-                UiKit.Bordered(bg.rectTransform);
-                var ic = UiKit.Icon(cell, "Icon", it.icon); UiKit.Pct(ic.rectTransform, 22, on ? 6 : 14, 56, on ? 56 : 72);
-                if (on) UiKit.Label(cell, 0, 62, 100, 34, it.label, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyle.Bold;
-                UiKit.AlertDot(cell, "Dot", new Vector2(1, 1), new Vector2(-14, -10), 40);   // T136
+                var cell = (RectTransform)brt.GetChild(i); cell.name = "Tab:" + it.key;
+                cell.anchorMin = new Vector2(i * 0.5f, 0f); cell.anchorMax = new Vector2((i + 1) * 0.5f, 1f);
+                cell.offsetMin = Vector2.zero; cell.offsetMax = Vector2.zero;
+                UiKit.SetSprite(cell, "Normal/Icon", it.icon, Palette.White); UiKit.SetSprite(cell, "Focus/Icon_Focus", it.icon, Palette.White);
+                UiKit.SetText(cell, "Focus/Text (TMP)", it.label);
+                UiKit.Show(cell, "Focus", on); UiKit.Show(cell, "Normal", !on);
+                UiKit.AlertDot(cell, "Dot", new Vector2(1, 1), new Vector2(-14, -10), 40);   // T136 — 점은 그대로(정사각 계약)
                 string key = it.key; UiKit.Clickable(cell, () => ShowPage(key));
             }
         }

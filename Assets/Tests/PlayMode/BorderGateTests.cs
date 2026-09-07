@@ -356,7 +356,14 @@ namespace KkomaKnight.Tests.Play
                 var card = UiKit.Find(evRoot, c); Assert.IsNotNull(card, c);
                 Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(card, "Pic")), c + " 그림 띠에 어두운 테두리(T69-events)");
             }
-            foreach (var t in new[] { "Tab:dungeon", "Tab:pvp" }) Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(evRoot, t)), t + " 탭 칸에 어두운 테두리(T69-events)");
+            // T165 — 던전/PvP 탭은 이제 로비와 **같은 조각**(`ui.tabBar`)이다. 로비 탭 바에는 링을 «안 넣기» 로 정했으므로(T69 종결 · 결정 365)
+            // 여기서도 덧댄 링을 요구하지 않는다 — 대신 «조각으로 서 있는가»(칸마다 Normal·Focus 두 벌)를 못 박는다.
+            foreach (var t in new[] { "Tab:dungeon", "Tab:pvp" })
+            {
+                var tab = UiKit.Find(evRoot, t); Assert.IsNotNull(tab, t);
+                Assert.IsNotNull(UiKit.Find(tab, "Normal"), t + " 는 조각 칸이라 «Normal» 을 갖는다(T165)");
+                Assert.IsNotNull(UiKit.Find(tab, "Focus"), t + " 는 조각 칸이라 «Focus» 를 갖는다(T165)");
+            }
             // T115 — 던전·아레나의 «물건 칸» 도 공용 GearUi.DarkFrame 을 거쳐 7항·결정 184 계약을 지킨다(전에는 조각 제 갈색 Border 로 «우연히» 통과했다)
             AssertItemFrameBorder(UiKit.Find(UiKit.Find(evRoot, "Card:hell"), "Cell:0"), "던전 카드 보상 칸 1");
             if (Press(UiKit.Find(evRoot, "Card:hell"), "EnterBtn"))
