@@ -814,7 +814,14 @@ namespace KkomaKnight.Tests.Play
                         Assert.IsFalse(t.text.Contains(" 이상)"), "잠금 꼬리는 «(등급)» 으로 줄인다: " + t.text);
                         // T84 — 어두운 pill 위 글자는 밝은 색 + 검은 아웃라인이어야 읽힌다(주인 상시 지시 · screens run 148 의 07 눈 확인에서 회색 글자가 안 읽혔다)
                         Assert.IsNotNull(t.GetComponent<Outline>(), "옵션 줄 «" + t.text + "» 에 검은 아웃라인(T63 0항 «예외 없이»)");
-                        Assert.GreaterOrEqual(t.color.grayscale, 0.55f, "옵션 줄 «" + t.text + "» 글자가 어두운 pill 에서 읽힐 만큼 밝아야 한다(T84)");
+                        // T177(주인 2026-09-07 «잠긴 옵션 줄 글씨는 #666666»)이 «잠긴» 줄만 일부러 어둡게 만든다 —
+                        // 그 자리는 `OwnerDarkTextTag` 를 달고 있으므로 T84 의 «밝아야 한다» 에서 뺀다(안 빼면 주인 지시가 게이트에 막힌다 · 결정 405).
+                        // 대신 «표식이 있으면 색이 정말 그 지정색인가» 를 재서 표식이 «아무 어두운 글자나 봐 주는 뒷문» 이 되지 않게 한다.
+                        if (t.GetComponent<OwnerDarkTextTag>() != null)
+                            Assert.AreEqual(Palette.OptLocked.grayscale, t.color.grayscale, 0.02f,
+                                "옵션 줄 «" + t.text + "» 은 주인 지정 어두운 글자 표식이 붙었으니 색이 #666666 이어야 한다(T177)");
+                        else
+                            Assert.GreaterOrEqual(t.color.grayscale, 0.55f, "옵션 줄 «" + t.text + "» 글자가 어두운 pill 에서 읽힐 만큼 밝아야 한다(T84)");
                     }
                     Assert.AreEqual(GearRole.IsAttack(g0.Part) ? 1 : 2, statRows, "스탯 줄 = 부위 역할(T88)"); Assert.AreEqual(CountNamed(opts, "Opt:"), optRows, "옵션 줄마다 글자 하나");
                     var st = (RectTransform)UiKit.Find(bx, "Stats"); var op = (RectTransform)opts;
