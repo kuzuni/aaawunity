@@ -69,10 +69,11 @@ namespace KkomaKnight.Game
             var bg = UiKit.Find(rt, "Background"); var bgImg = bg != null ? bg.GetComponent<Image>() : null;
             if (bgImg != null) { bgImg.color = Color.Lerp(Palette.Green, Palette.Ink, 0.42f); bgImg.raycastTarget = true; }
             if (bg != null) for (int i = 0; i < bg.childCount; i++) { var c = bg.GetChild(i); if (c.name.StartsWith("Deco")) c.gameObject.SetActive(false); }
-            // T72 ① 배경 패턴 + ③ 배경 그라데이션 (주인 «로비 배경에 이 패턴이 오른쪽 상단으로 천천히 올라간다» · 레퍼런스 01 은 초록보다 «어두운» 칼 무늬 → Ink 무늬)
+            // T72 ① 배경 패턴 + ③ 배경 그라데이션 (주인 «로비 배경에 이 패턴이 오른쪽 상단으로 천천히 올라간다»)
+            // T166 ⓐ(주인 09:2X «배경 무늬를 흰색 7/255 로») — 종전 주석의 «레퍼런스 01 은 어두운 칼 무늬 → Ink» 는 주인 지시로 뒤집혔다: 밝은 무늬가 정본이다.
             // 자리는 배경 조각 «바로 위» 형제 = 7항 «패턴은 배경 층에만»(상단 재화 바·사이드 기둥·챕터 카드·START·탭 바는 전부 뒤에 오는 형제라 무늬가 그 안으로 비치지 않는다)
             int bgIdx = bg != null && bg.parent == rt ? bg.GetSiblingIndex() + 1 : 0;
-            UiKit.PatternBg(rt, UiKit.PatternTintLobby, UiKit.PatternTileSeconds, bgIdx);   // T94 ⓐ — 로비만 18/255(공용 3/255 는 이 바탕에서 안 보인다)
+            UiKit.PatternBg(rt, UiKit.PatternTintLobby, UiKit.PatternTileSeconds, bgIdx);   // 색·알파는 UiKit.PatternTintLobby 한 곳(T166 ⓐ = 흰 7/255 · T94 ⓐ 의 잉크 18/255 를 덮었다)
             UiKit.Gradient(rt, siblingIndex: bgIdx);   // 위 +12% 밝음 · 아래 −18% 어둠(3항 «화면 배경» · 헬퍼가 패턴 위로 넣는다)
 
             // ① 상단 재화 바 (아바타 · 전투력 · 골드 · 보석) — 공용 헬퍼 · 비평 이름표(T46 · ref-layout ① 의 «요소» 이름 그대로)
