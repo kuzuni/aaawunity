@@ -26,6 +26,18 @@ namespace KkomaKnight.Tests.Play
         static float OrbLifeMax(int count, float speed)
             => ((count - 1) * RewardOrbs.StepSec + RewardOrbs.HopSec + RewardOrbs.HoldSec + RewardOrbs.FlySecMax + RewardOrbs.PopSec) / Mathf.Max(0.5f, speed) + 0.35f;
 
+        /// <summary>
+        /// 지금 화면에 꼬리가 몇 개 있나 — T144 로 꼬리가 <b>월드 <c>TrailRenderer</c></b> 가 됐고(주인 지시), 머티리얼을 빌릴 월드 스프라이트가
+        /// 없는 자리에서는 T109 의 잔상 스프라이트로 물러난다. 둘 중 무엇이든 «꼬리가 있다» 로 센다.
+        /// </summary>
+        static int TrailCount()
+        {
+            int n = UnityEngine.Object.FindObjectsByType<TrailRenderer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length;
+            foreach (var t in UnityEngine.Object.FindObjectsByType<RectTransform>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+                if (t.name == RewardOrbs.TrailName) n++;
+            return n;
+        }
+
         static IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
         static IEnumerator RealSeconds(float sec) { float t = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t < sec) yield return null; }
 
@@ -83,8 +95,14 @@ namespace KkomaKnight.Tests.Play
 
             G.P.Dmg = 0;   // 이 뒤로는 새 킬이 없다 — 이번 한 벌의 수명만 잰다
             float tOrb = Time.realtimeSinceStartup, limit = OrbLifeMax(peak, 1f);
-            while (bs.OrbCount > 0 && Time.realtimeSinceStartup - tOrb < limit + 1f) yield return null;
+            int trailPeak = 0;
+            while (bs.OrbCount > 0 && Time.realtimeSinceStartup - tOrb < limit + 1f) { trailPeak = Mathf.Max(trailPeak, TrailCount()); yield return null; }
             Assert.AreEqual(0, bs.OrbCount, "구슬은 " + limit.ToString("0.00") + "초 안에 전부 도착해 사라져야 한다");
+            // T144(주인 «흡수될 때 트레일 랜더러로») — 구슬이 도는 동안 월드 꼬리가 떠 있었고, 끝나면 하나도 안 남는다(누수 0).
+            Assert.Greater(trailPeak, 0, "흡수 중에는 꼬리(TrailRenderer)가 떠 있어야 한다(T144)");
+            float tTrail = Time.realtimeSinceStartup;
+            while (TrailCount() > 0 && Time.realtimeSinceStartup - tTrail < RewardOrbs.TrailTime + 1.5f) yield return null;
+            Assert.AreEqual(0, TrailCount(), "구슬이 사라지면 꼬리도 남으면 안 된다(T144 · 누수 0)");
             Assert.LessOrEqual(Time.realtimeSinceStartup - tOrb, limit, "구슬 수명이 상한(시차+홉+비행+도착 팝)을 넘었다");
 
             t0 = Time.realtimeSinceStartup;
@@ -141,8 +159,7 @@ namespace KkomaKnight.Tests.Play
                 // 출발 = 그 기준점에서 눈에 띄게 벗어난 순간(머무름의 흔들림 폭 0.35×크기 보다 넉넉히 크게 잡는다)
                 if (hopTaken && tDepart < 0f && Vector2.Distance(p, hopPos) > size * 0.8f) { tDepart = now; departPos = p; }
                 if (tDepart > 0f && midAt < 0f && now - tDepart >= RewardOrbs.FlySec * 0.45f) { midAt = now; midPos = p; }
-                if (trailSeenAt < 0f)
-                    foreach (var rt in layer.GetComponentsInChildren<RectTransform>(true)) if (rt.name == RewardOrbs.TrailName) { trailSeenAt = now; break; }
+                if (trailSeenAt < 0f && TrailCount() > 0) trailSeenAt = now;
                 if (tArrive < 0f && Vector2.Distance(p, to) < size * 0.6f) tArrive = now;
                 if (tArrive > 0f && orbs.Alive == 0) break;
             }
@@ -166,7 +183,7 @@ namespace KkomaKnight.Tests.Play
             float off = abLen < 0.001f ? 0f : Mathf.Abs(ab.x * (midPos.y - departPos.y) - ab.y * (midPos.x - departPos.x)) / abLen;
             Assert.Greater(off, size * 0.8f, $"경로가 직선에 가깝다 — 랜덤 곡선이어야 한다(직선에서 {off:0.0}px 벗어남)");
             // ⓓ 트레일
-            Assert.Greater(trailSeenAt, 0f, $"구슬 뒤에 잔상(«{RewardOrbs.TrailName}»)이 남아야 한다(T109 3항)");
+            Assert.Greater(trailSeenAt, 0f, "구슬 뒤에 꼬리가 남아야 한다(T109 3항 · T144 로 월드 TrailRenderer)");
             // ⓔ 값은 정확히 한 번, 전부
             float tv = Time.realtimeSinceStartup;
             while (orbs.Alive > 0 && Time.realtimeSinceStartup - tv < 2f) yield return null;

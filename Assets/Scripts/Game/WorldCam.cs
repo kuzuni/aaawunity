@@ -49,6 +49,16 @@ namespace KkomaKnight.Game
             float yFrac = 0.5f - worldPos.y * PPU / LayoutH;
             return new Vector2(lx * (UiKit.FrameW / LayoutW), (1f - yFrac) * UiKit.FrameH);
         }
+        /// <summary>
+        /// <see cref="ToFrame"/> 의 <b>역변환</b> — 프레임 px(왼쪽 아래 0,0) → 유니티 월드.
+        /// UI 층에서 움직이는 것(보상 구슬 · T85)을 월드 렌더러(<c>TrailRenderer</c> · T144)로 따라가게 할 때 쓴다.
+        /// </summary>
+        public static Vector3 FromFrame(Vector2 framePos, float z = 0)
+        {
+            float lx = framePos.x * LayoutW / Mathf.Max(1f, UiKit.FrameW);
+            float yFrac = 1f - framePos.y / Mathf.Max(1f, UiKit.FrameH);
+            return ToWorld(lx, yFrac, z);
+        }
         /// <summary>프레임 % 높이 → 유니티 단위.</summary>
         public static float PctH(float pct) => pct / 100f * LayoutH / PPU;
         public static float PctW(float pct) => pct / 100f * LayoutW / PPU;

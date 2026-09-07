@@ -38,16 +38,36 @@ namespace KkomaKnight.Game
         /// <summary>잔상을 남기는 간격(비행 시간을 이 값으로 나눠 등분한다) · 한 장이 사라지기까지 · 화면 동시 상한.</summary>
         public const float TrailStepSec = 0.04f, TrailFadeSec = 0.26f;
         public const int MaxTrail = 140;
+        /// <summary>
+        /// T144(주인 2026-09-07 «그 골드랑 경험치 흡수될때 트레일 랜더러로 효과좀 줘») — 꼬리를 <c>TrailRenderer</c>(월드 렌더러)로 낸다.
+        /// <para>
+        /// UI 캔버스는 <c>ScreenSpaceOverlay</c> 라 월드 렌더러가 그 아래 깔린다 → 지시서가 권한 ⓒ 를 골랐다(결정 기록):
+        /// <b>구슬 그림은 지금처럼 UI 층에 두고, 꼬리만 월드에 띄워 따라다니게</b> 한다. 전투 마당(화면 위쪽)에서는 꼬리가 보이고
+        /// HUD 패널에 들어설 때 자연히 가려져 사라진다 — «바에 빨려 들어간다» 는 느낌이 그대로다.
+        /// </para>
+        /// 잔상 스프라이트(<see cref="TrailName"/>)는 두 겹이 되지 않게 <b>끈다</b>(지시서 3항).
+        /// </summary>
+        public const string TrailObjName = "OrbTrailWorld";
+        /// <summary>꼬리 길이(초) · 시작·끝 굵기(유니티 단위) · z(캐릭터보다 뒤로 살짝) — 연출 수치라 한곳에 모은다(주인이 굵기·길이를 말하면 여기 한 줄).</summary>
+        public const float TrailTime = 0.28f, TrailStartW = 0.16f, TrailEndW = 0.02f, TrailZ = 0.2f;
 
         sealed class Orb
         {
-            public RectTransform Rt; public Sequence Seq; public double Value; public Action<double> OnArrive; public bool Done;
+            public RectTransform Rt; public Sequence Seq; public double Value; public Action<double> OnArrive; public bool Done; public GameObject Trail;
         }
 
         readonly RectTransform _layer;
         readonly List<Orb> _alive = new List<Orb>();
         /// <summary>지금 화면에 떠 있는 잔상(T109 3항) — 상한(<see cref="MaxTrail"/>)과 한꺼번에 지우기에 쓴다.</summary>
         readonly List<RectTransform> _trails = new List<RectTransform>();
+        /// <summary>T144 — 월드 꼬리(<c>TrailRenderer</c>) 들. 누수 0 을 위해 여기서 센다.</summary>
+        readonly List<GameObject> _worldTrails = new List<GameObject>();
+        Material _trailMat; int _sortLayer;
+        static readonly int MainTex = Shader.PropertyToID("_MainTex");
+        /// <summary>T144 — 꼬리를 월드 <c>TrailRenderer</c> 로 낼 것인가(끄면 T109 의 잔상 스프라이트로 돌아간다 · 되돌리는 스위치).</summary>
+        public static bool UseWorldTrail = true;
+        /// <summary>꼬리의 정렬 순서 — 캐릭터(0)보다 뒤에 깔아 그림을 안 가린다.</summary>
+        public const int TrailSortOrder = -50;
 
         public RewardOrbs(RectTransform layer) { _layer = layer; }
 
@@ -128,6 +148,7 @@ namespace KkomaKnight.Game
             seq.Append(rt.DOScale(1.15f, PopSec * 0.4f / sc));
             seq.Append(rt.DOScale(0f, PopSec * 0.6f / sc));
             seq.OnComplete(() => Kill(orb));
+            AttachWorldTrail(orb, tint);
             orb.Seq = seq;
             _alive.Add(orb);
         }
@@ -139,7 +160,8 @@ namespace KkomaKnight.Game
         /// </summary>
         void SpawnTrail(Vector2 pos, string spriteKey, Color tint, float sizePx, float sc)
         {
-            if (_layer == null || _trails.Count >= MaxTrail) return;
+            // T144 ⓒ — 월드 꼬리(TrailRenderer)가 붙었으면 잔상은 안 뿌린다(두 겹이면 지저분하다 · 지시서 3항)
+            if (UseWorldTrail || _layer == null || _trails.Count >= MaxTrail) return;
             var img = UiKit.Icon(_layer, TrailName, spriteKey, tint);
             if (img == null) return;
             img.raycastTarget = false;
@@ -165,6 +187,79 @@ namespace KkomaKnight.Game
             foreach (var t in list) { if (t != null) { DOTween.Kill(t.gameObject); UnityEngine.Object.Destroy(t.gameObject); } }
         }
 
+
+        /// <summary>
+        /// T144 ⓒ — 구슬 하나에 <b>월드</b> <c>TrailRenderer</c> 를 붙인다. 구슬 그림(UI)은 그대로 두고 꼬리만 월드에 뜬다.
+        /// 따라다니는 일은 붙인 오브젝트 자신이 한다(<see cref="OrbTrail"/>) — <see cref="RewardOrbs"/> 는 MonoBehaviour 가 아니라 매 프레임 도는 자리가 없다.
+        /// 머티리얼은 <b>새로 만들지 않고</b> 씬에 이미 있는 월드 스프라이트의 것을 빌려 쓴다 — URP 2D 라 <c>Shader.Find("Sprites/Default")</c> 는
+        /// 빌드에서 스트리핑될 수 있고(§1 «주인 에셋만»), 빌린 것은 이미 빌드에 들어 있는 물건이라 확실하다. 못 찾으면 꼬리 없이 간다(구슬은 그대로 난다).
+        /// </summary>
+        void AttachWorldTrail(Orb orb, Color tint)
+        {
+            if (!UseWorldTrail || orb == null || orb.Rt == null) return;
+            var mat = TrailMaterial();
+            if (mat == null) return;
+            var go = new GameObject(TrailObjName);
+            go.transform.position = WorldCam.FromFrame(orb.Rt.anchoredPosition, TrailZ);
+            var tr = go.AddComponent<TrailRenderer>();
+            tr.time = TrailTime; tr.startWidth = TrailStartW; tr.endWidth = TrailEndW;
+            tr.numCapVertices = 4; tr.minVertexDistance = 0.02f; tr.autodestruct = false; tr.emitting = true;
+            tr.sharedMaterial = mat;
+            // 색은 구슬 색 그대로(경험치 초록 · 골드 흰/노랑) — 끝으로 갈수록 투명해진다
+            var c0 = tint; var c1 = tint; c1.a = 0f;
+            tr.startColor = c0; tr.endColor = c1;
+            tr.sortingLayerID = SortLayer(); tr.sortingOrder = TrailSortOrder;
+            var follow = go.AddComponent<OrbTrail>(); follow.Follow = orb.Rt;
+            orb.Trail = go;
+            _worldTrails.Add(go);
+        }
+
+        /// <summary>씬의 월드 스프라이트에서 머티리얼을 한 번 빌려 캐시한다(위 설명).</summary>
+        Material TrailMaterial()
+        {
+            if (_trailMat != null) return _trailMat;
+            var sr = UnityEngine.Object.FindFirstObjectByType<SpriteRenderer>(FindObjectsInactive.Exclude);
+            if (sr == null || sr.sharedMaterial == null) return null;
+            _sortLayer = sr.sortingLayerID;
+            // 빌린 셰이더를 그대로 쓰되 «그림» 은 흰 텍스처로 바꾼 사본을 하나 만든다 — 안 그러면 꼬리가 그 스프라이트의 그림을 물고 늘어진다.
+            // (스프라이트 셰이더는 텍스처를 SpriteRenderer 가 넣어 주는데 TrailRenderer 는 안 넣어 주므로 머티리얼의 것이 그대로 쓰인다.)
+            _trailMat = new Material(sr.sharedMaterial) { name = "OrbTrailMat" };
+            if (_trailMat.HasProperty(MainTex)) _trailMat.SetTexture(MainTex, Texture2D.whiteTexture);
+            return _trailMat;
+        }
+        int SortLayer() { return _sortLayer; }
+
+        /// <summary>꼬리 하나를 거둔다 — 구슬이 사라지면 더 이상 늘리지 않고, 이미 그려진 꼬리는 <see cref="TrailTime"/> 만큼 남았다가 없어진다.</summary>
+        void RetireTrail(Orb o, bool immediate)
+        {
+            if (o == null || o.Trail == null) return;
+            var go = o.Trail; o.Trail = null;
+            _worldTrails.Remove(go);
+            var f = go.GetComponent<OrbTrail>(); if (f != null) f.Follow = null;
+            var tr = go.GetComponent<TrailRenderer>(); if (tr != null) tr.emitting = false;
+            if (immediate) { if (tr != null) tr.Clear(); UnityEngine.Object.Destroy(go); }
+            else UnityEngine.Object.Destroy(go, TrailTime);
+        }
+
+        /// <summary>남은 꼬리를 즉시 없앤다 — 화면 전환·새 판(누수 0).</summary>
+        void ClearWorldTrails()
+        {
+            var list = new List<GameObject>(_worldTrails);
+            _worldTrails.Clear();
+            foreach (var go in list) { if (go == null) continue; var f = go.GetComponent<OrbTrail>(); if (f != null) f.Follow = null; UnityEngine.Object.Destroy(go); }
+        }
+
+        /// <summary>UI 층에서 도는 구슬을 월드에서 따라다니는 꼬리 — 자기 <c>LateUpdate</c> 로 따라간다(구슬 트윈이 끝난 «뒤» 라 한 프레임도 안 밀린다).</summary>
+        sealed class OrbTrail : MonoBehaviour
+        {
+            public RectTransform Follow;
+            void LateUpdate()
+            {
+                if (Follow == null) return;
+                transform.position = WorldCam.FromFrame(Follow.anchoredPosition, TrailZ);
+            }
+        }
+
         static Vector2 Bezier(Vector2 a, Vector2 c, Vector2 b, float t)
         {
             float u = 1f - t;
@@ -181,6 +276,7 @@ namespace KkomaKnight.Game
         void Kill(Orb o)
         {
             Arrive(o);
+            RetireTrail(o, false);
             if (o.Rt != null) { UnityEngine.Object.Destroy(o.Rt.gameObject); o.Rt = null; }
             _alive.Remove(o);
         }
@@ -190,16 +286,16 @@ namespace KkomaKnight.Game
         {
             var list = new List<Orb>(_alive);
             _alive.Clear();
-            foreach (var o in list) { if (o.Seq != null) { o.Seq.Kill(); o.Seq = null; } Arrive(o); if (o.Rt != null) { UnityEngine.Object.Destroy(o.Rt.gameObject); o.Rt = null; } }
-            ClearTrails();
+            foreach (var o in list) { if (o.Seq != null) { o.Seq.Kill(); o.Seq = null; } Arrive(o); RetireTrail(o, true); if (o.Rt != null) { UnityEngine.Object.Destroy(o.Rt.gameObject); o.Rt = null; } }
+            ClearTrails(); ClearWorldTrails();
         }
         /// <summary>값 적립 없이 비운다 — 화면 전환·새 판(호출자가 표시값을 엔진 값으로 맞춘다).</summary>
         public void Clear()
         {
             var list = new List<Orb>(_alive);
             _alive.Clear();
-            foreach (var o in list) { if (o.Seq != null) { o.Seq.Kill(); o.Seq = null; } o.OnArrive = null; if (o.Rt != null) { UnityEngine.Object.Destroy(o.Rt.gameObject); o.Rt = null; } }
-            ClearTrails();
+            foreach (var o in list) { if (o.Seq != null) { o.Seq.Kill(); o.Seq = null; } o.OnArrive = null; RetireTrail(o, true); if (o.Rt != null) { UnityEngine.Object.Destroy(o.Rt.gameObject); o.Rt = null; } }
+            ClearTrails(); ClearWorldTrails();
         }
 
         void Prune()
