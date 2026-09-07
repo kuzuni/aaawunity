@@ -93,9 +93,11 @@ namespace KkomaKnight.Game
                 _menuDot = dot; dot.SetActive(false);
             }
 
-            // ③ 사이드 아이콘 기둥 — **T96-menu(주인 2026-09-07 «중복된 거는 메뉴 안으로 넣는 걸로»)로 지웠다.**
-            // 특권(좌 1칸)·출석·데일리 기프트·퀘스트(우 3칸)는 전부 ≡ 메뉴 안에 있으므로 로비에 두 번 나오지 않는다.
-            // 남는 것은 메뉴에 없는 것뿐 — 보조 줄(탐험 · 클리어 보상)과 오른쪽 아래 «이벤트». 자리(Layout.LobbySideL/R)는 표에 남겨 둔다(비운다).
+            // ③ 사이드 아이콘 기둥 — **T148(주인 2026-09-07 06:0X «그 메뉴중에 데일리기프트, 퀘스트, 출석, 특권은 로비에 걍 꺼내놓는게 나은듯 · 전처럼»)로 되살렸다.**
+            // T96-menu 가 «중복된 거는 메뉴 안으로» 로 지웠던 그 넷이다 — 새 지시가 이긴다. 자리(Layout.LobbySideL/R)는 그때 비운 채로 표에 남겨 뒀으므로 그대로 쓴다.
+            // 메뉴(≡)에 남는 것은 우편함 · 설정 둘뿐이다(LobbyMenu.Items) · 데일리 기프트의 빨간 점도 메뉴 줄이 아니라 여기 칸(_giftDot · T77)으로 돌아왔다.
+            UiKit.Tag(BuildColumn(rt, "SideL", Layout.LobbySideL, false, (SidePrivilege, "ui.iconCrown", "특권")), "좌 사이드 아이콘 열(1개)");
+            UiKit.Tag(BuildColumn(rt, "SideR", Layout.LobbySideR, false, (SideAttendance, "ui.iconCalendar", "출석"), (SideDailyGift, "ui.iconBalloon", "데일리 기프트"), (SideQuest, "ui.iconQuest", "퀘스트")), "우 사이드 아이콘 열(3개)");
 
             // ④ 챕터 제목(프리팹 Title_LineDeco 조각 = 글자 + 밑줄 장식 · 표의 제목 행 ∪ 밑줄 행 자리)
             var title = UiKit.FindAny(rt, "Title_LineDeco_01_Blue", "Title_LineDeco_01_l");
@@ -219,7 +221,8 @@ namespace KkomaKnight.Game
             // T98 3항 — 받을 수 있는 챕터 보상이 있으면 «클리어 보상» 보조 버튼에 빨간 점
             if (_chestDot != null) _chestDot.SetActive(Core.ChapterChest.AnyClaimable(App.Data, s));
             // T96 ⓔ — 메뉴 안(데일리 기프트 · 광고로 받을 재화 …)에 받을 것이 있으면 ≡ 에 빨간 점
-            if (_menuDot != null) _menuDot.SetActive(Core.Notify.MenuAny(App.Data, s, LobbyPopups.NowSec(), SaveStore.Today()));
+            // T148 — 메뉴에 남은 것은 우편함·설정 둘뿐이라 ≡ 점은 «우편함» 만 본다(데일리 기프트 점은 로비 칸 _giftDot 으로 돌아갔다).
+            if (_menuDot != null) _menuDot.SetActive(Mailbox.Any(App));
         }
     }
 

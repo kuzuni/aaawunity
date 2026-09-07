@@ -42,9 +42,9 @@ namespace KkomaKnight.Core
         }
 
         /// <summary>
-        /// 로비 메뉴(≡)에 점을 켤 것인가 = 메뉴가 품은 항목 가운데 하나라도 «지금 받을 수 있는 것» 이 있는가.
-        /// 지금 메뉴가 품는 것은 우편함 · 설정 · 데일리 기프트 · 퀘스트 · 출석 · 특권 이고,
-        /// 그중 판정이 있는 것은 데일리 기프트(수령 + 광고)뿐이다.
+        /// «데일리 기프트에 지금 받을 것이 있는가»(수령 + 광고) — 이름은 T96-menu 때 메뉴가 그것을 품고 있어서 붙었다.
+        /// <para>⚠ <b>T148 로 데일리 기프트가 로비로 돌아가</b> ≡ 점은 더 이상 이것을 안 본다(우편함만 본다 · <c>LobbyScreen.Refresh</c>).
+        /// 이 함수는 <see cref="Any"/>(화면 어디든 받을 것이 있는가)의 한 조각으로 그대로 남는다 — 데일리 기프트는 여전히 받을 수 있기 때문이다.</para>
         /// </summary>
         public static bool MenuAny(GameData G, SaveData s, double nowSec, string today)
         {

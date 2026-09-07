@@ -55,7 +55,10 @@ namespace KkomaKnight.Tests.Play
             b.onClick.Invoke();
         }
         bool HasText(Func<string, bool> pred) { foreach (var t in _app.UiCanvas.GetComponentsInChildren<Text>(false)) if (pred(t.text ?? "")) return true; return false; }
-        static readonly string[] Items = { LobbyMenu.ItemMail, LobbyMenu.ItemSettings, LobbyMenu.ItemDailyGift, LobbyMenu.ItemQuest, LobbyMenu.ItemAttendance, LobbyMenu.ItemPrivilege };
+        /// <summary>메뉴에 남는 항목 — T148(주인 «데일리기프트, 퀘스트, 출석, 특권은 로비에 걍 꺼내놓는게 나은듯 · 전처럼»)로 <b>둘</b>이 됐다.</summary>
+        static readonly string[] Items = { LobbyMenu.ItemMail, LobbyMenu.ItemSettings };
+        /// <summary>T148 로 <b>로비로 돌아간</b> 넷 — 메뉴에는 없고 사이드 기둥에 있다(이 자가 양쪽을 다 본다).</summary>
+        static readonly string[] BackToLobby = { LobbyScreen.SidePrivilege, LobbyScreen.SideAttendance, LobbyScreen.SideDailyGift, LobbyScreen.SideQuest };
         /// <summary>드롭다운 판 윗변이 ≡ 버튼 윗변보다 위로 올라가도 봐 주는 한도(프레임 px · T139) — 실측 5px(주인이 준 자리)라 한 줄(메뉴 줄 113.9px)의 1/4 을 잡았다. 판이 버튼 «위» 로 떠 버리면(수백 px) 여기서 걸린다.</summary>
         const float PanelOverButtonPx = 28f;
 
@@ -66,10 +69,10 @@ namespace KkomaKnight.Tests.Play
             _app.ShowScreen("lobby"); yield return Frames(2);
             var lobby = _app.Current.Root;
 
-            // 로비에는 메뉴로 옮긴 버튼이 남아 있지 않다(주인 «중복된 거는 메뉴 안으로»)
-            Assert.IsNull(UiKit.Find(lobby, "SideL"), "좌 사이드 기둥 삭제"); Assert.IsNull(UiKit.Find(lobby, "SideR"), "우 사이드 기둥 삭제");
-            foreach (var k in new[] { LobbyScreen.SideQuest, LobbyScreen.SideAttendance, LobbyScreen.SideDailyGift, LobbyScreen.SidePrivilege })
-                Assert.IsNull(UiKit.Find(lobby, "Side:" + k), "로비에 중복 버튼 없음: " + k);
+            // T148 — 넷은 «전처럼» 로비 사이드 기둥에 있다(T96-menu 가 지웠던 것을 주인 지시로 되살렸다)
+            Assert.IsNotNull(UiKit.Find(lobby, "SideL"), "좌 사이드 기둥(특권)"); Assert.IsNotNull(UiKit.Find(lobby, "SideR"), "우 사이드 기둥(출석·데일리 기프트·퀘스트)");
+            foreach (var k in BackToLobby)
+                Assert.IsNotNull(UiKit.Find(lobby, "Side:" + k), "로비 사이드 칸: " + k);
 
             ClickNamed(lobby, "Button_Menu"); yield return Frames(2);
             Assert.IsTrue(_app.Overlay.IsOpen, "메뉴가 열린다");
@@ -78,7 +81,7 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(panel, "프리팹 판(HambergerMenu) — 우리 격자로 다시 만들지 않는다");
             Assert.IsNotNull(UiKit.Find(ov, "Dimmed"), "프리팹 어둠");
 
-            // 여섯 줄이 주인이 부른 순서대로 · 라벨은 우리말
+            // 남은 두 줄이 순서대로 · 라벨은 우리말 · 나머지 프리팹 줄은 꺼져 있다
             int shown = 0;
             for (int i = 0; i < Items.Length; i++)
             {
@@ -88,23 +91,26 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(i, row.GetSiblingIndex(), "메뉴 순서 " + Items[i]);
                 shown++;
             }
-            Assert.AreEqual(6, shown, "메뉴 항목 6");
-            foreach (var s in new[] { "우편함", "설정", "데일리 기프트", "퀘스트", "출석", "특권" })
+            Assert.AreEqual(2, shown, "메뉴 항목 2(T148 로 넷이 로비로 갔다)");
+            foreach (var s in new[] { "우편함", "설정" })
                 Assert.IsTrue(HasText(x => x == s), "메뉴 라벨 «" + s + "»");
+            // 로비로 간 넷은 메뉴 «안» 에 줄이 없다 — 한 화면에 같은 입구가 둘이 되지 않게
+            foreach (var k in new[] { LobbyMenu.ItemDailyGift, LobbyMenu.ItemQuest, LobbyMenu.ItemAttendance, LobbyMenu.ItemPrivilege })
+                Assert.IsNull(UiKit.Find(ov, "Menu:" + k), "메뉴에 남아 있으면 안 되는 줄: " + k);
             _log.AssertNoRed("메뉴 열림");
 
-            // 줄 높이·아이콘은 프리팹 그대로(복제한 두 줄도 같은 크기)
+            // 줄 높이·폭은 프리팹 그대로(T148 로 복제가 없어졌어도 남은 줄이 프리팹 값이어야 한다)
             var first = (RectTransform)UiKit.Find(ov, "Menu:" + Items[0]);
             var last = (RectTransform)UiKit.Find(ov, "Menu:" + Items[Items.Length - 1]);
-            Assert.AreEqual(first.rect.height, last.rect.height, 0.5f, "복제한 줄도 프리팹 줄과 같은 높이");
-            Assert.AreEqual(first.rect.width, last.rect.width, 0.5f, "복제한 줄도 프리팹 줄과 같은 폭");
+            Assert.AreEqual(first.rect.height, last.rect.height, 0.5f, "두 줄의 높이가 같다(프리팹 값)");
+            Assert.AreEqual(first.rect.width, last.rect.width, 0.5f, "두 줄의 폭이 같다(프리팹 값)");
 
             yield return Shutdown();
         }
 
         /// <summary>
         /// T139 — 주인이 스크린샷으로 준 두 가지. ⓐ <b>어둠(Dimmed)을 누르면 닫힌다</b>(«딤 눌러도 꺼지게») ·
-        /// ⓑ <b>판 자리</b>가 인스펙터 값 그대로다(앵커 (1,1) · Pivot (0.5,0.5) · Pos (−323,−558) · 가로 382.62 · 세로는 줄 수 계산값 688.305).
+        /// ⓑ <b>판 자리</b>가 인스펙터 값 그대로다(앵커 (1,1) · Pivot (0.5,0.5) · x −323 · 가로 382.62 · <b>윗변</b>은 주인 값에서 뽑은 자리 · 세로는 줄 수가 정한다 = T148 로 둘이라 458.87).
         /// 자리는 주인 인스펙터 값이 정본이라 그 값으로 단언하고, «드롭다운이 ≡ 버튼 아래로 늘어진다» 는 성질은 프레임 좌표로 따로 본다.
         /// </summary>
         [UnityTest]
@@ -126,10 +132,13 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(panel.anchorMin, panel.anchorMax, "판 앵커 Min == Max(= sizeDelta 가 곧 크기)");
             Assert.AreEqual(0.5f, panel.pivot.x, 1e-3f, "판 Pivot x = 0.5");
             Assert.AreEqual(0.5f, panel.pivot.y, 1e-3f, "판 Pivot y = 0.5");
-            Assert.AreEqual(LobbyMenu.PanelPos.x, panel.anchoredPosition.x, 0.5f, "판 Pos x = −323(주인 값)");
-            Assert.AreEqual(LobbyMenu.PanelPos.y, panel.anchoredPosition.y, 0.5f, "판 Pos y = −558(주인 값)");
+            Assert.AreEqual(LobbyMenu.PanelX, panel.anchoredPosition.x, 0.5f, "판 Pos x = −323(주인 값)");
             Assert.AreEqual(LobbyMenu.PanelWidth, panel.rect.width, 1f, "판 가로 = 382.62(주인 값)");
-            Assert.AreEqual(688.305f, panel.rect.height, 1f, "판 세로 = 688.305(= 프리팹 458.87 × 줄 6/4 · 주인 값과 같다)");
+            // T148 — 줄이 둘이 되어 세로는 프리팹 값(458.87)이다. **고정하는 것은 «가운데» 가 아니라 «윗변»** 이라
+            // 줄 수가 바뀌어도 판은 늘 ≡ 버튼 바로 아래에서 시작한다(주인이 준 자리에서 뽑은 값 · 결정 377 이 미리 짚어 둔 자리).
+            Assert.AreEqual(458.87f, panel.rect.height, 1f, "판 세로 = 프리팹 458.87(줄 둘이라 6/4 로 늘리지 않는다)");
+            Assert.AreEqual(LobbyMenu.PanelTopY, panel.anchoredPosition.y + panel.rect.height * 0.5f, 0.5f,
+                "판 윗변은 주인 값에서 뽑은 자리 그대로여야 한다(줄 수가 바뀌어도 여기서 시작한다)");
 
             // 드롭다운이 ≡ 버튼에서 «아래로» 늘어지는가 — 프레임 좌표로(자리 값이 다른 rect 기준이면 여기서 드러난다).
             // 판 윗변은 버튼 윗변과 «거의 같다»(실측 955 ↔ 950 = 5px 위로 겹친다 — 드롭다운이 버튼을 살짝 물고 내려오는 꼴이고
@@ -176,25 +185,29 @@ namespace KkomaKnight.Tests.Play
             _app.ShowScreen("lobby"); yield return Frames(2);
             var lobby = _app.Current.Root;
 
-            (string key, string mark)[] pops =
+            // T148 — 메뉴에 남은 것은 설정뿐이고, 나머지 셋은 «로비 사이드 칸» 이 연다(주인 «전처럼»)
+            ClickNamed(lobby, "Button_Menu"); yield return Frames(2);
+            ClickNamed(_app.Overlay.Root, "Menu:" + LobbyMenu.ItemSettings); yield return Frames(2);
+            Assert.IsTrue(_app.Overlay.IsOpen, "설정 팝업이 열린다");
+            Assert.IsTrue(HasText(s => s.Contains("음악")), "설정 내용 «음악»");
+            Assert.IsNull(UiKit.Find(_app.Overlay.Root, LobbyMenu.PanelName), "메뉴는 닫히고 갈아 끼운다");
+            _app.Overlay.Close(); yield return Frames(1);
+
+            (string key, string mark)[] side =
             {
-                (LobbyMenu.ItemSettings, "음악"), (LobbyMenu.ItemDailyGift, "데일리 기프트"),
-                (LobbyMenu.ItemQuest, "퀘스트"), (LobbyMenu.ItemAttendance, "출석 보상"),
+                (LobbyScreen.SideDailyGift, "데일리 기프트"), (LobbyScreen.SideQuest, "퀘스트"), (LobbyScreen.SideAttendance, "출석 보상"),
             };
-            foreach (var p in pops)
+            foreach (var p in side)
             {
-                ClickNamed(lobby, "Button_Menu"); yield return Frames(2);
-                ClickNamed(_app.Overlay.Root, "Menu:" + p.key); yield return Frames(2);
-                Assert.IsTrue(_app.Overlay.IsOpen, p.key + ": 팝업이 열린다");
+                ClickNamed(lobby, "Side:" + p.key); yield return Frames(2);
+                Assert.IsTrue(_app.Overlay.IsOpen, p.key + ": 로비 칸이 팝업을 연다");
                 Assert.IsTrue(HasText(s => s.Contains(p.mark)), p.key + ": 내용 «" + p.mark + "»");
-                Assert.IsNull(UiKit.Find(_app.Overlay.Root, LobbyMenu.PanelName), p.key + ": 메뉴는 닫히고 갈아 끼운다");
                 _app.Overlay.Close(); yield return Frames(1);
             }
-            _log.AssertNoRed("메뉴 항목 팝업 4종");
+            _log.AssertNoRed("로비 사이드 팝업 3종 + 설정");
 
-            // 특권 = 페이지
-            ClickNamed(lobby, "Button_Menu"); yield return Frames(2);
-            ClickNamed(_app.Overlay.Root, "Menu:" + LobbyMenu.ItemPrivilege); yield return Frames(3);
+            // 특권 = 페이지(이것도 로비 칸으로 돌아갔다)
+            ClickNamed(lobby, "Side:" + LobbyScreen.SidePrivilege); yield return Frames(3);
             Assert.AreEqual("privilege", _app.Current.Name, "특권 페이지로 간다");
             _app.ShowScreen("lobby"); yield return Frames(2); lobby = _app.Current.Root;
 
@@ -216,13 +229,22 @@ namespace KkomaKnight.Tests.Play
             var lobby = _app.Current.Root;
             var G = _app.Data; var S = _app.Save; string today = SaveStore.Today();
 
+            // T148 — ≡ 점은 이제 «우편함» 만 본다(메뉴에 남은 것이 우편함·설정뿐이라).
             var menuDot = UiKit.Find(UiKit.Find(lobby, "Button_Menu"), "MenuDot");
             Assert.IsNotNull(menuDot, "메뉴(≡) 알림 점");
-            Assert.AreEqual(Notify.MenuAny(G, S, LobbyPopups.NowSec(), today), menuDot.gameObject.activeSelf, "≡ 점 = Notify.MenuAny");
+            Assert.AreEqual(Mailbox.Any(_app), menuDot.gameObject.activeSelf, "≡ 점 = 우편함에 받을 것이 있는가");
 
-            // 데일리 기프트를 다 받으면 점이 꺼진다(판정이 있는 항목이 그것뿐이다)
+            // 데일리 기프트 점은 «로비 칸» 으로 돌아갔다 — 받을 것이 있으면 켜지고 다 받으면 꺼진다
+            var giftCell = UiKit.Find(lobby, "Side:" + LobbyScreen.SideDailyGift);
+            Assert.IsNotNull(giftCell, "로비 «데일리 기프트» 칸(T148)");
+            var giftDot = UiKit.Find(giftCell, "GiftDot");
+            Assert.IsNotNull(giftDot, "로비 데일리 기프트 알림 점(T77)");
             if (G != null && G.DailyGift != null)
             {
+                Assert.IsTrue(DailyGift.AnyClaimable(S, G.DailyGift, today), "새 세이브에는 받을 것이 있다(시험이 성립한다)");
+                _app.Current.Refresh(); yield return Frames(1);
+                Assert.IsTrue(giftDot.gameObject.activeSelf, "받을 것이 있으면 로비 칸에 점이 켜진다");
+
                 DailyGift.ClaimFree(S, G.DailyGift, today);
                 for (int i = 0; i < G.DailyGift.Milestones.Count; i++)
                 {
@@ -230,15 +252,8 @@ namespace KkomaKnight.Tests.Play
                     DailyGift.Claim(S, G.DailyGift, i, today);
                 }
                 _app.Current.Refresh(); yield return Frames(1);
-                Assert.IsFalse(Notify.MenuAny(G, S, LobbyPopups.NowSec(), today), "다 받으면 메뉴에 받을 것이 없다");
-                Assert.IsFalse(menuDot.gameObject.activeSelf, "≡ 점이 꺼진다");
-
-                ClickNamed(lobby, "Button_Menu"); yield return Frames(2);
-                var giftRow = UiKit.Find(_app.Overlay.Root, "Menu:" + LobbyMenu.ItemDailyGift);
-                var rowDot = UiKit.Find(giftRow, "AlertDot");
-                Assert.IsNotNull(rowDot, "메뉴 줄 알림 점");
-                Assert.IsFalse(rowDot.gameObject.activeSelf, "다 받은 데일리 기프트 줄에는 점이 없다");
-                _app.Overlay.Close(); yield return Frames(1);
+                Assert.IsFalse(DailyGift.AnyClaimable(S, G.DailyGift, today), "다 받으면 받을 것이 없다");
+                Assert.IsFalse(giftDot.gameObject.activeSelf, "로비 칸의 점이 꺼진다");
             }
             _log.AssertNoRed("알림 점");
 

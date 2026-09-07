@@ -28,14 +28,22 @@ namespace KkomaKnight.Game
 
         /// <summary>
         /// 주인이 준 판 자리(T139 ⓑ · 2026-09-07 04:5X 인스펙터 스크린샷) — 앵커 Min/Max <b>(1,1)</b> · Pivot <b>(0.5,0.5)</b> ·
-        /// <c>anchoredPosition</c> <b>(−323, −558)</b> · 가로 <b>382.62</b>. 세로는 지금 코드가 «줄 수 ÷ 프리팹 줄 수» 로 만드는 값과
-        /// 주인 값(688.305 = 프리팹 458.87 × 6/4)이 <b>같아서</b> 계산을 그대로 둔다 — 즉 주인이 바꾼 것은 «자리» 다.
-        /// <para>⚠ 항목 수가 바뀌면(예 <b>T148</b> 이 넷을 로비로 도로 꺼내 메뉴가 둘이 되면) 세로가 458.87 로 줄어 판이 위로 짧아진다.
-        /// 그때는 «가운데 피벗 + 고정 Pos» 라 판이 ≡ 버튼에서 떨어져 보이므로, 그 작업을 잡는 워커가 <see cref="PanelPos"/> 의 y 를 다시 잰다(높이 절반만큼 올린다).</para>
+        /// <c>anchoredPosition</c> <b>(−323, −558)</b> · 크기 <b>382.62 × 688.305</b>(그때는 줄이 여섯이었다).
+        /// <para>
+        /// <b>T148 로 줄이 둘이 됐다</b>(주인이 넷을 로비로 도로 꺼냈다) → 판 높이가 프리팹 값 458.87 로 줄어든다.
+        /// 피벗이 가운데라 <c>Pos</c> 를 그대로 두면 판이 <b>위로 114.7px 올라가</b> ≡ 버튼에서 떨어진다(결정 377 이 미리 짚어 둔 자리).
+        /// 그래서 고정하는 것을 «가운데» 가 아니라 <b>«판 윗변»</b> 으로 바꿨다 — 주인 값에서 뽑은 그 윗변(<see cref="PanelTopY"/>)에
+        /// 판을 걸고 높이는 줄 수가 정한다. 줄 수가 또 바뀌어도 판은 늘 ≡ 버튼 바로 아래에서 시작한다(§1 «리터럴 대신 계산»).
+        /// </para>
         /// </summary>
-        public static readonly Vector2 PanelPos = new Vector2(-323f, -558f);
+        public const float PanelX = -323f;
+        /// <summary>판 «윗변» 의 자리(px · 오른쪽 위 모서리 기준) = 주인 Pos y(−558) + 주인 높이(688.305) ÷ 2. 줄 수와 무관한 값이라 이것을 고정한다.</summary>
+        public const float PanelTopY = -558f + 688.305f / 2f;
         /// <summary>같은 스크린샷의 판 가로(px) — 프리팹 값과 같으면 그대로다.</summary>
         public const float PanelWidth = 382.62f;
+
+        /// <summary>높이가 <paramref name="height"/> 인 판의 <c>anchoredPosition</c> — 윗변을 <see cref="PanelTopY"/> 에 맞춘다.</summary>
+        public static Vector2 PanelPosFor(float height) => new Vector2(PanelX, PanelTopY - height * 0.5f);
 
         /// <summary>메뉴 항목 — 이름(줄 오브젝트 «Menu:key») · 라벨 · 새 줄이면 아이콘 키.</summary>
         public const string ItemMail = "mail", ItemSettings = "settings", ItemDailyGift = "dailyGift", ItemQuest = "quest", ItemAttendance = "attendance", ItemPrivilege = "privilege";
@@ -78,11 +86,11 @@ namespace KkomaKnight.Game
                 panel.sizeDelta = new Vector2(panel.sizeDelta.x, panel.sizeDelta.y * rows.Count / PrefabRows.Length);
             // T139 ⓑ — 판 자리를 주인이 준 인스펙터 값으로. 앵커·피벗을 먼저 바꾸고 크기·자리를 넣는다
             // (앵커 Min == Max 면 sizeDelta 가 곧 크기고, 앵커를 나중에 바꾸면 그 값이 다시 해석돼 어긋난다).
-            // 높이는 위 계산값을 그대로 쓴다 — 주인 값 688.305 와 같다(주석 PanelPos 참조).
+            // T148 — 높이는 «줄 수» 가 정하고 자리는 «윗변» 을 고정한다(주석 PanelTopY 참조 · 줄이 둘로 줄어도 ≡ 버튼 바로 아래에서 시작한다).
             panel.anchorMin = panel.anchorMax = Vector2.one;
             panel.pivot = new Vector2(0.5f, 0.5f);
             panel.sizeDelta = new Vector2(PanelWidth, panel.sizeDelta.y);
-            panel.anchoredPosition = PanelPos;
+            panel.anchoredPosition = PanelPosFor(panel.sizeDelta.y);
 
             for (int i = 0; i < items.Count; i++) Row(app, rows[i], i, items[i]);
             for (int i = items.Count; i < rows.Count; i++) rows[i].gameObject.SetActive(false);
@@ -92,17 +100,13 @@ namespace KkomaKnight.Game
         /// <summary>메뉴 항목 표 — 순서·라벨·아이콘(새 줄만)·누르면 할 일 · 점을 켤 조건.</summary>
         static List<(string key, string label, string icon, Action open, Func<bool> dot)> Items(App app)
         {
-            var G = app.Data; var S = app.Save;
-            Func<bool> giftDot = () => G != null && S != null
-                && (Notify.DailyGiftClaimable(S, G.DailyGift, SaveStore.Today()) || Notify.DailyGiftAd(S, G.DailyGift, SaveStore.Today()));
+            // T148 로 데일리 기프트가 로비로 돌아가면서 이 자리의 점 판정(Notify.DailyGift*)도 로비 칸(_giftDot · T77)으로 갔다.
             return new List<(string, string, string, Action, Func<bool>)>
             {
                 (ItemMail, "우편함", null, () => Game.Mailbox.Open(app), () => Mailbox.Any(app)),   // T96-mail
                 (ItemSettings, "설정", null, () => app.Overlay.Settings(), () => false),
-                (ItemDailyGift, "데일리 기프트", null, () => LobbyPopups.DailyGift(app), giftDot),
-                (ItemQuest, "퀘스트", null, () => LobbyPopups.Quest(app), () => false),
-                (ItemAttendance, "출석", "ui.iconCalendar", () => LobbyPopups.Attendance(app), () => false),
-                (ItemPrivilege, "특권", "ui.iconCrown", () => app.ShowScreen("privilege"), () => false),
+                // T148(주인 2026-09-07 06:0X «데일리기프트, 퀘스트, 출석, 특권은 로비에 걍 꺼내놓는게 나은듯 · 전처럼») —
+                // 그 넷은 로비 사이드 기둥으로 돌아갔다(LobbyScreen ③). 메뉴에 두면 한 화면에 같은 입구가 둘이 된다.
             };
         }
 
