@@ -32,31 +32,26 @@ namespace KkomaKnight.Game
             float cy = (boxR.Y - (ribbonR.Y + ribbonR.H / 2f)) / 100f * UiKit.FrameH;
             rr.anchoredPosition = new Vector2(cx, cy);
             // 명판 글자 = 제목 종류(T63 · 60 · 리본이 좁으면 bestFit 으로 32 까지)
-            var t = rr.GetComponentInChildren<Text>(true); if (t != null) { t.fontSize = TextSize.Title; t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitMin; t.resizeTextMaxSize = TextSize.Title; TextAudit.Mark(t, TextKind.Title); RibbonTextFit(t); RibbonOutline(t); }
+            var t = rr.GetComponentInChildren<Text>(true); if (t != null) { t.fontSize = TextSize.Title; t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitMin; t.resizeTextMaxSize = TextSize.Title; TextAudit.Mark(t, TextKind.Title); RibbonTextFit(t); UiKit.EnsureOutline(t); }
             return rr;
         }
 
         /// <summary>
-        /// T186 ⓒ — <b>노란 리본 위 흰 제목</b>의 검은 아웃라인을 레퍼런스 굵기로. 공통 규격(<see cref="UiKit.OutlineRatio"/> = 글자의 5% · 최대 4px)은
-        /// 어두운 바탕에서는 넉넉하지만 <b>밝은 리본 위</b>에서는 540폭 캡처에서 획과 섞여 회색 테로만 남는다 —
-        /// `screens` run 333 의 17 리본 실측: 우리 «검은 픽셀 0.000 / 흰 0.182», 레퍼런스 `docs/ref/17_daily_gift.jpg` 같은 자리 «검 0.282 / 흰 0.195»(검/흰 <b>1.44</b>).
-        /// 즉 레퍼런스는 글자만큼 굵은 검은 테로 읽히게 한다. 그래서 <b>이 리본 글자에서만</b> 두께 비율을 두 배로 올린다(색·α·리본 색은 T63·레퍼런스 그대로).
-        /// <para>※ 리본은 «노란 판 + 흰 글자» 라 <c>png_contrast.py</c> 의 «바탕 ↔ 글자 휘도 차» 로는 <b>레퍼런스도 0.11</b> 이다(잰 값 = 레퍼런스 #FFD84A ↔ 흰색).
-        /// 그 자리는 대비가 아니라 <b>아웃라인 굵기</b>로 읽히는 자리이므로 0.35 선을 적용하지 않는다(결정 기록 참조).</para>
+        /// T186 ⓒ 회차 2 — <b>되돌렸다</b>. «리본 글자만 아웃라인을 두 배로»(회차 1 · 0.10)는 <b>두 가지가 걸린다</b>:
+        /// <para>
+        /// ⓘ <b>효과가 거의 없었다</b> — `screens` run 360 실측(리본 rect 150,296,240,30): 검은 픽셀 0.000 → <b>0.006</b>,
+        /// 가장 어두운 값 0.23. 레퍼런스 같은 자리는 «검 0.282 / 흰 0.195 = 검/흰 <b>1.44</b>» 다. 두께를 두 배로 해도
+        /// 540폭 캡처에서는 1~2px 테로만 남는다(레퍼런스는 4~5px 짜리 굵은 테 + 더 굵은 획의 글꼴이다).
+        /// ⓙ <b>레포의 strict 규칙과 부딪친다</b> — <see cref="TextAudit.OutlineStrict"/> 가 <c>true</c> 이고
+        /// <see cref="TextAudit"/> 는 «두께 = <see cref="UiKit.OutlineWidth"/>(쓰이는 크기)» 에서 0.26px 만 벗어나도 «어긋남» 으로 센다.
+        /// 즉 이 한 자리만 두껍게 하면 <c>TextSizeGateTests</c> 가 빨개진다 — 얻는 것(0.006)보다 잃는 것이 크다.
+        /// </para>
+        /// <b>남은 길은 규칙 자체</b>(<see cref="UiKit.OutlineRatio"/> 0.05 · <see cref="UiKit.OutlineMaxPx"/> 4px)를 올리는 것인데
+        /// 그것은 <b>게임의 모든 글자</b>에 걸리는 <c>UiKit</c> 변경이라 이 작업(팝업 하나의 색)의 범위가 아니다 —
+        /// 근거 숫자를 지시서 §2 T186 5항에 남겨 두었으니 <c>UiKit</c>/T63 을 잡는 워커가 정한다.
+        /// <para>※ 이 자리를 <c>png_contrast.py</c> 의 «바탕 ↔ 글자 휘도 차» 로 재지 않는 것은 그대로다 — <b>레퍼런스도 0.11</b> 이다.</para>
         /// </summary>
-        public const float RibbonOutlineRatio = 0.10f;
-
-        /// <summary>리본 제목에 <see cref="RibbonOutlineRatio"/> 두께의 검은 아웃라인을 붙인다(색·α 는 <see cref="UiKit.OutlineColor"/> 그대로 · 컴포넌트는 이미 있으면 값만 갱신).</summary>
-        public static Outline RibbonOutline(Text t)
-        {
-            if (t == null) return null;
-            var ol = UiKit.Ensure<Outline>(t.gameObject);
-            ol.effectColor = UiKit.OutlineColor;
-            float size = t.resizeTextForBestFit ? Mathf.Max(t.resizeTextMaxSize, t.fontSize) : t.fontSize;
-            float d = size * RibbonOutlineRatio;
-            ol.effectDistance = new Vector2(d, -d); ol.useGraphicAlpha = true;
-            return ol;
-        }
+        public const float RibbonOutlineRatio = UiKit.OutlineRatio;
 
         /// <summary>리본 조각(Title_01)의 글자 rect 는 3.9% 리본에서 56px 인데 제목 60 의 한 줄 선호 높이가 58px 라 위아래 1px 씩 넘쳤다(CI #106 게이트 «출석 보상»·«데일리 기프트» 잘림) → 글자 rect 만 세로로 늘린다(리본 크기·자리 불변 · 글자는 가운데 정렬 그대로).</summary>
         public static void RibbonTextFit(Text t)
