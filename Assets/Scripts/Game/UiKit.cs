@@ -785,6 +785,7 @@ namespace KkomaKnight.Game
             go = UnityEngine.Object.Instantiate(prefab, Staging(), false);
             go.name = prefabKey;
             StripDemoScripts(go);
+            StripDemoHighlights(go);
             if (adopt) Adopt(go);
             go.transform.SetParent(parent, false);
             return go;
@@ -805,6 +806,26 @@ namespace KkomaKnight.Game
                 var tn = pv.GetType().FullName;
                 if (tn == "LayerLab.CasualGame.PanelView" || tn == "LayerLab.GUIScripts.PanelControl") UnityEngine.Object.DestroyImmediate(pv);
             }
+        }
+        /// <summary>
+        /// T164 회차 3 — 조각이 달고 오는 데모 하이라이트(<c>HighLight*</c>)를 <b>세우는 자리 한 곳</b>에서 끈다
+        /// (주인 09:0X «썡뚱맞게 HighLight1,2 있는데 튀기만 하고 이상함 그거 삭제하라 해»).
+        /// <para>
+        /// 회차 2 는 <see cref="GearUi.DarkFrame"/>(= <b>아이템 칸</b>을 세우는 자리)에서 껐는데,
+        /// 하이라이트를 달고 오는 조각은 아이템 칸만이 아니다 — 실측 <b>9개 조각</b>이 그것을 품는다
+        /// (<c>Button_02_BasePrefab</c>·<c>Button_03_BasePrefab</c>·<c>PassFrame_02~04</c>·<c>CardFrame_01</c>·
+        /// <c>ItemFrame_01_Normal</c>·<c>Button_Pause_01</c>·<c>Button_Close_Square_01</c>).
+        /// 그래서 펫 화면의 «전체 강화» 버튼(<c>ui.btnGray</c> → <c>Button_02_BasePrefab</c>)은 그 손질을 못 받아
+        /// CI #332 에서 «[13_pet] 켜진 하이라이트가 4개» 로 빨갰다.
+        /// </para>
+        /// 우리 코드가 이 자식을 쓰는 자리는 <b>한 곳도 없다</b>(grep 0건) → 조각 원본은 그대로 두고(§1 «프리팹은 부품 · 원본 불변»)
+        /// <b>인스턴스만</b> 끈다. <see cref="StripDemoScripts"/> 와 같은 자리(비활성 대기 중)라 한 프레임도 안 번쩍인다.
+        /// 잣대는 끄는 쪽·재는 쪽이 갈리지 않게 <see cref="GearUi.HighlightPrefix"/> 하나를 계속 쓴다.
+        /// </summary>
+        static void StripDemoHighlights(GameObject root)
+        {
+            foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                if (t != null && t.name.StartsWith(GearUi.HighlightPrefix, StringComparison.Ordinal)) t.gameObject.SetActive(false);
         }
         public static RectTransform SpawnRt(string prefabKey, Transform parent, Layout.R r)
         {
