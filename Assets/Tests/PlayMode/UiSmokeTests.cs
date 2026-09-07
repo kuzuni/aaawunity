@@ -1322,9 +1322,16 @@ namespace KkomaKnight.Tests.Play
                 // 시계와 경주하는 단언이라 기계 부하에 따라 빨갛다 말았다 한다(결정 395 에 적어 둔 그 함정).
                 // 그래서 «언제 재느냐» 에 안 흔들리는 꼴로 바꾼다 — 셋 중 어느 것도 시각에 안 매인다:
                 Assert.Less(ShopScreen.ChestScaleFrom, 1f, "시작 배율은 1보다 작아야 «작았다가» 가 성립한다(T158 ⓐ · 지금 " + ShopScreen.ChestScaleFrom + ")");
-                Assert.IsTrue(chestScale0 < 1f || UiKit.IsTweening(chestGrp0),
-                    "결과 창의 상자가 «작았다 커졌다» 를 안 한다 — 연 직후 배율이 " + chestScale0.ToString("0.###") + " 인데 상자에 도는 트윈도 없다(T158 ⓐ). "
-                    + "배율이 1 이어도 «아직 도는 중» 이면 통과다 — 넘김(OutBack) 구간을 잡았을 뿐이니까. 둘 다 아니면 연출이 아예 안 걸린 것이다.");
+                // ⚠ 회차 2 는 «배율 < 1 || 도는 중» 으로 고쳤는데 그것도 빨갰다(#332 · «배율 1.006 인데 트윈도 없다»).
+                // 까닭: 이 배율 트윈은 Sequence «안» 에 끼워져 있어 DOTween.IsTweening(대상) 이 못 본다(중첩 트윈은 활성 목록에서 빠진다).
+                // → 회차 3 은 «지금 어떤 상태냐» 를 아예 안 묻는다. 화면이 «그 일을 했다» 를 기록으로 남기고 그것을 본다(결정 329 · 로딩 화면과 같은 방법).
+                Assert.AreEqual(ShopScreen.ChestScaleFrom, ShopScreen.LastChestScale, 0.001f,
+                    "결과 창이 상자에 시작 배율을 안 넣었다 = «작았다 커졌다» 연출이 안 걸렸다(T158 ⓐ · 기록값 " + ShopScreen.LastChestScale.ToString("0.###") + "). "
+                    + "이 값은 ChestResult 가 배율을 실제로 넣을 때만 채워진다 — 연출을 지우면 0 이 되어 여기서 빨개진다.");
+                // OutBack 의 넘김 폭 — 기본 계수(1.70158)로 0→1 을 밀면 봉우리가 약 1.099 다. 여유를 두어 0.12.
+                const float ChestOvershootMax = 0.12f;
+                Assert.Less(chestScale0, 1f + ChestOvershootMax,
+                    "연 직후 배율은 시작(작음)~넘김(OutBack) 사이여야 한다 — 지금 " + chestScale0.ToString("0.###") + "(T158 ⓐ · 이 줄은 «언제 재느냐» 에 안 흔들리게 넘김까지 허용한다)");
                 // T158 ⓒ — 결과 칸은 눌러도 어두워지지 않는다(우리가 클릭을 안 붙인 칸이라 조각이 달고 온 Button 을 뗀다)
                 var got0 = UiKit.Find(_app.Overlay.Root, "Got");
                 Assert.IsNotNull(got0, "얻은 장비 격자(Got)");

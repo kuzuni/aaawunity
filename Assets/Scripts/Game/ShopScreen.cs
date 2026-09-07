@@ -543,6 +543,16 @@ namespace KkomaKnight.Game
         /// </summary>
         public const float ChestScaleFrom = 0.6f;
         /// <summary>
+        /// 마지막으로 연 결과 창이 상자에 <b>실제로 넣은</b> 시작 배율 — 0 이면 «연출이 안 걸렸다»(T158 ⓐ 회차 3 · 결정 329 와 같은 방법).
+        /// <para>
+        /// 배율 연출은 0.24초에 지나가는 것이라 «지금 작나» 로는 못 잰다(회차 1 이 그러다 CI 를 빨갛게 했다).
+        /// «도는 중인가» 로도 못 잰다 — 이 트윈은 <see cref="DG.Tweening.Sequence"/> 안에 <b>끼워져</b> 있어서
+        /// <c>DOTween.IsTweening(대상)</c> 이 못 본다(중첩 트윈은 활성 목록에서 빠진다). 회차 2 가 그래서 또 빨갰다.
+        /// 그래서 <b>«그 일이 일어났다» 를 코드가 기록</b>한다 — 로딩 화면이 <c>LastShownWasPrefab</c> 으로 같은 함정을 푼 그 방법이다.
+        /// </para>
+        /// </summary>
+        public static float LastChestScale;
+        /// <summary>
         /// 연출 상수 — <b>T180 순서(주인 2026-09-07 11:3X «닫힌 게 위에서 떨어져서 착지하고 열린 상태 이미지로 바뀐 다음에 장비들»)</b>:
         /// 낙하(<see cref="ChestFallSec"/> · <see cref="ChestFallFrom"/> px 위에서) → 착지 «쿵»(<see cref="ChestShake"/>) →
         /// 열린 그림 교체 + 빛 폭발(<see cref="ChestOpenAt"/>) → 장비 칸이 하나씩(<see cref="ChestCellStep"/> 간격 · 시작 스케일 <see cref="ChestCellFrom"/>).
@@ -566,6 +576,7 @@ namespace KkomaKnight.Game
         void ChestResult(GachaBox box, int n, List<GearItem> got, GearItem best)
         {
             var D = App.Data;
+            LastChestScale = 0f;   // 이번 창이 배율 연출을 걸었는지 기록한다(T158 ⓐ) — 아래에서 실제로 걸 때 값이 들어간다
             var rootGo = App.Overlay.OpenPrefab("ui.chestOpen"); var root = (RectTransform)rootGo.transform;
             // 조각의 어둠+무늬 배경 = 프레임 밖까지(T104 와 같은 값) · 배경 탭 = 닫기
             var bg = UiKit.Find(root, "Background") as RectTransform;
@@ -656,6 +667,7 @@ namespace KkomaKnight.Game
                 chestGrp.anchoredPosition = home + new Vector2(0f, ChestFallFrom);
                 // T158 ⓐ — 떨어지는 «동안» 작은 것이 커진다 · OutBack 이 끝에서 살짝 넘겼다가 제 크기로 돌아온다(주인 문장 그대로)
                 chestGrp.localScale = Vector3.one * ChestScaleFrom;
+                LastChestScale = ChestScaleFrom;
                 seq.Insert(0f, chestGrp.DOScale(1f, ChestFallSec).SetEase(Ease.OutBack).SetUpdate(true).SetLink(chestGrp.gameObject));
                 seq.Insert(0f, chestGrp.DOAnchorPos(home, ChestFallSec).SetEase(Ease.InQuad).SetUpdate(true).SetLink(chestGrp.gameObject));
                 // 착지 «쿵» — 예전에는 이 펀치가 0초에 있었다(떨어지기 전에 흔들렸다). 이제 «닿는 순간» 이다.
