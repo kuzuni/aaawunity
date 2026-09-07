@@ -287,6 +287,7 @@
 2. SID 발급: `sess-HHMM-$RANDOM` (예: sess-0512-23481)
 3. aaaw `PLAN.md`(스펙) → 이 문서 → `docs/ref/README.md`(UI 레퍼런스 색인 · UI 작업이면 해당 jpg 를 `Read` 로 직접 본다) → `docs/PROGRESS.md` → `docs/claims/` 순서로 읽는다. **PROGRESS 의 «주인 콘솔 에러 보고함» 도 반드시 읽는다** — 아직 작업으로 안 올라간 항목이 있으면 «가장 큰 번호 +1» 로 등재하고, 그것이 선점 가능한 가장 앞 작업이 된다(콘솔 에러 수정은 UI 작업보다 우선). aaaw 는 `git clone --depth 1 https://github.com/kuzuni/aaaw .aaaw-src` 로 옆에 둔다(커밋 금지 폴더 · .gitignore).
 4. [2. 작업 목록]에서 **선점 가능한 가장 앞 작업**을 lock 으로 선점한다 (규약: `docs/claims/README.md`).
+   **⚠ 선점 전에 `python3 tools/check_task_rows.py` 를 돌려라(결정 455)** — 표가 길어져 같은 작업이 **두 줄**에 남은 자리가 있고, 한 줄이 «✅ 완료» 인데 다른 줄이 «⬜ 대기» 였다. 아래 줄만 보고 T149·T151 을 선점했다가 **05:41 커밋이 셋을 이미 다 고쳐 놓은 것**을 코드에서 확인하고 물러난 사고가 있다(한 회차가 샜다). 그리고 «⬜ 대기» 를 믿기 전에 **그 자리 코드를 한 번 읽어라** — 주인 지시가 이미 반영돼 있으면 표가 늦은 것이다.
 5. 선점할 작업이 없으면(전부 lock 또는 전부 완료): 게이트(§3)를 재실행해 검증만 하고, 이상 없으면 **커밋 없이 조용히 종료**. 이상이 있으면 PROGRESS 에 등재하고 종료.
 
 ## 1. 절대 규칙
@@ -1602,6 +1603,7 @@ python3 tools/check_audio_webgl.py                                # 오디오가
 tools/check_data_sync.sh [.aaaw-src]                              # data ↔ aaaw main
 python3 tools/check_decisions.py                                  # PROGRESS «워커 결정 기록» 번호 겹침(T131) — `--next` 로 «다음에 쓸 번호» 만 찍을 수도 있다
 python3 tools/check_stale_asserts.py                              # 바꾼 값·이름을 «아직 박아 둔» 테스트 자리(T184) — `--strict` 면 있을 때 1 로 끝난다
+python3 tools/check_task_rows.py                                  # PROGRESS 에 같은 작업이 두 줄 있고 «⬜ 대기» ↔ «✅/🔄» 로 어긋난 것(끝난 일을 다시 선점하게 만든다 · 결정 455) — `--list` 로 겹치는 줄 전부 보기
 dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이후) 이식 검증
 ```
 
