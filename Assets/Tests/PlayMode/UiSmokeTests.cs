@@ -230,6 +230,32 @@ namespace KkomaKnight.Tests.Play
                     what + " 카드 «" + name + "» 은 바탕보다 뒤에 그려져야 한다(형제 번호가 커야 위에 보인다 · T147)");
             }
         }
+        /// <summary>
+        /// T157 — 뽑기 결과 창의 두 가지(주인 2026-09-07 07:5X).
+        /// ⓐ 얻은 칸 격자의 <b>가운데가 조각이 준 칸(<c>ItemFrame_01</c>)의 가운데</b>와 같은가 — 예전에는 그 칸을 안 보고
+        ///   «화면 위 24%» 에 제 격자를 얹어 주인이 «썡둥맞은 위치» 라고 했다. 자리 수를 코드에 안 박았으므로 시험도 <b>조각에서 읽어</b> 맞댄다.
+        /// ⓑ 배경 무늬가 <b>흐르는가</b> — 조각의 것은 정적 <c>Image</c> 라 안 움직인다. 우리 흐름은 <c>RawImage</c> 의 uvRect 트윈(T72 ①)이다.
+        ///   «있는가» 가 아니라 «도는가» 를 잰다(T147 에서 배운 것 — 있기만 하면 초록인 자는 결함을 놓친다).
+        /// </summary>
+        void AssertChestSlotAndPattern(string what)
+        {
+            var root = _app.Overlay.Root;
+            var slot = UiKit.Find(root, ShopScreen.ChestSlotName) as RectTransform;
+            Assert.IsNotNull(slot, what + ": 조각이 준 칸(" + ShopScreen.ChestSlotName + ")이 있어야 한다 — 자리의 근거다");
+            var grid = UiKit.Find(root, "Got") as RectTransform;
+            Assert.IsNotNull(grid, what + ": 얻은 칸 격자(Got)");
+            Canvas.ForceUpdateCanvases();
+            var sc = (Vector2)slot.TransformPoint(slot.rect.center);
+            var gc = (Vector2)grid.TransformPoint(grid.rect.center);
+            Assert.AreEqual(sc.x, gc.x, 1.0f, what + ": 격자 가운데 x 가 조각 칸 가운데와 같아야 한다(T157 ⓐ · 주인 «ItemFrame_01 있는 곳에 아이템이 떠야»)");
+            Assert.AreEqual(sc.y, gc.y, 1.0f, what + ": 격자 가운데 y 가 조각 칸 가운데와 같아야 한다(T157 ⓐ)");
+
+            var pat = UiKit.Find(root, UiKit.PatternName) as RectTransform;
+            Assert.IsNotNull(pat, what + ": 흐르는 무늬(" + UiKit.PatternName + ")");
+            var raw = pat.GetComponent<RawImage>();
+            Assert.IsNotNull(raw, what + ": 무늬는 RawImage 라야 uvRect 가 흐른다 — 조각의 정적 Image 그대로면 안 움직인다(T157 ⓑ)");
+            Assert.IsTrue(UiKit.IsTweening(raw), what + ": 무늬가 실제로 돌아야 한다(주인 «뽑기 결과에서도 패턴들 움직여야 함» · T157 ⓑ)");
+        }
         static void AssertSolidGradient(Transform piece, string what, string paletteName)
         {
             // 회차 3 — 바탕도 두 색의 «가운데 색» 이라야 한다(결정 344). 두 조각이 가운데서 교차하며 반쯤만 덮으므로
@@ -1177,11 +1203,13 @@ namespace KkomaKnight.Tests.Play
                 }
             }
             Assert.AreEqual(CountNamed(_app.Overlay.Root, "gear:"), S.Inv.Count - inv, "결과 팝업의 장비 칸 수 = 얻은 수");
+            AssertChestSlotAndPattern("뽑기 결과(1회)");
             _app.Overlay.Close(); yield return Frames(1);
             inv = S.Inv.Count;
             Assert.IsTrue(Click(shop, s => s.Contains("10회")), "«10회» 뽑기 버튼"); yield return Frames(2);
             Check("뽑기 결과 팝업(10회)", expectOverlay: true);
             Assert.GreaterOrEqual(S.Inv.Count, inv + D.Gacha.TenPullCount, "10회 = 10개 이상");
+            AssertChestSlotAndPattern("뽑기 결과(10회)");
             _app.Overlay.Close(); yield return Frames(1);
             Check("상점(뽑기 뒤)");
             yield return Shutdown();

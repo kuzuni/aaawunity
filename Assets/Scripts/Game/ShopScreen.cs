@@ -533,7 +533,11 @@ namespace KkomaKnight.Game
         /// <summary>결과 창 조각(<c>Shop_Chest_Open</c>)의 «상자» 묶음 자리 — 프리팹 실측(가운데에서 y −427.8 · 565×493). 격자는 그 «위» 에 놓는다(T95).</summary>
         public const float ChestGroupY = -427.84f;
         /// <summary>격자 맨 위가 놓이는 자리(프레임 % · 제목 아래 · 상자 그림 위) 와 안내 줄 자리(T95 · 프리팹에는 격자가 없어 우리 규칙).</summary>
-        public const float ChestGridTopPct = 24f, ChestNoteYPct = 52f;
+        /// <summary>조각이 «얻은 것은 여기» 라고 준 칸(T157) — 자리·크기를 여기서 읽는다(코드에 수를 안 박는다).</summary>
+        public const string ChestSlotName = "ItemFrame_01";
+        /// <summary>그 칸이 없는 조각(옛 빌드·조각 교체)일 때만 쓰는 예전 자리 — 평소에는 안 쓴다.</summary>
+        public const float ChestGridFallbackTopPct = 24f;
+        public const float ChestNoteYPct = 52f;
         /// <summary>«찰지게»(주인 2026-09-07) 연출 상수 — 상자 흔들림 · 빛 폭발 시작 · 칸이 하나씩 나오는 간격 · 시작 스케일(오버슛은 <see cref="UiKit.Reveal"/> 의 OutBack). 총 길이 ≤ <see cref="UiKit.RevealMaxResult"/>.</summary>
         public const float ChestShake = 0.25f, ChestBurstAt = 0.18f, ChestCellStep = 0.08f, ChestCellFrom = 0.55f;
 
@@ -557,6 +561,17 @@ namespace KkomaKnight.Game
                 UiKit.Stretch(bg, -UiKit.DimOverscan, -UiKit.DimOverscan, -UiKit.DimOverscan, -UiKit.DimOverscan);
                 UiKit.Clickable(bg, () => { App.Overlay.Close(); Refresh(); }, false);
             }
+            // ⓑ T157 — 주인 «뽑기 결과에서도 패턴들 움직여야 함». 조각의 «Pattern» 은 정적 Image 고 우리 흐름은 RawImage 의 uvRect 트윈(T72 ①)인데,
+            // 한 GameObject 는 Graphic 을 하나만 가지므로 그 조각에 RawImage 를 덧붙일 수 없다. 그래서 조각 것은 **이름을 바꿔 끄고**(같은 이름이면
+            // PatternBg 가 그것을 찾아 RawImage 가 없다고 또 하나를 만들어 «Pattern» 이 둘이 된다) 같은 부모·같은 사각형에 흐르는 무늬를 깐다(결정 408).
+            // 어두운 딤 위라 tint 는 PatternTintDark. **T110 ⓑ·T140 의 «패턴 없음» 과는 다른 화면이다** — 여기서는 주인이 흐르라고 했다.
+            var oldPat = UiKit.Find(root, UiKit.PatternName) as RectTransform;
+            if (oldPat != null && oldPat.GetComponent<RawImage>() == null)
+            {
+                oldPat.name = "PatternStatic"; oldPat.gameObject.SetActive(false);
+                var host = oldPat.parent as RectTransform;
+                if (host != null) UiKit.PatternBg(host, UiKit.PatternTintDark, siblingIndex: oldPat.GetSiblingIndex());
+            }
             // 상자 그림만 우리 상자 종류로(자리·크기는 조각 그대로)
             var chestGrp = UiKit.Find(root, "Chest") as RectTransform;
             UiKit.SetSprite(root, "Image_Chest", "chest." + box.Key + ".open", Palette.White);
@@ -576,12 +591,28 @@ namespace KkomaKnight.Game
             if (title != null) title.name = "Title";
             var note = UiKit.Label(root, 5, ChestNoteYPct, 90, 6, $"최고 등급 {GearUi.RarName(D, best.Rar)} · 장착은 장비 탭에서", TextSize.Body, Palette.White, TextAnchor.MiddleCenter, true, false);
             note.name = "Note";
+            // ⓐ T157 — 격자 자리는 **조각이 «여기» 라고 준 칸**(ItemFrame_01)에서 읽는다(주인 «ItemFrame_01 있는 곳에 아이템이 떠야 하는데 썡둥맞은 위치에 뜬다»).
+            // 예전에는 그 칸을 쳐다보지도 않고 «화면 위 24%» 에 제 격자를 얹었다. 수(190×190 · y +217)는 **조각이 들고 있으니 코드에 안 박는다** — 자리·부모를 런타임에 읽는다.
+            var slot = UiKit.Find(root, ChestSlotName) as RectTransform;
             // 격자 = ListItem_EquipMent 본래 크기(188 · 비례 고정) · 4열 — 10개면 3행
             float cs = GearUi.CellSize(App.Assets), gap = 12f; int rows = Mathf.Max(1, (got.Count + ResultCols - 1) / ResultCols);
-            var grid = UiKit.Rect(root, "Got"); grid.anchorMin = new Vector2(0.5f, 1f); grid.anchorMax = new Vector2(0.5f, 1f); grid.pivot = new Vector2(0.5f, 1f);
+            var grid = UiKit.Rect(slot != null ? slot.parent : root, "Got");
             grid.sizeDelta = new Vector2(ResultCols * cs + (ResultCols - 1) * gap, rows * cs + (rows - 1) * gap);
-            grid.anchoredPosition = new Vector2(0, -UiKit.FrameH * ChestGridTopPct / 100f);
-            var gl = grid.gameObject.AddComponent<GridLayoutGroup>(); gl.cellSize = new Vector2(cs, cs); gl.spacing = new Vector2(gap, gap); gl.childAlignment = TextAnchor.UpperCenter; gl.constraint = GridLayoutGroup.Constraint.FixedColumnCount; gl.constraintCount = ResultCols;
+            if (slot != null)
+            {
+                // 조각 칸과 «가운데가 같게» — 한 개면 그 칸에 그대로 앉고, 10개면 그 자리를 가운데로 펼친다(지시서 ⓘⓙ).
+                grid.anchorMin = slot.anchorMin; grid.anchorMax = slot.anchorMax; grid.pivot = new Vector2(0.5f, 0.5f);
+                grid.anchoredPosition = slot.anchoredPosition + (slot.pivot - new Vector2(0.5f, 0.5f)) * -slot.rect.size;
+                // 조각의 초록 프레임은 «자» 로만 쓰고 감춘다 — 우리 칸(GearUi.Cell)이 제 등급색 프레임을 세우므로
+                // 그대로 두면 한 개일 때 초록 링이 등급색 밑에 비치고, 10개일 때는 격자 한복판에 홀로 남는다(결정 407).
+                slot.gameObject.SetActive(false);
+            }
+            else
+            {
+                grid.anchorMin = new Vector2(0.5f, 1f); grid.anchorMax = new Vector2(0.5f, 1f); grid.pivot = new Vector2(0.5f, 1f);
+                grid.anchoredPosition = new Vector2(0, -UiKit.FrameH * ChestGridFallbackTopPct / 100f);
+            }
+            var gl = grid.gameObject.AddComponent<GridLayoutGroup>(); gl.cellSize = new Vector2(cs, cs); gl.spacing = new Vector2(gap, gap); gl.childAlignment = TextAnchor.MiddleCenter; gl.constraint = GridLayoutGroup.Constraint.FixedColumnCount; gl.constraintCount = ResultCols;
             var cells = new List<RectTransform>();
             RectTransform bestCell = null;
             foreach (var g in got) { var c = GearUi.Cell(grid, D, g, new GearUi.CellOpts { IsNew = true }, null); cells.Add(c); if (g == best) bestCell = c; }
