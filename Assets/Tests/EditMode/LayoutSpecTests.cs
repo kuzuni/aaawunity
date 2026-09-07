@@ -65,16 +65,16 @@ namespace KkomaKnight.Tests
             Assert.That(value, Is.EqualTo(v[idx].Value).Within(0.05f), $"{sec} «{name}»");
         }
 
-        /// <summary>㉝ 챕터 보상 페이지(T98 · 레퍼런스 32) — 표 ↔ <see cref="Layout"/> 상수.</summary>
+        /// <summary>㉝ 챕터 보상 페이지(T137 · 레퍼런스 32) — 표 ↔ <see cref="Layout"/> 상수(T137 은 자리를 안 옮겼다 · 행 이름만 «보상 한 칸» 으로 바뀌었다).</summary>
         [Test]
         public void ChapterChest_MatchesSpec()
         {
             var s = Parse();
             Same(s, "㉝", "제목 리본(챕터 보상)", Layout.CcRibbon);
-            Same(s, "㉝", "부제(챕터 N 에서 적 M 처치)", Layout.CcSub);
+            Same(s, "㉝", "부제(챕터 N · 몇 번째 보상)", Layout.CcSub);
             Same(s, "㉝", "챕터 배너(가운데)", Layout.CcBanner);
             Same(s, "㉝", "배너 제목 pill(챕터 N)", Layout.CcBannerTitle);
-            Same(s, "㉝", "배너 목표 글자(적 M 처치)", Layout.CcBannerGoal);
+            Same(s, "㉝", "배너 목표 글자(적 A/B 처치)", Layout.CcBannerGoal);
             Same(s, "㉝", "보상 상자", Layout.CcRewardBox);
             Same(s, "㉝", "보상 머리(보상)", Layout.CcRewardHead);
             Same(s, "㉝", "보상 칸(다이아)", Layout.CcRewardCell);

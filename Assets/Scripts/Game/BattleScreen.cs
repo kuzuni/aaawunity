@@ -259,6 +259,8 @@ namespace KkomaKnight.Game
         {
             _ended = true;
             var D = App.Data; var S = App.Save;
+            // T137 — 챕터 보상 진행도(적 1/3·2/3·전멸)는 «이기든 지든» 여기 한 곳에서 남는다: max(기존, 이번 판 처치)
+            ChapterChest.RecordKills(S, G.Chapter, G.Kills);
             if (G.Cleared)
             {
                 double bonus = Math.Round(D.Tune.GoldClear(G.Chapter));   // index.html openClear: 클리어 보너스 = TUNE.goldClear(chapter)

@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using KkomaKnight.Core;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,14 +7,15 @@ using UnityEngine.UI;
 namespace KkomaKnight.Game
 {
     /// <summary>
-    /// 챕터 보상(Chapter Chest) 페이지 — 레퍼런스 <c>32_lobby_clear.jpg</c> (T98 · 주인 2026-09-07 «로비 → 클리어 보상»).
-    /// 구도(표 ㉝): 상단 재화 바 → 파란 리본 «챕터 보상» → 부제 «챕터 N 에서 적 M 처치» → <b>큰 금테 배너</b>(제목 pill «챕터 N» + 목표 두 줄)
-    /// 와 좌우로 살짝 보이는 이웃 챕터 → «보상» 상자(다이아·골드 칸) → «받기»(못 받으면 회색) → 바닥 띠 + 왼쪽 아래 뒤로.
+    /// 챕터 보상(Chapter Chest) 페이지 — 레퍼런스 <c>32_lobby_clear.jpg</c> (T137 · 주인 2026-09-07 «챕터 보상은 챕터당 3개 … 받으면 옆으로 스크롤»).
+    /// 구도(표 ㉝): 상단 재화 바 → 파란 리본 «챕터 보상» → 부제 → <b>큰 금테 배너</b>(제목 pill «챕터 N» + 목표 두 줄)
+    /// 와 좌우로 살짝 보이는 이웃 보상 → «보상» 상자(다이아·골드 칸) → «받기»(못 받으면 회색) → 바닥 띠 + 왼쪽 아래 뒤로.
     /// <para>
+    /// 배너 한 장 = <b>보상 한 칸</b>(챕터 하나의 «단» 하나 · 챕터가 아니다). 받으면 배너 줄이 한 칸 옆으로 흘러 다음 보상이 가운데로 온다(T137 5항).
     /// 레퍼런스의 «금테 방패» 그림은 주인 에셋에 없다 → <c>CardFrame_04_Yellow</c> 조각으로 같은 구도를 세운다
     /// (ROUTINE ⓑ «부품으로 뜯어 레퍼런스 구도로 재조립» · 새 그림 0). 규칙·수치는 전부 <see cref="ChapterChest"/>(순수 C#)에 있고 여기서는 그리기만 한다.
     /// </para>
-    /// 이름 계약(스모크 테스트): 배너 <c>Banner</c>(이웃 = <c>Banner:prev</c>/<c>Banner:next</c>) · 제목 <c>BannerTitle</c> · 목표 <c>BannerGoal</c> ·
+    /// 이름 계약(스모크 테스트): 배너 줄 <c>BannerRow</c> · 배너 <c>Banner</c>(이웃 = <c>Banner:prev</c>/<c>Banner:next</c>) · 제목 <c>BannerTitle</c> · 목표 <c>BannerGoal</c> ·
     /// 부제 <c>Sub</c> · 보상 칸 <c>Cell:gem</c>/<c>Cell:gold</c> · 버튼 <c>ClaimBtn</c>/<c>BackBtn</c>.
     /// </summary>
     public sealed class ChapterChestScreen : GameScreen
@@ -24,18 +26,21 @@ namespace KkomaKnight.Game
         static readonly Layout.R Screen100 = new Layout.R(0, 0, 100, 100);
         /// <summary>아직 값이 없을 때(데이터 표가 없거나 범위 밖) 보여 주는 자리표.</summary>
         const string Dash = "--";
+        /// <summary>옆으로 흐르는 시간(초) — 연출값이라 코드에 둔다(게임 수치가 아니다).</summary>
+        const float SlideSec = 0.22f;
 
         TopBar _top;
-        RectTransform _banner, _prev, _next, _title, _goal, _rewardBox;
+        RectTransform _row, _banner, _prev, _next, _title, _goal, _rewardBox;
         Text _sub, _titleText, _goalText, _gemQty, _goldQty;
         RectTransform _claim;
-        int _sel = 1;
+        /// <summary>지금 보고 있는 «보상 칸» 번호(0부터 · 챕터 = 번호/단수 + 1 · <see cref="ChapterChest.Cell"/>).</summary>
+        int _cell;
 
-        /// <summary>페이지를 연다 — 받을 수 있는 가장 앞 챕터부터 보여 준다(없으면 도전 중인 챕터).</summary>
+        /// <summary>페이지를 연다 — 받을 수 있는 첫 «단» 부터 보여 준다(없으면 도전 중인 챕터의 못 받은 첫 단).</summary>
         public static void Open(App app)
         {
             var sc = app != null ? app.GetScreen<ChapterChestScreen>() : null;
-            if (sc != null) sc._sel = ChapterChest.FirstOpen(app.Data, app.Save);
+            if (sc != null) sc._cell = ChapterChest.FirstOpen(app.Data, app.Save);
             app?.ShowScreen("chapterChest");
         }
 
@@ -53,9 +58,10 @@ namespace KkomaKnight.Game
             _sub = UiKit.Label(Root, Layout.CcSub.X, Layout.CcSub.Y, Layout.CcSub.W, Layout.CcSub.H, "", TextSize.Body, Palette.CreamDark);
             _sub.name = "Sub";
 
-            // 배너 셋 — 가운데(현재)와 좌우 이웃(가장자리만 보인다 · 누르면 그 챕터로 넘어간다)
-            _prev = Banner("Banner:prev", -Layout.CcBannerPitch, () => Shift(-1));
-            _next = Banner("Banner:next", Layout.CcBannerPitch, () => Shift(+1));
+            // 배너 셋(이전·현재·다음)을 담는 «줄» — 받으면 이 줄을 한 칸 밀었다가 제자리로 되돌리며 글자를 갈아 끼운다(T137 5항)
+            _row = UiKit.Rect(Root, "BannerRow"); UiKit.Pct(_row, Screen100);
+            _prev = Banner("Banner:prev", -Layout.CcBannerPitch, () => Go(-1));
+            _next = Banner("Banner:next", Layout.CcBannerPitch, () => Go(+1));
             _banner = Banner("Banner", 0, null);
             _title = UiKit.Find(_banner, "BannerTitle") as RectTransform;
             _goal = UiKit.Find(_banner, "BannerGoal") as RectTransform;
@@ -80,16 +86,16 @@ namespace KkomaKnight.Game
             { var t = UiKit.ButtonText(back); if (t != null) t.gameObject.SetActive(false); var ic = UiKit.Icon(back, "Icon", "pi.arrow_left", Palette.Cream); UiKit.Pct(ic.rectTransform, 30, 18, 40, 64); }
 
             // 비평 이름표(T46 · 표 ㉝ 의 «요소» 글자 그대로)
-            UiKit.Tag(rrt, "제목 리본(챕터 보상)"); UiKit.Tag(_sub.rectTransform, "부제(챕터 N 에서 적 M 처치)");
-            UiKit.Tag(_banner, "챕터 배너(가운데)"); if (_title != null) UiKit.Tag(_title, "배너 제목 pill(챕터 N)"); if (_goal != null) UiKit.Tag(_goal, "배너 목표 글자(적 M 처치)");
+            UiKit.Tag(rrt, "제목 리본(챕터 보상)"); UiKit.Tag(_sub.rectTransform, "부제(챕터 N · 몇 번째 보상)");
+            UiKit.Tag(_banner, "챕터 배너(가운데)"); if (_title != null) UiKit.Tag(_title, "배너 제목 pill(챕터 N)"); if (_goal != null) UiKit.Tag(_goal, "배너 목표 글자(적 A/B 처치)");
             UiKit.Tag(_rewardBox, "보상 상자"); UiKit.Tag(gemCell, "보상 칸(다이아)"); UiKit.Tag(_claim, "받기 버튼");
             UiKit.Tag(foot.transform, "바닥 띠"); UiKit.Tag(back, "뒤로(◀)");
         }
 
-        /// <summary>배너 한 장 = <c>CardFrame_04_Yellow</c> 조각(제목 띠 + 몸통). 이웃은 흐리게 깔고 누르면 그 챕터로 넘어간다.</summary>
+        /// <summary>배너 한 장 = <c>CardFrame_04_Yellow</c> 조각(제목 띠 + 몸통). 이웃은 흐리게 깔고 누르면 그쪽 보상으로 흘러간다.</summary>
         RectTransform Banner(string name, float dx, Action onClick)
         {
-            var go = UiKit.Spawn("ui.cardFrame.yellow", Root); go.name = name;
+            var go = UiKit.Spawn("ui.cardFrame.yellow", _row); go.name = name;
             var rt = (RectTransform)go.transform;
             UiKit.Pct(rt, new Layout.R(Layout.CcBanner.X + dx, Layout.CcBanner.Y, Layout.CcBanner.W, Layout.CcBanner.H));
             // 조각의 제목 띠(TitleBg) 자리에 «챕터 N» · 몸통에 목표 두 줄 — 조각 요소를 옮기지 않고 글자만 얹는다
@@ -109,40 +115,58 @@ namespace KkomaKnight.Game
             return t != null ? t.GetComponent<Text>() : cell.GetComponentInChildren<Text>(true);
         }
 
-        void Shift(int d)
+        /// <summary>옆으로 한 칸(+1 = 다음 보상 · -1 = 이전) — 글자를 갈아 끼우고 줄을 흘린다.</summary>
+        void Go(int delta)
         {
-            int max = Math.Max(1, Math.Min(App.Save.MaxChapter, App.Data.Tune.MaxChapter));
-            _sel = Mathf.Clamp(_sel + d, 1, max); Refresh();
+            int last = ChapterChest.LastIndex(App.Data, App.Save);
+            int next = Mathf.Clamp(_cell + delta, 0, Math.Max(0, last));
+            if (next == _cell) return;
+            int dir = next > _cell ? 1 : -1;
+            _cell = next; Refresh(); Slide(dir);
+        }
+
+        /// <summary>배너 줄을 한 칸(<see cref="Layout.CcBannerPitch"/>) 밀어 놓고 제자리로 되돌린다 — 새 보상이 옆에서 들어오는 것처럼 보인다.</summary>
+        void Slide(int dir)
+        {
+            if (_row == null) return;
+            _row.DOKill(true);   // 연달아 눌러도 자리가 밀리지 않게 «끝난 상태»(제자리)로 되돌리고 시작
+            float w = _row.rect.width > 1f ? _row.rect.width : UiKit.FrameW;
+            _row.anchoredPosition = new Vector2(w * Layout.CcBannerPitch / 100f * dir, _row.anchoredPosition.y);
+            _row.DOAnchorPos(Vector2.zero, SlideSec).SetEase(Ease.OutCubic).SetLink(_row.gameObject);   // SetLink(T56) — 화면이 파괴돼도 경고 0
         }
 
         void OnClaim()
         {
-            if (!ChapterChest.Claim(App.Data, App.Save, _sel, out var gem, out var gold)) { App.Toast("아직 받을 수 없습니다"); return; }
+            if (!ChapterChest.Cell(App.Data, _cell, out var chapter, out var step)) return;
+            if (!ChapterChest.Claim(App.Data, App.Save, chapter, step, out var gem, out var gold)) { App.Toast("아직 받을 수 없습니다"); return; }
             App.Save.Gem += gem; App.Save.Gold += gold; App.Persist();
             Audio.Sfx("snd.coin");
-            App.Toast($"챕터 {_sel} 보상 — 다이아 {UiKit.Fmt(gem)} · 골드 {UiKit.Fmt(gold)}");
-            Refresh();
+            App.Toast($"챕터 {chapter} · {step}단계 보상 — 다이아 {UiKit.Fmt(gem)} · 골드 {UiKit.Fmt(gold)}");
+            // 받으면 옆으로 스크롤되어 다음 보상(주인 지시) — 마지막 칸이면 제자리에서 «받음» 만 남는다
+            if (_cell < ChapterChest.LastIndex(App.Data, App.Save)) Go(+1);
+            else Refresh();
         }
 
         public override void Refresh()
         {
             var D = App.Data; var S = App.Save;
-            int max = Math.Max(1, Math.Min(S.MaxChapter, D.Tune.MaxChapter));
-            _sel = Mathf.Clamp(_sel, 1, max);
-            var info = ChapterChest.At(D, S, _sel);
+            int last = ChapterChest.LastIndex(D, S);
+            _cell = Mathf.Clamp(_cell, 0, Math.Max(0, last));
+            var info = ChapterChest.AtIndex(D, S, _cell);
             bool ok = info.Chapter != 0;
+            int steps = D != null && D.ChapterChest != null ? D.ChapterChest.Steps : 0;
 
-            if (_sub != null) _sub.text = ok ? $"챕터 {info.Chapter} 에서 적 {info.Kills} 처치" : Dash;
+            if (_sub != null) _sub.text = ok ? $"챕터 {info.Chapter} · {info.Step}/{steps} 번째 보상" : Dash;
             if (_titleText != null) _titleText.text = ok ? $"챕터 {info.Chapter}" : Dash;
-            if (_goalText != null) _goalText.text = ok ? $"적 {info.Kills}\n처치" : Dash;
+            if (_goalText != null) _goalText.text = ok ? $"적 {info.Kills}/{info.Goal}\n처치" : Dash;
             if (_gemQty != null) _gemQty.text = ok ? UiKit.Fmt(info.Gem) : Dash;
             if (_goldQty != null) _goldQty.text = ok ? UiKit.Fmt(info.Gold) : Dash;
 
-            // 이웃 배너 — 범위 밖이면 감춘다(첫 챕터 왼쪽 · 마지막 챕터 오른쪽)
-            if (_prev != null) _prev.gameObject.SetActive(_sel > 1);
-            if (_next != null) _next.gameObject.SetActive(_sel < max);
+            // 이웃 배너 — 범위 밖이면 감춘다(첫 칸 왼쪽 · 마지막 칸 오른쪽)
+            if (_prev != null) _prev.gameObject.SetActive(_cell > 0);
+            if (_next != null) _next.gameObject.SetActive(_cell < last);
             Dim(_prev); Dim(_next);
-            NeighborText(_prev, _sel - 1); NeighborText(_next, _sel + 1);
+            NeighborText(_prev, _cell - 1); NeighborText(_next, _cell + 1);
 
             // 받기 — 받을 수 있으면 주황·눌림 · 이미 받았으면 «받음» · 아직이면 회색
             if (_claim != null)
@@ -161,15 +185,15 @@ namespace KkomaKnight.Game
             var cg = UiKit.Ensure<CanvasGroup>(rt.gameObject); cg.alpha = 0.55f;
         }
 
-        void NeighborText(RectTransform rt, int chapter)
+        void NeighborText(RectTransform rt, int cell)
         {
             if (rt == null || !rt.gameObject.activeSelf) return;
             var tt = UiKit.Find(rt, "BannerTitle"); var gg = UiKit.Find(rt, "BannerGoal");
-            var info = ChapterChest.At(App.Data, App.Save, chapter);
+            var info = ChapterChest.AtIndex(App.Data, App.Save, cell);
             var t1 = tt != null ? tt.GetComponentInChildren<Text>(true) : null;
             var t2 = gg != null ? gg.GetComponentInChildren<Text>(true) : null;
             if (t1 != null) t1.text = info.Chapter != 0 ? $"챕터 {info.Chapter}" : "";
-            if (t2 != null) t2.text = info.Chapter != 0 ? $"적 {info.Kills}\n처치" : "";
+            if (t2 != null) t2.text = info.Chapter != 0 ? $"적 {info.Kills}/{info.Goal}\n처치" : "";
         }
     }
 }

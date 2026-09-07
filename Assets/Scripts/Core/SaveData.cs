@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace KkomaKnight.Core
 {
@@ -59,9 +60,13 @@ namespace KkomaKnight.Core
         public Dictionary<string, int> DunAdUsed = new Dictionary<string, int>();
         /// <summary>던전 키 → 오늘 쓴 «다이아로 티켓» 횟수(상한 = dungeon.json <c>gemPerDay</c>).</summary>
         public Dictionary<string, int> DunGemUsed = new Dictionary<string, int>();
-        /// <summary>이미 받은 <b>챕터 보상</b>(Chapter Chest) 챕터 번호(T98 · 주인 2026-09-07 «로비 → 클리어 보상»).
-        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 빈 목록»(옛 세이브 호환 · <see cref="DunDay"/> 와 같은 방식) — 세이브 버전은 그대로 둔다.</summary>
-        public HashSet<int> ChestClaimed = new HashSet<int>();
+        /// <summary>이미 받은 <b>챕터 보상</b>(Chapter Chest) — 챕터 → «받은 단» 비트(T137 · 주인 2026-09-07 «챕터 보상은 챕터당 3개» · 단 하나가 비트 하나).
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 빈 목록»(옛 세이브 호환 · <see cref="DunDay"/> 와 같은 방식) — 세이브 버전은 그대로 둔다.
+        /// T98 때의 «챕터 번호 목록» 세이브는 <see cref="ChapterChest.OldSaveAll"/> 로 읽어 두었다가 <see cref="ChapterChest.Normalize"/> 가 «단 다 받음» 으로 옮긴다.</summary>
+        public Dictionary<int, int> ChestClaimed = new Dictionary<int, int>();
+        /// <summary>챕터 → 그 챕터에서 잡아 본 <b>최고 처치 수</b>(T137 3항 · 챕터 보상 진행도) — <b>이기든 지든</b> <c>BattleScreen.EndRun</c> 한 곳에서 남는다.
+        /// 이 레포 전용 필드라 «없으면 빈 목록»(옛 세이브 호환 · 세이브 버전 유지) — 이미 깬 챕터는 값이 없어도 «전멸» 로 친다(<see cref="ChapterChest.Progress"/>).</summary>
+        public Dictionary<int, int> ChestKills = new Dictionary<int, int>();
 
         public static SaveData NewSave(GameData D)
         {
@@ -98,7 +103,7 @@ namespace KkomaKnight.Core
             Gold = Math.Max(0, Gold); Gem = Math.Max(0, Gem);
             Speed = Math.Max(SpeedMin, Math.Min(Speed, SpeedMax));
             GiftAds = Math.Max(0, GiftAds); if (GiftClaimed == null) GiftClaimed = new List<bool>();   // 표 길이 보정은 DailyGift.Roll (표를 여기서 모른다)
-            if (ChestClaimed == null) ChestClaimed = new HashSet<int>(); ChapterChest.Normalize(this, D.Tune.MaxChapter);
+            if (ChestClaimed == null) ChestClaimed = new Dictionary<int, int>(); ChapterChest.Normalize(this, D);
             if (ExpSettle < 0) ExpSettle = 0; ExpQuickUsed = Math.Max(0, ExpQuickUsed);   // 빠른 탐험 상한은 Expedition.Roll (표를 여기서 모른다) · 시계 되돌림도 거기서
             Inv.RemoveAll(g => g == null || Array.IndexOf(D.Gear.Parts, g.Part) < 0 || !D.Gear.Options.ContainsKey(g.Type) || g.Rar < 0 || g.Rar >= D.Gear.RarName.Length);
             foreach (var g in Inv) { g.Plus = Math.Max(0, g.Plus); if (g.Rar == D.Gear.RarLegend && g.Plus >= D.Gear.LegendToMythPlus) { g.Rar = D.Gear.RarMyth; g.Plus = 0; } }
@@ -146,7 +151,9 @@ namespace KkomaKnight.Core
             var dt = new Dictionary<string, object>(); foreach (var kv in DunTickets) dt[kv.Key] = (double)kv.Value; o["dunTickets"] = dt;
             var da = new Dictionary<string, object>(); foreach (var kv in DunAdUsed) da[kv.Key] = (double)kv.Value; o["dunAdUsed"] = da;
             var dgm = new Dictionary<string, object>(); foreach (var kv in DunGemUsed) dgm[kv.Key] = (double)kv.Value; o["dunGemUsed"] = dgm;
-            var cc = new List<object>(); foreach (var c in ChestClaimed) cc.Add((double)c); o["chestClaimed"] = cc;
+            // T137 — «챕터 → 받은 단 비트» 라 목록이 아니라 표로 적는다(옛 세이브의 목록 꼴도 읽는다 · FromJson)
+            var cc = new Dictionary<string, object>(); foreach (var kv in ChestClaimed) cc[kv.Key.ToString(CultureInfo.InvariantCulture)] = (double)kv.Value; o["chestClaimed"] = cc;
+            var ck = new Dictionary<string, object>(); foreach (var kv in ChestKills) ck[kv.Key.ToString(CultureInfo.InvariantCulture)] = (double)kv.Value; o["chestKills"] = ck;
             var gb = new Dictionary<string, object>();
             foreach (var kv in GachaBoxes) gb[kv.Key] = new Dictionary<string, object> { ["p50"] = (double)kv.Value.P50, ["p10"] = (double)kv.Value.P10, ["pulls"] = (double)kv.Value.Pulls };
             o["gachaBoxes"] = gb;
@@ -175,7 +182,11 @@ namespace KkomaKnight.Core
                     foreach (var k in j["dunTickets"].Keys) s.DunTickets[k] = j["dunTickets"][k].Int();
                     foreach (var k in j["dunAdUsed"].Keys) s.DunAdUsed[k] = j["dunAdUsed"][k].Int();
                     foreach (var k in j["dunGemUsed"].Keys) s.DunGemUsed[k] = j["dunGemUsed"][k].Int();
-                    foreach (var c in j["chestClaimed"].Items()) s.ChestClaimed.Add(c.Int());
+                    // T137 — 새 세이브는 «챕터 → 비트» 표, T98 옛 세이브는 «챕터 번호 목록»(그 챕터는 «단 다 받음» = ChapterChest.Normalize 가 옮긴다)
+                    var cc = j["chestClaimed"];
+                    if (cc.IsArray) foreach (var c in cc.Items()) s.ChestClaimed[c.Int()] = ChapterChest.OldSaveAll;
+                    else foreach (var k in cc.Keys) if (int.TryParse(k, NumberStyles.Integer, CultureInfo.InvariantCulture, out var c)) s.ChestClaimed[c] = cc[k].Int();
+                    foreach (var k in j["chestKills"].Keys) if (int.TryParse(k, NumberStyles.Integer, CultureInfo.InvariantCulture, out var c)) s.ChestKills[c] = j["chestKills"][k].Int();
                     foreach (var k in j["gachaBoxes"].Keys) s.GachaBoxes[k] = new GachaState { P50 = j["gachaBoxes"][k]["p50"].Int(), P10 = j["gachaBoxes"][k]["p10"].Int(), Pulls = j["gachaBoxes"][k]["pulls"].Int() };
                 }
                 catch (Exception) { s = new SaveData(); }

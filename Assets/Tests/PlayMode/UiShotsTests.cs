@@ -99,6 +99,10 @@ namespace KkomaKnight.Tests.Play
             if (_app.Data != null && _app.Data.Expedition != null) _app.Save.ExpSettle = LobbyPopups.NowSec() - _app.Data.Expedition.MaxHours * 3600.0;
             LobbyPopups.Expedition(_app); yield return Frames(2); yield return Shot("30_expedition");
             LobbyPopups.QuickExplore(_app, null); yield return Frames(2); yield return Shot("31_expedition_fast"); _app.Overlay.Close(); yield return Frames(1);
+            // 32 챕터 보상 (T137 · 표 ㉝) — 챕터 1 을 깬 상태로 열어야 «받을 수 있는 첫 단» 이 가운데에 온다(레퍼런스 32 의 주황 Claim)
+            S.MaxChapter = Mathf.Max(S.MaxChapter, 2); S.SelChapter = S.MaxChapter;
+            ChapterChestScreen.Open(_app); yield return Frames(3); yield return Shot("32_lobby_clear");
+            _app.ShowScreen("lobby"); yield return Frames(1);
 
             // 13 펫 탭 · 14 펫 세부 (T42 껍데기)
             _app.ShowScreen("pet"); yield return Frames(3); yield return Shot("13_pet");
