@@ -236,9 +236,10 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(G.C.AxeSpeed * world_t, flownAxe, G.C.AxeSpeed * world_t * 0.25, "도끼 표시 전진 = axeSpeed × 흐른 시간(±25%)");
             Assert.AreEqual(G.C.SpearSpeed * world_t, flownSpear, G.C.SpearSpeed * world_t * 0.25, "창 표시 전진 = spearSpeed × 흐른 시간(±25%)");
             Assert.Greater(flownSpear, flownAxe, "같은 시간이면 빠른 창(520)이 도끼(430)보다 멀리 간다 — 속도는 거리당이다");
-            // ⓑ 창은 수평(0°) · 화살은 주인 지적 밖이라 종전 각(−35°)
+            // ⓑ 창도 화살도 수평 — 화살의 −35° 는 T179 에서 0 이 됐다(주인 «화살 각도가 완벽히 누워 있어야 하는데 비스듬하다»).
+            // 값은 리터럴로 박지 않고 코드의 상수를 그대로 본다 — 옛 −35° 를 박아 둔 이 줄이 T179 커밋에서 빨개졌던 자리다(결정 425 와 같은 갈래).
             Assert.LessOrEqual(Mathf.Abs(Mathf.DeltaAngle(spearGo.transform.eulerAngles.z, 0f)), 2f, "창은 수평(0°±2°)으로 누워 날아간다(T86 ⓑ · 주인 «비스듬한 각» 지적)");
-            Assert.LessOrEqual(Mathf.Abs(Mathf.DeltaAngle(arrowGo.transform.eulerAngles.z, -35f)), 2f, "화살 각은 종전 그대로(−35° · 지시서 7항)");
+            Assert.LessOrEqual(Mathf.Abs(Mathf.DeltaAngle(arrowGo.transform.eulerAngles.z, BattleWorld.ArrowAngle)), 2f, "플레이어 화살도 수평(T179 · 화살은 포물선을 안 그리므로 가는 방향과 그림이 같아야 한다)");
             // ⓒ 도끼 회전 = 초당 1바퀴(360°/s) — 비행 거리 비율이 아니라 «날아간 시간»에서 나온다
             Assert.AreEqual(360f * world_t, spin, 360f * world_t * 0.2f + 6f, "도끼 회전은 초당 1바퀴여야 한다(±20% · T86 ⓒ · 주인 «너무 빠름»)");
             float expect = -360f * (float)((world.ProjShownX(axe) - axe.StartX) / axe.Spd);

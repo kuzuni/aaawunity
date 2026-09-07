@@ -678,7 +678,7 @@ namespace KkomaKnight.Game
         /// 종전 −35° 는 «쏘아 올린 활» 느낌으로 준 값인데, 화살은 <see cref="ProjKind.Axe"/> 와 달리 <b>포물선을 안 그린다</b>(같은 <c>yf</c> 로 직선 비행) —
         /// 즉 가는 방향과 그림이 어긋나 있었다. 스프라이트 <c>FA_Consumable_Arrow_002</c> 의 본디 기울기는 PNG 실측 <b>0.05°</b>(사실상 수평)라 보정도 필요 없다(결정 415).
         /// </summary>
-        const float ArrowAngle = 0f;
+        public const float ArrowAngle = 0f;
         /// <summary>
         /// 적 화살 각 — 적 화살은 <b>왼쪽</b>으로 나므로 <c>flipX = true</c> 로 좌우만 뒤집고 회전은 <b>0°</b>(T179 ⓐ).
         /// 종전 <c>Euler(0,0,200f)</c> 는 «180°(왼쪽 보기) + 20°» 라 그 20° 가 그대로 기울기로 보였다 — 주인이 말한 «비스듬» 이 이것이다.
