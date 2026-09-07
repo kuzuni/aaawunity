@@ -17,7 +17,7 @@ namespace KkomaKnight.Tests.Play
     /// </para>
     /// <para>
     /// <b>이웃은 둘이다</b> — 회차 1 은 «바닥» 만 보고 불을 위로 올렸다가 이번엔 «안내 문구» 와 겹쳤다
-    /// (run 365 눈 확인: «고르세요» 글자 위에 불꽃 · 결정 477). 한쪽 이웃만 재는 자는 고친 자리를 옆으로 밀 뿐이다.
+    /// (run 365 눈 확인: «고르세요» 글자 위에 불꽃 · 결정 488). 한쪽 이웃만 재는 자는 고친 자리를 옆으로 밀 뿐이다.
     /// </para>
     /// <para>
     /// <b>rect 로 잰다</b> — 그림(잉크)은 <c>preserveAspect</c> 로 칸 안에서 위아래 여백을 갖고 가운데 놓이므로,
@@ -84,7 +84,7 @@ namespace KkomaKnight.Tests.Play
             Assert.GreaterOrEqual(fireTop, hearthTop - eps, "불이 화덕 윗변보다 위로 나갔다(T191)");
             Assert.LessOrEqual(fireBottom, hearthBottom + eps, "불이 화덕 아래 끝보다 아래로 나갔다(T191)");
 
-            // ⚠ 이웃은 **둘**이다 — 회차 1 은 바닥만 보고 불을 올렸다가 안내 문구와 겹쳤다(결정 477).
+            // ⚠ 이웃은 **둘**이다 — 회차 1 은 바닥만 보고 불을 올렸다가 안내 문구와 겹쳤다(결정 488).
             // 안내 상자는 무대가 아니라 Root 의 자식이라 좌표계가 다르다 → 프레임 % 로 환산해 견준다.
             float bannerBottomFrame = (1f - banner.anchorMin.y) * 100f;
             float fireTopFrame = fireTop * Layout.ForgeStage.H + Layout.ForgeStage.Y;
