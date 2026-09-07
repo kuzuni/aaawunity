@@ -320,7 +320,7 @@ namespace KkomaKnight.Game
             for (int i = 0; i < piece.childCount; i++) if (piece.GetChild(i).name == bgName) { bg = piece.GetChild(i); idx = i + 1; break; }
             // 몸통을 채우는 자리는 바탕까지 그 계열색으로 물들인다 — 위·아래 두 조각은 서로 반대 방향 램프라
             // «가운데» 에서 둘 다 반쯤만 덮는다(실측: 회차 2 의 희귀 카드 채도 0.60 · 레퍼런스 0.98).
-            // 비치는 것이 조각의 «회색» 이면 색이 죽고, 두 색의 «가운데 색» 이면 그대로 레퍼런스의 가운데다(결정 339).
+            // 비치는 것이 조각의 «회색» 이면 색이 죽고, 두 색의 «가운데 색» 이면 그대로 레퍼런스의 가운데다(결정 344).
             if (bg != null && alpha >= UiKit.GradientCardSolidAlpha && GradientPalette.Has(paletteName))
             {
                 var img = bg.GetComponent<Image>();

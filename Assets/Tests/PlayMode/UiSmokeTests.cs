@@ -201,7 +201,7 @@ namespace KkomaKnight.Tests.Play
         /// </summary>
         static void AssertSolidGradient(Transform piece, string what, string paletteName)
         {
-            // 회차 3 — 바탕도 두 색의 «가운데 색» 이라야 한다(결정 339). 두 조각이 가운데서 교차하며 반쯤만 덮으므로
+            // 회차 3 — 바탕도 두 색의 «가운데 색» 이라야 한다(결정 344). 두 조각이 가운데서 교차하며 반쯤만 덮으므로
             // 비치는 것이 조각의 회색이면 채도가 죽는다(실측: 희귀 0.60 ↔ 레퍼런스 0.98).
             var bg = UiKit.Find(piece, "Bg");
             Assert.IsNotNull(bg, what + " 카드 조각의 «Bg»");
