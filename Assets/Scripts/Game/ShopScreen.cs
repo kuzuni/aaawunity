@@ -525,7 +525,7 @@ namespace KkomaKnight.Game
                 S.Pulls++;
             }
             App.Persist(); Refresh();
-            // 소리는 «착지하는 순간» 에 난다 — ChestResult 의 연출 시퀀스가 낸다(T180 · 결정 416). 여기서 미리 내면 상자가 아직 공중이다.
+            // 소리는 «착지하는 순간» 에 난다 — ChestResult 의 연출 시퀀스가 낸다(T180 · 결정 420). 여기서 미리 내면 상자가 아직 공중이다.
             var best = got[0]; foreach (var g in got) if (GearSystem.GearScore(g) > GearSystem.GearScore(best)) best = g;
             ChestResult(box, n, got, best);
         }
@@ -646,7 +646,7 @@ namespace KkomaKnight.Game
                 seq.Insert(0f, chestGrp.DOAnchorPos(home, ChestFallSec).SetEase(Ease.InQuad).SetUpdate(true).SetLink(chestGrp.gameObject));
                 // 착지 «쿵» — 예전에는 이 펀치가 0초에 있었다(떨어지기 전에 흔들렸다). 이제 «닿는 순간» 이다.
                 seq.Insert(ChestFallSec, chestGrp.DOPunchAnchorPos(new Vector2(0f, 22f), ChestShake, 12, 1f).SetUpdate(true).SetLink(chestGrp.gameObject));
-                seq.InsertCallback(ChestFallSec, () => Audio.Sfx("snd.gacha"));   // 착지음(T28) — 뽑기 직후가 아니라 «닿는 순간»(결정 416)
+                seq.InsertCallback(ChestFallSec, () => Audio.Sfx("snd.gacha"));   // 착지음(T28) — 뽑기 직후가 아니라 «닿는 순간»(결정 420)
             }
             // 닫힘 → 열림은 한 프레임에 톡 바뀌지만 같은 시각의 빛 폭발이 그 순간을 덮는다.
             // InsertCallback 이라 탭 스킵(DOTween.CompleteAll(true) · withCallbacks)에서도 «열린 상자» 로 끝난다(지시서 4항 ⓓ).
