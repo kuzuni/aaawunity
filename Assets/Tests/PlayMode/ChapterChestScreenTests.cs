@@ -108,8 +108,13 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(gem0 + D.ChapterChest.Gem, S.Gem, 1e-6, "다이아가 늘었다");
                 Assert.AreEqual(gold0 + D.ChapterChest.Gold, S.Gold, 1e-6, "골드가 늘었다");
                 Assert.IsTrue(ChapterChest.ClaimedStep(S, 1, st), "받았다고 남는다");
-                Assert.AreEqual("챕터 1", TextOf(Find(page, "Banner"), "BannerTitle"), "아직 챕터 1 안이다");
-                if (st < steps) StringAssert.Contains($"{st + 1}/{steps}", TextOf(page, "Sub"), "받으면 옆으로 — 다음 보상이 가운데로");
+                // 마지막 단을 받으면 «다음 챕터의 첫 단» 이 가운데로 온다(칸 번호는 챕터를 넘어 이어진다) — 그 전까지는 같은 챕터 안에서 옆으로
+                if (st < steps)
+                {
+                    Assert.AreEqual("챕터 1", TextOf(Find(page, "Banner"), "BannerTitle"), "아직 챕터 1 안이다");
+                    StringAssert.Contains($"{st + 1}/{steps}", TextOf(page, "Sub"), "받으면 옆으로 — 다음 보상이 가운데로");
+                }
+                else Assert.AreEqual("챕터 2", TextOf(Find(page, "Banner"), "BannerTitle"), "마지막 단을 받으면 다음 챕터의 첫 단으로 넘어간다");
             }
             Assert.AreEqual(D.ChapterChest.Gem * steps, S.Gem, 1e-6, "한 챕터 다 받으면 다이아 300");
             Assert.AreEqual(D.ChapterChest.Gold * steps, S.Gold, 1e-6, "한 챕터 다 받으면 골드 3000");
