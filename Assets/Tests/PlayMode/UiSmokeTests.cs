@@ -284,7 +284,23 @@ namespace KkomaKnight.Tests.Play
             Assert.LessOrEqual(t.preferredHeight, t.rectTransform.rect.height + 1f, $"{what} «{t.text}» 가 칸({t.rectTransform.rect.height:0}) 을 넘친다");
         }
         /// <summary>살아 있는 shine 머티리얼 인스턴스 수(T61 · 카드가 파괴되면 0 이어야 한다 — 에셋 «PerkShine» 자체는 이름이 달라 안 센다).</summary>
-        static int CountShineInstances() { int n = 0; foreach (var m in Resources.FindObjectsOfTypeAll<Material>()) if (m != null && m.name == "PerkShine (Instance)") n++; return n; }
+        /// <summary>
+        /// <b>임자 없는</b> shine 머티리얼 인스턴스 수(T61 계약 «카드가 죽으면 인스턴스도 죽는다» 의 자).
+        /// <para>
+        /// 전에는 씬 전체의 «PerkShine (Instance)» 를 세었다 — 특전 카드가 <b>유일한</b> 사용자일 때는 그것이 곧 누수 개수였다.
+        /// T166 ⓑ 로 <b>일부러 오래 사는</b> 두 번째 사용자(로비 챕터 카드의 되풀이 shine)가 생기면서 그 셈은 «살아 있는 정상 인스턴스» 까지 세어 버렸다.
+        /// 그래서 재는 것을 <b>성질</b>로 바꾼다: 살아 있는 <see cref="UiKit.MaterialOwner"/> 가 <b>아무도 안 쥔</b> 인스턴스 = 누수.
+        /// 이 자는 종전보다 <b>더 세다</b> — 다른 카드가 살아 있는 동안에도 누수를 잡는다(종전에는 개수가 0 이 아니면 무조건 빨강이라 그런 상황을 아예 못 쟀다).
+        /// </para>
+        /// </summary>
+        static int CountShineInstances()
+        {
+            var owned = new HashSet<Material>();
+            foreach (var mo in Resources.FindObjectsOfTypeAll<UiKit.MaterialOwner>()) if (mo != null && mo.Mat != null) owned.Add(mo.Mat);
+            int n = 0;
+            foreach (var m in Resources.FindObjectsOfTypeAll<Material>()) if (m != null && m.name == "PerkShine (Instance)" && !owned.Contains(m)) n++;
+            return n;
+        }
 
         /// <summary>테스트용 장비 — gear.json 의 부위×종류 표(AllTypes)에서 만든다(뽑기와 같은 규칙 · 등급 0).</summary>
         GearItem Give(string part, int rar = 0, int plus = 0)
@@ -1351,7 +1367,7 @@ namespace KkomaKnight.Tests.Play
             var first = cards.GetChild(0).GetComponent<Button>(); Assert.IsNotNull(first, "카드는 클릭 가능"); first.onClick.Invoke(); yield return Frames(3);
             Assert.AreEqual(1, G.Taken.Count, "특전 1개 획득"); Assert.IsFalse(_app.Overlay.IsOpen);
             Assert.IsFalse(UiKit.IsTweening(_app.Overlay.Root), "Close 뒤 팝업 층을 겨냥한 연출 시퀀스 0(T49)"); foreach (var c in cardRts) Assert.IsFalse(UiKit.IsTweening(c), "Close 뒤 카드를 겨냥한 트윈 0");
-            Assert.AreEqual(0, CountShineInstances(), "Close 뒤 shine 머티리얼 인스턴스 0(카드 파괴 = MaterialOwner 가 인스턴스 파괴 · T61)");
+            Assert.AreEqual(0, CountShineInstances(), "Close 뒤 «임자 없는» shine 인스턴스 0(카드 파괴 = MaterialOwner 가 인스턴스 파괴 · T61 · 로비 카드처럼 일부러 사는 것은 임자가 있어 안 센다 · T166 ⓑ)");
             G.Pending = null;   // 엔진이 3초 동안 쌓아 둔 레벨업이 이어서 열렸을 수 있다 — 여기서는 팝업 하나씩만 본다
             Check("특전 선택 뒤(HUD 특전 줄 갱신)");
 
@@ -1367,7 +1383,7 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(1, _app.Overlay.ShineStarts.Count, "보유 특전 카드 1장 = shine 1(T61)");
             { var bookMo = UiKit.Find(_app.Overlay.Root, "Content").GetChild(0).GetComponent<UiKit.MaterialOwner>(); Assert.IsNotNull(bookMo, "보유 특전 카드 MaterialOwner"); Assert.AreEqual(UiKit.ShineTo, bookMo.Mat.GetFloat(UiKit.ShineLocationId), 1e-3f, "CompleteAll 뒤 shine 끝 값"); }
             Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), "배경 탭"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen, "배경 탭으로 닫힌다");
-            yield return Frames(2); Assert.AreEqual(0, CountShineInstances(), "보유 특전 닫은 뒤 shine 인스턴스 0(T61)");
+            yield return Frames(2); Assert.AreEqual(0, CountShineInstances(), "보유 특전 닫은 뒤 «임자 없는» shine 인스턴스 0(T61)");
 
             // 쉼터
             G.Pending = new PendingDecision { Kind = PendingKind.Rest };
