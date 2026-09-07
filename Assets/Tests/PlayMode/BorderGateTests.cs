@@ -122,12 +122,16 @@ namespace KkomaKnight.Tests.Play
             if (icon != null && icon.parent == pill) Assert.Greater(icon.GetSiblingIndex(), bt.GetSiblingIndex(), label + " 아이콘은 테두리 위(형제 순서 뒤)");
         }
 
-        /// <summary>칸 안 등급 조각(<c>ItemFrame_01_Normal_&lt;색&gt;</c>)의 바탕 스프라이트 이름 — T103 2항 «등급 = 색 변형 교체» 를 재는 자.</summary>
+        /// <summary>
+        /// 칸 안 등급 조각의 <b>카탈로그 키</b>(<c>ui.itemFrame.&lt;색&gt;</c>) — T103 2항 «등급 = 색 변형 교체» 를 재는 자.
+        /// <see cref="UiKit.Spawn"/> 이 인스턴스 이름을 카탈로그 키로 바꿔 두므로 오브젝트 이름이 곧 «어느 변형을 세웠는가» 다
+        /// (스프라이트 이름으로 재던 첫 판은 조각 안 그림 이름이 달라 CI #225 에서 빨갰다 — 워커 결정 기록).
+        /// </summary>
         static string GradeSprite(Transform cell)
         {
-            var area = cell != null ? UiKit.Find(cell, "NormalArea") : null; if (area == null) return null;
-            foreach (var im in area.GetComponentsInChildren<Image>(false))
-                if (im != null && im.sprite != null && im.sprite.name.StartsWith("ItemFrame_01_Normal", System.StringComparison.Ordinal)) return im.sprite.name;
+            if (cell == null) return null;
+            foreach (var t in cell.GetComponentsInChildren<Transform>(false))
+                if (t != null && t.name.StartsWith("ui.itemFrame.", System.StringComparison.Ordinal)) return t.name;
             return null;
         }
 
