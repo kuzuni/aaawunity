@@ -386,12 +386,13 @@ namespace KkomaKnight.Game
             fill.size = new Vector2(Mathf.Max(0.001f, w * f), fill.size.y);
             fill.transform.localPosition = new Vector3(-(w - w * f) / 2f, 0, 0);
         }
-        /// <summary>발밑 바 안의 숫자(T35) — 팝 층의 uGUI Text(흰 글자 · 외곽선). 글자 높이는 바 높이(FootBarH % · 프레임 px)에서 재되 보조 라벨 하한(T63 · 36)을 밑돌지 않는다 — 픽셀 상수 없음. 글자 칸 높이는 «올린 뒤» 크기로(전엔 올리기 전 크기라 게이트 «잘림»).</summary>
+        /// <summary>발밑 바 안의 숫자(T35) — 팝 층의 uGUI Text(흰 글자 · 외곽선). 크기는 <see cref="FootFontSize"/>(바 높이에서 잰다 · 픽셀 상수 없음). 글자 칸 높이는 «올린 뒤» 크기로(전엔 올리기 전 크기라 게이트 «잘림»).</summary>
         Text FootText(string name)
         {
             if (_pops == null) return null;
-            int size = Mathf.RoundToInt(UiKit.FrameH * Layout.FootBarH / 100f * 0.8f);
-            var t = UiKit.Text(_pops, "", size, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Aux); t.name = name;
+            int size = FootFontSize;
+            // TextKind.Small = «정말 작아야 하는 곳»(하한 없음 · 호출부가 명시) — 이 자리만의 T63 예외다. 까닭은 FootFontSize 주석(결정 361).
+            var t = UiKit.Text(_pops, "", size, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Small); t.name = name;
             size = t.fontSize;
             t.horizontalOverflow = HorizontalWrapMode.Overflow; t.fontStyle = FontStyle.Bold; t.raycastTarget = false;
             var rt = t.rectTransform; rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f); rt.sizeDelta = new Vector2(400, size * 1.4f);
@@ -407,12 +408,12 @@ namespace KkomaKnight.Game
             if (t.text != s) { t.text = s; FitFootText(t, barPctW); }
         }
 
-        /// <summary>발밑 바 숫자가 바 «안» 에 들도록 글자 크기를 줄인다(T125 ⓑ) — 글자가 바뀔 때만 부른다(<c>preferredWidth</c> 는 레이아웃을 건드린다).</summary>
+        /// <summary>발밑 바 숫자가 바 «안» 에 들도록 글자 크기를 줄이는 <b>안전판</b>(T125 ⓑ) — 글자가 바뀔 때만 부른다(<c>preferredWidth</c> 는 레이아웃을 건드린다).</summary>
         /// <param name="barPctW">바 폭(프레임 %) — 플레이어 <see cref="Layout.PlayerFootBarW"/> · 적 <see cref="Layout.EnemyFootBarW"/> (둘 다 <see cref="Layout.FootBarScale"/> 곱한 값).</param>
         /// <remarks>
-        /// 왜 필요한가(screens run 239 `02_battle.png` 실측): 이 글자는 <c>horizontalOverflow = Overflow</c> 라 바 폭과 무관하게 그려지고,
-        /// 크기는 T63 하한(<see cref="TextKind.Aux"/>)까지 올라간다. 우리 값이 네 자리를 넘어서면(«1239»·«12.9K») 글자가 바보다 넓어져
-        /// <b>글자끼리 겹치고 검은 아웃라인이 뭉쳐 흰 덩어리</b>가 되고 빨강·파랑 채움도 가려진다(레퍼런스 02 는 «1055»·«2258» 이 바 안에 여유 있게 든다).
+        /// ⚠ <b>지금 값으로는 한 번도 걸리지 않는다</b> — 자세한 실측은 <see cref="FootTextFill"/> 주석(결정 361). 여기 남겨 두는 이유는
+        /// 이 글자가 <c>horizontalOverflow = Overflow</c> 라 <b>바 폭과 무관하게</b> 그려지기 때문이다: 나중에 표기가 길어지거나(다섯 자리·꼬리표 두 글자)
+        /// T63 하한(<see cref="TextKind.Aux"/>)이 올라가면 그때는 실제로 바를 넘게 되고, 그 자리를 이 함수가 막는다.
         /// 하한은 <see cref="MinFootFont"/> — 그 아래로는 안 줄이고, 그래도 넘치면 그냥 넘치게 둔다(안 보이는 것보다 낫다).
         /// </remarks>
         static void FitFootText(Text t, float barPctW)
@@ -426,17 +427,40 @@ namespace KkomaKnight.Game
             }
         }
         /// <summary>
-        /// 발밑 바 숫자가 쓸 수 있는 바 폭 비율 — <b>레퍼런스 02 실측 0.74</b>(720px 사본에서 바 ≈70px · «1055»·«2258» ≈52px)에서 조금 여유를 둔 값(T125 ⓑ 회차 2).
-        /// 회차 1 의 0.86 은 «바를 안 넘는다» 는 만족시켰지만 <b>글자끼리 붙어 여전히 뭉갰다</b>(screens run 246 실측) — 우리 글자는 굵고(Bold)
-        /// T63-outline 의 검은 아웃라인이 두꺼워서 레퍼런스보다 글자 사이 여백이 더 필요하다.
+        /// 발밑 바 숫자가 쓸 수 있는 바 <b>폭</b> 비율 — 레퍼런스 02 실측 0.74(720px 사본에서 바 ≈70px · «1055»·«2258» ≈52px)에 맞춘 값.
+        /// <para>
+        /// ⚠ <b>정정(결정 361)</b>: «숫자가 바 <b>폭</b>을 넘어 뭉갠다» 는 T125 ⓑ 의 등재 전제는 <b>사실이 아니었다</b>. screens 캡처를 픽셀로 재면
+        /// 우리 숫자는 처음부터 바보다 좁았다 — run 239 폭비 <b>0.70</b> · run 246·255 <b>0.72</b>(레퍼런스가 오히려 더 꽉 찬 0.74).
+        /// 그래서 회차 1(<see cref="FootNum"/> 의 콤마 제거)은 글자를 40→36px 로 실제로 줄였지만, 회차 2 의 이 상수 0.86→0.72 는
+        /// <b>아무것도 바꾸지 않았다</b>(<see cref="FitFootText"/> 의 줄이기 고리가 한 번도 돌지 않는다).
+        /// 뭉갠 것은 폭이 아니라 <b>높이</b>였다 — <see cref="FootTextHeight"/> 참조.
+        /// </para>
         /// </summary>
         const float FootTextFill = 0.72f;
         /// <summary>
+        /// 발밑 바 숫자 크기 = 바 높이(<see cref="Layout.FootBarH"/> % · 프레임 px) × 이 값 — <b>레퍼런스 02 실측</b>(결정 361).
+        /// <para>
+        /// 실측(레퍼런스 720px 사본 / 우리 screens run 255 · 빨간 HP 단): 레퍼런스는 바 18px 안에 숫자 잉크가 <b>9px = 바 높이의 0.50</b> 이고
+        /// 바 넓이의 <b>12%</b>만 흰 픽셀이다. 우리는 바 17px 에 잉크 <b>14px = 0.82</b> 이고 흰 픽셀이 <b>49%</b> — 숫자가 단을 거의 덮어
+        /// 빨강·파랑 채움이 가려지고 획 사이가 메워져 «흰 덩어리» 로 보였다. 폭이 아니라 <b>높이가 범인</b>이다.
+        /// </para>
+        /// <para>
+        /// 왜 그렇게 컸나: 전에는 «바 높이 × 0.8» 로 재 놓고 <c>TextKind.Aux</c> 로 만들어 T63 하한(<see cref="TextSize.Aux"/> 36)이
+        /// 그 값을 <b>도로 끌어올렸다</b>. 그래서 <see cref="FootText"/> 는 이제 <c>TextKind.Small</c>(하한 없음 · 호출부 명시)을 쓴다.
+        /// 값 = 레퍼런스 비 0.50 ÷ 우리 글자의 «잉크 ÷ 크기» ≈ 0.78 ⇒ <b>0.64</b>.
+        /// </para>
+        /// </summary>
+        const float FootTextHeight = 0.64f;
+        /// <summary>
         /// 발밑 바 숫자의 하한(T63 «글씨 작다» 와의 절충 — 이 아래로는 안 줄인다 · 배지급 글자 크기).
-        /// T63 의 본문·보조 하한(40·36)보다 낮은 것은 <b>이 자리만의 예외</b>다: 바 폭이 «캐릭터 폭» 으로 정해져 있어(표 ② 상수) 글자를 키우면 넘치고,
+        /// T63 의 본문·보조 하한(40·36)보다 낮은 것은 <b>이 자리만의 예외</b>다: 바 높이가 표 ② 상수로 정해져 있어 글자를 키우면 단을 덮고,
         /// 레퍼런스 02 도 이 숫자만은 작게 그린다(화면에서 가장 작은 글자). 다른 자리에는 적용되지 않는다.
+        /// 지금은 이 하한이 실제로 <b>걸린다</b> — 바 높이에서 잰 값(≈24)보다 크므로 최종 크기는 26 이고, 그래서 잉크 비는 레퍼런스 0.50 이 아니라 ≈0.59 다
+        /// (주인 지시 T63 «글씨가 작아 안 읽힌다» 를 더 깎지 않으려는 절충 · 결정 361).
         /// </summary>
         const int MinFootFont = 26;
+        /// <summary>발밑 바 숫자의 최종 글자 크기 — 바 높이에서 재고(<see cref="FootTextHeight"/>) <see cref="MinFootFont"/> 로 받친다. 게이트가 같은 식으로 단언한다.</summary>
+        public static int FootFontSize => Mathf.Max(MinFootFont, Mathf.RoundToInt(UiKit.FrameH * Layout.FootBarH / 100f * FootTextHeight));
         /// <summary>발밑 바 숫자 표기 — 레퍼런스 02·03 처럼 <b>천 단위 콤마 없이</b>(«1239») 쓴다. 큰 수의 K/M 꼬리표는 <see cref="UiKit.Fmt"/> 그대로 남는다(T125 ⓑ).</summary>
         static string FootNum(double v) => UiKit.Fmt(System.Math.Ceiling(v)).Replace(",", "");
         void BuildPlayer()

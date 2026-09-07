@@ -73,14 +73,19 @@ namespace KkomaKnight.Tests.Play
             // ⓑ 플레이어 발밑 2단 — 빨강 HP(숫자) 위 · 파랑 실드(숫자) 아래 · 실드 0 이면 파란 단 숨김 · 바 폭 = 표 폭 × 2/3
             Assert.IsNotNull(W.PlayerHpBar, "플레이어 HP 바"); Assert.IsTrue(W.PlayerHpBar.gameObject.activeSelf, "HP 단 보임");
             Assert.IsNotNull(W.PlayerHpText, "HP 단 숫자(팝 층 uGUI)"); Assert.IsTrue(W.PlayerHpText.gameObject.activeSelf, "HP 숫자 보임");
-            Assert.AreEqual(UiKit.Fmt(System.Math.Ceiling(W.ShownHp)), W.PlayerHpText.text, "HP 단 숫자 = 표시 체력");
+            // 발밑 숫자는 레퍼런스 02·03 처럼 «천 단위 콤마 없이»(T125 ⓑ 회차 1 · BattleWorld.FootNum) — K/M 꼬리표는 Fmt 그대로 남는다
+            Assert.AreEqual(UiKit.Fmt(System.Math.Ceiling(W.ShownHp)).Replace(",", ""), W.PlayerHpText.text, "HP 단 숫자 = 표시 체력(콤마 없이)");
             Assert.AreEqual(P.MaxSh > 0, W.PlayerShBar.gameObject.activeSelf, "실드 단은 실드가 있을 때만");
-            if (P.MaxSh > 0) { Assert.IsTrue(W.PlayerShText.gameObject.activeSelf, "실드 숫자 보임"); Assert.AreEqual(UiKit.Fmt(System.Math.Ceiling(W.ShownSh)), W.PlayerShText.text, "실드 단 숫자"); }
+            if (P.MaxSh > 0) { Assert.IsTrue(W.PlayerShText.gameObject.activeSelf, "실드 숫자 보임"); Assert.AreEqual(UiKit.Fmt(System.Math.Ceiling(W.ShownSh)).Replace(",", ""), W.PlayerShText.text, "실드 단 숫자(콤마 없이)"); }
             else Assert.IsTrue(W.PlayerShText == null || !W.PlayerShText.gameObject.activeSelf, "실드 0 이면 파란 단의 숫자도 숨김");
             Assert.Less(W.PlayerShBar.transform.position.y, W.PlayerHpBar.transform.position.y, "파란 단은 빨간 단 아래");
             Assert.AreEqual(WorldCam.PctW(Layout.PlayerFootBarW) * Layout.FootBarScale, W.PlayerHpBar.size.x, 1e-3f, "HP 단 폭 = 표 폭 × FootBarScale(T63-battle · 숫자 36 이 들어가게)");
-            // 발밑 숫자(T63-battle): 보조 하한(36) 이상 · 글자 칸 높이 ≥ 선호 높이(게이트 «잘림» 0) · 선호 폭이 바 폭 안(레퍼런스 03 «2555» 처럼 바 안에 들어감)
-            Assert.GreaterOrEqual(W.PlayerHpText.fontSize, TextSize.Aux, "발밑 숫자 = 보조 하한 이상");
+            // 발밑 숫자(T63-battle · T125 ⓑ 회차 3): 크기는 «바 높이에서 잰 값»(BattleWorld.FootFontSize) 그대로 — T63 보조 하한(36)을 일부러 벗어난다.
+            // 왜 = 레퍼런스 02 는 숫자 잉크가 바 높이의 0.50 인데 우리는 Aux 하한에 끌려 올라가 0.82 였고, 그래서 숫자가 단을 덮어 채움색이 안 보였다(결정 361).
+            Assert.AreEqual(BattleWorld.FootFontSize, W.PlayerHpText.fontSize, "발밑 숫자 크기 = 바 높이에서 잰 값(Aux 하한 아님)");
+            Assert.Less(W.PlayerHpText.fontSize, TextSize.Aux, "발밑 숫자는 보조 하한보다 작다 — 이 자리만의 T63 예외(결정 361)");
+            Assert.GreaterOrEqual(W.PlayerHpText.fontSize, 26, "그래도 배지급 하한(BattleWorld.MinFootFont 26) 아래로는 안 내려간다");
+            Assert.LessOrEqual(W.PlayerHpText.fontSize, UiKit.FrameH * Layout.FootBarH / 100f * 0.8f, "발밑 숫자 ≤ 단 높이 × 0.8 — 넘으면 숫자가 단을 덮어 빨강·파랑 채움이 안 보인다(결정 361)");
             Assert.GreaterOrEqual(W.PlayerHpText.rectTransform.rect.height, W.PlayerHpText.preferredHeight - 1f, "발밑 숫자 칸 높이 ≥ 선호 높이(잘림 0)");
             Assert.LessOrEqual(W.PlayerHpText.preferredWidth, W.PlayerHpBar.size.x * WorldCam.PPU * (UiKit.FrameW / WorldCam.LayoutW) + 1f, "발밑 숫자 «" + W.PlayerHpText.text + "» 가 바 폭 안에");
             Assert.AreEqual(W.PlayerHpBar.size.x, W.PlayerShBar.size.x, 1e-3f, "두 단은 같은 폭"); Assert.AreEqual(W.PlayerHpBar.size.y, W.PlayerShBar.size.y, 1e-3f, "두 단은 같은 높이");
