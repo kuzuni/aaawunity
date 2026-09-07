@@ -121,9 +121,10 @@ namespace KkomaKnight.Game
             BuildColumn(rt, "Events", Layout.LobbyEvents, true, (SideEvents, "ui.iconDungeon", "이벤트"));
 
             // ⑦ 하단 탭 5칸 — 프리팹 탭 바 조각을 표 자리에 (상점 · 장비 · 전투 · 던전 · 펫 — T10 · «탤런트 → 던전» 은 T43)
-            NavBar.BottomFrame(rt);   // T106 ⓓ — 로비는 탭 바를 프리팹에서 가져오므로 띠를 여기서 따로 깐다(탭 바보다 먼저 = 바 뒤)
+            // T106 ⓓ — 로비는 탭 바를 프리팹에서 가져오므로 띠를 여기서 따로 깐다 · T122: 띠가 스스로 «탭 바 바로 앞» 으로 들어가고, 바도 맨 위로 올려 둘 다에서 순서를 못 박는다
+            NavBar.BottomFrame(rt);
             _tabs = UiKit.Find(rt, "Tab_01_BottomFlushMenu");
-            if (_tabs != null) { var tt = (RectTransform)_tabs; tt.SetParent(rt, false); UiKit.Pct(tt, Layout.TabBar); NavBar.Wire(App, _tabs, "lobby"); UiKit.Tag(tt, "하단 탭바"); }
+            if (_tabs != null) { var tt = (RectTransform)_tabs; tt.SetParent(rt, false); tt.SetAsLastSibling(); UiKit.Pct(tt, Layout.TabBar); NavBar.Wire(App, _tabs, "lobby"); UiKit.Tag(tt, "하단 탭바"); }
         }
 
         /// <summary>
@@ -387,14 +388,29 @@ namespace KkomaKnight.Game
         /// <summary>
         /// 하단 프레임 띠 — 아래 SafeArea(제스처 바)·레터박스만큼 탭 바 바탕을 화면 끝까지 늘린다(T106 ⓓ · 결정 255).
         /// 탭 바 «안» 이 아니라 **형제**로 둔다(<see cref="Wire"/> 가 바의 자식 0~4 를 탭으로 배선하므로 자식을 늘리면 탭이 밀린다) ·
-        /// **탭 바보다 먼저** 불러야 띠가 바 뒤에 깔린다. 탭 바를 <see cref="Attach"/> 로 세우지 않고 프리팹 것을 쓰는 화면(로비)도 이것을 부른다.
+        /// 탭 바를 <see cref="Attach"/> 로 세우지 않고 프리팹 것을 쓰는 화면(로비)도 이것을 부른다.
+        /// <b>T122</b> — 띠는 만들자마자 «이미 있는 탭 바 바로 앞» 으로 옮긴다: 새로 만든 오브젝트는 형제 <b>맨 뒤</b>(= 맨 위)에 붙는데,
+        /// 로비의 탭 바는 프리팹이 달고 온 자식이라 <c>SetParent(같은 부모)</c> 로는 형제 순서가 안 바뀐다 → 띠가 탭 바를 통째로 덮었다(screens run 218 실측).
+        /// 부르는 순서(바보다 먼저/나중)에 기대지 않게 여기서 자리를 잡는다.
         /// </summary>
         public static Image BottomFrame(RectTransform root)
         {
             var band = UiKit.Panel(root, BottomFrameName, "fr.rect", Palette.TopFrame);
             var brt = band.rectTransform; UiKit.Pct(brt, Layout.TabBar);
             brt.offsetMin = new Vector2(-TopBar.FrameOverscan, -TopBar.FrameOverscan); brt.offsetMax = new Vector2(TopBar.FrameOverscan, 0f);
+            var barTop = BarSibling(root);
+            if (barTop != null && barTop != band.transform) band.transform.SetSiblingIndex(barTop.GetSiblingIndex());
             return band;
+        }
+
+        /// <summary>이미 서 있는 탭 바가 속한 «root 의 직계 자식» — 없으면 null. (프리팹 안에 깊이 들어 있어도 그 조상을 돌려준다.)</summary>
+        static Transform BarSibling(RectTransform root)
+        {
+            var bar = UiKit.FindAny(root, "Tab_01_BottomFlushMenu", "ui.tabBar");
+            if (bar == null) return null;
+            var t = bar;
+            while (t != null && t.parent != root) t = t.parent;
+            return t;
         }
         /// <summary>탭 바(Tab_01_BottomFlushMenu 인스턴스)의 자식 5개에 아이콘·라벨·클릭을 배선한다. current = 켜 둘 탭(«lobby» 는 전투 탭).</summary>
         public static void Wire(App app, Transform bar, string current)

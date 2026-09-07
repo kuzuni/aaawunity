@@ -768,6 +768,21 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(frameBefore.width, frameAfter.width, 0.5f, "같음(폭)");
             Assert.AreEqual(frameBefore.height, frameAfter.height, 0.5f, "같음(높이)");
 
+            // T122 — 하단 띠는 탭 바보다 «뒤»(형제 순서 앞)여야 한다. 로비는 탭 바가 프리팹이 달고 온 자식이라
+            // 새로 만든 띠가 형제 맨 뒤(= 맨 위)에 붙어 탭 바를 통째로 덮었다(screens run 218 실측). 두 경로(프리팹·Attach) 다 잰다.
+            foreach (var screen in new[] { "lobby", "shop" })
+            {
+                _app.ShowScreen(screen); yield return Frames(2); Canvas.ForceUpdateCanvases();
+                var sr = _app.Current.Root; string w2 = "[" + screen + "] ";
+                var bandT = sr.Find(NavBar.BottomFrameName);
+                Assert.IsNotNull(bandT, w2 + "하단 프레임 띠");
+                var bar = UiKit.FindAny(sr, "Tab_01_BottomFlushMenu", "ui.tabBar");
+                Assert.IsNotNull(bar, w2 + "하단 탭 바");
+                var barTop = bar; while (barTop != null && barTop.parent != sr) barTop = barTop.parent;
+                Assert.IsNotNull(barTop, w2 + "탭 바가 화면 루트 아래에 있다");
+                Assert.Less(bandT.GetSiblingIndex(), barTop.GetSiblingIndex(), w2 + "띠는 탭 바 뒤(= 탭 아이콘·라벨을 가리지 않는다 · T122)");
+            }
+
             _log.AssertNoRed("T106 SafeArea · 상단 프레임");
             yield return Shutdown();
         }
