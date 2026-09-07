@@ -107,9 +107,16 @@ namespace KkomaKnight.Game
         /// 장착 슬롯(GearScreen) · 인벤/대장간/뽑기 결과/세부 팝업 칸(<see cref="Cell"/>) · 빈 슬롯 팝업(<see cref="OpenSlot"/>) · 펫·상점·던전·아레나·로비 팝업의 물건 칸이 전부 이 함수를 거친다.
         /// <paramref name="scale"/> 는 굵히기를 하던 시절의 인자다 — 호출부 열세 곳을 건드리지 않으려고 자리만 남겼다(T103 · 워커 결정 기록).
         /// </summary>
+        /// <summary>아이템 칸 조각이 달고 오는 «튀는» 하이라이트 자식 이름(T164 · 우리 코드가 쓰는 자리는 없다).</summary>
+        static readonly string[] HighlightNames = { "HighLight1", "HighLight2" };
         public static void DarkFrame(Transform frame, float scale = 1f)
         {
             if (frame == null) return;
+            // T164(주인 09:0X «원정 부분에 뜬금없게 HighLight1,2 있는데 튀기만 하고 이상함») — 조각
+            // `ItemFrame_01_Normal_BasePrefab` 이 달고 오는 하이라이트 둘은 칸마다 알파·스케일이 제각각이라 번쩍인다.
+            // 우리 코드가 그것을 쓰는 자리는 **한 곳도 없다**(grep 0건) → 조각을 세우는 공용 자리인 여기서 끈다
+            // (조각 원본은 안 고친다 · §1 «프리팹은 부품 · 원본 불변»). 장비·대장간·던전·아레나·뽑기 결과가 같이 조용해진다.
+            foreach (var n in HighlightNames) { var h = UiKit.Find(frame, n); if (h != null) h.gameObject.SetActive(false); }
             foreach (var im in frame.GetComponentsInChildren<Image>(true))
             {
                 if (im == null || im.name != UiKit.BorderName || im.sprite == null || !im.sprite.name.StartsWith(ItemBorderSprite, StringComparison.Ordinal)) continue;

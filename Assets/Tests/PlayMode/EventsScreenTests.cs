@@ -61,6 +61,14 @@ namespace KkomaKnight.Tests.Play
             foreach (var t in ActiveTexts()) { string s = (t.text ?? "").Trim(); foreach (var d in Demo) if (s == d) Assert.Fail($"[{where}] 영문 데모 글자: {s}"); }
             Assert.AreEqual(expectOverlay, _app.Overlay.IsOpen, $"[{where}] 팝업 열림 = {expectOverlay}");
         }
+        /// <summary>T164 — 화면 어디에도 켜진 «HighLight1/2»(아이템 칸 조각의 데모 하이라이트)가 없어야 한다.</summary>
+        void AssertNoHighlights(string where)
+        {
+            int n = 0; string first = null;
+            foreach (var t in _app.UiCanvas.GetComponentsInChildren<Transform>(false))
+                if (t != null && t.name.StartsWith("HighLight", StringComparison.Ordinal)) { n++; if (first == null) first = t.name + "(부모 " + (t.parent != null ? t.parent.name : "-") + ")"; }
+            Assert.AreEqual(0, n, "[" + where + "] 켜진 하이라이트가 " + n + "개 있다(T164 · 첫 자리 " + (first ?? "-") + ")");
+        }
         static void AtX(RectTransform rt, Layout.R r, string what) { Assert.AreEqual(r.X, rt.anchorMin.x * 100f, 0.5f, what + " x"); Assert.AreEqual(r.X + r.W, rt.anchorMax.x * 100f, 0.5f, what + " 오른쪽"); }
         static void AtY(RectTransform rt, Layout.R r, string what) { Assert.AreEqual(1f - r.Y / 100f, rt.anchorMax.y, 5e-3f, what + " y"); Assert.AreEqual(1f - (r.Y + r.H) / 100f, rt.anchorMin.y, 5e-3f, what + " 아래"); }
 
@@ -102,6 +110,9 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(0f, ri.color.r, 0.01f, "링 색 R = 0(T149 ⓑ)"); Assert.AreEqual(0f, ri.color.g, 0.01f, "링 색 G = 0");
                 Assert.AreEqual(0f, ri.color.b, 0.01f, "링 색 B = 0"); Assert.AreEqual(1f, ri.color.a, 0.01f, "링 알파 = 1");
             }
+            // T164 — 아이템 칸 조각이 달고 오는 «튀는» 하이라이트 둘은 어느 화면에서도 켜져 있으면 안 된다(주인 «원정 부분에 …
+            // HighLight1,2 … 튀기만 하고 이상함»). `GearUi.DarkFrame` 한 곳에서 끄므로 던전·아레나·장비·뽑기가 같이 조용해진다.
+            AssertNoHighlights("20_dungeon");
             // T151 — 던전 «입장» 버튼의 글자가 버튼 끝에 닿지 않는다(좌우 여백 ≥ 3%).
             {
                 var enter = UiKit.Find(hell, "EnterBtn") as RectTransform; Assert.IsNotNull(enter, "입장 버튼");
@@ -148,6 +159,7 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(Layout.DdHead.Y + Layout.DdHead.H, Layout.DdPic.Y, 0.1f, "그림 띠 y = 제목 띠 바닥(T102 ⓑ)");
             { var picRt = UiKit.Find(ov, "Pic") as RectTransform; Assert.IsNotNull(picRt, "그림 띠"); AtY(picRt, Layout.DdPic.Within(Layout.DdBox), "그림 띠"); }
             Assert.AreEqual(4, CountNamed(ov, "RewardCell:"), "보상 칸 4"); Assert.IsNotNull(UiKit.Find(ov, "FloorCircle"), "층수 원");
+            AssertNoHighlights("21_dungeon_detail");   // T164
             // T150 ⓐ — 보상 칸은 «가운데로 모인다»: 묶음의 좌우 여백이 같고 칸 사이 틈이 칸 폭의 30% 를 안 넘는다.
             // 예전(space-between)으로 되돌아가면 칸이 둘인 원정에서 틈이 칸 폭의 3배까지 벌어져 바로 빨개진다.
             {
