@@ -425,9 +425,17 @@ namespace KkomaKnight.Game
                 t.fontSize = Mathf.Max(MinFootFont, t.fontSize - 2);
             }
         }
-        /// <summary>발밑 바 숫자가 쓸 수 있는 바 폭 비율(T125 ⓑ · 레퍼런스 02 에서 숫자가 바 폭의 ~85% 다).</summary>
-        const float FootTextFill = 0.86f;
-        /// <summary>발밑 바 숫자의 하한(T63 «글씨 작다» 와의 절충 — 이 아래로는 안 줄인다 · 배지급 글자 크기).</summary>
+        /// <summary>
+        /// 발밑 바 숫자가 쓸 수 있는 바 폭 비율 — <b>레퍼런스 02 실측 0.74</b>(720px 사본에서 바 ≈70px · «1055»·«2258» ≈52px)에서 조금 여유를 둔 값(T125 ⓑ 회차 2).
+        /// 회차 1 의 0.86 은 «바를 안 넘는다» 는 만족시켰지만 <b>글자끼리 붙어 여전히 뭉갰다</b>(screens run 246 실측) — 우리 글자는 굵고(Bold)
+        /// T63-outline 의 검은 아웃라인이 두꺼워서 레퍼런스보다 글자 사이 여백이 더 필요하다.
+        /// </summary>
+        const float FootTextFill = 0.72f;
+        /// <summary>
+        /// 발밑 바 숫자의 하한(T63 «글씨 작다» 와의 절충 — 이 아래로는 안 줄인다 · 배지급 글자 크기).
+        /// T63 의 본문·보조 하한(40·36)보다 낮은 것은 <b>이 자리만의 예외</b>다: 바 폭이 «캐릭터 폭» 으로 정해져 있어(표 ② 상수) 글자를 키우면 넘치고,
+        /// 레퍼런스 02 도 이 숫자만은 작게 그린다(화면에서 가장 작은 글자). 다른 자리에는 적용되지 않는다.
+        /// </summary>
         const int MinFootFont = 26;
         /// <summary>발밑 바 숫자 표기 — 레퍼런스 02·03 처럼 <b>천 단위 콤마 없이</b>(«1239») 쓴다. 큰 수의 K/M 꼬리표는 <see cref="UiKit.Fmt"/> 그대로 남는다(T125 ⓑ).</summary>
         static string FootNum(double v) => UiKit.Fmt(System.Math.Ceiling(v)).Replace(",", "");
