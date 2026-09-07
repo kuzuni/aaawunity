@@ -1306,6 +1306,19 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(chestImg0.sprite, "상자 스프라이트");
             StringAssert.DoesNotContain("open", chestImg0.sprite.name.ToLowerInvariant(),
                 "팝업이 뜬 직후에는 «닫힌» 상자여야 한다 — 지금 스프라이트: " + chestImg0.sprite.name + " (T180)");
+            // T202(주인 2026-09-07 09:0X «상자가 바닥에 착지하고 **1초 뒤**에 열리는 애니메이션») —
+            // «지금 몇 초냐» 를 묻지 않는다(그 함정은 T158 ⓐ 가 세 회차에 걸쳐 밟았다 · 결정 395). 상수 사이의 **관계**로 잰다:
+            Assert.AreEqual(1.0f, ShopScreen.ChestOpenAt - ShopScreen.ChestFallSec, 0.2f,
+                "착지(ChestFallSec) 와 열림(ChestOpenAt) 사이가 «1초» 여야 한다 — 지금 "
+                + (ShopScreen.ChestOpenAt - ShopScreen.ChestFallSec).ToString("0.##") + "s (T202 2항)");
+            Assert.LessOrEqual(ShopScreen.ChestOpenAt + 1.2f, 2.7f,
+                "연출 총 길이(착지 + 정지 + 열림 ≈ 1.2s)가 2.7s 를 넘으면 주인이 여러 번 돌릴 때 답답하다(T202 4항)");
+            // T202 4항 — **첫 탭 = 건너뛰기**(그 다음 탭이 닫기). 연출이 1초 길어졌으므로 이 갈래가 없으면 탭 한 번에 창이 닫혀 결과를 못 본다.
+            // ⚠ 시계에 안 매이게 «둘 중 하나» 로 단언한다 — 느린 기계에서 이미 연출이 끝났다면 «닫히는 것» 이 옳은 동작이라 거짓 빨강이 되면 안 된다.
+            Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Background"), "결과 창 배경(탭 자리)"); yield return Frames(1);
+            Assert.IsTrue(_app.Overlay.IsOpen || chestImg0.sprite.name.ToLowerInvariant().Contains("open"),
+                "연출이 도는 중에 배경을 탭하면 «건너뛰기» 여야 한다(창이 닫히면 안 된다 · T202 4항). "
+                + "연출이 이미 끝난 뒤였다면 닫히는 것이 옳으므로 그때는 «열린 상자» 로 통과한다.");
             var chestGrp0 = UiKit.Find(_app.Overlay.Root, "Chest") as RectTransform;
             Assert.IsNotNull(chestGrp0, "조각의 상자 묶음(Chest)");
             float chestY0 = chestGrp0.anchoredPosition.y;   // «떨어지기 전» 높이 — 연출이 끝난 뒤와 맞대 본다(상수에 안 기댄다)

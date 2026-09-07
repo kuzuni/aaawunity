@@ -562,7 +562,14 @@ namespace KkomaKnight.Game
         /// </para>
         /// </summary>
         public const float ChestFallSec = 0.24f, ChestFallFrom = 420f;
-        public const float ChestShake = 0.18f, ChestOpenAt = 0.30f, ChestCellStep = 0.05f, ChestCellFrom = 0.55f;
+        /// <summary>
+        /// T202(주인 2026-09-07 09:0X «상자가 바닥에 <b>착지하고 1초 뒤</b>에 열리는 애니메이션 떠야 함») — 착지와 열림 <b>사이의 정지</b>.
+        /// 그 사이가 비어 보이지 않게 아주 작은 «두근두근»(<see cref="ChestBeat"/>) 두 번이 들어간다(지시서 2항 «스케일 ±2% 두 번»).
+        /// 무작위를 안 쓰므로 <c>screens</c> 스샷이 회차마다 안 흔들린다(T174 가 알갱이에서 정한 것과 같은 규약).
+        /// </summary>
+        public const float ChestHoldSec = 1.0f, ChestBeat = 0.02f, ChestBeatSec = 0.22f;
+        /// <summary>열림 시각 = <b>착지 + 정지</b>. 리터럴(옛 0.30)이 아니라 <b>관계</b>로 적는다 — 낙하 시간을 누가 바꾸면 «1초 뒤» 가 저절로 따라간다(§1).</summary>
+        public const float ChestShake = 0.18f, ChestOpenAt = ChestFallSec + ChestHoldSec, ChestCellStep = 0.05f, ChestCellFrom = 0.55f;
 
         /// <summary>
         /// 소환(뽑기) 결과 창 — <b>주인 지정 조각 <c>Shop_Chest_Open</c> 그대로</b>(T95 · 2026-09-07 «소환 결과 창이 이 프리팹으로 돼야 하는데 안 됐더라»).
@@ -579,11 +586,19 @@ namespace KkomaKnight.Game
             LastChestScale = 0f;   // 이번 창이 배율 연출을 걸었는지 기록한다(T158 ⓐ) — 아래에서 실제로 걸 때 값이 들어간다
             var rootGo = App.Overlay.OpenPrefab("ui.chestOpen"); var root = (RectTransform)rootGo.transform;
             // 조각의 어둠+무늬 배경 = 프레임 밖까지(T104 와 같은 값) · 배경 탭 = 닫기
+            Sequence seq = null;   // 아래에서 만든다 — 배경 탭이 «아직 도는 중이면 건너뛰기» 를 하려면 그 손잡이가 필요하다(T202 4항)
             var bg = UiKit.Find(root, "Background") as RectTransform;
             if (bg != null)
             {
                 UiKit.Stretch(bg, -UiKit.DimOverscan, -UiKit.DimOverscan, -UiKit.DimOverscan, -UiKit.DimOverscan);
-                UiKit.Clickable(bg, () => { App.Overlay.Close(); Refresh(); }, false);
+                // T202 — **첫 탭은 «건너뛰기», 그 다음 탭이 «닫기»**(주인이 여러 번 돌릴 때 2.4초를 매번 안 기다리게).
+                // 연출이 1초 길어졌으므로 이 갈래가 없으면 탭 한 번에 결과를 못 보고 창이 닫힌다.
+                // `Complete(true)` = 콜백까지 실행 → 열린 그림 교체·빛·칸이 전부 최종 상태가 된다(Overlay.Skip 과 같은 문법).
+                UiKit.Clickable(bg, () =>
+                {
+                    if (seq != null && seq.IsActive() && seq.IsPlaying()) { seq.Complete(true); return; }
+                    App.Overlay.Close(); Refresh();
+                }, false);
             }
             // ⓑ T157 — 주인 «뽑기 결과에서도 패턴들 움직여야 함». 조각의 «Pattern» 은 정적 Image 고 우리 흐름은 RawImage 의 uvRect 트윈(T72 ①)인데,
             // 한 GameObject 는 Graphic 을 하나만 가지므로 그 조각에 RawImage 를 덧붙일 수 없다. 그래서 조각 것은 **이름을 바꿔 끄고**(같은 이름이면
@@ -653,7 +668,7 @@ namespace KkomaKnight.Game
             // T190 — ⚑ **주인 13:4X 재확인**(«소환 결과에 아이템 슬롯 «내부» 빛 효과라든가 그런 거 없게 해») 이라
             // 여기 있던 «얻은 장비 칸 그림 뒤 빛살»(T72 ②)을 **아예 안 부른다**. 이 창을 만지는 T157·T158·T180 워커도 다시 넣지 말 것.
             // ── 연출(«찰지게» T95 · 순서는 T180) : 닫힌 상자 낙하 → 착지 «쿵» → 열린 그림 + 빛 폭발 → 장비 칸 ──
-            var seq = DOTween.Sequence().SetUpdate(true).SetTarget(root).SetLink(rootGo);
+            seq = DOTween.Sequence().SetUpdate(true).SetTarget(root).SetLink(rootGo);
             if (chestGrp != null)
             {
                 // «떨어진다» — 제자리(조각이 준 자리 · ChestGroupY)는 그대로 두고 그 «위» 에서 내려온다(자리를 바꾸는 것이 아니다 · 지시서 3항).
@@ -668,6 +683,10 @@ namespace KkomaKnight.Game
                 // 착지 «쿵» — 예전에는 이 펀치가 0초에 있었다(떨어지기 전에 흔들렸다). 이제 «닿는 순간» 이다.
                 seq.Insert(ChestFallSec, chestGrp.DOPunchAnchorPos(new Vector2(0f, 22f), ChestShake, 12, 1f).SetUpdate(true).SetLink(chestGrp.gameObject));
                 seq.InsertCallback(ChestFallSec, () => Audio.Sfx("snd.gacha"));   // 착지음(T28) — 뽑기 직후가 아니라 «닿는 순간»(결정 420)
+                // T202 2항 — 착지와 열림 사이 «1초 정지» 가 죽은 시간으로 보이지 않게 아주 작은 두근두근 두 번(±2%).
+                // 자리(anchoredPosition)가 아니라 **배율**을 건드리므로 착지 펀치와 겹쳐도 서로 안 밀어낸다.
+                seq.Insert(ChestFallSec + ChestHoldSec * 0.30f, chestGrp.DOPunchScale(Vector3.one * ChestBeat, ChestBeatSec, 1, 1f).SetUpdate(true).SetLink(chestGrp.gameObject));
+                seq.Insert(ChestFallSec + ChestHoldSec * 0.65f, chestGrp.DOPunchScale(Vector3.one * ChestBeat, ChestBeatSec, 1, 1f).SetUpdate(true).SetLink(chestGrp.gameObject));
             }
             // 닫힘 → 열림은 한 프레임에 톡 바뀌지만 같은 시각의 빛 폭발이 그 순간을 덮는다.
             // InsertCallback 이라 탭 스킵(DOTween.CompleteAll(true) · withCallbacks)에서도 «열린 상자» 로 끝난다(지시서 4항 ⓓ).
