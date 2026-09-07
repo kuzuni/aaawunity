@@ -1188,6 +1188,8 @@ namespace KkomaKnight.Tests.Play
             var chestGrp0 = UiKit.Find(_app.Overlay.Root, "Chest") as RectTransform;
             Assert.IsNotNull(chestGrp0, "조각의 상자 묶음(Chest)");
             float chestY0 = chestGrp0.anchoredPosition.y;   // «떨어지기 전» 높이 — 연출이 끝난 뒤와 맞대 본다(상수에 안 기댄다)
+            // T158 ⓐ — «작았다» 는 여기서 잰다(가장 이른 자리). 뒤에서 재면 커지는 중이라 값이 흐른다.
+            float chestScale0 = chestGrp0.localScale.x;
             Assert.IsTrue(HasText(s => s == "탭하여 닫기"), "결과 창: «탭하여 닫기»(조각의 Text_TouchContionue)");
             // T95 — 제목은 **조각 제 리본**에 쓴다(글자를 따로 얹으면 리본의 데모 글자 «Reward» 가 화면에 남는다 · CI #235)
             {
@@ -1198,10 +1200,19 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreNotEqual("Reward", rt2.text, "리본에 데모 글자가 남으면 안 된다");
             }
             {
-                // T63-shop — 결과 창 안내 줄은 본문 40 한 줄 · 글자 잘림 0(장비 칸 «gear:» 안 글자는 T63-gear 몫이라 제외)
-                var note = UiKit.Find(_app.Overlay.Root, "Note"); Assert.IsNotNull(note, "결과 창 안내 줄(Note)");
-                var nt = note.GetComponent<Text>(); Assert.GreaterOrEqual(nt.fontSize, TextSize.Body, "안내 줄 = 본문 하한");
+                // T158 ⓑ — 안내 줄(«최고 등급 … · 장착은 장비 탭에서»)은 주인 지시로 없앴다. 되살아나면 여기서 빨개진다(T63-shop 의 «본문 하한» 단언을 뒤집은 자리)
+                Assert.IsNull(UiKit.Find(_app.Overlay.Root, "Note"), "결과 창에 안내 줄이 없어야 한다(T158 ⓑ · 주인 «이런 텍스트 빼셈»)");
+                // 글자 잘림 0(장비 칸 «gear:» 안 글자는 T63-gear 몫이라 제외)
                 AssertNoTextClip("뽑기 결과 창", _app.Overlay.Root, skipPath: "gear:");
+            }
+            {
+                // T158 ⓐ — 상자는 «작았다 → 커졌다 → 제 크기». 연 직후 값은 위에서 미리 잡아 뒀다(그새 커지므로).
+                Assert.Less(chestScale0, 1f, "결과 창을 연 직후 상자는 제 크기보다 작다(T158 ⓐ · 주인 «작았었는데 커졌다가» · 지금 " + chestScale0.ToString("0.###") + ")");
+                Assert.GreaterOrEqual(chestScale0, ShopScreen.ChestScaleFrom - 0.01f, "시작 배율(ShopScreen.ChestScaleFrom)보다 작아지지는 않는다");
+                // T158 ⓒ — 결과 칸은 눌러도 어두워지지 않는다(우리가 클릭을 안 붙인 칸이라 조각이 달고 온 Button 을 뗀다)
+                var got0 = UiKit.Find(_app.Overlay.Root, "Got");
+                Assert.IsNotNull(got0, "얻은 장비 격자(Got)");
+                Assert.AreEqual(0, got0.GetComponentsInChildren<Button>(true).Length, "결과 칸에 Button 이 남아 있으면 눌림 표시가 돈다(T158 ⓒ)");
             }
             Assert.GreaterOrEqual(S.Inv.Count, inv + 1, "뽑은 장비가 인벤에 담겨야 한다");
             {
@@ -1216,6 +1227,8 @@ namespace KkomaKnight.Tests.Play
                     "연출이 끝나면 «열린» 상자여야 한다 — 지금 스프라이트: " + chestImg0.sprite.name + " (T180)");
                 Assert.Less(chestGrp0.anchoredPosition.y, chestY0 - 1f,
                     "상자는 위에서 «떨어져» 내려와 있어야 한다(시작 y=" + chestY0.ToString("0.0") + " → 끝 y=" + chestGrp0.anchoredPosition.y.ToString("0.0") + " · T180)");
+                // T158 ⓐ — 커지는 연출이 끝나면 «제 크기»(오버슛이 남아 있으면 안 된다)
+                Assert.AreEqual(1f, chestGrp0.localScale.x, 0.02f, "연출이 끝나면 상자는 제 크기(T158 ⓐ)");
                 var got = UiKit.Find(_app.Overlay.Root, "Got");
                 for (int i = 0; i < got.childCount; i++)
                 {

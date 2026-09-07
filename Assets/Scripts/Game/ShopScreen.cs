@@ -532,12 +532,16 @@ namespace KkomaKnight.Game
 
         /// <summary>결과 창 조각(<c>Shop_Chest_Open</c>)의 «상자» 묶음 자리 — 프리팹 실측(가운데에서 y −427.8 · 565×493). 격자는 그 «위» 에 놓는다(T95).</summary>
         public const float ChestGroupY = -427.84f;
-        /// <summary>격자 맨 위가 놓이는 자리(프레임 % · 제목 아래 · 상자 그림 위) 와 안내 줄 자리(T95 · 프리팹에는 격자가 없어 우리 규칙).</summary>
         /// <summary>조각이 «얻은 것은 여기» 라고 준 칸(T157) — 자리·크기를 여기서 읽는다(코드에 수를 안 박는다).</summary>
         public const string ChestSlotName = "ItemFrame_01";
         /// <summary>그 칸이 없는 조각(옛 빌드·조각 교체)일 때만 쓰는 예전 자리 — 평소에는 안 쓴다.</summary>
         public const float ChestGridFallbackTopPct = 24f;
-        public const float ChestNoteYPct = 52f;
+        /// <summary>
+        /// 상자가 «작았다 → 커졌다 → 제 크기» 로 서는 시작 배율(T158 ⓐ · 주인 2026-09-07 08:0X «상자가 작았었는데 커졌다가 원래 사이즈로 되는 애니메이션 돼야 함»).
+        /// 낙하(<see cref="ChestFallSec"/>) 와 <b>같은 시간</b>에 <c>Ease.OutBack</c> 으로 1 까지 자란다 — OutBack 이 «커졌다가 제 크기» 오버슛을 한 번에 준다.
+        /// 착지 «쿵» 펀치는 그 뒤라 둘이 겹치지 않는다(T180 순서 불변).
+        /// </summary>
+        public const float ChestScaleFrom = 0.6f;
         /// <summary>
         /// 연출 상수 — <b>T180 순서(주인 2026-09-07 11:3X «닫힌 게 위에서 떨어져서 착지하고 열린 상태 이미지로 바뀐 다음에 장비들»)</b>:
         /// 낙하(<see cref="ChestFallSec"/> · <see cref="ChestFallFrom"/> px 위에서) → 착지 «쿵»(<see cref="ChestShake"/>) →
@@ -601,8 +605,8 @@ namespace KkomaKnight.Game
             }
             else title = UiKit.Label(root, 6, 12, 88, 7, titleText, TextSize.Title, Palette.White, TextAnchor.MiddleCenter, true, false, kind: TextKind.Title);
             if (title != null) title.name = "Title";
-            var note = UiKit.Label(root, 5, ChestNoteYPct, 90, 6, $"최고 등급 {GearUi.RarName(D, best.Rar)} · 장착은 장비 탭에서", TextSize.Body, Palette.White, TextAnchor.MiddleCenter, true, false);
-            note.name = "Note";
+            // T158 ⓑ — 안내 줄(«최고 등급 … · 장착은 장비 탭에서»)은 주인 지시로 없앴다(«이런 텍스트 빼셈 소환결과 부분»).
+            // «최고 등급 한 칸 더 튀기» 연출은 그대로다 — best/bestCell 은 글자와 무관하다.
             // ⓐ T157 — 격자 자리는 **조각이 «여기» 라고 준 칸**(ItemFrame_01)에서 읽는다(주인 «ItemFrame_01 있는 곳에 아이템이 떠야 하는데 썡둥맞은 위치에 뜬다»).
             // 예전에는 그 칸을 쳐다보지도 않고 «화면 위 24%» 에 제 격자를 얹었다. 수(190×190 · y +217)는 **조각이 들고 있으니 코드에 안 박는다** — 자리·부모를 런타임에 읽는다.
             var slot = UiKit.Find(root, ChestSlotName) as RectTransform;
@@ -628,6 +632,13 @@ namespace KkomaKnight.Game
             var cells = new List<RectTransform>();
             RectTransform bestCell = null;
             foreach (var g in got) { var c = GearUi.Cell(grid, D, g, new GearUi.CellOpts { IsNew = true }, null); cells.Add(c); if (g == best) bestCell = c; }
+            // T158 ⓒ — 주인 «칸 눌러도 어두워지는 거 없애셈». 여기 칸에는 우리가 클릭을 안 붙이는데(onClick: null)
+            // 조각(ListItem_EquipMent)이 제 Button 을 달고 와서 누르면 눌림 표시가 돈다. 그래서 이 창의 칸에서만 Button 을 떼어 낸다 —
+            // transition = None 으로 죽이면 «모든 Button 은 눌림 표시» 계약(PressFeedbackTests)과 부딪히고, 아예 없으면 PressFeedback 도 첫 줄에서 되돌아간다(Btn == null).
+            // 떼는 자리를 GearUi 가 아니라 여기로 잡은 까닭: 주인이 부른 것은 «소환결과 부분» 이고, 장비·인벤 칸의 눌림은 그대로 두어야 한다(결정 기록).
+            foreach (var c in cells)
+                foreach (var b in c.GetComponentsInChildren<Button>(true))
+                    UnityEngine.Object.DestroyImmediate(b);
             // T72 ② 얻은 장비 칸의 그림 뒤 빛살 — 격자가 배치된 뒤에 건다(결정 174)
             Canvas.ForceUpdateCanvases();
             foreach (var c in cells)
@@ -643,6 +654,9 @@ namespace KkomaKnight.Game
                 // Ease.InQuad = 갈수록 빨라진다 = 떨어지는 느낌(OutQuad 는 느려져서 «내려놓는» 느낌이 된다).
                 var home = chestGrp.anchoredPosition;
                 chestGrp.anchoredPosition = home + new Vector2(0f, ChestFallFrom);
+                // T158 ⓐ — 떨어지는 «동안» 작은 것이 커진다 · OutBack 이 끝에서 살짝 넘겼다가 제 크기로 돌아온다(주인 문장 그대로)
+                chestGrp.localScale = Vector3.one * ChestScaleFrom;
+                seq.Insert(0f, chestGrp.DOScale(1f, ChestFallSec).SetEase(Ease.OutBack).SetUpdate(true).SetLink(chestGrp.gameObject));
                 seq.Insert(0f, chestGrp.DOAnchorPos(home, ChestFallSec).SetEase(Ease.InQuad).SetUpdate(true).SetLink(chestGrp.gameObject));
                 // 착지 «쿵» — 예전에는 이 펀치가 0초에 있었다(떨어지기 전에 흔들렸다). 이제 «닿는 순간» 이다.
                 seq.Insert(ChestFallSec, chestGrp.DOPunchAnchorPos(new Vector2(0f, 22f), ChestShake, 12, 1f).SetUpdate(true).SetLink(chestGrp.gameObject));
@@ -662,7 +676,6 @@ namespace KkomaKnight.Game
             // 최고 등급 한 칸만 한 번 더 튄다(등급이 여럿이어도 하나 · 연출 길이는 그대로)
             if (bestCell != null) seq.Insert(end, bestCell.DOPunchScale(Vector3.one * 0.12f, 0.22f, 8, 1f).SetUpdate(true).SetLink(bestCell.gameObject));
             seq.Insert(end, UiKit.Reveal(title.rectTransform));
-            seq.Insert(end + 0.06f, UiKit.Reveal(note.rectTransform));
             if (touch != null) seq.Insert(end + 0.12f, UiKit.Reveal(touch.rectTransform));
         }
     }
