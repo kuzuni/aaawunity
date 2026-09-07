@@ -877,9 +877,13 @@ namespace KkomaKnight.Game
             _top = TopBar.Build(App, Root);
             // 제목(⭐ 특권) + 밑줄 + 부제
             var title = UiKit.Rect(Root, "Title"); UiKit.Pct(title, Layout.PrTitle);
-            var star = UiKit.Icon(title, "Icon", "pi.star", Palette.Yellow); UiKit.Pct(star.rectTransform, 0, 0, 22, 100);
+            var star = UiKit.Icon(title, "Icon", "pi.star", Palette.Yellow);
             // 페이지 제목 = 제목 종류 60(전 52 · 칸 3.0%×120% = 84px ≥ 한 줄 ≈66px)
             var tt = UiKit.Label(title, 25, -10, 75, 120, "특권", TextSize.Title, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Title); tt.fontStyle = FontStyle.Bold;
+            // T170(주인 2026-09-07 10:0X «타이틀이 왼쪽으로 치우친다 · 특권·던전·PvP · 모든 타이틀 다 점검») —
+            // 여기는 «아이콘을 줄 왼쪽 끝(x 0)에 못 박고 글자를 25% 부터 왼쪽 정렬» 이라 덩어리가 왼쪽에 쏠려 있었다.
+            // 자리 계산은 UiKit 한 곳(CenterIconTitle)이고 던전·PvP·아레나 티어가 같은 함수를 쓴다.
+            UiKit.CenterIconTitle(star.rectTransform, tt, Layout.PrTitle.W);
             var line = UiKit.Icon(Root, "Underline", "fr.lineDeco", Palette.A(Palette.White, 0.45f)); line.preserveAspect = false; UiKit.Pct(line.rectTransform, Layout.PrUnderline);
             // 부제 = 본문 40 · 칸 표 ⑲ 1.8%(42px) → LpLineH 2.2% · 문구는 «활성화하고»→«활성화해»(40 이면 628px 로 칸 폭 58%(626px)를 1~2px 넘겨 두 줄이 되던 것 · T63 2항 ⓒ 문구 줄이기)
             var sub = UiKit.Label(Root, 0, 0, 100, 100, "특권을 활성화해 놀라운 보상을 받으세요!", TextSize.Body, Palette.CreamDark); sub.name = "Sub"; UiKit.Pct(sub.rectTransform, Layout.PrSub.WithH(Layout.LpLineH));

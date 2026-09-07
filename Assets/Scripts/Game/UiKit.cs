@@ -1237,6 +1237,45 @@ namespace KkomaKnight.Game
         public static readonly int ShineLocationId = Shader.PropertyToID("_ShineLocation");
         /// <summary>빛이 지나가는 속도 곡선(T153 ⓑ · 주인 «쭉 지나가는») — 종전 <c>InOutSine</c> 은 가장자리에서 느리고 가운데서 빨라 «일정하게» 가 아니다. 등속이 <see cref="Ease.Linear"/> 다.</summary>
         public const Ease ShineEase = Ease.Linear;
+        // ───────────────────────── «아이콘 + 글자» 제목 줄 (T170 · 주인 2026-09-07 10:0X «타이틀이 왼쪽으로 치우친다 · 모든 타이틀 다 점검») ─────────────────────────
+        /// <summary>제목 줄의 아이콘 폭 / 아이콘과 글자 사이 간격(줄 폭 %) — <see cref="CenterIconTitle"/> 의 «가운데 덩어리» 계산에 쓴다.</summary>
+        public const float TitleIconPct = 16f, TitleGapPct = 2f;
+        /// <summary>
+        /// «아이콘 + 글자» 를 <b>한 덩어리로</b> 줄 가운데에 놓는다(T170 · T101 ⓓ 를 전 화면 공용으로 올린 것).
+        /// <para>
+        /// 치우침의 뿌리는 <b>아이콘 rect 와 글자 rect 를 따로 놓는 것</b>이다 — 아이콘을 줄 왼쪽 끝(x 0)에 못 박고 글자를 그 옆에서 <b>왼쪽 정렬</b>하면
+        /// 줄은 가운데라도 <b>보이는 덩어리</b>는 왼쪽에 쏠린다(특권 ⭐·던전·PvP·아레나 티어가 전부 그 꼴이었다).
+        /// 그래서 글자 폭을 <see cref="Text.preferredWidth"/> 로 <b>실측</b>해 «아이콘 + 간격 + 글자» 의 합을 구하고, 그 합을 줄 가운데에 놓는다 —
+        /// 글자 길이가 달라도(«던전»·«PvP»·«브론즈»·«특권») 각자 가운데다.
+        /// </para>
+        /// <para>
+        /// ⚠ 주인이 말한 «TMPro 인라인 아이콘»(글자 안에 그림을 넣는 길)은 <b>지금 못 한다</b> — 이 프로젝트는 TMP 를 전부 uGUI <see cref="Text"/>(Jua)로 바꿔 쓰고
+        /// (T63 아웃라인 규약이 그 위에 있다) <b>Jua SDF 폰트 애셋이 없어</b> TMP 로 두면 한글이 두부가 된다. SDF 만들기는 에디터 작업(주인)이다.
+        /// 그래서 «덩어리를 가운데로» 로 같은 그림을 낸다.
+        /// </para>
+        /// <paramref name="rowWPct"/> 는 그 줄의 <b>프레임 대비 폭 %</b>(rect 를 안 읽으므로 배치 전에 불러도 된다).
+        /// </summary>
+        public static void CenterIconTitle(RectTransform icon, Text text, float rowWPct, float iconPct = TitleIconPct, float gapPct = TitleGapPct)
+        {
+            if (icon == null || text == null) return;
+            float rowPx = Mathf.Max(1f, rowWPct / 100f * FrameW);
+            float textPct = Mathf.Clamp(text.preferredWidth / rowPx * 100f, 5f, 100f - iconPct - gapPct);
+            float startPct = Mathf.Max(0f, (100f - (iconPct + gapPct + textPct)) * 0.5f);
+            Pct(icon, startPct, -10, iconPct, 120);
+            Pct(text.rectTransform, startPct + iconPct + gapPct, 0, textPct, 100);
+        }
+
+        /// <summary>
+        /// 제목 덩어리가 줄 가운데에서 얼마나 벗어났나(%p · 왼쪽 여백 − 오른쪽 여백 · 0 이면 정확히 가운데) — <see cref="CenterIconTitle"/> 의 <b>짝이 되는 자</b>다(T170).
+        /// 재는 것과 놓는 것을 같은 파일에 두어, 계산이 바뀌면 게이트도 같이 따라오게 한다(테스트가 앵커 산수를 제 손으로 다시 쓰면 둘이 갈라진다).
+        /// </summary>
+        public static float TitleBlockOffsetPct(RectTransform icon, Text text)
+        {
+            if (icon == null || text == null) return 0f;
+            float left = icon.anchorMin.x * 100f, right = 100f - text.rectTransform.anchorMax.x * 100f;
+            return left - right;
+        }
+
         /// <summary>«이 카드의 shine 머티리얼 인스턴스» 표식 — 카드가 파괴되면 인스턴스도 파괴한다(UI Image 는 MaterialPropertyBlock 을 못 쓰므로 인스턴스가 필요하다 · 인스턴스는 자기 이름이 «PerkShine (Instance)»).</summary>
         public sealed class MaterialOwner : MonoBehaviour
         {

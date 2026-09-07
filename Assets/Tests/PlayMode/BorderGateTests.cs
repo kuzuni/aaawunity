@@ -298,6 +298,17 @@ namespace KkomaKnight.Tests.Play
             _app.ShowScreen("privilege"); yield return Frames(2); yield return Check("11_shop_special");
             {
                 var prRoot = _app.Current.Root;
+                // T170(주인 2026-09-07 10:0X «타이틀이 왼쪽으로 치우친다 · 특권·던전·PvP · 모든 타이틀 다 점검») —
+                // 특권 제목(⭐ + «특권»)은 아이콘을 줄 왼쪽 끝에 못 박고 글자를 왼쪽 정렬해 덩어리가 왼쪽에 쏠려 있었다.
+                // 재는 것은 배치 코드 옆의 UiKit.TitleBlockOffsetPct 한 곳이다(던전·PvP·상인·아레나 티어도 같은 자를 쓴다).
+                {
+                    var trow = UiKit.Find(prRoot, "Title") as RectTransform; Assert.IsNotNull(trow, "특권 제목 줄");
+                    var tic = UiKit.Find(trow, "Icon") as RectTransform; Assert.IsNotNull(tic, "특권 제목 아이콘");
+                    Text ttx = null; foreach (var t in trow.GetComponentsInChildren<Text>(true)) { ttx = t; break; }
+                    Assert.IsNotNull(ttx, "특권 제목 글자");
+                    float off = UiKit.TitleBlockOffsetPct(tic, ttx);
+                    Assert.AreEqual(0f, off, 2.0f, "특권 제목 덩어리가 줄 가운데(좌우 여백 차 " + off.ToString("0.0") + "%p · T170)");
+                }
                 for (int i = 1; i <= 4; i++) AssertUiBarBorder(prRoot, "Card:" + i);
                 for (int i = 2; i <= 4; i++) AssertUiBarBorder(prRoot, "Desc:" + i);
                 var pic2t = UiKit.Find(prRoot, "Pic:2"); Assert.IsNotNull(pic2t, "카드 그림(2)");

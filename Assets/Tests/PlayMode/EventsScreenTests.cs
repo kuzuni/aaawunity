@@ -149,13 +149,8 @@ namespace KkomaKnight.Tests.Play
                 Assert.GreaterOrEqual(kinds.Count, 3, "원정 카드 보상 칸의 테두리 색이 셋 이상(지금 " + string.Join("·", kinds) + " · T128)");
                 Assert.IsTrue(kinds.Contains("ui.itemFrame.blue") && kinds.Contains("ui.itemFrame.plum") && kinds.Contains("ui.itemFrame.yellow"), "파랑·자주·노랑 칸(레퍼런스 20 · T128)");
             }
-            // T101 ⓓ — 제목 줄이 가운데(아이콘 + 글자 덩어리의 좌우 여백 차 ≤ 2%p)
-            {
-                var trow = UiKit.Find(pg, "Title") as RectTransform; Assert.IsNotNull(trow, "제목 줄");
-                var tic = UiKit.Find(trow, "Icon") as RectTransform; var ttx = FindText(trow, "Text"); Assert.IsNotNull(tic, "제목 아이콘"); Assert.IsNotNull(ttx, "제목 글자");
-                float left = tic.anchorMin.x * 100f, right = 100f - ttx.rectTransform.anchorMax.x * 100f;
-                Assert.AreEqual(left, right, 2.0f, "제목 덩어리가 가운데(왼쪽 여백 " + left.ToString("0.0") + " ↔ 오른쪽 " + right.ToString("0.0") + " · T101 ⓓ)");
-            }
+            // T101 ⓓ → T170 — 제목 줄이 가운데(아이콘 + 글자 덩어리의 좌우 여백 차 ≤ 2%p)
+            AssertTitleCentered(pg, "Title", "던전 제목");
             Assert.IsNotNull(UiKit.Find(pg, "BackBtn"), "뒤로"); Assert.IsNotNull(UiKit.Find(pg, "Tab:dungeon"), "던전 탭"); Assert.IsNotNull(UiKit.Find(pg, "Tab:pvp"), "PvP 탭");
             // T165 — 두 탭은 로비와 «같은 조각»(`ui.tabBar`)이고 켜진 탭만 Focus 가 켜진다(손으로 만든 판·링 방식으로 되돌아가면 빨개진다).
             {
@@ -369,6 +364,20 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(0, clipped.Count, $"[{screen}] 잘림/넘침(선호 크기 > 칸 · 칸 h ≥ 크기 × 1.4 로 잡는다):\n" + string.Join("\n", clipped));
         }
 
+        /// <summary>
+        /// «아이콘 + 글자» 제목이 줄 가운데에 있는가(T170 · 주인 «모든 타이틀 다 점검») — 재는 것은 <see cref="UiKit.TitleBlockOffsetPct"/> 한 곳이다
+        /// (테스트가 앵커 산수를 제 손으로 다시 쓰면 배치 계산과 갈라진다). 아이콘을 줄 왼쪽 끝에 못 박고 글자를 왼쪽 정렬하던 옛 꼴로 되돌아가면 여기서 빨개진다.
+        /// </summary>
+        static void AssertTitleCentered(Transform root, string rowName, string label)
+        {
+            var row = UiKit.Find(root, rowName) as RectTransform; Assert.IsNotNull(row, label + " 줄");
+            var ic = UiKit.Find(row, "Icon") as RectTransform; Assert.IsNotNull(ic, label + " 아이콘");
+            Text tx = null; foreach (var t in row.GetComponentsInChildren<Text>(true)) { tx = t; break; }
+            Assert.IsNotNull(tx, label + " 글자");
+            float off = UiKit.TitleBlockOffsetPct(ic, tx);
+            Assert.AreEqual(0f, off, 2.0f, label + " 덩어리가 줄 가운데(좌우 여백 차 " + off.ToString("0.0") + "%p · T170)");
+        }
+
         static Text FindText(Transform root, string path)
         {
             var t = UiKit.Find(root, path); Assert.IsNotNull(t, $"«{path}» 를 못 찾음");
@@ -416,6 +425,7 @@ namespace KkomaKnight.Tests.Play
             var ae = UiKit.Find(root, "Page:" + EventsScreen.PageArena);
             Readable("23_arena_enter", ae, new[] { "RankList", "Podium/Banner" });
             Assert.AreEqual(TextSize.Title, MaxSize(FindText(ae, "TierTitle")), "아레나 티어 제목 = 제목 60");
+            AssertTitleCentered(ae, "TierTitle", "아레나 티어 제목");
 
             // 24 도전 팝업 · 25 순위 보상 팝업
             Assert.IsTrue(ClickNamed(root, "ChallengeBtn"), "도전 버튼"); yield return Frames(3);
@@ -430,6 +440,7 @@ namespace KkomaKnight.Tests.Play
             var me = UiKit.Find(root, "Page:" + EventsScreen.PageMerchant);
             Readable("26_arena_shop", me);
             Assert.AreEqual(TextSize.Title, MaxSize(FindText(me, "Title")), "상인 제목 = 제목 60");
+            AssertTitleCentered(me, "Title", "상인 제목");
             _log.AssertNoRed("글자 가독성(20·21·22·23·24·25·26)");
             yield return Shutdown();
         }

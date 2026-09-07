@@ -298,7 +298,14 @@ namespace KkomaKnight.Game
             }
             // 티어 제목 · 시즌 타이머 · 오른쪽 위 보상/상인
             var tier = UiKit.Rect(pg, "TierTitle"); UiKit.Pct(tier, Layout.AeTier); UiKit.Tag(tier, "티어 제목");
-            { var m = UiKit.Icon(tier, "Icon", "ui.iconMedalBronze"); UiKit.Pct(m.rectTransform, 0, 0, 22, 100); UiKit.Label(tier, 26, 0, 74, 100, "브론즈", TextSize.Title, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Title).fontStyle = FontStyle.Bold; }
+            // T170 — 티어 제목도 «아이콘 왼쪽 끝 + 왼쪽 정렬 글자» 라 덩어리가 왼쪽에 쏠려 있었다(던전·PvP 와 같은 꼴)
+            {
+                var m = UiKit.Icon(tier, "Icon", "ui.iconMedalBronze");
+                var mt = UiKit.Label(tier, 26, 0, 74, 100, "브론즈", TextSize.Title, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Title);
+                mt.fontStyle = FontStyle.Bold;
+                CenterTitle(m.rectTransform, mt, Layout.AeTier.W);
+                _titlePlan.Add((tier, m.rectTransform, mt, Layout.AeTier.W));
+            }
             var season = UiKit.Rect(pg, "Season"); UiKit.Pct(season, Layout.AeSeason); UiKit.Tag(season, "시즌 타이머");
             { var c = UiKit.Icon(season, "Icon", "ui.iconClock"); UiKit.Pct(c.rectTransform, 0, 0, 10, 100); UiKit.Label(season, 12, 0, 88, 100, "시즌 종료까지: " + NoTime, TextSize.Aux, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Aux); }
             var side = UiKit.Rect(pg, "SideIcons"); UiKit.Pct(side, Layout.AeSideIcons); UiKit.Tag(side, "우측 아이콘 열(2개)");
@@ -615,16 +622,8 @@ namespace KkomaKnight.Game
             _lightPlan.Add((cell, cell.Find("Icon") as RectTransform, key));
         }
         /// <summary>예약해 둔 빛살을 «배치가 끝난 뒤»에 한꺼번에 건다 — 그 전에는 % 앵커 아이콘의 rect 가 0 이라 빛살 한 변이 0 이 된다(결정 174).</summary>
-        /// <summary>«아이콘 + 글자» 를 한 덩어리로 줄 가운데에 놓는다(T101 ⓓ) — 글자 폭은 <see cref="Text.preferredWidth"/> 실측이라 «던전»·«PvP»·«상인» 이 각자 가운데다.</summary>
-        static void CenterTitle(RectTransform icon, Text text, float rowWPct)
-        {
-            if (icon == null || text == null) return;
-            float rowPx = Mathf.Max(1f, rowWPct / 100f * UiKit.FrameW);
-            float textPct = Mathf.Clamp(text.preferredWidth / rowPx * 100f, 5f, 100f - TitleIconPct - TitleGapPct);
-            float startPct = Mathf.Max(0f, (100f - (TitleIconPct + TitleGapPct + textPct)) * 0.5f);
-            UiKit.Pct(icon, startPct, -10, TitleIconPct, 120);
-            UiKit.Pct(text.rectTransform, startPct + TitleIconPct + TitleGapPct, 0, textPct, 100);
-        }
+        /// <summary>«아이콘 + 글자» 를 한 덩어리로 줄 가운데에 — 계산은 <see cref="UiKit.CenterIconTitle"/> 한 곳이다(T170 이 T101 ⓓ 를 전 화면 공용으로 올렸다).</summary>
+        static void CenterTitle(RectTransform icon, Text text, float rowWPct) => UiKit.CenterIconTitle(icon, text, rowWPct, TitleIconPct, TitleGapPct);
 
         void ApplyLights()
         {
