@@ -72,7 +72,7 @@ namespace KkomaKnight.Game
             var box = UiKit.Panel(Root, "RewardBox", "fr.r12", Palette.A(Palette.Ink, 0.55f));
             _rewardBox = box.rectTransform; UiKit.Pct(_rewardBox, Layout.CcRewardBox);
             UiKit.Bordered(_rewardBox);   // T69 — 칸·상자에는 검은 아웃라인
-            UiKit.Label(_rewardBox, Layout.CcRewardHead.X, Layout.CcRewardHead.Y, Layout.CcRewardHead.W, Layout.CcRewardHead.H, "보상", TextSize.Body, Palette.Cream).fontStyle = FontStyle.Bold;
+            var head = UiKit.Label(_rewardBox, Layout.CcRewardHead.X, Layout.CcRewardHead.Y, Layout.CcRewardHead.W, Layout.CcRewardHead.H, "보상", TextSize.Body, Palette.Cream); head.fontStyle = FontStyle.Bold;
             var gemCell = LobbyPopups.Cell(Root, Screen100, Layout.CcRewardCell, "plum", "ui.gemRed", Dash, false, "Cell:gem");
             var goldRect = new Layout.R(Layout.CcRewardCell.X + Layout.CcRewardPitch, Layout.CcRewardCell.Y, Layout.CcRewardCell.W, Layout.CcRewardCell.H);
             var goldCell = LobbyPopups.Cell(Root, Screen100, goldRect, "green", "ui.coin", Dash, false, "Cell:gold");
@@ -88,7 +88,7 @@ namespace KkomaKnight.Game
             // 비평 이름표(T46 · 표 ㉝ 의 «요소» 글자 그대로)
             UiKit.Tag(rrt, "제목 리본(챕터 보상)"); UiKit.Tag(_sub.rectTransform, "부제(챕터 N · 몇 번째 보상)");
             UiKit.Tag(_banner, "챕터 배너(가운데)"); if (_title != null) UiKit.Tag(_title, "배너 제목 pill(챕터 N)"); if (_goal != null) UiKit.Tag(_goal, "배너 목표 글자(적 A/B 처치)");
-            UiKit.Tag(_rewardBox, "보상 상자"); UiKit.Tag(gemCell, "보상 칸(다이아)"); UiKit.Tag(_claim, "받기 버튼");
+            UiKit.Tag(_rewardBox, "보상 상자"); UiKit.Tag(head.rectTransform, "보상 머리(보상)"); UiKit.Tag(gemCell, "보상 칸(다이아)"); UiKit.Tag(_claim, "받기 버튼");
             UiKit.Tag(foot.transform, "바닥 띠"); UiKit.Tag(back, "뒤로(◀)");
         }
 
@@ -98,9 +98,14 @@ namespace KkomaKnight.Game
             var go = UiKit.Spawn("ui.cardFrame.yellow", _row); go.name = name;
             var rt = (RectTransform)go.transform;
             UiKit.Pct(rt, new Layout.R(Layout.CcBanner.X + dx, Layout.CcBanner.Y, Layout.CcBanner.W, Layout.CcBanner.H));
+            // 조각이 달고 온 데모 글자(«Text»)를 끈다 — screens run 283 의 32 PNG 에서 제목 띠에 그대로 비쳤다(내 글자는 아래에서 새로 얹는다)
+            foreach (var demo in go.GetComponentsInChildren<Text>(true)) demo.gameObject.SetActive(false);
             // 조각의 제목 띠(TitleBg) 자리에 «챕터 N» · 몸통에 목표 두 줄 — 조각 요소를 옮기지 않고 글자만 얹는다
             var title = UiKit.Rect(rt, "BannerTitle"); UiKit.Pct(title, Layout.CcBannerTitle);
-            UiKit.Label(title, 0, 0, 100, 100, "", TextSize.Body, Palette.Cream).name = "TitleText";
+            // 레퍼런스 32 의 «Chapter 30» 은 어두운 pill 위 흰 글자다 — 크림 몸통 위 크림 글자(run 283 실측)는 안 읽혀 같은 꼴로 바꾼다
+            var plate = UiKit.Panel(title, "TitlePlate", "fr.r12", Palette.A(Palette.Ink, 0.55f)); UiKit.Stretch(plate.rectTransform);
+            UiKit.Bordered(plate.rectTransform);   // T69 — 칸에는 검은 아웃라인
+            UiKit.Label(title, 0, 0, 100, 100, "", TextSize.Body, Palette.White).name = "TitleText";
             var goal = UiKit.Rect(rt, "BannerGoal"); UiKit.Pct(goal, Layout.CcBannerGoal);
             var gt = UiKit.Label(goal, 0, 0, 100, 100, "", TextSize.Title, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Title);
             gt.name = "GoalText"; gt.fontStyle = FontStyle.Bold;
@@ -158,7 +163,7 @@ namespace KkomaKnight.Game
 
             if (_sub != null) _sub.text = ok ? $"챕터 {info.Chapter} · {info.Step}/{steps} 번째 보상" : Dash;
             if (_titleText != null) _titleText.text = ok ? $"챕터 {info.Chapter}" : Dash;
-            if (_goalText != null) _goalText.text = ok ? $"적 {info.Kills}/{info.Goal}\n처치" : Dash;
+            if (_goalText != null) _goalText.text = ok ? $"적 {Math.Min(info.Kills, info.Goal)}/{info.Goal}\n처치" : Dash;   // 진행도는 그 «단» 목표를 넘겨 적지 않는다(«17/6» 처럼 보이지 않게)
             if (_gemQty != null) _gemQty.text = ok ? UiKit.Fmt(info.Gem) : Dash;
             if (_goldQty != null) _goldQty.text = ok ? UiKit.Fmt(info.Gold) : Dash;
 
@@ -193,7 +198,7 @@ namespace KkomaKnight.Game
             var t1 = tt != null ? tt.GetComponentInChildren<Text>(true) : null;
             var t2 = gg != null ? gg.GetComponentInChildren<Text>(true) : null;
             if (t1 != null) t1.text = info.Chapter != 0 ? $"챕터 {info.Chapter}" : "";
-            if (t2 != null) t2.text = info.Chapter != 0 ? $"적 {info.Kills}/{info.Goal}\n처치" : "";
+            if (t2 != null) t2.text = info.Chapter != 0 ? $"적 {Math.Min(info.Kills, info.Goal)}/{info.Goal}\n처치" : "";
         }
     }
 }

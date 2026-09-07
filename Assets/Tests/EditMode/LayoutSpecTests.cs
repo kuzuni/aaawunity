@@ -65,6 +65,25 @@ namespace KkomaKnight.Tests
             Assert.That(value, Is.EqualTo(v[idx].Value).Within(0.05f), $"{sec} «{name}»");
         }
 
+        /// <summary>
+        /// «부모 안 %» 로 적힌 코드 상수를 <b>프레임 %</b> 로 환산해 표와 맞춘다(T137 회차 2 · 결정 414) —
+        /// 표는 프레임 % 로 적어야 <c>tools/ui_score.py</c> 가 채점할 수 있고(§5), 코드는 <c>UiKit.Pct(부모, …)</c> 라 안쪽 % 를 갖는다.
+        /// 표 값이 소수 한 자리라 허용 오차는 0.06(반올림 폭).
+        /// </summary>
+        static void SameInner(Dictionary<string, Dictionary<string, float?[]>> spec, string sec, string name, Layout.R outer, Layout.R inner)
+        {
+            Assert.That(spec.ContainsKey(sec), Is.True, "섹션 없음 " + sec);
+            Assert.That(spec[sec].ContainsKey(name), Is.True, $"{sec} 표에 행 없음: {name}");
+            var v = spec[sec][name];
+            var got = new[]
+            {
+                outer.X + inner.X / 100f * outer.W, outer.Y + inner.Y / 100f * outer.H,
+                inner.W / 100f * outer.W, inner.H / 100f * outer.H,
+            };
+            var lbl = new[] { "x", "y", "w", "h" };
+            for (int i = 0; i < 4; i++) if (v[i].HasValue) Assert.That(got[i], Is.EqualTo(v[i].Value).Within(0.06f), $"{sec} «{name}» {lbl[i]}(프레임 % 환산)");
+        }
+
         /// <summary>㉝ 챕터 보상 페이지(T137 · 레퍼런스 32) — 표 ↔ <see cref="Layout"/> 상수(T137 은 자리를 안 옮겼다 · 행 이름만 «보상 한 칸» 으로 바뀌었다).</summary>
         [Test]
         public void ChapterChest_MatchesSpec()
@@ -73,10 +92,10 @@ namespace KkomaKnight.Tests
             Same(s, "㉝", "제목 리본(챕터 보상)", Layout.CcRibbon);
             Same(s, "㉝", "부제(챕터 N · 몇 번째 보상)", Layout.CcSub);
             Same(s, "㉝", "챕터 배너(가운데)", Layout.CcBanner);
-            Same(s, "㉝", "배너 제목 pill(챕터 N)", Layout.CcBannerTitle);
-            Same(s, "㉝", "배너 목표 글자(적 A/B 처치)", Layout.CcBannerGoal);
+            SameInner(s, "㉝", "배너 제목 pill(챕터 N)", Layout.CcBanner, Layout.CcBannerTitle);
+            SameInner(s, "㉝", "배너 목표 글자(적 A/B 처치)", Layout.CcBanner, Layout.CcBannerGoal);
             Same(s, "㉝", "보상 상자", Layout.CcRewardBox);
-            Same(s, "㉝", "보상 머리(보상)", Layout.CcRewardHead);
+            SameInner(s, "㉝", "보상 머리(보상)", Layout.CcRewardBox, Layout.CcRewardHead);
             Same(s, "㉝", "보상 칸(다이아)", Layout.CcRewardCell);
             Same(s, "㉝", "받기 버튼", Layout.CcClaim);
             Same(s, "㉝", "바닥 띠", Layout.CcFootBar);
