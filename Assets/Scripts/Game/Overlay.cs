@@ -86,7 +86,7 @@ namespace KkomaKnight.Game
         /// </para>
         /// 옛 <c>DimPattern</c>(상자 없이 어둠 위에 조립되는 프리팹 팝업의 «Dimmed» 바로 위 무늬)은 이제 부르는 곳이 없어 지웠다 — 결과 팝업은 T110 ⓑ, 레벨업 3택은 T140 이 뺐다.
         /// </summary>
-        static void NoPattern(Transform host)
+        public static void NoPattern(Transform host)
         {
             if (host == null) return;
             for (int i = host.childCount - 1; i >= 0; i--)

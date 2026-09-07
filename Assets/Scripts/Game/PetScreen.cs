@@ -172,11 +172,13 @@ namespace KkomaKnight.Game
             var ribbon = UiKit.Find(box, "ui.title.tangerine"); if (ribbon != null) ribbon.gameObject.SetActive(false);   // 레퍼런스 14 는 명판이 없다
             var lvR = new Layout.R(Layout.PdCell.X + Layout.PdCell.W * 0.15f, Layout.PdCell.Y - 0.9f, Layout.PdCell.W * 0.7f, 1.8f);
             var cell = PetCell(box, Layout.PdBox, Layout.PdCell, lvR, Layout.PdBar, index, null, out _, out var bar); cell.name = "PetDetailCell";
-            // T72 ② 펫 아이콘 뒤 빛살(ROUTINE T72 2항 «펫 세부의 아이콘») — 조각 안 «Item» 바로 뒤(NormalArea 등급판 위) · 칸 하나뿐이라 개수 제한(4항)에 걸리지 않는다
-            var petIcon = UiKit.Find(cell, "Item");
-            // T190 범위 밖 — 여기는 그대로 둔다. 지시서 T190 1항의 «뺀다» 목록(장비 인벤·장착·대장간·뽑기 결과·클리어/사망 보상·던전/아레나 보상·출석/탐험/챕터 보상)에
-            // 펫 세부는 없고, 주인이 든 예도 «아이템 슬롯 · 클리어 골드 슬롯» 이다. 주인이 «펫도» 라고 하면 위 갈래들과 같은 `UiKit.IsItemCell` 한 줄로 막으면 된다.
-            if (petIcon != null) UiKit.LightBehind((RectTransform)petIcon.parent, (RectTransform)petIcon);
+            // T203 ⓐ — 여기에는 빛살을 안 넣는다(주인 2026-09-07 «펫 세부 팝업에 보면 라이트 이펙트가 장비 슬롯 내부에 있던데 그거 없애기»).
+            // 종전에는 T72 ② 로 «Item» 뒤에 UiKit.LightBehind 를 걸었고, 그 자리 주석이 «T190 범위 밖 — 주인이 «펫도» 라고 하면 뺀다» 라고 적어 두었다.
+            // 주인이 그 «펫도» 를 말했으므로 뺀다. T190(아이템·보상 슬롯)과 지시가 하나로 모인 자리라 되살릴 일은 없을 것이나, 되돌리려면 이 자리에 LightBehind 한 줄.
+            // T203 ⓑ — 이 팝업에는 무늬를 안 깐다(주인 «펫 세부 팝업에는 패턴 없애기»). 공통 팝업이 상자 «안» 에 까는 T72 ② 를 이 자리에서만 지운다.
+            // 지우는 것은 Overlay.NoPattern 한 곳이다(T140 이 특전 화면에 쓴 그 함수 그대로 · 끄지 않고 지우는 까닭은 무늬 트윈이 SetLink 로 조각에 묶여 같이 죽기 때문).
+            // 펫 «탭»(13)의 풀스크린 무늬(위 Build 의 UiKit.PatternBg)는 주인이 말한 자리가 아니므로 그대로 둔다.
+            Overlay.NoPattern(box);
             var desc = UiKit.Panel(box, "Desc", "fr.r12", Palette.A(Palette.Dim, 0.6f)); UiKit.Pct(desc.rectTransform, Layout.PdDesc.Within(Layout.PdBox));
             UiKit.Label(desc.transform, 4, 8, 92, 84, "펫 시스템은 준비 중입니다.\n업데이트로 만나요.", 32, Palette.White);
             var pt = UiKit.Label(box, 0, 0, 100, 100, "패시브:", 34, Palette.Cream); pt.name = "PassiveTitle"; pt.fontStyle = FontStyle.Bold; UiKit.Pct(pt.rectTransform, Layout.PdPassiveTitle.Within(Layout.PdBox));

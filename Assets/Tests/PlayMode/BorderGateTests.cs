@@ -354,7 +354,7 @@ namespace KkomaKnight.Tests.Play
             {
                 var pd = UiKit.Find(_app.Overlay.Root, "PetDetailCell"); AssertItemFrameBorder(pd, "펫 세부 칸");
                 var petIcon = UiKit.Find(pd, "Item"); Assert.IsNotNull(petIcon, "세부 칸 아이콘");
-                Assert.IsTrue(UiKit.HasLight(petIcon.parent), "펫 세부 아이콘 뒤 빛살(T72 ②)");
+                Assert.IsFalse(UiKit.HasLight(petIcon.parent), "펫 세부 아이콘 뒤에는 빛살이 없다(T203 ⓐ · 주인 지시로 T72 ② 에서 뺐다)");
             }
             _app.Overlay.Close(); yield return Frames(1);
 

@@ -218,37 +218,28 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(0, petPat.GetSiblingIndex(), "패턴은 바탕 바로 위(형제 0) — 상단 바·격자·탭 바 아래");
             Assert.AreEqual(1f, petPat.GetComponent<RawImage>().color.r, 0.001f, "어두운 바탕이라 흰 무늬(PatternTintDark)");
 
-            // ⓐ·ⓒ 펫 세부 팝업(14) — 공통 팝업 상자 안 패턴 + 아이콘 뒤 빛살
+            // T203 — 펫 세부 팝업(14)에는 «무늬도 빛살도 없다»(주인 2026-09-07 «라이트 이펙트가 장비 슬롯 내부에 있던데 그거 없애기» · «패턴 없애기»).
+            // 종전에는 이 자리가 «공통 팝업 상자 안 패턴 + 아이콘 뒤 빛살» 의 본보기였다 — 그 계약은 잃지 않는다:
+            //  · 무늬 «있음»·층 순서 = 아래 설정 팝업 줄(T140 이 특전 둘을 뺄 때 옮겨 둔 그 자리)
+            //  · 빛살 «있음»·순서 = 아래 상점 상자 줄
+            //  · 둘의 unscaled 흐름·회전 = 이 파일 맨 앞 «시험 칸» 줄(timeScale 0 실측)
+            // 그래서 여기서는 «없다» 만 못 박는다.
             _app.GetScreen<PetScreen>().OpenDetail(0); yield return Frames(2); Canvas.ForceUpdateCanvases();
             var box = UiKit.Find(_app.Overlay.Root, "ui.popup");
             Assert.IsNotNull(box, "펫 세부 = 공통 팝업 상자(ui.popup)");
-            Assert.IsTrue(UiKit.HasPattern(box), "팝업 상자 «안» 에 패턴(T72 ① · UiKit.Popup 한 곳)");
-            var pat = box.Find(UiKit.PatternName); var bgc = box.Find("Bg"); var border = box.Find("Border");
-            Assert.IsNotNull(bgc, "팝업 조각의 Bg");
-            Assert.AreEqual(bgc.GetSiblingIndex() + 1, pat.GetSiblingIndex(), "패턴은 조각의 Bg 바로 위");
-            if (border != null) Assert.Less(pat.GetSiblingIndex(), border.GetSiblingIndex(), "패턴은 테두리 아래(테두리가 무늬에 안 가린다)");
-            var prt = (RectTransform)pat; var brt = (RectTransform)box;
-            Assert.AreEqual(brt.rect.width - 2f * UiKit.PopupPatternInset, prt.rect.width, 1f, "둥근 모서리 안쪽으로 " + UiKit.PopupPatternInset + "px 들여 깐다(사각 무늬가 모서리 밖으로 안 나간다)");
-            Assert.IsFalse(prt.GetComponent<RawImage>().raycastTarget, "패턴은 클릭을 안 먹는다(배경 탭으로 닫기 그대로)");
+            Assert.IsFalse(UiKit.HasPattern(box), "펫 세부(14) 상자 안에 흐르는 무늬가 없다(T203 ⓑ)");
+            Assert.AreEqual(0, CountPatterns(box), "14 팝업 나무 어디에도 «Pattern» RawImage 가 없다(T203 ⓑ)");
 
             var cell = UiKit.Find(box, "PetDetailCell"); Assert.IsNotNull(cell, "펫 칸(세부)");
             var item = UiKit.Find(cell, "Item"); Assert.IsNotNull(item, "펫 아이콘(조각의 Item)");
-            var frame = item.parent;
-            Assert.IsTrue(UiKit.HasLight(frame), "펫 세부 아이콘 뒤 빛살(T72 ②)");
-            Assert.Less(frame.Find(UiKit.LightMaskName).GetSiblingIndex(), item.GetSiblingIndex(), "빛살은 아이콘 «뒤»(형제 순서 앞)");
-
-            // 시간이 멈춘 팝업 중에도 흐르고 돈다(unscaled) — 화면 적용도 헬퍼 계약 그대로
-            Time.timeScale = 0f;
-            var lrt = (RectTransform)frame.Find(UiKit.LightMaskName + "/" + UiKit.LightName);
-            var praw = pat.GetComponent<RawImage>(); var p0 = praw.uvRect.position; var r0 = lrt.localRotation;
-            yield return RealSeconds(0.4f);
-            Assert.Less(praw.uvRect.position.x, p0.x, "팝업 패턴도 오른쪽 위로 흐른다(팝업 시간 정지 중에도)");
-            Assert.Less(Vector3.SignedAngle(r0 * Vector3.up, lrt.localRotation * Vector3.up, Vector3.forward), -0.5f, "팝업 빛살도 시계방향으로 돈다");
-            Time.timeScale = 1f;
+            Assert.IsFalse(UiKit.HasLight(item.parent), "펫 세부 아이콘 뒤에 빛살이 없다(T203 ⓐ)");
+            Assert.IsNull(item.parent.Find(UiKit.LightMaskName), "빛 담개(LightMask)까지 남지 않는다 — 끄는 것이 아니라 안 세운다");
 
             _app.Overlay.Close(); yield return Frames(2);
             Assert.IsFalse(_app.Overlay.IsOpen, "닫힘");
-            Assert.IsFalse(UiKit.IsTweening(lrt), "팝업이 닫히면 빛살 트윈도 없다(SetLink · T56)");
+            // 종전에는 여기서 «팝업이 닫히면 빛살 트윈도 없다» 를 쟀는데 이제 빛살 자체가 없다(T203 ⓐ).
+            // 그 «SetLink 로 트윈이 같이 죽는다» 계약은 이 파일 맨 앞 «시험 칸» 줄(칸 파괴 뒤 트윈 0)이 그대로 지킨다.
+            Assert.AreEqual(0, CountPatterns(_app.Overlay.Root), "팝업을 닫으면 어둠 층에 «Pattern» 이 하나도 안 남는다");
             _log.AssertNoRed("T72 화면 적용(팝업 · 펫)");
             yield return Shutdown();
         }
