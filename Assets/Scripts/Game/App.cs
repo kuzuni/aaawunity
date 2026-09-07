@@ -17,6 +17,8 @@ namespace KkomaKnight.Game
         public SaveData Save { get; private set; }
         public AssetCatalog Assets { get; private set; }
         public RectTransform Frame { get; private set; }
+        /// <summary>프레임 «밖» 레터박스 띠를 채우는 바탕(T182 2단계 · 테스트가 띠 넷을 잰다).</summary>
+        public FrameBackdrop Backdrop { get; private set; }
         /// <summary>T106 — 노치·펀치홀을 피한 영역(<see cref="SafeAreaRoot"/>). <see cref="Frame"/> 의 부모다.</summary>
         public RectTransform SafeArea { get; private set; }
         public Canvas UiCanvas { get; private set; }
@@ -49,6 +51,9 @@ namespace KkomaKnight.Game
             UiCanvas = UiKit.CreateRootCanvas("UI", 10);
             SafeArea = UiKit.CreateSafeArea(UiCanvas.transform);   // T106 — 노치를 피한 영역 · 화면 UI 는 전부 이 안(상단·하단 프레임 띠만 이 밖으로 뻗는다)
             Frame = UiKit.CreateFrame(SafeArea);
+            // T182 2단계 — 프레임 «밖» 레터박스 띠를 게임 배경으로 채운다(태블릿 3:4 에서 화면의 38.4% 가 검은 띠였다 · 주인 «갤럭시 탭까지»).
+            // 프레임 안은 한 픽셀도 안 덮는다 — 전투 마당은 WorldCam 이 캔버스 «뒤» 에 그리므로 통짜 배경 한 장이면 마당이 사라진다.
+            Backdrop = FrameBackdrop.Create(UiCanvas.transform, Frame);
             Frame.GetComponent<Image>().enabled = false;   // 프레임 안은 각 화면이 채운다 · 전투는 카메라가 보인다
             if (WorldCamera != null)
             {
