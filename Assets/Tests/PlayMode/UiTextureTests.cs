@@ -642,14 +642,17 @@ namespace KkomaKnight.Tests.Play
                 {
                     var item = UiKit.Find(c, "Item"); Assert.IsNotNull(item, "보상 칸 그림(조각의 Item)");
                     var frame = item.parent;
-                    Assert.IsTrue(UiKit.HasLight(frame), "보상 칸 그림 뒤 빛살(T72 ② · 작은 조각)");
-                    Assert.Less(frame.Find(UiKit.LightMaskName).GetSiblingIndex(), item.GetSiblingIndex(), "빛살은 그림 «뒤»(형제 순서 앞)");
+                    // T190(주인 2026-09-07 13:3X «아이템 슬롯 같은 거에는 빛 효과 없게») — 특권 카드의 «보상 칸» 도 조각 ItemFrame_01 이라 빛이 빠졌다.
+                    // 카드 «그림» 뒤 빛살은 위 갈래(Pic:)에서 그대로 남는다 — 칸이 아니라 카드이기 때문이다(주인 «특별 상품» 갈래).
+                    Assert.IsTrue(UiKit.IsItemCell(frame), "특권 보상 칸은 «아이템 칸»(조각 ItemFrame_01) 이다 — 판정의 근거(T190 1항)");
+                    Assert.IsFalse(UiKit.HasLight(frame), "특권 보상 칸에 빛살 없음(T190)");
+                    Assert.IsFalse(UiKit.HasLightMask(frame), "특권 보상 칸에 빛 담개도 없음(T190)");
                     cellLights++;
                 }
             }
             Assert.AreEqual(4, cards, "특권 카드 4장(레퍼런스 11)");
             Assert.AreEqual(4, heads, "카드 제목 띠 4");
-            Assert.AreEqual(4, cellLights, "보상 칸 빛살 4(카드마다 다이아 칸 하나)");
+            Assert.AreEqual(4, cellLights, "보상 칸 4(카드마다 다이아 칸 하나) — 빛은 T190 으로 빠졌고 «칸이 넷» 은 그대로 잰다");
             Assert.AreEqual(3, picLights, "긴 카드 3장의 그림 뒤 빛살(카드 1 은 그림이 없다)");
 
             // 시간이 멈춰도 흐르고 돈다(unscaled) — 화면 적용도 헬퍼 계약 그대로
