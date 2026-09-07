@@ -371,6 +371,24 @@ namespace KkomaKnight.Tests.Play
                 AssertNoTextClip("퀘스트 팝업", _app.Overlay.Root); AssertUsedAtLeast("퀘스트 제목", _app.Overlay.Root, "Title", TextSize.Body);
                 _app.Overlay.Close(); yield return Frames(1);
                 LobbyPopups.Attendance(_app); yield return Frames(1); Assert.AreEqual(7, CountNamed(_app.Overlay.Root, "Day:"), "출석 칸 7");
+                // T133 — 출석 팝업(16) 두 가지가 되돌아가면 여기서 잡는다(둘 다 게이트가 못 재는 «대비·읽힘» 이라 단언으로 못 박는다).
+                {
+                    var ovA = _app.Overlay.Root;
+                    // ⓑ «N일차» 머리 띠는 흰 글자가 뜰 만큼 어두워야 한다 — 레퍼런스 16 은 짙은 자주(휘도 ≈0.2)다.
+                    var headT = UiKit.Find(ovA, "Head"); Assert.IsNotNull(headT, "«N일차» 머리 띠");
+                    var headImg = headT.GetComponent<Image>(); Assert.IsNotNull(headImg, "머리 띠 그림");
+                    float luma = 0.299f * headImg.color.r + 0.587f * headImg.color.g + 0.114f * headImg.color.b;
+                    Assert.LessOrEqual(luma, 0.30f, $"머리 띠가 너무 밝다(휘도 {luma:0.00}) — 흰 글자와 대비가 없다(T133 ⓑ · 레퍼런스 ≈0.2)");
+                    Assert.GreaterOrEqual(headImg.color.a, 0.99f, "머리 띠는 불투명이어야 한다 — 반투명이면 밝은 칸이 비쳐 다시 떠 버린다(T133 ⓑ)");
+                    // ⓐ 수량은 «칸 아래를 가로지르는 큰 글자» 다 — 오른쪽 아래 한 글자로 되돌아가면 실기에서 안 보인다.
+                    var cellT = UiKit.Find(ovA, "Cell"); Assert.IsNotNull(cellT, "출석 보상 칸");
+                    var qtyT = UiKit.Find(cellT, "Qty"); Assert.IsNotNull(qtyT, "보상 수량 글자");
+                    var qty = qtyT.GetComponent<Text>(); Assert.IsNotNull(qty, "수량 Text");
+                    Assert.AreEqual(TextAnchor.MiddleCenter, qty.alignment, "수량은 칸 아래 띠 가운데(T133 ⓐ)");
+                    Assert.GreaterOrEqual(qty.fontSize, TextSize.Body, $"수량 글자가 본문 하한보다 작다({qty.fontSize} · T133 ⓐ)");
+                    var qrt = qty.rectTransform;
+                    Assert.GreaterOrEqual(qrt.anchorMax.x - qrt.anchorMin.x, 0.8f, "수량 칸이 칸 폭을 가로질러야 한다(T133 ⓐ)");
+                }
                 AssertNoTextClip("출석 팝업", _app.Overlay.Root);
                 // T76 — 출석 팝업은 GUI Pro `Rewards_Daily7_Popup` 프리팹이다: 리본은 프리팹 Title_01_Deco_Yellow · 칸은 DailyFrame(상태 바탕) · 오늘(1일차)만 Bg_Focus1 · 받은 날 ✅ 0
                 { var rib = UiKit.Find(_app.Overlay.Root, "Title_01_Deco_Yellow"); Assert.IsNotNull(rib, "출석 리본 = 프리팹 Title_01_Deco_Yellow"); var rt = rib.GetComponentInChildren<Text>(true); Assert.IsNotNull(rt, "출석 리본 글자"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(rt), "리본 = 제목 종류"); Assert.GreaterOrEqual(rt.rectTransform.rect.height, rt.preferredHeight, "리본 글자 rect ≥ 선호 높이(RibbonTextFit)"); }

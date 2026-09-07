@@ -46,7 +46,18 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>보상 칸 — ItemFrame_01 조각(본래 190px · 배율로 표 칸에) + 등급색 변형 + 아이콘 (+ 오른쪽 아래 수량 · 오른쪽 위 자물쇠). PetScreen 의 칸과 같은 문법.</summary>
-        public static RectTransform Cell(Transform parent, Layout.R parentR, Layout.R cellR, string frameColor, string iconKey, string qty = null, bool locked = false, string name = "Cell")
+        /// <summary>T133 ⓐ — «칸 아래를 가로지르는» 수량 띠의 높이(칸 %). 글자 크기는 이 높이에서 계산한다.</summary>
+        public const float QtyBandH = 30f;
+        /// <summary>
+        /// T133 ⓑ — 출석 칸 머리(«N일차») 띠 색을 누르는 비율. 레퍼런스 16 의 머리 띠는 <b>짙은 자주(휘도 ≈0.2)</b> 인데
+        /// 우리 것은 <c>Palette.Plum</c> α0.8 이라 밝은 칸 위에서 #D493E1(휘도 0.69)로 떠 흰 글자와 대비가 0.31 밖에 안 됐다.
+        /// <b>Ink 로 섞지 않고 밝기만 누른다</b> — 섞으면 회색이 되어 «자주» 가 사라진다(0.36 배 = 휘도 ≈0.22 · 대비 ≈0.78).
+        /// </summary>
+        public const float HeadBandDark = 0.36f;
+        /// <summary>레퍼런스 16 머리 띠 색 — <see cref="HeadBandDark"/> 로 누른 <c>Palette.Plum</c>(불투명).</summary>
+        public static Color HeadBand { get { var c = Palette.Plum; return new Color(c.r * HeadBandDark, c.g * HeadBandDark, c.b * HeadBandDark, 1f); } }
+
+        public static RectTransform Cell(Transform parent, Layout.R parentR, Layout.R cellR, string frameColor, string iconKey, string qty = null, bool locked = false, string name = "Cell", bool qtyBand = false)
         {
             var cell = UiKit.Rect(parent, name); UiKit.Pct(cell, cellR.Within(parentR));
             var frame = UiKit.Spawn("ui.itemFrame.empty", cell); frame.name = "ItemFrame_01"; var frt = (RectTransform)frame.transform;
@@ -60,7 +71,19 @@ namespace KkomaKnight.Game
             // 안 거치면 조각의 제 Border(짙은 갈색 · 선 5px · 가운데 채움)로 «어두운 테두리» 감사만 우연히 통과하고 굵기·결정 184 계약은 안 선다(CI #189 실측).
             GearUi.DarkFrame(frt, frt.localScale.x);
             // 수량 글자 칸 — 보조 36 의 한 줄(TextSize.BoxHeight(36) = 50.4px)이 들어가야 한다(T63 · T77 이 처음 쓴다): 칸 4.0%(93.5px)의 56% = 52.4px · 폭 76%(76px)는 «300»(≈54px)의 141%
-            if (!string.IsNullOrEmpty(qty)) { var q = UiKit.Label(cell, 20, 44, 76, 56, qty, TextSize.Aux, Palette.White, TextAnchor.LowerRight, kind: TextKind.Aux); q.name = "Qty"; q.fontStyle = FontStyle.Bold; }
+            if (!string.IsNullOrEmpty(qty))
+            {
+                Text q;
+                if (qtyBand)
+                {
+                    // T133 ⓐ — 레퍼런스 16 의 수량은 «칸 아래를 가로지르는 큰 글자» 다. 우리 것은 아이콘 오른쪽 아래에 붙은 한 글자라
+                    // 실제 크기(540px 폭)에서 거의 안 보였다(screens run 255 의 16_attendance.png 4배 확대로 실측).
+                    // 크기는 리터럴이 아니라 «띠 높이» 에서 뽑는다(§1 · ShopScreen.HeaderSize 와 같은 방식).
+                    q = UiKit.Label(cell, 2, 100f - QtyBandH - 2f, 96, QtyBandH, qty, UiKit.FontForHeight(cellR.H * QtyBandH / 100f), Palette.White, TextAnchor.MiddleCenter, kind: TextKind.Body);
+                }
+                else q = UiKit.Label(cell, 20, 44, 76, 56, qty, TextSize.Aux, Palette.White, TextAnchor.LowerRight, kind: TextKind.Aux);
+                q.name = "Qty"; q.fontStyle = FontStyle.Bold;
+            }
             if (locked) { var lk = UiKit.Icon(cell, "Lock", "ui.iconLock"); UiKit.Pct(lk.rectTransform, 64, -16, 44, 44); }
             return cell;
         }
@@ -368,8 +391,8 @@ namespace KkomaKnight.Game
                 {
                     var frame = (RectTransform)group.GetChild(i); frame.name = "Day:" + (i + 1); frame.gameObject.SetActive(true);
                     DayFrame(frame, i == 0);
-                    var head = Head(frame, Layout.AtCell, Layout.AtCellHead, (i + 1) + "일차", Palette.A(Palette.Plum, 0.8f));
-                    var ic = Cell(frame, Layout.AtCell, Layout.AtCellIcon, AttendColors[i], AttendIcons[i], AttendQty);
+                    var head = Head(frame, Layout.AtCell, Layout.AtCellHead, (i + 1) + "일차", HeadBand);
+                    var ic = Cell(frame, Layout.AtCell, Layout.AtCellIcon, AttendColors[i], AttendIcons[i], AttendQty, qtyBand: true);
                     UiKit.Clickable(frame, () => { });
                     cells[i] = frame; if (i == 0) { head0 = head.transform.parent as RectTransform; icon0 = ic; }
                 }
@@ -380,9 +403,9 @@ namespace KkomaKnight.Game
             if (day7 != null)
             {
                 day7.name = "Day:7"; UiKit.Pct(day7, Layout.AtDay7.Within(B)); DayFrame(day7, false);
-                head7 = Head(day7, Layout.AtDay7, Layout.AtDay7Head, "7일차", Palette.A(Palette.Plum, 0.8f), "Head7").transform.parent as RectTransform;
-                r7[0] = Cell(day7, Layout.AtDay7, Layout.AtDay7Cell, "green", "ui.coin", AttendQty);
-                r7[1] = Cell(day7, Layout.AtDay7, Sh(Layout.AtDay7Cell, Layout.AtDay7Pitch, 0), "plum", "ui.gemRed", AttendQty);
+                head7 = Head(day7, Layout.AtDay7, Layout.AtDay7Head, "7일차", HeadBand, "Head7").transform.parent as RectTransform;
+                r7[0] = Cell(day7, Layout.AtDay7, Layout.AtDay7Cell, "green", "ui.coin", AttendQty, qtyBand: true);
+                r7[1] = Cell(day7, Layout.AtDay7, Sh(Layout.AtDay7Cell, Layout.AtDay7Pitch, 0), "plum", "ui.gemRed", AttendQty, qtyBand: true);
                 UiKit.Clickable(day7, () => { });
             }
             // 비평 이름표(표 ㉑)
