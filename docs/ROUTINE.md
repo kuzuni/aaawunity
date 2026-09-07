@@ -2696,7 +2696,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 6. **테스트** — EditMode(순수 C#)가 이 일의 정본이다: ⓐ 지옥의 문 굴림에서 **일반 등급이 한 번도 안 나온다**(많이 굴려 확인) ⓑ 원정은 **시작 특전 5개**를 들고 있고 **레벨 5**이며 `ExpNeed(5)` 를 다음 필요치로 본다 ⓒ 원정 굴림에는 **일반이 나온다** ⓓ **일반 챕터 전투는 셋 다 그대로**(기본값 회귀 0) ⓔ `Sim --seeds 11,12,13` 21칸 **불변**. PlayMode: 도전 → 티켓 1 감소 → 전투 진입 → 끝나면 돌아오기 · 빨간 줄 0.
 7. 판정 = 그 커밋을 담은 첫 완주 런(EditMode·PlayMode + **골든 불변 표**) + 주인 폰(두 던전을 실제로 한 판씩).
 
-### T188 — **컴파일 파손을 «로컬에서» 잡는 자**(asmdef 참조 대조) + 절차 못 박기 (주인 2026-09-07 12:2X 상시 지시 · 도구·문서 · 게임 코드 0줄)
+### T188 ✅ — **컴파일 파손을 «로컬에서» 잡는 자**(asmdef 참조 대조) + 절차 못 박기 — **✅ 완료**: 자 = **T189 의 `tools/check_asmdef.py`**(워커 B · 실제 파손 커밋으로 검증) · `--self-test`·`ci.yml` dotnet 잡 편입 = `b7de386e`(워커 L) · 테스트 어셈블리 쪽은 `check_test_usings.py` 가 따로 덮는다 · **2항의 `tools/check_asmdef_refs.py` 는 만들지 말 것**(그 자가 `check_asmdef.py` 다) (주인 2026-09-07 12:2X 상시 지시 · 도구·문서 · 게임 코드 0줄)
 
 > **⚑ 실측 하나(12:3X UTC · 워커 E · sess-1913-2015 · 선점 안 함 · 코드 0줄) — 자를 만들 때 «거짓 경고» 가 될 규칙 하나를 미리 걸러 둔다.** `Assets/Tests/PlayMode/KkomaKnight.Tests.PlayMode.asmdef` 은 `Unity.RenderPipelines.**Core**.Runtime` 을 **참조하지 않는다**. 그런데 `PostFxTests.cs` 는 `using UnityEngine.Rendering;` 을 쓰고 `Volume` 의 멤버(`isGlobal`·`sharedProfile`)를 실제로 만진다 — «그러면 CS0246 이 나야 한다» 고 보고 고치려다 **CI 로 반증했다**: 그 파일은 CI **#348**(`e4e2cdf7`) 시점에 **이미 있었고**, 그 런이 낸 컴파일 오류는 `using DG.Tweening` 둘**뿐**이었다(`Volume` 오류는 없다). 즉 **PlayMode 어셈블리에서는 Core RP 타입이 참조 없이도 풀린다**(참조한 `Universal.Runtime` 을 통해 컴파일러에 같이 넘어가는 것으로 보인다 · 원인까지는 안 팠다). **자에 쓸 말**: «네임스페이스 → 어셈블리» 표를 그대로 요구 조건으로 삼으면 이 자리가 **거짓 경고**가 된다. `Game.asmdef`(A 가 고친 그 자리)에서는 진짜였고 여기서는 아니었다 — 둘의 차이가 무엇인지 자를 만들며 한 번 보고, 안 되면 **«CI 가 실제로 실패한 조합만»** 규칙으로 넣는 편이 낫다(거짓 경고가 나면 다음 워커가 자를 안 믿는다).
 
