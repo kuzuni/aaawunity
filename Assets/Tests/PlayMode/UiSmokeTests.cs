@@ -96,8 +96,20 @@ namespace KkomaKnight.Tests.Play
         }
         IEnumerable<Text> ActiveTexts() => _app.UiCanvas.GetComponentsInChildren<Text>(false);
         bool HasText(Func<string, bool> pred) { foreach (var t in ActiveTexts()) if (pred(t.text ?? "")) return true; return false; }
-        /// <summary>같은 글자가 <b>몇 군데</b> 나오는가 — «중복이니 빼라»(T168) 처럼 «하나만 있어야 한다» 를 재는 자리에 쓴다.</summary>
-        int CountText(Func<string, bool> pred) { int n = 0; foreach (var t in ActiveTexts()) if (pred(t.text ?? "")) n++; return n; }
+        /// <summary>
+        /// 같은 글자가 <paramref name="root"/> 아래 <b>몇 군데</b> 있는가 — «중복이니 빼라»(T168) 처럼 «하나만 있어야 한다» 를 재는 자리에 쓴다.
+        /// <para>
+        /// <b>꺼진 것도 센다.</b> 탭 바는 «켜진 탭만 글자»(조각의 Focus/Normal 전환)라 다른 탭의 라벨은 꺼져 있다 —
+        /// 켜진 것만 세면 «탭에 이벤트 라벨이 있다» 가 로비에서 0 으로 나온다(CI #322 에서 내가 그렇게 틀렸다).
+        /// 우리가 재려는 것은 «그 글자를 가진 자리가 몇 개인가» 이지 «지금 보이는가» 가 아니다.
+        /// </para>
+        /// </summary>
+        static int CountTextIn(Transform root, Func<string, bool> pred)
+        {
+            int n = 0;
+            foreach (var t in root.GetComponentsInChildren<Text>(true)) if (t != null && pred(t.text ?? "")) n++;
+            return n;
+        }
 
         /// <summary>검사 지점 — ⓐ 빨간 줄 0 + 경로/키 경고 0 ⓑ 데모 잔여 글자 0 (+ 팝업 열림 여부).</summary>
         void Check(string where, bool expectOverlay = false, bool demoText = true)
@@ -381,8 +393,12 @@ namespace KkomaKnight.Tests.Play
                 // T168 — 오른쪽 아래 «이벤트» 도 삭제됐다(주인 «중복이니 빼 주고»). 같은 입구는 하단 탭 맨 오른쪽에 있다.
                 Assert.IsNull(UiKit.Find(lobby, "Events"), "오른쪽 아래 «이벤트» 는 삭제됐다(T168 · 탭과 중복)");
                 Assert.IsTrue(HasText(s => s == "탐험") && HasText(s => s == "클리어 보상"), "보조 줄 라벨은 우리말");
-                // «이벤트» 글자는 이제 **탭에서만** 나온다 — 모서리 버튼이 되살아나면 둘이 되어 여기서 잡힌다.
-                Assert.AreEqual(1, CountText(s => s == "이벤트"), "로비의 «이벤트» 글자는 탭 하나뿐이다(T168 · 중복 금지)");
+                // 주인 지시의 진짜 계약은 «중복이니 빼라» 다 → **탭 바 «밖»에는 «이벤트» 글자가 하나도 없어야** 하고,
+                // 탭 바 «안»에는 있어야 한다. 이렇게 나눠 재면 로비 프리팹에 남은 다른 조각이 무엇을 들고 있든 흔들리지 않는다.
+                // 꺼진 것도 세는 까닭 = 탭 라벨은 «켜진 탭만» 보이므로 로비(전투 탭)에서 이벤트 라벨은 꺼져 있다(CI #322 에서 내가 이걸 놓쳐 빨갰다).
+                int evInTabs = CountTextIn(tabs, s => s == "이벤트");
+                Assert.GreaterOrEqual(evInTabs, 1, "탭 바에 «이벤트» 라벨이 있어야 한다(T168 · 다섯째 칸)");
+                Assert.AreEqual(evInTabs, CountTextIn(lobby, s => s == "이벤트"), "«이벤트» 글자는 탭 바 밖에 하나도 없어야 한다(T168 · 주인 «중복이니 빼 주고»)");
                 Assert.IsFalse(HasText(s => s == "특권") || HasText(s => s == "퀘스트") || HasText(s => s == "출석"), "메뉴로 옮긴 것은 로비에 두 번 안 나온다(T96-menu)");
                 Assert.IsFalse(HasText(s => s == "스타터팩") || HasText(s => s == "7일 챌린지") || HasText(s => s == "시즌 패스") || HasText(s => s == "성"), "T78 삭제분 라벨 0");
                 // T63-lobby — 아이콘 라벨(사이드 4 · 보조 2 · 이벤트)은 보조 하한(36)으로 2줄까지 잘림 없이: bestFit 이 줄이지 않고(TextGenerator 로 직접 굴려 36) · 선호 높이 ≤ 칸
