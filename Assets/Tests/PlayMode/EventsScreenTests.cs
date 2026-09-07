@@ -356,11 +356,13 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual("100", UiKit.Find(UiKit.Find(me, "Goods:0"), "Badge").GetComponent<Text>().text, "다이아 배지 100");
                 Assert.AreEqual("20", UiKit.Find(UiKit.Find(me, "Goods:1"), "Badge").GetComponent<Text>().text, "도안 배지 20");
                 Assert.IsNull(UiKit.Find(UiKit.Find(me, "Goods:7"), "Badge"), "희귀 열쇠에는 개수 배지가 없다(레퍼런스)");
-                // 잘린 두 칸은 여전히 «—» — 누가 «빈 칸이니 채우자» 며 수를 지어내면 여기서 빨개진다
-                Assert.AreEqual("한도 —", Lim(9), "전설 열쇠 한도는 레퍼런스에서 잘렸다 — «—» 로 남는다");
-                Assert.AreEqual("—", Cost(9), "전설 열쇠 값도 «—»");
-                Assert.AreEqual("한도 —", Lim(10), "부활 토큰 한도도 «—»");
-                Assert.AreEqual("—", Cost(10), "부활 토큰 값도 «—»");
+                // 잘린 두 칸은 여전히 «—» — 누가 «빈 칸이니 채우자» 며 수를 지어내면 여기서 빨개진다.
+                // ⚠ 기댓값에 `TextGlyphs.Safe` 를 씌운다(이 파일 177행과 같은 idiom) — Jua 에 «—» 글리프가 없어
+                //    화면에 나갈 때 «-» 로 바뀐다(T75). 리터럴 «—» 로 적으면 **어떤 코드로도 통과 못 하는 단언**이다(결정 508 과 같은 갈래).
+                Assert.AreEqual(TextGlyphs.Safe("한도 —"), Lim(9), "전설 열쇠 한도는 레퍼런스에서 잘렸다 — 줄표로 남는다");
+                Assert.AreEqual(TextGlyphs.Safe("—"), Cost(9), "전설 열쇠 값도 줄표");
+                Assert.AreEqual(TextGlyphs.Safe("한도 —"), Lim(10), "부활 토큰 한도도 줄표");
+                Assert.AreEqual(TextGlyphs.Safe("—"), Cost(10), "부활 토큰 값도 줄표");
                 Assert.AreEqual("3", UiKit.Find(UiKit.Find(me, "Goods:10"), "Badge").GetComponent<Text>().text, "부활 토큰 배지 3(이것만 레퍼런스에 보인다)");
             }
             Check("상인 페이지");
