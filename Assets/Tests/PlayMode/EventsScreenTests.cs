@@ -176,6 +176,14 @@ namespace KkomaKnight.Tests.Play
             Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 2, "HeroView 2(상단 바 아바타 + 1위 초상 «나»)");
             Assert.IsNotNull(UiKit.Find(ar, "ChallengeBtn"), "도전"); Assert.IsNotNull(UiKit.Find(ar, "RewardsBtn"), "보상"); Assert.IsNotNull(UiKit.Find(ar, "MerchantBtn"), "상인");
             AtY((RectTransform)UiKit.Find(ar, "Stage"), Layout.AeStage, "무대"); AtX((RectTransform)UiKit.Find(ar, "ChallengeBtn"), Layout.AeChallenge, "도전 버튼"); AtX((RectTransform)UiKit.Find(ar, "RankList"), Layout.AeList, "순위 목록");
+            // T124 — 승급 안내 띠는 목록 마지막 줄 위에 걸치므로(레퍼런스 23 도 그렇다) «불투명 + 목록보다 뒤 형제» 라야 뒤 글자가 안 비친다.
+            {
+                var promo = UiKit.Find(ar, "Promo") as RectTransform; Assert.IsNotNull(promo, "승급 안내 띠");
+                var pim = promo.GetComponent<Image>(); Assert.IsNotNull(pim, "안내 띠 판");
+                Assert.GreaterOrEqual(pim.color.a, 0.98f, "안내 띠는 불투명(α0.85 이면 10위 줄 글자가 비쳐 겹친다 · T124)");
+                var listRt = UiKit.Find(ar, "RankList"); Assert.IsNotNull(listRt, "순위 목록");
+                Assert.Greater(promo.GetSiblingIndex(), listRt.GetSiblingIndex(), "안내 띠가 목록보다 뒤 형제 = 위에 그려진다(T124)");
+            }
             Check("아레나 입장 화면");
 
             // ⑤ 도전 → 도전 팝업(24) · 줄 버튼·새로고침 아무 일 없음

@@ -312,7 +312,9 @@ namespace KkomaKnight.Game
                 RankItem(row, i + 4, Foes[i % Foes.Length]);
                 if (i == 0) UiKit.Tag(row, "순위 줄(1칸)");
             }
-            var promo = UiKit.Panel(pg, "Promo", "fr.rect", Palette.A(Palette.Dim, 0.85f)); UiKit.Pct(promo.rectTransform, Layout.AePromo); UiKit.Tag(promo.transform, "승급 안내");
+            // T124 — 승급 안내 띠는 «불투명» 이다: 레퍼런스 23 도 목록 마지막 줄 위에 걸치지만 띠가 꽉 찬 어두운 막대라 뒤 줄이 안 비친다.
+            // α0.85 이던 동안에는 10위 줄의 흰 이름·트로피 숫자가 안내 글자 사이로 비쳐 두 글자가 서로 먹었다(screens 218 실측 · 게이트가 못 재는 종류).
+            var promo = UiKit.Panel(pg, "Promo", "fr.rect", Palette.Dim); UiKit.Pct(promo.rectTransform, Layout.AePromo); UiKit.Tag(promo.transform, "승급 안내");
             UiKit.Label(promo.transform, 0, 0, 100, 100, "시즌이 끝나면 상위 순위가 승급합니다", TextSize.Body, Palette.White);
             // 바닥: 뒤로(→ PvP 페이지) + 도전 🎫x1(→ 도전 팝업)
             Foot(pg, null, () => ShowPage(PagePvp));
