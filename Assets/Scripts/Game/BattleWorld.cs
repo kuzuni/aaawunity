@@ -824,7 +824,8 @@ namespace KkomaKnight.Game
                 case EvKind.Hit:
                 {
                     var p = EnemyPos(ev.Enemy);
-                    Pop(UiKit.Fmt(ev.Value) + (ev.Crit ? "!" : ""), p + Vector3.up * 0.5f, ev.Crit ? Palette.PopCrit : Palette.White, ev.Crit ? 50 : 38);
+                    // T152 — 치명타는 숫자 뒤 «!» 대신 왼쪽에 치명타 아이콘(주인 «치명타 아이콘+데미지») · 색·크기는 종전 그대로
+                    Pop(UiKit.Fmt(ev.Value), p + Vector3.up * 0.5f, ev.Crit ? Palette.PopCrit : Palette.White, ev.Crit ? 50 : 38, ev.Crit ? CritIconKey : null);
                     Fx.Spawn(ev.Crit ? "fx.crit" : "fx.hit", p, ev.Crit ? 0.25f : 0.6f, 1.2f);
                     Audio.Sfx(ev.Crit ? "snd.crit" : "snd.hit", ev.Crit ? 1f : 0.8f);
                     if (ev.Enemy != null && _enemies.TryGetValue(ev.Enemy, out var v)) { v.Rig.Flash(flash, 0.1f); v.Rig.transform.DOKill(true); v.Rig.transform.DOPunchPosition(new Vector3(0.06f, 0, 0), 0.15f, 1, 0).SetLink(v.Rig.gameObject); }   // SetLink(T56) — 사망 연출 뒤 Remove 로 파괴돼도 경고 0
@@ -849,7 +850,8 @@ namespace KkomaKnight.Game
                 case EvKind.Stun: Pop("스턴", EnemyPos(ev.Enemy, 1.0f), Palette.Yellow, 30); break;
                 case EvKind.Bolt: Lightning(ev.Enemy); break;
                 case EvKind.Reflect: Pop("반사 " + UiKit.Fmt(ev.Value), EnemyPos(ev.Enemy, 0.95f), Palette.Sky, 32); break;
-                case EvKind.Counter: Pop("반격 " + UiKit.Fmt(ev.Value) + (ev.Crit ? "!" : ""), EnemyPos(ev.Enemy, 0.95f), Palette.Orange, 34); Fx.Spawn("fx.hit", EnemyPos(ev.Enemy), 0.5f, 1f); break;
+                // T152 3항 — 반격 팝도 같은 표기로 맞춘다(같은 «치명타» 를 두 가지로 적지 않는다 · 결정 기록)
+                case EvKind.Counter: Pop("반격 " + UiKit.Fmt(ev.Value), EnemyPos(ev.Enemy, 0.95f), Palette.Orange, 34, ev.Crit ? CritIconKey : null); Fx.Spawn("fx.hit", EnemyPos(ev.Enemy), 0.5f, 1f); break;
                 case EvKind.LevelUp: Pop("LEVEL UP!", PlayerPos(1.3f), Palette.Yellow, 46); Fx.Spawn("fx.levelup", PlayerPos(0.5f), 1f, 2f); Audio.Sfx("snd.levelup"); break;
                 case EvKind.Perk:
                 {
@@ -861,8 +863,21 @@ namespace KkomaKnight.Game
             }
         }
 
-        /// <summary>데미지 팝 — 프레임(UI) 층에 Text 를 띄우고 DOTween 으로 올라가며 사라진다. 크기는 호출부 값 × <see cref="TextSize.BattleNumberMul"/>(1.3 · T63 «데미지 팝·전투 숫자는 지금보다 1.3배») 뒤 본문 하한.</summary>
-        public void Pop(string s, Vector3 worldPos, Color color, int size)
+        /// <summary>
+        /// 치명타 팝 앞에 붙는 아이콘의 카탈로그 키(T152 · 주인 2026-09-07 «치명타 데미지일시에 데미지 텍스트 치명타 아이콘+데미지 이런식으로») —
+        /// 스탯 «치명타 확률» 이 쓰는 그림 그대로라 <b>새 그림 0</b>(§1 «에셋은 주인 에셋만»).
+        /// </summary>
+        public const string CritIconKey = "pi.critical";
+        /// <summary>팝 아이콘 한 변 = 글자 크기의 이 배(숫자 높이와 눈으로 같아 보이는 비율).</summary>
+        public const float PopIconMul = 1f;
+        /// <summary>아이콘과 숫자 사이 틈(프레임 px).</summary>
+        public const float PopIconGap = 6f;
+        /// <summary>팝 아이콘 오브젝트 이름(게이트가 이 이름으로도 찾는다).</summary>
+        public const string PopIconName = "PopIcon";
+
+        /// <summary>데미지 팝 — 프레임(UI) 층에 Text 를 띄우고 DOTween 으로 올라가며 사라진다. 크기는 호출부 값 × <see cref="TextSize.BattleNumberMul"/>(1.3 · T63 «데미지 팝·전투 숫자는 지금보다 1.3배») 뒤 본문 하한.
+        /// <paramref name="iconKey"/> 를 주면 숫자 <b>왼쪽</b>에 그 그림이 붙어 «아이콘 + 데미지» 한 덩어리로 뜬다(T152).</summary>
+        public void Pop(string s, Vector3 worldPos, Color color, int size, string iconKey = null)
         {
             if (_pops == null) return;
             size = Mathf.RoundToInt(size * TextSize.BattleNumberMul);
@@ -873,11 +888,31 @@ namespace KkomaKnight.Game
             // 월드 → 프레임 px(WorldCam.ToFrame) + 좌우 흔들기
             rt.anchoredPosition = WorldCam.ToFrame(worldPos) + new Vector2(Random.Range(-30f, 30f), 0f);
             rt.localScale = Vector3.one * 0.6f;
+            var icon = PopIcon(t, iconKey, size);   // T152 — 글자 rect 의 자식이라 아래 트윈 하나에 아이콘까지 같이 따라 올라간다
             var seq = DOTween.Sequence().SetLink(t.gameObject);   // SetLink(T56) — 전투 종료로 팝 층이 먼저 파괴돼도 경고 0
             seq.Append(rt.DOScale(1f, 0.12f).SetEase(Ease.OutBack));
             seq.Join(rt.DOAnchorPosY(rt.anchoredPosition.y + 140f, 0.9f).SetEase(Ease.OutCubic));
             seq.Insert(0.45f, t.DOFade(0f, 0.45f));
-            seq.OnComplete(() => { if (t != null) Object.Destroy(t.gameObject); });
+            if (icon != null) seq.Insert(0.45f, icon.DOFade(0f, 0.45f));   // 글자와 같이 사라진다(아이콘만 남지 않게)
+            seq.OnComplete(() => { if (t != null) Object.Destroy(t.gameObject); });   // 아이콘은 자식이라 같이 사라진다(누수 0)
+        }
+
+        /// <summary>
+        /// 팝 숫자 <b>왼쪽</b>에 아이콘 하나(T152). 글자 rect(폭 400 · 가운데 정렬) 안에서 숫자가 실제로 차지하는 폭(<c>preferredWidth</c>)을 재
+        /// 그 왼쪽에 붙이고, «아이콘 + 틈 + 숫자» 덩어리가 원래 자리에 가운데로 남도록 글자 rect 를 그 절반만큼 오른쪽으로 민다.
+        /// 키가 없으면 아무것도 안 만든다(종전 팝 그대로).
+        /// </summary>
+        static Image PopIcon(Text t, string iconKey, int size)
+        {
+            if (string.IsNullOrEmpty(iconKey)) return null;
+            float d = size * PopIconMul;
+            var img = UiKit.Icon(t.transform, PopIconName, iconKey);
+            var irt = img.rectTransform;
+            irt.anchorMin = irt.anchorMax = new Vector2(0.5f, 0.5f); irt.pivot = new Vector2(0.5f, 0.5f);
+            irt.sizeDelta = new Vector2(d, d);
+            irt.anchoredPosition = new Vector2(-(t.preferredWidth * 0.5f + PopIconGap + d * 0.5f), 0f);
+            var rt = t.rectTransform; rt.anchoredPosition += new Vector2((d + PopIconGap) * 0.5f, 0f);
+            return img;
         }
     }
 }
