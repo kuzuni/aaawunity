@@ -312,21 +312,47 @@ namespace KkomaKnight.Game
         /// <b>상자 카드(10)는 조각 바탕이 회색</b>이라 덧칠이면 색이 죽는다(회차 1 실측: 레퍼런스 «Rare» #0182C3 → 우리 #8997A2) →
         /// 몸통을 <see cref="UiKit.GradientCardSolidAlpha"/> 로 덮는다(T100 ⓓ 회차 2 · 결정 338).
         /// </para>
+        /// <para>
+        /// T147 — 바탕은 <b>직계 자식이 아닐 수 있다</b>. 다이아·골드 카드(<c>ui.shopItem</c>)의 계층은 «카드 → <c>ShopFrame_01</c> → <c>Bg(Mask)</c>» 라
+        /// 바탕이 <b>손자</b>다(프리팹 실측: <c>Bg(Mask)</c> 는 중첩 조각 <c>ShopFrame_01</c> 안에 있고 Image + Mask 를 달고 있다).
+        /// 그래서 ⓐ 바탕을 <b>깊이 찾고</b> ⓑ 그라데이션을 <b>바탕의 부모</b>에 건다(바탕이 직계면 부모 = <paramref name="piece"/> 라 종전과 같은 자리 = 10 상자 카드 불변).
+        /// 못 찾으면 <b>조용히 형제 0 으로 떨어지지 않는다</b> — 그것이 이 결함이었다(형제 0 = 불투명 프레임 «뒤» 라 그라데이션이 안 보인다 · 결정 374).
+        /// </para>
         /// </summary>
         static void CardGradient(Transform piece, string paletteName, string bgName, float alpha = UiKit.GradientCardAlpha)
         {
             if (piece == null) return;
-            int idx = 0; Transform bg = null;
-            for (int i = 0; i < piece.childCount; i++) if (piece.GetChild(i).name == bgName) { bg = piece.GetChild(i); idx = i + 1; break; }
+            var bg = FindDeep(piece, bgName);
+            if (bg == null)
+            {
+                Debug.LogWarning("[T147] 카드 바탕 «" + bgName + "» 을 " + piece.name + " 아래에서 못 찾았다 — 그라데이션을 안 깐다(형제 0 = 프레임 뒤라 안 보인다)");
+                return;
+            }
             // 몸통을 채우는 자리는 바탕까지 그 계열색으로 물들인다 — 위·아래 두 조각은 서로 반대 방향 램프라
             // «가운데» 에서 둘 다 반쯤만 덮는다(실측: 회차 2 의 희귀 카드 채도 0.60 · 레퍼런스 0.98).
             // 비치는 것이 조각의 «회색» 이면 색이 죽고, 두 색의 «가운데 색» 이면 그대로 레퍼런스의 가운데다(결정 344).
-            if (bg != null && alpha >= UiKit.GradientCardSolidAlpha && GradientPalette.Has(paletteName))
+            if (alpha >= UiKit.GradientCardSolidAlpha && GradientPalette.Has(paletteName))
             {
                 var img = bg.GetComponent<Image>();
                 if (img != null) { var p = GradientPalette.Of(paletteName); img.color = Color.Lerp(p.Top, p.Bottom, 0.5f); }
             }
-            UiKit.GradientCard((RectTransform)piece, paletteName, null, UiKit.PopupPatternInset, idx, alpha);
+            UiKit.GradientCard((RectTransform)bg.parent, paletteName, null, UiKit.PopupPatternInset, bg.GetSiblingIndex() + 1, alpha);
+        }
+        /// <summary>이름이 <paramref name="name"/> 인 자손을 너비 우선으로 찾는다(T147 · 얕은 것 우선 = 바탕이 여러 겹일 때 «카드에 가장 가까운» 것).</summary>
+        static Transform FindDeep(Transform root, string name)
+        {
+            var q = new Queue<Transform>(); q.Enqueue(root);
+            while (q.Count > 0)
+            {
+                var t = q.Dequeue();
+                for (int i = 0; i < t.childCount; i++)
+                {
+                    var c = t.GetChild(i);
+                    if (c.name == name) return c;
+                    q.Enqueue(c);
+                }
+            }
+            return null;
         }
 
         void BuildBigCard(RectTransform card, GachaBox box, List<RectTransform> btnsOut)

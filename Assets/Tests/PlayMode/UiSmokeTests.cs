@@ -199,6 +199,37 @@ namespace KkomaKnight.Tests.Play
         /// 회차 1 은 덧칠(0.55)이라 조각의 회색 바탕이 비쳐 색이 죽었다(레퍼런스 «Rare» #0182C3 ↔ 우리 #8997A2 실측).
         /// 두 조각은 서로 반대 방향 알파 램프라(<c>ui.gradTop1</c> 흰→투명 · <c>ui.gradBottom</c> 투명→흰) 둘 다 1 이라야 몸통이 그 두 색으로 덮인다.
         /// </summary>
+        /// <summary>이름이 <paramref name="name"/> 인 자손을 너비 우선으로(얕은 것 먼저) 찾는다 — T147 검사용.</summary>
+        static Transform DeepFind(Transform root, string name)
+        {
+            var q = new Queue<Transform>(); q.Enqueue(root);
+            while (q.Count > 0)
+            {
+                var t = q.Dequeue();
+                for (int i = 0; i < t.childCount; i++) { var c = t.GetChild(i); if (c.name == name) return c; q.Enqueue(c); }
+            }
+            return null;
+        }
+        /// <summary>
+        /// T147 — 그라데이션이 <b>보이는가</b>. 종전 검사(<see cref="UiKit.HasGradient"/>)는 «조각 안에 있는가» 만 봐서
+        /// 다이아·골드 카드가 <b>초록인 채로 안 보였다</b>: 바탕 <c>Bg(Mask)</c> 가 중첩 조각 <c>ShopFrame_01</c> 안의 <b>손자</b>라
+        /// 직계 검색이 못 찾고 형제 0(= 불투명 프레임 «뒤»)으로 떨어졌던 것이다(주인 2026-09-07 05:5X 지적 · 결정 374).
+        /// 그래서 «있다» 가 아니라 <b>«바탕과 같은 부모에서 바탕보다 뒤에 그려진다»</b> 를 못 박는다 — 이 한 줄이 그 결함을 그대로 잡는다.
+        /// </summary>
+        static void AssertGradientAboveBg(Transform piece, string bgName, string what)
+        {
+            var bg = DeepFind(piece, bgName);
+            Assert.IsNotNull(bg, what + " 카드 조각의 바탕 «" + bgName + "»");
+            foreach (var name in new[] { UiKit.GradientTopName, UiKit.GradientBottomName })
+            {
+                var g = DeepFind(piece, name);
+                Assert.IsNotNull(g, what + " 카드 «" + name + "» 조각");
+                Assert.AreSame(bg.parent, g.parent,
+                    what + " 카드 «" + name + "» 은 바탕(" + bgName + ")과 같은 부모에 있어야 한다 — 다른 부모면 불투명 프레임 뒤로 떨어져 안 보인다(T147)");
+                Assert.Greater(g.GetSiblingIndex(), bg.GetSiblingIndex(),
+                    what + " 카드 «" + name + "» 은 바탕보다 뒤에 그려져야 한다(형제 번호가 커야 위에 보인다 · T147)");
+            }
+        }
         static void AssertSolidGradient(Transform piece, string what, string paletteName)
         {
             // 회차 3 — 바탕도 두 색의 «가운데 색» 이라야 한다(결정 344). 두 조각이 가운데서 교차하며 반쯤만 덮으므로
@@ -1076,7 +1107,9 @@ namespace KkomaKnight.Tests.Play
                     var c = content.GetChild(i);
                     bool isCard = c.name.StartsWith("Box:") || c.name.StartsWith("GemPack:") || c.name.StartsWith("GoldPack:");
                     if (!isCard || c.childCount == 0) continue;
-                    Assert.IsTrue(UiKit.HasGradient(c.GetChild(0)), c.name + " 카드 조각 안에 그라데이션(T100 ⓓ)");
+                    // T147 — «있는가» 가 아니라 «바탕 바로 위에 있는가» 를 잰다(있기만 하면 프레임 뒤라도 초록이었다 · 결정 374).
+                    // 바탕 이름은 조각마다 다르다: 상자 카드(ui.cardFrame)는 «Bg» 가 직계 · 상품 카드(ui.shopItem)는 «Bg(Mask)» 가 ShopFrame_01 안의 손자.
+                    AssertGradientAboveBg(c.GetChild(0), c.name.StartsWith("Box:") ? "Bg" : "Bg(Mask)", c.name);
                     // T100 ⓓ 회차 2 — 상자 카드(10)는 조각 바탕이 회색이라 «덧칠» 이면 색이 죽는다(실측: 레퍼런스 «Rare» #0182C3 → 회차 1 의 우리 #8997A2).
                     // 몸통을 꽉 채워야 레퍼런스 색감이 난다 → 위·아래 두 조각의 tint 알파가 1(결정 338). 상품 카드(09)는 덧칠 그대로라 여기서 안 잰다.
                     if (c.name.StartsWith("Box:"))
