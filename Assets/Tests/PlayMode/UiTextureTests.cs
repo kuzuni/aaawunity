@@ -482,16 +482,32 @@ namespace KkomaKnight.Tests.Play
             var pat = lobby.Find(UiKit.PatternName);
             Assert.AreEqual(bgT.GetSiblingIndex() + 1, pat.GetSiblingIndex(), "무늬는 배경 조각 «바로 위»");
             var praw = pat.GetComponent<RawImage>();
-            Assert.Less(praw.color.r, 0.5f, "초록 바탕이라 어두운 무늬(PatternTintLight = Ink · 레퍼런스 01)");
-            // T94 ⓐ — 로비만 18/255(주인이 두 번 «로비에 패턴이 없다» 고 했다 · 공용 3/255 는 이 어두운 초록 바탕에서 안 보인다) · 다른 화면은 3/255 그대로
-            Assert.AreEqual(UiKit.PatternAlphaLobby, praw.color.a, 0.001f, "로비 무늬 알파 = 18/255(T94 ⓐ)");
-            Assert.Greater(UiKit.PatternAlphaLobby, UiKit.PatternAlpha, "로비 무늬는 공용보다 진하다");
+            // T166 ⓐ(주인 2026-09-07 09:2X «배경 무늬를 흰색 7/255 로») — T94 ⓐ 의 «잉크 18/255» 를 덮는다.
+            // 색과 알파가 둘 다 바뀌므로 둘 다 잰다: ⓐ 흰 무늬(어두운 초록 바탕이라 밝은 쪽) ⓑ 알파 = 7/255.
+            Assert.Greater(praw.color.r, 0.9f, "로비 무늬는 흰색(T166 ⓐ · 잉크로 되돌아가면 빨강)");
+            Assert.Greater(praw.color.g, 0.9f, "로비 무늬는 흰색(g)"); Assert.Greater(praw.color.b, 0.9f, "로비 무늬는 흰색(b)");
+            Assert.AreEqual(7f / 255f, praw.color.a, 0.001f, "로비 무늬 알파 = 7/255(주인 지정 T166 ⓐ)");
+            Assert.AreEqual(UiKit.PatternAlphaLobby, praw.color.a, 0.001f, "그 값은 UiKit.PatternAlphaLobby 한 곳에서 온다");
             Assert.IsFalse(praw.raycastTarget, "무늬는 클릭을 안 먹는다(카드·버튼 그대로)");
             Assert.IsTrue(UiKit.HasGradient(lobby), "로비 배경 그라데이션(T72 ③ 3항 «화면 배경»)");
             var gtop = lobby.Find(UiKit.GradientTopName); var gbot = lobby.Find(UiKit.GradientBottomName);
             Assert.IsNotNull(gtop, "GradientTop"); Assert.IsNotNull(gbot, "GradientBottom");
             Assert.Less(pat.GetSiblingIndex(), gtop.GetSiblingIndex(), "그라데이션은 무늬 «위»(질감 층 순서 · 결정 171)");
             Assert.Less(gtop.GetSiblingIndex(), gbot.GetSiblingIndex(), "위 밝음 → 아래 어둠 순서");
+            // T166 ⓑ(주인 2026-09-07 09:2X «챕터 카드에 5초마다 shine») — 재료는 특전 카드가 쓰던 mat.perkShine 그대로이고 새로 필요한 것은 «되풀이» 다.
+            // 재는 것 셋: ⓐ 카드에 머티리얼 인스턴스가 매달려 있다(MaterialOwner = 카드가 죽으면 인스턴스도 죽는다)
+            // ⓑ 그 인스턴스를 겨냥한 트윈이 돈다(= 되풀이가 걸렸다 · 한 번 훑고 끝이면 여기서 빨강)
+            // ⓒ 화면을 세운 직후에는 빛이 «시작 자리»(카드 밖)에 있다 — PlayShot PNG 가 훑는 중간을 물지 않는다는 계약(ShineLoop 의 PrependInterval).
+            {
+                var cardT = lobby.Find("ChapterCard"); Assert.IsNotNull(cardT, "로비 챕터 카드");
+                var mo = cardT.GetComponent<UiKit.MaterialOwner>();
+                Assert.IsNotNull(mo, "챕터 카드에 shine 머티리얼 인스턴스(T166 ⓑ)");
+                Assert.IsNotNull(mo.Mat, "그 인스턴스가 살아 있다");
+                Assert.IsTrue(UiKit.IsTweening(mo.Mat), "챕터 카드 shine 이 «되풀이» 로 돈다(T166 ⓑ · 한 번 훑고 끝이면 빨강)");
+                Assert.AreEqual(UiKit.ShineFrom, mo.Mat.GetFloat(UiKit.ShineLocationId), 0.001f,
+                    "화면을 세운 직후 빛은 시작 자리 = 비평 PNG 가 훑는 중간을 안 문다(ShineLoop 은 한 주기 뒤에 첫 훑기)");
+                Assert.AreEqual(5f, UiKit.ShinePeriod, 0.001f, "주기 = 주인이 말한 5초");
+            }
             foreach (var n in new[] { "TopBar", "SubRow", "ChapterCard", "Start" })   // T96-menu 로 사이드 기둥 둘은 없다
             {
                 var t = lobby.Find(n); Assert.IsNotNull(t, "로비 " + n);

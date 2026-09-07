@@ -118,6 +118,9 @@ namespace KkomaKnight.Game
                     var mi = map.GetComponent<Image>(); if (mi != null) { mi.preserveAspect = true; mi.raycastTarget = false; }
                 }
                 UiKit.Clickable(card, () => { Audio.Wake(); App.StartBattle(App.Save.SelChapter); });
+                // T166 ⓑ(주인 2026-09-07 09:2X «챕터 카드에 5초마다 shine») — 재료(mat.perkShine)는 특전 카드가 쓰던 그대로고
+                // 새로 필요한 것은 «되풀이» 뿐이라 UiKit.ShineLoop 한 줄이다. 카드가 사라지면 머티리얼 인스턴스도 트윈도 같이 죽는다.
+                UiKit.ShineLoop(UiKit.ShineMaterial(card, card), card);
                 // T94 ⓑ(주인 2026-09-07 05:3X «메인 로비에 Border 있는 것들은 걍 없애셈») — T69-lobby 가 넣었던 카드 검은 링을 뺀다.
                 // 로비만 예외이고 다른 화면의 T69 테두리는 그대로다(BorderAudit.StrictScreens 에서 01_lobby 만 뺐다).
                 UiKit.Tag(card, "챕터 카드(스테이지 그림)");

@@ -450,9 +450,14 @@ namespace KkomaKnight.Game
         /// 로비의 어두운 초록 바탕에서는 **눈에 안 보인다** — 주인의 «없다» 는 그 뜻으로 본다.
         /// 그래서 **로비에서만** 18/255 로 올린다(다른 화면은 주인이 02:0X 에 확정한 3/255 그대로 · 결정 기록).
         /// </summary>
-        public const float PatternAlphaLobby = 18f / 255f;
-        /// <summary>로비 배경 무늬 색(어두운 초록 바탕 위 = Ink 무늬 · <see cref="PatternAlphaLobby"/>).</summary>
-        public static Color PatternTintLobby => Palette.A(Palette.Ink, PatternAlphaLobby);
+        /// <para>
+        /// ⚑ <b>T166 ⓐ(주인 2026-09-07 09:2X «배경 무늬를 흰색 7/255 로»)</b> — 색과 알파가 <b>둘 다</b> 바뀐다: 잉크 18/255 → <b>흰색 7/255</b>.
+        /// 위 T94 ⓐ 는 «안 보인다» 를 알파로 풀었는데, 어두운 초록 바탕에서는 <b>밝은 무늬</b>가 훨씬 적은 알파로도 보인다 — 주인이 그 답을 준 것이다.
+        /// 로비만이고 다른 화면은 그대로(공용 <see cref="PatternAlpha"/> 3/255 · 주인이 02:0X 에 확정).
+        /// </para>
+        public const float PatternAlphaLobby = 7f / 255f;
+        /// <summary>로비 배경 무늬 색 — <b>흰 무늬</b>(주인 T166 ⓐ · 어두운 초록 바탕 위라 밝은 쪽이 맞다 · <see cref="PatternAlphaLobby"/>).</summary>
+        public static Color PatternTintLobby => Palette.A(Palette.White, PatternAlphaLobby);
         public static Color PatternTintLight => Palette.A(Palette.Ink, PatternAlpha);
         public static Color PatternTintDark => Palette.A(Palette.White, PatternAlpha);
         /// <summary>빛살 한 바퀴(초 · 12~20) · 한 변 = 아이콘 긴 변 × 배(1.6~2.2) · 알파 = 주인 확정 2026-09-07 «255 중 68»(= 68/255 ≈ 0.267 · 종전 0.6 은 아이콘을 덮었다).</summary>
@@ -1236,6 +1241,31 @@ namespace KkomaKnight.Game
             if (link != null) tw.SetLink(link.gameObject);   // SetLink(T56) — 마스터에 Insert 되면 마스터의 링크·Kill 이 대신 지킨다
             master.Insert(at, tw);
             return at + ShineDur;
+        }
+        /// <summary>«가만히 있는» 그림에 빛이 지나가는 주기(초 · T166 ⓑ · 주인 2026-09-07 09:2X «챕터 카드에 5초마다 shine»). 연출 상수 · 밸런스 아님.</summary>
+        public const float ShinePeriod = 5f;
+        /// <summary>
+        /// <paramref name="inst"/> 의 빛을 <paramref name="period"/> 초마다 한 번씩 지나가게 한다(T166 ⓑ) — <see cref="Shine"/> 은 마스터 시퀀스에 한 번 Insert 하는
+        /// «등장 연출» 이라 되풀이가 없다. 여기는 제 시퀀스를 만들어 <b>무한 루프</b>한다(질감 3종 = 패턴 흐름·빛살 회전과 같은 갈래).
+        /// <para>
+        /// <b>첫 훑기는 한 주기 뒤에 온다</b>(<c>PrependInterval</c>) — 까닭 둘: ⓐ 주인 말 «5초마다» 를 그대로 읽으면 첫 번도 5초 뒤다
+        /// ⓑ 화면을 세우자마자 찍는 <see cref="PlayShot"/> PNG 가 <b>훑는 중간</b>을 물지 않는다(무한 루프는 <see cref="CompleteAllTweens"/> 가 못 끝낸다 ·
+        /// 그러면 `screens` 비평 그림이 회차마다 밝기가 달라진다 · 결정 기록).
+        /// </para>
+        /// unscaled(일시정지에도 돈다) · <paramref name="link"/> 가 사라지면 트윈도 같이 죽는다(SetLink · T56) · 머티리얼 인스턴스는 <see cref="MaterialOwner"/> 가 치운다.
+        /// </summary>
+        public static Sequence ShineLoop(Material inst, Transform link, float period = ShinePeriod)
+        {
+            if (inst == null) return null;
+            inst.SetFloat(ShineLocationId, ShineFrom);
+            float gap = Mathf.Max(0.01f, period - ShineDur);
+            var seq = DOTween.Sequence().SetUpdate(true).SetTarget(inst);
+            seq.AppendInterval(gap);
+            seq.Append(DOTween.To(() => inst != null ? inst.GetFloat(ShineLocationId) : ShineFrom, x => { if (inst != null) inst.SetFloat(ShineLocationId, x); }, ShineTo, ShineDur).SetEase(Ease.InOutSine));
+            seq.AppendCallback(() => { if (inst != null) inst.SetFloat(ShineLocationId, ShineFrom); });
+            seq.SetLoops(-1);
+            if (link != null) seq.SetLink(link.gameObject);
+            return seq;
         }
         /// <summary><see cref="Stagger"/> 와 같은 <paramref name="start"/>·<paramref name="step"/> 으로 카드마다 shine 을 뒤따르게 한다(카드 i = start + i·step + <see cref="ShineLead"/>) — «등장 순서 = 반짝임 순서».
         /// 카드에 <see cref="MaterialOwner"/>(= <see cref="ShineMaterial"/>) 가 없으면 건너뛴다. <paramref name="starts"/> 에 시작 시각을 순서대로 적어 준다(테스트 · 단조 증가 계약). 돌려주는 값 = 마지막 shine 이 끝나는 시각.</summary>
