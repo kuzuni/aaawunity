@@ -53,7 +53,7 @@ namespace KkomaKnight.Tests.Play
         }
         /// <summary>
         /// 화면에 그려진 «월드» 사각형(y 는 위로 증가) — 앵커 % 로 재면 안 된다: 줄은 <b>상자의 자식</b>이라 그 % 는 «상자 안 %» 이고
-        /// 링크는 <c>Root</c> 의 자식이라 «프레임 %» 다(CI #333 이 이 실수로 빨갰다 · 결정 458). 월드 사각형은 부모가 달라도 같은 자로 잰다.
+        /// 링크는 <c>Root</c> 의 자식이라 «프레임 %» 다(CI #333 이 이 실수로 빨갰다 · 결정 462). 월드 사각형은 부모가 달라도 같은 자로 잰다.
         /// </summary>
         static Rect WorldRect(RectTransform rt)
         {

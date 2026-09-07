@@ -10,7 +10,7 @@ namespace KkomaKnight.Game
     /// <list type="bullet">
     /// <item><b>씬 파일을 손으로 안 고친다</b> — 워커에게는 유니티 에디터가 없어 <c>SampleScene.unity</c> 와 <c>VolumeProfile</c> 에셋의
     /// YAML(스크립트 GUID·fileID)을 <b>추측으로</b> 써 넣어야 하는데, 한 글자만 틀려도 씬이 통째로 안 열려 PlayMode 전체와 WebGL 빌드가 죽는다.
-    /// 그래서 이 레포가 화면을 만드는 방식 그대로 <b>코드로</b> 세운다(결정 458). 프로파일도 메모리에서 만든다 — 새 에셋 0.</item>
+    /// 그래서 이 레포가 화면을 만드는 방식 그대로 <b>코드로</b> 세운다(결정 463). 프로파일도 메모리에서 만든다 — 새 에셋 0.</item>
     /// <item><b>UI 에는 안 먹는다</b>(지시서 2항) — UI 캔버스가 <c>ScreenSpaceOverlay</c> 라 카메라 렌더 «뒤» 에 그려진다.
     /// 아이템 칸 빛살·글로우 서클(T155 ⓓ·T172·T174)·특전 카드 shine 은 전부 UI 라 <b>Bloom 으로는 안 밝아진다</b> — 그쪽은 그 작업들이 UI 층에서 따로 한다.</item>
     /// <item><see cref="HeroView"/> 의 런타임 카메라(로비·장비 초상 · RenderTexture)는 <b>켜지 않는다</b> — 그쪽은 이미
