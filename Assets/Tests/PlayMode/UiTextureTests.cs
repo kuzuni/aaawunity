@@ -787,6 +787,10 @@ namespace KkomaKnight.Tests.Play
             Assert.GreaterOrEqual(bandRect.yMax, Screen.height, "띠는 화면 맨 위까지(노치·레터박스를 덮는다 · 주인 «SafeArea 넘어서까지»)");
             Assert.LessOrEqual(bandRect.xMin, 0f, "띠는 화면 왼쪽 끝까지"); Assert.GreaterOrEqual(bandRect.xMax, Screen.width, "띠는 화면 오른쪽 끝까지");
             Assert.LessOrEqual(bandRect.yMin, ScreenRect((RectTransform)top).yMin + 1f, "띠의 아래 끝 = 탑바 줄 아래(그 아래는 화면이 보인다)");
+            // T138 — 주인 «검회색 프레임에 맞닿아 있다» → 띠가 줄 밑단보다 «더 아래» 로 내려와 초상 밑에 여백이 보여야 한다(위 단언은 부등호 방향 때문에 0 이어도 초록이다)
+            Assert.Greater(TopBar.FrameBandBelow, 0f, "띠가 줄 밑으로 자라는 여백(T138)");
+            Assert.AreEqual(-TopBar.FrameBandBelow, band.offsetMin.y, 0.01f, "띠 아래 여백 = FrameBandBelow(프레임 px · 요소는 하나도 안 움직인다 = 표 ① 불변)");
+            Assert.Less(bandRect.yMin, ScreenRect((RectTransform)top).yMin - 1f, "띠 밑단이 탑바 줄 밑단보다 아래(여백이 0 으로 돌아가면 여기서 빨개진다)");
 
             // ⓒ 하단 탭 바 띠는 화면 아래 끝까지
             var bottom = UiKit.Find(_app.Current.Root, NavBar.BottomFrameName) as RectTransform;

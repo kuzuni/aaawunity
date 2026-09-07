@@ -232,6 +232,17 @@ namespace KkomaKnight.Game
         public const float FrameOverscan = 4000f;
 
         /// <summary>
+        /// 띠가 <b>탑바 줄 밑으로</b> 더 자라는 길이(프레임 px · T138 · 주인 2026-09-07 «탑바 부분들 보니까 너무 검회색 프레임 맞닿아있음. 좀 아래에 여백좀 있게좀 해줘야함»).
+        /// <para>
+        /// 아바타 칸(<see cref="Layout.LobbyAvatar"/>)의 밑단과 탑바 줄(<see cref="Layout.LobbyTopBar"/>)의 밑단이 <b>같은 8.2%</b>(192px)이고 띠는 거기서 딱 끊겼다 —
+        /// 그래서 노란 초상 테두리가 띠 끝에 붙어 보였다. <b>요소는 하나도 안 움직인다</b>(배치 표 ① 불변) — 띠만 아래로 자란다.
+        /// </para>
+        /// 상한은 23px 다: 바로 아래 이웃인 로비 ≡ 메뉴(<see cref="Layout.LobbyMenu"/> y 9.2% = 215px)와 줄 밑단(192px) 사이가 그만큼이다.
+        /// 띠는 형제 맨 앞(= 맨 뒤에 그려진다)이라 조금 겹쳐도 버튼을 가리지 않지만, 표를 안 흔들리게 그 안에서 고른다(권장 20~23 · 결정 기록).
+        /// </summary>
+        public const float FrameBandBelow = 22f;
+
+        /// <summary>
         /// 칸 하나에 <b>불투명</b> 바탕(T72 7항 · 주인 재차 2026-09-07 «탑바를 프레임으로 감싸서 패턴이 침범하지 않는 것처럼») —
         /// 조각이 제 바탕(직계 «Bg» · 재화 pill 의 캡슐)을 가진 칸은 <b>모양을 지키려고 그 조각을 그대로 두고</b> 색만 <see cref="Palette.TopCell"/>(불투명)로 칠하고
         /// (GUI Pro 원본은 #1E1E1F 알파 0.749 = 반투명이라 무늬가 비쳤다), 바탕이 없는 칸(아바타·전투력)은 <see cref="CellBgName"/> 이름의 fr.rect 를 맨 뒤에 깐다. raycast 는 끈다.
@@ -262,7 +273,8 @@ namespace KkomaKnight.Game
             var band = UiKit.Panel(root, FrameName, "fr.rect", Palette.TopFrame);
             var brt = band.rectTransform;
             UiKit.Stretch(brt);
-            brt.offsetMin = new Vector2(-FrameOverscan, 0f);
+            // 아래로는 FrameBandBelow 만큼만 자란다(T138) — 위·좌·우의 오버스캔과 달리 «여백» 이 목적이라 이웃(≡ 메뉴)을 넘지 않는 값이다
+            brt.offsetMin = new Vector2(-FrameOverscan, -FrameBandBelow);
             brt.offsetMax = new Vector2(FrameOverscan, FrameOverscan);
             band.transform.SetAsFirstSibling();
         }
