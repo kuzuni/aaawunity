@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
@@ -40,14 +42,25 @@ namespace KkomaKnight.Tests.Play
         {
             public int graphics, images, raws, texts, masks, canvases;
             public float area;      // 화면 넓이의 몇 배를 칠하는가(= 오버드로 대용) — 겹칠수록 커진다
+            public System.Collections.Generic.List<KeyValuePair<string, float>> big;   // 회차 5 — 그 넓이를 «누가» 먹는가
             public override string ToString() =>
                 "그림 " + graphics + "(Image " + images + " · RawImage " + raws + " · Text " + texts + ")"
                 + " · 담개 " + masks + " · 캔버스 " + canvases + " · 칠하는 넓이 " + area.ToString("0.00") + "화면";
         }
 
+        /// <summary>조각을 이름으로 찾을 수 있게 «부모/부모/이름» 으로 — 이름만으로는 «Bg» 가 열 개라 못 가른다.</summary>
+        static string PathOf(Transform t, int depth = 3)
+        {
+            var parts = new System.Collections.Generic.List<string>();
+            for (var x = t; x != null && parts.Count < depth; x = x.parent) parts.Add(x.name);
+            parts.Reverse();
+            return string.Join("/", parts);
+        }
+
         static Cost Measure()
         {
             var c = new Cost();
+            c.big = new System.Collections.Generic.List<KeyValuePair<string, float>>();
             float screen = Mathf.Max(1f, Screen.width * (float)Screen.height);
             foreach (var g in Object.FindObjectsByType<Graphic>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
             {
@@ -57,7 +70,9 @@ namespace KkomaKnight.Tests.Play
                 if (g is RawImage) c.raws++; else if (g is Image) c.images++; else if (g is Text) c.texts++;
                 var rt = g.rectTransform; if (rt == null) continue;
                 var w = new Vector3[4]; rt.GetWorldCorners(w);           // 실제 화면에서 차지하는 사각형(스케일·회전 반영)
-                c.area += Mathf.Abs((w[2].x - w[0].x) * (w[2].y - w[0].y)) / screen;
+                float a = Mathf.Abs((w[2].x - w[0].x) * (w[2].y - w[0].y)) / screen;
+                c.area += a;
+                if (a >= 0.2f) c.big.Add(new KeyValuePair<string, float>(PathOf(g.transform) + "[" + g.GetType().Name + "]", a));
             }
             foreach (var m in Object.FindObjectsByType<RectMask2D>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
                 if (m != null && m.isActiveAndEnabled) c.masks++;
@@ -66,6 +81,16 @@ namespace KkomaKnight.Tests.Play
             foreach (var cv in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
                 if (cv != null && cv.isActiveAndEnabled) c.canvases++;
             return c;
+        }
+
+        /// <summary>넓이를 크게 먹는 조각을 큰 것부터 적는다 — 0.2화면(= 화면의 5분의 1) 이상만.</summary>
+        static void Append(StringBuilder sb, string who, Cost c)
+        {
+            var top = c.big.OrderByDescending(kv => kv.Value).Take(8).ToList();
+            sb.Append("  ").Append(who).Append(" 에서 넓이를 먹는 조각(0.2화면 이상 · 큰 것부터 · 전부 ")
+              .Append(c.big.Count).Append("개, 합 ").Append(c.big.Sum(kv => kv.Value).ToString("0.00")).Append("화면)\n");
+            if (top.Count == 0) sb.Append("    (없음 — 넓이가 여러 조각에 고르게 흩어져 있다)\n");
+            foreach (var kv in top) sb.Append("    ").Append(kv.Value.ToString("0.00")).Append("화면  ").Append(kv.Key).Append('\n');
         }
 
         [UnityTest]
@@ -91,7 +116,9 @@ namespace KkomaKnight.Tests.Play
             sb.Append("  로비 = ").Append(lobby).Append('\n');
             sb.Append("  전투 = ").Append(battle).Append('\n');
             sb.Append("  비(로비÷전투) = 그림 ").Append((battle.graphics > 0 ? lobby.graphics / (float)battle.graphics : 0f).ToString("0.00"))
-              .Append(" · 칠하는 넓이 ").Append((battle.area > 0.01f ? lobby.area / battle.area : 0f).ToString("0.00"));
+              .Append(" · 칠하는 넓이 ").Append((battle.area > 0.01f ? lobby.area / battle.area : 0f).ToString("0.00")).Append('\n');
+            // 회차 5 — 넓이는 몇몇 «큰 장» 이 거의 다 먹는다. **누가** 먹는지 이름으로 대야 다음 회차가 그 자리를 열 수 있다.
+            Append(sb, "로비", lobby); Append(sb, "전투", battle);
             Debug.Log(sb.ToString());
 
             // ⚠ 단언은 «잰 것이 실제로 있다» 만 — 조각 수에 상한을 걸면 다음 UI 작업이 이 자에 걸려 죽는다.
