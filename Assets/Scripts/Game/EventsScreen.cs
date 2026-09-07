@@ -690,7 +690,7 @@ namespace KkomaKnight.Game
                 UiKit.Bordered(bg.rectTransform);
                 var ic = UiKit.Icon(cell, "Icon", it.icon); UiKit.Pct(ic.rectTransform, 22, on ? 6 : 14, 56, on ? 56 : 72);
                 if (on) UiKit.Label(cell, 0, 62, 100, 34, it.label, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyle.Bold;
-                var dot = UiKit.Spawn("ui.alertDot", cell); var dr = (RectTransform)dot.transform; dr.anchorMin = dr.anchorMax = new Vector2(1, 1); dr.pivot = new Vector2(0.5f, 0.5f); dr.anchoredPosition = new Vector2(-14, -10); dr.sizeDelta = new Vector2(40, 40);
+                UiKit.AlertDot(cell, "Dot", new Vector2(1, 1), new Vector2(-14, -10), 40);   // T136
                 string key = it.key; UiKit.Clickable(cell, () => ShowPage(key));
             }
         }
@@ -760,9 +760,7 @@ namespace KkomaKnight.Game
         /// <summary>버튼 오른쪽 위 빨간 알림 점(GUI Pro 조각).</summary>
         static GameObject AlertDot(RectTransform btn)
         {
-            var d = UiKit.Spawn("ui.alertDot", btn); var dr = (RectTransform)d.transform; d.name = "Dot";
-            dr.anchorMin = dr.anchorMax = new Vector2(1, 1); dr.pivot = new Vector2(0.5f, 0.5f); dr.anchoredPosition = new Vector2(-4, 4); dr.sizeDelta = new Vector2(52, 52);
-            return d;
+            return UiKit.AlertDot(btn, "Dot", new Vector2(1, 1), new Vector2(-4, 4), 52);   // T136 — 자리·크기는 종전 그대로
         }
         /// <summary>버튼 글자 아래 «🎫 x1» 줄(아이콘 + 글자) — 글자를 위로 올리고 아래에 작은 줄.</summary>
         /// <summary>버튼 글자를 좌우 <see cref="ButtonPadPct"/> 만큼 들인다(T151 4항 · «🎫 x1» 줄이 없는 버튼용 — 던전·아레나 «입장»).</summary>

@@ -84,8 +84,8 @@ namespace KkomaKnight.Game
             // 다이아 배지 = **부위** 아이콘(T105 · 주인 «무슨 장비 부위인지 알려주는 아이콘» · 세트 아이콘은 세부 팝업 옵션 줄에서만 쓴다)
             if (type != null) { type.gameObject.SetActive(g != null); if (g != null) UiKit.SetSprite(type, "Icon", GearLook.PartIcon(g.Part), Palette.White); }
             UiKit.Show(cell, "Check", g != null && o.Equipped && o.EquippedMark);
-            if (g != null && o.Fusable && o.FusableDot) { var d = UiKit.Spawn("ui.alertDot", cell); var dr = (RectTransform)d.transform; d.name = "FuseDot"; dr.anchorMin = dr.anchorMax = new Vector2(1, 1); dr.pivot = new Vector2(0.5f, 0.5f); dr.anchoredPosition = new Vector2(-14, -14); dr.sizeDelta = new Vector2(47, 47); }
-            if (g != null && o.IsNew) { var n = UiKit.Spawn("ui.alertDot", cell); var nr = (RectTransform)n.transform; n.name = "New"; nr.anchorMin = nr.anchorMax = new Vector2(0, 0); nr.pivot = new Vector2(0.5f, 0.5f); nr.anchoredPosition = new Vector2(18, 18); nr.sizeDelta = new Vector2(44, 44); var nt = UiKit.Text(nr, "N", 22, Palette.White); UiKit.Stretch(nt.rectTransform); }
+            if (g != null && o.Fusable && o.FusableDot) UiKit.AlertDot(cell, "FuseDot", new Vector2(1, 1), new Vector2(-14, -14), 47);   // T136
+            if (g != null && o.IsNew) { var n = UiKit.AlertDot(cell, "New", new Vector2(0, 0), new Vector2(18, 18), 44); var nt = UiKit.Text(n.transform, "N", 22, Palette.White); UiKit.Stretch(nt.rectTransform); }   // T136
             if (o.Off) { var cg = UiKit.Ensure<CanvasGroup>(cell.gameObject); cg.alpha = 0.4f; }
             if (onClick != null) UiKit.Clickable(cell, onClick);
             return cell;

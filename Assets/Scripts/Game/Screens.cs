@@ -38,6 +38,16 @@ namespace KkomaKnight.Game
         /// </summary>
         static readonly Layout.R CardMapImage = new Layout.R(5, -67.5f, 90, 167.5f);
 
+        /// <summary>
+        /// 로비의 빨간 알림 점 둘(T136 · 주인 2026-09-07 «빨간점들이 찌그러져있더라»). 전에는 부모 칸의 % 로 쟀는데
+        /// 보조 줄 칸(212×222)이 가로로 넓어 <c>Pct(…,26,11)</c> 이 55×24 = 2.26:1 타원을 만들었다 — 이제 «모서리 + px · 지름» 으로 잰다.
+        /// 값은 종전 점 «가운데» 자리를 그대로 옮긴 것(보조 줄 40.3/16.6 → 38/22 · ≡ 20.4/18.2 → 20/18)이라 그림만 원이 되고 자리는 안 움직인다.
+        /// </summary>
+        static readonly Vector2 SubDotAnchor = new Vector2(1, 1), SubDotOffset = new Vector2(-38, -22);
+        const float SubDotSize = 44f;
+        static readonly Vector2 MenuDotAnchor = new Vector2(1, 1), MenuDotOffset = new Vector2(-20, -18);
+        const float MenuDotSize = 33f;
+
         TopBar _top; Text _chap; Transform _tabs;
         /// <summary>«데일리 기프트» 사이드 아이콘의 빨간 알림 점 — 지금 받을 수 있는 줄이 하나라도 있으면 켠다(T77 · <see cref="Refresh"/>).</summary>
         GameObject _giftDot;
@@ -76,8 +86,9 @@ namespace KkomaKnight.Game
                 var mrt = (RectTransform)menu; mrt.SetParent(rt, false); UiKit.Pct(mrt, Layout.LobbyMenu);
                 UiKit.Clickable(mrt, () => LobbyMenu.Open(App)); UiKit.Tag(mrt, "메뉴(☰) 버튼");
                 // 메뉴 안에 받을 것이 있으면 켠다(T96 ⓔ · Refresh 가 켜고 끈다)
-                var dot = UiKit.Spawn("ui.alertDot", mrt); dot.name = "MenuDot";
-                UiKit.Pct((RectTransform)dot.transform, 62, 2, 34, 34); _menuDot = dot; dot.SetActive(false);
+                // T136 — 점은 «부모 모서리 + px · 지름 하나» 로만 잰다(%로 재면 칸 비율대로 찌그러진다) · 자리는 종전 그대로
+                var dot = UiKit.AlertDot(mrt, "MenuDot", MenuDotAnchor, MenuDotOffset, MenuDotSize);
+                _menuDot = dot; dot.SetActive(false);
             }
 
             // ③ 사이드 아이콘 기둥 — **T96-menu(주인 2026-09-07 «중복된 거는 메뉴 안으로 넣는 걸로»)로 지웠다.**
@@ -146,19 +157,19 @@ namespace KkomaKnight.Game
                 // T77 — «데일리 기프트» 칸만 빨간 알림 점(아이콘 오른쪽 위 · 받을 수 있는 줄이 있을 때만 · Refresh 가 켜고 끈다)
                 if (it.key == SideDailyGift)
                 {
-                    var dot = UiKit.Spawn("ui.alertDot", cell); dot.name = "GiftDot";
-                    var drt = (RectTransform)dot.transform; UiKit.Pct(drt, 68, 2, 26, 11); _giftDot = dot; dot.SetActive(false);
+                    var dot = UiKit.AlertDot(cell, "GiftDot", SubDotAnchor, SubDotOffset, SubDotSize);
+                    _giftDot = dot; dot.SetActive(false);
                 }
                 if (it.key == SideExplore)
                 {
-                    var dot = UiKit.Spawn("ui.alertDot", cell); dot.name = "ExpDot";
-                    var drt = (RectTransform)dot.transform; UiKit.Pct(drt, 68, 2, 26, 11); _expDot = dot; dot.SetActive(false);
+                    var dot = UiKit.AlertDot(cell, "ExpDot", SubDotAnchor, SubDotOffset, SubDotSize);
+                    _expDot = dot; dot.SetActive(false);
                 }
                 // T98 3항 — 받을 수 있는 챕터 보상이 있으면 빨간 점(T96 ⓔ 와 같은 규칙)
                 if (it.key == SideClearReward)
                 {
-                    var dot = UiKit.Spawn("ui.alertDot", cell); dot.name = "ChestDot";
-                    var drt = (RectTransform)dot.transform; UiKit.Pct(drt, 68, 2, 26, 11); _chestDot = dot; dot.SetActive(false);
+                    var dot = UiKit.AlertDot(cell, "ChestDot", SubDotAnchor, SubDotOffset, SubDotSize);
+                    _chestDot = dot; dot.SetActive(false);
                 }
                 string key = it.key; UiKit.Clickable(cell, () => OnSide(key));
             }

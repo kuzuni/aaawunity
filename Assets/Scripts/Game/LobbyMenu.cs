@@ -40,6 +40,13 @@ namespace KkomaKnight.Game
         /// <summary>메뉴 항목 — 이름(줄 오브젝트 «Menu:key») · 라벨 · 새 줄이면 아이콘 키.</summary>
         public const string ItemMail = "mail", ItemSettings = "settings", ItemDailyGift = "dailyGift", ItemQuest = "quest", ItemAttendance = "attendance", ItemPrivilege = "privilege";
 
+        /// <summary>
+        /// 줄의 빨간 점(T136) — 줄(382.6×113.9)의 % 로 재던 것을 «왼쪽 위 모서리 + px · 지름» 으로 바꿨다(전에는 34×39 로 눌렸다).
+        /// 값은 종전 점 가운데(63.1 / 28.5)를 그대로 옮긴 것이라 자리는 안 움직인다.
+        /// </summary>
+        static readonly Vector2 DotAnchor = new Vector2(0, 1), DotOffset = new Vector2(63, -29);
+        const float DotSize = 36f;
+
 
         /// <summary>메뉴를 연다 — 로비의 ≡ 버튼이 부른다(전에는 설정 팝업을 바로 열었다).</summary>
         public static void Open(App app)
@@ -115,8 +122,9 @@ namespace KkomaKnight.Game
             var dot = Kid(row, "AlertDot");
             if (dot == null)
             {
-                var go = UiKit.Spawn("ui.alertDot", row); go.name = "AlertDot"; dot = go.transform;
-                UiKit.Pct((RectTransform)dot, 12, 8, 9, 34);   // 아이콘(프리팹 x 58 · 128px) 오른쪽 위
+                // T136 — 줄(382.6×113.9)의 % 로 재면 34×39 로 눌린다: «왼쪽 위 모서리 + px · 지름» 으로(자리는 종전 가운데 그대로)
+                var go = UiKit.AlertDot(row, "AlertDot", DotAnchor, DotOffset, DotSize);   // 아이콘(프리팹 x 58 · 128px) 오른쪽 위
+                dot = go.transform;
             }
             bool on = it.dot != null && it.dot();
             dot.gameObject.SetActive(on);

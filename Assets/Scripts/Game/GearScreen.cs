@@ -105,7 +105,7 @@ namespace KkomaKnight.Game
                 s.PartIcon = UiKit.Icon(s.Root, "PartIcon", GearLook.PartIcon(part)); UiKit.Pct(s.PartIcon.rectTransform, -8, -8, 30, 30);
                 var badge = UiKit.Panel(s.Root, "PlusBadge", "fr.r12", Palette.Yellow); UiKit.Pct(badge.rectTransform, SlotBadge); s.PlusBadge = badge.gameObject;
                 s.Plus = UiKit.Text(badge.transform, "+0", SlotBadgeSize, Palette.Ink, TextAnchor.MiddleCenter, false, false, TextKind.Small); UiKit.Stretch(s.Plus.rectTransform);
-                var dot = UiKit.Spawn("ui.alertDot", s.Root); var dr = (RectTransform)dot.transform; dot.name = "Alert_Dot_01_Red"; dr.anchorMin = dr.anchorMax = new Vector2(1, 1); dr.pivot = new Vector2(0.5f, 0.5f); dr.anchoredPosition = new Vector2(-6, -6); dr.sizeDelta = new Vector2(44, 44); s.Dot = dot;
+                var dot = UiKit.AlertDot(s.Root, "Alert_Dot_01_Red", new Vector2(1, 1), new Vector2(-6, -6), 44); s.Dot = dot;   // T136 — 점은 헬퍼 한 곳에서만 세운다
                 int idx = i; UiKit.Clickable(s.Root, () => OnSlot(idx));
             }
 
@@ -116,7 +116,7 @@ namespace KkomaKnight.Game
             var band = UiKit.Panel(Root, "Band", "fr.rect", Palette.InkLight); UiKit.Pct(band.rectTransform, Band); band.raycastTarget = true;
             var shop = UiKit.Button(Root, "ui.btnGray", "상점", () => App.ShowScreen("shop"), ShopBtn); shop.name = "ShopBtn";
             var forge = UiKit.Button(Root, "ui.btnOrange", "대장간", () => App.ShowScreen("forge"), Layout.GearForgeBtn); forge.name = "ForgeBtn";
-            { var d = UiKit.Spawn("ui.alertDot", forge); var dr = (RectTransform)d.transform; d.name = "ForgeDot"; dr.anchorMin = dr.anchorMax = new Vector2(1, 1); dr.pivot = new Vector2(0.5f, 0.5f); dr.anchoredPosition = new Vector2(-4, 4); dr.sizeDelta = new Vector2(52, 52); _forgeDot = d; }
+            _forgeDot = UiKit.AlertDot(forge, "ForgeDot", new Vector2(1, 1), new Vector2(-4, 4), 52);   // T136
 
             // ⑤ 인벤 5열 격자(장비 화면 프리팹의 격자 값 · 칸 = ListItem_EquipMent) → ⑥ 탭 바
             _content = GearUi.Grid(Root, Layout.GearInv, out _);

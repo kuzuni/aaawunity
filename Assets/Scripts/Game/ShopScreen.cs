@@ -409,7 +409,7 @@ namespace KkomaKnight.Game
             // 광고 버튼(파랑 · 클래퍼) = 일일 무료 보급(gacha.json dailyGem · 하루 1회) — 받을 수 있으면 빨간 점
             var ad = UiKit.Button(card, "ui.btnBlue", "", OnFree, new Layout.R(6, 83, 42, 14)); ad.name = "Ad";
             var adIc = UiKit.Icon(ad, "Icon", "ui.ad"); UiKit.Pct(adIc.rectTransform, 26, 12, 48, 76);
-            var dot = UiKit.Spawn("ui.alertDot", ad); var drt = (RectTransform)dot.transform; dot.name = "FreeDot"; drt.anchorMin = drt.anchorMax = new Vector2(1, 1); drt.pivot = new Vector2(0.5f, 0.5f); drt.anchoredPosition = new Vector2(-6, -2); drt.sizeDelta = new Vector2(44, 44);
+            var dot = UiKit.AlertDot(ad, "FreeDot", new Vector2(1, 1), new Vector2(-6, -2), 44);   // T136
             _freeBtns.Add(ad.GetComponent<Button>()); _freeDots.Add(dot);
             var one = PriceButton(card, "One", "1회", box.Cost, () => Pull(1, key), new Layout.R(52, 83, 42, 14), false);
             w.One = one.GetComponent<Button>();

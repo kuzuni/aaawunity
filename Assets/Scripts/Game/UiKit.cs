@@ -773,6 +773,33 @@ namespace KkomaKnight.Game
             var go = Spawn(prefabKey, parent); var rt = (RectTransform)go.transform; Pct(rt, r); return rt;
         }
 
+        /// <summary>빨간 알림 점 조각의 카탈로그 키(<see cref="AlertDot"/> · 게이트가 이 키로 조각을 집어 스프라이트를 찾는다).</summary>
+        public const string AlertDotKey = "ui.alertDot";
+
+        /// <summary>
+        /// 빨간 알림 점(T136 · 주인 2026-09-07 «빨간점들이 찌그러져있더라») — **점을 세우는 유일한 입구**.
+        /// 조각 <c>Alert_Dot_01_Red</c> 는 그림 하나라 rect 가 정사각이 아니면 그대로 늘어난다.
+        /// 그래서 자리는 <b>부모 모서리 + px</b>, 크기는 <b>«지름» 하나</b>로만 받는다 — 부모 칸의 %(<see cref="Pct"/>)로 재면
+        /// 칸이 가로로 넓을 때 점이 타원이 된다(로비 보조 줄이 55×24 = 2.26:1 이었다).
+        /// 세우면서 그림에 <c>preserveAspect</c> 를 켠다 — 나중에 누가 rect 를 찌그러뜨려도 그림만은 원으로 남는 마지막 방어선.
+        /// </summary>
+        /// <param name="anchor">부모 안의 기준 모서리(오른쪽 위 = (1,1) · 왼쪽 위 = (0,1) · 왼쪽 아래 = (0,0)).</param>
+        /// <param name="offsetPx">그 모서리에서 점 «가운데» 까지의 프레임 px(유니티 부호 그대로 — 왼쪽·아래가 음수).</param>
+        /// <param name="d">점 지름 px(가로 = 세로).</param>
+        public static GameObject AlertDot(Transform parent, string name, Vector2 anchor, Vector2 offsetPx, float d)
+        {
+            var go = Spawn(AlertDotKey, parent);
+            go.name = name;
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = rt.anchorMax = anchor;
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = offsetPx;
+            rt.sizeDelta = new Vector2(d, d);
+            rt.localScale = Vector3.one;
+            foreach (var img in go.GetComponentsInChildren<Image>(true)) img.preserveAspect = true;
+            return go;
+        }
+
         /// <summary>인스턴스를 이 프로젝트 규칙에 맞춘다 — TMP → Text(Jua) · LayerLab 데모 스크립트 제거 · 이미지 raycast 끔.</summary>
         public static void Adopt(GameObject root)
         {

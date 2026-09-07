@@ -66,7 +66,7 @@ namespace KkomaKnight.Game
             var band = UiKit.Panel(Root, "ActionBar", "fr.rect", Palette.InkLight); UiKit.Pct(band.rectTransform, Layout.ForgeActionBar); band.raycastTarget = true;
             UiKit.Gradient(band.rectTransform);   // T72 ③ 액션바 띠(레퍼런스 08 의 갈색 띠도 위 밝고 아래 어둡다)
             var autoRt = UiKit.Button(Root, "ui.btnBlue", "자동", OnAuto, Layout.ForgeAuto); autoRt.name = "AutoBtn"; _auto = autoRt.GetComponent<Button>();
-            { var d = UiKit.Spawn("ui.alertDot", autoRt); var dr = (RectTransform)d.transform; d.name = "AutoDot"; dr.anchorMin = dr.anchorMax = new Vector2(1, 1); dr.pivot = new Vector2(0.5f, 0.5f); dr.anchoredPosition = new Vector2(-4, 4); dr.sizeDelta = new Vector2(52, 52); _autoDot = d; }
+            _autoDot = UiKit.AlertDot(autoRt, "AutoDot", new Vector2(1, 1), new Vector2(-4, 4), 52);   // T136
             _fuseOff = UiKit.Button(Root, "ui.btnGray", "합성 (0/3)", OnFuse, Layout.ForgeFuse); _fuseOff.name = "FuseBtn"; _fuseTxtOff = UiKit.ButtonText(_fuseOff);
             _fuseOn = UiKit.Button(Root, "ui.btnOrange", "합성 (3/3)", OnFuse, Layout.ForgeFuse); _fuseOn.name = "FuseBtnOn"; _fuseTxtOn = UiKit.ButtonText(_fuseOn);
             _fuseOn.gameObject.SetActive(false);
