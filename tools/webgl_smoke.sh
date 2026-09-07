@@ -25,6 +25,10 @@ done
 if ! command -v node >/dev/null 2>&1; then echo "[smoke] node 없음"; exit 3; fi
 NODE_PATH_G="$(npm root -g 2>/dev/null || true)"
 
+# T134 — 브라우저를 켜기 «전» 에 판정기 자가 점검부터. 오디오 문구 분류가 틀어지면 25분짜리 WebGL 빌드를
+# 다 태우고 나서야 알게 된다(#252·#255 두 런이 그렇게 버려졌다). 여기서 1초에 걸러진다.
+node "$ROOT/tools/webgl_smoke.js" --self-test || { echo "[smoke] 자가 점검 실패 — 판정기가 문구를 잘못 가른다(브라우저 안 켠다)"; exit 4; }
+
 serve_dir() {  # $1 = 폴더 → 로컬 http.server (빈 포트) · 전역 SRV_PID / SRV_URL
   local port
   port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()')

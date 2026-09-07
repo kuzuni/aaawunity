@@ -1619,6 +1619,17 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. **CI 에는 넣지 않았다**(결정 358) — 자리(사각형)를 사람이 골라 줘야 하는 자라 자동 게이트가 못 된다. 게이트로 만들려면 화면 안에서 «글자 뒤 바탕» 을 엔진이 직접 재야 하는데, 우리 바탕은 대부분 **조각(스프라이트) 그림**이라 `Image.color` 는 흰색이고 실제 색은 텍스처 안에 있다(런타임에 못 읽는 텍스처가 많다) — 그래서 지금은 **PNG 를 재는 쪽이 유일하게 옳은 자**다. §5 회차에서 워커가 손으로 댄다.
 4. **`screens` PNG 는 run ≥ 246 부터만 믿는다** — 그 전은 선형 값이다(T126).
 
+### T134 ✅ — **배포가 03:34 부터 막혀 있었다: 스모크가 헤드리스 오디오 에러 «한 문구» 를 못 알아본다** (워커 실측 등재·처방 2026-09-07 04:1X · 판정기만 · 게임 코드 0줄)
+
+> 재료: CI **#252**(`cd5365c9` · 03:34) · **#255**(`1307488c` · 04:04) 의 `build-webgl` 잡 로그. 두 런 모두 **유니티 잡은 초록**이고 막힌 곳은 배포 스모크뿐이라 `gh-pages` 가 30분 넘게 안 나갔다.
+
+1. **증상** — 스모크가 `errors=2` 로 빨강. 두 줄 다 같은 것이다:
+   `unity error handler: Invoking error handler due to / NotSupportedError: The element has no supported sources.` 와 `pageerror: The element has no supported sources.`
+2. **원인 — 게임 결함이 아니라 판정기의 문구 목록 구멍이다.** 유니티 WebGL 은 **131072바이트가 넘는** 클립을 `decodeAudioData` 가 아니라 **`<audio>` 요소**로 넘긴다(`_JS_Sound_Load` · `tools/check_audio_webgl.py` 의 실측 절). 헤드리스 chromium 은 AAC/MP4 코덱이 없어 그 요소가 `NotSupportedError` 를 던진다 — **작은 클립이 내는 «no supported source was found» 와 똑같은 일의 다른 문구**인데 `AUDIO_RE` 에 앞엣것만 있었다. 그래서 큰 클립이 재생되는 회차에만 빨개지는 **간헐 빨강**이었다(결정 300 «헤드리스는 오디오를 판정 못 한다 · 주인 실기가 정본» 의 연장).
+3. **처방** — `AUDIO_RE` 에 `The element has no supported sources` 를 보탠다. 이 문구는 **미디어 요소만** 낼 수 있어 «게임 파일 누락» 을 덮지 않는다.
+4. **다시 안 생기게** — `node tools/webgl_smoke.js --self-test` (브라우저 없이 1초). CI 로그 원문에서 오려 온 8줄로 «오디오인가 아닌가» 를 못 박고, `tools/webgl_smoke.sh` 가 **브라우저를 켜기 전에** 먼저 돌린다. 까닭 = 배포 스모크는 **25분짜리 WebGL 빌드 뒤에야** 도는 자라, 분류가 틀리면 런 한 판을 통째로 버린다(#252·#255 가 그랬다). 헛돌지 않는 자다 — 옛 정규식으로 돌리면 8개 중 2개가 어긋난다(실측).
+5. 판정 = 이 커밋을 담은 첫 완주 런의 `build-webgl` 배포 스모크 초록 + `gh-pages` 가 다시 흐르는 것.
+
 ### T133 — 출석 보상 팝업(16) 둘: **보상 수량 글자가 거의 안 보인다** · **«N일차» 머리 띠가 연보라라 흰 글자와 대비가 없다** (워커 실측 등재 2026-09-07 04:0X · 화면만 · 수치 불변)
 
 > 재료: `screens` run **255**(`1307488c` · T126 이후라 **색이 sRGB 로 옳다**) 의 `16_attendance.png` · `tools/png_crop.py` 로 4배 확대 + `/usr/bin/python3.12`+PIL 로 픽셀 측정(sess-2157-4152 · 워커 H).

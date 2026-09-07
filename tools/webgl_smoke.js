@@ -3,7 +3,8 @@
 // 판정(종료 코드 0 = 초록):
 //   ⓐ pageerror · console.error 0 — 유니티 로더의 «Invoking error handler»(RangeError · 예외) · 빨간 Debug.LogError 전부.
 //      단 **오디오 문구는 빨강 사유가 아니다 — 주인 종결 지시(2026-09-07 04:3X «webgl 오디오 잘 들리는데 뭐 자꾸 안 된다 카냐»)**.
-//      «no supported source» · «Unable to decode audio data» · «Loading FSB failed» · «playSoundClip error» ·
+//      «no supported source» · «The element has no supported sources»(T134) · «Unable to decode audio data» ·
+//      «Loading FSB failed» · «playSoundClip error» ·
 //      «Streaming of 'ogg' on this platform is not supported» 는 `AUDIO⚠` 로 로그에만 남기고 종료 코드에 안 넣는다
 //      (--strict-audio 를 **명시**해야 에러 · 결정 110 → 219). 판정 정본은 주인 실기다 — 주인 폰·데스크톱 Chrome 에서는 소리가 난다.
 //      headless 가 유독 못 읽는 까닭도 실측됐다(결정 218): playwright 의 chromium 은 독점 코덱이 없어
@@ -26,13 +27,42 @@ const args = process.argv.slice(2);
 const url = args.find(a => !a.startsWith('--') && !/^\d+$/.test(a) && !a.endsWith('.png') && !a.endsWith('.txt'));
 const flag = n => args.includes('--' + n);
 const opt = (n, d) => { const i = args.indexOf('--' + n); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
-if (!url) { console.error('usage: node tools/webgl_smoke.js <URL> [--battle] [--require-marker] [--strict-audio] [--strict-net] [--no-fps] [--timeout SEC] [--shot out.png] [--log out.txt]'); process.exit(2); }
+if (!url && !flag('self-test')) { console.error('usage: node tools/webgl_smoke.js <URL> [--battle] [--require-marker] [--strict-audio] [--strict-net] [--no-fps] [--timeout SEC] [--shot out.png] [--log out.txt] | --self-test'); process.exit(2); }
 const timeoutSec = parseInt(opt('timeout', '180'), 10);
 const wantBattle = flag('battle'), requireMarker = flag('require-marker'), strictAudio = flag('strict-audio'), strictNet = flag('strict-net');
 const shotPath = opt('shot', ''), logPath = opt('log', '');
 // 오디오 문구(주인 종결 지시 2026-09-07 · 결정 219) — 「Streaming of 'ogg' … not supported」 는 유니티 WebGL 네이티브가
 // UnityWebRequestMultimedia 의 ogg 스트리밍을 거부하며 찍는 줄이라 위 넷과 같은 갈래로 본다.
-const AUDIO_RE = /no supported source was found|Unable to decode audio data|Loading FSB failed|playSoundClip error|Streaming of '[^']*' on this platform is not supported/;
+// 「The element has no supported sources.」(T134) — 유니티 WebGL 은 131072바이트가 넘는 클립을 `<audio>` 요소로 넘기는데
+// (`_JS_Sound_Load` · `check_audio_webgl.py` 의 실측 절), 헤드리스 chromium 은 AAC/MP4 코덱이 없어 그 요소가
+// `NotSupportedError` 를 던진다. 「no supported source was found」 와 **같은 일의 다른 문구**다(작은 클립은 decodeAudioData
+// 로 가서 앞 문구, 큰 클립은 `<audio>` 로 가서 이 문구) — 그래서 같은 갈래로 본다. 이 문구는 미디어 요소만 낼 수 있어
+// 다른 «자원 없음» 을 덮지 않는다. 오디오가 진짜 나는지는 헤드리스가 판정 못 하고 주인 실기가 정본이다(결정 300).
+const AUDIO_RE = /no supported source was found|The element has no supported sources|Unable to decode audio data|Loading FSB failed|playSoundClip error|Streaming of '[^']*' on this platform is not supported/;
+// 브라우저 없이 도는 자가 점검(T134) — 「이 문구가 오디오인가」 를 실제 CI 로그에서 오려 온 줄로 못 박는다.
+// 배포 스모크는 25분짜리 WebGL 빌드 뒤에야 도는 자라 분류가 틀린 것을 «빌드 한 판» 쓰고 나서야 안다
+// (T134 가 그랬다: #252·#255 두 런이 통째로 버려졌다). 셸 래퍼가 브라우저를 켜기 전에 이걸 먼저 돌린다.
+if (flag('self-test')) {
+  const cases = [
+    // [문구, 오디오로 봐야 하는가] — 참인 것들은 CI 로그 원문에서 그대로 옮겼다
+    ['pageerror: The element has no supported sources.', true],                    // #252·#255 가 빨개진 줄
+    ['unity error handler: Invoking error handler due to\nNotSupportedError: The element has no supported sources.', true],
+    ['pageerror: Failed to load because no supported source was found.', true],
+    ['console.error: Loading FSB failed for audio clip "hit".', true],
+    ['pageerror: Unable to decode audio data', true],
+    // 오디오가 아닌 것을 삼키면 «게임 파일 누락» 을 놓친다 — 반대쪽도 못 박는다
+    ['console.error: Failed to load resource: the server responded with a status of 404', false],
+    ['pageerror: RangeError: Maximum call stack size exceeded', false],
+    ['console.error: 화면 없음: lobby', false],
+  ];
+  let bad = 0;
+  for (const [text, want] of cases) {
+    const got = AUDIO_RE.test(text);
+    if (got !== want) { bad++; console.error(`  ✗ «${text.split('\n')[0]}» → 오디오=${got} (기대 ${want})`); }
+  }
+  console.log(bad ? `[smoke] ❌ 자가 점검 ${bad}/${cases.length} 어긋남` : `[smoke] ✅ 자가 점검 ${cases.length}/${cases.length} — 오디오 문구 분류 그대로`);
+  process.exit(bad ? 1 : 0);
+}
 // 망 때문에 못 간 요청(프록시·DNS·오프라인) — 서버가 준 4xx/5xx 는 여기 없다(그건 아래 response 훅이 에러로 센다)
 const NET_RE = /Failed to load resource: net::(ERR_TUNNEL_CONNECTION_FAILED|ERR_PROXY_CONNECTION_FAILED|ERR_NAME_NOT_RESOLVED|ERR_INTERNET_DISCONNECTED|ERR_CONNECTION_(REFUSED|TIMED_OUT|RESET|CLOSED)|ERR_ADDRESS_UNREACHABLE|ERR_CERT_[A-Z_]+)/;
 // 무엇을 쟀는지 한 낱말로(perf 줄용 · T129) — 로컬 서버면 셸이 넣어 준 SMOKE_TARGET, 아니면 URL 의 호스트
