@@ -61,6 +61,14 @@ namespace KkomaKnight.Tests.Play
             return string.Join("/", parts);
         }
 
+        /// <summary>부팅 캔버스(<c>BootCanvas</c>)가 아직 살아 있는가 — 있으면 그 화면 조각이 로비 표에 섞인다.</summary>
+        static bool BootCanvasAlive()
+        {
+            foreach (var cv in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if (cv != null && cv.name == "BootCanvas") return true;
+            return false;
+        }
+
         static Cost Measure()
         {
             var c = new Cost();
@@ -115,8 +123,18 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(App.I, "Bootstrap 이 60초 안에 App 을 세워야 한다");
             _app = App.I; yield return Frames(2);
 
+            // 회차 7 — **부팅 캔버스가 사라질 때까지 기다린다.** 안 기다리면 로비 표에 남의 화면이 섞인다.
+            // `LoadingScreen.MinSeconds`(0.3s · 깜빡임 방지 · T96-loading) 동안 `BootCanvas` 가 아직 살아 있고
+            // 그 안 `ui.titleLoading/Background` 가 **화면 한 장을 통째로 덮는다** — 회차 6 의 표에서 그것이
+            // «로비에서 가장 큰 조각(1.00화면)» 으로 잡혔다. 게임 결함이 아니라 **내가 너무 일찍 잰 것**이다
+            // (회차 5 때는 우연히 이미 지워져 있어 안 잡혔다 = 회차마다 흔들리는 수였다).
+            float bootT0 = Time.realtimeSinceStartup;
+            while (BootCanvasAlive() && Time.realtimeSinceStartup - bootT0 < 10f) yield return null;
+            yield return Frames(2);
+
             _app.ShowScreen("lobby"); yield return Frames(3); Canvas.ForceUpdateCanvases();
             var lobby = Measure();
+            Assert.IsFalse(BootCanvasAlive(), "부팅 캔버스가 사라진 뒤에 재야 로비 표에 남의 화면이 안 섞인다(회차 7)");
 
             _app.StartBattle(1); yield return Frames(3); Canvas.ForceUpdateCanvases();
             Assert.AreEqual("battle", _app.Current.Name, "전투로 들어가야 두 화면을 맞댈 수 있다");
