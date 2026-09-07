@@ -371,14 +371,23 @@ namespace KkomaKnight.Game
                 default: return new CharacterRig.Skin { Helmet = "cm.meleeC.helmet", Chest = "cm.meleeC.chest", Sword = "cm.meleeC.sword" };
             }
         }
+        /// <summary>
+        /// 발밑 HP·실드 바(플레이어·적)의 테두리 조각 — <b>주인 지목</b>(T145 · 2026-09-07 «그 플레이어, 적 hp바랑 실드 바 보더
+        /// `BasicFrame_Rectangle_01~04_White_InnerBorder1_Px7` 이거로 해줘야함»). 공용 <see cref="UiKit.BorderKey"/>(Border3)가 아니다.
+        /// 하단 HUD 의 EXP·HP·실드 세 바는 주인이 «플레이어·적» 이라고 못 박아 공용 조각 그대로 둔다.
+        /// 게이트(<c>BorderGateTests.AssertWorldBarBorder</c>)가 이 키로 선 굵기를 계산하므로 여기만 바꾸면 게이트도 따라온다.
+        /// </summary>
+        public const string FootBarBorderKey = "fr.rectInner7";
         void MakeBar(Transform parent, float width, float height, out SpriteRenderer bg, out SpriteRenderer fill, Color fillColor, int order)
         {
             var bgo = new GameObject("BarBg"); bgo.transform.SetParent(parent, false);
             bg = bgo.AddComponent<SpriteRenderer>(); bg.sprite = UiKit.White(); bg.color = new Color(0.08f, 0.08f, 0.1f, 0.85f); bg.sortingOrder = order; bg.drawMode = SpriteDrawMode.Sliced; bg.size = new Vector2(width, height);
             var fgo = new GameObject("BarFill"); fgo.transform.SetParent(bgo.transform, false);
             fill = fgo.AddComponent<SpriteRenderer>(); fill.sprite = UiKit.White(); fill.color = fillColor; fill.sortingOrder = order + 1; fill.drawMode = SpriteDrawMode.Sliced; fill.size = new Vector2(width - 0.02f, height - 0.02f);
-            // T69 8항(주인 «HP·실드 바도 Border») — 같은 조각(fr.rectBorder3)을 월드용 Sprite 로 감싸 바 위에 한 장(fill + 1 · 바 폭·높이 그대로 = 표 «발밑 바 폭» 이름표 불변)
-            UiKit.WorldBorder(bgo.transform, new Vector2(width, height), order + 2);
+            // T69 8항(주인 «HP·실드 바도 Border») — 월드용 Sprite 로 감싸 바 위에 한 장(fill + 1 · 바 폭·높이 그대로 = 표 «발밑 바 폭» 이름표 불변).
+            // 조각은 주인 지목(T145) 대로 fr.rectInner7 = BasicFrame_..._InnerBorder1_Px7 — 그려지는 선 굵기는 그대로 프레임 8px 다(WorldBorderSprite 가 ppu 로 맞춘다).
+            // 모서리도 이쪽이 낫다: 9-slice 모서리 = spriteBorder × 8 ÷ 원본선px 라 Border3 는 13×8/5 = 20.8px(양쪽 41.6 > 바 높이 37.4 = 뭉침)인데 이 조각은 12×8/7 = 13.7px(양쪽 27.4)로 바 안에 든다(결정 373).
+            UiKit.WorldBorder(bgo.transform, new Vector2(width, height), order + 2, FootBarBorderKey);
         }
         static void SetBar(SpriteRenderer bg, SpriteRenderer fill, double frac)
         {

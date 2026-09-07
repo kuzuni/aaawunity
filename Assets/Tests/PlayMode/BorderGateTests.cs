@@ -99,7 +99,10 @@ namespace KkomaKnight.Tests.Play
             if (bg.gameObject.activeInHierarchy) Assert.IsTrue(UiKit.HasDarkBorder(bg.transform), name + " 은 어두운 테두리");   // 실드 0 이면 파란 단이 꺼져 있다(HudBarsTests ⓑ) — 켜진 바만 색까지 본다
             SpriteRenderer fill = null; for (int i = 0; i < bg.transform.childCount; i++) if (bg.transform.GetChild(i).name == "BarFill") fill = bg.transform.GetChild(i).GetComponent<SpriteRenderer>();
             Assert.IsNotNull(fill, name + " fill"); Assert.Greater(sr.sortingOrder, fill.sortingOrder, name + " Border 는 fill 위");
-            float lineWorld = UiKit.BorderNativePx(UiKit.BorderKey) / sr.sprite.pixelsPerUnit;
+            // 조각은 주인 지목(T145) 대로 InnerBorder1_Px7 이어야 한다 — 되돌아가면 여기서 빨개진다
+            Assert.IsTrue(sr.sprite.name.Contains("InnerBorder1_Px7"), name + " Border 조각 = BasicFrame_..._InnerBorder1_Px7 (주인 지목 T145 · 지금 «" + sr.sprite.name + "»)");
+            // 선 굵기 계산은 «그 바가 실제로 쓰는 키» 의 원본 선 굵기로 한다 — 공용 BorderKey 로 박아 두면 조각을 바꾸는 순간 애먼 곳이 빨개진다
+            float lineWorld = UiKit.BorderNativePx(BattleWorld.FootBarBorderKey) / sr.sprite.pixelsPerUnit;
             Assert.AreEqual(UiKit.WorldBorderLine, lineWorld, 1e-4f, name + " 테두리 선 = 프레임 8px 의 월드 길이");
             Assert.Less(lineWorld * 2f, bg.size.y, name + " 선 2줄이 바 높이 안(위·아래 선이 겹치지 않음)");
         }
