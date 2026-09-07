@@ -454,7 +454,9 @@ namespace KkomaKnight.Tests.Play
             var me = UiKit.Find(root, "Page:" + EventsScreen.PageMerchant);
             Readable("26_arena_shop", me);
             Assert.AreEqual(TextSize.Title, MaxSize(FindText(me, "Title")), "상인 제목 = 제목 60");
-            AssertTitleCentered(me, "Title", "상인 제목");
+            // T170 — 상인 제목은 «아이콘 + 글자» 가 아니라 **아이콘 없는 그냥 라벨**이다(`EventsScreen.cs:361` · Layout.MeTitle 칸에 글자 하나).
+            // 회차 1 에서 여기에도 «덩어리 가운데» 단언을 걸었다가 «아이콘 / Expected: not null / But was: null» 로 main 을 빨갛게 했다 —
+            // 잴 덩어리가 없는 자리다. 아이콘이 붙는 날 이 줄을 되살리면 된다(결정 기록).
             _log.AssertNoRed("글자 가독성(20·21·22·23·24·25·26)");
             yield return Shutdown();
         }
