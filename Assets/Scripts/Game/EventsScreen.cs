@@ -61,10 +61,12 @@ namespace KkomaKnight.Game
         /// <summary>아레나 상대 초상(껍데기 · 순환) · 순위 목록 줄 수 · 도전 팝업 줄 수 · 순위 보상 줄 수 · 상인 상품.</summary>
         static readonly string[] Foes = { "ui.iconFoe1", "ui.iconFoe2", "ui.iconFoe3", "ui.iconFoe4" };
         const int RankRows = 7, FoeRows = 5, RewardRows = 4;
-        static readonly (string title, string icon)[] Goods =
+        /// <summary>상인 상품 — <c>key</c> 는 <see cref="Core.ArenaShopData"/>(arenaShop.json)의 줄 이름이다. 표에 없는 키는 한도·값이 «—» 로 난다(T209 · 레퍼런스에서 잘린 «전설 열쇠» 가 그렇다).</summary>
+        static readonly (string title, string icon, string key)[] Goods =
         {
-            ("다이아", "ui.iconGemPurple"), ("무기 도안", "ui.iconScroll"), ("갑옷 도안", "ui.iconScroll"), ("투구 도안", "ui.iconScroll"), ("신발 도안", "ui.iconScroll"), ("반지 도안", "ui.iconScroll"),
-            ("목걸이 도안", "ui.iconScroll"), ("희귀 열쇠", "ui.iconKeyBlue"), ("에픽 열쇠", "ui.iconKeyPurple"), ("전설 열쇠", "ui.iconKeyGold"), ("부활 토큰", "ui.iconRevive"),
+            ("다이아", "ui.iconGemPurple", "gem"), ("무기 도안", "ui.iconScroll", "recipeWeapon"), ("갑옷 도안", "ui.iconScroll", "recipeArmor"), ("투구 도안", "ui.iconScroll", "recipeHelmet"),
+            ("신발 도안", "ui.iconScroll", "recipeShoes"), ("반지 도안", "ui.iconScroll", "recipeRing"), ("목걸이 도안", "ui.iconScroll", "recipeNecklace"),
+            ("희귀 열쇠", "ui.iconKeyBlue", "rareKey"), ("에픽 열쇠", "ui.iconKeyPurple", "epicKey"), ("전설 열쇠", "ui.iconKeyGold", "legendKey"), ("부활 토큰", "ui.iconRevive", "revive"),
         };
         static readonly (string label, string icon)[] Tiers = { ("브론즈", "ui.iconMedalBronze"), ("실버", "ui.iconMedalSilver"), ("골드", "ui.iconMedal"), ("플래티넘", "ui.iconGemBlue"), ("다이아", "ui.iconGemPurple") };
         const string NoTime = "--:--:--";
@@ -381,9 +383,14 @@ namespace KkomaKnight.Game
                 GearUi.DarkFrame(f.transform);   // T115 — 워커 I 가 «우연히 통과» 로 지목한 자리(f08a7fe 커밋 메시지)
                 // T72 ② 상품 아이콘 뒤 빛살(주인 «상점 아이템 … 아이콘 뒤에 Effect_Light» · 상인 페이지도 상점이다)
                 PlanLight(ic); _goodsCells.Add(ic);
-                UiKit.Label(card, 4, 60, 92, 15, "한도 —", TextSize.Aux, Palette.Ink, kind: TextKind.Aux);
+                // T209 — 한도·값·개수 배지는 arenaShop.json 에서 온다(코드에 숫자 없음 · 값의 정본은 주인 레퍼런스 26). 표에 없거나 0 인 칸은 종전대로 «—».
+                var shop = App != null && App.Data != null ? App.Data.ArenaShop : null;
+                var ge = shop != null ? shop.Of(g.key) : null;
+                if (ge != null && ge.HasBadge) { var bg = UiKit.Label(ic, 52, 62, 44, 32, ge.Badge.ToString(), TextSize.Aux, Palette.White, TextAnchor.MiddleRight, kind: TextKind.Aux); bg.name = "Badge"; bg.fontStyle = FontStyle.Bold; }
+                var lim = UiKit.Label(card, 4, 60, 92, 15, shop != null ? shop.Limit(ge, "한도 " + Dash) : "한도 " + Dash, TextSize.Aux, Palette.Ink, kind: TextKind.Aux); lim.name = "Limit";
                 var price = UiKit.Panel(card, "Price", "fr.r12", Palette.Cream); UiKit.Pct(price.rectTransform, 5, 79, 90, 17);
-                var coin = UiKit.Icon(price.transform, "Icon", "ui.iconArenaCoin"); UiKit.Pct(coin.rectTransform, 8, 12, 22, 76); UiKit.Label(price.transform, 32, 0, 62, 100, "—", TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
+                var coin = UiKit.Icon(price.transform, "Icon", "ui.iconArenaCoin"); UiKit.Pct(coin.rectTransform, 8, 12, 22, 76);
+                var pl = UiKit.Label(price.transform, 32, 0, 62, 100, ge != null && ge.HasCost ? UiKit.Fmt(ge.Cost) : Dash, TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft); pl.name = "Cost"; pl.fontStyle = FontStyle.Bold;
                 UiKit.Clickable(card, Noop);
                 if (i == 0) UiKit.Tag(card, "상품 카드(1칸)");
             }

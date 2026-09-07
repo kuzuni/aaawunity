@@ -651,7 +651,8 @@
     "data.expedition": "Assets/KkomaKnight/expedition.json",
     "data.chapterChest": "Assets/KkomaKnight/chapterChest.json",
     "data.dungeon": "Assets/KkomaKnight/dungeon.json",
-    "data.combatOverride": "Assets/KkomaKnight/combatOverride.json"
+    "data.combatOverride": "Assets/KkomaKnight/combatOverride.json",
+    "data.arenaShop": "Assets/KkomaKnight/arenaShop.json"
   },
   "audio": {
     "bgm.lobby": "Assets/Audio/bgm/lobby.ogg",

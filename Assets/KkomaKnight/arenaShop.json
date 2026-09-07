@@ -1,0 +1,19 @@
+{
+  "_note": "상인(아레나 상점 · 화면 26) 상품표 — 이 레포 전용(aaaw data/ 에 없는 수치 · T209). StreamingAssets/data 는 aaaw 동기 폴더라 여기 둔다. 코드는 카탈로그 텍스트 «data.arenaShop» 으로 읽는다(코드에 숫자 없음 · ROUTINE §1). 값을 바꾸려면 이 파일만 고친다.",
+  "_source": "값은 워커가 지어낸 것이 아니라 주인 레퍼런스 docs/ref/26_arena_shop.jpg 를 읽은 것이다(T209 4항 · «주인이 지목한 그림에서 실측» = Core/Nickname 의 «/12» 와 같은 전례). 그림에 «Limit 5/5» 와 아레나 코인 값이 카드마다 찍혀 있다.",
+  "_unknown": "전설 열쇠(legendKey)·부활 토큰(revive) 두 칸은 레퍼런스에서 스크롤 밖으로 잘려 한도·값이 안 보인다 — 지어내지 않고 뺐다. 표에 없는 키는 화면이 «—» 로 낸다(없는 수를 만드는 것이 «—» 보다 나쁘다 · T209 4항). 주인이 그 두 값을 주면 여기 두 줄만 더한다.",
+  "_badge": "badge = 아이콘 오른쪽 아래 개수 배지(레퍼런스의 100·20·3). 0 이면 배지를 안 그린다 — 레퍼런스도 열쇠 세 장에는 배지가 없다.",
+  "limitText": "한도 {have}/{max}",
+  "goods": [
+    { "key": "gem",            "max": 5, "cost": 10000, "badge": 100 },
+    { "key": "recipeWeapon",   "max": 5, "cost": 5000,  "badge": 20 },
+    { "key": "recipeArmor",    "max": 5, "cost": 5000,  "badge": 20 },
+    { "key": "recipeHelmet",   "max": 5, "cost": 5000,  "badge": 20 },
+    { "key": "recipeShoes",    "max": 5, "cost": 5000,  "badge": 20 },
+    { "key": "recipeRing",     "max": 5, "cost": 5000,  "badge": 20 },
+    { "key": "recipeNecklace", "max": 5, "cost": 5000,  "badge": 20 },
+    { "key": "rareKey",        "max": 5, "cost": 5000,  "badge": 0 },
+    { "key": "epicKey",        "max": 5, "cost": 20000, "badge": 0 },
+    { "key": "revive",         "badge": 3 }
+  ]
+}

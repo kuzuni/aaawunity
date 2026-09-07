@@ -58,6 +58,7 @@ namespace KkomaKnight.Game
             d.Expedition = LoadExpedition(catalog);
             d.ChapterChest = LoadChapterChest(catalog);
             d.Dungeon = LoadDungeon(catalog);
+            d.ArenaShop = LoadArenaShop(catalog);
             ApplyCombatOverride(d, catalog);   // T173 — 전투 규칙 덮어쓰기(창 사거리·관통)는 App 이 서기 «전» 에 먹인다
             App.Create(d, catalog, uiFont, Camera.main);
             PostFx.Enable(App.I != null ? App.I.transform : null, Camera.main);   // T181 — 월드 Bloom(UI 에는 안 먹는다 · PostFx 주석 참조)
@@ -113,6 +114,15 @@ namespace KkomaKnight.Game
             if (ta == null) { Debug.LogError("[KkomaKnight] dungeon.json 이 카탈로그(data.dungeon)에 없다 — 던전 티켓 표 없음"); return null; }
             try { return DungeonData.Parse(ta.text); }
             catch (Exception e) { Debug.LogError("[KkomaKnight] dungeon.json 파싱 실패: " + e.Message); return null; }
+        }
+
+        /// <summary>상인(26) 상품표 — 이 레포 전용 <c>Assets/KkomaKnight/arenaShop.json</c>(카탈로그 텍스트 «data.arenaShop» · T209). 못 읽으면 null(카드가 종전처럼 «한도 —»·«—» 로 뜬다 — 화면은 안 깨진다).</summary>
+        static ArenaShopData LoadArenaShop(AssetCatalog catalog)
+        {
+            var ta = catalog != null ? catalog.Text("data.arenaShop") : null;
+            if (ta == null) { Debug.LogError("[KkomaKnight] arenaShop.json 이 카탈로그(data.arenaShop)에 없다 — 상인 상품표 없음"); return null; }
+            try { return ArenaShopData.Parse(ta.text); }
+            catch (Exception e) { Debug.LogError("[KkomaKnight] arenaShop.json 파싱 실패: " + e.Message); return null; }
         }
 
         /// <summary>탐험 수치표 — 이 레포 전용 <c>Assets/KkomaKnight/expedition.json</c>(카탈로그 텍스트 «data.expedition» · T97). 못 읽으면 null(탐험 팝업이 «--» 로 뜬다).</summary>
