@@ -472,8 +472,8 @@ namespace KkomaKnight.Game
         public static Color PatternTintDark => Palette.A(Palette.White, PatternAlpha);
         /// <summary>빛살 한 바퀴(초 · 12~20) · 한 변 = 아이콘 긴 변 × 배(1.6~2.2) · 알파 = 주인 확정 2026-09-07 «255 중 68»(= 68/255 ≈ 0.267 · 종전 0.6 은 아이콘을 덮었다).</summary>
         public const float LightPeriod = 16f, LightScale = 1.9f, LightAlpha = 68f / 255f;
-        /// <summary>T172 — 빛살 한 변의 «칸 대비» 하한(칸 긴 변의 몇 배). 1 보다 커야 프레임 «밖» 으로 번진 것이 보인다. T155 ⓓ 글로우 서클의 짙기는 빛살보다 옅다(겹치면 더 밝아지므로).</summary>
-        public const float LightOutScale = 1.35f, GlowAlpha = 46f / 255f;
+        /// <summary>T155 ⓓ 글로우 서클의 짙기 — 빛살보다 옅다(같은 자리에 겹치므로). T172 가 넣었던 «칸 대비 하한»(`LightOutScale`)은 T189(주인 «다 안으로»)로 **없앴다**.</summary>
+        public const float GlowAlpha = 46f / 255f;
         /// <summary>그라데이션 tint — 위 흰 +12% 밝기 · 아래 Ink −18%(ROUTINE T72 3항 팔레트). 화면 «배경» 은 레퍼런스도 이 방향이다(위 밝음 → 아래 어둠 · T116 실측 #3C6833 → #315529).</summary>
         public const float GradientTopAlpha = 0.12f, GradientBottomAlpha = 0.18f;
         /// <summary>
@@ -552,10 +552,11 @@ namespace KkomaKnight.Game
         /// <paramref name="cell"/> 안에 빛 담개(<see cref="LightMaskName"/> · Stretch · <paramref name="inset"/>)를 두고 그 안에
         /// «Glow»(글로우 서클 · 정적) → «Light»(<paramref name="key"/> · 도는 빛살) 두 겹을 넣는다.
         /// <para>
-        /// <b>T172(주인 10:2X «아이템 슬롯 프레임 «밖» 에 해 주쇼»)</b>: 담개에 <see cref="RectMask2D"/> 를 <b>붙이지 않는다</b>(있으면 뗀다).
-        /// 예전에는 그 마스크가 빛을 칸 안쪽으로 잘랐다(T72 ② 원문 «프레임 안쪽에서만 보인다»). 마스크가 없으면 자를 것이 없으니
-        /// 빛은 프레임 <b>밖</b>으로 그대로 번진다(형제 자리는 T72 그대로 = 아이콘 뒤 · 질감층 위 · 결정 171). 칸보다 반드시 커야 밖에서 보이므로 한 변은
-        /// «아이콘 긴 변 × <paramref name="scale"/>» 과 «칸 긴 변 × <see cref="LightOutScale"/>» 중 <b>큰 쪽</b>이다(결정 456).
+        /// <b>T189(주인 13:2X «그냥 밖으로 하는 거 말고 다 안으로 해라 걍» · T172 통째 취소)</b>: 담개는 다시 <see cref="RectMask2D"/> 다 —
+        /// 빛도 글로우 서클도 <b>칸 안에서 끝난다</b>(T72 ② 원문 «프레임 안쪽에서만 보인다» 로 복귀). 한 변은 «아이콘 긴 변 × <paramref name="scale"/>»
+        /// (아이콘이 없으면 칸 긴 변 × 그것)이고, T172 가 넣었던 «칸 긴 변 × 1.35» 하한은 없앴다.
+        /// ⚠ 주인 말이 세 번 바뀐 자리다 — «밖에»(10:2X) → «상점은 바꾸기 전이 맞았음»(13:1X) → «다 안으로»(13:2X · 최종). 되살리지 말 것.
+        /// <paramref name="clip"/> 를 false 로 주는 자리는 «칸이 아닌» 특전 리본 뒤 빛 두 겹(T155 ⓒ) 하나뿐이다.
         /// </para>
         /// <para>
         /// <b>T155 ⓓ(주인 07:3X «모든 이펙트 라이트 들어간 곳에 글로우 서클도 같이»)</b>: 같은 사각형·같은 중심에 <see cref="GlowKey"/> 를
@@ -564,15 +565,20 @@ namespace KkomaKnight.Game
         /// 빛살은 DOLocalRotate(0,0,−360 · FastBeyond360 · Linear · 무한 · unscaled · SetLink) 로 <b>시계방향</b>(주인 «오른쪽으로») 한 바퀴 <paramref name="period"/> 초.
         /// 이미 있으면 갱신만. 스크롤 밖 칸은 <see cref="SetLightSpinning"/> 으로 멈춘다(T72 4항 개수 제한).
         /// </summary>
-        public static Image LightBehind(RectTransform cell, RectTransform icon = null, string key = LightKey, float period = LightPeriod, Color? tint = null, float scale = LightScale, float inset = 0f, float sidePx = 0f)
+        public static Image LightBehind(RectTransform cell, RectTransform icon = null, string key = LightKey, float period = LightPeriod, Color? tint = null, float scale = LightScale, float inset = 0f, float sidePx = 0f, bool clip = true)
         {
             if (cell == null) return null;
             var sp = Cat != null ? Cat.Sprite(key) : null; if (sp == null) return null;
             RectTransform mask = null;
             for (int i = 0; i < cell.childCount; i++) if (cell.GetChild(i).name == LightMaskName) { mask = (RectTransform)cell.GetChild(i); break; }
             if (mask == null) mask = Rect(cell, LightMaskName);
-            // T172 — 자르던 마스크를 뗀다(빛이 칸 밖으로 번져야 한다). 이미 붙어 있던 것도 그 자리에서 없앤다.
-            var clip = mask.GetComponent<RectMask2D>(); if (clip != null) UnityEngine.Object.DestroyImmediate(clip);
+            // T189(주인 13:2X «그냥 밖으로 하는 거 말고 다 안으로 해라 걍» · T172 통째 취소) —
+            // 담개에 마스크를 **되살린다**: 빛도 글로우 서클도 칸 안에서 끝난다. T172 회차에 만들어져
+            // 마스크가 빠진 담개가 이미 있을 수 있으므로 «없으면 붙이는» 꼴이다.
+            // `clip: false` 는 «칸이 아닌 자리» 하나뿐이다 — 특전 «레벨 업» 리본 뒤 빛 두 겹(T155 ⓒ ·
+            // 주인이 따로 시킨 연출이라 마스크 규칙과 무관하다고 지시서 T189 2항이 못 박았다).
+            if (clip) Ensure<RectMask2D>(mask.gameObject);
+            else { var m2d = mask.GetComponent<RectMask2D>(); if (m2d != null) UnityEngine.Object.DestroyImmediate(m2d); }
             Stretch(mask, inset, inset, inset, inset);
             // 형제 자리는 T72 그대로 둔다 — «아이콘 뒤 · 질감층(무늬·그라데이션) 위»(결정 171). 마스크가 없어진 것만으로
             // 빛은 이미 칸 밖으로 번진다(자를 것이 없다) — 자리를 맨 앞(0)으로 내리면 «칸 안» 몫이 프레임 몸통에 가려 사라지는데,
@@ -587,9 +593,7 @@ namespace KkomaKnight.Game
             lt.anchorMin = lt.anchorMax = new Vector2(0.5f, 0.5f); lt.pivot = new Vector2(0.5f, 0.5f);
             Vector2 refSize = icon != null ? icon.rect.size : cell.rect.size;
             float side = Mathf.Max(refSize.x, refSize.y); if (side <= 1f) side = Mathf.Max(cell.rect.width, cell.rect.height);
-            side *= scale;
-            float outside = Mathf.Max(cell.rect.width, cell.rect.height) * LightOutScale;   // T172 — 칸보다 커야 «밖» 에서 보인다
-            if (outside > side) side = outside;
+            side *= scale;   // T189 — T172 가 넣은 «칸 긴 변 × 1.35» 하한은 없앴다(주인 «다 안으로»)
             // T155 ⓒ 회차 2 — 부르는 쪽이 «한 변» 을 직접 주면 위 두 규칙(아이콘 배·칸 하한)을 쓰지 않는다.
             // 아이콘 뒤 빛살은 «칸» 이 기준이라 저 규칙이 맞지만, 리본처럼 **가로로 긴 판** 뒤에 깔면
             // max(폭,높이)×1.9 가 화면 폭을 넘어 빛이 화면 절반을 덮는다(screens run 360 에서 실제로 그랬다 · 결정 479).

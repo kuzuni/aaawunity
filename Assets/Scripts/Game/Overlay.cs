@@ -312,7 +312,8 @@ namespace KkomaKnight.Game
                 Canvas.ForceUpdateCanvases();
                 UiKit.LightBehind(glowHost, null, UiKit.LightKey, UiKit.LightPeriod,
                                   Palette.A(Palette.Yellow, TitleGlowAlpha),          // 레퍼런스의 빛은 «금빛» 이다(우리 흰빛은 회색 판처럼 보였다)
-                                  sidePx: UiKit.FrameW * TitleGlowR.W / 100f);        // 한 변 = 그 판의 «가로» (세로에 안 끌려간다)
+                                  sidePx: UiKit.FrameW * TitleGlowR.W / 100f,        // 한 변 = 그 판의 «가로» (세로에 안 끌려간다)
+                                  clip: false);                                     // T189 예외 — 여기는 «칸» 이 아니라 리본 자리다(빛이 잘리면 부채가 사각형으로 잘린다)
             }
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "레벨 업!");
             var sub = UiKit.Find(rt, "Text (TMP)"); if (sub != null) { UiKit.Pct((RectTransform)sub, Layout.OvSub); UiKit.SetText(rt, "Text (TMP)", "새 특전을 고르세요"); }   // 레퍼런스 04 «Choose a New Perk»

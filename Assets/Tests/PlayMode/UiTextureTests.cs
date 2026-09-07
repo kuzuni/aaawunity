@@ -12,7 +12,7 @@ namespace KkomaKnight.Tests.Play
     /// <summary>
     /// T72 «질감 3종» 헬퍼 계약(주인 2026-09-06 «Pattern_01_256 거의 모든 UI 에 · 아이콘 뒤 Effect_Light 천천히 회전 · 그라데이션 색감») — 실제 씬(App) 위에 시험 칸을 세우고
     /// ① <see cref="UiKit.PatternBg"/>: «Pattern» RawImage · 텍스처 Repeat(.meta) · uvRect 크기 = 사각형 ÷ 256 · 시간이 멈춘 중(timeScale 0)에도 uvRect.position 이 <b>줄어</b>(= 그림이 오른쪽 위로) 흐른다 · raycast 끔 · 알파 3/255 · 한 타일 10~15초(주인 확정 2026-09-07)
-    /// ② <see cref="UiKit.LightBehind"/>: 빛 담개 안 «Glow»(정적 · T155 ⓓ) + «Light» · 아이콘 <b>뒤</b>(형제 순서 앞) · 한 변 = max(아이콘 긴 변 × 1.9, 칸 긴 변 × 1.35) · 아이콘 중심 · <b>시계방향</b> 회전(unscaled) · <see cref="UiKit.SetLightSpinning"/> 으로 멈춤 · 담개에 마스크는 <b>없다</b>(T172 — 빛이 프레임 밖으로 번진다)
+    /// ② <see cref="UiKit.LightBehind"/>: 빛 담개 안 «Glow»(정적 · T155 ⓓ) + «Light» · 아이콘 <b>뒤</b>(형제 순서 앞) · 한 변 = max(아이콘 긴 변 × 1.9, 칸 긴 변 × 1.35) · 아이콘 중심 · <b>시계방향</b> 회전(unscaled) · <see cref="UiKit.SetLightSpinning"/> 으로 멈춤 · 담개는 <b>마스크</b>다(T189 — 빛·서클이 칸 안에서 끝난다 · T172 는 주인 13:2X 로 취소)
     /// ③ <see cref="UiKit.Gradient"/>: «GradientTop»/«GradientBottom» 두 장 · Gradient 스프라이트 · 글자·아이콘 아래(형제 순서 앞) · raycast 끔
     /// 공통: 두 번 불러도 조각이 늘지 않고, 칸이 파괴되면 트윈이 남지 않으며(SetLink · T56), 빨간 줄 0(<see cref="PlayLog"/>). 화면별 «어디에 있나» 는 T63/T69 화면 묶음 테스트가 <see cref="UiKit.HasPattern"/>·<see cref="UiKit.HasLight"/>·<see cref="UiKit.HasGradient"/> 로 단언한다.
     /// </summary>
@@ -84,20 +84,25 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(light, "LightBehind 는 Image 를 돌려준다(ui.light1 카탈로그)");
             Assert.AreEqual(UiKit.LightName, light.name);
             var mask = light.transform.parent; Assert.AreEqual(UiKit.LightMaskName, mask.name, "Light 는 LightMask 안");
-            // T172(주인 10:2X «아이템 슬롯 프레임 «밖» 에 해 주쇼») — T72 ② 를 뒤집었다: 자르던 마스크가 없어야 빛이 칸 밖으로 번진다.
-            Assert.IsNull(mask.GetComponent<RectMask2D>(), "빛 담개에 RectMask2D 가 있으면 빛이 칸 안에 갇힌다(T172 · 뒤집힌 기댓값)");
+            // T189(주인 13:2X «그냥 밖으로 하는 거 말고 다 안으로 해라 걍») — T172 를 통째로 되돌렸다: 담개는 다시 마스크다.
+            // ⚠ 주인 말이 세 번 바뀐 자리다(«밖에» → «상점은 바꾸기 전이 맞았음» → «다 안으로» 최종) — 되살리지 말 것.
+            Assert.IsNotNull(mask.GetComponent<RectMask2D>(), "빛 담개 = RectMask2D(빛·글로우 서클이 칸 밖으로 안 나간다 · T189)");
             Assert.AreEqual(host, mask.parent, "LightMask 는 host 의 자식");
             Assert.Less(mask.GetSiblingIndex(), icon.transform.GetSiblingIndex(), "빛살은 아이콘 «뒤»(형제 순서 앞)");
             Assert.Greater(mask.GetSiblingIndex(), raw.transform.GetSiblingIndex(), "빛살은 패턴 위");
             Assert.IsFalse(light.raycastTarget, "Light raycast 끔"); Assert.IsNotNull(light.sprite); Assert.IsTrue(light.sprite.name.StartsWith("Effect_Light"), "스프라이트 = Effect_Light_01_512 (" + light.sprite.name + ")");
             Assert.AreEqual(68f / 255f, light.color.a, 0.01f, "빛살 알파 = 주인 확정 «255 중 68»(2026-09-07)");
             var lrt = light.rectTransform; var irt = icon.rectTransform;
-            // T172 — 한 변 = «아이콘 긴 변 × 1.9» 와 «칸 긴 변 × 1.35»(밖으로 번지는 하한) 중 큰 쪽
-            float side = Mathf.Max(Mathf.Max(irt.rect.width, irt.rect.height) * UiKit.LightScale,
-                                   Mathf.Max(host.rect.width, host.rect.height) * UiKit.LightOutScale);
-            Assert.AreEqual(side, lrt.rect.width, 1f, "빛살 한 변 = max(아이콘 긴 변 × " + UiKit.LightScale + ", 칸 긴 변 × " + UiKit.LightOutScale + ")"); Assert.AreEqual(side, lrt.rect.height, 1f, "정사각");
-            Assert.Greater(lrt.rect.width, host.rect.width, "빛살이 칸보다 넓어야 프레임 «밖» 에서 보인다(T172)");
-            Assert.Greater(lrt.rect.height, host.rect.height, "세로도 칸보다 커야 한다(T172)");
+            // T189 — 한 변 = 아이콘 긴 변 × LightScale(T172 가 넣었던 «칸 × 1.35» 하한은 없앴다)
+            float side = Mathf.Max(irt.rect.width, irt.rect.height) * UiKit.LightScale;
+            Assert.AreEqual(side, lrt.rect.width, 1f, "빛살 한 변 = 아이콘 긴 변 × " + UiKit.LightScale); Assert.AreEqual(side, lrt.rect.height, 1f, "정사각");
+            // 그리고 «칸 밖으로 안 나간다» 를 눈에 보이는 성질로 못 박는다(T189 3항) — 마스크가 또 떨어지면 이 줄이 잡는다.
+            var mrt = (RectTransform)mask; var hostCorners = new Vector3[4]; var maskCorners = new Vector3[4];
+            host.GetWorldCorners(hostCorners); mrt.GetWorldCorners(maskCorners);
+            Assert.LessOrEqual(hostCorners[0].x - 0.5f, maskCorners[0].x, "빛 담개 왼쪽이 칸 안(마스크가 자르는 사각형 = 칸)");
+            Assert.LessOrEqual(maskCorners[2].x, hostCorners[2].x + 0.5f, "빛 담개 오른쪽이 칸 안");
+            Assert.LessOrEqual(hostCorners[0].y - 0.5f, maskCorners[0].y, "빛 담개 아래가 칸 안"); Assert.LessOrEqual(maskCorners[2].y, hostCorners[2].y + 0.5f, "빛 담개 위가 칸 안");
+            Assert.IsTrue(mask.GetComponent<RectMask2D>().enabled, "그 마스크가 켜져 있다(꺼 두면 자르지 않는다)");
             var lc = host.InverseTransformPoint(lrt.TransformPoint(lrt.rect.center)); var ic = host.InverseTransformPoint(irt.TransformPoint(irt.rect.center));
             Assert.AreEqual(ic.x, lc.x, 1f, "빛살 중심 x = 아이콘 중심"); Assert.AreEqual(ic.y, lc.y, 1f, "빛살 중심 y = 아이콘 중심");
             Assert.IsTrue(UiKit.HasLight(host), "HasLight");
