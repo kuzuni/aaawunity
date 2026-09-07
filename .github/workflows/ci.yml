@@ -43,6 +43,16 @@ jobs:
           python3 tools/check_asmdef.py
       - name: 테스트 어셈블리 using 검사 (참조 없는 네임스페이스 · T188)
         run: python3 tools/check_test_usings.py
+      # T193 — «PROGRESS 는 ✅ 완료인데 ROUTINE §2 제목에는 ✅ 가 없다» = 다음 워커가 끝난 일을 다시 잡는 덫.
+      # ⚠ **일부러 `continue-on-error` 다.** 이 잡이 빨개지면 `unity-test` → `build-webgl` 이 줄줄이 안 돌아
+      # **주인 폰 배포가 막힌다**(needs 사슬). ✅ 하나가 빠진 것은 «조율 결함» 이지 «빌드 결함» 이 아니라,
+      # 폰을 볼모로 잡을 값어치가 없다 — 로그와 주황 표시로 보이게만 하고 막지는 않는다(결정 493).
+      # 자기 검사는 순수 함수라 문서 어긋남과 무관하니 그대로 막는다.
+      - name: 작업 상태 대조 (ROUTINE §2 제목 ↔ PROGRESS 상태 · T193) + 자기 검사
+        run: python3 tools/task_state.py --self-test
+      - name: "작업 상태 대조 — 보고만(빨개도 안 막는다 · 결정 493)"
+        continue-on-error: true
+        run: python3 tools/task_state.py --check
       - name: 오디오 형식 검사 (WebGL 이 읽는 PCM/MP3/AAC 만 · T64)
         run: python3 tools/check_audio_webgl.py
       - name: aaaw main 체크아웃 (수치 정본)

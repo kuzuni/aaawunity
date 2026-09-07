@@ -5,7 +5,7 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
-- **(2026-09-07 · 13:3X UTC) ⚑ 주인 — **아이템·보상 슬롯에는 빛 효과 자체를 없앤다** → **T190**(T189 보다 앞선다):** «그 뭐 **아이템 슬롯 같은 거에는 빛 효과 없게** 하셈 · 예를 들어 **클리어했을 때 골드 주는 거 슬롯에 빛 효과 같은 그거**» — T189 가 «남는 빛은 칸 «안» 으로» 라면, **이 지시는 그 칸들에서 빛을 아예 빼는 것**이다(빼면 «안이냐 밖이냐» 는 물을 것도 없다). **상점 상품 카드의 빛은 그대로 둔다**(주인 13:1X «상점은 바꾸기 전이 맞았음»).
+- **(2026-09-07 · 13:3X UTC) ⚑ 주인 — **아이템·보상 슬롯에는 빛 효과 자체를 없앤다** → **T194**(T192 보다 앞선다):** «그 뭐 **아이템 슬롯 같은 거에는 빛 효과 없게** 하셈 · 예를 들어 **클리어했을 때 골드 주는 거 슬롯에 빛 효과 같은 그거**» — T192 가 «남는 빛은 칸 «안» 으로» 라면, **이 지시는 그 칸들에서 빛을 아예 빼는 것**이다(빼면 «안이냐 밖이냐» 는 물을 것도 없다). **상점 상품 카드의 빛은 그대로 둔다**(주인 13:1X «상점은 바꾸기 전이 맞았음»).
 
 - **(2026-09-07 · 13:2X UTC) ⚑ 주인 확정 — **빛·글로우는 «다 칸 안» 으로 되돌린다(T172 통째 취소)** → **T192**(등재는 T189 로 되어 있었는데 그 번호는 asmdef 자에 이미 쓰였다 — 규약 «한 번호는 한 작업» 대로 늦게 등재된 이 작업을 옮겼다 · 워커 J):** 처음에 «아이템 슬롯 프레임 밖에» 라 했다가 «상점은 바꾸기 전이 맞았음» → 최종 확인: «**그냥 밖으로 하는 거 말고 다 안으로 해라 걍**» = **모든 칸에서 예전(칸 안에서 잘림)으로**. T172 가 `UiKit.LightBehind` 에서 뗀 마스크를 **되살리고** 크기 하한(`LightOutScale`)도 **없앤다**.
 
@@ -293,6 +293,7 @@
 2. SID 발급: `sess-HHMM-$RANDOM` (예: sess-0512-23481)
 3. aaaw `PLAN.md`(스펙) → 이 문서 → `docs/ref/README.md`(UI 레퍼런스 색인 · UI 작업이면 해당 jpg 를 `Read` 로 직접 본다) → `docs/PROGRESS.md` → `docs/claims/` 순서로 읽는다. **PROGRESS 의 «주인 콘솔 에러 보고함» 도 반드시 읽는다** — 아직 작업으로 안 올라간 항목이 있으면 «가장 큰 번호 +1» 로 등재하고, 그것이 선점 가능한 가장 앞 작업이 된다(콘솔 에러 수정은 UI 작업보다 우선). aaaw 는 `git clone --depth 1 https://github.com/kuzuni/aaaw .aaaw-src` 로 옆에 둔다(커밋 금지 폴더 · .gitignore).
 4. [2. 작업 목록]에서 **선점 가능한 가장 앞 작업**을 lock 으로 선점한다 (규약: `docs/claims/README.md`).
+   **⚠⚠ 선점 «직전» 에 `python3 tools/task_state.py <ID>` 한 줄을 돌려라(T193 · 결정 493).** 잡아도 되면 **0**, 아니면 **1** 로 끝나고 까닭을 한 줄로 찍는다(살아 있는 남의 lock · 이미 ✅ · **그 번호를 가리키는 코드·커밋이 이미 있다**). 오늘만 세 번 샜다 — 워커 J 의 T149·T151(결정 455) · 워커 B 의 T188(결정 479) · 워커 B 가 잡으려던 T161(코드는 `2ad1aeaf` 에 이미 다 있었다). **«lock 없음» 도 «제목에 ✅ 없음» 도 «안 한 일» 의 증거가 아니다** — lock 은 끝내면 반납하고, 제목의 ✅ 는 사람이 손으로 단다. 전체는 `--list`, 어긋난 짝만은 `--check`.
    **⚠ 선점 전에 `python3 tools/check_task_rows.py` 를 돌려라(결정 455)** — 표가 길어져 같은 작업이 **두 줄**에 남은 자리가 있고, 한 줄이 «✅ 완료» 인데 다른 줄이 «⬜ 대기» 였다. 아래 줄만 보고 T149·T151 을 선점했다가 **05:41 커밋이 셋을 이미 다 고쳐 놓은 것**을 코드에서 확인하고 물러난 사고가 있다(한 회차가 샜다). 그리고 «⬜ 대기» 를 믿기 전에 **그 자리 코드를 한 번 읽어라** — 주인 지시가 이미 반영돼 있으면 표가 늦은 것이다.
 5. 선점할 작업이 없으면(전부 lock 또는 전부 완료): 게이트(§3)를 재실행해 검증만 하고, 이상 없으면 **커밋 없이 조용히 종료**. 이상이 있으면 PROGRESS 에 등재하고 종료.
 
@@ -431,9 +432,9 @@
 
 > T1~T5(주인이 정한 5단계)는 끝났다. **(16:3X UTC · 워커 E) T71·T74·T80 ✅ — CI #128(`4dfdbd4`)에서 `MapThemeTests`·`UiSmokeTests` ②·`BorderGateTests`·`EventsTextsAreReadable` 전부 Passed · 세 lock 삭제 · 지금 main 빨강은 T82(UiTextureTests «Pattern 형제 0» = `UiKit.Gradient` 재호출이 형제 0·1 에 끼어들어 Pattern 을 2 로 밀어냄 · BorderGateTests «Castle»·«Banner» = T78 이 지운 조각 · lock 은 sess-1604 워커가 잡았다).** **(15:5X UTC · 워커 E) CI #119 의 빨강 2건(ⓐ 진행 바 테두리 · ⓑ 28_confirm_reset 로비 라벨)은 T80 `4f87d85` · T79 `c8265dd` 로 고쳤다(같은 push 에 T71 코드 `e2366b5`) — 그 런(4f87d85)이 초록이면 T71·T74·T79·T80 lock 을 지우고 T63-toast·T69 1단계·T69-lobby·T63-events 회차 2 의 확인이 풀린다. T70(번개 CC0 에셋)은 에셋 사이트가 프록시에 막혀 GitHub 미러 URL 을 아는 워커 몫(결정 153).** **(15:2X UTC · 워커 E) main 빨강 2건 중 남은 1건(CI #112·#114 · T63-events 의 «첫 클리어» 배지 bestFit 35)은 T74 `80601f3` 로 고쳤다 — 그 런이 초록이면 T63-events·T63-toast·T69 1단계·T63-shop 회차 2 의 확인이 풀린다.** **(15:4X UTC · 워커 F) T73 `d4b6d34` 는 CI #119 에서 확인(상점 헤더 단언 Passed) · 지금 main 빨강(CI #117·#119 · `80601f3`)은 남은 2건 = ⓐ `BorderGateTests.BattleBarsHaveBordersAndCellTagsAreAudited` «[02_battle] 진행 바 Bar:Progress 테두리 없음»(T69 1단계 `6989924` · 워커 H · #120 `8cc90a7` 결과를 먼저 본다) ⓑ `TextSizeGateTests.EveryActiveTextMeetsTheMinimumSize` «[28_confirm_reset] Side:starter «스타터팩» Aux 36 < 40»(T63-toast `e611bda` 의 새 화면 단언이 확인 팝업 뒤 로비 사이드 라벨(결정 138 보조 36)까지 본문 하한으로 잰다 · 워커 D · lock 15:20) — 각 워커가 안 잡으면 다음 워커가 «가장 큰 번호 +1» 로(T67·T73·T74 규약) · screens 는 run 106 그대로라 T63 하위 행 PNG 채점이 전부 이 초록을 기다린다.** **⚠ 먼저 볼 것(13:4X UTC 갱신 · 워커 B): main 빨강은 끝났고 배포도 다시 돈다 — `b12a224`(T61 코드 · T65 수정 `984f713` 포함)의 **CI [#95](https://github.com/kuzuni/aaawunity/actions/runs/34035892457) 가 유니티 잡 초록**(EditMode+PlayMode 전부 Passed) → `screens` 갱신(`7b5a0c9` · 26 PNG) → **`build-webgl` 의 배포 스모크 step 초록 → gh-pages `b212a7e` 배포**(워커 B 가 `tools/webgl_smoke.sh --gh-pages --battle` 로 재확인 = 콘솔 에러 0 · 로비 · 전투 · 오디오 경고 40 = T64). **T61 ✅ · T62 회차 1 채점 가능 · T60 확인 재료도 이 잡이다**(T60 lock 주인이 닫는다). 참고: `984f713` 자신의 CI #94 를 빨갛게 한 `BattleWorldTests.cs:152`(대시 평균 속도) 단언은 **같은 코드가 든 #95 에서 통과** — 흔들리는 지표라 워커 D 가 결정 123(`de91abc`)에서 분모를 고쳤다.** **지금 열린 작업은 T17~T66**(T66 = T59 진단 심볼 되돌리기 · T65 = main 빨강 후속 · T59 ✅ 종결(원인 미확정) · (T64 = WebGL 오디오(BGM «no supported source» · SFX «Loading FSB failed» · T59/T60 스모크에서 발견 · 제약 없음) · T59 🔄 워커 G 진단 빌드 push(심볼 Embedded · 부팅 마커 · 데스크톱 headless 재현 불가 · PROGRESS T59 진행 기록) · T60 코드 완료(워커 G · CI build-webgl 잡의 스모크 step 이 확인) · T63 = 전체 글자 가독성 · (T62 ✅(회차 2 = 9.5) = 아레나 순위 = Social_Ranking 프리팹 변형 · (T61 = 특전 카드 Shine 순서대로 · (T59 = WebGL 배포 크래시 최우선 · T60 = 배포 스모크 게이트 · (T58 = 비평 하니스 PNG 촬영 결함(UI 띠 34.8% · 월드 스프라이트 겹침 · T46 뒤) · T57 ✅ · T47 🔄(회차 1 · 로비 9.7 ✅ · 전투 8.6 ✅ 캔버스 · 남은 코드 3건) · T46 ✅(screens CI #83 · T58 열림) · T44 ✅(비평 9.5~10.0) · T41 ✅(비평 10.0) · T36 ✅(비평 9.5) · T38 ✅(비평 8.5) · T56 = 플레이 콘솔 노란 줄 0 — DOTween 세이프 모드 경고(파괴된 오브젝트 겨냥 트윈 · `SetLink`) · T55 = CI #76·#77 빨강 후속(T49 회귀 · 최우선) · T49 = 팝업 등장 연출 DOTween 순서대로 · T50 ✅(엔진 틱 보류 · 워커 H) · T54 ✅ · T51 ✅(T50 과 같은 커밋) · T52 = 특전 글자 한 색 · T53 = 특전 설명 «트리거: 내용» 표기 · 2026-09-06) — **T34~T44 = UI 를 `docs/ref` 레퍼런스 구도로(2026-09-06 · 최우선 · «프리팹 그대로» 계열 지시를 대체 · T25 흡수 · T27·T30·T32 폐기)**. 이전 묶음: T17~T33(T12~T16 은 워커가 먼저 쓴 번호 · 내 T13~T16 은 T20~T23 으로 정정) (T12 = 콘솔 에러 수정 · 최우선 · T13 = 특전 미리보기 줄 비례 · T14 = 전투 캐릭터 크기·공격 애니·사망 모션 · T15 = 프리팹 스폰 PanelView 예외 · 콘솔 에러라 최우선 · T16 = T14 의 CI #39 빨강 후속) — 같은 파일을 만지는 것은 아래 «순서» 대로(앞 번호의 lock 이 사라지고 PROGRESS 행이 ✅ 가 된 뒤에 잡는다). 겹치지 않는 것은 병렬 선점 가능. **(14:1X UTC · 워커 D) 그 결과로 T60 ✅(스모크 step 초록 뒤에야 배포 step 이 돌았음을 #95 에서 확인 + 새 배포에 `--battle --require-marker` 스모크 초록) · T65 ✅(#95 초록 + #99 에서 `BattleWorldTests` 2/2 Passed) · T59 ✅ 종결(원인 미확정 · 결정 120) — 이 셋의 lock 은 없다. 지금 main 빨강은 T63-lobby 회귀 = T67(워커 G).**
 
-### T1 — 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README ✅ (완료 · PROGRESS 참조)
+### T1 ✅ — 프로젝트 뼈대 + JSON 로더 + CI/활성화 워크플로 + README ✅ (완료 · PROGRESS 참조)
 
-### T2 — 전투 엔진 (순수 C#) + 이식 검증 ✅ (완료 · PROGRESS 참조 — 21칸 전부 sim.js 와 동일)
+### T2 ✅ — 전투 엔진 (순수 C#) + 이식 검증 ✅ (완료 · PROGRESS 참조 — 21칸 전부 sim.js 와 동일)
 범위: `Assets/Scripts/Core/Battle*.cs` · `Assets/Scripts/Core/Perks*.cs` · `tools/sim/` · `Assets/Tests/EditMode/Battle*.cs`
 1. sim.js `runChapter` 를 `KkomaKnight.Core` 에 이식 — 챕터·웨이브·노드(쉼터/악마/천사/보스)·원거리 배치(enemies.json 의 `ranged[]` 그대로)·투사체(도끼/화살/창/검기 · 적 화살)·스턴·실드·방어막·특전 100종·장비 세트 옵션.
    - 난수는 `IRng` 하나로만 굴리고 **sim.js 와 같은 순서로 소비**한다(치명 굴림 → 회피 굴림, 골드 `rand(1,1.8)` 도 소비 등). 그래야 시드 하니스가 sim.js 와 같은 수열을 밟는다.
@@ -443,13 +444,13 @@
 3. 어긋나면 수치가 아니라 코드 차이를 고친다. 결과표(시드×7칸)를 PROGRESS 에 남긴다.
 4. EditMode 테스트: 결정적 시드에서 한 챕터 결과가 고정값인가(회귀 방지) · 방어막→피해 무시→피해 순서 · 소환 적중 = 공격 트리거 · PROC_TICK_CAP.
 
-### T3 — 레벨업 특전 3택 + 악마의 거래 (유니티 팝업) ✅ (완료 · PROGRESS 참조 — 실물 확인은 WebGL 배포에서)
+### T3 ✅ — 레벨업 특전 3택 + 악마의 거래 (유니티 팝업) ✅ (완료 · PROGRESS 참조 — 실물 확인은 WebGL 배포에서)
 범위: `Assets/Scripts/Game/Battle*.cs` · `Assets/Scripts/Game/Overlay*.cs` · `Assets/Scripts/Game/Hud*.cs`
 1. 전투 화면(카메라 줌 1.5 · 플레이어 x 16% · 발밑 바 2/3 — `ui.json`)을 코드로 생성한 uGUI/스프라이트로 그린다(적·투사체·데미지 팝은 엔진 상태에서 읽는다).
 2. 레벨업 3택 카드(등급색 테두리 + 등급 이름), 📘 보유 특전, 악마 카드(미리 굴린 한 장 그대로 · 최대체력 30% 차감), 쉼터(체력 260 / 경험치 26), 천사(+5% / 광고 3초 +15%). 팝업 중 `Tick` 정지.
 3. 상단 스탯 줄 8칸(공격력·방어력·공격속도·반격·치확·회피·치배·흡혈) · 버프 아이콘 열 · 특전 미리보기 줄.
 
-### T4 — 로비 · 장비 · 강화 · 슬롯 · 뽑기 상자 3종 ✅ (완료 · PROGRESS 참조 — 실물 확인은 WebGL 배포에서)
+### T4 ✅ — 로비 · 장비 · 강화 · 슬롯 · 뽑기 상자 3종 ✅ (완료 · PROGRESS 참조 — 실물 확인은 WebGL 배포에서)
 범위: `Assets/Scripts/Game/Screens.cs`(Lobby·Gear·Forge·Shop) · 새 파일은 `Gear*.cs` · `Forge*.cs` · `Shop*.cs` · `Assets/KkomaKnight/catalog.json`(키 추가)
 > 방법(T3 에서 확립): 화면은 주인 지정 GUI Pro 데모 프리팹을 `UiKit.Spawn` 으로 세우고 자식 이름으로 글자/아이콘/버튼을 바꾼다(`docs/assets-map.md` · `/tmp` 덤프는 `python3 tools/…` 없이 prefab YAML 을 직접 읽는다). 장비 = **Character_Hero_Equipment** · 소환 결과 = **Shop_Chest_Open** · 장비 아이콘 = catalog `gi.<부위>.<세트>` · 등급 색 = `Palette.RarName`(gray/blue/yellow/plum) 의 ItemFrame_01_Normal_* 변형. 새 에셋 키는 catalog.json 에 추가하고 `python3 tools/gen_catalog.py` 로 재생성(assets-map 도 같이 갱신된다).
 1. 세이브(PlayerPrefs 에 JSON — index.html `kkoma-knight-v2` 와 같은 필드: gold·gem·maxChapter·selChapter·inv·eq·slots·gachaBoxes·uid·freeDay).
@@ -457,14 +458,14 @@
 3. 장비 탭(좌우 슬롯열 3+3 · 캐릭터 · 공/체/실 3칸 · 균등 보너스 · 합성 버튼 · 인벤 5열) · 세부 팝업(등급 배지·아이콘·이름·스탯·옵션 7줄 잠금 표시·슬롯 강화 비용·장착/해제) · 대장간(수동 3칸 + 자동 · 장착분 제외 · `FuseMake` 하나만).
 4. 상점(무료 보급 2,500/일 · 모의 결제 12,000 · 상자 3종: 가격·확률·천장 문구는 `gacha.json` 에서 · 뽑기 결과 팝업 · 자동 장착 없음 · NEW 뱃지).
 
-### T5 — UI 를 docs/ref 레이아웃에 맞추기 ✅ (완료 · PROGRESS 참조 — 실물 확인은 WebGL 배포에서)
+### T5 ✅ — UI 를 docs/ref 레이아웃에 맞추기 ✅ (완료 · PROGRESS 참조 — 실물 확인은 WebGL 배포에서)
 범위: `Assets/Scripts/Game/Layout*.cs` + 각 화면의 배치 상수
 > 시작점: T3/T4 화면은 이미 `Layout` 상수(ref-layout ①~⑦ %)로 앵커링돼 있다 — 남은 것은 데모 프리팹을 통째로 세운 화면(로비 Lobby_Default · 장비 Character_Hero_Equipment · 팝업들)의 내부 요소를 표 % 로 옮기는 일과 실물(WebGL) 대조. 승인 대기 17(장비 탭 기사 RenderTexture)도 여기서.
 1. aaaw `docs/ui/ref-layout.md` 의 표(요소별 x/y/w/h · 프레임 %)를 배치의 단일 정본으로 코드에 옮긴다(9:19.5 레퍼런스 → 프레임 % 환산).
 2. 화면마다 요소를 그 % 자리에 앵커링한다(±3%p). 색·폰트·그림체는 점수 밖 — 배치·비율·비례만.
 3. 검증: 에디터 없이 되는 만큼 — 배치 상수가 표와 같은지 EditMode 테스트로 대조하고, 실물 확인은 WebGL 배포에서 주인이 폰으로 한다.
 
-### T6 — 로비 = Lobby_Default 그대로 — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `814d59d` · sess-2034-9487 / 워커 B · 자세한 것은 PROGRESS 그 행)**
+### T6 ✅ — 로비 = Lobby_Default 그대로 — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `814d59d` · sess-2034-9487 / 워커 B · 자세한 것은 PROGRESS 그 행)**
 범위: `Assets/Scripts/Game/Screens.cs`(LobbyScreen) · `Assets/Scripts/Game/TopBar.cs`(삭제) · catalog(로비용 키)
 순서: 제약 없음(먼저 잡아도 됨). T10 이 이 파일(NavBar)을 뒤이어 만진다.
 1. `ui.lobby`(Lobby_Default) 인스턴스를 **원형 그대로** 둔다 — 요소를 Pct 로 옮기지 않는다(T5 의 재앵커링을 되돌린다). 프리팹 안 요소는 글자·숫자만 바꾼다.
@@ -473,7 +474,7 @@
 4. 챕터 표시·카드·좌우 화살·START·하단 탭은 프리팹 자리 그대로(기능 유지). 챕터 이동 로직 그대로.
 5. 게이트 + PROGRESS T6 행 + «주인이 확인할 것» 한 줄. `docs/assets-map.md` 갱신(gen_catalog).
 
-### T7 — 장비 화면 = Character_Hero_Equipment 그대로 + 외형 반영 — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `ff53ebb` · sess-2036-27996 / 워커 C · 자세한 것은 PROGRESS 그 행)**
+### T7 ✅ — 장비 화면 = Character_Hero_Equipment 그대로 + 외형 반영 — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `ff53ebb` · sess-2036-27996 / 워커 C · 자세한 것은 PROGRESS 그 행)**
 범위: `Assets/Scripts/Game/GearScreen.cs` · `GearUi.cs` · `CharacterRig.cs`(외형 매핑 헬퍼) · `BattleWorld.cs`(플레이어 스킨 한 줄) · catalog(장비 아이콘 키)
 순서: 제약 없음. **T8 은 이 작업 뒤**(GearUi 공유).
 1. 장착 슬롯 6칸: 프리팹의 슬롯 크기·아이콘 크기 **그대로**(우리 Cell 을 억지로 축소해 넣지 않는다 — 프리팹 슬롯 안 Icon 이미지에 스프라이트만 꽂는다). 슬롯의 부위 라벨(«갑옷·장갑·투구…») 전부 비활성. «균등 보너스 …» 문구 삭제(`EvenBonus` 표시 제거 · 계산 함수는 남겨도 됨).
@@ -486,7 +487,7 @@
 7. `GearUi.Cell` 은 대장간(T8)·뽑기 결과(T9)도 쓴다 — `CellOpts` 에 «장착중 표기 on/off · 합성 가능 빨간 점» 옵션을 두고 여기서는 둘 다 끈다.
 8. 게이트 + PROGRESS T7 행 + «주인이 확인할 것».
 
-### T8 — 대장간 정리 (T7 뒤) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `41e524c` · sess-2113-28861 / 워커 A · 자세한 것은 PROGRESS 그 행)**
+### T8 ✅ — 대장간 정리 (T7 뒤) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `41e524c` · sess-2113-28861 / 워커 A · 자세한 것은 PROGRESS 그 행)**
 범위: `Assets/Scripts/Game/ForgeScreen.cs`
 순서: **T7 완료 뒤**.
 1. 하단 인벤에 장비가 **전부** 보인다(지금 안 보이는 원인 규명 — Grid/Content 크기·ScrollRect·Pct 겹침 — PROGRESS 에 원인 한 줄).
@@ -495,7 +496,7 @@
 4. 여기서는 **장착중 표기 유지**(배지) — 그러나 **장착 중인 장비도 재료로 쓸 수 있다**(주인 2026-09-06 «대장간에 장착중인 거도 합성 가능하게») → `ForgeScreen.Toggle` 의 장착분 거부·흐리게 처리를 없애고, `GearSystem.FuseAll/FuseMake` 호출에서 장착 제외(`EquippedSet`)를 빼서 자동 합성도 장착분을 포함한다. 장착 중이던 것이 재료로 사라지면 **결과물이 같은 부위면 그 슬롯에 장착**, 아니면 슬롯을 비운다(승인 대기 29 기본값). aaaw 의 T125(«장착분은 재료가 아니다») 는 주인이 뒤집었다 — PROGRESS 에 한 줄.
 5. 게이트 + PROGRESS T8 행.
 
-### T9 — 상점 = Shop_List 그대로 + 뽑기 결과 = Shop_Chest_Open 그대로 — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `4506ed4` · sess-2136-22274 / 워커 C · 자세한 것은 PROGRESS 그 행)**
+### T9 ✅ — 상점 = Shop_List 그대로 + 뽑기 결과 = Shop_Chest_Open 그대로 — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `4506ed4` · sess-2136-22274 / 워커 C · 자세한 것은 PROGRESS 그 행)**
 범위: `Assets/Scripts/Game/ShopScreen.cs` · catalog(상점 키) · `Assets/Scripts/Core/GameData.cs`(상점 상품표 로더 — JSON 이 아니라 코드 상수 금지 → 아래 5 참조)
 순서: 제약 없음.
 1. `Shop_List` 프리팹을 **원형 그대로**(스크롤·섹션·비율). 우리가 만든 카드 레이아웃(3 상자 카드·격자)은 버린다.
@@ -505,7 +506,7 @@
 5. **수치**(주인 확정 2026-09-05 «그렇게 해라» = 아래 기본값 그대로): 다이아 6종의 **다이아 개수**와 골드 3종의 **다이아 가격** → `Assets/StreamingAssets/data/` 는 aaaw 동기 폴더라 못 넣는다. **`Assets/KkomaKnight/shop.json`**(이 레포 전용 · 승인 대기 25 의 기본값) 을 만들어 거기서 읽는다(코드 상수 금지 규칙의 예외가 아니라 «JSON 에서 읽기» 그대로). 기본값: 다이아 100·1,100·3,500·6,000·10,000·14,000 / 골드 1,000=다이아 30 · 3,000=80 · 10,000=250. 주인이 바꾸면 파일만 고친다.
 6. 게이트 + PROGRESS T9 행 + 승인 대기 25 갱신.
 
-### T10 — 하단 네비 5칸 = 상점·장비·전투·탤런트·펫 + 설정 = Settings 그대로 (T6 뒤) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `dce33d6` · sess-2052-15499 / 워커 D · 자세한 것은 PROGRESS 그 행)**
+### T10 ✅ — 하단 네비 5칸 = 상점·장비·전투·탤런트·펫 + 설정 = Settings 그대로 (T6 뒤) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `dce33d6` · sess-2052-15499 / 워커 D · 자세한 것은 PROGRESS 그 행)**
 범위: `Assets/Scripts/Game/Screens.cs`(NavBar · 새 팝업 진입) · `Assets/Scripts/Game/Overlay.cs`(Settings·Talent 팝업) · catalog(`ui.talent` = Character_Talent_02)
 순서: **T6 완료 뒤**(Screens.cs 공유).
 1. 탭 = 상점 · 장비 · 전투 · **탤런트 · 펫**(대장간·설정 탭 제거 · 대장간은 장비 화면의 «합성» 버튼으로만 진입 · 설정은 로비의 메뉴(≡) 버튼과 전투의 일시정지에서).
@@ -513,14 +514,14 @@
 3. 설정 팝업 = `ui.settings`(Settings) **그대로** — 지금 구현이 프리팹 요소를 옮겼으면 되돌린다. 동작하는 것만 연결(사운드 토글은 값만 저장 · 나머지 버튼은 눌러도 아무 일 없음).
 4. 게이트 + PROGRESS T10 행.
 
-### T11 — UI 스모크 테스트(PlayMode) + 가짜 null 게이트 — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `bddcf98` · sess-2150-31726 / 워커 D · 자세한 것은 PROGRESS 그 행)**
+### T11 ✅ — UI 스모크 테스트(PlayMode) + 가짜 null 게이트 — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `bddcf98` · sess-2150-31726 / 워커 D · 자세한 것은 PROGRESS 그 행)**
 범위: `Assets/Tests/PlayMode/` · `tools/check_unity_null.sh`(신규) · `.github/workflows/ci.yml`(게이트 한 줄) · `docs/ROUTINE.md` §3
 순서: 제약 없음(다른 작업과 파일 안 겹침). 화면 코드가 바뀌면 테스트도 따라 고친다(같은 워커가 아니어도 됨).
 1. PlayMode 테스트(유니티 CI 가 돌린다 · dotnet 은 컴파일 못 하므로 `tools/dotnet` 에 넣지 않는다): `App` 을 세우고 **모든 화면(로비·장비·대장간·상점·전투)과 팝업(레벨업·보유 특전·쉼터·악마·천사·사망·클리어·일시정지·설정·탤런트·펫·세부·뽑기 결과·슬롯)을 하나씩 연다** → ⓐ 예외·에러 로그 0(`LogAssert.NoUnexpectedReceived`) ⓑ 프리팹 잔여 글자(«Text», «Remain», «New Text», 영문 데모 문구) 가 활성 Text 에 없음 ⓒ 화면마다 핵심 요소 존재(예: 장비 슬롯 6 · 상점 상자 3 · 탭 5) ⓓ 전투는 3초 틱 뒤 예외 0.
 2. `tools/check_unity_null.sh`: `GetComponent…() ??` · `Find(...) ??` 패턴이 `Assets/Scripts` 에 0건인지(있으면 실패 · 메시지에 `UiKit.Ensure<T>` 안내). CI dotnet 잡과 §3 게이트에 추가.
 3. 게이트 + PROGRESS T11 행(테스트 수 · CI 런 번호).
 
-### T12 — 플레이 콘솔 에러 0 : URP 2D 렌더 에러(HeroView RenderTexture) + 전 화면 런타임 에러 감사 (최우선 · 제약 없음) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `2203550` · sess-2121-23849 / 워커 B · 자세한 것은 PROGRESS 그 행)**
+### T12 ✅ — 플레이 콘솔 에러 0 : URP 2D 렌더 에러(HeroView RenderTexture) + 전 화면 런타임 에러 감사 (최우선 · 제약 없음) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `2203550` · sess-2121-23849 / 워커 B · 자세한 것은 PROGRESS 그 행)**
 범위: `Assets/Scripts/Game/HeroView.cs` · (필요시) `WorldCam.cs`·`App.cs`·`BattleWorld.cs` 의 카메라/RenderTexture 코드 · `Assets/Tests/PlayMode/`(HeroView 렌더 1프레임 테스트 추가 — T11 과 파일이 겹치면 T11 워커와 별도 파일 `HeroViewTests.cs`)
 순서: 제약 없음 — **다른 T 보다 먼저 잡는다**(주인: 플레이할 때마다 뜬다).
 1. 주인 로그 재현 원인 확정: `Renderer2D Pass: Fake or uninitialized surface is not supported for attachment 0.` + `EndRenderPass: Not inside a Renderpass`. 등재 진단(⚑ 최신 항목)대로 `HeroView.BuildStage` 의 깊이 0 RenderTexture 가 유력 — `Renderer2D.asset` `m_UseDepthStencilBuffer: 1` 과 충돌. 확정 근거를 PROGRESS 에 한 줄.
@@ -529,7 +530,7 @@
 4. 검증: PlayMode 테스트 `HeroViewTests` — `HeroView` 를 세우고 `yield return new WaitForEndOfFrame()` ×3 뒤 `LogAssert.NoUnexpectedReceived()`. dotnet 게이트는 PlayMode 를 못 돌리므로 CI(유니티) 런 번호를 PROGRESS 에 적고, CI 시크릿이 없어 유니티 잡이 안 돌면 «주인이 에디터에서 확인할 것: 플레이 → 로비·장비·전투 왕복 → 콘솔 빨간 줄 0» 을 적는다.
 5. 게이트 + PROGRESS T12 행 + «주인 콘솔 에러 보고함» 의 해당 항목에 ✅·커밋 해시·원인 한 줄.
 
-### T13 — 전투 HUD «얻은 특전 미리보기 줄»(PerkStrip) 비례 수정 — 아이콘이 서로 가림 (제약 없음) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `50860f2` · sess-2206-21029 / 워커 A · 자세한 것은 PROGRESS 그 행)**
+### T13 ✅ — 전투 HUD «얻은 특전 미리보기 줄»(PerkStrip) 비례 수정 — 아이콘이 서로 가림 (제약 없음) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `50860f2` · sess-2206-21029 / 워커 A · 자세한 것은 PROGRESS 그 행)**
 범위: `Assets/Scripts/Game/BattleScreen.cs`(`RefreshPerkStrip` · 85~87행 PerkStrip 생성) · `UiKit.PerkFrame`(필요시) · `Assets/Scripts/Core/Layout.cs`(`HudPerkStrip` 은 표값 — 바꾸지 않는다) · `Assets/Tests/PlayMode/PerkStripTests.cs`(신규)
 순서: 제약 없음. T11/T12 와 파일이 겹치지 않게 테스트는 별도 파일.
 1. 주인 증상: 특전을 여러 개 얻으면 하단 미리보기 아이콘이 **너무 크게 그려져 서로 겹친다**. 등재 세션 관찰(확정은 워커): 줄 = `Layout.HudPerkStrip`(높이 4.0% ≈ 93px · 폭 80% ≈ 864px) · 셀 `sizeDelta 78×84` + 간격 8 을 `HorizontalLayoutGroup(childControl* = false)` 에 최대 11개 → 11×86 = 946px > 864px 로 폭을 넘친다. 또 `UiKit.PerkFrame` 이 `ui.itemFrame4` 프리팹을 셀 안에 `size×165/162` 로 세우는데 프리팹 내부(그림자·광택 등 자식)가 셀보다 크게 뻗을 수 있다 — 실제 어느 쪽이 겹침을 만드는지 프리팹 YAML(RectTransform 트리)과 계산으로 확정해 PROGRESS 에 한 줄.
@@ -538,7 +539,7 @@
 4. **스크린샷 확인(주인 지시)**: 워커는 에디터가 없으므로 ⓐ PlayMode 테스트 `PerkStripTests` 가 특전 12개를 강제로 얻은 상태를 만들고(`G.Taken` 에 서로 다른 id 12개 + 중복 1개) 한 프레임 뒤 **모든 셀 rect 가 서로 겹치지 않고 PerkStrip rect 안에 있는지** 를 `RectTransformUtility` 로 단언 ⓑ 같은 테스트에서 `ScreenCapture.CaptureScreenshot` 으로 PNG 를 **`Application.temporaryCachePath`/CI 아티팩트**에 남긴다(레포 커밋 금지 — `.github/workflows/ci.yml` 의 PlayMode 잡에 `actions/upload-artifact` 한 줄 · 이름 `perkstrip-screens`). PROGRESS 에 CI 런 번호와 아티팩트 이름을 적어 주인이 내려받아 보게 한다. CI 유니티 잡이 안 돌면 «주인이 에디터에서 확인할 것 — 특전 10개 이상 얻은 뒤 하단 줄이 안 겹치는지» 를 적는다.
 5. 게이트(§3 + 플레이 콘솔 에러 0) + PROGRESS T13 행.
 
-### T14 — 전투 캐릭터 크기 2/3 · 공속 비례 공격 애니 · 사망 모션 루프 금지 — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `0ee1e18` · sess-2220-32398 / 워커 B · 자세한 것은 PROGRESS 그 행)**
+### T14 ✅ — 전투 캐릭터 크기 2/3 · 공속 비례 공격 애니 · 사망 모션 루프 금지 — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `0ee1e18` · sess-2220-32398 / 워커 B · 자세한 것은 PROGRESS 그 행)**
 > (등재 시 T12 로 적혔던 것을 번호 규약(«가장 큰 번호 +1» · 재사용 금지 · T12 = 콘솔 에러 수정 완료)에 따라 T14 로 바로잡음 — sess-2136-22274 · lock 은 `T14.lock`)
 범위: `Assets/Scripts/Game/BattleWorld.cs`(캐릭터 크기 · Dead 재생) · `Assets/Scripts/Game/CharacterRig.cs`(PlayAttack 속도 · Dead 비루프) · `Assets/Scripts/Core/Layout.cs`(PlayerHeight/EnemyHeight 상수 — LayoutSpecTests 가 표와 대조하므로 표 값은 두고 **배율 상수** 를 따로 둔다)
 순서: 제약 없음(T7 이 BattleWorld 의 KnightSkin 한 줄을 만진다 — 그 줄만 피한다).
@@ -547,28 +548,28 @@
 3. **사망 모션 루프 금지**: Dead1.anim 이 루프(`m_LoopTime: 1`)라 죽은 뒤 다시 일어나는 것처럼 보인다. 에셋을 고치지 말고(주인 에셋 불변) `CharacterRig.Play(Dead)` 뒤 클립 길이만큼 지나면 **Animator 를 멈춘다**(`_anim.speed = 0` 또는 마지막 프레임에서 정지) — 플레이어·적 모두. Victory/Defeat 도 루프면 같은 처리(정지 시점 = 클립 끝).
 4. 게이트 + PROGRESS T14 행 + «주인이 확인할 것».
 
-### T15 — 플레이 콘솔 에러 0 : 데모 프리팹 스폰 시 `PanelView.OnEnable` 예외 (최우선 · 제약 없음) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `b001d5f` · sess-2136-22274 / 워커 C · 자세한 것은 PROGRESS 그 행)**
+### T15 ✅ — 플레이 콘솔 에러 0 : 데모 프리팹 스폰 시 `PanelView.OnEnable` 예외 (최우선 · 제약 없음) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `b001d5f` · sess-2136-22274 / 워커 C · 자세한 것은 PROGRESS 그 행)**
 범위: `Assets/Scripts/Game/UiKit.cs`(`Spawn`) · 회귀 확인 = T11 의 PlayMode 스모크(CI)
 순서: 제약 없음(T11 워커와 파일이 겹치지 않는다 — 테스트는 손대지 않는다).
 1. 원인(CI #36 · https://github.com/kuzuni/aaawunity/actions/runs/33995378223 · `UiSmokeTests` 3건 전부 같은 스택): `UiKit.Spawn` 이 `Instantiate(prefab, parent, false)` 를 **활성 부모** 밑에 하므로 GUI Pro 데모 스크립트 `LayerLab.CasualGame.PanelView.OnEnable`(`otherPanels[i].SetActive` · 배열 미할당)이 `Adopt` 가 스크립트를 지우기 **전에** 돌아 `UnassignedReferenceException` 을 던진다(에디터 플레이에서도 설정·장비 세부·전투 팝업을 열 때마다 빨간 줄 — 빌드에선 NRE). 스택: `PanelView.OnEnable ← Object.Instantiate ← UiKit.Spawn ← Overlay.SettingsPopup`.
 2. 수정(에셋을 고치지 않는다 · 주인 에셋 불변): `Spawn` 이 **비활성 대기 오브젝트** 밑에 먼저 인스턴스화 → `Adopt`(PanelView/PanelControl 제거 · TMP 변환) → `SetParent(parent, false)` 순서로 바꿔 데모 스크립트의 OnEnable 이 한 번도 돌지 않게 한다. `adopt=false` 호출은 지금 없으므로 그 경로도 같은 순서(스크립트 제거만은 항상).
 3. 게이트 + PROGRESS T15 행 + 콘솔 에러 0 확인 수단 = 코드 커밋의 CI PlayMode(`UiSmokeTests` 3건이 초록으로).
 
-### T16 — CI 런 #39 빨강(T14 코드 커밋 `0ee1e18`) 후속: 사망/승리 정지 `Frozen` 계약을 같은 프레임에 성립시키기 ✅ (완료 · `2b71ea1` · CI #40 초록 · PROGRESS 참조)
+### T16 ✅ — CI 런 #39 빨강(T14 코드 커밋 `0ee1e18`) 후속: 사망/승리 정지 `Frozen` 계약을 같은 프레임에 성립시키기 ✅ (완료 · `2b71ea1` · CI #40 초록 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/CharacterRig.cs`(`Update` 의 정지 1줄) · 테스트 불변(`Assets/Tests/PlayMode/CharacterRigTests.cs` 는 손대지 않는다)
 순서: 제약 없음.
 1. 원인(CI #39 · PlayMode `CharacterRigTests.PlayerDeathInBattleFreezesUnderDeadPopup` 1건 · 나머지 10건 Passed): `Animator.Play(상태, 0, 0.999)` 는 다음 애니 평가 때 적용되는데 `_frozen` 은 즉시 켜져, 코루틴이 그 프레임에 읽은 `normalizedTime` 이 직전 값(0.967)이라 1초 뒤 정지점(0.999)과 불일치. 정지 자체는 정상.
 2. 수정: Play 직후 `_anim.Update(0f)` 즉시 평가(코드 커밋 `2b71ea1`). 확인 수단 = CI 런 #40 유니티 잡(PlayMode 11/11). 빨가면 로그의 `result="Failed"` test-case 메시지를 PROGRESS T16 기록에 붙이고 다시 고친다.
 3. 게이트 + PROGRESS T16 행 ✅ + lock 삭제.
 
-### T20 — 웨이브 출발 버그 · 버프 스택 표시 = 팔각 프레임 (번호 정정: 구 T13) ✅ (완료 · `81780ac` · CI #43 초록 · PROGRESS 참조)
+### T20 ✅ — 웨이브 출발 버그 · 버프 스택 표시 = 팔각 프레임 (번호 정정: 구 T13) ✅ (완료 · `81780ac` · CI #43 초록 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/BattleWorld.cs` · `BattleScreen.cs`(RefreshBuffBar)
 순서: 제약 없음(T14 캐릭터 크기·T16 정지는 끝났다).
 1. **주인 지적 «웨이브 내 적을 다 안 죽였는데 출발함»** — 원인부터 규명해 PROGRESS 에 한 줄: ⓐ 엔진(Battle.Tick: alive[0] 까지 걷는다 · sim.js 와 동일해야 하므로 엔진은 못 바꾼다) ⓑ 연출(사망 표시를 Strike 큐가 미루는 동안 엔진은 이미 다음 적으로 걷는다 · 죽은 적이 Dead 루프로 서 있다 · 화면 밖 적) 중 어느 것인지. 고치는 쪽은 **연출**이다: 플레이어가 걷기 시작하는 순간 화면에 «살아 보이는» 적이 남아 있으면 안 된다(사망 연출을 즉시 시작하거나, Walk 전환을 사망 연출이 끝날 때까지 미룬다 — 엔진 좌표는 그대로 두고 표시만).
 2. HUD 왼쪽 버프 바(발동 중 스택)의 칸을 `ui.buffSlot`(엉뚱한 프레임) 대신 **특전과 같은 팔각 `ItemFrame_04_*`(`UiKit.PerkFrame` · 등급색)** 로. 스택 수 글자는 그대로 오른쪽 아래.
 3. 게이트 + PROGRESS T20 행.
 
-### T21 — 투사체(도끼·화살·창·번개) 표적 = 웨이브 안 무작위 적 (번호 정정: 구 T14) ✅ (완료 · `39f4d1b` · 원본이 이미 무작위(−30~540px) · 엔진·그리기 변경 없음 · 승인 대기 27 종결 · PROGRESS 참조)
+### T21 ✅ — 투사체(도끼·화살·창·번개) 표적 = 웨이브 안 무작위 적 (번호 정정: 구 T14) ✅ (완료 · `39f4d1b` · 원본이 이미 무작위(−30~540px) · 엔진·그리기 변경 없음 · 승인 대기 27 종결 · PROGRESS 참조)
 범위: `Assets/Scripts/Core/Battle.cs`(FireAxe/FireArrows/FireSpear/FireBolts · RandTarget) · `Assets/Scripts/Game/BattleWorld.cs`(투사체 그리기 — T20·T19 와 겹친다)
 순서: **T20·T19 완료 뒤**.
 1. 먼저 aaaw `sim.js` 의 `randTarget`/`fireAxe`/`fireArrows`/`fireSpear`/`fireBolts` 를 읽고 **원본이 무엇을 표적으로 삼는지** 적는다(무작위 범위 −30~540 · 관통 등). 우리 엔진이 원본과 다르면 엔진을 원본에 맞춘다(시드 골든 BattleTests 가 통과해야 한다 — 골든이 깨지면 엔진이 아니라 내가 틀린 것).
@@ -576,21 +577,21 @@
 3. 원본 자체가 «맨 앞만» 이라면 주인이 원하는 «웨이브 안 무작위» 는 규칙 변경이라 **승인 대기 27** 로 올리고(골든 재생성 필요) 기본값은 원본 유지.
 4. 게이트 + PROGRESS T21 행.
 
-### T22 — 모든 버튼에 눌림 표시 (번호 정정: 구 T15) ✅ (완료 · `f748948` · CI #45 초록(#44 는 취소) · PROGRESS 참조)
+### T22 ✅ — 모든 버튼에 눌림 표시 (번호 정정: 구 T15) ✅ (완료 · `f748948` · CI #45 초록(#44 는 취소) · PROGRESS 참조)
 범위: `Assets/Scripts/Game/UiKit.cs`(Clickable · Button) · `Screens.cs`(NavBar 탭)
 순서: 제약 없음(T10 이 Screens.cs 를 만지면 NavBar 부분은 T10 뒤).
 1. `UiKit.Clickable` 로 만드는 **모든** 버튼(프리팹 버튼·탭·카드·칸)에 눌림 피드백: `Button.transition = ColorTint`(pressedColor 는 어둡게 ≈ ×0.8 · highlighted 는 그대로) + 이미 있는 DOPunchScale. targetGraphic 이 투명 히트 영역이면(칸·카드) 자식의 첫 Image 를 targetGraphic 으로 잡거나 CanvasGroup alpha 로 눌림을 보여 준다. 비활성(interactable=false)은 지금처럼 반투명.
 2. 하단 탭(NavBar)의 «현재 탭» 강조는 그대로 두고 눌림만 추가.
 3. 게이트 + PROGRESS T22 행.
 
-### T23 — 쉼터 «광고 보고 둘 다 얻기» · 클리어 팝업 = 골드만 + «광고 보고 보상 ×2 받기» (번호 정정: 구 T16) ✅ (완료 · `9ea5d9d` · CI #51 · PROGRESS 참조)
+### T23 ✅ — 쉼터 «광고 보고 둘 다 얻기» · 클리어 팝업 = 골드만 + «광고 보고 보상 ×2 받기» (번호 정정: 구 T16) ✅ (완료 · `9ea5d9d` · CI #51 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/Overlay.cs`(Rest · Clear) · `Assets/Scripts/Core/Battle.cs`(`ResolveRest` 에 «둘 다» 경로 1개 — 대화형 전용 · SimPolicy 는 절대 고르지 않으므로 시드 골든 불변) · `BattleScreen.cs`(EndRun 보상)
 순서: T21 뒤(Battle.cs 공유).
 1. **쉼터**: 기존 두 버튼(체력 회복 / 경험치) 아래에 **«광고 보고 둘 다 얻기»**(`ui.btnOrange` · 광고 카운트다운은 천사의 `AdCountdown` 재사용) → `G.ResolveRest(both)` = 회복 + 경험치 둘 다. 엔진에 `ResolveRestBoth()` 를 추가하되 `ResolveRest(bool)` 은 그대로.
 2. **클리어 팝업(Play_Result_Win_01)**: 보상 표시는 **골드만**(프리팹의 다른 두 보상 칸은 끈다). 버튼은 «다음 챕터» 대신 **«광고 보고 보상 ×2 받기»**(광고 카운트다운 뒤 클리어 골드를 2배로 지급하고 로비로). 그 아래 작은 글자 버튼 **«그냥 받기»**(1배 · 로비로) 를 둔다 — 광고를 안 보면 못 나가는 것을 막기 위한 기본값(승인 대기 28). «다음 챕터» 진입은 로비의 챕터 화살표로.
 3. 게이트 + PROGRESS T23 행 + 승인 대기 28.
 
-### T17 — 장비 아이콘 마무리 (투구·갑옷·무기 크기 · ~~무기 45°~~ 취소 · 근접 무기만) (T7 뒤) ✅ (완료 · `6918f71`+`8c8d60e`+`ec1a91a` · CI #47 초록 · PROGRESS 참조)
+### T17 ✅ — 장비 아이콘 마무리 (투구·갑옷·무기 크기 · ~~무기 45°~~ 취소 · 근접 무기만) (T7 뒤) ✅ (완료 · `6918f71`+`8c8d60e`+`ec1a91a` · CI #47 초록 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/GearUi.cs`(Cell 아이콘) · `GearScreen.cs`(슬롯 아이콘) · `GearLook` 표(T7 이 만든 것) · catalog
 순서: **T7 완료 뒤**(같은 파일·표).
 1. **주인 지적 «투구·갑옷·무기 아이콘만 작다»** — CharacterMaker 파츠 스프라이트는 GUI Pro 아이콘(128px)보다 작아 같은 칸에서 작게 보인다. 파츠 아이콘은 칸 안에서 다른 부위 아이콘과 **같은 시각 크기**로(스프라이트 bounds 기준으로 칸의 70~75% 를 채우도록 스케일 · preserveAspect). 장착 슬롯·인벤 칸·세부 팝업·대장간·뽑기 결과 전부.
@@ -598,13 +599,13 @@
 3. **무기는 전부 근접 무기** — 활·지팡이·완드·창 계열 금지. `GearLook` 표에서 무기 종류 × 등급을 **검(Sword)·방망이(Blunt)·도끼(Axe)** 세 계열의 파츠에서 고른다(주인 2026-09-06 «Axe, Blunt, Sword 중에 골라서» · 등급이 오를수록 화려한 것 · 착용 파츠 슬롯은 HandRight/Sword·Blunt·Axe 중 종류에 맞는 것). 카탈로그 키·`docs/assets-map.md` 갱신.
 4. 게이트 + PROGRESS T17 행.
 
-### T18 — 배속(x2) 기억 ✅ (완료 · `73e38de` · CI #45 · PROGRESS 참조)
+### T18 ✅ — 배속(x2) 기억 ✅ (완료 · `73e38de` · CI #45 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/BattleScreen.cs`(_speed) · `SaveStore.cs`/`SaveData`(필드 1개)
 순서: 제약 없음.
 1. 배속 버튼 값(x1/x2)을 세이브(`SaveData.Speed` · PlayerPrefs)에 저장하고, 전투 시작 시 그 값으로 시작한다(«2배속으로 하다가 클리어 뒤 다른 챕터 도전하면 다시 1배속» 이 안 되게). index.html `kkoma-knight-v2` 에 없는 필드라 세이브 호환은 «없으면 1».
 2. 게이트 + PROGRESS T18 행.
 
-### T19 — 전투 맵 = 데모 씬 «그림» 그대로 (T20 뒤 · 주인 재지적) ✅ (완료 · `dedeffb` · CI #48 · PROGRESS 참조 — 씬에는 세로 반전이 없고 Road_Up/Road_Down 두 그룹이 같은 스프라이트를 양쪽에 둔다)
+### T19 ✅ — 전투 맵 = 데모 씬 «그림» 그대로 (T20 뒤 · 주인 재지적) ✅ (완료 · `dedeffb` · CI #48 · PROGRESS 참조 — 씬에는 세로 반전이 없고 Road_Up/Road_Down 두 그룹이 같은 스프라이트를 양쪽에 둔다)
 범위: `Assets/Scripts/Game/BattleWorld.cs`(BuildGround/BuildProps) · `tools/gen_maps.py` · `Assets/Scripts/Game/MapLayouts.cs`(재생성)
 순서: **T20 완료 뒤**(BattleWorld 공유). T21 보다 먼저.
 > 주인(2026-09-06): «맵 디자인을 DemoScene_Autumn/DeepForest/Desert/Forest 씬에 있는 거 그대로 가져와서 쓰라니까 안 쓰네? 지금 맵이 디자인 존나 다르던데». 씬을 그림으로 보려면 `python3 tools/demo_render/render_demo_scene.py <폴더>` + `node tools/demo_render/shot.js <폴더>`(Playwright · PNG 는 커밋 금지). 데모 씬의 모습: 평면색 들판 화면 전체 · 가운데 **두꺼운 길 띠(2.46u · 화면 높이의 1/4)** · 길 **위·아래 양쪽** 가장자리에 물결 풀 경계 · 길 위쪽 들판과 아래쪽 들판 모두에 나무·돌·통·꽃이 **빽빽하게**(17.8u 폭 화면에 30~60개).
@@ -615,7 +616,7 @@
 5. 검증: 워커는 WebGL 을 못 돌리므로, `tools/demo_render` 의 방식으로 **우리 배치 표(MapLayouts × 0.6 · 5.4u 창)** 를 같은 HTML 로 그려 데모 그림과 나란히 보고(PNG 커밋 금지) PROGRESS 에 «같다/다른 점» 한 줄. 대화형 세션이 gh-pages 스크린샷으로 최종 확인한다.
 6. 게이트 + PROGRESS T19 행.
 
-### T24 — 대장간: 장착 중 장비도 합성 재료 (T8 뒤 · 주인 2026-09-06) ✅ (완료 · `920fe0b` · PROGRESS 참조)
+### T24 ✅ — 대장간: 장착 중 장비도 합성 재료 (T8 뒤 · 주인 2026-09-06) ✅ (완료 · `920fe0b` · PROGRESS 참조)
 범위: `Assets/Scripts/Game/ForgeScreen.cs` · `GearUi.cs`(Cell 흐림 옵션) · `Assets/Scripts/Core/GearSystem.cs`(FuseAll 장착 제외 인자)
 순서: 제약 없음(T8 ✅ · T17 이 GearUi 아이콘 부분을 만지므로 Cell 의 «흐림» 한 줄만 조심).
 1. 주인 «대장간에 장착중인 거도 합성 가능하게». `ForgeScreen.Toggle` 의 장착분 거부(토스트)·흐림을 없애고 장착중 배지(Check)는 유지. «자동» 도 장착분을 포함해 합성(`FuseAll` 호출에서 `EquippedSet` 제외를 뺀다 — 함수 시그니처는 두고 빈 집합을 넘겨도 된다).
@@ -630,7 +631,7 @@
 1. 주인 «장비 부분에서 상점·합성, 공격력·체력·실드 표시하는 곳 밑에 표시되게». 지금 자리(화면 아래·탭바 위)에서 **스탯 3칸 줄 바로 아래**로 옮긴다. 프리팹(Character_Hero_Equipment)에 그 자리 버튼 줄이 있으면 그것을 쓰고, 없으면 `ui.btnGray`(상점)·`ui.btnOrange`(합성 N) 2개를 스탯 줄 밑에 같은 폭으로 나란히. 인벤 격자는 그 아래부터 시작(높이 줄어든 만큼 스크롤).
 2. 게이트 + PROGRESS T25 행.
 
-### T26 — 뽑기 확률 검증 (주인 «확률에 안 맞게 뽑히는 것 같다») ✅ (완료 · `9781557` · 어긋난 곳 없음 — 테스트 +6 만 · CI #50 · PROGRESS 참조)
+### T26 ✅ — 뽑기 확률 검증 (주인 «확률에 안 맞게 뽑히는 것 같다») ✅ (완료 · `9781557` · 어긋난 곳 없음 — 테스트 +6 만 · CI #50 · PROGRESS 참조)
 범위: `Assets/Scripts/Core/GearSystem.cs`(뽑기 · 천장) · `Assets/Tests/EditMode/GearTests.cs`(통계 테스트 추가) · `Assets/Scripts/Game/ShopScreen.cs`(표시 문구가 실제 확률과 같은지)
 순서: 제약 없음.
 1. 먼저 **원본**을 읽는다: aaaw `index.html` 의 뽑기(`pull`/`rollRar`/천장 `pity`)와 `data/gacha.json` 의 상자별 등급 확률·천장. 우리 `GearSystem` 의 굴림이 원본과 **같은 순서·같은 난수 소비**인지 줄 단위로 대조.
@@ -647,7 +648,7 @@
 3. UiSmokeTests ② 가 «세부 팝업 = Character_Hero_Item_Detail_01» 인지 프리팹 이름으로 단언하도록 보강.
 4. 게이트 + PROGRESS T27 행 + «주인이 확인할 것».
 
-### T28 — 배경음(BGM) · 효과음(SFX) (주인 2026-09-06 «인터넷에서 받아서 넣어라») ✅ (완료 · `9c1eb54` · CI #52(취소되면 #53) · PROGRESS 참조 — CC0 20개 GitHub 미러 · Audio/AudioManager · Settings BGM/SFX 스위치)
+### T28 ✅ — 배경음(BGM) · 효과음(SFX) (주인 2026-09-06 «인터넷에서 받아서 넣어라») ✅ (완료 · `9c1eb54` · CI #52(취소되면 #53) · PROGRESS 참조 — CC0 20개 GitHub 미러 · Audio/AudioManager · Settings BGM/SFX 스위치)
 범위: `Assets/Audio/`(신규 · 오디오 파일 + `LICENSES.md`) · `Assets/Scripts/Game/Audio.cs`(신규 · AudioManager) · 각 화면/팝업의 호출 한 줄씩(Screens · BattleScreen · BattleWorld(타격) · Overlay · GearUi · ShopScreen · ForgeScreen) · `SaveStore`(음소거 2개) · catalog(`bgm.*`/`snd.*`)
 순서: 제약 없음(호출은 한 줄씩이라 다른 작업과 겹쳐도 rebase 로 풀린다 — 충돌 나면 내 줄만 다시).
 1. **에셋 구하기**: 이 환경의 프록시는 kenney.nl·opengameart.org·freesound.org 를 막는다(디스패처가 확인 · 000). **GitHub 는 열려 있다** → `git clone --depth 1` 로 받을 수 있는 **CC0/퍼블릭 도메인** 팩만 쓴다(예: Kenney 의 GitHub 미러 · OpenGameArt CC0 모음 미러 · «cc0 game sfx» 검색). 라이선스가 CC0/PD 가 아니면 쓰지 않는다. 받은 파일의 출처·라이선스를 `Assets/Audio/LICENSES.md` 에 한 줄씩(URL · 원작자 · 라이선스). **GitHub 에서도 못 구하면** 오디오 시스템(2~4)만 만들고 `Assets/Audio/README.md` 에 «주인이 파일을 이 폴더에 넣으면 catalog 한 줄로 붙는다» 를 적고 PROGRESS 승인 대기 30 에 등재.
@@ -657,7 +658,7 @@
 5. UiSmokeTests 에 «BGM 키가 화면마다 바뀌는가 · SFX 호출이 예외 없이 도는가(클립 없어도 경고만)» 를 추가. 클립이 없을 때는 조용히 넘어간다(에러 0).
 6. 게이트 + PROGRESS T28 행 + «주인이 확인할 것»(어떤 팩을 어디서 받았는지 표).
 
-### T29 — 설정 팝업에 «데이터 삭제» (주인 2026-09-06) ✅ (완료 · `5e92205` · CI #57 · PROGRESS 참조 — 빨간 «Account Delete» 자리 · 확인 팝업 · SaveStore.Reset)
+### T29 ✅ — 설정 팝업에 «데이터 삭제» (주인 2026-09-06) ✅ (완료 · `5e92205` · CI #57 · PROGRESS 참조 — 빨간 «Account Delete» 자리 · 확인 팝업 · SaveStore.Reset)
 범위: `Assets/Scripts/Game/Overlay.cs`(Settings 팝업) · `SaveStore.cs`(Reset)
 순서: 제약 없음(T28 이 Settings 의 BGM/SFX 스위치 줄을 만진다 — 그 줄만 피한다).
 1. Settings 프리팹(그대로 원칙)의 버튼 중 하나를 «데이터 삭제» 로 쓴다(프리팹에 남는 버튼이 없으면 프리팹 안 버튼 줄 아래에 `ui.btnRed` 1개 — 유일한 추가). 누르면 **확인 팝업**(Popup_Box + «정말 삭제할까요? 장비·골드·보석·진행이 모두 사라집니다» · «삭제»(빨강) / «취소»). «삭제» 는 `SaveStore.Reset()`(PlayerPrefs 의 세이브 키 삭제 → 새 세이브 생성 · 배속·음소거 같은 설정값도 초기화) 뒤 로비로 돌아가 화면을 새로 그린다(전투 중이면 전투를 끝내고).
@@ -672,7 +673,7 @@
 3. UiSmokeTests ① 의 «탤런트» 단언을 «던전 목록 → Start1 → 닫기 → 둘째 → Start2 → 닫기» 로 바꾼다.
 4. 게이트 + PROGRESS T30 행.
 
-### T31 — 장비 아이콘 = CharacterMaker «Thumbnail» 그림 (입는 파츠와 아이콘을 분리 · 주인 2026-09-06) (T17 뒤) ✅ (완료 · `07bbc86` · CI #58 · PROGRESS 참조 — cm.gear.* 착용 / cmi.gear.* 아이콘 · Thumbnail 36개 전부 같은 이름 · 임시 대체 0)
+### T31 ✅ — 장비 아이콘 = CharacterMaker «Thumbnail» 그림 (입는 파츠와 아이콘을 분리 · 주인 2026-09-06) (T17 뒤) ✅ (완료 · `07bbc86` · CI #58 · PROGRESS 참조 — cm.gear.* 착용 / cmi.gear.* 아이콘 · Thumbnail 36개 전부 같은 이름 · 임시 대체 0)
 범위: `GearLook` 표 · `Assets/Scripts/Game/GearUi.cs`(아이콘 키) · catalog(`cmi.*` 신규 키)
 순서: **T17 완료 뒤**(같은 표·파일). T25·T27 과는 줄이 다르다.
 1. CharacterMaker 팩은 파츠마다 **입는 그림**(`Extenstions/Parts Pack Base/Parts/<부위>/<이름>.png`)과 **아이콘용 그림**(`…/Thumbnail/<부위>/<같은 이름>.png` · Helmet·Chest·Sword·Blunt·Axe·Spear·Bow·Shield 등)이 따로 있다. 주인: «막상 장착 아이콘용 갑옷이랑 실제 입는 갑옷이 다르게 돼 있는데 내 게임도 그렇게». → `GearLook` 표의 각 항목에 **아이콘 키(Thumbnail)** 와 **착용 키(Parts)** 를 둘 다 두고, 장비 칸·슬롯·세부 팝업·뽑기 결과·대장간의 아이콘은 **Thumbnail** 을, 캐릭터(HeroView·전투)는 **Parts** 를 쓴다. 카탈로그 키는 `cmi.<part>.<name>`(Thumbnail) / 기존 `cm.*`(Parts). 같은 이름이 Thumbnail 에 없으면 PROGRESS 에 목록으로 남기고 Parts 그림을 임시로.
@@ -687,7 +688,7 @@
 2. UiSmokeTests ① 의 «펫» 단언을 «Character_Skill → 항목 → Character_Skill_Detail → 닫기 → 닫기» 로 바꾼다(프리팹 이름으로 단언).
 3. 게이트 + PROGRESS T32 행.
 
-### T33 — 전투 HUD 웨이브 수 표시 제거 (주인 2026-09-06) ✅ (완료 · `5938425` · CI #55 · PROGRESS 참조)
+### T33 ✅ — 전투 HUD 웨이브 수 표시 제거 (주인 2026-09-06) ✅ (완료 · `5938425` · CI #55 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/BattleScreen.cs`(HUD `_round` · `ui.frameDark` 라운드 상자)
 순서: 제약 없음(T20 이 BattleScreen 의 버프 바를 만지면 rebase · 다른 줄).
 1. 오른쪽 «웨이브 N/M» 상자(`Layout.HudRound` 자리 · `_round`)를 만들지 않는다(코드·갱신 함께 제거 · Layout 상수는 표 대조 테스트 때문에 남긴다). 다른 HUD 요소는 그대로.
@@ -710,7 +711,7 @@
 4. **스탯 8칸 2열×4행**(아이콘 · 이름 작게 · 값 크게 · 버프 중 값 초록) → 맨 아래 특전 미리보기 줄(T13 비례 유지) + 오른쪽 📘(보유 특전 팝업). 왼쪽 버프 스택은 팔각 프레임(T20 그대로).
 5. 게이트 + PlayMode(전투 3초 · 바 3개 존재 · 발밑 바 2단) + PROGRESS T35 행.
 
-### T36 — 레벨업 3택 · 보유 특전 팝업 = `04_perks.jpg`·`05_perks_list.jpg` 구도 · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `1a9cec4` · CI #59 · 공통 팝업 헬퍼 = `UiKit.Popup` · **비평 회차 1 = 04 9.5 · 05 9.5**(CI #83 screens 첫 PNG · 워커 H) · PROGRESS 참조)
+### T36 ✅ — 레벨업 3택 · 보유 특전 팝업 = `04_perks.jpg`·`05_perks_list.jpg` 구도 · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `1a9cec4` · CI #59 · 공통 팝업 헬퍼 = `UiKit.Popup` · **비평 회차 1 = 04 9.5 · 05 9.5**(CI #83 screens 첫 PNG · 워커 H) · PROGRESS 참조)
 범위: `Assets/Scripts/Game/Overlay.cs`(LevelUp · PerkList) · `UiKit.cs`(PerkFrame·카드·공통 팝업 헬퍼 `UiKit.Popup(title, ribbon)`) · catalog
 순서: 제약 없음(T23·T29 가 Overlay 의 다른 팝업을 만진다 — rebase). **공통 팝업 헬퍼는 여기서 먼저 만든다**(T38·T41·T42·T44 가 쓴다).
 1. 3택: 배경 어둡게 · 상단 스탯 8칸을 한 줄 미니 아이콘으로 · 노란 광선 + «Level Up!» 리본 · «새 특전을 고르세요» · **카드 3장 세로 전폭**(왼쪽 위 등급 탭 · 왼쪽 팔각 아이콘 · 오른쪽 설명 · ~~수치 초록~~ → T52 로 취소(한 색)) · 아래 «새로고침 무료» 주황 + «남은 횟수 : N» · 오른쪽 📘. 규칙(새로고침 횟수 등)은 기존 코드 그대로 — 배치만.
@@ -718,63 +719,63 @@
 3. 악마·천사·쉼터 팝업은 같은 패널·명판·버튼 문법으로 통일(레퍼런스 없음 · README «공통 문법» 절).
 4. 게이트 + PROGRESS T36 행.
 
-### T37 — 장비 화면 = `06_gear.jpg` 구도 (T17 뒤 · T25 흡수) · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `e031e1c` · CI #60 · **비평 회차 1 = 10.0**(screens CI #83 · 워커 G) · PROGRESS 참조)
+### T37 ✅ — 장비 화면 = `06_gear.jpg` 구도 (T17 뒤 · T25 흡수) · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `e031e1c` · CI #60 · **비평 회차 1 = 10.0**(screens CI #83 · 워커 G) · PROGRESS 참조)
 범위: `Assets/Scripts/Game/GearScreen.cs` · `GearUi.cs`(칸 문법) · `HeroView.cs`(무대 배경 · 캐릭터 크기) · catalog
 순서: **T17 완료 뒤**(GearScreen/GearUi 공유). T31(아이콘 키)은 다른 줄 — rebase. T38·T39 가 뒤따른다. **T25 는 이 작업에 흡수**(캐릭터 크기 · 버튼 위치 = 레퍼런스의 자리).
 1. 상단 재화 바 → **캐릭터 무대**(Environment 배경 · 가운데 큰 플레이어 — 무대 세로의 85~90% · 좌 3 / 우 3 슬롯 · 슬롯 위 «Lv. N» · «+N» 배지) → **스탯 3칸 한 줄**(공 · ❤ · 🛡) → 그 바로 아래 오른쪽 **«대장간» 주황 버튼**(합성 가능하면 빨간 !) + 왼쪽 «상점»(회색) → **인벤 5열 격자**(스크롤 · 등급색 프레임 · 부위 소아이콘 · +N) → 탭 바. ref-layout ④.
 2. 칸 문법(등급색 프레임 · 왼쪽 위 부위 아이콘 · 왼쪽 아래 +N · 가운데 «장착중») 을 `GearUi.Cell` 한 곳에 — 세부·대장간·뽑기 결과가 같은 칸을 쓴다.
 3. 게이트 + PROGRESS T37 행.
 
-### T38 — 장비 세부 팝업 = `07_gear_detail.jpg` 구도 (T37 뒤 · T27 대체) · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `7346617` · CI #63 · **비평 회차 1 = 8.5**(표 9.0 · 등급 배지 폭만 0점 · CI #83 screens · 워커 H · 선택 처방 = 점수판) · PROGRESS 참조)
+### T38 ✅ — 장비 세부 팝업 = `07_gear_detail.jpg` 구도 (T37 뒤 · T27 대체) · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `7346617` · CI #63 · **비평 회차 1 = 8.5**(표 9.0 · 등급 배지 폭만 0점 · CI #83 screens · 워커 H · 선택 처방 = 점수판) · PROGRESS 참조)
 범위: `Assets/Scripts/Game/GearUi.cs`(OpenDetail · OpenSlot) 또는 `GearDetail.cs`(신규)
 순서: **T37 뒤**. T27(«Character_Hero_Item_Detail_01 그대로»)은 **폐기** — 그 프리팹은 부품으로만.
 1. 위 등급 탭 → 패널: 왼쪽 아이콘 칸(+N) · 오른쪽 이름 굵게 + «레벨 N/최대» · «부위» 두 pill → 스탯 박스(초록 +값) → 옵션 줄(등급색 · 잠금은 자물쇠 + 흐림) → 비용 줄(골드 · 재료) → **해제(파랑) · 강화(주황)** → «탭하여 닫기». 규칙·수치는 기존 코드 그대로. 빈 슬롯 팝업도 같은 구도(장비 없는 상태 · 강화만).
 2. 게이트 + PROGRESS T38 행.
 
-### T39 — 대장간 = `08_gear_fuse.jpg` 구도 (T37 뒤) · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `48d05a6` · CI #66 · **비평 회차 1 = 9.5**(screens CI #83 · 워커 G · −0.5 인벤 순서 = 선택 처방) · PROGRESS 참조)
+### T39 ✅ — 대장간 = `08_gear_fuse.jpg` 구도 (T37 뒤) · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `48d05a6` · CI #66 · **비평 회차 1 = 9.5**(screens CI #83 · 워커 G · −0.5 인벤 순서 = 선택 처방) · PROGRESS 참조)
 범위: `Assets/Scripts/Game/ForgeScreen.cs`
 1. 위 절반 대장간 그림(Environment/GUI Pro 조각) 위에 **선택 칸(초록 테두리) · 모루 · + 칸** + «합성할 장비를 고르세요» → **자동(파랑 · !) · 합성(회색→가능하면 주황)** 한 줄 → 인벤 5열(합성 가능 = 초록 프레임 + 빨간 ! · 장착 = «장착중» 배지 · T24 대로 재료 가능) → 왼쪽 아래 뒤로(◀). ref-layout ⑥. `FuseMake` 규칙 그대로.
 2. 게이트 + PROGRESS T39 행.
 
-### T40 — 상점 = `09_shop_1.jpg`·`10_shop_2.jpg` 구도 · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `c922d5a` · CI #64 · **비평 회차 1 = 09 10.0 · 10 10.0**(screens CI #83 · 워커 G) · PROGRESS 참조)
+### T40 ✅ — 상점 = `09_shop_1.jpg`·`10_shop_2.jpg` 구도 · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `c922d5a` · CI #64 · **비평 회차 1 = 09 10.0 · 10 10.0**(screens CI #83 · 워커 G) · PROGRESS 참조)
 범위: `Assets/Scripts/Game/ShopScreen.cs` · catalog
 순서: 제약 없음(T26 이 확률 문구 한 줄을 만진다 — rebase).
 1. 상단 재화 바 → 천막 띠 → **전설(최상위) 상자 큰 카드**(그림 왼쪽 · 설명·천장 문구 오른쪽 · «열기 💎가격» · «10회 💎가격») → **나머지 상자 2칸 나란히**(광고 버튼 + 보석 가격 · «무료까지 hh:mm:ss» = 무료 보급) → «다이아» 섹션 3열×2행(수량 · 그림 · 이름 · ₩) → «골드» 3열×1행(💎가격) → 탭 바. 수치는 `gacha.json`·`shop.json` 그대로. ref-layout ⑦.
 2. 뽑기 결과 팝업은 공통 팝업 문법(명판 · 패널 · 격자 = GearUi.Cell · 탭하여 닫기).
 3. 게이트 + PROGRESS T40 행.
 
-### T41 — 설정 팝업 = `12_settings.jpg` 구도 (T29 뒤) · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `b0bf87d` · CI #61 · 표 ⑨ 신설 · **비평 회차 1 = 10.0**(screens CI #83 · 워커 E) · PROGRESS 참조)
+### T41 ✅ — 설정 팝업 = `12_settings.jpg` 구도 (T29 뒤) · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `b0bf87d` · CI #61 · 표 ⑨ 신설 · **비평 회차 1 = 10.0**(screens CI #83 · 워커 E) · PROGRESS 참조)
 범위: `Assets/Scripts/Game/Overlay.cs`(Settings)
 순서: **T29(데이터 삭제) 뒤** · T28 의 BGM/SFX 스위치 줄은 유지.
 1. 작은 패널 · 명판 «설정» · **음악 / 효과음 토글 스위치**(T28 연결 유지) · **언어 버튼**(«한국어» 표시만) · 패널 아래 개인정보 처리방침 · 이용약관 링크 글자(눌러도 아무 일 없음) · 그 아래 T29 의 **«데이터 삭제» 빨간 작은 버튼** · «탭하여 닫기».
 2. 게이트 + PROGRESS T41 행.
 
-### T42 — 펫 탭 = `13_pet.jpg` 구도 + 펫 세부 = `14_pet_detail.jpg` (껍데기 · T32 대체) ✅ (완료 · 코드 `66818af` · **비평 13 = 9.0 · 14 = 10.0 ✅(회차 1 · CI #83)** · 회차 2 감점 제거 `d6f66eb` · CI #84 · PROGRESS 참조)
+### T42 ✅ — 펫 탭 = `13_pet.jpg` 구도 + 펫 세부 = `14_pet_detail.jpg` (껍데기 · T32 대체) ✅ (완료 · 코드 `66818af` · **비평 13 = 9.0 · 14 = 10.0 ✅(회차 1 · CI #83)** · 회차 2 감점 제거 `d6f66eb` · CI #84 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/PetScreen.cs`(신규) · `Screens.cs`(NavBar 펫 탭 → PetScreen 한 줄) · catalog
 순서: 제약 없음(Screens 한 줄 — rebase). T32(«Character_Skill 그대로»)는 **폐기** — Character_Skill·Character_Skill_Detail 프리팹은 부품으로만.
 1. 상단 재화 바 → **4열 격자**(GUI Pro 아이콘 8~9개 · 칸 위 «Lv. N» · 아래 진행바 «n/m» · 2칸 «장착중») → 합계 줄(«+N ❤ | +N 🛡 | +N 🗡») → «장착중» 띠 + 슬롯 4(잠금 2 · 장착 2) → 전체 강화 · 빠른 장착(회색) → 소환 💎 · 소환 x10 💎(주황) → 탭 바. **전부 표시만**(누르면 아무 일 없음 · 데이터 없음 → 레퍼런스 숫자를 그대로 두지 말고 0/잠금 표시).
 2. 칸을 누르면 세부 팝업(칸 + 진행바 · 설명 박스 · «패시브:» · 강화(회색) · 장착(주황) · 탭하여 닫기).
 3. 게이트 + 스모크(탭 5 · 격자 존재) + PROGRESS T42 행.
 
-### T43 — 던전 탭 = 던전 `20`·`21` + 아레나 `22`~`26` 껍데기 (T30 대체) · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `6acbcdb` · CI #70 · **비평 회차 1 = 7장 8.9~10.0**(screens CI #83 · 워커 G) · 회차 2 코드 `bf7f5d8`(초상 위치 · ◀ 색 · 카드 클립 · 확인 = 그 CI) · PROGRESS 참조)
+### T43 ✅ — 던전 탭 = 던전 `20`·`21` + 아레나 `22`~`26` 껍데기 (T30 대체) · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `6acbcdb` · CI #70 · **비평 회차 1 = 7장 8.9~10.0**(screens CI #83 · 워커 G) · 회차 2 코드 `bf7f5d8`(초상 위치 · ◀ 색 · 카드 클립 · 확인 = 그 CI) · PROGRESS 참조)
 범위: `Assets/Scripts/Game/EventsScreen.cs`(신규) · `Screens.cs`(NavBar «탤런트» → «던전» 탭 · 로비 오른쪽 아래 «이벤트» 버튼도 여기로) · catalog
 순서: 제약 없음(Screens NavBar 줄 — T22 뒤). T30(«World_Dungeon_List 그대로»)은 **폐기** — 탭 이름 변경(탤런트 → 던전)만 여기서 이어받고, World_Dungeon_* 프리팹은 부품으로만.
 1. 던전 페이지(제목 «던전» · 큰 카드 2(제목 띠 + 티켓 · 그림 · «획득 가능» 보상 아이콘 · 입장(주황 · !)) · «준비 중» 카드 · 하단 던전/아레나 2탭 + 뒤로) · 던전 세부 팝업(그림 띠 · ◀ 층수 ▶ · 보상 4칸 · 소탕(파랑) · 도전(주황)) · 아레나 페이지(경기장 카드 · 시즌 타이머 · 티어 · 입장) · 입장 화면(시상대 1·2·3 · 오른쪽 위 보상·상인 · 순위 목록 · 바닥 도전 🎫x1) · 도전 팝업(상대 5줄 · 무료 새로고침) · 순위 보상 팝업(티어 띠 · 1~4위 줄 · 일일/시즌 탭) · 상인 페이지(배너 · 3열 상품 격자 · 한도 · 코인 가격). **전부 표시만**(버튼은 눌러도 아무 일 없음 · 뒤로/탭하여 닫기만 동작).
 2. 게이트 + 스모크(페이지·팝업 전부 열고 빨간 줄 0) + PROGRESS T43 행.
 
-### T44 — 로비 사이드 팝업 껍데기 6종 = `11`·`15`·`16`·`17`·`18`·`19` (T34 뒤) · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `423cd98` · CI #73 · 워커 F · 표 ⑲~㉔ 신설 · `LobbyPopups.cs` · **비평 회차 1 = 11·15·17·18·19 10.0 · 16 9.5**(screens CI #83 · 워커 E) · PROGRESS 참조)
+### T44 ✅ — 로비 사이드 팝업 껍데기 6종 = `11`·`15`·`16`·`17`·`18`·`19` (T34 뒤) · **✅ 조건 = 비평 ≥ 8.0/10(§5)** ✅ (완료 · 코드 `423cd98` · CI #73 · 워커 F · 표 ⑲~㉔ 신설 · `LobbyPopups.cs` · **비평 회차 1 = 11·15·17·18·19 10.0 · 16 9.5**(screens CI #83 · 워커 E) · PROGRESS 참조)
 범위: `Assets/Scripts/Game/LobbyPopups.cs`(신규) · `Screens.cs`(T34 의 `OnSide` 훅 연결 한 줄씩) · catalog
 1. 특권(11 · 페이지 · 카드 세로 나열 · «전체 받기» 바닥 바) · 퀘스트(15 · 파란 명판 · 점수 트랙 · 줄 목록 · 일일/주간/업적 탭) · 출석(16 · 노란 리본 · 3×2 + 7일 칸) · 데일리 기프트(17 · 선물 그림 · 세로 타임라인 · 광고 N회 줄 4) · 7일 챌린지(18 · 빨간 리본 · 배너 · 점수 트랙 · Days 1~7 세로 탭 + 과제 줄) · 패스(19 · 시즌 배너 · 3열 세로 트랙 · 바닥 3버튼). 각각 레퍼런스 구도 그대로, 글자는 한국어, **버튼은 눌려도 아무 일 없음 · 배경 탭으로 닫힘**.
 2. 게이트 + 스모크(6개 열고 빨간 줄 0) + PROGRESS T44 행.
 
-### T45 — CI #51 빨강(T23 코드 커밋 `9ea5d9d`) 후속: PlayMode `MapThemeTests` 사막 물결 경계 정렬 1건 — T19 회귀 ✅ (완료 · `11a737d` · CI #53 유니티 잡 초록 · PROGRESS 참조)
+### T45 ✅ — CI #51 빨강(T23 코드 커밋 `9ea5d9d`) 후속: PlayMode `MapThemeTests` 사막 물결 경계 정렬 1건 — T19 회귀 ✅ (완료 · `11a737d` · CI #53 유니티 잡 초록 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/BattleWorld.cs`(`BuildProps` 의 `flat` 판정 1줄) · 테스트 불변(`Assets/Tests/PlayMode/MapThemeTests.cs` 는 손대지 않는다)
 순서: 제약 없음.
 1. 원인(CI #51 · https://github.com/kuzuni/aaawunity/actions/runs/34017948738 · PlayMode 21건 중 `MapThemeTests.AllFourThemesMatchDemoSceneComposition` 1건 실패 · 나머지 20 + EditMode 78 Passed): 메시지 «챕터 4 (desert) 물결 경계는 길 바로 위(납작 · 데모 렌더 순서) Expected: -16 But was: 389». `BuildProps` 가 물결 경계를 «납작(스프라이트 높이 × Sy < 0.35u)» 으로 골라 -16 을 주는데, `Road_up_Desert.png` 만 **43px = 0.43u**(Autumn 34 · DeepForest 33 · Forest 33px) 라 문턱을 넘어 일반 소품 규칙(y 로 381+…)로 떨어진다. T19 커밋 `dedeffb` 의 CI #48·#50 이 뒤 push 로 취소돼 그 세션이 못 본 회귀.
 2. 수정: `flat` 판정에 **키가 `.roadUp` 이면 무조건 납작**을 더한다(물결 경계는 늘 길 바로 위 = 데모 렌더 순서 · 문턱 수치는 그대로). 에셋·테스트 불변.
 3. 게이트 + PROGRESS T45 행 + 확인 수단 = 이 코드 커밋의 CI 유니티 잡(PlayMode `MapThemeTests` 4테마 Passed) — 같은 런이 T28·T23 의 확인 수단이 된다.
 
-### T46 — UI 비평 하니스: 전 화면 스크린샷 + layout.json → `screens` 브랜치 + `tools/ui_score.py` (최우선 · 제약 없음) ✅ (완료 · 코드 `d47a55f`(+`1442ce7`) · **첫 `screens` 배포 = CI #83**(26 PNG + layout.json + meta.json) · 회차 1 실사용 22 화면 · 촬영 결함은 T58 · 종결 = 워커 E lock 인계 · PROGRESS T46 진행 기록)
+### T46 ✅ — UI 비평 하니스: 전 화면 스크린샷 + layout.json → `screens` 브랜치 + `tools/ui_score.py` (최우선 · 제약 없음) ✅ (완료 · 코드 `d47a55f`(+`1442ce7`) · **첫 `screens` 배포 = CI #83**(26 PNG + layout.json + meta.json) · 회차 1 실사용 22 화면 · 촬영 결함은 T58 · 종결 = 워커 E lock 인계 · PROGRESS T46 진행 기록)
 범위: `Assets/Tests/PlayMode/UiShotsTests.cs`(신규) · `Assets/Tests/PlayMode/PlayShot.cs`(신규 · PerkStripTests 의 `SaveScreens` 를 옮겨 공용화) · `Assets/Scripts/Game/UiKit.cs`(`UiKit.Tag(go, "이름")` 한 함수 · 판정 요소에 이름표) · `.github/workflows/ci.yml`(unity-test 잡 끝에 «screens 브랜치 배포» 1단계) · `tools/ui_score.py`(신규) · `docs/ref-layout.md`(⑧~ 새 화면 표 자리)
 순서: 제약 없음 — **T36~T44 보다 먼저 잡는다**(이게 없으면 그 작업들이 ✅ 를 못 단다). 다른 UI 워커와 겹치는 파일은 UiKit 한 함수뿐(rebase).
 1. **PNG**: `UiShotsTests` 가 UiSmokeTests 와 같은 순서로 모든 화면·팝업(로비 · 전투 HUD(적 조우 상태 포함) · 레벨업 3택 · 보유 특전 · 장비 · 장비 세부 · 대장간 · 상점 · 설정 · 펫 · 펫 세부 · 던전 · 던전 세부 · 아레나 5종 · 사이드 팝업 6종 — 아직 없는 화면은 건너뛰고 «없음» 으로 기록)을 열어 `PlayShot.Save("lobby")` 처럼 **540×1170 PNG** 를 `ui-screens/<이름>.png` 에 남긴다(PerkStripTests 의 RenderTexture 방식 그대로 · 배치 모드에서도 됨). 파일 이름 = `docs/ref/` 번호와 같게(`01_lobby.png` · `02_battle.png` …).
@@ -792,20 +793,20 @@
 5. **비평(사람 눈 몫 · 워커가 한다)**: PNG 와 `docs/ref/NN.jpg` 를 나란히 `Read` 로 보고 표가 못 잡는 것 — 겹침 · 잘림 · 순서 뒤바뀜 · 빠진 요소 · 비례가 눈에 띄게 다른 덩어리 — 를 **최대 −2.0 까지 감점**(항목당 −0.5 · 이유 한 줄씩). **아이콘·그림·색·폰트·글자체는 감점 금지**(주인 지시). `최종 = 표 점수 − 감점`. **8.0 이상이어야 ✅**.
 6. 게이트 + PROGRESS T46 행 + «UI 비평 점수판» 절 신설(§5 형식) + `docs/ref-layout.md` 머리에 «채점 = tools/ui_score.py» 한 줄.
 
-### T47 — 로비(T34) · 전투 HUD(T35) 비평 회차 (T46 뒤) ✅ (완료 · 회차 3 채점 = **01 9.5 · 02 8.8 · 03 8.8**(CI #95 `b12a224` screens run 95 · 워커 A) — 회차 1(9.7/8.6) → 회차 2(9.3/8.9/8.9) → 회차 3 코드 `b8658b6`(챕터 제목 글자 크기 · 적 바 폭) 확인 · 남은 0.5 셋은 주인 지시(T19·T14)로 생긴 값이라 표 불변(결정 107) · 눈 비평 감점 2건(배너 배지 겹침 · 발밑 바 숫자 넘침)은 글자 크기 부작용이라 **T63-lobby·T63-battle 로 처방 이관**(결정 129) · PROGRESS T47 회차 3 채점 기록 참조)
+### T47 ✅ — 로비(T34) · 전투 HUD(T35) 비평 회차 (T46 뒤) ✅ (완료 · 회차 3 채점 = **01 9.5 · 02 8.8 · 03 8.8**(CI #95 `b12a224` screens run 95 · 워커 A) — 회차 1(9.7/8.6) → 회차 2(9.3/8.9/8.9) → 회차 3 코드 `b8658b6`(챕터 제목 글자 크기 · 적 바 폭) 확인 · 남은 0.5 셋은 주인 지시(T19·T14)로 생긴 값이라 표 불변(결정 107) · 눈 비평 감점 2건(배너 배지 겹침 · 발밑 바 숫자 넘침)은 글자 크기 부작용이라 **T63-lobby·T63-battle 로 처방 이관**(결정 129) · PROGRESS T47 회차 3 채점 기록 참조)
 범위: T34·T35 의 파일(Screens.cs Lobby · BattleScreen/BattleWorld HUD) · `docs/ref-layout.md` ①·② 표(틀린 행이 있으면 정정 + 회차 로그)
 순서: **T46 완료 뒤**(screens 브랜치에 첫 PNG 가 올라온 뒤).
 1. §5 대로 로비·전투 두 화면을 채점한다(표 + 눈). 8.0 미만이면 고치고 push → 다음 CI → 다시 채점. 8.0 이 될 때까지 회차를 잇는다(회차마다 점수판에 한 줄).
 2. 8.0 이상이면 PROGRESS T34·T35 행에 «비평 N.N ✅(회차 k)» 를 붙이고 T47 을 ✅.
 3. **회차 2(코드 3건 · 2026-09-06 워커 E 등재 · 결정 102)**: ⓐ `Assets/Tests/PlayMode/UiShotsTests.cs:125` — `Shot("02_battle")` 앞에 `if (_app.Overlay.IsOpen) { _app.Overlay.Close(); G.Pending = null; yield return Frames(1); }`(3초 안에 레벨업 팝업이 떠 02 가 특전 카드 화면으로 찍힘 · 03 루프와 같은 처리) ⓑ 월드 8행(② 표의 발밑 y·적 행 y·플레이어/적 높이·체력 라벨 줄·중심 x·바 폭 2)을 `BattleWorld` 에서 재서 `PlayShot.Layout` 결과 사전에 표와 같은 이름으로 넣는다(결정 51 · 하니스는 캔버스만 잰다) ⓒ «챕터 제목» 이름표를 조각 루트가 아니라 글자(Text) rect 에(`Screens.cs:77` 로비 · `BattleScreen.cs:111` 전투 — 조각은 표 ±6/12 여유로 세워 w 가 +6~8 크다) → 예상 로비 10.0 · 전투 캔버스 13/14. 그 뒤 CI → screens → `ui_score.py 02_battle`·`03_battle_enemy` 로 22행 기준 재채점 + T58 이 고쳐졌으면 눈 비평(발밑 2단 바 · 캐릭터 크기).
 
-### T48 — CI #66 빨강(`48d05a6` · T39 코드 push) 후속: PlayMode 4건(T39 대장간 2 · T40 상점 2) — main 빨강 = gh-pages·screens 브랜치 안 생김 (최우선 · 제약 없음) ✅ (완료 · 대장간 = B `07c044d` + A `b13ac22`(ⓓ) · 상점 = D `d2df257` + ⓔ `353527e` · 확인 CI #75 · PROGRESS 참조)
+### T48 ✅ — CI #66 빨강(`48d05a6` · T39 코드 push) 후속: PlayMode 4건(T39 대장간 2 · T40 상점 2) — main 빨강 = gh-pages·screens 브랜치 안 생김 (최우선 · 제약 없음) ✅ (완료 · 대장간 = B `07c044d` + A `b13ac22`(ⓓ) · 상점 = D `d2df257` + ⓔ `353527e` · 확인 CI #75 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/ForgeScreen.cs` · `ShopScreen.cs` · `Screens.cs`(NavBar) · 테스트는 «구도 단언이 새 구도와 어긋난 것» 만 고친다(규칙을 지우지 않는다)
 순서: 제약 없음 — T39·T40 을 만든 워커가 있으면 그가, 없으면 다음 워커가 잡는다.
 1. 로그(https://github.com/kuzuni/aaawunity/actions/runs/34021396912 · PlayMode 25 중 5 실패 · 5번째 장비 세부 `ui.title.blue` 는 T38 이 `bb51e3e` 로 고침): ⓐ `UiSmokeTests.ForgeShowsAllAndFuses` «뒤로 = 왼쪽 아래 Expected: greater than 0.9 But was: 0.015»(UiSmokeTests.cs:398 — 뒤로 버튼 anchor 를 보는 단언 · T39 가 뒤로를 «아래 회색 띠 + ◀» 로 바꿈) ⓑ `ForgeEquippedFuseTests.EquippedGearIsAMaterialAndTheProductTakesItsSlot` «장착중 배지(Check)는 유지 Expected: True But was: False»(ForgeEquippedFuseTests.cs:93 — T39 가 «장착중» 글자로 바꿔 Check 배지가 꺼짐 → 테스트를 «장착중 표기(Check 또는 글자)» 로) ⓒ `UiSmokeTests.ShopBoxesAndChestOpenPopup` «상자 카드 3 Expected: 3 But was: 0»(UiSmokeTests.cs:437 — T40 재조립 뒤 이름/개수 계약) ⓓ `PressFeedbackTests.EveryButtonOnEveryScreenHasPressFeedback` «[shop] 탭 0 에 Button Expected: not null»(PressFeedbackTests.cs:198 — 상점 화면 탭 바에 Clickable 이 안 붙음).
 2. 게이트 + PROGRESS T48 행 + 확인 수단 = 코드 커밋의 CI 유니티 잡(PlayMode 전부 Passed).
 
-### T82 — main 빨강 후속 (CI #131 `f25cd1a` T69-gear · #134 `9c5606a` T66 · 최우선) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `fc9fe35` · 확인 CI #148 · sess-1604-19072 · 확인 sess-1628-B / 워커 B · 자세한 것은 PROGRESS 그 행)**
+### T82 ✅ — main 빨강 후속 (CI #131 `f25cd1a` T69-gear · #134 `9c5606a` T66 · 최우선) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `fc9fe35` · 확인 CI #148 · sess-1604-19072 · 확인 sess-1628-B / 워커 B · 자세한 것은 PROGRESS 그 행)**
 범위: 실패한 화면의 `Assets/Scripts/Game/*Screen.cs` · `Assets/Tests/PlayMode/TextSizeGateTests.cs`·`BorderGateTests.cs`. 게이트 자체를 끄거나 느슨하게 해서 초록을 만들지 않는다 — 화면을 고친다.
 순서: 제약 없음 · 최우선(main 이 빨가면 screens·gh-pages 가 안 돈다).
 1. 두 런의 유니티 잡 «Unity EditMode + PlayMode 테스트» 가 빨갛다. #134 로그에서 EditMode 는 «Run succeeded, no failures occurred» 이고 그 뒤 COMBINE_RESULTS 단계에서 Failure → **실패는 PlayMode 쪽**이다.
@@ -817,7 +818,7 @@
 ### 신규 작업 등재
 - 버그·후속 작업 발견 시 PROGRESS 표에 **이미 쓰인 번호 중 가장 큰 것 +1** 로 등재 (번호 재사용 금지, 한 번호 = 한 작업).
 
-### T49 — 팝업 등장 연출 = DOTween «순서대로»: 레벨업 3택 특전 카드 · 승리(클리어) 팝업 · 패배(사망) 팝업 (주인 2026-09-06 · T36·T23 코드 뒤 · 제약 없음) ✅ (완료 · `fdb8d35` · CI #76 · 3택 0.77s · 클리어 0.94s · 사망 0.98s · 배경 탭 = 스킵 · PROGRESS 참조)
+### T49 ✅ — 팝업 등장 연출 = DOTween «순서대로»: 레벨업 3택 특전 카드 · 승리(클리어) 팝업 · 패배(사망) 팝업 (주인 2026-09-06 · T36·T23 코드 뒤 · 제약 없음) ✅ (완료 · `fdb8d35` · CI #76 · 3택 0.77s · 클리어 0.94s · 사망 0.98s · 배경 탭 = 스킵 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/Overlay.cs`(LevelUp · PerkBook · Clear · Dead) · `UiKit.cs`(연출 헬퍼 — 기존 `PopIn(rt, from, dur)`·`FadeIn` 에 <b>delay</b> 인자 또는 `Stagger(items, step)` 추가 · 타이밍 상수는 UiKit 한 곳) · `Assets/Tests/PlayMode/UiSmokeTests.cs`(연출 뒤 단언) · `PlayShot`(T46 스크린샷은 연출이 끝난 뒤)
 순서: 제약 없음 — T36(3택)·T23(클리어)·T41(설정) 코드는 끝났다. Overlay 를 만지는 열린 작업 = T44(LobbyPopups 신규 파일 · Screens 훅뿐) · T47(전투 HUD) — 파일이 겹치지 않는다. 다른 워커가 Overlay 를 만졌으면 rebase.
 주인 원문(2026-09-06 · 08:1X UTC): «특전 뜰 때 순서대로 dotween 으로 뜨게 애니메이션 · 졌을 때 팝업도, 이겼을 때 팝업도 그런 식 연출로».
@@ -829,7 +830,7 @@
 6. **테스트**: PlayMode `UiSmokeTests` — 팝업 연 직후에도 요소는 <b>존재</b>(개수·이름 단언은 그대로 · 알파/스케일 단언은 `DOTween.CompleteAll()` 뒤) · `LogAssert.NoUnexpectedReceived` · Close 뒤 해당 오브젝트를 겨냥한 트윈 0. `PlayShot`(T46) 은 `DOTween.CompleteAll()` 뒤에 찍어 비평 PNG 가 연출 중간을 찍지 않게.
 7. 게이트 + PROGRESS T49 행 + 완료 기록(«무엇으로 확인했는가» = CI 유니티 잡 PlayMode 전부 Passed).
 
-### T50 — 킬 뒤 이동 = «공격 모션 끝 → 걷기 모션 → 원래 걷기 속도(132·walkMul)로 다음 적» · 2배 따라잡기 폐지 (주인 2026-09-06 · T20 연출 수정 · 화면만 · 엔진 불변) ✅ (완료 · `07873b4` · 워커 H · 격차 대신 엔진 틱 보류(`HoldEngine` · 결정 107) · 확인 = 그 커밋의 CI PlayMode `BattleWorldTests` · PROGRESS 참조)
+### T50 ✅ — 킬 뒤 이동 = «공격 모션 끝 → 걷기 모션 → 원래 걷기 속도(132·walkMul)로 다음 적» · 2배 따라잡기 폐지 (주인 2026-09-06 · T20 연출 수정 · 화면만 · 엔진 불변) ✅ (완료 · `07873b4` · 워커 H · 격차 대신 엔진 틱 보류(`HoldEngine` · 결정 107) · 확인 = 그 커밋의 CI PlayMode `BattleWorldTests` · PROGRESS 참조)
 범위: `Assets/Scripts/Game/BattleWorld.cs`(`Sync` 의 표시 원점 `_shownPX` · `CatchUpMul`·`KillPending`·`_moving` · 플레이어 공격 모션 상태) · `CharacterRig.cs`(공격 중 여부 노출이 모자라면) · `Assets/Tests/PlayMode/BattleWorldTests.cs`(T20 테스트 갱신)
 순서: 제약 없음 — T47(전투 HUD 비평)이 BattleScreen/BattleWorld 를 만질 수 있으니 rebase. **엔진(`Core/Battle.cs` 671행 · `P.WorldX += PlayerSpeed*WalkMul*(Dash?DashMul:1)*dt`)은 손대지 않는다** — sim.js 와 1:1 이고 시드 골든이 걸려 있다.
 주인 원문(2026-09-06 · 09:0X UTC): «킬하고 나서 공격 모션 끝나고 나서 걸어가는 모션 나오면서 원래 걷기 속도로 다음 적 가야 함. 특전 부분은 그대로.»
@@ -842,7 +843,7 @@
 6. **테스트**(PlayMode `BattleWorldTests` · T20 것 갱신): ⓐ 킬 뒤 표시 원점의 프레임당 이동량 ≤ `PlayerSpeed×WalkMul×dt`(대시 아닐 때 2배 구간 0) ⓑ 공격 모션 중(`Attacking`)에는 표시 원점 이동 0 ⓒ 다음 적 앞에서 격차가 0 으로 수렴(엔진 정지 중) ⓓ `LogAssert.NoUnexpectedReceived`. 시드 골든(EditMode)은 건드릴 이유가 없다 — 바뀌면 엔진을 건드린 것이므로 되돌린다.
 7. 게이트 + PROGRESS T50 행 + 완료 기록(«무엇으로 확인했는가» = CI 유니티 잡 PlayMode 전부 Passed · 가능하면 T46 하니스 전투 PNG 는 참고만).
 
-### T51 — ① 특전 «처치 시 대시»도 «공격 모션 끝 → 그다음 ×5 로 걷기» · ② 적 사망 «펑» 이펙트(fx.death Magic Poof) 제거 (주인 2026-09-06 · T50 뒤 · 같은 파일) ✅ (완료 · `07873b4` · T50 과 같은 커밋 · 워커 H · PROGRESS 참조)
+### T51 ✅ — ① 특전 «처치 시 대시»도 «공격 모션 끝 → 그다음 ×5 로 걷기» · ② 적 사망 «펑» 이펙트(fx.death Magic Poof) 제거 (주인 2026-09-06 · T50 뒤 · 같은 파일) ✅ (완료 · `07873b4` · T50 과 같은 커밋 · 워커 H · PROGRESS 참조)
 범위: `Assets/Scripts/Game/BattleWorld.cs`(`Sync` 표시 원점 — T50 이 만든 «공격 모션 끝까지 정지» 규칙에 대시도 포함 · 454행 `Fx.Spawn("fx.death", …)` 제거) · `Assets/Tests/PlayMode/BattleWorldTests.cs` · `docs/assets-map.md`(fx.death 행 «미사용» 표기 · catalog 키는 남겨도 된다)
 순서: **T50 뒤**(같은 `Sync` 코드 · T50 lock 이 풀리고 PROGRESS T50 이 ✅ 된 뒤) — T50 워커가 아직 작업 중이면 그 워커가 이어서 잡아도 된다.
 주인 원문(2026-09-06 · 09:1X UTC): «특전 부분도 생각해 보니까 킬하고 나서 공격 모션 끝나고 5배로 걷는 속도 되어야 하는 거임» · «죽을 때 펑 하고 터지는 이펙트 없애기».
@@ -851,7 +852,7 @@
 3. **테스트**(PlayMode `BattleWorldTests`): ⓐ 대시 특전 상태에서 킬 뒤 공격 모션 중 표시 이동 0 · 끝난 뒤 프레임당 이동 ≈ `PlayerSpeed×WalkMul×DashMul×dt` ⓑ 적 사망 시 fx.death 인스턴스 0(Fx 스폰 카운트 또는 이름으로 `FindObjectsOfType`) ⓒ `LogAssert.NoUnexpectedReceived`.
 4. 게이트 + PROGRESS T51 행 + 완료 기록(확인 수단 = CI 유니티 잡 PlayMode 전부 Passed).
 
-### T52 — 특전 설명 글자 한 색(수치 연두색 강조 제거) (주인 2026-09-06 · 제약 없음 · T49 와 같은 Overlay 파일 → rebase) ✅ (완료 · `8f78d2a` · PROGRESS 참조 · «남은 횟수 N» 주황은 유지 = 결정 88)
+### T52 ✅ — 특전 설명 글자 한 색(수치 연두색 강조 제거) (주인 2026-09-06 · 제약 없음 · T49 와 같은 Overlay 파일 → rebase) ✅ (완료 · `8f78d2a` · PROGRESS 참조 · «남은 횟수 N» 주황은 유지 = 결정 88)
 범위: `Assets/Scripts/Game/Overlay.cs`(`GreenNumbers` 63~70행 · `PerkCard` 106행 `UiKit.SetText(rt, "Text_Value", GreenNumbers(p.Desc), Palette.Ink, 34)`) · `Assets/Tests/PlayMode/UiSmokeTests.cs`(582행 GreenNumbers 단언) · `docs/ref/README.md`(04 항목 «수치 초록» 문구에 «주인 취소 2026-09-06» 표기) · 특전 설명이 쓰이는 다른 자리(악마 거래·천사·보유 특전·전투 PerkStrip 툴팁 등 `<color` 를 넣는 곳 전부)
 주인 원문(2026-09-06 · 09:2X UTC): «특전들 글씨가 색깔 다르게 하는 거 하지 말기 · 연두색 섞여 있는데 존나 안 읽힌다». T36 1항 «수치 초록»(레퍼런스 04) 은 이 지시로 **취소**.
 1. 특전 카드 설명(`Text_Value`)은 **한 색**(`Palette.Ink`) 으로 — `GreenNumbers` 호출을 없애고 `p.Desc` 를 그대로 넣는다. 함수는 지우거나 남기되 호출 0(남기면 «미사용 · 주인 취소» 주석).
@@ -860,7 +861,7 @@
 4. 테스트: `UiSmokeTests` 582행 단언을 «설명 텍스트에 `<color` 없음 · 원문 `p.Desc` 그대로» 로 바꾼다 · `LogAssert.NoUnexpectedReceived`.
 5. 게이트 + PROGRESS T52 행 + 완료 기록(확인 수단 = CI PlayMode + screens 브랜치 04/05 PNG 를 `Read` 로 한 번 보고 «글자 한 색» 확인).
 
-### T53 — 특전 설명 표기 = «트리거: 내용» (예: «처치 시: 33% 확률로 …» · «피격 시: …» · «3타마다: …») (주인 2026-09-06 · T52 뒤 · 같은 Overlay 파일) ✅ (완료 · `574ae4f` + `6e2d9cc` · Core/PerkText · 트리거 76 · 패시브 24 · PROGRESS 참조)
+### T53 ✅ — 특전 설명 표기 = «트리거: 내용» (예: «처치 시: 33% 확률로 …» · «피격 시: …» · «3타마다: …») (주인 2026-09-06 · T52 뒤 · 같은 Overlay 파일) ✅ (완료 · `574ae4f` + `6e2d9cc` · Core/PerkText · 트리거 76 · 패시브 24 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/Overlay.cs`(`PerkCard` 의 설명 문자열 가공 · T52 가 만든 «한 색» 자리) 또는 `UiKit`/새 정적 헬퍼 `PerkText.Format(desc)` · 이 레포 전용 JSON 이 필요하면 `Assets/KkomaKnight/perkText.json`(shop.json 방식) · `Assets/Tests/EditMode`(순수 문자열 변환 테스트 · 100개 전수) · `Assets/Tests/PlayMode/UiSmokeTests`
 순서: **T52 뒤**(같은 `PerkCard` 설명 줄) — T52 워커가 이어서 잡아도 된다.
 주인 원문(2026-09-06 · 09:2X UTC): «처치시: 33퍼 확률로 어쩌구저쩌구 / 피격시: 33퍼 확률로 어쩌구저쩌구 / 3타마다: 어쩌구저쩌구 이런 식으로 표기하기».
@@ -871,19 +872,19 @@
 4. 같은 표기를 특전 설명이 보이는 모든 자리에(3택 · 보유 특전 · 악마 거래 · 천사 · PerkStrip 툴팁 등 · T52 와 같은 목록).
 5. 게이트 + PROGRESS T53 행 + 완료 기록(확인 = EditMode 전수 테스트 + CI PlayMode + screens 04/05 PNG 한 번 보기).
 
-### T54 — CI #75(·#71) 빨강 후속: PlayMode `EventsScreenTests.DungeonArenaPagesAndPopups` «[상인 페이지] 영문 데모 글자: Text» 1건 (최우선 · 제약 없음 · 워커 A · lock 파일은 `T50.lock` · 코드 `faa0d30`) ✅ (완료 · CI #77·#82 초록 · lock 은 90분 경과로 워커 H 가 인계하며 종결 · 결정 108)
+### T54 ✅ — CI #75(·#71) 빨강 후속: PlayMode `EventsScreenTests.DungeonArenaPagesAndPopups` «[상인 페이지] 영문 데모 글자: Text» 1건 (최우선 · 제약 없음 · 워커 A · lock 파일은 `T50.lock` · 코드 `faa0d30`) ✅ (완료 · CI #77·#82 초록 · lock 은 90분 경과로 워커 H 가 인계하며 종결 · 결정 108)
 범위: `Assets/Scripts/Game/EventsScreen.cs`(상인 페이지 상품 카드의 CardFrame_04 `Text_Title`)
 > 번호: A 가 09:09 에 `T50.lock` 으로 선점했는데 09:14 등재 세션이 같은 번호로 «킬 뒤 이동» 을 올렸다(그 뒤 T51~T53 이 그 번호 기준으로 이어짐) → 규약 «최대 +1» 대로 A 의 후속에 T54 를 준다(PROGRESS 워커 결정 87). A 가 끝나며 `T50.lock` 을 지우면 그때 T50 을 잡는다.
 1. 원인(CI #75 로그 · PlayMode 26 중 1 실패 · EditMode 83/83): 상인 페이지 상품 카드가 CardFrame_04 원본의 `Text_Title`(«Text») 을 켜 둔 채 제목 Label 을 따로 얹어 데모 잔여 글자 검사에 걸림 → ShopScreen 상자 카드처럼 `Text_Title` 자리를 제목으로 쓴다(`faa0d30`).
 2. 게이트 + PROGRESS T54 행 + 확인 수단 = `faa0d30` 이 포함된 CI 유니티 잡(PlayMode 전부 Passed → `screens`·gh-pages 첫 배포).
 
-### T55 — CI #76·#77 빨강 후속(T49 코드 `fdb8d35` 회귀): PlayMode `UiSmokeTests.BattleTicksAndAllBattlePopups` «카드 수 = 제안 수 Expected: 3 But was: 6» 1건 — main 빨강 = `screens`·gh-pages 안 생김 (최우선 · 제약 없음) ✅ (완료 · `028133e` · UiKit.Clear 떼고 파괴 · 확인 = 그 커밋의 CI 런 · PROGRESS 참조)
+### T55 ✅ — CI #76·#77 빨강 후속(T49 코드 `fdb8d35` 회귀): PlayMode `UiSmokeTests.BattleTicksAndAllBattlePopups` «카드 수 = 제안 수 Expected: 3 But was: 6» 1건 — main 빨강 = `screens`·gh-pages 안 생김 (최우선 · 제약 없음) ✅ (완료 · `028133e` · UiKit.Clear 떼고 파괴 · 확인 = 그 커밋의 CI 런 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/UiKit.cs`(`Clear` 한 줄) · 테스트 불변(`UiSmokeTests.cs:570` 단언은 T49 의 계약 그대로)
 1. 원인(CI #76 https://github.com/kuzuni/aaawunity/actions/runs/34023880052 · #77 https://github.com/kuzuni/aaawunity/actions/runs/34024048144 · PlayMode 26 중 1 · EditMode 83/83): T49 가 «카드 수 = 제안 수» 단언을 `Overlay.LevelUp()` **직후(같은 프레임)** 로 옮겼다(연출 중에도 요소가 존재해야 하므로). `LevelUp` 은 `UiKit.Clear(group)` 으로 프리팹(Play_Perk_Selection_02) 의 샘플 카드 3장을 지우고 3장을 새로 만드는데, `Clear` 가 `Destroy`(프레임 끝에 실제 제거)만 하므로 같은 프레임의 `childCount` 는 3 + 3 = 6. 예전 단언은 프레임을 넘긴 뒤라 3 이었다.
 2. 수정: `UiKit.Clear` 가 자식을 **트리에서 먼저 떼고**(`SetParent(null, false)` · 비활성) 파괴한다 — T48 상점 껍데기와 같은 규칙(결정 80 · `Find`/`childCount` 가 같은 프레임에 옛 것을 보지 않게). 트윈 Kill 순서는 그대로(먼저).
 3. 게이트 + PROGRESS T55 행 + 확인 수단 = 이 코드 커밋의 CI 유니티 잡(PlayMode 전부 Passed → `screens`·gh-pages 첫 배포).
 
-### T56 — 플레이 콘솔 노란 줄 0: DOTween 세이프 모드 경고(파괴된 오브젝트를 겨냥한 트윈 · CI #77 유니티 로그 «safe mode captured 59 errors» = missing target 47 + startup 12) — 모든 트윈에 `SetLink(gameObject)` (§1 · T12 감사 ⓓ 부류 · 제약 없음) ✅ (코드 완료 · `262ca21` · 확인 = CI #82 로그의 «SAFE MODE captured N» = 0 · PROGRESS 참조)
+### T56 ✅ — 플레이 콘솔 노란 줄 0: DOTween 세이프 모드 경고(파괴된 오브젝트를 겨냥한 트윈 · CI #77 유니티 로그 «safe mode captured 59 errors» = missing target 47 + startup 12) — 모든 트윈에 `SetLink(gameObject)` (§1 · T12 감사 ⓓ 부류 · 제약 없음) ✅ (코드 완료 · `262ca21` · 확인 = CI #82 로그의 «SAFE MODE captured N» = 0 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/UiKit.cs`(Clickable 눌림 punch · PopIn · FadeIn · Reveal — **`Clear` 는 T55 몫 · 손대지 않는다**) · `Overlay.cs`(마스터 시퀀스 · 골드 카운트업 · BossWarn 띠) · `BattleWorld.cs`(피격 punch · 데미지 팝) · 테스트 불변
 순서: 제약 없음(T55 와 같은 UiKit 파일이지만 다른 줄 · 한 줄씩이라 rebase 로 풀린다 · T50/T51 의 `Sync` 와도 다른 줄).
 1. 원인(CI #77 https://github.com/kuzuni/aaawunity/actions/runs/34024048144 유니티 로그 · 테스트별 경고 수: ForgeShowsAllAndFuses 26 · LobbySettingsTalentPetToast 8 · PlayerNeverWalks… 7 · DungeonArenaPagesAndPopups 6 · ForgeEquippedFuse 4 · 그 밖 8): 트윈 원점 = DOPunchScale 27(버튼 눌림 · `UiKit.Clickable`) · DOScale 11(`PopIn`/`Reveal`) · DOFade 11(`FadeIn`/`Reveal`/BossWarn) · DOAnchorPosY 5(데미지 팝) · DOPunchPosition 1(피격). 대상 오브젝트가 `UiKit.Clear`(T49 `KillTweens`) 가 아닌 경로 — 화면 루트·월드 루트·캔버스 `Destroy` · 인벤/셀 재구성 · 팝업 갈아끼움 — 로 파괴되면 DOTween 이 다음 갱신에서 «Target or field is missing/null»(노란 경고 · safeMode 가 조용히 kill), 시작 전에 파괴되면 «Tween startup failed» 를 찍는다. 에디터 플레이에서도 같은 경로(합성 뒤 인벤 재구성 · 전투 종료 · 팝업 갈아끼움)에서 노란 줄이 뜬다 — T49 완료 기록이 «파괴된 오브젝트를 만지는 트윈 경고 = §1 콘솔 줄» 이라 적은 그 부류.
@@ -891,14 +892,14 @@
 3. 확인 수단: 코드 커밋의 CI 유니티 잡 로그에서 «DOTWEEN ► … SAFE MODE ► captured N errors» 줄이 사라지거나 N 이 0 (남으면 test-case 별 원점을 PROGRESS 에 적어 다음 회차) · PlayMode 전부 Passed. dotnet build 가 실제 `DOTween.dll` 을 참조하므로 API 존재는 컴파일이 보증.
 4. 게이트 + PROGRESS T56 행 + 워커 결정 기록 한 줄.
 
-### T57 — CI #82 빨강 후속(유니티 테스트는 전부 초록): «screens 브랜치용 meta.json» 단계 «ui-screens/meta.json: Permission denied» — 첫 `screens`·gh-pages 배포가 또 막힘 (최우선 · ci.yml 한 줄) ✅ (완료 · `d399e3f` · 워커 H · 확인 = CI #83 에서 screens 브랜치 생성 · PROGRESS 참조)
+### T57 ✅ — CI #82 빨강 후속(유니티 테스트는 전부 초록): «screens 브랜치용 meta.json» 단계 «ui-screens/meta.json: Permission denied» — 첫 `screens`·gh-pages 배포가 또 막힘 (최우선 · ci.yml 한 줄) ✅ (완료 · `d399e3f` · 워커 H · 확인 = CI #83 에서 screens 브랜치 생성 · PROGRESS 참조)
 범위: `.github/workflows/ci.yml`(unity-test 잡 «screens 브랜치용 meta.json» 단계 1줄) · 코드·테스트 불변
 순서: 제약 없음(T46 lock 이 살아 있어도 T46 의 파일 범위 중 ci.yml 의 이 한 단계만 · 결정 92).
 1. 원인(CI #82 https://github.com/kuzuni/aaawunity/actions/runs/34025135763 · `262ca21` · 로그: «Test run completed. Exiting with code 0 (Ok)» 뒤 «/…/sh: line 2: ui-screens/meta.json: Permission denied» · exit 1): `game-ci/unity-test-runner` 는 docker 컨테이너(root)로 돌고 `UiShotsTests`/`PlayShot` 이 `/github/workspace/ui-screens/` 에 PNG·layout.json 을 쓴다 → 워크스페이스에 **root 소유 폴더**가 남는다. 다음 단계는 러너 사용자(runner)의 셸이라 그 폴더 안에 `meta.json` 을 못 만든다. #76 이전 런은 테스트가 빨개서 이 단계까지 오지 않아(`if: success()`) 처음 드러났다.
 2. 수정: `printf … > ui-screens/meta.json` 앞에 `sudo chown -R "$(id -u):$(id -g)" ui-screens`(GitHub 호스트 러너는 sudo 무비밀번호). peaceiris 배포는 그 폴더를 그대로 읽는다.
 3. 확인 수단 = 코드 커밋의 CI 런: unity-test 잡 초록 + «screens 브랜치로 배포» 단계 초록 → `git fetch origin screens` 가 된다(첫 PNG·layout.json·meta.json). 그러면 T47·T36~T44 비평 회차 시작.
 
-### T58 — UI 비평 하니스 PNG 촬영 결함: UI 프레임이 PNG 가운데 188×404(34.8%) 띠로만 · 월드 스프라이트가 UI 위에 겹침 (첫 `screens` 배포 CI #83 · 26장 전부 · T46 뒤 · 같은 PlayShot.cs) ✅ (완료 · 코드 `0a036a3` · 원인 = CopyFrom 이 WorldCam letterbox rect 복사 · 확인 = CI #87 로그 fill 0.999 + CI #88 screens run 88 PNG 전체 화면 · PROGRESS T58 진행 기록)
+### T58 ✅ — UI 비평 하니스 PNG 촬영 결함: UI 프레임이 PNG 가운데 188×404(34.8%) 띠로만 · 월드 스프라이트가 UI 위에 겹침 (첫 `screens` 배포 CI #83 · 26장 전부 · T46 뒤 · 같은 PlayShot.cs) ✅ (완료 · 코드 `0a036a3` · 원인 = CopyFrom 이 WorldCam letterbox rect 복사 · 확인 = CI #87 로그 fill 0.999 + CI #88 screens run 88 PNG 전체 화면 · PROGRESS T58 진행 기록)
 범위: `Assets/Tests/PlayMode/PlayShot.cs`(`Save`) · (필요 시) `UiShotsTests.cs` 단언 1개 · 코드(게임)·layout.json 계약 불변
 순서: **T46 뒤**(T46 lock 이 사라지고 PROGRESS T46 이 ✅ 된 뒤) — T46 워커 C 가 T46 안에서 고쳐도 된다(그러면 이 번호는 «T46 에 흡수» 로 닫는다).
 1. 증상(sess-0958-19455 · 워커 H 가 `git show origin/screens:01_lobby.png` 등을 `Read`): 540×1168 PNG 에서 UI 프레임(9:19.5)이 **가운데 x176~363 · y383~786(188×404 px = 프레임 폭의 34.8%)** 에만 그려지고, 나머지는 월드 카메라 그림(로비 = 하늘색 배경색 · 전투 = 주황 들판) · 전투 계열(02~05)은 나무·캐릭터 스프라이트가 UI **위에** 확대돼 겹친다. `layout.json` 은 `UiTag.Measure(app.Frame)` 의 프레임 % 라 정상(T36 회차 1 이 표 점수 10.0 으로 확인) — 눈 비평만 막힌다(임시 = `tools/png_crop.py --strip`).
@@ -907,7 +908,7 @@
 4. 확인 = 코드 커밋의 CI 유니티 잡 초록 → 새 `screens` 배포의 `01_lobby.png` 를 `Read` 로 봤을 때 화면 전체가 UI. 그 뒤 점수판의 «T58 뒤 다시 본다» 항목(T36 글자 덩어리 −0.5 등)을 다음 회차에서 재평가.
 5. 게이트 + PROGRESS T58 행 + 결정 기록 한 줄.
 
-### T59 — ⚑⚑⚑ WebGL 배포 크래시: 페이지 열자마자 «RangeError: Maximum call stack size exceeded»(invoke_iii → wasm 재귀) — 주인 폰 Chrome 스크린샷 2026-09-06 (최우선 · 제약 없음 · 다른 작업보다 먼저) — **✅ 종결(2026-09-06 13:2X UTC · 워커 D · sess-1259-29943 · 원인 미확정 · 재현 안 됨 · 주인이 폰에서 «잘 된다» 확인 · 결정 120 · 진단 심볼 되돌리기 = T66) · 아래는 진단 기록(워커 G · 코드 `2cd0eb1`)**: 배포된 wasm 그대로를 headless chromium 으로 열면(데스크톱·Pixel 7 흉내·JS 스택 100KB·Liftoff 전용·KST/ko-KR·터치·센서 이벤트 전부) **재현되지 않고 로비까지 뜬다** · 주인 스택의 `wasm-function[147169]`·`[147187]` 은 그 wasm 에서 둘 다 «MethodInfo→invoker_method 로 되부르는 IL2CPP 미해결 호출 스텁»(직접 호출자 0 · 함수 포인터로만 불림 · 크기 94/80B) = «컴파일된 본체가 없는 메서드를 함수 포인터/가상 호출로 부를 때 스텁↔invoker 무한 상호재귀» 꼴 → 어느 메서드인지는 **이름 있는 스택**이 있어야 한다 → 이 커밋 = `webGLDebugSymbols: 2`(Embedded · 스택에 C# 이름) + 부팅 마커 4개(`boot: save/audio/ui` · `ready lobby`) + T60 스모크. **다음 워커**: ⓐ 그 CI 의 gh-pages 를 `tools/webgl_smoke.sh --gh-pages` 로 열어 초록 확인 ⓑ 주인이 폰에서 다시 열어 준 스크린샷(이제 함수 이름이 보인다)의 이름을 PROGRESS «주인 콘솔 에러 보고함 ④» 에서 읽고 그 메서드를 고친다(스트리핑이면 `Assets/link.xml` 보존 · 제네릭이면 명시 인스턴스) ⓒ 스크린샷 전엔 링크 후보를 미리 좁힌다(PROGRESS T59 진행 기록의 «후보» 절). 자세한 근거는 PROGRESS T59 진행 기록.
+### T59 ✅ — ⚑⚑⚑ WebGL 배포 크래시: 페이지 열자마자 «RangeError: Maximum call stack size exceeded»(invoke_iii → wasm 재귀) — 주인 폰 Chrome 스크린샷 2026-09-06 (최우선 · 제약 없음 · 다른 작업보다 먼저) — **✅ 종결(2026-09-06 13:2X UTC · 워커 D · sess-1259-29943 · 원인 미확정 · 재현 안 됨 · 주인이 폰에서 «잘 된다» 확인 · 결정 120 · 진단 심볼 되돌리기 = T66) · 아래는 진단 기록(워커 G · 코드 `2cd0eb1`)**: 배포된 wasm 그대로를 headless chromium 으로 열면(데스크톱·Pixel 7 흉내·JS 스택 100KB·Liftoff 전용·KST/ko-KR·터치·센서 이벤트 전부) **재현되지 않고 로비까지 뜬다** · 주인 스택의 `wasm-function[147169]`·`[147187]` 은 그 wasm 에서 둘 다 «MethodInfo→invoker_method 로 되부르는 IL2CPP 미해결 호출 스텁»(직접 호출자 0 · 함수 포인터로만 불림 · 크기 94/80B) = «컴파일된 본체가 없는 메서드를 함수 포인터/가상 호출로 부를 때 스텁↔invoker 무한 상호재귀» 꼴 → 어느 메서드인지는 **이름 있는 스택**이 있어야 한다 → 이 커밋 = `webGLDebugSymbols: 2`(Embedded · 스택에 C# 이름) + 부팅 마커 4개(`boot: save/audio/ui` · `ready lobby`) + T60 스모크. **다음 워커**: ⓐ 그 CI 의 gh-pages 를 `tools/webgl_smoke.sh --gh-pages` 로 열어 초록 확인 ⓑ 주인이 폰에서 다시 열어 준 스크린샷(이제 함수 이름이 보인다)의 이름을 PROGRESS «주인 콘솔 에러 보고함 ④» 에서 읽고 그 메서드를 고친다(스트리핑이면 `Assets/link.xml` 보존 · 제네릭이면 명시 인스턴스) ⓒ 스크린샷 전엔 링크 후보를 미리 좁힌다(PROGRESS T59 진행 기록의 «후보» 절). 자세한 근거는 PROGRESS T59 진행 기록.
 범위: 원인이 있는 C# 어디든(`Assets/Scripts/Game/*` 우선) · `ProjectSettings/ProjectSettings.asset`(`webGLDebugSymbols` · `webGLExceptionSupport` 진단용) · `Assets/Tests/PlayMode`(부팅 스모크 회귀) · 필요하면 `.github/workflows/ci.yml`
 배포 상태: gh-pages `20b11aa`(10:37 UTC · **첫 WebGL 배포**) = main `d6f66eb`. 즉 WebGL 에서 게임이 돌아간 적이 아직 없다 — 에디터/PlayMode 에서만 초록이었다. 스택: `invoke_iii (KkomaKnight.framework.js:9:473704)` → `wasm-function[147169]` → `[147187]` → … 반복 = C# 쪽 **무한 재귀**(또는 WebGL 의 작은 스택을 넘는 깊은 재귀). 첫 화면(로딩 직후)에서 난다.
 ⚑ **주인 확인(11:3X UTC): «어쨌든 핸드폰으로 잘 된다» · 11:5X «웹에서 이제 잘된다» — T59 종결.** gh-pages 배포는 그대로 `20b11aa`(d6f66eb) 라 **같은 빌드**에서 첫 로드(10:3X)엔 죽고 지금은 된다 = 일시적(첫 로드 캐시/메모리·오디오 디코드·탭 복귀 등 후보). 워커 G(sess-1042 · 헤드리스 재현 실패 · wasm 디코드까지 감)는 **이 세션 안에서** 조사 결과(재현 안 됨 · 후보 · 스택 함수 147169/147187 의 정체)를 PROGRESS 완료 기록에 남기고 T59 를 «원인 미확정 · 주인 확인으로 종결» 로 닫는다. 남는 일은 T60(배포 스모크 게이트 · 모바일 UA 포함) 과 «다시 나면 재등재». 더 파지 않는다.
@@ -916,7 +917,7 @@
 3. **고친 뒤 회귀**: PlayMode 에 «부팅 스모크»(Bootstrap → 데이터 로드(UnityWebRequest 경로를 `file://` 로 강제) → 로비 → 전투 진입 → 팝업 1개) 가 없으면 만든다 · `LogAssert.NoUnexpectedReceived`.
 4. **확인 수단** = ⓐ CI 유니티 잡 초록 ⓑ 새 gh-pages 배포를 1 의 headless 스크립트로 열어 콘솔 에러 0 + 로비 도달 ⓒ PROGRESS 완료 기록에 «원인 한 줄(어느 함수가 어느 함수를 다시 불렀나)» 과 «배포 URL 에서 무엇으로 확인했나» 를 적는다. 주인이 폰에서 다시 열어 본다.
 
-### T60 — 배포 스모크 게이트: WebGL 빌드를 headless 브라우저로 열어 «콘솔 에러 0 · 로비 도달 · 전투 진입» 을 확인한 뒤에만 gh-pages 에 배포 (주인 상시 지시 2026-09-06 · T59 뒤 또는 T59 워커가 같이) — **✅ 완료(코드 `2cd0eb1` · 워커 G · 확인 2026-09-06 13:5X UTC · 워커 D — CI #95 `b12a224` 의 build-webgl 에서 «배포 스모크» step 초록 뒤에야 gh-pages 배포 step 이 돌았고, 새 배포를 `webgl_smoke.sh --gh-pages --battle --require-marker` 로 열어 콘솔 에러 0 · 로비 · 전투 확인)**: `tools/webgl_smoke.js`(playwright 판정기) + `tools/webgl_smoke.sh`(`--gh-pages` = git 으로 받아 로컬 서버 · `--dir` · URL) + `App.DebugGo`/`ready lobby`/`ready battle` 마커 + `ci.yml` build-webgl 의 «배포 스모크» step(빨강이면 배포 step 안 돎 · Artifact `webgl-smoke`) + 배포 뒤 gh-pages URL 재확인(5회 재시도 · Artifact `webgl-smoke-ghpages`). **확인 = CI build-webgl 잡** — 단 `2cd0eb1` 이후 CI #91·#92·#93 이 전부 유니티 잡 빨강(T50 회귀 1건)이라 `build-webgl` 이 통째로 **skipped** 였다 → **T65 `984f713` 로 고쳐 push** · 그 런의 «배포 스모크» step 초록 + gh-pages 가 `984f713` 로 갱신되면 ✅ 로 닫는다(다음 워커 · 오디오 경고는 T64). 워커 로컬 실행은 §1 규칙대로 세션마다 `tools/webgl_smoke.sh --gh-pages`(이 환경은 kuzuni.github.io 가 프록시 403 이라 git 경유).
+### T60 ✅ — 배포 스모크 게이트: WebGL 빌드를 headless 브라우저로 열어 «콘솔 에러 0 · 로비 도달 · 전투 진입» 을 확인한 뒤에만 gh-pages 에 배포 (주인 상시 지시 2026-09-06 · T59 뒤 또는 T59 워커가 같이) — **✅ 완료(코드 `2cd0eb1` · 워커 G · 확인 2026-09-06 13:5X UTC · 워커 D — CI #95 `b12a224` 의 build-webgl 에서 «배포 스모크» step 초록 뒤에야 gh-pages 배포 step 이 돌았고, 새 배포를 `webgl_smoke.sh --gh-pages --battle --require-marker` 로 열어 콘솔 에러 0 · 로비 · 전투 확인)**: `tools/webgl_smoke.js`(playwright 판정기) + `tools/webgl_smoke.sh`(`--gh-pages` = git 으로 받아 로컬 서버 · `--dir` · URL) + `App.DebugGo`/`ready lobby`/`ready battle` 마커 + `ci.yml` build-webgl 의 «배포 스모크» step(빨강이면 배포 step 안 돎 · Artifact `webgl-smoke`) + 배포 뒤 gh-pages URL 재확인(5회 재시도 · Artifact `webgl-smoke-ghpages`). **확인 = CI build-webgl 잡** — 단 `2cd0eb1` 이후 CI #91·#92·#93 이 전부 유니티 잡 빨강(T50 회귀 1건)이라 `build-webgl` 이 통째로 **skipped** 였다 → **T65 `984f713` 로 고쳐 push** · 그 런의 «배포 스모크» step 초록 + gh-pages 가 `984f713` 로 갱신되면 ✅ 로 닫는다(다음 워커 · 오디오 경고는 T64). 워커 로컬 실행은 §1 규칙대로 세션마다 `tools/webgl_smoke.sh --gh-pages`(이 환경은 kuzuni.github.io 가 프록시 403 이라 git 경유).
 범위: `.github/workflows/ci.yml`(`build-webgl` 잡 · 배포 step 앞에 스모크 step) · `tools/webgl_smoke.sh` + `tools/webgl_smoke.js`(playwright) · `Assets/Scripts/Game/App.cs`(진단 훅: 로비 준비 시 `Debug.Log("[KkomaKnight] ready lobby")` · 전투 진입 시 `ready battle` · JS 에서 `SendMessage("App","DebugGo","battle")` 로 전투 자동 진입 — 릴리스에서도 무해한 로그 한 줄) · ROUTINE §1·§3(이 커밋에서 규칙은 이미 적음)
 주인 원문(2026-09-06 · 10:4X UTC): «항상 배포나 커밋 푸시 하기 전에 에러 확인하고 겜 들어가 봐서도 에러 뜨는지 확인하고 고치고 그러라 하셈».
 1. `build-webgl` 잡: 빌드 → `python3 -m http.server` 로 `build/WebGL/KkomaKnight` 를 띄움 → `npx playwright@latest` chromium headless(swiftshader)로 열어 ⓐ `pageerror`·`console.error` 0 ⓑ Unity 로딩 완료(`unityInstance` 존재 · 로딩바 사라짐) ⓒ 콘솔에 `[KkomaKnight] ready lobby` ⓓ `SendMessage("App","DebugGo","battle")` 뒤 10초 동안 에러 0 + `ready battle` — 하나라도 실패하면 **배포 step 을 건너뛴다**(gh-pages 는 마지막 초록 빌드 유지) 그리고 잡을 빨강으로. 스크린샷 PNG 는 Actions artifact 로만(커밋 금지).
@@ -924,7 +925,7 @@
 3. 워커용: `tools/webgl_smoke.sh [URL]`(기본 = gh-pages) — 코드 커밋 전/후 워커가 직접 돌려 완료 기록에 결과 한 줄. playwright 설치가 환경에서 막히면 «워커 결정 기록» 에 남기고 CI 결과로 대신한다.
 4. 게이트 + PROGRESS T60 행.
 
-### T61 — 특전 카드 등장 순서에 맞춘 «Shine»(AllIn1SpriteShader) — 카드가 하나씩 뜰 때 반짝임도 하나씩 (주인 2026-09-06 · T49 뒤 · 제약 없음) ✅ (완료 · 코드 `b12a224`(워커 E) · **확인 = CI #95 유니티 잡 초록(`UiSmokeTests` ⑤ shine 단언 전부 통과) + 같은 런 배포 스모크 초록 → gh-pages `b212a7e`**(워커 B · sess-1329-26629) · PROGRESS T61 완료 기록)
+### T61 ✅ — 특전 카드 등장 순서에 맞춘 «Shine»(AllIn1SpriteShader) — 카드가 하나씩 뜰 때 반짝임도 하나씩 (주인 2026-09-06 · T49 뒤 · 제약 없음) ✅ (완료 · 코드 `b12a224`(워커 E) · **확인 = CI #95 유니티 잡 초록(`UiSmokeTests` ⑤ shine 단언 전부 통과) + 같은 런 배포 스모크 초록 → gh-pages `b212a7e`**(워커 B · sess-1329-26629) · PROGRESS T61 완료 기록)
 범위: `Assets/Scripts/Game/Overlay.cs`(LevelUp 148행 · PerkBook 224행 — T49 의 `UiKit.Stagger` 자리) · `UiKit.cs`(`Stagger`/`Reveal` 에 «드러난 뒤 shine» 훅 · shine 트윈 헬퍼) · **새 머티리얼** `Assets/KkomaKnight/PerkShine.mat`(쉐이더 = `AllIn1SpriteShaderUiMask` · SHINE_ON · 카탈로그 키 `mat.perkShine` · .meta 는 `gen_meta.py`) · `Assets/KkomaKnight/catalog.json` · `docs/assets-map.md` · `Assets/Tests/PlayMode/UiSmokeTests`
 순서: **T49 뒤**(✅ · `fdb8d35`) — 같은 stagger 코드 위에 얹는다. T52·T53 도 끝났으니 Overlay 충돌 없음(rebase 만).
 주인 원문(2026-09-06 · 11:1X UTC): «그 특전들 순서대로 등장할 때 shine 효과도 순서대로 돼야 함 · 올인원 스프라이트 쉐이더».
@@ -935,7 +936,7 @@
 5. **테스트**(PlayMode `UiSmokeTests` ⑤ 확장): 3택을 연 뒤 ⓐ 카드 프레임 Image 의 material 쉐이더 이름에 `AllIn1SpriteShaderUiMask` ⓑ shine 트윈이 카드 순서대로 시작(마스터 시퀀스 안 Insert 시각이 단조 증가 — `UiKit` 이 시작 시각 목록을 돌려주게) ⓒ `CompleteAllTweens` 뒤 `_ShineLocation` 이 끝 값 ⓓ Close 뒤 머티리얼 인스턴스 0(`Resources.FindObjectsOfTypeAll<Material>` 이름 «PerkShine (Instance)» 0) ⓔ `LogAssert.NoUnexpectedReceived`. WebGL 에서 쉐이더 키워드가 빠지지 않게 머티리얼 에셋에 키워드를 박는다(런타임 `EnableKeyword` 만 쓰면 스트리핑될 수 있다 · T59 규칙: 배포 스모크에서도 확인).
 6. 게이트 + assets-map 한 줄 + PROGRESS T61 행 + 완료 기록(확인 = CI PlayMode + screens 04 PNG 는 참고 · 배포 스모크).
 
-### T62 — 아레나 «순위» 화면(`23_arena_enter.jpg` · 시상대 1·2·3위 + 순위 목록) = GUI Pro **`Social_Ranking` + `ListItem_Ranking`** 프리팹을 조금 변형해서 (주인 2026-09-06 «랭킹 UI 유난히 안 맞음 · 유사한 프리팹 있으니 거기서 변형» · T43 뒤 · 비평 ≥ 8.0) ✅ (완료 · 코드 `715b522` + 회차 2 `b951461` · **비평 회차 1 = 8.5 → 회차 2 = 9.5 ✅**(screens run 95 → run 101) · CI #101 전부 초록 · 남은 −0.5 = 왕관 번호 삐져나옴 = T63 글자 크기 부작용 → T63-events 로 처방 이관 · 결정 116~118 · PROGRESS T62 완료 기록 참조)
+### T62 ✅ — 아레나 «순위» 화면(`23_arena_enter.jpg` · 시상대 1·2·3위 + 순위 목록) = GUI Pro **`Social_Ranking` + `ListItem_Ranking`** 프리팹을 조금 변형해서 (주인 2026-09-06 «랭킹 UI 유난히 안 맞음 · 유사한 프리팹 있으니 거기서 변형» · T43 뒤 · 비평 ≥ 8.0) ✅ (완료 · 코드 `715b522` + 회차 2 `b951461` · **비평 회차 1 = 8.5 → 회차 2 = 9.5 ✅**(screens run 95 → run 101) · CI #101 전부 초록 · 남은 −0.5 = 왕관 번호 삐져나옴 = T63 글자 크기 부작용 → T63-events 로 처방 이관 · 결정 116~118 · PROGRESS T62 완료 기록 참조)
 범위: `Assets/Scripts/Game/EventsScreen.cs`(T43 이 만든 아레나 입장(23) 페이지 · 순위 목록 부분 — 필요하면 25 «순위 보상» 의 보상 줄도 같은 ListItem 으로) · `Assets/KkomaKnight/catalog.json`(`ui.socialRanking` = `Prefabs~DemoScenes/Social_Ranking.prefab` · `ui.listRanking` = `Prefabs~DemoLayout/ListItem_Ranking.prefab`) · `docs/assets-map.md` · `Core/Layout.cs`·`docs/ref-layout.md`(23 표는 그대로 · 실측 보정만) · `Assets/Tests/PlayMode/EventsScreenTests.cs`·`UiShotsTests`(23 PNG)
 순서: T43(✅ 코드 · 비평 회차 진행 중) 뒤 — T43 비평 lock 과 겹치면 그 워커가 이어서 잡는다.
 주인 원문(2026-09-06 · 11:3X UTC): «랭킹 부분 UI 유난히 안 맞음. 사실 랭킹 부분 UI 프리팹 유사한 게 프리팹으로 있어서 거기서 조금 변형해서 쓰면 거의 똑같은데 참고해».
@@ -960,7 +961,7 @@
 4. **게이트**: EditMode/PlayMode 테스트 — 모든 화면을 열고 `Text` 전부를 모아 `fontSize ≥ 하한(allowSmall 제외)` · bestFit min ≥ 32 · 잘림 검사(`preferredWidth/Height` 가 rect 보다 크면 실패 · 2줄 허용 칸은 예외 목록) · `LogAssert.NoUnexpectedReceived`. 이 테스트가 이후 모든 UI 커밋의 회귀 게이트.
 5. **비평 점수**는 배치 표 기준이라 글자 크기와 별개지만, 글자를 키워 칸을 옮겼으면 그 화면은 §5 회차를 한 번 더 돈다(8.0 유지).
 6. PROGRESS T63 행(+ 하위 행) + 완료 기록(«화면별 최소 글자 크기 before→after 표» 한 줄씩 · 확인 = CI PlayMode 게이트 + screens PNG + 배포 스모크 · 주인 폰 확인).
-### T64 — WebGL 오디오 ✅ (완료 · 설정 = **AAC**(compressionFormat 7) · 주인 실기 확인 «webgl 오디오 잘 들린다» 2026-09-07 04:3X = 배포 CI #148 `fc9fe35`(회차 2 `2dc76dc`) · 회차 3 `9ed1c7a` 의 Vorbis 되돌림 회귀를 회차 5 `115d7ca` 가 복원 + 게이트 `tools/check_audio_webgl.py`(20개가 AAC 인가)로 고정 · 회차 3 의 ogg 스트리밍은 유니티가 거부해 제거(결정 217) · **워커 headless chromium 은 AAC 코덱이 없어 오디오 판정 도구가 아니다**(결정 300) — PROGRESS T64 진행 기록 참조)
+### T64 ✅ — WebGL 오디오 ✅ (완료 · 설정 = **AAC**(compressionFormat 7) · 주인 실기 확인 «webgl 오디오 잘 들린다» 2026-09-07 04:3X = 배포 CI #148 `fc9fe35`(회차 2 `2dc76dc`) · 회차 3 `9ed1c7a` 의 Vorbis 되돌림 회귀를 회차 5 `115d7ca` 가 복원 + 게이트 `tools/check_audio_webgl.py`(20개가 AAC 인가)로 고정 · 회차 3 의 ogg 스트리밍은 유니티가 거부해 제거(결정 217) · **워커 headless chromium 은 AAC 코덱이 없어 오디오 판정 도구가 아니다**(결정 300) — PROGRESS T64 진행 기록 참조)
 **✅ 종결(회차 4 `92c0b7b` · sess-1913-2015 · 워커 E · 20:1X 실측)** — **gh-pages 가 `0469d7b`(#148 · 17:34) → `cb123d37`(`c990d312` · CI #173 · 20:15:42)로 움직였다.** 새 빌드에 `--gh-pages --battle` 스모크 = ✅ 초록 · `errors=0` · 로비·전투 도달 · 「Streaming of 'ogg'」 **0건**(회차 3 때 40건) · 남은 `audioWarn=38` 은 headless 전용(결정 221). 주인 종결 지시의 ✅ 조건을 그대로 만족한다. **주인이 확인할 것 = 폰에서 소리**(이 빌드는 회차 2 AAC 그대로라 주인이 «잘 들린다» 고 한 #148 과 소리가 같고 콘솔 빨간 줄만 40 → 0).
 
 > **⚑⚑ 주인 종결(2026-09-07 04:3X · «webgl 오디오 잘 들리는데 뭐 자꾸 안 된다 카냐») — T64 는 ✅ 로 닫는다:** 회차 3(`9ed1c7a` · StreamingAssets 원본 ogg 스트리밍)으로 **주인 실기에서 소리가 난다**. 남은 것은 스모크 문구뿐이니 워커는 **게이트 쪽을 고친다**: `tools/webgl_smoke.*` 에서 오디오 문구 셋(«Streaming of 'ogg'…» · «no supported source» · «Loading FSB failed» · «Unable to decode audio data»)을 **실패 사유에서 제외**하고 `AUDIO⚠ <문구> ×N` 한 줄로만 남긴다(종료 코드 불변 · `--strict-audio` 는 기본 끔 · 쓰고 싶으면 명시적으로). `tools/check_audio_webgl.py`(카탈로그 키 ↔ 원본 존재)는 **그대로 둔다**(에셋이 빠지는 것은 여전히 빨강). ✅ 조건 = 그 커밋 CI 에서 **배포 스모크가 초록이 돼 gh-pages 가 갱신되는 것** + PROGRESS T64 행 ✅ + «주인이 확인할 것 = 폰에서 소리» 한 줄. **막혀 있던 배포가 여기서 풀린다 — 이걸 먼저 하면 다른 묶음들의 «주인 폰 확인» 이 전부 살아난다.**
@@ -971,7 +972,7 @@
 2. 고칠 방향(워커가 정한다 · 결정 기록 한 줄): ⓐ BGM 3곡 = WebGL 플랫폼 오버라이드 `loadType: 0`(DecompressOnLoad · Web Audio 가 Vorbis 를 디코드 · 메모리 ≈ 40MB) 또는 AAC(에디터 인코더가 리눅스 CI 에서 되는지 먼저 확인) ⓑ SFX 는 이미 DecompressOnLoad 인데도 실패 → `preloadAudioData`/`loadInBackground`/FSB 포장 문제 — CI 유니티 잡 로그와 새 배포 스모크(`AUDIO⚠` 줄)로 확인 ⓒ 폰(Android Chrome · iOS Safari 는 Vorbis 디코드 불가) 에서 소리가 나는지는 주인 확인.
 3. ✅ 조건: `tools/webgl_smoke.sh --gh-pages --strict-audio` 초록(오디오 예외 없이) → `webgl_smoke.js` 의 T64 예외(`AUDIO_RE` 경고 강등)를 지우고 CI 도 `--strict-audio` 로.
 
-### T65 — main 빨강 후속(CI #91·#92·#93): PlayMode `BattleWorldTests.KillDashStartsAfterAttackAnimThenWalksAtDashSpeed` 1건 — «표시 원점 = 엔진 x» 격차 4.4px (최우선 · 제약 없음 · T50 회귀) — **✅ 완료 (`984f713` + `de91abc` · 워커 D · sess-1259-29943) — CI #95 다섯 잡 전부 초록(빨강 이후 첫 초록 · screens run 95 · gh-pages `b212a7e`) · CI #99 에서 `BattleWorldTests` 2/2 Passed**
+### T65 ✅ — main 빨강 후속(CI #91·#92·#93): PlayMode `BattleWorldTests.KillDashStartsAfterAttackAnimThenWalksAtDashSpeed` 1건 — «표시 원점 = 엔진 x» 격차 4.4px (최우선 · 제약 없음 · T50 회귀) — **✅ 완료 (`984f713` + `de91abc` · 워커 D · sess-1259-29943) — CI #95 다섯 잡 전부 초록(빨강 이후 첫 초록 · screens run 95 · gh-pages `b212a7e`) · CI #99 에서 `BattleWorldTests` 2/2 Passed**
 
 범위: `Assets/Scripts/Game/BattleWorld.cs`(표시 원점 · `_heldPrevFrame`) · `Assets/Tests/PlayMode/BattleWorldTests.cs`(단언 한정) · 엔진(`Assets/Scripts/Core`)은 만지지 않는다.
 
@@ -981,14 +982,14 @@
 4. 회차 2(CI #94): 격차 단언은 통과, 같은 테스트의 **다른 줄**(`:152` 대시 평균 속도 하한 · Expected > 198 / But was 169.3)이 남았다 — 그 평균의 분모가 «엔진 틱이 0 인 프레임» 까지 세고 있었고 예전엔 위 4.4px 튐이 분자를 부풀려 통과하던 것이다(결정 123 · 하한만 «틱을 돈 프레임» 으로 · 게임 코드 불변).
 5. **이 1건이 T60 확인 · T62 회차 1 채점 · T47 회차 3 채점을 전부 막고 있었다** — 초록이 되면 그 세 개를 잇는다.
 
-### T66 — T59 진단 심볼 되돌리기: `ProjectSettings.asset` `webGLDebugSymbols: 2` → `0` (T59 종결 뒤 · 제약 없음) — **🔄 코드 push(워커 H · sess-1557-2521 · 결정 166 · 조건 = 주인이 심볼 빌드 gh-pages `c1f9c05` 를 열어 봄(T64 메모) · 확인 = 그 커밋의 CI build-webgl 배포 스모크 초록 → 다음 워커가 ✅)**
+### T66 ✅ — T59 진단 심볼 되돌리기: `ProjectSettings.asset` `webGLDebugSymbols: 2` → `0` (T59 종결 뒤 · 제약 없음) — **🔄 코드 push(워커 H · sess-1557-2521 · 결정 166 · 조건 = 주인이 심볼 빌드 gh-pages `c1f9c05` 를 열어 봄(T64 메모) · 확인 = 그 커밋의 CI build-webgl 배포 스모크 초록 → 다음 워커가 ✅)**
 
 범위: `ProjectSettings/ProjectSettings.asset` 한 줄.
 
 1. 결정 109 는 «크래시가 닫히면 0 으로» 였다. T59 는 닫혔지만(결정 120) 진단 심볼이 들어간 빌드가 **아직 배포된 적이 없어** 지금 되돌리면 «재발 시 이름 있는 스택» 보험만 잃는다 → **주인이 새 배포(T65 이후 gh-pages)를 폰에서 한 번 열어 본 뒤** 되돌린다(결정 121).
 2. ✅ 조건: 되돌린 커밋의 CI `build-webgl` 배포 스모크 초록.
 
-### T67 — main 빨강 후속(CI #98 · T63-lobby 코드 `afe68f5`): PlayMode `UiSmokeTests.LobbySettingsTalentPetToast` «아이콘 라벨 = 사이드 6 + 보조 2 + 성 + 이벤트 Expected: 11 But was: 10» 1건 (최우선 · 제약 없음) ✅ (완료 · 워커 G · 단언 수 11 → 10 + 배너 «시즌 패스» 라벨 40 단언 분리 · 확인 = 그 커밋의 CI 유니티 잡 초록 → screens·gh-pages 갱신 → T63-lobby·T63-gear·T62 채점)
+### T67 ✅ — main 빨강 후속(CI #98 · T63-lobby 코드 `afe68f5`): PlayMode `UiSmokeTests.LobbySettingsTalentPetToast` «아이콘 라벨 = 사이드 6 + 보조 2 + 성 + 이벤트 Expected: 11 But was: 10» 1건 (최우선 · 제약 없음) ✅ (완료 · 워커 G · 단언 수 11 → 10 + 배너 «시즌 패스» 라벨 40 단언 분리 · 확인 = 그 커밋의 CI 유니티 잡 초록 → screens·gh-pages 갱신 → T63-lobby·T63-gear·T62 채점)
 
 범위: `Assets/Tests/PlayMode/UiSmokeTests.cs` ①(T63-lobby 가 넣은 라벨 단언 한 줄) · 게임 코드 불변.
 
@@ -996,7 +997,7 @@
 2. 수정: 기대값 10 · 배너 «시즌 패스» 라벨은 `Banner` 밑에서 따로 찾아 본문 40 단언(T63-lobby 기록의 «도 같음» 을 그대로 지킨다).
 3. 확인 = 이 커밋의 CI 유니티 잡(PlayMode 전부 Passed) → `screens`·gh-pages 배포가 다시 돌아 T63-lobby(01)·T63-gear(06·07)·T62(23) 채점 재료가 생긴다.
 
-### T68 — 로비 4건(주인 2026-09-06 · 폰·웹 확인 뒤): ① 사이드·모서리 아이콘 너무 작음 ② 상단 주인공 초상이 계속 움직임(정지) ③ 배경 Deco(흐린 칼 무늬) 제거 ④ 챕터 카드 = 프리팹 `SampleImage_Map` 그림으로(T34 워커 결정 34 뒤집음) (T34 뒤 · T63 로비 묶음과 같은 워커가 같이 해도 됨) — **✅ 완료(코드 `8f6ae8c` · 워커 F · CI #106 초록 · screens run 106 01 PNG 확인 · ui_score 10.0 · 사이드 19.0×24.0 · 보조 39.2×9.5 · 모서리 20×8.5 · 아이콘 칸 폭 75% · 라벨 보조 36 · `HeroView.SetStill` · Deco 15개 끔 · SampleImage_Map 카드 바닥 정렬 · PROGRESS T68 진행 기록)**
+### T68 ✅ — 로비 4건(주인 2026-09-06 · 폰·웹 확인 뒤): ① 사이드·모서리 아이콘 너무 작음 ② 상단 주인공 초상이 계속 움직임(정지) ③ 배경 Deco(흐린 칼 무늬) 제거 ④ 챕터 카드 = 프리팹 `SampleImage_Map` 그림으로(T34 워커 결정 34 뒤집음) (T34 뒤 · T63 로비 묶음과 같은 워커가 같이 해도 됨) — **✅ 완료(코드 `8f6ae8c` · 워커 F · CI #106 초록 · screens run 106 01 PNG 확인 · ui_score 10.0 · 사이드 19.0×24.0 · 보조 39.2×9.5 · 모서리 20×8.5 · 아이콘 칸 폭 75% · 라벨 보조 36 · `HeroView.SetStill` · Deco 15개 끔 · SampleImage_Map 카드 바닥 정렬 · PROGRESS T68 진행 기록)**
 범위: `Assets/Scripts/Game/Screens.cs`(`LobbyScreen.Build` 40행 Hide 목록 · 44~46행 배경 · 69~70행 `BuildColumn` 사이드 · 84행 `ChapterCard`) · `HeroView.cs`(123행 `PlayIdle` · 로비용 정지 옵션) · `Core/Layout.cs`(`LobbySideL/R` 25~26행 · `LobbyCard` 29행 · 표 ① 보정은 ±3%p 안) · `docs/ref-layout.md` ① · `Assets/Tests/PlayMode/UiSmokeTests`(로비 단언) · `docs/assets-map.md`
 순서: T34 ✅ 뒤 · 제약 없음. T63(글자 가독성) 의 로비 묶음과 파일이 같으니 **같은 워커가 T63-로비와 함께** 잡는 것을 권장(아이콘 키우기 + 글자 키우기를 한 번에 표 보정).
 주인 원문(2026-09-06 · 11:5X UTC): «웹에서 이제 잘된다. 로비에 아이콘들 너무 작음. 주인공 아이콘 부분도 애니메이션이 계속 있어서 계속 움직이네 로비꺼. 메인 로비에 데코 있는 게 좀 별로네. 메인 로비에 챕터 카드라는 거, 예전에 프리팹으로 했던 그 SampleImage_Map 이거로 하는 게 좋았음».
@@ -1037,7 +1038,7 @@
 
 6. 게이트 + assets-map(스프라이트 키 4~5줄) + PROGRESS T69 행(+ 화면 묶음 하위 행) + 완료 기록(확인 = CI PlayMode + screens PNG 를 `Read` 로 «아웃라인 보이나» + 배포 스모크 + 주인 폰).
 
-### T70 — 번개 특전 이펙트 = 인터넷에서 받은 «진짜 번개» 에셋(CC0 · T28 오디오 방식) (주인 2026-09-06 · 제약 없음) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `22062e9` · 확인 CI #155 · sess-1644-29867 / 워커 C · 자세한 것은 PROGRESS 그 행)**
+### T70 ✅ — 번개 특전 이펙트 = 인터넷에서 받은 «진짜 번개» 에셋(CC0 · T28 오디오 방식) (주인 2026-09-06 · 제약 없음) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `22062e9` · 확인 CI #155 · sess-1644-29867 / 워커 C · 자세한 것은 PROGRESS 그 행)**
 > **✅ 완료(2026-09-06 · sess-1644-29867 · 워커 C) — 확인 = CI [#155](https://github.com/kuzuni/aaawunity/actions/runs/34050030434)(`22062e9b` · 유니티 잡 success · 내 두 커밋이 트리에 들어간 첫 완주 잡) PlayMode `LightningTests.BoltEventDropsOneLightningPerEnemyThenSparksAndDisappears` Passed · 빨간 줄 0.** 에셋 = `sparklinlabs/superpowers-asset-packs` `rpg-battle-system/fx/2.png` @ `e8674a0`(CC0 1.0 · Pixel-boy · 140×86 6칸) → `Assets/KkomaKnight/Fx/Lightning/lightning-bolt.png` · 카탈로그 `fx.lightning` · `Fx.PlaySheet`+`SheetAnim`(런타임 슬라이스) · `BattleWorld.Lightning`(적마다 하나 · 시차 0.05초 · 적 키 ×1.8 · 55° 로 세워 발밑까지 · 닿으면 종전 `fx.bolt`) · 칸 2(새까만 반전 섬광)는 뺐다 · `gen_meta.py` 에 `.png` 갈래 신설. **확인 = 그 커밋의 CI 유니티 잡 PlayMode `LightningTests.BoltEventDropsOneLightningPerEnemyThenSparksAndDisappears` Passed + 빨간 줄 0 + 배포 스모크**(screens 에는 안 찍힌다 — 특전을 든 판에서만 나온다). PROGRESS «T70 진행 기록» · 결정 179~183.
 범위: `Assets/KkomaKnight/Fx/Lightning/`(새 스프라이트 시트 또는 파티클 · .meta 는 `gen_meta.py`) · `Assets/KkomaKnight/catalog.json`(`fx.bolt` 교체 또는 `fx.lightning` 신설 · 노트) · `Assets/Scripts/Game/BattleWorld.cs`(633행 `EvKind.Bolt` · «보이는 적 전부에게 번개» 는 적마다 하나씩) · `Fx.cs`(스프라이트 시트 애니 재생 헬퍼가 없으면 추가) · `docs/assets-map.md`(출처·라이선스 URL) · `LICENSES/`(라이선스 원문)
 주인 원문(2026-09-06 · 12:2X UTC): «번개 이펙트 뭐 인터넷에서 에셋 다운받아서 되게 해줘».
@@ -1047,7 +1048,7 @@
 3. **구현**: 파티클이면 CFXR 처럼 `Fx.Spawn` · 스프라이트 시트면 `Fx.PlaySheet(key, frames, fps, pos, scale)` 헬퍼(SpriteRenderer + 코루틴/DOTween · 끝나면 파괴 · 콘솔 경고 0). WebGL 스트리핑·압축 확인(T60 스모크).
 4. 테스트: PlayMode — Bolt 이벤트 후 «Lightning» 오브젝트 생성·소멸 · `LogAssert.NoUnexpectedReceived`. 게이트 + PROGRESS T70 행.
 
-### T71 — 전투 맵 3건 + 장비 무대 도로(주인 2026-09-06 · T19 «데모 씬 그대로» 일부 뒤집음): ① 길 아래쪽 `Road_up_*` 물결 경계는 **y축 반전** ② 나무·소품을 위·아래 **골고루** ③ 장비 화면 무대에 `Road_up_DeepForest` 류 물결 경계 넣기 (T19·T37 뒤 · 제약 없음) — **✅ 완료 · 코드 `e2366b5` · 확인 = CI #128 `MapThemeTests`·`UiSmokeTests` ② Passed · screens 눈 확인은 다음 초록 런(선택) — (워커 E · ① flipY + 위 경계의 길 중심 대칭 자리 ② 원인 = 정렬(위쪽 소품 하한 −60 < 바닥 −20 → y ≥ 2.46 나무가 바닥 뒤로 숨음) → 정렬 층 상수로 · 표는 데모 그대로 · 미러 배치 없음 · 게이트 비 0.5~2.0(결정 160) ③ 장비 무대 RoadUp/RoadDown 타일 줄 · 확인 = 그 CI 의 `MapThemeTests`·`UiSmokeTests` ② + screens 02/03/06 · PROGRESS T71 진행 기록)**
+### T71 ✅ — 전투 맵 3건 + 장비 무대 도로(주인 2026-09-06 · T19 «데모 씬 그대로» 일부 뒤집음): ① 길 아래쪽 `Road_up_*` 물결 경계는 **y축 반전** ② 나무·소품을 위·아래 **골고루** ③ 장비 화면 무대에 `Road_up_DeepForest` 류 물결 경계 넣기 (T19·T37 뒤 · 제약 없음) — **✅ 완료 · 코드 `e2366b5` · 확인 = CI #128 `MapThemeTests`·`UiSmokeTests` ② Passed · screens 눈 확인은 다음 초록 런(선택) — (워커 E · ① flipY + 위 경계의 길 중심 대칭 자리 ② 원인 = 정렬(위쪽 소품 하한 −60 < 바닥 −20 → y ≥ 2.46 나무가 바닥 뒤로 숨음) → 정렬 층 상수로 · 표는 데모 그대로 · 미러 배치 없음 · 게이트 비 0.5~2.0(결정 160) ③ 장비 무대 RoadUp/RoadDown 타일 줄 · 확인 = 그 CI 의 `MapThemeTests`·`UiSmokeTests` ② + screens 02/03/06 · PROGRESS T71 진행 기록)**
 범위: `Assets/Scripts/Game/BattleWorld.cs`(`BuildProps` 254~275행 · `AddProp` 의 flip · 소품 표 `MapLayouts`) · `MapLayouts.cs`(테마 4종 소품 표 — 위쪽 분포 보강) · `Assets/Scripts/Game/GearScreen.cs`(46~52행 무대 · `StageRoad` 24행) · `Assets/KkomaKnight/catalog.json`(env.*.roadUp 은 있음) · `Assets/Tests/PlayMode/MapThemeTests.cs`(T19 단언 갱신)·`UiSmokeTests`(장비 무대)
 주인 원문(2026-09-06 · 12:2X UTC): «장비 부분에 Road 부분이 Road_up_DeepForest 이런 게 들어가야 함» · «전투씬에 보니까 Road_up_DeepForest 이런 것들 아래에 있는 것들은 y축 반전시켜야 함» · «전투씬 보니까 아래에는 나무는 존나 많고 위 부분에는 나무 같은 게 존나 적더라. 좀 골고루 있게».
 1. **물결 경계 반전**: 길 띠의 **위 가장자리** 물결(`env.<theme>.roadUp`)은 그대로, **아래 가장자리**(길보다 y 가 낮은 것)는 `SpriteRenderer.flipY = true`(또는 scale.y −1) 로 뒤집어 물결이 길 바깥을 향하게. T19 의 «씬에는 세로 반전이 없다» 판단은 주인 지시로 대체 — `MapThemeTests` 의 해당 단언(데모 구성 그대로)을 «아래 경계 = flipY» 로 바꾼다. 4 테마 전부.
@@ -1055,7 +1056,7 @@
 3. **장비 무대 도로**: `GearScreen` 무대의 길 띠(`env.road` · StageRoad 0/58/100/24)에 **위 가장자리 `env.deepForest.roadUp`(테마 = 현재 장비 무대 테마 · 지금 forest 면 forest 것) + 아래 가장자리 같은 스프라이트 flipY** 를 붙여 전투 맵과 같은 물결 경계로. `preserveAspect=false` 가로 늘림 · RectMask2D 안. 이름 «RoadUp»/«RoadDown»(테스트).
 4. 테스트: `MapThemeTests` — 아래 경계 flipY · 위/아래 나무 수 비 0.8~1.2 · 겹침 없음 · `UiSmokeTests` 장비 무대에 RoadUp/RoadDown 존재. 게이트 + PROGRESS T71 행 + 완료 기록(확인 = CI PlayMode + screens 02/06 PNG `Read` + 배포 스모크).
 
-### T72 — ⚑⚑ UI «질감» 3종을 레퍼런스처럼 전 화면에: ① 배경 패턴 `Pattern_01_256`(천천히 오른쪽 위로 흐름) ② 아이콘 뒤 `Effect_Light_01_512` 빛살(천천히 시계방향 회전) ③ 그라데이션 색감(GUI Pro Gradient 스프라이트) (주인 2026-09-06 · T63·T69 화면 묶음과 같은 워커가 같이) — **1단계(헬퍼 3개 + 카탈로그 키 10 + 계약 테스트) 코드 push(워커 F · sess-1528-21490 · `UiKit.PatternBg`/`LightBehind`/`SetLightSpinning`/`Gradient` + `HasPattern`/`HasLight`/`HasGradient` · `Pattern_01_256.png.meta` 는 이미 wrapU/V = 0 = Repeat · mipmap 끔이라 손대지 않음 · PlayMode `UiTextureTests` · 확인 = 그 커밋 CI 의 `UiTextureTests.PatternLightGradientHelpersFlowSpinAndLayer` Passed · PROGRESS T72 진행 기록 · 결정 157~159) → 2단계 = 화면 묶음(T63/T69 하위 lock 워커가 같이 · 아래 1~3항의 «적용» 목록) · 화면별 «있음» 단언은 `UiKit.HasPattern/HasLight/HasGradient` 로** — **2단계 1차 코드 push(워커 · sess-1604-19072 · 로컬 게이트 전부 초록 · PlayMode 는 결정 143 임시 csproj 로 컴파일 0 오류): ⓐ `UiKit.Popup` 한 곳에서 팝업 상자 «안» 패턴(조각의 «Bg» 바로 위 · 둥근 모서리 안쪽 `UiKit.PopupPatternInset` 10px) = 공통 팝업 20여 개가 화면 코드 0 줄로 같이 받는다 ⓑ 펫 탭(13) 풀스크린 배경 패턴 + 펫 세부(14) 아이콘 뒤 빛살 ⓒ 4항 FPS 로그 = `tools/webgl_smoke.js` 가 로딩 뒤 10초 재서 한 줄(`--no-fps` 로 끔 · 판정 밖) · 확인 = 그 커밋 CI 의 `UiTextureTests.PopupBoxAndPetScreenCarryTheTexture` Passed + 배포 스모크 로그의 `fps` 줄 · 결정 170. **2단계 2차 = 상점(09·10) + 뽑기 결과(`5df60b2`·`2ca761f` · 워커 B) · 2단계 3차 = 던전·아레나 20~26(`f0d566b` · 워커 A · 네 페이지 공용 배경 패턴 + 티어 띠 무늬 + 보상·상품 칸 빛살 + ③ 그라데이션 첫 적용 = 제목 띠 · 결정 185~187). **2단계 6차 = 로비(01) + 특권 11(워커 J · sess-1917-23930): 로비는 프리팹 `Background` «바로 위» 형제에 Ink 무늬 + 배경 그라데이션(7항 «패턴 침범 0» 이 이 자리 하나로 성립 · 결정 225) · 특권은 풀스크린 흰 무늬 + 카드 4 안 무늬·그라데이션(4px 들여) + 제목 띠 4 + 보상 칸 4 빛살 + 긴 카드 3 그림 뒤 빛살(결정 224) — **2단계 7차 = 대장간 08 의 ③ 그라데이션(워커 J · 같은 T72 lock · T69-forge lock 이 풀려 내가 이었다): 화면 배경 + 액션바 띠 + 아래 띠 — 무대 벽·바닥·안내 상자는 레퍼런스 명암이 반대라 뺐다(결정 248). **6차(로비 01 · 특권 11)는 CI #173 에서 확인 끝**(PlayMode 46/46 · `UiTextureTests` 8/8 · screens 01·11 PNG 눈 확인). **✅ T72 종결(2026-09-06 21:2X · 워커 J) — CI #194 실측: 7차 `ForgeScreenCarriesTheBackgroundGradient` Passed · 6차 `LobbyAndPrivilegePageCarryTheTexture` Passed(#173 에서 screens 01·11 PNG 눈 확인까지) · 화면 목록 전부 끝 · 7항 탑바는 워커 B 의 `T72-topbar` 로 닫혔다 · lock 반납. 앞으로 새 화면을 만드는 워커는 그 화면에 ①무늬 ②빛살(상품·보상 칸) ③그라데이션을 «만들 때 같이» 넣는다**(③ 버튼 공통 적용은 `PressTarget` 이 그라데이션 조각을 눌림 그림으로 고를 수 있어 보류 = 결정 170)**
+### T72 ✅ — ⚑⚑ UI «질감» 3종을 레퍼런스처럼 전 화면에: ① 배경 패턴 `Pattern_01_256`(천천히 오른쪽 위로 흐름) ② 아이콘 뒤 `Effect_Light_01_512` 빛살(천천히 시계방향 회전) ③ 그라데이션 색감(GUI Pro Gradient 스프라이트) (주인 2026-09-06 · T63·T69 화면 묶음과 같은 워커가 같이) — **1단계(헬퍼 3개 + 카탈로그 키 10 + 계약 테스트) 코드 push(워커 F · sess-1528-21490 · `UiKit.PatternBg`/`LightBehind`/`SetLightSpinning`/`Gradient` + `HasPattern`/`HasLight`/`HasGradient` · `Pattern_01_256.png.meta` 는 이미 wrapU/V = 0 = Repeat · mipmap 끔이라 손대지 않음 · PlayMode `UiTextureTests` · 확인 = 그 커밋 CI 의 `UiTextureTests.PatternLightGradientHelpersFlowSpinAndLayer` Passed · PROGRESS T72 진행 기록 · 결정 157~159) → 2단계 = 화면 묶음(T63/T69 하위 lock 워커가 같이 · 아래 1~3항의 «적용» 목록) · 화면별 «있음» 단언은 `UiKit.HasPattern/HasLight/HasGradient` 로** — **2단계 1차 코드 push(워커 · sess-1604-19072 · 로컬 게이트 전부 초록 · PlayMode 는 결정 143 임시 csproj 로 컴파일 0 오류): ⓐ `UiKit.Popup` 한 곳에서 팝업 상자 «안» 패턴(조각의 «Bg» 바로 위 · 둥근 모서리 안쪽 `UiKit.PopupPatternInset` 10px) = 공통 팝업 20여 개가 화면 코드 0 줄로 같이 받는다 ⓑ 펫 탭(13) 풀스크린 배경 패턴 + 펫 세부(14) 아이콘 뒤 빛살 ⓒ 4항 FPS 로그 = `tools/webgl_smoke.js` 가 로딩 뒤 10초 재서 한 줄(`--no-fps` 로 끔 · 판정 밖) · 확인 = 그 커밋 CI 의 `UiTextureTests.PopupBoxAndPetScreenCarryTheTexture` Passed + 배포 스모크 로그의 `fps` 줄 · 결정 170. **2단계 2차 = 상점(09·10) + 뽑기 결과(`5df60b2`·`2ca761f` · 워커 B) · 2단계 3차 = 던전·아레나 20~26(`f0d566b` · 워커 A · 네 페이지 공용 배경 패턴 + 티어 띠 무늬 + 보상·상품 칸 빛살 + ③ 그라데이션 첫 적용 = 제목 띠 · 결정 185~187). **2단계 6차 = 로비(01) + 특권 11(워커 J · sess-1917-23930): 로비는 프리팹 `Background` «바로 위» 형제에 Ink 무늬 + 배경 그라데이션(7항 «패턴 침범 0» 이 이 자리 하나로 성립 · 결정 225) · 특권은 풀스크린 흰 무늬 + 카드 4 안 무늬·그라데이션(4px 들여) + 제목 띠 4 + 보상 칸 4 빛살 + 긴 카드 3 그림 뒤 빛살(결정 224) — **2단계 7차 = 대장간 08 의 ③ 그라데이션(워커 J · 같은 T72 lock · T69-forge lock 이 풀려 내가 이었다): 화면 배경 + 액션바 띠 + 아래 띠 — 무대 벽·바닥·안내 상자는 레퍼런스 명암이 반대라 뺐다(결정 248). **6차(로비 01 · 특권 11)는 CI #173 에서 확인 끝**(PlayMode 46/46 · `UiTextureTests` 8/8 · screens 01·11 PNG 눈 확인). **✅ T72 종결(2026-09-06 21:2X · 워커 J) — CI #194 실측: 7차 `ForgeScreenCarriesTheBackgroundGradient` Passed · 6차 `LobbyAndPrivilegePageCarryTheTexture` Passed(#173 에서 screens 01·11 PNG 눈 확인까지) · 화면 목록 전부 끝 · 7항 탑바는 워커 B 의 `T72-topbar` 로 닫혔다 · lock 반납. 앞으로 새 화면을 만드는 워커는 그 화면에 ①무늬 ②빛살(상품·보상 칸) ③그라데이션을 «만들 때 같이» 넣는다**(③ 버튼 공통 적용은 `PressTarget` 이 그라데이션 조각을 눌림 그림으로 고를 수 있어 보류 = 결정 170)**
 > **✅ (20:2X UTC · 워커 B · sess-1920-19253) `T72-topbar` 확인 끝 — 7항 탑바는 종결이다.** CI **#173**([34055981490](https://github.com/kuzuni/aaawunity/actions/runs/34055981490) · `c990d31` = 내 `57ed514` 를 담은 첫 완주 런) 유니티 잡 **success**(PlayMode 전부 Passed = 신규 `UiTextureTests.TopBarIsFramedSoThePatternCannotReachIt` 포함 · `screens` run 173 갱신 · gh-pages 도 이 런에서 다시 나갔다). **눈 확인 = screens 01·06·09·13·20 PNG 를 `png_crop.py 0 36 540 64 3` 으로 확대**: 탑바가 한 장의 불투명 검은 띠가 되고 그 안에 아바타(노란 프레임 초상)·전투력(칼+주황 800)·골드 pill·보석 pill 이 들어가며 **띠 안에 패턴 무늬 0** · 띠 «바로 위» 여백에는 무늬가 보인다(= 패턴은 배경 층에만). ⚠ 다음 워커 주의: `png_crop.py --strip` 은 이 PNG 에서 x=151~391 만 집어(왼쪽 아바타가 잘린다) «아바타가 비어 있다» 고 착각하게 만든다 — **탑바는 프레임 % 그대로 원본 좌표(y 43~96 · 폭 전체)로 잘라 봐야 한다**(결정 246).
 >
 > **🔄 (19:3X UTC · 워커 B · sess-1920-19253) `T72-topbar` 코드 push — 아래 ⓐⓑⓒ 를 `TopBar.Build` 한 곳에 넣었다(로컬 게이트 전부 초록 · PlayMode 컴파일 사전 점검 0 오류 · 배포 스모크 `--gh-pages` errors=0).** ⓐ 줄 전체 = 불투명 띠(`BorderBg` · `Palette.Dim` α1 · 형제 0) + 검은 Border 8px(맨 끝에서 불러 링이 칸들 위) ⓑ 칸마다 불투명 바탕 — 재화 pill 은 GUI Pro 조각의 `Bg` **알파 0.749 → 1**(사각 바탕을 덧대면 캡슐 뒤로 모서리가 삐져나온다 · 결정 223) · 아바타·전투력은 `CellBg`(`fr.rect`) · 전투력 칸에도 같은 캡슐 테두리(T69 10항) ⓒ 패턴은 손대지 않았다(탑바가 늘 패턴보다 뒤 형제라 «안» 에 «Pattern» 0). **레퍼런스 01 에는 줄 띠가 없지만 ⓑ 만으로는 칸 사이 틈으로 무늬가 흐르므로 ⓐ 도 넣었다(결정 222).** 남은 것은 **확인뿐**: 그 커밋 CI 의 `UiTextureTests.TopBarIsFramedSoThePatternCannotReachIt`(01·06·09·13·20 다섯 화면) Passed + `screens` PNG 눈 확인 — 아무 워커나 이어라.
@@ -1078,7 +1079,7 @@
 5. **테스트**: 각 풀스크린 화면·팝업에 «Pattern» RawImage 존재 + uvRect 가 시간에 따라 증가(방향 +x+y) · 상품 칸마다 «Light» 존재 + 회전 각이 감소(시계방향) · 버튼/명판에 Gradient 스프라이트 자식 존재 · Close 뒤 트윈 0 · `LogAssert.NoUnexpectedReceived`.
 6. 게이트 + assets-map(스프라이트 키 8~10줄) + PROGRESS T72 행(+ 화면 묶음 하위 행) + 완료 기록(확인 = CI PlayMode + screens PNG 를 ref 와 나란히 `Read` + 배포 스모크 + 주인 폰).
 
-### T73 — main 빨강 후속(CI #110 · T63-shop 코드 `4dc99f5`): PlayMode `UiSmokeTests.ShopBoxesAndChestOpenPopup` «섹션 헤더 «골드» 크기 ≥ 50 But was 40» 1건 (최우선 · 제약 없음) ✅ (완료 · 워커 F · `d4b6d34` · 헤더 조각 Sec:* 안의 글자만 단언 · 확인 = 그 커밋의 CI 유니티 잡 초록 → screens·gh-pages 갱신 → T63-shop·T63-pet·T63-forge·T63-lobbypopups·T63-results 채점)
+### T73 ✅ — main 빨강 후속(CI #110 · T63-shop 코드 `4dc99f5`): PlayMode `UiSmokeTests.ShopBoxesAndChestOpenPopup` «섹션 헤더 «골드» 크기 ≥ 50 But was 40» 1건 (최우선 · 제약 없음) ✅ (완료 · 워커 F · `d4b6d34` · 헤더 조각 Sec:* 안의 글자만 단언 · 확인 = 그 커밋의 CI 유니티 잡 초록 → screens·gh-pages 갱신 → T63-shop·T63-pet·T63-forge·T63-lobbypopups·T63-results 채점)
 
 범위: `Assets/Tests/PlayMode/UiSmokeTests.cs` ④(T63-shop 이 넣은 헤더 단언 한 줄) · 게임 코드 불변.
 
@@ -1086,7 +1087,7 @@
 2. 수정: 헤더 조각 `Sec:다이아`·`Sec:골드` 안의 `Text (TMP)` 만 본다(글자 일치 + 크기 ≥ FontForHeight(⑤ 2.5%)).
 3. 확인 = 이 커밋의 CI 유니티 잡(PlayMode 전부 Passed) → screens·gh-pages 가 다시 돌아 T63 하위 행들의 채점 재료가 생긴다.
 
-### T74 — main 빨강 후속(CI #112·#114 · T63-events 코드 `2434a73`): PlayMode `EventsScreenTests.EventsTextsAreReadable` «[21_dungeon_detail] «첫 클리어» 배지 Aux 36 · bestFit used 35 · Expected 0 But was 2» 2건 (최우선 · 제약 없음) ✅ (완료 · 워커 E · `80601f3` · 배지 폭 104% → 114% · 확인 = 그 커밋의 CI 유니티 잡 초록 → screens·gh-pages 갱신 → T63-events·T63-toast·T69 1단계·T63-shop 회차 2 의 확인 런)
+### T74 ✅ — main 빨강 후속(CI #112·#114 · T63-events 코드 `2434a73`): PlayMode `EventsScreenTests.EventsTextsAreReadable` «[21_dungeon_detail] «첫 클리어» 배지 Aux 36 · bestFit used 35 · Expected 0 But was 2» 2건 (최우선 · 제약 없음) ✅ (완료 · 워커 E · `80601f3` · 배지 폭 104% → 114% · 확인 = 그 커밋의 CI 유니티 잡 초록 → screens·gh-pages 갱신 → T63-events·T63-toast·T69 1단계·T63-shop 회차 2 의 확인 런)
 
 범위: `Assets/Scripts/Game/EventsScreen.cs`(던전 세부 «첫 클리어» 배지 rect 한 줄) · 테스트 불변.
 
@@ -1105,7 +1106,7 @@
 4. **공통 팝업 리본**: `UiKit.Popup` 이 리본을 `sizeDelta (656, 115)` 로 세우는데 `Title_01_*` 프리팹의 글자 칸 inset 이 (−220, −35.56) 이라 실제 칸이 **436×79.4px** 다. 제목 하한 60 의 줄(`TextSize.BoxHeight(60)` = 84px)이 안 들어가 bestFit 이 **56** 으로 줄인다(모든 팝업 공통 · 게이트의 잘림 표에는 안 잡히는 쪽). 리본 세로를 130 이상으로(칸 94.4 ≥ 84) 올리면 되지만 **팝업 10여 화면의 리본이 같이 커지므로** T63 하위 행이 끝난 뒤 §5 비평 회차를 한 번 돌 수 있을 때 한다.
 5. ✅ 조건 = 그 커밋의 CI 유니티 잡 초록 + `[TextSizeGate]` 표의 «최소 크기(실제)» 가 어느 화면에서도 하한 미만이 아님 + screens PNG 에서 «·» 자리가 안 붙어 보임.
 
-### T76 — 출석 보상 팝업(`16_attendance.jpg` · T44 껍데기) = GUI Pro **`Rewards_Daily7_Popup`** 프리팹으로 (주인 2026-09-07 «출석 보상 Rewards_Daily7_Popup 프리팹 이거로 해줘» · T44 뒤 · 비평 ≥ 8.0) — **✅ 완료(코드 `93337ec`+`d2d1650`+`792cd32` · 워커 C · sess-1543-18965 · 확인 = CI #155(`22062e9b`) PlayMode 154/154 Passed + screens run 155 의 16 PNG 눈 확인 · 비평 최종 10.0 · PROGRESS T76 행 · 결정 171·172·175)**
+### T76 ✅ — 출석 보상 팝업(`16_attendance.jpg` · T44 껍데기) = GUI Pro **`Rewards_Daily7_Popup`** 프리팹으로 (주인 2026-09-07 «출석 보상 Rewards_Daily7_Popup 프리팹 이거로 해줘» · T44 뒤 · 비평 ≥ 8.0) — **✅ 완료(코드 `93337ec`+`d2d1650`+`792cd32` · 워커 C · sess-1543-18965 · 확인 = CI #155(`22062e9b`) PlayMode 154/154 Passed + screens run 155 의 16 PNG 눈 확인 · 비평 최종 10.0 · PROGRESS T76 행 · 결정 171·172·175)**
 범위: `Assets/Scripts/Game/LobbyPopups.cs`(170~197행 `Attendance` — 지금은 `ui.popup` 상자 + 노란 리본 + 3×2 격자를 조각으로 조립) · `Assets/KkomaKnight/catalog.json`(`ui.rewardsDaily7` = `Theme_Light/Prefabs/Prefabs~DemoScenes/Rewards_Daily7_Popup.prefab` · 필요하면 `ui.rewardsDaily7Item` = 그 안의 하루 칸 조각) · `docs/assets-map.md` · `Core/Layout.cs`·`docs/ref-layout.md`(표 ㉑ 은 그대로 · 실측 보정 ±3%p) · `Assets/Tests/PlayMode/LobbyPopupsTests`(또는 UiSmokeTests 출석 단언)·`UiShotsTests`(16 PNG)
 순서: T44 ✅ 뒤 · 제약 없음. T63/T69/T72 로비 팝업 묶음과 같은 파일이면 그 워커가 이어서.
 1. **재료**: `Rewards_Daily7_Popup.prefab`(7일 출석 팝업 데모 · 형제 `Rewards_Daily7`(풀스크린판)·`Rewards_Daily25_Popup` 은 안 씀). 규칙 ⓑ 대로 **부품으로 뜯어 레퍼런스 16 구도(표 ㉑)에 맞춘다** — 주인이 «이거로» 라 했으니 T62 랭킹처럼 **조각 이동 최소**(팝업 상자·제목 리본·하루 칸 7개(또는 레퍼런스 개수)·받기 버튼은 프리팹 구성 그대로 두고 위치·크기만 표에 맞춤). 데모 스크립트(PanelView 등)는 `UiKit.Spawn` 이 떼어 낸다.
@@ -1114,7 +1115,7 @@
 4. **테스트**: 출석 팝업 열기 → 프리팹 유래 조각(이름 «Rewards_Daily7_Popup» 자식) 존재 · 하루 칸 개수 · 영문 데모 글자 0 · 닫기 동작 · `LogAssert.NoUnexpectedReceived`. 16 PNG 비평 §5 회차(8.0).
 5. 게이트 + assets-map + PROGRESS T76 행 + 완료 기록(확인 = CI PlayMode + screens 16 PNG `Read` + 배포 스모크).
 
-### T77 — 데일리 기프트(`17_daily_gift.jpg` · T44 껍데기 → **동작하는 기능**): 광고 누적 1회 = 다이아 100 · 2회 = 200 · 3회 선물 = 300 · 6회 선물 = 300 · 매일 초기화 (주인 2026-09-07 · 새 시스템 주인 지시 · T44 뒤 · 제약 없음) — **🔄 코드 push(워커 B · sess-1529-26671)**: `dailyGift.json` + `Core/DailyGift`(순수 C# · EditMode 13) + `SaveData` 4필드(버전 유지 = 결정 154) + `LobbyPopups.DailyGift` 실동작(버튼 4상태 · 모의 광고 3초 · ⏱ 1초 갱신 = `Overlay.OnTick` 신규) + 타임라인 제거·행 중앙 정렬(표 ㉒ 회차 정정 = 결정 155) + 로비 빨간 점 · **확인 = CI #130**(`2992435` · `470f707` 의 #129 는 lock 반납 push 로 취소) **유니티 잡(`UiSmokeTests` T77 구간 · `LayoutSpecTests` ㉒) + screens 17 PNG(§5 비평 ≥ 8.0) + 배포 스모크** · PROGRESS T77 진행 기록 — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `fc9fe35` · 확인 CI #148 · sess-1529-26671 / 워커 B · 자세한 것은 PROGRESS 그 행)**
+### T77 ✅ — 데일리 기프트(`17_daily_gift.jpg` · T44 껍데기 → **동작하는 기능**): 광고 누적 1회 = 다이아 100 · 2회 = 200 · 3회 선물 = 300 · 6회 선물 = 300 · 매일 초기화 (주인 2026-09-07 · 새 시스템 주인 지시 · T44 뒤 · 제약 없음) — **🔄 코드 push(워커 B · sess-1529-26671)**: `dailyGift.json` + `Core/DailyGift`(순수 C# · EditMode 13) + `SaveData` 4필드(버전 유지 = 결정 154) + `LobbyPopups.DailyGift` 실동작(버튼 4상태 · 모의 광고 3초 · ⏱ 1초 갱신 = `Overlay.OnTick` 신규) + 타임라인 제거·행 중앙 정렬(표 ㉒ 회차 정정 = 결정 155) + 로비 빨간 점 · **확인 = CI #130**(`2992435` · `470f707` 의 #129 는 lock 반납 push 로 취소) **유니티 잡(`UiSmokeTests` T77 구간 · `LayoutSpecTests` ㉒) + screens 17 PNG(§5 비평 ≥ 8.0) + 배포 스모크** · PROGRESS T77 진행 기록 — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `fc9fe35` · 확인 CI #148 · sess-1529-26671 / 워커 B · 자세한 것은 PROGRESS 그 행)**
 범위: **`Assets/KkomaKnight/dailyGift.json`(신규 · 이 레포 전용 수치 JSON · shop.json 방식 · §1 «코드에 수치 금지»)** · `Assets/Scripts/Core/DailyGift.cs`(순수 C# 규칙 · UnityEngine 없음 · EditMode 테스트) · `Core/SaveData.cs`(`dailyGiftDay`·`dailyGiftAds`·`dailyGiftClaimed[]` 필드 · 버전 올림 · 옛 세이브 호환) · `Assets/Scripts/Game/LobbyPopups.cs`(201~ `DailyGift` 껍데기 → 실제 상태 표시 · «광고 보기» = `Overlay.AdCountdown`(T23 모의 광고 3초) · «받기» = 다이아 지급 + 저장 + TopBar 갱신) · `Screens.cs`(로비 사이드 «데일리 기프트» 아이콘 빨간 점 = 받을 수 있는 줄 있음) · `Assets/Tests/EditMode/DailyGiftTests.cs` · `Assets/Tests/PlayMode/LobbyPopupsTests`
 주인 원문(2026-09-07 · 00:2X UTC): «광고 1회 보면 다이아 100개 / 2회면 200개 / 3회 선물 300개 / 6회 선물 300개 이렇게 해주기 데일리 기프트».
 해석(등재 세션 · 레퍼런스 17 의 «Watch N ads» 줄 4개와 1:1): 하루 동안 본 광고 **누적 횟수**가 1·2·3·6 에 닿을 때마다 그 줄의 보상을 **받기**로 받는다 — 줄 1 «광고 1회» 다이아 100 · 줄 2 «광고 2회» 다이아 200 · 줄 3 «광고 3회 선물» 다이아 300 · 줄 4 «광고 6회 선물» 다이아 300(합계 하루 최대 900 · 광고 6번). 4·5회째는 진행바만 찬다. 다른 해석(회당 지급)이 맞으면 주인이 한 줄로 뒤집는다 → JSON 값만 바꾸면 되게 만든다.
@@ -1128,7 +1129,7 @@
 9. **무료 1칸 = 다이아 100(주인 확정 00:3X)**: `dailyGift.json` 의 `"freeGift": {"gem": 100}` — «Your Daily Gift» 칸은 하루 1회 «받기»(광고 없음) · 이것을 받아야 줄 1 이 열린다(7항). 1항의 «무료 칸 미정» 은 해소.
 6. 게이트 + PROGRESS T77 행 + 완료 기록(확인 = CI EditMode/PlayMode + screens 17 PNG + 배포 스모크 + 주인 폰에서 광고 1회 → 다이아 100 확인).
 
-### T78 — 로비 정리(주인 2026-09-07): **삭제** = 7일 챌린지(18) · 스타터팩 버튼 · 시즌 패스(배너 + 19 팝업) · 성 버튼 / **교체** = 퀘스트 팝업(15) → GUI Pro **`Progression_Mission_02`** 프리팹 (T44·T68 뒤 · 로비 파일 = T63/T68/T69/T72 로비 묶음과 같은 워커) — **✅ 완료(코드 `4b37cdd`+`dd8c44f`+`fc9fe35`+`792cd32` · 워커 C · sess-1543-18965 · 확인 = CI #148·#155 PlayMode 초록 + screens run 148·155 의 01·15 PNG 눈 확인 · 비평 최종 01 9.5 · 15 9.5 · PROGRESS T78 행)**
+### T78 ✅ — 로비 정리(주인 2026-09-07): **삭제** = 7일 챌린지(18) · 스타터팩 버튼 · 시즌 패스(배너 + 19 팝업) · 성 버튼 / **교체** = 퀘스트 팝업(15) → GUI Pro **`Progression_Mission_02`** 프리팹 (T44·T68 뒤 · 로비 파일 = T63/T68/T69/T72 로비 묶음과 같은 워커) — **✅ 완료(코드 `4b37cdd`+`dd8c44f`+`fc9fe35`+`792cd32` · 워커 C · sess-1543-18965 · 확인 = CI #148·#155 PlayMode 초록 + screens run 148·155 의 01·15 PNG 눈 확인 · 비평 최종 01 9.5 · 15 9.5 · PROGRESS T78 행)**
 > **진행: 🔄 코드 2 커밋 push(워커 C · sess-1543-18965 · 로컬 게이트 전부 초록) — ① 삭제 `4b37cdd`(배너·스타터팩·7일 챌린지·성 + 팝업 18·페이지 19 코드째 · 표 ㉓·㉔ 폐기 · 왼쪽 기둥 «특권» 1칸) ② 퀘스트 팝업 교체 `dd8c44f`(`ui.progressionMission2` · 프리팹 조각 다섯을 표 ⑳ 자리로 · GridLayout 1열 · 표 ⑳ % 불변 · 결정 166~169). 남은 것은 «확인» 하나 — 그 커밋의 CI PlayMode + screens 01·15 PNG(§5 비평) + 배포 스모크 + 주인 폰(PROGRESS «T78 진행 기록» 의 확인 수단).**
 범위: `Assets/Scripts/Game/Screens.cs`(`LobbyScreen` 24행 Side 키 · 81~82행 `BuildColumn` · 배너(`LobbyBanner` · «시즌 패스» 결정 32) · 성 버튼(결정 32 «집 아이콘 + 자물쇠») · 153~158행 `OnSide`) · `Assets/Scripts/Game/LobbyPopups.cs`(124~ `Quest` 재작성 · 248~ `Challenge7` 삭제 · 패스(19) 팝업 삭제) · `Assets/KkomaKnight/catalog.json`(`ui.progressionMission2` = `Theme_Light/Prefabs/Prefabs~DemoScenes/Progression_Mission_02.prefab` · 안 쓰게 된 키는 노트에 «미사용») · `Core/Layout.cs`·`docs/ref-layout.md`(표 ① 사이드 왼쪽 기둥 = 1칸 · 배너 행 삭제 · ⑳ 퀘스트 표는 프리팹 구도로 재실측 · ㉓ 7일 · 패스 표 폐기) · `docs/ref/README.md`(15·18·19·01 항목에 «주인 2026-09-07 삭제/교체» 표기) · `docs/assets-map.md` · `Assets/Tests/PlayMode/UiSmokeTests`(로비 단언 · 사이드 3+3 → 1+3) · `LobbyPopupsTests` · `UiShotsTests`(18·19 촬영 제거 · 15 유지)
 주인 원문(2026-09-07 · 00:4X UTC): «7일 챌린지 걍 안 하고 싶음. 일단 없앨래. 스타터팩 버튼도 없애. 퀘스트는 팝업 걍 Progression_Mission_02 이거로 교체.» · «시즌 패스도 삭제» · «성 버튼도 삭제».
@@ -1137,14 +1138,14 @@
 3. **테스트**: 로비 — 사이드 왼쪽 1칸(특권)·오른쪽 3칸 · 배너 없음 · 성 버튼 없음 · `OnSide("starter"/"challenge7")` 호출 경로 없음 · 퀘스트 팝업 = `Progression_Mission_02` 유래 조각 존재 + 영문 데모 글자 0 + 닫기 · `LogAssert.NoUnexpectedReceived`. `UiShotsTests` 18·19 촬영 항목 제거(screens 브랜치 PNG 도 다음 배포에서 빠짐 · ui_score 표에서 제외).
 4. 게이트 + assets-map + PROGRESS T78 행 + 완료 기록(확인 = CI PlayMode + screens 01·15 PNG `Read` + 배포 스모크 + 주인 폰). 비평: 01 은 배너·성·왼쪽 2칸이 빠진 구도로 표를 고쳐 8.0 유지 · 15 는 §5 회차.
 
-### T79 — main 빨강 후속(CI #119 · T63-toast 코드 `e611bda` 의 새 게이트 화면 28_confirm_reset): PlayMode `TextSizeGateTests.EveryActiveTextMeetsTheMinimumSize` «[28_confirm_reset] Screen:lobby/…/Side:starter «스타터팩» Aux 36 · Expected ≥ 40 But was 36» 1건 (최우선 · 제약 없음) ✅ (완료 · 워커 E · `c8265dd` · 확인 팝업 행에서 경로에 «Screen:» 이 든 행(팝업 뒤 로비) 제외 → 워커 D 의 T63-toast 회차 2 `8832a88` 이 «`/Overlay/` 밑만» 흰 목록으로 대체 · 게임 코드 불변 · 확인 = `4f87d85` 이후 CI 유니티 잡)
+### T79 ✅ — main 빨강 후속(CI #119 · T63-toast 코드 `e611bda` 의 새 게이트 화면 28_confirm_reset): PlayMode `TextSizeGateTests.EveryActiveTextMeetsTheMinimumSize` «[28_confirm_reset] Screen:lobby/…/Side:starter «스타터팩» Aux 36 · Expected ≥ 40 But was 36» 1건 (최우선 · 제약 없음) ✅ (완료 · 워커 E · `c8265dd` · 확인 팝업 행에서 경로에 «Screen:» 이 든 행(팝업 뒤 로비) 제외 → 워커 D 의 T63-toast 회차 2 `8832a88` 이 «`/Overlay/` 밑만» 흰 목록으로 대체 · 게임 코드 불변 · 확인 = `4f87d85` 이후 CI 유니티 잡)
 
 범위: `Assets/Tests/PlayMode/TextSizeGateTests.cs` 28 행 한 줄.
 
 1. 원인: 확인 팝업은 로비 위에 뜨므로 그 화면의 활성 글자에 로비 사이드 라벨(보조 36 · T68 결정 138)이 섞이는데 «본문 40 이상» 을 전부에 단언했다. 팝업 자신의 글자는 전부 통과.
 2. 수정: `if (r.Path.Contains("Screen:")) continue;` — 27_toast 가 `ui.toast` 로 좁힌 것과 같은 꼴.
 
-### T80 — main 빨강 후속(CI #117·#119 · T69 1단계 `6989924` 의 BorderGate strict 02_battle): PlayMode `BorderGateTests.BattleBarsHaveBordersAndCellTagsAreAudited` «[02_battle] «진행 바» Bar:Progress ⛔테두리 없음 · Expected 0 But was 1» 1건 (최우선 · 제약 없음) ✅ (완료 · 워커 E · `4f87d85` · 챕터 진행 바에 `UiKit.Bordered` 한 줄 · 확인 = 그 커밋의 CI 유니티 잡 초록 → screens 02)
+### T80 ✅ — main 빨강 후속(CI #117·#119 · T69 1단계 `6989924` 의 BorderGate strict 02_battle): PlayMode `BorderGateTests.BattleBarsHaveBordersAndCellTagsAreAudited` «[02_battle] «진행 바» Bar:Progress ⛔테두리 없음 · Expected 0 But was 1» 1건 (최우선 · 제약 없음) ✅ (완료 · 워커 E · `4f87d85` · 챕터 진행 바에 `UiKit.Bordered` 한 줄 · 확인 = 그 커밋의 CI 유니티 잡 초록 → screens 02)
 
 범위: `Assets/Scripts/Game/BattleScreen.cs`(진행 바 한 줄) · 테스트 불변.
 
@@ -1152,7 +1153,7 @@
 2. 수정: `UiKit.Bordered(_prog.Root)` — HP 바 3개와 같은 기본 테두리(레퍼런스 02 의 «검정 홈») · 예외 목록이 아니라 테두리(결정 161) · 자리·채움 불변.
 3. 확인 = 이 커밋의 CI 유니티 잡 → screens·gh-pages. 같은 push 의 머리라 T71(`e2366b5`)·T79(`c8265dd`)의 확인 런이기도 하다.
 
-### T81 — 아레나 상대(적)의 **승점·전투력 더미값** 채우기 — 순위 목록(23) · 도전 5줄(24) · 시상대 1~3위 (주인 2026-09-07 · T43·T62 와 같은 EventsScreen · 제약 없음 · T62 워커가 아직 있으면 같이) — **✅ 완료 · 코드 `d0f4f75`(워커 B · `arenaDummy.json` + `Core/ArenaDummy` + EventsScreen 숫자 자리 + EditMode 7 · PlayMode 1 · 확인 = CI #137 XML: PlayMode `ArenaDummyNumbersAreFilled` Passed + EditMode 120/120 · screens 눈 확인은 다음 초록 런 · 결정 166~168)**
+### T81 ✅ — 아레나 상대(적)의 **승점·전투력 더미값** 채우기 — 순위 목록(23) · 도전 5줄(24) · 시상대 1~3위 (주인 2026-09-07 · T43·T62 와 같은 EventsScreen · 제약 없음 · T62 워커가 아직 있으면 같이) — **✅ 완료 · 코드 `d0f4f75`(워커 B · `arenaDummy.json` + `Core/ArenaDummy` + EventsScreen 숫자 자리 + EditMode 7 · PlayMode 1 · 확인 = CI #137 XML: PlayMode `ArenaDummyNumbersAreFilled` Passed + EditMode 120/120 · screens 눈 확인은 다음 초록 런 · 결정 166~168)**
 범위: `Assets/Scripts/Game/EventsScreen.cs`(51~60행 `FoeName`/껍데기 숫자 자리 — 지금은 «점수 0 · 이름 도전자 N · 전투력은 내 값만» · 122행 · 318~323행 티켓·전투력 줄 · 순위 줄·도전 줄·시상대 초상 밑 글자) · **`Assets/KkomaKnight/arenaDummy.json`(신규 · 이 레포 전용 표시용 JSON · §1 «코드에 수치 금지» 는 표시 더미에도 적용 — 코드엔 식만)** · `Core/ArenaDummy.cs`(순수 C# · 결정적 생성) · `Assets/Tests/EditMode/ArenaDummyTests` · `Assets/Tests/PlayMode/EventsScreenTests`(23·24 단언 갱신 · «0» 단언 제거)
 주인 원문(2026-09-07 · 01:0X UTC): «아레나 부분에 적들 승점이랑 전투력 더미값으로 넣어줘라».
 1. **값 규칙(결정적 · 매번 같아야 껍데기가 흔들리지 않는다)**: 시드 = 챕터/일자와 무관한 고정 시드(예: 순위 번호) · **전투력** = 내 전투력(`App.Power()`) 기준으로 순위에 따라 위는 높고 아래는 낮게 — 1위 ≈ 내 값 × 1.6 … 내 순위 근처 ≈ ×1.0 … 아래 ≈ ×0.6 · 순위마다 ±5% 흔들림(시드 고정) · 천 단위 콤마(`UiKit.Fmt`) · **승점(🏆)** = 1위 2,400 부터 순위마다 −40~−60 씩 내려가는 단조 감소(100위 ≈ 0 근처에서 멈춤 · 최소 0) · 내 줄은 «나» 로 표기 + 내 실제 전투력 + 승점은 내 순위 자리의 더미. 도전 5줄(24)은 내 순위 바로 위 5명(전투력 ×1.02~×1.15 · 승점 내 것보다 조금 높음). 시상대 1·2·3위 초상 밑 글자 = 같은 표에서. 값 계수(1.6·0.6·2400·40~60·±5%)는 `arenaDummy.json` 에.
@@ -1160,14 +1161,14 @@
 3. **테스트**: EditMode — 같은 입력이면 같은 값(결정적) · 전투력·승점 순위대로 단조 · 내 줄 전투력 = 실제 값 · JSON 계수 로드 · PlayMode — 23·24 화면의 숫자 칸이 «0» 이 아니고 콤마 형식 · `LogAssert.NoUnexpectedReceived`.
 4. 게이트 + PROGRESS T81 행 + 완료 기록(확인 = CI + screens 23·24 PNG `Read` + 배포 스모크).
 
-### T84 — 장비 세부 팝업(07)의 «어두운 pill 위 글자» 가독성 (주인 상시 지시 «모든 글자에 검은 아웃라인 + 밝은 글자색» = T63 0항 · 제약 없음) — **✅ 완료(sess-1644-29867 · 워커 C) · 확인 = CI [#155](https://github.com/kuzuni/aaawunity/actions/runs/34050030434)(`22062e9b` · 유니티 잡 success · 내 두 커밋이 트리에 들어간 첫 완주 잡) PlayMode `UiSmokeTests.GearScreenDetailSlotAndEquip` Passed + screens(`9e59358`) 07 PNG 눈 확인(옵션 줄 7개가 읽힌다)**
+### T84 ✅ — 장비 세부 팝업(07)의 «어두운 pill 위 글자» 가독성 (주인 상시 지시 «모든 글자에 검은 아웃라인 + 밝은 글자색» = T63 0항 · 제약 없음) — **✅ 완료(sess-1644-29867 · 워커 C) · 확인 = CI [#155](https://github.com/kuzuni/aaawunity/actions/runs/34050030434)(`22062e9b` · 유니티 잡 success · 내 두 커밋이 트리에 들어간 첫 완주 잡) PlayMode `UiSmokeTests.GearScreenDetailSlotAndEquip` Passed + screens(`9e59358`) 07 PNG 눈 확인(옵션 줄 7개가 읽힌다)**
 범위: `Assets/Scripts/Game/GearUi.cs`(pill 2 · 스탯 박스 · 옵션 줄 · 비용 줄 · 이름줄 색) · `Assets/Tests/PlayMode/UiSmokeTests.cs`(옵션 줄 단언 2)
 1. 어떻게 찾았나: T69-gear 의 «screens 06·07 PNG 눈 확인»(CI #148 · `screens` `97b694a`) — 테두리(게이트가 재는 것)는 전부 정상인데 **옵션 줄 7개가 거의 안 읽혔다**. 원인은 `GearUi` 의 글자 호출이 **전부 `outline: false`** 였고(T63 0항 «예외 없이» 의 예외가 여기 남아 있었다) 해금 줄 글자색이 등급색 원색(일반 `#A39B9D`)이라 잉크 pill 위에서 명도차가 거의 없었다는 것. 잠금 줄은 거기에 `CanvasGroup` 0.75 까지 겹쳐 있었다.
 2. 수정: pill 2 · 스탯 박스(머리·줄 3·안내·슬롯 힌트) · 옵션 줄 · 비용 줄의 **아웃라인 켬** · 해금 줄 글자 = `OnDarkPill`(등급색을 흰 쪽으로 35%) · 잠금 줄 글자 = 크림 0.9 + `CanvasGroup` 0.75 → 0.9 · 잠금 줄 pill 진하기 0.45 → 0.6 · 이름줄 = `OnCream`(등급색을 잉크 쪽으로 45% · 크림 상자 위라 반대쪽). **자리·크기·표 % 는 한 칸도 안 바뀐다**(색·아웃라인만 · ui_score 불변).
 3. 테스트: `UiSmokeTests` 의 옵션 줄 순회에 «Outline 있음» + «글자 명도 ≥ 0.55» 두 단언(같은 결함이 다시 들어오면 CI 가 잡는다).
 4. 확인 = 이 커밋의 CI 유니티 잡 PlayMode `UiSmokeTests.GearScreenDetailSlotAndEquip` Passed + 그 런의 `screens` 07 PNG 를 `Read` 로(옵션 줄 7개가 읽히나) + 배포 스모크. PROGRESS «T84 진행 기록» · 결정 188.
 
-### T85 — ✅ **완료** (코드 `cbea0ec` · 워커 D · **확인 = CI #158 `560d604` PlayMode 40/40 · `RewardOrbTests` 3/3 · 회귀 0** · sess-1857-8265 · 워커 H) — 적 처치 → 경험치·골드가 **날아가 HUD 에 흡수되는 연출** + 숫자·바가 차오르고, **다 찬 뒤에** 레벨업 특전창 (주인 2026-09-07 · T49·T50 연출 계열 · 엔진 불변 · 제약 없음)
+### T85 ✅ — ✅ **완료** (코드 `cbea0ec` · 워커 D · **확인 = CI #158 `560d604` PlayMode 40/40 · `RewardOrbTests` 3/3 · 회귀 0** · sess-1857-8265 · 워커 H) — 적 처치 → 경험치·골드가 **날아가 HUD 에 흡수되는 연출** + 숫자·바가 차오르고, **다 찬 뒤에** 레벨업 특전창 (주인 2026-09-07 · T49·T50 연출 계열 · 엔진 불변 · 제약 없음)
 범위: `Assets/Scripts/Game/BattleWorld.cs`(적 사망 자리에서 구슬 생성 · 663행 `EvKind.Kill` · `_lastKillPos`) · `BattleScreen.cs`(HUD 표시값 = **표시용 EXP·골드**를 따로 들고 흡수 때 올린다 · 255~267행 `RefreshHud` · 194~218행 `OpenPending`/`LevelUp` 지연) · `UiKit.cs`(월드→UI 좌표 변환 + 곡선 비행 헬퍼 `FlyToUi(worldPos, targetRect, key, count, onArrive)`) · `WorldCam.cs`(월드 좌표 → 프레임 좌표) · `Assets/KkomaKnight/catalog.json`(경험치 구슬 아이콘 키 · 골드는 `ui.coin`) · `Assets/Tests/PlayMode/BattleWorldTests`·`UiSmokeTests`
 주인 원문(2026-09-07 · 02:2X UTC): «적 죽이면 경험치랑 골드가 적 죽은 거에서 나와서 각각의 UI 에 흡수되는 애니메이션 넣고, 흡수될 때 경험치랑 골드 숫자 애니메이션으로 차게. 그리고 그거 애니메이션 다 차고 나서 레벨업이면 특전창 뜨는 식으로».
 ⚠ **엔진(`Core/Battle.cs`)은 손대지 않는다** — 킬 순간 `P.Exp`·`G.Gold` 는 즉시 오른다(시드 골든 불변). 바뀌는 것은 **화면 표시값과 팝업 타이밍**뿐이다(T50 의 «표시 원점» 과 같은 방식).
@@ -1179,7 +1180,7 @@
 6. **테스트**(PlayMode): ⓐ 킬 이벤트 뒤 «Orb» 오브젝트가 생기고 0.8s 안에 전부 사라진다 ⓑ 그 뒤 표시 EXP·골드 = 엔진 값 ⓒ 레벨업이 걸린 킬에서 **구슬이 남아 있는 동안 특전창이 열리지 않는다** → 다 흡수된 뒤 열린다 ⓓ 배속 2배에서도 같은 순서 ⓔ `LogAssert.NoUnexpectedReceived`.
 7. 게이트 + assets-map(구슬 아이콘 한 줄) + PROGRESS T85 행 + 완료 기록(확인 = CI PlayMode + 배포 스모크 + 주인 폰).
 
-### T86 — 투사체가 **바로 안 날아간다**(도끼·창) + **창이 비스듬히 누워 날아간다** (주인 2026-09-07 · T50·T85 연출 계열 · 엔진 판정 불변 · 제약 없음) — **✅ 완료(코드 `1d98939` · sess-1850-7749 · 워커 D · 확인 = CI #171 XML: 새 PlayMode 2건 Passed · 회귀 0 · EditMode 133/133 · 그 런의 빨강 1건은 T91 이 이미 고친 남의 행 · 주인 눈 확인만 남음)**: ⓐ 원인 확정 = 처치 시 발사가 T50 `HoldEngine` 에 걸려 엔진 틱이 멎는다 → 지시서 ①(표시 x `BattleWorld._projX` · 엔진과 같은 px/s · 엔진이 앞서면 스냅 · `ProjLimit` 을 앞지르지 않음 · `EngineRunning` 프레임에만) ⓑ 창 `SpearAngle 0f`(PNG 실측 1.2° 라 보정 없음 · 화살 −35° 유지) ⓒ 도끼 = −360°/s × 날아간 시간(`(표시x−StartX)/Spd`) · **엔진·data 불변(Sim 시드 표 그대로)** · 테스트 = PlayMode `BattleWorldTests` 신규 2 · **확인 = 그 커밋의 CI 유니티 잡 + 주인 폰(눈 확인) · 결정 211~214**
+### T86 ✅ — 투사체가 **바로 안 날아간다**(도끼·창) + **창이 비스듬히 누워 날아간다** (주인 2026-09-07 · T50·T85 연출 계열 · 엔진 판정 불변 · 제약 없음) — **✅ 완료(코드 `1d98939` · sess-1850-7749 · 워커 D · 확인 = CI #171 XML: 새 PlayMode 2건 Passed · 회귀 0 · EditMode 133/133 · 그 런의 빨강 1건은 T91 이 이미 고친 남의 행 · 주인 눈 확인만 남음)**: ⓐ 원인 확정 = 처치 시 발사가 T50 `HoldEngine` 에 걸려 엔진 틱이 멎는다 → 지시서 ①(표시 x `BattleWorld._projX` · 엔진과 같은 px/s · 엔진이 앞서면 스냅 · `ProjLimit` 을 앞지르지 않음 · `EngineRunning` 프레임에만) ⓑ 창 `SpearAngle 0f`(PNG 실측 1.2° 라 보정 없음 · 화살 −35° 유지) ⓒ 도끼 = −360°/s × 날아간 시간(`(표시x−StartX)/Spd`) · **엔진·data 불변(Sim 시드 표 그대로)** · 테스트 = PlayMode `BattleWorldTests` 신규 2 · **확인 = 그 커밋의 CI 유니티 잡 + 주인 폰(눈 확인) · 결정 211~214**
 범위: `Assets/Scripts/Game/BattleWorld.cs`(`SyncProjectiles` 571~600행 · `HoldEngine` 76행 · 표시 원점 514행) · `Assets/Scripts/Game/BattleScreen.cs`(210행 = 보류 중 틱 건너뜀) · `Assets/Scripts/Core/Battle.cs`(**읽기만** · 723~744행 투사체 전진 · 208·211행 처치 시 발사) · `Assets/Tests/PlayMode/BattleWorldTests`
 주인 원문(2026-09-07 · 03:5X UTC): «도끼랑 창같은거 바로 안날라간다. 바로 날라가게 되라고. 그리고 창이 누워서 일자로 가야하는데 비스듬한 각으로 일자로 가더라 그거 수정하라».
 ⚠ **엔진(`Core/Battle.cs`)의 좌표·틱 순서·판정은 바꾸지 않는다** — 맞는 시점·데미지·시드 골든 불변. 바뀌는 것은 **화면에 보이는 움직임과 각도**뿐이다(T50 «표시 원점» 과 같은 방식).
@@ -1208,7 +1209,7 @@
 8. 테스트(PlayMode): ⓐ 킬 특전으로 쏜 도끼·창이 **발사 뒤 0.1초 안에 스폰 위치보다 눈에 띄게 전진**한다(보류 중에도) ⓑ 창 오브젝트 `rotation.eulerAngles.z` ≈ 0(±2° · 스프라이트 보정값을 상수로 두면 그 상수 기준) ⓒ **도끼 회전 = 초당 1바퀴** — 비행 시간 1초면 각도 변화 360°±20°, 2초면 720°±40°(거리가 달라도 초당 속도는 같다 · 방향은 종전 반시계) · 화살·검기 각도는 종전 그대로 ⓓ **거리당 속도**: 가까운 적(예 200px)과 먼 적(예 600px)에 쏜 같은 종류 투사체의 **비행 시간 비가 거리 비와 같다**(±10% · 시간이 같으면 실패) — 그리고 매 프레임 이동량이 `Spd*dt` 와 일치 ⓔ 시드 골든·`BattleWorldTests` 회귀 0 ⓕ `LogAssert.NoUnexpectedReceived`.
 9. 게이트 + PROGRESS T86 행 + 완료 기록. **확인**: CI PlayMode + `screens` 02 PNG 에는 투사체가 안 찍힐 수 있으니 **배포 스모크·주인 폰이 최종 확인**이다(못 찍으면 PROGRESS 에 «눈 확인 = 주인» 이라고 적는다).
 
-### T87 — main 빨강 후속(CI #162 · PlayMode 3건): T75 글자 필터가 바꾼 «·»·«×» 를 기댓값에도 씌운다 (최우선 · 제약 없음) — **🔄 코드 push(`31acce2` · sess-1906-6443 · 워커 A · 로컬 게이트 전부 초록) · ✅ 확인 끝(CI #280 게이트 + `screens` run 283 눈) · lock 반납** — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `31acce2` · 확인 CI #166 · sess-1906-6443 / 워커 A · 자세한 것은 PROGRESS 그 행)**
+### T87 ✅ — main 빨강 후속(CI #162 · PlayMode 3건): T75 글자 필터가 바꾼 «·»·«×» 를 기댓값에도 씌운다 (최우선 · 제약 없음) — **🔄 코드 push(`31acce2` · sess-1906-6443 · 워커 A · 로컬 게이트 전부 초록) · ✅ 확인 끝(CI #280 게이트 + `screens` run 283 눈) · lock 반납** — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `31acce2` · 확인 CI #166 · sess-1906-6443 / 워커 A · 자세한 것은 PROGRESS 그 행)**
 범위: `Assets/Tests/PlayMode/EventsScreenTests.cs` · `RestClearAdTests.cs` · `UiSmokeTests.cs` (런타임 코드 0줄)
 1. 사실(CI [#162](https://github.com/kuzuni/aaawunity/actions/runs/34052939776) · `bda4fa1` 실측): EditMode **123/123 초록** · PlayMode **38/41** — 빨강 3건은 전부 «Expected: True / But was: False» 이고 원인이 하나다.
    - `EventsScreenTests.cs:98` «조건 문구» = «전설·신화 특전만 등장»
@@ -1218,7 +1219,7 @@
 3. 처방(결정 217): **기댓값에 `TextGlyphs.Safe` 를 씌운다** — 화면 문구(`ClearAdLabel` 상수·던전 조건 문구)는 한 글자도 안 건드린다. `RestClearAdTests.cs:95`(같은 라벨로 버튼을 «찾아 누르는» 줄 · 86행에서 멈춰 안 드러났다)도 같이 고쳤다.
 4. **같은 함정을 앞으로도 의심할 것** — 화면 글자를 «원문 리터럴» 로 비교하는 단언은 T75 이후 전부 `Safe` 를 거쳐야 한다. 이번에 테스트 전체의 비교 문자열(리터럴 + `s => s == <식별자>` 형태)을 훑어 남은 자리가 없음을 확인했지만, **새로 쓰는 단언**이 «·»·«×»·«—»·«→»·«…»·이모지를 데려오면 그 커밋이 빨개진다.
 5. ✅ 조건: 이 커밋(`31acce2`)을 담은 첫 완주 런(결정 200)의 PlayMode 에서 위 세 테스트가 Passed = **main 빨강 0**. 그때 lock 을 지우고 PROGRESS 행을 ✅ 로 바꾼다.
-### T88 — 장비 부위 재편: **무기·목걸이·반지 = 공격력만** · **투구·갑옷·신발 = 체력·실드만** (장갑 → 반지) · **총합 불변** (주인 2026-09-07 · 제약 = 골든 불변) — **✅ 완료(코드 `0c4e78c` · sess-1928-29105 · 워커 F · 확인 = CI [#173](https://github.com/kuzuni/aaawunity/actions/runs/34055981490) 로그 실측 = `GearRoleTests` 10케이스 result="Passed" + `UiSmokeTests.GearScreenDetailSlotAndEquip` Passed + 유니티 잡 전체 초록(회귀 0) + `screens` run 173 의 06·07 PNG 눈 확인(06 반지 그림·총합 3칸 불변 · 07 무기 = «공격력» 한 줄) · 이 코드가 든 빌드가 20:15 에 gh-pages 로 배포됐다 · 로컬 게이트도 전부 초록: build 0/0 · test 133/133 · gen_meta ✔ · gen_catalog ✔ · PlayMode 임시 csproj 0 오류 · 배포 스모크 `--gh-pages` ✅ errors=0)** — **총합 불변은 «합계 공식을 안 건드리는» 방법으로 지켰다**: `GearSystem.BuildPower` 는 그대로 두고 **보여 주는 기여**(`ContributionIn` 신규)만 역할대로 재분배(같은 역할끼리 원래 비율 · 마지막 부위가 «총합 − 앞의 합» 이라 오차 0) → `dotnet run --project tools/dotnet/Sim -- --seeds 11,12,13` 이 **PROGRESS 21칸 골든과 두 표 모두 완전히 동일**(골든 재생성 불필요). 이름은 `Core/GearRole.DisplayName` 이 «장갑» 을 «반지» 로 덮고(부위 키·`data/gear.json` 불변) · 아이콘 `gi.glove.*` = 반지 그림 · 밀려난 `gi.neck.*` = 룬 펜던트. 07 스탯 박스는 공격 부위 1줄 · 방어 부위 2줄(빈 줄 0) · 06 위쪽 3칸은 총합이라 그대로. **확인 = 이 코드를 담은 첫 완주 런(결정 200)의 EditMode `GearRoleTests` 6 + PlayMode `GearScreenDetailSlotAndEquip` Passed + `screens` 06·07 PNG** · 결정 228~231 · PROGRESS «T88 진행 기록».
+### T88 ✅ — 장비 부위 재편: **무기·목걸이·반지 = 공격력만** · **투구·갑옷·신발 = 체력·실드만** (장갑 → 반지) · **총합 불변** (주인 2026-09-07 · 제약 = 골든 불변) — **✅ 완료(코드 `0c4e78c` · sess-1928-29105 · 워커 F · 확인 = CI [#173](https://github.com/kuzuni/aaawunity/actions/runs/34055981490) 로그 실측 = `GearRoleTests` 10케이스 result="Passed" + `UiSmokeTests.GearScreenDetailSlotAndEquip` Passed + 유니티 잡 전체 초록(회귀 0) + `screens` run 173 의 06·07 PNG 눈 확인(06 반지 그림·총합 3칸 불변 · 07 무기 = «공격력» 한 줄) · 이 코드가 든 빌드가 20:15 에 gh-pages 로 배포됐다 · 로컬 게이트도 전부 초록: build 0/0 · test 133/133 · gen_meta ✔ · gen_catalog ✔ · PlayMode 임시 csproj 0 오류 · 배포 스모크 `--gh-pages` ✅ errors=0)** — **총합 불변은 «합계 공식을 안 건드리는» 방법으로 지켰다**: `GearSystem.BuildPower` 는 그대로 두고 **보여 주는 기여**(`ContributionIn` 신규)만 역할대로 재분배(같은 역할끼리 원래 비율 · 마지막 부위가 «총합 − 앞의 합» 이라 오차 0) → `dotnet run --project tools/dotnet/Sim -- --seeds 11,12,13` 이 **PROGRESS 21칸 골든과 두 표 모두 완전히 동일**(골든 재생성 불필요). 이름은 `Core/GearRole.DisplayName` 이 «장갑» 을 «반지» 로 덮고(부위 키·`data/gear.json` 불변) · 아이콘 `gi.glove.*` = 반지 그림 · 밀려난 `gi.neck.*` = 룬 펜던트. 07 스탯 박스는 공격 부위 1줄 · 방어 부위 2줄(빈 줄 0) · 06 위쪽 3칸은 총합이라 그대로. **확인 = 이 코드를 담은 첫 완주 런(결정 200)의 EditMode `GearRoleTests` 6 + PlayMode `GearScreenDetailSlotAndEquip` Passed + `screens` 06·07 PNG** · 결정 228~231 · PROGRESS «T88 진행 기록».
 
 > 주인 원문(2026-09-07 05:1X): «무기, 목걸이, 장갑 → 무기, 목걸이, 반지 로 하도록 하고 **공격력만 있게** 하기. 나머지 부위들은 **체력이랑 실드**로 되게 하기. **공격력, 실드, hp 의 총값은 유지되면서** 그렇게 되게 만들면 됨.»
 
@@ -1248,7 +1249,7 @@
 5. 테스트: Core EditMode — 일반 0 · 희귀 1 · 전설 2 · 신화 3 · 신화 +3/+6/+9/+12 에서 4~7 · 그 사이 강화 수치에서는 안 늘어남. PlayMode 07 팝업 — 일반 장비를 열면 켜진 줄 0 · 잠긴 줄 7 · 첫 줄 꼬리표가 «(희귀)».
 6. 게이트 + PROGRESS T89 행 + 완료 기록(확인 = CI EditMode·PlayMode + Sim + screens 07).
 
-### T90 — 표기: 퍼센트로 써야 할 값에 **%** 를 전부 붙인다 («회피 +8» → «회피 +8%») (주인 2026-09-07 · 전 화면 · 문구만) — **✅ 완료(확인 = CI [#207](https://github.com/kuzuni/aaawunity/actions/runs/34063117525) 로그 «[PercentGate] 훑은 화면 33 · % 가 빠진 줄 0(strict=**True**)» + `PercentGateTests` Passed + `StatTextTests` Passed + screens run 173 의 04·05·07 PNG 눈 확인 «패시브: 회피율 +8%»)** — **🔄 1단계(비율 스탯 표 + 표시 함수 훅 + 감사) 코드 push(`1f6dacb` · sess-1932-24302 · 워커 K · 로컬 게이트 전부 초록 · 배포 스모크 초록)**
+### T90 ✅ — 표기: 퍼센트로 써야 할 값에 **%** 를 전부 붙인다 («회피 +8» → «회피 +8%») (주인 2026-09-07 · 전 화면 · 문구만) — **✅ 완료(확인 = CI [#207](https://github.com/kuzuni/aaawunity/actions/runs/34063117525) 로그 «[PercentGate] 훑은 화면 33 · % 가 빠진 줄 0(strict=**True**)» + `PercentGateTests` Passed + `StatTextTests` Passed + screens run 173 의 04·05·07 PNG 눈 확인 «패시브: 회피율 +8%»)** — **🔄 1단계(비율 스탯 표 + 표시 함수 훅 + 감사) 코드 push(`1f6dacb` · sess-1932-24302 · 워커 K · 로컬 게이트 전부 초록 · 배포 스모크 초록)**
 
 > **1단계에서 한 일**: `Core/StatText`(신규) = 비율 스탯 이름 표 12개(치명타 확률·치명타 피해·치명타 배율·반격 확률·반격률·회피율·회피·흡혈·방어력·가시갑옷·최대 체력·최대 실드 · **긴 이름이 앞**) + `Percent`(표시 시점에 % 부착 · 멱등 · **부호 있는 값만** 대상이라 «공격력 1234» 절대값은 안 걸린다) · `Missing`(% 빠진 조각) · `Signed`(라벨+값 조립용). 이것을 **`PerkText.Format`·`GearText.Shorten` 두 곳**에만 걸어 특전 카드(04)·보유 특전(05)·악마/천사 카드·장비 세부 옵션 줄(07)이 **화면 코드 0 줄 수정**으로 고쳐졌다(원문 JSON 불변 · 결정 232~234). 정본 실측 = 특전 14줄 + 장비 옵션 4종에 % 가 빠져 있었다.
 >
@@ -1267,7 +1268,7 @@
 5. 테스트: Core EditMode — 표에 든 스탯의 포맷 결과에 `%` 포함 · 아닌 스탯(공격력·체력·실드 같은 절대값)에는 안 붙음. PlayMode — 07 팝업·특전 카드·강화 안내에서 «회피/치명/흡혈» 줄에 `%` 존재.
 6. 게이트 + PROGRESS T90 행 + 완료 기록(확인 = CI + «[PercentGate]» 표 0 + screens 04·05·07·08 PNG).
 
-### T91 — main 빨강 후속(CI #166) · **지금 배포를 막는 마지막 하나**: 클리어 팝업 «골드 카운트업 최종값» 단언이 프레임의 «Text» 를 집는다 (T64 워커 E 가 실측·등재 2026-09-06 19:3X · **범위가 `T69-overlay` 안이므로 그 lock 워커가 이어서 · 규약대로 뒤 번호가 기다린다**) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `c990d31` · 확인 CI #173 · 원 등재 = 워커 E · 수정 = sess-1842-31994 / 워커 G · 자세한 것은 PROGRESS 그 행)**
+### T91 ✅ — main 빨강 후속(CI #166) · **지금 배포를 막는 마지막 하나**: 클리어 팝업 «골드 카운트업 최종값» 단언이 프레임의 «Text» 를 집는다 (T64 워커 E 가 실측·등재 2026-09-06 19:3X · **범위가 `T69-overlay` 안이므로 그 lock 워커가 이어서 · 규약대로 뒤 번호가 기다린다**) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `c990d31` · 확인 CI #173 · 원 등재 = 워커 E · 수정 = sess-1842-31994 / 워커 G · 자세한 것은 PROGRESS 그 행)**
 
 > **왜 최우선인가**: `build-webgl` 은 `needs: [unity-test]` 라 **PlayMode 가 빨가면 WebGL 빌드도 배포도 아예 안 돈다**. T64 회차 4(`92c0b7b`)로 «배포 스모크» 쪽 사유는 풀었지만, 이 한 건이 남아 있는 한 gh-pages 는 계속 `0469d7b`(CI #148)에 멈춰 있다 — 17:1X 이후 모든 묶음의 «주인 폰 확인» 이 이것 하나에 걸려 있다.
 
@@ -1282,7 +1283,7 @@
 
 > **⚠ 실측 보탬(19:4X · 워커 E) — CI [#167](https://github.com/kuzuni/aaawunity/actions/runs/34054858183)(`92c0b7b` = T64 회차 4)에서도 빨강은 이 한 건뿐이다.** 그 런의 PlayMode XML 을 전수로 훑었다: 실패 test-case 는 `UiSmokeTests.BattleTicksAndAllBattlePopups` **하나**이고(나머지 42 케이스와 EditMode 123 은 전부 Passed) `build-webgl`·`build-android` 는 그래서 **skipped** 됐다(19:35:23). 즉 **T87 은 실질적으로 끝났고**(그 워커가 고친 세 단언 — `EventsScreenTests` · `RestClearAdTests` ×2 — 는 #166·#167 에서 다 Passed) **T91 하나만 고치면 그 다음 런에서 바로 배포가 나간다.** T69-overlay lock 워커가 이어 잡는 것이 규약이지만, **그 lock 이 90분(20:13:19Z)을 넘기면 아무 워커나 죽은 lock 규약으로 회수해 즉시 고쳐라** — 배포가 그만큼 더 멈춘다.
 
-### T93 — 특전 행(카드) 디자인을 데모 프리팹 `Play_Perk_Selection_02` 와 **같게** · 색은 회색·노란색·빨간색 ✅ **완료(확인 = CI #207·#209 · `PerkCardTests` 가 두 워커의 실패 목록에 없다 · PROGRESS 참조)** — (이력) 코드 push(`8a2a9b1` · sess-2148-1691 · 워커 L · 로컬 게이트 전부 초록 · 배포 스모크 초록) · ✅ 확인 끝(CI #280 게이트 + `screens` run 283 눈) · lock 반납**
+### T93 ✅ — 특전 행(카드) 디자인을 데모 프리팹 `Play_Perk_Selection_02` 와 **같게** · 색은 회색·노란색·빨간색 ✅ **완료(확인 = CI #207·#209 · `PerkCardTests` 가 두 워커의 실패 목록에 없다 · PROGRESS 참조)** — (이력) 코드 push(`8a2a9b1` · sess-2148-1691 · 워커 L · 로컬 게이트 전부 초록 · 배포 스모크 초록) · ✅ 확인 끝(CI #280 게이트 + `screens` run 283 눈) · lock 반납**
 
 > **실측 결과**: 조각·색 이름은 **이미 프리팹과 같았다**. 진짜 결함은 `screens` run 173 의 04 PNG 를 확대해서 나왔다 — `UiKit.Desaturate` 가 프레임 전체를 훑어 **일반 등급의 «등급 탭» 이 몸통에 묻혀** 통짜 회색 판으로 보였다(결정 286). 고침 = `Palette.PerkTabColor` 로 **탭에만** 등급색 + 설명 글자 칸 좌우를 프리팹 실측(0.2239~0.9649)으로. **프리팹과 일부러 다른 곳**(카드 사이 간격 107↔38px · 카드 높이 11.46↔11.0% · 두 줄↔한 덩어리)은 «화면 위 자리는 레퍼런스 표 ⑦ 이 정본» 원칙(결정 287)과 주인 2026-09-05 «이름 금지» 때문이고 PROGRESS 대조표에 적었다.
 
@@ -1300,7 +1301,7 @@
 
 7. **⚑ 주인 보탬(2026-09-07 07:2X · «특전 다 흰 글씨로 써지게 해줘야 함 · 검은 아웃라인 글씨로 되어 있기 때문에»)**: 특전 카드(04)·보유 목록(05)·악마/천사 한 장의 **글자 색을 전부 흰색**으로 바꾼다 — 지금은 등급색(`OnDarkPill`/`Palette.ByName`)이나 어두운 잉크색으로 칠해 밝은 프레임 위에서 묻힌다. **검은 아웃라인(T63-outline)이 대비를 만들어 주므로 흰색이면 어디서든 읽힌다.** 등급은 **프레임·리본 색**으로 알아보게 두고 **글자는 흰색 하나**. 예외 = **T52 의 «수치 연두색 강조»** 는 그대로 둔다(밝은 강조색이라 아웃라인 위에서 잘 읽힌다 · 주인이 이것도 흰색으로 원하면 그 한 줄만 되돌린다 — 결정 기록에 남긴다). T63 대비 규칙(«밝은 프레임 위 글자는 잉크색») 중 **특전 카드에 걸린 부분은 이 지시로 대체**한다.
 
-### T94 — 메인 로비(01): ⓐ 배경 **패턴 애니메이션 넣기** · ⓑ 로비의 **Border 는 전부 없애기** (주인 2026-09-07 · 로비만 · T69 예외) — **🔄 코드 push(`4fc9f88` · sess-2250-1843 · 워커 L · 로컬 게이트 전부 초록 · 배포 스모크 초록) · 남은 일 = 확인뿐** — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `1f3a215` · sess-2250-1843 / 워커 L · 자세한 것은 PROGRESS 그 행)**
+### T94 ✅ — 메인 로비(01): ⓐ 배경 **패턴 애니메이션 넣기** · ⓑ 로비의 **Border 는 전부 없애기** (주인 2026-09-07 · 로비만 · T69 예외) — **🔄 코드 push(`4fc9f88` · sess-2250-1843 · 워커 L · 로컬 게이트 전부 초록 · 배포 스모크 초록) · 남은 일 = 확인뿐** — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `1f3a215` · sess-2250-1843 / 워커 L · 자세한 것은 PROGRESS 그 행)**
 
 > **ⓐ 는 «안 깔린 것» 이 아니라 «안 보인 것» 이었다** — 무늬는 T72 6차(`95069e5`)가 이미 깔았고 주인이 본 배포에도 들어 있다. 공용 알파 3/255 가 로비의 어두운 초록 바탕에서 안 보여서 «없다» 로 읽힌 것으로 보고 **로비에서만 18/255**(`UiKit.PatternAlphaLobby`)로 올렸다(다른 화면은 주인 02:0X 확정 3/255 그대로 · 결정 298). **ⓑ 는 로비 «전용» 조각 둘만 지웠다**(챕터 카드 · 기둥 상자) — 상단 재화 바 띠·pill 테두리는 주인 07:0X 의 T106 지시가 더 최신이라 남겼다(결정 299). `BorderAudit` 는 `01_lobby` 만 strict 에서 뺐다.
 
@@ -1356,7 +1357,7 @@
 3. 표·비평: 새 화면(메뉴·우편함·프로필·로딩)은 §5 5항대로 `ref-layout.md` 에 표를 먼저 추가(레퍼런스 그림이 없으면 «프리팹 그대로» 를 기준으로 명시)하고 채점한다.
 4. 게이트 + assets-map(새 키 6줄) + PROGRESS T96 행(+ 하위 행 넷) + 완료 기록(확인 = CI + screens + 주인 폰).
 
-### T97 — 탐험(방치·오프라인 보상) + 빠른 탐험(광고) — 레퍼런스 `30_expedition.jpg` · `31_expedition_fast.jpg` (주인 2026-09-07) — **✅ 완료(§5 비평 30 = 9.5 · 31 = 9.5 ≥ 8.0 · CI #243 · 남은 것은 주인 폰 눈 · sess-1957-28503 · 워커 D · 1단계 `315a74d` + 2단계 · 로컬 게이트 전부 초록)**: `expedition.json` + `Core/Expedition`(마지막 정산 시각 하나로 오프라인 동일 · 상한 8h · 시계 되돌림 이득 0 · 빠른 탐험은 누적과 별개 즉시 지급) + `SaveData` 3필드(옛 세이브 호환) + 팝업 둘(표 ㉕·㉖ 신설) + 로비 «탐험» 진입·빨간 점 + EditMode 9 · PlayMode 2 · **확인 = 그 커밋의 CI + screens 30·31 PNG(§5 비평) + 주인 폰 · 결정 242~244**
+### T97 ✅ — 탐험(방치·오프라인 보상) + 빠른 탐험(광고) — 레퍼런스 `30_expedition.jpg` · `31_expedition_fast.jpg` (주인 2026-09-07) — **✅ 완료(§5 비평 30 = 9.5 · 31 = 9.5 ≥ 8.0 · CI #243 · 남은 것은 주인 폰 눈 · sess-1957-28503 · 워커 D · 1단계 `315a74d` + 2단계 · 로컬 게이트 전부 초록)**: `expedition.json` + `Core/Expedition`(마지막 정산 시각 하나로 오프라인 동일 · 상한 8h · 시계 되돌림 이득 0 · 빠른 탐험은 누적과 별개 즉시 지급) + `SaveData` 3필드(옛 세이브 호환) + 팝업 둘(표 ㉕·㉖ 신설) + 로비 «탐험» 진입·빨간 점 + EditMode 9 · PlayMode 2 · **확인 = 그 커밋의 CI + screens 30·31 PNG(§5 비평) + 주인 폰 · 결정 242~244**
 
 > 주인 원문(2026-09-07 06:0X): «탐험은 걍 **방치 + 오프라인 보상** 느낌이어서 **켜두거나 꺼둬도 쩄든 방치 보상 쌓이고** 있는 거고, 쩄든 **골드·다이아 쌓이게** 하면 되는 거임. **빠른 탐험도 그런 식인데 빠른 탐험은 광고 보고 얻는 식**임.»
 
@@ -1368,7 +1369,7 @@
 6. 테스트: Core EditMode — 시간 경과 계산(오프라인 6h·9h(상한) · 시계 되돌림) · 빠른 탐험 5시간치 · 하루 횟수 리셋. PlayMode — 팝업 두 개가 뜨고 «받기» 로 재화가 늘고 격자가 비워짐 · 글자 잘림 0. + `ref-layout.md` 에 30·31 표 추가(§5 5항) 후 채점.
 7. 게이트 + PROGRESS T97 행 + 완료 기록.
 
-### T98 — 로비 → **챕터 보상(Chapter Chest)** 페이지 — 레퍼런스 `32_lobby_clear.jpg` (주인 2026-09-07) — **✅ 완료(확인 = CI [#235](https://github.com/kuzuni/aaawunity/actions/runs/34072018966) 실측 = `ChapterChestScreenTests`·`ChapterChestTests`·`ChapterChest_MatchesSpec` 전부 Passed · 회귀 0 · screens 32 PNG 비평은 main 이 초록이 되는 첫 런에서)** — **🔄 1단계(규칙·수치·세이브) 코드 push(`fe54267e` · sess-1928-29105 · 워커 F · 로컬 게이트 전부 초록 · test 181/181)**: `chapterChest.json`(신규 · 코드 상수 0) + `Core/ChapterChest`(순수 C#) + `SaveData.ChestClaimed`(버전 불변 · 옛 세이브 호환) + Bootstrap 배선 + EditMode 9. **2항 «워커가 규칙을 정하라» 는 이렇게 정했다**: 목표 = 그 챕터의 적 전부(`enemyCount`)이고 판정은 `maxChapter > C` — **처치 카운터를 새로 만들지 않는다**(전투 코드 0줄 · 결정 309) · 다이아 = 10 + 3×C(레퍼런스 32 의 챕터 30 = 💎100 에 맞춤) · 골드 = 1.0 × `goldClear(C)`(우리 경제 곡선 · 레퍼런스의 3200 은 안 베낀다 · 결정 308). **🔄 2단계(화면) 코드 push(`e6f5d16f`)**: `Game/ChapterChestScreen`(신규) = 리본·부제·**큰 배너 + 좌우 이웃 챕터**(눌러서 넘김)·«보상» 상자·«받기»(못 받으면 회색)·뒤로 ◀ — 레퍼런스의 «금테 방패» 그림이 주인 에셋에 없어 `CardFrame_04_Yellow` 조각으로 같은 구도(**새 그림 0** · 결정 324) · 로비 «클리어 보상» 이 이 페이지를 열고 받을 게 있으면 빨간 점(`Screens.cs` 세 줄 = 결정 323) · `ref-layout` 표 ㉝ 신설 + `Layout` 11 + `LayoutSpecTests` · PlayMode `ChapterChestScreenTests` 신규. **남은 것 = 확인뿐**(그 코드를 담은 첫 완주 런의 PlayMode·EditMode + screens 32 PNG 비평 ≥ 8.0).
+### T98 ✅ — 로비 → **챕터 보상(Chapter Chest)** 페이지 — 레퍼런스 `32_lobby_clear.jpg` (주인 2026-09-07) — **✅ 완료(확인 = CI [#235](https://github.com/kuzuni/aaawunity/actions/runs/34072018966) 실측 = `ChapterChestScreenTests`·`ChapterChestTests`·`ChapterChest_MatchesSpec` 전부 Passed · 회귀 0 · screens 32 PNG 비평은 main 이 초록이 되는 첫 런에서)** — **🔄 1단계(규칙·수치·세이브) 코드 push(`fe54267e` · sess-1928-29105 · 워커 F · 로컬 게이트 전부 초록 · test 181/181)**: `chapterChest.json`(신규 · 코드 상수 0) + `Core/ChapterChest`(순수 C#) + `SaveData.ChestClaimed`(버전 불변 · 옛 세이브 호환) + Bootstrap 배선 + EditMode 9. **2항 «워커가 규칙을 정하라» 는 이렇게 정했다**: 목표 = 그 챕터의 적 전부(`enemyCount`)이고 판정은 `maxChapter > C` — **처치 카운터를 새로 만들지 않는다**(전투 코드 0줄 · 결정 309) · 다이아 = 10 + 3×C(레퍼런스 32 의 챕터 30 = 💎100 에 맞춤) · 골드 = 1.0 × `goldClear(C)`(우리 경제 곡선 · 레퍼런스의 3200 은 안 베낀다 · 결정 308). **🔄 2단계(화면) 코드 push(`e6f5d16f`)**: `Game/ChapterChestScreen`(신규) = 리본·부제·**큰 배너 + 좌우 이웃 챕터**(눌러서 넘김)·«보상» 상자·«받기»(못 받으면 회색)·뒤로 ◀ — 레퍼런스의 «금테 방패» 그림이 주인 에셋에 없어 `CardFrame_04_Yellow` 조각으로 같은 구도(**새 그림 0** · 결정 324) · 로비 «클리어 보상» 이 이 페이지를 열고 받을 게 있으면 빨간 점(`Screens.cs` 세 줄 = 결정 323) · `ref-layout` 표 ㉝ 신설 + `Layout` 11 + `LayoutSpecTests` · PlayMode `ChapterChestScreenTests` 신규. **남은 것 = 확인뿐**(그 코드를 담은 첫 완주 런의 PlayMode·EditMode + screens 32 PNG 비평 ≥ 8.0).
 
 > 주인 지시: «로비 → 클리어 보상» 을 이 그림대로 넣어라.
 
@@ -1378,7 +1379,7 @@
 4. 테스트: PlayMode — 목표 미달이면 회색·받기 불가 · 달성이면 받기 → 재화 증가 · 같은 챕터 두 번 못 받음 · 옆 챕터로 넘김. `ref-layout.md` 에 32 표 추가 후 채점.
 5. 게이트 + PROGRESS T98 행 + 완료 기록.
 
-### T99 — 던전: 티켓 하루 2개 보충 + 광고/다이아 구매 · 지옥문·원정 **보상 수치 확정** (주인 2026-09-07 · 수치는 주인이 준 값 그대로) — **✅ 완료(코드 `9e4c6b9` · sess-2041-14225 · 워커 C · 로컬 게이트 전부 초록 · 배포 스모크 초록)**: 수치는 새 표 `Assets/KkomaKnight/dungeon.json`(«data.dungeon» · 코드 상수 0 · `data/*.json` 불변) · `Core/Dungeon`(Roll = «2 미만이면 2 로» · 광고/다이아 던전별 하루 1회 · Ready) · 세이브 네 필드 · 세부 팝업의 두 버튼 교체(못 쓰면 알파 0.5 + 이유 토스트 = 결정 263) · 보상 칸을 표에서(지옥의 문 네 칸이라 표 ⑪ 불변) · 펫알 지갑은 안 만들었다(던전 전투가 없다 = 결정 264) · **확인 = 그 커밋 CI 의 EditMode `DungeonTicketTests` 7 + PlayMode `DungeonTicketPlayTests` + screens 20·21**
+### T99 ✅ — 던전: 티켓 하루 2개 보충 + 광고/다이아 구매 · 지옥문·원정 **보상 수치 확정** (주인 2026-09-07 · 수치는 주인이 준 값 그대로) — **✅ 완료(코드 `9e4c6b9` · sess-2041-14225 · 워커 C · 로컬 게이트 전부 초록 · 배포 스모크 초록)**: 수치는 새 표 `Assets/KkomaKnight/dungeon.json`(«data.dungeon» · 코드 상수 0 · `data/*.json` 불변) · `Core/Dungeon`(Roll = «2 미만이면 2 로» · 광고/다이아 던전별 하루 1회 · Ready) · 세이브 네 필드 · 세부 팝업의 두 버튼 교체(못 쓰면 알파 0.5 + 이유 토스트 = 결정 263) · 보상 칸을 표에서(지옥의 문 네 칸이라 표 ⑪ 불변) · 펫알 지갑은 안 만들었다(던전 전투가 없다 = 결정 264) · **확인 = 그 커밋 CI 의 EditMode `DungeonTicketTests` 7 + PlayMode `DungeonTicketPlayTests` + screens 20·21**
 
 > 주인 원문(2026-09-07 06:0X): «**던전 티켓은 하루에 2개씩 보충** 되게 해 줘야 함 — **2개 미만일 시에 2개로 채워 주는 느낌**. 그리고 **광고 보고 1개** 얻을 수 있고 **50다이아 지불하고 1개** 얻을 수 있고 **둘 다 하루에 각각 1번씩 가능, 던전당**. 그래서 **티켓 없는 경우 소탕 버튼은 «광고 보고 1개 얻기» 버튼**으로 되고 **도전 버튼은 «50다이아 지불하고 티켓 사는» 버튼**으로 바뀜. **지옥문**에서는 **펫알 첫 클리어에 6개** 주기로 하고 **첫 클리어 아닌 거는 펫알 5개 · 골드 1000**. 그래서 **첫 클리어 시 총 펫알 11개 + 골드 1000**. 그리고 **소탕은 클리어했던 것만** 가능하니까 **펫알 5 · 골드 1000**. **원정**에서는 **첫 클리어 골드 5800 · 클리어 골드 3500**.»
 
@@ -1391,7 +1392,7 @@
 7. 테스트: Core EditMode — 날짜 넘김에서 1→2 · 2→2 · 3→3 · 광고/다이아 각 하루 1회(두 번째는 거부) · 던전별 독립 · 보상 표(첫 클리어/재클리어/소탕 각각의 펫알·골드). PlayMode — 티켓 0 일 때 두 버튼의 글자·동작이 바뀐다 · 다이아 부족이면 비활성.
 8. 게이트 + PROGRESS T99 행 + 완료 기록(확인 = CI + screens 20·21 + 주인 폰).
 
-### T100 — 상점(09): 상자 카드의 `TitleBg`·`TitleBgBorder` 제거 · **«상자» 섹션 헤더** 추가 · 섹션 **라인 데코 알파 13/255** (주인 2026-09-07 · 화면만) — **✅ 완료(ⓐⓑⓒⓓ 전부 확인 끝 · CI #246 유니티 잡 초록 + sRGB PNG 직접 실측 · lock 반납 · 자세한 것은 PROGRESS 그 행) · (이력)(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `1f3a2158` · 확인 CI #187 · sess-1906-6443 / 워커 A · 자세한 것은 PROGRESS 그 행)**
+### T100 ✅ — 상점(09): 상자 카드의 `TitleBg`·`TitleBgBorder` 제거 · **«상자» 섹션 헤더** 추가 · 섹션 **라인 데코 알파 13/255** (주인 2026-09-07 · 화면만) — **✅ 완료(ⓐⓑⓒⓓ 전부 확인 끝 · CI #246 유니티 잡 초록 + sRGB PNG 직접 실측 · lock 반납 · 자세한 것은 PROGRESS 그 행) · (이력)(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `1f3a2158` · 확인 CI #187 · sess-1906-6443 / 워커 A · 자세한 것은 PROGRESS 그 행)**
 
 > **⚑ ⓓ 회차 2(02:1X UTC · sess-1842-31994 · 워커 G · T100 lock)** — 주인 «상자 카드에도 **레퍼런스랑 같은 색감** 그라데이션» 은 회차 1(`0baf05f7`)이 CI 초록으로 닫혔지만 **색이 죽어 있었다**. T122 초록으로 `screens` 가 218 → 239 로 풀린 PNG 를 레퍼런스와 **같은 상대 좌표**로 재서 드러났다: 작은 왼 «희귀» 레퍼런스 `#0182C3`→`#10A5DD`(꽉 찬 파랑) vs 우리 `#585D65`→`#809FAE`(**회색**) · 작은 오 «전설» `#840DE5`→`#DC56CF` vs `#65525D`→`#B67DA7`. 까닭 = `UiKit.GradientCard` 의 **α 0.55 덧칠**이 09 상품 카드(조각 바탕이 어두운 제 색)에는 맞지만 **10 상자 카드(조각 바탕이 회색)** 에서는 45% 가 비쳐 색을 죽인다 — 레퍼런스는 카드 **몸통 자체가** 그 두 색이다. 고침 = `UiKit.GradientCardSolidAlpha`(=1) + `GradientCard`·`CardGradient` 의 `alpha` 매개변수(**기본값이 종전 값이라 다른 호출부 0줄**) 로 **상자 카드 3장만** 몸통을 채운다. 게이트 = `UiSmokeTests.AssertSolidGradient`(`Box:*` 두 조각의 tint 알파 1 — 덧칠로 되돌아가면 바로 빨강 · 결정 338). **ⓐⓑⓒ 의 «`ui_score.py` 재채점» 도 같이 끝** — run 239 layout 으로 09 `10.0/10`(8/8행) · 10 `10.0/10`(4/4행) 유지. **회차 3(`2439db7f`)** — 회차 2 는 CI #243 초록으로 들어갔지만 그 PNG 채도가 레퍼런스의 60% 였다(희귀 0.98 → 0.60 · 전설 0.80 → 0.54): 위·아래 두 조각이 **반대 방향 알파 램프**라 알파 1 이어도 «가운데» 는 각각 반쯤만 덮고 그 틈으로 조각의 회색 바탕이 비친다. 고침 = 몸통을 채우는 자리에서는 조각의 `Bg` 도 **두 색의 가운데 색**으로 물들인다(결정 344 · 새 그림·카탈로그·배치 0 · 덧칠 자리는 조건 밖이라 불변). 게이트에 «바탕 = 가운데 색» 단언 보탬. **⚑ 수치 정정(T126·결정 343 적용)** — 위 채도들은 **선형 PNG ↔ sRGB 레퍼런스**를 맞댄 값이라 자가 달랐다. 환산해 다시 재면 희귀 레퍼런스 **0.98** vs 회차 1 **0.10** · 회차 2 **0.34**(내가 0.60 으로 적었다) — **격차가 오히려 더 크다**(방향은 그대로 · 결정 345). 다음 확인은 T126 이 든 뒤의 PNG 로 환산 없이 직접 잰다. **✅ 확인 끝** — CI [#246](https://github.com/kuzuni/aaawunity/actions/runs/34076918402)(회차 3 + T126 을 둘 다 담은 첫 완주 런) 유니티 잡 **success**(실패 0) + 그 `screens` PNG 를 **환산 없이** 직접 실측: 희귀 레퍼런스 `#10A5DD`(0.98) ↔ 우리 `#119BD8`(**0.88**) · 전설 `#A621EE`(0.80) ↔ `#A849CE`(**0.65**) · 신화 0.70 ↔ **0.61**. **색상은 거의 붙었고 채도만 살짝 낮다** — 남은 차이는 우리에만 있는 T72 빛살·패턴 한 겹이라 걷지 않는다(결정 353). `ui_score` 09·10 **10.0/10 유지**.
 
@@ -1447,7 +1448,7 @@
 4. **T88(부위 재편)·T89(옵션)·T69-gear ⓐ~ⓖ 와 겹친다** — 장비 화면·팝업을 만지는 워커가 **같이** 처리한다(lock `T69-gear` · 다른 화면은 그 화면 묶음 워커가 자기 칸을 이 기준으로).
 5. 테스트: PlayMode — «물건 칸» 이름표 아래에 `ItemFrame_01_Normal_*` 조각이 있고 그 자식 `Bg`·`Border`·`Item` 이 **살아 있음**(꺼져 있지 않음) · 등급이 바뀌면 **조각 키가 바뀜**(tint 만 바뀌는 것이 아님) · 아이콘·레벨·별이 데이터대로. §5 06·07·08·09·13 재채점(점수 안 내려감).
 6. 게이트 + assets-map(색 변형 키 정리) + PROGRESS T103 행 + 완료 기록(확인 = CI + `screens` 06·07 PNG 를 프리팹 모양과 대조 + 주인 폰).
-### T104 — 설정 팝업(12): **뒤 어둠이 화면을 다 안 덮는다** + **«탭하여 닫기» 가 하단 탭 바와 겹친다** (워커 실측 등재 2026-09-06 20:0X · 화면만 · 배치 표 불변 · **번호 정정: 등재 때 쓴 T101 은 «던전 팝업(20)» 이 이미 쓰고 있었고, 옮기려던 T103 도 같은 시각에 «아이템 칸 정본» 이 가져가 T104 가 됐다**) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `3a6f79c` · 확인 CI #209 · 등재 = 워커 H · 수정 = sess-1842-31994 / 워커 G · 자세한 것은 PROGRESS 그 행)**
+### T104 ✅ — 설정 팝업(12): **뒤 어둠이 화면을 다 안 덮는다** + **«탭하여 닫기» 가 하단 탭 바와 겹친다** (워커 실측 등재 2026-09-06 20:0X · 화면만 · 배치 표 불변 · **번호 정정: 등재 때 쓴 T101 은 «던전 팝업(20)» 이 이미 쓰고 있었고, 옮기려던 T103 도 같은 시각에 «아이템 칸 정본» 이 가져가 T104 가 됐다**) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `3a6f79c` · 확인 CI #209 · 등재 = 워커 H · 수정 = sess-1842-31994 / 워커 G · 자세한 것은 PROGRESS 그 행)**
 
 > 나온 자리: `screens` run **173**(`c990d31`) 의 `12_settings.png` 를 레퍼런스 `docs/ref/12_settings.jpg` 와 나란히 본 눈 확인(sess-1957-30860 · 워커 H). **게이트가 못 재는 종류**다 — «[BorderGate]» 12 는 6/6 · 없음 0 · strict ✔ 로 통과한다.
 
@@ -1457,7 +1458,7 @@
 4. 테스트: PlayMode — 설정을 연 상태에서 **어둠 층이 TopBar·NavBar·사이드 기둥보다 앞** 이고 알파가 레퍼런스급(≥ 0.6)인 것 · «탭하여 닫기» rect 의 아래끝이 탭 바 위끝보다 위 · 빨간 줄 0.
 5. 게이트 + PROGRESS T104 행 + 완료 기록(확인 = CI + `screens` 12 PNG 눈 확인 = 탭 바·재화 바가 어두워졌나).
 
-### T105 — 장비 칸의 **다이아 배지 = 부위 아이콘**(세트 아이콘 아님) + 장착 슬롯 6칸에 부위 아이콘 기본 표시 (주인 2026-09-07 · 화면만 · T88 과 짝) — **✅ 완료(확인 = CI [#207](https://github.com/kuzuni/aaawunity/actions/runs/34063117525) 의 `UiSmokeTests.GearScreenDetailSlotAndEquip` Passed · screens 06 PNG 눈 확인은 main 이 초록이 되는 첫 런에서 자동으로)** — **코드 push(`7bb8436` · sess-1928-29105 · 워커 F · 로컬 게이트 전부 초록 · 배포 스모크 초록)**: `GearLook.PartIcon` 신규(**새 에셋 0 · 카탈로그 불변** — 이미 있는 `gi.<부위>.crit` 재사용) · 칸 배지와 슬롯 아이콘을 부위 아이콘으로 · 슬롯 아이콘은 **빈 칸에도 흐리게 늘 켜 둔다**(α 0.45 · 결정 281 = 빈 칸 «+»·링은 안 건드려 T69 게이트 불변) · 열 순서 `ColLeft = weapon·neck·glove` / `ColRight = helm·armor·boot`(T88 역할 묶음과 같다 · 배치 표 불변). **확인 = 그 코드를 담은 첫 완주 런의 `UiSmokeTests.GearScreenDetailSlotAndEquip` Passed + screens 06 PNG** · 결정 280·281.
+### T105 ✅ — 장비 칸의 **다이아 배지 = 부위 아이콘**(세트 아이콘 아님) + 장착 슬롯 6칸에 부위 아이콘 기본 표시 (주인 2026-09-07 · 화면만 · T88 과 짝) — **✅ 완료(확인 = CI [#207](https://github.com/kuzuni/aaawunity/actions/runs/34063117525) 의 `UiSmokeTests.GearScreenDetailSlotAndEquip` Passed · screens 06 PNG 눈 확인은 main 이 초록이 되는 첫 런에서 자동으로)** — **코드 push(`7bb8436` · sess-1928-29105 · 워커 F · 로컬 게이트 전부 초록 · 배포 스모크 초록)**: `GearLook.PartIcon` 신규(**새 에셋 0 · 카탈로그 불변** — 이미 있는 `gi.<부위>.crit` 재사용) · 칸 배지와 슬롯 아이콘을 부위 아이콘으로 · 슬롯 아이콘은 **빈 칸에도 흐리게 늘 켜 둔다**(α 0.45 · 결정 281 = 빈 칸 «+»·링은 안 건드려 T69 게이트 불변) · 열 순서 `ColLeft = weapon·neck·glove` / `ColRight = helm·armor·boot`(T88 역할 묶음과 같다 · 배치 표 불변). **확인 = 그 코드를 담은 첫 완주 런의 `UiSmokeTests.GearScreenDetailSlotAndEquip` Passed + screens 06 PNG** · 결정 280·281.
 
 > 주인 원문(2026-09-07 06:5X): «장비마다 `BasicFrame_Diamond_H48_NoBorder_Plum` 에 아이콘들이 **무슨 장비 부위인지 알려주는 아이콘**이어야 함. **투구, 갑옷, 신발, 무기, 목걸이, 반지** — 이렇게 아이콘이 있으면 되는 거임. **지금처럼 치명타, 체력, 회피 이런 거 아니고** ㅇㅇ. **상단에 장착 슬롯에도 기본으로 표시**해 놔 주면 좋을 듯. **왼쪽 세 개는 무기·목걸이·반지, 오른쪽 세 개는 투구·갑옷·신발.**»
 
@@ -1470,7 +1471,7 @@
 5. 테스트: PlayMode — 인벤·슬롯·세부 팝업의 배지 아이콘 키가 **부위 키와 1:1**(세트 아이콘 `pi.critical`·`pi.heart`·`ui.dodge` 가 배지에 안 남아 있음) · 빈 슬롯 6칸에 부위 아이콘 존재 · 슬롯 순서가 왼쪽 무기·목걸이·반지 / 오른쪽 투구·갑옷·신발 · 옵션 줄은 여전히 세트 아이콘. §5 06·07 재채점.
 6. 게이트 + assets-map(부위 아이콘 키 표) + PROGRESS T105 행 + 완료 기록.
 
-### T106 — **SafeArea** 도입 + 상단 프레임을 **화면 맨 위까지**(노치 영역 포함) · 프레임 색은 레퍼런스대로 (주인 2026-09-07 · 모바일 출시 대비 · 전 화면) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `9e6524f` · 확인 CI #203 · sess-1920-19253 / 워커 B · 자세한 것은 PROGRESS 그 행)**
+### T106 ✅ — **SafeArea** 도입 + 상단 프레임을 **화면 맨 위까지**(노치 영역 포함) · 프레임 색은 레퍼런스대로 (주인 2026-09-07 · 모바일 출시 대비 · 전 화면) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `9e6524f` · 확인 CI #203 · sess-1920-19253 / 워커 B · 자세한 것은 PROGRESS 그 행)**
 
 > **🔄 (20:4X UTC · 워커 B · sess-1920-19253) 1~4·6항 코드 push — 남은 것은 확인이다.** ⓐ `SafeAreaRoot`(신규) + `UiKit.CreateSafeArea` + `App.SafeArea` = **캔버스 → SafeArea → Frame → 화면**(앵커 0~1 · 픽셀 0 · safeArea 가 화면 전체면 배치 픽셀 동일 = 회귀 0 · 배치 표 불변) ⓑ `TopBar.FrameBand` = 탑바 바탕이 `TopFrame` 한 장이 되어 위·좌·우 4000px 뻗어 노치·레터박스를 덮는다(마스크가 없으면 자식은 부모 rect 밖에도 그려진다) · T72 7항의 링은 뺐다(결정 254) ⓒ **색 실측** = 레퍼런스 01 상단 띠 **#2C2B29** · pill 안쪽 **#12110F**(headless chromium + canvas `getImageData` · PIL·ffmpeg 없이 jpg 를 재는 법 · 결정 253) → `Palette.TopFrame`/`TopCell` ⓓ `NavBar` 가 탭 바 **형제**로 `BottomFrame` 을 깔아 아래 끝까지(바 «안» 에 넣으면 탭 배선이 밀린다 · 결정 255) ⓔ PlayMode `UiTextureTests.SafeAreaHoldsTheUiAndTheFrameCoversTheNotch` 신규. **남은 것 = 5·7항의 확인**: 그 커밋 CI 의 새 테스트 Passed + `UiSmokeTests`·`BorderGateTests`·`TextSizeGateTests` 회귀 0 + `screens` 01 PNG(띠가 화면 맨 위까지 · 레퍼런스 톤) + `ui_score` 점수 불변 + **주인 폰(노치 기기)**. 안드로이드 «Render outside safe area» 설정은 손대지 않았다 — 폰에서 노치 아래로 안 들어가면 그때 `ProjectSettings` 를 본다.
 
@@ -1506,7 +1507,7 @@
 5. 테스트: PlayMode — 탭 5칸의 이름·순서가 상점·장비·전투·펫·탤런트 · 던전 탭 **없음** · 이벤트를 열면 `Page:dungeon` 이 활성 · 탤런트 화면이 `ui.talent` 조각으로 뜨고 빨간 줄 0 · 글자 잘림 0. §5 — 탤런트는 새 화면이라 `ref-layout.md` 에 표를 먼저 추가(레퍼런스 그림이 없으니 «프리팹 그대로» 기준 명시)하고 채점.
 6. 게이트 + assets-map + PROGRESS T107 행 + 완료 기록(확인 = CI + `screens` + 주인 폰).
 
-### T108 — **투사체·소환물은 어떤 상태에서도 멈추지 않는다** + **창은 관통**(지나가며 맞는 적 전부에게 데미지) (주인 2026-09-07 · T86 후속) — **✅ 코드·테스트 확인 끝(CI #202 `7bb8436` · `SpearNeverStalls…` Passed · 스냅 0 · 멈춤 0) · 남은 것은 주인 폰 눈 확인**(확인 회차 = sess-1957-28503 · 워커 D · 결정 261)
+### T108 ✅ — **투사체·소환물은 어떤 상태에서도 멈추지 않는다** + **창은 관통**(지나가며 맞는 적 전부에게 데미지) (주인 2026-09-07 · T86 후속) — **✅ 코드·테스트 확인 끝(CI #202 `7bb8436` · `SpearNeverStalls…` Passed · 스냅 0 · 멈춤 0) · 남은 것은 주인 폰 눈 확인**(확인 회차 = sess-1957-28503 · 워커 D · 결정 261)
 
 > 주인 원문(2026-09-07 07:3X): «창이 **스무스하게 나가지 않고 멈춰 있는 현상**이 있다. **창 발사하면 그냥 멈추지 말고 쭉 지나가면서 다 데미지 주고 지나가야 함.**» · «**쩄든 뭐든 멈추면 안 됨 — 소환물들.**»
 
@@ -1522,7 +1523,7 @@
 
 > **🔄 코드 push(`e71e9b3` · sess-1913-2015 · 워커 E · 로컬 게이트 전부 초록):** ★ **3항은 엔진을 고칠 것이 없었다** — 지시서대로 aaaw `sim.js` 를 먼저 읽으니 `fireSpear` 가 이미 `pierce:SPEAR_PIERCE`(=8)로 쏘고(`sim.js:1488~1490`) 우리 `Core/Battle.cs` 도 같다(`:436`·`:726~734`) → **판정은 이미 관통** 이고 «안 지나간다» 는 그림 문제였다(3항 ⓐ · 골든 재생성 없음 · Sim 21칸 그대로). **원인은 `BattleWorld.ProjLimit` 의 «다음에 꿸 적» 걸림쇠**(결정 255) — 엔진이 보류되면 걸림쇠도 같이 멎어 표시 창이 바로 앞 적에 붙어 선다. 관통형은 걸림쇠를 **사거리 끝 하나**로 줄였고(유도형은 유지), 2항 스냅은 «따라잡기 1.5배» + **전투 배속을 표시에도 반영**(`BattleWorld.Speed`)해 격차 자체를 없앴다(x2 에서 엔진은 틱을 두 배로 도는데 표시가 한 배였다). 1항의 `EngineRunning` 은 그대로 — 팝업·일시정지·판 종료에만 false 라 지시서의 «팝업만 예외» 와 이미 같다. 테스트 = PlayMode `SpearNeverStallsAndFliesThroughEnemiesWithoutSnapping`. **남은 것은 주인 폰 눈 확인뿐**(그리고 이제 배포가 다시 도니 다음 완주 런에서 바로 올라간다).
 
-### T109 — 경험치·골드 **흡수 연출 보탬**: 1초 머물렀다가 **랜덤 곡선 + 트레일** (주인 2026-09-07 · T85 후속 · 연출만) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `69247ab` · 확인 CI #198 · sess-1906-6443 / 워커 A · 자세한 것은 PROGRESS 그 행)**
+### T109 ✅ — 경험치·골드 **흡수 연출 보탬**: 1초 머물렀다가 **랜덤 곡선 + 트레일** (주인 2026-09-07 · T85 후속 · 연출만) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `69247ab` · 확인 CI #198 · sess-1906-6443 / 워커 A · 자세한 것은 PROGRESS 그 행)**
 
 > 주인 원문(2026-09-07 07:3X): «흡수되는 거 경험치·골드 — 이거 **1초 정도 머물렀다가 랜덤 곡선 그리면서 (트레일 있어야 함) 0.8초 동안 흡수**되어야 함.»
 
@@ -1536,7 +1537,7 @@ T85(적 처치 → 경험치·골드가 EXP 바·골드 pill 로 날아가 흡�
 6. 게이트 + PROGRESS T109 행 + 완료 기록(확인 = CI + 주인 폰).
 
 
-### T110 — 클리어 팝업: **움직이는 패턴 제거 · 타이틀 `SampleEffect` 회전 · 등장할 때 폭죽 파티클** + **골드 «+49 G» 팝 텍스트 삭제** (주인 2026-09-07 · 연출만) — **✅ 완료(코드 확인 끝 = CI #210 PlayMode 두 테스트 Passed · 남은 것은 주인 폰 눈 · sess-1957-28503 · 워커 D · 로컬 게이트 전부 초록)**: ⓐ 골드 «+N G» 팝 삭제(소리는 유지) ⓑ 승리·사망 팝업 `DimPattern` 제거(레벨업 3택은 유지 · 결정 286) ⓒ 제목 `SampleEffect` 시계방향 14s 무한 회전 ⓓ 프리팹 `SampleEffect_Confetti` 를 되살려 좌우 두 번 «펑»(새 에셋 0 · 결정 287) · **확인 = 그 커밋의 CI PlayMode(`UiTextureTests` 뒤집은 단언 + `BattleWorldTests` 골드 팝 0) + 주인 폰**
+### T110 ✅ — 클리어 팝업: **움직이는 패턴 제거 · 타이틀 `SampleEffect` 회전 · 등장할 때 폭죽 파티클** + **골드 «+49 G» 팝 텍스트 삭제** (주인 2026-09-07 · 연출만) — **✅ 완료(코드 확인 끝 = CI #210 PlayMode 두 테스트 Passed · 남은 것은 주인 폰 눈 · sess-1957-28503 · 워커 D · 로컬 게이트 전부 초록)**: ⓐ 골드 «+N G» 팝 삭제(소리는 유지) ⓑ 승리·사망 팝업 `DimPattern` 제거(레벨업 3택은 유지 · 결정 286) ⓒ 제목 `SampleEffect` 시계방향 14s 무한 회전 ⓓ 프리팹 `SampleEffect_Confetti` 를 되살려 좌우 두 번 «펑»(새 에셋 0 · 결정 287) · **확인 = 그 커밋의 CI PlayMode(`UiTextureTests` 뒤집은 단언 + `BattleWorldTests` 골드 팝 0) + 주인 폰**
 
 > 주인 원문(2026-09-07 07:4X): «**골드 +49G 이런 거 데미지 텍스트처럼 뜨는 거 하면 안 됨.**» · «**클리어 팝업에는 패턴으로 움직이는 그거 있으면 안 됨.**» · «클리어 팝업에 **SampleEffect 이거 타이틀에 있는 거 이것도 회전**해야 함.» · «**클리어 팝업 뜰 때 빵빠레 터지듯이 파티클 이펙트 떠야 함, 폭죽? 뭐 쩄든 그런 느낌.**»
 
@@ -1549,7 +1550,7 @@ T85(적 처치 → 경험치·골드가 EXP 바·골드 pill 로 날아가 흡�
 7. 게이트 + PROGRESS T110 행 + 완료 기록(확인 = CI + 주인 폰).
 
 
-### T111 — ⓐ **챕터 제목 아래 `LineDeco` 제거**(로비·전투) · ⓑ **검정 글씨는 전부 흰 글씨로**(검정 아웃라인 통일의 짝) (주인 2026-09-07 · 전 화면) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `126b544` · 확인 CI #216 · sess-1917-23930 / 워커 J · 자세한 것은 PROGRESS 그 행)**
+### T111 ✅ — ⓐ **챕터 제목 아래 `LineDeco` 제거**(로비·전투) · ⓑ **검정 글씨는 전부 흰 글씨로**(검정 아웃라인 통일의 짝) (주인 2026-09-07 · 전 화면) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `126b544` · 확인 CI #216 · sess-1917-23930 / 워커 J · 자세한 것은 PROGRESS 그 행)**
 
 > 주인 원문(2026-09-07 07:5X): «**챕터 아래에 LineDeco 들은 없애줘. 로비, 전투 화면 둘 다.**» · «**모든 글씨 중에 검정 글씨 → 흰 글씨로 바꿔야 함. 검정 아웃라인으로 통일시켰기 때문에.**»
 
@@ -1563,7 +1564,7 @@ T85(적 처치 → 경험치·골드가 EXP 바·골드 pill 로 날아가 흡�
 
 > **⚠ (21:0X UTC · 워커 H 실측 · sess-2057-9230) ⓑ 가 «크림 바탕 위 어두운 글자» 까지 흰색으로 만든다 — CI [#189](https://github.com/kuzuni/aaawunity/actions/runs/34059063519) 의 `EventsScreenTests.EventsTextsAreReadable` 이 그 첫 실패다(«크림 패널 위 티켓 수는 어두운 글자여야 한다 · Expected < 1.5 · But was **3.0**»). `EnsureOutline` 이 `EnsureBright` 를 부르므로 글자 입구 다섯 곳과 `Adopt` 를 지나는 **모든** 어두운 글자가 바뀌는데, 화면 코드가 일부러 어둡게 준 자리 — 던전 세부 21 티켓 수(`EventsScreen.cs:390` = `Palette.Ink`) · **07 장비 세부의 크림 이름줄(T84 가 `OnCream` 으로 잡은 자리)** · 12 설정 팝업 · 16 출석 팝업 · 공용 팝업의 크림 바탕 — 이 전부 흰 글자가 되어 안 읽힌다. 게이트는 «아웃라인·크기» 만 보고 «바탕과의 대비» 는 안 재므로 PNG 눈 확인 없이는 안 잡힌다(T84 · 결정 174 와 같은 갈래). **처방 후보**: `EnsureBright` 를 «바탕이 어두울 때만» 걸거나(부모 배경 휘도 판정), `Palette.OnCream` 류로 준 글자를 예외로 두기. 주인 지시 «검정 글씨 → 흰 글씨» 는 «어두운 판 위» 를 뜻한 것으로 읽는 것이 레퍼런스와도 맞다(레퍼런스 21·07 은 크림 판 위에 검은 글자다).**
 
-### T112 — 장비 화면(06)·대장간(08): **`Stage` 를 `Band` 까지 늘려 스탯이 무대 안에 있게** + **인벤 `Content` 위 패딩 ≈20px** (주인 2026-09-07 · 배치만) — **✅ 06 완료(`735035dc` · `T112-gear` · sess-1928-29105 · 워커 F · 확인 = CI [#217](https://github.com/kuzuni/aaawunity/actions/runs/34066208978) 의 `UiSmokeTests.GearScreenDetailSlotAndEquip` Passed = 새 단언 다섯 전부 · screens 06 PNG·ui_score 재채점은 main 이 초록이 되는 첫 런에서 · 결정 306)**: ⓐ `GearStage` 26.5 → 32.5(아래 끝이 `GearScreen.Band` 위 41.0 과 맞닿음) · **무대 그림은 `GearScreen.StageArtH` 환산으로 한 픽셀도 안 움직인다**(결정 296 · 늘어난 아래는 들판이 채우고 스탯 3칸이 그 위에) ⓑ `GearUi.InvTopPadPx = 20`(장비·대장간 공용 `GearUi.Grid` 라 둘 다 받는다) ⓒ `ref-layout` ③ 표 동기. **남은 것 = 08 대장간의 ⓐ(무대를 액션바까지)** — `ForgeScreen.cs` 가 T113 lock 안이라 **그 워커 몫**이다(결정 295). 확인 = 그 코드를 담은 첫 완주 런의 `UiSmokeTests` 06 구간 + screens 06 PNG + `ui_score 06_gear` 10.0 유지.
+### T112 ✅ — 장비 화면(06)·대장간(08): **`Stage` 를 `Band` 까지 늘려 스탯이 무대 안에 있게** + **인벤 `Content` 위 패딩 ≈20px** (주인 2026-09-07 · 배치만) — **✅ 06 완료(`735035dc` · `T112-gear` · sess-1928-29105 · 워커 F · 확인 = CI [#217](https://github.com/kuzuni/aaawunity/actions/runs/34066208978) 의 `UiSmokeTests.GearScreenDetailSlotAndEquip` Passed = 새 단언 다섯 전부 · screens 06 PNG·ui_score 재채점은 main 이 초록이 되는 첫 런에서 · 결정 306)**: ⓐ `GearStage` 26.5 → 32.5(아래 끝이 `GearScreen.Band` 위 41.0 과 맞닿음) · **무대 그림은 `GearScreen.StageArtH` 환산으로 한 픽셀도 안 움직인다**(결정 296 · 늘어난 아래는 들판이 채우고 스탯 3칸이 그 위에) ⓑ `GearUi.InvTopPadPx = 20`(장비·대장간 공용 `GearUi.Grid` 라 둘 다 받는다) ⓒ `ref-layout` ③ 표 동기. **남은 것 = 08 대장간의 ⓐ(무대를 액션바까지)** — `ForgeScreen.cs` 가 T113 lock 안이라 **그 워커 몫**이다(결정 295). 확인 = 그 코드를 담은 첫 완주 런의 `UiSmokeTests` 06 구간 + screens 06 PNG + `ui_score 06_gear` 10.0 유지.
 
 > 주인 원문(2026-09-07 08:0X): «장비 팝업에 보면 **Stage 라 되어 있는 거 아래 부분이 Band 부분이랑 맞닿을 정도로 늘려 놓든지** 해야 함. 그래서 **스탯 표시한 것들이 Stage 내부에 있는 느낌**으로. 그리고 장비 팝업 보니까 **아래에 장비 아이템들이 Band 에 너무 딱 붙어 있음. Content 에 탑에 패딩 20 정도** 주면 될 듯.» · «**대장간도 마찬가지.**»
 
@@ -1577,7 +1578,7 @@ T85(적 처치 → 경험치·골드가 EXP 바·골드 pill 로 날아가 흡�
 6. 게이트 + PROGRESS T112 행 + 완료 기록(확인 = CI + `screens` 06·08 PNG 확대).
 
 
-### T113 — 대장간(08): **`AnvilArt` 제거** · **결과/선택 슬롯의 초록 프레임 → 색 통일** · **`ActionBar` = 장비 화면 `Band` 와 같은 크기·위치** (주인 2026-09-07 · 화면만) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `0c0aa22` · 확인 CI #213 · sess-1913-2015 / 워커 E · 자세한 것은 PROGRESS 그 행)**
+### T113 ✅ — 대장간(08): **`AnvilArt` 제거** · **결과/선택 슬롯의 초록 프레임 → 색 통일** · **`ActionBar` = 장비 화면 `Band` 와 같은 크기·위치** (주인 2026-09-07 · 화면만) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `0c0aa22` · 확인 CI #213 · sess-1913-2015 / 워커 E · 자세한 것은 PROGRESS 그 행)**
 
 > 주인 원문(2026-09-07 08:1X): «대장간에 **AnvilArt 빼셈**. 그리고 **완성됐을 때의 슬롯 부분이 초록인데 그러지 말고 색 통일**할 것. 그리고 대장간에 **Action 바 부분도 장비 팝업에 Band 랑 같은 크기랑 위치로** 되어 있으면 적절할 듯.»
 
@@ -1625,6 +1626,7 @@ python3 tools/check_stale_asserts.py                              # 바꾼 값·
 python3 tools/check_asmdef.py                                     # 유니티 «패키지» using 이 그 폴더 asmdef 참조에 있는가(T189) — 없으면 CI 가 컴파일에서 죽는다
 python3 tools/check_test_usings.py                                # 테스트 어셈블리가 «참조하지 않는» 네임스페이스를 using 하는가(DG.Tweening·TMPro) — 로컬 임시 csproj 는 DOTween 을 참조해서 이것을 절대 못 잡는다(결정 465 · CI #346~#348 컴파일 파손)
 python3 tools/check_task_rows.py                                  # PROGRESS 에 같은 작업이 두 줄 있고 «⬜ 대기» ↔ «✅/🔄» 로 어긋난 것(끝난 일을 다시 선점하게 만든다 · 결정 455) — `--list` 로 겹치는 줄 전부 보기
+python3 tools/task_state.py --check                               # 그 옆칸: ROUTINE §2 «제목» ↔ PROGRESS «상태» 어긋남(T193 · 결정 493). 끝냈으면 **제목에도 ✅ 를 단다** — 안 달면 다음 워커가 열린 일로 읽는다. 선점 직전에는 `tools/task_state.py <ID>`(0 = 잡아도 된다)
 dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이후) 이식 검증
 ```
 
@@ -1655,7 +1657,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. **테스트**: `BorderGateTests` 20~26 구간에 `AssertItemFrameBorder` 를 더한다(던전 카드 보상 칸 · 세부 보상 칸 · 상인 상품 칸 · 도전 줄 초상) — 같은 퇴행이 다시 들어오면 빨강.
 4. 게이트 + PROGRESS T115 행 + 완료 기록(확인 = CI `BorderGateTests` + screens 20·21·26 PNG 확대에서 칸 외곽선이 다른 화면과 같은 굵기인가).
 
-### T117 — main 빨강 후속(CI #209 `3a6f79c`): 이벤트 진입이 «던전부터» 로 바뀐 것을 `EventsScreenTests` 기댓값에도 (T107 뒤 · 테스트만) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `1f3a215` · 확인 CI #218 · sess-1842-31994 / 워커 G · 자세한 것은 PROGRESS 그 행)**
+### T117 ✅ — main 빨강 후속(CI #209 `3a6f79c`): 이벤트 진입이 «던전부터» 로 바뀐 것을 `EventsScreenTests` 기댓값에도 (T107 뒤 · 테스트만) — **✅ 완료(PROGRESS 표 기준 · 제목 표기만 뒤늦게 맞춤 · 코드 `1f3a215` · 확인 CI #218 · sess-1842-31994 / 워커 G · 자세한 것은 PROGRESS 그 행)**
 
 > **✅ 완료(2026-09-06 22:4X · sess-1842-31994 · 워커 G) — 코드 `0c0aa22`(게임 코드 0줄 · 테스트 기댓값 세 줄).** CI #209 PlayMode 빨강 2건 중 하나 = `EventsScreenTests.DungeonArenaPagesAndPopups` 의 «이벤트 버튼 = PvP 페이지»(`Expected "pvp" · But was "dungeon"` · NUnit XML 실측). T107(워커 B)이 주인 지시(«이벤트 열면 무조건 던전부터»)대로 로비 «이벤트» 버튼을 던전 페이지로 바꿨는데 그 화면을 왕복하는 ⑨ 블록의 기댓값이 예전 순서 그대로였다 — 게임이 옳고 테스트가 낡았다. 이벤트 버튼 뒤 = `PageDungeon` · 이어지는 왕복은 던전에서 «Tab:pvp» → PvP → «BackBtn» → 로비로 뒤집었다. T107 은 lock 이 반납돼 있어 main 빨강 규약대로 다음 워커가 잡았다. 같은 런의 다른 빨강(`TextSizeGateTests` 공통 팝업 리본 칸 높이 · 12·17·07·05)은 T75(워커 J) lock 안이라 손대지 않았다. **확인 끝 = CI #218(`1f3a215`) 유니티 잡 초록**(그 런이 `screens` 를 갱신 = 유니티 잡 통과 · 내 `0c0aa22` 는 그 트리의 조상). ✅ 종결 · lock 반납.
 범위: `Assets/Tests/PlayMode/EventsScreenTests.cs`(⑨ 블록 세 줄)
@@ -1670,7 +1672,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. 게이트 + PROGRESS T120 행 + `screens` 01 PNG 재확인.
 
 
-### T122 — 로비 하단 탭 바가 T106 띠에 통째로 가려진다 (screens run 218 실측 · T106 ⓓ 회귀 · 화면만) — **✅ 완료(확인 끝 · 코드 `0cf7e0b`(워커 B) + `e1bff70c`(회차 2 · 워커 G) · CI #239)**
+### T122 ✅ — 로비 하단 탭 바가 T106 띠에 통째로 가려진다 (screens run 218 실측 · T106 ⓓ 회귀 · 화면만) — **✅ 완료(확인 끝 · 코드 `0cf7e0b`(워커 B) + `e1bff70c`(회차 2 · 워커 G) · CI #239)**
 
 > 증상 = `01_lobby.png` 의 탭 바 줄이 통째로 검다(가운데 탭 뚜껑만 삐져나옴) · 같은 런의 `09_shop_1.png` 는 멀쩡(T107 아이콘 다섯 정상). 원인 = 새로 만든 띠는 형제 맨 뒤(맨 위)인데 로비 탭 바는 프리팹 자식이라 `SetParent(같은 부모)` 로 순서가 안 바뀐다(결정 330). 처방 = 띠가 «있는 탭 바 바로 앞» 으로 스스로 들어가고 + 로비도 탭 바를 맨 위로 + **형제 순서 단언**을 `UiTextureTests` 에 넣었다(로비·상점 두 경로). 회차 2 = 그 단언이 띠를 «화면 루트의 직계» 로 찾아 로비에서 null 이 나 main 이 빨개진 것을 «같은 부모 안 형제 순서» 로 고쳤다(게임 코드 0줄 · 결정 336).
 >
@@ -1930,7 +1932,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. **⚠ «어둠이 안 덮인다» 는 아니다 — 재 보고 아니라고 확인했다.** 눈으로는 상단 재화 바가 밝아 보이지만 실측 휘도는 **0.086**(하단 탭 바 0.198 · 로비 바닥 0.191)이라 팝업 뒤는 제대로 어둡다. **이 항목으로 등재하지 말 것**(T104 가 이미 고친 자리다).
 4. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` 16 PNG 를 위 좌표로 확대해 «수량이 한눈에 읽히는가 · 머리 띠 글자가 뜨는가» + 주인 폰.
 
-### T121 — **크림(밝은) 바탕 위 글자가 흰색이라 뭉갠다** — T111 ⓑ 의 부작용이 T84(주인이 직접 지적한 07 가독성)를 되돌렸다 (워커 실측 등재 2026-09-07 00:0X · 화면 색만 · 배치 불변)
+### T121 ✅ — **크림(밝은) 바탕 위 글자가 흰색이라 뭉갠다** — T111 ⓑ 의 부작용이 T84(주인이 직접 지적한 07 가독성)를 되돌렸다 (워커 실측 등재 2026-09-07 00:0X · 화면 색만 · 배치 불변)
 
 > 재료: `screens` run **218**(`1f3a2158` · 지금 gh-pages 에 나가 있는 그 빌드) PNG 를 `tools/png_crop.py` 로 2~3배 확대해 봤다(sess-2157-4152 · 워커 H). **게이트는 전부 초록이다** — 크기·아웃라인·테두리는 재지만 **«글자와 바탕의 대비» 는 아무도 안 잰다**(T84 · 결정 174 와 같은 갈래).
 
@@ -1988,7 +1990,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 3. 게이트 + PROGRESS T116 행 + 완료 기록(확인 = 그 커밋 CI 의 `GradientPaletteTests`·`UiTextureTests` Passed + `screens` 01·09·11 PNG 를 레퍼런스와 나란히 눈 확인).
 
-### T136 — **빨간 알림 점이 «타원» 으로 찌그러져 있다 — 점을 부모 칸의 % 로 재기 때문** (주인 2026-09-07 04:4X «빨간점들이 찌그러져있더라» · 등재 세션 코드 실측 · 화면만 · 규칙·수치 0줄)
+### T136 ✅ — **빨간 알림 점이 «타원» 으로 찌그러져 있다 — 점을 부모 칸의 % 로 재기 때문** (주인 2026-09-07 04:4X «빨간점들이 찌그러져있더라» · 등재 세션 코드 실측 · 화면만 · 규칙·수치 0줄)
 
 > 재료 = 코드 실측(등재 세션은 dotnet·유니티가 없어 게이트를 못 돌린다 → **등재만** 한다 · 결정 206·266 과 같은 처지). 잰 법 = 각 점의 rect 를 프레임 px(1080×2337)로 환산.
 > **원인 한 줄**: 조각 `Alert_Dot_01_Red` 는 **Image 하나(47×47 · `m_PreserveAspect: 0`)** 라 rect 가 정사각이 아니면 그림이 그대로 늘어난다. 그런데 세 자리가 점을 **부모 % 로** 재고 있다.
@@ -2020,7 +2022,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 8. **문서** — `chapterChest.json` 의 `_note`·`_goal`·`_reward` 를 새 규칙으로 다시 쓰고(결정 308·309 를 주인 지시가 덮었다는 사실을 그 안에 남긴다) · 자리가 바뀌면 `docs/ref-layout.md` 표 ㉝ 도 같이.
 9. 판정 = 그 커밋을 담은 첫 완주 런의 EditMode·PlayMode 초록 + `screens` 32 PNG(§5 비평 ≥ 8.0) + 주인 폰(받으면 옆으로 넘어가는지).
 
-### T138 — **상단 재화 바가 검회색 프레임에 «맞닿아» 있다 → 띠를 칸 밑으로 조금 더 내린다** (주인 2026-09-07 04:4X · 전 화면 공통 · **배치 표 0줄**) — **✅ 완료(코드 `72fb7548` · sess-0527-19842 · 워커 F · `TopBar.FrameBandBelow = 22f` · 배치 표 0줄) — CI #277·#278 에서 `UiTextureTests` 초록(그 런들의 유일한 빨강은 남의 `LobbyMenuTests`) · lock 반납 · 남은 것은 `screens` 01 PNG 눈 확인(다음 초록 런을 보는 아무 워커나)과 주인 폰**
+### T138 ✅ — **상단 재화 바가 검회색 프레임에 «맞닿아» 있다 → 띠를 칸 밑으로 조금 더 내린다** (주인 2026-09-07 04:4X · 전 화면 공통 · **배치 표 0줄**) — **✅ 완료(코드 `72fb7548` · sess-0527-19842 · 워커 F · `TopBar.FrameBandBelow = 22f` · 배치 표 0줄) — CI #277·#278 에서 `UiTextureTests` 초록(그 런들의 유일한 빨강은 남의 `LobbyMenuTests`) · lock 반납 · 남은 것은 `screens` 01 PNG 눈 확인(다음 초록 런을 보는 아무 워커나)과 주인 폰**
 
 > 주인 원문: «**탑바 부분들 보니까 너무 검회색 프레임 맞닿아있음. 좀 아래에 여백좀 있게좀 해줘야함**»
 > 실측(프레임 1080×2337): 탑바 줄 `Layout.LobbyTopBar` = y 3.7~**8.2%**(86~192px) · 아바타 칸 `LobbyAvatar` = 3.8~**8.2%** → **칸 밑단과 줄 밑단이 같다**. 그런데 프레임 띠(`TopBar.FrameBand`)는 `offsetMin.y = 0` 이라 **줄 밑단에서 딱 끊긴다** — 노란 초상 테두리가 띠 끝에 붙어 보이는 까닭이다. 위·좌·우로는 `FrameOverscan`(4000px)이라 여백 문제가 없다.
@@ -2072,7 +2074,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 5. **테스트** — PlayMode: 악마·천사(그리고 같이 고친 팝업)를 열어 ⓐ 팝업 나무에 `ui.popup.*` 조각이 **0개** ⓑ `Dimmed` 는 있고 α ≥ 0.8 ⓒ 글자 색 휘도가 어둠(0.07)과 **대비 ≥ 0.35**(T132 의 자 `tools/png_contrast.py` 와 같은 판정선) ⓓ 버튼 두 개가 눌리고 그 판정이 예전과 같다 · `PlayLog.AssertNoRed`.
 6. 판정 = 그 커밋을 담은 첫 완주 런의 PlayMode 초록 + `screens` 에 이 팝업 촬영이 없으면 워커가 한 장 찍어 눈으로(04 와 나란히 놓고 «같은 꼴인가») + 주인 폰.
 
-### T142 — 전투 하단 **특전 미리보기 줄(`PerkStrip`)·보유 특전 책 버튼(`PerkBook`) 자리**를 주인이 준 인스펙터 값으로 (주인 2026-09-07 05:2X · 스크린샷 둘 · 자리만 · 그리기 0줄)
+### T142 ✅ — 전투 하단 **특전 미리보기 줄(`PerkStrip`)·보유 특전 책 버튼(`PerkBook`) 자리**를 주인이 준 인스펙터 값으로 (주인 2026-09-07 05:2X · 스크린샷 둘 · 자리만 · 그리기 0줄)
 
 > 주인 원문: «**특전에 이거도 이렇게 돼게 해야함**» + 유니티 인스펙터 스크린샷 둘(둘 다 Left/Top/Right/Bottom = 0 · Pivot 0.5 · Scale 1).
 >
@@ -2088,7 +2090,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 5. **테스트** — `LayoutSpecTests`(있으면 그 표 행) + `PerkStripTests` 재실행 + PlayMode 에서 두 사각형이 프레임 안(0~100%)에 들고 서로 안 겹친다는 단언 한 줄.
 6. 판정 = 그 커밋을 담은 첫 완주 런의 PlayMode 초록 + `screens` 02 PNG 아래쪽 확대(줄·책이 바닥에 붙었는가) + 주인 폰.
 
-### T143 — 전투(02) 하단 셋: **스탯 8칸이 오른쪽으로 치우침** · **바 3개가 왼쪽으로 치우침** · **바 사이에 틈이 없다** (주인 2026-09-07 05:3X · 등재 세션 산술 실측 · 자리만 · 엔진·수치 0줄)
+### T143 ✅ — 전투(02) 하단 셋: **스탯 8칸이 오른쪽으로 치우침** · **바 3개가 왼쪽으로 치우침** · **바 사이에 틈이 없다** (주인 2026-09-07 05:3X · 등재 세션 산술 실측 · 자리만 · 엔진·수치 0줄)
 
 > 주인 원문: «공격력 방어력 반격확률 이런거 옵션들 보면 **오른쪽으로 치우쳐져있음** … **중앙 정렬**되게 해줘 / 경험치 hp 실드바도 **왼쪽으로 치우쳐진거 같음** … **중앙에 있게** / 경험치바 실드바 체력바가 **좀 간격있어보이게** … 간격없이 뭉쳐있어서 별로임 / **스샷으로 찍어가면서 수정해**»
 
@@ -2214,7 +2216,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 5. **게이트** — PlayMode: 그 버튼들의 글자·아이콘 사각형이 **버튼 사각형 안에 들어오고** 각 변에 **≥ 3%** 여백이 남는다(T63 «잘림 0» 게이트가 글자 «내용» 만 보고 «버튼 끝에 닿음» 은 안 보던 갈래다).
 6. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` 20·21 PNG 확대(버튼 안에 여백이 보인다) + 주인 폰.
 
-### T152 — **치명타 데미지 팝을 «치명타 아이콘 + 데미지» 로** (주인 2026-09-07 06:5X · 연출만 · 엔진·수치 0줄)
+### T152 ✅ — **치명타 데미지 팝을 «치명타 아이콘 + 데미지» 로** (주인 2026-09-07 06:5X · 연출만 · 엔진·수치 0줄)
 
 > 주인 원문: «**치명타 데미지일시에 데미지 텍스트 치명타 아이콘+데미지 이런식으로 해줘야함**»
 > 지금: `BattleWorld.cs:801` 이 `Pop(UiKit.Fmt(ev.Value) + (ev.Crit ? "!" : ""), …)` — 치명타면 숫자 뒤에 **«!»** 만 붙고 색·크기만 다르다(`Palette.PopCrit` · 50 vs 38).
@@ -2241,7 +2243,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 4. **게이트** — PlayMode 로 «굵기» 를 재기는 어렵다 → 대신 계약 두 줄: ⓐ 카드 하나당 이 머티리얼을 쓰는 **Image 가 1개**(다섯이 아니다) ⓑ shine 트윈의 이징이 `Linear`. 눈 확인은 워커가 3택 팝업을 열어 짧은 연속 스샷(또는 `PlayShot` 을 시각 두세 곳에서)으로 «띠 굵기가 같은가».
 5. 판정 = 그 커밋을 담은 첫 완주 런 + 워커 스샷 + 주인 폰. `ShineStarts` 계약(순서대로 시작 · `StaggerShine`)은 **그대로 지킨다**(T61 이 단언한다).
 
-### T154 — 특전 팝업 **«책»(보유 특전) 아이콘이 세로로 찌그러진다** (주인 2026-09-07 07:1X · 등재 세션 산술 실측 · 자리/비례만)
+### T154 ✅ — 특전 팝업 **«책»(보유 특전) 아이콘이 세로로 찌그러진다** (주인 2026-09-07 07:1X · 등재 세션 산술 실측 · 자리/비례만)
 
 > 주인 원문: «**특전에 보면 책 아이콘 찌그러져있더라 수정해줘**»
 
@@ -2303,7 +2305,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 > **⚑ (10:2X UTC · 워커 E · sess-1913-2015) 배포가 06:59 이후 안 나간다 — CI #324 PlayMode **79/83** 의 빨강 넷을 XML 원문으로 갈라 둔다(다음 워커가 로그를 다시 파헤치지 않게).** 읽는 법은 결정 172 그대로(`get_job_logs` 를 **job_id** 로 · 큰 `tail_lines` → 저장된 파일을 `grep`). ⚠ 로그 끝의 «Run succeeded, no failures occurred» 는 **마지막 모드 하나**의 말이라 런 전체가 초록이라는 뜻이 아니다(내가 처음에 헷갈렸다). ① `SettingsProfileRowsTests…OpenTheirPopups`(Expected ≤ 70.2 · was 70.588) = **T156 · 살아 있는 lock** ② `UiSmokeTests.GearScreenDetailSlotAndEquip`(«슬롯 0 배지 지름 = 칸의 25.5%» · Expected 0.255±0.03 · was 0.203) = **T176 ⓑ · 살아 있는 lock** ③ `UiSmokeTests.LobbySettingsTalentPetToast`(«로비의 «이벤트» 글자는 탭 하나뿐이다» · **Expected 1 · But was 0**) = **T168 · lock 만료(임자 없음)** — 수가 2(중복)가 아니라 **0** 이다 = 탭 라벨 자체가 사라졌다. **`Game/Screens` 가 T165·T166 의 살아 있는 lock 과 같은 파일이라 나는 안 잡았다** — 그 둘 중 하나가 끝나거나 Screens 가 풀리면 잡을 것. ⚠ **정정(10:3X · 워커 F · sess-1027-30188): 이 ③ 은 이미 고쳐져 있다.** 임자(워커 A)가 **10:12 에 `4ed527cd`(T168 회차 3)** 로 그 단언을 갈아 끼웠는데(«로비에 이벤트 글자 1개» → «탭 «안» 에 ≥ 1 이고 탭 «밖» 에는 0») 그 커밋이 **#324 보다 늦어** 그 런에는 안 들어갔다. 지금 main 에 있고 `Game/Screens` 는 **한 줄도 안 바뀐다**(테스트 파일만) — **다음 완주 런이 이 빨강의 판정이다.** 나는 만료 lock 을 인계했다가 이 사실을 확인하고 **바로 반납했다**(결정 444). ④ `UiSmokeTests.ShopBoxesAndChestOpenPopup`(Expected < 1.0f · was 1.003) = **T158 ⓐ · lock 만료 → 내가 인계해 고쳤다**(`e680c8df` · 코드가 아니라 «시계와 경주하는 자» 가 문제였다 · 결정 446).
 
-### T158 — 뽑기(소환) 결과 창 셋: **상자 «작았다 커졌다 제 크기» 애니** · **안내 글자 삭제** · **칸을 눌러도 안 어두워지게** (주인 2026-09-07 08:0X · T157 과 같은 함수 · 연출·화면 · 확률·수치 0줄) — **🔄 코드 push(sess-0827-14663 · 워커 F · `ChestScaleFrom = 0.6` + 낙하와 같은 시간 OutBack · 안내 줄과 그 단언 같이 삭제 · 결과 칸 Button 을 ShopScreen 에서 뗀다(결정 422) · 로컬 게이트 전부 초록) · 남은 일 = 확인뿐** — **✅ 완료(회차 3 `ed7d7ad9` · CI #360 에서 `ShopBoxesAndChestOpenPopup` 초록 = 빨강 다섯 중 없음) · lock 반납 · 남은 것은 주인 폰뿐**
+### T158 ✅ — 뽑기(소환) 결과 창 셋: **상자 «작았다 커졌다 제 크기» 애니** · **안내 글자 삭제** · **칸을 눌러도 안 어두워지게** (주인 2026-09-07 08:0X · T157 과 같은 함수 · 연출·화면 · 확률·수치 0줄) — **🔄 코드 push(sess-0827-14663 · 워커 F · `ChestScaleFrom = 0.6` + 낙하와 같은 시간 OutBack · 안내 줄과 그 단언 같이 삭제 · 결과 칸 Button 을 ShopScreen 에서 뗀다(결정 422) · 로컬 게이트 전부 초록) · 남은 일 = 확인뿐** — **✅ 완료(회차 3 `ed7d7ad9` · CI #360 에서 `ShopBoxesAndChestOpenPopup` 초록 = 빨강 다섯 중 없음) · lock 반납 · 남은 것은 주인 폰뿐**
 
 > 주인 원문: «뽑기 결과 뜰 때 **상자가 작았었는데 커졌다가 원래 사이즈로 되는 애니메이션** 돼야 함» / «**«최고 등급 일반 · 장착은 장비 탭에서» 이런 텍스트 빼셈** 소환결과 부분» / «소환결과 부분 **클릭하니까 버튼이어서 갑자기 색 어두워지는데 그거 하지 말라**»
 > **T157 과 같은 `ShopScreen.ChestResult` 한 함수**다 — 한 워커가 T157·T158 을 같이 잡는 것이 싸다.
@@ -2353,7 +2355,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. **게이트** — PlayMode(07 구간): ⓐ 잠긴 옵션 줄의 «ic» 색이 **그 줄 등급색과 같다**(회색이 아니다) ⓑ 잠긴 줄 글자에 «(» 로 시작하는 등급 꼬리가 **없다**. 글자 하한(T63)·잘림 0 은 그대로 통과해야 한다(꼬리가 빠져 오히려 짧아진다).
 4. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` **07_gear_detail** PNG 확대(자물쇠가 등급색 · 꼬리 없음) + 주인 폰.
 
-### T161 — 장비 이름을 **«암살자/전사/도둑의 <부위>»** 로 · **«반지» 가 «장갑» 으로 나오는 것 고치기** (주인 2026-09-07 08:3X · 표시 글자만 · `data/gear.json` 불변 · 규칙·수치 0줄)
+### T161 ✅ — 장비 이름을 **«암살자/전사/도둑의 <부위>»** 로 · **«반지» 가 «장갑» 으로 나오는 것 고치기** (주인 2026-09-07 08:3X · 표시 글자만 · `data/gear.json` 불변 · 규칙·수치 0줄)
 
 > 주인 원문: «치명 관련 장비는 **암살자의 장갑** 이런 식으로 해 줘 / 체력실드 관한 거는 **전사의 장갑** / 회피 관한 거는 **도둑의 장갑** 이런 식으로» + «그리고 **반지가 장갑으로 이름 되어 있더라 그런 거 수정 ㄱㄱ**»
 
@@ -2376,7 +2378,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. **테스트** — `LobbyMenuTests`: ⓐ 메뉴에 활성 `Button_Close` 가 **없다** ⓑ 딤을 눌러 닫힌다(T139 의 단언과 같은 자리). 기존에 닫기 버튼을 눌러 닫는 단언이 있으면 딤 클릭으로 바꾼다.
 4. 판정 = 그 커밋을 담은 첫 완주 런의 `LobbyMenuTests` Passed + 주인 폰.
 
-### T163 — **«빨간 점이 여전히 찌그러져 있다»(탐험·클리어 보상) — T136 이 배포됐는지부터 확인** (주인 2026-09-07 09:0X · 확인 우선 · 코드는 이미 들어가 있다) — **✅ 완료(sess-0727-24106 · 워커 F) — 2항이 답이었다: T136 코드 `6043faf`(05:49:52Z)를 담은 첫 배포는 `da50e0ca`(06:59:00Z)라 주인이 본 빌드에는 그 고침이 없었다(그 사이 배포는 T134 가 막고 있었다). ⓑ·ⓒ 는 실측으로 지웠고 ⓐ 는 4항 게이트(`AlertDotTests` · rect × lossyScale)로 넘겼다 · 남은 것은 새 빌드에서 주인이 다시 보기**
+### T163 ✅ — **«빨간 점이 여전히 찌그러져 있다»(탐험·클리어 보상) — T136 이 배포됐는지부터 확인** (주인 2026-09-07 09:0X · 확인 우선 · 코드는 이미 들어가 있다) — **✅ 완료(sess-0727-24106 · 워커 F) — 2항이 답이었다: T136 코드 `6043faf`(05:49:52Z)를 담은 첫 배포는 `da50e0ca`(06:59:00Z)라 주인이 본 빌드에는 그 고침이 없었다(그 사이 배포는 T134 가 막고 있었다). ⓑ·ⓒ 는 실측으로 지웠고 ⓐ 는 4항 게이트(`AlertDotTests` · rect × lossyScale)로 넘겼다 · 남은 것은 새 빌드에서 주인이 다시 보기**
 
 > 주인 원문: «**여전히 탐험, 클리어 보상 쪽에 빨간 점이 찌그러져 있음. 해결하라 해**»
 
@@ -2417,7 +2419,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 4. **게이트** — PlayMode(`EventsScreenTests`): ⓐ 두 탭이 **`ui.tabBar` 조각**으로 서 있다(자식에 `Normal`·`Focus` 가 있다) ⓑ 켜진 탭만 `Focus` 가 켜져 있다 ⓒ 눌러서 페이지가 바뀐다(기존 단언 유지) ⓓ 사각형이 표 ⑮ `DgTabs` 와 같다.
 5. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` **20_dungeon**·**22_arena** PNG 를 로비 01 과 나란히 놓고 «같은 탭 그림인가» + 주인 폰.
 
-### T166 — 로비 둘: **배경 무늬를 «흰색 7/255»로** · **챕터 카드에 5초마다 shine** (주인 2026-09-07 09:2X · 색·연출 · 배치 0줄) — **✅ 완료(확인 끝 · CI #320 + `screens` run 329 PNG 실측 · lock 반납 · ⓑ 의 «5초마다» 는 정지 그림으로 못 보므로 주인 폰만 남는다 · 자세한 것은 PROGRESS 그 행)**
+### T166 ✅ — 로비 둘: **배경 무늬를 «흰색 7/255»로** · **챕터 카드에 5초마다 shine** (주인 2026-09-07 09:2X · 색·연출 · 배치 0줄) — **✅ 완료(확인 끝 · CI #320 + `screens` run 329 PNG 실측 · lock 반납 · ⓑ 의 «5초마다» 는 정지 그림으로 못 보므로 주인 폰만 남는다 · 자세한 것은 PROGRESS 그 행)**
 
 > 주인 원문: «**로비에 패턴 흰색에 투명도 255 중에 7 로 해 줘**» / «그리고 **로비에 챕터 버튼에 shine 효과 5초에 한 번씩 뜨게** 해 줘»
 
@@ -2535,7 +2537,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 5. **게이트** — PlayMode: ⓐ 아이템 슬롯의 빛살 사각형이 **칸 사각형보다 크다**(밖으로 번진다) ⓑ 빛살이 그 칸의 **프레임·아이콘보다 뒤 형제**다 ⓒ 옆 칸의 아이콘 사각형과 **겹치지 않는다**(또는 겹쳐도 알파가 낮아 가리지 않는다 — 수치로 못 재면 PNG 눈 확인) ⓓ `HasLight` 계약(T72 감사)은 그대로 참.
 6. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` **06_gear**·**09_shop_1**(+ 뽑기 결과 스샷) PNG 확대 + 주인 폰.
 
-### T173 — 창: **사거리(352) 대신 «화면 밖 +10» 에서 사라진다** · **관통 8 → 무제한(닿으면 다 데미지)** (주인 2026-09-07 10:3X · **전투 규칙 변경 = 주인 지시** · T171 과 짝 · **골든 재생성**)
+### T173 ✅ — 창: **사거리(352) 대신 «화면 밖 +10» 에서 사라진다** · **관통 8 → 무제한(닿으면 다 데미지)** (주인 2026-09-07 10:3X · **전투 규칙 변경 = 주인 지시** · T171 과 짝 · **골든 재생성**)
 
 > 주인 원문: «**창은 그냥 화면 넘어서 10 정도 더 가면 지워지게** 해 줘 / 그리고 **8까지 관통이었는데 그냥 그런 거 제한 없애 주고**» → «**걍 닿으면 다 데미지 주게로 해 주고 관통 8개까지 말고**»
 
@@ -2779,7 +2781,8 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. **게이트도 같이 되돌린다** — T172 회차가 `UiTextureTests` 에 뒤집어 넣은 두 줄(«담개에 `RectMask2D` 가 **없다**» · «빛살 한 변 = max(아이콘×1.9, **칸×1.35**)»)을 **예전 단언으로** 돌린다: «담개 = `RectMask2D`» · «한 변 = 아이콘 긴 변 × `LightScale`». 그리고 «빛이 칸 밖으로 안 나간다»(빛 사각형 ⊆ 칸 사각형)를 한 줄 더해 **다시 밖으로 새면 빨개지게** 한다.
 4. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` **06·08·09·10·20** PNG(빛이 칸 테두리 안에서 끝난다) + 주인 폰.
 
-### T190 — **아이템·보상 슬롯에서 빛 효과를 뺀다**(클리어 골드 칸 등) (주인 2026-09-07 13:3X · **T189 보다 앞선다** · 연출 제거 · 자리·수치 0줄)
+### T194 — **아이템·보상 슬롯에서 빛 효과를 뺀다**(클리어 골드 칸 등) (주인 2026-09-07 13:3X · **T192 보다 앞선다** · 연출 제거 · 자리·수치 0줄)
+  ⚠ **번호 정정 2026-09-07 14:4X(워커 B · T193)** — 이 작업은 처음 **T190** 으로 등재됐는데 그 번호는 12:45 에 워커 F 가 «`screens` 도 마지막 초록 커밋으로»(PROGRESS 그 행)로 **먼저** 쓰고 있었다. 규약대로 **늦게 민 쪽**(14:34)이 옮긴다 → **T194**. 같은 이유로 이 절이 «T189» 라 부르던 되돌림 작업은 워커 J 가 **T192** 로 옮겨 놨다(제 커밋 `f99613cf`). 두 번호 다 여기서 맞춘다.
 
 > 주인 원문: «그 뭐 **아이템 슬롯 같은 거에는 빛 효과 없게** 하셈 · 예를 들어 **클리어했을 때 골드 주는 거 슬롯에 빛 효과 같은 그거**»
 
@@ -2789,10 +2792,20 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
    - 애매하면 «**그 칸이 `ItemFrame_01` 을 쓰는가**» 로 판정하고, 판정을 **한 함수**(예 `UiKit.HasItemFrame(cell)`)로 두어 다음 워커가 눈으로 고르지 않게 한다.
 2. **어떻게 빼나** — 빛을 **거는 자리를 안 부르는 것**이 정답이다(만들고 지우지 말 것): `PlanLight`/`RewardLight`/`LightBehind` 호출을 그 칸에서 없앤다. 이미 세워진 담개(`LightMask`)가 남지 않게, 예전에 빛을 걸던 자리에 **담개·`Light`·`Glow` 오브젝트가 하나도 안 생기는지** 확인한다.
    - **글로우 서클(T155 ⓓ)도 같이 빠진다** — 서클은 빛살과 한 벌이라 빛을 안 걸면 서클도 없다. 그것이 주인 문장(«빛 효과 없게»)에 맞다.
-3. **T189 와의 관계(순서)** — **T190 이 먼저다.** 빛을 빼는 칸에서는 «안이냐 밖이냐» 가 사라지므로, T189(마스크 복원·`LightOutScale` 제거)는 **남는 자리**(상점 상품 카드 등)에만 뜻이 있다. **한 워커가 T190 → T189 순서로 같이 잡는 것이 가장 싸다.**
+3. **T192 와의 관계(순서)** — **T194 이 먼저다.** 빛을 빼는 칸에서는 «안이냐 밖이냐» 가 사라지므로, T192(마스크 복원·`LightOutScale` 제거)는 **남는 자리**(상점 상품 카드 등)에만 뜻이 있다. **한 워커가 T194 → T192 순서로 같이 잡는 것이 가장 싸다.**
 4. **게이트** — PlayMode: ⓐ 클리어 팝업·장비 인벤·대장간·뽑기 결과·던전 보상 칸에 **`UiKit.HasLight(cell) == false`**(그리고 글로우 서클도 0) ⓑ **상점 상품 카드는 여전히 참**(남기는 자리를 못 박는다 — 이 줄이 없으면 다음 워커가 전부 지운다) ⓒ 빨간 줄 0. T72 ② 를 «전 화면 빛살» 로 단언하던 옛 줄이 있으면 **자리 목록을 이 규칙으로 고친다**.
-5. **문서** — ROUTINE T72 ② 절에 «**T190(주인 2026-09-07 13:3X)로 «아이템·보상 칸» 에서는 빼기로 바뀌었다 — 남는 곳은 상점 상품 카드**» 를 적어 다음 워커가 되살리지 않게 한다.
+5. **문서** — ROUTINE T72 ② 절에 «**T194(주인 2026-09-07 13:3X)로 «아이템·보상 칸» 에서는 빼기로 바뀌었다 — 남는 곳은 상점 상품 카드**» 를 적어 다음 워커가 되살리지 않게 한다.
 6. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` **06·08·09·20**·클리어 팝업 스샷(칸에 빛이 없다 · 상점 상품에는 있다) + 주인 폰.
+### T193 ✅ — **«이미 끝난 일을 또 잡는» 헛구덩이를 자로 막는다 — ROUTINE §2 제목 ↔ PROGRESS 상태 대조** (워커 실측 등재 2026-09-07 14:2X · 도구·문서 · 게임 코드 0줄) — **✅ 완료(`tools/task_state.py` + 제목 109개 정정 · sess-1424-31894 · 워커 B)**
+
+> 오늘만 세 번 샜다: 워커 J 의 **T149·T151**(결정 455) · 워커 B 의 **T188**(결정 479) · 워커 B 가 잡으려던 **T161**(코드는 `2ad1aeaf` 에 이미 다 있었다).
+
+1. **뿌리 = 두 문서가 어긋난다.** 선점은 이 문서 **§2 제목 줄**을 보고 하는데(§0 4항 «선점 가능한 가장 앞 작업»), «끝났다» 는 사실은 `docs/PROGRESS.md` **상태 칸**에 적힌다. 제목의 ✅ 는 **사람이 손으로** 다는 것이라 자주 빠진다 — 등재 시각 기준으로 **109개**가 «PROGRESS 는 ✅ 완료인데 제목엔 ✅ 없음» 이었다(T121·T136·T142·T143·T152·T154·T158·T161·T163·T166·T173 등 **최근 것도 열하나**). 그러면 전부 «열린 일» 로 보인다.
+2. **lock 도 신호가 못 된다** — 끝내면 반납하므로 «lock 없음» 이 «안 했음» 과 «다 했음» 을 못 가른다(결정 479 가 적은 그것).
+3. **자 = `tools/task_state.py`** — ⓐ `--check` 는 어긋난 짝을 전부 찍는다 ⓑ `<ID>` 는 선점 «직전» 한 줄로 «잡아도 되나» 를 **종료 코드**로 답한다(0/1 · 남의 살아 있는 lock · 이미 ✅ · **그 번호를 가리키는 코드·커밋이 이미 있는가**) ⓒ `--self-test` 는 T161 사고를 가짜 문서로 재현해 «잡는지 · 고치면 조용한지» 를 본다 ⓓ `--list` 는 전체 표.
+4. **CI 는 `--self-test` 만 막는다** — `--check` 는 `continue-on-error` 로 **보고만** 한다(결정 493). dotnet 잡이 빨개지면 `unity-test` → `build-webgl` 이 줄줄이 안 돌아 **주인 폰 배포가 막힌다**. ✅ 하나가 빠진 것은 «조율 결함» 이지 «빌드 결함» 이 아니다.
+5. **작업을 끝내면 PROGRESS 상태와 §2 제목 «둘 다»** 를 고친다 — 그것이 이 자가 요구하는 전부다.
+
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).

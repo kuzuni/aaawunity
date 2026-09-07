@@ -1,0 +1,264 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""«이미 끝난 일을 또 잡는» 헛구덩이를 막는 자 (T193).
+
+왜 있나 — 오늘만 세 번 샜다.
+  · 워커 J 가 **T149·T151** 을 선점했다가 05:41 커밋이 이미 다 고쳐 놓은 것을 코드에서 알았다(결정 455).
+  · 내가 **T188** 을 선점했더니 31분 전에 워커 L 이 끝내 놓았다(결정 479).
+  · 내가 **T161** 을 잡으려다 `git log -- <그 파일>` 한 줄로 `2ad1aeaf`(워커 L)를 봤다 — 이미 다 들어 있었다.
+
+**뿌리는 «두 문서가 어긋난다» 는 것이다.** 선점은 `docs/ROUTINE.md` §2 **제목 줄**을 보고 하는데
+(§0 4항: «선점 가능한 «가장 앞» 작업»), «끝났다» 는 사실은 `docs/PROGRESS.md` **상태 칸**에 적힌다.
+제목의 ✅ 는 사람이 손으로 다는 것이라 자주 빠진다 — T161 은 PROGRESS 가 «✅ 완료 · CI 확인 끝» 인데
+ROUTINE 제목에는 ✅ 가 없었다. 그러면 **열린 일로 보인다**. lock 이 없는 것도 신호가 못 된다
+(끝내면 반납하므로 «없음» 이 «안 했음» 과 «다 했음» 을 못 가른다).
+
+`check_task_rows.py`(결정 455)는 **PROGRESS 표 안에서** 같은 ID 가 두 줄로 갈라진 것을 잡는다.
+이 자는 그 옆칸을 본다 — **ROUTINE 제목 ↔ PROGRESS 상태**가 어긋나는 자리.
+
+쓰는 법
+  python3 tools/task_state.py --check     # 게이트: 어긋나면 1 로 끝난다 (ROUTINE §3 목록)
+  python3 tools/task_state.py T161        # 선점 «직전» 한 줄 — 잡아도 되는지 판정 (0 = 잡아도 된다)
+  python3 tools/task_state.py --list      # 전체 표
+  python3 tools/task_state.py --self-test # 이 자가 실제로 잡는지
+"""
+import io
+import os
+import re
+import subprocess
+import sys
+import datetime
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROUTINE = os.path.join(ROOT, "docs", "ROUTINE.md")
+PROGRESS = os.path.join(ROOT, "docs", "PROGRESS.md")
+CLAIMS = os.path.join(ROOT, "docs", "claims")
+
+# «### T161 — …» · «### T188 ✅ — …» — 꼬리에 -gear 같은 갈래가 붙는 ID 는 이 표의 대상이 아니다(별개 작업).
+HEAD = re.compile(r"^###\s+(T\d+)(?![\w-])(.*)$")
+ROW = re.compile(r"^\|\s*(T\d+)(?![\w-])[^|]*\|([^|]*)\|([^|]*)\|")
+STALE_MIN = 90          # docs/claims/README.md 의 «90분» 규약과 같은 값
+
+
+def _fold(s):
+    """접어 둔 중복 행 표시(✂·♻)는 상태로 안 센다 — check_task_rows.py 와 같은 규약."""
+    return "✂" in s or "♻" in s
+
+
+def routine_heads(path=ROUTINE):
+    """ID → (줄번호, 제목에 ✅ 가 있나, 제목 원문)."""
+    out = {}
+    with io.open(path, encoding="utf-8") as f:
+        for n, line in enumerate(f, 1):
+            m = HEAD.match(line.rstrip("\n"))
+            if not m:
+                continue
+            tid, rest = m.group(1), m.group(2)
+            # 제목의 «맨 앞 토막»(첫 — 앞)에 있는 ✅ 만 «이 작업이 끝났다» 는 표시다.
+            # 본문 쪽 «✅ 완료(코드 …)» 는 꼬리에 덧붙인 진행 기록이라 제목 표시와 구별한다.
+            head_part = rest.split("—")[0]
+            out.setdefault(tid, (n, "✅" in head_part, rest.strip()))
+    return out
+
+
+def progress_rows(path=PROGRESS):
+    """ID → (줄번호, 상태 칸). 같은 ID 가 여러 줄이면 «가장 앞선 상태» 를 쓴다(✅ > 🔄 > ⬜)."""
+    rank = {"✅": 3, "🔄": 2, "⬜": 1}
+    out = {}
+    with io.open(path, encoding="utf-8") as f:
+        for n, line in enumerate(f, 1):
+            m = ROW.match(line.rstrip("\n"))
+            if not m:
+                continue
+            tid, work, state = m.group(1), m.group(2), m.group(3)
+            if _fold(work) or _fold(state):
+                continue
+            # ⚠ 칸 «어디에든» ✅ 가 있으면 완료로 세면 안 된다 — «🔄 코드 push … 로컬 게이트 전부 초록 ✅» 같은
+            # 진행 기록에도 ✅ 가 흔하고, «**비평 회차 3 = 9.5 ✅**» 처럼 점수 표시로 쓰인 자리도 있다.
+            # 상태는 칸 **맨 앞**에 적는 것이 이 표의 규약이라(§4) 앞의 굵게 표시만 벗기고 첫 글자를 본다.
+            lead = state.strip().lstrip("*").strip()
+            mark = lead[0] if lead[:1] in ("✅", "🔄", "⬜") else ""
+            prev = out.get(tid)
+            if prev is None or rank.get(mark, 0) > rank.get(prev[1], 0):
+                out[tid] = (n, mark, state.strip())
+    return out
+
+
+def lock_of(tid):
+    """살아 있는 lock 이면 (SID, 나이(분)), 90분을 넘겼으면 (SID, 나이) + stale, 없으면 None."""
+    p = os.path.join(CLAIMS, tid + ".lock")
+    if not os.path.exists(p):
+        return None
+    try:
+        txt = io.open(p, encoding="utf-8").read().strip().split()
+        when = datetime.datetime.strptime(txt[0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc)
+        sid = txt[1] if len(txt) > 1 else "(SID 없음)"
+    except (OSError, ValueError, IndexError):
+        return ("(못 읽음)", 0.0)
+    age = (datetime.datetime.now(datetime.timezone.utc) - when).total_seconds() / 60.0
+    return (sid, age)
+
+
+def _git(args):
+    try:
+        return subprocess.run(["git"] + args, cwd=ROOT, stdout=subprocess.PIPE,
+                              stderr=subprocess.DEVNULL, text=True, timeout=60).stdout
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+def footprint(tid):
+    """그 작업 번호가 **코드에** 남긴 자취 — 파일 목록과 «제목이 그 번호로 시작하는» 커밋들."""
+    # 우리가 쓴 것만 본다 — `Assets/` 통째로 훑으면 에셋 팩의 **이진 파일**(.psd 등)이 우연히 걸린다(실측).
+    out = _git(["grep", "-l", "-E", tid + r"([^0-9]|$)", "--",
+                "Assets/Scripts", "Assets/Tests", "tools", "docs/ref"])
+    files = [l for l in out.split("\n") if l]
+    commits = []
+    log = _git(["log", "--format=%h\t%cI\t%s", "-200"])
+    pat = re.compile(r"^" + tid + r"(?![\w-])")
+    for line in log.split("\n"):
+        parts = line.split("\t")
+        if len(parts) == 3 and pat.match(parts[2]):
+            commits.append(parts)
+    return files, commits
+
+
+def verdict(tid, heads, rows):
+    """(잡아도 되나, 한 줄 판정). «잡아도 되나» 가 거짓이면 그 회차에 그 번호를 선점하지 않는다."""
+    lk = lock_of(tid)
+    if lk and lk[1] < STALE_MIN:
+        return False, "남의 lock 이 살아 있다 — %s · %d분 전(90분 규약)" % (lk[0], lk[1])
+    hn, hdone, _ = heads.get(tid, (0, False, ""))
+    pn, pmark, ptext = rows.get(tid, (0, "", ""))
+    if hdone or pmark == "✅":
+        where = "ROUTINE 제목이" if hdone else "PROGRESS 상태가"
+        return False, "**끝난 일이다**(%s ✅) — 잡지 마라" % where
+    files, commits = footprint(tid)
+    if commits:
+        h, when, subj = commits[0]
+        return False, "⚠ **이미 손댄 흔적** — 커밋 %s(%s) «%s» · 코드 %d곳. 먼저 읽어라" % (
+            h, when[:16], subj[:60], len(files))
+    if files:
+        return False, "⚠ **코드가 이 번호를 %d곳에서 가리킨다** — 먼저 읽어라: %s" % (
+            len(files), ", ".join(files[:3]))
+    if lk:
+        return True, "lock 이 %d분 지났다(90분 초과) — 인계해서 잡아도 된다" % lk[1]
+    return True, "깨끗하다 — 선점해도 된다"
+
+
+def mismatches(heads, rows):
+    """«PROGRESS 는 ✅ 인데 ROUTINE 제목에는 ✅ 가 없다» = 선점 덫. 이것이 T161·T188 이 빠진 구덩이다."""
+    bad = []
+    for tid, (pn, mark, ptext) in sorted(rows.items(), key=lambda kv: int(kv[0][1:])):
+        if mark != "✅":
+            continue
+        h = heads.get(tid)
+        if h is None:
+            continue        # ROUTINE §2 에 없는 작업(옛 표만 있는 것)은 선점 대상이 아니다
+        if not h[1]:
+            bad.append((tid, h[0], pn, ptext[:70]))
+    return bad
+
+
+def cmd_check(heads, rows):
+    bad = mismatches(heads, rows)
+    if not bad:
+        print("✓ task_state: ROUTINE §2 제목과 PROGRESS 상태가 어긋나는 작업 0개 (제목 %d · 표 %d)"
+              % (len(heads), len(rows)))
+        return 0
+    print("⛔ **선점 덫** — PROGRESS 는 «✅ 완료» 인데 ROUTINE §2 제목에 ✅ 가 없다.")
+    print("   다음 워커는 이것을 «열린 일» 로 읽고 한 회차를 통째로 버린다(T161·T188 이 그랬다).")
+    print("   고침: `docs/ROUTINE.md` 그 제목 줄의 ID 뒤에 ✅ 를 붙인다.")
+    for tid, hn, pn, ptext in bad:
+        print("  · %-5s ROUTINE.md:%d  ↔  PROGRESS.md:%d  «%s»" % (tid, hn, pn, ptext))
+    return 1
+
+
+def cmd_list(heads, rows):
+    for tid in sorted(set(heads) | set(rows), key=lambda t: int(t[1:])):
+        ok, why = verdict(tid, heads, rows)
+        print("%-5s %s %s" % (tid, "잡아도 됨" if ok else "잡지 마라 ", why))
+    return 0
+
+
+def cmd_one(tid, heads, rows):
+    hn, hdone, htext = heads.get(tid, (0, False, "(ROUTINE §2 에 없다)"))
+    pn, pmark, ptext = rows.get(tid, (0, "", "(PROGRESS 표에 없다)"))
+    lk = lock_of(tid)
+    files, commits = footprint(tid)
+    print("== %s ==" % tid)
+    print("  ROUTINE §2  : %s" % (htext[:100] or "(없다)"))      # 제목 원문에 이미 ✅ 가 들어 있다
+    print("  PROGRESS 상태: %s" % (ptext[:100] or "(없다)"))
+    print("  lock        : %s" % ("%s · %d분 전%s" % (lk[0], lk[1], " (90분 초과 = 죽은 lock)" if lk[1] >= STALE_MIN else "")
+                                  if lk else "없음"))
+    print("  코드 자취    : %d곳%s" % (len(files), (" — " + ", ".join(files[:5])) if files else ""))
+    for h, when, subj in commits[:3]:
+        print("  커밋        : %s %s %s" % (h, when[:16], subj[:70]))
+    ok, why = verdict(tid, heads, rows)
+    print("  → %s: %s" % ("잡아도 된다" if ok else "잡지 마라", why))
+    return 0 if ok else 1
+
+
+def self_test():
+    """오늘 실제로 난 두 사고(T161 · T188)를 자가 잡는지 본다 — «늘 초록인 자» 와 «잡는 자» 를 가른다."""
+    import tempfile
+    import shutil
+    tmp = tempfile.mkdtemp(prefix="task_state_selftest_")
+    try:
+        r = os.path.join(tmp, "ROUTINE.md")
+        p = os.path.join(tmp, "PROGRESS.md")
+        # ⓐ T161 꼴 — PROGRESS 는 ✅ 인데 제목에 ✅ 가 없다 → 잡아야 한다.
+        # ⚠ «쓰인 적 없는 번호» 를 **글자 그대로** 적으면 안 된다 — 이 파일 자체가 `git grep` 에 걸려
+        # «코드 자취가 있다» 로 판정되고 자기 검사가 스스로를 깬다(실제로 그랬다). 그래서 숫자로 만든다.
+        free = "T%d" % 9000
+        io.open(r, "w", encoding="utf-8").write(
+            "### T161 — 장비 이름을 바꾼다 (주인 …)\n### %s — 아직 아무도 안 한 일\n" % free)
+        io.open(p, "w", encoding="utf-8").write(
+            "| ID | 작업 | 상태 | SID |\n| T161 | 장비 이름 | ✅ **완료 · CI 확인 끝** | 워커 L |\n"
+            "| %s | 새 일 | ⬜ 대기 | |\n" % free)
+        heads, rows = routine_heads(r), progress_rows(p)
+        bad = mismatches(heads, rows)
+        if [b[0] for b in bad] != ["T161"]:
+            print("⛔ 자기 검사 실패 — T161 꼴(표는 ✅ · 제목은 ✅ 없음)을 못 잡았다: %s" % (bad,))
+            return 1
+        # ⓑ 제목에 ✅ 를 달면 조용해야 한다(거짓 경고 0).
+        io.open(r, "w", encoding="utf-8").write(
+            "### T161 ✅ — 장비 이름을 바꾼다 (주인 …)\n### %s — 아직 아무도 안 한 일\n" % free)
+        if mismatches(routine_heads(r), rows):
+            print("⛔ 자기 검사 실패 — 제목에 ✅ 를 달았는데도 걸린다(거짓 경고)")
+            return 1
+        # ⓒ 진짜 트리에서 «코드 자취» 판정 — T161 은 이미 손댄 흔적이 있고, 쓰인 적 없는 번호는 깨끗하다.
+        # ⚠ git 을 못 쓰는 자리(내려받은 tarball 등)에서는 이 조각을 **건너뛴다** — 여기서 «실패» 로 끝내면
+        # CI dotnet 잡이 빨개지고 그 사슬 끝의 gh-pages(주인 폰)까지 멈춘다(결정 493 이 정한 그 원칙).
+        if not _git(["rev-parse", "HEAD"]).strip():
+            print("✓ task_state --self-test: 문서 대조는 통과(git 이 없어 «코드 자취» 조각은 건너뛴다)")
+            return 0
+        H, R = routine_heads(), progress_rows()
+        if verdict("T161", H, R)[0]:
+            print("⛔ 자기 검사 실패 — 실제 트리의 T161 을 «잡아도 된다» 로 판정했다(코드가 이미 있다)")
+            return 1
+        if not verdict(free, H, R)[0]:
+            print("⛔ 자기 검사 실패 — 쓰인 적 없는 %s 를 «잡지 마라» 로 판정했다(거짓 경고)" % free)
+            return 1
+        print("✓ task_state --self-test: 어긋난 짝을 잡고(T161) · ✅ 를 달면 조용하고 · 빈 번호는 통과한다")
+        return 0
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def main(argv):
+    if "--self-test" in argv:
+        return self_test()
+    heads, rows = routine_heads(), progress_rows()
+    if "--check" in argv:
+        return cmd_check(heads, rows)
+    if "--list" in argv:
+        return cmd_list(heads, rows)
+    ids = [a for a in argv if re.fullmatch(r"T\d+", a)]
+    if ids:
+        return max(cmd_one(t, heads, rows) for t in ids)
+    return cmd_check(heads, rows)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
