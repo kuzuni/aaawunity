@@ -9,11 +9,15 @@ using UnityEngine.TestTools;
 namespace KkomaKnight.Tests.Play
 {
     /// <summary>
-    /// T191 — 대장간(08) 무대: <b>불이 화덕 «안»에서 탄다</b>(바닥 띠 위로 안 걸친다).
+    /// T191 — 대장간(08) 무대: <b>불이 «안내 문구 아래 · 바닥 띠 위»</b> 그 사이에서 탄다(레퍼런스 08 의 작은 불씨).
     /// <para>
     /// 여태 이 화면에서 잰 것은 «칸이 있는가 · 글자가 안 잘리는가 · 테두리가 있는가» 였고
     /// <b>«무대 조각끼리 겹치는가»</b> 는 아무도 안 봤다 — 그래서 불꽃 그림의 아래 절반이 바닥 띠 위에
     /// 떠 있는 채로 모든 게이트가 초록이었다(`screens` run 358 실측: 불꽃 y 237~317 · 바닥 윗변 y 297).
+    /// </para>
+    /// <para>
+    /// <b>이웃은 둘이다</b> — 회차 1 은 «바닥» 만 보고 불을 위로 올렸다가 이번엔 «안내 문구» 와 겹쳤다
+    /// (run 365 눈 확인: «고르세요» 글자 위에 불꽃 · 결정 477). 한쪽 이웃만 재는 자는 고친 자리를 옆으로 밀 뿐이다.
     /// </para>
     /// <para>
     /// <b>rect 로 잰다</b> — 그림(잉크)은 <c>preserveAspect</c> 로 칸 안에서 위아래 여백을 갖고 가운데 놓이므로,
@@ -59,9 +63,11 @@ namespace KkomaKnight.Tests.Play
             var fire = UiKit.Find(stage, "Fire") as RectTransform;
             var floor = UiKit.Find(stage, "Floor") as RectTransform;
             var hearth = UiKit.Find(stage, "Hearth") as RectTransform;
+            var banner = UiKit.Find(_app.Current.Root, "Banner") as RectTransform;   // 안내 문구 상자 — 무대가 아니라 Root 의 자식이다
             Assert.IsNotNull(fire, "화덕 불(Fire)");
             Assert.IsNotNull(floor, "바닥 띠(Floor)");
             Assert.IsNotNull(hearth, "화덕 상자(Hearth)");
+            Assert.IsNotNull(banner, "안내 문구 상자(Banner)");
 
             float fireTop, fireBottom, floorTop, floorBottom, hearthTop, hearthBottom;
             Span(fire, out fireTop, out fireBottom);
@@ -77,6 +83,15 @@ namespace KkomaKnight.Tests.Play
             // 화덕 «안»이라는 것도 같이 못 박는다 — 위로 도망가도 안 된다.
             Assert.GreaterOrEqual(fireTop, hearthTop - eps, "불이 화덕 윗변보다 위로 나갔다(T191)");
             Assert.LessOrEqual(fireBottom, hearthBottom + eps, "불이 화덕 아래 끝보다 아래로 나갔다(T191)");
+
+            // ⚠ 이웃은 **둘**이다 — 회차 1 은 바닥만 보고 불을 올렸다가 안내 문구와 겹쳤다(결정 477).
+            // 안내 상자는 무대가 아니라 Root 의 자식이라 좌표계가 다르다 → 프레임 % 로 환산해 견준다.
+            float bannerBottomFrame = (1f - banner.anchorMin.y) * 100f;
+            float fireTopFrame = fireTop * Layout.ForgeStage.H + Layout.ForgeStage.Y;
+            Debug.Log(string.Format("[T191] 안내 상자 아래 끝 {0:0.00}% · 불 윗변 {1:0.00}% (프레임 %)", bannerBottomFrame, fireTopFrame));
+            Assert.GreaterOrEqual(fireTopFrame, bannerBottomFrame - 0.1f,
+                "불이 안내 문구 상자와 겹친다 — 불 윗변 " + fireTopFrame.ToString("0.00") + "% < 안내 상자 아래 끝 " + bannerBottomFrame.ToString("0.00") + "%"
+                + " (T191 회차 2 · 레퍼런스 08 은 불이 안내 문구 «아래»에서 타는 작은 불씨다)");
 
             _log.AssertNoRed("T191 대장간 무대");
             if (_app != null) { if (_app.UiCanvas != null) Object.Destroy(_app.UiCanvas.gameObject); Object.Destroy(_app.gameObject); }

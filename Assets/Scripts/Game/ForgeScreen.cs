@@ -24,19 +24,23 @@ namespace KkomaKnight.Game
         /// <summary>무대 안 조각 자리(무대 % · 레퍼런스 08 을 눈으로 잰 것 · 전부 점수 밖 «느낌» — 표 행은 무대 사각형뿐).</summary>
         static readonly Layout.R StageFloor = new Layout.R(0, 62, 100, 38);          // 아래 38% 는 바닥(밝은 갈색 띠) · 위는 벽
         static readonly Layout.R StageHearth = new Layout.R(40, 16, 52, 60);         // 화덕(어두운 상자) — 안내 문구가 그 위에 얹힌다
-        /// <summary>불 칸의 높이(무대 %) — 자리는 <see cref="StageFire"/> 가 바닥에서 뽑는다.</summary>
-        const float FireH = 24f;
+        /// <summary>안내 상자(<see cref="Layout.ForgeBanner"/> · 프레임 %)의 아래 끝을 <b>무대 %</b> 로 환산한 값 — 불은 그 아래에서 탄다.</summary>
+        static float BannerBottomInStage => (Layout.ForgeBanner.Y + Layout.ForgeBanner.H) / Layout.ForgeStage.H * 100f;
         /// <summary>
-        /// 화덕 «안» 의 불 — <b>바닥 띠 위에 걸치지 않도록 아래 끝을 바닥 윗변에 맞춘다</b>(T191).
+        /// 화덕 «안» 의 불 — <b>안내 상자 «아래», 바닥 띠 «위»</b> 그 사이 칸에 딱 맞춘다(T191 회차 2).
         /// <para>
-        /// 전에는 y 를 46 으로 박아 두어 칸 아래 끝이 70% = 바닥 윗변(62%)보다 <b>8%p 아래</b>였다.
-        /// 바닥은 불보다 <b>먼저</b> 깔리므로 불이 그 위에 그려져, `screens` run 358 실측으로
-        /// 불꽃 그림(y 237~317)이 바닥 윗변(y 297)보다 <b>20px 아래</b>까지 내려와 «화덕 밖에서 타는» 그림이 됐다.
-        /// 레퍼런스 08 은 불이 화덕 아가리 «안»에서 탄다.
+        /// 레퍼런스 08 을 보면 불은 «큰 불꽃» 이 아니라 안내 문구 <b>아래</b>에서 타는 <b>작은 불씨</b>다
+        /// («Select equipment to merge» 판이 화덕 아가리 위쪽을 덮고, 그 밑에 은은한 주황 빛만 보인다).
         /// </para>
-        /// 리터럴 대신 <see cref="StageFloor"/> 에서 뽑는 까닭 = 바닥 높이를 나중에 누가 바꾸면 불도 같이 따라간다(§1).
+        /// <para>
+        /// 회차 1 은 <b>바닥만</b> 보고 불을 위로 올렸다가 이번엔 <b>안내 문구와 겹쳤다</b>(«고르세요» 위에 불꽃) —
+        /// 이웃이 둘인데 하나만 보고 잰 것이 잘못이었다(결정 477). 그래서 이제 <b>위·아래 두 이웃 사이</b>로 자리를 뽑는다:
+        /// 위 = 안내 상자 아래 끝(<see cref="BannerBottomInStage"/>) · 아래 = 바닥 윗변(<see cref="StageFloor"/>).
+        /// </para>
+        /// 둘 다 리터럴이 아니라 <b>이웃에서 뽑으므로</b> 안내 상자나 바닥을 나중에 누가 옮기면 불도 같이 따라간다(§1).
         /// </summary>
-        static readonly Layout.R StageFire = new Layout.R(56, StageFloor.Y - FireH, 20, FireH);
+        static readonly Layout.R StageFire = new Layout.R(
+            56, BannerBottomInStage, 20, Mathf.Max(2f, StageFloor.Y - BannerBottomInStage));
         static readonly Layout.R StageBarrelL = new Layout.R(-4, 70, 16, 26), StageBarrelR = new Layout.R(88, 70, 16, 26);
         static readonly Layout.R StageToolA = new Layout.R(8, 5, 9, 14), StageToolB = new Layout.R(19, 5, 9, 14);   // 벽에 걸린 연장(망치·도끼)
         /// <summary>모루 그림(프레임 %) — 결과 슬롯과 재료 슬롯 사이 왼쪽(레퍼런스 x4~36 · y21~29).</summary>
