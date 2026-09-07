@@ -1706,7 +1706,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 1. **자** `tools/check_asmdef.py` — `Assets/Scripts` 의 `.cs` 마다 «가장 가까운 조상 asmdef» 을 찾아, `using` 한 **표(`NS_TO_ASM`)에 있는** 네임스페이스가 그 asmdef 의 `references` + `precompiledReferences` 에 있는지 본다. 표에 없는 네임스페이스는 **아무 말도 안 한다**(모르는 것을 추측하지 않는다). 새 패키지를 쓰면 표에 한 줄 더한다.
 2. **실제 파손으로 검증** — `ad0d3d2e~1`(고치기 전) 트리에서 `PostFx.cs:2 using UnityEngine.Rendering` **한 줄만** 짚고 «`Unity.RenderPipelines.Core.Runtime` 을 넣어라» 까지 말한다. 지금 트리는 초록.
-3. **⚠ `Assets/Tests` 는 일부러 안 본다(결정 465)** — 처음엔 넣었는데 **멀쩡히 컴파일되는 트리에서 오탐 80건**이 났다. 테스트 asmdef 은 `nunit.framework.dll` 을 `precompiledReferences` 에 적고, `DG.Tweening`·`UnityEngine.Rendering` 은 `references` 에 없어도 컴파일된다(자동 참조가 얽혀 있어 유니티 없이는 모델링이 안 된다). **자가 소음이 되면 아무도 안 본다** — 증거 있는 자리만 본다.
+3. **⚠ `Assets/Tests` 는 일부러 안 본다(결정 466)** — 처음엔 넣었는데 **멀쩡히 컴파일되는 트리에서 오탐 80건**이 났다. 테스트 asmdef 은 `nunit.framework.dll` 을 `precompiledReferences` 에 적고, `DG.Tweening`·`UnityEngine.Rendering` 은 `references` 에 없어도 컴파일된다(자동 참조가 얽혀 있어 유니티 없이는 모델링이 안 된다). **자가 소음이 되면 아무도 안 본다** — 증거 있는 자리만 본다.
 4. **CI 에는 안 넣었다** — `check_decisions`·`check_stale_asserts` 와 같은 결로 **커밋 직전 워커가 도는 자**다. ROUTINE §3 게이트 목록 + 워커 A 의 §1 규칙 줄에 «이제 자가 본다» 를 붙였다.
 5. 판정 = `python3 tools/check_asmdef.py` 가 초록이고, 다음에 누가 새 패키지 타입을 쓸 때 이 자가 커밋 «전» 에 잡는 것.
 
