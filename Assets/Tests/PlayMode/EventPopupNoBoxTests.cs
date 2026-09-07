@@ -74,6 +74,9 @@ namespace KkomaKnight.Tests.Play
         /// <summary>한 팝업을 ⓐⓑⓒ 로 재고 «[T141]» 로 남긴다(다음 워커가 CI 로그에서 바로 읽는다).</summary>
         void AssertNoBox(string name)
         {
+            // 어둠은 α 0 에서 0.85 로 «페이드»(UiKit.FadeIn) 라 연 직후 두 프레임은 아직 옅다(CI #297 실측 0.235) —
+            // 비평 PNG 를 찍는 UiShotsTests 와 같은 방법으로 연출을 끝까지 돌린 뒤 잰다(T49 규약).
+            UiKit.CompleteAllTweens();
             var root = _app.Overlay.Root;
             var pieces = BoxPieces(root);
             Assert.AreEqual(0, pieces.Count, name + ": 판(공통 팝업 상자) 조각이 남아 있다 — " + string.Join(", ", pieces));
@@ -149,7 +152,7 @@ namespace KkomaKnight.Tests.Play
             // ⑤ 축복 강화(광고 뒤 팝업) — 직접 열어 같은 꼴인지만 본다
             _app.Overlay.Blessed(_ => { }); yield return Frames(2);
             AssertNoBox("축복 강화");
-            _app.Overlay.Close(); yield return Frames(1);
+            _app.Overlay.Close(); yield return Frames(2);   // 닫힌 팝업 조각이 실제로 사라진 뒤에 다음을 연다(Destroy 는 한 프레임 뒤)
 
             // ⑥ «상자 없음» 은 이 다섯 자리뿐 — 다른 공통 팝업(일시정지 = 설정과 같은 팝업)은 판 그대로다
             _app.Overlay.Pause(() => { }, () => { }); yield return Frames(2);
