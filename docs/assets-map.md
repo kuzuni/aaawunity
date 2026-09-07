@@ -180,6 +180,10 @@
 | sprites | `pi.wand` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/wand_star.png` | fileID 21300000 |  |
 | sprites | `pi.energy` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/energy.png` | fileID 21300000 |  |
 | sprites | `pi.necklace` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/necklace.png` | fileID 21300000 |  |
+| sprites | `pi.headgear` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/headgear.png` | fileID 21300000 |  |
+| sprites | `pi.armor` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/armor.png` | fileID 21300000 |  |
+| sprites | `pi.boots` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/boots.png` | fileID 21300000 |  |
+| sprites | `pi.ring` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/ring.png` | fileID 21300000 |  |
 | sprites | `ui.dodge` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Stat_Dodge_01.png` | fileID 21300000 | 스탯 «회피» (UniqueIcon Stat_Dodge_01) |
 | sprites | `ui.speed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Common_Speed_01_Yellow.png` | fileID 21300000 | HUD 배속 버튼(x1/x2) |
 | sprites | `ui.skull` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Skull_01.png` | fileID 21300000 | 클리어 팝업 «처치 수» |

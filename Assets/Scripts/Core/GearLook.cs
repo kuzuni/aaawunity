@@ -30,28 +30,32 @@ namespace KkomaKnight.Core
         /// <b>부위</b> 아이콘 키 (T105 · 주인 2026-09-07 «무슨 장비 부위인지 알려주는 아이콘이어야 함 — 투구·갑옷·신발·무기·목걸이·반지 · 지금처럼 치명타·체력·회피 이런 거 아니고») —
         /// 칸의 다이아 배지와 장착 슬롯의 «여기는 무슨 자리» 표시에 쓴다. <b>세트</b> 아이콘(<c>pi.critical</c>·<c>pi.heart</c>·<c>ui.dodge</c>)은 세트 옵션 줄에서만 계속 쓴다.
         /// <para>
-        /// 그림은 <b>이미 카탈로그에 있는 것을 그대로 쓴다</b>(T105 1항 «이미 쓰는 것 우선 재사용» · 새 에셋 0 · 카탈로그 불변) — <c>gi.&lt;부위&gt;.crit</c> 여섯 개다.
+        /// 그림은 <b>PictoIcon 기호</b>다(T175 · 주인 2026-09-07 10:5X) — <c>pi.headgear</c>·<c>pi.armor</c>·<c>pi.boots</c>·<c>pi.necklace</c>·<c>pi.ring</c>·<c>pi.dagger</c>.
+        /// 주인 에셋에 이미 있는 그림이라 <b>새 그림 0</b>이고, 카탈로그에 없던 넷(<c>pi.headgear</c>·<c>pi.armor</c>·<c>pi.boots</c>·<c>pi.ring</c>)만 키를 새로 만들었다.
+        /// <para>T105 때는 <c>gi.&lt;부위&gt;.crit</c>(아이템 그림)을 돌려 썼는데, 그것은 «기호» 가 아니라 아이템 한 점의 그림이라 부위로 안 읽혔다 — 주인이 그것을 지적했다.</para>
         /// 투구·무기·갑옷의 <c>gi.*</c> 는 아이템 아이콘이 CharacterMaker Thumbnail(<c>cmi.*</c>)로 바뀌면서 안 쓰이게 된 자리라 «부위를 뜻하는 일반 그림» 으로 딱 맞고,
         /// 목걸이(룬 펜던트)·반지(<c>glove</c> · T88)·신발은 아이템 아이콘과 같은 그림이라 «그 부위» 로 바로 읽힌다.
         /// </para>
         /// </summary>
         public static string PartIcon(string part)
         {
-            // 검 · 투구 · 갑옷 · 신발 · 룬 펜던트(목걸이) · 반지(glove = T88 «장갑 → 반지» · 부위 키는 그대로)
+            // T175(주인 2026-09-07 10:5X «부위 표시 부분 pictoicon 으로 넣어 놔야 함») — 아이템 그림(gi.*)에서 **PictoIcon 기호**로 바꿨다.
+            // PictoIcon 은 단색 실루엣이라 «이 자리는 무슨 부위» 가 한눈에 읽히고, 빈 슬롯을 흐리게 그리는 규칙(PartIconEmptyAlpha)과도 맞는다.
+            // 무기는 표에 axe_1·dagger_1 둘이 있었는데 우리 무기 그림이 검(cm.knight.sword)이라 «칼» 쪽(pi.dagger)을 골랐다(결정 421).
             switch (part)
             {
                 case Weapon:
-                    return "gi.weapon.crit";
+                    return "pi.dagger";
                 case Helm:
-                    return "gi.helm.crit";
+                    return "pi.headgear";
                 case Armor:
-                    return "gi.armor.crit";
+                    return "pi.armor";
                 case "boot":
-                    return "gi.boot.crit";
+                    return "pi.boots";
                 case "neck":
-                    return "gi.neck.crit";
+                    return "pi.necklace";
                 case "glove":
-                    return "gi.glove.crit";
+                    return "pi.ring";
             }
             return null;
         }

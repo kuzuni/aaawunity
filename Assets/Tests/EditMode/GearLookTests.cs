@@ -39,6 +39,32 @@ namespace KkomaKnight.Tests
                     }
         }
 
+        /// <summary>
+        /// T175(주인 2026-09-07 10:5X «부위 표시 부분 pictoicon 으로») — 부위 여섯의 표시 아이콘이
+        /// ⓐ 빠짐 없이 있고 ⓑ 서로 다르고 ⓒ **PictoIcon(`pi.*`)** 이고 ⓓ 카탈로그에 실재하고 ⓔ 그 파일이 `PictoIcon/` 아래 있는가.
+        /// 하나라도 아이템 그림(`gi.*`)으로 되돌아가면 ⓒ 에서 걸린다.
+        /// </summary>
+        [Test]
+        public void PartIconsArePictoIconsAndAllDistinct()
+        {
+            var d = TestData.Load();
+            var path = Path.GetFullPath(Path.Combine(TestData.Dir, "..", "..", "KkomaKnight", "catalog.json"));
+            var sprites = new JNode(MiniJson.Parse(File.ReadAllText(path)))["sprites"];
+            var seen = new HashSet<string>();
+            foreach (var part in d.Gear.Parts)
+            {
+                var key = GearLook.PartIcon(part);
+                Assert.That(key, Is.Not.Null.And.Not.Empty, "부위 표시 아이콘이 없다: " + part);
+                Assert.That(key.StartsWith("pi."), Is.True, "부위 표시는 PictoIcon 기호여야 한다(T175 · 아이템 그림 gi.* 로 되돌아갔다): " + part + " → " + key);
+                Assert.That(seen.Add(key), Is.True, "두 부위가 같은 그림을 쓴다(부위로 안 읽힌다): " + part + " → " + key);
+                var file = sprites[key].Str();
+                Assert.That(file, Is.Not.Null.And.Not.Empty, "catalog.json 에 없는 키: " + key);
+                Assert.That(file.Contains("/PictoIcon/"), Is.True, "PictoIcon 폴더 그림이어야 한다: " + file);
+                Assert.That(File.Exists(TestData.RepoFile(file)), Is.True, "그림 파일 없음: " + file);
+            }
+            Assert.That(seen.Count, Is.EqualTo(d.Gear.Parts.Length), "부위 수만큼 서로 다른 아이콘");
+        }
+
         /// <summary>T31 주인 지시 «아이콘용 그림과 입는 그림은 따로» — 착용 키(cm.gear.*)는 Parts/ 의 그림, 아이콘 키(cmi.gear.*)는 Thumbnail/ 의 **같은 이름** 그림이어야 한다(투구·무기·갑옷 × 세트 × 등급 36쌍 전부).</summary>
         [Test]
         public void IconKeysAreThumbnailsOfTheSameWornPart()
