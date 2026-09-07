@@ -44,6 +44,12 @@ namespace KkomaKnight.Game
         /// 세로 46% = 119px 칸에서 55px ≥ 보조 36 × 1.4(=50.4px · <see cref="TextSize.LineBox"/>)라 글자가 안 눌린다.
         /// </summary>
         static readonly Layout.R FirstBadge = new Layout.R(36f, -10f, 62f, 46f);
+        /// <summary>
+        /// 순위 보상 팝업(25) 하단 탭 버튼이 탭 줄에서 쓰는 세로 비율(% · T127) — 줄의 밑변 = 팝업 박스 rect 의 밑변이라
+        /// 꽉 채우면 조각의 «보이는» 크림 바닥 밖으로 버튼이 삐져나온다. 72% 면 버튼 높이 5.1%p 로 레퍼런스 25(≈5.3%p)와 같고
+        /// 버튼 아래 여백이 2.0%p 생긴다. 버튼 칸 세로는 166px × 0.72 ≈ 120px 이라 버튼 글자 44(칸 62px)에 넉넉하다.
+        /// </summary>
+        const float TabBtnH = 72f;
         /// <summary>아레나 상대 초상(껍데기 · 순환) · 순위 목록 줄 수 · 도전 팝업 줄 수 · 순위 보상 줄 수 · 상인 상품.</summary>
         static readonly string[] Foes = { "ui.iconFoe1", "ui.iconFoe2", "ui.iconFoe3", "ui.iconFoe4" };
         const int RankRows = 7, FoeRows = 5, RewardRows = 4;
@@ -497,8 +503,11 @@ namespace KkomaKnight.Game
                 if (i == 0) UiKit.Tag(row, "보상 줄(1칸)");
             }
             var tabs = UiKit.Rect(box, "Tabs"); UiKit.Pct(tabs, Layout.RrTabs.Within(Layout.RrBox)); UiKit.Tag(tabs, "하단 탭(2개)");
-            var daily = UiKit.Button(tabs, "ui.btnGray", "일일 보상", Noop, new Layout.R(0, 0, 48.5f, 100)); daily.name = "DailyTab";
-            var seasonTab = UiKit.Button(tabs, "ui.btnGray", "시즌 보상", Noop, new Layout.R(51.5f, 0, 48.5f, 100)); seasonTab.name = "SeasonTab"; UiKit.Ensure<CanvasGroup>(seasonTab.gameObject).alpha = 0.7f;
+            // T127 — 버튼은 탭 줄(표 ⑰ 의 «하단 탭») 안에서 위쪽 TabBtnH% 만 쓴다: 줄의 밑변은 팝업 박스 rect 의 밑변과 같은데
+            // 팝업 조각의 «보이는» 크림 바닥은 그보다 위라, 줄을 꽉 채우면 버튼 아래쪽이 크림 밖(검은 배경) 으로 삐져나온다(screens 243 실측).
+            // 레퍼런스 25 도 버튼 아래에 여백이 있고 버튼 높이가 줄보다 낮다 — 배치 표는 «줄» 을 잰 값이라 한 칸도 안 바꾼다.
+            var daily = UiKit.Button(tabs, "ui.btnGray", "일일 보상", Noop, new Layout.R(0, 0, 48.5f, TabBtnH)); daily.name = "DailyTab";
+            var seasonTab = UiKit.Button(tabs, "ui.btnGray", "시즌 보상", Noop, new Layout.R(51.5f, 0, 48.5f, TabBtnH)); seasonTab.name = "SeasonTab"; UiKit.Ensure<CanvasGroup>(seasonTab.gameObject).alpha = 0.7f;
             ApplyLights();
             TagClose();
         }

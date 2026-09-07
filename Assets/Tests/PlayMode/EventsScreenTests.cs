@@ -205,6 +205,17 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(HasText(s => s == "순위 보상") && HasText(s => s == "일일 보상") && HasText(s => s == "시즌 보상") && HasText(s => s.StartsWith("초기화까지")) && HasText(s => s == "순위 보상은 우편으로 지급됩니다"), "순위 보상 글자");
             Assert.AreEqual(5, CountNamed(ov, "Tier:"), "티어 5"); Assert.AreEqual(4, CountNamed(ov, "RewardRow:"), "보상 줄 4");
             var rbox = UiKit.Find(ov, "ui.popup") as RectTransform; Assert.IsNotNull(rbox); AtX(rbox, Layout.RrBox, "순위 보상 박스"); AtY(rbox, Layout.RrBox, "순위 보상 박스");
+            // T127 — 하단 탭 버튼 두 개는 팝업 박스 «안» 에 여백을 두고 앉는다: 탭 줄의 밑변이 박스 밑변과 같아서
+            // 버튼이 줄을 꽉 채우면 조각의 보이는 크림 바닥 밖으로 삐져나온다(screens 243 실측). 아래 여백 ≥ 박스 높이의 1%.
+            {
+                var bc = new Vector3[4]; rbox.GetWorldCorners(bc); float boxH = bc[1].y - bc[0].y;
+                foreach (var n in new[] { "DailyTab", "SeasonTab" })
+                {
+                    var btn = UiKit.Find(ov, n) as RectTransform; Assert.IsNotNull(btn, n);
+                    var tc = new Vector3[4]; btn.GetWorldCorners(tc);
+                    Assert.GreaterOrEqual(tc[0].y - bc[0].y, boxH * 0.01f, n + " 아래에 팝업 박스 안 여백이 있다(T127)");
+                }
+            }
             Assert.IsTrue(ClickNamed(ov, "DailyTab") && ClickNamed(ov, "SeasonTab"), "일일/시즌 탭 누름"); yield return Frames(1);
             Assert.IsTrue(_app.Overlay.IsOpen, "탭은 아무 일 없음");
             Assert.IsTrue(ClickNamed(ov, "Dimmed"), "배경 탭"); yield return Frames(2);
