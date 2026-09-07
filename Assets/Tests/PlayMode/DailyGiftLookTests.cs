@@ -101,9 +101,10 @@ namespace KkomaKnight.Tests.Play
             Assert.IsFalse(locked.interactable, "잠긴 버튼은 눌리지 않는다");
             var cg = locked.GetComponent<CanvasGroup>();
             Assert.IsTrue(cg == null || cg.alpha >= 0.99f, "알파로 흐리게 하지 않는다 — α 를 먹이면 판·글자가 같이 끌려가 대비가 α 배로 준다(T186 ⓓ)");
-            Assert.AreEqual(Selectable.Transition.None, locked.transition, "유니티 제 disabledColor(α 0.5)가 다시 알파를 먹이지 않게");
-            var plate = locked.targetGraphic as Image; if (plate == null) plate = locked.GetComponent<Image>();
-            Assert.IsNotNull(plate, "잠긴 버튼 판");
+            Assert.AreEqual(Selectable.Transition.ColorTint, locked.transition, "전이는 ColorTint 그대로(«모든 버튼은 ColorTint» = PressFeedbackTests 계약 · disabledColor 가 흰색이라 판 색이 안 흐려진다)");
+            var plate = LobbyPopups.PlateOf((RectTransform)locked.transform);
+            Assert.IsNotNull(plate, "잠긴 버튼 판(«보이는» 조각 — 루트 Image 는 투명 히트 영역이다)");
+            Assert.Less(Luma(plate.color), 0.25f, "판이 어두워야 흰 글자가 뜬다(고치기 전 0.63)");
             var lockTxt = locked.GetComponentInChildren<Text>(true);
             Assert.Greater(Mathf.Abs(Luma(lockTxt.color) - Luma(plate.color)), MinContrast,
                            "«잠금» 글자 ↔ 판 대비(고치기 전 0.16)");

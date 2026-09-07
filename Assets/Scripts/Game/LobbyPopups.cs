@@ -524,20 +524,33 @@ namespace KkomaKnight.Game
         /// <b>같은 비율로</b> 바탕 쪽으로 끌어당기므로 <b>둘의 차이도 그만큼 줄어든다</b>(α 를 곱한 만큼 대비가 곱해진다).
         /// 즉 회색 조각 위 흰 글자는 α 를 어떻게 잡아도 0.35 를 못 넘는다 — 판 자체를 어둡게 해야 한다.
         /// </para>
-        /// 그래서 ⓘ <c>interactable</c> 은 <b>false 그대로</b>(누름 차단) ⓙ 유니티 색 전이는 <c>None</c>(제 <c>disabledColor</c> 가 다시 α 를 먹이지 않게)
-        /// ⓚ 판을 <see cref="LockedPlate"/> 로 tint. 글자는 T63·T111 그대로 흰색 + 검은 아웃라인이라 «잠긴 줄» 이라는 뜻은 회색 조각·«잠금» 글자·자물쇠 배지가 낸다.
+        /// 그래서 ⓘ <c>interactable</c> 은 <b>false 그대로</b>(누름 차단) ⓙ 전이는 <b>ColorTint 그대로 둔다</b>
+        /// (<see cref="UiKit.PressColors"/> 의 <c>disabledColor</c> 가 <b>흰색</b>이라 비활성이어도 판 색이 안 흐려진다 ·
+        /// «모든 버튼은 ColorTint» 는 <c>PressFeedbackTests</c> 의 계약이라 <c>None</c> 으로 바꾸면 그 자가 빨개진다)
+        /// ⓚ 판(<see cref="PlateOf"/>)을 <see cref="LockedPlate"/> 로 tint. 글자는 T63·T111 그대로 흰색 + 검은 아웃라인이고
+        /// «잠긴 줄» 이라는 뜻은 «잠금» 글자와 보상 칸의 자물쇠가 낸다.
         /// </summary>
         static void LockLook(RectTransform b)
         {
             if (b == null) return;
+            var btn = b.GetComponent<Button>(); if (btn != null) btn.interactable = false;
+            var plate = PlateOf(b); if (plate != null) plate.color = LockedPlate;
+        }
+
+        /// <summary>
+        /// 버튼의 «보이는 판» — <see cref="UiKit.Clickable"/> 이 루트에 붙이는 것은 <b>투명 히트 영역</b>이고 실제 그림은 조각의 자식(«Bg»)이다.
+        /// 그 조각이 곧 <c>targetGraphic</c>(<see cref="UiKit.PressTarget"/> 이 «보이는 첫 자식» 으로 고른 것)이라 그것을 먼저 쓰고,
+        /// 없으면 알파가 있는 첫 자식 Image 로 내려간다. <b>게이트도 이 함수로 판을 찾는다</b> — 코드와 자가 서로 다른 조각을 보면 판정이 어긋난다.
+        /// </summary>
+        public static Image PlateOf(RectTransform b)
+        {
+            if (b == null) return null;
             var btn = b.GetComponent<Button>();
-            if (btn != null)
-            {
-                btn.transition = Selectable.Transition.None;
-                btn.interactable = false;
-                var tg = btn.targetGraphic as Image; if (tg != null) tg.color = LockedPlate;
-            }
-            var img = b.GetComponent<Image>(); if (img != null) img.color = LockedPlate;
+            var tg = btn != null ? btn.targetGraphic as Image : null;
+            if (tg != null && tg.color.a > 0.01f) return tg;
+            foreach (var img in b.GetComponentsInChildren<Image>(true))
+                if (img.transform != b && img.color.a > 0.01f) return img;
+            return tg;
         }
 
         /// <summary>자정까지 남은 시간 — «종료까지 hh:mm:ss»(상점 무료 보급 줄과 같은 문법 · 표에 없는 날은 «--:--:--»).</summary>
