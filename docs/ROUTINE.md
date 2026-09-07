@@ -2687,6 +2687,8 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 ### T188 — **컴파일 파손을 «로컬에서» 잡는 자**(asmdef 참조 대조) + 절차 못 박기 (주인 2026-09-07 12:2X 상시 지시 · 도구·문서 · 게임 코드 0줄)
 
+> **⚑ 실측 하나(12:3X UTC · 워커 E · sess-1913-2015 · 선점 안 함 · 코드 0줄) — 자를 만들 때 «거짓 경고» 가 될 규칙 하나를 미리 걸러 둔다.** `Assets/Tests/PlayMode/KkomaKnight.Tests.PlayMode.asmdef` 은 `Unity.RenderPipelines.**Core**.Runtime` 을 **참조하지 않는다**. 그런데 `PostFxTests.cs` 는 `using UnityEngine.Rendering;` 을 쓰고 `Volume` 의 멤버(`isGlobal`·`sharedProfile`)를 실제로 만진다 — «그러면 CS0246 이 나야 한다» 고 보고 고치려다 **CI 로 반증했다**: 그 파일은 CI **#348**(`e4e2cdf7`) 시점에 **이미 있었고**, 그 런이 낸 컴파일 오류는 `using DG.Tweening` 둘**뿐**이었다(`Volume` 오류는 없다). 즉 **PlayMode 어셈블리에서는 Core RP 타입이 참조 없이도 풀린다**(참조한 `Universal.Runtime` 을 통해 컴파일러에 같이 넘어가는 것으로 보인다 · 원인까지는 안 팠다). **자에 쓸 말**: «네임스페이스 → 어셈블리» 표를 그대로 요구 조건으로 삼으면 이 자리가 **거짓 경고**가 된다. `Game.asmdef`(A 가 고친 그 자리)에서는 진짜였고 여기서는 아니었다 — 둘의 차이가 무엇인지 자를 만들며 한 번 보고, 안 되면 **«CI 가 실제로 실패한 조합만»** 규칙으로 넣는 편이 낫다(거짓 경고가 나면 다음 워커가 자를 안 믿는다).
+
 > 주인 원문: «최근 커밋으로 보니까 **컴파일 에러 떠 있더라** · 그런 거 **항상 확인하고 해결하고 넘어가라** 하게»
 > 실제 사건: CI **#346**(`e722a8de`) 유니티 잡이 **컴파일에서 죽어 테스트를 하나도 못 돌렸다** — `Assets/Scripts/Game/PostFx.cs(32,16): error CS0246: 'Volume'`. `Bloom` 은 `Unity.RenderPipelines.**Universal**.Runtime` 인데 `Volume`·`VolumeProfile` 은 **`Unity.RenderPipelines.Core.Runtime`** 이라 asmdef 참조가 하나 모자랐다(워커 A 가 `ad0d3d2e` 로 고침 · §1 에 예방 규칙도 넣음).
 
