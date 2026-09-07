@@ -32,6 +32,11 @@ SCREENS = {
     '08_gear_fuse': ('⑥', None, None),
     '04_perks': ('⑦', None, '(인포 팝업)'),       # 선택창 = «(인포 팝업)» 행 제외
     '05_perks_list': ('⑦', '(인포 팝업)', None),  # 인포 팝업 = «(인포 팝업)» 행만
+    # T213 — 이벤트 팝업 둘은 ㊱ 한 표를 쓰고 행 이름 앞머리로 갈린다.
+    # ⚠ 이름으로 표를 찾는 갈래(`find_table` 아래쪽)는 이 둘을 **못 가른다** — 둘 다 접두가 «ev_» 라 같은 표를 집는다.
+    #    그래서 여기 명시한다(⑤·⑦ 과 같은 방식). 표가 «레퍼런스 그림 없는 회귀 자» 인 것은 ㊱ 머리에 적혀 있다.
+    'ev_devil': ('㊱', '(악마)', None),
+    'ev_angel': ('㊱', '(천사)', None),
 }
 PASS, HALF = 3.0, 6.0
 
@@ -45,7 +50,9 @@ def parse_ref():
     """{기호: {'title': 제목줄, 'rows': [(이름, [x,y,w,h] or None들, 비고)]}} — 요소/x/y/w/h/비고 6열 표만."""
     tables = {}; cur = None; in_table = False
     for line in open(REF, encoding='utf-8'):
-        m = re.match(r'^## ([①-⑳㉑-㉟])\s*(.*)$', line)
+        # T213 — 번호가 ㉟ 을 넘겼다(㊱ 부터). 옛 문자 범위는 ㉟ 까지만 받아 **새 표를 조용히 못 본다** —
+        #        표를 세워도 «표가 없다» 고 하고 그 화면은 영영 «—» 다(그 침묵이 이 작업을 부른 자리다).
+        m = re.match(r'^## ([①-⑳㉑-㉟㊱-㊿])\s*(.*)$', line)
         if m:
             cur = m.group(1); tables[cur] = {'title': m.group(2).strip(), 'rows': []}; in_table = False; continue
         if line.startswith('## '): cur = None; in_table = False; continue   # 기호 없는 절(«⚑ U01 회차 정정» 등)은 표가 아니다 — 마지막 표에 그 절의 표 행이 섞이던 것을 막는다(T44)
