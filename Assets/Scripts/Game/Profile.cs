@@ -41,7 +41,9 @@ namespace KkomaKnight.Game
             return Colors[0];
         }
         /// <summary>그 색의 테두리 조각 카탈로그 키.</summary>
-        public static string FrameKey(SaveData s) => "ui.profileFrame." + Current(s);
+        /// <summary>아바타 테두리 조각의 카탈로그 키 앞머리 — 탑바가 «옛 색 조각» 을 찾아 지울 때 쓴다(T96-profile · <see cref="Game.TopBar"/>).</summary>
+        public const string FrameKeyPrefix = "ui.profileFrame.";
+        public static string FrameKey(SaveData s) => FrameKeyPrefix + Current(s);
 
         /// <summary>아바타(테두리) 고르기 팝업 — 탑바 아바타를 누르면 열린다.</summary>
         public static void OpenAvatar(App app)

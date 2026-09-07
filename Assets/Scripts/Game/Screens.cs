@@ -276,18 +276,7 @@ namespace KkomaKnight.Game
             var slot = UiKit.Rect(root, "Avatar"); UiKit.Pct(slot, Layout.LobbyAvatar.Within(top)); tb.Avatar = slot;
             Opaque(slot);   // T72 7항 ⓑ — 칸 제 불투명 바탕(노란 초상 프레임 뒤로 패턴이 비치지 않게)
             // T96-profile — 테두리 조각은 «고른 색»(세이브 · 기본 노랑 = 종전 UserInfo_01_Slider 안의 그것과 같은 프리팹)을 카탈로그에서 바로 세운다
-            var frameGo = UiKit.Spawn(Profile.FrameKey(app.Save), slot);
-            var frame = frameGo != null ? frameGo.transform : null;
-            if (frame != null)
-            {
-                var frt = (RectTransform)frame;
-                UiKit.FitScale(frt, UiKit.PxSize(Layout.LobbyAvatar));
-                var mask = UiKit.FindAny(frt, "Bg_MainColor(Mask)", "Mask"); if (mask == null) mask = frt;
-                UiKit.Hide(mask, "Character");
-                tb.Hero = HeroView.Attach((RectTransform)mask, HeroView.PlayerSkin(app));
-                tb.Hero.SetFraming(1.6f, 0.45f);   // 가슴 위(레퍼런스 아바타)
-            }
-            else { tb.Hero = HeroView.Attach(slot, HeroView.PlayerSkin(app)); tb.Hero.SetFraming(1.6f, 0.45f); }
+            AvatarFrame(app, tb, slot);
             // 아바타를 누르면 프로필(아바타 고르기) — T96-profile · 조각에 버튼이 없으므로 칸 자체에 붙인다
             UiKit.Clickable(slot, () => Profile.OpenAvatar(app));
             // 상단 초상은 정지 그림(T68 ② · 주인 «로비 주인공 아이콘이 계속 움직인다») — 장비 화면 가운데 큰 캐릭터(GearScreen)는 그대로 움직인다
@@ -331,6 +320,43 @@ namespace KkomaKnight.Game
             if (Gold != null) Gold.text = UiKit.Fmt(s.Gold);
             if (Gem != null) Gem.text = UiKit.Fmt(s.Gem);
             Hero?.SetSkin(HeroView.PlayerSkin(_app));
+            AvatarFrame(_app, this, Avatar);   // T96-profile — 프로필에서 색을 고르면 세이브만 바뀌므로 여기서 조각을 갈아 끼운다(색이 같으면 아무 일도 안 한다)
+        }
+
+        /// <summary>
+        /// 아바타 칸의 테두리 조각을 «지금 고른 색»(<see cref="Profile.FrameKey"/>)으로 세운다 — <b>이미 그 색이면 아무것도 안 한다</b>.
+        /// <para>
+        /// 왜 <see cref="Refresh"/> 도 부르나: 프로필 팝업의 «선택» 은 세이브에 색을 남기고 화면 <c>Refresh</c> 만 부르는데,
+        /// 조각은 <see cref="Build"/> 때 한 번 세워진 그대로라 <b>탑바가 옛 색으로 남았다</b>(CI #233 `ProfileTests` 빨강 · 결정 320).
+        /// 색이 바뀐 순간에만 갈아 끼우므로 매 <c>Refresh</c>(재화 갱신)마다 초상이 다시 붙어 깜빡이는 일은 없다.
+        /// </para>
+        /// 옛 조각은 <see cref="UiKit.Clear"/> 와 같은 법으로 <b>먼저 부모에서 떼고</b> 지운다 — <c>Destroy</c> 는 프레임 끝에 처리되므로
+        /// 떼지 않으면 같은 프레임에 새 조각과 옛 조각이 둘 다 <see cref="UiKit.Find"/> 에 걸린다.
+        /// </summary>
+        static void AvatarFrame(App app, TopBar tb, RectTransform slot)
+        {
+            if (app == null || tb == null || slot == null) return;
+            string key = Profile.FrameKey(app.Save);
+            if (UiKit.Find(slot, key) != null) return;
+            for (int i = slot.childCount - 1; i >= 0; i--)
+            {
+                var c = slot.GetChild(i);
+                if (!c.name.StartsWith(Profile.FrameKeyPrefix, StringComparison.Ordinal)) continue;
+                c.SetParent(null, false); c.gameObject.SetActive(false); UnityEngine.Object.Destroy(c.gameObject);
+            }
+            var frameGo = UiKit.Spawn(key, slot);
+            var frame = frameGo != null ? frameGo.transform : null;
+            if (frame != null)
+            {
+                var frt = (RectTransform)frame;
+                UiKit.FitScale(frt, UiKit.PxSize(Layout.LobbyAvatar));
+                var mask = UiKit.FindAny(frt, "Bg_MainColor(Mask)", "Mask"); if (mask == null) mask = frt;
+                UiKit.Hide(mask, "Character");
+                tb.Hero = HeroView.Attach((RectTransform)mask, HeroView.PlayerSkin(app));
+                tb.Hero.SetFraming(1.6f, 0.45f);   // 가슴 위(레퍼런스 아바타)
+            }
+            else { tb.Hero = HeroView.Attach(slot, HeroView.PlayerSkin(app)); tb.Hero.SetFraming(1.6f, 0.45f); }
+            tb.Hero?.SetStill(true);   // 상단 초상은 정지 그림(T68 ② · 갈아 끼운 뒤에도 그대로)
         }
     }
 
