@@ -113,7 +113,9 @@ namespace KkomaKnight.Game
         {
             if (app == null) return;
             var entries = Entries(app);
-            var root = app.Overlay.OpenPrefab(entries.Count > 0 ? "ui.mailbox" : "ui.mailboxEmpty");
+            // closeOnDim: true — 어둠을 눌러도 닫힌다(T169 ⓑ · T139 ⓐ 가 만든 인자를 그대로 쓴다).
+            // 이 창은 «닫는 길이 하나도 없어» 막혀 있었으므로 닫기 버튼(아래 Buttons)과 어둠 둘 다 넣는다.
+            var root = app.Overlay.OpenPrefab(entries.Count > 0 ? "ui.mailbox" : "ui.mailboxEmpty", closeOnDim: true);
             var rt = (RectTransform)root.transform;
             var popup = UiKit.Find(rt, "Popup") as RectTransform;
             if (popup == null) return;                                   // 조각 구성이 바뀌면 조용히 빈 어둠(빨간 줄 0)
@@ -185,9 +187,17 @@ namespace KkomaKnight.Game
             Open(app);   // 남은 줄로 다시 그린다(하나도 안 남으면 «비었음» 프리팹)
         }
 
-        /// <summary>프리팹의 아래 버튼 둘 — «Claim All» 은 «전체 받기» 로, «Delete All»(편지 삭제)은 우리 우편함에 뜻이 없어 끈다.</summary>
+        /// <summary>조각이 들고 오는 닫기 버튼의 이름 — 인스턴스는 <c>Button_Close_01</c> 로 이름이 덮여 있고 원본 조각은 <c>Button_Close_Square_01</c> 다(둘 다 찾는다 · Profile 과 같은 꼴).</summary>
+        public const string CloseName = "Button_Close_01";
+
+        /// <summary>프리팹의 아래 버튼 둘 — «Claim All» 은 «전체 받기» 로, «Delete All»(편지 삭제)은 우리 우편함에 뜻이 없어 끈다. 오른쪽 위 <b>닫기</b>는 조각이 들고 오는데 여태 배선이 없었다(T169).</summary>
         static void Buttons(App app, RectTransform rt, bool anyRow)
         {
+            // T169 ⓐ — 조각(Rewards_Mailbox·Rewards_Mailbox_Empty 둘 다)이 Button_Close_01 을 들고 오는데
+            // 여태 아무도 배선하지 않아 «눌러도 아무 일이 없는» 버튼이었다. 그래서 이 창은 닫을 길이 하나도 없었다.
+            var close = UiKit.FindAny(rt, CloseName, "Button_Close_Square_01");
+            if (close != null) UiKit.Clickable(close, () => app.Overlay.Close());
+
             var del = UiKit.Find(rt, "Button_DeleteAll");
             if (del != null) del.gameObject.SetActive(false);
             var all = UiKit.Find(rt, "Button_ClaimAll");

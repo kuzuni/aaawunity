@@ -118,6 +118,23 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(_app.Overlay.IsOpen, "우편함이 열린다");
             Assert.IsNotNull(UiKit.FindAny(_app.Overlay.Root, "ui.mailbox", "ui.mailboxEmpty"), "메뉴 → 우편함 조각");
 
+            // ⓔ T169 — 닫을 수 있어야 한다(주인 «우편함 팝업 안 닫힌다»). 여태 닫는 길이 하나도 없는 막힌 창이었다.
+            var close = UiKit.FindAny(_app.Overlay.Root, Mailbox.CloseName, "Button_Close_Square_01");
+            Assert.IsNotNull(close, "조각이 들고 오는 닫기 버튼(" + Mailbox.CloseName + ")");
+            var cb = close.GetComponent<Button>();
+            Assert.IsNotNull(cb, "그 버튼이 배선돼 있다(예전엔 조각만 있고 아무도 안 붙였다)");
+            cb.onClick.Invoke(); yield return Frames(2);
+            Assert.IsFalse(_app.Overlay.IsOpen, "닫기 버튼으로 닫힌다");
+
+            Mailbox.Open(_app); yield return Frames(2);
+            Assert.IsTrue(_app.Overlay.IsOpen, "다시 연다");
+            var dim = UiKit.Find(_app.Overlay.Root, "Dimmed");
+            Assert.IsNotNull(dim, "조각의 어둠");
+            var db = dim.GetComponent<Button>();
+            Assert.IsNotNull(db, "어둠에도 닫기가 붙는다(OpenPrefab closeOnDim: true · T139 ⓐ 인자)");
+            db.onClick.Invoke(); yield return Frames(2);
+            Assert.IsFalse(_app.Overlay.IsOpen, "딤을 눌러도 닫힌다");
+
             _log.AssertNoRed("T96-mail 우편함");
             yield return Shutdown();
         }
