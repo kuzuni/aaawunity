@@ -1767,7 +1767,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. **⚠ 이 화면에 «대비» 결함은 없다 — 재 보고 확인했다**(`tools/png_contrast.py` · T132): 안내 글자 **0.78** · 최대 시간 줄 **0.83** · 제목 띠 «탐험 보상» **0.68** — 셋 다 판정선 0.35 을 크게 넘는다. **대비로 등재하지 말 것.**
 4. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` 30 PNG 를 위 좌표로 확대(리본이 사라졌거나 글자가 들어갔는가 · 그림 띠에 캐릭터가 보이는가) + §5 30 재채점.
 
-### T133 ✅ — 출석 보상 팝업(16) 둘: **보상 수량 글자가 거의 안 보인다** · **«N일차» 머리 띠가 연보라라 흰 글자와 대비가 없다** (워커 실측 등재 2026-09-07 04:0X · 화면만 · 수치 불변) — **✅ 완료(`dd53ad72` · sess-1906-6443 · 워커 A) · CI #277 에서 `UiSmokeTests.LobbySettingsTalentPetToast` Passed** · 남은 것은 `screens` 16 PNG 눈 확인뿐인데 `screens` 가 run 257 에 멈춰 있어 lock 반납했다(결정 386) — 다음 초록 런의 `screens` 를 보는 워커가 `png_crop.py 16_attendance.png cell.png 50 355 220 160 4` 로 확인하면 된다
+### T133 🔺 — 출석 보상 팝업(16) 둘: **보상 수량 글자가 거의 안 보인다** · **«N일차» 머리 띠가 연보라라 흰 글자와 대비가 없다** (워커 실측 등재 2026-09-07 04:0X · 화면만 · 수치 불변) — **🔺 ⓑ 는 됐고 ⓐ 는 안 됐다(sess-1906-6443 · 워커 A 가 다시 선점 · 결정 403).** `screens` run **283** 의 `16_attendance.png` 를 처음 눈으로 봤다: **ⓑ «N일차» 머리 띠 = 짙은 자주 + 흰 글자로 또렷(됐다)** · **ⓐ 수량은 여전히 «거의 안 보인다»** — 아이콘 밑단에 걸린 가느다란 흰 «1» 한 획. **까닭 = 「띠」를 이름만 만들고 실제로 안 그렸다** — `LobbyPopups.QtyBandH` 는 **글자 rect 높이**일 뿐 뒤에 깔리는 판이 없어 흰 글자가 밝은 아이콘 위에 그냥 얹혔다. **게이트 구멍도 같다** — 성질(정렬·하한·폭)만 재고 «바탕과 구별되는가» 를 안 봤다(T121 대비 자가 이 팝업을 아직 안 훑는다). ⓐ 만 다시 잡는다
 
 > 재료: `screens` run **255**(`1307488c` · T126 이후라 **색이 sRGB 로 옳다**) 의 `16_attendance.png` · `tools/png_crop.py` 로 4배 확대 + `/usr/bin/python3.12`+PIL 로 픽셀 측정(sess-2157-4152 · 워커 H).
 > 재현: `python3 tools/png_crop.py 16_attendance.png cell.png 50 355 220 160 4`.
@@ -2310,7 +2310,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 5. **문서** — `docs/ref-layout.md` ① 의 «오른쪽 아래 이벤트» 행에 «T168 로 삭제(탭으로 옮김)» · 탭 바 행의 다섯째 칸 이름을 «이벤트» 로. ROUTINE T107 절에도 «맨 오른쪽은 T168 로 이벤트가 됐다» 를 적어 다음 워커가 되돌리지 않게 한다.
 6. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` **01_lobby**(오른쪽 아래가 비고 탭 다섯째가 이벤트) + 주인 폰.
 
-### T169 — **우편함 팝업이 안 닫힌다**(닫는 길이 하나도 없다) (주인 2026-09-07 09:5X · **막힌 창이라 급하다** · 배선 두 줄 · 자리·수치 0줄) — **🔄 코드 push(sess-1906-6443 · 워커 A · 로컬 게이트 전부 초록) · 남은 일 = 확인뿐** — ⓐ 닫기 버튼 배선(인스턴스 이름이 정말 `Button_Close_01` 임을 프리팹 실측으로 확인 · 원본 조각은 `Button_Close_Square_01` 이고 `m_Name` **덮어쓰기**라 `m_Name:` grep 으로는 안 보인다) ⓑ `OpenPrefab(closeOnDim: true)`(T139 ⓐ 인자가 이미 main 에 있다) ⓒ 2항 게이트 = **새 파일 `PopupCloseTests`**(`UiSmokeTests` 는 지금 워커 여럿이 만지는 자리라 피했다 · 결정 387) — 팝업 여섯을 열어 `Button_Close*`·`Dimmed`·`Background` 를 **눌러** `Overlay.IsOpen == false` 를 본다
+### T169 ✅ — **우편함 팝업이 안 닫힌다**(닫는 길이 하나도 없다) (주인 2026-09-07 09:5X · **막힌 창이라 급하다** · 배선 두 줄 · 자리·수치 0줄) — **✅ 완료 · CI #283 런 전체 초록(PlayMode 74/74 · `PopupCloseTests`·`MailboxTests` Passed)이고 그 빌드가 06:59 에 gh-pages 로 배포됐다 · lock 반납** — 코드 push(sess-1906-6443 · 워커 A · 로컬 게이트 전부 초록) · 남은 일 = 확인뿐** — ⓐ 닫기 버튼 배선(인스턴스 이름이 정말 `Button_Close_01` 임을 프리팹 실측으로 확인 · 원본 조각은 `Button_Close_Square_01` 이고 `m_Name` **덮어쓰기**라 `m_Name:` grep 으로는 안 보인다) ⓑ `OpenPrefab(closeOnDim: true)`(T139 ⓐ 인자가 이미 main 에 있다) ⓒ 2항 게이트 = **새 파일 `PopupCloseTests`**(`UiSmokeTests` 는 지금 워커 여럿이 만지는 자리라 피했다 · 결정 387) — 팝업 여섯을 열어 `Button_Close*`·`Dimmed`·`Background` 를 **눌러** `Overlay.IsOpen == false` 를 본다
 
 > 주인 원문: «**우편함 팝업 안 닫힌다 수정 좀**»
 > 등재 세션 확인(코드·프리팹 실측) — **정말 닫을 수가 없다**:
