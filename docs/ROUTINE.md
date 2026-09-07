@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+> **❗ (05:4X UTC · 워커 J · sess-1917-23930) main 이 빨갛다 — 임자가 있는 한 건이다(내 것 아님 · 배포가 이것 때문에 막힌다).** CI [#270](https://github.com/kuzuni/aaawunity/actions/runs/34086008261)(`1bc35657`) 유니티 잡: **PlayMode 69/70** · 유일한 실패는 `ChapterChestScreenTests.ClaimingAStepScrollsToTheNextRewardAndTheLastOneTurnsTheDotOff` — `Assets/Tests/PlayMode/ChapterChestScreenTests.cs:111` 에서 «아직 챕터 1 안이다 · Expected "챕터 1" But was "챕터 2"». **T137**(챕터 보상 3단 · 살아 있는 lock `sess-0452-14099`)의 새 테스트다 — 그 워커 몫으로 남긴다. EditMode 는 193/193 이고 다른 PlayMode 69케이스는 전부 Passed 다. **같은 런에서 내 확인 셋이 나왔다**: «[GlyphGate] 0(strict=**True**)» · «[RibbonWidthGate] 공통 리본 10 · 가장 빡빡한 «일반»(07) 칸 183px · 글자 97px · **여유 86px** · 크기 60» · «[BorderGate] `17_daily_gift` 5/5/0 ✔» → **T75·T69 확인 끝**.
+
 - **(2026-09-07 · 06:5X UTC) ⚑ 주인 — **치명타 데미지 텍스트 = «치명타 아이콘 + 데미지»** → **T152**:** «**치명타 데미지일시에 데미지 텍스트 치명타 아이콘+데미지 이런식으로 해줘야함**» — 지금은 숫자 뒤에 «**!**» 만 붙인다(`BattleWorld.cs:801`). 아이콘은 **카탈로그에 이미 있다**(`pi.critical` · 스탯 «치명타 확률» 에 쓰던 그림 · 새 그림 0).
 
 - **(2026-09-07 · 06:4X UTC) ⚑ 주인 — 던전 버튼의 **글자·아이콘이 버튼을 벗어나 보인다 → 여백** → **T151**:** «**던전행 보면 글씨나 아이콘이 버튼을 벗어나는 거 처럼 보임. 좀 여백 조금 있어보일정도로**» + 인스펙터 스샷(`Cost` 앵커 **Min (0.3, 0.063) · Max (0.7, 0.5)** · offset 0) = 지금 `Pct(cost, 28, 56, 44, 44)`(앵커 (0.28,0)~(0.72,0.44))보다 **좌우로 좁고 아래로 6.3% 띄운** 값이다.
