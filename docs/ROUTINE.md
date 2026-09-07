@@ -1957,7 +1957,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 5. **테스트** — PlayMode: 적을 죽여 구슬을 띄우고 ⓐ 흡수 중 `TrailRenderer` ≥ 1 ⓑ 끝나면 남은 트레일 0(누수 없음) ⓒ `PlayLog.AssertNoRed`. 기존 `RewardOrbTests` 를 고쳐 쓴다.
 6. 판정 = 그 커밋을 담은 첫 완주 런 + 워커가 찍은 전투 스샷(꼬리가 보이는가) + 주인 폰.
 
-### T145 — 플레이어·적 **발밑 HP·실드 바 테두리 = `BasicFrame_Rectangle_01~04_White_InnerBorder1_Px7`** (주인 2026-09-07 05:4X · 조각 교체 한 줄 · 자리·크기 0줄)
+### T145 — 플레이어·적 **발밑 HP·실드 바 테두리 = `BasicFrame_Rectangle_01~04_White_InnerBorder1_Px7`** (주인 2026-09-07 05:4X · 조각 교체 한 줄 · 자리·크기 0줄) — **✅ 완료(코드 `7a9a1ad8` · sess-0303-27371 · 워커 I · `BattleWorld.FootBarBorderKey` · CI #278 에서 `BorderGateTests` Passed · lock 반납) · 남은 것은 모서리 눈 확인 하나뿐**(`png_crop.py 02_battle.png feet.png 30 440 130 60 6`)
 
 > 주인 원문: «**그 플레이어, 적 hp바랑 실드 바 보더 `BasicFrame_Rectangle_01~04_White_InnerBorder1_Px7` 이거로 해줘야함**»
 > 등재 세션이 미리 확인한 것: 그 조각은 **카탈로그에 이미 있다** — `fr.rectInner7`(`catalog.json:281` · 설명은 «T69 안쪽 선이 필요한 칸 · 예비»). 9-slice `spriteBorder = 12/12/12/12`(.meta 실측)로 잘려 있어 `Sliced` 로 늘려도 된다. `UiKit.BorderNativePx` 도 이 키를 **7px** 로 이미 알고 있다(`UiKit.cs:313`).
