@@ -91,7 +91,8 @@ namespace KkomaKnight.Tests.Play
             // 받을 수 있는 첫 «단»(챕터 1 · 1단)부터 · 목표는 «적 A/B 처치» · 보상은 단마다 같은 값
             var first = ChapterChest.At(D, S, 1, 1);
             Assert.AreEqual("챕터 1", TextOf(Find(page, "Banner"), "BannerTitle"), "배너 제목");
-            StringAssert.Contains($"{first.Kills}/{first.Goal}", TextOf(Find(page, "Banner"), "BannerGoal"), "목표 = 적 A/B 처치");
+            // 진행도 A 는 그 «단» 목표를 넘겨 적지 않는다(T137 회차 2 · 깬 챕터는 전멸로 치므로 1단에서 «17/6» 처럼 보이던 자리)
+            StringAssert.Contains($"{System.Math.Min(first.Kills, first.Goal)}/{first.Goal}", TextOf(Find(page, "Banner"), "BannerGoal"), "목표 = 적 A/B 처치(A ≤ B)");
             Assert.AreEqual(UiKit.Fmt(D.ChapterChest.Gem), TextOf(Find(page, "Cell:gem"), "Qty"), "다이아 칸");
             Assert.AreEqual(UiKit.Fmt(D.ChapterChest.Gold), TextOf(Find(page, "Cell:gold"), "Qty"), "골드 칸");
             Assert.IsFalse(Find(page, "Banner:prev").gameObject.activeSelf, "첫 칸에서는 왼쪽 이웃이 없다");
