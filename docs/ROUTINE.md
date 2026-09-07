@@ -1277,7 +1277,7 @@
 4. 테스트: PlayMode — 21 팝업에 빨간 «DecoLine» 이 **꺼져 있음** · `Pic` 의 위 y = `DdHead` 아래 y(오차 0.1%p) · 글자 잘림 0 · `BorderGateTests` 21 구간 회귀 0.
 5. 게이트 + PROGRESS T102 행 + 완료 기록(확인 = CI + `screens` 21 PNG 확대: 빨간 선 없음 · 머리 띠와 그림 사이 빈틈 없음).
 
-### T103 — 아이템 칸의 **정본 = `Character_Hero_Item_Detail_03` 의 `ItemFrame_01_Normal_Red`** · 등급은 **색 변형만** 교체 (주인 2026-09-07 · 전 화면 · T69 7항 확정) — **🔄 코드 push(`175c82e2` · sess-2041-14225 · 워커 C · 3항은 **기본값 ⓐ** 로 정했다: 조각 링 그대로 + 아이템 칸은 T69 감사 면제 · 결정 312 · 로컬 게이트 전부 초록) · CI 확인 끝(#237 실측) · 남은 것 = `screens` 눈 확인뿐**
+### T103 ✅ — 아이템 칸의 **정본 = `Character_Hero_Item_Detail_03` 의 `ItemFrame_01_Normal_Red`** · 등급은 **색 변형만** 교체 (주인 2026-09-07 · 전 화면 · T69 7항 확정) — **✅ 완료(CI #237 게이트 + `screens` run 243 눈 확인 · lock 반납)** — **🔄 코드 push(`175c82e2` · sess-2041-14225 · 워커 C · 3항은 **기본값 ⓐ** 로 정했다: 조각 링 그대로 + 아이템 칸은 T69 감사 면제 · 결정 312 · 로컬 게이트 전부 초록) · CI 확인 끝(#237 실측) · 남은 것 = `screens` 눈 확인뿐**
 
 > **✅ 게이트 확인 끝(01:4X UTC · 워커 C · sess-2041-14225)** — CI **[#237](https://github.com/kuzuni/aaawunity/actions/runs/34072977754)**(`21cbe524` · 내 `c2c42e1c` 가 든 첫 완주 런) 결과 XML 실측: `BorderGateTests.BattleBarsHaveBordersAndCellTagsAreAudited` **Passed**(결정 325 로 고친 «인벤 첫 칸의 등급 조각» 단언 포함) · 같은 런 로그의 «[BorderGate] 행·카드·칸 이름표 141 · 테두리 없음 **0**» 이고 표의 strict 화면 **23 곳 전부 «없음 0»** 이라 아이템 칸 면제(3항 ⓐ)가 다른 화면의 테두리 게이트를 낮추지 않았다. 그 런의 빨강 둘은 **내 것이 아니다**(`UiSmokeTests.ShopBoxesAndChestOpenPopup` = T95 · 워커 F 가 `1ab95236` 로 고쳐 #238 확인 중 · `UiTextureTests.SafeAreaHoldsTheUiAndTheFrameCoversTheNotch` = 같은 런의 T122 커밋이 만든 것 · 워커 B 몫). **남은 것 = `screens` 06·07·08·13 PNG 대조** — 지금 `screens` 는 run **218**(`1f3a2158`)이고 내 `175c82e2` 가 그 트리에 **없다**(유니티 잡이 계속 빨개 screens step 이 skipped) → 유니티 잡이 초록이 되는 첫 런까지 lock 을 유지하고 타임스탬프만 갱신한다.
 
@@ -1513,7 +1513,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > ⓐ **CI** [#239](https://github.com/kuzuni/aaawunity/actions/runs/34074133478)(`e1bff70c` · 이 커밋을 담은 첫 완주 런) 결과 XML: PlayMode **68/68 Passed**(빨강 0) · EditMode **184/184 Passed** · 문제의 `UiTextureTests.SafeAreaHoldsTheUiAndTheFrameCoversTheNotch` **Passed** · `UiTextureTests` 픽스처 **10/10**. **유니티 잡이 초록이 되어 `screens`(run 218 → **239**)와 gh-pages 배포가 함께 풀렸다.**
 > ⓑ **PNG 실측** — 새 `screens`(`580eb6fe` · CI #239)의 `01_lobby.png` 탭 바 줄(y 92.6~100%)을 재니 **중앙값 21.4 · 평균 48.7 · p90 130.2 · 밝은 픽셀 13.3%** 로, 멀쩡했던 `09_shop_1.png` 의 같은 줄(21.4 / 47.8 / 130.2 / 13.4%)과 **사실상 같다**. 고치기 전 run 218 의 같은 줄은 **중앙값 6.0 · p90 6.0 · 밝은 픽셀 0.2%**(= 통째로 검정)였다. 확대해 보면 **탭 아이콘 다섯(상점·장비·전투·펫·탤런트)이 다 보인다.**
 
-### T123 — 던전 세부(21) **«첫 클리어» 배지가 칸 밖으로 넘쳐** 옆 칸·«보상» 제목과 부딪친다 (`screens` run 218 눈 확인 · 워커 C 실측 등재 2026-09-07 01:5X · 화면만 · 배치 표 불변) — **🔄 코드 push(sess-2041-14225 · 워커 C · 로컬 게이트 전부 초록) · 남은 일 = 확인뿐**
+### T123 ✅ — 던전 세부(21) **«첫 클리어» 배지가 칸 밖으로 넘쳐** 옆 칸·«보상» 제목과 부딪친다 (`screens` run 218 눈 확인 · 워커 C 실측 등재 2026-09-07 01:5X · 화면만 · 배치 표 불변) — **✅ 완료 · 확인 끝 = CI #243(`89c921c2`) 유니티 잡 success + `screens` run 243 PNG 확대 · lock 반납**
 
 > 재료: `screens` run **218**(`1f3a2158`)의 `21_dungeon_detail.png` 을 `tools/png_crop.py` 로 4배 확대해 봤다. 보상 칸 4개 중 앞 두 칸의 빨간 «첫 클리어» 배지가 **칸보다 넓고**(칸 폭 114% · 좌우로 8px 씩 삐져나온다) **칸 위로 34%(40px)나 솟아** 옆 칸 배지와 붙고 «보상» 제목 글자를 덮는다. 레퍼런스 `docs/ref/21_dungeon_detail.jpg` 는 **칸 안 오른쪽 위**의 작은 «FIRST» pill 이다.
 > 게이트는 이 종류를 못 잡는다 — 글자는 배지 안에 있고 배지가 **칸 밖**으로 나간 것이기 때문이다(T120·T122 와 같은 갈래).
@@ -1523,7 +1523,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. **게이트**: `EventsScreenTests` — 배지 좌우가 칸 안 · 위로 걸치는 폭 ≤ 칸 높이의 15% · 글자 preferredWidth ≤ 배지 폭 · «첫 클리어» 글자 0.
 4. 판정 = 그 커밋을 담은 첫 완주 런의 PlayMode `EventsScreenTests` Passed + `screens` 21 PNG 확대(배지가 칸 안 오른쪽 위 · «보상» 제목 안 가려짐) + 주인 폰.
 
-### T124 — 아레나 입장(23) **승급 안내 띠가 반투명이라 뒤 순위 줄이 비쳐 겹친다** (`screens` run 218 눈 확인 · 워커 C 실측 등재 2026-09-07 01:5X · 화면 색만 · 배치 표 불변) — **🔄 코드 push(sess-2041-14225 · 워커 C · 로컬 게이트 전부 초록) · 남은 일 = 확인뿐**
+### T124 ✅ — 아레나 입장(23) **승급 안내 띠가 반투명이라 뒤 순위 줄이 비쳐 겹친다** (`screens` run 218 눈 확인 · 워커 C 실측 등재 2026-09-07 01:5X · 화면 색만 · 배치 표 불변) — **🔄 코드 push(sess-2041-14225 · 워커 C · 로컬 게이트 전부 초록) · 남은 일 = 확인뿐**
 
 > 재료: `screens` run **218** 의 `23_arena_enter.png` 을 `tools/png_crop.py` 로 3배 확대해 봤다. 바닥의 «시즌이 끝나면 상위 순위가 승급합니다» 글자 사이로 **10위 줄의 흰 이름(«도전자 10»)과 트로피 숫자(1,922)가 그대로 비쳐** 두 글자가 서로 먹는다.
 > 레퍼런스 `docs/ref/23_arena_enter.jpg` 도 안내 띠가 목록 마지막 줄 **위에 걸치지만**, 띠가 **꽉 찬 어두운 막대**라 뒤가 안 비친다 → **배치는 옳고 투명도만 틀렸다**.
