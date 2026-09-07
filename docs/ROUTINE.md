@@ -207,6 +207,8 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
+> **✅ (02:0X UTC · 워커 A · sess-1906-6443) main 이 초록이 됐다 — 아래 01:1X 의 «빨강 셋» 메모는 이력이다.** CI [#239](https://github.com/kuzuni/aaawunity/actions/runs/34074133478)(`e1bff70c`) 실측: 유니티 잡 **success**(01:55) → `screens` 가 run **239** 로 갱신됐고, **`build-webgl` 은 지금 돌고 있다**(WebGL 빌드 01:57 시작 · 배포 스모크 → 배포 → 배포 뒤 재확인이 남았다 · 보통 25분쯤). gh-pages 는 이 글을 쓰는 02:0X 에는 아직 `037fd446`(23:55 의 `1f3a2158`)이다 — **주인 폰의 «소리»(T64 회차 5 의 AAC 복원)는 그 잡이 끝나면 나간다**. 그때까지 «배포가 안 됐다» 고 새로 등재하지 말 것. 덧: 01:1X 메모의 셋 가운데 **T96-loading·T96-profile·T95 는 그 뒤 각 워커가 닫았다**(그래서 #239 가 초록이다). **T107·T114 는 확인이 끝나 ✅ 로 바꿨다**(PROGRESS 는 01:1X 에 이미 ✅ 였는데 여기 제목만 안 바뀌어 있었다 — 그대로 두면 다른 워커가 다시 잡는다).
+>
 > **📌 (01:2X UTC · 워커 J · sess-1917-23930) 상점·특권을 만지는 워커에게 — T116 3단계는 «한 줄씩» 남았고 색은 이미 실측돼 있다(주인 08:5X 지시 = T100 ⓓ 가 이 자리다).** CI #235 실측으로 T116 1·2단계는 초록 확정(`GradientPaletteTests` 2/2 · `UiTextureTests` 10/10) — 남은 것은 화면이 `UiKit.GradientCard` 를 부르는 것뿐이다: **상점(`ShopScreen`)** = 상자 카드 3장 `cardChestLegend`(#BA8BFF→#DA15EB) · `cardChestRare`(#015AB8→#18B2E6) · `cardChestEpic`(#3F14A1→#C959E1) / 다이아 칸 `cardGem`(#40116D→#AA0CB8) · 골드 칸 `cardGold`(#183D6A→#1683BE) · **특권(`LobbyPopups.PrivilegeScreen`)** = 카드 4장 `cardBlue`(#50A1E0→#5CC6F8) 또는 `UiKit.GradientCard(card, null, L.color)`. 두 파일이 지금 살아 있는 T100·T97 lock 안이라 내가 못 건드렸다 → **T116 lock 반납**. 나머지 화면(던전·아레나 띠 · 펫 칸)은 실측이 «단색» 이라 그대로 둔다(결정 322). 지금 main 빨강 2건(CI #235)은 임자가 다 있다: `BootShowsThePrefabLoadingScreen…`(T96-loading lock) · `ShopBoxesAndChestOpenPopup`(T100 lock).
 >
 > **⏱ (01:1X UTC · 워커 A · sess-1906-6443) CI [#234](https://github.com/kuzuni/aaawunity/actions/runs/34071226044)(`2c2e34a3`) 빨강 셋 — 셋 다 임자가 있다(내가 안 건드렸다) · 그리고 그중 **T96-loading 은 «카탈로그 결손» 이 아니다**(그쪽 워커가 자기 슬롯을 그 확인에 쓰지 않게 미리 걸러 둔다).** ⓐ `BootShowsThePrefabLoadingScreenAndItGoesAwayWhenTheGameIsUp`(«부팅에 로딩 화면 조각(ui.titleLoading)이 떠야 한다 · Expected not null») = **T96-loading**(`2c2e34a3` · 워커 L · 00:53 push · lock 은 없지만 13분 전 자기 커밋이라 손대지 않았다). **내가 확인해 제외한 것**: `Assets/KkomaKnight/catalog.json` 에 키 있음(479·749행) · `AssetCatalog.asset` 에 항목 있음(963~964행 · 다른 `ui.*` 프리팹과 같은 꼴) · GUID `c1d785d37a27548cf98aa36a12b35d92` 가 `Title_Loading.prefab.meta` 와 **일치** · 그 프리팹 파일도 있다. 즉 `cat.Prefab(Key)` 가 못 찾을 까닭이 카탈로그 쪽엔 없다 → 남은 후보는 **부팅 시점**(`LoadingScreen.Show(_boot.transform, catalog)` 가 불릴 때 `catalog` 가 아직 씬에서 주입되기 전인가) · **부모**(`_boot.transform` 이 캔버스 아래인가) · **테스트가 찾는 경로**다. ⓑ `AvatarOpensProfileAndKeepsTheChosenFrame`(«탑바 테두리가 고른 색 조각으로 선다») = **T96-profile**(lock 살아 있음) ⓒ `ShopBoxesAndChestOpenPopup`(«뽑기 결과 팝업 데모 글자 «Reward»») = **T95**(lock 살아 있음 · 00:2X 워커 E 메모의 그것이 아직 그대로다). 같은 런에서 내 것은 전부 초록이다(`LobbySettingsTalentPetToast` = T120 · `RewardOrbTests` 4/4 = T109 · 상점 배치 = T100).
@@ -1323,7 +1325,7 @@
 6. 테스트: PlayMode — ⓐ `Screen.safeArea` 를 일부러 줄여 넣었을 때(테스트용 주입) 화면 루트가 그만큼 줄고 **탑바 글자·pill 이 safeArea 안**에 있음 · ⓑ 상단 프레임의 위 가장자리가 **캔버스 맨 위(y=화면 끝)** 까지 닿음 · ⓒ safeArea = 전체일 때 기존 배치와 **픽셀 동일**(회귀 0) · `UiSmokeTests`·`TextSizeGateTests`·`BorderGateTests` 전부 초록.
 7. 게이트 + PROGRESS T106 행 + 완료 기록(확인 = CI + `screens` 01 + **주인 폰**(노치 있는 기기에서 안 가리는지) · 안드로이드 빌드 설정에 «Render outside safe area» 관련 값이 필요하면 `ProjectSettings` 도 같이).
 
-### T107 — 하단 탭 = **상점 · 장비 · 전투 · 펫 · 탤런트**(던전 탭 삭제) · 이벤트는 **던전 페이지부터** · 탤런트 화면 = `Character_Talent_02` 프리팹 (주인 2026-09-07)
+### T107 ✅ — 하단 탭 = **상점 · 장비 · 전투 · 펫 · 탤런트**(던전 탭 삭제) · 이벤트는 **던전 페이지부터** · 탤런트 화면 = `Character_Talent_02` 프리팹 (주인 2026-09-07)
 
 > **✅ (23:2X UTC · 워커 B · sess-1920-19253) 테스트 확인 끝 — 남은 것은 `screens` PNG 와 주인 폰뿐.** CI **#215**(`2211249e` · 내 `3a6f79c` 가 든 완주 런)는 빨강이 «챕터 카드»(T118 몫) **한 건뿐**이고 나머지 EditMode·PlayMode 전부 초록이라 내 세 테스트(탭 계약·탤런트 팝업·로비 «이벤트» 진입·탭 눌림)는 Passed 다.
 >
@@ -1425,7 +1427,7 @@ T85(적 처치 → 경험치·골드가 EXP 바·골드 pill 로 날아가 흡�
 > **🔄 코드 push(`128f1e30` · sess-1913-2015 · 워커 E · 로컬 게이트 전부 초록):** ⚠ **4항이 시킨 확인 결과 — 레퍼런스 `08_gear_fuse.jpg` 에는 셋 다 «있다»**(큰 모루 · 결과 슬롯 초록 테두리 · 합성 가능 인벤 칸 3개 초록 바탕). 즉 이번 지시는 **레퍼런스를 따르지 않기로 한 주인 결정**이고 그대로 따랐다(결정 275 · §5 재채점에서 «모루 없음» 이 감점으로 잡히면 모루를 되살리지 말고 채점 기준에서 그 행을 뺄 것). ⓐ `AnvilArt`+`Anvil` 상수 삭제(자리는 비움 · 결과 칸 «안» 작은 모루는 유지) ⓑ `GreenFrame` 헬퍼·호출 3곳 삭제 → 세 칸 다 T103 정본(등급색/빈 칸)으로 · «합성 가능» 은 **이미 있던** 빨간 점·«자동» 빨간 !·주황 «합성» 버튼으로(새 표시 0 · 결정 273) · ▲ 화살표도 초록 → Cream ⓒ `Layout.ForgeActionBar` 를 **숫자가 아니라 `GearScreen.Band` 와 같은 식**으로 정의(결정 274) — **T112 가 스탯·인벤을 옮기면 두 화면 띠가 저절로 같이 따라간다** · `GearScreen.cs` 는 T90-gear lock 안이라 안 건드렸다 · 표 ⑥ «액션바» 행 동기(42.0/5.0 → 41.0/6.5). **남은 것은 확인뿐이라 lock 은 반납했다** — 아무 워커나 그 런의 `BorderGateTests` 08 새 단언 4 + `screens` 08 PNG + §5 재채점으로 ✅ 로 닫으면 된다.
 
 
-### T114 — 합성 조건: **전설 미만은 «같은 부위 + 개수» 만 맞으면 합성**(종류 무관) (주인 2026-09-07 · 규칙 변경 = 주인 지시 · aaaw 원본과 달라짐)
+### T114 ✅ — 합성 조건: **전설 미만은 «같은 부위 + 개수» 만 맞으면 합성**(종류 무관) (주인 2026-09-07 · 규칙 변경 = 주인 지시 · aaaw 원본과 달라짐)
 
 > **✅ (22:2X UTC · 워커 B · sess-1920-19253) 확인 끝 — 코드는 초록이다. 남은 것은 주인 폰뿐.** CI **#206**([34062642169](https://github.com/kuzuni/aaawunity/actions/runs/34062642169) · 내 `087f980` 이 든 완주 런)의 **«dotnet · 순수 C# 테스트» 잡 success** = `Assets/Tests/EditMode` 172건(내 `GearFuseKeyTests` 4건 포함) 전부 Passed · 같은 시각 «남은 빨강» 은 T75 4항 하나뿐이라 PlayMode 회귀도 0. 골든 21칸은 push 전에 실측으로 확인했다.
 >
