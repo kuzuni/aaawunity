@@ -194,6 +194,22 @@ namespace KkomaKnight.Tests.Play
             var deep = cell.GetComponentInChildren<Text>(true); Assert.IsNotNull(deep, "보상 칸의 값 글자");
             return deep;
         }
+        /// <summary>
+        /// «몸통이 곧 그라데이션» 인 카드(T100 ⓓ 회차 2 · 레퍼런스 10 의 상자 카드) — 위·아래 두 조각의 tint 알파가 <b>1</b> 이어야 한다(결정 338).
+        /// 회차 1 은 덧칠(0.55)이라 조각의 회색 바탕이 비쳐 색이 죽었다(레퍼런스 «Rare» #0182C3 ↔ 우리 #8997A2 실측).
+        /// 두 조각은 서로 반대 방향 알파 램프라(<c>ui.gradTop1</c> 흰→투명 · <c>ui.gradBottom</c> 투명→흰) 둘 다 1 이라야 몸통이 그 두 색으로 덮인다.
+        /// </summary>
+        static void AssertSolidGradient(Transform piece, string what)
+        {
+            foreach (var name in new[] { UiKit.GradientTopName, UiKit.GradientBottomName })
+            {
+                var g = UiKit.Find(piece, name);
+                Assert.IsNotNull(g, what + " 카드 «" + name + "» 조각");
+                var img = g.GetComponent<Image>();
+                Assert.IsNotNull(img, what + " 카드 «" + name + "» 그림");
+                Assert.GreaterOrEqual(img.color.a, 0.99f, what + " 카드 «" + name + "» 는 몸통을 꽉 채운다(덧칠이면 조각의 회색 바탕이 비쳐 색이 죽는다 · T100 ⓓ 회차 2)");
+            }
+        }
         static void AssertReadable(Text t, int min, string what)
         {
             Assert.IsNotNull(t, what + " 글자가 있어야 한다");
@@ -1033,6 +1049,9 @@ namespace KkomaKnight.Tests.Play
                     bool isCard = c.name.StartsWith("Box:") || c.name.StartsWith("GemPack:") || c.name.StartsWith("GoldPack:");
                     if (!isCard || c.childCount == 0) continue;
                     Assert.IsTrue(UiKit.HasGradient(c.GetChild(0)), c.name + " 카드 조각 안에 그라데이션(T100 ⓓ)");
+                    // T100 ⓓ 회차 2 — 상자 카드(10)는 조각 바탕이 회색이라 «덧칠» 이면 색이 죽는다(실측: 레퍼런스 «Rare» #0182C3 → 회차 1 의 우리 #8997A2).
+                    // 몸통을 꽉 채워야 레퍼런스 색감이 난다 → 위·아래 두 조각의 tint 알파가 1(결정 338). 상품 카드(09)는 덧칠 그대로라 여기서 안 잰다.
+                    if (c.name.StartsWith("Box:")) AssertSolidGradient(c.GetChild(0), c.name);
                     gradCards++;
                 }
                 Assert.GreaterOrEqual(gradCards, D.Gacha.Boxes.Count, "상자 카드 3장 + 상품 카드에 전부 그라데이션");

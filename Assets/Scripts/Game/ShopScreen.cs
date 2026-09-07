@@ -289,13 +289,18 @@ namespace KkomaKnight.Game
         /// 카드 조각 «안» 그라데이션(T100 ⓓ · 주인 2026-09-07 08:5X «상자들 카드 부분에도 그라디안트 · 레퍼런스랑 같은 색감») —
         /// 조각의 바탕(<paramref name="bgName"/>) «바로 위» 형제에 <see cref="UiKit.GradientCard"/> 두 장을 깐다(글자·아이콘·버튼·테두리는 그 위 · T72 ③ 층 순서).
         /// 색은 <see cref="GradientPalette"/> 의 <b>레퍼런스 실측 두 색</b>(T116) — 코드에 색을 박지 않는다(§1).
+        /// <para>
+        /// <paramref name="alpha"/> — 상품 카드(09)는 조각 바탕이 어두운 제 색이라 덧칠(<see cref="UiKit.GradientCardAlpha"/>)로 레퍼런스와 맞는데,
+        /// <b>상자 카드(10)는 조각 바탕이 회색</b>이라 덧칠이면 색이 죽는다(회차 1 실측: 레퍼런스 «Rare» #0182C3 → 우리 #8997A2) →
+        /// 몸통을 <see cref="UiKit.GradientCardSolidAlpha"/> 로 덮는다(T100 ⓓ 회차 2 · 결정 338).
+        /// </para>
         /// </summary>
-        static void CardGradient(Transform piece, string paletteName, string bgName)
+        static void CardGradient(Transform piece, string paletteName, string bgName, float alpha = UiKit.GradientCardAlpha)
         {
             if (piece == null) return;
             int idx = 0;
             for (int i = 0; i < piece.childCount; i++) if (piece.GetChild(i).name == bgName) { idx = i + 1; break; }
-            UiKit.GradientCard((RectTransform)piece, paletteName, null, UiKit.PopupPatternInset, idx);
+            UiKit.GradientCard((RectTransform)piece, paletteName, null, UiKit.PopupPatternInset, idx, alpha);
         }
 
         void BuildBigCard(RectTransform card, GachaBox box, List<RectTransform> btnsOut)
@@ -304,8 +309,8 @@ namespace KkomaKnight.Game
             var frame = UiKit.Spawn(Palette.FrameKey("ui.cardFrame", BoxColor(box)), card); UiKit.Stretch((RectTransform)frame.transform);
             // T100 ⓐ — 제목 바탕 끄기(§1 «문장 끝 // 주석 금지» 대로 주석은 윗줄에)
             HideCardTitleBg(frame.transform);
-            // T100 ⓓ — 레퍼런스 10 의 대형 «Legendary Chest» 카드 색(위 연보라 → 아래 자홍)
-            CardGradient(frame.transform, "cardChestLegend", "Bg");
+            // T100 ⓓ — 레퍼런스 10 의 대형 «Legendary Chest» 카드 색(위 연보라 → 아래 자홍 · 몸통을 꽉 채운다 · 회차 2)
+            CardGradient(frame.transform, "cardChestLegend", "Bg", UiKit.GradientCardSolidAlpha);
             // 상자 이름 = 제목(60 · T63-shop · 레퍼런스 «Legendary Chest» 는 카드에서 가장 큰 글자) — 칸 13% × 배너 26% = 79px ≥ 선호 59
             var title = UiKit.SetText(frame.transform, "Text_Title", box.Name, Palette.Yellow, TextSize.Title, TextKind.Title);
             if (title != null) { UiKit.Pct(title.rectTransform, 42, 3, 49, 13); title.alignment = TextAnchor.MiddleRight; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = TextSize.BestFitMin; title.resizeTextMaxSize = TextSize.Title; }
@@ -332,8 +337,8 @@ namespace KkomaKnight.Game
             var frame = UiKit.Spawn(Palette.FrameKey("ui.cardFrame", BoxColor(box)), card); UiKit.Stretch((RectTransform)frame.transform);
             // T100 ⓐ — 제목 바탕 끄기(§1 «문장 끝 // 주석 금지» 대로 주석은 윗줄에)
             HideCardTitleBg(frame.transform);
-            // T100 ⓓ — 레퍼런스 10 의 작은 카드 색(왼쪽 «Rare» 파랑 → 하늘 · 오른쪽 «Epic» 남보라 → 자주)
-            CardGradient(frame.transform, gradName, "Bg");
+            // T100 ⓓ — 레퍼런스 10 의 작은 카드 색(왼쪽 «Rare» 파랑 → 하늘 · 오른쪽 «Epic» 남보라 → 자주 · 몸통을 꽉 채운다 · 회차 2)
+            CardGradient(frame.transform, gradName, "Bg", UiKit.GradientCardSolidAlpha);
             // 상자 이름 = 제목(60 · T63-shop) — 칸 10% × 카드 29% = 68px ≥ 선호 59 · 확률 pill 은 그 아래(12.5~26.5% · 95px ≥ 2줄 88 — 회차 1 의 13% = 88px 은 딱 맞아 bestFit 이 39 로 눌렀다 · CI #110 표 «최소 크기(실제) 39»)
             var title = UiKit.SetText(frame.transform, "Text_Title", box.Name, Palette.White, TextSize.Title, TextKind.Title);
             if (title != null) { UiKit.Pct(title.rectTransform, 6, 2, 76, 10); title.alignment = TextAnchor.MiddleCenter; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = TextSize.BestFitMin; title.resizeTextMaxSize = TextSize.Title; }

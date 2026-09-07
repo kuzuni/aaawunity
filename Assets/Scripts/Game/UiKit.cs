@@ -447,6 +447,13 @@ namespace KkomaKnight.Game
         /// 무채색 덧칠이 아니라 그 색을 그대로 얹는다. 0.55 = 조각 스프라이트의 부드러운 알파 위에 색이 읽히면서 밑그림(아이콘·글자)이 죽지 않는 세기.
         /// </summary>
         public const float GradientCardAlpha = 0.55f;
+        /// <summary>
+        /// <b>카드 몸통이 곧 그라데이션인 자리</b>의 세기(T100 ⓓ 회차 2 · 결정 338) — 레퍼런스 10 의 상자 카드는 몸통 전체가 꽉 찬 두 색이라
+        /// 덧칠(<see cref="GradientCardAlpha"/>)로는 조각의 회색 바탕이 비쳐 색이 죽는다(실측: 레퍼런스 «Rare» #0182C3 → 우리 #8997A2).
+        /// 위·아래 조각이 서로 반대 방향 알파 램프라(<c>ui.gradTop1</c> 흰→투명 · <c>ui.gradBottom</c> 투명→흰) 둘 다 1 이면 몸통이 그 두 색으로 덮인다.
+        /// 그림·글자·버튼·테두리는 그 «위» 형제라 그대로 보인다(층 순서 결정 171).
+        /// </summary>
+        public const float GradientCardSolidAlpha = 1f;
         /// <summary>표에 이름도 바탕색도 없을 때 쓰는 카드 방향 무채색 세기(어두운 위 / 밝은 아래 — 방향만 레퍼런스대로).</summary>
         public const float GradientCardTopAlpha = 0.20f, GradientCardBottomAlpha = 0.14f;
         /// <summary>공통 팝업 상자 안 패턴을 들여 까는 여백(px) — Popup_Box_01~03_White_Bg 의 둥근 모서리 반지름 실측 8px + Bg 자신의 여백 2px(결정 164).</summary>
@@ -589,20 +596,24 @@ namespace KkomaKnight.Game
         /// 둘 다 없으면 방향만 레퍼런스대로인 무채색(어두운 위 / 밝은 아래)이다.
         /// </para>
         /// 층 순서·조각·raycast·중복 방지는 <see cref="Gradient"/> 와 같다(그 함수를 그대로 부른다).
+        /// <para>
+        /// <paramref name="alpha"/> 는 색 세기다 — 기본 <see cref="GradientCardAlpha"/>(덧칠 · 조각의 바탕색이 살아 있는 자리 · 09 상품 카드),
+        /// <see cref="GradientCardSolidAlpha"/> 는 <b>몸통이 곧 그라데이션</b>인 자리(10 상자 카드 · T100 ⓓ 회차 2 · 결정 338).
+        /// </para>
         /// </summary>
-        public static void GradientCard(RectTransform rt, string paletteName = null, Color? baseColor = null, float inset = 0f, int siblingIndex = 0)
+        public static void GradientCard(RectTransform rt, string paletteName = null, Color? baseColor = null, float inset = 0f, int siblingIndex = 0, float alpha = GradientCardAlpha)
         {
             if (rt == null) return;
             Color top, bottom;
             if (!string.IsNullOrEmpty(paletteName) && GradientPalette.Has(paletteName))
             {
                 var p = GradientPalette.Of(paletteName);
-                top = Palette.A(p.Top, GradientCardAlpha); bottom = Palette.A(p.Bottom, GradientCardAlpha);
+                top = Palette.A(p.Top, alpha); bottom = Palette.A(p.Bottom, alpha);
             }
             else if (baseColor.HasValue)
             {
                 var p = GradientPalette.CardWay(baseColor.Value);
-                top = Palette.A(p.Top, GradientCardAlpha); bottom = Palette.A(p.Bottom, GradientCardAlpha);
+                top = Palette.A(p.Top, alpha); bottom = Palette.A(p.Bottom, alpha);
             }
             else
             {
