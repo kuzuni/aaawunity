@@ -1047,6 +1047,14 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNull(UiKit.Find(_app.Overlay.Root, "ui.popup"), "공통 팝업 상자로 다시 조립하지 않는다(T95 1항)");
             Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Image_Chest"), "조각의 열린 상자 그림");
             Assert.IsTrue(HasText(s => s == "탭하여 닫기"), "결과 창: «탭하여 닫기»(조각의 Text_TouchContionue)");
+            // T95 — 제목은 **조각 제 리본**에 쓴다(글자를 따로 얹으면 리본의 데모 글자 «Reward» 가 화면에 남는다 · CI #235)
+            {
+                var rib = UiKit.Find(_app.Overlay.Root, "Title_01_NoDeco_Tangerine");
+                Assert.IsNotNull(rib, "조각의 제목 리본");
+                var rt2 = rib.GetComponentInChildren<Text>(true);
+                Assert.IsNotNull(rt2, "리본 글자"); StringAssert.Contains("회", rt2.text, "리본에 우리 제목(«… N회»)이 들어간다");
+                Assert.AreNotEqual("Reward", rt2.text, "리본에 데모 글자가 남으면 안 된다");
+            }
             {
                 // T63-shop — 결과 창 안내 줄은 본문 40 한 줄 · 글자 잘림 0(장비 칸 «gear:» 안 글자는 T63-gear 몫이라 제외)
                 var note = UiKit.Find(_app.Overlay.Root, "Note"); Assert.IsNotNull(note, "결과 창 안내 줄(Note)");

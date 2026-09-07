@@ -479,6 +479,9 @@ namespace KkomaKnight.Game
         /// 연출(«찰지게» · T49 결): 상자가 짧게 흔들리고 → 빛이 터지고 → 칸이 한 장씩 오버슛으로 튀어나오고 → 최고 등급 한 칸이 한 번 더 튀고 → 제목·안내·터치 안내. 전부 unscaled + SetLink.
         /// 확률·천장·비용·결과 목록은 한 줄도 안 건드린다(T26 이 검증한 엔진·gacha.json · T95 3항).
         /// </summary>
+        /// <summary>뽑기 결과 조각(<c>Shop_Chest_Open</c>)의 제목 리본 이름 — 조각 그대로다(그 안 «Text (TMP)» 가 데모 글자 «Reward» 를 들고 있다 · T95).</summary>
+        const string ChestRibbonName = "Title_01_NoDeco_Tangerine";
+
         void ChestResult(GachaBox box, int n, List<GearItem> got, GearItem best)
         {
             var D = App.Data;
@@ -494,8 +497,19 @@ namespace KkomaKnight.Game
             var chestGrp = UiKit.Find(root, "Chest") as RectTransform;
             UiKit.SetSprite(root, "Image_Chest", "chest." + box.Key + ".open", Palette.White);
             var touch = UiKit.SetText(root, "Text_TouchContionue", "탭하여 닫기");
-            var title = UiKit.Label(root, 6, 12, 88, 7, $"{box.Name} {n}회" + (got.Count > n ? $" · {got.Count}개" : ""), TextSize.Title, Palette.White, TextAnchor.MiddleCenter, true, false, kind: TextKind.Title);
-            title.name = "Title";
+            // 제목은 **조각 제 리본**에 쓴다(T95 1항 «프리팹 그대로») — 예전엔 리본을 그대로 둔 채 글자를 따로 얹어
+            // 조각의 데모 글자(«Reward»)가 화면에 남았다(CI #235 «데모 프리팹 잔여 글자 1건»). 리본이 없는 조각이면 예전처럼 글자를 얹는다.
+            string titleText = $"{box.Name} {n}회" + (got.Count > n ? $" · {got.Count}개" : "");
+            var ribbon = UiKit.Find(root, ChestRibbonName);
+            Text title;
+            if (ribbon != null)
+            {
+                Overlay.FitRibbonText(ribbon);   // T75 4항 — 리본 글자 칸을 제목 60 한 줄(84px)로 올린다
+                title = UiKit.SetText(ribbon, "Text (TMP)", titleText, Palette.Cream, TextSize.Title, TextKind.Title);
+                if (title == null) title = ribbon.GetComponentInChildren<Text>(true);
+            }
+            else title = UiKit.Label(root, 6, 12, 88, 7, titleText, TextSize.Title, Palette.White, TextAnchor.MiddleCenter, true, false, kind: TextKind.Title);
+            if (title != null) title.name = "Title";
             var note = UiKit.Label(root, 5, ChestNoteYPct, 90, 6, $"최고 등급 {GearUi.RarName(D, best.Rar)} · 장착은 장비 탭에서", TextSize.Body, Palette.White, TextAnchor.MiddleCenter, true, false);
             note.name = "Note";
             // 격자 = ListItem_EquipMent 본래 크기(188 · 비례 고정) · 4열 — 10개면 3행
