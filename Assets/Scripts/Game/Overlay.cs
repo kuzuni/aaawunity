@@ -448,12 +448,18 @@ namespace KkomaKnight.Game
         {
             var perk = G.Pending?.DevilPerk;
             var box = Box("ui.popup.plum", "ui.title.plum", "악마의 거래", new Layout.R(4, 24, 92, 52), boxed: false);   // T141 — 판 없이 어둠 위
-            Sub(box, "\"네 생명을 바치면... 이 힘을 주지\"", 9, 6, TextSize.Body, Palette.Yellow);   // T141 ⓑ — 어둠 위 강조는 «밝은 쪽» 으로(Plum 은 안 읽힌다)
-            if (perk != null) { var card = PerkCard(box, perk, "yellow", null); UiKit.Pct(card, 2, 18, 96, 22); }
+            // T213 — 이름표(UiTag)가 없으면 §5 비평 하니스의 layout.json 에 이 화면이 «빈 칸» 으로 남는다(자가 아무것도 못 잰다).
+            // 이름은 ref-layout 표의 행 이름과 **글자 그대로** 같아야 `tools/ui_score.py` 가 짝을 짓는다.
+            UiKit.Tag(box, "(악마) 팝업 상자");
+            var dSub = Sub(box, "\"네 생명을 바치면... 이 힘을 주지\"", 9, 6, TextSize.Body, Palette.Yellow);   // T141 ⓑ — 어둠 위 강조는 «밝은 쪽» 으로(Plum 은 안 읽힌다)
+            UiKit.Tag(dSub.rectTransform, "(악마) 대사");
+            if (perk != null) { var card = PerkCard(box, perk, "yellow", null); UiKit.Pct(card, 2, 18, 96, 22); UiKit.Tag(card, "(악마) 특전 카드"); }
             double cost = G.C.DevilCostMaxHp > 0 ? G.C.DevilCostMaxHp : G.PK.DevilCostMaxHp;
-            Sub(box, $"최대 체력이 {Math.Round(cost * 100)}% 줄어든 채 진행 · 위 전설 특전 1개를 획득", 43, 10, TextSize.Body, Palette.White);   // T141 ⓑ
-            UiKit.Button(box, "ui.btnRed", "거래 수락", () => { Close(); onChoose(true); }, new Layout.R(8, 60, 40, 13));
-            UiKit.Button(box, "ui.btnGray", "거절", () => { Close(); onChoose(false); }, new Layout.R(52, 60, 40, 13));
+            var dNote = Sub(box, $"최대 체력이 {Math.Round(cost * 100)}% 줄어든 채 진행 · 위 전설 특전 1개를 획득", 43, 10, TextSize.Body, Palette.White);   // T141 ⓑ
+            UiKit.Tag(dNote.rectTransform, "(악마) 안내 문구");
+            var dYes = UiKit.Button(box, "ui.btnRed", "거래 수락", () => { Close(); onChoose(true); }, new Layout.R(8, 60, 40, 13));
+            var dNo = UiKit.Button(box, "ui.btnGray", "거절", () => { Close(); onChoose(false); }, new Layout.R(52, 60, 40, 13));
+            UiKit.Tag(dYes, "(악마) 수락 버튼"); UiKit.Tag(dNo, "(악마) 거절 버튼");
         }
         public void DevilGift(PerkDef perk, Action onOk)
         {
@@ -467,12 +473,17 @@ namespace KkomaKnight.Game
         public void Angel(BattleState G, Action<double> onChoose)
         {
             var box = Box("ui.popup.yellow", "ui.title.yellow", "천사의 축복", Layout.EvBox, boxed: false);   // T141 — 판 없이 어둠 위
-            Sub(box, "\"용사여, 축복을 내리노라\"", 10, 7, TextSize.Body, Palette.Yellow);   // T141 ⓑ — Orange 는 어둠 위에서 흐리다
+            UiKit.Tag(box, "(천사) 팝업 상자");   // T213 — 아래 이름표들이 §5 하니스가 이 화면을 재는 유일한 손잡이다
+            var aSub = Sub(box, "\"용사여, 축복을 내리노라\"", 10, 7, TextSize.Body, Palette.Yellow);   // T141 ⓑ — Orange 는 어둠 위에서 흐리다
+            UiKit.Tag(aSub.rectTransform, "(천사) 대사");
             var ic = UiKit.Icon(box, "Wing", "pi.wing", Palette.Yellow); UiKit.Pct(ic.rectTransform, 35, 20, 30, 26);
-            UiKit.Button(box, "ui.btnGreen", $"무료 축복 · 공격력 +{Math.Round((SimPolicy.AngelFree - 1) * 100)}%", () => { Close(); onChoose(SimPolicy.AngelFree); }, new Layout.R(10, 54, 80, 12));
+            UiKit.Tag(ic.rectTransform, "(천사) 날개 아이콘");
+            var aFree = UiKit.Button(box, "ui.btnGreen", $"무료 축복 · 공격력 +{Math.Round((SimPolicy.AngelFree - 1) * 100)}%", () => { Close(); onChoose(SimPolicy.AngelFree); }, new Layout.R(10, 54, 80, 12));
             var ad = UiKit.Button(box, "ui.btnOrange", $"광고 보고 공격력 +{Math.Round((SimPolicy.AngelAd - 1) * 100)}%", () => AdCountdown(3, () => Blessed(onChoose)), new Layout.R(10, 70, 80, 12));
             var adIc = UiKit.Icon(ad, "Ad", "hud.alertAd"); UiKit.Pct(adIc.rectTransform, 84, -22, 18, 50);
-            Sub(box, "더 강한 축복", 85, 6, TextSize.Body, Palette.White);   // T141 ⓑ
+            UiKit.Tag(aFree, "(천사) 무료 버튼"); UiKit.Tag(ad, "(천사) 광고 버튼");
+            var aNote = Sub(box, "더 강한 축복", 85, 6, TextSize.Body, Palette.White);   // T141 ⓑ
+            UiKit.Tag(aNote.rectTransform, "(천사) 아래 문구");
         }
         /// <summary>축복 강화(광고 뒤) — T141 게이트가 직접 열어 «판 없이 어둠 위» 인지 보므로 공개다(여는 곳은 여전히 <see cref="Angel"/> 한 곳).</summary>
         public void Blessed(Action<double> onChoose)

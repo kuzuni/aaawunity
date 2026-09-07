@@ -159,7 +159,10 @@ namespace KkomaKnight.Tests.Play
             }
             _app.Overlay.PerkBook(G, null); yield return Frames(2); yield return Shot("05_perks_list"); _app.Overlay.Close(); yield return Frames(1);
             // ev_devil · ev_angel — T141 6항 «워커가 한 장 찍어 04 와 나란히 눈으로»(판 없이 어둠 위인가).
-            // 레퍼런스 그림이 없는 화면이라 번호 대신 이름으로 남긴다(표가 없어 ui_score 채점 대상이 아니고 눈 비평 전용).
+            // 레퍼런스 그림이 없는 화면이라 번호 대신 이름으로 남긴다.
+            // ⚠ T213 — «표가 없어 채점 대상이 아니다» 는 반쪽이었다: 이 둘은 **이름표(UiTag)조차 없어** layout.json 에
+            //    빈 칸 `{}` 으로 남았고, `ui_score --all` 이 그 자리에 «—» 를 찍고 지나갔다(자 «밖» 의 화면 둘).
+            //    Overlay.Devil/Angel 에 이름표를 달았으니 이제 재진다 — 아래 단언이 그 상태를 지킨다.
             {
                 var devilPerk = Perks.OfferDevil(D, G.Taken, rng);
                 G.Pending = new PendingDecision { Kind = PendingKind.Devil, DevilPerk = devilPerk };
@@ -175,6 +178,10 @@ namespace KkomaKnight.Tests.Play
             PlayShot.WriteLayout(_layout, _missing);
             Assert.Greater(_saved, 0, "PNG 가 하나도 안 남았다(RenderTexture 캡처 실패)");
             Assert.IsTrue(_layout.ContainsKey("01_lobby") && ((Dictionary<string, object>)_layout["01_lobby"]).Count > 0, "로비 이름표(UiTag)가 layout.json 에 있어야 한다");
+            // T213 — «찍히기는 하는데 아무것도 안 재는» 화면을 막는다. 빈 칸이면 §5 자가 그 화면을 통째로 못 본다.
+            foreach (var evName in new[] { "ev_devil", "ev_angel" })
+                Assert.IsTrue(_layout.ContainsKey(evName) && ((Dictionary<string, object>)_layout[evName]).Count > 0,
+                    evName + " 에 이름표(UiTag)가 하나도 없다 — layout.json 이 빈 칸이면 `ui_score` 가 그 화면을 «—» 로 지나친다(T213)");
             _log.AssertNoRed("스크린샷 회차(전 화면)");
             yield return Shutdown();
         }
