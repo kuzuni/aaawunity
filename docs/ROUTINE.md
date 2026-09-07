@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-07 · 10:5X UTC) ⚑ 주인 — 장비 칸 **부위 표시 아이콘을 PictoIcon 으로** → **T175**(T105 후속):** «장비 부분에 **왼쪽 위에 어떤 부위 장비인지 표시해 주는 부분** … 그거 **pictoicon 으로 넣어 놔야 함**» — 지금은 `GearLook.PartIcon` 이 **`gi.*.crit`**(아이템 그림)을 쓴다. **PictoIcon 에 부위 그림이 그대로 다 있다**(실측: `headgear` · `armor` · `boots` · `necklace` · `ring` · 무기는 `axe_1`/`dagger_1`) → 그 여섯으로 갈아 끼우면 «부위를 뜻하는 기호» 가 된다.
+
 - **(2026-09-07 · 10:4X UTC) ⚑ 주인 — 빛살 있는 곳마다 **«빛 알갱이·먼지가 천천히 퍼지는» 파티클** → **T174**:** «**모든 이펙트 라이트 있는 곳에 파티클 이펙트도 넣어 줘 · 빛 알갱이 먼지가 천천히 퍼지는 느낌으로**» — **⚠ 진짜 `ParticleSystem` 은 UI 위에 못 그린다**(캔버스가 `ScreenSpaceOverlay` 라 월드 파티클은 **UI 뒤**로 간다 · T144 에서 이미 확인해 «꼬리만 월드» 로 우회했다 = 결정 373) → **UI 알갱이 스프라이트 + 트윈**으로 같은 느낌을 낸다. **T155 ⓓ(글로우 서클)·T172(마스크 걷기)와 같은 함수**(`UiKit.LightBehind`)라 셋을 묶어 잡는 게 싸다.
 
 - **(2026-09-07 · 10:3X UTC) ⚑⚑ 주인 — 창: **화면 밖 +10 에서 사라지게** · **관통 8 제한 없애고 «닿으면 다 데미지»** → **T173**(전투 규칙 변경 = 주인 지시 · 골든 재생성 대상):** «**창은 그냥 화면 넘어서 10 정도 더 가면 지워지게** 해 줘 · 그리고 **8까지 관통이었는데 그냥 그런 거 제한 없애 주고**» → «**걍 닿으면 다 데미지 주게로 해 주고 관통 8개까지 말고**». 실측: `combat.json` 의 `spearReach 352`·`pierce.spear 8` 이 그 둘이다(**aaaw 정본이라 그 파일은 못 고친다** → 이 레포 전용 오버라이드 + `sim.js` 사본 동기 + **시드 골든 재생성**).
@@ -2380,6 +2382,27 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 4. **성능(T129 와 직결)** — 이제 한 칸에 **빛살 + 글로우 서클(T155 ⓓ) + 알갱이(T174)** 세 겹이다. ⓐ 알갱이는 **칸마다 트윈 하나** ⓑ **«보이는 칸만»** 규약(`SetLightSpinning` · T72 4항)에 알갱이도 같이 태워 스크롤 밖에서는 멈춘다 ⓒ 알갱이 수·크기는 **로비·상점에서 fps 를 재 보고**(배포 스모크의 fps 계측 = T129) 정한다. **fps 가 눈에 띄게 떨어지면 알갱이 수를 줄이고 그 사실을 PROGRESS 에 적는다.**
 5. **게이트** — PlayMode: ⓐ 빛살이 있는 칸에는 «Dust» 묶음도 있다(`UiKit.HasLight` 옆에 짝이 되는 자 하나) ⓑ 알갱이 트윈이 스크롤 밖에서 **멈춘다** ⓒ 화면을 닫으면 트윈 누수 0(`SetLink`) · `PlayLog.AssertNoRed`.
 6. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` 06·09·20 PNG(알갱이가 보이는가 · 글자를 안 가리는가) + **fps 계측 전·후** + 주인 폰.
+
+### T175 — 장비 칸의 **부위 표시 아이콘을 PictoIcon(`pi.*`)으로** (주인 2026-09-07 10:5X · T105 후속 · 아이콘 키 표 한 곳 · 자리·수치 0줄)
+
+> 주인 원문: «장비 부분에 **왼쪽 위에 어떤 부위 장비인지 표시해 주는 부분** 얘기해서 넣어 놨던데 그거 **pictoicon 으로 넣어 놔야 함**»
+
+1. **지금** — `GearLook.PartIcon(part)`(`Core/GearLook.cs:38~`)이 **`gi.<부위>.crit`**(아이템 그림 · «안 쓰이게 된 자리를 부위 표시로 돌려 쓴다» 가 T105 의 판단)을 돌려준다. 그래서 «기호» 가 아니라 **아이템 그림**이라 한눈에 부위로 안 읽힌다.
+2. **PictoIcon 에 부위 그림이 이미 다 있다(등재 세션 실측 · `Shared/Icons/PictoIcon/128/`)**
+   | 부위 | PictoIcon 파일 | 비고 |
+   |---|---|---|
+   | 투구 `helm` | **`headgear.png`** | 투구 기호 그대로 |
+   | 갑옷 `armor` | **`armor.png`** | |
+   | 신발 `boot` | **`boots.png`** | |
+   | 목걸이 `neck` | **`necklace.png`** | |
+   | 반지 `glove`(T88 «장갑 → 반지») | **`ring.png`** | 부위 키는 `glove` 그대로 |
+   | 무기 `weapon` | **`axe_1.png`** 또는 **`dagger_1.png`** | 우리 무기 그림(검·도끼)에 맞춰 워커가 고른다(카탈로그에 `pi.axe`·`pi.dagger` 로 **이미 등재돼 있다**) |
+   - **카탈로그에 없는 것만 키를 새로 만든다**(`pi.headgear`·`pi.armor`·`pi.boots`·`pi.necklace`·`pi.ring`) → `python3 tools/gen_catalog.py` 로 `AssetCatalog.asset`·`docs/assets-map.md` 재생성(CI 가 `--check` 한다). **새 그림은 안 그린다**(§1 · 주인 에셋 그대로).
+3. **어디에 듣나(한 함수라 전부 같이)** — `GearLook.PartIcon` 을 쓰는 자리: 장착 슬롯의 «여기는 무슨 자리» 표시(`GearScreen.cs:105`·`:165`)와 인벤 칸의 **다이아 배지**(`GearUi.cs:85` · T105 가 만든 그 자리). **표만 갈아 끼우면 둘 다 바뀐다.**
+4. **크기 손질 주의** — 파츠 아이콘은 `GearUi.FitPartIcon`/`GearLook.PartIconFill`(0.72)로 **불투명 bbox 기준**으로 맞춰 그린다(`GearUi.cs:136~156`). PictoIcon 은 여백 비율이 `gi.*` 와 다르므로 **바꾼 뒤 칸에서 커 보이거나 작아 보일 수 있다** — `screens` 06 PNG 로 재서 필요하면 `PartIconFill` 을 그 아이콘군에 맞게 조정한다(값은 한 곳).
+5. **색** — 지금 빈 슬롯은 흐리게(`PartIconEmptyAlpha` 0.45), 장착 시 흰색이다(`GearScreen.cs:165`). PictoIcon 은 **단색 실루엣**이라 그 규칙이 더 잘 맞는다 — 그대로 둔다.
+6. **테스트** — PlayMode: 슬롯 여섯의 `PartIcon` 스프라이트 이름이 **PictoIcon 파일 이름**(`headgear`·`armor`·`boots`·`necklace`·`ring`·무기)과 같다 · 인벤 칸 배지도 같은 그림 · 잘림·크기 게이트 통과. EditMode: `GearLook.PartIcon` 이 부위 여섯에 대해 **서로 다른 키**를 돌려준다(빠진 부위 0).
+7. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` **06_gear**·**07_gear_detail** PNG 확대(부위가 한눈에 읽히는가) + 주인 폰.
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
