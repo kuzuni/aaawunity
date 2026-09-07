@@ -98,7 +98,8 @@ namespace KkomaKnight.Game
 
         /// <summary>
         /// 배포 스모크 진단 훅(T60) — 브라우저 JS 가 <c>unityInstance.SendMessage("App", "DebugGo", "battle")</c> 로 부른다(GameObject 이름 = «App»).
-        /// «battle» = 선택 챕터로 전투 진입 · «lobby» = 로비 · «perf» = 지금 도는 트윈 수를 로그 한 줄로(T129 ⓑ · 화면은 안 바뀐다). 그 외는 무시(로그 한 줄).
+        /// «battle» = 선택 챕터로 전투 진입 · «lobby» = 로비 · «perf» = 지금 도는 트윈 수 + Bloom 상태를 로그 한 줄로(T129 ⓑ · 화면은 안 바뀐다) ·
+        /// <b>«bloom:off»·«bloom:on»·«bloom»(토글)</b> = 월드 후처리 스위치(T181 ⓐ · 같은 런 안에서 fps 를 갈라 재려고 · 화면 구도·세이브 불변). 그 외는 무시(로그 한 줄).
         /// 게임 로직은 StartBattle/ShowScreen 그대로 — 새 기능이 아니라 진입 경로만 연다.
         /// </summary>
         public void DebugGo(string what)
@@ -109,7 +110,14 @@ namespace KkomaKnight.Game
                 case "battle": StartBattle(Save.SelChapter); break;
                 case "lobby": Overlay?.Close(); GetScreen<BattleScreen>()?.Abort(); ShowScreen("lobby"); break;
                 // T129 ⓑ — «지금 몇 개가 도나» 한 줄. 스모크가 fps 를 재기 직전에 불러 fps 옆에 같이 적는다(문구 바꾸면 tools/webgl_smoke.js 도 같이).
-                case "perf": Debug.Log("[KkomaKnight] perf tweens=" + UiKit.PlayingTweens() + " screen=" + (_current != null ? _current.Name : "-")); break;
+                case "perf": Debug.Log("[KkomaKnight] perf tweens=" + UiKit.PlayingTweens() + " screen=" + (_current != null ? _current.Name : "-") + " bloom=" + (PostFx.Enabled ? "on" : "off")); break;
+                // T181 ⓐ — Bloom 을 «한 런 안에서» 껐다 켜며 재는 손잡이(«bloom:off» · «bloom:on» · «bloom» = 토글).
+                // 런 사이 절대 fps 는 못 쓴다(같은 빌드가 23.8 ↔ 16.4 · 결정 524) — 이 스위치가 있어야 «Bloom 값» 을 노이즈 밖에서 잰다.
+                // 화면·세이브는 한 줄도 안 바뀐다(카메라 후처리 스위치 하나다).
+                case "bloom": case "bloom:on": case "bloom:off":
+                    PostFx.Enabled = what == "bloom" ? !PostFx.Enabled : what == "bloom:on";
+                    Debug.Log("[KkomaKnight] perf bloom=" + (PostFx.Enabled ? "on" : "off"));
+                    break;
                 default: Debug.Log("[KkomaKnight] DebugGo: 모르는 목적지 — " + what); break;
             }
         }

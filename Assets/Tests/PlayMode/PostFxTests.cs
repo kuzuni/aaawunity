@@ -70,6 +70,18 @@ namespace KkomaKnight.Tests.Play
             }
             Debug.Log("[T181] 초상 카메라 " + portraits + "대 확인 · Bloom = " + PostFx.BloomThreshold + "/" + PostFx.BloomIntensity + "/" + PostFx.BloomScatter);
 
+            // ⓓ T181 ⓐ 판정 손잡이 — 스모크가 «한 런 안에서» Bloom 을 껐다 켜며 fps 를 가른다(런 사이 절대값은 못 쓴다 · 결정 524).
+            // 자는 «스위치가 실제로 움직이나» 와 «끄고 켜도 Volume·Bloom 계약이 그대로인가» 둘을 본다 —
+            // 끄기를 Volume 파괴로 구현하면 다시 켤 때 값이 달라지고 위 ⓐ 단언이 조용히 무의미해진다.
+            Assert.IsTrue(PostFx.Enabled, "손잡이가 «지금 켜져 있다» 를 옳게 읽는다");
+            _app.DebugGo("bloom:off"); yield return Frames(1);
+            Assert.IsFalse(PostFx.Enabled, "«bloom:off» 면 꺼진다(T181 ⓐ)");
+            Assert.IsFalse(data.renderPostProcessing, "끄는 것은 카메라 스위치 한 줄이다");
+            Assert.AreSame(v, PostFx.Current, "꺼도 Volume 은 그대로 살아 있다(다시 켤 때 값이 같아야 한다)");
+            _app.DebugGo("bloom"); yield return Frames(1);
+            Assert.IsTrue(PostFx.Enabled, "«bloom» 은 토글이다 — 꺼진 상태에서 부르면 다시 켜진다");
+            Assert.AreEqual(PostFx.BloomIntensity, PostFx.CurrentBloom.intensity.value, 1e-3f, "껐다 켜도 Bloom 값이 그대로다");
+
             _log.AssertNoRed("포스트 프로세싱");
             if (_app != null) { if (_app.UiCanvas != null) Object.Destroy(_app.UiCanvas.gameObject); Object.Destroy(_app.gameObject); }
             yield return Frames(3);

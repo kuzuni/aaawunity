@@ -76,5 +76,33 @@ namespace KkomaKnight.Game
             var data = UiKit.Ensure<UniversalAdditionalCameraData>(cam.gameObject);
             data.renderPostProcessing = true;
         }
+
+        /// <summary>
+        /// T181 ⓐ 판정용 스위치 — <b>같은 빌드·같은 런에서</b> Bloom 을 껐다 켜며 fps 를 잰다.
+        /// <para>
+        /// 왜 필요한가: 지시서 3항이 «WebGL 비용을 반드시 재고 눈에 띄게 떨어지면 Bloom 을 더 얕게» 라고 못 박았는데,
+        /// <b>런 사이 절대값은 못 쓴다</b> — 워커 L 이 T129 회차 3 에서 «같은 빌드 두 번이 23.8 ↔ 16.4» 를 보였다(결정 524).
+        /// 쓸 수 있는 것은 «한 런 «안» 의 비» 뿐이라, 끄고 켜는 손잡이가 없으면 이 판정은 <b>영영 안 난다</b>.
+        /// </para>
+        /// 끄는 것은 <b>카메라 스위치 한 줄</b>이다(Volume·프로파일은 그대로 둔다) — 그래야 다시 켤 때 값이 같고,
+        /// 게이트가 보는 «Volume 이 하나 · Bloom 이 들어 있다» 계약도 안 흔들린다.
+        /// </summary>
+        public static bool Enabled
+        {
+            get
+            {
+                var cam = App.I != null ? App.I.WorldCamera : null;
+                if (cam == null) return false;
+                var data = cam.GetComponent<UniversalAdditionalCameraData>();
+                return data != null && data.renderPostProcessing;
+            }
+            set
+            {
+                var cam = App.I != null ? App.I.WorldCamera : null;
+                if (cam == null) return;
+                var data = UiKit.Ensure<UniversalAdditionalCameraData>(cam.gameObject);
+                data.renderPostProcessing = value;
+            }
+        }
     }
 }
