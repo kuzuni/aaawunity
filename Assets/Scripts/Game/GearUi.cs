@@ -347,13 +347,18 @@ namespace KkomaKnight.Game
             for (int i = 0; i < opts.Count; i++)
             {
                 bool on = i < n; bool mythPlus = D.Gear.OptNeedsMythPlus(i);
-                string tier = D.Gear.OptTierName(i);                          // T89: 표(OptCountByRar·MythPlusOptAt)에서 읽는다
                 var color = mythPlus ? Palette.Plum : Palette.ByName(Palette.RarName(D.Gear.OptTierRar(i)));
                 var row = Pill(host, "Opt:" + i, new Layout.R(0, i * rowPct, 100, rowPct * OptRowFill), on ? 0.7f : 0.6f);
-                var ic = UiKit.Icon(row, "ic", on ? SetIcon(Set(D, g)) : "ui.iconLock", on ? color : Palette.A(Palette.Gray, 0.9f)); UiKit.Pct(ic.rectTransform, 1.5f, 12, 5, 76);
-                string desc = GearText.Shorten(opts[i].Desc) + (on ? "" : GearText.LockSuffix(tier));
-                var t = UiKit.Label(row, 7.5f, 0, 91.5f, 100, desc, TextSize.Body, on ? OnDarkPill(color) : Palette.A(Palette.Cream, 0.9f), TextAnchor.MiddleLeft, true, true);
-                if (!on) { var cg = UiKit.Ensure<CanvasGroup>(row.gameObject); cg.alpha = 0.9f; }
+                // T160 ⓐ(주인 «자물쇠 색을 해당 열리는 등급 색으로») — 잠겨 있어도 색은 죽이지 않는다.
+                // «잠김» 은 자물쇠 «그림» 이 말한다(T69-gear ⓕ 원문) · 흐림(CanvasGroup)은 T177 로 걷었다.
+                var ic = UiKit.Icon(row, "ic", on ? SetIcon(Set(D, g)) : "ui.iconLock", color); UiKit.Pct(ic.rectTransform, 1.5f, 12, 5, 76);
+                // T160 ⓑ(주인 «옵션에 «(신화)» «(신화 +3)» 이런 거 넣지 말라») — 꼬리를 안 붙인다.
+                // GearText.LockSuffix 자체는 남긴다(순수 함수 · EditMode 테스트가 쓴다) — 부르는 곳이 여기 하나뿐이라 여기서만 뗀다(지시서 T160 2항 ⓘ).
+                string desc = GearText.Shorten(opts[i].Desc);
+                var t = UiKit.Label(row, 7.5f, 0, 91.5f, 100, desc, TextSize.Body, on ? OnDarkPill(color) : Palette.OptLocked, TextAnchor.MiddleLeft, true, true);
+                // T177(주인 «잠겨 있는 거는 글씨가 색이 666666») — Label 이 만들면서 EnsureBright(T111 ⓑ)로 흰색이 됐으므로 표식을 붙여 다시 넣는다.
+                // 흐림(CanvasGroup 0.9)은 걷었다 — 색과 겹치면 두 번 흐려져 주인이 준 값이 안 나온다(지시서 T177 1항).
+                if (!on) UiKit.DarkText(t, Palette.OptLocked);
             }
         }
         /// <summary>옵션 줄이 피치에서 차지하는 비율 — 16% ÷ 7줄 = 53px 피치 × 0.94 = 50px(본문 40 한 줄 49px 이 들어간다 · 줄 사이 3px).</summary>
@@ -363,10 +368,15 @@ namespace KkomaKnight.Game
         {
             var r = Layout.GdCost.Within(Layout.GdBox);
             var row = Pill(box, "Cost", r, 0.75f); UiKit.Tag(row, "비용줄");
-            var ic = UiKit.Icon(row, "ic", "pi.coins"); UiKit.Pct(ic.rectTransform, 30, 8, 5, 84);
+            // T159(주인 «가격 표시 옆에 재화가 골드 아이콘이어야») — 이 게임의 골드 재화 아이콘은 ui.coin 이다
+            // (클리어·사망 보상 · 출석 · 탐험 · 챕터 보상 · 던전 보상이 전부 같은 키를 쓴다 · pi.coins 는 픽토 그림이라 이 팝업만 달랐다).
+            // 칸은 줄 높이에 맞춘 정사각으로 — 폭 5%(36.6px) × 높이 84%(27.4px) 라 가로로 남던 자리를 지운다(그림 크기는 그대로 27.4px · T136 과 같은 갈래).
+            var ic = UiKit.Icon(row, "ic", "ui.coin"); UiKit.Pct(ic.rectTransform, 30, 8, CostIconWPct, 84);
             string s = maxed ? $"슬롯 MAX (Lv.{maxLv})" : $"<color=#{Hex(S.Gold >= cost ? Palette.Green : Palette.Red)}>{UiKit.Fmt(S.Gold)}</color>/{UiKit.Fmt(cost)}";
             var t = UiKit.Label(row, 36, 0, 40, 100, s, TextSize.Body, Palette.Cream, TextAnchor.MiddleLeft, true, true); t.name = "CostText";
         }
+        /// <summary>비용 줄 재화 아이콘 칸의 폭(줄 %) — 줄이 732.9×32.6px 이라 높이 84%(27.4px)와 같은 폭이 되는 값이다(T159 · 정사각).</summary>
+        public const float CostIconWPct = 3.74f;
         /// <summary>표 ④ «장비 세부 팝업»: 등급 탭 → 아이콘 칸(+N) · 이름 · «슬롯 Lv. N/최대»·«부위» pill → 스탯 박스(초록 +값) → 옵션 줄(등급색 · 잠금 흐림) → 비용 줄 → 해제/장착(파랑) · 슬롯 강화(주황) → «탭하여 닫기». 규칙·수치는 예전 그대로.</summary>
         public static void OpenDetail(App app, GearItem g, Action onChanged)
         {

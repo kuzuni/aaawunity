@@ -241,7 +241,22 @@ namespace KkomaKnight.Game
         public static void EnsureBright(Text t)
         {
             if (t == null) return;
+            // T177 — 주인이 색을 못 박은 자리(잠긴 옵션 #666666)는 이 규칙 밖이다. 표식은 DarkText 한 곳에서만 붙인다.
+            if (t.GetComponent<OwnerDarkTextTag>() != null) return;
             t.color = BrightText(t.color);
+        }
+
+        /// <summary>
+        /// 주인이 «어두운 글자» 로 못 박은 자리(T177 · 장비 세부 07 의 잠긴 옵션 줄) — <see cref="OwnerDarkTextTag"/> 를 붙이고 색을 넣는다.
+        /// 표식을 붙인 «뒤» 에 색을 다시 넣는 까닭 = <see cref="Label"/>·<see cref="Text"/> 가 만들면서 이미 <see cref="EnsureBright"/>(T111 ⓑ)를 거쳐 흰색이 됐기 때문이다.
+        /// 이 함수를 새 자리에 쓸 때는 «어느 주인 지시인가» 를 그 줄에 같이 적는다 — 안 그러면 다음 워커가 «가독성» 이라며 되돌린다.
+        /// </summary>
+        public static Text DarkText(Text t, Color c)
+        {
+            if (t == null) return null;
+            Ensure<OwnerDarkTextTag>(t.gameObject);
+            t.color = c;
+            return t;
         }
 
         public static Outline EnsureOutline(Text t, float size = 0f)

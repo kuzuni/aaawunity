@@ -12,6 +12,13 @@ namespace KkomaKnight.Game
     /// </summary>
     public sealed class PopupRibbonTag : MonoBehaviour { }
 
+    /// <summary>
+    /// 주인이 색을 «어둡게» 못 박은 글자(T177 · 장비 세부 07 의 잠긴 옵션 줄 <c>#666666</c>) — T111 ⓑ 의 «검정 글씨 → 흰 글씨»(<see cref="UiKit.EnsureBright"/>)와
+    /// «[TextColorGate]» 판정에서 **뺀다**. 붙이는 곳은 <see cref="UiKit.DarkText"/> 한 곳뿐이니, 늘릴 때는 그 자리에 주인 지시를 같이 적는다.
+    /// (표에서 지우지는 않는다 — <see cref="TextAudit.ColorSummary"/> 가 «주인 지정 N» 으로 세어 다음 워커가 «가독성» 이라며 되돌리지 않게 남긴다.)
+    /// </summary>
+    public sealed class OwnerDarkTextTag : MonoBehaviour { }
+
     /// <summary>글자 종류 표식(T63) — <see cref="UiKit"/> 가 Body 가 아닌 종류(Button·Aux·Title·Small)로 만든 Text 에 붙인다. 하한 게이트가 이걸 보고 종류별 하한을 적용한다.</summary>
     public sealed class TextKindTag : MonoBehaviour
     {
@@ -71,6 +78,8 @@ namespace KkomaKnight.Game
             public string OutlineWhy = "";
             /// <summary>글자색 휘도(<see cref="UiKit.Luma"/>) 와 «어두운 글자» 판정(T111 ⓑ · <see cref="UiKit.TextLumaMin"/> 미만이면 참).</summary>
             public float Luma; public bool DarkBad;
+            /// <summary>주인이 어둡게 지정한 자리인가(<see cref="OwnerDarkTextTag"/> · T177) — 어두워도 <see cref="DarkBad"/> 로 세지 않는다.</summary>
+            public bool OwnerDark;
             /// <summary>이 글자가 <see cref="UiKit.Popup"/> 이 세운 제목 리본 안에 있는가(T75 4항 게이트) · 리본 안이면서 칸이 제목 60 의 한 줄(84px)보다 낮으면 참.</summary>
             public bool PopupRibbon, RibbonShort;
             public override string ToString() =>
@@ -139,7 +148,9 @@ namespace KkomaKnight.Game
             var sb = new StringBuilder();
             var bad = new List<Row>();
             foreach (var r in rows) if (r.DarkBad) bad.Add(r);
-            sb.Append("[TextColorGate] 검정·짙은 글자 ").Append(bad.Count).Append('/').Append(rows.Count);
+            int owner = 0; foreach (var r in rows) if (r.OwnerDark) owner++;
+            sb.Append("[TextColorGate] 검정·짙은 글자 ").Append(bad.Count).Append('/').Append(rows.Count)
+              .Append(" · 주인 지정 어두운 글자 ").Append(owner).Append("(T177 · 판정 밖)");
             if (bad.Count == 0) { sb.Append(" — 없음 0 ✔"); return sb.ToString(); }
             foreach (var r in bad) sb.Append('\n').Append("  · [").Append(r.Screen).Append("] ").Append(r.Path)
                 .Append(" «").Append(Short(r.Text)).Append("» 휘도 ").Append(r.Luma.ToString("0.00"));
@@ -201,7 +212,8 @@ namespace KkomaKnight.Game
                 row.Clipped = wideBad || tallBad;
                 FillOutline(row, t);
                 row.Luma = UiKit.Luma(t.color);
-                row.DarkBad = t.color.a > 0.2f && row.Luma < UiKit.TextLumaMin;   // T111 ⓑ — 알파가 거의 0 인 숨긴 글자는 세지 않는다
+                row.OwnerDark = t.GetComponent<OwnerDarkTextTag>() != null;   // T177 — 주인이 색을 못 박은 자리
+                row.DarkBad = t.color.a > 0.2f && row.Luma < UiKit.TextLumaMin && !row.OwnerDark;   // T111 ⓑ — 알파가 거의 0 인 숨긴 글자와 주인 지정(T177)은 세지 않는다
                 row.PopupRibbon = t.GetComponentInParent<PopupRibbonTag>() != null;
                 row.RibbonShort = row.RectH < TextSize.BoxHeight(TextSize.Title) - 1f;   // T75 4항 — 제목 60 의 한 줄이 안 들어가는 리본 칸(화면이 스스로 세운 리본도 표에는 남긴다)
                 rows.Add(row);

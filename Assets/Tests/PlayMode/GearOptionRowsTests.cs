@@ -13,8 +13,9 @@ namespace KkomaKnight.Tests.Play
     /// <summary>
     /// T89 — 장비 세부 팝업(07)의 옵션 줄이 «한 칸 뒤로 민» 사다리를 그대로 보여 주는가
     /// (주인 2026-09-07 «일반 등급에서는 옵션 안 열리게 · 희귀에서부터 · 신화 12강에 마지막 흡혈 +8% 개방»).
-    /// ⓐ 일반 장비 = 켜진 줄 0 · 잠긴 줄 7 · 첫 줄 꼬리표 «(희귀)» ⓑ 마지막 줄 꼬리표 «(신화 +12강)»
-    /// ⓒ 신화 +12강 = 7줄 전부 켜짐 · 잠금 꼬리표 0 ⓓ 신화 +9강은 6줄(마지막 한 줄만 잠김) · 빨간 줄 0.
+    /// ⓐ 일반 장비 = 켜진 줄 0 · 잠긴 줄 7 ⓑ 잠긴 줄은 «자물쇠 = 그 줄 등급색»(T160 ⓐ) · «꼬리표 «(신화 +3강)» 없음»(T160 ⓑ) · «글자 #666666»(T177)
+    /// ⓒ 신화 +12강 = 7줄 전부 켜짐 ⓓ 신화 +9강은 6줄(마지막 한 줄만 잠김) · 빨간 줄 0.
+    /// ⚠ «잠김» 판정은 <b>글자 꼬리표가 아니라 자물쇠 그림</b>이다 — 주인 T160 ⓑ 로 꼬리표를 없앴다.
     /// <see cref="UiSmokeTests"/> 는 남의 lock(T87·T88) 이라 손대지 않고 여기에 따로 둔다.
     /// </summary>
     public class GearOptionRowsTests
@@ -83,8 +84,60 @@ namespace KkomaKnight.Tests.Play
             b.onClick.Invoke();
         }
 
-        /// <summary>잠긴 줄 = 꼬리표 «(단계)» 로 끝나는 줄(<see cref="GearText.LockSuffix"/> · 글자 필터 T75 를 거친 뒤 비교).</summary>
-        bool IsLocked(string rowText, int i) => rowText.EndsWith(TextGlyphs.Safe(GearText.LockSuffix(_app.Data.Gear.OptTierName(i))));
+        /// <summary>
+        /// 잠긴 줄인가 — <b>글자 꼬리표가 아니라 «자물쇠 그림»</b> 으로 판정한다(T160 ⓑ 로 꼬리표 «(신화 +3강)» 을 없앴다 · 주인 지시).
+        /// 이제 «잠김» 을 말하는 것은 자물쇠 아이콘 하나이므로 자가 그것을 본다.
+        /// </summary>
+        bool IsLocked(int i)
+        {
+            var img = RowIcon(i);
+            var lockSprite = _app.Assets.Sprite("ui.iconLock");
+            Assert.IsNotNull(lockSprite, "카탈로그 자물쇠 그림(ui.iconLock)");
+            return img.sprite == lockSprite;
+        }
+
+        /// <summary>옵션 줄의 아이콘(«ic») — 세트 아이콘이거나 자물쇠다.</summary>
+        Image RowIcon(int i)
+        {
+            var opts = UiKit.Find(_app.Overlay.Root, "Options"); Assert.IsNotNull(opts, "옵션 목록(Options)");
+            var row = UiKit.Find(opts, "Opt:" + i); Assert.IsNotNull(row, "옵션 줄 Opt:" + i);
+            var ic = UiKit.Find(row, "ic"); Assert.IsNotNull(ic, "옵션 줄 아이콘 Opt:" + i + "/ic");
+            var img = ic.GetComponent<Image>(); Assert.IsNotNull(img, "옵션 줄 아이콘 Image Opt:" + i);
+            return img;
+        }
+
+        /// <summary>옵션 줄의 글자 컴포넌트.</summary>
+        Text RowText(int i)
+        {
+            var opts = UiKit.Find(_app.Overlay.Root, "Options"); Assert.IsNotNull(opts, "옵션 목록(Options)");
+            var row = UiKit.Find(opts, "Opt:" + i); Assert.IsNotNull(row, "옵션 줄 Opt:" + i);
+            var t = row.GetComponentInChildren<Text>(true); Assert.IsNotNull(t, "옵션 줄 글자 Opt:" + i);
+            return t;
+        }
+
+        /// <summary>그 줄이 «열리는 등급» 의 색 — 게임 코드와 같은 식(T160 ⓐ 는 잠겨 있어도 이 색이어야 한다).</summary>
+        Color TierColor(int i)
+        {
+            var G = _app.Data.Gear;
+            return G.OptNeedsMythPlus(i) ? Palette.Plum : Palette.ByName(Palette.RarName(G.OptTierRar(i)));
+        }
+
+        /// <summary>T160 ⓐ·ⓑ + T177 을 한 줄에서 잰다 — 잠긴 줄의 자물쇠 색 = 등급색 · 꼬리표 없음 · 글자 #666666.</summary>
+        void AssertLockedRowLooksRight(int i)
+        {
+            var want = TierColor(i); var got = RowIcon(i).color;
+            Assert.AreEqual(want.r, got.r, 0.02f, i + "번 잠긴 줄 자물쇠 R = 등급색(T160 ⓐ · 회색으로 죽이지 않는다)");
+            Assert.AreEqual(want.g, got.g, 0.02f, i + "번 잠긴 줄 자물쇠 G = 등급색");
+            Assert.AreEqual(want.b, got.b, 0.02f, i + "번 잠긴 줄 자물쇠 B = 등급색");
+            Assert.AreEqual(1f, got.a, 0.02f, i + "번 잠긴 줄 자물쇠는 불투명(T160 ⓐ)");
+            var t = RowText(i);
+            Assert.IsFalse(t.text.TrimEnd().EndsWith(")"), i + "번 잠긴 줄에 «(등급)» 꼬리표가 남아 있다(T160 ⓑ) — " + t.text);
+            var want2 = Palette.OptLocked;
+            Assert.AreEqual(want2.r, t.color.r, 0.01f, i + "번 잠긴 줄 글자 = #666666(T177 · 주인 지정)");
+            Assert.AreEqual(want2.g, t.color.g, 0.01f, i + "번 잠긴 줄 글자 = #666666");
+            Assert.AreEqual(want2.b, t.color.b, 0.01f, i + "번 잠긴 줄 글자 = #666666");
+            Assert.IsNotNull(RowText(i).GetComponent<OwnerDarkTextTag>(), i + "번 잠긴 줄은 «주인 지정 어두운 글자» 표식을 단다(T177 · EnsureBright·TextColorGate 밖)");
+        }
 
         [UnityTest]
         public IEnumerator CommonGearOpensNothingAndTheFirstRowSaysRare()
@@ -100,9 +153,11 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(_app.Overlay.IsOpen, "세부 팝업이 열린다");
             var rows = OptionRowTexts();
             Assert.AreEqual(D.Gear.OptMaxCount, rows.Count, "옵션 줄 7");
-            for (int i = 0; i < rows.Count; i++) Assert.IsTrue(IsLocked(rows[i], i), "일반 장비는 " + i + "번 줄이 잠겨 있어야 한다 — " + rows[i]);
-            Assert.IsTrue(rows[0].EndsWith(TextGlyphs.Safe(" (" + D.Gear.RarName[1] + ")")), "첫 줄 꼬리표 = «(희귀)» — " + rows[0]);
-            Assert.IsTrue(rows[rows.Count - 1].EndsWith(TextGlyphs.Safe(" (" + D.Gear.RarName[D.Gear.RarMyth] + " +12강)")), "마지막 줄 꼬리표 = «(신화 +12강)» — " + rows[rows.Count - 1]);
+            for (int i = 0; i < rows.Count; i++) Assert.IsTrue(IsLocked(i), "일반 장비는 " + i + "번 줄이 잠겨 있어야 한다 — " + rows[i]);
+            // T160 ⓑ 로 꼬리표를 없앴으므로 «첫 줄 = (희귀)»·«마지막 줄 = (신화 +12강)» 단언은 «꼬리표가 없다» + «자물쇠가 등급색» 으로 바뀐다.
+            // «몇 등급에서 열리는가» 는 이제 자물쇠 «색» 이 말한다(주인이 두 지시를 같이 준 까닭).
+            for (int i = 0; i < rows.Count; i++) AssertLockedRowLooksRight(i);
+            Assert.AreNotEqual(TierColor(0), TierColor(rows.Count - 1), "첫 줄(희귀)과 마지막 줄(신화 +12강)의 자물쇠 색이 서로 달라야 «등급» 이 읽힌다");
             _log.AssertNoRed("일반 장비 세부 팝업");
             ClickNamed(_app.Overlay.Root, "Dimmed"); yield return Frames(2);
             Assert.IsFalse(_app.Overlay.IsOpen, "배경 탭 = 닫기");
@@ -123,8 +178,10 @@ namespace KkomaKnight.Tests.Play
             GearUi.OpenDetail(_app, nine, _app.Current.Refresh); yield return Frames(2);
             var rows = OptionRowTexts();
             Assert.AreEqual(D.Gear.OptMaxCount - 1, D.Gear.OptCount(myth, 9), "신화 +9강 = 6줄");
-            for (int i = 0; i < rows.Count - 1; i++) Assert.IsFalse(IsLocked(rows[i], i), "신화 +9강에서 " + i + "번 줄은 켜져 있어야 한다 — " + rows[i]);
-            Assert.IsTrue(IsLocked(rows[rows.Count - 1], rows.Count - 1), "마지막 줄만 잠긴다 — " + rows[rows.Count - 1]);
+            for (int i = 0; i < rows.Count - 1; i++) Assert.IsFalse(IsLocked(i), "신화 +9강에서 " + i + "번 줄은 켜져 있어야 한다 — " + rows[i]);
+            Assert.IsTrue(IsLocked(rows.Count - 1), "마지막 줄만 잠긴다 — " + rows[rows.Count - 1]);
+            AssertLockedRowLooksRight(rows.Count - 1);
+            Assert.IsNull(RowText(0).GetComponent<OwnerDarkTextTag>(), "켜진 줄은 «주인 지정» 표식을 안 단다(T177 · 예전 색 그대로)");
             _log.AssertNoRed("신화 +9강 세부 팝업");
             ClickNamed(_app.Overlay.Root, "Dimmed"); yield return Frames(2);
 
@@ -133,7 +190,7 @@ namespace KkomaKnight.Tests.Play
             GearUi.OpenDetail(_app, twelve, _app.Current.Refresh); yield return Frames(2);
             rows = OptionRowTexts();
             Assert.AreEqual(D.Gear.OptMaxCount, D.Gear.OptCount(myth, 12), "신화 +12강 = 7줄 전부");
-            for (int i = 0; i < rows.Count; i++) Assert.IsFalse(IsLocked(rows[i], i), "신화 +12강에서 " + i + "번 줄이 잠기면 안 된다 — " + rows[i]);
+            for (int i = 0; i < rows.Count; i++) Assert.IsFalse(IsLocked(i), "신화 +12강에서 " + i + "번 줄이 잠기면 안 된다 — " + rows[i]);
             _log.AssertNoRed("신화 +12강 세부 팝업");
             ClickNamed(_app.Overlay.Root, "Dimmed"); yield return Frames(2);
 

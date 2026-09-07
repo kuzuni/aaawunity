@@ -40,6 +40,9 @@ namespace KkomaKnight.Game
         /// <summary>특전 카드 몸통(T135) — 조각 <c>CardFrame_04_*</c> 의 «Bg» 는 밝은 회색이지만 레퍼런스 <c>docs/ref/04_perks.jpg</c> 의 카드 몸통은 어두운 회색이다(같은 자리 실측 #2C2C2C).
         /// 흰 글자 + 검은 아웃라인(T63 0항 · T111 ⓑ)은 어두운 몸통을 전제로 한 규칙이라 밝은 몸통 위에서는 설명이 안 읽혔다.</summary>
         public static Color PerkCardBody => Cat("perkCardBody", "#2C2C2C");
+        /// <summary>장비 세부(07)의 **잠긴** 옵션 줄 글자(T177 · 주인이 값을 직접 줬다 «666666»). 켜진 줄은 <see cref="OnDarkPill"/> 계열 그대로.
+        /// 이 색은 휘도 0.4 라 T111 ⓑ 의 «밝은 글자» 규칙에 걸린다 — <see cref="UiKit.DarkText"/> 로 넣어 규칙 밖에 둔다.</summary>
+        public static Color OptLocked => Cat("optLocked", "#666666");
         /// <summary>그 상자 안쪽 장식선(조각의 «DecoLine» · 원래 살구 #F0D0AD) — 레퍼런스 12 의 안쪽 테두리 줄 실측(T130).</summary>
         public static Color PopupDeco => Cat("popupDeco", "#2C2C2C");
         /// <summary>팝업 «안» 줄 바탕(T130 · T121 후속) — 레퍼런스 07 의 옵션 줄 실측. 몸통(#343434)보다 한 단계 어둡다.</summary>
