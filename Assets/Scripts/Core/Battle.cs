@@ -380,6 +380,13 @@ namespace KkomaKnight.Core
             if (ProcN < C.ProcTickCap) { ProcN++; ProcOnAttack(e); }
         }
         void ProjHit(Projectile pr, EnemyState e) => SummonHit(e, pr.Kind == ProjKind.Axe ? C.RAxe : pr.Ratio);
+
+        /// <summary>
+        /// 관통 상한 — <b>0 이하는 «상한 없음»</b>(T173 · 주인 2026-09-07 «걍 닿으면 다 데미지 주게로 해 주고 관통 8개까지 말고»).
+        /// 값은 <c>combat.json</c>(aaaw 정본) 위에 <c>Assets/KkomaKnight/combatOverride.json</c> 이 덮는다 — <b>코드에 숫자를 박지 않는다</b>.
+        /// 창만 0 이고 검기(<c>wave</c>·<c>waveBig</c>)는 정본 값 그대로다(주인이 창만 말했다).
+        /// </summary>
+        public static int PierceCap(int pierce) => pierce <= 0 ? int.MaxValue : pierce;
         void PushProj(Projectile pr)
         {
             if (Projs.Count < C.ProjCap) { Projs.Add(pr); Emit(EvKind.Proj, pr.Target, 0, false, null, pr); return; }
@@ -388,7 +395,9 @@ namespace KkomaKnight.Core
                 var list = new List<EnemyState>();
                 foreach (var e in AliveList()) if ((pr.Node == null || e.Wave == pr.Node) && e.WorldX >= pr.X - EngineConst.ProjHitTol && e.WorldX <= pr.MaxX) list.Add(e);
                 list.Sort((a, b) => a.WorldX.CompareTo(b.WorldX));
-                for (int i = 0; i < list.Count && i < pr.Pierce; i++) ProjHit(pr, list[i]);
+                // T173 — pierce ≤ 0 은 «상한 없음»(주인 «걍 닿으면 다 데미지 주게로 해 주고 관통 8개까지 말고» · combatOverride.json 의 pierce.spear = 0)
+                int cap = PierceCap(pr.Pierce);
+                for (int i = 0; i < list.Count && i < cap; i++) ProjHit(pr, list[i]);
             }
             else if (pr.Target != null && pr.Target.Hp > 0) ProjHit(pr, pr.Target);
         }
@@ -731,7 +740,7 @@ namespace KkomaKnight.Core
                         if (!pr.Hit.Contains(e) && Math.Abs(e.WorldX - pr.X) < EngineConst.ProjHitTol)
                         {
                             pr.Hit.Add(e); ProjHit(pr, e);
-                            if (pr.Hit.Count >= pr.Pierce) { done = true; break; }
+                            if (pr.Hit.Count >= PierceCap(pr.Pierce)) { done = true; break; }   // T173 — pierce ≤ 0 = 상한 없음
                         }
                     }
                     if (pr.X > pr.MaxX) done = true;

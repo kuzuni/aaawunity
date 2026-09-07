@@ -42,10 +42,14 @@ namespace KkomaKnight.Tests
         public void GoldenRate_Seed11_Chapter60_Myth_ThreePick_100Runs()
         {
             // node: SEED=11 · mkBuild(3,0,25) · 3pick · 100판 → 82.0%  (판별 특전: 회복 증폭·방어력 증가·가시갑옷·관통 베기 등 전부 걸린다)
+            // ⚑ T173(주인 2026-09-07 «창 관통 제한 없애고 · 화면 밖 +10 에서 지워지게») 로 이 값이 **82 → 83** 이 됐다.
+            //   창이 8 마리에서 끊기지 않고 사거리 안 적을 전부 때리므로 클리어가 한 판 더 난다 — 규칙이 바뀐 만큼 골든도 다시 뽑았다(§1 규약).
+            //   재도출 = 옆에 둔 aaaw 사본 sim.js 에 **같은 규칙**(SPEAR_PIERCE = Infinity · SPEAR_REACH = 312)을 먹여 실험1 표를 다시 뽑고
+            //   이 엔진의 Sim 표와 대조했다(전·후 21칸 표는 PROGRESS T173 행 · aaaw 원본 저장소는 불변).
             var d = TestData.Load(); var rng = new Mulberry32(11); var b = GearSystem.MkBuild(d, 3, 0, 25);
             int w = 0;
             for (int i = 0; i < 100; i++) if (new BattleState(d, 60, b, rng, new SimPolicy(), Ladder(true)).RunToEnd().Clear) w++;
-            Assert.That(w, Is.EqualTo(82));
+            Assert.That(w, Is.EqualTo(83));
         }
 
         [Test]

@@ -1291,6 +1291,8 @@ MonoBehaviour:
     text: {fileID: 4900000, guid: 544bbb0c80ff9c1c26d7694624619bf2, type: 3}
   - key: data.dungeon
     text: {fileID: 4900000, guid: b0a365b4676e4d3a095949932cf7202f, type: 3}
+  - key: data.combatOverride
+    text: {fileID: 4900000, guid: 3f666be8faab6ec62f596ecabf6d7cbb, type: 3}
   audio:
   - key: bgm.lobby
     clip: {fileID: 8300000, guid: e8ab4b520cd1ceb6fa53ae0b8ce16276, type: 3}

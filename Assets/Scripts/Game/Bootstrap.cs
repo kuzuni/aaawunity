@@ -58,6 +58,7 @@ namespace KkomaKnight.Game
             d.Expedition = LoadExpedition(catalog);
             d.ChapterChest = LoadChapterChest(catalog);
             d.Dungeon = LoadDungeon(catalog);
+            ApplyCombatOverride(d, catalog);   // T173 — 전투 규칙 덮어쓰기(창 사거리·관통)는 App 이 서기 «전» 에 먹인다
             App.Create(d, catalog, uiFont, Camera.main);
             _loading?.SetProgress(1f);
             // 깜빡임 방지 — 데이터가 순식간에 읽혀도 로딩 화면이 한 프레임만 번쩍이지 않게 최소 표시 시간을 채우고 지운다(T96-loading).
@@ -90,6 +91,18 @@ namespace KkomaKnight.Game
             if (ta == null) { Debug.LogError("[KkomaKnight] dailyGift.json 이 카탈로그(data.dailyGift)에 없다 — 데일리 기프트 표 없음"); return null; }
             try { return DailyGiftData.Parse(ta.text); }
             catch (Exception e) { Debug.LogError("[KkomaKnight] dailyGift.json 파싱 실패: " + e.Message); return null; }
+        }
+
+        /// <summary>
+        /// 이 레포 전용 전투 수치 덮어쓰기 — <c>Assets/KkomaKnight/combatOverride.json</c>(카탈로그 텍스트 «data.combatOverride» · T173).
+        /// <c>data/combat.json</c> 은 aaaw 정본이라 손대지 않고(§1) 여기 적은 키만 덮는다. 없으면 정본 그대로 간다(부팅은 막히지 않는다).
+        /// 헤드리스 하니스(Sim·EditMode)는 <see cref="GameData.LoadFromDirectory"/> 가 같은 파일을 직접 읽어 먹인다 — 두 길이 같은 규칙으로 돈다.
+        /// </summary>
+        static void ApplyCombatOverride(GameData d, AssetCatalog catalog)
+        {
+            var ta = catalog != null ? catalog.Text("data.combatOverride") : null;
+            if (ta == null) { Debug.LogWarning("[KkomaKnight] combatOverride.json 이 카탈로그(data.combatOverride)에 없다 — combat.json 정본 값 그대로 간다"); return; }
+            d.ApplyCombatOverride(ta.text);
         }
 
         /// <summary>던전 티켓·보상 수치표 — 이 레포 전용 <c>Assets/KkomaKnight/dungeon.json</c>(카탈로그 텍스트 «data.dungeon» · T99). 못 읽으면 null(티켓이 «--» 로 뜨고 보충·구매 없음).</summary>

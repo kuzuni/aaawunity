@@ -48,9 +48,41 @@ namespace KkomaKnight.Core
             return d;
         }
 
-        /// <summary>디스크 폴더에서 로드 (dotnet 하니스·EditMode 테스트용).</summary>
+        /// <summary>
+        /// 디스크 폴더에서 로드 (dotnet 하니스·EditMode 테스트용).
+        /// <b>이 레포 전용 전투 덮어쓰기</b>(<c>Assets/KkomaKnight/combatOverride.json</c> · T173)도 같이 먹인다 —
+        /// 안 그러면 Sim 시드 골든·EditMode 가 «게임과 다른 규칙» 으로 돌아 서로 어긋난다(게임 쪽은 <c>Bootstrap</c> 이 카탈로그로 먹인다).
+        /// 파일이 없으면 조용히 정본 그대로다.
+        /// </summary>
         public static GameData LoadFromDirectory(string dir)
-            => Load(f => System.IO.File.ReadAllText(System.IO.Path.Combine(dir, f)));
+        {
+            var d = Load(f => System.IO.File.ReadAllText(System.IO.Path.Combine(dir, f)));
+            // data 폴더는 <레포>/Assets/StreamingAssets/data → 덮어쓰기는 <레포>/Assets/KkomaKnight/
+            var path = System.IO.Path.GetFullPath(System.IO.Path.Combine(dir, "..", "..", "KkomaKnight", CombatOverrideFile));
+            if (System.IO.File.Exists(path)) d.ApplyCombatOverride(System.IO.File.ReadAllText(path));
+            return d;
+        }
+
+        /// <summary>이 레포 전용 전투 덮어쓰기 파일 이름(카탈로그 텍스트 키는 <c>data.combatOverride</c>).</summary>
+        public const string CombatOverrideFile = "combatOverride.json";
+
+        /// <summary>
+        /// <c>combat.json</c>(aaaw 정본 · 불변) 위에 <b>이 레포가 정한 값만</b> 덮는다 (T173 · 주인 지시로 바뀐 전투 규칙).
+        /// 적힌 키만 바뀌고 나머지는 정본 그대로다 — 빈 글이거나 못 읽으면 아무 일도 안 한다(부팅은 막히지 않는다).
+        /// </summary>
+        public void ApplyCombatOverride(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json) || Combat == null) return;
+            var j = new JNode(MiniJson.Parse(json));
+            if (!j.IsObject) return;
+            var r = j["range"];
+            if (r.Has("spearReach")) Combat.SpearReach = r["spearReach"].Num(Combat.SpearReach);
+            if (r.Has("waveReach")) Combat.WaveReach = r["waveReach"].Num(Combat.WaveReach);
+            var p = j["pierce"];
+            if (p.Has("spear")) Combat.PierceSpear = p["spear"].Int(Combat.PierceSpear);
+            if (p.Has("wave")) Combat.PierceWave = p["wave"].Int(Combat.PierceWave);
+            if (p.Has("waveBig")) Combat.PierceWaveBig = p["waveBig"].Int(Combat.PierceWaveBig);
+        }
 
         void Validate()
         {
