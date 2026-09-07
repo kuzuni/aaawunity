@@ -1146,6 +1146,8 @@ MonoBehaviour:
     prefab: {fileID: 6196068370515240449, guid: bc933be3e1d884febbbc44a4ad312def, type: 3}
   - key: ui.profileAvatar
     prefab: {fileID: 3223506120641057420, guid: f583887b7da7f4a5f821f008509cb089, type: 3}
+  - key: ui.profileNick
+    prefab: {fileID: 5511544850249683026, guid: d0e5925152a5741dc8ede9a658159f6f, type: 3}
   controllers:
   - key: cm.controller
     controller: {fileID: 9100000, guid: b491875454dfab744b3c79816cba2e67, type: 2}

@@ -741,11 +741,81 @@ namespace KkomaKnight.Game
         public static void Adopt(GameObject root)
         {
             StripDemoScripts(root);
+            var inputs = TakeTmpInputs(root);   // 입력칸을 먼저 걷어 낸다 — 아래 줄이 그 글자(TMP_Text)를 파괴하면 TMP_InputField 가 제 글자를 잃는다(T96-profile 2단계)
             foreach (var tmp in root.GetComponentsInChildren<TMP_Text>(true)) ConvertTmp(tmp);
             // 조각이 TMP 가 아니라 처음부터 uGUI Text 로 만들어 둔 자리도 있다 — 그런 글자는 어떤 입구도 안 거치므로 여기서 같이 붙인다(T63-outline)
             foreach (var t in root.GetComponentsInChildren<Text>(true)) EnsureOutline(t);
             foreach (var g in root.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
+            RestoreInputs(inputs);   // 글자가 uGUI Text 가 된 뒤라야 uGUI InputField 를 붙일 수 있다(raycast 도 여기서 되살린다)
             var rt = root.transform as RectTransform; if (rt != null) rt.localScale = Vector3.one;
+        }
+
+        /// <summary>프리팹 입력칸 하나를 다시 세우는 데 필요한 것만 적어 둔 쪽지(<see cref="TakeTmpInputs"/> → <see cref="RestoreInputs"/>).</summary>
+        struct TmpInput { public GameObject Go, Text, Placeholder; public int Limit; public bool Multi; }
+
+        /// <summary>
+        /// 조각 안 TMP 입력칸을 <b>떼어 내고</b> 다시 세울 쪽지를 남긴다(T96-profile 2단계 · 주인 지목 <c>Social_Profile_Nickname</c>).
+        /// <see cref="Adopt"/> 가 TMP_Text 를 파괴하고 uGUI <see cref="Text"/> 로 갈아 끼우므로, 입력칸을 그대로 두면 제 글자·자리표시를 잃은 채 남는다.
+        /// 캐럿 조각은 <see cref="Spawn"/> 이 비활성 홀더 밑에서 만들어 아직 없지만(OnEnable 이 안 돌았다) 조각에 미리 저장돼 있으면 같이 지운다.
+        /// </summary>
+        static List<TmpInput> TakeTmpInputs(GameObject root)
+        {
+            var found = root.GetComponentsInChildren<TMP_InputField>(true);
+            if (found.Length == 0) return null;   // 거의 모든 조각이 여기서 끝난다(입력칸은 이름 팝업 하나뿐)
+            var list = new List<TmpInput>();
+            foreach (var f in found)
+            {
+                if (f == null) continue;
+                var rec = new TmpInput
+                {
+                    Go = f.gameObject,
+                    Text = f.textComponent != null ? f.textComponent.gameObject : null,
+                    Placeholder = f.placeholder != null ? f.placeholder.gameObject : null,
+                    Limit = f.characterLimit,
+                    Multi = f.lineType != TMP_InputField.LineType.SingleLine,
+                };
+                var caret = Find(f.transform, "Caret");
+                if (caret != null) UnityEngine.Object.DestroyImmediate(caret.gameObject);
+                UnityEngine.Object.DestroyImmediate(f);
+                list.Add(rec);
+            }
+            return list;
+        }
+
+        /// <summary>걷어 낸 입력칸을 uGUI <see cref="InputField"/> 로 다시 세운다 — 자리·크기·글자 자리는 프리팹 그대로고 부품만 우리 것이다.</summary>
+        static void RestoreInputs(List<TmpInput> list)
+        {
+            if (list == null) return;
+            foreach (var rec in list)
+            {
+                if (rec.Go == null) continue;
+                var img = rec.Go.GetComponent<Image>();
+                if (img != null) img.raycastTarget = true;   // 입력칸은 눌려야 한다(바로 위에서 전부 껐다)
+                var f = rec.Go.AddComponent<InputField>();
+                var txt = rec.Text != null ? rec.Text.GetComponent<Text>() : null;
+                if (txt != null)
+                {
+                    // bestFit·리치 텍스트는 캐럿 자리를 어긋나게 한다(uGUI InputField 규약) · 한 줄은 넘쳐도 자르지 않고 흘린다
+                    txt.supportRichText = false; txt.resizeTextForBestFit = false;
+                    txt.horizontalOverflow = HorizontalWrapMode.Overflow;
+                    txt.verticalOverflow = VerticalWrapMode.Truncate;
+                    txt.raycastTarget = false;
+                    f.textComponent = txt;
+                }
+                var ph = rec.Placeholder != null ? rec.Placeholder.GetComponent<Graphic>() : null;
+                if (ph != null)
+                {
+                    var pt = ph as Text;
+                    if (pt != null) { pt.supportRichText = false; pt.resizeTextForBestFit = false; }
+                    ph.raycastTarget = false;
+                    f.placeholder = ph;
+                }
+                f.characterLimit = Mathf.Max(0, rec.Limit);
+                f.lineType = rec.Multi ? InputField.LineType.MultiLineNewline : InputField.LineType.SingleLine;
+                f.targetGraphic = img;
+                f.transition = Selectable.Transition.None;
+                f.text = "";
+            }
         }
 
         static Text ConvertTmp(TMP_Text tmp)

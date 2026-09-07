@@ -28,4 +28,13 @@ namespace TMPro
         public TMP_FontAsset font { get; set; }
     }
     public class TextMeshProUGUI : TMP_Text { }
+    // 프리팹 입력칸 — UiKit.Adopt 가 이것을 떼고 uGUI InputField 로 갈아 끼운다(T96-profile 2단계)
+    public class TMP_InputField : Selectable
+    {
+        public enum LineType { SingleLine = 0, MultiLineSubmit = 1, MultiLineNewline = 2 }
+        public TMP_Text textComponent { get; set; }
+        public Graphic placeholder { get; set; }
+        public int characterLimit { get; set; }
+        public LineType lineType { get; set; }
+    }
 }

@@ -38,6 +38,10 @@ namespace KkomaKnight.Core
         /// <c>ui.profileFrame.&lt;색&gt;</c>(ProfileFrame_02 다섯 변형)의 색 이름. 빈 값 = 기본(노랑 · 종전과 같은 조각).
         /// 이 레포 전용 필드라 «없으면 기본값»(옛 세이브 호환).</summary>
         public string ProfileColor = "";
+        /// <summary>플레이어 이름(T96-profile 2단계 · 주인 2026-09-07 «<c>Social_Profile_Nickname</c> 이거 좀 써라 프리팹들») —
+        /// 규칙·기본값은 <see cref="Nickname"/> 한 곳이 갖는다. 빈 값 = 안 지었다(= <see cref="Nickname.Default"/>).
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 기본값»(옛 세이브 호환 · <see cref="ProfileColor"/> 와 같은 방식).</summary>
+        public string Nick = "";
         /// <summary>탐험(T97 · 주인 2026-09-07) — <b>마지막 정산 시각</b>(UTC 유닉스 초 · 0 이면 «아직 한 번도 안 열었다» → 여는 순간이 시작점).
         /// 쌓인 양을 저장하지 않고 이 시각 하나만 두므로 «켜 두든 꺼 두든»(오프라인) 같은 속도로 쌓인다(<see cref="Expedition"/>).
         /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 기본값»(옛 세이브 호환 · <see cref="GiftDay"/> 와 같은 방식).</summary>
@@ -99,6 +103,9 @@ namespace KkomaKnight.Core
             Inv.RemoveAll(g => g == null || Array.IndexOf(D.Gear.Parts, g.Part) < 0 || !D.Gear.Options.ContainsKey(g.Type) || g.Rar < 0 || g.Rar >= D.Gear.RarName.Length);
             foreach (var g in Inv) { g.Plus = Math.Max(0, g.Plus); if (g.Rar == D.Gear.RarLegend && g.Plus >= D.Gear.LegendToMythPlus) { g.Rar = D.Gear.RarMyth; g.Plus = 0; } }
             Uid = Math.Max(1, Uid);
+            // 이름은 다듬어 두고, 규칙에 못 미치면 «안 지었다»(빈 값 = 기본 이름)로 되돌린다 — 화면은 Nickname.Of 만 본다
+            Nick = Nickname.Clean(Nick);
+            if (Nick.Length < Nickname.MinLen) Nick = "";
             var seen = new HashSet<int>();
             foreach (var g in Inv) { if (g.Uid <= 0) continue; if (seen.Contains(g.Uid)) g.Uid = 0; else seen.Add(g.Uid); }
             foreach (var u in seen) if (u >= Uid) Uid = u + 1;
@@ -122,7 +129,7 @@ namespace KkomaKnight.Core
                 ["muted"] = MuteBgm, ["muteBgm"] = MuteBgm, ["muteSfx"] = MuteSfx, ["speed"] = (double)Speed, ["pulls"] = (double)Pulls, ["fuses"] = (double)Fuses, ["uid"] = (double)Uid, ["freeDay"] = FreeDay ?? "",
                 ["giftDay"] = GiftDay ?? "", ["giftAds"] = (double)GiftAds, ["giftFree"] = GiftFree,
                 ["expSettle"] = ExpSettle, ["expQuickDay"] = ExpQuickDay ?? "", ["expQuickUsed"] = (double)ExpQuickUsed,
-                ["profileColor"] = ProfileColor ?? "",
+                ["profileColor"] = ProfileColor ?? "", ["nick"] = Nick ?? "",
             };
             var gc = new List<object>(); foreach (var b in GiftClaimed) gc.Add(b); o["giftClaimed"] = gc;
             o["dunDay"] = DunDay ?? "";
@@ -158,7 +165,7 @@ namespace KkomaKnight.Core
                     s.MuteBgm = j.Has("muteBgm") ? j["muteBgm"].Bool() : j["muted"].Bool(); s.MuteSfx = j["muteSfx"].Bool(); s.Speed = j["speed"].Int(SpeedMin); s.Pulls = j["pulls"].Int(); s.Fuses = j["fuses"].Int(); s.Uid = j["uid"].Int(1); s.FreeDay = j["freeDay"].Str("");
                     s.GiftDay = j["giftDay"].Str(""); s.GiftAds = j["giftAds"].Int(); s.GiftFree = j["giftFree"].Bool();
                     s.ExpSettle = j["expSettle"].Num(); s.ExpQuickDay = j["expQuickDay"].Str(""); s.ExpQuickUsed = j["expQuickUsed"].Int();
-                    s.ProfileColor = j["profileColor"].Str("");
+                    s.ProfileColor = j["profileColor"].Str(""); s.Nick = j["nick"].Str("");
                     foreach (var c in j["giftClaimed"].Items()) s.GiftClaimed.Add(c.Bool());
                     foreach (var g in j["inv"].Items())
                         s.Inv.Add(new GearItem { Uid = g["u"].Int(), Part = g["part"].Str(), Type = g["type"].Str(), Rar = g["rar"].Int(), Plus = g["plus"].Int(), IsNew = g["nw"].Num() != 0 });

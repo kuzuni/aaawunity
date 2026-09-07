@@ -60,8 +60,8 @@ namespace KkomaKnight.Game
         };
         static readonly (string label, string icon)[] Tiers = { ("브론즈", "ui.iconMedalBronze"), ("실버", "ui.iconMedalSilver"), ("골드", "ui.iconMedal"), ("플래티넘", "ui.iconGemBlue"), ("다이아", "ui.iconGemPurple") };
         const string NoTime = "--:--:--";
-        /// <summary>아레나 껍데기 표시 이름 — 상대는 «도전자 N» · 내 자리는 게임 주인공 이름(저장 데이터에 플레이어 이름이 없다 · 워커 결정 기록 T62).</summary>
-        const string MeName = "꼬마기사";
+        /// <summary>아레나 껍데기 표시 이름 — 상대는 «도전자 N» · 내 자리는 <b>내가 지은 이름</b>(T96-profile 2단계 · 기본값이 종전 «꼬마기사» 라 안 고치면 화면 불변).</summary>
+        string MeName => Core.Nickname.Of(App != null ? App.Save : null);
         static string FoeName(int rank) => "도전자 " + rank;
         /// <summary>껍데기 숫자 자리 — 값을 못 만들 때만 쓴다(계수 JSON 이 없을 때 · 0 을 쓰면 실제 값처럼 보인다).</summary>
         const string Dash = "—";

@@ -94,5 +94,73 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("T96-profile 아바타 고르기");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T96-profile 2단계 — 아바타 팝업 제목(= 지금 내 이름)을 누르면 주인 지목 <c>Social_Profile_Nickname</c> 이 뜨고,
+        /// TMP 입력칸이 uGUI <see cref="InputField"/> 로 서 있어 이름을 지을 수 있다.
+        /// ⓐ 제목이 «Avatar» 가 아니라 내 이름 ⓑ 눌러서 열리는 조각 = <c>ui.profileNick</c> · 입력칸·확인·글자 수가 다 있다
+        /// ⓒ 2자 미만이면 «확인» 이 흐리고 안 눌린다 ⓓ 지으면 세이브에 남고 아바타 팝업 제목이 새 이름이 된다 ⓔ 빨간 줄 0.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator NicknameEditsThroughThePrefabInputField()
+        {
+            yield return Boot();
+            _app.ShowScreen("lobby"); yield return Frames(2);
+
+            var avatar = UiKit.Find(_app.Current.Root, "Avatar");
+            Assert.IsNotNull(avatar, "탑바 아바타 칸");
+            avatar.GetComponent<Button>().onClick.Invoke(); yield return Frames(2); Canvas.ForceUpdateCanvases();
+
+            // ⓐ 제목 = 지금 내 이름(안 지었으면 기본 이름)
+            var nickBtn = UiKit.Find(_app.Overlay.Root, Profile.NickName);
+            Assert.IsNotNull(nickBtn, "아바타 팝업 제목 = 이름 바꾸기 입구(NickBtn)");
+            var nickLabel = nickBtn.GetComponentInChildren<Text>(true);
+            Assert.IsNotNull(nickLabel, "제목 글자");
+            Assert.AreEqual(Nickname.Default, nickLabel.text, "안 지었으면 기본 이름이 제목에 선다");
+
+            // ⓑ 누르면 주인 지목 이름 조각
+            var nickBtnB = nickBtn.GetComponent<Button>();
+            Assert.IsNotNull(nickBtnB, "제목 줄에 버튼(Clickable 이 붙인다)");
+            nickBtnB.onClick.Invoke(); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var ov = _app.Overlay.Root;
+            Assert.IsNotNull(UiKit.Find(ov, "ui.profileNick"), "Social_Profile_Nickname 조각(주인 지목)");
+            var input = UiKit.Find(ov, Profile.NickInputName);
+            Assert.IsNotNull(input, "입력칸(NickInput)");
+            var field = input.GetComponent<InputField>();
+            Assert.IsNotNull(field, "TMP 입력칸이 uGUI InputField 로 서 있다(Adopt 가 갈아 끼운다)");
+            Assert.IsNotNull(field.textComponent, "제 글자 컴포넌트를 갖고 있다");
+            Assert.AreEqual(Nickname.MaxLen, field.characterLimit, "한도 = 조각 실측 12");
+            Assert.AreEqual(Nickname.Default, field.text, "지금 이름이 채워져 있다");
+            var okT = UiKit.Find(ov, Profile.NickOkName);
+            Assert.IsNotNull(okT, "«확인» 버튼(NickOkBtn)");
+            var ok = okT.GetComponent<Button>(); Assert.IsNotNull(ok, "그 버튼의 Button");
+            var count = UiKit.Find(ov, Profile.NickCountName);
+            Assert.IsNotNull(count, "글자 수 표시(NickCount)");
+            Assert.AreEqual($"{Nickname.Default.Length}/{Nickname.MaxLen}", count.GetComponent<Text>().text, "글자 수가 지금 이름 길이");
+            foreach (var t in ov.GetComponentsInChildren<Text>(true))
+            {
+                string s = (t.text ?? "").Trim();
+                Assert.AreNotEqual("Nickname", s, "영문 데모 글자 0(제목은 «이름 바꾸기»)");
+                Assert.AreNotEqual("Choose", s, "영문 데모 글자 0(버튼은 «확인»)");
+            }
+
+            // ⓒ 한 자면 못 누른다
+            field.text = "가"; field.onValueChanged.Invoke(field.text); yield return Frames(1);
+            Assert.IsFalse(ok.IsInteractable(), "2자 미만이면 «확인» 이 안 눌린다");
+            Assert.AreEqual($"1/{Nickname.MaxLen}", count.GetComponent<Text>().text, "글자 수가 따라간다");
+
+            // ⓓ 지으면 세이브에 남고 아바타 팝업 제목이 새 이름
+            field.text = "  용감한 기사  "; field.onValueChanged.Invoke(field.text); yield return Frames(1);
+            Assert.IsTrue(ok.IsInteractable(), "2자 이상이면 눌린다");
+            ok.onClick.Invoke(); yield return Frames(3); Canvas.ForceUpdateCanvases();
+            Assert.AreEqual("용감한 기사", _app.Save.Nick, "다듬어 저장한다(앞뒤 빈칸 제거)");
+            Assert.IsTrue(_app.Overlay.IsOpen, "지으면 왔던 아바타 팝업으로 돌아간다");
+            var back = UiKit.Find(_app.Overlay.Root, Profile.NickName);
+            Assert.IsNotNull(back, "돌아온 아바타 팝업의 제목");
+            Assert.AreEqual("용감한 기사", back.GetComponentInChildren<Text>(true).text, "제목이 새 이름");
+
+            _log.AssertNoRed("T96-profile 이름 바꾸기");
+            yield return Shutdown();
+        }
     }
 }
