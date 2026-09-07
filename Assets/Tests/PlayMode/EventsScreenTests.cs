@@ -436,7 +436,7 @@ namespace KkomaKnight.Tests.Play
             // 전에는 «크림 패널 위라 잉크색» 이 규칙이었고 이 줄이 그것을 못 박고 있었다. 이제 크림 패널 위에서도 흰 글자이고,
             // 읽히게 하는 몫은 검은 아웃라인(T63-outline)이 맡는다 → 기댓값을 «밝은 글자 + 아웃라인 있음» 으로 뒤집는다(결정 274).
             Assert.GreaterOrEqual(UiKit.Luma(ticket.color), UiKit.TextLumaMin, "크림 패널 위 티켓 수도 흰 글자다(T111 ⓑ)");
-            Assert.IsNotNull(ticket.GetComponent<Outline>(), "그 흰 글자에는 검은 아웃라인이 붙어 있어야 읽힌다(T63-outline)");
+            Assert.IsNotNull(ticket.GetComponent<TextOutline8>(), "그 흰 글자에는 검은 아웃라인이 붙어 있어야 읽힌다(T63-outline)");
             _app.Overlay.Close(); yield return Frames(2);
 
             // 22 PvP — 시즌 타이머 36(칸 h2.3) · 티어 줄 40

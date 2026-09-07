@@ -264,7 +264,18 @@ namespace KkomaKnight.Game
         /// 색은 그대로 두었고, <b>α 는 회차 2 에서 1 로 올렸다</b>(<see cref="OutlineAlpha"/> 주석의 셈 · 결정 507) — 두께만으로는 레퍼런스의 «순수 검정» 에 못 간다.
         /// <b>이 상수를 고치면 자(<see cref="TextAudit"/> 의 아웃라인 판정)가 저절로 따라온다</b> — 두께 리터럴을 다른 곳에 새로 적지 말 것(T194 4항 · 그렇게 적힌 줄이 하나 있어 같은 회차에 <see cref="EnsureOutline"/> 로 모았다).
         /// </summary>
-        public const float OutlineRatio = 0.12f, OutlineMinPx = 1.5f, OutlineMaxPx = 12f;
+        /// <summary>
+        /// <b>T204(주인 «메테리얼로 두른 테 느낌이 아님 · 괴상하다»)로 0.12 → 0.07 · 상한 12 → 7.</b>
+        /// <para>
+        /// 까닭은 «얇다/두껍다» 가 아니라 <b>Jua 획 굵기와의 관계</b>다 — Jua 의 최빈 획 굵기가 <b>크기 × 0.115</b> 라
+        /// 0.12 는 테가 획만큼 굵어 <b>ㅇ·ㅂ·8·0 의 속 구멍이 메워진다</b>(등재 실측: 크기 40 에서 구멍이 4.8% 만 남는다).
+        /// 0.07 이면 구멍이 <b>26~32%</b> 살아 글자꼴이 읽히고, 그러면서도 T194 이전의 0.05 보다 <b>1.4배 두껍다</b>
+        /// (T194 가 «얇다» 며 올린 뜻은 지킨다).
+        /// </para>
+        /// ⚠ T194 가 좇던 «레퍼런스 리본 띠 6.6~8.0 프레임px»(비율 0.11~0.13)는 <b>포기한다</b> — 그 띠는 Jua 획보다 굵은
+        /// 글꼴에서 나온 값이라 우리 글꼴로 흉내 내면 속이 메워진다(T204 3항 ⓑ).
+        /// </summary>
+        public const float OutlineRatio = 0.07f, OutlineMinPx = 1.5f, OutlineMaxPx = 7f;
         /// <summary>크기에서 아웃라인 두께(프레임px) — 게이트도 같은 식을 쓴다.</summary>
         public static float OutlineWidth(float size) => Mathf.Clamp(size * OutlineRatio, OutlineMinPx, OutlineMaxPx);
 
@@ -313,15 +324,18 @@ namespace KkomaKnight.Game
             return t;
         }
 
-        public static Outline EnsureOutline(Text t, float size = 0f)
+        public static TextOutline8 EnsureOutline(Text t, float size = 0f)
         {
             if (t == null) return null;
             EnsureBright(t);   // T111 ⓑ — 아웃라인과 글자색은 짝이다(검은 아웃라인 + 밝은 글자) · 입구 다섯 곳이 전부 이 함수를 거친다
             if (size <= 0f) size = t.resizeTextForBestFit ? Mathf.Max(t.resizeTextMaxSize, t.fontSize) : t.fontSize;
-            var ol = Ensure<Outline>(t.gameObject);
+            // T204 — uGUI `Outline`(대각 네 장 · 마름모)에서 `TextOutline8`(여덟 방향 같은 반경)로 바꿨다.
+            // 옛 컴포넌트가 붙어 있던 글자(조각이 달고 온 것 포함)는 여기서 걷어 낸다 — 둘이 겹치면 테가 두 겹이 된다.
+            var old = t.GetComponents<Outline>();
+            for (int i = 0; i < old.Length; i++) UnityEngine.Object.DestroyImmediate(old[i]);
+            var ol = Ensure<TextOutline8>(t.gameObject);
             ol.effectColor = OutlineColor;
-            float d = OutlineWidth(size);
-            ol.effectDistance = new Vector2(d, -d); ol.useGraphicAlpha = true;
+            ol.radius = OutlineWidth(size); ol.useGraphicAlpha = true;
             return ol;
         }
         /// <param name="outline">아무 일도 하지 않는다 — <see cref="Text"/> 의 같은 인자 설명 참조(T63-outline · 결정 227).</param>

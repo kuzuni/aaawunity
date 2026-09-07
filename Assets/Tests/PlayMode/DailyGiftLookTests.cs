@@ -81,19 +81,19 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(rib, "제목 리본");
             var ribTxt = rib.GetComponentInChildren<Text>(true);
             Assert.IsNotNull(ribTxt, "리본 제목 글자");
-            var ol = ribTxt.GetComponent<Outline>();
+            var ol = ribTxt.GetComponent<TextOutline8>();
             Assert.IsNotNull(ol, "리본 제목에도 검은 아웃라인(T63-outline)");
             Assert.AreEqual(UiKit.OutlineColor, ol.effectColor, "아웃라인 색은 공통 규격 그대로");
             float size = ribTxt.resizeTextForBestFit ? Mathf.Max(ribTxt.resizeTextMaxSize, ribTxt.fontSize) : ribTxt.fontSize;
             // 회차 2 — «이 자리만 두껍게» 를 되돌렸다(효과 0.006 · 게다가 OutlineStrict 와 부딪친다 · 결정 483).
             // 그래서 여기서 지키는 것은 «공통 규격 그대로인가» 다 — 어긋나면 TextSizeGateTests 가 빨개지는 자리이기도 하다.
-            Assert.AreEqual(UiKit.OutlineWidth(size), Mathf.Abs(ol.effectDistance.x), 0.26f,
+            Assert.AreEqual(UiKit.OutlineWidth(size), Mathf.Abs(ol.radius), 0.26f,
                             "리본 제목 아웃라인 두께 = 공통 규격(T63-outline · TextAudit.OutlineStrict 가 같은 식으로 잰다)");
             // 다음 회차가 쓸 숫자 — 리본 글자가 화면에서 실제로 몇 px 로 그려지고 아웃라인이 몇 px 인가(캡처는 프레임의 절반 폭이다)
             float lossy = ribTxt.rectTransform.lossyScale.x;
-            Debug.Log($"[T186ⓒ] 리본 제목 크기 {size} · 아웃라인 {Mathf.Abs(ol.effectDistance.x):0.0}px · lossyScale {lossy:0.00} " +
-                      $"→ 화면 {Mathf.Abs(ol.effectDistance.x) * lossy:0.0}px · ⚠ 규격과 «화면» 은 다른 값이다(이 줄이 그 차를 보여 준다 · T194 결정 522) · " +
-                      "레퍼런스 띠를 내는 규격은 프레임 6.6~8.0px = 비율 0.111~0.130(TextOutlineRuleTests)");
+            Debug.Log($"[T186ⓒ] 리본 제목 크기 {size} · 아웃라인 {Mathf.Abs(ol.radius):0.0}px(여덟 방향 같은 반경 · T204) · lossyScale {lossy:0.00} " +
+                      $"→ 화면 {Mathf.Abs(ol.radius) * lossy:0.0}px · ⚠ 규격과 «화면» 은 다른 값이다(이 줄이 그 차를 보여 준다 · T194 결정 522) · " +
+                      "T204 로 비율은 0.07 이다 — 레퍼런스 띠(0.111~0.130)는 Jua 획보다 굵은 글꼴의 값이라 좇지 않는다");
 
             // ⓓ «잠금» 버튼 = 어두운 판 + 흰 글자(알파로 흐리게 하지 않는다) ────
             Button locked = null;

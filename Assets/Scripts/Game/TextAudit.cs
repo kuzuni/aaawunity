@@ -98,8 +98,12 @@ namespace KkomaKnight.Game
         /// </summary>
         static void FillOutline(Row row, Text t)
         {
-            var ols = t.GetComponents<Outline>();
+            // T204 — 테는 이제 `TextOutline8`(여덟 방향 같은 반경)이다. 옛 uGUI `Outline` 이 남아 있으면
+            // 마름모 테가 겹쳐 두 겹이 되므로 «섞여 있다» 를 어긋남으로 센다(EnsureOutline 이 걷어 내지만 자도 본다).
+            var stale = t.GetComponents<Outline>();
+            var ols = t.GetComponents<TextOutline8>();
             row.Outlines = ols.Length;
+            if (stale.Length > 0) { row.OutlineBad = true; row.OutlineWhy = "옛 Outline " + stale.Length + "개(T204)"; return; }
             if (ols.Length == 0) { row.OutlineBad = true; row.OutlineWhy = "없음"; return; }
             if (ols.Length > 1) { row.OutlineBad = true; row.OutlineWhy = ols.Length + "개"; return; }
             var ol = ols[0];
@@ -108,7 +112,7 @@ namespace KkomaKnight.Game
                 Mathf.Abs(c.b - UiKit.OutlineColor.b) > 0.02f || Mathf.Abs(c.a - UiKit.OutlineColor.a) > 0.02f)
             { row.OutlineBad = true; row.OutlineWhy = $"색 {c.r:0.00},{c.g:0.00},{c.b:0.00},{c.a:0.00}"; return; }
             float want = UiKit.OutlineWidth(t.resizeTextForBestFit ? Mathf.Max(t.resizeTextMaxSize, t.fontSize) : t.fontSize);
-            float got = Mathf.Abs(ol.effectDistance.x);
+            float got = Mathf.Abs(ol.radius);
             if (Mathf.Abs(got - want) > 0.26f) { row.OutlineBad = true; row.OutlineWhy = $"두께 {got:0.0}≠{want:0.0}"; }
         }
 

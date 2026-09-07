@@ -498,7 +498,7 @@ namespace KkomaKnight.Tests.Play
                     Assert.AreEqual(3, checks, "완료 줄 ✅ 3(프리팹 Check · 레퍼런스 15)");
                     Assert.IsTrue(HasText(s => s == "적 50마리 처치"), "줄 제목은 우리말");
                     // T78 — 줄 바탕(프리팹 ListFrame_08)이 어두워 제목은 흰 글자 + 외곽선이어야 읽힌다(screens run 148 눈 확인)
-                    { var t0 = UiKit.Find(q0, "Title").GetComponent<Text>(); Assert.IsNotNull(t0, "줄 제목 글자"); Assert.IsNotNull(t0.GetComponent<Outline>(), "줄 제목 외곽선"); Assert.Greater(t0.color.r + t0.color.g + t0.color.b, 2.4f, "줄 제목은 밝은 글자"); }
+                    { var t0 = UiKit.Find(q0, "Title").GetComponent<Text>(); Assert.IsNotNull(t0, "줄 제목 글자"); Assert.IsNotNull(t0.GetComponent<TextOutline8>(), "줄 제목 외곽선"); Assert.Greater(t0.color.r + t0.color.g + t0.color.b, 2.4f, "줄 제목은 밝은 글자"); }
                 }
                 { var bx = (RectTransform)UiKit.Find(_app.Overlay.Root, "QuestBox"); Assert.IsNotNull(bx, "퀘스트 박스"); Assert.AreEqual(Layout.QsBox.X, bx.anchorMin.x * 100f, 0.5f, "퀘스트 박스 x = 표 ⑬"); Assert.AreEqual(1f - Layout.QsBox.Y / 100f, bx.anchorMax.y, 1e-3f, "퀘스트 박스 y = 표 ⑬"); }
                 // T63-lobbypopups — 글자 잘림 0 + 제목/카운터가 본문 40 아래로 안 줄어듦(팝업 4종) · 리본 명판 60 이 안 잘림
@@ -947,7 +947,7 @@ namespace KkomaKnight.Tests.Play
                         Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, TextSize.BestFitMin, "옵션 줄 «" + t.text + "» 가 bestFit 최소(32) 아래로"); Assert.AreEqual(1, gen.lineCount, "옵션 줄 «" + t.text + "» 는 한 줄(문구 줄이기 = GearText.Shorten)");
                         Assert.IsFalse(t.text.Contains(" 이상)"), "잠금 꼬리는 «(등급)» 으로 줄인다: " + t.text);
                         // T84 — 어두운 pill 위 글자는 밝은 색 + 검은 아웃라인이어야 읽힌다(주인 상시 지시 · screens run 148 의 07 눈 확인에서 회색 글자가 안 읽혔다)
-                        Assert.IsNotNull(t.GetComponent<Outline>(), "옵션 줄 «" + t.text + "» 에 검은 아웃라인(T63 0항 «예외 없이»)");
+                        Assert.IsNotNull(t.GetComponent<TextOutline8>(), "옵션 줄 «" + t.text + "» 에 검은 아웃라인(T63 0항 «예외 없이»)");
                         // T177(주인 2026-09-07 «잠긴 옵션 줄 글씨는 #666666»)이 «잠긴» 줄만 일부러 어둡게 만든다 —
                         // 그 자리는 `OwnerDarkTextTag` 를 달고 있으므로 T84 의 «밝아야 한다» 에서 뺀다(안 빼면 주인 지시가 게이트에 막힌다 · 결정 428).
                         // 대신 «표식이 있으면 색이 정말 그 지정색인가» 를 재서 표식이 «아무 어두운 글자나 봐 주는 뒷문» 이 되지 않게 한다.

@@ -1,6 +1,7 @@
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace KkomaKnight.Tests.Play
 {
@@ -34,7 +35,37 @@ namespace KkomaKnight.Tests.Play
         /// </summary>
         const float RefTitleMin = 6.6f, RefTitleMax = 8.0f;
 
+        /// <summary>
+        /// Jua 의 <b>최빈 획 굵기 비율</b> — 등재 세션이 `Assets/Fonts/Jua-Regular.ttf` 로 실측했다(36 → 4px · 40 → 5px · 44 → 5px · 60 → 7px).
+        /// 테가 이 값에 가까워지면 <b>ㅇ·ㅂ·8·0 의 속 구멍이 메워져</b> 글자꼴이 뭉갠다(T204 2항 ⓒ).
+        /// </summary>
+        const float JuaStrokeRatio = 0.115f;
+        /// <summary>T194 이전 값 — 주인이 «얇다» 고 한 자리라 여기보다는 두꺼워야 한다.</summary>
+        const float TooThinRatio = 0.05f;
+
+        /// <summary>
+        /// <b>T204(주인 «메테리얼로 두른 테 느낌이 아님 · 괴상하다») — 판정을 «레퍼런스 띠 두께» 에서 «획 굵기와의 관계» 로 바꿨다.</b>
+        /// <para>
+        /// T194 는 레퍼런스 리본 띠(6.6~8.0 프레임px = 비율 0.111~0.130)를 좇았다. 그런데 그 띠는 <b>획이 더 굵은 글꼴</b>에서 나온 값이라
+        /// Jua 로 흉내 내면 테가 <b>제 획만큼</b> 굵어져 속 구멍이 메워진다(크기 40 에서 구멍이 4.8% 만 남았다 · 그것이 주인이 본 «괴상함» 의 나머지 절반이다).
+        /// 그래서 <b>그 목표는 포기하고</b>(T204 3항 ⓑ) 이 자는 이제 «테가 획보다 얇은가 · 그러면서 옛 0.05 보다는 두꺼운가» 를 지킨다.
+        /// </para>
+        /// 옛 상수 <see cref="RefTitleMin"/>·<see cref="RefTitleMax"/> 는 <b>그 시절 값이 무엇이었는지</b> 를 남기려고 지우지 않았다(로그 한 줄로 견준다).
+        /// </summary>
         [Test]
+        public void OutlineStaysThinnerThanTheStrokeSoCountersSurvive()
+        {
+            Assert.Less(UiKit.OutlineRatio, JuaStrokeRatio,
+                $"테 비율 {UiKit.OutlineRatio:0.000} 이 Jua 획 굵기 {JuaStrokeRatio:0.000} 이상이다 — " +
+                "테가 획만큼 굵으면 ㅇ·ㅂ·8·0 의 속 구멍이 메워져 글자가 뭉갠다(T204 · 주인 «괴상하다»)");
+            Assert.Greater(UiKit.OutlineRatio, TooThinRatio,
+                $"테 비율 {UiKit.OutlineRatio:0.000} 이 T194 이전 값 {TooThinRatio:0.000} 이하다 — 주인이 «얇다» 고 한 자리로 되돌아간다");
+            float title = UiKit.OutlineWidth(TextSize.Title);
+            Debug.Log($"[T204] 제목({TextSize.Title}) 테 {title:0.00}px · 비율 {UiKit.OutlineRatio:0.000}(Jua 획 {JuaStrokeRatio:0.000}) · " +
+                      $"T194 가 좇던 레퍼런스 띠는 {RefTitleMin}~{RefTitleMax}px 이었다(T204 로 포기 — 획보다 굵어진다)");
+        }
+
+        [Test, Ignore("T204 — 이 목표(레퍼런스 리본 띠 6.6~8.0px)는 포기했다. 그 띠는 Jua 보다 획이 굵은 글꼴의 값이라 우리 글꼴에서는 속 구멍을 메운다(T204 3항 ⓑ · 위 OutlineStaysThinnerThanTheStrokeSoCountersSurvive 가 대신 선다).")]
         public void TitleOutlineMatchesReferenceThickness()
         {
             float title = UiKit.OutlineWidth(TextSize.Title);
