@@ -158,6 +158,17 @@ namespace KkomaKnight.Tests.Play
                 for (int i = 0; i < offer.Count && i < 3; i++) G.Taken.Add(offer[i]);
             }
             _app.Overlay.PerkBook(G, null); yield return Frames(2); yield return Shot("05_perks_list"); _app.Overlay.Close(); yield return Frames(1);
+            // ev_devil · ev_angel — T141 6항 «워커가 한 장 찍어 04 와 나란히 눈으로»(판 없이 어둠 위인가).
+            // 레퍼런스 그림이 없는 화면이라 번호 대신 이름으로 남긴다(표가 없어 ui_score 채점 대상이 아니고 눈 비평 전용).
+            {
+                var devilPerk = Perks.OfferDevil(D, G.Taken, rng);
+                G.Pending = new PendingDecision { Kind = PendingKind.Devil, DevilPerk = devilPerk };
+                _app.Overlay.Devil(G, _ => { }); yield return Frames(2); yield return Shot("ev_devil");
+                _app.Overlay.Close(); G.Pending = null; yield return Frames(1);
+                G.Pending = new PendingDecision { Kind = PendingKind.Angel };
+                _app.Overlay.Angel(G, _ => { }); yield return Frames(2); yield return Shot("ev_angel");
+                _app.Overlay.Close(); G.Pending = null; yield return Frames(1);
+            }
             Time.timeScale = 1f; _app.ShowScreen("lobby"); yield return Frames(2);
 
             // 20~26 은 T43 · 11·15~19 는 T44 가 위에서 찍는다 — 이제 «없음» 화면이 없다(_missing 은 03 조우 실패 때만)
