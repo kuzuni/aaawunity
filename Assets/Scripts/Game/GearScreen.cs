@@ -102,7 +102,13 @@ namespace KkomaKnight.Game
                 // 배지(74~101%)와 다음 칸 «Lv. N»(−34~+2%) 은 피치 8.0(틈 40px)에서 잉크가 안 겹친다(UiSmokeTests ② 가 사각형으로 단언)
                 s.Lv = UiKit.Label(s.Root, SlotLv.X, SlotLv.Y, SlotLv.W, SlotLv.H, "Lv. 0", TextSize.Body, Palette.White, TextAnchor.LowerCenter);
                 // 부위 아이콘 — 빈 슬롯에도 «여기는 무슨 자리» 로 흐리게 깔아 둔다(T105 3항 · Refresh 가 장착 여부로 색만 바꾼다)
-                s.PartIcon = UiKit.Icon(s.Root, "PartIcon", GearLook.PartIcon(part)); UiKit.Pct(s.PartIcon.rectTransform, -8, -8, 30, 30);
+                // T176 ⓑ(주인 2026-09-07 11:0X «장착 슬롯 부분이랑 아래에 있는 장비 모양일 때랑 형식이 똑같지가 않네 통일해 줘») —
+                // 인벤 칸과 **같은 조각**(ui.partBadge = 그 칸의 TypeArea 가 달고 있는 다이아 배지)을 **같은 비율**(GearUi.PartBadge)로 세우고
+                // 그 안의 «Icon» 에 부위 그림을 넣는다. 종전에는 배지 없이 아이콘 한 장을 칸 밖(−8%)에 얹어 두 자리의 꼴이 달랐다.
+                var badgeGo = UiKit.Spawn("ui.partBadge", s.Root); badgeGo.name = "PartBadge";
+                UiKit.Pct((RectTransform)badgeGo.transform, GearUi.PartBadge);
+                s.PartIcon = UiKit.SetSprite(badgeGo.transform, "Icon", GearLook.PartIcon(part), Palette.White);
+                if (s.PartIcon != null) s.PartIcon.gameObject.name = "PartIcon";
                 var badge = UiKit.Panel(s.Root, "PlusBadge", "fr.r12", Palette.Yellow); UiKit.Pct(badge.rectTransform, SlotBadge); s.PlusBadge = badge.gameObject;
                 s.Plus = UiKit.Text(badge.transform, "+0", SlotBadgeSize, Palette.Ink, TextAnchor.MiddleCenter, false, false, TextKind.Small); UiKit.Stretch(s.Plus.rectTransform);
                 var dot = UiKit.AlertDot(s.Root, "Alert_Dot_01_Red", new Vector2(1, 1), new Vector2(-6, -6), 44); s.Dot = dot;   // T136 — 점은 헬퍼 한 곳에서만 세운다

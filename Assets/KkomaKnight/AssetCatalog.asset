@@ -984,6 +984,8 @@ MonoBehaviour:
     prefab: {fileID: 2550204177070044198, guid: da41cf218cbb141e5b7ca734c527861b, type: 3}
   - key: ui.equipCell
     prefab: {fileID: 6644578971798763600, guid: 45836c803114749df9e4a0f2c18da8b1, type: 3}
+  - key: ui.partBadge
+    prefab: {fileID: 9157208978545742812, guid: add1e72fd94bd4992a01a480e2559c97, type: 3}
   - key: ui.bossWarn
     prefab: {fileID: 8909184347632126517, guid: eb97ee65757024e4889369822c185468, type: 3}
   - key: ui.card

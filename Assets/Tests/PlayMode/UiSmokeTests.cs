@@ -752,6 +752,8 @@ namespace KkomaKnight.Tests.Play
             var bar = UiKit.Find(gear, "ui.tabBar"); Assert.IsNotNull(bar, "장비 화면 탭 바"); Assert.GreaterOrEqual(bar.childCount, 5, "탭 5");
             var content = UiKit.Find(gear, "Content"); Assert.IsNotNull(content, "인벤 Content");
             Assert.AreEqual(items.Count, CountNamed(content, "gear:"), "인벤 칸 = 장비 수(장착 없음)");
+            // T176 ⓐ(주인 «왼쪽 하단에 N 표시 … 그거 필요 없음 장비 부분») — 칸에 «New» 그림이 없다. 값(GearItem.IsNew)은 그대로 살아 있다(T167 이 쓴다).
+            Assert.AreEqual(0, CountNamed(content, "New"), "인벤 칸에 «N»(NEW) 표시가 남아 있다(T176 ⓐ)");
             Assert.IsTrue(HasText(s => s == "장비"), "제목 «장비»");
             // T37 — 레퍼런스 06_gear.jpg 구도 단언: 상단 재화 바 · 무대(들판·길·나무 · 정사각 캐릭터 호스트) · 슬롯 6 = 표 자리(좌 3 / 우 3 · ±0.5%p) · 스탯 3칸 · 상점/대장간 버튼(스탯 줄 아래 · 대장간 오른쪽 끝) · 인벤 5열 · 탭 바
             {
@@ -1009,6 +1011,18 @@ namespace KkomaKnight.Tests.Play
                         foreach (var k in setIcons) Assert.AreNotEqual(_app.Assets.Sprite(k), pim.sprite, "슬롯 " + i + " 배지에 세트 아이콘(" + k + ")이 남아 있으면 안 된다(T105)");
                         Assert.AreEqual(1f, pim.color.a, 1e-3f, "전부 장착 상태라 또렷하다");
                     }
+                    // T176 ⓑ(주인 «장착 슬롯이랑 인벤 칸의 부위 표시 형식을 통일해 줘») — 슬롯도 인벤 칸과 **같은 배지 조각**을 **같은 비율**로 단다.
+                    for (int i = 0; i < 6; i++)
+                    {
+                        var badge = UiKit.Find(slotGrp.GetChild(i), "PartBadge");
+                        Assert.IsNotNull(badge, "슬롯 " + i + " 부위 배지(T176 ⓑ · 인벤 칸의 TypeArea 와 같은 조각)");
+                        var brt = (RectTransform)badge; var frame2 = (RectTransform)UiKit.Find(slotGrp.GetChild(i), "ItemFrame_01");
+                        float cell2 = Mathf.Min(frame2.rect.width, frame2.rect.height);
+                        Assert.AreEqual(GearUi.PartBadge.W / 100f, brt.rect.width / cell2, 0.03f,
+                            "슬롯 " + i + " 배지 지름 = 칸의 " + GearUi.PartBadge.W + "%(인벤 칸 실측과 같은 비율 · T176 ⓑ)");
+                        Assert.IsNotNull(UiKit.Find(badge, "PartIcon"), "슬롯 " + i + " 배지 안에 부위 아이콘");
+                    }
+
                     // 하나를 빼면 그 칸만 흐려진다
                     var offPart = GearUi.ColLeft[0]; var offUid = S.Eq[offPart]; S.Eq.Remove(offPart);
                     _app.ShowScreen("gear"); yield return Frames(2);

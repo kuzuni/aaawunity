@@ -12,6 +12,14 @@ namespace KkomaKnight.Game
     /// </summary>
     public static class GearUi
     {
+        /// <summary>
+        /// T176 ⓑ — <b>부위 표시 배지</b>의 칸 안 자리(칸 한 변의 %). 인벤 칸 조각(<c>ui.equipCell</c> = 188×188)의 <c>TypeArea</c> 실측을
+        /// «지름 48px = 25.5% · 가운데가 왼쪽에서 31.7px(16.9%) · 위에서 32.5px(17.3%)» 로 옮긴 값이다.
+        /// 장착 슬롯도 <b>같은 조각(<c>ui.partBadge</c>)·같은 비율</b>로 세워 두 자리의 꼴을 맞춘다
+        /// (주인 «장착 슬롯 부분이랑 아래에 있는 장비 모양일 때랑 형식이 똑같지가 않네 통일해 줘»).
+        /// </summary>
+        public static readonly Layout.R PartBadge = new Layout.R(16.9f - 25.5f / 2f, 17.3f - 25.5f / 2f, 25.5f, 25.5f);
+
         /// <summary>장착 슬롯 두 열 — <b>왼쪽 = 무기·목걸이·반지(공격) · 오른쪽 = 투구·갑옷·신발(방어)</b>(T105 · 주인 2026-09-07 지정 · T88 의 역할 묶음과 같다 · 예전 index.html GEAR_COL 은 갑옷↔반지가 반대였다).</summary>
         public static readonly string[] ColLeft = { "weapon", "neck", "glove" }, ColRight = { "helm", "armor", "boot" };
 
@@ -92,7 +100,8 @@ namespace KkomaKnight.Game
             if (type != null) { type.gameObject.SetActive(g != null); if (g != null) UiKit.SetSprite(type, "Icon", GearLook.PartIcon(g.Part), Palette.White); }
             UiKit.Show(cell, "Check", g != null && o.Equipped && o.EquippedMark);
             if (g != null && o.Fusable && o.FusableDot) UiKit.AlertDot(cell, "FuseDot", new Vector2(1, 1), new Vector2(-14, -14), 47);   // T136
-            if (g != null && o.IsNew) { var n = UiKit.AlertDot(cell, "New", new Vector2(0, 0), new Vector2(18, 18), 44); var nt = UiKit.Text(n.transform, "N", 22, Palette.White); UiKit.Stretch(nt.rectTransform); }   // T136
+            // T176 ⓐ(주인 2026-09-07 11:0X «왼쪽 하단에 N 표시 … 그거 필요 없음 장비 부분») — **그림만** 없앤다.
+            // 세이브 값 <see cref="GearItem.IsNew"/> 는 그대로 둔다: 세부 팝업을 열면 «봤다» 로 끄는 흐름(OpenDetail 첫 줄)과 T167(장비 탭 빨간 점)이 그 값을 쓴다.
             if (o.Off) { var cg = UiKit.Ensure<CanvasGroup>(cell.gameObject); cg.alpha = 0.4f; }
             if (onClick != null) UiKit.Clickable(cell, onClick);
             return cell;
