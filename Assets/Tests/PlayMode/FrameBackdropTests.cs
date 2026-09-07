@@ -121,7 +121,7 @@ namespace KkomaKnight.Tests.Play
                 float insideBand = (safe.width - frame.width) / Mathf.Max(1f, safe.width) * 100f;
                 Debug.Log($"[T182ⓑ] 9:19.5 안전영역 안 좌우 띠 {insideBand:0.0}%");
                 Assert.Less(insideBand, 2f, "기준 비율에서는 안전 영역 안 레터박스가 거의 0");
-                // ⓒ 는 기준 비율에서도 잰다 — 넓은 화면 둘에서만 재던 것이 CI #373 의 «마당 가림» 을 놓친 자리다(결정 496)
+                // ⓒ 는 기준 비율에서도 잰다 — 넓은 화면 둘에서만 재던 것이 CI #373 의 «마당 가림» 을 놓친 자리다(결정 498)
                 foreach (var n in new[] { FrameBackdrop.LeftName, FrameBackdrop.RightName, FrameBackdrop.TopName, FrameBackdrop.BottomName })
                 {
                     var b = WorldRect(Band(n));
