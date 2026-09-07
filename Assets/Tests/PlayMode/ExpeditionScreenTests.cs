@@ -110,6 +110,15 @@ namespace KkomaKnight.Tests.Play
             // T146 ⓐ — 레퍼런스 30 에는 공통 제목 리본이 없다(제목은 상자 폭 «명판»). 종전 코드는 리본을 «Title_01» 이라는 프리팹 이름으로 찾아 껐는데
             // UiKit.Spawn 이 이름을 카탈로그 키로 바꿔 놓아 한 번도 안 맞았고, 글자 없는 초록 리본이 그림 띠 위에 떠 있었다(결정 388).
             AssertNoPopupRibbon(ov, "탐험 팝업(30)");
+            // T146 ⓑ — 레퍼런스 30 의 띠에는 기사와 적이 길 위를 걸어간다. 조각(HeroView)이 둘 다 서 있고 발이 같은 높이(길 위)인지 본다.
+            var picRt = (RectTransform)Find(ov, "Picture");
+            var knight = Find(picRt, "Knight"); var foe = Find(picRt, "Foe");
+            Assert.IsNotNull(knight, "그림 띠의 기사(T146 ⓑ)"); Assert.IsNotNull(foe, "그림 띠의 적(T146 ⓑ)");
+            Assert.IsNotNull(knight.GetComponentInChildren<HeroView>(true), "기사는 HeroView 조각으로 세운다(새 그림 0)");
+            Assert.IsNotNull(foe.GetComponentInChildren<HeroView>(true), "적도 HeroView 조각으로 세운다");
+            float KneeY(Transform t) { var c = new Vector3[4]; ((RectTransform)t).GetWorldCorners(c); return picRt.InverseTransformPoint(c[0]).y; }
+            Assert.AreEqual(KneeY(knight), KneeY(foe), picRt.rect.height * 0.06f, "기사와 적의 발이 길 위 같은 높이에 선다(레퍼런스 30)");
+            Assert.Less(((RectTransform)knight).anchorMin.x, ((RectTransform)foe).anchorMin.x, "기사가 왼쪽 · 적이 오른쪽(레퍼런스 30)");
 
             // 쌓인 값이 화면에 «0» 이 아니라 실제 계산값으로 찍힌다
             Expedition.Pending(_app.Data, S, D, LobbyPopups.NowSec(), SaveStore.Today(), out double pg, out double pm);

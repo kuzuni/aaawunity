@@ -199,6 +199,9 @@ namespace KkomaKnight.Game
         /// (`screens` run 257 의 30 PNG 실측 · 결정 388). <see cref="PopupRibbonTag"/> 는 <see cref="UiKit.Popup"/> 이 리본에만 붙이는 표라 이름이 바뀌어도 맞는다.
         /// </para>
         /// </summary>
+        /// <summary>T146 ⓑ 의 적 외형 — 전투의 «곤봉 적»(<c>BattleWorld.EnemySkin</c> 갈래 1)과 **같은 조각 세 개**다(새 그림·새 카탈로그 키 0 · 레퍼런스 30 의 적도 같은 꼴이다).</summary>
+        static CharacterRig.Skin FoeSkin() => new CharacterRig.Skin { Helmet = "cm.meleeB.helmet", Chest = "cm.meleeB.chest", Axe = "cm.meleeB.axe" };
+
         static void HideRibbon(RectTransform box)
         {
             if (box == null) return;
@@ -654,7 +657,14 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>상자 맨 위 풍경 띠(레퍼런스 30) — 전투 맵과 같은 Environment 조각(들판 · 길 · 나무 · 덤불)으로 만든 정지 그림. 새 그림 0.</summary>
-        static RectTransform Picture(Transform parent, Layout.R parentR, Layout.R r)
+        /// <summary>
+        /// T146 ⓑ — 그림 띠에 세우는 두 캐릭터의 자리(띠 안 %)와 적 외형. 레퍼런스 <c>docs/ref/30_expedition.jpg</c>(720×1560) 실측을 띠 사각형(x 32~690 · y 305~565)의 %로 옮긴 값이다:
+        /// 기사 x 38.4~49.8 · y 38.5~86.5 · 적 x 58.2~69.6 · y 51.9~84.6 — 둘의 발이 길(<c>Road</c> 62% 아래) 위 같은 높이에 선다.
+        /// 적 외형은 전투의 «곤봉 적»(<see cref="BattleWorld"/> 의 <c>EnemySkin</c> 갈래 1)과 같은 조각이라 새 그림 0이다.
+        /// </summary>
+        static readonly Layout.R ExKnight = new Layout.R(38.4f, 38.5f, 11.4f, 48.0f), ExFoe = new Layout.R(58.2f, 51.9f, 11.4f, 32.7f);
+
+        static RectTransform Picture(Transform parent, Layout.R parentR, Layout.R r, App app = null)
         {
             var pic = UiKit.Rect(parent, "Picture"); UiKit.Pct(pic, r.Within(parentR));
             pic.gameObject.AddComponent<RectMask2D>();
@@ -663,6 +673,15 @@ namespace KkomaKnight.Game
             var edge = UiKit.Icon(pic, "RoadUp", "env.roadUp"); edge.preserveAspect = false; UiKit.Pct(edge.rectTransform, 0, 57, 100, 8);
             for (int i = 0; i < 3; i++) { var t = UiKit.Icon(pic, "Tree" + i, "env.tree"); UiKit.Pct(t.rectTransform, 6 + i * 34, 12, 16, 46); }
             var bush = UiKit.Icon(pic, "Bush", "env.bush"); UiKit.Pct(bush.rectTransform, 78, 66, 12, 22);
+            // T146 ⓑ — 레퍼런스 30 의 띠에는 기사와 적이 길 위를 걸어간다. 우리 띠는 나무·길뿐이었다(screens run 257 실측).
+            // 조각은 이미 있는 것뿐이다 — 기사는 장착 외형(HeroView.PlayerSkin = 전투·장비 화면과 같은 표), 적은 전투의 «곤봉 적» 외형.
+            if (app != null)
+            {
+                var kh = UiKit.Rect(pic, "Knight"); UiKit.Pct(kh, ExKnight);
+                HeroView.Attach(kh, HeroView.PlayerSkin(app), 256);
+                var fh = UiKit.Rect(pic, "Foe"); UiKit.Pct(fh, ExFoe);
+                HeroView.Attach(fh, FoeSkin(), 256);
+            }
             UiKit.Bordered(pic);
             return pic;
         }
@@ -682,7 +701,7 @@ namespace KkomaKnight.Game
 
             var box = ov.OpenBox("ui.popup", "ui.title.green", "", B, () => ov.Close()); box.name = "ExpeditionBox";
             HideRibbon(box);   // T146 ⓐ — 레퍼런스 30 은 리본이 아니라 상자 폭 명판이다(«Title_01» 로 찾던 종전 줄은 이름이 달라 한 번도 안 맞았다 · 결정 388)
-            var pic = Picture(box, B, Layout.ExPic);
+            var pic = Picture(box, B, Layout.ExPic, app);   // T146 ⓑ — app 을 주면 띠에 기사·적이 선다
             var plate = Plate(box, B, Layout.ExPlate, "탐험 보상");
             var info = UiKit.Icon(box, "InfoBtn", "pi.info", Palette.White); UiKit.Pct(info.rectTransform, Layout.ExInfoBtn.Within(B));
             var subR = Layout.ExSub.Within(B);
