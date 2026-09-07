@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using KkomaKnight.Core;
 using NUnit.Framework;
@@ -140,6 +141,73 @@ namespace KkomaKnight.Tests
             Assert.IsFalse(DungeonTickets.CanAd(back, d, "hell", "2026-09-06"), "오늘 쓴 광고 횟수도 살아남는다");
             Assert.IsFalse(DungeonTickets.GemLeft(back, d, "expedition", "2026-09-06"), "오늘 쓴 다이아 횟수도 살아남는다");
             Assert.AreEqual(450, back.Gem, 1e-9, "다이아 500 − 50");
+        }
+
+        // ───────────────────────── T183 1단계 — 던전 «판 규칙»(run) 표 ─────────────────────────
+
+        const string RunJson = @"{
+          ""dailyRefill"": 2, ""gemCost"": 50, ""adPerDay"": 1, ""gemPerDay"": 1,
+          ""dungeons"": [
+            { ""key"": ""hell"", ""first"": { ""petEgg"": 11 }, ""clear"": { ""petEgg"": 5 }, ""sweep"": { ""petEgg"": 5 },
+              ""run"": { ""startPerks"": 0, ""startLevel"": 1, ""minPerkGrade"": 2 } },
+            { ""key"": ""expedition"", ""first"": { ""gold"": 5800 }, ""clear"": { ""gold"": 3500 }, ""sweep"": { ""gold"": 3500 },
+              ""run"": { ""startPerks"": 5, ""startLevel"": 5, ""minPerkGrade"": 0 } }
+          ]
+        }";
+
+        /// <summary>T183 — 판 규칙은 표에서 온다(코드에 5·2 를 안 박는다) · «run» 이 없으면 일반 전투와 같은 기본값.</summary>
+        [Test]
+        public void RunRule_ComesFromTheTableAndDefaultsToAPlainRun()
+        {
+            var d = DungeonData.Parse(RunJson);
+            var hell = d.Of("hell"); var exp = d.Of("expedition");
+            Assert.That(hell.Run.StartPerks, Is.EqualTo(0), "지옥의 문: 시작 특전 없음(주인)");
+            Assert.That(hell.Run.StartLevel, Is.EqualTo(1), "지옥의 문: 레벨 1 로 시작");
+            Assert.That(hell.Run.MinPerkGrade, Is.EqualTo(2), "지옥의 문: 맨 위 등급만(주인 «전설·신화만»)");
+            Assert.That(hell.Run.IsPlain, Is.False, "등급 하한이 있으면 «일반 판» 이 아니다");
+            Assert.That(exp.Run.StartPerks, Is.EqualTo(5), "원정: 시작 특전 5개(주인)");
+            Assert.That(exp.Run.StartLevel, Is.EqualTo(5), "원정: 레벨 5 로 시작(주인)");
+            Assert.That(exp.Run.MinPerkGrade, Is.EqualTo(0), "원정: 일반 특전도 뜬다(주인)");
+
+            // «run» 이 아예 없는 표(이 파일 위쪽 Json)는 기본값 = 일반 챕터 전투와 똑같은 판이다.
+            var plain = DungeonData.Parse(Json).Of("hell");
+            Assert.That(plain.Run.IsPlain, Is.True, "run 이 없으면 일반 판(시작 특전 0 · 레벨 1 · 등급 제한 없음)");
+            Assert.That(plain.Run.StartLevel, Is.EqualTo(1));
+        }
+
+        /// <summary>T183 — 등급 하한이 있으면 그 아래 등급은 안 뜨고, 하한이 0 이면 지금과 한 치도 안 다르다.</summary>
+        [Test]
+        public void PerkOffer_MinGradeKeepsTheLowGradesOutAndZeroChangesNothing()
+        {
+            var data = TestData.Load();
+            // ⓐ 하한 2 = 맨 위 등급만
+            {
+                var rng = new Mulberry32(11); var taken = new List<PerkDef>();
+                for (int i = 0; i < 60; i++)
+                    foreach (var p in Perks.Offer(data, taken, false, rng, 2))
+                        Assert.That(p.Grade, Is.EqualTo(2), "하한 2 면 맨 위 등급만 뜬다(T183 · 지옥의 문)");
+            }
+            // ⓑ 하한 0 = 종전과 같은 굴림(같은 시드·같은 taken 이면 결과가 글자까지 같다)
+            {
+                var a = new Mulberry32(7); var b = new Mulberry32(7);
+                var ta = new List<PerkDef>(); var tb = new List<PerkDef>();
+                for (int i = 0; i < 40; i++)
+                {
+                    var oa = Perks.Offer(data, ta, false, a);
+                    var ob = Perks.Offer(data, tb, false, b, 0);
+                    Assert.That(ob.Count, Is.EqualTo(oa.Count), "하한 0 은 굴림을 안 바꾼다");
+                    for (int k = 0; k < oa.Count; k++) Assert.That(ob[k].Id, Is.EqualTo(oa[k].Id), "하한 0 은 뽑히는 특전까지 같다");
+                    foreach (var p in oa) ta.Add(p);
+                    foreach (var p in ob) tb.Add(p);
+                }
+            }
+            // ⓒ 하한 위 등급을 다 가져갔으면 제한을 풀어 «못 고르는 판» 이 안 된다
+            {
+                var rng = new Mulberry32(3); var taken = new List<PerkDef>();
+                foreach (var p in data.Perks.Perks) if (p.Grade == 2) taken.Add(p);
+                var o = Perks.Offer(data, taken, false, rng, 2);
+                Assert.That(o.Count, Is.GreaterThan(0), "맨 위 등급이 동나면 아래 등급으로라도 준다(막힌 판 방지)");
+            }
         }
     }
 }

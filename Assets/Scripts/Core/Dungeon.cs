@@ -29,9 +29,26 @@ namespace KkomaKnight.Core
             public Reward Clear = new Reward();
             /// <summary>소탕(클리어한 층만 가능) 보상.</summary>
             public Reward Sweep = new Reward();
+            /// <summary>이 던전으로 «실제 도전» 할 때의 판 규칙(T183 · 주인 2026-09-07 12:0X) — 표는 <c>dungeon.json</c> 의 <c>run</c> 이고 코드에 숫자를 안 박는다.</summary>
+            public RunRule Run = new RunRule();
         }
 
         /// <summary>하루가 바뀌면 <b>이 수 미만일 때만</b> 이 수로 채운다(주인 «2개 미만일 시에 2개로» — 더하지 않는다).</summary>
+        /// <summary>
+        /// 던전 판 규칙(T183) — 기본값은 <b>일반 챕터 전투와 똑같다</b>(시작 특전 0 · 레벨 1 · 등급 제한 없음).
+        /// 그래서 이 표를 안 주면 엔진이 지금과 한 치도 다르게 안 돈다(시드 골든이 그대로인 근거).
+        /// </summary>
+        public sealed class RunRule
+        {
+            /// <summary>판을 시작하자마자 자동으로 집어 주는 특전 수(원정 5 · 지옥의 문 0).</summary>
+            public int StartPerks;
+            /// <summary>시작 레벨(원정 5 · 지옥의 문 1) — 다음 렙업 필요 경험치는 엔진이 <c>ExpNeed(Level)</c> 로 저절로 이 레벨 기준이 된다.</summary>
+            public int StartLevel = 1;
+            /// <summary>굴릴 수 있는 특전 등급의 <b>하한</b>(0 = 제한 없음 · 2 = 맨 위 등급만 = 주인의 «전설·신화만»).</summary>
+            public int MinPerkGrade;
+            /// <summary>기본값 그대로인가(= 일반 전투와 같은 판) — 게이트·분기가 이 하나만 본다.</summary>
+            public bool IsPlain => StartPerks == 0 && StartLevel <= 1 && MinPerkGrade <= 0;
+        }
         public int DailyRefill = 2;
         /// <summary>티켓 1개를 사는 다이아 값.</summary>
         public double GemCost = 50;
@@ -60,7 +77,7 @@ namespace KkomaKnight.Core
             {
                 var key = e["key"].Str("");
                 if (string.IsNullOrEmpty(key)) throw new FormatException("dungeon.json: dungeons[].key 가 비었다");
-                d.Dungeons.Add(new Entry { Key = key, First = Rew(e["first"]), Clear = Rew(e["clear"]), Sweep = Rew(e["sweep"]) });
+                d.Dungeons.Add(new Entry { Key = key, First = Rew(e["first"]), Clear = Rew(e["clear"]), Sweep = Rew(e["sweep"]), Run = Rule(e["run"], key) });
             }
             if (d.Dungeons.Count == 0) throw new FormatException("dungeon.json: dungeons 가 비어 있다");
             if (d.DailyRefill < 0) throw new FormatException("dungeon.json: dailyRefill 은 0 이상이어야 한다");
@@ -69,6 +86,16 @@ namespace KkomaKnight.Core
             return d;
         }
         static Reward Rew(JNode j) => new Reward { PetEgg = j["petEgg"].Num(), Gold = j["gold"].Num() };
+        /// <summary>«run» 블록 → <see cref="RunRule"/>(없으면 기본값 = 일반 전투와 같은 판 · T183).</summary>
+        static RunRule Rule(JNode j, string key)
+        {
+            var r = new RunRule { StartPerks = (int)j["startPerks"].Num(), MinPerkGrade = (int)j["minPerkGrade"].Num() };
+            int lv = (int)j["startLevel"].Num();
+            r.StartLevel = lv > 0 ? lv : 1;
+            if (r.StartPerks < 0) throw new FormatException("dungeon.json: " + key + ".run.startPerks 는 0 이상이어야 한다");
+            if (r.MinPerkGrade < 0) throw new FormatException("dungeon.json: " + key + ".run.minPerkGrade 는 0 이상이어야 한다");
+            return r;
+        }
     }
 
     /// <summary>

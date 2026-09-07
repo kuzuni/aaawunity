@@ -9,16 +9,43 @@
     {
       "key": "hell",
       "_note": "지옥의 문 — 주인 «펫알 첫 클리어에 6개 · 첫 클리어 아닌 거는 펫알 5 · 골드 1000 · 첫 클리어 시 총 펫알 11 + 골드 1000 · 소탕은 클리어했던 것만 가능하니 펫알 5 · 골드 1000»",
-      "first": { "petEgg": 11, "gold": 1000 },
-      "clear": { "petEgg": 5, "gold": 1000 },
-      "sweep": { "petEgg": 5, "gold": 1000 }
+      "first": {
+        "petEgg": 11,
+        "gold": 1000
+      },
+      "clear": {
+        "petEgg": 5,
+        "gold": 1000
+      },
+      "sweep": {
+        "petEgg": 5,
+        "gold": 1000
+      },
+      "run": {
+        "_note": "T183 — 주인 «지옥의 문 = 게임이랑 난이도 같음 · 전설/신화 특전만 · 시작 특전 없음». 우리 특전 등급은 일반(0)·희귀(1)·전설(2) 셋뿐이라 «전설·신화» = 맨 위 등급(2)만으로 읽는다(결정 기록).",
+        "startPerks": 0,
+        "startLevel": 1,
+        "minPerkGrade": 2
+      }
     },
     {
       "key": "expedition",
       "_note": "원정 — 주인 «첫 클리어 골드 5800 · 클리어 골드 3500»(소탕도 클리어와 같은 값)",
-      "first": { "gold": 5800 },
-      "clear": { "gold": 3500 },
-      "sweep": { "gold": 3500 }
+      "first": {
+        "gold": 5800
+      },
+      "clear": {
+        "gold": 3500
+      },
+      "sweep": {
+        "gold": 3500
+      },
+      "run": {
+        "_note": "T183 — 주인 «원정은 시작부터 특전 5개 · 레벨 5 로 시작(다음 렙업 경험치도 레벨 5 기준) · 일반도 뜸». 등급 제한 없음(minPerkGrade 0).",
+        "startPerks": 5,
+        "startLevel": 5,
+        "minPerkGrade": 0
+      }
     }
   ]
 }

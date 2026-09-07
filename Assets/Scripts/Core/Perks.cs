@@ -70,7 +70,7 @@ namespace KkomaKnight.Core
         /// sim.js `offerPerks(taken, noble)` — 등급 1회 굴림(빈 등급 가중치 0 · 귀족의 눈은 일반 제외) → 그 등급에서 최대 3장(중복 없음).
         /// 난수 소비: 등급 1회 + 카드 수만큼.
         /// </summary>
-        public static List<PerkDef> Offer(GameData D, IList<PerkDef> taken, bool noble, IRng rng)
+        public static List<PerkDef> Offer(GameData D, IList<PerkDef> taken, bool noble, IRng rng, int minGrade = 0)
         {
             var C = D.Perks;
             var cand = new List<PerkDef>();
@@ -80,6 +80,15 @@ namespace KkomaKnight.Core
             var w = new double[3];
             for (int g = 0; g < 3; g++) { bool any = false; foreach (var p in cand) if (p.Grade == g) { any = true; break; } w[g] = any ? C.GradeRate[g] : 0; }
             if (noble && (w[1] > 0 || w[2] > 0)) w[0] = 0;
+            // T183 — 던전 판의 «등급 하한»(지옥의 문 = 맨 위 등급만 = 주인 «전설·신화만»). 기본값 0 이면 이 줄은 아무것도 안 한다
+            // → 일반 챕터 전투는 한 치도 안 바뀐다(시드 골든이 그대로인 근거). 귀족의 눈이 일반을 0 으로 만드는 것과 같은 자리·같은 문법이다.
+            // 하한 위에 굴릴 것이 하나도 없으면(그 등급 특전을 다 가져갔다) 제한을 풀어 «못 고르는 판» 이 되지 않게 한다.
+            if (minGrade > 0)
+            {
+                bool anyAbove = false;
+                for (int g = minGrade; g < 3; g++) if (g < 3 && w[g] > 0) { anyAbove = true; break; }
+                if (anyAbove) for (int g = 0; g < minGrade && g < 3; g++) w[g] = 0;
+            }
             double tot = w[0] + w[1] + w[2];
             double r = rng.Next() * tot; int gg = 0;
             for (gg = 0; gg < 3; gg++) { if (r < w[gg]) break; r -= w[gg]; }
