@@ -1268,7 +1268,9 @@
 4. 테스트: PlayMode — 21 팝업에 빨간 «DecoLine» 이 **꺼져 있음** · `Pic` 의 위 y = `DdHead` 아래 y(오차 0.1%p) · 글자 잘림 0 · `BorderGateTests` 21 구간 회귀 0.
 5. 게이트 + PROGRESS T102 행 + 완료 기록(확인 = CI + `screens` 21 PNG 확대: 빨간 선 없음 · 머리 띠와 그림 사이 빈틈 없음).
 
-### T103 — 아이템 칸의 **정본 = `Character_Hero_Item_Detail_03` 의 `ItemFrame_01_Normal_Red`** · 등급은 **색 변형만** 교체 (주인 2026-09-07 · 전 화면 · T69 7항 확정) — **🔄 코드 push(`175c82e2` · sess-2041-14225 · 워커 C · 3항은 **기본값 ⓐ** 로 정했다: 조각 링 그대로 + 아이템 칸은 T69 감사 면제 · 결정 312 · 로컬 게이트 전부 초록)**
+### T103 — 아이템 칸의 **정본 = `Character_Hero_Item_Detail_03` 의 `ItemFrame_01_Normal_Red`** · 등급은 **색 변형만** 교체 (주인 2026-09-07 · 전 화면 · T69 7항 확정) — **🔄 코드 push(`175c82e2` · sess-2041-14225 · 워커 C · 3항은 **기본값 ⓐ** 로 정했다: 조각 링 그대로 + 아이템 칸은 T69 감사 면제 · 결정 312 · 로컬 게이트 전부 초록) · CI 확인 끝(#237 실측) · 남은 것 = `screens` 눈 확인뿐**
+
+> **✅ 게이트 확인 끝(01:4X UTC · 워커 C · sess-2041-14225)** — CI **[#237](https://github.com/kuzuni/aaawunity/actions/runs/34072977754)**(`21cbe524` · 내 `c2c42e1c` 가 든 첫 완주 런) 결과 XML 실측: `BorderGateTests.BattleBarsHaveBordersAndCellTagsAreAudited` **Passed**(결정 325 로 고친 «인벤 첫 칸의 등급 조각» 단언 포함) · 같은 런 로그의 «[BorderGate] 행·카드·칸 이름표 141 · 테두리 없음 **0**» 이고 표의 strict 화면 **23 곳 전부 «없음 0»** 이라 아이템 칸 면제(3항 ⓐ)가 다른 화면의 테두리 게이트를 낮추지 않았다. 그 런의 빨강 둘은 **내 것이 아니다**(`UiSmokeTests.ShopBoxesAndChestOpenPopup` = T95 · 워커 F 가 `1ab95236` 로 고쳐 #238 확인 중 · `UiTextureTests.SafeAreaHoldsTheUiAndTheFrameCoversTheNotch` = 같은 런의 T122 커밋이 만든 것 · 워커 B 몫). **남은 것 = `screens` 06·07·08·13 PNG 대조** — 지금 `screens` 는 run **218**(`1f3a2158`)이고 내 `175c82e2` 가 그 트리에 **없다**(유니티 잡이 계속 빨개 screens step 이 skipped) → 유니티 잡이 초록이 되는 첫 런까지 lock 을 유지하고 타임스탬프만 갱신한다.
 
 > 주인 원문(2026-09-07 06:4X): «장비들 슬롯 보더랑 뭐 배치, 글로우 뭐 아이템 아이콘 있고 그런 거 — `Character_Hero_Item_Detail_03` 이 프리팹에 **`ItemFrame_01_Normal_Red` 이 부분 기준**으로 해 달라 해. **여기서 색깔만 바뀌는 식이면 딱 맞는 거임.**»
 
