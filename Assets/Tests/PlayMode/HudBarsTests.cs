@@ -84,7 +84,7 @@ namespace KkomaKnight.Tests.Play
             // 왜 = 레퍼런스 02 는 숫자 잉크가 바 높이의 0.50 인데 우리는 Aux 하한에 끌려 올라가 0.82 였고, 그래서 숫자가 단을 덮어 채움색이 안 보였다(결정 361).
             Assert.AreEqual(BattleWorld.FootFontSize, W.PlayerHpText.fontSize, "발밑 숫자 크기 = 바 높이에서 잰 값(Aux 하한 아님)");
             Assert.Less(W.PlayerHpText.fontSize, TextSize.Aux, "발밑 숫자는 보조 하한보다 작다 — 이 자리만의 T63 예외(결정 361)");
-            Assert.GreaterOrEqual(W.PlayerHpText.fontSize, 26, "그래도 배지급 하한(BattleWorld.MinFootFont 26) 아래로는 안 내려간다");
+            Assert.GreaterOrEqual(W.PlayerHpText.fontSize, BattleWorld.MinFootFont, "그래도 하한(BattleWorld.MinFootFont) 아래로는 안 내려간다 — 숫자를 박지 않는다(결정 426)");
             Assert.LessOrEqual(W.PlayerHpText.fontSize, UiKit.FrameH * Layout.FootBarH / 100f * 0.8f, "발밑 숫자 ≤ 단 높이 × 0.8 — 넘으면 숫자가 단을 덮어 빨강·파랑 채움이 안 보인다(결정 361)");
             // 화면에서 가장 작은 글자라 Bold 면 획이 서로 붙어 흰 덩어리가 된다(결정 449 · screens run 331 실측: 레퍼런스와 글자 크기는 같은데 흰 픽셀이 0.12 대 0.38)
             Assert.AreEqual(FontStyle.Normal, W.PlayerHpText.fontStyle, "발밑 숫자는 Bold 가 아니다(T125 회차 4 · 결정 449)");
