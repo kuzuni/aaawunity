@@ -184,8 +184,10 @@ namespace KkomaKnight.Tests.Play
             { var picRt = UiKit.Find(ov, "Pic") as RectTransform; Assert.IsNotNull(picRt, "그림 띠"); AtY(picRt, Layout.DdPic.Within(Layout.DdBox), "그림 띠"); }
             Assert.AreEqual(4, CountNamed(ov, "RewardCell:"), "보상 칸 4"); Assert.IsNotNull(UiKit.Find(ov, "FloorCircle"), "층수 원");
             AssertNoHighlights("21_dungeon_detail");   // T164
-            // T150 ⓐ — 보상 칸은 «가운데로 모인다»: 묶음의 좌우 여백이 같고 칸 사이 틈이 칸 폭의 30% 를 안 넘는다.
-            // 예전(space-between)으로 되돌아가면 칸이 둘인 원정에서 틈이 칸 폭의 3배까지 벌어져 바로 빨개진다.
+            // T214 — 여기(21 · 넉 장)는 «꽉 채운다»: 묶음이 보상 줄의 좌우 끝에 닿는다.
+            // 레퍼런스 21 실측(720폭 그림)이 칸 ≈78px · 틈 ≈28px 로 줄을 그대로 쓰고, §5 도 그 폭(w55.6)을 잰다 —
+            // 고정 틈(칸 폭의 12%)으로 모으면 48.1%(−7.5%p)로 좁아져 0점이었다.
+            // ⚠ T150 ⓐ(«칸 둘이 양 끝으로 벌어진다»)의 자는 없애지 않고 **그 병이 실제로 나는 자리**(카드 1 = 칸 둘)로 옮겼다 — 아래 블록.
             {
                 var cellsRow = UiKit.Find(ov, "RewardCells") as RectTransform; Assert.IsNotNull(cellsRow, "보상 칸 줄");
                 var first = UiKit.Find(ov, "RewardCell:0") as RectTransform; var last = UiKit.Find(ov, "RewardCell:3") as RectTransform;
@@ -196,7 +198,19 @@ namespace KkomaKnight.Tests.Play
                 var sc = new Vector3[4]; second.GetWorldCorners(sc);
                 float rowW = rc[2].x - rc[0].x, cellW = fc[2].x - fc[0].x;
                 Assert.AreEqual(fc[0].x - rc[0].x, rc[2].x - lc[2].x, rowW * 0.005f, "보상 칸 묶음의 좌우 여백이 같다(가운데 · T150 ⓐ)");
-                Assert.LessOrEqual(sc[0].x - fc[2].x, cellW * 0.30f, "칸 사이 틈 ≤ 칸 폭의 30%(T150 ⓐ)");
+                Assert.AreEqual(rc[0].x, fc[0].x, rowW * 0.01f, "보상 칸 넉 장이 줄 왼쪽 끝에서 시작한다(T214 · 레퍼런스 21)");
+                Assert.AreEqual(rc[2].x, lc[2].x, rowW * 0.01f, "보상 칸 넉 장이 줄 오른쪽 끝에서 끝난다(T214 · 레퍼런스 21)");
+                Assert.LessOrEqual(sc[0].x - fc[2].x, cellW * 0.45f, "칸 사이 틈 ≤ 칸 폭의 45%(레퍼런스 21 실측 36% + 여유)");
+            }
+            // T150 ⓐ 를 지키는 자 — 병이 나는 곳은 «칸이 둘» 인 줄이다(주인 «보상 양쪽 끝에 있더라»).
+            // 카드 1(지옥의 문)의 보상은 둘이라 space-between 으로 되돌아가면 틈이 칸 폭의 3배까지 벌어진다.
+            {
+                var row2 = UiKit.Find(hell, "Rewards") as RectTransform; Assert.IsNotNull(row2, "카드 1 보상 줄");
+                var a = UiKit.Find(row2, "Cell:0") as RectTransform; var b = UiKit.Find(row2, "Cell:1") as RectTransform;
+                Assert.IsNotNull(a, "카드 1 보상 칸 0"); Assert.IsNotNull(b, "카드 1 보상 칸 1");
+                var ac = new Vector3[4]; a.GetWorldCorners(ac); var bc = new Vector3[4]; b.GetWorldCorners(bc);
+                float cw = ac[2].x - ac[0].x;
+                Assert.LessOrEqual(bc[0].x - ac[2].x, cw * 0.30f, "칸 둘은 붙어서 가운데에 모인다 — 틈 ≤ 칸 폭의 30%(T150 ⓐ)");
             }
             // T150 ⓒ — 제목 띠는 좌·상·우 1px 안쪽(주인 인스펙터 offset L1 T1 R1 B0).
             {

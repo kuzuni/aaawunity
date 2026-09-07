@@ -19,6 +19,11 @@ namespace KkomaKnight.Game
         /// (주인 «장착 슬롯 부분이랑 아래에 있는 장비 모양일 때랑 형식이 똑같지가 않네 통일해 줘»).
         /// </summary>
         public static readonly Layout.R PartBadge = new Layout.R(16.9f - 25.5f / 2f, 17.3f - 25.5f / 2f, 25.5f, 25.5f);
+        /// <summary>
+        /// 등급 탭(<see cref="Layout.GdBadge"/>)의 <b>세로</b>에만 더하는 여유(px · T214) — 리본 글자가 제목 60 이라 칸이 <see cref="TextSize.BoxHeight"/>(84px) 는 돼야 하는데
+        /// 표 높이 2.3%(53.8px)로는 못 담는다(<c>UiKit.RibbonFit</c> 이 공통 팝업 리본에 거는 규칙과 같다 · T75 4항). <b>가로에는 아무것도 안 더한다</b> — 폭은 표 22.0% 그대로다.
+        /// </summary>
+        public const float BadgeTitlePadPx = 36f;
 
         /// <summary>장착 슬롯 두 열 — <b>왼쪽 = 무기·목걸이·반지(공격) · 오른쪽 = 투구·갑옷·신발(방어)</b>(T105 · 주인 2026-09-07 지정 · T88 의 역할 묶음과 같다 · 예전 index.html GEAR_COL 은 갑옷↔반지가 반대였다).</summary>
         public static readonly string[] ColLeft = { "weapon", "neck", "glove" }, ColRight = { "helm", "armor", "boot" };
@@ -307,7 +312,10 @@ namespace KkomaKnight.Game
             var ov = app.Overlay; var B = Layout.GdBox;
             string bk = BadgeKey(colorName);
             var box = ov.OpenBox("ui.popup", bk, badge, B, () => ov.Close());
-            var rib = UiKit.Find(box, bk); if (rib != null) { var rr = (RectTransform)rib; rr.sizeDelta = UiKit.PxSize(Layout.GdBadge) + new Vector2(70, 36); rr.anchoredPosition = new Vector2(0, 6); Overlay.FitRibbonText(rr); }   // 등급 탭 = 표 배지 크기(글자 여유만) · 글자 칸은 제목 60 한 줄(84px) 아래로 안 내려간다(T75 4항)
+            // 등급 탭 = 표 ④ 배지 크기. **가로는 표 그대로**(T214 · 예전에는 +70px 를 더해 폭이 22.0 → 28.5%(+6.5%p)로 벌어져 §5 에서 0점이었다 · 결정 96 이 «22×2.3» 이라고 적어 둔 자리다).
+            // **세로만 +36px 를 남긴다** — 리본 글자는 제목 60 이고 그 칸은 84px 이 필요한데(<see cref="TextSize.BoxHeight"/> · T75 4항 · <c>UiKit.RibbonFit</c> 이 공통 팝업에 거는 것과 같은 규칙)
+            // 표 h 2.3%(53.8px)로는 못 담는다. 세로 차 +1.5%p·자리 −1.7%p 는 §5 판정 ±3%p 안이라 이 한 줄로 행이 0 → 1 점이 된다.
+            var rib = UiKit.Find(box, bk); if (rib != null) { var rr = (RectTransform)rib; rr.sizeDelta = UiKit.PxSize(Layout.GdBadge) + new Vector2(0, BadgeTitlePadPx); rr.anchoredPosition = new Vector2(0, 6); Overlay.FitRibbonText(rr); }
             var slot = UiKit.Rect(box, "IconSlot"); UiKit.Pct(slot, Layout.GdIcon.Within(B));
             if (g != null) { var cell = Cell(slot, app.Data, g, new CellOpts(), null); UiKit.Stretch(cell); }
             else

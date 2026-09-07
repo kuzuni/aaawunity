@@ -366,6 +366,12 @@ namespace KkomaKnight.Core
         public const float AcRowPitch = 8.2f;
         public static readonly R AcRowBtn = new R(61.1f, 32.4f, 29.9f, 5.4f);
         public static readonly R AcRefresh = new R(33.3f, 72.8f, 33.4f, 6.0f);
+        /// <summary>
+        /// ⑯ 의 «탭하여 닫기» 줄(T214) — 공통 <see cref="BookClose"/>(91.5)보다 <b>4.4%p 아래</b>다. 레퍼런스는 화면마다 이 줄이 다르고
+        /// (④ 91.5 · ⑮ 94.4 · ⑯ 95.9) 공통값 하나로는 ⑯ 이 판정 ±3%p 를 넘어 0.5점이었다. 높이는 공통과 같은 2.4(본문 40 의 줄 높이 56px · T63-settings).
+        /// <b>여기만 따로 두는 까닭</b> = <see cref="BookClose"/> 를 옮기면 ④(표 91.5 · 지금 정확히 맞는다)가 대신 어긋난다.
+        /// </summary>
+        public static readonly R AcClose = new R(30.0f, 95.9f, 40.0f, 2.4f);
 
         // ⑰ 아레나 순위 보상 팝업 — docs/ref/25_arena_rank_reward.jpg (T43)
         public static readonly R RrBox = new R(4.7f, 20.6f, 90.6f, 58.9f);

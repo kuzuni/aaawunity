@@ -936,6 +936,15 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNull(UiKit.Find(ovr, "ui.itemDetail"), "세부 팝업은 프리팹 통째가 아니다(T38)");
                 var bx = (RectTransform)UiKit.Find(ovr, "ui.popup"); Assert.IsNotNull(bx, "세부 패널(ui.popup)");
                 Assert.AreEqual(Layout.GdBox.X, bx.anchorMin.x * 100f, 0.5f, "패널 x = 표 ④"); Assert.AreEqual(1f - Layout.GdBox.Y / 100f, bx.anchorMax.y, 1e-3f, "패널 y = 표 ④"); Assert.AreEqual(Layout.GdBox.H, (bx.anchorMax.y - bx.anchorMin.y) * 100f, 0.5f, "패널 높이 = 표 ④");
+                // T214 — 등급 탭의 **가로는 표 ④ 그대로**(예전에는 +70px 이 붙어 22.0 → 28.5% 였고 §5 에서 0점이었다).
+                // 세로만 여유(BadgeTitlePadPx)가 붙는다 — 리본 글자가 제목 60 이라 칸이 84px 은 돼야 한다(T75 4항).
+                {
+                    var rib = bx.GetComponentInChildren<PopupRibbonTag>(true); Assert.IsNotNull(rib, "등급 탭(공통 리본)");
+                    var rr = (RectTransform)rib.transform;
+                    Assert.AreEqual(UiKit.FrameW * Layout.GdBadge.W / 100f, rr.sizeDelta.x, 1f, "등급 탭 폭 = 표 ④ 22.0%(T214 · 가로에는 아무것도 안 더한다)");
+                    Assert.AreEqual(UiKit.FrameH * Layout.GdBadge.H / 100f + GearUi.BadgeTitlePadPx, rr.sizeDelta.y, 1f, "등급 탭 높이 = 표 ④ + 제목 여유(T214)");
+                    Assert.GreaterOrEqual(rr.sizeDelta.y, TextSize.BoxHeight(TextSize.Title), "등급 탭은 제목 60 한 줄(84px)이 들어간다(T75 4항)");
+                }
                 Assert.IsNotNull(UiKit.Find(bx, "IconSlot"), "아이콘 칸"); Assert.IsNotNull(UiKit.Find(bx, "gear:" + g0.Uid), "아이콘 칸 = 장비 칸(Cell)");
                 Assert.IsNotNull(UiKit.Find(bx, "Name"), "이름줄"); Assert.IsNotNull(UiKit.Find(bx, "Pill1"), "pill «슬롯 Lv»"); Assert.IsNotNull(UiKit.Find(bx, "Pill2"), "pill «부위»");
                 Assert.IsTrue(HasText(s => s.StartsWith("슬롯 Lv. ")), "메타 pill 글자"); Assert.IsTrue(HasText(s => s == GearUi.PartName(D, g0.Part)), "부위 pill");

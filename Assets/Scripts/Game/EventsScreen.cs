@@ -419,7 +419,9 @@ namespace KkomaKnight.Game
             // T99 4항 — 보상 칸은 표(dungeon.json)가 만든다: «첫 클리어 총액» 칸들(빨간 «최초» 배지 · T123) + «이후 클리어» 칸들.
             // 지옥의 문 = 펫알 11 · 골드 1,000(첫) + 펫알 5 · 골드 1,000 = 네 칸이라 레퍼런스 21(초록 프레임 4 · 앞 두 칸에 FIRST 배지)과 같은 꼴이고 표 ⑪ 도 그대로다.
             var rewardDefs = RewardCells(key, d.rewards);
-            var cellRts = IconRow(cells, Layout.DdRewardCells, Icons(rewardDefs), "ui.itemFrame.green", "RewardCell:", true);
+            // T214 — 이 줄만 «꽉 채운다»(fill): 레퍼런스 21 은 넉 장이 보상 상자 폭을 그대로 쓴다(칸 ≈78px · 틈 ≈28px · 720폭 그림 실측).
+            // 고정 틈(칸 폭의 12%)으로 모으면 묶음이 55.6 → 48.1%(−7.5%p)로 좁아져 §5 에서 0점이었다.
+            var cellRts = IconRow(cells, Layout.DdRewardCells, Icons(rewardDefs), "ui.itemFrame.green", "RewardCell:", true, fill: true);
             for (int i = 0; i < cellRts.Count && i < rewardDefs.Count; i++)
             {
                 UiKit.Label(cellRts[i], 0, 58, 100, 42, rewardDefs[i].amount, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyle.Bold;
@@ -497,6 +499,8 @@ namespace KkomaKnight.Game
                 if (i == 0) { UiKit.Tag(row, "상대 줄(1칸)"); UiKit.Tag(b, "줄 도전 버튼"); }
             }
             var refresh = UiKit.Button(box, "ui.btnOrange", "무료 새로고침", Noop, Layout.AcRefresh.Within(Layout.AcBox)); refresh.name = "RefreshBtn"; UiKit.Tag(refresh, "무료 새로고침 버튼");
+            // T214 — 이 팝업의 닫기 안내만 표 ⑯ 자리(95.9)로 내린다. 공통 BookClose(91.5)를 옮기면 ④(표 91.5)가 대신 어긋난다.
+            { var tap = UiKit.Find(App.Overlay.Root, "TapToClose"); if (tap != null) UiKit.Pct((RectTransform)tap, Layout.AcClose); }
             TagClose();
         }
 
@@ -762,7 +766,16 @@ namespace KkomaKnight.Game
             foreach (var f in RewardFrames) if (f.icon == icon) return f.frame;
             return RewardFrameDefault;
         }
-        static List<RectTransform> IconRow(RectTransform row, Layout.R rowRect, string[] icons, string frameKey, string namePrefix = "Cell:", bool amountBelow = false, bool frameByIcon = false)
+        /// <summary>
+        /// <paramref name="fill"/> = 칸이 줄을 <b>꽉 채운다</b>(남는 자리를 틈이 나눠 갖는다 · T214 · 던전 세부 21 의 보상 넉 장만 이 꼴이다).
+        /// <para>
+        /// T150 ⓐ 가 «남는 자리를 전부 틈에» 를 버린 것은 <b>칸이 둘일 때</b> 틈이 362px 까지 벌어져 «보상이 양 끝에» 있었기 때문이다(주인 지적).
+        /// 21 은 넉 장이라 그 병이 없다 — 레퍼런스 21 실측(720폭 그림)에서 칸 ≈78px · 틈 ≈28px(= 칸 폭의 36%)로 <b>줄을 꽉 채운다</b>.
+        /// 우리 값도 같은 꼴이 된다(칸 19.85% · 틈 6.87% = 칸의 34.6%). 그래서 «둘일 때는 모으고 · 넉 장은 채운다» 를 부르는 쪽이 고르게 두었다 —
+        /// 공용 상수 <see cref="IconRowGapPct"/> 를 키우면 20·30·31 의 두 칸짜리 줄까지 같이 벌어져 T150 이 되돌아간다.
+        /// </para>
+        /// </summary>
+        static List<RectTransform> IconRow(RectTransform row, Layout.R rowRect, string[] icons, string frameKey, string namePrefix = "Cell:", bool amountBelow = false, bool frameByIcon = false, bool fill = false)
         {
             var res = new List<RectTransform>();
             float rowW = Mathf.Max(1e-3f, rowRect.W / 100f * UiKit.FrameW), rowH = Mathf.Max(1e-3f, rowRect.H / 100f * UiKit.FrameH);
@@ -771,7 +784,8 @@ namespace KkomaKnight.Game
             // 칸이 둘이면 줄 양 끝에 하나씩 벌어졌다(원정 보상 = 362px 틈 · 주인 «보상 양쪽 끝에 있더라»).
             // 칸이 많아 고정 틈으로도 넘치면 예전처럼 남는 자리를 나눠 준다(상한).
             int n = icons.Length;
-            float gap = n > 1 ? Mathf.Min(cellW * IconRowGapPct, Mathf.Max(0, (100f - n * cellW) / (n - 1))) : 0;
+            float spread = n > 1 ? Mathf.Max(0f, (100f - n * cellW) / (n - 1)) : 0f;   // 줄을 꽉 채우는 틈(= 옛 space-between)
+            float gap = n > 1 ? (fill ? spread : Mathf.Min(cellW * IconRowGapPct, spread)) : 0;
             float start = Mathf.Max(0f, (100f - (n * cellW + (n - 1) * gap)) * 0.5f);
             for (int i = 0; i < n; i++)
             {
