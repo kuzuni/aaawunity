@@ -15,9 +15,16 @@ namespace KkomaKnight.Game
         /// <summary>장착 슬롯 두 열 — <b>왼쪽 = 무기·목걸이·반지(공격) · 오른쪽 = 투구·갑옷·신발(방어)</b>(T105 · 주인 2026-09-07 지정 · T88 의 역할 묶음과 같다 · 예전 index.html GEAR_COL 은 갑옷↔반지가 반대였다).</summary>
         public static readonly string[] ColLeft = { "weapon", "neck", "glove" }, ColRight = { "helm", "armor", "boot" };
 
-        public static string Name(GameData D, GearItem g) => D.Gear.TypeName.TryGetValue(g.Type, out var n) ? n : g.Type;
+        /// <summary>
+        /// 장비 이름 = «<b>세트 별칭</b>의 <b>부위 표시 이름</b>» (T161 · 주인 2026-09-07 «치명 관련 장비는 암살자의 장갑 …» + «반지가 장갑으로 이름 되어 있더라»).
+        /// <c>gear.json</c> 의 <c>typeName</c>(«치명 장갑»)은 <b>더 안 쓴다</b> — 그 표가 두 결함의 뿌리였다:
+        /// 세트가 «치명» 으로 나오고, T88 의 «장갑 → 반지» 덮어쓰기(<see cref="GearRole.DisplayName"/>)를 안 거쳐 제목만 «장갑» 으로 남아
+        /// 같은 팝업 안의 부위 pill(«반지»)과 어긋났다. 이제 둘 다 <see cref="GearRole"/> 한 곳을 지난다.
+        /// </summary>
+        public static string Name(GameData D, GearItem g) => GearRole.SetDisplayName(D, Set(D, g)) + "의 " + PartName(D, g.Part);
         public static string Set(GameData D, GearItem g) => D.Gear.SetOf(g.Type);
-        public static string SetLabel(GameData D, GearItem g) => (D.Gear.SetName.TryGetValue(Set(D, g), out var n) ? n : Set(D, g)) + " 세트";
+        /// <summary>세트 라벨 — 이름과 같은 별칭을 쓴다(«암살자 세트» · T161 결정: 한 화면에서 «암살자의 반지» 와 «치명 세트» 가 나란히 나오지 않게).</summary>
+        public static string SetLabel(GameData D, GearItem g) => GearRole.SetDisplayName(D, Set(D, g)) + " 세트";
         /// <summary>부위 이름 — T88 덮어쓰기(장갑 → «반지» · gear.json 은 aaaw 정본이라 불변)를 거친다.</summary>
         public static string PartName(GameData D, string part) => GearRole.DisplayName(D, part);
         public static string RarName(GameData D, int rar) => rar >= 0 && rar < D.Gear.RarName.Length ? D.Gear.RarName[rar] : rar.ToString();

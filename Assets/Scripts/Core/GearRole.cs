@@ -20,6 +20,23 @@ namespace KkomaKnight.Core
         /// <summary>표시 이름 덮어쓰기 — 주인 지시 «장갑 → 반지»(gear.json 은 aaaw 정본이라 손대지 않는다).</summary>
         static readonly Dictionary<string, string> NameOverride = new Dictionary<string, string> { { "glove", "반지" } };
 
+        /// <summary>
+        /// 세트 표시 이름 덮어쓰기 (T161 · 주인 2026-09-07 «치명 관련 장비는 <b>암살자</b>의 장갑 · 체력실드 관한 거는 <b>전사</b> · 회피 관한 거는 <b>도둑</b>»).
+        /// <c>gear.json</c> 의 <c>setName</c>(«치명»·«체력실드»·«회피»)은 aaaw 정본이라 <b>안 고친다</b> — 부위에 한 것과 같은 방식으로 표시 이름만 덮는다.
+        /// </summary>
+        static readonly Dictionary<string, string> SetNameOverride = new Dictionary<string, string>
+        {
+            { "crit", "암살자" }, { "hpsh", "전사" }, { "evade", "도둑" },
+        };
+
+        /// <summary>세트 표시 이름 — 덮어쓰기 표가 먼저, 없으면 gear.json 의 <c>setName</c>, 그것도 없으면 키 그대로.</summary>
+        public static string SetDisplayName(GameData D, string set)
+        {
+            if (set != null && SetNameOverride.TryGetValue(set, out var over)) return over;
+            if (D != null && set != null && D.Gear.SetName.TryGetValue(set, out var n)) return n;
+            return set;
+        }
+
         public static bool IsAttack(string part) => Array.IndexOf(AttackParts, part) >= 0;
         public static bool IsDefense(string part) => Array.IndexOf(DefenseParts, part) >= 0;
 

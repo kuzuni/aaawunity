@@ -18,7 +18,7 @@ namespace KkomaKnight.Tests
         {
             // 대장간 재료 안내 토스트 — 전에는 «같은 부위종류등급만 재료가 됩니다» 로 붙어 나왔다
             Assert.AreEqual("같은 부위/종류/등급만 재료가 됩니다", TextGlyphs.Safe("같은 부위·종류·등급만 재료가 됩니다"));
-            Assert.AreEqual("(목걸이 / 체력실드 목걸이 / 신화)", TextGlyphs.Safe("(목걸이 · 체력실드 목걸이 · 신화)"));
+            Assert.AreEqual("(목걸이 / 암살자의 목걸이 / 신화)", TextGlyphs.Safe("(목걸이 · 암살자의 목걸이 · 신화)"));   // 이름 꼴은 T161 로 바뀌었다
         }
 
         [Test]

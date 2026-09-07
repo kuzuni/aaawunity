@@ -139,5 +139,52 @@ namespace KkomaKnight.Tests
             Assert.That(gotW / gotN, Is.EqualTo(rawW / rawN).Within(1e-9).Percent, "몫의 비 = 날 기여의 비");
             Assert.Greater(gotW, rawW, "재분배로 공격 부위 몫은 늘어난다(방어 부위 몫을 나눠 받는다)");
         }
+
+        /// <summary>
+        /// T161 — 세트 표시 이름이 주인이 준 별칭이다(«치명 → 암살자» · «체력실드 → 전사» · «회피 → 도둑»).
+        /// <c>gear.json</c> 의 <c>setName</c> 은 aaaw 정본이라 <b>안 고치고</b> 표시만 덮으므로, 데이터 쪽 값이 그대로인지도 같이 잰다.
+        /// </summary>
+        [Test]
+        public void SetDisplayNameUsesTheOwnersAliases()
+        {
+            var D = TestData.Load();
+            Assert.AreEqual("암살자", GearRole.SetDisplayName(D, "crit"));
+            Assert.AreEqual("전사", GearRole.SetDisplayName(D, "hpsh"));
+            Assert.AreEqual("도둑", GearRole.SetDisplayName(D, "evade"));
+            // 정본은 그대로 — 우리가 덮는 것은 «보여 주는 이름» 뿐이다(§1 · data/*.json 불변)
+            Assert.AreEqual("치명", D.Gear.SetName["crit"]);
+            Assert.AreEqual("체력실드", D.Gear.SetName["hpsh"]);
+            Assert.AreEqual("회피", D.Gear.SetName["evade"]);
+            // 모르는 세트 키는 데이터 → 키 순서로 물러난다(조용히 빈 문자열이 되지 않는다)
+            Assert.AreEqual("nosuch", GearRole.SetDisplayName(D, "nosuch"));
+            Assert.IsNull(GearRole.SetDisplayName(D, null));
+        }
+
+        /// <summary>
+        /// T161 — 이름에 쓰이는 별칭과 부위가 <b>전부 채워져 있다</b>: 세트 × 부위 어느 조합에도 빈 칸이 없고,
+        /// <c>glove</c> 는 이름 쪽에서도 «반지» 로 나온다(T88 덮어쓰기를 거친다 = 주인이 본 «반지가 장갑으로» 어긋남의 뿌리).
+        /// </summary>
+        [Test]
+        public void EverySetAndPartHasADisplayNameAndGloveReadsAsRing()
+        {
+            var D = TestData.Load();
+            Assert.AreEqual("반지", GearRole.DisplayName(D, "glove"), "T88 — 장갑은 «반지» 로 보여 준다");
+            foreach (var pt in D.Gear.Parts)
+            {
+                var pn = GearRole.DisplayName(D, pt);
+                Assert.IsFalse(string.IsNullOrWhiteSpace(pn), "부위 표시 이름이 비었다: " + pt);
+                foreach (var kv in D.Gear.SetName)
+                {
+                    var sn = GearRole.SetDisplayName(D, kv.Key);
+                    Assert.IsFalse(string.IsNullOrWhiteSpace(sn), "세트 표시 이름이 비었다: " + kv.Key);
+                    // 화면이 조립하는 꼴 그대로(«암살자의 반지») — 별칭이 빠지면 «의 반지» 가 되어 여기서 걸린다
+                    var full = sn + "의 " + pn;
+                    StringAssert.StartsWith(sn, full);
+                    StringAssert.EndsWith(pn, full);
+                    Assert.IsFalse(full.StartsWith("의 "), "별칭이 비어 «의 …» 로 시작한다: " + kv.Key + "/" + pt);
+                }
+            }
+        }
+
     }
 }

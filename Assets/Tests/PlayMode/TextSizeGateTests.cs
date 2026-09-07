@@ -18,8 +18,8 @@ namespace KkomaKnight.Tests.Play
     public class TextSizeGateTests
     {
         App _app; PlayLog _log;
-        /// <summary>가장 긴 실제 토스트(ForgeScreen 재료 안내 · 최악의 이름 = «체력실드 목걸이») — 본문 40 으로 두 줄이다.</summary>
-        const string LongToast = "같은 부위·종류·등급만 재료가 됩니다 (목걸이 · 체력실드 목걸이 · 신화)";
+        /// <summary>가장 긴 실제 토스트(ForgeScreen 재료 안내) — 최악의 이름은 T161 로 «체력실드 목걸이» → <b>«암살자의 목걸이»</b> 가 됐다(별칭 셋 × 부위 여섯 중 가장 긴 조합). 본문 40 으로 두 줄이다.</summary>
+        const string LongToast = "같은 부위·종류·등급만 재료가 됩니다 (목걸이 · 암살자의 목걸이 · 신화)";
         readonly List<TextAudit.Row> _rows = new List<TextAudit.Row>();
 
         [SetUp] public void SetUp() { _log = new PlayLog(); _rows.Clear(); }
@@ -160,7 +160,7 @@ namespace KkomaKnight.Tests.Play
             Time.timeScale = 1f; _app.ShowScreen("lobby"); yield return Frames(2);
 
             // ⑫ 27 토스트 · 28 «데이터 삭제» 확인 팝업 · 29 보스 경고 띠 (T63-toast — 앞서 어느 화면에서도 안 열리던 셋)
-            // 가장 긴 실제 토스트(ForgeScreen 재료 안내 · 최악의 이름 = «체력실드 목걸이») — 본문 40 으로 두 줄이라 칸이 모자라면 bestFit 이 말없이 줄인다
+            // 가장 긴 실제 토스트(ForgeScreen 재료 안내 · 최악의 이름 = «암살자의 목걸이» · T161) — 본문 40 으로 두 줄이라 칸이 모자라면 bestFit 이 말없이 줄인다
             _app.Toast(LongToast); yield return Check("27_toast");
             _app.Overlay.ConfirmReset(); yield return Check("28_confirm_reset");
             _app.Overlay.Close(); yield return Frames(1);

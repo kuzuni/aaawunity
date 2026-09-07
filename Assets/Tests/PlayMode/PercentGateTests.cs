@@ -179,7 +179,7 @@ namespace KkomaKnight.Tests.Play
 
             Time.timeScale = 1f; _app.ShowScreen("lobby"); yield return Frames(2);
             // 토스트는 실제 문구(대장간 재료 안내 · 가장 긴 것)로 연다 — 여기서 «회피 +8» 같은 예시를 넣으면 감사 표가 «테스트가 만든 줄» 로 더러워진다
-            _app.Toast("같은 부위·종류·등급만 재료가 됩니다 (목걸이 · 체력실드 목걸이 · 신화)"); yield return Check("27_toast");
+            _app.Toast("같은 부위·종류·등급만 재료가 됩니다 (목걸이 · 암살자의 목걸이 · 신화)"); yield return Check("27_toast");   // 최악의 이름 = T161 의 «암살자의 목걸이»
             _app.Overlay.ConfirmReset(); yield return Check("28_confirm_reset"); _app.Overlay.Close(); yield return Frames(1);
 
             // 표(«[PercentGate]») 를 먼저 찍고 판정한다 — 먼저 터지면 다른 워커가 자기 화면 수를 못 읽는다(T63-toast 가 CI #119 에서 겪은 함정)
