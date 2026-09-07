@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
@@ -243,5 +244,43 @@ namespace KkomaKnight.Tests.Play
 
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T162 — 주인 «메뉴 드롭다운 팝업에 클로즈 버튼 없애기». 조각 <c>Lobby_Menu</c> 가 달고 오는 닫기 버튼을 끄고,
+        /// 닫는 길은 <b>T139 ⓐ 의 딤 클릭</b>이 잇는다 — 둘은 한 짝이라 여기서 같이 잰다(하나만 되돌리면 «못 닫는 창» 이 된다).
+        /// 이름을 «앞머리» 로 재는 까닭 = 데모 조각이 인스턴스마다 이름을 덮어써서(<c>Button_Close</c> ↔ <c>Button_Close_Square_01</c>)
+        /// 정확한 이름 하나로 찾으면 놓친다(워커 A 가 우편함에서 밟은 함정).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator TheDropdownHasNoCloseButtonAndTheDimIsStillTheWayOut()
+        {
+            yield return Boot();
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            ClickNamed(_app.Current.Root, "Button_Menu"); yield return Frames(2);
+            Assert.IsTrue(_app.Overlay.IsOpen, "메뉴가 열린다");
+            var ov = _app.Overlay.Root;
+
+            int off = 0; var on = new List<string>();
+            foreach (var t in ov.GetComponentsInChildren<Transform>(true))
+            {
+                if (!t.name.StartsWith(LobbyMenu.CloseNamePrefix)) continue;
+                if (t.gameObject.activeInHierarchy) on.Add(t.name + "(부모 " + (t.parent != null ? t.parent.name : "?") + ")");
+                else off++;
+            }
+            Debug.Log("[T162] 닫기 버튼 — 켜진 것 " + on.Count + " · 꺼진 것 " + off);
+            Assert.IsEmpty(on, "메뉴 드롭다운에 닫기 버튼이 보이면 안 된다(T162) — 켜져 있는 것: " + string.Join(", ", on.ToArray()));
+
+            // 닫는 길은 남아 있다(T139 ⓐ) — 이 단언이 없으면 T162 가 «못 닫는 창» 을 만들었는지 여기서 안 걸린다
+            var dim = UiKit.Find(ov, "Dimmed");
+            Assert.IsNotNull(dim, "프리팹 어둠");
+            var dimBtn = dim.GetComponent<Button>();
+            Assert.IsNotNull(dimBtn, "닫기 버튼을 뺐으므로 어둠이 유일한 닫는 길이다(OpenPrefab(closeOnDim: true))");
+            dimBtn.onClick.Invoke(); yield return Frames(2);
+            Assert.IsFalse(_app.Overlay.IsOpen, "어둠을 누르면 닫힌다");
+
+            _log.AssertNoRed("T162 닫기 버튼 제거");
+            yield return Shutdown();
+        }
+
     }
 }

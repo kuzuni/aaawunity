@@ -54,6 +54,7 @@ namespace KkomaKnight.Game
             if (app == null) return;
             var root = app.Overlay.OpenPrefab("ui.lobbyMenu", closeOnDim: true);   // T139 ⓐ — 주인 «딤 눌러도 꺼지게»(이 자리만 true)
             var rt = (RectTransform)root.transform;
+            HideCloseButtons(rt);                                       // T162 — 주인 «메뉴 드롭다운 팝업에 클로즈 버튼 없애기»(닫는 길은 위 딤 클릭)
             var panel = UiKit.Find(rt, PanelName) as RectTransform;
             if (panel == null) return;                                  // 프리팹이 없으면(카탈로그 결손) 조용히 빈 어둠 — 빨간 줄 0
             UiKit.Tag(panel, "메뉴 판");
@@ -131,6 +132,23 @@ namespace KkomaKnight.Game
             var open = it.open; var overlay = app.Overlay;
             UiKit.Clickable(row, () => { overlay.Close(); open?.Invoke(); });
             UiKit.Tag(row, "메뉴 «" + it.label + "» 줄");
+        }
+
+        /// <summary>조각이 달고 온 닫기 버튼 이름의 «앞머리»(T162) — 데모 조각은 인스턴스마다 이름을 덮어써서
+        /// (<c>Button_Close</c> · 원본은 <c>Button_Close_Square_01</c>) 정확한 이름 하나로 찾으면 놓친다(워커 A 가 우편함에서 밟은 함정).</summary>
+        public const string CloseNamePrefix = "Button_Close";
+
+        /// <summary>
+        /// 메뉴 팝업의 닫기 버튼을 전부 끈다(T162 · 주인 2026-09-07 «메뉴 드롭다운 팝업에 클로즈 버튼 없애기»).
+        /// 조각 원본은 안 고친다(§1 «프리팹은 부품 · 원본 불변») — 세워진 인스턴스에서 끌 뿐이다.
+        /// <b>닫는 길은 남아 있다</b> — T139 ⓐ 로 이 팝업은 어둠(<c>Dimmed</c>)을 눌러 닫힌다. 그 인자가 <c>true</c> 인 것과
+        /// 이 줄은 한 짝이라, 하나를 되돌리면 «못 닫는 창» 이 된다(<see cref="Open"/> 의 <c>closeOnDim</c> 참조).
+        /// </summary>
+        static void HideCloseButtons(Transform root)
+        {
+            if (root == null) return;
+            foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                if (t != root && t.name.StartsWith(CloseNamePrefix)) t.gameObject.SetActive(false);
         }
 
         /// <summary>이름이 같은 직계 자식(깊은 <see cref="UiKit.Find"/> 는 조각 «안»의 같은 이름을 먼저 집는다 — Overlay.Kid 와 같은 까닭).</summary>
