@@ -1677,7 +1677,7 @@ python3 tools/check_asmdef.py                                     # 유니티 «
 python3 tools/check_test_usings.py                                # 테스트 어셈블리가 «참조하지 않는» 네임스페이스를 using 하는가(DG.Tweening·TMPro) — 로컬 임시 csproj 는 DOTween 을 참조해서 이것을 절대 못 잡는다(결정 465 · CI #346~#348 컴파일 파손)
 python3 tools/check_task_rows.py                                  # PROGRESS 에 같은 작업이 두 줄 있고 «⬜ 대기» ↔ «✅/🔄» 로 어긋난 것(끝난 일을 다시 선점하게 만든다 · 결정 455) — `--list` 로 겹치는 줄 전부 보기
 python3 tools/check_webgl_template.py                             # 배포 껍데기(WebGL 템플릿 · T196): 캔버스가 창을 채우는가 + 스모크(T60)가 문자열로 찾는 자리 넷이 그대로인가 — 되돌리면 PC 에서 960×600 상자로 나가고 «로딩 완료» 판정이 조용히 무뎌진다
-python3 tools/task_state.py --check                               # 그 옆칸: ROUTINE §2 «제목» ↔ PROGRESS «상태» 어긋남(T193 · 결정 493). 끝냈으면 **제목에도 ✅ 를 단다** — 안 달면 다음 워커가 열린 일로 읽는다. 선점 직전에는 `tools/task_state.py <ID>`(0 = 잡아도 된다)
+python3 tools/task_state.py --check                               # ⓐ **한 번호가 두 작업을 가리키는가**(T205 · 오늘만 T189·T190·T204 세 번) ⓑ 그 옆칸: ROUTINE §2 «제목» ↔ PROGRESS «상태» 어긋남(T193 · 결정 493). 끝냈으면 **제목에도 ✅ 를 단다** — 안 달면 다음 워커가 열린 일로 읽는다. 선점 직전에는 `tools/task_state.py <ID>`(0 = 잡아도 된다)
 dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이후) 이식 검증
 ```
 
@@ -3061,6 +3061,18 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
    - `Game/PetScreen.cs:70` · `BattleWorld.FitFootText`(§2 T194 의 «넘김 한 줄») — «크기를 바꿨으면 `EnsureOutline` 을 다시 부른다» 는 규약. 비율이 0.12 → 0.07 로 **내려가면** 허용 오차 0.26px 이 숨겨 주는 크기 어긋남 Δ 는 **3.25 → 3.7 로 넓어진다** → 지금 초록인 것이 이 회차 때문에 빨개지지는 않는다(T194 회차 1-b 의 셈 그대로).
 
 순서 — **T194 lock(`docs/claims/T194.lock` · sess-1842-31994 · 워커 G)이 살아 있다.** 같은 함수·같은 자·같은 실측 도구를 이미 갖고 있으므로 **그 워커가 그대로 이어서 하는 것이 맞다**; 아니면 그 lock 이 풀린 뒤에 잡는다. T63-outline 계열과 같은 파일이라 **다른 화면 lock 과는 안 겹친다**.
+
+### T205 ✅ — **«한 번호가 두 작업을 가리킨다» 를 자가 잡는다** (워커 실측 등재 2026-09-07 17:2X · 도구·문서 · 게임 코드 0줄) — **✅ 완료(`tools/task_state.py` 에 한 칸 추가 + 자기 검사 · sess-1424-31894 · 워커 B)**
+
+> `docs/claims/README.md` 는 «**한 번호는 한 작업만 가리킨다** · 신규는 «가장 큰 것 +1» · 번호 재사용 금지» 라고 **규칙은** 적어 뒀다. 자가 없었다.
+
+1. **오늘만 세 번 났다** — **T189**(내 `check_asmdef.py` ↔ 워커 J 의 T172 되돌림 → 워커 J 가 T192 로) · **T190**(워커 F 의 «`screens` 도 마지막 초록으로» ↔ «아이템 슬롯 빛 제거» → 내가 T194 로) · **T204**(«소환 결과» ↔ «검은 아웃라인» → 워커 E 가 T202 로). 매번 **사람이 손으로** 찾아 보고 커밋을 쓰거나(워커 A 17:11) 선점을 반납했다(워커 A 17:09).
+2. **왜 아무 자도 못 봤나** — `check_task_rows.py`(결정 455)는 **PROGRESS 표 «안»** 만 본다. T193 의 `task_state --check` 는 **제목 ↔ 상태**만 본다. **제목 번호 자체의 중복**은 그 사이로 빠진다. 게다가 등재 직후에는 PROGRESS 행이 아직 없어(워커 A 의 17:11 보고 그대로) `check_task_rows` 는 **아무것도 못 본다**.
+3. **무엇이 망가지나** — `T204.lock` 이 «어느 일» 인지 못 가른다. 두 워커가 그 번호를 각자 제 일로 읽고 **같은 파일을 반대로 민다**(T204 는 실제로 «T194 회차 3 을 뒤집는» 작업이라 상수 하나를 0.12 ↔ 0.07 로 서로 덮을 뻔했다).
+4. **한 것** — `routine_heads(dups=…)` 가 «번호가 두 번 이상 붙은 제목» 을 모으고, `--check` 가 **1 로 끝난다**(고침 = «늦게 등재된 쪽» 을 다음 빈 번호로 · 제목·행·본문 참조 함께). 곁들여 «제목은 있는데 PROGRESS 행이 없는» 작업은 **알리기만** 한다 — 등재 중인 자리가 정상적으로 그 꼴이라 실패로 세면 소음이 된다.
+5. **CI 는 그대로다** — `--check` 는 이미 `continue-on-error`(보고만)이고 `--self-test` 만 막는다. 번호 중복은 «조율 결함» 이라 폰 배포를 볼모로 잡지 않는다(결정 493 의 기준 그대로 · `ci.yml` 0줄).
+6. 자기 검사에 칸 하나를 더했다 — 같은 번호를 붙인 제목 둘을 만들어 **잡는지**, 하나로 줄이면 **조용한지**.
+
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).

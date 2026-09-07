@@ -16,8 +16,16 @@ ROUTINE 제목에는 ✅ 가 없었다. 그러면 **열린 일로 보인다**. l
 `check_task_rows.py`(결정 455)는 **PROGRESS 표 안에서** 같은 ID 가 두 줄로 갈라진 것을 잡는다.
 이 자는 그 옆칸을 본다 — **ROUTINE 제목 ↔ PROGRESS 상태**가 어긋나는 자리.
 
+**T205 로 하나 더 본다 — «한 번호가 두 작업을 가리킨다».** `docs/claims/README.md` 가
+«한 번호는 한 작업만 가리킨다 · 번호 재사용 금지» 라고 규칙은 적어 뒀는데 **자가 없었다**.
+2026-09-07 하루에 세 번 났다: T189(→T192) · T190 둘 · T204 둘. 그때마다 사람이 손으로 찾아
+보고 커밋을 쓰거나(워커 A 17:11) 선점을 반납했다(워커 A 17:09). 번호가 갈라지면
+`T204.lock` 이 «어느 일» 인지 못 가르고 두 워커가 같은 파일을 반대로 민다.
+곁들여 «제목은 있는데 PROGRESS 행이 없는» 작업도 **알리기만** 한다(등재 중인 자리가 정상적으로 그 꼴이라
+실패로 세지 않는다 — 다만 그 사이 `check_task_rows` 가 그 작업을 못 본다).
+
 쓰는 법
-  python3 tools/task_state.py --check     # 게이트: 어긋나면 1 로 끝난다 (ROUTINE §3 목록)
+  python3 tools/task_state.py --check     # 게이트: 번호 중복·제목↔상태 어긋남이 있으면 1 (ROUTINE §3 목록)
   python3 tools/task_state.py T161        # 선점 «직전» 한 줄 — 잡아도 되는지 판정 (0 = 잡아도 된다)
   python3 tools/task_state.py --list      # 전체 표
   python3 tools/task_state.py --self-test # 이 자가 실제로 잡는지
@@ -45,9 +53,12 @@ def _fold(s):
     return "✂" in s or "♻" in s
 
 
-def routine_heads(path=ROUTINE):
-    """ID → (줄번호, 제목에 ✅ 가 있나, 제목 원문)."""
-    out = {}
+def routine_heads(path=ROUTINE, dups=None):
+    """ID → (줄번호, 제목에 ✅ 가 있나, 제목 원문).
+
+    `dups` 에 dict 를 주면 **번호가 두 번 이상 붙은 자리**를 ID → [(줄번호, 제목), …] 로 채운다(T205).
+    """
+    out, seen = {}, {}
     with io.open(path, encoding="utf-8") as f:
         for n, line in enumerate(f, 1):
             m = HEAD.match(line.rstrip("\n"))
@@ -58,6 +69,10 @@ def routine_heads(path=ROUTINE):
             # 본문 쪽 «✅ 완료(코드 …)» 는 꼬리에 덧붙인 진행 기록이라 제목 표시와 구별한다.
             head_part = rest.split("—")[0]
             out.setdefault(tid, (n, "✅" in head_part, rest.strip()))
+            seen.setdefault(tid, []).append((n, rest.strip()))
+    if dups is not None:
+        dups.clear()
+        dups.update({t: v for t, v in seen.items() if len(v) > 1})
     return out
 
 
@@ -160,12 +175,33 @@ def mismatches(heads, rows):
     return bad
 
 
-def cmd_check(heads, rows):
+def cmd_check(heads, rows, dups=None):
+    rc = 0
+    # ⓐ 한 번호가 두 작업을 가리키는가 (T205) — `docs/claims/README.md` 의 «한 번호는 한 작업만» 규칙.
+    #    이것이 남으면 `T204.lock` 이 «어느 일» 인지 못 가르고, 두 워커가 같은 파일을 반대로 민다.
+    if dups:
+        rc = 1
+        print("⛔ **한 번호가 여러 작업을 가리킨다** — `docs/claims/README.md`: «한 번호는 한 작업만 가리킨다».")
+        print("   그대로 두면 그 번호의 lock 이 어느 일인지 못 가르고, 선점이 겹친다(오늘만 T189·T190·T204 세 번).")
+        print("   고침: **늦게 등재된 쪽**을 다음 빈 번호로 옮긴다(제목·PROGRESS 행·본문 참조 함께).")
+        for tid, places in sorted(dups.items(), key=lambda kv: int(kv[0][1:])):
+            print("  · %s 가 %d곳:" % (tid, len(places)))
+            for n, title in places:
+                print("      ROUTINE.md:%d  «%s»" % (n, title[:80]))
+
+    # ⓑ 제목은 있는데 PROGRESS 행이 없다 — **실패로 세지 않는다**(등재가 진행 중인 자리가 정상적으로 이 꼴이다).
+    #    다만 그 사이에는 `check_task_rows` 가 아무것도 못 보므로 알려는 둔다(워커 A 의 17:11 보고가 그 자리다).
+    orphan = sorted(set(heads) - set(rows), key=lambda t: int(t[1:]))
+    if orphan:
+        print("· (참고 · 실패 아님) ROUTINE §2 제목은 있는데 PROGRESS 표에 행이 없는 작업: %s" % " ".join(orphan))
+        print("  등재 중이면 곧 채워진다. 오래 남아 있으면 그 사이 `check_task_rows` 가 그 작업을 못 본다.")
+
     bad = mismatches(heads, rows)
     if not bad:
-        print("✓ task_state: ROUTINE §2 제목과 PROGRESS 상태가 어긋나는 작업 0개 (제목 %d · 표 %d)"
-              % (len(heads), len(rows)))
-        return 0
+        if rc == 0:
+            print("✓ task_state: 번호 중복 0 · ROUTINE §2 제목과 PROGRESS 상태가 어긋나는 작업 0개 (제목 %d · 표 %d)"
+                  % (len(heads), len(rows)))
+        return rc
     print("⛔ **선점 덫** — PROGRESS 는 «✅ 완료» 인데 ROUTINE §2 제목에 ✅ 가 없다.")
     print("   다음 워커는 이것을 «열린 일» 로 읽고 한 회차를 통째로 버린다(T161·T188 이 그랬다).")
     print("   고침: `docs/ROUTINE.md` 그 제목 줄의 ID 뒤에 ✅ 를 붙인다.")
@@ -240,7 +276,25 @@ def self_test():
         if not verdict(free, H, R)[0]:
             print("⛔ 자기 검사 실패 — 쓰인 적 없는 %s 를 «잡지 마라» 로 판정했다(거짓 경고)" % free)
             return 1
-        print("✓ task_state --self-test: 어긋난 짝을 잡고(T161) · ✅ 를 달면 조용하고 · 빈 번호는 통과한다")
+        # ⓓ **한 번호가 두 작업을 가리키는 자리**(T205) — 오늘 T189·T190·T204 로 세 번 났고
+        #    그때마다 사람이 손으로 찾아 보고했다. 가짜 문서로 «잡는가 · 하나뿐이면 조용한가» 를 본다.
+        io.open(r, "w", encoding="utf-8").write(
+            "### T161 ✅ — 장비 이름을 바꾼다 (주인 …)\n"
+            "### %s — 소환 결과 상자\n### %s — 검은 아웃라인\n" % (free, free))
+        d = {}
+        routine_heads(r, dups=d)
+        if list(d) != [free] or len(d[free]) != 2:
+            print("⛔ 자기 검사 실패 — 같은 번호가 붙은 제목 둘을 못 잡았다: %s" % (d,))
+            return 1
+        io.open(r, "w", encoding="utf-8").write(
+            "### T161 ✅ — 장비 이름을 바꾼다 (주인 …)\n### %s — 소환 결과 상자\n" % free)
+        d = {}
+        routine_heads(r, dups=d)
+        if d:
+            print("⛔ 자기 검사 실패 — 번호가 하나씩인데 중복이라 한다(거짓 경고): %s" % (d,))
+            return 1
+
+        print("✓ task_state --self-test: 어긋난 짝을 잡고(T161) · ✅ 를 달면 조용하고 · 빈 번호는 통과하고 · 같은 번호 두 제목을 잡는다")
         return 0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -249,15 +303,16 @@ def self_test():
 def main(argv):
     if "--self-test" in argv:
         return self_test()
-    heads, rows = routine_heads(), progress_rows()
+    dups = {}
+    heads, rows = routine_heads(dups=dups), progress_rows()
     if "--check" in argv:
-        return cmd_check(heads, rows)
+        return cmd_check(heads, rows, dups)
     if "--list" in argv:
         return cmd_list(heads, rows)
     ids = [a for a in argv if re.fullmatch(r"T\d+", a)]
     if ids:
         return max(cmd_one(t, heads, rows) for t in ids)
-    return cmd_check(heads, rows)
+    return cmd_check(heads, rows, dups)
 
 
 if __name__ == "__main__":
