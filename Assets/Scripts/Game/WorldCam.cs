@@ -18,7 +18,7 @@ namespace KkomaKnight.Game
         {
             var wc = cam.gameObject.GetComponent<WorldCam>(); if (wc == null) wc = cam.gameObject.AddComponent<WorldCam>();
             wc._cam = cam; wc.Frame = frame;
-            cam.orthographic = true; cam.orthographicSize = LayoutH / 2f / PPU;
+            cam.orthographic = true; cam.orthographicSize = OrthoFor(frame);
             cam.transform.position = new Vector3(0, 0, -10);
             wc.Apply();
             return wc;
@@ -34,6 +34,31 @@ namespace KkomaKnight.Game
             float w = (corners[2].x - corners[0].x) / Screen.width, h = (corners[2].y - corners[0].y) / Screen.height;
             var r = new Rect(Mathf.Clamp01(x), Mathf.Clamp01(y), Mathf.Clamp01(w), Mathf.Clamp01(h));
             if (r != _last) { _cam.rect = r; _last = r; }
+            float ortho = OrthoFor(Frame);
+            if (!Mathf.Approximately(_cam.orthographicSize, ortho)) _cam.orthographicSize = ortho;
+        }
+
+        /// <summary>
+        /// T182 3단계-3 — 프레임이 길어지면 마당을 <b>«더 보여 준다»</b>(확대하지 않는다).
+        /// <para>
+        /// 카메라의 <c>orthographicSize</c> 는 «세로 절반» 이고 가로는 viewport 비율이 따라오므로,
+        /// 기준 값(<see cref="LayoutH"/>/2)을 그대로 두면 프레임이 길어질 때 <b>가로가 좁아져 그림이 7.8% 확대된다</b>.
+        /// 그래서 세로비가 커진 만큼 <c>orthographicSize</c> 도 같이 키운다 — 그러면 <b>가로 배율이 상수</b>가 되고
+        /// 늘어난 높이는 «마당이 더 보이는» 몫이 된다(세로 신축 규칙 «가운데가 남는 높이를 먹는다» 와 같은 뜻).
+        /// </para>
+        /// 기준 비율에서는 배수가 <b>정확히 1</b> 이라 지금과 한 치도 다르지 않다.
+        /// ⚠ 여기 남은 <b>2.5% 어긋남</b>(<see cref="LayoutH"/> 가 19/9 인데 프레임은 19.475/9 · 결정 552)은 <b>이 회차가 안 건드린다</b> —
+        /// 그것을 같이 고치면 어느 쪽이 마당을 움직였는지 못 가른다.
+        /// </summary>
+        public static float OrthoFor(RectTransform frame)
+        {
+            float baseOrtho = LayoutH / 2f / PPU;
+            if (frame == null) return baseOrtho;
+            var r = frame.rect;
+            if (r.width <= 1f || r.height <= 1f) return baseOrtho;
+            float grow = (r.height / r.width) / Core.Stretch.RefAspect;
+            if (grow < 1f) grow = 1f;
+            return baseOrtho * grow;
         }
 
         /// <summary>프레임 안 레이아웃 좌표(x: 0~540 왼→오, yFrac: 0~1 위→아래) → 유니티 월드.</summary>

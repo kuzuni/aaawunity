@@ -23,7 +23,7 @@ namespace KkomaKnight.Tests.Play
         App _app; PlayLog _log;
 
         [SetUp] public void SetUp() { _log = new PlayLog(); }
-        [TearDown] public void TearDown() { UiKit.FrameKOverride = null; _log?.Dispose(); _log = null; }
+        [TearDown] public void TearDown() { UiKit.FrameKOverride = null; SafeAreaRoot.Override = null; _log?.Dispose(); _log = null; }
 
         static IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
 
@@ -104,6 +104,77 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(1f, UiKit.FrameK, 0.001f, "주입을 풀면 곧바로 오늘로 돌아온다");
 
             _log.AssertNoRed("세로 신축 배선(T182 3단계-2)");
+            yield return Shutdown();
+        }
+
+        /// <summary>안전 영역을 그 비율의 사각형으로 주입한다(1단계 <c>AspectRatioGateTests.SetRatio</c> 와 같은 방법).</summary>
+        void SetRatio(float w, float h)
+        {
+            float sw = Screen.width, sh = Screen.height, want = w / h;
+            float rw = sw, rh = sw / want;
+            if (rh > sh) { rh = sh; rw = sh * want; }
+            SafeAreaRoot.Override = new Rect((sw - rw) * 0.5f, (sh - rh) * 0.5f, rw, rh);
+            foreach (var s in Object.FindObjectsByType<SafeAreaRoot>(FindObjectsInactive.Include, FindObjectsSortMode.None)) s.Apply(true);
+            Canvas.ForceUpdateCanvases();
+        }
+
+        /// <summary>
+        /// T182 <b>3단계-3</b> — 프레임 비율이 실제로 화면을 따라간다(<see cref="FrameFit"/>).
+        /// <list type="bullet">
+        /// <item>납작한 화면(9:16 · 3:4)과 기준(9:19.5)에서는 <b>기준 비율 그대로</b> — 지금과 한 치도 다르지 않다(회귀 0).</item>
+        /// <item>9:21 에서는 프레임이 <b>화면을 꽉 채우고</b> 신축 배수가 1.078 이 된다.</item>
+        /// <item>상한(9:21) 위는 더 안 늘어난다 — 남는 위·아래는 2단계 띠 몫이다.</item>
+        /// <item><b>마당은 «확대» 가 아니라 «더 보이는» 것</b> — 가로 배율(월드 반폭)이 비율이 바뀌어도 상수다.</item>
+        /// </list>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator FrameFollowsTheScreenUpToTheCapAndTheWorldKeepsItsHorizontalScale()
+        {
+            yield return Boot();
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            var frame = _app.Frame;
+
+            float HalfW(RectTransform f) { var r = f.rect; return WorldCam.OrthoFor(f) * (r.width / r.height); }
+
+            SetRatio(9f, 19.5f); yield return Frames(2);
+            float refHalfW = HalfW(frame), refAspect = frame.rect.height / frame.rect.width;
+            Debug.Log($"[T182ⓗ] 9:19.5 프레임 {frame.rect.width:0}×{frame.rect.height:0}(세로비 {refAspect:0.0000}) · k={UiKit.FrameK:0.0000} · 월드 반폭 {refHalfW:0.000}");
+            Assert.AreEqual(Stretch.RefAspect, refAspect, 0.01f, "기준 비율에서는 프레임이 기준 그대로");
+            Assert.AreEqual(1f, UiKit.FrameK, 0.005f, "기준에서는 신축 0");
+
+            foreach (var (name, w, h) in new[] { ("9:16", 9f, 16f), ("3:4(태블릿)", 3f, 4f) })
+            {
+                SetRatio(w, h); yield return Frames(2);
+                float a = frame.rect.height / frame.rect.width;
+                Debug.Log($"[T182ⓗ] {name} 프레임 {frame.rect.width:0}×{frame.rect.height:0}(세로비 {a:0.0000}) · k={UiKit.FrameK:0.0000} · 월드 반폭 {HalfW(frame):0.000}");
+                Assert.AreEqual(Stretch.RefAspect, a, 0.01f, name + ": 납작한 화면은 기준 비율 그대로(남는 폭은 2단계 띠 몫)");
+                Assert.AreEqual(1f, UiKit.FrameK, 0.005f, name + ": 신축 0");
+                Assert.AreEqual(refHalfW, HalfW(frame), 0.01f, name + ": 마당 가로 배율은 상수");
+            }
+
+            SetRatio(9f, 21f); yield return Frames(2);
+            {
+                var safe = (RectTransform)_app.SafeArea;
+                float a = frame.rect.height / frame.rect.width;
+                Debug.Log($"[T182ⓗ] 9:21 프레임 {frame.rect.width:0}×{frame.rect.height:0}(세로비 {a:0.0000}) · 안전영역 {safe.rect.width:0}×{safe.rect.height:0} · k={UiKit.FrameK:0.0000} · 월드 반폭 {HalfW(frame):0.000}");
+                Assert.AreEqual(Stretch.MaxAspect, a, 0.01f, "9:21 은 상한과 같아 프레임이 그 비율로 선다");
+                Assert.Greater(frame.rect.height / safe.rect.height, 0.98f, "9:21 에서는 프레임이 화면 높이를 꽉 채운다(위·아래 레터박스 0)");
+                Assert.AreEqual(Stretch.K(9f, 21f), UiKit.FrameK, 0.005f, "신축 배수 1.078");
+                Assert.AreEqual(refHalfW, HalfW(frame), 0.01f, "마당은 «확대» 가 아니라 «더 보이는» 것 — 가로 배율이 그대로다");
+                Assert.AreEqual(WorldCam.LayoutH / 2f / WorldCam.PPU * Stretch.K(9f, 21f), WorldCam.OrthoFor(frame), 0.02f, "세로로는 그만큼 «더 보인다»(확대가 아니다)");
+            }
+
+            SetRatio(9f, 26f); yield return Frames(2);
+            {
+                float a = frame.rect.height / frame.rect.width;
+                Debug.Log($"[T182ⓗ] 9:26 프레임 세로비 {a:0.0000} · k={UiKit.FrameK:0.0000}");
+                Assert.AreEqual(Stretch.MaxAspect, a, 0.01f, "상한 위는 더 안 늘어난다 — 남는 위·아래는 2단계 띠가 채운다");
+            }
+
+            SafeAreaRoot.Override = null;
+            foreach (var s in Object.FindObjectsByType<SafeAreaRoot>(FindObjectsInactive.Include, FindObjectsSortMode.None)) s.Apply(true);
+            yield return Frames(2);
+            _log.AssertNoRed("프레임 비율이 화면을 따라간다(T182 3단계-3)");
             yield return Shutdown();
         }
     }

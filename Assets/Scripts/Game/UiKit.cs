@@ -145,7 +145,7 @@ namespace KkomaKnight.Game
             return false;
         }
 
-        /// <summary>9:19.5 프레임 — index.html #frame. 화면 가운데 · 최대 크기로 letterbox.</summary>
+        /// <summary>프레임 — index.html #frame. 화면 가운데 · 최대 크기로 letterbox. 비율은 <see cref="FrameFit"/> 이 화면에 맞춰 잡는다(기준 9:19.5 ~ 상한 9:21 · T182 3단계-3).</summary>
         public static RectTransform CreateFrame(Transform canvas)
         {
             var rt = Rect(canvas, "Frame");
@@ -155,6 +155,7 @@ namespace KkomaKnight.Game
             arf.aspectMode = AspectRatioFitter.AspectMode.FitInParent; arf.aspectRatio = FrameW / FrameH;
             var img = rt.gameObject.AddComponent<Image>(); img.color = Palette.Bg; img.raycastTarget = true;
             Frame = rt;   // T182 3단계 — 프레임 칸 판정·세로 신축 배수의 기준
+            FrameFit.Attach(rt);   // T182 3단계-3 — 화면이 기준보다 길쭉하면(9:21 까지) 프레임이 그만큼 길어진다(납작한 화면은 기준 그대로)
             return rt;
         }
 
