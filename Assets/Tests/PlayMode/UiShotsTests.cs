@@ -145,6 +145,9 @@ namespace KkomaKnight.Tests.Play
                 var l02 = (Dictionary<string, object>)_layout["02_battle"];
                 Assert.IsTrue(l02.ContainsKey("플레이어 발밑 y") && l02.ContainsKey("플레이어 높이") && l02.ContainsKey("지면(길) 띠"), "02_battle layout 에 월드 행(플레이어 발밑 y · 플레이어 높이 · 지면(길) 띠)이 있어야 한다");
                 Assert.IsTrue(l02.ContainsKey("챕터 제목") && l02.ContainsKey("HP 바"), "02_battle 은 팝업이 아니라 HUD 를 찍어야 한다(챕터 제목 · HP 바 이름표)");
+                // T215 — 지면(길) 띠는 표 ②(레퍼런스 실측 y30.0 h21.0)의 자리다. 데모 씬 스케일 그대로면 h16.2 라 §5 02·03 이 0.5점씩 깎였다.
+                // 기댓값은 표에서 읽은 수를 그대로 적는다(코드 상수를 부르지 않는다 · 결정 555) · 판정 여유는 §5 와 같은 ±3%p 보다 좁게 잡는다.
+                { var band = (List<object>)l02["지면(길) 띠"]; Assert.AreEqual(21.0, (double)band[3], 1.0, "지면(길) 띠 높이 = 표 ② 21.0%"); Assert.AreEqual(30.0, (double)band[1], 1.5, "지면(길) 띠 윗변 = 표 ② 30.0%"); }
             }
             Time.timeScale = 1f;
             bool engaged = false; float t0 = Time.realtimeSinceStartup;

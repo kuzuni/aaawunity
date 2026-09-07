@@ -27,9 +27,24 @@ namespace KkomaKnight.Game
         readonly float _zoom; readonly float _playerX;             // ui.json camera.zoom · playerX(프레임 폭 비율)
         public const float CharBaseHeight = 0.85f;                          // Character.prefab 스케일 1 의 키(유니티 단위 · 조사값)
         const float FootY = Layout.PlayerFootY / 100f;
-        const float RoadCenterFrac = 0.41f;                          // 데모 씬의 길 중심(y −0.402)이 놓이는 프레임 비율 — 발 줄 40% 을 품는다(길 띠 1.48u = ±6.5% · 34.5~47.5% · ref-layout 지면 띠 30~51% 안)
+        const float RoadCenterFrac = 0.41f;                          // 데모 씬의 길 중심(y −0.402)이 놓이는 프레임 비율 — 발 줄 40% 을 품는다(띠는 이 줄을 가운데로 ±RoadBandH/2 = 30.5~51.5% · ref-layout 지면 띠 30~51 과 같은 자리)
         /// <summary>데모 씬 1u 가 화면에서 차지하는 프레임 높이 비율 — 데모 구성을 통째로 <see cref="Layout.MapScale"/>(0.6) 배로 그린다(T19 · 1u → 0.6 유니티 단위 = 프레임의 1/19).</summary>
         const float UnitFrac = WorldCam.PPU * Layout.MapScale / WorldCam.LayoutH;
+        /// <summary>
+        /// 지면(길) 띠의 프레임 높이(%) — <c>docs/ref-layout.md</c> ② «지면(길) 띠 y30.0 h21.0» 의 h (T215).
+        /// <para>
+        /// 데모 씬의 길은 <see cref="MapLayouts.RoadScaleY"/> 그대로 두면 <b>3.15u = 16.2%</b> 라 표보다 4.8%p 얇았다(§5 02·03 의 마지막 감점).
+        /// «데모 씬 그대로»(T19)를 어기는 것이 아니다 — 길 그림(<c>Road_*.png</c>)은 <b>128×128 이 한 가지 색으로 채워진 판</b>이라
+        /// 세로로 늘려도 그림이 상하지 않는다(늘리는 것은 그림이 아니라 «띠의 자리» 다). 레퍼런스 02 와 원본 HTML 게임이 둘 다 30~51% 로 같은 쪽을 가리킨다.
+        /// </para>
+        /// </summary>
+        public const float RoadBandH = 21.0f;
+        /// <summary>데모 길 띠의 높이(데모 u) — 그림 1.28u(128px ÷ PPU 100) × 데모 스케일 = 3.15u.</summary>
+        public const float RoadDemoH = 1.28f * MapLayouts.RoadScaleY;
+        /// <summary>데모 띠(16.2%)를 표 높이(<see cref="RoadBandH"/>)로 만드는 세로 배수 — 길 타일 스케일에 곱한다.</summary>
+        public static float RoadStretchY => RoadBandH / 100f / (RoadDemoH * UnitFrac);
+        /// <summary>띠가 늘어난 만큼(위·아래 각각) 물결 경계(<c>*.roadUp</c>)도 바깥으로 옮기는 폭(데모 u) — 안 옮기면 띠 경계와 물결이 갈라진다.</summary>
+        public static float RoadEdgeShift => RoadDemoH * 0.5f * (RoadStretchY - 1f);
         /// <summary>
         /// 월드 정렬 층(T71) — 바닥 &lt; 길 &lt; 납작(물결 경계·풀꽃) &lt; 길 위쪽 소품(멀수록 뒤 · <see cref="OrderNearProp"/> 에서 1u 당 −3 · 하한 <see cref="OrderFarProp"/>) &lt; 캐릭터 &lt; 길 아래쪽 소품(381~).
         /// 예전엔 바닥 −20 · 위쪽 소품 하한 −60 이라 발 줄에서 2.7u 이상 위(y ≥ 2.46 · 테마마다 큰 나무 5~10그루)의 소품이 바닥 뒤로 숨었다 — 주인 «위쪽엔 나무가 적다» 의 원인.
@@ -243,7 +258,8 @@ namespace KkomaKnight.Game
                     _fieldTiles.Add(sr);
                 }
             var road = _app.Assets.Sprite(_theme.Road) ?? _app.Assets.Sprite("env.road");
-            var roadScale = new Vector3(MapLayouts.RoadScaleX * Layout.MapScale, MapLayouts.RoadScaleY * Layout.MapScale, 1f);       // 데모: 128px × (22.47, 2.46) = 28.8 × 3.15u 띠
+            // 세로만 표 높이로 늘린다(T215 · <see cref="RoadStretchY"/>) — 가로·자리는 데모 그대로다. 길 그림이 한 색 판이라 늘려도 그림이 안 상한다.
+            var roadScale = new Vector3(MapLayouts.RoadScaleX * Layout.MapScale, MapLayouts.RoadScaleY * Layout.MapScale * RoadStretchY, 1f);       // 데모: 128px × (22.47, 2.46) = 28.8 × 3.15u 띠
             float roadY = WorldCam.ToWorld(0, DemoY(MapLayouts.RoadCenterY)).y;
             float roadW = (road != null ? road.bounds.size.x : 1.28f) * roadScale.x; int roadCols = Mathf.CeilToInt(WorldCam.LayoutW / WorldCam.PPU / roadW) + 2;
             for (int c = 0; c < roadCols; c++)
@@ -288,12 +304,13 @@ namespace KkomaKnight.Game
             float footDemoY = MapLayouts.RoadCenterY + (RoadCenterFrac - FootY) / UnitFrac;   // 발 줄의 데모 y (≈ −0.21)
             var layout = MapLayouts.Of(_theme.Name); double period = MapLayouts.WidthOf(_theme.Name) * unitPx;
             double start = System.Math.Floor(from / period) * period;
-            float upperEdgeY = UpperRoadEdgeY(layout);
+            // T215 — 띠를 세로로 늘렸으므로 물결 경계도 같은 폭만큼 위·아래로 옮긴다(경계와 띠 끝의 관계는 데모 그대로 유지된다).
+            float upperEdgeY = UpperRoadEdgeY(layout) + RoadEdgeShift;
             for (double x0 = start; x0 < to; x0 += period)
                 foreach (var p in layout)
                 {
                     bool roadUp = p.Key.EndsWith(".roadUp"); bool lowerEdge = roadUp && p.Y < MapLayouts.RoadCenterY;
-                    float y = lowerEdge ? 2f * MapLayouts.RoadCenterY - upperEdgeY : p.Y;    // 아래 경계 = 위 경계의 길 중심 대칭 자리(T71 ①)
+                    float y = roadUp ? (lowerEdge ? 2f * MapLayouts.RoadCenterY - upperEdgeY : p.Y + RoadEdgeShift) : p.Y;    // 아래 경계 = 위 경계의 길 중심 대칭 자리(T71 ①) · 위 경계는 늘어난 만큼 위로(T215)
                     float yf = DemoY(y);
                     if (yf < -0.15f || yf > 0.72f) continue;                        // 화면 위 밖 · HUD 패널 뒤는 만들지 않는다
                     var sp = _app.Assets.Sprite(p.Key);

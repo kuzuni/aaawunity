@@ -72,7 +72,10 @@ namespace KkomaKnight.Tests.Play
                     {
                         roads++; Assert.IsNotNull(sr.sprite, where + " 길 그림"); roadB = sr.bounds;
                         Assert.AreEqual(MapLayouts.RoadScaleX * Layout.MapScale, sr.transform.localScale.x, 1e-3f, where + " 길 스케일 x = Road 인스턴스 × MapScale");
-                        Assert.AreEqual(MapLayouts.RoadScaleY * Layout.MapScale, sr.transform.localScale.y, 1e-3f, where + " 길 스케일 y = Road 인스턴스 × MapScale(2.46 × 0.6)");
+                        // T215 — 세로는 «데모 스케일 그대로» 가 아니라 «표 높이» 다: ref-layout ② «지면(길) 띠 h 21.0%».
+                        // 데모 그대로면 16.2% 라 §5 02·03 이 4.8%p 감점이었다(길 그림은 한 색으로 채운 판이라 늘려도 그림이 안 상한다).
+                        // 여기서 재는 것은 스케일 상수가 아니라 «화면에서 띠가 몇 %인가» 다 — 구현을 부르면 자가 아니라 거울이 된다(결정 555).
+                        Assert.AreEqual(21.0f, sr.bounds.size.y / (WorldCam.LayoutH / WorldCam.PPU) * 100f, 0.5f, where + " 길 띠 높이 = 표 ② 21.0%");
                     }
                 }
                 Assert.Greater(fields, 0, where + " 바닥 타일"); Assert.Greater(roads, 0, where + " 길 타일");
@@ -88,7 +91,12 @@ namespace KkomaKnight.Tests.Play
                 var props = Under(root, "Props"); Assert.Greater(props.Count, 0, where + " 소품");
                 var table = MapLayouts.Of(theme.Name); var sys = new HashSet<float>(); foreach (var p in table) sys.Add(Mathf.Abs(p.Sy));
                 int upAbove = 0, upBelow = 0, visible = 0, visibleRoadUp = 0, tallAbove = 0, tallBelow = 0;
-                float upperEdgeY = WorldCam.ToWorld(0, BattleWorld.DemoY(BattleWorld.UpperRoadEdgeY(table))).y;   // 위 경계 자리 · 아래 경계는 길 중심 대칭(T71 ①)
+                // 위 경계 자리 — **그려진 것에서** 읽는다(T215 로 띠가 늘어나면 경계도 같이 옮겨 가므로 표 값으로는 못 잡는다).
+                // 아래 경계는 이 값의 길 중심 대칭(T71 ①)이고, 위 경계는 띠 윗변에 붙어 있어야 한다(아래 ⓑ).
+                float upperEdgeY = float.MinValue;
+                foreach (var sr in props) if (sr.sprite != null && sr.sprite.name.StartsWith("Road_up") && sr.transform.position.y > roadB.center.y) upperEdgeY = Mathf.Max(upperEdgeY, sr.transform.position.y);
+                Assert.Greater(upperEdgeY, float.MinValue, where + " 위쪽 물결 경계");
+                Assert.AreEqual(roadB.max.y, upperEdgeY, 0.12f, where + " 위 물결 경계는 띠 윗변에 붙어 있다 — 띠만 늘리고 경계를 두면 길 끝에 직선 이음매가 생긴다(T215)");
                 foreach (var sr in props)
                 {
                     Assert.IsNotNull(sr.sprite, where + " 소품 그림 없음: " + sr.name);
