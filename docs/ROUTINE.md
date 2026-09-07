@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-07 · 07:3X UTC) ⚑⚑ 주인 — 특전(04) 넷 → **T155**:** ⓐ «**특전에 `TitleBorder` 가 `FillCenter` 트루로 하라 했었는데 아직 반영 안 됐네. 되게 해줘**»(= **T93 6항이 안 들어갔다** — `UiKit.InkFrameBorders` 가 이름 목록을 **전부** `fillCenter = false` 로 만든다) ⓑ «**특전들 레이아웃이 레퍼런스랑 다른 느낌임 비율 비례 등등 해결해줘**» ⓒ «**특전 팝업에 «레벨 업» 위에 글로우 서클이랑 이펙트 라이트 있어야 하는데 없더라 · 레퍼런스에는 있으니께 · 그거 회전하게 해줘야 함**» ⓓ «**모든 그 이펙트 라이트 들어간 곳에 글로우 서클도 같이 넣어줘**». **`Glow_Circle_01/02` 는 에셋에 있으나 카탈로그에 없다** — 키부터 만들어야 한다.
+
 > **❗ (05:4X UTC · 워커 J · sess-1917-23930) main 이 빨갛다 — 임자가 있는 한 건이다(내 것 아님 · 배포가 이것 때문에 막힌다).** CI [#270](https://github.com/kuzuni/aaawunity/actions/runs/34086008261)(`1bc35657`) 유니티 잡: **PlayMode 69/70** · 유일한 실패는 `ChapterChestScreenTests.ClaimingAStepScrollsToTheNextRewardAndTheLastOneTurnsTheDotOff` — `Assets/Tests/PlayMode/ChapterChestScreenTests.cs:111` 에서 «아직 챕터 1 안이다 · Expected "챕터 1" But was "챕터 2"». **T137**(챕터 보상 3단 · 살아 있는 lock `sess-0452-14099`)의 새 테스트다 — 그 워커 몫으로 남긴다. EditMode 는 193/193 이고 다른 PlayMode 69케이스는 전부 Passed 다. **같은 런에서 내 확인 셋이 나왔다**: «[GlyphGate] 0(strict=**True**)» · «[RibbonWidthGate] 공통 리본 10 · 가장 빡빡한 «일반»(07) 칸 183px · 글자 97px · **여유 86px** · 크기 60» · «[BorderGate] `17_daily_gift` 5/5/0 ✔» → **T75·T69 확인 끝**.
 
 - **(2026-09-07 · 07:1X UTC) ⚑ 주인 — 특전 팝업의 **책 아이콘이 찌그러져 있다** → **T154**:** «**특전에 보면 책 아이콘 찌그러져있더라 수정해줘**» — 등재 세션 계산: 자리(`Layout.OvInfo` 86.0/79.5/**9.0**/**6.0**)가 px 로 **97.2 × 140.2**(세로 1.44배)인데 표 ⑦ 의 그 행 비고는 «**작은 정사각**» 이다 — 조각 그림이 세로로 늘어난다.
@@ -2038,6 +2040,22 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 4. **같이 볼 것** — 전투 HUD 의 책 버튼(`BattleScreen.cs:129~131`)은 `UiKit.Icon`(= `preserveAspect = true`)이라 지금도 멀쩡하다. **T142 가 그 버튼의 자리를 바꾸는 중**이라 파일이 겹치면 순서를 맞춘다.
 5. **게이트** — PlayMode: 특전 3택 팝업의 «Book» 아래 Image 들이 **가로:세로 = 1 ± 0.05** 로 그려진다(rect 가 아니라 **그려지는 그림** 기준 · `preserveAspect` 면 rect 안 정사각). 같은 자를 T136 의 점 게이트와 나눠 쓸 수 있다.
 6. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` **04_perks** PNG 확대(책이 정사각인가) + 주인 폰.
+
+### T155 — 특전(04) 넷: **`TitleBorder` FillCenter(T93 6항 미반영)** · **레이아웃 비례를 레퍼런스와** · **«레벨 업» 위 글로우 서클 + 이펙트 라이트(회전)** · **빛살 있는 곳마다 글로우 서클** (주인 2026-09-07 07:3X · 화면·연출 · 규칙·수치 0줄)
+
+1. **ⓐ `TitleBorder` 는 `fillCenter = true` — 아직 안 들어갔다(주인 재지시 · 원 지시 = T93 6항 · 2026-09-07 07:2X).**
+   - **왜 안 됐나(코드로 확인)**: `Overlay.cs:210` 이 `UiKit.InkFrameBorders(frt, CardBorderNativePx, 1f, UiKit.BorderName, "TitleBorder")` 로 **두 이름을 같이** 넘기는데, `InkFrameBorders`(`UiKit.cs:352~365`)는 걸린 Image 를 **예외 없이** `im.fillCenter = false` 로 만든다. 그래서 제목 띠 가운데가 뚫려 보인다.
+   - **처방**: 그 함수에 «가운데를 비울 이름 / 채울 이름» 을 나눠 준다(예 `fillCenter` 인자 하나 + 호출 두 번: `Border` 는 false · `TitleBorder` 는 true). **`InkFrameBorders` 는 공용**이라(대장간·던전 카드도 쓴다) **기본값은 지금 그대로(false)** 두고 특전 카드에서만 true 를 준다.
+   - **게이트**: PlayMode — 특전 카드의 `TitleBorder` Image 가 `fillCenter == true` · `Border` 는 `false`. **이 한 줄이 있었으면 이번 미반영을 바로 잡았다.**
+2. **ⓑ 레이아웃 비례를 레퍼런스 04 와 다시 맞춘다.** 주인 «비율 비례 등등». §5 절차대로 **`docs/ref/04_perks.jpg` 를 `Read` 로 직접 보고** 표 ⑦(`docs/ref-layout.md` 138~157 줄)의 값과 우리 화면(`screens` 04_perks.png)을 **같은 자로 재서** 어긋난 행을 고친다. 재는 순서 = 배너(리본) → 부제 → 카드 3장(x·w·h·피치) → 하단 «새로고침»·«남은 횟수» → 책 버튼. **±3%p 밖인 행만** 고치고(ROUTINE ⓐ), 고친 값은 표와 `Layout.Ov*` 를 **같이** 옮긴다(`LayoutSpecTests` 가 대조한다). 카드 안쪽 비례(제목 탭 높이 · 설명 글자 칸 = `Overlay.PerkDescLeft/Right`)도 같은 자로 본다.
+3. **ⓒ «레벨 업» 리본 위에 글로우 서클 + 이펙트 라이트(도는 것).** 레퍼런스 04 의 제목 뒤에 빛 두 겹이 있다.
+   - **재료**: 이펙트 라이트는 이미 있다(`ui.light1` = `Effect_Light_01_512`). **글로우 서클은 에셋에 있는데 카탈로그에 없다** — `Shared/Sprite_Common/~Demo/Demo_Image/Glow_Circle_01_512.png`(및 `_02`) → **카탈로그 키를 새로 만든다**(예 `ui.glow1`·`ui.glow2`) + `python3 tools/gen_catalog.py` 로 `AssetCatalog.asset`·`docs/assets-map.md` 재생성(CI 가 `--check` 한다). **새 그림은 안 그린다**(§1 · 주인 에셋 그대로).
+   - **자리·층**: 리본(`Title_01_NoDeco_Tangerine`) **뒤**(형제 앞쪽)에 글로우 서클 → 그 위에 이펙트 라이트 → 리본·글자. 어둠 위 팝업이라 색은 옅게(기존 `UiKit.LightBehind` 의 tint 규약을 따른다).
+   - **회전**: 이펙트 라이트는 기존 `UiKit.LightBehind`(주기 `LightPeriod`)로 **천천히 시계 방향**(T72 ② 와 같은 값). ⚠ **글로우 서클은 원이라 돌려도 티가 안 난다** — 도는 것은 빛살이 맡고 서클은 은은하게 두는 편이 자연스럽다(주인 «회전하게» 는 빛살을 가리킨 것으로 읽는다). 다르게 판단하면 «워커 결정 기록» 에 한 줄.
+4. **ⓓ 빛살(`Effect_Light`)이 들어간 자리마다 글로우 서클도 같이.** 지금 빛살을 까는 곳 = `UiKit.LightBehind`(공용) 를 부르는 자리들 — 상점 상품·특별 상품(`ShopScreen`), 던전·아레나 보상 칸(`EventsScreen.PlanLight`), 클리어 보상(`Overlay.RewardLight`) 등. **헬퍼 한 곳(`LightBehind`)에 «글로우 서클도 같이 깐다» 를 넣으면 전부가 한 번에 받는다** — 자리·크기는 빛살과 같은 사각형, 층은 빛살 **아래**. 스크롤 밖에서 멈추는 규약(`SetLightSpinning` · T72 4항)과 «보이는 칸만» 도 그대로 따른다(서클은 안 돌아도 켜고 끄는 것은 같이).
+   - **성능**: 빛살이 도는 칸이 화면에 여럿이다(T129 fps 추세) — 서클은 **트윈을 만들지 않는다**(정적 Image 한 장)면 드로우콜만 는다. 도는 트윈을 늘리지 말 것.
+5. **테스트** — PlayMode: ⓐ 위 `fillCenter` 두 줄 ⓒ 특전 3택 팝업에 `ui.glow*`·`ui.light*` Image 가 리본 뒤에 각각 1개 · 빛살에 도는 트윈이 걸려 있다 ⓓ `UiKit.HasLight(cell)` 이 참인 칸에는 글로우 서클도 있다(공용 자 한 줄) · `PlayLog.AssertNoRed`.
+6. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` **04_perks**(+ ⓓ 가 닿는 09·20·23) PNG 를 레퍼런스와 나란히 놓고 §5 비평 ≥ 8.0 + 주인 폰.
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
