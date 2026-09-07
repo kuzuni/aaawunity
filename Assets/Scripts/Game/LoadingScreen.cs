@@ -30,6 +30,21 @@ namespace KkomaKnight.Game
         /// <summary>화면에 떠 있은 시간(초) — <see cref="MinSeconds"/> 를 채웠는지 <see cref="Bootstrap"/> 이 본다.</summary>
         public float Elapsed => Time.realtimeSinceStartup - _shownAt;
 
+        /// <summary>
+        /// 마지막 부팅에서 <b>주인 지목 조각으로</b> 로딩 화면이 실제로 떴는가(T96-loading 게이트용 · 결정 329).
+        /// 로딩 화면은 0.3~수초 만에 사라지는 <b>지나가는</b> 오브젝트라, 테스트가 그 순간을 놓치면
+        /// «안 떴다» 와 «떴는데 못 잡았다» 를 구별할 수 없다 — 그래서 «떴다» 는 사실을 여기 남긴다.
+        /// <see cref="Show"/> 가 조각을 세울 때만 참이 되고, 조각을 못 찾아 <c>null</c> 을 돌려줄 때는 거짓 그대로다.
+        /// </summary>
+        public static bool LastShownWasPrefab { get; private set; }
+        /// <summary>마지막으로 띄운 로딩 화면의 진행 바 범위(같은 까닭 · 없었으면 둘 다 0).</summary>
+        public static float LastBarMin { get; private set; }
+        /// <summary>진행 바 최대(0~1 계약 확인용).</summary>
+        public static float LastBarMax { get; private set; }
+
+        /// <summary>부팅마다 초기화 — 앞 부팅의 흔적을 다음 판정에 쓰지 않는다(<see cref="Bootstrap"/> 가 Show 직전에 부른다).</summary>
+        public static void ResetLastShown() { LastShownWasPrefab = false; LastBarMin = 0f; LastBarMax = 0f; }
+
         /// <summary>로딩 화면을 띄운다 — 조각이 없으면 null(부팅은 계속된다).</summary>
         public static LoadingScreen Show(Transform parent, AssetCatalog cat)
         {
@@ -42,6 +57,9 @@ namespace KkomaKnight.Game
             // 프리팹의 버전 글자(«Ver. 1.0.130») 자리를 진행 글자로 쓴다 — 새 글자를 만들지 않는다(프리팹 그대로)
             foreach (var t in go.GetComponentsInChildren<Text>(true)) { s._pct = t; break; }
             s.SetProgress(0f);
+            LastShownWasPrefab = true;
+            LastBarMin = s._bar != null ? s._bar.minValue : 0f;
+            LastBarMax = s._bar != null ? s._bar.maxValue : 0f;
             return s;
         }
 

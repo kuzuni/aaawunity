@@ -38,6 +38,7 @@ namespace KkomaKnight.Game
             _boot = UiKit.CreateRootCanvas("BootCanvas");
             // T96-loading — 주인 지목 프리팹으로 로딩 화면을 띄운다(유니티 로더가 끝난 «뒤» 라 WebGL 첫 로딩과 겹치지 않는다).
             // 카탈로그를 직접 넘긴다 — App 이 아직 없어 UiKit.Cat 이 비어 있다.
+            LoadingScreen.ResetLastShown();
             _loading = LoadingScreen.Show(_boot.transform, catalog);
             if (_loading == null)
             {

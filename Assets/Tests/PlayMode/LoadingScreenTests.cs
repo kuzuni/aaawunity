@@ -44,9 +44,17 @@ namespace KkomaKnight.Tests.Play
                 yield return null;
             }
             Assert.IsNotNull(App.I, "Bootstrap 이 60초 안에 App 을 세워야 한다");
-            Assert.IsNotNull(piece, "부팅에 로딩 화면 조각(" + LoadingScreen.Key + ")이 떠야 한다(T96-loading)");
-            Assert.IsNotNull(bar, "로딩 진행 바(프리팹 " + LoadingScreen.BarName + ")");
-            Assert.AreEqual(0f, bar.minValue, 1e-3f, "진행 바 0~1"); Assert.AreEqual(1f, bar.maxValue, 1e-3f, "진행 바 0~1");
+
+            // 로딩 화면은 «지나가는» 오브젝트다(데이터를 다 읽으면 0.3s 뒤 사라진다) — 위 루프가 그 순간을 놓칠 수 있으므로
+            // «떴다» 는 사실은 부팅이 남긴 기록(LoadingScreen.LastShownWasPrefab · 결정 329)으로 판정한다.
+            // 이렇게 하면 실패했을 때 «조각이 안 떴다» 와 «떴는데 테스트가 못 잡았다» 가 메시지로 갈린다(CI #234 에서 이것을 못 갈라 한 회차를 버렸다).
+            Assert.IsTrue(LoadingScreen.LastShownWasPrefab,
+                "부팅에 로딩 화면 조각(" + LoadingScreen.Key + ")이 떠야 한다(T96-loading) — 조각을 못 찾아 Show 가 null 을 돌려줬다"
+                + (piece != null ? " ※ 그런데 화면에서는 조각이 잡혔다(기록 쪽이 틀렸다는 뜻)" : ""));
+            Assert.AreEqual(0f, LoadingScreen.LastBarMin, 1e-3f, "진행 바 0~1(부팅 기록)");
+            Assert.AreEqual(1f, LoadingScreen.LastBarMax, 1e-3f, "진행 바 0~1(부팅 기록)");
+            // 살아 있는 조각을 잡았으면 그것으로도 확인한다(잡는 것은 타이밍이라 «못 잡음» 은 실패가 아니다)
+            if (piece != null) Assert.IsNotNull(bar, "로딩 진행 바(프리팹 " + LoadingScreen.BarName + ")");
 
             // ⓑ 다 읽으면 사라진다 — 최소 표시 시간(0.3s)을 넉넉히 넘겨 기다린다
             float t1 = Time.realtimeSinceStartup;
