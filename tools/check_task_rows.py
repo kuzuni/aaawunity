@@ -39,6 +39,10 @@ FOLDED = ("✂", "♻")          # 이미 «중복 행» 이라고 접어 둔 �
 WAITING = "⬜"
 LIVE = ("✅", "🔄")
 CLOSED = re.compile(r"✅\s*\*{0,2}\s*(종결|완료|눈 확인까지 끝)")   # 본문에 적힌 «닫았다» 표시 (ⓓ)
+# ⓕ — «lock 을 반납했다» 는 말. ⓓ 의 문구를 안 쓰고 닫는 워커가 있어서(T182: «✅ 3단계까지 전부 끝 · lock 반납»)
+#     낱말을 하나 더 본다. **이것만으로는 못 쓴다** — 본문에 «lock 잡음»·«저 lock 이 닫히기 전에는» 처럼
+#     남의/제 살아 있는 lock 을 말하는 줄이 많다. 그래서 `docs/claims/` 의 **실제 파일 유무**와 함께 본다(아래 참조).
+RELEASED = re.compile(r"lock\s*(을|를)?\s*반납|반납했다|반납한다")
 COLS = 6                     # ID · 설명 · 상태 · 워커 · 범위 · 비고 (ⓔ)
 
 
@@ -69,8 +73,21 @@ def rows(path):
     return out, shape
 
 
+CLAIMS = os.path.join(os.path.dirname(DOC), "claims")
+
+
+def live_lock_ids(claims_dir=None):
+    """`docs/claims/*.lock` 이 실제로 있는 작업 ID 들 — ⓕ 가 «반납했다는 말» 과 함께 본다."""
+    d = claims_dir or CLAIMS
+    try:
+        return {f[:-5] for f in os.listdir(d) if f.endswith(".lock")}
+    except OSError:
+        return set()
+
+
 def main():
     show_all = "--list" in sys.argv
+    live_locks = live_lock_ids()
     if not os.path.exists(DOC):
         print("PROGRESS.md 가 없다: " + DOC)
         return 1
@@ -132,6 +149,24 @@ def main():
             if says_closed(status) or says_closed(desc_of.get((tid, n), "")):
                 closed.append((tid, n, status))
 
+    # ⓕ 머리는 «🔄 진행» 인데 본문이 «lock 을 반납했다» 고 말하고 **실제로 그 lock 파일이 없다** (T218).
+    #    ⓓ 는 «✅ 종결»·«✅ 완료» 라는 **문구**를 찾는데, 그 문구를 안 쓰고 닫는 워커가 있다 —
+    #    T182 는 «✅ 3단계까지 전부 끝 · lock 반납» 이라고 적었고 ⓓ 는 조용했다(내가 T198 로 그 자를 넓힌 바로 다음 자리다).
+    #    ⚠ **낱말만으로는 거짓 경고가 난다** — T207(«lock 잡음»)·T215(«T182.lock 이 닫히기 전에는 잡지 마라»)는
+    #    둘 다 살아 있는 lock 안이다. 그래서 두 신호를 함께 본다: **본문이 반납을 말한다 + 그 작업의 lock 파일이 실제로 없다.**
+    #    (lock 이 살아 있으면 그 줄은 «하는 중» 이 맞으므로 이 자는 아무 말도 안 한다.)
+    released = []
+    for tid, items in by_id.items():
+        if tid in live_locks:
+            continue
+        for n, status in items:
+            if not status.lstrip("*_ ").startswith("🔄"):
+                continue
+            if (tid, n) in {(t, ln) for t, ln, _ in closed}:
+                continue                                   # ⓓ 가 이미 잡은 줄은 두 번 안 센다
+            if RELEASED.search(status) or RELEASED.search(desc_of.get((tid, n), "")):
+                released.append((tid, n, status))
+
     dups = {k: v for k, v in by_id.items() if len(v) > 1}
     bad = []
     for tid, items in dups.items():
@@ -159,6 +194,14 @@ def main():
         print("고치는 법: 상태 칸 **머리**를 ✅ 로 바꾸고 «(이력)» 뒤에 옛 머리를 그대로 남긴다 —")
         print("            «닫았다» 는 본문 «뒤» 가 아니라 **머리**에 있어야 한다(표를 훑는 워커는 머리만 본다).")
         print("            정말로 아직 하는 중이면 본문의 그 «✅ 종결» 이 남의 작업 이야기인지 보고, 그렇다면 «T160 ✅ 종결» 처럼 작업 번호를 앞에 적는다.")
+        return 1
+
+    if released:
+        print("머리는 «🔄 진행» 인데 본문은 «lock 을 반납했다» 고 말하고 그 lock 파일도 실제로 없다 — 아무도 안 잡는 줄이 된다(T218):")
+        for tid, n, status in sorted(released, key=lambda x: x[1]):
+            print("  " + tid + " — " + str(n) + "행: " + status[:70].replace("\n", " ") + " …")
+        print("고치는 법: 갈래 ⓓ 와 같다 — 상태 칸 **머리**를 ✅(또는 아직 남은 일이 있으면 그 상태)로 바꾸고 옛 머리는 «(이력)» 뒤에 남긴다.")
+        print("            **정말로 하는 중인데 lock 이 없으면 그것이 문제다** — 반납한 채로 일하면 남이 같은 자리를 잡는다(§3). lock 을 다시 잡아라.")
         return 1
 
     if bad:
