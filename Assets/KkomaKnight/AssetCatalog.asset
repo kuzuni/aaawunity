@@ -1132,6 +1132,18 @@ MonoBehaviour:
     prefab: {fileID: 5129137505210471693, guid: 540c65f25596c43c19b8e6ac4f24c199, type: 3}
   - key: ui.userInfoSlider
     prefab: {fileID: 3948410254394711559, guid: b79be41b82c304d6a8ddae49ef1b54c8, type: 3}
+  - key: ui.profileFrame.yellow
+    prefab: {fileID: 2135611221386603852, guid: 36cb6b82c61eb4399b62085d0e188dfe, type: 3}
+  - key: ui.profileFrame.blue
+    prefab: {fileID: 88474802282519757, guid: 8a7b62536d2aa4bd8b6667505c37ddf7, type: 3}
+  - key: ui.profileFrame.red
+    prefab: {fileID: 4235510568301889854, guid: e26350b90415342729b6e8f05f93e8af, type: 3}
+  - key: ui.profileFrame.plum
+    prefab: {fileID: 8873941238824999879, guid: f31bbfb16481a4e3893bff00fc67ef13, type: 3}
+  - key: ui.profileFrame.gray
+    prefab: {fileID: 6196068370515240449, guid: bc933be3e1d884febbbc44a4ad312def, type: 3}
+  - key: ui.profileAvatar
+    prefab: {fileID: 3223506120641057420, guid: f583887b7da7f4a5f821f008509cb089, type: 3}
   controllers:
   - key: cm.controller
     controller: {fileID: 9100000, guid: b491875454dfab744b3c79816cba2e67, type: 2}

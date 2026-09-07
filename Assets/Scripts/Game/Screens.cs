@@ -199,7 +199,7 @@ namespace KkomaKnight.Game
     /// <summary>
     /// 상단 재화 바 — 레퍼런스 공통 문법(docs/ref/README.md · 로비·장비·상점·펫·던전·아레나 풀스크린 화면 공통 · 전투 HUD 에는 없음):
     /// 맨 왼쪽 <b>정사각 아바타(노란 테두리 · 내 플레이어 가슴 위 · HeroView)</b> → <b>전투력(칼 아이콘 + 주황 큰 숫자)</b> → <b>골드 pill</b> → <b>보석 pill</b>. 프레임 맨 위에서 3.7% 띄움(<see cref="Layout.LobbyTopBar"/>).
-    /// 재료: 아바타 = UserInfo_01_Slider 의 ProfileFrame_02_Yellow 조각(본래 177px · 배율로) · pill = ResourceBar_Group 의 Coin/Gem 칸 · 아이콘 = ui.battle. 화면마다 이 한 줄이면 된다: <c>_top = TopBar.Build(App, root);</c> + Refresh 에서 <c>_top.Refresh()</c>.
+    /// 재료: 아바타 = <c>ui.profileFrame.&lt;색&gt;</c>(ProfileFrame_02 · 색은 프로필에서 고른다 = T96-profile · 기본 노랑 · 본래 177px 을 배율로 · 누르면 <see cref="Profile.OpenAvatar"/>) · pill = ResourceBar_Group 의 Coin/Gem 칸 · 아이콘 = ui.battle. 화면마다 이 한 줄이면 된다: <c>_top = TopBar.Build(App, root);</c> + Refresh 에서 <c>_top.Refresh()</c>.
     /// </summary>
     public sealed class TopBar
     {
@@ -262,22 +262,24 @@ namespace KkomaKnight.Game
             var tb = new TopBar(app);
             var root = UiKit.Rect(parent, "TopBar"); UiKit.Pct(root, Layout.LobbyTopBar); tb.Root = root;
             var top = Layout.LobbyTopBar;
-            // 아바타 — UserInfo_01_Slider 에서 ProfileFrame_02_Yellow 조각만(나머지 이름·길드·슬라이더·바탕 프레임은 끔) · 조각은 본래 크기 그대로 두고 아바타 칸에 배율로
+            // 아바타 — ProfileFrame_02 조각(색은 프로필에서 고른다 · T96-profile · 기본 노랑) · 조각은 본래 크기 그대로 두고 아바타 칸에 배율로 · 누르면 프로필 팝업
             var slot = UiKit.Rect(root, "Avatar"); UiKit.Pct(slot, Layout.LobbyAvatar.Within(top)); tb.Avatar = slot;
             Opaque(slot);   // T72 7항 ⓑ — 칸 제 불투명 바탕(노란 초상 프레임 뒤로 패턴이 비치지 않게)
-            var info = UiKit.Spawn("ui.userInfoSlider", slot); var irt = (RectTransform)info.transform;
-            var frame = UiKit.FindAny(irt, "ProfileFrame_02_Yellow", "ProfileFrame_02");
+            // T96-profile — 테두리 조각은 «고른 색»(세이브 · 기본 노랑 = 종전 UserInfo_01_Slider 안의 그것과 같은 프리팹)을 카탈로그에서 바로 세운다
+            var frameGo = UiKit.Spawn(Profile.FrameKey(app.Save), slot);
+            var frame = frameGo != null ? frameGo.transform : null;
             if (frame != null)
             {
-                for (int i = irt.childCount - 1; i >= 0; i--) { var c = irt.GetChild(i); if (c != frame) c.gameObject.SetActive(false); }
-                var frt = (RectTransform)frame; frt.SetParent(slot, false); info.SetActive(false);
+                var frt = (RectTransform)frame;
                 UiKit.FitScale(frt, UiKit.PxSize(Layout.LobbyAvatar));
                 var mask = UiKit.FindAny(frt, "Bg_MainColor(Mask)", "Mask"); if (mask == null) mask = frt;
                 UiKit.Hide(mask, "Character");
                 tb.Hero = HeroView.Attach((RectTransform)mask, HeroView.PlayerSkin(app));
                 tb.Hero.SetFraming(1.6f, 0.45f);   // 가슴 위(레퍼런스 아바타)
             }
-            else { info.SetActive(false); tb.Hero = HeroView.Attach(slot, HeroView.PlayerSkin(app)); tb.Hero.SetFraming(1.6f, 0.45f); }
+            else { tb.Hero = HeroView.Attach(slot, HeroView.PlayerSkin(app)); tb.Hero.SetFraming(1.6f, 0.45f); }
+            // 아바타를 누르면 프로필(아바타 고르기) — T96-profile · 조각에 버튼이 없으므로 칸 자체에 붙인다
+            UiKit.Clickable(slot, () => Profile.OpenAvatar(app));
             // 상단 초상은 정지 그림(T68 ② · 주인 «로비 주인공 아이콘이 계속 움직인다») — 장비 화면 가운데 큰 캐릭터(GearScreen)는 그대로 움직인다
             tb.Hero.SetStill(true);
             // 전투력 — 칼 아이콘 + 주황 큰 숫자(숫자만 · 레퍼런스에 라벨 없음)
