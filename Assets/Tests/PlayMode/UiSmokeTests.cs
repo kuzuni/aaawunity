@@ -1290,9 +1290,16 @@ namespace KkomaKnight.Tests.Play
                 AssertNoTextClip("뽑기 결과 창", _app.Overlay.Root, skipPath: "gear:");
             }
             {
-                // T158 ⓐ — 상자는 «작았다 → 커졌다 → 제 크기». 연 직후 값은 위에서 미리 잡아 뒀다(그새 커지므로).
-                Assert.Less(chestScale0, 1f, "결과 창을 연 직후 상자는 제 크기보다 작다(T158 ⓐ · 주인 «작았었는데 커졌다가» · 지금 " + chestScale0.ToString("0.###") + ")");
-                Assert.GreaterOrEqual(chestScale0, ShopScreen.ChestScaleFrom - 0.01f, "시작 배율(ShopScreen.ChestScaleFrom)보다 작아지지는 않는다");
+                // T158 ⓐ — 상자는 «작았다 → 커졌다 → 제 크기»(주인 «작았었는데 커졌다가»).
+                // ⚠ 회차 1 은 «연 직후 배율 < 1» 로 쟀다가 CI 를 빨갛게 했다(#324 · «Expected less than 1.0f · But was 1.00306165f»).
+                // 까닭은 코드가 아니라 **자**다: 배율 트윈은 ChestFallSec(0.24초)뿐인데 팝업을 연 뒤 여기까지 오는 데
+                // 그보다 오래 걸린다(헤드리스에서 Find·Check 가 캔버스를 훑는다) → 이미 OutBack 의 «살짝 넘긴» 구간(1.003)을 잰다.
+                // 시계와 경주하는 단언이라 기계 부하에 따라 빨갛다 말았다 한다(결정 395 에 적어 둔 그 함정).
+                // 그래서 «언제 재느냐» 에 안 흔들리는 꼴로 바꾼다 — 셋 중 어느 것도 시각에 안 매인다:
+                Assert.Less(ShopScreen.ChestScaleFrom, 1f, "시작 배율은 1보다 작아야 «작았다가» 가 성립한다(T158 ⓐ · 지금 " + ShopScreen.ChestScaleFrom + ")");
+                Assert.IsTrue(chestScale0 < 1f || UiKit.IsTweening(chestGrp0),
+                    "결과 창의 상자가 «작았다 커졌다» 를 안 한다 — 연 직후 배율이 " + chestScale0.ToString("0.###") + " 인데 상자에 도는 트윈도 없다(T158 ⓐ). "
+                    + "배율이 1 이어도 «아직 도는 중» 이면 통과다 — 넘김(OutBack) 구간을 잡았을 뿐이니까. 둘 다 아니면 연출이 아예 안 걸린 것이다.");
                 // T158 ⓒ — 결과 칸은 눌러도 어두워지지 않는다(우리가 클릭을 안 붙인 칸이라 조각이 달고 온 Button 을 뗀다)
                 var got0 = UiKit.Find(_app.Overlay.Root, "Got");
                 Assert.IsNotNull(got0, "얻은 장비 격자(Got)");
