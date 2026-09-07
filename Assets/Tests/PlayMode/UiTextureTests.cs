@@ -43,6 +43,15 @@ namespace KkomaKnight.Tests.Play
         static IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
         static IEnumerator RealSeconds(float sec) { float t = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t < sec) yield return null; }
         static int CountNamed(Transform t, string name) { int n = 0; for (int i = 0; i < t.childCount; i++) if (t.GetChild(i).name == name) n++; return n; }
+        /// <summary>나무 «전체» 에서 살아 있는 배경 무늬(«Pattern» RawImage) 수 — T140 게이트(특전 화면 둘은 0).</summary>
+        static int CountPatterns(Transform t)
+        {
+            if (t == null) return 0;
+            int n = 0;
+            foreach (var raw in t.GetComponentsInChildren<RawImage>(true))
+                if (raw != null && raw.name == UiKit.PatternName && raw.gameObject.activeInHierarchy) n++;
+            return n;
+        }
 
         [UnityTest]
         public IEnumerator PatternLightGradientHelpersFlowSpinAndLayer()
@@ -418,28 +427,38 @@ namespace KkomaKnight.Tests.Play
                 G.Pending = new PendingDecision { Kind = PendingKind.LevelUp, Offer = offer };
                 _app.Overlay.LevelUp(G, _ => { }); yield return Frames(2);
                 var perk = UiKit.Find(_app.Overlay.Root, "ui.perkSelect"); Assert.IsNotNull(perk, "레벨업 3택 조각");
-                Assert.IsTrue(UiKit.HasPattern(perk), "레벨업 3택(04) 배경에도 패턴(T72 ①)");
+                // T140(주인 2026-09-07 «특전 부분에서는 패턴 없었으면함») — 04 도 이제 «없어야» 한다(T110 ⓑ 결과 팝업과 같은 처리 · 여기 있던 IsTrue 를 이 지시가 덮었다)
+                Assert.IsFalse(UiKit.HasPattern(perk), "레벨업 3택(04)에는 흐르는 무늬가 없다(T140)");
+                Assert.AreEqual(0, CountPatterns(perk), "04 팝업 나무 어디에도 «Pattern» RawImage 가 없다(T140 4항)");
                 AssertPerkCardIsReadable(perk);
                 _app.Overlay.Close(); G.Pending = null; yield return Frames(1);
             }
 
-            // ⓒ 공통 팝업 상자 = 패턴 «위» 그라데이션(한 곳에서 팝업 전부가 받는다)
+            // T140 — 보유 특전(05)도 무늬가 «없어야» 한다. 상자는 공통(UiKit.Popup)이라 무늬가 깔려 오는데 이 팝업만 뺀다(다른 팝업은 그대로 = 바로 아래 설정 팝업으로 확인).
             _app.Overlay.PerkBook(G, null); yield return Frames(2);
-            var box = UiKit.Find(_app.Overlay.Root, "ui.popup.blue"); Assert.IsNotNull(box, "보유 특전 = 공통 팝업 상자");
+            var bookBox = UiKit.Find(_app.Overlay.Root, "ui.popup.blue"); Assert.IsNotNull(bookBox, "보유 특전 = 공통 팝업 상자");
+            Assert.IsFalse(UiKit.HasPattern(bookBox), "보유 특전(05) 상자 안에는 흐르는 무늬가 없다(T140)");
+            Assert.AreEqual(0, CountPatterns(bookBox), "05 팝업 나무 어디에도 «Pattern» RawImage 가 없다(T140 4항)");
+            Assert.IsTrue(UiKit.HasGradient(bookBox), "무늬만 뺐다 — 그라데이션(T72 ③)은 그대로");
+            _app.Overlay.Close(); yield return Frames(2);
+
+            // ⓒ 공통 팝업 상자 = 패턴 «위» 그라데이션(한 곳에서 팝업 전부가 받는다) — 특전 둘만 T140 으로 빠졌으므로 «남은 팝업» 인 설정으로 본다
+            _app.Overlay.Settings(); yield return Frames(2);
+            var box = UiKit.Find(_app.Overlay.Root, "ui.popup"); Assert.IsNotNull(box, "설정 = 공통 팝업 상자");
             Assert.IsTrue(UiKit.HasGradient(box), "공통 팝업 상자에 그라데이션(T72 ③ · UiKit.Popup 한 곳)");
             var pat = box.Find(UiKit.PatternName); var top = box.Find(UiKit.GradientTopName); var bottom = box.Find(UiKit.GradientBottomName);
-            Assert.IsNotNull(pat, "상자 안 패턴"); Assert.IsNotNull(top, "GradientTop"); Assert.IsNotNull(bottom, "GradientBottom");
+            Assert.IsNotNull(pat, "상자 안 패턴(T140 이 뺀 것은 특전 둘뿐 — 다른 팝업은 그대로)"); Assert.IsNotNull(top, "GradientTop"); Assert.IsNotNull(bottom, "GradientBottom");
             Assert.Less(pat.GetSiblingIndex(), top.GetSiblingIndex(), "그라데이션은 패턴 «위»(질감 층 순서 · 결정 171)");
             Assert.Less(top.GetSiblingIndex(), bottom.GetSiblingIndex(), "위 밝음 → 아래 어둠 순서");
             var border = box.Find(UiKit.BorderName); if (border != null) Assert.Less(bottom.GetSiblingIndex(), border.GetSiblingIndex(), "그라데이션은 테두리 아래");
-            var ribbon = UiKit.Find(box, "ui.title.sky"); if (ribbon != null) Assert.Less(bottom.GetSiblingIndex(), ribbon.GetSiblingIndex(), "그라데이션은 리본 아래(제목이 안 가려진다)");
+            var ribbon = UiKit.Find(box, "ui.titleBrown"); if (ribbon != null) Assert.Less(bottom.GetSiblingIndex(), ribbon.GetSiblingIndex(), "그라데이션은 명판 아래(제목이 안 가려진다)");
             Assert.IsFalse(top.GetComponent<Image>().raycastTarget, "그라데이션은 클릭을 안 먹는다(배경 탭으로 닫기 그대로)");
             var brt = (RectTransform)box; var trt = (RectTransform)top;
             Assert.AreEqual(brt.rect.width - 2f * UiKit.PopupPatternInset, trt.rect.width, 1f, "둥근 모서리 안쪽으로 " + UiKit.PopupPatternInset + "px 들여 덧댄다");
             _app.Overlay.Close(); yield return Frames(2);
             Time.timeScale = 1f;
 
-            _log.AssertNoRed("T72 화면 적용(승리·사망·레벨업 · 공통 팝업 그라데이션)");
+            _log.AssertNoRed("T72 화면 적용(승리·사망·레벨업 · 특전 둘 무늬 없음 · 공통 팝업 그라데이션)");
             yield return Shutdown();
         }
 

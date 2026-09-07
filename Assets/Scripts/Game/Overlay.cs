@@ -77,15 +77,22 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>
-        /// 상자 없이 어둠 위에 바로 조립되는 <b>프리팹 팝업</b>(레벨업 3택 · 승리 · 사망)의 배경 무늬(T72 ①) — 어둠 조각 «Dimmed» 바로 위 형제에 흰 무늬를 깐다(어두운 바탕 = <see cref="UiKit.PatternTintDark"/>).
-        /// 공통 팝업 상자는 <see cref="UiKit.Popup"/> 이 상자 «안» 에 깔아 주므로 여기서 부르지 않는다(무늬가 겹치지 않는다).
+        /// 공통 팝업 상자 «안» 에 <see cref="UiKit.Popup"/> 이 깔아 준 배경 무늬(T72 ①)를 이 팝업에서만 뺀다
+        /// (T140 · 주인 2026-09-07 «특전 부분에서는 패턴 없었으면함» — 보유 특전 05 한 자리).
+        /// <para>
+        /// <c>UiKit.Popup</c> 에 «무늬 없음» 인자를 더하는 길(지시서 T140 2항 ⓘ)이 더 곧지만 <c>UiKit.cs</c> 가 다른 워커 lock(T130 · 공통 팝업 상자) 안이라
+        /// 지시서가 같이 적어 둔 ⓙ(«상자를 세운 뒤 그 안의 무늬를 끈다» · 되돌리기 쉽다)를 골랐다. 끄기만 하지 않고 지우는 까닭 = 무늬 트윈이 <c>SetLink</c> 로 그 조각에 묶여 있어 같이 죽는다.
+        /// </para>
+        /// 옛 <c>DimPattern</c>(상자 없이 어둠 위에 조립되는 프리팹 팝업의 «Dimmed» 바로 위 무늬)은 이제 부르는 곳이 없어 지웠다 — 결과 팝업은 T110 ⓑ, 레벨업 3택은 T140 이 뺐다.
         /// </summary>
-        static void DimPattern(RectTransform rt)
+        static void NoPattern(Transform host)
         {
-            if (rt == null) return;
-            int idx = 0;
-            for (int i = 0; i < rt.childCount; i++) if (rt.GetChild(i).name == "Dimmed") { idx = i + 1; break; }
-            UiKit.PatternBg(rt, UiKit.PatternTintDark, UiKit.PatternTileSeconds, idx);
+            if (host == null) return;
+            for (int i = host.childCount - 1; i >= 0; i--)
+            {
+                var c = host.GetChild(i); if (c.name != UiKit.PatternName) continue;
+                c.gameObject.SetActive(false); UnityEngine.Object.Destroy(c.gameObject);
+            }
         }
         /// <summary>
         /// 제목 리본을 «표 자리» 로 다시 잡은 뒤 <b>글자 칸이 제목 60 의 한 줄(84px)보다 낮아지지 않게</b> 올린다(T75 4항 게이트 · <c>UiKit.RibbonFit</c> 과 같은 규칙).
@@ -279,7 +286,7 @@ namespace KkomaKnight.Game
             var offer = G.Pending?.Offer ?? new List<PerkDef>();
             var root = UiKit.Spawn("ui.perkSelect", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
             var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
-            DimPattern(rt);
+            // T140(주인 2026-09-07 «특전 부분에서는 패턴 없었으면함») — 어둠 위 흐르는 무늬를 안 깐다(승리·사망 = T110 ⓑ 와 같은 처리 · 배치·글자 0줄).
             // 표 ⑦ 선택창 — 상자 없음 · 배너 20/26.5 · 부제 30/31.5 · 카드 x5.5 w89 h11 피치 13 · 하단 버튼 31/79 · 인포 86/79.5
             var ribbon = UiKit.Find(rt, "Title_01_NoDeco_Tangerine"); if (ribbon != null) UiKit.Pct((RectTransform)ribbon, Layout.OvBanner.X, Layout.OvBanner.Y - 0.7f, Layout.OvBanner.W, Layout.OvBanner.H + 1.4f);
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "레벨 업!");
@@ -352,6 +359,7 @@ namespace KkomaKnight.Game
         public void PerkBook(BattleState G, Action onBack)
         {
             var box = Box("ui.popup.blue", "ui.title.sky", "특전", Layout.BookBox, () => { Close(); onBack?.Invoke(); });   // 표 ⑦ 인포 팝업 y23 h52.5 · 리본 25/21.5 w50 h4 · 닫기 안내 y91.5(상자 밖)
+            NoPattern(box);   // T140 — 특전 화면에는 무늬를 안 깐다(다른 공통 팝업 상자는 UiKit.Popup 기본값 그대로)
             var rib = UiKit.Find(box, "ui.title.sky"); if (rib != null) { var rr = (RectTransform)rib; rr.sizeDelta = new Vector2(UiKit.FrameW * Layout.BookRibbon.W / 100f, UiKit.FrameH * Layout.BookRibbon.H / 100f + 20); FitRibbonText(rr); }
             // 목록 — 같은 특전은 묶어 ×N
             var groups = new List<KeyValuePair<PerkDef, int>>();
@@ -474,7 +482,8 @@ namespace KkomaKnight.Game
             var root = UiKit.Spawn("ui.resultWin", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
             var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
             // T110 ⓑ(주인 2026-09-07 «클리어 팝업에는 패턴으로 움직이는 그거 있으면 안 됨») — 결과 팝업(승리·사망)에는 어둠 위 흐르는 무늬를 깔지 않는다.
-            // T72 ① 패턴은 다른 화면·다른 팝업(레벨업 3택 포함) 그대로다.
+            // T140(주인 2026-09-07 «특전 부분에서는 패턴 없었으면함») — 레벨업 3택(04)·보유 특전(05)에도 안 깐다(그때 적어 둔 «레벨업 3택 포함 그대로» 를 이 지시가 덮었다).
+            // T72 ① 패턴은 그 밖의 화면·팝업 그대로다.
             var chap = UiKit.SetText(rt, "Text", $"챕터 {G.Chapter}");
             var unlock = UiKit.SetText(rt, "Text (1)", last ? "모든 챕터 클리어!" : $"챕터 {G.Chapter + 1} 해금!");   // 프리팹 칸 528×61 — 본문 40 한 줄에 들어가는 길이로(T63-results)
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "클리어!");
