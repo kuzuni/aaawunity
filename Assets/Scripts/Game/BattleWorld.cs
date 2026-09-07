@@ -674,13 +674,32 @@ namespace KkomaKnight.Game
         /// </para>
         /// 관통형은 이제 <b>사거리 끝(<c>MaxX</c>)까지 한 번도 안 멈추고</b> 간다 — 엔진은 판정만 하고(관통·피해·마릿수 상한은 그대로),
         /// 표시가 적을 살짝 먼저 지나가도 엔진이 곧 같은 적을 꿰므로 그림과 판정이 어긋나 보이지 않는다.
-        /// 유도형(도끼·화살)은 «맞는 순간 사라지는» 것이라 목표 자리 걸림쇠를 그대로 둔다(그걸 풀면 목표를 지나쳐 날아가 버린다).
+        /// <para>
+        /// <b>T171(주인 2026-09-07 «창이 여전히 화면 끝에서 멈추네 가끔씩»)</b> — 남아 있던 두 «상한» 을 마저 없앤다. 둘 다 같은 병이다:
+        /// <b>상한이 엔진과 함께 얼어붙는데 표시만 계속 흐르는 것</b>. 킬 연출 동안 엔진 틱은 보류(<see cref="HoldEngine"/> · T50/T86)되지만
+        /// 표시는 «흐르는 중» 이라(<see cref="EngineRunning"/> 은 팝업·일시정지에만 false) 표시가 얼어붙은 상한에 눌려 <b>그 자리에 붙어 선다</b>.
+        /// <list type="bullet">
+        /// <item>관통형의 상한이 <c>MaxX</c>(사거리 끝) 였다 — 그 창을 지우는 것은 <b>엔진</b>(<c>Battle.cs</c> <c>pr.X &gt; pr.MaxX</c>)인데
+        /// 보류 중엔 못 지운다 → 사거리 끝(대개 화면 오른쪽)에 서 있는다 = 주인이 본 «화면 끝에서 멈춤», 킬 연출과 겹칠 때만이라 «가끔».</item>
+        /// <item>유도형의 상한이 표적이 죽으면 <c>pr.X</c>(엔진 x) 였다 — 보류 중엔 그 값이 안 움직이니 도끼가 <b>공중에 선다</b>(주인 T108 1-b «도끼가 여전히 멈춘다»).</item>
+        /// </list>
+        /// 그래서 둘 다 <b>상한을 두지 않는다</b>: 사거리 끝을 지나 화면 밖으로 계속 날아가고, 엔진이 다음 틱에 지우면 그림도 사라진다
+        /// (화면에서는 «쭉 지나가 사라졌다» = 주인 T108 «쭉 지나가면서» 와 같은 그림). <b>엔진은 한 줄도 안 건드린다 — 시드 골든 불변.</b>
+        /// </para>
+        /// <b>표적이 살아 있는 유도형의 상한은 그대로 둔다</b> — 그걸 풀면 도끼가 표적을 지나쳐 날아간 뒤에야 맞는 그림이 된다.
         /// </summary>
         public double ProjLimit(Projectile pr)
         {
-            if (pr.Kind == ProjKind.Spear || pr.Kind == ProjKind.Wave) return pr.MaxX;
-            return pr.Target != null && pr.Target.Hp > 0 ? pr.Target.WorldX - EngineConst.ProjArriveDx : pr.X;   // 유도형(도끼·화살): 도달 판정 자리
+            if (pr.Kind == ProjKind.Spear || pr.Kind == ProjKind.Wave) return double.PositiveInfinity;   // 관통형: 상한 없음(T171)
+            return pr.Target != null && pr.Target.Hp > 0 ? pr.Target.WorldX - EngineConst.ProjArriveDx : double.PositiveInfinity;   // 유도형: 표적이 살아 있을 때만 «맞는 자리»
         }
+
+        /// <summary>
+        /// 사거리 끝을 지난 투사체의 그림을 감추는 자리(T171) — 사거리 끝 + 레이아웃 폭의 이 비율.
+        /// 상한을 없앴으므로 엔진이 지우기 전까지는 계속 날아간다. 화면 밖이라 어차피 안 보이지만,
+        /// 엔진 보류가 길어질 때 좌표가 하염없이 커지지 않게 <b>그림만</b> 끈다(엔진 목록·<c>_projs</c> 는 그대로 두어 정리 경로는 한 곳 = 누수 0).
+        /// </summary>
+        public const float ProjOffscreenPad = 0.35f;
 
         /// <summary>
         /// 표시 x 가 엔진 x 를 따라잡을 때 한 프레임에 갈 수 있는 최대 배율(T108 2항 «스냅 금지»).
@@ -737,6 +756,13 @@ namespace KkomaKnight.Game
                 }
                 else go.transform.rotation = Quaternion.Euler(0, 0, pr.Kind == ProjKind.Wave ? 0 : pr.Kind == ProjKind.Spear ? SpearAngle : ArrowAngle);
                 go.transform.position = Pos(shown, yf, -0.2f);
+                // T171 — 사거리 끝을 한참 지나면 그림만 끈다(화면 밖이라 안 보이던 것이지만 좌표가 커지는 것을 여기서 멈춘다).
+                // 엔진 목록·_projs 는 안 건드린다 — 정리는 아래 dead 한 곳이라야 누수가 없다.
+                // **관통형에만 건다** — `MaxX` 를 엔진이 채우는 것은 창·검기뿐이고(Battle.cs 431·436), 유도형(도끼·화살)은 0 으로 남는다.
+                // 그것을 모르고 `MaxX + 여유` 를 유도형에도 쓰면 «0 + 189px» 이라 스폰하자마자 도끼가 사라진다. 유도형은 표적 곁에서 엔진이 곧 지우므로 멀리 못 간다.
+                bool piercing = pr.Kind == ProjKind.Spear || pr.Kind == ProjKind.Wave;
+                bool gone = !Silent && piercing && shown > pr.MaxX + ProjOffscreenPad * WorldCam.LayoutW;
+                if (go.activeSelf == gone) go.SetActive(!gone);
             }
             var dead = new List<Projectile>(); foreach (var kv in _projs) if (!live.Contains(kv.Key)) dead.Add(kv.Key);
             foreach (var k in dead) { Object.Destroy(_projs[k]); _projs.Remove(k); _projX.Remove(k); }

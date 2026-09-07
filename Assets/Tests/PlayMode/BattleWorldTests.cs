@@ -329,8 +329,11 @@ namespace KkomaKnight.Tests.Play
             // ⓒ 걸림쇠가 사거리 끝뿐인가 — 앞에 살아 있는 적이 있어도 그 적 자리로 깎이면 안 된다(결정 252 · 이것이 «멈춰 있는 현상» 의 원인이었다)
             Assert.Greater(ahead.WorldX, x0, "적이 창보다 앞에 있어야 시험이 성립한다");
             Assert.Less(ahead.WorldX, spear.MaxX, "적이 창의 사거리 안에 있어야 시험이 성립한다");
-            Assert.AreEqual(spear.MaxX, world.ProjLimit(spear), 1e-6,
-                "관통형(창·검기)의 표시 걸림쇠는 «사거리 끝» 뿐이어야 한다 — 앞의 적 자리로 깎이면 엔진이 보류된 동안 그 적 앞에 붙어 선다(T108 3항 · 주인 «쭉 지나가면서»)");
+            // T171 — T108 은 «앞의 적» 걸림쇠를 없앴고 걸림쇠를 «사거리 끝» 으로 두었는데, 그 사거리 끝이 남은 멈춤의 원인이었다:
+            // 사거리 끝에서 창을 지우는 것은 «엔진» 인데 킬 연출 동안 엔진 틱이 보류되므로, 표시가 얼어붙은 상한에 눌려 화면 끝에 붙어 선다.
+            // 이제 관통형에는 상한이 없다(주인 «창이 여전히 화면 끝에서 멈추네 가끔씩»).
+            Assert.IsTrue(double.IsPositiveInfinity(world.ProjLimit(spear)),
+                "관통형(창·검기)에는 표시 걸림쇠가 없어야 한다 — 사거리 끝에 걸어 두면 엔진이 보류된 동안 그 자리에 붙어 선다(T171 · 주인 «화면 끝에서 멈추네»)");
 
             int frames = 0, stalled = 0; double prev = world.ProjShownX(spear); double worstStep = 0;
             float t1 = Time.realtimeSinceStartup;
@@ -357,6 +360,26 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(0, stalled, "창은 어떤 상태에서도 멈추면 안 된다 — 멈춘 프레임 " + stalled + "/" + frames + " (T108 1항 · 주인 «쩄든 뭐든 멈추면 안 됨»)");
             Assert.AreEqual(0.0, worstStep, 1e-6, "표시 좌표가 튀었다(스냅) — 초과 이동량 " + worstStep.ToString("0.0") + "px (T108 2항)");
             _log.AssertNoRed("창 관통 비행");
+
+            // ───── T171 — «상한이 엔진과 함께 얼어붙는» 두 자리를 계약으로 못 박는다 ─────
+            // 시간을 재는 loop 로 잡지 않는다: 표시가 상한을 넘어설 수 있는 창(窓)은 «엔진이 보류된 동안» 뿐인데 그 길이는 킬 연출에 달렸고,
+            // 그걸 기다리는 단언은 CI 에서 간헐로 빨개진다(T134 가 딱 그런 자를 25분짜리 빌드 뒤에서 터뜨렸다). 위 0.8초 loop 이 «멈춤 0» 은 이미 재고 있으니
+            // 여기서는 **고침 그 자체 = 상한이 없다** 를 결정적으로 잰다. 상한이 무한이면 `shown > lim` 가지가 아예 닿지 않아 «눌려 서는» 일이 성립하지 않는다.
+            {
+                // ⓑ 표적이 먼저 죽은 유도형(도끼) — 예전 상한은 «pr.X(엔진 x)» 라 보류 중엔 안 움직여 도끼가 공중에 섰다(주인 T108 1-b «도끼가 여전히 멈춘다»).
+                var axe = Ghost(G, ProjKind.Axe, ahead.Wave, ahead, G.P.WorldX + EngineConst.ProjSpawnDx, 0);
+                Assert.IsFalse(double.IsPositiveInfinity(world.ProjLimit(axe)),
+                    "표적이 살아 있는 유도형은 «맞는 자리» 에 서야 한다 — 이 상한까지 풀면 도끼가 표적을 지나쳐 날아간 뒤에 맞는다(T171 이 건드리지 않는 자리)");
+                axe.Target = null;   // 표적이 이미 사라진 상태(엔진이 아직 못 지운 프레임)
+                Assert.IsTrue(double.IsPositiveInfinity(world.ProjLimit(axe)),
+                    "표적이 사라진 유도형은 «엔진 x» 에 묶이면 안 된다 — 그러면 킬 연출 동안 공중에 선다(T171 3항)");
+                // 누수 0(T171 4항 ⓓ) — 표시 층이 만든 그림·좌표는 엔진 목록에서 빠지면 같이 사라져야 한다.
+                G.Projs.Add(axe); yield return Frames(2);
+                Assert.IsNotNull(world.ProjGo(axe), "표시 층이 도끼 그림을 세워야 시험이 성립한다");
+                G.Projs.Remove(axe); yield return Frames(2);
+                Assert.IsNull(world.ProjGo(axe), "사라진 도끼의 그림이 남으면 안 된다(누수 0 · T171 4항 ⓓ)");
+            }
+            _log.AssertNoRed("T171 표적 잃은 도끼");
 
             G.Projs.Remove(spear); yield return Frames(2);
             _app.ShowScreen("lobby"); yield return Frames(2);
