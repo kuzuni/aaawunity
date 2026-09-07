@@ -38,6 +38,12 @@ namespace KkomaKnight.Game
         static readonly Layout.R PicRoad = new Layout.R(0, 62, 100, 18);
         /// <summary>«획득 가능» 라벨(카드 1 기준 · 보상 아이콘 줄 바로 위 · 레퍼런스 y38.2 h1.4 · T63-events 에서 h2.3 = 보조 36 × 1.4 · 보상 줄 y41.1 과 안 겹친다).</summary>
         static readonly Layout.R FoundLabel = new Layout.R(5.0f, 38.2f, 20.0f, 2.3f);
+        /// <summary>
+        /// 던전 세부(21) 보상 칸의 «최초» 배지 자리(칸 % · T123) — 레퍼런스 21 처럼 <b>칸 안 오른쪽 위</b>이고 위로만 살짝 걸친다.
+        /// 좌우는 칸을 안 넘고(x ≥ 0 · x+w ≤ 100) 위로 넘는 폭은 칸 높이의 10% 뿐이라 «보상» 제목과 부딪치지 않는다.
+        /// 세로 46% = 119px 칸에서 55px ≥ 보조 36 × 1.4(=50.4px · <see cref="TextSize.LineBox"/>)라 글자가 안 눌린다.
+        /// </summary>
+        static readonly Layout.R FirstBadge = new Layout.R(36f, -10f, 62f, 46f);
         /// <summary>아레나 상대 초상(껍데기 · 순환) · 순위 목록 줄 수 · 도전 팝업 줄 수 · 순위 보상 줄 수 · 상인 상품.</summary>
         static readonly string[] Foes = { "ui.iconFoe1", "ui.iconFoe2", "ui.iconFoe3", "ui.iconFoe4" };
         const int RankRows = 7, FoeRows = 5, RewardRows = 4;
@@ -377,17 +383,20 @@ namespace KkomaKnight.Game
             var rewards = UiKit.Spawn("ui.frameDark", box); var rrt = (RectTransform)rewards.transform; rrt.name = "Rewards"; UiKit.Pct(rrt, Layout.DdRewards.Within(Layout.DdBox)); UiKit.Tag(rrt, "보상 박스");
             UiKit.Label(rrt, 0, 3, 100, 24, "보상", TextSize.Body, Palette.White).fontStyle = FontStyle.Bold;
             var cells = UiKit.Rect(box, "RewardCells"); UiKit.Pct(cells, Layout.DdRewardCells.Within(Layout.DdBox));
-            // T99 4항 — 보상 칸은 표(dungeon.json)가 만든다: «첫 클리어 총액» 칸들(빨간 «첫 클리어» 배지) + «이후 클리어» 칸들.
+            // T99 4항 — 보상 칸은 표(dungeon.json)가 만든다: «첫 클리어 총액» 칸들(빨간 «최초» 배지 · T123) + «이후 클리어» 칸들.
             // 지옥의 문 = 펫알 11 · 골드 1,000(첫) + 펫알 5 · 골드 1,000 = 네 칸이라 레퍼런스 21(초록 프레임 4 · 앞 두 칸에 FIRST 배지)과 같은 꼴이고 표 ⑪ 도 그대로다.
             var rewardDefs = RewardCells(key, d.rewards);
             var cellRts = IconRow(cells, Layout.DdRewardCells, Icons(rewardDefs), "ui.itemFrame.green", "RewardCell:", true);
             for (int i = 0; i < cellRts.Count && i < rewardDefs.Count; i++)
             {
                 UiKit.Label(cellRts[i], 0, 58, 100, 42, rewardDefs[i].amount, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyle.Bold;
-                // «첫 클리어» 배지 — 칸 폭 119px 에 104% = 124px 였는데 보조 36 의 선호 폭이 122px 라 여유 2px 뿐이라 bestFit 이 35 로 눌렀다(CI #112·#114 · T74) → 114% = 136px(여유 11% · 옆 칸 배지와 27px 떨어짐)
+                // T123 — «최초» 배지는 레퍼런스 21 처럼 «칸 안 오른쪽 위»(칸 폭 안 · 위로만 살짝 걸침)다.
+                // 전에는 «첫 클리어» 다섯 글자가 보조 36 으로 칸 폭 119px 에 안 들어가 배지를 114%(136px)로 넓혔고(T74),
+                // 그 바람에 배지가 좌우로 삐져나와 옆 칸 배지와 붙고 위로 34%(40px)나 솟아 «보상» 제목을 덮었다(screens 218 실측).
+                // 글자를 줄이는 쪽으로 고친다 — 크기 36(T63 보조 하한)은 그대로 두고 낱말만 «최초»(레퍼런스 «FIRST» 와 같은 뜻·같은 자리)로.
                 if (!rewardDefs[i].first) continue;
-                var badge = UiKit.Panel(cellRts[i], "First", "fr.r12", Palette.Red); UiKit.Pct(badge.rectTransform, -7, -34, 114, 46);
-                UiKit.Label(badge.transform, 0, 0, 100, 100, "첫 클리어", TextSize.Aux, Palette.White, kind: TextKind.Aux);
+                var badge = UiKit.Panel(cellRts[i], "First", "fr.r12", Palette.Red); UiKit.Pct(badge.rectTransform, FirstBadge);
+                UiKit.Label(badge.transform, 0, 0, 100, 100, "최초", TextSize.Aux, Palette.White, kind: TextKind.Aux);
             }
             UiKit.TagGroup(box, "보상 칸(" + cellRts.Count + "개)", cellRts.ToArray());
             foreach (var cell in cellRts) PlanLight(cell);
@@ -503,7 +512,7 @@ namespace KkomaKnight.Game
         /// <summary>카드 제목 띠의 «보유/하루 보충»(표가 없으면 «--»).</summary>
         string TicketText(string key) { var d = Dun; return d == null ? "--" : Tickets(key) + "/" + d.DailyRefill; }
 
-        /// <summary>보상 칸 한 개 — 아이콘 키 · 수량 글자 · «첫 클리어» 배지인가.</summary>
+        /// <summary>보상 칸 한 개 — 아이콘 키 · 수량 글자 · «최초»(첫 클리어) 배지인가.</summary>
         readonly struct RewardCellDef
         {
             public readonly string icon, amount; public readonly bool first;

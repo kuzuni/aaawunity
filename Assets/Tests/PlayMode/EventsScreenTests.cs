@@ -124,6 +124,23 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(Layout.DdHead.Y + Layout.DdHead.H, Layout.DdPic.Y, 0.1f, "그림 띠 y = 제목 띠 바닥(T102 ⓑ)");
             { var picRt = UiKit.Find(ov, "Pic") as RectTransform; Assert.IsNotNull(picRt, "그림 띠"); AtY(picRt, Layout.DdPic.Within(Layout.DdBox), "그림 띠"); }
             Assert.AreEqual(4, CountNamed(ov, "RewardCell:"), "보상 칸 4"); Assert.IsNotNull(UiKit.Find(ov, "FloorCircle"), "층수 원");
+            // T123 — «최초» 배지는 레퍼런스 21 처럼 «칸 안 오른쪽 위»다: 좌우로 칸을 넘지 않고, 위로 걸치는 폭이 칸 높이의 15% 이하라
+            // 옆 칸 배지·«보상» 제목과 부딪치지 않는다. 옛 «첫 클리어» 다섯 글자 배지(114% 폭 · 위로 34%)로 되돌아가면 여기서 바로 빨개진다.
+            Assert.IsFalse(HasText(s => s == "첫 클리어"), "칸보다 넓던 «첫 클리어» 배지는 없다(T123)");
+            Assert.IsTrue(HasText(s => s == "최초"), "«최초» 배지 글자(레퍼런스 21 의 FIRST 자리)");
+            {
+                var cell0 = UiKit.Find(ov, "RewardCell:0") as RectTransform; Assert.IsNotNull(cell0, "보상 칸 0");
+                var badge = UiKit.Find(cell0, "First") as RectTransform; Assert.IsNotNull(badge, "칸 0 의 «최초» 배지");
+                var cc = new Vector3[4]; cell0.GetWorldCorners(cc); var bc = new Vector3[4]; badge.GetWorldCorners(bc);
+                float cellW = cc[2].x - cc[0].x, cellH = cc[1].y - cc[0].y;
+                Assert.GreaterOrEqual(bc[0].x, cc[0].x - cellW * 0.01f, "배지 왼쪽이 칸 안(T123)");
+                Assert.LessOrEqual(bc[2].x, cc[2].x + cellW * 0.01f, "배지 오른쪽이 칸 안(T123)");
+                Assert.LessOrEqual(bc[1].y - cc[1].y, cellH * 0.15f, "배지가 칸 위로 걸치는 폭 ≤ 칸 높이의 15%(T123 · «보상» 제목과 안 겹친다)");
+                // 글자 크기는 안 낮췄다 — 낱말만 줄였다(«첫 클리어» → «최초»). 실제로 찍히는 크기는 «[TextSizeGate]» 표가 전 화면 공통으로 잰다.
+                var badgeText = badge.GetComponentInChildren<Text>(); Assert.IsNotNull(badgeText, "배지 글자");
+                Assert.GreaterOrEqual(MaxSize(badgeText), TextSize.Aux, "배지 글자는 보조 하한 36 그대로(T63)");
+                Assert.LessOrEqual(badgeText.preferredWidth, badge.rect.width + 1f, "배지 글자가 배지 폭 안에 들어간다(bestFit 이 안 눌린다 · T74 회귀)");
+            }
             var box = UiKit.Find(ov, "ui.popup.red") as RectTransform; Assert.IsNotNull(box, "빨간 팝업 패널"); AtX(box, Layout.DdBox, "세부 박스"); AtY(box, Layout.DdBox, "세부 박스");
             Assert.IsNull(UiKit.Find(ov, "Button_Close_01"), "닫기 X 없음");
             { var arrowImg = UiKit.Find(ov, "FloorPrev")?.GetComponent<Image>(); Assert.IsNotNull(arrowImg, "층수 ◀"); Assert.AreNotEqual(Palette.Cream, arrowImg.color, "층수 ◀ 는 크림 패널과 다른 색(크림이면 안 보임 · T43 비평 회차 1)"); }
