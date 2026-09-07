@@ -27,6 +27,55 @@ namespace KkomaKnight.Game
         /// <summary>TMP SDF 셰이더의 아웃라인 두께·색 프로퍼티 이름(머티리얼로 두르는 «진짜» 아웃라인이 이 둘이다).</summary>
         public const string OutlineWidthProp = "_OutlineWidth", OutlineColorProp = "_OutlineColor";
 
+
+        /// <summary>
+        /// T207 ① ⓑ — <b>배포 빌드(WebGL)에서도 동적 굽기가 되는가</b>를 재는 부팅 탐침.
+        /// <para>
+        /// 이 작업 전체의 가장 큰 위험이 «에디터에서 되고 WebGL 에서 안 된다» 다(동적 글리프 굽기는 네이티브 FreeType 을 탄다).
+        /// PlayMode 자(<c>TmpFontProbeTests</c>)는 그것을 못 잰다 — 배포 빌드에서 실제로 돌아야만 답이 나온다.
+        /// 그래서 부팅이 끝나면 한 번만 굽어 보고 <b>한 줄</b>을 남긴다: 배포 스모크(<c>tools/webgl_smoke.sh --log</c>)가 그 줄을 담아 온다.
+        /// </para>
+        /// <b>이 탐침은 ② 가 시작되면 지운다</b> — 그때는 화면 글자가 이미 TMP 라 «되는가» 를 따로 물을 일이 없다.
+        /// 남기는 자국은 로그 한 줄뿐이고(화면·세이브 0), 못 만들면 조용히 물러난다.
+        /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        static void BootProbe()
+        {
+            var go = new GameObject("T207:TmpFontProbe");
+            Object.DontDestroyOnLoad(go);
+            go.hideFlags = HideFlags.HideAndDontSave;
+            go.AddComponent<Probe>();
+        }
+
+        /// <summary>부팅이 끝나기를 기다렸다가 한 번 굽어 보고 한 줄 남기고 사라진다.</summary>
+        sealed class Probe : MonoBehaviour
+        {
+            System.Collections.IEnumerator Start()
+            {
+                float t0 = Time.realtimeSinceStartup;
+                while ((App.I == null || App.I.Assets == null) && Time.realtimeSinceStartup - t0 < 90f) yield return null;
+                string line;
+                try
+                {
+                    var asset = Get();
+                    if (asset == null) line = "bake=none";      // 폰트 애셋 자체를 못 만들었다(이 플랫폼에서 동적 굽기 불가)
+                    else
+                    {
+                        bool baked = HasAll(asset, ProbeChars);
+                        bool outline = SetOutline(asset, Color.black);
+                        line = "bake=" + (baked ? "ok" : "fail") + " chars=" + ProbeChars.Length + " outline=" + (outline ? "ok" : "none");
+                    }
+                }
+                catch (System.Exception e) { line = "bake=throw " + e.GetType().Name + ": " + e.Message; }
+                // 스모크가 담아 오는 줄 — 접두사는 기존 마커와 같은 «[KkomaKnight]» 다(App.cs «ready lobby» 규약)
+                Debug.Log("[KkomaKnight] tmpfont " + line);
+                Destroy(gameObject);
+            }
+        }
+
+        /// <summary>부팅 탐침이 구워 보는 글자 — 한글·숫자·영문이 섞여 있어야 «한글만 두부» 도 갈린다.</summary>
+        public const string ProbeChars = "레벨 업 장비 특전 0123 Lv";
+
         static TMP_FontAsset _asset;
 
         /// <summary>
