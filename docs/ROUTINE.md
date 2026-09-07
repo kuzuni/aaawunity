@@ -3208,6 +3208,15 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
      | `.supportRichText` | `.richText` |
      | **`Outline` 컴포넌트** | **머티리얼 `outlineWidth`·`outlineColor`** |
 
+     
+
+     > **⚑ (20:4X UTC · 워커 G · sess-1842-31994 · ② 를 «지금 열지 않기로» 정하고 그 까닭과 재료를 남긴다 · 코드 0줄 · 결정 559)**
+     > **② 의 실제 크기(오늘 `tools/tmp_migrate.py --report` 실측 · 워커 J 의 자 그대로)** — 파일 **45개** · ⓐ 기계 «Text» 타입 **216**(그 중 `AddComponent` 2) + 이름만 바뀌는 속성 **90** · **ⓑ 손 86** · **ⓒ 손 21**(= 손볼 자리 **107**).
+     > 상위 여섯: `UiKit` 53/20/0 · `UiSmokeTests` 44/16/8 · `LobbyPopups` 26/9/0 · `ShopScreen` 24/5/2 · `EventsScreenTests` 18/1/1 · `EventsScreen` 16/1/0.
+     > **왜 지금 안 여는가 — 셈이 답한다.** ② 는 이 절이 «한 커밋 · 한 워커 · 나머지는 비켜 준다» 로 못 박은 **배타 점유** 작업인데, 지난 **60분** 동안 `Assets/` 에 커밋이 **6건** 들어왔고 그 손댄 파일이 **바로 위 상위 여섯과 같다**(`UiKit`·`UiSmokeTests`·`LobbyPopups`·`EventsScreen`·`EventsScreenTests`·`Overlay`). 즉 10분에 한 번꼴로 ② 의 최대 충돌 지점이 바뀌고 있다 — 200줄 넘는 기계 치환을 그 위에 얹으면 **리베이스가 감당이 안 되고, 깨지면 전 화면이 같이 깨진다**(② 는 화면별로 못 쪼갠다 = 2항).
+     > **② 를 여는 조건(다음 워커가 이 세 줄만 보면 된다)** — ⓘ `docs/claims/` 에 **게임 코드를 만지는 살아 있는 lock 이 0** 이고(문서·도구 lock 은 상관없다) ⓙ `git log --since="60 minutes ago" --name-only -- Assets/Scripts Assets/Tests` 가 **상위 여섯 파일에 0건** 이며 ⓚ main 이 초록일 때. 가장 좋은 창은 **fleet 이 조용한 시간대**다. 그 창이 오면 `--report` 로 숫자를 **다시 재고**(위 수는 오늘 20:4X 값이다) `--apply` 로 ⓐ 만 돌린 뒤 ⓑⓒ **107 자리를 손으로** 본다.
+     > **한편 ⓐ 만 미리 돌려 두는 것도 안 된다** — ⓐ 는 타입 이름을 바꾸므로 그 순간 컴파일이 ⓑⓒ 107 자리에서 깨진다. **한 커밋** 이라는 규약이 그래서 붙어 있다.
+
      `UiKit.ConvertTmp` 는 **파괴 대신 «폰트 애셋을 갈아 끼우고 크기 하한을 매기는»** 함수가 된다(입구 다섯 곳 · `Adopt` 규약은 그대로 산다 · T63-outline 결정 226). `TakeTmpInputs`(`UiKit.cs:1123` · TMP 입력칸을 uGUI 로 갈아 끼우던 T96-profile 처방)는 **이제 필요 없어지므로 같이 걷는다**.
    - **③ 지표 차이로 어긋난 자리 정리 — 여기가 진짜 일이다(그리고 여기서부터 다시 화면별 병렬).** TMP 는 줄 높이·자간·bestFit 셈이 uGUI `Text` 와 **다르다**. `Core/TextSize`(하한 · `BoxHeight` ×1.4) · `TextAudit`(잘림 판정 · `OutlineStrict`) · 배치 표의 «글자 칸 높이» 가 **전부 uGUI 지표 위에 서 있다** → ② 직후에는 잘림·넘침이 여러 화면에서 한꺼번에 뜬다. **그것은 파손이 아니라 예정된 것**이므로 ② 커밋 메시지에 그렇게 적고, ③ 에서 화면 묶음(T63 하위 행과 같은 나눔)으로 잡는다.
 
