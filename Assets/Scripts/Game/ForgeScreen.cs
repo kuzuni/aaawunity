@@ -24,7 +24,19 @@ namespace KkomaKnight.Game
         /// <summary>무대 안 조각 자리(무대 % · 레퍼런스 08 을 눈으로 잰 것 · 전부 점수 밖 «느낌» — 표 행은 무대 사각형뿐).</summary>
         static readonly Layout.R StageFloor = new Layout.R(0, 62, 100, 38);          // 아래 38% 는 바닥(밝은 갈색 띠) · 위는 벽
         static readonly Layout.R StageHearth = new Layout.R(40, 16, 52, 60);         // 화덕(어두운 상자) — 안내 문구가 그 위에 얹힌다
-        static readonly Layout.R StageFire = new Layout.R(56, 46, 20, 24);           // 화덕 안 불
+        /// <summary>불 칸의 높이(무대 %) — 자리는 <see cref="StageFire"/> 가 바닥에서 뽑는다.</summary>
+        const float FireH = 24f;
+        /// <summary>
+        /// 화덕 «안» 의 불 — <b>바닥 띠 위에 걸치지 않도록 아래 끝을 바닥 윗변에 맞춘다</b>(T191).
+        /// <para>
+        /// 전에는 y 를 46 으로 박아 두어 칸 아래 끝이 70% = 바닥 윗변(62%)보다 <b>8%p 아래</b>였다.
+        /// 바닥은 불보다 <b>먼저</b> 깔리므로 불이 그 위에 그려져, `screens` run 358 실측으로
+        /// 불꽃 그림(y 237~317)이 바닥 윗변(y 297)보다 <b>20px 아래</b>까지 내려와 «화덕 밖에서 타는» 그림이 됐다.
+        /// 레퍼런스 08 은 불이 화덕 아가리 «안»에서 탄다.
+        /// </para>
+        /// 리터럴 대신 <see cref="StageFloor"/> 에서 뽑는 까닭 = 바닥 높이를 나중에 누가 바꾸면 불도 같이 따라간다(§1).
+        /// </summary>
+        static readonly Layout.R StageFire = new Layout.R(56, StageFloor.Y - FireH, 20, FireH);
         static readonly Layout.R StageBarrelL = new Layout.R(-4, 70, 16, 26), StageBarrelR = new Layout.R(88, 70, 16, 26);
         static readonly Layout.R StageToolA = new Layout.R(8, 5, 9, 14), StageToolB = new Layout.R(19, 5, 9, 14);   // 벽에 걸린 연장(망치·도끼)
         /// <summary>모루 그림(프레임 %) — 결과 슬롯과 재료 슬롯 사이 왼쪽(레퍼런스 x4~36 · y21~29).</summary>

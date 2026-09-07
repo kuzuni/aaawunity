@@ -193,7 +193,7 @@ namespace KkomaKnight.Core
         public static readonly R OvStatCell = new R(0, 4.0f, 12.5f, 6.0f);
         public static readonly R OvBanner = new R(20.0f, 26.5f, 60.0f, 3.5f);
         public static readonly R OvSub = new R(30.0f, 31.5f, 40.0f, 3.0f);
-        // T155 ⓑ(주인 «특전들 레이아웃이 레퍼런스랑 다른 느낌임 비율 비례 등등») — `docs/ref/04_perks.jpg`(720×1560) 실측으로 고침(결정 468).
+        // T155 ⓑ(주인 «특전들 레이아웃이 레퍼런스랑 다른 느낌임 비율 비례 등등») — `docs/ref/04_perks.jpg`(720×1560) 실측으로 고침(결정 474).
         // 카드 세로: 레퍼런스 카드 세 장은 y 577~714 · 763~901 · 950~1087 px = **h 8.78/8.85/8.78%p** · 피치 **11.92/11.99%p**.
         // 우리 종전 값 h 11.0 · 피치 13.0 은 카드가 25% 두껍고 카드3 아래끝이 73.5 vs 레퍼런스 69.68 = **3.8%p 밖**(허용 ±3%p 초과)이었다.
         // ⚠ 덤으로 «비율» 이 같이 맞는다 — 카드 안 조각은 앵커(비례)라 세로만 줄면 아이콘도 같이 줄어 팔각 아이콘 가로:세로가
@@ -205,7 +205,7 @@ namespace KkomaKnight.Core
         public const float OvCardPitch = 11.95f;
         public static readonly R OvCards = new R(5.5f, 36.5f, 89.0f, 32.7f);   // 카드1 위 ~ 카드3 아래(60.4+8.8 = 69.2 · 레퍼런스 69.68)
         /// <summary>특전 카드 왼쪽 팔각 아이콘 — <b>코드가 이 값으로 잡지 않는다</b>(카드 안은 조각의 앵커·비례다). 표 ⑦ ↔ 여기를 맞춰 두는 «기록용» 값이고,
-        /// T155 ⓑ 에서 레퍼런스 실측(팔각 102×81px = 가로:세로 <b>1.26</b> · «정사각» 이 아니다)으로 고쳤다. 실제 그림은 카드 세로를 따라온다 — 그래서 카드 h 를 8.8 로 되돌린 것이 이 비율도 같이 맞췄다(결정 468).</summary>
+        /// T155 ⓑ 에서 레퍼런스 실측(팔각 102×81px = 가로:세로 <b>1.26</b> · «정사각» 이 아니다)으로 고쳤다. 실제 그림은 카드 세로를 따라온다 — 그래서 카드 h 를 8.8 로 되돌린 것이 이 비율도 같이 맞췄다(결정 474).</summary>
         public static readonly R OvCardIcon = new R(8.6f, 39.1f, 14.2f, 5.2f);
         public static readonly R OvCardText = new R(25.0f, 38.5f, 68.0f, 7.0f);
         public static readonly R OvFoot = new R(31.0f, 79.0f, 38.0f, 7.5f);
