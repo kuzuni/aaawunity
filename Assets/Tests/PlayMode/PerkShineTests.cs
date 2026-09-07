@@ -6,7 +6,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
-using DG.Tweening;
 
 namespace KkomaKnight.Tests.Play
 {
@@ -97,24 +96,20 @@ namespace KkomaKnight.Tests.Play
         public IEnumerator ShineMovesAtAConstantSpeed()
         {
             yield return Boot();
-            Assert.AreEqual(Ease.Linear, UiKit.ShineEase, "빛의 속도 곡선은 등속(Linear)이어야 한다(주인 «쭉 지나가는»)");
+            Assert.AreEqual("Linear", UiKit.ShineEaseName, "빛의 속도 곡선은 등속(Linear)이어야 한다(주인 «쭉 지나가는»)");
 
-            var src = _app.Assets.Material("mat.perkShine");
-            if (src == null) { Assert.Pass("카탈로그에 mat.perkShine 이 없는 환경 — 빛이 아예 없다"); yield break; }
-            var inst = new Material(src) { name = src.name + " (Instance)" };
-            var seq = DOTween.Sequence().SetUpdate(true);
-            UiKit.Shine(seq, inst, null, 0f);
-
-            // 시퀀스를 시각으로 감아 세 곳에서 값을 읽는다(트윈을 «돌리지» 않아도 Goto 가 값을 넣는다 = 프레임 흔들림 0)
-            float At(float f) { seq.Goto(UiKit.ShineDur * f, false); return inst.GetFloat(UiKit.ShineLocationId); }
+            // ⚠ 이 어셈블리는 DOTween 을 참조하지 않는다(asmdef `overrideReferences: true` · precompiled 는 nunit 하나) —
+            // 그래서 «이징을 실제로 재는» 부분은 UiKit.ShineEasedAt(t) 로 옮겨 두고 여기서는 **float 만** 받는다(결정 465).
+            // 이름을 믿지 않는 성질은 그대로다: 세 곳을 재서 «간격이 같은가» 를 본다(InOutSine 이면 가운데가 더 크다).
+            float At(float f) => UiKit.ShineEasedAt(f);
             float q1 = At(0.25f), q2 = At(0.5f), q3 = At(0.75f);
             float d1 = q2 - q1, d2 = q3 - q2;
             Debug.Log($"[T153] _ShineLocation 1/4 {q1:0.000} · 1/2 {q2:0.000} · 3/4 {q3:0.000} · 간격 {d1:0.000}/{d2:0.000}(등속이면 같다)");
             Assert.Greater(d1, 0f, "빛은 앞으로 간다");
             Assert.AreEqual(d1, d2, (UiKit.ShineTo - UiKit.ShineFrom) * 0.02f,
                 "1/4~1/2 와 1/2~3/4 의 이동량이 같아야 한다 = 등속(InOutSine 이면 가운데가 더 크다 · T153 2항)");
+            Assert.AreEqual(UiKit.ShineFrom, At(0f), 0.001f, "0 에서는 시작 값"); Assert.AreEqual(UiKit.ShineTo, At(1f), 0.001f, "1 에서는 끝 값(화면 밖)");
 
-            seq.Kill(); Object.Destroy(inst);
             _log.AssertNoRed("shine 등속");
             yield return Shutdown();
         }

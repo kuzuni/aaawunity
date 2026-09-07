@@ -6,7 +6,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
-using DG.Tweening;
 
 namespace KkomaKnight.Tests.Play
 {
@@ -108,7 +107,7 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(lrt.rect.width, grt.rect.width, 1f, "글로우 서클 = 빛살과 같은 사각형"); Assert.AreEqual(lrt.rect.height, grt.rect.height, 1f, "정사각");
             Assert.AreEqual(lrt.anchoredPosition.x, grt.anchoredPosition.x, 1f, "중심 x 가 같다"); Assert.AreEqual(lrt.anchoredPosition.y, grt.anchoredPosition.y, 1f, "중심 y 가 같다");
             Assert.Less(grt.GetSiblingIndex(), lrt.GetSiblingIndex(), "글로우 서클은 빛살 «아래»");
-            Assert.IsFalse(DOTween.IsTweening(grt, true), "글로우 서클은 돌지 않는다 — 원이라 티가 안 나고 도는 트윈만 늘어 fps 를 깎는다(T155 4항 «성능»)");
+            Assert.IsFalse(UiKit.IsTweening(grt), "글로우 서클은 돌지 않는다 — 원이라 티가 안 나고 도는 트윈만 늘어 fps 를 깎는다(T155 4항 «성능»)");
             var gimg = grt.GetComponent<Image>();
             Assert.AreEqual(UiKit.GlowAlpha, gimg.color.a, 0.01f, "글로우 서클 알파 = " + UiKit.GlowAlpha + "(빛살보다 옅다 · 겹치면 더 밝아지므로)");
             Assert.IsFalse(gimg.raycastTarget, "Glow raycast 끔");

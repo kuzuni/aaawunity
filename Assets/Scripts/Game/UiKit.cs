@@ -1386,6 +1386,17 @@ namespace KkomaKnight.Game
             master.Insert(at, tw);
             return at + ShineDur;
         }
+        /// <summary>
+        /// T153 2항 — 빛이 진행률 <paramref name="t01"/>(0~1) 에서 <b>실제로 어디까지</b> 갔는가(<see cref="ShineFrom"/>~<see cref="ShineTo"/>).
+        /// <para>
+        /// 자(테스트)가 «등속인가» 를 이징 <b>이름</b>이 아니라 값으로 재려면 이징 함수를 불러야 하는데, PlayMode 테스트 어셈블리는
+        /// <b>DOTween 을 참조하지 않는다</b>(<c>overrideReferences: true</c> · precompiled 는 nunit 하나뿐). 그래서 «DG 를 쓰는 부분» 은
+        /// 여기(=DOTween 을 참조하는 어셈블리)에 두고 자에게는 <b>float</b> 만 돌려준다 — 자가 세 곳을 재서 간격이 같은지 본다(결정 465).
+        /// </para>
+        /// </summary>
+        /// <summary>빛의 속도 곡선 이름(«Linear» …) — 자가 <see cref="ShineEase"/> 를 직접 만지려면 DOTween 을 참조해야 하는데 테스트 어셈블리는 안 한다(결정 465).</summary>
+        public static string ShineEaseName => ShineEase.ToString();
+        public static float ShineEasedAt(float t01) => DOVirtual.EasedValue(ShineFrom, ShineTo, Mathf.Clamp01(t01), ShineEase);
         /// <summary>«가만히 있는» 그림에 빛이 지나가는 주기(초 · T166 ⓑ · 주인 2026-09-07 09:2X «챕터 카드에 5초마다 shine»). 연출 상수 · 밸런스 아님.</summary>
         public const float ShinePeriod = 5f;
         /// <summary>
