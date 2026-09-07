@@ -587,6 +587,10 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 322a6e9ee66794e879b02bdaeef29c00, type: 3}
   - key: ui.light2
     sprite: {fileID: 21300000, guid: 166e683030d2d45f1b931f91e5bc4497, type: 3}
+  - key: ui.glow1
+    sprite: {fileID: 21300000, guid: a517166b651a0428ebd86a5bb120989e, type: 3}
+  - key: ui.glow2
+    sprite: {fileID: 21300000, guid: 8a1876a36db754ef8bf336dcc554a445, type: 3}
   - key: ui.gradTop1
     sprite: {fileID: 21300000, guid: 387b21f476d2b47b98fd1b94b28e78d3, type: 3}
   - key: ui.gradTop2

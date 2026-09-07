@@ -215,7 +215,10 @@ namespace KkomaKnight.Game
                 if (colorName == "gray") UiKit.Desaturate(frt);
                 // T69-overlay(주인 «카드마다 검은 아웃라인» · 1항) — 조각 제 링(CardFrame_04_White_Border 회색 0.23 · 제목 탭 TitleBorder 0.42)을 Ink 로 칠하고 선을 프레임 8px 로(레퍼런스 04 의 카드 외곽선)
                 // Desaturate 뒤에 부른다(gray 등급도 링은 Ink) · 안쪽 밝은 선(InnerBorder)은 그대로 둔다
-                UiKit.InkFrameBorders(frt, CardBorderNativePx, 1f, UiKit.BorderName, "TitleBorder");
+                // T155 ⓐ(주인 07:2X·07:3X 재지시 «TitleBorder 는 FillCenter 트루») — 두 이름을 **따로** 칠한다:
+                // 바깥 링은 가운데가 비어야 내용이 보이고(false), 제목 «띠» 는 가운데가 채워져야 띠 색이 남는다(true).
+                UiKit.InkFrameBorders(frt, CardBorderNativePx, 1f, UiKit.BorderName);
+                UiKit.InkFrameBordersFilled(frt, true, CardBorderNativePx, 1f, "TitleBorder");
                 // T135 — 몸통을 레퍼런스 04 의 어두운 회색으로. 조각의 «Bg» 는 밝은 회색(#D7D3D3)인데 설명 글자는 흰색이라
                 // 대비가 0.16 밖에 안 나 안 읽혔다(screens run 257 실측 · 레퍼런스는 몸통 #2C2C2C + 흰 글자 = 0.83).
                 // Desaturate·InkFrameBorders «뒤» 에 부른다(그 둘이 몸통을 다시 덮지 않게) · 등급 탭 색은 아래에서 따로 칠한다.
@@ -290,6 +293,17 @@ namespace KkomaKnight.Game
             // T140(주인 2026-09-07 «특전 부분에서는 패턴 없었으면함») — 어둠 위 흐르는 무늬를 안 깐다(승리·사망 = T110 ⓑ 와 같은 처리 · 배치·글자 0줄).
             // 표 ⑦ 선택창 — 상자 없음 · 배너 20/26.5 · 부제 30/31.5 · 카드 x5.5 w89 h11 피치 13 · 하단 버튼 31/79 · 인포 86/79.5
             var ribbon = UiKit.Find(rt, "Title_01_NoDeco_Tangerine"); if (ribbon != null) UiKit.Pct((RectTransform)ribbon, Layout.OvBanner.X, Layout.OvBanner.Y - 0.7f, Layout.OvBanner.W, Layout.OvBanner.H + 1.4f);
+            // T155 ⓒ(주인 07:3X ««레벨 업» 위에 글로우 서클이랑 이펙트 라이트 있어야 하는데 없더라 · 회전하게») —
+            // 리본 «뒤» 에 빛 두 겹. 리본의 자식으로 넣으면 부모보다 «뒤» 가 아니라 «위» 에 그려지므로(자식이 나중에 그려진다)
+            // 리본과 같은 자리의 빈 사각형을 리본 «앞 형제» 로 두고 거기에 건다. 어둠(Dimmed)보다는 뒤가 아니어야 보인다 → 어둠 다음 자리.
+            if (ribbon != null)
+            {
+                var glowHost = UiKit.Rect(rt, "TitleGlow");
+                UiKit.Pct(glowHost, Layout.OvBanner.X, Layout.OvBanner.Y - 0.7f, Layout.OvBanner.W, Layout.OvBanner.H + 1.4f);
+                glowHost.SetSiblingIndex(ribbon.GetSiblingIndex());
+                Canvas.ForceUpdateCanvases();   // 빛 크기는 «칸 긴 변» 을 재서 정한다 — 자리를 막 잡았으므로 한 번 밀어 준다
+                UiKit.LightBehind(glowHost);   // 도는 것은 빛살(«Light») · 글로우 서클(«Glow»)은 정적으로 그 아래(T155 ⓓ 규약 그대로)
+            }
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "레벨 업!");
             var sub = UiKit.Find(rt, "Text (TMP)"); if (sub != null) { UiKit.Pct((RectTransform)sub, Layout.OvSub); UiKit.SetText(rt, "Text (TMP)", "새 특전을 고르세요"); }   // 레퍼런스 04 «Choose a New Perk»
             var group = UiKit.Find(rt, "Group_Card");

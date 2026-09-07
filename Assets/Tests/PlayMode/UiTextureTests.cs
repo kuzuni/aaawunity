@@ -6,13 +6,14 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
+using DG.Tweening;
 
 namespace KkomaKnight.Tests.Play
 {
     /// <summary>
     /// T72 «질감 3종» 헬퍼 계약(주인 2026-09-06 «Pattern_01_256 거의 모든 UI 에 · 아이콘 뒤 Effect_Light 천천히 회전 · 그라데이션 색감») — 실제 씬(App) 위에 시험 칸을 세우고
     /// ① <see cref="UiKit.PatternBg"/>: «Pattern» RawImage · 텍스처 Repeat(.meta) · uvRect 크기 = 사각형 ÷ 256 · 시간이 멈춘 중(timeScale 0)에도 uvRect.position 이 <b>줄어</b>(= 그림이 오른쪽 위로) 흐른다 · raycast 끔 · 알파 3/255 · 한 타일 10~15초(주인 확정 2026-09-07)
-    /// ② <see cref="UiKit.LightBehind"/>: «LightMask»(RectMask2D) 안 «Light» · 아이콘 <b>뒤</b>(형제 순서 앞) · 한 변 = 아이콘 긴 변 × 1.9 · 아이콘 중심 · <b>시계방향</b> 회전(unscaled) · <see cref="UiKit.SetLightSpinning"/> 으로 멈춤
+    /// ② <see cref="UiKit.LightBehind"/>: 빛 담개 안 «Glow»(정적 · T155 ⓓ) + «Light» · 아이콘 <b>뒤</b>(형제 순서 앞) · 한 변 = max(아이콘 긴 변 × 1.9, 칸 긴 변 × 1.35) · 아이콘 중심 · <b>시계방향</b> 회전(unscaled) · <see cref="UiKit.SetLightSpinning"/> 으로 멈춤 · 담개에 마스크는 <b>없다</b>(T172 — 빛이 프레임 밖으로 번진다)
     /// ③ <see cref="UiKit.Gradient"/>: «GradientTop»/«GradientBottom» 두 장 · Gradient 스프라이트 · 글자·아이콘 아래(형제 순서 앞) · raycast 끔
     /// 공통: 두 번 불러도 조각이 늘지 않고, 칸이 파괴되면 트윈이 남지 않으며(SetLink · T56), 빨간 줄 0(<see cref="PlayLog"/>). 화면별 «어디에 있나» 는 T63/T69 화면 묶음 테스트가 <see cref="UiKit.HasPattern"/>·<see cref="UiKit.HasLight"/>·<see cref="UiKit.HasGradient"/> 로 단언한다.
     /// </summary>
@@ -84,18 +85,33 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(light, "LightBehind 는 Image 를 돌려준다(ui.light1 카탈로그)");
             Assert.AreEqual(UiKit.LightName, light.name);
             var mask = light.transform.parent; Assert.AreEqual(UiKit.LightMaskName, mask.name, "Light 는 LightMask 안");
-            Assert.IsNotNull(mask.GetComponent<RectMask2D>(), "LightMask = RectMask2D(빛살이 칸 밖으로 안 나간다)");
+            // T172(주인 10:2X «아이템 슬롯 프레임 «밖» 에 해 주쇼») — T72 ② 를 뒤집었다: 자르던 마스크가 없어야 빛이 칸 밖으로 번진다.
+            Assert.IsNull(mask.GetComponent<RectMask2D>(), "빛 담개에 RectMask2D 가 있으면 빛이 칸 안에 갇힌다(T172 · 뒤집힌 기댓값)");
             Assert.AreEqual(host, mask.parent, "LightMask 는 host 의 자식");
             Assert.Less(mask.GetSiblingIndex(), icon.transform.GetSiblingIndex(), "빛살은 아이콘 «뒤»(형제 순서 앞)");
             Assert.Greater(mask.GetSiblingIndex(), raw.transform.GetSiblingIndex(), "빛살은 패턴 위");
             Assert.IsFalse(light.raycastTarget, "Light raycast 끔"); Assert.IsNotNull(light.sprite); Assert.IsTrue(light.sprite.name.StartsWith("Effect_Light"), "스프라이트 = Effect_Light_01_512 (" + light.sprite.name + ")");
             Assert.AreEqual(68f / 255f, light.color.a, 0.01f, "빛살 알파 = 주인 확정 «255 중 68»(2026-09-07)");
             var lrt = light.rectTransform; var irt = icon.rectTransform;
-            float side = Mathf.Max(irt.rect.width, irt.rect.height) * UiKit.LightScale;
-            Assert.AreEqual(side, lrt.rect.width, 1f, "빛살 한 변 = 아이콘 긴 변 × " + UiKit.LightScale); Assert.AreEqual(side, lrt.rect.height, 1f, "정사각");
+            // T172 — 한 변 = «아이콘 긴 변 × 1.9» 와 «칸 긴 변 × 1.35»(밖으로 번지는 하한) 중 큰 쪽
+            float side = Mathf.Max(Mathf.Max(irt.rect.width, irt.rect.height) * UiKit.LightScale,
+                                   Mathf.Max(host.rect.width, host.rect.height) * UiKit.LightOutScale);
+            Assert.AreEqual(side, lrt.rect.width, 1f, "빛살 한 변 = max(아이콘 긴 변 × " + UiKit.LightScale + ", 칸 긴 변 × " + UiKit.LightOutScale + ")"); Assert.AreEqual(side, lrt.rect.height, 1f, "정사각");
+            Assert.Greater(lrt.rect.width, host.rect.width, "빛살이 칸보다 넓어야 프레임 «밖» 에서 보인다(T172)");
+            Assert.Greater(lrt.rect.height, host.rect.height, "세로도 칸보다 커야 한다(T172)");
             var lc = host.InverseTransformPoint(lrt.TransformPoint(lrt.rect.center)); var ic = host.InverseTransformPoint(irt.TransformPoint(irt.rect.center));
             Assert.AreEqual(ic.x, lc.x, 1f, "빛살 중심 x = 아이콘 중심"); Assert.AreEqual(ic.y, lc.y, 1f, "빛살 중심 y = 아이콘 중심");
             Assert.IsTrue(UiKit.HasLight(host), "HasLight");
+            // T155 ⓓ(주인 07:3X «모든 이펙트 라이트 들어간 곳에 글로우 서클도 같이») — 같은 사각형·같은 중심 · 빛살 «아래» 겹 · 도는 트윈은 안 늘린다
+            Assert.IsTrue(UiKit.HasGlow(host), "빛살 아래 글로우 서클(T155 ⓓ)");
+            var grt = (RectTransform)mask.Find(UiKit.GlowName);
+            Assert.AreEqual(lrt.rect.width, grt.rect.width, 1f, "글로우 서클 = 빛살과 같은 사각형"); Assert.AreEqual(lrt.rect.height, grt.rect.height, 1f, "정사각");
+            Assert.AreEqual(lrt.anchoredPosition.x, grt.anchoredPosition.x, 1f, "중심 x 가 같다"); Assert.AreEqual(lrt.anchoredPosition.y, grt.anchoredPosition.y, 1f, "중심 y 가 같다");
+            Assert.Less(grt.GetSiblingIndex(), lrt.GetSiblingIndex(), "글로우 서클은 빛살 «아래»");
+            Assert.IsFalse(DOTween.IsTweening(grt, true), "글로우 서클은 돌지 않는다 — 원이라 티가 안 나고 도는 트윈만 늘어 fps 를 깎는다(T155 4항 «성능»)");
+            var gimg = grt.GetComponent<Image>();
+            Assert.AreEqual(UiKit.GlowAlpha, gimg.color.a, 0.01f, "글로우 서클 알파 = " + UiKit.GlowAlpha + "(빛살보다 옅다 · 겹치면 더 밝아지므로)");
+            Assert.IsFalse(gimg.raycastTarget, "Glow raycast 끔");
 
             // ③ 그라데이션
             UiKit.Gradient(host);
@@ -130,9 +146,10 @@ namespace KkomaKnight.Tests.Play
 
             // 두 번 불러도 조각이 늘지 않는다(갱신만)
             UiKit.PatternBg(host, UiKit.PatternTintDark); UiKit.LightBehind(host, icon.rectTransform); UiKit.Gradient(host);
-            Assert.AreEqual(1, CountNamed(host, UiKit.PatternName), "Pattern 1개"); Assert.AreEqual(1, CountNamed(host, UiKit.LightMaskName), "LightMask 1개");
+            Assert.AreEqual(1, CountNamed(host, UiKit.PatternName), "Pattern 1개"); Assert.AreEqual(1, CountNamed(host, UiKit.LightMaskName), "빛 담개 1개");
             Assert.AreEqual(1, CountNamed(host, UiKit.GradientTopName), "GradientTop 1개"); Assert.AreEqual(1, CountNamed(host, UiKit.GradientBottomName), "GradientBottom 1개");
             Assert.AreEqual(1, CountNamed(mask, UiKit.LightName), "Light 1개");
+            Assert.AreEqual(1, CountNamed(mask, UiKit.GlowName), "Glow 1개(두 번 불러도 글로우 서클이 늘지 않는다 · T155 ⓓ)");
             Assert.Less(mask.GetSiblingIndex(), icon.transform.GetSiblingIndex(), "다시 불러도 빛살은 아이콘 뒤에 남는다(형제 순서)");
             Assert.AreEqual(0, raw.transform.GetSiblingIndex(), "다시 불러도 Pattern 은 형제 0");
             Assert.AreEqual(1f, raw.color.r, 0.001f, "tint 갱신(어두운 바탕용 White)");
@@ -431,6 +448,28 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsFalse(UiKit.HasPattern(perk), "레벨업 3택(04)에는 흐르는 무늬가 없다(T140)");
                 Assert.AreEqual(0, CountPatterns(perk), "04 팝업 나무 어디에도 «Pattern» RawImage 가 없다(T140 4항)");
                 AssertPerkCardIsReadable(perk);
+
+                // T155 ⓐ(주인 07:2X·07:3X 재지시 «특전 카드 TitleBorder 는 FillCenter 트루») —
+                // 이 두 줄이 있었으면 «넘긴 이름을 전부 false» 던 미반영을 바로 잡았다(지시서 T155 1항 «게이트»).
+                Image titleBorder = null, outerBorder = null;
+                foreach (var im in perk.GetComponentsInChildren<Image>(true))
+                {
+                    if (im == null || im.sprite == null || !im.sprite.name.Contains("Border")) continue;
+                    if (im.name == "TitleBorder" && titleBorder == null) titleBorder = im;
+                    else if (im.name == UiKit.BorderName && outerBorder == null) outerBorder = im;
+                }
+                Assert.IsNotNull(titleBorder, "특전 카드의 제목 띠 링(TitleBorder) — 조각 구성이 바뀌면 이 자가 알려 준다");
+                Assert.IsTrue(titleBorder.fillCenter, "TitleBorder 는 FillCenter 켜짐(제목 «띠» 는 가운데가 채워져야 띠 색이 남는다 · T155 ⓐ)");
+                if (outerBorder != null) Assert.IsFalse(outerBorder.fillCenter, "바깥 링(Border)은 가운데를 비운다(내용이 보여야 한다) — 기본값 그대로");
+
+                // T155 ⓒ(주인 ««레벨 업» 위에 글로우 서클이랑 이펙트 라이트 있어야 하는데 없더라 · 회전하게») — 리본 «뒤» 에 빛 두 겹
+                var titleGlow = UiKit.Find(perk, "TitleGlow"); Assert.IsNotNull(titleGlow, "«레벨 업» 리본 뒤 빛 담개(T155 ⓒ)");
+                Assert.IsTrue(UiKit.HasLight(titleGlow), "리본 뒤 도는 이펙트 라이트(T155 ⓒ)");
+                Assert.IsTrue(UiKit.HasGlow(titleGlow), "리본 뒤 글로우 서클(T155 ⓒ · 아래 겹)");
+                var rib = UiKit.Find(perk, "Title_01_NoDeco_Tangerine");
+                if (rib != null) Assert.Less(titleGlow.GetSiblingIndex(), rib.GetSiblingIndex(), "빛 두 겹은 리본 «뒤»(형제 순서 앞 — 자식으로 넣으면 리본 «위» 로 그려진다)");
+                var ribLight = (RectTransform)titleGlow.Find(UiKit.LightMaskName + "/" + UiKit.LightName);
+                Assert.IsTrue(UiKit.IsTweening(ribLight), "리본 뒤 빛살은 돈다(주인 «회전하게») — 글로우 서클은 원이라 안 돌린다");
                 _app.Overlay.Close(); G.Pending = null; yield return Frames(1);
             }
 

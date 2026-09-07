@@ -365,6 +365,14 @@ namespace KkomaKnight.Game
         /// 조각이 <paramref name="scale"/> 로 축소돼 있으면 그만큼 더 굵게(화면에서 같은 8px). 안쪽 밝은 선(«InnerBorder»)은 이름을 안 주면 안 건드린다. 돌려주는 값 = 칠한 개수(0 이면 조각 구성이 바뀐 것).
         /// </summary>
         public static int InkFrameBorders(Transform frame, float nativePx = 5f, float scale = 1f, params string[] names)
+            => InkFrameBordersFilled(frame, false, nativePx, scale, names);
+        /// <summary>
+        /// <see cref="InkFrameBorders"/> 와 같되 <b>가운데를 채울지</b>(<paramref name="fillCenter"/>) 를 고른다 —
+        /// 주인 지시 «특전 카드의 `TitleBorder` 는 FillCenter 켜짐»(T93 6항 · T155 ⓐ 재지시). 제목 띠는 «링» 이 아니라 «띠» 라
+        /// 가운데가 뚫리면 띠 색이 사라진다. 바깥 링(<see cref="BorderName"/>)은 가운데가 비어야 내용이 보이므로 <b>기본값은 그대로 false</b>다
+        /// (이 함수는 공용이라 대장간·던전 카드도 쓴다 · 특전 카드에서만 true 를 준다).
+        /// </summary>
+        public static int InkFrameBordersFilled(Transform frame, bool fillCenter, float nativePx = 5f, float scale = 1f, params string[] names)
         {
             if (frame == null || names == null || names.Length == 0) return 0;
             int n = 0; float px = BorderPx / Mathf.Max(0.05f, scale);
@@ -374,7 +382,7 @@ namespace KkomaKnight.Game
                 bool hit = false;
                 foreach (var nm in names) if (im.name == nm) { hit = true; break; }
                 if (!hit || im.sprite.name.IndexOf("Border", StringComparison.OrdinalIgnoreCase) < 0) continue;
-                im.color = BorderInk; im.type = Image.Type.Sliced; im.fillCenter = false; im.raycastTarget = false;
+                im.color = BorderInk; im.type = Image.Type.Sliced; im.fillCenter = fillCenter; im.raycastTarget = false;
                 im.pixelsPerUnitMultiplier = Mathf.Min(1f, nativePx / Mathf.Max(1f, px));
                 n++;
             }
@@ -434,6 +442,8 @@ namespace KkomaKnight.Game
         // 전부 unscaled(팝업 시간 정지 중에도 흐른다) + SetLink(T56 · 대상이 파괴되면 트윈도 죽는다). 화면 적용은 T63/T69 화면 묶음 워커가 같이(한 화면 세 번 만지지 않기).
         /// <summary>질감 조각 이름(고정 · 테스트·감사가 찾는다).</summary>
         public const string PatternName = "Pattern", LightName = "Light", LightMaskName = "LightMask", GradientTopName = "GradientTop", GradientBottomName = "GradientBottom";
+        /// <summary>T155 ⓓ — 빛살 아래 겹 글로우 서클의 이름·키·짙기. 이름 «LightMask» 는 T172 로 자르지 않게 됐지만 값은 그대로 둔다(코드·자·문서 열두 자리가 이 이름을 계약으로 쓴다 · 결정 456).</summary>
+        public const string GlowName = "Glow", GlowKey = "ui.glow1";
         public const string PatternKey = "ui.pattern", LightKey = "ui.light1", LightKeySmall = "ui.light2", GradTopKey = "ui.gradTop1", GradBottomKey = "ui.gradBottom";
         /// <summary>버튼 아래 어둠(Button_03_White_Gradient · 버튼 모양 9-slice) · 카드 위 밝음(CardFrame_03_White_Gradient) — ③ 그라데이션 3항 우선순위 1·3.</summary>
         public const string BtnGradientKey = "ui.btnGradient", CardGradientKey = "fr.cardGradient3";
@@ -462,6 +472,8 @@ namespace KkomaKnight.Game
         public static Color PatternTintDark => Palette.A(Palette.White, PatternAlpha);
         /// <summary>빛살 한 바퀴(초 · 12~20) · 한 변 = 아이콘 긴 변 × 배(1.6~2.2) · 알파 = 주인 확정 2026-09-07 «255 중 68»(= 68/255 ≈ 0.267 · 종전 0.6 은 아이콘을 덮었다).</summary>
         public const float LightPeriod = 16f, LightScale = 1.9f, LightAlpha = 68f / 255f;
+        /// <summary>T172 — 빛살 한 변의 «칸 대비» 하한(칸 긴 변의 몇 배). 1 보다 커야 프레임 «밖» 으로 번진 것이 보인다. T155 ⓓ 글로우 서클의 짙기는 빛살보다 옅다(겹치면 더 밝아지므로).</summary>
+        public const float LightOutScale = 1.35f, GlowAlpha = 46f / 255f;
         /// <summary>그라데이션 tint — 위 흰 +12% 밝기 · 아래 Ink −18%(ROUTINE T72 3항 팔레트). 화면 «배경» 은 레퍼런스도 이 방향이다(위 밝음 → 아래 어둠 · T116 실측 #3C6833 → #315529).</summary>
         public const float GradientTopAlpha = 0.12f, GradientBottomAlpha = 0.18f;
         /// <summary>
@@ -536,8 +548,21 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>
-        /// ② 아이콘 뒤 빛살(T72) — <paramref name="cell"/> 안에 «LightMask»(RectMask2D · Stretch · 프레임 안쪽 <paramref name="inset"/> · 빛살이 칸 밖으로 안 나간다) 를 <paramref name="icon"/> 바로 앞 형제(아이콘이 cell 의 자식이 아니면 맨 뒤 = 0)에 두고, 그 안에 «Light» Image(<paramref name="key"/> · 정사각 · 한 변 = 아이콘 긴 변(없으면 칸 긴 변) × <paramref name="scale"/> · 아이콘 중심(없으면 칸 중심) · raycast 끔 · tint 기본 흰 α <see cref="LightAlpha"/> · 등급색을 주면 그 색)를 넣고
-        /// DOLocalRotate(0,0,−360 · FastBeyond360 · Linear · 무한 · unscaled · SetLink) 로 <b>시계방향</b>(주인 «오른쪽으로») 한 바퀴 <paramref name="period"/> 초. 이미 있으면 갱신만. 스크롤 밖 칸은 <see cref="SetLightSpinning"/> 으로 멈춘다(T72 4항 개수 제한).
+        /// ② 아이콘 뒤 빛살(T72 · <b>T172 로 «칸 안» → «프레임 밖» 으로 뒤집혔다</b>) —
+        /// <paramref name="cell"/> 안에 빛 담개(<see cref="LightMaskName"/> · Stretch · <paramref name="inset"/>)를 두고 그 안에
+        /// «Glow»(글로우 서클 · 정적) → «Light»(<paramref name="key"/> · 도는 빛살) 두 겹을 넣는다.
+        /// <para>
+        /// <b>T172(주인 10:2X «아이템 슬롯 프레임 «밖» 에 해 주쇼»)</b>: 담개에 <see cref="RectMask2D"/> 를 <b>붙이지 않는다</b>(있으면 뗀다).
+        /// 예전에는 그 마스크가 빛을 칸 안쪽으로 잘랐다(T72 ② 원문 «프레임 안쪽에서만 보인다»). 마스크가 없으면 자를 것이 없으니
+        /// 빛은 프레임 <b>밖</b>으로 그대로 번진다(형제 자리는 T72 그대로 = 아이콘 뒤 · 질감층 위 · 결정 171). 칸보다 반드시 커야 밖에서 보이므로 한 변은
+        /// «아이콘 긴 변 × <paramref name="scale"/>» 과 «칸 긴 변 × <see cref="LightOutScale"/>» 중 <b>큰 쪽</b>이다(결정 456).
+        /// </para>
+        /// <para>
+        /// <b>T155 ⓓ(주인 07:3X «모든 이펙트 라이트 들어간 곳에 글로우 서클도 같이»)</b>: 같은 사각형·같은 중심에 <see cref="GlowKey"/> 를
+        /// 빛살 <b>아래</b> 겹으로 한 장 깐다. <b>돌리지 않는다</b> — 원이라 돌려도 티가 안 나고 도는 트윈만 늘어 fps 를 깎는다(지시서 T155 4항 «성능»).
+        /// </para>
+        /// 빛살은 DOLocalRotate(0,0,−360 · FastBeyond360 · Linear · 무한 · unscaled · SetLink) 로 <b>시계방향</b>(주인 «오른쪽으로») 한 바퀴 <paramref name="period"/> 초.
+        /// 이미 있으면 갱신만. 스크롤 밖 칸은 <see cref="SetLightSpinning"/> 으로 멈춘다(T72 4항 개수 제한).
         /// </summary>
         public static Image LightBehind(RectTransform cell, RectTransform icon = null, string key = LightKey, float period = LightPeriod, Color? tint = null, float scale = LightScale, float inset = 0f)
         {
@@ -546,8 +571,12 @@ namespace KkomaKnight.Game
             RectTransform mask = null;
             for (int i = 0; i < cell.childCount; i++) if (cell.GetChild(i).name == LightMaskName) { mask = (RectTransform)cell.GetChild(i); break; }
             if (mask == null) mask = Rect(cell, LightMaskName);
-            Ensure<RectMask2D>(mask.gameObject);
+            // T172 — 자르던 마스크를 뗀다(빛이 칸 밖으로 번져야 한다). 이미 붙어 있던 것도 그 자리에서 없앤다.
+            var clip = mask.GetComponent<RectMask2D>(); if (clip != null) UnityEngine.Object.DestroyImmediate(clip);
             Stretch(mask, inset, inset, inset, inset);
+            // 형제 자리는 T72 그대로 둔다 — «아이콘 뒤 · 질감층(무늬·그라데이션) 위»(결정 171). 마스크가 없어진 것만으로
+            // 빛은 이미 칸 밖으로 번진다(자를 것이 없다) — 자리를 맨 앞(0)으로 내리면 «칸 안» 몫이 프레임 몸통에 가려 사라지는데,
+            // 주인 문장은 «밖에도 보이게» 이지 «안에서는 지워라» 가 아니다(결정 456 · 안쪽까지 지우려면 이 한 줄을 0 으로).
             int target = icon != null && icon.parent == cell ? icon.GetSiblingIndex() : 0;
             if (mask.GetSiblingIndex() < target) target--;
             mask.SetSiblingIndex(Mathf.Max(0, target));
@@ -558,13 +587,40 @@ namespace KkomaKnight.Game
             lt.anchorMin = lt.anchorMax = new Vector2(0.5f, 0.5f); lt.pivot = new Vector2(0.5f, 0.5f);
             Vector2 refSize = icon != null ? icon.rect.size : cell.rect.size;
             float side = Mathf.Max(refSize.x, refSize.y); if (side <= 1f) side = Mathf.Max(cell.rect.width, cell.rect.height);
-            lt.sizeDelta = new Vector2(side * scale, side * scale);
+            side *= scale;
+            float outside = Mathf.Max(cell.rect.width, cell.rect.height) * LightOutScale;   // T172 — 칸보다 커야 «밖» 에서 보인다
+            if (outside > side) side = outside;
+            lt.sizeDelta = new Vector2(side, side);
             Vector2 center = Vector2.zero;
             if (icon != null) { var c = mask.InverseTransformPoint(icon.TransformPoint(icon.rect.center)); center = new Vector2(c.x, c.y) - mask.rect.center; }
             lt.anchoredPosition = center;
             DOTween.Kill(lt); lt.localRotation = Quaternion.identity;
             lt.DOLocalRotate(new Vector3(0f, 0f, -360f), Mathf.Max(0.1f, period), RotateMode.FastBeyond360).SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart).SetUpdate(true).SetLink(lt.gameObject);
+            GlowUnder(mask, lt, tint);
             return img;
+        }
+        /// <summary>
+        /// T155 ⓓ — 빛살 <paramref name="light"/> 과 같은 사각형·같은 중심에 글로우 서클 한 장을 <b>아래 겹</b>(형제 맨 앞)으로 깐다.
+        /// 정적이다(트윈 0). 카탈로그에 <see cref="GlowKey"/> 가 없는 환경이면 아무 일도 하지 않는다.
+        /// </summary>
+        static Image GlowUnder(RectTransform host, RectTransform light, Color? tint)
+        {
+            var sp = Cat != null ? Cat.Sprite(GlowKey) : null; if (sp == null || host == null || light == null) return null;
+            var gt = host.Find(GlowName) as RectTransform;
+            Image img;
+            if (gt == null) { gt = Rect(host, GlowName); img = gt.gameObject.AddComponent<Image>(); } else img = Ensure<Image>(gt.gameObject);
+            img.sprite = sp; img.type = Image.Type.Simple; img.preserveAspect = true; img.raycastTarget = false;
+            img.color = tint.HasValue ? Palette.A(tint.Value, GlowAlpha) : Palette.A(Palette.White, GlowAlpha);
+            gt.anchorMin = gt.anchorMax = new Vector2(0.5f, 0.5f); gt.pivot = new Vector2(0.5f, 0.5f);
+            gt.sizeDelta = light.sizeDelta; gt.anchoredPosition = light.anchoredPosition;
+            gt.SetSiblingIndex(0);
+            return img;
+        }
+        /// <summary>이 칸의 빛살 «아래» 에 글로우 서클이 깔려 있는가(테스트·감사용 · T155 ⓓ) — «&lt;담개&gt;/Glow» 가 활성이고 스프라이트가 Glow_Circle.</summary>
+        public static bool HasGlow(Transform cell)
+        {
+            var gt = cell != null ? cell.Find(LightMaskName + "/" + GlowName) : null; if (gt == null || !gt.gameObject.activeInHierarchy) return false;
+            var img = gt.GetComponent<Image>(); return img != null && img.enabled && img.sprite != null && img.sprite.name.StartsWith("Glow_Circle");
         }
         /// <summary>빛살 회전 켜기/끄기(스크롤 밖 칸은 끈다 · T72 4항 «보이는 칸만») — 그 칸의 «LightMask/Light» 트윈을 Play/Pause. 없으면 아무 일 없음.</summary>
         public static void SetLightSpinning(RectTransform cell, bool on)
