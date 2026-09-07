@@ -82,6 +82,17 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(PostFx.Enabled, "«bloom» 은 토글이다 — 꺼진 상태에서 부르면 다시 켜진다");
             Assert.AreEqual(PostFx.BloomIntensity, PostFx.CurrentBloom.intensity.value, 1e-3f, "껐다 켜도 Bloom 값이 그대로다");
 
+            // ⓔ T181 ⓑ — «비용» 손잡이 둘이 진짜 빌드에서 실제로 들어갔는가(결정 563·565).
+            //    이 단언은 이 회차가 답을 얻는 유일한 길이다: 워커에게는 유니티가 없어 URP `Bloom` 의 서명을 확인할 방법이 없고,
+            //    스텁에 추측으로 필드를 더해 «타입으로» 쓰면 로컬만 초록이고 유니티에서 컴파일이 깨진다(결정 457).
+            //    그래서 코드는 이름으로 넣고(리플렉션 = 컴파일은 어디서도 안 깨진다) **재는 일을 이 자가 맡는다**.
+            //    실패하면 메시지에 «진짜 Bloom 이 가진 필드 전부» 가 실려 나오므로 다음 회차가 그 줄만 보면 고칠 수 있다.
+            Debug.Log("[T181ⓑ] 비용 손잡이 — " + PostFx.LeverReport + " | Bloom 필드 = " + PostFx.BloomFields);
+            StringAssert.Contains("downscale=" + PostFx.BloomDownscale, PostFx.LeverReport,
+                "번짐을 1/4 해상도에서 굽는 손잡이(downscale)가 들어가야 한다 — 진짜 Bloom 의 필드: " + PostFx.BloomFields);
+            StringAssert.Contains("maxIterations=" + PostFx.BloomMaxIterations, PostFx.LeverReport,
+                "번짐 층수 손잡이(maxIterations)가 들어가야 한다 — 진짜 Bloom 의 필드: " + PostFx.BloomFields);
+
             _log.AssertNoRed("포스트 프로세싱");
             if (_app != null) { if (_app.UiCanvas != null) Object.Destroy(_app.UiCanvas.gameObject); Object.Destroy(_app.gameObject); }
             yield return Frames(3);
