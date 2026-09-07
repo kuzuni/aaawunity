@@ -1258,6 +1258,14 @@ namespace KkomaKnight.Tests.Play
                 foreach (var r in TextAudit.Collect("shop", shop))
                     if (r.Kind != TextKind.Small && r.Used > 0 && r.Used < r.Min && r.Path.IndexOf("TopBar", StringComparison.Ordinal) < 0 && r.Path.IndexOf("ui.tabBar", StringComparison.Ordinal) < 0) shrunk.Add(r.ToString());
                 Assert.AreEqual(0, shrunk.Count, "상점 글자가 bestFit 으로 종류 하한 아래로 줄었다(T63-shop):\n" + string.Join("\n", shrunk));
+                // T190 ⓑ — **남기는 자리를 못 박는다**: 상점 상품 카드의 빛은 그대로다(주인 13:1X «상점은 바꾸기 전이 맞았음»).
+                // 이 줄이 없으면 «빛 효과 없게» 를 읽은 다음 워커가 상점 것까지 지운다. 상품 카드는 조각이 달라(ListItem_ShopItem) «아이템 칸» 판정에도 안 걸린다.
+                {
+                    var pack = UiKit.Find(content, "GemPack:0"); Assert.IsNotNull(pack, "다이아 상품 카드");
+                    var icon = UiKit.Find(pack, "Icon"); Assert.IsNotNull(icon, "상품 아이콘");
+                    Assert.IsTrue(UiKit.HasLight(icon.parent), "상점 상품 아이콘 뒤 빛살은 **남는다**(T190 ⓑ · 주인 13:1X)");
+                    Assert.IsFalse(UiKit.IsItemCell(icon.parent), "상품 카드는 «아이템 칸»(ItemFrame_01) 이 아니다 — 판정이 상점을 안 건드린다는 근거(T190 1항)");
+                }
                 var qty = UiKit.Find(UiKit.Find(content, "GemPack:0"), "Text_Title"); Assert.IsNotNull(qty, "다이아 카드 수량 글자");
                 Assert.GreaterOrEqual(qty.GetComponent<Text>().fontSize, ShopScreen.QtySize, "상품 수량 크기 = 수량 띠 높이에서 계산(≈51)");
                 // T100 ⓓ(주인 2026-09-07 «상자들 카드 부분에도 그라디안트 · 레퍼런스랑 같은 색감») — 카드 조각 «안»(바탕 바로 위)에 실측 두 색 그라데이션
@@ -1343,10 +1351,15 @@ namespace KkomaKnight.Tests.Play
             }
             Assert.GreaterOrEqual(S.Inv.Count, inv + 1, "뽑은 장비가 인벤에 담겨야 한다");
             {
-                // T72 ② — 얻은 장비 칸 그림 뒤 빛살(주인 «상점 아이템 … 아이콘 뒤에 Effect_Light») · 상자 그림의 빛은 조각이 제 «Light» 로 낸다(T95)
+                // T190 — ⚑ **주인 13:4X**(«소환 결과에 아이템 슬롯 «내부» 빛 효과라든가 그런 거 없게 해») 로 **뒤집혔다**:
+                // 여기 있던 «빛살이 있다»(T72 ② · 주인 «상점 아이템 … 아이콘 뒤에 Effect_Light»)를 **없다** 로 바꾼다.
+                // 담개(`LightMask`)까지 없어야 한다 — 빛살만 끄고 글로우 서클(T155 ⓓ)이 남으면 «빛 효과» 는 그대로다.
+                // 상자 그림의 빛은 조각이 제 «Light» 로 내는 것이라 여기와 무관하다(T95).
                 var first = UiKit.Find(_app.Overlay.Root, "Got").GetChild(0);
                 var itemFrame = UiKit.Find(first, "Item").parent;
-                Assert.IsTrue(UiKit.HasLight(itemFrame), "얻은 장비 칸 그림 뒤 빛살(ItemFrame 안)");
+                Assert.IsFalse(UiKit.HasLight(itemFrame), "뽑기 결과 칸에는 빛살이 없다(T190 · 주인 13:4X)");
+                Assert.IsFalse(UiKit.HasLightMask(itemFrame), "뽑기 결과 칸에는 빛 담개(글로우 서클 포함)도 안 선다(T190)");
+                Assert.IsTrue(UiKit.IsItemCell(itemFrame), "그 칸이 «아이템 칸» 이라는 판정 자체를 못 박는다(UiKit.IsItemCell · T190 1항)");
                 // T95 «찰지게» — 연출이 끝나면 모든 칸이 제 크기·불투명(트윈이 중간에 멈춘 채 남지 않는다)
                 UiKit.CompleteAllTweens(); yield return Frames(1);
                 // T180 — 끝난 상태 = «착지한 열린 상자». 스킵(CompleteAll(true))으로도 같은 상태라야 한다(지시서 4항 ⓓ).

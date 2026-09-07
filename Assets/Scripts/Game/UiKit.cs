@@ -565,6 +565,30 @@ namespace KkomaKnight.Game
         /// 빛살은 DOLocalRotate(0,0,−360 · FastBeyond360 · Linear · 무한 · unscaled · SetLink) 로 <b>시계방향</b>(주인 «오른쪽으로») 한 바퀴 <paramref name="period"/> 초.
         /// 이미 있으면 갱신만. 스크롤 밖 칸은 <see cref="SetLightSpinning"/> 으로 멈춘다(T72 4항 개수 제한).
         /// </summary>
+        /// <summary>아이템 칸 조각 인스턴스의 이름 앞머리 — <see cref="Spawn"/> 이 인스턴스 이름을 카탈로그 키로 두므로(결정 325) «ui.itemFrame.&lt;색&gt;» 이다.</summary>
+        public const string ItemFramePrefix = "ui.itemFrame";
+        /// <summary>
+        /// T190 — 이 칸이 «아이템·보상 칸»(조각 <c>ItemFrame_01_*</c>)인가. <b>빛을 걸지 말지 가르는 판정을 이 한 함수에 모은다</b>
+        /// (지시서 T190 1항 «애매하면 그 칸이 ItemFrame_01 을 쓰는가로 판정하고, 판정을 한 함수로 두어 다음 워커가 눈으로 고르지 않게 한다»).
+        /// 칸 자신·조상·바로 아래 자식까지 본다 — 우리 코드가 프레임을 «칸으로 세우는» 꼴과 «칸 안에 자식으로 세우는» 꼴 둘 다 쓰기 때문이다.
+        /// <b>상점 상품 카드</b>는 다른 조각(<c>ListItem_ShopItem</c>)이라 여기에 안 걸린다 — 주인 13:1X «상점은 바꾸기 전이 맞았음» 대로 빛이 남는다.
+        /// </summary>
+        public static bool IsItemCell(Transform cell)
+        {
+            if (cell == null) return false;
+            for (var t = cell; t != null; t = t.parent)
+                if (t.name.StartsWith(ItemFramePrefix, StringComparison.Ordinal)) return true;
+            for (int i = 0; i < cell.childCount; i++)
+                if (cell.GetChild(i).name.StartsWith(ItemFramePrefix, StringComparison.Ordinal)) return true;
+            return false;
+        }
+        /// <summary>
+        /// T190 게이트용 읽기 — 이 칸에 빛 <b>담개</b>(<see cref="LightMaskName"/>)가 서 있나.
+        /// 이미 있는 <see cref="HasLight"/>(도는 빛살이 «보이나»)와 다르다: 담개는 빛살과 글로우 서클을 **둘 다** 담으므로,
+        /// «빛을 아예 안 걸었다» 를 재려면 담개가 **없어야** 한다(빛살만 끄고 서클이 남는 것을 이 자가 잡는다).
+        /// </summary>
+        public static bool HasLightMask(Transform cell) => cell != null && cell.Find(LightMaskName) != null;
+
         public static Image LightBehind(RectTransform cell, RectTransform icon = null, string key = LightKey, float period = LightPeriod, Color? tint = null, float scale = LightScale, float inset = 0f, float sidePx = 0f, bool clip = true)
         {
             if (cell == null) return null;

@@ -650,13 +650,8 @@ namespace KkomaKnight.Game
             foreach (var c in cells)
                 foreach (var b in c.GetComponentsInChildren<Button>(true))
                     UnityEngine.Object.DestroyImmediate(b);
-            // T72 ② 얻은 장비 칸의 그림 뒤 빛살 — 격자가 배치된 뒤에 건다(결정 174)
-            Canvas.ForceUpdateCanvases();
-            foreach (var c in cells)
-            {
-                var item = UiKit.Find(c, "Item");
-                if (item != null && item.gameObject.activeSelf) UiKit.LightBehind((RectTransform)item.parent, (RectTransform)item, UiKit.LightKeySmall);
-            }
+            // T190 — ⚑ **주인 13:4X 재확인**(«소환 결과에 아이템 슬롯 «내부» 빛 효과라든가 그런 거 없게 해») 이라
+            // 여기 있던 «얻은 장비 칸 그림 뒤 빛살»(T72 ②)을 **아예 안 부른다**. 이 창을 만지는 T157·T158·T180 워커도 다시 넣지 말 것.
             // ── 연출(«찰지게» T95 · 순서는 T180) : 닫힌 상자 낙하 → 착지 «쿵» → 열린 그림 + 빛 폭발 → 장비 칸 ──
             var seq = DOTween.Sequence().SetUpdate(true).SetTarget(root).SetLink(rootGo);
             if (chestGrp != null)

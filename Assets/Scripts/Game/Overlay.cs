@@ -158,13 +158,11 @@ namespace KkomaKnight.Game
             seq.OnComplete(() => { if (t != null) UnityEngine.Object.Destroy(t.gameObject); });
         }
 
-        /// <summary>보상 칸 그림 뒤 빛살(T72 ② · 작은 조각 <see cref="UiKit.LightKeySmall"/>) — 조각 rect 가 다 잡힌 <b>뒤</b>에 건다(그 전에는 한 변이 0 이 된다 · 결정 174).</summary>
-        static void RewardLight(Transform cell)
-        {
-            if (cell == null) return;
-            Canvas.ForceUpdateCanvases();
-            UiKit.LightBehind((RectTransform)cell, UiKit.Find(cell, "Icon") as RectTransform, UiKit.LightKeySmall);
-        }
+        // T190(주인 2026-09-07 13:3X «아이템 슬롯 같은 거에는 빛 효과 없게 · 예를 들어 **클리어했을 때 골드 주는 거 슬롯**») —
+        // 여기 있던 `RewardLight`(보상 칸 그림 뒤 빛살 · T72 ②)를 **없앴다**. 주인이 이름을 대고 지목한 자리라
+        // «칸 안이냐 밖이냐»(T192)를 물을 것도 없이 빛 자체를 안 건다. 빛을 만들었다 지우는 것이 아니라
+        // **부르는 자리를 없애는** 꼴이다(지시서 T190 2항) — 담개(`UiKit.LightMaskName`)도 생기지 않는다.
+        // 남는 자리: 상점 상품 카드 · 특전 «레벨 업» 리본 뒤 빛 두 겹(T155 ⓒ · 이 파일 아래 `LightBehind(glowHost, …)`).
 
         // (T36 의 «수치만 초록» GreenNumbers 는 주인 취소(2026-09-06 «연두색 섞여 있으면 안 읽힌다» · T52) — 특전 설명은 한 색(Palette.Ink) · 리치 텍스트 부분 색 없음)
         /// <summary>
@@ -539,9 +537,8 @@ namespace KkomaKnight.Game
                 Seq().Insert(0.35f, DOTween.To(() => v, x => { v = x; if (goldText != null) goldText.text = UiKit.Fmt(x); }, target, 0.4f).SetEase(Ease.OutQuad).SetTarget(goldText).SetLink(goldText.gameObject));
             }
             At(0.6f, b1); At(0.72f, b2);
-            // T72 ② 그림 뒤 빛살 → T69 7항 보상 칸 = 장비 프레임 + 검은 아웃라인 — 둘 다 조각 rect 가 다 잡힌 뒤(결정 174)
-            // 순서가 중요하다: 빛살이 먼저다(프레임을 먼저 깔면 RewardLight 의 깊은 «Icon» 찾기가 프레임 안 아이콘을 집는다) · 형제 = [프레임 · 빛살 · 아이콘 · 숫자]
-            RewardLight(goldCell);
+            // T69 7항 보상 칸 = 장비 프레임 + 검은 아웃라인 — 조각 rect 가 다 잡힌 뒤(결정 174)
+            // T190 — 여기 있던 `RewardLight(goldCell)` 은 없앴다(주인이 이름을 대고 지목한 «클리어 골드 슬롯» 이다).
             RewardFrame(goldCell);
             if (goldCell != null) UiKit.Tag(goldCell, "클리어 보상 칸");   // T69 감사 대상(«칸») — 결과 팝업은 레퍼런스 jpg 가 없어 표(ref-layout) 행은 없다
         }
@@ -613,8 +610,8 @@ namespace KkomaKnight.Game
             At(0.05f, UiKit.Find(rt, "Title_LineDeco_01_s_White")); At(0.2f, reward);
             float tipsEnd = UiKit.Stagger(Seq(), rows, 0.35f, UiKit.RevealStep);   // 0.35 · 0.46 · 0.57 → 0.79
             At(tipsEnd - UiKit.RevealStep, lobbyBtn); if (touch != null) At(tipsEnd - 0.03f, touch.transform);
-            // T72 ② 사망 보상(골드) 그림 뒤 빛살 → T69 7항 보상 칸 = 장비 프레임 + 검은 아웃라인 — 배치가 끝난 뒤(결정 174) · 빛살이 먼저(위 Clear 와 같은 이유)
-            RewardLight(reward);
+            // T69 7항 보상 칸 = 장비 프레임 + 검은 아웃라인 — 배치가 끝난 뒤(결정 174)
+            // T190 — 사망 보상(골드) 칸의 빛살도 없앴다(클리어 칸과 같은 꼴이다).
             RewardFrame(reward);
             if (reward != null) UiKit.Tag(reward, "패배 보상 칸");
         }

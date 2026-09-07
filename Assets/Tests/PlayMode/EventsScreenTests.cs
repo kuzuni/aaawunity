@@ -212,6 +212,11 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(HasText(s => s == "최초"), "«최초» 배지 글자(레퍼런스 21 의 FIRST 자리)");
             {
                 var cell0 = UiKit.Find(ov, "RewardCell:0") as RectTransform; Assert.IsNotNull(cell0, "보상 칸 0");
+                // T190 ⓐ(주인 13:3X «아이템 슬롯 같은 거에는 빛 효과 없게») — 던전 보상 칸에는 빛살도 담개도 없다.
+                // 담개까지 재는 까닭: 빛살만 끄고 글로우 서클(T155 ⓓ)이 남으면 사람 눈에는 그대로 «빛 효과» 다.
+                Assert.IsTrue(UiKit.IsItemCell(cell0), "보상 칸은 «아이템 칸»(조각 ItemFrame_01) 이다 — 판정의 근거(T190 1항)");
+                Assert.IsFalse(UiKit.HasLight(cell0), "던전 보상 칸에 빛살 없음(T190)");
+                Assert.IsFalse(UiKit.HasLightMask(cell0), "던전 보상 칸에 빛 담개도 안 선다(글로우 서클 포함 · T190)");
                 var badge = UiKit.Find(cell0, "First") as RectTransform; Assert.IsNotNull(badge, "칸 0 의 «최초» 배지");
                 var cc = new Vector3[4]; cell0.GetWorldCorners(cc); var bc = new Vector3[4]; badge.GetWorldCorners(bc);
                 float cellW = cc[2].x - cc[0].x, cellH = cc[1].y - cc[0].y;

@@ -1061,6 +1061,8 @@ namespace KkomaKnight.Game
         {
             var item = cell != null ? UiKit.Find(cell, "Item") : null;
             if (item == null || !item.gameObject.activeSelf) return;
+            // T190(주인 13:3X) — 출석·탐험·챕터 보상의 «보상 칸» 은 조각 ItemFrame_01 이라 여기서 걸린다(빛 예약 안 함).
+            if (UiKit.IsItemCell(item.parent)) return;
             _lightPlan.Add(((RectTransform)item.parent, (RectTransform)item, UiKit.LightKeySmall));
         }
 

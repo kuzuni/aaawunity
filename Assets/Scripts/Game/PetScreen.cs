@@ -172,6 +172,8 @@ namespace KkomaKnight.Game
             var cell = PetCell(box, Layout.PdBox, Layout.PdCell, lvR, Layout.PdBar, index, null, out _, out var bar); cell.name = "PetDetailCell";
             // T72 ② 펫 아이콘 뒤 빛살(ROUTINE T72 2항 «펫 세부의 아이콘») — 조각 안 «Item» 바로 뒤(NormalArea 등급판 위) · 칸 하나뿐이라 개수 제한(4항)에 걸리지 않는다
             var petIcon = UiKit.Find(cell, "Item");
+            // T190 범위 밖 — 여기는 그대로 둔다. 지시서 T190 1항의 «뺀다» 목록(장비 인벤·장착·대장간·뽑기 결과·클리어/사망 보상·던전/아레나 보상·출석/탐험/챕터 보상)에
+            // 펫 세부는 없고, 주인이 든 예도 «아이템 슬롯 · 클리어 골드 슬롯» 이다. 주인이 «펫도» 라고 하면 위 갈래들과 같은 `UiKit.IsItemCell` 한 줄로 막으면 된다.
             if (petIcon != null) UiKit.LightBehind((RectTransform)petIcon.parent, (RectTransform)petIcon);
             var desc = UiKit.Panel(box, "Desc", "fr.r12", Palette.A(Palette.Dim, 0.6f)); UiKit.Pct(desc.rectTransform, Layout.PdDesc.Within(Layout.PdBox));
             UiKit.Label(desc.transform, 4, 8, 92, 84, "펫 시스템은 준비 중입니다.\n업데이트로 만나요.", 32, Palette.White);

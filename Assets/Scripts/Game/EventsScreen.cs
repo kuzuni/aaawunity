@@ -640,6 +640,9 @@ namespace KkomaKnight.Game
         void PlanLight(RectTransform cell, string key = UiKit.LightKeySmall)
         {
             if (cell == null) return;
+            // T190(주인 13:3X «아이템 슬롯 같은 거에는 빛 효과 없게») — 아이템·보상 칸이면 **예약 자체를 안 한다**.
+            // 판정은 `UiKit.IsItemCell` 한 곳이다(지시서 T190 1항) — 던전·아레나 보상 칸이 여기서 걸린다.
+            if (UiKit.IsItemCell(cell)) return;
             _lightPlan.Add((cell, cell.Find("Icon") as RectTransform, key));
         }
         /// <summary>예약해 둔 빛살을 «배치가 끝난 뒤»에 한꺼번에 건다 — 그 전에는 % 앵커 아이콘의 rect 가 0 이라 빛살 한 변이 0 이 된다(결정 174).</summary>
