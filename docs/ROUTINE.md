@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-07 · 08:0X UTC) ⚑ 주인 — 뽑기(소환) 결과 창 셋 더 → **T158**:** «**상자가 작았었는데 커졌다가 원래 사이즈로 되는 애니메이션** 돼야 함» · «**«최고 등급 일반 / 장착은 장비 탭에서» 이런 텍스트 빼셈**» · «**소환결과 부분 클릭하니까 버튼이어서 갑자기 색 어두워지는데 그거 하지 말라**» — 셋 다 T157 과 같은 함수(`ShopScreen.ChestResult`)라 **묶어 잡으면 한 번**이다.
+
 - **(2026-09-07 · 07:5X UTC) ⚑ 주인 — 뽑기 결과 둘 → **T157**:** «**뽑기할 때 `ItemFrame_01` 있는 곳에 아이템이 떠야 하는데 지금 썡둥맞은 위치에 뜬다**» · «**뽑기 결과에서도 패턴들 움직여야 함**» — 등재 세션 확인: 조각(`Shop_Chest_Open`)에 **`ItemFrame_01`(190×190 · 앵커 가운데 · y +217)이 실제로 있고** `Pattern` 자식도 있는데, 우리 코드는 **둘 다 안 쓴다** — 얻은 칸을 «화면 위 24%»(`ChestGridTopPct`)에 제 격자로 얹고, 조각의 `Pattern` 은 **정적 Image** 라 안 흐른다.
 
 - **(2026-09-07 · 07:4X UTC) ⚑ 주인 — **설정에 «프로필 아이콘 설정»·«닉네임 설정» 줄을 넣는다** → **T156**:** «**설정에 프로필 아이콘 설정, 닉네임 설정 있어야함**» — 팝업 둘은 **이미 있다**(`Profile.OpenAvatar` · `Profile.OpenNickname` = T96-profile · 지금은 상단 재화 바의 아바타를 눌러야 열린다). 설정 팝업(표 ⑨)에 **줄 둘을 더하고** 상자·아래 링크 자리를 그만큼 내리면 된다.
@@ -2091,6 +2093,23 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. **연출은 그대로** — T95 의 «찰지게»(상자 흔들림 → 빛 폭발 → 칸 하나씩 오버슛 → 최고 등급 한 번 더)는 유지한다. 칸 자리가 바뀌어도 `UiKit.Stagger` 순서·시간(`ChestShake`·`ChestCellStep`·`RevealMaxResult`)은 손대지 않는다.
 4. **테스트** — PlayMode(`ShopScreen`/뽑기 구간): ⓐ 1회 뽑기에서 얻은 칸의 **가운데가 조각 `ItemFrame_01` 의 가운데와 ±8px** ⓑ 10회에서도 격자 **가운데**가 그 자리와 같다 ⓒ 팝업에 `UiKit.PatternName` RawImage 가 1개 있고 **도는 트윈이 걸려 있다** ⓓ `PlayLog.AssertNoRed`.
 5. 판정 = 그 커밋을 담은 첫 완주 런 + 워커가 찍은 1회·10회 결과 스샷(칸이 상자 위 그 자리에) + 주인 폰.
+
+### T158 — 뽑기(소환) 결과 창 셋: **상자 «작았다 커졌다 제 크기» 애니** · **안내 글자 삭제** · **칸을 눌러도 안 어두워지게** (주인 2026-09-07 08:0X · T157 과 같은 함수 · 연출·화면 · 확률·수치 0줄)
+
+> 주인 원문: «뽑기 결과 뜰 때 **상자가 작았었는데 커졌다가 원래 사이즈로 되는 애니메이션** 돼야 함» / «**«최고 등급 일반 · 장착은 장비 탭에서» 이런 텍스트 빼셈** 소환결과 부분» / «소환결과 부분 **클릭하니까 버튼이어서 갑자기 색 어두워지는데 그거 하지 말라**»
+> **T157 과 같은 `ShopScreen.ChestResult` 한 함수**다 — 한 워커가 T157·T158 을 같이 잡는 것이 싸다.
+
+1. **ⓐ 상자 등장 = 작게 → 커졌다가 → 제 크기.** 지금 연출은 상자 **위치 펀치**(`chestGrp.DOPunchAnchorPos(…, 0, 22)`)와 빛 폭발(`light.DOScale(0.55 → 1)`)뿐이라 **상자 자체는 크기가 안 변한다**.
+   - **처방**: `chestGrp.localScale` 을 작게(예 0.6) 두고 시작하자마자 `DOScale(1f, ~0.3s).SetEase(Ease.OutBack)` — **OutBack 이 «커졌다가 제 크기로» 오버슛을 한 번에 준다**(주인 문장 그대로). `SetUpdate(true)` + `SetLink(chestGrp.gameObject)`(§1) · 기존 위치 펀치는 남기거나 이 스케일과 겹치지 않게 조절한다.
+   - 전체 길이는 `UiKit.RevealMaxResult` 안에 그대로 든다(칸 stagger 시작 `ChestShake + 0.06` 은 손대지 않아도 된다 · 바꾸면 그 상수만).
+2. **ⓑ 안내 줄 삭제.** `ShopScreen.cs:577~578` 의 `note` = «최고 등급 {등급} · 장착은 장비 탭에서» 를 **없앤다**(줄과 그 Reveal 도 같이).
+   - **⚠ 테스트가 그 줄을 단언한다** — `UiSmokeTests.cs:1145` 의 «결과 창 안내 줄(Note)» `Assert.IsNotNull` 을 **같은 커밋에서 지운다**(안 지우면 main 이 빨개진다).
+   - **연출의 «최고 등급 한 칸 더 튀기» 는 남긴다** — `best`/`bestCell` 계산은 글자와 무관하다.
+3. **ⓒ 칸을 눌러도 어두워지지 않게.** 결과 칸(`GearUi.Cell(…, onClick: null)`)에는 우리가 클릭을 안 붙인다(`GearUi.cs:90` 은 `onClick != null` 일 때만) — 어두워지는 것은 **조각(`ui.equipCell` = `ListItem_EquipMent`)이 달고 온 제 `Button`**(색 tint 전이)이다.
+   - **처방**: 클릭이 없는 칸에서는 조각의 `Button` 을 **떼어 낸다**(`Destroy`). `transition = None` 으로 죽이는 길도 있지만 **`PressFeedbackTests`(«모든 Button 은 눌림 표시» 계약)와 부딪칠 수 있어** 아예 없애는 쪽이 안전하다. 부품을 지우는 자리라 `GearUi.Cell` 안(= `onClick == null` 이면 조각 Button 제거)에 한 줄로 두면 **다른 «못 누르는 칸» 도 같이 나아진다** — 다만 장비 탭·대장간처럼 **클릭이 있는** 칸은 그대로여야 한다(그쪽은 `onClick != null`).
+   - 배경 탭으로 닫는 것(`Background` 클릭 = 닫기)은 **그대로 둔다**.
+4. **테스트** — PlayMode: ⓐ 팝업을 연 직후 상자 `localScale < 1` 이고 연출이 끝나면 `≈1`(`UiKit.CompleteAllTweens()` 뒤) ⓑ `Note` 오브젝트가 **없다**(위 단언을 뒤집어 둔다) ⓒ 결과 칸에 `Button` 이 **0개**(눌러도 색이 안 변한다) · `PlayLog.AssertNoRed`.
+5. 판정 = 그 커밋을 담은 첫 완주 런(회귀 0 · 특히 `UiSmokeTests`) + 워커가 찍은 결과 스샷 + 주인 폰.
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
