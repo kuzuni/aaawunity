@@ -411,14 +411,21 @@ namespace KkomaKnight.Tests.Play
                     float luma = 0.299f * headImg.color.r + 0.587f * headImg.color.g + 0.114f * headImg.color.b;
                     Assert.LessOrEqual(luma, 0.30f, $"머리 띠가 너무 밝다(휘도 {luma:0.00}) — 흰 글자와 대비가 없다(T133 ⓑ · 레퍼런스 ≈0.2)");
                     Assert.GreaterOrEqual(headImg.color.a, 0.99f, "머리 띠는 불투명이어야 한다 — 반투명이면 밝은 칸이 비쳐 다시 떠 버린다(T133 ⓑ)");
-                    // ⓐ 수량은 «칸 아래를 가로지르는 큰 글자» 다 — 오른쪽 아래 한 글자로 되돌아가면 실기에서 안 보인다.
+                    // ⓐ 수량 = 레퍼런스 16 처럼 «아이콘 오른쪽 아래에 굵게 얹힌 큰 숫자»(회차 2 · 결정 403).
+                    // 회차 1 의 단언(«MiddleCenter · fontSize ≥ 하한 · 칸 폭 80%»)은 **초록인 채로 화면은 안 고쳐졌다** —
+                    // bestFit 이 rect 안에서 글자를 다시 누르므로 `fontSize`(상한)는 «그려지는 크기» 가 아니었다.
+                    // 그래서 이번에는 **rect 가 실제로 그만큼 크다** 를 잰다(그것이 bestFit 뒤 글자 크기의 상한이다).
                     var cellT = UiKit.Find(ovA, "Cell"); Assert.IsNotNull(cellT, "출석 보상 칸");
                     var qtyT = UiKit.Find(cellT, "Qty"); Assert.IsNotNull(qtyT, "보상 수량 글자");
                     var qty = qtyT.GetComponent<Text>(); Assert.IsNotNull(qty, "수량 Text");
-                    Assert.AreEqual(TextAnchor.MiddleCenter, qty.alignment, "수량은 칸 아래 띠 가운데(T133 ⓐ)");
-                    Assert.GreaterOrEqual(qty.fontSize, TextSize.Body, $"수량 글자가 본문 하한보다 작다({qty.fontSize} · T133 ⓐ)");
+                    Assert.AreEqual(TextAnchor.LowerRight, qty.alignment, "수량은 아이콘 오른쪽 아래(레퍼런스 16 · T133 ⓐ)");
+                    Assert.GreaterOrEqual(qty.fontSize, TextSize.Body, $"수량 글자 상한이 본문 하한보다 작다({qty.fontSize} · T133 ⓐ)");
                     var qrt = qty.rectTransform;
-                    Assert.GreaterOrEqual(qrt.anchorMax.x - qrt.anchorMin.x, 0.8f, "수량 칸이 칸 폭을 가로질러야 한다(T133 ⓐ)");
+                    // 앵커로 잰다 — 「칸 높이의 몇 %인가」가 곧 앵커 차이라, 레이아웃이 언제 잡히든 값이 같다(회차 1 단언이 쓴 방식 그대로).
+                    float qtyPct = (qrt.anchorMax.y - qrt.anchorMin.y) * 100f;
+                    Assert.GreaterOrEqual(qtyPct, LobbyPopups.QtyMinHeightPct,
+                        $"수량 글자 칸이 칸 높이의 {qtyPct:0.0}% 뿐이다 — bestFit 이 여기까지 글자를 눌러 그림에 먹힌다"
+                        + $"(회차 1 이 30% 라 21~25px 이 됐다 · 하한 {LobbyPopups.QtyMinHeightPct}% · T133 ⓐ)");
                 }
                 AssertNoTextClip("출석 팝업", _app.Overlay.Root);
                 // T76 — 출석 팝업은 GUI Pro `Rewards_Daily7_Popup` 프리팹이다: 리본은 프리팹 Title_01_Deco_Yellow · 칸은 DailyFrame(상태 바탕) · 오늘(1일차)만 Bg_Focus1 · 받은 날 ✅ 0

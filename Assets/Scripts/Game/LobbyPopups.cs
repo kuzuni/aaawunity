@@ -47,7 +47,15 @@ namespace KkomaKnight.Game
 
         /// <summary>보상 칸 — ItemFrame_01 조각(본래 190px · 배율로 표 칸에) + 등급색 변형 + 아이콘 (+ 오른쪽 아래 수량 · 오른쪽 위 자물쇠). PetScreen 의 칸과 같은 문법.</summary>
         /// <summary>T133 ⓐ — «칸 아래를 가로지르는» 수량 띠의 높이(칸 %). 글자 크기는 이 높이에서 계산한다.</summary>
-        public const float QtyBandH = 30f;
+        /// <summary>
+        /// T133 ⓐ — 출석 칸 수량 글자의 칸(칸 크기의 %). 레퍼런스 `16_attendance.jpg` 실측:
+        /// 수량은 아이콘 **오른쪽 아래**에 굵게 얹혀 프레임 밖으로 조금 걸치고, 글자 잉크가 아이콘 높이의 ≈25% 다.
+        /// bestFit 이 rect 안에서 글자를 다시 누르므로 **rect 높이가 곧 글자 크기의 상한**이다 — 하한(T63)이 뜻을 가지려면 rect 가 그만큼 커야 한다.
+        /// <para><see cref="QtyOver"/> = 프레임 밖으로 걸치는 양(레퍼런스도 숫자가 칸 모서리를 조금 넘는다).</para>
+        /// </summary>
+        public const float QtyW = 82f, QtyH = 50f, QtyOver = 4f;
+        /// <summary>수량 글자가 «너무 작아 그림에 먹히지» 않는 하한 — 칸 높이 대비 비율(게이트가 이 값으로 잰다 · 회차 1 은 30% 라 25px 로 눌렸다).</summary>
+        public const float QtyMinHeightPct = 40f;
         /// <summary>
         /// T133 ⓑ — 출석 칸 머리(«N일차») 띠 색을 누르는 비율. 레퍼런스 16 의 머리 띠는 <b>짙은 자주(휘도 ≈0.2)</b> 인데
         /// 우리 것은 <c>Palette.Plum</c> α0.8 이라 밝은 칸 위에서 #D493E1(휘도 0.69)로 떠 흰 글자와 대비가 0.31 밖에 안 됐다.
@@ -76,10 +84,17 @@ namespace KkomaKnight.Game
                 Text q;
                 if (qtyBand)
                 {
-                    // T133 ⓐ — 레퍼런스 16 의 수량은 «칸 아래를 가로지르는 큰 글자» 다. 우리 것은 아이콘 오른쪽 아래에 붙은 한 글자라
-                    // 실제 크기(540px 폭)에서 거의 안 보였다(screens run 255 의 16_attendance.png 4배 확대로 실측).
-                    // 크기는 리터럴이 아니라 «띠 높이» 에서 뽑는다(§1 · ShopScreen.HeaderSize 와 같은 방식).
-                    q = UiKit.Label(cell, 2, 100f - QtyBandH - 2f, 96, QtyBandH, qty, UiKit.FontForHeight(cellR.H * QtyBandH / 100f), Palette.White, TextAnchor.MiddleCenter, kind: TextKind.Body);
+                    // T133 ⓐ 회차 2 — 회차 1(가운데 «띠»)은 실제 화면에서 **안 됐다**(`screens` run 283 의 16_attendance.png 확대 · 결정 403):
+                    // 아이콘 밑단에 걸린 가느다란 흰 «1» 한 획이라 그림에 먹혔다. 두 가지가 틀렸었다 —
+                    //  ⓘ **자리**: 등재 메모의 «칸 아래를 가로지르는 큰 글자» 는 레퍼런스를 잘못 읽은 것이다.
+                    //     `docs/ref/16_attendance.jpg` 를 다시 보면 수량(«5000»·«10K»·«1»)은 **아이콘 오른쪽 아래**에
+                    //     굵게 얹혀 프레임 밖으로 살짝 걸친다 — 원래 코드의 LowerRight 가 맞았다.
+                    //  ⓙ **크기**: `FontForHeight` 는 «프레임 높이의 %» 를 받는데 «칸 높이의 %» 를 넘겨 21px 이 나왔고,
+                    //     30% 짜리 rect(≈25px)가 bestFit 으로 글자를 다시 눌러 하한 40 이 아무 뜻이 없었다.
+                    // 그래서 rect 를 «칸 높이의 절반» 으로 키우고 자리를 레퍼런스대로 오른쪽 아래(살짝 걸침)로 되돌린다.
+                    // 읽히게 하는 것은 띠가 아니라 **검은 아웃라인**이다(T63 0항이 모든 글자에 무조건 붙인다 · 레퍼런스도 같은 방식).
+                    q = UiKit.Label(cell, 100f - QtyW + QtyOver, 100f - QtyH + QtyOver, QtyW, QtyH, qty,
+                                    UiKit.FontForHeight(cellR.H * QtyH / 100f), Palette.White, TextAnchor.LowerRight, kind: TextKind.Body);
                 }
                 else q = UiKit.Label(cell, 20, 44, 76, 56, qty, TextSize.Aux, Palette.White, TextAnchor.LowerRight, kind: TextKind.Aux);
                 q.name = "Qty"; q.fontStyle = FontStyle.Bold;
