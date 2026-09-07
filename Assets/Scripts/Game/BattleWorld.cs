@@ -102,6 +102,8 @@ namespace KkomaKnight.Game
         /// <summary>투사체 표시 x(T86 ⓐ) — 엔진 x 와 «같은 px/s»(pr.Spd)로 매 프레임 전진하고, 엔진이 앞서면 엔진을 따르며, 엔진이 맞히는 자리는 앞지르지 않는다.</summary>
         readonly Dictionary<Projectile, double> _projX = new Dictionary<Projectile, double>();
         readonly Dictionary<EnemyArrow, GameObject> _arrows = new Dictionary<EnemyArrow, GameObject>();
+        /// <summary>적 화살의 «표시 x»(T179 ⓑ) — <see cref="_projX"/> 와 같은 구실이다. 엔진 좌표(<c>a.X</c>)를 그대로 그리면 킬 연출로 엔진 틱이 보류된 동안 화살이 공중에 선다.</summary>
+        readonly Dictionary<EnemyArrow, double> _arrowX = new Dictionary<EnemyArrow, double>();
         // 노드 · 배경
         sealed class NodeView { public BattleNode N; public GameObject Go; public GameObject FxGo; public bool Dimmed; }
         readonly List<NodeView> _nodes = new List<NodeView>();
@@ -671,10 +673,27 @@ namespace KkomaKnight.Game
         //    엔진이 앞서면 즉시 엔진을 따르고(격차 0), 엔진이 맞히는 자리(ProjLimit)는 앞지르지 않는다 — 그래서 «맞기 전에 지나가 버리는» 그림이 안 나온다.
         const float AxeSpinDegPerSec = 360f;   // ⓒ 초당 1바퀴 — 정규화 t(비행 거리 비율)가 아니라 «날아간 시간»(거리/속도)에서 뽑는다(거리가 달라도 초당 속도는 같다)
         const float SpearAngle = 0f;           // ⓑ 창은 수평 — 스프라이트 FA_WP_Main_Spear_001 은 이미 오른쪽으로 누워 있다(PNG 실측 기울기 1.2° · 보정 불필요)
-        const float ArrowAngle = -35f;         // 화살은 주인 지적 밖이라 종전 각 그대로(지시서 7항)
+        /// <summary>
+        /// 플레이어 화살 각 — <b>수평</b>(T179 · 주인 «화살 각도가 완벽히 누워 있어야 하는데 비스듬하다»).
+        /// 종전 −35° 는 «쏘아 올린 활» 느낌으로 준 값인데, 화살은 <see cref="ProjKind.Axe"/> 와 달리 <b>포물선을 안 그린다</b>(같은 <c>yf</c> 로 직선 비행) —
+        /// 즉 가는 방향과 그림이 어긋나 있었다. 스프라이트 <c>FA_Consumable_Arrow_002</c> 의 본디 기울기는 PNG 실측 <b>0.05°</b>(사실상 수평)라 보정도 필요 없다(결정 415).
+        /// </summary>
+        const float ArrowAngle = 0f;
+        /// <summary>
+        /// 적 화살 각 — 적 화살은 <b>왼쪽</b>으로 나므로 <c>flipX = true</c> 로 좌우만 뒤집고 회전은 <b>0°</b>(T179 ⓐ).
+        /// 종전 <c>Euler(0,0,200f)</c> 는 «180°(왼쪽 보기) + 20°» 라 그 20° 가 그대로 기울기로 보였다 — 주인이 말한 «비스듬» 이 이것이다.
+        /// 스프라이트 <c>FA_Consumable_Arrow_001</c> 의 본디 기울기는 PNG 실측 <b>0.14°</b>(불투명 픽셀의 주축)라 보정 없이 0 이면 수평이다(<see cref="SpearAngle"/> 과 같은 판단).
+        /// </summary>
+        public const float EnemyArrowAngle = 0f;
 
         /// <summary>투사체의 표시 x(T86 ⓐ · 테스트·진단용) — 화면에 없으면 엔진 x.</summary>
         public double ProjShownX(Projectile pr) => pr != null && _projX.TryGetValue(pr, out double x) ? x : (pr != null ? pr.X : 0);
+        /// <summary>적 화살의 표시 x(T179 ⓑ 게이트용) — 그림이 실제로 서 있는 자리다(엔진 <c>a.X</c> 가 아니라).</summary>
+        public double ArrowShownX(EnemyArrow a) => a != null && _arrowX.TryGetValue(a, out double x) ? x : (a != null ? a.X : 0);
+        /// <summary>화면에 서 있는 적 화살 그림 수(T179 ⓓ 누수 0 게이트용).</summary>
+        public int ArrowViewCount => _arrows.Count;
+        /// <summary>적 화살 그림의 z 회전(T179 ⓐ 게이트용) — 없으면 <c>float.NaN</c>.</summary>
+        public float ArrowViewAngle(EnemyArrow a) => a != null && _arrows.TryGetValue(a, out var go) && go != null ? go.transform.eulerAngles.z : float.NaN;
         /// <summary>투사체의 화면 오브젝트(T86 · 테스트·진단용 · 각도 확인).</summary>
         public GameObject ProjGo(Projectile pr) { if (pr != null && _projs.TryGetValue(pr, out var go)) return go; return null; }
 
@@ -788,14 +807,27 @@ namespace KkomaKnight.Game
                 {
                     go = new GameObject("arrow"); go.transform.SetParent(_root, false);
                     var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = _app.Assets.Sprite("cm.rangedB.arrow"); sr.sortingOrder = 350; sr.flipX = true;
-                    go.transform.localScale = Vector3.one * 0.85f; go.transform.rotation = Quaternion.Euler(0, 0, 200f);
+                    go.transform.localScale = Vector3.one * 0.85f; go.transform.rotation = Quaternion.Euler(0, 0, EnemyArrowAngle);
                     if (!Silent) Audio.Sfx("snd.arrow", 0.5f);
-                    _arrows[a] = go;
+                    _arrows[a] = go; _arrowX[a] = a.X;
                 }
-                go.transform.position = Pos(a.X, FootY - 0.05f, -0.2f);
+                // 표시 x(T179 ⓑ) — 투사체(T86 ⓐ · 위 SyncProjectiles)와 같은 방식이다. 적 화살은 왼쪽으로 나므로 부호만 뒤집힌다.
+                if (!_arrowX.TryGetValue(a, out double ashown)) ashown = a.X;
+                if (Silent) ashown = a.X;
+                else if (EngineRunning)   // 팝업·일시정지·판 종료일 때만 선다 — 킬 연출로 엔진이 보류된 동안에도 간다(그래서 화살이 공중에 안 뜬다)
+                {
+                    double astep = D.Combat.EnemyArrowSpeed * dt * System.Math.Max(1, Speed);
+                    if (ashown > a.X) astep = System.Math.Min(ashown - a.X, astep * ProjCatchUpMul);   // 엔진이 앞서(= 더 왼쪽) 있으면 스냅하지 않고 조금 더 빨리 좁힌다
+                    ashown -= astep;
+                }
+                // 엔진이 «맞았다» 고 보는 자리(Battle.cs `a.X <= P.WorldX + ArrowHitDx`)를 앞지르지 않는다 — 앞지르면 맞기도 전에 플레이어를 지나가 버린다(투사체의 ProjLimit 과 같은 구실).
+                double ahit = G.P.WorldX + EngineConst.ArrowHitDx;
+                if (ashown < ahit) ashown = System.Math.Min(a.X, ahit);
+                _arrowX[a] = ashown;
+                go.transform.position = Pos(ashown, FootY - 0.05f, -0.2f);
             }
             var deadA = new List<EnemyArrow>(); foreach (var kv in _arrows) if (!liveA.Contains(kv.Key)) deadA.Add(kv.Key);
-            foreach (var k in deadA) { Object.Destroy(_arrows[k]); _arrows.Remove(k); }
+            foreach (var k in deadA) { Object.Destroy(_arrows[k]); _arrows.Remove(k); _arrowX.Remove(k); }
         }
 
         // ───────────────────────── 연출 이벤트 ─────────────────────────

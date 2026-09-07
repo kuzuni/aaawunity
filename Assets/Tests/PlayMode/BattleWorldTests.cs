@@ -386,5 +386,67 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("로비 복귀");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T179 — 주인 2026-09-07: «적의 화살들이 각도가 완벽히 누워 있어야 하는데 비스듬하다» · «화살이 맞아야 하는데 멈출 때가 있음».
+        /// ⓐ 적 화살 그림의 z 회전이 <see cref="BattleWorld.EnemyArrowAngle"/>(수평) 이다 — 종전 <c>Euler(0,0,200f)</c> 는 «180° + 20°» 라 20° 기울어 보였다.
+        /// ⓑ 킬 연출로 <b>엔진 틱이 보류된</b> 프레임에도 표시 x 가 한 번도 안 멈추고 왼쪽으로 간다(투사체 T86·T108 과 같은 계약을 적 화살에도).
+        /// ⓒ 좌표 점프가 없다(프레임 이동량 ≤ 속도 × dt × 배속 × <see cref="BattleWorld.ProjCatchUpMul"/>).
+        /// ⓓ 엔진이 지우면 그림도 사라진다(누수 0).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator EnemyArrowsLieFlatAndKeepFlyingWhileKillHoldsTheEngine()
+        {
+            yield return Boot();
+            _app.StartBattle(1);
+            var bs = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bs); var G = bs.G; Assert.IsNotNull(G, "전투 상태");
+            var world = bs.World; Assert.IsNotNull(world, "BattleWorld");
+            Arm(G);
+            Time.timeScale = 3f;
+            float t0 = Time.realtimeSinceStartup;
+            while (!world.HoldEngine && Time.realtimeSinceStartup - t0 < 30f && !G.Over && !_app.Overlay.IsOpen) yield return null;
+            Time.timeScale = 1f;
+            Assert.IsTrue(world.HoldEngine, "킬 연출로 엔진이 보류되는 순간이 있어야 시험이 성립한다(T50)");
+
+            // 피해 0 짜리 화살을 한참 오른쪽에 둔다 — 엔진의 명중·소멸선(P.WorldX + ArrowHitDx/ArrowCullDx) 밖이라 시험 동안 살아 있다.
+            var arrow = new EnemyArrow { X = G.P.WorldX + 3000, Dmg = 0, Friendly = false };
+            G.Arrows.Add(arrow);
+            yield return null;   // 첫 Sync 가 그림을 만든다
+            Assert.AreEqual(1, world.ArrowViewCount, "적 화살 그림이 하나 서야 한다");
+
+            // ⓐ 각 — flipX 로 좌우만 뒤집고 회전은 0 이다(스프라이트 본디 기울기 PNG 실측 0.14°)
+            float ang = world.ArrowViewAngle(arrow);
+            Assert.IsFalse(float.IsNaN(ang), "적 화살 그림의 각");
+            float off = Mathf.Abs(Mathf.DeltaAngle(ang, BattleWorld.EnemyArrowAngle));
+            Assert.LessOrEqual(off, 1f, "적 화살은 수평 — 각이 " + ang.ToString("0.0") + "° 라 " + off.ToString("0.0") + "° 기울었다(T179 ⓐ)");
+
+            // ⓑⓒ 보류 중에도 가고, 점프하지 않는다
+            int heldFrames = 0, heldAdvanced = 0;
+            double prev = world.ArrowShownX(arrow);
+            double spd = _app.Data.Combat.EnemyArrowSpeed;
+            float t1 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t1 < 0.7f && !G.Over && !_app.Overlay.IsOpen && world.ArrowViewCount > 0)
+            {
+                bool heldBefore = world.HoldEngine;
+                yield return null;
+                double now = world.ArrowShownX(arrow);
+                double moved = prev - now;                                   // 왼쪽으로 간 거리(양수여야 한다)
+                double cap = spd * Time.deltaTime * Mathf.Max(1, world.Speed) * BattleWorld.ProjCatchUpMul + 1e-6;
+                Assert.LessOrEqual(moved, cap, "적 화살 좌표가 튀면 안 된다(스냅 0) — 이 프레임 " + moved.ToString("0.0") + " > 상한 " + cap.ToString("0.0"));
+                if (heldBefore) { heldFrames++; if (moved > 1e-6) heldAdvanced++; }
+                prev = now;
+            }
+            Assert.Greater(heldFrames, 0, "엔진이 보류된 프레임이 있어야 ⓑ 를 잴 수 있다");
+            Assert.AreEqual(heldFrames, heldAdvanced, "엔진 보류 중에도 적 화살은 한 프레임도 안 멈춘다(T179 ⓑ · 멈춘 프레임 " + (heldFrames - heldAdvanced) + ")");
+            _log.AssertNoRed("T179 적 화살");
+
+            // ⓓ 엔진이 지우면 그림도 간다
+            G.Arrows.Remove(arrow); yield return Frames(2);
+            Assert.AreEqual(0, world.ArrowViewCount, "사라진 적 화살의 그림이 남으면 안 된다(누수 0 · T179 ⓓ)");
+
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            _log.AssertNoRed("로비 복귀");
+            yield return Shutdown();
+        }
     }
 }
