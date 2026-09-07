@@ -3421,6 +3421,26 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 4. **잡을 때 첫 일 = 다시 재기.** T182 3단계·3단계-4 가 세로·가로 환산을 둘 다 건드렸으니 위 수치가 이미 달라져 있을 수 있다 — `python3 tools/ui_score.py 02_battle <layout.json>` 을 먼저 돌려 **그날의 수**로 잡는다.
 5. **✅ 3항의 막힘은 풀렸다(sess-2157-4152 · 워커 H · 22:5X · 선점 안 함 · 코드 0줄)** — 그 단서를 T214 4항에 건 것이 나이므로 내가 푼다: **`docs/claims/T182.lock` 은 반납됐고 T182 는 3단계까지 끝났다**(워커 D · 결정 576). **이제 잡아도 된다.** 곁들여 `screens` **run 435**(`ce821228`)로 나도 재 봤는데 워커 F 의 run 433 값과 **똑같다**(`y32.9 h16.2` · `+2.9 −4.8`) — 두 런에서 같은 수가 나왔으니 4항의 «그날의 수로 다시 재라» 는 지키되 **값이 흔들려서가 아니라 관례로** 하면 된다. 그리고 **T182 의 세로 신축은 이 띠를 안 고쳤다**(오히려 0.4%p 더 얇아졌다) — 지면 띠는 T182 가 손댄 «가운데가 늘어난다» 규칙과 **별개로 제 높이를 정하고 있다**는 뜻이니 잡는 워커는 거기부터 보라.
 
+### T216 — **자에는 드나드는데 «사진» 이 없는 화면이 여덟이다 — 그래서 아무도 눈으로 본 적이 없다** (워커 실측 등재 2026-09-07 23:1X · sess-2005-9317 · 워커 A · **1단계 착수**)
+
+1. **실측**(코드 두 목록의 차 · `comm` 한 줄):
+
+   | | 개수 |
+   |---|---|
+   | `UiShotsTests` 가 PNG 를 남기는 화면 | **29** |
+   | `TextSizeGateTests` 가 여는 화면 | **33** |
+   | **사진이 없는 화면** | **8** — `res_win` · `res_win_last` · `res_lose` · `ev_rest` · `ev_devil_gift` · `ev_ad` · `27_toast` · `28_confirm_reset` |
+
+2. **둘 다 없다** — PNG 가 없어 §5 채점도 워커 눈도 닿지 못하고, 이름표(`UiKit.Tag`)도 거의 0 이라 `layout.json` 에도 안 실린다
+   (실측: `Rest` 0 · `DevilGift` 0 · `AdCountdown` 0 · `ConfirmReset` 0 · `Toast` 0 · `Clear` 1 · `Dead` 2).
+   **`res_win`·`res_lose` 는 `BorderAudit.StrictScreens` 안에 있다** — 테두리는 실패로 세면서 그림은 한 번도 안 본 자리다.
+   그리고 이 셋(결과 팝업)은 **주인이 판마다 보는 화면**이다.
+3. **왜 지금 이것인가** — 오늘 이 함대가 세 번(T133 글자 · T191 불 자리 · T204 테) 배운 것이 «로컬 게이트가 초록인 것과 화면이 옳은 것은 다른 말이다» 였고,
+   셋 다 드러낸 것은 `screens` PNG 였다. **PNG 가 없는 화면은 그 배움이 닿지 못한다** — 자를 더 만들기 전에 사진부터 있어야 한다.
+4. **1단계(이 회차) = 사진뿐**. 여는 코드는 이미 `TextSizeGateTests` 에 **한 줄씩** 있다(`Overlay.Rest` · `DevilGift` · `AdCountdown` · `Clear(false/true)` · `Dead` · `App.Toast` · `ConfirmReset`) — `UiShotsTests` 에 같은 순서로 옮긴다.
+5. **2단계(다음 회차 · 아무 워커나) = 이름표 + 회귀 표.** T213 이 `ev_devil`·`ev_angel` 에 한 것과 **같은 순서**다(1단계 이름표·사진 → 2단계 재서 표 ㊱).
+   ⚠ 레퍼런스 jpg 가 없는 화면이므로 그 표는 «주인 그림과 같은가» 가 아니라 **«우리 화면이 안 흔들리는가»(회귀 자)** 라고 표 머리에 못 박는다(§5 5항 · ㉜·㉞·㊱ 과 같은 갈래).
+
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
 2. 계정 2 에 **환경(Environment)** 이 하나 있어야 한다(기본 «Default» 면 된다 · 프록시 정책은 계정 1 과 같다고 가정 — 다르면 dotnet 설치가 막힐 수 있으니 첫 런 로그를 본다).
