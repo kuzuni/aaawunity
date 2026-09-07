@@ -3261,6 +3261,15 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 4. 자기 검사에 두 칸 추가 — ⓔ «표는 ⛔ · 제목엔 표시 없음» 을 잡고 ⛔ 를 달면 조용한가 ⓕ `\|` 가 든 칸에서 상태를 제대로 읽는가.
 
 
+### T211 ✅ — **«생성물이 낡았다» 를 아무 자도 안 봤다 — catalog.json 에 키를 넣고 생성기를 안 돌리면 부팅이 통째로 빨개진다** (워커 실측 등재 2026-09-07 19:4X · 자 + CI 한 줄 · 게임 코드 0줄) — **✅ 완료(sess-1928-30712 · 워커 F)**
+
+1. **오늘 실제로 났다(CI #412 · T209 회차)** — `arenaShop.json` 을 새로 넣으면서 `catalog.json` 에는 `data.arenaShop` 을 등록했는데 **생성물 `AssetCatalog.asset` 에는 그 줄이 없었다**. 게임이 런타임에 읽는 것은 그 `.asset` 이라 부팅이 키를 못 찾아 `[Error] arenaShop.json 이 카탈로그(data.arenaShop)에 없다` 를 찍었고, **부팅을 지나는 PlayMode 가 `Unhandled log message` 로 93건 한꺼번에 죽었다**(LobbyMenuTests 5 · UiTextureTests · UiShotsTests · SpeedMemoryTests …). 런이 빨개 `screens`·gh-pages 도 같이 멈췄다.
+2. **왜 로컬 게이트가 초록이었나** — `check_catalog_keys` 는 «코드 리터럴 ↔ catalog.json» 만 보고, `gen_catalog.py --check` 도 **catalog.json 안쪽만** 봤다(«catalog OK — 660 entries»). **생성물이 최신인지는 아무도 안 봤다.** 즉 «json 만 고치고 생성기를 안 돌린» 상태가 모든 자를 통과한다.
+3. **고침 = `--check` 가 생성물을 실제로 견준다** — 지금 만들었을 문자열과 디스크의 `AssetCatalog.asset`·`docs/assets-map.md` 를 그대로 비교해 다르면 1 로 끝나고 **고칠 방법 한 줄**(«`python3 tools/gen_catalog.py` 를 돌려 같이 커밋해라»)을 찍는다. `__main__` 도 `sys.exit(main())` 으로 고쳤다 — 안 돌려주면 게이트가 늘 초록이다.
+4. **CI 에 걸었다(dotnet 잡)** — 결정 493 기준으로 «틀렸을 때 무엇이 같이 멈추느냐» 를 보면 이 어긋남은 **어차피 유니티 잡을 빨갛게 하고 배포까지 멈춘다**. 그러니 이 자는 새로 막는 자가 아니라 **8분 먼저 · 고칠 방법을 적어서** 알리는 자다.
+5. **확인** — 일부러 그 사고를 되풀이해 봤다: 생성물에서 그 두 줄을 빼면 **exit 1 + 안내 문구**, 되돌리면 초록(①최신 0 · ②낡음 1 · ③되돌림 0).
+6. **다음 워커에게** — `Assets/KkomaKnight/*.json` 을 새로 넣거나 `catalog.json` 을 고쳤으면 **같은 커밋에 `python3 tools/gen_catalog.py` 결과(.asset + assets-map)를 함께** 민다. 다른 생성기도 같은 규약이다(`gen_meta.py` · `gen_maps.py`).
+
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
 2. 계정 2 에 **환경(Environment)** 이 하나 있어야 한다(기본 «Default» 면 된다 · 프록시 정책은 계정 1 과 같다고 가정 — 다르면 dotnet 설치가 막힐 수 있으니 첫 런 로그를 본다).

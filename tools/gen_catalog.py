@@ -121,15 +121,31 @@ def main():
     section('colors', spec.get('colors', {}), co)
     section('texts', spec.get('texts', {}), tx)
     section('audio', spec.get('audio', {}), au)
+    asset_text = '\n'.join(y) + '\n'
+    doc_text = ('# 에셋 사용 지도 (assets-map)\n\n> `tools/gen_catalog.py` 가 `Assets/KkomaKnight/catalog.json` 에서 생성한다 — 손으로 고치지 말고 catalog.json 을 고칠 것.\n'
+                '> 키는 코드(`App.Assets.Sprite("key")` 등)에서 쓰는 이름, 경로는 주인 에셋의 실제 위치다. 주인이 바꾸고 싶은 줄만 말해 주면 그 줄의 경로를 바꾼다.\n\n'
+                '| 종류 | 키 | 에셋 (경로#스프라이트) | ID | 쓰는 자리 |\n|---|---|---|---|---|\n'
+                + ''.join(f'| {kind} | `{key}` | `{val}` | {idinfo} | {note} |\n' for kind, key, val, idinfo, note in rows))
     if check:
-        print(f'catalog OK — {len(rows)} entries'); return
-    with open(OUT, 'w', encoding='utf-8', newline='\n') as f: f.write('\n'.join(y) + '\n')
-    with open(DOC, 'w', encoding='utf-8', newline='\n') as f:
-        f.write('# 에셋 사용 지도 (assets-map)\n\n> `tools/gen_catalog.py` 가 `Assets/KkomaKnight/catalog.json` 에서 생성한다 — 손으로 고치지 말고 catalog.json 을 고칠 것.\n'
-                '> 키는 코드(`App.Assets.Sprite("key")` 등)에서 쓰는 이름, 경로는 주인 에셋의 실제 위치다. 주인이 바꾸고 싶은 줄만 말해 주면 그 줄의 경로를 바꾼다.\n\n')
-        f.write('| 종류 | 키 | 에셋 (경로#스프라이트) | ID | 쓰는 자리 |\n|---|---|---|---|---|\n')
-        for kind, key, val, idinfo, note in rows: f.write(f'| {kind} | `{key}` | `{val}` | {idinfo} | {note} |\n')
+        # ⚠ T211 — «catalog.json 이 옳은가» 만 보면 모자란다. 게임이 런타임에 읽는 것은 그 json 이 아니라
+        #    **여기서 생성된** `AssetCatalog.asset` 이다. 그래서 «json 에 키를 넣고 생성기를 안 돌린» 상태가
+        #    옛 --check 를 그대로 통과했고(그 자는 catalog.json 안쪽만 봤다), 부팅이 그 키를 못 찾아
+        #    `[Error]` 를 찍어 **부팅을 지나는 PlayMode 93건이 한꺼번에 빨개졌다**(CI #412 실측 · T209 회차).
+        #    로컬 게이트가 못 잡으면 8분짜리 유니티 잡이 유일한 시험대이고, 그 사이 배포도 같이 멈춘다.
+        stale = [name for name, path, want in (('AssetCatalog.asset', OUT, asset_text), ('docs/assets-map.md', DOC, doc_text))
+                 if (open(path, encoding='utf-8').read() if os.path.exists(path) else None) != want]
+        if stale:
+            print('생성물이 낡았다 — catalog.json 은 고쳤는데 생성기를 안 돌렸다: ' + ' · '.join(stale))
+            print('고치는 법: `python3 tools/gen_catalog.py` 를 돌리고 그 결과를 **같이 커밋**한다.')
+            print('  (게임은 catalog.json 이 아니라 AssetCatalog.asset 을 읽는다 — 낡으면 부팅이 그 키를 못 찾아')
+            print('   `[Error] … 카탈로그에 없다` 를 찍고, 부팅을 지나는 PlayMode 가 전부 빨개진다 · T211)')
+            return 1
+        print(f'catalog OK — {len(rows)} entries · 생성물도 최신(AssetCatalog.asset · assets-map)')
+        return 0
+    with open(OUT, 'w', encoding='utf-8', newline='\n') as f: f.write(asset_text)
+    with open(DOC, 'w', encoding='utf-8', newline='\n') as f: f.write(doc_text)
     print(f'wrote {OUT} and {DOC} — {len(rows)} entries')
+    return 0
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())     # ⚠ --check 는 «낡았다» 를 1 로 알린다 — 돌려주지 않으면 게이트가 늘 초록이다(T211)
