@@ -111,6 +111,8 @@ namespace KkomaKnight.Game
             // T69 8항(주인 «HP·실드 바 테두리») — 세 바에 검은 아웃라인(맨 앞) · 왼쪽 캡(«EXP» 라벨 · ❤ · 🛡)은 테두리 위로 · 바 자리·크기 불변
             foreach (var b in new[] { _exp, _hp, _sh }) { UiKit.Bordered(b.Root); var capT = UiKit.Find(b.Root, "Cap"); if (capT != null) capT.SetAsLastSibling(); }
             // 스탯 8칸 = 칸마다 어두운 상자(ui.frameDark) · 왼쪽 아이콘 · 오른쪽에 이름(보조 36 · 위) + 값(본문 40 · 아래) · 버프 중 값 초록(레퍼런스 02) — 자리 = 표(HudStats · 행 피치 5.2) · 상자 사이 틈 0.4%
+            // T125 3항 — 이름 글자는 CreamDark(#E3CDAA) 였는데 칸이 «갈색» 이라 값(흰색)에 비해 눈에 띄게 묻혔다(screens run 239 02 PNG 3배 확대).
+            // Cream(#F5E9D0) 으로 한 단 올려 대비를 세운다 — 값보다는 여전히 어두워 «이름 → 값» 위계는 레퍼런스 02 처럼 남는다.
             // T63-battle: 칸 높이 4.8%(112px) = 이름 46%(51px ≥ 36×1.375) + 값 52%(58px ≥ 40×1.375) — 전엔 4.6% 칸에 40%/48% 라 bestFit 이 이름을 32 · 값을 37 로 몰래 줄였다(게이트 표엔 안 걸림 · T63 진행 기록 ⚠)
             for (int i = 0; i < StatDefs.Length; i++)
             {
@@ -118,7 +120,7 @@ namespace KkomaKnight.Game
                 var cell = UiKit.SpawnRt("ui.frameDark", Root, new Layout.R(Layout.HudStats.X + col * Layout.HudStatColR + 0.4f, Layout.HudStats.Y + row * Layout.HudStatRowPitch + 0.2f, Layout.HudStatCellW - 0.8f, Layout.HudStatCellH - 0.4f));
                 cell.name = "stat:" + StatDefs[i].Key;
                 var ic = UiKit.Icon(cell, "ic", Icons.Stat(StatDefs[i].Key)); UiKit.Pct(ic.rectTransform, 3, 12, 15, 76);
-                var lb = UiKit.Label(cell, 21, 1, 76, 46, StatDefs[i].Label, TextSize.Aux, Palette.CreamDark, TextAnchor.MiddleLeft, kind: TextKind.Aux); lb.name = "Label";
+                var lb = UiKit.Label(cell, 21, 1, 76, 46, StatDefs[i].Label, TextSize.Aux, Palette.Cream, TextAnchor.MiddleLeft, kind: TextKind.Aux); lb.name = "Label";
                 _statVals[i] = UiKit.Label(cell, 21, 47, 76, 52, "", TextSize.Body, Palette.White, TextAnchor.MiddleLeft); _statVals[i].name = "Value"; _statVals[i].fontStyle = FontStyle.Bold;
                 // T69 — 스탯 칸마다 검은 아웃라인(어두운 상자 위 · 자리 불변)
                 UiKit.Bordered(cell);

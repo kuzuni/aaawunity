@@ -398,14 +398,39 @@ namespace KkomaKnight.Game
             return t;
         }
         /// <summary>숫자 글자를 바(월드 위치)의 한가운데로 — Pop 과 같은 월드 → 레이아웃 → 프레임 px 변환. 글자는 바뀔 때만 다시 쓴다(uGUI 재구성 최소화).</summary>
-        static void PlaceFootText(Text t, Vector3 worldPos, string s, bool visible)
+        static void PlaceFootText(Text t, Vector3 worldPos, string s, bool visible, float barPctW)
         {
             if (t == null) return;
             if (t.gameObject.activeSelf != visible) t.gameObject.SetActive(visible);
             if (!visible) return;
             t.rectTransform.anchoredPosition = WorldCam.ToFrame(worldPos);
-            if (t.text != s) t.text = s;
+            if (t.text != s) { t.text = s; FitFootText(t, barPctW); }
         }
+
+        /// <summary>발밑 바 숫자가 바 «안» 에 들도록 글자 크기를 줄인다(T125 ⓑ) — 글자가 바뀔 때만 부른다(<c>preferredWidth</c> 는 레이아웃을 건드린다).</summary>
+        /// <param name="barPctW">바 폭(프레임 %) — 플레이어 <see cref="Layout.PlayerFootBarW"/> · 적 <see cref="Layout.EnemyFootBarW"/> (둘 다 <see cref="Layout.FootBarScale"/> 곱한 값).</param>
+        /// <remarks>
+        /// 왜 필요한가(screens run 239 `02_battle.png` 실측): 이 글자는 <c>horizontalOverflow = Overflow</c> 라 바 폭과 무관하게 그려지고,
+        /// 크기는 T63 하한(<see cref="TextKind.Aux"/>)까지 올라간다. 우리 값이 네 자리를 넘어서면(«1239»·«12.9K») 글자가 바보다 넓어져
+        /// <b>글자끼리 겹치고 검은 아웃라인이 뭉쳐 흰 덩어리</b>가 되고 빨강·파랑 채움도 가려진다(레퍼런스 02 는 «1055»·«2258» 이 바 안에 여유 있게 든다).
+        /// 하한은 <see cref="MinFootFont"/> — 그 아래로는 안 줄이고, 그래도 넘치면 그냥 넘치게 둔다(안 보이는 것보다 낫다).
+        /// </remarks>
+        static void FitFootText(Text t, float barPctW)
+        {
+            if (t == null || barPctW <= 0f) return;
+            float room = UiKit.FrameW * barPctW / 100f * FootTextFill;
+            for (int guard = 0; guard < 12; guard++)
+            {
+                if (t.preferredWidth <= room || t.fontSize <= MinFootFont) break;
+                t.fontSize = Mathf.Max(MinFootFont, t.fontSize - 2);
+            }
+        }
+        /// <summary>발밑 바 숫자가 쓸 수 있는 바 폭 비율(T125 ⓑ · 레퍼런스 02 에서 숫자가 바 폭의 ~85% 다).</summary>
+        const float FootTextFill = 0.86f;
+        /// <summary>발밑 바 숫자의 하한(T63 «글씨 작다» 와의 절충 — 이 아래로는 안 줄인다 · 배지급 글자 크기).</summary>
+        const int MinFootFont = 26;
+        /// <summary>발밑 바 숫자 표기 — 레퍼런스 02·03 처럼 <b>천 단위 콤마 없이</b>(«1239») 쓴다. 큰 수의 K/M 꼬리표는 <see cref="UiKit.Fmt"/> 그대로 남는다(T125 ⓑ).</summary>
+        static string FootNum(double v) => UiKit.Fmt(System.Math.Ceiling(v)).Replace(",", "");
         void BuildPlayer()
         {
             _player = MakeChar("Player", CharacterRig.PlayerSkin(D, _app.Save, G.P.MaxSh > 0), Layout.PlayerHeight, true);   // 장착 외형 반영 — 장비 화면(HeroView)과 같은 표(GearLook)
@@ -437,7 +462,7 @@ namespace KkomaKnight.Game
             foreach (var kv in _enemies)
             {
                 var v = kv.Value; if (v.BarBg == null || !v.BarBg.gameObject.activeSelf) continue;
-                if (v.BarTxt == null || !v.BarTxt.gameObject.activeSelf || v.BarTxt.text != UiKit.Fmt(System.Math.Ceiling(v.ShownHp))) return false;
+                if (v.BarTxt == null || !v.BarTxt.gameObject.activeSelf || v.BarTxt.text != FootNum(v.ShownHp)) return false;
             }
             return true;
         }
@@ -542,8 +567,8 @@ namespace KkomaKnight.Game
             _pShBg.transform.position = Pos(_shownPX, Layout.FootShBarY / 100f); SetBar(_pShBg, _pShFill, P.MaxSh > 0 ? ShownSh / P.MaxSh : 0);
             _pShBg.gameObject.SetActive(!_pDeadShown && P.MaxSh > 0);   // 실드 0 이면 파란 단 숨김(T35)
             if (_pHpTxt == null) { _pHpTxt = FootText("FootTxt:PlayerHp"); _pShTxt = FootText("FootTxt:PlayerSh"); }   // 팝 층은 화면이 새 판마다 비우므로 여기서(첫 Sync) 만든다
-            PlaceFootText(_pHpTxt, _pBarBg.transform.position, UiKit.Fmt(System.Math.Ceiling(ShownHp)), _pBarBg.gameObject.activeSelf);
-            PlaceFootText(_pShTxt, _pShBg.transform.position, UiKit.Fmt(System.Math.Ceiling(ShownSh)), _pShBg.gameObject.activeSelf);
+            PlaceFootText(_pHpTxt, _pBarBg.transform.position, FootNum(ShownHp), _pBarBg.gameObject.activeSelf, Layout.PlayerFootBarW * Layout.FootBarScale);
+            PlaceFootText(_pShTxt, _pShBg.transform.position, FootNum(ShownSh), _pShBg.gameObject.activeSelf, Layout.PlayerFootBarW * Layout.FootBarScale);
             // 적
             var seen = new HashSet<EnemyState>(); bool engaged = false;
             foreach (var n in G.Nodes) foreach (var e in n.Enemies)
@@ -558,7 +583,7 @@ namespace KkomaKnight.Game
                 if (e.Dead && v.Hold == 0)
                 {
                     // 사망 = 모션(Dead1 · 끝에서 정지) + 알파 페이드 + snd.kill — «펑» 이펙트(fx.death Magic Poof)는 주인 지시로 뿌리지 않는다(T51 · 2026-09-06)
-                    if (v.DieT < 0) { v.DieT = 0; v.Rig.Play(CharacterRig.Dead, true); _lastKillPos = v.Rig.transform.position; if (!Silent) Audio.Sfx("snd.kill", 0.9f); v.BarBg.gameObject.SetActive(false); PlaceFootText(v.BarTxt, Vector3.zero, "", false); if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } if (!Silent && KillShown != null) KillShown(_lastKillPos, e.IsBoss); }
+                    if (v.DieT < 0) { v.DieT = 0; v.Rig.Play(CharacterRig.Dead, true); _lastKillPos = v.Rig.transform.position; if (!Silent) Audio.Sfx("snd.kill", 0.9f); v.BarBg.gameObject.SetActive(false); PlaceFootText(v.BarTxt, Vector3.zero, "", false, Layout.EnemyFootBarW * Layout.FootBarScale); if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } if (!Silent && KillShown != null) KillShown(_lastKillPos, e.IsBoss); }
                     v.DieT += dt; v.Rig.SetAlpha(Mathf.Clamp01(1.2f - v.DieT * 1.5f));
                     if (v.DieT > 0.85f) Remove(v);
                     continue;
@@ -567,7 +592,7 @@ namespace KkomaKnight.Game
                 else { if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } if (!v.Rig.Attacking) v.Rig.Play(CharacterRig.Idle); }
                 v.BarBg.transform.position = Pos(e.WorldX, Layout.FootHpBarY / 100f);
                 SetBar(v.BarBg, v.BarFill, e.MaxHp > 0 ? v.ShownHp / e.MaxHp : 0);
-                PlaceFootText(v.BarTxt, v.BarBg.transform.position, UiKit.Fmt(System.Math.Ceiling(v.ShownHp)), v.BarBg.gameObject.activeSelf);
+                PlaceFootText(v.BarTxt, v.BarBg.transform.position, FootNum(v.ShownHp), v.BarBg.gameObject.activeSelf, Layout.EnemyFootBarW * Layout.FootBarScale);
                 if (!e.Dead && lx < WorldCam.LayoutW) engaged = true;
                 if (e.IsBoss && !_bossWarned && lx < WorldCam.LayoutW) { _bossWarned = true; _app.Overlay.BossWarn(_app.Frame); Fx.Spawn("fx.bossWarn", v.Rig.transform.position + Vector3.up * 1.2f, 0.8f, 2.5f); Audio.Bgm("bgm.boss"); }
             }
