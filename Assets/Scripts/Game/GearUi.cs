@@ -251,9 +251,19 @@ namespace KkomaKnight.Game
         /// 인자는 안 쓰지만 «이 자리 색은 등급에서 온다» 는 호출부 뜻을 남겨 둔다.
         /// </summary>
         static Color OnPopupBox(Color rarity) => Palette.White;
+        /// <summary>
+        /// 팝업 «안» 의 띠 하나(스탯 상자 · 옵션 줄 · 비용 줄 · 메타 pill) — <paramref name="alpha"/> 는 «얼마나 도드라지나» 다(0.6 옅음 ~ 0.85 진함).
+        /// <para>
+        /// T130 회차 2 — 종전에는 <b>잉크(#341B19)를 알파로</b> 얹었다. 크림 상자 위에서는 그 갈색이 안 보였지만
+        /// 상자가 어두워지자(<see cref="Palette.PopupBox"/>) <b>띠가 갈색기를 띠어</b> 레퍼런스의 중성 회색과 어긋났다(`screens` run 257 실측).
+        /// 그래서 알파 합성 대신 <b>상자색 → 레퍼런스 줄색(<see cref="Palette.PopupRow"/> · 07 실측 #201E1F) 사이를 <paramref name="alpha"/> 로 보간</b>한다 —
+        /// 세기의 뜻(0.6~0.85 의 위계)은 그대로고, 결과는 <b>불투명</b>이라 상자 색이 또 바뀌어도 안 흔들린다(결정 344 와 같은 갈래: 비치는 것을 계열색으로 바꾼다).
+        /// </para>
+        /// </summary>
         static RectTransform Pill(RectTransform parent, string name, Layout.R r, float alpha = 0.85f)
         {
-            var p = UiKit.Panel(parent, name, "fr.r12", Palette.A(Palette.Ink, alpha)); UiKit.Pct(p.rectTransform, r); UiKit.Bordered(p.rectTransform); return p.rectTransform;
+            var bg = Color.Lerp(Palette.PopupBox, Palette.PopupRow, Mathf.Clamp01(alpha));
+            var p = UiKit.Panel(parent, name, "fr.r12", bg); UiKit.Pct(p.rectTransform, r); UiKit.Bordered(p.rectTransform); return p.rectTransform;
         }
         /// <summary>
         /// 표 ④ 의 공통 뼈대: 어둠 + 패널(GdBox) + 박스 윗변 <b>등급 탭</b>(GdBadge · 등급색 명판) → 왼쪽 <b>아이콘 칸</b>(GdIcon · 장비 칸 Cell «+N» 포함 · 빈 슬롯은 빈 프레임) · 오른쪽 <b>이름 굵게</b>(GdName) + <b>pill 2</b>(GdMeta · «슬롯 Lv. N/최대» · «부위») → «탭하여 닫기»(배경 탭 = 닫기 · 닫기 X 없음).
