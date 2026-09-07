@@ -42,6 +42,15 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("종료");
         }
 
+        /// <summary>T146 ⓐ — 이 팝업에는 공통 제목 리본(<see cref="PopupRibbonTag"/>)이 «켜진 채로» 남아 있으면 안 된다(레퍼런스 30·31 은 명판이 제목이다).</summary>
+        static void AssertNoPopupRibbon(Transform popupRoot, string what)
+        {
+            int on = 0;
+            foreach (var tag in popupRoot.GetComponentsInChildren<PopupRibbonTag>(true))
+                if (tag.gameObject.activeInHierarchy) on++;
+            Assert.AreEqual(0, on, what + " 에 글자 없는 공통 제목 리본이 떠 있다(T146 ⓐ · 레퍼런스에는 없다)");
+        }
+
         static Transform Find(Transform root, string name)
         {
             if (root == null) return null;
@@ -98,6 +107,9 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(Find(ov, "ExpeditionBox"), "팝업 상자");
             foreach (var n in new[] { "Picture", "Plate", "ExpTime", "RateGold", "RateGem", "ExpCellGold", "ExpCellGem", "QuickBtn", "ClaimBtn", "CapNote" })
                 Assert.IsNotNull(Find(ov, n), "조각 " + n + " (표 ㉕)");
+            // T146 ⓐ — 레퍼런스 30 에는 공통 제목 리본이 없다(제목은 상자 폭 «명판»). 종전 코드는 리본을 «Title_01» 이라는 프리팹 이름으로 찾아 껐는데
+            // UiKit.Spawn 이 이름을 카탈로그 키로 바꿔 놓아 한 번도 안 맞았고, 글자 없는 초록 리본이 그림 띠 위에 떠 있었다(결정 388).
+            AssertNoPopupRibbon(ov, "탐험 팝업(30)");
 
             // 쌓인 값이 화면에 «0» 이 아니라 실제 계산값으로 찍힌다
             Expedition.Pending(_app.Data, S, D, LobbyPopups.NowSec(), SaveStore.Today(), out double pg, out double pm);
@@ -148,6 +160,7 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(UiKit.FmtQty(qm), CellQty(ov, "QxCellGem"), "빠른 탐험 다이아");
             Assert.IsTrue(Find(ov, "QxFreeBtn").GetComponent<Button>().interactable, "횟수가 남으면 광고 버튼이 열린다");
             Assert.IsNotNull(Find(ov, "QxBadge"), "남은 횟수 배지");
+            AssertNoPopupRibbon(ov, "빠른 탐험 팝업(31)");   // T146 ⓐ — 31 도 레퍼런스에 리본이 없다(명판이 제목)
             Assert.IsNull(EnglishLeftOver(ov), "영문 데모 글자 0 (T44)");
             _log.AssertNoRed("빠른 탐험 팝업");
 

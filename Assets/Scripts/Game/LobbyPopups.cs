@@ -176,6 +176,20 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>이름이 <paramref name="prefix"/> 로 시작하는 첫 «직계» 자식 — 프리팹 인스턴스가 «이름 (1)» 처럼 붙어 나올 때 쓴다.</summary>
+        /// <summary>
+        /// 공통 팝업이 세운 제목 리본을 끈다(T146 ⓐ) — 레퍼런스 30·31 에는 리본이 없고 상자 폭 «명판»(<see cref="Plate"/>)이 제목이다.
+        /// <para>
+        /// <b>이름으로 찾지 않는다</b>: <see cref="UiKit.Spawn"/> 이 조각 이름을 «카탈로그 키»(예 <c>ui.title.green</c>)로 바꿔 놓으므로
+        /// 종전 줄(<c>ChildStarting(box, "Title_01")</c>)은 프리팹 이름을 찾다 한 번도 안 맞았고, 그래서 글자 없는 초록 리본이 그림 띠 위에 그대로 떠 있었다
+        /// (`screens` run 257 의 30 PNG 실측 · 결정 388). <see cref="PopupRibbonTag"/> 는 <see cref="UiKit.Popup"/> 이 리본에만 붙이는 표라 이름이 바뀌어도 맞는다.
+        /// </para>
+        /// </summary>
+        static void HideRibbon(RectTransform box)
+        {
+            if (box == null) return;
+            foreach (var tag in box.GetComponentsInChildren<PopupRibbonTag>(true)) tag.gameObject.SetActive(false);
+        }
+
         static RectTransform ChildStarting(Transform root, string prefix)
         {
             if (root == null) return null;
@@ -652,7 +666,7 @@ namespace KkomaKnight.Game
             if (D != null) Core.Expedition.Roll(S, D, NowSec(), today);
 
             var box = ov.OpenBox("ui.popup", "ui.title.green", "", B, () => ov.Close()); box.name = "ExpeditionBox";
-            var rib = ChildStarting(box, "Title_01"); if (rib != null) rib.gameObject.SetActive(false);   // 레퍼런스 30 은 리본이 아니라 상자 폭 명판이다
+            HideRibbon(box);   // T146 ⓐ — 레퍼런스 30 은 리본이 아니라 상자 폭 명판이다(«Title_01» 로 찾던 종전 줄은 이름이 달라 한 번도 안 맞았다 · 결정 388)
             var pic = Picture(box, B, Layout.ExPic);
             var plate = Plate(box, B, Layout.ExPlate, "탐험 보상");
             var info = UiKit.Icon(box, "InfoBtn", "pi.info", Palette.White); UiKit.Pct(info.rectTransform, Layout.ExInfoBtn.Within(B));
@@ -757,7 +771,7 @@ namespace KkomaKnight.Game
             string today = SaveStore.Today();
             double now = NowSec();
             var box = ov.OpenBox("ui.popup", "ui.title.green", "", B, () => { ov.Close(); if (after != null) { LobbyPopups.Expedition(app); } }); box.name = "QuickExploreBox";
-            var rib = ChildStarting(box, "Title_01"); if (rib != null) rib.gameObject.SetActive(false);
+            HideRibbon(box);   // T146 ⓐ — 31 도 30 과 같은 꼴(명판이 제목이다)
             var plate = Plate(box, B, Layout.QxPlate, "빠른 탐험", "QxPlate");
             var subR = Layout.QxSub.Within(B);
             var qxBand = UiKit.Panel(box, "QxBand", "fr.r12", Palette.A(Palette.Dim, 0.55f));
