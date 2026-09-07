@@ -157,6 +157,7 @@ namespace KkomaKnight.Game
             var rng = new Mulberry32((uint)Environment.TickCount ^ 0x9E3779B9u);
             var opt = new RunOptions { EmitEvents = true };
             if (run != null) { opt.StartPerks = run.StartPerks; opt.StartLevel = run.StartLevel; opt.MinPerkGrade = run.MinPerkGrade; }
+            _exitPage = run != null ? EventsScreen.PageDungeon : null;   // T183 4단계 — 던전에서 들어온 판은 던전 화면으로 되돌린다(일반 전투는 그대로 로비)
             G = new BattleState(D, chapter, App.Save.CurBuild(D), rng, new InteractivePolicy(), opt);
             BaseStats = new Dictionary<string, double>(); foreach (var d in StatDefs) BaseStats[d.Key] = d.Cur(G);
             _world?.Dispose(); UiKit.Clear(_pops);   // 팝 층은 새 월드를 만들기 «전에» 비운다(발밑 숫자 글자가 팝 층에 산다 · T35)
@@ -179,11 +180,25 @@ namespace KkomaKnight.Game
             RefreshHud();
         }
 
-        void EndToLobby()
+        /// <summary>
+        /// T183 4단계 — <b>판이 끝나면 갈 곳</b>. <c>null</c> = 로비(지금까지와 똑같은 일반 챕터 전투)이고,
+        /// 던전 판(<see cref="Start(int, DungeonData.RunRule)"/> 의 <c>run != null</c>)이면 그 던전 화면의 페이지 키다 —
+        /// 던전에서 들어간 판이 끝났는데 로비로 튕기면 티켓을 또 쓰러 갈 자리를 사람이 다시 찾아야 한다.
+        /// </summary>
+        string _exitPage;
+        /// <summary>테스트·진단용 읽기 — 이 판이 끝나면 갈 곳(<c>null</c> = 로비).</summary>
+        public string ExitPage => _exitPage;
+        /// <summary>판이 끝나 화면을 뜨는 길 한 곳 — 클리어·사망·포기 셋이 모두 여기를 지난다(«로비로» 를 네 군데에 박아 두지 않는다).</summary>
+        void ExitBattle()
+        {
+            App.Overlay.Close();
+            if (_exitPage != null) EventsScreen.Open(App, _exitPage);
+            else App.ShowScreen("lobby");
+        }
+        void EndAndExit()
         {
             if (G != null && !_ended) { _ended = true; App.Save.Gold += Math.Round(G.Gold); App.Persist(); }
-            App.Overlay.Close();
-            App.ShowScreen("lobby");
+            ExitBattle();
         }
         /// <summary>판을 버린다(T29 «데이터 삭제» — 골드를 은행에 넣지 않는다 · 로비 전환은 호출자가). 전투 중이 아니면 아무 일 없음.</summary>
         public void Abort()
@@ -196,7 +211,7 @@ namespace KkomaKnight.Game
         {
             if (G == null || G.Over || App.Overlay.IsOpen) return;
             _paused = true;
-            App.Overlay.Pause(() => _paused = false, () => { _paused = false; EndToLobby(); });
+            App.Overlay.Pause(() => _paused = false, () => { _paused = false; EndAndExit(); });
         }
 
         // ───────────────────────── 매 프레임 ─────────────────────────
@@ -278,13 +293,13 @@ namespace KkomaKnight.Game
                 S.SelChapter = next; S.Gold += Math.Round(G.Gold); App.Persist();   // 1배는 여기서 은행에(«그냥 받기» = 이대로 로비로)
                 // T23 — «광고 보고 보상 ×2 받기» = 광고 카운트다운 뒤 이 판의 골드(처치 + 클리어 보너스)를 한 번 더 지급 → 2배 · 로비로. «다음 챕터» 는 로비의 챕터 화살표(SelChapter = next 로 이미 맞춰 둠).
                 App.Overlay.Clear(G, last,
-                    () => { S.Gold += Math.Round(G.Gold); App.Persist(); App.Toast($"광고 보상 ×2 · +{UiKit.Fmt(Math.Round(G.Gold))} G"); App.Overlay.Close(); App.ShowScreen("lobby"); },
-                    () => { App.Overlay.Close(); App.ShowScreen("lobby"); });
+                    () => { S.Gold += Math.Round(G.Gold); App.Persist(); App.Toast($"광고 보상 ×2 · +{UiKit.Fmt(Math.Round(G.Gold))} G"); ExitBattle(); },
+                    () => ExitBattle());
             }
             else
             {
                 S.Gold += Math.Round(G.Gold); App.Persist();
-                App.Overlay.Dead(G, () => { App.Overlay.Close(); App.ShowScreen("lobby"); });
+                App.Overlay.Dead(G, () => ExitBattle());
             }
         }
 

@@ -244,6 +244,11 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual("battle", _app.Current.Name, "도전 = 전투가 열린다(T183)");
                 Assert.AreEqual(before - 1, DungeonTickets.Tickets(_app.Save, dun, "hell", SaveStore.Today()), "티켓 1 소모(T183)");
                 Assert.IsFalse(_app.Overlay.IsOpen, "판이 열리면 세부 팝업은 닫혀 있다");
+                // T183 4단계 — 던전에서 들어간 판은 끝나고 «로비» 가 아니라 던전 화면으로 돌아간다(클리어·사망·포기 셋이 같은 길).
+                var bt = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bt, "전투 화면");
+                Assert.AreEqual(EventsScreen.PageDungeon, bt.ExitPage, "던전 판이 끝나면 던전 화면으로(T183 4단계)");
+                _app.StartBattle(_app.Save.SelChapter); yield return Frames(2);
+                Assert.IsNull(bt.ExitPage, "일반 챕터 전투는 그대로 로비로 — 회귀 0(T183 4단계)");
                 _app.ShowScreen("events"); yield return Frames(3);
                 ev.ShowPage(EventsScreen.PageDungeon); yield return Frames(2);
                 ov = _app.Overlay.Root;
