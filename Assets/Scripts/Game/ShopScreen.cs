@@ -127,7 +127,7 @@ namespace KkomaKnight.Game
             var clock = UiKit.Icon(fl, "Icon", "ui.iconClock"); UiKit.Pct(clock.rectTransform, 0, 0, 6.4f, 100);
             _freeTxt = UiKit.Label(fl, 7.5f, 0, 92, 100, "", TextSize.Body, Palette.White, TextAnchor.MiddleLeft);
 
-            // ④ «다이아» 3열×2행(shop.json gemPacks · ₩ 모의 결제 = 누르면 바로 지급) · ⑤ «골드» 3열×1행(goldPacks · 다이아 소모)
+            // ④ «다이아» 3열×2행(shop.json gemPacks · 원화 모의 결제 = 누르면 바로 지급) · ⑤ «골드» 3열×1행(goldPacks · 다이아 소모)
             var gems = D.Shop != null ? D.Shop.GemPacks : new List<ShopData.GemPack>();
             var golds = D.Shop != null ? D.Shop.GoldPacks : new List<ShopData.GoldPack>();
             UiKit.Tag(Header(SecGemY, "다이아"), "섹션 헤더");
@@ -135,7 +135,7 @@ namespace KkomaKnight.Game
             {
                 var p = gems[i]; var slot = Place(UiKit.Rect(_content, "GemPack:" + i), CardRect(i < 3 ? Row1Y : Row2Y, i % 3));
                 if (i == 0) UiKit.Tag(slot, "상품 카드(1칸)"); else if (i == 3) UiKit.Tag(slot, "상품 카드 2행");
-                BuildPack(slot, UiKit.FmtQty(p.Gem), "shop.gem." + Mathf.Clamp(i + 1, 1, 6), "다이아 · 모의 결제", null, $"₩{p.Won:#,0}", Color.Lerp(Palette.Plum, Palette.Ink, 0.35f),
+                BuildPack(slot, UiKit.FmtQty(p.Gem), "shop.gem." + Mathf.Clamp(i + 1, 1, 6), "다이아 · 모의 결제", null, $"{p.Won:#,0}원", Color.Lerp(Palette.Plum, Palette.Ink, 0.35f),
                     () => { App.Save.Gem += p.Gem; App.Persist(); Refresh(); App.Toast($"다이아 {UiKit.FmtQty(p.Gem)} 지급 (모의 결제)"); }, "cardGem");
             }
             UiKit.Tag(Header(SecGoldY, "골드"), "두 번째 섹션 헤더");
@@ -448,9 +448,10 @@ namespace KkomaKnight.Game
         {
             if (_freeTxt == null) return;
             // 💎 글리프 없음(결정 142) → «다이아» 글자로 · 40 한 줄이 줄(934px)에 들어가게 문구를 줄임
-            if (CanFree(App.Save)) { _freeTxt.text = $"무료 보급 다이아 {UiKit.FmtQty(App.Data.Gacha.DailyGem)} — 지금 수령 가능"; return; }
+            // T75 ⓒ — 이 두 줄은 Text.text 에 «직접» 넣어서 UiKit 입구의 TextGlyphs.Safe 를 안 거친다(«—» 는 Jua 에 글리프가 없어 폭 0 으로 사라졌다 · «[GlyphGate]» 표의 09·10 두 줄)
+            if (CanFree(App.Save)) { _freeTxt.text = TextGlyphs.Safe($"무료 보급 다이아 {UiKit.FmtQty(App.Data.Gacha.DailyGem)} — 지금 수령 가능"); return; }
             var left = DateTime.Today.AddDays(1) - DateTime.Now; if (left.Ticks < 0) left = TimeSpan.Zero;
-            _freeTxt.text = $"무료 보급까지 {(int)left.TotalHours:00}:{left.Minutes:00}:{left.Seconds:00}";
+            _freeTxt.text = TextGlyphs.Safe($"무료 보급까지 {(int)left.TotalHours:00}:{left.Minutes:00}:{left.Seconds:00}");
         }
 
         void OnFree()
