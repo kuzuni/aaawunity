@@ -603,11 +603,22 @@ namespace KkomaKnight.Game
         {
             if (cell == null) return false;
             for (var t = cell; t != null; t = t.parent)
-                if (t.name.StartsWith(ItemFramePrefix, StringComparison.Ordinal)) return true;
+                if (IsItemFrameName(t.name)) return true;
             for (int i = 0; i < cell.childCount; i++)
-                if (cell.GetChild(i).name.StartsWith(ItemFramePrefix, StringComparison.Ordinal)) return true;
+                if (IsItemFrameName(cell.GetChild(i).name)) return true;
             return false;
         }
+        /// <summary>
+        /// T190 회차 2 — 조각 인스턴스 이름 판정. <b>두 꼴을 다 본다</b>: <see cref="Spawn"/> 이 붙이는 카탈로그 키(«ui.itemFrame.&lt;색&gt;» · 결정 325)와,
+        /// 부르는 쪽이 <c>go.name = "ItemFrame_01"</c> 처럼 <b>조각 이름으로 바꿔 놓은</b> 꼴(펫 빈 슬롯·뽑기 결과 칸 등)이다.
+        /// 회차 1 은 앞의 것만 봐서 «뽑기 결과 칸이 아이템 칸이 아니다» 라는 틀린 답을 냈다(CI #381 실측).
+        /// <para>
+        /// ⚠ 뒤 꼴은 <b>«ItemFrame_»</b> 까지 봐야 한다 — 그냥 «ItemFrame» 으로 자르면 상점 상품 카드 조각 안의
+        /// <c>ItemFrameArea</c>(쓰지 않아 꺼 두는 자리 · <c>ShopScreen.cs:427</c>)가 걸려 **남겨야 할 상점 빛까지 꺼진다**.
+        /// </para>
+        /// </summary>
+        static bool IsItemFrameName(string n) =>
+            !string.IsNullOrEmpty(n) && (n.StartsWith(ItemFramePrefix, StringComparison.Ordinal) || n.StartsWith("ItemFrame_", StringComparison.Ordinal));
         /// <summary>
         /// T190 게이트용 읽기 — 이 칸에 빛 <b>담개</b>(<see cref="LightMaskName"/>)가 서 있나.
         /// 이미 있는 <see cref="HasLight"/>(도는 빛살이 «보이나»)와 다르다: 담개는 빛살과 글로우 서클을 **둘 다** 담으므로,

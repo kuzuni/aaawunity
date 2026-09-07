@@ -339,9 +339,11 @@ namespace KkomaKnight.Tests.Play
                 for (int i = 0; i < rew.childCount; i++)
                 {
                     var cell = rew.GetChild(i); if (!cell.name.StartsWith("Cell:")) continue;
-                    Assert.IsTrue(UiKit.HasLight(cell), name + "/" + cell.name + " 보상 아이콘 뒤 빛살");
+                    // T190(주인 2026-09-07 13:3X «아이템 슬롯 같은 거에는 빛 효과 없게») — 보상 칸의 빛살은 **빠졌다**.
+                    // 담개까지 재는 까닭: 빛살만 끄고 글로우 서클(T155 ⓓ)·알갱이(T174)가 남으면 눈에는 그대로 «빛 효과» 다.
+                    Assert.IsFalse(UiKit.HasLight(cell), name + "/" + cell.name + ": 보상 칸에 빛살 없음(T190)");
+                    Assert.IsFalse(UiKit.HasLightMask(cell), name + "/" + cell.name + ": 보상 칸에 빛 담개도 없음(T190)");
                     var icon = cell.Find("Icon"); Assert.IsNotNull(icon, cell.name + " 아이콘");
-                    Assert.Less(cell.Find(UiKit.LightMaskName).GetSiblingIndex(), icon.GetSiblingIndex(), cell.name + ": 빛살은 아이콘 «뒤»(형제 순서 앞)");
                     cells++;
                 }
             }
@@ -351,11 +353,10 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(UiKit.HasGradient(UiKit.Find(hell, "Head")), "던전 카드 제목 띠에 그라데이션(T72 ③)");
 
             // 패턴은 오른쪽 위로 흐르고 빛살은 시계방향
-            var firstLight = (RectTransform)UiKit.Find(hell, "Cell:0").Find(UiKit.LightMaskName + "/" + UiKit.LightName);
-            var p0 = praw.uvRect.position; var r0 = firstLight.localRotation;
+            // T190 — «보상 칸 빛살이 시계방향» 은 잴 것이 없어졌다(빛 자체가 없다). 패턴 흐름만 남는다.
+            var p0 = praw.uvRect.position;
             yield return RealSeconds(0.4f);
             Assert.Less(praw.uvRect.position.x, p0.x, "던전 배경 패턴도 오른쪽 위로 흐른다");
-            Assert.Less(Vector3.SignedAngle(r0 * Vector3.up, firstLight.localRotation * Vector3.up, Vector3.forward), -0.5f, "보상 칸 빛살은 시계방향");
 
             // ⓑ 던전 세부 팝업(21) 보상 칸 4개 + 제목 띠 그라데이션
             var enter = UiKit.Find(hell, "EnterBtn").GetComponent<Button>(); Assert.IsNotNull(enter, "입장 버튼");
@@ -365,7 +366,7 @@ namespace KkomaKnight.Tests.Play
             for (int i = 0; i < 4; i++)
             {
                 var cell = UiKit.Find(ov, "RewardCell:" + i); Assert.IsNotNull(cell, "세부 팝업 보상 칸 " + i);
-                Assert.IsTrue(UiKit.HasLight(cell), "세부 팝업 보상 칸 " + i + " 아이콘 뒤 빛살"); rcells++;
+                Assert.IsFalse(UiKit.HasLight(cell) || UiKit.HasLightMask(cell), "세부 팝업 보상 칸 " + i + " 에 빛 없음(T190)"); rcells++;
             }
             Assert.AreEqual(4, rcells, "세부 팝업 보상 칸 4(레퍼런스 21)");
             Assert.IsTrue(UiKit.HasGradient(UiKit.Find(ov, "Head")), "팝업 제목 띠에 그라데이션(T72 ③)");
@@ -378,10 +379,11 @@ namespace KkomaKnight.Tests.Play
             ov = _app.Overlay.Root;
             var band = UiKit.Find(ov, "Tiers"); Assert.IsNotNull(band, "티어 띠");
             Assert.IsTrue(UiKit.HasPattern(band), "붉은 티어 띠 안에도 무늬(레퍼런스 25)");
-            int rr = 0;
+            int rr = 0, rlit = 0;
             foreach (var t in ov.GetComponentsInChildren<Transform>(false))
-                if (t.name == "Reward" && UiKit.HasLight(t)) rr++;
-            Assert.AreEqual(8, rr, "순위 보상 칸 = 4줄 × (코인·다이아) 전부 빛살");
+                if (t.name == "Reward") { rr++; if (UiKit.HasLight(t) || UiKit.HasLightMask(t)) rlit++; }
+            Assert.AreEqual(8, rr, "순위 보상 칸 = 4줄 × (코인·다이아)");
+            Assert.AreEqual(0, rlit, "순위 보상 칸에는 빛이 하나도 없다(T190)");
             _app.Overlay.Close(); yield return Frames(2);
 
             // ⓑⓔ 상인 페이지(26) 상품 11칸 + T72 4항 «안 보는 페이지는 멈춘다»
@@ -392,19 +394,16 @@ namespace KkomaKnight.Tests.Play
             {
                 var card = UiKit.Find(me, "Goods:" + i); Assert.IsNotNull(card, "상품 카드 " + i);
                 var ic = card.Find("IconCell"); Assert.IsNotNull(ic, "상품 " + i + " 아이콘 칸");
-                Assert.IsTrue(UiKit.HasLight(ic), "상품 " + i + " 아이콘 뒤 빛살"); if (firstGoods == null) firstGoods = ic; goods++;
+                // T190 — 상인 페이지 상품 칸은 조각 `ItemFrame_01` 을 쓰므로 «아이템 칸» 판정에 걸려 빛이 빠진다.
+                // 주인이 «남긴다» 고 한 것은 **상점(09·10)의 상품 카드**(조각 `ListItem_ShopItem`)다 — 그쪽은 `ShopScreenCarriesPatternAndItemLights` 가 지킨다.
+                Assert.IsFalse(UiKit.HasLight(ic) || UiKit.HasLightMask(ic), "상인 상품 " + i + " 칸에 빛 없음(T190)"); if (firstGoods == null) firstGoods = ic; goods++;
             }
             Assert.AreEqual(11, goods, "상인 상품 11칸 전부(레퍼런스 26)");
-            var gl = (RectTransform)firstGoods.Find(UiKit.LightMaskName + "/" + UiKit.LightName);
-            var g0 = gl.localRotation; yield return RealSeconds(0.4f);
-            Assert.Less(Vector3.SignedAngle(g0 * Vector3.up, gl.localRotation * Vector3.up, Vector3.forward), -0.5f, "보고 있는 상인 페이지의 상품 빛살은 돈다");
-            // 멈춤은 «트윈이 없다» 가 아니라 «각이 안 변한다» 로 잰다(DOTween.IsTweening 은 멈춘 트윈도 참 · CI #145)
+            Assert.IsNotNull(firstGoods, "상품 칸 하나는 잡혔다");
+            // T190 — «보고 있는 페이지만 돈다»(T72 4항)를 여기서 재던 세 걸음은 잴 것이 없어졌다(상인 칸에 빛이 없다).
+            // 그 규약 자체는 상점 화면의 `ShopScreenCarriesPatternAndItemLights`(빛이 남는 자리)가 그대로 지킨다.
             ev.ShowPage(EventsScreen.PageArena); yield return Frames(2);
-            var g1 = gl.localRotation; yield return RealSeconds(0.4f);
-            Assert.AreEqual(0f, Quaternion.Angle(g1, gl.localRotation), 0.01f, "다른 페이지로 가면 상인 상품 빛살은 멈춘다(T72 4항)");
             ev.ShowPage(EventsScreen.PageMerchant); yield return Frames(2);
-            var g2 = gl.localRotation; yield return RealSeconds(0.4f);
-            Assert.Less(Vector3.SignedAngle(g2 * Vector3.up, gl.localRotation * Vector3.up, Vector3.forward), -0.5f, "돌아오면 다시 돈다");
 
             _log.AssertNoRed("T72 화면 적용(던전·아레나)");
             yield return Shutdown();
@@ -441,18 +440,15 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(cfL.gameObject.activeInHierarchy, "폭죽은 켜져 있다(여태 Hide 로 꺼 두던 조각)");
             var items = UiKit.Find(win, "Group_RewardItem"); Assert.IsNotNull(items, "보상 줄");
             var goldCell = items.GetChild(0);
-            Assert.IsTrue(UiKit.HasLight(goldCell), "클리어 보상(골드) 그림 뒤 빛살(T72 ②)");
-            var wlight = (RectTransform)goldCell.Find(UiKit.LightMaskName + "/" + UiKit.LightName);
-            Assert.Greater(wlight.rect.width, 1f, "빛살 한 변 > 0 — 배치가 끝난 뒤에 걸었다(결정 174)");
-            // 팝업 시간 정지 중에도(unscaled) 보상 빛살과 제목 빛살이 시계방향으로 돈다
-            var wr0 = wlight.localRotation;
+            // T190 — ⚑ 주인이 **이름을 대고 지목한 자리**다(«클리어했을 때 골드 주는 거 슬롯에 빛 효과 같은 그거»). 빛살도 담개도 없다.
+            Assert.IsFalse(UiKit.HasLight(goldCell), "클리어 보상(골드) 칸에 빛살 없음(T190 · 주인 13:3X)");
+            Assert.IsFalse(UiKit.HasLightMask(goldCell), "클리어 보상 칸에 빛 담개도 없음(T190)");
+            // 팝업 시간 정지 중에도(unscaled) 제목 빛살은 시계방향으로 돈다(T110 ⓒ · 이쪽은 조각 제 연출이라 그대로다)
             yield return RealSeconds(0.4f);
-            Assert.Less(Vector3.SignedAngle(wr0 * Vector3.up, wlight.localRotation * Vector3.up, Vector3.forward), -0.5f, "보상 빛살은 시계방향");
             Assert.Less(Vector3.SignedAngle(tr0 * Vector3.up, tfx.localRotation * Vector3.up, Vector3.forward), -0.5f, "제목 빛살도 시계방향으로 돈다(T110 ⓒ)");
             yield return RealSeconds(Overlay.ConfettiSec + 0.6f);
             Assert.IsTrue(UiKit.Find(win, "SampleEffect_Confetti_R") == null || !UiKit.Find(win, "SampleEffect_Confetti_R").gameObject.activeInHierarchy, "폭죽은 다 터지면 사라진다(T110 ⓓ)");
             _app.Overlay.Close(); yield return Frames(2);
-            Assert.IsFalse(UiKit.IsTweening(wlight), "팝업이 닫히면 빛살 트윈도 없다(SetLink · T56)");
 
             // ⓐⓑ 사망 팝업 — 같은 두 가지
             _app.Overlay.Dead(G, () => { }); yield return Frames(2); Canvas.ForceUpdateCanvases();
@@ -460,9 +456,9 @@ namespace KkomaKnight.Tests.Play
             Assert.IsFalse(UiKit.HasPattern(lose), "사망 팝업에도 흐르는 무늬가 없다(T110 ⓑ · 같은 «결과 팝업»)");
             var ldim = lose.Find("Dimmed"); Assert.IsNotNull(ldim, "어둠 조각");
             var reward = UiKit.Find(lose, "Reward"); Assert.IsNotNull(reward, "사망 보상 칸");
-            Assert.IsTrue(UiKit.HasLight(reward), "사망 보상(골드) 그림 뒤 빛살(T72 ②)");
+            Assert.IsFalse(UiKit.HasLight(reward), "사망 보상(골드) 칸에 빛살 없음(T190)");
+            Assert.IsFalse(UiKit.HasLightMask(reward), "사망 보상 칸에 빛 담개도 없음(T190)");
             var icon = reward.Find("Icon"); Assert.IsNotNull(icon, "보상 아이콘");
-            Assert.Less(reward.Find(UiKit.LightMaskName).GetSiblingIndex(), icon.GetSiblingIndex(), "빛살은 아이콘 «뒤»(형제 순서 앞)");
             _app.Overlay.Close(); yield return Frames(2);
 
             // ⓐ 레벨업 3택(04)도 어둠 위 무늬를 받는다
