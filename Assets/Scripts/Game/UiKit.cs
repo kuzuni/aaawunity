@@ -700,7 +700,10 @@ namespace KkomaKnight.Game
         /// <summary>특전 카드 조각(<c>CardFrame_04_BasePrefab</c>)의 몸통 자식 이름 — 형제는 InnerBorder · Border · TitleBg · TitleBorder(프리팹 실측).</summary>
         public const string CardBodyName = "Bg";
 
-        public static PopupParts Popup(Transform layer, string title, Layout.R rect, Action onTapClose, string popupKey = PopupKeyPlain, string titleKey = "ui.title.tangerine", bool dim = true)
+        /// <summary>«판 없음» 모드(<c>boxed: false</c>)가 상자 조각 대신 세우는 투명 칸의 이름 — 게이트가 «상자가 없다» 를 이 이름으로도 읽는다(T141).</summary>
+        public const string NoBoxName = "PopupNoBox";
+
+        public static PopupParts Popup(Transform layer, string title, Layout.R rect, Action onTapClose, string popupKey = PopupKeyPlain, string titleKey = "ui.title.tangerine", bool dim = true, bool boxed = true)
         {
             var parts = new PopupParts();
             if (dim)
@@ -711,19 +714,27 @@ namespace KkomaKnight.Game
                 FadeIn(di, 0.85f);
                 parts.Dim = d;
             }
-            var box = SpawnRt(popupKey, layer, rect);
-            foreach (var g in box.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;   // 상자 뒤로 클릭이 새지 않게
-            // T130 — 기본 팝업 상자를 레퍼런스대로 «어두운 회색» 으로. 조각이 색을 변형의 색 덮어쓰기로 가지므로 tint 로 닿는다(새 그림·새 키 0).
-            bool darkBox = DarkenPopupBox(box, popupKey);
-            // T72 ① 팝업 상자 «안» 배경 패턴(ROUTINE T72 1항 적용 목록) — 조각의 «Bg» 바로 위(DecoLine·Border 아래) · 둥근 모서리 안쪽.
-            // 여기 한 곳이라 모든 공통 팝업(Overlay.Box · LobbyPopups · 화면 세부 팝업)이 같이 받는다 — 화면 코드는 한 줄도 안 만진다.
-            // 무늬 색은 바탕을 따라간다 — T130 뒤로 기본 상자는 어두우니 흰 무늬, 색 변형(ui.popup.<색>)은 여전히 밝아 Ink 무늬다.
-            int patIdx = 0; for (int i = 0; i < box.childCount; i++) if (box.GetChild(i).name == "Bg") { patIdx = i + 1; break; }
-            PatternBg(box, darkBox ? PatternTintDark : PatternTintLight, PatternTileSeconds, patIdx, PatternTilePx, PopupPatternInset);
-            // T72 ③ 상자 «안» 그라데이션(위 +12% 밝음 · 아래 −18% 어둠) — 패턴 바로 위 · 테두리·리본·내용 아래(질감 층 순서 = 결정 171)
-            // 여기 한 곳이라 공통 팝업 전부가 같이 받는다(버튼 공통 적용은 결정 170 대로 계속 보류 · 결정 188).
-            // T116 실측 — 레퍼런스의 팝업 패널도 거의 단색(#2C2829 → #201E1F)이라 배경(0.12/0.18)보다 얕게
-            Gradient(box, Palette.A(Palette.White, GradientFlatTopAlpha), Palette.A(Palette.Ink, GradientFlatBottomAlpha), inset: PopupPatternInset, siblingIndex: patIdx);
+            // T141(주인 2026-09-07 «그 흰색 패널? 통일되게 검정 투명 딤 위에 있는 느낌으로») — 쉼터·악마·천사 세 형제는 판 없이 어둠 위에 바로 얹힌다.
+            // 조각 대신 «같은 rect 의 투명 칸» 을 세우므로 내용의 % 자리 계산은 한 줄도 안 바뀌고, 상자에 딸린 무늬·그라데이션·어둡게도 같이 건너뛴다.
+            // 어둠(Dimmed)과 리본은 특전 선택(04)처럼 그대로 남는다 — 클릭 차단은 어둠이 맡는다(이미 raycastTarget = true).
+            RectTransform box;
+            if (!boxed) { box = Rect(layer, NoBoxName); Pct(box, rect); }
+            else
+            {
+                box = SpawnRt(popupKey, layer, rect);
+                foreach (var g in box.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;   // 상자 뒤로 클릭이 새지 않게
+                // T130 — 기본 팝업 상자를 레퍼런스대로 «어두운 회색» 으로. 조각이 색을 변형의 색 덮어쓰기로 가지므로 tint 로 닿는다(새 그림·새 키 0).
+                bool darkBox = DarkenPopupBox(box, popupKey);
+                // T72 ① 팝업 상자 «안» 배경 패턴(ROUTINE T72 1항 적용 목록) — 조각의 «Bg» 바로 위(DecoLine·Border 아래) · 둥근 모서리 안쪽.
+                // 여기 한 곳이라 모든 공통 팝업(Overlay.Box · LobbyPopups · 화면 세부 팝업)이 같이 받는다 — 화면 코드는 한 줄도 안 만진다.
+                // 무늬 색은 바탕을 따라간다 — T130 뒤로 기본 상자는 어두우니 흰 무늬, 색 변형(ui.popup.<색>)은 여전히 밝아 Ink 무늬다.
+                int patIdx = 0; for (int i = 0; i < box.childCount; i++) if (box.GetChild(i).name == "Bg") { patIdx = i + 1; break; }
+                PatternBg(box, darkBox ? PatternTintDark : PatternTintLight, PatternTileSeconds, patIdx, PatternTilePx, PopupPatternInset);
+                // T72 ③ 상자 «안» 그라데이션(위 +12% 밝음 · 아래 −18% 어둠) — 패턴 바로 위 · 테두리·리본·내용 아래(질감 층 순서 = 결정 171)
+                // 여기 한 곳이라 공통 팝업 전부가 같이 받는다(버튼 공통 적용은 결정 170 대로 계속 보류 · 결정 188).
+                // T116 실측 — 레퍼런스의 팝업 패널도 거의 단색(#2C2829 → #201E1F)이라 배경(0.12/0.18)보다 얕게
+                Gradient(box, Palette.A(Palette.White, GradientFlatTopAlpha), Palette.A(Palette.Ink, GradientFlatBottomAlpha), inset: PopupPatternInset, siblingIndex: patIdx);
+            }
             var ribbon = Spawn(titleKey, box); var rr = (RectTransform)ribbon.transform;
             rr.anchorMin = rr.anchorMax = new Vector2(0.5f, 1f); rr.pivot = new Vector2(0.5f, 0.5f); rr.sizeDelta = PopupRibbonSize; rr.anchoredPosition = new Vector2(0, 8);
             Ensure<PopupRibbonTag>(ribbon);   // T75 4항 — 게이트가 «UiKit.Popup 이 세운 리본» 만 단언하게(화면이 스스로 세운 리본은 그 화면 워커 몫 · 결정 291)

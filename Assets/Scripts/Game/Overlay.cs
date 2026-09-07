@@ -58,10 +58,11 @@ namespace KkomaKnight.Game
 
         /// <summary>어둠 + 팝업 상자(Popup_Box_02 변형) + 리본 제목 = 공통 팝업 문법(<see cref="UiKit.Popup"/> · T36). 돌려주는 RectTransform 안에서 Pct 로 내용을 배치한다.
         /// <paramref name="onTapClose"/> 를 주면 프레임 아래 «탭하여 닫기» + 배경 탭으로 닫힌다(정보 팝업) · null 이면 선택을 강제하는 이벤트 팝업(쉼터·악마·천사).</summary>
-        RectTransform Box(string popupKey, string titleKey, string title, Layout.R rect, Action onTapClose = null)
+        /// <param name="boxed">false 면 «판 없이 어둠 위»(T141 · 쉼터·악마·천사 세 형제 · <see cref="UiKit.Popup"/> 이 같은 rect 의 투명 칸을 세운다 — 내용 % 자리 불변).</param>
+        RectTransform Box(string popupKey, string titleKey, string title, Layout.R rect, Action onTapClose = null, bool boxed = true)
         {
             Begin();
-            var parts = UiKit.Popup(Root, title, rect, onTapClose, popupKey, titleKey);
+            var parts = UiKit.Popup(Root, title, rect, onTapClose, popupKey, titleKey, true, boxed);
             _cur = parts.Box.gameObject;
             return parts.Box;
         }
@@ -405,8 +406,8 @@ namespace KkomaKnight.Game
         /// <summary>쉼터 — 체력 회복 / 경험치 / (T23) «광고 보고 둘 다 얻기»(광고 카운트다운 = 천사의 <see cref="AdCountdown"/> 재사용 → <paramref name="onBoth"/>).</summary>
         public void Rest(BattleState G, Action<bool> onChoose, Action onBoth = null)
         {
-            var box = Box("ui.popup.green", "ui.title.green", "쉼터", Layout.EvBox);
-            Sub(box, "모닥불 앞에서 잠시 쉬어갑니다", 9, 7, TextSize.Body);
+            var box = Box("ui.popup.green", "ui.title.green", "쉼터", Layout.EvBox, boxed: false);   // T141 — 판 없이 어둠 위(주인 «그 쉼터도 … 패널 없게»)
+            Sub(box, "모닥불 앞에서 잠시 쉬어갑니다", 9, 7, TextSize.Body, Palette.White);   // T141 ⓑ — 판이 없어졌으니 어두운 글자(InkSoft 기본값)를 흰 글자로
             var ic = UiKit.Icon(box, "Fire", "ui.fire"); UiKit.Pct(ic.rectTransform, 37, 17, 26, 24);
             string heal = G.C.RestHeal <= 1 ? $"최대 체력 {Math.Round(G.C.RestHeal * 100)}%" : $"체력 {UiKit.Fmt(G.C.RestHeal)}";
             UiKit.Button(box, "ui.btnGreen", $"체력 회복 (+{heal})", () => { Close(); onChoose(true); }, new Layout.R(10, 45, 80, 11));
@@ -416,25 +417,25 @@ namespace KkomaKnight.Game
                 var ad = UiKit.Button(box, "ui.btnOrange", "광고 보고 둘 다 얻기", () => AdCountdown(3, () => { Close(); onBoth(); }), new Layout.R(10, 71, 80, 12));
                 var adIc = UiKit.Icon(ad, "Ad", "hud.alertAd"); UiKit.Pct(adIc.rectTransform, 84, -22, 18, 50);
             }
-            Sub(box, "다음 레벨에 가까워집니다", 86, 6, TextSize.Body, Palette.InkSoft);   // T63-perks — 밝은 패널 위 InkLight → InkSoft
+            Sub(box, "다음 레벨에 가까워집니다", 86, 6, TextSize.Body, Palette.White);   // T141 ⓑ — 판이 사라져 어둠 위라 흰 글자(T63-perks 의 InkSoft 는 밝은 패널 전제였다)
         }
 
         // ───────────────────────── 악마의 거래 ─────────────────────────
         public void Devil(BattleState G, Action<bool> onChoose)
         {
             var perk = G.Pending?.DevilPerk;
-            var box = Box("ui.popup.plum", "ui.title.plum", "악마의 거래", new Layout.R(4, 24, 92, 52));
-            Sub(box, "\"네 생명을 바치면... 이 힘을 주지\"", 9, 6, TextSize.Body, Palette.Plum);
+            var box = Box("ui.popup.plum", "ui.title.plum", "악마의 거래", new Layout.R(4, 24, 92, 52), boxed: false);   // T141 — 판 없이 어둠 위
+            Sub(box, "\"네 생명을 바치면... 이 힘을 주지\"", 9, 6, TextSize.Body, Palette.Yellow);   // T141 ⓑ — 어둠 위 강조는 «밝은 쪽» 으로(Plum 은 안 읽힌다)
             if (perk != null) { var card = PerkCard(box, perk, "yellow", null); UiKit.Pct(card, 2, 18, 96, 22); }
             double cost = G.C.DevilCostMaxHp > 0 ? G.C.DevilCostMaxHp : G.PK.DevilCostMaxHp;
-            Sub(box, $"최대 체력이 {Math.Round(cost * 100)}% 줄어든 채 진행 · 위 전설 특전 1개를 획득", 43, 10, TextSize.Body, Palette.InkSoft);
+            Sub(box, $"최대 체력이 {Math.Round(cost * 100)}% 줄어든 채 진행 · 위 전설 특전 1개를 획득", 43, 10, TextSize.Body, Palette.White);   // T141 ⓑ
             UiKit.Button(box, "ui.btnRed", "거래 수락", () => { Close(); onChoose(true); }, new Layout.R(8, 60, 40, 13));
             UiKit.Button(box, "ui.btnGray", "거절", () => { Close(); onChoose(false); }, new Layout.R(52, 60, 40, 13));
         }
         public void DevilGift(PerkDef perk, Action onOk)
         {
-            var box = Box("ui.popup.plum", "ui.title.plum", "악마의 선물", new Layout.R(6, 30, 88, 40));
-            Sub(box, "전설 특전을 얻었습니다", 11, 7, TextSize.Body, Palette.Plum);
+            var box = Box("ui.popup.plum", "ui.title.plum", "악마의 선물", new Layout.R(6, 30, 88, 40), boxed: false);   // T141 — 같은 흐름의 뒷 팝업도 같이(판이 있었다 없어지면 어색하다)
+            Sub(box, "전설 특전을 얻었습니다", 11, 7, TextSize.Body, Palette.Yellow);   // T141 ⓑ
             if (perk != null) { var card = PerkCard(box, perk, "yellow", null); UiKit.Pct(card, 2, 24, 96, 28); }
             UiKit.Button(box, "ui.btnOrange", "계속", () => { Close(); onOk?.Invoke(); }, new Layout.R(25, 66, 50, 16));
         }
@@ -442,18 +443,19 @@ namespace KkomaKnight.Game
         // ───────────────────────── 천사의 축복 ─────────────────────────
         public void Angel(BattleState G, Action<double> onChoose)
         {
-            var box = Box("ui.popup.yellow", "ui.title.yellow", "천사의 축복", Layout.EvBox);
-            Sub(box, "\"용사여, 축복을 내리노라\"", 10, 7, TextSize.Body, Palette.Orange);
+            var box = Box("ui.popup.yellow", "ui.title.yellow", "천사의 축복", Layout.EvBox, boxed: false);   // T141 — 판 없이 어둠 위
+            Sub(box, "\"용사여, 축복을 내리노라\"", 10, 7, TextSize.Body, Palette.Yellow);   // T141 ⓑ — Orange 는 어둠 위에서 흐리다
             var ic = UiKit.Icon(box, "Wing", "pi.wing", Palette.Yellow); UiKit.Pct(ic.rectTransform, 35, 20, 30, 26);
             UiKit.Button(box, "ui.btnGreen", $"무료 축복 · 공격력 +{Math.Round((SimPolicy.AngelFree - 1) * 100)}%", () => { Close(); onChoose(SimPolicy.AngelFree); }, new Layout.R(10, 54, 80, 12));
             var ad = UiKit.Button(box, "ui.btnOrange", $"광고 보고 공격력 +{Math.Round((SimPolicy.AngelAd - 1) * 100)}%", () => AdCountdown(3, () => Blessed(onChoose)), new Layout.R(10, 70, 80, 12));
             var adIc = UiKit.Icon(ad, "Ad", "hud.alertAd"); UiKit.Pct(adIc.rectTransform, 84, -22, 18, 50);
-            Sub(box, "더 강한 축복", 85, 6, TextSize.Body, Palette.InkSoft);   // T63-perks — 밝은 패널 위 InkLight → InkSoft
+            Sub(box, "더 강한 축복", 85, 6, TextSize.Body, Palette.White);   // T141 ⓑ
         }
-        void Blessed(Action<double> onChoose)
+        /// <summary>축복 강화(광고 뒤) — T141 게이트가 직접 열어 «판 없이 어둠 위» 인지 보므로 공개다(여는 곳은 여전히 <see cref="Angel"/> 한 곳).</summary>
+        public void Blessed(Action<double> onChoose)
         {
-            var box = Box("ui.popup.yellow", "ui.title.yellow", "축복 강화!", new Layout.R(6, 32, 88, 36));
-            Sub(box, $"공격력이 {Math.Round((SimPolicy.AngelAd - 1) * 100)}% 증가했습니다", 18, 14, TextSize.Body, Palette.Orange);
+            var box = Box("ui.popup.yellow", "ui.title.yellow", "축복 강화!", new Layout.R(6, 32, 88, 36), boxed: false);   // T141 — 같은 흐름의 뒷 팝업
+            Sub(box, $"공격력이 {Math.Round((SimPolicy.AngelAd - 1) * 100)}% 증가했습니다", 18, 14, TextSize.Body, Palette.Yellow);   // T141 ⓑ
             UiKit.Button(box, "ui.btnOrange", "계속 전진", () => { Close(); onChoose(SimPolicy.AngelAd); }, new Layout.R(25, 62, 50, 18));
         }
         /// <summary>광고 카운트다운 숫자 크기 — 본문 하한(40)보다 «크게» 보여야 뜻이 있는 자리다(칸 30% = 196px 에 한 줄 88px). T63-results.</summary>
