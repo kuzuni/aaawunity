@@ -71,7 +71,9 @@ def main():
         for tid, waiting, moving in sorted(bad, key=lambda x: x[0]):
             print("  " + tid + " — 대기 줄 " + ", ".join(str(n) + "행" for n, _ in waiting)
                   + " / 살아 있는 줄 " + ", ".join(str(n) + "행" for n, _ in moving))
-        print("고치는 법: 낡은 줄의 상태 칸을 «✂ 중복 행 — 살아 있는 기록은 N행이다» 로 바꾼다(지우지 않는다 · 이력이다).")
+        print("고치는 법 ⓐ 두 줄이 «같은 작업» 이면: 낡은 줄의 상태 칸을 «✂ 중복 행 — 살아 있는 기록은 N행이다» 로 바꾼다(지우지 않는다 · 이력이다).")
+        print("고치는 법 ⓑ 두 줄이 «다른 작업인데 번호만 같으면» 접지 말고 **번호를 옮긴다** — 주인이 부른 쪽이 번호를 갖고 워커가 등재한 쪽이 다음 빈 번호로 간다")
+        print("            (규약 «한 번호는 한 작업» · 결정 435 = T182 전례 · 결정 494 = T190 을 접었다가 되살린 사고). **먼저 두 줄의 제목을 읽고 ⓐ·ⓑ 를 가른다.**")
         return 1
 
     print("✓ check_task_rows: 표 행 " + str(sum(len(v) for v in by_id.values()))
