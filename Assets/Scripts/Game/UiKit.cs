@@ -597,6 +597,33 @@ namespace KkomaKnight.Game
         public const float LightPeriod = 16f, LightScale = 1.9f, LightAlpha = 68f / 255f;
         /// <summary>T155 ⓓ 글로우 서클의 짙기 — 빛살보다 옅다(같은 자리에 겹치므로). T172 가 넣었던 «칸 대비 하한»(`LightOutScale`)은 T189(주인 «다 안으로»)로 **없앴다**.</summary>
         public const float GlowAlpha = 46f / 255f;
+        /// <summary>빛 계열이 함께 쓰는 <b>加算(additive)</b> 머티리얼의 이름 — 게이트가 이 이름으로 찾는다(T181 ⓑ).</summary>
+        public const string LightMatName = "UiAdditive";
+        static Material _lightMat;
+        /// <summary>
+        /// T181 ⓑ(주인 «glow 같은 거 빛나는 느낌이 잘 안 든다») — 빛살·글로우 서클이 <b>겹칠수록 밝아지게</b> 하는 加算 머티리얼 <b>한 장</b>.
+        /// <para>
+        /// <b>왜 加算인가</b> — 지금은 보통 알파 블렌딩이라 흰 그림이 «위에 얹힌 흰 판» 으로 보인다(겹쳐도 안 밝아진다).
+        /// 加算은 아래 색에 <b>더한다</b> — 그래서 어두운 판 위 빛이 «빛» 으로 읽히고, 두 겹(빛살 + 글로우 서클)이 겹친 가운데가 자연히 더 밝다.
+        /// ⓐ 의 Bloom 은 <b>UI 에 안 먹으므로</b>(캔버스가 ScreenSpaceOverlay · PostFx 주석) UI 쪽 «빛나는 느낌» 은 이 길이 유일하다.
+        /// </para>
+        /// <para>
+        /// <b>새 에셋 0</b> — 이미 쓰는 <c>AllIn1SpriteShader/AllIn1SpriteShaderUiMask</c>(<c>mat.perkShine</c> 과 같은 셰이더)를 그대로 쓰고
+        /// <b>속성 하나</b>만 바꾼다: <c>_MyDstMode</c> 를 기본 <c>OneMinusSrcAlpha</c>(10) → <c>One</c>(1).
+        /// <c>_MySrcMode</c> 는 기본값 <c>SrcAlpha</c>(5) 그대로라 <b>주인이 정한 알파(68/255)가 여전히 세기를 정한다</b> — «One One» 로 두면 알파가 무시돼 하얗게 뜬다.
+        /// UiMask 갈래라 <see cref="RectMask2D"/> 잘림(T189 «다 안으로»)도 그대로 받는다.
+        /// </para>
+        /// 한 장을 <b>모든 빛이 나눠 쓴다</b>(인스턴스 0 · 드로콜·배칭 그대로). 셰이더를 못 찾는 환경이면 <c>null</c> 이고 그러면 지금 그림 그대로다.
+        /// </summary>
+        public static Material LightMaterial()
+        {
+            if (_lightMat != null) return _lightMat;
+            var sh = Shader.Find("AllIn1SpriteShader/AllIn1SpriteShaderUiMask");
+            if (sh == null) return null;
+            _lightMat = new Material(sh) { name = LightMatName, hideFlags = HideFlags.DontSave };
+            _lightMat.SetFloat("_MyDstMode", (float)UnityEngine.Rendering.BlendMode.One);
+            return _lightMat;
+        }
         /// <summary>
         /// 빛 알갱이(T174 · 주인 2026-09-07 10:4X «모든 이펙트 라이트 있는 곳에 파티클 이펙트도 넣어 줘 · 빛 알갱이 먼지가 천천히 퍼지는 느낌으로»).
         /// 개수는 <b>칸마다 4</b> — 지시서 4항이 «fps 를 재 보고 정한다» 고 한 자리라 값을 여기 한 곳에 둔다(줄이려면 이 줄만 고친다).
@@ -756,6 +783,7 @@ namespace KkomaKnight.Game
             Image img;
             if (lt == null) { lt = Rect(mask, LightName); img = lt.gameObject.AddComponent<Image>(); } else img = Ensure<Image>(lt.gameObject);
             img.sprite = sp; img.type = Image.Type.Simple; img.preserveAspect = true; img.raycastTarget = false; img.color = tint ?? Palette.A(Palette.White, LightAlpha);
+            { var lm = LightMaterial(); if (lm != null) img.material = lm; }   // T181 ⓑ — 겹칠수록 밝아지는 加算(셰이더가 없으면 지금 그림 그대로)
             lt.anchorMin = lt.anchorMax = new Vector2(0.5f, 0.5f); lt.pivot = new Vector2(0.5f, 0.5f);
             Vector2 refSize = icon != null ? icon.rect.size : cell.rect.size;
             float side = Mathf.Max(refSize.x, refSize.y); if (side <= 1f) side = Mathf.Max(cell.rect.width, cell.rect.height);
@@ -786,6 +814,7 @@ namespace KkomaKnight.Game
             if (gt == null) { gt = Rect(host, GlowName); img = gt.gameObject.AddComponent<Image>(); } else img = Ensure<Image>(gt.gameObject);
             img.sprite = sp; img.type = Image.Type.Simple; img.preserveAspect = true; img.raycastTarget = false;
             img.color = tint.HasValue ? Palette.A(tint.Value, GlowAlpha) : Palette.A(Palette.White, GlowAlpha);
+            { var lm = LightMaterial(); if (lm != null) img.material = lm; }   // T181 ⓑ — 빛살과 같은 加算(둘이 겹친 가운데가 자연히 더 밝다)
             gt.anchorMin = gt.anchorMax = new Vector2(0.5f, 0.5f); gt.pivot = new Vector2(0.5f, 0.5f);
             gt.sizeDelta = light.sizeDelta; gt.anchoredPosition = light.anchoredPosition;
             gt.SetSiblingIndex(0);

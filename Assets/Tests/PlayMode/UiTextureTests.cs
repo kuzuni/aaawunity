@@ -294,6 +294,26 @@ namespace KkomaKnight.Tests.Play
             Assert.Less(praw.uvRect.position.x, p0.x, "상점 패턴도 오른쪽 위로 흐른다");
             Assert.Less(Vector3.SignedAngle(r0 * Vector3.up, bigLight.localRotation * Vector3.up, Vector3.forward), -0.5f, "빛살은 시계방향(주인 «오른쪽으로»)");
 
+            // T181 ⓑ — 빛은 «겹칠수록 밝아지는» 加算이라야 «빛나는 느낌» 이 난다(주인 «glow 빛나는 느낌이 잘 안 든다»).
+            // ⓐ 의 Bloom 은 UI 에 안 먹으므로(캔버스가 ScreenSpaceOverlay) UI 쪽은 이 길뿐이다.
+            // 재는 것은 «머티리얼이 붙었나» 가 아니라 **섞는 방식**이다 — 이름만 보면 기본 알파 블렌딩으로 되돌아가도 초록이다.
+            {
+                var lmat = UiKit.LightMaterial();
+                if (lmat != null)   // 셰이더가 없는 환경(스텁)에서는 이 칸을 건너뛴다 — 그 경우 그림은 종전 그대로다
+                {
+                    Assert.AreEqual(UiKit.LightMatName, lmat.name, "빛 머티리얼 이름(게이트가 이것으로 찾는다)");
+                    Assert.AreEqual((float)UnityEngine.Rendering.BlendMode.One, lmat.GetFloat("_MyDstMode"), 1e-3f,
+                        "加算 = 도착 blend 가 One 이어야 겹칠수록 밝아진다(OneMinusSrcAlpha 로 돌아가면 «흰 판» 이 된다)");
+                    Assert.AreEqual((float)UnityEngine.Rendering.BlendMode.SrcAlpha, lmat.GetFloat("_MySrcMode"), 1e-3f,
+                        "출발 blend 는 SrcAlpha 그대로 — 주인이 정한 알파(68/255)가 세기를 정한다(One One 이면 알파가 무시돼 하얗게 뜬다)");
+                    var bigImg = bigLight.GetComponent<Image>();
+                    Assert.AreSame(lmat, bigImg.material, "빛살이 그 한 장을 쓴다");
+                    var glow = firstBox.Find(UiKit.LightMaskName + "/" + UiKit.GlowName);
+                    if (glow != null) Assert.AreSame(lmat, glow.GetComponent<Image>().material, "글로우 서클도 같은 한 장(둘이 겹친 가운데가 더 밝다)");
+                    Assert.AreSame(lmat, UiKit.LightMaterial(), "머티리얼은 «한 장을 나눠 쓴다» — 칸마다 인스턴스를 만들면 드로콜이 는다");
+                }
+            }
+
             // ⓓ 4항 «보이는 칸만» — 맨 위(10) 에서는 맨 아래 골드 칸이 멈춰 있다
             var lastGold = UiKit.Find(content, "GoldPack:2");
             Assert.IsNotNull(lastGold, "골드 마지막 칸");
