@@ -1159,6 +1159,12 @@ namespace KkomaKnight.Game
         public static int CompleteAllTweens() => DOTween.CompleteAll(true);
         /// <summary><paramref name="target"/> 을 겨냥한 살아 있는 트윈/시퀀스가 있는가(테스트용 · Close 뒤 0 계약).</summary>
         public static bool IsTweening(object target) => target != null && DOTween.IsTweening(target);
+        /// <summary>
+        /// 지금 «도는» 트윈 수(T129 ⓑ 계측 · 멈춰 있는 것은 안 센다). 질감 3종(패턴 uvRect 흐름 · 빛살 회전)은 <b>무한 루프</b>라
+        /// 화면이 서 있는 동안 계속 프레임을 먹는다 — 로비 fps 가 회차마다 내려온 원인을 «몇 개가 도나» 로 먼저 세려는 자다.
+        /// 판정에 쓰지 않는다(수를 줄이는 것은 다음 회차 · 여기서는 재기만 한다). PlayMode 테스트 어셈블리가 DOTween 을 직접 참조하지 않아 여기 둔다.
+        /// </summary>
+        public static int PlayingTweens() => DOTween.TotalPlayingTweens();
         /// <summary>소리·눌림 없는 탭 영역(연출 스킵용 · T49) — Button 을 만들지 않는다(PressFeedbackTests 의 «모든 Button 은 눌림 표시» 계약 밖). 테스트는 <see cref="Tap.Fire"/> 로 누른다.</summary>
         public static Tap OnTap(Transform t, Action onTap)
         {

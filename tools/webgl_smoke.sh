@@ -40,9 +40,13 @@ case "$MODE" in
     TMP="$(mktemp -d)"
     ( cd "$ROOT" && git fetch -q origin gh-pages && git archive origin/gh-pages | tar -x -C "$TMP" ) || { echo "[smoke] origin/gh-pages 를 못 받았다"; exit 4; }
     echo "[smoke] gh-pages $(cd "$ROOT" && git log -1 --format='%h %s' origin/gh-pages) → $TMP"
+    # T129 ⓐ — perf 줄에 «어느 빌드를 쟀는지» 를 넣어 준다(배포 커밋 제목의 소스 sha)
+    export SMOKE_BUILD="$(cd "$ROOT" && git log -1 --format='%s' origin/gh-pages | grep -oE '[0-9a-f]{40}' | head -1)"
+    export SMOKE_TARGET=gh-pages
     serve_dir "$TMP" || exit 4; TARGET="$SRV_URL";;
   dir)
     [ -f "$DIR/index.html" ] || { echo "[smoke] $DIR/index.html 없음"; exit 4; }
+    export SMOKE_TARGET=dir
     serve_dir "$DIR" || exit 4; TARGET="$SRV_URL";;
   url) [ -n "$TARGET" ] || { echo "사용: tools/webgl_smoke.sh (--gh-pages | --dir DIR | URL) [--battle] [--require-marker] [--shot P] [--log P]"; exit 2; };;
 esac

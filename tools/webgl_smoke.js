@@ -35,6 +35,8 @@ const shotPath = opt('shot', ''), logPath = opt('log', '');
 const AUDIO_RE = /no supported source was found|Unable to decode audio data|Loading FSB failed|playSoundClip error|Streaming of '[^']*' on this platform is not supported/;
 // 망 때문에 못 간 요청(프록시·DNS·오프라인) — 서버가 준 4xx/5xx 는 여기 없다(그건 아래 response 훅이 에러로 센다)
 const NET_RE = /Failed to load resource: net::(ERR_TUNNEL_CONNECTION_FAILED|ERR_PROXY_CONNECTION_FAILED|ERR_NAME_NOT_RESOLVED|ERR_INTERNET_DISCONNECTED|ERR_CONNECTION_(REFUSED|TIMED_OUT|RESET|CLOSED)|ERR_ADDRESS_UNREACHABLE|ERR_CERT_[A-Z_]+)/;
+// 무엇을 쟀는지 한 낱말로(perf 줄용 · T129) — 로컬 서버면 셸이 넣어 준 SMOKE_TARGET, 아니면 URL 의 호스트
+const mode = () => process.env.SMOKE_TARGET || (() => { try { return new URL(url).hostname; } catch (e) { return 'unknown'; } })();
 const pageOrigin = (() => { try { return new URL(url).origin; } catch (e) { return null; } })();
 const isOffOrigin = (u) => { if (!u) return false; try { return new URL(u).origin !== pageOrigin; } catch (e) { return false; } };
 
@@ -55,7 +57,7 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
   });
   const page = await browser.newPage({ viewport: { width: 540, height: 1170 } });
   const errors = [], audioWarn = [], netWarn = [];
-  let readyLobby = false, readyBattle = false, loaded = false;
+  let readyLobby = false, readyBattle = false, loaded = false, tweens = null;
   // where = 그 console 메시지가 가리키는 자원 URL(«Failed to load resource» 는 막힌 그 파일을 가리킨다)
   const noteError = (text, where) => {
     if (!strictAudio && AUDIO_RE.test(text)) { audioWarn.push(text); log('AUDIO⚠', text); return; }
@@ -70,6 +72,7 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
     else log('log', text.slice(0, 300));
     if (text.includes('[KkomaKnight] ready lobby')) readyLobby = true;
     if (text.includes('[KkomaKnight] ready battle')) readyBattle = true;
+    { const p = text.match(/\[KkomaKnight\] perf tweens=(\d+)/); if (p) tweens = Number(p[1]); }   // T129 ⓑ — DebugGo perf 의 답(Assets/Scripts/Game/App.cs)
     if (text.includes('Invoking error handler due to') && !AUDIO_RE.test(text)) noteError('unity error handler: ' + text.slice(0, 500));
   });
   page.on('requestfailed', r => log('reqfail', r.url() + ' ' + (r.failure() || {}).errorText));
@@ -103,6 +106,13 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
   // T72 4항 — 질감 트윈(패턴 uvRect 흐름 · 아이콘 뒤 빛살 회전)이 프레임을 갉지 않는지 «배포된 화면에서 10초» 재서 한 줄 남긴다.
   // 판정에는 안 쓴다(headless SwiftShader 는 폰 GPU 가 아니다 · 회차 사이 비교용 수치) — --no-fps 로 끌 수 있다.
   if (loaded && !flag('no-fps')) {
+    // T129 ⓑ — «왜 느려지나» 를 세려면 «몇 개가 도나» 부터다. fps 를 재기 직전에 한 번 묻는다(화면은 안 바뀐다).
+    // 이 case 가 없는 옛 빌드는 «모르는 목적지» 를 로그 한 줄로 남기고 끝난다(에러 0) → tweens 는 null 로 남고 perf 줄에서 «?» 가 된다.
+    await page.evaluate(() => {
+      const inst = window.unityInstance; if (inst && inst.SendMessage) return inst.SendMessage('App', 'DebugGo', 'perf');
+      const M = window.Module || (window.unityFramework && window.unityFramework.Module); if (M && M.SendMessage) M.SendMessage('App', 'DebugGo', 'perf');
+    }).catch(e => log('perf-fail', e.message));
+    await page.waitForTimeout(500);   // 콘솔 답이 넘어올 틈
     const fps = await page.evaluate(() => new Promise(res => {
       const t0 = performance.now(); let n = 0, prev = t0, worst = Infinity;
       const step = t => {
@@ -112,7 +122,14 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
       };
       requestAnimationFrame(step);
     })).catch(e => { log('fps-fail', e.message); return null; });
-    if (fps) log('fps', `로비 10초 · 평균 ${fps.avg.toFixed(1)} fps · 최저 ${fps.min.toFixed(1)} fps (T72 질감 트윈 · headless SwiftShader 기준)`);
+    if (fps) {
+      log('fps', `로비 10초 · 평균 ${fps.avg.toFixed(1)} fps · 최저 ${fps.min.toFixed(1)} fps (T72 질감 트윈 · headless SwiftShader 기준)`);
+      // T129 ⓐ — «추세를 보려면 회차마다 로그를 눈으로 읽어야» 했다. 한 줄을 기계가 읽을 꼴로 같이 남긴다:
+      // 지난 CI 로그·아티팩트에서 `grep -o 'perf fps=.*'` 한 번이면 표가 복원된다(build 는 어느 빌드를 잰 것인지).
+      // build 는 셸(--gh-pages 가 배포 커밋을 넣어 준다) → GitHub Actions 의 GITHUB_SHA → 빈 값 순.
+      const build = (process.env.SMOKE_BUILD || process.env.GITHUB_SHA || '').slice(0, 8);
+      log('perf', `fps=${fps.avg.toFixed(1)} min=${fps.min.toFixed(1)} tweens=${tweens === null ? '?' : tweens} build=${build || '?'} target=${mode()}`);
+    }
   }
   if (loaded && wantBattle) {
     // 템플릿은 unityInstance 를 지역 변수로만 두므로 SendMessage 는 Module(unityFramework) 경유가 안 되면 실패 — App 이 없으면 에러 1건

@@ -93,7 +93,8 @@ namespace KkomaKnight.Game
 
         /// <summary>
         /// 배포 스모크 진단 훅(T60) — 브라우저 JS 가 <c>unityInstance.SendMessage("App", "DebugGo", "battle")</c> 로 부른다(GameObject 이름 = «App»).
-        /// «battle» = 선택 챕터로 전투 진입 · «lobby» = 로비. 그 외는 무시(로그 한 줄). 게임 로직은 StartBattle/ShowScreen 그대로 — 새 기능이 아니라 진입 경로만 연다.
+        /// «battle» = 선택 챕터로 전투 진입 · «lobby» = 로비 · «perf» = 지금 도는 트윈 수를 로그 한 줄로(T129 ⓑ · 화면은 안 바뀐다). 그 외는 무시(로그 한 줄).
+        /// 게임 로직은 StartBattle/ShowScreen 그대로 — 새 기능이 아니라 진입 경로만 연다.
         /// </summary>
         public void DebugGo(string what)
         {
@@ -102,6 +103,8 @@ namespace KkomaKnight.Game
             {
                 case "battle": StartBattle(Save.SelChapter); break;
                 case "lobby": Overlay?.Close(); GetScreen<BattleScreen>()?.Abort(); ShowScreen("lobby"); break;
+                // T129 ⓑ — «지금 몇 개가 도나» 한 줄. 스모크가 fps 를 재기 직전에 불러 fps 옆에 같이 적는다(문구 바꾸면 tools/webgl_smoke.js 도 같이).
+                case "perf": Debug.Log("[KkomaKnight] perf tweens=" + UiKit.PlayingTweens() + " screen=" + (_current != null ? _current.Name : "-")); break;
                 default: Debug.Log("[KkomaKnight] DebugGo: 모르는 목적지 — " + what); break;
             }
         }
