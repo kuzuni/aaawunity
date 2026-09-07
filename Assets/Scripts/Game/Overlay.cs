@@ -159,12 +159,20 @@ namespace KkomaKnight.Game
         }
 
         // (T36 의 «수치만 초록» GreenNumbers 는 주인 취소(2026-09-06 «연두색 섞여 있으면 안 읽힌다» · T52) — 특전 설명은 한 색(Palette.Ink) · 리치 텍스트 부분 색 없음)
-        /// <summary>데모 프리팹 하나를 팝업 층에 그대로 세운다(Dimmed 가 있으면 클릭 차단·페이드).</summary>
-        public GameObject OpenPrefab(string key)
+        /// <summary>
+        /// 데모 프리팹 하나를 팝업 층에 그대로 세운다(Dimmed 가 있으면 클릭 차단·페이드).
+        /// <para>
+        /// <paramref name="closeOnDim"/> — 어둠을 누르면 닫힌다(T139 ⓐ · 주인 2026-09-07 04:5X «메뉴 … 딤 눌러도 꺼지게»).
+        /// 기본값은 <b>false</b> = 종전 그대로(어둠은 뒤 클릭만 막는다) — 주인이 말한 것은 로비 메뉴 하나뿐이라 나머지 여섯 자리는 안 바꾼다.
+        /// 뽑기 결과 팝업처럼 «어둠에 제 손으로 다른 일(스킵·로비로)을 붙인» 자리는 그쪽이 뒤에 덮으므로 이 인자와 부딪치지 않는다.
+        /// </para>
+        /// </summary>
+        public GameObject OpenPrefab(string key, bool closeOnDim = false)
         {
             Begin();
             var root = UiKit.Spawn(key, Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
             var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
+            if (closeOnDim && dim != null) UiKit.Clickable(dim, Close, false);   // T139 ⓐ — punch(눌림 연출)는 끈다: 어둠은 «버튼처럼 보이는 것» 이 아니다(뽑기 결과 자리와 같은 호출 꼴)
             var bg = UiKit.Find(rt, "Background"); if (bg != null) { var bi = bg.GetComponent<Image>(); if (bi != null) bi.raycastTarget = true; }
             _cur = root;
             return root;

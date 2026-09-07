@@ -99,6 +99,68 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
+        /// <summary>
+        /// T139 — 주인이 스크린샷으로 준 두 가지. ⓐ <b>어둠(Dimmed)을 누르면 닫힌다</b>(«딤 눌러도 꺼지게») ·
+        /// ⓑ <b>판 자리</b>가 인스펙터 값 그대로다(앵커 (1,1) · Pivot (0.5,0.5) · Pos (−323,−558) · 가로 382.62 · 세로는 줄 수 계산값 688.305).
+        /// 자리는 주인 인스펙터 값이 정본이라 그 값으로 단언하고, «드롭다운이 ≡ 버튼 아래로 늘어진다» 는 성질은 프레임 좌표로 따로 본다.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator DimClickClosesTheMenuAndThePanelSitsWhereTheOwnerPutIt()
+        {
+            yield return Boot();
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            var lobby = _app.Current.Root;
+
+            ClickNamed(lobby, "Button_Menu"); yield return Frames(2);
+            Assert.IsTrue(_app.Overlay.IsOpen, "메뉴가 열린다");
+            var ov = _app.Overlay.Root;
+
+            // ⓑ 판 자리 = 주인 인스펙터 값
+            var panel = (RectTransform)UiKit.Find(ov, LobbyMenu.PanelName);
+            Assert.IsNotNull(panel, "프리팹 판(HambergerMenu)");
+            Assert.AreEqual(1f, panel.anchorMin.x, 1e-3f, "판 앵커 Min x = 1(주인 값)");
+            Assert.AreEqual(1f, panel.anchorMin.y, 1e-3f, "판 앵커 Min y = 1");
+            Assert.AreEqual(panel.anchorMin, panel.anchorMax, "판 앵커 Min == Max(= sizeDelta 가 곧 크기)");
+            Assert.AreEqual(0.5f, panel.pivot.x, 1e-3f, "판 Pivot x = 0.5");
+            Assert.AreEqual(0.5f, panel.pivot.y, 1e-3f, "판 Pivot y = 0.5");
+            Assert.AreEqual(LobbyMenu.PanelPos.x, panel.anchoredPosition.x, 0.5f, "판 Pos x = −323(주인 값)");
+            Assert.AreEqual(LobbyMenu.PanelPos.y, panel.anchoredPosition.y, 0.5f, "판 Pos y = −558(주인 값)");
+            Assert.AreEqual(LobbyMenu.PanelWidth, panel.rect.width, 1f, "판 가로 = 382.62(주인 값)");
+            Assert.AreEqual(688.305f, panel.rect.height, 1f, "판 세로 = 688.305(= 프리팹 458.87 × 줄 6/4 · 주인 값과 같다)");
+
+            // 드롭다운이 ≡ 버튼 «아래» 로 늘어지는가 — 프레임 좌표로(자리 값이 다른 rect 기준이면 여기서 드러난다)
+            var menuBtn = (RectTransform)UiKit.Find(lobby, "Button_Menu");
+            var frame = _app.Frame;
+            Canvas.ForceUpdateCanvases();
+            float PanelTopY(RectTransform rt)
+            {
+                var c = new Vector3[4]; rt.GetWorldCorners(c);
+                return frame.InverseTransformPoint(c[1]).y;   // 왼쪽 위 모서리의 프레임 y
+            }
+            float btnTop = PanelTopY(menuBtn), panelTop = PanelTopY(panel);
+            Debug.Log($"[T139] 판 프레임 rect = {frame.InverseTransformPoint(panel.position)} · 크기 {panel.rect.width:0.0}×{panel.rect.height:0.0} · ≡ 버튼 윗변 y {btnTop:0} · 판 윗변 y {panelTop:0}");
+            Assert.LessOrEqual(panelTop, btnTop, "드롭다운 판은 ≡ 버튼 윗변보다 아래에서 시작한다(버튼 위로 솟지 않는다)");
+
+            // ⓐ 어둠을 누르면 닫힌다
+            var dim = UiKit.Find(ov, "Dimmed");
+            Assert.IsNotNull(dim, "프리팹 어둠");
+            var dimBtn = dim.GetComponent<Button>();
+            Assert.IsNotNull(dimBtn, "어둠에 «누르면 닫기» 가 붙어 있다(T139 ⓐ · OpenPrefab(closeOnDim: true))");
+            dimBtn.onClick.Invoke(); yield return Frames(2);
+            Assert.IsFalse(_app.Overlay.IsOpen, "어둠을 누르면 메뉴가 닫힌다(주인 «딤 눌러도 꺼지게»)");
+
+            // 기본값은 종전 그대로다 — 인자를 안 주면 어둠은 닫기 버튼이 되지 않는다(주인이 말한 것은 메뉴 하나 · 나머지 여섯 자리 불변).
+            // 퀘스트·출석 팝업처럼 «제 손으로» 어둠에 닫기를 붙여 둔 자리가 있어 화면 코드로 재면 헷갈린다 → 헬퍼를 직접 부른다.
+            _app.Overlay.OpenPrefab("ui.lobbyMenu"); yield return Frames(1);
+            var plainDim = UiKit.Find(_app.Overlay.Root, "Dimmed");
+            Assert.IsNotNull(plainDim, "같은 조각의 어둠");
+            Assert.IsNull(plainDim.GetComponent<Button>(), "OpenPrefab 기본값(closeOnDim: false)에서는 어둠에 «누르면 닫기» 가 안 붙는다");
+            _app.Overlay.Close(); yield return Frames(1);
+
+            _log.AssertNoRed("T139 메뉴 드롭다운");
+            yield return Shutdown();
+        }
+
         [UnityTest]
         public IEnumerator EveryRowOpensItsPopupAndTheMailHookIsCalled()
         {

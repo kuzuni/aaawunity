@@ -26,6 +26,17 @@ namespace KkomaKnight.Game
         /// <summary>프리팹 줄 넷의 이름 — 이 순서로 항목에 배정한다(우편함 · 설정 · 데일리 기프트 · 퀘스트).</summary>
         static readonly string[] PrefabRows = { "Button_Inbox", "Button_Settings", "Button_Daily Login", "Button_Achievement" };
 
+        /// <summary>
+        /// 주인이 준 판 자리(T139 ⓑ · 2026-09-07 04:5X 인스펙터 스크린샷) — 앵커 Min/Max <b>(1,1)</b> · Pivot <b>(0.5,0.5)</b> ·
+        /// <c>anchoredPosition</c> <b>(−323, −558)</b> · 가로 <b>382.62</b>. 세로는 지금 코드가 «줄 수 ÷ 프리팹 줄 수» 로 만드는 값과
+        /// 주인 값(688.305 = 프리팹 458.87 × 6/4)이 <b>같아서</b> 계산을 그대로 둔다 — 즉 주인이 바꾼 것은 «자리» 다.
+        /// <para>⚠ 항목 수가 바뀌면(예 <b>T148</b> 이 넷을 로비로 도로 꺼내 메뉴가 둘이 되면) 세로가 458.87 로 줄어 판이 위로 짧아진다.
+        /// 그때는 «가운데 피벗 + 고정 Pos» 라 판이 ≡ 버튼에서 떨어져 보이므로, 그 작업을 잡는 워커가 <see cref="PanelPos"/> 의 y 를 다시 잰다(높이 절반만큼 올린다).</para>
+        /// </summary>
+        public static readonly Vector2 PanelPos = new Vector2(-323f, -558f);
+        /// <summary>같은 스크린샷의 판 가로(px) — 프리팹 값과 같으면 그대로다.</summary>
+        public const float PanelWidth = 382.62f;
+
         /// <summary>메뉴 항목 — 이름(줄 오브젝트 «Menu:key») · 라벨 · 새 줄이면 아이콘 키.</summary>
         public const string ItemMail = "mail", ItemSettings = "settings", ItemDailyGift = "dailyGift", ItemQuest = "quest", ItemAttendance = "attendance", ItemPrivilege = "privilege";
 
@@ -34,7 +45,7 @@ namespace KkomaKnight.Game
         public static void Open(App app)
         {
             if (app == null) return;
-            var root = app.Overlay.OpenPrefab("ui.lobbyMenu");
+            var root = app.Overlay.OpenPrefab("ui.lobbyMenu", closeOnDim: true);   // T139 ⓐ — 주인 «딤 눌러도 꺼지게»(이 자리만 true)
             var rt = (RectTransform)root.transform;
             var panel = UiKit.Find(rt, PanelName) as RectTransform;
             if (panel == null) return;                                  // 프리팹이 없으면(카탈로그 결손) 조용히 빈 어둠 — 빨간 줄 0
@@ -57,6 +68,13 @@ namespace KkomaKnight.Game
             // 판 높이 = 줄 수에 비례(프리팹은 넷 기준 496px) — 줄 크기·간격은 레이아웃이 그대로 쓴다
             if (rows.Count > PrefabRows.Length)
                 panel.sizeDelta = new Vector2(panel.sizeDelta.x, panel.sizeDelta.y * rows.Count / PrefabRows.Length);
+            // T139 ⓑ — 판 자리를 주인이 준 인스펙터 값으로. 앵커·피벗을 먼저 바꾸고 크기·자리를 넣는다
+            // (앵커 Min == Max 면 sizeDelta 가 곧 크기고, 앵커를 나중에 바꾸면 그 값이 다시 해석돼 어긋난다).
+            // 높이는 위 계산값을 그대로 쓴다 — 주인 값 688.305 와 같다(주석 PanelPos 참조).
+            panel.anchorMin = panel.anchorMax = Vector2.one;
+            panel.pivot = new Vector2(0.5f, 0.5f);
+            panel.sizeDelta = new Vector2(PanelWidth, panel.sizeDelta.y);
+            panel.anchoredPosition = PanelPos;
 
             for (int i = 0; i < items.Count; i++) Row(app, rows[i], i, items[i]);
             for (int i = items.Count; i < rows.Count; i++) rows[i].gameObject.SetActive(false);
