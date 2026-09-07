@@ -309,6 +309,17 @@
 
 ## 2. 작업 목록 (순서 고정 — lock ID = 아래 번호)
 
+> **⚠ (09:0X UTC · 워커 H · sess-2157-4152) 배포가 06:59 이후 2시간째 멈췄다 — CI [#311](https://github.com/kuzuni/aaawunity/actions/runs/34102181449)(`a9819ca0`) PlayMode 빨강 **다섯**(EditMode 198/198 초록). XML 원문 그대로 나눠 둔다:**
+> | 실패 | 원문(요지) | 누구 것 | lock |
+> |---|---|---|---|
+> | `BattleWorldTests.Projectiles…SpearIsFlat…` | «화살 각은 종전 그대로(−35°) · Expected ≤ 2.0 · But was **35.0**» | **T179**(적 화살 수평) — 테스트가 옛 각을 지킨다 | 살아 있음 |
+> | `ChapterChestScreenTests…` | «목표 = 적 A/B 처치 · Expected containing «17/6» · But was «적 6/6 처치»» | **T137**(챕터 보상 3단) | 살아 있음 |
+> | `EventsScreenTests.DungeonArenaPagesAndPopups` | «[20_dungeon] 켜진 하이라이트가 **3개**(T164 · 첫 자리 HighLight(부모 EnterBtn)) · Expected 0» | **T164** | 살아 있음 |
+> | `UiSmokeTests.LobbySettingsTalentPetToast` | «오른쪽 아래 이벤트 · Expected not null · But was **null**» | **T168**(`6f287f4c` 이 이벤트를 하단 탭으로 옮겼다 — 단언이 옛 자리를 찾는다) | 살아 있음 |
+> | `UiSmokeTests.BattleTicksAndAllBattlePopups` | «Close 뒤 shine 머티리얼 인스턴스 0(T61) · But was **1**» | 특전 팝업을 최근 만진 **T140**(`b24f5c3d` · `DimPattern`→`NoPattern` 으로 조각을 **Destroy** 한다)와 **T141**(`93f4a4d8`) 둘 중 하나 | **T140 은 lock 없음** · T141 은 살아 있음 |
+>
+> **넷은 임자가 있다 — 각자 «게임 코드가 옳고 테스트가 낡았는가» 부터 보면 빠르다**(T179·T168 은 그 꼴이 뚜렷하다). **마지막 하나(shine 인스턴스)만 임자가 갈린다**: T141 워커가 자기 커밋을 먼저 확인하고, 아니면 **T140 은 lock 이 없으니 아무 워커나 잡으면 된다**. 지금 gh-pages 는 `da50e0ca`(06:59) · `screens` 는 run 283 에 서 있다.
+>
 > **✅✅ (02:2X UTC · 워커 E · sess-1913-2015) 주인 폰 소리가 돌아왔다 — CI [#239](https://github.com/kuzuni/aaawunity/actions/runs/34074133478)(`e1bff70c`)가 **다섯 잡 전부 success** 로 끝나 02:08:40 에 배포됐다.** **그 빌드의 `Assets/Audio/bgm/lobby.ogg.meta` 는 `compressionFormat: 7`(AAC)** — 주인이 «잘 들린다» 고 한 CI #148 과 같은 설정이다(직전 배포 `1f3a2158` 는 1 = Vorbis 라 소리가 안 났다). 배포 스모크는 `--battle` 로 돌고 배포 뒤 재확인까지 초록이었고, `screens` 도 run 239 로 함께 풀렸다(§5 재채점이 다시 된다). **내가 배포 뒤 실물을 4회 스모크로 확인**: 로비·전투 도달 · 콘솔 에러 0(첫 회만 2건이 떴고 이어진 3회가 0 이라 일회성) · 오디오 경고는 headless 코덱 탓이라 판정 밖(결정 221). **주의 — 워커 환경으로는 «소리가 나는가» 를 못 잰다**(headless chromium 에 AAC 코덱이 없다 · 결정 300) → 판정은 주인 실기다. 이 배포를 막던 빨강 셋은 다 닫혔다: 우편함 «받기»(`8adc5ac2` · 워커 E) · 로딩 화면 단언(`391a94ba` · 워커 E) · 뽑기 결과 «Reward»(`1ab95236`) + 로비 하단 띠(`e1bff70c` · 워커 G).
 > **✅ (02:2X UTC · 워커 J · sess-1917-23930) 초록 확정을 받아 «확인만 남아 있던» 행을 닫았다 — 보드에서 끝난 일이 열린 것처럼 보이지 않게.** CI [#239](https://github.com/kuzuni/aaawunity/actions/runs/34074133478)(`e1bff70c`) 유니티 잡 **success**(= 실패 0 · `screens` run 239 배포) 를 근거로 **T69-overlay ✅**(회차 2 `ceebbb7` · 이건 내가 닫았다) 로 바꿨고, **T96-mail·T96-loading 은 같은 시각 워커 E 가 같은 근거로 먼저 닫았다**(`da7b4109` · 내 것은 중복이라 버렸다) — 셋 다 lock 이 이미 반납돼 있어 «확인» 만 남은 상태였다(워커 A 가 T108·T109 를 그렇게 닫은 전례). 내가 여는 lock 은 없다 — 열린 나머지는 전부 남의 살아 있는 lock(T95·T97·T100·T103·T121·T123·T124·T125) 이거나 그 lock 에 막힌 항목(T75 ⓒ 상점 문구 · T116 3단계 특권 카드)이다.
 >
