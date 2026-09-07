@@ -363,6 +363,34 @@ namespace KkomaKnight.Core
         public static readonly R PrCard3 = new R(4.0f, 55.6f, 92.0f, 22.9f);
         public static readonly R PrCard4 = new R(4.0f, 79.8f, 92.0f, 22.9f);
         public static readonly R PrFootBar = new R(0, 93.3f, 100, 6.7f);
+
+        // ㉝ 챕터 보상(Chapter Chest) 페이지 — 레퍼런스 32_lobby_clear.jpg 실측(720×1560) · T98
+        /// <summary>파란 제목 리본 «챕터 보상».</summary>
+        public static readonly R CcRibbon = new R(6.9f, 14.6f, 86.1f, 4.6f);
+        /// <summary>부제 «챕터 N 에서 적 M 처치»(리본과 배너 사이).</summary>
+        public static readonly R CcSub = new R(10.0f, 28.8f, 80.0f, 2.6f);
+        /// <summary>가운데 챕터 배너(금테 카드) — 좌우 이웃은 같은 크기로 <see cref="CcBannerPitch"/> 만큼 밀어 놓는다(레퍼런스처럼 가장자리만 보인다).</summary>
+        public static readonly R CcBanner = new R(21.5f, 32.1f, 57.0f, 27.6f);
+        /// <summary>이웃 배너까지의 가로 간격(%p) — 레퍼런스 32 에서 오른쪽 이웃의 왼쪽 끝이 84.5% 쯤 보인다.</summary>
+        public const float CcBannerPitch = 63.0f;
+        /// <summary>배너 «안» % — 제목 pill «챕터 N».</summary>
+        public static readonly R CcBannerTitle = new R(26.2f, 19.8f, 47.8f, 9.3f);
+        /// <summary>배너 «안» % — 목표 글자 «적 M 처치»(두 줄).</summary>
+        public static readonly R CcBannerGoal = new R(8.0f, 38.4f, 84.0f, 26.7f);
+        /// <summary>«보상» 상자.</summary>
+        public static readonly R CcRewardBox = new R(20.6f, 63.8f, 58.9f, 10.6f);
+        /// <summary>상자 «안» % — 머리 글자 «보상».</summary>
+        public static readonly R CcRewardHead = new R(0, 4.0f, 100, 24.0f);
+        /// <summary>보상 칸 첫째(다이아) — 둘째(골드)는 x + <see cref="CcRewardPitch"/>.</summary>
+        public static readonly R CcRewardCell = new R(39.0f, 67.3f, 9.8f, 4.5f);
+        /// <summary>보상 칸 사이 가로 간격(%p).</summary>
+        public const float CcRewardPitch = 12.1f;
+        /// <summary>«받기» 버튼(못 받으면 회색).</summary>
+        public static readonly R CcClaim = new R(33.3f, 77.6f, 33.3f, 5.1f);
+        /// <summary>바닥 회색 띠(특권 페이지와 같은 자리).</summary>
+        public static readonly R CcFootBar = new R(0, 93.3f, 100, 6.7f);
+        /// <summary>왼쪽 아래 뒤로(◀).</summary>
+        public static readonly R CcBack = new R(2.8f, 94.2f, 16.7f, 4.5f);
         public static readonly R PrBack = new R(2.5f, 93.9f, 16.9f, 5.1f);
         public static readonly R PrClaimAll = new R(32.2f, 93.9f, 35.6f, 5.1f);
 

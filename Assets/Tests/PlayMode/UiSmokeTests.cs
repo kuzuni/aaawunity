@@ -292,11 +292,14 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(Layout.LobbyStart.X, start.anchorMin.x * 100f, 0.5f, "START x"); Assert.AreEqual(Layout.LobbyCard.X + Layout.LobbyCard.W, card.anchorMax.x * 100f, 0.5f, "카드 오른쪽 = START 오른쪽");
                 Assert.AreEqual(start.anchorMin.x, card.anchorMin.x, 1e-3f, "START 와 카드는 같은 x"); Assert.AreEqual(start.anchorMax.x, card.anchorMax.x, 1e-3f, "START 와 카드는 같은 폭");
                 Assert.AreEqual(1f - Layout.TabBar.Y / 100f, ((RectTransform)tabs).anchorMax.y, 1e-3f, "탭 바 = 표 자리");
-                // 남은 껍데기 보조 버튼은 눌러도 아무 일 없음(팝업 안 열림 · 빨간 줄 0 · 오른쪽 아래 «이벤트» 는 T43 아레나 페이지(EventsScreenTests))
-                // T97 — «탐험» 은 더 이상 껍데기가 아니다(방치·오프라인 보상 팝업 · ExpeditionScreenTests 가 따로 본다) → 여기서는 «클리어 보상» 만 남는다
-                foreach (var key in new[] { LobbyScreen.SideClearReward }) Assert.IsTrue(ClickNamed(lobby, "Side:" + key), "껍데기 버튼 " + key);
-                yield return Frames(1);
-                Assert.IsFalse(_app.Overlay.IsOpen, "껍데기 버튼은 팝업을 열지 않는다"); Assert.AreEqual("lobby", _app.Current.Name, "껍데기 버튼은 화면을 바꾸지 않는다");
+                // T98 — «클리어 보상» 도 더 이상 껍데기가 아니다(챕터 보상 페이지 · ChapterChestScreenTests 가 따로 본다) →
+                // 보조 줄에 남은 껍데기 버튼은 이제 **하나도 없다**. 대신 둘 다 «제 것을 연다» 를 여기서 못 박는다.
+                Assert.IsTrue(ClickNamed(lobby, "Side:" + LobbyScreen.SideClearReward), "클리어 보상 버튼");
+                yield return Frames(2);
+                Assert.AreEqual("chapterChest", _app.Current.Name, "«클리어 보상» 은 챕터 보상 페이지를 연다(T98)");
+                Assert.IsNotNull(UiKit.Find(_app.Current.Root, "Banner"), "챕터 배너(T98)");
+                _app.ShowScreen("lobby"); yield return Frames(2);
+                lobby = _app.Current.Root;
                 // T97 — «탐험» 은 팝업을 연다(껍데기 목록에서 빠진 것이 «눌러도 아무 일 없음» 으로 되돌아가지 않게 여기서 못 박는다)
                 Assert.IsTrue(ClickNamed(lobby, "Side:" + LobbyScreen.SideExplore), "탐험 버튼");
                 yield return Frames(1);

@@ -42,7 +42,7 @@ namespace KkomaKnight.Game
         /// <summary>«데일리 기프트» 사이드 아이콘의 빨간 알림 점 — 지금 받을 수 있는 줄이 하나라도 있으면 켠다(T77 · <see cref="Refresh"/>).</summary>
         GameObject _giftDot;
         /// <summary>«탐험» 보조 버튼의 빨간 알림 점 — 받을 것이 쌓였거나 빠른 탐험 횟수가 남으면 켠다(T97 · <see cref="Refresh"/>).</summary>
-        GameObject _expDot;
+        GameObject _expDot, _chestDot;
         /// <summary>메뉴(≡) 버튼의 빨간 알림 점 — 메뉴가 품은 항목에 지금 받을 것이 있으면 켠다(T96 ⓔ · <see cref="Core.Notify.MenuAny"/>).</summary>
         GameObject _menuDot;
 
@@ -153,6 +153,12 @@ namespace KkomaKnight.Game
                     var dot = UiKit.Spawn("ui.alertDot", cell); dot.name = "ExpDot";
                     var drt = (RectTransform)dot.transform; UiKit.Pct(drt, 68, 2, 26, 11); _expDot = dot; dot.SetActive(false);
                 }
+                // T98 3항 — 받을 수 있는 챕터 보상이 있으면 빨간 점(T96 ⓔ 와 같은 규칙)
+                if (it.key == SideClearReward)
+                {
+                    var dot = UiKit.Spawn("ui.alertDot", cell); dot.name = "ChestDot";
+                    var drt = (RectTransform)dot.transform; UiKit.Pct(drt, 68, 2, 26, 11); _chestDot = dot; dot.SetActive(false);
+                }
                 string key = it.key; UiKit.Clickable(cell, () => OnSide(key));
             }
             // T94 ⓑ — 기둥 «상자» 의 검은 링도 뺀다(주인 «로비에 Border 있는 것들은 걍 없애셈» · 위 카드와 같은 까닭).
@@ -171,6 +177,8 @@ namespace KkomaKnight.Game
                 case SideAttendance: LobbyPopups.Attendance(App); break;
                 case SideDailyGift: LobbyPopups.DailyGift(App); break;
                 case SideExplore: LobbyPopups.Expedition(App); break;   // T97 — 방치·오프라인 보상(껍데기 아님)
+                // T98 — 챕터 보상(Chapter Chest) 페이지(껍데기 아님 · 레퍼런스 32)
+                case SideClearReward: ChapterChestScreen.Open(App); break;
             }
         }
 
@@ -191,6 +199,8 @@ namespace KkomaKnight.Game
             // T97 — 탐험에 쌓인 것이 있거나 빠른 탐험 횟수가 남으면 «탐험» 보조 버튼에 빨간 점
             if (_expDot != null) _expDot.SetActive(App.Data != null && App.Data.Expedition != null
                 && Core.Expedition.AnyClaimable(App.Data, s, App.Data.Expedition, LobbyPopups.NowSec(), SaveStore.Today()));
+            // T98 3항 — 받을 수 있는 챕터 보상이 있으면 «클리어 보상» 보조 버튼에 빨간 점
+            if (_chestDot != null) _chestDot.SetActive(Core.ChapterChest.AnyClaimable(App.Data, s));
             // T96 ⓔ — 메뉴 안(데일리 기프트 · 광고로 받을 재화 …)에 받을 것이 있으면 ≡ 에 빨간 점
             if (_menuDot != null) _menuDot.SetActive(Core.Notify.MenuAny(App.Data, s, LobbyPopups.NowSec(), SaveStore.Today()));
         }
