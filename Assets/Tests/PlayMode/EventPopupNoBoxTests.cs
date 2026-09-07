@@ -74,7 +74,7 @@ namespace KkomaKnight.Tests.Play
         /// <summary>한 팝업을 ⓐⓑⓒ 로 재고 «[T141]» 로 남긴다(다음 워커가 CI 로그에서 바로 읽는다).</summary>
         void AssertNoBox(string name)
         {
-            // 어둠은 α 0 에서 0.85 로 «페이드»(UiKit.FadeIn) 라 연 직후 두 프레임은 아직 옅다(CI #297 실측 0.235) —
+            // 어둠은 α 0 에서 UiKit.DimAlpha(T199 로 0.85 → 0.985)로 «페이드»(UiKit.FadeIn) 라 연 직후 두 프레임은 아직 옅다(CI #297 실측 0.235) —
             // 비평 PNG 를 찍는 UiShotsTests 와 같은 방법으로 연출을 끝까지 돌린 뒤 잰다(T49 규약).
             UiKit.CompleteAllTweens();
             var root = _app.Overlay.Root;
