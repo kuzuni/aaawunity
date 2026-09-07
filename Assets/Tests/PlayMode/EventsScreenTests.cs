@@ -97,6 +97,16 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(ri.sprite != null && ri.sprite.name.Contains("Rectangle"), "직사각형 조각이어야 한다(지금 " + (ri.sprite != null ? ri.sprite.name : "null") + ")");
                 Assert.IsFalse(ri.fillCenter, "링은 가운데 비움"); Assert.IsFalse(ri.raycastTarget, "링 raycast 끔");
             }
+            // T128 — 원정 카드의 «획득 가능» 칸은 물건마다 테두리 색이 다르다(레퍼런스 20): 파랑 열쇠 = 파랑 · 보라 열쇠 = 자주 · 금 열쇠 = 노랑.
+            // 조각 이름 = 카탈로그 키다(`UiKit.Spawn` 이 그렇게 이름 짓는다 · 결정 325). 전부 초록으로 되돌아가면 색 수가 1 이 되어 빨개진다.
+            {
+                var rew = UiKit.Find(exp, "Rewards"); Assert.IsNotNull(rew, "원정 카드 보상 줄");
+                var kinds = new System.Collections.Generic.HashSet<string>();
+                foreach (var t in rew.GetComponentsInChildren<Transform>(false))
+                    if (t.name.StartsWith("ui.itemFrame.", System.StringComparison.Ordinal)) kinds.Add(t.name);
+                Assert.GreaterOrEqual(kinds.Count, 3, "원정 카드 보상 칸의 테두리 색이 셋 이상(지금 " + string.Join("·", kinds) + " · T128)");
+                Assert.IsTrue(kinds.Contains("ui.itemFrame.blue") && kinds.Contains("ui.itemFrame.plum") && kinds.Contains("ui.itemFrame.yellow"), "파랑·자주·노랑 칸(레퍼런스 20 · T128)");
+            }
             // T101 ⓓ — 제목 줄이 가운데(아이콘 + 글자 덩어리의 좌우 여백 차 ≤ 2%p)
             {
                 var trow = UiKit.Find(pg, "Title") as RectTransform; Assert.IsNotNull(trow, "제목 줄");

@@ -227,7 +227,8 @@ namespace KkomaKnight.Game
                 var rew = UiKit.Rect(card, "Rewards"); var rr = Layout.DgRewards; rr.W = d.rewards.Length == 2 ? rr.W : 40.0f;
                 UiKit.Pct(rew, Shift(rr, dy).Within(rect));
                 // T72 ② 보상 아이콘 뒤 빛살(작은 칸이라 Effect_Light_02) — 던전 카드는 항상 보이므로 스크롤 제한 없이 돈다
-                foreach (var cell in IconRow(rew, rr, d.rewards, "ui.itemFrame.green")) PlanLight(cell);
+                // T128 — 칸 색은 물건마다(레퍼런스 20 · 표에 없으면 초록). 21 세부 팝업의 보상 칸은 레퍼런스도 전부 초록이라 그대로 둔다.
+                foreach (var cell in IconRow(rew, rr, d.rewards, RewardFrameDefault, frameByIcon: true)) PlanLight(cell);
                 var enter = UiKit.Button(card, "ui.btnOrange", "입장", Noop, Shift(Layout.DgEnter, dy).Within(rect)); enter.name = "EnterBtn";
                 // T99 6항 — 빨간 점은 «지금 할 일이 있을 때만»(티켓이 있거나 광고로 하나 받을 수 있다) · 상태가 바뀌면 Refresh 가 켜고 끈다
                 var dot = AlertDot(enter);
@@ -696,7 +697,22 @@ namespace KkomaKnight.Game
             return t;
         }
         /// <summary>정사각 아이콘 칸 줄(프레임 조각 + 아이콘) — 칸 한 변 = 줄 높이 · 왼쪽부터 · 간격은 남는 폭을 등분. rowRect = 줄의 프레임 % 사각형(정사각 환산용).</summary>
-        static List<RectTransform> IconRow(RectTransform row, Layout.R rowRect, string[] icons, string frameKey, string namePrefix = "Cell:", bool amountBelow = false)
+        /// <summary>
+        /// 카드 «획득 가능» 칸의 테두리 색 표(T128) — 레퍼런스 20 의 원정 카드는 칸마다 색이 다르다:
+        /// 파랑 열쇠 = 파랑 · 보라 열쇠 = 자주 · 금 열쇠 = 노랑 · 두루마리 = 파랑. 표에 없는 물건은 초록(레퍼런스 20 지옥의 문 두 칸 · 21 보상 네 칸이 그렇다).
+        /// </summary>
+        static readonly (string icon, string frame)[] RewardFrames =
+        {
+            ("ui.iconKeyBlue", "ui.itemFrame.blue"), ("ui.iconKeyPurple", "ui.itemFrame.plum"),
+            ("ui.iconKeyGold", "ui.itemFrame.yellow"), ("ui.iconScroll", "ui.itemFrame.blue"),
+        };
+        const string RewardFrameDefault = "ui.itemFrame.green";
+        static string RewardFrame(string icon)
+        {
+            foreach (var f in RewardFrames) if (f.icon == icon) return f.frame;
+            return RewardFrameDefault;
+        }
+        static List<RectTransform> IconRow(RectTransform row, Layout.R rowRect, string[] icons, string frameKey, string namePrefix = "Cell:", bool amountBelow = false, bool frameByIcon = false)
         {
             var res = new List<RectTransform>();
             float rowW = Mathf.Max(1e-3f, rowRect.W / 100f * UiKit.FrameW), rowH = Mathf.Max(1e-3f, rowRect.H / 100f * UiKit.FrameH);
@@ -705,7 +721,7 @@ namespace KkomaKnight.Game
             for (int i = 0; i < n; i++)
             {
                 var cell = UiKit.Rect(row, namePrefix + i); UiKit.Pct(cell, i * (cellW + gap), 0, cellW, 100);
-                var f = UiKit.Spawn(frameKey, cell); UiKit.Stretch((RectTransform)f.transform);
+                var f = UiKit.Spawn(frameByIcon ? RewardFrame(icons[i]) : frameKey, cell); UiKit.Stretch((RectTransform)f.transform);
                 GearUi.DarkFrame(f.transform);   // T115 · T69 7항 — 조각 제 Border 링을 Ink 8px 로 + 결정 184 계약(가운데 비움 · raycast 끔 · 링이 형제 맨 뒤)
                 // 수량 글자가 아래 34% 를 쓰는 칸(던전 세부 보상 · T99)은 아이콘을 위로 올려 겹치지 않게 한다 — 레퍼런스 21 도 «그림 위 · 숫자 아래» 다
                 var ic = UiKit.Icon(cell, "Icon", icons[i]); UiKit.Pct(ic.rectTransform, amountBelow ? 22 : 16, amountBelow ? 4 : 16, amountBelow ? 56 : 68, amountBelow ? 56 : 68);
