@@ -13,7 +13,17 @@ namespace TMPro
         MidlineLeft = 0x1001, Midline = 0x1002, MidlineRight = 0x1004,
     }
     [System.Flags] public enum FontStyles { Normal = 0, Bold = 1, Italic = 2, Underline = 4 }
-    public class TMP_FontAsset : ScriptableObject { public Material material; }
+    public class TMP_FontAsset : ScriptableObject
+    {
+        public Material material;
+        // T207 ① — 런타임 폰트 애셋 만들기(에디터 없이 굽는 길). 진짜 TMP 의 서명 그대로다:
+        //   public static TMP_FontAsset CreateFontAsset(Font font)   (기본 = sampling 90 · padding 9 · SDFAA · 1024² · Dynamic)
+        // ⚠ 긴 오버로드(padding·아틀라스 크기를 직접 주는 것)는 아직 안 쓴다 — 스텁에 없는 서명을 쓰면
+        //   dotnet 은 초록인데 유니티에서만 죽는다(결정 465 가 남긴 자리). 두께가 잘리면 그때 같이 넓힌다.
+        public static TMP_FontAsset CreateFontAsset(Font font) { return font != null ? CreateInstance<TMP_FontAsset>() : null; }
+        public bool HasCharacter(char c) { return false; }
+        public bool TryAddCharacters(string chars) { return false; }
+    }
     public abstract class TMP_Text : MaskableGraphic
     {
         public virtual string text { get; set; }
