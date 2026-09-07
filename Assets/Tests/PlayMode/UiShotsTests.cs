@@ -17,6 +17,9 @@ namespace KkomaKnight.Tests.Play
     /// </summary>
     public class UiShotsTests
     {
+        /// <summary>가장 긴 실제 토스트 문구(T161 · 대장간 재료 안내 · 최악의 이름 «암살자의 목걸이») — `TextSizeGateTests` 와 <b>같은 글</b>이라 두 자가 같은 화면을 본다(T216).</summary>
+        const string LongToast = "같은 부위·종류·등급만 재료가 됩니다 (목걸이 · 암살자의 목걸이 · 신화)";
+
         App _app; PlayLog _log;
         readonly Dictionary<string, object> _layout = new Dictionary<string, object>();
         readonly List<object> _missing = new List<object>();
@@ -171,8 +174,36 @@ namespace KkomaKnight.Tests.Play
                 G.Pending = new PendingDecision { Kind = PendingKind.Angel };
                 _app.Overlay.Angel(G, _ => { }); yield return Frames(2); yield return Shot("ev_angel");
                 _app.Overlay.Close(); G.Pending = null; yield return Frames(1);
+                // T216 1단계 — 여기까지 «자는 드나드는데 사진이 없던» 화면 여섯(+ 아래 로비에서 둘).
+                // 이 여섯은 `TextSizeGateTests` 가 이미 한 줄씩 열고 있었다(글자 하한·잘림은 실패로 세는 화면이다) —
+                // 그런데 PNG 가 없어 **§5 도 워커 눈도 닿은 적이 없다**. 특히 결과 팝업 셋(res_*)은
+                // `BorderAudit.StrictScreens` 안에까지 들어 있으면서(테두리는 실패로 센다) 그림은 한 번도 안 봤고,
+                // 주인이 **판마다 보는 화면**이다. 여는 코드는 그쪽에서 그대로 옮겼다(같은 순서 · 같은 인자).
+                G.Gold = 12750; G.Kills = 137;
+                _app.Overlay.Rest(G, _ => { }, () => { }); yield return Frames(2); yield return Shot("ev_rest");
+                _app.Overlay.Close(); yield return Frames(1);
+                _app.Overlay.DevilGift(devilPerk, null); yield return Frames(2); yield return Shot("ev_devil_gift");
+                _app.Overlay.Close(); yield return Frames(1);
+                _app.Overlay.AdCountdown(9, () => { }); yield return Frames(2); yield return Shot("ev_ad");
+                _app.Overlay.Close(); yield return Frames(1);
+                _app.Overlay.Clear(G, false, () => { }, () => { }); yield return Frames(2); yield return Shot("res_win");
+                _app.Overlay.Close(); yield return Frames(1);
+                _app.Overlay.Clear(G, true, () => { }, () => { }); yield return Frames(2); yield return Shot("res_win_last");
+                _app.Overlay.Close(); yield return Frames(1);
+                _app.Overlay.Dead(G, () => { }); yield return Frames(2); yield return Shot("res_lose");
+                _app.Overlay.Close(); yield return Frames(1);
             }
             Time.timeScale = 1f; _app.ShowScreen("lobby"); yield return Frames(2);
+
+            // T216 1단계 — 나머지 둘. 토스트는 «가장 긴 실제 문구»(대장간 재료 안내 · 최악의 이름 = 암살자의 목걸이 · T161)로 찍는다 —
+            // 짧은 글로 찍으면 사진이 있어도 «칸이 모자란가» 를 못 본다(`TextSizeGateTests` 가 같은 문구를 쓰는 까닭이다).
+            _app.Toast(LongToast); yield return Frames(2); yield return Shot("27_toast");
+            // ⚠ 토스트는 1.8초를 살고 스스로 꺼진다(`App.Toast` · `_toastT`). 그대로 다음 장을 찍으면
+            // «데이터 삭제» 확인 팝업 사진에 토스트가 얹혀 나온다 — 사진을 남기는 자에게 그것은 «틀린 사진» 이다.
+            // 게이트라면 몇 프레임이 아깝지만 이 자의 결과물은 **사람이 보는 그림**이라 꺼질 때까지 기다린다.
+            yield return RealSeconds(2f);
+            _app.Overlay.ConfirmReset(); yield return Frames(2); yield return Shot("28_confirm_reset");
+            _app.Overlay.Close(); yield return Frames(1);
 
             // 20~26 은 T43 · 11·15~19 는 T44 가 위에서 찍는다 — 이제 «없음» 화면이 없다(_missing 은 03 조우 실패 때만)
             PlayShot.WriteLayout(_layout, _missing);

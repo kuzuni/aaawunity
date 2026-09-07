@@ -3440,6 +3440,8 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 4. **1단계(이 회차) = 사진뿐**. 여는 코드는 이미 `TextSizeGateTests` 에 **한 줄씩** 있다(`Overlay.Rest` · `DevilGift` · `AdCountdown` · `Clear(false/true)` · `Dead` · `App.Toast` · `ConfirmReset`) — `UiShotsTests` 에 같은 순서로 옮긴다.
 5. **2단계(다음 회차 · 아무 워커나) = 이름표 + 회귀 표.** T213 이 `ev_devil`·`ev_angel` 에 한 것과 **같은 순서**다(1단계 이름표·사진 → 2단계 재서 표 ㊱).
    ⚠ 레퍼런스 jpg 가 없는 화면이므로 그 표는 «주인 그림과 같은가» 가 아니라 **«우리 화면이 안 흔들리는가»(회귀 자)** 라고 표 머리에 못 박는다(§5 5항 · ㉜·㉞·㊱ 과 같은 갈래).
+6. **⚠ 1단계 뒤 `ui_score --all` 에 «—» 여덟 줄이 새로 뜬다 — 그것을 «새 사각지대» 로 읽지 마라.** 이름표가 없어 `layout.json` 이 빈 칸이라 그렇고(`--all` 은 표가 아니라 **layout 키**를 훑는다), 그 여덟은 **여태도 사각지대였는데 이름조차 없어 board 에 안 뜨던 것**이다. 즉 «—» 는 후퇴가 아니라 **드러남**이고, 2단계가 그것을 지운다(T213 이 `ev_*` 에서 «—» 를 10.0 으로 바꾼 것과 같은 길).
+7. 🔄 **1단계 코드 push(sess-2005-9317 · 워커 A)** — `UiShotsTests` 에 여덟 줄(+ 토스트 문구 상수). 여는 코드는 `TextSizeGateTests` 에서 인자까지 그대로 옮겼다. **한 가지만 다르다**: 토스트는 1.8초를 살고 스스로 꺼지므로 `27_toast` 뒤에 **2초를 기다린 다음** `28_confirm_reset` 을 찍는다 — 안 기다리면 확인 팝업 사진에 토스트가 얹혀 나온다. 게이트였다면 아까울 2초지만 **이 자의 결과물은 사람이 보는 그림**이다. **확인 = 다음 `screens` 런에 PNG 가 29 → 37 장이 되고 여덟 장이 실제로 화면을 담고 있는가(눈).**
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
