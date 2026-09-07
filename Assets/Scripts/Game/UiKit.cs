@@ -205,10 +205,22 @@ namespace KkomaKnight.Game
             return t;
         }
 
-        /// <summary>검은 아웃라인 색(<see cref="EnsureOutline"/>) — Ink 계열 · α <see cref="OutlineAlpha"/>.</summary>
-        public static readonly Color OutlineColor = new Color(0.1f, 0.06f, 0.05f, 0.85f);
-        /// <summary>아웃라인 α(게이트가 이 값으로 단언한다).</summary>
-        public const float OutlineAlpha = 0.85f;
+        /// <summary>검은 아웃라인 색(<see cref="EnsureOutline"/>) — Ink 계열 · α <see cref="OutlineAlpha"/>. <b>α 는 리터럴로 적지 않는다</b>(둘이 어긋나면 자가 색을 어긋남으로 센다).</summary>
+        public static readonly Color OutlineColor = new Color(0.1f, 0.06f, 0.05f, OutlineAlpha);
+        /// <summary>
+        /// 아웃라인 α(게이트가 이 값으로 단언한다).
+        /// <para>
+        /// <b>T194 회차 2(2026-09-07 15:4X · 결정 498) — 0.85 에서 1 로.</b> 회차 1(비율 0.05 → 0.08)을 `screens` <b>run 382</b> 로 실측하니
+        /// 띠는 실제로 두꺼워졌는데(어두운 픽셀 수 <b>5.4배</b> · 프레임 두께 중앙값 2px → <b>4px</b>) <b>레퍼런스의 «순수 검정» 에는 여전히 못 갔다</b>(우리 가장 어두운 픽셀 0.269 ↔ 레퍼런스 <b>0.000</b>).
+        /// 까닭은 두께가 아니라 <b>α 가 바닥을 만든다</b>는 것이다 — 노란 리본(휘도 0.815) 위에서 <b>완전히 덮인</b> 테 픽셀조차
+        /// <c>0.85 × 0.071 + 0.15 × 0.815 = <b>0.182</b></c> 아래로 못 내려간다. 즉 α 0.85 인 한 레퍼런스의 검정은 <b>셈으로 도달 불가</b>다.
+        /// α 1 이면 같은 자리가 <b>0.071</b> 이 된다.
+        /// </para>
+        /// <b>주인 지시는 «모든 글자들 다 <u>검정</u> 아웃라인»</b>(T63-outline)이고 0.85 는 워커가 고른 값이었다 — 1 로 두는 쪽이 그 말에 더 가깝다.
+        /// 어두운 판 위에서는 판과 테가 둘 다 어두워 눈에 차이가 없고, 밝은 판 위에서만 달라진다(그 자리가 이 작업이 부른 자리다).
+        /// <b>색·α 를 고치면 자(<see cref="TextAudit"/>)와 <c>DailyGiftLookTests</c> 가 저절로 따라온다</b> — 둘 다 <see cref="OutlineColor"/> 를 그대로 읽는다.
+        /// </summary>
+        public const float OutlineAlpha = 1f;
         /// <summary>
         /// 아웃라인 두께 = 글자 크기 × 이 비율(<see cref="OutlineMinPx"/>~<see cref="OutlineMaxPx"/> 로 자른다).
         /// <para>
@@ -223,7 +235,7 @@ namespace KkomaKnight.Game
         /// 즉 «띠 안쪽에 온전히 칠해진 픽셀» 이 생기려면 화면에서 2px 이상이어야 하고, 그것이 프레임 두께 4.5px 이상 = 이 비율이다.
         /// </para>
         /// <b>최대치도 같이 올려야 한다</b> — 4px 이면 제목 60 이 4.8px 이 아니라 4px 로 잘려 비율을 올린 뜻이 사라진다(제일 큰 글자 = 전투 숫자 60×1.3=78 → 6.24px 이라 8px 안에 든다).
-        /// 색·α(<see cref="OutlineColor"/> · <see cref="OutlineAlpha"/>)는 <b>안 건드린다</b>(주인 T63-outline 규약).
+        /// 색은 그대로 두었고, <b>α 는 회차 2 에서 1 로 올렸다</b>(<see cref="OutlineAlpha"/> 주석의 셈 · 결정 498) — 두께만으로는 레퍼런스의 «순수 검정» 에 못 간다.
         /// <b>이 상수를 고치면 자(<see cref="TextAudit"/> 의 아웃라인 판정)가 저절로 따라온다</b> — 두께 리터럴을 다른 곳에 새로 적지 말 것(T194 4항 · 그렇게 적힌 줄이 하나 있어 같은 회차에 <see cref="EnsureOutline"/> 로 모았다).
         /// </summary>
         public const float OutlineRatio = 0.08f, OutlineMinPx = 1.5f, OutlineMaxPx = 8f;

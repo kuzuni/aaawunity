@@ -47,6 +47,27 @@ namespace KkomaKnight.Tests.Play
         }
 
         /// <summary>
+        /// 회차 2 — <b>완전히 덮인 테 픽셀이 «검정» 까지 갈 수 있는가</b>(<see cref="UiKit.OutlineAlpha"/>).
+        /// <para>
+        /// 회차 1 은 띠를 두껍게 했는데 `screens` run 382 의 가장 어두운 픽셀이 <b>0.269</b> 였다(레퍼런스는 <b>0.000</b>).
+        /// 두께가 아니라 <b>α 가 바닥을 만든다</b> — 밝은 판 위에서는 완전히 덮인 자리조차 <c>α·테 + (1-α)·판</c> 아래로 못 내려간다.
+        /// 노란 리본(휘도 0.815)에서 α 0.85 의 바닥은 <b>0.182</b> 였다. 그 바닥이 판정선을 넘으면 «아무리 두껍게 해도 검정이 안 나온다» 가 된다.
+        /// </para>
+        /// 여기서 재는 것은 그 <b>바닥</b> 하나다(실제 픽셀은 덮인 정도까지 곱해지므로 언제나 이보다 밝다).
+        /// </summary>
+        [Test]
+        public void FullyCoveredOutlineCanReachBlack()
+        {
+            const float RibbonLuma = 0.815f;   // 레퍼런스와 같은 노란 리본(실측 · 우리 17 PNG 도 같은 값)
+            const float BlackLine = 0.20f;     // «검정» 판정선 — 레퍼런스 테의 속은 0.000 이다
+            float a = UiKit.OutlineColor.a;
+            float floor = a * UiKit.Luma(UiKit.OutlineColor) + (1f - a) * RibbonLuma;
+            Assert.Less(floor, BlackLine,
+                $"완전히 덮인 테 픽셀의 바닥이 {floor:0.000} 이라 밝은 판 위에서는 «검정» 이 안 나온다(α {a:0.00}) — " +
+                "두께를 아무리 올려도 못 넘는 벽이다(T194 회차 2 · 주인 T63-outline «모든 글자들 다 검정 아웃라인»)");
+        }
+
+        /// <summary>
         /// 작은 글자는 하한(<see cref="UiKit.OutlineMinPx"/>)이 아니라 <b>비율</b>이 잡아야 한다 —
         /// 하한이 본문까지 덮으면 «크기에 비례하는 테» 라는 규칙 자체가 없어진다.
         /// </summary>
