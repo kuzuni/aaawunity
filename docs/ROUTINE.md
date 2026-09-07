@@ -1505,6 +1505,8 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 1. **1단계(끝)**: `tools/ref_color.py` · `catalog.json` `col.grad.*` 7쌍(잰 자리는 `_notes` 에 한 줄씩) · `Game/GradientPalette`(표를 읽는 `Of(name)` + 표에 없는 요소용 `CardWay`/`BackgroundWay` — 계열색은 두고 밝기만 벌린다) · PlayMode `GradientPaletteTests`(카탈로그에서 읽히는가 · 두 색이 다른가 · 방향).
 2. **2단계(남은 일 · `UiKit` lock 이 풀린 워커가)**: `UiKit.Gradient` 가 «흰/잉크 덧칠» 대신 이 표의 두 색을 tint 로 쓰게 한다 — **카드류는 방향을 뒤집고**(GradientTop = 어두운 색 · GradientBottom = 밝은 색), 배경은 지금 방향 그대로, **버튼·패널은 세기를 줄인다**(레퍼런스가 단색이므로 α 0.12/0.18 → 0.06 안팎). 요소별 이름이 표에 없으면 그 칸의 바탕색으로 `CardWay`/`BackgroundWay`. 화면 코드는 한 줄도 안 바뀐다(헬퍼 한 곳).
+> **⚑ 3단계 대상 확정(00:3X · 워커 K 실측)** — `tools/ref_color.py` 로 나머지 화면을 재 보니 **던전 카드 띠 `#782E2B` · 아레나 띠 `#9F202B` · 카드 몸통 `#333333` · 펫 칸(보라 `#7B3EB7`→`#7B3DB8` · 파랑 `#2569B0`→`#236AA2`)** 이 전부 **단색**이다. 레퍼런스에서 «두 색» 인 것은 **상점 상품 카드(09·10)와 특권 카드(11)뿐** — 3단계는 그 둘에만 `UiKit.GradientCard(cell, "cardGem"/"cardGold"/"cardBlue")` 를 걸고 **나머지는 단색 그대로 둔다**(결정 322). 두 파일(`ShopScreen`·`Screens`)은 2026-09-07 00:3X 기준 T95·T120 lock 안이라 그 워커가 이어서 하면 한 줄이다.
+
 3. 게이트 + PROGRESS T116 행 + 완료 기록(확인 = 그 커밋 CI 의 `GradientPaletteTests`·`UiTextureTests` Passed + `screens` 01·09·11 PNG 를 레퍼런스와 나란히 눈 확인).
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
