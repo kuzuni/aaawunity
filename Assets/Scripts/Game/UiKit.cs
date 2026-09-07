@@ -750,6 +750,14 @@ namespace KkomaKnight.Game
                 seq.Insert(at, gi.DOFade(0f, DustPeriod).SetEase(Ease.InQuad).From(color));
             }
             seq.SetTarget(dt);                                       // SetLightSpinning 이 «칸 하나» 로 재우고 깨울 수 있게
+            // T174 회차 3 — **첫 프레임부터 이미 퍼져 있게** 시퀀스를 앞으로 감는다(결정 513).
+            // 안 감으면 알갱이 넷이 «칸이 생긴 순간» 전부 가운데(= 빛살 중심 = 아이콘 중심)에 겹쳐 서는데,
+            // 이 담개는 아이콘 «뒤» 겹이라(위 SetSiblingIndex) 그 순간 넷 다 **그림에 완전히 가려 안 보인다**.
+            // 그래서 ⓐ 칸이 스크롤로 들어올 때마다 몇 초간 아무것도 없다가 나타나고
+            //      ⓑ `screens` PNG 는 화면을 연 지 2~5프레임 만에 찍으므로(UiShotsTests.Shot) **영영 못 담는다**.
+            // 감는 자리 = 마지막 알갱이가 막 나기 시작하는 시각 — 넷이 0·¼·½·¾ 만큼 퍼진 «흐르는 중» 이 된다.
+            // 무작위가 아니라 상수라 스샷은 회차마다 그대로다(4항 ⓐ 의 «흔들리지 않는다» 를 지킨다).
+            seq.Goto(DustPeriod * (DustCount - 1f) / DustCount, true);
         }
 
         /// <summary>이 칸에 빛 알갱이(T174)가 깔려 있는가(테스트·감사용) — «&lt;담개&gt;/Dust» 가 활성이고 알갱이가 <see cref="DustCount"/>개다.</summary>

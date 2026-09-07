@@ -156,6 +156,11 @@ namespace KkomaKnight.Tests.Play
             Time.timeScale = 0f;
             var p0 = raw.uvRect.position; var r0 = lrt.localRotation;
             var d0 = (RectTransform)drt.GetChild(0); float dm0 = d0.anchoredPosition.magnitude;   // T174 알갱이 0번(시퀀스 0초에 꽂혀 있어 이 순간 반드시 흐르는 중이다)
+            // T174 회차 3 — 칸이 생긴 «첫 프레임부터» 이미 퍼져 있어야 한다(결정 513). 담개가 아이콘 «뒤» 겹이라
+            // 가운데에 겹쳐 서면 그림에 완전히 가려 안 보이고, `screens` PNG 는 화면을 연 지 2~5프레임 만에 찍는다(UiShotsTests.Shot).
+            // 안 감았을 때 이 시점의 값은 퍼짐 거리의 1~2% 뿐이라, 절반을 넘으면 감긴 것이 확실하다.
+            Assert.Greater(dm0, lrt.rect.width * UiKit.DustDriftMul * 0.5f,
+                "알갱이는 첫 프레임부터 이미 퍼져 있다(T174 4항 · 시퀀스를 앞으로 감는다 — 가운데에 겹쳐 서면 아이콘 뒤라 안 보인다)");
             yield return RealSeconds(0.4f);
             var p1 = raw.uvRect.position;
             Assert.Less(p1.x, p0.x, "패턴 uvRect.x 가 줄어야 무늬가 오른쪽으로 간다(결정 157)"); Assert.Less(p1.y, p0.y, "uvRect.y 가 줄어야 무늬가 위로 간다");
