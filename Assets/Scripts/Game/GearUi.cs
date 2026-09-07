@@ -114,8 +114,12 @@ namespace KkomaKnight.Game
         /// 장착 슬롯(GearScreen) · 인벤/대장간/뽑기 결과/세부 팝업 칸(<see cref="Cell"/>) · 빈 슬롯 팝업(<see cref="OpenSlot"/>) · 펫·상점·던전·아레나·로비 팝업의 물건 칸이 전부 이 함수를 거친다.
         /// <paramref name="scale"/> 는 굵히기를 하던 시절의 인자다 — 호출부 열세 곳을 건드리지 않으려고 자리만 남겼다(T103 · 워커 결정 기록).
         /// </summary>
-        /// <summary>아이템 칸 조각이 달고 오는 «튀는» 하이라이트 자식 이름(T164 · 우리 코드가 쓰는 자리는 없다).</summary>
-        static readonly string[] HighlightNames = { "HighLight1", "HighLight2" };
+        /// <summary>
+        /// 아이템 칸 조각이 달고 오는 «튀는» 하이라이트 자식의 이름 앞머리(T164 · 우리 코드가 쓰는 자리는 없다 · grep 0건).
+        /// 이름을 <b>둘로 나열하지 않고 앞머리로</b> 잡는다 — 게이트(<c>EventsScreenTests.AssertNoHighlights</c>)가 «HighLight 로 시작하는 것» 을 세므로
+        /// 끄는 쪽과 재는 쪽의 잣대가 같아야 «조각에 HighLight3 이 생기면 게이트만 빨개지는» 어긋남이 안 난다.
+        /// </summary>
+        public const string HighlightPrefix = "HighLight";
         public static void DarkFrame(Transform frame, float scale = 1f)
         {
             if (frame == null) return;
@@ -123,7 +127,13 @@ namespace KkomaKnight.Game
             // `ItemFrame_01_Normal_BasePrefab` 이 달고 오는 하이라이트 둘은 칸마다 알파·스케일이 제각각이라 번쩍인다.
             // 우리 코드가 그것을 쓰는 자리는 **한 곳도 없다**(grep 0건) → 조각을 세우는 공용 자리인 여기서 끈다
             // (조각 원본은 안 고친다 · §1 «프리팹은 부품 · 원본 불변»). 장비·대장간·던전·아레나·뽑기 결과가 같이 조용해진다.
-            foreach (var n in HighlightNames) { var h = UiKit.Find(frame, n); if (h != null) h.gameObject.SetActive(false); }
+            // ⚠ 회차 1(`16def030`)은 `UiKit.Find` 로 껐는데 그것은 **이름마다 «첫 하나»** 만 돌려준다.
+            // 우리 칸은 조각을 **겹쳐** 세우는 자리가 많다 — 바깥 `ui.itemFrame.empty` 안 `NormalArea` 에
+            // 등급색 `ui.itemFrame.<색>` 을 하나 더 넣는다(GearScreen·LobbyPopups·Overlay·PetScreen).
+            // 두 조각이 각각 HighLight1·2 를 달고 오므로 한 칸에 넷이 있고, 첫 하나씩만 꺼져 **둘이 남아 켜져 있었다**
+            // (CI #311·#315 «켜진 하이라이트 3개»). 그래서 이름이 «HighLight» 로 시작하는 **자손 전부**를 끈다(결정 433).
+            foreach (var t in frame.GetComponentsInChildren<Transform>(true))
+                if (t != null && t.name.StartsWith(HighlightPrefix, StringComparison.Ordinal)) t.gameObject.SetActive(false);
             foreach (var im in frame.GetComponentsInChildren<Image>(true))
             {
                 if (im == null || im.name != UiKit.BorderName || im.sprite == null || !im.sprite.name.StartsWith(ItemBorderSprite, StringComparison.Ordinal)) continue;

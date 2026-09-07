@@ -201,6 +201,18 @@ namespace KkomaKnight.Tests.Play
         /// 회차 1 은 덧칠(0.55)이라 조각의 회색 바탕이 비쳐 색이 죽었다(레퍼런스 «Rare» #0182C3 ↔ 우리 #8997A2 실측).
         /// 두 조각은 서로 반대 방향 알파 램프라(<c>ui.gradTop1</c> 흰→투명 · <c>ui.gradBottom</c> 투명→흰) 둘 다 1 이라야 몸통이 그 두 색으로 덮인다.
         /// </summary>
+        /// <summary>
+        /// T164 — 화면 어디에도 켜진 «HighLight*»(아이템 칸 조각의 데모 하이라이트)가 없어야 한다.
+        /// 세는 잣대는 <see cref="GearUi.HighlightPrefix"/> 로 끄는 쪽과 <b>같은 것</b>을 쓴다(둘이 갈리면 조각이 늘 때 게이트만 빨개진다).
+        /// </summary>
+        void AssertNoHighlights(string where)
+        {
+            int n = 0; string first = null;
+            foreach (var t in _app.UiCanvas.GetComponentsInChildren<Transform>(false))
+                if (t != null && t.name.StartsWith(GearUi.HighlightPrefix, StringComparison.Ordinal))
+                { n++; if (first == null) first = t.name + "(부모 " + (t.parent != null ? t.parent.name : "-") + ")"; }
+            Assert.AreEqual(0, n, "[" + where + "] 켜진 하이라이트가 " + n + "개 있다(T164 · 첫 자리 " + (first ?? "-") + ")");
+        }
         /// <summary>이름이 <paramref name="name"/> 인 자손을 너비 우선으로(얕은 것 먼저) 찾는다 — T147 검사용.</summary>
         static Transform DeepFind(Transform root, string name)
         {
@@ -673,6 +685,10 @@ namespace KkomaKnight.Tests.Play
                 var ua = (RectTransform)UiKit.Find(pet, "UpgradeAllBtn"); var sm = (RectTransform)UiKit.Find(pet, "SummonBtn"); var sm10 = (RectTransform)UiKit.Find(pet, "Summon10Btn");
                 Assert.IsTrue(ua.anchorMin.y > sm.anchorMax.y, "회색 줄이 소환 줄 위"); Assert.IsTrue(sm10.anchorMin.x > sm.anchorMax.x, "소환 x10 은 소환 오른쪽");
                 Assert.AreEqual(Layout.PetSummon.X, sm.anchorMin.x * 100f, 0.5f, "소환 x"); Assert.AreEqual(1f - Layout.TabBar.Y / 100f, ((RectTransform)tabs2).anchorMax.y, 1e-3f, "탭 바 = 표 자리");
+                // T164 회차 2 — 펫 화면은 칸 조각을 **겹쳐** 세운다(바깥 `ui.itemFrame.empty` 안 `NormalArea` 에 색 변형 하나 더).
+                // 회차 1 은 `UiKit.Find`(이름마다 «첫 하나»)로 껐기 때문에 겹친 칸에서 **둘이 남아 켜져 있었다** — 던전(20)이 그래서 빨갰다.
+                // 겹쳐 세우는 자리를 직접 재 둔다(20 은 EventsScreenTests 가 잰다 · 결정 433).
+                AssertNoHighlights("13_pet");
                 // T178 — 주인이 던전 20 에서 지우라고 한 «준비 중» 표기가 이 화면에도 남아 있었다(소환 버튼 가격 자리).
                 // 값을 지어내지 않고 «흐리게 + 누르면 까닭을 토스트» 로 바꿨다(T99 티켓과 같은 문법 · 결정 432).
                 foreach (var n in new[] { "SummonBtn", "Summon10Btn" })
