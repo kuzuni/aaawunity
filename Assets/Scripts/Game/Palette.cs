@@ -30,6 +30,17 @@ namespace KkomaKnight.Game
         public static Color CreamDark => Cat("creamDark", "#E3CDAA");
         public static Color Dim => Cat("dim", "#12131A");
         public static Color Slate => Cat("slate", "#415760");
+        /// <summary>
+        /// 공통 팝업 상자 몸통(T130) — 레퍼런스의 팝업은 <b>어두운 회색 판 + 흰 글자</b>인데 우리 조각(<c>ui.popup</c>)은 <b>크림</b>이라 색이 반대였다.
+        /// <b>실측</b>: <c>docs/ref/12_settings.jpg</c> 와 <c>docs/ref/07_gear_detail.jpg</c> 의 팝업 몸통이 <b>둘 다 #343434</b>(두 워커가 따로 재서 같은 값 · 워커 E · 워커 G).
+        /// 조각의 «Bg» 를 이 색으로 <b>tint</b> 한다 — 새 그림도 새 키도 없다(조각이 색을 스프라이트가 아니라 변형의 색 덮어쓰기로 갖는다).
+        /// <b>색 변형(<c>ui.popup.blue</c> 등)은 안 건드린다</b> — 이벤트 팝업이 일부러 색을 쓰는 자리다.
+        /// </summary>
+        public static Color PopupBox => Cat("popupBox", "#343434");
+        /// <summary>그 상자 안쪽 장식선(조각의 «DecoLine» · 원래 살구 #F0D0AD) — 레퍼런스 12 의 안쪽 테두리 줄 실측(T130).</summary>
+        public static Color PopupDeco => Cat("popupDeco", "#2C2C2C");
+        /// <summary>팝업 «안» 줄 바탕(T130 · T121 후속) — 레퍼런스 07 의 옵션 줄 실측. 몸통(#343434)보다 한 단계 어둡다.</summary>
+        public static Color PopupRow => Cat("popupRow", "#201E1F");
         /// <summary>상단 프레임 띠(탑바 줄 + 그 위 화면 끝까지 · T106) — <b>레퍼런스 실측</b>: <c>docs/ref/01_lobby.jpg</c> 상단 띠의 픽셀 평균이 #2C2B29 다(y 1~118 · 아이콘·pill 을 피한 자리 · 워커 B 가 headless chromium 으로 잼).</summary>
         public static Color TopFrame => Cat("topFrame", "#2C2B29");
         /// <summary>그 프레임 «안» 칸 바탕(아바타·전투력·골드 pill·보석 pill · T106) — 같은 레퍼런스에서 pill 안쪽 실측 #12110F(띠보다 한 단계 어둡다).</summary>

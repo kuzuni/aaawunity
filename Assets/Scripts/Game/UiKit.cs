@@ -652,7 +652,21 @@ namespace KkomaKnight.Game
         /// 프레임 밖 아래 가운데 <b>«탭하여 닫기»</b> 흰 글자(<see cref="Layout.BookClose"/> 줄 · 닫기 X 버튼 없음 · <b>배경 탭으로 닫힘</b> = <paramref name="onTapClose"/>). onTapClose 가 null 이면 닫기 글자·배경 탭 없음(선택을 강제하는 이벤트 팝업).
         /// 조각은 전부 GUI Pro 프리팹 · 코드 도형 0. 상자 안 배치는 돌려준 <see cref="PopupParts.Box"/> 에 Pct 로.
         /// </summary>
-        public static PopupParts Popup(Transform layer, string title, Layout.R rect, Action onTapClose, string popupKey = "ui.popup", string titleKey = "ui.title.tangerine", bool dim = true)
+        /// <summary>색을 안 쓰는 <b>기본</b> 팝업 상자 키(T130) — 이 키로 세운 상자만 어두운 회색으로 바꾼다. 색 변형(<c>ui.popup.blue</c> 등)은 이벤트가 일부러 색을 쓰는 자리라 그대로 둔다.</summary>
+        public const string PopupKeyPlain = "ui.popup";
+        /// <summary>기본 팝업 상자를 레퍼런스대로 어둡게(T130) — 조각의 «Bg»·«DecoLine» 을 <see cref="Palette.PopupBox"/>·<see cref="Palette.PopupDeco"/> 로 tint 한다(«Border» 는 원래 검정이라 그대로). 바꿨으면 true.</summary>
+        public static bool DarkenPopupBox(RectTransform box, string popupKey)
+        {
+            if (box == null || popupKey != PopupKeyPlain) return false;
+            for (int i = 0; i < box.childCount; i++)
+            {
+                var c = box.GetChild(i); var img = c.GetComponent<Image>(); if (img == null) continue;
+                if (c.name == "Bg") img.color = Palette.PopupBox;
+                else if (c.name == "DecoLine") img.color = Palette.PopupDeco;
+            }
+            return true;
+        }
+        public static PopupParts Popup(Transform layer, string title, Layout.R rect, Action onTapClose, string popupKey = PopupKeyPlain, string titleKey = "ui.title.tangerine", bool dim = true)
         {
             var parts = new PopupParts();
             if (dim)
@@ -665,10 +679,13 @@ namespace KkomaKnight.Game
             }
             var box = SpawnRt(popupKey, layer, rect);
             foreach (var g in box.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;   // 상자 뒤로 클릭이 새지 않게
-            // T72 ① 팝업 상자 «안» 배경 패턴(ROUTINE T72 1항 적용 목록) — 조각의 «Bg» 바로 위(DecoLine·Border 아래) · 둥근 모서리 안쪽 · 크림 바탕이라 Ink 무늬.
+            // T130 — 기본 팝업 상자를 레퍼런스대로 «어두운 회색» 으로. 조각이 색을 변형의 색 덮어쓰기로 가지므로 tint 로 닿는다(새 그림·새 키 0).
+            bool darkBox = DarkenPopupBox(box, popupKey);
+            // T72 ① 팝업 상자 «안» 배경 패턴(ROUTINE T72 1항 적용 목록) — 조각의 «Bg» 바로 위(DecoLine·Border 아래) · 둥근 모서리 안쪽.
             // 여기 한 곳이라 모든 공통 팝업(Overlay.Box · LobbyPopups · 화면 세부 팝업)이 같이 받는다 — 화면 코드는 한 줄도 안 만진다.
+            // 무늬 색은 바탕을 따라간다 — T130 뒤로 기본 상자는 어두우니 흰 무늬, 색 변형(ui.popup.<색>)은 여전히 밝아 Ink 무늬다.
             int patIdx = 0; for (int i = 0; i < box.childCount; i++) if (box.GetChild(i).name == "Bg") { patIdx = i + 1; break; }
-            PatternBg(box, PatternTintLight, PatternTileSeconds, patIdx, PatternTilePx, PopupPatternInset);
+            PatternBg(box, darkBox ? PatternTintDark : PatternTintLight, PatternTileSeconds, patIdx, PatternTilePx, PopupPatternInset);
             // T72 ③ 상자 «안» 그라데이션(위 +12% 밝음 · 아래 −18% 어둠) — 패턴 바로 위 · 테두리·리본·내용 아래(질감 층 순서 = 결정 171)
             // 여기 한 곳이라 공통 팝업 전부가 같이 받는다(버튼 공통 적용은 결정 170 대로 계속 보류 · 결정 188).
             // T116 실측 — 레퍼런스의 팝업 패널도 거의 단색(#2C2829 → #201E1F)이라 배경(0.12/0.18)보다 얕게

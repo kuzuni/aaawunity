@@ -583,8 +583,13 @@ namespace KkomaKnight.Game
         /// 글자를 되돌리는 것(T111 지시를 거스르고 <c>TextAudit.ColorStrict</c> 도 깬다)이 아니라 <b>띠를 레퍼런스대로 어둡게</b> 해서 대비를 세운다(결정 313).
         /// 잉크 α 0.72 를 크림(휘도 0.90) 위에 얹으면 합성 휘도 ≈ 0.35 로 레퍼런스의 어두운 회색 판과 같은 자리다.
         /// </para>
+        /// <para>
+        /// <b>T130 뒤</b>: 상자 자체가 레퍼런스대로 어두워졌으니(<see cref="Palette.PopupBox"/> = #343434) «크림 위 잉크 α0.72» 라는 전제가 사라졌다 —
+        /// 그대로 두면 어두운 판 위에 또 잉크를 얹어 거의 검게 되고 갈색 기까지 돈다(잉크 = #341B19). 그래서 <b>레퍼런스 07 의 줄 바탕을 그대로 쓴다</b>
+        /// (<see cref="Palette.PopupRow"/> = #201E1F · 몸통보다 한 단계 어둡다 = 레퍼런스의 위계). 합성 계산이 없어져 상자 색이 또 바뀌어도 안 흔들린다.
+        /// </para>
         /// </summary>
-        public static Color SetRowBg => Palette.A(Palette.Ink, 0.72f);
+        public static Color SetRowBg => Palette.PopupRow;
 
         public void Settings() => SettingsPopup("설정", null, null);
         /// <summary>전투 일시정지 — 같은 팝업. 링크 아래 줄이 «재개»(주황)·«포기하고 로비로»(회색) · 배경 탭 = 재개.</summary>

@@ -244,8 +244,13 @@ namespace KkomaKnight.Game
         /// 일반 등급 회색(#A39B9D)이 잉크 pill 위에서 안 읽히던 것이 이유다(screens run 148 의 07 눈 확인).
         /// </summary>
         static Color OnDarkPill(Color c) => Color.Lerp(c, Palette.White, 0.35f);
-        /// <summary>크림 상자 위 글자색 — 같은 지시의 반대쪽(바탕이 밝으면 글자를 눌러야 읽힌다) · 이름줄에 쓴다.</summary>
-        static Color OnCream(Color c) => Color.Lerp(c, Palette.Ink, 0.45f);
+        /// <summary>
+        /// 팝업 상자 위 이름줄 글자색(T130) — 상자가 <b>어두운 회색</b>이 되면서(<see cref="Palette.PopupBox"/>) «밝은 바탕이니 글자를 누른다» 는 전제가 사라졌다.
+        /// <b>레퍼런스 07 의 아이템 이름(«Shadow Treads»)은 등급색이 아니라 흰색**이고, 등급은 위 리본(«EPIC»)과 아이콘 테두리가 말한다 — 그래서 흰색을 쓴다
+        /// (T63 0항 «밝은 글자 + 검은 아웃라인» 과도 같은 방향 · 종전 <c>OnCream</c> 은 어두운 상자 위에서 등급색을 더 눌러 안 읽혔다).
+        /// 인자는 안 쓰지만 «이 자리 색은 등급에서 온다» 는 호출부 뜻을 남겨 둔다.
+        /// </summary>
+        static Color OnPopupBox(Color rarity) => Palette.White;
         static RectTransform Pill(RectTransform parent, string name, Layout.R r, float alpha = 0.85f)
         {
             var p = UiKit.Panel(parent, name, "fr.r12", Palette.A(Palette.Ink, alpha)); UiKit.Pct(p.rectTransform, r); UiKit.Bordered(p.rectTransform); return p.rectTransform;
@@ -360,7 +365,7 @@ namespace KkomaKnight.Game
             if (g.IsNew) { g.IsNew = false; app.Persist(); onChanged?.Invoke(); }
             int lv = S.SlotLv(g.Part); double cost = D.Gear.SlotCost(lv); bool eqd = S.IsEquipped(g); bool maxed = lv >= D.Gear.SlotLvMax;
             string colorName = Palette.RarName(g.Rar);
-            var box = DetailFrame(app, RarName(D, g.Rar), colorName, g, Name(D, g) + (g.Plus > 0 ? " +" + g.Plus : ""), OnCream(Palette.ByName(colorName)), $"슬롯 Lv. {lv}/{D.Gear.SlotLvMax}", PartName(D, g.Part));
+            var box = DetailFrame(app, RarName(D, g.Rar), colorName, g, Name(D, g) + (g.Plus > 0 ? " +" + g.Plus : ""), OnPopupBox(Palette.ByName(colorName)), $"슬롯 Lv. {lv}/{D.Gear.SlotLvMax}", PartName(D, g.Part));
             StatsBox(box, D, S, g, g.Part, lv, eqd);
             OptionRows(box, D, g);
             CostRow(box, S, cost, maxed, D.Gear.SlotLvMax);

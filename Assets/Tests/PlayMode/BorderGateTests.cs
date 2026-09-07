@@ -182,6 +182,30 @@ namespace KkomaKnight.Tests.Play
             var lk = UiKit.Find(slot, "Lock"); if (lk != null && lk.parent == slot) Assert.Greater(lk.GetSiblingIndex(), bt.GetSiblingIndex(), label + " 자물쇠는 테두리 위(형제 순서 뒤)");
         }
 
+        /// <summary>
+        /// 기본 팝업 상자(<c>ui.popup</c>)가 레퍼런스대로 <b>어두운 회색</b>인가(T130) — 조각 원본은 크림(#F4E9D0)이라 tint 가 빠지면 여기서 잡힌다.
+        /// <para>
+        /// 두 갈래로 잰다: ⓐ «Bg» 색 = 카탈로그 <c>col.popupBox</c>(<see cref="Palette.PopupBox"/> · 오차 0.02) ⓑ 그 색의 <b>휘도가 0.35 미만</b>
+        /// (크림은 0.90 · 값을 바꾸더라도 «어둡다» 는 방향 자체를 못 박는다 — 색 하나만 대면 팔레트를 크림으로 되돌려도 통과해 버린다).
+        /// «DecoLine» 도 같이 본다(원래 살구 #F0D0AD).
+        /// </para>
+        /// </summary>
+        static void AssertPopupBoxIsDark(Transform box, string label)
+        {
+            Assert.IsNotNull(box, label + " 상자");
+            var checks = new[] { ("Bg", Palette.PopupBox), ("DecoLine", Palette.PopupDeco) };
+            foreach (var (name, want) in checks)
+            {
+                var t = UiKit.Find(box, name); Assert.IsNotNull(t, label + " 조각의 «" + name + "»");
+                var img = t.GetComponent<Image>(); Assert.IsNotNull(img, label + " «" + name + "» 그림");
+                var c = img.color;
+                Assert.Less(Mathf.Abs(c.r - want.r) + Mathf.Abs(c.g - want.g) + Mathf.Abs(c.b - want.b), 0.02f,
+                    label + " «" + name + "» = 카탈로그 색(T130 · 조각 원본 크림으로 되돌아가면 빨강)");
+                float lum = 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
+                Assert.Less(lum, 0.35f, label + " «" + name + "» 는 어두워야 한다(휘도 " + lum.ToString("0.00") + " · 크림은 0.90 · T130)");
+            }
+        }
+
         /// <summary>덧댄 링(<see cref="UiKit.Bordered"/>)의 계약(T69-overlay · 스탯 칸·팁 줄) — 직계 «Border» Image · 9-slice · 가운데 비움 · raycast 끔 · Ink(α ≥ 0.8) · 선 ≥ 8px · 사각형 = 칸 rect − 안쪽 여백 2× <paramref name="inset"/>.</summary>
         static void AssertRingBorder(Transform cell, string label, string key, float inset = 0f)
         {
@@ -257,6 +281,9 @@ namespace KkomaKnight.Tests.Play
                 }
                 // 토글(Swich_01)·언어 버튼(Button_02)은 조각 그림 자체에 검은 외곽선이 있다(«Border» 오브젝트 없음 · 레퍼런스 12 와 같은 꼴) — 여기서는 «링 위에 있다» 만 본다
                 var popBox = UiKit.Find(ov, "BGM").parent; Assert.IsTrue(UiKit.HasPattern(popBox), "설정 팝업 상자 안 패턴(T72 · UiKit.Popup)");
+                // T130 — 기본 팝업 상자는 레퍼런스대로 «어두운 회색»(#343434) 이어야 한다. 조각 원본은 크림(#F4E9D0) 이라 되돌아가면 여기서 바로 빨개진다.
+                // 색은 카탈로그(col.popupBox)에서 오므로 그 값과 맞대고, «어둡다» 는 것 자체도 휘도로 못 박는다(크림은 0.90 · 우리 목표는 0.2 안팎).
+                AssertPopupBoxIsDark(popBox, "설정 팝업(12)");
             }
             _app.Overlay.Close(); yield return Frames(1);
 
@@ -387,6 +414,8 @@ namespace KkomaKnight.Tests.Play
                 foreach (var n in new[] { "Pill1", "Pill2", "Stats", "Cost" }) Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(bx, n)), "세부 팝업 «" + n + "» 에 어두운 테두리(T69-gear)");
                 var opt0 = UiKit.Find(bx, "Opt:0"); if (opt0 != null) Assert.IsTrue(UiKit.HasDarkBorder(opt0), "세부 팝업 옵션 줄 0 에 어두운 테두리(T69-gear)");
                 AssertItemFrameBorder(UiKit.Find(bx, "IconSlot"), "세부 팝업 아이콘 칸");
+                // T130 — 07 도 레퍼런스가 «어두운 회색 상자 + 흰 글자» 인 자리다(12 와 같은 값 #343434 로 실측됐다)
+                AssertPopupBoxIsDark(UiKit.Find(bx, "Pill1").parent, "장비 세부 팝업(07)");
                 _app.Overlay.Close(); yield return Frames(1);
                 // 빈 슬롯 팝업 — 물건 칸은 ItemFrame_01(7항) · 검은 아웃라인
                 S.Eq.Remove(D.Gear.Parts[0]); GearUi.OpenSlot(_app, D.Gear.Parts[0], null); yield return Frames(2);
