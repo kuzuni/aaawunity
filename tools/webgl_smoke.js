@@ -132,7 +132,7 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
   });
   const page = await browser.newPage({ viewport: { width: 540, height: 1170 } });
   const errors = [], audioWarn = [], netWarn = [];
-  let readyLobby = false, readyBattle = false, loaded = false, tweens = null, screen = null, lobbyP50 = null;
+  let readyLobby = false, readyBattle = false, loaded = false, tweens = null, screen = null, lobbyP50 = null, bloom = null;
   // where = 그 console 메시지가 가리키는 자원 URL(«Failed to load resource» 는 막힌 그 파일을 가리킨다)
   const noteError = (text, where) => {
     if (!strictAudio && AUDIO_RE.test(text)) { audioWarn.push(text); log('AUDIO⚠', text); return; }
@@ -151,6 +151,10 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
     // T129 회차 2 — 어느 화면을 잰 것인지도 받아 둔다. App.cs 는 여태 «screen=<이름>» 을 같이 찍고 있었는데 버리고 있었다.
     // 이 자는 «로비 10초» 만 재므로(결정 509) 화면 이름이 perf 줄에 없으면 다음 워커가 그 수를 «게임 전체» 로 잘못 읽는다.
     { const p = text.match(/\[KkomaKnight\] perf tweens=\d+ screen=(\S+)/); if (p) screen = p[1]; }
+    // T181 ⓐ(워커 E) — 후처리 스위치 상태. «perf» 줄에도 붙고 «bloom:on/off» 를 부른 뒤에도 한 줄 온다.
+    // ⚠ 이 값을 **확인해야** 한다 — 스위치가 없는 옛 배포는 «모르는 목적지» 만 찍고 아무 일도 안 하는데,
+    //    그대로 재면 두 창이 같아져 «Bloom 은 공짜» 라는 거짓 답이 나온다.
+    { const p = text.match(/\[KkomaKnight\] perf (?:tweens=\d+ screen=\S+ )?bloom=(on|off)/); if (p) bloom = p[1]; }
     if (text.includes('Invoking error handler due to') && !AUDIO_RE.test(text)) noteError('unity error handler: ' + text.slice(0, 500));
   });
   page.on('requestfailed', r => log('reqfail', r.url() + ' ' + (r.failure() || {}).errorText));
@@ -195,7 +199,7 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
   }), ms).catch(e => { log('fps-fail', e.message); return null; });
   // 화면 안 바꾸고 «몇 개가 도나» 만 묻는다(App.DebugGo perf · 답은 콘솔 훅이 tweens·screen 에 담는다).
   const askPerf = async () => {
-    tweens = null; screen = null;
+    tweens = null; screen = null; bloom = null;
     await page.evaluate(() => {
       const inst = window.unityInstance; if (inst && inst.SendMessage) return inst.SendMessage('App', 'DebugGo', 'perf');
       const M = window.Module || (window.unityFramework && window.unityFramework.Module); if (M && M.SendMessage) M.SendMessage('App', 'DebugGo', 'perf');
@@ -243,14 +247,43 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
     // 왜 이것이 필요한가 — fps 절대값은 런 «사이»(러너 기계·부하)에서 45%까지 흔들려 회차 비교에 못 쓴다(결정 524).
     // 같은 런 안의 **비**는 그 기계 몫이 분자·분모에서 상쇄되므로 «무엇이 프레임을 먹는가» 에 답할 수 있다.
     if (!flag('no-fps') && readyBattle) {
+      // T181 ⓐ(워커 E 의 호출 규약) — 이 10초를 **전반 5초 bloom:on · 후반 5초 bloom:off** 로 가른다.
+      // 같은 런·같은 기계·같은 화면이라 러너 잡음(±45% · 결정 524)이 두 값에 똑같이 실려 **비에서 사라진다.**
+      // 벽시계는 그대로다(원래 놀며 기다리던 10초를 쪼갠 것뿐).
       await askPerf();
-      const f2 = await measureFrames(10000);
+      const f2 = await measureFrames(5000);              // 전반 = 배포된 그대로(bloom on)
+      const st2 = f2 ? frameStats(f2.dts || []) : null;
       if (f2) {
-        const st2 = frameStats(f2.dts || []);
         const ratio = (st2 && lobbyP50) ? (st2.p50 / lobbyP50) : null;
-        log('perf2', `fps=${f2.avg.toFixed(1)} min=${f2.min.toFixed(1)} tweens=${tweens === null ? '?' : tweens} screen=${screen || 'battle'}`
+        log('perf2', `fps=${f2.avg.toFixed(1)} min=${f2.min.toFixed(1)} tweens=${tweens === null ? '?' : tweens} screen=${screen || 'battle'} bloom=${bloom || '?'}`
           + (st2 ? ` fps50=${st2.p50.toFixed(1)} p95ms=${st2.p95ms.toFixed(1)} warm=${st2.a.toFixed(1)}/${st2.b.toFixed(1)}` : '')
-          + (ratio ? ` ratio=${ratio.toFixed(2)}` : '') + ' vs=lobby');
+          + (ratio ? ` ratio=${ratio.toFixed(2)}` : '') + ' vs=lobby win=5s');
+      }
+      // 후반 = 후처리를 끄고 같은 길이로. **껐는지 먼저 확인한다** — 스위치가 없는 옛 배포는
+      // 아무 일도 안 하고 두 창이 같아져 «Bloom 은 공짜» 라는 거짓 답을 낸다(T181 판정이 그 한 줄에 걸린다).
+      const before = bloom;
+      await page.evaluate(() => {
+        const inst = window.unityInstance; if (inst && inst.SendMessage) return inst.SendMessage('App', 'DebugGo', 'bloom:off');
+        const M = window.Module || (window.unityFramework && window.unityFramework.Module); if (M && M.SendMessage) M.SendMessage('App', 'DebugGo', 'bloom:off');
+      }).catch(e => log('bloom-fail', e.message));
+      await page.waitForTimeout(500);
+      if (bloom !== 'off') {
+        log('perf3', `bloom=unsupported(전=${before || '?'} 후=${bloom || '?'}) — 이 빌드에는 후처리 스위치가 없다(T181 ⓐ 이전 배포). 비를 내지 않는다`);
+        await page.waitForTimeout(4500);                 // 벽시계를 원래대로(전투 10초 동안 에러 0)
+      } else {
+        const f3 = await measureFrames(5000);
+        const st3 = f3 ? frameStats(f3.dts || []) : null;
+        if (f3) {
+          const gain = (st3 && st2 && st2.p50 > 0.01) ? (st3.p50 / st2.p50) : null;
+          log('perf3', `fps=${f3.avg.toFixed(1)} min=${f3.min.toFixed(1)} screen=${screen || 'battle'} bloom=off`
+            + (st3 ? ` fps50=${st3.p50.toFixed(1)} p95ms=${st3.p95ms.toFixed(1)}` : '')
+            + (gain ? ` ratio=${gain.toFixed(2)}` : '') + ' vs=bloom-on win=5s');
+        }
+        // 껐던 것은 도로 켠다 — 뒤에 오는 스샷·판정이 «배포된 그대로» 를 보게(T181 은 계측이지 변경이 아니다).
+        await page.evaluate(() => {
+          const inst = window.unityInstance; if (inst && inst.SendMessage) return inst.SendMessage('App', 'DebugGo', 'bloom:on');
+          const M = window.Module || (window.unityFramework && window.unityFramework.Module); if (M && M.SendMessage) M.SendMessage('App', 'DebugGo', 'bloom:on');
+        }).catch(() => {});
       }
     } else {
       await page.waitForTimeout(10000);   // 전투 10초 동안 에러 0(--no-fps 이거나 전투에 못 갔을 때)
