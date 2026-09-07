@@ -299,7 +299,7 @@
 - **aaaw 레포 수정 금지.** 수치(`data/*.json`)는 `tools/check_data_sync.sh --sync` 로만 가져온다. JSON 을 손으로 고치지 않는다.
 - **코드에 게임 수치를 직접 박지 않는다** — `KkomaKnight.Core.GameData` 에서 읽는다. 상수가 JSON 에 없으면 이 레포 전용 JSON(`Assets/KkomaKnight/*.json` · shop.json 방식)에 넣고 «워커 결정 기록» 에 한 줄 적는다(코드 상수 금지는 그대로).
 - **새 콘텐츠(특전/시스템/수치 체계) 임의 추가 금지.** 화면 껍데기(T42~T44)는 콘텐츠가 아니다. **주인 승인을 기다리는 일은 없다(2026-09-06)** — 판단이 필요하면 스스로 정해 적용하고 «워커 결정 기록» 에 남긴다.
-- **유니티 «패키지» 타입을 새로 쓰면 그 타입이 «어느 어셈블리» 인지 확인하고 `*.asmdef` 의 `references` 에 넣는다 — 이것은 로컬에서 절대 안 걸린다.** `tools/dotnet` 하니스는 URP·TMP 타입을 안 물고 컴파일하므로 `dotnet build` 도 임시 csproj 사전 점검도 초록인데 **CI 유니티 잡은 컴파일 단계에서 죽는다**(테스트 0개 · 빨간 테스트보다 나쁘다). 2026-09-07 12:0X 에 실제로 그랬다(결정 464): `PostFx.cs` 의 `Volume` 이 `CS0246` — `Bloom` 은 `Unity.RenderPipelines.**Universal**.Runtime` 이지만 `Volume`·`VolumeProfile`(네임스페이스 `UnityEngine.Rendering`)은 **`Unity.RenderPipelines.Core.Runtime`** 이라 참조가 하나 모자랐다. **빠른 확인법**: 새로 쓴 타입의 네임스페이스가 `UnityEngine.Rendering.Universal` 이면 Universal.Runtime · 그냥 `UnityEngine.Rendering` 이면 **Core.Runtime** · `TMPro` 면 Unity.TextMeshPro · `DG.Tweening` 이면 DOTween.Modules. **컴파일 파손은 «작업» 이 아니라 «장애» 다** — 남의 lock 안이라도 asmdef 한 줄이면 바로 고치고 이유를 남긴다(그 커밋의 설계·값·테스트는 건드리지 않는다).
+- **유니티 «패키지» 타입을 새로 쓰면 그 타입이 «어느 어셈블리» 인지 확인하고 `*.asmdef` 의 `references` 에 넣는다 — 이것은 로컬에서 절대 안 걸린다.** `tools/dotnet` 하니스는 URP·TMP 타입을 안 물고 컴파일하므로 `dotnet build` 도 임시 csproj 사전 점검도 초록인데 **CI 유니티 잡은 컴파일 단계에서 죽는다**(테스트 0개 · 빨간 테스트보다 나쁘다). 2026-09-07 12:0X 에 실제로 그랬다(결정 464): `PostFx.cs` 의 `Volume` 이 `CS0246` — `Bloom` 은 `Unity.RenderPipelines.**Universal**.Runtime` 이지만 `Volume`·`VolumeProfile`(네임스페이스 `UnityEngine.Rendering`)은 **`Unity.RenderPipelines.Core.Runtime`** 이라 참조가 하나 모자랐다. **빠른 확인법**: 새로 쓴 타입의 네임스페이스가 `UnityEngine.Rendering.Universal` 이면 Universal.Runtime · 그냥 `UnityEngine.Rendering` 이면 **Core.Runtime** · `TMPro` 면 Unity.TextMeshPro · `DG.Tweening` 이면 DOTween.Modules. **컴파일 파손은 «작업» 이 아니라 «장애» 다** — 남의 lock 안이라도 asmdef 한 줄이면 바로 고치고 이유를 남긴다(그 커밋의 설계·값·테스트는 건드리지 않는다). **이 규칙은 이제 자가 본다 — 커밋 직전 `python3 tools/check_asmdef.py`(T189).**
 - **⚑⚑⚑ 컴파일 파손을 남긴 채 다음 작업으로 넘어가지 않는다(주인 상시 지시 2026-09-07 12:2X «컴파일 에러 항상 확인하고 해결하고 넘어가라»).** 규칙 셋: ⓐ **push 한 워커는 다음 회차에 «내 커밋을 담은 CI 유니티 잡이 컴파일을 지나 테스트를 실제로 돌렸는가» 를 먼저 본다** — «테스트 0개» 는 빨간 테스트보다 나쁘다(그 런은 `screens`·gh-pages 도 같이 막는다). ⓑ **컴파일이 깨져 있으면 그것이 그 회차의 첫 일이다** — 자기 lock 이든 남의 lock 이든, 새 작업을 잡기 전에 고친다(남의 lock 이라도 asmdef·`using` 한 줄이면 바로 고치고 이유를 남긴다 = 위 줄의 «장애» 규약). ⓒ **세션 시작 절차(§0)에 넣는다** — `docs/claims/` 를 읽기 전에 **최근 CI 런의 유니티 잡이 컴파일을 지났는지** 한 번 본다. 자동으로 잡는 자는 **T188**.
 - **화면·상수에서 값이나 이름을 바꾸거나 지우면, 그것을 박아 둔 옛 단언을 같은 커밋에서 훑는다(T184).** 커밋 직전에 `python3 tools/check_stale_asserts.py` 를 돌리면 «이 diff 가 지운 값·이름이 `Assets/Tests` 에 아직 있다» 를 찍어 준다. **로컬 게이트로는 절대 못 걸리는 자리다** — 이 단언들은 대개 PlayMode 라 `dotnet test` 가 안 돌리고, 임시 csproj 사전 점검(결정 143)은 컴파일만 본다(`UiKit.Find(...)` 가 null 을 돌려주는 것은 컴파일 오류가 아니다). 훑을 것은 셋이다: ⓐ 카탈로그·상수 **키** ⓑ **오브젝트 이름 문자열** ⓒ 화면 **글자**(결정 425~427·429 가 같은 함정을 네 번 적었다). ⚠ 자가 못 잡는 짝도 있다 — **새 값이 «옛 문턱» 을 깨는 경우**(내 `#666666` 이 T84 «밝기 ≥ 0.55» 를 깬 자리)는 지운 값이 그 단언에 없어 안 걸린다. 그때는 «그 글자를 재는 단언» 을 이름으로 grep 한다.
 - **PROGRESS «워커 결정 기록» 번호는 커밋 «직전» 에 `python3 tools/check_decisions.py` 로 확인한다(T131).** 번호는 각자 «지금 제일 큰 것 + 1» 로 고르는데 워커 여럿이 30분 안에 같은 파일을 밀어 자주 겹친다(하루에 다섯 쌍). 겹치면 **늦게 push 한 쪽이 옮긴다** — 누가 늦었는지는 `git log -1 --format=%cI -S"<번호>. **<첫 낱말>" -- docs/PROGRESS.md` 로 가린다. **단 코드 주석(`Assets/**`)이 가리키는 번호는 먼저 밀었든 아니든 옮기지 않는다** — 문서만 고치면 되는 쪽을 옮긴다(결정 356). 옮길 때는 본문 줄과 함께 `docs/`·`Assets/` 의 «결정 N» 참조도 같이 옮긴다. **양쪽 다 코드가 가리키면** 그 예외로는 못 가르므로 늦게 민 쪽이 옮기되, **양쪽이 각각 남의 살아 있는 lock 안이면 제3자는 손대지 않고 기록만 남긴다**(규칙 3항이 번호 정리보다 앞선다 · 늦게 민 쪽 임자가 제 커밋에서 옮긴다 · 결정 421). **341 미만의 옛 겹침 45쌍은 동결이다**(커밋 메시지 수십 개가 그 번호로 가리키고 있어 지금 옮기면 그 참조가 전부 틀린 곳을 가리킨다 · 자가 세기만 하고 실패시키지 않는다).
@@ -1607,6 +1607,7 @@ python3 tools/check_audio_webgl.py                                # 오디오가
 tools/check_data_sync.sh [.aaaw-src]                              # data ↔ aaaw main
 python3 tools/check_decisions.py                                  # PROGRESS «워커 결정 기록» 번호 겹침(T131) — `--next` 로 «다음에 쓸 번호» 만 찍을 수도 있다
 python3 tools/check_stale_asserts.py                              # 바꾼 값·이름을 «아직 박아 둔» 테스트 자리(T184) — `--strict` 면 있을 때 1 로 끝난다
+python3 tools/check_asmdef.py                                     # 유니티 «패키지» using 이 그 폴더 asmdef 참조에 있는가(T189) — 없으면 CI 가 컴파일에서 죽는다
 python3 tools/check_task_rows.py                                  # PROGRESS 에 같은 작업이 두 줄 있고 «⬜ 대기» ↔ «✅/🔄» 로 어긋난 것(끝난 일을 다시 선점하게 만든다 · 결정 455) — `--list` 로 겹치는 줄 전부 보기
 dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이후) 이식 검증
 ```
@@ -1694,6 +1695,20 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 4. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` 02·03 PNG 를 위 두 좌표로 확대해 «코인 하나 · 숫자가 바 안» + 주인 폰.
 
 > **↺ (11:0X UTC · 워커 H · sess-2157-4152 · 등재자가 뒷값을 잰다) 회차 3(`440d3180` · 높이 처방)이 든 `screens` run **329**(`46be4202` · 빨간 런이지만 PNG 는 나온다 = T185)에서 다시 쟀다 — **처방은 실제로 먹혔다**: 발밑 빨간 단 안 **흰 픽셀 19.7%**(회차 3 전 실측 **49%** · 레퍼런스 **12%**). 즉 «흰 덩어리» 의 절반 이상이 걷혔고 빨강·파랑 채움도 다시 보인다(`png_crop.py 02_battle.png x 30 460 130 55 5` 로 확인). **남은 차이(19.7% ↔ 12%)는 `MinFootFont = 26` 하한이 잡아먹는 몫**이고 그 하한은 T63(«글씨가 작아 안 읽힌다» 주인 지시)과의 절충으로 그 회차가 일부러 남긴 것이다 — 더 깎을지는 주인 폰에서 보고 정하면 된다(9배 확대에서는 아직 획이 붙어 보이지만, 그건 540px 캡처의 한계이기도 하다: 레퍼런스 사본은 720px 이라 같은 잣대가 아니다). **ⓐ(골드 pill 코인 둘)는 run 329 에서 코인 하나 + 숫자로 보인다 — 이 자리도 이제 레퍼런스와 같다.**
+
+### T189 ✅ — **asmdef 참조 누락을 자로 잡는다**(로컬 게이트가 «구조적으로» 못 보는 셋째 자리) (워커 실측 등재 2026-09-07 12:2X · 도구·문서만 · 코드 0줄) — **✅ 완료(sess-0220-31894 · 워커 B)**
+
+> 왜 — 오늘 12:0X 에 CI 유니티 잡이 **테스트를 한 개도 못 돌리고** 죽었다: `Assets/Scripts/Game/PostFx.cs(32,16): error CS0246: … 'Volume' …`. `Volume`·`VolumeProfile` 은 `Unity.RenderPipelines.**Core**.Runtime` 에 있는데 asmdef 은 `…Universal.Runtime` 만 참조하고 있었다. **빨간 테스트보다 나쁘다** — 테스트가 0개라 아무 게이트도 판정을 못 하고 `screens`·gh-pages 도 같이 막힌다.
+>
+> **로컬로는 구조적으로 못 잡는다** — `tools/dotnet` 하니스는 NuGet 참조 어셈블리로 컴파일하느라 URP·TMP 타입을 안 물고 asmdef 을 읽지도 않는다. `dotnet build` 도 임시 csproj 사전 점검(결정 143)도 **초록인데** 유니티만 죽는다.
+>
+> 워커 A 가 `ad0d3d2e` 로 고치고 §1 에 규칙을 적었다. 규칙은 옳지만 **오늘 «규칙만» 으로 네 번 놓친 전례**(T184)가 있어 자로 만든다.
+
+1. **자** `tools/check_asmdef.py` — `Assets/Scripts` 의 `.cs` 마다 «가장 가까운 조상 asmdef» 을 찾아, `using` 한 **표(`NS_TO_ASM`)에 있는** 네임스페이스가 그 asmdef 의 `references` + `precompiledReferences` 에 있는지 본다. 표에 없는 네임스페이스는 **아무 말도 안 한다**(모르는 것을 추측하지 않는다). 새 패키지를 쓰면 표에 한 줄 더한다.
+2. **실제 파손으로 검증** — `ad0d3d2e~1`(고치기 전) 트리에서 `PostFx.cs:2 using UnityEngine.Rendering` **한 줄만** 짚고 «`Unity.RenderPipelines.Core.Runtime` 을 넣어라» 까지 말한다. 지금 트리는 초록.
+3. **⚠ `Assets/Tests` 는 일부러 안 본다(결정 465)** — 처음엔 넣었는데 **멀쩡히 컴파일되는 트리에서 오탐 80건**이 났다. 테스트 asmdef 은 `nunit.framework.dll` 을 `precompiledReferences` 에 적고, `DG.Tweening`·`UnityEngine.Rendering` 은 `references` 에 없어도 컴파일된다(자동 참조가 얽혀 있어 유니티 없이는 모델링이 안 된다). **자가 소음이 되면 아무도 안 본다** — 증거 있는 자리만 본다.
+4. **CI 에는 안 넣었다** — `check_decisions`·`check_stale_asserts` 와 같은 결로 **커밋 직전 워커가 도는 자**다. ROUTINE §3 게이트 목록 + 워커 A 의 §1 규칙 줄에 «이제 자가 본다» 를 붙였다.
+5. 판정 = `python3 tools/check_asmdef.py` 가 초록이고, 다음에 누가 새 패키지 타입을 쓸 때 이 자가 커밋 «전» 에 잡는 것.
 
 ### T185 ✅ — **`screens` 배포가 «테스트 초록일 때만» 이라 눈 확인이 통째로 막힌다** (워커 실측 등재 2026-09-07 10:2X · CI 설정 한 곳 · 게임 코드 0줄) — **✅ 완료(sess-0220-31894 · 워커 B)**
 
