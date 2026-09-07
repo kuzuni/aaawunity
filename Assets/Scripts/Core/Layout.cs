@@ -100,12 +100,22 @@ namespace KkomaKnight.Core
         public static readonly R HudSpeed = new R(3.0f, 65.0f, 11.0f, 4.0f);
         public static readonly R HudRound = new R(85.0f, 63.0f, 13.0f, 6.5f);
         public static readonly R HudPanel = new R(0, 69.5f, 100, 30.5f);
-        public static readonly R HudExp = new R(3.0f, 70.5f, 26.0f, 3.7f);
-        public static readonly R HudHp = new R(31.0f, 70.5f, 32.0f, 3.7f);
-        public static readonly R HudSh = new R(65.0f, 70.5f, 32.0f, 3.7f);
+        /// <summary>
+        /// EXP·HP·실드 바(T143 · 주인 2026-09-07 05:3X «바가 왼쪽으로 치우쳐 보인다 · 바 사이에 틈이 없다») — 자리를 «바 사각형» 이 아니라
+        /// <b>«왼쪽 캡(«EXP» 라벨 · ❤ · 🛡)까지 포함한 보이는 상자»</b> 로 잡는다. 캡은 바 rect 밖으로 <see cref="HudBarCapExp"/>·<see cref="HudBarCapIcon"/> 만큼 튀어나오므로,
+        /// 표 실측값(3.0 / 31.0 / 65.0)을 그대로 쓰면 보이는 왼쪽 끝이 −0.52%p(화면 밖)가 되고 바 사이 틈(표 2.0%p)이 캡에 먹혀 14.4px 씩 겹쳤다.
+        /// 지금 값은 «좌우 여백 2.0%p 대칭 · 틈 1.5%p · 폭 비율 26:32:32 유지» 로 다시 푼 것이다(<c>PerkStripSpecTests</c> 옆 <c>HudBarGeometryTests</c> 가 산술로 지킨다).
+        /// </summary>
+        public static readonly R HudExp = new R(5.52f, 70.5f, 23.93f, 3.7f);
+        public static readonly R HudHp = new R(34.28f, 70.5f, 29.45f, 3.7f);
+        public static readonly R HudSh = new R(68.56f, 70.5f, 29.45f, 3.7f);
+        /// <summary>바 왼쪽 캡이 바 rect 보다 왼쪽으로 튀어나오는 폭(%p · 프레임 1080 기준 실측) — «EXP» 라벨(104×64 를 x14 에 가운데) 3.52 · ❤·🛡 아이콘(84×84 를 x6 에) 3.33.</summary>
+        public const float HudBarCapExp = 3.52f, HudBarCapIcon = 3.33f;
         public static readonly R HudStats = new R(3.0f, 75.0f, 94.0f, 22.0f);
         public static readonly R HudStatCell = new R(3.0f, 75.0f, 47.0f, 5.2f);
-        public const float HudStatRowPitch = 5.2f, HudStatCellW = 47.0f, HudStatCellH = 5.2f, HudStatColR = 50.0f;
+        /// <summary>스탯 8칸 격자 — 열 피치(<c>HudStatColR</c>)는 «화면의 절반(50)» 이 아니라 <b>그리드 제 폭의 절반</b>(94.0 / 2 = 47.0)이다(T143 · 주인 «오른쪽으로 치우쳐 보인다»).
+        /// 50 이던 동안 오른쪽 열이 53.4~99.6 에 놓여 왼 여백 3.4 / 오른 여백 0.4 로 3%p 치우쳤다 — 47.0 이면 50.4~96.6 으로 좌우 3.4 대칭이다(표 ② «스탯 그리드» 3.0/94.0 은 옳았고 코드가 틀렸다).</summary>
+        public const float HudStatRowPitch = 5.2f, HudStatCellW = 47.0f, HudStatCellH = 5.2f, HudStatColR = 47.0f;
         /// <summary>
         /// 보유 특전 «책» 버튼 — <b>주인이 인스펙터 값으로 직접 지정</b>(T142 · 2026-09-07 05:2X · 앵커 Min(0.84, 0) ~ Max(1, 0.044)).
         /// 레퍼런스 실측이 아니라 주인이 준 값이다 — 화면 바닥에 붙고 오른쪽 끝(100%)까지 간다.
