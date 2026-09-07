@@ -120,6 +120,20 @@ namespace KkomaKnight.Tests.Play
             return false;
         }
         static bool ClickNamed(Transform root, string name) { var t = UiKit.Find(root, name); var b = t != null ? t.GetComponent<Button>() : null; if (b == null) return false; b.onClick.Invoke(); return true; }
+        /// <summary>
+        /// T120 — 이 사각형이 <b>프레임 안</b>(0~100%)에 들어오는가. 프레임 가장자리에 붙는 요소(모서리 버튼·기둥)가 밖으로 나가면
+        /// 글자·테두리·잘림 게이트는 전부 통과하는데 화면에서만 잘려 보인다(칸 «안» 은 멀쩡하고 칸이 화면 밖이기 때문).
+        /// 앵커는 <see cref="UiKit.Pct"/> 가 넣은 프레임 비율이라 그대로 재면 된다. 반올림 몫으로 0.1%p 는 봐준다.
+        /// </summary>
+        static void AssertInsideFrame(string what, RectTransform rt)
+        {
+            const float eps = 1e-3f;
+            Assert.GreaterOrEqual(rt.anchorMin.x, -eps, what + " 왼쪽이 화면 밖으로 나갔다(" + (rt.anchorMin.x * 100f).ToString("0.0") + "%)");
+            Assert.LessOrEqual(rt.anchorMax.x, 1f + eps, what + " 오른쪽이 화면 밖으로 나갔다(" + (rt.anchorMax.x * 100f).ToString("0.0") + "%)");
+            Assert.GreaterOrEqual(rt.anchorMin.y, -eps, what + " 아래가 화면 밖으로 나갔다");
+            Assert.LessOrEqual(rt.anchorMax.y, 1f + eps, what + " 위가 화면 밖으로 나갔다");
+        }
+
         static int CountNamed(Transform root, string prefix) { int n = 0; foreach (var t in root.GetComponentsInChildren<Transform>(false)) if (t.name.StartsWith(prefix)) n++; return n; }
         /// <summary>T63 화면 단위 «잘림 0» 계약 — root 아래 활성 Text 를 <see cref="TextAudit.Collect"/> 로 판정해 잘림/하한 미달/bestFit 미달이 하나도 없어야 한다(전체 게이트 TextSizeGateTests 는 아직 strict 가 아니라 화면 작업자가 자기 화면을 여기서 잠근다). skipPath 가 든 경로(다른 하위 행 몫)는 제외.</summary>
         static void AssertNoTextClip(string where, Transform root, string skipPath = null)
@@ -214,6 +228,14 @@ namespace KkomaKnight.Tests.Play
             CollectionAssert.DoesNotContain(NavBar.Keys, "dungeon", "던전 탭 없음(T107 · 로비 «이벤트» 로만 연다)");
             Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 1, "로비 초상(HeroView · 상단 바 아바타)");
             Assert.IsTrue(HasText(s => s == "START"), "START 버튼");
+            // T120 — «모서리 요소가 화면 밖으로 나가지 않는다» 게이트(주인·워커 눈에만 보이던 종류 · 배치 표에 이름표가 없는 자리는 ui_score 도 못 잰다).
+            // 로비 오른쪽 아래 «이벤트» 처럼 프레임 가장자리에 붙는 것들이 대상이다 — 하나라도 0~100% 밖으로 삐져나오면 여기서 잡는다.
+            foreach (var n in new[] { "Events", "SubRow", "ChapterCard", "Menu", "Start" })
+            {
+                var t = UiKit.Find(lobby, n) as RectTransform;
+                if (t == null) continue;
+                AssertInsideFrame("로비 «" + n + "»", t);
+            }
             Assert.IsTrue(HasText(s => s.StartsWith("챕터")), "챕터 제목");
             // T34 — 레퍼런스 01_lobby.jpg 구도 단언: 상단 바(아바타·전투력·골드·보석) · 메뉴 · 사이드 1+3 · 카드+◀▶ · 보조 2 · START · 이벤트 · 탭 5 (T78 로 배너·성·스타터팩·7일 챌린지 삭제)
             {
