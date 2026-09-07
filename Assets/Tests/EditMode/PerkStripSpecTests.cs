@@ -11,7 +11,7 @@ namespace KkomaKnight.Tests
     {
         static Layout.PerkStripSpec RefFrame()
         {
-            // 1080×2337 프레임에서 HudPerkStrip(80% × 4.0%) 의 실제 크기
+            // 1080×2337 프레임에서 HudPerkStrip(T142 주인 값 = 80.4% × 4.186%) 의 실제 크기
             return new Layout.PerkStripSpec(1080f * Layout.HudPerkStrip.W / 100f, 2337f * Layout.HudPerkStrip.H / 100f);
         }
 
@@ -25,8 +25,10 @@ namespace KkomaKnight.Tests
             Assert.That(m.Pad / m.Height, Is.EqualTo(7f / 34f).Within(1e-4), "«+N» 안쪽 여백 = 7/34");
             Assert.That(m.Font, Is.EqualTo(System.Math.Max(TextSize.Aux, System.Math.Round(m.Height * 12f / 34f))).Within(0.5), "«+N» 글자 = 12/34 · 보조 하한(36) 이상(T63)");
             Assert.That(m.Cell, Is.LessThan(m.Height), "셀은 줄보다 낮다(세로로 안 넘침)");
-            // 종전 상수(78×84 셀 · 간격 8 · 최대 11개 = 938px) 가 864px 줄을 넘쳤던 것과 달리, 셀은 줄 높이(≈93px)의 82% ≈ 77px
-            Assert.That(m.Cell, Is.EqualTo(93.48f * 28f / 34f).Within(0.5f));
+            // 종전 상수(78×84 셀 · 간격 8 · 최대 11개 = 938px) 가 줄 폭을 넘쳤던 것과 달리, 셀은 «줄 높이의 28/34» 로 따라간다.
+            // 픽셀 숫자를 박지 않고 줄 높이에서 뽑는다 — 줄 높이는 주인이 인스펙터로 바꿀 수 있다(T142 에서 4.0% → 4.186% 로 바뀌었다).
+            float rowPx = 2337f * Layout.HudPerkStrip.H / 100f;
+            Assert.That(m.Cell, Is.EqualTo(rowPx * 28f / 34f).Within(0.5f));
         }
 
         [Test]
@@ -59,11 +61,31 @@ namespace KkomaKnight.Tests
         {
             var m = RefFrame();
             int fit = m.Fit;
-            Assert.That(fit, Is.GreaterThanOrEqualTo(8).And.LessThanOrEqualTo(11), "864px 줄에 77px 셀+11px 간격 → 9개");
+            Assert.That(fit, Is.GreaterThanOrEqualTo(8).And.LessThanOrEqualTo(11), "868px 줄에 81px 셀+12px 간격 → 9개(T142 값)");
             Assert.That(m.Shown(fit), Is.EqualTo(fit), "딱 들어가면 «+N» 없이 전부");
             Assert.That(m.Shown(fit + 1), Is.LessThan(fit + 1), "하나 더 생기면 «+N» 으로 접힌다");
             Assert.That(m.Shown(fit + 1), Is.GreaterThanOrEqualTo(fit - 2), "«+N» 칸 하나 때문에 셀이 두 개 넘게 빠지진 않는다");
             Assert.That(m.Shown(12), Is.GreaterThan(0)); Assert.That(m.Shown(0), Is.EqualTo(0)); Assert.That(m.Shown(1), Is.EqualTo(1));
+        }
+
+        /// <summary>
+        /// T142 — 주인이 인스펙터로 준 두 사각형(<see cref="Layout.HudPerkStrip"/> 줄 · <see cref="Layout.HudInfo"/> 책 버튼)이
+        /// 프레임(0~100%) 안에 들고, 화면 바닥에 붙고, 서로 안 겹치는가. 값이 흔들리면 여기서 바로 걸린다.
+        /// </summary>
+        [Test]
+        public void OwnerGivenBottomRectsFitTheFrameAndDoNotOverlap()
+        {
+            var strip = Layout.HudPerkStrip; var book = Layout.HudInfo;
+            foreach (var r in new[] { strip, book })
+            {
+                Assert.That(r.X, Is.GreaterThanOrEqualTo(0f)); Assert.That(r.Y, Is.GreaterThanOrEqualTo(0f));
+                Assert.That(r.X + r.W, Is.LessThanOrEqualTo(100.01f), "가로가 프레임을 안 넘는다");
+                Assert.That(r.Y + r.H, Is.LessThanOrEqualTo(100.01f), "세로가 프레임을 안 넘는다");
+            }
+            Assert.That(strip.Y + strip.H, Is.EqualTo(100f).Within(0.05f), "줄은 화면 바닥에 붙는다(주인 앵커 Max.y = 0.04186 · Min.y = 0)");
+            Assert.That(book.Y + book.H, Is.EqualTo(100f).Within(0.05f), "책 버튼도 바닥에 붙는다");
+            Assert.That(book.X + book.W, Is.EqualTo(100f).Within(0.05f), "책 버튼은 오른쪽 끝까지 간다(Max.x = 1)");
+            Assert.That(strip.X + strip.W, Is.LessThanOrEqualTo(book.X + 0.01f), "줄 오른쪽 끝(83.4) ≤ 책 왼쪽(84.0) — 둘은 안 겹친다");
         }
 
         [Test]

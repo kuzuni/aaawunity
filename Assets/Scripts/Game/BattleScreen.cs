@@ -126,7 +126,8 @@ namespace KkomaKnight.Game
                 UiKit.Bordered(cell);
             }
             // 보유 특전 = 책 모양 버튼(특전 선택 팝업의 Book 과 같은 그림 · 위에 개수) — 주인 지시 2026-09-05
-            var info = UiKit.Rect(Root, "PerkBook"); UiKit.Pct(info, Layout.HudInfo.X - 1, Layout.HudInfo.Y - 1.5f, Layout.HudInfo.W + 2, Layout.HudInfo.H + 3);
+            // T142 — 자리는 주인이 인스펙터로 준 값 그대로다(Layout.HudInfo · 화면 바닥 + 오른쪽 끝). 종전처럼 여기서 ±여유를 더하지 않는다.
+            var info = UiKit.Rect(Root, "PerkBook"); UiKit.Pct(info, Layout.HudInfo);
             var book = UiKit.Icon(info, "Book", "ui.bookBlue"); UiKit.Stretch(book.rectTransform);
             _perkCount = UiKit.Text(info, "0", 30, Palette.White, TextAnchor.MiddleCenter, false, true); UiKit.Pct(_perkCount.rectTransform, 45, 40, 55, 50);
             UiKit.Clickable(info, () => { if (G != null && !App.Overlay.IsOpen) App.Overlay.PerkBook(G, null); });

@@ -106,8 +106,14 @@ namespace KkomaKnight.Core
         public static readonly R HudStats = new R(3.0f, 75.0f, 94.0f, 22.0f);
         public static readonly R HudStatCell = new R(3.0f, 75.0f, 47.0f, 5.2f);
         public const float HudStatRowPitch = 5.2f, HudStatCellW = 47.0f, HudStatCellH = 5.2f, HudStatColR = 50.0f;
-        public static readonly R HudInfo = new R(85.0f, 94.5f, 10.0f, 4.0f);
-        public static readonly R HudPerkStrip = new R(3.0f, 94.5f, 80.0f, 4.0f);   // 주인 지시 ② (표 밖 · 인포 버튼 행 왼쪽)
+        /// <summary>
+        /// 보유 특전 «책» 버튼 — <b>주인이 인스펙터 값으로 직접 지정</b>(T142 · 2026-09-07 05:2X · 앵커 Min(0.84, 0) ~ Max(1, 0.044)).
+        /// 레퍼런스 실측이 아니라 주인이 준 값이다 — 화면 바닥에 붙고 오른쪽 끝(100%)까지 간다.
+        /// <see cref="BattleScreen"/> 이 이 사각형을 <b>그대로</b> 쓴다(종전에는 여기에 ±여유를 더해 그렸다).
+        /// </summary>
+        public static readonly R HudInfo = new R(84.0f, 95.6f, 16.0f, 4.4f);
+        /// <summary>전투 HUD «얻은 특전 미리보기 줄» — 주인이 인스펙터 값으로 지정(T142 · 앵커 Min(0.03, 0) ~ Max(0.834, 0.04186) · 화면 바닥에 붙는다 · 책 버튼과 안 겹친다: 83.4 &lt; 84.0).</summary>
+        public static readonly R HudPerkStrip = new R(3.0f, 95.814f, 80.4f, 4.186f);
 
         // ③ 장비 탭 — 캐릭터 장비.jpg
         /// <summary>장비 무대 — 아래 끝이 갈색 띠(<c>GearScreen.Band</c> 위 = 41.0%)와 맞닿는다(T112 ⓐ · 주인 2026-09-07 «Stage 아래가 Band 랑 맞닿을 정도로 늘려서 스탯이 Stage 내부에 있는 느낌»).
