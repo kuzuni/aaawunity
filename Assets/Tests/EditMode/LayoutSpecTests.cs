@@ -143,7 +143,7 @@ namespace KkomaKnight.Tests
             Same(s, "①", "상단 바(아바타+재화 줄 전체)", Layout.LobbyTopBar); Same(s, "①", "아바타(정사각)", Layout.LobbyAvatar); Same(s, "①", "재화 pill 줄", Layout.LobbyPills);
             Same(s, "①", "메뉴(☰) 버튼", Layout.LobbyMenu);
             // T78 — 이벤트 배너·성 버튼 행은 표 ① 에서 삭제 · T96-menu — 사이드 기둥 둘(특권 · 출석/데일리/퀘스트)도 메뉴로 옮겨 표에서 뺐다
-            Same(s, "①", "챕터 제목", Layout.LobbyChapTitle); Same(s, "①", "챕터 밑줄·선택 화살표", Layout.LobbyChapUnderline); Same(s, "①", "챕터 카드(스테이지 그림)", Layout.LobbyCard);
+            Same(s, "①", "챕터 제목", Layout.LobbyChapTitle); Same(s, "①", "챕터 밑줄·선택 화살표(참고·컨테이너)", Layout.LobbyChapUnderline);   // T200 — 밑줄 «장식» 은 T111 ⓐ 로 껐지만 숫자는 제목 덩어리를 정하므로 표에 남는다(채점만 뺀다) Same(s, "①", "챕터 카드(스테이지 그림)", Layout.LobbyCard);
             Same(s, "①", "좌 화살표", Layout.LobbyArrowL); Same(s, "①", "우 화살표", Layout.LobbyArrowR); Same(s, "①", "보조 버튼 2개 줄", Layout.LobbySubRow);
             Same(s, "①", "START 버튼", Layout.LobbyStart); Same(s, "①", "하단 탭바", Layout.TabBar);
         }
