@@ -132,7 +132,7 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
   });
   const page = await browser.newPage({ viewport: { width: 540, height: 1170 } });
   const errors = [], audioWarn = [], netWarn = [];
-  let readyLobby = false, readyBattle = false, loaded = false, tweens = null, screen = null;
+  let readyLobby = false, readyBattle = false, loaded = false, tweens = null, screen = null, lobbyP50 = null;
   // where = 그 console 메시지가 가리키는 자원 URL(«Failed to load resource» 는 막힌 그 파일을 가리킨다)
   const noteError = (text, where) => {
     if (!strictAudio && AUDIO_RE.test(text)) { audioWarn.push(text); log('AUDIO⚠', text); return; }
@@ -181,27 +181,35 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
   }
   log('state', `loaded=${loaded} readyLobby=${readyLobby} errors=${errors.length} audioWarn=${audioWarn.length} netWarn=${netWarn.length}`);
 
-  // T72 4항 — 질감 트윈(패턴 uvRect 흐름 · 아이콘 뒤 빛살 회전)이 프레임을 갉지 않는지 «배포된 화면에서 10초» 재서 한 줄 남긴다.
-  // 판정에는 안 쓴다(headless SwiftShader 는 폰 GPU 가 아니다 · 회차 사이 비교용 수치) — --no-fps 로 끌 수 있다.
-  if (loaded && !flag('no-fps')) {
-    // T129 ⓑ — «왜 느려지나» 를 세려면 «몇 개가 도나» 부터다. fps 를 재기 직전에 한 번 묻는다(화면은 안 바뀐다).
-    // 이 case 가 없는 옛 빌드는 «모르는 목적지» 를 로그 한 줄로 남기고 끝난다(에러 0) → tweens 는 null 로 남고 perf 줄에서 «?» 가 된다.
+  // T129 회차 3 — 프레임 창 하나를 재는 자(로비·전투가 **같은 셈**을 쓰게 함수로 뺐다).
+  // ⚠ avg·min 셈은 **한 글자도 안 바꿨다** — 여태 쌓은 표(39.8·30.2·…·15.5)와 이어서 읽어야 한다(결정 509).
+  //    간격 목록 dts 만 같이 들고 나와 밖에서 «믿을 수 있는 수»(frameStats)를 뽑는다.
+  const measureFrames = ms => page.evaluate(msIn => new Promise(res => {
+    const t0 = performance.now(); let n = 0, prev = t0, worst = Infinity; const dts = [];
+    const step = t => {
+      n++; const dt = t - prev; prev = t;
+      if (n > 1 && dt > 0) { worst = Math.min(worst, 1000 / dt); dts.push(dt); }
+      if (t - t0 < msIn) requestAnimationFrame(step); else res({ avg: n / ((t - t0) / 1000), min: worst === Infinity ? 0 : worst, dts });
+    };
+    requestAnimationFrame(step);
+  }), ms).catch(e => { log('fps-fail', e.message); return null; });
+  // 화면 안 바꾸고 «몇 개가 도나» 만 묻는다(App.DebugGo perf · 답은 콘솔 훅이 tweens·screen 에 담는다).
+  const askPerf = async () => {
+    tweens = null; screen = null;
     await page.evaluate(() => {
       const inst = window.unityInstance; if (inst && inst.SendMessage) return inst.SendMessage('App', 'DebugGo', 'perf');
       const M = window.Module || (window.unityFramework && window.unityFramework.Module); if (M && M.SendMessage) M.SendMessage('App', 'DebugGo', 'perf');
     }).catch(e => log('perf-fail', e.message));
     await page.waitForTimeout(500);   // 콘솔 답이 넘어올 틈
-    // ⚠ avg·min 셈은 **한 글자도 안 바꾼다** — 여태 쌓은 표(39.8·30.2·…·15.5)와 이어서 읽어야 한다(결정 509).
-    //    간격 목록 dts 만 같이 들고 나와 아래에서 «믿을 수 있는 수» 를 따로 뽑는다.
-    const fps = await page.evaluate(() => new Promise(res => {
-      const t0 = performance.now(); let n = 0, prev = t0, worst = Infinity; const dts = [];
-      const step = t => {
-        n++; const dt = t - prev; prev = t;
-        if (n > 1 && dt > 0) { worst = Math.min(worst, 1000 / dt); dts.push(dt); }
-        if (t - t0 < 10000) requestAnimationFrame(step); else res({ avg: n / ((t - t0) / 1000), min: worst === Infinity ? 0 : worst, dts });
-      };
-      requestAnimationFrame(step);
-    })).catch(e => { log('fps-fail', e.message); return null; });
+  };
+
+  // T72 4항 — 질감 트윈(패턴 uvRect 흐름 · 아이콘 뒤 빛살 회전)이 프레임을 갉지 않는지 «배포된 화면에서 10초» 재서 한 줄 남긴다.
+  // 판정에는 안 쓴다(headless SwiftShader 는 폰 GPU 가 아니다 · 회차 사이 비교용 수치) — --no-fps 로 끌 수 있다.
+  if (loaded && !flag('no-fps')) {
+    // T129 ⓑ — «왜 느려지나» 를 세려면 «몇 개가 도나» 부터다. fps 를 재기 직전에 한 번 묻는다(화면은 안 바뀐다).
+    // 이 case 가 없는 옛 빌드는 «모르는 목적지» 를 로그 한 줄로 남기고 끝난다(에러 0) → tweens 는 null 로 남고 perf 줄에서 «?» 가 된다.
+    await askPerf();
+    const fps = await measureFrames(10000);
     if (fps) {
       log('fps', `로비 10초 · 평균 ${fps.avg.toFixed(1)} fps · 최저 ${fps.min.toFixed(1)} fps (T72 질감 트윈 · headless SwiftShader 기준)`);
       // T129 ⓐ — «추세를 보려면 회차마다 로그를 눈으로 읽어야» 했다. 한 줄을 기계가 읽을 꼴로 같이 남긴다:
@@ -213,6 +221,7 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
       //   warm  = 앞 절반/뒤 절반 — 두 수가 크게 다르면 그 회차의 fps= 는 «데우는 비용» 을 재고 있는 것이다
       //   screen= 무엇을 재고 있었는지(이 자는 로비만 잰다 · 결정 509)
       const st = frameStats(fps.dts || []);
+      if (st) lobbyP50 = st.p50;   // T129 회차 3 — 같은 런 «안» 의 비를 내려고 들고 있는다
       const extra = st ? ` fps50=${st.p50.toFixed(1)} p95ms=${st.p95ms.toFixed(1)} warm=${st.a.toFixed(1)}/${st.b.toFixed(1)}` : '';
       log('perf', `fps=${fps.avg.toFixed(1)} min=${fps.min.toFixed(1)} tweens=${tweens === null ? '?' : tweens} build=${build || '?'} target=${mode()}${extra} screen=${screen || '?'}`);
     }
@@ -229,7 +238,23 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
     else log('send', 'DebugGo battle via ' + sent);
     const d2 = Date.now() + 20000;
     while (Date.now() < d2 && !readyBattle) await page.waitForTimeout(250);
-    await page.waitForTimeout(10000);   // 전투 10초 동안 에러 0
+    // T129 회차 3 — 이 10초는 여태 «전투 동안 에러 0» 을 보려고 **놀며 기다리던** 시간이다.
+    // 같은 10초에 프레임도 같이 재면 **벽시계 비용 0** 으로 «같은 런 · 같은 기계» 의 두 번째 수가 생긴다.
+    // 왜 이것이 필요한가 — fps 절대값은 런 «사이»(러너 기계·부하)에서 45%까지 흔들려 회차 비교에 못 쓴다(결정 524).
+    // 같은 런 안의 **비**는 그 기계 몫이 분자·분모에서 상쇄되므로 «무엇이 프레임을 먹는가» 에 답할 수 있다.
+    if (!flag('no-fps') && readyBattle) {
+      await askPerf();
+      const f2 = await measureFrames(10000);
+      if (f2) {
+        const st2 = frameStats(f2.dts || []);
+        const ratio = (st2 && lobbyP50) ? (st2.p50 / lobbyP50) : null;
+        log('perf2', `fps=${f2.avg.toFixed(1)} min=${f2.min.toFixed(1)} tweens=${tweens === null ? '?' : tweens} screen=${screen || 'battle'}`
+          + (st2 ? ` fps50=${st2.p50.toFixed(1)} p95ms=${st2.p95ms.toFixed(1)} warm=${st2.a.toFixed(1)}/${st2.b.toFixed(1)}` : '')
+          + (ratio ? ` ratio=${ratio.toFixed(2)}` : '') + ' vs=lobby');
+      }
+    } else {
+      await page.waitForTimeout(10000);   // 전투 10초 동안 에러 0(--no-fps 이거나 전투에 못 갔을 때)
+    }
     log('state', `readyBattle=${readyBattle} errors=${errors.length} audioWarn=${audioWarn.length} netWarn=${netWarn.length}`);
   }
   if (shotPath) { try { fs.mkdirSync(require('path').dirname(shotPath), { recursive: true }); await page.screenshot({ path: shotPath }); log('shot', shotPath); } catch (e) { log('shot-fail', e.message); } }
