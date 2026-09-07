@@ -1705,7 +1705,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. **게이트**: `EventsScreenTests` — 띠 α ≥ 0.98 · 띠가 순위 목록보다 **뒤 형제**(= 위에 그려진다).
 4. 판정 = 그 커밋을 담은 첫 완주 런의 PlayMode `EventsScreenTests` Passed + `screens` 23 PNG 확대(안내 글자만 보인다) + 주인 폰.
 
-### T125 — 전투 화면(02·03) 두 결함: **골드 pill 에 코인 아이콘이 둘** · **발밑 2단 바의 숫자가 바 폭을 넘어 뭉갠다** (워커 실측 등재 2026-09-07 02:0X · 화면만 · 엔진·수치 불변)
+### T125 ✅ — 전투 화면(02·03) 두 결함: **골드 pill 에 코인 아이콘이 둘** · **발밑 2단 바의 숫자가 바 폭을 넘어 뭉갠다** (워커 실측 등재 2026-09-07 02:0X · 화면만 · 엔진·수치 불변) — **✅ 눈 확인 끝(run 386 실측 · sess-1913-2015 · 워커 E): ⓐ 코인 1개 + «0» · ⓑ 빨간 단(52×13px) 안 흰 픽셀 17.9%(등재 49% → 지금 17.9%)이고 채움이 또렷하다. 3항(스탯 라벨 대비)은 T121 몫으로 남긴다 · 남은 것은 주인 폰뿐.**
 
 > 재료: `screens` run **239**(`e1bff70c`) 의 `02_battle.png` 를 `tools/png_crop.py` 로 4~5배 확대(sess-2157-4152 · 워커 H). 그대로 재현하려면:
 > `python3 tools/png_crop.py 02_battle.png top.png 0 55 250 45 4` (상단 pill) · `python3 tools/png_crop.py 02_battle.png feet.png 30 460 130 55 5` (발밑 바).
@@ -2720,6 +2720,8 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > 
 > lock 이 살아 있어 **손대지 않았다**. 이 표는 그 워커가 바로 쓰라고 남기는 재료다. **다른 워커들에게**: 이것이 풀릴 때까지 `02`·`03` 으로 §5 눈 확인을 하면 안 된다(내 T125 판정도 그래서 미뤘다 · 결정 478).
 > 
+> **⚑ 16:2X 빨강 분류(워커 E · CI [#386](https://github.com/kuzuni/aaawunity/actions/runs/34140837311) `01b6572e` · 16:06) — 빨강은 «하나» 이고 임자가 있다.** `UiTextureTests.LobbyAndPrivilegePageCarryTheTexture`(`UiTextureTests.cs:640` · «보상 칸 그림 뒤 빛살(T72 ② · 작은 조각)») = **T190**(워커 C · lock 살아 있음)의 **일곱째 자리**다 — 회차 2 가 여섯 자리를 뒤집었는데 로비·특권 페이지의 그 한 줄이 남았다(같은 갈래 · 값이 아니라 계약이 바뀐 자리라 `check_stale_asserts` 로는 안 걸린다). **이 하나만 꺼지면 다시 초록이고 배포가 흐른다**(15:05 이후 새 빌드 없음). 나머지 테스트는 전부 통과했다 — T174 회차 2 의 «자리가 변하나» 고침도 통과했다.
+>
 > **⚑ 15:3X 빨강 분류(워커 E · CI [#380](https://github.com/kuzuni/aaawunity/actions/runs/34136539941) `6f53b2f3` · 유니티 잡 실패 · 임자 없는 것 0)** — 다음 워커가 로그를 다시 파헤치지 않게 넷을 갈라 둔다. ① `UiSmokeTests.ShopBoxesAndChestOpenPopup`(«그 칸이 아이템 칸이라는 판정 = `UiKit.IsItemCell`») · ② `UiTextureTests.DungeonArenaScreensCarryPatternAndRewardLights`(«Card:hell/Cell:0 보상 아이콘 뒤 빛살») · ④ `UiTextureTests.ResultPopupsCarryPatternAndRewardLights`(«클리어 보상(골드) 그림 뒤 빛살(T72 ②)») → 셋 다 **T190**(아이템·보상 칸에서 빛 빼기 · 워커 C · lock 살아 있음): ①은 그 회차의 **새 판정**이 실제로는 안 맞는 것이고, ②④는 **빛이 있어야 한다던 옛 단언**이 지시와 뒤집혀 남은 것이다(값이 아니라 계약이 바뀐 자리라 `check_stale_asserts` 로는 안 걸린다). ③ `UiTextureTests.PatternLightGradientHelpersFlowSpinAndLayer`(«스크롤 밖 칸에서는 알갱이도 멈춘다(T174 4항 ⓑ)») → **T174**(빛 알갱이 · 워커 L · lock 살아 있음). **읽는 법**: `get_job_logs` 를 job_id 로 · `tail_lines=6000` → 저장 파일에서 `result="Failed"` 다음 줄들의 `CDATA` 첫 줄이 «어느 단언인가» 다(그 한 줄이면 임자가 갈린다).
 
 > **⚑ 16:0X 빨강 분류(워커 L · CI [#386](https://github.com/kuzuni/aaawunity/actions/runs/34140837311) `01b6572e` · 유니티 잡 실패 · 임자 없는 것 0)** — 이 런의 빨강은 **딱 하나**다(전 테스트 중 이것뿐 · `UiTextureTests` 는 10개 중 9 Passed). ① `UiTextureTests.LobbyAndPrivilegePageCarryTheTexture` — «보상 칸 그림 뒤 빛살(T72 ② · 작은 조각)» `Expected: True / But was: False` · `UiTextureTests.cs:640` (**특전 페이지(11) 의 «Cell» 보상 칸**) → **T190**(아이템·보상 칸에서 빛 빼기 · 워커 C · lock 살아 있음). **결정 505 가 센 여섯 자리 «밖» 의 일곱째다** — 그 회차가 뒤집은 것은 던전 카드·세부 팝업·순위 보상·상인 상품·클리어·사망이고, **특전 페이지 보상 칸**은 목록에 없었다. 코드가 아니라 «빛이 있다» 고 단언하던 옛 자가 하나 더 남은 것이다(결정 505 와 같은 꼴). ※ 앞선 #381 의 빨강 넷 중 «스크롤 밖 칸에서는 알갱이도 멈춘다»(T174 · 워커 L)는 **#386 에서 초록**이다 — 그 줄은 끝났다.
