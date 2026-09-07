@@ -313,6 +313,19 @@ namespace KkomaKnight.Game
         struct QuestRowParts { public RectTransform Medal, Title, Bar, Go; }
 
         /// <summary>
+        /// 슬라이더의 «채움» 그림 — <see cref="Slider.fillRect"/> 를 먼저 보고, 그 참조가 비어 있으면 이름 <c>Fill</c> 로 찾는다(T212).
+        /// <para>둘을 다 보는 까닭 = <c>fillRect</c> 는 <b>프리팹에 직렬화된 참조</b>라 조각을 다시 저장하거나 중첩 프리팹을
+        /// 갈아 끼우면 조용히 비는 자리다. 그때 «색이 안 걸린 채로» 지나가지 않게 한다(그림 이름은 `Slider_02_BasePrefab` 부터 <c>Fill</c> 로 고정이다).</para>
+        /// </summary>
+        public static Image BarFill(Slider slider)
+        {
+            if (slider == null) return null;
+            if (slider.fillRect != null) { var im = slider.fillRect.GetComponent<Image>(); if (im != null) return im; }
+            var f = UiKit.Find(slider.transform, "Fill");
+            return f != null ? f.GetComponent<Image>() : null;
+        }
+
+        /// <summary>
         /// 미션 줄 한 개 — 프리팹 <c>ListFrame_08</c>(칸 바탕) 안의 <c>ListItem_Mission_02</c> 조각을 표 ⑳ 의 줄 안 자리로 옮긴다.
         /// 격자 칸 자신이 <c>ListItem_Mission_02</c> 이고 그 안에 바탕 <c>ListFrame_08</c> · 제목 · <c>Slider_02_Yellow</c> · <c>Group_Price</c> · <c>Check</c> 가 있다(이름은 <c>Quest:i</c> 로 바꾼다 · 프리팹 유래 증거는 안쪽 <c>ListFrame_08</c>).
         /// 옮기는 것: 보상(<c>Group_Price</c> = 아이콘 + 점수 · 가로 배치를 끄고 레퍼런스처럼 «아이콘 위 · 숫자 아래») · 제목 · 진행바(<c>Slider_02_Yellow</c>) · 받기 표시(<c>Check</c> · 슬라이더 밑에 있던 것을 줄 오른쪽으로).
@@ -364,11 +377,7 @@ namespace KkomaKnight.Game
                 // rgb(130,215,60) 으로 tint 한 것뿐이라(두 프리팹의 차이는 `m_Color` 세 줄) **색 한 줄이면 그 프리팹과 같은 그림**이다.
                 // 색은 우리 팔레트 `Palette.Green`(#85D048 = rgb(133,208,72)) — 그 프리팹 값과 눈으로 같은 초록이고,
                 // «초록 = 열림/완료» 를 이미 쓰는 다른 자리(장비 세부 열린 줄)와 **한 곳에서** 나온다.
-                if (done && slider.fillRect != null)
-                {
-                    var fill = slider.fillRect.GetComponent<Image>();
-                    if (fill != null) fill.color = Palette.Green;
-                }
+                if (done) { var fill = BarFill(slider); if (fill != null) fill.color = Palette.Green; }
                 var st = sr.GetComponentInChildren<Text>(true);
                 // 바 안 숫자는 UiKit.MakeBar 와 같은 규격(bestFit 32~40 · 가로 넘침 허용) — 바 칸(LpBarH 44px)이 40 한 줄(55px)보다 낮다
                 if (st != null) { st.text = (done ? QuestGoals[i] : 0) + "/" + QuestGoals[i]; st.fontSize = TextSize.Body; st.resizeTextForBestFit = true; st.resizeTextMinSize = TextSize.BestFitMin; st.resizeTextMaxSize = TextSize.Body; st.horizontalOverflow = HorizontalWrapMode.Overflow; OnDark(st); TextAudit.Mark(st, TextKind.Body); }

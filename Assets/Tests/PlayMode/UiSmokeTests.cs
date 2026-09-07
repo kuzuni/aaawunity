@@ -506,8 +506,9 @@ namespace KkomaKnight.Tests.Play
                     {
                         var q = UiKit.Find(_app.Overlay.Root, "Quest:" + qi); Assert.IsNotNull(q, "퀘스트 줄 " + qi);
                         var sl = q.GetComponentInChildren<Slider>(true); Assert.IsNotNull(sl, "줄 " + qi + " 진행바");
-                        Assert.IsNotNull(sl.fillRect, "줄 " + qi + " 진행바 채움 칸(fillRect)");
-                        var fi = sl.fillRect.GetComponent<Image>(); Assert.IsNotNull(fi, "줄 " + qi + " 채움 그림");
+                        // 채움 그림 찾기는 화면 코드와 같은 자를 쓴다(`fillRect` 가 비면 이름 `Fill` 로) — **찾는 법**은 같아도
+                        // 재는 것은 «무슨 색인가» 라 거울이 아니다(결정 555). 여기서 제 손으로 `fillRect` 만 보면 그 참조가 빈 날 화면이 옳아도 빨개진다.
+                        var fi = LobbyPopups.BarFill(sl); Assert.IsNotNull(fi, "줄 " + qi + " 채움 그림(fillRect 또는 «Fill»)");
                         bool green = Mathf.Abs(fi.color.r - Palette.Green.r) < 0.02f
                                   && Mathf.Abs(fi.color.g - Palette.Green.g) < 0.02f
                                   && Mathf.Abs(fi.color.b - Palette.Green.b) < 0.02f;
