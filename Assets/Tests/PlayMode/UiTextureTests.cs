@@ -135,11 +135,9 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(g.rect.width, g.rect.height, 0.5f, "알갱이는 정사각(preserveAspect 와 짝)");
                 Assert.Less(g.rect.width, lrt.rect.width, "알갱이는 빛살보다 작다(먼지지 두 번째 빛살이 아니다)");
             }
-            // «보이는 칸만»(T72 4항) 규약에 알갱이도 같이 탄다 — 스크롤 밖에서 멈추고 돌아오면 다시 돈다
-            UiKit.SetLightSpinning(host, false);
-            Assert.IsFalse(UiKit.IsTweening(drt), "스크롤 밖 칸에서는 알갱이도 멈춘다(T174 4항 ⓑ)");
-            UiKit.SetLightSpinning(host, true);
-            Assert.IsTrue(UiKit.IsTweening(drt), "돌아오면 다시 돈다");
+            // «보이는 칸만»(T72 4항) 규약에 알갱이도 같이 탄다 — 그 «멈춘다/다시 돈다» 는 아래 timeScale 0 실측 칸에서 잰다.
+            // ⚠ 여기서 IsTweening 으로 재면 안 된다 — 멈춘(Pause) 트윈도 «활성» 이라 늘 참이다(이 파일 아래 «CI #145 에서 확인» 줄과 같은 함정 · 결정 508).
+            // «시퀀스가 이 묶음을 겨냥한다»(= 재우고 깨울 손잡이가 걸려 있다)는 바로 위 TweenCountOn 줄이 이미 못 박았다.
 
             // ③ 그라데이션
             UiKit.Gradient(host);
@@ -157,6 +155,7 @@ namespace KkomaKnight.Tests.Play
             // 흐름·회전은 시간이 멈춘 팝업 중에도(unscaled) — timeScale 0 에서 실측
             Time.timeScale = 0f;
             var p0 = raw.uvRect.position; var r0 = lrt.localRotation;
+            var d0 = (RectTransform)drt.GetChild(0); float dm0 = d0.anchoredPosition.magnitude;   // T174 알갱이 0번(시퀀스 0초에 꽂혀 있어 이 순간 반드시 흐르는 중이다)
             yield return RealSeconds(0.4f);
             var p1 = raw.uvRect.position;
             Assert.Less(p1.x, p0.x, "패턴 uvRect.x 가 줄어야 무늬가 오른쪽으로 간다(결정 157)"); Assert.Less(p1.y, p0.y, "uvRect.y 가 줄어야 무늬가 위로 간다");
@@ -164,12 +163,17 @@ namespace KkomaKnight.Tests.Play
             float ang = Vector3.SignedAngle(r0 * Vector3.up, lrt.localRotation * Vector3.up, Vector3.forward);
             Assert.Less(ang, -1f, "빛살은 시계방향(z 각이 줄어든다) · 0.4s 에 " + ang.ToString("0.0") + "°");
             Assert.Greater(ang, -30f, "천천히(한 바퀴 " + UiKit.LightPeriod + "s)");
+            // 알갱이(T174)도 같은 unscaled 결로 흐른다 — 여기서 «흐른다 → 멈춘다 → 다시 흐른다» 를 빛살과 한 자리에서 잰다.
+            // 재는 것은 «트윈이 있나» 가 아니라 «자리가 변하나» 다(아래 상점 칸 줄과 같은 까닭 · 결정 508).
             UiKit.SetLightSpinning(host, false);
-            var r2 = lrt.localRotation; yield return RealSeconds(0.25f);
+            var r2 = lrt.localRotation; float dm1 = d0.anchoredPosition.magnitude; yield return RealSeconds(0.25f);
+            Assert.Greater(dm1, dm0 + 0.5f, "멈추기 전 0.4s 동안 알갱이가 가운데서 바깥으로 흘렀다(" + dm0.ToString("0.0") + " → " + dm1.ToString("0.0") + "px)");
             Assert.AreEqual(0f, Vector3.SignedAngle(r2 * Vector3.up, lrt.localRotation * Vector3.up, Vector3.forward), 0.01f, "SetLightSpinning(false) 면 멈춘다");
+            Assert.AreEqual(dm1, d0.anchoredPosition.magnitude, 0.01f, "스크롤 밖 칸에서는 알갱이도 멈춘다(T174 4항 ⓑ)");
             UiKit.SetLightSpinning(host, true);
             yield return RealSeconds(0.2f);
             Assert.Less(Vector3.SignedAngle(r2 * Vector3.up, lrt.localRotation * Vector3.up, Vector3.forward), -0.5f, "다시 켜면 돈다");
+            Assert.Greater(d0.anchoredPosition.magnitude, dm1 + 0.2f, "돌아오면 알갱이도 다시 흐른다");
             Time.timeScale = 1f;
 
             // 두 번 불러도 조각이 늘지 않는다(갱신만)
