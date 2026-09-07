@@ -71,8 +71,26 @@ namespace KkomaKnight.Tests.Play
             return null;
         }
 
+        /// <summary>지금 팝업 층에 서 있는 조각의 이름(= 카탈로그 키 · <c>UiKit.Spawn</c> 이 그 이름으로 세운다) — «다른 팝업으로 갔는가» 를 이것으로 가른다.</summary>
+        static string Top(Transform root)
+        {
+            if (root == null) return "";
+            for (int i = 0; i < root.childCount; i++)
+            {
+                var c = root.GetChild(i);
+                if (c != null && c.gameObject.activeSelf) return c.name;
+            }
+            return "";
+        }
+
         /// <summary>
-        /// <paramref name="open"/> 으로 연 팝업을 <see cref="CloseSpots"/> 중 하나를 «눌러» 닫을 수 있는지 본다.
+        /// <paramref name="open"/> 으로 연 팝업이 <b>«막힌 창» 이 아닌지</b> 본다 — <see cref="CloseSpots"/> 중 하나를 눌러
+        /// 팝업 층이 닫히거나, 적어도 <b>닫을 수 있는 다른 팝업으로 돌아가는지</b>.
+        /// <para>
+        /// «바로 닫힘» 만 보면 안 되는 까닭 — 이름 바꾸기 팝업의 닫기는 <b>«뒤로»</b>(아바타 팝업으로 되돌아감)다
+        /// (<c>Profile.cs</c> «close → OpenAvatar»). 그것은 결함이 아니라 일부러 그렇게 만든 길이고,
+        /// 돌아간 자리에서 닫히면 주인은 갇히지 않는다. 우리가 재려는 것은 «갇히지 않는가» 다.
+        /// </para>
         /// 후보마다 <b>새로 열어서</b> 하나씩 시도한다 — 안 닫히는 후보가 다른 일(예: 스킵)을 해 버려도 다음 판정이 안 흔들린다.
         /// </summary>
         IEnumerator AssertClosable(string what, Action open)
@@ -84,17 +102,32 @@ namespace KkomaKnight.Tests.Play
                 _app.Overlay.Close(); yield return Frames(1);
                 open(); yield return Frames(2); Canvas.ForceUpdateCanvases();
                 Assert.IsTrue(_app.Overlay.IsOpen, what + " 가 열려야 한다");
+                string before = Top(_app.Overlay.Root);
                 var b = Spot(_app.Overlay.Root, prefix);
                 if (b == null) continue;
                 seen.Add(prefix);
                 b.onClick.Invoke(); yield return Frames(2);
-                if (!_app.Overlay.IsOpen) found.Add(prefix);
+                if (!_app.Overlay.IsOpen) { found.Add(prefix); continue; }
+
+                // 아직 열려 있다 — 아무 데도 안 갔으면 «닫는 길» 이 아니다
+                string after = Top(_app.Overlay.Root);
+                if (after == before) continue;
+
+                // 다른 팝업으로 «뒤로» 갔다 → 거기서 닫히면 갇힌 것이 아니다
+                foreach (var p2 in CloseSpots)
+                {
+                    var b2 = Spot(_app.Overlay.Root, p2);
+                    if (b2 == null) continue;
+                    b2.onClick.Invoke(); yield return Frames(2);
+                    if (!_app.Overlay.IsOpen) break;
+                }
+                if (!_app.Overlay.IsOpen) found.Add(prefix + "→" + after);
             }
             _app.Overlay.Close(); yield return Frames(1);
             Debug.Log("[PopupClose] " + what + " — 누를 수 있는 자리 [" + string.Join(",", seen.ToArray())
-                      + "] · 그중 실제로 닫히는 것 [" + string.Join(",", found.ToArray()) + "]");
+                      + "] · 그중 빠져나가지는 것 [" + string.Join(",", found.ToArray()) + "]");
             Assert.Greater(found.Count, 0,
-                what + " 를 닫을 길이 하나도 없다(막힌 창) — 눌러 본 자리: [" + string.Join(",", seen.ToArray()) + "] · "
+                what + " 에서 빠져나갈 길이 하나도 없다(막힌 창) — 눌러 본 자리: [" + string.Join(",", seen.ToArray()) + "] · "
                 + "조각의 닫기 버튼을 배선하거나 OpenPrefab 을 closeOnDim: true 로 부른다(T169)");
         }
 
