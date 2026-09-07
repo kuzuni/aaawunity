@@ -15,7 +15,7 @@ namespace KkomaKnight.Tests.Play
     /// <item>ⓐ 설정을 열면 줄이 <b>다섯</b>(음악·효과음·언어·프로필 아이콘·닉네임)이고 새 줄 둘에 «변경» 버튼이 있다.</item>
     /// <item>ⓑ «프로필 아이콘 → 변경» 이 아바타 팝업(<c>ui.profileAvatar</c>)을 연다.</item>
     /// <item>ⓒ «닉네임 → 변경» 이 이름 짓기 팝업(<c>ui.profileNick</c>)을 열고 <b>입력칸이 살아 있다</b>.</item>
-    /// <item>ⓓ 새 줄 둘은 상자 «안» 이고, 상자 밖 아래 링크·버튼과 겹치지 않는다(상자가 9.6%p 길어졌다).</item>
+    /// <item>ⓓ 새 줄 둘은 상자 «안» 이고 링크는 상자 «밖» 아래다(상자는 9.6%p 길어지되 <b>위로</b> 늘어 링크 자리는 레퍼런스 그대로 · 결정 445).</item>
     /// <item>ⓔ 빨간 줄 0(<see cref="PlayLog"/> · T11 규약).</item>
     /// </list>
     /// 새로 만든 기능은 0 이다 — 두 팝업은 T96-profile 이 이미 만들었고 <b>상단 재화 바의 아바타 입구도 그대로</b>다(여기서는 입구를 하나 더 낸 것).
@@ -51,9 +51,15 @@ namespace KkomaKnight.Tests.Play
             if (b == null || !b.IsInteractable()) return false;
             b.onClick.Invoke(); return true;
         }
-        /// <summary>프레임 % 사각형(왼쪽 위 기준) — 표 ⑨ 값과 같은 좌표계로 잰다.</summary>
-        static Rect PctRect(RectTransform rt) => new Rect(rt.anchorMin.x * 100f, (1f - rt.anchorMax.y) * 100f,
-                                                          (rt.anchorMax.x - rt.anchorMin.x) * 100f, (rt.anchorMax.y - rt.anchorMin.y) * 100f);
+        /// <summary>
+        /// 화면에 그려진 «월드» 사각형(y 는 위로 증가) — 앵커 % 로 재면 안 된다: 줄은 <b>상자의 자식</b>이라 그 % 는 «상자 안 %» 이고
+        /// 링크는 <c>Root</c> 의 자식이라 «프레임 %» 다(CI #333 이 이 실수로 빨갰다 · 결정 458). 월드 사각형은 부모가 달라도 같은 자로 잰다.
+        /// </summary>
+        static Rect WorldRect(RectTransform rt)
+        {
+            var c = new Vector3[4]; rt.GetWorldCorners(c);
+            return Rect.MinMaxRect(c[0].x, c[0].y, c[2].x, c[2].y);
+        }
 
         [UnityTest]
         public IEnumerator SettingsHasProfileAndNicknameRowsThatOpenTheirPopups()
@@ -71,15 +77,17 @@ namespace KkomaKnight.Tests.Play
 
             // ⓓ 새 줄 둘은 상자 «안» · 상자 밖 아래 링크와 안 겹친다
             var box = UiKit.Find(ov, "ui.popup") as RectTransform; Assert.IsNotNull(box, "설정 = 공통 팝업 상자");
-            var boxR = PctRect(box);
+            Canvas.ForceUpdateCanvases();
+            var boxR = WorldRect(box); float eps = boxR.height * 0.02f;
             foreach (var n in new[] { "Profile", "Nickname" })
             {
-                var r = PctRect((RectTransform)UiKit.Find(ov, n));
-                Assert.GreaterOrEqual(r.y, boxR.y, n + " 줄은 상자 안(위)");
-                Assert.LessOrEqual(r.y + r.height, boxR.y + boxR.height, n + " 줄은 상자 안(아래)");
+                var r = WorldRect((RectTransform)UiKit.Find(ov, n));
+                Assert.GreaterOrEqual(r.yMin, boxR.yMin - eps, n + " 줄은 상자 안(아래 끝)");
+                Assert.LessOrEqual(r.yMax, boxR.yMax + eps, n + " 줄은 상자 안(위 끝)");
             }
-            var privacy = PctRect((RectTransform)UiKit.Find(ov, "Privacy"));
-            Assert.GreaterOrEqual(privacy.y, boxR.y + boxR.height - 0.5f, "링크는 상자 «밖» 아래 — 줄 둘이 늘어난 만큼 같이 내려갔다");
+            // 링크는 상자 «밖» 아래 = 상자 밑변보다 낮다(T156 회차 2 는 상자를 «위» 로 늘려 링크를 레퍼런스 자리에 그대로 두었다 · 결정 445)
+            var privacy = WorldRect((RectTransform)UiKit.Find(ov, "Privacy"));
+            Assert.LessOrEqual(privacy.yMax, boxR.yMin + eps, "링크는 상자 «밖» 아래");
 
             // ⓑ 프로필 아이콘 → 변경
             Assert.IsTrue(ClickNamed(ov, "ProfileBtn"), "«프로필 아이콘» 줄의 변경 버튼");
@@ -94,8 +102,11 @@ namespace KkomaKnight.Tests.Play
             yield return Frames(2);
             var nick = UiKit.Find(_app.Overlay.Root, "ui.profileNick");
             Assert.IsNotNull(nick, "이름 짓기 팝업이 열린다");
-            var input = nick.GetComponentInChildren<InputField>(true);
-            Assert.IsNotNull(input, "이름 입력칸(T96-profile 2단계)");
+            // 입력칸은 이름으로 찾는다(ProfileTests 와 같은 계약 · Adopt 가 TMP 입력칸을 uGUI InputField 로 갈아 끼운 것)
+            var inputT = UiKit.Find(_app.Overlay.Root, Profile.NickInputName);
+            Assert.IsNotNull(inputT, "이름 입력칸(" + Profile.NickInputName + ")");
+            var input = inputT.GetComponent<InputField>();
+            Assert.IsNotNull(input, "입력칸이 uGUI InputField 로 서 있다");
             Assert.IsTrue(input.IsActive() && input.IsInteractable(), "입력칸이 살아 있다");
             _app.Overlay.Close(); yield return Frames(2);
             Assert.IsFalse(_app.Overlay.IsOpen, "닫힌다");
