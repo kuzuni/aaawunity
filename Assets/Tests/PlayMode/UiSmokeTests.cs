@@ -1177,7 +1177,17 @@ namespace KkomaKnight.Tests.Play
             // T95(주인 2026-09-07 «소환 결과 창이 Shop_Chest_Open 이거로 돼야 하는데 안 됐더라») — 조각 그대로 · 우리 격자는 그 위에
             Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.chestOpen"), "뽑기 결과 = 주인 지정 조각(Shop_Chest_Open) 그대로(T95)");
             Assert.IsNull(UiKit.Find(_app.Overlay.Root, "ui.popup"), "공통 팝업 상자로 다시 조립하지 않는다(T95 1항)");
-            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Image_Chest"), "조각의 열린 상자 그림");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Image_Chest"), "조각의 상자 그림");
+            // T180 — 연출 «전» 을 여기서 잰다(아래 CompleteAllTweens 뒤에는 이미 열려 있다).
+            // 주인 «닫힌 게 위에서 떨어져서 착지하고 열린 상태 이미지로 바뀐 다음에 장비들 뭐 나왔는지».
+            var chestImg0 = UiKit.Find(_app.Overlay.Root, "Image_Chest").GetComponent<Image>();
+            Assert.IsNotNull(chestImg0, "상자 그림(Image)");
+            Assert.IsNotNull(chestImg0.sprite, "상자 스프라이트");
+            StringAssert.DoesNotContain("open", chestImg0.sprite.name.ToLowerInvariant(),
+                "팝업이 뜬 직후에는 «닫힌» 상자여야 한다 — 지금 스프라이트: " + chestImg0.sprite.name + " (T180)");
+            var chestGrp0 = UiKit.Find(_app.Overlay.Root, "Chest") as RectTransform;
+            Assert.IsNotNull(chestGrp0, "조각의 상자 묶음(Chest)");
+            float chestY0 = chestGrp0.anchoredPosition.y;   // «떨어지기 전» 높이 — 연출이 끝난 뒤와 맞대 본다(상수에 안 기댄다)
             Assert.IsTrue(HasText(s => s == "탭하여 닫기"), "결과 창: «탭하여 닫기»(조각의 Text_TouchContionue)");
             // T95 — 제목은 **조각 제 리본**에 쓴다(글자를 따로 얹으면 리본의 데모 글자 «Reward» 가 화면에 남는다 · CI #235)
             {
@@ -1201,6 +1211,11 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(UiKit.HasLight(itemFrame), "얻은 장비 칸 그림 뒤 빛살(ItemFrame 안)");
                 // T95 «찰지게» — 연출이 끝나면 모든 칸이 제 크기·불투명(트윈이 중간에 멈춘 채 남지 않는다)
                 UiKit.CompleteAllTweens(); yield return Frames(1);
+                // T180 — 끝난 상태 = «착지한 열린 상자». 스킵(CompleteAll(true))으로도 같은 상태라야 한다(지시서 4항 ⓓ).
+                StringAssert.Contains("open", chestImg0.sprite.name.ToLowerInvariant(),
+                    "연출이 끝나면 «열린» 상자여야 한다 — 지금 스프라이트: " + chestImg0.sprite.name + " (T180)");
+                Assert.Less(chestGrp0.anchoredPosition.y, chestY0 - 1f,
+                    "상자는 위에서 «떨어져» 내려와 있어야 한다(시작 y=" + chestY0.ToString("0.0") + " → 끝 y=" + chestGrp0.anchoredPosition.y.ToString("0.0") + " · T180)");
                 var got = UiKit.Find(_app.Overlay.Root, "Got");
                 for (int i = 0; i < got.childCount; i++)
                 {

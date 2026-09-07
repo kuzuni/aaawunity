@@ -525,7 +525,7 @@ namespace KkomaKnight.Game
                 S.Pulls++;
             }
             App.Persist(); Refresh();
-            Audio.Sfx("snd.gacha");   // 상자 열림(T28)
+            // 소리는 «착지하는 순간» 에 난다 — ChestResult 의 연출 시퀀스가 낸다(T180 · 결정 416). 여기서 미리 내면 상자가 아직 공중이다.
             var best = got[0]; foreach (var g in got) if (GearSystem.GearScore(g) > GearSystem.GearScore(best)) best = g;
             ChestResult(box, n, got, best);
         }
@@ -538,8 +538,17 @@ namespace KkomaKnight.Game
         /// <summary>그 칸이 없는 조각(옛 빌드·조각 교체)일 때만 쓰는 예전 자리 — 평소에는 안 쓴다.</summary>
         public const float ChestGridFallbackTopPct = 24f;
         public const float ChestNoteYPct = 52f;
-        /// <summary>«찰지게»(주인 2026-09-07) 연출 상수 — 상자 흔들림 · 빛 폭발 시작 · 칸이 하나씩 나오는 간격 · 시작 스케일(오버슛은 <see cref="UiKit.Reveal"/> 의 OutBack). 총 길이 ≤ <see cref="UiKit.RevealMaxResult"/>.</summary>
-        public const float ChestShake = 0.25f, ChestBurstAt = 0.18f, ChestCellStep = 0.08f, ChestCellFrom = 0.55f;
+        /// <summary>
+        /// 연출 상수 — <b>T180 순서(주인 2026-09-07 11:3X «닫힌 게 위에서 떨어져서 착지하고 열린 상태 이미지로 바뀐 다음에 장비들»)</b>:
+        /// 낙하(<see cref="ChestFallSec"/> · <see cref="ChestFallFrom"/> px 위에서) → 착지 «쿵»(<see cref="ChestShake"/>) →
+        /// 열린 그림 교체 + 빛 폭발(<see cref="ChestOpenAt"/>) → 장비 칸이 하나씩(<see cref="ChestCellStep"/> 간격 · 시작 스케일 <see cref="ChestCellFrom"/>).
+        /// <para>
+        /// 낙하가 앞에 붙는 만큼 뒤를 당겼다 — 칸 간격 0.08 → 0.05, 흔들림 0.25 → 0.18. 10회(10칸) 기준 마지막 칸이
+        /// 0.36 + 9×0.05 = 0.81 에 시작해 <see cref="UiKit.RevealDur"/> 뒤 <b>≈1.03s</b> 에 끝난다(≤ <see cref="UiKit.RevealMaxResult"/> 언저리 · 예전 0.08 간격은 1.25s 였다).
+        /// </para>
+        /// </summary>
+        public const float ChestFallSec = 0.24f, ChestFallFrom = 420f;
+        public const float ChestShake = 0.18f, ChestOpenAt = 0.30f, ChestCellStep = 0.05f, ChestCellFrom = 0.55f;
 
         /// <summary>
         /// 소환(뽑기) 결과 창 — <b>주인 지정 조각 <c>Shop_Chest_Open</c> 그대로</b>(T95 · 2026-09-07 «소환 결과 창이 이 프리팹으로 돼야 하는데 안 됐더라»).
@@ -574,7 +583,10 @@ namespace KkomaKnight.Game
             }
             // 상자 그림만 우리 상자 종류로(자리·크기는 조각 그대로)
             var chestGrp = UiKit.Find(root, "Chest") as RectTransform;
-            UiKit.SetSprite(root, "Image_Chest", "chest." + box.Key + ".open", Palette.White);
+            // T180 — 처음에는 «닫힌» 그림이다. 착지 뒤(ChestOpenAt)에 열린 그림으로 바뀐다(주인 «닫힌 게 … 착지하고 열린 상태 이미지로»).
+            // 카탈로그에 닫힘/열림이 짝으로 있다(chest.<key> · chest.<key>.open) — 새 그림 0.
+            var chestImg = UiKit.SetSprite(root, "Image_Chest", "chest." + box.Key, Palette.White);
+            var openSprite = App.Assets != null ? App.Assets.Sprite("chest." + box.Key + ".open") : null;
             var touch = UiKit.SetText(root, "Text_TouchContionue", "탭하여 닫기");
             // 제목은 **조각 제 리본**에 쓴다(T95 1항 «프리팹 그대로») — 예전엔 리본을 그대로 둔 채 글자를 따로 얹어
             // 조각의 데모 글자(«Reward»)가 화면에 남았다(CI #235 «데모 프리팹 잔여 글자 1건»). 리본이 없는 조각이면 예전처럼 글자를 얹는다.
@@ -623,16 +635,30 @@ namespace KkomaKnight.Game
                 var item = UiKit.Find(c, "Item");
                 if (item != null && item.gameObject.activeSelf) UiKit.LightBehind((RectTransform)item.parent, (RectTransform)item, UiKit.LightKeySmall);
             }
-            // ── 연출(«찰지게») ──
+            // ── 연출(«찰지게» T95 · 순서는 T180) : 닫힌 상자 낙하 → 착지 «쿵» → 열린 그림 + 빛 폭발 → 장비 칸 ──
             var seq = DOTween.Sequence().SetUpdate(true).SetTarget(root).SetLink(rootGo);
-            if (chestGrp != null) seq.Insert(0f, chestGrp.DOPunchAnchorPos(new Vector2(0f, 22f), ChestShake, 12, 1f).SetUpdate(true).SetLink(chestGrp.gameObject));
+            if (chestGrp != null)
+            {
+                // «떨어진다» — 제자리(조각이 준 자리 · ChestGroupY)는 그대로 두고 그 «위» 에서 내려온다(자리를 바꾸는 것이 아니다 · 지시서 3항).
+                // Ease.InQuad = 갈수록 빨라진다 = 떨어지는 느낌(OutQuad 는 느려져서 «내려놓는» 느낌이 된다).
+                var home = chestGrp.anchoredPosition;
+                chestGrp.anchoredPosition = home + new Vector2(0f, ChestFallFrom);
+                seq.Insert(0f, chestGrp.DOAnchorPos(home, ChestFallSec).SetEase(Ease.InQuad).SetUpdate(true).SetLink(chestGrp.gameObject));
+                // 착지 «쿵» — 예전에는 이 펀치가 0초에 있었다(떨어지기 전에 흔들렸다). 이제 «닿는 순간» 이다.
+                seq.Insert(ChestFallSec, chestGrp.DOPunchAnchorPos(new Vector2(0f, 22f), ChestShake, 12, 1f).SetUpdate(true).SetLink(chestGrp.gameObject));
+                seq.InsertCallback(ChestFallSec, () => Audio.Sfx("snd.gacha"));   // 착지음(T28) — 뽑기 직후가 아니라 «닿는 순간»(결정 416)
+            }
+            // 닫힘 → 열림은 한 프레임에 톡 바뀌지만 같은 시각의 빛 폭발이 그 순간을 덮는다.
+            // InsertCallback 이라 탭 스킵(DOTween.CompleteAll(true) · withCallbacks)에서도 «열린 상자» 로 끝난다(지시서 4항 ⓓ).
+            if (chestImg != null && openSprite != null) seq.InsertCallback(ChestOpenAt, () => { if (chestImg != null) chestImg.sprite = openSprite; });
             var light = chestGrp != null ? UiKit.Find(chestGrp, "Light") as RectTransform : null;
             if (light != null)
             {
-                light.localScale = Vector3.one * 0.55f;
-                seq.Insert(ChestBurstAt, light.DOScale(1f, 0.32f).SetEase(Ease.OutBack).SetUpdate(true).SetLink(light.gameObject));
+                // 낙하 동안에는 빛이 없어야 «열리면서 터진다» 로 읽힌다 → 0 에서 시작(예전 0.55 는 처음부터 보였다).
+                light.localScale = Vector3.zero;
+                seq.Insert(ChestOpenAt, light.DOScale(1f, 0.32f).SetEase(Ease.OutBack).SetUpdate(true).SetLink(light.gameObject));
             }
-            float end = UiKit.Stagger(seq, cells, ChestShake + 0.06f, ChestCellStep, ChestCellFrom);
+            float end = UiKit.Stagger(seq, cells, ChestOpenAt + 0.06f, ChestCellStep, ChestCellFrom);
             // 최고 등급 한 칸만 한 번 더 튄다(등급이 여럿이어도 하나 · 연출 길이는 그대로)
             if (bestCell != null) seq.Insert(end, bestCell.DOPunchScale(Vector3.one * 0.12f, 0.22f, 8, 1f).SetUpdate(true).SetLink(bestCell.gameObject));
             seq.Insert(end, UiKit.Reveal(title.rectTransform));
