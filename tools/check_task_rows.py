@@ -13,6 +13,12 @@
   이미 «✂»·«♻»(중복 행 표시)로 접어 둔 줄은 세지 않는다 — 그것이 이 사고를 막는 올바른 꼴이다.
   ID 는 표 첫 칸 글자 그대로 본다(«T63» 과 «T63-lobby» 는 다른 작업이다 · 꼬리의 ✅ 같은 표시는 떼고 본다).
 
+이 자가 «보는 칸» (T198 · 결정 510 — 자를 놓을 때는 사각지대를 적어 둔다)
+  표 한 줄은 여섯 칸(ID · 설명 · 상태 · 워커 · 범위 · 비고)인데 이 자가 읽는 것은 **ID · 설명 · 상태 셋**뿐이다.
+  갈래 ⓒ·ⓓ 는 «닫혔다/하는 중» 을 **설명 칸과 상태 칸 둘 다**에서 찾는다 — 종결 문장을 설명 칸에 쓴 줄
+  (T95·T114·T107 · 워커 A)이 상태 칸만 보던 옛 자를 그대로 지나갔기 때문이다.
+  **나머지 세 칸(워커·범위·비고)은 안 본다** — 거기에 «✅ 종결» 을 적으면 이 자는 조용하다.
+
 쓰기: python3 tools/check_task_rows.py [--list]
   --list = 겹치는 줄을 전부 (실패가 아니어도) 보여 준다.
 """
@@ -41,7 +47,7 @@ def rows(path):
             tid = tid.replace("✅", "").replace("🔄", "").replace("⬜", "").strip()
             if not re.match(r"^T\d+[A-Za-z0-9\-·ⓐ-ⓩ]*$", tid):
                 continue
-            out.append((n, tid, m.group(3).strip()))
+            out.append((n, tid, m.group(3).strip(), m.group(2).strip()))
     return out
 
 
@@ -51,8 +57,10 @@ def main():
         print("PROGRESS.md 가 없다: " + DOC)
         return 1
     by_id = {}
-    for n, tid, status in rows(DOC):
+    desc_of = {}
+    for n, tid, status, desc in rows(DOC):
         by_id.setdefault(tid, []).append((n, status))
+        desc_of[(tid, n)] = desc
 
     # ⓒ 한 줄 안에서 어긋난 것 — 머리는 «⬜ 대기» 인데 본문에 «코드 push»·✅·🔄 가 있다.
     #    워커들이 상태 칸 «뒤» 에 회차 기록을 덧붙이면서 머리를 안 고쳐 생긴다(T170 실측 · 결정 500).
@@ -69,19 +77,27 @@ def main():
     #    (실측: T159·T160·T177 은 워커 B 가 11:2X 에 PNG 로 닫았는데 개별 세 줄의 머리가 🔄 로 남아
     #     워커 F 가 15:3X 에 lock 을 셋 잡고 같은 확인을 통째로 되풀이했다 · 한 회차가 그냥 샜다).
     #    인용(«✅ 종결» 기록은…)과 남의 작업 이야기(«T156 ✅ 종결»)는 세지 않는다 — 앞 글자로 가른다.
+    def says_closed(text):
+        """이 칸이 «이 작업은 닫혔다» 고 말하는가 — 인용·남의 작업 이야기는 빼고 본다."""
+        for m in CLOSED.finditer(text):
+            pre = text[:m.start()]
+            if pre[-1:] in ("«", "(", "“"):        # 인용·괄호 안 = 남의 이야기
+                continue
+            if re.search(r"T\d+[^\s]*\s*$", pre):        # «T156 ✅ 종결» = 다른 작업 이야기
+                continue
+            return True
+        return False
+
     closed = []
     for tid, items in by_id.items():
         for n, status in items:
             if not status.lstrip("*_ ").startswith("🔄"):
                 continue
-            for m in CLOSED.finditer(status):
-                pre = status[:m.start()]
-                if pre[-1:] in ("«", "(", "“"):        # 인용·괄호 안 = 남의 이야기
-                    continue
-                if re.search(r"T\d+[^\s]*\s*$", pre):        # «T156 ✅ 종결» = 다른 작업 이야기
-                    continue
+            # ⚠ 상태 칸만 보면 놓친다 — 닫은 워커가 종결 문장을 «설명 칸» 앞에 쓰는 일이 실제로 있었다
+            #    (T95·T114·T107 · 워커 A · T198 실측). 머리는 🔄 로 남고 자는 조용해 사고가 그대로 산다.
+            #    그래서 두 칸을 다 본다 — 어느 칸에 적혔든 «닫혔다» 는 말은 머리와 어긋난다.
+            if says_closed(status) or says_closed(desc_of.get((tid, n), "")):
                 closed.append((tid, n, status))
-                break
 
     dups = {k: v for k, v in by_id.items() if len(v) > 1}
     bad = []
