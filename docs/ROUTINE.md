@@ -633,7 +633,7 @@
 3. aaaw T125(«장착분은 재료가 아니다»)는 주인이 뒤집었다 — PROGRESS 한 줄. UiSmokeTests ③ 의 «장착분 재료 불가» 가정이 있으면 새 규칙으로 고친다.
 4. 게이트 + PROGRESS T24 행.
 
-### T25 — 장비 화면: «상점»·«합성» 버튼을 공격력·체력·실드 3칸 바로 아래로 + 캐릭터 크기 (T7 뒤 · 주인 2026-09-06) — **⛔ T37 에 흡수(2026-09-06 UI 레퍼런스 지시) · 잡지 않는다**
+### T25 ⛔ — 장비 화면: «상점»·«합성» 버튼을 공격력·체력·실드 3칸 바로 아래로 + 캐릭터 크기 (T7 뒤 · 주인 2026-09-06) — **⛔ T37 에 흡수(2026-09-06 UI 레퍼런스 지시) · 잡지 않는다**
 범위: `Assets/Scripts/Game/GearScreen.cs` · `HeroView.cs`(렌더 카메라 크기)
 순서: **T17 완료 뒤**(GearScreen 공유).
 0. **캐릭터가 너무 작다**(주인). Character_Hero_Equipment 프리팹의 샘플 캐릭터(Sample_Cha02_l 자리)가 차지하는 **RectTransform 크기 그대로** HeroView 의 RawImage 를 맞추고, 렌더 카메라의 orthographicSize 를 캐릭터(Character.prefab 키 0.85u)가 그 사각형의 세로 **85~90%** 를 채우도록 잡는다(발이 사각형 아래에서 5% 위 · 머리·투구 위 여백 5%). 로비 초상(T6 의 HeroView 재사용)은 자기 사각형 기준으로 같은 규칙(따로 배율 인자). 근거 수치(프리팹 사각형 px · 카메라 size)를 PROGRESS 에 한 줄.
@@ -649,7 +649,7 @@
 4. 상점 카드의 확률 문구(«전설 N% …»)가 실제 굴림과 같은 수치인지 확인.
 5. 게이트 + PROGRESS T26 행 + 원인 한 줄(정말 어긋났는지, 아니면 표본이 작아 그렇게 보인 것인지 — 후자면 그렇게 적는다).
 
-### T27 — 장비 정보 팝업 = Character_Hero_Item_Detail_01 그대로 (주인 재지적) — **⛔ 폐기 → T38(레퍼런스 `07` 구도) · 잡지 않는다**
+### T27 ⛔ — 장비 정보 팝업 = Character_Hero_Item_Detail_01 그대로 (주인 재지적) — **⛔ 폐기 → T38(레퍼런스 `07` 구도) · 잡지 않는다**
 범위: `Assets/Scripts/Game/GearUi.cs`(OpenDetail · OpenSlot) · catalog(`ui.itemDetail`)
 순서: **T17 완료 뒤**(GearUi 공유). T25 와는 파일이 다르다.
 1. 주인 «장비 정보 팝업이 Character_Hero_Item_Detail_01 을 써야 하는데 안 쓰는 듯». 지금 `OpenDetail` 이 `ui.itemDetail` 을 스폰하는지, 스폰하더라도 내부 요소를 옮기거나 우리 상자(Popup_Box)로 감싸 프리팹 모양이 사라졌는지 확인한다. **프리팹을 원형 그대로**(어둠 + 프리팹 루트 스트레치 · 내부 요소 Pct 이동 금지) 두고 글자·아이콘·등급색·버튼 문구만 바꾼다. 세부 정보(이름·부위·세트·슬롯 Lv·기여 3수치·세트 옵션·장착/해제/슬롯 강화)는 프리팹의 해당 자리에.
@@ -674,7 +674,7 @@
 2. UiSmokeTests ① 에 «데이터 삭제 → 확인 → 세이브가 초기값(골드 0 · 장비 0 · 챕터 1)» 단언 추가.
 3. 게이트 + PROGRESS T29 행.
 
-### T30 — 하단 탭 «탤런트» → «던전» (World_Dungeon_List · 각 항목 → World_Dungeon_Start1/2) (주인 2026-09-06) — **⛔ 폐기 → T43(레퍼런스 `20`~`26` 구도 · 탭 이름 변경 포함) · 잡지 않는다**
+### T30 ⛔ — 하단 탭 «탤런트» → «던전» (World_Dungeon_List · 각 항목 → World_Dungeon_Start1/2) (주인 2026-09-06) — **⛔ 폐기 → T43(레퍼런스 `20`~`26` 구도 · 탭 이름 변경 포함) · 잡지 않는다**
 범위: `Assets/Scripts/Game/Screens.cs`(NavBar 탭 · 던전 팝업 진입) · `Overlay.cs`(던전 팝업 2단) · catalog(`ui.dungeonList` = World_Dungeon_List · `ui.dungeonStart1` = World_Dungeon_Start1 · `ui.dungeonStart2` = World_Dungeon_Start2)
 순서: 제약 없음(T10 ✅ · T22 가 NavBar 눌림을 만지면 rebase).
 1. 탭 5칸을 **상점 · 장비 · 전투 · 던전 · 펫** 으로(«탤런트» 탭·Character_Talent_02 팝업 진입 제거 · 펫은 그대로). 탭 아이콘은 GUI Pro 던전 아이콘.
@@ -690,7 +690,7 @@
 3. `docs/assets-map.md` 갱신(gen_catalog).
 4. 게이트 + PROGRESS T31 행 + «주인이 확인할 것».
 
-### T32 — 펫 팝업 = Character_Skill 그대로 · 항목 클릭 → Character_Skill_Detail 그대로 (주인 2026-09-06) — **⛔ 폐기 → T42(레퍼런스 `13`·`14` 구도) · 잡지 않는다**
+### T32 ⛔ — 펫 팝업 = Character_Skill 그대로 · 항목 클릭 → Character_Skill_Detail 그대로 (주인 2026-09-06) — **⛔ 폐기 → T42(레퍼런스 `13`·`14` 구도) · 잡지 않는다**
 범위: `Assets/Scripts/Game/Overlay.cs`(펫 팝업 2단) · `Screens.cs`(펫 탭 진입 한 줄) · catalog(`ui.pet` = Character_Skill · `ui.petDetail` = Character_Skill_Detail)
 순서: 제약 없음(T30 이 던전 탭·Screens 를 만지면 rebase · 펫 탭 진입 줄만 겹친다).
 1. 하단 탭 «펫» = `Character_Skill` 프리팹 팝업 **그대로**(요소 이동·삭제 금지 · 제목만 «펫» · 지금의 Character_Talent_02 팝업은 버린다). 목록의 각 항목 클릭 → `Character_Skill_Detail` 프리팹 팝업 **그대로**(제목·이름만 «펫 N»). 기능은 없다 — 열고 닫기만(버튼은 누르면 토스트 «준비 중»). 닫기(X) 로 목록으로, 목록의 X 로 원래 화면으로.
@@ -704,14 +704,14 @@
 2. UiSmokeTests ⑤ 의 «HUD 웨이브» 단언을 지운다.
 3. 게이트 + PROGRESS T33 행.
 
-### T34 — 로비 = `docs/ref/01_lobby.jpg` 구도 (UI 레퍼런스 · 최우선) ✅ (완료 · `d6d1411` · 상단 재화 바 = `TopBar` 헬퍼(Screens.cs) — T37·T40·T42·T43 은 `TopBar.Build(App, root)` 한 줄로 · 사이드/배너/모서리 버튼은 `LobbyScreen.OnSide(key)` 훅 · PROGRESS 참조) · **코드 ✅ · 비평 회차 1 = 9.7 ✅(screens CI #83 · 워커 E · T47)**
+### T34 ✅ — 로비 = `docs/ref/01_lobby.jpg` 구도 (UI 레퍼런스 · 최우선) ✅ (완료 · `d6d1411` · 상단 재화 바 = `TopBar` 헬퍼(Screens.cs) — T37·T40·T42·T43 은 `TopBar.Build(App, root)` 한 줄로 · 사이드/배너/모서리 버튼은 `LobbyScreen.OnSide(key)` 훅 · PROGRESS 참조) · **코드 ✅ · 비평 회차 1 = 9.7 ✅(screens CI #83 · 워커 E · T47)**
 범위: `Assets/Scripts/Game/Screens.cs`(LobbyScreen · NavBar 훅) · `HeroView.cs`(초상) · catalog(로비 조각 키) · `Assets/Tests/PlayMode/UiSmokeTests.cs`(로비 단언)
 순서: **T22(버튼 눌림 · Screens NavBar) 완료 뒤**. T42·T43·T44 가 이 화면의 버튼 훅을 이어 쓴다.
 1. `docs/ref/README.md` «01 로비» + `ref-layout.md` ① 표대로: 상단 재화 바(아바타 · 전투력 · 골드 · 보석) → 이벤트 배너(보라 · 진행바 · 레벨 뱃지 — 패스 껍데기 T44 진입) + 메뉴(≡ · 설정) → 왼쪽 세로 아이콘 3(스타터팩·특권·7일 챌린지) / 오른쪽 세로 3(출석·데일리 기프트·퀘스트) → «CHAPTER N» + 밑줄 화살 → 챕터 카드(1.25:1) + ◀▶ → 보조 버튼 2(탐험·클리어 보상 — 껍데기) → START(주황 · 카드 폭) → 왼쪽 아래 성(잠금) · 오른쪽 아래 이벤트(방패 — T43 던전/아레나 진입) → 탭 바(상점·장비·전투·던전·펫).
 2. 재료 = GUI Pro 조각(Lobby_Default 의 상단 바·탭 바·버튼을 뜯어 쓴다 · 세로 아이콘은 GUI Pro 아이콘 + 라벨). 사이드 아이콘·배너·보조 버튼은 T44 가 채울 때까지 **눌러도 아무 일 없음**(`LobbyScreen.OnSide(string key)` 훅 하나로 모아 둔다).
 3. 게이트 + 스모크 단언(사이드 3+3 · START · 탭 5) + PROGRESS T34 행.
 
-### T35 — 전투 HUD = `02_battle.jpg`·`03_battle_enemy.jpg` 구도 + **HP·실드 바(주인 강조)** (T33 뒤) ✅ (완료 · `4773d23` · CI #56 · PROGRESS 참조) · **코드 ✅ · 비평 회차 1 = 8.6 ✅(캔버스 12/14 · screens CI #83 · 워커 E) · 월드 8행·02 촬영은 T47 회차 2(코드)**
+### T35 ✅ — 전투 HUD = `02_battle.jpg`·`03_battle_enemy.jpg` 구도 + **HP·실드 바(주인 강조)** (T33 뒤) ✅ (완료 · `4773d23` · CI #56 · PROGRESS 참조) · **코드 ✅ · 비평 회차 1 = 8.6 ✅(캔버스 12/14 · screens CI #83 · 워커 E) · 월드 8행·02 촬영은 T47 회차 2(코드)**
 범위: `Assets/Scripts/Game/BattleScreen.cs`(HUD 전체) · `BattleWorld.cs`(발밑 2단 바) · `Assets/Scripts/Core/Layout.cs`(HUD 상수 — 표값을 바꾸면 `ref-layout.md` ② 와 `LayoutSpecTests` 도 같이) · catalog
 순서: **T33(웨이브 수 제거 · 같은 HUD 영역) 뒤**. T19·T21·T23 과는 같은 파일이지만 다른 영역(지형·투사체·EndRun) — rebase 로 합치고 충돌 나면 뒤 번호가 다시.
 1. **바 3개 한 줄**(HUD 스탯 격자 바로 위): EXP(초록 라벨 «EXP» + 검정 바 + «0/6») · ❤ HP(빨강 바 · «1055/1055») · 🛡 실드(파랑 바 · «2258/2258») — 각 바 왼쪽에 아이콘, 바 안에 흰 숫자. 실드 = 엔진의 방어막/실드 값(없으면 0/최대).
@@ -1242,7 +1242,7 @@
 5. **테스트**(Core EditMode + PlayMode): ⓐ 임의 장비 조합 100개에서 `Power` 가 **변경 전과 완전히 같음**(변경 전 값을 골든 표로 먼저 떠 놓고 대조) ⓑ 공격 부위 아이템의 Hp·Sh = 0 · 방어 부위의 Atk = 0 ⓒ 부위별 기여의 합 = 총합 ⓓ `dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13` **21칸 그대로** ⓔ 06·07 화면 단언(부위 이름 «반지» · 줄 수).
 6. 게이트 + assets-map(반지 아이콘 키 한 줄) + PROGRESS T88 행 + 완료 기록(확인 = CI PlayMode·EditMode + Sim 21칸 + screens 06·07 PNG + «주인이 확인할 것» 한 줄).
 
-### T89 — 세트 옵션 개방 등급을 한 칸 올린다: **일반 = 0개 · 희귀부터 열림 · 마지막(흡혈 +8%)은 신화 +12강** ✅ **완료(확인 = CI #203 `9e6524f` · EditMode 172/172 + PlayMode 빨강 둘 다 남의 것 · PROGRESS 참조)** — (이력) 코드 push(`2a666ef` · sess-1950-2102 · 워커 L · 로컬 게이트 전부 초록: build 0/0 · test 155/155 · gen_meta ✔ · gen_catalog 603 · catalog_keys 1021/602 · unity_null 0 · audio_webgl 20 · data_sync OK · 배포 스모크 `--gh-pages` ✅ errors=0) · ✅ 확인 끝(CI #280 게이트 + `screens` run 283 눈) · lock 반납**
+### T89 ✅ — 세트 옵션 개방 등급을 한 칸 올린다: **일반 = 0개 · 희귀부터 열림 · 마지막(흡혈 +8%)은 신화 +12강** ✅ **완료(확인 = CI #203 `9e6524f` · EditMode 172/172 + PlayMode 빨강 둘 다 남의 것 · PROGRESS 참조)** — (이력) 코드 push(`2a666ef` · sess-1950-2102 · 워커 L · 로컬 게이트 전부 초록: build 0/0 · test 155/155 · gen_meta ✔ · gen_catalog 603 · catalog_keys 1021/602 · unity_null 0 · audio_webgl 20 · data_sync OK · 배포 스모크 `--gh-pages` ✅ errors=0) · ✅ 확인 끝(CI #280 게이트 + `screens` run 283 눈) · lock 반납**
 
 > **한 일**: ⓐ `GearData.From` 이 정본 JSON 을 읽은 **뒤에** `ShiftOptionLadderOneStep` 으로 사다리를 한 칸 민다(등급 1/2/3/4 → **0/1/2/3** · 신화 강화 +3/+6/+9 → **+3/+6/+9/+12** · 줄 수 7 불변 · `data/gear.json` 은 한 글자도 안 건드렸다) ⓑ 잠긴 줄 꼬리표를 화면이 계산하던 것(«(i−등급수+1)×3»)을 **표에서 읽는 `OptTierName`** 으로 옮겼다(결정 238) ⓒ **골든 재생성 불필요** — 세트 옵션은 `RunOptions.GearOpts` 가 켜진 판에만 들어가고 T2 골든·`tools/sim` 은 꺼져 있다. 실측으로 `--seeds 11,12,13` 이 21칸 골든과 **두 표 모두 완전히 동일**(결정 239).
 >
@@ -1681,7 +1681,7 @@ python3 tools/check_asmdef.py                                     # 유니티 «
 python3 tools/check_test_usings.py                                # 테스트 어셈블리가 «참조하지 않는» 네임스페이스를 using 하는가(DG.Tweening·TMPro) — 로컬 임시 csproj 는 DOTween 을 참조해서 이것을 절대 못 잡는다(결정 465 · CI #346~#348 컴파일 파손)
 python3 tools/check_task_rows.py                                  # PROGRESS 에 같은 작업이 두 줄 있고 «⬜ 대기» ↔ «✅/🔄» 로 어긋난 것(끝난 일을 다시 선점하게 만든다 · 결정 455) — `--list` 로 겹치는 줄 전부 보기
 python3 tools/check_webgl_template.py                             # 배포 껍데기(WebGL 템플릿 · T196): 캔버스가 창을 채우는가 + 스모크(T60)가 문자열로 찾는 자리 넷이 그대로인가 — 되돌리면 PC 에서 960×600 상자로 나가고 «로딩 완료» 판정이 조용히 무뎌진다
-python3 tools/task_state.py --check                               # ⓐ **한 번호가 두 작업을 가리키는가**(T205 · 오늘만 T189·T190·T204 세 번) ⓑ 그 옆칸: ROUTINE §2 «제목» ↔ PROGRESS «상태» 어긋남(T193 · 결정 493). 끝냈으면 **제목에도 ✅ 를 단다** — 안 달면 다음 워커가 열린 일로 읽는다. 선점 직전에는 `tools/task_state.py <ID>`(0 = 잡아도 된다)
+python3 tools/task_state.py --check                               # ⓐ **닫힌 꼴 둘(✅ 완료 · ⛔ 폐기·흡수)이 §2 제목에도 달렸는가**(T193·T210) ⓑ **한 번호가 두 작업을 가리키는가**(T205 · 오늘만 T189·T190·T204 세 번) ⓑ 그 옆칸: ROUTINE §2 «제목» ↔ PROGRESS «상태» 어긋남(T193 · 결정 493). 끝냈으면 **제목에도 ✅ 를 단다** — 안 달면 다음 워커가 열린 일로 읽는다. 선점 직전에는 `tools/task_state.py <ID>`(0 = 잡아도 된다)
 dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이후) 이식 검증
 ```
 
@@ -3252,6 +3252,14 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 6. **시즌 타이머(«시즌 종료까지: --:--:--» · `NoTime` = `EventsScreen.cs:70`)는 이 작업이 아니다.** 그것은 **일부러** 고정한 값으로 보인다 — 살아 있는 시계를 찍으면 `screens` PNG 가 회차마다 흔들려 §5 비평과 스샷 게이트가 못 쓰게 된다. 건드리려면 그 이유부터 뒤집어야 하므로 **범위 밖**으로 둔다(같이 고치려다 스샷 결정성을 깨는 일이 없도록 여기 적어 둔다).
 7. **곁들여 눈에 걸린 것 둘**(같은 화면 · 이 작업 범위인지는 임자 판단) — ⓐ 아이콘 **개수 배지**가 우리에겐 아예 없다(레퍼런스는 100·20·3). ⓑ 머리 그림이 레퍼런스는 «가게 안 상인» 한 장면인데 우리는 아이콘 넷이 갈색 띠 위에 흩어져 있고 **맨 오른쪽 항아리가 오른쪽 가장자리에서 잘린다**.
 8. **선점 안 한 까닭** — 이 컨테이너에 `dotnet` 이 없어 4항 게이트를 못 돌린다(결정 206). 재서 넘긴다.
+
+### T210 ✅ — **«폐기(⛔)» 와 «상태 표시 없음» 도 열린 일로 보인다 + 표 파서가 `\|` 를 못 읽었다** (워커 실측 등재 2026-09-07 19:2X · 도구·문서 · 게임 코드 0줄) — **✅ 완료(`tools/task_state.py` · sess-1424-31894 · 워커 B)**
+
+1. **닫힌 꼴은 둘인데 자는 하나만 봤다** — T193 의 자는 «PROGRESS ✅ ↔ 제목 ✅» 만 대조했다. 표에는 **⛔(폐기·흡수)** 도 쓰이고 그것도 «잡으면 안 되는 자리» 다. 실측 넷: **T25**(→T37) · **T27**(→T38) · **T30**(→T43) · **T32**(→T42) — 넷 다 §2 제목에 아무 표시가 없어 **열린 일로 보였다**. 제목에 **⛔** 를 달았다(✅ 를 달면 «했다» 가 되므로 대신 쓰지 않는다).
+2. **상태 칸이 어느 표시로도 시작하지 않는 행** — T34 · T35 · T89 셋. 그 행은 이 자도 `check_task_rows` 도 상태를 못 읽는다(§4 규약 위반). **실패로는 안 센다**(표 꼴 문제이지 일이 잘못된 것이 아니다) — 참고로 찍고, 이번엔 셋을 문구 한 글자도 안 고치고 **앞에 ✅ 만** 붙였다(근거 = §5 3항 «최종 8.0 이상이면 ✅» · T34 9.5 · T35 8.8/8.8 · T89 «주인 눈 확인까지 끝»).
+3. **⚠ 그 조사가 내 버그를 잡았다 — 표 파서가 `\|` 를 못 읽었다.** 칸을 `[^|]*` 로 자르면 본문의 **escape 된 파이프** 앞에서 끊긴다. 내 **T196 행**의 `` `iPhone\|iPad\|iPod\|Android` `` 때문에 그 행의 «상태» 를 **«iPad\»** 로 읽고 있었다 — 즉 내가 넣은 행이 자의 눈 밖에 있었다. 이제 «앞이 역슬래시가 아닌 `|`» 로만 자른다. **`check_task_rows` 는 T201 회차에 이미 같은 고침이 들어가 있었다**(내 자만 뒤처져 있었다 · 결정 547).
+4. 자기 검사에 두 칸 추가 — ⓔ «표는 ⛔ · 제목엔 표시 없음» 을 잡고 ⛔ 를 달면 조용한가 ⓕ `\|` 가 든 칸에서 상태를 제대로 읽는가.
+
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).

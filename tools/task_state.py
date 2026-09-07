@@ -24,6 +24,12 @@ ROUTINE 제목에는 ✅ 가 없었다. 그러면 **열린 일로 보인다**. l
 곁들여 «제목은 있는데 PROGRESS 행이 없는» 작업도 **알리기만** 한다(등재 중인 자리가 정상적으로 그 꼴이라
 실패로 세지 않는다 — 다만 그 사이 `check_task_rows` 가 그 작업을 못 본다).
 
+**T210 으로 «닫힌 꼴» 을 둘로 넓혔다** — ✅ 완료 말고 **⛔ 폐기·흡수**도 닫힌 자리다.
+실측에서 넷(T25→T37 · T27→T38 · T30→T43 · T32→T42)이 표에는 ⛔ 인데 §2 제목엔 아무 표시가 없어
+**열린 일로 보였다**. 폐기에는 ✅ 가 아니라 **⛔** 를 단다(✅ 를 달면 «했다» 는 뜻이 된다).
+같은 회차에 파서도 고쳤다 — 칸을 `[^|]*` 로 자르면 본문의 **`\|`(escape 된 파이프)** 앞에서 끊겨
+상태를 엉뚱한 조각에서 읽는다(내 T196 행이 «iPad\» 를 상태로 읽고 있었다 · `check_task_rows` 는 이미 고쳐져 있었다).
+
 쓰는 법
   python3 tools/task_state.py --check     # 게이트: 번호 중복·제목↔상태 어긋남이 있으면 1 (ROUTINE §3 목록)
   python3 tools/task_state.py T161        # 선점 «직전» 한 줄 — 잡아도 되는지 판정 (0 = 잡아도 된다)
@@ -44,7 +50,23 @@ CLAIMS = os.path.join(ROOT, "docs", "claims")
 
 # «### T161 — …» · «### T188 ✅ — …» — 꼬리에 -gear 같은 갈래가 붙는 ID 는 이 표의 대상이 아니다(별개 작업).
 HEAD = re.compile(r"^###\s+(T\d+)(?![\w-])(.*)$")
-ROW = re.compile(r"^\|\s*(T\d+)(?![\w-])[^|]*\|([^|]*)\|([^|]*)\|")
+# ⚠ 칸을 «`|` 로 자르기» 는 그냥은 안 된다 — 본문에 **`\|` 로 escape 된 파이프**가 있다
+# (내 T196 행의 `iPhone\|iPad\|iPod\|Android` 가 그것이다). `[^|]*` 는 그 앞에서 끊겨
+# **상태 칸을 엉뚱한 조각에서 읽는다**(그 행은 «iPad\» 를 상태로 읽고 있었다 · T210 실측 · T201 과 같은 갈래).
+# 그래서 «앞이 역슬래시가 아닌 `|`» 로만 자른다.
+SPLIT = re.compile(r"(?<!\\)\|")
+ID_IN_CELL = re.compile(r"^\s*(T\d+)(?![\w-])")
+
+
+def cells(line):
+    """표 한 줄 → (ID, 작업 칸, 상태 칸) · 표 줄이 아니거나 칸이 모자라면 None."""
+    if not line.lstrip().startswith("|"):
+        return None
+    parts = SPLIT.split(line.rstrip("\n"))
+    if len(parts) < 4:
+        return None
+    m = ID_IN_CELL.match(parts[1])
+    return (m.group(1), parts[2], parts[3]) if m else None
 STALE_MIN = 90          # docs/claims/README.md 의 «90분» 규약과 같은 값
 
 
@@ -58,9 +80,9 @@ def row_ids_all(path=PROGRESS):
     out = set()
     with io.open(path, encoding="utf-8") as f:
         for line in f:
-            m = ROW.match(line.rstrip("\n"))
-            if m:
-                out.add(m.group(1))
+            c = cells(line)
+            if c:
+                out.add(c[0])
     return out
 
 
@@ -79,7 +101,9 @@ def routine_heads(path=ROUTINE, dups=None):
             # 제목의 «맨 앞 토막»(첫 — 앞)에 있는 ✅ 만 «이 작업이 끝났다» 는 표시다.
             # 본문 쪽 «✅ 완료(코드 …)» 는 꼬리에 덧붙인 진행 기록이라 제목 표시와 구별한다.
             head_part = rest.split("—")[0]
-            out.setdefault(tid, (n, "✅" in head_part, rest.strip()))
+            # 두 번째 칸 = 제목이 단 «닫힘 표시»(✅ 완료 · ⛔ 폐기·흡수) · 없으면 "" (T210 전에는 bool 이었다 · 참·거짓 쓰임은 그대로 산다)
+            closed = "✅" if "✅" in head_part else ("⛔" if "⛔" in head_part else "")
+            out.setdefault(tid, (n, closed, rest.strip()))
             seen.setdefault(tid, []).append((n, rest.strip()))
     if dups is not None:
         dups.clear()
@@ -89,21 +113,22 @@ def routine_heads(path=ROUTINE, dups=None):
 
 def progress_rows(path=PROGRESS):
     """ID → (줄번호, 상태 칸). 같은 ID 가 여러 줄이면 «가장 앞선 상태» 를 쓴다(✅ > 🔄 > ⬜)."""
-    rank = {"✅": 3, "🔄": 2, "⬜": 1}
+    # ⛔ = «폐기 · 다른 번호에 흡수»(T210) — ✅ 와 마찬가지로 **닫힌** 꼴이라 선점 대상이 아니다.
+    rank = {"✅": 4, "⛔": 3, "🔄": 2, "⬜": 1}
     out = {}
     with io.open(path, encoding="utf-8") as f:
         for n, line in enumerate(f, 1):
-            m = ROW.match(line.rstrip("\n"))
-            if not m:
+            c = cells(line)
+            if not c:
                 continue
-            tid, work, state = m.group(1), m.group(2), m.group(3)
+            tid, work, state = c
             if _fold(work) or _fold(state):
                 continue
             # ⚠ 칸 «어디에든» ✅ 가 있으면 완료로 세면 안 된다 — «🔄 코드 push … 로컬 게이트 전부 초록 ✅» 같은
             # 진행 기록에도 ✅ 가 흔하고, «**비평 회차 3 = 9.5 ✅**» 처럼 점수 표시로 쓰인 자리도 있다.
             # 상태는 칸 **맨 앞**에 적는 것이 이 표의 규약이라(§4) 앞의 굵게 표시만 벗기고 첫 글자를 본다.
             lead = state.strip().lstrip("*").strip()
-            mark = lead[0] if lead[:1] in ("✅", "🔄", "⬜") else ""
+            mark = lead[0] if lead[:1] in ("✅", "⛔", "🔄", "⬜") else ""
             prev = out.get(tid)
             if prev is None or rank.get(mark, 0) > rank.get(prev[1], 0):
                 out[tid] = (n, mark, state.strip())
@@ -173,16 +198,20 @@ def verdict(tid, heads, rows):
 
 
 def mismatches(heads, rows):
-    """«PROGRESS 는 ✅ 인데 ROUTINE 제목에는 ✅ 가 없다» = 선점 덫. 이것이 T161·T188 이 빠진 구덩이다."""
+    """«PROGRESS 는 닫혔는데 ROUTINE 제목은 열려 보인다» = 선점 덫. T161·T188 이 빠진 구덩이다.
+
+    **닫힌 꼴은 둘이다(T210)** — ✅ 완료 · ⛔ 폐기·흡수. 제목에 필요한 표시도 각각 그것이다
+    (폐기된 일에 ✅ 를 달면 «했다» 는 뜻이 되므로 ✅ 로 대신하지 않는다 · 이미 ✅ 면 그대로 둔다).
+    """
     bad = []
     for tid, (pn, mark, ptext) in sorted(rows.items(), key=lambda kv: int(kv[0][1:])):
-        if mark != "✅":
+        if mark not in ("✅", "⛔"):
             continue
         h = heads.get(tid)
         if h is None:
             continue        # ROUTINE §2 에 없는 작업(옛 표만 있는 것)은 선점 대상이 아니다
-        if not h[1]:
-            bad.append((tid, h[0], pn, ptext[:70]))
+        if h[1] == "":
+            bad.append((tid, h[0], pn, mark, ptext[:70]))
     return bad
 
 
@@ -215,17 +244,24 @@ def cmd_check(heads, rows, dups=None):
     if folded:
         print("· (참고 · 손댈 것 없음) 표에 **접힌 행(✂·♻)만** 있는 작업: %s — 다른 번호로 옮겼거나 취소된 자리다." % " ".join(folded))
 
+    # ⓒ 상태 칸이 네 표시(✅ ⛔ 🔄 ⬜) 중 무엇으로도 **시작하지 않는** 행 — 어떤 자도 그 작업의 상태를 못 읽는다.
+    #    실패로는 안 센다(표 규약을 어긴 것이지 일이 잘못된 것은 아니다) — 다만 그 행은 이 자와 check_task_rows 의 눈 밖이다.
+    blind = sorted([t for t, (n, m, s) in rows.items() if m == ""], key=lambda t: int(t[1:]))
+    if blind:
+        print("· (참고 · 실패 아님) PROGRESS 상태 칸이 ✅·⛔·🔄·⬜ 중 무엇으로도 시작하지 않는 작업: %s" % " ".join(blind))
+        print("  그 행은 이 자도 `check_task_rows` 도 상태를 못 읽는다 — 칸 맨 앞에 표시를 하나 붙여 주면 된다(§4 규약).")
+
     bad = mismatches(heads, rows)
     if not bad:
         if rc == 0:
             print("✓ task_state: 번호 중복 0 · ROUTINE §2 제목과 PROGRESS 상태가 어긋나는 작업 0개 (제목 %d · 표 %d)"
                   % (len(heads), len(rows)))
         return rc
-    print("⛔ **선점 덫** — PROGRESS 는 «✅ 완료» 인데 ROUTINE §2 제목에 ✅ 가 없다.")
+    print("⛔ **선점 덫** — PROGRESS 는 닫혔는데(✅ 완료 · ⛔ 폐기·흡수) ROUTINE §2 제목에는 표시가 없다.")
     print("   다음 워커는 이것을 «열린 일» 로 읽고 한 회차를 통째로 버린다(T161·T188 이 그랬다).")
-    print("   고침: `docs/ROUTINE.md` 그 제목 줄의 ID 뒤에 ✅ 를 붙인다.")
-    for tid, hn, pn, ptext in bad:
-        print("  · %-5s ROUTINE.md:%d  ↔  PROGRESS.md:%d  «%s»" % (tid, hn, pn, ptext))
+    print("   고침: `docs/ROUTINE.md` 그 제목 줄의 ID 뒤에 **표에 적힌 그 표시**를 붙인다(✅ 는 ✅ · ⛔ 는 ⛔).")
+    for tid, hn, pn, mark, ptext in bad:
+        print("  · %-5s %s  ROUTINE.md:%d  ↔  PROGRESS.md:%d  «%s»" % (tid, mark, hn, pn, ptext))
     return 1
 
 
@@ -327,8 +363,29 @@ def self_test():
             print("⛔ 자기 검사 실패 — 행이 하나도 없는 표에서 ID 를 세었다(거짓 경고)")
             return 1
 
+        # ⓔ **폐기(⛔)도 닫힌 꼴이다**(T210) — 표가 ⛔ 인데 제목에 표시가 없으면 잡아야 하고, ⛔ 를 달면 조용해야 한다.
+        io.open(r, "w", encoding="utf-8").write("### T161 — 폐기된 일\n")
+        io.open(p, "w", encoding="utf-8").write(
+            "| ID | 작업 | 상태 | SID |\n| T161 | 폐기 | ⛔ 폐기 → T37 | |\n")
+        got = mismatches(routine_heads(r), progress_rows(p))
+        if [b[0] for b in got] != ["T161"] or got[0][3] != "⛔":
+            print("⛔ 자기 검사 실패 — «표는 ⛔ · 제목엔 표시 없음» 을 못 잡았다: %s" % (got,))
+            return 1
+        io.open(r, "w", encoding="utf-8").write("### T161 ⛔ — 폐기된 일\n")
+        if mismatches(routine_heads(r), progress_rows(p)):
+            print("⛔ 자기 검사 실패 — 제목에 ⛔ 를 달았는데도 걸린다(거짓 경고)")
+            return 1
+
+        # ⓕ **escape 된 파이프**(`\|`)가 든 칸을 제대로 가르는가(T210) — 못 가르면 상태를 엉뚱한 조각에서 읽는다.
+        io.open(p, "w", encoding="utf-8").write(
+            "| ID | 작업 | 상태 | SID |\n| T161 | UA 가 `iPhone\\|iPad\\|iPod` 로 갈린다 | ✅ 완료 | |\n")
+        got = progress_rows(p)
+        if got.get("T161", (0, "", ""))[1] != "✅":
+            print("⛔ 자기 검사 실패 — `\\|` 가 든 칸 때문에 상태를 못 읽었다: %s" % (got,))
+            return 1
+
         print("✓ task_state --self-test: 어긋난 짝을 잡고(T161) · ✅ 를 달면 조용하고 · 빈 번호는 통과하고 ·"
-              " 같은 번호 두 제목을 잡고 · «행 없음 ↔ 접힌 행만» 을 가른다")
+              " 같은 번호 두 제목을 잡고 · «행 없음 ↔ 접힌 행만» 을 가르고 · ⛔ 와 `\\|` 도 읽는다")
         return 0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
