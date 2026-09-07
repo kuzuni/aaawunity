@@ -444,6 +444,8 @@ namespace KkomaKnight.Game
         public const string PatternName = "Pattern", LightName = "Light", LightMaskName = "LightMask", GradientTopName = "GradientTop", GradientBottomName = "GradientBottom";
         /// <summary>T155 ⓓ — 빛살 아래 겹 글로우 서클의 이름·키·짙기. 이름 «LightMask» 는 T172 로 자르지 않게 됐지만 값은 그대로 둔다(코드·자·문서 열두 자리가 이 이름을 계약으로 쓴다 · 결정 456).</summary>
         public const string GlowName = "Glow", GlowKey = "ui.glow1";
+        /// <summary>빛 알갱이 묶음 이름(T174 · 담개 <see cref="LightMaskName"/> 안 · 알갱이는 그 자식 «Dust0»~).</summary>
+        public const string DustName = "Dust";
         public const string PatternKey = "ui.pattern", LightKey = "ui.light1", LightKeySmall = "ui.light2", GradTopKey = "ui.gradTop1", GradBottomKey = "ui.gradBottom";
         /// <summary>버튼 아래 어둠(Button_03_White_Gradient · 버튼 모양 9-slice) · 카드 위 밝음(CardFrame_03_White_Gradient) — ③ 그라데이션 3항 우선순위 1·3.</summary>
         public const string BtnGradientKey = "ui.btnGradient", CardGradientKey = "fr.cardGradient3";
@@ -474,6 +476,14 @@ namespace KkomaKnight.Game
         public const float LightPeriod = 16f, LightScale = 1.9f, LightAlpha = 68f / 255f;
         /// <summary>T155 ⓓ 글로우 서클의 짙기 — 빛살보다 옅다(같은 자리에 겹치므로). T172 가 넣었던 «칸 대비 하한»(`LightOutScale`)은 T189(주인 «다 안으로»)로 **없앴다**.</summary>
         public const float GlowAlpha = 46f / 255f;
+        /// <summary>
+        /// 빛 알갱이(T174 · 주인 2026-09-07 10:4X «모든 이펙트 라이트 있는 곳에 파티클 이펙트도 넣어 줘 · 빛 알갱이 먼지가 천천히 퍼지는 느낌으로»).
+        /// 개수는 <b>칸마다 4</b> — 지시서 4항이 «fps 를 재 보고 정한다» 고 한 자리라 값을 여기 한 곳에 둔다(줄이려면 이 줄만 고친다).
+        /// 알갱이 한 변 = 빛살 한 변 × <see cref="DustSizeMul"/> · 퍼져 나가는 거리 = 빛살 한 변 × <see cref="DustDriftMul"/> ·
+        /// 한 알갱이가 «났다 사라지는» 데 <see cref="DustPeriod"/> 초(느리게 — 주인 «천천히 퍼지는»).
+        /// </summary>
+        public const int DustCount = 4;
+        public const float DustSizeMul = 0.10f, DustDriftMul = 0.42f, DustPeriod = 5.2f, DustAlpha = 74f / 255f;
         /// <summary>그라데이션 tint — 위 흰 +12% 밝기 · 아래 Ink −18%(ROUTINE T72 3항 팔레트). 화면 «배경» 은 레퍼런스도 이 방향이다(위 밝음 → 아래 어둠 · T116 실측 #3C6833 → #315529).</summary>
         public const float GradientTopAlpha = 0.12f, GradientBottomAlpha = 0.18f;
         /// <summary>
@@ -589,7 +599,7 @@ namespace KkomaKnight.Game
         /// </summary>
         public static bool HasLightMask(Transform cell) => cell != null && cell.Find(LightMaskName) != null;
 
-        public static Image LightBehind(RectTransform cell, RectTransform icon = null, string key = LightKey, float period = LightPeriod, Color? tint = null, float scale = LightScale, float inset = 0f, float sidePx = 0f, bool clip = true)
+        public static Image LightBehind(RectTransform cell, RectTransform icon = null, string key = LightKey, float period = LightPeriod, Color? tint = null, float scale = LightScale, float inset = 0f, float sidePx = 0f, bool clip = true, bool dust = true)
         {
             if (cell == null) return null;
             var sp = Cat != null ? Cat.Sprite(key) : null; if (sp == null) return null;
@@ -629,6 +639,7 @@ namespace KkomaKnight.Game
             DOTween.Kill(lt); lt.localRotation = Quaternion.identity;
             lt.DOLocalRotate(new Vector3(0f, 0f, -360f), Mathf.Max(0.1f, period), RotateMode.FastBeyond360).SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart).SetUpdate(true).SetLink(lt.gameObject);
             GlowUnder(mask, lt, tint);
+            DustOver(mask, lt, tint, dust);   // T174 — 빛살 자리마다 «천천히 퍼지는» 알갱이 한 겹(끄려면 dust: false)
             return img;
         }
         /// <summary>
@@ -648,6 +659,74 @@ namespace KkomaKnight.Game
             gt.SetSiblingIndex(0);
             return img;
         }
+        /// <summary>
+        /// T174 — 빛살 <paramref name="light"/> 과 같은 중심에 <b>빛 알갱이</b>(먼지) 한 겹을 <b>위</b>로 깐다.
+        /// <list type="bullet">
+        /// <item><b>진짜 파티클이 아니다</b> — UI 캔버스가 <c>ScreenSpaceOverlay</c> 라 <c>ParticleSystem</c> 은 언제나 UI «뒤» 로 간다
+        /// (T144·T181 에서 같은 벽을 만났다). 그래서 작은 uGUI <c>Image</c> 몇 장을 트윈으로 흘린다.</item>
+        /// <item><b>칸마다 트윈 «하나»</b>(지시서 4항 ⓐ) — 시퀀스 하나가 알갱이 <see cref="DustCount"/>개를 전부 움직인다.
+        /// 알갱이마다 트윈을 따로 걸면 칸당 도는 트윈이 4배로 늘어 fps 가 바로 떨어진다(T129).</item>
+        /// <item>알갱이는 가운데서 났다가 <b>바깥으로 천천히</b> 흐르며 알파가 0 으로 진다 — 시작 시각을 어긋나게 꽂아
+        /// «퍼지는» 결을 만든다(주인 «빛 알갱이 먼지가 천천히 퍼지는 느낌으로»).</item>
+        /// <item>담개(<see cref="LightMaskName"/>) 안에 있으므로 <c>clip</c> 규칙(T189 «다 안으로»)과 <see cref="SetLightSpinning"/>
+        /// 의 «보이는 칸만» 규약을 <b>빛살과 똑같이</b> 받는다 — 새 예외를 만들지 않는다.</item>
+        /// </list>
+        /// <paramref name="on"/> 이 거짓이면 이미 있던 알갱이를 지운다(끄는 자리도 한 줄로 되게).
+        /// </summary>
+        static void DustOver(RectTransform host, RectTransform light, Color? tint, bool on)
+        {
+            if (host == null || light == null) return;
+            var dt = host.Find(DustName) as RectTransform;
+            if (!on)
+            {
+                if (dt != null) { DOTween.Kill(dt); UnityEngine.Object.Destroy(dt.gameObject); }
+                return;
+            }
+            var sp = Cat != null ? Cat.Sprite(GlowKey) : null; if (sp == null) return;   // 조각이 없으면 조용히 아무 일 없음
+            if (dt == null) dt = Rect(host, DustName);
+            dt.anchorMin = dt.anchorMax = new Vector2(0.5f, 0.5f); dt.pivot = new Vector2(0.5f, 0.5f);
+            dt.sizeDelta = light.sizeDelta; dt.anchoredPosition = light.anchoredPosition;
+            dt.SetAsLastSibling();                                   // 빛살 «위»(같은 담개 안이라 층 규칙은 그대로)
+
+            float side = Mathf.Max(light.sizeDelta.x, light.sizeDelta.y);
+            float grain = Mathf.Max(2f, side * DustSizeMul), drift = side * DustDriftMul;
+            var color = Palette.A(tint ?? Palette.White, DustAlpha);
+
+            DOTween.Kill(dt);
+            var seq = DOTween.Sequence().SetLink(dt.gameObject).SetUpdate(true).SetLoops(-1, LoopType.Restart);
+            for (int i = 0; i < DustCount; i++)
+            {
+                var g = dt.Find(DustName + i) as RectTransform;
+                Image gi;
+                if (g == null) { g = Rect(dt, DustName + i); gi = g.gameObject.AddComponent<Image>(); } else gi = Ensure<Image>(g.gameObject);
+                gi.sprite = sp; gi.type = Image.Type.Simple; gi.preserveAspect = true; gi.raycastTarget = false; gi.color = color;
+                g.anchorMin = g.anchorMax = new Vector2(0.5f, 0.5f); g.pivot = new Vector2(0.5f, 0.5f);
+                g.sizeDelta = new Vector2(grain, grain);
+                g.anchoredPosition = Vector2.zero;
+                // 알갱이마다 다른 방향(고르게 나눈 각 + 반 칸 어긋남)과 다른 시작 시각 — 무작위를 안 쓰므로 스샷이 회차마다 안 흔들린다
+                float ang = (i + 0.5f) / DustCount * Mathf.PI * 2f;
+                var to = new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * drift;
+                float at = DustPeriod * i / DustCount;
+                seq.Insert(at, g.DOAnchorPos(to, DustPeriod).SetEase(Ease.OutSine).From(Vector2.zero));
+                seq.Insert(at, gi.DOFade(0f, DustPeriod).SetEase(Ease.InQuad).From(color));
+            }
+            seq.SetTarget(dt);                                       // SetLightSpinning 이 «칸 하나» 로 재우고 깨울 수 있게
+        }
+
+        /// <summary>이 칸에 빛 알갱이(T174)가 깔려 있는가(테스트·감사용) — «&lt;담개&gt;/Dust» 가 활성이고 알갱이가 <see cref="DustCount"/>개다.</summary>
+        public static bool HasDust(Transform cell)
+        {
+            var dt = cell != null ? cell.Find(LightMaskName + "/" + DustName) : null;
+            if (dt == null || !dt.gameObject.activeInHierarchy) return false;
+            int n = 0;
+            for (int i = 0; i < dt.childCount; i++)
+            {
+                var img = dt.GetChild(i).GetComponent<Image>();
+                if (img != null && img.enabled && img.sprite != null) n++;
+            }
+            return n == DustCount;
+        }
+
         /// <summary>이 칸의 빛살 «아래» 에 글로우 서클이 깔려 있는가(테스트·감사용 · T155 ⓓ) — «&lt;담개&gt;/Glow» 가 활성이고 스프라이트가 Glow_Circle.</summary>
         public static bool HasGlow(Transform cell)
         {
@@ -659,6 +738,9 @@ namespace KkomaKnight.Game
         {
             var lt = cell != null ? cell.Find(LightMaskName + "/" + LightName) : null; if (lt == null) return;
             if (on) DOTween.Play(lt); else DOTween.Pause(lt);
+            // T174 4항 ⓑ — 알갱이도 «보이는 칸만» 규약에 같이 태운다(스크롤 밖에서는 멈춘다)
+            var dt = cell.Find(LightMaskName + "/" + DustName);
+            if (dt != null) { if (on) DOTween.Play(dt); else DOTween.Pause(dt); }
         }
         /// <summary>이 칸에 도는 빛살이 있는가(테스트·감사용) — «LightMask/Light» 가 활성이고 스프라이트 이름에 Effect_Light.</summary>
         public static bool HasLight(Transform cell)
@@ -1499,6 +1581,13 @@ namespace KkomaKnight.Game
         public static int CompleteAllTweens() => DOTween.CompleteAll(true);
         /// <summary><paramref name="target"/> 을 겨냥한 살아 있는 트윈/시퀀스가 있는가(테스트용 · Close 뒤 0 계약).</summary>
         public static bool IsTweening(object target) => target != null && DOTween.IsTweening(target);
+        /// <summary>이 target 에 걸린 트윈 수(멈춘 것 포함 · T174 «칸마다 트윈 하나» 를 재는 자리). 테스트 어셈블리가 DOTween 을 직접 안 부르게 여기 둔다.</summary>
+        public static int TweenCountOn(object target)
+        {
+            if (target == null) return 0;
+            var list = DOTween.TweensByTarget(target, true);
+            return list != null ? list.Count : 0;
+        }
         /// <summary>
         /// 지금 «도는» 트윈 수(T129 ⓑ 계측 · 멈춰 있는 것은 안 센다). 질감 3종(패턴 uvRect 흐름 · 빛살 회전)은 <b>무한 루프</b>라
         /// 화면이 서 있는 동안 계속 프레임을 먹는다 — 로비 fps 가 회차마다 내려온 원인을 «몇 개가 도나» 로 먼저 세려는 자다.

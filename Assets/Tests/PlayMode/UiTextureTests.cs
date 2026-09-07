@@ -117,6 +117,30 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(UiKit.GlowAlpha, gimg.color.a, 0.01f, "글로우 서클 알파 = " + UiKit.GlowAlpha + "(빛살보다 옅다 · 겹치면 더 밝아지므로)");
             Assert.IsFalse(gimg.raycastTarget, "Glow raycast 끔");
 
+            // T174(주인 2026-09-07 10:4X «모든 이펙트 라이트 있는 곳에 파티클 이펙트도 넣어 줘 · 빛 알갱이 먼지가 천천히 퍼지는 느낌으로»)
+            // — 진짜 파티클은 UI 위에 못 뜬다(캔버스가 ScreenSpaceOverlay · T144·T181 과 같은 벽)라 작은 Image 몇 장을 트윈으로 흘린다.
+            Assert.IsTrue(UiKit.HasDust(host), "빛살 자리에 빛 알갱이 묶음(T174)");
+            var drt = (RectTransform)mask.Find(UiKit.DustName);
+            Assert.AreEqual(UiKit.DustCount, drt.childCount, "알갱이 수 = UiKit.DustCount(fps 를 재고 줄일 자리가 그 상수 한 곳이다)");
+            Assert.Greater(drt.GetSiblingIndex(), lrt.GetSiblingIndex(), "알갱이는 빛살 «위»");
+            Assert.AreEqual(lrt.anchoredPosition.x, drt.anchoredPosition.x, 1f, "알갱이 묶음 중심 x = 빛살");
+            Assert.AreEqual(lrt.anchoredPosition.y, drt.anchoredPosition.y, 1f, "알갱이 묶음 중심 y = 빛살");
+            // **칸마다 트윈 하나**(지시서 4항 ⓐ) — 알갱이마다 따로 걸면 칸당 도는 트윈이 4배로 늘어 fps 가 떨어진다(T129).
+            Assert.AreEqual(1, UiKit.TweenCountOn(drt), "알갱이는 칸마다 시퀀스 «하나» 가 전부 움직인다(T174 4항 ⓐ · 알갱이마다 걸면 칸당 4배가 된다)");
+            foreach (RectTransform g in drt)
+            {
+                var gimg2 = g.GetComponent<Image>();
+                Assert.IsNotNull(gimg2, "알갱이 그림 " + g.name);
+                Assert.IsFalse(gimg2.raycastTarget, "알갱이 raycast 끔 — 글자·버튼을 막으면 안 된다");
+                Assert.AreEqual(g.rect.width, g.rect.height, 0.5f, "알갱이는 정사각(preserveAspect 와 짝)");
+                Assert.Less(g.rect.width, lrt.rect.width, "알갱이는 빛살보다 작다(먼지지 두 번째 빛살이 아니다)");
+            }
+            // «보이는 칸만»(T72 4항) 규약에 알갱이도 같이 탄다 — 스크롤 밖에서 멈추고 돌아오면 다시 돈다
+            UiKit.SetLightSpinning(host, false);
+            Assert.IsFalse(UiKit.IsTweening(drt), "스크롤 밖 칸에서는 알갱이도 멈춘다(T174 4항 ⓑ)");
+            UiKit.SetLightSpinning(host, true);
+            Assert.IsTrue(UiKit.IsTweening(drt), "돌아오면 다시 돈다");
+
             // ③ 그라데이션
             UiKit.Gradient(host);
             var gt = host.Find(UiKit.GradientTopName); var gb = host.Find(UiKit.GradientBottomName);
