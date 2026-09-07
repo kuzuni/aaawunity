@@ -774,12 +774,15 @@ namespace KkomaKnight.Tests.Play
             {
                 _app.ShowScreen(screen); yield return Frames(2); Canvas.ForceUpdateCanvases();
                 var sr = _app.Current.Root; string w2 = "[" + screen + "] ";
-                var bandT = sr.Find(NavBar.BottomFrameName);
+                // 띠가 어느 «부모» 아래 서는지는 화면마다 다르다 — 상점은 화면 루트(NavBar.Attach), 로비는 프리팹 루트(ui.lobby)다
+                // (로비는 프리팹을 통째로 세우고 그 안에서 조립하므로 BottomFrame·탭 바가 둘 다 프리팹 루트의 자식이다 · T122 회차 2).
+                // 가리느냐 마느냐는 «같은 부모 안에서의 형제 순서» 로 정해지므로, 띠를 깊이 찾아 그 부모를 기준으로 잰다.
+                var bandT = UiKit.Find(sr, NavBar.BottomFrameName);
                 Assert.IsNotNull(bandT, w2 + "하단 프레임 띠");
                 var bar = UiKit.FindAny(sr, "Tab_01_BottomFlushMenu", "ui.tabBar");
                 Assert.IsNotNull(bar, w2 + "하단 탭 바");
-                var barTop = bar; while (barTop != null && barTop.parent != sr) barTop = barTop.parent;
-                Assert.IsNotNull(barTop, w2 + "탭 바가 화면 루트 아래에 있다");
+                var barTop = bar; while (barTop != null && barTop.parent != bandT.parent) barTop = barTop.parent;
+                Assert.IsNotNull(barTop, w2 + "띠와 탭 바가 같은 부모 아래에 있다");
                 Assert.Less(bandT.GetSiblingIndex(), barTop.GetSiblingIndex(), w2 + "띠는 탭 바 뒤(= 탭 아이콘·라벨을 가리지 않는다 · T122)");
             }
 
