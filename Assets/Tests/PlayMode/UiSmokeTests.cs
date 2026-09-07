@@ -598,7 +598,11 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNull(UiKit.Find(pv, "ui.tabBar"), "특권: 탭 바 없음"); Assert.IsFalse(HasText(s => s == "START"), "로비는 숨겨져 있다");
                 // T63-lobbypopups — 특권: 잘림 0 · 부제 40 안 줄어듦(문구 «활성화해») · 제목 «특권» 은 제목 종류 60
                 AssertNoTextClip("특권 페이지", pv); AssertUsedAtLeast("특권 부제", pv, "Sub", TextSize.Body);
-                { Text pt = null; foreach (var t in pv.GetComponentsInChildren<Text>(false)) if (t.text == "특권") pt = t; Assert.IsNotNull(pt, "«특권» 글자"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(pt), "«특권» = 제목 종류"); Assert.GreaterOrEqual(TextAudit.BestFitSize(pt), TextSize.Title, "«특권» 실제 크기 ≥ 60"); }
+                { Text pt = null; foreach (var t in pv.GetComponentsInChildren<Text>(false)) if (t.text == "특권") pt = t; Assert.IsNotNull(pt, "«특권» 글자"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(pt), "«특권» = 제목 종류"); Assert.GreaterOrEqual(TextAudit.BestFitSize(pt), TextSize.Title, "«특권» 실제 크기 ≥ 60");
+                  // T170 회차 3 — 위 한 줄이 55 로 빨개졌을 때 «왜» 를 바로 말해 주는 자(결정 490): 60 이 들어가려면 칸이 한 줄(≈66px)보다 커야 하고
+                  // 그 칸을 세운 것은 Label(…, -10, …, 120) 이다. 가운데 정렬 함수가 세로를 0/100 으로 덮으면 70px 이 되어 bestFit 이 글자를 줄인다.
+                  float ptH = pt.rectTransform.rect.height;   // 앵커 비율이 아니라 «놓이고 난 실제 px» 를 잰다(부모가 줄이라 비율만 보면 헛값이다)
+                  Assert.GreaterOrEqual(ptH, TextSize.Title * 1.2f, "«특권» 글자 칸 세로(px) — 가운데 정렬은 가로만 옮긴다(세로를 덮으면 여기서 먼저 빨개진다)"); }
                 Check("특권 페이지");
                 Assert.IsTrue(ClickNamed(pv, "BackBtn"), "특권 뒤로"); yield return Frames(2); Assert.AreEqual("lobby", _app.Current.Name, "뒤로 → 로비");
                 // T78 — 시즌 패스 페이지(이벤트 배너 진입)는 삭제됐다

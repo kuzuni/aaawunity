@@ -1322,7 +1322,12 @@ namespace KkomaKnight.Game
             float textPct = Mathf.Clamp(text.preferredWidth / rowPx * 100f, 5f, 100f - iconPct - gapPct);
             float startPct = Mathf.Max(0f, (100f - (iconPct + gapPct + textPct)) * 0.5f);
             Pct(icon, startPct, -10, iconPct, 120);
-            Pct(text.rectTransform, startPct + iconPct + gapPct, 0, textPct, 100);
+            // 세로는 «부르는 쪽이 잡아 둔 그대로» 둔다(가로만 가운데로 옮기는 함수다 · T170 회차 3 · 결정 490).
+            // 여기서 0/100 을 못 박았더니 특권(11) 제목이 120% 짜리 칸(3.0%×1.2 = 84px)에서 100%(70px)로 낮아졌고,
+            // bestFit 이 60 을 70px 안에 못 넣어 55 로 줄여 그렸다 — 화면은 «가운데» 가 됐는데 글자만 작아진 것이다.
+            var trt = text.rectTransform;
+            float textY = (1f - trt.anchorMax.y) * 100f, textH = Mathf.Max(1f, (trt.anchorMax.y - trt.anchorMin.y) * 100f);
+            Pct(trt, startPct + iconPct + gapPct, textY, textPct, textH);
         }
 
         /// <summary>
