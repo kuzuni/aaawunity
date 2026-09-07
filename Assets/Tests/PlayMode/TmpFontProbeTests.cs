@@ -106,6 +106,21 @@ namespace KkomaKnight.Tests.Play
             Debug.Log($"[T207①] 흰 판 위 어두운 픽셀 — 글자 전 {before} → 후 {after}(글자가 그려지면 늘어난다)");
             Assert.Greater(after, before + 200, "TMP 라벨이 흰 판 위에 실제로 그려져야 한다(늘어난 어두운 픽셀 = 글자 획)");
 
+            // ⓔ T207 ② 준비 — <b>진짜 TMP 의 API 를 이 자리에서 적어 둔다</b>(결정 573 을 그대로 되풀이한다).
+            //    ② 는 파일 45개에서 uGUI `Text` 를 TMP 타입으로 바꾸는 일이고, 그 코드는 dotnet 스텁에 맞춰 컴파일된다.
+            //    스텁을 «내가 아는 대로» 적으면 로컬만 초록이고 유니티에서 깨지는데, 이번에는 그 규모가 **전 화면**이다.
+            //    Bloom 에서 통한 방법을 그대로 쓴다: 진짜 빌드에게 **제 멤버 목록을 적어 달라고** 한다.
+            //    ⓑⓒ 로 분류해 둔 자리(alignment·fontSize·overflow·preferredWidth …)가 실제로 무슨 타입인지
+            //    이 한 줄이 답한다 — ② 는 그것을 보고 스텁을 넓힌다(추측 0).
+            var sb = new System.Text.StringBuilder();
+            foreach (var p in typeof(TMP_Text).GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+            {
+                if (sb.Length > 0) sb.Append(' ');
+                sb.Append(p.Name).Append(':').Append(p.PropertyType.Name);
+            }
+            Debug.Log("[T207②] TMP_Text 공개 프로퍼티 — " + sb);
+            Assert.Greater(sb.Length, 0, "TMP_Text 의 프로퍼티 목록을 읽어야 한다(② 가 이 목록으로 스텁을 넓힌다)");
+
             Object.Destroy(go); Object.Destroy(host.gameObject); yield return Frames(1);
             _log.AssertNoRed("TMP 탐사");
         }
