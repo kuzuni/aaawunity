@@ -75,6 +75,18 @@ jobs:
             echo "::notice::이미 그 커밋이 배포돼 있다 — 굽지 않는다"
             exit 0
           fi
+          # ⚠ 뒤로 되돌리지 않는다 — ci.yml 이 «머리가 초록» 이라 방금 더 새 커밋을 배포했는데
+          # 내가 그보다 «오래된 초록» 을 골라 덮으면 주인 폰이 뒤로 간다(두 워크플로가 나란히 도는 구조의 유일한 위험).
+          # 그래서 고른 커밋이 지금 배포된 것보다 «앞서 있는가» 를 한 번 묻는다(ahead 일 때만 굽는다).
+          if [ -n "${cur:-}" ]; then
+            rel=$(gh api "repos/$GITHUB_REPOSITORY/compare/$cur...$found" --jq '.status' 2>/dev/null || echo "unknown")
+            echo "배포된 것 ↔ 고른 것: $rel"
+            if [ "$rel" != "ahead" ]; then
+              echo "go=false" >> "$GITHUB_OUTPUT"
+              echo "::notice::고른 커밋이 지금 배포된 것보다 새롭지 않다($rel) — 뒤로 되돌리지 않는다"
+              exit 0
+            fi
+          fi
           { echo "sha=$found"; echo "run=$foundrun"; echo "go=true"; } >> "$GITHUB_OUTPUT"
 
   deploy:
