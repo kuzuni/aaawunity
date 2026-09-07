@@ -363,7 +363,10 @@ namespace KkomaKnight.Game
                 // 전에는 상판이 74 에서 시작하고 소품이 벽 가운데 떠 있었다 — 레퍼런스는 소품이 전부 상판에 «놓여» 있다.
                 var counter = UiKit.Panel(banner.transform, "Counter", "fr.rect", Palette.Hex("#4C3426")); UiKit.Pct(counter.rectTransform, 0, MeCounterY, 100, 10);
                 var ledge = UiKit.Panel(banner.transform, "Ledge", "fr.rect", Palette.Hex("#564535")); UiKit.Pct(ledge.rectTransform, 0, 92, 100, 8);
-                var coins = UiKit.Icon(banner.transform, "Coins", "pi.coins", Palette.Yellow); UiKit.Pct(coins.rectTransform, 17, 51, 16, 40);           // 레퍼런스 금화 자루 자리(x 19~31)
+                // 금화만 상판(82)이 아니라 **80** 에서 멈춘다 — 레퍼런스 자루도 그렇고(y 45~80),
+                // 그 아래 2%p 가 시즌 타이머 글자(`Layout.MeSeason` · 배너 76.7~91.2%)가 지나가는 자리다.
+                // 회차 1 에서 51 로 두었더니 노란 금화가 «시즌 종료까지» 글자를 덮었다(run 431 실측: 금화 56.8~84.8).
+                var coins = UiKit.Icon(banner.transform, "Coins", "pi.coins", Palette.Yellow); UiKit.Pct(coins.rectTransform, 17, 46, 16, 40);           // 레퍼런스 금화 자루 자리(x 19~31)
                 var chest = UiKit.Icon(banner.transform, "Chest", "ui.iconChestRed"); UiKit.Pct(chest.rectTransform, 61.5f, 43, 20, 48);                  // 레퍼런스 궤짝 자리(x 64~79)
                 var bar1 = UiKit.Icon(banner.transform, "Barrel", "env.barrel"); UiKit.Pct(bar1.rectTransform, 78, 55.5f, 10, 36);                        // 레퍼런스 작은 주머니 자리(x 80~86)
                 // 상인은 «가판 아이콘»(ui.iconMerchant)이 아니라 **사람**이다 — 레퍼런스의 상인은 대머리에 로브를 입고 계산대 뒤에 서 있다.
