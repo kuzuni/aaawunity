@@ -621,7 +621,7 @@ namespace KkomaKnight.Game
         /// <summary>
         /// 공통 팝업 문법(<see cref="UiKit.Popup"/>) 위에 표 ⑨ 자리로 조립한다(재료 = ui.popup 패널 · ui.titleBrown 명판 · pi.music/pi.sound/pi.globe 아이콘 · ui.switch(Swich_01 · On/Off 자식) · ui.btnGray/btnRed/btnOrange).
         /// 동작하는 것: 음악 = Save.MuteBgm · 효과음 = Save.MuteSfx(T28 · 각각 저장 + Audio 즉시 반영) · «데이터 삭제»(로비) · «재개»/«포기»(전투) · 배경 탭 = 닫기(전투에선 재개). 언어 버튼·링크 글자는 표시만.
-        /// 이름 계약(AudioTests·UiSmokeTests): 줄 «BGM»·«SFX» 안에 «Swich_01».
+        /// 이름 계약(AudioTests·UiSmokeTests): 줄 «BGM»·«SFX» 안에 «Swich_01» · T156 의 줄 둘 = «Profile»·«Nickname»(버튼 «ProfileBtn»·«NickBtn»).
         /// </summary>
         void SettingsPopup(string title, Action onResume, Action onGiveUp)
         {
@@ -642,6 +642,10 @@ namespace KkomaKnight.Game
             var bgm = Row("BGM", Layout.SetRowMusic, "pi.music", "음악");
             var sfx = Row("SFX", Layout.SetRowSound, "pi.sound", "효과음");
             var lang = Row("Language", Layout.SetRowLang, "pi.globe", "언어");
+            // T156(주인 2026-09-07 07:4X «설정에 프로필 아이콘 설정, 닉네임 설정 있어야함») — 레퍼런스 12 에는 없는 우리 줄 둘.
+            // 새로 만드는 기능은 0 이다: 두 팝업(T96-profile)이 이미 있고 상단 아바타 입구도 그대로 둔다 — 여기서는 «또 하나의 입구» 만 낸다.
+            var prof = Row("Profile", Layout.SetRowProfile, "pi.crown", "프로필 아이콘");
+            var nick = Row("Nickname", Layout.SetRowNick, "pi.book", "닉네임");
             // 토글 = Swich_01 조각(본래 크기 그대로 · 배율로 표 «토글» 칸에) — On/Off 자식으로 상태 표시(ApplySwitch)
             RectTransform Toggle(RectTransform row, Layout.R rowRect, Layout.R at, bool on, Action onClick)
             {
@@ -657,6 +661,9 @@ namespace KkomaKnight.Game
             ssw = Toggle(sfx, Layout.SetRowSound, sfxToggle, !_app.Save.MuteSfx, () => { _app.Save.MuteSfx = !_app.Save.MuteSfx; _app.Persist(); Audio.ApplyMute(); ApplySwitch(ssw, !_app.Save.MuteSfx); });
             // 언어 버튼 = 회색 보조 버튼 «한국어»(표시만 · 언어 시스템 없음)
             var lb = UiKit.Button(box, "ui.btnGray", "한국어", () => { }, Layout.SetLangBtn.Within(Layout.SetBox)); lb.name = "LangBtn";
+            // 두 줄의 «변경» — 언어 버튼과 같은 조각·같은 폭. 팝업 층을 갈아 끼우므로(Overlay.Box 규약) 설정 위에 겹치지 않는다.
+            var pb = UiKit.Button(box, "ui.btnGray", "변경", () => Profile.OpenAvatar(_app), Layout.SetProfileBtn.Within(Layout.SetBox)); pb.name = "ProfileBtn";
+            var nb = UiKit.Button(box, "ui.btnGray", "변경", () => Profile.OpenNickname(_app), Layout.SetNickBtn.Within(Layout.SetBox)); nb.name = "NickBtn";
             // 패널 밖 아래 — 링크 글자 2(눌러도 아무 일 없음) · 그 아래 줄 = 로비: «데이터 삭제»(T29) / 전투: «재개»·«포기하고 로비로»
             // 링크 2 = 본문 하한(T63-settings · 30 이 하한으로 올라가던 것을 명시) · 사각형은 글자를 담는다(전에는 표 그대로라 «개인정보 처리방침» 268px 이 219px 칸에서 좌우로 넘쳤다 → Layout.SetPrivacy 보정)
             var pv = UiKit.Text(Root, "개인정보 처리방침", TextSize.Body, Palette.Sky, TextAnchor.MiddleCenter, false, true); pv.name = "Privacy"; pv.horizontalOverflow = HorizontalWrapMode.Overflow; UiKit.Pct(pv.rectTransform, Layout.SetPrivacy);
@@ -671,6 +678,7 @@ namespace KkomaKnight.Game
             // T46 이름표(표 ⑨ «요소» 글자 그대로)
             UiKit.Tag(box, "팝업 박스"); if (rib != null) UiKit.Tag(rib, "제목 리본(Settings)");
             UiKit.Tag(bgm, "음악 줄"); UiKit.Tag(sfx, "효과음 줄"); UiKit.Tag(lang, "언어 줄");
+            UiKit.Tag(prof, "프로필 아이콘 줄"); UiKit.Tag(nick, "닉네임 줄"); UiKit.Tag(pb, "프로필 변경 버튼"); UiKit.Tag(nb, "닉네임 변경 버튼");
             if (bsw != null && bsw.parent != null) UiKit.Tag(bsw.parent, "토글(1개)"); UiKit.Tag(lb, "언어 버튼");
             UiKit.Tag(pv.rectTransform, "개인정보 링크"); UiKit.Tag(tm.rectTransform, "이용약관 링크");
             if (onResume == null && onGiveUp == null) UiKit.Tag(lastRow, "데이터 삭제 버튼");

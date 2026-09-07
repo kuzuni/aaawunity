@@ -84,6 +84,40 @@ namespace KkomaKnight.Tests
             for (int i = 0; i < 4; i++) if (v[i].HasValue) Assert.That(got[i], Is.EqualTo(v[i].Value).Within(0.06f), $"{sec} «{name}» {lbl[i]}(프레임 % 환산)");
         }
 
+        /// <summary>⑨ 설정 팝업 — 표 ↔ <see cref="Layout"/> 상수(T156 이 줄 둘을 더하며 상자·아래 셋이 같이 움직였다 · 표가 «자» 라 둘이 어긋나면 여기서 빨개진다).</summary>
+        [Test]
+        public void Settings_MatchesSpec()
+        {
+            var s = Parse();
+            Same(s, "⑨", "팝업 박스", Layout.SetBox);
+            Same(s, "⑨", "제목 리본(Settings)", Layout.SetRibbon);
+            Same(s, "⑨", "음악 줄", Layout.SetRowMusic);
+            Same(s, "⑨", "효과음 줄", Layout.SetRowSound);
+            Same(s, "⑨", "언어 줄", Layout.SetRowLang);
+            Same(s, "⑨", "프로필 아이콘 줄", Layout.SetRowProfile);
+            Same(s, "⑨", "닉네임 줄", Layout.SetRowNick);
+            Same(s, "⑨", "토글(1개)", Layout.SetToggle);
+            Same(s, "⑨", "언어 버튼", Layout.SetLangBtn);
+            Same(s, "⑨", "프로필 변경 버튼", Layout.SetProfileBtn);
+            Same(s, "⑨", "닉네임 변경 버튼", Layout.SetNickBtn);
+            Same(s, "⑨", "개인정보 링크", Layout.SetPrivacy);
+            Same(s, "⑨", "이용약관 링크", Layout.SetTerms);
+            Same(s, "⑨", "데이터 삭제 버튼", Layout.SetReset);
+            // 줄 다섯이 같은 피치로 서고, 마지막 줄이 상자 «안» 에서 끝난다(아래 여백 ≥ 3%p)
+            Assert.That(Layout.SetRowSound.Y - Layout.SetRowMusic.Y, Is.EqualTo(Layout.SetRowPitch).Within(0.05f), "줄 피치");
+            Assert.That(Layout.SetRowProfile.Y - Layout.SetRowLang.Y, Is.EqualTo(Layout.SetRowPitch).Within(0.05f), "프로필 줄도 같은 피치");
+            Assert.That(Layout.SetRowNick.Y - Layout.SetRowProfile.Y, Is.EqualTo(Layout.SetRowPitch).Within(0.05f), "닉네임 줄도 같은 피치");
+            float boxBottom = Layout.SetBox.Y + Layout.SetBox.H, lastRow = Layout.SetRowNick.Y + Layout.SetRowNick.H;
+            Assert.That(lastRow, Is.LessThan(boxBottom), "마지막 줄은 상자 안에서 끝난다");
+            Assert.That(boxBottom - lastRow, Is.GreaterThanOrEqualTo(3.0f), "상자 아래 여백");
+            // 상자 «밖» 아래 셋은 상자와 안 겹치고 탭 바(92.6) 위에서 끝난다
+            foreach (var r in new[] { Layout.SetPrivacy, Layout.SetTerms, Layout.SetReset, Layout.SetResumeBtn, Layout.SetGiveUpBtn })
+            {
+                Assert.That(r.Y, Is.GreaterThanOrEqualTo(boxBottom), "상자 아래에 선다");
+                Assert.That(r.Y + r.H, Is.LessThan(92.6f), "탭 바 위에서 끝난다");
+            }
+        }
+
         /// <summary>㉝ 챕터 보상 페이지(T137 · 레퍼런스 32) — 표 ↔ <see cref="Layout"/> 상수(T137 은 자리를 안 옮겼다 · 행 이름만 «보상 한 칸» 으로 바뀌었다).</summary>
         [Test]
         public void ChapterChest_MatchesSpec()
