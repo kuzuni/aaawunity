@@ -9,7 +9,7 @@ namespace KkomaKnight.Game
     /// 펫 탭 = 레퍼런스 <c>docs/ref/13_pet.jpg</c> 구도 · 펫 세부 팝업 = <c>14_pet_detail.jpg</c> (T42 · 주인 2026-09-06 «UI 는 무조건 레퍼런스 기준» · T32 «Character_Skill 그대로» 폐기 · 주인 ⓔ «시스템이 없는 화면은 레이아웃 껍데기»).
     /// 펫 시스템은 없다 — <b>전부 표시만</b>(버튼은 눌러도 아무 일 없음 · 숫자는 0 · 슬롯은 잠금/빈 칸 · 레퍼런스 숫자를 베끼지 않는다). ref-layout ⑩·⑪ 표(<see cref="Layout.PetGrid"/> …) 자리에 GUI Pro 조각을 조립한다:
     /// ① 상단 재화 바(<see cref="TopBar"/>) → ② <b>4열 격자 9칸</b>(칸 = ItemFrame_01 조각 + 파란 등급 변형 + GUI Pro 아이콘 · 칸 위 «Lv. 0» · 칸 아래 진행바 «0/0») → ③ <b>합계 줄</b>(«+0 ❤ | +0 🛡 | +0 🗡»)
-    /// → ④ <b>«장착중» 띠</b>(어두운 패널 + 초록 라벨 + 슬롯 4 = 잠금 원 2 · 빈 칸 2) → ⑤ 회색 <b>전체 강화 · 빠른 장착</b> → ⑥ 주황 <b>소환 · 소환 x10</b>(두 줄 · 가격 자리 «준비 중») → ⑦ 탭 바.
+    /// → ④ <b>«장착중» 띠</b>(어두운 패널 + 초록 라벨 + 슬롯 4 = 잠금 원 2 · 빈 칸 2) → ⑤ 회색 <b>전체 강화 · 빠른 장착</b> → ⑥ 주황 <b>소환 · 소환 x10</b>(가격 자리는 <b>비어 있다</b> — 펫 시스템이 없어 값을 지어내지 않는다 · 흐리게 + 누르면 토스트 · T178) → ⑦ 탭 바.
     /// 칸을 누르면 세부 팝업(공통 팝업 문법 <see cref="UiKit.Popup"/> · 명판 없음 · 칸이 상자 윗변에 걸침 · 설명 박스 · «패시브:» 수치 줄 · 강화(회색) · 장착(주황) · «탭하여 닫기»).
     /// 글자(T63-pet · 주인 «글씨 너무 작다»): 전부 <see cref="UiKit"/> 하한(본문 40 · 버튼 44) — 직접 박은 크기는 없다. 진행바 «n/m» 만 표 높이에 안 들어가 바를 <see cref="Layout.PetBarH"/> 로 키웠다(13·14 게이트 잘림 0).
     /// 테두리(T69-pet · 주인 «행·카드·칸마다 검은 아웃라인» + 7항 «아이템류 칸 = 장비 화면의 그 프레임»): 격자 9칸·빈 장착 슬롯·세부 칸의 ItemFrame Border 링을 <see cref="GearUi.DarkFrame"/> 로 Ink 8px · 잠금 슬롯(원)은 <see cref="CircleBorderKey"/> 굵은 원형 조각.
@@ -91,7 +91,7 @@ namespace KkomaKnight.Game
                 UiKit.Clickable(s, () => { });   // 껍데기 — 눌러도 아무 일 없음
             }
 
-            // ⑤ 회색 보조 버튼 2 → ⑥ 주황 소환 버튼 2(두 줄 · 가격 자리는 «준비 중») → ⑦ 탭 바
+            // ⑤ 회색 보조 버튼 2 → ⑥ 주황 소환 버튼 2(가격 자리 없음 · 흐리게 + 누르면 «준비 중» 토스트 · T178) → ⑦ 탭 바
             var up = UiKit.Button(Root, "ui.btnGray", "전체 강화", () => { }, Layout.PetUpgradeAll); up.name = "UpgradeAllBtn";
             var qe = UiKit.Button(Root, "ui.btnGray", "빠른 장착", () => { }, Layout.PetQuickEquip); qe.name = "QuickEquipBtn";
             var sm = SummonButton("SummonBtn", "소환", Layout.PetSummon); var sm10 = SummonButton("Summon10Btn", "소환 x10", Layout.PetSummon10);
@@ -136,14 +136,31 @@ namespace KkomaKnight.Game
         }
         static void Sep(Transform row, float x) => UiKit.Label(row, x, 0, 6, 100, "|", 40, Palette.Cream);
 
-        /// <summary>주황 소환 버튼 — 위 줄 «소환»/«소환 x10» · 아래 줄 💎 + «준비 중»(펫 시스템·가격 데이터 없음 · 레퍼런스 숫자 베끼지 않음).</summary>
+        /// <summary>펫 시스템이 아직 없다는 안내 — 버튼을 눌렀을 때 뜨는 한 줄(T178 · 세부 팝업의 설명과 같은 말이라 한 곳에 둔다).</summary>
+        public const string NotReadyMsg = "펫 시스템은 준비 중입니다";
+        /// <summary>
+        /// 주황 소환 버튼 — 위 줄 «소환»/«소환 x10». <b>가격 자리는 비운다</b>(펫 시스템·가격 데이터가 없다 · 레퍼런스 숫자를 베끼지 않는다 · §1).
+        /// <para>
+        /// T178(주인이 던전 20 에서 «준비 중» 카드를 지우라고 했다 = T101 ⓑ) — 여기에도 «💎 준비 중» 이 남아 있었다.
+        /// 주인이 싫다고 한 표기를 다른 화면에 두지 않는다: <b>글자를 지우고</b> 버튼을 흐리게(<see cref="Dim"/> 0.5) 해서 «지금은 못 누른다» 를 보이고,
+        /// 눌렀을 때 <b>토스트로 까닭</b>을 말한다. 이 레포에 이미 있는 문법이다(T99 던전 티켓 · 결정 205 · <c>EventsScreen.Dim</c>).
+        /// 가격 숫자를 지어내지 않고, 새 기능도 만들지 않는다(결정 <b>432</b>).
+        /// </para>
+        /// </summary>
         RectTransform SummonButton(string name, string label, Layout.R r)
         {
-            var b = UiKit.Button(Root, "ui.btnOrange", label, () => { }, r); b.name = name;
-            var txt = UiKit.ButtonText(b); if (txt != null) { UiKit.Pct(txt.rectTransform, 4, 6, 92, 46); txt.alignment = TextAnchor.MiddleCenter; }
-            var gem = UiKit.Icon(b, "Gem", "ui.gemRed"); UiKit.Pct(gem.rectTransform, 30, 56, 11, 36);
-            UiKit.Label(b, 43, 54, 40, 40, "준비 중", 30, Palette.Ink, TextAnchor.MiddleLeft, true, false);
+            var b = UiKit.Button(Root, "ui.btnOrange", label, () => App.Toast(NotReadyMsg), r); b.name = name;
+            // 가격 줄이 없으니 글자가 버튼 «전체» 를 쓴다(예전엔 위 46% 만 쓰고 아래에 «💎 준비 중» 이 있었다).
+            // 💎 아이콘도 세우지 않는다 — 뒤에 숫자가 없는 다이아 아이콘은 «값이 있는데 안 보이는» 것처럼 읽혀 빈 자리보다 나쁘다.
+            var txt = UiKit.ButtonText(b); if (txt != null) { UiKit.Pct(txt.rectTransform, 4, 6, 92, 88); txt.alignment = TextAnchor.MiddleCenter; }
+            Dim(b, false);
             return b;
+        }
+        /// <summary>«눌리기는 하되 꺼져 보이는» 버튼(알파 0.5) — 까닭을 토스트로 알려야 해서 <see cref="UiKit.SetInteractable"/>(클릭까지 막는다) 대신 쓴다(<c>EventsScreen.Dim</c> 과 같은 문법 · T99 · 결정 205).</summary>
+        static void Dim(RectTransform btn, bool on)
+        {
+            if (btn == null) return;
+            UiKit.Ensure<CanvasGroup>(btn.gameObject).alpha = on ? 1f : 0.5f;
         }
 
         /// <summary>펫 세부 팝업(레퍼런스 14) — 공통 팝업 문법 위에: 명판 없음 · 펫 칸이 상자 윗변에 걸침 · 진행바 · 설명 박스 · «패시브:» + «+0 🗡 | +0 🛡» · 강화(회색) · 장착(주황) · «탭하여 닫기»(배경 탭). 버튼은 껍데기.</summary>

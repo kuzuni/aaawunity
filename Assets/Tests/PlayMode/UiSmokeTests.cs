@@ -673,9 +673,24 @@ namespace KkomaKnight.Tests.Play
                 var ua = (RectTransform)UiKit.Find(pet, "UpgradeAllBtn"); var sm = (RectTransform)UiKit.Find(pet, "SummonBtn"); var sm10 = (RectTransform)UiKit.Find(pet, "Summon10Btn");
                 Assert.IsTrue(ua.anchorMin.y > sm.anchorMax.y, "회색 줄이 소환 줄 위"); Assert.IsTrue(sm10.anchorMin.x > sm.anchorMax.x, "소환 x10 은 소환 오른쪽");
                 Assert.AreEqual(Layout.PetSummon.X, sm.anchorMin.x * 100f, 0.5f, "소환 x"); Assert.AreEqual(1f - Layout.TabBar.Y / 100f, ((RectTransform)tabs2).anchorMax.y, 1e-3f, "탭 바 = 표 자리");
+                // T178 — 주인이 던전 20 에서 지우라고 한 «준비 중» 표기가 이 화면에도 남아 있었다(소환 버튼 가격 자리).
+                // 값을 지어내지 않고 «흐리게 + 누르면 까닭을 토스트» 로 바꿨다(T99 티켓과 같은 문법 · 결정 432).
+                foreach (var n in new[] { "SummonBtn", "Summon10Btn" })
+                {
+                    var btn = UiKit.Find(pet, n);
+                    Assert.IsNotNull(btn, "펫 소환 버튼 " + n);
+                    foreach (var t in btn.GetComponentsInChildren<Text>(true))
+                        StringAssert.DoesNotContain("준비 중", t.text, n + " 안에 «준비 중» 글자가 남으면 안 된다(T178 · 주인이 던전에서 지우라 한 그 표기)");
+                    var cg = btn.GetComponent<CanvasGroup>();
+                    Assert.IsNotNull(cg, n + " 는 «못 누르는 것» 으로 보여야 한다(CanvasGroup 알파 · T178)");
+                    Assert.AreEqual(0.5f, cg.alpha, 0.01f, n + " 알파 0.5(흐리게 · T99 티켓과 같은 문법)");
+                }
                 // 껍데기 버튼·슬롯 — 눌러도 아무 일 없음(팝업 안 열림 · 화면 그대로 · 빨간 줄 0)
                 foreach (var n in new[] { "UpgradeAllBtn", "QuickEquipBtn", "SummonBtn", "Summon10Btn", "Slot:0", "Slot:3" }) Assert.IsTrue(ClickNamed(pet, n), "껍데기 " + n);
                 yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen, "껍데기 버튼은 팝업을 열지 않는다"); Assert.AreEqual("pet", _app.Current.Name, "화면 그대로");
+                // 소환을 «마지막에» 눌렀으므로 토스트가 그 까닭을 말하고 있어야 한다(T178 · 팝업이 아니라 토스트라 위 «팝업 안 열림» 과 어긋나지 않는다)
+                Assert.IsTrue(HasText(s => s.Contains(PetScreen.NotReadyMsg)),
+                    "소환을 누르면 «" + PetScreen.NotReadyMsg + "» 토스트로 까닭을 말해야 한다(T178)");
                 Check("펫 껍데기 버튼");
                 // 세부 팝업(14) — 칸 클릭 → 명판 없음 · 세부 칸 · «패시브:» · 강화/장착(껍데기) · «탭하여 닫기» · 배경 탭으로 닫힘
                 Assert.IsTrue(ClickNamed(pet, "Pet:0"), "펫 칸 클릭"); yield return Frames(2);
