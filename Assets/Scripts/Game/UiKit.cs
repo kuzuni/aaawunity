@@ -1365,16 +1365,19 @@ namespace KkomaKnight.Game
         public static Image ShineTarget(Transform frameRoot)
         {
             if (frameRoot == null) return null;
-            Image best = null; float bestArea = -1f;
+            // T153 회차 2 — «몸통(Bg)» 이 있으면 그 한 장이다. 회차 1 은 «면적이 가장 큰 한 장» 이었는데
+            // CI #359 에서 카드 조각의 가장 큰 Image 가 Bg 가 **아니었다**(테두리·그림자 쪽이 더 넓다) —
+            // 그러면 빛이 «테두리 링» 만 훑어 주인이 본 «얇은 띠» 가 그대로 남는다. 빛이 지나갈 면은 몸통이다.
+            Image bg = null, best = null; float bestArea = -1f;
             foreach (var img in frameRoot.GetComponentsInChildren<Image>(true))
             {
                 if (img == null) continue;
+                if (bg == null && img.name == "Bg") bg = img;
                 var r = ((RectTransform)img.transform).rect;
                 float area = Mathf.Abs(r.width * r.height);
-                bool better = area > bestArea + 0.5f || (Mathf.Abs(area - bestArea) <= 0.5f && img.name == "Bg" && (best == null || best.name != "Bg"));
-                if (better) { best = img; bestArea = area; }
+                if (area > bestArea + 0.5f) { best = img; bestArea = area; }
             }
-            return best;
+            return bg != null ? bg : best;   // 몸통이 없는 조각(로비 챕터 카드 등)에서는 가장 넓은 한 장
         }
         /// <summary><paramref name="inst"/> 의 _ShineLocation 을 <paramref name="at"/> 초부터 <see cref="ShineDur"/> 동안 <see cref="ShineFrom"/>→<see cref="ShineTo"/> 로 — 마스터 시퀀스에 Insert(스킵·CompleteAll 이면 끝 값 = 화면 밖). 돌려주는 값 = 끝나는 시각.</summary>
         public static float Shine(Sequence master, Material inst, Transform link, float at)

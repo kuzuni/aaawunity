@@ -14,7 +14,7 @@ namespace KkomaKnight.Tests.Play
     /// «샤인이 일정한 두께로 쭉 지나가는 효과인데 특전꺼 보니까 얇게 하다가 존나 두껍게 하다가 얇게 하다가 끝남»).
     /// <para>
     /// 굵기 자체는 PlayMode 로 못 재므로(셰이더가 그리는 픽셀이다) 지시서 4항대로 <b>그 굵기를 만들어 내는 두 원인</b>을 잰다:
-    /// ⓐ 한 카드에서 이 머티리얼을 쓰는 <b>Image 가 하나</b>다(다섯이면 층마다 다른 굵기·속도의 띠가 겹쳐 «얇→두꺼→얇» 이 된다) ·
+    /// ⓐ 한 카드에서 이 머티리얼을 쓰는 <b>Image 가 하나</b>(= 몸통 «Bg»)다(다섯이면 층마다 다른 굵기·속도의 띠가 겹쳐 «얇→두꺼→얇» 이 된다) ·
     /// ⓑ 빛의 속도가 <b>등속</b>이다(<c>InOutSine</c> 이면 가장자리에서 느리고 가운데서 빠르다).
     /// ⓑ 는 이징 이름을 믿지 않고 <b>실제 값을 세 곳에서 재서</b> 간격이 같은지 본다.
     /// </para>
@@ -70,8 +70,8 @@ namespace KkomaKnight.Tests.Play
             yield return Frames(2);
             UiKit.CompleteAllTweens(); yield return Frames(1);
 
-            var cards = UiKit.Find(_app.Overlay.Root, "Content");
-            Assert.IsNotNull(cards, "3택 카드 담개(Content)");
+            var cards = UiKit.Find(_app.Overlay.Root, "Group_Card");   // 조각의 담개 이름(«Content» 가 아니다 — CI #359 에서 내 자가 여기서 죽었다)
+            Assert.IsNotNull(cards, "3택 카드 담개(Group_Card)");
             int seen = 0;
             foreach (Transform card in cards)
             {
@@ -82,7 +82,7 @@ namespace KkomaKnight.Tests.Play
                     card.name + ": 빛을 물린 Image 는 한 장이어야 한다(여러 장이면 층마다 굵기·속도가 달라 «얇→두꺼→얇» 이 된다 · T153 1항)");
                 var target = UiKit.ShineTarget(card);
                 Assert.IsNotNull(target, card.name + " 빛을 물릴 한 장");
-                Assert.AreSame(mo.Mat, target.material, card.name + ": 빛은 «가장 큰 한 장»(카드 몸통)에 물린다");
+                Assert.AreSame(mo.Mat, target.material, card.name + ": 빛은 카드 «몸통(Bg)» 한 장에 물린다(없는 조각이면 가장 넓은 한 장 · T153 회차 2)");
             }
             Assert.Greater(seen, 0, "3택 카드에 shine 머티리얼이 하나는 붙어 있어야 한다(T61)");
             _log.AssertNoRed("특전 3택 shine");

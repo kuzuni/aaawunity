@@ -1422,7 +1422,13 @@ namespace KkomaKnight.Tests.Play
                     Assert.AreEqual(UiKit.ShineFrom, mo.Mat.GetFloat(UiKit.ShineLocationId), 1e-4f, $"연 직후 카드 {i} 빛은 카드 밖(시작 값)");
                     var frame = UiKit.Find(c, "CardFrameArea"); Assert.IsNotNull(frame, $"카드 {i} CardFrameArea");
                     var imgs = frame.GetComponentsInChildren<Image>(true); Assert.Greater(imgs.Length, 0, $"카드 {i} 프레임 Image");
-                    foreach (var im in imgs) { Assert.AreSame(mo.Mat, im.material, $"카드 {i} 프레임 Image «{im.name}» = 그 카드의 인스턴스"); Assert.IsTrue(im.material.shader.name.Contains("AllIn1SpriteShaderUiMask"), $"카드 {i} 프레임 쉐이더 = UiMask: {im.material.shader.name}"); }
+                    // T153(주인 07:0X «샤인이 일정한 두께로 쭉 지나가야 하는데 얇→두꺼→얇») — 빛은 이제 프레임 Image **한 장**에만 문다.
+                    // 예전 계약(«프레임 Image 전부»)이 그 «얇→두꺼→얇» 의 원인이었다: 층마다 폭이 달라 띠 다섯이 겹쳐 지나갔다.
+                    // 새 지시가 옛 단언을 이긴다(T94 ⓑ vs T69 · T168 vs T107 이 밟은 길) — 여기서는 «한 장 · 그 한 장이 ShineTarget» 을 잰다.
+                    var lit = new List<Image>(); foreach (var im in imgs) if (im != null && im.material == mo.Mat) lit.Add(im);
+                    Assert.AreEqual(1, lit.Count, $"카드 {i}: 빛을 문 프레임 Image 는 한 장이어야 한다(T153) — 지금 {lit.Count}장");
+                    Assert.AreSame(UiKit.ShineTarget(frame), lit[0], $"카드 {i}: 빛은 UiKit.ShineTarget 이 고른 한 장(카드 몸통 «Bg»)에 문다");
+                    Assert.IsTrue(lit[0].material.shader.name.Contains("AllIn1SpriteShaderUiMask"), $"카드 {i} 프레임 쉐이더 = UiMask: {lit[0].material.shader.name}");
                     var desc = UiKit.Find(c, "Text_Value"); var dt = desc != null ? desc.GetComponent<Text>() : null; Assert.IsNotNull(dt, $"카드 {i} 설명 글자"); Assert.IsFalse(dt.material != null && dt.material.shader != null && dt.material.shader.name.Contains("AllIn1"), $"카드 {i} 글자엔 shine 안 붙음(T52 한 색)");
                     var icon = UiKit.Find(c, "ItemFrameArea"); if (icon != null) foreach (var im in icon.GetComponentsInChildren<Image>(true)) Assert.AreNotSame(mo.Mat, im.material, $"카드 {i} 아이콘 조각 «{im.name}» 엔 shine 안 붙음");
                 }
