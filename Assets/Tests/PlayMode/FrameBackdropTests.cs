@@ -14,12 +14,13 @@ namespace KkomaKnight.Tests.Play
     /// 1단계 자(<see cref="AspectRatioGateTests"/>)가 «태블릿 3:4 에서 남는 띠 <b>38.4%</b>» 를 재 놓았고, 이 자는 그 자리가 <b>덮였는지</b>를 본다.
     /// <list type="bullet">
     /// <item>ⓐ 띠 넷(<c>Band:left/right/top/bottom</c>)이 있고 <b>프레임보다 뒤</b>(캔버스 형제 0 인 <c>Backdrop</c> 안)에 선다.</item>
-    /// <item>ⓑ 넓은 화면(3:4·9:16)에서 좌우 띠가 <b>실제로 넓이를 갖고</b>, 띠 + 프레임이 안전 영역을 가로로 <b>다 덮는다</b>(검은 바닥 0).</item>
+    /// <item>ⓑ 넓은 화면(3:4·9:16)에서 좌우 띠가 <b>캔버스 끝 ~ 프레임 변</b>을 채운다(검은 바닥 0).</item>
     /// <item>ⓒ <b>프레임 안은 한 픽셀도 안 덮는다</b> — 전투 마당은 <see cref="WorldCam"/> 이 캔버스 «뒤» 에 그리므로 덮으면 마당이 사라진다(이 자가 그 회귀를 잡는다).</item>
-    /// <item>ⓓ 기준 비율(9:19.5)에서는 띠가 거의 0 이라 그림이 종전과 같다.</item>
+    /// <item>ⓓ 기준 비율(9:19.5)에서는 <b>안전 영역 «안»</b> 레터박스가 거의 0 이라 그림이 종전과 같다.</item>
     /// <item>ⓔ 빨간 줄 0(<see cref="PlayLog"/> · T11 규약).</item>
     /// </list>
     /// 비율은 1단계와 같은 방법(<see cref="SafeAreaRoot.Override"/> 주입)으로 흉내 낸다 — CI 에서 기기 해상도를 못 바꾸기 때문이다.
+    /// ⚠ <b>자의 기준은 캔버스</b>다 — 띠는 안전 영역 «밖»(노치 띠)까지 덮는 것이 옳아서, 안전 영역으로 나누면 100% 를 넘는 헛값이 나온다(CI #362 · 결정 487).
     /// </summary>
     public class FrameBackdropTests
     {
@@ -84,21 +85,22 @@ namespace KkomaKnight.Tests.Play
                 Assert.Greater(img.color.a, 0.9f, n + " 는 불투명해야 검은 바닥을 덮는다");
             }
 
-            // ⓑⓒ 넓은 화면 둘 — 좌우 띠가 생기고, 띠 + 프레임이 가로를 다 덮고, 프레임 «안» 은 안 덮는다
+            // ⓑⓒ 넓은 화면 둘 — 좌우 띠가 «캔버스 끝 ~ 프레임 변» 을 채우고, 프레임 «안» 은 안 덮는다
             foreach (var (name, w, h) in new[] { ("3:4(태블릿)", 3f, 4f), ("9:16", 9f, 16f) })
             {
                 SetRatio(w, h); yield return Frames(2); Canvas.ForceUpdateCanvases();
+                var canvas = WorldRect(backdrop);
                 var safe = WorldRect((RectTransform)_app.SafeArea);
                 var frame = WorldRect(_app.Frame);
                 var left = WorldRect(Band(FrameBackdrop.LeftName));
                 var right = WorldRect(Band(FrameBackdrop.RightName));
-                float sideBand = (left.width + right.width) / Mathf.Max(1f, safe.width) * 100f;
-                Debug.Log($"[T182ⓑ] {name} 안전영역 {safe.width:0}×{safe.height:0} · 프레임 {frame.width:0}×{frame.height:0} · 좌우 띠 {sideBand:0.0}%");
-                Assert.Greater(left.width, 1f, name + ": 왼쪽 띠가 실제로 넓이를 갖는다(넓은 화면이라 프레임 옆이 남는다)");
+                float insideBand = (safe.width - frame.width) / Mathf.Max(1f, safe.width) * 100f;
+                Debug.Log($"[T182ⓑ] {name} 캔버스 {canvas.width:0}×{canvas.height:0} · 안전영역 {safe.width:0}×{safe.height:0} · 프레임 {frame.width:0}×{frame.height:0} · 안전영역 안 좌우 띠 {insideBand:0.0}%");
+                Assert.Greater(insideBand, 5f, name + ": 넓은 화면이라 안전 영역 안에서도 프레임 옆이 남는다(이 자가 헛돌지 않게)");
+                Assert.Greater(left.width, 1f, name + ": 왼쪽 띠가 실제로 넓이를 갖는다");
                 Assert.Greater(right.width, 1f, name + ": 오른쪽 띠");
-                // 띠 + 프레임 = 화면 가로 전부(검은 바닥이 안 남는다)
-                Assert.LessOrEqual(left.xMin, safe.xMin + 1f, name + ": 왼쪽 띠가 화면 왼쪽 끝까지");
-                Assert.GreaterOrEqual(right.xMax, safe.xMax - 1f, name + ": 오른쪽 띠가 화면 오른쪽 끝까지");
+                Assert.LessOrEqual(left.xMin, canvas.xMin + 1f, name + ": 왼쪽 띠가 화면(캔버스) 왼쪽 끝까지");
+                Assert.GreaterOrEqual(right.xMax, canvas.xMax - 1f, name + ": 오른쪽 띠가 화면 오른쪽 끝까지");
                 Assert.LessOrEqual(Mathf.Abs(left.xMax - frame.xMin), 1f, name + ": 왼쪽 띠는 프레임 왼쪽 변에서 끝난다");
                 Assert.LessOrEqual(Mathf.Abs(right.xMin - frame.xMax), 1f, name + ": 오른쪽 띠는 프레임 오른쪽 변에서 시작한다");
                 // ⓒ 프레임 «안» 은 어느 띠도 안 덮는다 — 덮으면 전투 마당(WorldCam)이 사라진다
@@ -111,15 +113,14 @@ namespace KkomaKnight.Tests.Play
                 }
             }
 
-            // ⓓ 기준 비율에서는 띠가 거의 없다(그림이 종전과 같다)
+            // ⓓ 기준 비율에서는 «안전 영역 안» 레터박스가 거의 0(캔버스 밖 띠는 기기 화면 비율 몫이라 여기서 안 센다)
             SetRatio(9f, 19.5f); yield return Frames(2); Canvas.ForceUpdateCanvases();
             {
                 var safe = WorldRect((RectTransform)_app.SafeArea);
-                var left = WorldRect(Band(FrameBackdrop.LeftName));
-                var right = WorldRect(Band(FrameBackdrop.RightName));
-                float sideBand = (left.width + right.width) / Mathf.Max(1f, safe.width) * 100f;
-                Debug.Log($"[T182ⓑ] 9:19.5 좌우 띠 {sideBand:0.0}%");
-                Assert.Less(sideBand, 2f, "기준 비율에서는 띠가 거의 0(레터박스가 없다)");
+                var frame = WorldRect(_app.Frame);
+                float insideBand = (safe.width - frame.width) / Mathf.Max(1f, safe.width) * 100f;
+                Debug.Log($"[T182ⓑ] 9:19.5 안전영역 안 좌우 띠 {insideBand:0.0}%");
+                Assert.Less(insideBand, 2f, "기준 비율에서는 안전 영역 안 레터박스가 거의 0");
             }
 
             _log.AssertNoRed("프레임 밖 바탕(T182 2단계)");
