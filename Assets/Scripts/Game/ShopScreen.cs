@@ -338,7 +338,12 @@ namespace KkomaKnight.Game
             }
             UiKit.GradientCard((RectTransform)bg.parent, paletteName, null, UiKit.PopupPatternInset, bg.GetSiblingIndex() + 1, alpha);
         }
-        /// <summary>이름이 <paramref name="name"/> 인 자손을 너비 우선으로 찾는다(T147 · 얕은 것 우선 = 바탕이 여러 겹일 때 «카드에 가장 가까운» 것).</summary>
+        /// <summary>
+        /// 이름이 <paramref name="name"/> 인 <b>보이는</b> 자손을 너비 우선으로 찾는다(T147).
+        /// 얕은 것 우선 = 바탕이 여러 겹일 때 «카드에 가장 가까운» 것. <b>꺼진 가지는 건너뛴다</b> —
+        /// 상품 카드는 <c>CardGradient</c> 바로 앞에서 <c>ItemFrameArea</c> 를 끄는데(<see cref="UiKit.Hide"/>),
+        /// 꺼진 조각 안의 같은 이름 바탕을 집으면 그라데이션이 <b>안 보이는 가지</b>에 깔린다(이 작업이 고친 결함과 같은 꼴).
+        /// </summary>
         static Transform FindDeep(Transform root, string name)
         {
             var q = new Queue<Transform>(); q.Enqueue(root);
@@ -348,6 +353,7 @@ namespace KkomaKnight.Game
                 for (int i = 0; i < t.childCount; i++)
                 {
                     var c = t.GetChild(i);
+                    if (!c.gameObject.activeSelf) continue;
                     if (c.name == name) return c;
                     q.Enqueue(c);
                 }
