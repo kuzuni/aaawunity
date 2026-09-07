@@ -378,6 +378,21 @@ namespace KkomaKnight.Game
         /// 게이트(<c>BorderGateTests.AssertWorldBarBorder</c>)가 이 키로 선 굵기를 계산하므로 여기만 바꾸면 게이트도 따라온다.
         /// </summary>
         public const string FootBarBorderKey = "fr.rectInner7";
+        /// <summary>
+        /// 발밑 바 테두리의 «그려지는 선» 굵기(프레임 px) — 전 화면 공용 <see cref="UiKit.BorderPx"/>(8)가 아니라 <b>레퍼런스 02 실측 비율</b>로 얇게(결정 405).
+        /// <para>
+        /// 왜(회차 1 이 만든 회귀 · screens run 283 실측): 옛 조각 <c>fr.rectBorder3</c> 은 26×26 에 <c>spriteBorder 13/13</c> 이라
+        /// <b>가운데 칸이 0px</b> = 9-slice 로 늘릴 자리가 없어 실제로는 <b>네 모서리 조각만</b> 그렸다. 새 조각은 가운데 칸이 2px 있어
+        /// <b>사방에 연속된 띠</b>를 제대로 그린다 — 그 자체는 옳아진 것이지만, 그 띠가 프레임 8px 라
+        /// 높이 37.4px(<see cref="Layout.FootBarH"/> 1.6%)인 이 바에서는 위·아래로 <b>16px</b> 을 먹어 빨강·파랑 채움이 반으로 줄었다.
+        /// </para>
+        /// <para>
+        /// 값(레퍼런스 <c>docs/ref/02_battle.jpg</c> 720px 사본의 세로 단면 x190·x193 실측): 어두운 선 <b>3px</b> · 빨강 채움 14px · 파랑 채움 14px
+        /// ⇒ 바 한 단 ≈ 20px 이고 <b>선 ÷ 단 = 0.15</b>. 그래서 이 상수도 리터럴이 아니라 <b>단 높이의 0.15</b> 로 잰다(1080/720 환산이 필요 없다).
+        /// </para>
+        /// 되돌리려면 이 한 줄. 전 화면 공용 <see cref="UiKit.BorderPx"/> 는 안 건드린다 — T69 가 수십 화면에 걸어 둔 값이다.
+        /// </summary>
+        public static float FootBarLinePx => UiKit.FrameH * Layout.FootBarH / 100f * 0.15f;
         void MakeBar(Transform parent, float width, float height, out SpriteRenderer bg, out SpriteRenderer fill, Color fillColor, int order)
         {
             var bgo = new GameObject("BarBg"); bgo.transform.SetParent(parent, false);
@@ -386,8 +401,8 @@ namespace KkomaKnight.Game
             fill = fgo.AddComponent<SpriteRenderer>(); fill.sprite = UiKit.White(); fill.color = fillColor; fill.sortingOrder = order + 1; fill.drawMode = SpriteDrawMode.Sliced; fill.size = new Vector2(width - 0.02f, height - 0.02f);
             // T69 8항(주인 «HP·실드 바도 Border») — 월드용 Sprite 로 감싸 바 위에 한 장(fill + 1 · 바 폭·높이 그대로 = 표 «발밑 바 폭» 이름표 불변).
             // 조각은 주인 지목(T145) 대로 fr.rectInner7 = BasicFrame_..._InnerBorder1_Px7 — 그려지는 선 굵기는 그대로 프레임 8px 다(WorldBorderSprite 가 ppu 로 맞춘다).
-            // 모서리도 이쪽이 낫다: 9-slice 모서리 = spriteBorder × 8 ÷ 원본선px 라 Border3 는 13×8/5 = 20.8px(양쪽 41.6 > 바 높이 37.4 = 뭉침)인데 이 조각은 12×8/7 = 13.7px(양쪽 27.4)로 바 안에 든다(결정 373).
-            UiKit.WorldBorder(bgo.transform, new Vector2(width, height), order + 2, FootBarBorderKey);
+            // 선 굵기는 공용 8px 이 아니라 FootBarLinePx(단 높이의 0.15 = 레퍼런스 실측) — 8px 이면 띠가 채움을 반이나 먹는다(결정 405).
+            UiKit.WorldBorder(bgo.transform, new Vector2(width, height), order + 2, FootBarBorderKey, thicknessPx: FootBarLinePx);
         }
         static void SetBar(SpriteRenderer bg, SpriteRenderer fill, double frac)
         {

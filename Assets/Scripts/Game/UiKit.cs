@@ -384,22 +384,29 @@ namespace KkomaKnight.Game
         // 월드(SpriteRenderer) 바 — 발밑 2단 바(BattleWorld.MakeBar · T69 8항). 같은 조각을 월드용 Sprite 로 다시 감싼다(pixelsPerUnit 을 «선 = 프레임 8px 에 해당하는 월드 길이» 로 · 텍스처는 주인 것 그대로).
         static readonly Dictionary<string, Sprite> _worldBorders = new Dictionary<string, Sprite>();
         /// <summary>프레임 <see cref="BorderPx"/> 에 해당하는 월드 길이(u) — 프레임 px → 레이아웃 px(× LayoutW/FrameW) → 월드(÷ PPU).</summary>
-        public static float WorldBorderLine => BorderPx * (WorldCam.LayoutW / FrameW) / WorldCam.PPU;
-        /// <summary>월드용 테두리 스프라이트(키마다 한 번 만들어 재사용 · 9-slice border 그대로 · FullRect).</summary>
-        public static Sprite WorldBorderSprite(string key = BorderKey)
+        public static float WorldBorderLine => WorldLine(BorderPx);
+        /// <summary>프레임 <paramref name="thicknessPx"/> 에 해당하는 월드 길이(u).</summary>
+        public static float WorldLine(float thicknessPx) => thicknessPx * (WorldCam.LayoutW / FrameW) / WorldCam.PPU;
+        /// <summary>
+        /// 월드용 테두리 스프라이트(키 + 선 굵기마다 한 번 만들어 재사용 · 9-slice border 그대로 · FullRect).
+        /// <paramref name="thicknessPx"/> 는 «그려지는 선» 의 프레임 px — 기본은 전 화면 공용 <see cref="BorderPx"/>(8).
+        /// 작은 월드 바처럼 8px 이 칸에 비해 두꺼운 자리는 호출부가 더 얇게 준다(<see cref="BattleWorld.FootBarLinePx"/>).
+        /// </summary>
+        public static Sprite WorldBorderSprite(string key = BorderKey, float thicknessPx = BorderPx)
         {
-            if (_worldBorders.TryGetValue(key, out var s) && s != null) return s;
+            string ck = key + "@" + thicknessPx.ToString("0.###");
+            if (_worldBorders.TryGetValue(ck, out var s) && s != null) return s;
             var src = Cat != null ? Cat.Sprite(key) : null; if (src == null) return null;
-            float ppu = BorderNativePx(key) / WorldBorderLine;
+            float ppu = BorderNativePx(key) / WorldLine(thicknessPx);
             s = Sprite.Create(src.texture, src.rect, new Vector2(0.5f, 0.5f), ppu, 0, SpriteMeshType.FullRect, src.border);
             s.name = src.name + " (world)";
-            _worldBorders[key] = s;
+            _worldBorders[ck] = s;
             return s;
         }
         /// <summary>월드 바(SpriteRenderer) 위에 테두리 한 장 — <paramref name="bar"/> 의 자식 «Border»(Sliced · <paramref name="size"/> = 바 크기 · sortingOrder = <paramref name="order"/> · Ink). 조각이 없으면 null(경고는 카탈로그가).</summary>
-        public static SpriteRenderer WorldBorder(Transform bar, Vector2 size, int order, string key = BorderKey, Color? tint = null)
+        public static SpriteRenderer WorldBorder(Transform bar, Vector2 size, int order, string key = BorderKey, Color? tint = null, float thicknessPx = BorderPx)
         {
-            var sp = WorldBorderSprite(key); if (sp == null || bar == null) return null;
+            var sp = WorldBorderSprite(key, thicknessPx); if (sp == null || bar == null) return null;
             var go = new GameObject(BorderName); go.transform.SetParent(bar, false);
             var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = sp; sr.drawMode = SpriteDrawMode.Sliced; sr.size = size; sr.color = tint ?? BorderInk; sr.sortingOrder = order;
             return sr;
