@@ -83,11 +83,11 @@ namespace KkomaKnight.Game
         public GameScreen Current => _current;
         public T GetScreen<T>() where T : GameScreen { foreach (var s in _screens.Values) if (s is T t) return t; return null; }
 
-        public void StartBattle(int chapter)
+        public void StartBattle(int chapter, DungeonData.RunRule run = null)
         {
             chapter = Mathf.Clamp(chapter, 1, Math.Max(1, Save.MaxChapter));
             ShowScreen("battle");
-            GetScreen<BattleScreen>().Start(chapter);
+            GetScreen<BattleScreen>().Start(chapter, run);   // T183 — run 이 null 이면 지금까지와 똑같은 일반 전투다
             Debug.Log("[KkomaKnight] ready battle");   // T60 배포 스모크 마커
         }
 

@@ -148,6 +148,20 @@ namespace KkomaKnight.Core
             return Get(s.DunTickets, key);
         }
 
+        /// <summary>
+        /// 티켓 1 을 쓴다(T183 — «도전» 이 판을 열 때) — 있으면 하나 줄이고 true, 없으면 아무것도 안 하고 false.
+        /// 저장은 호출부(게임 층)가 한다(<see cref="ClaimAd"/>·<see cref="BuyGem"/> 과 같은 규약).
+        /// </summary>
+        public static bool Spend(SaveData s, DungeonData d, string key, string today)
+        {
+            if (s == null || d == null || d.Of(key) == null) return false;
+            Roll(s, d, today);
+            int have = Get(s.DunTickets, key);
+            if (have <= 0) return false;
+            s.DunTickets[key] = have - 1;
+            return true;
+        }
+
         /// <summary>오늘 이 던전에서 «광고 보고 티켓» 이 남았는가.</summary>
         public static bool CanAd(SaveData s, DungeonData d, string key, string today)
         {

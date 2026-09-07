@@ -232,9 +232,23 @@ namespace KkomaKnight.Tests.Play
             }
             Assert.IsNull(UiKit.Find(ov, "Button_Close_01"), "닫기 X 없음");
             { var arrowImg = UiKit.Find(ov, "FloorPrev")?.GetComponent<Image>(); Assert.IsNotNull(arrowImg, "층수 ◀"); Assert.AreNotEqual(Palette.Cream, arrowImg.color, "층수 ◀ 는 크림 패널과 다른 색(크림이면 안 보임 · T43 비평 회차 1)"); }
-            Assert.IsTrue(ClickNamed(ov, "SweepBtn") && ClickNamed(ov, "ChallengeBtn") && ClickNamed(ov, "FloorPrev"), "소탕·도전·◀ 누름"); yield return Frames(1);
-            Assert.IsTrue(_app.Overlay.IsOpen && _app.Current.Name == "events", "껍데기 버튼은 아무 일 없음");
-            Assert.IsTrue(ClickNamed(ov, "Dimmed"), "배경 탭"); yield return Frames(2);
+            // T183 3단계 — «도전» 은 더 이상 껍데기가 아니다(티켓 1 을 쓰고 판을 연다) → 여기서는 아직 껍데기인 것만 누른다.
+            Assert.IsTrue(ClickNamed(ov, "SweepBtn") && ClickNamed(ov, "FloorPrev"), "소탕·◀ 누름"); yield return Frames(1);
+            Assert.IsTrue(_app.Overlay.IsOpen && _app.Current.Name == "events", "껍데기 버튼(소탕·◀)은 아무 일 없음");
+            // T183 3단계 — «도전»: 티켓이 하나 줄고 팝업이 닫히며 전투가 열린다(판 규칙은 dungeon.json 의 run · 엔진 쪽은 EditMode 가 잰다).
+            {
+                var dun = _app.Data.Dungeon; Assert.IsNotNull(dun, "dungeon.json 표");
+                int before = DungeonTickets.Tickets(_app.Save, dun, "hell", SaveStore.Today());
+                Assert.Greater(before, 0, "첫날은 티켓이 차 있다(T99)");
+                Assert.IsTrue(ClickNamed(ov, "ChallengeBtn"), "도전 누름"); yield return Frames(3);
+                Assert.AreEqual("battle", _app.Current.Name, "도전 = 전투가 열린다(T183)");
+                Assert.AreEqual(before - 1, DungeonTickets.Tickets(_app.Save, dun, "hell", SaveStore.Today()), "티켓 1 소모(T183)");
+                Assert.IsFalse(_app.Overlay.IsOpen, "판이 열리면 세부 팝업은 닫혀 있다");
+                _app.ShowScreen("events"); yield return Frames(3);
+                ev.ShowPage(EventsScreen.PageDungeon); yield return Frames(2);
+                ov = _app.Overlay.Root;
+            }
+            if (_app.Overlay.IsOpen) { Assert.IsTrue(ClickNamed(ov, "Dimmed"), "배경 탭"); yield return Frames(2); }
             Check("던전 세부 닫힘");
 
             // ③ PvP 탭 → 아레나 페이지(22)

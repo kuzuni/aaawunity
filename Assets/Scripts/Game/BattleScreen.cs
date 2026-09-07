@@ -147,11 +147,17 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 시작 · 종료 ─────────────────────────
-        public void Start(int chapter)
+        /// <summary>
+        /// 판을 시작한다. <paramref name="run"/> 는 <b>던전 판 규칙</b>(T183 · 시작 특전 N · 시작 레벨 · 특전 등급 하한)이고
+        /// <c>null</c> 이면 <b>지금까지와 똑같은 일반 챕터 전투</b>다(기본값 = 아무 데도 안 닿는다).
+        /// </summary>
+        public void Start(int chapter, DungeonData.RunRule run = null)
         {
             var D = App.Data;
             var rng = new Mulberry32((uint)Environment.TickCount ^ 0x9E3779B9u);
-            G = new BattleState(D, chapter, App.Save.CurBuild(D), rng, new InteractivePolicy(), new RunOptions { EmitEvents = true });
+            var opt = new RunOptions { EmitEvents = true };
+            if (run != null) { opt.StartPerks = run.StartPerks; opt.StartLevel = run.StartLevel; opt.MinPerkGrade = run.MinPerkGrade; }
+            G = new BattleState(D, chapter, App.Save.CurBuild(D), rng, new InteractivePolicy(), opt);
             BaseStats = new Dictionary<string, double>(); foreach (var d in StatDefs) BaseStats[d.Key] = d.Cur(G);
             _world?.Dispose(); UiKit.Clear(_pops);   // 팝 층은 새 월드를 만들기 «전에» 비운다(발밑 숫자 글자가 팝 층에 산다 · T35)
             _world = new BattleWorld(App, G, _pops);

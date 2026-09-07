@@ -436,7 +436,10 @@ namespace KkomaKnight.Game
             {
                 // 티켓이 있으면 레퍼런스 21 그대로 — 소탕(파랑 · 클리어한 층만)·도전(주황) · 아직 껍데기라 눌러도 아무 일 없다
                 sweep = UiKit.Button(box, "ui.btnBlue", "소탕", Noop, leftRect); sweep.name = "SweepBtn"; TicketCost(sweep, d.ticket);
-                chal = UiKit.Button(box, "ui.btnOrange", "도전", Noop, rightRect); chal.name = "ChallengeBtn"; TicketCost(chal, d.ticket);
+                // T183 3단계 — «도전» 이 진짜로 판을 연다: 티켓 1 소모 → 그 던전의 판 규칙(dungeon.json 의 run)으로 전투.
+                // «소탕» 은 주인이 이번에 말하지 않았으므로 그대로 껍데기다(지시서 5항).
+                string chKey = key;
+                chal = UiKit.Button(box, "ui.btnOrange", "도전", () => Challenge(chKey), rightRect); chal.name = "ChallengeBtn"; TicketCost(chal, d.ticket);
             }
             else
             {
@@ -544,6 +547,24 @@ namespace KkomaKnight.Game
         int Tickets(string key) { var d = Dun; return d == null ? 0 : DungeonTickets.Tickets(App.Save, d, key, Today()); }
         /// <summary>카드 제목 띠의 «보유/하루 보충»(표가 없으면 «--»).</summary>
         string TicketText(string key) { var d = Dun; return d == null ? "--" : Tickets(key) + "/" + d.DailyRefill; }
+
+        /// <summary>
+        /// T183 — 던전 «도전»: 티켓 1 을 쓰고 그 던전의 판 규칙으로 전투를 연다(주인 2026-09-07 12:0X «던전들도 도전 가능하게»).
+        /// <para><b>어느 챕터로 도나</b>(지시서 2항이 워커에게 맡긴 자리 · 결정 기록) — <b>지금 도전 중인 챕터</b>(<c>Save.SelChapter</c>)다.
+        /// 주인이 «게임이랑 난이도 같음» 이라고 했고, 로비에서 고른 그 챕터가 주인이 «지금 하는 난이도» 이기 때문이다
+        /// (최고 도달 챕터로 하면 고른 것과 어긋나 «내가 고른 난이도가 아닌» 판이 된다).</para>
+        /// <para>티켓이 없으면 이 버튼 자체가 «티켓 얻기» 로 바뀌어 있으므로(T99 3항) 여기 오는 것은 티켓이 있는 상태뿐이다 —
+        /// 그래도 규칙은 <see cref="DungeonTickets"/> 한 곳에서만 판정한다(경쟁 상태로 0 이 되면 조용히 아무 일도 안 한다).</para>
+        /// </summary>
+        void Challenge(string key)
+        {
+            if (Dun == null) return;
+            var e = Dun.Of(key); if (e == null) return;
+            if (!DungeonTickets.Spend(App.Save, Dun, key, Today())) return;   // 티켓 1 소모(없으면 조용히 아무 일도 안 한다)
+            App.Overlay.Close();
+            SaveStore.Save(App.Save);
+            App.StartBattle(App.Save.SelChapter, e.Run);
+        }
 
         /// <summary>보상 칸 한 개 — 아이콘 키 · 수량 글자 · «최초»(첫 클리어) 배지인가.</summary>
         readonly struct RewardCellDef
