@@ -158,7 +158,7 @@ namespace KkomaKnight.Game
             }
         }
 
-        /// <summary>줄 하나 — 제목·설명·아이콘을 우리 것으로 바꾸고 <b>줄 자체를 «받기» 버튼으로</b> 만든다(조각에 버튼이 없다 · 결정 303). 타이머(만료)는 우리 우편에 없으니 끈다.</summary>
+        /// <summary>줄 하나 — 제목·설명·아이콘을 우리 것으로 바꾸고 <b>줄 자체를 «받기» 버튼으로</b> 만든다(조각에 버튼이 없다 · 결정 318). 타이머(만료)는 우리 우편에 없으니 끈다.</summary>
         static void Row(App app, RectTransform row, Entry e)
         {
             row.name = RowPrefix + e.Key;
@@ -168,7 +168,7 @@ namespace KkomaKnight.Game
             var icon = UiKit.Find(row, "Icon");
             if (icon != null) UiKit.SetSprite(icon.parent != null ? icon.parent : row, "Icon", e.Icon, Palette.White);
             // 줄 조각(ListItem_Mailbox)에는 «받기» 버튼이 아예 없다 — 데모 줄은 제목·설명·아이콘·도장·타이머뿐이다(프리팹 실측).
-            // 그래서 예전 코드는 GetComponentInChildren<Button>() 이 null 이라 조용히 돌아가 버렸고 줄이 눌리지 않았다(CI #225 빨강 · 결정 303).
+            // 그래서 예전 코드는 GetComponentInChildren<Button>() 이 null 이라 조용히 돌아가 버렸고 줄이 눌리지 않았다(CI #225 빨강 · 결정 318).
             // 조각에 없는 버튼을 새로 그리지 않고 **줄 자체를 «받기» 버튼으로** 삼는다(UiKit.Clickable 이 Button 을 Ensure 하고 눌림 표시까지 붙인다).
             // 줄 안의 글자를 «받기» 로 덮어쓰지 않는다 — 첫 Text 는 우편 제목이라 덮으면 제목이 사라진다.
             // 줄 오브젝트의 이름(Mail:<키>)은 그대로 둔다 — 테스트·다음 갱신이 그 이름으로 줄을 찾는다.
