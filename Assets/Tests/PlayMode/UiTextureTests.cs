@@ -497,6 +497,15 @@ namespace KkomaKnight.Tests.Play
                     Assert.IsTrue(UiKit.HasGradient(c), c.name + " 카드 그라데이션(T72 ③)");
                     var cpat = (RectTransform)c.Find(UiKit.PatternName); var crt = (RectTransform)c;
                     Assert.AreEqual(crt.rect.width - 8f, cpat.rect.width, 1f, c.name + " 무늬는 둥근 모서리 안쪽으로 4px 들여 깐다");
+                    // T116 3단계 ⓑ — 카드 그라데이션은 «흰/잉크 무채색 덧칠» 이 아니라 레퍼런스 11 실측 두 색이다(주인 «더 화려하게 색깔»).
+                    // 무채색으로 되돌아가거나 카드마다 색이 뒤바뀌면 여기서 바로 빨개진다.
+                    var wantGrad = PrivilegeCardGrad(c.name); Assert.IsNotNull(wantGrad, c.name + " 은 그라데이션 이름이 정해져 있어야 한다");
+                    var want = GradientPalette.Of(wantGrad);
+                    var gcTop = c.Find(UiKit.GradientTopName).GetComponent<Image>();
+                    var gcBot = c.Find(UiKit.GradientBottomName).GetComponent<Image>();
+                    AssertGradTint(want.Top, gcTop.color, c.name + " 위 색 = col.grad." + wantGrad + ".top");
+                    AssertGradTint(want.Bottom, gcBot.color, c.name + " 아래 색 = col.grad." + wantGrad + ".bottom");
+                    Assert.Greater(UiKit.Luma(gcBot.color), UiKit.Luma(gcTop.color), c.name + " 카드류는 «어두운 위 → 밝은 아래»(T116 · 레퍼런스 방향)");
                     var mask = c.Find(UiKit.LightMaskName);
                     if (mask != null)
                     {
@@ -542,6 +551,30 @@ namespace KkomaKnight.Tests.Play
             _app.ShowScreen("lobby"); yield return Frames(2);
             _log.AssertNoRed("T72 화면 적용(로비 01 · 특권 11)");
             yield return Shutdown();
+        }
+
+        /// <summary>T116 3단계 ⓑ — 특권 카드(11) 이름 → 그라데이션 표 이름. 화면 코드의 상수를 그대로 읽어 «두 곳에 박지» 않는다.</summary>
+        static string PrivilegeCardGrad(string cardName)
+        {
+            switch (cardName)
+            {
+                case "Card:1": return PrivilegeScreen.GradCard1;
+                case "Card:2": return PrivilegeScreen.GradCard2;
+                case "Card:3": return PrivilegeScreen.GradCard3;
+                case "Card:4": return PrivilegeScreen.GradCard4;
+                default: return null;
+            }
+        }
+
+        /// <summary>그라데이션 조각의 tint 가 «실측 색 + 카드 세기(알파)» 인가 — 색은 계열색(무채색 아님)이어야 한다.</summary>
+        static void AssertGradTint(Color want, Color got, string what)
+        {
+            Assert.AreEqual(want.r, got.r, 0.01f, what + " (R)");
+            Assert.AreEqual(want.g, got.g, 0.01f, what + " (G)");
+            Assert.AreEqual(want.b, got.b, 0.01f, what + " (B)");
+            Assert.AreEqual(UiKit.GradientCardAlpha, got.a, 0.01f, what + " 세기 = 카드 덧칠(GradientCardAlpha)");
+            float spread = Mathf.Max(got.r, Mathf.Max(got.g, got.b)) - Mathf.Min(got.r, Mathf.Min(got.g, got.b));
+            Assert.Greater(spread, 0.1f, what + " 은 무채색 덧칠이 아니라 계열색이어야 한다(주인 «더 화려하게 색깔»)");
         }
 
         /// <summary>

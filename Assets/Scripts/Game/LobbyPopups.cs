@@ -790,6 +790,11 @@ namespace KkomaKnight.Game
         const float CardTextureInset = 4f;
         /// <summary>T72 ② 빛살을 걸 자리 — 배치가 끝난 <b>뒤</b>에 한꺼번에 건다(그 전에는 % 앵커 조각의 rect 가 0 이라 빛살 한 변이 0 이 된다 · 결정 174).</summary>
         readonly List<(RectTransform host, RectTransform icon, string key)> _lightPlan = new List<(RectTransform, RectTransform, string)>();
+        /// <summary>
+        /// T116 3단계 ⓑ — 특권 카드 4장의 그라데이션 이름(<see cref="GradientPalette"/> · 카탈로그 <c>col.grad.*</c> · 레퍼런스 11 실측).
+        /// 카드마다 계열색이 달라 한 이름으로 묶을 수 없다(1 = 하늘 · 2 = 파랑 · 3 = 자주 · 4 = 주황→금). 문자열을 두 곳에 안 박는다(§1).
+        /// </summary>
+        public const string GradCard1 = "cardBlue", GradCard2 = "cardPrivAd", GradCard3 = "cardPrivMonth", GradCard4 = "cardPrivLife";
 
         static Layout.R Sh(Layout.R r, float dx, float dy) => new Layout.R(r.X + dx, r.Y + dy, r.W, r.H);
 
@@ -818,7 +823,7 @@ namespace KkomaKnight.Game
             var C = new Layout.R(0, top, 100, bottom - top);
             // 카드 1 = 일일 선물(짧은 카드)
             var card1 = UiKit.Panel(content, "Card:1", "fr.r12", Palette.Sky); UiKit.Pct(card1.rectTransform, Layout.PrCard1.Within(C));
-            CardTexture(card1.rectTransform);
+            CardTexture(card1.rectTransform, GradCard1, Palette.Sky);
             var head1 = UiKit.Panel(content, "Head:1", "fr.r12", Palette.A(Palette.Blue, 0.9f)); UiKit.Pct(head1.rectTransform, new Layout.R(Layout.PrCard1.X, Layout.PrCard1.Y, Layout.PrCard1.W, 3.6f).Within(C));
             UiKit.Gradient(head1.rectTransform, inset: CardTextureInset);   // T72 ③ 카드 제목 띠(레퍼런스 11 의 띠도 위 밝고 아래 어둡다)
             CardHead(head1.transform, "ui.iconGiftRed", "일일 선물", "초기화까지 " + LobbyPopups.Dashes);
@@ -827,17 +832,17 @@ namespace KkomaKnight.Game
             var btn1 = UiKit.Button(content, "ui.btnGray", "받기", () => { }, Layout.PrCard1Btn.Within(C)); btn1.name = "CardBtn:1";
             // 카드 2~4 = 긴 카드
             RectTransform card2 = null, cardTitle2 = null, desc2 = null, pic2 = null, reward2 = null, btn2 = null, card3 = null, card4 = null;
-            (Layout.R rect, Color color, string icon, string name, string pic, string[] lines, string btnKey, string btnLabel)[] longs =
+            (Layout.R rect, Color color, string icon, string name, string pic, string[] lines, string btnKey, string btnLabel, string grad)[] longs =
             {
-                (Layout.PrCard2, Palette.Blue, "ui.ad", "광고 제거 카드", "ui.ad", new[] { "영구 광고 제거 특권", "구매 시 💎 지급" }, "ui.btnGray", "받기"),
-                (Layout.PrCard3, Palette.Plum, "ui.iconCalendar", "월간 카드", "ui.iconMedal", new[] { "최대 탐험 시간 24시간", "던전 티켓 +2 / 일", "최대 배속 +1", "구매 시 💎 지급" }, "ui.btnOrange", "구매"),
-                (Layout.PrCard4, Palette.Orange, "ui.gemRed", "평생 다이아", "ui.trophy", new[] { "매일 다이아 대량 수령", "구매 시 💎 지급" }, "ui.btnOrange", "구매"),
+                (Layout.PrCard2, Palette.Blue, "ui.ad", "광고 제거 카드", "ui.ad", new[] { "영구 광고 제거 특권", "구매 시 💎 지급" }, "ui.btnGray", "받기", GradCard2),
+                (Layout.PrCard3, Palette.Plum, "ui.iconCalendar", "월간 카드", "ui.iconMedal", new[] { "최대 탐험 시간 24시간", "던전 티켓 +2 / 일", "최대 배속 +1", "구매 시 💎 지급" }, "ui.btnOrange", "구매", GradCard3),
+                (Layout.PrCard4, Palette.Orange, "ui.gemRed", "평생 다이아", "ui.trophy", new[] { "매일 다이아 대량 수령", "구매 시 💎 지급" }, "ui.btnOrange", "구매", GradCard4),
             };
             for (int k = 0; k < longs.Length; k++)
             {
                 var L = longs[k]; float dy = L.rect.Y - Layout.PrCard2.Y;
                 var card = UiKit.Panel(content, "Card:" + (k + 2), "fr.r12", L.color); UiKit.Pct(card.rectTransform, L.rect.Within(C));
-                CardTexture(card.rectTransform);
+                CardTexture(card.rectTransform, L.grad, L.color);
                 var head = UiKit.Panel(content, "Head:" + (k + 2), "fr.r12", Palette.A(Palette.Dim, 0.35f)); UiKit.Pct(head.rectTransform, Sh(Layout.PrCardTitle, 0, dy).Within(C));
                 UiKit.Gradient(head.rectTransform, inset: CardTextureInset);   // T72 ③ 카드 제목 띠
                 CardHead(head.transform, L.icon, L.name, "비활성");
@@ -883,12 +888,19 @@ namespace KkomaKnight.Game
         /// <summary>특권 카드·설명 상자 — 질감·빛살을 다 건 뒤에 테두리를 걸려고 모아 둔다(T69-lobbypopups).</summary>
         readonly List<RectTransform> _prBordered = new List<RectTransform>();
 
-        /// <summary>T72 ①③ 특권 카드 안 질감 — 카드 조각 위에 무늬 한 장(밝은 색 카드라 흰 무늬 · 레퍼런스 11 의 카드 안에도 무늬가 어른거린다) + 그라데이션 두 장(위 밝음 → 아래 어둠). 카드의 내용(제목 띠·설명·그림·보상·버튼)은 카드의 <b>형제</b> 라 이 두 층 위에 그대로 남는다.</summary>
-        static void CardTexture(RectTransform card)
+        /// <summary>
+        /// T72 ①③ 특권 카드 안 질감 — 카드 조각 위에 무늬 한 장(밝은 색 카드라 흰 무늬 · 레퍼런스 11 의 카드 안에도 무늬가 어른거린다) + 그라데이션 두 장.
+        /// 카드의 내용(제목 띠·설명·그림·보상·버튼)은 카드의 <b>형제</b> 라 이 두 층 위에 그대로 남는다.
+        /// <para>
+        /// T116 3단계 ⓑ — 그라데이션은 무채색 덧칠(<see cref="UiKit.Gradient"/>)이 아니라 <b>레퍼런스에서 잰 두 색</b>(<paramref name="gradName"/> · <see cref="GradientPalette"/>)이다.
+        /// 카드 몸통이 제 색(하늘·파랑·자주·주황)으로 살아 있는 자리라 세기는 덧칠(<see cref="UiKit.GradientCardAlpha"/>)이고, 이름이 표에 없으면 카드 바탕색에서 만든다.
+        /// </para>
+        /// </summary>
+        static void CardTexture(RectTransform card, string gradName, Color baseColor)
         {
             if (card == null) return;
             UiKit.PatternBg(card, UiKit.PatternTintDark, UiKit.PatternTileSeconds, 0, UiKit.PatternTilePx, CardTextureInset);
-            UiKit.Gradient(card, inset: CardTextureInset);
+            UiKit.GradientCard(card, gradName, baseColor, CardTextureInset);
         }
 
         /// <summary>T72 ② 보상 칸(다이아) 그림 뒤 빛살 예약 — 칸 조각(ItemFrame_01) 안 «Item» 바로 뒤(프레임 안쪽에서만 보인다 · 작은 조각).</summary>

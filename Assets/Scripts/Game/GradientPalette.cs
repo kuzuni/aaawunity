@@ -47,6 +47,11 @@ namespace KkomaKnight.Game
                 case "cardChestRare": return new Pair(Cat("cardChestRare.top", "#015AB8"), Cat("cardChestRare.bottom", "#18B2E6"));
                 case "cardChestEpic": return new Pair(Cat("cardChestEpic.top", "#3F14A1"), Cat("cardChestEpic.bottom", "#C959E1"));
                 case "cardBlue": return new Pair(Cat("cardBlue.top", "#50A1E0"), Cat("cardBlue.bottom", "#5CC6F8"));
+                // T116 3단계 ⓑ(특권 11 카드 2~4) — docs/ref/11_shop_special.jpg 실측. 이 카드들은 몸통이 «왼 여백은 어둡고 그림 쪽은 밝은» 두 색인데
+                // 우리 헬퍼는 세로로만 깔 수 있어 «어두운 위 → 밝은 아래» 로 옮겼다(카드류의 방향 · 결정 357).
+                case "cardPrivAd": return new Pair(Cat("cardPrivAd.top", "#1A61C9"), Cat("cardPrivAd.bottom", "#3A91FA"));
+                case "cardPrivMonth": return new Pair(Cat("cardPrivMonth.top", "#5115C5"), Cat("cardPrivMonth.bottom", "#7436DE"));
+                case "cardPrivLife": return new Pair(Cat("cardPrivLife.top", "#FF6501"), Cat("cardPrivLife.bottom", "#FFB833"));
                 case "bgLobby": return new Pair(Cat("bgLobby.top", "#3C6833"), Cat("bgLobby.bottom", "#315529"));
                 case "btnBlue": return new Pair(Cat("btnBlue.top", "#188AFA"), Cat("btnBlue.bottom", "#096CFD"));
                 case "btnOrange": return new Pair(Cat("btnOrange.top", "#FDA406"), Cat("btnOrange.bottom", "#F09600"));
@@ -56,7 +61,7 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>표에 든 이름 전부(테스트·감사용 · 순서는 «카드 → 배경 → 버튼 → 패널»).</summary>
-        public static readonly string[] Names = { "cardGem", "cardGold", "cardBlue", "cardChestLegend", "cardChestRare", "cardChestEpic", "bgLobby", "btnBlue", "btnOrange", "panelDark" };
+        public static readonly string[] Names = { "cardGem", "cardGold", "cardBlue", "cardChestLegend", "cardChestRare", "cardChestEpic", "cardPrivAd", "cardPrivMonth", "cardPrivLife", "bgLobby", "btnBlue", "btnOrange", "panelDark" };
 
         /// <summary>표에 이름이 있는가.</summary>
         public static bool Has(string name)

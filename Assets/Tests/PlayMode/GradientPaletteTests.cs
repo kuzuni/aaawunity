@@ -48,7 +48,8 @@ namespace KkomaKnight.Tests.Play
             }
 
             // 방향 — 카드류는 «어두운 위 → 밝은 아래»(레퍼런스 09·11 실측), 배경은 «밝은 위 → 어두운 아래»(레퍼런스 01 실측)
-            foreach (var card in new[] { "cardGem", "cardGold", "cardBlue" })
+            // 3단계 ⓑ 에서 특권 카드 2~4 의 실측 쌍이 늘었다(cardPriv*) — 카드류는 다 같은 방향이어야 한다
+            foreach (var card in new[] { "cardGem", "cardGold", "cardBlue", "cardPrivAd", "cardPrivMonth", "cardPrivLife" })
             {
                 var p = GradientPalette.Of(card);
                 Assert.Less(Luma(p.Top), Luma(p.Bottom), card + " 카드는 위가 어둡고 아래가 밝아야 한다(레퍼런스 방향)");
