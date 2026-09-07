@@ -17,6 +17,8 @@ namespace KkomaKnight.Game
         public AssetCatalog catalog;
 
         Text _status; Canvas _boot;
+        /// <summary>부팅 로딩 화면(T96-loading · 주인 지목 프리팹 <c>Title_Loading</c>) — 조각이 없으면 null 이고 <see cref="_status"/> 글자가 대신한다.</summary>
+        LoadingScreen _loading;
 
         void Awake()
         {
@@ -34,9 +36,15 @@ namespace KkomaKnight.Game
         {
             UiKit.EnsureEventSystem();
             _boot = UiKit.CreateRootCanvas("BootCanvas");
-            _status = UiKit.Text(_boot.transform, "데이터 로드 중…", 60, Color.white);
-            UiKit.Stretch(_status.rectTransform);
-            StartCoroutine(DataLoader.Load(OnLoaded, OnError));
+            // T96-loading — 주인 지목 프리팹으로 로딩 화면을 띄운다(유니티 로더가 끝난 «뒤» 라 WebGL 첫 로딩과 겹치지 않는다).
+            // 카탈로그를 직접 넘긴다 — App 이 아직 없어 UiKit.Cat 이 비어 있다.
+            _loading = LoadingScreen.Show(_boot.transform, catalog);
+            if (_loading == null)
+            {
+                _status = UiKit.Text(_boot.transform, "데이터 로드 중…", 60, Color.white);
+                UiKit.Stretch(_status.rectTransform);
+            }
+            StartCoroutine(DataLoader.Load(OnLoaded, OnError, p => _loading?.SetProgress(p)));
         }
 
         void OnLoaded(GameData d)
@@ -50,7 +58,19 @@ namespace KkomaKnight.Game
             d.ChapterChest = LoadChapterChest(catalog);
             d.Dungeon = LoadDungeon(catalog);
             App.Create(d, catalog, uiFont, Camera.main);
-            if (_boot != null) Destroy(_boot.gameObject);
+            _loading?.SetProgress(1f);
+            // 깜빡임 방지 — 데이터가 순식간에 읽혀도 로딩 화면이 한 프레임만 번쩍이지 않게 최소 표시 시간을 채우고 지운다(T96-loading).
+            // 로비는 이미 그 뒤에 세워져 있으므로 사라지는 순간 바로 보인다.
+            if (_boot != null) StartCoroutine(CloseBoot());
+        }
+
+        /// <summary>로딩 화면을 최소 표시 시간까지 두고 부팅 캔버스를 지운다(T96-loading).</summary>
+        System.Collections.IEnumerator CloseBoot()
+        {
+            float left = LoadingScreen.MinSeconds - (_loading != null ? _loading.Elapsed : LoadingScreen.MinSeconds);
+            if (left > 0f) yield return new WaitForSecondsRealtime(left);
+            _loading?.Hide(); _loading = null;
+            if (_boot != null) { Destroy(_boot.gameObject); _boot = null; }
         }
 
         /// <summary>상점 상품표 — 이 레포 전용 <c>Assets/KkomaKnight/shop.json</c>(카탈로그 텍스트 «data.shop» · T9). aaaw 동기 폴더(StreamingAssets/data)가 아니라 카탈로그 참조로 빌드에 들어간다. 못 읽으면 null(상점이 상품 없이 뜨고 에러 로그 1줄).</summary>

@@ -27,9 +27,12 @@ namespace KkomaKnight.Game
             return p.Contains("://") || p.Contains(":///");
         }
 
-        public static IEnumerator Load(Action<GameData> onDone, Action<string> onError)
+        /// <param name="onProgress">0~1 진행률 — 파일 하나를 읽을 때마다 부른다(부팅 로딩 바 · T96-loading · 안 주면 아무 일 없음).</param>
+        public static IEnumerator Load(Action<GameData> onDone, Action<string> onError, Action<float> onProgress = null)
         {
             var texts = new Dictionary<string, string>();
+            int done = 0, total = Math.Max(1, GameData.Files.Length);
+            onProgress?.Invoke(0f);
             foreach (var f in GameData.Files)
             {
                 string url = PathOf(f);
@@ -53,6 +56,8 @@ namespace KkomaKnight.Game
                     catch (Exception e) { err = $"데이터 로드 실패: {f} — {e.Message}"; }
                     if (err != null) { onError?.Invoke(err); yield break; }
                 }
+                done++;
+                onProgress?.Invoke((float)done / total);
             }
             GameData data = null; string perr = null;
             try { data = GameData.Load(f => texts[f]); }

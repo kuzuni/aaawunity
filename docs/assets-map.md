@@ -478,6 +478,7 @@
 | prefabs | `ui.lobbyMenu` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Lobby_Menu.prefab` | root 5221192687263998773 |  |
 | prefabs | `ui.mailbox` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Rewards_Mailbox.prefab` | root 577547553208854970 | 로비 메뉴 «우편함»(T96-mail · 받을 것이 있을 때) — 주인 지목 데모 프리팹 Rewards_Mailbox 그대로 · 줄 조각 = ListItem_Mailbox 를 복제해 쓴다 · Button_DeleteAll(편지 삭제)은 우리 우편함에 뜻이 없어 끈다 |
 | prefabs | `ui.mailboxEmpty` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Rewards_Mailbox_Empty.prefab` | root 577547553208854970 | 로비 메뉴 «우편함» 빈 상태(T96-mail · 받을 것이 하나도 없을 때) — 주인 지목 데모 프리팹 Rewards_Mailbox_Empty 그대로 |
+| prefabs | `ui.titleLoading` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Title_Loading.prefab` | root 1846150863418231505 | 부팅 로딩 화면(T96-loading · 데이터·에셋 읽는 동안) — 주인 지목 데모 프리팹 Title_Loading(진행 바 Slider_01_Yellow) |
 | prefabs | `ui.itemDetail` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Character_Hero_Item_Detail_01.prefab` | root 7414256810885239513 | (T38 부터 세부 팝업은 공통 팝업 문법으로 조립 · 이 프리팹은 안 씀 · 예비) |
 | prefabs | `ui.shopList` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Shop_List.prefab` | root 7323211708528492628 | 상점 배경·천막 부품(T40 · 레퍼런스 09/10 구도) — Shop_List 프리팹에서 Background(어두운 바탕색으로 틴트)·Roof(천막 띠 · 상단 바 바로 아래 5%) 두 조각만 떼어 쓰고 나머지 조각은 통째로 끈다. (T9 «Shop_List 그대로» 는 2026-09-06 지시로 대체) |
 | prefabs | `ui.shopItem` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoLayout/ListItem_ShopItem.prefab` | root 7492873612176689367 | 상점 «다이아»·«골드» 카드(T40 · ListItem_ShopItem 부품 · 레퍼런스 09 카드 = 수량·그림·이름·가격 띠) — Text_Title = 수량(위) · Icon = shop.gem.*/shop.gold.* 그림(가운데) · Text_Limit = 이름 · Button_Price(GroupArea Icon+Text) = ₩ 또는 💎가격(아래 띠) · ItemFrameArea·Text_ItemNum 은 끔 · Bg(Mask)/Botton 색 = 다이아 보라·골드 파랑/크림 |
@@ -603,6 +604,12 @@
 | colors | `col.grad.cardGold.bottom` | `#1683BE` | #1683BE | 상점 골드 카드 «아래» 색 — 같은 실측 |
 | colors | `col.grad.cardBlue.top` | `#50A1E0` | #50A1E0 | 특권 카드 «위» 색 — 11_shop_special.jpg (40,300)~(680,430) 실측 |
 | colors | `col.grad.cardBlue.bottom` | `#5CC6F8` | #5CC6F8 | 특권 카드 «아래» 색 — 같은 실측 |
+| colors | `col.grad.cardChestLegend.top` | `#BA8BFF` | #BA8BFF |  |
+| colors | `col.grad.cardChestLegend.bottom` | `#DA15EB` | #DA15EB |  |
+| colors | `col.grad.cardChestRare.top` | `#015AB8` | #015AB8 |  |
+| colors | `col.grad.cardChestRare.bottom` | `#18B2E6` | #18B2E6 |  |
+| colors | `col.grad.cardChestEpic.top` | `#3F14A1` | #3F14A1 |  |
+| colors | `col.grad.cardChestEpic.bottom` | `#C959E1` | #C959E1 |  |
 | colors | `col.grad.bgLobby.top` | `#3C6833` | #3C6833 | 로비 배경 «위» 색 — 01_lobby.jpg (40,600)~(120,700) 실측(배경만 위가 밝고 아래가 어둡다) |
 | colors | `col.grad.bgLobby.bottom` | `#315529` | #315529 | 로비 배경 «아래» 색 — 01_lobby.jpg (40,1300)~(120,1400) 실측 |
 | colors | `col.grad.btnBlue.top` | `#188AFA` | #188AFA | 파란(광고) 버튼 «위» — 09_shop_1.jpg (45,225)~(190,275) 실측 |

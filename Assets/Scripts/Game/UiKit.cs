@@ -686,9 +686,15 @@ namespace KkomaKnight.Game
         /// <see cref="Adopt"/> 가 지우기 전에 돌아 <c>UnassignedReferenceException</c>(빌드에선 NRE) 을 던진다 — 설정·세부·전투 팝업을 열 때마다 콘솔 빨간 줄(CI #36 PlayMode 3건).
         /// 그래서 **비활성 대기 오브젝트** 밑에 먼저 만들어 데모 스크립트를 떼고(OnEnable 이 한 번도 안 돈다) 그 다음 parent 로 옮긴다.
         /// </summary>
-        public static GameObject Spawn(string prefabKey, Transform parent, bool adopt = true)
+        public static GameObject Spawn(string prefabKey, Transform parent, bool adopt = true) => SpawnWith(Cat, prefabKey, parent, adopt);
+
+        /// <summary>
+        /// <see cref="Spawn"/> 과 같은 손질(데모 스크립트 제거 · <see cref="Adopt"/>)을 하되 **카탈로그를 직접 받는다** —
+        /// <see cref="App"/> 이 아직 없는 부팅 로딩 화면(T96-loading)이 쓴다(<see cref="Cat"/> 은 App 이 서야 값이 있다).
+        /// </summary>
+        public static GameObject SpawnWith(AssetCatalog cat, string prefabKey, Transform parent, bool adopt = true)
         {
-            var prefab = Cat != null ? Cat.Prefab(prefabKey) : null;
+            var prefab = cat != null ? cat.Prefab(prefabKey) : null;
             GameObject go;
             if (prefab == null) { go = new GameObject(prefabKey, typeof(RectTransform)); go.transform.SetParent(parent, false); return go; }
             go = UnityEngine.Object.Instantiate(prefab, Staging(), false);

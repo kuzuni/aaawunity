@@ -960,6 +960,8 @@ MonoBehaviour:
     prefab: {fileID: 577547553208854970, guid: 8c9c16236e5ac4316955cb4034a351eb, type: 3}
   - key: ui.mailboxEmpty
     prefab: {fileID: 577547553208854970, guid: 33cb154f78d654e949558e97cf8b44a9, type: 3}
+  - key: ui.titleLoading
+    prefab: {fileID: 1846150863418231505, guid: c1d785d37a27548cf98aa36a12b35d92, type: 3}
   - key: ui.itemDetail
     prefab: {fileID: 7414256810885239513, guid: 30a0e5142a3be478ebc038ed64679a5b, type: 3}
   - key: ui.shopList
@@ -1214,6 +1216,18 @@ MonoBehaviour:
     color: {r: 0.313725, g: 0.631373, b: 0.878431, a: 1}
   - key: col.grad.cardBlue.bottom
     color: {r: 0.360784, g: 0.776471, b: 0.972549, a: 1}
+  - key: col.grad.cardChestLegend.top
+    color: {r: 0.729412, g: 0.545098, b: 1, a: 1}
+  - key: col.grad.cardChestLegend.bottom
+    color: {r: 0.854902, g: 0.0823529, b: 0.921569, a: 1}
+  - key: col.grad.cardChestRare.top
+    color: {r: 0.00392157, g: 0.352941, b: 0.721569, a: 1}
+  - key: col.grad.cardChestRare.bottom
+    color: {r: 0.0941176, g: 0.698039, b: 0.901961, a: 1}
+  - key: col.grad.cardChestEpic.top
+    color: {r: 0.247059, g: 0.0784314, b: 0.631373, a: 1}
+  - key: col.grad.cardChestEpic.bottom
+    color: {r: 0.788235, g: 0.34902, b: 0.882353, a: 1}
   - key: col.grad.bgLobby.top
     color: {r: 0.235294, g: 0.407843, b: 0.2, a: 1}
   - key: col.grad.bgLobby.bottom
