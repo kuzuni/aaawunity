@@ -209,5 +209,39 @@ namespace KkomaKnight.Tests
                 Assert.That(o.Count, Is.GreaterThan(0), "맨 위 등급이 동나면 아래 등급으로라도 준다(막힌 판 방지)");
             }
         }
+
+        /// <summary>T183 2단계 — 판 «시작 조건»: 원정은 특전 5개 + 레벨 5 로 시작하고, 기본값이면 지금과 똑같이 시작한다.</summary>
+        [Test]
+        public void StartRun_GivesThePerksAndTheLevelFromTheTable()
+        {
+            var d = TestData.Load(); var b = GearSystem.MkBuild(d, -1, 0, 0);
+            var run = DungeonData.Parse(RunJson);
+
+            // ⓐ 원정 = 시작 특전 5 · 레벨 5 (등급 제한 없음)
+            {
+                var e = run.Of("expedition").Run;
+                var st = new BattleState(d, 3, b, new Mulberry32(21), new SimPolicy(),
+                    new RunOptions { StartPerks = e.StartPerks, StartLevel = e.StartLevel, MinPerkGrade = e.MinPerkGrade });
+                Assert.That(st.P.Level, Is.EqualTo(5), "원정은 레벨 5 로 시작한다(주인)");
+                Assert.That(st.P.Exp, Is.EqualTo(0), "시작 경험치 0 — 다음 렙업은 ExpNeed(5) 가 기준이 된다");
+                Assert.That(st.Taken.Count, Is.EqualTo(5), "시작하자마자 특전 5개(주인)");
+            }
+            // ⓑ 지옥의 문 = 시작 특전 없음 · 레벨 1 · 맨 위 등급만
+            {
+                var e = run.Of("hell").Run;
+                var st = new BattleState(d, 3, b, new Mulberry32(21), new SimPolicy(),
+                    new RunOptions { StartPerks = e.StartPerks, StartLevel = e.StartLevel, MinPerkGrade = e.MinPerkGrade });
+                Assert.That(st.P.Level, Is.EqualTo(1), "지옥의 문은 레벨 1(주인)");
+                Assert.That(st.Taken.Count, Is.EqualTo(0), "지옥의 문은 시작 특전 없음(주인)");
+                var r = st.RunToEnd();
+                foreach (var id in r.Taken)
+                    Assert.That(d.Perks.ById(id).Grade, Is.EqualTo(2), "지옥의 문에서는 맨 위 등급 특전만 뜬다(T183 · id " + id + ")");
+            }
+            // ⓒ 기본 RunOptions = 지금과 똑같은 판(레벨 1 · 시작 특전 0) — 시드 골든이 흔들리지 않는 근거
+            {
+                var st = new BattleState(d, 3, b, new Mulberry32(21), new SimPolicy(), new RunOptions());
+                Assert.That(st.P.Level, Is.EqualTo(1)); Assert.That(st.Taken.Count, Is.EqualTo(0));
+            }
+        }
     }
 }

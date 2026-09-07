@@ -135,6 +135,14 @@ namespace KkomaKnight.Core
         public bool BaseStatsLegacy20;   // 치확·반격·방어·회피 기본치 20 (재적합 자 전용)
         public bool GearOpts = true;     // false = 세트 옵션 끔
         public bool EmitEvents;          // 연출 이벤트 생성(게임)
+
+        // ───────── T183 던전 판(주인 2026-09-07 12:0X) — 셋 다 기본값이 «일반 챕터 전투와 똑같은 판» 이다 ─────────
+        /// <summary>굴릴 수 있는 특전 등급의 <b>하한</b>(0 = 제한 없음 · 2 = 맨 위 등급만 = 지옥의 문 «전설·신화만»).</summary>
+        public int MinPerkGrade;
+        /// <summary>판을 시작하자마자 <b>자동으로</b> 집어 주는 특전 수(원정 5 · 3택 팝업 없이 같은 <c>Rng</c> 로 굴린다).</summary>
+        public int StartPerks;
+        /// <summary>시작 레벨(원정 5) — 다음 렙업 필요 경험치는 엔진이 <c>ExpNeed(Level)</c> 를 보므로 저절로 그 레벨 기준이 된다.</summary>
+        public int StartLevel = 1;
     }
 
     public struct RunResult

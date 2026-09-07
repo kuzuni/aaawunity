@@ -44,6 +44,7 @@ namespace KkomaKnight.Core
             for (int i = 0; i < 10 && i < PK.Perks.Count; i++) Base10.Add(PK.Perks[i]);
             P = MkPlayer(build);
             BuildNodes();
+            StartRun();
         }
 
         // ───────────────────────── 플레이어 생성 (sim.js mkPlayer) ─────────────────────────
@@ -239,6 +240,24 @@ namespace KkomaKnight.Core
             return false;
         }
 
+        /// <summary>
+        /// T183 — 던전 판의 «시작 조건»(주인 2026-09-07 12:0X · 원정 = 특전 5개 + 레벨 5). <b>기본값이면 아무것도 안 한다</b>
+        /// (<see cref="RunOptions.StartLevel"/> 1 · <see cref="RunOptions.StartPerks"/> 0) — 일반 챕터 전투는 한 치도 안 바뀐다(시드 골든 근거).
+        /// 레벨은 숫자만 올린다(우리 엔진의 렙업은 스탯을 안 준다 — 주는 것은 «특전 기회» 뿐이라 그 몫이 시작 특전 N 이다).
+        /// 굴림은 판의 같은 <see cref="Rng"/> 를 쓰므로 시드가 같으면 판도 같다.
+        /// </summary>
+        void StartRun()
+        {
+            if (Opt.StartLevel > 1) { P.Level = Opt.StartLevel; P.Exp = 0; }
+            for (int i = 0; i < Opt.StartPerks; i++)
+            {
+                if (Taken.Count >= PK.PicksPerRun) break;
+                var offer = Perks.Offer(D, Taken, P.Has("p_nobleEye"), Rng, Opt.MinPerkGrade);
+                if (offer.Count == 0) break;
+                PickPerk(Perks.SimPick(offer));
+            }
+        }
+
         void GrantNextPerk()
         {
             PerkChances++;
@@ -250,7 +269,7 @@ namespace KkomaKnight.Core
                 return;
             }
             if (Policy is InteractivePolicy) { PendingLevelUps++; Emit(EvKind.LevelUp, null, P.Level); return; }   // 팝업이 열릴 때 굴린다(index.html 과 같음)
-            var offer = Perks.Offer(D, Taken, P.Has("p_nobleEye"), Rng);
+            var offer = Perks.Offer(D, Taken, P.Has("p_nobleEye"), Rng, Opt.MinPerkGrade);
             if (offer.Count == 0) return;
             var pick = Policy.PickPerk(this, offer);
             if (pick == null) pick = Perks.SimPick(offer);
@@ -565,7 +584,7 @@ namespace KkomaKnight.Core
         {
             PerkChances++;
             if (!HasPerkLeft()) { PendingLevelUps = Math.Max(0, PendingLevelUps - 1); if (PendingLevelUps > 0) OpenLevelUp(); return; }
-            var offer = Perks.Offer(D, Taken, P.Has("p_nobleEye"), Rng);
+            var offer = Perks.Offer(D, Taken, P.Has("p_nobleEye"), Rng, Opt.MinPerkGrade);
             if (offer.Count == 0) { PendingLevelUps = Math.Max(0, PendingLevelUps - 1); return; }
             Pending = new PendingDecision { Kind = PendingKind.LevelUp, Offer = offer };
         }
@@ -579,7 +598,7 @@ namespace KkomaKnight.Core
         {
             if (Pending == null || Pending.Kind != PendingKind.LevelUp) return false;
             if (Pending.Rerolls >= EngineConst.RerollPerLevelUp) return false;
-            var offer = Perks.Offer(D, Taken, P.Has("p_nobleEye"), Rng);
+            var offer = Perks.Offer(D, Taken, P.Has("p_nobleEye"), Rng, Opt.MinPerkGrade);
             if (offer.Count == 0) return false;
             Pending.Offer = offer; Pending.Rerolls++;
             return true;
