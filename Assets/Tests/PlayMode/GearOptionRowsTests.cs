@@ -132,7 +132,7 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(1f, got.a, 0.02f, i + "번 잠긴 줄 자물쇠는 불투명(T160 ⓐ)");
             var t = RowText(i);
             // T160 ⓑ 는 «(등급)» 꼬리표를 없앴는지 본다 — 그런데 «)» 로 끝나는지로 재면 안 된다:
-            // 옵션 설명 자체가 «치명타 시 50%: 도끼 1개(공격력 50%)» 처럼 괄호로 끝나는 것이 있어 그 줄이 잘못 걸린다(CI #290 실측 · 결정 405).
+            // 옵션 설명 자체가 «치명타 시 50%: 도끼 1개(공격력 50%)» 처럼 괄호로 끝나는 것이 있어 그 줄이 잘못 걸린다(CI #290 실측 · 결정 415).
             // 재야 하는 것은 «GearText.LockSuffix 가 만드는 꼬리(예 « (신화)»)가 붙어 있나» 이므로 그 함수로 만든 꼬리를 그대로 대 본다.
             string suffix = GearText.LockSuffix(_app.Data.Gear.OptTierName(i));
             Assert.IsNotEmpty(suffix, i + "번 줄의 개방 단계 이름이 비어 있다(표를 못 읽었다 · 이 줄은 이 자로 잴 수 없다)");

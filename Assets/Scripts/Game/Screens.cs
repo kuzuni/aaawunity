@@ -22,7 +22,8 @@ namespace KkomaKnight.Game
         public override string Name => "lobby";
         /// <summary>사이드·보조·모서리 버튼 키 — T43(events) · T44(나머지) 가 <see cref="OnSide"/> 에서 이어받는다. T78(주인 2026-09-07)로 <c>starter</c>·<c>challenge7</c>·<c>pass</c>·<c>castle</c> 네 키는 삭제됐다.</summary>
         public const string SidePrivilege = "privilege", SideAttendance = "attendance", SideDailyGift = "dailyGift", SideQuest = "quest";
-        public const string SideExplore = "explore", SideClearReward = "clearReward", SideEvents = "events";
+        // T168 — «SideEvents»(로비 오른쪽 아래 이벤트 버튼)는 주인 지시로 삭제됐다(중복) · 같은 입구가 하단 탭 맨 오른쪽으로 갔다.
+        public const string SideExplore = "explore", SideClearReward = "clearReward";
         /// <summary>
         /// 아이콘 라벨 칸(사이드·보조·모서리 · <see cref="BuildColumn"/>) 안의 아이콘 자리 / 글자 띠 자리(칸 %) — T68 ①(주인 «아이콘 너무 작음» · 1.5~1.8배 · 칸 폭의 ≥ 75%) + T63-lobby(라벨 보조 36 · 2줄 · 잘림 0).
         /// 아이콘이 칸 위 82% 를 차지하고 글자 띠(아래 50%)가 아이콘 아랫부분에 겹친다 — 레퍼런스 01 도 «Daily Gifts»·«7-Day Challenge» 가 아이콘 밑단 위에 얹혀 있다(외곽선 글자).
@@ -131,10 +132,11 @@ namespace KkomaKnight.Game
             // ⑥ 보조 버튼 2(탐험 · 클리어 보상 — 껍데기) → START(주황 · 카드 폭) → 모서리(이벤트 · T78 로 «성» 삭제)
             UiKit.Tag(BuildColumn(rt, "SubRow", Layout.LobbySubRow, true, (SideExplore, "ui.iconMap", "탐험"), (SideClearReward, "ui.iconChestRed", "클리어 보상")), "보조 버튼 2개 줄");
             var start = UiKit.Button(rt, "ui.btnStartOrange", "START", () => { Audio.Wake(); App.StartBattle(App.Save.SelChapter); }, Layout.LobbyStart); start.name = "Start"; UiKit.Tag(start, "START 버튼");   // Wake = WebGL 첫 터치 뒤 잠든 BGM 재개(T28)
-            // T78 — 왼쪽 아래 «성»(집 아이콘 + 자물쇠 · 결정 32)은 주인 2026-09-07 지시로 삭제 · 오른쪽 아래 «이벤트» 는 레퍼런스 01 자리 그대로 둔다
-            BuildColumn(rt, "Events", Layout.LobbyEvents, true, (SideEvents, "ui.iconDungeon", "이벤트"));
+            // T78 — 왼쪽 아래 «성»(집 아이콘 + 자물쇠 · 결정 32)은 주인 2026-09-07 지시로 삭제.
+            // T168 — 오른쪽 아래 «이벤트» 도 삭제했다(주인 «이벤트라 돼 있는 거 중복되니까 빼 주고») — 같은 입구가 하단 탭 맨 오른쪽으로 갔다.
+            // 자리(Layout.LobbyEvents)는 «비워 둔다» — 다른 요소를 끌어올리지 않는다(T78 이 «성» 을 지웠을 때와 같은 규약).
 
-            // ⑦ 하단 탭 5칸 — 프리팹 탭 바 조각을 표 자리에 (상점 · 장비 · 전투 · 던전 · 펫 — T10 · «탤런트 → 던전» 은 T43)
+            // ⑦ 하단 탭 5칸 — 프리팹 탭 바 조각을 표 자리에 (상점 · 장비 · 전투 · 펫 · 이벤트 — T10 · 맨 오른쪽은 T107 «탤런트» → T168 «이벤트»)
             // T106 ⓓ — 로비는 탭 바를 프리팹에서 가져오므로 띠를 여기서 따로 깐다 · T122: 띠가 스스로 «탭 바 바로 앞» 으로 들어가고, 바도 맨 위로 올려 둘 다에서 순서를 못 박는다
             NavBar.BottomFrame(rt);
             _tabs = UiKit.Find(rt, "Tab_01_BottomFlushMenu");
@@ -186,7 +188,6 @@ namespace KkomaKnight.Game
             switch (key)
             {
                 // T107 — 주인 «이벤트 열면 무조건 던전부터 뜨게»(아레나·상인은 그 안에서 넘어간다)
-                case SideEvents: EventsScreen.Open(App, EventsScreen.PageDungeon); break;
                 case SidePrivilege: App.ShowScreen("privilege"); break;
                 case SideQuest: LobbyPopups.Quest(App); break;
                 case SideAttendance: LobbyPopups.Attendance(App); break;
@@ -388,18 +389,22 @@ namespace KkomaKnight.Game
     }
 
     /// <summary>
-    /// 하단 탭 5칸 = <b>상점 · 장비 · 전투 · 펫 · 탤런트</b> (T107 · 주인 2026-09-07 «던전 메뉴 빼셈 — 이벤트랑 중복 · 거기에 펫 넣고 맨 오른쪽에는 탤런트» · 대장간·설정 탭은 T10 부터 없다).
+    /// 하단 탭 5칸 = <b>상점 · 장비 · 전투 · 펫 · 이벤트</b> (T107 이 «맨 오른쪽 = 탤런트» 로 정한 것을 <b>T168 이 주인 지시로 «이벤트» 로 뒤집었다</b> · 대장간·설정 탭은 T10 부터 없다).
     /// 대장간은 장비 화면의 «합성» 버튼으로만 · 설정은 로비의 메뉴(≡)와 전투의 일시정지에서만 연다.
     /// 로비 프리팹(Lobby_Default)의 Tab_01_BottomFlushMenu 를 다른 화면에도 같은 배선으로 세운다 — 탭 순서 = 프리팹 자식 순서(0~4) 그대로.
-    /// 펫 탭 = <see cref="PetScreen"/>(레퍼런스 13 구도 껍데기 · T42) · 탤런트 탭 = 주인이 지목한 <c>Character_Talent_02</c> 프리팹 팝업(<see cref="Overlay.TalentPet"/> · 껍데기 · T107).
+    /// 펫 탭 = <see cref="PetScreen"/>(레퍼런스 13 구도 껍데기 · T42) · 이벤트 탭 = <see cref="EventsScreen"/> 던전 페이지부터(T107 이 정한 규약 · T168 이 자리를 탭으로 옮겼다).
+    /// 「탤런트」 팝업(<see cref="Overlay.TalentPet"/> · 주인 지목 <c>Character_Talent_02</c>)은 코드로 남아 있고 <b>부르는 곳만 없다</b> — 주인이 자리를 정하면 그때 붙인다(결정 416).
     /// <b>던전(이벤트)은 탭에서 빠졌다</b> — 로비 오른쪽 아래 «이벤트» 버튼으로만 열고, 열면 언제나 <see cref="EventsScreen.PageDungeon"/> 이 먼저 보인다(T107 · 주인 «이벤트 열면 무조건 던전부터»).
     /// </summary>
     public static class NavBar
     {
         // T107(주인 2026-09-07 «하단에 던전 메뉴 있는 거 빼셈 — 이벤트랑 어차피 중복됨 · 던전 메뉴 빼고 거기에 펫 넣고, 맨 오른쪽에는 탤런트»)
-        public static readonly string[] Keys = { "shop", "gear", "battle", "pet", "talent" };
-        static readonly string[] IconsK = { "ui.shop", "ui.bag", "ui.battle", "ui.petIcon", "ui.iconTalent" };
-        public static readonly string[] Labels = { "상점", "장비", "전투", "펫", "탤런트" };
+        // T168(주인 2026-09-07 09:4X «탤런트 대신 이벤트를 하단 네비 탤런트 자리에») — 맨 오른쪽 칸이 «탤런트» → «이벤트» 로 바뀌었다.
+        // T107 이 이 자리를 «탤런트» 로 정했던 것을 주인이 뒤집은 것이다(그 절에도 적어 뒀다) — 되돌리지 마라.
+        // 아이콘은 로비 오른쪽 아래 «이벤트» 칸이 쓰던 그것(ui.iconDungeon)을 그대로 가져왔다(그 칸은 이 작업이 지웠다 · 중복).
+        public static readonly string[] Keys = { "shop", "gear", "battle", "pet", "events" };
+        static readonly string[] IconsK = { "ui.shop", "ui.bag", "ui.battle", "ui.petIcon", "ui.iconDungeon" };
+        public static readonly string[] Labels = { "상점", "장비", "전투", "펫", "이벤트" };
 
         /// <summary>하단 프레임 띠 오브젝트 이름(고정 · T106 ⓓ 게이트가 찾는다).</summary>
         public const string BottomFrameName = "BottomFrame";
@@ -438,12 +443,15 @@ namespace KkomaKnight.Game
             while (t != null && t.parent != root) t = t.parent;
             return t;
         }
+        /// <summary>탭 오브젝트 이름 — 조각이 준 이름은 «Tab_01_…» 이라 다섯 칸이 서로 구별되지 않는다(T168).</summary>
+        public static string TabName(string key) => "Tab:" + key;
         /// <summary>탭 바(Tab_01_BottomFlushMenu 인스턴스)의 자식 5개에 아이콘·라벨·클릭을 배선한다. current = 켜 둘 탭(«lobby» 는 전투 탭).</summary>
         public static void Wire(App app, Transform bar, string current)
         {
             for (int i = 0; i < bar.childCount && i < Keys.Length; i++)
             {
                 var tab = bar.GetChild(i); int k = i;
+                tab.name = TabName(Keys[i]);   // T168 — 조각이 준 이름 대신 «Tab:<키>» 로 못 박는다(테스트가 다섯째 탭을 자리번호가 아니라 이름으로 집는다 · 이벤트 화면의 Tab:dungeon·Tab:pvp 와 같은 문법)
                 UiKit.SetSprite(tab, "Normal/Icon", IconsK[i], Palette.White); UiKit.SetSprite(tab, "Focus/Icon_Focus", IconsK[i], Palette.White);
                 UiKit.SetText(tab, "Focus/Text (TMP)", Labels[i]);
                 bool on = Keys[i] == current || (Keys[i] == "battle" && current == "lobby");
@@ -458,8 +466,9 @@ namespace KkomaKnight.Game
             switch (key)
             {
                 case "battle": app.Overlay.Close(); if (current != "lobby") app.ShowScreen("lobby"); break;
-                // T107 — 맨 오른쪽 «탤런트» = 주인이 지목한 Character_Talent_02 프리팹 팝업(껍데기 · Overlay.TalentPet) · 던전은 탭에서 빠지고 로비 «이벤트» 로만 연다
-                case "talent": app.Overlay.TalentPet("talent"); break;
+                // T168 — 맨 오른쪽은 «이벤트» 다(주인이 T107 의 «탤런트» 를 뒤집었다). 여는 곳은 T107 이 정한 대로 **던전 페이지부터**다.
+                // 「탤런트」 팝업(Overlay.TalentPet · 주인 지목 Character_Talent_02)은 코드로 남아 있고 부르는 곳만 없어졌다 — 주인이 자리를 정하면 그때 붙인다(결정 416).
+                case "events": app.Overlay.Close(); EventsScreen.Open(app, EventsScreen.PageDungeon); break;
                 // 펫은 T42 부터 화면(PetScreen)
                 default: app.Overlay.Close(); app.ShowScreen(key); break;
             }

@@ -304,10 +304,10 @@ namespace KkomaKnight.Tests.Play
             var tabs = UiKit.Find(lobby, "Tab_01_BottomFlushMenu");
             Assert.IsNotNull(tabs, "로비 프리팹(Lobby_Default)의 하단 탭 바 조각이 표 자리(TabBar)에 있어야 한다");
             Assert.GreaterOrEqual(tabs.childCount, NavBar.Keys.Length, "하단 탭 5칸");
-            // T107(주인 2026-09-07 «던전 메뉴 빼고 거기에 펫 넣고, 맨 오른쪽에는 탤런트») — 던전 탭은 없다(이벤트와 중복)
-            Assert.AreEqual(5, NavBar.Keys.Length, "탭 = 상점·장비·전투·펫·탤런트");
-            CollectionAssert.AreEqual(new[] { "shop", "gear", "battle", "pet", "talent" }, NavBar.Keys, "탭 순서(T107)");
-            CollectionAssert.AreEqual(new[] { "상점", "장비", "전투", "펫", "탤런트" }, NavBar.Labels, "탭 라벨(T107)");
+            // T107 이 «맨 오른쪽 = 탤런트» 로 정한 것을 **T168 이 주인 지시로 «이벤트» 로 뒤집었다**(«탤런트 대신 이벤트를 하단 네비 탤런트 자리에»).
+            Assert.AreEqual(5, NavBar.Keys.Length, "탭 = 상점·장비·전투·펫·이벤트");
+            CollectionAssert.AreEqual(new[] { "shop", "gear", "battle", "pet", "events" }, NavBar.Keys, "탭 순서(T107 → 맨 오른쪽은 T168)");
+            CollectionAssert.AreEqual(new[] { "상점", "장비", "전투", "펫", "이벤트" }, NavBar.Labels, "탭 라벨(T168)");
             CollectionAssert.DoesNotContain(NavBar.Keys, "dungeon", "던전 탭 없음(T107 · 로비 «이벤트» 로만 연다)");
             Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 1, "로비 초상(HeroView · 상단 바 아바타)");
             Assert.IsTrue(HasText(s => s == "START"), "START 버튼");
@@ -602,18 +602,25 @@ namespace KkomaKnight.Tests.Play
                 Check("데이터 삭제 뒤 로비");
             }
 
-            // T107(주인 2026-09-07 «맨 오른쪽에는 탤런트 넣으셈 · 탤런트 팝업 분명히 prefab 으로 있음 그거 쓰게») —
-            // 맨 오른쪽(다섯째) 탭 = 주인이 지목한 Character_Talent_02 프리팹 팝업(껍데기 · 기능 없음). 앞 블록이 세이브를 지우며 로비를 다시 세우므로 탭 바를 새로 찾는다.
+            // T168 — 맨 오른쪽(다섯째) 탭은 **«이벤트»** 이고 누르면 **던전 페이지**가 열린다(T107 이 정한 «이벤트는 무조건 던전부터» 를 지킨다).
+            // 앞 블록이 세이브를 지우며 로비를 다시 세우므로 탭 바를 새로 찾는다. 탭은 자리번호가 아니라 **이름**으로 집는다(T168 의 «Tab:<키>»).
             {
                 _app.ShowScreen("lobby"); yield return Frames(2);
                 var tabs2 = UiKit.Find(_app.Current.Root, "Tab_01_BottomFlushMenu"); Assert.IsNotNull(tabs2, "로비 탭 바(다시)");
-                var talBtn = tabs2.GetChild(4).GetComponent<Button>(); Assert.IsNotNull(talBtn, "다섯째 탭 버튼(탤런트)");
-                talBtn.onClick.Invoke(); yield return Frames(2);
-                Assert.IsTrue(_app.Overlay.IsOpen, "탤런트 탭은 팝업으로 뜬다(T107)");
-                Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.talent"), "Character_Talent_02 조각(주인 지목 프리팹 그대로)");
-                Check("탤런트 팝업", expectOverlay: true);
+                var evTab = UiKit.Find(tabs2, NavBar.TabName("events")); Assert.IsNotNull(evTab, "다섯째 탭 = 이벤트(T168)");
+                Assert.AreSame(tabs2.GetChild(4), evTab, "이벤트 탭은 맨 오른쪽 칸이다(주인 «탤런트 자리에»)");
+                var evBtn = evTab.GetComponent<Button>(); Assert.IsNotNull(evBtn, "이벤트 탭 버튼");
+                evBtn.onClick.Invoke(); yield return Frames(2);
+                Assert.AreEqual("events", _app.Current.Name, "이벤트 탭 = 이벤트 화면(팝업이 아니다)");
+                Assert.AreEqual(EventsScreen.PageDungeon, ((EventsScreen)_app.Current).Page, "이벤트는 던전 페이지부터(T107)");
+                Assert.IsFalse(_app.Overlay.IsOpen, "팝업은 안 뜬다");
+                // 「탤런트」 팝업은 코드로 남아 있고 부르는 곳만 없어졌다(결정 416) — 조각 자체는 그대로임을 여기서 한 번 확인해 둔다.
+                _app.Overlay.TalentPet("talent"); yield return Frames(2);
+                Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.talent"), "Character_Talent_02 조각은 그대로 있다(입구만 없다 · 주인이 자리를 정하면 붙인다)");
+                Check("탤런트 팝업(입구 없음 · 조각만 확인)", expectOverlay: true);
                 _app.Overlay.Close(); yield return Frames(2);
                 Assert.IsFalse(_app.Overlay.IsOpen, "닫힘");
+                _app.ShowScreen("lobby"); yield return Frames(2);
             }
 
             // T42 — 펫 탭 = 레퍼런스 13_pet.jpg 구도(PetScreen · 껍데기): 상단 바 · 4열 격자 9칸(Lv · 진행바) · 합계 줄 · «장착중» 띠 + 슬롯 4 · 회색 2 · 주황 소환 2 · 탭 5 → 칸 클릭 = 세부 팝업(14 · 명판 없음 · 탭하여 닫기)
@@ -841,7 +848,7 @@ namespace KkomaKnight.Tests.Play
                         // T84 — 어두운 pill 위 글자는 밝은 색 + 검은 아웃라인이어야 읽힌다(주인 상시 지시 · screens run 148 의 07 눈 확인에서 회색 글자가 안 읽혔다)
                         Assert.IsNotNull(t.GetComponent<Outline>(), "옵션 줄 «" + t.text + "» 에 검은 아웃라인(T63 0항 «예외 없이»)");
                         // T177(주인 2026-09-07 «잠긴 옵션 줄 글씨는 #666666»)이 «잠긴» 줄만 일부러 어둡게 만든다 —
-                        // 그 자리는 `OwnerDarkTextTag` 를 달고 있으므로 T84 의 «밝아야 한다» 에서 뺀다(안 빼면 주인 지시가 게이트에 막힌다 · 결정 405).
+                        // 그 자리는 `OwnerDarkTextTag` 를 달고 있으므로 T84 의 «밝아야 한다» 에서 뺀다(안 빼면 주인 지시가 게이트에 막힌다 · 결정 415).
                         // 대신 «표식이 있으면 색이 정말 그 지정색인가» 를 재서 표식이 «아무 어두운 글자나 봐 주는 뒷문» 이 되지 않게 한다.
                         if (t.GetComponent<OwnerDarkTextTag>() != null)
                             Assert.AreEqual(Palette.OptLocked.grayscale, t.color.grayscale, 0.02f,

@@ -313,9 +313,12 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(ClickNamed(pv, "BackBtn"), "PvP 뒤로"); yield return Frames(2); Assert.AreEqual("lobby", _app.Current.Name, "PvP 뒤로 = 로비");
             Check("뒤로 → 로비");
 
-            // ⑨ 로비 오른쪽 아래 «이벤트»(방패) → **던전 페이지**(T107 · 주인 2026-09-07 «이벤트 열면 무조건 던전부터») · 거기서 PvP 탭 → PvP 페이지
-            Assert.IsTrue(ClickNamed(lobby, "Side:" + LobbyScreen.SideEvents), "로비 이벤트 버튼"); yield return Frames(2);
-            Assert.AreEqual("events", _app.Current.Name); Assert.AreEqual(EventsScreen.PageDungeon, ev.Page, "이벤트 버튼 = 던전 페이지(T107)");
+            // ⑨ **하단 탭 맨 오른쪽 «이벤트»** → **던전 페이지**(T107 «이벤트 열면 무조건 던전부터») · 거기서 PvP 탭 → PvP 페이지
+            // T168 — 예전에는 로비 오른쪽 아래 «이벤트»(방패) 버튼으로 들어왔다. 주인이 «중복이니 빼라» 고 해서 그 버튼은 없어지고
+            // 같은 입구가 탭 맨 오른쪽(탤런트 자리)으로 갔다 — 여는 곳·페이지 규약은 그대로라 이 줄만 바뀐다.
+            Assert.IsNull(UiKit.Find(lobby, "Side:events"), "로비 오른쪽 아래 «이벤트» 버튼은 없어졌다(T168 · 탭과 중복)");
+            Assert.IsTrue(ClickNamed(lobby, NavBar.TabName("events")), "하단 탭 «이벤트»"); yield return Frames(2);
+            Assert.AreEqual("events", _app.Current.Name); Assert.AreEqual(EventsScreen.PageDungeon, ev.Page, "이벤트 탭 = 던전 페이지(T107)");
             Assert.IsTrue(ClickNamed(pg, "Tab:pvp"), "PvP 탭"); yield return Frames(2); Assert.AreEqual(EventsScreen.PagePvp, ev.Page);
             Assert.IsTrue(ClickNamed(pv, "BackBtn"), "PvP 뒤로"); yield return Frames(2); Assert.AreEqual("lobby", _app.Current.Name);
             Check("이벤트 버튼 왕복");
