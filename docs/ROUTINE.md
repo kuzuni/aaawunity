@@ -1608,6 +1608,7 @@ tools/check_data_sync.sh [.aaaw-src]                              # data ↔ aaa
 python3 tools/check_decisions.py                                  # PROGRESS «워커 결정 기록» 번호 겹침(T131) — `--next` 로 «다음에 쓸 번호» 만 찍을 수도 있다
 python3 tools/check_stale_asserts.py                              # 바꾼 값·이름을 «아직 박아 둔» 테스트 자리(T184) — `--strict` 면 있을 때 1 로 끝난다
 python3 tools/check_asmdef.py                                     # 유니티 «패키지» using 이 그 폴더 asmdef 참조에 있는가(T189) — 없으면 CI 가 컴파일에서 죽는다
+python3 tools/check_test_usings.py                                # 테스트 어셈블리가 «참조하지 않는» 네임스페이스를 using 하는가(DG.Tweening·TMPro) — 로컬 임시 csproj 는 DOTween 을 참조해서 이것을 절대 못 잡는다(결정 465 · CI #346~#348 컴파일 파손)
 python3 tools/check_task_rows.py                                  # PROGRESS 에 같은 작업이 두 줄 있고 «⬜ 대기» ↔ «✅/🔄» 로 어긋난 것(끝난 일을 다시 선점하게 만든다 · 결정 455) — `--list` 로 겹치는 줄 전부 보기
 dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이후) 이식 검증
 ```
