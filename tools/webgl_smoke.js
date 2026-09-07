@@ -60,9 +60,54 @@ if (flag('self-test')) {
     const got = AUDIO_RE.test(text);
     if (got !== want) { bad++; console.error(`  ✗ «${text.split('\n')[0]}» → 오디오=${got} (기대 ${want})`); }
   }
-  console.log(bad ? `[smoke] ❌ 자가 점검 ${bad}/${cases.length} 어긋남` : `[smoke] ✅ 자가 점검 ${cases.length}/${cases.length} — 오디오 문구 분류 그대로`);
+  // T129 회차 2 — frameStats 가 «잡음에 안 흔들리는가» 를 직접 깨뜨려 본다.
+  const near = (x, y, tol) => Math.abs(x - y) <= tol;
+  const fs = [
+    // [이름, 간격 목록(ms), 검사]
+    ['고른 30fps', Array(100).fill(33.3), r => near(r.p50, 30, 0.5) && near(r.p95ms, 33.3, 0.5) && near(r.a, r.b, 0.5)],
+    // 멈칫이 섞여도 «보통 몇 프레임인가» 는 그대로여야 한다 — 평균은 여기서 끌려간다(30 → 20.4)
+    ['멈칫 10% 섞임', Array(90).fill(33.3).concat(Array(10).fill(500)),
+      r => near(r.p50, 30, 0.5) && r.p95ms > 100],
+    // ⚠ 경계는 알고 쓴다 — 딱 5%만 느리면 p95 는 «느린 쪽» 이 아니라 그 바로 아래를 집는다(최근접 순위).
+    //    p95 는 «끊김이 5% 를 넘는가» 를 보는 자다. 그보다 드문 멈칫은 min= 과 앞/뒤 절반이 잡는다.
+    ['멈칫 딱 5% 는 p95 가 안 잡는다(경계)', Array(95).fill(33.3).concat(Array(5).fill(500)),
+      r => near(r.p95ms, 33.3, 0.5)],
+    // 앞이 느리고 뒤가 빠르면 «데우는 비용» 이 앞 절반에만 잡혀야 한다
+    ['앞이 느림(데우는 중)', Array(50).fill(100).concat(Array(50).fill(25)),
+      r => r.a < 15 && r.b > 35],
+    ['빈 목록은 null', [], r => r === null],
+    ['0 뿐이면 null', [0, 0, 0], r => r === null],
+  ];
+  for (const [name, dts, ok] of fs) {
+    const r = frameStats(dts);
+    if (!ok(r)) { bad++; console.error(`  ✗ frameStats «${name}» → ${JSON.stringify(r)}`); }
+  }
+  const total = cases.length + fs.length;
+  console.log(bad ? `[smoke] ❌ 자가 점검 ${bad}/${total} 어긋남` : `[smoke] ✅ 자가 점검 ${total}/${total} — 오디오 문구 분류 + 프레임 통계`);
   process.exit(bad ? 1 : 0);
 }
+// T129 회차 2 — «프레임 사이 간격» 목록에서 **믿을 수 있는 수**를 뽑는다(결정 509 · 순수 함수라 --self-test 가 직접 잰다).
+//   여태 perf 줄은 «10초 평균» 과 «가장 나쁜 프레임 하나» 뿐이었다. 둘 다 잡음에 약하다 —
+//   평균은 멈칫 한 번에 끌려가고, «최저» 는 10초 중 제일 나쁜 프레임 «하나» 라 사실상 잡음의 최대값이다.
+//   그래서 같은 빌드를 두 번 재면 23.8 ↔ 16.4(45%)가 나왔고, 그 자로는 무엇이 좋아졌는지 말할 수 없었다.
+//   ⓐ **중앙값**은 멈칫 몇 번에 안 흔들린다(«보통 몇 프레임인가») ⓑ **p95 프레임 시간**은 «끊김» 을 한 수로 요약한다
+//   ⓒ **앞/뒤 절반**을 따로 내면 «데운 뒤로는 괜찮아졌는가»(= 잡음의 큰 몫인 로딩 직후 비용)가 눈에 보인다.
+//   기존 fps=·min= 은 **건드리지 않는다** — 여태 쌓은 표(39.8·30.2·…·15.5)와 이어서 읽어야 하기 때문이다.
+function frameStats(dts) {
+  const good = dts.filter(d => d > 0).sort((a, b) => a - b);
+  if (!good.length) return null;
+  const at = q => good[Math.min(good.length - 1, Math.max(0, Math.round(q * (good.length - 1))))];
+  const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+  const half = Math.floor(dts.length / 2);
+  const fpsOf = a => { const m = mean(a.filter(d => d > 0)); return m > 0 ? 1000 / m : 0; };
+  return {
+    p50: 1000 / at(0.5),                 // 중앙값 fps — «보통 이만큼 나온다»
+    p95ms: at(0.95),                     // 95번째 프레임 시간(ms) — «끊김» 요약
+    a: fpsOf(dts.slice(0, half)),        // 앞 절반(데우는 중이 여기 든다)
+    b: fpsOf(dts.slice(half)),           // 뒤 절반
+  };
+}
+
 // 망 때문에 못 간 요청(프록시·DNS·오프라인) — 서버가 준 4xx/5xx 는 여기 없다(그건 아래 response 훅이 에러로 센다)
 const NET_RE = /Failed to load resource: net::(ERR_TUNNEL_CONNECTION_FAILED|ERR_PROXY_CONNECTION_FAILED|ERR_NAME_NOT_RESOLVED|ERR_INTERNET_DISCONNECTED|ERR_CONNECTION_(REFUSED|TIMED_OUT|RESET|CLOSED)|ERR_ADDRESS_UNREACHABLE|ERR_CERT_[A-Z_]+)/;
 // 무엇을 쟀는지 한 낱말로(perf 줄용 · T129) — 로컬 서버면 셸이 넣어 준 SMOKE_TARGET, 아니면 URL 의 호스트
@@ -87,7 +132,7 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
   });
   const page = await browser.newPage({ viewport: { width: 540, height: 1170 } });
   const errors = [], audioWarn = [], netWarn = [];
-  let readyLobby = false, readyBattle = false, loaded = false, tweens = null;
+  let readyLobby = false, readyBattle = false, loaded = false, tweens = null, screen = null;
   // where = 그 console 메시지가 가리키는 자원 URL(«Failed to load resource» 는 막힌 그 파일을 가리킨다)
   const noteError = (text, where) => {
     if (!strictAudio && AUDIO_RE.test(text)) { audioWarn.push(text); log('AUDIO⚠', text); return; }
@@ -103,6 +148,9 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
     if (text.includes('[KkomaKnight] ready lobby')) readyLobby = true;
     if (text.includes('[KkomaKnight] ready battle')) readyBattle = true;
     { const p = text.match(/\[KkomaKnight\] perf tweens=(\d+)/); if (p) tweens = Number(p[1]); }   // T129 ⓑ — DebugGo perf 의 답(Assets/Scripts/Game/App.cs)
+    // T129 회차 2 — 어느 화면을 잰 것인지도 받아 둔다. App.cs 는 여태 «screen=<이름>» 을 같이 찍고 있었는데 버리고 있었다.
+    // 이 자는 «로비 10초» 만 재므로(결정 509) 화면 이름이 perf 줄에 없으면 다음 워커가 그 수를 «게임 전체» 로 잘못 읽는다.
+    { const p = text.match(/\[KkomaKnight\] perf tweens=\d+ screen=(\S+)/); if (p) screen = p[1]; }
     if (text.includes('Invoking error handler due to') && !AUDIO_RE.test(text)) noteError('unity error handler: ' + text.slice(0, 500));
   });
   page.on('requestfailed', r => log('reqfail', r.url() + ' ' + (r.failure() || {}).errorText));
@@ -143,12 +191,14 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
       const M = window.Module || (window.unityFramework && window.unityFramework.Module); if (M && M.SendMessage) M.SendMessage('App', 'DebugGo', 'perf');
     }).catch(e => log('perf-fail', e.message));
     await page.waitForTimeout(500);   // 콘솔 답이 넘어올 틈
+    // ⚠ avg·min 셈은 **한 글자도 안 바꾼다** — 여태 쌓은 표(39.8·30.2·…·15.5)와 이어서 읽어야 한다(결정 509).
+    //    간격 목록 dts 만 같이 들고 나와 아래에서 «믿을 수 있는 수» 를 따로 뽑는다.
     const fps = await page.evaluate(() => new Promise(res => {
-      const t0 = performance.now(); let n = 0, prev = t0, worst = Infinity;
+      const t0 = performance.now(); let n = 0, prev = t0, worst = Infinity; const dts = [];
       const step = t => {
         n++; const dt = t - prev; prev = t;
-        if (n > 1 && dt > 0) worst = Math.min(worst, 1000 / dt);
-        if (t - t0 < 10000) requestAnimationFrame(step); else res({ avg: n / ((t - t0) / 1000), min: worst === Infinity ? 0 : worst });
+        if (n > 1 && dt > 0) { worst = Math.min(worst, 1000 / dt); dts.push(dt); }
+        if (t - t0 < 10000) requestAnimationFrame(step); else res({ avg: n / ((t - t0) / 1000), min: worst === Infinity ? 0 : worst, dts });
       };
       requestAnimationFrame(step);
     })).catch(e => { log('fps-fail', e.message); return null; });
@@ -158,7 +208,13 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
       // 지난 CI 로그·아티팩트에서 `grep -o 'perf fps=.*'` 한 번이면 표가 복원된다(build 는 어느 빌드를 잰 것인지).
       // build 는 셸(--gh-pages 가 배포 커밋을 넣어 준다) → GitHub Actions 의 GITHUB_SHA → 빈 값 순.
       const build = (process.env.SMOKE_BUILD || process.env.GITHUB_SHA || '').slice(0, 8);
-      log('perf', `fps=${fps.avg.toFixed(1)} min=${fps.min.toFixed(1)} tweens=${tweens === null ? '?' : tweens} build=${build || '?'} target=${mode()}`);
+      // T129 회차 2 — 뒤에 «믿을 수 있는 수» 를 덧붙인다(앞 필드는 이름·차례 그대로라 옛 grep 이 그대로 돈다):
+      //   fps50 = 중앙값(멈칫에 안 흔들린다 · 회차 비교는 이것으로 한다) · p95ms = 95번째 프레임 시간(끊김)
+      //   warm  = 앞 절반/뒤 절반 — 두 수가 크게 다르면 그 회차의 fps= 는 «데우는 비용» 을 재고 있는 것이다
+      //   screen= 무엇을 재고 있었는지(이 자는 로비만 잰다 · 결정 509)
+      const st = frameStats(fps.dts || []);
+      const extra = st ? ` fps50=${st.p50.toFixed(1)} p95ms=${st.p95ms.toFixed(1)} warm=${st.a.toFixed(1)}/${st.b.toFixed(1)}` : '';
+      log('perf', `fps=${fps.avg.toFixed(1)} min=${fps.min.toFixed(1)} tweens=${tweens === null ? '?' : tweens} build=${build || '?'} target=${mode()}${extra} screen=${screen || '?'}`);
     }
   }
   if (loaded && wantBattle) {
