@@ -102,6 +102,49 @@ namespace KkomaKnight.Game
             return rt;
         }
 
+        /// <summary>
+        /// T182 3단계 — 지금 서 있는 프레임(<see cref="CreateFrame"/> 이 마지막으로 세운 것). «프레임 칸(frame space)» 판정과 세로 신축 배수를 여기서 뽑는다.
+        /// </summary>
+        public static RectTransform Frame { get; private set; }
+        /// <summary>
+        /// T182 3단계 — 세로 신축 배수를 <b>일부러 주입</b>하는 자리(자 전용 · null 이면 프레임 실제 크기에서 뽑는다).
+        /// 3단계-2 는 «배선» 만 하고 프레임은 아직 9:19.5 고정이라 <see cref="FrameK"/> 가 늘 1 이다 — 그러면 배선이 맞는지 <b>잴 방법이 없다</b>.
+        /// 그래서 자가 «9:21 짜리 프레임» 을 흉내 내 배선을 미리 확인한다(3단계-3 이 <see cref="CreateFrame"/> 을 바꾸면 이 주입 없이 그대로 돈다).
+        /// </summary>
+        public static float? FrameKOverride;
+        /// <summary>세로 신축 배수 — 1 이면 <see cref="Stretch"/> 의 모든 함수가 항등이라 배치가 지금과 한 치도 다르지 않다.</summary>
+        public static float FrameK
+        {
+            get
+            {
+                if (FrameKOverride.HasValue) return FrameKOverride.Value;
+                if (Frame == null) return 1f;
+                var r = Frame.rect;
+                return Core.Stretch.K(r.width, r.height);
+            }
+        }
+        /// <summary>
+        /// 이 부모가 «프레임 칸» 인가 — 프레임 자신이거나, 프레임까지 <b>전부 꽉 채운(anchor 0~1)</b> 겹으로만 이어져 있는가.
+        /// <para>
+        /// 세로 신축은 <b>프레임 좌표계의 줄</b>에만 건다. 팝업 상자 안·목록 칸 안의 %는 «그 상자» 기준이라 그대로 두어야 한다 —
+        /// 상자 자체가 신축된 자리에 서면 그 안은 따라 움직인다(두 번 걸면 두 배로 밀린다).
+        /// 꽉 채운 겹(<see cref="Stretch(RectTransform, float, float, float, float)"/> · <c>Overlay.Root</c> 같은 층)은 프레임과 같은 사각형이라 프레임 칸으로 센다.
+        /// </para>
+        /// </summary>
+        public static bool FrameSpace(Transform t)
+        {
+            if (Frame == null) return false;
+            for (int i = 0; i < 16 && t != null; i++)
+            {
+                if (t == Frame) return true;
+                var rt = t as RectTransform;
+                if (rt == null) return false;
+                if (rt.anchorMin != Vector2.zero || rt.anchorMax != Vector2.one) return false;   // 꽉 채운 겹이 아니면 제 좌표계다
+                t = t.parent;
+            }
+            return false;
+        }
+
         /// <summary>9:19.5 프레임 — index.html #frame. 화면 가운데 · 최대 크기로 letterbox.</summary>
         public static RectTransform CreateFrame(Transform canvas)
         {
@@ -111,6 +154,7 @@ namespace KkomaKnight.Game
             var arf = rt.gameObject.AddComponent<AspectRatioFitter>();
             arf.aspectMode = AspectRatioFitter.AspectMode.FitInParent; arf.aspectRatio = FrameW / FrameH;
             var img = rt.gameObject.AddComponent<Image>(); img.color = Palette.Bg; img.raycastTarget = true;
+            Frame = rt;   // T182 3단계 — 프레임 칸 판정·세로 신축 배수의 기준
             return rt;
         }
 
@@ -147,9 +191,18 @@ namespace KkomaKnight.Game
             rt.offsetMin = new Vector2(l, b); rt.offsetMax = new Vector2(-r, -t);
         }
 
-        /// <summary>부모 % 배치 — x,y = 왼쪽·위 모서리(%), w,h = 폭·높이(%). ref-layout.md 표를 그대로 넣는다.</summary>
+        /// <summary>
+        /// 부모 % 배치 — x,y = 왼쪽·위 모서리(%), w,h = 폭·높이(%). ref-layout.md 표를 그대로 넣는다.
+        /// <para>
+        /// T182 3단계 — 부모가 «프레임 칸»(<see cref="FrameSpace"/>)이면 세로 두 값이 <see cref="Core.Stretch.MapRow"/> 를 지난다:
+        /// 위·아래 띠는 픽셀을 지키고 가운데가 남는 높이를 먹는다. <see cref="FrameK"/> 가 1 이면 <b>항등</b>이라 지금 화면은 한 치도 안 바뀐다.
+        /// 가로(x·w)는 안 건드린다 — 폭은 2단계(상한 + 좌우 띠)가 이미 «기준 폭 그대로» 로 맞춰 놓았다.
+        /// </para>
+        /// </summary>
         public static void Pct(RectTransform rt, float x, float y, float w, float h)
         {
+            float k = FrameK;
+            if (k > 1f && rt != null && FrameSpace(rt.parent)) Core.Stretch.MapRow(y, h, k, out y, out h);
             rt.anchorMin = new Vector2(x / 100f, 1f - (y + h) / 100f);
             rt.anchorMax = new Vector2((x + w) / 100f, 1f - y / 100f);
             rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
