@@ -27,6 +27,7 @@ ROW = re.compile(r"^\|([^|]+)\|([^|]*)\|([^|]*)\|")
 FOLDED = ("✂", "♻")          # 이미 «중복 행» 이라고 접어 둔 줄
 WAITING = "⬜"
 LIVE = ("✅", "🔄")
+CLOSED = re.compile(r"✅\s*\*{0,2}\s*(종결|완료|눈 확인까지 끝)")   # 본문에 적힌 «닫았다» 표시 (ⓓ)
 
 
 def rows(path):
@@ -62,6 +63,26 @@ def main():
             if status.startswith(WAITING) and re.search(r"코드 push|✅|🔄", status):
                 inner.append((tid, n, status))
 
+    # ⓓ 머리는 «🔄 진행» 인데 본문에 «✅ 종결»·«✅ 완료» 가 적혀 있다 (T197 · 결정 500 의 짝).
+    #    ⓒ 가 «⬜ → 실은 하는 중» 을 잡는다면 이 자는 «🔄 → 실은 끝났다» 를 잡는다. 사고는 한 번 더 나쁘다 —
+    #    «🔄» 는 «남이 하는 중» 으로 읽히므로 다음 워커는 «남은 일 = 확인뿐» 만 보고 **이미 끝난 확인을 다시 한다**
+    #    (실측: T159·T160·T177 은 워커 B 가 11:2X 에 PNG 로 닫았는데 개별 세 줄의 머리가 🔄 로 남아
+    #     워커 F 가 15:3X 에 lock 을 셋 잡고 같은 확인을 통째로 되풀이했다 · 한 회차가 그냥 샜다).
+    #    인용(«✅ 종결» 기록은…)과 남의 작업 이야기(«T156 ✅ 종결»)는 세지 않는다 — 앞 글자로 가른다.
+    closed = []
+    for tid, items in by_id.items():
+        for n, status in items:
+            if not status.lstrip("*_ ").startswith("🔄"):
+                continue
+            for m in CLOSED.finditer(status):
+                pre = status[:m.start()]
+                if pre[-1:] in ("«", "(", "“"):        # 인용·괄호 안 = 남의 이야기
+                    continue
+                if re.search(r"T\d+[^\s]*\s*$", pre):        # «T156 ✅ 종결» = 다른 작업 이야기
+                    continue
+                closed.append((tid, n, status))
+                break
+
     dups = {k: v for k, v in by_id.items() if len(v) > 1}
     bad = []
     for tid, items in dups.items():
@@ -80,6 +101,15 @@ def main():
         for tid, n, status in sorted(inner, key=lambda x: x[1]):
             print("  " + tid + " — " + str(n) + "행: " + status[:70].replace("\n", " ") + " …")
         print("고치는 법: 상태 칸 **머리**를 실제 상태(✅·🔄)로 바꾼다 — 뒤에 붙인 회차 기록은 그대로 둔다(이력이다).")
+        return 1
+
+    if closed:
+        print("머리는 «🔄 진행» 인데 본문에는 «✅ 종결/완료» 가 적혀 있다 — 다음 워커가 «남은 일 = 확인뿐» 으로 읽고 끝난 확인을 되풀이한다(T197):")
+        for tid, n, status in sorted(closed, key=lambda x: x[1]):
+            print("  " + tid + " — " + str(n) + "행: " + status[:70].replace("\n", " ") + " …")
+        print("고치는 법: 상태 칸 **머리**를 ✅ 로 바꾸고 «(이력)» 뒤에 옛 머리를 그대로 남긴다 —")
+        print("            «닫았다» 는 본문 «뒤» 가 아니라 **머리**에 있어야 한다(표를 훑는 워커는 머리만 본다).")
+        print("            정말로 아직 하는 중이면 본문의 그 «✅ 종결» 이 남의 작업 이야기인지 보고, 그렇다면 «T160 ✅ 종결» 처럼 작업 번호를 앞에 적는다.")
         return 1
 
     if bad:
