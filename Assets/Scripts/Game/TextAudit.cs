@@ -37,7 +37,7 @@ namespace KkomaKnight.Game
         public const bool ClipStrict = true;
 
         /// <summary>
-        /// 글꼴에 없는 글자(폭 0 으로 사라지는 글자 · T75)를 실패로 셀지 — 아직 <b>보고만</b> 한다.
+        /// 글꼴에 없는 글자(폭 0 으로 사라지는 글자 · T75)를 실패로 센다 — <b>표가 0 이 된 것을 CI 로 보고</b> 켰다.
         /// <para>
         /// T75 2단계(sess-1813-10924 · 워커 A)가 <see cref="UiKit"/> 의 글자 입구 다섯 곳(<c>Text</c>·<c>SetText</c>·<c>Button</c>·<c>ConvertTmp</c>·<c>Bar.Set</c>)에
         /// <see cref="TextGlyphs.Safe"/> 를 걸어 «UiKit 을 거치는 글자» 는 전부 걸러진다. 남는 것은 화면 코드가 <c>Text.text</c> 에 <b>직접</b> 넣는 자리(35곳)와
@@ -45,8 +45,13 @@ namespace KkomaKnight.Game
         /// </para>
         /// 그래서 «[GlyphGate]» 표로 화면·경로·글자를 CI 로그에 남겨 두고(<see cref="GlyphSummary"/>), 그 화면 묶음 워커가 하나씩 0 으로 만든 뒤 이 한 줄을 true 로 켠다
         /// (<see cref="ClipStrict"/> 와 같은 방식 · T75 5항).
+        /// <para>
+        /// <b>2026-09-07 03:4X 켰다</b>(T75 ⓒ · sess-1917-23930 · 워커 J) — 마지막 14줄이던 상점 09·10 의 7자리를 «1,000원»·<see cref="TextGlyphs.Safe"/> 로 고친
+        /// 커밋(<c>549a317c</c>)이 든 CI 런 <b>255</b> 의 로그가 «[GlyphGate] 없는 글자가 있는 줄 <b>0</b>» 이고 그 유니티 잡이 PlayMode 70/70 · EditMode 191/191 초록이었다
+        /// (표를 먼저 0 으로 만든 뒤 켠다 = 결정 201·245·275 가 밟은 순서). 이제 «없는 글자» 가 한 줄이라도 새로 생기면 <c>TextSizeGateTests</c> 가 바로 빨개진다.
+        /// </para>
         /// </summary>
-        public const bool GlyphStrict = false;
+        public const bool GlyphStrict = true;
 
         public sealed class Row
         {
