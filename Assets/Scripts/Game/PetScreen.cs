@@ -65,7 +65,9 @@ namespace KkomaKnight.Game
                 var hl = piece.GetComponent<HorizontalLayoutGroup>(); if (hl != null) hl.enabled = false;
                 UiKit.Stretch(prt);
                 var t = piece.GetComponentInChildren<Text>(true);
-                if (t != null) { t.text = "장착중"; UiKit.Pct(t.rectTransform, 8, 0, 84, 100); t.alignment = TextAnchor.MiddleCenter; t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitMin; t.resizeTextMaxSize = 44; t.horizontalOverflow = HorizontalWrapMode.Overflow; }
+                // T194 — 끝의 `EnsureOutline` 은 «크기를 바꿨으면 아웃라인도 다시 잰다» 는 뜻이다. 조각 글자는 `ConvertTmp` 가 붙일 때 크기 40(Body 하한)으로 테를 재는데
+                // 여기서 bestFit 최대만 44 로 올리면 `TextAudit` 은 44 로 재므로 둘이 어긋난다(자의 허용 오차는 0.26px 인데, 비율이 0.05 일 때 그 차는 0.2 라 숨어 있었고 0.08 에서는 0.32 로 드러난다).
+                if (t != null) { t.text = "장착중"; UiKit.Pct(t.rectTransform, 8, 0, 84, 100); t.alignment = TextAnchor.MiddleCenter; t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitMin; t.resizeTextMaxSize = 44; t.horizontalOverflow = HorizontalWrapMode.Overflow; UiKit.EnsureOutline(t); }
             }
             var slotsHost = UiKit.Rect(Root, "Slots"); UiKit.Stretch(slotsHost);
             var slots = new RectTransform[SlotCount];
