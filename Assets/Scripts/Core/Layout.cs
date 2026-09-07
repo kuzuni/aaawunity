@@ -203,7 +203,13 @@ namespace KkomaKnight.Core
         public static readonly R OvFoot = new R(31.0f, 79.0f, 38.0f, 7.5f);
         /// <summary>«남은 횟수 : N» — 예외적으로 <b>버튼(OvFoot) 칸의 %</b> 다(그 자식이라 버튼과 같이 뜨고 같이 커진다). 레퍼런스 04 처럼 버튼 «아래»: y 104% = 버튼 아래끝에서 프레임 0.3% 띄우고, h 46% = 프레임 3.45%(80px · 본문 40 한 줄 55px 이 든다) · w 120% 는 «남은 횟수 : 1»(≈330px)이 버튼 폭 410px 안에서 한 줄로 남게 하는 여유.</summary>
         public static readonly R OvFootRemain = new R(-10.0f, 104.0f, 120.0f, 46.0f);
-        public static readonly R OvInfo = new R(86.0f, 79.5f, 9.0f, 6.0f);
+        /// <summary>
+        /// 특전 팝업의 «보유 특전(책)» 버튼 — <b>정사각</b>(T154 · 주인 2026-09-07 07:1X «책 아이콘 찌그러져 있더라»).
+        /// 종전 9.0 × 6.0%p 는 프레임(1080×2337)에서 97.2 × 140.2px = <b>세로가 1.44배</b>라 조각 그림이 세로로 늘어났다 —
+        /// 표 ⑦ 의 그 행 비고가 이미 «작은 정사각» 이라 <b>표의 비고가 옳고 수치가 틀렸던</b> 자리다.
+        /// 폭 9.0%p = 97.2px 를 세로로 그대로 옮기면 97.2 / 2337 = <b>4.16%p</b> — 그래서 높이를 그 값으로 잡는다(<c>HudBarGeometryTests</c> 옆 산술 단언이 지킨다).
+        /// </summary>
+        public static readonly R OvInfo = new R(86.0f, 79.5f, 9.0f, 4.16f);
         public static readonly R BookBox = new R(6.5f, 23.0f, 87.0f, 52.5f);
         public static readonly R BookRibbon = new R(25.0f, 21.5f, 50.0f, 4.0f);
         public static readonly R BookCard = new R(11.0f, 26.5f, 78.0f, 9.5f);

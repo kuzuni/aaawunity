@@ -38,6 +38,20 @@ namespace KkomaKnight.Tests
                 Assert.That(b.Y, Is.EqualTo(Layout.HudExp.Y).Within(1e-3f), "세 바는 같은 줄·같은 두께");
         }
 
+        /// <summary>
+        /// T154 — 특전 팝업의 «책» 버튼은 <b>정사각</b>이어야 한다(주인 «책 아이콘 찌그러져 있더라»).
+        /// %p 는 프레임(1080×2337)에서 가로·세로 길이가 다르므로 «폭 % × 1080 ≈ 높이 % × 2337» 이 되어야 눈에 정사각이다.
+        /// 표 ⑦ 의 비고가 이미 «작은 정사각» 이라 이 산술이 그 비고를 지키는 자다.
+        /// </summary>
+        [Test]
+        public void PerkBookButtonIsSquareOnScreen()
+        {
+            const float frameW = 1080f, frameH = 2337f;
+            float wPx = Layout.OvInfo.W / 100f * frameW;
+            float hPx = Layout.OvInfo.H / 100f * frameH;
+            Assert.That(wPx / hPx, Is.EqualTo(1f).Within(0.05f), "책 버튼 가로:세로 = 1 ± 0.05(고치기 전 0.69 = 세로 1.44배)");
+        }
+
         [Test]
         public void StatGridColumnsAreSymmetric()
         {
