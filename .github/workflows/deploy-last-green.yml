@@ -11,8 +11,15 @@
 name: 마지막 초록 커밋 배포 (gh-pages · T187)
 
 on:
+  # ⚠ `schedule` 만으로는 안 돌았다(실측 · 13:25·14:25 두 틱 다 안 뜸 · 13:30 수동 실행만 기록에 있다).
+  # 새로 넣은 크론이 등록되기까지 걸리거나 조용히 건너뛰는 일이 잦아 «배포가 다시 흐르는가» 를 크론에 걸어 두면 안 된다.
+  # 그래서 **CI 가 끝날 때마다** 도는 방아쇠를 정본으로 삼는다 — 초록이 생긴 «바로 그 순간» 다음 회에 배포된다(대기 ≈ 0).
+  # 할 일이 없으면 pick 이 30초 안에 «굽지 않음» 으로 끝나므로 자주 도는 것이 비싸지 않다.
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
   schedule:
-    # 매시 :25 — 워커 슬롯(:05/:12/:20/:27/:35/:42/:50/:57)과 겹치지 않는 자리라 푸시 폭주와 부딪히지 않는다.
+    # 그래도 크론을 남겨 둔다 — CI 가 한동안 안 돌아도(밤·주말) 마지막 초록을 놓치지 않는 안전망이다.
     - cron: '25 * * * *'
   workflow_dispatch:
 
@@ -46,6 +53,8 @@ jobs:
           cur=$(gh api "repos/$GITHUB_REPOSITORY/commits/gh-pages" --jq '.commit.message' 2>/dev/null | head -1 | grep -oE '[0-9a-f]{40}' | head -1 || true)
           echo "지금 배포된 커밋: ${cur:-(없음)}"
           # main 의 최근 런을 새것부터 훑어 «유니티 잡 conclusion == success» 인 첫 커밋을 고른다.
+          # 30개로 끊는 까닭: 런 하나마다 jobs API 를 한 번 부르는데 이 워크플로가 CI 가 끝날 때마다 돈다 —
+          # 100개씩 훑으면 초록이 없는 동안 시간당 2천 번이 되어 GITHUB_TOKEN 시간당 한도(1000)를 넘긴다. 30개면 최근 ~1.5시간을 덮는다.
           # 런 전체(conclusion)가 아니라 **그 잡 하나**를 본다 — WebGL·Android 가 다른 까닭으로 빨개도 «테스트는 초록» 이면 폰에 보내도 되는 빌드다.
           found=""; foundrun=""
           while read -r id sha; do
@@ -53,11 +62,11 @@ jobs:
             ok=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$id/jobs?per_page=30" \
                    --jq '[.jobs[] | select(.name | test("Unity")) | .conclusion] | index("success") // empty' 2>/dev/null || true)
             if [ -n "$ok" ]; then found="$sha"; foundrun="$id"; break; fi
-          done < <(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?branch=main&per_page=100" \
+          done < <(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?branch=main&per_page=30" \
                      --jq '.workflow_runs[] | "\(.id) \(.head_sha)"')
           if [ -z "$found" ]; then
             echo "go=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::최근 100 런에 «유니티 잡 초록» 이 하나도 없다 — 배포할 것이 없다"
+            echo "::warning::최근 30 런에 «유니티 잡 초록» 이 하나도 없다 — 배포할 것이 없다"
             exit 0
           fi
           echo "고른 커밋: $found (런 $foundrun)"
