@@ -12,16 +12,27 @@ namespace KkomaKnight.Tests.Play
     /// </para>
     /// <para>
     /// <b>띠의 출처(실측 · 되풀이할 수 있게 적는다)</b> — 레퍼런스 <c>docs/ref/17_daily_gift.jpg</c>(720폭)의 제목 리본을 가로로 468줄 훑어
-    /// «휘도 0.30 미만이 이어지는 길이» 를 세면 최빈 <b>3px</b> · 중앙값 <b>4px</b> 다. 우리 프레임은 1080폭이므로 ×1.5 하면 <b>4.5~6px</b> 이고,
-    /// 제목 크기 60 에서 그 두께가 나오려면 비율이 <b>0.075~0.10</b> 이어야 한다. 종전 0.05 는 3px 이라 띠의 절반에도 못 미쳤다.
+    /// «휘도 0.30 미만이 이어지는 길이» 를 세면 최빈 <b>3px</b> · 중앙값 <b>4px</b> 다(우리 540폭 캡처로는 <b>2.25~3px</b>).
+    /// </para>
+    /// <para>
+    /// ⚠ <b>그 값을 «규격» 과 곧바로 견주면 안 된다</b>(회차 1 이 그렇게 해서 두 회차를 썼다 · 결정 522) — 규칙 px 는 글자의 <b>로컬</b> 단위이고,
+    /// 화면에 어둡게 찍히는 띠는 그보다 얇다. CI 로그의 진단 한 줄이 그 사이를 보여 준다: «리본 제목 크기 60 · 아웃라인 <b>4.8px</b> · lossyScale 0.21 → 화면 <b>1.0px</b>».
+    /// 잰 손실은 <b>거의 일정한 2.2 PNG px</b>(비례가 아니라 상수라 얇을수록 통째로 사라진다) → 레퍼런스 띠를 내는 규격은 <b>6.7~7.8 프레임px</b> = 제목 60 에서 비율 <b>0.111~0.130</b>.
     /// </para>
     /// 씬을 안 띄운다 — 규칙(상수와 식)만 본다. 실제 글자마다 그 두께가 붙었는지는 <c>TextSizeGateTests</c> 의
     /// «[TextOutlineGate] 어긋난 글자 0» 이 전 화면에서 이미 지킨다(<see cref="TextAudit.OutlineStrict"/>).
     /// </summary>
     public class TextOutlineRuleTests
     {
-        /// <summary>레퍼런스에서 잰 제목 아웃라인 두께(프레임 1080폭 기준 px) — 이 띠 안이면 통과.</summary>
-        const float RefTitleMin = 4.5f, RefTitleMax = 7.5f;
+        /// <summary>
+        /// 레퍼런스에서 잰 제목 아웃라인 두께(프레임 1080폭 기준 px) — 이 띠 안이면 통과.
+        /// <para>
+        /// <b>회차 3 에서 다시 잡았다</b>(결정 522). 회차 1 의 «레퍼런스 3~4px × 1.5 = 4.5~7.5» 는 <b>규격을 그대로 화면 두께로 여긴</b> 값이라 낙관적이었다 —
+        /// 실제로는 안티에일리어싱이 <b>거의 일정한 2.2 PNG px</b> 를 먹는다(CI 로그 «아웃라인 4.8px · lossyScale 0.21 → 화면 1.0px» + `screens` run 391 실측: 우리 띠 3.4% ↔ 레퍼런스 8.3~11.1% · 글자 높이 대비).
+        /// 그 손실을 넣고 되풀면 레퍼런스 띠 2.25~3 PNG px 를 내는 규격은 <b>6.7~7.8 프레임px</b> 다.
+        /// </para>
+        /// </summary>
+        const float RefTitleMin = 6.6f, RefTitleMax = 8.0f;
 
         [Test]
         public void TitleOutlineMatchesReferenceThickness()
@@ -29,7 +40,7 @@ namespace KkomaKnight.Tests.Play
             float title = UiKit.OutlineWidth(TextSize.Title);
             Assert.GreaterOrEqual(title, RefTitleMin,
                 $"제목({TextSize.Title}) 아웃라인 {title:0.00}px 이 레퍼런스 띠({RefTitleMin}~{RefTitleMax}px)보다 얇다 — " +
-                "촬영은 1080 프레임을 540 으로 그리므로 화면에서는 이 값의 절반이고, 2px 밑이면 글자 자신의 안티에일리어싱이 띠를 다 덮어 회색 그림자로만 남는다(T194)");
+                "규격에서 안티에일리어싱이 «거의 일정한» 2.2 PNG px 를 먹으므로, 이 값이 낮으면 어둡게 찍히는 띠가 통째로 사라진다(T194 회차 3 · 결정 522)");
             Assert.LessOrEqual(title, RefTitleMax,
                 $"제목({TextSize.Title}) 아웃라인 {title:0.00}px 이 레퍼런스 띠보다 두껍다 — 굵기는 목적이 아니라 레퍼런스를 맞추는 일이다(T194)");
         }

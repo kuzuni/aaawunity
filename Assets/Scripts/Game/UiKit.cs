@@ -248,11 +248,23 @@ namespace KkomaKnight.Game
         /// (`screens` run 370 의 17 리본 실측: 노란 판 0.815 → 테 0.68 = 덮은 정도 <b>0.18</b> · 가장 어두운 픽셀 0.423 = 검은 픽셀 <b>0</b>).
         /// 즉 «띠 안쪽에 온전히 칠해진 픽셀» 이 생기려면 화면에서 2px 이상이어야 하고, 그것이 프레임 두께 4.5px 이상 = 이 비율이다.
         /// </para>
-        /// <b>최대치도 같이 올려야 한다</b> — 4px 이면 제목 60 이 4.8px 이 아니라 4px 로 잘려 비율을 올린 뜻이 사라진다(제일 큰 글자 = 전투 숫자 60×1.3=78 → 6.24px 이라 8px 안에 든다).
+        /// <para>
+        /// <b>회차 3(2026-09-07 16:4X · 결정 522) — 0.08 → 0.12 · 상한 8 → 12px.</b> 회차 1·2 를 두 번 실측하고 나서야 <b>규격과 «찍히는 띠» 사이의 손실</b>을 셈에 넣었다.
+        /// 열쇠는 <c>DailyGiftLookTests</c> 가 CI 로그에 남기던 진단 한 줄이었다 — «<b>리본 제목 크기 60 · 아웃라인 4.8px · lossyScale 0.21 → 화면 1.0px</b>».
+        /// 즉 규칙 px 는 글자의 <b>로컬</b> 단위이고, 화면에 찍히는 띠는 그보다 훨씬 얇다.
+        /// </para>
+        /// <para>
+        /// <b>그래서 «글자 높이 대비» 로 갈아 재면 갈린다</b>(`screens` run 391 ↔ 레퍼런스 · 각자의 그림 안에서):
+        /// 우리 띠 <b>1.0px / 글자 29px = 3.4%</b> ↔ 레퍼런스 <b>3~4px / 글자 36px = 8.3~11.1%</b>.
+        /// PNG px 로 환산하면(프레임px → PNG px 배율 <b>0.67</b>) 규격 4.8 프레임px = 3.2 PNG px 인데 어둡게 찍히는 것은 <b>1.0</b> 뿐 —
+        /// <b>안티에일리어싱이 먹는 몫이 2.2 PNG px 로 «거의 일정»</b>하다(비례가 아니라 상수라, 얇을수록 통째로 사라진다).
+        /// 레퍼런스 띠 2.25~3 PNG px 를 내려면 규격이 <b>6.7~7.8 프레임px</b> = 제목 60 에서 비율 <b>0.111~0.130</b> 이어야 한다 → 그 가운데인 <b>0.12</b>.
+        /// </para>
+        /// <b>최대치도 같이 올려야 한다</b> — 상한이 비율보다 낮으면 제일 큰 글자에서 잘려 비율을 올린 뜻이 사라진다(전투 숫자 60×1.3=78 → 9.36px 이라 12px 안에 든다).
         /// 색은 그대로 두었고, <b>α 는 회차 2 에서 1 로 올렸다</b>(<see cref="OutlineAlpha"/> 주석의 셈 · 결정 507) — 두께만으로는 레퍼런스의 «순수 검정» 에 못 간다.
         /// <b>이 상수를 고치면 자(<see cref="TextAudit"/> 의 아웃라인 판정)가 저절로 따라온다</b> — 두께 리터럴을 다른 곳에 새로 적지 말 것(T194 4항 · 그렇게 적힌 줄이 하나 있어 같은 회차에 <see cref="EnsureOutline"/> 로 모았다).
         /// </summary>
-        public const float OutlineRatio = 0.08f, OutlineMinPx = 1.5f, OutlineMaxPx = 8f;
+        public const float OutlineRatio = 0.12f, OutlineMinPx = 1.5f, OutlineMaxPx = 12f;
         /// <summary>크기에서 아웃라인 두께(프레임px) — 게이트도 같은 식을 쓴다.</summary>
         public static float OutlineWidth(float size) => Mathf.Clamp(size * OutlineRatio, OutlineMinPx, OutlineMaxPx);
 
