@@ -79,10 +79,12 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual("lobby", _app.Current.Name);
             var lobby = _app.Current.Root;
 
-            // ① 로비 오른쪽 아래 «이벤트» → events 화면 던전 페이지 (T107 · 하단 탭에서 던전은 빠졌고 이벤트를 열면 언제나 던전이 먼저)
-            var evBtn = UiKit.Find(lobby, "Events"); Assert.IsNotNull(evBtn, "로비 «이벤트» 버튼");
-            var evClick = evBtn.GetComponentInChildren<Button>(true); Assert.IsNotNull(evClick, "«이벤트» 버튼의 Button"); evClick.onClick.Invoke(); yield return Frames(3);
-            Assert.AreEqual("events", _app.Current.Name, "«이벤트» = events 화면");
+            // ① 하단 탭 맨 오른쪽 «이벤트» → events 화면 던전 페이지 (T107 «이벤트를 열면 언제나 던전이 먼저» · 던전 탭은 빠졌다)
+            // ⚠ T168 로 **로비 오른쪽 아래 «이벤트» 버튼이 없어졌다** — 이 줄은 그 버튼을 누르고 있어서 main 이 빨갰다
+            // (CI #307 «로비 «이벤트» 버튼 · Expected: not null»). 아래 ⑨ 와 같은 입구(탭)로 바꾼다. `NavBar.TabName` = T168 ⓒ 의 이름 계약.
+            var evTab = UiKit.Find(lobby, NavBar.TabName("events")); Assert.IsNotNull(evTab, "하단 탭 «이벤트»(T168)");
+            Assert.IsTrue(ClickNamed(lobby, NavBar.TabName("events")), "이벤트 탭 누름"); yield return Frames(3);
+            Assert.AreEqual("events", _app.Current.Name, "«이벤트» 탭 = events 화면");
             CollectionAssert.DoesNotContain(NavBar.Keys, "dungeon", "하단 탭에 던전 없음(T107)");
             var ev = _app.GetScreen<EventsScreen>(); Assert.IsNotNull(ev); Assert.AreEqual(EventsScreen.PageDungeon, ev.Page, "던전 페이지");
             var root = ev.Root; var pg = UiKit.Find(root, "Page:dungeon") as RectTransform; Assert.IsNotNull(pg, "던전 페이지 루트"); Assert.IsTrue(pg.gameObject.activeSelf);
