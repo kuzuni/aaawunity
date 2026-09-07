@@ -1025,6 +1025,17 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(0, shrunk.Count, "상점 글자가 bestFit 으로 종류 하한 아래로 줄었다(T63-shop):\n" + string.Join("\n", shrunk));
                 var qty = UiKit.Find(UiKit.Find(content, "GemPack:0"), "Text_Title"); Assert.IsNotNull(qty, "다이아 카드 수량 글자");
                 Assert.GreaterOrEqual(qty.GetComponent<Text>().fontSize, ShopScreen.QtySize, "상품 수량 크기 = 수량 띠 높이에서 계산(≈51)");
+                // T100 ⓓ(주인 2026-09-07 «상자들 카드 부분에도 그라디안트 · 레퍼런스랑 같은 색감») — 카드 조각 «안»(바탕 바로 위)에 실측 두 색 그라데이션
+                int gradCards = 0;
+                for (int i = 0; i < content.childCount; i++)
+                {
+                    var c = content.GetChild(i);
+                    bool isCard = c.name.StartsWith("Box:") || c.name.StartsWith("GemPack:") || c.name.StartsWith("GoldPack:");
+                    if (!isCard || c.childCount == 0) continue;
+                    Assert.IsTrue(UiKit.HasGradient(c.GetChild(0)), c.name + " 카드 조각 안에 그라데이션(T100 ⓓ)");
+                    gradCards++;
+                }
+                Assert.GreaterOrEqual(gradCards, D.Gacha.Boxes.Count, "상자 카드 3장 + 상품 카드에 전부 그라데이션");
                 AssertNoTextClip("상점", shop);
             }
 

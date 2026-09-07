@@ -114,7 +114,7 @@ namespace KkomaKnight.Game
             for (int i = 0; i < small.Count && i < 2; i++)
             {
                 var card = Place(UiKit.Rect(_content, "Box:" + small[i].Key), new Layout.R(ChestRow.X + i * (ChestRow.W - ChestCardW), ChestRow.Y, ChestCardW, ChestRow.H));
-                BuildSmallCard(card, small[i]); smallCards.Add(card);
+                BuildSmallCard(card, small[i], i == 0 ? "cardChestRare" : "cardChestEpic"); smallCards.Add(card);
                 var bottom = UiKit.Rect(card, "Bottom"); UiKit.Pct(bottom, 0, 78, 100, 22); smallBottoms.Add(bottom);   // 카드 아래 띠(광고+가격 버튼 줄) — 09 에서 보이는 «광고/무료 카드 2개» 행의 측정 자리
             }
             // 비평 이름표(T46 · 표 ⑤) — 10 = «(뽑기 화면)» 행 3 · 09 = 스크롤 맨 아래에서 보이는 행들
@@ -136,7 +136,7 @@ namespace KkomaKnight.Game
                 var p = gems[i]; var slot = Place(UiKit.Rect(_content, "GemPack:" + i), CardRect(i < 3 ? Row1Y : Row2Y, i % 3));
                 if (i == 0) UiKit.Tag(slot, "상품 카드(1칸)"); else if (i == 3) UiKit.Tag(slot, "상품 카드 2행");
                 BuildPack(slot, UiKit.FmtQty(p.Gem), "shop.gem." + Mathf.Clamp(i + 1, 1, 6), "다이아 · 모의 결제", null, $"₩{p.Won:#,0}", Color.Lerp(Palette.Plum, Palette.Ink, 0.35f),
-                    () => { App.Save.Gem += p.Gem; App.Persist(); Refresh(); App.Toast($"다이아 {UiKit.FmtQty(p.Gem)} 지급 (모의 결제)"); });
+                    () => { App.Save.Gem += p.Gem; App.Persist(); Refresh(); App.Toast($"다이아 {UiKit.FmtQty(p.Gem)} 지급 (모의 결제)"); }, "cardGem");
             }
             UiKit.Tag(Header(SecGoldY, "골드"), "두 번째 섹션 헤더");
             for (int i = 0; i < golds.Count && i < 3; i++)
@@ -147,7 +147,7 @@ namespace KkomaKnight.Game
                 {
                     var S = App.Save; if (S.Gem < p.Gem) { App.Toast("다이아가 부족합니다"); return; }
                     S.Gem -= p.Gem; S.Gold += p.Gold; App.Persist(); Refresh(); Audio.Sfx("snd.coin"); App.Toast($"골드 {UiKit.Fmt(p.Gold)} 구매!");
-                });
+                }, "cardGold");
                 foreach (var b in btn) _gated.Add((b, () => App.Save.Gem >= p.Gem));
             }
 
@@ -285,12 +285,27 @@ namespace KkomaKnight.Game
 
         // ───────────────────────── 상자 카드 ─────────────────────────
         /// <summary>최상위 상자 큰 카드(10_shop_2.jpg 위) — 그림 왼쪽 · 오른쪽에 이름 + (i) · 확률 한 줄 · 천장 pill 2 · 아래 «1회 💎» · «10회 💎» 주황 2개(표 ⑤ «상자 버튼 2개» 자리).</summary>
+        /// <summary>
+        /// 카드 조각 «안» 그라데이션(T100 ⓓ · 주인 2026-09-07 08:5X «상자들 카드 부분에도 그라디안트 · 레퍼런스랑 같은 색감») —
+        /// 조각의 바탕(<paramref name="bgName"/>) «바로 위» 형제에 <see cref="UiKit.GradientCard"/> 두 장을 깐다(글자·아이콘·버튼·테두리는 그 위 · T72 ③ 층 순서).
+        /// 색은 <see cref="GradientPalette"/> 의 <b>레퍼런스 실측 두 색</b>(T116) — 코드에 색을 박지 않는다(§1).
+        /// </summary>
+        static void CardGradient(Transform piece, string paletteName, string bgName)
+        {
+            if (piece == null) return;
+            int idx = 0;
+            for (int i = 0; i < piece.childCount; i++) if (piece.GetChild(i).name == bgName) { idx = i + 1; break; }
+            UiKit.GradientCard((RectTransform)piece, paletteName, null, UiKit.PopupPatternInset, idx);
+        }
+
         void BuildBigCard(RectTransform card, GachaBox box, List<RectTransform> btnsOut)
         {
             var D = App.Data; var w = new BoxWidgets(); string key = box.Key;
             var frame = UiKit.Spawn(Palette.FrameKey("ui.cardFrame", BoxColor(box)), card); UiKit.Stretch((RectTransform)frame.transform);
             // T100 ⓐ — 제목 바탕 끄기(§1 «문장 끝 // 주석 금지» 대로 주석은 윗줄에)
             HideCardTitleBg(frame.transform);
+            // T100 ⓓ — 레퍼런스 10 의 대형 «Legendary Chest» 카드 색(위 연보라 → 아래 자홍)
+            CardGradient(frame.transform, "cardChestLegend", "Bg");
             // 상자 이름 = 제목(60 · T63-shop · 레퍼런스 «Legendary Chest» 는 카드에서 가장 큰 글자) — 칸 13% × 배너 26% = 79px ≥ 선호 59
             var title = UiKit.SetText(frame.transform, "Text_Title", box.Name, Palette.Yellow, TextSize.Title, TextKind.Title);
             if (title != null) { UiKit.Pct(title.rectTransform, 42, 3, 49, 13); title.alignment = TextAnchor.MiddleRight; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = TextSize.BestFitMin; title.resizeTextMaxSize = TextSize.Title; }
@@ -311,12 +326,14 @@ namespace KkomaKnight.Game
             _box[key] = w;
         }
         /// <summary>나머지 상자 작은 카드(10_shop_2.jpg 가운데) — 이름 + (i) · 확률 pill · 그림 · 천장 pill · 아래 <b>광고(파랑 · 무료 보급 수령)</b> + <b>«💎가격»(1회)</b>.</summary>
-        void BuildSmallCard(RectTransform card, GachaBox box)
+        void BuildSmallCard(RectTransform card, GachaBox box, string gradName)
         {
             var D = App.Data; var w = new BoxWidgets(); string key = box.Key;
             var frame = UiKit.Spawn(Palette.FrameKey("ui.cardFrame", BoxColor(box)), card); UiKit.Stretch((RectTransform)frame.transform);
             // T100 ⓐ — 제목 바탕 끄기(§1 «문장 끝 // 주석 금지» 대로 주석은 윗줄에)
             HideCardTitleBg(frame.transform);
+            // T100 ⓓ — 레퍼런스 10 의 작은 카드 색(왼쪽 «Rare» 파랑 → 하늘 · 오른쪽 «Epic» 남보라 → 자주)
+            CardGradient(frame.transform, gradName, "Bg");
             // 상자 이름 = 제목(60 · T63-shop) — 칸 10% × 카드 29% = 68px ≥ 선호 59 · 확률 pill 은 그 아래(12.5~26.5% · 95px ≥ 2줄 88 — 회차 1 의 13% = 88px 은 딱 맞아 bestFit 이 39 로 눌렀다 · CI #110 표 «최소 크기(실제) 39»)
             var title = UiKit.SetText(frame.transform, "Text_Title", box.Name, Palette.White, TextSize.Title, TextKind.Title);
             if (title != null) { UiKit.Pct(title.rectTransform, 6, 2, 76, 10); title.alignment = TextAnchor.MiddleCenter; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = TextSize.BestFitMin; title.resizeTextMaxSize = TextSize.Title; }
@@ -340,11 +357,13 @@ namespace KkomaKnight.Game
 
         // ───────────────────────── 상품 카드 (ListItem_ShopItem 부품 · 수량 → 그림 → 이름 → 가격 띠) ─────────────────────────
         /// <summary>다이아/골드 카드 1칸 — 09_shop_1.jpg 카드 안 비례: 수량(위 5~19%) · 그림(20~64%) · 이름(66~77%) · 가격 띠(80~97%). 카드 전체와 가격 버튼이 같은 일을 한다. priceIconKey 가 null 이면 가격 아이콘을 끈다(₩).</summary>
-        List<Button> BuildPack(RectTransform slot, string qty, string iconKey, string name, string priceIconKey, string price, Color tint, Action onClick)
+        List<Button> BuildPack(RectTransform slot, string qty, string iconKey, string name, string priceIconKey, string price, Color tint, Action onClick, string gradName = null)
         {
             var cell = UiKit.Spawn("ui.shopItem", slot); var crt = (RectTransform)cell.transform; UiKit.Stretch(crt);
             foreach (var im in cell.GetComponentsInChildren<Image>(true)) { if (im.name == "Bg(Mask)") im.color = tint; else if (im.name == "Botton") im.color = Palette.Cream; }
             UiKit.Hide(crt, "ItemFrameArea", "Text_ItemNum");
+            // T100 ⓓ — 상품 카드도 같은 규칙(한 화면에서 상자만 화려하면 어색하다 · 지시서 ⓓⓒ 기본값 · 결정 313)
+            CardGradient(crt, gradName, "Bg(Mask)");
             // 수량 = 띠 높이에서 계산(≈51 · T63-shop) — 띠 14% × 카드 18.5% = 60px ≥ 선호 50
             var q = UiKit.SetText(crt, "Text_Title", qty, Palette.White, QtySize);
             if (q != null) { UiKit.Pct(q.rectTransform, 5, 5, 90, QtyBandH); q.fontStyle = FontStyle.Bold; q.resizeTextForBestFit = true; q.resizeTextMinSize = TextSize.BestFitMin; q.resizeTextMaxSize = QtySize; }

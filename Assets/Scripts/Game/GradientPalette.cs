@@ -42,6 +42,10 @@ namespace KkomaKnight.Game
             {
                 case "cardGem": return new Pair(Cat("cardGem.top", "#40116D"), Cat("cardGem.bottom", "#AA0CB8"));
                 case "cardGold": return new Pair(Cat("cardGold.top", "#183D6A"), Cat("cardGold.bottom", "#1683BE"));
+                // T100 ⓓ(주인 2026-09-07 08:5X «상자들 카드 부분에도 그라디안트 · 레퍼런스랑 같은 색감») — docs/ref/10_shop_2.jpg 의 카드 오른쪽 띠를 tools/ref_color.py 로 5등분해 잰 값
+                case "cardChestLegend": return new Pair(Cat("cardChestLegend.top", "#BA8BFF"), Cat("cardChestLegend.bottom", "#DA15EB"));
+                case "cardChestRare": return new Pair(Cat("cardChestRare.top", "#015AB8"), Cat("cardChestRare.bottom", "#18B2E6"));
+                case "cardChestEpic": return new Pair(Cat("cardChestEpic.top", "#3F14A1"), Cat("cardChestEpic.bottom", "#C959E1"));
                 case "cardBlue": return new Pair(Cat("cardBlue.top", "#50A1E0"), Cat("cardBlue.bottom", "#5CC6F8"));
                 case "bgLobby": return new Pair(Cat("bgLobby.top", "#3C6833"), Cat("bgLobby.bottom", "#315529"));
                 case "btnBlue": return new Pair(Cat("btnBlue.top", "#188AFA"), Cat("btnBlue.bottom", "#096CFD"));
@@ -52,7 +56,7 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>표에 든 이름 전부(테스트·감사용 · 순서는 «카드 → 배경 → 버튼 → 패널»).</summary>
-        public static readonly string[] Names = { "cardGem", "cardGold", "cardBlue", "bgLobby", "btnBlue", "btnOrange", "panelDark" };
+        public static readonly string[] Names = { "cardGem", "cardGold", "cardBlue", "cardChestLegend", "cardChestRare", "cardChestEpic", "bgLobby", "btnBlue", "btnOrange", "panelDark" };
 
         /// <summary>표에 이름이 있는가.</summary>
         public static bool Has(string name)
