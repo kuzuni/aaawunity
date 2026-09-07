@@ -390,7 +390,7 @@ namespace KkomaKnight.Game
                 var lim = UiKit.Label(card, 4, 60, 92, 15, shop != null ? shop.Limit(ge, "한도 " + Dash) : "한도 " + Dash, TextSize.Aux, Palette.Ink, kind: TextKind.Aux); lim.name = "Limit";
                 var price = UiKit.Panel(card, "Price", "fr.r12", Palette.Cream); UiKit.Pct(price.rectTransform, 5, 79, 90, 17);
                 var coin = UiKit.Icon(price.transform, "Icon", "ui.iconArenaCoin"); UiKit.Pct(coin.rectTransform, 8, 12, 22, 76);
-                var pl = UiKit.Label(price.transform, 32, 0, 62, 100, ge != null && ge.HasCost ? UiKit.Fmt(ge.Cost) : Dash, TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft); pl.name = "Cost"; pl.fontStyle = FontStyle.Bold;
+                var pl = UiKit.Label(price.transform, 32, 0, 62, 100, shop != null ? shop.Cost(ge, Dash) : Dash, TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft); pl.name = "Cost"; pl.fontStyle = FontStyle.Bold;
                 UiKit.Clickable(card, Noop);
                 if (i == 0) UiKit.Tag(card, "상품 카드(1칸)");
             }

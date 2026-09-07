@@ -43,6 +43,17 @@ namespace KkomaKnight.Core
             return null;
         }
 
+        /// <summary>
+        /// 아레나 코인 값 글자 — <b>레퍼런스처럼 «10000»·«5000» 그대로</b> 쓴다(콤마도 K 도 없다).
+        /// <para>
+        /// <see cref="Game.UiKit.Fmt"/> 를 쓰면 1e4 이상이 «10K» 로 줄고 그 아래는 «5,000» 이 되어 <b>둘 다 레퍼런스와 다르다</b>
+        /// (docs/ref/26 은 «10000»·«5000»·«20000» 이다). <c>BattleWorld.FootNum</c> 이 발밑 숫자에서 콤마를 뺀 것과 같은 갈래다 —
+        /// 「우리 기본 표기」가 아니라 「그 화면의 레퍼런스 표기」를 따른다(T209 · 결정 546).
+        /// </para>
+        /// 값을 모르는 칸은 <paramref name="dash"/>(화면의 «—»).
+        /// </summary>
+        public string Cost(Entry e, string dash) => e == null || !e.HasCost ? dash : e.Cost.ToString("0");
+
         /// <summary>«한도 5/5» 처럼 채워 돌려준다 — 한도를 모르는 칸은 <paramref name="dash"/>(화면의 «—»).</summary>
         public string Limit(Entry e, string dash)
         {

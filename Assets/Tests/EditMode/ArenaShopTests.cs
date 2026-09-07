@@ -58,6 +58,18 @@ namespace KkomaKnight.Tests
             Assert.AreEqual("한도 —", d.Limit(null, "한도 —"), "표에 없는 키도 «—»");
         }
 
+        /// <summary>값 글자는 «우리 기본 표기»(<c>UiKit.Fmt</c>)가 아니라 «그 화면의 레퍼런스 표기» 를 따른다 — 콤마도 K 도 없다(T209 · 결정 546).</summary>
+        [Test]
+        public void CostTextFollowsTheReferenceNotOurDefaultFormatter()
+        {
+            var d = Real();
+            Assert.AreEqual("10000", d.Cost(d.Of("gem"), "—"), "레퍼런스는 «10000» — 우리 Fmt 는 «10K» 가 된다");
+            Assert.AreEqual("5000", d.Cost(d.Of("recipeWeapon"), "—"), "레퍼런스는 «5000» — 우리 Fmt 는 «5,000» 이 된다");
+            Assert.AreEqual("20000", d.Cost(d.Of("epicKey"), "—"), "레퍼런스는 «20000»");
+            Assert.AreEqual("—", d.Cost(d.Of("revive"), "—"), "값을 모르는 칸은 «—»");
+            Assert.AreEqual("—", d.Cost(null, "—"), "표에 없는 키도 «—»");
+        }
+
         [Test]
         public void EmptyGoodsIsRejected()
         {
