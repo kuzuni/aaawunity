@@ -349,7 +349,7 @@ namespace KkomaKnight.Tests.Play
                 string Lim(int i) => UiKit.Find(UiKit.Find(me, "Goods:" + i), "Limit").GetComponent<Text>().text;
                 string Cost(int i) => UiKit.Find(UiKit.Find(me, "Goods:" + i), "Cost").GetComponent<Text>().text;
                 Assert.AreEqual("한도 5/5", Lim(0), "다이아 한도(레퍼런스 «Limit 5/5»)");
-                Assert.AreEqual("10000", Cost(0), "다이아 값 = 레퍼런스 표기 «10000» — UiKit.Fmt 를 쓰면 «10K» 가 되어 레퍼런스와 다르다(결정 546)");
+                Assert.AreEqual("10000", Cost(0), "다이아 값 = 레퍼런스 표기 «10000» — UiKit.Fmt 를 쓰면 «10K» 가 되어 레퍼런스와 다르다(결정 555)");
                 Assert.AreEqual("5000", Cost(1), "무기 도안 값 = «5000»(콤마 없음 — Fmt 는 «5,000» 이 된다)");
                 Assert.AreEqual("20000", Cost(8), "에픽 열쇠 값 = «20000»");
                 // 배지 = 아이콘 오른쪽 아래 개수(레퍼런스 100·20·3) · 열쇠에는 없다

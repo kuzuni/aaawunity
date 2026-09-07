@@ -58,7 +58,7 @@ namespace KkomaKnight.Tests
             Assert.AreEqual("한도 —", d.Limit(null, "한도 —"), "표에 없는 키도 «—»");
         }
 
-        /// <summary>값 글자는 «우리 기본 표기»(<c>UiKit.Fmt</c>)가 아니라 «그 화면의 레퍼런스 표기» 를 따른다 — 콤마도 K 도 없다(T209 · 결정 546).</summary>
+        /// <summary>값 글자는 «우리 기본 표기»(<c>UiKit.Fmt</c>)가 아니라 «그 화면의 레퍼런스 표기» 를 따른다 — 콤마도 K 도 없다(T209 · 결정 555).</summary>
         [Test]
         public void CostTextFollowsTheReferenceNotOurDefaultFormatter()
         {
