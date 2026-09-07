@@ -592,6 +592,10 @@
 | colors | `col.cream` | `#F5E9D0` | #F5E9D0 |  |
 | colors | `col.creamDark` | `#E3CDAA` | #E3CDAA |  |
 | colors | `col.dim` | `#12131A` | #12131A |  |
+| colors | `col.popupBox` | `#343434` | #343434 | 공통 팝업 상자 몸통(T130 · 주인 레퍼런스대로 «어두운 회색») — `docs/ref/12_settings.jpg`·`docs/ref/07_gear_detail.jpg` 픽셀 실측(두 그림이 같은 값). 조각 `ui.popup` 의 «Bg» 를 이 색으로 tint 한다(스프라이트 교체 아님 · 색 변형 `ui.popup.<색>` 은 일부러 색을 쓰는 자리라 그대로) |
+| colors | `col.perkCardBody` | `#2C2C2C` | #2C2C2C | 특전 카드(04 레벨업 3택 · 05 보유 특전 · 악마/천사 한 장) 몸통(T135) — 조각 `CardFrame_04_*` 의 «Bg» 는 밝은 회색(#D7D3D3)인데 레퍼런스 `docs/ref/04_perks.jpg` 의 카드 몸통은 어두운 회색이다(같은 자리 픽셀 실측 #2C2C2C). 흰 글자 + 검은 아웃라인(T63 0항 · T111 ⓑ)은 어두운 몸통을 전제로 한 규칙이라, 밝은 몸통 위에서는 설명이 안 읽혔다(대비 0.16). 등급 «탭»(TitleBg)은 주인 T93 지시대로 등급색 그대로 둔다 |
+| colors | `col.popupDeco` | `#2C2C2C` | #2C2C2C | 공통 팝업 상자 안쪽 장식선(T130) — 조각의 «DecoLine»(원래 살구 #F0D0AD). 레퍼런스 12 의 안쪽 테두리 줄 실측 |
+| colors | `col.popupRow` | `#201E1F` | #201E1F | 공통 팝업 «안» 의 줄 바탕(T130 · T121 후속) — `docs/ref/07_gear_detail.jpg` 의 옵션 줄 바탕 실측. 상자가 어두워졌으니 크림 위에 얹던 잉크 α0.72 대신 이 값을 그대로 쓴다 |
 | colors | `col.hpFill` | `#FD4840` | #FD4840 |  |
 | colors | `col.shFill` | `#5875F2` | #5875F2 |  |
 | colors | `col.expFill` | `#35A6E1` | #35A6E1 |  |
@@ -611,6 +615,12 @@
 | colors | `col.grad.cardChestRare.bottom` | `#18B2E6` | #18B2E6 |  |
 | colors | `col.grad.cardChestEpic.top` | `#3F14A1` | #3F14A1 |  |
 | colors | `col.grad.cardChestEpic.bottom` | `#C959E1` | #C959E1 |  |
+| colors | `col.grad.cardPrivAd.top` | `#1A61C9` | #1A61C9 | 특권 카드 2(광고 제거) «어두운» 색 — 11_shop_special.jpg 왼 여백 (34,572)~(46,840) 실측 |
+| colors | `col.grad.cardPrivAd.bottom` | `#3A91FA` | #3A91FA | 같은 카드 «밝은» 색 — 그림 쪽 몸통 (430,600)~(466,745) 실측(레퍼런스는 그림 뒤가 밝다) |
+| colors | `col.grad.cardPrivMonth.top` | `#5115C5` | #5115C5 | 특권 카드 3(월간) «어두운» 색 — 왼 여백 (34,934)~(46,1242) 실측 |
+| colors | `col.grad.cardPrivMonth.bottom` | `#7436DE` | #7436DE | 같은 카드 «밝은» 색 — 그림 쪽 몸통 (430,960)~(466,1230) 실측 |
+| colors | `col.grad.cardPrivLife.top` | `#FF6501` | #FF6501 | 특권 카드 4(평생 다이아) «어두운» 색 — 왼 여백 (34,1310)~(46,1432) 실측 |
+| colors | `col.grad.cardPrivLife.bottom` | `#FFB833` | #FFB833 | 같은 카드 «밝은» 색 — 그림 쪽 몸통 (430,1315)~(466,1425) 실측 |
 | colors | `col.grad.bgLobby.top` | `#3C6833` | #3C6833 | 로비 배경 «위» 색 — 01_lobby.jpg (40,600)~(120,700) 실측(배경만 위가 밝고 아래가 어둡다) |
 | colors | `col.grad.bgLobby.bottom` | `#315529` | #315529 | 로비 배경 «아래» 색 — 01_lobby.jpg (40,1300)~(120,1400) 실측 |
 | colors | `col.grad.btnBlue.top` | `#188AFA` | #188AFA | 파란(광고) 버튼 «위» — 09_shop_1.jpg (45,225)~(190,275) 실측 |

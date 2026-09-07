@@ -200,6 +200,10 @@ namespace KkomaKnight.Game
                 // T69-overlay(주인 «카드마다 검은 아웃라인» · 1항) — 조각 제 링(CardFrame_04_White_Border 회색 0.23 · 제목 탭 TitleBorder 0.42)을 Ink 로 칠하고 선을 프레임 8px 로(레퍼런스 04 의 카드 외곽선)
                 // Desaturate 뒤에 부른다(gray 등급도 링은 Ink) · 안쪽 밝은 선(InnerBorder)은 그대로 둔다
                 UiKit.InkFrameBorders(frt, CardBorderNativePx, 1f, UiKit.BorderName, "TitleBorder");
+                // T135 — 몸통을 레퍼런스 04 의 어두운 회색으로. 조각의 «Bg» 는 밝은 회색(#D7D3D3)인데 설명 글자는 흰색이라
+                // 대비가 0.16 밖에 안 나 안 읽혔다(screens run 257 실측 · 레퍼런스는 몸통 #2C2C2C + 흰 글자 = 0.83).
+                // Desaturate·InkFrameBorders «뒤» 에 부른다(그 둘이 몸통을 다시 덮지 않게) · 등급 탭 색은 아래에서 따로 칠한다.
+                UiKit.DarkenCardBody(frt);
                 if (shine) UiKit.ShineMaterial(frt, rt);   // T61 — 프레임 그림(Border·Bg·InnerBorder·제목 탭)에만 · 글자·아이콘은 그대로
                 foreach (var old in frt.GetComponentsInChildren<Text>(true)) old.gameObject.SetActive(false);   // 프리팹의 남은 글자("Text_Title" 등) 전부 끄기 — 주인: «Text 라고 빨간 글씨 없애줘»
                 var tb = UiKit.Find(frt, "TitleBg"); if (tb == null) tb = UiKit.Find(frt, "Text_Title");

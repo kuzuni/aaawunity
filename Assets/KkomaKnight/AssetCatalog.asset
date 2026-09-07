@@ -1192,6 +1192,14 @@ MonoBehaviour:
     color: {r: 0.890196, g: 0.803922, b: 0.666667, a: 1}
   - key: col.dim
     color: {r: 0.0705882, g: 0.0745098, b: 0.101961, a: 1}
+  - key: col.popupBox
+    color: {r: 0.203922, g: 0.203922, b: 0.203922, a: 1}
+  - key: col.perkCardBody
+    color: {r: 0.172549, g: 0.172549, b: 0.172549, a: 1}
+  - key: col.popupDeco
+    color: {r: 0.172549, g: 0.172549, b: 0.172549, a: 1}
+  - key: col.popupRow
+    color: {r: 0.12549, g: 0.117647, b: 0.121569, a: 1}
   - key: col.hpFill
     color: {r: 0.992157, g: 0.282353, b: 0.25098, a: 1}
   - key: col.shFill
@@ -1230,6 +1238,18 @@ MonoBehaviour:
     color: {r: 0.247059, g: 0.0784314, b: 0.631373, a: 1}
   - key: col.grad.cardChestEpic.bottom
     color: {r: 0.788235, g: 0.34902, b: 0.882353, a: 1}
+  - key: col.grad.cardPrivAd.top
+    color: {r: 0.101961, g: 0.380392, b: 0.788235, a: 1}
+  - key: col.grad.cardPrivAd.bottom
+    color: {r: 0.227451, g: 0.568627, b: 0.980392, a: 1}
+  - key: col.grad.cardPrivMonth.top
+    color: {r: 0.317647, g: 0.0823529, b: 0.772549, a: 1}
+  - key: col.grad.cardPrivMonth.bottom
+    color: {r: 0.454902, g: 0.211765, b: 0.870588, a: 1}
+  - key: col.grad.cardPrivLife.top
+    color: {r: 1, g: 0.396078, b: 0.00392157, a: 1}
+  - key: col.grad.cardPrivLife.bottom
+    color: {r: 1, g: 0.721569, b: 0.2, a: 1}
   - key: col.grad.bgLobby.top
     color: {r: 0.235294, g: 0.407843, b: 0.2, a: 1}
   - key: col.grad.bgLobby.bottom

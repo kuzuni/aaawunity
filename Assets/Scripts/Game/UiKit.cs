@@ -666,6 +666,25 @@ namespace KkomaKnight.Game
             }
             return true;
         }
+        /// <summary>
+        /// T135 — 특전 카드 몸통을 레퍼런스 04 의 어두운 회색(<see cref="Palette.PerkCardBody"/>)으로. 조각(<c>CardFrame_04_*</c>)의 직계 «Bg» 하나만 tint 한다.
+        /// 등급을 알려 주는 «TitleBg»(탭)와 테두리(«Border»·«TitleBorder» · T69)·안쪽 밝은 선(«InnerBorder»)은 건드리지 않는다 — 몸통만 뒤집는 일이다.
+        /// <see cref="Desaturate"/>·<see cref="InkFrameBorders"/> «뒤» 에 불러야 그 둘이 다시 덮지 않는다.
+        /// </summary>
+        public static void DarkenCardBody(RectTransform frame)
+        {
+            if (frame == null) return;
+            for (int i = 0; i < frame.childCount; i++)
+            {
+                var c = frame.GetChild(i);
+                if (c.name != CardBodyName) continue;
+                var img = c.GetComponent<Image>();
+                if (img != null) img.color = Palette.PerkCardBody;
+            }
+        }
+        /// <summary>특전 카드 조각(<c>CardFrame_04_BasePrefab</c>)의 몸통 자식 이름 — 형제는 InnerBorder · Border · TitleBg · TitleBorder(프리팹 실측).</summary>
+        public const string CardBodyName = "Bg";
+
         public static PopupParts Popup(Transform layer, string title, Layout.R rect, Action onTapClose, string popupKey = PopupKeyPlain, string titleKey = "ui.title.tangerine", bool dim = true)
         {
             var parts = new PopupParts();

@@ -37,6 +37,9 @@ namespace KkomaKnight.Game
         /// <b>색 변형(<c>ui.popup.blue</c> 등)은 안 건드린다</b> — 이벤트 팝업이 일부러 색을 쓰는 자리다.
         /// </summary>
         public static Color PopupBox => Cat("popupBox", "#343434");
+        /// <summary>특전 카드 몸통(T135) — 조각 <c>CardFrame_04_*</c> 의 «Bg» 는 밝은 회색이지만 레퍼런스 <c>docs/ref/04_perks.jpg</c> 의 카드 몸통은 어두운 회색이다(같은 자리 실측 #2C2C2C).
+        /// 흰 글자 + 검은 아웃라인(T63 0항 · T111 ⓑ)은 어두운 몸통을 전제로 한 규칙이라 밝은 몸통 위에서는 설명이 안 읽혔다.</summary>
+        public static Color PerkCardBody => Cat("perkCardBody", "#2C2C2C");
         /// <summary>그 상자 안쪽 장식선(조각의 «DecoLine» · 원래 살구 #F0D0AD) — 레퍼런스 12 의 안쪽 테두리 줄 실측(T130).</summary>
         public static Color PopupDeco => Cat("popupDeco", "#2C2C2C");
         /// <summary>팝업 «안» 줄 바탕(T130 · T121 후속) — 레퍼런스 07 의 옵션 줄 실측. 몸통(#343434)보다 한 단계 어둡다.</summary>

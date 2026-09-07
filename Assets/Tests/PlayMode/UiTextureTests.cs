@@ -419,6 +419,7 @@ namespace KkomaKnight.Tests.Play
                 _app.Overlay.LevelUp(G, _ => { }); yield return Frames(2);
                 var perk = UiKit.Find(_app.Overlay.Root, "ui.perkSelect"); Assert.IsNotNull(perk, "레벨업 3택 조각");
                 Assert.IsTrue(UiKit.HasPattern(perk), "레벨업 3택(04) 배경에도 패턴(T72 ①)");
+                AssertPerkCardIsReadable(perk);
                 _app.Overlay.Close(); G.Pending = null; yield return Frames(1);
             }
 
@@ -822,5 +823,31 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("T106 SafeArea · 상단 프레임");
             yield return Shutdown();
         }
+
+        /// <summary>특전 카드 몸통이 흰 설명 글자와 대비를 낸다(T135) — 몸통이 다시 밝아지면(조각 기본값 #D7D3D3) 여기서 바로 빨개진다.
+        /// 이 종류(글자는 제 칸 안에 있고 크기·아웃라인·테두리도 맞는데 «바탕과 같은 밝기라 안 읽힌다»)는 여태 어느 게이트도 못 쟀다(T84 · T121 · T130 과 같은 갈래).</summary>
+        static void AssertPerkCardIsReadable(Transform perk)
+        {
+            var card = UiKit.Find(perk, "ui.card");
+            Assert.IsNotNull(card, "특전 카드 한 장");
+            var area = UiKit.Find(card, "CardFrameArea");
+            Assert.IsNotNull(area, "카드의 CardFrameArea");
+            var body = UiKit.Find(area, UiKit.CardBodyName);
+            Assert.IsNotNull(body, "카드 몸통(" + UiKit.CardBodyName + ")");
+            var bodyImg = body.GetComponent<UnityEngine.UI.Image>();
+            Assert.IsNotNull(bodyImg, "몸통 Image");
+            float bodyLuma = UiKit.Luma(bodyImg.color);
+            Assert.LessOrEqual(bodyLuma, PerkBodyLumaMax, "특전 카드 몸통이 밝다(휘도 " + bodyLuma.ToString("0.00") + ") — 흰 글자가 안 읽힌다(T135 · 레퍼런스 04 는 어두운 회색 몸통)");
+            var desc = UiKit.Find(card, "Text_Value");
+            Assert.IsNotNull(desc, "카드 설명 글자");
+            var t = desc.GetComponent<UnityEngine.UI.Text>();
+            Assert.IsNotNull(t, "설명 Text");
+            float gap = Mathf.Abs(UiKit.Luma(t.color) - bodyLuma);
+            Assert.GreaterOrEqual(gap, PerkContrastMin, "설명 글자와 몸통의 밝기 차이가 " + gap.ToString("0.00") + " 뿐이다(T135 · 최소 " + PerkContrastMin + ")");
+        }
+        /// <summary>특전 카드 몸통 휘도 상한(T135) — 레퍼런스 04 실측 #2C2C2C = 0.17 · 조각 기본값 #D7D3D3 = 0.84.</summary>
+        const float PerkBodyLumaMax = 0.30f;
+        /// <summary>설명 글자와 몸통의 최소 밝기 차이(T135) — 고치기 전 0.16 · 레퍼런스 0.83.</summary>
+        const float PerkContrastMin = 0.45f;
     }
 }
