@@ -61,14 +61,29 @@ namespace KkomaKnight.Tests.Play
             foreach (var t in ActiveTexts()) { string s = (t.text ?? "").Trim(); foreach (var d in Demo) if (s == d) Assert.Fail($"[{where}] 영문 데모 글자: {s}"); }
             Assert.AreEqual(expectOverlay, _app.Overlay.IsOpen, $"[{where}] 팝업 열림 = {expectOverlay}");
         }
-        /// <summary>T164 — 화면 어디에도 켜진 «HighLight1/2»(아이템 칸 조각의 데모 하이라이트)가 없어야 한다.</summary>
+        /// <summary>
+        /// T164 — <b>아이템 칸 조각</b>이 달고 온 켜진 «HighLight*» 가 없어야 한다.
+        /// ⚠ 회차 1 의 이 자는 «이름이 HighLight 로 시작하는 모든 것» 을 셌는데, 그러면 <b>버튼 조각의 광택</b>
+        /// (`ui.btnOrange` 의 «HighLight» · 입장 버튼 둘 등)까지 잡혀 CI #318 이 «3개» 로 빨갰다.
+        /// 주인이 말한 것은 «원정 칸(아이템 칸)» 이고, 끄는 쪽(<see cref="GearUi.DarkFrame"/>)도 아이템 칸만 지난다 —
+        /// 버튼 광택은 조각의 제 그림이라 끄면 안 된다. 그래서 <b>조상에 `ui.itemFrame*` 이 있는 것만</b> 센다(결정 434).
+        /// </summary>
         void AssertNoHighlights(string where)
         {
             int n = 0; string first = null;
             foreach (var t in _app.UiCanvas.GetComponentsInChildren<Transform>(false))
-                if (t != null && t.name.StartsWith("HighLight", StringComparison.Ordinal)) { n++; if (first == null) first = t.name + "(부모 " + (t.parent != null ? t.parent.name : "-") + ")"; }
-            Assert.AreEqual(0, n, "[" + where + "] 켜진 하이라이트가 " + n + "개 있다(T164 · 첫 자리 " + (first ?? "-") + ")");
+            {
+                if (t == null || !t.name.StartsWith(GearUi.HighlightPrefix, StringComparison.Ordinal)) continue;
+                bool inItemFrame = false;
+                for (var p = t.parent; p != null; p = p.parent)
+                    if (p.name.StartsWith(ItemFramePrefix, StringComparison.Ordinal)) { inItemFrame = true; break; }
+                if (!inItemFrame) continue;
+                n++; if (first == null) first = t.name + "(부모 " + (t.parent != null ? t.parent.name : "-") + ")";
+            }
+            Assert.AreEqual(0, n, "[" + where + "] 아이템 칸에 켜진 하이라이트가 " + n + "개 있다(T164 · 첫 자리 " + (first ?? "-") + ")");
         }
+        /// <summary>아이템 칸 조각 인스턴스의 이름 앞머리 — `UiKit.Spawn` 이 인스턴스 이름을 카탈로그 키로 두므로(결정 325) «ui.itemFrame.<색>» 이다.</summary>
+        const string ItemFramePrefix = "ui.itemFrame";
         static void AtX(RectTransform rt, Layout.R r, string what) { Assert.AreEqual(r.X, rt.anchorMin.x * 100f, 0.5f, what + " x"); Assert.AreEqual(r.X + r.W, rt.anchorMax.x * 100f, 0.5f, what + " 오른쪽"); }
         static void AtY(RectTransform rt, Layout.R r, string what) { Assert.AreEqual(1f - r.Y / 100f, rt.anchorMax.y, 5e-3f, what + " y"); Assert.AreEqual(1f - (r.Y + r.H) / 100f, rt.anchorMin.y, 5e-3f, what + " 아래"); }
 
