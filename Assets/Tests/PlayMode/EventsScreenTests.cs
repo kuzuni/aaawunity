@@ -96,6 +96,20 @@ namespace KkomaKnight.Tests.Play
                 var ri = ring.GetComponent<Image>(); Assert.IsNotNull(ri, "링은 Image");
                 Assert.IsTrue(ri.sprite != null && ri.sprite.name.Contains("Rectangle"), "직사각형 조각이어야 한다(지금 " + (ri.sprite != null ? ri.sprite.name : "null") + ")");
                 Assert.IsFalse(ri.fillCenter, "링은 가운데 비움"); Assert.IsFalse(ri.raycastTarget, "링 raycast 끔");
+                // T149 — 주인 계층 스샷: 링은 카드의 «마지막 자식» 이고 색은 «순수 검정 · 알파 1» 이다.
+                // 조립 «중간» 에 링을 걸던 예전 코드로 되돌아가면 제목 띠·그림·버튼이 링 위로 그려져 네 변이 끊긴다 → 여기서 바로 빨개진다.
+                Assert.AreEqual(c.childCount - 1, ring.GetSiblingIndex(), "링이 카드의 마지막 자식(T149 ⓐ)");
+                Assert.AreEqual(0f, ri.color.r, 0.01f, "링 색 R = 0(T149 ⓑ)"); Assert.AreEqual(0f, ri.color.g, 0.01f, "링 색 G = 0");
+                Assert.AreEqual(0f, ri.color.b, 0.01f, "링 색 B = 0"); Assert.AreEqual(1f, ri.color.a, 0.01f, "링 알파 = 1");
+            }
+            // T151 — 던전 «입장» 버튼의 글자가 버튼 끝에 닿지 않는다(좌우 여백 ≥ 3%).
+            {
+                var enter = UiKit.Find(hell, "EnterBtn") as RectTransform; Assert.IsNotNull(enter, "입장 버튼");
+                var et = enter.GetComponentInChildren<Text>(); Assert.IsNotNull(et, "입장 버튼 글자");
+                var ec = new Vector3[4]; enter.GetWorldCorners(ec); var tc = new Vector3[4]; et.rectTransform.GetWorldCorners(tc);
+                float bw = ec[2].x - ec[0].x;
+                Assert.GreaterOrEqual(tc[0].x - ec[0].x, bw * 0.03f, "입장 글자 왼쪽 여백 ≥ 버튼 폭의 3%(T151)");
+                Assert.GreaterOrEqual(ec[2].x - tc[2].x, bw * 0.03f, "입장 글자 오른쪽 여백 ≥ 버튼 폭의 3%(T151)");
             }
             // T128 — 원정 카드의 «획득 가능» 칸은 물건마다 테두리 색이 다르다(레퍼런스 20): 파랑 열쇠 = 파랑 · 보라 열쇠 = 자주 · 금 열쇠 = 노랑.
             // 조각 이름 = 카탈로그 키다(`UiKit.Spawn` 이 그렇게 이름 짓는다 · 결정 325). 전부 초록으로 되돌아가면 색 수가 1 이 되어 빨개진다.
@@ -134,6 +148,28 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(Layout.DdHead.Y + Layout.DdHead.H, Layout.DdPic.Y, 0.1f, "그림 띠 y = 제목 띠 바닥(T102 ⓑ)");
             { var picRt = UiKit.Find(ov, "Pic") as RectTransform; Assert.IsNotNull(picRt, "그림 띠"); AtY(picRt, Layout.DdPic.Within(Layout.DdBox), "그림 띠"); }
             Assert.AreEqual(4, CountNamed(ov, "RewardCell:"), "보상 칸 4"); Assert.IsNotNull(UiKit.Find(ov, "FloorCircle"), "층수 원");
+            // T150 ⓐ — 보상 칸은 «가운데로 모인다»: 묶음의 좌우 여백이 같고 칸 사이 틈이 칸 폭의 30% 를 안 넘는다.
+            // 예전(space-between)으로 되돌아가면 칸이 둘인 원정에서 틈이 칸 폭의 3배까지 벌어져 바로 빨개진다.
+            {
+                var cellsRow = UiKit.Find(ov, "RewardCells") as RectTransform; Assert.IsNotNull(cellsRow, "보상 칸 줄");
+                var first = UiKit.Find(ov, "RewardCell:0") as RectTransform; var last = UiKit.Find(ov, "RewardCell:3") as RectTransform;
+                var second = UiKit.Find(ov, "RewardCell:1") as RectTransform;
+                Assert.IsNotNull(first); Assert.IsNotNull(second); Assert.IsNotNull(last);
+                var rc = new Vector3[4]; cellsRow.GetWorldCorners(rc);
+                var fc = new Vector3[4]; first.GetWorldCorners(fc); var lc = new Vector3[4]; last.GetWorldCorners(lc);
+                var sc = new Vector3[4]; second.GetWorldCorners(sc);
+                float rowW = rc[2].x - rc[0].x, cellW = fc[2].x - fc[0].x;
+                Assert.AreEqual(fc[0].x - rc[0].x, rc[2].x - lc[2].x, rowW * 0.005f, "보상 칸 묶음의 좌우 여백이 같다(가운데 · T150 ⓐ)");
+                Assert.LessOrEqual(sc[0].x - fc[2].x, cellW * 0.30f, "칸 사이 틈 ≤ 칸 폭의 30%(T150 ⓐ)");
+            }
+            // T150 ⓒ — 제목 띠는 좌·상·우 1px 안쪽(주인 인스펙터 offset L1 T1 R1 B0).
+            {
+                var headRt = UiKit.Find(ov, "Head") as RectTransform; Assert.IsNotNull(headRt, "제목 띠");
+                Assert.AreEqual(1f, headRt.offsetMin.x, 0.5f, "제목 띠 왼쪽 1px 안쪽(T150 ⓒ)");
+                Assert.AreEqual(0f, headRt.offsetMin.y, 0.5f, "제목 띠 아래는 0");
+                Assert.AreEqual(-1f, headRt.offsetMax.x, 0.5f, "제목 띠 오른쪽 1px 안쪽");
+                Assert.AreEqual(-1f, headRt.offsetMax.y, 0.5f, "제목 띠 위 1px 안쪽");
+            }
             // T123 — «최초» 배지는 레퍼런스 21 처럼 «칸 안 오른쪽 위»다: 좌우로 칸을 넘지 않고, 위로 걸치는 폭이 칸 높이의 15% 이하라
             // 옆 칸 배지·«보상» 제목과 부딪치지 않는다. 옛 «첫 클리어» 다섯 글자 배지(114% 폭 · 위로 34%)로 되돌아가면 여기서 바로 빨개진다.
             Assert.IsFalse(HasText(s => s == "첫 클리어"), "칸보다 넓던 «첫 클리어» 배지는 없다(T123)");
@@ -152,6 +188,12 @@ namespace KkomaKnight.Tests.Play
                 Assert.LessOrEqual(badgeText.preferredWidth, badge.rect.width + 1f, "배지 글자가 배지 폭 안에 들어간다(bestFit 이 안 눌린다 · T74 회귀)");
             }
             var box = UiKit.Find(ov, "ui.popup.red") as RectTransform; Assert.IsNotNull(box, "빨간 팝업 패널"); AtX(box, Layout.DdBox, "세부 박스"); AtY(box, Layout.DdBox, "세부 박스");
+            // T150 ⓑ — 조각의 테두리가 팝업 상자의 «마지막 자식»(그래야 네 변의 선이 제목 띠·그림·버튼에 안 덮인다).
+            {
+                Transform ring = null; for (int i = 0; i < box.childCount; i++) if (box.GetChild(i).name.StartsWith("Border", StringComparison.Ordinal)) ring = box.GetChild(i);
+                Assert.IsNotNull(ring, "팝업 상자의 테두리 자식");
+                Assert.AreEqual(box.childCount - 1, ring.GetSiblingIndex(), "테두리가 마지막 자식(T150 ⓑ)");
+            }
             Assert.IsNull(UiKit.Find(ov, "Button_Close_01"), "닫기 X 없음");
             { var arrowImg = UiKit.Find(ov, "FloorPrev")?.GetComponent<Image>(); Assert.IsNotNull(arrowImg, "층수 ◀"); Assert.AreNotEqual(Palette.Cream, arrowImg.color, "층수 ◀ 는 크림 패널과 다른 색(크림이면 안 보임 · T43 비평 회차 1)"); }
             Assert.IsTrue(ClickNamed(ov, "SweepBtn") && ClickNamed(ov, "ChallengeBtn") && ClickNamed(ov, "FloorPrev"), "소탕·도전·◀ 누름"); yield return Frames(1);

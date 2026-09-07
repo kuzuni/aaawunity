@@ -50,6 +50,14 @@ namespace KkomaKnight.Game
         /// 버튼 아래 여백이 2.0%p 생긴다. 버튼 칸 세로는 166px × 0.72 ≈ 120px 이라 버튼 글자 44(칸 62px)에 넉넉하다.
         /// </summary>
         const float TabBtnH = 72f;
+        /// <summary>던전·아레나 카드를 감싸는 링 색(T149 ⓑ · 주인 «컬러가 검정으로 투명도 풀») — 전 화면 공용값 <see cref="UiKit.BorderInk"/>(코코아 α0.9)와 일부러 다르다.</summary>
+        static readonly Color CardRingInk = new Color(0f, 0f, 0f, 1f);
+        /// <summary>보상 칸 사이 틈 = 칸 폭의 몇 배인가(T150 ⓐ · 레퍼런스 20·21 은 아이콘이 서로 붙어 가운데에 모여 있다).</summary>
+        const float IconRowGapPct = 0.12f;
+        /// <summary>팝업 제목 띠를 상자 테두리 안쪽으로 들이는 폭(px · T150 ⓒ · 주인 인스펙터 offset L1 T1 R1 B0).</summary>
+        const float HeadInsetPx = 1f;
+        /// <summary>버튼 글자를 좌우로 들이는 비율(T151 2항 · 주인 «여백 조금 있어 보일 정도로» · 앵커 0.06~0.94).</summary>
+        const float ButtonPadPct = 0.06f;
         /// <summary>아레나 상대 초상(껍데기 · 순환) · 순위 목록 줄 수 · 도전 팝업 줄 수 · 순위 보상 줄 수 · 상인 상품.</summary>
         static readonly string[] Foes = { "ui.iconFoe1", "ui.iconFoe2", "ui.iconFoe3", "ui.iconFoe4" };
         const int RankRows = 7, FoeRows = 5, RewardRows = 4;
@@ -209,8 +217,6 @@ namespace KkomaKnight.Game
                 var card = UiKit.Rect(pg, "Card:" + d.key); UiKit.Pct(card, rect);
                 var body = UiKit.Spawn("ui.frameDarkBorder", card); UiKit.Stretch((RectTransform)body.transform);
                 var fill = UiKit.Panel(card, "Fill", "fr.r12", CardBody); UiKit.Stretch(fill.rectTransform, 4, 4, 4, 4);
-                // T101 ⓒ(주인 «보더가 직사각형용 보더가 아니더라 · 카드 자체를 감싸는 느낌으로») — 조각(SquareSharpEdge)의 테두리 대신 9-slice 직사각형 링을 카드 rect 네 변에
-                UiKit.Bordered(card);
                 // 제목 띠(카드 1 빨강 · 카드 2 파랑) — 왼쪽 이름 · 오른쪽 🎫 0/2
                 var head = UiKit.Panel(card, "Head", "fr.r12", i == 0 ? DeepRed : CardBlue); UiKit.Pct(head.rectTransform, Shift(Layout.DgCardHead, dy).Within(rect));
                 UiKit.Gradient(head.rectTransform, inset: HeadGradientInset);
@@ -229,11 +235,15 @@ namespace KkomaKnight.Game
                 // T72 ② 보상 아이콘 뒤 빛살(작은 칸이라 Effect_Light_02) — 던전 카드는 항상 보이므로 스크롤 제한 없이 돈다
                 // T128 — 칸 색은 물건마다(레퍼런스 20 · 표에 없으면 초록). 21 세부 팝업의 보상 칸은 레퍼런스도 전부 초록이라 그대로 둔다.
                 foreach (var cell in IconRow(rew, rr, d.rewards, RewardFrameDefault, frameByIcon: true)) PlanLight(cell);
-                var enter = UiKit.Button(card, "ui.btnOrange", "입장", Noop, Shift(Layout.DgEnter, dy).Within(rect)); enter.name = "EnterBtn";
+                var enter = UiKit.Button(card, "ui.btnOrange", "입장", Noop, Shift(Layout.DgEnter, dy).Within(rect)); enter.name = "EnterBtn"; ButtonPad(enter);
                 // T99 6항 — 빨간 점은 «지금 할 일이 있을 때만»(티켓이 있거나 광고로 하나 받을 수 있다) · 상태가 바뀌면 Refresh 가 켜고 끈다
                 var dot = AlertDot(enter);
                 if (dot != null) { dot.SetActive(Dun == null || DungeonTickets.Ready(App.Save, Dun, d.key, Today())); _ticketDots.Add(new KeyValuePair<GameObject, string>(dot, d.key)); }
                 string key = d.key; UiKit.Clickable(enter, () => OpenDungeonDetail(key));
+                // T101 ⓒ + T149 — 카드 네 변을 감싸는 직사각형 링. 조립이 «끝난 뒤» 걸어야 형제 맨 뒤(= 맨 위)에 서서
+                // 제목 띠·그림·보상 줄·입장 버튼이 링을 덮지 않는다(주인 계층 스샷의 순서 = Border 가 마지막 자식).
+                // 색은 주인이 못 박은 «순수 검정 · 알파 1»(전 화면 공용값 UiKit.BorderInk 는 안 건드린다 · T149 ⓑ).
+                UiKit.Bordered(card, tint: CardRingInk);
                 if (i == 0)
                 {
                     UiKit.Tag(card, "던전 카드 1"); UiKit.Tag(head.transform, "카드 제목 띠"); UiKit.Tag(pic, "카드 그림"); UiKit.Tag(enter, "입장 버튼"); UiKit.Tag(rew, "보상 아이콘 줄");
@@ -252,7 +262,6 @@ namespace KkomaKnight.Game
             var card = UiKit.Rect(pg, "Card:arena"); UiKit.Pct(card, rect);
             var body = UiKit.Spawn("ui.frameDarkBorder", card); UiKit.Stretch((RectTransform)body.transform);
             var fill = UiKit.Panel(card, "Fill", "fr.r12", CardBody); UiKit.Stretch(fill.rectTransform, 4, 4, 4, 4);
-            UiKit.Bordered(card);   // T101 ⓒ — 던전 카드와 같은 직사각형 링
             var head = UiKit.Panel(card, "Head", "fr.r12", ArenaRed); UiKit.Pct(head.rectTransform, Layout.ArCardHead.Within(rect));
             UiKit.Gradient(head.rectTransform, inset: HeadGradientInset);
             UiKit.Label(head.transform, 2.5f, 0, 60, 100, "아레나", CardTitleSize, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
@@ -265,10 +274,11 @@ namespace KkomaKnight.Game
             UiKit.Bordered(pic);
             var season = UiKit.Rect(card, "Season"); UiKit.Pct(season, Layout.ArSeason.Within(rect));
             UiKit.Label(season, 0, 0, 100, 100, "시즌 종료까지: " + NoTime, TextSize.Aux, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Aux);
-            var enter = UiKit.Button(card, "ui.btnOrange", "입장", () => ShowPage(PageArena), Layout.ArEnter.Within(rect)); enter.name = "EnterBtn"; AlertDot(enter);
+            var enter = UiKit.Button(card, "ui.btnOrange", "입장", () => ShowPage(PageArena), Layout.ArEnter.Within(rect)); enter.name = "EnterBtn"; ButtonPad(enter); AlertDot(enter);
             var tier = UiKit.Rect(card, "Tier"); UiKit.Pct(tier, Layout.ArTier.Within(rect));
             var med = UiKit.Icon(tier, "Icon", "ui.iconMedalBronze"); UiKit.Pct(med.rectTransform, 0, 0, 24, 100);
             UiKit.Label(tier, 28, 0, 72, 100, "브론즈", 34, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
+            UiKit.Bordered(card, tint: CardRingInk);   // T101 ⓒ + T149 — 던전 카드와 같은 규칙(조립 뒤 · 맨 마지막 형제 · 검정 α1)
             UiKit.Tag(card, "아레나 카드"); UiKit.Tag(head.transform, "카드 제목 띠"); UiKit.Tag(pic, "카드 그림"); UiKit.Tag(season, "시즌 타이머"); UiKit.Tag(enter, "입장 버튼"); UiKit.Tag(tier, "티어 줄");
             Foot(pg, PagePvp, () => App.ShowScreen("lobby"));
         }
@@ -432,6 +442,10 @@ namespace KkomaKnight.Game
                 Dim(chal, DungeonTickets.CanBuyGem(App.Save, Dun, key, Today()));
             }
             UiKit.TagGroup(box, "버튼 2개", sweep, chal);
+            // T150 ⓑ — 조각이 달고 온 테두리를 «맨 마지막 자식» 으로 올린다(주인 계층 스샷의 마지막 줄 = Border).
+            // 우리가 붙인 제목 띠·그림·보상·버튼이 전부 그 앞이라, 이걸 안 하면 네 변의 선이 내용에 덮여 끊겨 보인다.
+            // 공통 팝업(UiKit.Popup) 전체에 걸면 화면 20여 개의 그림이 같이 바뀌므로 여기서만 한다(결정 기록 · 전 화면 적용은 따로 등재).
+            RingLast(box);
             ApplyLights();
             TagClose();
         }
@@ -717,10 +731,15 @@ namespace KkomaKnight.Game
             var res = new List<RectTransform>();
             float rowW = Mathf.Max(1e-3f, rowRect.W / 100f * UiKit.FrameW), rowH = Mathf.Max(1e-3f, rowRect.H / 100f * UiKit.FrameH);
             float cellW = Mathf.Min(100f, rowH / rowW * 100f);   // 줄 높이(px)를 줄 폭 % 로 — 정사각 칸
-            int n = icons.Length; float gap = n > 1 ? Mathf.Max(0, (100f - n * cellW) / (n - 1)) : 0;
+            // T150 ⓐ — 칸은 «고정 틈으로 붙여 가운데»에 모은다. 예전에는 남는 자리를 전부 틈에 줘서(space-between)
+            // 칸이 둘이면 줄 양 끝에 하나씩 벌어졌다(원정 보상 = 362px 틈 · 주인 «보상 양쪽 끝에 있더라»).
+            // 칸이 많아 고정 틈으로도 넘치면 예전처럼 남는 자리를 나눠 준다(상한).
+            int n = icons.Length;
+            float gap = n > 1 ? Mathf.Min(cellW * IconRowGapPct, Mathf.Max(0, (100f - n * cellW) / (n - 1))) : 0;
+            float start = Mathf.Max(0f, (100f - (n * cellW + (n - 1) * gap)) * 0.5f);
             for (int i = 0; i < n; i++)
             {
-                var cell = UiKit.Rect(row, namePrefix + i); UiKit.Pct(cell, i * (cellW + gap), 0, cellW, 100);
+                var cell = UiKit.Rect(row, namePrefix + i); UiKit.Pct(cell, start + i * (cellW + gap), 0, cellW, 100);
                 var f = UiKit.Spawn(frameByIcon ? RewardFrame(icons[i]) : frameKey, cell); UiKit.Stretch((RectTransform)f.transform);
                 GearUi.DarkFrame(f.transform);   // T115 · T69 7항 — 조각 제 Border 링을 Ink 8px 로 + 결정 184 계약(가운데 비움 · raycast 끔 · 링이 형제 맨 뒤)
                 // 수량 글자가 아래 34% 를 쓰는 칸(던전 세부 보상 · T99)은 아이콘을 위로 올려 겹치지 않게 한다 — 레퍼런스 21 도 «그림 위 · 숫자 아래» 다
@@ -746,10 +765,20 @@ namespace KkomaKnight.Game
             return d;
         }
         /// <summary>버튼 글자 아래 «🎫 x1» 줄(아이콘 + 글자) — 글자를 위로 올리고 아래에 작은 줄.</summary>
+        /// <summary>버튼 글자를 좌우 <see cref="ButtonPadPct"/> 만큼 들인다(T151 4항 · «🎫 x1» 줄이 없는 버튼용 — 던전·아레나 «입장»).</summary>
+        static void ButtonPad(RectTransform btn)
+        {
+            var t = UiKit.ButtonText(btn); if (t == null) return;
+            var trt = t.rectTransform; trt.anchorMin = new Vector2(ButtonPadPct, trt.anchorMin.y); trt.anchorMax = new Vector2(1f - ButtonPadPct, trt.anchorMax.y);
+            trt.offsetMin = new Vector2(0f, trt.offsetMin.y); trt.offsetMax = new Vector2(0f, trt.offsetMax.y);
+        }
         static void TicketCost(RectTransform btn, string icon)
         {
-            var t = UiKit.ButtonText(btn); if (t != null) { var trt = t.rectTransform; trt.anchorMin = new Vector2(0, 0.42f); trt.anchorMax = new Vector2(1, 1); trt.offsetMin = trt.offsetMax = Vector2.zero; }
-            var cost = UiKit.Rect(btn, "Cost"); UiKit.Pct(cost, 28, 56, 44, 44);
+            // T151 — 주인 «글씨나 아이콘이 버튼을 벗어나는 것처럼 보인다 · 여백 조금». 글자는 좌우 ButtonPadPct 만큼 들이고(예전엔 0),
+            // «🎫 x1» 줄은 주인 인스펙터 값(앵커 x 0.30~0.70 · y 0.063~0.5)을 우리 표기로 옮긴 자리에 둔다 — 예전 값은 아래 여백이 0 이었다.
+            var t = UiKit.ButtonText(btn);
+            if (t != null) { var trt = t.rectTransform; trt.anchorMin = new Vector2(ButtonPadPct, 0.42f); trt.anchorMax = new Vector2(1f - ButtonPadPct, 1); trt.offsetMin = trt.offsetMax = Vector2.zero; }
+            var cost = UiKit.Rect(btn, "Cost"); UiKit.Pct(cost, 30, 50, 40, 43.7f);
             var ic = UiKit.Icon(cost, "Icon", icon); UiKit.Pct(ic.rectTransform, 0, 0, 40, 100); UiKit.Label(cost, 44, 0, 56, 100, "x1", TextSize.Aux, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Aux).fontStyle = FontStyle.Bold;
         }
         /// <summary>초상 칸 = 프레임 조각 + (아이콘 | HeroView 자리 «Inner»).</summary>
@@ -856,9 +885,24 @@ namespace KkomaKnight.Game
         {
             foreach (var key in new[] { "ui.title.red", "ui.titleBrown", "ui.title.tangerine" }) { var rb = UiKit.Find(box, key); if (rb != null) rb.gameObject.SetActive(false); }
             var head = UiKit.Panel(box, "Head", "fr.r12", color); UiKit.Pct(head.rectTransform, headRect.Within(boxRect)); head.raycastTarget = true; UiKit.Tag(head.transform, "제목 띠");
+            // T150 ⓒ — 주인 인스펙터 값: 앵커는 그대로 두고 offset 만 좌·상·우 1px 안쪽(아래 0). 제목 띠가 팝업 테두리 선을 밟지 않는다.
+            var hrt = head.rectTransform; hrt.offsetMin = new Vector2(HeadInsetPx, 0f); hrt.offsetMax = new Vector2(-HeadInsetPx, -HeadInsetPx);
             UiKit.Gradient(head.rectTransform, inset: HeadGradientInset);
             UiKit.Label(head.transform, 4, 0, 92, 100, title, TextSize.Title, Palette.White, kind: TextKind.Title).fontStyle = FontStyle.Bold;
             UiKit.Tag(box, "팝업 박스");
+        }
+        /// <summary>
+        /// 팝업 상자가 달고 온 테두리(«Border» 계열 직계 자식)를 <b>맨 마지막 형제</b>로 올린다 — T150 ⓑ.
+        /// 형제 맨 뒤 = 맨 위에 그려짐이라, 뒤에 붙인 제목 띠·그림·버튼이 네 변의 선을 덮지 않는다.
+        /// </summary>
+        static void RingLast(RectTransform box)
+        {
+            if (box == null) return;
+            for (int i = box.childCount - 1; i >= 0; i--)
+            {
+                var c = box.GetChild(i);
+                if (c != null && c.name.StartsWith("Border", StringComparison.Ordinal)) { c.SetAsLastSibling(); return; }
+            }
         }
         /// <summary>팝업 조각이 달고 오는 장식 선(«DecoLine»·«LineDeco» 계열)을 전부 끈다 — T102 ⓐ(21 세부 팝업의 빨간 선).</summary>
         static void HideDeco(RectTransform box)
