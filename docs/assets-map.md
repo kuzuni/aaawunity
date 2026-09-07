@@ -269,7 +269,9 @@
 | sprites | `ui.iconCrownBronze` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Crown_01_Bronze.png` | fileID 21300000 | T43 아레나 3위 왕관 |
 | sprites | `ui.iconPvp` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Shield_03_Gold.png` | fileID 21300000 | T43 «PvP» 탭·제목 아이콘(레퍼런스의 월계관 방패 자리) |
 | sprites | `ui.iconGiftBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Gift_01_Blue.png` | fileID 21300000 | T43 아레나 입장 화면 오른쪽 위 «보상» 아이콘(→ 순위 보상 팝업) |
-| sprites | `ui.iconMerchant` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Shop_01_Green.png` | fileID 21300000 | T43 아레나 입장 화면 오른쪽 위 «상인» 아이콘(→ 상인 페이지) |
+| sprites | `ui.iconMerchant` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Shop_01_Green.png` | fileID 21300000 | T43 아레나 입장 화면 오른쪽 위 «상인» 아이콘(→ 상인 페이지) · 아이콘 자리에만 쓴다(상인 «사람» 은 env.keeper* 다 · T209 ⓑ) |
+| sprites | `env.keeperHead` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/CharacterParts/Large/Characters_05_Head.png` | fileID 21300000 | T209 ⓑ 상인 배너(26)의 상인 머리 — GUI Pro CharacterParts 05(대머리). 레퍼런스 26 의 상인도 대머리라 여섯 조각 중 이것을 골랐다. tint 없음(눈 흰자가 같이 어두워진다) |
+| sprites | `env.keeperBody` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/CharacterParts/Large/Characters_05_Body.png` | fileID 21300000 | T209 ⓑ 상인 배너(26)의 상인 몸(로브) — CharacterParts 05. 화면에서 곱셈 tint #CF6585 를 걸어 조각 rgb(95,108,109) → 레퍼런스 로브 실측 rgb(77,43,57) 이 되게 한다 |
 | sprites | `ui.iconRevive` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Consumable_Potion_03_Red.png` | fileID 21300000 | T43 상인 «부활 토큰» 상품 |
 | sprites | `ui.iconFoe1` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Skull_01.png` | fileID 21300000 | T43 아레나 상대 초상 1(껍데기 · 순위 목록·도전 팝업 줄) |
 | sprites | `ui.iconFoe2` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Consumable_Food_Mushroom_02.png` | fileID 21300000 | T43 아레나 상대 초상 2 |

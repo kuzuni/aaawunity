@@ -58,6 +58,11 @@ namespace KkomaKnight.Game
         const float HeadInsetPx = 1f;
         /// <summary>버튼 글자를 좌우로 들이는 비율(T151 2항 · 주인 «여백 조금 있어 보일 정도로» · 앵커 0.06~0.94).</summary>
         const float ButtonPadPct = 0.06f;
+        /// <summary>
+        /// 상인 배너(26)의 <b>계산대 상판 윗변</b> — 배너 높이의 %. 레퍼런스 <c>docs/ref/26_arena_shop.jpg</c> 의 배너에 10% 격자를 얹어 잰 값이고
+        /// (벽 0~82 · 상판 82~92 · 갈색 턱 92~100), <b>소품과 상인이 전부 이 줄에 놓인다</b>(T209 ⓑ).
+        /// </summary>
+        const float MeCounterY = 82f;
         /// <summary>아레나 상대 초상(껍데기 · 순환) · 순위 목록 줄 수 · 도전 팝업 줄 수 · 순위 보상 줄 수 · 상인 상품.</summary>
         static readonly string[] Foes = { "ui.iconFoe1", "ui.iconFoe2", "ui.iconFoe3", "ui.iconFoe4" };
         const int RankRows = 7, FoeRows = 5, RewardRows = 4;
@@ -353,12 +358,21 @@ namespace KkomaKnight.Game
         {
             var banner = UiKit.Panel(pg, "Banner", "fr.rect", Palette.Hex("#3F3532")); UiKit.Pct(banner.rectTransform, Layout.MeBanner); UiKit.Tag(banner.transform, "상인 배너");
             {
-                var shelf = UiKit.Panel(banner.transform, "Shelf", "fr.rect", Palette.Hex("#5A4636")); UiKit.Pct(shelf.rectTransform, 0, 74, 100, 20);
-                var ledge = UiKit.Panel(banner.transform, "Ledge", "fr.rect", Palette.Hex("#6B4A2E")); UiKit.Pct(ledge.rectTransform, 0, 94, 100, 6);
-                var chest = UiKit.Icon(banner.transform, "Chest", "ui.iconChestRed"); UiKit.Pct(chest.rectTransform, 66, 34, 20, 48);
-                var coins = UiKit.Icon(banner.transform, "Coins", "pi.coins", Palette.Yellow); UiKit.Pct(coins.rectTransform, 12, 40, 16, 40);
-                var keeper = UiKit.Icon(banner.transform, "Keeper", "ui.iconMerchant"); UiKit.Pct(keeper.rectTransform, 38, 24, 24, 58);
-                var bar1 = UiKit.Icon(banner.transform, "Barrel", "env.barrel"); UiKit.Pct(bar1.rectTransform, 88, 46, 10, 36);
+                // T209 ⓑ — 자리·색은 레퍼런스 `docs/ref/26_arena_shop.jpg` 의 배너(화면 y 8.0~23.9%)에 10% 격자를 얹어 잰 값이다(아래 % 는 전부 «배너 안» %).
+                //   벽 0~82 rgb(63,52,48) · 계산대 상판 82~92 rgb(76,52,38) · 아래 갈색 턱 92~100 rgb(86,69,53)(표의 «아래 갈색 턱»).
+                // 전에는 상판이 74 에서 시작하고 소품이 벽 가운데 떠 있었다 — 레퍼런스는 소품이 전부 상판에 «놓여» 있다.
+                var counter = UiKit.Panel(banner.transform, "Counter", "fr.rect", Palette.Hex("#4C3426")); UiKit.Pct(counter.rectTransform, 0, MeCounterY, 100, 10);
+                var ledge = UiKit.Panel(banner.transform, "Ledge", "fr.rect", Palette.Hex("#564535")); UiKit.Pct(ledge.rectTransform, 0, 92, 100, 8);
+                var coins = UiKit.Icon(banner.transform, "Coins", "pi.coins", Palette.Yellow); UiKit.Pct(coins.rectTransform, 17, 51, 16, 40);           // 레퍼런스 금화 자루 자리(x 19~31)
+                var chest = UiKit.Icon(banner.transform, "Chest", "ui.iconChestRed"); UiKit.Pct(chest.rectTransform, 61.5f, 43, 20, 48);                  // 레퍼런스 궤짝 자리(x 64~79)
+                var bar1 = UiKit.Icon(banner.transform, "Barrel", "env.barrel"); UiKit.Pct(bar1.rectTransform, 78, 55.5f, 10, 36);                        // 레퍼런스 작은 주머니 자리(x 80~86)
+                // 상인은 «가판 아이콘»(ui.iconMerchant)이 아니라 **사람**이다 — 레퍼런스의 상인은 대머리에 로브를 입고 계산대 뒤에 서 있다.
+                // 조각 = GUI Pro CharacterParts 05 두 장(머리 163×124 · 몸 152×125 · 둘 다 여백 없이 꽉 찬 그림).
+                // 칸의 가로:세로는 조각의 가로:세로에 맞춰 잡았다 — preserveAspect 는 남는 쪽에 여백을 만들어 그림을 가운데로 보내므로,
+                // 칸 비율이 어긋나면 상인이 상판에서 «뜬다»(옛 소품 넷이 그렇게 떠 있었다). 기준 프레임에서 배너 한 칸의 가로:세로는 2.903:1 이다.
+                var body = UiKit.Icon(banner.transform, "Keeper", "env.keeperBody", Palette.Hex("#CF6585")); UiKit.Pct(body.rectTransform, 41.8f, 52, 13.4f, 32);
+                var head = UiKit.Icon(banner.transform, "Head", "env.keeperHead"); UiKit.Pct(head.rectTransform, 42.2f, 26, 12.6f, 28);
+                UiKit.TagGroup(banner.transform, "상인(머리+몸)", body.rectTransform, head.rectTransform);
             }
             var title = UiKit.Label(pg, Layout.MeTitle.X, Layout.MeTitle.Y, Layout.MeTitle.W, Layout.MeTitle.H, "상인", TextSize.Title, Palette.White, kind: TextKind.Title); title.fontStyle = FontStyle.Bold; title.gameObject.name = "Title"; UiKit.Tag(title.transform, "제목(Merchant)");
             var season = UiKit.Rect(pg, "Season"); UiKit.Pct(season, Layout.MeSeason); UiKit.Tag(season, "시즌 타이머");

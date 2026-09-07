@@ -379,6 +379,30 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(TextGlyphs.Safe("—"), Cost(10), "부활 토큰 값도 줄표");
                 Assert.AreEqual("3", UiKit.Find(UiKit.Find(me, "Goods:10"), "Badge").GetComponent<Text>().text, "부활 토큰 배지 3(이것만 레퍼런스에 보인다)");
             }
+            // T209 ⓑ — 배너는 «가게 안» 한 장면이고, 그 안의 상인은 **아이콘이 아니라 사람**이다.
+            // 종전에는 계산대 상판이 74% 에서 시작하고 상인 자리를 «초록 가판 아이콘»(ui.iconMerchant)이 대신했다.
+            // 아래 수는 레퍼런스 26 배너에 10% 격자를 얹어 읽은 값을 그대로 적은 것이다 — 코드 상수(MeCounterY)를 부르지 않는다
+            // (게이트가 구현을 부르면 자가 아니라 거울이 되어 둘 다 틀려도 초록이다 · 결정 555).
+            {
+                var bn = UiKit.Find(me, "Banner") as RectTransform; Assert.IsNotNull(bn, "상인 배너");
+                RectTransform In(string n) { var r = UiKit.Find(bn, n) as RectTransform; Assert.IsNotNull(r, "배너 안 " + n); return r; }
+                float TopPct(RectTransform r) => (1f - r.anchorMax.y) * 100f;
+                float BotPct(RectTransform r) => (1f - r.anchorMin.y) * 100f;
+                Assert.AreEqual(82f, TopPct(In("Counter")), 1.5f, "계산대 상판 윗변 = 배너의 82%(레퍼런스 실측 · 종전 74 는 상판이 화면의 1/4 를 먹던 값)");
+                Assert.AreEqual(92f, TopPct(In("Ledge")), 1.5f, "아래 갈색 턱 = 92%~(레퍼런스 표의 «아래 갈색 턱»)");
+                var body = In("Keeper"); var head = In("Head");
+                var bi = body.GetComponent<Image>(); var hi = head.GetComponent<Image>();
+                Assert.IsNotNull(bi != null ? bi.sprite : null, "상인 몸 조각"); Assert.IsNotNull(hi != null ? hi.sprite : null, "상인 머리 조각");
+                Assert.AreNotSame(bi.sprite, hi.sprite, "상인은 머리·몸 두 조각으로 서 있다(한 장짜리 아이콘이 아니다)");
+                var stall = _app.Assets != null ? _app.Assets.Sprite("ui.iconMerchant") : null;
+                Assert.AreNotSame(stall, bi.sprite, "상인 자리에 «가판 아이콘» 을 다시 놓으면 여기서 빨개진다 — 레퍼런스는 사람이다");
+                Assert.AreNotSame(stall, hi.sprite, "머리 자리도 마찬가지");
+                Assert.Less(TopPct(head), TopPct(body), "머리가 몸보다 위");
+                Assert.Greater(BotPct(head), TopPct(body), "머리와 몸이 겹친다(목이 끊겨 보이면 안 된다)");
+                Assert.AreEqual(82f, BotPct(body), 3f, "상인은 계산대 뒤에 «서» 있다 — 몸 아래끝이 상판 줄(82%)에 닿는다");
+                float cx = (body.anchorMin.x + body.anchorMax.x) * 50f;
+                Assert.AreEqual(48.5f, cx, 3f, "상인은 배너 가운데(레퍼런스 x 37~60 의 가운데 48.5%)");
+            }
             Check("상인 페이지");
 
             // ⑧ 뒤로 ×3: 상인 → 아레나 입장 → PvP → 로비

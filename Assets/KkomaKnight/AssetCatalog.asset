@@ -543,6 +543,10 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 3decf037bc4dc44879511a37d8de29cf, type: 3}
   - key: ui.iconMerchant
     sprite: {fileID: 21300000, guid: 5aa576f5eacec4ba3b8abbfc08fafe45, type: 3}
+  - key: env.keeperHead
+    sprite: {fileID: 21300000, guid: 63d91083390db452e8fc5181b7a17ab0, type: 3}
+  - key: env.keeperBody
+    sprite: {fileID: 21300000, guid: 857657e751f824ed1b872f105c4fcacf, type: 3}
   - key: ui.iconRevive
     sprite: {fileID: 21300000, guid: 405586064c6764e27a85517f8fd9da8f, type: 3}
   - key: ui.iconFoe1
