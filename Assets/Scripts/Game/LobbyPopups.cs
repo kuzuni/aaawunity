@@ -32,8 +32,30 @@ namespace KkomaKnight.Game
             float cy = (boxR.Y - (ribbonR.Y + ribbonR.H / 2f)) / 100f * UiKit.FrameH;
             rr.anchoredPosition = new Vector2(cx, cy);
             // 명판 글자 = 제목 종류(T63 · 60 · 리본이 좁으면 bestFit 으로 32 까지)
-            var t = rr.GetComponentInChildren<Text>(true); if (t != null) { t.fontSize = TextSize.Title; t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitMin; t.resizeTextMaxSize = TextSize.Title; TextAudit.Mark(t, TextKind.Title); RibbonTextFit(t); }
+            var t = rr.GetComponentInChildren<Text>(true); if (t != null) { t.fontSize = TextSize.Title; t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitMin; t.resizeTextMaxSize = TextSize.Title; TextAudit.Mark(t, TextKind.Title); RibbonTextFit(t); RibbonOutline(t); }
             return rr;
+        }
+
+        /// <summary>
+        /// T186 ⓒ — <b>노란 리본 위 흰 제목</b>의 검은 아웃라인을 레퍼런스 굵기로. 공통 규격(<see cref="UiKit.OutlineRatio"/> = 글자의 5% · 최대 4px)은
+        /// 어두운 바탕에서는 넉넉하지만 <b>밝은 리본 위</b>에서는 540폭 캡처에서 획과 섞여 회색 테로만 남는다 —
+        /// `screens` run 333 의 17 리본 실측: 우리 «검은 픽셀 0.000 / 흰 0.182», 레퍼런스 `docs/ref/17_daily_gift.jpg` 같은 자리 «검 0.282 / 흰 0.195»(검/흰 <b>1.44</b>).
+        /// 즉 레퍼런스는 글자만큼 굵은 검은 테로 읽히게 한다. 그래서 <b>이 리본 글자에서만</b> 두께 비율을 두 배로 올린다(색·α·리본 색은 T63·레퍼런스 그대로).
+        /// <para>※ 리본은 «노란 판 + 흰 글자» 라 <c>png_contrast.py</c> 의 «바탕 ↔ 글자 휘도 차» 로는 <b>레퍼런스도 0.11</b> 이다(잰 값 = 레퍼런스 #FFD84A ↔ 흰색).
+        /// 그 자리는 대비가 아니라 <b>아웃라인 굵기</b>로 읽히는 자리이므로 0.35 선을 적용하지 않는다(결정 기록 참조).</para>
+        /// </summary>
+        public const float RibbonOutlineRatio = 0.10f;
+
+        /// <summary>리본 제목에 <see cref="RibbonOutlineRatio"/> 두께의 검은 아웃라인을 붙인다(색·α 는 <see cref="UiKit.OutlineColor"/> 그대로 · 컴포넌트는 이미 있으면 값만 갱신).</summary>
+        public static Outline RibbonOutline(Text t)
+        {
+            if (t == null) return null;
+            var ol = UiKit.Ensure<Outline>(t.gameObject);
+            ol.effectColor = UiKit.OutlineColor;
+            float size = t.resizeTextForBestFit ? Mathf.Max(t.resizeTextMaxSize, t.fontSize) : t.fontSize;
+            float d = size * RibbonOutlineRatio;
+            ol.effectDistance = new Vector2(d, -d); ol.useGraphicAlpha = true;
+            return ol;
         }
 
         /// <summary>리본 조각(Title_01)의 글자 rect 는 3.9% 리본에서 56px 인데 제목 60 의 한 줄 선호 높이가 58px 라 위아래 1px 씩 넘쳤다(CI #106 게이트 «출석 보상»·«데일리 기프트» 잘림) → 글자 rect 만 세로로 늘린다(리본 크기·자리 불변 · 글자는 가운데 정렬 그대로).</summary>
@@ -487,8 +509,35 @@ namespace KkomaKnight.Game
             string label = st == GiftBtn.Claim ? "받기" : st == GiftBtn.Ad ? "광고 보기" : "잠금";
             var b = UiKit.Button(parent, key, label, st == GiftBtn.Locked ? (Action)(() => { }) : onClick, r.Within(parentR));
             b.name = name;
-            if (st == GiftBtn.Locked) UiKit.SetInteractable(b.GetComponent<Button>(), false);
+            if (st == GiftBtn.Locked) LockLook(b);
             return b;
+        }
+
+        /// <summary>«잠금» 버튼 판 색 — 흰 글자가 뜨는 어두운 판(<see cref="Palette.Ink"/> 계열 · <see cref="LockLook"/> 설명 참조).</summary>
+        public static Color LockedPlate => Palette.Ink;
+
+        /// <summary>
+        /// T186 ⓓ — «잠금»(비활성) 버튼을 <b>알파로 흐리게</b> 하지 않고 <b>어두운 판 + 흰 글자</b>로 만든다.
+        /// <para>
+        /// 실측(`screens` run 333 의 17): 판 #B49B8E <b>0.63</b> · 글자 #CEC8C6 <b>0.79</b> = 대비 <b>0.16</b>.
+        /// 원인은 색이 아니라 <b>흐리게 하는 방식</b>이다 — <c>CanvasGroup</c> α 0.5(+ 유니티 <c>disabledColor</c> α 0.5)는 판과 글자를
+        /// <b>같은 비율로</b> 바탕 쪽으로 끌어당기므로 <b>둘의 차이도 그만큼 줄어든다</b>(α 를 곱한 만큼 대비가 곱해진다).
+        /// 즉 회색 조각 위 흰 글자는 α 를 어떻게 잡아도 0.35 를 못 넘는다 — 판 자체를 어둡게 해야 한다.
+        /// </para>
+        /// 그래서 ⓘ <c>interactable</c> 은 <b>false 그대로</b>(누름 차단) ⓙ 유니티 색 전이는 <c>None</c>(제 <c>disabledColor</c> 가 다시 α 를 먹이지 않게)
+        /// ⓚ 판을 <see cref="LockedPlate"/> 로 tint. 글자는 T63·T111 그대로 흰색 + 검은 아웃라인이라 «잠긴 줄» 이라는 뜻은 회색 조각·«잠금» 글자·자물쇠 배지가 낸다.
+        /// </summary>
+        static void LockLook(RectTransform b)
+        {
+            if (b == null) return;
+            var btn = b.GetComponent<Button>();
+            if (btn != null)
+            {
+                btn.transition = Selectable.Transition.None;
+                btn.interactable = false;
+                var tg = btn.targetGraphic as Image; if (tg != null) tg.color = LockedPlate;
+            }
+            var img = b.GetComponent<Image>(); if (img != null) img.color = LockedPlate;
         }
 
         /// <summary>자정까지 남은 시간 — «종료까지 hh:mm:ss»(상점 무료 보급 줄과 같은 문법 · 표에 없는 날은 «--:--:--»).</summary>
@@ -513,6 +562,7 @@ namespace KkomaKnight.Game
             if (D != null) Core.DailyGift.Roll(S, D, today);
 
             var box = ov.OpenBox("ui.popup.yellow", "ui.title.yellow", "데일리 기프트", B, () => ov.Close()); box.name = "DailyGiftBox";
+            DarkenGiftBoxBody(box);   // T186 ⓐ — 이 화면만 상자가 크림으로 남아 있었다(T130 은 «ui.popup» 만 어둡게 한다)
             var rib = Ribbon(box, "ui.title.yellow", Layout.GfRibbon, B);
             var pic = UiKit.Icon(ov.Root, "GiftPic", "ui.gift"); UiKit.Pct(pic.rectTransform, Layout.GfPic); pic.transform.SetSiblingIndex(1);   // 어둠 위 · 상자 아래
             var timer = TimerRow(box, B, Layout.GfTimer, GiftEndsIn());
@@ -528,6 +578,26 @@ namespace KkomaKnight.Game
 
             // 비평 이름표(표 ㉒) — 다시 그려도 자리가 같으므로 여기서 한 번(줄 조각의 이름표는 BuildGiftRows 안)
             UiKit.Tag(pic.transform, "선물 그림"); if (rib != null) UiKit.Tag(rib, "제목 리본"); UiKit.Tag(box, "팝업 박스"); UiKit.Tag(timer, "종료 시각 줄"); TagClose(app);
+        }
+
+        /// <summary>
+        /// T186 ⓐ — 데일리 기프트 상자 <b>몸통만</b> 레퍼런스대로 어둡게(<see cref="Palette.PopupBox"/>).
+        /// <para>
+        /// T130 이 공통 팝업을 어둡게 했지만 그 손질은 «색을 안 쓰는» 키(<see cref="UiKit.PopupKeyPlain"/>)에만 닿는다 —
+        /// 17 은 <c>ui.popup.yellow</c> 로 제 상자를 세우는 화면이라 혼자 크림으로 남았다(`screens` run 333 실측 휘도 <b>0.92</b> · 같은 런 07 은 0.353 · 16 은 0.212).
+        /// 그 탓에 «⏱ 종료까지 …» 흰 글자가 대비 <b>0.08</b> 로 안 읽혔다(T186 ⓑ 는 이 한 줄로 같이 풀린다).
+        /// </para>
+        /// <b>«DecoLine» 은 건드리지 않는다</b> — 이 조각에서 그 선이 곧 <b>금색 테</b>(조각 변형이 유일하게 덮어쓴 색 #F7AE29)이고
+        /// 레퍼런스 17 도 «어두운 몸통 + 금색 테» 다. T130 이 공통 팝업에서 DecoLine 까지 어둡게 한 것은 그쪽 선이 살구색이라서다.
+        /// </summary>
+        static void DarkenGiftBoxBody(RectTransform box)
+        {
+            if (box == null) return;
+            for (int i = 0; i < box.childCount; i++)
+            {
+                var c = box.GetChild(i); if (c.name != UiKit.CardBodyName) continue;   // 조각의 몸통 자식 이름 = «Bg»(T130·T135 와 같은 이름)
+                var img = c.GetComponent<Image>(); if (img != null) img.color = Palette.PopupBox;
+            }
         }
 
         /// <summary>«오늘의 선물» 칸 + 광고 줄 N개를 <paramref name="host"/> 에 그린다(상태가 바뀌면 <paramref name="refresh"/> 로 이 안만 다시 그린다).</summary>
