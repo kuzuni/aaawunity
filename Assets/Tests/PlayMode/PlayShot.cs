@@ -26,6 +26,11 @@ namespace KkomaKnight.Tests.Play
         public static string LastFrameInfo { get; private set; } = "";
         /// <summary>마지막 <see cref="Save"/> 가 만든 PNG 바이트 — 색공간 게이트(T126)가 파일을 다시 읽지 않고 이걸 디코딩해 픽셀을 잰다.</summary>
         public static byte[] LastPng { get; private set; }
+        /// <summary>
+        /// 마지막 <see cref="Save"/> 에서 <see cref="FrameBackdrop"/> 띠가 <b>프레임 안</b>을 덮은 넓이 비율(0~1 · 넷 중 가장 큰 것 · T182).
+        /// 0 이 아니면 그 PNG 는 마당(<see cref="WorldCam"/>)이 띠에 가려진 그림이다 — CI #373 `02_battle` 이 좌우 176px 씩 덮여 0.65 였다.
+        /// </summary>
+        public static float LastBandOverlap { get; private set; }
 
         public static IEnumerable<string> Dirs(string folder = DefaultFolder)
         {
@@ -65,11 +70,15 @@ namespace KkomaKnight.Tests.Play
                 // T58: 카메라 모드 캔버스는 월드 스프라이트(sortingOrder ≤ 350 · Fx)와 같은 «Default» 층에서 order 로 겨루므로 촬영 중엔 맨 위로(원래 10 · 되돌린다).
                 canvas.sortingOrder = short.MaxValue;
                 Canvas.ForceUpdateCanvases();
+                // T182 — 캔버스가 «이 한 프레임 동안만» 9:19.5 RenderTexture 사각형이 된다(LateUpdate 가 안 돈다).
+                // 프레임 밖 띠는 그 사이에도 프레임을 비켜 가야 한다 — 안 그러면 배치 모드 «가로 화면» 몫으로 잡힌 띠가 마당을 덮은 채 찍힌다(CI #373).
+                if (app.Backdrop != null) app.Backdrop.Refresh();
+                LastBandOverlap = BandOverlap(app);
                 if (app.Frame != null)
                 {
                     var px = FramePixelRect(app.Frame, cam);
                     LastFrameFill = Mathf.Min(px.width / rt.width, px.height / rt.height);
-                    LastFrameInfo = $"{name}: cam.rect={cam.rect} pixelRect={cam.pixelRect} canvas.pixelRect={canvas.pixelRect} scale={canvas.scaleFactor:0.###} frame.rect={app.Frame.rect.size} frame.px={px} fill={LastFrameFill:0.###} screen={Screen.width}x{Screen.height}";
+                    LastFrameInfo = $"{name}: cam.rect={cam.rect} pixelRect={cam.pixelRect} canvas.pixelRect={canvas.pixelRect} scale={canvas.scaleFactor:0.###} frame.rect={app.Frame.rect.size} frame.px={px} fill={LastFrameFill:0.###} band={LastBandOverlap:0.###} screen={Screen.width}x{Screen.height}";
                     Debug.Log("[PlayShot] " + LastFrameInfo);
                 }
                 cam.Render();
@@ -98,6 +107,28 @@ namespace KkomaKnight.Tests.Play
                 catch (Exception e) { Debug.LogWarning("[PlayShot] 스크린샷 저장 실패(" + dir + "): " + e.Message); }
             }
             return ok;
+        }
+
+        /// <summary>프레임 밖 띠 넷 중 <b>프레임 안</b>을 가장 많이 덮은 넓이 비율(프레임 넓이 대비 · T182) — 0 이어야 마당이 보인다.</summary>
+        static float BandOverlap(App app)
+        {
+            var fb = app != null ? app.Backdrop : null;
+            if (fb == null || app.Frame == null) return 0f;
+            var f = WorldRect(app.Frame); float area = Mathf.Max(1f, f.width * f.height), worst = 0f;
+            for (int i = 0; i < 4; i++)
+            {
+                var band = fb.BandAt(i); if (band == null) continue;
+                var b = WorldRect(band);
+                float ox = Mathf.Min(b.xMax, f.xMax) - Mathf.Max(b.xMin, f.xMin);
+                float oy = Mathf.Min(b.yMax, f.yMax) - Mathf.Max(b.yMin, f.yMin);
+                if (ox > 0f && oy > 0f) worst = Mathf.Max(worst, ox * oy / area);
+            }
+            return worst;
+        }
+        static Rect WorldRect(RectTransform rt)
+        {
+            var c = new Vector3[4]; rt.GetWorldCorners(c);
+            return Rect.MinMaxRect(c[0].x, c[0].y, c[2].x, c[2].y);
         }
 
         /// <summary>프레임 RectTransform 의 네 모서리를 촬영 카메라의 픽셀 좌표(RT 기준)로 — 촬영 직전 «프레임이 RT 를 얼마나 채우는가» 를 잰다(T58).</summary>

@@ -121,9 +121,42 @@ namespace KkomaKnight.Tests.Play
                 float insideBand = (safe.width - frame.width) / Mathf.Max(1f, safe.width) * 100f;
                 Debug.Log($"[T182ⓑ] 9:19.5 안전영역 안 좌우 띠 {insideBand:0.0}%");
                 Assert.Less(insideBand, 2f, "기준 비율에서는 안전 영역 안 레터박스가 거의 0");
+                // ⓒ 는 기준 비율에서도 잰다 — 넓은 화면 둘에서만 재던 것이 CI #373 의 «마당 가림» 을 놓친 자리다(결정 496)
+                foreach (var n in new[] { FrameBackdrop.LeftName, FrameBackdrop.RightName, FrameBackdrop.TopName, FrameBackdrop.BottomName })
+                {
+                    var b = WorldRect(Band(n));
+                    float ox = Mathf.Min(b.xMax, frame.xMax) - Mathf.Max(b.xMin, frame.xMin);
+                    float oy = Mathf.Min(b.yMax, frame.yMax) - Mathf.Max(b.yMin, frame.yMin);
+                    Assert.IsTrue(ox <= 1f || oy <= 1f, "9:19.5: " + n + " 가 프레임 안을 덮는다 — 겹침 " + ox.ToString("0.0") + "×" + oy.ToString("0.0"));
+                }
             }
 
             _log.AssertNoRed("프레임 밖 바탕(T182 2단계)");
+            yield return Shutdown();
+        }
+
+        /// <summary>
+        /// T182 2단계 <b>회차 3</b> — <b>«촬영 순간» 에도</b> 띠가 프레임을 안 덮는다.
+        /// <para>
+        /// 회차 2 까지의 자는 «화면이 그대로 있는» 상태만 쟀다. 그런데 §5 비평 PNG 는 <c>PlayShot.Save</c> 가
+        /// 캔버스를 한 프레임 동안 <c>ScreenSpaceCamera</c> 로 돌려 9:19.5 RenderTexture 에 그려서 만든다 —
+        /// 그 사이 <c>LateUpdate</c> 가 안 돌아, <b>배치 모드 가로 화면</b> 몫으로 잡혀 있던 띠(폭 ≈ 35%)가 그대로 찍혔다.
+        /// 실측(CI #373 `02_battle`): 좌우 176px 씩 어두운 띠 · 마당은 가운데 188/540 만 보였다(워커 I 가 그림으로 먼저 잡았다).
+        /// </para>
+        /// 그래서 이 자는 <b>PNG 를 만드는 그 길</b>을 그대로 밟아 «촬영 직전 겹침» 을 잰다(<see cref="PlayShot.LastBandOverlap"/>).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ShotTimeBandsNeverCoverTheFrame()
+        {
+            yield return Boot();
+            _app.ShowScreen("lobby"); yield return Frames(2);
+
+            Assert.IsTrue(PlayShot.Save(_app, "t182_shot", null), "촬영(RenderTexture)이 돼야 잰다");
+            Debug.Log($"[T182ⓕ] 촬영 겹침 {PlayShot.LastBandOverlap:0.000} · {PlayShot.LastFrameInfo}");
+            Assert.Less(PlayShot.LastBandOverlap, 0.01f, "촬영 순간 띠가 프레임 안을 덮으면 그 PNG 는 마당이 가려진 그림이다");
+            Assert.GreaterOrEqual(PlayShot.LastFrameFill, 0.95f, "촬영 프레임 채움(T58 규약)은 그대로여야 한다");
+
+            _log.AssertNoRed("촬영 순간 띠(T182 회차 3)");
             yield return Shutdown();
         }
     }
