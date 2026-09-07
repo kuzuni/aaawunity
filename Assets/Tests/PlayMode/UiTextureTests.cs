@@ -469,6 +469,11 @@ namespace KkomaKnight.Tests.Play
                 if (rib != null) Assert.Less(titleGlow.GetSiblingIndex(), rib.GetSiblingIndex(), "빛 두 겹은 리본 «뒤»(형제 순서 앞 — 자식으로 넣으면 리본 «위» 로 그려진다)");
                 var ribLight = (RectTransform)titleGlow.Find(UiKit.LightMaskName + "/" + UiKit.LightName);
                 Assert.IsTrue(UiKit.IsTweening(ribLight), "리본 뒤 빛살은 돈다(주인 «회전하게») — 글로우 서클은 원이라 안 돌린다");
+                // 회차 2(결정 479) — 크기를 «칸 긴 변 × 1.9» 에 맡겼더니 리본이 가로로 길어 한 변이 1231px 가 되고
+                // 빛이 화면 위 절반을 덮었다(screens run 360 눈 확인). 레퍼런스의 빛은 화면 폭의 47.1% 안이다.
+                Assert.AreEqual(UiKit.FrameW * Overlay.TitleGlowR.W / 100f, ribLight.rect.width, 8f,
+                    "리본 뒤 빛 한 변 = 레퍼런스 실측 폭(화면의 " + Overlay.TitleGlowR.W + "%) — 리본 세로에 끌려가면 화면을 덮는다");
+                Assert.Less(ribLight.rect.width, UiKit.FrameW * 0.6f, "빛이 화면 폭의 60% 를 넘으면 배경이 씻긴다");
                 _app.Overlay.Close(); G.Pending = null; yield return Frames(1);
             }
 

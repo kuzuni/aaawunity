@@ -564,7 +564,7 @@ namespace KkomaKnight.Game
         /// 빛살은 DOLocalRotate(0,0,−360 · FastBeyond360 · Linear · 무한 · unscaled · SetLink) 로 <b>시계방향</b>(주인 «오른쪽으로») 한 바퀴 <paramref name="period"/> 초.
         /// 이미 있으면 갱신만. 스크롤 밖 칸은 <see cref="SetLightSpinning"/> 으로 멈춘다(T72 4항 개수 제한).
         /// </summary>
-        public static Image LightBehind(RectTransform cell, RectTransform icon = null, string key = LightKey, float period = LightPeriod, Color? tint = null, float scale = LightScale, float inset = 0f)
+        public static Image LightBehind(RectTransform cell, RectTransform icon = null, string key = LightKey, float period = LightPeriod, Color? tint = null, float scale = LightScale, float inset = 0f, float sidePx = 0f)
         {
             if (cell == null) return null;
             var sp = Cat != null ? Cat.Sprite(key) : null; if (sp == null) return null;
@@ -590,6 +590,10 @@ namespace KkomaKnight.Game
             side *= scale;
             float outside = Mathf.Max(cell.rect.width, cell.rect.height) * LightOutScale;   // T172 — 칸보다 커야 «밖» 에서 보인다
             if (outside > side) side = outside;
+            // T155 ⓒ 회차 2 — 부르는 쪽이 «한 변» 을 직접 주면 위 두 규칙(아이콘 배·칸 하한)을 쓰지 않는다.
+            // 아이콘 뒤 빛살은 «칸» 이 기준이라 저 규칙이 맞지만, 리본처럼 **가로로 긴 판** 뒤에 깔면
+            // max(폭,높이)×1.9 가 화면 폭을 넘어 빛이 화면 절반을 덮는다(screens run 360 에서 실제로 그랬다 · 결정 479).
+            if (sidePx > 0f) side = sidePx;
             lt.sizeDelta = new Vector2(side, side);
             Vector2 center = Vector2.zero;
             if (icon != null) { var c = mask.InverseTransformPoint(icon.TransformPoint(icon.rect.center)); center = new Vector2(c.x, c.y) - mask.rect.center; }

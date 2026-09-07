@@ -251,6 +251,11 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>특전 카드 설명 글자 칸의 왼쪽 끝 — 프리팹 <c>ListItem_StageBuff_02</c> 실측(964.04px 카드에서 왼쪽 여백 215.86px · T93 ①).</summary>
+        /// <summary>T155 ⓒ — «레벨 업» 리본 뒤 빛 두 겹의 자리(레퍼런스 04 실측: 빛 bbox x 191~529 · y 259~412px / 720×1560 = 26.5~73.6% · 16.6~26.5%).
+        /// 리본(26.5%)보다 <b>위</b>에 중심이 있다 — 빛은 리본 뒤에서 위로 퍼진다.</summary>
+        public static readonly Layout.R TitleGlowR = new Layout.R(26.5f, 16.6f, 47.1f, 9.9f);
+        /// <summary>그 빛의 짙기 — 레퍼런스는 가장 밝은 곳이 (234,233,231) 이지만 우리 배경은 더 밝아(어둠 α 0.85) 그대로 주면 화면이 씻긴다. 빛살 기본값(68/255)보다 조금 진하게.</summary>
+        public const float TitleGlowAlpha = 90f / 255f;
         public const float PerkDescLeft = 215.86f / 964.04f;
         /// <summary>같은 칸의 오른쪽 끝 — 프리팹 실측 오른쪽 여백 33.86px.</summary>
         public const float PerkDescRight = (964.04f - 33.86f) / 964.04f;
@@ -298,11 +303,16 @@ namespace KkomaKnight.Game
             // 리본과 같은 자리의 빈 사각형을 리본 «앞 형제» 로 두고 거기에 건다. 어둠(Dimmed)보다는 뒤가 아니어야 보인다 → 어둠 다음 자리.
             if (ribbon != null)
             {
+                // 회차 2(결정 479) — 자리·크기를 레퍼런스 04 실측으로 못 박는다. 회차 1 은 자리만 리본에 맞추고 크기를
+                // `LightBehind` 의 기본 규칙(칸 긴 변 × 1.9)에 맡겼는데, 리본은 «가로로 긴 판» 이라 한 변이 1231px 가 되어
+                // 빛이 화면 위 절반을 덮었다(screens run 360). 레퍼런스의 빛은 x 26.5~73.6% · y 16.6~26.5% 안이다.
                 var glowHost = UiKit.Rect(rt, "TitleGlow");
-                UiKit.Pct(glowHost, Layout.OvBanner.X, Layout.OvBanner.Y - 0.7f, Layout.OvBanner.W, Layout.OvBanner.H + 1.4f);
+                UiKit.Pct(glowHost, TitleGlowR.X, TitleGlowR.Y, TitleGlowR.W, TitleGlowR.H);
                 glowHost.SetSiblingIndex(ribbon.GetSiblingIndex());
-                Canvas.ForceUpdateCanvases();   // 빛 크기는 «칸 긴 변» 을 재서 정한다 — 자리를 막 잡았으므로 한 번 밀어 준다
-                UiKit.LightBehind(glowHost);   // 도는 것은 빛살(«Light») · 글로우 서클(«Glow»)은 정적으로 그 아래(T155 ⓓ 규약 그대로)
+                Canvas.ForceUpdateCanvases();
+                UiKit.LightBehind(glowHost, null, UiKit.LightKey, UiKit.LightPeriod,
+                                  Palette.A(Palette.Yellow, TitleGlowAlpha),          // 레퍼런스의 빛은 «금빛» 이다(우리 흰빛은 회색 판처럼 보였다)
+                                  sidePx: UiKit.FrameW * TitleGlowR.W / 100f);        // 한 변 = 그 판의 «가로» (세로에 안 끌려간다)
             }
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "레벨 업!");
             var sub = UiKit.Find(rt, "Text (TMP)"); if (sub != null) { UiKit.Pct((RectTransform)sub, Layout.OvSub); UiKit.SetText(rt, "Text (TMP)", "새 특전을 고르세요"); }   // 레퍼런스 04 «Choose a New Perk»

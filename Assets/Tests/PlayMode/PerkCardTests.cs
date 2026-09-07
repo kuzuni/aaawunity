@@ -72,7 +72,7 @@ namespace KkomaKnight.Tests.Play
         /// T155 ⓑ — 카드의 «비율» 이 레퍼런스 04 와 같은가(주인 «특전들 레이아웃이 레퍼런스랑 다른 느낌임 비율 비례 등등»).
         /// <para>
         /// 실측 근거(`docs/ref/04_perks.jpg` 720×1560): 카드 세 장 y 577~714 · 763~901 · 950~1087px = h <b>8.78/8.85/8.78%p</b> ·
-        /// 피치 <b>11.92/11.99%p</b> · 왼쪽 팔각 아이콘 <b>104×98px ≈ 정사각</b>(회차 1 에서 1.26 으로 잰 것은 탭에 가린 위쪽을 잘라 잰 오류다 · 결정 477).
+        /// 피치 <b>11.92/11.99%p</b> · 왼쪽 팔각 아이콘 <b>104×98px ≈ 정사각</b>(회차 1 에서 1.26 으로 잰 것은 탭에 가린 위쪽을 잘라 잰 오류다 · 결정 480).
         /// </para>
         /// 아이콘은 <b>코드가 크기를 잡지 않는다</b>(카드 안은 조각의 앵커·비례) — 카드 세로를 줄여도 조각이 정사각을 지키는지가 이 자의 물음이다.
         /// </summary>
@@ -94,7 +94,7 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(11.95f, Layout.OvCardPitch, 0.05f, "카드 피치 = 레퍼런스 실측 11.95%p(종전 13.0)");
             Assert.AreEqual(Layout.OvCard3.Y + Layout.OvCard3.H, 69.2f, 0.6f, "카드3 아래끝 = 레퍼런스 69.68%p ±(종전 73.5 는 3.8%p 밖이었다)");
 
-            // ⓑ 그 세로에서도 팔각 아이콘이 «정사각» 을 지키는가 — 레퍼런스도 사실상 정사각이다(104×98px · 결정 477)
+            // ⓑ 그 세로에서도 팔각 아이콘이 «정사각» 을 지키는가 — 레퍼런스도 사실상 정사각이다(104×98px · 결정 480)
             var itemArea = UiKit.Find(card, "ItemFrameArea"); Assert.IsNotNull(itemArea, "아이콘 자리(ItemFrameArea)");
             var ir = (RectTransform)itemArea; var rect = ir.rect;
             Assert.Greater(rect.width, 1f, "아이콘 자리 폭 > 0(배치가 끝난 뒤에 잰다)");
@@ -102,7 +102,7 @@ namespace KkomaKnight.Tests.Play
             Debug.Log($"[T155ⓑ] 카드 {((RectTransform)card).rect.width:0.0}x{((RectTransform)card).rect.height:0.0} · 아이콘 {rect.width:0.0}x{rect.height:0.0} = 가로:세로 {ratio:0.00}(레퍼런스 104×98px ≈ 1.06)");
             // ⚠ 회차 1 의 내 단언(«1.26»)은 **내 실측이 틀린 것**이었다 — 레퍼런스 팔각의 «위» 가 노란 탭에 가려
             // 같은 노란색이라 잘라 재는 바람에 세로가 짧게 나왔다. 탭 색이 아니라 «배경이 아닌 것» 으로 다시 재니
-            // 팔각은 x 61~164 · y ≈600~698 = **104×98px ≈ 1.06**(사실상 정사각)이고 우리 것(0.99)과 같다(결정 477).
+            // 팔각은 x 61~164 · y ≈600~698 = **104×98px ≈ 1.06**(사실상 정사각)이고 우리 것(0.99)과 같다(결정 480).
             // 그래서 이 줄은 «정사각을 지킨다» 로 바꾼다 — 조각이 바뀌어 아이콘이 납작해지면 이 자가 잡는다.
             Assert.AreEqual(1.0f, ratio, 0.15f, "팔각 아이콘은 정사각(레퍼런스 실측 104×98px = 1.06) — 카드 세로를 줄여도 조각이 비율을 지킨다");
             _log.AssertNoRed("특전 카드 비율");
