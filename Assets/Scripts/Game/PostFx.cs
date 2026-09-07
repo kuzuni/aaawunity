@@ -102,6 +102,7 @@ namespace KkomaKnight.Game
         /// 비용 손잡이 둘을 넣고 «무엇이 들어갔는지» 를 <see cref="LeverReport"/> 와 로그 한 줄로 남긴다.
         /// 진짜 빌드에서만 답이 나오는 물음이라(스텁 Bloom 에는 이 필드들이 없다) <b>기록이 이 함수의 절반</b>이다.
         /// </summary>
+        static bool _leversLogged;
         static void ApplyLevers(Bloom bloom)
         {
             var names = new System.Text.StringBuilder();
@@ -112,7 +113,9 @@ namespace KkomaKnight.Game
             }
             BloomFields = names.ToString();
             LeverReport = SetLever(bloom, "downscale", 0, BloomDownscale) + " " + SetLever(bloom, "maxIterations", BloomMaxIterations, null);
-            Debug.Log("[T181] bloom levers " + LeverReport + " | fields=" + BloomFields);
+            // 한 번만 찍는다 — PlayMode 는 테스트마다 부팅하므로 그냥 찍으면 이 줄이 CI 로그에 90번 넘게 쌓여
+            // 진짜 봐야 할 줄을 덮는다(CI #431 실측). 판정은 로그가 아니라 LeverReport 를 읽는 게이트가 한다.
+            if (!_leversLogged) { _leversLogged = true; Debug.Log("[T181] bloom levers " + LeverReport + " | fields=" + BloomFields); }
         }
 
         /// <summary>
