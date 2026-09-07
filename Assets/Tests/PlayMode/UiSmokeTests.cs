@@ -399,7 +399,11 @@ namespace KkomaKnight.Tests.Play
                 int evInTabs = CountTextIn(tabs, s => s == "이벤트");
                 Assert.GreaterOrEqual(evInTabs, 1, "탭 바에 «이벤트» 라벨이 있어야 한다(T168 · 다섯째 칸)");
                 Assert.AreEqual(evInTabs, CountTextIn(lobby, s => s == "이벤트"), "«이벤트» 글자는 탭 바 밖에 하나도 없어야 한다(T168 · 주인 «중복이니 빼 주고»)");
-                Assert.IsFalse(HasText(s => s == "특권") || HasText(s => s == "퀘스트") || HasText(s => s == "출석"), "메뉴로 옮긴 것은 로비에 두 번 안 나온다(T96-menu)");
+                // T148(주인 «데일리기프트·퀘스트·출석·특권은 로비에 걍 꺼내놓는게 나은듯» → «전처럼») 이 **T96-menu 를 뒤집었다** —
+                // 넷은 이제 로비 사이드 기둥에 «있어야» 한다. 예전 단언(«로비에 두 번 안 나온다»)은 그 지시 «전»의 계약이라 뒤집는다.
+                // 꺼진 것도 세는 자로 본다(탭 라벨에서 겪은 함정과 같은 이유 · 결정 441).
+                foreach (var n in new[] { "특권", "퀘스트", "출석" })
+                    Assert.GreaterOrEqual(CountTextIn(lobby, t => t == n), 1, "«" + n + "» 은 로비에 나온다(T148 이 T96-menu 를 뒤집었다)");
                 Assert.IsFalse(HasText(s => s == "스타터팩") || HasText(s => s == "7일 챌린지") || HasText(s => s == "시즌 패스") || HasText(s => s == "성"), "T78 삭제분 라벨 0");
                 // T63-lobby — 아이콘 라벨(사이드 4 · 보조 2 · 이벤트)은 보조 하한(36)으로 2줄까지 잘림 없이: bestFit 이 줄이지 않고(TextGenerator 로 직접 굴려 36) · 선호 높이 ≤ 칸
                 {
