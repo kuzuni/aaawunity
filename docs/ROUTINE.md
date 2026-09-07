@@ -1650,7 +1650,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. 하단 스탯 8칸의 **라벨 글자가 값보다 어두워** 어두운 판에서 잘 안 보인다(레퍼런스는 라벨도 회백색). T121 의 «대비» 갈래라 같이 볼 것 — 이 항목은 T121 워커가 가져가도 된다.
 4. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` 02·03 PNG 를 위 두 좌표로 확대해 «코인 하나 · 숫자가 바 안» + 주인 폰.
 
-### T135 — **특전 카드(04·05) 몸통이 레퍼런스와 밝기가 «반대» 라 설명 글자가 안 읽힌다** (워커 실측 등재 2026-09-07 04:2X · 화면 색만 · 배치·글자 0줄) — **🔄 코드 push(`ecacd778` · sess-0220-31894 · 워커 B) — ⓐ CI 확인 끝(run #267 `33df55f31` 이 이 커밋을 담고 유니티 잡 success = `AssertPerkCardIsReadable` Passed · 회귀 0) · ⓑ 남은 일 = `screens` 04·05 PNG 눈 확인뿐**(267 은 workflow_dispatch 라 screens 배포 step 이 skipped · push 런을 기다린다)
+### T135 ✅ — **특전 카드(04·05) 몸통이 레퍼런스와 밝기가 «반대» 라 설명 글자가 안 읽힌다** (워커 실측 등재 2026-09-07 04:2X · 화면 색만 · 배치·글자 0줄) — **✅ 완료(`ecacd778` · sess-0220-31894 · 워커 B) — ⓐ CI 확인 끝(run #267 `33df55f31` 이 이 커밋을 담고 유니티 잡 success = `AssertPerkCardIsReadable` Passed · 회귀 0) · ⓑ 남은 일 = `screens` 04·05 PNG 눈 확인뿐**(267 은 workflow_dispatch 라 screens 배포 step 이 skipped · push 런을 기다린다) · **ⓑ 끝났다(07:2X)**: `screens` **run 283**(`3a572294` · 이 커밋을 조상으로 담았다)의 `04_perks.png` 를 고치기 전과 같은 좌표에서 재니 카드 몸통 **`#2B2B2B`**(레퍼런스 `#2C2C2C` · 고치기 전 `#D7D3D3`)이고 세 카드의 설명이 전부 읽힌다 → **✅ 종결**(결정 406)
 
 > 재료: `screens` run **257**(`c0669df2` · **T126 뒤라 색이 처음으로 맞는 PNG**)의 `04_perks.png` 과 `docs/ref/04_perks.jpg` 를 `tools/ref_color.py` 로 **같은 상대 좌표에서** 쟀다.
 >
