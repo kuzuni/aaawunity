@@ -21,3 +21,41 @@ namespace UnityEngine.Rendering.Universal
         public void SetRenderer(int index) { }
     }
 }
+
+namespace UnityEngine.Rendering
+{
+    // Volume 프레임워크 — T181 이 쓰는 표면만(진짜 URP 에서는 UnityEngine.Rendering 에 있다).
+    public class VolumeParameter { public bool overrideState { get; set; } }
+    public class VolumeParameter<T> : VolumeParameter { public T value { get; set; } }
+    public class MinFloatParameter : VolumeParameter<float> { }
+    public class ClampedFloatParameter : VolumeParameter<float> { }
+    public class BoolParameter : VolumeParameter<bool> { }
+
+    public class VolumeComponent : ScriptableObject { public bool active { get; set; } }
+
+    public class VolumeProfile : ScriptableObject
+    {
+        public T Add<T>(bool overrides = false) where T : VolumeComponent => ScriptableObject.CreateInstance<T>();
+        public bool TryGet<T>(out T component) where T : VolumeComponent { component = null; return false; }
+    }
+
+    public class Volume : MonoBehaviour
+    {
+        public bool isGlobal { get; set; }
+        public float priority { get; set; }
+        public float weight { get; set; }
+        public VolumeProfile profile { get; set; }
+        public VolumeProfile sharedProfile { get; set; }
+    }
+}
+
+namespace UnityEngine.Rendering.Universal
+{
+    public class Bloom : VolumeComponent
+    {
+        public MinFloatParameter threshold = new MinFloatParameter();
+        public MinFloatParameter intensity = new MinFloatParameter();
+        public ClampedFloatParameter scatter = new ClampedFloatParameter();
+        public BoolParameter highQualityFiltering = new BoolParameter();
+    }
+}

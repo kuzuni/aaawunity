@@ -60,6 +60,7 @@ namespace KkomaKnight.Game
             d.Dungeon = LoadDungeon(catalog);
             ApplyCombatOverride(d, catalog);   // T173 — 전투 규칙 덮어쓰기(창 사거리·관통)는 App 이 서기 «전» 에 먹인다
             App.Create(d, catalog, uiFont, Camera.main);
+            PostFx.Enable(App.I != null ? App.I.transform : null, Camera.main);   // T181 — 월드 Bloom(UI 에는 안 먹는다 · PostFx 주석 참조)
             _loading?.SetProgress(1f);
             // 깜빡임 방지 — 데이터가 순식간에 읽혀도 로딩 화면이 한 프레임만 번쩍이지 않게 최소 표시 시간을 채우고 지운다(T96-loading).
             // 로비는 이미 그 뒤에 세워져 있으므로 사라지는 순간 바로 보인다.
