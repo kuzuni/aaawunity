@@ -420,7 +420,9 @@ namespace KkomaKnight.Game
             // TextKind.Small = «정말 작아야 하는 곳»(하한 없음 · 호출부가 명시) — 이 자리만의 T63 예외다. 까닭은 FootFontSize 주석(결정 361).
             var t = UiKit.Text(_pops, "", size, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Small); t.name = name;
             size = t.fontSize;
-            t.horizontalOverflow = HorizontalWrapMode.Overflow; t.fontStyle = FontStyle.Bold; t.raycastTarget = false;
+            // Bold 를 안 준다(T125 회차 4 · 결정 449) — 이 자리는 화면에서 가장 작은 글자라 Bold 면 획이 서로 붙어 숫자가 흰 덩어리가 된다.
+            // 실측: 레퍼런스와 글자 bbox 는 사실상 같은데(540 환산 30×10.5 대 27×11) 단 안 흰 픽셀 비율이 0.12 대 0.38 이었다 = 크기가 아니라 굵기.
+            t.horizontalOverflow = HorizontalWrapMode.Overflow; t.fontStyle = FontStyle.Normal; t.raycastTarget = false;
             var rt = t.rectTransform; rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f); rt.sizeDelta = new Vector2(400, size * 1.4f);
             return t;
         }
@@ -469,6 +471,12 @@ namespace KkomaKnight.Game
         /// 실측(레퍼런스 720px 사본 / 우리 screens run 255 · 빨간 HP 단): 레퍼런스는 바 18px 안에 숫자 잉크가 <b>9px = 바 높이의 0.50</b> 이고
         /// 바 넓이의 <b>12%</b>만 흰 픽셀이다. 우리는 바 17px 에 잉크 <b>14px = 0.82</b> 이고 흰 픽셀이 <b>49%</b> — 숫자가 단을 거의 덮어
         /// 빨강·파랑 채움이 가려지고 획 사이가 메워져 «흰 덩어리» 로 보였다. 폭이 아니라 <b>높이가 범인</b>이다.
+        /// <para>
+        /// ⚠ <b>위 «0.50» 은 잘못 잰 값이다(결정 449)</b> — 흰 픽셀을 «바 사각형 안» 에서만 찾았는데 <b>레퍼런스의 숫자는 바 위·아래로 넘쳐 나간다</b>
+        /// (레퍼런스 02 의 «1055» 는 빨간 단 윗변을 넘는다). 제대로 재면 레퍼런스 글자는 720px 에서 40×14 = <b>540 환산 30×10.5</b> 이고
+        /// 우리는 <b>27×11</b> 로 <b>사실상 같다</b>. 즉 이 상수가 데려온 최종 크기 26 은 <b>결과적으로 옳았고</b>(되돌리지 않는다),
+        /// 그것을 고른 근거 숫자만 틀렸다. 남은 «뭉개짐» 의 진짜 원인은 크기가 아니라 <b>굵기</b>다 — <see cref="FootText"/> 의 <c>fontStyle</c> 주석.
+        /// </para>
         /// </para>
         /// <para>
         /// 왜 그렇게 컸나: 전에는 «바 높이 × 0.8» 로 재 놓고 <c>TextKind.Aux</c> 로 만들어 T63 하한(<see cref="TextSize.Aux"/> 36)이

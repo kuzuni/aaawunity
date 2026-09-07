@@ -86,6 +86,8 @@ namespace KkomaKnight.Tests.Play
             Assert.Less(W.PlayerHpText.fontSize, TextSize.Aux, "발밑 숫자는 보조 하한보다 작다 — 이 자리만의 T63 예외(결정 361)");
             Assert.GreaterOrEqual(W.PlayerHpText.fontSize, 26, "그래도 배지급 하한(BattleWorld.MinFootFont 26) 아래로는 안 내려간다");
             Assert.LessOrEqual(W.PlayerHpText.fontSize, UiKit.FrameH * Layout.FootBarH / 100f * 0.8f, "발밑 숫자 ≤ 단 높이 × 0.8 — 넘으면 숫자가 단을 덮어 빨강·파랑 채움이 안 보인다(결정 361)");
+            // 화면에서 가장 작은 글자라 Bold 면 획이 서로 붙어 흰 덩어리가 된다(결정 449 · screens run 331 실측: 레퍼런스와 글자 크기는 같은데 흰 픽셀이 0.12 대 0.38)
+            Assert.AreEqual(FontStyle.Normal, W.PlayerHpText.fontStyle, "발밑 숫자는 Bold 가 아니다(T125 회차 4 · 결정 449)");
             Assert.GreaterOrEqual(W.PlayerHpText.rectTransform.rect.height, W.PlayerHpText.preferredHeight - 1f, "발밑 숫자 칸 높이 ≥ 선호 높이(잘림 0)");
             Assert.LessOrEqual(W.PlayerHpText.preferredWidth, W.PlayerHpBar.size.x * WorldCam.PPU * (UiKit.FrameW / WorldCam.LayoutW) + 1f, "발밑 숫자 «" + W.PlayerHpText.text + "» 가 바 폭 안에");
             Assert.AreEqual(W.PlayerHpBar.size.x, W.PlayerShBar.size.x, 1e-3f, "두 단은 같은 폭"); Assert.AreEqual(W.PlayerHpBar.size.y, W.PlayerShBar.size.y, 1e-3f, "두 단은 같은 높이");
