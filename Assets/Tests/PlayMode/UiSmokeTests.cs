@@ -1313,17 +1313,19 @@ namespace KkomaKnight.Tests.Play
                 + (ShopScreen.ChestOpenAt - ShopScreen.ChestFallSec).ToString("0.##") + "s (T202 2항)");
             Assert.LessOrEqual(ShopScreen.ChestOpenAt + 1.2f, 2.7f,
                 "연출 총 길이(착지 + 정지 + 열림 ≈ 1.2s)가 2.7s 를 넘으면 주인이 여러 번 돌릴 때 답답하다(T202 4항)");
-            // T202 4항 — **첫 탭 = 건너뛰기**(그 다음 탭이 닫기). 연출이 1초 길어졌으므로 이 갈래가 없으면 탭 한 번에 창이 닫혀 결과를 못 본다.
-            // ⚠ 시계에 안 매이게 «둘 중 하나» 로 단언한다 — 느린 기계에서 이미 연출이 끝났다면 «닫히는 것» 이 옳은 동작이라 거짓 빨강이 되면 안 된다.
-            Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Background"), "결과 창 배경(탭 자리)"); yield return Frames(1);
-            Assert.IsTrue(_app.Overlay.IsOpen || chestImg0.sprite.name.ToLowerInvariant().Contains("open"),
-                "연출이 도는 중에 배경을 탭하면 «건너뛰기» 여야 한다(창이 닫히면 안 된다 · T202 4항). "
-                + "연출이 이미 끝난 뒤였다면 닫히는 것이 옳으므로 그때는 «열린 상자» 로 통과한다.");
             var chestGrp0 = UiKit.Find(_app.Overlay.Root, "Chest") as RectTransform;
             Assert.IsNotNull(chestGrp0, "조각의 상자 묶음(Chest)");
             float chestY0 = chestGrp0.anchoredPosition.y;   // «떨어지기 전» 높이 — 연출이 끝난 뒤와 맞대 본다(상수에 안 기댄다)
             // T158 ⓐ — «작았다» 는 여기서 잰다(가장 이른 자리). 뒤에서 재면 커지는 중이라 값이 흐른다.
             float chestScale0 = chestGrp0.localScale.x;
+            // T202 4항 — **첫 탭 = 건너뛰기**(그 다음 탭이 닫기). 연출이 1초 길어졌으므로 이 갈래가 없으면 탭 한 번에 창이 닫혀 결과를 못 본다.
+            // ⚠ 자리는 «재기 전» 값(chestY0·chestScale0)을 다 읽은 «뒤» 여야 한다 — 건너뛰기는 낙하를 끝까지 돌려 놓으므로
+            //    앞에 두면 «떨어지기 전 높이» 가 이미 착지 높이가 되어 아래 «떨어져 내려왔나» 단언이 스스로 빨개진다(CI #404 에서 실제로 그랬다 · 결정 527).
+            // ⚠ 그리고 시계에 안 매이게 «둘 중 하나» 로 단언한다 — 느린 기계에서 이미 연출이 끝났다면 «닫히는 것» 이 옳은 동작이라 거짓 빨강이 되면 안 된다.
+            Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Background"), "결과 창 배경(탭 자리)"); yield return Frames(1);
+            Assert.IsTrue(_app.Overlay.IsOpen || chestImg0.sprite.name.ToLowerInvariant().Contains("open"),
+                "연출이 도는 중에 배경을 탭하면 «건너뛰기» 여야 한다(창이 닫히면 안 된다 · T202 4항). "
+                + "연출이 이미 끝난 뒤였다면 닫히는 것이 옳으므로 그때는 «열린 상자» 로 통과한다.");
             Assert.IsTrue(HasText(s => s == "탭하여 닫기"), "결과 창: «탭하여 닫기»(조각의 Text_TouchContionue)");
             // T95 — 제목은 **조각 제 리본**에 쓴다(글자를 따로 얹으면 리본의 데모 글자 «Reward» 가 화면에 남는다 · CI #235)
             {
