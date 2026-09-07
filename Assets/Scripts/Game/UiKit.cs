@@ -1309,7 +1309,7 @@ namespace KkomaKnight.Game
         /// <para>
         /// 치우침의 뿌리는 <b>아이콘 rect 와 글자 rect 를 따로 놓는 것</b>이다 — 아이콘을 줄 왼쪽 끝(x 0)에 못 박고 글자를 그 옆에서 <b>왼쪽 정렬</b>하면
         /// 줄은 가운데라도 <b>보이는 덩어리</b>는 왼쪽에 쏠린다(특권 ⭐·던전·PvP·아레나 티어가 전부 그 꼴이었다).
-        /// 그래서 글자 폭을 <see cref="Text.preferredWidth"/> 로 <b>실측</b>해 «아이콘 + 간격 + 글자» 의 합을 구하고, 그 합을 줄 가운데에 놓는다 —
+        /// 그래서 글자 폭을 <see cref="TextWidthAtFullSize"/> 로 <b>실측</b>해(제 크기로 그릴 때의 폭 · <b><see cref="Text.preferredWidth"/> 는 쓰지 않는다</b> — 그 값은 «지금 줄어든 크기» 로 재므로 되먹임이 생긴다 · 결정 490) «아이콘 + 간격 + 글자» 의 합을 구하고, 그 합을 줄 가운데에 놓는다 —
         /// 글자 길이가 달라도(«던전»·«PvP»·«브론즈»·«특권») 각자 가운데다.
         /// </para>
         /// <para>
@@ -1319,11 +1319,30 @@ namespace KkomaKnight.Game
         /// </para>
         /// <paramref name="rowWPct"/> 는 그 줄의 <b>프레임 대비 폭 %</b>(rect 를 안 읽으므로 배치 전에 불러도 된다).
         /// </summary>
+        /// <summary>
+        /// 그 글자가 <b>제 크기(<see cref="Text.fontSize"/>)로</b> 그려질 때 필요한 폭(프레임 단위 px) — <see cref="CenterIconTitle"/> 이 칸을 잡을 때 쓴다.
+        /// <para>
+        /// <b>왜 <see cref="Text.preferredWidth"/> 를 안 쓰나(T170 회차 3 · 결정 490)</b> — bestFit 글자에서 그 값은 «지금 rect 안에서 줄어든 크기» 로 잰 폭이다.
+        /// 그 폭으로 rect 를 다시 잡으면 <b>작아진 폭 → 더 좁은 칸 → 더 작은 글자</b> 로 스스로 주저앉는 되먹임이 생긴다
+        /// (특권 제목이 60 이 아니라 <b>55</b> 로 굳어 있던 까닭이 이것이다 — 칸이 «55 로 그린 폭» 과 정확히 같아 60 이 다시는 안 들어갔다).
+        /// 그래서 <b>넉넉한 칸</b>을 주고 재 «최대 크기(= fontSize)로 그릴 때의 폭» 을 얻는다(<see cref="TextAudit.BestFitSize"/> 와 같은 방법 · 새 <see cref="TextGenerator"/>).
+        /// </para>
+        /// </summary>
+        public static float TextWidthAtFullSize(Text text)
+        {
+            if (text == null || string.IsNullOrEmpty(text.text)) return 0f;
+            var s = text.GetGenerationSettings(new Vector2(FrameW * 4f, FrameH * 4f));   // 넉넉한 칸 = bestFit 이 제 크기를 고른다
+            s.scaleFactor = 1f;
+            return new TextGenerator().GetPreferredWidth(text.text, s);
+        }
+
         public static void CenterIconTitle(RectTransform icon, Text text, float rowWPct, float iconPct = TitleIconPct, float gapPct = TitleGapPct)
         {
             if (icon == null || text == null) return;
             float rowPx = Mathf.Max(1f, rowWPct / 100f * FrameW);
-            float textPct = Mathf.Clamp(text.preferredWidth / rowPx * 100f, 5f, 100f - iconPct - gapPct);
+            // 4% 여유 — bestFit 은 «칸 안에 들어가야» 고르므로 칸이 필요 폭과 «딱» 같으면 반올림 한 픽셀에 한 단계 줄어든다.
+            // 여유는 덩어리 폭에 함께 들어가므로 가운데 계산(TitleBlockOffsetPct = 0)은 그대로다(글자는 왼쪽 정렬이라 오른쪽 여백만 는다).
+            float textPct = Mathf.Clamp(TextWidthAtFullSize(text) * 1.04f / rowPx * 100f, 5f, 100f - iconPct - gapPct);
             float startPct = Mathf.Max(0f, (100f - (iconPct + gapPct + textPct)) * 0.5f);
             Pct(icon, startPct, -10, iconPct, 120);
             // 세로는 «부르는 쪽이 잡아 둔 그대로» 둔다(가로만 가운데로 옮기는 함수다 · T170 회차 3 · 결정 490).
