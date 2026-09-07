@@ -105,8 +105,12 @@ namespace KkomaKnight.Game
                 // T176 ⓑ(주인 2026-09-07 11:0X «장착 슬롯 부분이랑 아래에 있는 장비 모양일 때랑 형식이 똑같지가 않네 통일해 줘») —
                 // 인벤 칸과 **같은 조각**(ui.partBadge = 그 칸의 TypeArea 가 달고 있는 다이아 배지)을 **같은 비율**(GearUi.PartBadge)로 세우고
                 // 그 안의 «Icon» 에 부위 그림을 넣는다. 종전에는 배지 없이 아이콘 한 장을 칸 밖(−8%)에 얹어 두 자리의 꼴이 달랐다.
-                var badgeGo = UiKit.Spawn("ui.partBadge", s.Root); badgeGo.name = "PartBadge";
+                // 배지는 **칸 조각(ItemFrame_01) 의 자식**이다 — 슬롯 뿌리(s.Root)는 위 «Lv. N» 줄까지 품어 칸보다 크고(1.26배),
+                // 거기에 %로 달면 «보이는 칸» 기준 비율이 어긋난다(CI #324 실측: 25.5% 로 준 것이 칸의 20.3% 로 보였다 · 결정 442).
+                // 조각의 자식이면 조각 배율(FitScale)까지 같이 받아 인벤 칸과 눈금이 같아진다. 그림 위로 올려 둔다.
+                var badgeGo = UiKit.Spawn("ui.partBadge", s.Frame); badgeGo.name = "PartBadge";
                 UiKit.Pct((RectTransform)badgeGo.transform, GearUi.PartBadge);
+                badgeGo.transform.SetAsLastSibling();
                 s.PartIcon = UiKit.SetSprite(badgeGo.transform, "Icon", GearLook.PartIcon(part), Palette.White);
                 if (s.PartIcon != null) s.PartIcon.gameObject.name = "PartIcon";
                 var badge = UiKit.Panel(s.Root, "PlusBadge", "fr.r12", Palette.Yellow); UiKit.Pct(badge.rectTransform, SlotBadge); s.PlusBadge = badge.gameObject;
