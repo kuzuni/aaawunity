@@ -499,6 +499,21 @@ namespace KkomaKnight.Tests.Play
                     Assert.IsTrue(HasText(s => s == "적 50마리 처치"), "줄 제목은 우리말");
                     // T78 — 줄 바탕(프리팹 ListFrame_08)이 어두워 제목은 흰 글자 + 외곽선이어야 읽힌다(screens run 148 눈 확인)
                     { var t0 = UiKit.Find(q0, "Title").GetComponent<Text>(); Assert.IsNotNull(t0, "줄 제목 글자"); Assert.IsNotNull(t0.GetComponent<TextOutline8>(), "줄 제목 외곽선"); Assert.Greater(t0.color.r + t0.color.g + t0.color.b, 2.4f, "줄 제목은 밝은 글자"); }
+                    // T212 — 진행바 채움 색: **완료 줄만** 초록(우리 «초록 = 열림/완료» 관례) · 미완 줄은 프리팹이 달고 온 노랑 그대로.
+                    // 리터럴 색이 아니라 `Palette.Green` 을 견주는 까닭 = 이 자가 묻는 것은 «무슨 rgb 인가» 가 아니라 «우리 관례와 같은가» 다
+                    // (팔레트가 바뀌면 화면과 자가 같이 움직여야 옳다 · 결정 555 «구현을 부르는 식» 과는 다른 갈래 — 여기서 부르는 것은 구현이 아니라 규약이다).
+                    for (int qi = 0; qi < 6; qi++)
+                    {
+                        var q = UiKit.Find(_app.Overlay.Root, "Quest:" + qi); Assert.IsNotNull(q, "퀘스트 줄 " + qi);
+                        var sl = q.GetComponentInChildren<Slider>(true); Assert.IsNotNull(sl, "줄 " + qi + " 진행바");
+                        Assert.IsNotNull(sl.fillRect, "줄 " + qi + " 진행바 채움 칸(fillRect)");
+                        var fi = sl.fillRect.GetComponent<Image>(); Assert.IsNotNull(fi, "줄 " + qi + " 채움 그림");
+                        bool green = Mathf.Abs(fi.color.r - Palette.Green.r) < 0.02f
+                                  && Mathf.Abs(fi.color.g - Palette.Green.g) < 0.02f
+                                  && Mathf.Abs(fi.color.b - Palette.Green.b) < 0.02f;
+                        if (qi >= 3) Assert.IsTrue(green, "완료 줄 " + qi + " 의 진행바는 초록이어야 한다(T212) — 지금 " + fi.color);
+                        else Assert.IsFalse(green, "미완 줄 " + qi + " 은 프리팹 노랑 그대로여야 한다(T212 · 관례는 «완료» 에만 걸린다) — 지금 " + fi.color);
+                    }
                 }
                 { var bx = (RectTransform)UiKit.Find(_app.Overlay.Root, "QuestBox"); Assert.IsNotNull(bx, "퀘스트 박스"); Assert.AreEqual(Layout.QsBox.X, bx.anchorMin.x * 100f, 0.5f, "퀘스트 박스 x = 표 ⑬"); Assert.AreEqual(1f - Layout.QsBox.Y / 100f, bx.anchorMax.y, 1e-3f, "퀘스트 박스 y = 표 ⑬"); }
                 // T63-lobbypopups — 글자 잘림 0 + 제목/카운터가 본문 40 아래로 안 줄어듦(팝업 4종) · 리본 명판 60 이 안 잘림

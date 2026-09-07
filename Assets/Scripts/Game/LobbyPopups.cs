@@ -317,6 +317,8 @@ namespace KkomaKnight.Game
         /// 격자 칸 자신이 <c>ListItem_Mission_02</c> 이고 그 안에 바탕 <c>ListFrame_08</c> · 제목 · <c>Slider_02_Yellow</c> · <c>Group_Price</c> · <c>Check</c> 가 있다(이름은 <c>Quest:i</c> 로 바꾼다 · 프리팹 유래 증거는 안쪽 <c>ListFrame_08</c>).
         /// 옮기는 것: 보상(<c>Group_Price</c> = 아이콘 + 점수 · 가로 배치를 끄고 레퍼런스처럼 «아이콘 위 · 숫자 아래») · 제목 · 진행바(<c>Slider_02_Yellow</c>) · 받기 표시(<c>Check</c> · 슬라이더 밑에 있던 것을 줄 오른쪽으로).
         /// 미완 줄(앞 3개)은 레퍼런스 15 처럼 주황 «이동» 버튼(껍데기 = 닫기만) · 완료 줄(뒤 3개)은 프리팹 ✅.
+        /// <b>진행바 채움은 «완료» 에만 초록</b>(T212 · 우리가 이미 쓰는 «초록 = 열림/완료» — 레퍼런스 15 도 완료 줄이 초록이다) ·
+        /// 미완 줄은 프리팹이 달고 온 노랑 그대로다. <b>다른 화면의 노란 진행바(로딩·경험치 등)는 이 관례에 안 걸린다.</b>
         /// </summary>
         static QuestRowParts QuestRow(RectTransform frame, int i, Overlay ov)
         {
@@ -357,6 +359,16 @@ namespace KkomaKnight.Game
                 var sr = (RectTransform)slider.transform; sr.name = "Bar";
                 UiKit.Pct(sr, Layout.QsRowBar.WithH(Layout.LpBarH).Within(Layout.QsRow1));
                 slider.value = done ? 1f : 0f;
+                // T212 — 완료 줄만 채움을 «초록» 으로. 프리팹이 달고 온 노랑(`Slider_02_Yellow`)은 **미완** 에만 남긴다.
+                // 조각을 갈아 끼우지 않는 까닭: `Slider_02_LightGreen` 은 같은 흰 조각(`Slider_02_BasePrefab` 의 `Fill`)을
+                // rgb(130,215,60) 으로 tint 한 것뿐이라(두 프리팹의 차이는 `m_Color` 세 줄) **색 한 줄이면 그 프리팹과 같은 그림**이다.
+                // 색은 우리 팔레트 `Palette.Green`(#85D048 = rgb(133,208,72)) — 그 프리팹 값과 눈으로 같은 초록이고,
+                // «초록 = 열림/완료» 를 이미 쓰는 다른 자리(장비 세부 열린 줄)와 **한 곳에서** 나온다.
+                if (done && slider.fillRect != null)
+                {
+                    var fill = slider.fillRect.GetComponent<Image>();
+                    if (fill != null) fill.color = Palette.Green;
+                }
                 var st = sr.GetComponentInChildren<Text>(true);
                 // 바 안 숫자는 UiKit.MakeBar 와 같은 규격(bestFit 32~40 · 가로 넘침 허용) — 바 칸(LpBarH 44px)이 40 한 줄(55px)보다 낮다
                 if (st != null) { st.text = (done ? QuestGoals[i] : 0) + "/" + QuestGoals[i]; st.fontSize = TextSize.Body; st.resizeTextForBestFit = true; st.resizeTextMinSize = TextSize.BestFitMin; st.resizeTextMaxSize = TextSize.Body; st.horizontalOverflow = HorizontalWrapMode.Overflow; OnDark(st); TextAudit.Mark(st, TextKind.Body); }

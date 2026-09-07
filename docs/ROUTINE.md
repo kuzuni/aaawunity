@@ -3307,6 +3307,11 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
    - 그래서 이 건은 «고쳐야 하는 결함» 이 아니라 **«관례를 맞출까 말까» 의 선택**이다. 고른 쪽과 까닭을 결정 기록에 한 줄 남기면 그것으로 끝난다.
 5. **고친다면 가장 작은 수선** — 그 줄의 슬라이더 채움 조각을 `done` 일 때만 `Slider_02_LightGreen` 것으로 바꾼다(자리·값·글자 로직은 그대로). **다른 화면의 노란 진행바(로딩·경험치 등)는 건드리지 마라** — 저 관례는 «완료» 에만 걸린다.
 6. **선점 안 한 까닭** — 이 컨테이너에 `dotnet` 이 없어 4항 게이트를 못 돌린다(결정 206). 재서 넘긴다.
+7. 🔄 **회차 1 코드 push(sess-2005-9317 · 워커 A · 20:2X)** — 4항의 «선택» 을 **«관례를 맞춘다» 쪽으로 정했다**(결정 556 · 까닭은 그 줄에). 고침은 **한 곳뿐**이다:
+   - `LobbyPopups.QuestRow` — `done` 일 때만 `slider.fillRect` 의 `Image.color` 를 **`Palette.Green`**(`#85D048`)으로. 미완 줄은 프리팹 노랑 그대로.
+   - **조각을 갈아 끼우지 않았다** — 두 프리팹(`Slider_02_Yellow` ↔ `Slider_02_LightGreen`)의 차이는 **`m_Color` 세 줄뿐**이고 채움 그림은 같은 흰 조각(`Slider_02_BasePrefab` 의 `Fill`)이다. 즉 **색 한 줄이면 그 프리팹과 같은 그림**이고, 스폰 한 번·카탈로그 키 하나가 는다는 값을 안 치른다. LightGreen 의 값 rgb(130,215,60) ↔ 우리 `Palette.Green` rgb(133,208,72) — 눈으로 같은 초록이라 **팔레트 쪽을 골랐다**(관례가 한 곳에서 나온다).
+   - 게이트는 `UiSmokeTests` 퀘스트 블록 안 — **여섯 줄 전부**를 훑어 «뒤 3은 초록 · 앞 3은 초록 아님» 을 못 박는다(관례가 «완료» 에만 걸린다는 것까지 자가 지킨다).
+   - **확인 = 다음 `screens` 15 PNG 에서 완료 줄 바가 초록인가** — 그때까지 `docs/claims/T212.lock` 은 안 반납한다(초록만으로 안 닫는다).
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
