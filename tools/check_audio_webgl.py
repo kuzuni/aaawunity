@@ -1,96 +1,66 @@
 #!/usr/bin/env python3
-"""오디오 게이트 (T64) — WebGL 에서 소리가 나려면 지켜야 하는 불변식.
+"""오디오 게이트 (T64) — WebGL 에서 소리가 나는 임포트 설정인가.
 
-**왜 임포트 설정이 아니라 이걸 보나** (두 회차의 배포 실측 · PROGRESS T64 진행 기록):
-  · 유니티 WebGL 은 압축 오디오를 **브라우저에게 그대로 넘긴다** — 배포 빌드의 `KkomaKnight.framework.js` 에서
-    `_JS_Sound_Load(ptr, length, decompress, fmodSoundType)` 는 `length < 131072` 면 `decodeAudioData` 를 강제하고
-    아니면 `<audio>` 요소에 `jsAudioGetMimeTypeFromType`(13 → audio/mpeg · 20 → audio/wav · 나머지 → audio/mp4) 로 물린다.
-  · 그런데 이 프로젝트의 WebGL 빌드는 임포터의 `compressionFormat` 을 **반영하지 않는다** — 회차 1(PCM 0)·회차 2(AAC 7)
-    둘 다 무시되고 소스 Vorbis 가 그대로 실렸다(`loadType` 만 반영됐다 = 재임포트는 되고 있다).
-    FSB 안의 raw Vorbis 는 Ogg 프레이밍이 없어 브라우저가 못 읽는다 → «no supported source» · «Unable to decode audio data».
-  · 그래서 회차 3 은 유니티 오디오 파이프라인을 **우회**했다: `Assets/StreamingAssets/audio/**.ogg` 원본을 런타임에
-    `UnityWebRequestMultimedia` 로 받아 카탈로그 클립 대신 쓴다(`Game/Audio.cs` 의 `AudioManager.LoadStreamed`).
-  · **회차 4 에서 그 경로는 껐다**(결정 217) — 유니티 WebGL 네이티브가 ogg **스트리밍**을 거부해
-    «Streaming of 'ogg' on this platform is not supported» 를 키 20 × 시도 2 = 40건 **빨간 줄**로 찍고(CI #155·#158)
-    받아 온 클립은 0/20 이었다. 즉 소리에는 보탬이 0 인데 배포 게이트만 막았다.
-    원본과 이 게이트는 남겨 둔다 — 브라우저 `decodeAudioData` 를 .jslib 로 직접 부르는 다음 길의 재료다.
+**무엇이 기준인가**: 주인이 2026-09-07 04:3X 에 «webgl 오디오 잘 들린다» 고 확인한 배포
+(gh-pages 가 서비스하던 CI #148 = main `fc9fe35`)의 설정 = **`compressionFormat: 7`(AAC)**.
+그 뒤 회차 3(`9ed1c7a`)이 이 설정을 Vorbis(1)로 되돌렸다가 회차 5(`이 커밋`)에서 복원했다 —
+같은 사고를 막으려고 게이트로 굳힌다.
 
-이 게이트가 지키는 것: **카탈로그의 `bgm.*`·`snd.*` 키마다 StreamingAssets 원본 파일이 있어야 한다**
-(`Audio.cs` 의 `StreamedFile()` 과 같은 규칙: `bgm.lobby` → `audio/bgm/lobby.ogg` · `snd.click` → `audio/sfx/click.ogg`).
-파일이 없으면 그 소리는 WebGL 에서 조용히 안 난다(에러는 아니라 아무도 모른다) — 그래서 CI 에서 막는다.
+**왜 AAC 여야 하나** (배포 빌드 `KkomaKnight.framework.js` 실측):
+  · `_JS_Sound_Load(ptr, length, decompress, fmodSoundType)` 는 `length < 131072` 면 `decodeAudioData`,
+    아니면 `<audio>` 요소 + `jsAudioGetMimeTypeFromType`(13 → audio/mpeg · 20 → audio/wav · **나머지 → audio/mp4**).
+    즉 유니티 WebGL 은 **AAC 를 전제**하고 데이터를 브라우저에 넘긴다.
+  · Vorbis 로 두면 FSB 안의 raw Vorbis(Ogg 프레이밍 없음)가 넘어가 브라우저가 못 읽는다.
+  · PCM(0)·ADPCM(2)은 빌드가 반영하지 않는다(회차 1 실측: `.data` 크기가 그대로였다).
+
+**주의 — 워커 환경의 headless chromium 으로는 이 설정을 판정할 수 없다**:
+headless 는 AAC/MP4 코덱이 없어 AAC 가 제대로 실려 있어도 «no supported source»·«Unable to decode
+audio data» 를 찍는다(회차 2 를 «실패» 로 잘못 읽은 원인 · 결정 300). 실기(주인 폰·데스크톱 크롬)가
+판정 도구다. 그래서 이 게이트는 «소리가 나는가» 가 아니라 «주인이 확인한 설정이 유지되는가» 를 지킨다.
 
 사용: python3 tools/check_audio_webgl.py        # 0 = 통과 · 1 = 위반 목록
 """
-import json, os, sys
+import glob, os, re, sys
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
-CATALOG = os.path.join(ROOT, 'Assets', 'KkomaKnight', 'catalog.json')
-STREAM = os.path.join(ROOT, 'Assets', 'StreamingAssets')
+WANT = 7          # AAC — 주인 확인 설정(CI #148)
+NAMES = {0: 'PCM', 1: 'Vorbis', 2: 'ADPCM', 3: 'MP3', 7: 'AAC'}
 
 
-def streamed_file(key):
-    """Audio.cs 의 AudioManager.StreamedFile 과 같은 규칙."""
-    if '.' not in key:
+def default_format(text):
+    m = re.search(r'^  defaultSettings:\n((?:    .*\n)+)', text, re.M)
+    if not m:
         return None
-    head, name = key.split('.', 1)
-    if not name:
-        return None
-    return 'audio/%s/%s.ogg' % ('bgm' if head == 'bgm' else 'sfx', name)
-
-
-def audio_keys():
-    doc = json.load(open(CATALOG, encoding='utf-8'))
-    out = {}
-    def walk(node):
-        if isinstance(node, dict):
-            for k, v in node.items():
-                if isinstance(v, str) and (k.startswith('bgm.') or k.startswith('snd.')):
-                    out[k] = v
-                else:
-                    walk(v)
-        elif isinstance(node, list):
-            for v in node:
-                walk(v)
-    walk(doc)
-    return out
+    f = re.search(r'^    compressionFormat: (\d+)$', m.group(1), re.M)
+    return int(f.group(1)) if f else None
 
 
 def main():
-    keys = audio_keys()
-    if not keys:
-        print('✗ check_audio_webgl: catalog.json 에서 bgm.*/snd.* 키를 못 찾았다 (경로·형식이 바뀌었나)')
+    bad, checked = [], 0
+    for meta in sorted(glob.glob(os.path.join(ROOT, 'Assets', 'Audio', '**', '*.meta'), recursive=True)):
+        text = open(meta, encoding='utf-8').read()
+        if 'AudioImporter:' not in text:
+            continue
+        checked += 1
+        fmt = default_format(text)
+        if fmt != WANT:
+            bad.append('%s: compressionFormat %s(%s) — 주인이 «잘 들린다» 고 확인한 설정은 %d(AAC) 다 (T64 · 결정 300)'
+                       % (os.path.relpath(meta, ROOT), fmt, NAMES.get(fmt, '?'), WANT))
+        # WebGL 오버라이드(BuildTargetGroup 13)가 생기면 그것도 AAC 여야 한다.
+        for group, block in re.findall(r'^    (\d+):\n((?:      .*\n)+)', text, re.M):
+            g = re.search(r'^      compressionFormat: (\d+)$', block, re.M)
+            if group == '13' and g and int(g.group(1)) != WANT:
+                bad.append('%s: WebGL 오버라이드 compressionFormat %s — 같은 이유로 %d(AAC) 여야 한다'
+                           % (os.path.relpath(meta, ROOT), g.group(1), WANT))
+    if not checked:
+        print('✗ check_audio_webgl: Assets/Audio 에서 AudioImporter meta 를 못 찾았다 (경로가 바뀌었나)')
         return 1
-    bad = []
-    for key, src in sorted(keys.items()):
-        rel = streamed_file(key)
-        if rel is None:
-            bad.append('%s: 키 이름이 «묶음.이름» 꼴이 아니라 StreamingAssets 경로를 만들 수 없다' % key)
-            continue
-        path = os.path.join(STREAM, rel.replace('/', os.sep))
-        if not os.path.isfile(path):
-            bad.append('%s(%s): Assets/StreamingAssets/%s 없음 — WebGL 에서 이 소리는 조용히 안 난다 (원본 .ogg 를 그 자리에 복사하고 python3 tools/gen_meta.py)' % (key, src, rel))
-        elif os.path.getsize(path) == 0:
-            bad.append('%s: Assets/StreamingAssets/%s 가 0바이트' % (key, rel))
-    extra = []
-    for folder in ('bgm', 'sfx'):
-        d = os.path.join(STREAM, 'audio', folder)
-        if not os.path.isdir(d):
-            continue
-        for f in sorted(os.listdir(d)):
-            if not f.endswith('.ogg'):
-                continue
-            key = ('bgm.' if folder == 'bgm' else 'snd.') + f[:-4]
-            if key not in keys:
-                extra.append('audio/%s/%s (카탈로그에 %s 키가 없다 — 쓰지 않는 파일이면 지운다)' % (folder, f, key))
     if bad:
-        print('✗ check_audio_webgl: WebGL 원본 오디오 %d건 빠짐 (T64)' % len(bad))
+        print('✗ check_audio_webgl: WebGL 오디오 설정이 어긋난 파일 %d건 (T64)' % len(bad))
         for b in bad:
             print('  - ' + b)
         return 1
-    msg = '✓ check_audio_webgl: 카탈로그 오디오 %d개 전부 StreamingAssets 원본 있음 (T64 · 회차 4 에서 런타임 사용은 껐고 원본만 지킨다)' % len(keys)
-    if extra:
-        msg += '\n  · 참고(실패는 아님): 카탈로그에 없는 원본 %d개 — %s' % (len(extra), ' · '.join(extra))
-    print(msg)
+    print('✓ check_audio_webgl: 오디오 %d개 전부 AAC(주인 확인 설정 · T64)' % checked)
     return 0
 
 
