@@ -53,6 +53,15 @@ def main():
     for n, tid, status in rows(DOC):
         by_id.setdefault(tid, []).append((n, status))
 
+    # ⓒ 한 줄 안에서 어긋난 것 — 머리는 «⬜ 대기» 인데 본문에 «코드 push»·✅·🔄 가 있다.
+    #    워커들이 상태 칸 «뒤» 에 회차 기록을 덧붙이면서 머리를 안 고쳐 생긴다(T170 실측 · 결정 500).
+    #    표를 훑는 워커는 머리만 본다 — 그래서 끝난 일을 «선점 안 됨» 으로 읽고 다시 잡는다(T149·T151 사고와 같은 결).
+    inner = []
+    for tid, items in by_id.items():
+        for n, status in items:
+            if status.startswith(WAITING) and re.search(r"코드 push|✅|🔄", status):
+                inner.append((tid, n, status))
+
     dups = {k: v for k, v in by_id.items() if len(v) > 1}
     bad = []
     for tid, items in dups.items():
@@ -65,6 +74,13 @@ def main():
     if show_all:
         for tid in sorted(dups, key=lambda s: (len(s), s)):
             print("· " + tid + ": " + " · ".join(str(n) + "행 " + s[:24] for n, s in dups[tid]))
+
+    if inner:
+        print("한 줄 안에서 상태가 어긋난다 — 머리는 «⬜ 대기» 인데 본문에 «코드 push»·✅·🔄 가 있다(결정 500):")
+        for tid, n, status in sorted(inner, key=lambda x: x[1]):
+            print("  " + tid + " — " + str(n) + "행: " + status[:70].replace("\n", " ") + " …")
+        print("고치는 법: 상태 칸 **머리**를 실제 상태(✅·🔄)로 바꾼다 — 뒤에 붙인 회차 기록은 그대로 둔다(이력이다).")
+        return 1
 
     if bad:
         print("같은 작업이 두 줄에 있고 상태가 어긋난다 — «대기» 줄만 본 워커가 끝난 일을 다시 잡는다:")
