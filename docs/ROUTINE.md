@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-07 · 07:4X UTC) ⚑ 주인 — **설정에 «프로필 아이콘 설정»·«닉네임 설정» 줄을 넣는다** → **T156**:** «**설정에 프로필 아이콘 설정, 닉네임 설정 있어야함**» — 팝업 둘은 **이미 있다**(`Profile.OpenAvatar` · `Profile.OpenNickname` = T96-profile · 지금은 상단 재화 바의 아바타를 눌러야 열린다). 설정 팝업(표 ⑨)에 **줄 둘을 더하고** 상자·아래 링크 자리를 그만큼 내리면 된다.
+
 - **(2026-09-07 · 07:3X UTC) ⚑⚑ 주인 — 특전(04) 넷 → **T155**:** ⓐ «**특전에 `TitleBorder` 가 `FillCenter` 트루로 하라 했었는데 아직 반영 안 됐네. 되게 해줘**»(= **T93 6항이 안 들어갔다** — `UiKit.InkFrameBorders` 가 이름 목록을 **전부** `fillCenter = false` 로 만든다) ⓑ «**특전들 레이아웃이 레퍼런스랑 다른 느낌임 비율 비례 등등 해결해줘**» ⓒ «**특전 팝업에 «레벨 업» 위에 글로우 서클이랑 이펙트 라이트 있어야 하는데 없더라 · 레퍼런스에는 있으니께 · 그거 회전하게 해줘야 함**» ⓓ «**모든 그 이펙트 라이트 들어간 곳에 글로우 서클도 같이 넣어줘**». **`Glow_Circle_01/02` 는 에셋에 있으나 카탈로그에 없다** — 키부터 만들어야 한다.
 
 > **❗ (05:4X UTC · 워커 J · sess-1917-23930) main 이 빨갛다 — 임자가 있는 한 건이다(내 것 아님 · 배포가 이것 때문에 막힌다).** CI [#270](https://github.com/kuzuni/aaawunity/actions/runs/34086008261)(`1bc35657`) 유니티 잡: **PlayMode 69/70** · 유일한 실패는 `ChapterChestScreenTests.ClaimingAStepScrollsToTheNextRewardAndTheLastOneTurnsTheDotOff` — `Assets/Tests/PlayMode/ChapterChestScreenTests.cs:111` 에서 «아직 챕터 1 안이다 · Expected "챕터 1" But was "챕터 2"». **T137**(챕터 보상 3단 · 살아 있는 lock `sess-0452-14099`)의 새 테스트다 — 그 워커 몫으로 남긴다. EditMode 는 193/193 이고 다른 PlayMode 69케이스는 전부 Passed 다. **같은 런에서 내 확인 셋이 나왔다**: «[GlyphGate] 0(strict=**True**)» · «[RibbonWidthGate] 공통 리본 10 · 가장 빡빡한 «일반»(07) 칸 183px · 글자 97px · **여유 86px** · 크기 60» · «[BorderGate] `17_daily_gift` 5/5/0 ✔» → **T75·T69 확인 끝**.
@@ -2056,6 +2058,21 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
    - **성능**: 빛살이 도는 칸이 화면에 여럿이다(T129 fps 추세) — 서클은 **트윈을 만들지 않는다**(정적 Image 한 장)면 드로우콜만 는다. 도는 트윈을 늘리지 말 것.
 5. **테스트** — PlayMode: ⓐ 위 `fillCenter` 두 줄 ⓒ 특전 3택 팝업에 `ui.glow*`·`ui.light*` Image 가 리본 뒤에 각각 1개 · 빛살에 도는 트윈이 걸려 있다 ⓓ `UiKit.HasLight(cell)` 이 참인 칸에는 글로우 서클도 있다(공용 자 한 줄) · `PlayLog.AssertNoRed`.
 6. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` **04_perks**(+ ⓓ 가 닿는 09·20·23) PNG 를 레퍼런스와 나란히 놓고 §5 비평 ≥ 8.0 + 주인 폰.
+
+### T156 — 설정 팝업에 **«프로필 아이콘»·«닉네임» 줄 둘** (주인 2026-09-07 07:4X · 화면만 · 새 시스템 0 · 규칙·수치 0줄)
+
+> 주인 원문: «**설정에 프로필 아이콘 설정, 닉네임 설정 있어야함**»
+> **새로 만들 기능이 없다** — 두 팝업은 T96-profile 이 이미 만들어 뒀고 공개 입구도 있다: `Profile.OpenAvatar(app)`(아바타 테두리 색 다섯 · `ui.profileAvatar`) · `Profile.OpenNickname(app)`(이름 짓기 · `ui.profileNick`). 지금은 **상단 재화 바의 아바타를 눌러야** 열려서 눈에 안 띈다. 설정에서도 열리게 하는 일이다(상단 아바타 입구는 **그대로 둔다**).
+
+1. **어디에 넣나** — `Overlay.SettingsPopup`(`Overlay.cs:615`)의 `Row(...)` 로 줄을 둘 더한다(지금 음악 · 효과음 · 언어 셋). 줄 오른쪽 끝은 «언어» 줄과 같은 꼴로 **버튼 하나**(`ui.btnGray` · 글자 «변경»)를 두고 누르면 각 팝업을 연다. 아이콘은 카탈로그에 있는 것으로(예 프로필 = `ui.iconProfile` 계열이 없으면 `pi.` 아이콘 중 사람/왕관 · 닉네임 = 연필/글자 아이콘 · **새 그림 0**).
+2. **자리(표 ⑨ 확장 · 계산해 둔다)** — 줄 피치는 `Layout.SetRowPitch = 4.8` 이다.
+   - 새 줄: **프로필 아이콘 `y 57.4`** · **닉네임 `y 62.2`**(둘 다 `x 13.9 · w 72.5 · h 3.8` = 지금 줄과 같다).
+   - 상자 `SetBox`(39.6 / h 21.0 · 아래 여백 4.2)는 마지막 줄이 66.0 에서 끝나므로 **h = 30.6**(39.6~70.2)으로.
+   - 상자 밖 아래 것들도 **+9.6** 씩: `SetPrivacy` 62.6 → **72.2** · `SetTerms` 67.3 → **76.9** · `SetReset` 72.0 → **81.6**(아래 끝 85.6 < 탭 바 92.6 이라 안 겹친다). 전투의 «재개»·«포기» 자리(`SetResumeBtn`·`SetGiveUpBtn`)도 같은 만큼.
+   - **⚠ 팝업이 꽤 길어진다.** 싫으면 **대안**: 줄 하나에 버튼 둘(«프로필 아이콘» | «닉네임»)로 넣어 한 줄만 늘린다(+4.8). 워커가 눈으로 고르고 «워커 결정 기록» 에 한 줄.
+3. **레퍼런스와의 관계** — `docs/ref/12_settings.jpg` 에는 이 줄이 **없다**(레퍼런스는 셋). **주인 지시가 레퍼런스를 이긴다**(전례: T78 로비 삭제 · T107 탭 재편). 그러니 `docs/ref-layout.md` ⑨ 표에 두 행을 더하고 **«레퍼런스에 없는 우리 줄(주인 T156)»** 이라고 비고를 남긴다 — §5 비평에서 다음 워커가 «표에 없는 줄» 이라고 감점하지 않게.
+4. **테스트** — `LayoutSpecTests`(표 ⑨ 대조)가 새 값과 같이 움직여야 한다. PlayMode: 설정을 열어 ⓐ 줄 다섯 ⓑ «프로필 아이콘» 버튼 → `ui.profileAvatar` 팝업이 열린다 ⓒ «닉네임» 버튼 → `ui.profileNick` 이 열리고 **입력칸이 살아 있다**(T96-profile 2단계의 `TakeTmpInputs` 경로) ⓓ 닫으면 설정으로 돌아오거나 그냥 닫힌다(둘 중 고른 쪽을 단언) · `PlayLog.AssertNoRed`. 글자 하한(T63)·테두리(T69 2항 «설정 줄»)는 기존 줄과 같은 손질을 받는다.
+5. 판정 = 그 커밋을 담은 첫 완주 런 + `screens` **12_settings** PNG(줄 다섯 · 아래 링크가 안 겹침) + 주인 폰.
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
