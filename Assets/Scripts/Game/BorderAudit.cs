@@ -22,6 +22,7 @@ namespace KkomaKnight.Game
             "20_dungeon", "21_dungeon_detail", "22_arena", "23_arena_enter", "24_arena_challenge", "25_arena_rank_reward", "26_arena_shop",   // T69-events(던전·아레나 묶음)
             "04_perks", "05_perks_list", "res_win", "res_lose",   // T69-overlay(특전 카드 · 결과 팝업 묶음)
             "15_quest", "16_attendance", "11_shop_special",   // T69-lobbypopups(로비 팝업 묶음 · 11 은 T72 lock 이 풀린 뒤 같은 묶음이 마저 닫았다)
+            "17_daily_gift",   // T69 마무리 — 표의 마지막 «strict 아닌» 화면이었다(CI #255 에서 이미 5/5) · 이로써 01_lobby(주인이 뺀 화면 · T94 ⓑ)만 보고 전용이다
         };
 
         /// <summary>
