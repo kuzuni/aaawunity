@@ -110,7 +110,9 @@ jobs:
       # T46 — UI 비평 하니스: PlayMode UiShotsTests 가 남긴 전 화면 PNG(540×1170) + layout.json 을 «screens» 브랜치로(main push · 테스트 초록일 때만).
       # 워커는 `git fetch origin screens && git show origin/screens:01_lobby.png > /tmp/01_lobby.png` 로 받아 본다. PNG 커밋 금지 규칙의 유일한 예외 = 이 브랜치(main 에는 절대 안 넣는다).
       - name: screens 브랜치용 meta.json (커밋 sha · CI 런 번호)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # T134 — 수동 실행(workflow_dispatch)도 같이 돈다: 워커 12명이 몇 분 간격으로 밀면 대기 런이 계속 밀려 취소돼
+        # «최신 트리를 담은 런이 하나도 없는» 상태가 생기는데, 그때 사람이 미는 유일한 지렛대가 수동 실행이다(결정 379).
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         run: |
           # T57 — unity-test-runner 는 docker(root) 로 돌아 ui-screens/ 와 그 안 PNG·layout.json 이 root 소유로 남는다 → 러너 셸(runner)이 «Permission denied»(CI #82). 소유자를 되돌린 뒤 쓴다.
           mkdir -p ui-screens
@@ -118,7 +120,9 @@ jobs:
           printf '{"sha":"%s","run":%s,"run_id":%s,"utc":"%s"}\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$GITHUB_RUN_ID" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > ui-screens/meta.json
           ls -la ui-screens
       - name: "screens 브랜치로 배포 (UI 비평 · ROUTINE §5)"
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # T134 — 수동 실행(workflow_dispatch)도 같이 돈다: 워커 12명이 몇 분 간격으로 밀면 대기 런이 계속 밀려 취소돼
+        # «최신 트리를 담은 런이 하나도 없는» 상태가 생기는데, 그때 사람이 미는 유일한 지렛대가 수동 실행이다(결정 379).
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -131,7 +135,8 @@ jobs:
   build-webgl:
     name: WebGL 빌드 → GitHub Pages (gh-pages)
     needs: [unity-test, gate]
-    if: needs.gate.outputs.has_license == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # T134 — 수동 실행도 포함(결정 379 · 위 screens 배포 단계와 같은 까닭)
+    if: needs.gate.outputs.has_license == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -190,7 +195,8 @@ jobs:
   build-android:
     name: Android APK 빌드 → Artifact
     needs: [unity-test, gate]
-    if: needs.gate.outputs.has_license == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # T134 — 수동 실행도 포함(결정 379 · 위 screens 배포 단계와 같은 까닭)
+    if: needs.gate.outputs.has_license == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
