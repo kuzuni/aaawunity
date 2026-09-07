@@ -53,6 +53,17 @@ def _fold(s):
     return "✂" in s or "♻" in s
 
 
+def row_ids_all(path=PROGRESS):
+    """표에 **한 줄이라도** 있는 ID 전부(접힌 줄 포함) — «행이 없다» 와 «접힌 행만 있다» 를 가르는 데 쓴다(T206)."""
+    out = set()
+    with io.open(path, encoding="utf-8") as f:
+        for line in f:
+            m = ROW.match(line.rstrip("\n"))
+            if m:
+                out.add(m.group(1))
+    return out
+
+
 def routine_heads(path=ROUTINE, dups=None):
     """ID → (줄번호, 제목에 ✅ 가 있나, 제목 원문).
 
@@ -191,10 +202,18 @@ def cmd_check(heads, rows, dups=None):
 
     # ⓑ 제목은 있는데 PROGRESS 행이 없다 — **실패로 세지 않는다**(등재가 진행 중인 자리가 정상적으로 이 꼴이다).
     #    다만 그 사이에는 `check_task_rows` 가 아무것도 못 보므로 알려는 둔다(워커 A 의 17:11 보고가 그 자리다).
+    #    ⚠ «행이 없다» 와 «접힌 행만 있다» 는 다른 일이다(T206) — 접힌 줄(✂·♻)은 «다른 번호로 옮겼다 · 취소됐다» 는
+    #    **정상적으로 끝난 꼴**이라 채울 것이 없고, 진짜로 채워야 하는 것은 «행이 아예 없는» 쪽이다.
+    #    둘을 한 목록에 섞으면 다음 워커가 이미 닫힌 T172·T189 를 «등재 중» 으로 읽고 손대러 간다.
     orphan = sorted(set(heads) - set(rows), key=lambda t: int(t[1:]))
-    if orphan:
-        print("· (참고 · 실패 아님) ROUTINE §2 제목은 있는데 PROGRESS 표에 행이 없는 작업: %s" % " ".join(orphan))
-        print("  등재 중이면 곧 채워진다. 오래 남아 있으면 그 사이 `check_task_rows` 가 그 작업을 못 본다.")
+    seen = row_ids_all()
+    missing = [t for t in orphan if t not in seen]
+    folded = [t for t in orphan if t in seen]
+    if missing:
+        print("· (참고 · 실패 아님) ROUTINE §2 제목은 있는데 PROGRESS 표에 **행이 아예 없는** 작업: %s" % " ".join(missing))
+        print("  등재 중이면 곧 채워진다. 오래 남아 있으면 그 사이 `check_task_rows` 가 그 작업을 못 본다(T96 이 그 꼴이었다).")
+    if folded:
+        print("· (참고 · 손댈 것 없음) 표에 **접힌 행(✂·♻)만** 있는 작업: %s — 다른 번호로 옮겼거나 취소된 자리다." % " ".join(folded))
 
     bad = mismatches(heads, rows)
     if not bad:
@@ -294,7 +313,22 @@ def self_test():
             print("⛔ 자기 검사 실패 — 번호가 하나씩인데 중복이라 한다(거짓 경고): %s" % (d,))
             return 1
 
-        print("✓ task_state --self-test: 어긋난 짝을 잡고(T161) · ✅ 를 달면 조용하고 · 빈 번호는 통과하고 · 같은 번호 두 제목을 잡는다")
+        # ⓔ **«행이 없다» ↔ «접힌 행만 있다»**(T206) — 접힌 줄(✂·♻)은 `progress_rows` 가 일부러 안 세므로
+        #    둘이 한 목록에 섞였다. 그러면 다음 워커가 이미 옮겨졌거나 취소된 번호를 «등재 중» 으로 읽는다.
+        io.open(p, "w", encoding="utf-8").write(
+            "| ID | 작업 | 상태 | SID |\n"
+            "| T161 | 장비 이름 | ✂ **중복 행 — 살아 있는 기록은 위다** | 워커 L |\n")
+        seen = row_ids_all(p)
+        if "T161" not in seen:
+            print("⛔ 자기 검사 실패 — 접힌 행도 «표에 있는 ID» 로 세야 한다")
+            return 1
+        io.open(p, "w", encoding="utf-8").write("| ID | 작업 | 상태 | SID |\n")
+        if row_ids_all(p):
+            print("⛔ 자기 검사 실패 — 행이 하나도 없는 표에서 ID 를 세었다(거짓 경고)")
+            return 1
+
+        print("✓ task_state --self-test: 어긋난 짝을 잡고(T161) · ✅ 를 달면 조용하고 · 빈 번호는 통과하고 ·"
+              " 같은 번호 두 제목을 잡고 · «행 없음 ↔ 접힌 행만» 을 가른다")
         return 0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
