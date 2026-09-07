@@ -4,12 +4,21 @@ namespace KkomaKnight.Game
 {
     /// <summary>
     /// 전투 월드 카메라 — UI 프레임(9:19)과 같은 화면 영역을 비춘다(viewport rect 를 프레임에 맞춘다).
-    /// 좌표 규약: 레이아웃 단위(index.html LW=540 → 프레임 폭) 100 = 유니티 1 단위. 프레임 높이 = 540×19/9 = 1140 레이아웃 단위.
+    /// 좌표 규약: 레이아웃 단위(index.html LW=540 → 프레임 폭) 100 = 유니티 1 단위. 프레임 높이 = 540 × (2337/1080) = 1168.5 레이아웃 단위(프레임 실제 비율 · T182 3단계 · 결정 552).
     /// 월드 x(sim.js 좌표) → 화면: (worldX − cam) × zoom + PLAYER_SCREEN_X (ui.json camera.zoom·playerX).
     /// </summary>
     public sealed class WorldCam : MonoBehaviour
     {
-        public const float LayoutW = 540f, LayoutH = LayoutW * 19f / 9f, PPU = 100f;
+        /// <summary>
+        /// 프레임 안 레이아웃 눈금(index.html LW=540) — <b>세로는 프레임 실제 비율에서 뽑는다</b>(T182 3단계 · 지시서 5-58항 · 결정 552).
+        /// <para>
+        /// ⚠ 여기 오래 «<c>LayoutW × 19/9 = 1140</c>»(세로비 2.1111) 이 박혀 있었는데 프레임은 <c>1080×2337</c> = <b>2.1639</b> 다.
+        /// 카메라 세로는 이 수가 잡고 가로는 viewport(프레임 실제)가 따라오므로, 그 차이만큼 <b>가로 한 단위가 100 이 아니라 102.5px</b> 이 되어
+        /// <see cref="ToWorld"/> 로 놓은 것이 전부 바깥으로 <b>2.5%</b> 밀려 있었다 — §5 채점표의 «플레이어 중심 x 표 16.0 ↔ 실측 15.1» 이 그 지문이다.
+        /// 프레임 비율에서 뽑으면 카메라가 보여 주는 가로가 정확히 <see cref="LayoutW"/> 가 되어 표와 화면이 같아진다.
+        /// </para>
+        /// </summary>
+        public const float LayoutW = 540f, LayoutH = LayoutW * UiKit.FrameH / UiKit.FrameW, PPU = 100f;
         public RectTransform Frame;
         Camera _cam;
         Rect _last;
@@ -47,8 +56,7 @@ namespace KkomaKnight.Game
         /// 늘어난 높이는 «마당이 더 보이는» 몫이 된다(세로 신축 규칙 «가운데가 남는 높이를 먹는다» 와 같은 뜻).
         /// </para>
         /// 기준 비율에서는 배수가 <b>정확히 1</b> 이라 지금과 한 치도 다르지 않다.
-        /// ⚠ 여기 남은 <b>2.5% 어긋남</b>(<see cref="LayoutH"/> 가 19/9 인데 프레임은 19.475/9 · 결정 552)은 <b>이 회차가 안 건드린다</b> —
-        /// 그것을 같이 고치면 어느 쪽이 마당을 움직였는지 못 가른다.
+        /// ✅ 옛 <b>2.5% 어긋남</b>(<see cref="LayoutH"/> 가 19/9 였다 · 결정 552)은 3단계-4 에서 고쳤다 — 이제 카메라가 보여 주는 가로가 정확히 <see cref="LayoutW"/> 다.
         /// </summary>
         public static float OrthoFor(RectTransform frame)
         {
