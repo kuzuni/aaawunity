@@ -27,6 +27,7 @@
     tools/tmp_migrate.py --report --sites    # 갈래 ⓑⓒ 자리를 파일:줄 로 전부 뽑는다(② 가 손으로 볼 목록)
     tools/tmp_migrate.py --apply             # 갈래 ⓐ 만 제자리 치환(ⓑⓒ 는 그대로 남는다)
     tools/tmp_migrate.py --apply --out DIR   # 원본을 두고 DIR 에 사본으로 (자가 점검용)
+    tools/tmp_migrate.py --window            # 지금 밀어도 되는가(막는 lock·파일을 이름으로 찍는다)
 종료 코드 0 = 훑기 성공 · 2 = 인자 잘못.
 """
 import argparse
@@ -209,13 +210,77 @@ def apply_one(src, code):
     return out, n
 
 
+def window():
+    """
+    ② 를 «지금 밀어도 되는가» — 지시서 §2 T207 ② 의 조건 셋 중 **기계가 답할 수 있는 둘**을 잰다.
+
+    ⓘ `Assets/Scripts/Game`·`Assets/Tests` 를 만지는 **살아 있는 남의 lock**(90분 규약) ·
+    ⓙ 지난 60분 안에 **상위 여섯 파일**에 들어온 커밋.
+    ⓚ(main 이 초록인가)는 CI 를 봐야 하므로 여기서는 «네가 확인하라» 로만 찍는다.
+
+    막는 것이 있으면 **이름으로** 찍는다 — «안 된다» 만 말하는 자는 다음 워커가 같은 조사를 또 하게 만든다.
+    """
+    import datetime
+    import subprocess
+    claims = os.path.join(ROOT, "docs/claims")
+    # 이 작업들이 만지는 폴더는 표의 «범위» 열이 정본이지만, 여기서는 «게임 코드 lock» 을
+    # 넉넉히 잡는다 — 문서·도구만 만지는 작업까지 세면 창이 영영 안 열린다(결정 580).
+    DOC_ONLY = {"T129", "T187", "T195", "T197", "T198", "T201", "T211"}
+    now = datetime.datetime.now(datetime.timezone.utc)
+    blocking = []
+    for f in sorted(os.listdir(claims)):
+        if not f.endswith(".lock"):
+            continue
+        tid = f[:-5]
+        if tid == "T207":
+            continue                       # 내 lock(② 그 자신)
+        body = open(os.path.join(claims, f), encoding="utf-8").read().strip()
+        stamp = body.split()[0] if body else ""
+        try:
+            age = (now - datetime.datetime.fromisoformat(stamp.replace("Z", "+00:00"))).total_seconds() / 60.0
+        except ValueError:
+            age = 0.0
+        if age > 90:
+            continue                       # 죽은 lock(규약대로 뺏을 수 있다)
+        if tid in DOC_ONLY:
+            continue
+        blocking.append((tid, body, age))
+
+    top = ["UiKit.cs", "UiSmokeTests.cs", "LobbyPopups.cs", "ShopScreen.cs", "EventsScreenTests.cs", "EventsScreen.cs"]
+    out = subprocess.run(["git", "log", "--since=60 minutes ago", "--name-only", "--pretty=format:", "--",
+                          "Assets/Scripts", "Assets/Tests"], cwd=ROOT, capture_output=True, text=True).stdout
+    hot = sorted({p for p in out.split() if os.path.basename(p) in top})
+
+    print("[tmp_migrate] T207 ② 창 — %s" % now.strftime("%Y-%m-%dT%H:%M:%SZ"))
+    if blocking:
+        print("  ⓘ ✗ 게임 코드/테스트를 잡은 살아 있는 lock %d개:" % len(blocking))
+        for tid, body, age in blocking:
+            print("       %s  (%s · %d분째)" % (tid, body, age))
+    else:
+        print("  ⓘ ✓ 막는 lock 없음")
+    if hot:
+        print("  ⓙ ✗ 지난 60분 안에 상위 여섯 파일이 움직였다:")
+        for p in hot:
+            print("       %s" % p)
+    else:
+        print("  ⓙ ✓ 상위 여섯 파일 60분간 조용함")
+    print("  ⓚ ? main 이 초록인가 — CI 최신 완주 런을 네 눈으로 확인해라(기계가 여기서 못 답한다)")
+    ok = not blocking and not hot
+    print("  ⇒ %s" % ("ⓘⓙ 통과 — ⓚ 만 보고 밀어라" if ok else
+                      "아직이다. 지시서 §2 T207 ② 의 «예약 창» 대로 «몇 시부터 비켜 달라» 를 먼저 적어라(결정 580)"))
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(add_help=True)
     ap.add_argument("--report", action="store_true", help="갈래별 자리 수를 센다")
     ap.add_argument("--sites", action="store_true", help="갈래 ⓑⓒ 자리를 파일:줄 로 전부 뽑는다")
     ap.add_argument("--apply", action="store_true", help="갈래 ⓐ 만 치환한다")
     ap.add_argument("--out", default=None, help="--apply 결과를 이 폴더에 사본으로(원본 안 건드림)")
+    ap.add_argument("--window", action="store_true", help="② 를 지금 밀어도 되는가(막는 lock·파일을 이름으로 찍는다)")
     a = ap.parse_args()
+    if a.window:
+        return window()
     if not (a.report or a.apply):
         ap.print_help()
         return 2
