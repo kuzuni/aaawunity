@@ -209,8 +209,24 @@ namespace KkomaKnight.Game
         public static readonly Color OutlineColor = new Color(0.1f, 0.06f, 0.05f, 0.85f);
         /// <summary>아웃라인 α(게이트가 이 값으로 단언한다).</summary>
         public const float OutlineAlpha = 0.85f;
-        /// <summary>아웃라인 두께 = 글자 크기 × 이 비율(<see cref="OutlineMinPx"/>~<see cref="OutlineMaxPx"/> 로 자른다).</summary>
-        public const float OutlineRatio = 0.05f, OutlineMinPx = 1.5f, OutlineMaxPx = 4f;
+        /// <summary>
+        /// 아웃라인 두께 = 글자 크기 × 이 비율(<see cref="OutlineMinPx"/>~<see cref="OutlineMaxPx"/> 로 자른다).
+        /// <para>
+        /// <b>T194(2026-09-07 14:4X · 결정 495) — 0.05·최대 4px 에서 0.08·최대 8px 로 올렸다.</b> 까닭은 실측이다:
+        /// 레퍼런스 <c>docs/ref/17_daily_gift.jpg</c>(720폭)의 제목 «Daily Gifts» 는 검은 테가 <b>3~5px</b>(가로 훑기 468줄의 최빈 3 · 중앙값 4)인데,
+        /// 우리 프레임(1080폭)으로 환산하면 <b>4.5~7.5px</b> 다. 종전 규칙은 제목 60 에서 <b>3px</b> 라 절반도 안 됐다.
+        /// </para>
+        /// <para>
+        /// <b>«얇다» 가 눈에 그토록 심하게 보인 까닭은 촬영 배율이다</b> — <c>PlayShot</c> 은 1080 프레임을 <b>540 RenderTexture</b> 에 그리므로 두께가 <b>절반</b>이 된다.
+        /// 3px 은 화면에서 1.5px 이고, 글자 자신의 안티에일리어싱 가장자리(≈1px)가 그 띠를 거의 다 덮어 <b>회색 그림자</b>로만 남았다
+        /// (`screens` run 370 의 17 리본 실측: 노란 판 0.815 → 테 0.68 = 덮은 정도 <b>0.18</b> · 가장 어두운 픽셀 0.423 = 검은 픽셀 <b>0</b>).
+        /// 즉 «띠 안쪽에 온전히 칠해진 픽셀» 이 생기려면 화면에서 2px 이상이어야 하고, 그것이 프레임 두께 4.5px 이상 = 이 비율이다.
+        /// </para>
+        /// <b>최대치도 같이 올려야 한다</b> — 4px 이면 제목 60 이 4.8px 이 아니라 4px 로 잘려 비율을 올린 뜻이 사라진다(제일 큰 글자 = 전투 숫자 60×1.3=78 → 6.24px 이라 8px 안에 든다).
+        /// 색·α(<see cref="OutlineColor"/> · <see cref="OutlineAlpha"/>)는 <b>안 건드린다</b>(주인 T63-outline 규약).
+        /// <b>이 상수를 고치면 자(<see cref="TextAudit"/> 의 아웃라인 판정)가 저절로 따라온다</b> — 두께 리터럴을 다른 곳에 새로 적지 말 것(T194 4항 · 그렇게 적힌 줄이 하나 있어 같은 회차에 <see cref="EnsureOutline"/> 로 모았다).
+        /// </summary>
+        public const float OutlineRatio = 0.08f, OutlineMinPx = 1.5f, OutlineMaxPx = 8f;
         /// <summary>크기에서 아웃라인 두께(프레임px) — 게이트도 같은 식을 쓴다.</summary>
         public static float OutlineWidth(float size) => Mathf.Clamp(size * OutlineRatio, OutlineMinPx, OutlineMaxPx);
 

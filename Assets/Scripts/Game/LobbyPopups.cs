@@ -46,9 +46,9 @@ namespace KkomaKnight.Game
         /// <see cref="TextAudit"/> 는 «두께 = <see cref="UiKit.OutlineWidth"/>(쓰이는 크기)» 에서 0.26px 만 벗어나도 «어긋남» 으로 센다.
         /// 즉 이 한 자리만 두껍게 하면 <c>TextSizeGateTests</c> 가 빨개진다 — 얻는 것(0.006)보다 잃는 것이 크다.
         /// </para>
-        /// <b>남은 길은 규칙 자체</b>(<see cref="UiKit.OutlineRatio"/> 0.05 · <see cref="UiKit.OutlineMaxPx"/> 4px)를 올리는 것인데
-        /// 그것은 <b>게임의 모든 글자</b>에 걸리는 <c>UiKit</c> 변경이라 이 작업(팝업 하나의 색)의 범위가 아니다 —
-        /// 근거 숫자를 지시서 §2 T186 5항에 남겨 두었으니 <c>UiKit</c>/T63 을 잡는 워커가 정한다.
+        /// <b>남은 길은 규칙 자체</b>(<see cref="UiKit.OutlineRatio"/> · <see cref="UiKit.OutlineMaxPx"/>)를 올리는 것이었고,
+        /// <b>그 길로 갔다 — T194</b>(2026-09-07 14:4X · 워커 G · 결정 495): 0.05·최대 4px → <b>0.08·최대 8px</b>(제목 60 에서 3px → 4.8px).
+        /// 그러니 이 자리는 이제 «공통 규격 그대로» 로 두는 것이 곧 레퍼런스 굵기다 — 여기만 따로 올릴 까닭이 없다.
         /// <para>※ 이 자리를 <c>png_contrast.py</c> 의 «바탕 ↔ 글자 휘도 차» 로 재지 않는 것은 그대로다 — <b>레퍼런스도 0.11</b> 이다.</para>
         /// </summary>
         public const float RibbonOutlineRatio = UiKit.OutlineRatio;
@@ -201,9 +201,10 @@ namespace KkomaKnight.Game
         {
             if (t == null) return null;
             t.color = color ?? Palette.White;
-            var ol = UiKit.Ensure<Outline>(t.gameObject);
-            ol.effectColor = new Color(0.1f, 0.06f, 0.05f, 0.85f);
-            float d = Mathf.Clamp(t.fontSize * 0.05f, 1.5f, 4f); ol.effectDistance = new Vector2(d, -d); ol.useGraphicAlpha = true;
+            // T194 — 여기에 규격이 «손으로 베껴» 적혀 있었다(색 리터럴 + 두께 0.05·1.5~4px). 그래서 UiKit 의 규칙을 올려도 이 자리만 옛 두께로 남고
+            // TextAudit(«두께 ≠ UiKit.OutlineWidth»)가 그 줄들을 어긋남으로 세어 TextSizeGateTests 가 빨개진다 → 규격은 한 함수에서만 나온다.
+            // 베낀 줄은 bestFit 글자에서 «최대 크기» 가 아니라 fontSize 로 재던 차이도 있었다(자는 최대 크기로 잰다) — 그 어긋남도 같이 사라진다.
+            UiKit.EnsureOutline(t);
             return t;
         }
 

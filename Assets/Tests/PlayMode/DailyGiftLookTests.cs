@@ -92,7 +92,7 @@ namespace KkomaKnight.Tests.Play
             // 다음 회차가 쓸 숫자 — 리본 글자가 화면에서 실제로 몇 px 로 그려지고 아웃라인이 몇 px 인가(캡처는 프레임의 절반 폭이다)
             float lossy = ribTxt.rectTransform.lossyScale.x;
             Debug.Log($"[T186ⓒ] 리본 제목 크기 {size} · 아웃라인 {Mathf.Abs(ol.effectDistance.x):0.0}px · lossyScale {lossy:0.00} " +
-                      $"→ 화면 {Mathf.Abs(ol.effectDistance.x) * lossy:0.0}px · 레퍼런스 굵기는 이 값의 약 2~3배다(검/흰 1.44 ↔ 우리 0.03)");
+                      $"→ 화면 {Mathf.Abs(ol.effectDistance.x) * lossy:0.0}px · 레퍼런스 띠는 프레임 4.5~7.5px(T194 가 공통 규칙을 그 안으로 올렸다 · TextOutlineRuleTests)");
 
             // ⓓ «잠금» 버튼 = 어두운 판 + 흰 글자(알파로 흐리게 하지 않는다) ────
             Button locked = null;
