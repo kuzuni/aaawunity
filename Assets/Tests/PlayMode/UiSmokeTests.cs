@@ -199,8 +199,18 @@ namespace KkomaKnight.Tests.Play
         /// 회차 1 은 덧칠(0.55)이라 조각의 회색 바탕이 비쳐 색이 죽었다(레퍼런스 «Rare» #0182C3 ↔ 우리 #8997A2 실측).
         /// 두 조각은 서로 반대 방향 알파 램프라(<c>ui.gradTop1</c> 흰→투명 · <c>ui.gradBottom</c> 투명→흰) 둘 다 1 이라야 몸통이 그 두 색으로 덮인다.
         /// </summary>
-        static void AssertSolidGradient(Transform piece, string what)
+        static void AssertSolidGradient(Transform piece, string what, string paletteName)
         {
+            // 회차 3 — 바탕도 두 색의 «가운데 색» 이라야 한다(결정 339). 두 조각이 가운데서 교차하며 반쯤만 덮으므로
+            // 비치는 것이 조각의 회색이면 채도가 죽는다(실측: 희귀 0.60 ↔ 레퍼런스 0.98).
+            var bg = UiKit.Find(piece, "Bg");
+            Assert.IsNotNull(bg, what + " 카드 조각의 «Bg»");
+            var bgImg = bg.GetComponent<Image>();
+            Assert.IsNotNull(bgImg, what + " 카드 «Bg» 그림");
+            var pair = GradientPalette.Of(paletteName);
+            var mid = Color.Lerp(pair.Top, pair.Bottom, 0.5f);
+            Assert.Less(Mathf.Abs(bgImg.color.r - mid.r) + Mathf.Abs(bgImg.color.g - mid.g) + Mathf.Abs(bgImg.color.b - mid.b), 0.02f,
+                what + " 카드 바탕 = 두 색의 가운데 색(회색 바탕이 비치면 색이 죽는다 · T100 ⓓ 회차 3)");
             foreach (var name in new[] { UiKit.GradientTopName, UiKit.GradientBottomName })
             {
                 var g = UiKit.Find(piece, name);
@@ -1051,7 +1061,12 @@ namespace KkomaKnight.Tests.Play
                     Assert.IsTrue(UiKit.HasGradient(c.GetChild(0)), c.name + " 카드 조각 안에 그라데이션(T100 ⓓ)");
                     // T100 ⓓ 회차 2 — 상자 카드(10)는 조각 바탕이 회색이라 «덧칠» 이면 색이 죽는다(실측: 레퍼런스 «Rare» #0182C3 → 회차 1 의 우리 #8997A2).
                     // 몸통을 꽉 채워야 레퍼런스 색감이 난다 → 위·아래 두 조각의 tint 알파가 1(결정 338). 상품 카드(09)는 덧칠 그대로라 여기서 안 잰다.
-                    if (c.name.StartsWith("Box:")) AssertSolidGradient(c.GetChild(0), c.name);
+                    if (c.name.StartsWith("Box:"))
+                    {
+                        var grad = ShopScreen.ChestGradName(D, c.name.Substring("Box:".Length));
+                        Assert.IsNotNull(grad, c.name + " 의 그라데이션 이름(ShopScreen.ChestGradName)");
+                        AssertSolidGradient(c.GetChild(0), c.name, grad);
+                    }
                     gradCards++;
                 }
                 Assert.GreaterOrEqual(gradCards, D.Gacha.Boxes.Count, "상자 카드 3장 + 상품 카드에 전부 그라데이션");

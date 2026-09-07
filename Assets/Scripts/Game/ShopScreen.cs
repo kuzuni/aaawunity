@@ -107,14 +107,14 @@ namespace KkomaKnight.Game
             // ② 상자 — 최상위(가장 비싼) 상자 = 큰 카드 · 나머지 2개 = 나란히(gacha.json 순서)
             // T100 ⓑ — «상자» 섹션 헤더(주인 «상자 부분도 다이아·골드 섹션처럼»). 다른 두 헤더와 같은 조각·같은 크기다.
             UiKit.Tag(Header(SecBoxY, "상자"), "(뽑기 화면) 상자 섹션 헤더");
-            GachaBox big = null; foreach (var b in D.Gacha.Boxes) if (big == null || b.Cost > big.Cost) big = b;
+            GachaBox big = BigBox(D);
             var small = new List<GachaBox>(); foreach (var b in D.Gacha.Boxes) if (b != big) small.Add(b);
             RectTransform bigCard = null; var smallCards = new List<RectTransform>(); var smallBottoms = new List<RectTransform>(); var bigBtns = new List<RectTransform>();
             if (big != null) { bigCard = Place(UiKit.Rect(_content, "Box:" + big.Key), Banner); BuildBigCard(bigCard, big, bigBtns); }
             for (int i = 0; i < small.Count && i < 2; i++)
             {
                 var card = Place(UiKit.Rect(_content, "Box:" + small[i].Key), new Layout.R(ChestRow.X + i * (ChestRow.W - ChestCardW), ChestRow.Y, ChestCardW, ChestRow.H));
-                BuildSmallCard(card, small[i], i == 0 ? "cardChestRare" : "cardChestEpic"); smallCards.Add(card);
+                BuildSmallCard(card, small[i], i == 0 ? ChestGradLeft : ChestGradRight); smallCards.Add(card);
                 var bottom = UiKit.Rect(card, "Bottom"); UiKit.Pct(bottom, 0, 78, 100, 22); smallBottoms.Add(bottom);   // 카드 아래 띠(광고+가격 버튼 줄) — 09 에서 보이는 «광고/무료 카드 2개» 행의 측정 자리
             }
             // 비평 이름표(T46 · 표 ⑤) — 10 = «(뽑기 화면)» 행 3 · 09 = 스크롤 맨 아래에서 보이는 행들
@@ -284,6 +284,24 @@ namespace KkomaKnight.Game
         GachaState State(string key) { var S = App.Save; if (!S.GachaBoxes.TryGetValue(key, out var st)) { st = new GachaState(); S.GachaBoxes[key] = st; } return st; }
 
         // ───────────────────────── 상자 카드 ─────────────────────────
+        /// <summary>상자 카드 3장의 그라데이션 이름(레퍼런스 10 실측 · <see cref="GradientPalette"/> · 카탈로그 <c>col.grad.cardChest*</c>) — 문자열을 두 곳에 안 박는다(§1).</summary>
+        public const string ChestGradBig = "cardChestLegend", ChestGradLeft = "cardChestRare", ChestGradRight = "cardChestEpic";
+        /// <summary>대형 카드가 되는 상자 = 가장 비싼 것(<c>gacha.json</c> 순서와 무관) — <see cref="Build"/> 와 테스트가 같은 표를 본다.</summary>
+        public static GachaBox BigBox(GameData d)
+        {
+            GachaBox big = null;
+            if (d != null && d.Gacha != null && d.Gacha.Boxes != null) foreach (var b in d.Gacha.Boxes) if (big == null || b.Cost > big.Cost) big = b;
+            return big;
+        }
+        /// <summary>상자 키 → 그 카드의 그라데이션 이름(대형 = 가장 비싼 상자 · 나머지 둘은 <c>gacha.json</c> 순서로 왼쪽·오른쪽) — 없는 키면 null.</summary>
+        public static string ChestGradName(GameData d, string boxKey)
+        {
+            var big = BigBox(d); if (big == null) return null;
+            if (big.Key == boxKey) return ChestGradBig;
+            int i = 0;
+            foreach (var b in d.Gacha.Boxes) { if (b == big) continue; if (b.Key == boxKey) return i == 0 ? ChestGradLeft : ChestGradRight; i++; }
+            return null;
+        }
         /// <summary>최상위 상자 큰 카드(10_shop_2.jpg 위) — 그림 왼쪽 · 오른쪽에 이름 + (i) · 확률 한 줄 · 천장 pill 2 · 아래 «1회 💎» · «10회 💎» 주황 2개(표 ⑤ «상자 버튼 2개» 자리).</summary>
         /// <summary>
         /// 카드 조각 «안» 그라데이션(T100 ⓓ · 주인 2026-09-07 08:5X «상자들 카드 부분에도 그라디안트 · 레퍼런스랑 같은 색감») —
@@ -298,8 +316,16 @@ namespace KkomaKnight.Game
         static void CardGradient(Transform piece, string paletteName, string bgName, float alpha = UiKit.GradientCardAlpha)
         {
             if (piece == null) return;
-            int idx = 0;
-            for (int i = 0; i < piece.childCount; i++) if (piece.GetChild(i).name == bgName) { idx = i + 1; break; }
+            int idx = 0; Transform bg = null;
+            for (int i = 0; i < piece.childCount; i++) if (piece.GetChild(i).name == bgName) { bg = piece.GetChild(i); idx = i + 1; break; }
+            // 몸통을 채우는 자리는 바탕까지 그 계열색으로 물들인다 — 위·아래 두 조각은 서로 반대 방향 램프라
+            // «가운데» 에서 둘 다 반쯤만 덮는다(실측: 회차 2 의 희귀 카드 채도 0.60 · 레퍼런스 0.98).
+            // 비치는 것이 조각의 «회색» 이면 색이 죽고, 두 색의 «가운데 색» 이면 그대로 레퍼런스의 가운데다(결정 339).
+            if (bg != null && alpha >= UiKit.GradientCardSolidAlpha && GradientPalette.Has(paletteName))
+            {
+                var img = bg.GetComponent<Image>();
+                if (img != null) { var p = GradientPalette.Of(paletteName); img.color = Color.Lerp(p.Top, p.Bottom, 0.5f); }
+            }
             UiKit.GradientCard((RectTransform)piece, paletteName, null, UiKit.PopupPatternInset, idx, alpha);
         }
 
@@ -310,7 +336,7 @@ namespace KkomaKnight.Game
             // T100 ⓐ — 제목 바탕 끄기(§1 «문장 끝 // 주석 금지» 대로 주석은 윗줄에)
             HideCardTitleBg(frame.transform);
             // T100 ⓓ — 레퍼런스 10 의 대형 «Legendary Chest» 카드 색(위 연보라 → 아래 자홍 · 몸통을 꽉 채운다 · 회차 2)
-            CardGradient(frame.transform, "cardChestLegend", "Bg", UiKit.GradientCardSolidAlpha);
+            CardGradient(frame.transform, ChestGradBig, "Bg", UiKit.GradientCardSolidAlpha);
             // 상자 이름 = 제목(60 · T63-shop · 레퍼런스 «Legendary Chest» 는 카드에서 가장 큰 글자) — 칸 13% × 배너 26% = 79px ≥ 선호 59
             var title = UiKit.SetText(frame.transform, "Text_Title", box.Name, Palette.Yellow, TextSize.Title, TextKind.Title);
             if (title != null) { UiKit.Pct(title.rectTransform, 42, 3, 49, 13); title.alignment = TextAnchor.MiddleRight; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = TextSize.BestFitMin; title.resizeTextMaxSize = TextSize.Title; }
