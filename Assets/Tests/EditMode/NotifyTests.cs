@@ -76,5 +76,62 @@ namespace KkomaKnight.Tests
             }
             Assert.IsFalse(Notify.MenuAny(G, s, 0, Today), "다 받으면 메뉴 점도 꺼진다");
         }
+        // ───────────────────────── T167 하단 탭 점 ─────────────────────────
+        // 주인 «장비 쪽에 빨간 점 있는 상황이면 장비 하단 네비에도 · 상점도 · 다른 모든 하단 네비 다 마찬가지로».
+        // 판정은 Notify.TabAny 한 곳이므로 그 표를 여기서 못 박는다(화면은 이 답을 보여 주기만 한다).
+        static GameData GearOnly()
+        {
+            var G = new GameData();
+            G.Gear = new GearData();
+            return G;
+        }
+        static GearItem Item(string part, string type, int rar) => new GearItem { Part = part, Type = type, Rar = rar };
+
+        [Test]
+        public void TabAny_Gear_IsTrueWhenSomethingIsNewOrFusable()
+        {
+            var G = GearOnly(); var s = Fresh();
+            Assert.IsFalse(Notify.GearAny(G, s), "인벤이 비면 장비 탭에 할 일이 없다");
+
+            s.Inv.Add(Item("weapon", "crit", 0));
+            Assert.IsFalse(Notify.GearAny(G, s), "한 개만 있고 새것도 아니면 아직 아니다");
+
+            s.Inv[0].IsNew = true;
+            Assert.IsTrue(Notify.GearAny(G, s), "안 본 새 장비가 있으면 점이 뜬다");
+
+            s.Inv[0].IsNew = false;
+            s.Inv.Add(Item("weapon", "crit", 0)); s.Inv.Add(Item("weapon", "crit", 0));
+            Assert.IsTrue(Notify.GearAny(G, s), "같은 묶음 3개 = 합성 가능하면 점이 뜬다(대장간 «자동» 과 같은 판정)");
+        }
+
+        [Test]
+        public void TabAny_Shop_IsTrueUntilTodaysFreeIsTaken()
+        {
+            var s = Fresh();
+            Assert.IsTrue(Notify.ShopAny(s, Today), "오늘 무료 보급을 아직 안 받았으면 상점 탭에 점이 뜬다");
+            s.FreeDay = Today;
+            Assert.IsFalse(Notify.ShopAny(s, Today), "받고 나면 꺼진다");
+        }
+
+        [Test]
+        public void TabAny_PetIsAlwaysOff_AndUnknownKeysAreOff()
+        {
+            var G = GearOnly(); var s = Fresh();
+            Assert.IsFalse(Notify.TabAny("pet", G, s, 0, Today), "펫은 시스템이 없어 늘 꺼짐(껍데기 화면으로 부르지 않는다)");
+            Assert.IsFalse(Notify.TabAny("없는탭", G, s, 0, Today), "모르는 키는 꺼짐");
+            Assert.IsFalse(Notify.TabAny("gear", null, s, 0, Today), "데이터가 없으면 꺼짐(부팅 중에 안 터진다)");
+            Assert.IsFalse(Notify.TabAny("gear", G, null, 0, Today), "세이브가 없으면 꺼짐");
+        }
+
+        [Test]
+        public void TabAny_RoutesEachKeyToItsOwnRule()
+        {
+            var G = GearOnly(); var s = Fresh();
+            s.FreeDay = Today;                                  // 상점은 껐다
+            s.Inv.Add(Item("weapon", "crit", 0)); s.Inv[0].IsNew = true;   // 장비만 켠다
+            Assert.IsTrue(Notify.TabAny("gear", G, s, 0, Today), "장비 탭은 장비 규칙을 본다");
+            Assert.IsFalse(Notify.TabAny("shop", G, s, 0, Today), "상점 탭은 장비 사정에 안 흔들린다");
+        }
+
     }
 }

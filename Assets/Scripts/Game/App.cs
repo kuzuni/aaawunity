@@ -162,6 +162,9 @@ namespace KkomaKnight.Game
             if (!_built) { Root = UiKit.Rect(App.Frame, "Screen:" + Name); UiKit.Stretch(Root); Build(); _built = true; }
             Root.gameObject.SetActive(true); Root.SetAsLastSibling();
             Refresh();
+            // T167 — 탭에 들어올 때마다 하단 탭 점을 지금 상태로 맞춘다. 화면마다 부르게 하면 빠뜨리는 화면이 생기므로
+            // «모든 화면이 지나는» 이 한 곳에 둔다(판정은 Core.Notify.TabAny · 여기서는 보여 주기만 한다).
+            NavBar.RefreshDots(App, UiKit.FindAny(Root, "Tab_01_BottomFlushMenu", "ui.tabBar"));
         }
         public void Hide() { if (Root != null) Root.gameObject.SetActive(false); OnHide(); }
         protected abstract void Build();

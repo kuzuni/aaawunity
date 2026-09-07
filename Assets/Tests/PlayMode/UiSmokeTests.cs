@@ -351,6 +351,29 @@ namespace KkomaKnight.Tests.Play
             CollectionAssert.AreEqual(new[] { "shop", "gear", "battle", "pet", "events" }, NavBar.Keys, "탭 순서(T107 → 맨 오른쪽은 T168)");
             CollectionAssert.AreEqual(new[] { "상점", "장비", "전투", "펫", "이벤트" }, NavBar.Labels, "탭 라벨(T168)");
             CollectionAssert.DoesNotContain(NavBar.Keys, "dungeon", "던전 탭 없음(T107 · 로비 «이벤트» 로만 연다)");
+            // T167 — 하단 탭 다섯에 빨간 점(주인 «장비 쪽에 점 있는 상황이면 장비 하단 네비에도 · 상점도 · 다른 모든 하단 네비 다 마찬가지로»).
+            // 점은 «그 탭에 들어가면» 이 아니라 **조건이 사라져야** 꺼진다 → 조건을 만들고 없애며 켜짐/꺼짐을 잰다.
+            {
+                for (int i = 0; i < NavBar.Keys.Length; i++)
+                {
+                    var d = UiKit.Find(tabs.GetChild(i), NavBar.TabDotName);
+                    Assert.IsNotNull(d, "탭 «" + NavBar.Keys[i] + "» 에 점 조각이 서 있어야 한다(꺼져 있어도 있다 · T167)");
+                    var drt = (RectTransform)d; var sz = drt.rect.size;
+                    Assert.AreEqual(sz.x, sz.y, 1f, "탭 점은 정사각이라야 한다(T136 계약 · 지금 " + sz.x.ToString("0") + "×" + sz.y.ToString("0") + ")");
+                }
+                Transform GearDot() => UiKit.Find(tabs.GetChild(System.Array.IndexOf(NavBar.Keys, "gear")), NavBar.TabDotName);
+                // 조건을 없앤다 — 인벤을 비우면 «새것도 합성거리도 없다»
+                _app.Save.Inv.Clear();
+                _app.ShowScreen("lobby"); yield return Frames(1);
+                Assert.IsFalse(GearDot().gameObject.activeSelf, "장비에 할 일이 없으면 장비 탭 점이 꺼진다(T167)");
+                // 조건을 만든다 — 안 본 새 장비 하나
+                Give("weapon").IsNew = true;
+                _app.ShowScreen("lobby"); yield return Frames(1);
+                Assert.IsTrue(GearDot().gameObject.activeSelf, "안 본 새 장비가 있으면 장비 탭 점이 켜진다(T167)");
+                _app.Save.Inv.Clear();
+                _app.ShowScreen("lobby"); yield return Frames(1);
+                Assert.IsFalse(GearDot().gameObject.activeSelf, "조건이 사라지면 다시 꺼진다 — «봤다» 상태를 새로 만들지 않는다(T167 4항)");
+            }
             Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 1, "로비 초상(HeroView · 상단 바 아바타)");
             Assert.IsTrue(HasText(s => s == "START"), "START 버튼");
             // T120 — «모서리 요소가 화면 밖으로 나가지 않는다» 게이트(주인·워커 눈에만 보이던 종류 · 배치 표에 이름표가 없는 자리는 ui_score 도 못 잰다).

@@ -461,6 +461,30 @@ namespace KkomaKnight.Game
                 bool on = Keys[i] == current || (Keys[i] == "battle" && current == "lobby");
                 UiKit.Show(tab, "Focus", on); UiKit.Show(tab, "Normal", !on);   // «현재 탭» 강조 = 프리팹의 Focus/Normal 전환 그대로(T22 는 손대지 않는다)
                 UiKit.Clickable(tab, () => Go(app, Keys[k], current));   // 눌림 표시(T22) = Clickable 의 ColorTint — 탭 루트는 그림이 없어 켜져 있는 쪽(Normal/Focus)의 첫 Image 가 어두워진다
+                // T167(주인 «장비 쪽에 빨간 점 있는 상황이면 장비 하단 네비에도 · 상점도 · 다른 모든 하단 네비 다 마찬가지로») —
+                // 탭마다 점 하나. 세우는 자리도 켜고 끄는 자리도 여기 한 곳이라 로비의 프리팹 탭 바까지 같이 걸린다(그 화면도 Wire 를 거친다).
+                UiKit.AlertDot(tab, TabDotName, new Vector2(1, 1), TabDotOffset, TabDotSize);
+            }
+            RefreshDots(app, bar);
+        }
+
+        /// <summary>탭 점 이름·자리·지름(T167) — 로비 ≡ 점(33)·던전 탭(40) 사이 눈금. 정사각 계약은 <see cref="UiKit.AlertDot"/> 가 지킨다(T136).</summary>
+        public const string TabDotName = "TabDot";
+        public const float TabDotSize = 34f;
+        public static readonly Vector2 TabDotOffset = new Vector2(-14f, -8f);
+
+        /// <summary>
+        /// 탭 점을 지금 상태로 켜고 끈다(T167) — 판정은 <see cref="Core.Notify.TabAny"/> 한 곳이고 여기서는 <b>보여 주기만</b> 한다.
+        /// 점은 «그 탭에 들어가면» 이 아니라 <b>조건이 사라져야</b> 꺼진다(주인 문장 «있는 상황이면 뜬다»).
+        /// </summary>
+        public static void RefreshDots(App app, Transform bar)
+        {
+            if (app == null || bar == null) return;
+            string today = SaveStore.Today(); double now = LobbyPopups.NowSec();
+            for (int i = 0; i < bar.childCount && i < Keys.Length; i++)
+            {
+                var dot = UiKit.Find(bar.GetChild(i), TabDotName);
+                if (dot != null) dot.gameObject.SetActive(Core.Notify.TabAny(Keys[i], app.Data, app.Save, now, today));
             }
         }
         /// <summary>탭 이동 — 팝업(설정 등)이 떠 있으면 닫고 간다. 같은 탭은 아무 일 없음.</summary>
@@ -478,5 +502,15 @@ namespace KkomaKnight.Game
             }
         }
         public static void Refresh(RectTransform root) { var bar = UiKit.Find(root, "ui.tabBar"); if (bar != null) bar.SetAsLastSibling(); }
+        /// <summary>
+        /// 화면 <c>Refresh</c> 가 부르는 갈래(T167) — 탭 바를 맨 위로 올리는 종전 일에 <b>점 갱신</b>을 얹었다.
+        /// 로비는 프리팹 탭 바를 써서 이름이 다르므로 <see cref="UiKit.FindAny"/> 로 둘 다 찾는다(<see cref="BarSibling"/> 과 같은 이름 짝).
+        /// </summary>
+        public static void Refresh(App app, RectTransform root)
+        {
+            Refresh(root);
+            var bar = UiKit.FindAny(root, "Tab_01_BottomFlushMenu", "ui.tabBar");
+            if (bar != null) RefreshDots(app, bar);
+        }
     }
 }

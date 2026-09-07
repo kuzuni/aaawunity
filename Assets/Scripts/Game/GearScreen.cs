@@ -194,7 +194,7 @@ namespace KkomaKnight.Game
                 }
                 if (shown == 0) GearUi.Empty(_content, S.Inv.Count == 0 ? "장비가 없습니다.\n상점에서 뽑기로 장비를 얻으세요." : "장착하지 않은 장비가 없습니다.");
             }
-            NavBar.Refresh(Root);
+            NavBar.Refresh(App, Root);   // T167 — 탭 점도 같이 갱신(합성·NEW 가 사라지면 장비 탭 점이 꺼진다)
         }
     }
 }

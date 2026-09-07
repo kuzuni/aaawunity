@@ -189,7 +189,7 @@ namespace KkomaKnight.Game
         public override void Refresh()
         {
             _top?.Refresh();
-            NavBar.Refresh(Root);
+            NavBar.Refresh(App, Root);   // T167 — 탭 점도 같이 갱신(합성·NEW 가 사라지면 장비 탭 점이 꺼진다)
         }
     }
 }
