@@ -53,6 +53,13 @@ jobs:
       - name: "작업 상태 대조 — 보고만(빨개도 안 막는다 · 결정 493)"
         continue-on-error: true
         run: python3 tools/task_state.py --check
+      # T196 — 배포 껍데기(WebGL 템플릿)가 «창을 채우고» «스모크가 알아볼 수 있는» 꼴인가.
+      # 되돌리면 다음 빌드가 PC 에서 960×600 상자로 나가거나 T60 이 «로딩 완료» 를 못 본다(빨강 없이 무뎌지는 쪽) —
+      # 둘 다 **배포가 깨지는 종류**라 조율 결함(위 «보고만»)과 달리 여기서 막는다(결정 493 의 기준).
+      - name: 배포 껍데기 검사 (WebGL 템플릿 · T196) + 자기 검사
+        run: |
+          python3 tools/check_webgl_template.py --self-test
+          python3 tools/check_webgl_template.py
       - name: 오디오 형식 검사 (WebGL 이 읽는 PCM/MP3/AAC 만 · T64)
         run: python3 tools/check_audio_webgl.py
       - name: aaaw main 체크아웃 (수치 정본)
