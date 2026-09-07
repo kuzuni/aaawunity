@@ -177,7 +177,7 @@ namespace KkomaKnight.Game
         {
             Begin();
             var root = UiKit.Spawn(key, Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
-            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
+            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, UiKit.DimAlpha); } }
             if (closeOnDim && dim != null) UiKit.Clickable(dim, Close, false);   // T139 ⓐ — punch(눌림 연출)는 끈다: 어둠은 «버튼처럼 보이는 것» 이 아니다(뽑기 결과 자리와 같은 호출 꼴)
             var bg = UiKit.Find(rt, "Background"); if (bg != null) { var bi = bg.GetComponent<Image>(); if (bi != null) bi.raycastTarget = true; }
             _cur = root;
@@ -292,7 +292,7 @@ namespace KkomaKnight.Game
             Begin();
             var offer = G.Pending?.Offer ?? new List<PerkDef>();
             var root = UiKit.Spawn("ui.perkSelect", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
-            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
+            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, UiKit.DimAlpha); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
             // T140(주인 2026-09-07 «특전 부분에서는 패턴 없었으면함») — 어둠 위 흐르는 무늬를 안 깐다(승리·사망 = T110 ⓑ 와 같은 처리 · 배치·글자 0줄).
             // 표 ⑦ 선택창 — 상자 없음 · 배너 20/26.5 · 부제 30/31.5 · 카드 x5.5 w89 h11 피치 13 · 하단 버튼 31/79 · 인포 86/79.5
             var ribbon = UiKit.Find(rt, "Title_01_NoDeco_Tangerine"); if (ribbon != null) UiKit.Pct((RectTransform)ribbon, Layout.OvBanner.X, Layout.OvBanner.Y - 0.7f, Layout.OvBanner.W, Layout.OvBanner.H + 1.4f);
@@ -505,7 +505,7 @@ namespace KkomaKnight.Game
         {
             Begin(); Audio.Sfx("snd.clear");
             var root = UiKit.Spawn("ui.resultWin", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
-            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
+            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, UiKit.DimAlpha); } UiKit.OnTap(dim, () => { if (Revealing) Skip(); }); }
             // T110 ⓑ(주인 2026-09-07 «클리어 팝업에는 패턴으로 움직이는 그거 있으면 안 됨») — 결과 팝업(승리·사망)에는 어둠 위 흐르는 무늬를 깔지 않는다.
             // T140(주인 2026-09-07 «특전 부분에서는 패턴 없었으면함») — 레벨업 3택(04)·보유 특전(05)에도 안 깐다(그때 적어 둔 «레벨업 3택 포함 그대로» 를 이 지시가 덮었다).
             // T72 ① 패턴은 그 밖의 화면·팝업 그대로다.
@@ -587,7 +587,7 @@ namespace KkomaKnight.Game
         {
             Begin(); Audio.Sfx("snd.fail");
             var root = UiKit.Spawn("ui.resultLose", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
-            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, 0.85f); } }
+            var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) { DimFull(dim); var di = dim.GetComponent<Image>(); if (di != null) { di.raycastTarget = true; UiKit.FadeIn(di, UiKit.DimAlpha); } }
             // T110 ⓑ — 결과 팝업(승리·사망)은 흐르는 무늬 없음(주인 지적은 클리어였고 사망도 같은 «결과 팝업» 이라 함께 뺀다 · 결정 기록)
             UiKit.SetText(rt, "Title_LineDeco_01_s_White/Text (TMP)", "쓰러졌다...");
             var reward = UiKit.Find(rt, "Reward"); if (reward != null) Reward(reward, "ui.coin", UiKit.Fmt(G.Gold));

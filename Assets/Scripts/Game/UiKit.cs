@@ -127,6 +127,20 @@ namespace KkomaKnight.Game
         /// 팝업이 떠도 그 띠만 밝게 남는다(레퍼런스 12 는 재화 바·탭 바까지 전부 어둡다). 같은 값이라 띠와 정확히 같은 범위를 덮는다.
         /// </summary>
         public const float DimOverscan = TopBar.FrameOverscan;
+        /// <summary>
+        /// 팝업 뒤 어둠의 알파(T199 · 주인 레퍼런스에 맞춘 실측값). <b>0.85 → 0.985</b> 로 올렸다.
+        /// <para>
+        /// 까닭 — 이 프로젝트는 <b>Linear 색공간</b>이라 UI 겹침도 선형에서 섞인다. 그래서 «α 0.85» 는 사람 눈으로는 α 0.85 만큼 어둡지 않다:
+        /// 흰 픽셀(선형 1.0)이 <c>0.15 × 1.0 + 0.85 × 선형(#12131A ≈ 0.0059)</c> = 0.155 선형 → <b>sRGB 0.43</b> 이 된다.
+        /// 워커 H 가 `screens` run 385 에서 잰 값이 정확히 그것이다(팝업이 덮은 열한 화면 전부 최대 <b>0.432</b> · 레퍼런스는 <b>0.141</b> · 결정 512).
+        /// </para>
+        /// 값을 고르는 셈도 같은 식이다 — 남는 밝기는 거의 전부 <c>(1−α) × 흰색</c> 항이므로 <b>α 만이 지렛대</b>다
+        /// (<see cref="Palette.Dim"/> 을 순수 검정으로 바꿔도 α 0.85 에서는 0.42 라 소용이 없다).
+        /// α 0.985 → 0.015 + 0.985×0.0059 = 0.0209 선형 → <b>sRGB ≈ 0.16</b> 으로 레퍼런스(0.141) 옆에 선다.
+        /// <b>한 회차에 이 변수 하나만</b> 움직이고 매번 다시 잰다(등재 5항) — 자는 <see cref="Assets"/> 밖
+        /// `DimDarknessTests`(어둠 위 상단 띠의 가장 밝은 픽셀 ≤ 0.20)가 지킨다.
+        /// </summary>
+        public const float DimAlpha = 0.985f;
         public static void Stretch(RectTransform rt, float l = 0, float t = 0, float r = 0, float b = 0)
         {
             rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
@@ -939,8 +953,8 @@ namespace KkomaKnight.Game
             {
                 // T104 — 어둠은 프레임 «밖»(레터박스 · 노치 · T106 이 화면 끝까지 뻗어 놓은 상단·하단 프레임 띠)까지 덮는다
                 var d = Rect(layer, "Dimmed"); Stretch(d, -DimOverscan, -DimOverscan, -DimOverscan, -DimOverscan);
-                var di = d.gameObject.AddComponent<Image>(); di.color = Palette.A(Palette.Dim, 0.85f); di.raycastTarget = true;
-                FadeIn(di, 0.85f);
+                var di = d.gameObject.AddComponent<Image>(); di.color = Palette.A(Palette.Dim, DimAlpha); di.raycastTarget = true;
+                FadeIn(di, DimAlpha);
                 parts.Dim = d;
             }
             // T141(주인 2026-09-07 «그 흰색 패널? 통일되게 검정 투명 딤 위에 있는 느낌으로») — 쉼터·악마·천사 세 형제는 판 없이 어둠 위에 바로 얹힌다.
