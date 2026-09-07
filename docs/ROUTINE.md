@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-07 · 05:4X UTC) ⚑ 주인 — 플레이어·적 **발밑 HP·실드 바의 테두리 조각**을 `InnerBorder1_Px7` 로 → **T145**:** «**그 플레이어, 적 hp바랑 실드 바 보더 `BasicFrame_Rectangle_01~04_White_InnerBorder1_Px7` 이거로 해줘야함**» → 지금은 공용 `fr.rectBorder3`(Border3)로 감싼다. 카탈로그에 그 조각이 **이미 `fr.rectInner7` 로 등재돼 있고**(지금은 «예비») `UiKit.WorldBorder` 가 **키를 인자로 받는다** — 조각 키만 갈아 끼우면 되는 일이다.
+
 - **(2026-09-07 · 05:3X UTC) ⚑ 주인 — 골드·경험치 흡수에 **`TrailRenderer`** 를 쓰라 → **T144**(T109 3항 후속):** «**그 골드랑 경험치 흡수될때 트레일 랜더러로 효과좀 줘.**» → 지금은 «같은 스프라이트를 일정 간격으로 떨구는 잔상»(uGUI 라 월드 렌더러를 못 쓴다고 코드에 적어 뒀다 · `RewardOrbs.cs:137`)이다. **주인이 렌더러를 콕 집었으므로 그 전제를 다시 푼다.**
 
 - **(2026-09-07 · 05:3X UTC) ⚑⚑ 주인 — 전투 화면(02) 하단 셋 → **T143**:** «**공격력 방어력 반격확률 이런거 옵션들 보면 오른쪽으로 치우쳐져있음 → 중앙 정렬**» · «**경험치 hp 실드바도 왼쪽으로 치우쳐진거 같음 → 중앙에**» · «**경험치바 실드바 체력바가 좀 간격있어보이게 · 간격없이 뭉쳐있어서 별로임**» + «**스샷으로 찍어가면서 수정해**». 등재 세션 실측으로 **둘 다 진짜 결함이고 까닭도 다르다**(스탯 = 열 피치가 50%, 바 = 왼쪽 캡이 바 밖으로 튀어나와 앞 바를 14px 덮는다).
@@ -1874,6 +1876,19 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 4. **성능** — 구슬이 한 판에 수십 개다(`OrbBossCount`·`MaxAlive`). `TrailRenderer` 는 구슬마다 하나씩이므로 **동시 상한(`RewardOrbs.MaxAlive`)을 그대로 지키고**, 끝난 구슬의 트레일은 `Clear()` 후 파괴한다(WebGL 에서 드로우콜이 는다 — T129 의 fps 추세와 같이 본다). 배포 스모크의 로비 fps 는 이 화면이 아니지만, 전투 진입 뒤 콘솔 빨간 줄 0 은 그대로 지킨다.
 5. **테스트** — PlayMode: 적을 죽여 구슬을 띄우고 ⓐ 흡수 중 `TrailRenderer` ≥ 1 ⓑ 끝나면 남은 트레일 0(누수 없음) ⓒ `PlayLog.AssertNoRed`. 기존 `RewardOrbTests` 를 고쳐 쓴다.
 6. 판정 = 그 커밋을 담은 첫 완주 런 + 워커가 찍은 전투 스샷(꼬리가 보이는가) + 주인 폰.
+
+### T145 — 플레이어·적 **발밑 HP·실드 바 테두리 = `BasicFrame_Rectangle_01~04_White_InnerBorder1_Px7`** (주인 2026-09-07 05:4X · 조각 교체 한 줄 · 자리·크기 0줄)
+
+> 주인 원문: «**그 플레이어, 적 hp바랑 실드 바 보더 `BasicFrame_Rectangle_01~04_White_InnerBorder1_Px7` 이거로 해줘야함**»
+> 등재 세션이 미리 확인한 것: 그 조각은 **카탈로그에 이미 있다** — `fr.rectInner7`(`catalog.json:281` · 설명은 «T69 안쪽 선이 필요한 칸 · 예비»). 9-slice `spriteBorder = 12/12/12/12`(.meta 실측)로 잘려 있어 `Sliced` 로 늘려도 된다. `UiKit.BorderNativePx` 도 이 키를 **7px** 로 이미 알고 있다(`UiKit.cs:313`).
+
+1. **어디 한 줄인가** — `BattleWorld.MakeBar`(`BattleWorld.cs:381`)의 `UiKit.WorldBorder(bgo.transform, new Vector2(width, height), order + 2)` 에 **`key: "fr.rectInner7"`** 를 준다. `WorldBorder` 는 이미 `string key = BorderKey` 인자를 받으므로 **호출 한 곳만** 고치면 플레이어·적, HP·실드 **네 바가 전부** 바뀐다(같은 함수를 넷이 쓴다).
+2. **선 굵기는 안 변한다(중요)** — `UiKit.WorldBorderSprite` 가 `ppu = BorderNativePx(key) / WorldBorderLine` 로 만들기 때문에 **그려지는 선은 여전히 프레임 8px**(`UiKit.BorderPx`)이다. 그래서 `BorderGateTests.AssertWorldBarBorder` 의 «테두리 선 = 프레임 8px 의 월드 길이» 단언은 **그대로 초록**이고, 바뀌는 것은 **선의 생김새(안쪽으로 그린 선)** 뿐이다.
+3. **눈으로 볼 것 하나** — 발밑 바는 높이가 작다. 이 조각의 9-slice 모서리(원본 12px)가 위 ppu 로 커지면 **바 높이보다 커져 모서리가 뭉칠 수** 있다. 워커는 `screens` 02_battle PNG 를 `tools/png_crop.py` 로 4~5배 확대해 «네 모서리가 뭉치지 않는가» 를 보고, 뭉치면 `BorderPx`(8) 대신 이 바에서만 선을 얇게 주는 길(같은 함수의 tint/ppu 인자 확장)을 «결정 기록» 과 함께 고른다.
+4. **범위** — 주인이 부른 것은 **발밑 바(플레이어·적)** 다. 하단 HUD 의 EXP·HP·실드 세 바(`Bar:EXP`·`Bar:HP`·`Bar:SH`)는 지금 조각(`fr.rectBorder3`) 그대로 둔다(주인이 «플레이어, 적» 이라고 못 박았다) — 나중에 같이 하라고 하면 그때.
+   - 곁들여: `catalog.json` 의 `fr.rectInner7` 설명에서 «예비» 를 지우고 «발밑 바 테두리(T145 · 주인 지목)» 로 바꾼다(`gen_catalog.py --check` 가 도는 자리라 설명만 고친다).
+5. **테스트** — `BorderGateTests` 의 발밑 바 구간에 «테두리 스프라이트 이름에 `InnerBorder1_Px7` 이 들어간다» 한 줄(조각이 다시 바뀌면 빨강). 나머지 단언(어두운 색 · 알파 · 선 굵기)은 그대로 통과해야 한다.
+6. 판정 = 그 커밋을 담은 첫 완주 런의 PlayMode `BorderGateTests` Passed + `screens` 02·03 PNG 확대(3항) + 주인 폰.
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
