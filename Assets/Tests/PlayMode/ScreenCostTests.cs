@@ -41,11 +41,15 @@ namespace KkomaKnight.Tests.Play
         struct Cost
         {
             public int graphics, images, raws, texts, masks, canvases;
-            public float area;      // 화면 넓이의 몇 배를 칠하는가(= 오버드로 대용) — 겹칠수록 커진다
+            /// <summary>회차 6 — <b>화면 안으로 잘라 낸</b> 넓이의 합. 이것이 «실제로 칠하는 양»(오버드로)에 가깝다.</summary>
+            public float area;
+            /// <summary>회차 5 까지 쓰던 «사각형 넓이» 합(자르기 전) — 화면 밖으로 뻗은 몫까지 센다. 회차 사이 비교용으로 남긴다.</summary>
+            public float rawArea;
             public System.Collections.Generic.List<KeyValuePair<string, float>> big;   // 회차 5 — 그 넓이를 «누가» 먹는가
             public override string ToString() =>
                 "그림 " + graphics + "(Image " + images + " · RawImage " + raws + " · Text " + texts + ")"
-                + " · 담개 " + masks + " · 캔버스 " + canvases + " · 칠하는 넓이 " + area.ToString("0.00") + "화면";
+                + " · 담개 " + masks + " · 캔버스 " + canvases
+                + " · **보이는 넓이 " + area.ToString("0.00") + "화면**(사각형 넓이 " + rawArea.ToString("0.00") + ")";
         }
 
         /// <summary>조각을 이름으로 찾을 수 있게 «부모/부모/이름» 으로 — 이름만으로는 «Bg» 가 열 개라 못 가른다.</summary>
@@ -70,7 +74,15 @@ namespace KkomaKnight.Tests.Play
                 if (g is RawImage) c.raws++; else if (g is Image) c.images++; else if (g is Text) c.texts++;
                 var rt = g.rectTransform; if (rt == null) continue;
                 var w = new Vector3[4]; rt.GetWorldCorners(w);           // 실제 화면에서 차지하는 사각형(스케일·회전 반영)
-                float a = Mathf.Abs((w[2].x - w[0].x) * (w[2].y - w[0].y)) / screen;
+                float raw = Mathf.Abs((w[2].x - w[0].x) * (w[2].y - w[0].y)) / screen;
+                c.rawArea += raw;
+                // ⚠ 회차 6 정정 — **화면 밖은 GPU 가 잘라 내므로 픽셀 값을 안 치른다.**
+                //    회차 5 는 사각형 넓이를 그대로 더해 `TopFrame`·`BottomFrame` 을 «각각 5.2화면» 으로 셌는데,
+                //    그 둘은 `TopBar.FrameOverscan = 4000f` 로 노치·레터박스를 덮으려고 **일부러** 사방 4000px 뻗은 띠다(T106 ⓑⓒ · 결정 254).
+                //    뻗은 몫은 화면 밖이라 칠해지지 않는다 → 화면 사각형과 **겹치는 부분만** 센다. 그것이 오버드로다.
+                float ix = Mathf.Max(0f, Mathf.Min(Mathf.Max(w[0].x, w[2].x), Screen.width) - Mathf.Max(Mathf.Min(w[0].x, w[2].x), 0f));
+                float iy = Mathf.Max(0f, Mathf.Min(Mathf.Max(w[0].y, w[2].y), Screen.height) - Mathf.Max(Mathf.Min(w[0].y, w[2].y), 0f));
+                float a = ix * iy / screen;
                 c.area += a;
                 if (a >= 0.2f) c.big.Add(new KeyValuePair<string, float>(PathOf(g.transform) + "[" + g.GetType().Name + "]", a));
             }
@@ -87,7 +99,7 @@ namespace KkomaKnight.Tests.Play
         static void Append(StringBuilder sb, string who, Cost c)
         {
             var top = c.big.OrderByDescending(kv => kv.Value).Take(8).ToList();
-            sb.Append("  ").Append(who).Append(" 에서 넓이를 먹는 조각(0.2화면 이상 · 큰 것부터 · 전부 ")
+            sb.Append("  ").Append(who).Append(" 에서 **보이는** 넓이를 먹는 조각(0.2화면 이상 · 큰 것부터 · 전부 ")
               .Append(c.big.Count).Append("개, 합 ").Append(c.big.Sum(kv => kv.Value).ToString("0.00")).Append("화면)\n");
             if (top.Count == 0) sb.Append("    (없음 — 넓이가 여러 조각에 고르게 흩어져 있다)\n");
             foreach (var kv in top) sb.Append("    ").Append(kv.Value.ToString("0.00")).Append("화면  ").Append(kv.Key).Append('\n');
@@ -116,7 +128,8 @@ namespace KkomaKnight.Tests.Play
             sb.Append("  로비 = ").Append(lobby).Append('\n');
             sb.Append("  전투 = ").Append(battle).Append('\n');
             sb.Append("  비(로비÷전투) = 그림 ").Append((battle.graphics > 0 ? lobby.graphics / (float)battle.graphics : 0f).ToString("0.00"))
-              .Append(" · 칠하는 넓이 ").Append((battle.area > 0.01f ? lobby.area / battle.area : 0f).ToString("0.00")).Append('\n');
+              .Append(" · 보이는 넓이 ").Append((battle.area > 0.01f ? lobby.area / battle.area : 0f).ToString("0.00"))
+              .Append(" (사각형 넓이 비 ").Append((battle.rawArea > 0.01f ? lobby.rawArea / battle.rawArea : 0f).ToString("0.00")).Append(")\n");
             // 회차 5 — 넓이는 몇몇 «큰 장» 이 거의 다 먹는다. **누가** 먹는지 이름으로 대야 다음 회차가 그 자리를 열 수 있다.
             Append(sb, "로비", lobby); Append(sb, "전투", battle);
             Debug.Log(sb.ToString());
