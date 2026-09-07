@@ -55,6 +55,8 @@ namespace KkomaKnight.Tests.Play
         }
         bool HasText(Func<string, bool> pred) { foreach (var t in _app.UiCanvas.GetComponentsInChildren<Text>(false)) if (pred(t.text ?? "")) return true; return false; }
         static readonly string[] Items = { LobbyMenu.ItemMail, LobbyMenu.ItemSettings, LobbyMenu.ItemDailyGift, LobbyMenu.ItemQuest, LobbyMenu.ItemAttendance, LobbyMenu.ItemPrivilege };
+        /// <summary>드롭다운 판 윗변이 ≡ 버튼 윗변보다 위로 올라가도 봐 주는 한도(프레임 px · T139) — 실측 5px(주인이 준 자리)라 한 줄(메뉴 줄 113.9px)의 1/4 을 잡았다. 판이 버튼 «위» 로 떠 버리면(수백 px) 여기서 걸린다.</summary>
+        const float PanelOverButtonPx = 28f;
 
         [UnityTest]
         public IEnumerator MenuOpensThePrefabWithSixRowsInTheOwnersOrder()
@@ -128,18 +130,23 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(LobbyMenu.PanelWidth, panel.rect.width, 1f, "판 가로 = 382.62(주인 값)");
             Assert.AreEqual(688.305f, panel.rect.height, 1f, "판 세로 = 688.305(= 프리팹 458.87 × 줄 6/4 · 주인 값과 같다)");
 
-            // 드롭다운이 ≡ 버튼 «아래» 로 늘어지는가 — 프레임 좌표로(자리 값이 다른 rect 기준이면 여기서 드러난다)
+            // 드롭다운이 ≡ 버튼에서 «아래로» 늘어지는가 — 프레임 좌표로(자리 값이 다른 rect 기준이면 여기서 드러난다).
+            // 판 윗변은 버튼 윗변과 «거의 같다»(실측 955 ↔ 950 = 5px 위로 겹친다 — 드롭다운이 버튼을 살짝 물고 내려오는 꼴이고
+            // 주인이 스크린샷으로 준 자리가 그렇다). 그래서 재는 것은 ⓐ 판이 버튼 «위로 떠 있지 않다»(윗변 차이가 한 줄보다 작다)와
+            // ⓑ 판이 버튼보다 «아래로» 뻗는다(밑변이 버튼 밑변보다 낮다) 둘이다 — 회차 1 의 «윗변 ≤ 버튼 윗변» 은 5px 때문에 빨개졌다(결정 379).
             var menuBtn = (RectTransform)UiKit.Find(lobby, "Button_Menu");
             var frame = _app.Frame;
             Canvas.ForceUpdateCanvases();
-            float PanelTopY(RectTransform rt)
+            (float top, float bottom) FrameEdges(RectTransform rt)
             {
                 var c = new Vector3[4]; rt.GetWorldCorners(c);
-                return frame.InverseTransformPoint(c[1]).y;   // 왼쪽 위 모서리의 프레임 y
+                return (frame.InverseTransformPoint(c[1]).y, frame.InverseTransformPoint(c[0]).y);   // 프레임 y — 위가 크다
             }
-            float btnTop = PanelTopY(menuBtn), panelTop = PanelTopY(panel);
-            Debug.Log($"[T139] 판 프레임 rect = {frame.InverseTransformPoint(panel.position)} · 크기 {panel.rect.width:0.0}×{panel.rect.height:0.0} · ≡ 버튼 윗변 y {btnTop:0} · 판 윗변 y {panelTop:0}");
-            Assert.LessOrEqual(panelTop, btnTop, "드롭다운 판은 ≡ 버튼 윗변보다 아래에서 시작한다(버튼 위로 솟지 않는다)");
+            var btnE = FrameEdges(menuBtn); var panelE = FrameEdges(panel);
+            Debug.Log($"[T139] 판 프레임 rect = {frame.InverseTransformPoint(panel.position)} · 크기 {panel.rect.width:0.0}×{panel.rect.height:0.0} · "
+                + $"≡ 버튼 윗변 {btnE.top:0}/밑변 {btnE.bottom:0} · 판 윗변 {panelE.top:0}/밑변 {panelE.bottom:0}");
+            Assert.LessOrEqual(panelE.top - btnE.top, PanelOverButtonPx, "드롭다운 판이 ≡ 버튼 위로 떠 있다(윗변이 버튼 윗변보다 한 줄 이상 높다)");
+            Assert.Less(panelE.bottom, btnE.bottom, "드롭다운 판은 ≡ 버튼보다 아래로 늘어진다(밑변이 버튼 밑변보다 낮다)");
 
             // ⓐ 어둠을 누르면 닫힌다
             var dim = UiKit.Find(ov, "Dimmed");
