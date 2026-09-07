@@ -24,6 +24,8 @@ namespace KkomaKnight.Tests.Play
         public static float LastFrameFill { get; private set; } = -1f;
         /// <summary>마지막 <see cref="Save"/> 의 진단 한 줄(카메라 rect · pixelRect · 캔버스 크기 · 프레임 px 사각형) — CI 로그에서 원인을 읽는다(T58).</summary>
         public static string LastFrameInfo { get; private set; } = "";
+        /// <summary>마지막 <see cref="Save"/> 가 만든 PNG 바이트 — 색공간 게이트(T126)가 파일을 다시 읽지 않고 이걸 디코딩해 픽셀을 잰다.</summary>
+        public static byte[] LastPng { get; private set; }
 
         public static IEnumerable<string> Dirs(string folder = DefaultFolder)
         {
@@ -32,17 +34,23 @@ namespace KkomaKnight.Tests.Play
             if (!string.IsNullOrEmpty(root)) yield return Path.Combine(root, folder);
         }
 
-        /// <summary>UI 캔버스를 잠시 카메라 모드로 돌려 RenderTexture 에 그린 뒤 PNG 로 저장. 실패해도 테스트는 안 깨진다(경고 1줄 · false). 월드(전투)도 같은 카메라가 그린다(CopyFrom).</summary>
+        /// <summary>UI 캔버스를 잠시 카메라 모드로 돌려 RenderTexture 에 그린 뒤 PNG 로 저장. 실패해도 테스트는 안 깨진다(경고 1줄 · false). 월드(전투)도 같은 카메라가 그린다(CopyFrom).
+        /// <paramref name="folder"/> 가 null 이면 파일을 안 남기고 <see cref="LastPng"/> 만 채운다(T126 색공간 게이트용).</summary>
         public static bool Save(App app, string name, string folder = DefaultFolder)
         {
             var canvas = app != null ? app.UiCanvas : null; if (canvas == null) return false;
             int w = ShotW, h = ShotH;
             var oldMode = canvas.renderMode; var oldCam = canvas.worldCamera; float oldPlane = canvas.planeDistance; int oldOrder = canvas.sortingOrder;
             RenderTexture rt = null; GameObject camGo = null; Texture2D tex = null; byte[] png = null;
-            LastFrameFill = -1f; LastFrameInfo = "";
+            LastFrameFill = -1f; LastFrameInfo = ""; LastPng = null;
             try
             {
                 var desc = new RenderTextureDescriptor(w, h, RenderTextureFormat.ARGB32, 24) { msaaSamples = 1, useMipMap = false, autoGenerateMips = false, volumeDepth = 1, dimension = UnityEngine.Rendering.TextureDimension.Tex2D };
+                // T126 ⚠ 이 프로젝트는 Linear 색공간(ProjectSettings m_ActiveColorSpace: 1)이고 RenderTextureDescriptor 의 sRGB 기본값은 false 다 —
+                // 그러면 카메라가 «선형» 값을 그대로 써 넣고 ReadPixels/EncodeToPNG 가 그 바이트를 PNG 에 담아 화면보다 훨씬 어둡고 붉은 그림이 나온다
+                // (실측: 코드 #2C2B29 → PNG #060606 · #12110F → #020101 · 주 버튼 #FF8612 → #F93C02 = 전부 linear(sRGB값) 과 바이트까지 같다).
+                // sRGB 로 두면 하드웨어가 쓰기에서 선형→sRGB 로 되돌려 PNG 가 화면과 같은 색이 된다.
+                desc.sRGB = true;
                 var ds = GraphicsFormatUtility.GetDepthStencilFormat(24, 8); if (ds != GraphicsFormat.None) desc.depthStencilFormat = ds;
                 rt = new RenderTexture(desc) { name = "PlayShot" }; rt.Create();
                 camGo = new GameObject("PlayShotCam", typeof(Camera)); var cam = camGo.GetComponent<Camera>();
@@ -80,6 +88,9 @@ namespace KkomaKnight.Tests.Play
                 Canvas.ForceUpdateCanvases();
             }
             if (png == null) return false;
+            LastPng = png;
+            // T126 색공간 게이트 — 파일은 안 남기고 바이트만 돌려준다
+            if (folder == null) return true;
             bool ok = false;
             foreach (var dir in Dirs(folder))
             {
