@@ -253,6 +253,22 @@ namespace KkomaKnight.Tests.Play
                 Assert.Greater(ribbons, 0, "표를 모은 화면 중에 공통 팝업 제목 리본(UiKit.Popup)이 하나는 있어야 한다(단언이 헛돌지 않게)");
                 Assert.AreEqual(0, shortOwn.Count,
                     "공통 팝업 제목 리본의 글자 칸 높이가 제목 60 의 한 줄(84px)보다 낮다 — bestFit 이 말없이 줄인다(T75 4항 · UiKit.PopupRibbonSize·RibbonFit):\n" + string.Join("\n", shortOwn));
+
+                // T75 ⓑ — «폭» 은 이미 두 게이트가 잡는다(하한 60 = FloorBad · 넘침 = Clipped). 여기서는 **여유**를 적는다:
+                // 제목이 칸을 얼마나 남기고 들어갔나. 가장 빡빡한 리본의 여유가 0 에 가까워지면(긴 제목이 새로 들어오면)
+                // 그때 리본 폭을 손대야 한다는 신호다 — 미리 넓히면 레퍼런스보다 더 넓어진다(결정 362).
+                var tight = (Text: "", Screen: "", Rect: 0f, Pref: 0f, Used: 0, Margin: float.MaxValue);
+                int ribbonTitles = 0;
+                foreach (var r in _rows)
+                {
+                    if (!r.PopupRibbon || r.Kind != TextKind.Title || string.IsNullOrEmpty(r.Text)) continue;
+                    ribbonTitles++;
+                    float margin = r.RectW - r.PrefW;
+                    if (margin < tight.Margin) tight = (r.Text, r.Screen, r.RectW, r.PrefW, r.Used, margin);
+                }
+                if (ribbonTitles > 0)
+                    Debug.Log($"[RibbonWidthGate] 제목 있는 공통 리본 {ribbonTitles} · 가장 빡빡한 제목 «{tight.Text}»({tight.Screen}) "
+                        + $"칸 {tight.Rect:0}px · 글자 {tight.Pref:0}px · 여유 {tight.Margin:0}px · 그려진 크기 {tight.Used}(보고만 · T75 ⓑ)");
             }
             _log.AssertNoRed("글자 크기 게이트(전 화면)");
             yield return Shutdown();
