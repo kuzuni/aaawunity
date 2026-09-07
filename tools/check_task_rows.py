@@ -18,6 +18,8 @@
   갈래 ⓒ·ⓓ 는 «닫혔다/하는 중» 을 **설명 칸과 상태 칸 둘 다**에서 찾는다 — 종결 문장을 설명 칸에 쓴 줄
   (T95·T114·T107 · 워커 A)이 상태 칸만 보던 옛 자를 그대로 지나갔기 때문이다.
   **나머지 세 칸(워커·범위·비고)은 안 본다** — 거기에 «✅ 종결» 을 적으면 이 자는 조용하다.
+  그리고 «몇 번째 칸» 이라는 셈 자체가 어긋나 있으면 위 갈래가 전부 헛돈다 — 그래서 갈래 ⓔ(T201)가
+  칸 수부터 본다. 칸을 가르는 것은 **escape 안 된 파이프**뿐이다(`\|` 는 글자).
 
 쓰기: python3 tools/check_task_rows.py [--list]
   --list = 겹치는 줄을 전부 (실패가 아니어도) 보여 준다.
@@ -29,26 +31,42 @@ import sys
 
 DOC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "PROGRESS.md")
 
-ROW = re.compile(r"^\|([^|]+)\|([^|]*)\|([^|]*)\|")
+ROWHEAD = re.compile(r"^\|\s*T\d")
+# ⚠ 칸을 가르는 것은 «escape 안 된» 파이프뿐이다 — 본문의 `\|`(iPhone\|iPad · `부위\|등급`)는 글자다.
+#   옛 자는 `[^|]+` 로 끊어 그 파이프에서 칸을 갈랐고, 그래서 상태 칸을 «앞토막만» 읽고 있었다(T201).
+CELL = re.compile(r"(?<!\\)\|")
 FOLDED = ("✂", "♻")          # 이미 «중복 행» 이라고 접어 둔 줄
 WAITING = "⬜"
 LIVE = ("✅", "🔄")
 CLOSED = re.compile(r"✅\s*\*{0,2}\s*(종결|완료|눈 확인까지 끝)")   # 본문에 적힌 «닫았다» 표시 (ⓓ)
+COLS = 6                     # ID · 설명 · 상태 · 워커 · 범위 · 비고 (ⓔ)
+
+
+def cells(line):
+    """표 한 줄의 칸 목록(앞뒤 빈 칸 제외). escape 된 파이프에서는 안 가른다."""
+    parts = CELL.split(line.rstrip("\n"))
+    if parts and parts[0].strip() == "":
+        parts = parts[1:]
+    if parts and parts[-1].strip() == "":
+        parts = parts[:-1]
+    return parts
 
 
 def rows(path):
-    out = []
+    out, shape = [], []
     with io.open(path, encoding="utf-8") as f:
         for n, line in enumerate(f, 1):
-            m = ROW.match(line.rstrip("\n"))
-            if not m:
+            if not ROWHEAD.match(line):
                 continue
-            tid = m.group(1).strip()
-            tid = tid.replace("✅", "").replace("🔄", "").replace("⬜", "").strip()
+            c = cells(line)
+            tid = c[0].strip().replace("✅", "").replace("🔄", "").replace("⬜", "").strip()
             if not re.match(r"^T\d+[A-Za-z0-9\-·ⓐ-ⓩ]*$", tid):
                 continue
-            out.append((n, tid, m.group(3).strip(), m.group(2).strip()))
-    return out
+            if len(c) != COLS:
+                shape.append((n, tid, len(c)))
+                continue
+            out.append((n, tid, c[2].strip(), c[1].strip()))
+    return out, shape
 
 
 def main():
@@ -58,7 +76,22 @@ def main():
         return 1
     by_id = {}
     desc_of = {}
-    for n, tid, status, desc in rows(DOC):
+    table_rows, shape = rows(DOC)
+
+    # ⓔ 칸 수가 어긋난 줄 — 이 자도, `task_state` 도, §5 채점도 «몇 번째 칸» 으로 상태를 읽는다.
+    #    칸이 밀리면 워커 칸을 상태로 읽거나(T182 · 상태 칸이 아예 없었다) 상태를 앞토막만 읽는다
+    #    (본문의 `|` 가 칸을 갈랐다 · T69·T114·T196 …). 그런 줄은 **모든 자의 눈 밖**이라 사고가 조용히 산다:
+    #    실제로 T125 의 «✅ 눈 확인 끝 → 종결» 은 칸 밖으로 새어 나가 갈래 ⓓ 가 못 보고 있었다(T201 이 접자 그날로 잡혔다).
+    #    고치는 법은 셋 — 본문 파이프는 `\|` 로 escape · 없는 칸은 만든다 · 칸 밖으로 샌 줄은 `<br>` 로 접는다(글자는 안 지운다).
+    if shape:
+        print("표 행의 «칸 수» 가 어긋난다 — 자들이 상태를 엉뚱한 칸에서 읽는다(T201):")
+        for n, tid, k in shape:
+            print("  " + tid + " — " + str(n) + "행: 칸 " + str(k) + "개(있어야 할 수 " + str(COLS) + ")")
+        print("고치는 법 ⓐ 본문에 쓴 «|» 는 `\\|` 로 escape 한다(표·코드 조각을 칸 안에 쓸 때) ·")
+        print("            ⓑ 빠진 칸은 만든다(모르면 «(기록 없음)») · ⓒ 줄이 «|» 로 안 끝나 다음 줄들이 새어 나갔으면 `<br>` 로 한 칸에 접는다.")
+        return 1
+
+    for n, tid, status, desc in table_rows:
         by_id.setdefault(tid, []).append((n, status))
         desc_of[(tid, n)] = desc
 
