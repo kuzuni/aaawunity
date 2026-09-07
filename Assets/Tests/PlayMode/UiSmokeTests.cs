@@ -96,6 +96,8 @@ namespace KkomaKnight.Tests.Play
         }
         IEnumerable<Text> ActiveTexts() => _app.UiCanvas.GetComponentsInChildren<Text>(false);
         bool HasText(Func<string, bool> pred) { foreach (var t in ActiveTexts()) if (pred(t.text ?? "")) return true; return false; }
+        /// <summary>같은 글자가 <b>몇 군데</b> 나오는가 — «중복이니 빼라»(T168) 처럼 «하나만 있어야 한다» 를 재는 자리에 쓴다.</summary>
+        int CountText(Func<string, bool> pred) { int n = 0; foreach (var t in ActiveTexts()) if (pred(t.text ?? "")) n++; return n; }
 
         /// <summary>검사 지점 — ⓐ 빨간 줄 0 + 경로/키 경고 0 ⓑ 데모 잔여 글자 0 (+ 팝업 열림 여부).</summary>
         void Check(string where, bool expectOverlay = false, bool demoText = true)
@@ -328,8 +330,9 @@ namespace KkomaKnight.Tests.Play
             Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 1, "로비 초상(HeroView · 상단 바 아바타)");
             Assert.IsTrue(HasText(s => s == "START"), "START 버튼");
             // T120 — «모서리 요소가 화면 밖으로 나가지 않는다» 게이트(주인·워커 눈에만 보이던 종류 · 배치 표에 이름표가 없는 자리는 ui_score 도 못 잰다).
-            // 로비 오른쪽 아래 «이벤트» 처럼 프레임 가장자리에 붙는 것들이 대상이다 — 하나라도 0~100% 밖으로 삐져나오면 여기서 잡는다.
-            foreach (var n in new[] { "Events", "SubRow", "ChapterCard", "Menu", "Start" })
+            // 프레임 가장자리에 붙는 것들이 대상이다 — 하나라도 0~100% 밖으로 삐져나오면 여기서 잡는다.
+            // («Events» = 로비 오른쪽 아래 모서리 버튼이었는데 T168 로 삭제됐다 → 목록에서 뺐다.)
+            foreach (var n in new[] { "SubRow", "ChapterCard", "Menu", "Start" })
             {
                 var t = UiKit.Find(lobby, n) as RectTransform;
                 if (t == null) continue;
@@ -362,8 +365,12 @@ namespace KkomaKnight.Tests.Play
                     Assert.IsTrue(hv.Still, "상단 초상 = 정지(T68 ②)"); Assert.AreEqual(0f, hv.Rig.AnimSpeed, 1e-3f, "상단 초상 Animator 속도 0");
                 }
                 Assert.AreEqual(2, CountNamed(UiKit.Find(lobby, "SubRow"), "Side:"), "보조 버튼 2(탐험·클리어 보상)");
-                Assert.IsNull(UiKit.Find(lobby, "Castle"), "왼쪽 아래 «성» 은 삭제됐다(T78)"); Assert.IsNotNull(UiKit.Find(lobby, "Events"), "오른쪽 아래 이벤트");
-                Assert.IsTrue(HasText(s => s == "탐험") && HasText(s => s == "클리어 보상") && HasText(s => s == "이벤트"), "보조·모서리 라벨은 우리말");
+                Assert.IsNull(UiKit.Find(lobby, "Castle"), "왼쪽 아래 «성» 은 삭제됐다(T78)");
+                // T168 — 오른쪽 아래 «이벤트» 도 삭제됐다(주인 «중복이니 빼 주고»). 같은 입구는 하단 탭 맨 오른쪽에 있다.
+                Assert.IsNull(UiKit.Find(lobby, "Events"), "오른쪽 아래 «이벤트» 는 삭제됐다(T168 · 탭과 중복)");
+                Assert.IsTrue(HasText(s => s == "탐험") && HasText(s => s == "클리어 보상"), "보조 줄 라벨은 우리말");
+                // «이벤트» 글자는 이제 **탭에서만** 나온다 — 모서리 버튼이 되살아나면 둘이 되어 여기서 잡힌다.
+                Assert.AreEqual(1, CountText(s => s == "이벤트"), "로비의 «이벤트» 글자는 탭 하나뿐이다(T168 · 중복 금지)");
                 Assert.IsFalse(HasText(s => s == "특권") || HasText(s => s == "퀘스트") || HasText(s => s == "출석"), "메뉴로 옮긴 것은 로비에 두 번 안 나온다(T96-menu)");
                 Assert.IsFalse(HasText(s => s == "스타터팩") || HasText(s => s == "7일 챌린지") || HasText(s => s == "시즌 패스") || HasText(s => s == "성"), "T78 삭제분 라벨 0");
                 // T63-lobby — 아이콘 라벨(사이드 4 · 보조 2 · 이벤트)은 보조 하한(36)으로 2줄까지 잘림 없이: bestFit 이 줄이지 않고(TextGenerator 로 직접 굴려 36) · 선호 높이 ≤ 칸
@@ -864,7 +871,7 @@ namespace KkomaKnight.Tests.Play
                         // T84 — 어두운 pill 위 글자는 밝은 색 + 검은 아웃라인이어야 읽힌다(주인 상시 지시 · screens run 148 의 07 눈 확인에서 회색 글자가 안 읽혔다)
                         Assert.IsNotNull(t.GetComponent<Outline>(), "옵션 줄 «" + t.text + "» 에 검은 아웃라인(T63 0항 «예외 없이»)");
                         // T177(주인 2026-09-07 «잠긴 옵션 줄 글씨는 #666666»)이 «잠긴» 줄만 일부러 어둡게 만든다 —
-                        // 그 자리는 `OwnerDarkTextTag` 를 달고 있으므로 T84 의 «밝아야 한다» 에서 뺀다(안 빼면 주인 지시가 게이트에 막힌다 · 결정 415).
+                        // 그 자리는 `OwnerDarkTextTag` 를 달고 있으므로 T84 의 «밝아야 한다» 에서 뺀다(안 빼면 주인 지시가 게이트에 막힌다 · 결정 428).
                         // 대신 «표식이 있으면 색이 정말 그 지정색인가» 를 재서 표식이 «아무 어두운 글자나 봐 주는 뒷문» 이 되지 않게 한다.
                         if (t.GetComponent<OwnerDarkTextTag>() != null)
                             Assert.AreEqual(Palette.OptLocked.grayscale, t.color.grayscale, 0.02f,

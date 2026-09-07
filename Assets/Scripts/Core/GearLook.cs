@@ -41,7 +41,7 @@ namespace KkomaKnight.Core
         {
             // T175(주인 2026-09-07 10:5X «부위 표시 부분 pictoicon 으로 넣어 놔야 함») — 아이템 그림(gi.*)에서 **PictoIcon 기호**로 바꿨다.
             // PictoIcon 은 단색 실루엣이라 «이 자리는 무슨 부위» 가 한눈에 읽히고, 빈 슬롯을 흐리게 그리는 규칙(PartIconEmptyAlpha)과도 맞는다.
-            // 무기는 표에 axe_1·dagger_1 둘이 있었는데 우리 무기 그림이 검(cm.knight.sword)이라 «칼» 쪽(pi.dagger)을 골랐다(결정 421).
+            // 무기는 표에 axe_1·dagger_1 둘이 있었는데 우리 무기 그림이 검(cm.knight.sword)이라 «칼» 쪽(pi.dagger)을 골랐다(결정 430).
             switch (part)
             {
                 case Weapon:

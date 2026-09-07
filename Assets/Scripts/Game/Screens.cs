@@ -14,7 +14,7 @@ namespace KkomaKnight.Game
     /// <item>상단 재화 바 = <see cref="TopBar"/>(아바타 = HeroView 가슴 위 · 전투력(칼 + 주황 숫자) · 골드 pill · 보석 pill) — 장비·상점·펫·던전 화면(T37·T40·T42·T43)도 같은 헬퍼를 쓴다.</item>
     /// <item>메뉴(≡ = 설정 팝업). <b>이벤트 배너(시즌 패스)는 주인 2026-09-07 지시로 삭제 — 그 자리는 비워 둔다</b>(T78 · 다른 요소를 끌어올리지 않는다).</item>
     /// <item>왼쪽 세로 아이콘 <b>1</b>(특권 · T78 로 스타터팩·7일 챌린지 삭제) / 오른쪽 3(출석·데일리 기프트·퀘스트) — 어두운 반투명 기둥 + 아이콘 + 라벨 · 전부 <see cref="OnSide"/> 훅 하나로.</item>
-    /// <item>«챕터 N» 제목(프리팹 Title_LineDeco 조각 · 밑줄 포함) → 챕터 카드(어두운 테두리 + 이번 챕터 전투 맵 테마의 Environment 바닥·길·소품) + ◀▶ → 보조 버튼 2(탐험·클리어 보상 · 껍데기) → START(주황 · 카드와 같은 폭) → 오른쪽 아래 이벤트(T43 진입) → 탭 바. <b>왼쪽 아래 «성»(잠금)은 주인 2026-09-07 지시로 삭제</b>(T78).</item>
+    /// <item>«챕터 N» 제목(프리팹 Title_LineDeco 조각 · 밑줄 포함) → 챕터 카드(어두운 테두리 + 이번 챕터 전투 맵 테마의 Environment 바닥·길·소품) + ◀▶ → 보조 버튼 2(탐험·클리어 보상 · 껍데기) → START(주황 · 카드와 같은 폭) → 탭 바. <b>왼쪽 아래 «성»(잠금)은 T78 로, 오른쪽 아래 «이벤트» 는 T168 로 삭제</b>(둘 다 주인 2026-09-07 지시 · 이벤트 입구는 탭 맨 오른쪽으로 갔다).</item>
     /// </list>
     /// </summary>
     public sealed class LobbyScreen : GameScreen
@@ -183,7 +183,7 @@ namespace KkomaKnight.Game
             return prt;
         }
 
-        /// <summary>사이드 아이콘·보조 버튼·모서리 버튼의 단일 훅 — T43: <see cref="SideEvents"/>(오른쪽 아래 방패) = 아레나(PvP) 페이지 · T44: 특권 = 페이지(<see cref="PrivilegeScreen"/>) · 퀘스트·출석·데일리 기프트 = 팝업(<see cref="LobbyPopups"/>). «탐험» = T97 방치·오프라인 보상 팝업(껍데기 아님) · 클리어 보상은 아무 일 없음(껍데기). T78 로 패스·7일 챌린지·스타터팩·성은 사라졌다.</summary>
+        /// <summary>사이드 아이콘·보조 버튼의 단일 훅 — T44: 특권 = 페이지(<see cref="PrivilegeScreen"/>) · 퀘스트·출석·데일리 기프트 = 팝업(<see cref="LobbyPopups"/>). «탐험» = T97 방치·오프라인 보상 팝업(껍데기 아님) · 클리어 보상은 아무 일 없음(껍데기). T78 로 패스·7일 챌린지·스타터팩·성이, T168 로 모서리 «이벤트» 가 사라졌다.</summary>
         public void OnSide(string key)
         {
             switch (key)
