@@ -1214,6 +1214,8 @@ namespace KkomaKnight.Game
         /// <summary>_ShineLocation 의 시작/끝 — 폭(0.12)만큼 카드 밖에서 출발해 밖으로 나간다(0/1 이면 모서리에 빛 조각이 남는다).</summary>
         public const float ShineFrom = -0.2f, ShineTo = 1.2f;
         public static readonly int ShineLocationId = Shader.PropertyToID("_ShineLocation");
+        /// <summary>빛이 지나가는 속도 곡선(T153 ⓑ · 주인 «쭉 지나가는») — 종전 <c>InOutSine</c> 은 가장자리에서 느리고 가운데서 빨라 «일정하게» 가 아니다. 등속이 <see cref="Ease.Linear"/> 다.</summary>
+        public const Ease ShineEase = Ease.Linear;
         /// <summary>«이 카드의 shine 머티리얼 인스턴스» 표식 — 카드가 파괴되면 인스턴스도 파괴한다(UI Image 는 MaterialPropertyBlock 을 못 쓰므로 인스턴스가 필요하다 · 인스턴스는 자기 이름이 «PerkShine (Instance)»).</summary>
         public sealed class MaterialOwner : MonoBehaviour
         {
@@ -1228,16 +1230,42 @@ namespace KkomaKnight.Game
             if (src == null || frameRoot == null || owner == null) return null;
             var inst = new Material(src) { name = src.name + " (Instance)" };
             inst.SetFloat(ShineLocationId, ShineFrom);
-            foreach (var img in frameRoot.GetComponentsInChildren<Image>(true)) img.material = inst;
+            var one = ShineTarget(frameRoot);
+            if (one != null) one.material = inst;
             var mo = Ensure<MaterialOwner>(owner.gameObject); mo.Mat = inst;
             return inst;
+        }
+
+        /// <summary>
+        /// 빛을 물릴 <b>한 장</b>(T153 · 주인 2026-09-07 07:0X «샤인이 일정한 두께로 쭉 지나가는 효과인데 … 얇게 하다가 존나 두껍게 하다가 얇게 하다가 끝남»).
+        /// <para>
+        /// 종전에는 조각 아래 <b>모든</b> Image(카드 조각이면 <c>Bg</c>·<c>InnerBorder</c>·<c>Border</c>·<c>TitleBg</c>·<c>TitleBorder</c> 다섯 장)에 같은 인스턴스를 물렸다.
+        /// 셰이더의 <c>_ShineLocation</c>·<c>_ShineWidth</c> 는 <b>UV(0~1) 기준</b>이라 화면에서 보이는 띠의 폭·자리가 <b>그 Image 의 폭에 비례</b>한다 —
+        /// 층마다 폭이 다르니 <b>띠가 다섯 개, 서로 다른 굵기로 서로 다른 속도로</b> 지나가고, 갈라졌을 때는 얇고 겹칠 때는 뭉쳐 두꺼워 보였다. 그것이 주인이 본 «얇→두꺼→얇» 이다.
+        /// </para>
+        /// 그래서 <b>가장 큰 한 장</b>(= 카드 몸통 · 같은 크기면 <c>Bg</c> 를 먼저)에만 물린다. 층마다 물리려면 Image 마다 인스턴스를 만들어 폭·위치를 그 층 크기로 환산해야 하는데
+        /// 값이 다섯 벌이 되므로 지시서가 권하지 않았다(T153 1항).
+        /// </summary>
+        public static Image ShineTarget(Transform frameRoot)
+        {
+            if (frameRoot == null) return null;
+            Image best = null; float bestArea = -1f;
+            foreach (var img in frameRoot.GetComponentsInChildren<Image>(true))
+            {
+                if (img == null) continue;
+                var r = ((RectTransform)img.transform).rect;
+                float area = Mathf.Abs(r.width * r.height);
+                bool better = area > bestArea + 0.5f || (Mathf.Abs(area - bestArea) <= 0.5f && img.name == "Bg" && (best == null || best.name != "Bg"));
+                if (better) { best = img; bestArea = area; }
+            }
+            return best;
         }
         /// <summary><paramref name="inst"/> 의 _ShineLocation 을 <paramref name="at"/> 초부터 <see cref="ShineDur"/> 동안 <see cref="ShineFrom"/>→<see cref="ShineTo"/> 로 — 마스터 시퀀스에 Insert(스킵·CompleteAll 이면 끝 값 = 화면 밖). 돌려주는 값 = 끝나는 시각.</summary>
         public static float Shine(Sequence master, Material inst, Transform link, float at)
         {
             if (inst == null || master == null) return at;
             float v = ShineFrom; inst.SetFloat(ShineLocationId, v);
-            var tw = DOTween.To(() => v, x => { v = x; if (inst != null) inst.SetFloat(ShineLocationId, x); }, ShineTo, ShineDur).SetEase(Ease.InOutSine).SetUpdate(true).SetTarget(inst);
+            var tw = DOTween.To(() => v, x => { v = x; if (inst != null) inst.SetFloat(ShineLocationId, x); }, ShineTo, ShineDur).SetEase(ShineEase).SetUpdate(true).SetTarget(inst);
             if (link != null) tw.SetLink(link.gameObject);   // SetLink(T56) — 마스터에 Insert 되면 마스터의 링크·Kill 이 대신 지킨다
             master.Insert(at, tw);
             return at + ShineDur;
