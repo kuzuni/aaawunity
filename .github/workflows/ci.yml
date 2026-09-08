@@ -22,7 +22,11 @@ jobs:
     # T276 회차 2 — `timeout-minutes` 가 없으면 기본이 **6시간**이다. 유니티 잡이 한 번 멈추면
     #   `concurrency: ci-<ref>`(cancel-in-progress: false)를 그 6시간 동안 붙들어 **CI 큐 전체가 선다** —
     #   오늘 배포 워크플로에서 같은 꼴을 2시간 실측했다(런 206 · unity-builder 에서 1시간 56분 in_progress).
-    #   아래 수는 실측의 3~5배라 성한 런은 안 건드리고 멈춘 것만 죽인다.
+    #   ⚠ 회차 3(22:3X) — 수를 «짐작» 이 아니라 **실측**으로 다시 맞췄다(런 591 · 잡 시작~끝):
+    #     gate 3초(→5) · dotnet 38초(→20) · unity-test **9분 42초**(→45 · 4.6배).
+    #     build-webgl·build-android 은 지금 수동 실행 전용이라 잴 런이 없어 **60 → 90** 으로 올렸다 —
+    #     같은 굽기가 배포 워크플로에서 21~28분이고 그쪽은 안드로이드까지 굽는다.
+    #     못 잰 자리는 **넉넉하게** 잡는다: 이 줄의 목적은 «빨리 죽이기» 가 아니라 «6시간을 안 붙들기» 다.
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -260,7 +264,7 @@ jobs:
     #   ⚠ 오디오·로더·빌드 설정을 만진 커밋은 워커가 이 잡을 **수동으로 한 번** 돌린다(3항 ⓒ).
     if: needs.gate.outputs.has_license == 'true' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
@@ -329,7 +333,7 @@ jobs:
     #   ⚠ 오디오·로더·빌드 설정을 만진 커밋은 워커가 이 잡을 **수동으로 한 번** 돌린다(3항 ⓒ).
     if: needs.gate.outputs.has_license == 'true' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - name: 디스크 확보 (Android 이미지가 크다)
