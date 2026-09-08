@@ -638,8 +638,10 @@ namespace KkomaKnight.Game
             {
                 double g = Core.DailyGift.ClaimFree(S, D, today);
                 if (g <= 0) return;
-                app.Persist(); app.Current?.Refresh(); app.Toast($"다이아 {UiKit.FmtQty(g)} 수령!");
-                refresh(); PopReward(host, "TodayCell");
+                app.Persist(); app.Current?.Refresh();
+                // T241 — 받은 것은 공통 «리워드» 팝업이 보여 준다(토스트 대신 · 지시서 2항 «각 화면이 제 나름의 토스트·팝업을 따로 만들지 않는다»).
+                // 닫으면 이 팝업을 다시 연다 — 아래 «광고 보기» 길이 이미 쓰는 그 꼴(`DailyGift(app)`)이라 흐름이 하나로 모인다.
+                RewardPopup.Show(new List<RewardPopup.Item> { RewardPopup.Item.Of("ui.gemRed", UiKit.FmtQty(g)) }, () => DailyGift(app));
             });
 
             // ── 광고 누적 줄(개수·값 전부 dailyGift.json — 코드에 숫자 없음)
@@ -670,8 +672,8 @@ namespace KkomaKnight.Game
                     {
                         double g = Core.DailyGift.Claim(S, D, idx, today);
                         if (g <= 0) return;
-                        app.Persist(); app.Current?.Refresh(); app.Toast($"다이아 {UiKit.FmtQty(g)} 수령!");
-                        refresh(); PopReward(host, "Reward:" + idx);
+                        app.Persist(); app.Current?.Refresh();
+                        RewardPopup.Show(new List<RewardPopup.Item> { RewardPopup.Item.Of("ui.gemRed", UiKit.FmtQty(g)) }, () => DailyGift(app));   // T241
                     }
                     else   // 광고 보기 — 실제 광고 SDK 없음: T23 과 같은 모의 카운트다운 3초 뒤 누적 +1 (팝업을 다시 연다)
                     {
@@ -688,11 +690,9 @@ namespace KkomaKnight.Game
         /// <summary>모의 광고 카운트다운 초 — T23(쉼터·천사)과 같은 3초.</summary>
         public const int GiftAdSeconds = 3;
 
-        /// <summary>받은 보상 칸이 «팝» 하고 커졌다 돌아온다(T49 감각 · 다시 그린 뒤라 이름으로 찾는다).</summary>
-        static void PopReward(RectTransform host, string name)
-        {
-            var c = UiKit.Find(host, name); if (c != null) UiKit.PopIn((RectTransform)c, 0.7f, 0.32f);
-        }
+        // T241 — 여기 있던 `PopReward`(받은 칸이 «팝» 하고 커졌다 돌아오는 연출)를 **지웠다**: 부르던 세 자리가 전부
+        // 공통 «리워드» 팝업(`RewardPopup.Show`)으로 갈아 끼워져 부르는 곳이 0 이 됐다. 받은 것을 알리는 연출은 이제
+        // 그 팝업의 칸 stagger 가 맡는다(T232 가 밟은 «부르는 코드가 사라진 자리는 남기지 않는다» 와 같은 정리).
 
         // ───────────────────────── 18 7일 챌린지 — T78(주인 2026-09-07 «7일 챌린지 걍 안 하고 싶음»)로 팝업째 삭제 ─────────────────────────
 
@@ -856,9 +856,13 @@ namespace KkomaKnight.Game
                 can ? (Action)(() =>
                 {
                     Core.Expedition.Claim(G, S, D, NowSec(), today, out double gg, out double mm);
-                    app.Persist();
-                    refresh(); PopReward(host, "ExpCellGold");
-                    app.Toast($"골드 +{UiKit.Fmt(gg)} · 다이아 +{UiKit.FmtQty(mm)}");
+                    app.Persist(); app.Current?.Refresh();
+                    // T241 — 골드·다이아 두 칸을 공통 «리워드» 팝업이 보여 준다(토스트 대신) · 닫으면 탐험 팝업이 다시 뜬다(칸은 0 부터 다시 쌓인다)
+                    RewardPopup.Show(new List<RewardPopup.Item>
+                    {
+                        RewardPopup.Item.Of("ui.coin", UiKit.Fmt(gg)),
+                        RewardPopup.Item.Of("ui.gemRed", UiKit.FmtQty(mm)),
+                    }, () => Expedition(app));
                 }) : () => { }, Layout.ExClaimBtn.Within(B));
             cb.name = "ClaimBtn";
             if (!can) UiKit.SetInteractable(cb.GetComponent<Button>(), false); else BtnBadge(cb, "!", "ClaimBadge");

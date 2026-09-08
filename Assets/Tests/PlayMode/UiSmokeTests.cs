@@ -87,6 +87,21 @@ namespace KkomaKnight.Tests.Play
         }
         IEnumerator RealSeconds(float sec) { float t = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t < sec) yield return Frames(1); }
 
+        /// <summary>
+        /// T241 — 보상을 받으면 공통 «리워드» 팝업이 먼저 뜬다. 그것이 떴는지 확인하고 <b>탭해서 닫는다</b>
+        /// (닫으면 부른 쪽 팝업이 다시 열리므로 그 뒤 단언은 종전 그대로 쓸 수 있다).
+        /// </summary>
+        IEnumerator CloseReward(string where)
+        {
+            var rv = _app.Overlay.Root;
+            Assert.IsNotNull(UiKit.Find(rv, "RewardTitle"), where + " — 받으면 리워드 팝업이 뜬다(T241)");
+            Assert.Greater(RewardPopup.LastCellCount, 0, where + " — 받은 것이 칸으로 선다");
+            var dim = UiKit.Find(rv, "Dimmed")?.GetComponent<Button>();
+            Assert.IsNotNull(dim, where + " — 리워드 팝업의 «탭하여 닫기»");
+            dim.onClick.Invoke();
+            yield return Frames(2);
+        }
+
         static string PathOf(Transform t) { var s = t.name; while (t.parent != null) { t = t.parent; s = t.name + "/" + s; } return s; }
         static bool IsDemo(string s)
         {
@@ -613,6 +628,8 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsFalse(HasText(s => s == "광고 보기"), "잠긴 줄에는 광고 버튼을 두지 않는다(한 번에 하나)");
                 // ② 무료 칸 받기 → 다이아 + freeGift.gem · 줄 1 이 열려 «광고 보기» 로 바뀐다
                 Assert.IsTrue(ClickNamed(_app.Overlay.Root, "TodayGetBtn"), "무료 칸 받기"); yield return Frames(2);
+                // T241 — 받으면 공통 «리워드» 팝업이 먼저 뜬다. 탭해 닫으면 데일리 기프트 팝업이 다시 열린다(그 뒤 단언은 그대로).
+                yield return CloseReward("데일리 기프트 무료 칸");
                 Assert.AreEqual(gem0 + GD.FreeGem, _app.Save.Gem, 0.001, "무료 칸 = dailyGift.json freeGift.gem");
                 Assert.IsTrue(HasText(s => s == "광고 보기"), "줄 1 이 열렸다");
                 Check("데일리 기프트 무료 칸 수령", expectOverlay: true);
@@ -625,6 +642,7 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(HasText(s => s == "받기"), "누적이 닿아 «받기» 로 바뀐다");
                 double gem1 = _app.Save.Gem;
                 Assert.IsTrue(ClickNamed(_app.Overlay.Root, "AdBtn"), "줄 1 받기"); yield return Frames(2);
+                yield return CloseReward("데일리 기프트 줄 1");   // T241
                 Assert.AreEqual(gem1 + GD.Milestones[0].Gem, _app.Save.Gem, 0.001, "줄 1 = dailyGift.json milestones[0].gem");
                 Assert.IsTrue(KkomaKnight.Core.DailyGift.Claimed(_app.Save, 0), "줄 1 수령 기록");
                 Assert.IsFalse(KkomaKnight.Core.DailyGift.CanClaim(_app.Save, GD, 0, SaveStore.Today()), "같은 줄 두 번은 못 받는다");

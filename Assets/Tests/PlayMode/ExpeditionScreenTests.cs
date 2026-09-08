@@ -133,6 +133,15 @@ namespace KkomaKnight.Tests.Play
             var btn = claim.GetComponent<Button>(); Assert.IsNotNull(btn); Assert.IsTrue(btn.interactable, "쌓인 게 있으면 받기가 열린다");
             double gold0 = S.Gold, gem0 = S.Gem;
             btn.onClick.Invoke(); yield return Frames(2);
+            // T241 — 받으면 **공통 «리워드» 팝업**이 먼저 뜬다(골드·다이아 두 칸). 탭해서 닫으면 탐험 팝업이 다시 열린다.
+            {
+                var rv = _app.Overlay.Root;
+                Assert.IsNotNull(Find(rv, "RewardTitle"), "받기 → 리워드 팝업(T241)");
+                Assert.AreEqual(2, RewardPopup.LastCellCount, "골드·다이아 두 칸");
+                var dim = Find(rv, "Dimmed")?.GetComponent<Button>(); Assert.IsNotNull(dim, "리워드 팝업의 탭하여 닫기");
+                dim.onClick.Invoke(); yield return Frames(2);
+                Assert.IsNotNull(Find(_app.Overlay.Root, "ExpeditionBox"), "닫으면 탐험 팝업으로 돌아온다");
+            }
             Assert.AreEqual(pg, S.Gold - gold0, 1.0, "받기 = 보이던 골드만큼 지급");
             Assert.AreEqual(pm, S.Gem - gem0, 1.0, "받기 = 보이던 다이아만큼 지급");
             Assert.AreEqual("0", CellQty(_app.Overlay.Root, "ExpCellGold"), "받은 뒤에는 0 부터 다시 쌓인다");
