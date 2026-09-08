@@ -1069,6 +1069,22 @@ namespace KkomaKnight.Game
         PrivilegeData PD => App != null && App.Data != null ? App.Data.Privilege : null;
         PrivilegeData.Card CardOf(int i) { var d = PD; return d == null || i < 0 || i >= CardKeys.Length ? null : d.Of(CardKeys[i]); }
 
+        /// <summary>설명 줄 가운데 «구매 즉시 보상» 을 적을 자리의 표식 — 표가 있으면 실제 수로 갈아 끼운다.</summary>
+        const string BuyLine = "구매 시 💎 지급";
+
+        /// <summary>«구매 시 다이아 2,400 지급» — 표가 없으면 종전 문구 그대로(껍데기라도 안 깨진다).</summary>
+        static string BuyNowText(PrivilegeData.Card c)
+        {
+            if (c == null || c.BuyNow.Count == 0) return BuyLine;
+            string s = "";
+            foreach (var r in c.BuyNow)
+            {
+                if (s.Length > 0) s += " · ";
+                s += Mail.Name(r.Item) + " " + System.Math.Round(r.Amount).ToString("#,0");
+            }
+            return "구매 시 " + s;
+        }
+
         /// <summary>그 카드가 매일 주는 다이아(표가 없거나 카드가 없으면 0) — 보상 칸 수량이 이 값이다(코드에 안 박는다).</summary>
         static double DailyGem(PrivilegeData.Card c)
         {
@@ -1200,8 +1216,12 @@ namespace KkomaKnight.Game
                 for (int i = 0; i < L.lines.Length; i++)
                 {
                     float ly = 4 + i * lh * 0.92f;
+                    // T264 — «구매 시 지급» 줄에는 주인이 준 즉시 보상 수를 넣는다.
+                    // 껍데기 때는 수가 없어 «구매 시 💎 지급» 이었는데, 그러면 주인이 준 2,400·600·4,000 이
+                    // 화면 어디에도 안 보인다(카드가 보여 주는 것은 «매일» 쪽뿐이다 · run 580 PNG 실측).
+                    string lineText = L.lines[i] == BuyLine ? BuyNowText(ck) : L.lines[i];
                     var bullet = UiKit.Icon(desc.transform, "Bullet", "pi.star", Palette.Yellow); UiKit.Pct(bullet.rectTransform, 4, ly + lh * 0.2f, 6, lh * 0.5f);   // 글머리 = 작은 노란 별(레퍼런스 금색 마름모 자리 · 글자 아님)
-                    UiKit.Label(desc.transform, 12, ly, 86, lh * 0.9f, L.lines[i], TextSize.Body, Palette.White, TextAnchor.MiddleLeft);
+                    UiKit.Label(desc.transform, 12, ly, 86, lh * 0.9f, lineText, TextSize.Body, Palette.White, TextAnchor.MiddleLeft);
                 }
                 var pic = UiKit.Icon(content, "Pic:" + (k + 2), L.pic); UiKit.Pct(pic.rectTransform, Sh(Layout.PrCardPic, 0, dy).Within(C));
                 var daily = UiKit.Label(content, 0, 0, 100, 100, "매일 수령", TextSize.Body, Palette.Yellow, TextAnchor.MiddleLeft); daily.name = "Daily"; daily.fontStyle = FontStyles.Bold;
