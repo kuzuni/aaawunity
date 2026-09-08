@@ -3483,6 +3483,18 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 ### T219 — **사진은 생겼는데 «재는 자» 가 없다: 그 여덟은 `ui_score --all` 이 «—» 로 지나친다** (T216 2단계 · 표 행으로 갈라 냄 · sess-2005-9317 · 워커 A · **선점 안 함**)
 
+> ❗ **실측 보고(2026-09-08 00:4X · sess-2041-14225 · 워커 C · 코드 0줄 · 임자 lock 이 살아 있어 알리기만 한다 · 결정 421) — 1단계(`21f648df`)가 main 을 빨갛게 했다.** CI **런 445**(`21f648df` · `screens` `meta.json` `"tests":"failure"`) 의 빨강은 **하나뿐**이고 이 작업 것이다:
+> ```
+> BorderGateTests.BattleBarsHaveBordersAndCellTagsAreAudited   (Assets/Tests/PlayMode/BorderGateTests.cs)
+>   strict 화면에 테두리 없는 행·카드·칸(T69):
+>     [res_win] «챕터 줄»  SafeArea/Frame/Overlay/ui.resultWin/Text      ⛔테두리 없음
+>     [res_win] «해금 줄»  SafeArea/Frame/Overlay/ui.resultWin/Text (1)  ⛔테두리 없음
+>   Expected: 0  But was: 2
+> ```
+> **까닭** — `BorderAudit` 는 **이름표가 붙은 것**을 «행·카드·칸» 으로 보고 strict 화면(`res_win` 포함)에서 테두리를 요구한다(`BorderAudit.cs:86`). 1단계가 `Overlay.cs:559·560` 에서 «챕터 줄»·«해금 줄» **맨 글자(`Text`)** 에 이름표를 달았는데, 그 둘은 판이 없는 글자라 테두리가 없다. **로컬이 초록이었던 것은 PlayMode 를 컴파일만 하기 때문**이다(결정 143) — «이름표를 다는» 회차는 `BorderAudit` 가 그 이름표를 어떻게 읽는지까지 봐야 한다(내가 T190 «빼는 회차» 에서 밟은 것과 같은 결 · 결정 505·520).
+> **처방은 임자가 고른다 — 전례는 둘이다**: ⓐ **`BorderAudit.Exempt` 에 그 두 이름을 넣는다** — «이름줄»(07 장비 이름)·«합계 줄»(13 펫)이 바로 같은 꼴로 이미 들어가 있다(판 없는 맨 글자 · 결정 171). ⓑ **이름표를 글자가 아니라 그 줄을 담은 판에 단다**(판이 있으면 테두리를 잴 수 있다). ⓐ 가 이 자리에 맞아 보인다 — 레퍼런스가 없는 회귀 자를 세우는 것이 이 작업의 목적이고, 결과 팝업의 그 두 줄은 실제로 상자가 없다.
+> ⚠ **급하다** — 이 한 건이 유니티 잡을 빨갛게 해 **gh-pages 배포가 막힌다**. 2단계(나머지 다섯 화면)를 잡기 전에 이것부터 닫는 편이 낫다. **임자 lock 이 반납되면 아무나 이 두 줄을 고쳐도 된다**(처방 ⓐ 는 `BorderAudit.Exempt` 두 줄이다).
+
 1. **지금 상태** — 여덟 장(`res_win`·`res_win_last`·`res_lose`·`ev_rest`·`ev_devil_gift`·`ev_ad`·`27_toast`·`28_confirm_reset`)은 run 441 부터 찍힌다. 그런데 이름표(`UiKit.Tag`)가 없어 `layout.json` 이 빈 칸이라 **§5 자가 못 잰다**(실측: `Rest` 0 · `DevilGift` 0 · `AdCountdown` 0 · `ConfirmReset` 0 · `Toast` 0 · `Clear` 1 · `Dead` 2).
 2. **길은 이미 나 있다 — T213 이 `ev_devil`·`ev_angel` 에 한 그대로** ⓐ 조각마다 `UiKit.Tag` ⓑ 다음 런의 `layout.json` 에서 값을 **재서**(유도하지 말고) `docs/ref-layout.md` 에 표를 세운다 ⓒ `tools/ui_score.py` 의 `SCREENS` 에 등록 ⓓ `UiShotsTests` 에 «이 화면들의 layout 이 비면 실패» 한 줄(다시 조용히 빈 칸으로 못 돌아가게).
 3. ⚠ **표 머리에 «회귀 자» 라고 못 박아라** — `docs/ref/` 에 이 여덟의 주인 그림이 **없다**. 그러니 그 표는 «주인 그림과 같은가» 가 아니라 **«우리 화면이 안 흔들리는가»** 다(§5 5항 · ㉜·㉞·㊱ 과 같은 갈래). 자리·문구를 **고치는** 회차는 그 표도 같이 고친다 — 그것이 «흔들림» 이 아니라 «고침» 이라는 표시다.
