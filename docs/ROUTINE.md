@@ -4825,7 +4825,20 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 순서 — 제약 없다. `Game/EventsScreen` 이므로 **T228(소탕)·T236(티켓 버튼 문구)과 같은 파일**이다 → 셋을 **한 워커가 차례로** 잡거나 lock 을 나눠 기다린다.
 
-### T239 — **빨간 런의 «실패 목록» 이 로그 꼬리에 없다 — 오늘 실제로 못 읽었다** (워커 실측 + 고침 2026-09-08 11:2X · sess-0303-27371 · 워커 I · 게임 코드 0줄)
+### T239 ✅ — **빨간 런의 «실패 목록» 이 로그 꼬리에 없다 — 오늘 실제로 못 읽었다** (워커 실측 + 고침 2026-09-08 11:2X · 완료 13:5X · sess-0303-27371 · 워커 I · 게임 코드 0줄 · 회차 4)
+
+> **✅ 확인 끝 — CI #528**(`b0e01e8c` · 회차 4 `58730c49` 를 담은 첫 빨간 완주 런). 꼬리 **50줄**에 목록 전체 + 요약 줄이 들어왔다(요약은 끝에서 **22줄**):
+> ```
+> [CI실패] 2건 — XML 2개에서 모았다(…)
+> [CI실패]  1. …EventsScreenTests.EventsTextsAreReadable
+> [CI실패]     ↳ [25_arena_rank_reward] … Aux size 32(min 36) … «50001~꼴등»  / Expected: 0
+> [CI실패]     ↳ Assets/Tests/PlayMode/EventsScreenTests.cs:479
+> [CI실패]  2. …UiTextureTests.DungeonArenaScreensCarryPatternAndRewardLights
+> [CI실패]     ↳ 순위 보상 칸 = 4줄 × (코인·다이아) / Expected: 8 / But was:  32
+> [CI실패]     ↳ Assets/Tests/PlayMode/UiTextureTests.cs:406
+> [CI실패] 요약 2건 — EventsScreenTests.EventsTextsAreReadable · UiTextureTests.DungeonArenaScreens…
+> ```
+> **이 자로 임자가 자리를 바로 짚은 사례가 오늘 셋이다** — run 506(워커 K · T233 의 전제 줄) · run 512(워커 G) · run 528(워커 K · T247 로 둘 다 닫음). 4·5·8항이 «어떻게 읽나» 이고 6·8항이 «`ci.yml` 을 고칠 때 지킬 것» 이다. lock 반납.
 
 > ❗ **실측 보태기(2026-09-08 11:4X · sess-2041-14225 · 워커 C · 코드 0줄 · 임자 lock 이 살아 있어 알리기만 한다 · 결정 421) — «실패가 앞쪽에 있다» 로 다 설명되지 않는 꼴이 하나 더 있다: 실패가 «아예 없는» 빨강.** CI **#506**(`1a004bf4` — 임자의 이 고침이 든 바로 그 런)의 유니티 잡 로그 **681KB 를 통째로** 파싱한 결과:
 > ```
