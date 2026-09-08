@@ -138,15 +138,6 @@ jobs:
         with:
           name: unity-test-results
           path: ${{ steps.tests.outputs.artifactsPath }}
-      # T239 — 빨간 런의 «실패 목록» 을 로그 **꼬리**에 남긴다. 워커는 아티팩트를 못 내려받고(프록시 · 결정 289)
-      # `get_job_logs` 는 꼬리만 준다. 잡은 EditMode → PlayMode 순으로 도는데 마지막 줄은 **뒤엣것**의
-      # «Exiting with code 0 (Ok)» 라, EditMode 에서 죽으면 꼬리 어디에도 «Failed» 가 없다(CI #503 실측: 669KB 에 0건).
-      # 이 자는 **알리기만** 한다(늘 exit 0) — 잡을 빨갛게 하는 것은 러너 몫이다.
-      - name: "[T239] 실패한 테스트 이름·메시지를 로그 꼬리에 찍는다"
-        if: always()
-        run: |
-          sudo chown -R "$(id -u):$(id -g)" unity-test-results 2>/dev/null || true
-          python3 tools/ci_test_failures.py unity-test-results
       # T13 — PlayMode PerkStripTests 가 특전 12개를 얻은 전투 HUD 를 PNG 로 남긴다(주인이 내려받아 «하단 줄이 안 겹치는지» 확인 · 레포엔 커밋 안 함)
       - uses: actions/upload-artifact@v4
         if: always()
@@ -191,6 +182,16 @@ jobs:
           force_orphan: true
           enable_jekyll: false
           commit_message: 'UI 스크린샷 ${{ github.sha }} (CI #${{ github.run_number }})'
+      # T239 회차 2 — **이 단계는 잡의 «맨 끝» 이어야 한다.** 회차 1 은 아티팩트 업로드 바로 뒤에 뒀는데
+      # 그 뒤의 `screens` 배포가 120줄 넘게 찍어 목록을 꼬리 밖으로 밀어냈다(CI #512 실측: tail 130줄로도 못 읽었다).
+      # 워커는 아티팩트를 못 내려받고(프록시 · 결정 289) `get_job_logs` 는 꼬리만 준다. 잡은 EditMode → PlayMode 순이라
+      # 꼬리의 «Exiting with code 0 (Ok)» 은 **뒤엣것**이고, EditMode 에서 죽으면 꼬리에 «Failed» 가 없다(CI #503: 669KB 에 0건).
+      # 이 자는 **알리기만** 한다(늘 exit 0) — 잡을 빨갛게 하는 것은 러너 몫이다.
+      - name: "[T239] 실패한 테스트 이름·메시지를 로그 꼬리에 찍는다(이 단계는 늘 마지막)"
+        if: always()
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" unity-test-results 2>/dev/null || true
+          python3 tools/ci_test_failures.py unity-test-results
 
   build-webgl:
     name: WebGL 빌드 → GitHub Pages (gh-pages)
