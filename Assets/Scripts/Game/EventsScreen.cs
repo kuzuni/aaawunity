@@ -531,7 +531,8 @@ namespace KkomaKnight.Game
                 _dummyPowerTexts.Add(new KeyValuePair<TMP_Text, int>(Pill(row, new Layout.R(16, 54, 22, 38), "ui.battle", DummyPower(FoeRank(i)), Palette.Orange), FoeRank(i)));
                 Pill(row, new Layout.R(39, 54, 22, 38), "ui.trophy", DummyScore(FoeRank(i)), Palette.Yellow);
                 var br = Layout.AcRowBtn; br.Y += i * Layout.AcRowPitch;
-                var b = UiKit.Button(box, "ui.btnOrange", "도전", Noop, br.Within(Layout.AcBox)); b.name = "FoeBtn:" + i; TicketCost(b, "ui.iconTokenRed");
+                int foeRank = FoeRank(i);
+                var b = UiKit.Button(box, "ui.btnOrange", "도전", () => ArenaChallenge(foeRank), br.Within(Layout.AcBox)); b.name = "FoeBtn:" + i; TicketCost(b, "ui.iconTokenRed");
                 if (i == 0) { UiKit.Tag(row, "상대 줄(1칸)"); UiKit.Tag(b, "줄 도전 버튼"); }
             }
             var refresh = UiKit.Button(box, "ui.btnOrange", "무료 새로고침", Noop, Layout.AcRefresh.Within(Layout.AcBox)); refresh.name = "RefreshBtn"; UiKit.Tag(refresh, "무료 새로고침 버튼");
@@ -639,6 +640,21 @@ namespace KkomaKnight.Game
         int Tickets(string key) { var d = Dun; return d == null ? 0 : DungeonTickets.Tickets(App.Save, d, key, Today()); }
         /// <summary>카드 제목 띠의 «보유/하루 보충»(표가 없으면 «--»).</summary>
         string TicketText(string key) { var d = Dun; return d == null ? "--" : Tickets(key) + "/" + d.DailyRefill; }
+
+        /// <summary>
+        /// T240 — 아레나 «도전»(24 팝업의 줄 버튼): 지금 고른 챕터로 판을 열고, <b>끝나면 승점이 움직인다</b>
+        /// (판정·지급·결과 화면은 <c>BattleScreen.EndArenaRun</c> 한 곳이다 · 주인 2026-09-08 «이기면 승점 올라가고 순위 올라가고 지면 승점 떨어지고»).
+        /// <para><b>어느 챕터로 도나</b> — <c>Save.SelChapter</c>(T183 던전이 정한 그 까닭 그대로: 로비에서 고른 그것이 «주인이 지금 하는 난이도» 다).</para>
+        /// <para>⚠ <b>티켓을 안 쓴다</b> — 지시서 T240 6항의 «아레나 티켓 규칙» 이 아직 없다(표도 세이브 자리도 없다).
+        /// 버튼의 «🎫x1» 은 <b>종전 그대로 그림</b>이고, 규칙을 지어내 붙이는 것은 §1 이 막는다.
+        /// 규칙이 서면 던전(<see cref="DungeonTickets.Spend"/>)과 같은 꼴로 이 함수 첫 줄에 한 줄만 넣으면 된다.</para>
+        /// <para>⚠ 무대·양쪽 플레이어(1·2항)는 아직이다 — 지금 도는 판은 <b>보통 전투</b>이고, 이 회차가 세운 것은 «판이 끝나면 승점·순위가 움직이고 결과 화면이 뜬다» 는 흐름이다.</para>
+        /// </summary>
+        void ArenaChallenge(int rank)
+        {
+            App.Overlay.Close();
+            App.StartBattle(App.Save.SelChapter, null, null, FoeName(rank));
+        }
 
         /// <summary>
         /// T183 — 던전 «도전»: 티켓 1 을 쓰고 그 던전의 판 규칙으로 전투를 연다(주인 2026-09-07 12:0X «던전들도 도전 가능하게»).

@@ -48,6 +48,13 @@ namespace KkomaKnight.Tests.Play
         }
         static IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
 
+        static bool Click(Transform root, string name)
+        {
+            var b = UiKit.Find(root, name)?.GetComponent<Button>();
+            if (b == null) return false;
+            b.onClick.Invoke(); return true;
+        }
+
         static TMP_Text Text(Transform root, string name)
         {
             var t = UiKit.Find(root, name);
@@ -92,6 +99,31 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(continued, "onContinue 가 불린다(아레나 화면으로 돌아가는 자리)");
 
             _log.AssertNoRed("PvP 결과(승리)");
+            yield return Shutdown();
+        }
+
+        /// <summary>
+        /// T240 배선 — 아레나 «줄 도전» 을 누르면 <b>판이 실제로 열리고</b> 그 판이 «아레나 판» 으로 표시된다.
+        /// <para>여기서 재는 것은 <b>«열리는가» 까지</b>다 — 판을 끝까지 돌리지 않는다(판이 언제 끝나는지는 매번 다르고,
+        /// 그것을 기다리는 단언이 오늘 배포를 세운 그 꼴이다 · §1 «그 판에 그 일이 일어난다» 규약).</para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ArenaChallengeActuallyOpensAMatchMarkedAsArena()
+        {
+            yield return Boot();
+            EventsScreen.Open(_app, EventsScreen.PageArena); yield return Frames(2);
+            var ar = _app.Current.Root;
+            Assert.IsTrue(Click(ar, "ChallengeBtn"), "«도전» 을 눌러 팝업을 연다"); yield return Frames(2);
+            var ov = _app.Overlay.Root;
+            Assert.IsTrue(Click(ov, "FoeBtn:0"), "상대 줄의 «도전»"); yield return Frames(2);
+
+            Assert.AreEqual("battle", _app.Current.Name, "판이 열린다(여태 이 버튼은 Noop 이었다)");
+            var bs = _app.GetScreen<BattleScreen>();
+            Assert.IsNotNull(bs);
+            Assert.IsTrue(bs.IsArena, "그 판은 «아레나 판» 으로 표시된다 — 이 표식 하나가 끝났을 때 승점 갈래를 켠다");
+            Assert.AreEqual(EventsScreen.PageArena, bs.ExitPage, "끝나면 아레나 화면으로 돌아간다");
+
+            _log.AssertNoRed("아레나 도전 → 판 열림");
             yield return Shutdown();
         }
 

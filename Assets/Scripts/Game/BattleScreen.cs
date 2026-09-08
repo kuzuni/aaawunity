@@ -152,14 +152,16 @@ namespace KkomaKnight.Game
         /// 판을 시작한다. <paramref name="run"/> 는 <b>던전 판 규칙</b>(T183 · 시작 특전 N · 시작 레벨 · 특전 등급 하한)이고
         /// <c>null</c> 이면 <b>지금까지와 똑같은 일반 챕터 전투</b>다(기본값 = 아무 데도 안 닿는다).
         /// </summary>
-        public void Start(int chapter, DungeonData.RunRule run = null, string dungeonKey = null)
+        public void Start(int chapter, DungeonData.RunRule run = null, string dungeonKey = null, string arenaFoe = null)
         {
-            _dunKey = dungeonKey;   // T228 ⓓ — 이 판이 «어느 던전» 인가(null = 일반 챕터 전투)
+            _dunKey = dungeonKey;
+            _arenaFoe = arenaFoe;   // T240 — 아레나 «도전» 으로 들어온 판이면 상대 이름(null = 아니다)   // T228 ⓓ — 이 판이 «어느 던전» 인가(null = 일반 챕터 전투)
             var D = App.Data;
             var rng = new Mulberry32((uint)Environment.TickCount ^ 0x9E3779B9u);
             var opt = new RunOptions { EmitEvents = true };
             if (run != null) { opt.StartPerks = run.StartPerks; opt.StartLevel = run.StartLevel; opt.MinPerkGrade = run.MinPerkGrade; }
-            _exitPage = run != null ? EventsScreen.PageDungeon : null;   // T183 4단계 — 던전에서 들어온 판은 던전 화면으로 되돌린다(일반 전투는 그대로 로비)
+            _exitPage = _arenaFoe != null ? EventsScreen.PageArena       // T240 — 아레나 판은 아레나 화면(23)으로 되돌린다
+                      : run != null ? EventsScreen.PageDungeon : null;   // T183 4단계 — 던전에서 들어온 판은 던전 화면으로 되돌린다(일반 전투는 그대로 로비)
             G = new BattleState(D, chapter, App.Save.CurBuild(D), rng, new InteractivePolicy(), opt);
             BaseStats = new Dictionary<string, double>(); foreach (var d in StatDefs) BaseStats[d.Key] = d.Cur(G);
             _world?.Dispose(); UiKit.Clear(_pops);   // 팝 층은 새 월드를 만들기 «전에» 비운다(발밑 숫자 글자가 팝 층에 산다 · T35)
@@ -196,6 +198,10 @@ namespace KkomaKnight.Game
         /// 이것이 없으면 «클리어한 던전만 소탕» 규칙이 영원히 안 켜진다(클리어를 아무도 안 적으므로).</para>
         /// </summary>
         string _dunKey;
+        /// <summary>T240 — 아레나 «도전» 으로 들어온 판의 <b>상대 이름</b>(<c>null</c> = 아레나가 아니다). 이 값 하나가 <see cref="EndRun"/> 의 아레나 갈래를 켠다.</summary>
+        string _arenaFoe;
+        /// <summary>지금 판이 아레나 판인가(자가 읽는다).</summary>
+        public bool IsArena => _arenaFoe != null;
         /// <summary>테스트·진단용 읽기 — 이 판이 들어온 던전 키(<c>null</c> = 일반 전투).</summary>
         public string DungeonKey => _dunKey;
         /// <summary>판이 끝나 화면을 뜨는 길 한 곳 — 클리어·사망·포기 셋이 모두 여기를 지난다(«로비로» 를 네 군데에 박아 두지 않는다).</summary>
@@ -291,6 +297,7 @@ namespace KkomaKnight.Game
         {
             _ended = true;
             var D = App.Data; var S = App.Save;
+            if (_arenaFoe != null) { EndArenaRun(D, S); return; }   // T240 — 아레나 판은 챕터 진행·클리어 보상이 아니라 «승점» 이 결과다
             // T137 — 챕터 보상 진행도(적 1/3·2/3·전멸)는 «이기든 지든» 여기 한 곳에서 남는다: max(기존, 이번 판 처치)
             ChapterChest.RecordKills(S, G.Chapter, G.Kills);
             if (G.Cleared)
@@ -315,6 +322,26 @@ namespace KkomaKnight.Game
                 S.Gold += Math.Round(G.Gold); App.Persist();
                 App.Overlay.Dead(G, () => ExitBattle());
             }
+        }
+
+        /// <summary>
+        /// T240 4·5항 — <b>아레나 판</b>이 끝났다: 승점·순위를 옮기고(<see cref="ArenaMatch.Settle"/>) 결과 화면(<see cref="ArenaResult"/>)을 띄운다.
+        /// <para>
+        /// <b>일반 전투와 갈리는 것 셋</b> — ⓐ <c>MaxChapter</c>·<c>SelChapter</c> 를 <b>안 건드린다</b>(아레나에서 이겨도 챕터가 열리면 안 된다) ·
+        /// ⓑ 클리어 보너스 골드를 <b>안 준다</b>(그 보상은 챕터 진행의 몫이다) · ⓒ <see cref="DungeonSweep.Record"/> 도 안 부른다(던전이 아니다).
+        /// 판에서 주운 골드(<c>G.Gold</c>)는 그대로 은행에 넣는다 — 그것은 «판을 돈 삯» 이라 어느 판이든 같다.
+        /// </para>
+        /// <para>⚠ <b>«이겼는가» = <c>G.Cleared</c></b> 다. 지금 아레나 판은 «지금 고른 챕터를 도는 판»(T183 던전과 같은 꼴)이라
+        /// 전멸시키면 이기고 죽으면 진다. 1·2항(콜로세움 무대 · 양쪽 플레이어 1대1)이 서면 그때 «누가 이겼나» 도 그 규칙이 정한다.</para>
+        /// </summary>
+        void EndArenaRun(GameData D, SaveData S)
+        {
+            ChapterChest.RecordKills(S, G.Chapter, G.Kills);   // 처치 진행도는 «이기든 지든» 남는다(T137) — 판을 돈 것은 사실이다
+            S.Gold += Math.Round(G.Gold);
+            var o = ArenaMatch.Settle(S, D != null ? D.ArenaMatch : null, D != null ? D.ArenaDummy : null, G.Cleared);
+            App.Persist();                                     // 저장은 여기 한 번뿐이다(Settle 은 순수 C# 이라 디스크를 안 만진다)
+            Debug.Log($"[T240] 아레나 결과 {(o.Win ? "승" : "패")} · 승점 {o.Before:0} → {o.After:0}({o.Delta:+0;-0;0}) · 순위 {o.RankBefore} → {o.RankAfter} · 티어 {o.Tier}");
+            ArenaResult.Show(o, Nickname.Of(S), _arenaFoe, null, null, ExitBattle);
         }
 
         // ───────────────────────── T85 · 보상 흡수(표시값) ─────────────────────────

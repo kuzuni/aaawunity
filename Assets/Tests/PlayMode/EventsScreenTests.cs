@@ -15,7 +15,8 @@ namespace KkomaKnight.Tests.Play
     /// <summary>
     /// T43 «던전·아레나 껍데기»(docs/ref 20~26) 스모크 — 하단 탭 «던전» → 던전 페이지 → 세부 팝업 → PvP 페이지 → 아레나 입장 → 도전 팝업 · 순위 보상 팝업 → 상인 페이지 → 뒤로 ×3 → 로비,
     /// 그리고 로비 오른쪽 아래 «이벤트» 버튼 → PvP 페이지. 지점마다 빨간 줄 0 · 경로/키 경고 0 · 영문 데모 글자 0 · 핵심 요소 개수(카드 2 · 초상 3 · 배너 3 · 순위 줄 7 · 상대 줄 5 · 보상 줄 4 · 티어 5 · 상품 11) ·
-    /// 구도(표 ⑩~⑯ 자리 ±0.5%p) · 껍데기 버튼(소탕·도전·새로고침·상품·일일/시즌 탭)은 눌러도 아무 일 없음 · 페이지 이동과 «탭하여 닫기»(배경 탭)만 동작.
+    /// 구도(표 ⑩~⑯ 자리 ±0.5%p) · 남은 껍데기 버튼(새로고침·상품·일일/시즌 탭)은 눌러도 아무 일 없음 · 페이지 이동과 «탭하여 닫기»(배경 탭)만 동작.
+    /// («소탕» 은 T228 · 던전 «도전» 은 T183 · 아레나 «줄 도전» 은 T240 이 차례로 배선했다 — 이 머리글의 «껍데기» 목록은 그때마다 줄어든다.)
     /// </summary>
     public class EventsScreenTests
     {
@@ -324,7 +325,7 @@ namespace KkomaKnight.Tests.Play
             }
             Check("아레나 입장 화면");
 
-            // ⑤ 도전 → 도전 팝업(24) · 줄 버튼·새로고침 아무 일 없음
+            // ⑤ 도전 → 도전 팝업(24) · 새로고침은 아직 껍데기(줄 도전은 T240 이 배선했다 — 아래 주석)
             Assert.IsTrue(ClickNamed(ar, "ChallengeBtn"), "도전"); yield return Frames(2);
             Check("도전 팝업", expectOverlay: true); ov = _app.Overlay.Root;
             Assert.IsTrue(HasText(s => s == "도전") && HasText(s => s == "무료 새로고침") && HasText(s => s == "탭하여 닫기"), "도전 팝업 글자");
@@ -332,8 +333,12 @@ namespace KkomaKnight.Tests.Play
             { var face = UiKit.Find(UiKit.Find(ov, "FoeRow:0"), "Face") as RectTransform; Assert.IsNotNull(face, "상대 줄 초상"); Assert.Less(face.anchorMax.x, 0.3f, "상대 줄 초상은 줄 왼쪽(레퍼런스 24) — T43 비평 회차 1 회귀"); }
             var cbox = UiKit.Find(ov, "ui.popup") as RectTransform; Assert.IsNotNull(cbox); AtX(cbox, Layout.AcBox, "도전 박스"); AtY(cbox, Layout.AcBox, "도전 박스");
             Assert.IsTrue(HasText(s => s == UiKit.Fmt(_app.Power())), "전투력 = 내 값");
-            Assert.IsTrue(ClickNamed(ov, "FoeBtn:0") && ClickNamed(ov, "RefreshBtn"), "줄 도전·새로고침 누름"); yield return Frames(1);
-            Assert.IsTrue(_app.Overlay.IsOpen, "껍데기 버튼은 아무 일 없음");
+            // T240 — «줄 도전»(FoeBtn)은 더는 껍데기가 아니다: 누르면 판이 열리고 끝나면 승점이 움직인다.
+            //   그래서 여기서는 **안 누른다** — 이 자는 이어서 도전 팝업을 닫고 ⑥ 보상 팝업까지 가는데, 판이 열리면 그 뒤가 통째로 무너진다.
+            //   «누르면 실제로 판이 열리는가» 는 ArenaResultTests 가 따로 잰다(그 자리에서 끝나는 자라 뒤를 안 무너뜨린다).
+            Assert.AreEqual(5, CountNamed(ov, "FoeBtn:"), "줄 도전 버튼은 그대로 5개");
+            Assert.IsTrue(ClickNamed(ov, "RefreshBtn"), "새로고침 누름"); yield return Frames(1);
+            Assert.IsTrue(_app.Overlay.IsOpen, "새로고침은 아직 껍데기라 아무 일 없음");
             Assert.IsTrue(ClickNamed(ov, "Dimmed"), "배경 탭"); yield return Frames(2);
             Check("도전 팝업 닫힘");
 

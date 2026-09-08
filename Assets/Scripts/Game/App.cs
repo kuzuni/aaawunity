@@ -94,11 +94,13 @@ namespace KkomaKnight.Game
         public T GetScreen<T>() where T : GameScreen { foreach (var s in _screens.Values) if (s is T t) return t; return null; }
 
         /// <param name="dungeonKey">T228 ⓓ — 던전에서 들어온 판이면 그 던전 키(<c>null</c> = 일반 챕터 전투). 클리어하면 <c>DungeonSweep.Record</c> 가 이 키로 «깬 적 있다» 를 남기고, 그것이 소탕의 조건이다.</param>
-        public void StartBattle(int chapter, DungeonData.RunRule run = null, string dungeonKey = null)
+        /// <param name="arenaFoe">T240 — 아레나 «도전» 으로 들어온 판이면 <b>상대 이름</b>(<c>null</c> = 아레나가 아니다).
+        /// 이 한 값이 «판이 끝나면 승점을 옮기고 결과 화면을 띄운다» 를 켠다(<c>BattleScreen.EndRun</c>) — 던전의 <paramref name="dungeonKey"/> 와 같은 꼴이다.</param>
+        public void StartBattle(int chapter, DungeonData.RunRule run = null, string dungeonKey = null, string arenaFoe = null)
         {
             chapter = Mathf.Clamp(chapter, 1, Math.Max(1, Save.MaxChapter));
             ShowScreen("battle");
-            GetScreen<BattleScreen>().Start(chapter, run, dungeonKey);   // T183 — run 이 null 이면 지금까지와 똑같은 일반 전투다
+            GetScreen<BattleScreen>().Start(chapter, run, dungeonKey, arenaFoe);   // T183 — run 이 null 이면 지금까지와 똑같은 일반 전투다
             Debug.Log("[KkomaKnight] ready battle");   // T60 배포 스모크 마커
         }
 

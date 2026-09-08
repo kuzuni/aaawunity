@@ -1837,6 +1837,17 @@ T95(소환 결과 = `Shop_Chest_Open` 프리팹 + 찰진 등장)가 ✅ 지만 *
 > 화면 하나 세우려고 다른 화면을 통째로 띄우는 길은 안 갔다. **`Overlay.Confetti` 를 «루트를 받는 공개 함수» 로 한 칸 넓히면 한 줄로 붙는다**(그 파일은 지금 아무 lock 도 없다).
 > ⚠ **`ui_score` 채점은 아직 못 한다** — 이 화면을 찍는 자리가 `UiShotsTests` 에 없다. 배선 회차가 «34_pvp_win» 을 찍고 `SCREENS` 에 넣는다(아래 줄).
 >
+> **(15:3X 보탬 · 같은 워커) 배선이 붙었다 — «도전» 을 누르면 판이 열리고 끝나면 승점·순위가 움직이고 결과 화면이 뜬다.**
+> 길: `EventsScreen.ArenaChallenge(rank)` → `App.StartBattle(SelChapter, null, null, 상대이름)` → `BattleScreen._arenaFoe` 표식 →
+> `EndRun` 이 `EndArenaRun` 으로 갈라져 `ArenaMatch.Settle` → `App.Persist()` → `ArenaResult.Show(..., ExitBattle)` → 아레나 화면(23)으로.
+> **일반 전투와 갈리는 것 셋**(코드에 적어 뒀다): `MaxChapter`/`SelChapter` 를 안 건드리고 · 클리어 보너스 골드를 안 주고 · `DungeonSweep.Record` 도 안 부른다.
+> 판에서 주운 골드는 그대로 준다(«판을 돈 삯» 이라 어느 판이든 같다).
+> ⚠ **1·2항(콜로세움 무대 · 양쪽 플레이어 1대1)은 아직이다** — 지금 도는 판은 **보통 전투**이고 «이겼는가» 는 `G.Cleared` 다. 그 둘이 서면 «누가 이겼나» 도 그 규칙이 정한다.
+> ⚠ **6항(아레나 티켓)은 여전히 안 만들었다** — 표도 세이브 자리도 없어서 **티켓을 안 쓴다**(버튼의 «🎫x1» 은 종전 그대로 그림이다).
+> 규칙이 서면 `ArenaChallenge` 첫 줄에 던전(`DungeonTickets.Spend`)과 같은 꼴로 한 줄만 넣으면 된다.
+> ⚠ **`EventsScreenTests` ⑤ 의 «줄 도전을 눌러도 아무 일 없음» 단언은 걷었다** — 그 자는 이어서 ⑥ 보상 팝업까지 가는데 판이 열리면 뒤가 통째로 무너진다.
+> «누르면 실제로 판이 열리는가» 는 `ArenaResultTests` 가 **그 자리에서 끝나는 자**로 따로 잰다(단언을 지운 게 아니라 옮겼다).
+>
 > ⚠ **`tools/ui_score.py` 의 `SCREENS` 에는 아직 안 넣었다** — 33·34 는 `screens` 에 PNG 가 없어서(화면이 없다) 지금 넣으면 채점이 «표에 없는 이름표» 로 운다. **화면을 세우는 회차가 PNG 이름과 함께 넣는다**(`'33_pvp_battle': ('㊺', None, None)` · `'34_pvp_win': ('㊻', None, None)`).
 
 ### T241 — 공통 **«리워드» 획득 팝업** — 레퍼런스 `35_reward_popup.jpg` — **🔄 1단계 push(팝업 본체·표 ㊹·자 · sess-1127-20713 · 워커 F · 결정 658) · 남은 일 = 부르는 자리 갈아 끼우기** (주인 2026-09-08 · 전 화면 공용)
