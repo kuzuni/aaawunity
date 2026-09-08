@@ -1791,6 +1791,18 @@ T95(소환 결과 = `Shop_Chest_Open` 프리팹 + 찰진 등장)가 ✅ 지만 *
 8. 표·비평: `docs/ref-layout.md` 에 **33·34 표를 먼저 추가**(§5 5항)하고 채점. 테스트: PlayMode — 도전 → 전투 → 결과 → 아레나 복귀가 **끊기지 않고** 돌고, 승리 시 승점 +8·순위 상승, 패배 시 −6, 0 미만 없음, 빨간 줄 0 · 글자 잘림 0. Core EditMode — 승점·순위·티어 계산.
 9. 게이트 + assets-map(콜로세움 조각 키) + PROGRESS T240 행 + 완료 기록(확인 = CI + `screens` 33·34 + 주인 폰).
 
+> **(2026-09-08 11:4X · 워커 J · sess-1917-23930) 5항만 섰다 — 다음 워커에게 넘기는 것.**
+> **선 것**: 표 `Assets/KkomaKnight/arenaMatch.json`(카탈로그 `data.arenaMatch` → `GameData.ArenaMatch`) · `Core/ArenaMatch`
+> (`Apply(m, score, win)` · `Delta`(바닥에 걸리면 −6 이 아니라 실제로 준 만큼) · `RankOf(dummy, score)` · `TierOf` · `BetterRank`) ·
+> `SaveData.ArenaScore`·`ArenaBest`(옛 세이브 «없으면 0» · 세이브 버전 그대로) · EditMode 자 여덟.
+> **안 한 것**: 1·2·4항(콜로세움 무대 · 양쪽 플레이어 · 결과 화면)과 **배선 전부**. 아레나 화면이 `EventsScreen.cs` 안이고 그 파일은
+> **T236(워커 C) lock** 이라 규약대로 뒤 번호가 기다린다 — 그 lock 이 풀리면 붙일 자리는 셋이다:
+> ⓐ 도전 → 전투 진입 ⓑ 전투 끝 → `ArenaMatch.Apply` 로 승점 갱신 + `BetterRank` 로 최고 순위 갱신 + 저장
+> ⓒ 순위 목록(23)이 내 줄을 `ArenaMatch.RankOf(D.ArenaDummy, save.ArenaScore)` 로 그린다.
+> ⚠ **`arenaDummy.json` 의 `meRank`(=1)를 «내 순위» 로 읽지 마라** — 그것은 T81 껍데기의 **전투력 곡선 기준점**이고,
+> 이제 «내 순위» 는 승점에서 나온다(`RankOf`). 둘을 같은 것으로 읽으면 승점이 움직여도 순위가 안 움직인다.
+> ⚠ **6항(아레나 티켓)은 손대지 않았다** — 규칙이 아직 없고 던전 티켓(T99)과 별개라, 지어내지 않고 배선 회차 몫으로 둔다.
+
 ### T241 — 공통 **«리워드» 획득 팝업** — 레퍼런스 `35_reward_popup.jpg` — **🔄 1단계 push(팝업 본체·표 ㊹·자 · sess-1127-20713 · 워커 F · 결정 658) · 남은 일 = 부르는 자리 갈아 끼우기** (주인 2026-09-08 · 전 화면 공용)
 
 > **✅ 1단계(11:5X · 워커 F · 결정 658) — 팝업이 선다. 값은 전부 주인 그림 실측이다.**
