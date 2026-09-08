@@ -122,10 +122,15 @@ namespace KkomaKnight.Game
                     var mrt = (RectTransform)map; mrt.SetParent(card, false); map.gameObject.SetActive(true); UiKit.Pct(mrt, CardMapImage);
                     var mi = map.GetComponent<Image>(); if (mi != null) { mi.preserveAspect = true; mi.raycastTarget = false; }
                 }
-                UiKit.Clickable(card, () => { Audio.Wake(); App.StartBattle(App.Save.SelChapter); });
-                // T166 ⓑ(주인 2026-09-07 09:2X «챕터 카드에 5초마다 shine») — 재료(mat.perkShine)는 특전 카드가 쓰던 그대로고
-                // 새로 필요한 것은 «되풀이» 뿐이라 UiKit.ShineLoop 한 줄이다. 카드가 사라지면 머티리얼 인스턴스도 트윈도 같이 죽는다.
-                UiKit.ShineLoop(UiKit.ShineMaterial(card, card), card);
+                // T245(주인 2026-09-08 12:0X «챕터 카드 … 클릭했더니 시작되는 거 안 되게 하고 그거 shine 이펙트 있는 거도 하지 말기»)
+                //  ⓐ 여기 있던 `UiKit.Clickable(card, …)`(전투 시작)을 **없앴다** — 카드는 «이번 챕터 그림» 만 보여 준다.
+                //     ⚠ 지우는 것으로 끝이다: `card` 는 `UiKit.Rect` 라 제 Image 가 없고, 투명 히트 영역을 만들던 것이 바로 그 `Clickable` 이다
+                //     (`UiKit.cs:1329` — Image 가 없으면 «투명 히트 영역» 을 붙이고 `raycastTarget=true` 를 켠다).
+                //     그래서 뒤에 raycastTarget 을 끄는 줄이 따로 필요 없다 — 켤 것을 안 켜는 쪽이라 죽은 자리가 안 남는다.
+                //     카드 그림(`SampleImage_Map`)은 위에서 이미 `raycastTarget = false` 다.
+                //  ⓑ 여기 있던 `ShineLoop(ShineMaterial(card, card), card)`(T166 ⓑ · 주인 2026-09-07)도 **없앴다** — 같은 지시로 뒤집혔다.
+                //     `ShineMaterial` 이 `MaterialOwner` 를 붙이던 것도 같이 사라진다(안 부르면 안 붙는다 = 누수 자가 세는 «임자 없는 인스턴스» 도 0 그대로).
+                //  ⓒ 그 빛은 아래 START 버튼으로 옮겼다(주인 «shine 이펙트는 START 버튼에 있어야 함»).
                 // T94 ⓑ(주인 2026-09-07 05:3X «메인 로비에 Border 있는 것들은 걍 없애셈») — T69-lobby 가 넣었던 카드 검은 링을 뺀다.
                 // 로비만 예외이고 다른 화면의 T69 테두리는 그대로다(BorderAudit.StrictScreens 에서 01_lobby 만 뺐다).
                 UiKit.Tag(card, "챕터 카드(스테이지 그림)");
@@ -136,6 +141,12 @@ namespace KkomaKnight.Game
             // ⑥ 보조 버튼 2(탐험 · 클리어 보상 — 껍데기) → START(주황 · 카드 폭) → 모서리(이벤트 · T78 로 «성» 삭제)
             UiKit.Tag(BuildColumn(rt, "SubRow", Layout.LobbySubRow, true, (SideExplore, "ui.iconMap", "탐험"), (SideClearReward, "ui.iconChestRed", "클리어 보상")), "보조 버튼 2개 줄");
             var start = UiKit.Button(rt, "ui.btnStartOrange", "START", () => { Audio.Wake(); App.StartBattle(App.Save.SelChapter); }, Layout.LobbyStart); start.name = "Start"; UiKit.Tag(start, "START 버튼");   // Wake = WebGL 첫 터치 뒤 잠든 BGM 재개(T28)
+            // T245 ⓒ(주인 2026-09-08 «shine 이펙트는 START 버튼에 있어야 함») — 카드에서 걷어 온 그 빛을 여기에 건다.
+            // 주기·세기는 카드가 쓰던 값 그대로다(`ShinePeriod` 5초 · 재료도 `mat.perkShine` 그대로) — 옮긴 것이지 새로 만든 것이 아니다.
+            // ⚠ 글자는 안 흐려진다: `ShineMaterial` 은 새 조각을 얹지 않고 `ShineTarget` 이 고른 **Image 한 장**의 머티리얼만 바꾸는데(`UiKit.cs:1606`),
+            //   버튼 글자는 `TMP_Text` 라 `Image` 가 아니어서 그 고르기에 아예 안 들어온다. 그래서 마스크를 따로 씌울 것이 없다.
+            // ⚠ 탭도 안 막힌다: 같은 까닭으로 **새 raycast 대상이 안 생긴다** — 그래도 «START 가 눌리는가» 는 T227 이 `AssertTappable` 로 지키고 있어 어긋나면 그 자가 잡는다.
+            UiKit.ShineLoop(UiKit.ShineMaterial(start, start), start);
             // T78 — 왼쪽 아래 «성»(집 아이콘 + 자물쇠 · 결정 32)은 주인 2026-09-07 지시로 삭제.
             // T168 — 오른쪽 아래 «이벤트» 도 삭제했다(주인 «이벤트라 돼 있는 거 중복되니까 빼 주고») — 같은 입구가 하단 탭 맨 오른쪽으로 갔다.
             // 자리(Layout.LobbyEvents)는 «비워 둔다» — 다른 요소를 끌어올리지 않는다(T78 이 «성» 을 지웠을 때와 같은 규약).

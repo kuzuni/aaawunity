@@ -439,6 +439,10 @@ namespace KkomaKnight.Tests.Play
                     var map = UiKit.Find(lobby, "SampleImage_Map"); Assert.IsNotNull(map, "챕터 카드 그림 = SampleImage_Map"); Assert.IsTrue(map.gameObject.activeInHierarchy, "SampleImage_Map 활성");
                     Assert.AreEqual("ChapterCard", map.parent.name, "SampleImage_Map 은 카드 자리 밑"); Assert.IsNotNull(map.GetComponent<Image>().sprite, "SampleImage_Map 스프라이트");
                     Assert.IsNull(UiKit.Find(UiKit.Find(lobby, "ChapterCard"), "Stage"), "코드 조립 카드(Stage) 폐기");
+                    // T245 ⓐ(주인 2026-09-08 «챕터 카드 … 클릭했더니 시작되는 거 안 되게») — 카드는 그림만 보여 준다.
+                    // «눌러도 전투가 안 시작된다» 를 클릭을 흉내 내서 재지 않고 **계약으로** 잰다: 카드에 Button 이 없으면 누를 자리 자체가 없다.
+                    // (클릭을 흉내 내면 «안 일어난 것» 을 재게 되는데, 그것은 화면 전환이 늦어도 통과해 버린다.)
+                    Assert.IsNull(UiKit.Find(lobby, "ChapterCard").GetComponent<Button>(), "챕터 카드는 눌리지 않는다(T245 ⓐ · 전투 시작은 START 하나로)");
                 }
                 // T68 ③ 배경 Deco(흐린 칼 무늬) 전부 비활성 · T68 ② 상단 초상은 정지(Animator 속도 0)
                 {
