@@ -181,15 +181,32 @@ namespace KkomaKnight.Game
 
         public void SetAlpha(float a) { foreach (var r in _renderers) if (r != null) { var c = r.color; c.a = a; r.color = c; } }
 
-        /// <summary>피격 플래시 — AllIn1SpriteShader 머티리얼(HITEFFECT_ON)로 잠시 갈아끼운다.</summary>
+        /// <summary>
+        /// 피격 플래시 — AllIn1SpriteShader 머티리얼(HITEFFECT_ON)로 잠시 갈아끼운다.
+        /// <para>
+        /// <b>지금 켜져 있는가</b>(<see cref="Flashing"/>)와 <b>여태 몇 번 켰나</b>(<see cref="FlashCount"/>)를 함께 남긴다 — T242 회차 1.
+        /// 주인이 «번쩍이 안 보인다» 고 한 자리인데 <b>왜 안 보이는지 아직 모른다</b>: 강도는 이미 최대이고
+        /// (<c>HitFlash.mat</c> 의 <c>_HitEffectBlend 1</c> · <c>_HitEffectGlow 5</c> · 흰색 α1) 남은 후보는
+        /// «길이(0.1s)» · «부르는 경로가 빠졌다» · «그 유닛은 이 <see cref="CharacterRig"/> 가 아니다» 셋이다.
+        /// <b>손잡이를 돌리기 전에 그 셋을 가르려면 «실제로 몇 번 · 얼마나 켜졌나» 를 재야 한다</b>(결정 622) —
+        /// 이 둘이 그 재료이고, 값·연출은 <b>한 줄도 안 바뀐다</b>.
+        /// </para>
+        /// </summary>
         public void Flash(Material flashMat, float seconds)
         {
             if (flashMat == null || _renderers == null) return;
             if (_origMats == null) { _origMats = new Material[_renderers.Length]; for (int i = 0; i < _renderers.Length; i++) _origMats[i] = _renderers[i].sharedMaterial; }
             foreach (var r in _renderers) if (r != null) r.sharedMaterial = flashMat;
+            Flashing = true; FlashCount++; LastFlashSeconds = seconds;
             CancelInvoke(nameof(Unflash)); Invoke(nameof(Unflash), seconds);
         }
-        void Unflash() { if (_origMats == null) return; for (int i = 0; i < _renderers.Length; i++) if (_renderers[i] != null) _renderers[i].sharedMaterial = _origMats[i]; }
+        /// <summary>지금 플래시 머티리얼이 걸려 있는가(T242 관측 · 화면을 안 바꾼다).</summary>
+        public bool Flashing { get; private set; }
+        /// <summary>이 리그가 여태 플래시를 켠 횟수(T242 관측) — 0 이면 «부르는 경로가 없다» 는 뜻이다.</summary>
+        public int FlashCount { get; private set; }
+        /// <summary>마지막으로 요청받은 플래시 길이(초 · T242 관측) — «길이가 짧아서» 후보를 이 값으로 잰다.</summary>
+        public float LastFlashSeconds { get; private set; }
+        void Unflash() { Flashing = false; if (_origMats == null) return; for (int i = 0; i < _renderers.Length; i++) if (_renderers[i] != null) _renderers[i].sharedMaterial = _origMats[i]; }
 
         public Bounds Bounds()
         {
