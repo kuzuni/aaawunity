@@ -450,5 +450,51 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("로비 복귀");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T233 — 주인 2026-09-08 «적 화살이 맞는 순간 바로 안 사라지고 <b>멈췄다</b> 사라진다».
+        /// <para>
+        /// 까닭은 그림 쪽 한 곳이다: 표시 x 는 늘 엔진보다 <b>먼저</b> 명중선(<see cref="BattleWorld.ArrowHitLine"/>)에 닿고
+        /// (화살이 태어난 프레임에 표시 = 엔진이라 걸음 상한이 안 걸린다), 닿으면 «앞지르지 않게» 붙잡는 클램프가
+        /// 그림을 그 선에 <b>세운다</b> — 엔진이 다음 틱에 지울 때까지 서 있는 그 몇 프레임이 «기다림» 으로 보였다.
+        /// </para>
+        /// 그래서 재는 것은 <b>«보이는 화살이 명중선에 서 있지 않은가»</b> 한 줄이다 — 고치기 전에는 이 줄이 프레임마다 걸린다.
+        /// (클램프 자체는 옳으므로 <b>안 건드린다</b> · 고침은 «닿으면 그림을 끈다» 뿐 · T179 의 넷은 그대로 남는다.)
+        /// ⚠ 순간 물체라 `screens` 정지 그림으로는 못 본다 — 주인 폰이 마지막 판정이고 이 자는 회귀를 막는다.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator EnemyArrowsVanishAtTheHitLineInsteadOfStandingThere()
+        {
+            yield return Boot();
+            _app.StartBattle(1);
+            var bs = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bs); var G = bs.G; Assert.IsNotNull(G, "전투 상태");
+            var world = bs.World; Assert.IsNotNull(world, "BattleWorld");
+            Arm(G);
+
+            int seen = 0, standing = 0; double worstOver = 0;
+            Time.timeScale = 3f;
+            float t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < 6f && !G.Over && !_app.Overlay.IsOpen)
+            {
+                yield return null;
+                double hit = world.ArrowHitLine;
+                foreach (var a in G.Arrows)
+                {
+                    if (a == null || !world.ArrowViewVisible(a)) continue;
+                    seen++;
+                    double shown = world.ArrowShownX(a);
+                    if (shown <= hit + 1e-6) { standing++; worstOver = System.Math.Max(worstOver, hit - shown); }
+                }
+            }
+            Time.timeScale = 1f;
+            Debug.Log($"[T233] 보이는 적 화살 프레임 {seen} · 그중 명중선에 선 것 {standing}(0 이어야 한다 · 가장 깊이 들어간 값 {worstOver:0.0}px)");
+            Assert.Greater(seen, 0, "적 화살이 한 번은 보여야 이 시험이 성립한다(6초 안에 궁수가 안 쏘면 이 줄이 알려 준다)");
+            Assert.AreEqual(0, standing,
+                            "명중선에 닿은 적 화살 그림은 그 자리에 서지 않고 사라져야 한다(T233 · 서 있던 프레임 " + standing + "/" + seen + ")");
+            _log.AssertNoRed("T233 적 화살 소멸");
+
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            yield return Shutdown();
+        }
     }
 }

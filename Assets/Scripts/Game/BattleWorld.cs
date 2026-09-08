@@ -725,6 +725,10 @@ namespace KkomaKnight.Game
         public double ArrowShownX(EnemyArrow a) => a != null && _arrowX.TryGetValue(a, out double x) ? x : (a != null ? a.X : 0);
         /// <summary>화면에 서 있는 적 화살 그림 수(T179 ⓓ 누수 0 게이트용).</summary>
         public int ArrowViewCount => _arrows.Count;
+        /// <summary>적 화살 그림이 <b>지금 보이는가</b>(T233 게이트용) — 명중선에 닿으면 끈다. 그림이 아예 없으면 false.</summary>
+        public bool ArrowViewVisible(EnemyArrow a) => a != null && _arrows.TryGetValue(a, out var go) && go != null && go.activeSelf;
+        /// <summary>엔진이 «맞았다» 고 보는 자리(테스트가 같은 식을 베끼지 않게 · <c>Battle.cs</c> 의 그 선과 같다).</summary>
+        public double ArrowHitLine => G != null && G.P != null ? G.P.WorldX + EngineConst.ArrowHitDx : 0;
         /// <summary>적 화살 그림의 z 회전(T179 ⓐ 게이트용) — 없으면 <c>float.NaN</c>.</summary>
         public float ArrowViewAngle(EnemyArrow a) => a != null && _arrows.TryGetValue(a, out var go) && go != null ? go.transform.eulerAngles.z : float.NaN;
         /// <summary>투사체의 화면 오브젝트(T86 · 테스트·진단용 · 각도 확인).</summary>
@@ -858,6 +862,13 @@ namespace KkomaKnight.Game
                 if (ashown < ahit) ashown = System.Math.Min(a.X, ahit);
                 _arrowX[a] = ashown;
                 go.transform.position = Pos(ashown, FootY - 0.05f, -0.2f);
+                // T233 — 명중선에 닿는 순간 그림을 끈다(주인 2026-09-08 «맞는 순간 바로 안 사라지고 멈췄다 사라진다»).
+                // 왜 «멈춰» 보였나: 표시는 늘 엔진보다 먼저 이 선에 닿고(태어난 프레임에 둘이 같아 걸음 상한이 안 걸린다),
+                // 닿으면 위 클램프가 그림을 그 자리에 세운다 — 엔진이 다음 틱에 지울 때까지 서 있는 것이 «기다림» 이다.
+                // 클램프는 그대로 둔다(맞기 전에 플레이어를 지나가지 않는다는 구실은 옳다) — 서 있는 대신 사라지게만 한다.
+                // 꼴은 바로 위 투사체의 `gone`(T171) 그대로다: 엔진 목록·_arrows 는 안 건드리고(정리는 아래 deadA 한 곳) 그림만 끈다.
+                bool goneA = !Silent && ashown <= ahit;
+                if (go.activeSelf == goneA) go.SetActive(!goneA);
             }
             var deadA = new List<EnemyArrow>(); foreach (var kv in _arrows) if (!liveA.Contains(kv.Key)) deadA.Add(kv.Key);
             foreach (var k in deadA) { Object.Destroy(_arrows[k]); _arrows.Remove(k); _arrowX.Remove(k); }
