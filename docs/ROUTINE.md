@@ -3880,6 +3880,13 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 3. **둘째 의심 — SDF 여백(padding)이 좁다.** `TMP_FontAsset.CreateFontAsset(Font)` **한 인자 판**은 표본 크기·padding 이 기본값으로 잡힌다. 아웃라인은 **글리프 둘레의 SDF 여백 안에서만** 자라므로(T207 4항 ⓐ 에 미리 적어 둔 함정) `_OutlineWidth` **0.20** 이 그 여백을 넘으면 테가 **각지게 잘리거나 아예 안 보인다**. 판별 = padding 을 키우는 오버로드로 만들어 **2항의 같은 픽셀 자**로 다시 재기. **한 회차에 하나만 움직인다**(2항 → 3항 차례로).
 
+> 🔎 **2항 자가 CI #472 에서 실제로 빨개졌다 — 그리고 그 빨강이 4항을 지웠다 + 목록에 없던 넷째 후보를 찾았다 (05:2X · sess-1913-2015 · 워커 E · 코드 0줄 · T224 lock 은 워커 G 것 · 결정 619)**
+> `TmpFontProbeTests.JuaTmpFontAssetBakesHangulAndDrawsWithAMaterialOutline` — «흰 판 위 흰 글자인데도 어두운 픽셀이 안 늘었다» · **Expected: greater than 210 · But was: 10**. 즉 **값(`_OutlineWidth` 0.20)도 넣고 갈래(`OUTLINE_ON`)도 켰는데 테가 한 획도 안 그려진다.** 워커 G 가 «ⓔ 가 빨갛다면 그것이 답이다» 로 예고한 바로 그 자리다 — 주인 지적은 배포 지연만이 아니라 **진짜 결함**이었다.
+> **⑴ 4항은 지워도 된다(확실하다).** 이 자는 **에디터 안 PlayMode**(game-ci unity-test-runner)에서 돈다. 셰이더 스트리핑은 **플레이어를 빌드할 때만** 일어나고 에디터에는 변형이 다 있다. 그러니 «에디터에서도 안 그려진다» 는 이 실측이 4항을 **원인 후보에서 제외**한다(4항은 나중에 «에디터는 되는데 웹만 안 된다» 가 됐을 때 되살아나는 항이다).
+> **⑵ 그런데 3항(SDF 여백)만 남은 것이 아니다 — 목록에 없던 넷째 후보가 있다: `_ScaleRatioA`.** TMP SDF 셰이더에서 **실제로 그려지는 테 두께는 `_OutlineWidth` 혼자 정하지 않는다** — `_GradientScale`(= 여백 + 1)과 **`_ScaleRatioA`** 가 함께 곱해진다. 그리고 `_ScaleRatioA` 는 보통 `TMP_Text` 가 머티리얼에 밀어 넣어 주는 값인데, **이 레포 전체(`Assets/Scripts` · `Assets/Tests`)에 `ScaleRatio`·`GradientScale` 이 한 번도 안 나온다(grep 0건)** — 런타임에 `CreateFontAsset` 로 만든 애셋의 공유 머티리얼에 그 값이 안 실렸다면 **`_OutlineWidth` 를 얼마로 넣든 두께가 0 이 된다.** 그 꼴이 지금 증상과 정확히 같다: 값 있음 · 갈래 켜짐 · 픽셀 0. ⚠ **이것은 «확인된 원인» 이 아니라 «후보» 다** — 아래 한 줄이 그것을 가른다.
+> **⑶ 3항이냐 ⑵냐를 한 런에 가르는 자리가 이미 있다.** 부팅 탐침이 지금도 `[KkomaKnight] tmpfont bake=ok … outline=ok` 를 찍는다(`TmpFont.cs:66·71`). **그 줄에 `_GradientScale` 과 `_ScaleRatioA` 를 같이 찍어라.** `_ScaleRatioA` 가 **0**(또는 없음)이면 ⑵ 이고 고침은 그 값을 채우는 쪽이다. 정상인데 `_GradientScale` 이 작으면 **3항**(여백)이고 고침은 `CreateFontAsset` 의 padding 오버로드다. 두 수가 다 멀쩡하면 그때 비로소 «그 밖» 이다. **한 회차에 하나만 움직인다는 3항의 규약대로, 그 한 줄을 먼저 찍고 나서 손을 대라** — 안 그러면 padding 을 키워 보고 «안 되네» 로 한 회차를 태운다.
+> **⑷ 그리고 이 빨강이 지금 `gh-pages` 배포를 다시 막고 있다**(04:48 에 TMP 빌드가 나갔다가 #471·#472 로 다시 skipped). 자를 세운 판단 자체는 옳다 — 그 자가 없었으면 이 결함을 아무도 못 봤다. 다만 **주인 배포가 이 한 고침을 기다린다**는 것을 알고 잡으면 된다.
+
 4. **셋째 의심 — WebGL 셰이더 스트리핑.** 런타임 `CreateFontAsset` 이 무는 셰이더가 빌드에 안 실리면 **에디터·PlayMode 에서는 되고 배포 빌드에서만 안 된다**. 1항이 풀려 TMP 빌드가 실제로 나간 뒤 «PlayMode 는 초록인데 웹에서만 테가 없다» 면 이쪽이다(판별 = 배포 스모크 로그의 `[KkomaKnight] tmpfont` 줄 + 셰이더를 `Always Included Shaders` 나 참조 애셋으로 고정).
 
 5. **주인 제안(NotoSans 로 갈아타기)에 대한 답 — 그 길은 지금 더 나쁘다. 실측이다.**
