@@ -219,6 +219,13 @@ namespace KkomaKnight.Tests.Play
                                            "ev_rest", "ev_devil_gift", "ev_ad", "27_toast", "28_confirm_reset" })
                 Assert.IsTrue(_layout.ContainsKey(evName) && ((Dictionary<string, object>)_layout[evName]).Count > 0,
                     evName + " 에 이름표(UiTag)가 하나도 없다 — layout.json 이 빈 칸이면 `ui_score` 가 그 화면을 «—» 로 지나친다(T213)");
+            // ⚠ 27_toast 만 «비었나» 로는 못 지킨다 — 토스트는 팝업이 아니라 로비 «위» 라 팝업 층이 안 열려 있고,
+            //   `PlayShot.Layout` 은 그때 캔버스 전체를 잰다(팝업이 열렸을 때만 Overlay 층으로 좁힌다).
+            //   그래서 이 칸에는 토스트 이름표가 하나도 없어도 **로비 이름표 13개가 이미 들어가 있어** 위 단언이 그냥 통과한다(실측 run 447).
+            //   토스트 제 이름표를 이름으로 콕 집어야 이 자가 뜻이 있다 — 표(㊴)를 세울 워커도 그 13개는 «로비 것» 임을 알아야 한다.
+            var toast = (Dictionary<string, object>)_layout["27_toast"];
+            foreach (var n in new[] { "토스트 띠", "토스트 문구" })
+                Assert.IsTrue(toast.ContainsKey(n), "27_toast 에 «" + n + "» 이름표가 없다 — 이 칸의 나머지는 로비 이름표라 «비었나» 로는 안 잡힌다(T219 3단계)");
             _log.AssertNoRed("스크린샷 회차(전 화면)");
             yield return Shutdown();
         }
