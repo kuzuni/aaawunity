@@ -251,6 +251,17 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(box.childCount - 1, ring.GetSiblingIndex(), "테두리가 마지막 자식(T150 ⓑ)");
             }
             Assert.IsNull(UiKit.Find(ov, "Button_Close_01"), "닫기 X 없음");
+            // ⚑ T227 — «주인이 손가락으로 눌러도 닿는가». 위 T150 ⓑ 가 테두리를 맨 위로 올려 놓았고 그 테두리는 상자를 통째로 덮는
+            // 늘린 Image 라, raycastTarget 을 그대로 두면 **상자 안 모든 탭을 그것이 먹는다**(주인 «도전 버튼 눌렀는데 겜 시작 안 하던데 던전»).
+            // 아래 ClickNamed 들은 onClick.Invoke() 라 레이캐스트를 건너뛰므로 이 그림을 못 본다 — 그래서 «닿는가» 를 여기서 따로 잰다.
+            {
+                // ⚠ 이번 회차는 **로그만** 이다 — 이 자가 빨가면 `build-webgl` 이 안 돌아 배포가 멈추고,
+                // T227 의 확인 조건이 «고친 빌드에서 주인이 직접 눌러 보는 것» 이라 그러면 확인 자체가 막힌다(T226 4항 · 결정 627).
+                // CI 로그에서 «[Tap] 닿음 «던전 세부 «도전»»» 을 눈으로 확인한 다음 회차에 AssertTappable 로 올린다.
+                Tap.LogTappable(_app, UiKit.Find(ov, "ChallengeBtn") as RectTransform, "던전 세부 «도전»");
+                Tap.LogTappable(_app, UiKit.Find(ov, "SweepBtn") as RectTransform, "던전 세부 «소탕»");
+                Tap.Report(_app, ov, "던전 세부 팝업(21)");
+            }
             { var arrowImg = UiKit.Find(ov, "FloorPrev")?.GetComponent<Image>(); Assert.IsNotNull(arrowImg, "층수 ◀"); Assert.AreNotEqual(Palette.Cream, arrowImg.color, "층수 ◀ 는 크림 패널과 다른 색(크림이면 안 보임 · T43 비평 회차 1)"); }
             // T183 3단계 — «도전» 은 더 이상 껍데기가 아니다(티켓 1 을 쓰고 판을 연다) → 여기서는 아직 껍데기인 것만 누른다.
             Assert.IsTrue(ClickNamed(ov, "SweepBtn") && ClickNamed(ov, "FloorPrev"), "소탕·◀ 누름"); yield return Frames(1);

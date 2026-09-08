@@ -973,6 +973,15 @@ namespace KkomaKnight.Game
         /// <summary>
         /// 팝업 상자가 달고 온 테두리(«Border» 계열 직계 자식)를 <b>맨 마지막 형제</b>로 올린다 — T150 ⓑ.
         /// 형제 맨 뒤 = 맨 위에 그려짐이라, 뒤에 붙인 제목 띠·그림·버튼이 네 변의 선을 덮지 않는다.
+        /// <para>
+        /// ⚑ T227 — <b>올린 테두리는 «보이기만» 해야 한다.</b> 이 조각(<c>Popup_Box_02_DecoLine_BasePrefab</c>)의 «Border» 는
+        /// 앵커 0~1 · sizeDelta 0 = <b>상자를 통째로 덮는 늘린 Image</b> 이고(원본 프리팹 실측),
+        /// <see cref="UiKit.Popup"/> 이 «상자 뒤로 클릭이 새지 않게» 상자 안 <c>Graphic</c> 을 전부 <c>raycastTarget = true</c> 로 켜 둔다.
+        /// 그것을 맨 위로 올리면 <b>상자 안 모든 탭을 그 테두리가 먹는다</b> — 레이캐스트가 맨 위에서 멈추기 때문이다.
+        /// 주인이 던전 «도전» 을 눌러도 아무 일이 없던 까닭이 이것이고(⚑⚑ 2026-09-08), 자가 초록이었던 까닭은
+        /// 이 레포의 «클릭» 이 전부 <c>Button.onClick.Invoke()</c> 라 레이캐스트를 건너뛰기 때문이다(T227 2항).
+        /// 뒤로 새는 것은 같은 크기(−4px)의 «Bg» 가 그대로 막는다 — 테두리만 탭에서 빼면 그림은 한 픽셀도 안 바뀐다.
+        /// </para>
         /// </summary>
         static void RingLast(RectTransform box)
         {
@@ -980,7 +989,10 @@ namespace KkomaKnight.Game
             for (int i = box.childCount - 1; i >= 0; i--)
             {
                 var c = box.GetChild(i);
-                if (c != null && c.name.StartsWith("Border", StringComparison.Ordinal)) { c.SetAsLastSibling(); return; }
+                if (c == null || !c.name.StartsWith("Border", StringComparison.Ordinal)) continue;
+                c.SetAsLastSibling();
+                foreach (var g in c.GetComponentsInChildren<Graphic>(true)) if (g != null) g.raycastTarget = false;   // T227 — 맨 위 = 탭을 먹는 자리다
+                return;
             }
         }
         /// <summary>팝업 조각이 달고 오는 장식 선(«DecoLine»·«LineDeco» 계열)을 전부 끈다 — T102 ⓐ(21 세부 팝업의 빨간 선).</summary>
