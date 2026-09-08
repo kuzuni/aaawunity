@@ -68,6 +68,12 @@ jobs:
           python3 tools/check_webgl_template.py
       - name: 오디오 형식 검사 (WebGL 이 읽는 PCM/MP3/AAC 만 · T64)
         run: python3 tools/check_audio_webgl.py
+      # T224 5항 ⓐ — 화면에 나가는 한글이 주인 글꼴(Jua)에 **실제로** 있는가(cmap 실측).
+      # 런타임 자(TextAudit → TextGlyphs.Missing)로는 구조적으로 못 잡는다: `CanRender` 가
+      # «한글 음절 영역이면 참» 이라 11,172자를 다 참이라 하는데 Jua 가 가진 것은 2,367자뿐이다.
+      # 없는 글자는 빨강 없이 **폭 0 으로 사라진다** — 무뎌지는 쪽이라 여기서 막는다(결정 493 의 기준).
+      - name: 글꼴 글리프 검사 (화면 문자열 ↔ Jua cmap · T224)
+        run: python3 tools/check_font_glyphs.py
       - name: aaaw main 체크아웃 (수치 정본)
         uses: actions/checkout@v4
         with:
