@@ -551,7 +551,16 @@ namespace KkomaKnight.Game
             // T69 7항 보상 칸 = 장비 프레임 + 검은 아웃라인 — 조각 rect 가 다 잡힌 뒤(결정 174)
             // T190 — 여기 있던 `RewardLight(goldCell)` 은 없앴다(주인이 이름을 대고 지목한 «클리어 골드 슬롯» 이다).
             RewardFrame(goldCell);
-            if (goldCell != null) UiKit.Tag(goldCell, "클리어 보상 칸");   // T69 감사 대상(«칸») — 결과 팝업은 레퍼런스 jpg 가 없어 표(ref-layout) 행은 없다
+            if (goldCell != null) UiKit.Tag(goldCell, "클리어 보상 칸");   // T69 감사 대상(«칸»)
+            // T219 1단계 — 이 화면은 **사진은 찍히는데 아무것도 안 재고** 있었다(layout.json 이 칸 하나뿐이라 `ui_score` 가 «—» 로 지나쳤다).
+            // T213 이 ev_devil·ev_angel 에 한 것과 같은 길이다: 이름표를 달아 다음 런의 layout.json 에서 **재서** 표를 세운다(값을 유도하지 않는다).
+            // ⚠ 표는 «주인 그림과 같은가» 가 아니라 **«우리 화면이 안 흔들리는가»(회귀 자)** 다 — `docs/ref/` 에 결과 팝업 그림이 없다(§5 5항).
+            UiKit.Tag(UiKit.Find(rt, "Title_01_NoDeco_Tangerine"), "제목 리본");
+            if (chap != null) UiKit.Tag(chap.transform, "챕터 줄");
+            if (unlock != null) UiKit.Tag(unlock.transform, "해금 줄");
+            UiKit.Tag(UiKit.Find(rt, "Title_LineDeco_01_s_White"), "보상 제목");
+            UiKit.Tag(items, "보상 칸 줄");
+            UiKit.Tag(b1, "광고 ×2 버튼"); UiKit.Tag(b2, "그냥 받기 버튼");
         }
         /// <summary>결과 팝업 보상 칸의 아이콘이 프레임 안쪽에 들어가는 비율(T69-overlay) — 조각(GetItem_Reward)은 칸 151px 에 아이콘 128px(85%) 라 프레임 링을 깔면 그림이 링을 넘는다. ItemFrame_01 의 속(안쪽 사각) 비율에 맞춰 74%.</summary>
         public const float RewardIconFill = 0.74f;
@@ -625,6 +634,10 @@ namespace KkomaKnight.Game
             // T190 — 사망 보상(골드) 칸의 빛살도 없앴다(클리어 칸과 같은 꼴이다).
             RewardFrame(reward);
             if (reward != null) UiKit.Tag(reward, "패배 보상 칸");
+            // T219 1단계 — 승리 팝업과 같은 까닭으로 이름표를 단다(팁 줄 셋은 위에서 이미 달렸다).
+            UiKit.Tag(UiKit.Find(rt, "Title_LineDeco_01_s_White"), "제목 리본");
+            UiKit.Tag(lobbyBtn, "로비로 버튼");
+            if (touch != null) UiKit.Tag(touch.transform, "터치 안내");
         }
 
         // ───────────────────────── 설정 / 일시정지 — 레퍼런스 12_settings.jpg 구도 (T41 · 표 ⑨ · «Settings 프리팹 그대로»(T10) 는 부품 규칙으로 대체) ─────────────────────────

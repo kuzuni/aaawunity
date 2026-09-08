@@ -213,7 +213,9 @@ namespace KkomaKnight.Tests.Play
             Assert.Greater(_saved, 0, "PNG 가 하나도 안 남았다(RenderTexture 캡처 실패)");
             Assert.IsTrue(_layout.ContainsKey("01_lobby") && ((Dictionary<string, object>)_layout["01_lobby"]).Count > 0, "로비 이름표(UiTag)가 layout.json 에 있어야 한다");
             // T213 — «찍히기는 하는데 아무것도 안 재는» 화면을 막는다. 빈 칸이면 §5 자가 그 화면을 통째로 못 본다.
-            foreach (var evName in new[] { "ev_devil", "ev_angel" })
+            // T219 1단계 — 결과 팝업 셋을 같은 자로 지킨다(주인이 판마다 보는 화면이고 `BorderAudit.StrictScreens` 안이다).
+            //   나머지 다섯(ev_rest·ev_devil_gift·ev_ad·27_toast·28_confirm_reset)은 화면 단위로 쪼갠 다음 회차 몫이다(지시서 T219 4항).
+            foreach (var evName in new[] { "ev_devil", "ev_angel", "res_win", "res_win_last", "res_lose" })
                 Assert.IsTrue(_layout.ContainsKey(evName) && ((Dictionary<string, object>)_layout[evName]).Count > 0,
                     evName + " 에 이름표(UiTag)가 하나도 없다 — layout.json 이 빈 칸이면 `ui_score` 가 그 화면을 «—» 로 지나친다(T213)");
             _log.AssertNoRed("스크린샷 회차(전 화면)");
