@@ -263,11 +263,13 @@ namespace KkomaKnight.Game
         /// 줄 배치는 프리팹의 <see cref="GridLayoutGroup"/> 을 1열 · 칸 = 표 ⑳ «퀘스트 줄 1» · 간격 = 피치 − 줄로 바꿔 만든다(줄마다 좌표를 박지 않는다).
         /// 껍데기 규칙(T44)은 그대로 — 진행 0/N · «이동» 은 닫기만 · 완료 줄은 프리팹 ✅.
         /// </summary>
-        public static void Quest(App app)
+        /// <param name="daily">true = 일일(동메달) · false = 주간(은메달). 탭은 <b>닫고 다시 여는</b> 길로 갈아탄다 —
+        /// 이미 잘 도는 길이라 조립을 반쯤 되돌리는 것보다 안전하다(줄 수·트랙 칸 수가 판마다 다르다).</param>
+        public static void Quest(App app, bool daily = true)
         {
             var ov = app.Overlay; var B = Layout.QsBox;
             // T257 — 그리기 전에 표를 잡고 날·주를 민다(어제 셈이 오늘 화면에 남지 않게 · 표가 없으면 종전 껍데기 그대로 뜬다).
-            _qd = app.Data != null ? app.Data.Quest : null; _qs = app.Save; _qDaily = true;
+            _qd = app.Data != null ? app.Data.Quest : null; _qs = app.Save; _qDaily = daily;
             if (_qd != null && _qs != null) QuestRun.Roll(_qs, _qd, System.DateTime.Now);
             _qt = _qd != null ? (_qDaily ? _qd.Daily : _qd.Weekly) : null;
             var root = (RectTransform)ov.OpenPrefab("ui.progressionMission2").transform;
@@ -306,6 +308,27 @@ namespace KkomaKnight.Game
                 }
             }
             Track(box, B, Layout.QsTrackIcon, Layout.QsTrackPitch, trackNums.Length, Layout.QsTrackNums, Palette.Yellow, trackIcons, trackNums, "트랙 아이콘 줄(" + trackNums.Length + "칸)", "트랙 아이콘(1칸)");
+            // T257 — 주인 «20포인트 채워지면 퀘스트 팝업 상단에 20포인트 부분 것 얻을 수 있고». **채운 칸만** 눌린다.
+            //  받으면 즉시 지급(`QuestRun.Claim`)하고 T241 리워드 팝업을 띄운 뒤, 닫을 때 이 팝업을 **다시 연다**(결정 671 의 그 꼴).
+            //  못 받는 칸은 아예 안 걸어 둔다 — 눌리는데 아무 일도 안 나는 것이 제일 나쁘다.
+            if (_qd != null && _qt != null && _qs != null)
+                for (int k = 0; k < _qt.Steps.Count; k++)
+                {
+                    if (!QuestRun.CanClaim(_qs, _qd, _qDaily, k)) continue;
+                    var cell = UiKit.Find(box, "Track:" + (k + 1));   // 0번 칸은 «0점» 표시라 한 칸 민다
+                    if (cell == null) continue;
+                    int idx = k; bool dailyNow = _qDaily;
+                    UiKit.Clickable(cell, () =>
+                    {
+                        var d2 = app.Data != null ? app.Data.Quest : null; if (d2 == null) return;
+                        var step = (dailyNow ? d2.Daily : d2.Weekly).Steps[idx];
+                        var got = new List<RewardPopup.Item>();
+                        foreach (var rw in step.Rewards) got.Add(RewardPopup.Item.Of(QuestRewardIcon(rw), UiKit.FmtQty(rw.Amount), amount: (int)rw.Amount));
+                        if (!QuestRun.Claim(app.Save, d2, dailyNow, idx)) return;
+                        app.Persist(); app.Current?.Refresh();
+                        RewardPopup.Show(got, () => Quest(app, dailyNow));   // 닫으면 이 팝업을 다시(받은 칸이 꺼진 채로)
+                    });
+                }
             var refresh = TimerRow(box, B, Layout.QsRefresh, "새로고침까지 " + Dashes, "Refresh");
             var listBox = UiKit.Panel(box, "ListBox", "fr.r12", Palette.A(Palette.Dim, 0.55f)); UiKit.Pct(listBox.rectTransform, Layout.QsListBox.Within(B));
 
@@ -340,8 +363,14 @@ namespace KkomaKnight.Game
             var tabs = new RectTransform[3]; string[] tabNames = { "일일", "주간", "업적" };
             for (int i = 0; i < 3; i++)
             {
-                var t = tabs[i] = UiKit.Button(ov.Root, "ui.btnGray", tabNames[i], () => { }, Sh(Layout.QsTab, i * Layout.QsTabPitch, 0)); t.name = "Tab:" + i;
-                if (i > 0) foreach (var im in t.GetComponentsInChildren<Image>(true)) im.color = Color.Lerp(im.color, Palette.Dim, 0.45f);   // 비활성 탭은 어둡게(첫 탭 «일일» 활성)
+                // T257 — «일일»·«주간» 은 판을 갈아탄다(닫고 다시 연다) · «업적» 은 T258 절이라 여기서는 껍데기 그대로 둔다.
+                int ti = i;
+                System.Action onTab = ti == 0 ? (System.Action)(() => Quest(app, true))
+                                    : ti == 1 ? (System.Action)(() => Quest(app, false)) : null;
+                var t = tabs[i] = UiKit.Button(ov.Root, "ui.btnGray", tabNames[i], () => { if (onTab != null) onTab(); }, Sh(Layout.QsTab, i * Layout.QsTabPitch, 0)); t.name = "Tab:" + i;
+                // 지금 보는 판만 밝다 — 표가 없으면 종전처럼 첫 탭이 밝다.
+                bool tabOn = _qd == null ? i == 0 : (i == (_qDaily ? 0 : 1));
+                if (!tabOn) foreach (var im in t.GetComponentsInChildren<Image>(true)) im.color = Color.Lerp(im.color, Palette.Dim, 0.45f);   // 비활성 탭은 어둡게(첫 탭 «일일» 활성)
                 // T69-lobbypopups — 탭마다 «검은 아웃라인»(레퍼런스 15 도 세 탭이 각자 어두운 외곽선이다) · 어둡게 칠한 «뒤» 에 걸어야 링이 Dim 쪽으로 섞이지 않는다
                 UiKit.Bordered(t);
             }
