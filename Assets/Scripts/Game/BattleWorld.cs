@@ -190,7 +190,15 @@ namespace KkomaKnight.Game
         public Dictionary<string, float[]> MeasureLayout()
         {
             var d = new Dictionary<string, float[]>();
-            if (_roadTiles.Count > 0 && _roadTiles[0] != null) { var rb = _roadTiles[0].bounds; var r = FrameRect(rb); d["지면(길) 띠"] = new[] { 0f, r[1], 100f, r[3] }; }
+            if (_roadTiles.Count > 0 && _roadTiles[0] != null)
+            {
+                var rb = _roadTiles[0].bounds; var r = FrameRect(rb);
+                d["지면(길) 띠"] = new[] { 0f, r[1], 100f, r[3] };
+                // T240 1항 — 아레나 판에서는 이 띠가 «모래 마당» 이다(표 ㊺ 의 그 행). 같은 물건에 이름만 하나 더 붙인다.
+                // ⚠ 이름을 안 붙이면 자가 그 행을 «없는 요소» 로 읽어 0 점을 주고, **자리가 맞는지 틀리는지조차 안 보인다** —
+                //    지금은 실제로 어긋나 있고(챕터 길 자리 그대로다) 그 어긋남을 «점수로 보이게» 하는 것이 이 줄의 일이다.
+                if (_isArena) d["모래 마당(타원)"] = new[] { 0f, r[1], 100f, r[3] };
+            }
             if (_player != null)
             {
                 var pb = FrameRect(_player.Bounds()); float foot = PctY(_player.transform.position.y);
