@@ -3951,6 +3951,22 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > **⑶ 3항이냐 ⑵냐를 한 런에 가르는 자리가 이미 있다.** 부팅 탐침이 지금도 `[KkomaKnight] tmpfont bake=ok … outline=ok` 를 찍는다(`TmpFont.cs:66·71`). **그 줄에 `_GradientScale` 과 `_ScaleRatioA` 를 같이 찍어라.** `_ScaleRatioA` 가 **0**(또는 없음)이면 ⑵ 이고 고침은 그 값을 채우는 쪽이다. 정상인데 `_GradientScale` 이 작으면 **3항**(여백)이고 고침은 `CreateFontAsset` 의 padding 오버로드다. 두 수가 다 멀쩡하면 그때 비로소 «그 밖» 이다. **한 회차에 하나만 움직인다는 3항의 규약대로, 그 한 줄을 먼저 찍고 나서 손을 대라** — 안 그러면 padding 을 키워 보고 «안 되네» 로 한 회차를 태운다.
 > **⑷ 그리고 이 빨강이 지금 `gh-pages` 배포를 다시 막고 있다**(04:48 에 TMP 빌드가 나갔다가 #471·#472 로 다시 skipped). 자를 세운 판단 자체는 옳다 — 그 자가 없었으면 이 결함을 아무도 못 봤다. 다만 **주인 배포가 이 한 고침을 기다린다**는 것을 알고 잡으면 된다.
 
+> 📏 **가르는 관측이 답을 내놓았다 — 그리고 그 답은 «셋 다 아니다» 다 (06:2X · sess-1913-2015 · 워커 E · 코드 0줄 · T224 lock 은 워커 G 것 · 결정 625)**
+> 워커 G 가 넣은 `OutlineDiag` 가 CI **#476**(`da9940d1` · 06:06 완주) 로그에 찍혔다. **그대로 옮긴다**:
+> ```
+> w=0.2 ratioA=0.9 grad=10 kw=on shader=TextMeshPro/Mobile/Distance Field
+> ```
+> G 가 적어 둔 읽는 법대로 가르면:
+> · **`ratioA=0.9` → 넷째 후보(`_ScaleRatioA` 가 0)는 죽었다. 내가 낸 후보이므로 내가 접는다** — 값은 멀쩡히 들어가 있다.
+> · **`grad=10` → 3항(SDF 여백)도 실측이 안 받쳐 준다.** `_GradientScale` = 여백 + 1 이므로 **여백 9** 이고, 이것은 TMP 의 **표준 기본값**이다(«한 인자 `CreateFontAsset` 이라 여백이 좁을 것» 이라는 3항의 전제가 실측과 다르다). 여백을 키우는 회차는 **이 수를 먼저 다시 보고** 시작해라.
+> · `kw=on` · 셰이더는 **`TextMeshPro/Mobile/Distance Field`**(테를 그릴 수 있는 갈래다).
+> ⇒ **G 의 표에서 «둘 다 멀쩡 → 그때가 «그 밖»» 칸에 떨어졌다.** 2·3·4항이 다 지워졌거나 안 받쳐진다 — 이제 후보를 **새로 세워야** 한다.
+>
+> 🔎 **그 «그 밖» 을 찾을 자리 하나 — 자들이 «그리는 머티리얼» 이 아니라 «공유 머티리얼» 을 본다**
+> `TextAudit.cs:132` 는 `t.fontSharedMaterial != null ? t.fontSharedMaterial : t.materialForRendering` 로 **공유 쪽을 먼저** 집는다. 그런데 TMP 는 **`RectMask2D` 아래 글자에 마스킹용 머티리얼(사본)을 따로 만들어 그린다** — 그러면 `SetOutline` 이 `asset.material` 에 넣은 값은 **그리는 사본에 안 들어가고**, 자는 공유 쪽을 읽으니 **초록**이다. 이 레포는 `RectMask2D` 를 여러 곳에서 쓴다(`GearScreen:79` · `Overlay:394` 스크롤 · `EventsScreen` 여섯 자리). 그리고 대화형 세션 실측 «**팝업은 되고 로비는 안 된다**»(`a3a98dc4`)가 **바로 그 갈림과 모양이 같다**(팝업은 대개 마스크 밖, 목록·스크롤 화면은 마스크 안).
+> ⚠ **그런데 이것으로 탐침 실패까지 설명하면 안 된다** — 탐침(`TmpFontProbeTests.cs:95-100`)은 제 글자를 **새로 세워** `fontSharedMaterial = asset.material` 을 직접 꽂고, **마스크 밑이 아니다**. 그런데도 어두운 픽셀이 10 이다. 즉 지금 손에 있는 것은 **한 가지가 아니라 둘일 수 있다**: ⓐ 마스크와 무관하게 **테가 아예 안 그려지는** 무엇 · ⓑ 화면마다 갈리는 **마스킹 사본** 문제. 하나로 묶어 놓으면 ⓐ 를 고치고도 로비가 그대로일 수 있다.
+> **다음 관측 한 줄(둘을 가른다)** — 탐침 안에서 `tmp.materialForRendering` 이 `asset.material` 과 **같은 객체인지**, 그리고 **`materialForRendering` 에서 되읽은 `_OutlineWidth`** 를 같이 찍어라. 같은 객체인데 0.2 가 들어 있고도 안 그려지면 ⓐ 는 렌더 경로 자체의 문제이고 ⓑ 는 **별개의 둘째 결함**으로 따로 세워야 한다. (자를 고칠 때는 `TextAudit.cs:132` 도 `materialForRendering` 쪽으로 뒤집는 것이 맞다 — 지금 그 자는 «그려지는 것» 을 못 본다.)
+
 4. **셋째 의심 — WebGL 셰이더 스트리핑.** 런타임 `CreateFontAsset` 이 무는 셰이더가 빌드에 안 실리면 **에디터·PlayMode 에서는 되고 배포 빌드에서만 안 된다**. 1항이 풀려 TMP 빌드가 실제로 나간 뒤 «PlayMode 는 초록인데 웹에서만 테가 없다» 면 이쪽이다(판별 = 배포 스모크 로그의 `[KkomaKnight] tmpfont` 줄 + 셰이더를 `Always Included Shaders` 나 참조 애셋으로 고정).
 
 5. **주인 제안(NotoSans 로 갈아타기)에 대한 답 — 그 길은 지금 더 나쁘다. 실측이다.**
