@@ -1,11 +1,13 @@
 {
-  "_note": "데일리 기프트 수치표 — 이 레포 전용(aaaw data/ 에 없는 수치 · 주인 지시 2026-09-07 «광고 1회 = 다이아 100 / 2회 = 200 / 3회 선물 = 300 / 6회 선물 = 300 · 매일 초기화» + 추가 «무료 1칸 = 다이아 100»). StreamingAssets/data 는 aaaw 동기 폴더라 여기 둔다. 코드는 카탈로그 텍스트 «data.dailyGift» 로 읽는다(개수·값 하드코딩 0). 값을 바꾸려면 이 파일만 고친다. milestones = 하루 누적 광고 횟수 표(ads = 그 줄이 열리는 누적 횟수 · gem = 받는 다이아 · gift = 레퍼런스 17 의 «선물» 줄) · freeGift = «오늘의 선물» 무료 1칸(광고 없이 하루 1회) · resetDaily = 날짜가 바뀌면 누적·수령을 초기화.",
+  "_note": "데일리 기프트 수치표 — 이 레포 전용(aaaw data/ 에 없는 수치). StreamingAssets/data 는 aaaw 동기 폴더라 여기 둔다. 코드는 카탈로그 텍스트 «data.dailyGift» 로 읽는다(개수·값 하드코딩 0). 값을 바꾸려면 이 파일만 고친다. milestones = 하루 누적 광고 횟수 표(ads = 그 줄이 열리는 누적 횟수 · item/amount = 받는 것 · gift = 레퍼런스 17 의 «선물» 줄) · freeGift = «오늘의 선물» 무료 1칸(광고 없이 하루 1회) · resetDaily = 날짜가 바뀌면 누적·수령을 초기화.",
+  "_t254": "주인 2026-09-09 «데일리 기프트 — 50다이아 / 5펫알 / 1보라키 / 1부활 / 300다이아 이렇게 고정». 다섯 칸의 **내용과 순서**가 주인 말 그대로다. ⚠ 광고 누적 횟수(1·2·3·6)와 «매일 초기화 · 위에서 아래로» 규칙은 **T77 그대로 안 건드렸다** — 지시서 T254 4항이 «T77 규칙은 그대로 두고 상품만 고정» 이라 했고, 주인은 칸의 내용만 줬지 광고 횟수를 새로 주지 않았다(결정 710). 칸이 마침 다섯인 것도 T77 이 세운 «무료 1칸 + 광고 4줄» 그대로다 — 새 칸을 만들지도, 있는 칸을 지우지도 않았다.",
+  "_items": "item 은 Core/Mail 의 재화 이름이다(gem · petEgg · keyPurple · revive). 담을 자리가 없는 이름을 적으면 **읽는 순간 예외**로 운다 — 그대로 두면 «받았는데 아무것도 안 늘어나는» 칸이 된다.",
   "resetDaily": true,
-  "freeGift": { "gem": 100 },
+  "freeGift": { "item": "gem", "amount": 50 },
   "milestones": [
-    { "ads": 1, "gem": 100 },
-    { "ads": 2, "gem": 200 },
-    { "ads": 3, "gem": 300, "gift": true },
-    { "ads": 6, "gem": 300, "gift": true }
+    { "ads": 1, "item": "petEgg",    "amount": 5 },
+    { "ads": 2, "item": "keyPurple", "amount": 1 },
+    { "ads": 3, "item": "revive",    "amount": 1, "gift": true },
+    { "ads": 6, "item": "gem",       "amount": 300, "gift": true }
   ]
 }

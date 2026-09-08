@@ -13,30 +13,72 @@ namespace KkomaKnight.Core
         {
             /// <summary>이 줄이 열리는 «하루 누적 광고 횟수».</summary>
             public int Ads;
-            /// <summary>받는 다이아.</summary>
-            public double Gem;
+            /// <summary>
+            /// 받는 다이아 — <b>옛 이름이자 짧은 길</b>. 읽으면 «이 줄이 다이아일 때의 개수»(아니면 0)이고,
+            /// 쓰면 «다이아 그만큼» 이 된다(<see cref="Item"/>·<see cref="Amount"/> 를 같이 맞춘다).
+            /// T254 로 칸마다 다른 것을 주게 됐는데, 이 이름으로 세워 둔 자리(자·화면)가 여럿이라 그대로 살려 둔다.
+            /// </summary>
+            public double Gem
+            {
+                get => Item == Mail.ItemGem ? Amount : 0;
+                set { Item = Mail.ItemGem; Amount = value; }
+            }
+            /// <summary>받는 것의 <b>이름</b>(<see cref="Mail"/> 의 재화 이름 · 적혀 있지 않으면 다이아).
+            /// T254 — 주인이 «50다이아 / 5펫알 / 1보라키 / 1부활 / 300다이아» 로 칸마다 다른 것을 못 박아서 이 칸이 생겼다.</summary>
+            public string Item = Mail.ItemGem;
+            /// <summary>받는 <b>개수</b>(다이아면 <see cref="Gem"/> 과 같은 수다).</summary>
+            public double Amount;
             /// <summary>레퍼런스 17 의 «선물» 줄(표시용 · 규칙에는 영향 없음).</summary>
             public bool Gift;
         }
         /// <summary>날짜가 바뀌면 누적·수령을 초기화하는가(주인 «매일 초기화»).</summary>
         public bool ResetDaily = true;
-        /// <summary>«오늘의 선물» 무료 1칸 다이아(광고 없이 하루 1회 · 주인 확정 2026-09-07 00:3X).</summary>
-        public double FreeGem;
+        /// <summary>«오늘의 선물» 무료 1칸 다이아 — <b>옛 이름이자 짧은 길</b>(<see cref="Milestone.Gem"/> 과 같은 규약).</summary>
+        public double FreeGem
+        {
+            get => FreeItem == Mail.ItemGem ? FreeAmount : 0;
+            set { FreeItem = Mail.ItemGem; FreeAmount = value; }
+        }
+        /// <summary>무료 1칸이 주는 것의 이름·개수(T254 · 적혀 있지 않으면 다이아).</summary>
+        public string FreeItem = Mail.ItemGem;
+        /// <summary>무료 1칸 개수.</summary>
+        public double FreeAmount;
+        /// <summary>무료 칸이 있는가 — 개수가 0 이면 없는 것으로 본다(옛 <see cref="FreeGem"/> 판정을 이름에 상관없이 쓰게).</summary>
+        public bool HasFree => FreeAmount > 0;
         public List<Milestone> Milestones = new List<Milestone>();
 
         /// <summary>하루에 셀 수 있는 광고 상한 = 마지막 줄의 누적 횟수(그 위로는 세지 않는다).</summary>
         public int MaxAds => Milestones.Count == 0 ? 0 : Milestones[Milestones.Count - 1].Ads;
         /// <summary>하루 최대 다이아(무료 칸 + 모든 줄).</summary>
         public double MaxGemPerDay { get { double g = FreeGem; foreach (var m in Milestones) g += m.Gem; return g; } }
+        /// <summary>줄 <paramref name="i"/> 가 주는 것(<see cref="Milestone.Item"/>·<see cref="Milestone.Amount"/>) — 화면·리워드 팝업이 쓴다.</summary>
+        public Milestone Row(int i) => i >= 0 && i < Milestones.Count ? Milestones[i] : null;
 
         public static DailyGiftData Parse(string json) => From(new JNode(MiniJson.Parse(json)));
         public static DailyGiftData From(JNode j)
         {
             var d = new DailyGiftData();
             d.ResetDaily = j.Has("resetDaily") ? j["resetDaily"].Bool(true) : true;
-            d.FreeGem = j["freeGift"]["gem"].Num();
+            var fg = j["freeGift"];
+            d.FreeItem = fg["item"].Str(Mail.ItemGem);
+            if (string.IsNullOrEmpty(d.FreeItem)) d.FreeItem = Mail.ItemGem;
+            d.FreeAmount = fg.Has("amount") ? fg["amount"].Num() : fg["gem"].Num();
             foreach (var m in j["milestones"].Items())
-                d.Milestones.Add(new Milestone { Ads = (int)m["ads"].ReqNum("milestones.ads"), Gem = m["gem"].ReqNum("milestones.gem"), Gift = m["gift"].Bool() });
+            {
+                string item = m["item"].Str(Mail.ItemGem);
+                if (string.IsNullOrEmpty(item)) item = Mail.ItemGem;
+                double amt = m.Has("amount") ? m["amount"].Num() : m["gem"].ReqNum("milestones.gem");
+                d.Milestones.Add(new Milestone
+                {
+                    Ads = (int)m["ads"].ReqNum("milestones.ads"),
+                    Item = item, Amount = amt,
+                    Gift = m["gift"].Bool(),
+                });
+            }
+            // 담을 자리가 없는 이름은 읽는 순간 운다 — 그대로 두면 «받았는데 아무것도 안 늘어나는» 칸이 된다(결정 633 과 같은 갈래).
+            if (!Mail.CanPay(d.FreeItem) && d.FreeAmount > 0) throw new FormatException("dailyGift.json: freeGift.item «" + d.FreeItem + "» 은 담을 자리가 없다");
+            foreach (var m in d.Milestones)
+                if (!Mail.CanPay(m.Item)) throw new FormatException("dailyGift.json: milestones.item «" + m.Item + "» 은 담을 자리가 없다");
             if (d.Milestones.Count == 0) throw new FormatException("dailyGift.json: milestones 가 비어 있다");
             for (int i = 1; i < d.Milestones.Count; i++)
                 if (d.Milestones[i].Ads <= d.Milestones[i - 1].Ads) throw new FormatException("dailyGift.json: milestones.ads 는 오름차순이어야 한다");
@@ -81,7 +123,7 @@ namespace KkomaKnight.Core
         /// <summary>무료 «오늘의 선물» 칸을 받을 수 있는가.</summary>
         public static bool CanFree(SaveData s, DailyGiftData d, string today)
         {
-            if (s == null || d == null || d.FreeGem <= 0) return false;
+            if (s == null || d == null || !d.HasFree) return false;
             Roll(s, d, today);
             return !s.GiftFree;
         }
@@ -90,8 +132,9 @@ namespace KkomaKnight.Core
         public static double ClaimFree(SaveData s, DailyGiftData d, string today)
         {
             if (!CanFree(s, d, today)) return 0;
-            s.GiftFree = true; s.Gem += d.FreeGem;
-            return d.FreeGem;
+            s.GiftFree = true;
+            Mail.Give(s, d.FreeItem, d.FreeAmount);   // T254 — 이름 → 담는 자리의 짝은 Mail 한 곳이다(다이아만이 아니게 됐다)
+            return d.FreeAmount;
         }
 
         /// <summary>줄 <paramref name="i"/> 가 «앞 줄 미수령» 으로 잠겨 있는가(줄 0 은 무료 칸을 받아야 열린다).</summary>
@@ -99,7 +142,7 @@ namespace KkomaKnight.Core
         {
             if (s == null || d == null || i < 0 || i >= d.Milestones.Count) return true;
             Roll(s, d, today);
-            if (i == 0) return d.FreeGem > 0 && !s.GiftFree;
+            if (i == 0) return d.HasFree && !s.GiftFree;
             return !Claimed(s, i - 1);
         }
 
@@ -125,8 +168,10 @@ namespace KkomaKnight.Core
         public static double Claim(SaveData s, DailyGiftData d, int i, string today)
         {
             if (!CanClaim(s, d, i, today)) return 0;
-            s.GiftClaimed[i] = true; s.Gem += d.Milestones[i].Gem;
-            return d.Milestones[i].Gem;
+            var m = d.Milestones[i];
+            s.GiftClaimed[i] = true;
+            Mail.Give(s, m.Item, m.Amount);   // T254 — 다이아만이 아니다(펫알·보라 키·부활권)
+            return m.Amount;
         }
 
         /// <summary>지금 받을 수 있는 것이 하나라도 있는가(로비 사이드 아이콘 빨간 점).</summary>
@@ -142,7 +187,7 @@ namespace KkomaKnight.Core
         public static double ClaimedGem(SaveData s, DailyGiftData d)
         {
             if (s == null || d == null) return 0;
-            double g = s.GiftFree ? d.FreeGem : 0;
+            double g = s.GiftFree && d.FreeItem == Mail.ItemGem ? d.FreeGem : 0;
             for (int i = 0; i < d.Milestones.Count; i++) if (Claimed(s, i)) g += d.Milestones[i].Gem;
             return g;
         }

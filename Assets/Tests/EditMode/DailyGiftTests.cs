@@ -25,17 +25,51 @@ namespace KkomaKnight.Tests
         [Test]
         public void Json_IsOwnersTable()
         {
-            // 주인 원문(2026-09-07): «광고 1회 = 다이아 100 / 2회 = 200 / 3회 선물 = 300 / 6회 선물 = 300» + 추가 «무료 1칸 = 다이아 100» · 매일 초기화.
+            // 주인 2026-09-09 «데일리 기프트 — 50다이아 / 5펫알 / 1보라키 / 1부활 / 300다이아 이렇게 고정»(T254 4항).
+            //   ⚠ 광고 누적 횟수(1·2·3·6)와 «매일 초기화 · 위에서 아래로» 는 **T77 그대로**다 —
+            //     지시서가 «T77 규칙은 그대로 두고 상품만 고정» 이라 했고 주인은 칸의 내용만 줬다(결정 710).
+            //   칸이 마침 다섯인 것도 T77 의 «무료 1칸 + 광고 4줄» 그대로다(새 칸을 만들지도 지우지도 않았다).
             var d = Load();
             Assert.That(d.ResetDaily, Is.True, "매일 초기화");
-            Assert.That(d.FreeGem, Is.EqualTo(100), "무료 «오늘의 선물» 칸 = 다이아 100");
-            Assert.That(d.Milestones.Count, Is.EqualTo(4), "광고 줄 4개");
-            Assert.That(d.Milestones[0].Ads, Is.EqualTo(1)); Assert.That(d.Milestones[0].Gem, Is.EqualTo(100));
-            Assert.That(d.Milestones[1].Ads, Is.EqualTo(2)); Assert.That(d.Milestones[1].Gem, Is.EqualTo(200));
-            Assert.That(d.Milestones[2].Ads, Is.EqualTo(3)); Assert.That(d.Milestones[2].Gem, Is.EqualTo(300)); Assert.That(d.Milestones[2].Gift, Is.True, "3회 = «선물» 줄");
-            Assert.That(d.Milestones[3].Ads, Is.EqualTo(6)); Assert.That(d.Milestones[3].Gem, Is.EqualTo(300)); Assert.That(d.Milestones[3].Gift, Is.True, "6회 = «선물» 줄");
+            Assert.That(d.FreeItem, Is.EqualTo(Mail.ItemGem)); Assert.That(d.FreeAmount, Is.EqualTo(50), "① 다이아 50");
+            Assert.That(d.Milestones.Count, Is.EqualTo(4), "광고 줄 4개(무료 1칸과 합쳐 다섯)");
+            Assert.That(d.Milestones[0].Ads, Is.EqualTo(1)); Assert.That(d.Milestones[0].Item, Is.EqualTo(Mail.ItemPetEgg)); Assert.That(d.Milestones[0].Amount, Is.EqualTo(5), "② 펫알 5");
+            Assert.That(d.Milestones[1].Ads, Is.EqualTo(2)); Assert.That(d.Milestones[1].Item, Is.EqualTo(GachaKeys.Purple)); Assert.That(d.Milestones[1].Amount, Is.EqualTo(1), "③ 보라 키 1");
+            Assert.That(d.Milestones[2].Ads, Is.EqualTo(3)); Assert.That(d.Milestones[2].Item, Is.EqualTo(Mail.ItemRevive)); Assert.That(d.Milestones[2].Amount, Is.EqualTo(1), "④ 부활권 1"); Assert.That(d.Milestones[2].Gift, Is.True, "3회 = «선물» 줄");
+            Assert.That(d.Milestones[3].Ads, Is.EqualTo(6)); Assert.That(d.Milestones[3].Item, Is.EqualTo(Mail.ItemGem)); Assert.That(d.Milestones[3].Amount, Is.EqualTo(300), "⑤ 다이아 300"); Assert.That(d.Milestones[3].Gift, Is.True, "6회 = «선물» 줄");
             Assert.That(d.MaxAds, Is.EqualTo(6), "하루 광고 상한 = 마지막 줄");
-            Assert.That(d.MaxGemPerDay, Is.EqualTo(1000), "하루 최대 = 무료 100 + 100 + 200 + 300 + 300");
+            Assert.That(d.MaxGemPerDay, Is.EqualTo(350), "하루 최대 «다이아» = 무료 50 + 마지막 줄 300(가운데 셋은 다이아가 아니다)");
+        }
+
+        [Test]
+        public void EveryRowPaysSomethingThatHasAHome()
+        {
+            // 담을 자리가 없는 이름을 적으면 «받았는데 아무것도 안 늘어나는» 칸이 된다 — 표를 읽는 순간 울어야 한다.
+            var d = Load();
+            Assert.That(Mail.CanPay(d.FreeItem), Is.True, "무료 칸이 주는 것은 담을 자리가 있다");
+            foreach (var m in d.Milestones)
+            {
+                Assert.That(Mail.CanPay(m.Item), Is.True, "«" + m.Item + "» 은 담을 자리가 있다");
+                Assert.That(m.Amount, Is.GreaterThan(0), "0 개를 주는 칸은 없다");
+            }
+            Assert.Throws<System.FormatException>(() => DailyGiftData.Parse(
+                "{\"freeGift\":{\"item\":\"gem\",\"amount\":1},\"milestones\":[{\"ads\":1,\"item\":\"없는것\",\"amount\":1}]}"),
+                "모르는 이름은 읽는 순간 운다");
+        }
+
+        [Test]
+        public void FiveSlotsPayFiveDifferentThings()
+        {
+            // 주인이 못 박은 다섯 칸이 «실제로 그 재화를» 늘리는가 — 이름만 맞고 안 늘면 아무 뜻이 없다.
+            var d = Load(); var s = NewSave();
+            double gem0 = s.Gem;
+            Assert.That(DailyGift.ClaimFree(s, d, D0), Is.EqualTo(50));
+            Assert.That(s.Gem - gem0, Is.EqualTo(50), "① 다이아 50");
+            for (int k = 0; k < d.MaxAds; k++) DailyGift.WatchAd(s, d, D0);
+            Assert.That(DailyGift.Claim(s, d, 0, D0), Is.EqualTo(5)); Assert.That(s.PetEgg, Is.EqualTo(5), "② 펫알 5");
+            Assert.That(DailyGift.Claim(s, d, 1, D0), Is.EqualTo(1)); Assert.That(s.KeyPurple, Is.EqualTo(1), "③ 보라 키 1");
+            Assert.That(DailyGift.Claim(s, d, 2, D0), Is.EqualTo(1)); Assert.That(s.Revive, Is.EqualTo(1), "④ 부활권 1");
+            Assert.That(DailyGift.Claim(s, d, 3, D0), Is.EqualTo(300)); Assert.That(s.Gem - gem0, Is.EqualTo(350), "⑤ 다이아 300");
         }
 
         [Test]
@@ -44,7 +78,7 @@ namespace KkomaKnight.Tests
             var d = Load();
             for (int i = 0; i < d.Milestones.Count; i++)
             {
-                Assert.That(d.Milestones[i].Ads, Is.GreaterThan(0)); Assert.That(d.Milestones[i].Gem, Is.GreaterThan(0));
+                Assert.That(d.Milestones[i].Ads, Is.GreaterThan(0)); Assert.That(d.Milestones[i].Amount, Is.GreaterThan(0));   // T254 — 다이아만이 아니라 «개수» 를 본다
                 if (i > 0) Assert.That(d.Milestones[i].Ads, Is.GreaterThan(d.Milestones[i - 1].Ads), "누적 광고 횟수 오름차순");
             }
         }
@@ -84,7 +118,7 @@ namespace KkomaKnight.Tests
             for (int i = 0; i < d.Milestones.Count; i++)
             {
                 Assert.That(DailyGift.CanClaim(s, d, i, D0), Is.True, $"앞 줄을 받았으니 줄 {i} 가 열린다");
-                Assert.That(DailyGift.Claim(s, d, i, D0), Is.EqualTo(d.Milestones[i].Gem));
+                Assert.That(DailyGift.Claim(s, d, i, D0), Is.EqualTo(d.Milestones[i].Amount));
             }
         }
 
@@ -97,9 +131,9 @@ namespace KkomaKnight.Tests
             DailyGift.WatchAd(s, d, D0);
             Assert.That(DailyGift.CanClaim(s, d, 0, D0), Is.True);
             double got = DailyGift.Claim(s, d, 0, D0);
-            Assert.That(got, Is.EqualTo(d.Milestones[0].Gem));
+            Assert.That(got, Is.EqualTo(d.Milestones[0].Amount));
             Assert.That(DailyGift.Claim(s, d, 0, D0), Is.EqualTo(0), "같은 줄 두 번은 못 받는다");
-            Assert.That(s.Gem, Is.EqualTo(d.FreeGem + d.Milestones[0].Gem));
+            Assert.That(s.Gem, Is.EqualTo(d.FreeGem), "이 줄은 다이아가 아니라 다이아는 무료 칸 몫 그대로다");
         }
 
         [Test]

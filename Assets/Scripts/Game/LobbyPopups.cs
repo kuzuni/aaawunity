@@ -622,6 +622,20 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>«오늘의 선물» 칸 + 광고 줄 N개를 <paramref name="host"/> 에 그린다(상태가 바뀌면 <paramref name="refresh"/> 로 이 안만 다시 그린다).</summary>
+        /// <summary>
+        /// 보상 이름 → 칸의 «틀 + 아이콘»(T254 · 표는 재화 이름만 적고 아이콘 짝짓기는 화면 몫이다 — <c>EventsScreen.RewardArt</c> 와 같은 규약).
+        /// <para>모르는 이름도 그림 하나는 준다 — 아이콘이 없어서 칸이 통째로 안 뜨는 일은 만들지 않는다.</para>
+        /// </summary>
+        static void GiftArt(string item, out string frame, out string icon)
+        {
+            if (item == Core.Mail.ItemGem) { frame = "plum"; icon = "ui.gemRed"; return; }
+            if (item == Core.Mail.ItemGold) { frame = "green"; icon = "ui.coin"; return; }
+            if (item == Core.Mail.ItemRevive) { frame = "plum"; icon = "ui.iconRevive"; return; }
+            var k = Core.GachaKeys.Icon(item);
+            if (k != null) { frame = item == Core.GachaKeys.Purple ? "plum" : "green"; icon = k; return; }   // 키 3종·펫알 = T255 가 아는 그림
+            frame = "green"; icon = "ui.iconArenaCoin";
+        }
+
         static void BuildGiftRows(App app, RectTransform host, Layout.R B, DailyGiftData D, string today, Action refresh)
         {
             var S = app.Save; var ov = app.Overlay;
@@ -632,8 +646,10 @@ namespace KkomaKnight.Game
             var th = Head(host, B, new Layout.R(T.X, T.Y, T.W, 2.4f), "오늘의 선물", Palette.A(Palette.Dim, 0.5f), "TodayHead");
             th.alignment = UiKit.TmpAlign(TextAnchor.MiddleLeft); UiKit.Pct(th.rectTransform, 8, 0, 90, 100);
             var gi = UiKit.Icon(th.transform.parent, "Icon", "pi.gift", Palette.Yellow); UiKit.Pct(gi.rectTransform, 1.5f, 10, 5, 80);
-            double freeGem = D != null ? D.FreeGem : 0;
-            Cell(host, B, new Layout.R(T.X + 1.6f, T.Y + 3.0f, 8.2f, 4.5f), "plum", "ui.gemRed", qty: freeGem > 0 ? UiKit.FmtQty(freeGem) : null, name: "TodayCell");
+            double freeAmt = D != null ? D.FreeAmount : 0;
+            string freeItem = D != null ? D.FreeItem : Core.Mail.ItemGem;
+            GiftArt(freeItem, out var freeFrame, out var freeIcon);   // T254 — 무료 칸도 표가 정한 것을 그린다(늘 다이아가 아니다)
+            Cell(host, B, new Layout.R(T.X + 1.6f, T.Y + 3.0f, 8.2f, 4.5f), freeFrame, freeIcon, qty: freeAmt > 0 ? UiKit.FmtQty(freeAmt) : null, name: "TodayCell");
             bool canFree = D != null && Core.DailyGift.CanFree(S, D, today);
             GiftButton(host, B, Layout.GfTodayBtn, "TodayGetBtn", canFree ? GiftBtn.Claim : GiftBtn.Done, () =>
             {
@@ -642,7 +658,7 @@ namespace KkomaKnight.Game
                 app.Persist(); app.Current?.Refresh();
                 // T241 — 받은 것은 공통 «리워드» 팝업이 보여 준다(토스트 대신 · 지시서 2항 «각 화면이 제 나름의 토스트·팝업을 따로 만들지 않는다»).
                 // 닫으면 이 팝업을 다시 연다 — 아래 «광고 보기» 길이 이미 쓰는 그 꼴(`DailyGift(app)`)이라 흐름이 하나로 모인다.
-                RewardPopup.Show(new List<RewardPopup.Item> { RewardPopup.Item.Of("ui.gemRed", UiKit.FmtQty(g)) }, () => DailyGift(app));
+                RewardPopup.Show(new List<RewardPopup.Item> { RewardPopup.Item.Of(freeIcon, UiKit.FmtQty(g)) }, () => DailyGift(app));
             });
 
             // ── 광고 누적 줄(개수·값 전부 dailyGift.json — 코드에 숫자 없음)
@@ -664,7 +680,8 @@ namespace KkomaKnight.Game
                 int cur = S.GiftAds < m.Ads ? S.GiftAds : m.Ads;
                 var bar = UiKit.MakeBar(host, "ui.sliderBlue"); bar.Root.name = "Bar"; UiKit.Pct(bar.Root, Sh(Layout.GfRowBar, 0, dy).WithH(Layout.LpBarH).Within(B));
                 bar.Set(m.Ads > 0 ? (double)cur / m.Ads : 0, cur + "/" + m.Ads);
-                var reward = Cell(host, B, Sh(Layout.GfRowReward, 0, dy), "plum", "ui.gemRed", qty: UiKit.FmtQty(m.Gem), locked: locked, name: "Reward:" + i);
+                GiftArt(m.Item, out var mFrame, out var mIcon);   // T254 — 줄마다 다른 것을 준다(펫알·보라 키·부활권·다이아)
+                var reward = Cell(host, B, Sh(Layout.GfRowReward, 0, dy), mFrame, mIcon, qty: UiKit.FmtQty(m.Amount), locked: locked, name: "Reward:" + i);
                 var st = claimed ? GiftBtn.Done : locked ? GiftBtn.Locked : canClaim ? GiftBtn.Claim : GiftBtn.Ad;
                 int idx = i;
                 var btn = GiftButton(host, B, Sh(Layout.GfRowBtn, 0, dy), "AdBtn", st, () =>
@@ -674,7 +691,7 @@ namespace KkomaKnight.Game
                         double g = Core.DailyGift.Claim(S, D, idx, today);
                         if (g <= 0) return;
                         app.Persist(); app.Current?.Refresh();
-                        RewardPopup.Show(new List<RewardPopup.Item> { RewardPopup.Item.Of("ui.gemRed", UiKit.FmtQty(g)) }, () => DailyGift(app));   // T241
+                        RewardPopup.Show(new List<RewardPopup.Item> { RewardPopup.Item.Of(mIcon, UiKit.FmtQty(g)) }, () => DailyGift(app));   // T241 · 아이콘은 그 줄이 실제로 준 것(T254)
                     }
                     else   // 광고 보기 — 실제 광고 SDK 없음: T23 과 같은 모의 카운트다운 3초 뒤 누적 +1 (팝업을 다시 연다)
                     {

@@ -644,10 +644,13 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(1, _app.Save.GiftAds, "광고 1회 누적");
                 yield return Frames(2);
                 Assert.IsTrue(HasText(s => s == "받기"), "누적이 닿아 «받기» 로 바뀐다");
-                double gem1 = _app.Save.Gem;
+                // T254 — 줄이 주는 것은 더는 «다이아» 가 아니다(표가 칸마다 정한다). 그래서 «그 줄의 재화» 가 그만큼 늘었는가를 잰다.
+                var row0 = GD.Milestones[0];
+                double had0 = KkomaKnight.Core.Mail.Held(_app.Save, row0.Item);
                 Assert.IsTrue(ClickNamed(_app.Overlay.Root, "AdBtn"), "줄 1 받기"); yield return Frames(2);
                 yield return CloseReward("데일리 기프트 줄 1");   // T241
-                Assert.AreEqual(gem1 + GD.Milestones[0].Gem, _app.Save.Gem, 0.001, "줄 1 = dailyGift.json milestones[0].gem");
+                Assert.AreEqual(had0 + row0.Amount, KkomaKnight.Core.Mail.Held(_app.Save, row0.Item), 0.001,
+                                "줄 1 = dailyGift.json milestones[0] 의 «" + row0.Item + "» " + row0.Amount + "개");
                 Assert.IsTrue(KkomaKnight.Core.DailyGift.Claimed(_app.Save, 0), "줄 1 수령 기록");
                 Assert.IsFalse(KkomaKnight.Core.DailyGift.CanClaim(_app.Save, GD, 0, SaveStore.Today()), "같은 줄 두 번은 못 받는다");
                 AssertNoTextClip("데일리 기프트 팝업(수령 뒤)", _app.Overlay.Root);
