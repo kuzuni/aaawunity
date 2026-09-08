@@ -159,5 +159,59 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("키로 캡 회 뽑기");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T275 ⓑ — <b>«17/10» 이 버튼 칸을 넘치는가</b> 를 <b>재기만</b> 한다(막지 않는다 · 결정 741 ③).
+        /// <para>
+        /// 이 물음은 <c>screens</c> PNG 로 못 닫는다 — 찍는 판은 <b>새 세이브</b>라 버튼에 언제나 «0/0» 만 뜬다.
+        /// 글자가 가장 길어지는 «보유 ≥ 캡» 은 사진에 아예 안 나온다. 그래서 그 판을 자가 만들어 <b>줄의 선호 폭 ↔ 버튼 폭</b>을 재고,
+        /// 초록 런의 <c>Debug.Log</c> 는 워커가 읽을 수 없으므로(결정 289 · T246) <c>ui-screens/t275.json</c> 으로 내보낸다.
+        /// </para>
+        /// <b>단언은 없다</b> — 넘치는지 «몰라서» 재는 자리다. 다음 회차가 이 수를 보고 넓힐지 정한다(넓히면 그 회차에 자를 세운다).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator KeyButtonWidthAtTheLongestTextIsOnlyMeasured()
+        {
+            yield return Boot();
+            var D = _app.Data; var S = _app.Save;
+            int cap = D.Gacha.TenPullCount;
+
+            // 글자가 가장 길어지는 판 — 상자마다 «보유 = 캡 + 7»(주인 예의 17 꼴 · «17/10» 다섯 자)
+            S.KeyBlue = S.KeyPurple = S.KeyYellow = cap + 7;
+            _app.ShowScreen("shop"); yield return Frames(2);
+            var content = UiKit.Find(_app.Current.Root, "Content");
+
+            var sb = new System.Text.StringBuilder();
+            sb.Append("{\"_meta\":{\"task\":\"T275\",\"note\":\"글자가 가장 길 때의 키 버튼 폭 — 재기만 한다\"},\"cap\":").Append(cap).Append(",\"boxes\":[");
+            bool first = true;
+            foreach (var box in D.Gacha.Boxes)
+            {
+                if (GachaKeys.KeyOf(box.Key) == null) continue;
+                var card = UiKit.Find(content, "Box:" + box.Key); if (card == null) continue;
+                var key = UiKit.Find(card, "Key"); if (key == null) continue;
+                var row = UiKit.Find(key, "Price"); if (row == null) continue;
+                Canvas.ForceUpdateCanvases();
+                LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)row);
+
+                float btnW = ((RectTransform)key).rect.width;
+                float needW = LayoutUtility.GetPreferredWidth((RectTransform)row);
+                string txt = CountOf(key);
+                if (!first) sb.Append(',');
+                first = false;
+                sb.Append("{\"box\":\"").Append(box.Key).Append("\",\"text\":\"").Append(txt)
+                  .Append("\",\"btnW\":").Append(btnW.ToString("0.0"))
+                  .Append(",\"needW\":").Append(needW.ToString("0.0"))
+                  .Append(",\"overPx\":").Append((needW - btnW).ToString("0.0")).Append('}');
+                Debug.Log($"[T275] {box.Key} «{txt}» 버튼 {btnW:0.0} · 줄 선호 {needW:0.0} · 넘침 {needW - btnW:+0.0;-0.0;0}");
+            }
+            sb.Append("]}");
+            foreach (var dir in PlayShot.Dirs())
+            {
+                try { System.IO.Directory.CreateDirectory(dir); System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "t275.json"), sb.ToString()); }
+                catch (Exception e) { Debug.LogWarning("[T275] t275.json 저장 실패(" + dir + "): " + e.Message); }
+            }
+            _log.AssertNoRed("키 버튼 폭 재기");
+            yield return Shutdown();
+        }
     }
 }
