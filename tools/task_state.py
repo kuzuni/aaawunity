@@ -217,6 +217,13 @@ def mismatches(heads, rows):
 
 def cmd_check(heads, rows, dups=None):
     rc = 0
+    # 마지막 «✓ 요약» 줄에 한 번 더 실을 참고 사항들 — T231.
+    #    까닭: 이 자의 «(참고 · 실패 아님)» 줄은 실패가 아니라서 종료 코드에 안 잡히고,
+    #    워커들은 회차마다 출력을 `| tail -1` 로 자르거나 `>/dev/null` 로 버리고 종료 코드만 본다.
+    #    그래서 갈래 ⓒ 가 **T223 을 이름으로 찍고 있었는데 아무도 못 봤고**, 닫힌 그 작업이
+    #    표에서 «열린 급한 일» 로 읽혀 한 워커가 회차를 통째로 썼다(결정 640).
+    #    막는 자로 올리지는 않는다 — 조율 결함은 알리기만 한다(결정 493). 대신 **끝줄에도 실어** 눈에 걸리게 한다.
+    notes = []
     # ⓐ 한 번호가 두 작업을 가리키는가 (T205) — `docs/claims/README.md` 의 «한 번호는 한 작업만» 규칙.
     #    이것이 남으면 `T204.lock` 이 «어느 일» 인지 못 가르고, 두 워커가 같은 파일을 반대로 민다.
     if dups:
@@ -240,23 +247,30 @@ def cmd_check(heads, rows, dups=None):
     folded = [t for t in orphan if t in seen]
     if missing:
         print("· (참고 · 실패 아님) ROUTINE §2 제목은 있는데 PROGRESS 표에 **행이 아예 없는** 작업: %s" % " ".join(missing))
+        notes.append("표에 행이 없는 작업 %s" % " ".join(missing))
         print("  등재 중이면 곧 채워진다. 오래 남아 있으면 그 사이 `check_task_rows` 가 그 작업을 못 본다(T96 이 그 꼴이었다).")
     if folded:
         print("· (참고 · 손댈 것 없음) 표에 **접힌 행(✂·♻)만** 있는 작업: %s — 다른 번호로 옮겼거나 취소된 자리다." % " ".join(folded))
+        notes.append("접힌 행만 있는 작업 %s(손댈 것 없음)" % " ".join(folded))
 
     # ⓒ 상태 칸이 네 표시(✅ ⛔ 🔄 ⬜) 중 무엇으로도 **시작하지 않는** 행 — 어떤 자도 그 작업의 상태를 못 읽는다.
     #    실패로는 안 센다(표 규약을 어긴 것이지 일이 잘못된 것은 아니다) — 다만 그 행은 이 자와 check_task_rows 의 눈 밖이다.
     blind = sorted([t for t, (n, m, s) in rows.items() if m == ""], key=lambda t: int(t[1:]))
     if blind:
         print("· (참고 · 실패 아님) PROGRESS 상태 칸이 ✅·⛔·🔄·⬜ 중 무엇으로도 시작하지 않는 작업: %s" % " ".join(blind))
+        notes.append("상태 칸이 표시로 시작 안 하는 작업 %s" % " ".join(blind))
         print("  그 행은 이 자도 `check_task_rows` 도 상태를 못 읽는다 — 칸 맨 앞에 표시를 하나 붙여 주면 된다(§4 규약).")
 
     bad = mismatches(heads, rows)
     if not bad:
         if rc == 0:
-            print("✓ task_state: 번호 중복 0 · ROUTINE §2 제목과 PROGRESS 상태가 어긋나는 작업 0개 (제목 %d · 표 %d)"
-                  % (len(heads), len(rows)))
+            # T231 — 참고 사항을 **끝줄에도** 싣는다(`tail -1` 만 봐도 보이게). 종료 코드는 그대로 0 이다.
+            print("✓ task_state: 번호 중복 0 · ROUTINE §2 제목과 PROGRESS 상태가 어긋나는 작업 0개 (제목 %d · 표 %d)%s"
+                  % (len(heads), len(rows), (" · ⚠ 참고 %d건 — %s(위 줄에 자세히)" % (len(notes), " · ".join(notes))) if notes else ""))
         return rc
+    if notes:
+        # 실패로 끝나는 길에서도 참고 사항이 tail 에 남게 한다(빨강만 보고 나가는 회차가 더 흔하다).
+        print("⚠ 참고 %d건 — %s" % (len(notes), " · ".join(notes)))
     print("⛔ **선점 덫** — PROGRESS 는 닫혔는데(✅ 완료 · ⛔ 폐기·흡수) ROUTINE §2 제목에는 표시가 없다.")
     print("   다음 워커는 이것을 «열린 일» 로 읽고 한 회차를 통째로 버린다(T161·T188 이 그랬다).")
     print("   고침: `docs/ROUTINE.md` 그 제목 줄의 ID 뒤에 **표에 적힌 그 표시**를 붙인다(✅ 는 ✅ · ⛔ 는 ⛔).")
@@ -384,8 +398,31 @@ def self_test():
             print("⛔ 자기 검사 실패 — `\\|` 가 든 칸 때문에 상태를 못 읽었다: %s" % (got,))
             return 1
 
+        # ⓖ T231 — «(참고 · 실패 아님)» 줄이 **마지막 요약 줄에도** 실리는가.
+        #    이것이 이 회차의 고침이다: 워커가 `| tail -1` 로 잘라 읽어도 참고 사항이 눈에 걸려야 한다.
+        #    (그 줄이 안 보여서 닫힌 T223 이 «열린 급한 일» 로 읽힌 사고가 실제로 났다 · 결정 640)
+        io.open(r, "w", encoding="utf-8").write("### T161 ✅ — 장비 이름\n")
+        io.open(p, "w", encoding="utf-8").write(
+            "| ID | 작업 | 상태 | SID |\n| T161 | 장비 이름 | ✅ 완료 | |\n"
+            "| %s | 표시가 없는 행 | 대기 중이라고만 적었다 | |\n" % free)
+        buf = io.StringIO()
+        keep = sys.stdout
+        try:
+            sys.stdout = buf
+            rc_note = cmd_check(routine_heads(r), progress_rows(p))
+        finally:
+            sys.stdout = keep
+        lines = [ln for ln in buf.getvalue().splitlines() if ln.strip()]
+        if rc_note != 0:
+            print("⛔ 자기 검사 실패 — 참고뿐인데 실패로 끝났다(조율 결함은 막지 않는다 · 결정 493): rc=%s" % rc_note)
+            return 1
+        if free not in lines[-1]:
+            print("⛔ 자기 검사 실패 — 참고 줄이 마지막 요약에 안 실렸다(tail -1 로 못 읽는다): %r" % (lines[-1],))
+            return 1
+
         print("✓ task_state --self-test: 어긋난 짝을 잡고(T161) · ✅ 를 달면 조용하고 · 빈 번호는 통과하고 ·"
-              " 같은 번호 두 제목을 잡고 · «행 없음 ↔ 접힌 행만» 을 가르고 · ⛔ 와 `\\|` 도 읽는다")
+              " 같은 번호 두 제목을 잡고 · «행 없음 ↔ 접힌 행만» 을 가르고 · ⛔ 와 `\\|` 도 읽고 ·"
+              " 참고 줄이 마지막 요약에도 실린다(T231)")
         return 0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
