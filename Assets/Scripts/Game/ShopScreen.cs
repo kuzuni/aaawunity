@@ -75,7 +75,7 @@ namespace KkomaKnight.Game
         /// <summary>빛살을 걸 자리(칸 · 아이콘 · 조각 키) — <b>배치가 끝난 뒤</b> 한꺼번에 건다(아이콘 rect 가 % 앵커라 Build 중에는 0 이고, 그러면 빛살 한 변이 0 이 된다).</summary>
         readonly List<(RectTransform host, RectTransform icon, string key)> _lightPlan = new List<(RectTransform, RectTransform, string)>();
         float _timerT;
-        sealed class BoxWidgets { public Button One, Ten; public readonly List<TMP_Text> Pills = new List<TMP_Text>(); }
+        sealed class BoxWidgets { public Button One, Ten, Key; public TMP_Text KeyCount; public readonly List<TMP_Text> Pills = new List<TMP_Text>(); }
 
         static string Today() => DateTime.Now.ToString("yyyy-MM-dd");
         static bool CanFree(SaveData S) => S.FreeDay != Today();
@@ -238,16 +238,39 @@ namespace KkomaKnight.Game
             else PriceRow(b, new Layout.R(0, 0, 100, 100), UiKit.FmtQty(cost), label);
             return b;
         }
-        /// <summary>[라벨][💎 아이콘][가격] 한 줄 — HorizontalLayoutGroup 이 자식을 선호 크기로 가운데 정렬(글자는 Overflow · rect 가 선호 폭과 같아 반올림으로 줄이 접히지 않게).</summary>
-        RectTransform PriceRow(RectTransform parent, Layout.R r, string cost, string before = null)
+        /// <summary>[라벨][💎 아이콘][가격] 한 줄 — HorizontalLayoutGroup 이 자식을 선호 크기로 가운데 정렬(글자는 Overflow · rect 가 선호 폭과 같아 반올림으로 줄이 접히지 않게).
+        /// <para>T255 — 아이콘·글자 크기를 인자로 받는다(키 버튼이 같은 줄 꼴을 쓴다 · 기본값은 종전 그대로라 다이아 버튼은 한 픽셀도 안 바뀐다).</para></summary>
+        RectTransform PriceRow(RectTransform parent, Layout.R r, string cost, string before = null, string iconKey = "hud.gem", string iconName = "Gem", int costSize = TextSize.Button, TextKind costKind = TextKind.Button)
         {
             var row = UiKit.Rect(parent, "Price"); UiKit.Pct(row, r);
             var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>(); hl.childAlignment = TextAnchor.MiddleCenter; hl.spacing = PriceGap; hl.childForceExpandWidth = false; hl.childForceExpandHeight = false; hl.childControlWidth = true; hl.childControlHeight = true;
             if (!string.IsNullOrEmpty(before)) { var t = UiKit.Text(row, before, TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); t.name = "Label"; t.textWrappingMode = TextWrappingModes.NoWrap; }
-            var ic = UiKit.Icon(row, "Gem", "hud.gem"); ic.preserveAspect = true;
+            var ic = UiKit.Icon(row, iconName, iconKey); ic.preserveAspect = true;
             var le = ic.gameObject.AddComponent<LayoutElement>(); le.preferredWidth = PriceIconSize; le.preferredHeight = PriceIconSize;
-            var c = UiKit.Text(row, cost, TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); c.name = "Cost"; c.textWrappingMode = TextWrappingModes.NoWrap;
+            var c = UiKit.Text(row, cost, costSize, Palette.White, TextAnchor.MiddleCenter, false, true, costKind); c.name = "Cost"; c.textWrappingMode = TextWrappingModes.NoWrap;
             return row;
+        }
+
+        /// <summary>
+        /// 상자 카드의 <b>«키로 열기»</b> 버튼(T255 3항 · 주인 2026-09-09 «파란색 키로 1회 뽑기 가능 …») — 초록 버튼에 [열쇠 아이콘][<b>가진 개수</b>].
+        /// <para>
+        /// <b>왜 «값» 이 아니라 «가진 개수» 를 찍나</b> — 값은 언제나 1 이라(«키 1개 = 1회») 「1」 은 아무것도 안 알려 준다.
+        /// 반면 «몇 개 있나» 는 다른 데서 볼 수 없다: 지시서 5항이 <b>탑바에는 넣지 말라</b>고 못 박고 «그 버튼 옆에 개수를 보여 준다» 라고 적은 자리가 여기다.
+        /// </para>
+        /// 0개면 비활성이고(개수는 그대로 「0」 이 보인다 — 어디서 구하는지는 아레나 상인·출석이 안다), 키가 없는 상자면 버튼 자체를 안 만든다.
+        /// </summary>
+        RectTransform KeyButton(RectTransform card, GachaBox box, Layout.R rect, bool twoLine, BoxWidgets w)
+        {
+            string item = GachaKeys.KeyOf(box.Key); if (item == null) return null;
+            var b = UiKit.Button(card, "ui.btnGreen", "", () => PullWithKey(box.Key), rect); b.name = "Key";
+            var own = UiKit.ButtonText(b); if (own != null) own.gameObject.SetActive(false);
+            var row = twoLine
+                ? PriceRow(b, new Layout.R(0, 50, 100, 44), "0", null, GachaKeys.Icon(item), "KeyIcon")
+                : PriceRow(b, new Layout.R(0, 0, 100, 100), "0", null, GachaKeys.Icon(item), "KeyIcon", TextSize.Aux, TextKind.Aux);
+            if (twoLine) { var top = UiKit.Label(b, 0, 6, 100, 44, "1회", TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); top.name = "Label"; }
+            w.Key = b.GetComponent<Button>();
+            w.KeyCount = row.Find("Cost") != null ? row.Find("Cost").GetComponent<TMP_Text>() : null;
+            return b;
         }
         /// <summary>(i) 버튼 = Button_Info 조각 → 확률·천장 팝업.</summary>
         void InfoButton(RectTransform card, Layout.R r, GachaBox box)
@@ -384,10 +407,13 @@ namespace KkomaKnight.Game
             UiKit.Label(card, 42, 20, 54, 16, RatesText(box), TextSize.Body, Palette.White);
             w.Pills.Add(Pill(card, new Layout.R(42, 45, 55, 10), ""));
             w.Pills.Add(Pill(card, new Layout.R(42, 58.5f, 55, 10), ""));
-            var one = PriceButton(card, "One", "1회", box.Cost, () => Pull(1, key), new Layout.R(2.5f, 74, 46, 21), true);
-            var ten = PriceButton(card, "Ten", $"{D.Gacha.TenPullCount}회", box.Cost * D.Gacha.TenPullCount, () => Pull(D.Gacha.TenPullCount, key), new Layout.R(51.5f, 74, 46, 21), true);
+            // T255 3항 — 세 갈래가 «같은 줄» 에 선다(높이·y 는 종전 그대로 · 폭만 나눈다). 큰 카드는 1,015px 라 «💎4,000» 도 305px 칸에 넉넉히 든다.
+            var one = PriceButton(card, "One", "1회", box.Cost, () => Pull(1, key), new Layout.R(2.5f, 74, 30, 21), true);
+            var ten = PriceButton(card, "Ten", $"{D.Gacha.TenPullCount}회", box.Cost * D.Gacha.TenPullCount, () => Pull(D.Gacha.TenPullCount, key), new Layout.R(34, 74, 30, 21), true);
             w.One = one.GetComponent<Button>(); w.Ten = ten.GetComponent<Button>();
             btnsOut.Add(one); btnsOut.Add(ten);
+            var bigKey = KeyButton(card, box, new Layout.R(65.5f, 74, 32, 21), true, w);
+            if (bigKey != null) btnsOut.Add(bigKey);
             // T69-shop «검은 아웃라인» — CardFrame_04 조각의 제 외곽선은 프레임 3~4px 라 폰에서 1px 남짓(8px 규칙 미달) → 카드 위에 Ink 링 한 장(가운데 비움 · raycast 끔 · 표 % 불변)
             UiKit.Bordered(card);
             _box[key] = w;
@@ -411,11 +437,15 @@ namespace KkomaKnight.Game
             _lightPlan.Add((card, chest.rectTransform, UiKit.LightKeySmall)); _lightCells.Add(card);
             w.Pills.Add(Pill(card, new Layout.R(6, 67, 88, 14), ""));
             // 광고 버튼(파랑 · 클래퍼) = 일일 무료 보급(gacha.json dailyGem · 하루 1회) — 받을 수 있으면 빨간 점
-            var ad = UiKit.Button(card, "ui.btnBlue", "", OnFree, new Layout.R(6, 83, 42, 14)); ad.name = "Ad";
+            // T255 3항 — 작은 카드는 폭이 324px 뿐이라 셋을 같은 줄에 세울 때 «글자를 가진 칸» 을 먼저 지켰다:
+            // 광고는 원래 아이콘 하나뿐이라 좁혀도 잘릴 글자가 없고(20% = 65px · 아이콘 44), 키는 [아이콘][개수] 라 짧다.
+            // 다이아 버튼(«1회 💎80»)만 종전 폭에 가깝게 남긴다 — 여기서 한 자라도 줄면 그 줄이 먼저 줄어든다(T63 하한).
+            var ad = UiKit.Button(card, "ui.btnBlue", "", OnFree, new Layout.R(6, 83, 18, 14)); ad.name = "Ad";
             var adIc = UiKit.Icon(ad, "Icon", "ui.ad"); UiKit.Pct(adIc.rectTransform, 26, 12, 48, 76);
             var dot = UiKit.AlertDot(ad, "FreeDot", new Vector2(1, 1), new Vector2(-6, -2), 44);   // T136
             _freeBtns.Add(ad.GetComponent<Button>()); _freeDots.Add(dot);
-            var one = PriceButton(card, "One", "1회", box.Cost, () => Pull(1, key), new Layout.R(52, 83, 42, 14), false);
+            KeyButton(card, box, new Layout.R(26, 83, 26, 14), false, w);
+            var one = PriceButton(card, "One", "1회", box.Cost, () => Pull(1, key), new Layout.R(54, 83, 40, 14), false);
             w.One = one.GetComponent<Button>();
             // T69-shop — 큰 카드와 같은 Ink 링(광고·가격 버튼 줄은 카드 «안» 이라 따로 상자를 두지 않는다 · 레퍼런스 10 도 그렇다 · BorderAudit.Exempt)
             UiKit.Bordered(card);
@@ -474,6 +504,14 @@ namespace KkomaKnight.Game
                 var st = State(box.Key); var lines = PityLines(box, st, w.Pills.Count);
                 for (int i = 0; i < w.Pills.Count; i++) if (w.Pills[i] != null) w.Pills[i].text = lines[i];
                 UiKit.SetInteractable(w.One, S.Gem >= box.Cost); UiKit.SetInteractable(w.Ten, S.Gem >= box.Cost * D.Gacha.TenPullCount);
+                // T255 — 키 버튼은 «가진 개수» 를 찍고 0개면 비활성(개수는 그대로 보인다 · 지시서 5항)
+                if (w.Key != null)
+                {
+                    var item = GachaKeys.KeyOf(box.Key);
+                    int have = (int)GachaKeys.Count(S, item);
+                    if (w.KeyCount != null) w.KeyCount.text = UiKit.FmtQty(have);
+                    UiKit.SetInteractable(w.Key, have > 0);
+                }
             }
             foreach (var g in _gated) UiKit.SetInteractable(g.btn, g.can());
             UpdateTimer(); UpdateLightSpin();
@@ -514,13 +552,29 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 뽑기 → 결과 팝업 (공통 팝업 문법 · 명판 · 열린 상자 · 격자 = GearUi.Cell · 탭하여 닫기) ─────────────────────────
-        void Pull(int n, string boxKey)
+        /// <summary>
+        /// 키 1개로 그 상자를 한 번 연다(T255 3항) — <b>여는 것은 다이아로 여는 그 경로 그대로</b>다.
+        /// 키는 «비용 수단» 만 바꾸므로(<see cref="GachaKeys"/>) 확률·천장·결과가 다이아로 연 것과 한 톨도 다르지 않다.
+        /// </summary>
+        void PullWithKey(string boxKey)
+        {
+            var item = GachaKeys.KeyOf(boxKey);
+            if (item == null) return;
+            if (!GachaKeys.CanOpen(App.Save, boxKey)) { App.Toast(GachaKeys.Name(item) + "가 없습니다"); return; }
+            Pull(1, boxKey, true);
+        }
+
+        void Pull(int n, string boxKey, bool withKey = false)
         {
             var D = App.Data; var S = App.Save;
             GachaBox box = null; foreach (var b in D.Gacha.Boxes) if (b.Key == boxKey) box = b; if (box == null) return;
             var st = State(boxKey);
-            double cost = box.Cost * n; if (S.Gem < cost) { App.Toast("다이아가 부족합니다"); return; }
-            S.Gem -= cost;
+            if (withKey) { if (!GachaKeys.Open(S, boxKey, n)) return; }
+            else
+            {
+                double cost = box.Cost * n; if (S.Gem < cost) { App.Toast("다이아가 부족합니다"); return; }
+                S.Gem -= cost;
+            }
             var rng = new Mulberry32((uint)Environment.TickCount ^ 0x5bd1e995u);
             var got = new List<GearItem>();
             for (int i = 0; i < n; i++)
