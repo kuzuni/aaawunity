@@ -2137,6 +2137,36 @@ T95(소환 결과 = `Shop_Chest_Open` 프리팹 + 찰진 등장)가 ✅ 지만 *
 4. 테스트: PlayMode — 카드의 «획득 가능» 아이콘 **종류가 세부 팝업 보상 칸의 종류 집합과 같다**(지옥문 = 펫알·골드 · 원정 = 골드) · 카드에는 수량·«최초» 배지가 **없다** · 두 던전 카드의 아이콘 줄이 안 겹치고 폭이 표와 맞는다 · 글자 잘림 0.
 5. 게이트 + PROGRESS T251 행 + 완료 기록(확인 = CI + `screens` 20·21 PNG 를 나란히 대조).
 
+### T263 — **유니티 잡이 «테스트 하나도 안 깨졌는데» 빨갛다: 오늘 두 번, 서로 다른 인프라 죽음** (워커 실측 등재 2026-09-08 17:4X · sess-1842-31994 · 워커 G · **선점 안 함** · 코드 0줄)
+
+0. **왜 등재하나** — 오늘 배포가 이 꼴로 **두 번** 멈췄고(합쳐 두 시간 넘게), 두 번 다 «누가 깼나» 를 찾느라 워커 시간이 갔다. **둘 다 테스트는 초록이었다.** 워커 I 의 `[CI실패]` 요약(T239)이 이제 그 사실을 한 줄로 말해 주므로(«요약 0건 — 이 런의 빨강은 테스트가 아니다») **다음 사람은 이 절만 보면 된다.**
+
+1. **꼴 ⓐ — 라이선스 반납 중 죽음**(CI **#503** · 11:1X · 결정 657). 두 판 다 «Run succeeded, no failures occurred» 를 찍은 **뒤** 유니티가 ULF 라이선스를 반납하다 죽었다 → `The process '/usr/bin/docker' failed with exit code **2**`.
+
+2. **꼴 ⓑ — 파일 서술자(FD) 한계 초과로 SIGABRT**(CI **#547** · 17:36 · 이 등재). 이번은 **테스트 전, 스크립트 컴파일 단계**다:
+
+```
+Starting: … bee_backend … ScriptAssemblies
+Unity: …/pal_utilities.h:160: int ToFileDescriptor(intptr_t): Assertion
+  `fd < sysconf(_SC_OPEN_MAX) && "Requested file descriptor exceeds maximum number of files allowed to be open at a time."' failed.
+Caught fatal signal - signo:6 (SIGABRT) · Unexpected exit code 134
+  #6 SystemNative_FcntlSetCloseOnExec ← #8 PipeStream:ConfigureSocket ← #9 NamedPipeServerStream:HandleAcceptedSocket
+##[error]The process '/usr/bin/docker' failed with exit code 134
+```
+
+   ⚠ **인과를 단정하지 않는다** — 그 스택의 «이름 있는 파이프» 는 **유니티 자신의 ILPP 서버**일 수 있다(로그 위쪽 `Now listening on: http://unix:/tmp/ilpp.sock-…`). 확인된 것은 «FD 한계를 넘겨 abort» 까지다.
+
+3. **다만 같이 재 둔 사실 하나** — CI 유니티 런은 **에디터 전용 도구 패키지 둘**을 매번 함께 올린다(그 런 로그의 패키지 목록):
+   · `com.gamelovers.mcp-unity`(git 패키지 · `Packages/manifest.json:3`) — **에디터 안에서 서버를 여는** MCP 패키지
+   · `com.singularitygroup.hotreload`(임베드 패키지) — Hot Reload
+   **CI 배치모드에서는 둘 다 쓰는 사람이 없다.** 다만 FD·소켓을 얼마나 쓰는지는 **안 쟀으므로 범인이라고 적지 않는다** — «CI 에서 안 쓰는 것이 서버를 연다» 는 사실만 남긴다.
+
+4. **다음 사람이 할 것(값싼 것부터)** — ⓐ **또 났는지부터 센다**: 드물면 손대지 않는 것이 옳다(런 하나 다시 돌면 지나간다 · 결정 493 의 결). ⓑ 잦으면 **가장 좁은 손**부터 — 유니티 잡의 `ulimit -n` 을 올린다(`fd < _SC_OPEN_MAX` 가 바로 그 한계다). ⓒ 그래도 나면 3항의 두 패키지를 **CI 에서만** 빼는 길을 본다. ⚠ **주인 로컬 작업(Hot Reload·MCP)을 망가뜨리지 않는 방법이어야 한다** — manifest 에서 지우는 것이 아니라 CI 에서만 제외한다.
+
+5. **판정** — 이 절은 «고쳤다» 로 닫지 않는다. **닫는 조건** = ⓐ 를 세어 «드물다» 로 판명되거나, 손을 댔다면 그 뒤 **열 런에서 이 꼴이 0** 인 것.
+
+순서 — 제약 없다. 다만 **먼저 세고 나중에 손대는** 절이다.
+
 ### T256 ✅ — **지시서가 «게이트» 라 부르는 자 셋이 CI 어디에서도 안 돌고 있었다** (조율 · 게임 코드 0줄 · sess-1913-2015 · 워커 E · 결정 699)
 
 > **실측** — `tools/check_*` 를 `ci.yml`·지시서와 맞대어 셌더니 셋이 **지시서 게이트 목록에는 있는데 CI 에는 0건**이었다:
