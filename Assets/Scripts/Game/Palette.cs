@@ -18,6 +18,8 @@ namespace KkomaKnight.Game
         public static Color Blue => Cat("blue", "#5BB0F0");
         public static Color Sky => Cat("sky", "#35A6E1");
         public static Color Yellow => Cat("yellow", "#FFCC00");
+        /// <summary>«리워드» 팝업(T241)의 노랑 — 제목 글자와 위아래 가로줄. 레퍼런스 35 실측(#F0E000~#F9DF16)이라 <see cref="Yellow"/>(#FFCC00)보다 레몬 쪽이다.</summary>
+        public static Color Reward => Cat("reward", "#F8DF16");
         public static Color Orange => Cat("orange", "#FF8612");
         public static Color Plum => Cat("plum", "#C76EF7");
         public static Color Red => Cat("red", "#FB5951");

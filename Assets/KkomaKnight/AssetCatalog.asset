@@ -1188,6 +1188,8 @@ MonoBehaviour:
     color: {r: 0.207843, g: 0.65098, b: 0.882353, a: 1}
   - key: col.yellow
     color: {r: 1, g: 0.8, b: 0, a: 1}
+  - key: col.reward
+    color: {r: 0.972549, g: 0.87451, b: 0.0862745, a: 1}
   - key: col.orange
     color: {r: 1, g: 0.52549, b: 0.0705882, a: 1}
   - key: col.plum

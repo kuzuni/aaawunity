@@ -1,0 +1,169 @@
+using System;
+using System.Collections.Generic;
+using DG.Tweening;
+using KkomaKnight.Core;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace KkomaKnight.Game
+{
+    /// <summary>
+    /// T241 — 공통 «리워드» 획득 팝업(주인 2026-09-08 «퀘스트나 뭐 보상 받거나 할 때 리워드 팝업 저런 식으로 뜨게» ·
+    /// 레퍼런스 <c>docs/ref/35_reward_popup.jpg</c>). <b>보상을 주는 모든 곳이 이 한 함수만 부른다</b> — 화면마다 제 나름의
+    /// 토스트·팝업을 따로 만들지 않는다(지시서 T241 2항).
+    /// <para>
+    /// 모양은 «상자» 가 아니라 <b>화면을 가로지르는 줄</b>이다: 어둠 → 빛살 → 노란 «리워드» → 위 노란 줄 → 칸 줄 → 아래 노란 줄 → «탭하여 닫기».
+    /// 자리는 전부 <see cref="Layout"/> 의 <c>Rw*</c>(레퍼런스 35 실측)이고 이 파일에 수치를 박지 않는다.
+    /// </para>
+    /// <para>
+    /// ⚠ <b>왜 <c>Overlay</c> 안이 아니라 새 파일인가</b> — 지시서는 «<c>Overlay.Reward(items)</c> 같은 한 함수» 라고 적었는데
+    /// 이 회차에 <c>Game/Overlay.cs</c> 가 다른 워커의 살아 있는 lock(T234·T236 «리본 뒤 빛») 안이었다.
+    /// claims 규약 «같은 파일을 두 작업이 만지면 번호가 큰 쪽이 기다린다» 대로 그 파일을 안 건드리고 <b>부르는 자리 하나</b>라는
+    /// 지시서의 뜻만 지켰다. 그 lock 이 풀리면 <c>Overlay.Reward(...) =&gt; RewardPopup.Show(...)</c> 한 줄을 얹어도 된다(그때도 여기가 본체다).
+    /// </para>
+    /// </summary>
+    public static class RewardPopup
+    {
+        /// <summary>팝업이 보여 주는 «얻은 것» 한 칸.</summary>
+        public struct Item
+        {
+            /// <summary>칸 안 그림(카탈로그 스프라이트 키 · 예 <c>ui.coin</c>).</summary>
+            public string Icon;
+            /// <summary>칸 아래 개수 글자(«×3» 처럼 부르는 쪽이 다듬어 넘긴다 · 비면 안 쓴다).</summary>
+            public string Qty;
+            /// <summary>칸 테두리 조각 키(등급색 · 비면 <see cref="DefaultFrame"/>).</summary>
+            public string Frame;
+            public static Item Of(string icon, string qty = null, string frame = null) => new Item { Icon = icon, Qty = qty, Frame = frame };
+        }
+
+        /// <summary>기본 칸 테두리 — 레퍼런스 35 의 두 칸이 <b>파랑</b>이다(T103 정본 <c>ItemFrame_01_Normal_*</c> 계열).</summary>
+        public const string DefaultFrame = "ui.itemFrame.blue";
+
+        /// <summary>
+        /// 이 팝업의 어둠 알파. 공통 <see cref="UiKit.DimAlpha"/>(0.985)는 뒤 화면을 <b>거의 지워</b> 버리는데,
+        /// 주인 그림과 주인 문장은 둘 다 «뒤 화면은 그대로 보인다» 다 — 레퍼런스 35 의 뒤 화면(대장간) 평균 밝기가
+        /// <b>26~32/255</b> 로 살아 있다(실측). 그래서 이 팝업만 옅은 어둠을 쓴다(결정 기록).
+        /// </summary>
+        public const float DimAlpha = 0.65f;
+
+        /// <summary>칸이 하나씩 뜨는 간격(초 · T95/T202 와 같은 결 · unscaled).</summary>
+        public const float CellStagger = 0.05f;
+        /// <summary>등장 연출 길이(초).</summary>
+        public const float RevealSec = 0.25f;
+
+        /// <summary>마지막으로 띄운 칸 수 — 테스트가 «지급한 만큼 칸이 섰나» 를 이걸로도 볼 수 있다.</summary>
+        public static int LastCellCount { get; private set; }
+
+        /// <summary>보상 팝업을 띄운다. <paramref name="items"/> 가 비면 아무것도 안 한다(«얻은 게 없는데 뜨는» 팝업 금지).</summary>
+        public static void Show(IList<Item> items, Action onClose = null)
+        {
+            var app = App.I;
+            if (app == null || app.Overlay == null || items == null || items.Count == 0) { LastCellCount = 0; return; }
+            var ov = app.Overlay;
+            ov.Close();   // 앞 팝업이 있으면 트윈까지 깨끗이 죽인다(Overlay.Close = KillReveal + Clear + 끄기) — Overlay.cs 를 안 건드리는 길이다
+            var root = ov.Root;
+            root.gameObject.SetActive(true);
+            root.SetAsLastSibling();
+            Audio.Sfx("snd.popup");
+
+            // ⓐ 어둠 — 프레임 밖(레터박스·노치)까지(T104). 누르면 닫힌다(레퍼런스 바닥 «탭하여 닫기»).
+            var dim = UiKit.Rect(root, "Dimmed");
+            UiKit.Stretch(dim, -UiKit.DimOverscan, -UiKit.DimOverscan, -UiKit.DimOverscan, -UiKit.DimOverscan);
+            var di = dim.gameObject.AddComponent<Image>();
+            di.color = Palette.A(Palette.Dim, DimAlpha); di.raycastTarget = true;
+            UiKit.FadeIn(di, DimAlpha);
+
+            // ⓑ 빛살 — 제목 뒤. 여기는 «칸» 이 아니라 리본 자리와 같은 갈래라 clip 을 끈다(T189 예외 · Overlay 의 레벨업 빛과 같은 호출 꼴).
+            var glow = UiKit.Rect(root, "RewardGlow");
+            UiKit.Pct(glow, Layout.RwGlow);
+            UiKit.LightBehind(glow, null, UiKit.LightKey, UiKit.LightPeriod, Palette.A(Palette.Reward, 0.55f),
+                              sidePx: UiKit.FrameW * Layout.RwGlow.W / 100f, clip: false);
+
+            // ⓒ 제목 — 노란 굵은 «리워드»
+            var title = UiKit.Label(root, Layout.RwTitle.X, Layout.RwTitle.Y, Layout.RwTitle.W, Layout.RwTitle.H,
+                                    "리워드", TextSize.Title, Palette.Reward, TextAnchor.MiddleCenter, true, true, TextKind.Title);
+            title.name = "RewardTitle"; title.fontStyle = FontStyles.Bold;
+            UiKit.Tag(title.transform, "리워드 제목");
+
+            // ⓓ 노란 가로줄 둘 — 그 사이가 «얻은 것» 자리다. 가운데가 밝고 양 끝으로 사라진다(레퍼런스 실측).
+            Rule(root, "RewardLineTop", Layout.RwLineTop, "위 노란 줄");
+            Rule(root, "RewardLineBottom", Layout.RwLineBottom, "아래 노란 줄");
+
+            // ⓔ 칸 줄 — 정사각 칸을 가운데로 모은다(폭은 개수만큼 · 넘치면 칸을 줄인다).
+            var row = UiKit.Rect(root, "RewardCells"); UiKit.Pct(row, Layout.RwCells);
+            var cells = Cells(row, items);
+            LastCellCount = cells.Count;
+            UiKit.TagGroup(row, "보상 칸(" + cells.Count + "개)", cells.ToArray());
+
+            // ⓕ 바닥 «탭하여 닫기»
+            var close = UiKit.Label(root, Layout.RwClose.X, Layout.RwClose.Y, Layout.RwClose.W, Layout.RwClose.H,
+                                    "탭하여 닫기", TextSize.Body, Palette.White, TextAnchor.MiddleCenter, true, true);
+            close.name = "TapToClose"; close.fontStyle = FontStyles.Bold;
+            UiKit.Tag(close.transform, "닫기 안내");
+
+            // ⓖ 어둠을 누르면 닫힌다 — punch(눌림 연출)는 끈다: 어둠은 «버튼처럼 보이는 것» 이 아니다(T139 ⓐ 와 같은 호출 꼴).
+            UiKit.Clickable(dim, () => { ov.Close(); onClose?.Invoke(); }, false);
+
+            Reveal(title.rectTransform, glow, cells);
+        }
+
+        /// <summary>같은 것을 «아이콘 키 → 개수» 로 부르는 짧은 길(대부분의 지급 자리가 이 꼴이다).</summary>
+        public static void Show(IDictionary<string, int> gained, Action onClose = null)
+        {
+            if (gained == null) { LastCellCount = 0; return; }
+            var list = new List<Item>();
+            foreach (var kv in gained) if (kv.Value > 0) list.Add(Item.Of(kv.Key, UiKit.FmtQty(kv.Value)));
+            Show(list, onClose);
+        }
+
+        static void Rule(RectTransform root, string name, Layout.R r, string tag)
+        {
+            var line = UiKit.Rect(root, name); UiKit.Pct(line, r);
+            var img = line.gameObject.AddComponent<Image>();
+            img.color = Palette.Reward; img.raycastTarget = false;   // 줄은 장식이다 — 탭은 어둠이 받는다(T227: 위에 덮은 그림이 탭을 먹지 않게)
+            UiKit.Tag(line, tag);
+        }
+
+        /// <summary>칸을 정사각으로 만들어 가운데로 모은다 — 개수가 많아 줄을 넘치면 칸과 틈을 같은 비로 줄인다.</summary>
+        static List<RectTransform> Cells(RectTransform row, IList<Item> items)
+        {
+            var res = new List<RectTransform>();
+            int n = items.Count;
+            float cellW = Layout.RwCellW, gap = Layout.RwCellGap;
+            float need = n * cellW + (n - 1) * gap;
+            if (need > 100f) { float k = 100f / need; cellW *= k; gap *= k; need = 100f; }
+            float start = Mathf.Max(0f, (100f - need) * 0.5f);
+            for (int i = 0; i < n; i++)
+            {
+                var it = items[i];
+                var cell = UiKit.Rect(row, "RewardCell:" + i);
+                UiKit.Pct(cell, start + i * (cellW + gap), 0, cellW, 100);
+                var f = UiKit.Spawn(string.IsNullOrEmpty(it.Frame) ? DefaultFrame : it.Frame, cell);
+                UiKit.Stretch((RectTransform)f.transform);
+                GearUi.DarkFrame(f.transform);   // T115 · 결정 184 — 조각 제 링을 Ink 로 + 가운데 비움 · raycast 끔
+                bool qty = !string.IsNullOrEmpty(it.Qty);
+                var ic = UiKit.Icon(cell, "Icon", it.Icon);
+                UiKit.Pct(ic.rectTransform, qty ? 22 : 16, qty ? 4 : 16, qty ? 56 : 68, qty ? 56 : 68);
+                if (qty) UiKit.Label(cell, 0, 58, 100, 42, it.Qty, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyles.Bold;
+                res.Add(cell);
+            }
+            return res;
+        }
+
+        /// <summary>
+        /// 등장 — 제목이 살짝 튀고(<see cref="UiKit.PopIn"/> = OutBack) 칸이 <b>하나씩</b>(stagger).
+        /// 전부 unscaled + <c>SetLink</c>(팝업이 닫혀도 트윈이 먼저 죽는다 · T56).
+        /// ⚠ <see cref="UiKit.Reveal"/> 의 셋째 인자는 «지연» 이 아니라 «길이» 다 — 지연은 마스터 시퀀스에 <c>Insert</c> 해서 준다
+        /// (<c>Overlay.At</c> 가 쓰는 그 꼴 · 여기서는 그 자리를 못 쓰므로 같은 식으로 직접 만든다).
+        /// </summary>
+        static void Reveal(RectTransform title, RectTransform glow, List<RectTransform> cells)
+        {
+            UiKit.PopIn(title, dur: RevealSec);
+            if (glow != null) UiKit.PopIn(glow, dur: RevealSec);
+            if (cells.Count == 0) return;
+            var seq = DOTween.Sequence().SetUpdate(true).SetTarget(cells[0]).SetLink(cells[0].gameObject);
+            for (int i = 0; i < cells.Count; i++) seq.Insert(CellStagger * i, UiKit.Reveal(cells[i]));
+        }
+    }
+}

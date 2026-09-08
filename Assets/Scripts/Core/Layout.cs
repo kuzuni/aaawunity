@@ -226,6 +226,25 @@ namespace KkomaKnight.Core
         /// <summary>이벤트 팝업(쉼터·악마·천사 등) — 표에 없는 화면. ⑧ 공통 «팝업 폭 87 · 좌우 여백 6.5» 와 ④ 의 세로(y28 h44)를 따른다.</summary>
         public static readonly R EvBox = new R(6.5f, 28.0f, 87.0f, 44.0f);
 
+        // ───────── T241 공통 «리워드» 획득 팝업 — 값은 전부 주인 레퍼런스 `docs/ref/35_reward_popup.jpg`(720×1560) 실측이다 ─────────
+        // 이 팝업은 «상자» 가 아니라 **화면을 가로지르는 줄**이다(주인 그림 그대로) — 어둠 위에 빛살·제목·노란 줄 둘·칸 줄·닫기 안내만 얹는다.
+        /// <summary>«리워드» 제목 글자 — 실측 글리프 x 37.9~62.1 · y 41.6~44.2(가운데 정렬이라 칸은 넉넉히 잡고 글자가 가운데 선다).</summary>
+        public static readonly R RwTitle = new R(20.0f, 40.4f, 60.0f, 4.4f);
+        /// <summary>제목 뒤 빛살 — 실측 밝은 무리 x 10.6~89.6 · y 40.9~46.2. 조각이 정사각이라 한 변을 폭으로 잡고 제목 가운데(42.9%)에 맞춘다.</summary>
+        public static readonly R RwGlow = new R(8.0f, 37.9f, 84.0f, 10.0f);
+        /// <summary>위 노란 가로줄 — 실측 y 716~719(45.9%) · 두께 4px(0.26%). 가운데가 가장 밝고 양 끝으로 사라진다(x 는 화면 전체).</summary>
+        public static readonly R RwLineTop = new R(0.0f, 45.9f, 100.0f, 0.3f);
+        /// <summary>칸 줄 — 실측 y 736~817(47.2~52.4%). 칸은 이 줄 안에서 가운데로 모인다(개수에 따라 폭이 준다).</summary>
+        public static readonly R RwCells = new R(0.0f, 47.2f, 100.0f, 5.3f);
+        /// <summary>아래 노란 가로줄 — 실측 y 840~843(53.8%).</summary>
+        public static readonly R RwLineBottom = new R(0.0f, 53.8f, 100.0f, 0.3f);
+        /// <summary>«탭하여 닫기» — 실측 글리프 y 94.2~95.6. 높이는 공통 <see cref="BookClose"/> 와 같은 2.4(본문 40 의 줄 높이가 들어간다 · T63).</summary>
+        public static readonly R RwClose = new R(30.0f, 93.6f, 40.0f, 2.4f);
+        /// <summary>칸 하나의 폭(%p) — 실측 79px / 720. 높이는 <see cref="RwCells"/> 가 정한다(정사각이 되게 코드가 px 로 맞춘다).</summary>
+        public const float RwCellW = 11.0f;
+        /// <summary>칸 사이 틈(%p) — 실측 8px / 720.</summary>
+        public const float RwCellGap = 1.1f;
+
         /// <summary>
         /// 토스트 띠(ToastMessage_01) — 레퍼런스에 없는 요소라 자는 글자다. 프리팹은 글자 칸을 상자보다 세로 17.3px 작게 잡으므로
         /// 본문 40 <b>두 줄</b>(<see cref="TextSize.BoxHeight"/> = 112px)이 들어가려면 상자가 129.3px 이상이어야 한다 — 전 5.0%(116.9px · 칸 99.6px)에선

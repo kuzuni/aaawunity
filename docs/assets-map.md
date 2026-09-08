@@ -590,6 +590,7 @@
 | colors | `col.blue` | `#5BB0F0` | #5BB0F0 |  |
 | colors | `col.sky` | `#35A6E1` | #35A6E1 |  |
 | colors | `col.yellow` | `#FFCC00` | #FFCC00 |  |
+| colors | `col.reward` | `#F8DF16` | #F8DF16 | «리워드» 팝업의 노랑(제목 글자·위아래 가로줄) — 레퍼런스 35 실측(#F0E000~#F9DF16 · col.yellow #FFCC00 보다 레몬 쪽) · T241 |
 | colors | `col.orange` | `#FF8612` | #FF8612 |  |
 | colors | `col.plum` | `#C76EF7` | #C76EF7 |  |
 | colors | `col.red` | `#FB5951` | #FB5951 |  |
