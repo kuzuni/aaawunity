@@ -74,6 +74,23 @@ jobs:
       # 없는 글자는 빨강 없이 **폭 0 으로 사라진다** — 무뎌지는 쪽이라 여기서 막는다(결정 493 의 기준).
       - name: 글꼴 글리프 검사 (화면 문자열 ↔ Jua cmap · T224)
         run: python3 tools/check_font_glyphs.py
+      # T253 — 아래 셋은 **지시서 §3 이 «게이트» 라 부르면서 CI 어디에서도 안 돌던** 자들이다(실측: ci.yml 0건 · 지시서 4~5곳).
+      # 워커가 손으로 돌려 커밋에 «✔» 를 적는 것이 유일한 실행이었는데, 그 방식이 구조적으로 못 잡는 자리가 하나 있다:
+      # **리베이스가 뒤에 넣는 어긋남**이다 — 손으로 돌릴 때는 깨끗했는데, 남의 커밋 위로 옮겨 앉으면서 번호가 겹치고
+      # 그대로 push 된다(2026-09-08 하루에만 결정 번호 겹침이 다섯 번 넘게 났고 전부 이 꼴이었다).
+      # ⚠ **셋 다 일부러 `continue-on-error` 다**(결정 493 의 기준 = «이 자가 빨간 동안 배포된 게임이 못 쓰게 되는가» → 아니다).
+      #   번호가 겹치거나 표 행이 어긋난 것은 **조율 결함**이지 빌드 결함이 아니라 주인 폰을 볼모로 잡을 값어치가 없다 —
+      #   바로 위 `task_state --check` 가 같은 까닭으로 이미 그렇게 서 있고, 그 자리를 그대로 따른다.
+      #   `check_stale_asserts` 는 우연히 같은 글자에 걸리는 일이 잦아(«7f»·«90f» 실례) 더더욱 막는 자로 두면 안 된다.
+      - name: "결정 번호 겹침 — 보고만(빨개도 안 막는다 · 결정 493)"
+        continue-on-error: true
+        run: python3 tools/check_decisions.py
+      - name: "PROGRESS 표 행 어긋남 — 보고만(빨개도 안 막는다 · 결정 493)"
+        continue-on-error: true
+        run: python3 tools/check_task_rows.py
+      - name: "지운 값을 아직 가리키는 테스트 — 보고만(빨개도 안 막는다 · 결정 493)"
+        continue-on-error: true
+        run: python3 tools/check_stale_asserts.py
       - name: aaaw main 체크아웃 (수치 정본)
         uses: actions/checkout@v4
         with:
