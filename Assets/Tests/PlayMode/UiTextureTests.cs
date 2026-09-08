@@ -403,7 +403,15 @@ namespace KkomaKnight.Tests.Play
             int rr = 0, rlit = 0;
             foreach (var t in ov.GetComponentsInChildren<Transform>(false))
                 if (t.name == "Reward") { rr++; if (UiKit.HasLight(t) || UiKit.HasLightMask(t)) rlit++; }
-            Assert.AreEqual(8, rr, "순위 보상 칸 = 4줄 × (코인·다이아)");
+            // T247 — 옛 값은 «8»(= 네 줄 × 코인·다이아)이었는데 T237 이 표(`arena.json`)의 구간 열여섯을 붙여 32 가 됐다.
+            //   ⚠ 여기서 수를 32 로 바꾸면 **같은 함정을 다시 놓는 것**이다 — 주인이 보상 «값» 을 채우면 줄마다 칸 수가
+            //   `rewards.Count` 로 바뀌어(빈 줄만 «코인·다이아» 두 칸) 또 깨진다. 그래서 **그리는 코드와 같은 규칙**으로 센다
+            //   (`EventsScreen.OpenRankRewards` 의 그 갈래 그대로). 표가 없으면(로드 실패) 종전 네 줄 껍데기다.
+            var rank = _app.Data != null ? _app.Data.ArenaRank : null;
+            int want = 0;
+            if (rank != null && rank.Tiers.Count > 0) foreach (var tier in rank.Tiers) want += tier.Rewards.Count > 0 ? tier.Rewards.Count : 2;
+            else want = 4 * 2;
+            Assert.AreEqual(want, rr, "순위 보상 칸 = 표의 구간 줄마다 «보상 수(비면 코인·다이아 둘)» 의 합(T237 표 · T247)");
             Assert.AreEqual(0, rlit, "순위 보상 칸에는 빛이 하나도 없다(T190)");
             _app.Overlay.Close(); yield return Frames(2);
 

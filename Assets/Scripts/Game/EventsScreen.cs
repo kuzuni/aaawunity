@@ -541,6 +541,20 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── ⑮ 순위 보상 팝업 (25) ─────────────────────────
+        /// <summary>
+        /// T247 — 25 팝업 «등수» 칸의 폭(줄 폭 %). 옛 값 <b>17</b> 은 네 줄 시절(글자가 «1»~«4»)의 값이라
+        /// T237 이 표의 구간 열여섯을 붙이자 가장 긴 «50001~꼴등» 이 넘쳤다 — CI #524 실측:
+        /// <c>rect 153×129 · pref 199×72 · used 32(min 36)</c> 라 bestFit 이 T63 하한(보조 36)을 깼다(<b>폭 하나뿐</b> · 높이는 129 ≥ 72).
+        /// <para>
+        /// 필요한 폭은 «199» 가 아니라 <b>36 크기에서의 폭</b>이다: <c>199 × 36/32 ≈ 224px</c>. 줄 폭이 <c>153 / 0.17 = 900px</c> 이므로 <b>24.9%</b> 가 하한이고,
+        /// 여기에 여유를 둬 <b>28</b>. 줄의 오른쪽은 원래 비어 있어(보상 칸이 <see cref="RankRewardX"/> + k×15 · 폭 13) 넓혀도 부딪히지 않는다.
+        /// </para>
+        /// 왕관 줄 셋(1·2·3)은 글자가 한 자라 <b>옛 값 그대로 둔다</b> — 건드리면 레퍼런스 25 의 왕관 자리가 흔들린다.
+        /// </summary>
+        const float RankLabelW = 28;
+        /// <summary>T247 — 등수 칸을 넓힌 만큼 보상 칸 첫 자리도 오른쪽으로(옛 20 → 31 · 칸 폭 13 + 틈 2 라 넷까지 100 안에 든다).</summary>
+        const float RankRewardX = 31;
+
         void OpenRankRewards()
         {
             var box = App.Overlay.OpenBox("ui.popup", "ui.titleBrown", "순위 보상", Layout.RrBox, () => App.Overlay.Close());
@@ -580,7 +594,7 @@ namespace KkomaKnight.Game
                 // 긴 글자는 보조 크기로 내려 칸 안에 들어가게 한다(«10001-50000» 이 왕관 자리 폭을 넘는다).
                 var size = label.Length > 2 ? TextSize.Aux : TextSize.Body;
                 if (i < crowns.Length) { var cr = UiKit.Icon(row, "Crown", crowns[i]); UiKit.Pct(cr.rectTransform, 2, 8, 14, 84); UiKit.Label(row, 2, 30, 14, 50, label, size, Palette.White, kind: size == TextSize.Aux ? TextKind.Aux : TextKind.Body).fontStyle = FontStyles.Bold; }
-                else UiKit.Label(row, 2, 0, 17, 100, label, size, Palette.White, kind: size == TextSize.Aux ? TextKind.Aux : TextKind.Body).fontStyle = FontStyles.Bold;
+                else UiKit.Label(row, 2, 0, RankLabelW, 100, label, size, Palette.White, kind: size == TextSize.Aux ? TextKind.Aux : TextKind.Body).fontStyle = FontStyles.Bold;
                 // 보상 칸 — 표에 적힌 만큼 그린다(줄마다 칸 수가 달라도 된다 · T237 ⓓ).
                 // ⚠ 표의 rewards 가 비어 있으면(지금이 그렇다 — 주인이 값을 아직 안 줬다) 레퍼런스 25 그대로 «코인·다이아 두 칸에 —» 다.
                 //    없는 값을 지어내는 것보다 «—» 가 낫다(T209 4항과 같은 갈래).
@@ -590,13 +604,13 @@ namespace KkomaKnight.Game
                     {
                         var rw = tier.Rewards[k];
                         RewardArt(rw.Item, out string frameKey, out string iconKey);
-                        PlanLight(RewardCell(row, new Layout.R(20 + k * 15, 8, 13, 84), frameKey, iconKey, UiKit.FmtComma(rw.Amount)));
+                        PlanLight(RewardCell(row, new Layout.R(RankRewardX + k * 15, 8, 13, 84), frameKey, iconKey, UiKit.FmtComma(rw.Amount)));
                     }
                 }
                 else
                 {
                     // T72 ② 보상 칸(코인·다이아) 아이콘 뒤 빛살 — 팝업이라 스크롤 제한 없이 같이 돈다(닫으면 SetLink 로 같이 죽는다)
-                    PlanLight(RewardCell(row, new Layout.R(20, 8, 13, 84), "ui.itemFrame.green", "ui.iconArenaCoin")); PlanLight(RewardCell(row, new Layout.R(35, 8, 13, 84), "ui.itemFrame.plum", "ui.iconGemPurple"));
+                    PlanLight(RewardCell(row, new Layout.R(RankRewardX, 8, 13, 84), "ui.itemFrame.green", "ui.iconArenaCoin")); PlanLight(RewardCell(row, new Layout.R(RankRewardX + 15, 8, 13, 84), "ui.itemFrame.plum", "ui.iconGemPurple"));
                 }
                 if (i == 0) UiKit.Tag(row, "보상 줄(1칸)");
             }
