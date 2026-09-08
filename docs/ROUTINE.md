@@ -6210,6 +6210,39 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 4. **먼저 재고 나서 정한다**: 52개 표 전부에 돌려 «지금 몇 건이나 어긋나 있나» 를 세고, 그 수가 크면(옛 표에 미완성 요소가 많으면) **새 표부터** 보게 좁힌다. 세기 전에 규칙을 정하지 말 것.
 5. 게이트 + PROGRESS T279 행 + 완료 기록(확인 = CI dotnet 잡 꼬리에 그 줄이 보이는 것 · 초록이면 «어긋남 0»).
 
+### T280 — **«부활» 버튼이 배선에 닿는지 아무 자도 안 눌러 본다** (검수 Q 실측 등재 2026-09-08 23:2X · sess-1808-28610 · **선점 안 함** · 코드 0줄)
+
+> 워커가 세어 등재한 구멍이다(주인 지시 아님). **T272 와 같은 갈래이고, 그 갈래의 마지막 한 자리다.**
+
+0. **왜 등재하나** — 주인이 못 박은 규칙이다: «**부활권 1개로 게임 1회 부활 가능하게 하기**»(T254 · 2026-09-09 04:4X). 규칙(`Core/Revive`)은 `ReviveTests` 가 촘촘히 잰다(티켓 1 줄어듦 · 체력·실드 가득 · 티켓 0 이면 아무 일 없음 · 한 판에 한 번). **비어 있는 것은 «버튼이 그 규칙에 닿아 있는가» 하나다.**
+
+1. **실측(2026-09-08 23:2X · 지금 main)**
+   · 배선은 **옳다** — `Overlay.cs:713` `ReviveBtn` → `BattleScreen.ReviveNow`(`:323`) → `Core.Revive.Use`(티켓 −1) + `App.Persist()`.
+   · 그런데 **PlayMode 자 어디에도 `"ReviveBtn"` 문자열이 없다**(전수 grep). 주석에만 두 번 나온다(`TextSizeGateTests`·`UiShotsTests`).
+   · 이름 붙은 버튼 34개를 «자가 눌러 보는가» 로 가르면 **남는 것이 이것 하나다**(`CardBtn:` 은 `"CardBtn:" + n` 접합이라 헛것 · T264 가 `CardBtn:1` 을 실제로 누른다).
+
+2. **T274 가 이 자리를 이미 닫지 않았나 → 아니다.** T274 는 **그리는 쪽**만 봤다 — 사진(`res_lose_revive`)·글자 크기(`TextSizeGateTests`)·표 ㊽. 그 회차는 `Dead(G, () => { }, () => { }, 0, true)` 로 **빈 콜백**을 넘겨 화면만 세웠다. 즉 **누르는 쪽은 한 번도 안 재어졌고**, T274 의 ✅ 는 그 몫에 대해서는 옳다.
+
+3. **왜 이 갈래가 조용한가**(T272 와 같은 말) — 배선이 끊기면(`onRevive` 에 `null`·다른 람다가 가면) **Core 자는 전부 초록인데 눌러도 아무 일이 없다.** 빨간 줄도 안 나고 게이트도 안 문다. 주인은 그때 «부활이 안 되는데» 라고 말하게 된다.
+
+4. **메우는 법**(자 하나 · 화면·규칙 코드 0줄) — `BattleScreen` 을 실제로 태우는 자리가 있으면 그쪽이 낫고, 없으면 `Overlay.Dead` 에 **진짜 콜백**을 넘겨 «버튼 → 콜백» 만이라도 잰다:
+   ```
+   int used = 0; var S = _app.Save; S.Revive = 2; bool called = false;
+   _app.Overlay.Dead(G, () => { }, () => { called = true; Core.Revive.Use(S, G, ref used); }, S.Revive, true);
+   yield return Frames(2);
+   Assert.IsTrue(ClickNamed(_app.Overlay.Root, "ReviveBtn"), "«부활» 이 눌린다");
+   Assert.IsTrue(called, "누르면 부활 길이 실제로 불린다");     ← 이 한 줄이 지금 비어 있는 자리다
+   Assert.AreEqual(1, S.Revive, "부활권이 1 줄어든다");
+   Assert.IsFalse(G.Dead, "판이 이어진다");
+   ```
+   그다음 **0개 판**: `S.Revive = 0` 으로 다시 열어 ⓐ 버튼이 `interactable == false` ⓑ 억지로 `onClick.Invoke()` 해도 티켓·상태가 **한 톨도 안 바뀐다**(T264 가 특권에서 세운 그 꼴 그대로).
+   ⚠ **`canRevive` 는 «이 판에 아직 안 썼나» 뿐이라 티켓 0 에서도 버튼이 선다**(T274 가 실측해 적어 둔 것) — 0개 판을 «버튼이 없다» 로 재면 틀린다.
+
+5. **검수 Q 가 직접 안 메운 까닭** — 이 자리에 `dotnet` 이 없어 새 C# 이 컴파일되는지 한 줄도 확인할 수 없다(§6 ⑨). 그리고 `BattleScreen.cs` 는 지금 **T240 의 살아 있는 lock 안**이다 — 자 파일만 건드리면 되지만, 잡는 사람이 그 lock 을 먼저 보는 것이 맞다.
+
+6. 게이트 + PROGRESS T280 행 + 완료 기록(확인 = 첫 완주 런의 그 자 Passed).
+
+
 ## 4. PROGRESS.md 기록 규약
 
 - 표의 자기 작업 행을 갱신: 상태(진행중/완료/대기) · SID · 워커 · 핵심 수치.
