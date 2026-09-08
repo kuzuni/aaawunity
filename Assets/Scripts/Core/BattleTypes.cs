@@ -143,6 +143,24 @@ namespace KkomaKnight.Core
         public int StartPerks;
         /// <summary>시작 레벨(원정 5) — 다음 렙업 필요 경험치는 엔진이 <c>ExpNeed(Level)</c> 를 보므로 저절로 그 레벨 기준이 된다.</summary>
         public int StartLevel = 1;
+
+        // ───────── T240 3항 아레나 1대1(주인 2026-09-08 11:2X «PvP 인게임 만들어줘 · 더미 데이터로 일단») ─────────
+        /// <summary>
+        /// 아레나 <b>1대1</b> 판이면 그 «상대 하나» 의 스탯, <c>null</c>(기본값)이면 <b>지금까지와 똑같은 챕터 전투</b>다.
+        /// <para>
+        /// 값은 <see cref="ArenaFoe.Of(ArenaFoeData, double, double)"/> 가 상대 전투력에서 푼 것이다.
+        /// 켜지면 챕터 표(웨이브·이벤트·보스)를 <b>아예 안 읽고</b> 적 하나짜리 판을 세운다 —
+        /// 지시서 §2 T240 3항 «웨이브 없음 · 1대1» 그대로이고, 7항의 «전부 로컬 더미» 도 그대로다(서버·네트워크 0).
+        /// </para>
+        /// <para>
+        /// ⚠ <b>기본값이 <c>null</c> 인 것이 시드 골든(T2)의 안전장치다</b> — 이 값이 없으면 엔진이 지나는 길이
+        /// 한 줄도 안 달라진다(지시서 3항 «기존 챕터 전투의 시드 골든은 건드리면 안 된다 · PvP 는 별도 진입점»).
+        /// T183 던전 판이 같은 자리에 같은 방식으로 붙어 있다.
+        /// </para>
+        /// </summary>
+        public ArenaFoe.Stats? ArenaDuelFoe;
+        /// <summary>이 판이 아레나 1대1 인가 — 엔진이 갈래를 볼 때 쓰는 한 줄.</summary>
+        public bool IsArenaDuel => ArenaDuelFoe.HasValue;
     }
 
     public struct RunResult

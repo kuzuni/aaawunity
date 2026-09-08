@@ -95,6 +95,9 @@ namespace KkomaKnight.Core
         // ───────────────────────── 노드 배치 (sim.js runChapter 머리) ─────────────────────────
         void BuildNodes()
         {
+            // T240 3항 — 아레나 1대1 이면 챕터 표를 아예 안 읽는다(웨이브·이벤트·보스 없음 · 적 하나).
+            // 기본값(null)일 때는 이 줄이 아무것도 안 하므로 시드 골든이 지나는 길은 그대로다.
+            if (Opt.IsArenaDuel) { BuildDuelNode(Opt.ArenaDuelFoe.Value); return; }
             var E = D.Enemies; var ch = E.Chapter(Chapter);
             double x = E.NodeGap; int wi = 0;
             foreach (var nd in ch.Nodes)
@@ -126,6 +129,28 @@ namespace KkomaKnight.Core
                 else x += E.NodeGapEvent;
                 Nodes.Add(node);
             }
+        }
+
+        /// <summary>
+        /// T240 3항 — 아레나 1대1 판: 노드 하나 · 적 하나. 스탯은 <see cref="ArenaFoe"/> 가 상대 전투력에서 푼 값 그대로다.
+        /// <para>
+        /// ⚠ <b>보스로 만들지 않았다</b> — <c>IsBoss</c> 를 켜면 «이기면 <see cref="Cleared"/>» 는 공짜로 얻지만
+        /// 보스 전용 규칙(공격 간격 · 3연타 · 기절 저항 · 경험치)과 <b>보스 외형·보스 체력바</b>까지 딸려 온다.
+        /// 지시서 2항은 상대가 «몹이 아니라 <b>플레이어 캐릭터</b>» 라고 했으니 그 반대쪽으로 가는 셈이다 —
+        /// 그래서 승리 판정만 <see cref="Kill"/> 에서 한 줄로 갈랐다(적이 하나뿐이라 «그 하나가 죽으면 이긴 것» 이 곧 규칙이다).
+        /// </para>
+        /// <para>자리(<c>WorldX</c>)·첫 공격 타이머는 <b>웨이브 적과 같은 방식</b>이다 — 새 상수를 만들지 않았다.</para>
+        /// </summary>
+        void BuildDuelNode(ArenaFoe.Stats foe)
+        {
+            var node = new BattleNode { Type = NodeType.Wave, X = D.Enemies.NodeGap };
+            node.Enemies.Add(new EnemyState
+            {
+                Id = ++_enemyId, WorldX = node.X, Hp = foe.MaxHp, MaxHp = foe.MaxHp, Dmg = foe.Dmg,
+                AtkTimer = Rng.Range(EngineConst.EnemyMinAtkTimer, EngineConst.EnemyMaxAtkTimer), Wave = node,
+            });
+            TotalEnemies = 1;
+            Nodes.Add(node);
         }
 
         // ───────────────────────── 실효 스탯 ─────────────────────────
@@ -219,7 +244,8 @@ namespace KkomaKnight.Core
             if (P.Has("p_killSureCrit")) P.SureCrit = true;
             if (P.Has("p_berserkStk")) P.BsStk++;
             if (P.Has("p_killDash") && e.Wave != null) { foreach (var x in e.Wave.Enemies) if (x.Hp > 0) { P.Dash = true; break; } }
-            if (e.IsBoss) Cleared = true;
+            // T240 3항 — 아레나 1대1 은 적이 하나뿐이라 «그 하나가 죽으면 이긴 것» 이다(챕터 판은 종전대로 보스가 죽어야 클리어).
+            if (e.IsBoss || Opt.IsArenaDuel) Cleared = true;
             GainExp(e.IsBoss ? D.Tune.ExpBoss : D.Tune.ExpKill);
         }
 
