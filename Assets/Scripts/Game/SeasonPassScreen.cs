@@ -91,6 +91,7 @@ namespace KkomaKnight.Game
             var bg = UiKit.Ensure<Image>(Root.gameObject); bg.color = Palette.Hex("#242424"); bg.raycastTarget = true;   // 트랙 밖 바탕 실측
             UiKit.PatternBg(Root, UiKit.PatternTintDark);
             _top = TopBar.Build(App, Root);
+            UiKit.Tag(_top.Root, "상단 재화 바");   // §5 는 이름표를 **이름 그대로** 맞춘다(결정 592) — 표 ㊼ 의 행 이름과 한 글자도 다르면 그 행이 0 점이 된다
 
             BuildBanner();
             BuildNotice();
@@ -119,6 +120,7 @@ namespace KkomaKnight.Game
             UiKit.Pct(bar, RBar); UiKit.Bordered(bar);
             var fill = UiKit.Panel(bar, "Fill", "fr.sliderBg", Palette.Hex("#3FD214")).rectTransform;
             UiKit.Pct(fill, 0f, 0f, 31f, 100f);
+            UiKit.Tag(fill, "진행 바 채움(초록)");
             UiKit.Label(bar, 0, 0, 100, 100, "15/45", TextSize.Aux, Palette.White).name = "BarText";
 
             var badge = UiKit.Panel(Root, "LevelBadge", "fr.r12", Palette.A(Palette.Ink, 0.85f)).rectTransform;
@@ -153,13 +155,18 @@ namespace KkomaKnight.Game
             {
                 float dy = RowPitch * i;
                 bool dim = i >= DimFrom;
-                Cell("Cell:free:" + Levels[i], RCellFree, dy, Rows[i, 0], dim);
-                Cell("Cell:paid1:" + Levels[i], RCellPaid1, dy, Rows[i, 1], dim);
-                Cell("Cell:paid2:" + Levels[i], RCellPaid2, dy, Rows[i, 2], dim);
+                var cFree = Cell("Cell:free:" + Levels[i], RCellFree, dy, Rows[i, 0], dim);
+                var cPaid1 = Cell("Cell:paid1:" + Levels[i], RCellPaid1, dy, Rows[i, 1], dim);
+                var cPaid2 = Cell("Cell:paid2:" + Levels[i], RCellPaid2, dy, Rows[i, 2], dim);
+                if (i == 0)
+                {   // 표 ㊼ 는 «첫 행» 만 재고 아래 행은 피치 10.3%p 로 따라온다 — 이름표도 첫 행에만 단다
+                    UiKit.Tag(cFree, "보상 칸(무료 · 첫 행)"); UiKit.Tag(cPaid1, "보상 칸(유료 1 · 첫 행)"); UiKit.Tag(cPaid2, "보상 칸(유료 2 · 첫 행)");
+                }
 
                 var b = UiKit.Panel(Root, "Badge:" + Levels[i], "fr.r12", Palette.A(dim ? Palette.Ink : Palette.Hex("#96793B"), 0.95f)).rectTransform;
                 UiKit.Pct(b, new Layout.R(RLvBadge.X, RLvBadge.Y + dy, RLvBadge.W, RLvBadge.H)); UiKit.Bordered(b);
                 UiKit.Label(b, 0, 0, 100, 100, Levels[i].ToString(), TextSize.Aux, dim ? Palette.CreamDark : Palette.White).name = "BadgeText";
+                if (i == 0) UiKit.Tag(b, "레벨 배지(행마다)");   // 표 ㊼ 는 첫 배지를 재고 나머지는 피치로 따라온다
             }
 
             // 구간 노란 띠 + «💎100» 배지 — 위는 연 구간 · 아래는 아직
@@ -188,7 +195,7 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>보상 칸 하나 — 아이콘 + 수량, 받은 칸은 초록 체크, 잠긴 칸은 자물쇠(레퍼런스 그대로).</summary>
-        void Cell(string name, Layout.R r, float dy, (string Icon, string Qty, bool Claimed) v, bool dim)
+        RectTransform Cell(string name, Layout.R r, float dy, (string Icon, string Qty, bool Claimed) v, bool dim)
         {
             var cell = UiKit.Panel(Root, name, "fr.itemBg", Palette.A(Palette.Ink, dim ? 0.75f : 0.5f)).rectTransform;
             UiKit.Pct(cell, new Layout.R(r.X, r.Y + dy, r.W, r.H)); UiKit.Bordered(cell);
@@ -197,6 +204,7 @@ namespace KkomaKnight.Game
             UiKit.Label(cell, 45, 66, 52, 30, v.Qty, TextSize.Aux, dim ? Palette.CreamDark : Palette.White).name = "Qty";
             if (v.Claimed) { var ck = UiKit.Icon(cell, "Check", "pi.check", Palette.Hex("#3FD214")); UiKit.Pct(ck.rectTransform, 18, 18, 64, 64); }
             else if (name.StartsWith("Cell:paid")) { var lk = UiKit.Icon(cell, "Lock", "pi.lock", dim ? Palette.CreamDark : Color.white); UiKit.Pct(lk.rectTransform, 62, -6, 40, 40); }
+            return cell;
         }
 
         void BuildButtons()

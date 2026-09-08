@@ -111,6 +111,10 @@ namespace KkomaKnight.Tests.Play
             ChapterChestScreen.Open(_app); yield return Frames(3); yield return Shot("32_lobby_clear");
             _app.ShowScreen("lobby"); yield return Frames(1);
 
+            // 19 시즌 패스 (T266 · 표 ㊼ · 주인 2026-09-09 «걍 다시 넣기» 가 T78 삭제를 뒤집었다 · 지금은 «디자인만»)
+            SeasonPassScreen.Open(_app); yield return Frames(3); yield return Shot("19_pass");
+            _app.ShowScreen("lobby"); yield return Frames(1);
+
             // 13 펫 탭 · 14 펫 세부 (T42 껍데기)
             _app.ShowScreen("pet"); yield return Frames(3); yield return Shot("13_pet");
             (_app.Current as PetScreen)?.OpenDetail(0); yield return Frames(2); yield return Shot("14_pet_detail"); _app.Overlay.Close(); yield return Frames(1);
