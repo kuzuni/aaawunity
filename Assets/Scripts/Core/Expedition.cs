@@ -84,7 +84,7 @@ namespace KkomaKnight.Core
         /// <list type="bullet">
         /// <item><b>옛 세이브·첫 실행은 «가득» 으로 시작</b>한다(<c>ExpQuickAt == 0</c>). 0 으로 시작하면 여태 하루 3회를 쓰던 사람에게서
         /// 아무 말 없이 아홉 시간을 빼앗는 셈이라, 규칙이 바뀔 때 손해 보는 쪽이 사람이 되면 안 된다(결정 기록).</item>
-        /// <item><b>기준 시각을 «지금» 이 아니라 «찬 만큼» 만 민다</b> — 그래야 «한 주기 + 59분» 이 한 주기로 잘려 59분이 사라지지 않는다(오프라인 회복이 정확해진다).</item>
+        /// <item><b>한 주기가 지나면 보유가 상한이 된다</b>(T270 ⓐ · 주인 «2시간마다 3개 전부 리필») — 두 주기가 지나도 3 이고, 1 남았을 때도 3 이다(4 가 아니다).</item>
         /// <item><b>꽉 차 있으면 기준 시각을 지금으로 붙든다</b> — 안 그러면 하루 꽉 차 있던 사람이 한 번 쓰는 순간 남은 여덟 칸이 한꺼번에 들어온다.</item>
         /// <item>시계를 뒤로 돌리면(지금 &lt; 기준) 기준을 지금으로 당긴다 — 되돌림 이득 0(누적 쪽과 같은 규약).</item>
         /// </list>
@@ -103,17 +103,10 @@ namespace KkomaKnight.Core
             if (s.ExpQuickAt > nowSec) s.ExpQuickAt = nowSec;                 // 시계 되돌림
             if (s.ExpQuickCharge > max) s.ExpQuickCharge = max;
             double per = d.QuickChargeSeconds;
-            if (s.ExpQuickCharge < max && per > 0)
-            {
-                double elapsed = nowSec - s.ExpQuickAt;
-                if (elapsed > 0)
-                {
-                    double gained = Math.Floor(elapsed / per);
-                    int room = max - s.ExpQuickCharge;
-                    if (gained > room) gained = room;                          // 상한에서 멈춘다
-                    if (gained > 0) { s.ExpQuickCharge += (int)gained; s.ExpQuickAt += gained * per; }
-                }
-            }
+            // T270 ⓐ 정정(주인 2026-09-09 «빠른 탐험은 **2시간마다 3개 전부 리필** · 1개씩 충전 아님») —
+            // 한 주기가 지나면 «한 칸» 이 아니라 **보유가 상한이 된다**. 1 남았든 0 이든 결과는 같은 3 이고, 넘치지도 않는다.
+            // 그래서 남는 시간을 이월할 것이 없다(가득 차면 아래에서 기준 시각을 «지금» 으로 붙든다 = 다음 주기는 «다 쓴 순간» 부터).
+            if (s.ExpQuickCharge < max && per > 0 && nowSec - s.ExpQuickAt >= per) s.ExpQuickCharge = max;
             if (s.ExpQuickCharge >= max) s.ExpQuickAt = nowSec;                // 꽉 차면 «다 쓰는 순간» 부터 다시 센다
         }
 

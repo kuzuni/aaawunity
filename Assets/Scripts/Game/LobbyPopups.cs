@@ -1021,7 +1021,8 @@ namespace KkomaKnight.Game
             if (D != null)
             {
                 double next = Core.Expedition.NextQuickSec(S, D, now);
-                ruleTxt = $"{UiKit.FmtQty(D.QuickChargeHours)}시간마다 1회 충전 · 최대 {D.QuickMax}회 · "
+                // T270 ⓐ — 주인 정정 «2시간마다 3개 전부 리필»(1개씩 충전이 아니다). 수는 전부 표에서 온다.
+                ruleTxt = $"{UiKit.FmtQty(D.QuickChargeHours)}시간마다 {UiKit.FmtQty(D.QuickMax)}회 전부 충전 · "
                         + (next > 0 ? "다음 충전까지 " + Hhmmss(next) : "충전 완료");
             }
             var rule = UiKit.Label(box, ruleR.X, ruleR.Y, ruleR.W, ruleR.H, ruleTxt,

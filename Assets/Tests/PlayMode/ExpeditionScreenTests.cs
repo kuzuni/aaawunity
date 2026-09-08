@@ -188,6 +188,9 @@ namespace KkomaKnight.Tests.Play
             // 꽉 차 있으므로 «충전 완료» 여야 한다(카운트다운은 다 쓴 판에서 잰다).
             string ruleTxt = Find(ov, "QxRule").GetComponent<TMP_Text>().text;
             StringAssert.Contains(UiKit.FmtQty(D.QuickChargeHours) + "시간마다", ruleTxt, "충전 주기가 표 값으로 적혀 있다");
+            // T270 ⓐ — 주인 재정정(«2시간마다 3개 전부 리필»)이 글자에도 와야 한다. 옛 글자는 «1회 충전» 이었다.
+            StringAssert.Contains(UiKit.FmtQty(D.QuickMax) + "회 전부 충전", ruleTxt, "«N회 전부 충전» — 한 칸씩이 아니다");
+            StringAssert.DoesNotContain("1회 충전", ruleTxt, "옛 글자(«1회 충전»)가 남아 있으면 안 된다");
             StringAssert.Contains("최대 " + D.QuickMax + "회", ruleTxt, "최대 보유가 표 값으로 적혀 있다");
             StringAssert.Contains("충전 완료", ruleTxt, "가득 차 있으면 «충전 완료»");
             AssertNoPopupRibbon(ov, "빠른 탐험 팝업(31)");   // T146 ⓐ — 31 도 레퍼런스에 리본이 없다(명판이 제목)

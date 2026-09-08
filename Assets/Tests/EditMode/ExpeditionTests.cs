@@ -27,9 +27,9 @@ namespace KkomaKnight.Tests
             var d = Load();
             Assert.That(d.MaxHours, Is.EqualTo(8).Within(1e-9), "상한 8시간(레퍼런스 30)");
             Assert.That(d.QuickHours, Is.EqualTo(5).Within(1e-9), "빠른 탐험 5시간치(레퍼런스 31)");
-            // T265 — «하루 3회» 가 아니라 «N시간마다 1회 · 최대 3회» 다. 주인이 입으로 준 수라 여기서 못 박는다.
+            // T265 — «하루 3회» 가 아니라 «N시간마다 리필 · 최대 3회» 다. 주인이 입으로 준 수라 여기서 못 박는다(주기는 T270 이 2시간으로, 방식은 «전부 리필» 로 정정).
             //  ⚠ T270 — 주기가 **3 → 2시간**으로 정정됐다(주인 2026-09-09 08:2X «3시간에 한 번이라던 거 2시간으로 하자»). 최대 3회는 그대로.
-            Assert.That(d.QuickChargeHours, Is.EqualTo(2).Within(1e-9), "2시간마다 1회 충전(주인 · T270 이 3에서 정정)");
+            Assert.That(d.QuickChargeHours, Is.EqualTo(2).Within(1e-9), "2시간마다 전부 리필(주인 · 주기는 T270 이 3에서 2로, 방식은 «한 칸씩» 에서 «전부» 로 정정)");
             Assert.That(d.QuickMax, Is.EqualTo(3), "최대 3회 보유(주인 · 레퍼런스 31 배지)");
             Assert.That(d.GemPerHour, Is.GreaterThan(0), "시간당 다이아");
             Assert.That(d.GoldKillsPerHour, Is.GreaterThan(0), "시간당 골드는 처치 수로 유도한다");
@@ -123,7 +123,7 @@ namespace KkomaKnight.Tests
         }
 
         [Test]
-        public void QuickExplore_ChargesOnePerWindowUpToTheCap()
+        public void QuickExplore_RefillsEverythingOncePerWindow()
         {
             // T265 주인 원문: «…에 한 번씩 초기화 · …에 한 번씩 3번 받을 수 있는 거임» · 주기는 T270 에서 **2시간**으로 정정.
             //  아래는 주기를 `per` 로 재므로 표 값이 바뀌어도 이 자는 안 깨진다 — 깨져야 하는 것은 위의 «표가 2인가» 한 줄뿐이다.
@@ -140,27 +140,27 @@ namespace KkomaKnight.Tests
             Assert.That(gg, Is.EqualTo(0).Within(1e-9)); Assert.That(mm, Is.EqualTo(0).Within(1e-9));
             Assert.That(s.Gold, Is.EqualTo(gold).Within(1e-9), "없으면 지급 0");
 
-            // 주인 문장 그대로(주기 = 2시간 · T270): 2시간 뒤 1 · 4시간 뒤 2 · 6시간 뒤 3 · 그 위로는 안 는다.
-            Assert.That(Expedition.QuickLeft(s, d, T0 + per - 1, D0), Is.EqualTo(0), "한 칸이 덜 찼으면 아직 0");
-            Assert.That(Expedition.QuickLeft(s, d, T0 + per, D0), Is.EqualTo(1), "한 주기(2시간) 뒤 1");
-            Assert.That(Expedition.QuickLeft(s, d, T0 + 2 * per, D0), Is.EqualTo(2), "두 주기(4시간) 뒤 2");
-            Assert.That(Expedition.QuickLeft(s, d, T0 + 3 * per, D0), Is.EqualTo(3), "세 주기(6시간) 뒤 3");
-            Assert.That(Expedition.QuickLeft(s, d, T0 + 30 * per, D0), Is.EqualTo(d.QuickMax), "상한에서 멈춘다(넘게 안 쌓인다)");
+            // ⚠ T270 ⓐ 정정 — 주인 재정정(2026-09-09 «빠른 탐험은 **2시간마다 3개 전부 리필** · 1개씩 충전 아님»).
+            //    옛 계약(«2시간 뒤 1 · 4시간 뒤 2 · 6시간 뒤 3»)을 **갈아 끼운다** — 지우지 않고 뒤집어 적는다(T184).
+            Assert.That(Expedition.QuickLeft(s, d, T0 + per - 1, D0), Is.EqualTo(0), "한 주기가 덜 지났으면 아직 0(1시간 59분엔 0)");
+            Assert.That(Expedition.QuickLeft(s, d, T0 + per, D0), Is.EqualTo(d.QuickMax), "한 주기(2시간) 뒤 «전부» 찬다");
+            Assert.That(Expedition.QuickLeft(s, d, T0 + 30 * per, D0), Is.EqualTo(d.QuickMax), "여러 주기가 지나도 상한 그대로(넘게 안 쌓인다)");
         }
 
         [Test]
-        public void QuickExplore_KeepsThePartialWindowAndCountsDownToTheNextCharge()
+        public void QuickExplore_CountsDownToTheFullRefillAndRestartsWhenSpent()
         {
-            // «한 주기 + 59분» 이 한 주기로 잘려 59분이 사라지면 오프라인 회복이 조용히 손해가 된다.
+            // 꽉 차 있다가 한 칸 쓰면 «그 순간부터» 한 주기다 — 안 그러면 오래 꽉 차 있던 사람이 쓰자마자 도로 가득 찬다.
             var G = Data(); var d = Load(); var s = NewSave(); s.MaxChapter = 10;
             double per = d.QuickChargeSeconds;
             Expedition.Roll(s, d, T0, D0);
             for (int i = 0; i < d.QuickMax; i++) Expedition.ClaimQuick(G, s, d, T0, D0, out _, out _);
 
-            double t = T0 + per + 0.25 * per;                       // 한 칸 차고 다음 칸이 4분의 1
-            Assert.That(Expedition.QuickLeft(s, d, t, D0), Is.EqualTo(1));
-            Assert.That(Expedition.NextQuickSec(s, d, t), Is.EqualTo(0.75 * per).Within(1e-6), "남은 4분의 3");
-            Assert.That(Expedition.QuickLeft(s, d, t + 0.75 * per, D0), Is.EqualTo(2), "그 4분의 3 이 지나면 곧바로 두 칸째");
+            // T270 ⓐ — 한 주기가 지나면 «전부» 차므로 이월할 남는 시간이 없다. 대신 «덜 지났으면 0 · 지나면 가득» 을 잰다.
+            double t = T0 + 0.75 * per;                              // 아직 4분의 3
+            Assert.That(Expedition.QuickLeft(s, d, t, D0), Is.EqualTo(0), "한 주기가 덜 지나면 그대로 0");
+            Assert.That(Expedition.NextQuickSec(s, d, t), Is.EqualTo(0.25 * per).Within(1e-6), "남은 4분의 1");
+            Assert.That(Expedition.QuickLeft(s, d, t + 0.25 * per, D0), Is.EqualTo(d.QuickMax), "그 4분의 1 이 지나면 곧바로 가득");
 
             // 꽉 차면 «충전 완료»(0) 이고, 한 칸 쓰는 순간부터 다시 꽉 찬 한 주기다 —
             // 그러지 않으면 하루 내내 꽉 차 있던 사람이 한 번 쓰자마자 남은 칸이 한꺼번에 들어온다.
@@ -173,6 +173,20 @@ namespace KkomaKnight.Tests
         }
 
         [Test]
+        public void QuickExplore_OneLeftBecomesFullNotOverflow()
+        {
+            // 주인 재정정의 가장자리 — «1 남았을 때 2시간 뒤 3»(4 가 아니다). 여기가 «한 칸씩» 과 «전부» 를 가르는 자리다.
+            var G = Data(); var d = Load(); var s = NewSave(); s.MaxChapter = 10;
+            double per = d.QuickChargeSeconds;
+            Expedition.Roll(s, d, T0, D0);
+            Expedition.ClaimQuick(G, s, d, T0, D0, out _, out _);   // 3 → 2
+            Expedition.ClaimQuick(G, s, d, T0, D0, out _, out _);   // 2 → 1
+            Assert.That(Expedition.QuickLeft(s, d, T0, D0), Is.EqualTo(d.QuickMax - 2), "둘 썼으니 1 남았다");
+            Assert.That(Expedition.QuickLeft(s, d, T0 + per, D0), Is.EqualTo(d.QuickMax), "한 주기 뒤 3(4 가 아니다)");
+            Assert.That(Expedition.QuickLeft(s, d, T0 + 5 * per, D0), Is.EqualTo(d.QuickMax), "더 기다려도 3");
+        }
+
+        [Test]
         public void QuickExplore_ClockRollbackGivesNothing()
         {
             var G = Data(); var d = Load(); var s = NewSave(); s.MaxChapter = 10;
@@ -182,7 +196,7 @@ namespace KkomaKnight.Tests
 
             double back = T0 - 50 * per;                             // 시계를 한참 뒤로
             Assert.That(Expedition.QuickLeft(s, d, back, D0), Is.EqualTo(0), "되돌려도 안 는다");
-            Assert.That(Expedition.QuickLeft(s, d, back + per, D0), Is.EqualTo(1), "되돌린 시각이 새 기준 — 거기서 3시간이면 한 칸");
+            Assert.That(Expedition.QuickLeft(s, d, back + per, D0), Is.EqualTo(d.QuickMax), "되돌린 시각이 새 기준 — 거기서 한 주기가 지나면 전부 찬다(T270 ⓐ)");
         }
 
         [Test]

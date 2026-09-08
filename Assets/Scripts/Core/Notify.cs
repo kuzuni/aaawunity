@@ -34,7 +34,7 @@ namespace KkomaKnight.Core
 
         /// <summary>
         /// **광고를 보면 받을 수 있는 재화**가 어디든 남았는가(주인 지시의 핵심) —
-        /// 데일리 기프트의 광고 줄 + 빠른 탐험(<b>보유 충전</b> · <see cref="ExpeditionData.QuickChargeHours"/>시간마다 1회 · 최대 <see cref="ExpeditionData.QuickMax"/> · T265).
+        /// 데일리 기프트의 광고 줄 + 빠른 탐험(<b>보유 충전</b> · <see cref="ExpeditionData.QuickChargeHours"/>시간마다 <see cref="ExpeditionData.QuickMax"/>회 전부 리필 · T265·T270).
         /// </summary>
         public static bool AdReward(GameData G, SaveData s, double nowSec, string today)
         {
