@@ -245,6 +245,31 @@ namespace KkomaKnight.Core
         /// <summary>칸 사이 틈(%p) — 실측 8px / 720.</summary>
         public const float RwCellGap = 1.1f;
 
+        // ───────── T240 4항 PvP 결과(승리/패배) — 값은 전부 주인 레퍼런스 `docs/ref/34_pvp_win.jpg`(720×1560) 실측이다(표 ㊻) ─────────
+        // 이 화면도 «상자» 가 아니라 어두운 전면 위 **가운데 세로 한 줄**이다: 방패 엠블럼 → 승리/패배 → 티어 명판 → 아바타 VS 아바타 → 이름 → 승점 변화 → 계속.
+        /// <summary>금빛 방패 엠블럼 — 실측 px 192~526 · 436~689.</summary>
+        public static readonly R ArrEmblem = new R(26.7f, 27.9f, 46.5f, 16.3f);
+        /// <summary>«승리»/«패배» 제목 — 실측 글리프 px 270~448 · 716~769(가운데 정렬이라 칸은 넉넉히).</summary>
+        public static readonly R ArrTitle = new R(20.0f, 45.9f, 60.0f, 3.5f);
+        /// <summary>티어 명판(회색 둥근 판 + 흰 글자) — 실측 판 px 277~442 · 745~783.</summary>
+        public static readonly R ArrTier = new R(38.5f, 47.8f, 23.1f, 2.5f);
+        /// <summary>내 아바타 칸 — 실측 px 197~295 · 879~977. 상대는 <see cref="ArrFoeFace"/>(좌우 대칭).</summary>
+        public static readonly R ArrMyFace = new R(27.4f, 56.3f, 13.8f, 6.3f);
+        /// <summary>상대 아바타 칸 — 실측 px 424~522 · 879~977.</summary>
+        public static readonly R ArrFoeFace = new R(58.9f, 56.3f, 13.8f, 6.3f);
+        /// <summary>두 아바타 사이 «VS» 배지 — 실측 9.2×2.8. 인게임(㊺)의 VS 배지와 <b>폭·높이가 같다</b>(같은 조각으로 본다).</summary>
+        public static readonly R ArrVs = new R(45.3f, 58.1f, 9.2f, 2.8f);
+        /// <summary>내 이름 — 실측 두 이름 묶음 bbox y 1000~1028. 각자 제 아바타 아래 가운데라 칸을 아바타 폭보다 넓게 잡는다.</summary>
+        public static readonly R ArrMyName = new R(20.0f, 64.1f, 28.6f, 2.4f);
+        /// <summary>상대 이름 — 위와 좌우 대칭.</summary>
+        public static readonly R ArrFoeName = new R(51.4f, 64.1f, 28.6f, 2.4f);
+        /// <summary>내 승점 변화(«+8» 초록) — 실측 글리프 px 231~261 · 1050~1071.</summary>
+        public static readonly R ArrMyDelta = new R(20.0f, 67.3f, 28.6f, 2.0f);
+        /// <summary>상대 승점 변화(«−6» 빨강) — 실측 글리프 px 461~484.</summary>
+        public static readonly R ArrFoeDelta = new R(51.4f, 67.3f, 28.6f, 2.0f);
+        /// <summary>«계속» 주황 버튼 — 실측 px 257~463 · 1196~1267.</summary>
+        public static readonly R ArrContinue = new R(35.7f, 76.7f, 28.7f, 4.6f);
+
         /// <summary>
         /// 토스트 띠(ToastMessage_01) — 레퍼런스에 없는 요소라 자는 글자다. 프리팹은 글자 칸을 상자보다 세로 17.3px 작게 잡으므로
         /// 본문 40 <b>두 줄</b>(<see cref="TextSize.BoxHeight"/> = 112px)이 들어가려면 상자가 129.3px 이상이어야 한다 — 전 5.0%(116.9px · 칸 99.6px)에선
