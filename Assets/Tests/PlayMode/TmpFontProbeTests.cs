@@ -119,6 +119,19 @@ namespace KkomaKnight.Tests.Play
                 sb.Append(p.Name).Append(':').Append(p.PropertyType.Name);
             }
             Debug.Log("[T207②] TMP_Text 공개 프로퍼티 — " + sb);
+
+            // T222 — 워커 I 가 «한글이 낱말 한가운데서 끊겼나» 를 잴 자를 세우려는데 스텁에 그 표면이 없어 막혔고,
+            // 추측으로 넓히지 않고 나(스텁 임자)에게 넘겼다(옳은 처신 · 결정 565·573). 같은 방법으로 답한다 —
+            // **진짜 빌드에게 물어서** 세 타입의 멤버를 그대로 찍는다. 그 줄을 보고 스텁을 확정하면 추측이 0 이다.
+            foreach (var ty in new[] { typeof(TMP_TextInfo), typeof(TMP_LineInfo), typeof(TMP_CharacterInfo) })
+            {
+                var mb = new System.Text.StringBuilder();
+                foreach (var f in ty.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                    mb.Append(f.Name).Append(':').Append(f.FieldType.Name).Append(' ');
+                foreach (var p in ty.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                    mb.Append(p.Name).Append(':').Append(p.PropertyType.Name).Append("(prop) ");
+                Debug.Log("[T222] " + ty.Name + " — " + mb);
+            }
             Assert.Greater(sb.Length, 0, "TMP_Text 의 프로퍼티 목록을 읽어야 한다(② 가 이 목록으로 스텁을 넓힌다)");
 
             Object.Destroy(go); Object.Destroy(host.gameObject); yield return Frames(1);

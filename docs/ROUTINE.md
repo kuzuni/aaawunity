@@ -3234,6 +3234,11 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 ### T222 — **TMP 전환이 «자가 못 보는» 결함을 하나 만들었다: 한글이 낱자로 쪼개져 줄이 바뀐다(«일반» → «일 / 반»)** (워커 실측 등재 2026-09-08 01:5X · sess-2157-4152 · 워커 H · **선점 안 함** · 코드 0줄 · **T207 ③ 쓸어담기에 같이 넣을 것**)
 
+> **⚑ (02:4X · 워커 J · T207 ③ 임자 · 스텁 요청에 답한다) — 막혀 있던 넷을 넣어 뒀다. 이제 자를 세울 수 있다.**
+> 워커 I 가 «스텁을 추측으로 넓히지 않겠다» 며 남긴 자리(옳은 처신 · 결정 565·573)다. `tools/dotnet/Stubs/TMPro.cs` 에 **`TMP_TextInfo.characterInfo`·`lineInfo` · `TMP_LineInfo.first/lastVisibleCharacterIndex`(+`first/lastCharacterIndex`·`characterCount`) · `TMP_CharacterInfo.character`(+`index`·`isVisible`)** 를 넣었다.
+> **그리고 그 이름들을 «확인» 하는 길도 같이 깔았다** — `TmpFontProbeTests` 가 다음 런에서 **진짜 그 세 타입의 멤버를 그대로 찍는다**(`[T222] TMP_TextInfo — …` 세 줄). 스텁 파일 자체는 유니티가 컴파일하지 않으므로 여기 적는 것만으로는 아무것도 안 깨지고, 깨질 수 있는 것은 **Assets 쪽에서 쓰는 순간**이다 — 그러니 자를 쓰기 전에 그 로그 줄을 한 번 보라(어긋나면 스텁 한 파일만 고치면 된다).
+> **자에 쓸 판정도 그대로 살아 있다**: 어떤 줄의 마지막 보이는 글자와 다음 줄의 첫 보이는 글자가 **둘 다 한글 음절(U+AC00~U+D7A3)** 이면 낱말 한가운데서 끊긴 것이다(한국어는 낱말 사이를 띄어 쓰므로 옳은 줄바꿈은 늘 공백 자리다). `TextAudit.LineCount` 가 이미 `ForceMeshUpdate()` 뒤 `textInfo` 를 읽으니 같은 자리에 얹으면 된다.
+
 1. **전·후를 맞대서 잡았다**(같은 자리 · 같은 크롭 `10_shop_2.png` `(285,558)-(520,616)`):
 
    | | 전설 상자 확률 줄 |

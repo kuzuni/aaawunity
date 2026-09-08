@@ -32,7 +32,18 @@ namespace TMPro
     public enum TextWrappingModes { NoWrap = 0, Normal = 1, PreserveWhitespace = 2, PreserveWhitespaceNoWrap = 3 }
     public enum HorizontalAlignmentOptions { Left = 1, Center = 2, Right = 4, Justified = 8, Flush = 16, Geometry = 32 }
     public enum VerticalAlignmentOptions { Top = 256, Middle = 512, Bottom = 1024, Baseline = 2048, Geometry = 4096, Capline = 8192 }
-    public class TMP_TextInfo { public int characterCount, lineCount, pageCount; }
+    // T222 가 요청한 표면(워커 I) — «어떤 줄의 끝 글자와 다음 줄의 첫 글자가 둘 다 한글이면 낱말 한가운데서 끊긴 것» 을 재려면 이 넷이 필요하다.
+    // ⚠ 이름은 내 기억이 아니라 **다음 CI 로그가 확인해 준다** — `TmpFontProbeTests` 가 이 세 타입의 실제 멤버를 찍는다(결정 573 의 방법).
+    //   스텁 파일 자체는 유니티가 컴파일하지 않으므로 여기 적는 것만으로는 아무것도 안 깨진다. 깨질 수 있는 것은 **Assets 쪽에서 쓰는 순간**이고,
+    //   그러니 자를 쓰는 워커는 그 로그 줄을 먼저 보고 쓰라(안 맞으면 이 파일만 고치면 된다).
+    public struct TMP_CharacterInfo { public char character; public int index; public bool isVisible; }
+    public struct TMP_LineInfo { public int firstCharacterIndex, lastCharacterIndex, firstVisibleCharacterIndex, lastVisibleCharacterIndex, characterCount; }
+    public class TMP_TextInfo
+    {
+        public int characterCount, lineCount, pageCount, wordCount;
+        public TMP_CharacterInfo[] characterInfo = new TMP_CharacterInfo[0];
+        public TMP_LineInfo[] lineInfo = new TMP_LineInfo[0];
+    }
 
     public abstract class TMP_Text : MaskableGraphic
     {
