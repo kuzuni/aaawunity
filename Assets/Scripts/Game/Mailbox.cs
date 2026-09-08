@@ -10,10 +10,10 @@ namespace KkomaKnight.Game
     /// <summary>
     /// 로비 메뉴(≡)의 «우편함»(T96-mail · 주인 2026-09-07 «`Rewards_Mailbox`·`Rewards_Mailbox_Empty` 이거 좀 써라 프리팹들 · 메뉴로 우편함 … 떠야 함»).
     ///
-    /// 우편 데이터는 아직 없으므로 지시서(§2 T96-mail)대로 <b>«지금 받을 수 있는 것» 을 모아 보여 주는 함</b>이다 —
-    /// 줄은 <see cref="Entries"/> 가 만들고, 그 판정과 지급은 전부 <see cref="Core.Expedition"/>·<see cref="Core.DailyGift"/> 의 <b>기존 순수 함수</b>를 그대로 부른다
-    /// (우편함이 규칙을 다시 구현하지 않는다 = 이중 지급·규칙 갈림 없음). <b>광고를 봐야 받는 것</b>(데일리 기프트 광고 줄 · 빠른 탐험)은
-    /// 광고 흐름이 그 팝업에 있으므로 <b>우편함에 넣지 않는다</b> — 우편함은 «바로 받을 수 있는 것» 만 담는다(결정 기록).
+    /// <b>T243(주인 2026-09-08 11:5X)로 범위가 좁아졌다</b> — «우편함으로는 <b>아레나 보상만</b> 오게 하고 나머지는 걍 <b>즉시 지급</b>해 … 우편함은 아레나 보상만.»
+    /// 그래서 이 함은 이제 «지금 받을 수 있는 것을 모아 보여 주는 함» 이 아니라 <b>세이브에 든 아레나 우편(<see cref="Core.Mail"/>)을 그대로 보여 주는 함</b>이다.
+    /// 걷어낸 탐험·데일리 기프트 줄은 <b>제 팝업(<c>LobbyPopups</c>)에서 그대로 받을 수 있다</b> — 없어진 보상은 하나도 없다(실측 확인).
+    /// 넣는 규칙(아레나 갈래만 · 담을 자리가 있는 보상만)은 <see cref="Core.Mail.Add"/> 가 <b>거절로</b> 지킨다.
     ///
     /// 화면은 프리팹 <b>그대로</b>: 받을 것이 있으면 <c>ui.mailbox</c>(<c>Rewards_Mailbox</c>) · 하나도 없으면 <c>ui.mailboxEmpty</c>(<c>Rewards_Mailbox_Empty</c>).
     /// 줄은 프리팹 안 <c>ListItem_Mailbox</c> 조각을 «부품» 으로 복제해 쓰고(크기·여백은 프리팹의 레이아웃 그대로), 글자만 우리말로 바꾼다.
@@ -28,7 +28,8 @@ namespace KkomaKnight.Game
         /// <summary>줄 조각(데모 프리팹의 우편 한 줄).</summary>
         public const string RowPiece = "ListItem_Mailbox";
 
-        public const string KeyExpedition = "expedition", KeyGiftFree = "giftFree", KeyGift = "gift";
+        /// <summary>줄 키 = 우편 하나의 <see cref="MailItem.Id"/> 그대로(줄 이름 = <c>Mail:&lt;id&gt;</c>). 아레나 순위 보상 우편의 id 앞머리.</summary>
+        public const string KeyArena = "arenaRank";
 
         /// <summary>우편함 줄 하나 — 제목·설명·아이콘과 «받기»(지급하고 토스트 문구를 돌려준다 · 못 받으면 null).</summary>
         public sealed class Entry
@@ -37,71 +38,43 @@ namespace KkomaKnight.Game
             public Func<App, string> Claim;
         }
 
-        static double NowSec() => (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+        /// <summary>보상 이름 → 줄 아이콘(카탈로그 키). 모르는 이름이면 코인 — 아이콘 때문에 우편이 안 뜨는 일은 없게.</summary>
+        static string IconOf(MailItem m)
+        {
+            foreach (var r in m.Rewards)
+            {
+                if (r.Item == Core.Mail.ItemGem) return "ui.gemRed";
+                if (r.Item == Core.Mail.ItemPetEgg) return "pet.egg";
+                if (r.Item == Core.Mail.ItemArenaCoin) return "ui.iconArenaCoin";
+            }
+            return "ui.coin";
+        }
 
         /// <summary>
-        /// 지금 «바로 받을 수 있는 것» 줄 목록(순서 = 탐험 → 데일리 기프트 무료 → 데일리 기프트 줄).
-        /// 판정은 Core 의 <c>CanClaim</c>/<c>CanFree</c> 를 그대로 쓴다 — 화면이 따로 세지 않는다.
+        /// 우편함 줄 목록 — <b>세이브에 든 우편 그대로</b>다(<see cref="Core.Mail"/>).
+        /// <para>
+        /// ⚠ <b>T243 으로 «지금 받을 수 있는 것을 모아 보여 주던» 함이 아니게 됐다</b>(주인 2026-09-08 11:5X «우편함으로는 <b>아레나 보상만</b> 오게 하고
+        /// 나머지는 걍 즉시 지급해 … 우편함은 아레나 보상만»). 그래서 <b>탐험·데일리 기프트 줄을 걷어냈다</b> —
+        /// 둘 다 제 팝업(<c>LobbyPopups</c>)에서 <b>여전히 그대로 받을 수 있으므로</b> 없어진 보상은 하나도 없다(실측 확인).
+        /// </para>
+        /// 아레나 보상이 아직 하나도 안 들어오는 것이 <b>정상</b>이다 — 우편을 넣는 자리(<see cref="Core.Mail.Add"/>)는 순위·시즌 정산이 생길 때 배선한다.
+        /// 그때까지 이 함은 «비었음» 조각으로 뜬다.
         /// </summary>
         public static List<Entry> Entries(App app)
         {
             var list = new List<Entry>();
-            if (app == null || app.Data == null || app.Save == null) return list;
-            var G = app.Data; var S = app.Save; string today = SaveStore.Today();
-
-            if (G.Expedition != null && Expedition.CanClaim(G, S, G.Expedition, NowSec(), today))
+            if (app == null || app.Save == null) return list;
+            foreach (var m in Core.Mail.Pending(app.Save))
             {
-                Expedition.Pending(G, S, G.Expedition, NowSec(), today, out double gold, out double gem);
+                string id = m.Id;
                 list.Add(new Entry
                 {
-                    Key = KeyExpedition,
-                    Title = "탐험 보상",
-                    Desc = "골드 " + UiKit.Fmt(gold) + " · 다이아 " + UiKit.FmtQty(gem),
-                    Icon = "ui.coin",
-                    Claim = a =>
-                    {
-                        Expedition.Claim(a.Data, a.Save, a.Data.Expedition, NowSec(), SaveStore.Today(), out double g2, out double m2);
-                        if (g2 <= 0 && m2 <= 0) return null;
-                        return "골드 +" + UiKit.Fmt(g2) + " · 다이아 +" + UiKit.FmtQty(m2);
-                    },
+                    Key = id,
+                    Title = string.IsNullOrEmpty(m.Title) ? "아레나 보상" : m.Title,
+                    Desc = string.IsNullOrEmpty(m.Desc) ? Core.Mail.Summary(m) : m.Desc,
+                    Icon = IconOf(m),
+                    Claim = a => Core.Mail.Claim(a.Save, id),
                 });
-            }
-
-            var D = G.DailyGift;
-            if (D != null && DailyGift.CanFree(S, D, today))
-            {
-                list.Add(new Entry
-                {
-                    Key = KeyGiftFree,
-                    Title = "데일리 기프트",
-                    Desc = "무료 다이아 " + UiKit.FmtQty(D.FreeGem),
-                    Icon = "ui.gemRed",
-                    Claim = a =>
-                    {
-                        double g = DailyGift.ClaimFree(a.Save, a.Data.DailyGift, SaveStore.Today());
-                        return g > 0 ? "다이아 " + UiKit.FmtQty(g) + " 수령!" : null;
-                    },
-                });
-            }
-            if (D != null)
-            {
-                for (int i = 0; i < D.Milestones.Count; i++)
-                {
-                    if (!DailyGift.CanClaim(S, D, i, today)) continue;
-                    int idx = i;
-                    list.Add(new Entry
-                    {
-                        Key = KeyGift + idx,
-                        Title = "데일리 기프트",
-                        Desc = "광고 " + D.Milestones[idx].Ads + "회 보상 · 다이아 " + UiKit.FmtQty(D.Milestones[idx].Gem),
-                        Icon = "ui.gemRed",
-                        Claim = a =>
-                        {
-                            double g = DailyGift.Claim(a.Save, a.Data.DailyGift, idx, SaveStore.Today());
-                            return g > 0 ? "다이아 " + UiKit.FmtQty(g) + " 수령!" : null;
-                        },
-                    });
-                }
             }
             return list;
         }

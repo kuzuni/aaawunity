@@ -86,6 +86,13 @@ namespace KkomaKnight.Core
         /// 그리고 표의 <c>startScore</c> 가 0(바닥)이라 옛 세이브는 <b>새로 시작한 것과 같은 자리</b>에 놓인다(세이브 버전 그대로).
         /// </summary>
         public double ArenaScore;
+        /// <summary>
+        /// 가진 <b>아레나 코인</b>(상인 화폐 · T243). <see cref="PetEgg"/> 와 같은 까닭으로 자리를 만든다 —
+        /// 순위 보상이 «아레나 코인» 을 줄 수 있는데 담을 곳이 없으면 <see cref="Mail"/> 이 그 우편을 아예 못 받는다(받아도 조용히 버려진다).
+        /// ⚠ <b>쓰는 곳은 아직 없다</b> — 상인(26 · <c>arenaShop.json</c>) 구매 배선이 아직이라 여기서는 <b>쌓기만</b> 한다(§1 · 소비는 지어내지 않는다).
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 0»(옛 세이브 호환).
+        /// </summary>
+        public double ArenaCoin;
         /// <summary>아레나 <b>최고 순위</b>(1 이 가장 높다 · <b>0 = 아직 한 판도 안 했다</b> · T240 5항). 승점과 달리 «되돌아가지 않는» 기록이라 따로 적는다.</summary>
         public int ArenaBest;
         /// <summary>이미 받은 <b>챕터 보상</b>(Chapter Chest) — 챕터 → «받은 단» 비트(T137 · 주인 2026-09-07 «챕터 보상은 챕터당 3개» · 단 하나가 비트 하나).
@@ -95,6 +102,12 @@ namespace KkomaKnight.Core
         /// <summary>챕터 → 그 챕터에서 잡아 본 <b>최고 처치 수</b>(T137 3항 · 챕터 보상 진행도) — <b>이기든 지든</b> <c>BattleScreen.EndRun</c> 한 곳에서 남는다.
         /// 이 레포 전용 필드라 «없으면 빈 목록»(옛 세이브 호환 · 세이브 버전 유지) — 이미 깬 챕터는 값이 없어도 «전멸» 로 친다(<see cref="ChapterChest.Progress"/>).</summary>
         public Dictionary<int, int> ChestKills = new Dictionary<int, int>();
+        /// <summary>
+        /// <b>우편함</b>에 든 것(T243 · 주인 2026-09-08 11:5X «우편함은 아레나 보상만») — 규칙·지급은 <see cref="Core.Mail"/> 한 곳이 갖는다.
+        /// 나머지 보상(상점·탐험·광고·데일리 기프트·출석·챕터·던전)은 <b>받는 순간 즉시 지급</b>이라 여기 안 들어온다.
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 빈 목록»(옛 세이브 호환).
+        /// </summary>
+        public List<MailItem> Mail = new List<MailItem>();
 
         public static SaveData NewSave(GameData D)
         {
@@ -179,6 +192,15 @@ namespace KkomaKnight.Core
             var df = new Dictionary<string, object>(); foreach (var kv in DunFloor) df[kv.Key] = (double)kv.Value; o["dunFloor"] = df;
             o["petEgg"] = PetEgg;
             o["arenaScore"] = ArenaScore; o["arenaBest"] = (double)ArenaBest;   // T240
+            o["arenaCoin"] = ArenaCoin;   // T243
+            var ml = new List<object>();
+            foreach (var m in Mail)
+            {
+                var rw = new List<object>();
+                foreach (var r in m.Rewards) rw.Add(new Dictionary<string, object> { ["item"] = r.Item, ["amount"] = r.Amount });
+                ml.Add(new Dictionary<string, object> { ["id"] = m.Id, ["kind"] = m.Kind, ["title"] = m.Title, ["desc"] = m.Desc, ["rewards"] = rw });
+            }
+            o["mail"] = ml;
             var dt = new Dictionary<string, object>(); foreach (var kv in DunTickets) dt[kv.Key] = (double)kv.Value; o["dunTickets"] = dt;
             var da = new Dictionary<string, object>(); foreach (var kv in DunAdUsed) da[kv.Key] = (double)kv.Value; o["dunAdUsed"] = da;
             var dgm = new Dictionary<string, object>(); foreach (var kv in DunGemUsed) dgm[kv.Key] = (double)kv.Value; o["dunGemUsed"] = dgm;
@@ -214,6 +236,13 @@ namespace KkomaKnight.Core
                     foreach (var k in j["dunFloor"].Keys) s.DunFloor[k] = j["dunFloor"][k].Int();
                     s.PetEgg = j["petEgg"].Num();   // 없으면 0(옛 세이브 호환 · T228)
                     s.ArenaScore = j["arenaScore"].Num(); s.ArenaBest = j["arenaBest"].Int();   // 없으면 0 = «아직 한 판도 안 했다»(옛 세이브 호환 · T240)
+                    s.ArenaCoin = j["arenaCoin"].Num();   // 없으면 0(옛 세이브 호환 · T243)
+                    foreach (var m in j["mail"].Items())
+                    {
+                        var mi = new MailItem { Id = m["id"].Str(""), Kind = m["kind"].Str(KkomaKnight.Core.Mail.KindArena), Title = m["title"].Str(""), Desc = m["desc"].Str("") };
+                        foreach (var r in m["rewards"].Items()) mi.Rewards.Add(new ArenaRankData.Reward { Item = r["item"].Str(""), Amount = r["amount"].Num() });
+                        s.Mail.Add(mi);
+                    }
                     foreach (var k in j["dunAdUsed"].Keys) s.DunAdUsed[k] = j["dunAdUsed"][k].Int();
                     foreach (var k in j["dunGemUsed"].Keys) s.DunGemUsed[k] = j["dunGemUsed"][k].Int();
                     // T137 — 새 세이브는 «챕터 → 비트» 표, T98 옛 세이브는 «챕터 번호 목록»(그 챕터는 «단 다 받음» = ChapterChest.Normalize 가 옮긴다)

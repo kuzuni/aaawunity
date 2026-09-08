@@ -12,10 +12,11 @@ using UnityEngine.UI;
 namespace KkomaKnight.Tests.Play
 {
     /// <summary>
-    /// T96-mail — 로비 메뉴(≡)의 «우편함»(주인 2026-09-07 «Rewards_Mailbox·Rewards_Mailbox_Empty 이거 좀 써라 프리팹들»):
-    /// ⓐ 받을 것이 하나도 없으면 <c>ui.mailboxEmpty</c> 조각(«비었음» 그림 · 줄 0 · 전체 받기 꺼짐)
-    /// ⓑ 받을 것이 생기면 <c>ui.mailbox</c> 조각에 줄이 서고(<c>Mail:expedition</c>) «받기» 로 <b>실제 재화가 들어온다</b>(지급은 Core 가 한다)
-    /// ⓒ 다 받으면 다시 «비었음» ⓓ 로비 메뉴 항목 «우편함» 이 이 팝업을 연다 ⓔ 영문 데모 글자 0 · 빨간 줄 0.
+    /// 우편함(T96-mail 조각 · <b>범위는 T243</b> — 주인 2026-09-08 11:5X «우편함으로는 <b>아레나 보상만</b> 오게 하고 나머지는 걍 즉시 지급해»):
+    /// ⓐ 아레나 우편이 없으면 <c>ui.mailboxEmpty</c> 조각(«비었음» 그림 · 줄 0 · 전체 받기 꺼짐)
+    /// ⓑ <b>탐험·데일리 기프트가 받을 수 있는 상태여도 우편함에는 한 줄도 안 뜬다</b>(그 둘은 제 팝업에서 즉시 받는다 — 없어진 보상 0)
+    /// ⓒ 아레나 우편이 오면 줄이 서고 «받기» 로 <b>실제 재화가 들어온다</b>(지급은 Core 가 한다) ⓓ 다 받으면 다시 «비었음»
+    /// ⓔ 로비 메뉴 «우편함» 이 이 팝업을 열고 ≡ 알림 점은 <b>아레나 우편에만</b> 반응 ⓕ 영문 데모 글자 0 · 빨간 줄 0.
     /// </summary>
     public class MailboxTests
     {
@@ -43,16 +44,14 @@ namespace KkomaKnight.Tests.Play
         static IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
         static double NowSec() => (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
 
-        /// <summary>지금 받을 수 있는 것을 전부 받아 «빈 우편함» 상태로 만든다(시작 상태가 날짜에 따라 갈리지 않게).</summary>
-        void DrainAll()
+        /// <summary>아레나 우편 한 통(테스트용) — 실제로 넣는 자리는 순위·시즌 정산이 생길 때 배선한다.</summary>
+        static MailItem ArenaMail(string id) => Mail1(id, Core.Mail.ItemGold, 1000, Core.Mail.ItemArenaCoin, 30);
+        static MailItem Mail1(string id, string i1, double a1, string i2, double a2)
         {
-            for (int guard = 0; guard < 32; guard++)
-            {
-                var list = Mailbox.Entries(_app);
-                if (list.Count == 0) return;
-                foreach (var e in list) e.Claim?.Invoke(_app);
-            }
-            Assert.Fail("우편함이 비워지지 않는다(무한 반복)");
+            var m = new MailItem { Id = id, Kind = Core.Mail.KindArena, Title = "아레나 순위 보상", Desc = "" };
+            m.Rewards.Add(new ArenaRankData.Reward { Item = i1, Amount = a1 });
+            m.Rewards.Add(new ArenaRankData.Reward { Item = i2, Amount = a2 });
+            return m;
         }
 
         static int RowCount(Transform root)
@@ -64,16 +63,14 @@ namespace KkomaKnight.Tests.Play
         }
 
         [UnityTest]
-        public IEnumerator MailboxShowsClaimablesAndGivesThem()
+        public IEnumerator MailboxCarriesArenaRewardsOnlyAndGivesThem()
         {
             yield return Boot();
             var S = _app.Save; var G = _app.Data;
             Assert.IsNotNull(G.Expedition, "탐험 표(T97)");
 
-            // ⓐ 빈 우편함 — 받을 것을 전부 비우고 연다
-            DrainAll();
-            S.ExpSettle = NowSec();   // 탐험도 방금 정산한 것으로
-            Assert.AreEqual(0, Mailbox.Entries(_app).Count, "받을 것 0");
+            // ⓐ 새 세이브 = 아레나 우편 0 → «비었음» 조각
+            Assert.AreEqual(0, Mailbox.Entries(_app).Count, "새 세이브의 우편함은 비어 있다");
             Assert.IsFalse(Mailbox.Any(_app), "Any 도 false");
             Mailbox.Open(_app); yield return Frames(2); Canvas.ForceUpdateCanvases();
             Assert.IsTrue(_app.Overlay.IsOpen, "우편함은 팝업");
@@ -87,29 +84,35 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreNotEqual("Mailbox", (t.text ?? "").Trim(), "영문 데모 글자 0(제목은 «우편함»)");
             _app.Overlay.Close(); yield return Frames(2);
 
-            // ⓑ 탐험 보상이 쌓이면 줄이 선다 — 8시간 전에 정산한 것으로 되돌린다(상한 안)
+            // ⓑ T243 의 핵심 — 탐험이 8시간 쌓이고 데일리 기프트도 받을 수 있는데 우편함은 그대로 비어 있다
             S.ExpSettle = NowSec() - 8 * 3600;
-            var entries = Mailbox.Entries(_app);
-            Assert.GreaterOrEqual(entries.Count, 1, "탐험 보상이 줄로 뜬다");
-            Assert.AreEqual(Mailbox.KeyExpedition, entries[0].Key, "첫 줄 = 탐험 보상");
-            double gold0 = S.Gold, gem0 = S.Gem;
+            S.GiftDay = ""; S.GiftFree = false;
+            Assert.IsTrue(Core.Expedition.CanClaim(G, S, G.Expedition, NowSec(), SaveStore.Today()), "탐험 보상이 받을 수 있는 상태");
+            Assert.AreEqual(0, Mailbox.Entries(_app).Count, "그래도 우편함에는 한 줄도 안 뜬다(주인 «우편함은 아레나 보상만»)");
+            Assert.IsFalse(Mailbox.Any(_app), "≡ 점도 안 켜진다");
 
+            // ⓒ 아레나 우편이 오면 줄이 서고 받으면 재화가 들어온다
+            Assert.IsTrue(Core.Mail.Add(S, ArenaMail(Mailbox.KeyArena + ":s1")), "아레나 우편은 들어온다");
+            double gold0 = S.Gold, coin0 = S.ArenaCoin;
+            var entries = Mailbox.Entries(_app);
+            Assert.AreEqual(1, entries.Count, "아레나 우편 한 줄");
             Mailbox.Open(_app); yield return Frames(2); Canvas.ForceUpdateCanvases();
             Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.mailbox"), "받을 것이 있으면 Rewards_Mailbox 조각");
-            var row = UiKit.Find(_app.Overlay.Root, Mailbox.RowPrefix + Mailbox.KeyExpedition);
-            Assert.IsNotNull(row, "줄 이름 = Mail:expedition");
+            var row = UiKit.Find(_app.Overlay.Root, Mailbox.RowPrefix + Mailbox.KeyArena + ":s1");
+            Assert.IsNotNull(row, "줄 이름 = Mail:<우편 id>");
             Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, Mailbox.ClaimAllName), "«전체 받기» 버튼");
             var claim = row.GetComponentInChildren<Button>(true); Assert.IsNotNull(claim, "줄의 «받기» 버튼");
             claim.onClick.Invoke(); yield return Frames(2);
-
-            Assert.Greater(S.Gold + S.Gem, gold0 + gem0, "«받기» 로 재화가 실제로 들어온다(지급은 Core 가 한다)");
+            Assert.AreEqual(gold0 + 1000, S.Gold, 1e-9, "골드가 실제로 들어온다");
+            Assert.AreEqual(coin0 + 30, S.ArenaCoin, 1e-9, "아레나 코인도 버려지지 않고 들어온다");
             Assert.AreEqual(0, Mailbox.Entries(_app).Count, "받고 나면 그 줄은 사라진다");
-            // ⓒ 다 받으면 다시 «비었음»
+
+            // ⓓ 다 받으면 다시 «비었음»
             Canvas.ForceUpdateCanvases();
             Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.mailboxEmpty"), "다 받으면 «비었음» 프리팹으로 다시 그린다");
             _app.Overlay.Close(); yield return Frames(2);
 
-            // ⓓ 로비 메뉴(≡) 의 «우편함» 항목이 이 팝업을 연다
+            // ⓔ 로비 메뉴(≡) 의 «우편함» 항목이 이 팝업을 연다
             _app.ShowScreen("lobby"); yield return Frames(2);
             LobbyMenu.Open(_app); yield return Frames(2);
             var mail = UiKit.Find(_app.Overlay.Root, "Menu:" + LobbyMenu.ItemMail);
@@ -119,11 +122,11 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(_app.Overlay.IsOpen, "우편함이 열린다");
             Assert.IsNotNull(UiKit.FindAny(_app.Overlay.Root, "ui.mailbox", "ui.mailboxEmpty"), "메뉴 → 우편함 조각");
 
-            // ⓔ T169 — 닫을 수 있어야 한다(주인 «우편함 팝업 안 닫힌다»). 여태 닫는 길이 하나도 없는 막힌 창이었다.
+            // ⓕ T169 — 닫을 수 있어야 한다(주인 «우편함 팝업 안 닫힌다»).
             var close = UiKit.FindAny(_app.Overlay.Root, Mailbox.CloseName, "Button_Close_Square_01");
             Assert.IsNotNull(close, "조각이 들고 오는 닫기 버튼(" + Mailbox.CloseName + ")");
             var cb = close.GetComponent<Button>();
-            Assert.IsNotNull(cb, "그 버튼이 배선돼 있다(예전엔 조각만 있고 아무도 안 붙였다)");
+            Assert.IsNotNull(cb, "그 버튼이 배선돼 있다");
             cb.onClick.Invoke(); yield return Frames(2);
             Assert.IsFalse(_app.Overlay.IsOpen, "닫기 버튼으로 닫힌다");
 
@@ -136,7 +139,7 @@ namespace KkomaKnight.Tests.Play
             db.onClick.Invoke(); yield return Frames(2);
             Assert.IsFalse(_app.Overlay.IsOpen, "딤을 눌러도 닫힌다");
 
-            _log.AssertNoRed("T96-mail 우편함");
+            _log.AssertNoRed("우편함(T243 · 아레나 전용)");
             yield return Shutdown();
         }
     }
