@@ -537,7 +537,11 @@ namespace KkomaKnight.Tests.Play
                     var cellT = UiKit.Find(ovA, "Cell"); Assert.IsNotNull(cellT, "출석 보상 칸");
                     var qtyT = UiKit.Find(cellT, "Qty"); Assert.IsNotNull(qtyT, "보상 수량 글자");
                     var qty = qtyT.GetComponent<TMP_Text>(); Assert.IsNotNull(qty, "수량 Text");
-                    Assert.AreEqual(TextAnchor.LowerRight, qty.alignment, "수량은 아이콘 오른쪽 아래(레퍼런스 16 · T133 ⓐ)");
+                    // T207 ③ — TMP 전환 뒤 이 줄이 **영영 빨갰다**: `qty.alignment` 는 `TextAlignmentOptions` 인데 기댓값이 uGUI `TextAnchor` 라
+                    // «Expected: LowerRight · But was: BottomRight» 가 났다. `Assert.AreEqual(object, object)` 라 **컴파일이 안 잡는다**.
+                    // 화면은 옳다 — 재는 자만 옛 세계에 있었다(결정 595·599). 기댓값을 `UiKit.TmpAlign` 으로 옮겨 **화면 코드와 같은 변환**을 쓴다:
+                    // 리터럴 `TextAlignmentOptions.BottomRight` 로 적으면 이 다음 전환 때 또 손으로 고쳐야 하고, 그때 또 컴파일이 안 잡는다.
+                    Assert.AreEqual(UiKit.TmpAlign(TextAnchor.LowerRight), qty.alignment, "수량은 아이콘 오른쪽 아래(레퍼런스 16 · T133 ⓐ)");
                     Assert.GreaterOrEqual(qty.fontSize, TextSize.Body, $"수량 글자 상한이 본문 하한보다 작다({qty.fontSize} · T133 ⓐ)");
                     var qrt = qty.rectTransform;
                     // 앵커로 잰다 — 「칸 높이의 몇 %인가」가 곧 앵커 차이라, 레이아웃이 언제 잡히든 값이 같다(회차 1 단언이 쓴 방식 그대로).
