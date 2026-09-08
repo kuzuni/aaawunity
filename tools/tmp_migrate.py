@@ -52,6 +52,36 @@ RENAME = {
 TYPE_READ = "TMP_Text"
 TYPE_MAKE = "TextMeshProUGUI"
 
+# ── 갈래 ⓑ-기계: «값이 바뀌지만 대응이 1:1 이라 기계가 옳은» 자리 ───────────────
+# 처음에는 ⓑ 를 통째로 손에 맡겼는데, 실제로 치환해 보니 210개 오류의 대부분이
+# **정해진 짝**이었다(FontStyle→FontStyles · Wrap 모드 · 정렬). 손으로 200곳을 고치면
+# 오타가 섞이고 무엇보다 **다시 못 만든다**(세션이 리셋되면 처음부터다).
+# 그래서 짝이 하나뿐인 것만 여기로 옮긴다 — 짝이 둘 이상인 자리는 그대로 손이 본다.
+#
+# ⚠ 이 표의 오른쪽은 CI #441 이 찍어 온 진짜 TMP 서명에서 왔다(결정 587). 지어낸 이름이 없다.
+PAIRS = [
+    # uGUI FontStyle → TMP FontStyles (BoldAndItalic 은 TMP 에서 «두 깃발» 이다)
+    (r"\bFontStyle\.BoldAndItalic\b", "(FontStyles.Bold | FontStyles.Italic)"),
+    (r"\bFontStyle\.(Normal|Bold|Italic)\b", r"FontStyles.\1"),
+    (r"(?<![\w.])FontStyle(?=\s+[A-Za-z_])", "FontStyles"),
+    # 가로 넘침 = «줄바꿈 방식» 으로 갈렸다
+    (r"\.horizontalOverflow\s*=\s*HorizontalWrapMode\.Wrap\b", ".textWrappingMode = TextWrappingModes.Normal"),
+    (r"\.horizontalOverflow\s*=\s*HorizontalWrapMode\.Overflow\b", ".textWrappingMode = TextWrappingModes.NoWrap"),
+    (r"\.horizontalOverflow\s*==\s*HorizontalWrapMode\.Wrap\b", ".textWrappingMode == TextWrappingModes.Normal"),
+    (r"\.horizontalOverflow\s*==\s*HorizontalWrapMode\.Overflow\b", ".textWrappingMode == TextWrappingModes.NoWrap"),
+    (r"\.horizontalOverflow\s*!=\s*HorizontalWrapMode\.Wrap\b", ".textWrappingMode != TextWrappingModes.Normal"),
+    (r"\.horizontalOverflow\s*!=\s*HorizontalWrapMode\.Overflow\b", ".textWrappingMode != TextWrappingModes.NoWrap"),
+    # 세로 넘침 = «넘칠 때 어떻게 하나»
+    (r"\.verticalOverflow\s*=\s*VerticalWrapMode\.Overflow\b", ".overflowMode = TextOverflowModes.Overflow"),
+    (r"\.verticalOverflow\s*=\s*VerticalWrapMode\.Truncate\b", ".overflowMode = TextOverflowModes.Truncate"),
+    (r"\.verticalOverflow\s*==\s*VerticalWrapMode\.Overflow\b", ".overflowMode == TextOverflowModes.Overflow"),
+    (r"\.verticalOverflow\s*==\s*VerticalWrapMode\.Truncate\b", ".overflowMode == TextOverflowModes.Truncate"),
+    (r"\.verticalOverflow\s*!=\s*VerticalWrapMode\.Truncate\b", ".overflowMode != TextOverflowModes.Truncate"),
+    # 정렬 — 우리 코드는 값을 «TextAnchor» 로 주고받는다(공개 API 를 안 바꾸려고 그대로 둔다).
+    # 넣는 자리에서만 표를 태운다: UiKit.TmpAlign(TextAnchor) 이 그 표다(MapAlign 의 역방향).
+    (r"\.alignment\s*=\s*(?!TextAlignmentOptions)([A-Za-z_][\w.]*)\s*;", r".alignment = UiKit.TmpAlign(\1);"),
+]
+
 # ── 갈래 ⓑ: 값·타입이 바뀐다(반드시 사람이 본다) ──────────────────────────────
 HAND_VALUE = {
     "alignment": "TextAnchor(9개) → TextAlignmentOptions(비트) · 표가 필요하다(UiKit.MapAlign 의 역방향)",
@@ -138,7 +168,8 @@ def files():
 # 그것까지 치환하면 **컴파일도 안 되고** 공사 크기도 3배로 부풀어 ② 가 예산을 잘못 잡는다.
 # 그래서 «타입으로 쓰인 자리» 넷만 고른다: 제네릭 인자 · 선언(`Text x`) · 캐스트/`as`/`is` · `typeof`.
 RE_MAKE = re.compile(r"AddComponent\s*<\s*(Text)\s*>")
-RE_GENERIC = re.compile(r"<[^<>();{}]*>")            # `<Text>` · `<Text, int>` · `List<Text>`
+RE_GENERIC = re.compile(r"<[^<>;{}]*>")              # `<Text>` · `<Text, int>` · `List<(RectTransform, Text, float)>`(튜플도 인자다)
+RE_NEWARR = re.compile(r"new\s+(Text)\s*\[")         # `new Text[n]` — 크기를 준 배열 만들기
 RE_IN_GENERIC = re.compile(r"(?<![\w.])Text(?![\w])")
 RE_DECL = re.compile(r"(?<![\w.])(Text)(?=\s+[A-Za-z_])")          # `Text _status;` · `Text txt = …`
 RE_CAST = re.compile(r"(?<![\w.])(?:as|is)\s+(Text)(?![\w])")       # `g as Text`
@@ -157,7 +188,7 @@ def type_spans(code):
             span = (g.start() + m.start(), g.start() + m.end())
             if span not in make:
                 read.add(span)
-    for rx in (RE_DECL, RE_CAST, RE_PAREN, RE_TYPEOF, RE_ARRAY):
+    for rx in (RE_DECL, RE_CAST, RE_PAREN, RE_TYPEOF, RE_ARRAY, RE_NEWARR):
         for m in rx.finditer(code):
             span = (m.start(1), m.end(1))
             if span not in make:
@@ -200,6 +231,11 @@ def apply_one(src, code):
     for a, b, new in sorted(edits, key=lambda e: -e[0]):
         out = out[:a] + new + out[b:]
     n = len(edits)
+    # ⓑ-기계: 짝이 하나뿐인 자리(위 PAIRS). 주석·문자열 위에서도 이름이 같으면 바뀌지만
+    # 이 이름들은 이 저장소 주석에 거의 안 나오고, 나와도 «옳은 새 이름» 이라 해가 없다.
+    for rx, rep in PAIRS:
+        out, k = re.subn(rx, rep, out)
+        n += k
     if n and "using TMPro;" not in out:
         # `using` 뭉치의 알파벳 자리에 끼운다(이 저장소 관례 · 없으면 첫 using 앞)
         us = [m for m in re.finditer(r"^using [^\n]+;\n", out, re.M)]
@@ -290,9 +326,20 @@ def main():
     changed = 0
     for p in files():
         src, code, r = scan_one(p)
-        if not (r["type"] or r["rename"] or r["value"] or r["none"]):
-            continue
         rel = os.path.relpath(p, ROOT)
+        # ⚠ 여기서 «타입 자리가 없으면 건너뛴다» 로 두면 **FontStyle 만 있는 파일**(GearUi 가 그랬다)이
+        #   조용히 안 바뀐 채 남는다 — 치환 뒤 컴파일 오류로 드러났다. 갈래 ⓐ 와 ⓑ-기계는 서로 다른 자를 타므로
+        #   건너뛰기는 «둘 다 없을 때» 만이다. (--apply 는 아래에서 «바뀐 것이 있으면» 쓴다.)
+        if not (r["type"] or r["rename"] or r["value"] or r["none"]):
+            if not a.apply:
+                continue
+            out, n = apply_one(src, code)
+            if out != src:
+                dst = p if not a.out else os.path.join(a.out, rel)
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+                open(dst, "w", encoding="utf-8").write(out)
+                changed += 1
+            continue
         for k in ("type", "make", "rename"):
             tot[k] += r[k]
         tot["value"] += len(r["value"])

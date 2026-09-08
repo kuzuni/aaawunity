@@ -2,6 +2,7 @@ using System.Collections;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -43,7 +44,7 @@ namespace KkomaKnight.Tests.Play
         /// <summary>«챕터 N» 글자가 든 조각(제목 묶음)을 그 글자에서 거슬러 찾는다 — 조각 이름(Blue/l 변형)에 매이지 않는다.</summary>
         static Transform ChapterTitlePiece(Transform root)
         {
-            foreach (var t in root.GetComponentsInChildren<Text>(true))
+            foreach (var t in root.GetComponentsInChildren<TMP_Text>(true))
             {
                 if (t.text == null || !t.text.StartsWith("챕터")) continue;
                 var p = t.transform.parent;
@@ -70,7 +71,7 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(lobbyDeco, "조각의 밑줄 장식(LineDeco)은 지우지 않고 «끈다»");
             Assert.IsFalse(lobbyDeco.gameObject.activeInHierarchy, "로비 챕터 밑줄은 꺼져 있어야 한다(T111 ⓐ · 주인 «챕터 아래 LineDeco 없애줘»)");
             bool lobbyTitleAlive = false;
-            foreach (var t in lobbyPiece.GetComponentsInChildren<Text>(false)) if (t.text != null && t.text.StartsWith("챕터")) lobbyTitleAlive = true;
+            foreach (var t in lobbyPiece.GetComponentsInChildren<TMP_Text>(false)) if (t.text != null && t.text.StartsWith("챕터")) lobbyTitleAlive = true;
             Assert.IsTrue(lobbyTitleAlive, "챕터 글자는 그대로 있어야 한다(밑줄만 끈다)");
 
             // ⓐ 전투(02) — 같은 조각을 쓰는 HUD 챕터 제목

@@ -1,5 +1,6 @@
 using System;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -34,9 +35,9 @@ namespace KkomaKnight.Game
         /// <summary>«+N» 배지 글자 — 아이콘 위 배지는 ROUTINE T63 1항의 명시 예외(<see cref="TextKind.Small"/>) · 레퍼런스 06 의 «+1»(≈27px 상당)보다 조금 크게 · 배지 높이 40px 에 한 줄(37px).</summary>
         public const int SlotBadgeSize = 30;
 
-        sealed class SlotUi { public RectTransform Root; public Transform Frame; public Text Lv, Plus; public GameObject PlusBadge, Dot; public Image PartIcon; public string Part; }
+        sealed class SlotUi { public RectTransform Root; public Transform Frame; public TMP_Text Lv, Plus; public GameObject PlusBadge, Dot; public Image PartIcon; public string Part; }
         readonly SlotUi[] _slot = new SlotUi[SlotCount];
-        TopBar _top; HeroView _hero; Transform _content; Text _atk, _hp, _sh; GameObject _forgeDot;
+        TopBar _top; HeroView _hero; Transform _content; TMP_Text _atk, _hp, _sh; GameObject _forgeDot;
 
         /// <summary>빈 슬롯의 부위 아이콘 투명도(T105 3항 «비어 있어도 그 부위 아이콘을 흐리게») — 끼우면 1.0.</summary>
         public const float PartIconEmptyAlpha = 0.45f;
@@ -139,7 +140,7 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>스탯 칸 하나 — 표의 «스탯 요약줄» 을 3등분(칸 사이 2%) · 어두운 상자 + 왼쪽 아이콘 + 숫자. 이름 <c>Stat:&lt;key&gt;</c>. 돌려주는 값 = 칸 사각형(이름표용) · 숫자 글자는 out.</summary>
-        RectTransform StatCell(int i, string key, string icon, Color tint, out Text value)
+        RectTransform StatCell(int i, string key, string icon, Color tint, out TMP_Text value)
         {
             var r = Layout.GearStats; float gap = 2f, w = (r.W - gap * 2) / 3f;
             var cell = UiKit.Spawn("ui.frameDark", Root); var crt = (RectTransform)cell.transform; crt.name = "Stat:" + key; UiKit.Pct(crt, r.X + i * (w + gap), r.Y, w, r.H);

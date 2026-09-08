@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -40,13 +41,13 @@ namespace KkomaKnight.Tests.Play
         }
         IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
 
-        IEnumerable<Text> ActiveTexts() => _app.UiCanvas.GetComponentsInChildren<Text>(false);
+        IEnumerable<TMP_Text> ActiveTexts() => _app.UiCanvas.GetComponentsInChildren<TMP_Text>(false);
         bool HasText(Func<string, bool> pred) { foreach (var t in ActiveTexts()) if (pred(t.text ?? "")) return true; return false; }
         static bool ClickNamed(Transform root, string name) { var t = root != null ? UiKit.Find(root, name) : null; var b = t != null ? t.GetComponent<Button>() : null; if (b == null) return false; b.onClick.Invoke(); return true; }
         static string LabelOf(Transform root, string name)
         {
             var t = root != null ? UiKit.Find(root, name) : null; if (t == null) return null;
-            foreach (var x in t.GetComponentsInChildren<Text>(false)) { string s = (x.text ?? "").Trim(); if (s.Length > 0) return s; }
+            foreach (var x in t.GetComponentsInChildren<TMP_Text>(false)) { string s = (x.text ?? "").Trim(); if (s.Length > 0) return s; }
             return "";
         }
 

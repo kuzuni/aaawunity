@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DG.Tweening;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -53,15 +54,15 @@ namespace KkomaKnight.Game
         const float SpreadRamp = 150f;                              // 1배 → WorldSpacing 배로 부드럽게 넘어가는 월드 px 구간
 
         // 플레이어
-        CharacterRig _player; SpriteRenderer _pBarBg, _pBarFill, _pShBg, _pShFill; Text _pHpTxt, _pShTxt; double _pStrikeTick; bool _pDeadShown; EnemyState _pTarget;
+        CharacterRig _player; SpriteRenderer _pBarBg, _pBarFill, _pShBg, _pShFill; TMP_Text _pHpTxt, _pShTxt; double _pStrikeTick; bool _pDeadShown; EnemyState _pTarget;
         int _holdPlayer;                                             // 아직 «칼이 안 내려온» 적 공격 수 — 0 일 때만 표시 체력을 엔진 값으로 맞춘다
         public double ShownHp { get; private set; } public double ShownSh { get; private set; }
         /// <summary>플레이어 발밑 2단 바(T35) — 테스트·진단용 읽기: 빨강 HP 바 · 파랑 실드 바 · 각 단 안의 숫자 글자.</summary>
-        public SpriteRenderer PlayerHpBar => _pBarBg; public SpriteRenderer PlayerShBar => _pShBg; public Text PlayerHpText => _pHpTxt; public Text PlayerShText => _pShTxt;
+        public SpriteRenderer PlayerHpBar => _pBarBg; public SpriteRenderer PlayerShBar => _pShBg; public TMP_Text PlayerHpText => _pHpTxt; public TMP_Text PlayerShText => _pShTxt;
         /// <summary>적과 조우 중인가(살아 있는 적이 화면 안) — HUD 상단 진행바가 이때 주황으로 찬다(T35 · 레퍼런스 03).</summary>
         public bool Engaged { get; private set; }
         // 적
-        sealed class EnemyView { public EnemyState E; public CharacterRig Rig; public SpriteRenderer BarBg, BarFill; public Text BarTxt; public double StrikeTick; public float DieT = -1; public GameObject StunFx; public double ShownHp; public int Hold; }
+        sealed class EnemyView { public EnemyState E; public CharacterRig Rig; public SpriteRenderer BarBg, BarFill; public TMP_Text BarTxt; public double StrikeTick; public float DieT = -1; public GameObject StunFx; public double ShownHp; public int Hold; }
         readonly Dictionary<EnemyState, EnemyView> _enemies = new Dictionary<EnemyState, EnemyView>();
         // 연출 지연 — 공격 모션의 타격 순간까지 묶어 두는 이벤트
         sealed class Strike { public CharacterRig Rig; public int HitCount0; public float At; public EnemyState Target; public bool OnPlayer; public readonly List<BattleEvent> Evs = new List<BattleEvent>(); }
@@ -430,21 +431,21 @@ namespace KkomaKnight.Game
             fill.transform.localPosition = new Vector3(-(w - w * f) / 2f, 0, 0);
         }
         /// <summary>발밑 바 안의 숫자(T35) — 팝 층의 uGUI Text(흰 글자 · 외곽선). 크기는 <see cref="FootFontSize"/>(바 높이에서 잰다 · 픽셀 상수 없음). 글자 칸 높이는 «올린 뒤» 크기로(전엔 올리기 전 크기라 게이트 «잘림»).</summary>
-        Text FootText(string name)
+        TMP_Text FootText(string name)
         {
             if (_pops == null) return null;
             int size = FootFontSize;
             // TextKind.Small = «정말 작아야 하는 곳»(하한 없음 · 호출부가 명시) — 이 자리만의 T63 예외다. 까닭은 FootFontSize 주석(결정 361).
             var t = UiKit.Text(_pops, "", size, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Small); t.name = name;
-            size = t.fontSize;
+            size = Mathf.RoundToInt(t.fontSize);
             // Bold 를 안 준다(T125 회차 4 · 결정 449) — 이 자리는 화면에서 가장 작은 글자라 Bold 면 획이 서로 붙어 숫자가 흰 덩어리가 된다.
             // 실측: 레퍼런스와 글자 bbox 는 사실상 같은데(540 환산 30×10.5 대 27×11) 단 안 흰 픽셀 비율이 0.12 대 0.38 이었다 = 크기가 아니라 굵기.
-            t.horizontalOverflow = HorizontalWrapMode.Overflow; t.fontStyle = FontStyle.Normal; t.raycastTarget = false;
+            t.textWrappingMode = TextWrappingModes.NoWrap; t.fontStyle = FontStyles.Normal; t.raycastTarget = false;
             var rt = t.rectTransform; rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f); rt.sizeDelta = new Vector2(400, size * 1.4f);
             return t;
         }
         /// <summary>숫자 글자를 바(월드 위치)의 한가운데로 — Pop 과 같은 월드 → 레이아웃 → 프레임 px 변환. 글자는 바뀔 때만 다시 쓴다(uGUI 재구성 최소화).</summary>
-        static void PlaceFootText(Text t, Vector3 worldPos, string s, bool visible, float barPctW)
+        static void PlaceFootText(TMP_Text t, Vector3 worldPos, string s, bool visible, float barPctW)
         {
             if (t == null) return;
             if (t.gameObject.activeSelf != visible) t.gameObject.SetActive(visible);
@@ -461,7 +462,7 @@ namespace KkomaKnight.Game
         /// T63 하한(<see cref="TextKind.Aux"/>)이 올라가면 그때는 실제로 바를 넘게 되고, 그 자리를 이 함수가 막는다.
         /// 하한은 <see cref="MinFootFont"/> — 그 아래로는 안 줄이고, 그래도 넘치면 그냥 넘치게 둔다(안 보이는 것보다 낫다).
         /// </remarks>
-        static void FitFootText(Text t, float barPctW)
+        static void FitFootText(TMP_Text t, float barPctW)
         {
             if (t == null || barPctW <= 0f) return;
             float room = UiKit.FrameW * barPctW / 100f * FootTextFill;
@@ -961,8 +962,8 @@ namespace KkomaKnight.Game
             if (_pops == null) return;
             size = Mathf.RoundToInt(size * TextSize.BattleNumberMul);
             var t = UiKit.Text(_pops, s, size, color, TextAnchor.MiddleCenter, false, true);
-            size = t.fontSize;
-            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            size = Mathf.RoundToInt(t.fontSize);
+            t.textWrappingMode = TextWrappingModes.NoWrap;
             var rt = t.rectTransform; rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f); rt.sizeDelta = new Vector2(400, size * 1.5f);
             // 월드 → 프레임 px(WorldCam.ToFrame) + 좌우 흔들기
             rt.anchoredPosition = WorldCam.ToFrame(worldPos) + new Vector2(Random.Range(-30f, 30f), 0f);
@@ -981,7 +982,7 @@ namespace KkomaKnight.Game
         /// 그 왼쪽에 붙이고, «아이콘 + 틈 + 숫자» 덩어리가 원래 자리에 가운데로 남도록 글자 rect 를 그 절반만큼 오른쪽으로 민다.
         /// 키가 없으면 아무것도 안 만든다(종전 팝 그대로).
         /// </summary>
-        static Image PopIcon(Text t, string iconKey, int size)
+        static Image PopIcon(TMP_Text t, string iconKey, int size)
         {
             if (string.IsNullOrEmpty(iconKey)) return null;
             float d = size * PopIconMul;

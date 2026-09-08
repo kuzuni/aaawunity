@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -86,7 +87,7 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(irt.rect.width, irt.rect.height, 1f, "아이콘은 정사각(지름 하나)");
             Assert.Less(irt.anchoredPosition.x, 0f, "아이콘은 숫자 «왼쪽» 이다(주인 «아이콘+데미지» 순서)");
 
-            var label = icon.transform.parent != null ? icon.transform.parent.GetComponent<Text>() : null;
+            var label = icon.transform.parent != null ? icon.transform.parent.GetComponent<TMP_Text>() : null;
             Assert.IsNotNull(label, "아이콘은 팝 글자의 자식이다(트윈 하나에 같이 따라 올라간다)");
             Assert.IsFalse(label.text.Contains("!"), "아이콘이 «치명타» 를 말하므로 숫자 뒤 «!» 는 빼야 한다 — 지금 글자: " + label.text);
             StringAssert.Contains(UiKit.Fmt(1234), label.text, "데미지 숫자는 그대로 뜬다");
@@ -121,7 +122,7 @@ namespace KkomaKnight.Tests.Play
             yield return Frames(2);
             var made = NewSince(before);
             Assert.AreEqual(1, made.Count, "치명타 반격도 아이콘 하나");
-            var label = made[0].transform.parent != null ? made[0].transform.parent.GetComponent<Text>() : null;
+            var label = made[0].transform.parent != null ? made[0].transform.parent.GetComponent<TMP_Text>() : null;
             Assert.IsNotNull(label, "팝 글자");
             Assert.IsFalse(label.text.Contains("!"), "반격 팝에서도 «!» 를 뺀다 — 지금 글자: " + label.text);
             StringAssert.StartsWith("반격", label.text, "«반격 N» 표기는 그대로");

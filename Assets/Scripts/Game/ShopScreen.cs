@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -66,7 +67,7 @@ namespace KkomaKnight.Game
         const float PriceGap = 10f;
 
         TopBar _top; RectTransform _content; ScrollRect _scroll;
-        Text _freeTxt; readonly List<Button> _freeBtns = new List<Button>(); readonly List<GameObject> _freeDots = new List<GameObject>();
+        TMP_Text _freeTxt; readonly List<Button> _freeBtns = new List<Button>(); readonly List<GameObject> _freeDots = new List<GameObject>();
         readonly Dictionary<string, BoxWidgets> _box = new Dictionary<string, BoxWidgets>();
         readonly List<(Button btn, Func<bool> can)> _gated = new List<(Button, Func<bool>)>();
         /// <summary>빛살이 도는 칸(T72 ② · 4항 «보이는 칸만» — 스크롤 밖 칸은 <see cref="UiKit.SetLightSpinning"/> 으로 멈춘다).</summary>
@@ -74,7 +75,7 @@ namespace KkomaKnight.Game
         /// <summary>빛살을 걸 자리(칸 · 아이콘 · 조각 키) — <b>배치가 끝난 뒤</b> 한꺼번에 건다(아이콘 rect 가 % 앵커라 Build 중에는 0 이고, 그러면 빛살 한 변이 0 이 된다).</summary>
         readonly List<(RectTransform host, RectTransform icon, string key)> _lightPlan = new List<(RectTransform, RectTransform, string)>();
         float _timerT;
-        sealed class BoxWidgets { public Button One, Ten; public readonly List<Text> Pills = new List<Text>(); }
+        sealed class BoxWidgets { public Button One, Ten; public readonly List<TMP_Text> Pills = new List<TMP_Text>(); }
 
         static string Today() => DateTime.Now.ToString("yyyy-MM-dd");
         static bool CanFree(SaveData S) => S.FreeDay != Today();
@@ -207,7 +208,7 @@ namespace KkomaKnight.Game
             var t = UiKit.Spawn("ui.lineTitle", _content); var rt = (RectTransform)t.transform; rt.name = "Sec:" + text;
             Place(rt, new Layout.R(20, y - 0.75f, 60, Layout.ShopSec1.H + 1.5f));
             // 헤더 글자 = 표 높이에서 계산(≈50 · T63-shop) — 조각 안 Text (TMP) 상자(높이 71px)에 한 줄이 들어간다(선호 높이 ≈ 크기 × 0.98)
-            var txt = UiKit.SetText(rt, "Text (TMP)", text, Palette.White, HeaderSize); if (txt != null) { txt.fontStyle = FontStyle.Bold; txt.resizeTextForBestFit = true; txt.resizeTextMinSize = TextSize.BestFitMin; txt.resizeTextMaxSize = HeaderSize; }
+            var txt = UiKit.SetText(rt, "Text (TMP)", text, Palette.White, HeaderSize); if (txt != null) { txt.fontStyle = FontStyles.Bold; txt.enableAutoSizing = true; txt.fontSizeMin = TextSize.BestFitMin; txt.fontSizeMax = HeaderSize; }
             var line = UiKit.Find(rt, "LineDeco") as RectTransform; if (line != null) line.sizeDelta = new Vector2(UiKit.FrameW * 0.6f, line.sizeDelta.y);   // 선을 레퍼런스처럼 길게(조각은 그대로 · 폭만)
             // T100 ⓒ — 섹션을 나누는 선만 아주 옅게(제목 글자는 그대로). 조각 안에 선이 여럿일 수 있어 이름이 «LineDeco» 로 시작하는 그림 전부.
             foreach (var im in rt.GetComponentsInChildren<Image>(true))
@@ -215,7 +216,7 @@ namespace KkomaKnight.Game
             return rt;
         }
         /// <summary>어두운 반투명 pill(TransperDark 조각) + 흰 글자 — 설명·천장 줄. 글자 = 본문 하한(40 · 2줄까지 접힘 · pill 높이는 카드 % 로 2줄이 들어가게).</summary>
-        Text Pill(RectTransform card, Layout.R r, string text)
+        TMP_Text Pill(RectTransform card, Layout.R r, string text)
         {
             var p = UiKit.Spawn("ui.frameDark", card); var prt = (RectTransform)p.transform; prt.name = "Pill"; UiKit.Pct(prt, r);
             return UiKit.Label(prt, 3, 0, 94, 100, text, TextSize.Body, Palette.White);
@@ -242,10 +243,10 @@ namespace KkomaKnight.Game
         {
             var row = UiKit.Rect(parent, "Price"); UiKit.Pct(row, r);
             var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>(); hl.childAlignment = TextAnchor.MiddleCenter; hl.spacing = PriceGap; hl.childForceExpandWidth = false; hl.childForceExpandHeight = false; hl.childControlWidth = true; hl.childControlHeight = true;
-            if (!string.IsNullOrEmpty(before)) { var t = UiKit.Text(row, before, TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); t.name = "Label"; t.horizontalOverflow = HorizontalWrapMode.Overflow; }
+            if (!string.IsNullOrEmpty(before)) { var t = UiKit.Text(row, before, TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); t.name = "Label"; t.textWrappingMode = TextWrappingModes.NoWrap; }
             var ic = UiKit.Icon(row, "Gem", "hud.gem"); ic.preserveAspect = true;
             var le = ic.gameObject.AddComponent<LayoutElement>(); le.preferredWidth = PriceIconSize; le.preferredHeight = PriceIconSize;
-            var c = UiKit.Text(row, cost, TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); c.name = "Cost"; c.horizontalOverflow = HorizontalWrapMode.Overflow;
+            var c = UiKit.Text(row, cost, TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); c.name = "Cost"; c.textWrappingMode = TextWrappingModes.NoWrap;
             return row;
         }
         /// <summary>(i) 버튼 = Button_Info 조각 → 확률·천장 팝업.</summary>
@@ -371,7 +372,7 @@ namespace KkomaKnight.Game
             CardGradient(frame.transform, ChestGradBig, "Bg", UiKit.GradientCardSolidAlpha);
             // 상자 이름 = 제목(60 · T63-shop · 레퍼런스 «Legendary Chest» 는 카드에서 가장 큰 글자) — 칸 13% × 배너 26% = 79px ≥ 선호 59
             var title = UiKit.SetText(frame.transform, "Text_Title", box.Name, Palette.Yellow, TextSize.Title, TextKind.Title);
-            if (title != null) { UiKit.Pct(title.rectTransform, 42, 3, 49, 13); title.alignment = TextAnchor.MiddleRight; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = TextSize.BestFitMin; title.resizeTextMaxSize = TextSize.Title; }
+            if (title != null) { UiKit.Pct(title.rectTransform, 42, 3, 49, 13); title.alignment = UiKit.TmpAlign(TextAnchor.MiddleRight); title.fontStyle = FontStyles.Bold; title.enableAutoSizing = true; title.fontSizeMin = TextSize.BestFitMin; title.fontSizeMax = TextSize.Title; }
             InfoButton(card, new Layout.R(91.5f, 4, 7, 12), box);
             var chest = UiKit.Icon(card, "Chest", "chest." + box.Key); UiKit.Pct(chest.rectTransform, 4, 8, 36, 56);
             // T72 ② 특별 상품(대형 상자) 그림 뒤 빛살 — 큰 조각(Effect_Light_01)
@@ -399,7 +400,7 @@ namespace KkomaKnight.Game
             CardGradient(frame.transform, gradName, "Bg", UiKit.GradientCardSolidAlpha);
             // 상자 이름 = 제목(60 · T63-shop) — 칸 10% × 카드 29% = 68px ≥ 선호 59 · 확률 pill 은 그 아래(12.5~26.5% · 95px ≥ 2줄 88 — 회차 1 의 13% = 88px 은 딱 맞아 bestFit 이 39 로 눌렀다 · CI #110 표 «최소 크기(실제) 39»)
             var title = UiKit.SetText(frame.transform, "Text_Title", box.Name, Palette.White, TextSize.Title, TextKind.Title);
-            if (title != null) { UiKit.Pct(title.rectTransform, 6, 2, 76, 10); title.alignment = TextAnchor.MiddleCenter; title.fontStyle = FontStyle.Bold; title.resizeTextForBestFit = true; title.resizeTextMinSize = TextSize.BestFitMin; title.resizeTextMaxSize = TextSize.Title; }
+            if (title != null) { UiKit.Pct(title.rectTransform, 6, 2, 76, 10); title.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); title.fontStyle = FontStyles.Bold; title.enableAutoSizing = true; title.fontSizeMin = TextSize.BestFitMin; title.fontSizeMax = TextSize.Title; }
             InfoButton(card, new Layout.R(84, 2, 12, 9), box);
             Pill(card, new Layout.R(6, 12.5f, 88, 14), RatesText(box));
             var chest = UiKit.Icon(card, "Chest", "chest." + box.Key); UiKit.Pct(chest.rectTransform, 22, 28, 56, 37);
@@ -429,7 +430,7 @@ namespace KkomaKnight.Game
             CardGradient(crt, gradName, "Bg(Mask)");
             // 수량 = 띠 높이에서 계산(≈51 · T63-shop) — 띠 14% × 카드 18.5% = 60px ≥ 선호 50
             var q = UiKit.SetText(crt, "Text_Title", qty, Palette.White, QtySize);
-            if (q != null) { UiKit.Pct(q.rectTransform, 5, 5, 90, QtyBandH); q.fontStyle = FontStyle.Bold; q.resizeTextForBestFit = true; q.resizeTextMinSize = TextSize.BestFitMin; q.resizeTextMaxSize = QtySize; }
+            if (q != null) { UiKit.Pct(q.rectTransform, 5, 5, 90, QtyBandH); q.fontStyle = FontStyles.Bold; q.enableAutoSizing = true; q.fontSizeMin = TextSize.BestFitMin; q.fontSizeMax = QtySize; }
             var im2 = UiKit.SetSprite(crt, "Icon", iconKey, Palette.White);
             if (im2 != null)
             {
@@ -437,7 +438,7 @@ namespace KkomaKnight.Game
                 // T72 ② 상점 상품 아이콘 뒤 빛살 — 아이콘은 조각(ListItem_ShopItem)의 바로 아래 자식이라 «아이콘 앞 형제» 가 곧 «그림 뒤»
                 _lightPlan.Add(((RectTransform)im2.rectTransform.parent, im2.rectTransform, UiKit.LightKeySmall)); _lightCells.Add(crt);
             }
-            var nm = UiKit.SetText(crt, "Text_Limit", name, Palette.White, TextSize.Body); if (nm != null) { UiKit.Pct(nm.rectTransform, 4, 66, 92, 11); nm.resizeTextForBestFit = true; nm.resizeTextMinSize = TextSize.BestFitMin; nm.resizeTextMaxSize = TextSize.Body; }
+            var nm = UiKit.SetText(crt, "Text_Limit", name, Palette.White, TextSize.Body); if (nm != null) { UiKit.Pct(nm.rectTransform, 4, 66, 92, 11); nm.enableAutoSizing = true; nm.fontSizeMin = TextSize.BestFitMin; nm.fontSizeMax = TextSize.Body; }
             var btns = new List<Button>();
             var btn = UiKit.Find(crt, "Button_Price");
             if (btn != null)
@@ -445,7 +446,7 @@ namespace KkomaKnight.Game
                 UiKit.Pct((RectTransform)btn, 6, 80, 88, 17);
                 var pi = UiKit.Find(btn, "GroupArea/Group/Icon"); if (pi != null) { pi.gameObject.SetActive(priceIconKey != null); if (priceIconKey != null) UiKit.SetSprite(btn, "GroupArea/Group/Icon", priceIconKey, Palette.White); }
                 // 가격 띠 글자 = 버튼 하한(44 · T63-shop) — Group(HorizontalLayoutGroup) 이 글자 rect 를 선호 폭으로 잡으므로 Overflow 유지(T40 · Wrap 이면 글자마다 줄이 접힌다)
-                var pt = UiKit.SetText(btn, "GroupArea/Group/Text (TMP)", price, null, TextSize.Button, TextKind.Button); if (pt != null) { pt.resizeTextForBestFit = true; pt.resizeTextMinSize = TextSize.BestFitMin; pt.resizeTextMaxSize = TextSize.Button; pt.horizontalOverflow = HorizontalWrapMode.Overflow; }
+                var pt = UiKit.SetText(btn, "GroupArea/Group/Text (TMP)", price, null, TextSize.Button, TextKind.Button); if (pt != null) { pt.enableAutoSizing = true; pt.fontSizeMin = TextSize.BestFitMin; pt.fontSizeMax = TextSize.Button; pt.textWrappingMode = TextWrappingModes.NoWrap; }
                 var inner = UiKit.Find(btn, "Button_02_Yellow"); if (inner != null) { var it = inner.Find("Text (TMP)"); if (it != null) it.gameObject.SetActive(false); }   // 버튼 프리팹 자체의 «Button» 글자 — 값은 GroupArea 의 글자가 맡는다
                 btns.Add(UiKit.Clickable(btn, onClick));
             }
@@ -622,12 +623,12 @@ namespace KkomaKnight.Game
             // 조각의 데모 글자(«Reward»)가 화면에 남았다(CI #235 «데모 프리팹 잔여 글자 1건»). 리본이 없는 조각이면 예전처럼 글자를 얹는다.
             string titleText = $"{box.Name} {n}회" + (got.Count > n ? $" · {got.Count}개" : "");
             var ribbon = UiKit.Find(root, ChestRibbonName);
-            Text title;
+            TMP_Text title;
             if (ribbon != null)
             {
                 Overlay.FitRibbonText(ribbon);   // T75 4항 — 리본 글자 칸을 제목 60 한 줄(84px)로 올린다
                 title = UiKit.SetText(ribbon, "Text (TMP)", titleText, Palette.Cream, TextSize.Title, TextKind.Title);
-                if (title == null) title = ribbon.GetComponentInChildren<Text>(true);
+                if (title == null) title = ribbon.GetComponentInChildren<TMP_Text>(true);
             }
             else title = UiKit.Label(root, 6, 12, 88, 7, titleText, TextSize.Title, Palette.White, TextAnchor.MiddleCenter, true, false, kind: TextKind.Title);
             if (title != null) title.name = "Title";

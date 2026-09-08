@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -54,7 +55,7 @@ namespace KkomaKnight.Tests.Play
             var b = t.GetComponent<Button>(); Assert.IsNotNull(b, "버튼 컴포넌트 " + name);
             b.onClick.Invoke();
         }
-        bool HasText(Func<string, bool> pred) { foreach (var t in _app.UiCanvas.GetComponentsInChildren<Text>(false)) if (pred(t.text ?? "")) return true; return false; }
+        bool HasText(Func<string, bool> pred) { foreach (var t in _app.UiCanvas.GetComponentsInChildren<TMP_Text>(false)) if (pred(t.text ?? "")) return true; return false; }
         /// <summary>메뉴에 남는 항목 — T148(주인 «데일리기프트, 퀘스트, 출석, 특권은 로비에 걍 꺼내놓는게 나은듯 · 전처럼»)로 <b>둘</b>이 됐다.</summary>
         static readonly string[] Items = { LobbyMenu.ItemMail, LobbyMenu.ItemSettings };
         /// <summary>T148 로 <b>로비로 돌아간</b> 넷 — 메뉴에는 없고 사이드 기둥에 있다(이 자가 양쪽을 다 본다).</summary>

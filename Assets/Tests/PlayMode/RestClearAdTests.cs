@@ -3,6 +3,7 @@ using System.Collections;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -33,11 +34,11 @@ namespace KkomaKnight.Tests.Play
         static bool Click(Transform root, Func<string, bool> label)
         {
             foreach (var b in root.GetComponentsInChildren<Button>(false))
-                foreach (var t in b.GetComponentsInChildren<Text>(false))
+                foreach (var t in b.GetComponentsInChildren<TMP_Text>(false))
                     if (label(t.text ?? "")) { b.onClick.Invoke(); return true; }
             return false;
         }
-        bool HasText(Func<string, bool> pred) { foreach (var t in _app.UiCanvas.GetComponentsInChildren<Text>(false)) if (pred(t.text ?? "")) return true; return false; }
+        bool HasText(Func<string, bool> pred) { foreach (var t in _app.UiCanvas.GetComponentsInChildren<TMP_Text>(false)) if (pred(t.text ?? "")) return true; return false; }
 
         IEnumerator Boot()
         {

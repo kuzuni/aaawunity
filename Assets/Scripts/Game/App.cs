@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -27,7 +28,7 @@ namespace KkomaKnight.Game
 
         readonly Dictionary<string, GameScreen> _screens = new Dictionary<string, GameScreen>();
         GameScreen _current;
-        RectTransform _toastRt; Text _toastText; float _toastT;
+        RectTransform _toastRt; TMP_Text _toastText; float _toastT;
 
         public static App Create(GameData data, AssetCatalog catalog, Font font, Camera worldCamera)
         {
@@ -66,7 +67,7 @@ namespace KkomaKnight.Game
             Overlay = new Overlay(this);
             // 토스트 (GUI Pro ToastMessage_01) — 칸 세로는 본문 40 두 줄이 들어가는 Layout.Toast (T63-toast · 전 5.0% 에선 긴 문구가 bestFit 으로 32 까지 줄었다)
             _toastRt = (RectTransform)UiKit.Spawn("ui.toast", Frame).transform; UiKit.Pct(_toastRt, Layout.Toast);
-            _toastText = _toastRt.GetComponentInChildren<Text>(true);
+            _toastText = _toastRt.GetComponentInChildren<TMP_Text>(true);
             _toastRt.gameObject.SetActive(false);
             Debug.Log("[KkomaKnight] boot: ui");
             ShowScreen("lobby");

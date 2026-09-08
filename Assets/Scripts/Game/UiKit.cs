@@ -259,15 +259,15 @@ namespace KkomaKnight.Game
         /// 인자를 남겨 둔 이유는 이 자리를 <b>위치 인자로</b> 넘기는 호출부가 40여 곳이고 그 파일 대부분이 다른 워커의 살아 있는 lock 안이기 때문이다(결정 227) —
         /// 지우면 그 파일들을 다 고쳐야 해서 규약(«같은 파일은 뒤 번호가 기다린다»)에 걸린다. lock 이 풀리는 대로 화면 워커가 자기 커밋에서 인자를 지우면 된다.
         /// </param>
-        public static Text Text(Transform parent, string s, int size, Color color, TextAnchor anchor = TextAnchor.MiddleCenter, bool bestFit = false, bool outline = true, TextKind kind = TextKind.Body)
+        public static TMP_Text Text(Transform parent, string s, int size, Color color, TextAnchor anchor = TextAnchor.MiddleCenter, bool bestFit = false, bool outline = true, TextKind kind = TextKind.Body)
         {
             size = TextSize.Floor(size, kind);
             var rt = Rect(parent, "Text");
-            var t = rt.gameObject.AddComponent<Text>();
-            t.font = FontOrBuiltin(); t.text = TextGlyphs.Safe(s); t.fontSize = size; t.color = color; t.alignment = anchor;
-            t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Overflow;
-            t.raycastTarget = false; t.supportRichText = true;
-            if (bestFit) { t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitFloor(12, kind); t.resizeTextMaxSize = size; t.verticalOverflow = VerticalWrapMode.Truncate; }
+            var t = rt.gameObject.AddComponent<TextMeshProUGUI>();
+            t.font = TmpFont.Get(); t.text = TextGlyphs.Safe(s); t.fontSize = size; t.color = color; t.alignment = UiKit.TmpAlign(anchor);
+            t.textWrappingMode = TextWrappingModes.Normal; t.overflowMode = TextOverflowModes.Overflow;
+            t.raycastTarget = false; t.richText = true;
+            if (bestFit) { t.enableAutoSizing = true; t.fontSizeMin = TextSize.BestFitFloor(12, kind); t.fontSizeMax = size; t.overflowMode = TextOverflowModes.Truncate; }
             EnsureOutline(t);
             TextAudit.Mark(t, kind);
             return t;
@@ -357,7 +357,7 @@ namespace KkomaKnight.Game
         /// <see cref="Adopt"/>(조각의 uGUI Text)가 전부 자동으로 받는다. 화면 파일을 한 줄도 안 고치므로 남의 lock 을 침범하지 않는다(결정 250).
         /// 리치 텍스트의 <c>&lt;color=…&gt;</c> 조각(등급색·수치 색)은 <c>Text.color</c> 가 아니라 태그가 정하므로 그대로 남는다.
         /// </summary>
-        public static void EnsureBright(Text t)
+        public static void EnsureBright(TMP_Text t)
         {
             if (t == null) return;
             // T177 — 주인이 색을 못 박은 자리(잠긴 옵션 #666666)는 이 규칙 밖이다. 표식은 DarkText 한 곳에서만 붙인다.
@@ -370,7 +370,7 @@ namespace KkomaKnight.Game
         /// 표식을 붙인 «뒤» 에 색을 다시 넣는 까닭 = <see cref="Label"/>·<see cref="Text"/> 가 만들면서 이미 <see cref="EnsureBright"/>(T111 ⓑ)를 거쳐 흰색이 됐기 때문이다.
         /// 이 함수를 새 자리에 쓸 때는 «어느 주인 지시인가» 를 그 줄에 같이 적는다 — 안 그러면 다음 워커가 «가독성» 이라며 되돌린다.
         /// </summary>
-        public static Text DarkText(Text t, Color c)
+        public static TMP_Text DarkText(TMP_Text t, Color c)
         {
             if (t == null) return null;
             Ensure<OwnerDarkTextTag>(t.gameObject);
@@ -378,22 +378,29 @@ namespace KkomaKnight.Game
             return t;
         }
 
-        public static TextOutline8 EnsureOutline(Text t, float size = 0f)
+        public static bool EnsureOutline(TMP_Text t, float size = 0f)
         {
-            if (t == null) return null;
+            if (t == null) return false;
             EnsureBright(t);   // T111 ⓑ — 아웃라인과 글자색은 짝이다(검은 아웃라인 + 밝은 글자) · 입구 다섯 곳이 전부 이 함수를 거친다
-            if (size <= 0f) size = t.resizeTextForBestFit ? Mathf.Max(t.resizeTextMaxSize, t.fontSize) : t.fontSize;
-            // T204 — uGUI `Outline`(대각 네 장 · 마름모)에서 `TextOutline8`(여덟 방향 같은 반경)로 바꿨다.
-            // 옛 컴포넌트가 붙어 있던 글자(조각이 달고 온 것 포함)는 여기서 걷어 낸다 — 둘이 겹치면 테가 두 겹이 된다.
-            var old = t.GetComponents<Outline>();
-            for (int i = 0; i < old.Length; i++) UnityEngine.Object.DestroyImmediate(old[i]);
-            var ol = Ensure<TextOutline8>(t.gameObject);
-            ol.effectColor = OutlineColor;
-            ol.radius = OutlineWidth(size); ol.useGraphicAlpha = true;
-            return ol;
+            // T207 ② — 주인이 말한 «진짜 메테리얼» 아웃라인으로 갈아탔다(2026-09-07 17:2X «tmpro로 아웃라인 해야지 진짜 메테리얼로»).
+            //  ⓐ 사본을 밀어 겹치던 컴포넌트(uGUI `Outline` 네 장 · T204 의 `TextOutline8` 여덟 방향)를 **걷어 낸다** —
+            //     SDF 셰이더가 테를 «거리장을 부풀려» 그리므로 정점이 안 늘고, 마름모꼴도 «없던 구멍» 도 원리적으로 안 생긴다(T204 2항).
+            //  ⓑ 두께는 **글자 크기에 저절로 비례**한다(SDF 비율 0~1 · 픽셀이 아니다) — T194 가 세 회차 태운
+            //     «규격 px ≠ 화면 px» 함정이 이 방식에는 없다. 그래서 `size` 인자는 이제 안 쓴다(호출부는 그대로 둔다).
+            //  ⓒ 색·두께는 **폰트 애셋의 공유 머티리얼 한 장**에 건다 — 자리마다 인스턴스를 만들면 배칭이 깨진다(T153 이 shine 에서 겪은 결).
+            for (var i = 0; i < 2; i++)
+            {
+                var old8 = t.GetComponent<TextOutline8>(); if (old8 != null) UnityEngine.Object.DestroyImmediate(old8);
+                var old4 = t.GetComponent<Outline>(); if (old4 != null) UnityEngine.Object.DestroyImmediate(old4);
+            }
+            var asset = TmpFont.Get();
+            if (asset == null) return false;
+            if (t.font != asset) t.font = asset;
+            if (t.fontSharedMaterial != asset.material) t.fontSharedMaterial = asset.material;
+            return TmpFont.SetOutline(asset, OutlineColor);
         }
         /// <param name="outline">아무 일도 하지 않는다 — <see cref="Text"/> 의 같은 인자 설명 참조(T63-outline · 결정 227).</param>
-        public static Text Label(Transform parent, float x, float y, float w, float h, string s, int size, Color color, TextAnchor anchor = TextAnchor.MiddleCenter, bool bestFit = true, bool outline = true, TextKind kind = TextKind.Body)
+        public static TMP_Text Label(Transform parent, float x, float y, float w, float h, string s, int size, Color color, TextAnchor anchor = TextAnchor.MiddleCenter, bool bestFit = true, bool outline = true, TextKind kind = TextKind.Body)
         {
             var t = Text(parent, s, size, color, anchor, bestFit, true, kind);
             Pct(t.rectTransform, x, y, w, h);
@@ -403,7 +410,7 @@ namespace KkomaKnight.Game
         /// <summary>가로 게이지 — GUI Pro Slider_02 프리팹(카탈로그 키 ui.slider*) 을 쓰고 값은 Slider 컴포넌트로 넣는다.</summary>
         public sealed class Bar
         {
-            public RectTransform Root; public Slider Slider; public Text Txt; public Image Cap;
+            public RectTransform Root; public Slider Slider; public TMP_Text Txt; public Image Cap;
             public void Set(double frac, string txt) { if (Slider != null) Slider.value = Mathf.Clamp01((float)frac); if (Txt != null) { Txt.text = TextGlyphs.Safe(txt); EnsureOutline(Txt); } }
         }
         public static Bar MakeBar(Transform parent, string sliderKey, string capIconKey = null)
@@ -411,8 +418,8 @@ namespace KkomaKnight.Game
             var go = Spawn(sliderKey, parent);
             var bar = new Bar { Root = (RectTransform)go.transform, Slider = go.GetComponentInChildren<Slider>(true) };
             if (bar.Slider != null) { bar.Slider.interactable = false; bar.Slider.transition = Selectable.Transition.None; bar.Slider.minValue = 0; bar.Slider.maxValue = 1; foreach (var g in go.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false; }
-            bar.Txt = go.GetComponentInChildren<Text>(true);
-            if (bar.Txt != null) { bar.Txt.resizeTextForBestFit = true; bar.Txt.resizeTextMinSize = TextSize.BestFitMin; bar.Txt.resizeTextMaxSize = TextSize.Body; bar.Txt.horizontalOverflow = HorizontalWrapMode.Overflow; }
+            bar.Txt = go.GetComponentInChildren<TMP_Text>(true);
+            if (bar.Txt != null) { bar.Txt.enableAutoSizing = true; bar.Txt.fontSizeMin = TextSize.BestFitMin; bar.Txt.fontSizeMax = TextSize.Body; bar.Txt.textWrappingMode = TextWrappingModes.NoWrap; }
             if (!string.IsNullOrEmpty(capIconKey))
             {
                 bar.Cap = Icon(go.transform, "Cap", capIconKey);
@@ -673,7 +680,7 @@ namespace KkomaKnight.Game
         static void RibbonFit(RectTransform ribbon)
         {
             if (ribbon == null) return;
-            var txt = ribbon.GetComponentInChildren<Text>(true); if (txt == null) return;
+            var txt = ribbon.GetComponentInChildren<TMP_Text>(true); if (txt == null) return;
             var trt = txt.rectTransform;
             bool stretched = trt.anchorMin.y == 0f && trt.anchorMax.y == 1f;
             float inset = stretched ? Mathf.Max(0f, -trt.sizeDelta.y) : 0f;
@@ -1013,7 +1020,7 @@ namespace KkomaKnight.Game
 
         // ───────────────────────── 공통 팝업 문법 (docs/ref/README.md «공통 문법» · T36 — T38·T41·T42·T44 가 같이 쓴다) ─────────────────────────
         /// <summary><see cref="Popup"/> 이 만든 조각들 — 안의 내용은 <see cref="Box"/> 에 <see cref="Pct"/> 로 배치한다.</summary>
-        public sealed class PopupParts { public RectTransform Dim, Box, Ribbon; public Text Title, TapClose; }
+        public sealed class PopupParts { public RectTransform Dim, Box, Ribbon; public TMP_Text Title, TapClose; }
         /// <summary>
         /// 레퍼런스 공통 팝업: <b>어두운 반투명 배경</b> 위 <b>둥근 패널</b>(Popup_Box 변형 · <paramref name="popupKey"/>) · 제목은 패널 윗변에 걸친 <b>리본/명판</b>(<paramref name="titleKey"/> · 가운데) ·
         /// 프레임 밖 아래 가운데 <b>«탭하여 닫기»</b> 흰 글자(<see cref="Layout.BookClose"/> 줄 · 닫기 X 버튼 없음 · <b>배경 탭으로 닫힘</b> = <paramref name="onTapClose"/>). onTapClose 가 null 이면 닫기 글자·배경 탭 없음(선택을 강제하는 이벤트 팝업).
@@ -1091,11 +1098,11 @@ namespace KkomaKnight.Game
             rr.anchorMin = rr.anchorMax = new Vector2(0.5f, 1f); rr.pivot = new Vector2(0.5f, 0.5f); rr.sizeDelta = PopupRibbonSize; rr.anchoredPosition = new Vector2(0, 8);
             Ensure<PopupRibbonTag>(ribbon);   // T75 4항 — 게이트가 «UiKit.Popup 이 세운 리본» 만 단언하게(화면이 스스로 세운 리본은 그 화면 워커 몫 · 결정 291)
             RibbonFit(rr);
-            var tt = SetText(rr, "Text (TMP)", title, null, TextSize.Title, TextKind.Title); if (tt != null) { tt.resizeTextForBestFit = true; tt.resizeTextMinSize = TextSize.BestFitMin; tt.resizeTextMaxSize = TextSize.Title; }
+            var tt = SetText(rr, "Text (TMP)", title, null, TextSize.Title, TextKind.Title); if (tt != null) { tt.enableAutoSizing = true; tt.fontSizeMin = TextSize.BestFitMin; tt.fontSizeMax = TextSize.Title; }
             parts.Box = box; parts.Ribbon = rr; parts.Title = tt;
             if (onTapClose != null)
             {
-                var tc = Text(layer, "탭하여 닫기", TextSize.Body, Palette.White, TextAnchor.MiddleCenter, false, true); tc.name = "TapToClose"; tc.fontStyle = FontStyle.Bold;
+                var tc = Text(layer, "탭하여 닫기", TextSize.Body, Palette.White, TextAnchor.MiddleCenter, false, true); tc.name = "TapToClose"; tc.fontStyle = FontStyles.Bold;
                 Pct(tc.rectTransform, Layout.BookClose);   // 표 «닫기 안내» 자리(y91.5 · 높이는 본문 40 의 줄 높이가 들어가는 2.4 = 56px · T63-settings · 이름표가 이 사각형을 잰다)
                 parts.TapClose = tc;
                 if (parts.Dim != null) Clickable(parts.Dim, onTapClose, false);
@@ -1199,103 +1206,67 @@ namespace KkomaKnight.Game
             return go;
         }
 
-        /// <summary>인스턴스를 이 프로젝트 규칙에 맞춘다 — TMP → Text(Jua) · LayerLab 데모 스크립트 제거 · 이미지 raycast 끔.</summary>
+        /// <summary>
+        /// 인스턴스를 이 프로젝트 규칙에 맞춘다 — <b>조각의 TMP 글자에 주인 글꼴을 입히고</b> · LayerLab 데모 스크립트 제거 · 이미지 raycast 끔.
+        /// <para>
+        /// <b>T207 ② 가 여기를 뒤집었다.</b> 전에는 이 줄이 조각의 TMP 글자를 <b>전부 파괴하고</b> uGUI <c>Text</c> 로 갈아 끼웠다
+        /// (그래서 «입력칸을 먼저 걷어 냈다가 다시 세우는» 두 함수도 필요했다). 주인이 «tmpro로 아웃라인 해야지 진짜 메테리얼로» 라고
+        /// 정했으므로 <b>부수기를 그만두고 글꼴만 갈아 끼운다</b> — 조각이 정한 크기·정렬·줄바꿈이 손실 없이 살고(전에는 손으로 베껴
+        /// 옮겨서 그 자체가 어긋남의 원천이었다 · T194 1-b) 입력칸도 제 <c>TMP_InputField</c> 로 그대로 남는다.
+        /// </para>
+        /// </summary>
         public static void Adopt(GameObject root)
         {
             StripDemoScripts(root);
-            var inputs = TakeTmpInputs(root);   // 입력칸을 먼저 걷어 낸다 — 아래 줄이 그 글자(TMP_Text)를 파괴하면 TMP_InputField 가 제 글자를 잃는다(T96-profile 2단계)
-            foreach (var tmp in root.GetComponentsInChildren<TMP_Text>(true)) ConvertTmp(tmp);
-            // 조각이 TMP 가 아니라 처음부터 uGUI Text 로 만들어 둔 자리도 있다 — 그런 글자는 어떤 입구도 안 거치므로 여기서 같이 붙인다(T63-outline)
-            foreach (var t in root.GetComponentsInChildren<Text>(true)) EnsureOutline(t);
+            foreach (var t in root.GetComponentsInChildren<TMP_Text>(true)) SkinTmp(t);
             foreach (var g in root.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
-            RestoreInputs(inputs);   // 글자가 uGUI Text 가 된 뒤라야 uGUI InputField 를 붙일 수 있다(raycast 도 여기서 되살린다)
+            // 입력칸은 눌려야 한다(바로 위에서 전부 껐다) — 조각의 TMP_InputField 를 그대로 쓰므로 되세울 것이 없다(T207 ②)
+            foreach (var f in root.GetComponentsInChildren<TMP_InputField>(true))
+            {
+                var img = f.GetComponent<Image>(); if (img != null) img.raycastTarget = true;
+            }
             var rt = root.transform as RectTransform; if (rt != null) rt.localScale = Vector3.one;
         }
 
-        /// <summary>프리팹 입력칸 하나를 다시 세우는 데 필요한 것만 적어 둔 쪽지(<see cref="TakeTmpInputs"/> → <see cref="RestoreInputs"/>).</summary>
-        struct TmpInput { public GameObject Go, Text, Placeholder; public int Limit; public bool Multi; }
-
         /// <summary>
-        /// 조각 안 TMP 입력칸을 <b>떼어 내고</b> 다시 세울 쪽지를 남긴다(T96-profile 2단계 · 주인 지목 <c>Social_Profile_Nickname</c>).
-        /// <see cref="Adopt"/> 가 TMP_Text 를 파괴하고 uGUI <see cref="Text"/> 로 갈아 끼우므로, 입력칸을 그대로 두면 제 글자·자리표시를 잃은 채 남는다.
-        /// 캐럿 조각은 <see cref="Spawn"/> 이 비활성 홀더 밑에서 만들어 아직 없지만(OnEnable 이 안 돌았다) 조각에 미리 저장돼 있으면 같이 지운다.
+        /// T207 ② — 조각이 달고 온 TMP 글자에 <b>우리 규칙만 입힌다</b>(부수지 않는다).
+        /// <para>
+        /// 하는 일 넷: ⓐ <b>주인 글꼴</b>(Jua TMP 폰트 애셋 · <see cref="TmpFont.Get"/>) ⓑ 없는 글리프 걸러내기(<see cref="TextGlyphs.Safe"/>) ⓒ
+        /// <b>크기 하한</b>(T63 — 데모 조각의 12~30 을 그대로 두면 폰에서 안 읽힌다) ⓓ <b>검정 아웃라인</b>(T63 0항 · 이제 SDF 머티리얼이다).
+        /// </para>
+        /// <b>안 하는 일</b>: 자리·정렬·줄바꿈·굵기를 손대지 않는다 — 그것은 조각이 정한 값이고, 전에 그 값을 손으로 베껴 옮기던 것이
+        /// 어긋남의 원천이었다(T194 1-b 의 Δ 가 거기서 나왔다). 크기도 <b>하한보다 크면 그대로</b> 둔다.
         /// </summary>
-        static List<TmpInput> TakeTmpInputs(GameObject root)
+        static TMP_Text SkinTmp(TMP_Text t)
         {
-            var found = root.GetComponentsInChildren<TMP_InputField>(true);
-            if (found.Length == 0) return null;   // 거의 모든 조각이 여기서 끝난다(입력칸은 이름 팝업 하나뿐)
-            var list = new List<TmpInput>();
-            foreach (var f in found)
-            {
-                if (f == null) continue;
-                var rec = new TmpInput
-                {
-                    Go = f.gameObject,
-                    Text = f.textComponent != null ? f.textComponent.gameObject : null,
-                    Placeholder = f.placeholder != null ? f.placeholder.gameObject : null,
-                    Limit = f.characterLimit,
-                    Multi = f.lineType != TMP_InputField.LineType.SingleLine,
-                };
-                var caret = Find(f.transform, "Caret");
-                if (caret != null) UnityEngine.Object.DestroyImmediate(caret.gameObject);
-                UnityEngine.Object.DestroyImmediate(f);
-                list.Add(rec);
-            }
-            return list;
-        }
-
-        /// <summary>걷어 낸 입력칸을 uGUI <see cref="InputField"/> 로 다시 세운다 — 자리·크기·글자 자리는 프리팹 그대로고 부품만 우리 것이다.</summary>
-        static void RestoreInputs(List<TmpInput> list)
-        {
-            if (list == null) return;
-            foreach (var rec in list)
-            {
-                if (rec.Go == null) continue;
-                var img = rec.Go.GetComponent<Image>();
-                if (img != null) img.raycastTarget = true;   // 입력칸은 눌려야 한다(바로 위에서 전부 껐다)
-                var f = rec.Go.AddComponent<InputField>();
-                var txt = rec.Text != null ? rec.Text.GetComponent<Text>() : null;
-                if (txt != null)
-                {
-                    // bestFit·리치 텍스트는 캐럿 자리를 어긋나게 한다(uGUI InputField 규약) · 한 줄은 넘쳐도 자르지 않고 흘린다
-                    txt.supportRichText = false; txt.resizeTextForBestFit = false;
-                    txt.horizontalOverflow = HorizontalWrapMode.Overflow;
-                    txt.verticalOverflow = VerticalWrapMode.Truncate;
-                    txt.raycastTarget = false;
-                    f.textComponent = txt;
-                }
-                var ph = rec.Placeholder != null ? rec.Placeholder.GetComponent<Graphic>() : null;
-                if (ph != null)
-                {
-                    var pt = ph as Text;
-                    if (pt != null) { pt.supportRichText = false; pt.resizeTextForBestFit = false; }
-                    ph.raycastTarget = false;
-                    f.placeholder = ph;
-                }
-                f.characterLimit = Mathf.Max(0, rec.Limit);
-                f.lineType = rec.Multi ? InputField.LineType.MultiLineNewline : InputField.LineType.SingleLine;
-                f.targetGraphic = img;
-                f.transition = Selectable.Transition.None;
-                f.text = "";
-            }
-        }
-
-        static Text ConvertTmp(TMP_Text tmp)
-        {
-            var go = tmp.gameObject;
-            string s = tmp.text; float fs = tmp.fontSize; Color c = tmp.color; var al = tmp.alignment;
-            bool auto = tmp.enableAutoSizing; float mn = tmp.fontSizeMin, mx = tmp.fontSizeMax;
-            UnityEngine.Object.DestroyImmediate(tmp);
-            var t = go.AddComponent<Text>();
-            // 프리팹 글자도 하한(T63) — 데모 프리팹의 작은 크기(12~30)를 그대로 옮기면 폰에서 안 읽힌다 · 종류는 Body(버튼은 Button() 이 다시 올린다)
-            int size = TextSize.Floor(Mathf.Max(12, Mathf.RoundToInt(fs)));
-            t.font = FontOrBuiltin(); t.text = TextGlyphs.Safe(s); t.fontSize = size; t.color = c; t.alignment = MapAlign(al);
-            t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Overflow; t.supportRichText = true; t.raycastTarget = false;
-            if (auto) { t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitFloor(Mathf.Max(10, (int)mn)); t.resizeTextMaxSize = TextSize.Floor(Mathf.Max(12, (int)mx)); }
-            // 조건 없이 붙인다 — 전에는 «머티리얼 이름에 Outline» 이거나 «밝은 글자» 일 때만이라 프리팹 글자가 화면마다 갈렸다(주인 04:4X · T63-outline)
+            if (t == null) return null;
+            var asset = TmpFont.Get();
+            if (asset != null) { t.font = asset; t.fontSharedMaterial = asset.material; }
+            t.text = TextGlyphs.Safe(t.text);
+            int size = TextSize.Floor(Mathf.Max(12, Mathf.RoundToInt(t.fontSize)));
+            if (size > t.fontSize) t.fontSize = size;                       // 하한만 올린다(조각이 더 크면 그대로)
+            if (t.enableAutoSizing) t.fontSizeMin = TextSize.BestFitFloor(Mathf.Max(10, Mathf.RoundToInt(t.fontSizeMin)));
+            t.raycastTarget = false;
             EnsureOutline(t, size);
+            TextAudit.Mark(t, TextKind.Body);
             return t;
         }
+        /// <summary>
+        /// T207 ② — <see cref="TextAnchor"/>(우리 코드가 주고받는 값) → TMP <see cref="TextAlignmentOptions"/>.
+        /// <para>
+        /// <b>왜 표를 태우나</b> — TMP 의 정렬은 «세로 비트 | 가로 비트» 인 <b>깃발</b>이고 uGUI 의 9칸 열거형과 값이 다르다.
+        /// 우리 화면 코드는 <c>TextAnchor.MiddleCenter</c> 같은 값을 <b>백 군데 넘게</b> 주고받으므로 공개 API 를 그대로 두고
+        /// <b>넣는 자리에서만</b> 이 표를 태운다(그 편이 diff 도 작고 되돌리기도 쉽다).
+        /// </para>
+        /// 세로 = <c>Top 0x100 · Middle 0x200 · Bottom 0x400</c> · 가로 = <c>Left 1 · Center 2 · Right 4</c> 라
+        /// <c>TextAnchor</c> 의 줄·칸을 그대로 자리 이동시키면 된다(<see cref="MapAlign"/> 의 정확한 역방향이다).
+        /// </summary>
+        public static TextAlignmentOptions TmpAlign(TextAnchor a)
+        {
+            int v = (int)a; if (v < 0 || v > 8) v = (int)TextAnchor.MiddleCenter;
+            return (TextAlignmentOptions)((0x100 << (v / 3)) | (1 << (v % 3)));
+        }
+
         static TextAnchor MapAlign(TextAlignmentOptions a)
         {
             int v = (int)a; int h = v & 0xFF; int vv = v >> 8;
@@ -1326,13 +1297,13 @@ namespace KkomaKnight.Game
             return null;
         }
         /// <summary>프리팹 안 글자 바꾸기. <paramref name="size"/> 를 주면 종류 하한(T63)으로 올려 넣고, bestFit 이면 최소도 <see cref="TextSize.BestFitMin"/> 으로. <paramref name="kind"/> 는 표식으로 남는다(게이트 판정).</summary>
-        public static Text SetText(Transform root, string path, string s, Color? color = null, int? size = null, TextKind kind = TextKind.Body)
+        public static TMP_Text SetText(Transform root, string path, string s, Color? color = null, int? size = null, TextKind kind = TextKind.Body)
         {
-            var t = Find(root, path); Text txt = null; if (t != null) { txt = t.GetComponent<Text>(); if (txt == null) txt = t.GetComponentInChildren<Text>(true); }
+            var t = Find(root, path); TMP_Text txt = null; if (t != null) { txt = t.GetComponent<TMP_Text>(); if (txt == null) txt = t.GetComponentInChildren<TMP_Text>(true); }
             if (txt == null) { Debug.LogWarning($"[UiKit] 글자 없음: {root.name}/{path}"); return null; }
             txt.text = TextGlyphs.Safe(s); if (color.HasValue) txt.color = color.Value;
-            if (size.HasValue) { int sz = TextSize.Floor(size.Value, kind); txt.fontSize = sz; txt.resizeTextMaxSize = sz; }
-            if (txt.resizeTextForBestFit) txt.resizeTextMinSize = TextSize.BestFitFloor(txt.resizeTextMinSize, kind);
+            if (size.HasValue) { int sz = TextSize.Floor(size.Value, kind); txt.fontSize = sz; txt.fontSizeMax = sz; }
+            if (txt.enableAutoSizing) txt.fontSizeMin = TextSize.BestFitFloor(Mathf.RoundToInt(txt.fontSizeMin), kind);
             EnsureOutline(txt);
             TextAudit.Mark(txt, kind);
             return txt;
@@ -1433,13 +1404,13 @@ namespace KkomaKnight.Game
             var go = Spawn(prefabKey, parent); var rt = (RectTransform)go.transform;
             if (rect.HasValue) Pct(rt, rect.Value);
             ButtonGradient(rt);
-            var txt = go.GetComponentInChildren<Text>(true);
+            var txt = go.GetComponentInChildren<TMP_Text>(true);
             // 버튼 글자 하한 = TextSize.Button(44 · T63) · bestFit 최소 32
-            if (txt != null) { txt.text = TextGlyphs.Safe(label); txt.fontSize = TextSize.Floor(txt.fontSize, TextKind.Button); txt.resizeTextForBestFit = true; txt.resizeTextMinSize = TextSize.BestFitMin; txt.resizeTextMaxSize = Mathf.Max(txt.fontSize, TextSize.Button); txt.horizontalOverflow = HorizontalWrapMode.Wrap; EnsureOutline(txt); TextAudit.Mark(txt, TextKind.Button); }
+            if (txt != null) { txt.text = TextGlyphs.Safe(label); txt.fontSize = TextSize.Floor(Mathf.RoundToInt(txt.fontSize), TextKind.Button); txt.enableAutoSizing = true; txt.fontSizeMin = TextSize.BestFitMin; txt.fontSizeMax = Mathf.Max(txt.fontSize, TextSize.Button); txt.textWrappingMode = TextWrappingModes.Normal; EnsureOutline(txt); TextAudit.Mark(txt, TextKind.Button); }
             Clickable(rt, onClick);
             return rt;
         }
-        public static Text ButtonText(Component b) => b.GetComponentInChildren<Text>(true);
+        public static TMP_Text ButtonText(Component b) => b.GetComponentInChildren<TMP_Text>(true);
 
         /// <summary>
         /// ③ 그라데이션(T72 3항 · 우선순위 1 «주황/파랑/회색 버튼») — 프리팹 버튼의 <b>보이는 배경 그림 안쪽</b>에 아래 어둠 한 장(<see cref="BtnGradientKey"/> · Ink α <see cref="GradientBottomAlpha"/>)을 덧댄다.
@@ -1604,15 +1575,15 @@ namespace KkomaKnight.Game
         /// 그래서 <b>넉넉한 칸</b>을 주고 재 «최대 크기(= fontSize)로 그릴 때의 폭» 을 얻는다(<see cref="TextAudit.BestFitSize"/> 와 같은 방법 · 새 <see cref="TextGenerator"/>).
         /// </para>
         /// </summary>
-        public static float TextWidthAtFullSize(Text text)
+        public static float TextWidthAtFullSize(TMP_Text text)
         {
             if (text == null || string.IsNullOrEmpty(text.text)) return 0f;
-            var s = text.GetGenerationSettings(new Vector2(FrameW * 4f, FrameH * 4f));   // 넉넉한 칸 = bestFit 이 제 크기를 고른다
-            s.scaleFactor = 1f;
-            return new TextGenerator().GetPreferredWidth(text.text, s);
+            // T207 ② — TMP 는 «이 글자를 제 크기로 그리면 얼마나 넓은가» 를 스스로 답한다(GetPreferredValues).
+            // 넉넉한 칸을 주는 까닭은 그대로다: 칸이 좁으면 자동 크기가 글자를 줄여 «제 크기» 가 아닌 폭이 나온다.
+            return text.GetPreferredValues(FrameW * 4f, FrameH * 4f).x;
         }
 
-        public static void CenterIconTitle(RectTransform icon, Text text, float rowWPct, float iconPct = TitleIconPct, float gapPct = TitleGapPct)
+        public static void CenterIconTitle(RectTransform icon, TMP_Text text, float rowWPct, float iconPct = TitleIconPct, float gapPct = TitleGapPct)
         {
             if (icon == null || text == null) return;
             float rowPx = Mathf.Max(1f, rowWPct / 100f * FrameW);
@@ -1633,7 +1604,7 @@ namespace KkomaKnight.Game
         /// 제목 덩어리가 줄 가운데에서 얼마나 벗어났나(%p · 왼쪽 여백 − 오른쪽 여백 · 0 이면 정확히 가운데) — <see cref="CenterIconTitle"/> 의 <b>짝이 되는 자</b>다(T170).
         /// 재는 것과 놓는 것을 같은 파일에 두어, 계산이 바뀌면 게이트도 같이 따라오게 한다(테스트가 앵커 산수를 제 손으로 다시 쓰면 둘이 갈라진다).
         /// </summary>
-        public static float TitleBlockOffsetPct(RectTransform icon, Text text)
+        public static float TitleBlockOffsetPct(RectTransform icon, TMP_Text text)
         {
             if (icon == null || text == null) return 0f;
             float left = icon.anchorMin.x * 100f, right = 100f - text.rectTransform.anchorMax.x * 100f;

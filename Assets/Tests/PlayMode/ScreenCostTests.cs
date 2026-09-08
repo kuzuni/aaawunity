@@ -5,6 +5,7 @@ using System.Text;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -79,7 +80,7 @@ namespace KkomaKnight.Tests.Play
                 if (g == null || !g.isActiveAndEnabled || g.canvasRenderer == null) continue;
                 if (g.color.a <= 0.004f) continue;                       // 안 보이는 것은 칠하지 않는다
                 c.graphics++;
-                if (g is RawImage) c.raws++; else if (g is Image) c.images++; else if (g is Text) c.texts++;
+                if (g is RawImage) c.raws++; else if (g is Image) c.images++; else if (g is TMP_Text) c.texts++;
                 var rt = g.rectTransform; if (rt == null) continue;
                 var w = new Vector3[4]; rt.GetWorldCorners(w);           // 실제 화면에서 차지하는 사각형(스케일·회전 반영)
                 float raw = Mathf.Abs((w[2].x - w[0].x) * (w[2].y - w[0].y)) / screen;

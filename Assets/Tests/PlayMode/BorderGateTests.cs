@@ -4,6 +4,7 @@ using System.Text;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -304,7 +305,7 @@ namespace KkomaKnight.Tests.Play
                 {
                     var trow = UiKit.Find(prRoot, "Title") as RectTransform; Assert.IsNotNull(trow, "특권 제목 줄");
                     var tic = UiKit.Find(trow, "Icon") as RectTransform; Assert.IsNotNull(tic, "특권 제목 아이콘");
-                    Text ttx = null; foreach (var t in trow.GetComponentsInChildren<Text>(true)) { ttx = t; break; }
+                    TMP_Text ttx = null; foreach (var t in trow.GetComponentsInChildren<TMP_Text>(true)) { ttx = t; break; }
                     Assert.IsNotNull(ttx, "특권 제목 글자");
                     float off = UiKit.TitleBlockOffsetPct(tic, ttx);
                     Assert.AreEqual(0f, off, 2.0f, "특권 제목 덩어리가 줄 가운데(좌우 여백 차 " + off.ToString("0.0") + "%p · T170)");

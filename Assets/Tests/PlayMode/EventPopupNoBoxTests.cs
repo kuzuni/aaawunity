@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -64,7 +65,7 @@ namespace KkomaKnight.Tests.Play
         {
             foreach (var b in root.GetComponentsInChildren<Button>(true))
             {
-                var t = b.GetComponentInChildren<Text>(true);
+                var t = b.GetComponentInChildren<TMP_Text>(true);
                 if (t == null || !match(t.text) || !b.IsInteractable()) continue;
                 b.onClick.Invoke(); return true;
             }
@@ -96,7 +97,7 @@ namespace KkomaKnight.Tests.Play
             int counted = 0;
             for (int i = 0; i < noBox.childCount; i++)
             {
-                var t = noBox.GetChild(i).GetComponent<Text>();
+                var t = noBox.GetChild(i).GetComponent<TMP_Text>();
                 if (t == null || !t.gameObject.activeInHierarchy || string.IsNullOrEmpty(t.text)) continue;
                 float d = Mathf.Abs(UiKit.Luma(t.color) - dimLuma);
                 Debug.Log($"[T141] {name} 글자 «{t.text}» 밝기차 {d:0.00} (색 {ColorUtility.ToHtmlStringRGB(t.color)})");

@@ -5,6 +5,7 @@ using System.IO;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -100,7 +101,7 @@ namespace KkomaKnight.Tests.Play
             int cells = 0; string more = null;
             foreach (var (rt, r) in boxes)
             {
-                var txt = rt.GetComponent<Text>();
+                var txt = rt.GetComponent<TMP_Text>();
                 if (txt != null) { more = txt.text; AssertInside(r, strip.rect, 1f, $"[{where}] «{txt.text}» 칸"); continue; }
                 cells++;
                 AssertInside(r, strip.rect, 1f, $"[{where}] 셀 {rt.name}");
@@ -179,8 +180,8 @@ namespace KkomaKnight.Tests.Play
             Assert.GreaterOrEqual(r12.cells, 6, "그래도 6개 이상은 보여야 한다");
             Assert.IsNotNull(r12.more, "«+N»");
             var first = strip.GetChild(0) as RectTransform; Assert.AreEqual(all[0].Id, first.name, "첫 셀 = 첫 특전");
-            var badge = first.GetComponentInChildren<Text>(false); Assert.IsNotNull(badge, "중복 특전엔 개수 배지가 있다"); Assert.AreEqual("2", badge.text, "배지 = 중복 개수");
-            var bookCount = book != null ? book.GetComponentInChildren<Text>(false) : null; if (bookCount != null) Assert.AreEqual("13", bookCount.text, "책 버튼 개수 = 얻은 특전 수(중복 포함)");
+            var badge = first.GetComponentInChildren<TMP_Text>(false); Assert.IsNotNull(badge, "중복 특전엔 개수 배지가 있다"); Assert.AreEqual("2", badge.text, "배지 = 중복 개수");
+            var bookCount = book != null ? book.GetComponentInChildren<TMP_Text>(false) : null; if (bookCount != null) Assert.AreEqual("13", bookCount.text, "책 버튼 개수 = 얻은 특전 수(중복 포함)");
             Check("특전 12개+중복");
             yield return SaveScreens("perkstrip-12");
 

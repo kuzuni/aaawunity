@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -92,28 +93,53 @@ namespace KkomaKnight.Game
         static string Short(string s) { if (string.IsNullOrEmpty(s)) return ""; s = s.Replace("\n", "⏎"); return s.Length > 18 ? s.Substring(0, 18) + "…" : s; }
 
         /// <summary>
-        /// 아웃라인 판정(T63-outline · 주인 04:4X «모든 글자들 다 검정 아웃라인 · 어떤 건 있고 어떤 건 없고») —
-        /// <see cref="Outline"/> 이 정확히 1개이고 색이 <see cref="UiKit.OutlineColor"/> 이며 두께가 <see cref="UiKit.OutlineWidth"/> 와 맞아야 통과.
-        /// 두께는 «쓰이는 크기»(bestFit 이면 최대 크기)로 재는데, <see cref="UiKit.EnsureOutline"/> 가 붙일 때 쓰는 크기와 같은 식이다.
+        /// 아웃라인 판정(T63-outline · 주인 04:4X «모든 글자들 다 검정 아웃라인 · 어떤 건 있고 어떤 건 없고»).
+        /// <para>
+        /// <b>T207 ② 로 판정이 바뀌었다</b> — 주인이 «tmpro로 아웃라인 해야지 진짜 메테리얼로» 를 정했으므로 테는 이제
+        /// <b>컴포넌트가 아니라 SDF 머티리얼</b>이 그린다. 그래서 «몇 개 붙었나» 가 아니라 <b>«이 글자가 쓰는 머티리얼이
+        /// 테를 켜고 있나»</b>를 본다: <c>_OutlineWidth &gt; 0</c> · <c>_OutlineColor</c> 가 우리 검정.
+        /// </para>
+        /// 그리고 <b>사본을 밀어 겹치던 옛 컴포넌트</b>(uGUI <see cref="Outline"/> 네 장 · <see cref="TextOutline8"/> 여덟 방향)가
+        /// 남아 있으면 테가 <b>두 겹</b>이 되므로 그것도 어긋남으로 센다 — <see cref="UiKit.EnsureOutline"/> 가 걷어 내지만 자도 본다.
+        /// 두께를 크기로 나눠 재던 옛 계산은 <b>사라졌다</b>: SDF 두께는 비율이라 글자 크기에 저절로 비례한다(T194 의 함정이 여기서 없어진다).
         /// </summary>
-        static void FillOutline(Row row, Text t)
+        /// <summary>
+        /// 이 글자에 <b>우리 규격의 검은 테</b>가 걸려 있는가 — 자들이 «여기에 아웃라인이 있어야 읽힌다» 를 단언할 때 부른다.
+        /// <para>
+        /// T207 ② 전에는 자들이 <c>GetComponent&lt;TextOutline8&gt;()</c> 로 물었는데, 테가 머티리얼로 옮겨간 뒤로 그 물음은
+        /// <b>늘 «없다»</b> 가 된다 — 컴포넌트가 없어진 것이지 테가 없어진 것이 아니다. 판정을 한 곳(<see cref="FillOutline"/>)에
+        /// 모아 두고 자들은 이 함수를 부른다(그러면 규격이 바뀔 때 고칠 자리가 하나다).
+        /// </para>
+        /// </summary>
+        public static bool HasOutline(TMP_Text t)
         {
-            // T204 — 테는 이제 `TextOutline8`(여덟 방향 같은 반경)이다. 옛 uGUI `Outline` 이 남아 있으면
-            // 마름모 테가 겹쳐 두 겹이 되므로 «섞여 있다» 를 어긋남으로 센다(EnsureOutline 이 걷어 내지만 자도 본다).
-            var stale = t.GetComponents<Outline>();
-            var ols = t.GetComponents<TextOutline8>();
-            row.Outlines = ols.Length;
-            if (stale.Length > 0) { row.OutlineBad = true; row.OutlineWhy = "옛 Outline " + stale.Length + "개(T204)"; return; }
-            if (ols.Length == 0) { row.OutlineBad = true; row.OutlineWhy = "없음"; return; }
-            if (ols.Length > 1) { row.OutlineBad = true; row.OutlineWhy = ols.Length + "개"; return; }
-            var ol = ols[0];
-            var c = ol.effectColor;
+            if (t == null) return false;
+            var row = new Row();
+            FillOutline(row, t);
+            return !row.OutlineBad;
+        }
+
+        static void FillOutline(Row row, TMP_Text t)
+        {
+            var stale4 = t.GetComponents<Outline>();
+            var stale8 = t.GetComponents<TextOutline8>();
+            if (stale4.Length + stale8.Length > 0)
+            {
+                row.OutlineBad = true;
+                row.OutlineWhy = "옛 컴포넌트 테 " + (stale4.Length + stale8.Length) + "개(T207 ② 는 머티리얼로 그린다)";
+                return;
+            }
+            var mat = t.fontSharedMaterial != null ? t.fontSharedMaterial : t.materialForRendering;
+            if (mat == null) { row.OutlineBad = true; row.OutlineWhy = "머티리얼 없음"; return; }
+            if (!mat.HasProperty(TmpFont.OutlineWidthProp)) { row.OutlineBad = true; row.OutlineWhy = "SDF 아님(" + mat.name + ")"; return; }
+            float w = mat.GetFloat(TmpFont.OutlineWidthProp);
+            row.Outlines = w > 0f ? 1 : 0;
+            if (w <= 0f) { row.OutlineBad = true; row.OutlineWhy = "두께 0"; return; }
+            if (!mat.HasProperty(TmpFont.OutlineColorProp)) return;      // 색 프로퍼티가 없는 변형 셰이더면 두께만 본다
+            var c = mat.GetColor(TmpFont.OutlineColorProp);
             if (Mathf.Abs(c.r - UiKit.OutlineColor.r) > 0.02f || Mathf.Abs(c.g - UiKit.OutlineColor.g) > 0.02f ||
-                Mathf.Abs(c.b - UiKit.OutlineColor.b) > 0.02f || Mathf.Abs(c.a - UiKit.OutlineColor.a) > 0.02f)
-            { row.OutlineBad = true; row.OutlineWhy = $"색 {c.r:0.00},{c.g:0.00},{c.b:0.00},{c.a:0.00}"; return; }
-            float want = UiKit.OutlineWidth(t.resizeTextForBestFit ? Mathf.Max(t.resizeTextMaxSize, t.fontSize) : t.fontSize);
-            float got = Mathf.Abs(ol.radius);
-            if (Mathf.Abs(got - want) > 0.26f) { row.OutlineBad = true; row.OutlineWhy = $"두께 {got:0.0}≠{want:0.0}"; }
+                Mathf.Abs(c.b - UiKit.OutlineColor.b) > 0.02f)
+            { row.OutlineBad = true; row.OutlineWhy = $"색 {c.r:0.00},{c.g:0.00},{c.b:0.00}"; }
         }
 
         /// <summary>
@@ -170,14 +196,14 @@ namespace KkomaKnight.Game
         /// </summary>
         public const bool ColorStrict = true;
 
-        public static TextKind KindOf(Text t)
+        public static TextKind KindOf(TMP_Text t)
         {
             var tag = t != null ? t.GetComponent<TextKindTag>() : null;
             return tag != null ? tag.Kind : TextKind.Body;
         }
 
         /// <summary>종류를 기록한다 — Body 는 표식 없음(있으면 Body 로 되돌림).</summary>
-        public static void Mark(Text t, TextKind kind)
+        public static void Mark(TMP_Text t, TextKind kind)
         {
             if (t == null) return;
             if (kind == TextKind.Body)
@@ -194,7 +220,7 @@ namespace KkomaKnight.Game
         {
             var rows = new List<Row>();
             if (root == null) return rows;
-            foreach (var t in root.GetComponentsInChildren<Text>(false))
+            foreach (var t in root.GetComponentsInChildren<TMP_Text>(false))
             {
                 if (t == null || !t.isActiveAndEnabled || string.IsNullOrWhiteSpace(t.text)) continue;
                 var kind = KindOf(t);
@@ -203,15 +229,15 @@ namespace KkomaKnight.Game
                 var row = new Row
                 {
                     Screen = screen, Path = PathOf(t.transform, root), Text = t.text, Kind = kind,
-                    FontSize = t.fontSize, Min = min, BestFit = t.resizeTextForBestFit, BestFitMinSize = t.resizeTextMinSize,
+                    FontSize = Mathf.RoundToInt(t.fontSize), Min = min, BestFit = t.enableAutoSizing, BestFitMinSize = Mathf.RoundToInt(t.fontSizeMin),
                     RectW = r.width, RectH = r.height, PrefW = t.preferredWidth, PrefH = t.preferredHeight,
                 };
                 row.Missing = TextGlyphs.Missing(t.text);
-                row.Used = t.resizeTextForBestFit ? BestFitSize(t) : t.fontSize;
-                int effective = t.resizeTextForBestFit ? Mathf.Max(t.fontSize, t.resizeTextMaxSize) : t.fontSize;
+                row.Used = t.enableAutoSizing ? BestFitSize(t) : Mathf.RoundToInt(t.fontSize);
+                int effective = Mathf.RoundToInt(t.enableAutoSizing ? Mathf.Max(t.fontSize, t.fontSizeMax) : t.fontSize);
                 row.FloorBad = kind != TextKind.Small && effective < min;
-                row.BestFitBad = kind != TextKind.Small && t.resizeTextForBestFit && t.resizeTextMinSize < TextSize.BestFitMin;
-                bool wideBad = t.horizontalOverflow == HorizontalWrapMode.Overflow && row.PrefW > row.RectW + 1f;
+                row.BestFitBad = kind != TextKind.Small && t.enableAutoSizing && t.fontSizeMin < TextSize.BestFitMin;
+                bool wideBad = t.textWrappingMode == TextWrappingModes.NoWrap && row.PrefW > row.RectW + 1f;
                 bool tallBad = row.PrefH > row.RectH + 1f;
                 row.Clipped = wideBad || tallBad;
                 FillOutline(row, t);
@@ -225,12 +251,34 @@ namespace KkomaKnight.Game
             return rows;
         }
 
-        /// <summary>bestFit 이 실제로 고른 크기(글자 단위) — <c>cachedTextGenerator.fontSizeUsedForBestFit</c> 는 캔버스 scaleFactor 가 곱해진 값이라(CI #94 표의 «최소 크기(실제) 6~8») scaleFactor 1 로 다시 굴린다(T63-lobby).</summary>
-        public static int BestFitSize(Text t)
+        /// <summary>
+        /// 자동 크기(bestFit)가 <b>실제로 고른</b> 글자 크기.
+        /// <para>
+        /// T207 ② 로 글자가 TMP 가 되면서 이 함수가 <b>훨씬 정직해졌다</b> — 전에는 uGUI <c>TextGenerator</c> 를 손으로 돌리고
+        /// «캔버스 scaleFactor 가 곱해진 값» 을 되나누어야 했는데(CI #… 에서 그 곱이 실제로 틀렸다), TMP 는 자동 크기를
+        /// <b>그려질 때</b> 정하고 그 값을 <c>fontSize</c> 에 그대로 남긴다. 그러니 «한 번 갱신하고 읽는다» 가 전부다.
+        /// </para>
+        /// </summary>
+        public static int BestFitSize(TMP_Text t)
         {
-            var s = t.GetGenerationSettings(t.rectTransform.rect.size); s.scaleFactor = 1f;
-            var g = new TextGenerator(); g.Populate(t.text, s);
-            return Mathf.Max(g.fontSizeUsedForBestFit, 0);
+            if (t == null) return 0;
+            t.ForceMeshUpdate();
+            return Mathf.Max(0, Mathf.RoundToInt(t.fontSize));
+        }
+
+        /// <summary>
+        /// 이 글자가 <b>실제로 몇 줄로</b> 그려졌나(칸을 넘겨 접힌 줄까지 센다).
+        /// <para>
+        /// T207 ② 전에는 <c>TextGenerator</c> 를 손으로 돌려 <c>lineCount</c> 를 읽어야 했는데, TMP 는 그린 결과를
+        /// <see cref="TMP_Text.textInfo"/> 에 남기므로 «갱신하고 읽는다» 가 전부다. 자들이 «라벨은 2줄까지»
+        /// 같은 계약을 이 값으로 지킨다(T68 ①).
+        /// </para>
+        /// </summary>
+        public static int LineCount(TMP_Text t)
+        {
+            if (t == null) return 0;
+            t.ForceMeshUpdate();
+            return t.textInfo != null ? t.textInfo.lineCount : 0;
         }
 
         static string PathOf(Transform t, Transform root)

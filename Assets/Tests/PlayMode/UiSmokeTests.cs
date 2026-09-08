@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -94,7 +95,7 @@ namespace KkomaKnight.Tests.Play
             foreach (var d in DemoContains) if (s.IndexOf(d, StringComparison.Ordinal) >= 0) return true;
             return false;
         }
-        IEnumerable<Text> ActiveTexts() => _app.UiCanvas.GetComponentsInChildren<Text>(false);
+        IEnumerable<TMP_Text> ActiveTexts() => _app.UiCanvas.GetComponentsInChildren<TMP_Text>(false);
         bool HasText(Func<string, bool> pred) { foreach (var t in ActiveTexts()) if (pred(t.text ?? "")) return true; return false; }
         /// <summary>
         /// 같은 글자가 <paramref name="root"/> 아래 <b>몇 군데</b> 있는가 — «중복이니 빼라»(T168) 처럼 «하나만 있어야 한다» 를 재는 자리에 쓴다.
@@ -107,7 +108,7 @@ namespace KkomaKnight.Tests.Play
         static int CountTextIn(Transform root, Func<string, bool> pred)
         {
             int n = 0;
-            foreach (var t in root.GetComponentsInChildren<Text>(true)) if (t != null && pred(t.text ?? "")) n++;
+            foreach (var t in root.GetComponentsInChildren<TMP_Text>(true)) if (t != null && pred(t.text ?? "")) n++;
             return n;
         }
 
@@ -129,7 +130,7 @@ namespace KkomaKnight.Tests.Play
         static bool Click(Transform root, Func<string, bool> label)
         {
             foreach (var b in root.GetComponentsInChildren<Button>(false))
-                foreach (var t in b.GetComponentsInChildren<Text>(false))
+                foreach (var t in b.GetComponentsInChildren<TMP_Text>(false))
                     if (label(t.text ?? "")) { b.onClick.Invoke(); return true; }
             return false;
         }
@@ -166,10 +167,10 @@ namespace KkomaKnight.Tests.Play
         {
             Canvas.ForceUpdateCanvases();
             int n = 0; var bad = new List<string>();
-            foreach (var t in root.GetComponentsInChildren<Text>(false))
+            foreach (var t in root.GetComponentsInChildren<TMP_Text>(false))
             {
                 if (t.name != name || !t.isActiveAndEnabled || string.IsNullOrWhiteSpace(t.text)) continue;
-                n++; int used = t.resizeTextForBestFit ? TextAudit.BestFitSize(t) : t.fontSize;
+                n++; int used = t.enableAutoSizing ? TextAudit.BestFitSize(t) : Mathf.RoundToInt(t.fontSize);
                 if (used < min) bad.Add($"«{t.text}» 실제 {used} < {min} (rect {t.rectTransform.rect.width:0}×{t.rectTransform.rect.height:0} · pref {t.preferredWidth:0}×{t.preferredHeight:0})");
             }
             Assert.Greater(n, 0, $"[{where}] 이름 «{name}» 인 활성 Text 가 없다");
@@ -200,12 +201,12 @@ namespace KkomaKnight.Tests.Play
         /// 깊은 검색(<c>GetComponentInChildren&lt;Text&gt;(true)</c>)으로 집으면 T69-overlay 가 칸 맨 뒤에 깐 `ItemFrame_01` 조각의
         /// 장식 글자를 먼저 집는다(T91 — 그 조각의 프리팹 자리 글자가 «Text» 라 골드 값과 비교가 깨졌고 배포까지 막혔다).
         /// </summary>
-        static Text RewardValueText(Transform group)
+        static TMP_Text RewardValueText(Transform group)
         {
             Assert.Greater(group.childCount, 0, "보상 줄에 칸");
             var cell = group.GetChild(0);
-            for (int i = 0; i < cell.childCount; i++) { var t = cell.GetChild(i).GetComponent<Text>(); if (t != null) return t; }
-            var deep = cell.GetComponentInChildren<Text>(true); Assert.IsNotNull(deep, "보상 칸의 값 글자");
+            for (int i = 0; i < cell.childCount; i++) { var t = cell.GetChild(i).GetComponent<TMP_Text>(); if (t != null) return t; }
+            var deep = cell.GetComponentInChildren<TMP_Text>(true); Assert.IsNotNull(deep, "보상 칸의 값 글자");
             return deep;
         }
         /// <summary>
@@ -303,7 +304,7 @@ namespace KkomaKnight.Tests.Play
                 Assert.GreaterOrEqual(img.color.a, 0.99f, what + " 카드 «" + name + "» 는 몸통을 꽉 채운다(덧칠이면 조각의 회색 바탕이 비쳐 색이 죽는다 · T100 ⓓ 회차 2)");
             }
         }
-        static void AssertReadable(Text t, int min, string what)
+        static void AssertReadable(TMP_Text t, int min, string what)
         {
             Assert.IsNotNull(t, what + " 글자가 있어야 한다");
             Assert.GreaterOrEqual(TextAudit.BestFitSize(t), min, $"{what} «{t.text}» 를 bestFit 이 {min} 밑으로 줄인다(실제 {TextAudit.BestFitSize(t)})");
@@ -431,16 +432,15 @@ namespace KkomaKnight.Tests.Play
                 // T63-lobby — 아이콘 라벨(사이드 4 · 보조 2 · 이벤트)은 보조 하한(36)으로 2줄까지 잘림 없이: bestFit 이 줄이지 않고(TextGenerator 로 직접 굴려 36) · 선호 높이 ≤ 칸
                 {
                     int captions = 0;
-                    foreach (var t in lobby.GetComponentsInChildren<Text>(false))
+                    foreach (var t in lobby.GetComponentsInChildren<TMP_Text>(false))
                     {
                         if (t.transform.parent == null || !t.transform.parent.name.StartsWith("Side:")) continue;
                         captions++;
                         // T68 ①: 라벨은 보조 하한(36 · ROUTINE T68 1항) — 아이콘이 칸 폭 75% 를 차지해야 하므로 본문 40 두 줄은 칸에 안 들어간다(결정 128)
                         Assert.AreEqual(TextSize.Aux, t.fontSize, $"라벨 «{t.text}» 크기 = 보조 하한"); Assert.AreEqual(TextKind.Aux, TextAudit.KindOf(t), $"라벨 «{t.text}» 종류 = Aux");
-                        var gs = t.GetGenerationSettings(t.rectTransform.rect.size); gs.scaleFactor = 1f;   // 캔버스 배율을 빼고 글자 단위로(fontSizeUsedForBestFit 은 scaleFactor 가 곱해진 값)
-                        var gen = new TextGenerator(); gen.Populate(t.text, gs);
-                        Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, TextSize.Aux, $"라벨 «{t.text}» 가 칸({t.rectTransform.rect.width:0}×{t.rectTransform.rect.height:0})에 36 으로 안 들어가 bestFit 이 줄였다");
-                        Assert.LessOrEqual(gen.lineCount, 2, $"라벨 «{t.text}» 는 2줄까지");
+                        int genUsed = TextAudit.BestFitSize(t); int genLines = TextAudit.LineCount(t);   // T207 ② — TMP 는 자동 크기를 «그릴 때» 정하므로 TextGenerator 를 손으로 돌릴 일이 없다
+                        Assert.GreaterOrEqual(genUsed, TextSize.Aux, $"라벨 «{t.text}» 가 칸({t.rectTransform.rect.width:0}×{t.rectTransform.rect.height:0})에 36 으로 안 들어가 bestFit 이 줄였다");
+                        Assert.LessOrEqual(genLines, 2, $"라벨 «{t.text}» 는 2줄까지");
                         // T68 ① 아이콘 = 칸 폭의 ≥ 75%(주인 «아이콘 너무 작음» · 1.5~1.8배)
                         var cell = (RectTransform)t.transform.parent; var icon = (RectTransform)UiKit.Find(cell, "Icon"); Assert.IsNotNull(icon, $"칸 {cell.name} 아이콘");
                         Assert.GreaterOrEqual(icon.rect.width, cell.rect.width * LobbyScreen.CaptionIconMinW - 1f, $"칸 {cell.name} 아이콘 폭 ≥ 칸 폭 75%");
@@ -498,7 +498,7 @@ namespace KkomaKnight.Tests.Play
                     Assert.AreEqual(3, checks, "완료 줄 ✅ 3(프리팹 Check · 레퍼런스 15)");
                     Assert.IsTrue(HasText(s => s == "적 50마리 처치"), "줄 제목은 우리말");
                     // T78 — 줄 바탕(프리팹 ListFrame_08)이 어두워 제목은 흰 글자 + 외곽선이어야 읽힌다(screens run 148 눈 확인)
-                    { var t0 = UiKit.Find(q0, "Title").GetComponent<Text>(); Assert.IsNotNull(t0, "줄 제목 글자"); Assert.IsNotNull(t0.GetComponent<TextOutline8>(), "줄 제목 외곽선"); Assert.Greater(t0.color.r + t0.color.g + t0.color.b, 2.4f, "줄 제목은 밝은 글자"); }
+                    { var t0 = UiKit.Find(q0, "Title").GetComponent<TMP_Text>(); Assert.IsNotNull(t0, "줄 제목 글자"); Assert.IsTrue(TextAudit.HasOutline(t0), "줄 제목 외곽선"); Assert.Greater(t0.color.r + t0.color.g + t0.color.b, 2.4f, "줄 제목은 밝은 글자"); }
                     // T212 — 진행바 채움 색: **완료 줄만** 초록(우리 «초록 = 열림/완료» 관례) · 미완 줄은 프리팹이 달고 온 노랑 그대로.
                     // 리터럴 색이 아니라 `Palette.Green` 을 견주는 까닭 = 이 자가 묻는 것은 «무슨 rgb 인가» 가 아니라 «우리 관례와 같은가» 다
                     // (팔레트가 바뀌면 화면과 자가 같이 움직여야 옳다 · 결정 555 «구현을 부르는 식» 과는 다른 갈래 — 여기서 부르는 것은 구현이 아니라 규약이다).
@@ -536,7 +536,7 @@ namespace KkomaKnight.Tests.Play
                     // 그래서 이번에는 **rect 가 실제로 그만큼 크다** 를 잰다(그것이 bestFit 뒤 글자 크기의 상한이다).
                     var cellT = UiKit.Find(ovA, "Cell"); Assert.IsNotNull(cellT, "출석 보상 칸");
                     var qtyT = UiKit.Find(cellT, "Qty"); Assert.IsNotNull(qtyT, "보상 수량 글자");
-                    var qty = qtyT.GetComponent<Text>(); Assert.IsNotNull(qty, "수량 Text");
+                    var qty = qtyT.GetComponent<TMP_Text>(); Assert.IsNotNull(qty, "수량 Text");
                     Assert.AreEqual(TextAnchor.LowerRight, qty.alignment, "수량은 아이콘 오른쪽 아래(레퍼런스 16 · T133 ⓐ)");
                     Assert.GreaterOrEqual(qty.fontSize, TextSize.Body, $"수량 글자 상한이 본문 하한보다 작다({qty.fontSize} · T133 ⓐ)");
                     var qrt = qty.rectTransform;
@@ -548,7 +548,7 @@ namespace KkomaKnight.Tests.Play
                 }
                 AssertNoTextClip("출석 팝업", _app.Overlay.Root);
                 // T76 — 출석 팝업은 GUI Pro `Rewards_Daily7_Popup` 프리팹이다: 리본은 프리팹 Title_01_Deco_Yellow · 칸은 DailyFrame(상태 바탕) · 오늘(1일차)만 Bg_Focus1 · 받은 날 ✅ 0
-                { var rib = UiKit.Find(_app.Overlay.Root, "Title_01_Deco_Yellow"); Assert.IsNotNull(rib, "출석 리본 = 프리팹 Title_01_Deco_Yellow"); var rt = rib.GetComponentInChildren<Text>(true); Assert.IsNotNull(rt, "출석 리본 글자"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(rt), "리본 = 제목 종류"); Assert.GreaterOrEqual(rt.rectTransform.rect.height, rt.preferredHeight, "리본 글자 rect ≥ 선호 높이(RibbonTextFit)"); }
+                { var rib = UiKit.Find(_app.Overlay.Root, "Title_01_Deco_Yellow"); Assert.IsNotNull(rib, "출석 리본 = 프리팹 Title_01_Deco_Yellow"); var rt = rib.GetComponentInChildren<TMP_Text>(true); Assert.IsNotNull(rt, "출석 리본 글자"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(rt), "리본 = 제목 종류"); Assert.GreaterOrEqual(rt.rectTransform.rect.height, rt.preferredHeight, "리본 글자 rect ≥ 선호 높이(RibbonTextFit)"); }
                 {
                     var d1 = UiKit.Find(_app.Overlay.Root, "Day:1"); Assert.IsNotNull(d1, "1일차 칸");
                     Assert.IsNotNull(UiKit.Find(d1, "Bg_Focus1"), "칸 = 프리팹 DailyFrame 조각(상태 바탕)");
@@ -614,7 +614,7 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNull(UiKit.Find(pv, "ui.tabBar"), "특권: 탭 바 없음"); Assert.IsFalse(HasText(s => s == "START"), "로비는 숨겨져 있다");
                 // T63-lobbypopups — 특권: 잘림 0 · 부제 40 안 줄어듦(문구 «활성화해») · 제목 «특권» 은 제목 종류 60
                 AssertNoTextClip("특권 페이지", pv); AssertUsedAtLeast("특권 부제", pv, "Sub", TextSize.Body);
-                { Text pt = null; foreach (var t in pv.GetComponentsInChildren<Text>(false)) if (t.text == "특권") pt = t; Assert.IsNotNull(pt, "«특권» 글자"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(pt), "«특권» = 제목 종류"); Assert.GreaterOrEqual(TextAudit.BestFitSize(pt), TextSize.Title, "«특권» 실제 크기 ≥ 60");
+                { TMP_Text pt = null; foreach (var t in pv.GetComponentsInChildren<TMP_Text>(false)) if (t.text == "특권") pt = t; Assert.IsNotNull(pt, "«특권» 글자"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(pt), "«특권» = 제목 종류"); Assert.GreaterOrEqual(TextAudit.BestFitSize(pt), TextSize.Title, "«특권» 실제 크기 ≥ 60");
                   // T170 회차 3 — 위 한 줄이 55 로 빨개졌을 때 «왜» 를 바로 말해 주는 자(결정 490): 60 이 들어가려면 칸이 한 줄(≈66px)보다 커야 하고
                   // 그 칸을 세운 것은 Label(…, -10, …, 120) 이다. 가운데 정렬 함수가 세로를 0/100 으로 덮으면 70px 이 되어 bestFit 이 글자를 줄인다.
                   float ptH = pt.rectTransform.rect.height;   // 앵커 비율이 아니라 «놓이고 난 실제 px» 를 잰다(부모가 줄이라 비율만 보면 헛값이다)
@@ -649,26 +649,24 @@ namespace KkomaKnight.Tests.Play
                 foreach (var rowName in new[] { "BGM", "SFX", "Language" })
                 {
                     var row = UiKit.Find(_app.Overlay.Root, rowName); Assert.IsNotNull(row, $"설정 줄 «{rowName}»");
-                    var lb = UiKit.Find(row, "Text").GetComponent<Text>(); Assert.IsNotNull(lb, $"«{rowName}» 라벨");
+                    var lb = UiKit.Find(row, "Text").GetComponent<TMP_Text>(); Assert.IsNotNull(lb, $"«{rowName}» 라벨");
                     Assert.AreEqual(Overlay.SetRowLabelSize, lb.fontSize, $"설정 라벨 «{lb.text}» 크기");
-                    var gs = lb.GetGenerationSettings(lb.rectTransform.rect.size); gs.scaleFactor = 1f;
-                    var gen = new TextGenerator(); gen.Populate(lb.text, gs);
-                    Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, Overlay.SetRowLabelSize, $"설정 라벨 «{lb.text}» 가 칸({lb.rectTransform.rect.width:0}×{lb.rectTransform.rect.height:0})에 안 들어가 bestFit 이 줄였다");
-                    Assert.AreEqual(1, gen.lineCount, $"설정 라벨 «{lb.text}» 는 한 줄");
+                    int genUsed = TextAudit.BestFitSize(lb); int genLines = TextAudit.LineCount(lb);   // T207 ② — TMP 는 자동 크기를 «그릴 때» 정하므로 TextGenerator 를 손으로 돌릴 일이 없다
+                    Assert.GreaterOrEqual(genUsed, Overlay.SetRowLabelSize, $"설정 라벨 «{lb.text}» 가 칸({lb.rectTransform.rect.width:0}×{lb.rectTransform.rect.height:0})에 안 들어가 bestFit 이 줄였다");
+                    Assert.AreEqual(1, genLines, $"설정 라벨 «{lb.text}» 는 한 줄");
                 }
                 foreach (var linkName in new[] { "Privacy", "Terms" })
                 {
-                    var lk = UiKit.Find(_app.Overlay.Root, linkName).GetComponent<Text>(); Assert.IsNotNull(lk, $"링크 «{linkName}»");
+                    var lk = UiKit.Find(_app.Overlay.Root, linkName).GetComponent<TMP_Text>(); Assert.IsNotNull(lk, $"링크 «{linkName}»");
                     Assert.AreEqual(TextSize.Body, lk.fontSize, $"링크 «{lk.text}» 크기 = 본문 하한");
                     var r = lk.rectTransform.rect;
                     Assert.LessOrEqual(lk.preferredWidth, r.width + 1f, $"링크 «{lk.text}» 가 칸({r.width:0}) 밖으로 넘친다");
                     Assert.LessOrEqual(lk.preferredHeight, r.height + 1f, $"링크 «{lk.text}» 가 칸({r.height:0}) 위아래로 잘린다");
                 }
                 var langTxt = UiKit.ButtonText(UiKit.Find(_app.Overlay.Root, "LangBtn")); Assert.IsNotNull(langTxt, "«한국어» 버튼 글자");
-                var lgs = langTxt.GetGenerationSettings(langTxt.rectTransform.rect.size); lgs.scaleFactor = 1f;
-                var lgen = new TextGenerator(); lgen.Populate(langTxt.text, lgs);
-                Assert.GreaterOrEqual(lgen.fontSizeUsedForBestFit, TextSize.Button, $"«{langTxt.text}» 버튼 글자가 칸({langTxt.rectTransform.rect.height:0})에 안 들어가 bestFit 이 버튼 하한 밑으로 줄였다");
-                var tap = UiKit.Find(_app.Overlay.Root, "TapToClose").GetComponent<Text>();
+                int lgenUsed = TextAudit.BestFitSize(langTxt); int lgenLines = TextAudit.LineCount(langTxt);   // T207 ② — TMP 는 자동 크기를 «그릴 때» 정하므로 TextGenerator 를 손으로 돌릴 일이 없다
+                Assert.GreaterOrEqual(lgenUsed, TextSize.Button, $"«{langTxt.text}» 버튼 글자가 칸({langTxt.rectTransform.rect.height:0})에 안 들어가 bestFit 이 버튼 하한 밑으로 줄였다");
+                var tap = UiKit.Find(_app.Overlay.Root, "TapToClose").GetComponent<TMP_Text>();
                 Assert.AreEqual(TextSize.Body, tap.fontSize, "«탭하여 닫기» 크기 = 본문 하한");
                 Assert.LessOrEqual(tap.preferredHeight, tap.rectTransform.rect.height + 1f, "«탭하여 닫기» 가 칸 위아래로 잘린다");
             }
@@ -731,8 +729,8 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(HasText(s => s == "Lv. 0") && HasText(s => s == "0/0"), "숫자는 0(레퍼런스 숫자 베끼지 않음)");
                 // T63-pet — 글자 가독성: 진행바 «0/0» 본문 40 이 바 안에 들어가고(바 높이 = Layout.PetBarH · 표 중심 유지) 펫 탭의 활성 Text 에 잘림/넘침 0(게이트 표와 같은 판정)
                 Canvas.ForceUpdateCanvases();
-                var barTxt0 = UiKit.Find(pet, "Pet:0/Bar").GetComponentInChildren<Text>(true); Assert.IsNotNull(barTxt0, "진행바 글자");
-                Assert.GreaterOrEqual(barTxt0.resizeTextMaxSize, TextSize.Body, "진행바 숫자 최대 = 본문 40"); Assert.GreaterOrEqual(TextAudit.BestFitSize(barTxt0), TextSize.Body, "진행바 숫자를 bestFit 이 안 줄인다(40 그대로)");
+                var barTxt0 = UiKit.Find(pet, "Pet:0/Bar").GetComponentInChildren<TMP_Text>(true); Assert.IsNotNull(barTxt0, "진행바 글자");
+                Assert.GreaterOrEqual(barTxt0.fontSizeMax, TextSize.Body, "진행바 숫자 최대 = 본문 40"); Assert.GreaterOrEqual(TextAudit.BestFitSize(barTxt0), TextSize.Body, "진행바 숫자를 bestFit 이 안 줄인다(40 그대로)");
                 Assert.GreaterOrEqual(barTxt0.rectTransform.rect.height + 1f, barTxt0.preferredHeight, "진행바 글자 rect 높이 ≥ 선호 높이(잘림 없음)");
                 var bar0Rt = (RectTransform)UiKit.Find(pet, "Pet:0/Bar"); Assert.AreEqual(Layout.PetBarH / 100f * _app.Frame.rect.height, bar0Rt.rect.height, 1.5f, "진행바 높이 = Layout.PetBarH(프레임 %)");
                 var petClip = TextAudit.Collect("13_pet", pet).FindAll(r => r.Clipped);
@@ -756,7 +754,7 @@ namespace KkomaKnight.Tests.Play
                 {
                     var btn = UiKit.Find(pet, n);
                     Assert.IsNotNull(btn, "펫 소환 버튼 " + n);
-                    foreach (var t in btn.GetComponentsInChildren<Text>(true))
+                    foreach (var t in btn.GetComponentsInChildren<TMP_Text>(true))
                         StringAssert.DoesNotContain("준비 중", t.text, n + " 안에 «준비 중» 글자가 남으면 안 된다(T178 · 주인이 던전에서 지우라 한 그 표기)");
                     var cg = btn.GetComponent<CanvasGroup>();
                     Assert.IsNotNull(cg, n + " 는 «못 누르는 것» 으로 보여야 한다(CanvasGroup 알파 · T178)");
@@ -779,7 +777,7 @@ namespace KkomaKnight.Tests.Play
                 var bx = (RectTransform)UiKit.Find(ov, "ui.popup"); Assert.IsNotNull(bx, "세부 패널(ui.popup)"); Assert.AreEqual(Layout.PdBox.X, bx.anchorMin.x * 100f, 0.5f, "패널 x = 표 ⑪"); Assert.AreEqual(1f - Layout.PdBox.Y / 100f, bx.anchorMax.y, 1e-3f, "패널 y = 표 ⑪");
                 // T63-pet — 세부 팝업 글자: 진행바 «0/0» 40 이 바 안에(PdBar 1.4% → Layout.PetBarH) · 팝업 안 활성 Text 잘림/넘침 0
                 Canvas.ForceUpdateCanvases();
-                var dBar = UiKit.Find(ov, "PetDetailCell/Bar"); Assert.IsNotNull(dBar, "세부 진행바"); var dBarTxt = dBar.GetComponentInChildren<Text>(true); Assert.IsNotNull(dBarTxt, "세부 진행바 글자");
+                var dBar = UiKit.Find(ov, "PetDetailCell/Bar"); Assert.IsNotNull(dBar, "세부 진행바"); var dBarTxt = dBar.GetComponentInChildren<TMP_Text>(true); Assert.IsNotNull(dBarTxt, "세부 진행바 글자");
                 Assert.GreaterOrEqual(TextAudit.BestFitSize(dBarTxt), TextSize.Body, "세부 진행바 숫자 40 그대로"); Assert.GreaterOrEqual(dBarTxt.rectTransform.rect.height + 1f, dBarTxt.preferredHeight, "세부 진행바 글자 rect 높이 ≥ 선호 높이");
                 var pdClip = TextAudit.Collect("14_pet_detail", ov).FindAll(r => r.Clipped);
                 Assert.AreEqual(0, pdClip.Count, "펫 세부 팝업 잘림/넘침 0(T63-pet) — " + string.Join(" · ", pdClip.ConvertAll(r => r.ToString())));
@@ -851,15 +849,14 @@ namespace KkomaKnight.Tests.Play
                     for (int i = 0; i < 6; i++)
                     {
                         var sl = slots.GetChild(i);
-                        foreach (var t in sl.GetComponentsInChildren<Text>(true))
+                        foreach (var t in sl.GetComponentsInChildren<TMP_Text>(true))
                         {
                             if (t.text.StartsWith("Lv.") && t.transform.parent == sl)
                             {
                                 lvRect[i] = t.rectTransform;
                                 Assert.AreEqual(TextSize.Body, t.fontSize, "슬롯 " + i + " «Lv. N» 크기 = 본문 하한");
-                                var gs = t.GetGenerationSettings(t.rectTransform.rect.size); gs.scaleFactor = 1f;
-                                var gen = new TextGenerator(); gen.Populate(t.text, gs);
-                                Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, TextSize.Body, "슬롯 " + i + " «Lv. N» 이 칸에 40 으로 안 들어가 bestFit 이 줄였다"); Assert.AreEqual(1, gen.lineCount, "슬롯 " + i + " «Lv. N» 한 줄");
+                                int genUsed = TextAudit.BestFitSize(t); int genLines = TextAudit.LineCount(t);   // T207 ② — TMP 는 자동 크기를 «그릴 때» 정하므로 TextGenerator 를 손으로 돌릴 일이 없다
+                                Assert.GreaterOrEqual(genUsed, TextSize.Body, "슬롯 " + i + " «Lv. N» 이 칸에 40 으로 안 들어가 bestFit 이 줄였다"); Assert.AreEqual(1, genLines, "슬롯 " + i + " «Lv. N» 한 줄");
                             }
                             else if (t.transform.parent != null && t.transform.parent.name == "PlusBadge")
                             {
@@ -957,22 +954,22 @@ namespace KkomaKnight.Tests.Play
                 // T63-gear — 스탯 줄 3 · 옵션 줄 전부 본문 40 이 «한 줄» 로(옵션은 긴 잠금 줄만 bestFit 32~40 허용 · 스탯은 40 그대로) · 스탯 상자와 옵션 목록이 안 겹친다(전엔 39.5+9.5 = 49.0 > 48.0)
                 {
                     int statRows = 0, optRows = 0;
-                    foreach (var t in UiKit.Find(bx, "Stats").GetComponentsInChildren<Text>(false))
+                    foreach (var t in UiKit.Find(bx, "Stats").GetComponentsInChildren<TMP_Text>(false))
                     {
                         if (!t.name.StartsWith("Stat:")) continue; statRows++;
                         Assert.AreEqual(TextSize.Body, t.fontSize, "스탯 줄 «" + t.text + "» 크기 = 본문 하한");
-                        var gs = t.GetGenerationSettings(t.rectTransform.rect.size); gs.scaleFactor = 1f; var gen = new TextGenerator(); gen.Populate(t.text, gs);
-                        Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, TextSize.Body, "스탯 줄 «" + t.text + "» 가 40 으로 안 들어간다"); Assert.AreEqual(1, gen.lineCount, "스탯 줄 한 줄");
+                        int genUsed = TextAudit.BestFitSize(t); int genLines = TextAudit.LineCount(t);   // T207 ② — TMP 는 자동 크기를 «그릴 때» 정하므로 TextGenerator 를 손으로 돌릴 일이 없다
+                        Assert.GreaterOrEqual(genUsed, TextSize.Body, "스탯 줄 «" + t.text + "» 가 40 으로 안 들어간다"); Assert.AreEqual(1, genLines, "스탯 줄 한 줄");
                     }
-                    foreach (var t in opts.GetComponentsInChildren<Text>(false))
+                    foreach (var t in opts.GetComponentsInChildren<TMP_Text>(false))
                     {
                         if (t.transform.parent == null || !t.transform.parent.name.StartsWith("Opt:")) continue; optRows++;
                         Assert.AreEqual(TextSize.Body, t.fontSize, "옵션 줄 «" + t.text + "» 크기 = 본문 하한");
-                        var gs = t.GetGenerationSettings(t.rectTransform.rect.size); gs.scaleFactor = 1f; var gen = new TextGenerator(); gen.Populate(t.text, gs);
-                        Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, TextSize.BestFitMin, "옵션 줄 «" + t.text + "» 가 bestFit 최소(32) 아래로"); Assert.AreEqual(1, gen.lineCount, "옵션 줄 «" + t.text + "» 는 한 줄(문구 줄이기 = GearText.Shorten)");
+                        int genUsed = TextAudit.BestFitSize(t); int genLines = TextAudit.LineCount(t);   // T207 ② — TMP 는 자동 크기를 «그릴 때» 정하므로 TextGenerator 를 손으로 돌릴 일이 없다
+                        Assert.GreaterOrEqual(genUsed, TextSize.BestFitMin, "옵션 줄 «" + t.text + "» 가 bestFit 최소(32) 아래로"); Assert.AreEqual(1, genLines, "옵션 줄 «" + t.text + "» 는 한 줄(문구 줄이기 = GearText.Shorten)");
                         Assert.IsFalse(t.text.Contains(" 이상)"), "잠금 꼬리는 «(등급)» 으로 줄인다: " + t.text);
                         // T84 — 어두운 pill 위 글자는 밝은 색 + 검은 아웃라인이어야 읽힌다(주인 상시 지시 · screens run 148 의 07 눈 확인에서 회색 글자가 안 읽혔다)
-                        Assert.IsNotNull(t.GetComponent<TextOutline8>(), "옵션 줄 «" + t.text + "» 에 검은 아웃라인(T63 0항 «예외 없이»)");
+                        Assert.IsTrue(TextAudit.HasOutline(t), "옵션 줄 «" + t.text + "» 에 검은 아웃라인(T63 0항 «예외 없이» · T207 ② 로 머티리얼이 그린다)");
                         // T177(주인 2026-09-07 «잠긴 옵션 줄 글씨는 #666666»)이 «잠긴» 줄만 일부러 어둡게 만든다 —
                         // 그 자리는 `OwnerDarkTextTag` 를 달고 있으므로 T84 의 «밝아야 한다» 에서 뺀다(안 빼면 주인 지시가 게이트에 막힌다 · 결정 428).
                         // 대신 «표식이 있으면 색이 정말 그 지정색인가» 를 재서 표식이 «아무 어두운 글자나 봐 주는 뒷문» 이 되지 않게 한다.
@@ -1145,12 +1142,11 @@ namespace KkomaKnight.Tests.Play
             // T63-forge — «장착중» 이 장비 그림 위에서 읽혀야 한다: 본문 하한 40 · bestFit 이 안 줄임 · 한 줄 · 뒤에 어두운 띠(레퍼런스 08 의 «Equipped» 띠)가 글자를 덮는다
             {
                 var eqTf = UiKit.Find(content, "EquippedLabel"); Assert.IsNotNull(eqTf, "«장착중» 글자");
-                var eqLb = eqTf.GetComponent<Text>(); Assert.IsNotNull(eqLb, "«장착중» Text 컴포넌트");
+                var eqLb = eqTf.GetComponent<TMP_Text>(); Assert.IsNotNull(eqLb, "«장착중» Text 컴포넌트");
                 Assert.AreEqual(TextSize.Body, eqLb.fontSize, "«장착중» 크기 = 본문 하한");
-                var gs = eqLb.GetGenerationSettings(eqLb.rectTransform.rect.size); gs.scaleFactor = 1f;
-                var gen = new TextGenerator(); gen.Populate(eqLb.text, gs);
-                Assert.GreaterOrEqual(gen.fontSizeUsedForBestFit, TextSize.Body, "«장착중» 이 칸에 40 으로 안 들어가 bestFit 이 줄였다");
-                Assert.AreEqual(1, gen.lineCount, "«장착중» 한 줄");
+                int genUsed = TextAudit.BestFitSize(eqLb); int genLines = TextAudit.LineCount(eqLb);   // T207 ② — TMP 는 자동 크기를 «그릴 때» 정하므로 TextGenerator 를 손으로 돌릴 일이 없다
+                Assert.GreaterOrEqual(genUsed, TextSize.Body, "«장착중» 이 칸에 40 으로 안 들어가 bestFit 이 줄였다");
+                Assert.AreEqual(1, genLines, "«장착중» 한 줄");
                 var plate = UiKit.Find(eqLb.transform.parent, "EquippedPlate");
                 Assert.IsNotNull(plate, "«장착중» 뒤 어두운 띠(그림 위에 바로 얹으면 안 읽힌다)");
                 var pr = (RectTransform)plate; var lr = eqLb.rectTransform;
@@ -1258,13 +1254,13 @@ namespace KkomaKnight.Tests.Play
                 foreach (var box in D.Gacha.Boxes)
                 {
                     var card = UiKit.Find(content, "Box:" + box.Key); Assert.IsNotNull(card, "상자 카드 " + box.Key);
-                    Text title = null; foreach (var t in card.GetComponentsInChildren<Text>(false)) if (t.text == box.Name) title = t;
+                    TMP_Text title = null; foreach (var t in card.GetComponentsInChildren<TMP_Text>(false)) if (t.text == box.Name) title = t;
                     Assert.IsNotNull(title, "상자 이름 글자 " + box.Name);
                     Assert.GreaterOrEqual(title.fontSize, TextSize.Title, "상자 이름 «" + box.Name + "» = 제목 크기(60)"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(title), "상자 이름은 Title 표식");
                     var one = UiKit.Find(card, "One"); Assert.IsNotNull(one, "«1회» 버튼 " + box.Key);
                     Assert.IsNotNull(UiKit.Find(one, "Gem"), "«1회» 버튼 안 다이아 아이콘(hud.gem · 💎 글리프 대신) " + box.Key);
                     int priceTexts = 0;
-                    foreach (var t in one.GetComponentsInChildren<Text>(false)) if (!string.IsNullOrEmpty(t.text)) { priceTexts++; Assert.GreaterOrEqual(t.fontSize, TextSize.Button, "«1회» 버튼 글자 «" + t.text + "» ≥ 버튼 하한(44)"); Assert.AreEqual(TextKind.Button, TextAudit.KindOf(t), "«1회» 버튼 글자 «" + t.text + "» 는 Button 표식"); }
+                    foreach (var t in one.GetComponentsInChildren<TMP_Text>(false)) if (!string.IsNullOrEmpty(t.text)) { priceTexts++; Assert.GreaterOrEqual(t.fontSize, TextSize.Button, "«1회» 버튼 글자 «" + t.text + "» ≥ 버튼 하한(44)"); Assert.AreEqual(TextKind.Button, TextAudit.KindOf(t), "«1회» 버튼 글자 «" + t.text + "» 는 Button 표식"); }
                     Assert.AreEqual(2, priceTexts, "«1회» 버튼 = «1회» + 가격 두 글자 " + box.Key);
                 }
                 foreach (var t in ActiveTexts()) Assert.IsFalse((t.text ?? "").Contains("💎"), "상점 글자에 💎 글리프(Jua 폰트에 없어 빈칸) — " + PathOf(t.transform) + " :: " + t.text);
@@ -1273,7 +1269,7 @@ namespace KkomaKnight.Tests.Play
                 foreach (var hn in new[] { "다이아", "골드" })
                 {
                     var sec = UiKit.Find(content, "Sec:" + hn); Assert.IsNotNull(sec, "섹션 헤더 조각 Sec:" + hn);
-                    var ht = UiKit.Find(sec, "Text (TMP)"); var htx = ht != null ? ht.GetComponent<Text>() : null; Assert.IsNotNull(htx, "섹션 헤더 «" + hn + "» 글자");
+                    var ht = UiKit.Find(sec, "Text (TMP)"); var htx = ht != null ? ht.GetComponent<TMP_Text>() : null; Assert.IsNotNull(htx, "섹션 헤더 «" + hn + "» 글자");
                     Assert.AreEqual(hn, htx.text, "섹션 헤더 글자 = " + hn); headers++;
                     Assert.GreaterOrEqual(htx.fontSize, UiKit.FontForHeight(Layout.ShopSec1.H), "섹션 헤더 «" + hn + "» 크기 = 표 ⑤ 헤더 높이(2.5%)에서 계산");
                 }
@@ -1292,7 +1288,7 @@ namespace KkomaKnight.Tests.Play
                     Assert.IsFalse(UiKit.IsItemCell(icon.parent), "상품 카드는 «아이템 칸»(ItemFrame_01) 이 아니다 — 판정이 상점을 안 건드린다는 근거(T190 1항)");
                 }
                 var qty = UiKit.Find(UiKit.Find(content, "GemPack:0"), "Text_Title"); Assert.IsNotNull(qty, "다이아 카드 수량 글자");
-                Assert.GreaterOrEqual(qty.GetComponent<Text>().fontSize, ShopScreen.QtySize, "상품 수량 크기 = 수량 띠 높이에서 계산(≈51)");
+                Assert.GreaterOrEqual(qty.GetComponent<TMP_Text>().fontSize, ShopScreen.QtySize, "상품 수량 크기 = 수량 띠 높이에서 계산(≈51)");
                 // T100 ⓓ(주인 2026-09-07 «상자들 카드 부분에도 그라디안트 · 레퍼런스랑 같은 색감») — 카드 조각 «안»(바탕 바로 위)에 실측 두 색 그라데이션
                 int gradCards = 0;
                 for (int i = 0; i < content.childCount; i++)
@@ -1356,7 +1352,7 @@ namespace KkomaKnight.Tests.Play
             {
                 var rib = UiKit.Find(_app.Overlay.Root, "Title_01_NoDeco_Tangerine");
                 Assert.IsNotNull(rib, "조각의 제목 리본");
-                var rt2 = rib.GetComponentInChildren<Text>(true);
+                var rt2 = rib.GetComponentInChildren<TMP_Text>(true);
                 Assert.IsNotNull(rt2, "리본 글자"); StringAssert.Contains("회", rt2.text, "리본에 우리 제목(«… N회»)이 들어간다");
                 Assert.AreNotEqual("Reward", rt2.text, "리본에 데모 글자가 남으면 안 된다");
             }
@@ -1486,7 +1482,7 @@ namespace KkomaKnight.Tests.Play
                     Assert.AreEqual(1, lit.Count, $"카드 {i}: 빛을 문 프레임 Image 는 한 장이어야 한다(T153) — 지금 {lit.Count}장");
                     Assert.AreSame(UiKit.ShineTarget(frame), lit[0], $"카드 {i}: 빛은 UiKit.ShineTarget 이 고른 한 장(카드 몸통 «Bg»)에 문다");
                     Assert.IsTrue(lit[0].material.shader.name.Contains("AllIn1SpriteShaderUiMask"), $"카드 {i} 프레임 쉐이더 = UiMask: {lit[0].material.shader.name}");
-                    var desc = UiKit.Find(c, "Text_Value"); var dt = desc != null ? desc.GetComponent<Text>() : null; Assert.IsNotNull(dt, $"카드 {i} 설명 글자"); Assert.IsFalse(dt.material != null && dt.material.shader != null && dt.material.shader.name.Contains("AllIn1"), $"카드 {i} 글자엔 shine 안 붙음(T52 한 색)");
+                    var desc = UiKit.Find(c, "Text_Value"); var dt = desc != null ? desc.GetComponent<TMP_Text>() : null; Assert.IsNotNull(dt, $"카드 {i} 설명 글자"); Assert.IsFalse(dt.material != null && dt.material.shader != null && dt.material.shader.name.Contains("AllIn1"), $"카드 {i} 글자엔 shine 안 붙음(T52 한 색)");
                     var icon = UiKit.Find(c, "ItemFrameArea"); if (icon != null) foreach (var im in icon.GetComponentsInChildren<Image>(true)) Assert.AreNotSame(mo.Mat, im.material, $"카드 {i} 아이콘 조각 «{im.name}» 엔 shine 안 붙음");
                 }
             }
@@ -1509,11 +1505,11 @@ namespace KkomaKnight.Tests.Play
             for (int i = 0; i < cards.childCount; i++)
             {
                 string grade = offer[i].GradeName; if (string.IsNullOrEmpty(grade)) continue;
-                Text gt = null;
-                foreach (var t in cards.GetChild(i).GetComponentsInChildren<Text>(false)) if (t.text == grade) { gt = t; break; }
+                TMP_Text gt = null;
+                foreach (var t in cards.GetChild(i).GetComponentsInChildren<TMP_Text>(false)) if (t.text == grade) { gt = t; break; }
                 Assert.IsNotNull(gt, $"카드 {i} 등급 탭 글자 «{grade}»");
-                Assert.AreEqual(TextSize.Body, gt.resizeTextMaxSize, $"카드 {i} 등급 글자 최대 = 본문 하한 40(T63)");
-                Assert.GreaterOrEqual(gt.resizeTextMinSize, TextSize.BestFitMin, $"카드 {i} 등급 글자 bestFit 최소 ≥ 32");
+                Assert.AreEqual(TextSize.Body, gt.fontSizeMax, $"카드 {i} 등급 글자 최대 = 본문 하한 40(T63)");
+                Assert.GreaterOrEqual(gt.fontSizeMin, TextSize.BestFitMin, $"카드 {i} 등급 글자 bestFit 최소 ≥ 32");
                 Assert.IsTrue(gt.color == Palette.OnFrame(Palette.PerkGradeName(offer[i].Grade)), $"카드 {i} 등급 글자색 = Palette.OnFrame(밝은 글자 + 검은 아웃라인 · T63 0항 · 결정 259): {gt.color}");
                 var host = gt.rectTransform.parent as RectTransform;
                 Assert.IsNotNull(host, $"카드 {i} 등급 글자 부모(탭)");
@@ -1525,8 +1521,8 @@ namespace KkomaKnight.Tests.Play
             // T63-perks — «남은 횟수 : N» 은 레퍼런스 04 처럼 버튼 «아래»(프리팹 자리 그대로면 버튼 위에 얹혀 아랫줄이 잘리고 주황 숫자가 주황 버튼에 묻힌다)
             {
                 var foot = UiKit.Find(_app.Overlay.Root, "Button_02_Orange"); Assert.IsNotNull(foot, "하단 주황 버튼");
-                Text remain = null;
-                foreach (var t in foot.GetComponentsInChildren<Text>(false)) if (t.text != null && t.text.StartsWith("남은 횟수")) { remain = t; break; }
+                TMP_Text remain = null;
+                foreach (var t in foot.GetComponentsInChildren<TMP_Text>(false)) if (t.text != null && t.text.StartsWith("남은 횟수")) { remain = t; break; }
                 Assert.IsNotNull(remain, "«남은 횟수» 글자");
                 var c4 = new Vector3[4]; ((RectTransform)foot).GetWorldCorners(c4); float btnBottom = c4[0].y;
                 remain.rectTransform.GetWorldCorners(c4); float remTop = c4[1].y, remBottom = c4[0].y;
@@ -1614,10 +1610,10 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(HasText(s => s == "클리어!"), "제목"); Assert.IsTrue(HasText(s => s == TextGlyphs.Safe(Overlay.ClearAdLabel)), "광고 ×2 버튼(프리팹 Get x2 자리 · T23 · 문구는 T63-results 에서 한 줄로)");
             Assert.IsFalse(HasText(s => s == "다음 챕터"), "«다음 챕터» 버튼은 없다(T23 · 로비의 챕터 화살표로)");
             // T63-results — 프리팹 칸이 좁아 눌리던 세 곳: ×2 버튼 글자(300×100) · 해금 줄(528×61) · 보상 값 칸(여백 15→2px)
-            AssertReadable(winBtns.GetChild(0).GetComponentInChildren<Text>(true), TextSize.Button, "×2 버튼");
-            AssertReadable(winBtns.GetChild(1).GetComponentInChildren<Text>(true), TextSize.Button, "그냥 받기 버튼");
+            AssertReadable(winBtns.GetChild(0).GetComponentInChildren<TMP_Text>(true), TextSize.Button, "×2 버튼");
+            AssertReadable(winBtns.GetChild(1).GetComponentInChildren<TMP_Text>(true), TextSize.Button, "그냥 받기 버튼");
             var unlockT = UiKit.Find(_app.Overlay.Root, "Text (1)"); Assert.IsNotNull(unlockT, "해금 줄(프리팹 «Text (1)»)");
-            AssertReadable(unlockT.GetComponent<Text>(), TextSize.Body, "해금 줄");
+            AssertReadable(unlockT.GetComponent<TMP_Text>(), TextSize.Body, "해금 줄");
             AssertReadable(RewardValueText(rewardCell), TextSize.Body, "클리어 보상 골드");
             AssertNoTextClip("클리어 팝업", _app.Overlay.Root);
             Assert.IsTrue(Click(_app.Overlay.Root, s => s == "그냥 받기"), "그냥 받기(프리팹 Home 자리)"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen);
@@ -1633,7 +1629,7 @@ namespace KkomaKnight.Tests.Play
             Check("사망 팝업", expectOverlay: true);
             Assert.IsTrue(HasText(s => s == "쓰러졌다..."), "제목");
             // T63-results — 팁 3줄은 프리팹 줄 글자 칸(730×82)에 «본문 40 한 줄» 로 들어가야 한다(전엔 둘째 줄이 35 로 눌렸다)
-            for (int i = 0; i < 3 && i < tipList.childCount; i++) AssertReadable(tipList.GetChild(i).GetComponentInChildren<Text>(true), TextSize.Body, $"팁 {i}");
+            for (int i = 0; i < 3 && i < tipList.childCount; i++) AssertReadable(tipList.GetChild(i).GetComponentInChildren<TMP_Text>(true), TextSize.Body, $"팁 {i}");
             AssertNoTextClip("사망 팝업", _app.Overlay.Root);
             Assert.IsTrue(Click(_app.Overlay.Root, s => s == "로비로"), "로비로"); yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen);
             Assert.IsFalse(UiKit.IsTweening(_app.Overlay.Root), "Close 뒤 연출 시퀀스 0");

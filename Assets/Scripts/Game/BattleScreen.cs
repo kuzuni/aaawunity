@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -42,10 +43,10 @@ namespace KkomaKnight.Game
         RectTransform _pops;
 
         // HUD (T35 · 레퍼런스 02_battle.jpg / 03_battle_enemy.jpg 구도)
-        Text _kills, _gold, _chapTitle, _speedTxt;
+        TMP_Text _kills, _gold, _chapTitle, _speedTxt;
         UiKit.Bar _prog, _exp, _hp, _sh; Image _progFill;
-        RectTransform _buffBar, _perkStrip; Text _perkCount; HorizontalLayoutGroup _perkStripLayout;
-        readonly Text[] _statVals = new Text[StatDefs.Length];
+        RectTransform _buffBar, _perkStrip; TMP_Text _perkCount; HorizontalLayoutGroup _perkStripLayout;
+        readonly TMP_Text[] _statVals = new TMP_Text[StatDefs.Length];
         string _perkStripKey = "", _buffKey = "";
         // T85 — 보상 흡수 연출: 엔진 값(G.Gold · P.Exp)은 킬 순간에 이미 올라 있고(불변), 화면은 «구슬이 도착한 만큼» 만 올린다.
         RectTransform _goldPill, _orbLayer; RewardOrbs _orbs;
@@ -102,12 +103,12 @@ namespace KkomaKnight.Game
             {
                 var cap = UiKit.Panel(_exp.Root, "Cap", "fr.r12", Palette.Green); var crt = cap.rectTransform;
                 crt.anchorMin = crt.anchorMax = new Vector2(0, 0.5f); crt.pivot = new Vector2(0.5f, 0.5f); crt.sizeDelta = new Vector2(104, 64); crt.anchoredPosition = new Vector2(14, 2);
-                var ct = UiKit.Text(cap.transform, "EXP", 34, Palette.White, TextAnchor.MiddleCenter, false, true); ct.fontStyle = FontStyle.Bold; UiKit.Stretch(ct.rectTransform);
+                var ct = UiKit.Text(cap.transform, "EXP", 34, Palette.White, TextAnchor.MiddleCenter, false, true); ct.fontStyle = FontStyles.Bold; UiKit.Stretch(ct.rectTransform);
             }
             _hp = UiKit.MakeBar(Root, "ui.sliderRed", "pi.heart"); UiKit.Pct(_hp.Root, Layout.HudHp); _hp.Root.name = "Bar:HP";
             _sh = UiKit.MakeBar(Root, "ui.sliderBlue", "pi.shield"); UiKit.Pct(_sh.Root, Layout.HudSh); _sh.Root.name = "Bar:SH";
             foreach (var b in new[] { _hp, _sh }) if (b.Cap != null) { b.Cap.rectTransform.sizeDelta = new Vector2(84, 84); b.Cap.rectTransform.anchoredPosition = new Vector2(6, 2); }   // 아이콘이 바보다 조금 크게(레퍼런스)
-            foreach (var b in new[] { _exp, _hp, _sh }) if (b.Txt != null) { b.Txt.color = Palette.White; b.Txt.fontStyle = FontStyle.Bold; b.Txt.alignment = TextAnchor.MiddleCenter; }
+            foreach (var b in new[] { _exp, _hp, _sh }) if (b.Txt != null) { b.Txt.color = Palette.White; b.Txt.fontStyle = FontStyles.Bold; b.Txt.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); }
             // T69 8항(주인 «HP·실드 바 테두리») — 세 바에 검은 아웃라인(맨 앞) · 왼쪽 캡(«EXP» 라벨 · ❤ · 🛡)은 테두리 위로 · 바 자리·크기 불변
             foreach (var b in new[] { _exp, _hp, _sh }) { UiKit.Bordered(b.Root); var capT = UiKit.Find(b.Root, "Cap"); if (capT != null) capT.SetAsLastSibling(); }
             // 스탯 8칸 = 칸마다 어두운 상자(ui.frameDark) · 왼쪽 아이콘 · 오른쪽에 이름(보조 36 · 위) + 값(본문 40 · 아래) · 버프 중 값 초록(레퍼런스 02) — 자리 = 표(HudStats · 행 피치 5.2) · 상자 사이 틈 0.4%
@@ -121,7 +122,7 @@ namespace KkomaKnight.Game
                 cell.name = "stat:" + StatDefs[i].Key;
                 var ic = UiKit.Icon(cell, "ic", Icons.Stat(StatDefs[i].Key)); UiKit.Pct(ic.rectTransform, 3, 12, 15, 76);
                 var lb = UiKit.Label(cell, 21, 1, 76, 46, StatDefs[i].Label, TextSize.Aux, Palette.Cream, TextAnchor.MiddleLeft, kind: TextKind.Aux); lb.name = "Label";
-                _statVals[i] = UiKit.Label(cell, 21, 47, 76, 52, "", TextSize.Body, Palette.White, TextAnchor.MiddleLeft); _statVals[i].name = "Value"; _statVals[i].fontStyle = FontStyle.Bold;
+                _statVals[i] = UiKit.Label(cell, 21, 47, 76, 52, "", TextSize.Body, Palette.White, TextAnchor.MiddleLeft); _statVals[i].name = "Value"; _statVals[i].fontStyle = FontStyles.Bold;
                 // T69 — 스탯 칸마다 검은 아웃라인(어두운 상자 위 · 자리 불변)
                 UiKit.Bordered(cell);
             }
@@ -460,13 +461,13 @@ namespace KkomaKnight.Game
                     // 개수 배지 — 오른쪽 위 모서리(.pv-ic .cnt · 14/34). 셀 안쪽 모서리에 두어 이웃 셀·줄 밖으로 안 나간다.
                     var n = UiKit.Text(cell, count[id].ToString(), (int)m.BadgeFont, Palette.White, kind: TextKind.Small);   // 아이콘 위 개수 배지 = 지시서 T63 의 «정말 작아야 하는 배지»(14/34 비례 그대로)
                     var nr = n.rectTransform; nr.anchorMin = nr.anchorMax = new Vector2(1f, 1f); nr.pivot = new Vector2(1f, 1f); nr.anchoredPosition = Vector2.zero; nr.sizeDelta = new Vector2(m.Badge, m.Badge);
-                    n.horizontalOverflow = HorizontalWrapMode.Overflow;
+                    n.textWrappingMode = TextWrappingModes.NoWrap;
                 }
             }
             if (shown < order.Count)
             {
                 var more = UiKit.Text(_perkStrip, "+" + (order.Count - shown), (int)m.Font, Palette.CreamDark, kind: TextKind.Aux);   // m.Font 는 이미 보조 하한(36) 이상(PerkStripSpec)
-                more.rectTransform.sizeDelta = new Vector2(m.MoreWidth(order.Count - shown), m.Cell); more.horizontalOverflow = HorizontalWrapMode.Overflow;
+                more.rectTransform.sizeDelta = new Vector2(m.MoreWidth(order.Count - shown), m.Cell); more.textWrappingMode = TextWrappingModes.NoWrap;
             }
         }
 
@@ -504,7 +505,7 @@ namespace KkomaKnight.Game
                 string icon = perk != null ? Icons.Perk(perk.Id) : Icons.Stat(g.Key.TrimStart('#') == "atk" ? "dmg" : g.Key.TrimStart('#'));
                 UiKit.PerkFrame(cell, perk != null ? Palette.PerkGradeName(perk.Grade) : "gray", icon, cell.sizeDelta.x);
                 // 스택 수는 그대로 오른쪽 아래(프레임 위에 그려지도록 뒤에 만든다)
-                if (g.Value > 1) { var n = UiKit.Text(cell, g.Value.ToString(), TextSize.Aux, Palette.White, kind: TextKind.Aux); UiKit.Pct(n.rectTransform, 45, 45, 55, 55); n.horizontalOverflow = HorizontalWrapMode.Overflow; }   // 중첩 수 = 보조 36(전 24) · 칸 48px(T63-battle)
+                if (g.Value > 1) { var n = UiKit.Text(cell, g.Value.ToString(), TextSize.Aux, Palette.White, kind: TextKind.Aux); UiKit.Pct(n.rectTransform, 45, 45, 55, 55); n.textWrappingMode = TextWrappingModes.NoWrap; }   // 중첩 수 = 보조 36(전 24) · 칸 48px(T63-battle)
             }
         }
     }

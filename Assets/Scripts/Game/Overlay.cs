@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,7 +18,7 @@ namespace KkomaKnight.Game
         readonly App _app;
         public RectTransform Root { get; }
         GameObject _cur;
-        float _countdown; Action _onCountdown; Text _countText;
+        float _countdown; Action _onCountdown; TMP_Text _countText;
         /// <summary>열려 있는 동안 매 프레임(unscaled) 부르는 훅 — 팝업 안 «자정까지 남은 시간» 같은 1초 갱신용(T77). <see cref="Begin"/>·<see cref="Close"/> 가 비운다(다음 팝업으로 새지 않는다).</summary>
         public Action OnTick;
         Sequence _reveal;   // 등장 연출 마스터 시퀀스(T49) — 팝업마다 Begin 에서 새로, Close 에서 Kill
@@ -103,7 +104,7 @@ namespace KkomaKnight.Game
         public static void FitRibbonText(Transform ribbon)
         {
             var rr = ribbon as RectTransform; if (rr == null) return;
-            var t = rr.GetComponentInChildren<Text>(true); if (t == null) return;
+            var t = rr.GetComponentInChildren<TMP_Text>(true); if (t == null) return;
             var trt = t.rectTransform; float h = trt.rect.height, need = TextSize.BoxHeight(TextSize.Title);
             if (h > 0f && h < need) trt.sizeDelta = new Vector2(trt.sizeDelta.x, trt.sizeDelta.y + (need - h));
         }
@@ -186,7 +187,7 @@ namespace KkomaKnight.Game
         /// <summary>공통 팝업 상자를 연다 — onTapClose 를 주면 «탭하여 닫기» + 배경 탭으로 닫히는 정보 팝업(상점 뽑기 결과·확률 정보 · T40).</summary>
         public RectTransform OpenBox(string popupKey, string titleKey, string title, Layout.R rect, Action onTapClose = null) => Box(popupKey, titleKey, title, rect, onTapClose);
 
-        Text Sub(RectTransform box, string s, float y = 9, float h = 7, int size = 36, Color? c = null)
+        TMP_Text Sub(RectTransform box, string s, float y = 9, float h = 7, int size = 36, Color? c = null)
             => UiKit.Label(box, 6, y, 88, h, s, size, c ?? Palette.InkSoft, TextAnchor.MiddleCenter, true, false);
 
         /// <summary>특전 카드 조각(CardFrame_04)의 테두리 링 원본 선 굵기(px · <c>CardFrame_04_White_Border.png</c> 74×79 실측 5px · 9-slice 38/41/36/38). T69-overlay.</summary>
@@ -222,7 +223,7 @@ namespace KkomaKnight.Game
                 // Desaturate·InkFrameBorders «뒤» 에 부른다(그 둘이 몸통을 다시 덮지 않게) · 등급 탭 색은 아래에서 따로 칠한다.
                 UiKit.DarkenCardBody(frt);
                 if (shine) UiKit.ShineMaterial(frt, rt);   // T61 — 프레임 그림(Border·Bg·InnerBorder·제목 탭)에만 · 글자·아이콘은 그대로
-                foreach (var old in frt.GetComponentsInChildren<Text>(true)) old.gameObject.SetActive(false);   // 프리팹의 남은 글자("Text_Title" 등) 전부 끄기 — 주인: «Text 라고 빨간 글씨 없애줘»
+                foreach (var old in frt.GetComponentsInChildren<TMP_Text>(true)) old.gameObject.SetActive(false);   // 프리팹의 남은 글자("Text_Title" 등) 전부 끄기 — 주인: «Text 라고 빨간 글씨 없애줘»
                 var tb = UiKit.Find(frt, "TitleBg"); if (tb == null) tb = UiKit.Find(frt, "Text_Title");
                 var host = tb != null ? tb : frt;
                 // T93(주인 2026-09-07 «색깔이 회색·노란색·빨간색 느낌이면 되는 거임») — 등급은 **탭 색**이 알려 준다.
@@ -243,7 +244,7 @@ namespace KkomaKnight.Game
             var desc = UiKit.SetText(rt, "Text_Value", PerkText.Format(p.Desc), Palette.White, TextSize.Body);
             // 글자 칸 좌우 = 프리팹 실측 그대로(T93 ① · ListItem_StageBuff_02 964.04px 안에서 왼쪽 여백 215.86 · 오른쪽 33.86 → 0.2239~0.9649).
             // 세로는 프리팹이 «제목 줄 + 값 줄» 둘인데 우리는 특전 이름을 안 쓰므로(주인 2026-09-05) 한 덩어리가 두 줄 자리를 다 쓴다 — 완료 기록의 대조표 참조.
-            if (desc != null) { desc.alignment = TextAnchor.MiddleLeft; var dr = desc.rectTransform; dr.anchorMin = new Vector2(PerkDescLeft, 0.08f); dr.anchorMax = new Vector2(PerkDescRight, 0.92f); dr.offsetMin = dr.offsetMax = Vector2.zero; desc.resizeTextForBestFit = true; desc.resizeTextMaxSize = TextSize.Body; desc.resizeTextMinSize = TextSize.BestFitMin; desc.horizontalOverflow = HorizontalWrapMode.Wrap; }
+            if (desc != null) { desc.alignment = UiKit.TmpAlign(TextAnchor.MiddleLeft); var dr = desc.rectTransform; dr.anchorMin = new Vector2(PerkDescLeft, 0.08f); dr.anchorMax = new Vector2(PerkDescRight, 0.92f); dr.offsetMin = dr.offsetMax = Vector2.zero; desc.enableAutoSizing = true; desc.fontSizeMax = TextSize.Body; desc.fontSizeMin = TextSize.BestFitMin; desc.textWrappingMode = TextWrappingModes.Normal; }
             if (onClick != null) UiKit.Clickable(rt, onClick);
             return rt;
         }
@@ -344,13 +345,13 @@ namespace KkomaKnight.Game
                 else
                 {
                     bool labeled = false; string hex = ColorUtility.ToHtmlStringRGB(Palette.Orange);
-                    foreach (var t in btn.GetComponentsInChildren<Text>(true))
+                    foreach (var t in btn.GetComponentsInChildren<TMP_Text>(true))
                     {
                         if (t.text != null && t.text.IndexOf("Remain", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            t.text = $"남은 횟수 : <color=#{hex}>{left}</color>"; t.supportRichText = true; t.gameObject.SetActive(true);
+                            t.text = $"남은 횟수 : <color=#{hex}>{left}</color>"; t.richText = true; t.gameObject.SetActive(true);
                             // 레퍼런스 04 는 «Remain : 1» 이 버튼 «아래» — 프리팹 자리 그대로 두면 버튼을 표 자리(OvFoot)로 키운 뒤 글자가 버튼 위에 얹혀 아랫줄이 반쯤 잘리고 주황 숫자가 주황 버튼에 묻힌다(T63-perks)
-                            t.transform.SetParent(btn, false); UiKit.Pct(t.rectTransform, Layout.OvFootRemain); t.alignment = TextAnchor.MiddleCenter;
+                            t.transform.SetParent(btn, false); UiKit.Pct(t.rectTransform, Layout.OvFootRemain); t.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter);
                             continue;
                         }
                         if (!labeled) { t.text = "새로고침 무료"; labeled = true; } else t.gameObject.SetActive(false);
@@ -420,7 +421,7 @@ namespace KkomaKnight.Game
             }
             foreach (var b in G.Blessings) Sub(box, b, 93, 5, 24, Palette.Orange);
             var tap = UiKit.Find(Root, "TapToClose");
-            if (onBack != null && tap != null) { var t = tap.GetComponent<Text>(); if (t != null) t.text = "탭하여 특전 선택으로"; }   // 레벨업에서 열었으면 배경 탭 = 선택으로 복귀
+            if (onBack != null && tap != null) { var t = tap.GetComponent<TMP_Text>(); if (t != null) t.text = "탭하여 특전 선택으로"; }   // 레벨업에서 열었으면 배경 탭 = 선택으로 복귀
             // T46 이름표(표 ⑦ «(인포 팝업)» 행)
             UiKit.Tag(box, "(인포 팝업) 박스"); if (rib != null) UiKit.Tag(rib, "(인포 팝업) 제목 리본"); if (content.childCount > 0) UiKit.Tag(content.GetChild(0), "(인포 팝업) 목록 카드"); if (tap != null) UiKit.Tag(tap, "(인포 팝업) 닫기 안내");
         }
@@ -524,7 +525,7 @@ namespace KkomaKnight.Game
             var unlock = UiKit.SetText(rt, "Text (1)", last ? "모든 챕터 클리어!" : $"챕터 {G.Chapter + 1} 해금!");   // 프리팹 칸 528×61 — 본문 40 한 줄에 들어가는 길이로(T63-results)
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "클리어!");
             UiKit.SetText(rt, "Title_LineDeco_01_s_White/Text (TMP)", "클리어 보상");
-            var items = UiKit.Find(rt, "Group_RewardItem"); Text goldText = null; Transform goldCell = null;
+            var items = UiKit.Find(rt, "Group_RewardItem"); TMP_Text goldText = null; Transform goldCell = null;
             if (items != null && items.childCount >= 1)
             {
                 goldCell = items.GetChild(0);
@@ -583,7 +584,7 @@ namespace KkomaKnight.Game
             UiKit.Hide(frt, "Text_Level", "Focus", "Disable", "Lock", "Add_1", "Add_2", "Item");   // 빈 프레임만(그림·숫자는 조각의 Icon·Text 가 그대로)
             // 조각이 달고 오는 «장식 글자»(Text_Level 의 프리팹 자리 글자 «Text» 등)는 보상 칸에서 쓰지 않는다 — 끄기만 하면
             // 깊은 검색(GetComponentInChildren<Text>(true))이 여전히 집어 «칸의 첫 글자 = 골드 숫자» 라는 계약이 깨진다(T91 · 배포까지 막았다) → 아예 지운다.
-            foreach (var t in frt.GetComponentsInChildren<Text>(true)) if (t != null) UnityEngine.Object.Destroy(t.gameObject);
+            foreach (var t in frt.GetComponentsInChildren<TMP_Text>(true)) if (t != null) UnityEngine.Object.Destroy(t.gameObject);
             // ItemFrame_01 은 NormalArea 가 비어 있어 그대로 두면 아무것도 안 보인다(PetScreen 과 같은 문법) — 등급 없는 물건(골드)이라 회색 변형(T69 7항)
             var area = UiKit.Find(frt, "NormalArea");
             if (area != null) { UiKit.Clear(area); var v = UiKit.Spawn("ui.itemFrame.gray", area); UiKit.Stretch((RectTransform)v.transform); }
@@ -592,7 +593,7 @@ namespace KkomaKnight.Game
             var ic = Kid(cell, "Icon") as RectTransform;
             if (ic != null && ic.sizeDelta.x > w * RewardIconFill) ic.sizeDelta = new Vector2(w * RewardIconFill, h * RewardIconFill);   // 링 안쪽으로(자리·앵커는 조각 그대로)
         }
-        static Text Reward(Transform cell, string iconKey, string value)
+        static TMP_Text Reward(Transform cell, string iconKey, string value)
         {
             UiKit.SetSprite(cell, "Icon", iconKey, Palette.White);
             var t = UiKit.SetText(cell, "Text (TMP)", value);
@@ -712,8 +713,8 @@ namespace KkomaKnight.Game
             var nb = UiKit.Button(box, "ui.btnGray", "변경", () => Profile.OpenNickname(_app), Layout.SetNickBtn.Within(Layout.SetBox)); nb.name = "NickBtn";
             // 패널 밖 아래 — 링크 글자 2(눌러도 아무 일 없음) · 그 아래 줄 = 로비: «데이터 삭제»(T29) / 전투: «재개»·«포기하고 로비로»
             // 링크 2 = 본문 하한(T63-settings · 30 이 하한으로 올라가던 것을 명시) · 사각형은 글자를 담는다(전에는 표 그대로라 «개인정보 처리방침» 268px 이 219px 칸에서 좌우로 넘쳤다 → Layout.SetPrivacy 보정)
-            var pv = UiKit.Text(Root, "개인정보 처리방침", TextSize.Body, Palette.Sky, TextAnchor.MiddleCenter, false, true); pv.name = "Privacy"; pv.horizontalOverflow = HorizontalWrapMode.Overflow; UiKit.Pct(pv.rectTransform, Layout.SetPrivacy);
-            var tm = UiKit.Text(Root, "이용약관", TextSize.Body, Palette.Sky, TextAnchor.MiddleCenter, false, true); tm.name = "Terms"; tm.horizontalOverflow = HorizontalWrapMode.Overflow; UiKit.Pct(tm.rectTransform, Layout.SetTerms);
+            var pv = UiKit.Text(Root, "개인정보 처리방침", TextSize.Body, Palette.Sky, TextAnchor.MiddleCenter, false, true); pv.name = "Privacy"; pv.textWrappingMode = TextWrappingModes.NoWrap; UiKit.Pct(pv.rectTransform, Layout.SetPrivacy);
+            var tm = UiKit.Text(Root, "이용약관", TextSize.Body, Palette.Sky, TextAnchor.MiddleCenter, false, true); tm.name = "Terms"; tm.textWrappingMode = TextWrappingModes.NoWrap; UiKit.Pct(tm.rectTransform, Layout.SetTerms);
             RectTransform lastRow;
             if (onResume != null || onGiveUp != null)
             {

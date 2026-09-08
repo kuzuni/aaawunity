@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -152,7 +153,7 @@ namespace KkomaKnight.Game
         /// <summary>제목 «Mailbox» → 우리말. 상자 안 첫 글자 조각이 제목이다(영문 데모 글자 0 · T34 ⓒ).</summary>
         static void Title(RectTransform popup)
         {
-            foreach (var t in popup.GetComponentsInChildren<Text>(true))
+            foreach (var t in popup.GetComponentsInChildren<TMP_Text>(true))
             {
                 if (t == null || t.text != "Mailbox") continue;
                 UiKit.SetText(t.transform, "", "우편함", kind: TextKind.Title);   // 빈 경로 = 이 글자 자신
@@ -205,7 +206,7 @@ namespace KkomaKnight.Game
             all.gameObject.SetActive(anyRow);
             if (!anyRow) return;
             all.name = ClaimAllName;
-            var label = all.GetComponentInChildren<Text>(true);
+            var label = all.GetComponentInChildren<TMP_Text>(true);
             if (label != null) UiKit.SetText(label.transform, "", "전체 받기", kind: TextKind.Button);
             UiKit.Clickable(all, () => GrantAll(app));
         }

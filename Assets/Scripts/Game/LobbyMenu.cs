@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -117,7 +118,7 @@ namespace KkomaKnight.Game
             row.SetSiblingIndex(index);                                  // 세로 레이아웃 순서 = 주인이 부른 순서
             row.gameObject.SetActive(true);
             // 글자 — 조각이 달고 온 Text 하나(TMP 는 UiKit.Adopt 가 이미 uGUI 로 바꿔 놨다)
-            var label = row.GetComponentInChildren<Text>(true);
+            var label = row.GetComponentInChildren<TMP_Text>(true);
             if (label != null) UiKit.SetText(row, label.name, it.label, kind: TextKind.Button);
             // 아이콘 — 새로 만든 줄만 카탈로그 그림으로 갈아 끼운다(프리팹 줄은 제 그림 그대로)
             if (!string.IsNullOrEmpty(it.icon) && Kid(row, "Icon") != null) UiKit.SetSprite(row, "Icon", it.icon);

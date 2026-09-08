@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -102,7 +103,7 @@ namespace KkomaKnight.Game
             if (choose != null)
             {
                 choose.name = ChooseName;
-                var label = choose.GetComponentInChildren<Text>(true);
+                var label = choose.GetComponentInChildren<TMP_Text>(true);
                 if (label != null) UiKit.SetText(label.transform, "", "선택", kind: TextKind.Button);
                 UiKit.Clickable(choose.transform, () =>
                 {
@@ -135,7 +136,7 @@ namespace KkomaKnight.Game
         /// </summary>
         static void Retitle(App app, RectTransform popup)
         {
-            foreach (var t in popup.GetComponentsInChildren<Text>(true))
+            foreach (var t in popup.GetComponentsInChildren<TMP_Text>(true))
             {
                 if (t == null) continue;
                 string s = (t.text ?? "").Trim();
@@ -169,8 +170,8 @@ namespace KkomaKnight.Game
             var root = app.Overlay.OpenPrefab("ui.profileNick");
             var rt = (RectTransform)root.transform;
             var input = rt.GetComponentInChildren<InputField>(true);
-            Text count = null, desc = null, okLabel = null;
-            foreach (var t in rt.GetComponentsInChildren<Text>(true))
+            TMP_Text count = null, desc = null, okLabel = null;
+            foreach (var t in rt.GetComponentsInChildren<TMP_Text>(true))
             {
                 if (t == null) continue;
                 if (input != null && t.transform.IsChildOf(input.transform)) continue;   // 입력칸 제 글자·자리표시는 건드리지 않는다
@@ -215,7 +216,7 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>글자 수 표시 갱신 + «확인» 을 쓸 수 있는지 — 규칙(<see cref="Nickname"/>)이 판정한다.</summary>
-        static void Tally(InputField input, Text count, Button ok)
+        static void Tally(InputField input, TMP_Text count, Button ok)
         {
             string v = input != null ? input.text : "";
             int n = Nickname.Clean(v).Length;

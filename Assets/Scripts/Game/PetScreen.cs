@@ -1,5 +1,6 @@
 using System;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -64,10 +65,10 @@ namespace KkomaKnight.Game
                 var csf = piece.GetComponent<ContentSizeFitter>(); if (csf != null) csf.enabled = false;
                 var hl = piece.GetComponent<HorizontalLayoutGroup>(); if (hl != null) hl.enabled = false;
                 UiKit.Stretch(prt);
-                var t = piece.GetComponentInChildren<Text>(true);
+                var t = piece.GetComponentInChildren<TMP_Text>(true);
                 // T194 — 끝의 `EnsureOutline` 은 «크기를 바꿨으면 아웃라인도 다시 잰다» 는 뜻이다. 조각 글자는 `ConvertTmp` 가 붙일 때 크기 40(Body 하한)으로 테를 재는데
                 // 여기서 bestFit 최대만 44 로 올리면 `TextAudit` 은 44 로 재므로 둘이 어긋난다(자의 허용 오차는 0.26px 인데, 비율이 0.05 일 때 그 차는 0.2 라 숨어 있었고 0.08 에서는 0.32 로 드러난다).
-                if (t != null) { t.text = "장착중"; UiKit.Pct(t.rectTransform, 8, 0, 84, 100); t.alignment = TextAnchor.MiddleCenter; t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitMin; t.resizeTextMaxSize = 44; t.horizontalOverflow = HorizontalWrapMode.Overflow; UiKit.EnsureOutline(t); }
+                if (t != null) { t.text = "장착중"; UiKit.Pct(t.rectTransform, 8, 0, 84, 100); t.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); t.enableAutoSizing = true; t.fontSizeMin = TextSize.BestFitMin; t.fontSizeMax = 44; t.textWrappingMode = TextWrappingModes.NoWrap; UiKit.EnsureOutline(t); }
             }
             var slotsHost = UiKit.Rect(Root, "Slots"); UiKit.Stretch(slotsHost);
             var slots = new RectTransform[SlotCount];
@@ -123,7 +124,7 @@ namespace KkomaKnight.Game
             GearUi.DarkFrame(frt, frt.localScale.x);   // T69-pet · 7항: 펫 칸 = 장비 화면의 그 프레임 → Border 링 Ink + 화면 8px(격자 0.89 · 세부 0.95 배율 보정 · 등급색은 파란 변형의 Bg·InnerBorder 가 그대로)
             var item = UiKit.Find(frt, "Item");
             if (item != null) { item.gameObject.SetActive(true); UiKit.SetSprite(frt, "Item", Icons[index % Icons.Length], Palette.White); }
-            var lv = UiKit.Label(cell, 0, 0, 100, 100, "Lv. 0", 28, Palette.White); lv.name = "Lv"; lv.fontStyle = FontStyle.Bold; UiKit.Pct(lv.rectTransform, lvR.Within(cellR)); lvRt = lv.rectTransform;
+            var lv = UiKit.Label(cell, 0, 0, 100, 100, "Lv. 0", 28, Palette.White); lv.name = "Lv"; lv.fontStyle = FontStyles.Bold; UiKit.Pct(lv.rectTransform, lvR.Within(cellR)); lvRt = lv.rectTransform;
             // 진행바 «n/m» 은 본문 40 — 표 높이(1.6/1.4%)엔 안 들어가므로 표 중심을 지켜 Layout.PetBarH 로 키운다(T63-pet · 게이트 잘림 0)
             var bar = UiKit.MakeBar(cell, "ui.sliderYellow"); bar.Root.name = "Bar"; UiKit.Pct(bar.Root, barR.WithH(Layout.PetBarH).Within(cellR)); bar.Set(0, "0/0"); barRt = bar.Root;
             if (onClick != null) UiKit.Clickable(cell, onClick);
@@ -154,7 +155,7 @@ namespace KkomaKnight.Game
             var b = UiKit.Button(Root, "ui.btnOrange", label, () => App.Toast(NotReadyMsg), r); b.name = name;
             // 가격 줄이 없으니 글자가 버튼 «전체» 를 쓴다(예전엔 위 46% 만 쓰고 아래에 «💎 준비 중» 이 있었다).
             // 💎 아이콘도 세우지 않는다 — 뒤에 숫자가 없는 다이아 아이콘은 «값이 있는데 안 보이는» 것처럼 읽혀 빈 자리보다 나쁘다.
-            var txt = UiKit.ButtonText(b); if (txt != null) { UiKit.Pct(txt.rectTransform, 4, 6, 92, 88); txt.alignment = TextAnchor.MiddleCenter; }
+            var txt = UiKit.ButtonText(b); if (txt != null) { UiKit.Pct(txt.rectTransform, 4, 6, 92, 88); txt.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); }
             Dim(b, false);
             return b;
         }
@@ -181,7 +182,7 @@ namespace KkomaKnight.Game
             Overlay.NoPattern(box);
             var desc = UiKit.Panel(box, "Desc", "fr.r12", Palette.A(Palette.Dim, 0.6f)); UiKit.Pct(desc.rectTransform, Layout.PdDesc.Within(Layout.PdBox));
             UiKit.Label(desc.transform, 4, 8, 92, 84, "펫 시스템은 준비 중입니다.\n업데이트로 만나요.", 32, Palette.White);
-            var pt = UiKit.Label(box, 0, 0, 100, 100, "패시브:", 34, Palette.Cream); pt.name = "PassiveTitle"; pt.fontStyle = FontStyle.Bold; UiKit.Pct(pt.rectTransform, Layout.PdPassiveTitle.Within(Layout.PdBox));
+            var pt = UiKit.Label(box, 0, 0, 100, 100, "패시브:", 34, Palette.Cream); pt.name = "PassiveTitle"; pt.fontStyle = FontStyles.Bold; UiKit.Pct(pt.rectTransform, Layout.PdPassiveTitle.Within(Layout.PdBox));
             var pv = UiKit.Rect(box, "PassiveRow"); UiKit.Pct(pv, Layout.PdPassive.Within(Layout.PdBox));
             SumGroup(pv, 0, 40, "pi.attack", Palette.White); Sep(pv, 47); SumGroup(pv, 60, 40, "pi.shield", Palette.Sky);
             var upB = UiKit.Button(box, "ui.btnGray", "강화", () => { }, Layout.PdBtnL.Within(Layout.PdBox)); upB.name = "PetUpgradeBtn";

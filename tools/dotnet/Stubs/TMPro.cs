@@ -24,11 +24,23 @@ namespace TMPro
         public bool HasCharacter(char c) { return false; }
         public bool TryAddCharacters(string chars) { return false; }
     }
+    // T207 ② — 아래 서명은 **추측이 아니라 실측**이다: CI #441 의 유니티 잡이 진짜 `TMP_Text` 의
+    // 공개 프로퍼티 129개를 이름:타입으로 찍어 왔고(`TmpFontProbeTests` 의 `[T207②]` 줄) 그중 이 레포가
+    // 쓰는 것만 그 타입 그대로 옮겼다. 지어내지 마라 — 스텁에 없거나 다른 서명을 쓰면 dotnet 은 초록인데
+    // 유니티에서만 죽고, ② 규모에서는 그것이 전 화면 파손이다(결정 457·565·587).
+    public enum TextOverflowModes { Overflow = 0, Ellipsis = 1, Masking = 2, Truncate = 3, ScrollRect = 4, Page = 5, Linked = 6 }
+    public enum TextWrappingModes { NoWrap = 0, Normal = 1, PreserveWhitespace = 2, PreserveWhitespaceNoWrap = 3 }
+    public enum HorizontalAlignmentOptions { Left = 1, Center = 2, Right = 4, Justified = 8, Flush = 16, Geometry = 32 }
+    public enum VerticalAlignmentOptions { Top = 256, Middle = 512, Bottom = 1024, Baseline = 2048, Geometry = 4096, Capline = 8192 }
+    public class TMP_TextInfo { public int characterCount, lineCount, pageCount; }
+
     public abstract class TMP_Text : MaskableGraphic
     {
         public virtual string text { get; set; }
-        public float fontSize { get; set; }
-        public TextAlignmentOptions alignment { get; set; }
+        public float fontSize { get; set; }                       // ⚠ Single 이다 — `int x = t.fontSize` 는 안 된다
+        public TextAlignmentOptions alignment { get; set; }        // ⚠ TextAnchor 아님
+        public HorizontalAlignmentOptions horizontalAlignment { get; set; }
+        public VerticalAlignmentOptions verticalAlignment { get; set; }
         public bool enableAutoSizing { get; set; }
         public float fontSizeMin { get; set; }
         public float fontSizeMax { get; set; }
@@ -36,6 +48,23 @@ namespace TMPro
         public bool richText { get; set; }
         public Material fontSharedMaterial { get; set; }
         public TMP_FontAsset font { get; set; }
+        public TextOverflowModes overflowMode { get; set; }
+        public TextWrappingModes textWrappingMode { get; set; }
+        public bool enableWordWrapping { get; set; }               // 아직 있다(구식이지만 살아 있는 이름)
+        public float lineSpacing { get; set; }
+        public float characterSpacing { get; set; }
+        public float paragraphSpacing { get; set; }
+        public Vector4 margin { get; set; }
+        public float outlineWidth { get; set; }                    // 주인이 말한 «진짜 머티리얼 아웃라인» 이 이 둘이다
+        public Color outlineColor { get; set; }
+        public int maxVisibleCharacters { get; set; }
+        public TMP_TextInfo textInfo { get; }
+        public float preferredWidth { get; }                       // ⚠ TMP 에도 있다 — 고칠 필요가 없던 자리(결정 587)
+        public float preferredHeight { get; }
+        public bool isTextTruncated { get; }
+        public void ForceMeshUpdate(bool ignoreActiveState = false, bool forceTextReparsing = false) { }
+        public Vector2 GetPreferredValues() { return Vector2.zero; }
+        public Vector2 GetPreferredValues(float width, float height) { return Vector2.zero; }
     }
     public class TextMeshProUGUI : TMP_Text { }
     // 프리팹 입력칸 — UiKit.Adopt 가 이것을 떼고 uGUI InputField 로 갈아 끼운다(T96-profile 2단계)

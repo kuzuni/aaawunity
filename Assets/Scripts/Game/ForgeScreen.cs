@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,7 +19,7 @@ namespace KkomaKnight.Game
     {
         public override string Name => "forge";
         readonly List<int> _sel = new List<int>();   // 선택 재료 uid (최대 3)
-        RectTransform _mats, _result, _content, _fuseOff, _fuseOn; Text _banner, _fuseTxtOff, _fuseTxtOn; Button _auto; GameObject _autoDot;
+        RectTransform _mats, _result, _content, _fuseOff, _fuseOn; TMP_Text _banner, _fuseTxtOff, _fuseTxtOn; Button _auto; GameObject _autoDot;
         readonly RectTransform[] _matSlot = new RectTransform[3];   // 재료 슬롯 자리(Pct) — 칸은 그 가운데 본래 크기
 
         /// <summary>무대 안 조각 자리(무대 % · 레퍼런스 08 을 눈으로 잰 것 · 전부 점수 밖 «느낌» — 표 행은 무대 사각형뿐).</summary>

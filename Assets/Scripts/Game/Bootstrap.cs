@@ -1,5 +1,6 @@
 using System;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,7 +17,7 @@ namespace KkomaKnight.Game
         /// <summary>주인 에셋 카탈로그 (Assets/KkomaKnight/AssetCatalog.asset — tools/gen_catalog.py 생성).</summary>
         public AssetCatalog catalog;
 
-        Text _status; Canvas _boot;
+        TMP_Text _status; Canvas _boot;
         /// <summary>부팅 로딩 화면(T96-loading · 주인 지목 프리팹 <c>Title_Loading</c>) — 조각이 없으면 null 이고 <see cref="_status"/> 글자가 대신한다.</summary>
         LoadingScreen _loading;
 

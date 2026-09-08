@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -44,7 +45,7 @@ namespace KkomaKnight.Game
         {
             var rows = new List<Row>();
             if (root == null) return rows;
-            foreach (var t in root.GetComponentsInChildren<Text>(false))
+            foreach (var t in root.GetComponentsInChildren<TMP_Text>(false))
             {
                 if (t == null || !t.isActiveAndEnabled || string.IsNullOrWhiteSpace(t.text)) continue;
                 string missing = StatText.Missing(t.text);

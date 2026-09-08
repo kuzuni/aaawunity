@@ -3,6 +3,7 @@ using System.Collections;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -82,7 +83,7 @@ namespace KkomaKnight.Tests.Play
             var empty = UiKit.Find(ov, "Empty");
             Assert.IsTrue(empty != null && empty.gameObject.activeInHierarchy, "«비었음» 그림이 보인다");
             Assert.IsNull(UiKit.Find(ov, Mailbox.ClaimAllName), "받을 것이 없으면 «전체 받기» 는 없다");
-            foreach (var t in ov.GetComponentsInChildren<Text>(true))
+            foreach (var t in ov.GetComponentsInChildren<TMP_Text>(true))
                 Assert.AreNotEqual("Mailbox", (t.text ?? "").Trim(), "영문 데모 글자 0(제목은 «우편함»)");
             _app.Overlay.Close(); yield return Frames(2);
 

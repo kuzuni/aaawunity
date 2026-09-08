@@ -2,6 +2,7 @@ using System.Collections;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -39,10 +40,10 @@ namespace KkomaKnight.Tests.Play
         }
 
         /// <summary>바(Slider_02 조각)의 숫자 글자 — EXP 바의 왼쪽 캡 라벨(«EXP»)은 뺀다.</summary>
-        static Text BarText(Transform root, string name)
+        static TMP_Text BarText(Transform root, string name)
         {
             var b = UiKit.Find(root, name); Assert.IsNotNull(b, name); Assert.IsNotNull(b.GetComponent<Slider>(), name + " 는 Slider 조각");
-            foreach (var t in b.GetComponentsInChildren<Text>(true)) if (t.text != "EXP") return t;
+            foreach (var t in b.GetComponentsInChildren<TMP_Text>(true)) if (t.text != "EXP") return t;
             return null;
         }
         static float BarValue(Transform root, string name) => UiKit.Find(root, name).GetComponent<Slider>().value;
@@ -64,7 +65,7 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual($"{UiKit.Fmt(W.ShownHp)}/{UiKit.Fmt(P.MaxHp)}", hp.text, "HP 바 안 «현재/최대»");
             Assert.AreEqual(P.MaxSh > 0 ? $"{UiKit.Fmt(W.ShownSh)}/{UiKit.Fmt(P.MaxSh)}" : "실드 없음", sh.text, "실드 바 안 «현재/최대»");
             Assert.AreEqual(P.MaxHp > 0 ? (float)(W.ShownHp / P.MaxHp) : 0f, BarValue(hud, "Bar:HP"), 0.01f, "HP 바 값");
-            foreach (var t in hud.GetComponentsInChildren<Text>(false)) if (t.text == "EXP") { Assert.IsTrue(t.transform.IsChildOf(UiKit.Find(hud, "Bar:EXP")), "«EXP» 라벨은 EXP 바 왼쪽 캡"); break; }
+            foreach (var t in hud.GetComponentsInChildren<TMP_Text>(false)) if (t.text == "EXP") { Assert.IsTrue(t.transform.IsChildOf(UiKit.Find(hud, "Bar:EXP")), "«EXP» 라벨은 EXP 바 왼쪽 캡"); break; }
             var re = (RectTransform)UiKit.Find(hud, "Bar:EXP"); var rh = (RectTransform)UiKit.Find(hud, "Bar:HP"); var rs = (RectTransform)UiKit.Find(hud, "Bar:SH");
             Assert.AreEqual(re.anchorMin.y, rh.anchorMin.y, 1e-3f, "세 바는 같은 줄"); Assert.AreEqual(rh.anchorMin.y, rs.anchorMin.y, 1e-3f, "세 바는 같은 줄");
             Assert.AreEqual(1f - Layout.HudHp.Y / 100f, rh.anchorMax.y, 1e-3f, "바 줄 = 표 ② HP 바 y");
@@ -87,7 +88,7 @@ namespace KkomaKnight.Tests.Play
             Assert.GreaterOrEqual(W.PlayerHpText.fontSize, BattleWorld.MinFootFont, "그래도 하한(BattleWorld.MinFootFont) 아래로는 안 내려간다 — 숫자를 박지 않는다(결정 426)");
             Assert.LessOrEqual(W.PlayerHpText.fontSize, UiKit.FrameH * Layout.FootBarH / 100f * 0.8f, "발밑 숫자 ≤ 단 높이 × 0.8 — 넘으면 숫자가 단을 덮어 빨강·파랑 채움이 안 보인다(결정 361)");
             // 화면에서 가장 작은 글자라 Bold 면 획이 서로 붙어 흰 덩어리가 된다(결정 449 · screens run 331 실측: 레퍼런스와 글자 크기는 같은데 흰 픽셀이 0.12 대 0.38)
-            Assert.AreEqual(FontStyle.Normal, W.PlayerHpText.fontStyle, "발밑 숫자는 Bold 가 아니다(T125 회차 4 · 결정 449)");
+            Assert.AreEqual(FontStyles.Normal, W.PlayerHpText.fontStyle, "발밑 숫자는 Bold 가 아니다(T125 회차 4 · 결정 449)");
             Assert.GreaterOrEqual(W.PlayerHpText.rectTransform.rect.height, W.PlayerHpText.preferredHeight - 1f, "발밑 숫자 칸 높이 ≥ 선호 높이(잘림 0)");
             Assert.LessOrEqual(W.PlayerHpText.preferredWidth, W.PlayerHpBar.size.x * WorldCam.PPU * (UiKit.FrameW / WorldCam.LayoutW) + 1f, "발밑 숫자 «" + W.PlayerHpText.text + "» 가 바 폭 안에");
             Assert.AreEqual(W.PlayerHpBar.size.x, W.PlayerShBar.size.x, 1e-3f, "두 단은 같은 폭"); Assert.AreEqual(W.PlayerHpBar.size.y, W.PlayerShBar.size.y, 1e-3f, "두 단은 같은 높이");
@@ -103,9 +104,9 @@ namespace KkomaKnight.Tests.Play
             // ⓓ 스탯 8칸(아이콘 · 이름 · 값) · 상단 pill 처치 수 = 엔진 Kills
             int cells = 0;
             foreach (var t in hud.GetComponentsInChildren<Transform>(false))
-                if (t.name.StartsWith("stat:")) { cells++; Assert.IsNotNull(UiKit.Find(t, "ic"), t.name + " 아이콘"); Assert.IsFalse(string.IsNullOrEmpty(UiKit.Find(t, "Label").GetComponent<Text>().text), t.name + " 이름"); Assert.IsFalse(string.IsNullOrEmpty(UiKit.Find(t, "Value").GetComponent<Text>().text), t.name + " 값"); }
+                if (t.name.StartsWith("stat:")) { cells++; Assert.IsNotNull(UiKit.Find(t, "ic"), t.name + " 아이콘"); Assert.IsFalse(string.IsNullOrEmpty(UiKit.Find(t, "Label").GetComponent<TMP_Text>().text), t.name + " 이름"); Assert.IsFalse(string.IsNullOrEmpty(UiKit.Find(t, "Value").GetComponent<TMP_Text>().text), t.name + " 값"); }
             Assert.AreEqual(BattleScreen.StatDefs.Length, cells, "스탯 8칸");
-            Assert.AreEqual(G.Kills.ToString(), UiKit.Find(hud, "Pill:kills").GetComponentInChildren<Text>(true).text, "처치 수 pill");
+            Assert.AreEqual(G.Kills.ToString(), UiKit.Find(hud, "Pill:kills").GetComponentInChildren<TMP_Text>(true).text, "처치 수 pill");
             Assert.AreEqual(0f, (float)BattleScreen.ChapterProgress(G), 1e-3f, "시작 직후 진행 0");
 
             // ⓒ 첫 웨이브까지 걷는다(엔진 틱은 dt 로 · 배속 3) → 적 발밑 빨간 숫자 바 · 조우 중 Engaged · 진행바 주황
@@ -120,13 +121,13 @@ namespace KkomaKnight.Tests.Play
             var fill = UiKit.Find(hud, "Bar:Progress").GetComponent<Slider>().fillRect.GetComponent<Image>();
             Assert.AreEqual(Palette.Orange, fill.color, "조우 중 진행바는 주황");
             Assert.AreEqual((float)BattleScreen.ChapterProgress(G), BarValue(hud, "Bar:Progress"), 0.01f, "진행바 값 = 노드 진행");
-            Assert.AreEqual(G.Kills.ToString(), UiKit.Find(hud, "Pill:kills").GetComponentInChildren<Text>(true).text, "처치 수 pill 갱신");
+            Assert.AreEqual(G.Kills.ToString(), UiKit.Find(hud, "Pill:kills").GetComponentInChildren<TMP_Text>(true).text, "처치 수 pill 갱신");
             _log.AssertNoRed("적 조우");
 
             // 로비로 — 월드와 함께 발밑 숫자(팝 층)도 사라진다 · 빨간 줄 0
             _app.Overlay.Close(); _app.ShowScreen("lobby"); yield return Frames(2);
             Assert.AreEqual("lobby", _app.Current.Name);
-            foreach (var t in _app.UiCanvas.GetComponentsInChildren<Text>(true)) Assert.IsFalse(t.name.StartsWith("FootTxt:"), "발밑 숫자 글자가 남아 있다: " + t.name);
+            foreach (var t in _app.UiCanvas.GetComponentsInChildren<TMP_Text>(true)) Assert.IsFalse(t.name.StartsWith("FootTxt:"), "발밑 숫자 글자가 남아 있다: " + t.name);
             _log.AssertNoRed("로비 복귀");
         }
     }

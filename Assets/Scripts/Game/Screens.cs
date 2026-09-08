@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -49,7 +50,7 @@ namespace KkomaKnight.Game
         static readonly Vector2 MenuDotAnchor = new Vector2(1, 1), MenuDotOffset = new Vector2(-20, -18);
         const float MenuDotSize = 33f;
 
-        TopBar _top; Text _chap; Transform _tabs;
+        TopBar _top; TMP_Text _chap; Transform _tabs;
         /// <summary>«데일리 기프트» 사이드 아이콘의 빨간 알림 점 — 지금 받을 수 있는 줄이 하나라도 있으면 켠다(T77 · <see cref="Refresh"/>).</summary>
         GameObject _giftDot;
         /// <summary>«탐험» 보조 버튼의 빨간 알림 점 — 받을 것이 쌓였거나 빠른 탐험 횟수가 남으면 켠다(T97 · <see cref="Refresh"/>).</summary>
@@ -233,7 +234,7 @@ namespace KkomaKnight.Game
     /// </summary>
     public sealed class TopBar
     {
-        public RectTransform Root; public HeroView Hero; public Text Power, Gold, Gem;
+        public RectTransform Root; public HeroView Hero; public TMP_Text Power, Gold, Gem;
         /// <summary>UI 비평 이름표용 조각(T46) — 아바타 칸 · 전투력 칸 · 골드 pill · 보석 pill. 화면이 표의 이름으로 <see cref="UiKit.Tag"/>/<see cref="UiKit.TagGroup"/> 을 단다.</summary>
         public RectTransform Avatar, PowerCell, GoldPill, GemPill;
         readonly App _app;

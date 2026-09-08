@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -116,18 +117,18 @@ namespace KkomaKnight.Game
 
         TopBar _top; string _page = PageDungeon;
         /// <summary>내 전투력이 바뀌면(장비·강화) 같이 다시 써야 하는 더미 전투력 글자 — (글자, 순위).</summary>
-        readonly List<KeyValuePair<Text, int>> _dummyPowerTexts = new List<KeyValuePair<Text, int>>();
+        readonly List<KeyValuePair<TMP_Text, int>> _dummyPowerTexts = new List<KeyValuePair<TMP_Text, int>>();
         readonly Dictionary<string, RectTransform> _pages = new Dictionary<string, RectTransform>();
-        readonly List<Text> _powerTexts = new List<Text>();
+        readonly List<TMP_Text> _powerTexts = new List<TMP_Text>();
         /// <summary>던전 카드 제목 띠의 티켓 글자(글자, 던전 키) — 티켓이 늘면 <see cref="Refresh"/> 가 다시 쓴다(T99).</summary>
-        readonly List<KeyValuePair<Text, string>> _ticketTexts = new List<KeyValuePair<Text, string>>();
+        readonly List<KeyValuePair<TMP_Text, string>> _ticketTexts = new List<KeyValuePair<TMP_Text, string>>();
         /// <summary>던전 카드 «입장» 버튼의 빨간 점(점, 던전 키) — «지금 할 일» 이 있을 때만 켠다(T99 6항).</summary>
         readonly List<KeyValuePair<GameObject, string>> _ticketDots = new List<KeyValuePair<GameObject, string>>();
         HeroView _me;
         /// <summary>T72 ② 빛살을 걸 자리 — 배치가 끝난 뒤에 한꺼번에 건다(% 앵커 아이콘은 Build 중 rect 가 0 이라 빛살 한 변이 0 이 된다 · 결정 174).</summary>
         readonly List<(RectTransform host, RectTransform icon, string key)> _lightPlan = new List<(RectTransform, RectTransform, string)>();
         /// <summary>제목 줄(아이콘·글자·줄 폭 %) — 배치가 끝난 뒤 글자 폭을 실측해 «아이콘 + 글자» 덩어리를 가운데로 옮긴다(T101 ⓓ).</summary>
-        readonly List<(RectTransform row, RectTransform icon, Text text, float rowWPct)> _titlePlan = new List<(RectTransform, RectTransform, Text, float)>();
+        readonly List<(RectTransform row, RectTransform icon, TMP_Text text, float rowWPct)> _titlePlan = new List<(RectTransform, RectTransform, TMP_Text, float)>();
         /// <summary>T72 4항 «보이는 칸만» — 상인 페이지(26)는 상품이 11칸이라 스크롤 창과 겹치는 칸만 돌린다.</summary>
         readonly List<RectTransform> _goodsCells = new List<RectTransform>();
         ScrollRect _goodsScroll;
@@ -227,8 +228,8 @@ namespace KkomaKnight.Game
                 // 제목 띠(카드 1 빨강 · 카드 2 파랑) — 왼쪽 이름 · 오른쪽 🎫 0/2
                 var head = UiKit.Panel(card, "Head", "fr.r12", i == 0 ? DeepRed : CardBlue); UiKit.Pct(head.rectTransform, Shift(Layout.DgCardHead, dy).Within(rect));
                 UiKit.Gradient(head.rectTransform, inset: HeadGradientInset);
-                UiKit.Label(head.transform, 2.5f, 0, 60, 100, d.title, CardTitleSize, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
-                _ticketTexts.Add(new KeyValuePair<Text, string>(TicketPill(head.transform, new Layout.R(84, 12, 14, 76), d.ticket, TicketText(d.key)), d.key));
+                UiKit.Label(head.transform, 2.5f, 0, 60, 100, d.title, CardTitleSize, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyles.Bold;
+                _ticketTexts.Add(new KeyValuePair<TMP_Text, string>(TicketPill(head.transform, new Layout.R(84, 12, 14, 76), d.ticket, TicketText(d.key)), d.key));
                 // 그림(Environment 들판 + 길 + 소품 · 카드 1 = 붉은 사막(지옥) · 카드 2 = 흰 들판(설원))
                 var pic = UiKit.Rect(card, "Pic"); UiKit.Pct(pic, Shift(Layout.DgCardPic, dy).Within(rect));
                 Stage(pic, d.field, d.tint, d.props);
@@ -271,7 +272,7 @@ namespace KkomaKnight.Game
             var fill = UiKit.Panel(card, "Fill", "fr.r12", CardBody); UiKit.Stretch(fill.rectTransform, 4, 4, 4, 4);
             var head = UiKit.Panel(card, "Head", "fr.r12", ArenaRed); UiKit.Pct(head.rectTransform, Layout.ArCardHead.Within(rect));
             UiKit.Gradient(head.rectTransform, inset: HeadGradientInset);
-            UiKit.Label(head.transform, 2.5f, 0, 60, 100, "아레나", CardTitleSize, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
+            UiKit.Label(head.transform, 2.5f, 0, 60, 100, "아레나", CardTitleSize, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyles.Bold;
             TicketPill(head.transform, new Layout.R(84, 12, 14, 76), "ui.iconTokenRed", "0/5");
             // 경기장 그림 = 모래 들판 + 기둥(석주) + 돌
             var pic = UiKit.Rect(card, "Pic"); UiKit.Pct(pic, Layout.ArCardPic.Within(rect));
@@ -284,7 +285,7 @@ namespace KkomaKnight.Game
             var enter = UiKit.Button(card, "ui.btnOrange", "입장", () => ShowPage(PageArena), Layout.ArEnter.Within(rect)); enter.name = "EnterBtn"; ButtonPad(enter); AlertDot(enter);
             var tier = UiKit.Rect(card, "Tier"); UiKit.Pct(tier, Layout.ArTier.Within(rect));
             var med = UiKit.Icon(tier, "Icon", "ui.iconMedalBronze"); UiKit.Pct(med.rectTransform, 0, 0, 24, 100);
-            UiKit.Label(tier, 28, 0, 72, 100, "브론즈", 34, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
+            UiKit.Label(tier, 28, 0, 72, 100, "브론즈", 34, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyles.Bold;
             UiKit.Bordered(card, tint: CardRingInk);   // T101 ⓒ + T149 — 던전 카드와 같은 규칙(조립 뒤 · 맨 마지막 형제 · 검정 α1)
             UiKit.Tag(card, "아레나 카드"); UiKit.Tag(head.transform, "카드 제목 띠"); UiKit.Tag(pic, "카드 그림"); UiKit.Tag(season, "시즌 타이머"); UiKit.Tag(enter, "입장 버튼"); UiKit.Tag(tier, "티어 줄");
             Foot(pg, PagePvp, () => App.ShowScreen("lobby"));
@@ -309,7 +310,7 @@ namespace KkomaKnight.Game
             {
                 var m = UiKit.Icon(tier, "Icon", "ui.iconMedalBronze");
                 var mt = UiKit.Label(tier, 26, 0, 74, 100, "브론즈", TextSize.Title, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Title);
-                mt.fontStyle = FontStyle.Bold;
+                mt.fontStyle = FontStyles.Bold;
                 CenterTitle(m.rectTransform, mt, Layout.AeTier.W);
                 _titlePlan.Add((tier, m.rectTransform, mt, Layout.AeTier.W));
             }
@@ -377,7 +378,7 @@ namespace KkomaKnight.Game
                 var head = UiKit.Icon(banner.transform, "Head", "env.keeperHead"); UiKit.Pct(head.rectTransform, 42.2f, 26, 12.6f, 28);
                 UiKit.TagGroup(banner.transform, "상인(머리+몸)", body.rectTransform, head.rectTransform);
             }
-            var title = UiKit.Label(pg, Layout.MeTitle.X, Layout.MeTitle.Y, Layout.MeTitle.W, Layout.MeTitle.H, "상인", TextSize.Title, Palette.White, kind: TextKind.Title); title.fontStyle = FontStyle.Bold; title.gameObject.name = "Title"; UiKit.Tag(title.transform, "제목(Merchant)");
+            var title = UiKit.Label(pg, Layout.MeTitle.X, Layout.MeTitle.Y, Layout.MeTitle.W, Layout.MeTitle.H, "상인", TextSize.Title, Palette.White, kind: TextKind.Title); title.fontStyle = FontStyles.Bold; title.gameObject.name = "Title"; UiKit.Tag(title.transform, "제목(Merchant)");
             var season = UiKit.Rect(pg, "Season"); UiKit.Pct(season, Layout.MeSeason); UiKit.Tag(season, "시즌 타이머");
             { var c = UiKit.Icon(season, "Icon", "ui.iconClock"); UiKit.Pct(c.rectTransform, 0, 0, 8, 100); UiKit.Label(season, 10, 0, 90, 100, "시즌 종료까지: " + NoTime, TextSize.Aux, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Aux); }
             int rows = (Goods.Length + 2) / 3;
@@ -393,8 +394,8 @@ namespace KkomaKnight.Game
                 var frame = UiKit.Spawn("ui.cardFrame.blue", card); UiKit.Stretch((RectTransform)frame.transform);
                 // 제목 = 프리팹의 Text_Title 자리(원본 CardFrame_04_BasePrefab_LightBg 의 «Text» 글자 · ShopScreen 상자 카드와 같은 식) — 따로 Label 을 얹으면 «Text» 가 활성으로 남아 T50(CI #71·#75 «[상인 페이지] 영문 데모 글자: Text»)
                 var gt = UiKit.SetText(frame.transform, "Text_Title", g.title, Palette.White, TextSize.Body);
-                if (gt != null) { UiKit.Pct(gt.rectTransform, 4, 2, 92, 15); gt.alignment = TextAnchor.MiddleCenter; gt.fontStyle = FontStyle.Bold; gt.resizeTextForBestFit = true; gt.resizeTextMinSize = TextSize.BestFitMin; gt.resizeTextMaxSize = TextSize.Body; }
-                else UiKit.Label(card, 4, 2, 92, 15, g.title, TextSize.Body, Palette.White).fontStyle = FontStyle.Bold;
+                if (gt != null) { UiKit.Pct(gt.rectTransform, 4, 2, 92, 15); gt.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); gt.fontStyle = FontStyles.Bold; gt.enableAutoSizing = true; gt.fontSizeMin = TextSize.BestFitMin; gt.fontSizeMax = TextSize.Body; }
+                else UiKit.Label(card, 4, 2, 92, 15, g.title, TextSize.Body, Palette.White).fontStyle = FontStyles.Bold;
                 var ic = UiKit.Rect(card, "IconCell"); UiKit.Pct(ic, 26, 20, 48, 38);
                 var f = UiKit.Spawn("ui.itemFrame.blue", ic); UiKit.Stretch((RectTransform)f.transform); var im = UiKit.Icon(ic, "Icon", g.icon); UiKit.Pct(im.rectTransform, 15, 15, 70, 70);
                 GearUi.DarkFrame(f.transform);   // T115 — 워커 I 가 «우연히 통과» 로 지목한 자리(f08a7fe 커밋 메시지)
@@ -403,11 +404,11 @@ namespace KkomaKnight.Game
                 // T209 — 한도·값·개수 배지는 arenaShop.json 에서 온다(코드에 숫자 없음 · 값의 정본은 주인 레퍼런스 26). 표에 없거나 0 인 칸은 종전대로 «—».
                 var shop = App != null && App.Data != null ? App.Data.ArenaShop : null;
                 var ge = shop != null ? shop.Of(g.key) : null;
-                if (ge != null && ge.HasBadge) { var bg = UiKit.Label(ic, 52, 62, 44, 32, ge.Badge.ToString(), TextSize.Aux, Palette.White, TextAnchor.MiddleRight, kind: TextKind.Aux); bg.name = "Badge"; bg.fontStyle = FontStyle.Bold; }
+                if (ge != null && ge.HasBadge) { var bg = UiKit.Label(ic, 52, 62, 44, 32, ge.Badge.ToString(), TextSize.Aux, Palette.White, TextAnchor.MiddleRight, kind: TextKind.Aux); bg.name = "Badge"; bg.fontStyle = FontStyles.Bold; }
                 var lim = UiKit.Label(card, 4, 60, 92, 15, shop != null ? shop.Limit(ge, "한도 " + Dash) : "한도 " + Dash, TextSize.Aux, Palette.Ink, kind: TextKind.Aux); lim.name = "Limit";
                 var price = UiKit.Panel(card, "Price", "fr.r12", Palette.Cream); UiKit.Pct(price.rectTransform, 5, 79, 90, 17);
                 var coin = UiKit.Icon(price.transform, "Icon", "ui.iconArenaCoin"); UiKit.Pct(coin.rectTransform, 8, 12, 22, 76);
-                var pl = UiKit.Label(price.transform, 32, 0, 62, 100, shop != null ? shop.Cost(ge, Dash) : Dash, TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft); pl.name = "Cost"; pl.fontStyle = FontStyle.Bold;
+                var pl = UiKit.Label(price.transform, 32, 0, 62, 100, shop != null ? shop.Cost(ge, Dash) : Dash, TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft); pl.name = "Cost"; pl.fontStyle = FontStyles.Bold;
                 UiKit.Clickable(card, Noop);
                 if (i == 0) UiKit.Tag(card, "상품 카드(1칸)");
             }
@@ -429,9 +430,9 @@ namespace KkomaKnight.Game
             // 층수 ◀ 색 = Gray: 크림 패널 위라 Cream 이면 안 보인다(T43 비평 회차 1 · 21 감점 원인) · 레퍼런스도 회색 화살표. ⚠ 한 줄에 문장 4개 — 뒤에 // 주석을 붙이면 Pct·Clickable·Tag 가 주석 처리된다(CI #87 회귀)
             var arrow = UiKit.Icon(box, "FloorPrev", "pi.arrow_left", Palette.Gray); UiKit.Pct(arrow.rectTransform, Layout.DdArrow.Within(Layout.DdBox)); UiKit.Clickable(arrow.transform, Noop); UiKit.Tag(arrow.transform, "층수 화살표");
             var circle = UiKit.Panel(box, "FloorCircle", "fr.circle", Palette.Hex("#141414")); UiKit.Pct(circle.rectTransform, Layout.DdFloor.Within(Layout.DdBox)); UiKit.Tag(circle.transform, "층수 원");
-            UiKit.Label(circle.transform, 0, 8, 100, 56, "1", 56, Palette.Orange).fontStyle = FontStyle.Bold; UiKit.Label(circle.transform, 0, 62, 100, 32, "층", TextSize.Aux, Palette.Orange, kind: TextKind.Aux);
+            UiKit.Label(circle.transform, 0, 8, 100, 56, "1", 56, Palette.Orange).fontStyle = FontStyles.Bold; UiKit.Label(circle.transform, 0, 62, 100, 32, "층", TextSize.Aux, Palette.Orange, kind: TextKind.Aux);
             var rewards = UiKit.Spawn("ui.frameDark", box); var rrt = (RectTransform)rewards.transform; rrt.name = "Rewards"; UiKit.Pct(rrt, Layout.DdRewards.Within(Layout.DdBox)); UiKit.Tag(rrt, "보상 박스");
-            UiKit.Label(rrt, 0, 3, 100, 24, "보상", TextSize.Body, Palette.White).fontStyle = FontStyle.Bold;
+            UiKit.Label(rrt, 0, 3, 100, 24, "보상", TextSize.Body, Palette.White).fontStyle = FontStyles.Bold;
             var cells = UiKit.Rect(box, "RewardCells"); UiKit.Pct(cells, Layout.DdRewardCells.Within(Layout.DdBox));
             // T99 4항 — 보상 칸은 표(dungeon.json)가 만든다: «첫 클리어 총액» 칸들(빨간 «최초» 배지 · T123) + «이후 클리어» 칸들.
             // 지옥의 문 = 펫알 11 · 골드 1,000(첫) + 펫알 5 · 골드 1,000 = 네 칸이라 레퍼런스 21(초록 프레임 4 · 앞 두 칸에 FIRST 배지)과 같은 꼴이고 표 ⑪ 도 그대로다.
@@ -441,7 +442,7 @@ namespace KkomaKnight.Game
             var cellRts = IconRow(cells, Layout.DdRewardCells, Icons(rewardDefs), "ui.itemFrame.green", "RewardCell:", true, fill: true);
             for (int i = 0; i < cellRts.Count && i < rewardDefs.Count; i++)
             {
-                UiKit.Label(cellRts[i], 0, 58, 100, 42, rewardDefs[i].amount, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyle.Bold;
+                UiKit.Label(cellRts[i], 0, 58, 100, 42, rewardDefs[i].amount, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyles.Bold;
                 // T123 — «최초» 배지는 레퍼런스 21 처럼 «칸 안 오른쪽 위»(칸 폭 안 · 위로만 살짝 걸침)다.
                 // 전에는 «첫 클리어» 다섯 글자가 보조 36 으로 칸 폭 119px 에 안 들어가 배지를 114%(136px)로 넓혔고(T74),
                 // 그 바람에 배지가 좌우로 삐져나와 옆 칸 배지와 붙고 위로 34%(40px)나 솟아 «보상» 제목을 덮었다(screens 218 실측).
@@ -496,7 +497,7 @@ namespace KkomaKnight.Game
                 var pill = UiKit.Panel(info, "TicketPill", "fr.r12", Palette.Hex("#1E1E1E")); UiKit.Pct(pill.rectTransform, 0, -30, 28, 160);
                 var ti = UiKit.Icon(pill.transform, "Icon", "ui.iconTokenRed"); UiKit.Pct(ti.rectTransform, 2, 5, 24, 90); UiKit.Label(pill.transform, 30, 0, 66, 100, "0", TextSize.Body, Palette.White);
                 var pw = UiKit.Icon(info, "PowerIcon", "ui.battle"); UiKit.Pct(pw.rectTransform, 70, -30, 8, 160);
-                var pt = UiKit.Label(info, 79, -30, 21, 160, "0", TextSize.Body, Palette.Orange, TextAnchor.MiddleLeft); pt.fontStyle = FontStyle.Bold; _powerTexts.Add(pt); pt.text = UiKit.FmtComma(App.Power());
+                var pt = UiKit.Label(info, 79, -30, 21, 160, "0", TextSize.Body, Palette.Orange, TextAnchor.MiddleLeft); pt.fontStyle = FontStyles.Bold; _powerTexts.Add(pt); pt.text = UiKit.FmtComma(App.Power());
             }
             var list = UiKit.Rect(box, "FoeList"); UiKit.Pct(list, Layout.AcList.Within(Layout.AcBox)); UiKit.Tag(list, "상대 목록(5줄)");
             for (int i = 0; i < FoeRows; i++)
@@ -508,8 +509,8 @@ namespace KkomaKnight.Game
                 // 게이트는 줄 안 초상 프레임(ItemFrame)의 링 때문에 이미 통과했지만 눈에는 줄 테두리가 없었다 — 결정 184 와 같은 함정이라 줄에 직접 건다.
                 UiKit.Bordered(row);
                 Portrait(row, "Face", new Layout.R(2.5f, 12, 11.5f, 76), "ui.itemFrame.yellow", Foes[i % Foes.Length], true);
-                UiKit.Label(row, 16, 6, 44, 42, FoeName(FoeRank(i)), TextSize.Body, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyle.Bold;
-                _dummyPowerTexts.Add(new KeyValuePair<Text, int>(Pill(row, new Layout.R(16, 54, 19, 38), "ui.battle", DummyPower(FoeRank(i)), Palette.Orange), FoeRank(i)));
+                UiKit.Label(row, 16, 6, 44, 42, FoeName(FoeRank(i)), TextSize.Body, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyles.Bold;
+                _dummyPowerTexts.Add(new KeyValuePair<TMP_Text, int>(Pill(row, new Layout.R(16, 54, 19, 38), "ui.battle", DummyPower(FoeRank(i)), Palette.Orange), FoeRank(i)));
                 Pill(row, new Layout.R(37, 54, 19, 38), "ui.trophy", DummyScore(FoeRank(i)), Palette.Yellow);
                 var br = Layout.AcRowBtn; br.Y += i * Layout.AcRowPitch;
                 var b = UiKit.Button(box, "ui.btnOrange", "도전", Noop, br.Within(Layout.AcBox)); b.name = "FoeBtn:" + i; TicketCost(b, "ui.iconTokenRed");
@@ -533,7 +534,7 @@ namespace KkomaKnight.Game
             for (int i = 0; i < Tiers.Length; i++)
             {
                 var cell = UiKit.Rect(band.transform, "Tier:" + i); UiKit.Pct(cell, i * 20.5f, 0, 20, 100);
-                var ic = UiKit.Icon(cell, "Icon", Tiers[i].icon); UiKit.Pct(ic.rectTransform, 22, 10, 56, 54); UiKit.Label(cell, 0, 66, 100, 30, Tiers[i].label, TextSize.Body, Palette.White).fontStyle = FontStyle.Bold;
+                var ic = UiKit.Icon(cell, "Icon", Tiers[i].icon); UiKit.Pct(ic.rectTransform, 22, 10, 56, 54); UiKit.Label(cell, 0, 66, 100, 30, Tiers[i].label, TextSize.Body, Palette.White).fontStyle = FontStyles.Bold;
                 if (i > 0) { var dash = UiKit.Panel(band.transform, "Dash", "fr.rect", Palette.Hex("#5A1520")); UiKit.Pct(dash.rectTransform, i * 20.5f - 2.2f, 44, 1.6f, 6); }
             }
             var timer = UiKit.Rect(box, "Timer"); UiKit.Pct(timer, Layout.RrTimer.Within(Layout.RrBox)); UiKit.Tag(timer, "리셋 타이머");
@@ -549,8 +550,8 @@ namespace KkomaKnight.Game
                 var fr = UiKit.Spawn("ui.frameDark", row); UiKit.Stretch((RectTransform)fr.transform);
                 // T69-events: 24 의 상대 줄과 같은 이유로 보상 줄에도 Ink 링(레퍼런스 25 의 4줄은 각자 검은 외곽선 상자)
                 UiKit.Bordered(row);
-                if (i < crowns.Length) { var cr = UiKit.Icon(row, "Crown", crowns[i]); UiKit.Pct(cr.rectTransform, 2, 8, 14, 84); UiKit.Label(row, 2, 30, 14, 50, (i + 1).ToString(), TextSize.Body, Palette.White).fontStyle = FontStyle.Bold; }
-                else UiKit.Label(row, 2, 0, 14, 100, (i + 1).ToString(), TextSize.Body, Palette.White).fontStyle = FontStyle.Bold;
+                if (i < crowns.Length) { var cr = UiKit.Icon(row, "Crown", crowns[i]); UiKit.Pct(cr.rectTransform, 2, 8, 14, 84); UiKit.Label(row, 2, 30, 14, 50, (i + 1).ToString(), TextSize.Body, Palette.White).fontStyle = FontStyles.Bold; }
+                else UiKit.Label(row, 2, 0, 14, 100, (i + 1).ToString(), TextSize.Body, Palette.White).fontStyle = FontStyles.Bold;
                 // T72 ② 보상 칸(코인·다이아) 아이콘 뒤 빛살 — 팝업이라 스크롤 제한 없이 여덟 칸이 같이 돈다(닫으면 SetLink 로 같이 죽는다)
                 PlanLight(RewardCell(row, new Layout.R(20, 8, 13, 84), "ui.itemFrame.green", "ui.iconArenaCoin")); PlanLight(RewardCell(row, new Layout.R(35, 8, 13, 84), "ui.itemFrame.plum", "ui.iconGemPurple"));
                 if (i == 0) UiKit.Tag(row, "보상 줄(1칸)");
@@ -675,7 +676,7 @@ namespace KkomaKnight.Game
         }
         /// <summary>예약해 둔 빛살을 «배치가 끝난 뒤»에 한꺼번에 건다 — 그 전에는 % 앵커 아이콘의 rect 가 0 이라 빛살 한 변이 0 이 된다(결정 174).</summary>
         /// <summary>«아이콘 + 글자» 를 한 덩어리로 줄 가운데에 — 계산은 <see cref="UiKit.CenterIconTitle"/> 한 곳이다(T170 이 T101 ⓓ 를 전 화면 공용으로 올렸다).</summary>
-        static void CenterTitle(RectTransform icon, Text text, float rowWPct) => UiKit.CenterIconTitle(icon, text, rowWPct, TitleIconPct, TitleGapPct);
+        static void CenterTitle(RectTransform icon, TMP_Text text, float rowWPct) => UiKit.CenterIconTitle(icon, text, rowWPct, TitleIconPct, TitleGapPct);
 
         void ApplyLights()
         {
@@ -710,7 +711,7 @@ namespace KkomaKnight.Game
         {
             var row = UiKit.Rect(pg, "Title"); UiKit.Pct(row, rect); UiKit.Tag(row, tag);
             var ic = UiKit.Icon(row, "Icon", icon);
-            var title = UiKit.Label(row, 0, 0, 100, 100, text, TextSize.Title, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Title); title.fontStyle = FontStyle.Bold;
+            var title = UiKit.Label(row, 0, 0, 100, 100, text, TextSize.Title, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Title); title.fontStyle = FontStyles.Bold;
             // T101 ⓓ(주인 2026-09-07 «상단 «던전» 타이틀이 왼쪽으로 치우쳐 있음 · 아이콘은 지울 필요 없고 걍 중앙에») —
             // 아이콘을 rect 왼쪽 끝에 못 박고 글자를 26% 부터 왼쪽 정렬하던 것을 «아이콘 + 글자» 한 덩어리로 묶어 가운데에 놓는다.
             // 글자 폭은 실측(preferredWidth)이라 «던전»·«PvP»·«상인» 길이가 달라도 각자 가운데다.
@@ -760,11 +761,11 @@ namespace KkomaKnight.Game
             for (int i = 0; i < props.Length && i < PropSlots.Length; i++) { var p = UiKit.Icon(host, "Prop" + i, props[i]); UiKit.Pct(p.rectTransform, PropSlots[i]); }
         }
         /// <summary>제목 띠 안 오른쪽 티켓 pill(아이콘 + «0/2»).</summary>
-        static Text TicketPill(Transform head, Layout.R r, string icon, string text)
+        static TMP_Text TicketPill(Transform head, Layout.R r, string icon, string text)
         {
             var cell = UiKit.Rect(head, "Ticket"); UiKit.Pct(cell, r);
             var ic = UiKit.Icon(cell, "Icon", icon); UiKit.Pct(ic.rectTransform, 0, 0, 34, 100);
-            var t = UiKit.Label(cell, 38, 0, 62, 100, text, TextSize.Body, Palette.White, TextAnchor.MiddleLeft); t.fontStyle = FontStyle.Bold;
+            var t = UiKit.Label(cell, 38, 0, 62, 100, text, TextSize.Body, Palette.White, TextAnchor.MiddleLeft); t.fontStyle = FontStyles.Bold;
             return t;
         }
         /// <summary>정사각 아이콘 칸 줄(프레임 조각 + 아이콘) — 칸 한 변 = 줄 높이 · 왼쪽부터 · 간격은 남는 폭을 등분. rowRect = 줄의 프레임 % 사각형(정사각 환산용).</summary>
@@ -844,7 +845,7 @@ namespace KkomaKnight.Game
             var t = UiKit.ButtonText(btn);
             if (t != null) { var trt = t.rectTransform; trt.anchorMin = new Vector2(ButtonPadPct, 0.42f); trt.anchorMax = new Vector2(1f - ButtonPadPct, 1); trt.offsetMin = trt.offsetMax = Vector2.zero; }
             var cost = UiKit.Rect(btn, "Cost"); UiKit.Pct(cost, 30, 50, 40, 43.7f);
-            var ic = UiKit.Icon(cost, "Icon", icon); UiKit.Pct(ic.rectTransform, 0, 0, 40, 100); UiKit.Label(cost, 44, 0, 56, 100, "x1", TextSize.Aux, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Aux).fontStyle = FontStyle.Bold;
+            var ic = UiKit.Icon(cost, "Icon", icon); UiKit.Pct(ic.rectTransform, 0, 0, 40, 100); UiKit.Label(cost, 44, 0, 56, 100, "x1", TextSize.Aux, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Aux).fontStyle = FontStyles.Bold;
         }
         /// <summary>초상 칸 = 프레임 조각 + (아이콘 | HeroView 자리 «Inner»).</summary>
         static RectTransform Portrait(RectTransform parent, string name, Layout.R r, string frameKey, string icon, bool aspect = false)
@@ -861,7 +862,7 @@ namespace KkomaKnight.Game
         static void Crown(RectTransform parent, Layout.R portrait, string icon, string num)
         {
             var c = UiKit.Rect(parent, "Crown:" + num); UiKit.Pct(c, portrait.X + portrait.W * 0.25f, portrait.Y - 3.0f, portrait.W * 0.5f, 2.8f);
-            var ic = UiKit.Icon(c, "Icon", icon); UiKit.Stretch(ic.rectTransform); UiKit.Label(c, 0, 20, 100, 80, num, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyle.Bold;
+            var ic = UiKit.Icon(c, "Icon", icon); UiKit.Stretch(ic.rectTransform); UiKit.Label(c, 0, 20, 100, 80, num, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyles.Bold;
         }
         /// <summary>
         /// 시상대 배너 = GUI Pro <c>Social_Ranking</c> 의 <c>Group_RankingPodium/&lt;자리&gt;/Podium</c> 조각 그대로(펜던트 배너 슬라이스 + <c>Text_Name</c> + <c>Group_Trophy</c>(🏆 + 점수)) —
@@ -876,8 +877,8 @@ namespace KkomaKnight.Game
             if (piece == null)
             {
                 var img = UiKit.Panel(b, "Cloth", "fr.label", DeepRed); UiKit.Stretch(img.rectTransform);
-                UiKit.Label(b, 4, 8, 92, 32, who, 40, Palette.White).fontStyle = FontStyle.Bold;
-                UiKit.Label(b, 4, 44, 92, 30, DummyScore(rank), 40, Palette.Yellow).fontStyle = FontStyle.Bold;
+                UiKit.Label(b, 4, 8, 92, 32, who, 40, Palette.White).fontStyle = FontStyles.Bold;
+                UiKit.Label(b, 4, 44, 92, 30, DummyScore(rank), 40, Palette.Yellow).fontStyle = FontStyles.Bold;
                 return b;
             }
             piece.SetParent(b, false); piece.name = "Cloth"; UiKit.Stretch((RectTransform)piece);
@@ -889,7 +890,7 @@ namespace KkomaKnight.Game
                 UiKit.Pct(grp, 6, 44, 88, 30);
                 var h = grp.GetComponent<HorizontalLayoutGroup>(); if (h != null) h.childAlignment = TextAnchor.MiddleCenter;
             }
-            var nt = UiKit.SetText(piece, "Text_Name", who, Palette.White, 40); if (nt != null) nt.fontStyle = FontStyle.Bold;
+            var nt = UiKit.SetText(piece, "Text_Name", who, Palette.White, 40); if (nt != null) nt.fontStyle = FontStyles.Bold;
             UiKit.SetText(piece, "Text_Value", DummyScore(rank), Palette.Yellow, 40);
             return b;
         }
@@ -912,13 +913,13 @@ namespace KkomaKnight.Game
             var item = UiKit.Spawn("ui.listRanking", row); var irt = (RectTransform)item.transform; UiKit.Stretch(irt);
             DarkenListFrame(irt);
             UiKit.SetText(irt, "Text_RankingNum", rank.ToString(), Palette.Gray, 44, TextKind.Aux);
-            var nt = UiKit.SetText(irt, "Text_Name", FoeName(rank), Palette.White, 44); if (nt != null) nt.fontStyle = FontStyle.Bold;
+            var nt = UiKit.SetText(irt, "Text_Name", FoeName(rank), Palette.White, 44); if (nt != null) nt.fontStyle = FontStyles.Bold;
             UiKit.SetText(irt, "Text_Value", DummyScore(rank), Palette.Yellow, 40);
             UiKit.Hide(irt, "Icon_NoGuild", "Text_NoGuild");
             UiKit.Show(irt, "Icon_GuildBadge", true); UiKit.Show(irt, "Text_GuildName", true);
             UiKit.SetSprite(irt, "Icon_GuildBadge", "ui.battle", Palette.White);
             var gt = UiKit.SetText(irt, "Text_GuildName", DummyPower(rank), Palette.Orange, 36, TextKind.Aux);
-            if (gt != null) _dummyPowerTexts.Add(new KeyValuePair<Text, int>(gt, rank));
+            if (gt != null) _dummyPowerTexts.Add(new KeyValuePair<TMP_Text, int>(gt, rank));
             var face = UiKit.Find(irt, "ProfileArea");
             if (face != null)
             {
@@ -938,11 +939,11 @@ namespace KkomaKnight.Game
             var border = UiKit.Find(frame, "Normal/Border1"); if (border != null) { var im = border.GetComponent<Image>(); if (im != null) im.color = RowBorder; }
         }
 
-        static Text Pill(RectTransform row, Layout.R r, string icon, string text, Color color)
+        static TMP_Text Pill(RectTransform row, Layout.R r, string icon, string text, Color color)
         {
             var p = UiKit.Panel(row, "Pill", "fr.r12", Palette.Hex("#1E1E1E")); UiKit.Pct(p.rectTransform, r);
             var ic = UiKit.Icon(p.transform, "Icon", icon); UiKit.Pct(ic.rectTransform, 6, 10, 26, 80);
-            var t = UiKit.Label(p.transform, 36, 0, 60, 100, text, TextSize.Body, color, TextAnchor.MiddleLeft); t.fontStyle = FontStyle.Bold;
+            var t = UiKit.Label(p.transform, 36, 0, 60, 100, text, TextSize.Body, color, TextAnchor.MiddleLeft); t.fontStyle = FontStyles.Bold;
             return t;
         }
         /// <summary>공통 팝업 위에 레퍼런스의 <b>평평한 제목 띠</b> — 리본(Title 조각)은 끄고 박스 윗변에 색 띠 + 굵은 흰 글자(워커 결정 기록).</summary>
@@ -953,7 +954,7 @@ namespace KkomaKnight.Game
             // T150 ⓒ — 주인 인스펙터 값: 앵커는 그대로 두고 offset 만 좌·상·우 1px 안쪽(아래 0). 제목 띠가 팝업 테두리 선을 밟지 않는다.
             var hrt = head.rectTransform; hrt.offsetMin = new Vector2(HeadInsetPx, 0f); hrt.offsetMax = new Vector2(-HeadInsetPx, -HeadInsetPx);
             UiKit.Gradient(head.rectTransform, inset: HeadGradientInset);
-            UiKit.Label(head.transform, 4, 0, 92, 100, title, TextSize.Title, Palette.White, kind: TextKind.Title).fontStyle = FontStyle.Bold;
+            UiKit.Label(head.transform, 4, 0, 92, 100, title, TextSize.Title, Palette.White, kind: TextKind.Title).fontStyle = FontStyles.Bold;
             UiKit.Tag(box, "팝업 박스");
         }
         /// <summary>

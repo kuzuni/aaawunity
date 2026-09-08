@@ -1,4 +1,5 @@
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -24,7 +25,7 @@ namespace KkomaKnight.Game
 
         /// <summary>세운 조각(테스트·Bootstrap 이 본다).</summary>
         public GameObject Root { get; private set; }
-        Slider _bar; Text _pct;
+        Slider _bar; TMP_Text _pct;
         float _shownAt;
 
         /// <summary>화면에 떠 있은 시간(초) — <see cref="MinSeconds"/> 를 채웠는지 <see cref="Bootstrap"/> 이 본다.</summary>
@@ -55,7 +56,7 @@ namespace KkomaKnight.Game
             s._bar = go.GetComponentInChildren<Slider>(true);
             if (s._bar != null) { s._bar.minValue = 0f; s._bar.maxValue = 1f; s._bar.value = 0f; s._bar.interactable = false; }
             // 프리팹의 버전 글자(«Ver. 1.0.130») 자리를 진행 글자로 쓴다 — 새 글자를 만들지 않는다(프리팹 그대로)
-            foreach (var t in go.GetComponentsInChildren<Text>(true)) { s._pct = t; break; }
+            foreach (var t in go.GetComponentsInChildren<TMP_Text>(true)) { s._pct = t; break; }
             s.SetProgress(0f);
             LastShownWasPrefab = true;
             LastBarMin = s._bar != null ? s._bar.minValue : 0f;

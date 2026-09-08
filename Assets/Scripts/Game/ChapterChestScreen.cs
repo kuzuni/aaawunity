@@ -1,6 +1,7 @@
 using System;
 using DG.Tweening;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -31,7 +32,7 @@ namespace KkomaKnight.Game
 
         TopBar _top;
         RectTransform _row, _banner, _prev, _next, _title, _goal, _rewardBox;
-        Text _sub, _titleText, _goalText, _gemQty, _goldQty;
+        TMP_Text _sub, _titleText, _goalText, _gemQty, _goldQty;
         RectTransform _claim;
         /// <summary>지금 보고 있는 «보상 칸» 번호(0부터 · 챕터 = 번호/단수 + 1 · <see cref="ChapterChest.Cell"/>).</summary>
         int _cell;
@@ -65,14 +66,14 @@ namespace KkomaKnight.Game
             _banner = Banner("Banner", 0, null);
             _title = UiKit.Find(_banner, "BannerTitle") as RectTransform;
             _goal = UiKit.Find(_banner, "BannerGoal") as RectTransform;
-            _titleText = _title != null ? _title.GetComponentInChildren<Text>(true) : null;
-            _goalText = _goal != null ? _goal.GetComponentInChildren<Text>(true) : null;
+            _titleText = _title != null ? _title.GetComponentInChildren<TMP_Text>(true) : null;
+            _goalText = _goal != null ? _goal.GetComponentInChildren<TMP_Text>(true) : null;
 
             // 보상 상자 — 어두운 판 + 머리 «보상» + 칸 2(다이아·골드)
             var box = UiKit.Panel(Root, "RewardBox", "fr.r12", Palette.A(Palette.Ink, 0.55f));
             _rewardBox = box.rectTransform; UiKit.Pct(_rewardBox, Layout.CcRewardBox);
             UiKit.Bordered(_rewardBox);   // T69 — 칸·상자에는 검은 아웃라인
-            var head = UiKit.Label(_rewardBox, Layout.CcRewardHead.X, Layout.CcRewardHead.Y, Layout.CcRewardHead.W, Layout.CcRewardHead.H, "보상", TextSize.Body, Palette.Cream); head.fontStyle = FontStyle.Bold;
+            var head = UiKit.Label(_rewardBox, Layout.CcRewardHead.X, Layout.CcRewardHead.Y, Layout.CcRewardHead.W, Layout.CcRewardHead.H, "보상", TextSize.Body, Palette.Cream); head.fontStyle = FontStyles.Bold;
             var gemCell = LobbyPopups.Cell(Root, Screen100, Layout.CcRewardCell, "plum", "ui.gemRed", Dash, false, "Cell:gem");
             var goldRect = new Layout.R(Layout.CcRewardCell.X + Layout.CcRewardPitch, Layout.CcRewardCell.Y, Layout.CcRewardCell.W, Layout.CcRewardCell.H);
             var goldCell = LobbyPopups.Cell(Root, Screen100, goldRect, "green", "ui.coin", Dash, false, "Cell:gold");
@@ -99,7 +100,7 @@ namespace KkomaKnight.Game
             var rt = (RectTransform)go.transform;
             UiKit.Pct(rt, new Layout.R(Layout.CcBanner.X + dx, Layout.CcBanner.Y, Layout.CcBanner.W, Layout.CcBanner.H));
             // 조각이 달고 온 데모 글자(«Text»)를 끈다 — screens run 283 의 32 PNG 에서 제목 띠에 그대로 비쳤다(내 글자는 아래에서 새로 얹는다)
-            foreach (var demo in go.GetComponentsInChildren<Text>(true)) demo.gameObject.SetActive(false);
+            foreach (var demo in go.GetComponentsInChildren<TMP_Text>(true)) demo.gameObject.SetActive(false);
             // 조각의 제목 띠(TitleBg) 자리에 «챕터 N» · 몸통에 목표 두 줄 — 조각 요소를 옮기지 않고 글자만 얹는다
             var title = UiKit.Rect(rt, "BannerTitle"); UiKit.Pct(title, Layout.CcBannerTitle);
             // 레퍼런스 32 의 «Chapter 30» 은 어두운 pill 위 흰 글자다 — 크림 몸통 위 크림 글자(run 283 실측)는 안 읽혀 같은 꼴로 바꾼다
@@ -108,16 +109,16 @@ namespace KkomaKnight.Game
             UiKit.Label(title, 0, 0, 100, 100, "", TextSize.Body, Palette.White).name = "TitleText";
             var goal = UiKit.Rect(rt, "BannerGoal"); UiKit.Pct(goal, Layout.CcBannerGoal);
             var gt = UiKit.Label(goal, 0, 0, 100, 100, "", TextSize.Title, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Title);
-            gt.name = "GoalText"; gt.fontStyle = FontStyle.Bold;
+            gt.name = "GoalText"; gt.fontStyle = FontStyles.Bold;
             if (onClick != null) UiKit.Clickable(rt, onClick);
             else { var cg = UiKit.Ensure<CanvasGroup>(go); cg.blocksRaycasts = false; }
             return rt;
         }
 
-        static Text QtyOf(RectTransform cell)
+        static TMP_Text QtyOf(RectTransform cell)
         {
             var t = UiKit.Find(cell, "Qty");
-            return t != null ? t.GetComponent<Text>() : cell.GetComponentInChildren<Text>(true);
+            return t != null ? t.GetComponent<TMP_Text>() : cell.GetComponentInChildren<TMP_Text>(true);
         }
 
         /// <summary>옆으로 한 칸(+1 = 다음 보상 · -1 = 이전) — 글자를 갈아 끼우고 줄을 흘린다.</summary>
@@ -195,8 +196,8 @@ namespace KkomaKnight.Game
             if (rt == null || !rt.gameObject.activeSelf) return;
             var tt = UiKit.Find(rt, "BannerTitle"); var gg = UiKit.Find(rt, "BannerGoal");
             var info = ChapterChest.AtIndex(App.Data, App.Save, cell);
-            var t1 = tt != null ? tt.GetComponentInChildren<Text>(true) : null;
-            var t2 = gg != null ? gg.GetComponentInChildren<Text>(true) : null;
+            var t1 = tt != null ? tt.GetComponentInChildren<TMP_Text>(true) : null;
+            var t2 = gg != null ? gg.GetComponentInChildren<TMP_Text>(true) : null;
             if (t1 != null) t1.text = info.Chapter != 0 ? $"챕터 {info.Chapter}" : "";
             if (t2 != null) t2.text = info.Chapter != 0 ? $"적 {Math.Min(info.Kills, info.Goal)}/{info.Goal}\n처치" : "";
         }

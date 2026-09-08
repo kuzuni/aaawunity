@@ -2,6 +2,7 @@ using System.Collections;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -57,7 +58,7 @@ namespace KkomaKnight.Tests.Play
         }
         static string TextOf(Transform root, string name)
         {
-            var t = Find(root, name); var x = t != null ? t.GetComponentInChildren<Text>(true) : null;
+            var t = Find(root, name); var x = t != null ? t.GetComponentInChildren<TMP_Text>(true) : null;
             return x != null ? x.text : null;
         }
 

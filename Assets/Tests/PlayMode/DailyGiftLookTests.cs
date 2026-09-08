@@ -2,6 +2,7 @@ using System.Collections;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -71,7 +72,7 @@ namespace KkomaKnight.Tests.Play
             // ⓑ «⏱ 종료까지 …» 줄이 몸통과 0.35 이상 벌어진다 ─────────────────
             var timer = UiKit.Find(box, "Timer");
             Assert.IsNotNull(timer, "종료 시각 줄");
-            var timerTxt = timer.GetComponentInChildren<Text>(true);
+            var timerTxt = timer.GetComponentInChildren<TMP_Text>(true);
             Assert.IsNotNull(timerTxt, "종료 시각 글자");
             Assert.Greater(Mathf.Abs(Luma(timerTxt.color) - Luma(body.color)), MinContrast,
                            "«종료까지» 글자 ↔ 상자 몸통 대비(고치기 전 0.08 = 크림 위 흰 글자)");
@@ -79,27 +80,25 @@ namespace KkomaKnight.Tests.Play
             // ⓒ 리본 제목의 검은 아웃라인이 레퍼런스 굵기 ──────────────────────
             var rib = UiKit.Find(box, "ui.title.yellow");
             Assert.IsNotNull(rib, "제목 리본");
-            var ribTxt = rib.GetComponentInChildren<Text>(true);
+            var ribTxt = rib.GetComponentInChildren<TMP_Text>(true);
             Assert.IsNotNull(ribTxt, "리본 제목 글자");
-            var ol = ribTxt.GetComponent<TextOutline8>();
-            Assert.IsNotNull(ol, "리본 제목에도 검은 아웃라인(T63-outline)");
-            Assert.AreEqual(UiKit.OutlineColor, ol.effectColor, "아웃라인 색은 공통 규격 그대로");
-            float size = ribTxt.resizeTextForBestFit ? Mathf.Max(ribTxt.resizeTextMaxSize, ribTxt.fontSize) : ribTxt.fontSize;
-            // 회차 2 — «이 자리만 두껍게» 를 되돌렸다(효과 0.006 · 게다가 OutlineStrict 와 부딪친다 · 결정 483).
-            // 그래서 여기서 지키는 것은 «공통 규격 그대로인가» 다 — 어긋나면 TextSizeGateTests 가 빨개지는 자리이기도 하다.
-            Assert.AreEqual(UiKit.OutlineWidth(size), Mathf.Abs(ol.radius), 0.26f,
-                            "리본 제목 아웃라인 두께 = 공통 규격(T63-outline · TextAudit.OutlineStrict 가 같은 식으로 잰다)");
-            // 다음 회차가 쓸 숫자 — 리본 글자가 화면에서 실제로 몇 px 로 그려지고 아웃라인이 몇 px 인가(캡처는 프레임의 절반 폭이다)
+            // T207 ② — 테는 이제 컴포넌트가 아니라 **SDF 머티리얼**이 그린다(주인 «tmpro로 아웃라인 해야지 진짜 메테리얼로»).
+            //  그래서 여기서 지키는 것도 «이 자리만의 두께» 가 아니라 «공통 규격이 그대로 걸려 있는가» 다(회차 2 가 정한 방향 그대로 · 결정 483).
+            //  두께를 크기로 곱해 재던 줄은 사라졌다 — SDF 두께는 비율이라 글자 크기에 저절로 비례한다(T194 가 세 회차 태운 함정이 여기서 없어진다).
+            Assert.IsTrue(TextAudit.HasOutline(ribTxt), "리본 제목에도 검은 아웃라인(T63-outline · 머티리얼)");
+            var ribMat = ribTxt.fontSharedMaterial;
+            Assert.IsNotNull(ribMat, "리본 제목 글자의 공유 머티리얼");
+            Assert.AreEqual(TmpFont.OutlineWidth, ribMat.GetFloat(TmpFont.OutlineWidthProp), 1e-3f,
+                            "아웃라인 두께 = 공통 규격(TmpFont.OutlineWidth · SDF 비율)");
+            float size = ribTxt.enableAutoSizing ? Mathf.Max(ribTxt.fontSizeMax, ribTxt.fontSize) : ribTxt.fontSize;
             float lossy = ribTxt.rectTransform.lossyScale.x;
-            Debug.Log($"[T186ⓒ] 리본 제목 크기 {size} · 아웃라인 {Mathf.Abs(ol.radius):0.0}px(여덟 방향 같은 반경 · T204) · lossyScale {lossy:0.00} " +
-                      $"→ 화면 {Mathf.Abs(ol.radius) * lossy:0.0}px · ⚠ 규격과 «화면» 은 다른 값이다(이 줄이 그 차를 보여 준다 · T194 결정 522) · " +
-                      "T204 로 비율은 0.07 이다 — 레퍼런스 띠(0.111~0.130)는 Jua 획보다 굵은 글꼴의 값이라 좇지 않는다");
+            Debug.Log($"[T186ⓒ] 리본 제목 크기 {size} · 아웃라인 {TmpFont.OutlineWidth:0.00}(SDF 비율 · 크기에 비례) · lossyScale {lossy:0.00}");
 
             // ⓓ «잠금» 버튼 = 어두운 판 + 흰 글자(알파로 흐리게 하지 않는다) ────
             Button locked = null;
             foreach (var b in _app.Overlay.Root.GetComponentsInChildren<Button>(true))
             {
-                var t = b.GetComponentInChildren<Text>(true);
+                var t = b.GetComponentInChildren<TMP_Text>(true);
                 if (t != null && t.text == "잠금") { locked = b; break; }
             }
             Assert.IsNotNull(locked, "«잠금» 버튼(무료 칸을 받기 전에는 줄이 잠겨 있다)");
@@ -110,7 +109,7 @@ namespace KkomaKnight.Tests.Play
             var plate = LobbyPopups.PlateOf((RectTransform)locked.transform);
             Assert.IsNotNull(plate, "잠긴 버튼 판(«보이는» 조각 — 루트 Image 는 투명 히트 영역이다)");
             Assert.Less(Luma(plate.color), 0.25f, "판이 어두워야 흰 글자가 뜬다(고치기 전 0.63)");
-            var lockTxt = locked.GetComponentInChildren<Text>(true);
+            var lockTxt = locked.GetComponentInChildren<TMP_Text>(true);
             Assert.Greater(Mathf.Abs(Luma(lockTxt.color) - Luma(plate.color)), MinContrast,
                            "«잠금» 글자 ↔ 판 대비(고치기 전 0.16)");
 

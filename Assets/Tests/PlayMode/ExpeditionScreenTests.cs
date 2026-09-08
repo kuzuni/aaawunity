@@ -2,6 +2,7 @@ using System.Collections;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -61,7 +62,7 @@ namespace KkomaKnight.Tests.Play
         static string CellQty(Transform root, string cell)
         {
             var c = Find(root, cell); if (c == null) return null;
-            var q = Find(c, "Qty"); var t = q != null ? q.GetComponent<Text>() : null;
+            var q = Find(c, "Qty"); var t = q != null ? q.GetComponent<TMP_Text>() : null;
             return t != null ? t.text : null;
         }
         /// <summary>
@@ -70,7 +71,7 @@ namespace KkomaKnight.Tests.Play
         /// </summary>
         static string EnglishLeftOver(Transform root)
         {
-            foreach (var t in root.GetComponentsInChildren<Text>(true))
+            foreach (var t in root.GetComponentsInChildren<TMP_Text>(true))
             {
                 if (t == null || !t.gameObject.activeInHierarchy || string.IsNullOrEmpty(t.text)) continue;
                 string s = t.text;

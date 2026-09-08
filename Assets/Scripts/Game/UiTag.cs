@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -51,7 +52,7 @@ namespace KkomaKnight.Game
         public static float[] MeasureText(RectTransform frame, RectTransform rt)
         {
             if (frame == null || rt == null) return null;
-            var text = rt.GetComponent<Text>();
+            var text = rt.GetComponent<TMP_Text>();
             if (text == null) return Measure(frame, rt);
             var r = rt.rect;
             float w = Mathf.Clamp(text.preferredWidth, 0f, r.width), h = Mathf.Clamp(text.preferredHeight, 0f, r.height);

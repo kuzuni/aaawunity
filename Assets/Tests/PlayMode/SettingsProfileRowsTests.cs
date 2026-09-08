@@ -2,6 +2,7 @@ using System.Collections;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -72,8 +73,8 @@ namespace KkomaKnight.Tests.Play
             var ov = _app.Overlay.Root;
             foreach (var n in new[] { "BGM", "SFX", "Language", "Profile", "Nickname", "LangBtn", "ProfileBtn", "NickBtn" })
                 Assert.IsNotNull(UiKit.Find(ov, n), "설정 조각 " + n);
-            Assert.AreEqual("프로필 아이콘", UiKit.Find(UiKit.Find(ov, "Profile"), "Text").GetComponent<Text>().text, "프로필 줄 라벨");
-            Assert.AreEqual("닉네임", UiKit.Find(UiKit.Find(ov, "Nickname"), "Text").GetComponent<Text>().text, "닉네임 줄 라벨");
+            Assert.AreEqual("프로필 아이콘", UiKit.Find(UiKit.Find(ov, "Profile"), "Text").GetComponent<TMP_Text>().text, "프로필 줄 라벨");
+            Assert.AreEqual("닉네임", UiKit.Find(UiKit.Find(ov, "Nickname"), "Text").GetComponent<TMP_Text>().text, "닉네임 줄 라벨");
 
             // ⓓ 새 줄 둘은 상자 «안» · 상자 밖 아래 링크와 안 겹친다
             var box = UiKit.Find(ov, "ui.popup") as RectTransform; Assert.IsNotNull(box, "설정 = 공통 팝업 상자");

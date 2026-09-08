@@ -2,6 +2,7 @@ using System.Collections;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -63,7 +64,7 @@ namespace KkomaKnight.Tests.Play
             var dr = (RectTransform)desc;
             Assert.AreEqual(Overlay.PerkDescLeft, dr.anchorMin.x, 1e-3f, "설명 칸 왼쪽 = 프리팹 실측");
             Assert.AreEqual(Overlay.PerkDescRight, dr.anchorMax.x, 1e-3f, "설명 칸 오른쪽 = 프리팹 실측");
-            var dt = desc.GetComponent<Text>(); Assert.IsNotNull(dt, "설명 글자 컴포넌트");
+            var dt = desc.GetComponent<TMP_Text>(); Assert.IsNotNull(dt, "설명 글자 컴포넌트");
             Assert.IsFalse(string.IsNullOrEmpty(dt.text), "설명 글자가 비어 있지 않다");
             _log.AssertNoRed("특전 카드 한 장");
         }

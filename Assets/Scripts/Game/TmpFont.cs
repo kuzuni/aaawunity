@@ -79,19 +79,37 @@ namespace KkomaKnight.Game
         static TMP_FontAsset _asset;
 
         /// <summary>
+        /// 새 판마다 깨끗하게(<see cref="UiKit.ResetStatics"/> 와 같은 까닭 · 에디터 «도메인 리로드 끔»).
+        /// <b>이 초기화가 없으면 PlayMode 두 번째 테스트부터 글자가 사라질 수 있다</b> — 앞 판에서 만든 폰트 애셋은
+        /// 그 판의 <c>Font</c> 를 물고 있고, 그것이 판과 함께 파괴되면 애셋만 남아 «글리프가 없는 애셋» 이 된다.
+        /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() { _asset = null; _warned = false; }
+
+        /// <summary>
         /// Jua TMP 폰트 애셋(한 번 만들고 다시 쓴다 · 만들 수 없으면 <c>null</c>).
         /// <paramref name="ttf"/> 를 안 주면 카탈로그의 <see cref="FontKey"/> 에서 가져온다.
         /// </summary>
         public static TMP_FontAsset Get(Font ttf = null)
         {
             if (_asset != null) return _asset;
-            var src = ttf != null ? ttf : (App.I != null && App.I.Assets != null ? App.I.Assets.Font(FontKey) : null);
-            if (src == null) { Debug.LogWarning("[T207] Jua 글꼴(" + FontKey + ")을 못 찾았다 — TMP 폰트 애셋을 만들 수 없다"); return null; }
-            _asset = TMP_FontAsset.CreateFontAsset(src);
-            if (_asset == null) { Debug.LogWarning("[T207] TMP_FontAsset.CreateFontAsset 이 null 을 돌려줬다(이 플랫폼에서 동적 굽기가 안 된다는 뜻일 수 있다)"); return null; }
-            _asset.name = "Jua SDF (Runtime)";
+            // T207 ② — 부팅 «첫» 글자도 주인 글꼴로 나와야 한다. `UiKit.DefaultFont` 는 `Bootstrap` 이 App 보다 먼저 채우므로
+            // 카탈로그(App.I)보다 이것을 먼저 본다 — 안 그러면 로딩 화면의 한글이 두부(□)가 된다(TMP 는 폰트가 없으면 라틴 기본 애셋을 쓴다).
+            var src = ttf != null ? ttf
+                    : (UiKit.DefaultFont != null ? UiKit.DefaultFont
+                    : (App.I != null && App.I.Assets != null ? App.I.Assets.Font(FontKey) : null));
+            if (src == null)
+            {
+                if (!_warned) { _warned = true; Debug.LogWarning("[T207] Jua 글꼴(" + FontKey + ")을 아직 못 찾았다 — 이 글자는 TMP 기본 애셋으로 나온다(다음 호출에서 다시 시도한다)"); }
+                return null;   // 캐시하지 않는다 — 글꼴이 들어온 뒤 다시 부르면 제대로 만든다
+            }
+            var made = TMP_FontAsset.CreateFontAsset(src);
+            if (made == null) { if (!_warned) { _warned = true; Debug.LogWarning("[T207] TMP_FontAsset.CreateFontAsset 이 null 을 돌려줬다(이 플랫폼에서 동적 굽기가 안 된다는 뜻일 수 있다)"); } return null; }
+            made.name = "Jua SDF (Runtime)";
+            _asset = made;
             return _asset;
         }
+        static bool _warned;
 
         /// <summary>이 글자들이 실제로 구워졌는가 — 동적 굽기가 되는 플랫폼인지 가르는 유일한 신호다(두부 □ 는 «글리프가 없다» 다).</summary>
         public static bool HasAll(TMP_FontAsset asset, string chars)

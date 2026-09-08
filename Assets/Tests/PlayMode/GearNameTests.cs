@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -54,7 +55,7 @@ namespace KkomaKnight.Tests.Play
             var l = new List<string>();
             var root = _app.Overlay.Root;
             if (root == null) return l;
-            foreach (var t in root.GetComponentsInChildren<Text>(false))
+            foreach (var t in root.GetComponentsInChildren<TMP_Text>(false))
                 if (t != null && t.isActiveAndEnabled && !string.IsNullOrWhiteSpace(t.text)) l.Add(t.text);
             return l;
         }
@@ -104,8 +105,8 @@ namespace KkomaKnight.Tests.Play
             var pill2 = UiKit.Find(ov, "Pill2");                     // 오른쪽 pill = 부위 이름
             Assert.IsNotNull(nameT, "세부 팝업 제목(Name)");
             Assert.IsNotNull(pill2, "세부 팝업 부위 pill(Pill2)");
-            var title = nameT.GetComponent<Text>();
-            var partT = pill2.GetComponentInChildren<Text>(true);
+            var title = nameT.GetComponent<TMP_Text>();
+            var partT = pill2.GetComponentInChildren<TMP_Text>(true);
             Assert.IsNotNull(title, "제목 글자");
             Assert.IsNotNull(partT, "부위 pill 글자");
             Debug.Log("[T161] 세부 팝업 — 제목 «" + title.text + "» · 부위 pill «" + partT.text + "» · 팝업 글자 "

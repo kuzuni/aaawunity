@@ -3,6 +3,7 @@ using System.Collections;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -56,13 +57,13 @@ namespace KkomaKnight.Tests.Play
         static bool Click(Transform root, Func<string, bool> label)
         {
             foreach (var b in root.GetComponentsInChildren<Button>(false))
-                foreach (var t in b.GetComponentsInChildren<Text>(false))
+                foreach (var t in b.GetComponentsInChildren<TMP_Text>(false))
                     if (label(t.text ?? "")) { b.onClick.Invoke(); return true; }
             return false;
         }
         static bool ClickNamed(Transform root, string name) { var t = UiKit.Find(root, name); var b = t != null ? t.GetComponent<Button>() : null; if (b == null) return false; b.onClick.Invoke(); return true; }
         static int CountNamed(Transform root, string prefix) { int n = 0; foreach (var t in root.GetComponentsInChildren<Transform>(false)) if (t.name.StartsWith(prefix)) n++; return n; }
-        bool HasText(Func<string, bool> pred) { foreach (var t in _app.UiCanvas.GetComponentsInChildren<Text>(false)) if (pred(t.text ?? "")) return true; return false; }
+        bool HasText(Func<string, bool> pred) { foreach (var t in _app.UiCanvas.GetComponentsInChildren<TMP_Text>(false)) if (pred(t.text ?? "")) return true; return false; }
 
         /// <summary>테스트용 장비 — gear.json 의 부위×종류 표(AllTypes)에서 그 부위의 첫 종류(같은 부위면 항상 같은 종류 = 같은 합성 키).</summary>
         GearItem Give(string part, int rar = 0, int plus = 0)

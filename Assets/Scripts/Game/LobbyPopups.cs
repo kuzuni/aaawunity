@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -32,7 +33,7 @@ namespace KkomaKnight.Game
             float cy = (boxR.Y - (ribbonR.Y + ribbonR.H / 2f)) / 100f * UiKit.FrameH;
             rr.anchoredPosition = new Vector2(cx, cy);
             // 명판 글자 = 제목 종류(T63 · 60 · 리본이 좁으면 bestFit 으로 32 까지)
-            var t = rr.GetComponentInChildren<Text>(true); if (t != null) { t.fontSize = TextSize.Title; t.resizeTextForBestFit = true; t.resizeTextMinSize = TextSize.BestFitMin; t.resizeTextMaxSize = TextSize.Title; TextAudit.Mark(t, TextKind.Title); RibbonTextFit(t); UiKit.EnsureOutline(t); }
+            var t = rr.GetComponentInChildren<TMP_Text>(true); if (t != null) { t.fontSize = TextSize.Title; t.enableAutoSizing = true; t.fontSizeMin = TextSize.BestFitMin; t.fontSizeMax = TextSize.Title; TextAudit.Mark(t, TextKind.Title); RibbonTextFit(t); UiKit.EnsureOutline(t); }
             return rr;
         }
 
@@ -54,7 +55,7 @@ namespace KkomaKnight.Game
         public const float RibbonOutlineRatio = UiKit.OutlineRatio;
 
         /// <summary>리본 조각(Title_01)의 글자 rect 는 3.9% 리본에서 56px 인데 제목 60 의 한 줄 선호 높이가 58px 라 위아래 1px 씩 넘쳤다(CI #106 게이트 «출석 보상»·«데일리 기프트» 잘림) → 글자 rect 만 세로로 늘린다(리본 크기·자리 불변 · 글자는 가운데 정렬 그대로).</summary>
-        public static void RibbonTextFit(Text t)
+        public static void RibbonTextFit(TMP_Text t)
         {
             // T75 4항 게이트가 «제목 60 한 줄(BoxHeight = 60×1.4 = 84px)» 을 요구한다 — 예전 1.2배(72px)로는 bestFit 이 말없이 줄인다(CI #210 «[17_daily_gift] rect 769×72»).
             float need = TextSize.BoxHeight(TextSize.Title);
@@ -98,7 +99,7 @@ namespace KkomaKnight.Game
             // 수량 글자 칸 — 보조 36 의 한 줄(TextSize.BoxHeight(36) = 50.4px)이 들어가야 한다(T63 · T77 이 처음 쓴다): 칸 4.0%(93.5px)의 56% = 52.4px · 폭 76%(76px)는 «300»(≈54px)의 141%
             if (!string.IsNullOrEmpty(qty))
             {
-                Text q;
+                TMP_Text q;
                 if (qtyBand)
                 {
                     // T133 ⓐ 회차 2 — 회차 1(가운데 «띠»)은 실제 화면에서 **안 됐다**(`screens` run 283 의 16_attendance.png 확대 · 결정 403):
@@ -114,7 +115,7 @@ namespace KkomaKnight.Game
                                     UiKit.FontForHeight(cellR.H * QtyH / 100f), Palette.White, TextAnchor.LowerRight, kind: TextKind.Body);
                 }
                 else q = UiKit.Label(cell, 20, 44, 76, 56, qty, TextSize.Aux, Palette.White, TextAnchor.LowerRight, kind: TextKind.Aux);
-                q.name = "Qty"; q.fontStyle = FontStyle.Bold;
+                q.name = "Qty"; q.fontStyle = FontStyles.Bold;
             }
             if (locked) { var lk = UiKit.Icon(cell, "Lock", "ui.iconLock"); UiKit.Pct(lk.rectTransform, 64, -16, 44, 44); }
             return cell;
@@ -174,7 +175,7 @@ namespace KkomaKnight.Game
             var ic = UiKit.Icon(b, "Icon", "pi.arrow_left", Palette.Ink); UiKit.Pct(ic.rectTransform, 30, 18, 40, 64);
             return b;
         }
-        static Text Head(Transform parent, Layout.R parentR, Layout.R r, string text, Color band, string name = "Head")
+        static TMP_Text Head(Transform parent, Layout.R parentR, Layout.R r, string text, Color band, string name = "Head")
         {
             var p = UiKit.Panel(parent, name, "fr.r12", band); UiKit.Pct(p.rectTransform, r.Within(parentR));
             return UiKit.Label(p.transform, 4, 0, 92, 100, text, TextSize.Body, Palette.White);
@@ -197,7 +198,7 @@ namespace KkomaKnight.Game
         /// 프리팹에서 온 글자를 «어두운 조각 위» 에서 읽히게 — 흰 글자 + 어두운 외곽선(<see cref="UiKit.Text"/> 가 새 글자에 붙이는 것과 같은 규격).
         /// <see cref="UiKit.SetText"/> 는 색·크기만 바꾸고 외곽선은 안 붙이므로 조각 글자에는 이걸 한 번 더 부른다(T63 1항의 반대 경우 = 바탕이 어두운 쪽).
         /// </summary>
-        static Text OnDark(Text t, Color? color = null)
+        static TMP_Text OnDark(TMP_Text t, Color? color = null)
         {
             if (t == null) return null;
             t.color = color ?? Palette.White;
@@ -250,7 +251,7 @@ namespace KkomaKnight.Game
             var dim = UiKit.Find(root, "Dimmed"); if (dim != null) UiKit.Clickable(dim, () => ov.Close(), false);
             UiKit.Hide(root, "Button_Close_01");
             var tc = UiKit.Text(ov.Root, "탭하여 닫기", TextSize.Body, Palette.White, TextAnchor.MiddleCenter, false, true);
-            tc.name = "TapToClose"; tc.fontStyle = FontStyle.Bold; UiKit.Pct(tc.rectTransform, Layout.BookClose);
+            tc.name = "TapToClose"; tc.fontStyle = FontStyles.Bold; UiKit.Pct(tc.rectTransform, Layout.BookClose);
 
             var box = (RectTransform)UiKit.Find(root, "Popup"); box.name = "QuestBox"; UiKit.Pct(box, B);
             foreach (var g in box.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;   // 상자 뒤로 클릭이 새지 않게(UiKit.Popup 과 같은 처리)
@@ -262,7 +263,7 @@ namespace KkomaKnight.Game
             {
                 UiKit.Pct(band, Layout.QsTitleBand.Within(B));
                 var bt = UiKit.SetText(band, "Text (TMP)", "퀘스트", null, TextSize.Title, TextKind.Title);
-                if (bt != null) { bt.resizeTextForBestFit = true; bt.resizeTextMinSize = TextSize.BestFitMin; bt.resizeTextMaxSize = TextSize.Title; RibbonTextFit(bt); }
+                if (bt != null) { bt.enableAutoSizing = true; bt.fontSizeMin = TextSize.BestFitMin; bt.fontSizeMax = TextSize.Title; RibbonTextFit(bt); }
             }
 
             // 점수 트랙 · 새로고침 줄 · 목록 상자 = 레퍼런스 15 그대로(프리팹에 없는 조각)
@@ -351,7 +352,7 @@ namespace KkomaKnight.Game
                 // 점수 숫자 = 메달 아래(칸 높이의 72% · 본문 40 한 줄이 안 줄고 들어간다 — 전 코드와 같은 값)
                 var mt = OnDark(UiKit.SetText(medal, "Text (TMP)", QuestScores[i], Palette.Yellow, TextSize.Body), Palette.Yellow);
                 // 전 코드(UiKit.Label(medal, -20, 98, 140, 72, …))와 같은 자리·규격 — 메달 아래 점수 한 줄
-                if (mt != null) { UiKit.Pct(mt.rectTransform, -20, 98, 140, 72); mt.alignment = TextAnchor.MiddleCenter; mt.resizeTextForBestFit = true; mt.resizeTextMinSize = TextSize.BestFitMin; mt.resizeTextMaxSize = TextSize.Body; mt.horizontalOverflow = HorizontalWrapMode.Overflow; }
+                if (mt != null) { UiKit.Pct(mt.rectTransform, -20, 98, 140, 72); mt.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); mt.enableAutoSizing = true; mt.fontSizeMin = TextSize.BestFitMin; mt.fontSizeMax = TextSize.Body; mt.textWrappingMode = TextWrappingModes.NoWrap; }
                 parts.Medal = medal;
             }
             // 제목 — 줄의 밝은 바탕 위라 잉크색(T63 1항)
@@ -360,10 +361,10 @@ namespace KkomaKnight.Game
             if (title != null)
             {
                 var tr = title.rectTransform; UiKit.Pct(tr, Layout.QsRowTitle.WithH(Layout.LpLineH).Within(Layout.QsRow1));
-                title.alignment = TextAnchor.MiddleLeft; title.name = "Title"; parts.Title = tr;
+                title.alignment = UiKit.TmpAlign(TextAnchor.MiddleLeft); title.name = "Title"; parts.Title = tr;
                 // 글자 규격은 전 코드(UiKit.Label)와 같게 — 프리팹에서 온 Text 라 bestFit 설정이 데모 값(10~30)일 수 있다
-                title.resizeTextForBestFit = true; title.resizeTextMinSize = TextSize.BestFitMin; title.resizeTextMaxSize = TextSize.Body;
-                title.horizontalOverflow = HorizontalWrapMode.Wrap; title.verticalOverflow = VerticalWrapMode.Truncate;
+                title.enableAutoSizing = true; title.fontSizeMin = TextSize.BestFitMin; title.fontSizeMax = TextSize.Body;
+                title.textWrappingMode = TextWrappingModes.Normal; title.overflowMode = TextOverflowModes.Truncate;
             }
             // 진행바(프리팹 Slider_02_Yellow) — 자리·값·글자만
             var slider = item.GetComponentInChildren<Slider>(true);
@@ -378,9 +379,9 @@ namespace KkomaKnight.Game
                 // 색은 우리 팔레트 `Palette.Green`(#85D048 = rgb(133,208,72)) — 그 프리팹 값과 눈으로 같은 초록이고,
                 // «초록 = 열림/완료» 를 이미 쓰는 다른 자리(장비 세부 열린 줄)와 **한 곳에서** 나온다.
                 if (done) { var fill = BarFill(slider); if (fill != null) fill.color = Palette.Green; }
-                var st = sr.GetComponentInChildren<Text>(true);
+                var st = sr.GetComponentInChildren<TMP_Text>(true);
                 // 바 안 숫자는 UiKit.MakeBar 와 같은 규격(bestFit 32~40 · 가로 넘침 허용) — 바 칸(LpBarH 44px)이 40 한 줄(55px)보다 낮다
-                if (st != null) { st.text = (done ? QuestGoals[i] : 0) + "/" + QuestGoals[i]; st.fontSize = TextSize.Body; st.resizeTextForBestFit = true; st.resizeTextMinSize = TextSize.BestFitMin; st.resizeTextMaxSize = TextSize.Body; st.horizontalOverflow = HorizontalWrapMode.Overflow; OnDark(st); TextAudit.Mark(st, TextKind.Body); }
+                if (st != null) { st.text = (done ? QuestGoals[i] : 0) + "/" + QuestGoals[i]; st.fontSize = TextSize.Body; st.enableAutoSizing = true; st.fontSizeMin = TextSize.BestFitMin; st.fontSizeMax = TextSize.Body; st.textWrappingMode = TextWrappingModes.NoWrap; OnDark(st); TextAudit.Mark(st, TextKind.Body); }
                 parts.Bar = sr;
             }
             // 받기 표시 / 이동 버튼 — Check 는 프리팹에서 슬라이더 밑에 있어 줄 오른쪽으로 옮긴다
@@ -425,7 +426,7 @@ namespace KkomaKnight.Game
             var dim = UiKit.Find(root, "Dimmed"); if (dim != null) UiKit.Clickable(dim, () => ov.Close(), false);
             UiKit.Hide(root, "Button_Close_01");
             var tc = UiKit.Text(ov.Root, "탭하여 닫기", TextSize.Body, Palette.White, TextAnchor.MiddleCenter, false, true);
-            tc.name = "TapToClose"; tc.fontStyle = FontStyle.Bold; UiKit.Pct(tc.rectTransform, Layout.BookClose);
+            tc.name = "TapToClose"; tc.fontStyle = FontStyles.Bold; UiKit.Pct(tc.rectTransform, Layout.BookClose);
 
             var box = (RectTransform)UiKit.Find(root, "Popup"); box.name = "AttendanceBox"; UiKit.Pct(box, B);
             foreach (var g in box.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;
@@ -439,7 +440,7 @@ namespace KkomaKnight.Game
             {
                 UiKit.Pct(rib, Layout.AtRibbon.Within(B));
                 var rt = UiKit.SetText(rib, "Text (TMP)", "출석 보상", null, TextSize.Title, TextKind.Title);
-                if (rt != null) { rt.resizeTextForBestFit = true; rt.resizeTextMinSize = TextSize.BestFitMin; rt.resizeTextMaxSize = TextSize.Title; RibbonTextFit(rt); }
+                if (rt != null) { rt.enableAutoSizing = true; rt.fontSizeMin = TextSize.BestFitMin; rt.fontSizeMax = TextSize.Title; RibbonTextFit(rt); }
             }
 
             // 3열×2행 격자 = 프리팹 Group_DailyList7(GridLayoutGroup) — 칸·피치는 표 ㉑
@@ -596,7 +597,7 @@ namespace KkomaKnight.Game
             var rib = Ribbon(box, "ui.title.yellow", Layout.GfRibbon, B);
             var pic = UiKit.Icon(ov.Root, "GiftPic", "ui.gift"); UiKit.Pct(pic.rectTransform, Layout.GfPic); pic.transform.SetSiblingIndex(1);   // 어둠 위 · 상자 아래
             var timer = TimerRow(box, B, Layout.GfTimer, GiftEndsIn());
-            var timerTxt = timer.GetComponentInChildren<Text>(true);
+            var timerTxt = timer.GetComponentInChildren<TMP_Text>(true);
             // «Ends in» 1초 갱신 — 팝업이 열려 있는 동안만(Overlay.OnTick 은 Begin/Close 가 비운다 · 트윈이 아니라 경고 0)
             float acc = 0f;
             ov.OnTick = () => { acc += Time.unscaledDeltaTime; if (acc < 1f) return; acc = 0f; if (timerTxt != null) timerTxt.text = GiftEndsIn(); };
@@ -639,7 +640,7 @@ namespace KkomaKnight.Game
             var todayCell = UiKit.Panel(host, "Today", "fr.r12", Palette.A(Palette.Sky, 0.55f)); UiKit.Pct(todayCell.rectTransform, T.Within(B));
             UiKit.Bordered(todayCell.rectTransform);   // T69 — 칸 «검은 아웃라인»
             var th = Head(host, B, new Layout.R(T.X, T.Y, T.W, 2.4f), "오늘의 선물", Palette.A(Palette.Dim, 0.5f), "TodayHead");
-            th.alignment = TextAnchor.MiddleLeft; UiKit.Pct(th.rectTransform, 8, 0, 90, 100);
+            th.alignment = UiKit.TmpAlign(TextAnchor.MiddleLeft); UiKit.Pct(th.rectTransform, 8, 0, 90, 100);
             var gi = UiKit.Icon(th.transform.parent, "Icon", "pi.gift", Palette.Yellow); UiKit.Pct(gi.rectTransform, 1.5f, 10, 5, 80);
             double freeGem = D != null ? D.FreeGem : 0;
             Cell(host, B, new Layout.R(T.X + 1.6f, T.Y + 3.0f, 8.2f, 4.5f), "plum", "ui.gemRed", qty: freeGem > 0 ? UiKit.FmtQty(freeGem) : null, name: "TodayCell");
@@ -734,7 +735,7 @@ namespace KkomaKnight.Game
             var p = UiKit.Panel(parent, name, "fr.rect", Palette.A(Palette.Slate, 0.85f)); var rt = p.rectTransform;
             UiKit.Pct(rt, r.Within(parentR)); UiKit.Bordered(rt);
             var t = UiKit.Label(rt, 6, 0, 88, 100, title, TextSize.Title, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Title);
-            t.fontStyle = FontStyle.Bold;
+            t.fontStyle = FontStyles.Bold;
             return rt;
         }
 
@@ -832,7 +833,7 @@ namespace KkomaKnight.Game
             var timeTxt = UiKit.Label(host, timeR.X, timeR.Y, timeR.W, timeR.H,
                 D == null ? "탐험 시간: --" : "탐험 시간: " + ExClock(Core.Expedition.ElapsedSec(S, D, now, today)),
                 TextSize.Title, Palette.Green, TextAnchor.MiddleCenter, true, true, TextKind.Title);
-            timeTxt.name = "ExpTime"; timeTxt.fontStyle = FontStyle.Bold;
+            timeTxt.name = "ExpTime"; timeTxt.fontStyle = FontStyles.Bold;
             var p1 = RatePill(host, B, Layout.ExRatePill1, "ui.coin", UiKit.Fmt(Math.Floor(perGold)) + "/시간", "RateGold");
             var p2 = RatePill(host, B, Layout.ExRatePill2, "ui.gemRed", UiKit.FmtQty(Math.Floor(perGem)) + "/시간", "RateGem");
 
@@ -914,7 +915,7 @@ namespace KkomaKnight.Game
             var qsub = UiKit.Label(box, subR.X, subR.Y, subR.W, subR.H, "탐험 보상을 한 번에 받습니다", TextSize.Aux, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Aux);
             qsub.name = "QxSub"; UiKit.Tag(qsub.rectTransform, "부제");
             var ttR = Layout.QxTitle.Within(B);
-            var tt = UiKit.Label(box, ttR.X, ttR.Y, ttR.W, ttR.H, "받을 보상", TextSize.Body, Palette.White, TextAnchor.MiddleCenter); tt.name = "QxTitle"; tt.fontStyle = FontStyle.Bold;
+            var tt = UiKit.Label(box, ttR.X, ttR.Y, ttR.W, ttR.H, "받을 보상", TextSize.Body, Palette.White, TextAnchor.MiddleCenter); tt.name = "QxTitle"; tt.fontStyle = FontStyles.Bold;
             UiKit.Tag(tt.rectTransform, "«받을 보상» 제목");
 
             var gridBg = UiKit.Panel(box, "QxGridBg", "fr.r12", Palette.A(Palette.Dim, 0.55f));
@@ -979,7 +980,7 @@ namespace KkomaKnight.Game
             var title = UiKit.Rect(Root, "Title"); UiKit.Pct(title, Layout.PrTitle);
             var star = UiKit.Icon(title, "Icon", "pi.star", Palette.Yellow);
             // 페이지 제목 = 제목 종류 60(전 52 · 칸 3.0%×120% = 84px ≥ 한 줄 ≈66px)
-            var tt = UiKit.Label(title, 25, -10, 75, 120, "특권", TextSize.Title, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Title); tt.fontStyle = FontStyle.Bold;
+            var tt = UiKit.Label(title, 25, -10, 75, 120, "특권", TextSize.Title, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Title); tt.fontStyle = FontStyles.Bold;
             // T170(주인 2026-09-07 10:0X «타이틀이 왼쪽으로 치우친다 · 특권·던전·PvP · 모든 타이틀 다 점검») —
             // 여기는 «아이콘을 줄 왼쪽 끝(x 0)에 못 박고 글자를 25% 부터 왼쪽 정렬» 이라 덩어리가 왼쪽에 쏠려 있었다.
             // 자리 계산은 UiKit 한 곳(CenterIconTitle)이고 던전·PvP·아레나 티어가 같은 함수를 쓴다.
@@ -1030,7 +1031,7 @@ namespace KkomaKnight.Game
                     UiKit.Label(desc.transform, 12, ly, 86, lh * 0.9f, L.lines[i], TextSize.Body, Palette.White, TextAnchor.MiddleLeft);
                 }
                 var pic = UiKit.Icon(content, "Pic:" + (k + 2), L.pic); UiKit.Pct(pic.rectTransform, Sh(Layout.PrCardPic, 0, dy).Within(C));
-                var daily = UiKit.Label(content, 0, 0, 100, 100, "매일 수령", TextSize.Body, Palette.Yellow, TextAnchor.MiddleLeft); daily.name = "Daily"; daily.fontStyle = FontStyle.Bold;
+                var daily = UiKit.Label(content, 0, 0, 100, 100, "매일 수령", TextSize.Body, Palette.Yellow, TextAnchor.MiddleLeft); daily.name = "Daily"; daily.fontStyle = FontStyles.Bold;
                 UiKit.Pct(daily.rectTransform, new Layout.R(8.6f, Layout.PrCardReward.Y + dy, 26.0f, Layout.PrCardReward.H).Within(C));
                 var reward = LobbyPopups.Cell(content, C, Sh(Layout.PrCardReward, 0, dy), "plum", "ui.gemRed");
                 PlanRewardLight(reward);
@@ -1106,7 +1107,7 @@ namespace KkomaKnight.Game
         static void CardHead(Transform head, string icon, string name, string right)
         {
             var ic = UiKit.Icon(head, "Icon", icon); UiKit.Pct(ic.rectTransform, 2, 10, 8, 80);
-            var t = UiKit.Label(head, 11, 0, 50, 100, name, TextSize.Body, Palette.White, TextAnchor.MiddleLeft); t.fontStyle = FontStyle.Bold;
+            var t = UiKit.Label(head, 11, 0, 50, 100, name, TextSize.Body, Palette.White, TextAnchor.MiddleLeft); t.fontStyle = FontStyles.Bold;
             UiKit.Label(head, 62, 0, 36, 100, right, TextSize.Body, Palette.White, TextAnchor.MiddleRight);
         }
 

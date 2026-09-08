@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using KkomaKnight.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -327,7 +328,7 @@ namespace KkomaKnight.Game
                 DarkFrame(ert, ert.localScale.x);
             }
             var nmR = Layout.GdName.Within(B);
-            var nm = UiKit.Label(box, nmR.X, nmR.Y, nmR.W, nmR.H, name, 44, nameColor, TextAnchor.MiddleLeft, true, true); nm.name = "Name"; nm.fontStyle = FontStyle.Bold;
+            var nm = UiKit.Label(box, nmR.X, nmR.Y, nmR.W, nmR.H, name, 44, nameColor, TextAnchor.MiddleLeft, true, true); nm.name = "Name"; nm.fontStyle = FontStyles.Bold;
             var meta = Layout.GdMeta.Within(B);
             // pill 글자 = 본문 40(T63-gear) · pill 폭 47 → 48%(«슬롯 Lv. 0/150» 40 ≈ 290px 이 안쪽 294px 에)
             var p1 = Pill(box, "Pill1", new Layout.R(meta.X, meta.Y, meta.W * 0.48f, meta.H)); var t1 = UiKit.Text(p1, pill1, TextSize.Body, Palette.Cream, TextAnchor.MiddleCenter, true, true); UiKit.Stretch(t1.rectTransform, 8, 2, 8, 2);
@@ -348,7 +349,7 @@ namespace KkomaKnight.Game
             var sp = Pill(box, "Stats", st, 0.75f); UiKit.Tag(sp, "스탯 섹션");
             string gh = Hex(Palette.Green);
             // 글자 전부 본문 40(T63-gear) — 상자 9.0% = 210px: 머리 24%(50px) + 줄 3 × 25%(52px ≥ 한 줄 49px) = 99%
-            UiKit.Label(sp, 3, 0, 60, 24, "스탯", TextSize.Body, Palette.Cream, TextAnchor.MiddleLeft, true, true).fontStyle = FontStyle.Bold;
+            UiKit.Label(sp, 3, 0, 60, 24, "스탯", TextSize.Body, Palette.Cream, TextAnchor.MiddleLeft, true, true).fontStyle = FontStyles.Bold;
             if (g == null)
             {
                 string what = GearRole.IsAttack(part) ? "공격력" : "체력·실드";   // T88 — 부위 역할에 맞는 안내

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -70,7 +71,7 @@ namespace KkomaKnight.Tests.Play
             for (int i = 0; i < _app.Data.Gear.OptMaxCount; i++)
             {
                 var row = UiKit.Find(opts, "Opt:" + i); Assert.IsNotNull(row, "옵션 줄 Opt:" + i);
-                var t = row.GetComponentInChildren<Text>(true); Assert.IsNotNull(t, "옵션 줄 글자 Opt:" + i);
+                var t = row.GetComponentInChildren<TMP_Text>(true); Assert.IsNotNull(t, "옵션 줄 글자 Opt:" + i);
                 rows.Add(t.text ?? "");
             }
             return rows;
@@ -107,11 +108,11 @@ namespace KkomaKnight.Tests.Play
         }
 
         /// <summary>옵션 줄의 글자 컴포넌트.</summary>
-        Text RowText(int i)
+        TMP_Text RowText(int i)
         {
             var opts = UiKit.Find(_app.Overlay.Root, "Options"); Assert.IsNotNull(opts, "옵션 목록(Options)");
             var row = UiKit.Find(opts, "Opt:" + i); Assert.IsNotNull(row, "옵션 줄 Opt:" + i);
-            var t = row.GetComponentInChildren<Text>(true); Assert.IsNotNull(t, "옵션 줄 글자 Opt:" + i);
+            var t = row.GetComponentInChildren<TMP_Text>(true); Assert.IsNotNull(t, "옵션 줄 글자 Opt:" + i);
             return t;
         }
 

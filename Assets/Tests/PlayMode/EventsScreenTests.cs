@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -50,7 +51,7 @@ namespace KkomaKnight.Tests.Play
                 yield return null;
             }
         }
-        IEnumerable<Text> ActiveTexts() => _app.UiCanvas.GetComponentsInChildren<Text>(false);
+        IEnumerable<TMP_Text> ActiveTexts() => _app.UiCanvas.GetComponentsInChildren<TMP_Text>(false);
         bool HasText(Func<string, bool> pred) { foreach (var t in ActiveTexts()) if (pred(t.text ?? "")) return true; return false; }
         static bool ClickNamed(Transform root, string name) { var t = root != null ? UiKit.Find(root, name) : null; var b = t != null ? t.GetComponent<Button>() : null; if (b == null) return false; b.onClick.Invoke(); return true; }
         static int CountNamed(Transform root, string prefix) { int n = 0; if (root == null) return 0; foreach (var t in root.GetComponentsInChildren<Transform>(false)) if (t.name.StartsWith(prefix)) n++; return n; }
@@ -133,7 +134,7 @@ namespace KkomaKnight.Tests.Play
             // T151 — 던전 «입장» 버튼의 글자가 버튼 끝에 닿지 않는다(좌우 여백 ≥ 3%).
             {
                 var enter = UiKit.Find(hell, "EnterBtn") as RectTransform; Assert.IsNotNull(enter, "입장 버튼");
-                var et = enter.GetComponentInChildren<Text>(); Assert.IsNotNull(et, "입장 버튼 글자");
+                var et = enter.GetComponentInChildren<TMP_Text>(); Assert.IsNotNull(et, "입장 버튼 글자");
                 var ec = new Vector3[4]; enter.GetWorldCorners(ec); var tc = new Vector3[4]; et.rectTransform.GetWorldCorners(tc);
                 float bw = ec[2].x - ec[0].x;
                 Assert.GreaterOrEqual(tc[0].x - ec[0].x, bw * 0.03f, "입장 글자 왼쪽 여백 ≥ 버튼 폭의 3%(T151)");
@@ -238,7 +239,7 @@ namespace KkomaKnight.Tests.Play
                 Assert.LessOrEqual(bc[2].x, cc[2].x + cellW * 0.01f, "배지 오른쪽이 칸 안(T123)");
                 Assert.LessOrEqual(bc[1].y - cc[1].y, cellH * 0.15f, "배지가 칸 위로 걸치는 폭 ≤ 칸 높이의 15%(T123 · «보상» 제목과 안 겹친다)");
                 // 글자 크기는 안 낮췄다 — 낱말만 줄였다(«첫 클리어» → «최초»). 실제로 찍히는 크기는 «[TextSizeGate]» 표가 전 화면 공통으로 잰다.
-                var badgeText = badge.GetComponentInChildren<Text>(); Assert.IsNotNull(badgeText, "배지 글자");
+                var badgeText = badge.GetComponentInChildren<TMP_Text>(); Assert.IsNotNull(badgeText, "배지 글자");
                 Assert.GreaterOrEqual(MaxSize(badgeText), TextSize.Aux, "배지 글자는 보조 하한 36 그대로(T63)");
                 Assert.LessOrEqual(badgeText.preferredWidth, badge.rect.width + 1f, "배지 글자가 배지 폭 안에 들어간다(bestFit 이 안 눌린다 · T74 회귀)");
             }
@@ -360,15 +361,15 @@ namespace KkomaKnight.Tests.Play
             // 값의 정본은 주인 레퍼런스 26 이고, 그 그림에서 «잘려 안 보이는» 두 칸은 지어내지 않고 «—» 로 남긴다.
             {
                 var shop = _app.Data.ArenaShop; Assert.IsNotNull(shop, "arenaShop.json 이 로드됐다(카탈로그 data.arenaShop)");
-                string Lim(int i) => UiKit.Find(UiKit.Find(me, "Goods:" + i), "Limit").GetComponent<Text>().text;
-                string Cost(int i) => UiKit.Find(UiKit.Find(me, "Goods:" + i), "Cost").GetComponent<Text>().text;
+                string Lim(int i) => UiKit.Find(UiKit.Find(me, "Goods:" + i), "Limit").GetComponent<TMP_Text>().text;
+                string Cost(int i) => UiKit.Find(UiKit.Find(me, "Goods:" + i), "Cost").GetComponent<TMP_Text>().text;
                 Assert.AreEqual("한도 5/5", Lim(0), "다이아 한도(레퍼런스 «Limit 5/5»)");
                 Assert.AreEqual("10000", Cost(0), "다이아 값 = 레퍼런스 표기 «10000» — UiKit.Fmt 를 쓰면 «10K» 가 되어 레퍼런스와 다르다(결정 555)");
                 Assert.AreEqual("5000", Cost(1), "무기 도안 값 = «5000»(콤마 없음 — Fmt 는 «5,000» 이 된다)");
                 Assert.AreEqual("20000", Cost(8), "에픽 열쇠 값 = «20000»");
                 // 배지 = 아이콘 오른쪽 아래 개수(레퍼런스 100·20·3) · 열쇠에는 없다
-                Assert.AreEqual("100", UiKit.Find(UiKit.Find(me, "Goods:0"), "Badge").GetComponent<Text>().text, "다이아 배지 100");
-                Assert.AreEqual("20", UiKit.Find(UiKit.Find(me, "Goods:1"), "Badge").GetComponent<Text>().text, "도안 배지 20");
+                Assert.AreEqual("100", UiKit.Find(UiKit.Find(me, "Goods:0"), "Badge").GetComponent<TMP_Text>().text, "다이아 배지 100");
+                Assert.AreEqual("20", UiKit.Find(UiKit.Find(me, "Goods:1"), "Badge").GetComponent<TMP_Text>().text, "도안 배지 20");
                 Assert.IsNull(UiKit.Find(UiKit.Find(me, "Goods:7"), "Badge"), "희귀 열쇠에는 개수 배지가 없다(레퍼런스)");
                 // 잘린 두 칸은 여전히 «—» — 누가 «빈 칸이니 채우자» 며 수를 지어내면 여기서 빨개진다.
                 // ⚠ 기댓값에 `TextGlyphs.Safe` 를 씌운다(이 파일 177행과 같은 idiom) — Jua 에 «—» 글리프가 없어
@@ -377,7 +378,7 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(TextGlyphs.Safe("—"), Cost(9), "전설 열쇠 값도 줄표");
                 Assert.AreEqual(TextGlyphs.Safe("한도 —"), Lim(10), "부활 토큰 한도도 줄표");
                 Assert.AreEqual(TextGlyphs.Safe("—"), Cost(10), "부활 토큰 값도 줄표");
-                Assert.AreEqual("3", UiKit.Find(UiKit.Find(me, "Goods:10"), "Badge").GetComponent<Text>().text, "부활 토큰 배지 3(이것만 레퍼런스에 보인다)");
+                Assert.AreEqual("3", UiKit.Find(UiKit.Find(me, "Goods:10"), "Badge").GetComponent<TMP_Text>().text, "부활 토큰 배지 3(이것만 레퍼런스에 보인다)");
             }
             // T209 ⓑ — 배너는 «가게 안» 한 장면이고, 그 안의 상인은 **아이콘이 아니라 사람**이다.
             // 종전에는 계산대 상판이 74% 에서 시작하고 상인 자리를 «초록 가판 아이콘»(ui.iconMerchant)이 대신했다.
@@ -458,19 +459,19 @@ namespace KkomaKnight.Tests.Play
         {
             var row = UiKit.Find(root, rowName) as RectTransform; Assert.IsNotNull(row, label + " 줄");
             var ic = UiKit.Find(row, "Icon") as RectTransform; Assert.IsNotNull(ic, label + " 아이콘");
-            Text tx = null; foreach (var t in row.GetComponentsInChildren<Text>(true)) { tx = t; break; }
+            TMP_Text tx = null; foreach (var t in row.GetComponentsInChildren<TMP_Text>(true)) { tx = t; break; }
             Assert.IsNotNull(tx, label + " 글자");
             float off = UiKit.TitleBlockOffsetPct(ic, tx);
             Assert.AreEqual(0f, off, 2.0f, label + " 덩어리가 줄 가운데(좌우 여백 차 " + off.ToString("0.0") + "%p · T170)");
         }
 
-        static Text FindText(Transform root, string path)
+        static TMP_Text FindText(Transform root, string path)
         {
             var t = UiKit.Find(root, path); Assert.IsNotNull(t, $"«{path}» 를 못 찾음");
-            var txt = t.GetComponent<Text>(); if (txt == null) txt = t.GetComponentInChildren<Text>(true);
+            var txt = t.GetComponent<TMP_Text>(); if (txt == null) txt = t.GetComponentInChildren<TMP_Text>(true);
             Assert.IsNotNull(txt, $"«{path}» 안에 글자가 없음"); return txt;
         }
-        static int MaxSize(Text t) => t.resizeTextForBestFit ? Mathf.Max(t.fontSize, t.resizeTextMaxSize) : t.fontSize;
+        static int MaxSize(TMP_Text t) => Mathf.RoundToInt(t.enableAutoSizing ? Mathf.Max(t.fontSize, t.fontSizeMax) : t.fontSize);
 
         /// <summary>
         /// T63-events(⑨ 던전·아레나 20~26) — 20·21·22·23·24·25·26 의 모든 활성 글자가 «실제 36 이상 · 잘림 0» 인지.
@@ -498,7 +499,7 @@ namespace KkomaKnight.Tests.Play
             // 전에는 «크림 패널 위라 잉크색» 이 규칙이었고 이 줄이 그것을 못 박고 있었다. 이제 크림 패널 위에서도 흰 글자이고,
             // 읽히게 하는 몫은 검은 아웃라인(T63-outline)이 맡는다 → 기댓값을 «밝은 글자 + 아웃라인 있음» 으로 뒤집는다(결정 274).
             Assert.GreaterOrEqual(UiKit.Luma(ticket.color), UiKit.TextLumaMin, "크림 패널 위 티켓 수도 흰 글자다(T111 ⓑ)");
-            Assert.IsNotNull(ticket.GetComponent<TextOutline8>(), "그 흰 글자에는 검은 아웃라인이 붙어 있어야 읽힌다(T63-outline)");
+            Assert.IsTrue(TextAudit.HasOutline(ticket), "그 흰 글자에는 검은 아웃라인이 걸려 있어야 읽힌다(T63-outline · T207 ② 로 머티리얼이 그린다)");
             _app.Overlay.Close(); yield return Frames(2);
 
             // 22 PvP — 시즌 타이머 36(칸 h2.3) · 티어 줄 40
@@ -592,7 +593,7 @@ namespace KkomaKnight.Tests.Play
             {
                 var row = UiKit.Find(box, "FoeRow:" + i); if (row == null) continue;
                 foes++;
-                var pills = row.GetComponentsInChildren<Text>(false);
+                var pills = row.GetComponentsInChildren<TMP_Text>(false);
                 int found = 0; foreach (var t in pills) { string tx = (t.text ?? "").Trim(); if (Commaed.IsMatch(tx)) found++; }
                 Assert.GreaterOrEqual(found, 2, "상대 줄 " + i + " 에 전투력·승점 두 숫자가 있어야 한다");
                 Assert.IsTrue(HasText(x => x.Contains("도전자")), "상대 줄에 이름이 있어야 한다");
