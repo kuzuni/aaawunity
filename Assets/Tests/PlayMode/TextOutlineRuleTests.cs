@@ -58,6 +58,30 @@ namespace KkomaKnight.Tests.Play
         }
 
         /// <summary>
+        /// <b>T224 2항 — 이 자가 «값» 만 보고 «그리나» 를 못 보던 것을 메운다.</b>
+        /// <para>
+        /// 주인이 T207 뒤에 «검은 아웃라인 없던데 tmpro들» 이라고 했을 때, 이 파일을 포함한 자 셋은 전부 <b>초록</b>이었다 —
+        /// 셋 다 <c>_OutlineWidth == 0.20</c> 만 봤기 때문이다. TMP SDF 셰이더는 아웃라인을 <c>OUTLINE_ON</c> 갈래로 가르므로
+        /// <b>값이 들어가 있어도 갈래가 꺼져 있으면 한 픽셀도 안 그린다</b>. 그래서 «두께 &gt; 0» 이 아니라 «그리는 상태» 를 묻는다.
+        /// </para>
+        /// 픽셀로 재는 진짜 판정은 <c>TmpFontProbeTests</c> 의 «흰 판 위 <b>흰</b> 글자» 촬영이다(같은 회차에 세웠다) —
+        /// 여기 이 줄은 그 판정이 다시 무너지지 않게 <b>상태</b>를 못 박는 자다.
+        /// </summary>
+        [Test]
+        public void OutlineIsInADrawingStateNotJustAValue()
+        {
+            var asset = TmpFont.Get();
+            if (asset == null || asset.material == null)
+            {
+                Assert.Ignore("폰트 애셋이 없는 자리 — 픽셀 판정은 TmpFontProbeTests 가 한다(여기는 상수·상태만 본다)");
+                return;
+            }
+            Assert.IsTrue(TmpFont.OutlineDraws(asset.material),
+                $"머티리얼이 «테를 그리는 상태» 가 아니다 — 두께 {asset.material.GetFloat(TmpFont.OutlineWidthProp):0.00} · " +
+                $"갈래 {TmpFont.OutlineKeyword} 꺼짐. 값만 넣고 갈래를 안 켜면 한 픽셀도 안 그린다(T224 2항 · 주인 «검은 아웃라인 없던데»)");
+        }
+
+        /// <summary>
         /// 옛 «프레임px 두께» 규칙이 되살아나지 않았는가 — 되살리면 T194 의 세 회차를 그대로 다시 태운다.
         /// <para>
         /// SDF 두께는 비율이라 크기·스케일에 저절로 비례한다. 누군가 «크기 × 비율 = px» 식을 다시 들여오면

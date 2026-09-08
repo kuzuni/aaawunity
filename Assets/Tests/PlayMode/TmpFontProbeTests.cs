@@ -106,6 +106,25 @@ namespace KkomaKnight.Tests.Play
             Debug.Log($"[T207①] 흰 판 위 어두운 픽셀 — 글자 전 {before} → 후 {after}(글자가 그려지면 늘어난다)");
             Assert.Greater(after, before + 200, "TMP 라벨이 흰 판 위에 실제로 그려져야 한다(늘어난 어두운 픽셀 = 글자 획)");
 
+            // ⓔ T224 2항 — **테가 «그려지나»** 를 잰다. ⓓ 는 그것을 못 잰다: 저 글자는 `Color.black` 이라
+            //    늘어난 어두운 픽셀이 **획 자체**이고, 테도 검정이라 그 셈에 섞여 사라진다.
+            //    그래서 같은 판에 **흰 글자**를 얹는다 — 흰 판 위 흰 글자에서 어두워지는 픽셀은 **오직 테**뿐이다.
+            //    (주인 2026-09-08 04:0X «검은 아웃라인 없던데 tmpro들 · 왜 그런거지» 가 이 자리를 부른 물음이다.)
+            tmp.color = Color.white;
+            Canvas.ForceUpdateCanvases(); yield return Frames(2);
+            Assert.IsTrue(PlayShot.Save(_app, "t224_white", null), "촬영(흰 글자)");
+            int white = DarkPixels(PlayShot.LastPng, 0.40f, 0.50f, 0.35f);
+            Assert.GreaterOrEqual(white, 0, "찍은 PNG 를 되읽는다(흰 글자)");
+            Debug.Log($"[T224②] 흰 판 위 «흰» 글자의 어두운 픽셀 {white}(판만 있을 때 {before}) — 이 차이가 곧 **테**다 · " +
+                      $"머티리얼 상태 OutlineDraws={TmpFont.OutlineDraws(asset.material)} · 두께 {asset.material.GetFloat(TmpFont.OutlineWidthProp):0.00}");
+            Assert.Greater(white, before + 200,
+                "흰 판 위 흰 글자인데도 어두운 픽셀이 안 늘었다 = **테가 안 그려진다**(값만 들어가고 셰이더 갈래가 꺼진 자리 · T224 2항). " +
+                "값을 재는 단언(_OutlineWidth == 0.20)은 이 경우에도 통과하므로 그 자로는 못 잡는다.");
+
+            // ⓕ 그 «상태» 도 같이 못 박는다 — 픽셀 판정이 먼저이고, 이것은 되돌림을 막는 자다.
+            Assert.IsTrue(TmpFont.OutlineDraws(asset.material),
+                "머티리얼이 «테를 그리는 상태» 여야 한다(두께 > 0 **그리고** 셰이더 갈래 " + TmpFont.OutlineKeyword + " 가 켜짐 · T224 2항)");
+
             // ⓔ T207 ② 준비 — <b>진짜 TMP 의 API 를 이 자리에서 적어 둔다</b>(결정 573 을 그대로 되풀이한다).
             //    ② 는 파일 45개에서 uGUI `Text` 를 TMP 타입으로 바꾸는 일이고, 그 코드는 dotnet 스텁에 맞춰 컴파일된다.
             //    스텁을 «내가 아는 대로» 적으면 로컬만 초록이고 유니티에서 깨지는데, 이번에는 그 규모가 **전 화면**이다.

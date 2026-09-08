@@ -120,14 +120,42 @@ namespace KkomaKnight.Game
             return true;
         }
 
-        /// <summary>그 애셋의 공유 머티리얼에 «진짜» 아웃라인을 두른다(자리마다 인스턴스를 만들지 않는다 — 지시서 4항 ⓒ).</summary>
+        /// <summary>
+        /// TMP SDF 셰이더가 아웃라인 갈래를 켜는 키워드 — <b>값만 넣으면 안 그려질 수 있다</b>(T224 2항).
+        /// <para>
+        /// TMP 의 여러 SDF 셰이더는 아웃라인을 <c>#pragma shader_feature OUTLINE_ON</c> 으로 갈라 두고,
+        /// 그 갈래가 꺼져 있으면 <c>_OutlineWidth</c> 에 무엇을 넣든 <b>셰이더가 그 줄을 아예 안 돈다</b>.
+        /// 에디터에서 인스펙터로 만지면 TMP 가 키워드를 같이 켜 주는데, <b>코드로 <c>SetFloat</c> 만 하면 아무도 안 켠다</b> —
+        /// 이 레포에 <c>EnableKeyword</c> 가 0건이었던 것이 그 자리다(주인 04:0X «검은 아웃라인 없던데 tmpro들»).
+        /// </para>
+        /// 키워드가 없는 셰이더(늘 그리는 갈래)에서는 켜도 <b>아무 일도 안 일어난다</b> — 그래서 조건 없이 켠다.
+        /// </summary>
+        public const string OutlineKeyword = "OUTLINE_ON";
+
+        /// <summary>
+        /// 그 애셋의 공유 머티리얼에 «진짜» 아웃라인을 두른다(자리마다 인스턴스를 만들지 않는다 — 지시서 4항 ⓒ).
+        /// <b>값 셋(두께·색·키워드)을 한 자리에서 다 건다</b> — T224 2항이 짚은 대로 앞의 둘만으로는 «값은 들어갔는데 픽셀이 없다» 가 된다.
+        /// </summary>
         public static bool SetOutline(TMP_FontAsset asset, Color color, float width = OutlineWidth)
         {
             var mat = asset != null ? asset.material : null;
             if (mat == null || !mat.HasProperty(OutlineWidthProp)) return false;
             mat.SetFloat(OutlineWidthProp, width);
             if (mat.HasProperty(OutlineColorProp)) mat.SetColor(OutlineColorProp, color);
+            // T224 2항 — 셰이더 갈래를 켠다. 두께가 0 이면 켤 까닭이 없으니 끈다(켜 두면 «0px 테» 를 계속 계산한다).
+            if (width > 0f) mat.EnableKeyword(OutlineKeyword); else mat.DisableKeyword(OutlineKeyword);
             return true;
         }
+
+        /// <summary>
+        /// 그 머티리얼이 «테를 그리는 상태» 인가 — 두께 <b>와</b> 셰이더 갈래를 같이 본다(T224 2항 · 자가 «값만» 보면 못 잡는다).
+        /// <para>
+        /// ⚠ 이것도 «상태» 를 볼 뿐 «픽셀» 을 보지는 못한다 — 진짜 판정은 <c>TmpFontProbeTests</c> 의 «흰 글자 · 흰 판» 촬영이다(같은 회차에 세웠다).
+        /// 여기서 <c>keywordSpace</c> 같은 최신 API 를 안 쓰는 까닭은 그것이 dotnet 스텁에 없으면 «로컬 초록 · 유니티 빨강» 이 되기 때문이다(결정 567).
+        /// </para>
+        /// </summary>
+        public static bool OutlineDraws(Material mat) =>
+            mat != null && mat.HasProperty(OutlineWidthProp) && mat.GetFloat(OutlineWidthProp) > 0f
+            && mat.IsKeywordEnabled(OutlineKeyword);
     }
 }
