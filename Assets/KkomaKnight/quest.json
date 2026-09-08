@@ -1,0 +1,52 @@
+{
+  "_note": "퀘스트 표 — 이 레포 전용(aaaw data/ 에 없는 수치 · T257). StreamingAssets/data 는 aaaw 동기 폴더라 여기 둔다. 코드는 카탈로그 텍스트 «data.quest» 로 읽는다(코드에 숫자 없음 · ROUTINE §1). 목록·점수·상품을 바꾸려면 이 파일만 고친다.",
+  "_source": "주인 2026-09-09 04:5X — 일일(동메달) 8줄·주간(은메달) 8줄의 «할 일» 글자와 메달 점수, 그리고 트랙 구간·상품을 전부 주인이 줬다. label 은 주인이 쓴 글자 그대로다(화면이 이 글자를 띄운다). 지어낸 수는 0.",
+  "_counter": "counter = «무엇을 세는가»(이미 있는 이벤트에 훅을 건다 · ROUTINE §2 T257 4항) · goal = 주인 글자 안에 든 수 그대로(«적 50개» → 50 · «탐험 보상 받기» → 1). ⚠ 주인이 낱말을 다르게 쓴 자리는 다른 counter 다: 일일 «던전 도전 1회»(dungeonTry) ↔ 주간 «던전 클리어 20회»(dungeonClear) · 일일 «로그인하기»(login · 하루 한 번) ↔ 주간 «로그인 5일»(loginDays · 서로 다른 날 5일).",
+  "_reward": "rewards[] = { item, amount } — item 은 게임 쪽 이름이고 아이콘 짝짓기는 화면 몫이다(dungeon.json 이 petEgg·gold 만 적는 것과 같다). 티켓은 던전마다 따로라(T99) dungeon 칸에 그 던전 key 를 같이 적는다(hell = 지옥의 문 · expedition = 원정).",
+  "_key": "키 셋의 이름은 T255 가 정본으로 세운 것 그대로다 — Core/GachaKeys 의 keyBlue·keyPurple·keyYellow(그 절이 색↔상자·이름·아이콘을 한 곳에서 갖고, 우편/지급 길목 Mail.CanPay 가 그 절에 물어본다). ⚠ 이 이름을 아레나 상인 상품표의 rareKey·epicKey·legendKey 와 헷갈리지 말 것 — 그 셋은 «상인이 파는 물건 줄» 의 이름이고, 재화를 더하고 빼는 길이 아는 이름은 이 색 이름이다. 주인이 준 짝이 한 칸씩 어긋나 보이는 것(«희귀 열쇠» = 파랑인데 여는 것은 희귀 상자 · «에픽 열쇠» = 보라인데 여는 것은 전설 상자)도 오타가 아니라 주인 규칙이다(T255 결정 704).",
+  "_reset": "일일 = 날짜가 바뀌면 0(출석·데일리 기프트와 같은 규칙 = SaveStore.Today() 의 yyyy-MM-dd) · 주간 = weekStartDow 요일 0시에 0. 누적 메달·받은 구간도 같이 0 이 된다.",
+
+  "weekStartDow": 1,
+
+  "daily": {
+    "medal": "bronze",
+    "quests": [
+      { "label": "로그인하기",          "counter": "login",               "goal": 1,    "medal": 10 },
+      { "label": "적 50개 죽이기",       "counter": "kill",                "goal": 50,   "medal": 20 },
+      { "label": "챕터 두 번 도전",      "counter": "chapterTry",          "goal": 2,    "medal": 20 },
+      { "label": "상자 2번 오픈",        "counter": "chestOpen",           "goal": 2,    "medal": 20 },
+      { "label": "장비 합성 2회",        "counter": "gearFuse",            "goal": 2,    "medal": 20 },
+      { "label": "던전 도전 1회",        "counter": "dungeonTry",          "goal": 1,    "medal": 20 },
+      { "label": "탐험 보상 받기",       "counter": "expeditionClaim",     "goal": 1,    "medal": 10 },
+      { "label": "빠른 탐험 보상 받기",  "counter": "expeditionFastClaim", "goal": 1,    "medal": 10 }
+    ],
+    "track": [
+      { "points": 20,  "rewards": [ { "item": "keyBlue", "amount": 1 } ] },
+      { "points": 40,  "rewards": [ { "item": "ticket",  "amount": 1, "dungeon": "hell" } ] },
+      { "points": 60,  "rewards": [ { "item": "gem",     "amount": 50 } ] },
+      { "points": 80,  "rewards": [ { "item": "ticket",  "amount": 1, "dungeon": "expedition" } ] },
+      { "points": 100, "rewards": [ { "item": "gem",     "amount": 100 } ] }
+    ]
+  },
+
+  "weekly": {
+    "medal": "silver",
+    "quests": [
+      { "label": "적 2,500 죽이기",      "counter": "kill",            "goal": 2500, "medal": 30 },
+      { "label": "로그인 5일",           "counter": "loginDays",       "goal": 5,    "medal": 20 },
+      { "label": "챕터 도전 25회",       "counter": "chapterTry",      "goal": 25,   "medal": 30 },
+      { "label": "상자 오픈 30회",       "counter": "chestOpen",       "goal": 30,   "medal": 30 },
+      { "label": "장비 합성 30회",       "counter": "gearFuse",        "goal": 30,   "medal": 30 },
+      { "label": "던전 클리어 20회",     "counter": "dungeonClear",    "goal": 20,   "medal": 30 },
+      { "label": "펫 업그레이드 10번",   "counter": "petUpgrade",      "goal": 10,   "medal": 20 },
+      { "label": "탐험 7번 보상 받기",   "counter": "expeditionClaim", "goal": 7,    "medal": 20 }
+    ],
+    "track": [
+      { "points": 30,  "rewards": [ { "item": "petEgg",    "amount": 10 } ] },
+      { "points": 60,  "rewards": [ { "item": "keyPurple", "amount": 2 } ] },
+      { "points": 90,  "rewards": [ { "item": "gold",      "amount": 3000 } ] },
+      { "points": 120, "rewards": [ { "item": "keyYellow", "amount": 1 } ] },
+      { "points": 150, "rewards": [ { "item": "gem",       "amount": 300 } ] }
+    ]
+  }
+}
