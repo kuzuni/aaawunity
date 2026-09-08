@@ -261,6 +261,27 @@ def cmd_check(heads, rows, dups=None):
         notes.append("상태 칸이 표시로 시작 안 하는 작업 %s" % " ".join(blind))
         print("  그 행은 이 자도 `check_task_rows` 도 상태를 못 읽는다 — 칸 맨 앞에 표시를 하나 붙여 주면 된다(§4 규약).")
 
+    # ⓖ **«⬜ 대기» 인데 그 번호의 lock 이 살아 있다** — 오늘 실제로 났다(T238 · 결정 653):
+    #    `T233` 행이 «⬜ 대기 — 선점 안 됨» 인 채로 `T233.lock`(10:37)이 살아 있었고 **고침은 이미 push** 돼 있었다.
+    #    이 꼴이 다른 어긋남보다 비싼 까닭은 하나다 — **⬜ 는 일감을 고르는 워커가 «정확히 그것만» 훑는 표시**라
+    #    «남이 하는 중» 으로 읽혀 지나칠 여지가 없고 **곧장 중복 착수**로 간다(결정 506 이 값을 치른 그 사고).
+    #    ⚠ **죽은 lock(90분 초과)은 안 찍는다** — 그 자리는 규약상 «잡아도 되는» 자리라 찍으면 거짓 경고가 된다.
+    #    ⚠ **막지 않는다** — 조율 결함은 알리기만 한다(결정 493·627). 대신 notes 에 실어 끝줄에도 남긴다(T231).
+    trap = []
+    for tid, (n_, mark, _txt) in rows.items():
+        if mark != "⬜":
+            continue
+        lk = lock_of(tid)
+        if lk and lk[1] < STALE_MIN:
+            trap.append((tid, n_, lk[0], lk[1]))
+    if trap:
+        trap.sort(key=lambda t: int(t[0][1:]))
+        print("· (참고 · 실패 아님) **«⬜ 대기» 인데 lock 이 살아 있는 작업** — 잡으면 남의 일을 두 번 한다:")
+        for tid, n_, sid, age in trap:
+            print("  · %-5s PROGRESS.md:%d  ↔  docs/claims/%s.lock  %s · %d분 전" % (tid, n_, tid, sid, age))
+        print("  고침: 임자가 상태 칸을 🔄 로 올린다(또는 일을 접었으면 lock 을 지운다).")
+        notes.append("⬜ 인데 lock 살아 있음 %s" % " ".join(t[0] for t in trap))
+
     bad = mismatches(heads, rows)
     if not bad:
         if rc == 0:
@@ -420,9 +441,48 @@ def self_test():
             print("⛔ 자기 검사 실패 — 참고 줄이 마지막 요약에 안 실렸다(tail -1 로 못 읽는다): %r" % (lines[-1],))
             return 1
 
+        # ⓗ **«⬜ 인데 살아 있는 lock»(T238 · 결정 653)** — 잡는가 · 그리고 **죽은 lock 은 안 잡는가**.
+        #    두 칸을 다 묻는 까닭: 거짓 경고 쪽이 더 나쁘다(90분 지난 lock 자리는 규약상 «잡아도 되는» 자리라
+        #    거기서 «잡지 마라» 를 찍으면 이 자가 오히려 일감을 막는다).
+        claims = os.path.join(tmp, "claims")
+        os.makedirs(claims, exist_ok=True)
+        io.open(r, "w", encoding="utf-8").write("### %s — 새 일\n" % free)
+        io.open(p, "w", encoding="utf-8").write(
+            "| ID | 작업 | 상태 | SID |\n| %s | 새 일 | ⬜ **대기 — 선점 안 됨** | |\n" % free)
+        global CLAIMS
+        keep_claims = CLAIMS
+        try:
+            CLAIMS = claims
+            now = datetime.datetime.now(datetime.timezone.utc)
+            def _write(minutes):
+                when = (now - datetime.timedelta(minutes=minutes)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                io.open(os.path.join(claims, free + ".lock"), "w", encoding="utf-8").write(when + " sess-test\n")
+            def _run():
+                b = io.StringIO(); k = sys.stdout
+                try:
+                    sys.stdout = b; rc_ = cmd_check(routine_heads(r), progress_rows(p))
+                finally:
+                    sys.stdout = k
+                return rc_, b.getvalue()
+            _write(5)                      # 살아 있는 lock
+            rc_live, out_live = _run()
+            if rc_live != 0:
+                print("⛔ 자기 검사 실패 — ⓖ 가 막았다(조율 결함은 알리기만 · 결정 493): rc=%s" % rc_live)
+                return 1
+            if "lock 이 살아 있는" not in out_live or free not in out_live:
+                print("⛔ 자기 검사 실패 — «⬜ + 살아 있는 lock» 을 못 잡았다:\n%s" % out_live)
+                return 1
+            _write(STALE_MIN + 30)         # 죽은 lock
+            rc_stale, out_stale = _run()
+            if "lock 이 살아 있는" in out_stale:
+                print("⛔ 자기 검사 실패 — 죽은 lock(90분 초과)인데 «잡지 마라» 로 찍었다(거짓 경고):\n%s" % out_stale)
+                return 1
+        finally:
+            CLAIMS = keep_claims
+
         print("✓ task_state --self-test: 어긋난 짝을 잡고(T161) · ✅ 를 달면 조용하고 · 빈 번호는 통과하고 ·"
               " 같은 번호 두 제목을 잡고 · «행 없음 ↔ 접힌 행만» 을 가르고 · ⛔ 와 `\\|` 도 읽고 ·"
-              " 참고 줄이 마지막 요약에도 실린다(T231)")
+              " 참고 줄이 마지막 요약에도 실리고(T231) · «⬜ + 살아 있는 lock» 을 잡되 죽은 lock 은 안 잡는다(T238)")
         return 0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
