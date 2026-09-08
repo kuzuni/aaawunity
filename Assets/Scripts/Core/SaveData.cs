@@ -121,6 +121,12 @@ namespace KkomaKnight.Core
         public int AttDone;
         /// <inheritdoc cref="AttDone"/>
         public string AttDay = "";
+        /// <summary>특권(11) 카드를 <b>산 날</b>(카드 키 → <c>yyyy-MM-dd</c> · T264). <b>키가 있으면 «가졌다»</b> 이고 값은 기간 있는 카드(월간)가 쓴다.
+        /// 공짜 카드(«데일리 기프트»)는 여기 안 들어간다 — 누구나 가진 것이라 <see cref="Core.Privilege.Owned"/> 가 언제나 참을 준다.
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 빈 표»(옛 세이브 호환 · 세이브 버전 그대로).</summary>
+        public Dictionary<string, string> PrivBuy = new Dictionary<string, string>();
+        /// <summary>특권 카드마다 <b>마지막으로 받은 날</b>(카드 키 → <c>yyyy-MM-dd</c> · T264) — 받기는 <b>카드마다 따로 하루 1회</b>다(주인 명시).</summary>
+        public Dictionary<string, string> PrivDay = new Dictionary<string, string>();
         /// <summary>아레나 <b>최고 순위</b>(1 이 가장 높다 · <b>0 = 아직 한 판도 안 했다</b> · T240 5항). 승점과 달리 «되돌아가지 않는» 기록이라 따로 적는다.</summary>
         public int ArenaBest;
         /// <summary>아레나 <b>티켓</b>(T240 6항 · 결정 695) · 그 티켓이 살아 있는 날짜(<c>yyyy-MM-dd</c> · 바뀌면 <see cref="ArenaTickets.Roll"/> 이 채운다).
@@ -233,6 +239,8 @@ namespace KkomaKnight.Core
             o["keyBlue"] = (double)KeyBlue; o["keyPurple"] = (double)KeyPurple; o["keyYellow"] = (double)KeyYellow;   // T255
             o["arenaCoin"] = ArenaCoin;   // T243
             o["attDone"] = (double)AttDone; o["attDay"] = AttDay ?? "";   // T253
+            var pb = new Dictionary<string, object>(); foreach (var kv in PrivBuy) pb[kv.Key] = kv.Value ?? ""; o["privBuy"] = pb;   // T264
+            var pd = new Dictionary<string, object>(); foreach (var kv in PrivDay) pd[kv.Key] = kv.Value ?? ""; o["privDay"] = pd;   // T264
             var ml = new List<object>();
             foreach (var m in Mail)
             {
@@ -282,6 +290,8 @@ namespace KkomaKnight.Core
                     s.KeyBlue = j["keyBlue"].Int(); s.KeyPurple = j["keyPurple"].Int(); s.KeyYellow = j["keyYellow"].Int();   // 없으면 0(옛 세이브 호환 · T255)
                     s.ArenaCoin = j["arenaCoin"].Num();   // 없으면 0(옛 세이브 호환 · T243)
                     s.AttDone = j["attDone"].Int(); s.AttDay = j["attDay"].Str("");   // 없으면 0/빈 값(옛 세이브 호환 · T253)
+                    foreach (var k in j["privBuy"].Keys) s.PrivBuy[k] = j["privBuy"][k].Str("");   // 없으면 빈 표(옛 세이브 호환 · T264)
+                    foreach (var k in j["privDay"].Keys) s.PrivDay[k] = j["privDay"][k].Str("");   // T264
                     foreach (var m in j["mail"].Items())
                     {
                         var mi = new MailItem { Id = m["id"].Str(""), Kind = m["kind"].Str(KkomaKnight.Core.Mail.KindArena), Title = m["title"].Str(""), Desc = m["desc"].Str("") };

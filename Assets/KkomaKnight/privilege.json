@@ -1,0 +1,36 @@
+{
+  "_note": "특권(11) 카드표 — T264 · 주인 2026-09-09 06:2X 가 준 값 그대로. 값을 바꾸려면 이 파일만 고친다(코드에 상수 없음).",
+  "_monthlyDays": "월간 카드 기간(일) — 주인이 기간을 말한 적이 없어 이름값 그대로 30 을 기본값으로 뒀다(ROUTINE §2 T264 2항).",
+  "monthlyDays": 30,
+  "cards": [
+    {
+      "key": "dailyGift",
+      "name": "데일리 기프트",
+      "free": true,
+      "buyNow": [],
+      "daily": [{ "item": "gem", "amount": 30 }]
+    },
+    {
+      "key": "adRemove",
+      "name": "광고 제거",
+      "free": false,
+      "buyNow": [{ "item": "gem", "amount": 2400 }],
+      "daily": [{ "item": "gem", "amount": 50 }]
+    },
+    {
+      "key": "monthly",
+      "name": "월간 카드",
+      "free": false,
+      "expires": true,
+      "buyNow": [{ "item": "gem", "amount": 600 }],
+      "daily": [{ "item": "gem", "amount": 300 }]
+    },
+    {
+      "key": "lifetime",
+      "name": "평생 다이아",
+      "free": false,
+      "buyNow": [{ "item": "gem", "amount": 4000 }],
+      "daily": [{ "item": "gem", "amount": 300 }]
+    }
+  ]
+}

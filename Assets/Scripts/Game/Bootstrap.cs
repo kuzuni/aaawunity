@@ -62,6 +62,7 @@ namespace KkomaKnight.Game
             d.ArenaShop = LoadArenaShop(catalog);
             d.ArenaRank = LoadArenaRank(catalog);
             d.Attendance = LoadAttendance(catalog);
+            d.Privilege = LoadPrivilege(catalog);
             d.Quest = LoadQuest(catalog);
             d.ArenaMatch = LoadArenaMatch(catalog);
             ApplyCombatOverride(d, catalog);   // T173 — 전투 규칙 덮어쓰기(창 사거리·관통)는 App 이 서기 «전» 에 먹인다
@@ -137,6 +138,15 @@ namespace KkomaKnight.Game
             if (ta == null) { Debug.LogError("[KkomaKnight] attendance.json 이 카탈로그(data.attendance)에 없다 — 출석 보상표 없음"); return null; }
             try { return AttendanceData.Parse(ta.text); }
             catch (Exception e) { Debug.LogError("[KkomaKnight] attendance.json 파싱 실패: " + e.Message); return null; }
+        }
+
+        /// <summary>특권(11) 카드표 — 이 레포 전용 <c>Assets/KkomaKnight/privilege.json</c>(카탈로그 텍스트 «data.privilege» · T264). 못 읽으면 null(특권 페이지가 종전 껍데기 그대로 뜬다 — 화면은 안 깨진다).</summary>
+        static PrivilegeData LoadPrivilege(AssetCatalog catalog)
+        {
+            var ta = catalog != null ? catalog.Text("data.privilege") : null;
+            if (ta == null) { Debug.LogError("[KkomaKnight] privilege.json 이 카탈로그(data.privilege)에 없다 — 특권 카드표 없음"); return null; }
+            try { return PrivilegeData.Parse(ta.text); }
+            catch (Exception e) { Debug.LogError("[KkomaKnight] privilege.json 파싱 실패: " + e.Message); return null; }
         }
 
         /// <summary>PvP 순위 보상 구간표 — 이 레포 전용 <c>Assets/KkomaKnight/arena.json</c>(카탈로그 텍스트 «data.arenaRank» · T237). 못 읽으면 null(25 팝업이 종전 네 줄 껍데기 그대로 뜬다 — 화면은 안 깨진다).</summary>
