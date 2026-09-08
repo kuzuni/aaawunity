@@ -89,9 +89,40 @@ namespace KkomaKnight.Tests.Play
             Debug.Log("[T242] 읽는 법 — 번쩍 0회면 «부르는 경로가 없다»(그 유닛은 CharacterRig 가 아니거나 그 이벤트가 안 온다) · "
                       + "회당 프레임이 한둘이면 «짧아서 안 보인다» · 여섯 이상인데도 주인 눈에 없으면 남은 것은 «그림이 안 바뀐다»(머티리얼 교체가 실제로 안 먹는 자리)다.");
 
+            WriteFlashJson(frames, rigs, flashed, totalCount, totalOn, onPerFlash, lastSec);
+
             _log.AssertNoRed("T242 피격 플래시 관측");
             if (_app != null) { if (_app.UiCanvas != null) Object.Destroy(_app.UiCanvas.gameObject); Object.Destroy(_app.gameObject); }
             yield return Frames(3);
+        }
+
+        /// <summary>
+        /// 잰 수를 <c>ui-screens/t242.json</c> 으로 남긴다 — <see cref="PlayShot.Dirs"/> 라 `screens` 브랜치로 배포된다.
+        /// <para>
+        /// <b>왜 파일인가</b>(오늘 워커 셋이 같은 벽을 만났다 · 결정 675): <b>초록 런의 <c>Debug.Log</c> 는 워커에게 오지 않는다</b> —
+        /// 잡 로그는 끝 30KB 뿐이고 그 창은 `screens` 배포 단계가 차지하며, 68만 자짜리 전체 로그는 <b>빨간 잡에만</b> 있고,
+        /// 결과 XML 아티팩트는 프록시가 막는다(결정 289). <c>ui-screens/</c> 는 유니티 잡이 빨개도 배포된다(run 506·511 실측).
+        /// 즉 <b>이 회차의 관측은 파일로 안 내보내면 «재고도 못 읽는» 것이 된다</b>(`tap.json`·`overdraw.json`·`t233.json`·`tmpfont.json` 과 같은 문법).
+        /// </para>
+        /// ⚠ 소수점은 <b>불변 문화권</b>으로 적는다 — 지역 설정이 «,» 이면 <c>0,08</c> 이 되어 JSON 이 통째로 안 읽힌다(결정 675 끝머리).
+        /// 실패해도 시험을 안 깬다(경고 한 줄) — 이 자는 «재는 것» 이지 «지키는 것» 이 아니다.
+        /// </summary>
+        static void WriteFlashJson(int frames, int rigs, int flashed, int flashCount, int onFrames, float onPerFlash, float lastSec)
+        {
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            string json = "{\"_meta\":{\"task\":\"T242\",\"round\":1},"
+                        + "\"frames\":" + frames.ToString(inv)
+                        + ",\"rigs\":" + rigs.ToString(inv)
+                        + ",\"rigsFlashed\":" + flashed.ToString(inv)
+                        + ",\"flashCount\":" + flashCount.ToString(inv)
+                        + ",\"onFrames\":" + onFrames.ToString(inv)
+                        + ",\"onFramesPerFlash\":" + onPerFlash.ToString("0.00", inv)
+                        + ",\"requestedSec\":" + (lastSec < 0f ? 0f : lastSec).ToString("0.000", inv) + "}";
+            foreach (var dir in PlayShot.Dirs())
+            {
+                try { System.IO.Directory.CreateDirectory(dir); System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "t242.json"), json); }
+                catch (System.Exception e) { Debug.LogWarning("[T242] t242.json 저장 실패(" + dir + "): " + e.Message); }
+            }
         }
     }
 }
