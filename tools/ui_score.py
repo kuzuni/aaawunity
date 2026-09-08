@@ -42,6 +42,16 @@ SCREENS = {
     'res_win': ('㊲', None, None),
     'res_win_last': ('㊲', None, None),
     'res_lose': ('㊳', None, None),
+    # T219 3단계 — 남은 다섯. **다섯 다 여기 적는다**: 이름으로 표를 찾는 갈래는 «ev_» 로 시작하는 화면을
+    # 서로 못 가른다(위 ㊱ 주석과 같은 함정 — 실제로 `ev_devil_gift`·`ev_ad` 가 둘 다 ㊴(휴식)로 붙어
+    # 2.1점·0.0점이 나왔다. «표가 틀린» 것이 아니라 «표를 잘못 찾은» 것이라 점수만 보면 원인을 못 읽는다).
+    'ev_rest': ('㊴', None, None),
+    'ev_devil_gift': ('㊵', None, None),
+    'ev_ad': ('㊶', None, None),
+    # ⚠ `27_toast` 의 layout 에는 **로비 이름표 13개가 같이** 들어 있다(로비 위에 뜬 토스트라서).
+    #    ㊷ 에는 «토스트» 것 둘만 두었다 — 로비 몫은 ① 이 이미 재고 있고, 여기서 또 재면 로비가 바뀔 때 이 표까지 흔들린다.
+    '27_toast': ('㊷', None, None),
+    '28_confirm_reset': ('㊸', None, None),
 }
 PASS, HALF = 3.0, 6.0
 
