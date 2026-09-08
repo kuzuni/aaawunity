@@ -377,10 +377,27 @@ namespace KkomaKnight.Tests.Play
             }
             Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 1, "로비 초상(HeroView · 상단 바 아바타)");
             Assert.IsTrue(HasText(s => s == "START"), "START 버튼");
-            // T227 4항 — «주인이 실제로 누르는 버튼» 이 탭으로 닿는가. 여기서는 **로그·표만**(단언 아님):
-            // 표는 `screens:tap.json` 으로 나가고, 그것이 초록인 것을 본 회차에 자리별로 AssertTappable 로 올린다(결정 627 순서).
+            // T227 4항 — «주인이 실제로 누르는 버튼» 이 탭으로 닿는가.
+            // 표(`Tap.Report`)는 그대로 둔다 — 그것이 «새로 생긴 자리» 를 찾아 주는 눈이고, 표는 `screens:tap.json` 으로 나간다.
             // 로비 한 장이면 START · 하단 네비 5 · 메뉴(≡) · 사이드 기둥이 한꺼번에 잰다.
             Tap.Report(_app, _app.Frame, "로비(01)");
+            // ⬆ 표를 먼저 두고 ⬇ 단언을 뒤에 두는 순서다 — 막히는 자리가 있으면 **표가 먼저 로그에 찍힌 뒤** 실패한다(고칠 사람이 이유를 같이 받는다).
+            // T227 회차 4(워커 E) — F 가 «표가 초록인 것을 본 회차에 자리별로 올린다» 로 남긴 일(결정 627 순서).
+            // `screens:tap.json` **run 493**(`b17289bd` · tests success) 실측: 23줄 중 22줄 `ok` ·
+            // 남은 하나(`Dimmed`)는 자가 스스로 «전면 덮개라 막힘이 정상» 이라 `note` 를 단 줄이라 올리지 않는다.
+            // 여기서부터 이 일곱 자리의 빨강은 **회귀**뿐이다 — 주인이 T227 로 겪은 «눌러도 아무 일 없다» 가 되돌아오면 그 순간 잡는다.
+            foreach (var (path, what) in new[]
+            {
+                ("Button_Menu", "로비 메뉴(≡)"), ("Start", "로비 «START»"),
+                ("Tab_01_BottomFlushMenu/Tab:shop", "하단 네비 «상점»"), ("Tab_01_BottomFlushMenu/Tab:gear", "하단 네비 «장비»"),
+                ("Tab_01_BottomFlushMenu/Tab:battle", "하단 네비 «전투»"), ("Tab_01_BottomFlushMenu/Tab:pet", "하단 네비 «펫»"),
+                ("Tab_01_BottomFlushMenu/Tab:events", "하단 네비 «이벤트»"),
+            })
+            {
+                var rt = UiKit.Find(_app.Frame, path) as RectTransform;
+                Assert.IsNotNull(rt, "로비에 «" + path + "» 가 있어야 한다(T227 4항 · 이름이 바뀌면 자가 아무것도 안 재게 된다)");
+                Tap.AssertTappable(_app, rt, what);
+            }
             // T120 — «모서리 요소가 화면 밖으로 나가지 않는다» 게이트(주인·워커 눈에만 보이던 종류 · 배치 표에 이름표가 없는 자리는 ui_score 도 못 잰다).
             // 프레임 가장자리에 붙는 것들이 대상이다 — 하나라도 0~100% 밖으로 삐져나오면 여기서 잡는다.
             // («Events» = 로비 오른쪽 아래 모서리 버튼이었는데 T168 로 삭제됐다 → 목록에서 뺐다.)
