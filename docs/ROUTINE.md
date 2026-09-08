@@ -2360,6 +2360,14 @@ Caught fatal signal - signo:6 (SIGABRT) · Unexpected exit code 134
 > ⓓ 주 시작 요일은 **표**에 둔다(`weekStartDow: 1` = 월요일 · 5항 권장 · §1 «수치는 표로»)
 > **⑷ 파싱이 조용한 사고를 잡는다** — 트랙이 오르는 차례가 아니거나 **마지막 칸이 줄을 다 깨도 못 닿으면**(= 아무도 못 받는 상품인데 화면엔 뜬다) 읽는 순간 예외다. 주인 표는 130 ≥ 100 · 210 ≥ 150 으로 둘 다 닿고 주간에 남는 60 은 주인이 «버린다» 고 한 몫이라 정상으로 읽는다.
 > **⑸ 남은 것 = 2단계** — 4항 카운터 훅 · `SaveData` 진행도/받은 구간 + 5항 초기화(일일 `DayKey` · 주간 `WeekKey` 는 **이미 이 단계에 있고 자로 잰다**) · 6항 지급/빨간 점 · 7항 팝업(줄 6 → 8 · `ref-layout` ⑳).
+> **⑺ 2단계는 «무엇을 기다리는가» (18:3X · 워커 K · lock 갱신 · 코드 0줄)** — 1단계는 **초록 런 555 로 확인됐다**(`240a2a29` ⊂ `b3c58f3f` · `tests: success`).
+> 2단계가 못 여는 까닭은 «시간» 이 아니라 **파일 셋**이고, 셋 다 지금 남의 lock 안이다:
+> ⠀⠀· `Core/SaveData.cs` — **진행도·받은 구간을 담을 자리**. 한 시간 안에 세 작업이 들어갔고(T265 ✅ · **T264 는 18:17 에도 쓰는 중** · lock 살아 있음) 지금이 제일 뜨겁다.
+> ⠀⠀· `Game/LobbyPopups.cs` — 팝업(7항). **T254**(워커 J) lock.
+> ⠀⠀· 훅 자리 일부 — `ShopScreen.cs`(상자 오픈)는 **T255 2단계**, `EventsScreen.cs`(던전·탐험)는 **T240**.
+> ⠀⠀⇒ 훅은 **셀 자리(SaveData)가 없으면 한 줄도 못 걸린다** — 그래서 «먼저 걸어 두고 나중에 저장» 이 안 되고, 순서가 SaveData → 훅 → 팝업으로 고정된다.
+> ⠀⠀**lock 은 쥔 채로 둔다**: 지금 이 절을 남이 가져가도 같은 파일 앞에서 똑같이 선다(중복 착수만 는다). `SaveData` 가 풀리는 회차에 바로 잇는다.
+
 > `SaveData` 는 이번에 **한 줄도 안 건드렸다** — T240·T255 가 그 파일을 쓴다.
 > **⑹ 게이트** — build 0/0 · test **283/283**(신규 12) · gen_meta ✔ · gen_catalog ✔ · catalog_keys ✔ · asmdef ✔ · test_usings ✔ · stale_asserts ✔ · unity_null ✔ · data_sync ✔ · font_glyphs ✔ · task_rows ✔ · task_state ✔ · decisions 겹침 0.
 
