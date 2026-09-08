@@ -115,8 +115,10 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(PlayShot.Save(_app, "t224_white", null), "촬영(흰 글자)");
             int white = DarkPixels(PlayShot.LastPng, 0.40f, 0.50f, 0.35f);
             Assert.GreaterOrEqual(white, 0, "찍은 PNG 를 되읽는다(흰 글자)");
+            // T224 2항-b — 이 줄이 «왜 0 인가» 를 한 런에 가른다(결정 617 · 워커 E 가 넘긴 처방).
+            //  ratioA 가 0 이면 «곱해서 0» · grad 가 작으면 SDF 여백 부족(3항) · 둘 다 멀쩡하면 «그 밖» 이다.
             Debug.Log($"[T224②] 흰 판 위 «흰» 글자의 어두운 픽셀 {white}(판만 있을 때 {before}) — 이 차이가 곧 **테**다 · " +
-                      $"머티리얼 상태 OutlineDraws={TmpFont.OutlineDraws(asset.material)} · 두께 {asset.material.GetFloat(TmpFont.OutlineWidthProp):0.00}");
+                      $"OutlineDraws={TmpFont.OutlineDraws(asset.material)} · {TmpFont.OutlineDiag(asset)}");
             Assert.Greater(white, before + 200,
                 "흰 판 위 흰 글자인데도 어두운 픽셀이 안 늘었다 = **테가 안 그려진다**(값만 들어가고 셰이더 갈래가 꺼진 자리 · T224 2항). " +
                 "값을 재는 단언(_OutlineWidth == 0.20)은 이 경우에도 통과하므로 그 자로는 못 잡는다.");

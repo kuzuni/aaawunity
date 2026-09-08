@@ -63,7 +63,8 @@ namespace KkomaKnight.Game
                     {
                         bool baked = HasAll(asset, ProbeChars);
                         bool outline = SetOutline(asset, Color.black);
-                        line = "bake=" + (baked ? "ok" : "fail") + " chars=" + ProbeChars.Length + " outline=" + (outline ? "ok" : "none");
+                        line = "bake=" + (baked ? "ok" : "fail") + " chars=" + ProbeChars.Length + " outline=" + (outline ? "ok" : "none")
+                             + " " + OutlineDiag(asset);
                     }
                 }
                 catch (System.Exception e) { line = "bake=throw " + e.GetType().Name + ": " + e.Message; }
@@ -154,6 +155,31 @@ namespace KkomaKnight.Game
         /// 여기서 <c>keywordSpace</c> 같은 최신 API 를 안 쓰는 까닭은 그것이 dotnet 스텁에 없으면 «로컬 초록 · 유니티 빨강» 이 되기 때문이다(결정 567).
         /// </para>
         /// </summary>
+        /// <summary>SDF 테 두께를 실제로 정하는 값들(TMP 셰이더는 <c>_OutlineWidth</c> 혼자 안 쓴다) — 이름으로만 읽는다(없으면 «-»).</summary>
+        public const string GradientScaleProp = "_GradientScale", ScaleRatioAProp = "_ScaleRatioA";
+
+        /// <summary>
+        /// <b>T224 2항-b — 남은 후보를 «한 런에» 가르는 관측 한 줄</b>(워커 E 가 넘긴 처방 · 결정 617).
+        /// <para>
+        /// 값(<c>_OutlineWidth</c> 0.20)도 넣고 갈래(<c>OUTLINE_ON</c>)도 켰는데 픽셀이 0 이었다(내 픽셀 자가 CI #472 에서 «210 이상이어야 하는데 10» 으로 잡았다).
+        /// TMP SDF 셰이더에서 <b>그려지는</b> 테 두께는 <c>_OutlineWidth</c> × <c>_ScaleRatioA</c> 꼴로 <c>_GradientScale</c>(아틀라스 여백+1)과 함께 정해지는데,
+        /// 이 레포에는 그 둘을 채우는 코드가 <b>한 줄도 없다</b>(런타임 <c>CreateFontAsset</c> 이 만든 공유 머티리얼이다).
+        /// </para>
+        /// <b>읽는 법</b> — <c>ratioA</c> 가 0 이면 «곱해서 0» 이고(고침 = 그 값을 채운다) · 정상인데 <c>grad</c> 가 작으면 여백 부족이다(고침 = <c>CreateFontAsset</c> padding 오버로드) · 둘 다 멀쩡하면 그때가 «그 밖» 이다.
+        /// 값을 <b>고치지 않고 찍기만</b> 하는 까닭: 어느 쪽인지 모르는 채 하나씩 움직이면 회차 수만큼 시간이 든다(결정 617).
+        /// </summary>
+        public static string OutlineDiag(TMP_FontAsset asset)
+        {
+            var mat = asset != null ? asset.material : null;
+            if (mat == null) return "mat=none";
+            string F(string prop) => mat.HasProperty(prop) ? mat.GetFloat(prop).ToString("0.###") : "-";
+            return "w=" + F(OutlineWidthProp) + " ratioA=" + F(ScaleRatioAProp) + " grad=" + F(GradientScaleProp)
+                 + " kw=" + (mat.IsKeywordEnabled(OutlineKeyword) ? "on" : "off")
+                 + " shader=" + (mat.shader != null ? mat.shader.name : "-");
+            // ⚠ `asset.atlasPadding` 은 일부러 안 찍는다 — dotnet 스텁에 없는 서명이라 «로컬 초록 · 유니티 빨강» 이 된다(결정 567).
+            //    여백은 `_GradientScale`(= 여백 + 1)에 이미 담겨 있어 잃는 것이 없다.
+        }
+
         public static bool OutlineDraws(Material mat) =>
             mat != null && mat.HasProperty(OutlineWidthProp) && mat.GetFloat(OutlineWidthProp) > 0f
             && mat.IsKeywordEnabled(OutlineKeyword);
