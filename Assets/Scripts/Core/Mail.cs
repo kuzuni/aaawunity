@@ -35,7 +35,7 @@ namespace KkomaKnight.Core
 
         /// <summary>이 보상을 세이브에 담을 수 있는가 — 모르는 이름은 <b>우편함에 안 들어간다</b>(조용히 버리지 않는다).</summary>
         public static bool CanPay(string item)
-            => item == ItemGold || item == ItemGem || item == ItemPetEgg || item == ItemArenaCoin;
+            => item == ItemGold || item == ItemGem || item == ItemPetEgg || item == ItemArenaCoin || GachaKeys.IsKey(item);   // 키 3종 = T255
 
         /// <summary>우편함에 든 것(없으면 빈 목록 · 옛 세이브 호환).</summary>
         public static List<MailItem> Pending(SaveData s)
@@ -101,6 +101,7 @@ namespace KkomaKnight.Core
             if (item == ItemGem) return "다이아";
             if (item == ItemPetEgg) return "펫알";
             if (item == ItemArenaCoin) return "아레나 코인";
+            if (GachaKeys.IsKey(item)) return GachaKeys.Name(item);   // T255 — 말은 GachaKeys 한 곳이 갖는다
             return item ?? "";
         }
 
@@ -113,6 +114,7 @@ namespace KkomaKnight.Core
             else if (item == ItemGem) s.Gem += amount;
             else if (item == ItemPetEgg) s.PetEgg += amount;
             else if (item == ItemArenaCoin) s.ArenaCoin += amount;
+            else if (GachaKeys.IsKey(item)) GachaKeys.Add(s, item, amount);   // T255 — 담는 자리도 GachaKeys 가 안다
             // 그 밖의 이름은 Add 가 이미 막았다 — 여기까지 오지 않는다.
         }
     }

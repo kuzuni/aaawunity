@@ -99,6 +99,12 @@ namespace KkomaKnight.Core
         /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 0»(옛 세이브 호환 · <see cref="PetEgg"/> 와 같은 방식 · 세이브 버전 그대로).
         /// </summary>
         public int Revive;
+        /// <summary>
+        /// 가진 <b>뽑기 «키»</b> 3종(T255 · 주인 2026-09-09 «희귀 상자는 파란색 키로 1회 뽑기 가능 …»).
+        /// 규칙(어느 키가 어느 상자를 여는가 · 이름 · 아이콘)은 <see cref="Core.GachaKeys"/> 한 곳이 갖는다 — 여기는 <b>담는 자리</b>일 뿐이다.
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 0»(옛 세이브 호환 · <see cref="Revive"/> 와 같은 방식 · 세이브 버전 그대로).
+        /// </summary>
+        public int KeyBlue, KeyPurple, KeyYellow;
         /// <summary>아레나 <b>최고 순위</b>(1 이 가장 높다 · <b>0 = 아직 한 판도 안 했다</b> · T240 5항). 승점과 달리 «되돌아가지 않는» 기록이라 따로 적는다.</summary>
         public int ArenaBest;
         /// <summary>아레나 <b>티켓</b>(T240 6항 · 결정 695) · 그 티켓이 살아 있는 날짜(<c>yyyy-MM-dd</c> · 바뀌면 <see cref="ArenaTickets.Roll"/> 이 채운다).
@@ -206,6 +212,7 @@ namespace KkomaKnight.Core
             o["arenaScore"] = ArenaScore; o["arenaBest"] = (double)ArenaBest;   // T240
             o["arenaTicket"] = (double)ArenaTicket; o["arenaDay"] = ArenaDay ?? "";   // T240 6항
             o["revive"] = (double)Revive;   // T254
+            o["keyBlue"] = (double)KeyBlue; o["keyPurple"] = (double)KeyPurple; o["keyYellow"] = (double)KeyYellow;   // T255
             o["arenaCoin"] = ArenaCoin;   // T243
             var ml = new List<object>();
             foreach (var m in Mail)
@@ -252,6 +259,7 @@ namespace KkomaKnight.Core
                     s.ArenaScore = j["arenaScore"].Num(); s.ArenaBest = j["arenaBest"].Int();   // 없으면 0 = «아직 한 판도 안 했다»(옛 세이브 호환 · T240)
                     s.ArenaTicket = j["arenaTicket"].Int(); s.ArenaDay = j["arenaDay"].Str("");   // 없으면 0/빈 값 → 첫 접근에 그날치가 채워진다(T240 6항)
                     s.Revive = j["revive"].Int();   // 없으면 0(옛 세이브 호환 · T254)
+                    s.KeyBlue = j["keyBlue"].Int(); s.KeyPurple = j["keyPurple"].Int(); s.KeyYellow = j["keyYellow"].Int();   // 없으면 0(옛 세이브 호환 · T255)
                     s.ArenaCoin = j["arenaCoin"].Num();   // 없으면 0(옛 세이브 호환 · T243)
                     foreach (var m in j["mail"].Items())
                     {
