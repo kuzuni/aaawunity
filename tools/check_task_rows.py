@@ -36,6 +36,17 @@ ROWHEAD = re.compile(r"^\|\s*T\d")
 #   옛 자는 `[^|]+` 로 끊어 그 파이프에서 칸을 갈랐고, 그래서 상태 칸을 «앞토막만» 읽고 있었다(T201).
 CELL = re.compile(r"(?<!\\)\|")
 FOLDED = ("✂", "♻")          # 이미 «중복 행» 이라고 접어 둔 줄
+
+
+def folded(st):
+    """접힘인가 — **칸 머리에서만** 읽는다(T249 · `task_state._fold` 와 같은 규약).
+
+    이 자 자신이 안내하는 꼴이 «상태 칸을 «✂ 중복 행 — 살아 있는 기록은 N행이다» 로 바꾼다» 라
+    접힘은 늘 **칸 맨 앞**에 온다. «칸 어디에든» 으로 읽으면 본문에 ✂ 를 인용한 **살아 있는 줄**이
+    통째로 접힘 처리된다(T172 가 그랬다 — 머리는 ✅ 인데 2366번째 글자의 이력 문장 때문에
+    두 자 모두에서 사라졌고, 그 바람에 §2 제목이 마커 없이 «열린 일» 로 남았다).
+    """
+    return st.lstrip("*_ ").startswith(FOLDED)
 WAITING = "⬜"
 LIVE = ("✅", "🔄")
 CLOSED = re.compile(r"✅\s*\*{0,2}\s*(종결|완료|눈 확인까지 끝)")   # 본문에 적힌 «닫았다» 표시 (ⓓ)
@@ -179,7 +190,7 @@ def main():
             continue
         def shut(st):
             h = st.lstrip("*_ ")
-            return h.startswith("✅") or h.startswith("⛔") or any(f in st for f in FOLDED)
+            return h.startswith("✅") or h.startswith("⛔") or folded(st)
         if not all(shut(st) for _, vs in kids for _, st in vs):
             continue
         for n, status in items:
@@ -189,7 +200,7 @@ def main():
     dups = {k: v for k, v in by_id.items() if len(v) > 1}
     bad = []
     for tid, items in dups.items():
-        live = [it for it in items if not any(f in it[1] for f in FOLDED)]
+        live = [it for it in items if not folded(it[1])]
         waiting = [it for it in live if it[1].startswith(WAITING)]
         moving = [it for it in live if it[1].lstrip("*_ ").startswith(LIVE)]
         if waiting and moving:
