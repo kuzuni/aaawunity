@@ -680,7 +680,10 @@ namespace KkomaKnight.Game
 
         // ───────────────────────── 사망 (Play_Result_Lose) ─────────────────────────
         /// <summary>사망 팝업. 등장 연출(T49 · 주인 «졌을 때 팝업도»): 배경 → «쓰러졌다...»(0.05s) → 보상 골드(0.2s) → 팁 3줄이 <b>한 줄씩</b>(0.35 · 0.46 · 0.57s) → «로비로»(0.68s) → «터치하면 로비로»(0.76s) → 0.98s 에 끝(≤ 1.0s). <b>배경 탭 = 연출 중이면 스킵</b>(즉시 전부 표시) · 끝난 뒤면 로비로.</summary>
-        public void Dead(BattleState G, Action onLobby)
+        /// <param name="onRevive">T254 — 부활권으로 «부활» 을 누른 자리(<c>null</c> = 버튼을 안 만든다).</param>
+        /// <param name="revives">지금 가진 부활권 수 — 0 이면 버튼을 <b>비활성 + 개수 0</b> 으로 띄운다(지시서 3항 기본값 · 어디서 구하는지 한 줄도 같이).</param>
+        /// <param name="canRevive">이 판에서 아직 부활할 수 있는가(판당 <see cref="Core.Revive.PerRun"/> 회) — false 면 버튼이 안 뜬다(이미 한 번 썼다).</param>
+        public void Dead(BattleState G, Action onLobby, Action onRevive = null, int revives = 0, bool canRevive = false)
         {
             Begin(); Audio.Sfx("snd.fail");
             var root = UiKit.Spawn("ui.resultLose", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
@@ -701,11 +704,28 @@ namespace KkomaKnight.Game
                 rows.Add(row);
             }
             var touch = UiKit.SetText(rt, "Text_TouchContionue", "터치하면 로비로");
-            var lobbyBtn = UiKit.Button(rt, "ui.btnBlue", "로비로", () => { Close(); onLobby(); }, new Layout.R(30, 80, 40, 6));
+            // T254 3항 — 부활권 선택지. 이 판에서 아직 쓸 수 있을 때만 자리를 낸다(이미 한 번 썼으면 아예 안 뜬다 = 「눌러도 안 되는 버튼」을 안 만든다).
+            RectTransform reviveBtn = null;
+            if (onRevive != null && canRevive)
+            {
+                bool has = revives > 0;
+                reviveBtn = UiKit.Button(rt, has ? "ui.btnOrange" : "ui.btnSmallGray", "부활 " + revives, has ? onRevive : (Action)null, new Layout.R(30, 72, 40, 6));
+                reviveBtn.name = "ReviveBtn";
+                var ri = UiKit.Icon(reviveBtn, "Icon", "ui.iconRevive"); UiKit.Pct(ri.rectTransform, 6, 20, 16, 60);
+                if (!has)
+                {
+                    // 0 개면 «비활성 + 개수 0»(지시서 3항 기본값) + 어디서 구하는지 한 줄 — 버튼만 회색이면 사람이 «고장» 으로 읽는다.
+                    var b = reviveBtn.GetComponent<Button>(); if (b != null) b.interactable = false;
+                    UiKit.Label(rt, 20, 78.5f, 60, 2.4f, "부활권은 데일리 기프트에서 얻는다", TextSize.Body, Palette.CreamDark).name = "ReviveHint";
+                }
+                UiKit.Tag(reviveBtn, "부활 버튼");
+            }
+            var lobbyBtn = UiKit.Button(rt, "ui.btnBlue", "로비로", () => { Close(); onLobby(); }, new Layout.R(30, 84, 40, 6));
             var hit = UiKit.Find(rt, "Dimmed"); if (hit != null) UiKit.Clickable(hit, () => { if (Revealing) Skip(); else { Close(); onLobby(); } }, false);
             // 순서 — 제목 → 보상 → 팁 한 줄씩 → 로비로 → 터치 안내
             At(0.05f, UiKit.Find(rt, "Title_LineDeco_01_s_White")); At(0.2f, reward);
             float tipsEnd = UiKit.Stagger(Seq(), rows, 0.35f, UiKit.RevealStep);   // 0.35 · 0.46 · 0.57 → 0.79
+            if (reviveBtn != null) At(tipsEnd - UiKit.RevealStep * 2f, reviveBtn);
             At(tipsEnd - UiKit.RevealStep, lobbyBtn); if (touch != null) At(tipsEnd - 0.03f, touch.transform);
             // T69 7항 보상 칸 = 장비 프레임 + 검은 아웃라인 — 배치가 끝난 뒤(결정 174)
             // T190 — 사망 보상(골드) 칸의 빛살도 없앴다(클리어 칸과 같은 꼴이다).

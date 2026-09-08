@@ -93,6 +93,12 @@ namespace KkomaKnight.Core
         /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 0»(옛 세이브 호환).
         /// </summary>
         public double ArenaCoin;
+        /// <summary>
+        /// 가진 <b>부활권</b>(T254 · 주인 2026-09-09 «부활권 1개로 게임 1회 부활 가능하게 하기»).
+        /// 쓰는 곳은 <see cref="Core.Revive"/> 한 곳이고 아이콘은 이미 있다(<c>ui.iconRevive</c> — 아레나 상인 표가 쓰는 그것 · 새 그림 0).
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 0»(옛 세이브 호환 · <see cref="PetEgg"/> 와 같은 방식 · 세이브 버전 그대로).
+        /// </summary>
+        public int Revive;
         /// <summary>아레나 <b>최고 순위</b>(1 이 가장 높다 · <b>0 = 아직 한 판도 안 했다</b> · T240 5항). 승점과 달리 «되돌아가지 않는» 기록이라 따로 적는다.</summary>
         public int ArenaBest;
         /// <summary>아레나 <b>티켓</b>(T240 6항 · 결정 695) · 그 티켓이 살아 있는 날짜(<c>yyyy-MM-dd</c> · 바뀌면 <see cref="ArenaTickets.Roll"/> 이 채운다).
@@ -199,6 +205,7 @@ namespace KkomaKnight.Core
             o["petEgg"] = PetEgg;
             o["arenaScore"] = ArenaScore; o["arenaBest"] = (double)ArenaBest;   // T240
             o["arenaTicket"] = (double)ArenaTicket; o["arenaDay"] = ArenaDay ?? "";   // T240 6항
+            o["revive"] = (double)Revive;   // T254
             o["arenaCoin"] = ArenaCoin;   // T243
             var ml = new List<object>();
             foreach (var m in Mail)
@@ -244,6 +251,7 @@ namespace KkomaKnight.Core
                     s.PetEgg = j["petEgg"].Num();   // 없으면 0(옛 세이브 호환 · T228)
                     s.ArenaScore = j["arenaScore"].Num(); s.ArenaBest = j["arenaBest"].Int();   // 없으면 0 = «아직 한 판도 안 했다»(옛 세이브 호환 · T240)
                     s.ArenaTicket = j["arenaTicket"].Int(); s.ArenaDay = j["arenaDay"].Str("");   // 없으면 0/빈 값 → 첫 접근에 그날치가 채워진다(T240 6항)
+                    s.Revive = j["revive"].Int();   // 없으면 0(옛 세이브 호환 · T254)
                     s.ArenaCoin = j["arenaCoin"].Num();   // 없으면 0(옛 세이브 호환 · T243)
                     foreach (var m in j["mail"].Items())
                     {

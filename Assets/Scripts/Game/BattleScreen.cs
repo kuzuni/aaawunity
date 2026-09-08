@@ -168,7 +168,7 @@ namespace KkomaKnight.Game
             _world = new BattleWorld(App, G, _pops);
             _world.KillShown = OnKillShown;   // T85 — 시체가 쓰러지는 순간 그 자리에서 보상 구슬이 튀어나온다
             SnapShown();                      // 새 판은 표시값 = 엔진 값(0)에서 시작
-            _acc = 0; _speed = App.Save.Speed; _paused = false; _ended = false; _perkStripKey = ""; _buffKey = ""; _lastReal = 0;   // 배속은 세이브에서(T18 · 클리어 뒤 다음 챕터도 그대로) · 새 판 첫 프레임이 «공백» 으로 잡히지 않게
+            _acc = 0; _speed = App.Save.Speed; _paused = false; _ended = false; _revivesUsed = 0; _perkStripKey = ""; _buffKey = ""; _lastReal = 0;   // 배속은 세이브에서(T18 · 클리어 뒤 다음 챕터도 그대로) · 새 판 첫 프레임이 «공백» 으로 잡히지 않게
             Audio.Bgm("bgm.battle");   // 새 판(클리어 뒤 다음 챕터 포함)은 전투 곡부터 — 보스 곡이었으면 되돌린다(T28)
             RefreshHud();
         }
@@ -200,6 +200,26 @@ namespace KkomaKnight.Game
         string _dunKey;
         /// <summary>T240 — 아레나 «도전» 으로 들어온 판의 <b>상대 이름</b>(<c>null</c> = 아레나가 아니다). 이 값 하나가 <see cref="EndRun"/> 의 아레나 갈래를 켠다.</summary>
         string _arenaFoe;
+        /// <summary>T254 — 이 판에서 이미 쓴 부활 횟수(<see cref="KkomaKnight.Core.Revive.PerRun"/> 까지). 새 판마다 0 으로 돌아간다.</summary>
+        int _revivesUsed;
+        /// <summary>이 판에서 쓴 부활 횟수(자가 읽는다).</summary>
+        public int RevivesUsed => _revivesUsed;
+
+        /// <summary>
+        /// T254 2항 — 부활권 1 을 쓰고 <b>그 자리에서 이어서</b> 진행한다(주인 «HP·실드 가득 · 그 자리에서»).
+        /// 규칙·되살리기는 <see cref="KkomaKnight.Core.Revive"/> 한 곳이고, 여기서는 «팝업을 닫고 판을 다시 굴린다» 만 한다.
+        /// </summary>
+        void ReviveNow()
+        {
+            if (G == null) return;
+            if (!KkomaKnight.Core.Revive.Use(App.Save, G, ref _revivesUsed)) return;
+            App.Persist();                 // 저장은 여기 한 번(Revive 는 순수 C# 이라 디스크를 안 만진다)
+            _ended = false; _overWait = 0; // 판을 다시 굴린다 — «끝났다» 표식만 내린다
+            App.Overlay.Close();
+            RefreshHud();
+            Debug.Log("[T254] 부활 — 남은 부활권 " + App.Save.Revive + " · 이 판 " + _revivesUsed + "/" + KkomaKnight.Core.Revive.PerRun);
+        }
+
         /// <summary>지금 판이 아레나 판인가(자가 읽는다).</summary>
         public bool IsArena => _arenaFoe != null;
         /// <summary>테스트·진단용 읽기 — 이 판이 들어온 던전 키(<c>null</c> = 일반 전투).</summary>
@@ -320,7 +340,10 @@ namespace KkomaKnight.Game
             else
             {
                 S.Gold += Math.Round(G.Gold); App.Persist();
-                App.Overlay.Dead(G, () => ExitBattle());
+                // T254 — 부활권 선택지. «이 판에서 아직 쓸 수 있는가» 는 개수와 따로다 —
+                //   0 개여도 그 자리는 보여 준다(비활성 + 어디서 구하는지). 이미 한 번 썼으면 자리 자체를 안 낸다.
+                bool canRevive = _revivesUsed < KkomaKnight.Core.Revive.PerRun;
+                App.Overlay.Dead(G, () => ExitBattle(), ReviveNow, S.Revive, canRevive);
             }
         }
 
