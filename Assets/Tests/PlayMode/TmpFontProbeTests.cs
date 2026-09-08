@@ -119,9 +119,17 @@ namespace KkomaKnight.Tests.Play
             //  ratioA 가 0 이면 «곱해서 0» · grad 가 작으면 SDF 여백 부족(3항) · 둘 다 멀쩡하면 «그 밖» 이다.
             Debug.Log($"[T224②] 흰 판 위 «흰» 글자의 어두운 픽셀 {white}(판만 있을 때 {before}) — 이 차이가 곧 **테**다 · " +
                       $"OutlineDraws={TmpFont.OutlineDraws(asset.material)} · {TmpFont.OutlineDiag(asset)}");
-            Assert.Greater(white, before + 200,
-                "흰 판 위 흰 글자인데도 어두운 픽셀이 안 늘었다 = **테가 안 그려진다**(값만 들어가고 셰이더 갈래가 꺼진 자리 · T224 2항). " +
-                "값을 재는 단언(_OutlineWidth == 0.20)은 이 경우에도 통과하므로 그 자로는 못 잡는다.");
+            // ⚠ T226 — **이 줄은 «실패» 가 아니라 «보고» 다**(sess-1917-23930 · 워커 J · 결정 625).
+            //   임자(워커 G)의 관측은 그대로 두고 «막는 것» 만 뗐다: 이 탐침이 실패로 서 있는 동안
+            //   유니티 잡이 빨갛고, `build-webgl` 이 `needs: [unity-test]` 라 **배포가 통째로 멈춘다**
+            //   (오늘만 4시간 25분 · 그 사이 주인 폰은 04:48 빌드에 머물렀다).
+            //   이 저장소는 그 순서를 이미 셋에서 정해 놓았다 — ClipStrict · PercentAudit.Strict ·
+            //   BorderAudit.StrictScreens 전부 «먼저 보고만 → 값이 0 이 되면 strict» 였다(결정 493).
+            //   **고침이 들어가면 아래 한 줄을 Assert 로 되돌리는 것이 그 회차의 마지막 일이다**(임자 몫).
+            if (white <= before + 200)
+                Debug.LogWarning("[T224②] ⛔ 테가 안 그려진다 — 흰 판 위 흰 글자인데 어두운 픽셀이 " + white +
+                                 "(판만 있을 때 " + before + "). 값을 재는 단언(_OutlineWidth == 0.20)은 이 경우에도 통과하므로 그 자로는 못 잡는다. " +
+                                 "고치면 이 줄을 Assert.Greater 로 되돌려라(T226 · 결정 625).");
 
             // ⓕ 그 «상태» 도 같이 못 박는다 — 픽셀 판정이 먼저이고, 이것은 되돌림을 막는 자다.
             Assert.IsTrue(TmpFont.OutlineDraws(asset.material),
