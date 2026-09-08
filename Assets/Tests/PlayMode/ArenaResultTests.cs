@@ -127,6 +127,40 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
+        /// <summary>
+        /// T240 1항 — 아레나 판은 챕터 전투와 <b>다른 무대</b>에서 돈다: 주인 레퍼런스 <c>33_pvp_battle.jpg</c> 의 가운데는 <b>모래 마당</b>이다.
+        /// <para>
+        /// 두 판을 <b>나란히</b> 잰다 — «아레나가 사막이다» 만 재면 <b>그냥 그 챕터가 사막이었을 때도 통과</b>한다(챕터 4·8… 은 원래 사막이다).
+        /// 그래서 같은 챕터로 일반 판을 한 번 더 열어 «같은 챕터인데 무대가 갈린다» 를 재는 것이 이 자의 전부다.
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ArenaRunFightsOnTheSandYardNotTheChapterMap()
+        {
+            yield return Boot();
+            EventsScreen.Open(_app, EventsScreen.PageArena); yield return Frames(2);
+            Assert.IsTrue(Click(_app.Current.Root, "ChallengeBtn")); yield return Frames(2);
+            Assert.IsTrue(Click(_app.Overlay.Root, "FoeBtn:0")); yield return Frames(2);
+
+            var bs = _app.GetScreen<BattleScreen>();
+            Assert.IsNotNull(bs); Assert.IsTrue(bs.IsArena, "먼저 «아레나 판» 인 것을 확인한다(아니면 아래 비교가 뜻이 없다)");
+            Assert.IsNotNull(bs.World, "월드가 서 있다");
+            int chapter = bs.G.Chapter;
+            Assert.AreEqual(BattleWorld.Theme.Arena.Name, bs.World.MapTheme.Name, "아레나 판의 무대 = 모래 마당");
+
+            // 같은 챕터로 일반 판 — 여기서 갈려야 «챕터 때문이 아니라 아레나라서» 가 증명된다.
+            _app.StartBattle(chapter); yield return Frames(2);
+            var normal = _app.GetScreen<BattleScreen>();
+            Assert.IsFalse(normal.IsArena, "이 판은 아레나가 아니다");
+            Assert.AreEqual(BattleWorld.Theme.ForChapter(chapter).Name, normal.World.MapTheme.Name, "일반 판은 종전대로 챕터가 무대를 정한다");
+            if (BattleWorld.Theme.ForChapter(chapter).Name == BattleWorld.Theme.Arena.Name)
+                Assert.Ignore("이 챕터의 무대가 마침 사막이라 이 판으로는 둘을 못 가른다 — 잴 것이 없는 판은 통과시킨다(§1 ⓑ)");
+            Assert.AreNotEqual(normal.World.MapTheme.Name, BattleWorld.Theme.Arena.Name, "같은 챕터인데 무대가 갈린다");
+
+            _log.AssertNoRed("아레나 무대 ↔ 챕터 무대");
+            yield return Shutdown();
+        }
+
         [UnityTest]
         public IEnumerator LoseAtTheFloorWritesWhatItTookNotWhatTheTableSays()
         {

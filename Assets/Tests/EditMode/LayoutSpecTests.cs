@@ -33,7 +33,10 @@ namespace KkomaKnight.Tests
             foreach (var raw in File.ReadAllLines(SpecPath()))
             {
                 var line = raw.Trim();
-                var h = Regex.Match(line, @"^## ([①-⑳㉑-㉟])");
+                // ⚠ ㊱-㊿ 를 빠뜨리면 **표가 늘어난 뒤로 이 자가 조용히 눈을 감는다** — 없는 절을 «못 찾음» 이 아니라
+                //   «절 자체가 없다» 로 읽어 그 표의 어떤 행도 대조되지 않는다(자가 빨개지지 않으니 아무도 모른다).
+                //   `tools/ui_score.py:73` 은 T213 이 같은 자리를 이미 «㊱-㊿» 로 고쳤는데 이 C# 자만 ㉟ 에 멈춰 있었다(T240 · 결정 698).
+                var h = Regex.Match(line, @"^## ([①-⑳㉑-㉟㊱-㊿])");
                 if (h.Success) { sec = h.Groups[1].Value; res[sec] = new Dictionary<string, float?[]>(); continue; }
                 if (line.StartsWith("## ")) { sec = null; continue; }   // 정정 절 이하는 표가 아니다
                 if (sec == null || !line.StartsWith("|")) continue;
@@ -302,6 +305,38 @@ namespace KkomaKnight.Tests
             Assert.That(Layout.GfTodayBtn.X, Is.EqualTo(Layout.GfRowBtn.X).Within(0.05f)); Assert.That(Layout.GfTodayBtn.W, Is.EqualTo(Layout.GfRowBtn.W).Within(0.05f));
 
             // ㉓ 7일 챌린지 · ㉔ 패스 — T78(주인 2026-09-07)로 화면째 삭제 · 표도 폐기
+        }
+        [Test]
+        public void PvpBattle_MatchesSpec()
+        {
+            // ㊺ PvP 인게임(33) — T240 1항. **이 자가 서기 전까지 ㊱ 이후 표는 어느 것도 대조되지 않았다**(Parse 의 절 정규식이 ㉟ 에서 멈춰 있었다).
+            var s = Parse();
+            Assert.That(s.ContainsKey("㊺"), Is.True, "표 ㊺ 를 못 읽었다 — Parse 의 절 정규식이 ㊱-㊿ 를 포함하는지 본다(그것이 막히면 이 자는 «절 없음» 으로 조용히 지나간다)");
+            Same(s, "㊺", "빨간 VS 바", Layout.PvpBar);
+            Same(s, "㊺", "VS 배지(금·원)", Layout.PvpBadge);
+            Same(s, "㊺", "아바타 칸(왼쪽)", Layout.PvpMyFace);
+            Same(s, "㊺", "이름(왼쪽)", Layout.PvpMyName);
+            // 전투력 줄은 표가 w 를 «—» 로 뒀다(글자 폭이라 수에 따라 변한다) — x·y·h 만 대조된다(Same 이 «—» 칸을 건너뛴다).
+            Same(s, "㊺", "전투력 줄(왼쪽)", Layout.PvpMyPower);
+
+            // 오른쪽은 표가 «좌우 대칭» 이라고만 적고 행을 따로 두지 않았다 — 그 대칭을 여기서 못 박는다.
+            // (표에 없는 값을 지어내 넣는 대신 «왼쪽에서 나오는 규칙» 으로 두는 쪽이다 — 왼쪽이 바뀌면 오른쪽이 같이 따라온다.)
+            Assert.That(Layout.PvpFoeFace.X, Is.EqualTo(100f - Layout.PvpMyFace.X - Layout.PvpMyFace.W).Within(0.05f), "상대 아바타 칸이 좌우 대칭(표 ㊺ 실측 86.4)");
+            Assert.That(Layout.PvpFoeFace.X, Is.EqualTo(86.4f).Within(0.05f));
+            foreach (var pair in new[] { new[] { Layout.PvpMyName, Layout.PvpFoeName }, new[] { Layout.PvpMyPower, Layout.PvpFoePower } })
+            {
+                Assert.That(pair[1].Y, Is.EqualTo(pair[0].Y).Within(0.05f), "양쪽 줄은 같은 높이에 선다");
+                Assert.That(pair[1].H, Is.EqualTo(pair[0].H).Within(0.05f));
+                Assert.That(pair[1].W, Is.EqualTo(pair[0].W).Within(0.05f));
+                Assert.That(pair[1].X + pair[1].W, Is.EqualTo(100f - pair[0].X).Within(0.05f), "오른쪽 칸의 끝 = 왼쪽 칸 시작의 거울");
+            }
+            // 실측 확인: 상대 전투력 글자의 왼쪽 끝(80.1)이 그 칸(오른쪽 정렬) 안에 든다 — 칸이 글자보다 왼쪽에서 시작해야 한다.
+            Assert.That(Layout.PvpFoePower.X, Is.LessThanOrEqualTo(80.1f), "상대 전투력 칸이 실측 글자 왼쪽 끝(80.1)보다 왼쪽에서 시작한다");
+            // VS 배지는 바 «가운데에 얹힌다» — 가로 가운데가 바의 가운데와 같고, 배지가 바보다 높아 위아래로 걸친다.
+            Assert.That(Layout.PvpBadge.X + Layout.PvpBadge.W / 2f, Is.EqualTo(Layout.PvpBar.X + Layout.PvpBar.W / 2f).Within(0.3f), "VS 배지가 바 가로 가운데");
+            Assert.That(Layout.PvpBadge.H, Is.GreaterThan(Layout.PvpBar.H), "배지가 바보다 높다(위아래로 걸친다)");
+            // 결과 화면(㊻)의 VS 배지와 «같은 조각» — 표 ㊻ 이 그렇게 적었다(폭·높이가 같다).
+            Assert.That(Layout.PvpBadge.W, Is.EqualTo(Layout.ArrVs.W).Within(0.05f)); Assert.That(Layout.PvpBadge.H, Is.EqualTo(Layout.ArrVs.H).Within(0.05f));
         }
         [Test]
         public void Common_TopBarAndTabBarSharedAcrossTabs()

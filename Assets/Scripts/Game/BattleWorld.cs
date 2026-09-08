@@ -138,6 +138,28 @@ namespace KkomaKnight.Game
             public static readonly Theme[] All = { new Theme { Name = "autumn" }, new Theme { Name = "deepForest" }, new Theme { Name = "forest" }, new Theme { Name = "desert" } };
             /// <summary>챕터 → 테마: 1=Autumn 2=DeepForest 3=Forest 4=Desert, 5=Autumn … (주인 지시 «4개 순환»).</summary>
             public static Theme ForChapter(int chapter) => All[((chapter - 1) % All.Length + All.Length) % All.Length];
+            /// <summary>
+            /// T240 1항 — 아레나(PvP) 판의 무대. 주인 레퍼런스 <c>33_pvp_battle.jpg</c> 의 가운데는 <b>모래 마당</b>이고
+            /// 챕터 전투(풀밭·숲)와 한눈에 갈려야 한다 — 그래서 챕터 순환에서 빼고 <b>사막 바닥을 고정</b>으로 쓴다(새 그림 0 · §1).
+            /// <para>⚠ 이것은 «데모 씬 그대로»(T19)를 어기는 것이 아니다 — 고르는 것이 «어느 챕터냐» 에서 «어느 판이냐» 로 바뀔 뿐 바닥·길 조각과 치수는 그 테마 그대로다.</para>
+            /// </summary>
+            public static readonly Theme Arena = All[3];
+        }
+
+        /// <summary>
+        /// 지금 만드는 판이 아레나(PvP) 판인가 — <see cref="BattleScreen.IsArena"/> 를 <b>되읽는다</b>.
+        /// <para>
+        /// ⚠ <b>왜 생성자 인자가 아닌가</b>: 인자로 받으려면 <c>BattleScreen.cs</c> 의 생성 줄을 고쳐야 하는데
+        /// 그 파일은 지금 <b>T254(부활권 · 살아 있는 lock)의 범위</b>다. 남의 lock 안 파일을 «편해서» 고치지 않는다(§1 · claims 규약).
+        /// 되읽기가 안전한 까닭은 순서가 이미 못 박혀 있기 때문이다 — <c>BattleScreen.Start</c> 는 <c>_arenaFoe</c> 를 <b>먼저</b> 넣고
+        /// 그 뒤에 <c>new BattleWorld(...)</c> 를 부른다(그 반대면 첫 판만 테마가 틀렸을 것이다).
+        /// </para>
+        /// <para>T254 lock 이 풀리면 <b>생성자 인자 한 개</b>로 바꾸는 것이 맞다(그때는 되읽기도, 이 주석도 지운다).</para>
+        /// </summary>
+        static bool IsArenaRun(App app)
+        {
+            var screen = app != null ? app.GetScreen<BattleScreen>() : null;
+            return screen != null && screen.IsArena;
         }
 
         /// <summary>월드 루트(Ground·Props·Nodes 의 부모) — 테스트·진단용 읽기(T19 PlayMode 맵 테스트가 바닥·길·소품 스케일을 본다).</summary>
@@ -199,7 +221,8 @@ namespace KkomaKnight.Game
         {
             _app = app; G = g; D = g.D; _pops = popsLayer;
             _zoom = (float)D.Ui.CameraZoom; _playerX = (float)(D.Ui.PlayerX * WorldCam.LayoutW);
-            _theme = Theme.ForChapter(g.Chapter);
+            // T240 1항 — 아레나 판은 챕터와 무관하게 «모래 마당»(레퍼런스 33). 일반 판은 종전대로 챕터가 무대를 정한다.
+            _theme = IsArenaRun(app) ? Theme.Arena : Theme.ForChapter(g.Chapter);
             _shownPX = G.P.WorldX; _heldPrevFrame = false;
             _root = new GameObject("World").transform;
             BuildGround(); BuildProps(); BuildNodes(); BuildPlayer();

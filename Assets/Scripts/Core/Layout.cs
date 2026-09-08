@@ -245,6 +245,29 @@ namespace KkomaKnight.Core
         /// <summary>칸 사이 틈(%p) — 실측 8px / 720.</summary>
         public const float RwCellGap = 1.1f;
 
+        // ───────── T240 1항 PvP 인게임 머리 — 값은 전부 주인 레퍼런스 `docs/ref/33_pvp_battle.jpg`(720×1560) 실측이다(표 ㊺) ─────────
+        // 이 줄들이 «보통 전투» 와 «PvP» 를 가르는 자리다: 빨간 VS 바 하나에 양쪽 정보 줄(아바타 칸 · 이름 · 전투력)이 걸린다.
+        // ⚠ 챕터 전투의 «챕터 N» 제목·진행 바가 있던 자리를 이것이 대신한다(PvP 는 웨이브가 없어 진행 바가 잴 것이 없다).
+        /// <summary>빨간 VS 바 — 실측 px x 24~695 · y 165~193. 양 끝이 화면에 안 닿는다(좌우 3.3%p 여백).</summary>
+        public static readonly R PvpBar = new R(3.3f, 10.6f, 93.3f, 1.9f);
+        /// <summary>바 가운데에 얹히는 금테 «VS» 배지 — 배지 높이가 바보다 커서 위아래로 걸친다. 결과 화면(<see cref="ArrVs"/>)과 폭·높이가 같다.</summary>
+        public static readonly R PvpBadge = new R(45.3f, 9.9f, 9.2f, 2.8f);
+        /// <summary>내 아바타 칸(금테 사각) — 실측 px 25~97 · 210~281.</summary>
+        public static readonly R PvpMyFace = new R(3.5f, 13.5f, 10.1f, 4.6f);
+        /// <summary>상대 아바타 칸 — 좌우 대칭(실측 x 86.4).</summary>
+        public static readonly R PvpFoeFace = new R(86.4f, 13.5f, 10.1f, 4.6f);
+        /// <summary>내 이름(흰 굵은 글자) — 아바타 칸 오른쪽에 붙는다(왼쪽 정렬).</summary>
+        public static readonly R PvpMyName = new R(16.2f, 13.8f, 21.8f, 1.8f);
+        /// <summary>상대 이름 — 좌우 대칭이라 <b>오른쪽 정렬</b>이다(칸 오른쪽 끝 = 100 − 16.2 = 83.8).</summary>
+        public static readonly R PvpFoeName = new R(62.0f, 13.8f, 21.8f, 1.8f);
+        /// <summary>
+        /// 내 전투력 줄(검 아이콘 + 수) — 이름 바로 아래. ⚠ <b>표 ㊺ 의 이 행은 w 를 안 쟀다</b>(글자 폭이라 수에 따라 변한다) —
+        /// 여기 폭 21.8 은 <b>워커가 고른 값</b>이고 이름 칸과 같게 뒀다(§5 는 «—» 인 칸을 안 잰다 · 결정 702).
+        /// </summary>
+        public static readonly R PvpMyPower = new R(16.8f, 16.3f, 21.8f, 0.9f);
+        /// <summary>상대 전투력 줄 — 오른쪽 정렬(칸 오른쪽 끝 = 100 − 16.8 = 83.2 · 실측 글자 왼쪽 끝 80.1 과 맞는다).</summary>
+        public static readonly R PvpFoePower = new R(61.4f, 16.3f, 21.8f, 0.9f);
+
         // ───────── T240 4항 PvP 결과(승리/패배) — 값은 전부 주인 레퍼런스 `docs/ref/34_pvp_win.jpg`(720×1560) 실측이다(표 ㊻) ─────────
         // 이 화면도 «상자» 가 아니라 어두운 전면 위 **가운데 세로 한 줄**이다: 방패 엠블럼 → 승리/패배 → 티어 명판 → 아바타 VS 아바타 → 이름 → 승점 변화 → 계속.
         /// <summary>금빛 방패 엠블럼 — 실측 px 192~526 · 436~689.</summary>
