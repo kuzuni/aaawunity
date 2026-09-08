@@ -65,6 +65,7 @@ namespace KkomaKnight.Game
             d.Privilege = LoadPrivilege(catalog);
             d.Quest = LoadQuest(catalog);
             d.ArenaMatch = LoadArenaMatch(catalog);
+            d.ArenaFoe = LoadArenaFoe(catalog);   // 같은 파일의 foe 칸(T240 3항)
             d.Achievement = LoadAchievement(catalog);
             ApplyCombatOverride(d, catalog);   // T173 — 전투 규칙 덮어쓰기(창 사거리·관통)는 App 이 서기 «전» 에 먹인다
             App.Create(d, catalog, uiFont, Camera.main);
@@ -184,6 +185,18 @@ namespace KkomaKnight.Game
             if (ta == null) { Debug.LogError("[KkomaKnight] arenaMatch.json 이 카탈로그(data.arenaMatch)에 없다 — 아레나 승점 규칙 없음"); return null; }
             try { return ArenaMatchData.Parse(ta.text); }
             catch (Exception e) { Debug.LogError("[KkomaKnight] arenaMatch.json 파싱 실패: " + e.Message); return null; }
+        }
+
+        /// <summary>
+        /// 아레나 <b>상대 스탯</b> 규칙(T240 3항) — <b>같은 파일</b>(<c>arenaMatch.json</c> 의 <c>foe</c> 칸)이라 텍스트를 한 번 더 읽어 푼다.
+        /// <para>못 읽으면 <c>null</c> 이고, 그러면 아레나 «도전» 이 <b>1대1 이 아니라 종전 챕터 전투</b>를 연다 — 아무 수나 지어내 판을 세우지 않는다.</para>
+        /// </summary>
+        static ArenaFoeData LoadArenaFoe(AssetCatalog catalog)
+        {
+            var ta = catalog != null ? catalog.Text("data.arenaMatch") : null;
+            if (ta == null) return null;   // 위 LoadArenaMatch 가 이미 같은 까닭으로 울었다 — 같은 줄을 두 번 찍지 않는다
+            try { return ArenaFoeData.Parse(ta.text); }
+            catch (Exception e) { Debug.LogError("[KkomaKnight] arenaMatch.json 의 foe 칸 파싱 실패: " + e.Message); return null; }
         }
 
         /// <summary>탐험 수치표 — 이 레포 전용 <c>Assets/KkomaKnight/expedition.json</c>(카탈로그 텍스트 «data.expedition» · T97). 못 읽으면 null(탐험 팝업이 «--» 로 뜬다).</summary>

@@ -152,7 +152,7 @@ namespace KkomaKnight.Game
         /// 판을 시작한다. <paramref name="run"/> 는 <b>던전 판 규칙</b>(T183 · 시작 특전 N · 시작 레벨 · 특전 등급 하한)이고
         /// <c>null</c> 이면 <b>지금까지와 똑같은 일반 챕터 전투</b>다(기본값 = 아무 데도 안 닿는다).
         /// </summary>
-        public void Start(int chapter, DungeonData.RunRule run = null, string dungeonKey = null, string arenaFoe = null)
+        public void Start(int chapter, DungeonData.RunRule run = null, string dungeonKey = null, string arenaFoe = null, int arenaFoeRank = 0)
         {
             _dunKey = dungeonKey;
             _arenaFoe = arenaFoe;   // T240 — 아레나 «도전» 으로 들어온 판이면 상대 이름(null = 아니다)   // T228 ⓓ — 이 판이 «어느 던전» 인가(null = 일반 챕터 전투)
@@ -160,6 +160,7 @@ namespace KkomaKnight.Game
             var rng = new Mulberry32((uint)Environment.TickCount ^ 0x9E3779B9u);
             var opt = new RunOptions { EmitEvents = true };
             if (run != null) { opt.StartPerks = run.StartPerks; opt.StartLevel = run.StartLevel; opt.MinPerkGrade = run.MinPerkGrade; }
+            opt.ArenaDuelFoe = DuelFoe(D, arenaFoe, arenaFoeRank);   // T240 3항 — 아레나 판이면 «웨이브 없는 1대1»(null 이면 종전 챕터 전투 그대로)
             _exitPage = _arenaFoe != null ? EventsScreen.PageArena       // T240 — 아레나 판은 아레나 화면(23)으로 되돌린다
                       : run != null ? EventsScreen.PageDungeon : null;   // T183 4단계 — 던전에서 들어온 판은 던전 화면으로 되돌린다(일반 전투는 그대로 로비)
             G = new BattleState(D, chapter, App.Save.CurBuild(D), rng, new InteractivePolicy(), opt);
@@ -172,6 +173,23 @@ namespace KkomaKnight.Game
             Audio.Bgm("bgm.battle");   // 새 판(클리어 뒤 다음 챕터 포함)은 전투 곡부터 — 보스 곡이었으면 되돌린다(T28)
             RefreshHud();
         }
+        /// <summary>
+        /// T240 3항 — 아레나 판의 <b>상대 하나</b>를 푼다: 순위 → 상대 전투력(<see cref="ArenaDummy.Power"/>) → 스탯(<see cref="ArenaFoe.Of(ArenaFoeData, double, double, double, double)"/>).
+        /// <para>
+        /// 아레나 판이 아니거나(<paramref name="arenaFoe"/> 가 <c>null</c>) 표·순위가 없으면 <c>null</c> 을 돌려준다 —
+        /// 그러면 <b>종전대로 챕터 전투</b>가 열린다. <b>못 읽었다고 아무 수나 지어내 판을 세우지 않는다</b>(§1).
+        /// </para>
+        /// <para>공격/체력 «몫» 은 <b>내 빌드의 실제 몫</b>이다 — 그래야 «전투력이 같으면 대등한 판» 이 된다(결정 715).</para>
+        /// </summary>
+        ArenaFoe.Stats? DuelFoe(GameData D, string arenaFoe, int rank)
+        {
+            if (arenaFoe == null || rank <= 0 || D == null || D.ArenaFoe == null || D.ArenaDummy == null) return null;
+            double foePower = ArenaDummy.Power(D.ArenaDummy, App.Power(), rank);
+            if (foePower <= 0) return null;
+            var pw = GearSystem.BuildPower(D, App.Save.CurBuild(D));
+            return ArenaFoe.Of(D.ArenaFoe, foePower, pw.Atk, pw.Hp, pw.Sh);
+        }
+
         protected override void OnHide() { _world?.Dispose(); _world = null; UiKit.Clear(_pops); _orbs?.Clear(); _flyGold = _flyExp = 0; }
 
         /// <summary>현재 배속(x1/x2) — 테스트·진단용 읽기.</summary>

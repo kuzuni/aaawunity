@@ -656,7 +656,8 @@ namespace KkomaKnight.Game
             if (!ArenaTickets.Spend(App.Save, m, Today())) { App.Toast("아레나 티켓이 없다"); return; }   // 규칙이 없는 세상에서는 늘 통과한다(ArenaTickets 주석)
             App.Overlay.Close();
             SaveStore.Save(App.Save);
-            App.StartBattle(App.Save.SelChapter, null, null, FoeName(rank));
+            // T240 3항 — 순위를 같이 넘긴다. 이름만으로는 상대가 얼마나 센지 알 길이 없어 1대1 판의 스탯을 못 푼다.
+            App.StartBattle(App.Save.SelChapter, null, null, FoeName(rank), rank);
         }
 
         /// <summary>

@@ -161,6 +161,41 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
+        /// <summary>
+        /// T240 3항 — 아레나 «도전» 이 여는 판이 실제로 <b>1대1</b> 인가(웨이브가 아니라).
+        /// <para>
+        /// 앞 회차까지 엔진·규칙은 다 서 있었지만 <b>아무도 그것을 안 불렀다</b> — 도전을 눌러도 종전 챕터 전투가 열렸다.
+        /// 이 자가 재는 것은 «순위 → 상대 전투력 → 스탯 → 판» 네 칸이 <b>한 줄로 이어졌는가</b> 하나다.
+        /// </para>
+        /// <para>⚠ 판을 끝까지 돌리지 않는다 — «열린 판의 모양» 만 본다(§1 «그 판에 그 일이 일어난다» 를 전제로 두지 않는다).</para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ArenaChallengeOpensAOneOnOneNotAChapterOfWaves()
+        {
+            yield return Boot();
+            EventsScreen.Open(_app, EventsScreen.PageArena); yield return Frames(2);
+            Assert.IsTrue(Click(_app.Current.Root, "ChallengeBtn")); yield return Frames(2);
+            Assert.IsTrue(Click(_app.Overlay.Root, "FoeBtn:0")); yield return Frames(2);
+
+            var bs = _app.GetScreen<BattleScreen>();
+            Assert.IsNotNull(bs); Assert.IsTrue(bs.IsArena, "먼저 «아레나 판» 인 것을 확인한다");
+            Assert.IsNotNull(bs.G);
+
+            // 표가 없으면 종전 챕터 전투가 열리는 것이 «맞는» 동작이라, 그 경우는 가를 것이 없다(§1 ⓑ).
+            if (_app.Data == null || _app.Data.ArenaFoe == null || _app.Data.ArenaDummy == null)
+                Assert.Ignore("아레나 상대 규칙표가 없다 — 그러면 1대1 이 아니라 종전 챕터 전투가 열리는 것이 맞는 동작이다");
+
+            Assert.AreEqual(1, bs.G.Nodes.Count, "1대1 이면 노드가 하나다 — 웨이브·이벤트·보스가 줄줄이 서 있으면 챕터 판이 열린 것이다");
+            Assert.AreEqual(1, bs.G.TotalEnemies, "적은 하나다");
+            var foe = bs.G.Nodes[0].Enemies[0];
+            Assert.Greater(foe.MaxHp, 0, "상대 체력이 규칙에서 나왔다");
+            Assert.Greater(foe.Dmg, 0, "상대 공격력이 규칙에서 나왔다");
+            Assert.IsFalse(foe.IsBoss, "보스가 아니다");
+
+            _log.AssertNoRed("아레나 도전 → 1대1");
+            yield return Shutdown();
+        }
+
         [UnityTest]
         public IEnumerator LoseAtTheFloorWritesWhatItTookNotWhatTheTableSays()
         {

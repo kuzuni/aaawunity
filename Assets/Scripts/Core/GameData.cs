@@ -44,6 +44,11 @@ namespace KkomaKnight.Core
         public QuestData Quest;
         /// <summary>아레나 한 판의 규칙표(승점·티어) — 이 레포의 <c>Assets/KkomaKnight/arenaMatch.json</c>(카탈로그 텍스트 «data.arenaMatch» · T240). 로드는 Bootstrap 이 따로 한다 · 없으면 null(승점이 안 움직인다).</summary>
         public ArenaMatchData ArenaMatch;
+        /// <summary>
+        /// 아레나 <b>상대 스탯</b> 규칙(전투력 → 체력·공격) — <b>같은 파일</b>(<c>arenaMatch.json</c> 의 <c>foe</c> 칸 · T240 3항)에서 읽는다.
+        /// 없으면 <c>null</c>(1대1 판이 안 열리고 종전대로 챕터 전투가 열린다 — 아무 수나 지어내지 않는다).
+        /// </summary>
+        public ArenaFoeData ArenaFoe;
         /// <summary>업적(반복 퀘스트) 표 — 이 레포의 <c>Assets/KkomaKnight/achievement.json</c>(카탈로그 텍스트 «data.achievement» · T258). 로드는 Bootstrap 이 따로 한다 · 없으면 null(업적 탭이 비어 뜨고 받기가 없다).</summary>
         public AchievementData Achievement;
 
