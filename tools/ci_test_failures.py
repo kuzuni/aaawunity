@@ -292,6 +292,13 @@ if __name__ == "__main__":
     if "--self-test" in args:
         sys.exit(self_test())
     target = args[0] if args else "unity-test-results"
-    report_roster(target)                           # T278 «무엇이 돌았나» — 반드시 아래 실패 보고보다 **먼저**다
+    # T278 «무엇이 돌았나» — 반드시 아래 실패 보고보다 **먼저**다.
+    # ⚑ 감싸 두는 까닭: 이 단계는 **모든 런의 마지막**에서 `if: always()` 로 돈다. 여기서 예외가 나면
+    #   그 자체로 단계가 빨개져 **초록 런까지 빨갛게 만든다** — 명부는 «있으면 좋은 것» 이지 판정이 아니다.
+    #   그리고 이 자의 본업(실패 목록)은 명부가 죽어도 그대로 나가야 한다.
+    try:
+        report_roster(target)
+    except Exception as e:                          # noqa: BLE001 — 무엇이 터지든 런을 빨갛게 하지 않는다
+        print(f"{ROSTER_TAG} 명부를 못 만들었다(런 판정과 무관하다): {type(e).__name__} {str(e)[:200]}")
     report(target)                                  # T239 «무엇이 깨졌나» — 마지막 줄이 «[CI실패] 요약» 이다
     sys.exit(0)                                     # 이 자는 **알리기만** 한다 — 잡을 빨갛게 하는 것은 테스트 러너 몫이다
