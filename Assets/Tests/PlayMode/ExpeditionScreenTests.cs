@@ -191,7 +191,9 @@ namespace KkomaKnight.Tests.Play
             // T270 ⓐ — 주인 재정정(«2시간마다 3개 전부 리필»)이 글자에도 와야 한다. 옛 글자는 «1회 충전» 이었다.
             StringAssert.Contains(UiKit.FmtQty(D.QuickMax) + "회 전부 충전", ruleTxt, "«N회 전부 충전» — 한 칸씩이 아니다");
             StringAssert.DoesNotContain("1회 충전", ruleTxt, "옛 글자(«1회 충전»)가 남아 있으면 안 된다");
-            StringAssert.Contains("최대 " + D.QuickMax + "회", ruleTxt, "최대 보유가 표 값으로 적혀 있다");
+            // ⚑ 옛 줄에는 «최대 N회» 칸이 따로 있었다(T265) — T270 ⓐ 뒤로 그 수는 **위 줄이 이미 말한다**
+            //   («N회 전부 충전» 의 N 이 곧 상한이고 같은 `D.QuickMax` 에서 온다). 두 번 적으면 같은 말이 두 번이라
+            //   지웠고, 그래서 «최대 …» 를 찾던 단언도 위 192 줄로 합쳤다 — **수를 재는 자리는 그대로 하나 남는다**.
             StringAssert.Contains("충전 완료", ruleTxt, "가득 차 있으면 «충전 완료»");
             AssertNoPopupRibbon(ov, "빠른 탐험 팝업(31)");   // T146 ⓐ — 31 도 레퍼런스에 리본이 없다(명판이 제목)
             Assert.IsNull(EnglishLeftOver(ov), "영문 데모 글자 0 (T44)");
