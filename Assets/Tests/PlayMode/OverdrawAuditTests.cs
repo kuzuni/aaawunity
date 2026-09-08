@@ -87,6 +87,16 @@ namespace KkomaKnight.Tests.Play
             /// 이어져 온 계열이라(로비 4.943 → 4.948 → 4.948) 정의를 바꾸면 지난 실측과 못 잇는다.
             /// </summary>
             public float Paint;
+            /// <summary>
+            /// <b>고침 셋이 각각 얼마를 움직였나</b>(회차 5 · 결정 628) — <c>Overdraw + DAlpha + DMask + DRing = Paint</c>.
+            /// <para>
+            /// 왜 나눠서 내나 — 회차 4 는 셋의 합만 냈고, 셈으로 예고한 값(상점 6.7~7.4)이 실측(<b>7.806</b>)과 어긋났는데
+            /// <b>어느 몫이 틀렸는지 가릴 수가 없었다</b>. 합계만 있는 자는 «움직였다» 는 알려 줘도 «왜» 는 못 알려 준다.
+            /// </para>
+            /// <see cref="DAlpha"/> 는 «판정선을 내려 새로 센 것»(≥0 · 대부분 배경 무늬 한 장),
+            /// <see cref="DMask"/> 는 «마스크 밖이라 잘린 것»(≤0), <see cref="DRing"/> 은 «링의 가운데»(≤0).
+            /// </summary>
+            public float DAlpha, DMask, DRing;
         }
         readonly List<Row> _rows = new List<Row>();
 
@@ -143,7 +153,7 @@ namespace KkomaKnight.Tests.Play
             var frame = _app.Frame;
             Canvas.ForceUpdateCanvases();
             var fr = frame.rect; float frameArea = Mathf.Max(1f, fr.width * fr.height);
-            float sum = 0f, paint = 0f; int full = 0, n = 0; var names = new List<string>();
+            float sum = 0f, paint = 0f, rawPaint = 0f, maskPaint = 0f; int full = 0, n = 0; var names = new List<string>();
             var all = new List<KeyValuePair<string, float>>();
 
             foreach (var g in _app.UiCanvas.GetComponentsInChildren<Graphic>(false))
@@ -161,13 +171,18 @@ namespace KkomaKnight.Tests.Play
                 float share = (w * h) / frameArea;
 
                 // ── 고친 자: 마스크 교집합 + 링은 테 띠만 ──
+                // 세 몫을 «따로» 쌓는다 — 합계만 내면 «값이 왜 움직였는가» 를 못 가른다.
+                // 회차 4 가 셈으로 예고한 수(상점 6.7~7.4)와 실측(7.806)이 어긋난 뒤 붙인 칸이다(회차 5 · 결정 628).
+                rawPaint += share;
                 float mx0 = x0, my0 = y0, mx1 = x1, my1 = y1;
                 ClipByMasks(frame, g.transform.parent, ref mx0, ref my0, ref mx1, ref my1);
                 float mw = mx1 - mx0, mh = my1 - my0;
                 if (mw > 0f && mh > 0f)
                 {
+                    float masked = (mw * mh) / frameArea;
+                    maskPaint += masked;
                     var lr = g.rectTransform.rect;
-                    paint += (mw * mh) / frameArea * RingFactor(g, lr.width, lr.height);
+                    paint += masked * RingFactor(g, lr.width, lr.height);
                 }
 
                 // ── 옛 계열: 정의를 한 글자도 안 바꾼다(지난 세 런과 이어서 읽힌다) ──
@@ -180,7 +195,8 @@ namespace KkomaKnight.Tests.Play
                 all.Add(new KeyValuePair<string, float>((par != null ? par.name + "/" : "") + g.name, share));
             }
             all.Sort((x, y) => y.Value.CompareTo(x.Value));
-            var row = new Row { Screen = screen, FullLayers = full, Overdraw = sum, Paint = paint, Graphics = n, FullNames = string.Join(" · ", names) };
+            var row = new Row { Screen = screen, FullLayers = full, Overdraw = sum, Paint = paint, Graphics = n, FullNames = string.Join(" · ", names),
+                                DAlpha = rawPaint - sum, DMask = maskPaint - rawPaint, DRing = paint - maskPaint };
             for (int i = 0; i < all.Count && i < TopCount; i++) row.Top.Add(all[i]);
             _rows.Add(row);
             return row;
@@ -209,6 +225,10 @@ namespace KkomaKnight.Tests.Play
                   .Append(",\"overdraw\":").Append(r.Overdraw.ToString("0.000"))
                   // T223 회차 4 — «자가 세지만 GPU 는 안 칠하는» 셋을 뺀 값(링 · 마스크 · 무늬 알파). 옛 칸은 그대로 둔다.
                   .Append(",\"paint\":").Append(r.Paint.ToString("0.000"))
+                  // T223 회차 5 — 고침 셋이 각각 얼마를 움직였나(overdraw + dAlpha + dMask + dRing = paint)
+                  .Append(",\"dAlpha\":").Append(r.DAlpha.ToString("0.000"))
+                  .Append(",\"dMask\":").Append(r.DMask.ToString("0.000"))
+                  .Append(",\"dRing\":").Append(r.DRing.ToString("0.000"))
                   .Append(",\"graphics\":").Append(r.Graphics)
                   .Append(",\"names\":\"").Append(r.FullNames.Replace("\"", "'")).Append('"');
                 // T223 1항 — «어디가 겹치는가» 는 합계가 아니라 이 칸이 답한다
@@ -249,15 +269,15 @@ namespace KkomaKnight.Tests.Play
 
             var sb = new StringBuilder();
             sb.AppendLine($"[OverdrawGate] 화면 {_rows.Count}개(보고만 · T217 회차 1 · 프레임 {_app.Frame.rect.width:0}×{_app.Frame.rect.height:0})");
-            sb.AppendLine("| 화면 | 전면 겹 | 오버드로(옛 계열) | **칠하는 넓이(고친 자)** | 차 | 조각 수 | 전면 겹 이름 | 가장 넓은 조각 다섯 |");
-            sb.AppendLine("|---|---|---|---|---|---|---|---|");
+            sb.AppendLine("| 화면 | 전면 겹 | 오버드로(옛 계열) | **칠하는 넓이(고친 자)** | 차 | 무늬(+) | 마스크(−) | 링(−) | 조각 수 | 전면 겹 이름 | 가장 넓은 조각 다섯 |");
+            sb.AppendLine("|---|---|---|---|---|---|---|---|---|---|---|");
             foreach (var r in _rows)
             {
                 var top = new StringBuilder();
                 for (int k = 0; k < r.Top.Count; k++) { if (k > 0) top.Append(" · "); top.Append(r.Top[k].Key).Append(' ').Append(r.Top[k].Value.ToString("0.00")); }
-                sb.AppendLine($"| {r.Screen} | {r.FullLayers} | {r.Overdraw:0.00} | **{r.Paint:0.00}** | {r.Paint - r.Overdraw:+0.00;-0.00;0.00} | {r.Graphics} | {r.FullNames} | {top} |");
+                sb.AppendLine($"| {r.Screen} | {r.FullLayers} | {r.Overdraw:0.00} | **{r.Paint:0.00}** | {r.Paint - r.Overdraw:+0.00;-0.00;0.00} | {r.DAlpha:+0.00;-0.00;0.00} | {r.DMask:+0.00;-0.00;0.00} | {r.DRing:+0.00;-0.00;0.00} | {r.Graphics} | {r.FullNames} | {top} |");
             }
-            sb.AppendLine("· 「칠하는 넓이」 = 링(fillCenter=false)은 테 띠만 · RectMask2D 교집합 · 무늬를 전 화면에서 같이 센다(T223 회차 4 · 결정 617)");
+            sb.AppendLine("· 「칠하는 넓이」 = 오버드로 + 무늬(+) + 마스크(−) + 링(−) — 셋이 각각 얼마를 움직였는지 같이 찍는다(T223 회차 4·5 · 결정 617·630)");
             Debug.Log(sb.ToString());
 
             // 판정(이 회차) — 달아나는 것만 잡는다. 로비가 넷(Background·Pattern·GradientTop·GradientBottom · T129 실측)이라
