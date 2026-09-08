@@ -7,10 +7,15 @@ EditMode → PlayMode 순으로 도는데 마지막에 남는 줄은 **뒤엣것
 EditMode 에서 죽으면 **꼬리 어디에도 «Failed» 가 없다**(2026-09-08 CI #503 에서 669KB 를 당겨도 0건이었다).
 그래서 이 자를 잡 끝에서 돌려 **실패 목록을 로그의 마지막 몇 줄로** 만든다.
 
-찍는 것 — 실패가 있으면 «[CI실패] N건» + 케이스마다 `풀네임 · message 첫 줄 · 파일:줄`,
-없으면 «[CI실패] 0건 — 이 런의 빨강은 테스트가 아니다» 한 줄(그 한 줄이 다음 사람의 30분을 아낀다).
-그리고 **맨 마지막 한 줄**이 «[CI실패] 요약 N건 — 이름 셋 외 M» 이다 — 목록은 길어질수록 스스로
-꼬리 밖으로 밀려나는데(한 건 세 줄), 이 줄만은 N 과 무관하게 끝에서 22줄 안쪽에 남는다(결정 670).
+찍는 것 — 실패가 있으면 «[CI실패] N건» + 케이스마다 `풀네임 · message 첫 줄 · 파일:줄`.
+그리고 **어느 갈래로 나가든 마지막 줄은 «[CI실패] 요약 …»** 이다(결정 678):
+    실패 있음   [CI실패] 요약 N건 — 이름 셋 외 M
+    실패 0건    [CI실패] 요약 0건 — … 이 런의 빨강은 테스트가 아니다
+    XML 없음    [CI실패] 요약 — 결과 XML 을 못 찾았다: …
+목록은 길어질수록 스스로 꼬리 밖으로 밀려나지만(한 건 세 줄) 이 줄만은 **건수와 무관하게** 뒤처리 바로 앞이다.
+
+⚑ 워커가 읽는 법 — **꼬리 50줄**을 당겨 이 «요약» 줄부터 본다. 목록 본문까지 보려면 `뒤처리 + 1 + 3N` 넘게 넓힌다.
+   («30줄» 이면 모자란다 — 뒤처리 줄 수가 런마다 다르다: 캐시 적중 21줄(#512) · **캐시 저장 31줄**(#521).)
 
 ⚑ `ci.yml` 에서 이 단계는 **유니티 잡의 마지막 단계**여야 한다 — 뒤에 오는 `screens` 배포가
    파일 42개를 한 줄씩 찍어 120줄 넘게 밀어낸다(CI #512 실측 · 결정 667).
@@ -84,13 +89,17 @@ def failures(path):
 
 def report(path, echo=print):
     got, broken, files = failures(path)
+    # ⚑ 어느 갈래로 나가든 **마지막 줄은 «[CI실패] 요약» 으로 시작한다**(결정 678).
+    #   갈래마다 꼴이 다르면 «꼬리에서 이것만 찾으면 된다» 가 성립하지 않는다 —
+    #   실제로 회차 3 은 실패가 있을 때만 요약을 찍어서, 첫 검증 런(초록 · #521)에 요약이 아예 없었다.
     if not files:
-        echo(f"{TAG} 결과 XML 을 못 찾았다: {path}(테스트가 시작조차 못 했을 수 있다 — 러너·라이선스 쪽을 보라)")
+        echo(f"{TAG} 요약 — 결과 XML 을 못 찾았다: {path}"
+             "(테스트가 시작조차 못 했을 수 있다 — 러너·라이선스 쪽을 보라)")
         return 0
     for f, e in broken:
         echo(f"{TAG} ⚠ XML 을 못 읽었다: {f} — {e}")
     if not got:
-        echo(f"{TAG} 0건 — XML {len(files)}개에 실패한 케이스가 없다. "
+        echo(f"{TAG} 요약 0건 — XML {len(files)}개에 실패한 케이스가 없다. "
              "이 런의 빨강은 **테스트가 아니다**(러너·빌드·라이선스 쪽을 보라).")
         return 0
     echo(f"{TAG} {len(got)}건 — XML {len(files)}개에서 모았다(아티팩트는 프록시에 막히므로 이 목록이 워커가 읽는 유일한 자리다).")
@@ -103,9 +112,9 @@ def report(path, echo=print):
     if len(got) > MAX_CASES:
         echo(f"{TAG}  … 그 밖 {len(got) - MAX_CASES}건(앞 {MAX_CASES}건만 찍는다)")
     # ⚑ 이 «요약» 한 줄은 **늘 맨 마지막**이어야 한다 — 목록 자신이 꼬리를 밀어내기 때문이다.
-    #   한 건이 최대 세 줄이라 N 건이면 머리글은 끝에서 (잡 뒤처리 ≈21줄 · CI #512 실측) + 1 + 3N 줄 뒤로 간다
+    #   한 건이 최대 세 줄이라 N 건이면 머리글은 끝에서 (잡 뒤처리) + 1 + 3N 줄 뒤로 간다.
     #   → N=7 이면 벌써 50줄 밖이다. 그런데 크게 깨진 런일수록 이 목록이 절실하다.
-    #   이 한 줄은 N 과 무관하게 **끝에서 22줄 안쪽**이라 «작은 꼬리로도 몇 건인지·무엇인지» 는 늘 읽힌다.
+    #   이 한 줄은 **N 과 무관하게** 뒤처리 바로 앞이라 «작은 꼬리로도 몇 건인지·무엇인지» 는 늘 읽힌다.
     head = " · ".join(_short(n) for n, _msg, _where in got[:SUM_NAMES])
     if len(got) > SUM_NAMES:
         head += f" 외 {len(got) - SUM_NAMES}"
@@ -114,9 +123,11 @@ def report(path, echo=print):
 
 
 def self_test():
-    """네 경우로 깨뜨려 본다 — 실패 있음 · 실패 없음 · XML 없음 · 많이 깨진 런(요약 줄이 끝에 있나)."""
+    """네 경우로 깨뜨려 본다 — 실패 있음 · 실패 없음 · XML 없음 · 많이 깨진 런.
+    그리고 **네 갈래 모두** 마지막 줄이 «[CI실패] 요약» 인가를 함께 묻는다(결정 678 의 계약)."""
     import tempfile
     ok = True
+    lasts = {}
     with tempfile.TemporaryDirectory() as d:
         with open(os.path.join(d, "editmode-results.xml"), "w", encoding="utf-8") as f:
             f.write('<test-run><test-suite><test-case name="A" fullname="N.A" result="Passed" />'
@@ -129,6 +140,7 @@ def self_test():
         ok &= (n == 1) and any("N.B" in x for x in lines) and any("But was: 2" in x for x in lines)
         ok &= any("Assets/Tests/PlayMode/Foo.cs:129" in x for x in lines)
         ok &= lines[-1].startswith(f"{TAG} 요약 1건")      # 요약은 **맨 마지막 줄**이다
+        lasts["ⓐ"] = lines[-1]
         print("ⓐ 실패 있음 —", "OK" if n == 1 else "실패")
     with tempfile.TemporaryDirectory() as d:
         with open(os.path.join(d, "r.xml"), "w", encoding="utf-8") as f:
@@ -136,11 +148,13 @@ def self_test():
         lines = []
         n = report(d, lines.append)
         ok &= (n == 0) and any("테스트가 아니다" in x for x in lines)
+        lasts["ⓑ"] = lines[-1]
         print("ⓑ 실패 0건 —", "OK" if n == 0 and lines else "실패")
     with tempfile.TemporaryDirectory() as d:
         lines = []
         report(d, lines.append)
         ok &= any("못 찾았다" in x for x in lines)
+        lasts["ⓒ"] = lines[-1]
         print("ⓒ XML 없음 —", "OK" if lines else "실패")
     with tempfile.TemporaryDirectory() as d:            # ⓓ 많이 깨진 런 — 목록이 길어져도 요약은 끝에서 한 줄
         cases = "".join(f'<test-case fullname="N.C{i}.M{i}" result="Failed">'
@@ -153,7 +167,12 @@ def self_test():
         last = lines[-1]
         ok &= (n == 12) and last.startswith(f"{TAG} 요약 12건") and "외 9" in last
         ok &= "C0.M0" in last                            # 첫 자리는 요약만 봐도 안다
+        lasts["ⓓ"] = last
         print("ⓓ 많이 깨짐 —", "OK" if n == 12 and "외 9" in last else "실패")
+    # ⓔ 계약 — 갈래가 넷이어도 **꼬리에서 찾을 것은 하나**다(«[CI실패] 요약»).
+    bad = [k for k, v in lasts.items() if not v.startswith(f"{TAG} 요약")]
+    ok &= (len(lasts) == 4) and not bad
+    print("ⓔ 마지막 줄 = «요약» (네 갈래) —", "OK" if not bad and len(lasts) == 4 else f"실패 {bad}")
     print("✓ ci_test_failures 자기 검사 통과" if ok else "✗ 자기 검사 실패")
     return 0 if ok else 1
 
