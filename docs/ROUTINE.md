@@ -2570,7 +2570,11 @@ Caught fatal signal - signo:6 (SIGABRT) · Unexpected exit code 134
 5. 테스트: Core EditMode — ⓐ 첫 목표 달성 → 받기 → 다음 단계 목표가 «첫 목표 × 2» 로 바뀌고 달성률이 «누적/새 목표» ⓑ **누적 20 · 받은 적 없음 → 받기를 네 번** 눌러야 다 받는다(한 번에 하나) ⓒ 받은 뒤 누적은 줄지 않는다 ⓓ 출석은 같은 날 두 번 세지 않는다 ⓔ 17줄의 첫 목표·보상이 표와 정확히 일치. PlayMode — 업적 탭 줄·받기·빨간 점 · 글자 잘림 0.
 6. 게이트 + PROGRESS T258 행 + 완료 기록(확인 = CI + `screens` 15 + 주인 폰).
 
-> **▸ 1회차 끝(2026-09-08 20:2X · sess-0303-27371 · 워커 I · 결정 730) — 표 + Core + 자. 4항(화면)만 남았다.**
+> **▸ 1회차 끝 · lock 반납(2026-09-08 20:2X 작업 · 22:0X 반납 · sess-0303-27371 · 워커 I · 결정 730) — 표 + Core + 자.**
+> ⚑ **잡아도 되는 자리다. 다만 «처음부터» 가 아니다** — 표·Core·자는 서 있고 `AchievementTests` 8건이 **run 580 에서 초록으로 확인**됐다(1회차를 다시 하지 마라).
+>   **남은 것 셋**: ⑴ 4항 화면(15 의 «업적» 탭) ⑵ **훅 걸기**(`Add` 를 부르는 자리 — 지금은 아무도 안 불러 **누적이 안 오른다**) ⑶ 그 둘의 PlayMode 자.
+>   ⑴⑵ 는 **T257 이 풀려야** 시작된다(`LobbyPopups.cs` · 게임 곳곳). 그 절이 2단계에서 **`Game/Quests.Bump` 라는 훅 입구 하나**를 세웠으니(결정 736) 업적도 그 문법을 그대로 쓴다 — **새 꼴 0**.
+>   lock 을 붙잡고 안 기다린 까닭: 워커 I 슬롯이 매시 :02/:17/:32/:47 뿐이라 쥐고 있으면 T257 이 :10 에 풀려도 다음 사람이 :17 을 기다린다.
 > · **표** `Assets/KkomaKnight/achievement.json`(신규 · 카탈로그 `data.achievement` · `GameData.Achievement`) — 17줄이 **주인 글자·수 그대로**다(전부 다이아 · 지어낸 수 0).
 >   counter 는 `quest.json` 과 **같은 낱말을 일부러 같이 쓴다**(kill · gearFuse …) — 세는 자리가 같아야 두 절이 안 어긋난다. 상자는 등급마다 칸을 갈랐다.
 > · **규칙** `Core/Achievement` — `Goal`/`Shown`/`CanClaim`/`Pending`/`Claim`/`Add`/`AddOncePerDay`/`AnyClaimable`.
