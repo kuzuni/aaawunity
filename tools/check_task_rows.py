@@ -167,6 +167,25 @@ def main():
             if RELEASED.search(status) or RELEASED.search(desc_of.get((tid, n), "")):
                 released.append((tid, n, status))
 
+    # ⓖ 부모 행은 «🔄 진행» 인데 하위 행(«T63-lobby» 처럼 «부모-꼬리»)이 **전부 닫혀 있다** (T220 · 알리기만).
+    #    T63 이 그랬다 — 하위 열셋이 다 ✅ 이고 부모가 «2단계의 마지막» 으로 적어 둔 `TextAudit.ClipStrict` 도 이미 true 인데
+    #    부모 머리만 🔄 로 남아 표에서 «남이 하는 중» 으로 보였다. 워커 A 가 T96 을 같은 꼴로 손수 닫은 전례가 있다.
+    #    ⚠ **실패로 세지 않는다** — 하위가 다 끝나도 부모에게 제 몫이 남아 있을 수 있다(«마지막에 strict 를 켠다» 같은 것).
+    #    그것은 사람이 그 줄을 읽어야 알고, 자가 단정하면 멀쩡한 부모를 닫게 만든다(결정 493 의 기준: 조율 결함은 막지 않고 알린다).
+    parent_done = []
+    for tid, items in by_id.items():
+        kids = [(k, v) for k, v in by_id.items() if k.startswith(tid + "-")]
+        if not kids:
+            continue
+        def shut(st):
+            h = st.lstrip("*_ ")
+            return h.startswith("✅") or h.startswith("⛔") or any(f in st for f in FOLDED)
+        if not all(shut(st) for _, vs in kids for _, st in vs):
+            continue
+        for n, status in items:
+            if status.lstrip("*_ ").startswith("🔄"):
+                parent_done.append((tid, n, len(kids)))
+
     dups = {k: v for k, v in by_id.items() if len(v) > 1}
     bad = []
     for tid, items in dups.items():
@@ -203,6 +222,13 @@ def main():
         print("고치는 법: 갈래 ⓓ 와 같다 — 상태 칸 **머리**를 ✅(또는 아직 남은 일이 있으면 그 상태)로 바꾸고 옛 머리는 «(이력)» 뒤에 남긴다.")
         print("            **정말로 하는 중인데 lock 이 없으면 그것이 문제다** — 반납한 채로 일하면 남이 같은 자리를 잡는다(§3). lock 을 다시 잡아라.")
         return 1
+
+    # ⓖ 는 «알리기만» 이라 여기서 끝내지 않는다(위 갈래들이 다 통과했을 때만 이 줄이 보인다).
+    if parent_done:
+        print("· (참고 · 실패 아님) 부모 행이 «🔄» 인데 하위 행이 전부 닫혀 있다(T220) — 표를 훑는 워커에게 «하는 중» 으로 보인다:")
+        for tid, n, k in sorted(parent_done, key=lambda x: x[1]):
+            print("    " + tid + " — " + str(n) + "행 · 하위 " + str(k) + "개가 전부 ✅/⛔")
+        print("    부모에게 제 몫이 남았으면 그대로 두고, 남은 것이 없으면 머리를 ✅ 로 올린다(본문은 안 지운다).")
 
     if bad:
         print("같은 작업이 두 줄에 있고 상태가 어긋난다 — «대기» 줄만 본 워커가 끝난 일을 다시 잡는다:")
