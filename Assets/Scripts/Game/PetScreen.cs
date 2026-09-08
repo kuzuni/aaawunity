@@ -66,8 +66,10 @@ namespace KkomaKnight.Game
                 var hl = piece.GetComponent<HorizontalLayoutGroup>(); if (hl != null) hl.enabled = false;
                 UiKit.Stretch(prt);
                 var t = piece.GetComponentInChildren<TMP_Text>(true);
-                // T194 — 끝의 `EnsureOutline` 은 «크기를 바꿨으면 아웃라인도 다시 잰다» 는 뜻이다. 조각 글자는 `ConvertTmp` 가 붙일 때 크기 40(Body 하한)으로 테를 재는데
-                // 여기서 bestFit 최대만 44 로 올리면 `TextAudit` 은 44 로 재므로 둘이 어긋난다(자의 허용 오차는 0.26px 인데, 비율이 0.05 일 때 그 차는 0.2 라 숨어 있었고 0.08 에서는 0.32 로 드러난다).
+                // T194 에서 이 줄 끝에 `EnsureOutline` 을 더했던 까닭은 «크기를 바꿨으면 두께도 다시 잰다» 였다
+                // (그때는 테가 «크기 × 비율 = px» 라 bestFit 최대만 44 로 올리면 자가 재는 크기와 어긋났다).
+                // T221 — 그 까닭은 T207 ② 로 사라졌다: 테가 SDF 머티리얼이라 두께가 크기에 저절로 비례한다.
+                // 그래도 이 호출은 남긴다 — 조각 글자에 주인 글꼴·검정 테를 입히는 입구가 바로 이 함수다.
                 if (t != null) { t.text = "장착중"; UiKit.Pct(t.rectTransform, 8, 0, 84, 100); t.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); t.enableAutoSizing = true; t.fontSizeMin = TextSize.BestFitMin; t.fontSizeMax = 44; t.textWrappingMode = TextWrappingModes.NoWrap; UiKit.EnsureOutline(t); }
             }
             var slotsHost = UiKit.Rect(Root, "Slots"); UiKit.Stretch(slotsHost);

@@ -37,22 +37,11 @@ namespace KkomaKnight.Game
             return rr;
         }
 
-        /// <summary>
-        /// T186 ⓒ 회차 2 — <b>되돌렸다</b>. «리본 글자만 아웃라인을 두 배로»(회차 1 · 0.10)는 <b>두 가지가 걸린다</b>:
-        /// <para>
-        /// ⓘ <b>효과가 거의 없었다</b> — `screens` run 360 실측(리본 rect 150,296,240,30): 검은 픽셀 0.000 → <b>0.006</b>,
-        /// 가장 어두운 값 0.23. 레퍼런스 같은 자리는 «검 0.282 / 흰 0.195 = 검/흰 <b>1.44</b>» 다. 두께를 두 배로 해도
-        /// 540폭 캡처에서는 1~2px 테로만 남는다(레퍼런스는 4~5px 짜리 굵은 테 + 더 굵은 획의 글꼴이다).
-        /// ⓙ <b>레포의 strict 규칙과 부딪친다</b> — <see cref="TextAudit.OutlineStrict"/> 가 <c>true</c> 이고
-        /// <see cref="TextAudit"/> 는 «두께 = <see cref="UiKit.OutlineWidth"/>(쓰이는 크기)» 에서 0.26px 만 벗어나도 «어긋남» 으로 센다.
-        /// 즉 이 한 자리만 두껍게 하면 <c>TextSizeGateTests</c> 가 빨개진다 — 얻는 것(0.006)보다 잃는 것이 크다.
-        /// </para>
-        /// <b>남은 길은 규칙 자체</b>(<see cref="UiKit.OutlineRatio"/> · <see cref="UiKit.OutlineMaxPx"/>)를 올리는 것이었고,
-        /// <b>그 길로 갔다 — T194</b>(2026-09-07 14:4X · 워커 G · 결정 496): 0.05·최대 4px → <b>0.08·최대 8px</b>(제목 60 에서 3px → 4.8px).
-        /// 그러니 이 자리는 이제 «공통 규격 그대로» 로 두는 것이 곧 레퍼런스 굵기다 — 여기만 따로 올릴 까닭이 없다.
-        /// <para>※ 이 자리를 <c>png_contrast.py</c> 의 «바탕 ↔ 글자 휘도 차» 로 재지 않는 것은 그대로다 — <b>레퍼런스도 0.11</b> 이다.</para>
-        /// </summary>
-        public const float RibbonOutlineRatio = UiKit.OutlineRatio;
+        // T221 — 여기 있던 `RibbonOutlineRatio`(= UiKit.OutlineRatio 별칭)를 걷었다.
+        //  T186 ⓒ 는 «이 리본만 테를 두껍게» 를 시도했다가 되돌린 자리이고(효과 0.006 · 결정 483),
+        //  T194 가 그 뒤 공통 규칙을 올렸다. 그런데 T207 ② 가 테를 SDF 머티리얼로 옮기면서
+        //  그 규칙 자체가 아무것도 안 그리게 됐다 — 두께는 이제 TmpFont.OutlineWidth 하나뿐이다(T221 · 결정 595).
+        //  이 리본이 «공통 규격 그대로» 라는 결론은 그대로 살아 있다(DailyGiftLookTests 가 그것을 잰다).
 
         /// <summary>리본 조각(Title_01)의 글자 rect 는 3.9% 리본에서 56px 인데 제목 60 의 한 줄 선호 높이가 58px 라 위아래 1px 씩 넘쳤다(CI #106 게이트 «출석 보상»·«데일리 기프트» 잘림) → 글자 rect 만 세로로 늘린다(리본 크기·자리 불변 · 글자는 가운데 정렬 그대로).</summary>
         public static void RibbonTextFit(TMP_Text t)
