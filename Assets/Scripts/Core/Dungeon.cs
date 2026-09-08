@@ -170,12 +170,18 @@ namespace KkomaKnight.Core
             return Get(s.DunAdUsed, key) < d.AdPerDay;
         }
 
-        /// <summary>광고 1회 → 티켓 +1(하루 <see cref="DungeonData.AdPerDay"/> 번 · 받았으면 true). 저장은 호출부(게임 층)가 한다.</summary>
+        /// <summary>
+        /// 광고 한 번에 얻는 티켓 수. <b>화면과 이 함수가 같은 값을 본다</b> —
+        /// T236 이 버튼을 «[광고 아이콘] 1» 로 바꾸면서 그 «1» 을 글자로 박지 않으려고 뺀 상수다(§1 «리터럴 대신 계산·상수»).
+        /// 하루 몇 번인지는 표(<see cref="DungeonData.AdPerDay"/>)가 정하고, <b>한 번에 몇 장인지는 규칙</b>이라 여기 있다.
+        /// </summary>
+        public const int AdGain = 1;
+        /// <summary>광고 1회 → 티켓 +<see cref="AdGain"/>(하루 <see cref="DungeonData.AdPerDay"/> 번 · 받았으면 true). 저장은 호출부(게임 층)가 한다.</summary>
         public static bool ClaimAd(SaveData s, DungeonData d, string key, string today)
         {
             if (!CanAd(s, d, key, today)) return false;
             s.DunAdUsed[key] = Get(s.DunAdUsed, key) + 1;
-            s.DunTickets[key] = Get(s.DunTickets, key) + 1;
+            s.DunTickets[key] = Get(s.DunTickets, key) + AdGain;
             return true;
         }
 

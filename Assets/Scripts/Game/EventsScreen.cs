@@ -487,9 +487,13 @@ namespace KkomaKnight.Game
                 // T99 3항 — 티켓이 0 이면 두 버튼이 «티켓 얻기» 로 바뀐다(왼쪽 = 광고 · 오른쪽 = 다이아). 하루치를 다 썼거나 다이아가 모자라면
                 // 꺼져 보이게(알파 0.5) 두되 클릭은 살려 이유를 토스트로 알린다(주인 «비활성(이유 토스트)» · 워커 결정 기록).
                 string dungeonKey = key;
-                sweep = UiKit.Button(box, "ui.btnBlue", "광고 보고 티켓 1개", () => AdTicket(dungeonKey), leftRect); sweep.name = "SweepBtn";
+                // T236(주인 09:2X) — 글자로 길게 쓰던 두 문구를 «아이콘 + 숫자» 로 바꾼다: 왼쪽 [광고] 1 · 오른쪽 [다이아] 50.
+                // 숫자는 둘 다 **표에서** 온다 — 광고는 «한 번에 얻는 티켓 수»(1), 다이아는 `dungeon.json` 의 `gemCost`.
+                sweep = UiKit.Button(box, "ui.btnBlue", "", () => AdTicket(dungeonKey), leftRect); sweep.name = "SweepBtn";
+                TicketCost(sweep, "ui.ad", UiKit.FmtQty(DungeonTickets.AdGain), main: true);
                 Dim(sweep, DungeonTickets.CanAd(App.Save, Dun, key, Today()));
-                chal = UiKit.Button(box, "ui.btnOrange", "다이아 " + UiKit.FmtQty(Dun.GemCost) + " 으로 티켓 사기", () => BuyTicket(dungeonKey), rightRect); chal.name = "ChallengeBtn";
+                chal = UiKit.Button(box, "ui.btnOrange", "", () => BuyTicket(dungeonKey), rightRect); chal.name = "ChallengeBtn";
+                TicketCost(chal, "hud.gem", UiKit.FmtQty(Dun.GemCost), main: true);
                 Dim(chal, DungeonTickets.CanBuyGem(App.Save, Dun, key, Today()));
             }
             UiKit.TagGroup(box, "버튼 2개", sweep, chal);
@@ -880,14 +884,35 @@ namespace KkomaKnight.Game
             var trt = t.rectTransform; trt.anchorMin = new Vector2(ButtonPadPct, trt.anchorMin.y); trt.anchorMax = new Vector2(1f - ButtonPadPct, trt.anchorMax.y);
             trt.offsetMin = new Vector2(0f, trt.offsetMin.y); trt.offsetMax = new Vector2(0f, trt.offsetMax.y);
         }
-        static void TicketCost(RectTransform btn, string icon)
+        /// <summary>«아이콘 + 수량» 줄이 버튼의 <b>본문</b>일 때 쓰는 자리(T236) — 글자 줄이 없으므로 버튼 한가운데를 차지한다.</summary>
+        static readonly Layout.R CostMain = new Layout.R(22, 18, 56, 64);
+        /// <summary>«소탕»·«도전» 처럼 <b>글자 아래</b>에 붙는 자리(T151 · 주인 인스펙터 값).</summary>
+        static readonly Layout.R CostSub = new Layout.R(30, 50, 40, 43.7f);
+        /// <summary>
+        /// 버튼에 «아이콘 + 수량» 을 붙인다. <paramref name="qty"/> 기본값 «x1» 은 «소탕»·«도전» 의 티켓 한 장이고,
+        /// <paramref name="main"/> 이 참이면 그 줄이 <b>버튼의 본문</b>이 된다 — 글자 줄을 끄고 한가운데를 크게 쓴다.
+        /// <para>
+        /// T236(주인 2026-09-08 09:2X «다이아 50으로 티켓 사기가 <b>(다이아 아이콘) 50</b> · 광고는 <b>(광고 아이콘) 1</b>») —
+        /// 지시서 3항 «새 꼴을 만들지 마라, 이 화면이 이미 그 문법을 쓴다» 대로 <b>이 함수를 인자만 넓혀</b> 쓴다.
+        /// 수량은 부르는 쪽이 <b>표에서 뽑아</b> 넘긴다(코드에 숫자를 박지 않는다 · §1).
+        /// </para>
+        /// </summary>
+        static void TicketCost(RectTransform btn, string icon, string qty = "x1", bool main = false)
         {
             // T151 — 주인 «글씨나 아이콘이 버튼을 벗어나는 것처럼 보인다 · 여백 조금». 글자는 좌우 ButtonPadPct 만큼 들이고(예전엔 0),
             // «🎫 x1» 줄은 주인 인스펙터 값(앵커 x 0.30~0.70 · y 0.063~0.5)을 우리 표기로 옮긴 자리에 둔다 — 예전 값은 아래 여백이 0 이었다.
             var t = UiKit.ButtonText(btn);
-            if (t != null) { var trt = t.rectTransform; trt.anchorMin = new Vector2(ButtonPadPct, 0.42f); trt.anchorMax = new Vector2(1f - ButtonPadPct, 1); trt.offsetMin = trt.offsetMax = Vector2.zero; }
-            var cost = UiKit.Rect(btn, "Cost"); UiKit.Pct(cost, 30, 50, 40, 43.7f);
-            var ic = UiKit.Icon(cost, "Icon", icon); UiKit.Pct(ic.rectTransform, 0, 0, 40, 100); UiKit.Label(cost, 44, 0, 56, 100, "x1", TextSize.Aux, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Aux).fontStyle = FontStyles.Bold;
+            if (t != null)
+            {
+                // T236 — 본문이 «아이콘 + 숫자» 인 버튼에는 글자 줄이 없다. 지우지 않고 **끈다** —
+                // 조각이 준 줄이라 다시 켤 일이 있고, 꺼 두면 글자 하한 자(T63)도 이 줄을 안 센다.
+                if (main) t.gameObject.SetActive(false);
+                else { var trt = t.rectTransform; trt.anchorMin = new Vector2(ButtonPadPct, 0.42f); trt.anchorMax = new Vector2(1f - ButtonPadPct, 1); trt.offsetMin = trt.offsetMax = Vector2.zero; }
+            }
+            var cost = UiKit.Rect(btn, "Cost"); UiKit.Pct(cost, main ? CostMain : CostSub);
+            var ic = UiKit.Icon(cost, "Icon", icon); UiKit.Pct(ic.rectTransform, 0, 0, 40, 100);
+            UiKit.Label(cost, 44, 0, 56, 100, qty, main ? TextSize.Button : TextSize.Aux, Palette.White, TextAnchor.MiddleLeft,
+                kind: main ? TextKind.Button : TextKind.Aux).fontStyle = FontStyles.Bold;
         }
         /// <summary>초상 칸 = 프레임 조각 + (아이콘 | HeroView 자리 «Inner»).</summary>
         static RectTransform Portrait(RectTransform parent, string name, Layout.R r, string frameKey, string icon, bool aspect = false)

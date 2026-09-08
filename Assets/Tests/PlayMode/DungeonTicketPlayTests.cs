@@ -77,9 +77,17 @@ namespace KkomaKnight.Tests.Play
             _app.Save.DunTickets["hell"] = 0; _app.Save.Gem = 0;
             Assert.IsTrue(ClickNamed(UiKit.Find(root, "Card:hell"), "EnterBtn")); yield return Frames(2);
             ov = _app.Overlay.Root;
-            Assert.AreEqual("광고 보고 티켓 1개", LabelOf(ov, "SweepBtn"), "티켓 0 이면 왼쪽은 광고 버튼(주인 T99 3항)");
-            StringAssert.Contains("티켓 사기", LabelOf(ov, "ChallengeBtn"), "티켓 0 이면 오른쪽은 다이아 버튼");
-            StringAssert.Contains(UiKit.FmtQty(D.GemCost), LabelOf(ov, "ChallengeBtn"), "다이아 값은 표(dungeon.json)에서");
+            // T236(주인 2026-09-08 09:2X «(다이아 아이콘) 50 · (광고 아이콘) 1») — 두 버튼이 **글자 문구가 아니라 «아이콘 + 숫자»** 다.
+            // ⚠ 문구 단언을 그냥 지우면 이 자리가 무방비가 되므로(지시서 5항) «아이콘 조각이 있다 + 숫자가 표 값과 같다» 로 바꾼다.
+            {
+                var ad = UiKit.Find(ov, "SweepBtn"); var buy = UiKit.Find(ov, "ChallengeBtn");
+                Assert.IsNotNull(UiKit.Find(ad, "Cost"), "광고 버튼의 «아이콘 + 숫자» 줄(T236)");
+                Assert.IsNotNull(UiKit.Find(buy, "Cost"), "다이아 버튼의 «아이콘 + 숫자» 줄(T236)");
+                Assert.IsNotNull(UiKit.Find(ad, "Icon"), "광고 아이콘");
+                Assert.IsNotNull(UiKit.Find(buy, "Icon"), "다이아 아이콘");
+                Assert.AreEqual(UiKit.FmtQty(DungeonTickets.AdGain), LabelOf(ov, "SweepBtn"), "광고 버튼 숫자 = 광고 한 번에 얻는 티켓 수(T236)");
+                Assert.AreEqual(UiKit.FmtQty(D.GemCost), LabelOf(ov, "ChallengeBtn"), "다이아 버튼 숫자 = 표(dungeon.json)의 gemCost — 코드에 안 박는다");
+            }
 
             // ⓓ 다이아가 모자라면 꺼져 보이고(알파 0.5) 눌러도 티켓이 안 는다
             var chal = UiKit.Find(ov, "ChallengeBtn");
