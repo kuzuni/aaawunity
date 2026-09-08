@@ -579,7 +579,12 @@ namespace KkomaKnight.Game
             int rows = rank != null && rank.Tiers.Count > 0 ? rank.Tiers.Count : RewardRows;
             float contentH = Mathf.Max(rows * Layout.RrRowPitch, Layout.RrList.H);
             var content = LobbyPopups.Scroll(box, Layout.RrBox, Layout.RrList, contentH, out var contentR, out _);
-            UiKit.Tag(content.parent as RectTransform, "보상 목록(" + rows + "줄)");
+            // T248 — ⚠ 이 이름표는 «내용» 이 아니라 **보이는 칸**(content.parent = 스크롤 뷰포트)에 붙는다.
+            // 그래서 이름의 수는 rows(표가 정하는 줄 수 · 지금 16)가 아니라 레퍼런스 25 에서 **보이는 네 줄**이고,
+            // 그 rect(표 ⑰ 8.6 41.7 83.1 27.5)는 T43 실측에서 한 자리도 안 바뀌었다 — 16 은 이 칸 «안» 스크롤 내용의 줄 수다.
+            // 그리고 이 이름은 **셋이 문자열로 맞춘다**: 표 ⑰ · BorderAudit.Exempt · LayoutSpecTests(+ ui_score 는 표와 이 이름표를 맞댄다).
+            // rows 로 지으면 주인이 arena.json 구간을 하나만 늘려도 넷이 한꺼번에 갈라진다(실제로 그래서 dotnet 잡이 빨갰다) ⇒ 상수로 둔다.
+            UiKit.Tag(content.parent as RectTransform, "보상 목록(" + RewardRows + "줄)");
             string[] crowns = { "ui.iconCrownGold", "ui.iconCrownSilver", "ui.iconCrownBronze" };
             for (int i = 0; i < rows; i++)
             {
