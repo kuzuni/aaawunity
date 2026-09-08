@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
@@ -90,6 +92,39 @@ namespace KkomaKnight.Tests.Play
             return row;
         }
 
+        /// <summary>
+        /// 표를 <c>ui-screens/overdraw.json</c> 로도 남긴다 — <see cref="PlayShot.Dirs"/> 가 주는 그 폴더라
+        /// CI 의 `screens` 배포가 <c>layout.json</c>·PNG 와 <b>같이 올려 준다</b>.
+        /// <para>
+        /// 까닭: 유니티 테스트의 <c>Debug.Log</c> 는 결과 XML(아티팩트) 안에만 남고, 워커 환경에서 그 아티팩트는 프록시가 막는다
+        /// (블롭 저장소 403). 그래서 «표를 찍었는데 아무도 못 읽는» 일이 생긴다 — `screens` 로 나가면 `curl` 한 번이면 읽힌다
+        /// (T185 가 PNG 로 푼 그 문제를 숫자에도 적용한다).
+        /// </para>
+        /// </summary>
+        void WriteJson(float lobbyOverBattle)
+        {
+            var sb = new StringBuilder();
+            sb.Append("{\"_meta\":{\"task\":\"T217\",\"frame\":\"").Append(_app.Frame.rect.width.ToString("0")).Append('x')
+              .Append(_app.Frame.rect.height.ToString("0")).Append("\",\"fullScreenShare\":").Append(FullScreenShare.ToString("0.00"))
+              .Append(",\"lobbyOverBattle\":").Append(lobbyOverBattle.ToString("0.00")).Append("},\"screens\":{");
+            for (int i = 0; i < _rows.Count; i++)
+            {
+                var r = _rows[i];
+                if (i > 0) sb.Append(',');
+                sb.Append('"').Append(r.Screen).Append("\":{\"full\":").Append(r.FullLayers)
+                  .Append(",\"overdraw\":").Append(r.Overdraw.ToString("0.000"))
+                  .Append(",\"graphics\":").Append(r.Graphics)
+                  .Append(",\"names\":\"").Append(r.FullNames.Replace("\"", "'")).Append("\"}");
+            }
+            sb.Append("}}");
+            string json = sb.ToString();
+            foreach (var dir in PlayShot.Dirs())
+            {
+                try { Directory.CreateDirectory(dir); File.WriteAllText(Path.Combine(dir, "overdraw.json"), json); }
+                catch (Exception e) { Debug.LogWarning("[OverdrawGate] overdraw.json 저장 실패(" + dir + "): " + e.Message); }
+            }
+        }
+
         [UnityTest]
         public IEnumerator EveryScreenReportsHowManyTimesItPaintsTheSamePlace()
         {
@@ -126,10 +161,13 @@ namespace KkomaKnight.Tests.Play
             // 로비 ↔ 전투 비 — T129 회차 7 이 1.87 로 잰 그 수를 여기서 «부하에 안 흔들리는 자» 로 다시 낸다(추세는 다음 회차가 본다).
             float lobby = 0f, battle = 0f;
             foreach (var r in _rows) { if (r.Screen == "lobby") lobby = r.Overdraw; else if (r.Screen == "battle") battle = r.Overdraw; }
-            if (battle > 0.01f) Debug.Log($"[OverdrawGate] 로비 ÷ 전투 = {lobby / battle:0.00} (T129 회차 7 의 fps 기반 추정 1.87 과 견주는 값 · 이 자는 기계 부하에 안 흔들린다)");
+            float ratio = battle > 0.01f ? lobby / battle : 0f;
+            if (ratio > 0f) Debug.Log($"[OverdrawGate] 로비 ÷ 전투 = {ratio:0.00} (T129 회차 7 의 fps 기반 추정 1.87 과 견주는 값 · 이 자는 기계 부하에 안 흔들린다)");
+            WriteJson(ratio);
 
             _log.AssertNoRed("화면 여섯 순회");
-            if (_app != null) { if (_app.UiCanvas != null) Object.Destroy(_app.UiCanvas.gameObject); Object.Destroy(_app.gameObject); }
+            // `using System;`(파일 쓰기) 때문에 «Object» 가 둘이 된다 — 유니티 쪽으로 못 박는다
+            if (_app != null) { if (_app.UiCanvas != null) UnityEngine.Object.Destroy(_app.UiCanvas.gameObject); UnityEngine.Object.Destroy(_app.gameObject); }
             yield return Frames(2);
         }
     }
