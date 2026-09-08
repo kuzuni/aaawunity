@@ -25,7 +25,25 @@ namespace KkomaKnight.Core
         public Dictionary<string, int> Slots = new Dictionary<string, int>();     // 부위 → 슬롯 레벨
         public Dictionary<string, GachaState> GachaBoxes = new Dictionary<string, GachaState>();
         public int Pulls, Fuses, Uid = 1;
-        public string FreeDay = "";
+        /// <summary>
+        /// 상점의 «하루 1번» 자리들 → <b>마지막으로 쓴 날</b>(<c>yyyy-MM-dd</c> · T259 4항 · 규칙은 <see cref="ShopFree"/>).
+        /// 자리 이름은 <see cref="ShopFree.Gem"/>·<see cref="ShopFree.Gold"/>·<see cref="ShopFree.BoxRare"/>·<see cref="ShopFree.BoxLegend"/> 넷이다.
+        /// <para>옛 세이브는 빈 표이고, 옛 필드 <c>freeDay</c> 가 있으면 <see cref="ShopFree.Gem"/> 자리로 옮겨 읽는다(지시서 4항 «예전 FreeDay 는 freeGem 으로»).</para>
+        /// </summary>
+        public Dictionary<string, string> FreeDays = new Dictionary<string, string>();
+        /// <summary>
+        /// 다이아 무료 보급을 마지막으로 받은 날 — <b>옛 이름이자 짧은 길</b>. 읽고 쓰면 <see cref="FreeDays"/> 의 <see cref="ShopFree.Gem"/> 칸이 그대로 움직인다.
+        /// <para>
+        /// T259 가 이 자리를 넷으로 쪼갤 때 이름을 지우지 않은 까닭 — 이 이름으로 세워 둔 자리(<c>ShopScreen</c>·자)가 여럿이고,
+        /// 한꺼번에 갈아엎으면 «쪼갠 것» 과 «부르는 쪽을 옮긴 것» 둘이 한 회차에 섞여 무엇이 깨졌는지 못 가른다.
+        /// 두 이름이 <b>같은 칸</b>을 보므로 갈라질 자리가 없다(<see cref="DailyGiftData.Milestone.Gem"/> 이 같은 규약이다).
+        /// </para>
+        /// </summary>
+        public string FreeDay
+        {
+            get => FreeDays.TryGetValue(ShopFree.Gem, out var d) ? (d ?? "") : "";
+            set => FreeDays[ShopFree.Gem] = value ?? "";
+        }
         /// <summary>데일리 기프트(T77 · 주인 2026-09-07) — 누적이 살아 있는 날짜(<c>yyyy-MM-dd</c> · 비어 있으면 «아직 한 번도 안 열었다»).
         /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 기본값»(옛 세이브 호환 · <see cref="Speed"/>·<see cref="FreeDay"/> 와 같은 방식).</summary>
         public string GiftDay = "";
@@ -277,6 +295,9 @@ namespace KkomaKnight.Core
             var ac = new Dictionary<string, object>(); foreach (var kv in Ach) ac[kv.Key] = (double)kv.Value; o["ach"] = ac;                 // T258
             var acc = new Dictionary<string, object>(); foreach (var kv in AchClaimed) acc[kv.Key] = (double)kv.Value; o["achClaimed"] = acc;
             var acd = new Dictionary<string, object>(); foreach (var kv in AchDay) acd[kv.Key] = kv.Value ?? ""; o["achDay"] = acd;
+            // T259 — 상점 «하루 1번» 자리 넷의 날짜 도장. 옛 키 `freeDay` 도 위에서 그대로 적는다(다이아 칸의 짧은 길) —
+            //        옛 판으로 되돌아가도 다이아 보급만은 오늘 몫을 지킨다. 두 이름이 같은 칸을 보므로 갈라질 자리가 없다.
+            var fd = new Dictionary<string, object>(); foreach (var kv in FreeDays) fd[kv.Key] = kv.Value ?? ""; o["freeDays"] = fd;
             var dt = new Dictionary<string, object>(); foreach (var kv in DunTickets) dt[kv.Key] = (double)kv.Value; o["dunTickets"] = dt;
             var da = new Dictionary<string, object>(); foreach (var kv in DunAdUsed) da[kv.Key] = (double)kv.Value; o["dunAdUsed"] = da;
             var dgm = new Dictionary<string, object>(); foreach (var kv in DunGemUsed) dgm[kv.Key] = (double)kv.Value; o["dunGemUsed"] = dgm;
@@ -291,6 +312,26 @@ namespace KkomaKnight.Core
             return MiniJson.Serialize(o);
         }
 
+        /// <summary>
+        /// 상점 «하루 1번» 날짜 도장을 읽는다 — <b>새 표가 먼저, 옛 필드는 채워지지 않은 자리에만</b>(T259 4항 마이그레이션).
+        /// <para>
+        /// 순서가 중요하다. 옛 필드(<c>freeDay</c>)를 나중에 넣으면 <b>이미 읽은 다이아 칸을 덮는다</b> —
+        /// 새 판에서 오늘 받은 뒤 옛 판으로 한 번 갔다 온 세이브는 두 값이 다를 수 있고, 그때 옛 값이 이기면 <b>오늘 몫이 되살아난다</b>.
+        /// «먼저 읽은 쪽이 이긴다» 로 두면 새 표가 없는 옛 세이브만 옛 필드로 채워진다.
+        /// </para>
+        /// <para>빈 문자열은 «안 받았다» 와 같은 뜻이라 굳이 표에 적지 않는다 — 적으면 왕복할 때마다 빈 칸이 늘어난다.</para>
+        /// </summary>
+        void ReadFreeDays(JNode j)
+        {
+            foreach (var k in j["freeDays"].Keys)
+            {
+                var v = j["freeDays"][k].Str("");
+                if (!string.IsNullOrEmpty(v)) FreeDays[k] = v;
+            }
+            var old = j["freeDay"].Str("");
+            if (!string.IsNullOrEmpty(old) && !FreeDays.ContainsKey(ShopFree.Gem)) FreeDays[ShopFree.Gem] = old;
+        }
+
         public static SaveData FromJson(string json, GameData D)
         {
             var s = new SaveData();
@@ -300,7 +341,7 @@ namespace KkomaKnight.Core
                 {
                     var j = new JNode(MiniJson.Parse(json));
                     s.Gold = j["gold"].Num(); s.Gem = j["gem"].Num(); s.MaxChapter = j["maxChapter"].Int(1); s.SelChapter = j["selChapter"].Int(1);
-                    s.MuteBgm = j.Has("muteBgm") ? j["muteBgm"].Bool() : j["muted"].Bool(); s.MuteSfx = j["muteSfx"].Bool(); s.Speed = j["speed"].Int(SpeedMin); s.Pulls = j["pulls"].Int(); s.Fuses = j["fuses"].Int(); s.Uid = j["uid"].Int(1); s.FreeDay = j["freeDay"].Str("");
+                    s.MuteBgm = j.Has("muteBgm") ? j["muteBgm"].Bool() : j["muted"].Bool(); s.MuteSfx = j["muteSfx"].Bool(); s.Speed = j["speed"].Int(SpeedMin); s.Pulls = j["pulls"].Int(); s.Fuses = j["fuses"].Int(); s.Uid = j["uid"].Int(1); s.ReadFreeDays(j);
                     s.GiftDay = j["giftDay"].Str(""); s.GiftAds = j["giftAds"].Int(); s.GiftFree = j["giftFree"].Bool();
                     s.ExpSettle = j["expSettle"].Num(); s.ExpQuickDay = j["expQuickDay"].Str(""); s.ExpQuickUsed = j["expQuickUsed"].Int();
                     s.ExpQuickCharge = j["expQuickCharge"].Int(); s.ExpQuickAt = j["expQuickAt"].Num();   // 없으면 0 — Roll 이 «가득» 으로 시작시킨다(T265)
