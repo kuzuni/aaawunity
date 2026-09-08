@@ -640,6 +640,22 @@
 | colors | `col.grad.btnOrange.bottom` | `#F09600` | #F09600 | 주 버튼(주황) «아래» — 같은 값에서 어둡게(레퍼런스는 사실상 단색) |
 | colors | `col.grad.panelDark.top` | `#2C2829` | #2C2829 | 팝업 패널 «위» — 07_gear_detail.jpg (70,600)~(640,960) 실측(거의 단색) |
 | colors | `col.grad.panelDark.bottom` | `#201E1F` | #201E1F | 팝업 패널 «아래» — 같은 실측 |
+| colors | `col.grad.passFree.top` | `#1F44AE` | #1F44AE |  |
+| colors | `col.grad.passFree.bottom` | `#286AC0` | #286AC0 |  |
+| colors | `col.grad.passPaid1.top` | `#DF7708` | #DF7708 |  |
+| colors | `col.grad.passPaid1.bottom` | `#E99A0A` | #E99A0A |  |
+| colors | `col.grad.passPaid2.top` | `#6D04A6` | #6D04A6 |  |
+| colors | `col.grad.passPaid2.bottom` | `#930DBC` | #930DBC |  |
+| colors | `col.passFreeDim` | `#0D233B` | #0D233B |  |
+| colors | `col.passPaid1Dim` | `#473203` | #473203 |  |
+| colors | `col.passPaid2Dim` | `#30053B` | #30053B |  |
+| colors | `col.passLine` | `#FFF43B` | #FFF43B |  |
+| colors | `col.passSegBadge` | `#EE9B19` | #EE9B19 |  |
+| colors | `col.grad.btnPassPaid1.top` | `#F7C70F` | #F7C70F |  |
+| colors | `col.grad.btnPassPaid1.bottom` | `#F39018` | #F39018 |  |
+| colors | `col.grad.btnPassPaid2.top` | `#F453DF` | #F453DF |  |
+| colors | `col.grad.btnPassPaid2.bottom` | `#D343E3` | #D343E3 |  |
+| colors | `col.btnPassClaimAll` | `#737373` | #737373 |  |
 | texts | `data.shop` | `Assets/KkomaKnight/shop.json` | fileID 4900000 | 상점 상품표 JSON(이 레포 전용 · 승인 대기 25 기본값 · 다이아 6종 개수 + 골드 3종 다이아 가격) — Bootstrap 이 읽어 GameData.Shop 에 올린다. 수치를 바꾸려면 이 파일만 |
 | texts | `data.dailyGift` | `Assets/KkomaKnight/dailyGift.json` | fileID 4900000 | 데일리 기프트 수치표 JSON(이 레포 전용 · 주인 2026-09-07 · 무료 칸 다이아 100 + 광고 누적 1/2/3/6 줄) — Bootstrap 이 읽어 GameData.DailyGift 에 올린다. 수치를 바꾸려면 이 파일만 |
 | texts | `data.arenaDummy` | `Assets/KkomaKnight/arenaDummy.json` | fileID 4900000 | 아레나 껍데기의 상대 승점·전투력 표시용 계수 JSON(이 레포 전용 · 주인 2026-09-07 «아레나 부분에 적들 승점이랑 전투력 더미값으로» · T81) — 밸런스 아님 · 전투 엔진은 안 쓴다 · Core/ArenaDummy 가 읽는다 |

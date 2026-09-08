@@ -2646,6 +2646,10 @@ Caught fatal signal - signo:6 (SIGABRT) · Unexpected exit code 134
 6. 테스트: PlayMode — 페이지가 열리고 3열·레벨 행·잠금/체크/어둠 상태가 그려진다 · «모두 받기» 로 열린 보상만 지급되고 두 번은 안 된다 · 유료 열은 구매 전 잠김 · 빨간 점 · 글자 잘림 0 · `UiTextureTests` 에 «세 열에 그라데이션 있음» 단언.
 7. 게이트 + assets-map(패스 조각·아이콘) + PROGRESS T266 행 + 완료 기록(확인 = CI + `screens` 19 를 ref 와 나란히 + 주인 폰).
 
+> **1단계 끝 — 실측**(2026-09-08 19:4X UTC · sess-1913-2015 · 워커 E · 결정 723 · lock 유지). `docs/ref-layout.md` **표 ㊼**(25행 · 열 경계·행 피치 10.3%p·배지·버튼·뒤로 · «어떻게 쟀나» 포함)와 **3열 그라데이션 실측**이 들어갔다 — `catalog.json` 의 `col.grad.passFree/passPaid1/passPaid2`(+ 버튼 둘 `btnPassPaid1`·`btnPassPaid2` · «못 연 행» 단색 어둠 `col.passFreeDim` 셋 · 노란 줄 `col.passLine` · 구간 배지 `col.passSegBadge` · «모두 받기» `col.btnPassClaimAll`). **2항의 «레퍼런스에서 각 열의 위·아래 색을 재라» 는 이것으로 끝났다** — 2단계는 그 값을 쓰기만 하면 된다.
+> ⚠ 색을 **어디서** 쟀는지가 값보다 중요하다(결정 723): 열 전체를 재면 아래쪽 «못 연 행» 의 어둠이 섞여 **방향이 뒤집히고**, 가운데를 재면 보상 아이콘 색이 섞인다. 표 ㊼ 머리에 잰 사각형을 적어 뒀으니 다시 잴 때 그 자리를 쓴다.
+> **2단계(남은 것) = 화면**: `Assets/Scripts/Game/SeasonPassScreen.cs`(새 파일) + `App.cs` Register 한 줄 + 입구는 **T78 이 비워 둔 로비 배너 자리**(표 ① 24.5/9.2/51.6/5.6 · `Screens.cs`). ⚠ **`LobbyPopups.cs` 는 안 건드린다** — T253·T254·T257·T264 넷의 살아 있는 lock 자리다(그래서 입구를 «메뉴 ≡ 안» 이 아니라 배너 자리로 잡았다).
+
 
 ### T267 — 상자 **«확률 정보» 팝업**(ⓘ) + **그 안 아이템 세부 팝업** — 레퍼런스 `36`·`37`·`38` (주인 2026-09-09)
 

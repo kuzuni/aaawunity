@@ -1288,6 +1288,38 @@ MonoBehaviour:
     color: {r: 0.172549, g: 0.156863, b: 0.160784, a: 1}
   - key: col.grad.panelDark.bottom
     color: {r: 0.12549, g: 0.117647, b: 0.121569, a: 1}
+  - key: col.grad.passFree.top
+    color: {r: 0.121569, g: 0.266667, b: 0.682353, a: 1}
+  - key: col.grad.passFree.bottom
+    color: {r: 0.156863, g: 0.415686, b: 0.752941, a: 1}
+  - key: col.grad.passPaid1.top
+    color: {r: 0.87451, g: 0.466667, b: 0.0313725, a: 1}
+  - key: col.grad.passPaid1.bottom
+    color: {r: 0.913725, g: 0.603922, b: 0.0392157, a: 1}
+  - key: col.grad.passPaid2.top
+    color: {r: 0.427451, g: 0.0156863, b: 0.65098, a: 1}
+  - key: col.grad.passPaid2.bottom
+    color: {r: 0.576471, g: 0.0509804, b: 0.737255, a: 1}
+  - key: col.passFreeDim
+    color: {r: 0.0509804, g: 0.137255, b: 0.231373, a: 1}
+  - key: col.passPaid1Dim
+    color: {r: 0.278431, g: 0.196078, b: 0.0117647, a: 1}
+  - key: col.passPaid2Dim
+    color: {r: 0.188235, g: 0.0196078, b: 0.231373, a: 1}
+  - key: col.passLine
+    color: {r: 1, g: 0.956863, b: 0.231373, a: 1}
+  - key: col.passSegBadge
+    color: {r: 0.933333, g: 0.607843, b: 0.0980392, a: 1}
+  - key: col.grad.btnPassPaid1.top
+    color: {r: 0.968627, g: 0.780392, b: 0.0588235, a: 1}
+  - key: col.grad.btnPassPaid1.bottom
+    color: {r: 0.952941, g: 0.564706, b: 0.0941176, a: 1}
+  - key: col.grad.btnPassPaid2.top
+    color: {r: 0.956863, g: 0.32549, b: 0.87451, a: 1}
+  - key: col.grad.btnPassPaid2.bottom
+    color: {r: 0.827451, g: 0.262745, b: 0.890196, a: 1}
+  - key: col.btnPassClaimAll
+    color: {r: 0.45098, g: 0.45098, b: 0.45098, a: 1}
   texts:
   - key: data.shop
     text: {fileID: 4900000, guid: 5edbc69efa2cdcb6b106d8355577a053, type: 3}

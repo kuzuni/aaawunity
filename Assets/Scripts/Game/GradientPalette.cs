@@ -56,12 +56,21 @@ namespace KkomaKnight.Game
                 case "btnBlue": return new Pair(Cat("btnBlue.top", "#188AFA"), Cat("btnBlue.bottom", "#096CFD"));
                 case "btnOrange": return new Pair(Cat("btnOrange.top", "#FDA406"), Cat("btnOrange.bottom", "#F09600"));
                 case "panelDark": return new Pair(Cat("panelDark.top", "#2C2829"), Cat("panelDark.bottom", "#201E1F"));
+                // T266 1단계(주인 2026-09-09 «레퍼런스 이미지 그대로 만들고, 그 그라데이션도 잘 해서») — docs/ref/19_pass.jpg 를
+                // tools/ref_color.py 로 5등분해 잰 값이다. 잰 자리는 **아이콘을 피한 열의 왼쪽 여백**이고(가운데를 물면 아이콘 색이 섞인다),
+                // 세로 범위는 «밝은 구간»(y 495~1140)만 — 그 아래는 «아직 못 연 행» 이라 같은 열이라도 어둡다(그 어둠은 col.passFreeDim 등 단색).
+                case "passFree": return new Pair(Cat("passFree.top", "#1F44AE"), Cat("passFree.bottom", "#286AC0"));
+                case "passPaid1": return new Pair(Cat("passPaid1.top", "#DF7708"), Cat("passPaid1.bottom", "#E99A0A"));
+                case "passPaid2": return new Pair(Cat("passPaid2.top", "#6D04A6"), Cat("passPaid2.bottom", "#930DBC"));
+                // 아래 버튼 둘 — «₩9,900»(주황)·«₩49,000»(자주). 열 색과 계열은 같지만 훨씬 밝다(버튼이라 눈에 먼저 들어와야 한다).
+                case "btnPassPaid1": return new Pair(Cat("btnPassPaid1.top", "#F7C70F"), Cat("btnPassPaid1.bottom", "#F39018"));
+                case "btnPassPaid2": return new Pair(Cat("btnPassPaid2.top", "#F453DF"), Cat("btnPassPaid2.bottom", "#D343E3"));
                 default: return new Pair(Color.white, Color.white);
             }
         }
 
-        /// <summary>표에 든 이름 전부(테스트·감사용 · 순서는 «카드 → 배경 → 버튼 → 패널»).</summary>
-        public static readonly string[] Names = { "cardGem", "cardGold", "cardBlue", "cardChestLegend", "cardChestRare", "cardChestEpic", "cardPrivAd", "cardPrivMonth", "cardPrivLife", "bgLobby", "btnBlue", "btnOrange", "panelDark" };
+        /// <summary>표에 든 이름 전부(테스트·감사용 · 순서는 «카드 → 배경 → 버튼 → 패널 → 패스 3열·패스 버튼 2»).</summary>
+        public static readonly string[] Names = { "cardGem", "cardGold", "cardBlue", "cardChestLegend", "cardChestRare", "cardChestEpic", "cardPrivAd", "cardPrivMonth", "cardPrivLife", "bgLobby", "btnBlue", "btnOrange", "panelDark", "passFree", "passPaid1", "passPaid2", "btnPassPaid1", "btnPassPaid2" };
 
         /// <summary>표에 이름이 있는가.</summary>
         public static bool Has(string name)

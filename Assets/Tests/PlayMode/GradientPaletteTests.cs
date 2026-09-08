@@ -57,6 +57,22 @@ namespace KkomaKnight.Tests.Play
             var bg = GradientPalette.Of("bgLobby");
             Assert.Greater(Luma(bg.Top), Luma(bg.Bottom), "화면 배경은 위가 밝고 아래가 어두워야 한다(레퍼런스 01 실측)");
 
+            // T266 1단계 — 시즌 패스 3열(주인 2026-09-09 «그라데이션도 잘 해서»). 레퍼런스 19 실측이고 셋 다 카드류와 같은 방향이다.
+            foreach (var col in new[] { "passFree", "passPaid1", "passPaid2" })
+            {
+                var p = GradientPalette.Of(col);
+                Assert.Less(Luma(p.Top), Luma(p.Bottom), col + " 열은 위가 어둡고 아래가 밝아야 한다(레퍼런스 19 실측 방향)");
+            }
+            // «아직 못 연 행» 의 어둠은 같은 열의 밝은 색보다 확실히 어둡다 — 실측 비율 0.19~0.33 이라 «절반 아래» 로 못 박는다.
+            // (이 셋은 그라데이션이 아니라 단색이라 표가 아니라 카탈로그 색 키로 들어갔다.)
+            foreach (var (col, dim) in new[] { ("passFree", "col.passFreeDim"), ("passPaid1", "col.passPaid1Dim"), ("passPaid2", "col.passPaid2Dim") })
+            {
+                var lit = GradientPalette.Of(col);
+                var d = _app.Assets.Color(dim, Color.white);
+                Assert.AreNotEqual(Color.white, d, dim + " 이 카탈로그에 없다(폴백 흰색이 나왔다)");
+                Assert.Less(Luma(d), Luma(lit.Top) * 0.5f, dim + " 은 그 열의 밝은 위 색보다 확실히 어두워야 한다(못 연 행 표시)");
+            }
+
             // 표에 없는 요소 — 바탕색에서 만든 두 색도 같은 방향이고 계열색(색상)을 잃지 않는다
             var baseC = new Color(0.35f, 0.55f, 0.30f, 1f);
             var made = GradientPalette.CardWay(baseC);
