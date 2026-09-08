@@ -255,13 +255,13 @@ namespace KkomaKnight.Game
         }
         /// <summary>[라벨][💎 아이콘][가격] 한 줄 — HorizontalLayoutGroup 이 자식을 선호 크기로 가운데 정렬(글자는 Overflow · rect 가 선호 폭과 같아 반올림으로 줄이 접히지 않게).
         /// <para>T255 — 아이콘·글자 크기를 인자로 받는다(키 버튼이 같은 줄 꼴을 쓴다 · 기본값은 종전 그대로라 다이아 버튼은 한 픽셀도 안 바뀐다).</para></summary>
-        RectTransform PriceRow(RectTransform parent, Layout.R r, string cost, string before = null, string iconKey = "hud.gem", string iconName = "Gem", int costSize = TextSize.Button, TextKind costKind = TextKind.Button)
+        RectTransform PriceRow(RectTransform parent, Layout.R r, string cost, string before = null, string iconKey = "hud.gem", string iconName = "Gem", int costSize = TextSize.Button, TextKind costKind = TextKind.Button, int iconSize = PriceIconSize)
         {
             var row = UiKit.Rect(parent, "Price"); UiKit.Pct(row, r);
             var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>(); hl.childAlignment = TextAnchor.MiddleCenter; hl.spacing = PriceGap; hl.childForceExpandWidth = false; hl.childForceExpandHeight = false; hl.childControlWidth = true; hl.childControlHeight = true;
             if (!string.IsNullOrEmpty(before)) { var t = UiKit.Text(row, before, TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); t.name = "Label"; t.textWrappingMode = TextWrappingModes.NoWrap; }
             var ic = UiKit.Icon(row, iconName, iconKey); ic.preserveAspect = true;
-            var le = ic.gameObject.AddComponent<LayoutElement>(); le.preferredWidth = PriceIconSize; le.preferredHeight = PriceIconSize;
+            var le = ic.gameObject.AddComponent<LayoutElement>(); le.preferredWidth = iconSize; le.preferredHeight = iconSize;
             var c = UiKit.Text(row, cost, costSize, Palette.White, TextAnchor.MiddleCenter, false, true, costKind); c.name = "Cost"; c.textWrappingMode = TextWrappingModes.NoWrap;
             return row;
         }
@@ -286,7 +286,9 @@ namespace KkomaKnight.Game
             var own = UiKit.ButtonText(b); if (own != null) own.gameObject.SetActive(false);
             var row = twoLine
                 ? PriceRow(b, new Layout.R(0, 50, 100, 44), "0/0", null, GachaKeys.Icon(item), "KeyIcon")
-                : PriceRow(b, new Layout.R(0, 0, 100, 100), "0/0", null, GachaKeys.Icon(item), "KeyIcon", TextSize.Aux, TextKind.Aux);
+                // T275 ⓑ — 작은 카드는 글자가 Aux(36) 이므로 아이콘도 Aux 로 맞춘다(큰 카드는 Button 44 로 그대로):
+                // 글자·아이콘 크기가 한 줄 안에서 어긋날 까닭이 없고, «17/10» 다섯 자가 들어갈 8px 이 여기서 난다(결정 761).
+                : PriceRow(b, new Layout.R(0, 0, 100, 100), "0/0", null, GachaKeys.Icon(item), "KeyIcon", TextSize.Aux, TextKind.Aux, TextSize.Aux);
             if (twoLine) { var top = UiKit.Label(b, 0, 6, 100, 44, "1회", TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); top.name = "Label"; w.KeyLabel = top; }
             w.Key = b.GetComponent<Button>();
             w.KeyCount = row.Find("Cost") != null ? row.Find("Cost").GetComponent<TMP_Text>() : null;
@@ -460,11 +462,14 @@ namespace KkomaKnight.Game
             // T255 3항 — 작은 카드는 폭이 324px 뿐이라 셋을 같은 줄에 세울 때 «글자를 가진 칸» 을 먼저 지켰다:
             // 광고는 원래 아이콘 하나뿐이라 좁혀도 잘릴 글자가 없고(20% = 65px · 아이콘 44), 키는 [아이콘][개수] 라 짧다.
             // 다이아 버튼(«1회 💎80»)만 종전 폭에 가깝게 남긴다 — 여기서 한 자라도 줄면 그 줄이 먼저 줄어든다(T63 하한).
-            var ad = UiKit.Button(card, "ui.btnBlue", "", OnFree, new Layout.R(6, 83, 18, 14)); ad.name = "Ad";
-            var adIc = UiKit.Icon(ad, "Icon", "ui.ad"); UiKit.Pct(adIc.rectTransform, 26, 12, 48, 76);
+            // T275 ⓑ — 광고 칸을 18% → 13% 로 좁혀 그 5%p 를 키 버튼에 준다(결정 761 · `screens:t275.json` 실측 «넘침 +16.9px»).
+            // 좁혀도 잃는 것이 없는 칸이 여기뿐이다: 광고는 아이콘 하나뿐이라 잘릴 글자가 없고, 칸 안 비율을 48% → 62% 로 올려
+            // 그려지는 아이콘 크기는 전과 거의 같게(42 → 40px) 뒀다. 다이아 버튼(«1회 💎80»)은 T255 경고대로 한 자도 안 건드린다.
+            var ad = UiKit.Button(card, "ui.btnBlue", "", OnFree, new Layout.R(6, 83, 13, 14)); ad.name = "Ad";
+            var adIc = UiKit.Icon(ad, "Icon", "ui.ad"); UiKit.Pct(adIc.rectTransform, 19, 12, 62, 76);
             var dot = UiKit.AlertDot(ad, "FreeDot", new Vector2(1, 1), new Vector2(-6, -2), 44);   // T136
             _freeBtns.Add(ad.GetComponent<Button>()); _freeDots.Add(dot);
-            KeyButton(card, box, new Layout.R(26, 83, 26, 14), false, w);
+            KeyButton(card, box, new Layout.R(21, 83, 31, 14), false, w);   // T275 ⓑ — 26% → 31%(127.8 → 152.4px · 필요 136.7px · 결정 761)
             var one = PriceButton(card, "One", "1회", box.Cost, () => Pull(1, key), new Layout.R(54, 83, 40, 14), false);
             w.One = one.GetComponent<Button>();
             // T69-shop — 큰 카드와 같은 Ink 링(광고·가격 버튼 줄은 카드 «안» 이라 따로 상자를 두지 않는다 · 레퍼런스 10 도 그렇다 · BorderAudit.Exempt)

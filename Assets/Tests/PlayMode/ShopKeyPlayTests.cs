@@ -161,16 +161,20 @@ namespace KkomaKnight.Tests.Play
         }
 
         /// <summary>
-        /// T275 ⓑ — <b>«17/10» 이 버튼 칸을 넘치는가</b> 를 <b>재기만</b> 한다(막지 않는다 · 결정 741 ③).
+        /// T275 ⓑ — <b>글자가 가장 길 때(«17/10») 키 버튼 칸이 그 줄을 담는가</b>.
         /// <para>
-        /// 이 물음은 <c>screens</c> PNG 로 못 닫는다 — 찍는 판은 <b>새 세이브</b>라 버튼에 언제나 «0/0» 만 뜬다.
-        /// 글자가 가장 길어지는 «보유 ≥ 캡» 은 사진에 아예 안 나온다. 그래서 그 판을 자가 만들어 <b>줄의 선호 폭 ↔ 버튼 폭</b>을 재고,
-        /// 초록 런의 <c>Debug.Log</c> 는 워커가 읽을 수 없으므로(결정 289 · T246) <c>ui-screens/t275.json</c> 으로 내보낸다.
+        /// 이 물음은 <c>screens</c> PNG 로 못 닫는다 — 찍는 판은 <b>새 세이브</b>라 버튼에 언제나 «0/0» 만 뜬다(결정 753).
+        /// 그래서 자가 그 판을 만들어 <b>줄의 선호 폭 ↔ 버튼 폭</b>을 재고, 초록 런의 <c>Debug.Log</c> 는 워커가 읽을 수 없으므로(결정 289 · T246)
+        /// 수를 <c>ui-screens/t275.json</c> 으로도 내보낸다(빨개졌을 때 «얼마나» 를 그 파일이 말해 준다).
         /// </para>
-        /// <b>단언은 없다</b> — 넘치는지 «몰라서» 재는 자리다. 다음 회차가 이 수를 보고 넓힐지 정한다(넓히면 그 회차에 자를 세운다).
+        /// <para>
+        /// <b>앞 회차에는 단언이 없었다</b>(결정 741 ③ — 넘치는지 몰라서 재기만 했다). 그 자가 <c>run 594</c> 에서 <b>넘침 +16.9px</b> 을 실측했고
+        /// 이 회차가 칸을 넓혀 고쳤으므로(광고 18% → 13% · 키 26% → 31% · 아이콘 44 → 36 · 결정 761) <b>이제 막는 자로 세운다</b> —
+        /// «탐침은 고침이 드는 회차에, 값이 증명된 뒤에 승격한다»(§1 T226)를 그대로 따른 것이다.
+        /// </para>
         /// </summary>
         [UnityTest]
-        public IEnumerator KeyButtonWidthAtTheLongestTextIsOnlyMeasured()
+        public IEnumerator KeyButtonIsWideEnoughForTheLongestText()
         {
             yield return Boot();
             var D = _app.Data; var S = _app.Save;
@@ -182,7 +186,8 @@ namespace KkomaKnight.Tests.Play
             var content = UiKit.Find(_app.Current.Root, "Content");
 
             var sb = new System.Text.StringBuilder();
-            sb.Append("{\"_meta\":{\"task\":\"T275\",\"note\":\"글자가 가장 길 때의 키 버튼 폭 — 재기만 한다\"},\"cap\":").Append(cap).Append(",\"boxes\":[");
+            sb.Append("{\"_meta\":{\"task\":\"T275\",\"note\":\"글자가 가장 길 때의 키 버튼 폭 — 넘치면 빨갛다\"},\"cap\":").Append(cap).Append(",\"boxes\":[");
+            var over = new List<string>();
             bool first = true;
             foreach (var box in D.Gacha.Boxes)
             {
@@ -203,6 +208,7 @@ namespace KkomaKnight.Tests.Play
                   .Append(",\"needW\":").Append(needW.ToString("0.0"))
                   .Append(",\"overPx\":").Append((needW - btnW).ToString("0.0")).Append('}');
                 Debug.Log($"[T275] {box.Key} «{txt}» 버튼 {btnW:0.0} · 줄 선호 {needW:0.0} · 넘침 {needW - btnW:+0.0;-0.0;0}");
+                if (needW > btnW) over.Add($"{box.Key} «{txt}» 버튼 {btnW:0.0} < 줄 {needW:0.0}(넘침 {needW - btnW:0.0}px)");
             }
             sb.Append("]}");
             foreach (var dir in PlayShot.Dirs())
@@ -210,7 +216,10 @@ namespace KkomaKnight.Tests.Play
                 try { System.IO.Directory.CreateDirectory(dir); System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "t275.json"), sb.ToString()); }
                 catch (Exception e) { Debug.LogWarning("[T275] t275.json 저장 실패(" + dir + "): " + e.Message); }
             }
-            _log.AssertNoRed("키 버튼 폭 재기");
+            _log.AssertNoRed("키 버튼 폭");
+            // 실측이 든 파일(`screens:t275.json`)이 먼저 쓰이고 나서 막는다 — 빨개도 «얼마나» 를 읽을 수 있게.
+            Assert.IsEmpty(over, "키 버튼이 «보유/쓸 개수» 를 못 담는다(칸을 넓히거나 줄을 줄여야 한다 · 수는 screens 의 t275.json): "
+                                 + string.Join(" · ", over));
             yield return Shutdown();
         }
     }
