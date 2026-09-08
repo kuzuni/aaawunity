@@ -155,10 +155,30 @@ def score_screen(tables, layout, screen):
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     flags = [a for a in sys.argv[1:] if a.startswith('--')]
-    if not args and '--all' not in flags: print(__doc__); sys.exit(2)
+    wide = '--all' in flags or '--summary' in flags
+    if not args and not wide: print(__doc__); sys.exit(2)
     tables = parse_ref()
-    layout, src = load_layout(args[1] if len(args) > 1 else (args[0] if '--all' in flags and args else None))
+    layout, src = load_layout(args[1] if len(args) > 1 else (args[0] if wide and args else None))
     print(f'<!-- layout: {src} · meta: {json.dumps(layout.get("_meta", {}), ensure_ascii=False)} -->')
+    if '--summary' in flags:
+        # T277 — CI 꼬리에 넣으려고 «표만» 찍는다. `--all` 은 646줄이라(실측) 그대로 넣으면
+        # T239 의 «실패한 테스트 목록» 을 꼬리 밖으로 도로 밀어낸다(그 사고가 T239 회차 1 → 2 의 자기 정정이었다).
+        # 늘 0 으로 끝난다 — §5 표 여덟(㊱~㊸)은 레퍼런스 그림 없는 «회귀 자» 라 **뜻한 변경도 점수를 떨어뜨린다**(T277 3항).
+        scored, no_table = [], []
+        for screen in [k for k in layout if not k.startswith('_')]:
+            score, _ = score_screen(tables, layout, screen)
+            (no_table if score is None else scored).append(screen if score is None else (score, screen))
+        low = sorted(s for s in scored if s[0] < 10.0)
+        print(f'[§5] 화면 {len(scored) + len(no_table)}개 · **10.0 미만 {len(low)}건** · 표 없음(«—») {len(no_table)}건')
+        for sc, nm in low:
+            print(f'[§5]   {nm} — {fmt(sc)}   ← `python3 tools/ui_score.py {nm}` 로 어느 행인지 본다')
+        if no_table:
+            print('[§5]   표 없음(ref-layout.md 에 그 화면 절이 없다): ' + ' · '.join(no_table))
+        missing = layout.get('_missing', [])
+        if missing:
+            print('[§5]   화면 자체가 안 찍혔다: ' + ' · '.join(map(str, missing)))
+        print('[§5] (보고만 — 이 자는 빨갛게 하지 않는다 · T277)')
+        sys.exit(0)
     if '--all' in flags:
         summary = ['| 화면 | 표 점수 |', '|---|---|']
         for screen in [k for k in layout if not k.startswith('_')]:

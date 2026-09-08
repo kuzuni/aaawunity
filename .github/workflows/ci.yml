@@ -199,6 +199,25 @@ jobs:
           force_orphan: true
           enable_jekyll: false
           commit_message: 'UI 스크린샷 ${{ github.sha }} (CI #${{ github.run_number }})'
+      # T277 — **§5 표 점수(`ui_score`)를 CI 가 실제로 센다.** 여태 `grep -n ui_score .github/workflows/*.yml` 이 **0건**이었고,
+      # 그 구멍으로 `res_lose` 가 10.0 → 9.3 으로 내려간 것을 아무도 못 봤다(워커 H 실측 — 손으로 돌려 보고서야 알았다).
+      # **재료는 이미 이 잡 안에 있다** — 위 단계가 만든 `ui-screens/layout.json` 하나면 된다. «못 돈다» 가 아니라 아무도 안 걸어 둔 것이었다.
+      # `--summary` 인 까닭(T277 2항 ⓐ): `--all` 은 **646줄**이라(실측) 그대로 넣으면 아래 T239 의 «실패한 테스트 목록» 을
+      #   꼬리 밖으로 도로 밀어낸다 — 그 사고가 T239 회차 1 → 2 의 자기 정정이었다. 요약은 **3줄**이다(실측).
+      # 자리(T277 2항 ⓑ): T239 단계가 잡의 «맨 끝» 이어야 하므로 이 자는 그 **바로 앞**이다.
+      # **알리기만 한다**(늘 exit 0 · 결정 493 의 «막는 자 ↔ 알리는 자» 기준) — §5 표 여덟(㊱~㊸)은 레퍼런스 그림 없는
+      #   «회귀 자» 라 **뜻한 변경도 점수를 떨어뜨린다**(오늘 `res_lose` 가 그랬고 표를 고치니 다시 10.0). 막는 자로 두면 정당한 변경이 막힌다.
+      - name: "[§5] 표 점수 요약 — 보고만(빨개도 안 막는다 · T277)"
+        if: always()
+        run: |
+          # ui-screens 는 위 단계에서 이미 소유자를 되돌렸지만, 유니티 잡이 죽어 그 단계를 건너뛴 경우를 위해 한 번 더(실패해도 무시).
+          sudo chown -R "$(id -u):$(id -g)" ui-screens 2>/dev/null || true
+          if [ -f ui-screens/layout.json ]; then
+            python3 tools/ui_score.py --summary ui-screens/layout.json || true
+          else
+            echo "[§5] ui-screens/layout.json 이 없다 — 유니티 잡이 화면을 못 찍었다(위 단계를 보라). 점수는 이번 런에서 안 센다."
+          fi
+
       # T239 회차 2 — **이 단계는 잡의 «맨 끝» 이어야 한다.** 회차 1 은 아티팩트 업로드 바로 뒤에 뒀는데
       # 그 뒤의 `screens` 배포가 120줄 넘게 찍어 목록을 꼬리 밖으로 밀어냈다(CI #512 실측: tail 130줄로도 못 읽었다).
       # 워커는 아티팩트를 못 내려받고(프록시 · 결정 289) `get_job_logs` 는 꼬리만 준다. 잡은 EditMode → PlayMode 순이라
