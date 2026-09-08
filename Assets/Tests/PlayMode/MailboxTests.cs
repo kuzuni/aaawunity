@@ -54,6 +54,15 @@ namespace KkomaKnight.Tests.Play
             return m;
         }
 
+        /// <summary>이름이 <paramref name="prefix"/> 로 시작하면서 «켜져 있는» 것의 수.</summary>
+        static int ActiveNamed(Transform root, string prefix)
+        {
+            int n = 0;
+            foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                if (t.name.StartsWith(prefix, StringComparison.Ordinal) && t.gameObject.activeInHierarchy) n++;
+            return n;
+        }
+
         static int RowCount(Transform root)
         {
             int n = 0;
@@ -101,6 +110,9 @@ namespace KkomaKnight.Tests.Play
             var row = UiKit.Find(_app.Overlay.Root, Mailbox.RowPrefix + Mailbox.KeyArena + ":s1");
             Assert.IsNotNull(row, "줄 이름 = Mail:<우편 id>");
             Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, Mailbox.ClaimAllName), "«전체 받기» 버튼");
+            // T244 — 줄이 서 있는 상태에서도 탭은 꺼져 있고, 목록·«전체 받기» 는 살아 있다(담개를 잘못 잡는 사고 방지).
+            Assert.AreEqual(0, ActiveNamed(_app.Overlay.Root, "Tab_02"), "탭 셋은 꺼져 있다(주인 «애초에 탭 필요 x»)");
+            Assert.AreEqual(1, RowCount(_app.Overlay.Root), "그런데 우편 줄은 그대로 서 있다");
             var claim = row.GetComponentInChildren<Button>(true); Assert.IsNotNull(claim, "줄의 «받기» 버튼");
             claim.onClick.Invoke(); yield return Frames(2);
             Assert.AreEqual(gold0 + 1000, S.Gold, 1e-9, "골드가 실제로 들어온다");
@@ -121,6 +133,10 @@ namespace KkomaKnight.Tests.Play
             mb.onClick.Invoke(); yield return Frames(2);
             Assert.IsTrue(_app.Overlay.IsOpen, "우편함이 열린다");
             Assert.IsNotNull(UiKit.FindAny(_app.Overlay.Root, "ui.mailbox", "ui.mailboxEmpty"), "메뉴 → 우편함 조각");
+
+            // ⓖ T244 — 탭 셋이 꺼져 있다(주인 «애초에 탭 필요 x»). 그리고 «담개를 잘못 잡아 목록까지 끄는» 사고가 없어야 한다.
+            Assert.AreEqual(0, ActiveNamed(_app.Overlay.Root, "Tab_02"), "탭 조각은 하나도 켜져 있지 않다");
+            Assert.IsNotNull(UiKit.FindAny(_app.Overlay.Root, Mailbox.CloseName, "Button_Close_Square_01"), "탭을 끄면서 닫기까지 끄지 않았다");
 
             // ⓕ T169 — 닫을 수 있어야 한다(주인 «우편함 팝업 안 닫힌다»).
             var close = UiKit.FindAny(_app.Overlay.Root, Mailbox.CloseName, "Button_Close_Square_01");

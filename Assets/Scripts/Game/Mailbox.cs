@@ -120,7 +120,42 @@ namespace KkomaKnight.Game
             }
             // «비었음» 그림은 줄이 없을 때만(프리팹이 둘 다 들고 있다)
             UiKit.Show(rt, "Empty", entries.Count == 0);
+            HideTabs(rt);
             Buttons(app, rt, entries.Count > 0);
+        }
+
+        /// <summary>조각이 물고 오는 <b>탭 담개</b>의 이름(두 프리팹 다 이 이름으로 덮여 있다 · 실측).</summary>
+        public const string TabsName = "Tab_02_BoxMenu_Text";
+
+        /// <summary>
+        /// T244 — <b>우편함 탭 셋을 끈다</b>(주인 2026-09-08 12:1X «우편에 탭 종류 3개던데 1개로 통합하기 · <b>애초에 탭 필요 x</b>» — 뒤 문장이 이긴다).
+        /// <para>
+        /// 그 탭은 <b>우리가 만든 것이 아니다</b> — 조각(<c>Rewards_Mailbox</c>·<c>Rewards_Mailbox_Empty</c>)이 중첩 프리팹으로 물고 오고 우리 코드는 한 번도 안 건드렸다.
+        /// 즉 <b>눌러도 아무 일 없는 장식</b>이고, T243(«우편함은 아레나 보상만»)으로 나눌 갈래도 하나뿐이 됐다.
+        /// </para>
+        /// <b>지우지 않고 끈다</b> — 조각 원본은 남의 에셋이라 손대지 않는다(<c>Button_DeleteAll</c> 을 끄는 <see cref="Buttons"/> 와 같은 문법 · 새 꼴 금지).
+        /// <para>
+        /// ⚠ 이름이 덮여 있을 수 있으므로 이름 하나만 믿지 않는다 — 못 찾으면 «<c>Tab_02</c> 로 시작하는» 것들 중 <b>가장 바깥</b>(담개)을 끈다.
+        /// 셋을 따로 끄지 않고 담개 하나를 끄는 까닭은 그래야 <b>자리도 같이 비기</b> 때문이다. 못 찾으면 아무것도 안 한다(창은 그대로 뜬다).
+        /// </para>
+        /// ⚠ <b>빈 자리는 지어내서 안 채운다</b> — 주인은 «없앤다» 만 말했다(목록을 위로 당길지는 말한 적이 없다 · §1).
+        /// </summary>
+        static void HideTabs(RectTransform rt)
+        {
+            var tabs = UiKit.Find(rt, TabsName);
+            if (tabs == null)
+            {
+                // 이름이 덮인 경우 — 가장 얕은(= 가장 바깥) «Tab_02…» 하나가 담개다.
+                int best = int.MaxValue;
+                foreach (var c in rt.GetComponentsInChildren<Transform>(true))
+                {
+                    if (c == null || !c.name.StartsWith("Tab_02", StringComparison.Ordinal)) continue;
+                    int depth = 0;
+                    for (var p = c.parent; p != null && p != rt; p = p.parent) depth++;
+                    if (depth < best) { best = depth; tabs = c; }
+                }
+            }
+            if (tabs != null) tabs.gameObject.SetActive(false);
         }
 
         /// <summary>제목 «Mailbox» → 우리말. 상자 안 첫 글자 조각이 제목이다(영문 데모 글자 0 · T34 ⓒ).</summary>
