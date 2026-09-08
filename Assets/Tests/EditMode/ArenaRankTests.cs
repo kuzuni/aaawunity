@@ -60,11 +60,44 @@ namespace KkomaKnight.Tests
         }
 
         [Test]
-        public void 보상_값은_아직_비어_있다_지어내지_않았다()
+        public void 주인이_못_박은_네_자리는_그_값_그대로다()
         {
+            // 주인 2026-09-08 09:4X «1등 다이아 3000개 2등 2500개 3등 2300개 이런 식으로 줘 · 꼴등은 한 500 정도».
+            // ⚠ 열여섯 줄을 다 베끼지 않는다 — 그러면 자가 표의 «거울» 이 되어 아무것도 못 지킨다(결정 555).
+            //    주인이 입으로 말한 네 자리만 못 박고, 나머지는 아래 «단조 감소» 규칙이 지킨다.
             var d = Load();
-            Assert.IsFalse(d.AnyRewards, "주인이 값을 주기 전까지 표는 비어 있어야 한다 — 누가 «대충 이만큼» 을 넣으면 여기서 걸린다(§1)");
-            foreach (var t in d.Tiers) Assert.IsFalse(t.HasRewards, t.Label + " 줄에 지어낸 값이 있다");
+            Assert.AreEqual(3000, Amount(d, 1), 1e-9, "1등");
+            Assert.AreEqual(2500, Amount(d, 2), 1e-9, "2등");
+            Assert.AreEqual(2300, Amount(d, 3), 1e-9, "3등");
+            Assert.AreEqual(500, Amount(d, 50001), 1e-9, "꼴등 줄");
+            Assert.AreEqual(500, Amount(d, 12345678), 1e-9, "꼴등 줄은 끝이 없다");
+        }
+
+        [Test]
+        public void 위로_갈수록_많이_받는다()
+        {
+            // 주인 «이런 식으로 줘» 의 «식» 이 이것이다 — 위 구간이 아래 구간보다 적게 받는 일은 없어야 한다.
+            // 값 자체는 표에서 오므로 자가 숫자를 안 베끼고 «규칙» 만 잰다(오타 한 자리는 여기서 걸린다).
+            var d = Load();
+            double prev = double.MaxValue;
+            foreach (var t in d.Tiers)
+            {
+                Assert.AreEqual(1, t.Rewards.Count, t.Label + " 줄은 보상 한 칸(다이아)이다");
+                Assert.AreEqual("gem", t.Rewards[0].Item, t.Label + " 줄의 보상 종류 = 다이아(주인 «1등 다이아 3000개»)");
+                Assert.LessOrEqual(t.Rewards[0].Amount, prev, t.Label + " 줄이 윗줄보다 많이 받는다");
+                Assert.Greater(t.Rewards[0].Amount, 0, t.Label + " 줄이 0 을 준다");
+                prev = t.Rewards[0].Amount;
+            }
+            Assert.IsTrue(d.AnyRewards, "이제 표에 값이 있다(주인이 09:4X 에 줬다)");
+        }
+
+        /// <summary>그 등수가 받는 다이아(구간을 찾아 첫 칸을 읽는다).</summary>
+        static double Amount(ArenaRankData d, int rank)
+        {
+            var t = d.TierOf(rank);
+            Assert.IsNotNull(t, rank + "등이 드는 구간");
+            Assert.AreEqual(1, t.Rewards.Count, t.Label + " 줄은 한 칸");
+            return t.Rewards[0].Amount;
         }
 
         [Test]
