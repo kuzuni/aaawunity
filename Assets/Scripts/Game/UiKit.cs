@@ -1210,12 +1210,20 @@ namespace KkomaKnight.Game
             var asset = TmpFont.Get();
             if (asset != null) { t.font = asset; t.fontSharedMaterial = asset.material; }
             t.text = TextGlyphs.Safe(t.text);
-            int size = TextSize.Floor(Mathf.Max(12, Mathf.RoundToInt(t.fontSize)));
-            if (size > t.fontSize) t.fontSize = size;                       // 하한만 올린다(조각이 더 크면 그대로)
-            if (t.enableAutoSizing) t.fontSizeMin = TextSize.BestFitFloor(Mathf.Max(10, Mathf.RoundToInt(t.fontSizeMin)));
+            // ⚠ TMP 와 uGUI 의 결정적인 차이 하나 — <b>자동 크기가 «고른» 값을 TMP 는 `fontSize` 에 되써 넣는다</b>
+            // (uGUI 는 `fontSize` 를 그대로 두고 그릴 때만 줄였다). 그래서 자동 크기 글자에서 «우리가 바란 크기» 는
+            // `fontSize` 가 아니라 <b>`fontSizeMax`</b> 다 — 하한을 `fontSize` 에만 걸면 다음 레이아웃에서 지워지고
+            // 하한 게이트가 «미달» 로 센다(CI #455 에서 실제로 126줄이 그렇게 걸렸다).
+            bool auto = t.enableAutoSizing;
+            int size = TextSize.Floor(Mathf.Max(12, Mathf.RoundToInt(auto ? Mathf.Max(t.fontSize, t.fontSizeMax) : t.fontSize)));
+            if (auto)
+            {
+                if (t.fontSizeMax < size) t.fontSizeMax = size;             // «올려도 되는 한계» 가 하한을 넘게(실제 크기는 칸이 정한다)
+                t.fontSizeMin = TextSize.BestFitFloor(Mathf.Max(10, Mathf.RoundToInt(t.fontSizeMin)));
+            }
+            else if (size > t.fontSize) t.fontSize = size;                  // 하한만 올린다(조각이 더 크면 그대로)
             t.raycastTarget = false;
             EnsureOutline(t, size);
-            TextAudit.Mark(t, TextKind.Body);
             return t;
         }
         /// <summary>

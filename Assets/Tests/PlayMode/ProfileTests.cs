@@ -127,8 +127,9 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(UiKit.Find(ov, "ui.profileNick"), "Social_Profile_Nickname 조각(주인 지목)");
             var input = UiKit.Find(ov, Profile.NickInputName);
             Assert.IsNotNull(input, "입력칸(NickInput)");
-            var field = input.GetComponent<InputField>();
-            Assert.IsNotNull(field, "TMP 입력칸이 uGUI InputField 로 서 있다(Adopt 가 갈아 끼운다)");
+            // T207 ② — 조각의 입력칸을 부수지 않으므로 «TMP_InputField 그대로» 가 새 계약이다(전에는 uGUI InputField 로 갈아 끼웠다).
+            var field = input.GetComponent<TMP_InputField>();
+            Assert.IsNotNull(field, "조각의 TMP 입력칸이 그대로 서 있다(T207 ② — 부수지 않는다)");
             Assert.IsNotNull(field.textComponent, "제 글자 컴포넌트를 갖고 있다");
             Assert.AreEqual(Nickname.MaxLen, field.characterLimit, "한도 = 조각 실측 12");
             Assert.AreEqual(Nickname.Default, field.text, "지금 이름이 채워져 있다");

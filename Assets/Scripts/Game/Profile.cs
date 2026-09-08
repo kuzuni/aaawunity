@@ -169,7 +169,9 @@ namespace KkomaKnight.Game
             if (app == null) return;
             var root = app.Overlay.OpenPrefab("ui.profileNick");
             var rt = (RectTransform)root.transform;
-            var input = rt.GetComponentInChildren<InputField>(true);
+            // T207 ② — 조각의 입력칸을 부수고 uGUI InputField 로 다시 세우던 자리가 사라졌다(Adopt 가 TMP 를 그대로 둔다).
+            //   그러니 여기서 찾는 것도 조각이 달고 온 `TMP_InputField` 다 — 안 바꾸면 이 팝업이 «입력칸 없음» 이 된다(CI #455).
+            var input = rt.GetComponentInChildren<TMP_InputField>(true);
             TMP_Text count = null, desc = null, okLabel = null;
             foreach (var t in rt.GetComponentsInChildren<TMP_Text>(true))
             {
@@ -216,7 +218,7 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>글자 수 표시 갱신 + «확인» 을 쓸 수 있는지 — 규칙(<see cref="Nickname"/>)이 판정한다.</summary>
-        static void Tally(InputField input, TMP_Text count, Button ok)
+        static void Tally(TMP_InputField input, TMP_Text count, Button ok)
         {
             string v = input != null ? input.text : "";
             int n = Nickname.Clean(v).Length;

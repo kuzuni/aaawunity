@@ -103,11 +103,11 @@ namespace KkomaKnight.Tests.Play
             yield return Frames(2);
             var nick = UiKit.Find(_app.Overlay.Root, "ui.profileNick");
             Assert.IsNotNull(nick, "이름 짓기 팝업이 열린다");
-            // 입력칸은 이름으로 찾는다(ProfileTests 와 같은 계약 · Adopt 가 TMP 입력칸을 uGUI InputField 로 갈아 끼운 것)
+            // 입력칸은 이름으로 찾는다(ProfileTests 와 같은 계약 · T207 ② 뒤로는 조각의 TMP_InputField 를 그대로 쓴다)
             var inputT = UiKit.Find(_app.Overlay.Root, Profile.NickInputName);
             Assert.IsNotNull(inputT, "이름 입력칸(" + Profile.NickInputName + ")");
-            var input = inputT.GetComponent<InputField>();
-            Assert.IsNotNull(input, "입력칸이 uGUI InputField 로 서 있다");
+            var input = inputT.GetComponent<TMP_InputField>();
+            Assert.IsNotNull(input, "입력칸이 조각의 TMP_InputField 로 서 있다(T207 ②)");
             Assert.IsTrue(input.IsActive() && input.IsInteractable(), "입력칸이 살아 있다");
             _app.Overlay.Close(); yield return Frames(2);
             Assert.IsFalse(_app.Overlay.IsOpen, "닫힌다");

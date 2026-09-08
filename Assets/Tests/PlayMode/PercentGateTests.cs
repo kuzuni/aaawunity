@@ -4,6 +4,7 @@ using System.Text;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -69,7 +70,7 @@ namespace KkomaKnight.Tests.Play
             {
                 if (cv == null || !cv.isRootCanvas) continue;
                 _rows.AddRange(PercentAudit.Collect(name, cv.transform));
-                foreach (var t in cv.GetComponentsInChildren<UnityEngine.UI.Text>(false))
+                foreach (var t in cv.GetComponentsInChildren<TMP_Text>(false))
                     if (t != null && t.isActiveAndEnabled && !string.IsNullOrWhiteSpace(t.text)) _texts.Add(name + "\t" + t.text);
             }
             yield return Frames(1);

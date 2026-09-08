@@ -2,6 +2,7 @@ using System.Collections;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -970,7 +971,7 @@ namespace KkomaKnight.Tests.Play
             Assert.LessOrEqual(bodyLuma, PerkBodyLumaMax, "특전 카드 몸통이 밝다(휘도 " + bodyLuma.ToString("0.00") + ") — 흰 글자가 안 읽힌다(T135 · 레퍼런스 04 는 어두운 회색 몸통)");
             var desc = UiKit.Find(card, "Text_Value");
             Assert.IsNotNull(desc, "카드 설명 글자");
-            var t = desc.GetComponent<UnityEngine.UI.Text>();
+            var t = desc.GetComponent<TMP_Text>();
             Assert.IsNotNull(t, "설명 Text");
             float gap = Mathf.Abs(UiKit.Luma(t.color) - bodyLuma);
             Assert.GreaterOrEqual(gap, PerkContrastMin, "설명 글자와 몸통의 밝기 차이가 " + gap.ToString("0.00") + " 뿐이다(T135 · 최소 " + PerkContrastMin + ")");

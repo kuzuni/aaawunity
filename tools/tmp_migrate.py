@@ -60,6 +60,8 @@ TYPE_MAKE = "TextMeshProUGUI"
 #
 # ⚠ 이 표의 오른쪽은 CI #441 이 찍어 온 진짜 TMP 서명에서 왔다(결정 587). 지어낸 이름이 없다.
 PAIRS = [
+    # 정규화된 이름 — 접두까지 통째로(위 RE_QUALIFIED 주석 참조 · CI #455)
+    (r"(?:global::)?UnityEngine\.UI\.Text(?![\w])", "TMP_Text"),
     # uGUI FontStyle → TMP FontStyles (BoldAndItalic 은 TMP 에서 «두 깃발» 이다)
     (r"\bFontStyle\.BoldAndItalic\b", "(FontStyles.Bold | FontStyles.Italic)"),
     (r"\bFontStyle\.(Normal|Bold|Italic)\b", r"FontStyles.\1"),
@@ -170,6 +172,10 @@ def files():
 RE_MAKE = re.compile(r"AddComponent\s*<\s*(Text)\s*>")
 RE_GENERIC = re.compile(r"<[^<>;{}]*>")              # `<Text>` · `<Text, int>` · `List<(RectTransform, Text, float)>`(튜플도 인자다)
 RE_NEWARR = re.compile(r"new\s+(Text)\s*\[")         # `new Text[n]` — 크기를 준 배열 만들기
+# ⚠ **정규화된 이름**(`UnityEngine.UI.Text`)은 위 규칙들이 «점 뒤라 타입이 아니다» 로 지나친다 — CI #455 가 그것을 짚었다:
+#   `PercentGateTests` 가 그 꼴로 훑고 있어서 치환 뒤 «활성 Text 0» 이 됐고, 그 자가 조용히 아무것도 안 세었다(그리고 다른 단언에서 터졌다).
+#   그래서 이 꼴만 따로 잡는다 — 앞의 네임스페이스까지 통째로 갈아 준다.
+RE_QUALIFIED = re.compile(r"(?:global::)?UnityEngine\.UI\.(Text)(?![\w])")
 RE_IN_GENERIC = re.compile(r"(?<![\w.])Text(?![\w])")
 RE_DECL = re.compile(r"(?<![\w.])(Text)(?=\s+[A-Za-z_])")          # `Text _status;` · `Text txt = …`
 RE_CAST = re.compile(r"(?<![\w.])(?:as|is)\s+(Text)(?![\w])")       # `g as Text`

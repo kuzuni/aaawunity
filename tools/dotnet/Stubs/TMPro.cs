@@ -75,5 +75,11 @@ namespace TMPro
         public Graphic placeholder { get; set; }
         public int characterLimit { get; set; }
         public LineType lineType { get; set; }
+        // T207 ② — 이제 조각의 입력칸을 «그대로 쓴다»(uGUI InputField 로 다시 세우지 않는다) → 우리 코드가 이 표면을 직접 부른다.
+        // 이름은 uGUI InputField 와 같다(TMP 가 그 API 를 그대로 본떴다).
+        public string text { get; set; }
+        public class OnChangeEvent : UnityEngine.Events.UnityEvent<string> { }
+        public OnChangeEvent onValueChanged { get; } = new OnChangeEvent();
+        public void ActivateInputField() { }
     }
 }

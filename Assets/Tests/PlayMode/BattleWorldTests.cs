@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -93,7 +94,7 @@ namespace KkomaKnight.Tests.Play
                 // T51 ② — 사망 «펑» 이펙트 없음
                 if (GameObject.Find(DeathFxName) != null) st.DeathFxFrames++;
                 // T110 ⓐ — 골드 팝 «글자» 는 뜨지 않는다(데미지 숫자는 그대로 떠야 한다)
-                foreach (var txt in _app.Frame.GetComponentsInChildren<UnityEngine.UI.Text>(false))
+                foreach (var txt in _app.Frame.GetComponentsInChildren<TMP_Text>(false))
                 {
                     if (txt == null || string.IsNullOrEmpty(txt.text)) continue;
                     if (txt.text.EndsWith(" G", StringComparison.Ordinal)) st.GoldPopFrames++;
