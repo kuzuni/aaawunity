@@ -3271,6 +3271,35 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > · `UiSmokeTests.BattleTicksAndAllBattlePopups` — 클리어 골드 «0» 이 bestFit 36(하한 40). ⓐ 와 같은 갈래로 보이나 이 자리는 **우리 코드가 세우는 글자**라 따로 재라.
 >
 > **순서 제안** — ⓑ 둘(각 한 줄)로 자를 새 세계에 맞춘 뒤 ⓐ 를 잡으면, ⓐ 를 고쳤는지가 자에 바로 보인다. ⓒ 는 그 다음.
+>
+> ---
+> 🔎 **ⓒ 넷을 다 쟀다 + ⓐ 의 뿌리가 «다섯 자리» 가 아니라 «한 줄» 이었다 (2026-09-08 02:2X · sess-1913-2015 · 워커 E · 코드 0줄 · 임자 lock 이라 안 고쳤다 · 결정 601)**
+> 워커 A 가 «추측 금지 · 재야 한다» 로 남긴 넷을 **코드로** 답했다. 그리고 재는 동안 ⓐ 가 갈라졌다.
+>
+> **① ⓐ 다섯 중 셋 + ⓒ 클리어 골드 = 한 뿌리 · 한 줄** — `UiKit.SetText`(`UiKit.cs:1272`)
+> ```csharp
+> if (size.HasValue) { int sz = TextSize.Floor(size.Value, kind); txt.fontSize = sz; txt.fontSizeMax = sz; }
+> ```
+> **하한이 «부르는 쪽이 크기를 넘겼을 때만» 걸린다.** uGUI 시절엔 `Adopt`/`ConvertTmp` 가 조각 글자를 부수고 새로 세워 **우리 크기가 언제나 이겼다** — T207 ② 가 그 부수기를 없앴으니 이제 **크기를 안 넘기는 호출부는 조각의 수를 그대로 물려받는다.**
+> 걸린 자리가 전부 «크기 인자 없는 `SetText`» 다: `Screens.cs:332` ResourceBar «0»·«1M»(39) · `Screens.cs:461` 탭 «전투/던전/상점»(30) · `Overlay.Reward`(`Overlay.cs:612`) 클리어 골드(36 · **A 의 ⓒ 넷째가 여기로 합쳐진다**).
+> 자가 보는 것도 확인했다 — `TextAudit.cs:237` 은 `effective = enableAutoSizing ? max(fontSize, fontSizeMax) : fontSize` 를 `TextSize.Min(kind)` 과 견준다. 즉 **«그려진 크기» 가 아니라 «선언된 크기»** 라, `SetText` 에서 올리면 그대로 초록이 된다.
+>
+> **② 그런데 토글 «ON»(36)만 다른 갈래다 — `SetText` 고침으로 안 잡힌다**
+> `ApplySwitch`(`Overlay.cs:747`)는 `Show`/`Hide` 뿐이고 **«ON»·«OFF» 글자를 우리가 한 번도 안 쓴다.** `SetText` 가 안 불리니 하한을 걸 자리가 없다. → 조각을 세울 때 그 글자를 **한 번 훑어 하한을 입히든지**(`Toggle()` 안에서) 예외로 두든지, 그 한 자리는 따로 정해야 한다. **①을 고치고도 이것 하나는 남는다 — 미리 알고 시작하라.**
+>
+> **③ ⓒ NickInput ×2 = «자» 가 아니라 «화면»(우리 코드)** — `Profile.cs:172`
+> ```csharp
+> var input = rt.GetComponentInChildren<InputField>(true);   // ← uGUI InputField
+> ```
+> T207 ② 커밋이 스스로 «입력칸도 조각의 `TMP_InputField` 를 그대로 쓴다» 고 적었다. 그러니 이 줄은 **null** 이고, `Profile.cs:206` 의 `input.name = NickInputName` 이 **영영 안 돈다** → 자가 찾는 «NickInput» 이 없다. 고침은 `TMP_InputField` 로: **172(지역 변수) · 194(`input.text` — API 같다) · 219(`Tally` 매개변수)** 셋.
+>
+> **④ ⓒ 07·05 «%» = «자» 쪽 · 한 줄** — `PercentGateTests.cs:71`
+> ```csharp
+> foreach (var t in cv.GetComponentsInChildren<UnityEngine.UI.Text>(false))   // ← _texts 가 영영 빈다
+> ```
+> `PercentAudit.cs:48` 과 `TextAudit.cs:223` 은 **이미 `TMP_Text` 로 옮겨져 있다** — 자 안에 손으로 쓴 이 수집 고리 하나만 남았다. 즉 **«%» 는 화면에 멀쩡히 찍혀 있고 자가 눈이 먼 것**이다(같은 파일의 197·203 행은 `PercentAudit` 를 쓰므로 멀쩡하다).
+>
+> **⇒ 다시 센 순서** — ⓑ 둘(A) + ④ + ③ 이 **«자·우리 코드를 새 세계에 맞추는» 네 자리**(각 한 줄~세 줄)이고, ① 한 줄이 **크기 넷**을 한꺼번에 닫는다. 남는 것은 ② 토글 «ON» 하나. **아홉이 아니라 여섯 자리다.**
 **▸ 회차 1 — 뿌리는 «설정 한 줄» 이었다(sess-0303-27371 · 워커 I · 02:1X · 결정 600 · lock 잡음)**
 
 위에 적힌 길 셋(ⓐ `NoWrap` · ⓑ 칸 넓히기 · ⓒ 금칙 손질)은 전부 **증상 쪽**이라 깨지는 화면 수만큼 되풀이해야 한다. 뿌리는 하나였다:
