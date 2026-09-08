@@ -147,7 +147,13 @@ namespace KkomaKnight.Game
             if (!ChapterChest.Claim(App.Data, App.Save, chapter, step, out var gem, out var gold)) { App.Toast("아직 받을 수 없습니다"); return; }
             App.Save.Gem += gem; App.Save.Gold += gold; App.Persist();
             Audio.Sfx("snd.coin");
-            App.Toast($"챕터 {chapter} · {step}단계 보상 — 다이아 {UiKit.Fmt(gem)} · 골드 {UiKit.Fmt(gold)}");
+            // T241 2단계 — 받은 것은 공통 «리워드» 팝업이 보여 준다(토스트 대신 · 지시서 2항 «각 화면이 제 나름의 토스트·팝업을 따로 만들지 않는다»).
+            // 여기는 팝업이 아니라 «화면» 이라 닫으면 그대로 이 화면이 남는다 — onClose 가 필요 없다(아래 Go/Refresh 는 팝업 뒤에서 이미 돌았다).
+            RewardPopup.Show(new System.Collections.Generic.List<RewardPopup.Item>
+            {
+                RewardPopup.Item.Of("ui.gemRed", UiKit.Fmt(gem)),
+                RewardPopup.Item.Of("ui.coin", UiKit.Fmt(gold)),
+            });
             // 받으면 옆으로 스크롤되어 다음 보상(주인 지시) — 마지막 칸이면 제자리에서 «받음» 만 남는다
             if (_cell < ChapterChest.LastIndex(App.Data, App.Save)) Go(+1);
             else Refresh();

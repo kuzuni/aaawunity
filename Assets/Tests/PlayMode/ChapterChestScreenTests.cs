@@ -107,6 +107,15 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual("받기", TextOf(page, "ClaimBtn"), "아직 안 받은 단");
                 Assert.IsTrue(ClickNamed(page, "ClaimBtn"), "«받기» 가 눌린다(단 " + st + ")");
                 yield return Frames(2);
+                // T241 — 받으면 공통 «리워드» 팝업이 화면 «위» 에 뜬다(다이아·골드 두 칸). 탭해 닫으면 이 화면이 그대로 남는다.
+                {
+                    var rv = _app.Overlay.Root;
+                    Assert.IsNotNull(Find(rv, "RewardTitle"), "받기 → 리워드 팝업(T241 · 단 " + st + ")");
+                    Assert.AreEqual(2, RewardPopup.LastCellCount, "다이아·골드 두 칸");
+                    var dim = Find(rv, "Dimmed")?.GetComponent<Button>(); Assert.IsNotNull(dim, "리워드 팝업의 탭하여 닫기");
+                    dim.onClick.Invoke(); yield return Frames(2);
+                    Assert.IsFalse(_app.Overlay.IsOpen, "탭하면 닫히고 챕터 보상 화면이 남는다");
+                }
                 Assert.AreEqual(gem0 + D.ChapterChest.Gem, S.Gem, 1e-6, "다이아가 늘었다");
                 Assert.AreEqual(gold0 + D.ChapterChest.Gold, S.Gold, 1e-6, "골드가 늘었다");
                 Assert.IsTrue(ChapterChest.ClaimedStep(S, 1, st), "받았다고 남는다");
