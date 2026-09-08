@@ -36,6 +36,8 @@ namespace KkomaKnight.Core
 
         /// <summary>PvP 순위 보상 구간표 — 이 레포의 <c>Assets/KkomaKnight/arena.json</c>(카탈로그 텍스트 «data.arenaRank» · T237). 로드는 Bootstrap 이 따로 한다 · 없으면 null(25 팝업이 종전 네 줄 껍데기 그대로 뜬다).</summary>
         public ArenaRankData ArenaRank;
+        /// <summary>출석(16) 7일 보상표 — 이 레포의 <c>Assets/KkomaKnight/attendance.json</c>(카탈로그 텍스트 «data.attendance» · T253). 로드는 Bootstrap 이 따로 한다 · 없으면 null(출석 팝업이 종전 껍데기 그대로 뜬다).</summary>
+        public AttendanceData Attendance;
         /// <summary>퀘스트 표 — 이 레포의 <c>Assets/KkomaKnight/quest.json</c>(카탈로그 텍스트 «data.quest» · T257). 로드는 Bootstrap 이 따로 한다 · 없으면 null(15 팝업이 종전 껍데기 그대로 뜬다).</summary>
         public QuestData Quest;
         /// <summary>아레나 한 판의 규칙표(승점·티어) — 이 레포의 <c>Assets/KkomaKnight/arenaMatch.json</c>(카탈로그 텍스트 «data.arenaMatch» · T240). 로드는 Bootstrap 이 따로 한다 · 없으면 null(승점이 안 움직인다).</summary>

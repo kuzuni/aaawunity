@@ -105,6 +105,14 @@ namespace KkomaKnight.Core
         /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 0»(옛 세이브 호환 · <see cref="Revive"/> 와 같은 방식 · 세이브 버전 그대로).
         /// </summary>
         public int KeyBlue, KeyPurple, KeyYellow;
+        /// <summary>
+        /// 출석(16)에서 <b>받은 칸 수</b>(0~7 · T253) · 그 칸을 받은 <b>날짜</b>(<c>yyyy-MM-dd</c> · 비어 있으면 «아직 한 번도 안 받았다»).
+        /// 규칙은 <see cref="Core.Attendance"/> 한 곳이 갖는다 — «며칠 연속인가» 가 아니라 <b>받은 칸 수</b>로 나아간다(주인이 «연속이 끊기면» 을 말한 적이 없다 · §1).
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 0/빈 값»(옛 세이브 호환 · 세이브 버전 그대로).
+        /// </summary>
+        public int AttDone;
+        /// <inheritdoc cref="AttDone"/>
+        public string AttDay = "";
         /// <summary>아레나 <b>최고 순위</b>(1 이 가장 높다 · <b>0 = 아직 한 판도 안 했다</b> · T240 5항). 승점과 달리 «되돌아가지 않는» 기록이라 따로 적는다.</summary>
         public int ArenaBest;
         /// <summary>아레나 <b>티켓</b>(T240 6항 · 결정 695) · 그 티켓이 살아 있는 날짜(<c>yyyy-MM-dd</c> · 바뀌면 <see cref="ArenaTickets.Roll"/> 이 채운다).
@@ -214,6 +222,7 @@ namespace KkomaKnight.Core
             o["revive"] = (double)Revive;   // T254
             o["keyBlue"] = (double)KeyBlue; o["keyPurple"] = (double)KeyPurple; o["keyYellow"] = (double)KeyYellow;   // T255
             o["arenaCoin"] = ArenaCoin;   // T243
+            o["attDone"] = (double)AttDone; o["attDay"] = AttDay ?? "";   // T253
             var ml = new List<object>();
             foreach (var m in Mail)
             {
@@ -261,6 +270,7 @@ namespace KkomaKnight.Core
                     s.Revive = j["revive"].Int();   // 없으면 0(옛 세이브 호환 · T254)
                     s.KeyBlue = j["keyBlue"].Int(); s.KeyPurple = j["keyPurple"].Int(); s.KeyYellow = j["keyYellow"].Int();   // 없으면 0(옛 세이브 호환 · T255)
                     s.ArenaCoin = j["arenaCoin"].Num();   // 없으면 0(옛 세이브 호환 · T243)
+                    s.AttDone = j["attDone"].Int(); s.AttDay = j["attDay"].Str("");   // 없으면 0/빈 값(옛 세이브 호환 · T253)
                     foreach (var m in j["mail"].Items())
                     {
                         var mi = new MailItem { Id = m["id"].Str(""), Kind = m["kind"].Str(KkomaKnight.Core.Mail.KindArena), Title = m["title"].Str(""), Desc = m["desc"].Str("") };

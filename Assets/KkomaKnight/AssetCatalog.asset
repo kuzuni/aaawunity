@@ -1307,6 +1307,8 @@ MonoBehaviour:
     text: {fileID: 4900000, guid: 53ac548ae01a73e2d587755cd32206a7, type: 3}
   - key: data.arenaRank
     text: {fileID: 4900000, guid: 9699792394ebe9c20b11351e4498fe52, type: 3}
+  - key: data.attendance
+    text: {fileID: 4900000, guid: 3d689e9fd117fd33573a162eeea0374c, type: 3}
   - key: data.arenaMatch
     text: {fileID: 4900000, guid: a1d27e6e48fa196c4a5302a2ab2477e0, type: 3}
   - key: data.quest

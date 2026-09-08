@@ -1,0 +1,15 @@
+{
+  "_note": "출석(16) 7일 보상표 — 이 레포 전용(aaaw data/ 에 없는 수치 · T253). StreamingAssets/data 는 aaaw 동기 폴더라 여기 둔다. 코드는 카탈로그 텍스트 «data.attendance» 로 읽는다(코드에 숫자 없음 · ROUTINE §1). 값을 바꾸려면 이 파일만 고친다.",
+  "_source": "주인 2026-09-09 04:3X 원문 그대로다 — «출석 날짜별 (7일) 보상 — 1. 3000골드 2. 파란키 2 3. 100다이아 4. 펫알 10 5. 5000골드 6. 보라키 1 7. 10k골드, 1000다이아 이렇게 하기.» 일곱 줄 전부 주인이 준 값이고 워커가 채운 칸은 없다.",
+  "_items": "item 이름은 재화 이름 한 벌을 그대로 쓴다(gold · gem · petEgg · keyBlue · keyPurple · keyYellow · arenaCoin) — 담는 자리는 Core.Mail.Give 한 곳이 안다. 아이콘 짝짓기는 화면 몫이다(arena.json·dungeon.json 과 같은 갈래).",
+  "_day7": "7일차만 보상이 둘이다(골드 10,000 + 다이아 1,000) — 레퍼런스 16 이 Day 7 을 넓은 칸으로 그리는 것과 맞다. 줄마다 칸 수가 달라도 되게 rewards 를 목록으로 둔다.",
+  "days": [
+    { "day": 1, "rewards": [ { "item": "gold",      "amount": 3000 } ] },
+    { "day": 2, "rewards": [ { "item": "keyBlue",   "amount": 2 } ] },
+    { "day": 3, "rewards": [ { "item": "gem",       "amount": 100 } ] },
+    { "day": 4, "rewards": [ { "item": "petEgg",    "amount": 10 } ] },
+    { "day": 5, "rewards": [ { "item": "gold",      "amount": 5000 } ] },
+    { "day": 6, "rewards": [ { "item": "keyPurple", "amount": 1 } ] },
+    { "day": 7, "rewards": [ { "item": "gold",      "amount": 10000 }, { "item": "gem", "amount": 1000 } ] }
+  ]
+}

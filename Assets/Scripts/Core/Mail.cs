@@ -107,6 +107,14 @@ namespace KkomaKnight.Core
 
         static string Num(double v) => System.Math.Round(v).ToString("#,0");
 
+        /// <summary>
+        /// 보상 한 칸을 <b>세이브에 더한다</b> — 우편함이 쓰고(<see cref="Claim"/>), <b>즉시 지급하는 곳도 같은 것을 쓴다</b>
+        /// (T253 출석 · 주인 T243 «나머지는 걍 즉시 지급»). 이름 → 담는 자리의 짝이 <b>이 한 곳</b>이어야
+        /// «우편으로 받은 골드» 와 «출석으로 받은 골드» 가 다른 칸에 들어가는 사고가 안 난다.
+        /// <para>모르는 이름·0 이하는 <b>아무 일도 안 한다</b> — 표가 오타를 내도 재화가 줄지 않는다(<see cref="CanPay"/> 로 미리 거르는 것이 옳은 길이다).</para>
+        /// </summary>
+        public static void Give(SaveData s, string item, double amount) => Pay(s, item, amount);
+
         static void Pay(SaveData s, string item, double amount)
         {
             if (s == null || amount <= 0) return;
