@@ -719,6 +719,13 @@ namespace KkomaKnight.Game
             return $"{(int)t.TotalMinutes:00}:{t.Seconds:00}";
         }
 
+        /// <summary>«h:mm:ss»(T265 충전 카운트다운 — 3시간짜리라 <see cref="Mmss"/> 의 «mm:ss» 로는 «180:00» 이 된다).</summary>
+        static string Hhmmss(double sec)
+        {
+            var t = TimeSpan.FromSeconds(sec < 0 ? 0 : Math.Ceiling(sec));
+            return $"{(int)t.TotalHours}:{t.Minutes:00}:{t.Seconds:00}";
+        }
+
         /// <summary>회색 제목 명판(레퍼런스 30·31 은 리본이 아니라 상자 폭을 채우는 띠) — 조각 <c>fr.rect</c> + 가운데 제목 글자.</summary>
         static RectTransform Plate(Transform parent, Layout.R parentR, Layout.R r, string title, string name = "Plate")
         {
@@ -891,7 +898,7 @@ namespace KkomaKnight.Game
         /// <summary>
         /// 빠른 탐험 팝업(표 ㉖ · 레퍼런스 31) — 탐험 팝업 «위에» 겹치는 작은 상자. 주인 «빠른 탐험은 광고 보고 얻는 식»:
         /// «받을 보상» 칸(골드·다이아 = 시간당 × <c>quickHours</c>) → «🎬 무료» 버튼 → 모의 광고 3초(T23 <see cref="Overlay.AdCountdown"/>) → 즉시 지급.
-        /// 지급은 누적에 더하지 않는다(중복 수령 방지 · ROUTINE T97 4항) · 하루 횟수를 하나 쓴다.
+        /// 지급은 누적에 더하지 않는다(중복 수령 방지 · ROUTINE T97 4항) · <b>보유 충전을 하나 쓴다</b>(T265 — 하루 횟수가 아니다).
         /// </summary>
         public static void QuickExplore(App app, Action after)
         {
@@ -938,8 +945,22 @@ namespace KkomaKnight.Game
             fb.name = "QxFreeBtn";
             if (left <= 0) UiKit.SetInteractable(fb.GetComponent<Button>(), false); else BtnBadge(fb, left.ToString(), "QxBadge");
 
+            // T265 — 주인 «빠른 탐험 팝업 내에 그렇게 써 주면 됨, 그런 정보».
+            // 규칙과 «다음 충전까지» 를 한 줄로 적는다. 수는 전부 표에서 온다(코드에 3 을 안 박는다).
+            var ruleR = Layout.QxRule.Within(B);
+            string ruleTxt = "--";
+            if (D != null)
+            {
+                double next = Core.Expedition.NextQuickSec(S, D, now);
+                ruleTxt = $"{UiKit.FmtQty(D.QuickChargeHours)}시간마다 1회 충전 · 최대 {D.QuickMax}회 · "
+                        + (next > 0 ? "다음 충전까지 " + Hhmmss(next) : "충전 완료");
+            }
+            var rule = UiKit.Label(box, ruleR.X, ruleR.Y, ruleR.W, ruleR.H, ruleTxt,
+                TextSize.Aux, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Aux);
+            rule.name = "QxRule";
+
             UiKit.Tag(box, "팝업 박스"); UiKit.Tag(plate, "제목 명판"); UiKit.Tag(gridBg.rectTransform, "보상 칸 바탕");
-            UiKit.Tag(note.rectTransform, "안내 문구"); UiKit.Tag(fb, "광고 버튼"); TagClose(app);
+            UiKit.Tag(note.rectTransform, "안내 문구"); UiKit.Tag(fb, "광고 버튼"); UiKit.Tag(rule.rectTransform, "충전 규칙"); TagClose(app);
             var qc = UiKit.Find(box, "QxCellGold"); if (qc != null) UiKit.Tag(qc, "보상 칸(1칸)");
         }
     }

@@ -1,5 +1,6 @@
 {
   "_note": "탐험(방치·오프라인 보상) 수치표 — 이 레포 전용(aaaw data/ 에 없는 수치 · 주인 지시 2026-09-07 «탐험은 걍 방치 + 오프라인 보상 느낌 · 켜두거나 꺼둬도 쩄든 방치 보상 쌓이고 · 골드·다이아 쌓이게 · 빠른 탐험은 광고 보고 얻는 식»). StreamingAssets/data 는 aaaw 동기 폴더라 여기 둔다(dailyGift.json 과 같은 자리). 코드는 카탈로그 텍스트 «data.expedition» 으로 읽는다 — 코드에 숫자 하드코딩 0. 값을 바꾸려면 이 파일만 고친다.",
+  "_quick": "빠른 탐험은 **하루 횟수** 가 아니라 **충전**이다(주인 2026-09-09 «3시간에 한 번씩 초기화 · 3시간에 한 번씩 3번 받을 수 있는 거임» · T265). quickChargeHours 마다 1회씩 차고 quickMax 까지 쌓인다 — 꽉 차 있으면 연속 3번, 다 쓰면 3시간 뒤 1회 · 6시간 뒤 2회 · 9시간 뒤 3회. 앱을 꺼 둔 동안도 지난 시간만큼 찬다(오프라인 회복 · 세이브가 «마지막 충전 기준 시각» 을 든다). 옛 quickAdsPerDay(하루 3회)는 이 규칙으로 **대체됐다** — 되돌리려면 이 두 키를 지우고 quickAdsPerDay 를 되살린다.",
   "_rate": "시간당 골드 = goldKill(진행 챕터) × goldRandAvg × goldKillsPerHour. goldKill 은 tune.json 의 결정부(goldKillBase + goldKillPer×c) × goldGrowth^(c-1) 그대로라 «뒤 챕터일수록 좋다»(레퍼런스 30 «Later chapters grant better rewards»)가 저절로 성립한다. goldKillsPerHour = 방치 1시간이 그 챕터 적 몇 마리 처치분인가(120 = 활성 플레이 몇 분치). 다이아는 챕터와 무관한 고정(레퍼런스 30 의 «10/h»).",
   "maxHours": 8,
   "goldKillsPerHour": 120,
@@ -7,5 +8,6 @@
   "gemPerHour": 10,
   "minClaimMinutes": 1,
   "quickHours": 5,
-  "quickAdsPerDay": 3
+  "quickChargeHours": 3,
+  "quickMax": 3
 }

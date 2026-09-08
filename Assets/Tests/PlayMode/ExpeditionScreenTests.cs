@@ -160,7 +160,7 @@ namespace KkomaKnight.Tests.Play
             yield return Boot();
             var D = _app.Data != null ? _app.Data.Expedition : null; Assert.IsNotNull(D);
             var S = _app.Save; S.MaxChapter = 10;
-            S.ExpQuickDay = SaveStore.Today(); S.ExpQuickUsed = 0;
+            S.ExpQuickDay = SaveStore.Today(); S.ExpQuickUsed = 0;   // 옛 필드(T265 로 안 쓴다) — 그래도 «가득» 이어야 한다: 아래 Roll 이 충전을 채운다
             _app.ShowScreen("lobby"); yield return Frames(2);
 
             // ⓔ 빨간 점 — 빠른 탐험 횟수가 남아 있으면 켜져 있다
@@ -172,13 +172,24 @@ namespace KkomaKnight.Tests.Play
             LobbyPopups.QuickExplore(_app, null); yield return Frames(2);
             var ov = _app.Overlay.Root;
             Assert.IsNotNull(Find(ov, "QuickExploreBox"), "빠른 탐험 상자");
-            foreach (var n in new[] { "QxPlate", "QxSub", "QxTitle", "QxGridBg", "QxCellGold", "QxCellGem", "QxNote", "QxFreeBtn" })
+            foreach (var n in new[] { "QxPlate", "QxSub", "QxTitle", "QxGridBg", "QxCellGold", "QxCellGem", "QxNote", "QxFreeBtn", "QxRule" })
                 Assert.IsNotNull(Find(ov, n), "조각 " + n + " (표 ㉖)");
             Expedition.QuickReward(_app.Data, S, D, out double qg, out double qm);
             Assert.AreEqual(UiKit.Fmt(qg), CellQty(ov, "QxCellGold"), "빠른 탐험 골드 = 시간당 × quickHours");
             Assert.AreEqual(UiKit.FmtQty(qm), CellQty(ov, "QxCellGem"), "빠른 탐험 다이아");
             Assert.IsTrue(Find(ov, "QxFreeBtn").GetComponent<Button>().interactable, "횟수가 남으면 광고 버튼이 열린다");
             Assert.IsNotNull(Find(ov, "QxBadge"), "남은 횟수 배지");
+            Assert.AreEqual(Expedition.QuickLeft(S, D, LobbyPopups.NowSec(), SaveStore.Today()).ToString(),
+                Find(ov, "QxBadge").GetComponentInChildren<TMP_Text>().text, "배지 숫자 = 보유 충전(T265)");
+
+            // T265 — 주인 «빠른 탐험 팝업 내에 그렇게 써 주면 됨, 그런 정보».
+            // «규칙이 적혀 있다» 를 글자 한 조각이 아니라 **세 가지가 다 있는가** 로 잰다 —
+            // 시간·최대 횟수는 표에서 온 값이어야 하고(코드에 3 을 박으면 표를 고쳐도 화면이 안 바뀐다),
+            // 꽉 차 있으므로 «충전 완료» 여야 한다(카운트다운은 다 쓴 판에서 잰다).
+            string ruleTxt = Find(ov, "QxRule").GetComponent<TMP_Text>().text;
+            StringAssert.Contains(UiKit.FmtQty(D.QuickChargeHours) + "시간마다", ruleTxt, "충전 주기가 표 값으로 적혀 있다");
+            StringAssert.Contains("최대 " + D.QuickMax + "회", ruleTxt, "최대 보유가 표 값으로 적혀 있다");
+            StringAssert.Contains("충전 완료", ruleTxt, "가득 차 있으면 «충전 완료»");
             AssertNoPopupRibbon(ov, "빠른 탐험 팝업(31)");   // T146 ⓐ — 31 도 레퍼런스에 리본이 없다(명판이 제목)
             Assert.IsNull(EnglishLeftOver(ov), "영문 데모 글자 0 (T44)");
             _log.AssertNoRed("빠른 탐험 팝업");

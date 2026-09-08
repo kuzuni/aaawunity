@@ -600,7 +600,8 @@ namespace KkomaKnight.Core
         public static readonly R ExBtnBadge = new R(84.0f, -6.0f, 20.0f, 40.0f);
 
         // ㉖ 빠른 탐험 팝업 — docs/ref/31_expedition_fast.jpg (T97 · 워커 D 실측 · ±0.5%p · 30 위에 겹치는 작은 상자)
-        public static readonly R QxBox = new R(5.3f, 31.4f, 89.4f, 36.5f);
+        // T265 — 충전 규칙 한 줄이 버튼 아래로 들어가면서 상자를 3.5%p 늘렸다(레퍼런스 31 에는 없던 줄 · 주인 «빠른 탐험 팝업 내에 그렇게 써 주면 됨»).
+        public static readonly R QxBox = new R(5.3f, 31.4f, 89.4f, 40.0f);
         public static readonly R QxPlate = new R(5.3f, 31.4f, 89.4f, 4.5f);
         public static readonly R QxSub = new R(5.3f, 36.6f, 89.4f, 2.2f);          // 보조 36 한 줄 (+0.4%p)
         public static readonly R QxTitle = new R(5.3f, 39.2f, 89.4f, 2.4f);        // 본문 40 한 줄 (+0.4%p)
@@ -609,6 +610,8 @@ namespace KkomaKnight.Core
         public const float QxCellPitchX = 15.0f; public const int QxCellCount = 4;
         public static readonly R QxNote = new R(5.3f, 58.4f, 89.4f, 2.4f);         // 본문 40 한 줄 (+0.4%p)
         public static readonly R QxFreeBtn = new R(31.7f, 61.9f, 36.6f, 4.8f);
+        /// <summary>충전 규칙 + 다음 충전까지 남은 시간(T265 · 주인 2026-09-09) — 광고 버튼 아래 보조 36 한 줄.</summary>
+        public static readonly R QxRule = new R(5.3f, 67.4f, 89.4f, 2.2f);
 
         // ㉓ 7일 챌린지 팝업 · ㉔ 패스 페이지 — T78(주인 2026-09-07 «7일 챌린지 걍 안 하고 싶음» · «시즌 패스도 삭제»)로 화면째 삭제 · 표 ㉓·㉔ 도 폐기
 
