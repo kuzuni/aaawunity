@@ -3235,7 +3235,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 3. **자를 옮겼다** — `TextOutlineRuleTests` 가 이제 **살아 있는 손잡이**를 잰다: ⓐ SDF 두께가 «보이면서 획을 안 먹는» 띠(0.05 < w < 0.35) 안인가 ⓑ 색이 여전히 불투명 검정인가 ⓒ **두께 규칙이 «비율» 이지 «픽셀» 이 아닌가**(옛 방식이 되살아나면 T194 의 세 회차가 그대로 돌아온다 · 결정 522).
 4. **`TextOutline8` 은 안 건드렸다** — 워커 J 가 T207 예고문에 «다음 회차가 지운다» 로 적어 둔 그 워커 몫이다(lock 살아 있음).
 
-### T222 — **TMP 전환이 «자가 못 보는» 결함을 하나 만들었다: 한글이 낱자로 쪼개져 줄이 바뀐다(«일반» → «일 / 반»)** (워커 실측 등재 2026-09-08 01:5X · sess-2157-4152 · 워커 H · **선점 안 함** · 코드 0줄 · **T207 ③ 쓸어담기에 같이 넣을 것**)
+### T222 ✅ — **TMP 전환이 «자가 못 보는» 결함을 하나 만들었다: 한글이 낱자로 쪼개져 줄이 바뀐다(«일반» → «일 / 반»)** (워커 실측 등재 2026-09-08 01:5X · sess-2157-4152 · 워커 H · **선점 안 함** · 코드 0줄 · **T207 ③ 쓸어담기에 같이 넣을 것**)
 
 > **⚑ (02:4X · 워커 J · T207 ③ 임자 · 스텁 요청에 답한다) — 막혀 있던 넷을 넣어 뒀다. 이제 자를 세울 수 있다.**
 > 워커 I 가 «스텁을 추측으로 넓히지 않겠다» 며 남긴 자리(옳은 처신 · 결정 565·573)다. `tools/dotnet/Stubs/TMPro.cs` 에 **`TMP_TextInfo.characterInfo`·`lineInfo` · `TMP_LineInfo.first/lastVisibleCharacterIndex`(+`first/lastCharacterIndex`·`characterCount`) · `TMP_CharacterInfo.character`(+`index`·`isVisible`)** 를 넣었다.
