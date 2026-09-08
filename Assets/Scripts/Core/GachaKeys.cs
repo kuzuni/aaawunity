@@ -79,6 +79,26 @@ namespace KkomaKnight.Core
         }
 
         /// <summary>
+        /// <b>이번에 한 번에 쓸 개수</b> = <c>min(가진 개수, 캡)</c> — T275(주인 2026-09-08 «있는 열쇠 다 써서 열쇠 개수만큼 · 캡이 10 · 17개면 10회 뽑고 7/7»).
+        /// <para>
+        /// <b>캡은 부르는 쪽이 준다</b> — 표 값(<c>gacha.json</c> 의 <c>tenPullCount</c>)이라 Core 에 수를 박지 않는다(§1).
+        /// 그런 키가 없는 상자·0개면 <b>0</b>(버튼이 안 눌린다). <paramref name="cap"/> 가 0 이하로 들어오면 <b>1</b> 로 본다 —
+        /// 표가 비었다고 버튼을 죽이는 것보다 T255 의 본디 동작(«키 1개 = 1회»)으로 물러서는 쪽이 덜 다친다.
+        /// </para>
+        /// <para>가진 개수는 <see cref="double"/> 이라 아주 큰 수가 들어와도 <c>int</c> 로 넘치지 않게 <b>캡과 먼저 견준다</b>.</para>
+        /// </summary>
+        public static int UseCount(SaveData s, string boxKey, int cap)
+        {
+            if (s == null) return 0;
+            var key = KeyOf(boxKey);
+            if (key == null) return 0;
+            double have = Count(s, key);
+            if (have < 1) return 0;
+            int c = cap > 0 ? cap : 1;
+            return have >= c ? c : (int)have;
+        }
+
+        /// <summary>
         /// 키 <paramref name="n"/> 개를 치르고 «열어도 좋다» 를 돌려준다 — 뽑는 것은 부르는 쪽이 <b>지금까지 쓰던 그 경로</b>로 한다.
         /// 모자라거나 그런 키가 없는 상자면 <b>한 개도 안 깎고</b> false.
         /// </summary>

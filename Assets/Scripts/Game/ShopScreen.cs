@@ -90,7 +90,7 @@ namespace KkomaKnight.Game
         /// <summary>빛살을 걸 자리(칸 · 아이콘 · 조각 키) — <b>배치가 끝난 뒤</b> 한꺼번에 건다(아이콘 rect 가 % 앵커라 Build 중에는 0 이고, 그러면 빛살 한 변이 0 이 된다).</summary>
         readonly List<(RectTransform host, RectTransform icon, string key)> _lightPlan = new List<(RectTransform, RectTransform, string)>();
         float _timerT;
-        sealed class BoxWidgets { public Button One, Ten, Key; public TMP_Text KeyCount; public readonly List<TMP_Text> Pills = new List<TMP_Text>(); }
+        sealed class BoxWidgets { public Button One, Ten, Key; public TMP_Text KeyCount, KeyLabel; public readonly List<TMP_Text> Pills = new List<TMP_Text>(); }
 
         static string Today() => DateTime.Now.ToString("yyyy-MM-dd");
         static bool CanFree(SaveData S) => S.FreeDay != Today();
@@ -272,7 +272,12 @@ namespace KkomaKnight.Game
         /// <b>왜 «값» 이 아니라 «가진 개수» 를 찍나</b> — 값은 언제나 1 이라(«키 1개 = 1회») 「1」 은 아무것도 안 알려 준다.
         /// 반면 «몇 개 있나» 는 다른 데서 볼 수 없다: 지시서 5항이 <b>탑바에는 넣지 말라</b>고 못 박고 «그 버튼 옆에 개수를 보여 준다» 라고 적은 자리가 여기다.
         /// </para>
-        /// 0개면 비활성이고(개수는 그대로 「0」 이 보인다 — 어디서 구하는지는 아레나 상인·출석이 안다), 키가 없는 상자면 버튼 자체를 안 만든다.
+        /// <para>
+        /// <b>T275 — 글자가 <c>보유/이번에 쓸 개수</c> 로 넓어졌다</b>(주인 2026-09-08 «있는 열쇠 다 써서 · 캡 10 · 17개면 17/10»).
+        /// 큰 카드 윗줄의 «1회» 도 <b>«쓸 개수»회</b> 로 같이 움직인다 — 누르면 10 회가 나가는데 «1회» 라고 적혀 있으면 그것이 거짓말이다.
+        /// 0개면 누를 수 없으므로 윗줄은 T255 때의 «1회» 그대로 쉰다.
+        /// </para>
+        /// 0개면 비활성이고(개수는 그대로 「0/0」 이 보인다 — 어디서 구하는지는 아레나 상인·출석이 안다), 키가 없는 상자면 버튼 자체를 안 만든다.
         /// </summary>
         RectTransform KeyButton(RectTransform card, GachaBox box, Layout.R rect, bool twoLine, BoxWidgets w)
         {
@@ -280,9 +285,9 @@ namespace KkomaKnight.Game
             var b = UiKit.Button(card, "ui.btnGreen", "", () => PullWithKey(box.Key), rect); b.name = "Key";
             var own = UiKit.ButtonText(b); if (own != null) own.gameObject.SetActive(false);
             var row = twoLine
-                ? PriceRow(b, new Layout.R(0, 50, 100, 44), "0", null, GachaKeys.Icon(item), "KeyIcon")
-                : PriceRow(b, new Layout.R(0, 0, 100, 100), "0", null, GachaKeys.Icon(item), "KeyIcon", TextSize.Aux, TextKind.Aux);
-            if (twoLine) { var top = UiKit.Label(b, 0, 6, 100, 44, "1회", TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); top.name = "Label"; }
+                ? PriceRow(b, new Layout.R(0, 50, 100, 44), "0/0", null, GachaKeys.Icon(item), "KeyIcon")
+                : PriceRow(b, new Layout.R(0, 0, 100, 100), "0/0", null, GachaKeys.Icon(item), "KeyIcon", TextSize.Aux, TextKind.Aux);
+            if (twoLine) { var top = UiKit.Label(b, 0, 6, 100, 44, "1회", TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); top.name = "Label"; w.KeyLabel = top; }
             w.Key = b.GetComponent<Button>();
             w.KeyCount = row.Find("Cost") != null ? row.Find("Cost").GetComponent<TMP_Text>() : null;
             return b;
@@ -519,13 +524,16 @@ namespace KkomaKnight.Game
                 var st = State(box.Key); var lines = PityLines(box, st, w.Pills.Count);
                 for (int i = 0; i < w.Pills.Count; i++) if (w.Pills[i] != null) w.Pills[i].text = lines[i];
                 UiKit.SetInteractable(w.One, S.Gem >= box.Cost); UiKit.SetInteractable(w.Ten, S.Gem >= box.Cost * D.Gacha.TenPullCount);
-                // T255 — 키 버튼은 «가진 개수» 를 찍고 0개면 비활성(개수는 그대로 보인다 · 지시서 5항)
+                // T255·T275 — 키 버튼은 «보유/이번에 쓸 개수» 를 찍고 0개면 비활성(개수는 그대로 보인다 · 지시서 5항)
+                // 쓸 개수 = min(보유, 캡) 이고 캡은 표 값이다(코드에 10 을 안 박는다 · §1). 뽑고 나면 Pull 이 이 Refresh 를 불러 17 → 7/7 로 바로 갈린다.
                 if (w.Key != null)
                 {
                     var item = GachaKeys.KeyOf(box.Key);
-                    int have = (int)GachaKeys.Count(S, item);
-                    if (w.KeyCount != null) w.KeyCount.text = UiKit.FmtQty(have);
-                    UiKit.SetInteractable(w.Key, have > 0);
+                    double have = GachaKeys.Count(S, item);
+                    int use = GachaKeys.UseCount(S, box.Key, D.Gacha.TenPullCount);
+                    if (w.KeyCount != null) w.KeyCount.text = UiKit.FmtQty(have) + "/" + use;
+                    if (w.KeyLabel != null) w.KeyLabel.text = (use > 0 ? use : 1) + "회";
+                    UiKit.SetInteractable(w.Key, use > 0);
                 }
             }
             foreach (var g in _gated) UiKit.SetInteractable(g.btn, g.can());
@@ -568,15 +576,21 @@ namespace KkomaKnight.Game
 
         // ───────────────────────── 뽑기 → 결과 팝업 (공통 팝업 문법 · 명판 · 열린 상자 · 격자 = GearUi.Cell · 탭하여 닫기) ─────────────────────────
         /// <summary>
-        /// 키 1개로 그 상자를 한 번 연다(T255 3항) — <b>여는 것은 다이아로 여는 그 경로 그대로</b>다.
+        /// 키로 그 상자를 <b>가진 만큼(캡까지) 한 번에</b> 연다(T255 3항 → T275 · 주인 2026-09-08 «있는 열쇠 다 써서 열쇠 개수만큼 · 캡이 10»).
         /// 키는 «비용 수단» 만 바꾸므로(<see cref="GachaKeys"/>) 확률·천장·결과가 다이아로 연 것과 한 톨도 다르지 않다.
+        /// <para>
+        /// <b>한 판으로 n 회</b>다 — <c>Pull(n, …)</c> 한 번(1회씩 n 번 부르면 결과 창이 n 번 뜬다 · T275 4항).
+        /// 다이아 N회 뽑기가 쓰는 그 길 그대로라 결과 창도 새 꼴이 아니다.
+        /// </para>
+        /// <b>캡은 표 값</b>(<c>D.Gacha.TenPullCount</c>) — «10회 버튼» 이 이미 그 값으로 글자와 값을 만든다. 코드에 10 을 안 박는다(§1).
         /// </summary>
         void PullWithKey(string boxKey)
         {
             var item = GachaKeys.KeyOf(boxKey);
             if (item == null) return;
-            if (!GachaKeys.CanOpen(App.Save, boxKey)) { App.Toast(GachaKeys.Name(item) + "가 없습니다"); return; }
-            Pull(1, boxKey, true);
+            int n = GachaKeys.UseCount(App.Save, boxKey, App.Data.Gacha.TenPullCount);
+            if (n <= 0) { App.Toast(GachaKeys.Name(item) + "가 없습니다"); return; }
+            Pull(n, boxKey, true);
         }
 
         void Pull(int n, string boxKey, bool withKey = false)

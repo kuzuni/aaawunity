@@ -96,5 +96,55 @@ namespace KkomaKnight.Tests
             Assert.AreEqual(5.0, s.PetEgg, "펫알은 종전 자리 그대로다(T228)");
             Assert.AreEqual(0, s.KeyBlue, "음수·모르는 이름은 아무 일도 안 한다");
         }
+
+        // ───────── T275 — «가진 만큼 한 번에»(캡은 표 값) ─────────
+
+        /// <summary>주인이 든 예를 그대로 잰다: 1→1 · 8→8 · 17→10(그 뒤 7→7) · 0→0. 경계는 캡 언저리(9·10·11)다.</summary>
+        [Test]
+        public void UseCountIsHaveCappedAtTheTableCap()
+        {
+            const int Cap = 10;   // 표 값(gacha.json tenPullCount)을 흉내낸 것 — 코드가 아니라 부르는 쪽이 준다
+            var s = new SaveData();
+            foreach (var (have, want) in new[] { (0, 0), (1, 1), (8, 8), (9, 9), (10, 10), (11, 10), (17, 10), (7, 7) })
+            {
+                s.KeyBlue = have;
+                Assert.AreEqual(want, GachaKeys.UseCount(s, GachaKeys.BoxRare, Cap), $"{have}개 → {want}회");
+            }
+        }
+
+        /// <summary>17개로 한 번 누르면 10 이 빠지고 남은 7 이 그대로 «다음에 쓸 개수» 가 된다(주인 예의 뒷부분).</summary>
+        [Test]
+        public void SeventeenBecomesSevenAfterOnePress()
+        {
+            const int Cap = 10;
+            var s = new SaveData { KeyBlue = 17 };
+            int n = GachaKeys.UseCount(s, GachaKeys.BoxRare, Cap);
+            Assert.AreEqual(10, n);
+            Assert.IsTrue(GachaKeys.Open(s, GachaKeys.BoxRare, n));
+            Assert.AreEqual(7, s.KeyBlue, "쓴 만큼만 빠진다");
+            Assert.AreEqual(7, GachaKeys.UseCount(s, GachaKeys.BoxRare, Cap), "다음 번은 7/7");
+        }
+
+        /// <summary>못 쓰는 자리는 0 이다 — 키 없는 상자·모르는 상자·세이브 없음. 캡이 0 이하로 와도 «1회» 로 물러설 뿐 넘치지 않는다.</summary>
+        [Test]
+        public void UseCountIsZeroWhereKeysCannotBeSpent()
+        {
+            var s = new SaveData { KeyBlue = 5 };
+            Assert.AreEqual(0, GachaKeys.UseCount(s, "noSuchBox", 10), "키가 없는 상자는 언제나 0");
+            Assert.AreEqual(0, GachaKeys.UseCount(s, GachaKeys.BoxLegend, 10), "파란 키는 전설 상자를 못 연다");
+            Assert.AreEqual(0, GachaKeys.UseCount(null, GachaKeys.BoxRare, 10));
+            Assert.AreEqual(1, GachaKeys.UseCount(s, GachaKeys.BoxRare, 0), "표가 비면 T255 의 본디 «1회» 로 물러선다");
+            Assert.AreEqual(1, GachaKeys.UseCount(s, GachaKeys.BoxRare, -3));
+        }
+
+        /// <summary>아주 큰 보유(우편 오지급 같은 사고)에도 캡이 먼저 걸린다 — <c>double → int</c> 로 넘겨 넘치는 자리가 없다.</summary>
+        [Test]
+        public void AbsurdlyManyKeysStillSpendOnlyTheCap()
+        {
+            var s = new SaveData { KeyYellow = int.MaxValue };
+            Assert.AreEqual(10, GachaKeys.UseCount(s, GachaKeys.BoxMyth, 10));
+            Assert.IsTrue(GachaKeys.Open(s, GachaKeys.BoxMyth, 10));
+            Assert.AreEqual(int.MaxValue - 10, s.KeyYellow);
+        }
     }
 }
