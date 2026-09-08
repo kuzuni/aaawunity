@@ -6,7 +6,7 @@ namespace KkomaKnight.Core
     /// «지금 받을 수 있는 것이 있는가» — 빨간 점(알림)의 판정을 **한 곳**에 모은다 (T96 ⓔ · 주인 2026-09-07
     /// «광고 보고 획득할 수 있는 재화 있는 경우에도 빨간 점 떠야 함. 알림.»).
     /// 화면(로비 메뉴 ≡ · 사이드 아이콘 · 메뉴 항목)은 여기만 보고 점을 켠다 — 판정이 화면마다 갈리지 않게.
-    /// 순수 C# 이라 EditMode 에서 그대로 돈다. 아직 실물이 아닌 항목(우편함 T96-mail · 출석 · 퀘스트 · 특권)은
+    /// 순수 C# 이라 EditMode 에서 그대로 돈다. 아직 실물이 아닌 항목(우편함 T96-mail · 출석)은
     /// 세이브에 «받았다» 상태 자체가 없어 **거짓말하지 않고 false** 로 둔다 — 실물이 되는 커밋이 여기 한 줄씩 더한다.
     /// </summary>
     public static class Notify
@@ -57,12 +57,31 @@ namespace KkomaKnight.Core
                 || Privilege.AnyClaimable(s, G.Privilege, today);
         }
 
+        /// <summary>
+        /// 퀘스트 트랙에 <b>지금 받을 칸</b>이 있는가 (T257 · 주인 «메달 포인트 채워질 때마다 상단 상품을 받을 수 있게»).
+        /// <para>
+        /// 묻기 전에 <see cref="QuestRun.Roll"/> 로 날·주를 먼저 민다 — 안 그러면 <b>어제 채운 칸</b>을 오늘도 받을 수 있다고 말한다.
+        /// 묻는 함수가 세이브를 손대는 것은 이 파일의 본디 꼴이다(<see cref="DailyGiftAd"/> 도 <c>DailyGift.Roll</c> 을 부른다).
+        /// </para>
+        /// <paramref name="today"/> 는 다른 판정과 <b>같은 날짜 글자</b>(<c>yyyy-MM-dd</c>)를 쓴다 — 여기서만 <c>DateTime.Now</c> 를 부르면
+        /// 한 화면 안에서 «어제로 보는 판정» 과 «오늘로 보는 판정» 이 섞인다. 글자가 이상하면 <b>거짓말하지 않고 false</b>.
+        /// </summary>
+        public static bool QuestClaimable(GameData G, SaveData s, string today)
+        {
+            if (G == null || s == null || G.Quest == null) return false;
+            if (!System.DateTime.TryParseExact(today, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                                               System.Globalization.DateTimeStyles.None, out var day)) return false;
+            QuestRun.Roll(s, G.Quest, day);
+            return QuestRun.AnyClaimable(s, G.Quest);
+        }
+
         /// <summary>화면 어디든 지금 받을 수 있는 것이 있는가(메뉴 + 로비에 남은 탐험 · 광고 재화 전부).</summary>
         public static bool Any(GameData G, SaveData s, double nowSec, string today)
         {
             if (G == null || s == null) return false;
             return MenuAny(G, s, nowSec, today)
                 || ExpeditionClaimable(G, s, G.Expedition, nowSec, today)
+                || QuestClaimable(G, s, today)          // T257 — 퀘스트는 T148 로 로비 사이드 기둥에 있다(메뉴 ≡ 가 아니라 여기)
                 || AdReward(G, s, nowSec, today);
         }
 

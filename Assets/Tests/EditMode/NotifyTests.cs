@@ -133,5 +133,48 @@ namespace KkomaKnight.Tests
             Assert.IsFalse(Notify.TabAny("shop", G, s, 0, Today), "상점 탭은 장비 사정에 안 흔들린다");
         }
 
+
+        // ── T257 퀘스트 빨간 점 ──────────────────────────────────────────────
+        static GameData WithQuest()
+        {
+            var G = new GameData();
+            G.Quest = QuestData.Parse(System.IO.File.ReadAllText(
+                TestData.RepoFile(System.IO.Path.Combine("Assets", "KkomaKnight", "quest.json"))));
+            return G;
+        }
+
+        [Test]
+        public void 퀘스트_받을_것이_생기면_점이_켜지고_받으면_꺼진다()
+        {
+            var G = WithQuest(); var s = Fresh();
+            Assert.IsFalse(Notify.QuestClaimable(G, s, Today), "아무것도 안 깼으면 꺼짐");
+            QuestRun.Bump(s, "kill", 50);            // 20 점 = 첫 칸이 열린다
+            Assert.IsTrue(Notify.QuestClaimable(G, s, Today), "받을 것이 생기면 켜짐");
+            Assert.IsTrue(QuestRun.Claim(s, G.Quest, true, 0));
+            Assert.IsFalse(Notify.QuestClaimable(G, s, Today), "받고 나면 꺼짐");
+        }
+
+        [Test]
+        public void 어제_채운_칸은_오늘_점을_켜지_않는다()
+        {
+            // 이 자가 없으면 «묻기 전에 Roll» 을 빠뜨려도 아무도 모른다 — 날이 바뀌어도 어제 것이 계속 켜져 있는다.
+            var G = WithQuest(); var s = Fresh();
+            QuestRun.Roll(s, G.Quest, new System.DateTime(2026, 9, 7));
+            QuestRun.Bump(s, "kill", 50);
+            Assert.IsTrue(Notify.QuestClaimable(G, s, "2026-09-07"), "그날은 켜져 있다");
+            Assert.IsFalse(Notify.QuestClaimable(G, s, "2026-09-08"), "날이 바뀌면 셈이 0 이라 꺼진다");
+        }
+
+        [Test]
+        public void 표가_없거나_날짜_글자가_이상하면_거짓말하지_않는다()
+        {
+            var s = Fresh();
+            Assert.IsFalse(Notify.QuestClaimable(new GameData(), s, Today), "표가 없으면 꺼짐(로드 실패 · 화면도 껍데기다)");
+            var G = WithQuest();
+            QuestRun.Bump(s, "kill", 50);
+            Assert.IsFalse(Notify.QuestClaimable(G, s, ""), "날짜 글자가 비면 꺼짐");
+            Assert.IsFalse(Notify.QuestClaimable(G, s, "2026/09/07"), "꼴이 다르면 꺼짐");
+        }
+
     }
 }
