@@ -73,12 +73,14 @@ namespace KkomaKnight.Game
             var di = dim.gameObject.AddComponent<Image>();
             di.color = Palette.A(Palette.Dim, DimAlpha); di.raycastTarget = true;
             UiKit.FadeIn(di, DimAlpha);
+            UiKit.Tag(dim, "어둠");
 
             // ⓑ 빛살 — 제목 뒤. 여기는 «칸» 이 아니라 리본 자리와 같은 갈래라 clip 을 끈다(T189 예외 · Overlay 의 레벨업 빛과 같은 호출 꼴).
             var glow = UiKit.Rect(root, "RewardGlow");
             UiKit.Pct(glow, Layout.RwGlow);
             UiKit.LightBehind(glow, null, UiKit.LightKey, UiKit.LightPeriod, Palette.A(Palette.Reward, 0.55f),
                               sidePx: UiKit.FrameW * Layout.RwGlow.W / 100f, clip: false);
+            UiKit.Tag(glow, "빛살");
 
             // ⓒ 제목 — 노란 굵은 «리워드»
             var title = UiKit.Label(root, Layout.RwTitle.X, Layout.RwTitle.Y, Layout.RwTitle.W, Layout.RwTitle.H,
@@ -94,7 +96,8 @@ namespace KkomaKnight.Game
             var row = UiKit.Rect(root, "RewardCells"); UiKit.Pct(row, Layout.RwCells);
             var cells = Cells(row, items);
             LastCellCount = cells.Count;
-            UiKit.TagGroup(row, "보상 칸(" + cells.Count + "개)", cells.ToArray());
+            UiKit.TagGroup(row, "보상 칸(" + cells.Count + "칸)", cells.ToArray());
+            if (cells.Count > 0) UiKit.Tag(cells[0], "보상 칸(1칸)");   // 표 ㊹ 는 «한 칸» 과 «묶음» 을 따로 잰다(칸 수가 달라져도 «한 칸» 은 안 흔들린다)
 
             // ⓕ 바닥 «탭하여 닫기»
             var close = UiKit.Label(root, Layout.RwClose.X, Layout.RwClose.Y, Layout.RwClose.W, Layout.RwClose.H,

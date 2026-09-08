@@ -98,6 +98,10 @@ namespace KkomaKnight.Tests.Play
             LobbyPopups.Quest(_app); yield return Frames(2); yield return Shot("15_quest"); _app.Overlay.Close(); yield return Frames(1);
             LobbyPopups.Attendance(_app); yield return Frames(2); yield return Shot("16_attendance"); _app.Overlay.Close(); yield return Frames(1);
             LobbyPopups.DailyGift(_app); yield return Frames(2); yield return Shot("17_daily_gift"); _app.Overlay.Close(); yield return Frames(1);
+            // 35 공통 «리워드» 획득 팝업(T241 · 표 ㊹) — 어느 지급 자리에서 뜨든 그림은 같으므로 «팝업 그 자체» 를 찍는다.
+            // 레퍼런스 35 도 두 칸이라 칸 수를 둘로 맞춘다(칸 수가 바뀌면 칸 폭·묶음 폭이 달라져 표와 어긋난다).
+            RewardPopup.Show(new List<RewardPopup.Item> { RewardPopup.Item.Of("ui.coin", "1,000"), RewardPopup.Item.Of("ui.gemRed", "50") });
+            yield return Frames(2); yield return Shot("35_reward"); _app.Overlay.Close(); yield return Frames(1);
             // 30 탐험 · 31 빠른 탐험 (T97 — 방치·오프라인 보상 · 표 ㉕·㉖) — 8시간이 쌓인 상태로 찍어야 칸 숫자·«받기» 가 레퍼런스처럼 보인다
             if (_app.Data != null && _app.Data.Expedition != null) _app.Save.ExpSettle = LobbyPopups.NowSec() - _app.Data.Expedition.MaxHours * 3600.0;
             LobbyPopups.Expedition(_app); yield return Frames(2); yield return Shot("30_expedition");
