@@ -1289,7 +1289,11 @@ namespace KkomaKnight.Tests.Play
                 //    검증 못 한 단언이 build-webgl 앞에 서면 배포가 멈춘다(T226 · 결정 625·627 의 순서 그대로).
                 //    다음 회차가 이 줄의 수를 보고 «≥ 10px» 단언으로 올린다.
                 {
-                    var gaps = new StringBuilder("[T260] 섹션 제목 위 여백(px · 목표 ≥ 10)");
+                    // ⚠ 이 수는 «절대값 ≥ 10px» 이 아니다 — 셈으로 미리 재 보니 상자 +8.8 · 다이아 +13.5 · **골드 −7.5** 다
+                    //    (`Header()` 가 조각을 y−0.75 에 높이 4.0 으로 놓아서 조각 상자가 위 칸과 겹친다).
+                    //    주인이 시킨 것은 «각각 위로 10씩 **더**» 이고 그것은 셋 다 정확히 +10.0px 로 지켜졌다.
+                    //    그러니 다음 회차가 올릴 단언은 «≥ 10px» 이 아니라 «SecTopGap 만큼 늘었다» 여야 한다(결정 728).
+                    var gaps = new StringBuilder("[T260] 섹션 제목 위 여백(px · 셈으로 미리 낸 값 = 상자 8.8 · 다이아 13.5 · 골드 −7.5)");
                     foreach (var nm in new[] { "Sec:상자", "Sec:다이아", "Sec:골드" })
                     {
                         var h = UiKit.Find(content, nm) as RectTransform;
