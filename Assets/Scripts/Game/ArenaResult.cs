@@ -11,7 +11,7 @@ namespace KkomaKnight.Game
     /// 레퍼런스 <c>docs/ref/34_pvp_win.jpg</c> · 자리 표 <c>docs/ref-layout.md</c> ㊻).
     /// <para>
     /// 모양은 «상자» 가 아니라 어두운 전면 위 <b>가운데 세로 한 줄</b>이다:
-    /// 어둠 → 빛나는 방패 엠블럼 → «승리»/«패배» → 티어 명판 → 아바타 VS 아바타 → 이름 둘 → 승점 변화 둘 → 주황 «계속».
+    /// 어둠(공통 <see cref="UiKit.DimAlpha"/>) → 빛나는 방패 엠블럼 → «승리»/«패배» → 티어 명판 → 아바타 VS 아바타 → 이름 둘 → 승점 변화 둘 → 주황 «계속».
     /// 자리는 전부 <see cref="Layout"/> 의 <c>Arr*</c>(레퍼런스 34 실측)이고 <b>이 파일에 자리 수치를 박지 않는다</b>.
     /// </para>
     /// <para>
@@ -28,11 +28,11 @@ namespace KkomaKnight.Game
     /// </summary>
     public static class ArenaResult
     {
-        /// <summary>
-        /// 이 화면의 어둠 알파 — 레퍼런스 34 의 뒤 화면(콜로세움) 평균 밝기가 <b>26.9/255</b> 로 살아 있다(실측).
-        /// 공통 <see cref="UiKit.DimAlpha"/>(0.985)는 뒤를 거의 지워 버린다. <see cref="RewardPopup.DimAlpha"/> 와 같은 값·같은 까닭이다.
-        /// </summary>
-        public const float DimAlpha = 0.65f;
+        // ⚠ 여기 있던 «이 화면만 옅은 어둠»(0.65) 특례를 **지웠다**(T240 · 워커 F 의 T241 4단계 실측을 그대로 따른다 · 결정 692).
+        //   내가 연 까닭은 «레퍼런스 34 의 뒤 화면 평균 밝기가 26.9/255 로 살아 있다» 였는데,
+        //   F 가 같은 런의 팝업 둘을 **나란히** 재 보니 **공통 어둠(UiKit.DimAlpha 0.985)이 내는 띠가 이미 26~32** 였다 —
+        //   레퍼런스에서 뒤가 «보이는» 것은 어둠이 옅어서가 아니라 **그 화면 자체가 밝아서**다(콜로세움도 밝다).
+        //   즉 내 26.9 는 «특례가 필요하다» 가 아니라 «공통값이 맞다» 는 증거였다. 한 장만 재면 관측이 아니라 인상이다(결정 620·692).
 
         /// <summary>«승리» / «패배» 글자 — 화면이 지어내지 않게 여기 한 곳에 둔다.</summary>
         public const string WinTitle = "승리", LoseTitle = "패배";
@@ -70,8 +70,8 @@ namespace KkomaKnight.Game
             var dim = UiKit.Rect(root, "Dimmed");
             UiKit.Stretch(dim, -UiKit.DimOverscan, -UiKit.DimOverscan, -UiKit.DimOverscan, -UiKit.DimOverscan);
             var di = dim.gameObject.AddComponent<Image>();
-            di.color = Palette.A(Palette.Dim, DimAlpha); di.raycastTarget = true;
-            UiKit.FadeIn(di, DimAlpha);
+            di.color = Palette.A(Palette.Dim, UiKit.DimAlpha); di.raycastTarget = true;
+            UiKit.FadeIn(di, UiKit.DimAlpha);
             UiKit.Tag(dim, "어둠");
 
             // ⓑ 방패 엠블럼 + 뒤 빛무리 — 조각은 이미 있는 것(ui.iconPvp = 금빛 방패)이다. 새 그림 0(§1).

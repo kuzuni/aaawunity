@@ -186,6 +186,56 @@ namespace KkomaKnight.Tests
         }
 
         [Test]
+        public void ArenaTicketsRefillOncePerDayAndBlockWhenEmpty()
+        {
+            var m = Load();
+            Assert.Greater(m.TicketDailyRefill, 0, "표에 아레나 티켓 보충이 있어야 이 절이 뜻이 있다(T240 6항)");
+            var s = new SaveData();
+
+            // 첫 접근에 그날치가 채워진다(옛 세이브도 여기로 온다 — 필드가 없으면 0/빈 값이다)
+            Assert.AreEqual(m.TicketDailyRefill, ArenaTickets.Tickets(s, m, "2026-09-08"));
+            // 같은 날 다시 봐도 안 채워진다
+            Assert.IsFalse(ArenaTickets.Roll(s, m, "2026-09-08"));
+
+            // 있는 만큼 쓰고, 없으면 막는다
+            for (int i = 0; i < m.TicketDailyRefill; i++) Assert.IsTrue(ArenaTickets.Spend(s, m, "2026-09-08"), "티켓 " + i);
+            Assert.AreEqual(0, s.ArenaTicket);
+            Assert.IsFalse(ArenaTickets.Spend(s, m, "2026-09-08"), "없으면 못 쓴다");
+
+            // 날짜가 바뀌면 다시 채워진다
+            Assert.IsTrue(ArenaTickets.Roll(s, m, "2026-09-09"));
+            Assert.AreEqual(m.TicketDailyRefill, s.ArenaTicket);
+
+            // 이미 그날치보다 많이 들고 있으면 깎지 않는다(던전 Roll 과 같은 규약)
+            s.ArenaTicket = m.TicketDailyRefill + 3;
+            ArenaTickets.Roll(s, m, "2026-09-10");
+            Assert.AreEqual(m.TicketDailyRefill + 3, s.ArenaTicket, "보충은 «채우기» 지 «맞추기» 가 아니다");
+        }
+
+        [Test]
+        public void WithoutATicketRuleTheChallengeIsNeverBlocked()
+        {
+            // 표를 못 읽었거나 보충이 0 이면 «티켓을 안 쓰는 세상» 이다 — 막으면 화면이 통째로 죽는다
+            var s = new SaveData();
+            Assert.IsTrue(ArenaTickets.Spend(s, null, "2026-09-08"), "표가 없으면 막지 않는다");
+            Assert.AreEqual(0, s.ArenaTicket, "그리고 아무것도 안 줄인다");
+            var zero = ArenaMatchData.Parse("{\"win\":8,\"lose\":-6,\"minScore\":0,\"ticketDailyRefill\":0,\"tiers\":[{\"name\":\"a\",\"from\":0}]}");
+            Assert.IsTrue(ArenaTickets.Spend(s, zero, "2026-09-08"), "보충 0 도 같다");
+        }
+
+        [Test]
+        public void ArenaTicketRoundTripsInTheSave()
+        {
+            var gd = TestData.Load();
+            var s = new SaveData { ArenaTicket = 2, ArenaDay = "2026-09-08" };
+            var back = SaveData.FromJson(s.ToJson(), gd);
+            Assert.AreEqual(2, back.ArenaTicket);
+            Assert.AreEqual("2026-09-08", back.ArenaDay);
+            var old = SaveData.FromJson("{\"v\":2,\"gold\":1}", gd);
+            Assert.AreEqual(0, old.ArenaTicket); Assert.AreEqual("", old.ArenaDay);
+        }
+
+        [Test]
         public void BestRankKeepsTheHighestAndTreatsZeroAsNone()
         {
             Assert.AreEqual(3, ArenaMatch.BetterRank(0, 3), "0 은 «아직 없다» 라 상대가 이긴다");

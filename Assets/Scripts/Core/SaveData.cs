@@ -95,6 +95,12 @@ namespace KkomaKnight.Core
         public double ArenaCoin;
         /// <summary>아레나 <b>최고 순위</b>(1 이 가장 높다 · <b>0 = 아직 한 판도 안 했다</b> · T240 5항). 승점과 달리 «되돌아가지 않는» 기록이라 따로 적는다.</summary>
         public int ArenaBest;
+        /// <summary>아레나 <b>티켓</b>(T240 6항 · 결정 695) · 그 티켓이 살아 있는 날짜(<c>yyyy-MM-dd</c> · 바뀌면 <see cref="ArenaTickets.Roll"/> 이 채운다).
+        /// 던전(<see cref="DunTickets"/>·<see cref="DunDay"/>)과 같은 꼴인데 아레나는 한 곳이라 <b>키가 없고 수 하나</b>다.
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 0/빈 값»(옛 세이브 호환 · 첫 접근에 그날치가 채워진다).</summary>
+        public int ArenaTicket;
+        /// <inheritdoc cref="ArenaTicket"/>
+        public string ArenaDay = "";
         /// <summary>이미 받은 <b>챕터 보상</b>(Chapter Chest) — 챕터 → «받은 단» 비트(T137 · 주인 2026-09-07 «챕터 보상은 챕터당 3개» · 단 하나가 비트 하나).
         /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 빈 목록»(옛 세이브 호환 · <see cref="DunDay"/> 와 같은 방식) — 세이브 버전은 그대로 둔다.
         /// T98 때의 «챕터 번호 목록» 세이브는 <see cref="ChapterChest.OldSaveAll"/> 로 읽어 두었다가 <see cref="ChapterChest.Normalize"/> 가 «단 다 받음» 으로 옮긴다.</summary>
@@ -192,6 +198,7 @@ namespace KkomaKnight.Core
             var df = new Dictionary<string, object>(); foreach (var kv in DunFloor) df[kv.Key] = (double)kv.Value; o["dunFloor"] = df;
             o["petEgg"] = PetEgg;
             o["arenaScore"] = ArenaScore; o["arenaBest"] = (double)ArenaBest;   // T240
+            o["arenaTicket"] = (double)ArenaTicket; o["arenaDay"] = ArenaDay ?? "";   // T240 6항
             o["arenaCoin"] = ArenaCoin;   // T243
             var ml = new List<object>();
             foreach (var m in Mail)
@@ -236,6 +243,7 @@ namespace KkomaKnight.Core
                     foreach (var k in j["dunFloor"].Keys) s.DunFloor[k] = j["dunFloor"][k].Int();
                     s.PetEgg = j["petEgg"].Num();   // 없으면 0(옛 세이브 호환 · T228)
                     s.ArenaScore = j["arenaScore"].Num(); s.ArenaBest = j["arenaBest"].Int();   // 없으면 0 = «아직 한 판도 안 했다»(옛 세이브 호환 · T240)
+                    s.ArenaTicket = j["arenaTicket"].Int(); s.ArenaDay = j["arenaDay"].Str("");   // 없으면 0/빈 값 → 첫 접근에 그날치가 채워진다(T240 6항)
                     s.ArenaCoin = j["arenaCoin"].Num();   // 없으면 0(옛 세이브 호환 · T243)
                     foreach (var m in j["mail"].Items())
                     {

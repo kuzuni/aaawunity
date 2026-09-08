@@ -31,6 +31,11 @@ namespace KkomaKnight.Core
         public double MinScore;
         /// <summary>새 세이브의 시작 승점.</summary>
         public double StartScore;
+        /// <summary>
+        /// 하루에 채워지는 <b>아레나 티켓</b> 수(T240 6항 · 결정 695). 0 이면 «티켓을 안 쓴다»(규칙 없음)로 읽고 도전이 늘 된다 —
+        /// 표를 못 읽었다고 도전을 막으면 화면이 통째로 죽는다(<see cref="Settle"/> 이 표가 없을 때 아무것도 안 바꾸는 것과 같은 결).
+        /// </summary>
+        public int TicketDailyRefill;
         /// <summary>승점 오름차순 티어 구간(첫 줄의 <c>From</c> 은 <see cref="MinScore"/> 와 같다).</summary>
         public readonly List<Tier> Tiers = new List<Tier>();
 
@@ -43,6 +48,7 @@ namespace KkomaKnight.Core
             m.Lose = j["lose"].ReqNum("lose");
             m.MinScore = j["minScore"].Num();
             m.StartScore = j["startScore"].Num();
+            m.TicketDailyRefill = (int)j["ticketDailyRefill"].Num();
             foreach (var t in j["tiers"].Items())
                 m.Tiers.Add(new Tier { Name = t["name"].Str(""), From = t["from"].ReqNum("tiers[].from") });
 
@@ -50,6 +56,7 @@ namespace KkomaKnight.Core
             if (m.Win <= 0) throw new FormatException("arenaMatch.json: win 은 양수여야 한다(이기면 오른다)");
             if (m.Lose >= 0) throw new FormatException("arenaMatch.json: lose 는 음수여야 한다(지면 내린다)");
             if (m.StartScore < m.MinScore) throw new FormatException("arenaMatch.json: startScore 는 minScore 이상이어야 한다");
+            if (m.TicketDailyRefill < 0) throw new FormatException("arenaMatch.json: ticketDailyRefill 은 음수일 수 없다");
             if (m.Tiers.Count == 0) throw new FormatException("arenaMatch.json: tiers 가 비어 있다");
             if (m.Tiers[0].From != m.MinScore) throw new FormatException("arenaMatch.json: 첫 티어의 from 은 minScore 와 같아야 한다(바닥에 이름이 없으면 안 된다)");
             for (int i = 0; i < m.Tiers.Count; i++)
@@ -177,6 +184,54 @@ namespace KkomaKnight.Core
             if (a <= 0) return b;
             if (b <= 0) return a;
             return a < b ? a : b;
+        }
+    }
+
+
+    /// <summary>
+    /// 아레나 <b>티켓</b> (T240 6항 · 결정 695 · <see cref="DungeonTickets"/> 와 <b>같은 꼴</b>이다 — 새 문법을 안 만든다).
+    /// <para>
+    /// 지시서가 «아레나 티켓 규칙이 없으면 하루 보충 규칙을 던전과 같은 방식으로 만들고 결정 기록 한 줄» 로 열어 둔 자리다.
+    /// 던전과 다른 것은 둘뿐 — ⓐ 아레나는 한 곳이라 <b>던전 키가 없다</b>(수 하나) ⓑ 광고·다이아로 <b>더 사는 길이 없다</b>
+    /// (주인이 그것은 던전에만 말했다 · 지어내지 않는다).
+    /// </para>
+    /// ⚠ 표의 <c>ticketDailyRefill</c> 이 0 이거나 표가 없으면 <b>티켓을 안 쓰는 세상</b>이다 — <see cref="Spend"/> 가 늘 true 를 낸다.
+    /// 표를 못 읽었다고 도전을 막으면 화면이 통째로 죽는데, 그 편이 훨씬 나쁘다.
+    /// </summary>
+    public static class ArenaTickets
+    {
+        /// <summary>날짜가 바뀌었으면 티켓을 채운다(하루 첫 접근마다 · 바꿨으면 true). 던전 <c>Roll</c> 과 같은 규약.</summary>
+        public static bool Roll(SaveData s, ArenaMatchData m, string today)
+        {
+            if (s == null || m == null || m.TicketDailyRefill <= 0) return false;
+            if (s.ArenaTicket < 0) s.ArenaTicket = 0;
+            if (s.ArenaDay == today) return false;
+            s.ArenaDay = today;
+            if (s.ArenaTicket < m.TicketDailyRefill) s.ArenaTicket = m.TicketDailyRefill;
+            return true;
+        }
+
+        /// <summary>지금 보유한 티켓(날짜 넘김 보충을 먼저 반영한다).</summary>
+        public static int Tickets(SaveData s, ArenaMatchData m, string today)
+        {
+            if (s == null) return 0;
+            Roll(s, m, today);
+            return s.ArenaTicket < 0 ? 0 : s.ArenaTicket;
+        }
+
+        /// <summary>
+        /// 티켓 1 을 쓴다 — 있으면 하나 줄이고 true, 없으면 아무것도 안 하고 false.
+        /// <b>규칙이 없는 세상(표 없음 · 보충 0)에서는 늘 true</b> 다(아무것도 안 줄인다).
+        /// 저장은 호출부(게임 층) 몫이다(<see cref="DungeonTickets.Spend"/> 와 같은 규약).
+        /// </summary>
+        public static bool Spend(SaveData s, ArenaMatchData m, string today)
+        {
+            if (s == null) return false;
+            if (m == null || m.TicketDailyRefill <= 0) return true;   // 규칙이 아직 없다 — 막지 않는다
+            Roll(s, m, today);
+            if (s.ArenaTicket <= 0) return false;
+            s.ArenaTicket--;
+            return true;
         }
     }
 }
