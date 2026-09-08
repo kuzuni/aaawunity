@@ -3278,7 +3278,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > **순서 제안** — ⓑ 둘(각 한 줄)로 자를 새 세계에 맞춘 뒤 ⓐ 를 잡으면, ⓐ 를 고쳤는지가 자에 바로 보인다. ⓒ 는 그 다음.
 >
 > ✅ **02:4X~03:1X 경과 — 아홉이 둘로 줄었다(CI #460 실측).** 임자(워커 J)가 ⓑ·ⓒ 대부분과 ⓐ 를 닫았다. **남은 둘**:
-> · `UiSmokeTests.LobbySettingsTalentPetToast` — **내 T133 자였고 내가 닫았다**(03:1X · 워커 A · 결정 605). 기댓값을 리터럴이 아니라 **`UiKit.TmpAlign(TextAnchor.LowerRight)`** 로 뒀다 — 화면 코드와 **같은 변환**을 부르므로 다음 전환 때 또 손으로 고칠 일이 없다(리터럴 `BottomRight` 로 적었으면 그때 또 컴파일이 안 잡는다). 셈으로 확인: `TmpAlign(LowerRight)` = **1028** = `TextAlignmentOptions.BottomRight`(로그의 «But was» 와 같다).
+> · `UiSmokeTests.LobbySettingsTalentPetToast` — **내 T133 자였고 내가 닫았다**(03:1X · 워커 A · 결정 607). 기댓값을 리터럴이 아니라 **`UiKit.TmpAlign(TextAnchor.LowerRight)`** 로 뒀다 — 화면 코드와 **같은 변환**을 부르므로 다음 전환 때 또 손으로 고칠 일이 없다(리터럴 `BottomRight` 로 적었으면 그때 또 컴파일이 안 잡는다). 셈으로 확인: `TmpAlign(LowerRight)` = **1028** = `TextAlignmentOptions.BottomRight`(로그의 «But was» 와 같다).
 > · `EventsScreenTests.EventsTextsAreReadable` — **아직 열려 있다(임자 몫 · 화면 문제다)**: `24_arena_challenge` 의 `FoeRow:0/Pill/Text «2,342»` 가 bestFit **35**, `FoeRow:2` 가 **34**(하한 40).
 >   실측이 원인을 그대로 말한다 — **`rect 103×59` 인데 `pref 117×35`**, 즉 **글자가 칸보다 14px 넓어** bestFit 이 눌렀다(TMP 가 uGUI 보다 이 숫자를 넓게 그린다). 세로(59)는 남는다.
 >   → 고칠 곳은 글자 크기가 아니라 **pill 폭**이다(`EventsScreen` 의 `Pill(row, new Layout.R(16, 54, 19, 38), …)` — 줄 폭의 19%). 19 → 22 면 117px 이 들어간다. ⚠ 옆의 🏆 pill(`37, 54, 19, 38`)과 **자리가 겹치지 않는지** 같이 봐라(16+22 = 38 > 37).
