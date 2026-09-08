@@ -536,8 +536,20 @@ namespace KkomaKnight.Tests.Play
 
         // ───────────────────────── T81: 아레나 적 승점·전투력 더미값 ─────────────────────────
 
-        static readonly System.Text.RegularExpressions.Regex Commaed =
-            new System.Text.RegularExpressions.Regex(@"^\d{1,3}(,\d{3})*$");
+        /// <summary>
+        /// 아레나 숫자의 꼴 — **콤마 없는 순수 숫자**다(T207 ③ · 결정 609 · 워커 J).
+        /// <para>
+        /// 예전에는 «천 단위 콤마»(<c>^\d{1,3}(,\d{3})*$</c>)를 <b>요구</b>했다. 그런데 레퍼런스를 열어 보면 우리만 콤마를 찍고 있었다 —
+        /// <c>docs/ref/24</c> 는 «2624»·«976» · <c>25</c> 는 «4000» 이다. 그래서 화면이 <c>ArenaNum</c>(<c>ToString("0")</c>)으로 바뀌었고,
+        /// 이 자는 <b>바뀐 화면을 막고 서 있었다</b>(CI #465 의 마지막 빨강 · «순위 4 승점 는 천 단위 콤마 숫자여야 한다: «2240»»).
+        /// </para>
+        /// <para>
+        /// 그래서 «콤마를 허용» 이 아니라 <b>«콤마를 금지»</b> 로 뒤집는다 — 레퍼런스가 그렇게 말하므로, 콤마가 돌아오면 그 순간 빨개지는 것이 옳다.
+        /// 이 자가 재는 것은 여전히 «값이 채워졌는가»(0·— 이 아닌가)이고 꼴은 그 곁다리다(T81).
+        /// </para>
+        /// </summary>
+        static readonly System.Text.RegularExpressions.Regex ArenaNumShape =
+            new System.Text.RegularExpressions.Regex(@"^\d+$");
 
         static double ParseNum(string s, string what)
         {
@@ -545,7 +557,7 @@ namespace KkomaKnight.Tests.Play
             string t = s.Trim();
             Assert.AreNotEqual("0", t, what + " 가 아직 «0» 이다(더미값이 안 들어갔다)");
             Assert.AreNotEqual("—", t, what + " 가 아직 «—» 다(계수 표를 못 읽었다)");
-            Assert.IsTrue(Commaed.IsMatch(t), what + " 는 천 단위 콤마 숫자여야 한다: «" + t + "»");
+            Assert.IsTrue(ArenaNumShape.IsMatch(t), what + " 는 **콤마 없는** 숫자여야 한다(레퍼런스 24·25 · 결정 609): «" + t + "»");
             return double.Parse(t.Replace(",", ""), System.Globalization.CultureInfo.InvariantCulture);
         }
 
@@ -594,7 +606,7 @@ namespace KkomaKnight.Tests.Play
                 var row = UiKit.Find(box, "FoeRow:" + i); if (row == null) continue;
                 foes++;
                 var pills = row.GetComponentsInChildren<TMP_Text>(false);
-                int found = 0; foreach (var t in pills) { string tx = (t.text ?? "").Trim(); if (Commaed.IsMatch(tx)) found++; }
+                int found = 0; foreach (var t in pills) { string tx = (t.text ?? "").Trim(); if (ArenaNumShape.IsMatch(tx)) found++; }
                 Assert.GreaterOrEqual(found, 2, "상대 줄 " + i + " 에 전투력·승점 두 숫자가 있어야 한다");
                 Assert.IsTrue(HasText(x => x.Contains("도전자")), "상대 줄에 이름이 있어야 한다");
             }
