@@ -32,7 +32,7 @@ namespace KkomaKnight.Core
         }
 
         public readonly List<Card> Cards = new List<Card>();
-        /// <summary>기간 있는 카드가 사는 날수(주인이 안 줘서 이름값 그대로 30 이 기본 · 파일이 정한다).</summary>
+        /// <summary>기간 있는 카드가 사는 날수 — <b>주인 확정 30일</b>(T268 ⓐ · 워커가 이름값으로 고른 기본값을 주인이 그대로 추인했다 · 결정 712 ⓐ). 값은 파일이 정한다.</summary>
         public int MonthlyDays = 30;
 
         /// <summary><paramref name="key"/> 카드(없으면 null).</summary>
@@ -94,7 +94,7 @@ namespace KkomaKnight.Core
     /// <item><b>산 카드만 매일</b> — 나머지 셋은 <see cref="Buy"/> 를 지난 사람만 받는다.</item>
     /// <item><b>받기는 카드마다 따로 하루 1회</b>(주인 명시) — 날짜가 바뀌면 넷 다 다시 열린다.</item>
     /// <item><b>월간 카드는 기간이 지나면 매일 지급이 멈춘다</b> — 산 날부터 <see cref="PrivilegeData.MonthlyDays"/> 일.
-    ///       주인이 «만료되면 어떻게 되나» 를 말한 적이 없어 <b>지어내지 않았다</b>: 카드는 남되 받기만 막힌다(다시 살 수 있다).</item>
+    ///       <b>기간 30일은 주인 확정</b>(T268 ⓐ)이고, «만료되면 어떻게 되나» 는 아직 주인이 말한 적이 없어 <b>지어내지 않았다</b>: 카드는 남되 받기만 막힌다(다시 살 수 있다).</item>
     /// </list>
     /// 지급은 <see cref="Mail.Give"/> 한 곳을 지난다(T243) — 특권으로 받은 다이아가 다른 칸에 들어가는 사고를 막는다.
     /// <para>저장(디스크 쓰기)·토스트·리워드 팝업·빨간 점은 부르는 쪽(게임 층) 몫이다.</para>

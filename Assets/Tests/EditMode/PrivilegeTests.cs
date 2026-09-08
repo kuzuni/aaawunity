@@ -41,7 +41,7 @@ namespace KkomaKnight.Tests
 
             Assert.IsTrue(d.Of("monthly").Expires, "월간 카드만 기간이 있다");
             Assert.IsFalse(d.Of("lifetime").Expires, "«평생» 은 기간이 없다");
-            Assert.AreEqual(30, d.MonthlyDays, "기간은 주인이 안 줘서 이름값 그대로 30 이 기본(ROUTINE §2 T264 2항)");
+            Assert.AreEqual(30, d.MonthlyDays, "월간 카드 기간 30일 — 주인 확정(T268 ⓐ · 워커 기본값 결정 712 ⓐ 를 그대로 추인)");
         }
 
         static void Check(PrivilegeData d, string key, double buy, double daily)
