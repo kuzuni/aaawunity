@@ -113,6 +113,19 @@ namespace KkomaKnight.Core
         /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 0»(옛 세이브 호환 · <see cref="Revive"/> 와 같은 방식 · 세이브 버전 그대로).
         /// </summary>
         public int KeyBlue, KeyPurple, KeyYellow;
+
+        /// <summary>퀘스트 진행(T257 2단계) — <b>일일·주간은 따로 센다</b>(같은 사건을 세지만 지워지는 때가 달라서 한 표에 못 담는다).
+        /// 열쇠는 <c>quest.json</c> 의 <c>counter</c> 이고, 표에 없는 이름이 들어와도 그냥 쌓이기만 한다(화면은 표에 있는 줄만 그린다).
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 기본값»(옛 세이브 호환 · <see cref="GiftDay"/> 와 같은 방식).</summary>
+        public Dictionary<string, int> QuestDaily = new Dictionary<string, int>();
+        public Dictionary<string, int> QuestWeekly = new Dictionary<string, int>();
+        /// <summary>그 셈이 살아 있는 날(<c>yyyy-MM-dd</c>)과 주(그 주 시작 날 · 같은 꼴) — 바뀌면 <see cref="QuestRun.Roll"/> 이 0 으로 민다.</summary>
+        public string QuestDay = "", QuestWeek = "";
+        /// <summary>트랙에서 <b>이미 받은 칸</b>(quest.json track 순 · 길이는 <see cref="QuestRun.Roll"/> 이 표에 맞춘다).</summary>
+        public List<bool> QuestDailyGot = new List<bool>();
+        public List<bool> QuestWeeklyGot = new List<bool>();
+        /// <summary>주간 «로그인 5일» 이 <b>마지막으로 하루를 센 날</b> — 같은 날 여러 번 켜도 하루는 하루다(<see cref="QuestDay"/> 는 매일 지워지므로 이 값이 따로 있어야 한다).</summary>
+        public string QuestLoginDay = "";
         /// <summary>
         /// 출석(16)에서 <b>받은 칸 수</b>(0~7 · T253) · 그 칸을 받은 <b>날짜</b>(<c>yyyy-MM-dd</c> · 비어 있으면 «아직 한 번도 안 받았다»).
         /// 규칙은 <see cref="Core.Attendance"/> 한 곳이 갖는다 — «며칠 연속인가» 가 아니라 <b>받은 칸 수</b>로 나아간다(주인이 «연속이 끊기면» 을 말한 적이 없다 · §1).
@@ -238,6 +251,11 @@ namespace KkomaKnight.Core
             o["revive"] = (double)Revive;   // T254
             o["keyBlue"] = (double)KeyBlue; o["keyPurple"] = (double)KeyPurple; o["keyYellow"] = (double)KeyYellow;   // T255
             o["arenaCoin"] = ArenaCoin;   // T243
+            var qd = new Dictionary<string, object>(); foreach (var kv in QuestDaily) qd[kv.Key] = (double)kv.Value; o["questDaily"] = qd;              // T257
+            var qw = new Dictionary<string, object>(); foreach (var kv in QuestWeekly) qw[kv.Key] = (double)kv.Value; o["questWeekly"] = qw;            // T257
+            o["questDay"] = QuestDay ?? ""; o["questWeek"] = QuestWeek ?? ""; o["questLoginDay"] = QuestLoginDay ?? "";                                  // T257
+            var qdg = new List<object>(); foreach (var b in QuestDailyGot) qdg.Add(b); o["questDailyGot"] = qdg;                                        // T257
+            var qwg = new List<object>(); foreach (var b in QuestWeeklyGot) qwg.Add(b); o["questWeeklyGot"] = qwg;                                      // T257
             o["attDone"] = (double)AttDone; o["attDay"] = AttDay ?? "";   // T253
             var pb = new Dictionary<string, object>(); foreach (var kv in PrivBuy) pb[kv.Key] = kv.Value ?? ""; o["privBuy"] = pb;   // T264
             var pd = new Dictionary<string, object>(); foreach (var kv in PrivDay) pd[kv.Key] = kv.Value ?? ""; o["privDay"] = pd;   // T264
@@ -289,6 +307,11 @@ namespace KkomaKnight.Core
                     s.Revive = j["revive"].Int();   // 없으면 0(옛 세이브 호환 · T254)
                     s.KeyBlue = j["keyBlue"].Int(); s.KeyPurple = j["keyPurple"].Int(); s.KeyYellow = j["keyYellow"].Int();   // 없으면 0(옛 세이브 호환 · T255)
                     s.ArenaCoin = j["arenaCoin"].Num();   // 없으면 0(옛 세이브 호환 · T243)
+                    foreach (var k in j["questDaily"].Keys) s.QuestDaily[k] = j["questDaily"][k].Int();       // 없으면 빈 표(옛 세이브 호환 · T257)
+                    foreach (var k in j["questWeekly"].Keys) s.QuestWeekly[k] = j["questWeekly"][k].Int();    // T257
+                    s.QuestDay = j["questDay"].Str(""); s.QuestWeek = j["questWeek"].Str(""); s.QuestLoginDay = j["questLoginDay"].Str("");   // T257
+                    foreach (var b in j["questDailyGot"].Items()) s.QuestDailyGot.Add(b.Bool());              // T257
+                    foreach (var b in j["questWeeklyGot"].Items()) s.QuestWeeklyGot.Add(b.Bool());            // T257
                     s.AttDone = j["attDone"].Int(); s.AttDay = j["attDay"].Str("");   // 없으면 0/빈 값(옛 세이브 호환 · T253)
                     foreach (var k in j["privBuy"].Keys) s.PrivBuy[k] = j["privBuy"][k].Str("");   // 없으면 빈 표(옛 세이브 호환 · T264)
                     foreach (var k in j["privDay"].Keys) s.PrivDay[k] = j["privDay"][k].Str("");   // T264

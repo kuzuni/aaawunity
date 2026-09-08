@@ -2394,7 +2394,17 @@ Caught fatal signal - signo:6 (SIGABRT) · Unexpected exit code 134
 > ⓓ 주 시작 요일은 **표**에 둔다(`weekStartDow: 1` = 월요일 · 5항 권장 · §1 «수치는 표로»)
 > **⑷ 파싱이 조용한 사고를 잡는다** — 트랙이 오르는 차례가 아니거나 **마지막 칸이 줄을 다 깨도 못 닿으면**(= 아무도 못 받는 상품인데 화면엔 뜬다) 읽는 순간 예외다. 주인 표는 130 ≥ 100 · 210 ≥ 150 으로 둘 다 닿고 주간에 남는 60 은 주인이 «버린다» 고 한 몫이라 정상으로 읽는다.
 > **⑸ 남은 것 = 2단계** — 4항 카운터 훅 · `SaveData` 진행도/받은 구간 + 5항 초기화(일일 `DayKey` · 주간 `WeekKey` 는 **이미 이 단계에 있고 자로 잰다**) · 6항 지급/빨간 점 · 7항 팝업(줄 6 → 8 · `ref-layout` ⑳).
-> **⑺ 2단계는 «무엇을 기다리는가» (18:3X · 워커 K · lock 갱신 · 코드 0줄)** — 1단계는 **초록 런 555 로 확인됐다**(`240a2a29` ⊂ `b3c58f3f` · `tests: success`).
+> **▸ 2단계 ⓐ 완료 (19:5X · sess-1932-18539 · 워커 K · lock 유지 · 결정 725) — T254·T255 가 닫히며 `SaveData` 가 풀려 바로 이었다.**
+> **⑴ 놓은 것** — `SaveData` 의 퀘스트 칸(`QuestDaily`·`QuestWeekly` 두 셈 · `QuestDay`/`QuestWeek` 도장 · `QuestDailyGot`/`QuestWeeklyGot` · `QuestLoginDay`) + **`Core/QuestRun`**(`Roll`·`Bump`·`Login`·`Count`·`Medal`·`CanClaim`·`AnyClaimable`·`Claim`) + EditMode **12자**. 옛 세이브 호환은 «없으면 기본값» 그대로다.
+> **⑵ 일일·주간을 두 표로 갈랐다** — 같은 사건을 세지만 **지워지는 때가 달라서** 한 표면 일일이 지워질 때 주간까지 날아간다. 그 사고는 화면에 아무 표시도 안 남으므로 자로 못 박았다(날 넘김 뒤 «일일 0 · 주간 그대로»).
+> **⑶ «로그인 5일» 만 다르게 센다** — 사건 수가 아니라 **서로 다른 날 수**라 `QuestLoginDay` 도장을 따로 두고 날이 바뀐 때만 센다(`Bump` 로 세면 하루에 다섯 번 켠 사람이 주간을 깬다). 일일 도장은 매일 지워지므로 그것으로는 못 센다.
+> **⑷ 누적 메달은 저장하지 않는다** — «깬 줄의 medal 합» 으로 그때그때 센다(저장하면 셈과 메달이 갈라지고, 갈라지면 어느 쪽이 옳은지 아무도 모른다). 저장은 되돌릴 수 없는 것(받은 칸)에만.
+> **⑸ 받기 = 즉시 지급**(T243) — 재화는 `Mail.Give` **한 곳**으로, **티켓만** 던전별 `DunTickets` 에 바로 더한다(하루 보충 상한은 안 본다 · 3항). 같은 칸은 두 번 안 들어온다.
+> **⑹ 화면은 한 줄도 안 나왔다** — 팝업은 이 절에 물어보기만 하면 되고, 그래서 이 단계가 **헤드리스로 전부 검사된다**(결정 143).
+> **⑺ 남은 것** — 4항 **훅**(`kill`·`chapterTry`·`chestOpen`·`gearFuse`·`dungeonTry`/`dungeonClear`·`expeditionClaim`/`Fast`·`petUpgrade`·`login`)을 게임 코드에 `QuestRun.Bump` 한 줄씩 · 6항 빨간 점(`AnyClaimable`) · 7항 팝업(줄 6 → 8 · `ref-layout` ⑳).
+> **⑻ 게이트** — build 0/0 · test **337/337**(신규 12) · gen_meta ✔ · gen_catalog ✔ · catalog_keys ✔ · asmdef ✔ · test_usings ✔ · stale_asserts ✔ · unity_null ✔ · data_sync ✔ · task_rows ✔ · task_state ✔ · decisions 겹침 0.
+
+> **(옛 것 · ⓐ 로 풀렸다) 2단계는 «무엇을 기다리는가» (18:3X · 워커 K · lock 갱신 · 코드 0줄)** — 1단계는 **초록 런 555 로 확인됐다**(`240a2a29` ⊂ `b3c58f3f` · `tests: success`).
 > 2단계가 못 여는 까닭은 «시간» 이 아니라 **파일 셋**이고, 셋 다 지금 남의 lock 안이다:
 > ⠀⠀· `Core/SaveData.cs` — **진행도·받은 구간을 담을 자리**. 한 시간 안에 세 작업이 들어갔고(T265 ✅ · **T264 는 18:17 에도 쓰는 중** · lock 살아 있음) 지금이 제일 뜨겁다.
 > ⠀⠀· `Game/LobbyPopups.cs` — 팝업(7항). **T254**(워커 J) lock.
