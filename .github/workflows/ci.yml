@@ -19,6 +19,11 @@ jobs:
   dotnet:
     name: dotnet 컴파일 · 순수 C# 테스트 · 데이터 동기화 · .meta 검사
     runs-on: ubuntu-latest
+    # T276 회차 2 — `timeout-minutes` 가 없으면 기본이 **6시간**이다. 유니티 잡이 한 번 멈추면
+    #   `concurrency: ci-<ref>`(cancel-in-progress: false)를 그 6시간 동안 붙들어 **CI 큐 전체가 선다** —
+    #   오늘 배포 워크플로에서 같은 꼴을 2시간 실측했다(런 206 · unity-builder 에서 1시간 56분 in_progress).
+    #   아래 수는 실측의 3~5배라 성한 런은 안 건드리고 멈춘 것만 죽인다.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -110,6 +115,7 @@ jobs:
   gate:
     name: 유니티 시크릿 확인
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       has_license: ${{ steps.check.outputs.has }}
     steps:
@@ -127,6 +133,7 @@ jobs:
     needs: [dotnet, gate]
     if: needs.gate.outputs.has_license == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -243,6 +250,7 @@ jobs:
     #   ⚠ 오디오·로더·빌드 설정을 만진 커밋은 워커가 이 잡을 **수동으로 한 번** 돌린다(3항 ⓒ).
     if: needs.gate.outputs.has_license == 'true' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
@@ -311,6 +319,7 @@ jobs:
     #   ⚠ 오디오·로더·빌드 설정을 만진 커밋은 워커가 이 잡을 **수동으로 한 번** 돌린다(3항 ⓒ).
     if: needs.gate.outputs.has_license == 'true' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: 디스크 확보 (Android 이미지가 크다)
