@@ -160,6 +160,17 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(cg == null || cg.alpha > 0.99f, "클리어한 적이 있으면 밝다");
             before = DungeonTickets.Tickets(_app.Save, D, "hell", today);
             Assert.IsTrue(ClickNamed(ov, "SweepBtn"), "소탕"); yield return Frames(2);
+            // T241 — 받은 것은 공통 «리워드» 팝업이 보여 준다. 표의 sweep 이 펫알·골드 둘이므로 칸도 둘이고,
+            // 탭해 닫으면 던전 세부 팝업이 다시 열린다(티켓 수·버튼 상태가 갱신된 채로).
+            {
+                var rv = _app.Overlay.Root;
+                Assert.IsNotNull(UiKit.Find(rv, "RewardTitle"), "소탕 → 리워드 팝업(T241)");
+                int want = (entry.Sweep.PetEgg > 0 ? 1 : 0) + (entry.Sweep.Gold > 0 ? 1 : 0);
+                Assert.AreEqual(want, RewardPopup.LastCellCount, "표의 sweep 에 있는 것만 칸이 된다");
+                var dim = UiKit.Find(rv, "Dimmed")?.GetComponent<Button>(); Assert.IsNotNull(dim, "리워드 팝업의 탭하여 닫기");
+                dim.onClick.Invoke(); yield return Frames(2);
+                Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "SweepBtn"), "닫으면 던전 세부 팝업이 다시 열린다");
+            }
             Assert.AreEqual(before - 1, DungeonTickets.Tickets(_app.Save, D, "hell", today), "티켓 정확히 1 장");
             Assert.AreEqual(entry.Sweep.Gold, _app.Save.Gold, 1e-9, "표의 sweep 골드가 들어왔다");
             Assert.AreEqual(entry.Sweep.PetEgg, _app.Save.PetEgg, 1e-9, "펫알도 버려지지 않고 들어왔다");

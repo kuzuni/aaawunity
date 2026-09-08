@@ -691,18 +691,24 @@ namespace KkomaKnight.Game
             var got = DungeonSweep.Grant(App.Save, d, key, Today());
             if (got == null) return;   // 그 사이 티켓이 0 이 됐다 — 조용히 아무 일도 안 한다(티켓도 안 쓰였다)
             App.Persist();
-            App.Toast(SweepToast(got));
             App.Current?.Refresh();
-            OpenDungeonDetail(key);   // 티켓 수·버튼 상태가 바뀌었으므로 팝업을 다시 연다(광고·다이아 티켓과 같은 방식)
+            // T241 — 받은 것은 공통 «리워드» 팝업이 보여 준다(토스트 대신 · 지시서 T241 2항).
+            // 여기는 «팝업 안에서 받는» 자리라 닫을 때 그 팝업을 다시 열어 준다 — 티켓 수·버튼 상태가 바뀌었으므로
+            // 어차피 다시 열어야 했다(광고·다이아 티켓과 같은 방식이고, 그 재열기를 onClose 로 옮긴 것뿐이다).
+            RewardPopup.Show(SweepItems(got), () => OpenDungeonDetail(key));
         }
 
-        /// <summary>소탕 보상 한 줄 — 표에 있는 것만 적는다(원정은 골드뿐이라 펫알 칸이 안 나온다).</summary>
-        static string SweepToast(DungeonData.Reward r)
+        /// <summary>
+        /// 소탕 보상 칸 — 표에 있는 것만 담는다(원정은 골드뿐이라 펫알 칸이 안 나온다).
+        /// 칸 그림·차례는 세부 팝업의 보상 칸(<see cref="Add"/>)과 <b>같은 규칙</b>이다 — 같은 표를 두 자리가 다르게 보이면 사람이 다른 보상으로 읽는다.
+        /// </summary>
+        static List<RewardPopup.Item> SweepItems(DungeonData.Reward r)
         {
-            string s = "";
-            if (r.Gold > 0) s += "골드 " + UiKit.FmtComma(r.Gold);
-            if (r.PetEgg > 0) s += (s.Length > 0 ? " · " : "") + "펫알 " + UiKit.FmtComma(r.PetEgg);
-            return s.Length > 0 ? "소탕 완료 — " + s : "소탕 완료";
+            var list = new List<RewardPopup.Item>();
+            if (r == null) return list;
+            if (r.PetEgg > 0) list.Add(RewardPopup.Item.Of("pet.egg", UiKit.FmtComma(r.PetEgg)));
+            if (r.Gold > 0) list.Add(RewardPopup.Item.Of("ui.coin", UiKit.FmtComma(r.Gold)));
+            return list;
         }
 
         /// <summary>보상 칸 한 개 — 아이콘 키 · 수량 글자 · «최초»(첫 클리어) 배지인가.</summary>
