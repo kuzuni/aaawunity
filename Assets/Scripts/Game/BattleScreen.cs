@@ -44,6 +44,9 @@ namespace KkomaKnight.Game
 
         // HUD (T35 · 레퍼런스 02_battle.jpg / 03_battle_enemy.jpg 구도)
         TMP_Text _kills, _gold, _chapTitle, _speedTxt;
+        // T240 1항 — PvP 머리(빨간 VS 바 · 금테 배지 · 아바타 칸 둘 · 이름 둘 · 전투력 줄 둘). 챕터 판에서는 꺼 둔다.
+        RectTransform _chapTitleBox, _pvpHead;
+        TMP_Text _pvpMyName, _pvpFoeName, _pvpMyPower, _pvpFoePower;
         UiKit.Bar _prog, _exp, _hp, _sh; Image _progFill;
         RectTransform _buffBar, _perkStrip; TMP_Text _perkCount; HorizontalLayoutGroup _perkStripLayout;
         readonly TMP_Text[] _statVals = new TMP_Text[StatDefs.Length];
@@ -79,6 +82,7 @@ namespace KkomaKnight.Game
             }
             var menu = UiKit.SpawnRt("ui.btnMenu", Root, Layout.HudMenu); menu.name = "Button_Menu"; UiKit.Clickable(menu, OnPause);   // ≡ → 일시정지 팝업(재개 · 로비로 · 설정)
             var title = UiKit.SpawnRt("ui.lineTitle", Root, new Layout.R(Layout.HudChapTitle.X - 6, Layout.HudChapTitle.Y - 1.2f, Layout.HudChapTitle.W + 12, Layout.HudChapTitle.H + 2.4f));
+            _chapTitleBox = title;
             _chapTitle = UiKit.SetText(title, "Text (TMP)", "챕터 1", size: UiKit.FontForHeight(Layout.HudChapTitle.H));   // 글자 높이 = 표 2.6%(T47 회차 2 에서 1.5% 로 작았다)
             UiKit.Show(title, "LineDeco", false);   // T111 ⓐ — 주인 2026-09-07 «챕터 아래에 LineDeco 들은 없애줘 · 로비, 전투 화면 둘 다»(글자·자리는 그대로)
             // 진행바 = 검정 홈에 주황이 차는 바(레퍼런스 02·03) — 값은 노드(웨이브) 진행(RefreshHud) · 숫자 없음(T33) · 적 조우 중엔 주황, 걷는 중엔 노랑
@@ -142,6 +146,8 @@ namespace KkomaKnight.Game
             UiKit.Tag(_exp.Root, "EXP 바"); UiKit.Tag(_hp.Root, "HP 바"); UiKit.Tag(_sh.Root, "실드 바");
             var cells = new RectTransform[StatDefs.Length]; for (int i = 0; i < StatDefs.Length; i++) cells[i] = UiKit.Find(Root, "stat:" + StatDefs[i].Key) as RectTransform;
             UiKit.TagGroup(Root, "스탯 그리드", cells); UiKit.Tag(cells[0], "스탯칸(1칸)"); UiKit.Tag(info, "인포(책) 버튼");
+
+            BuildPvpHead();   // T240 1항 — 아레나 판에서만 켜진다(Start 가 IsArena 로 켠다)
             // T85 — 보상 구슬 층은 HUD «위» (마지막 형제): 구슬이 하단 패널 안의 EXP 바까지 가려지지 않고 날아가야 한다. 글자·이름표 없음(비평 표·게이트 불변).
             _orbLayer = UiKit.Rect(Root, "Orbs"); UiKit.Stretch(_orbLayer); _orbLayer.SetAsLastSibling();
             _orbs = new RewardOrbs(_orbLayer);
@@ -171,6 +177,7 @@ namespace KkomaKnight.Game
             SnapShown();                      // 새 판은 표시값 = 엔진 값(0)에서 시작
             _acc = 0; _speed = App.Save.Speed; _paused = false; _ended = false; _revivesUsed = 0; _perkStripKey = ""; _buffKey = ""; _lastReal = 0;   // 배속은 세이브에서(T18 · 클리어 뒤 다음 챕터도 그대로) · 새 판 첫 프레임이 «공백» 으로 잡히지 않게
             Audio.Bgm("bgm.battle");   // 새 판(클리어 뒤 다음 챕터 포함)은 전투 곡부터 — 보스 곡이었으면 되돌린다(T28)
+            ShowPvpHead(D, arenaFoe, arenaFoeRank);   // T240 1항 — 아레나면 PvP 머리를 켜고 챕터 제목·진행 바를 끈다
             RefreshHud();
         }
         /// <summary>
@@ -188,6 +195,92 @@ namespace KkomaKnight.Game
             if (foePower <= 0) return null;
             var pw = GearSystem.BuildPower(D, App.Save.CurBuild(D));
             return ArenaFoe.Of(D.ArenaFoe, foePower, pw.Atk, pw.Hp, pw.Sh);
+        }
+
+
+        // ───────────────────────── T240 1항 PvP 머리(레퍼런스 33 · 표 ㊺) ─────────────────────────
+        /// <summary>
+        /// PvP 인게임의 머리 — <b>빨간 VS 바</b> 하나에 양쪽 정보 줄(금테 아바타 칸 · 이름 · 전투력)이 걸린다.
+        /// 자리는 전부 <see cref="Layout"/> 의 <c>Pvp*</c>(표 ㊺ 실측)이고 <b>이 파일에 자리 수치를 박지 않는다</b>.
+        /// <para>
+        /// ⚠ <b>만들어 두고 꺼 둔다</b> — 챕터 전투에서 이 묶음이 켜져 있으면 §5 채점(02·03)과 테두리 감사가 «없던 요소» 를 세게 된다.
+        /// 켜는 것은 <see cref="Start"/> 가 <see cref="IsArena"/> 로 한 번만 한다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>«챕터 N» 제목과 진행 바는 같이 끈다</b> — PvP 는 웨이브가 없어 진행 바가 <b>잴 것이 없고</b>(늘 0 이거나 한 칸),
+        /// 챕터 번호도 판을 안 바꾼다(1대1 은 챕터 표를 안 읽는다 · 결정 725). 켜 두면 «있는데 뜻이 없는 눈금» 이 된다.
+        /// </para>
+        /// </summary>
+        void BuildPvpHead()
+        {
+            _pvpHead = UiKit.Rect(Root, "PvpHead"); UiKit.Stretch(_pvpHead);
+
+            var bar = UiKit.Panel(_pvpHead, "VsBar", "fr.rect", Palette.ArenaVsBar);
+            UiKit.Pct(bar.rectTransform, Layout.PvpBar);
+            UiKit.Tag(bar.transform, "빨간 VS 바");
+
+            // 금테 원 배지 — 조각은 이미 있는 것(우하단 원형 버튼이 쓰는 fr.circle/fr.circleBorder)이다. 새 그림 0(§1).
+            var badge = UiKit.Rect(_pvpHead, "VsBadge"); UiKit.Pct(badge, Layout.PvpBadge);
+            var bg = UiKit.Icon(badge, "Bg", "fr.circle", Palette.Ink); UiKit.Stretch(bg.rectTransform);
+            var bd = UiKit.Icon(badge, "Border", "fr.circleBorder", Palette.Yellow); UiKit.Stretch(bd.rectTransform);
+            var vs = UiKit.Label(badge, 0, 0, 100, 100, "VS", TextSize.Body, Palette.Yellow);
+            vs.name = "VsText"; vs.fontStyle = FontStyles.Bold;
+            UiKit.Tag(badge, "VS 배지(금·원)");
+
+            PvpSide(true, out _pvpMyName, out _pvpMyPower);
+            PvpSide(false, out _pvpFoeName, out _pvpFoePower);
+
+            _pvpHead.gameObject.SetActive(false);
+        }
+
+        /// <summary>PvP 머리의 한쪽(아바타 칸 · 이름 · 전투력 줄) — 왼쪽이 나, 오른쪽이 상대이고 자리는 좌우 대칭이다(표 ㊺).</summary>
+        void PvpSide(bool mine, out TMP_Text name, out TMP_Text power)
+        {
+            var faceR = mine ? Layout.PvpMyFace : Layout.PvpFoeFace;
+            var nameR = mine ? Layout.PvpMyName : Layout.PvpFoeName;
+            var powR = mine ? Layout.PvpMyPower : Layout.PvpFoePower;
+            string who = mine ? "My" : "Foe";
+
+            var box = UiKit.Rect(_pvpHead, who + "Face"); UiKit.Pct(box, faceR);
+            var frame = UiKit.Spawn("ui.itemFrame.yellow", box);
+            if (frame != null) UiKit.Stretch((RectTransform)frame.transform);
+            UiKit.Tag(box, mine ? "아바타 칸(왼쪽)" : "아바타 칸(오른쪽)");
+
+            // 이름 — 내 쪽은 칸 오른쪽에 붙어 왼쪽 정렬, 상대 쪽은 칸 왼쪽에 붙어 오른쪽 정렬(레퍼런스 33 그대로).
+            var anchor = mine ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight;
+            name = UiKit.Label(_pvpHead, nameR.X, nameR.Y, nameR.W, nameR.H, "", TextSize.Body, Palette.White, anchor);
+            name.name = who + "Name"; name.fontStyle = FontStyles.Bold;
+            UiKit.Tag(name.transform, mine ? "이름(왼쪽)" : "이름(오른쪽)", textBounds: true);
+
+            // 전투력 줄 = 검 아이콘 + 수. 아이콘은 이미 쓰는 것(ui.battle · 아레나 순위 줄이 같은 뜻으로 쓴다).
+            var row = UiKit.Rect(_pvpHead, who + "Power"); UiKit.Pct(row, powR);
+            var ic = UiKit.Icon(row, "Icon", "ui.battle");
+            UiKit.Pct(ic.rectTransform, mine ? 0 : 88, 0, 12, 100);
+            power = UiKit.Label(row, mine ? 14 : 0, 0, 86, 100, "", TextSize.Aux, Palette.White, anchor, kind: TextKind.Aux);
+            power.name = who + "PowerText";
+            UiKit.Tag(row, mine ? "전투력 줄(왼쪽)" : "전투력 줄(오른쪽)");
+        }
+
+        /// <summary>
+        /// T240 1항 — 이 판이 아레나면 PvP 머리를 켜고 «챕터 N» 제목·진행 바를 끈다(챕터 판이면 그 반대).
+        /// <paramref name="foeRank"/> 가 0(모름)이면 상대 전투력은 «—» 로 둔다 — <b>모르는 수를 지어내지 않는다</b>.
+        /// </summary>
+        void ShowPvpHead(GameData D, string foeName, int foeRank)
+        {
+            bool on = IsArena;
+            if (_pvpHead != null) _pvpHead.gameObject.SetActive(on);
+            if (_chapTitleBox != null) _chapTitleBox.gameObject.SetActive(!on);
+            if (_prog != null && _prog.Root != null) _prog.Root.gameObject.SetActive(!on);
+            if (!on) return;
+
+            if (_pvpMyName != null) _pvpMyName.text = Nickname.Of(App.Save);
+            if (_pvpFoeName != null) _pvpFoeName.text = foeName ?? "";
+            if (_pvpMyPower != null) _pvpMyPower.text = UiKit.Fmt(App.Power());
+            if (_pvpFoePower != null)
+            {
+                bool known = foeRank > 0 && D != null && D.ArenaDummy != null;
+                _pvpFoePower.text = known ? UiKit.Fmt(ArenaDummy.Power(D.ArenaDummy, App.Power(), foeRank)) : "—";
+            }
         }
 
         protected override void OnHide() { _world?.Dispose(); _world = null; UiKit.Clear(_pops); _orbs?.Clear(); _flyGold = _flyExp = 0; }

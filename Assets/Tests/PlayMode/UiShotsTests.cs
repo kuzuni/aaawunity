@@ -172,6 +172,18 @@ namespace KkomaKnight.Tests.Play
                 for (int i = 0; i < offer.Count && i < 3; i++) G.Taken.Add(offer[i]);
             }
             _app.Overlay.PerkBook(G, null); yield return Frames(2); yield return Shot("05_perks_list"); _app.Overlay.Close(); yield return Frames(1);
+
+            // T240 1항 — PvP 인게임(33). **아레나 «판» 으로 다시 연다** — 같은 챕터라도 아레나면 무대(모래)·상대 외형(기사)·머리(VS 바)가 전부 갈리므로
+            //   02_battle 을 다시 쓰면 안 된다. 순위 1 을 주는 까닭은 그래야 상대 전투력이 «—» 가 아닌 실제 수로 찍히기 때문이다(표 ㊺ «전투력 줄»).
+            Time.timeScale = 1f;
+            _app.StartBattle(1, null, null, "도전자 1", 1); yield return RealSeconds(2f);
+            Time.timeScale = 0f; _app.Overlay.Close(); yield return Frames(2);
+            yield return Shot("33_pvp_battle");
+            {   // ⚠ 가드(ContainsKey)를 두지 않는다 — Shot 이 _layout[name] 을 **늘** 채우므로 가드는 «못 찍었을 때 조용히 넘어가는» 구멍만 만든다(02_battle 과 같은 꼴).
+                var l33 = (Dictionary<string, object>)_layout["33_pvp_battle"];
+                Assert.IsTrue(l33.ContainsKey("빨간 VS 바") && l33.ContainsKey("VS 배지(금·원)"), "33 은 PvP 머리를 찍어야 한다(빨간 VS 바 · VS 배지)");
+                Assert.IsFalse(l33.ContainsKey("챕터 제목"), "PvP 판에는 «챕터 N» 제목이 없다(웨이브가 없어 뜻이 없다)");
+            }
             // ev_devil · ev_angel — T141 6항 «워커가 한 장 찍어 04 와 나란히 눈으로»(판 없이 어둠 위인가).
             // 레퍼런스 그림이 없는 화면이라 번호 대신 이름으로 남긴다.
             // ⚠ T213 — «표가 없어 채점 대상이 아니다» 는 반쪽이었다: 이 둘은 **이름표(UiTag)조차 없어** layout.json 에

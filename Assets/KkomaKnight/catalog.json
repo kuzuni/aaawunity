@@ -591,6 +591,7 @@
     "font.ui": "Assets/Fonts/Jua-Regular.ttf"
   },
   "colors": {
+    "col.arenaVsBar": "#C4271E",
     "col.gray": "#A39B9D",
     "col.green": "#85D048",
     "col.blue": "#5BB0F0",
