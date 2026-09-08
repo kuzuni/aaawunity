@@ -156,6 +156,15 @@ namespace KkomaKnight.Tests.Play
             _app.Overlay.Clear(G, false, () => { }, () => { }); yield return Check("res_win"); _app.Overlay.Close(); yield return Frames(1);
             _app.Overlay.Clear(G, true, () => { }, () => { }); yield return Check("res_win_last"); _app.Overlay.Close(); yield return Frames(1);
             _app.Overlay.Dead(G, () => { }); yield return Check("res_lose"); _app.Overlay.Close(); yield return Frames(1);
+            // T274 5b — 같은 팝업의 «부활권» 갈래. 위 한 줄은 `canRevive` 기본값(false)이라 «부활 N» 버튼과 안내 줄을
+            // **한 번도 안 본다**(T254 1항이 세운 자리 · 결정 724). 개수를 0 으로 주는 것이 뜻이 있다 —
+            // 버튼은 티켓 0 에서도 서고 안내 줄은 **0 일 때만** 뜨므로, 0 이라야 두 글자가 한 번에 이 자의 눈에 든다.
+            // ⚠ 이 자의 단언은 **전 화면 한 통**이라(floorBad·fitBad·clipped 모아 0) 화면을 늘리면 배포가 설 수 있다.
+            //   그래서 앞 회차가 `UiShotsTests` 에서 로그로 먼저 재고(§1 T226 «조사 중인 탐침은 막는 자로 세우지 않는다»)
+            //   **그 수가 깨끗한 것을 보고** 여기로 올렸다 — CI run 579 실측:
+            //     ReviveBtn  «부활 0» Button size 44(min 44) used 44 · rect 415×118 pref 116×44
+            //     ReviveHint 본문 40(min 40) used 40      · rect 648×56  pref 520×40   (bestFit 이 줄이지도 않았다)
+            _app.Overlay.Dead(G, () => { }, () => { }, 0, true); yield return Check("res_lose_revive"); _app.Overlay.Close(); yield return Frames(1);
 
             Time.timeScale = 1f; _app.ShowScreen("lobby"); yield return Frames(2);
 

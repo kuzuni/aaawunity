@@ -208,20 +208,9 @@ namespace KkomaKnight.Tests.Play
                 //   그때만 안내 줄(`ReviveHint`)이 같이 뜬다. 즉 0 으로 찍어야 **새 요소 둘이 한 장에 다 든다**
                 //   (2 로 찍으면 안내 줄이 없어 그 줄은 여전히 아무도 못 본다).
                 _app.Overlay.Dead(G, () => { }, () => { }, 0, true); yield return Frames(2); yield return Shot("res_lose_revive");
-                // T274 2단계 — 이 두 글자의 «실제로 그려진 크기» 를 로그로만 남긴다(**막지 않는다**).
-                // 까닭: `TextSizeGateTests` 에 이 화면을 넣으면 그 자의 단언은 **전 화면 한 통**이라
-                // (floorBad·fitBad·clipped 를 모아 0 이어야 한다) 크기가 하한 아래면 그 자리에서 배포가 선다.
-                // 워커는 PlayMode 를 못 돌려 그 수를 미리 못 보므로, 검증 못 한 수를 막는 자 앞에 세우지 않는다
-                // (§1 «조사 중인 탐침은 막는 자로 세우지 않는다» · T226 · 결정 625·627 · T260 이 같은 자리에서 같은 길을 갔다).
-                // 다음 회차가 이 줄을 읽고 ⓐ 하한 위면 TextSizeGateTests 에 넣어 승격 ⓑ 아래면 칸을 넓혀 고친 뒤 승격.
-                // 수를 손으로 다시 짜지 않고 **그 자가 쓰는 셈 그대로**(TextAudit.Collect) 불러 줄째로 찍는다 —
-                // 그래야 «로그의 수» 와 «자가 볼 수» 가 어긋날 자리가 없다(⛔하한·⛔bestFit최소·⚠잘림 표식까지 그대로 나온다).
-                {
-                    int found = 0;
-                    foreach (var r in TextAudit.Collect("res_lose_revive", _app.Overlay.Root))
-                        if (r.Path.Contains("Revive")) { Debug.Log("[T274] " + r); found++; }
-                    if (found == 0) Debug.Log("[T274] Revive 글자를 하나도 못 찾았다 — 이 갈래가 안 섰다는 뜻이라 위 사진부터 다시 봐라");
-                }
+                // T274 5b — 여기 있던 «[T274] 글자 크기» 임시 로그는 **할 일을 마치고 걷었다**:
+                // 그 수(run 579 실측 · 버튼 44/44 · 안내 40/40 · 잘림 0)를 보고 `TextSizeGateTests` 로 올렸으므로
+                // 이제 그 자가 매 런 같은 것을 **막는 자로** 잰다. 로그를 남겨 두면 자와 같은 말을 두 번 하는 자리가 된다.
                 _app.Overlay.Close(); yield return Frames(1);
             }
             Time.timeScale = 1f; _app.ShowScreen("lobby"); yield return Frames(2);
