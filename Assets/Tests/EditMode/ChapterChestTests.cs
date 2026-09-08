@@ -22,10 +22,10 @@ namespace KkomaKnight.Tests
         public void TableComesFromTheFile_NotFromCode()
         {
             var t = Load().ChapterChest;
-            // 주인 지시 원문 — 챕터당 3개 · 한 단마다 다이아 100 · 골드 1000
+            // 주인 지시 원문 — 챕터당 3개 · 챕터 1 의 한 단마다 다이아 100 · 골드 1000(T137)
             Assert.AreEqual(3, t.Steps, "챕터당 보상 칸 수");
-            Assert.AreEqual(100.0, t.Gem, 1e-9, "한 단 다이아");
-            Assert.AreEqual(1000.0, t.Gold, 1e-9, "한 단 골드");
+            Assert.AreEqual(100.0, t.GemAt(1), 1e-9, "챕터 1 한 단 다이아");
+            Assert.AreEqual(1000.0, t.GoldAt(1), 1e-9, "챕터 1 한 단 골드");
             Assert.AreEqual((1 << t.Steps) - 1, t.FullMask, "다 받음 비트");
         }
 
@@ -57,8 +57,8 @@ namespace KkomaKnight.Tests
                 for (int st = 1; st <= d.ChapterChest.Steps; st++)
                 {
                     var info = ChapterChest.At(d, s, c, st);
-                    Assert.AreEqual(d.ChapterChest.Gem, info.Gem, 1e-9, "단마다 같은 다이아");
-                    Assert.AreEqual(d.ChapterChest.Gold, info.Gold, 1e-9, "단마다 같은 골드");
+                    Assert.AreEqual(d.ChapterChest.GemAt(c), info.Gem, 1e-9, "한 챕터 안에서는 단마다 같은 다이아");
+                    Assert.AreEqual(d.ChapterChest.GoldAt(c), info.Gold, 1e-9, "한 챕터 안에서는 단마다 같은 골드");
                 }
         }
 
@@ -110,8 +110,8 @@ namespace KkomaKnight.Tests
                 Assert.IsFalse(ChapterChest.Claim(d, s, 1, st, out var g2, out var o2), "같은 단을 두 번 못 받는다");
                 Assert.AreEqual(0.0, g2); Assert.AreEqual(0.0, o2);
             }
-            Assert.AreEqual(d.ChapterChest.Gem * 3, gemAll, 1e-9, "한 챕터 다 받으면 다이아 300");
-            Assert.AreEqual(d.ChapterChest.Gold * 3, goldAll, 1e-9, "한 챕터 다 받으면 골드 3000");
+            Assert.AreEqual(d.ChapterChest.GemAt(1) * 3, gemAll, 1e-9, "챕터 1 을 다 받으면 다이아 300");
+            Assert.AreEqual(d.ChapterChest.GoldAt(1) * 3, goldAll, 1e-9, "챕터 1 을 다 받으면 골드 3000");
             Assert.IsFalse(ChapterChest.Claim(d, s, 3, 1, out _, out _), "처치 미달이면 못 받는다");
         }
 
@@ -197,6 +197,97 @@ namespace KkomaKnight.Tests
             Assert.AreEqual(0, ChapterChest.At(d, s, 1, d.ChapterChest.Steps + 1).Chapter);
             Assert.AreEqual(0, ChapterChest.At(d, s, d.Tune.MaxChapter + 1, 1).Chapter);
             Assert.IsFalse(ChapterChest.At(d, s, 0, 1).Claimable, "빈 칸은 못 받는다");
+        }
+
+        // ───────────────────────── T268 ⓒ — 챕터 100까지의 보상 곡선 ─────────────────────────
+        // 주인 2026-09-09 «챕터 100까지 수치 만들어 놓으쇼». 곡선 자체는 워커가 정한 것이라(결정 기록)
+        // 자는 «주인이 입으로 못 박은 것» 만 잰다(결정 555): 챕터 1 = 옛 값 · 오를수록 커진다 ·
+        // 100챕터가 1챕터의 수십 배 · 딱 떨어지는 수 · 표 밖 규칙. 짚은 값 몇 개는 곡선이 조용히
+        // 바뀌는 것을 잡으려고 같이 박아 둔다(바꿀 때 이 줄이 같이 빨개져야 «바꿨다» 가 보인다).
+
+        [Test]
+        public void RewardGrowsWithTheChapter_AndStartsAtTheOldFixedValue()
+        {
+            var t = Load().ChapterChest;
+            Assert.AreEqual(100.0, t.GemAt(1), 1e-9, "챕터 1 은 T137 이 준 값에서 시작한다(다이아)");
+            Assert.AreEqual(1000.0, t.GoldAt(1), 1e-9, "챕터 1 은 T137 이 준 값에서 시작한다(골드)");
+
+            // 짚은 값(이 곡선의 실제 표) — gemGrowth 1.035 · goldGrowth 1.05 · 반올림 10·100
+            Assert.AreEqual(1100.0, t.GoldAt(2), 1e-9, "챕터 2 골드");
+            Assert.AreEqual(540.0, t.GemAt(50), 1e-9, "챕터 50 다이아");
+            Assert.AreEqual(10900.0, t.GoldAt(50), 1e-9, "챕터 50 골드");
+            Assert.AreEqual(2910.0, t.GemAt(99), 1e-9, "챕터 99 다이아");
+            Assert.AreEqual(119300.0, t.GoldAt(99), 1e-9, "챕터 99 골드");
+            Assert.AreEqual(3010.0, t.GemAt(100), 1e-9, "챕터 100 다이아");
+            Assert.AreEqual(125200.0, t.GoldAt(100), 1e-9, "챕터 100 골드");
+
+            // 주인이 못 박은 «수십 배» — 100챕터가 1챕터의 20배 이상(지금 다이아 30.1배 · 골드 125.2배)
+            Assert.GreaterOrEqual(t.GemAt(100) / t.GemAt(1), 20.0, "100챕터 다이아가 1챕터의 수십 배");
+            Assert.GreaterOrEqual(t.GoldAt(100) / t.GoldAt(1), 20.0, "100챕터 골드가 1챕터의 수십 배");
+        }
+
+        [Test]
+        public void RewardNeverGoesDown_AndLandsOnRoundNumbers()
+        {
+            var t = Load().ChapterChest;
+            double pg = -1, po = -1;
+            for (int c = 1; c <= 420; c++)
+            {
+                double g = t.GemAt(c), o = t.GoldAt(c);
+                // ⚠ «비감소» 다 — 반올림 단위보다 복리 증가분이 작은 앞머리(챕터 1~2 다이아)는 같은 값이 이어진다.
+                Assert.GreaterOrEqual(g, pg, "챕터 " + c + " 다이아가 앞 챕터보다 작아졌다");
+                Assert.GreaterOrEqual(o, po, "챕터 " + c + " 골드가 앞 챕터보다 작아졌다");
+                Assert.AreEqual(0.0, g % t.GemRound, 1e-9, "챕터 " + c + " 다이아가 " + t.GemRound + " 단위로 안 떨어진다");
+                Assert.AreEqual(0.0, o % t.GoldRound, 1e-9, "챕터 " + c + " 골드가 " + t.GoldRound + " 단위로 안 떨어진다");
+                pg = g; po = o;
+            }
+            Assert.Greater(t.GemAt(100), t.GemAt(1), "끝내 커지긴 한다(다이아)");
+            Assert.Greater(t.GoldAt(100), t.GoldAt(1), "끝내 커지긴 한다(골드)");
+        }
+
+        [Test]
+        public void OutsideTheTableRepeatsTheLastChapter()
+        {
+            var d = Load(); var t = d.ChapterChest;
+            Assert.AreEqual(100, t.TableMax, "표가 덮는 마지막 챕터(주인 «챕터 100까지»)");
+            // 게임 데이터의 챕터는 420 까지 있다(T1) — 표 밖이 반드시 있고, 그 자리는 100챕터 값을 그대로 쓴다.
+            Assert.Greater(d.Tune.MaxChapter, t.TableMax, "표 밖 챕터가 실제로 있다(없으면 이 규칙이 죽은 코드다)");
+            foreach (var c in new[] { 101, 200, 420 })
+            {
+                Assert.AreEqual(t.GemAt(t.TableMax), t.GemAt(c), 1e-9, "챕터 " + c + " 다이아 = 100챕터 값 그대로");
+                Assert.AreEqual(t.GoldAt(t.TableMax), t.GoldAt(c), 1e-9, "챕터 " + c + " 골드 = 100챕터 값 그대로");
+            }
+            Assert.AreEqual(0.0, t.GemAt(0), 1e-9, "챕터 0 은 없는 칸");
+            Assert.AreEqual(0.0, t.GoldAt(-1), 1e-9, "음수 챕터도 없는 칸");
+        }
+
+        [Test]
+        public void AWholeHighChapterGivesThatChaptersValueTimesSteps()
+        {
+            var d = Load(); var s = Fresh(d); int steps = d.ChapterChest.Steps;
+            const int C = 50;
+            s.MaxChapter = C + 1;                       // C 는 이미 깬 챕터 = 전멸로 친다
+            double gemAll = 0, goldAll = 0;
+            for (int st = 1; st <= steps; st++)
+            {
+                Assert.IsTrue(ChapterChest.Claim(d, s, C, st, out var g, out var o), "챕터 " + C + " 단 " + st);
+                gemAll += g; goldAll += o;
+            }
+            Assert.AreEqual(d.ChapterChest.GemAt(C) * steps, gemAll, 1e-9, "그 챕터 값 × 단 수(다이아)");
+            Assert.AreEqual(d.ChapterChest.GoldAt(C) * steps, goldAll, 1e-9, "그 챕터 값 × 단 수(골드)");
+            Assert.Greater(gemAll, d.ChapterChest.GemAt(1) * steps, "챕터 1 을 다 받은 것보다 많다");
+        }
+
+        [Test]
+        public void BrokenCurveIsAnExceptionAtParseTime()
+        {
+            // 조용히 반대로 도는 표를 만들지 못하게 — 읽는 순간 예외다.
+            const string ok = "{\"steps\":3,\"gem1\":100,\"gold1\":1000,\"gemGrowth\":1.035,\"goldGrowth\":1.05,\"gemRound\":10,\"goldRound\":100,\"tableMax\":100}";
+            Assert.DoesNotThrow(() => ChapterChestData.Parse(ok), "멀쩡한 표");
+            Assert.Throws<FormatException>(() => ChapterChestData.Parse(ok.Replace("\"gemGrowth\":1.035", "\"gemGrowth\":0.9")), "복리가 1 보다 작으면 챕터가 오를수록 작아진다");
+            Assert.Throws<FormatException>(() => ChapterChestData.Parse(ok.Replace("\"goldRound\":100", "\"goldRound\":0")), "반올림 단위 0");
+            Assert.Throws<FormatException>(() => ChapterChestData.Parse(ok.Replace("\"tableMax\":100", "\"tableMax\":0")), "표 밖 규칙이 가리킬 챕터가 없다");
+            Assert.Throws<FormatException>(() => ChapterChestData.Parse(ok.Replace("\"gem1\":100", "\"gem1\":-1")), "음수 첫값");
         }
     }
 }

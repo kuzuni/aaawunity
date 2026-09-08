@@ -4,30 +4,68 @@ using System.Collections.Generic;
 namespace KkomaKnight.Core
 {
     /// <summary>
-    /// 챕터 보상 수치표 (<c>Assets/KkomaKnight/chapterChest.json</c> · T137 · 주인 2026-09-07 «챕터 보상은 챕터당 3개»).
+    /// 챕터 보상 수치표 (<c>Assets/KkomaKnight/chapterChest.json</c> · T137 · 주인 2026-09-07 «챕터 보상은 챕터당 3개»
+    /// · T268 ⓒ · 주인 2026-09-09 «챕터 100까지 수치 만들어 놓으쇼»).
     /// 값은 전부 파일에서 온다 — 코드 상수 없음(<see cref="ExpeditionData"/>·<see cref="DailyGiftData"/> 와 같은 방식).
+    /// <para>보상은 <b>챕터마다 다르다</b> — <see cref="GemAt"/>·<see cref="GoldAt"/> 로만 읽는다.
+    /// «표의 첫값» 인 <see cref="Gem1"/>·<see cref="Gold1"/> 을 그대로 화면에 쓰면 전 챕터가 챕터 1 값이 된다(T268 이전의 사고).</para>
     /// </summary>
     public sealed class ChapterChestData
     {
         /// <summary>한 챕터가 갖는 보상 «단» 수(주인 지시 = 3 · 목표는 적 1/3 · 2/3 · 전멸).</summary>
         public int Steps = 1;
-        /// <summary>한 단이 주는 다이아·골드 — 단·챕터와 무관하게 고정(주인 지시 = 100 · 1000).</summary>
-        public double Gem, Gold;
+        /// <summary>
+        /// <b>챕터 1</b> 의 한 단이 주는 다이아·골드(주인이 T137 에 준 값 = 100 · 1000) — 곡선의 시작점일 뿐이다.
+        /// <b>어느 챕터의 값이 필요하면 <see cref="GemAt"/>·<see cref="GoldAt"/> 를 쓴다.</b>
+        /// </summary>
+        public double Gem1, Gold1;
+        /// <summary>챕터당 복리 배수(다이아 1.035 · 골드 1.05) — 주인이 곡선만 바꾸고 싶으면 이 두 수만 고친다.</summary>
+        public double GemGrowth = 1, GoldGrowth = 1;
+        /// <summary>«딱 떨어지는 수» 로 만드는 반올림 단위(다이아 10 · 골드 100 · 주인 지시 ⓒ).</summary>
+        public int GemRound = 1, GoldRound = 1;
+        /// <summary>표가 덮는 마지막 챕터(= 100) — <b>그 밖 챕터는 이 챕터 값을 그대로</b> 쓴다(결정 기록 참고 · 게임 데이터의 챕터는 420까지 · T1).</summary>
+        public int TableMax = 1;
 
         /// <summary>단 수 상한 — 수치가 아니라 «수령 기록을 int 비트로 담는다» 는 저장 방식의 한계다.</summary>
         public const int MaxSteps = 30;
         /// <summary>«그 챕터를 다 받았다» 를 뜻하는 비트(단 <see cref="Steps"/> 개가 전부 1).</summary>
         public int FullMask => (1 << Steps) - 1;
 
+        /// <summary>챕터 <paramref name="chapter"/> 의 한 단이 주는 다이아(챕터 &lt; 1 이면 0).</summary>
+        public double GemAt(int chapter) => ValueAt(Gem1, GemGrowth, GemRound, chapter);
+        /// <summary>챕터 <paramref name="chapter"/> 의 한 단이 주는 골드(챕터 &lt; 1 이면 0).</summary>
+        public double GoldAt(int chapter) => ValueAt(Gold1, GoldGrowth, GoldRound, chapter);
+
+        /// <summary>
+        /// 값(C) = round(첫값 × 복리^(C-1), 반올림단위) · <b>C 는 <see cref="TableMax"/> 에서 멈춘다</b>(표 밖 = 마지막 챕터 값 그대로).
+        /// ⚠ 반올림 때문에 복리 증가분이 반올림 단위보다 작은 앞머리 구간은 <b>같은 값이 몇 챕터 이어진다</b> — 줄어들지는 않는다(비감소).
+        /// </summary>
+        double ValueAt(double first, double growth, int unit, int chapter)
+        {
+            if (chapter < 1) return 0;
+            int c = Math.Min(chapter, TableMax);
+            double raw = first * Math.Pow(growth, c - 1);
+            return Math.Round(raw / unit, MidpointRounding.AwayFromZero) * unit;
+        }
+
         public static ChapterChestData Parse(string json) => From(new JNode(MiniJson.Parse(json)));
         public static ChapterChestData From(JNode j)
         {
             var d = new ChapterChestData();
             d.Steps = (int)j["steps"].ReqNum("steps");
-            d.Gem = j["gem"].ReqNum("gem");
-            d.Gold = j["gold"].ReqNum("gold");
+            d.Gem1 = j["gem1"].ReqNum("gem1");
+            d.Gold1 = j["gold1"].ReqNum("gold1");
+            d.GemGrowth = j["gemGrowth"].ReqNum("gemGrowth");
+            d.GoldGrowth = j["goldGrowth"].ReqNum("goldGrowth");
+            d.GemRound = (int)j["gemRound"].ReqNum("gemRound");
+            d.GoldRound = (int)j["goldRound"].ReqNum("goldRound");
+            d.TableMax = (int)j["tableMax"].ReqNum("tableMax");
             if (d.Steps < 1 || d.Steps > MaxSteps) throw new FormatException("chapterChest.json: steps 는 1~" + MaxSteps + " 여야 한다(수령 기록이 세이브의 비트라서)");
-            if (d.Gem < 0 || d.Gold < 0) throw new FormatException("chapterChest.json: gem·gold 는 0 이상이어야 한다");
+            if (d.Gem1 < 0 || d.Gold1 < 0) throw new FormatException("chapterChest.json: gem1·gold1 은 0 이상이어야 한다");
+            // 복리가 1 보다 작으면 «챕터가 오를수록 커진다»(주인 지시 ⓒ)가 뒤집힌다 — 표가 조용히 반대로 도는 것을 막는다.
+            if (d.GemGrowth < 1 || d.GoldGrowth < 1) throw new FormatException("chapterChest.json: gemGrowth·goldGrowth 는 1 이상이어야 한다(챕터가 오를수록 커진다 · 주인 지시)");
+            if (d.GemRound < 1 || d.GoldRound < 1) throw new FormatException("chapterChest.json: gemRound·goldRound 는 1 이상이어야 한다");
+            if (d.TableMax < 1) throw new FormatException("chapterChest.json: tableMax 는 1 이상이어야 한다(표 밖 챕터가 쓰는 값이다)");
             return d;
         }
     }
@@ -58,7 +96,8 @@ namespace KkomaKnight.Core
     /// 챕터 보상(Chapter Chest) 규칙 (T137 · 순수 C# · 저장은 <see cref="SaveData.ChestClaimed"/>·<see cref="SaveData.ChestKills"/>).
     /// <list type="bullet">
     /// <item><b>한 챕터에 보상 칸이 <see cref="ChapterChestData.Steps"/> 개</b>(주인 지시 = 3) — 목표는 그 챕터 적의 1/3 · 2/3 · 전부 처치이고
-    /// 정확히는 <c>ceil(적 수 × 단 / 단 수)</c> 다. 보상은 단마다 같다(다이아 <c>gem</c> · 골드 <c>gold</c>).</item>
+    /// 정확히는 <c>ceil(적 수 × 단 / 단 수)</c> 다. 보상은 <b>한 챕터 안에서는</b> 단마다 같고,
+    /// <b>챕터가 오를수록 커진다</b>(<see cref="ChapterChestData.GemAt"/>·<see cref="ChapterChestData.GoldAt"/> · T268 ⓒ).</item>
     /// <item>진행도는 «그 챕터에서 잡아 본 최고 처치 수»(<see cref="SaveData.ChestKills"/>) 다 — <b>지든 이기든</b> 남는다.
     /// 이미 깬 챕터(<c>maxChapter &gt; C</c>)는 «전멸» 로 친다(옛 세이브가 손해 보지 않게).</item>
     /// <item>수령은 <b>단마다 한 번</b> — 챕터 → 비트(단 하나가 비트 하나)로 담는다.</item>
@@ -137,8 +176,8 @@ namespace KkomaKnight.Core
                 Goal = Goal(D, chapter, step),
                 Kills = Progress(D, s, chapter),
                 EnemyCount = EnemyCount(D, chapter),
-                Gem = t.Gem,
-                Gold = t.Gold,
+                Gem = t.GemAt(chapter),
+                Gold = t.GoldAt(chapter),
                 Claimed = ClaimedStep(s, chapter, step),
             };
         }
