@@ -1908,6 +1908,23 @@ T95(소환 결과 = `Shop_Chest_Open` 프리팹 + 찰진 등장)가 ✅ 지만 *
 >   **공통 `UiKit.DimAlpha` 가 내는 띠가 이미 26~32** 였다(결정 692) — 내 실측 26.9 는 «특례가 필요하다» 가 아니라 «공통값이 맞다» 는 증거였다. 표 ㊻ 의 그 행도 같이 고쳤다.
 >   («한 장만 재면 관측이 아니라 인상이다» — 결정 620·692 의 이웃이고, 내가 오늘 T224 에서 같은 값을 치렀다.)
 >
+> **(20:4X 보탬 · sess-1424-31894 · 워커 B) 3항 배선 — 아레나 «도전» 이 드디어 1대1 판을 연다.**
+> T254 lock 이 풀려 두 회차 미뤄 둔 «한 줄 넘기기» 를 했다. 붙인 것은 **값 하나가 흐르는 길**뿐이다:
+> `EventsScreen.ArenaChallenge(rank)` → `App.StartBattle(…, arenaFoeRank)` → `BattleScreen.Start(…, arenaFoeRank)`
+> → `BattleScreen.DuelFoe` 가 «순위 → `ArenaDummy.Power` → `ArenaFoe.Of`» 를 풀어 `RunOptions.ArenaDuelFoe` 에 넣는다.
+> `GameData.ArenaFoe` + `Bootstrap.LoadArenaFoe`(같은 `arenaMatch.json` 의 `foe` 칸을 한 번 더 판다).
+> · **못 읽으면 종전대로** — 표나 순위가 없으면 `DuelFoe` 가 `null` 이고 **종전 챕터 전투**가 열린다(지어내 1대1 을 세우지 않는다).
+> · **`rank` 기본값 0(모름)** 이라 `StartBattle` 을 부르는 다른 자리(로비·던전·스모크 훅)는 한 줄도 안 고쳤다.
+>
+> **⚑ 이제 남은 것은 2항(양쪽 다 «플레이어») 하나다 — 그리고 지금이 그것을 할 때다.**
+> 적이 하나가 됐으니 «플레이어처럼 생긴 몹 떼» 가 될 걱정이 없어졌다(앞 회차의 그 경고는 이제 풀렸다).
+> ⓐ `BattleWorld.EnemySkin(e)` 이 지금은 몹 스킨(투구·활)만 낸다 — **아레나 판이면 기사 쪽 스킨**으로 갈라야 한다.
+>    아레나 여부는 `BattleWorld` 가 이미 안다(`IsArenaRun` · 1항에서 넣었다).
+> ⓑ ⚠ **상대 «장비» 는 데이터가 없다**(더미는 이름·아바타·전투력뿐) — «상대 장비를 입힌 모습» 은 지금 재료로 못 만든다.
+>    기사 기본 외형(`CharacterRig.PlayerSkin(D, null, false)`)으로 갈지 주인에게 청할지가 그 회차의 판단이고, **지어내지 말 것**.
+> ⓒ 1항의 **VS 머리**(빨간 바·배지·아바타 칸 둘·이름 둘·전투력 줄 둘)도 이제 붙일 수 있다 — 자리(`Layout.Pvp*` · 표 ㊺)와 자는 이미 서 있고
+>    **상대 전투력도 이제 구할 수 있다**(`rank` 가 `BattleScreen` 까지 들어왔다). 붙는 곳은 `BattleScreen.Build`/`Start` 다.
+
 > **(19:5X 보탬 · sess-1424-31894 · 워커 B) 3항 회차 2 — 1대1 진입점이 섰다(엔진 세 곳 · 전부 기본값 off).**
 > · **새 엔진을 안 만들었다** — T183 던전 판이 이미 쓰는 자리(`RunOptions`)에 **`ArenaDuelFoe` 한 칸**을 달았다.
 >   켜지면 `BuildNodes` 가 챕터 표를 **아예 안 읽고**(웨이브·이벤트·보스 없음) 적 하나짜리 판을 세우고, `Kill` 이 «그 하나가 죽으면 클리어» 로 갈린다.
