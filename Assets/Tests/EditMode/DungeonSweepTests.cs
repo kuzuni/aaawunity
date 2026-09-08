@@ -124,9 +124,69 @@ namespace KkomaKnight.Tests
         public void 옛_세이브에_그_칸이_없어도_안_깨진다()
         {
             var d = Table();
-            var old = SaveData.FromJson("{\"gold\":10}", TestData.Load());   // dunFloor 가 없는 옛 세이브
+            var old = SaveData.FromJson("{\"gold\":10}", TestData.Load());   // dunFloor·petEgg 가 없는 옛 세이브
             Assert.AreEqual(0, DungeonSweep.Floor(old, "hell"), "없으면 0 — 옛 세이브 호환");
+            Assert.AreEqual(0, old.PetEgg, 1e-9, "펫알 칸도 «없으면 0»");
             Assert.IsFalse(DungeonSweep.Can(old, d, "hell", Today));
+        }
+
+        // ───────────────────────── 2단계 ⓐ — «주기»(Grant · 펫알 저장 자리) ─────────────────────────
+
+        [Test]
+        public void 소탕하면_티켓_한_장을_쓰고_표의_sweep_을_받는다()
+        {
+            var d = Table(); var s = Fresh(d);
+            DungeonSweep.Record(s, "hell", 3);
+            int before = DungeonTickets.Tickets(s, d, "hell", Today);
+            var got = DungeonSweep.Grant(s, d, "hell", Today);
+            Assert.IsNotNull(got, "될 때는 보상을 돌려준다(화면이 그대로 띄운다)");
+            Assert.AreEqual(5, got.PetEgg, 1e-9); Assert.AreEqual(1000, got.Gold, 1e-9);
+            Assert.AreEqual(before - 1, DungeonTickets.Tickets(s, d, "hell", Today), "티켓 정확히 1 장");
+            Assert.AreEqual(1000, s.Gold, 1e-9, "골드가 세이브에 들어갔다");
+            Assert.AreEqual(5, s.PetEgg, 1e-9, "펫알도 «버리지 않고» 세이브에 쌓인다 — 1단계에서 뗐던 반쪽");
+        }
+
+        [Test]
+        public void 못_하는_판이면_티켓도_보상도_안_움직인다()
+        {
+            var d = Table(); var s = Fresh(d);   // 층 0 = 못 한다
+            int before = DungeonTickets.Tickets(s, d, "hell", Today);
+            Assert.IsNull(DungeonSweep.Grant(s, d, "hell", Today), "못 하면 null");
+            Assert.AreEqual(before, DungeonTickets.Tickets(s, d, "hell", Today), "티켓이 그대로다(«쓰고 못 받는» 일이 없어야 한다)");
+            Assert.AreEqual(0, s.Gold, 1e-9); Assert.AreEqual(0, s.PetEgg, 1e-9);
+        }
+
+        [Test]
+        public void 티켓이_다_떨어질_때까지만_되고_그_뒤로는_안_준다()
+        {
+            var d = Table(); var s = Fresh(d);
+            DungeonSweep.Record(s, "hell", 1);
+            int n = 0;
+            while (DungeonSweep.Grant(s, d, "hell", Today) != null) { n++; Assert.Less(n, 10, "무한히 주면 안 된다"); }
+            Assert.AreEqual(2, n, "하루 티켓 2 장 = 소탕 2 번");
+            Assert.AreEqual(2000, s.Gold, 1e-9); Assert.AreEqual(10, s.PetEgg, 1e-9, "두 번치가 쌓인다");
+            Assert.AreEqual("티켓이 없다", DungeonSweep.Why(s, d, "hell", Today));
+        }
+
+        [Test]
+        public void 펫알은_세이브를_건너간다()
+        {
+            var d = Table(); var s = Fresh(d);
+            DungeonSweep.Record(s, "hell", 2);
+            DungeonSweep.Grant(s, d, "hell", Today);
+            var back = SaveData.FromJson(s.ToJson(), TestData.Load());
+            Assert.AreEqual(5, back.PetEgg, 1e-9, "펫알이 세이브 왕복을 견딘다");
+            Assert.AreEqual(1000, back.Gold, 1e-9);
+        }
+
+        [Test]
+        public void 원정_소탕은_골드만_주고_펫알은_안_준다()
+        {
+            var d = Table(); var s = Fresh(d);
+            DungeonSweep.Record(s, "expedition", 1);
+            var got = DungeonSweep.Grant(s, d, "expedition", Today);
+            Assert.AreEqual(3500, got.Gold, 1e-9, "표의 sweep(첫 클리어 5800 이 아니다)");
+            Assert.AreEqual(0, s.PetEgg, 1e-9, "원정은 표에 펫알이 없다 — 없는 것을 지어내지 않는다");
         }
     }
 }

@@ -66,6 +66,16 @@ namespace KkomaKnight.Core
         /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 빈 목록»(옛 세이브 호환 · <see cref="DunDay"/> 와 같은 방식).
         /// </summary>
         public Dictionary<string, int> DunFloor = new Dictionary<string, int>();
+        /// <summary>
+        /// 가진 <b>펫알</b> 개수(T228 2단계 ⓐ · 주인 표 <c>dungeon.json</c> 의 소탕·클리어 보상이 «펫알 + 골드» 다).
+        /// <para>
+        /// <b>왜 세이브 필드인가</b> — 1단계에서 지급을 뗀 까닭이 «펫알을 담을 자리가 없다» 였다(결정 633). 자리는 여기 하나면 되고,
+        /// 이것이 없으면 주인이 준 표의 <b>절반</b>(지옥의 문 펫알 5)이 매번 조용히 버려진다. <see cref="Gold"/>·<see cref="Gem"/> 과 같은 꼴(재화 = <c>double</c>)이다.
+        /// </para>
+        /// ⚠ <b>쓰는 곳은 아직 없다</b> — 펫 시스템(<c>PetScreen</c>)은 껍데기라 «알을 무엇에 쓰나» 는 주인이 말하지 않았다.
+        /// 그래서 여기서는 <b>쌓기만</b> 하고 소비·표시는 지어내지 않는다(§1). index.html 세이브에 없는 이 레포 전용 필드라 «없으면 0»(옛 세이브 호환).
+        /// </summary>
+        public double PetEgg;
         /// <summary>이미 받은 <b>챕터 보상</b>(Chapter Chest) — 챕터 → «받은 단» 비트(T137 · 주인 2026-09-07 «챕터 보상은 챕터당 3개» · 단 하나가 비트 하나).
         /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 빈 목록»(옛 세이브 호환 · <see cref="DunDay"/> 와 같은 방식) — 세이브 버전은 그대로 둔다.
         /// T98 때의 «챕터 번호 목록» 세이브는 <see cref="ChapterChest.OldSaveAll"/> 로 읽어 두었다가 <see cref="ChapterChest.Normalize"/> 가 «단 다 받음» 으로 옮긴다.</summary>
@@ -155,6 +165,7 @@ namespace KkomaKnight.Core
             var eq = new Dictionary<string, object>(); foreach (var kv in Eq) eq[kv.Key] = (double)kv.Value; o["eq"] = eq;
             var sl = new Dictionary<string, object>(); foreach (var kv in Slots) sl[kv.Key] = (double)kv.Value; o["slots"] = sl;
             var df = new Dictionary<string, object>(); foreach (var kv in DunFloor) df[kv.Key] = (double)kv.Value; o["dunFloor"] = df;
+            o["petEgg"] = PetEgg;
             var dt = new Dictionary<string, object>(); foreach (var kv in DunTickets) dt[kv.Key] = (double)kv.Value; o["dunTickets"] = dt;
             var da = new Dictionary<string, object>(); foreach (var kv in DunAdUsed) da[kv.Key] = (double)kv.Value; o["dunAdUsed"] = da;
             var dgm = new Dictionary<string, object>(); foreach (var kv in DunGemUsed) dgm[kv.Key] = (double)kv.Value; o["dunGemUsed"] = dgm;
@@ -188,6 +199,7 @@ namespace KkomaKnight.Core
                     s.DunDay = j["dunDay"].Str("");
                     foreach (var k in j["dunTickets"].Keys) s.DunTickets[k] = j["dunTickets"][k].Int();
                     foreach (var k in j["dunFloor"].Keys) s.DunFloor[k] = j["dunFloor"][k].Int();
+                    s.PetEgg = j["petEgg"].Num();   // 없으면 0(옛 세이브 호환 · T228)
                     foreach (var k in j["dunAdUsed"].Keys) s.DunAdUsed[k] = j["dunAdUsed"][k].Int();
                     foreach (var k in j["dunGemUsed"].Keys) s.DunGemUsed[k] = j["dunGemUsed"][k].Int();
                     // T137 — 새 세이브는 «챕터 → 비트» 표, T98 옛 세이브는 «챕터 번호 목록»(그 챕터는 «단 다 받음» = ChapterChest.Normalize 가 옮긴다)

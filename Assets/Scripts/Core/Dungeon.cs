@@ -221,7 +221,8 @@ namespace KkomaKnight.Core
     ///       주인이 두 번 말한 «최초 보상은 안 주고 나머지만» 이 그것이고, 표에도 그렇게 나뉘어 있다(지옥문 펫알 5·골드 1000 · 원정 골드 3500).</item>
     /// <item><b>층별 차등은 없다</b> — 표에 던전마다 값이 <b>하나</b>다. 차등이 필요하면 주인이 표를 준다(§1 «수치는 표로») — 여기서 지어내지 않는다.</item>
     /// </list>
-    /// 화면 배선(21 팝업 «소탕» 버튼)은 <c>EventsScreen</c> 몫이고 이 클래스는 규칙과 값만 갖는다.
+    /// 화면 배선(21 팝업 «소탕» 버튼)은 <c>EventsScreen</c> 몫이고, 이 클래스가 <b>판정·값·지급</b>(<see cref="Grant"/>)을 다 갖는다 —
+    /// 화면은 «되나»(<see cref="Can"/>) · «안 되면 왜»(<see cref="Why"/>) · «눌렀다»(<see cref="Grant"/>) 셋만 부르면 된다.
     /// </summary>
     public static class DungeonSweep
     {
@@ -263,15 +264,26 @@ namespace KkomaKnight.Core
         }
 
         /// <summary>
-        /// ⚠ <b>«주기»(지급)는 아직 여기 없다 — 넣을 곳이 없어서다.</b>
+        /// 소탕 한 번을 <b>실제로 치른다</b>(T228 2단계 ⓐ) — 못 하면 <c>null</c> 이고 <b>아무것도 안 바뀐다</b>.
+        /// 되면 <b>티켓 1 을 쓰고</b> 표의 <c>sweep</c> 을 세이브에 더한 뒤 그 보상을 돌려준다(화면이 «무엇을 받았는지» 를 그대로 띄운다).
         /// <para>
-        /// 표의 소탕 보상은 <b>펫알 + 골드</b>인데(지옥문 펫알 5·골드 1000) <see cref="SaveData"/> 에 <b>펫알을 담는 자리가 없다</b> —
-        /// 레포 전체에서 «펫알» 은 보상 «칸을 그리는» 자리(<c>EventsScreen</c> 의 <c>pet.egg</c> 아이콘) 한 곳뿐이고 세이브 필드도 재화도 아니다(전수 확인).
-        /// 골드만 주고 펫알을 조용히 버리면 <b>주인이 준 표의 절반을 말없이 삭제</b>하는 것이라 그렇게 하지 않았다.
+        /// <b>1단계에서 뗐던 «주기» 가 여기서 붙는다</b>(결정 633 의 남은 반쪽) — 뗐던 까닭은 «펫알을 담을 자리가 없다» 였고,
+        /// 그 자리를 <see cref="SaveData.PetEgg"/> 하나로 만들었다. 골드만 주고 펫알을 버리는 길(주인이 준 표의 절반을 말없이 삭제)은 끝까지 안 골랐다.
         /// </para>
-        /// 그래서 이 클래스는 «되는가·무엇을 주는가» 까지만 정하고, <b>실제 지급은 배선 회차</b>(21 팝업 «소탕» 버튼 · <c>EventsScreen</c>)가
-        /// 펫알 저장 자리를 함께 정하며 넣는다 — 그 회차의 첫 물음이 «펫알은 어디에 쌓이나» 다.
+        /// ⚠ <b>순서가 규칙이다</b> — 티켓을 쓰기 <b>전에</b> <see cref="Can"/> 로 판정하고, 티켓 소모가 실패하면(경쟁 상태로 0 이 됐다) <b>보상도 안 준다</b>.
+        /// 반대로 하면 «티켓만 사라지고 보상은 없다» 가 생긴다.
         /// </summary>
-        public const string GrantNote = "펫알 저장 자리가 없어 지급은 배선 회차 몫(T228)";
+        public static DungeonData.Reward Grant(SaveData s, DungeonData d, string key, string today)
+        {
+            var prize = Prize(s, d, key, today);
+            if (prize == null) return null;
+            if (!DungeonTickets.Spend(s, d, key, today)) return null;   // 티켓이 그 사이 0 이 됐으면 보상도 없다
+            s.Gold += prize.Gold;
+            s.PetEgg += prize.PetEgg;
+            return prize;
+        }
+
+        /// <summary>1단계에 «지급을 왜 뗐나» 를 적어 두었던 자리 — 2단계가 <see cref="Grant"/> 로 채웠다(문구는 옛 기록이 가리키므로 남긴다).</summary>
+        public const string GrantNote = "펫알은 SaveData.PetEgg 에 쌓는다 — 지급은 Grant 가 한다(T228 2단계)";
     }
 }
