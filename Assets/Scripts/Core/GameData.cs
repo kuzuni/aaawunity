@@ -536,18 +536,37 @@ namespace KkomaKnight.Core
     /// </summary>
     public sealed class ShopData
     {
-        public sealed class GemPack { public int Won; public double Gem; }
-        public sealed class GoldPack { public double Gold; public double Gem; }
+        /// <summary><c>Free</c> = 무료 보급 때 가격 버튼이 «Free» 로 바뀌는 줄인가(T259 3항 · 표의 <c>free</c>).</summary>
+        public sealed class GemPack { public int Won; public double Gem; public bool Free; }
+        /// <summary><c>Free</c> = 위와 같다(주인 «1000골드 부분도 마찬가지»).</summary>
+        public sealed class GoldPack { public double Gold; public double Gem; public bool Free; }
         public List<GemPack> GemPacks = new List<GemPack>();
         public List<GoldPack> GoldPacks = new List<GoldPack>();
+
+        /// <summary>
+        /// 무료 보급 때 «Free» 가 되는 <b>다이아 줄</b>(주인 2026-09-09 «100다이아 부분 상품도 무료 보급 때마다 1회 Free») — 없으면 null.
+        /// <para>
+        /// <b>«첫 줄» 이 아니라 «표가 그렇다고 적은 줄» 이다.</b> 순서로 정하면 표에 줄을 하나 끼우는 순간 무료 상품이 조용히 바뀐다 —
+        /// 그 사고는 화면에도 자에도 «오류» 로 안 뜨고, 그냥 다른 상품이 공짜가 된다(결정 758).
+        /// </para>
+        /// </summary>
+        public GemPack FreeGemPack { get { foreach (var p in GemPacks) if (p.Free) return p; return null; } }
+        /// <summary>무료 보급 때 «Free» 가 되는 <b>골드 줄</b>(주인 «1000골드 부분도 마찬가지») — 없으면 null.</summary>
+        public GoldPack FreeGoldPack { get { foreach (var p in GoldPacks) if (p.Free) return p; return null; } }
 
         public static ShopData Parse(string json) => From(new JNode(MiniJson.Parse(json)));
         public static ShopData From(JNode j)
         {
             var d = new ShopData();
-            foreach (var p in j["gemPacks"].Items()) d.GemPacks.Add(new GemPack { Won = (int)p["won"].ReqNum("gemPacks.won"), Gem = p["gem"].ReqNum("gemPacks.gem") });
-            foreach (var p in j["goldPacks"].Items()) d.GoldPacks.Add(new GoldPack { Gold = p["gold"].ReqNum("goldPacks.gold"), Gem = p["gem"].ReqNum("goldPacks.gem") });
+            foreach (var p in j["gemPacks"].Items()) d.GemPacks.Add(new GemPack { Won = (int)p["won"].ReqNum("gemPacks.won"), Gem = p["gem"].ReqNum("gemPacks.gem"), Free = p["free"].Bool() });
+            foreach (var p in j["goldPacks"].Items()) d.GoldPacks.Add(new GoldPack { Gold = p["gold"].ReqNum("goldPacks.gold"), Gem = p["gem"].ReqNum("goldPacks.gem"), Free = p["free"].Bool() });
             if (d.GemPacks.Count == 0 && d.GoldPacks.Count == 0) throw new FormatException("shop.json: gemPacks/goldPacks 가 비어 있다");
+            // T259 3항 — 무료 줄은 갈래마다 **하나**여야 한다. 둘이면 화면이 어느 것을 «Free» 로 그릴지 조용히 골라 버리고,
+            // 그 선택은 표를 봐도 코드를 봐도 안 보인다(«위에서 첫 번째» 라는 규칙이 아무 데도 안 적혀 있으므로).
+            int fg = 0; foreach (var p in d.GemPacks) if (p.Free) fg++;
+            int fo = 0; foreach (var p in d.GoldPacks) if (p.Free) fo++;
+            if (fg > 1) throw new FormatException("shop.json: gemPacks 의 free 가 " + fg + "줄이다 — 무료 보급 줄은 하나여야 한다");
+            if (fo > 1) throw new FormatException("shop.json: goldPacks 의 free 가 " + fo + "줄이다 — 무료 보급 줄은 하나여야 한다");
             return d;
         }
     }
