@@ -372,6 +372,16 @@ namespace KkomaKnight.Core
         /// <b>여기만 따로 두는 까닭</b> = <see cref="BookClose"/> 를 옮기면 ④(표 91.5 · 지금 정확히 맞는다)가 대신 어긋난다.
         /// </summary>
         public static readonly R AcClose = new R(30.0f, 95.9f, 40.0f, 2.4f);
+        /// <summary>
+        /// ⑦ 인포 팝업(특전 목록)의 «탭하여 닫기» 줄(T230) — 공통 <see cref="BookClose"/>(91.5)보다 <b>2.9%p 아래</b>다.
+        /// <para>
+        /// 표 ⑦ 은 이 줄을 오래 <b>91.5</b> 로 적고 있었는데 <b>그 그림에서 잰 값이 아니었다</b> — `docs/ref/05_perks_list.jpg` 실측은 글자 94.23~95.58(칸 ≈94.4)이다.
+        /// 표와 코드가 같은 91.5 를 들고 있어 §5 는 «+0.0 ○» 를 줬지만 화면에서는 힌트가 <b>스탯 격자 위에 얹혔다</b>(레퍼런스는 격자 아래 빈 띠).
+        /// </para>
+        /// <b>공통값을 안 옮기는 까닭</b> = 이 줄은 레퍼런스에서 화면마다 다르다(④ ≈91.0 · ⑪ ≈91.0 · ⑦·⑨·⑬·⑳·㉑·㉒ ≈94.4 · ⑯ ≈96.1) —
+        /// <see cref="BookClose"/> 를 내리면 ⑪(표 90.4)이 대신 판정 밖으로 나간다(<see cref="AcClose"/> 와 같은 갈래 · 결정 564).
+        /// </summary>
+        public static readonly R PerkBookClose = new R(30.0f, 94.4f, 40.0f, 2.4f);
 
         // ⑰ 아레나 순위 보상 팝업 — docs/ref/25_arena_rank_reward.jpg (T43)
         public static readonly R RrBox = new R(4.7f, 20.6f, 90.6f, 58.9f);

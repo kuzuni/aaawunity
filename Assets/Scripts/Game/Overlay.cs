@@ -422,6 +422,8 @@ namespace KkomaKnight.Game
             foreach (var b in G.Blessings) Sub(box, b, 93, 5, 24, Palette.Orange);
             var tap = UiKit.Find(Root, "TapToClose");
             if (onBack != null && tap != null) { var t = tap.GetComponent<TMP_Text>(); if (t != null) t.text = "탭하여 특전 선택으로"; }   // 레벨업에서 열었으면 배경 탭 = 선택으로 복귀
+            // T230 — 이 팝업의 닫기 안내만 표 ⑦ 자리(94.4)로 내린다. 공통 BookClose(91.5)를 옮기면 ⑪(표 90.4)이 대신 어긋난다(T214·AcClose 와 같은 갈래).
+            if (tap != null) UiKit.Pct((RectTransform)tap, Layout.PerkBookClose);
             // T46 이름표(표 ⑦ «(인포 팝업)» 행)
             UiKit.Tag(box, "(인포 팝업) 박스"); if (rib != null) UiKit.Tag(rib, "(인포 팝업) 제목 리본"); if (content.childCount > 0) UiKit.Tag(content.GetChild(0), "(인포 팝업) 목록 카드"); if (tap != null) UiKit.Tag(tap, "(인포 팝업) 닫기 안내");
         }

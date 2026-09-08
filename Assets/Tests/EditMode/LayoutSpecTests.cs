@@ -210,7 +210,9 @@ namespace KkomaKnight.Tests
             Same(s, "⑦", "카드 아이콘", Layout.OvCardIcon); Same(s, "⑦", "카드 문구", Layout.OvCardText);
             Same(s, "⑦", "하단 버튼", Layout.OvFoot); Same(s, "⑦", "인포(책) 버튼", Layout.OvInfo);
             Same(s, "⑦", "(인포 팝업) 박스", Layout.BookBox); Same(s, "⑦", "(인포 팝업) 제목 리본", Layout.BookRibbon); Same(s, "⑦", "(인포 팝업) 목록 카드", Layout.BookCard);
-            SameV(s, "⑦", "(인포 팝업) 닫기 안내", 1, Layout.BookClose.Y);
+            // T230 — 표 ⑦ 의 이 값은 오래 91.5(공통 BookClose)였는데 그 그림에서 잰 값이 아니었다(실측 글자 94.23~95.58 = 칸 ≈94.4).
+            //        표를 94.4 로 고치고 이 팝업만 따로 내렸다 — 공통값을 옮기면 ⑪(표 90.4)이 대신 어긋난다.
+            SameV(s, "⑦", "(인포 팝업) 닫기 안내", 1, Layout.PerkBookClose.Y);
         }
         [Test]
         public void Pet_MatchesSpec()
