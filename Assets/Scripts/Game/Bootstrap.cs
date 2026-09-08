@@ -65,6 +65,7 @@ namespace KkomaKnight.Game
             d.Privilege = LoadPrivilege(catalog);
             d.Quest = LoadQuest(catalog);
             d.ArenaMatch = LoadArenaMatch(catalog);
+            d.Achievement = LoadAchievement(catalog);
             ApplyCombatOverride(d, catalog);   // T173 — 전투 규칙 덮어쓰기(창 사거리·관통)는 App 이 서기 «전» 에 먹인다
             App.Create(d, catalog, uiFont, Camera.main);
             PostFx.Enable(App.I != null ? App.I.transform : null, Camera.main);   // T181 — 월드 Bloom(UI 에는 안 먹는다 · PostFx 주석 참조)
@@ -165,6 +166,15 @@ namespace KkomaKnight.Game
             if (ta == null) { Debug.LogError("[KkomaKnight] quest.json 이 카탈로그(data.quest)에 없다 — 퀘스트 표 없음"); return null; }
             try { return QuestData.Parse(ta.text); }
             catch (Exception e) { Debug.LogError("[KkomaKnight] quest.json 파싱 실패: " + e.Message); return null; }
+        }
+
+        /// <summary>업적 표 — 이 레포 전용 <c>Assets/KkomaKnight/achievement.json</c>(카탈로그 텍스트 «data.achievement» · T258). 못 읽으면 null(업적 탭이 비어 뜨고 받기가 없다 — 화면은 안 깨진다).</summary>
+        static AchievementData LoadAchievement(AssetCatalog catalog)
+        {
+            var ta = catalog != null ? catalog.Text("data.achievement") : null;
+            if (ta == null) { Debug.LogError("[KkomaKnight] achievement.json 이 카탈로그(data.achievement)에 없다 — 업적 표 없음"); return null; }
+            try { return AchievementData.Parse(ta.text); }
+            catch (Exception e) { Debug.LogError("[KkomaKnight] achievement.json 파싱 실패: " + e.Message); return null; }
         }
 
         /// <summary>아레나 한 판의 규칙표 — 이 레포 전용 <c>Assets/KkomaKnight/arenaMatch.json</c>(카탈로그 텍스트 «data.arenaMatch» · T240). 못 읽으면 null(승점이 안 움직인다 — 아레나 껍데기는 종전 그대로 뜬다).</summary>

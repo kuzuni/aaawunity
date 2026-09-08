@@ -1347,6 +1347,8 @@ MonoBehaviour:
     text: {fileID: 4900000, guid: a1d27e6e48fa196c4a5302a2ab2477e0, type: 3}
   - key: data.quest
     text: {fileID: 4900000, guid: 26785a4bfdbfc604cc77f37ae8e98505, type: 3}
+  - key: data.achievement
+    text: {fileID: 4900000, guid: 16d814e592e3e47ca150a063e4a00569, type: 3}
   audio:
   - key: bgm.lobby
     clip: {fileID: 8300000, guid: e8ab4b520cd1ceb6fa53ae0b8ce16276, type: 3}

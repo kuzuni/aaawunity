@@ -1,0 +1,25 @@
+{
+  "_note": "업적(반복 퀘스트) 표 — 이 레포 전용(T258 · 주인 2026-09-09 05:2X «업적 부분은 메달 없음. 걍 보상 바로 받음. 업적은 일종의 반복 퀘스트 느낌으로 하면 됨»). 코드는 카탈로그 텍스트 «data.achievement» 로 읽는다 — 코드에 숫자 하드코딩 0. 값을 바꾸려면 이 파일만 고친다.",
+  "_stage": "단계가 끝없이 늘어난다 — 단계 N 의 목표 = goal × N (상자 5회 → 10 → 15 → 20 …). 보상은 단계마다 같다(주인이 단계별로 다른 값을 주지 않았다 · 다르게 하려면 여기 한 줄에 칸을 더한다). 진행도는 누적이고 받아도 줄지 않는다 — 일일·주간(quest.json)과 달리 초기화가 없다.",
+  "_counter": "counter = 무엇을 세는가. quest.json 과 **같은 낱말을 일부러 같이 쓴다**(kill · chestOpen · gearFuse · dungeonTry) — 세는 자리가 같아야 두 절이 어긋나지 않는다. 다만 **누적은 따로 담는다**(SaveData.Ach): 일일·주간 카운터는 초기화되므로 그 값을 업적에 쓰면 안 된다. 상자는 등급마다 갈랐다(chestOpen:rare 처럼 묶지 않고 칸을 나눈 것은 quest.json 의 Dungeon 칸과 같은 까닭 — 묶으면 읽는 쪽이 문자열을 다시 쪼개야 하고 그 규칙이 코드에 숨는다).",
+  "_attend": "출석(attend)은 **하루 한 번만** 오른다(주인 명시). 그래서 이것만 «마지막으로 센 날짜» 를 같이 든다 — 다른 것은 이벤트마다 +1(적 처치는 마릿수).",
+  "list": [
+    { "label": "희귀 상자 5회 오픈",     "counter": "chestOpenRare",    "goal": 5,   "item": "gem", "amount": 5 },
+    { "label": "전설 상자 5회 오픈",     "counter": "chestOpenEpic",    "goal": 5,   "item": "gem", "amount": 10 },
+    { "label": "신화 상자 5회 오픈",     "counter": "chestOpenMythic",  "goal": 5,   "item": "gem", "amount": 15 },
+    { "label": "광고 10회 시청",         "counter": "adWatch",          "goal": 10,  "item": "gem", "amount": 5 },
+    { "label": "적 처치 100명",          "counter": "kill",             "goal": 100, "item": "gem", "amount": 10 },
+    { "label": "장비 합성 10회",         "counter": "gearFuse",         "goal": 10,  "item": "gem", "amount": 5 },
+    { "label": "지옥문 던전 도전 5회",   "counter": "dungeonTryHell",   "goal": 5,   "item": "gem", "amount": 5 },
+    { "label": "원정 던전 도전 5회",     "counter": "dungeonTryExpd",   "goal": 5,   "item": "gem", "amount": 5 },
+    { "label": "탐험 5회",               "counter": "expeditionClaim",  "goal": 5,   "item": "gem", "amount": 5 },
+    { "label": "빠른 탐험 5회",          "counter": "expeditionQuick",  "goal": 5,   "item": "gem", "amount": 5 },
+    { "label": "클리어 보상 수령 5회",   "counter": "chapterChestClaim","goal": 5,   "item": "gem", "amount": 5 },
+    { "label": "출석 1회",               "counter": "attend",           "goal": 1,   "item": "gem", "amount": 5 },
+    { "label": "출석 보상 1회 수령",     "counter": "attendClaim",      "goal": 1,   "item": "gem", "amount": 5 },
+    { "label": "데일리 기프트 5회 수령", "counter": "giftClaim",        "goal": 5,   "item": "gem", "amount": 5 },
+    { "label": "펫 업그레이드 10회",     "counter": "petUpgrade",       "goal": 10,  "item": "gem", "amount": 5 },
+    { "label": "펫 뽑기 10회",           "counter": "petGacha",         "goal": 10,  "item": "gem", "amount": 5 },
+    { "label": "아레나 10회 도전",       "counter": "arenaTry",         "goal": 10,  "item": "gem", "amount": 5 }
+  ]
+}

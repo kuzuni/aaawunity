@@ -63,6 +63,13 @@ namespace KkomaKnight.Core
         /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 기본값»(옛 세이브 호환 · <see cref="GiftDay"/> 와 같은 방식).</summary>
         public string DunDay = "";
         /// <summary>던전 키(hell·expedition) → 보유 티켓 수.</summary>
+        /// <summary>업적 <b>누적</b>(평생 · T258 · 카운터 이름 → 지금까지 몇). 받아도 줄지 않는다 — 일일·주간(퀘스트)과 달리 초기화가 없다.
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 기본값»(옛 세이브 호환).</summary>
+        public Dictionary<string, int> Ach = new Dictionary<string, int>();
+        /// <summary>업적 <b>받은 단계 수</b>(T258 · 카운터 이름 → 몇 단계까지 받았나). 지금 도전 중인 단계 = 이것 + 1.</summary>
+        public Dictionary<string, int> AchClaimed = new Dictionary<string, int>();
+        /// <summary>업적 중 <b>하루 한 번만</b> 오르는 것의 «마지막으로 센 날짜»(<c>yyyy-MM-dd</c> · 지금은 출석 하나 · 주인 명시).</summary>
+        public Dictionary<string, string> AchDay = new Dictionary<string, string>();
         public Dictionary<string, int> DunTickets = new Dictionary<string, int>();
         /// <summary>던전 키 → 오늘 쓴 «광고 보고 티켓» 횟수(상한 = dungeon.json <c>adPerDay</c>).</summary>
         public Dictionary<string, int> DunAdUsed = new Dictionary<string, int>();
@@ -267,6 +274,9 @@ namespace KkomaKnight.Core
                 ml.Add(new Dictionary<string, object> { ["id"] = m.Id, ["kind"] = m.Kind, ["title"] = m.Title, ["desc"] = m.Desc, ["rewards"] = rw });
             }
             o["mail"] = ml;
+            var ac = new Dictionary<string, object>(); foreach (var kv in Ach) ac[kv.Key] = (double)kv.Value; o["ach"] = ac;                 // T258
+            var acc = new Dictionary<string, object>(); foreach (var kv in AchClaimed) acc[kv.Key] = (double)kv.Value; o["achClaimed"] = acc;
+            var acd = new Dictionary<string, object>(); foreach (var kv in AchDay) acd[kv.Key] = kv.Value ?? ""; o["achDay"] = acd;
             var dt = new Dictionary<string, object>(); foreach (var kv in DunTickets) dt[kv.Key] = (double)kv.Value; o["dunTickets"] = dt;
             var da = new Dictionary<string, object>(); foreach (var kv in DunAdUsed) da[kv.Key] = (double)kv.Value; o["dunAdUsed"] = da;
             var dgm = new Dictionary<string, object>(); foreach (var kv in DunGemUsed) dgm[kv.Key] = (double)kv.Value; o["dunGemUsed"] = dgm;
@@ -299,6 +309,9 @@ namespace KkomaKnight.Core
                     foreach (var k in j["eq"].Keys) s.Eq[k] = j["eq"][k].Int();
                     foreach (var k in j["slots"].Keys) s.Slots[k] = j["slots"][k].Int();
                     s.DunDay = j["dunDay"].Str("");
+                    foreach (var k in j["ach"].Keys) s.Ach[k] = j["ach"][k].Int();                             // T258 — 없으면 빈 표(옛 세이브)
+                    foreach (var k in j["achClaimed"].Keys) s.AchClaimed[k] = j["achClaimed"][k].Int();
+                    foreach (var k in j["achDay"].Keys) s.AchDay[k] = j["achDay"][k].Str("");
                     foreach (var k in j["dunTickets"].Keys) s.DunTickets[k] = j["dunTickets"][k].Int();
                     foreach (var k in j["dunFloor"].Keys) s.DunFloor[k] = j["dunFloor"][k].Int();
                     s.PetEgg = j["petEgg"].Num();   // 없으면 0(옛 세이브 호환 · T228)
