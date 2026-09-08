@@ -2687,6 +2687,32 @@ Caught fatal signal - signo:6 (SIGABRT) · Unexpected exit code 134
 5. **자가 무는지 부러뜨려 봤다**(T249 기준) — `Core/GachaKeys.cs` 를 지운 커밋을 만들어 돌리니 `✗ CS0246 타입 «GachaKeys» 정의 없음 ← Mail.cs, ShopScreen.cs, AttendanceTests.cs, GachaKeysTests.cs` 로 **주인이 본 그 이름 그대로** 빨개졌고, 되돌리니 초록이다.
 6. **CI 에는 안 걸었다** — `ci.yml` 은 지금 T263(«잡이 왜 빨간가»)이 보는 파일이고, 커밋당 3~5초라 잡 시간도 는다. **push 직전에 워커가 도는 자리**(§3)로 먼저 세운다. CI 로 옮길지는 T263 이 끝난 뒤 그 임자가 정한다.
 
+### T272 — 빠른 탐험 «광고 보고 무료» 버튼이 **재화를 실제로 주는지 아무 자도 안 눌러 본다** (검수 Q 등재 · 지급 버튼 가운데 **여기 하나만** 그렇다)
+
+> **⚑ T270 임자에게**: T270 5항이 이미 이 파일(`Assets/Tests/PlayMode/ExpeditionScreenTests.cs`)로 들어간다 — **같이 하면 한 회차에 끝난다.** 따로 잡을 것 없이 T270 안에서 처리하고 이 절에 «T270 이 흡수» 라고 적어도 된다.
+
+1. **무엇이 비었나** — `QuickExplorePopupAndLobbyRedDot` 은 `QxFreeBtn` 을 **«있다 + `interactable` 이다» 까지만** 본다. **한 번도 안 누른다.** 그래서 아무 자도 이것을 재지 않는다:
+   - 누르면 **골드·다이아가 실제로 늘어나는가**(`Expedition.ClaimQuick` 이 정말 불리는가)
+   - 누르면 **보유 충전이 1 줄어드는가** · 배지 숫자가 따라 내려가는가
+   - **다 쓰면 버튼이 잠기는가**(주인 예시의 «두 번째는 막히는지» 쪽 절반)
+2. **왜 이것만 도드라지나 — 세어 봤다.** 이름 붙은 버튼 36개 가운데 PlayMode 자가 이름조차 안 부르는 것은 4개뿐이고 그 넷은 전부 **지금 살아 있는 lock 안**이다(특권 `CardBtn`·`ClaimAllBtn` = T264 · `ReviveBtn` = T254). 자가 이름은 부르는데 **한 번도 안 눌러 보는** 16개는 대부분 자리·수를 재는 자리(`BtnL`/`BtnR` 좌우 · `FoeBtn:` 5개 세기)거나 껍데기다. **재화를 주는 버튼 가운데 눌러 보지 않는 것은 `QxFreeBtn` 하나다** — 바로 옆 형제인 같은 팝업 계열의 `ClaimBtn`(탐험 30 «받기»)은 **누르고 · 재화 차이를 재고 · 받은 직후 잠기는 것까지** 다 잰다(`ExpeditionScreenTests` :131~149). 즉 이 레포의 자 문법은 이미 옳고, **한 자리만 빠졌다**.
+3. **왜 이 갈래가 위험한가** — 규칙(Core)은 EditMode 가 `ClaimQuick`·`QuickLeft`·시계 되돌림까지 촘촘히 재고 있다. 비어 있는 것은 **«버튼이 그 규칙에 배선돼 있는가»** 다. 그 배선이 끊기면 **Core 는 전부 초록인데 눌러도 아무 일이 없다** — 화면에 빨간 줄도 안 나고 게이트도 안 문다. 주인이 «○○이 안 받아지네» 라고 말하는 꼴이 정확히 이것이다(출석이 그랬다).
+4. **어떻게 메우나**(자 하나 · 화면·규칙 코드 0줄) — 같은 파일의 `ExpeditionPopupShowsAccruedRewardsAndClaimPaysThem` 이 쓰는 방식 그대로, 그리고 모의 광고는 `UiSmokeTests` :643 의 **이미 있는 관용구**를 베낀다:
+   ```
+   double g0 = S.Gold, m0 = S.Gem; int left0 = Expedition.QuickLeft(S, D, LobbyPopups.NowSec(), SaveStore.Today());
+   Expedition.QuickReward(_app.Data, S, D, out double qg, out double qm);
+   Assert.IsTrue(ClickNamed(ov, "QxFreeBtn"), "«광고 보고 무료» 가 눌린다");  yield return Frames(2);
+   Assert.IsTrue(HasText(s => s == "광고 시청 중..."), "모의 광고(T23 과 같은 자리)");
+   { float t0 = Time.realtimeSinceStartup; while (S.Gold - g0 < 1 && Time.realtimeSinceStartup - t0 < 10f) yield return Frames(1); }   // 3초 카운트다운을 프레임으로 넘긴다
+   Assert.AreEqual(qg, S.Gold - g0, 1.0, "누르면 보이던 골드만큼 실제로 들어온다");
+   Assert.AreEqual(qm, S.Gem  - m0, 1.0, "다이아도");
+   Assert.AreEqual(left0 - 1, Expedition.QuickLeft(...), "충전이 1 줄어든다");
+   ```
+   그다음 **다 쓴 판**을 만들어(`ExpQuickCharge = 0` · `ExpQuickAt = NowSec()`) 팝업을 다시 열고 — ⓐ `QxFreeBtn` 이 `interactable == false` ⓑ `QxRule` 이 «충전 완료» 가 아니라 **카운트다운**을 보인다 ⓒ 로비 `ExpDot` 이 꺼진다.
+5. **수를 코드에 박지 말 것** — 주기·최대는 반드시 표(`D.QuickChargeHours`·`D.QuickMax`)에서 읽는다. **그래야 T270(3시간 → 2시간)이 이 자를 안 깬다.** 지금 있는 규칙 줄 단언이 이미 그렇게 돼 있으니 그 꼴을 따른다.
+6. **검수 Q 가 직접 안 메운 까닭** — 이 자리에 `dotnet` 이 없어(§6 ⑨) **새로 쓴 C# 이 컴파일되는지 한 줄도 확인할 수 없다.** 검증 못 한 자를 미는 것은 게이트를 지키는 자리가 할 일이 아니다(빨간 main 이 이 발견보다 비싸다) — 그래서 **재료를 다 갖춰 넘긴다.** `dotnet` 이 있는 워커가 위 4항을 그대로 붙이고 `test`·`-t:Rebuild` 로 확인하면 된다.
+7. 게이트 + PROGRESS T272 행 + 완료 기록(확인 = 다음 완주 런의 `ExpeditionScreenTests`).
+
 
 ## 3. 게이트 (커밋 전 · 세션 종료 전)
 
@@ -5725,6 +5751,12 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 - **Q 가 하는 일(프롬프트 요약)**: ① **컴파일 무결성** — `dotnet build/test` · `gen_meta --check` · PlayMode/EditMode 컴파일 사전 점검 + **최근 커밋 20개에서 «정의와 참조가 나뉘어 밀린» 자리** 찾기 ② **기능이 실제로 도는가** — 최근 ✅ 항목의 PlayMode 단언이 «존재만» 보고 있으면 **동작 단언을 보탠다**(눌렀을 때 재화가 늘고 두 번째는 막히는지) · 주인이 «안 된다» 고 한 것부터 ③ **게이트 상태** — main 이 빨간데 아무도 안 잡고 있으면 **Q 가 잡아 고친다**.
 - **Q 는 새 기능을 먼저 만들지 않는다.** 고칠 것이 없으면 발견만 ⚑·PROGRESS 에 적고 커밋 없이 끝낸다.
 - 다른 워커와 같은 lock 규약 — **Q 도 남의 lock 은 건드리지 않는다.**
+
+**⚑ Q 자리의 실측 사실(2026-09-08 18:1X · sess-1808-28610 · 다음 Q 세션이 같은 시간을 다시 쓰지 말라고 적는다)**
+
+- **이 컨테이너에는 `dotnet` 이 없고, 설치도 막혀 있다.** `dotnet-install.sh` 를 받으려 하면 `builds.dotnet.microsoft.com:443` 이 조직 egress 정책으로 **CONNECT 403** 이다(우회 금지). ⇒ **Q 는 `dotnet build`·`dotnet test`·PlayMode 임시 csproj 사전 점검을 로컬에서 못 돌린다.** 그 셋의 결과는 **CI 런으로만** 확인한다(§6 ⑨ ③ 게이트 상태와 같은 길). 파이썬·셸 검사 14종과 `check_split_push` 는 전부 돈다.
+- **그래서 Q 가 «컴파일을 확인할 수 없는 코드» 를 미는 것은 금지다.** 게이트를 지키는 자리가 검증 못 한 C# 을 밀어 main 을 빨갛게 만들면, 그 손해가 발견의 값어치보다 크다. 고쳐야 할 자리를 찾으면 **재료를 다 갖춰 절로 등재**하고 `dotnet` 이 있는 워커에게 넘긴다(T272 가 그 전례).
+- **② «기능이 실제로 도는가» 를 손으로 훑지 말고 세는 법** — 화면 코드의 `이름 = "…Btn"` 을 전부 모아 PlayMode 자가 ⓐ 그 이름을 부르는가 ⓑ **실제로 눌러 보는가** 로 가른다. 이 레포는 ⓐ 가 36개 중 4개만 비어 있고 그 넷은 전부 살아 있는 lock 안이었으며, ⓑ 의 16개 가운데 **재화를 주는 버튼은 `QxFreeBtn` 하나뿐**이었다(→ T272). 이 셈이 «어디를 볼까» 를 5분에 끝낸다.
 
 ## 4. PROGRESS.md 기록 규약
 
