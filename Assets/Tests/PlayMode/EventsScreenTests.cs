@@ -341,7 +341,25 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(ClickNamed(ar, "RewardsBtn"), "보상"); yield return Frames(2);
             Check("순위 보상 팝업", expectOverlay: true); ov = _app.Overlay.Root;
             Assert.IsTrue(HasText(s => s == "순위 보상") && HasText(s => s == "일일 보상") && HasText(s => s == "시즌 보상") && HasText(s => s.StartsWith("초기화까지")) && HasText(s => s == "순위 보상은 우편으로 지급됩니다"), "순위 보상 글자");
-            Assert.AreEqual(5, CountNamed(ov, "Tier:"), "티어 5"); Assert.AreEqual(4, CountNamed(ov, "RewardRow:"), "보상 줄 4");
+            Assert.AreEqual(5, CountNamed(ov, "Tier:"), "티어 5");
+            // T237 ⓒ — 보상 줄 수는 «표가 정한다»(arena.json 의 구간 16개). 예전에는 코드에 박힌 네 줄이었다.
+            var rank = _app.Data.ArenaRank;
+            Assert.IsNotNull(rank, "arena.json 이 카탈로그(data.arenaRank)로 실려야 한다");
+            Assert.AreEqual(rank.Tiers.Count, CountNamed(ov, "RewardRow:"), "보상 줄 = 표의 구간 수");
+            Assert.Greater(rank.Tiers.Count, 4, "표는 네 줄보다 많다(16) — 한 화면에 안 들어간다");
+            Assert.IsNotNull(UiKit.Find(ov, "Scroll"), "그래서 세로 스크롤 창 안에 있다");
+            Assert.IsNotNull(UiKit.Find(ov, "Scroll").GetComponent<UnityEngine.UI.ScrollRect>(), "실제로 스크롤된다");
+            // 줄의 글자 = 주인이 준 구간 그대로(«1» · «4-5» · «50001~꼴등»)
+            for (int ti = 0; ti < rank.Tiers.Count; ti++)
+            {
+                var rr = UiKit.Find(ov, "RewardRow:" + ti);
+                Assert.IsNotNull(rr, "줄 " + ti);
+                bool found = false;
+                foreach (var lab in rr.GetComponentsInChildren<TMPro.TMP_Text>(true)) if ((lab.text ?? "").Trim() == rank.Tiers[ti].Label) { found = true; break; }
+                Assert.IsTrue(found, ti + "번째 줄에 구간 글자 «" + rank.Tiers[ti].Label + "»");
+            }
+            for (int ti = 0; ti < 3; ti++) Assert.IsNotNull(UiKit.Find(UiKit.Find(ov, "RewardRow:" + ti), "Crown"), "왕관은 1·2·3 에만(레퍼런스 25) — 줄 " + ti);
+            Assert.IsNull(UiKit.Find(UiKit.Find(ov, "RewardRow:3"), "Crown"), "네 번째 줄에는 왕관이 없다");
             var rbox = UiKit.Find(ov, "ui.popup") as RectTransform; Assert.IsNotNull(rbox); AtX(rbox, Layout.RrBox, "순위 보상 박스"); AtY(rbox, Layout.RrBox, "순위 보상 박스");
             // T127 — 하단 탭 버튼 두 개는 팝업 박스 «안» 에 여백을 두고 앉는다: 탭 줄의 밑변이 박스 밑변과 같아서
             // 버튼이 줄을 꽉 채우면 조각의 보이는 크림 바닥 밖으로 삐져나온다(screens 243 실측). 아래 여백 ≥ 박스 높이의 1%.

@@ -559,19 +559,45 @@ namespace KkomaKnight.Game
             { var c = UiKit.Icon(timer, "Icon", "ui.iconClock"); UiKit.Pct(c.rectTransform, 0, 0, 10, 100); UiKit.Label(timer, 12, 0, 88, 100, "초기화까지: " + NoTime, TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft); }
             var rn = Layout.RrNote.Within(Layout.RrBox);
             UiKit.Tag(UiKit.Label(box, rn.X, rn.Y, rn.W, rn.H, "순위 보상은 우편으로 지급됩니다", TextSize.Aux, Palette.Ink, kind: TextKind.Aux).transform, "안내 문구");
-            var list = UiKit.Rect(box, "RewardList"); UiKit.Pct(list, Layout.RrList.Within(Layout.RrBox)); UiKit.Tag(list, "보상 목록(4줄)");
+            // T237 ⓒ — 줄 수는 «표가 정한다»(arena.json 구간 16개). 한 화면에 안 들어가므로 세로 스크롤 창 안에 놓는다.
+            // 스크롤 문법은 새로 만들지 않고 팝업 공용(LobbyPopups.Scroll)을 그대로 쓴다. 표가 없으면(로드 실패) 종전 네 줄 껍데기 그대로다.
+            var rank = App.Data != null ? App.Data.ArenaRank : null;
+            int rows = rank != null && rank.Tiers.Count > 0 ? rank.Tiers.Count : RewardRows;
+            float contentH = Mathf.Max(rows * Layout.RrRowPitch, Layout.RrList.H);
+            var content = LobbyPopups.Scroll(box, Layout.RrBox, Layout.RrList, contentH, out var contentR, out _);
+            UiKit.Tag(content.parent as RectTransform, "보상 목록(" + rows + "줄)");
             string[] crowns = { "ui.iconCrownGold", "ui.iconCrownSilver", "ui.iconCrownBronze" };
-            for (int i = 0; i < RewardRows; i++)
+            for (int i = 0; i < rows; i++)
             {
                 var r = Layout.RrRow; r.Y += i * Layout.RrRowPitch;
-                var row = UiKit.Rect(box, "RewardRow:" + i); UiKit.Pct(row, r.Within(Layout.RrBox));
+                var row = UiKit.Rect(content, "RewardRow:" + i); UiKit.Pct(row, r.Within(contentR));
                 var fr = UiKit.Spawn("ui.frameDark", row); UiKit.Stretch((RectTransform)fr.transform);
-                // T69-events: 24 의 상대 줄과 같은 이유로 보상 줄에도 Ink 링(레퍼런스 25 의 4줄은 각자 검은 외곽선 상자)
+                // T69-events: 24 의 상대 줄과 같은 이유로 보상 줄에도 Ink 링(레퍼런스 25 의 네 줄은 각자 검은 외곽선 상자)
                 UiKit.Bordered(row);
-                if (i < crowns.Length) { var cr = UiKit.Icon(row, "Crown", crowns[i]); UiKit.Pct(cr.rectTransform, 2, 8, 14, 84); UiKit.Label(row, 2, 30, 14, 50, (i + 1).ToString(), TextSize.Body, Palette.White).fontStyle = FontStyles.Bold; }
-                else UiKit.Label(row, 2, 0, 14, 100, (i + 1).ToString(), TextSize.Body, Palette.White).fontStyle = FontStyles.Bold;
-                // T72 ② 보상 칸(코인·다이아) 아이콘 뒤 빛살 — 팝업이라 스크롤 제한 없이 여덟 칸이 같이 돈다(닫으면 SetLink 로 같이 죽는다)
-                PlanLight(RewardCell(row, new Layout.R(20, 8, 13, 84), "ui.itemFrame.green", "ui.iconArenaCoin")); PlanLight(RewardCell(row, new Layout.R(35, 8, 13, 84), "ui.itemFrame.plum", "ui.iconGemPurple"));
+                var tier = rank != null && i < rank.Tiers.Count ? rank.Tiers[i] : null;
+                string label = tier != null ? tier.Label : (i + 1).ToString();
+                // 구간 글자는 주인이 쓴 그대로다(«4-5» · «50001~꼴등») — 왕관 셋은 레퍼런스대로 1·2·3 에만.
+                // 긴 글자는 보조 크기로 내려 칸 안에 들어가게 한다(«10001-50000» 이 왕관 자리 폭을 넘는다).
+                var size = label.Length > 2 ? TextSize.Aux : TextSize.Body;
+                if (i < crowns.Length) { var cr = UiKit.Icon(row, "Crown", crowns[i]); UiKit.Pct(cr.rectTransform, 2, 8, 14, 84); UiKit.Label(row, 2, 30, 14, 50, label, size, Palette.White, kind: size == TextSize.Aux ? TextKind.Aux : TextKind.Body).fontStyle = FontStyles.Bold; }
+                else UiKit.Label(row, 2, 0, 17, 100, label, size, Palette.White, kind: size == TextSize.Aux ? TextKind.Aux : TextKind.Body).fontStyle = FontStyles.Bold;
+                // 보상 칸 — 표에 적힌 만큼 그린다(줄마다 칸 수가 달라도 된다 · T237 ⓓ).
+                // ⚠ 표의 rewards 가 비어 있으면(지금이 그렇다 — 주인이 값을 아직 안 줬다) 레퍼런스 25 그대로 «코인·다이아 두 칸에 —» 다.
+                //    없는 값을 지어내는 것보다 «—» 가 낫다(T209 4항과 같은 갈래).
+                if (tier != null && tier.Rewards.Count > 0)
+                {
+                    for (int k = 0; k < tier.Rewards.Count; k++)
+                    {
+                        var rw = tier.Rewards[k];
+                        RewardArt(rw.Item, out string frameKey, out string iconKey);
+                        PlanLight(RewardCell(row, new Layout.R(20 + k * 15, 8, 13, 84), frameKey, iconKey, UiKit.FmtComma(rw.Amount)));
+                    }
+                }
+                else
+                {
+                    // T72 ② 보상 칸(코인·다이아) 아이콘 뒤 빛살 — 팝업이라 스크롤 제한 없이 같이 돈다(닫으면 SetLink 로 같이 죽는다)
+                    PlanLight(RewardCell(row, new Layout.R(20, 8, 13, 84), "ui.itemFrame.green", "ui.iconArenaCoin")); PlanLight(RewardCell(row, new Layout.R(35, 8, 13, 84), "ui.itemFrame.plum", "ui.iconGemPurple"));
+                }
                 if (i == 0) UiKit.Tag(row, "보상 줄(1칸)");
             }
             var tabs = UiKit.Rect(box, "Tabs"); UiKit.Pct(tabs, Layout.RrTabs.Within(Layout.RrBox)); UiKit.Tag(tabs, "하단 탭(2개)");
@@ -862,13 +888,22 @@ namespace KkomaKnight.Game
             }
             return res;
         }
-        static RectTransform RewardCell(RectTransform row, Layout.R r, string frameKey, string icon)
+        /// <summary>보상 이름 → 칸의 «틀 + 아이콘»(표는 게임 쪽 이름만 적고 아이콘 짝짓기는 화면 몫이다 · T237 ⓓ).</summary>
+        static void RewardArt(string item, out string frameKey, out string icon)
+        {
+            if (item == Core.Mail.ItemGem) { frameKey = "ui.itemFrame.plum"; icon = "ui.iconGemPurple"; return; }
+            if (item == Core.Mail.ItemPetEgg) { frameKey = "ui.itemFrame.green"; icon = "pet.egg"; return; }
+            if (item == Core.Mail.ItemGold) { frameKey = "ui.itemFrame.green"; icon = "ui.coin"; return; }
+            frameKey = "ui.itemFrame.green"; icon = "ui.iconArenaCoin";   // 아레나 코인 · 모르는 이름도 여기(아이콘 때문에 줄이 안 뜨는 일은 없게)
+        }
+
+        static RectTransform RewardCell(RectTransform row, Layout.R r, string frameKey, string icon, string amount = "—")
         {
             var cell = UiKit.Rect(row, "Reward"); UiKit.Pct(cell, r);
             var f = UiKit.Spawn(frameKey, cell); UiKit.Stretch((RectTransform)f.transform);
             GearUi.DarkFrame(f.transform);   // T115
             var ic = UiKit.Icon(cell, "Icon", icon); UiKit.Pct(ic.rectTransform, 16, 12, 68, 68);
-            UiKit.Label(cell, 0, 50, 100, 50, "—", TextSize.Aux, Palette.White, kind: TextKind.Aux);
+            UiKit.Label(cell, 0, 50, 100, 50, amount, TextSize.Aux, Palette.White, kind: TextKind.Aux);
             return cell;
         }
         /// <summary>버튼 오른쪽 위 빨간 알림 점(GUI Pro 조각).</summary>

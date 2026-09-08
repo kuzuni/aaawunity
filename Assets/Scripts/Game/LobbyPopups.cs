@@ -144,8 +144,9 @@ namespace KkomaKnight.Game
             return host;
         }
 
-        /// <summary>세로 스크롤 창 — <paramref name="viewR"/>(프레임 %) 안에 content(위 앵커 · 높이 <paramref name="contentH"/>%). 자식은 돌려주는 <paramref name="contentR"/> 기준 <c>Within</c> 으로 놓는다.</summary>
-        static RectTransform Scroll(Transform parent, Layout.R parentR, Layout.R viewR, float contentH, out Layout.R contentR, out ScrollRect sr)
+        /// <summary>세로 스크롤 창 — <paramref name="viewR"/>(프레임 %) 안에 content(위 앵커 · 높이 <paramref name="contentH"/>%). 자식은 돌려주는 <paramref name="contentR"/> 기준 <c>Within</c> 으로 놓는다.
+        /// <para>팝업 안 세로 스크롤의 <b>문법 한 곳</b>이다 — T237 이 25 팝업(순위 보상 16줄)에서 그대로 쓴다(새 꼴을 만들지 않는다).</para></summary>
+        public static RectTransform Scroll(Transform parent, Layout.R parentR, Layout.R viewR, float contentH, out Layout.R contentR, out ScrollRect sr)
         {
             var view = UiKit.Rect(parent, "Scroll"); UiKit.Pct(view, viewR.Within(parentR)); UiKit.Ensure<RectMask2D>(view.gameObject);
             var vimg = view.gameObject.AddComponent<Image>(); vimg.color = new Color(0, 0, 0, 0); vimg.raycastTarget = true;
