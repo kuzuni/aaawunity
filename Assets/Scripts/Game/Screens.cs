@@ -53,6 +53,8 @@ namespace KkomaKnight.Game
         TopBar _top; TMP_Text _chap; Transform _tabs;
         /// <summary>«데일리 기프트» 사이드 아이콘의 빨간 알림 점 — 지금 받을 수 있는 줄이 하나라도 있으면 켠다(T77 · <see cref="Refresh"/>).</summary>
         GameObject _giftDot;
+        /// <summary>«출석» 칸의 빨간 점(T253 4항) — 오늘 받을 칸이 있을 때만 켠다.</summary>
+        GameObject _attendDot;
         /// <summary>«탐험» 보조 버튼의 빨간 알림 점 — 받을 것이 쌓였거나 빠른 탐험 횟수가 남으면 켠다(T97 · <see cref="Refresh"/>).</summary>
         GameObject _expDot, _chestDot;
         /// <summary>메뉴(≡) 버튼의 빨간 알림 점 — 메뉴가 품은 항목에 지금 받을 것이 있으면 켠다(T96 ⓔ · <see cref="Core.Notify.MenuAny"/>).</summary>
@@ -180,6 +182,12 @@ namespace KkomaKnight.Game
                     var dot = UiKit.AlertDot(cell, "GiftDot", SubDotAnchor, SubDotOffset, SubDotSize);
                     _giftDot = dot; dot.SetActive(false);
                 }
+                // T253 4항 — «출석» 칸도 빨간 점(오늘 받을 칸이 있을 때만 · T96 ⓔ·T77 과 같은 규칙)
+                if (it.key == SideAttendance)
+                {
+                    var dot = UiKit.AlertDot(cell, "AttendDot", SubDotAnchor, SubDotOffset, SubDotSize);
+                    _attendDot = dot; dot.SetActive(false);
+                }
                 if (it.key == SideExplore)
                 {
                     var dot = UiKit.AlertDot(cell, "ExpDot", SubDotAnchor, SubDotOffset, SubDotSize);
@@ -227,6 +235,9 @@ namespace KkomaKnight.Game
             _top?.Refresh();
             // T77 — 데일리 기프트에 받을 것이 있으면 사이드 아이콘에 빨간 점
             if (_giftDot != null) _giftDot.SetActive(Core.DailyGift.AnyClaimable(s, App.Data != null ? App.Data.DailyGift : null, SaveStore.Today()));
+            // T253 4항 — 오늘 받을 출석 칸이 있으면 «출석» 사이드 아이콘에 빨간 점(다 받았거나 오늘 이미 받았으면 안 켠다)
+            if (_attendDot != null) _attendDot.SetActive(App.Data != null && App.Data.Attendance != null
+                && Core.Attendance.Can(s, App.Data.Attendance, SaveStore.Today()));
             // T97 — 탐험에 쌓인 것이 있거나 빠른 탐험 횟수가 남으면 «탐험» 보조 버튼에 빨간 점
             if (_expDot != null) _expDot.SetActive(App.Data != null && App.Data.Expedition != null
                 && Core.Expedition.AnyClaimable(App.Data, s, App.Data.Expedition, LobbyPopups.NowSec(), SaveStore.Today()));

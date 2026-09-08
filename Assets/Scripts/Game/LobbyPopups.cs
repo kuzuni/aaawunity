@@ -394,6 +394,22 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 16 출석 ─────────────────────────
+        /// <summary>
+        /// T253 4항 — 보상 이름 → 칸의 «틀 색 + 아이콘»(표는 게임 쪽 이름만 적고 짝짓기는 화면 몫이다 · <c>arena.json</c>·<c>dungeon.json</c> 과 같은 갈래).
+        /// <b>새 그림 0</b> — 전부 이미 카탈로그에 있는 키다. 모르는 이름이면 코인으로 둔다(아이콘 때문에 칸이 안 뜨는 일은 없게).
+        /// </summary>
+        static void AttendArt(string item, out string color, out string icon)
+        {
+            if (item == Core.Mail.ItemGem) { color = "plum"; icon = "ui.gemRed"; return; }
+            if (item == Core.Mail.ItemRevive) { color = "blue"; icon = "ui.iconRevive"; return; }
+            var keyIcon = Core.GachaKeys.Icon(item);
+            if (keyIcon != null) { color = item == Core.GachaKeys.Purple ? "plum" : "blue"; icon = keyIcon; return; }
+            color = "green"; icon = "ui.coin";
+        }
+
+        /// <summary>칸의 수량 글자 — «3,000» · «×2» 처럼 표의 값 그대로(지시서 T253 4항).</summary>
+        static string AttendQtyText(double amount) => System.Math.Round(amount).ToString("#,0");
+
         static readonly string[] AttendIcons = { "ui.coin", "ui.potionRed", "ui.gemRed", "ui.bookBlue", "ui.coin", "ui.hourglass" };
         static readonly string[] AttendColors = { "green", "blue", "plum", "green", "green", "plum" };
         /// <summary>하루 칸 보상 수량(껍데기 · 레퍼런스 16 의 숫자를 베끼지 않고 «1» 로 통일 — T44 «숫자는 표시만»).</summary>
@@ -417,6 +433,10 @@ namespace KkomaKnight.Game
             UiKit.Hide(root, "Button_Close_01");
             var tc = UiKit.Text(ov.Root, "탭하여 닫기", TextSize.Body, Palette.White, TextAnchor.MiddleCenter, false, true);
             tc.name = "TapToClose"; tc.fontStyle = FontStyles.Bold; UiKit.Pct(tc.rectTransform, Layout.BookClose);
+
+            // T253 4항 — 칸의 아이콘·수량·상태가 전부 표(attendance.json)에서 온다. 표가 없으면(로드 실패) 종전 껍데기 그대로다.
+            var AT = app.Data != null ? app.Data.Attendance : null;
+            int todayNo = AT != null ? Core.Attendance.Today(app.Save, AT, SaveStore.Today()) : 1;
 
             var box = (RectTransform)UiKit.Find(root, "Popup"); box.name = "AttendanceBox"; UiKit.Pct(box, B);
             foreach (var g in box.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = true;
@@ -451,11 +471,15 @@ namespace KkomaKnight.Game
                 for (int i = group.childCount - 1; i >= n; i--) group.GetChild(i).gameObject.SetActive(false);
                 for (int i = 0; i < n; i++)
                 {
-                    var frame = (RectTransform)group.GetChild(i); frame.name = "Day:" + (i + 1); frame.gameObject.SetActive(true);
-                    DayFrame(frame, i == 0);
-                    var head = Head(frame, Layout.AtCell, Layout.AtCellHead, (i + 1) + "일차", HeadBand);
-                    var ic = Cell(frame, Layout.AtCell, Layout.AtCellIcon, AttendColors[i], AttendIcons[i], AttendQty, qtyBand: true);
-                    UiKit.Clickable(frame, () => { });
+                    int no = i + 1;
+                    var frame = (RectTransform)group.GetChild(i); frame.name = "Day:" + no; frame.gameObject.SetActive(true);
+                    DayFrame(frame, no == todayNo, AT != null && Core.Attendance.Claimed(app.Save, no));
+                    var head = Head(frame, Layout.AtCell, Layout.AtCellHead, no + "일차", HeadBand);
+                    var day = AT != null ? AT.Of(no) : null;
+                    string color = AttendColors[i], icon = AttendIcons[i], qty = AttendQty;
+                    if (day != null && day.Rewards.Count > 0) { AttendArt(day.Rewards[0].Item, out color, out icon); qty = AttendQtyText(day.Rewards[0].Amount); }
+                    var ic = Cell(frame, Layout.AtCell, Layout.AtCellIcon, color, icon, qty, qtyBand: true);
+                    UiKit.Clickable(frame, () => ClaimAttendance(app));
                     cells[i] = frame; if (i == 0) { head0 = head.transform.parent as RectTransform; icon0 = ic; }
                 }
             }
@@ -464,11 +488,16 @@ namespace KkomaKnight.Game
             var day7 = ChildStarting(box, "DailyFrame_01_l"); RectTransform head7 = null; var r7 = new RectTransform[2];
             if (day7 != null)
             {
-                day7.name = "Day:7"; UiKit.Pct(day7, Layout.AtDay7.Within(B)); DayFrame(day7, false);
+                day7.name = "Day:7"; UiKit.Pct(day7, Layout.AtDay7.Within(B));
+                DayFrame(day7, todayNo == 7, AT != null && Core.Attendance.Claimed(app.Save, 7));
                 head7 = Head(day7, Layout.AtDay7, Layout.AtDay7Head, "7일차", HeadBand, "Head7").transform.parent as RectTransform;
-                r7[0] = Cell(day7, Layout.AtDay7, Layout.AtDay7Cell, "green", "ui.coin", AttendQty, qtyBand: true);
-                r7[1] = Cell(day7, Layout.AtDay7, Sh(Layout.AtDay7Cell, Layout.AtDay7Pitch, 0), "plum", "ui.gemRed", AttendQty, qtyBand: true);
-                UiKit.Clickable(day7, () => { });
+                var d7 = AT != null ? AT.Of(7) : null;
+                string c70 = "green", i70 = "ui.coin", q70 = AttendQty, c71 = "plum", i71 = "ui.gemRed", q71 = AttendQty;
+                if (d7 != null && d7.Rewards.Count > 0) { AttendArt(d7.Rewards[0].Item, out c70, out i70); q70 = AttendQtyText(d7.Rewards[0].Amount); }
+                if (d7 != null && d7.Rewards.Count > 1) { AttendArt(d7.Rewards[1].Item, out c71, out i71); q71 = AttendQtyText(d7.Rewards[1].Amount); }
+                r7[0] = Cell(day7, Layout.AtDay7, Layout.AtDay7Cell, c70, i70, q70, qtyBand: true);
+                r7[1] = Cell(day7, Layout.AtDay7, Sh(Layout.AtDay7Cell, Layout.AtDay7Pitch, 0), c71, i71, q71, qtyBand: true);
+                UiKit.Clickable(day7, () => ClaimAttendance(app));
             }
             // 비평 이름표(표 ㉑)
             if (rib != null) UiKit.Tag(rib, "제목 리본"); UiKit.Tag(box, "팝업 박스");
@@ -482,12 +511,35 @@ namespace KkomaKnight.Game
         /// 우리가 안 쓰는 데모 조각(가운데 큰 아이콘·수량·반짝임·칸 머리 장식·«DAY» 글자)은 <b>지우지 않고 끈다</b>(결정 168).
         /// 보상 칸(장비 프레임)과 «N일차» 머리 띠는 부르는 쪽이 표 ㉑ 자리에 얹는다.
         /// </summary>
-        static void DayFrame(RectTransform frame, bool today)
+        static void DayFrame(RectTransform frame, bool today, bool claimed = false)
         {
-            UiKit.Show(frame, "Bg_Normal", !today); UiKit.Show(frame, "Bg_Focus1", today);
-            UiKit.Hide(frame, "Bg_Focus2", "Bg_Focus3", "Bg_Disable", "SampleEffect", "SampleParticle", "Icon", "Text_Num", "Text_Day", "Check");
+            // T253 4항 — 받은 날은 ✅(프리팹의 Check)를 켜고 바탕을 «다 쓴» 것으로, 오늘 받을 칸은 Bg_Focus1 로 강조한다.
+            UiKit.Show(frame, "Bg_Normal", !today && !claimed); UiKit.Show(frame, "Bg_Focus1", today);
+            UiKit.Hide(frame, "Bg_Focus2", "Bg_Focus3", "SampleEffect", "SampleParticle", "Icon", "Text_Num", "Text_Day");
+            UiKit.Show(frame, "Bg_Disable", claimed); UiKit.Show(frame, "Check", claimed);
             foreach (var deco in frame.GetComponentsInChildren<Transform>(true)) if (deco.name == "Deco") deco.gameObject.SetActive(false);
             UiKit.Bordered(frame);   // T69 — 칸 테두리(레퍼런스 16 도 칸마다 검은 외곽선)
+        }
+
+        /// <summary>
+        /// T253 — 출석 칸을 누르면 <b>오늘 칸을 받는다</b>(주인 2항 «지급 = 즉시» · 우편함으로 안 간다).
+        /// 규칙·지급은 <see cref="Core.Attendance"/> 한 곳이고, 받은 것은 <b>T241 공통 리워드 팝업</b>으로 보여 준 뒤 출석 팝업을 다시 그린다.
+        /// <para>못 받으면 까닭을 토스트로 알린다 — 문구는 <see cref="Core.Attendance.Why"/> 가 갖는다(화면이 다시 짓지 않는다).</para>
+        /// ⚠ <b>어느 칸을 눌러도 «오늘 칸» 을 받는다</b> — 표의 순서가 곧 차례라 «3일차만 골라 받기» 같은 것은 없다(주인이 말한 적도 없다).
+        /// </summary>
+        static void ClaimAttendance(App app)
+        {
+            var AT = app.Data != null ? app.Data.Attendance : null;
+            if (AT == null) return;                                  // 표가 없으면 종전 껍데기 — 아무 일도 안 한다
+            string today = SaveStore.Today();
+            string why = Core.Attendance.Why(app.Save, AT, today);
+            if (why.Length > 0) { app.Toast(why); return; }
+            var got = Core.Attendance.Claim(app.Save, AT, today);
+            if (got == null) return;
+            app.Persist(); app.Current?.Refresh();
+            var items = new List<RewardPopup.Item>();
+            foreach (var r in got.Rewards) { AttendArt(r.Item, out _, out string icon); items.Add(RewardPopup.Item.Of(icon, AttendQtyText(r.Amount))); }
+            RewardPopup.Show(items, () => Attendance(app));           // 닫으면 출석 팝업을 다시 그린다(✅ 가 붙은 채로)
         }
 
         // ───────────────────────── 17 데일리 기프트 (T77 — 껍데기 → 동작하는 기능) ─────────────────────────
