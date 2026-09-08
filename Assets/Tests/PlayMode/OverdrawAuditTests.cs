@@ -62,8 +62,16 @@ namespace KkomaKnight.Tests.Play
             public int Graphics;
             /// <summary>전면 겹의 이름들(무엇이 겹치는지 사람이 바로 읽게).</summary>
             public string FullNames = "";
+            /// <summary>
+            /// 가장 넓게 칠하는 조각 다섯(«부모/이름» · 프레임 대비 넓이) — T223 1항이 요구한 칸이다.
+            /// 화면 «합계» 만으로는 «어디가 겹치는가» 를 못 가른다(상점 7.38 이 큰 겹 하나 때문인지 카드 백 장 때문인지 모른다).
+            /// </summary>
+            public List<KeyValuePair<string, float>> Top = new List<KeyValuePair<string, float>>();
         }
         readonly List<Row> _rows = new List<Row>();
+
+        /// <summary>`overdraw.json` 에 남기는 «가장 넓은 조각» 수(T223 1항).</summary>
+        const int TopCount = 5;
 
         /// <summary>지금 화면의 겹을 센다 — 프레임(<see cref="App.Frame"/>) 안으로 잘라서 «덮는 넓이» 만 더한다.</summary>
         Row Measure(string screen)
@@ -72,6 +80,7 @@ namespace KkomaKnight.Tests.Play
             Canvas.ForceUpdateCanvases();
             var fr = frame.rect; float frameArea = Mathf.Max(1f, fr.width * fr.height);
             float sum = 0f; int full = 0, n = 0; var names = new List<string>();
+            var all = new List<KeyValuePair<string, float>>();
 
             foreach (var g in _app.UiCanvas.GetComponentsInChildren<Graphic>(false))
             {
@@ -86,8 +95,13 @@ namespace KkomaKnight.Tests.Play
                 float share = (w * h) / frameArea;
                 sum += share; n++;
                 if (share >= FullScreenShare) { full++; if (names.Count < 8) names.Add(g.name); }
+                // «부모/이름» 으로 적는다 — 같은 이름 조각(«Bg»·«Icon»)이 수십 개라 이름만으로는 어느 자리인지 못 찾는다
+                var par = g.transform.parent;
+                all.Add(new KeyValuePair<string, float>((par != null ? par.name + "/" : "") + g.name, share));
             }
+            all.Sort((x, y) => y.Value.CompareTo(x.Value));
             var row = new Row { Screen = screen, FullLayers = full, Overdraw = sum, Graphics = n, FullNames = string.Join(" · ", names) };
+            for (int i = 0; i < all.Count && i < TopCount; i++) row.Top.Add(all[i]);
             _rows.Add(row);
             return row;
         }
@@ -114,7 +128,16 @@ namespace KkomaKnight.Tests.Play
                 sb.Append('"').Append(r.Screen).Append("\":{\"full\":").Append(r.FullLayers)
                   .Append(",\"overdraw\":").Append(r.Overdraw.ToString("0.000"))
                   .Append(",\"graphics\":").Append(r.Graphics)
-                  .Append(",\"names\":\"").Append(r.FullNames.Replace("\"", "'")).Append("\"}");
+                  .Append(",\"names\":\"").Append(r.FullNames.Replace("\"", "'")).Append('"');
+                // T223 1항 — «어디가 겹치는가» 는 합계가 아니라 이 칸이 답한다
+                sb.Append(",\"top\":[");
+                for (int k = 0; k < r.Top.Count; k++)
+                {
+                    if (k > 0) sb.Append(',');
+                    sb.Append("{\"n\":\"").Append(r.Top[k].Key.Replace("\"", "'")).Append("\",\"s\":")
+                      .Append(r.Top[k].Value.ToString("0.000")).Append('}');
+                }
+                sb.Append("]}");
             }
             sb.Append("}}");
             string json = sb.ToString();
@@ -144,10 +167,14 @@ namespace KkomaKnight.Tests.Play
 
             var sb = new StringBuilder();
             sb.AppendLine($"[OverdrawGate] 화면 {_rows.Count}개(보고만 · T217 회차 1 · 프레임 {_app.Frame.rect.width:0}×{_app.Frame.rect.height:0})");
-            sb.AppendLine("| 화면 | 전면 겹 | 오버드로(넓이 합÷프레임) | 조각 수 | 전면 겹 이름 |");
-            sb.AppendLine("|---|---|---|---|---|");
+            sb.AppendLine("| 화면 | 전면 겹 | 오버드로(넓이 합÷프레임) | 조각 수 | 전면 겹 이름 | 가장 넓은 조각 다섯 |");
+            sb.AppendLine("|---|---|---|---|---|---|");
             foreach (var r in _rows)
-                sb.AppendLine($"| {r.Screen} | {r.FullLayers} | {r.Overdraw:0.00} | {r.Graphics} | {r.FullNames} |");
+            {
+                var top = new StringBuilder();
+                for (int k = 0; k < r.Top.Count; k++) { if (k > 0) top.Append(" · "); top.Append(r.Top[k].Key).Append(' ').Append(r.Top[k].Value.ToString("0.00")); }
+                sb.AppendLine($"| {r.Screen} | {r.FullLayers} | {r.Overdraw:0.00} | {r.Graphics} | {r.FullNames} | {top} |");
+            }
             Debug.Log(sb.ToString());
 
             // 판정(이 회차) — 달아나는 것만 잡는다. 로비가 넷(Background·Pattern·GradientTop·GradientBottom · T129 실측)이라
