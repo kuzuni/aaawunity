@@ -65,12 +65,15 @@ namespace KkomaKnight.Game
                 // 아래 버튼 둘 — «₩9,900»(주황)·«₩49,000»(자주). 열 색과 계열은 같지만 훨씬 밝다(버튼이라 눈에 먼저 들어와야 한다).
                 case "btnPassPaid1": return new Pair(Cat("btnPassPaid1.top", "#F7C70F"), Cat("btnPassPaid1.bottom", "#F39018"));
                 case "btnPassPaid2": return new Pair(Cat("btnPassPaid2.top", "#F453DF"), Cat("btnPassPaid2.bottom", "#D343E3"));
+                // 머리 배너 — 레퍼런스의 무지개·성 그림은 주인 에셋에 없다. 실측한 «맑은 하늘»(y 255~290)과 «풀밭»(y 355~375) 두 색으로
+                // 세워 두고, 그림 조각이 생기면 이 판만 갈아 끼운다(새 그림 0 · ROUTINE ⓑ).
+                case "passBanner": return new Pair(Cat("passBanner.top", "#5AAECA"), Cat("passBanner.bottom", "#425E1E"));
                 default: return new Pair(Color.white, Color.white);
             }
         }
 
         /// <summary>표에 든 이름 전부(테스트·감사용 · 순서는 «카드 → 배경 → 버튼 → 패널 → 패스 3열·패스 버튼 2»).</summary>
-        public static readonly string[] Names = { "cardGem", "cardGold", "cardBlue", "cardChestLegend", "cardChestRare", "cardChestEpic", "cardPrivAd", "cardPrivMonth", "cardPrivLife", "bgLobby", "btnBlue", "btnOrange", "panelDark", "passFree", "passPaid1", "passPaid2", "btnPassPaid1", "btnPassPaid2" };
+        public static readonly string[] Names = { "cardGem", "cardGold", "cardBlue", "cardChestLegend", "cardChestRare", "cardChestEpic", "cardPrivAd", "cardPrivMonth", "cardPrivLife", "bgLobby", "btnBlue", "btnOrange", "panelDark", "passFree", "passPaid1", "passPaid2", "btnPassPaid1", "btnPassPaid2", "passBanner" };
 
         /// <summary>표에 이름이 있는가.</summary>
         public static bool Has(string name)

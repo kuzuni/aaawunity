@@ -661,7 +661,10 @@
     "col.grad.btnPassPaid1.bottom": "#F39018",
     "col.grad.btnPassPaid2.top": "#F453DF",
     "col.grad.btnPassPaid2.bottom": "#D343E3",
-    "col.btnPassClaimAll": "#737373"
+    "col.btnPassClaimAll": "#737373",
+    "col.grad.passBanner.top": "#5AAECA",
+    "col.grad.passBanner.bottom": "#425E1E",
+    "col.passNotice": "#182210"
   },
   "texts": {
     "data.shop": "Assets/KkomaKnight/shop.json",

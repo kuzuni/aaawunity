@@ -429,8 +429,10 @@ namespace KkomaKnight.Tests.Play
                 var top = UiKit.Find(lobby, "TopBar"); Assert.IsNotNull(top, "상단 재화 바(TopBar)");
                 Assert.IsNotNull(UiKit.Find(top, "Avatar"), "상단 바 아바타 칸"); Assert.IsNotNull(UiKit.Find(top, "Power"), "상단 바 전투력 숫자");
                 Assert.IsNotNull(UiKit.Find(top, "ResourceBar_Coin"), "골드 pill"); Assert.IsNotNull(UiKit.Find(top, "ResourceBar_Gem"), "보석 pill");
-                // T78 — 이벤트 배너(시즌 패스)는 삭제 · 그 자리는 비워 둔다
-                Assert.IsNull(UiKit.Find(lobby, "Banner"), "이벤트 배너는 삭제됐다(T78)"); Assert.IsNotNull(UiKit.Find(lobby, "Button_Menu"), "메뉴(≡)");
+                // T266 — 이벤트 배너(시즌 패스)는 **되살아났다**(주인 2026-09-09 «전에 패스를 폐지했었는데 걍 다시 넣기» 가 T78 삭제를 뒤집었다).
+                //   자리는 T78 이 비워 둔 표 ① 의 그 rect 그대로다 — 이름이 «PassBanner» 라 챕터 배너(«Banner» · T98)와 안 겹친다.
+                Assert.IsNotNull(UiKit.Find(lobby, "PassBanner"), "로비 이벤트 배너(시즌 패스 · T266 이 T78 을 뒤집었다)");
+                Assert.IsNotNull(UiKit.Find(lobby, "Button_Menu"), "메뉴(≡)");
                 // T148(주인 2026-09-07 «데일리기프트, 퀘스트, 출석, 특권은 로비에 걍 꺼내놓는게 나은듯 · 전처럼») — T96-menu 가 지웠던 사이드 기둥 둘이 돌아왔다
                 Assert.IsNotNull(UiKit.Find(lobby, "SideL"), "왼쪽 사이드 기둥(특권 · T148)"); Assert.IsNotNull(UiKit.Find(lobby, "SideR"), "오른쪽 사이드 기둥(출석·데일리 기프트·퀘스트 · T148)");
                 Assert.IsNotNull(UiKit.Find(UiKit.Find(lobby, "Button_Menu"), "MenuDot"), "메뉴(≡) 알림 점 자리(T96 ⓔ)");
@@ -469,7 +471,8 @@ namespace KkomaKnight.Tests.Play
                 // 꺼진 것도 세는 자로 본다(탭 라벨에서 겪은 함정과 같은 이유 · 결정 441).
                 foreach (var n in new[] { "특권", "퀘스트", "출석" })
                     Assert.GreaterOrEqual(CountTextIn(lobby, t => t == n), 1, "«" + n + "» 은 로비에 나온다(T148 이 T96-menu 를 뒤집었다)");
-                Assert.IsFalse(HasText(s => s == "스타터팩") || HasText(s => s == "7일 챌린지") || HasText(s => s == "시즌 패스") || HasText(s => s == "성"), "T78 삭제분 라벨 0");
+                Assert.IsFalse(HasText(s => s == "스타터팩") || HasText(s => s == "7일 챌린지") || HasText(s => s == "성"), "T78 삭제분 라벨 0(패스는 T266 이 되살렸다 — 아래에서 따로 본다)");
+                Assert.IsTrue(HasText(s => s == SeasonPassScreen.PassTitle), "로비 배너에 패스 이름(T266)");
                 // T63-lobby — 아이콘 라벨(사이드 4 · 보조 2 · 이벤트)은 보조 하한(36)으로 2줄까지 잘림 없이: bestFit 이 줄이지 않고(TextGenerator 로 직접 굴려 36) · 선호 높이 ≤ 칸
                 {
                     int captions = 0;
@@ -672,7 +675,36 @@ namespace KkomaKnight.Tests.Play
                   Assert.GreaterOrEqual(ptH, TextSize.Title * 1.2f, "«특권» 글자 칸 세로(px) — 가운데 정렬은 가로만 옮긴다(세로를 덮으면 여기서 먼저 빨개진다)"); }
                 Check("특권 페이지");
                 Assert.IsTrue(ClickNamed(pv, "BackBtn"), "특권 뒤로"); yield return Frames(2); Assert.AreEqual("lobby", _app.Current.Name, "뒤로 → 로비");
-                // T78 — 시즌 패스 페이지(이벤트 배너 진입)는 삭제됐다
+                // T266 — 시즌 패스 페이지가 **되살아났다**(주인 2026-09-09). 로비 배너로 들어가고, 지금은 «디자인만» 이라
+                //   버튼 셋은 아무것도 지급하지 않고 «준비 중» 토스트만 띄운다(T268 ⓑ). 그 «안 준다» 가 이 자의 요점이다 —
+                //   수치가 오기 전에 조용히 지급하기 시작하면 세이브가 지어낸 값으로 더러워지고 되돌릴 수 없다.
+                Assert.IsTrue(ClickNamed(lobby, "PassBanner"), "로비 이벤트 배너 → 시즌 패스"); yield return Frames(2);
+                Assert.AreEqual("seasonPass", _app.Current.Name, "시즌 패스 페이지가 열린다(T266)");
+                var sp = _app.Current.Root;
+                foreach (var n in new[] { "Banner", "PassName", "SeasonEnds", "ProgressBar", "LevelBadge", "Notice", "Track",
+                                          "Col:free", "Col:paid1", "Col:paid2", "Line", "SegBand", "SegBadge",
+                                          "ClaimAllBtn", "BuyBtn:1", "BuyBtn:2", "BackBtn", "PassIconBtn" })
+                    Assert.IsNotNull(UiKit.Find(sp, n), "시즌 패스 조각 «" + n + "»(표 ㊼)");
+                // 3열 전부 실측 그라데이션이 깔려 있다 — 주인이 «그 그라데이션도 잘 해서» 라고 못 박은 자리다
+                foreach (var n in new[] { "Col:free", "Col:paid1", "Col:paid2" })
+                    Assert.IsTrue(UiKit.HasGradient(UiKit.Find(sp, n)), "«" + n + "» 에 그라데이션이 없다(주인 지시 · 표 ㊼ 실측값)");
+                // 레벨 배지·보상 칸은 행마다 선다(레퍼런스에 보이는 다섯 줄)
+                foreach (var lv in new[] { 29, 30, 31, 32, 33 })
+                {
+                    Assert.IsNotNull(UiKit.Find(sp, "Badge:" + lv), "레벨 배지 " + lv);
+                    Assert.IsNotNull(UiKit.Find(sp, "Cell:free:" + lv), "무료 칸 " + lv);
+                    Assert.IsNotNull(UiKit.Find(sp, "Cell:paid2:" + lv), "유료 2 칸 " + lv);
+                }
+                { // «디자인만» — 눌러도 재화가 한 톨도 안 는다
+                    double g0 = _app.Save.Gold, m0 = _app.Save.Gem;
+                    Assert.IsTrue(ClickNamed(sp, "ClaimAllBtn"), "«모두 받기»"); yield return Frames(2);
+                    Assert.IsTrue(ClickNamed(sp, "BuyBtn:1"), "«₩9,900»"); yield return Frames(2);
+                    Assert.AreEqual(g0, _app.Save.Gold, 1e-9, "시즌 패스는 아직 아무것도 안 준다(T268 ⓑ «디자인만»)");
+                    Assert.AreEqual(m0, _app.Save.Gem, 1e-9, "시즌 패스는 아직 아무것도 안 준다(T268 ⓑ «디자인만»)");
+                }
+                Check("시즌 패스 페이지");
+                Assert.IsTrue(ClickNamed(sp, "BackBtn"), "시즌 패스 뒤로"); yield return Frames(2);
+                Assert.AreEqual("lobby", _app.Current.Name, "뒤로 → 로비");
                 Check("로비 복귀");
             }
 

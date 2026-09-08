@@ -63,7 +63,7 @@ namespace KkomaKnight.Game
             }
             Register(new LobbyScreen()); Register(new GearScreen()); Register(new ForgeScreen()); Register(new ShopScreen()); Register(new PetScreen()); Register(new BattleScreen()); Register(new EventsScreen());
             // T44 로비 사이드 페이지(특권 · 껍데기) · 시즌 패스 페이지는 T78(주인 2026-09-07)로 삭제 · T98 챕터 보상 페이지(레퍼런스 32)
-            Register(new PrivilegeScreen()); Register(new ChapterChestScreen());
+            Register(new PrivilegeScreen()); Register(new ChapterChestScreen()); Register(new SeasonPassScreen());   // T266 — 시즌 패스는 T78 로 지웠다가 주인 2026-09-09 지시로 되살렸다
             Overlay = new Overlay(this);
             // 토스트 (GUI Pro ToastMessage_01) — 칸 세로는 본문 40 두 줄이 들어가는 Layout.Toast (T63-toast · 전 5.0% 에선 긴 문구가 bestFit 으로 32 까지 줄었다)
             _toastRt = (RectTransform)UiKit.Spawn("ui.toast", Frame).transform; UiKit.Pct(_toastRt, Layout.Toast);

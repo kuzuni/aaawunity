@@ -1320,6 +1320,12 @@ MonoBehaviour:
     color: {r: 0.827451, g: 0.262745, b: 0.890196, a: 1}
   - key: col.btnPassClaimAll
     color: {r: 0.45098, g: 0.45098, b: 0.45098, a: 1}
+  - key: col.grad.passBanner.top
+    color: {r: 0.352941, g: 0.682353, b: 0.792157, a: 1}
+  - key: col.grad.passBanner.bottom
+    color: {r: 0.258824, g: 0.368627, b: 0.117647, a: 1}
+  - key: col.passNotice
+    color: {r: 0.0941176, g: 0.133333, b: 0.0627451, a: 1}
   texts:
   - key: data.shop
     text: {fileID: 4900000, guid: 5edbc69efa2cdcb6b106d8355577a053, type: 3}

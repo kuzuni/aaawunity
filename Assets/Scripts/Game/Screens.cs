@@ -25,6 +25,10 @@ namespace KkomaKnight.Game
         public const string SidePrivilege = "privilege", SideAttendance = "attendance", SideDailyGift = "dailyGift", SideQuest = "quest";
         // T168 — «SideEvents»(로비 오른쪽 아래 이벤트 버튼)는 주인 지시로 삭제됐다(중복) · 같은 입구가 하단 탭 맨 오른쪽으로 갔다.
         public const string SideExplore = "explore", SideClearReward = "clearReward";
+        /// <summary>시즌 패스 입구 — T78(주인 2026-09-07)로 지웠다가 <b>주인 2026-09-09 «걍 다시 넣기»</b> 로 되살렸다(T266). 자리는 T78 이 비워 둔 표 ① 의 배너 그대로.</summary>
+        public const string SidePass = "pass";
+        /// <summary>로비 이벤트 배너 자리(표 ① 24.5/9.2/51.6/5.6) — T78 이 «비워 두고 아래를 끌어올리지 않는다» 로 남겨 둔 그 rect 다.</summary>
+        static readonly Layout.R LobbyPassBanner = new Layout.R(24.5f, 9.2f, 51.6f, 5.6f);
         /// <summary>
         /// 아이콘 라벨 칸(사이드·보조·모서리 · <see cref="BuildColumn"/>) 안의 아이콘 자리 / 글자 띠 자리(칸 %) — T68 ①(주인 «아이콘 너무 작음» · 1.5~1.8배 · 칸 폭의 ≥ 75%) + T63-lobby(라벨 보조 36 · 2줄 · 잘림 0).
         /// 아이콘이 칸 위 82% 를 차지하고 글자 띠(아래 50%)가 아이콘 아랫부분에 겹친다 — 레퍼런스 01 도 «Daily Gifts»·«7-Day Challenge» 가 아이콘 밑단 위에 얹혀 있다(외곽선 글자).
@@ -83,7 +87,19 @@ namespace KkomaKnight.Game
             _top = TopBar.Build(App, rt);
             UiKit.Tag(_top.Root, "상단 바(아바타+재화 줄 전체)"); UiKit.Tag(_top.Avatar, "아바타(정사각)"); UiKit.TagGroup(_top.Root, "재화 pill 줄", _top.PowerCell, _top.GoldPill, _top.GemPill);
 
-            // ② 메뉴(≡) — 이벤트 배너(시즌 패스)는 T78(주인 2026-09-07 «시즌 패스도 삭제»)로 없앴다 · 표 ① 의 배너 자리(24.5/9.2/51.6/5.6)는 비워 두고 아래 요소를 끌어올리지 않는다
+            // ② 이벤트 배너(시즌 패스) — T78(2026-09-07)이 지웠던 자리를 **주인 2026-09-09 «전에 패스를 폐지했었는데 걍 다시 넣기»** 로 되살렸다(T266).
+            //    자리는 T78 이 비워 둔 표 ① 의 그 rect 그대로라 아래 요소는 한 칸도 안 움직인다. 누르면 시즌 패스 페이지(껍데기 · T268 ⓑ «디자인만»).
+            {
+                var pass = UiKit.Panel(rt, "PassBanner", "fr.r12", Palette.A(Palette.Ink, 0.55f)).rectTransform;
+                UiKit.Pct(pass, LobbyPassBanner); UiKit.Bordered(pass);
+                UiKit.GradientCard(pass, "passBanner", alpha: UiKit.GradientCardSolidAlpha);
+                var picon = UiKit.Icon(pass, "Icon", "ui.iconMedal", Color.white); UiKit.Pct(picon.rectTransform, 2, 12, 18, 76);
+                UiKit.Label(pass, 22, 0, 76, 100, SeasonPassScreen.PassTitle, TextSize.Aux, Palette.White).name = "PassBannerText";
+                UiKit.Clickable(pass, () => OnSide(SidePass));
+                UiKit.Tag(pass, "이벤트 배너(시즌 패스)");
+            }
+
+            // ②-2 메뉴(≡)
             var menu = UiKit.Find(rt, "Button_Menu");
             if (menu != null)
             {
@@ -218,6 +234,8 @@ namespace KkomaKnight.Game
                 case SideExplore: LobbyPopups.Expedition(App); break;   // T97 — 방치·오프라인 보상(껍데기 아님)
                 // T98 — 챕터 보상(Chapter Chest) 페이지(껍데기 아님 · 레퍼런스 32)
                 case SideClearReward: ChapterChestScreen.Open(App); break;
+                // T266 — 시즌 패스 페이지(껍데기 · 주인 2026-09-09 «걍 다시 넣기» 가 T78 삭제를 뒤집었다)
+                case SidePass: SeasonPassScreen.Open(App); break;
             }
         }
 
