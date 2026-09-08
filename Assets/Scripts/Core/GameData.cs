@@ -34,6 +34,9 @@ namespace KkomaKnight.Core
         /// <summary>상인(아레나 상점 · 26) 상품표 — aaaw data/ 가 아니라 이 레포의 <c>Assets/KkomaKnight/arenaShop.json</c>(카탈로그 텍스트 «data.arenaShop» · T209). 로드는 Bootstrap 이 따로 한다 · 없으면 null(카드가 종전처럼 «한도 —»·«—» 로 뜬다).</summary>
         public ArenaShopData ArenaShop;
 
+        /// <summary>PvP 순위 보상 구간표 — 이 레포의 <c>Assets/KkomaKnight/arena.json</c>(카탈로그 텍스트 «data.arenaRank» · T237). 로드는 Bootstrap 이 따로 한다 · 없으면 null(25 팝업이 종전 네 줄 껍데기 그대로 뜬다).</summary>
+        public ArenaRankData ArenaRank;
+
         public static readonly string[] Files = { "tune.json", "enemies.json", "perks.json", "gear.json", "gacha.json", "combat.json", "ui.json" };
 
         /// <param name="read">파일명(예: "tune.json") → 본문 텍스트. 플랫폼별 읽기(StreamingAssets·File) 는 호출부가 준다.</param>
