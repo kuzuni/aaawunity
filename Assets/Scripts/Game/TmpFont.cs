@@ -22,8 +22,22 @@ namespace KkomaKnight.Game
     {
         /// <summary>Jua 글꼴의 카탈로그 키(uGUI <c>Text</c> 가 쓰던 것과 같은 글꼴이다 — 화면 인상이 안 바뀐다).</summary>
         public const string FontKey = "font.ui";
-        /// <summary>SDF 아웃라인 두께(0~1 의 <b>SDF 비율</b> · 픽셀이 아니다 · 지시서 4항 ⓑ). 글자 크기·스케일에 저절로 비례한다.</summary>
-        public const float OutlineWidth = 0.20f;
+        /// <summary>
+        /// SDF 아웃라인 두께(0~1 의 <b>SDF 비율</b> · 픽셀이 아니다 · 지시서 4항 ⓑ). 글자 크기·스케일에 저절로 비례한다.
+        /// <para>
+        /// <b>T224 — 0.20 → 0.70.</b> 주인 «검은 아웃라인 없던데 tmpro들» 의 답은 «안 그려진다» 가 아니라 <b>«0.4px 라 안 보인다»</b> 였다
+        /// (워커 J 가 재서 넘겼다 · 후보 넷은 그 전에 실측으로 다 죽었다: 갈래 <c>OUTLINE_ON</c> · SDF 여백 · WebGL 스트리핑 · <c>_ScaleRatioA</c>).
+        /// <b>단위가 함정이다</b> — <see cref="TMP_FontAsset.CreateFontAsset(Font)"/> 기본은 표본 90pt · 여백 9 이고(진단 줄의 <c>grad=10</c> = 여백+1 이 그 증거다),
+        /// TMP 는 <c>_OutlineWidth</c> <b>1.0 을 em 의 10%</b>(= 여백/표본)로 매핑한다. 그러니 옛 0.20 은 <b>em 의 2%</b> 였다:
+        /// 본문 40 → <c>screens</c>(540폭 = 프레임 절반)에서 <b>0.40px</b> · 주인 폰(1080)에서 0.80px ⇒ 안티에일리어싱에 먹혀 안 보인다.
+        /// 제목·START 72 만 0.72px 로 겨우 보였고 <b>실측에서도 그 하나만 테가 잡혔다</b>(run 480 · 고리 방법 −0.158 대 −0.010 · +0.005).
+        /// </para>
+        /// <b>왜 하필 0.70 인가</b> — T204 가 uGUI 시절 재 둔 «주인이 보던 그 두께» 와 <b>같은 값</b>이다: 옛 테 = <c>0.07 × 글자 크기</c> →
+        /// 본문 40 에서 2.8px · 제목 72 에서 5.0px, 새 0.70 = em 의 7% → <b>2.80px · 5.04px</b>. 그리고 T204 는 «0.12 는 ㅇ·ㅂ·8·0 속을 메운다 ·
+        /// 0.07 이 상한» 이라고 재 뒀으니 그 상한과 같은 값이고 Jua 최빈 획(11.5%)보다 얇다 ⇒ 속 구멍은 안 메워진다.
+        /// <b>더 굵히려면 그때 다시 재라</b> — 위·아래 벽은 <c>TextOutlineRuleTests</c> 가 지킨다.
+        /// </summary>
+        public const float OutlineWidth = 0.70f;
         /// <summary>TMP SDF 셰이더의 아웃라인 두께·색 프로퍼티 이름(머티리얼로 두르는 «진짜» 아웃라인이 이 둘이다).</summary>
         public const string OutlineWidthProp = "_OutlineWidth", OutlineColorProp = "_OutlineColor";
 
