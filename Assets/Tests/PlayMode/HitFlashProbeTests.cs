@@ -10,7 +10,7 @@ using UnityEngine.TestTools;
 namespace KkomaKnight.Tests.Play
 {
     /// <summary>
-    /// T242 회차 1 — <b>주인이 «피격 시 하얗게 번쩍이 안 보인다» 고 한 자리를 «재는» 자</b>(고치는 자가 아니다).
+    /// T242 — <b>주인이 «피격 시 하얗게 번쩍이 안 보인다» 고 한 자리를 «재는» 자</b>(회차 1 은 재기만 했고, 회차 2 가 그 수로 손잡이 하나를 돌렸다).
     /// <para>
     /// 등재문이 원인 후보로 «0.1s · 세기 부족 · 경로 누락» 셋을 적었는데 <b>«세기» 는 이미 지웠다</b> —
     /// <c>Assets/KkomaKnight/HitFlash.mat</c> 이 <c>_HitEffectBlend 1</c> · <c>_HitEffectGlow 5</c> · 흰색 α1 로 <b>최대</b>다.
@@ -23,9 +23,17 @@ namespace KkomaKnight.Tests.Play
     /// </list>
     /// </para>
     /// <para>
-    /// ⚠ <b>이 자는 막지 않는다</b>(결정 627 · T226) — 새로 묻는 물음이라 처음엔 <see cref="Debug.Log"/> 로만 적고,
-    /// 값이 0 이 아닌 것이 확인된 회차에 단언으로 올린다. 지금 막으면 «아직 답을 모르는 물음» 이 배포를 세운다.
-    /// ⚠ <b>손잡이는 한 칸도 안 돌렸다</b> — 길이·세기·경로 어느 것도 이 회차에서 안 바꾼다(결정 622: 모르는 채 움직이면 관측도 못 얻는다).
+    /// <b>회차 2 — 회차 1 의 수가 돌아왔다</b>(<c>screens/t242.json</c> · run 529):
+    /// 424프레임 · 리그 4 중 번쩍인 것 2 · 번쩍 5회 · <b>회당 5.8프레임</b> · 요청 0.100s.
+    /// ⇒ «경로가 없다» 도 «세기가 약하다» 도 아니고 <b>«짧다»</b> 다 — 53fps 에서 5.8프레임이면 요청한 0.1초를 정확히 채운 것이고,
+    /// 주인 폰(WebGL)은 프레임이 더 낮아 같은 0.1초가 세 프레임이 된다. 그래서 이 회차에 <b>손잡이 하나만</b> 돌렸다:
+    /// <see cref="CharacterRig.HitFlashSeconds"/> 0.1 → 0.18(결정 684).
+    /// 남은 갈래 둘을 이 회차가 새로 잰다 — ⓐ <b>그림이 정말 갈리는가</b>(켜진 프레임 ↔ 머티리얼이 실제로 붙은 프레임) ·
+    /// ⓑ <b>안 번쩍인 리그 둘이 누구인가</b>(이름을 적어 «아직 안 만난 적» 인지 «경로가 빠진 유닛» 인지 다음 회차가 가른다).
+    /// </para>
+    /// <para>
+    /// ⚠ <b>이 자는 아직도 막지 않는다</b>(결정 627 · T226 · 워커 G 의 «두 런 쌓이면 올린다») — 수가 한 런뿐이라
+    /// 단언으로 올리지 않는다. 같은 꼴이 두 런 나오면 그때 «번쩍 0회면 빨강» 을 세운다. 지금 막으면 배포가 선다.
     /// </para>
     /// </summary>
     public class HitFlashProbeTests
@@ -58,38 +66,48 @@ namespace KkomaKnight.Tests.Play
             yield return Frames(2);
 
             // 리그마다 «켜진 채로 지나간 프레임» 을 센다 — 요청 길이(초)와 따로 재야 «짧아서 안 보인다» 를 가를 수 있다.
+            // 회차 2 보탬 — 같은 프레임에 «그림이 정말 갈렸나»(FlashedRenderers > 0)도 따로 센다.
+            // Flashing 은 내가 세운 깃발이라 «깃발은 켜졌는데 화면은 그대로» 를 못 가른다.
             var onFrames = new Dictionary<CharacterRig, int>();
+            var matFrames = new Dictionary<CharacterRig, int>();
             var seen = new List<CharacterRig>();
-            int frames = 0;
+            int frames = 0, matMismatch = 0;
             float t0 = Time.realtimeSinceStartup;
             while (Time.realtimeSinceStartup - t0 < 8f)
             {
                 foreach (var rig in Object.FindObjectsByType<CharacterRig>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
                 {
                     if (rig == null) continue;
-                    if (!onFrames.ContainsKey(rig)) { onFrames[rig] = 0; seen.Add(rig); }
-                    if (rig.Flashing) onFrames[rig]++;
+                    if (!onFrames.ContainsKey(rig)) { onFrames[rig] = 0; matFrames[rig] = 0; seen.Add(rig); }
+                    if (!rig.Flashing) continue;
+                    onFrames[rig]++;
+                    if (rig.FlashedRenderers > 0) matFrames[rig]++; else matMismatch++;
                 }
                 frames++;
                 yield return null;
             }
 
-            int rigs = 0, flashed = 0, totalOn = 0, totalCount = 0; float lastSec = -1f;
+            int rigs = 0, flashed = 0, totalOn = 0, totalMat = 0, totalCount = 0; float lastSec = -1f;
+            var never = new List<string>();
             foreach (var rig in seen)
             {
                 if (rig == null) continue;
                 rigs++;
                 if (rig.FlashCount > 0) { flashed++; totalCount += rig.FlashCount; if (rig.LastFlashSeconds > 0f) lastSec = rig.LastFlashSeconds; }
+                else never.Add(rig.name);
                 totalOn += onFrames[rig];
+                totalMat += matFrames[rig];
             }
             float onPerFlash = totalCount > 0 ? (float)totalOn / totalCount : 0f;
+            string neverNames = never.Count == 0 ? "(없음)" : string.Join(",", never.ToArray());
             Debug.Log(string.Format(
-                "[T242] 전투 {0}프레임 · 리그 {1}개 중 한 번이라도 번쩍인 것 {2}개 · 번쩍 {3}회 · 켜진 프레임 합 {4} · 회당 {5:0.0}프레임 · 요청 길이 {6:0.000}s",
-                frames, rigs, flashed, totalCount, totalOn, onPerFlash, lastSec));
+                "[T242] 전투 {0}프레임 · 리그 {1}개 중 한 번이라도 번쩍인 것 {2}개 · 번쩍 {3}회 · 켜진 프레임 합 {4}(그중 그림이 갈린 프레임 {5}) · 회당 {6:0.0}프레임 · 요청 길이 {7:0.000}s · 한 번도 안 번쩍인 리그: {8}",
+                frames, rigs, flashed, totalCount, totalOn, totalMat, onPerFlash, lastSec, neverNames));
             Debug.Log("[T242] 읽는 법 — 번쩍 0회면 «부르는 경로가 없다»(그 유닛은 CharacterRig 가 아니거나 그 이벤트가 안 온다) · "
-                      + "회당 프레임이 한둘이면 «짧아서 안 보인다» · 여섯 이상인데도 주인 눈에 없으면 남은 것은 «그림이 안 바뀐다»(머티리얼 교체가 실제로 안 먹는 자리)다.");
+                      + "회당 프레임이 한둘이면 «짧아서 안 보인다» · 여섯 이상인데도 주인 눈에 없으면 남은 것은 «그림이 안 바뀐다»(머티리얼 교체가 실제로 안 먹는 자리)다. "
+                      + "회차 2 부터는 그 마지막 갈래를 «켜진 프레임 ↔ 그림이 갈린 프레임» 이 직접 가른다 — 둘이 같으면 그림은 정말 갈린 것이고, 뒤가 0 이면 교체가 안 먹은 것이다.");
 
-            WriteFlashJson(frames, rigs, flashed, totalCount, totalOn, onPerFlash, lastSec);
+            WriteFlashJson(frames, rigs, flashed, totalCount, totalOn, totalMat, matMismatch, onPerFlash, lastSec, neverNames);
 
             _log.AssertNoRed("T242 피격 플래시 관측");
             if (_app != null) { if (_app.UiCanvas != null) Object.Destroy(_app.UiCanvas.gameObject); Object.Destroy(_app.gameObject); }
@@ -107,22 +125,32 @@ namespace KkomaKnight.Tests.Play
         /// ⚠ 소수점은 <b>불변 문화권</b>으로 적는다 — 지역 설정이 «,» 이면 <c>0,08</c> 이 되어 JSON 이 통째로 안 읽힌다(결정 675 끝머리).
         /// 실패해도 시험을 안 깬다(경고 한 줄) — 이 자는 «재는 것» 이지 «지키는 것» 이 아니다.
         /// </summary>
-        static void WriteFlashJson(int frames, int rigs, int flashed, int flashCount, int onFrames, float onPerFlash, float lastSec)
+        static void WriteFlashJson(int frames, int rigs, int flashed, int flashCount, int onFrames, int matFrames, int matMismatch, float onPerFlash, float lastSec, string neverNames)
         {
             var inv = System.Globalization.CultureInfo.InvariantCulture;
-            string json = "{\"_meta\":{\"task\":\"T242\",\"round\":1},"
+            string json = "{\"_meta\":{\"task\":\"T242\",\"round\":2},"
                         + "\"frames\":" + frames.ToString(inv)
                         + ",\"rigs\":" + rigs.ToString(inv)
                         + ",\"rigsFlashed\":" + flashed.ToString(inv)
                         + ",\"flashCount\":" + flashCount.ToString(inv)
                         + ",\"onFrames\":" + onFrames.ToString(inv)
+                        + ",\"matFrames\":" + matFrames.ToString(inv)
+                        + ",\"matMismatchFrames\":" + matMismatch.ToString(inv)
                         + ",\"onFramesPerFlash\":" + onPerFlash.ToString("0.00", inv)
-                        + ",\"requestedSec\":" + (lastSec < 0f ? 0f : lastSec).ToString("0.000", inv) + "}";
+                        + ",\"requestedSec\":" + (lastSec < 0f ? 0f : lastSec).ToString("0.000", inv)
+                        + ",\"neverFlashed\":\"" + Escape(neverNames) + "\"}";
             foreach (var dir in PlayShot.Dirs())
             {
                 try { System.IO.Directory.CreateDirectory(dir); System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "t242.json"), json); }
                 catch (System.Exception e) { Debug.LogWarning("[T242] t242.json 저장 실패(" + dir + "): " + e.Message); }
             }
+        }
+
+        /// <summary>리그 이름이 «"» 나 «\» 를 품으면 JSON 이 통째로 안 읽힌다 — 값 하나 때문에 파일을 잃지 않는다(결정 675 와 같은 결).</summary>
+        static string Escape(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return "";
+            return s.Replace("\\", "\\\\").Replace("\"", "\\\"");
         }
     }
 }

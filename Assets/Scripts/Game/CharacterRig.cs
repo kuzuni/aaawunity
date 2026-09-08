@@ -52,7 +52,7 @@ namespace KkomaKnight.Game
 
         Animator _anim; SpriteRenderer[] _renderers; readonly Dictionary<SpriteRenderer, int> _baseOrder = new Dictionary<SpriteRenderer, int>();
         string _current; System.Action _onAttackHit;
-        Material[] _origMats;
+        Material[] _origMats; Material _flashMat;   // _flashMat = «그림이 정말 갈렸나» 를 세는 잣대(T242 회차 2 관측)
         float _attackLen = 1.8333334f, _attackHitAt = 1.0f;   // Attack.anim 길이 · OnAttackHit 이벤트 시각(클립에서 읽고, 못 읽으면 조사값)
         float _speedBase = 1f, _attackEndClock = -1f, _attackHitClock = -1f, _clock;
         // 한 번만 재생하는 상태(사망·승리·패배) — 클립은 전부 루프(m_LoopTime 1 · 주인 에셋 불변)라 끝에서 Animator 를 멈춘다(T14 · «죽은 뒤 다시 일어나는 것처럼 보임» 금지)
@@ -182,14 +182,27 @@ namespace KkomaKnight.Game
         public void SetAlpha(float a) { foreach (var r in _renderers) if (r != null) { var c = r.color; c.a = a; r.color = c; } }
 
         /// <summary>
+        /// 피격 플래시 길이(초) — <b>주인 지시로 0.1 → 0.18</b>(T242 회차 2 · 결정 684).
+        /// <para>
+        /// 회차 1 이 재고 나니 <b>돌릴 수 있는 손잡이가 이것 하나뿐</b>이었다:
+        /// 세기는 이미 최대이고(<c>HitFlash.mat</c> 의 <c>_HitEffectBlend 1</c> · <c>_HitEffectGlow 5</c> · 흰색 α1)
+        /// 부르는 경로도 둘 다 있다(<c>BattleWorld.Present</c> 의 <see cref="Core.EvKind.Hit"/>·<see cref="Core.EvKind.PlayerHit"/>).
+        /// 0.1초는 <b>재 보니 정말로 0.1초였다</b>(53fps 에서 회당 5.8프레임 · <c>screens/t242.json</c>) — 즉 «안 켜진다» 가 아니라 «짧다».
+        /// 주인 폰(WebGL)은 프레임이 더 낮아 같은 0.1초가 <b>세 프레임</b>이 되므로 거기서 특히 안 보인다.
+        /// </para>
+        /// ⚠ 원본(aaaw)에는 <b>이 연출 자체가 없어</b> 베낄 수가 없다 — 그래서 값은 워커가 정했다:
+        /// 30fps 에서도 <b>다섯 프레임 이상</b> 남으면서 «잔상» 으로 굳지 않는 자리가 0.18 이다(0.25 를 넘기면 흰 유령이 된다).
+        /// 되돌리려면 이 상수 하나.
+        /// </summary>
+        public const float HitFlashSeconds = 0.18f;
+
+        /// <summary>
         /// 피격 플래시 — AllIn1SpriteShader 머티리얼(HITEFFECT_ON)로 잠시 갈아끼운다.
         /// <para>
         /// <b>지금 켜져 있는가</b>(<see cref="Flashing"/>)와 <b>여태 몇 번 켰나</b>(<see cref="FlashCount"/>)를 함께 남긴다 — T242 회차 1.
-        /// 주인이 «번쩍이 안 보인다» 고 한 자리인데 <b>왜 안 보이는지 아직 모른다</b>: 강도는 이미 최대이고
-        /// (<c>HitFlash.mat</c> 의 <c>_HitEffectBlend 1</c> · <c>_HitEffectGlow 5</c> · 흰색 α1) 남은 후보는
-        /// «길이(0.1s)» · «부르는 경로가 빠졌다» · «그 유닛은 이 <see cref="CharacterRig"/> 가 아니다» 셋이다.
-        /// <b>손잡이를 돌리기 전에 그 셋을 가르려면 «실제로 몇 번 · 얼마나 켜졌나» 를 재야 한다</b>(결정 622) —
-        /// 이 둘이 그 재료이고, 값·연출은 <b>한 줄도 안 바뀐다</b>.
+        /// 회차 2 가 <see cref="FlashedRenderers"/>·<see cref="VisibleRenderers"/> 를 보탰다:
+        /// <see cref="Flashing"/> 은 <b>내가 세운 깃발</b>일 뿐이라 «그림이 정말 갈렸나» 는 못 가른다
+        /// (누군가 머티리얼을 도로 돌려놔도 깃발은 켜진 채다). 그 갈래를 닫으려면 <b>렌더러에 붙은 머티리얼 자체</b>를 세야 한다.
         /// </para>
         /// </summary>
         public void Flash(Material flashMat, float seconds)
@@ -197,6 +210,7 @@ namespace KkomaKnight.Game
             if (flashMat == null || _renderers == null) return;
             if (_origMats == null) { _origMats = new Material[_renderers.Length]; for (int i = 0; i < _renderers.Length; i++) _origMats[i] = _renderers[i].sharedMaterial; }
             foreach (var r in _renderers) if (r != null) r.sharedMaterial = flashMat;
+            _flashMat = flashMat;
             Flashing = true; FlashCount++; LastFlashSeconds = seconds;
             CancelInvoke(nameof(Unflash)); Invoke(nameof(Unflash), seconds);
         }
@@ -206,6 +220,22 @@ namespace KkomaKnight.Game
         public int FlashCount { get; private set; }
         /// <summary>마지막으로 요청받은 플래시 길이(초 · T242 관측) — «길이가 짧아서» 후보를 이 값으로 잰다.</summary>
         public float LastFlashSeconds { get; private set; }
+        /// <summary>지금 화면에 보이는(스프라이트가 있고 켜진) 렌더러 수 — <see cref="FlashedRenderers"/> 의 분모(T242 회차 2 관측).</summary>
+        public int VisibleRenderers { get { return CountRenderers(false); } }
+        /// <summary>그중 <b>실제로 플래시 머티리얼이 붙어 있는</b> 렌더러 수(T242 회차 2 관측) — 깃발이 아니라 그림을 센다.</summary>
+        public int FlashedRenderers { get { return CountRenderers(true); } }
+        int CountRenderers(bool onlyFlash)
+        {
+            if (_renderers == null) return 0;
+            int n = 0;
+            foreach (var r in _renderers)
+            {
+                if (r == null || !r.enabled || r.sprite == null || !r.gameObject.activeInHierarchy) continue;
+                if (onlyFlash && (_flashMat == null || r.sharedMaterial != _flashMat)) continue;
+                n++;
+            }
+            return n;
+        }
         void Unflash() { Flashing = false; if (_origMats == null) return; for (int i = 0; i < _renderers.Length; i++) if (_renderers[i] != null) _renderers[i].sharedMaterial = _origMats[i]; }
 
         public Bounds Bounds()
