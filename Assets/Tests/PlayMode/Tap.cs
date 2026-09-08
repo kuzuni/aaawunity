@@ -111,8 +111,10 @@ namespace KkomaKnight.Tests.Play
                 if (b == null) continue;
                 var rt = (RectTransform)b.transform;
                 var r = Reaches(app, rt, out string why);
-                Row(where + " · " + b.name, rt, r, why);
-                sb.Append("  ").Append(r == Reach.Ok ? "닿음  " : r == Reach.Blocked ? "막힘  " : "못잼  ").Append(PathOf(b.transform)).Append("  ← ").Append(why).Append('\n');
+                string note = Cover(app, rt) ? "전면 덮개(어둠·배경) — 중심이 팝업 뒤라 «막힘» 이 정상이다(잴 뜻이 없는 줄)" : "";
+                Row(where + " · " + b.name, rt, r, why, note);
+                sb.Append("  ").Append(r == Reach.Ok ? "닿음  " : r == Reach.Blocked ? "막힘  " : "못잼  ").Append(PathOf(b.transform))
+                  .Append(note.Length > 0 ? "  (" + note + ")" : "").Append("  ← ").Append(why).Append('\n');
             }
             Debug.Log(sb.ToString());
             return sb.ToString();
@@ -131,10 +133,23 @@ namespace KkomaKnight.Tests.Play
 
         static string J(string s) => (s ?? "").Replace("\\", "/").Replace("\"", "'").Replace("\n", " ");
 
-        static void Row(string what, RectTransform btn, Reach r, string why)
+        /// <summary>
+        /// 프레임을 거의 다 덮는 칸인가(어둠 <c>Dimmed</c> · 프리팹 팝업의 <c>Background</c>). 그런 칸은 <b>중심이 팝업 상자 뒤</b>라
+        /// «막힘» 이 나오는 것이 정상이고 결함이 아니다 — run 487 실측에서 `Dimmed` 한 줄이 그렇게 나왔다(T227 회차 3).
+        /// 표에서 그 줄에 까닭을 붙여 다음 사람이 좇지 않게 한다.
+        /// </summary>
+        static bool Cover(App app, RectTransform t)
+        {
+            var frame = app != null ? app.Frame : null;
+            if (frame == null || t == null) return false;
+            float fa = frame.rect.width * frame.rect.height, ta = t.rect.width * t.rect.height;
+            return fa > 1f && ta >= fa * 0.8f;
+        }
+
+        static void Row(string what, RectTransform btn, Reach r, string why, string note = "")
         {
             _rows.Add("{\"what\":\"" + J(what) + "\",\"btn\":\"" + J(btn != null ? PathOf(btn) : "(null)") + "\",\"reach\":\""
-                      + (r == Reach.Ok ? "ok" : r == Reach.Blocked ? "blocked" : "nohit") + "\",\"why\":\"" + J(why) + "\"}");
+                      + (r == Reach.Ok ? "ok" : r == Reach.Blocked ? "blocked" : "nohit") + "\",\"why\":\"" + J(why) + "\",\"note\":\"" + J(note) + "\"}");
             Flush();
         }
 

@@ -255,11 +255,11 @@ namespace KkomaKnight.Tests.Play
             // 늘린 Image 라, raycastTarget 을 그대로 두면 **상자 안 모든 탭을 그것이 먹는다**(주인 «도전 버튼 눌렀는데 겜 시작 안 하던데 던전»).
             // 아래 ClickNamed 들은 onClick.Invoke() 라 레이캐스트를 건너뛰므로 이 그림을 못 본다 — 그래서 «닿는가» 를 여기서 따로 잰다.
             {
-                // ⚠ 이번 회차는 **로그만** 이다 — 이 자가 빨가면 `build-webgl` 이 안 돌아 배포가 멈추고,
-                // T227 의 확인 조건이 «고친 빌드에서 주인이 직접 눌러 보는 것» 이라 그러면 확인 자체가 막힌다(T226 4항 · 결정 627).
-                // CI 로그에서 «[Tap] 닿음 «던전 세부 «도전»»» 을 눈으로 확인한 다음 회차에 AssertTappable 로 올린다.
-                Tap.LogTappable(_app, UiKit.Find(ov, "ChallengeBtn") as RectTransform, "던전 세부 «도전»");
-                Tap.LogTappable(_app, UiKit.Find(ov, "SweepBtn") as RectTransform, "던전 세부 «소탕»");
+                // ✅ 이제 **막는 자**다(회차 3 · run 487 `screens:tap.json` 실측이 둘 다 `"reach":"ok"` 였다 —
+                // 「맨 위 히트 = ChallengeBtn · 쌓인 순서: ChallengeBtn < Bg < Dimmed …」 로 테두리가 아예 안 나온다).
+                // 초록인 것을 재고 나서 올린다 = 이 저장소의 순서(결정 627 · T226 4항)이고, 여기서부터 빨강은 «회귀» 뿐이라 막는 것이 옳다.
+                Tap.AssertTappable(_app, UiKit.Find(ov, "ChallengeBtn") as RectTransform, "던전 세부 «도전»");
+                Tap.AssertTappable(_app, UiKit.Find(ov, "SweepBtn") as RectTransform, "던전 세부 «소탕»");
                 Tap.Report(_app, ov, "던전 세부 팝업(21)");
             }
             { var arrowImg = UiKit.Find(ov, "FloorPrev")?.GetComponent<Image>(); Assert.IsNotNull(arrowImg, "층수 ◀"); Assert.AreNotEqual(Palette.Cream, arrowImg.color, "층수 ◀ 는 크림 패널과 다른 색(크림이면 안 보임 · T43 비평 회차 1)"); }

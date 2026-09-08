@@ -377,6 +377,10 @@ namespace KkomaKnight.Tests.Play
             }
             Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 1, "로비 초상(HeroView · 상단 바 아바타)");
             Assert.IsTrue(HasText(s => s == "START"), "START 버튼");
+            // T227 4항 — «주인이 실제로 누르는 버튼» 이 탭으로 닿는가. 여기서는 **로그·표만**(단언 아님):
+            // 표는 `screens:tap.json` 으로 나가고, 그것이 초록인 것을 본 회차에 자리별로 AssertTappable 로 올린다(결정 627 순서).
+            // 로비 한 장이면 START · 하단 네비 5 · 메뉴(≡) · 사이드 기둥이 한꺼번에 잰다.
+            Tap.Report(_app, _app.Frame, "로비(01)");
             // T120 — «모서리 요소가 화면 밖으로 나가지 않는다» 게이트(주인·워커 눈에만 보이던 종류 · 배치 표에 이름표가 없는 자리는 ui_score 도 못 잰다).
             // 프레임 가장자리에 붙는 것들이 대상이다 — 하나라도 0~100% 밖으로 삐져나오면 여기서 잡는다.
             // («Events» = 로비 오른쪽 아래 모서리 버튼이었는데 T168 로 삭제됐다 → 목록에서 뺐다.)
