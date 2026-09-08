@@ -192,6 +192,12 @@ namespace KkomaKnight.Tests.Play
                 Debug.Log($"[T224⑤] 흰 낯 남음 — 회색 판 위 밝은 픽셀 {greyBright}(테가 획을 먹으면 이 수가 준다 · " +
                           $"두께 {TmpFont.OutlineWidth:0.00} ↔ 낯 부풀리기 {TmpFont.FaceDilate:0.00}).");
 
+            // ⓗ T246 — **여기까지 잰 수를 «워커가 읽을 수 있는 자리» 에 남긴다.**
+            //   위 다섯 줄은 전부 `Debug.Log` 인데 **초록 런에서는 그 줄이 워커에게 안 온다**(T246 1항 실측):
+            //   잡 로그는 끝 30KB 뿐이고 그 창은 `screens` 배포 단계가 차지한다 · `failed_only` 로 오는 68만 자는 **빨간 잡에만** 있다 ·
+            //   결과 XML 아티팩트는 프록시가 막는다. 그래서 이 저장소가 이미 세 번 쓴 길(tap.json · overdraw.json · t233.json)을 한 번 더 쓴다.
+            WriteTmpFontJson(before, after, white, greyDark, greyBright, asset);
+
             // ⓕ 그 «상태» 도 같이 못 박는다 — 픽셀 판정이 먼저이고, 이것은 되돌림을 막는 자다.
             Assert.IsTrue(TmpFont.OutlineDraws(asset.material),
                 "머티리얼이 «테를 그리는 상태» 여야 한다(두께 > 0 **그리고** 셰이더 갈래 " + TmpFont.OutlineKeyword + " 가 켜짐 · T224 2항)");
@@ -226,6 +232,48 @@ namespace KkomaKnight.Tests.Play
 
             Object.Destroy(go); Object.Destroy(host.gameObject); yield return Frames(1);
             _log.AssertNoRed("TMP 탐사");
+        }
+
+        /// <summary>
+        /// T246 — 이 탐침이 잰 수를 <c>ui-screens/tmpfont.json</c> 으로 남긴다(<see cref="PlayShot.Dirs"/> · <c>screens</c> 브랜치로 배포된다).
+        /// <para>
+        /// <b>왜 파일인가</b> — 워커가 이 수를 읽을 수 있는 자리가 여기뿐이다: CI 잡 로그는 <b>끝 30KB</b> 만 오고(그 창은 `screens` 배포 단계가 차지한다),
+        /// <c>failed_only</c> 로 오는 68만 자는 <b>빨간 잡에만</b> 있으며(결정 657), 결과 XML 아티팩트는 프록시가 막는다(결정 289).
+        /// <c>ui-screens/</c> 는 <b>유니티 잡이 빨개도 배포된다</b>(run 506·511 실측) — 그래서 초록·빨강 어느 쪽에서도 읽힌다.
+        /// </para>
+        /// <b>이 수로 무엇을 하나</b> — <c>faceBright</c>(회색 판 위 흰 낯)가 이 자의 다음 단계다: T224 회차 1 이 «테를 키우다 글자를 먹인» 것을
+        /// 이 탐침이 <b>초록으로 통과시킨</b> 까닭이 «어두운 픽셀만 물어서» 였다(결정 641). 그 수가 두 런 이상 쌓여 계열이 서면
+        /// «절반 밑이면 빨강» 으로 올린다 — 그것이 T246 의 마지막 일이다(T226 규약 ⓑ).
+        /// <b>실패해도 시험을 안 깬다</b>(경고 한 줄) — 이 자는 «재는 것» 이지 «지키는 것» 이 아니다.
+        /// </summary>
+        static void WriteTmpFontJson(int plateDark, int blackGlyphDark, int whiteGlyphDark, int greyDark, int greyBright, TMP_FontAsset asset)
+        {
+            var mat = asset != null ? asset.material : null;
+            // ⚠ 두 가지가 JSON 을 조용히 깨뜨린다 — 둘 다 «읽는 쪽이 통째로 못 읽는» 사고라 여기서 막는다:
+            //   ⓐ 없는 프로퍼티를 «NaN» 으로 적는 것 → 없으면 `null` 로 적는다.
+            //   ⓑ 소수점이 «,» 인 지역 설정 → `0,700` 이 되어 JSON 이 깨진다. 그래서 **불변 문화권**으로 못 박는다.
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            string F(string prop) => mat != null && mat.HasProperty(prop) ? mat.GetFloat(prop).ToString("0.000", inv) : "null";
+            string json = "{\"_meta\":{\"task\":\"T246\",\"of\":\"T224 픽셀 탐침\"}"
+                        + ",\"plateDark\":" + plateDark                      // 판만 있을 때(흰 판) — 나머지 수의 바닥
+                        + ",\"blackGlyphDark\":" + blackGlyphDark            // 흰 판 + 검은 글자 = 획이 그려지는가
+                        + ",\"whiteGlyphDark\":" + whiteGlyphDark            // 흰 판 + 흰 글자 = 어두워지는 것은 테뿐이다
+                        + ",\"greyDark\":" + greyDark                        // 회색 판 + 흰 글자 — 검은 테
+                        + ",\"faceBright\":" + greyBright                    // 〃 남은 흰 낯 ← 다음 단계가 막을 수
+                        + ",\"outlineWidth\":" + TmpFont.OutlineWidth.ToString("0.000", inv)
+                        + ",\"faceDilate\":" + TmpFont.FaceDilate.ToString("0.000", inv)
+                        + ",\"matOutlineWidth\":" + F(TmpFont.OutlineWidthProp)
+                        + ",\"matFaceDilate\":" + F(TmpFont.FaceDilateProp)
+                        + ",\"scaleRatioA\":" + F(TmpFont.ScaleRatioAProp)
+                        + ",\"gradientScale\":" + F(TmpFont.GradientScaleProp)
+                        + ",\"keywordOn\":" + ((mat != null && mat.IsKeywordEnabled(TmpFont.OutlineKeyword)) ? "true" : "false")
+                        + ",\"draws\":" + (TmpFont.OutlineDraws(mat) ? "true" : "false") + "}";
+            foreach (var dir in PlayShot.Dirs())
+            {
+                try { System.IO.Directory.CreateDirectory(dir); System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "tmpfont.json"), json); }
+                catch (System.Exception e) { Debug.LogWarning("[T246] tmpfont.json 저장 실패(" + dir + "): " + e.Message); }
+            }
+            Debug.Log("[T246] tmpfont.json — " + json);
         }
     }
 }
