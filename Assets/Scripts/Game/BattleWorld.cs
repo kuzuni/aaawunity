@@ -685,7 +685,10 @@ namespace KkomaKnight.Game
                 SetBar(v.BarBg, v.BarFill, e.MaxHp > 0 ? v.ShownHp / e.MaxHp : 0);
                 PlaceFootText(v.BarTxt, v.BarBg.transform.position, FootNum(v.ShownHp), v.BarBg.gameObject.activeSelf, Layout.EnemyFootBarW * Layout.FootBarScale);
                 if (!e.Dead && lx < WorldCam.LayoutW) engaged = true;
-                if (e.IsBoss && !_bossWarned && lx < WorldCam.LayoutW) { _bossWarned = true; _app.Overlay.BossWarn(_app.Frame); Fx.Spawn("fx.bossWarn", v.Rig.transform.position + Vector3.up * 1.2f, 0.8f, 2.5f); Audio.Bgm("bgm.boss"); }
+                // T235(주인 2026-09-08 09:1X «보스라고 보스 연출 안 떠도 된다») — 경고 띠(Overlay.BossWarn)와 터지는 이펙트(fx.bossWarn)를 뺐다.
+                // 남긴 것은 보스 곡 하나다: 주인이 말한 것은 «연출» 이고 곡은 분위기라 지어내지 않는다(§1). 곡까지 빼려면 주인 한마디면 된다.
+                // _bossWarned 표식도 그 곡 때문에 그대로 남는다 — 한 판에 한 번만 바꾸게 하는 구실이 여전히 필요하다.
+                if (e.IsBoss && !_bossWarned && lx < WorldCam.LayoutW) { _bossWarned = true; Audio.Bgm("bgm.boss"); }
             }
             var gone = new List<EnemyView>(); foreach (var kv in _enemies) if (!seen.Contains(kv.Key)) gone.Add(kv.Value);
             foreach (var v in gone) Remove(v);

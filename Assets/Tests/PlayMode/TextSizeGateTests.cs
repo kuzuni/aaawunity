@@ -164,6 +164,9 @@ namespace KkomaKnight.Tests.Play
             _app.Toast(LongToast); yield return Check("27_toast");
             _app.Overlay.ConfirmReset(); yield return Check("28_confirm_reset");
             _app.Overlay.Close(); yield return Frames(1);
+            // ⚠ T235 이후 이 띠는 **게임에서 안 뜬다**(주인 «보스라고 보스 연출 안 떠도 된다» · `BattleWorld` 의 부르던 한 줄을 뺐다).
+            // 여기 남겨 둔 것은 조각·카탈로그 키가 멀쩡하고 주인이 «다시 띄워라» 하면 한 줄로 돌아오기 때문이다 —
+            // 이 줄이 초록인 것을 «보스 띠가 잘 뜬다» 로 읽지 마라(재는 것은 그 띠 «글자» 의 크기 하한뿐이다).
             _app.Overlay.BossWarn(_app.Frame); yield return CheckLive("29_boss_warn");
             UiKit.CompleteAllTweens(); yield return Frames(2);
 

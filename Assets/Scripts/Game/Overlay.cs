@@ -809,6 +809,16 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 보스 경고 띠 (Play_Warning_Boss 의 Panel_Warning) — 시간 안 멈춤 ─────────────────────────
+        /// <summary>
+        /// ⚠ <b>T235(주인 2026-09-08 09:1X «보스라고 보스 연출 안 떠도 된다») 이후 이 띠는 게임에서 안 뜬다</b> —
+        /// 부르던 한 곳(<c>BattleWorld</c> 의 보스 조우)에서 뺐다. 지금 이것을 부르는 자리는
+        /// <c>TextSizeGateTests</c> 의 화면 <c>29_boss_warn</c> 한 곳뿐이다(글자 크기 하한을 재려고 직접 세운다).
+        /// <para>
+        /// <b>그래서 그 게이트가 초록인 것을 «보스 띠가 잘 뜬다» 로 읽지 마라</b> — 그 자는 «이 함수가 세우는 띠의 글자가 규격인가» 만 본다.
+        /// 함수와 자를 남겨 둔 까닭: 조각도 카탈로그 키(<c>ui.bossWarn</c>)도 멀쩡하고, 주인이 «다시 띄워라» 하면
+        /// <c>BattleWorld</c> 한 줄이면 돌아온다. 지우면 그 한 줄이 다시 «만들기» 가 된다.
+        /// </para>
+        /// </summary>
         public void BossWarn(Transform parent)
         {
             var whole = UiKit.Spawn("ui.bossWarn", parent);
