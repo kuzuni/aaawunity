@@ -32,19 +32,27 @@ namespace KkomaKnight.Tests.Play
         /// 그 환산으로 T204 의 실측을 그대로 옮기면 두 벽이 열 배 위에 있다 — <b>옛 띠는 «두꺼워서 위험한» 자리를 하나도 안 덮고 있었고,
         /// 도리어 T224 의 고침값(0.70)을 빨강으로 막아 배포를 세울 뻔했다</b>(이 자가 이 회차의 진짜 위험이었다).
         /// </para>
-        /// <b>위 벽 1.15</b> — T204 실측 «0.12 는 ㅇ·ㅂ·8·0 속을 메운다 · 0.07 이 상한» ⇒ 새 단위로 1.20 은 나쁘고 0.70 은 안전하다.
-        /// 벽은 그 사이에 두되 Jua 최빈 획 두께(em 의 11.5%)에 맞춘다 — 테가 획만큼 굵어지면 속 구멍이 메워지는 것이 그 까닭이기 때문이다.
+        /// <b>⛔ 그리고 그 «환산» 도 반쪽이었다 — 회차 2 가 실측으로 잡았다(run 487).</b> 옛 uGUI 테는 글자 <b>밖</b>으로 나갔는데
+        /// TMP SDF 테는 모서리에 <b>걸쳐</b>(반은 안) 그린다 — 그래서 0.70 은 «옛 두께» 가 아니라 <b>획을 반이나 파먹는 값</b>이었고
+        /// `01_lobby` «챕터 1» 의 밝은 획이 250 → 2 픽셀로 사라졌다. 고침은 <see cref="TmpFont.FaceDilate"/> 와 <b>짝짓는 것</b>이고,
+        /// 짝지으면 보이는 검은 띠는 «바깥 한 겹» 이라 눈금이 <b>절반</b>이 된다 ⇒ 두 벽도 그 눈금으로 다시 옮긴다.
+        /// <para>
+        /// <b>위 벽 0.60</b> — T204 실측 «0.07 × 크기 가 상한 · 0.12 는 ㅇ·ㅂ·8·0 속을 메운다» 를 «바깥 한 겹» 눈금으로 옮긴 자리다.
+        /// (이 벽이 지키는 것은 «속 구멍» 하나뿐이다 — «획을 파먹는가» 는 이제 값이 아니라 <b>짝</b>이 지킨다: 아래 <see cref="FaceDilateIsPairedWithOutlineWidth"/>.)
+        /// </para>
         /// </summary>
-        const float CountersDieAbove = 1.15f;
+        const float CountersDieAbove = 0.60f;
         /// <summary>
         /// «있으나 마나» 한 선 — <b>주인이 «검은 아웃라인 없던데» 라고 한 그 자리가 정확히 이 밑이다</b>(옛 0.20 = em 의 2%).
         /// <para>
-        /// 셈으로 벽을 둔다: 본문 크기 40 에서 <c>screens</c>(540폭 = 프레임 절반)에 <b>적어도 1px</b> 은 남아야 눈에 걸린다
-        /// ⇒ 40 × (w/10) × 0.5 ≥ 1 ⇒ <b>w ≥ 0.50</b>. 그 밑은 안티에일리어싱에 먹혀 «회색 그림자» 조차 아니고 <b>없는 것과 같다</b>
-        /// (T194 가 «얇다» 로 부른 자리 · T224 가 그것을 픽셀로 확인했다).
+        /// 셈으로 벽을 둔다: 본문 크기 40 에서 <c>screens</c>(540폭 = 프레임 절반)에 <b>적어도 1px</b> 은 남아야 눈에 걸린다.
+        /// 짝지은 뒤의 «바깥 한 겹» 눈금으로 40 × (w/10) × 0.5 ≥ 1 ⇒ <b>w ≥ 0.50</b> 인데, 그 벽은 <b>고침값 자신</b>이라
+        /// 다음 회차가 실측으로 한 눈금 내리면 그대로 빨강이 된다 — 벽은 «틀림없이 안 보이는» 자리에 둔다: <b>0.25</b>(= 그 절반 · 0.5px).
+        /// 그 밑은 안티에일리어싱에 먹혀 «회색 그림자» 조차 아니고 <b>없는 것과 같다</b>(T194 가 «얇다» 로 부른 자리 · T224 가 픽셀로 확인했다:
+        /// 0.20 은 본문에서 0.40px 이었고 주인이 «검은 아웃라인 없던데» 라고 했다).
         /// </para>
         /// </summary>
-        const float TooThinAtOrBelow = 0.50f;
+        const float TooThinAtOrBelow = 0.25f;
 
         /// <summary>
         /// 테 두께가 «글자를 먹지 않으면서 보이는» 띠 안인가 — 이 자가 지키는 **유일한** 두께 손잡이다(T221).
@@ -58,6 +66,32 @@ namespace KkomaKnight.Tests.Play
                 $"SDF 테 두께 {TmpFont.OutlineWidth:0.000} 이 {TooThinAtOrBelow} 이하다 — 주인이 «얇다» 고 한 자리로 되돌아간다(T194)");
             Debug.Log($"[T221] SDF 테 두께 {TmpFont.OutlineWidth:0.000}(비율 · 크기에 저절로 비례) · 색 {UiKit.OutlineColor} · " +
                       "옛 프레임px 규칙(UiKit.OutlineRatio 등)은 T207 ② 뒤 아무것도 안 그려서 걷었다");
+        }
+
+        /// <summary>
+        /// <b>T224 회차 2 — 테 두께와 낯 부풀리기는 «짝» 이다. 하나만 올리면 테가 글자를 파먹는다.</b>
+        /// <para>
+        /// 이 계약은 <b>어림이 아니라 셰이더에 적혀 있다</b> — <c>TMP_SDF-Mobile.shader</c> 는 낯 갈래를 <c>bias + outline</c> 부터 그리고
+        /// (155·192줄) <c>_FaceDilate</c> 는 같은 배율로 <c>weight</c> 를 민다(149줄) ⇒ <b>둘이 같을 때만</b> 원래 글자 굵기가 남고
+        /// 검은 띠가 통째로 바깥으로 간다. 짝이 어긋나면 그 차이만큼 흰 낯이 깎인다.
+        /// </para>
+        /// <b>그리고 그것이 «가정» 이 아닌 까닭</b>: 회차 1 이 두께만 0.70 으로 올려 내보냈고, <c>screens</c> run 487 에서
+        /// `01_lobby` «챕터 1» 의 밝은 획이 <b>250 → 2 픽셀</b>로 사라졌다(72pt «START» 조차 검은 덩어리였다). 그 그림을 다시 못 만들게 막는 자다.
+        /// </summary>
+        [Test]
+        public void FaceDilateIsPairedWithOutlineWidth()
+        {
+            Assert.AreEqual(TmpFont.OutlineWidth, TmpFont.FaceDilate, 1e-3f,
+                $"낯 부풀리기 {TmpFont.FaceDilate:0.000} 가 테 두께 {TmpFont.OutlineWidth:0.000} 와 다르다 — " +
+                "TMP 테는 모서리에 «걸쳐» 그려서 반은 글자를 파먹는다. 짝이 어긋난 만큼 흰 획이 깎이고, " +
+                "작은 글자부터 검은 덩어리가 된다(T224 회차 1 이 run 487 에서 실제로 그렇게 나갔다)");
+
+            var asset = TmpFont.Get();
+            if (asset == null || asset.material == null) return;   // 픽셀·머티리얼 판정은 TmpFontProbeTests 몫
+            var mat = asset.material;
+            if (!mat.HasProperty(TmpFont.FaceDilateProp)) return;  // 셰이더 갈래가 다른 자리 — 값 계약은 위에서 이미 봤다
+            Assert.AreEqual(TmpFont.FaceDilate, mat.GetFloat(TmpFont.FaceDilateProp), 1e-3f,
+                $"머티리얼의 {TmpFont.FaceDilateProp} 가 규격과 다르다 — {nameof(TmpFont)}.{nameof(TmpFont.SetOutline)} 이 둘을 같이 넣어야 한다");
         }
 
         /// <summary>

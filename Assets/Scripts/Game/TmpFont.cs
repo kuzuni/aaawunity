@@ -32,12 +32,28 @@ namespace KkomaKnight.Game
         /// 본문 40 → <c>screens</c>(540폭 = 프레임 절반)에서 <b>0.40px</b> · 주인 폰(1080)에서 0.80px ⇒ 안티에일리어싱에 먹혀 안 보인다.
         /// 제목·START 72 만 0.72px 로 겨우 보였고 <b>실측에서도 그 하나만 테가 잡혔다</b>(run 480 · 고리 방법 −0.158 대 −0.010 · +0.005).
         /// </para>
-        /// <b>왜 하필 0.70 인가</b> — T204 가 uGUI 시절 재 둔 «주인이 보던 그 두께» 와 <b>같은 값</b>이다: 옛 테 = <c>0.07 × 글자 크기</c> →
-        /// 본문 40 에서 2.8px · 제목 72 에서 5.0px, 새 0.70 = em 의 7% → <b>2.80px · 5.04px</b>. 그리고 T204 는 «0.12 는 ㅇ·ㅂ·8·0 속을 메운다 ·
-        /// 0.07 이 상한» 이라고 재 뒀으니 그 상한과 같은 값이고 Jua 최빈 획(11.5%)보다 얇다 ⇒ 속 구멍은 안 메워진다.
-        /// <b>더 굵히려면 그때 다시 재라</b> — 위·아래 벽은 <c>TextOutlineRuleTests</c> 가 지킨다.
+        /// <b>⛔ 그런데 0.70 «한 줄» 은 글자를 먹었다 — 회차 2 가 실측으로 잡았다(run 487).</b> `screens` 로 재 보니
+        /// <c>01_lobby</c> «챕터 1» 의 밝은 획이 <b>250 → 2 픽셀</b>로 사라졌고 72pt «START» 조차 거의 <b>검은 덩어리</b>가 됐다.
+        /// <b>까닭은 방향이다</b> — 옛 uGUI <c>Outline</c>/<c>TextOutline8</c> 은 검은 사본을 글자 <b>밖</b>으로 밀었는데,
+        /// TMP SDF 는 테를 <b>글자 모서리에 걸쳐</b>(반은 안, 반은 밖) 그린다. 셰이더가 그대로 적어 놓았다
+        /// (<c>TMP_SDF-Mobile.shader:155·192</c> — <c>outline = _OutlineWidth * _ScaleRatioA * 0.5 * scale</c> 이고
+        /// 낯 갈래가 <c>bias + outline</c> 부터라 <b>낯이 그만큼 줄어든다</b>). 즉 같은 «두께» 숫자라도 옛것은 더하고 이것은 <b>깎는다</b>.
+        /// <b>고침 = <see cref="FaceDilate"/> 를 같은 값으로 짝지어 깎인 만큼 낯을 도로 밀어 준다</b>(같은 줄 149 의 <c>weight</c> 가 정확히 같은 배율을 탄다 ⇒ 상쇄가 딱 맞는다).
+        /// 그러면 흰 낯은 그대로이고 검은 띠만 <b>바깥으로</b> 나간다 — 옛 uGUI 그림 그대로다.
+        /// <para>
+        /// <b>왜 0.50 인가</b> — 짝지으면 보이는 검은 띠는 «바깥 한 겹» 이라 0.70 때의 절반 눈금으로 읽어야 한다.
+        /// T204 실측(«0.07 × 크기» 가 상한 · 0.12 는 ㅇ·ㅂ·8·0 을 메운다)을 그 눈금으로 옮기면 0.50 이 그 상한 언저리이고,
+        /// 본문 40 에서 <c>screens</c> 1px 은 남아 눈에 걸린다. <b>회차 3 에서 같은 고리 방법으로 다시 재고 필요하면 이 한 값만 옮긴다</b>
+        /// — 위·아래 벽과 «짝이 맞는가» 는 <c>TextOutlineRuleTests</c> 가 지킨다.
+        /// </para>
         /// </summary>
-        public const float OutlineWidth = 0.70f;
+        public const float OutlineWidth = 0.50f;
+        /// <summary>
+        /// <b>낯 부풀리기 — 테가 «깎는» 만큼 도로 밀어 주는 짝이다(T224 회차 2).</b> 반드시 <see cref="OutlineWidth"/> 와 같아야 한다:
+        /// 셰이더에서 낯 모서리는 <c>bias + outline − faceDilate</c> 자리라 둘이 같을 때만 <b>원래 글자 굵기</b>가 남고 테가 통째로 바깥으로 간다.
+        /// 이것을 0 으로 두면 0.50 짜리 테가 획을 반이나 파먹어 작은 글자가 <b>검은 덩어리</b>가 된다(run 487 이 그 그림이다).
+        /// </summary>
+        public const float FaceDilate = OutlineWidth;
         /// <summary>TMP SDF 셰이더의 아웃라인 두께·색 프로퍼티 이름(머티리얼로 두르는 «진짜» 아웃라인이 이 둘이다).</summary>
         public const string OutlineWidthProp = "_OutlineWidth", OutlineColorProp = "_OutlineColor";
 
@@ -157,6 +173,12 @@ namespace KkomaKnight.Game
             if (mat == null || !mat.HasProperty(OutlineWidthProp)) return false;
             mat.SetFloat(OutlineWidthProp, width);
             if (mat.HasProperty(OutlineColorProp)) mat.SetColor(OutlineColorProp, color);
+            // ⚑ T224 회차 2 — **두께와 낯 부풀리기는 짝이다. 하나만 넣으면 테가 글자를 파먹는다.**
+            //  TMP SDF 는 테를 글자 «모서리에 걸쳐» 그린다(반은 안 · 반은 밖 · TMP_SDF-Mobile.shader:155·192).
+            //  그래서 두께만 올리면 흰 낯이 그만큼 깎여 나가고, run 487 에서 실제로 «챕터 1» 의 밝은 획이 250 → 2 픽셀이 됐다.
+            //  같은 값으로 `_FaceDilate` 를 밀면(셰이더 149 줄이 같은 배율을 탄다) 깎인 만큼 정확히 상쇄되어
+            //  **흰 낯은 그대로 · 검은 띠는 바깥으로** = 옛 uGUI `TextOutline8` 그림이 된다.
+            if (mat.HasProperty(FaceDilateProp)) mat.SetFloat(FaceDilateProp, width);
             // T224 2항 — 셰이더 갈래를 켠다. 두께가 0 이면 켤 까닭이 없으니 끈다(켜 두면 «0px 테» 를 계속 계산한다).
             if (width > 0f) mat.EnableKeyword(OutlineKeyword); else mat.DisableKeyword(OutlineKeyword);
             return true;
