@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
@@ -1283,6 +1284,29 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(D.Shop.GemPacks.Count, CountNamed(content, "GemPack:"), "다이아 카드 = shop.json gemPacks 수"); Assert.AreEqual(6, D.Shop.GemPacks.Count, "다이아 6");
                 Assert.AreEqual(D.Shop.GoldPacks.Count, CountNamed(content, "GoldPack:"), "골드 카드 = shop.json goldPacks 수"); Assert.AreEqual(3, D.Shop.GoldPacks.Count, "골드 3");
                 Assert.IsNotNull(UiKit.Find(content, "FreeLine"), "«무료 보급까지» 줄");
+                // T260 2항 — 섹션 제목 «위» 여백(주인 2026-09-09 «위로 각각 여백 좀 10씩 · 너무 딱딱 붙어 있음»).
+                // ⚠ 이 회차는 **재기만 한다**(막지 않는다) — 워커는 PlayMode 를 못 돌려 수를 못 보고,
+                //    검증 못 한 단언이 build-webgl 앞에 서면 배포가 멈춘다(T226 · 결정 625·627 의 순서 그대로).
+                //    다음 회차가 이 줄의 수를 보고 «≥ 10px» 단언으로 올린다.
+                {
+                    var gaps = new StringBuilder("[T260] 섹션 제목 위 여백(px · 목표 ≥ 10)");
+                    foreach (var nm in new[] { "Sec:상자", "Sec:다이아", "Sec:골드" })
+                    {
+                        var h = UiKit.Find(content, nm) as RectTransform;
+                        if (h == null) { gaps.Append(" · ").Append(nm).Append(" 없음"); continue; }
+                        // 바로 위 형제의 아래끝 ↔ 이 헤더의 위끝 (Content 좌표 · y 는 아래로 갈수록 작아진다)
+                        float top = h.offsetMax.y, prevBottom = float.NegativeInfinity; string prev = "—";
+                        foreach (RectTransform sib in content)
+                        {
+                            if (sib == h) continue;
+                            float bot = sib.offsetMin.y;
+                            if (bot >= top && bot > prevBottom) { prevBottom = bot; prev = sib.name; }
+                        }
+                        gaps.Append(" · ").Append(nm).Append(' ')
+                            .Append(float.IsNegativeInfinity(prevBottom) ? "위에 아무것도 없음" : (prevBottom - top).ToString("0.0") + "(" + prev + ")");
+                    }
+                    Debug.Log(gaps.ToString());
+                }
                 Assert.IsTrue(HasText(s => s == "다이아") && HasText(s => s == "골드"), "섹션 제목 «다이아»·«골드»");
                 GachaBox big = null; foreach (var b in D.Gacha.Boxes) if (big == null || b.Cost > big.Cost) big = b;
                 var bigCard = (RectTransform)UiKit.Find(content, "Box:" + big.Key);

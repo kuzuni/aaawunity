@@ -30,23 +30,38 @@ namespace KkomaKnight.Game
         /// «상자» 섹션 헤더 y (T100 · 주인 2026-09-07 «상자 부분도 다이아·골드처럼 섹션 나눠 달라») — 스크롤 맨 위(<see cref="ContentTop"/> 12.8) 바로 아래.
         /// 헤더가 하나 늘어난 만큼 <b>아래 전부</b>가 <see cref="SecShift"/> 만큼 내려간다.
         /// </summary>
-        const float SecBoxY = 13.5f;
+        const float SecBoxY = 13.5f + SecTopGap;
         /// <summary>헤더 → 그 아래 첫 내용까지의 간격 — «다이아» 헤더(74.0)와 첫 카드행(78.5)의 간격 그대로. T100 이 «상자» 헤더를 끼우며 아래를 이만큼 민다.</summary>
         const float SecShift = 4.5f;
-        /// <summary>표 ⑤ «(뽑기 화면) 대형 상자 배너» · «상자 카드 2개(좌우 각 45.5)» · «상자 버튼 2개(배너 안 아래)» — T100 의 «상자» 헤더만큼(<see cref="SecShift"/>) 내려간 자리.</summary>
-        static readonly Layout.R Banner = new Layout.R(3.0f, 13.5f + SecShift, 94.0f, 26.0f);
-        static readonly Layout.R ChestRow = new Layout.R(3.0f, 40.5f + SecShift, 94.0f, 29.0f);
+        /// <summary>
+        /// T260 2항 — <b>섹션 제목 «위» 여백 10px</b>(주인 2026-09-09 05:4X «섹션 나누는 타이틀 같은 거 위로 각각 여백 좀 10씩 주기 · 너무 딱딱 붙어 있음»).
+        /// 프레임 높이(<see cref="UiKit.FrameH"/> 2337)로 환산한 % — 픽셀을 코드에 박지 않고 «10px» 이라는 주인 말을 그대로 남긴다.
+        /// <para>
+        /// 헤더가 셋(상자·다이아·골드)이라 <b>아래로 갈수록 쌓인다</b> — 상자 아래는 1칸, 다이아 아래는 2칸, 골드 아래는 3칸.
+        /// <see cref="ContentEnd"/> 도 3칸 내려가므로 <b>스크롤 맨 아래에서 골드 섹션은 제자리</b>이고(표 ⑤ 09 의 66.0 · 70.5 불변)
+        /// 다이아 섹션만 그 화면에서 <see cref="SecTopGap"/> 만큼 올라온다(22.60 → 22.17 · 27.10 → 26.67 · 47.60 → 47.17).
+        /// </para>
+        /// </summary>
+        const float SecTopGap = 10f / UiKit.FrameH * 100f;
+        /// <summary>표 ⑤ «(뽑기 화면) 대형 상자 배너» · «상자 카드 2개(좌우 각 45.5)» · «상자 버튼 2개(배너 안 아래)» — T100 의 «상자» 헤더만큼(<see cref="SecShift"/>) 내려간 자리 + T260 의 «상자» 헤더 위 여백 한 칸.</summary>
+        static readonly Layout.R Banner = new Layout.R(3.0f, 13.5f + SecShift + SecTopGap, 94.0f, 26.0f);
+        static readonly Layout.R ChestRow = new Layout.R(3.0f, 40.5f + SecShift + SecTopGap, 94.0f, 29.0f);
         const float ChestCardW = 45.5f;
-        static readonly Layout.R FreeLine = new Layout.R(3.0f, 70.3f + SecShift, 94.0f, 2.8f);
+        static readonly Layout.R FreeLine = new Layout.R(3.0f, 70.3f + SecShift + SecTopGap, 94.0f, 2.8f);
         /// <summary>
         /// «다이아» 섹션 헤더 y — 09_shop_1.jpg 의 헤더(22.5)·카드행(27 · 47.5)·둘째 헤더(66)·행(70.5) 간격을 그대로 이어 붙인다(<see cref="Layout.ShopSec1"/> 계열 표값에서 계산).
         /// T100 의 «상자» 헤더만큼 내려가지만 <see cref="ContentEnd"/> 도 같이 내려가므로 <b>스크롤 맨 아래에서 보이는 09 화면은 한 픽셀도 안 바뀐다</b>(표 ⑤ 09 행 불변).
+        /// <para>
+        /// T260 — 여기에 «위 여백»(<see cref="SecTopGap"/>)이 <b>두 칸</b> 쌓인다: 제 몫 한 칸 + 위에 있는 «상자» 헤더 몫 한 칸.
+        /// 골드 헤더는 세 칸이고 <see cref="ContentEnd"/> 도 세 칸이라, 09 화면에서 <b>골드 섹션만 제자리</b>이고 다이아 섹션은 한 칸 올라온다(표 ⑤ 를 그렇게 고쳤다).
+        /// </para>
         /// </summary>
-        const float SecGemY = 74.0f + SecShift;
+        const float SecGemY = 74.0f + SecShift + 2f * SecTopGap;
         static float Row1Y => SecGemY + (Layout.ShopCardRow1.Y - Layout.ShopSec1.Y);          // 78.5
         static float Row2Y => Row1Y + Layout.ShopCardRowPitch;                                  // 99.0
-        static float SecGoldY => SecGemY + (Layout.ShopSec2.Y - Layout.ShopSec1.Y);            // 117.5
-        static float Row3Y => SecGemY + (Layout.ShopCardRow3.Y - Layout.ShopSec1.Y);           // 122.0
+        // T260 — 골드 헤더와 그 아래는 «위 여백» 세 칸째다(상자 · 다이아 · 골드 제 몫).
+        static float SecGoldY => SecGemY + (Layout.ShopSec2.Y - Layout.ShopSec1.Y) + SecTopGap;
+        static float Row3Y => SecGemY + (Layout.ShopCardRow3.Y - Layout.ShopSec1.Y) + SecTopGap;
         /// <summary>내용 끝 = 골드 행 아래 여백 3.5(레퍼런스 09 의 골드 카드 아래 ~ 탭 바 = 2.9) → 끝까지 내리면 «다이아» 헤더가 표 ⑤ 09 의 22.5 자리에 온다(= 09 스크린샷 = 스크롤 맨 아래).</summary>
         static float ContentEnd => Row3Y + Layout.ShopCardRow3.H + 3.5f;                        // 144.0
         static readonly Layout.R InfoBox = new Layout.R(6.5f, 27.0f, 87.0f, 42.0f);
