@@ -716,7 +716,12 @@ namespace KkomaKnight.Game
                 {
                     // 0 개면 «비활성 + 개수 0»(지시서 3항 기본값) + 어디서 구하는지 한 줄 — 버튼만 회색이면 사람이 «고장» 으로 읽는다.
                     var b = reviveBtn.GetComponent<Button>(); if (b != null) b.interactable = false;
-                    UiKit.Label(rt, 20, 78.5f, 60, 2.4f, "부활권은 데일리 기프트에서 얻는다", TextSize.Body, Palette.CreamDark).name = "ReviveHint";
+                    var hint = UiKit.Label(rt, 20, 78.5f, 60, 2.4f, "부활권은 데일리 기프트에서 얻는다", TextSize.Body, Palette.CreamDark);
+                    hint.name = "ReviveHint";
+                    // T274 1단계 — 이름표. «안내» 로 부른다: 이름에 «칸·카드·행·슬롯·기둥·줄» 이 들어가면
+                    // `BorderAudit.CellWords` 가 «판이 있어야 할 것» 으로 읽고, `res_lose` 계열은 strict 라 그대로 빨강이 된다
+                    // (T219 2단계가 «팁 줄» 로 main 을 세운 그 자리다). 「부활 버튼」 은 위에서 이미 달렸다.
+                    UiKit.Tag(hint.transform, "부활 안내");
                 }
                 UiKit.Tag(reviveBtn, "부활 버튼");
             }

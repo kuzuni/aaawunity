@@ -2771,6 +2771,10 @@ Caught fatal signal - signo:6 (SIGABRT) · Unexpected exit code 134
 
 > 주인 지시가 아니라 **워커가 세어 등재한 구멍**이다(T254 를 닫으며 발견 · 결정 724).
 
+> 🔄 **1단계 끝(2026-09-08 19:3X · sess-1917-23930 · 워커 J · lock 유지)** — 아래 1·2항을 했다: `UiShotsTests` 가 `res_lose` 뒤에 `Dead(G, () => { }, () => { }, 0, true)` 로 **`res_lose_revive`** 를 한 장 더 남기고, 안내 줄에 이름표 «부활 안내» 를 달았다(버튼 쪽 «부활 버튼» 은 T254 회차에 이미 달려 있었다).
+> **개수를 0 으로 준 까닭**(아래 1항의 «2» 를 안 따랐다) — `BattleScreen:345` 의 `canRevive` 는 «이 판에 아직 안 썼나» 뿐이라 **티켓 0 에서도 버튼이 서고**, 안내 줄은 **0 일 때만** 뜬다. 2 로 찍으면 새 요소 둘 중 **하나만** 사진에 든다. 0 이 «가장 많이 보이는 화면» 이기도 하다(부활권은 데일리 기프트에서 오므로 기본이 0).
+> **남은 것 = 3·4항**(실측으로 표 + `SCREENS` 등재 + ㊳ 의 ⚑ 정리). 다음 회차가 그 런의 `layout.json` 을 보고 잇는다.
+
 **무엇이 문제인가** — T254 1항이 사망 팝업에 «부활 N» 버튼(`ReviveBtn`)과 안내 줄(`ReviveHint`)을 세웠는데, 그 둘은 `Overlay.Dead(...)` 가 **`canRevive: true`** 로 불릴 때만 선다. 그런데 이 화면을 여는 세 자리가 **전부 기본값**이다:
 `UiShotsTests.cs:200` · `BorderGateTests.cs:547` · `TextSizeGateTests.cs:158` · `PercentGateTests.cs:179` — 넷 다 `Dead(G, () => { })`.
 ⇒ **`res_lose` PNG 에도 `layout.json` 에도 그 둘이 영영 안 들어온다.** 글자 하한·잘림(`TextSizeGateTests`)도, 테두리(`BorderGateTests` · `res_lose` 는 strict 다)도, 자리 표(㊳)도 이 버튼을 **한 번도 본 적이 없다**. 주인이 판에서 죽어야만 보는 화면이다.

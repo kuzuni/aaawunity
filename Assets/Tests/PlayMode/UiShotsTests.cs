@@ -199,6 +199,16 @@ namespace KkomaKnight.Tests.Play
                 _app.Overlay.Close(); yield return Frames(1);
                 _app.Overlay.Dead(G, () => { }); yield return Frames(2); yield return Shot("res_lose");
                 _app.Overlay.Close(); yield return Frames(1);
+                // T274 1단계 — 같은 팝업의 «부활권» 갈래. 위 한 줄로는 이 갈래가 **영영 안 찍힌다**:
+                // `ReviveBtn`·`ReviveHint` 는 `canRevive: true` 일 때만 서는데 이 화면을 여는 네 자리
+                // (여기 · BorderGateTests:547 · TextSizeGateTests:158 · PercentGateTests:179)가 전부 기본값이라
+                // T254 1항이 세운 버튼을 **글자 하한도 테두리도 자리 표도 한 번도 본 적이 없다**(결정 724).
+                // ⚠ 개수를 0 으로 주는 것이 «인색한 사진» 이 아니라 **가장 많이 보이는 화면**이다 —
+                //   `BattleScreen:345` 의 canRevive 는 «이 판에 아직 안 썼나» 뿐이라 티켓 0 이어도 버튼이 서고,
+                //   그때만 안내 줄(`ReviveHint`)이 같이 뜬다. 즉 0 으로 찍어야 **새 요소 둘이 한 장에 다 든다**
+                //   (2 로 찍으면 안내 줄이 없어 그 줄은 여전히 아무도 못 본다).
+                _app.Overlay.Dead(G, () => { }, () => { }, 0, true); yield return Frames(2); yield return Shot("res_lose_revive");
+                _app.Overlay.Close(); yield return Frames(1);
             }
             Time.timeScale = 1f; _app.ShowScreen("lobby"); yield return Frames(2);
 
@@ -219,7 +229,8 @@ namespace KkomaKnight.Tests.Play
             // T213 — «찍히기는 하는데 아무것도 안 재는» 화면을 막는다. 빈 칸이면 §5 자가 그 화면을 통째로 못 본다.
             // T219 1단계 — 결과 팝업 셋을 같은 자로 지킨다(주인이 판마다 보는 화면이고 `BorderAudit.StrictScreens` 안이다).
             // T219 3단계 — 남은 다섯(ev_rest·ev_devil_gift·ev_ad·27_toast·28_confirm_reset)까지 채웠다. **이로써 T216 이 낸 여덟 장이 전부 재진다.**
-            foreach (var evName in new[] { "ev_devil", "ev_angel", "res_win", "res_win_last", "res_lose",
+            // T274 1단계 — `res_lose_revive` 도 같은 자로 지킨다(이름표가 비면 §5 가 그 화면을 «—» 로 지나친다).
+            foreach (var evName in new[] { "ev_devil", "ev_angel", "res_win", "res_win_last", "res_lose", "res_lose_revive",
                                            "ev_rest", "ev_devil_gift", "ev_ad", "27_toast", "28_confirm_reset" })
                 Assert.IsTrue(_layout.ContainsKey(evName) && ((Dictionary<string, object>)_layout[evName]).Count > 0,
                     evName + " 에 이름표(UiTag)가 하나도 없다 — layout.json 이 빈 칸이면 `ui_score` 가 그 화면을 «—» 로 지나친다(T213)");
