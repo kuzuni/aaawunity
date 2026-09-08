@@ -26,6 +26,15 @@ namespace KkomaKnight.Tests.Play
         App _app; PlayLog _log;
         /// <summary>재는 글자 — 화면에 실제로 쓰는 말에서 골랐다(«레벨 업!» · «장비» · 숫자 · 영문).</summary>
         const string Sample = "레벨 업 장비 특전 0123 Lv";
+        /// <summary>
+        /// T246 — «회색 판 위에 남은 흰 낯»(밝은 픽셀)의 <b>바닥</b>. 이 밑이면 테가 글자를 파먹은 것이다.
+        /// <para>
+        /// <b>수의 출처</b>: `screens` 의 <c>tmpfont.json</c> 두 런(524 · 526)이 <b>둘 다 2153</b> 을 냈다 — 이 탐침은 글자·크기·판이 다 고정이라 결정적이다.
+        /// 벽을 그 <b>절반</b>에 두어 2배 여유를 남긴다: 흔들려서 빨개질 자리가 없고, 막으려는 그림에서는 이 수가 <b>0 쪽으로 무너진다</b>
+        /// (T224 회차 1 의 로비 «챕터 1» 이 밝은 픽셀 250 → <b>2</b> 였다).
+        /// </para>
+        /// </summary>
+        const int FaceBrightFloor = 1000;
 
         [SetUp] public void SetUp() { _log = new PlayLog(); }
         [TearDown] public void TearDown() { _log?.Dispose(); _log = null; try { PlayerPrefs.DeleteKey(SaveStore.Key); } catch { } }
@@ -183,14 +192,17 @@ namespace KkomaKnight.Tests.Play
             //   (`screens` run 487 에서 «챕터 1» 의 밝은 픽셀 250 → 2 · 72pt «START» 도 검은 덩어리).
             //   그런데 위 ⓔ 는 «어두운 픽셀이 늘었나» 만 물으므로 그 회차에 **초록**을 줬다 — 글자가 검어질수록 더 초록이 된다.
             //   그래서 같은 촬영에서 **남은 흰 낯**을 같이 적는다: 회색 판 위 흰 글자의 밝은 픽셀이 곧 그 낯이다.
-            //   ⚠ 아직 «막지 않는다» — 이 수의 계열이 두 런 이상 쌓이면 그때 «절반 밑이면 빨강» 으로 올린다(결정 493 · T226 규약 ⓑ).
-            if (greyBright < 200)
-                Debug.LogWarning($"[T224⑤] ⛔ 흰 낯이 거의 안 남았다 — 회색 판 위 밝은 픽셀 {greyBright}. " +
-                                 $"테가 글자를 파먹는 그림이다(두께 {TmpFont.OutlineWidth:0.00} ↔ 낯 부풀리기 {TmpFont.FaceDilate:0.00} 짝이 맞는지 먼저 본다). " +
-                                 TmpFont.OutlineDiag(asset));
-            else
-                Debug.Log($"[T224⑤] 흰 낯 남음 — 회색 판 위 밝은 픽셀 {greyBright}(테가 획을 먹으면 이 수가 준다 · " +
-                          $"두께 {TmpFont.OutlineWidth:0.00} ↔ 낯 부풀리기 {TmpFont.FaceDilate:0.00}).");
+            //   ⚑ **T246 — 계열이 찼으므로 이 줄을 «보고» 에서 «막는 자» 로 올린다**(T226 규약 ⓑ: «고침이 든 회차» 가 아니라 «수가 선 회차» 가 올리는 때다).
+            //   `screens` 의 `tmpfont.json` 이 두 런을 냈고 **두 런이 완전히 같은 수**다(탐침이 결정적이다 — 글자·크기·판이 다 고정이라 흔들릴 자리가 없다):
+            //     run 524 · run 526 → faceBright **2153** · whiteGlyphDark 1077 · greyDark 1539 · blackGlyphDark 3728 · plateDark 10
+            //   벽은 **절반(1000)** 에 둔다 — 2배 여유라 «흔들려서» 빨개질 자리가 없고, 막으려는 그림(테가 획을 먹는다)에서는
+            //   이 수가 **0 쪽으로 무너진다**(T224 회차 1 의 로비 글자가 밝은 픽셀 250 → 2 였다). 즉 «조금 줄었다» 와 «먹혔다» 사이가 넉넉히 갈린다.
+            Debug.Log($"[T224⑤] 흰 낯 {greyBright}(계열 2153 · 벽 {FaceBrightFloor}) · 테 {white}(판만 {before}) · " +
+                      $"두께 {TmpFont.OutlineWidth:0.00} ↔ 낯 부풀리기 {TmpFont.FaceDilate:0.00}");
+            Assert.Greater(greyBright, FaceBrightFloor,
+                $"회색 판 위 흰 낯이 {greyBright} 뿐이다(계열 2153 · 벽 {FaceBrightFloor}) — **테가 글자를 파먹고 있다**. " +
+                $"먼저 볼 것: 두께 {TmpFont.OutlineWidth:0.00} ↔ 낯 부풀리기 {TmpFont.FaceDilate:0.00} 가 **같은 값인가**"
+                + "(TMP 테는 글자 모서리에 «걸쳐» 그려서 짝이 어긋난 만큼 흰 획이 깎인다 · T224 회차 2). " + TmpFont.OutlineDiag(asset));
 
             // ⓗ T246 — **여기까지 잰 수를 «워커가 읽을 수 있는 자리» 에 남긴다.**
             //   위 다섯 줄은 전부 `Debug.Log` 인데 **초록 런에서는 그 줄이 워커에게 안 온다**(T246 1항 실측):
