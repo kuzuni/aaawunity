@@ -597,6 +597,7 @@ namespace KkomaKnight.Game
                 foreach (var raw in GearSystem.GachaPull(D, st, box, rng)) { var g = S.NewGear(raw.Part, raw.Type, raw.Rar, raw.Plus); g.IsNew = true; S.Inv.Add(g); got.Add(g); }
                 S.Pulls++;
             }
+            Quests.Bump(App, Quests.ChestOpen, n);   // T257 — «상자 2번 오픈»(일일)·«30회»(주간) · n 연차면 n 번이다
             App.Persist(); Refresh();
             // 소리는 «착지하는 순간» 에 난다 — ChestResult 의 연출 시퀀스가 낸다(T180 · 결정 420). 여기서 미리 내면 상자가 아직 공중이다.
             var best = got[0]; foreach (var g in got) if (GearSystem.GearScore(g) > GearSystem.GearScore(best)) best = g;

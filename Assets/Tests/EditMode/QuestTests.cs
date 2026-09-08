@@ -84,6 +84,25 @@ namespace KkomaKnight.Tests
         }
 
         [Test]
+        public void 세는_이름은_훅이_거는_아홉_가지뿐이다()
+        {
+            // 표의 counter 는 게임 코드가 부르는 이름이다(`Game/Quests` 의 상수) — 표에 새 이름이 들어오면
+            // 그 줄은 **영원히 0** 인 채로 화면에 뜬다(부르는 자리가 없으니까). 그 어긋남을 여기서 잡는다.
+            //  ⚠ 자가 Game 어셈블리를 못 보므로(테스트는 Core 만 참조) 이름을 글자로 적는다 —
+            //     그래서 `Game/Quests` 의 상수를 고치면 **이 목록도 같이** 고쳐야 한다(그것이 이 자의 값이다).
+            var known = new System.Collections.Generic.HashSet<string>
+            {
+                "login", "loginDays", "kill", "chapterTry", "chestOpen", "gearFuse",
+                "dungeonTry", "dungeonClear", "expeditionClaim", "expeditionFastClaim", "petUpgrade",
+            };
+            var d = Load();
+            foreach (var tr in new[] { d.Daily, d.Weekly })
+                foreach (var q in tr.Quests)
+                    Assert.IsTrue(known.Contains(q.Counter),
+                                  "표에 «" + q.Counter + "» 이 들어왔는데 부르는 자리가 없다 — 그 줄은 영원히 0 이다(«" + q.Label + "»)");
+        }
+
+        [Test]
         public void 트랙_구간과_상품이_주인이_준_그대로다()
         {
             var d = Load();

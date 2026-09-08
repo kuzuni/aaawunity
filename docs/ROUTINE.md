@@ -2415,6 +2415,16 @@ Caught fatal signal - signo:6 (SIGABRT) · Unexpected exit code 134
 > ⓓ 주 시작 요일은 **표**에 둔다(`weekStartDow: 1` = 월요일 · 5항 권장 · §1 «수치는 표로»)
 > **⑷ 파싱이 조용한 사고를 잡는다** — 트랙이 오르는 차례가 아니거나 **마지막 칸이 줄을 다 깨도 못 닿으면**(= 아무도 못 받는 상품인데 화면엔 뜬다) 읽는 순간 예외다. 주인 표는 130 ≥ 100 · 210 ≥ 150 으로 둘 다 닿고 주간에 남는 60 은 주인이 «버린다» 고 한 몫이라 정상으로 읽는다.
 > **⑸ 남은 것 = 2단계** — 4항 카운터 훅 · `SaveData` 진행도/받은 구간 + 5항 초기화(일일 `DayKey` · 주간 `WeekKey` 는 **이미 이 단계에 있고 자로 잰다**) · 6항 지급/빨간 점 · 7항 팝업(줄 6 → 8 · `ref-layout` ⑳).
+> **▸ 2단계 ⓑ — 훅의 입구 + 자리 셋 (20:5X · sess-2032-18539 · 워커 K · lock 유지 · 결정 737)**
+> **⑴ ⓐ 확인 끝** — `a46e41c6` ⊂ `0dce6fad`(run **574** · `tests: success`).
+> **⑵ 입구는 하나다** — `Game/Quests.Bump(app, counter, n)` 가 **Roll → Bump → Persist** 를 묶는다. 자리마다 셋을 손으로 쓰면 한 자리만 빠뜨려도 조용히 어긋난다(`Roll` 없으면 어제 것에 얹히고 · `Persist` 없으면 껐다 켜면 사라진다 · 둘 다 화면에 표시가 안 남는다). 표가 없으면(`GameData.Quest == null`) **아무 일도 안 한다**.
+> **⑶ 이번에 건 자리 셋** — `gearFuse`: `ForgeScreen` 손 합성 1회 · 자동 합성 **n회** · `chestOpen`: `ShopScreen` 상자 **n연차**.
+> **⑷ 안 건 여섯 — 까닭이 두 갈래이고, 그 갈래가 다르다는 것이 중요하다**
+> ⠀⠀· **남이 쥔 파일**(시간이 풀어 준다): `kill`·`dungeonClear` = `BattleScreen.cs` · `chapterTry`·`dungeonTry`·`expeditionClaim`·`expeditionFastClaim` = `App.cs`/`EventsScreen.cs` → **T240**.
+> ⠀⠀· **걸 자리가 아예 없다**(다른 작업이 생겨야 풀린다): `petUpgrade` — 펫 강화 버튼이 `() => { }` 껍데기다(`PetScreen.cs:100·190`).
+> **⑸ 표 ↔ 코드 어긋남을 자로 잡았다** — 부르는 자리가 없는 `counter` 가 표에 들어오면 그 줄은 **영원히 0 인 채로 화면에 뜬다**. 자는 Game 어셈블리를 못 보므로 이름을 글자로 적었고, `Game/Quests` 상수를 고치면 자도 같이 고쳐야 한다 — 그 번거로움이 이 자의 값이다.
+> **⑹ 게이트** — build 0/0 · test **351/351** · PlayMode 임시 csproj(-t:Rebuild) 0 오류 · gen_meta ✔ · gen_catalog ✔ · catalog_keys ✔ · asmdef ✔ · test_usings ✔ · stale_asserts ✔ · unity_null ✔ · task_rows ✔ · task_state ✔ · decisions 겹침 0.
+
 > **▸ 2단계 ⓐ 완료 (19:5X · sess-1932-18539 · 워커 K · lock 유지 · 결정 725) — T254·T255 가 닫히며 `SaveData` 가 풀려 바로 이었다.**
 > **⑴ 놓은 것** — `SaveData` 의 퀘스트 칸(`QuestDaily`·`QuestWeekly` 두 셈 · `QuestDay`/`QuestWeek` 도장 · `QuestDailyGot`/`QuestWeeklyGot` · `QuestLoginDay`) + **`Core/QuestRun`**(`Roll`·`Bump`·`Login`·`Count`·`Medal`·`CanClaim`·`AnyClaimable`·`Claim`) + EditMode **12자**. 옛 세이브 호환은 «없으면 기본값» 그대로다.
 > **⑵ 일일·주간을 두 표로 갈랐다** — 같은 사건을 세지만 **지워지는 때가 달라서** 한 표면 일일이 지워질 때 주간까지 날아간다. 그 사고는 화면에 아무 표시도 안 남으므로 자로 못 박았다(날 넘김 뒤 «일일 0 · 주간 그대로»).

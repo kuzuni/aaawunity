@@ -207,6 +207,7 @@ namespace KkomaKnight.Game
             var made = GearSystem.FuseMake(D, Basis(mats));
             foreach (var m in mats) S.Inv.Remove(m);
             made.Uid = S.Uid++; S.Inv.Add(made); S.Fuses++; _sel.Clear();
+            Quests.Bump(App, Quests.GearFuse);   // T257 — «장비 합성 2회»(일일)·«30회»(주간)
             GearSystem.ReEquipAfterFuse(S, mats, made);   // 장착분이 재료였으면 산출물을 그 슬롯에(T24 · 승인 대기 29) — 세이브·전투력·외형은 Persist/화면 Refresh 가 S.Eq 에서 다시 읽는다
             App.Persist(); Refresh(); Audio.Sfx("snd.fuse");
             App.Toast($"🔨 {GearUi.RarName(D, made.Rar)} {GearUi.Name(D, made)}{(made.Plus > 0 ? $" +{made.Plus}" : "")} 완성!" + (S.IsEquipped(made) ? " (장착 중이던 재료 자리에 장착)" : ""));
@@ -218,6 +219,7 @@ namespace KkomaKnight.Game
             int n = GearSystem.FuseAll(D, S.Inv, null, g => S.Uid++, (mats, made) => GearSystem.ReEquipAfterFuse(S, mats, made));
             foreach (var g in S.Inv) if (g.Uid == 0) g.Uid = S.Uid++;
             S.Fuses += n; _sel.Clear();
+            Quests.Bump(App, Quests.GearFuse, n);   // T257 — 한 번에 n 회면 n 만큼 센다(n = 0 이면 Bump 가 아무 일도 안 한다)
             if (n > 0) { App.Persist(); Refresh(); Audio.Sfx("snd.fuse"); App.Toast($"🔨 {n}회 합성 (장비 {before} → {S.Inv.Count})"); }
             else App.Toast("합성할 조합이 없습니다 (같은 부위·종류·등급 3개)");
         }
