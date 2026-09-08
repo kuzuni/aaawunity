@@ -197,7 +197,15 @@ jobs:
     name: WebGL 빌드 → GitHub Pages (gh-pages)
     needs: [unity-test, gate]
     # T134 — 수동 실행도 포함(결정 379 · 위 screens 배포 단계와 같은 까닭)
-    if: needs.gate.outputs.has_license == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    # ⚑ T250(주인 2026-09-09 «그 깃헙 배포 하지 말라 하면 속도 훨씬 빨라지냐» → «그렇게 해 그럼») —
+    #   **push 를 뺐다.** 배포는 `deploy-last-green.yml`(T187)이 통째로 맡는다: 스스로 WebGL 을 굽고
+    #   배포 스모크(T60)를 돌리고 gh-pages 에 올린 뒤 다시 확인하며, 트리거가 «CI 완료 + 매시 :25» 이고
+    #   concurrency 그룹이 달라 이 큐를 안 막는다. 그 자의 «마지막 초록» 고르기는 **유니티 잡**(`test("Unity")`)만
+    #   보므로 이 잡이 push 에서 빠져도 판정이 그대로다(실측 확인 · T250).
+    #   ⚠ 되돌리려면 아래 줄의 `github.event_name == 'workflow_dispatch'` 를
+    #     `(github.event_name == 'push' || github.event_name == 'workflow_dispatch')` 로 되돌린다(그 한 곳뿐).
+    #   ⚠ 오디오·로더·빌드 설정을 만진 커밋은 워커가 이 잡을 **수동으로 한 번** 돌린다(3항 ⓒ).
+    if: needs.gate.outputs.has_license == 'true' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -257,7 +265,15 @@ jobs:
     name: Android APK 빌드 → Artifact
     needs: [unity-test, gate]
     # T134 — 수동 실행도 포함(결정 379 · 위 screens 배포 단계와 같은 까닭)
-    if: needs.gate.outputs.has_license == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    # ⚑ T250(주인 2026-09-09 «그 깃헙 배포 하지 말라 하면 속도 훨씬 빨라지냐» → «그렇게 해 그럼») —
+    #   **push 를 뺐다.** 배포는 `deploy-last-green.yml`(T187)이 통째로 맡는다: 스스로 WebGL 을 굽고
+    #   배포 스모크(T60)를 돌리고 gh-pages 에 올린 뒤 다시 확인하며, 트리거가 «CI 완료 + 매시 :25» 이고
+    #   concurrency 그룹이 달라 이 큐를 안 막는다. 그 자의 «마지막 초록» 고르기는 **유니티 잡**(`test("Unity")`)만
+    #   보므로 이 잡이 push 에서 빠져도 판정이 그대로다(실측 확인 · T250).
+    #   ⚠ 되돌리려면 아래 줄의 `github.event_name == 'workflow_dispatch'` 를
+    #     `(github.event_name == 'push' || github.event_name == 'workflow_dispatch')` 로 되돌린다(그 한 곳뿐).
+    #   ⚠ 오디오·로더·빌드 설정을 만진 커밋은 워커가 이 잡을 **수동으로 한 번** 돌린다(3항 ⓒ).
+    if: needs.gate.outputs.has_license == 'true' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
