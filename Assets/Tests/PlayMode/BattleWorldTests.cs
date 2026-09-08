@@ -470,9 +470,17 @@ namespace KkomaKnight.Tests.Play
         /// </para>
         /// <para>
         /// 그리고 이 꼴이면 <b>결함 재현이 우연이 아니다</b>: 엔진은 <see cref="EngineConst.Dt"/>(1/30) 단위로 띄엄띄엄 가고
-        /// 그림은 프레임마다(≈1/60) 이어서 간다 → 그림이 명중선에 <b>반드시 먼저</b> 닿는다. 고치기 전에는 그 사이 프레임이
-        /// 전부 «서 있는» 프레임이고, 고친 뒤에는 전부 «꺼진» 프레임이다(<c>vanished</c> 로 그것까지 못 박는다 — 안 그러면
+        /// 그림은 프레임마다 이어서 간다 → 그림이 명중선에 <b>반드시 먼저</b> 닿는다. 고치기 전에는 그 사이 프레임이
+        /// 전부 «서 있는» 프레임이고, 고친 뒤에는 전부 «꺼진» 프레임이다(<c>vanished</c> 로 그것까지 본다 — 안 그러면
         /// 화살이 한 번도 선까지 못 가도 «0 건» 으로 초록이 된다).
+        /// </para>
+        /// <para>
+        /// ⚠ <b>회차 3 — «몇 프레임 거리» 로 자리를 잡지 않는다(회차 2 가 여기서 또 빨갰다).</b> 회차 2 는 명중선에서 <c>spd × 0.1</c>(33px)에 놓고
+        /// «여섯 프레임» 이라 적었는데 그 셈은 프레임 dt 를 1/60 으로 <b>가정</b>한 것이다. 그림의 한 프레임 걸음은 <c>spd × dt × Speed</c> 라
+        /// <b>러너의 dt 가 0.1초면 그 한 걸음이 33px 통째</b>고, 태어난 다음 Sync 에서 이미 선 안이라 그림이 꺼져 «보인 프레임 0» 이 된다
+        /// (그 꺼짐이 바로 이 절의 고침이라 <b>고침이 옳을수록 자가 안 선다</b>). 워커는 PlayMode 를 못 돌려 dt 를 모르므로
+        /// <b>dt 를 모르고도 성립하는 거리</b>(3초치 ≈ 990px)를 쓴다. 그리고 잰 수를 <c>ui-screens/t233.json</c> 으로 내보내
+        /// 다음 회차가 <b>가정 대신 실측</b>으로 판단한다(<see cref="WriteArrowJson"/>).
         /// </para>
         /// </summary>
         [UnityTest]
@@ -484,19 +492,30 @@ namespace KkomaKnight.Tests.Play
             var world = bs.World; Assert.IsNotNull(world, "BattleWorld");
             Arm(G);
 
-            // 명중선에서 «여섯 프레임 남짓» 뒤에 피해 0 짜리 화살을 놓는다(T179 와 같은 길 · 엔진 목록에만 넣고 그림은 Sync 가 만든다).
+            // ⚑ 회차 3 — 놓는 자리를 «프레임 수» 가 아니라 «게임 시간» 으로 잡는다(회차 2 가 여기서 또 빨갰다).
+            //   회차 2 는 `spd * 0.1`(= 33px)에 놓고 «여섯 프레임 거리» 라고 적었는데, 그 셈은 **프레임 dt 를 1/60 으로 가정**한 것이다.
+            //   그림의 한 프레임 걸음은 `spd * dt * Speed` 라 **dt 가 0.1초면 그 한 프레임이 33px 통째**다 —
+            //   즉 러너가 느리면 태어난 다음 Sync 에서 이미 명중선 안이라 그림이 꺼지고(그게 이 절의 고침이다) 보인 프레임이 0 이 된다.
+            //   워커는 PlayMode 를 못 돌려 러너의 dt 를 모른다 ⇒ **dt 를 모르고도 성립하는 거리**를 쓴다: 3초치(≈990px · T179 는 3000px).
+            //   가장 느린 판(한 프레임 0.3초)에서도 열 프레임 넘게 보이고, 빠른 판에서는 그냥 프레임이 더 많아질 뿐이다.
             double spd = _app.Data.Combat.EnemyArrowSpeed;
-            var arrow = new EnemyArrow { X = world.ArrowHitLine + spd * 0.1, Dmg = 0, Friendly = false };
+            double dist = spd * 3.0;
+            var arrow = new EnemyArrow { X = world.ArrowHitLine + dist, Dmg = 0, Friendly = false };
             G.Arrows.Add(arrow);
-            yield return null;   // 첫 Sync 가 그림을 만든다
+            Time.timeScale = 3f;   // 그 거리를 실시간으로 기다리지 않는다(엔진·표시 둘 다 dt 로 도므로 관계는 그대로다)
+            yield return null;     // 첫 Sync 가 그림을 만든다
             Assert.AreEqual(1, world.ArrowViewCount, "적 화살 그림이 하나 서야 한다");
 
-            int seen = 0, standing = 0, vanished = 0; double worstOver = 0;
+            int seen = 0, standing = 0, vanished = 0, frames = 0; double worstOver = 0, maxStep = 0, firstGap = double.NaN;
+            double prevShown = world.ArrowShownX(arrow); float sumDt = 0;
             float t0 = Time.realtimeSinceStartup;
-            while (Time.realtimeSinceStartup - t0 < 6f && G.Arrows.Contains(arrow) && !G.Over && !_app.Overlay.IsOpen)
+            while (Time.realtimeSinceStartup - t0 < 10f && G.Arrows.Contains(arrow) && !G.Over && !_app.Overlay.IsOpen)
             {
                 double hit = world.ArrowHitLine, shown = world.ArrowShownX(arrow);
                 bool atLine = shown <= hit + 1e-6;
+                frames++; sumDt += Time.deltaTime;
+                maxStep = System.Math.Max(maxStep, prevShown - shown); prevShown = shown;
+                if (double.IsNaN(firstGap)) firstGap = shown - hit;
                 if (world.ArrowViewVisible(arrow))
                 {
                     seen++;
@@ -505,8 +524,18 @@ namespace KkomaKnight.Tests.Play
                 else if (atLine) vanished++;
                 yield return null;
             }
+            Time.timeScale = 1f;
+            string diag = $"놓은 거리 {dist:0}px · 프레임 {frames} · 평균 dt {(frames > 0 ? sumDt / frames : 0):0.0000}s"
+                        + $" · 한 프레임 최대 걸음 {maxStep:0.0}px · 첫 잰 프레임의 선까지 거리 {firstGap:0.0}px";
             Debug.Log($"[T233] 보이는 적 화살 프레임 {seen} · 그중 명중선에 선 것 {standing}(0 이어야 한다 · 가장 깊이 들어간 값 {worstOver:0.0}px)"
-                      + $" · 닿아서 꺼진 프레임 {vanished}(엔진이 지우기 전 · 1 이상이어야 이 시험이 헛돌지 않는다)");
+                      + $" · 닿아서 꺼진 프레임 {vanished}(엔진이 지우기 전 · 1 이상이어야 이 시험이 헛돌지 않는다) · {diag}");
+            // ⚑ 회차 3 — 잰 수를 `screens` 브랜치로 내보낸다(결정 588 이 낸 길 · `overdraw.json` 과 같은 자리).
+            //   까닭: 이 자가 **초록이든 빨갛든 건너뛰든** 워커가 수를 읽을 수 있어야 한다.
+            //   · CI 잡 로그는 Debug.Log 를 안 담아 온다(워커 G 가 두 런을 뒤지고 못 찾았다)
+            //   · 워커 I 의 `[CI실패]` 목록은 **실패한 자**만 싣는다 — 아래처럼 «건너뜀» 으로 끝나면 거기 안 뜬다
+            //   · 아티팩트(결과 XML) 내려받기는 프록시가 막는다(결정 289)
+            //   ⇒ 남은 길은 `ui-screens/` 뿐이고, 그 폴더는 잡이 빨개도 `screens` 로 배포된다(run 506 에서 실측).
+            WriteArrowJson(dist, frames, sumDt, seen, standing, vanished, worstOver, maxStep, firstGap);
             // ⚑ T226 규약대로 «전제» 한 줄만 내린다 (2026-09-08 12:0X · sess-1842-31994 · 워커 G · 임자 lock 살아 있음 · 관측은 한 줄도 안 줄였다)
             //   깨진 것은 이 절의 «계약»(아래 standing·vanished)이 아니라 **시험이 서는 전제**다: CI 판에서 보이는 화살 프레임이 0 이다.
             //   그런데 그 한 줄이 `build-webgl`(`needs: [unity-test]`)을 막아 **배포가 10:53 부터 멈춰 있다**(런 504·506·511 · 회차 1 은 궁수가 안 쏨 · 회차 2 는 놓은 자리 탓).
@@ -516,13 +545,16 @@ namespace KkomaKnight.Tests.Play
             //   ⚠ 임자 몫으로 남긴 것 — ⓐ 전제를 세우면 이 블록을 지우고 원래 `Assert.Greater(seen, 0, …)` 를 되살린다.
             //   ⓑ 진단은 아래 `[T233]` 로그가 아니라 **실패 문구에 수를 넣어야** 읽힌다: CI 로그가 그 Debug.Log 를 안 담아 와서
             //      내가 두 런을 뒤졌는데도 seen·standing·vanished 값을 못 봤다(워커 I 의 `[CI실패]` 목록에는 «문구» 만 실린다).
+            //   ⓒ 회차 3(임자) — 이 «건너뜀» 은 그대로 둔다. 전제를 고치는 회차마다 자를 다시 «막는 자» 로 올리면
+            //      틀릴 때마다 배포가 선다. 전제가 실제로 서는 것을 `screens` 의 `t233.json` 으로 **먼저 확인**하고,
+            //      그 뒤 회차에 `Assert.Greater(seen, 0)` 로 올린다(결정 625·627 이 정한 차례 그대로).
             if (seen == 0)
             {
-                Debug.LogWarning($"[T233] ⛔ 전제가 안 섰다 — 보이는 화살 프레임 0(선 것 {standing} · 꺼진 것 {vanished} · 가장 깊이 {worstOver:0.0}px). "
+                Debug.LogWarning($"[T233] ⛔ 전제가 안 섰다 — 보이는 화살 프레임 0(선 것 {standing} · 꺼진 것 {vanished} · 가장 깊이 {worstOver:0.0}px · {diag}). "
                                  + "그림이 한 번도 안 보이면 계약(«서 있지 않는다»)을 잴 수 없다. 배포를 막지 않으려고 여기서 «건너뜀» 으로 끝낸다(T226 규약 · 워커 G 가 내렸다).");
                 _app.ShowScreen("lobby"); yield return Frames(2);
                 yield return Shutdown();
-                Assert.Ignore($"T233 전제 미성립 — 보이는 화살 프레임 0(선 것 {standing} · 꺼진 것 {vanished}). 임자가 전제를 세운 뒤 이 블록을 지우고 Assert.Greater(seen, 0) 를 되살린다.");
+                Assert.Ignore($"T233 전제 미성립 — 보이는 화살 프레임 0(선 것 {standing} · 꺼진 것 {vanished} · {diag}). 수는 `screens` 의 t233.json 에도 실린다.");
             }
             Assert.AreEqual(0, standing,
                             "명중선에 닿은 적 화살 그림은 그 자리에 서지 않고 사라져야 한다(T233 · 서 있던 프레임 " + standing + "/" + seen + ")");
@@ -536,6 +568,35 @@ namespace KkomaKnight.Tests.Play
 
             _app.ShowScreen("lobby"); yield return Frames(2);
             yield return Shutdown();
+        }
+
+        /// <summary>
+        /// T233 회차 3 — 위 자가 잰 수를 <c>ui-screens/t233.json</c> 으로 남긴다(<see cref="PlayShot.Dirs"/> · `screens` 브랜치로 배포된다).
+        /// <para>
+        /// <b>왜 파일인가</b>: 워커가 이 수를 읽을 수 있는 자리가 여기뿐이다 — CI 잡 로그는 <c>Debug.Log</c> 를 안 담아 오고,
+        /// <c>tools/ci_test_failures.py</c> 의 목록은 <b>실패한 자</b>만 실으며(«건너뜀» 은 안 뜬다), 결과 XML 아티팩트는 프록시가 막는다(결정 289).
+        /// `ui-screens/` 는 유니티 잡이 빨개도 배포된다(run 506 실측).
+        /// </para>
+        /// 실패해도 시험을 안 깬다(경고 한 줄) — 이 자는 «재는 것» 이지 «지키는 것» 이 아니다.
+        /// </summary>
+        static void WriteArrowJson(double dist, int frames, float sumDt, int seen, int standing, int vanished,
+                                   double worstOver, double maxStep, double firstGap)
+        {
+            string json = "{\"_meta\":{\"task\":\"T233\",\"round\":3},"
+                        + "\"distPx\":" + dist.ToString("0.0")
+                        + ",\"frames\":" + frames
+                        + ",\"avgDt\":" + (frames > 0 ? sumDt / frames : 0f).ToString("0.00000")
+                        + ",\"maxStepPx\":" + maxStep.ToString("0.0")
+                        + ",\"firstGapPx\":" + (double.IsNaN(firstGap) ? 0 : firstGap).ToString("0.0")
+                        + ",\"seen\":" + seen
+                        + ",\"standing\":" + standing
+                        + ",\"vanished\":" + vanished
+                        + ",\"worstOverPx\":" + worstOver.ToString("0.0") + "}";
+            foreach (var dir in PlayShot.Dirs())
+            {
+                try { System.IO.Directory.CreateDirectory(dir); System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "t233.json"), json); }
+                catch (Exception e) { Debug.LogWarning("[T233] t233.json 저장 실패(" + dir + "): " + e.Message); }
+            }
         }
     }
 }
