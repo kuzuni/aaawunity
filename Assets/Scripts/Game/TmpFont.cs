@@ -157,6 +157,8 @@ namespace KkomaKnight.Game
         /// </summary>
         /// <summary>SDF 테 두께를 실제로 정하는 값들(TMP 셰이더는 <c>_OutlineWidth</c> 혼자 안 쓴다) — 이름으로만 읽는다(없으면 «-»).</summary>
         public const string GradientScaleProp = "_GradientScale", ScaleRatioAProp = "_ScaleRatioA";
+        /// <summary>테를 «있는데 안 보이게» 만들 수 있는 나머지 둘(T224 2항-c) — 얼굴을 부풀리면 테를 덮고, 너무 무르면 배경에 녹는다.</summary>
+        public const string OutlineSoftnessProp = "_OutlineSoftness", FaceDilateProp = "_FaceDilate";
 
         /// <summary>
         /// <b>T224 2항-b — 남은 후보를 «한 런에» 가르는 관측 한 줄</b>(워커 E 가 넘긴 처방 · 결정 617).
@@ -168,12 +170,15 @@ namespace KkomaKnight.Game
         /// <b>읽는 법</b> — <c>ratioA</c> 가 0 이면 «곱해서 0» 이고(고침 = 그 값을 채운다) · 정상인데 <c>grad</c> 가 작으면 여백 부족이다(고침 = <c>CreateFontAsset</c> padding 오버로드) · 둘 다 멀쩡하면 그때가 «그 밖» 이다.
         /// 값을 <b>고치지 않고 찍기만</b> 하는 까닭: 어느 쪽인지 모르는 채 하나씩 움직이면 회차 수만큼 시간이 든다(결정 617).
         /// </summary>
-        public static string OutlineDiag(TMP_FontAsset asset)
+        public static string OutlineDiag(TMP_FontAsset asset) => OutlineDiag(asset != null ? asset.material : null);
+
+        /// <summary>같은 진단을 «그리는 머티리얼» 에도 쓴다(T224 2항-c) — 공유 쪽과 그리는 쪽이 다를 수 있다(마스킹 사본).</summary>
+        public static string OutlineDiag(Material mat)
         {
-            var mat = asset != null ? asset.material : null;
             if (mat == null) return "mat=none";
             string F(string prop) => mat.HasProperty(prop) ? mat.GetFloat(prop).ToString("0.###") : "-";
             return "w=" + F(OutlineWidthProp) + " ratioA=" + F(ScaleRatioAProp) + " grad=" + F(GradientScaleProp)
+                 + " soft=" + F(OutlineSoftnessProp) + " dilate=" + F(FaceDilateProp)
                  + " kw=" + (mat.IsKeywordEnabled(OutlineKeyword) ? "on" : "off")
                  + " shader=" + (mat.shader != null ? mat.shader.name : "-");
             // ⚠ `asset.atlasPadding` 은 일부러 안 찍는다 — dotnet 스텁에 없는 서명이라 «로컬 초록 · 유니티 빨강» 이 된다(결정 567).

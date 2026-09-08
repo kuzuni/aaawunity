@@ -119,6 +119,16 @@ namespace KkomaKnight.Tests.Play
             //  ratioA 가 0 이면 «곱해서 0» · grad 가 작으면 SDF 여백 부족(3항) · 둘 다 멀쩡하면 «그 밖» 이다.
             Debug.Log($"[T224②] 흰 판 위 «흰» 글자의 어두운 픽셀 {white}(판만 있을 때 {before}) — 이 차이가 곧 **테**다 · " +
                       $"OutlineDraws={TmpFont.OutlineDraws(asset.material)} · {TmpFont.OutlineDiag(asset)}");
+            // ⓕ T224 2항-c — **워커 E 가 넘긴 «둘을 가르는» 관측**(6f0fa7da ⑤): 증상이 하나가 아닐 수 있다.
+            //   ⓐ 마스크와 무관하게 테가 아예 안 그려지는 무엇 · ⓑ 화면마다 갈리는 «마스킹 사본 머티리얼»
+            //   (TMP 는 RectMask2D 아래 글자를 사본으로 그리므로, 공유 쪽에 넣은 값이 그리는 쪽에 없을 수 있다).
+            //   이 탐침의 글자는 마스크 밑이 **아니다** — 그러니 여기서 «그리는 머티리얼» 이 공유와 같고 값도 같은데
+            //   픽셀이 0 이면 ⓑ 는 이 자리의 원인이 아니고 ⓐ 가 남는다. 로그만 찍는다(막지 않는다 · T226 · 결정 625).
+            var matDraw = tmp.materialForRendering;
+            bool sameMat = ReferenceEquals(matDraw, asset.material);
+            Debug.Log($"[T224③] 그리는 머티리얼 ↔ 공유 머티리얼 같은가 {sameMat} · 이름 «{(matDraw != null ? matDraw.name : "-")}» · " +
+                      $"그리는 쪽 {(matDraw != null ? TmpFont.OutlineDiag(matDraw) : "mat=none")}");
+
             // ⚠ T226 — **이 줄은 «실패» 가 아니라 «보고» 다**(sess-1917-23930 · 워커 J · 결정 625).
             //   임자(워커 G)의 관측은 그대로 두고 «막는 것» 만 뗐다: 이 탐침이 실패로 서 있는 동안
             //   유니티 잡이 빨갛고, `build-webgl` 이 `needs: [unity-test]` 라 **배포가 통째로 멈춘다**
