@@ -715,6 +715,14 @@ namespace KkomaKnight.Tests.Play
                     Assert.AreEqual(g0, _app.Save.Gold, 1e-9, "시즌 패스는 아직 아무것도 안 준다(T268 ⓑ «디자인만»)");
                     Assert.AreEqual(m0, _app.Save.Gem, 1e-9, "시즌 패스는 아직 아무것도 안 준다(T268 ⓑ «디자인만»)");
                 }
+                {   // [T266] §5 회차 1 에서 «시즌 종료까지 20일 8시간» 행이 ✗ 였다(ref 33.3% = 영문 잉크 폭).
+                    //   좁히면 우리말이 bestFit 하한 밑으로 내려갈 셈이 나오는데 **워커는 그 수를 로컬에서 못 잰다** —
+                    //   그래서 단언 대신 «실제로 몇 으로 놓였나» 를 찍는다(T260 4단계·결정 739 와 같은 순서).
+                    var endsT = UiKit.Find(sp, "SeasonEnds")?.GetComponent<TMPro.TMP_Text>();
+                    if (endsT != null)
+                        Debug.Log("[T266] 시즌 종료 줄 — 글자 «" + endsT.text + "» · 놓인 크기 " + endsT.fontSize.ToString("0.0")
+                            + "(하한 " + TextSize.BestFitMin + ") · 칸 폭 " + endsT.rectTransform.rect.width.ToString("0") + "px");
+                }
                 Check("시즌 패스 페이지");
                 Assert.IsTrue(ClickNamed(sp, "BackBtn"), "시즌 패스 뒤로"); yield return Frames(2);
                 Assert.AreEqual("lobby", _app.Current.Name, "뒤로 → 로비");

@@ -40,7 +40,12 @@ namespace KkomaKnight.Game
         // ⚠ 이 rect 들을 Core/Layout 에 두지 않은 까닭: 그 파일이 T260 의 살아 있는 lock 안이다(«같은 파일이면 뒤 번호가 기다린다»).
         //    T260 이 반납하면 Layout 으로 옮긴다 — 값은 표 ㊼ 그대로라 옮겨도 한 자도 안 바뀐다(결정 기록).
         static readonly Layout.R RBanner = new Layout.R(0f, 7.9f, 100f, 19.9f);
-        static readonly Layout.R RName = new Layout.R(10f, 12.6f, 80f, 3.4f);
+        // §5 회차 1(9.2/10) 에서 이 행이 ✗ 였다 — 표 ㊼ 의 ref 는 «흰 글자 잉크 bbox»(실측 px 192~527)인데 내가 우리말을 담으려고 80% 로 벌려 뒀었다.
+        // 재어 보니 벌릴 까닭이 없었다: 46.7% = 504px 이고 «방랑자의 보상» 7자는 Title 60 에서 ≈420px 라 84px 이 남는다 → ref 그대로 되돌린다.
+        static readonly Layout.R RName = new Layout.R(26.7f, 13.0f, 46.7f, 2.6f);
+        // ⚠ 이 행은 §5 에서 ✗ 로 둔다(표 ㊼ 의 ⚑ 참고) — ref 33.3%(=360px)는 영문 «Season ends in 20d 8h» 의 잉크다.
+        //    우리말 «시즌 종료까지 20일 8시간» 은 그 폭에서 bestFit 이 하한(32) 밑으로 내려갈 셈이 나온다 — 점수 한 행보다 글자 잘림 0(T63)이 먼저다.
+        //    ⇒ 좁히지 않고 **실제로 몇 으로 놓였는지**를 스모크가 로그로 찍게 했다(결정 739·T260 4단계와 같은 순서: 못 재는 자리에 단언을 안 세운다).
         static readonly Layout.R REnds = new Layout.R(20f, 19.2f, 60f, 2.0f);
         static readonly Layout.R RMedal = new Layout.R(15.8f, 20.6f, 7.2f, 2.9f);
         static readonly Layout.R RBar = new Layout.R(22.9f, 21.3f, 54.9f, 1.7f);
