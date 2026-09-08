@@ -461,6 +461,19 @@ namespace KkomaKnight.Tests.Play
         /// 그래서 재는 것은 <b>«보이는 화살이 명중선에 서 있지 않은가»</b> 한 줄이다 — 고치기 전에는 이 줄이 프레임마다 걸린다.
         /// (클램프 자체는 옳으므로 <b>안 건드린다</b> · 고침은 «닿으면 그림을 끈다» 뿐 · T179 의 넷은 그대로 남는다.)
         /// ⚠ 순간 물체라 `screens` 정지 그림으로는 못 본다 — 주인 폰이 마지막 판정이고 이 자는 회귀를 막는다.
+        /// <para>
+        /// ⚠ <b>화살은 «궁수가 쏘기를 기다려» 얻지 않는다 — 직접 놓는다</b>(회차 2 · CI #506 이 이 줄로 빨갰다).
+        /// <see cref="Arm"/> 이 <c>P.Dmg = 1e6</c> 으로 한 방 킬을 만들기 때문에 <b>궁수가 화살을 한 대도 못 쏘고 죽는다</b> —
+        /// 6초를 돌려도 «보이는 화살 프레임» 이 0 이라 시험이 성립하지 않았다. Arm 을 빼면 이번엔 레벨업 팝업이 엔진을 세운다.
+        /// 그래서 T179 가 쓰는 길(피해 0 짜리 화살을 손으로 놓는다)을 그대로 쓴다 — 이 자가 재려는 것은
+        /// «궁수가 쏘는가» 가 아니라 «닿은 화살이 서 있는가» 다.
+        /// </para>
+        /// <para>
+        /// 그리고 이 꼴이면 <b>결함 재현이 우연이 아니다</b>: 엔진은 <see cref="EngineConst.Dt"/>(1/30) 단위로 띄엄띄엄 가고
+        /// 그림은 프레임마다(≈1/60) 이어서 간다 → 그림이 명중선에 <b>반드시 먼저</b> 닿는다. 고치기 전에는 그 사이 프레임이
+        /// 전부 «서 있는» 프레임이고, 고친 뒤에는 전부 «꺼진» 프레임이다(<c>vanished</c> 로 그것까지 못 박는다 — 안 그러면
+        /// 화살이 한 번도 선까지 못 가도 «0 건» 으로 초록이 된다).
+        /// </para>
         /// </summary>
         [UnityTest]
         public IEnumerator EnemyArrowsVanishAtTheHitLineInsteadOfStandingThere()
@@ -471,26 +484,34 @@ namespace KkomaKnight.Tests.Play
             var world = bs.World; Assert.IsNotNull(world, "BattleWorld");
             Arm(G);
 
-            int seen = 0, standing = 0; double worstOver = 0;
-            Time.timeScale = 3f;
+            // 명중선에서 «여섯 프레임 남짓» 뒤에 피해 0 짜리 화살을 놓는다(T179 와 같은 길 · 엔진 목록에만 넣고 그림은 Sync 가 만든다).
+            double spd = _app.Data.Combat.EnemyArrowSpeed;
+            var arrow = new EnemyArrow { X = world.ArrowHitLine + spd * 0.1, Dmg = 0, Friendly = false };
+            G.Arrows.Add(arrow);
+            yield return null;   // 첫 Sync 가 그림을 만든다
+            Assert.AreEqual(1, world.ArrowViewCount, "적 화살 그림이 하나 서야 한다");
+
+            int seen = 0, standing = 0, vanished = 0; double worstOver = 0;
             float t0 = Time.realtimeSinceStartup;
-            while (Time.realtimeSinceStartup - t0 < 6f && !G.Over && !_app.Overlay.IsOpen)
+            while (Time.realtimeSinceStartup - t0 < 6f && G.Arrows.Contains(arrow) && !G.Over && !_app.Overlay.IsOpen)
             {
-                yield return null;
-                double hit = world.ArrowHitLine;
-                foreach (var a in G.Arrows)
+                double hit = world.ArrowHitLine, shown = world.ArrowShownX(arrow);
+                bool atLine = shown <= hit + 1e-6;
+                if (world.ArrowViewVisible(arrow))
                 {
-                    if (a == null || !world.ArrowViewVisible(a)) continue;
                     seen++;
-                    double shown = world.ArrowShownX(a);
-                    if (shown <= hit + 1e-6) { standing++; worstOver = System.Math.Max(worstOver, hit - shown); }
+                    if (atLine) { standing++; worstOver = System.Math.Max(worstOver, hit - shown); }
                 }
+                else if (atLine) vanished++;
+                yield return null;
             }
-            Time.timeScale = 1f;
-            Debug.Log($"[T233] 보이는 적 화살 프레임 {seen} · 그중 명중선에 선 것 {standing}(0 이어야 한다 · 가장 깊이 들어간 값 {worstOver:0.0}px)");
-            Assert.Greater(seen, 0, "적 화살이 한 번은 보여야 이 시험이 성립한다(6초 안에 궁수가 안 쏘면 이 줄이 알려 준다)");
+            Debug.Log($"[T233] 보이는 적 화살 프레임 {seen} · 그중 명중선에 선 것 {standing}(0 이어야 한다 · 가장 깊이 들어간 값 {worstOver:0.0}px)"
+                      + $" · 닿아서 꺼진 프레임 {vanished}(엔진이 지우기 전 · 1 이상이어야 이 시험이 헛돌지 않는다)");
+            Assert.Greater(seen, 0, "화살 그림이 한 번은 보여야 이 시험이 성립한다(놓은 자리가 이미 명중선 안이면 이 줄이 알려 준다)");
             Assert.AreEqual(0, standing,
                             "명중선에 닿은 적 화살 그림은 그 자리에 서지 않고 사라져야 한다(T233 · 서 있던 프레임 " + standing + "/" + seen + ")");
+            Assert.Greater(vanished, 0,
+                           "그림이 명중선에 닿아 «꺼진» 프레임이 있어야 한다 — 없으면 화살이 선까지 가지도 않은 것이라 위 0 이 헛것이다");
             _log.AssertNoRed("T233 적 화살 소멸");
 
             _app.ShowScreen("lobby"); yield return Frames(2);
