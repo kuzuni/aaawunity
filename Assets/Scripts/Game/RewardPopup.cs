@@ -40,18 +40,14 @@ namespace KkomaKnight.Game
         /// <summary>기본 칸 테두리 — 레퍼런스 35 의 두 칸이 <b>파랑</b>이다(T103 정본 <c>ItemFrame_01_Normal_*</c> 계열).</summary>
         public const string DefaultFrame = "ui.itemFrame.blue";
 
-        /// <summary>
-        /// 이 팝업의 어둠 알파. 공통 <see cref="UiKit.DimAlpha"/>(0.985)는 뒤 화면을 <b>거의 지워</b> 버리는데
-        /// 주인 그림과 주인 문장은 둘 다 «뒤 화면은 그대로 보인다» 다 — 그래서 이 팝업만 따로 잡는다.
-        /// <para>
-        /// ⚠ <b>값은 셈으로 잡았다(눈 확인이 첫 값을 잡아냈다 · T241 3단계)</b>. 첫 회차의 0.65 는 «0.985 보다 옅게» 라는
-        /// 방향만 맞고 세기가 모자랐다 — `screens` <c>35_reward</c>(run 533) 실측에서 뒤 화면이 <b>71~81/255</b> 로
-        /// 훤히 읽혔다(레퍼런스는 <b>26~32/255</b>). 어둠색(<see cref="Palette.Dim"/> ≈ 20/255)을 알파 a 로 덮으면
-        /// 결과 = (1−a)·원본 + a·20 이고, 로비 원본이 ≈110 이므로 <b>a = 0.88 이면 ≈ 30</b> = 레퍼런스 띠 안이다.
-        /// 다시 재려면 같은 자리(상단 재화 바·하단 네비·사이드 칸)의 평균 밝기를 <c>01_lobby</c> 와 견주면 된다.
-        /// </para>
-        /// </summary>
-        public const float DimAlpha = 0.88f;
+        // ✂ T241 4단계(결정 692) — 이 팝업만 쓰던 «옅은 어둠» 상수(DimAlpha 0.65 → 0.88)를 없앴다. 내 첫 판단이 틀렸다.
+        //   «주인 그림은 뒤 화면이 보이니 공통 UiKit.DimAlpha(0.985)보다 옅어야 한다» 고 봤는데, 같은 런(screens 539)의
+        //   다른 팝업과 나란히 재니 수가 그 짐작을 무너뜨렸다:
+        //     17_daily_gift(공통 0.985)  상단 바 25.5 · 특권 칸 28.9 · 하단 네비 28.6
+        //     레퍼런스 35 의 뒤 화면      26~32              ← 같은 띠다
+        //     이 팝업(0.88)              30.9 · 47.9 · 52.0 ← 훨씬 밝다
+        //   레퍼런스에서 대장간이 «보이는» 것은 어둠이 옅어서가 아니라 그 화면 자체가 밝아서다 — 덮고 나면 같은 26~32 에 온다.
+        //   그래서 특례를 지우고 UiKit.DimAlpha 를 쓴다(팝업 스무 곳과 같은 값 · 상수 하나가 줄었다).
 
         /// <summary>
         /// 빛살 조각의 한 변(프레임 폭의 비) — ⚠ <b>이것은 «자리» 가 아니라 «그림» 이라 표 ㊹ 가 못 잡는다.</b>
@@ -88,8 +84,8 @@ namespace KkomaKnight.Game
             var dim = UiKit.Rect(root, "Dimmed");
             UiKit.Stretch(dim, -UiKit.DimOverscan, -UiKit.DimOverscan, -UiKit.DimOverscan, -UiKit.DimOverscan);
             var di = dim.gameObject.AddComponent<Image>();
-            di.color = Palette.A(Palette.Dim, DimAlpha); di.raycastTarget = true;
-            UiKit.FadeIn(di, DimAlpha);
+            di.color = Palette.A(Palette.Dim, UiKit.DimAlpha); di.raycastTarget = true;
+            UiKit.FadeIn(di, UiKit.DimAlpha);
             // ⚠ 어둠에는 이름표를 안 단다 — 프레임 «밖»(레터박스·노치)까지 덮으므로 자리로 재면 x−370 · w840 이 나온다(§5 가 0점을 준다).
             //    어둠은 «자리» 가 아니라 «세기» 로 판정하는 것이라 표 ㊹ 머리에 그 수(알파·뒤 화면 밝기)를 적어 두었다.
 
