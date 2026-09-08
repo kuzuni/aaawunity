@@ -32,10 +32,12 @@ namespace KkomaKnight.Core
 
         /// <summary>담을 자리가 있는 보상 이름(세이브 필드가 실제로 있는 것만).</summary>
         public const string ItemGold = "gold", ItemGem = "gem", ItemPetEgg = "petEgg", ItemArenaCoin = "arenaCoin";
+        /// <summary><b>부활권</b>(T254 · 주인 2026-09-09) — 담는 자리는 <see cref="SaveData.Revive"/>. 데일리 기프트 ④ 칸이 이 이름으로 준다.</summary>
+        public const string ItemRevive = "revive";
 
         /// <summary>이 보상을 세이브에 담을 수 있는가 — 모르는 이름은 <b>우편함에 안 들어간다</b>(조용히 버리지 않는다).</summary>
         public static bool CanPay(string item)
-            => item == ItemGold || item == ItemGem || item == ItemPetEgg || item == ItemArenaCoin || GachaKeys.IsKey(item);   // 키 3종 = T255
+            => item == ItemGold || item == ItemGem || item == ItemPetEgg || item == ItemArenaCoin || item == ItemRevive || GachaKeys.IsKey(item);   // 키 3종 = T255 · 부활권 = T254
 
         /// <summary>우편함에 든 것(없으면 빈 목록 · 옛 세이브 호환).</summary>
         public static List<MailItem> Pending(SaveData s)
@@ -101,6 +103,7 @@ namespace KkomaKnight.Core
             if (item == ItemGem) return "다이아";
             if (item == ItemPetEgg) return "펫알";
             if (item == ItemArenaCoin) return "아레나 코인";
+            if (item == ItemRevive) return "부활권";   // T254 — 아레나 상인 표의 «부활 토큰» 과 같은 물건이고, 주인이 부른 말은 «부활권» 이다
             if (GachaKeys.IsKey(item)) return GachaKeys.Name(item);   // T255 — 말은 GachaKeys 한 곳이 갖는다
             return item ?? "";
         }
@@ -115,6 +118,22 @@ namespace KkomaKnight.Core
         /// </summary>
         public static void Give(SaveData s, string item, double amount) => Pay(s, item, amount);
 
+        /// <summary>
+        /// 지금 그 재화를 <b>얼마나 가졌나</b> — <see cref="Give"/> 의 짝이다(같은 이름표가 같은 자리를 가리키게 한 곳에 둔다).
+        /// 모르는 이름은 0. 자·화면이 «받기 전 ↔ 받은 뒤» 를 견줄 때 쓴다.
+        /// </summary>
+        public static double Held(SaveData s, string item)
+        {
+            if (s == null) return 0;
+            if (item == ItemGold) return s.Gold;
+            if (item == ItemGem) return s.Gem;
+            if (item == ItemPetEgg) return s.PetEgg;
+            if (item == ItemArenaCoin) return s.ArenaCoin;
+            if (item == ItemRevive) return s.Revive;
+            if (GachaKeys.IsKey(item)) return GachaKeys.Count(s, item);
+            return 0;
+        }
+
         static void Pay(SaveData s, string item, double amount)
         {
             if (s == null || amount <= 0) return;
@@ -122,6 +141,7 @@ namespace KkomaKnight.Core
             else if (item == ItemGem) s.Gem += amount;
             else if (item == ItemPetEgg) s.PetEgg += amount;
             else if (item == ItemArenaCoin) s.ArenaCoin += amount;
+            else if (item == ItemRevive) s.Revive += (int)System.Math.Round(amount);   // T254
             else if (GachaKeys.IsKey(item)) GachaKeys.Add(s, item, amount);   // T255 — 담는 자리도 GachaKeys 가 안다
             // 그 밖의 이름은 Add 가 이미 막았다 — 여기까지 오지 않는다.
         }
