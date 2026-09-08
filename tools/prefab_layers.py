@@ -9,15 +9,19 @@
 각 겹이 **뿌리 칸의 몇 %를 덮는가**를 앵커에서 계산한다.
 
 한계(먼저 적어 둔다):
-  · 앵커가 부모에 «비례»(stretch) 인 겹만 넓이를 계산한다. 고정 크기(sizeDelta) 겹은
-    부모 픽셀 크기를 모르면 비율이 안 나오므로 `?` 로 두고 개수만 센다.
   · 코드가 런타임에 `UiKit.Pct`·`Hide` 로 바꾸는 것은 반영 못 한다 — 그래서 «조각이 원래
     몇 겹인가» 를 재는 자이지 «화면이 실제로 몇 번 칠하는가» 를 재는 자가 아니다.
     실측의 정본은 언제나 `screens/overdraw.json` 이다.
+  · 뿌리 크기를 안 주면 조각의 «원래 크기» 로 잰다. 화면이 조각을 다른 크기로 늘여 쓰면
+    고정 px 로 물린 테·안쪽 선의 몫이 달라지므로 `--at` 로 그 칸 크기를 주는 편이 옳다
+    (T223 회차 3 이 큰 카드 ↔ 작은 카드에서 이 차이를 만났다).
+  · `m_FillCenter: 0` 인 9-slice 는 «(링)» 으로 표시만 한다 — rect 는 칸 전체지만 칠하는
+    것은 테뿐이라 그 줄의 넓이는 **위쪽 한계**다.
 
 쓰기:
   python3 tools/prefab_layers.py ui.cardFrame.blue ui.shopItem      # 카탈로그 키
-  python3 tools/prefab_layers.py --key ui.shopItem --tree           # 계층까지
+  python3 tools/prefab_layers.py ui.cardFrame.plum --at=1015x607    # 화면에 놓이는 칸 크기로
+  python3 tools/prefab_layers.py ui.shopItem --tree                 # 계층까지
   python3 tools/prefab_layers.py --self-test
 """
 import json
@@ -213,16 +217,20 @@ def load(path, gidx, depth=0, off=frozenset()):
     return nested[0] if len(nested) == 1 else None
 
 
-def walk(n, size=None, depth=0, out=None, path='', root=None):
+def walk(n, size=None, depth=0, out=None, path='', root=None, at=None):
     """
     뿌리 칸을 1 로 놓고 겹마다 «칸의 몇 배를 덮는가» 를 매긴다.
     픽셀 크기를 위에서 아래로 물려 주므로 «고정 크기» 칸도 비율이 나온다.
+
+    <paramref name="at"/> = 이 조각이 <b>화면에서 실제로 놓이는 크기</b>(px). 코드가
+    <c>UiKit.Stretch</c>·<c>Pct</c> 로 칸에 맞춰 늘이므로 조각의 «원래 크기» 로 잰 비율은
+    작은 칸에서 틀어진다(고정 px 로 물린 테·안쪽 선의 몫이 칸이 작을수록 커진다).
     """
     out = [] if out is None else out
     here = path + ('/' if path else '') + n.name
     if depth == 0:
-        # 뿌리 크기 = 제 sizeDelta(앵커 폭이 0 인 «고정» 뿌리 · 화면에 붙을 때는 코드가 다시 늘린다)
-        size = (n.cov[2], n.cov[3]) if (n.cov and n.cov[2] > 0 and n.cov[3] > 0) else None
+        # 뿌리 크기 = 준 크기(at) 또는 제 sizeDelta(앵커 폭이 0 인 «고정» 뿌리)
+        size = at or ((n.cov[2], n.cov[3]) if (n.cov and n.cov[2] > 0 and n.cov[3] > 0) else None)
         root = size
     else:
         size = size_of(n.cov, size)
@@ -293,6 +301,11 @@ def main(argv):
     if '--self-test' in argv:
         return self_test()
     tree = '--tree' in argv
+    at = None
+    for a in argv:
+        if a.startswith('--at='):
+            w, _, h = a[5:].partition('x')
+            at = (float(w), float(h))
     keys = [a for a in argv if not a.startswith('--')]
     if not keys:
         print(__doc__)
@@ -307,10 +320,10 @@ def main(argv):
         if n is None:
             print('%s — 읽었지만 뿌리를 못 찾았다' % key)
             continue
-        rows = walk(n)
+        rows = walk(n, at=at)
         tot = sum(r[2] for r in rows if r[2] is not None)
         unk = sum(1 for r in rows if r[2] is None)
-        print('%s  (%s)' % (key, os.path.basename(p)))
+        print('%s  (%s)%s' % (key, os.path.basename(p), (' · 칸 %gx%gpx 로 놓고 잰다' % at) if at else ''))
         print('  칠하는 겹 %d개 · 칸 넓이 합 %.2f배%s' % (len(rows), tot, (' · 비율 모름 %d개' % unk) if unk else ''))
         for path_, kind, share, exact, depth in sorted(rows, key=lambda r: -(r[2] or 0)):
             if tree or share is None or share >= 0.10:
