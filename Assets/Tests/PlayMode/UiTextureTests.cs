@@ -583,19 +583,22 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(gtop, "GradientTop"); Assert.IsNotNull(gbot, "GradientBottom");
             Assert.Less(pat.GetSiblingIndex(), gtop.GetSiblingIndex(), "그라데이션은 무늬 «위»(질감 층 순서 · 결정 171)");
             Assert.Less(gtop.GetSiblingIndex(), gbot.GetSiblingIndex(), "위 밝음 → 아래 어둠 순서");
-            // T166 ⓑ(주인 2026-09-07 09:2X «챕터 카드에 5초마다 shine») — 재료는 특전 카드가 쓰던 mat.perkShine 그대로이고 새로 필요한 것은 «되풀이» 다.
-            // 재는 것 셋: ⓐ 카드에 머티리얼 인스턴스가 매달려 있다(MaterialOwner = 카드가 죽으면 인스턴스도 죽는다)
+            // T245(주인 2026-09-08 «shine 이펙트는 START 버튼에 있어야 함») — T166 ⓑ 가 **챕터 카드**에 걸었던 그 빛을 START 로 옮겼다.
+            // 재는 것은 그대로 셋이고 «어디에» 만 바뀐다: ⓐ 머티리얼 인스턴스가 매달려 있다(MaterialOwner = 그 자리가 죽으면 인스턴스도 죽는다)
             // ⓑ 그 인스턴스를 겨냥한 트윈이 돈다(= 되풀이가 걸렸다 · 한 번 훑고 끝이면 여기서 빨강)
-            // ⓒ 화면을 세운 직후에는 빛이 «시작 자리»(카드 밖)에 있다 — PlayShot PNG 가 훑는 중간을 물지 않는다는 계약(ShineLoop 의 PrependInterval).
+            // ⓒ 화면을 세운 직후에는 빛이 «시작 자리»(버튼 밖)에 있다 — PlayShot PNG 가 훑는 중간을 물지 않는다는 계약(ShineLoop 의 첫 AppendInterval).
+            // ⓓ **그리고 카드에는 없다** — 옮긴 것이지 «양쪽에 건» 것이 아니다(이 한 줄이 없으면 «옮겼다» 를 아무도 안 지킨다).
             {
-                var cardT = lobby.Find("ChapterCard"); Assert.IsNotNull(cardT, "로비 챕터 카드");
-                var mo = cardT.GetComponent<UiKit.MaterialOwner>();
-                Assert.IsNotNull(mo, "챕터 카드에 shine 머티리얼 인스턴스(T166 ⓑ)");
+                var startT = lobby.Find("Start"); Assert.IsNotNull(startT, "로비 START 버튼");
+                var mo = startT.GetComponent<UiKit.MaterialOwner>();
+                Assert.IsNotNull(mo, "START 에 shine 머티리얼 인스턴스(T245 ⓒ)");
                 Assert.IsNotNull(mo.Mat, "그 인스턴스가 살아 있다");
-                Assert.IsTrue(UiKit.IsTweening(mo.Mat), "챕터 카드 shine 이 «되풀이» 로 돈다(T166 ⓑ · 한 번 훑고 끝이면 빨강)");
+                Assert.IsTrue(UiKit.IsTweening(mo.Mat), "START shine 이 «되풀이» 로 돈다(T245 ⓒ · 한 번 훑고 끝이면 빨강)");
                 Assert.AreEqual(UiKit.ShineFrom, mo.Mat.GetFloat(UiKit.ShineLocationId), 0.001f,
                     "화면을 세운 직후 빛은 시작 자리 = 비평 PNG 가 훑는 중간을 안 문다(ShineLoop 은 한 주기 뒤에 첫 훑기)");
-                Assert.AreEqual(5f, UiKit.ShinePeriod, 0.001f, "주기 = 주인이 말한 5초");
+                Assert.AreEqual(5f, UiKit.ShinePeriod, 0.001f, "주기 = 카드에서 쓰던 값 그대로(5초)");
+                var cardT = lobby.Find("ChapterCard"); Assert.IsNotNull(cardT, "로비 챕터 카드");
+                Assert.IsNull(cardT.GetComponent<UiKit.MaterialOwner>(), "챕터 카드에는 shine 이 **없다**(T245 ⓑ · T166 ⓑ 가 주인 지시로 뒤집혔다)");
             }
             foreach (var n in new[] { "TopBar", "SubRow", "ChapterCard", "Start" })   // T96-menu 로 사이드 기둥 둘은 없다
             {
