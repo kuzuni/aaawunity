@@ -4586,6 +4586,18 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 ### T239 — **빨간 런의 «실패 목록» 이 로그 꼬리에 없다 — 오늘 실제로 못 읽었다** (워커 실측 + 고침 2026-09-08 11:2X · sess-0303-27371 · 워커 I · 게임 코드 0줄)
 
+> ❗ **실측 보태기(2026-09-08 11:4X · sess-2041-14225 · 워커 C · 코드 0줄 · 임자 lock 이 살아 있어 알리기만 한다 · 결정 421) — «실패가 앞쪽에 있다» 로 다 설명되지 않는 꼴이 하나 더 있다: 실패가 «아예 없는» 빨강.** CI **#506**(`1a004bf4` — 임자의 이 고침이 든 바로 그 런)의 유니티 잡 로그 **681KB 를 통째로** 파싱한 결과:
+> ```
+> <test-case> 339개 · Passed 339 · Failed 0 · Skipped 0 · Inconclusive 0
+>   (EditMode·PlayMode 흔적이 둘 다 있다 — 앞쪽이 잘려 못 본 것이 아니다)
+> 11:31:46  Run succeeded, no failures occurred      ← 앞엣것
+> 11:32:07  Run succeeded, no failures occurred      ← 뒤엣것
+> 11:32:12  #  Failure  #  →  ##[error]The process '/usr/bin/docker' failed with exit code 2
+> ```
+> 즉 **두 모드가 다 «실패 0» 으로 끝났는데 잡이 빨갛다** — 라이선스 반납까지 정상으로 찍히고 그 직후 exit 2 다. 2항의 설명(«EditMode 실패가 로그 앞쪽에 있다»)은 #503 에는 맞아도 **이 런에는 안 맞는다**.
+> **그래서 이 자에 한 줄이 더 필요해 보인다** — 실패 0건일 때 «0건» 만 찍으면 읽는 사람은 그대로 막힌다. **«테스트는 339/339 통과했다 → 빨강의 까닭은 테스트가 아니라 러너·스텝 쪽이다»** 라고 **방향을 가리켜** 주면 다음 워커가 로그를 다시 파헤치지 않는다(이번에 내가 그 파헤침을 했고, 답은 «내 코드 아님» 이었다).
+> **판단은 임자 몫**이다 — 나는 재기만 한다. 곁들여 이 런에 **내 T236 커밋이 들어 있고** `DungeonTicketPlayTests` 둘·`EventsScreenTests` 셋이 **전부 Passed** 라 내 쪽 원인도 아니다.
+
 1. **무엇이 났나** — CI **#503**(`499fdfe4`)의 유니티 잡이 빨간데 **까닭을 못 읽었다**. `get_job_logs` 로 꼬리를 **669KB** 당겨도 `Failed` 가 **0건**이고, 마지막에 보이는 것은 «Test run completed. Exiting with code 0 (Ok)» 와 «Build completed with a result of 0» 뿐이다.
 2. **까닭** — 잡은 **EditMode → PlayMode** 순으로 돌고 꼬리에 남는 «Exiting with code 0» 은 **뒤엣것(PlayMode)** 의 것이다. EditMode 에서 죽으면 그 결과는 로그 **앞쪽**에 있고, 꼬리로는 영영 안 잡힌다. 아티팩트(결과 XML) 내려받기는 **프록시가 막는다**(결정 289).
 3. **고침** — `tools/ci_test_failures.py`(신설) + `ci.yml` 의 잡 끝 한 단계(`if: always()`). 결과 XML 을 파싱해 **실패 케이스 이름 · message 첫 줄 · `Assets/…:줄`** 을 로그 **마지막 몇 줄**로 찍는다. 실패가 없으면 «0건 — 이 런의 빨강은 테스트가 아니다(러너·빌드·라이선스 쪽을 보라)» 한 줄을 남긴다 — **그 한 줄이 오늘 내 30분을 아꼈을 줄이다**.
