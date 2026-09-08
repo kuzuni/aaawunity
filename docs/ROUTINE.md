@@ -3248,6 +3248,30 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 5. **확인 = 같은 크롭 두 장**(`10_shop_2` 전설 상자 · 신화 상자) — «일반» 이 한 줄에 붙고 «/» 가 줄 첫 글자로 안 내려오면 끝이다. 새 자를 놓을 거라면 «줄 첫 글자가 «/»·«%» 가 아닌가» 한 줄이 값싸다.
 6. **선점 안 한 까닭** — 이 컨테이너에 `dotnet` 이 없어 4항 게이트를 못 돌린다(결정 206). **T207 lock 이 살아 있어**(01:19) 그 화면은 임자 것이기도 하다 — 재서 넘긴다.
 
+> 🚨 **TMP 전환 뒤 main 이 빨갛다 — 실패 9건의 지도(2026-09-08 02:1X · sess-2005-9317 · 워커 A · 코드 0줄 · 결정 599)**
+> CI **#453·#454 연속 실패** · `gh-pages` 배포 step **skipped**. 임자 lock(T207)이 살아 있어 **코드는 한 줄도 안 건드렸다** — 대신 아홉을 다 열어 **갈래를 갈라** 둔다.
+>
+> **ⓐ 화면이 실제로 작아졌다 — 프리팹이 달고 온 TMP 크기가 우리 하한 밑이다(5자리 · 이것이 진짜 고칠 것)**
+> ```
+> ResourceBar_Coin/Gem  «0»·«1M»   size 39 (min 40)   rect 241×56
+> Tab:battle/dungeon/shop /Focus/Text «전투»·«던전»·«상점»  size 30 (min 40)   rect 201×53
+> Swich_01/On/Text «ON»            size 36 (min 40)
+> ```
+> uGUI 시절엔 우리 `SetText` 가 크기를 덮어썼는데 **TMP 조각은 제 크기(39·30·36)를 갖고 온다**. 39 는 «거의 맞는데 1 모자란» 값이라 눈으로는 안 보이고 자만 잡는다 — 탭 30 은 눈에도 작다.
+> 걸린 자: `TextSizeGateTests.EveryActiveTextMeetsTheMinimumSize` · `UiSmokeTests.ShopBoxesAndChestOpenPopup` · `EventsScreenTests.EventsTextsAreReadable`.
+>
+> **ⓑ 자가 «옛 세계» 를 재고 있다 — 화면은 옳은데 영영 빨간 자리(코드로 확인함 · 2자리)**
+> · `UiTextureTests.cs:973` — `desc.GetComponent<UnityEngine.UI.Text>()` 가 TMP 로 바뀐 조각을 못 집어 **null**(«설명 Text»). TMP 로 바꾸면 끝.
+> · `UiSmokeTests.cs:540` — `Assert.AreEqual(TextAnchor.LowerRight, qty.alignment)` 는 **uGUI enum ↔ TMP enum 비교**라 `Expected: LowerRight · But was: BottomRight` 로 **영영** 빨갛다.
+>   ⚠ `Assert.AreEqual(object, object)` 라 **컴파일이 안 잡는다.** 고침 = `TextAlignmentOptions.BottomRight`. **이것은 내(워커 A) T133 자다** — 임자 lock 이라 손대지 않았으니 그 회차에 같이 고쳐 달라(결정 595 «큰 전환 뒤엔 내가 만든 자부터 다시 읽는다» 의 실례가 내 자에서 났다).
+>
+> **ⓒ 아직 안 가른 것 넷 — «자» 인지 «화면» 인지 재야 한다(추측 금지 · 결정 585)**
+> · `ProfileTests` · `SettingsProfileRowsTests` — `NickInput` **not null 실패 ×2**. 이름은 `Profile.cs:206` 이 붙인다(`input.name = NickInputName`). `InputField` → `TMP_InputField` 로 조각이 바뀌며 그 코드 길이 안 도는지 **먼저 확인**.
+> · `PercentGateTests` — 07·05 에 «%» 가 하나도 안 잡힌다. 글자가 사라진 것인지 **`_texts` 수집이 TMP 를 못 담는 것**인지 가른 뒤 고친다.
+> · `UiSmokeTests.BattleTicksAndAllBattlePopups` — 클리어 골드 «0» 이 bestFit 36(하한 40). ⓐ 와 같은 갈래로 보이나 이 자리는 **우리 코드가 세우는 글자**라 따로 재라.
+>
+> **순서 제안** — ⓑ 둘(각 한 줄)로 자를 새 세계에 맞춘 뒤 ⓐ 를 잡으면, ⓐ 를 고쳤는지가 자에 바로 보인다. ⓒ 는 그 다음.
+
 ### T207 — ⚑⚑⚑ 주인 승인: **글자를 TMP(SDF)로 되돌리고 아웃라인을 «진짜 머티리얼» 로** (주인 2026-09-07 17:2X «tmpro로 아웃라인 해야지 진짜 메테리얼로» · **구조 작업 · 큼** · 단계로 쪼갠다 · 자리·수치 표 0줄)
 
 > **⚑⚑ 보탬(2026-09-07 17:4X · 등재 세션 실측 · 주인 «tmpro 안 쓰고 텍스트 썼었냐 다 tmpro여야 하는데») — 주인 짐작이 맞다. 그리고 사정은 «TMP 를 안 썼다» 가 아니라 «있는 TMP 를 우리가 부수고 있다» 다.**
