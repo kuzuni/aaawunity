@@ -431,17 +431,24 @@ namespace KkomaKnight.Game
         public void Rest(BattleState G, Action<bool> onChoose, Action onBoth = null)
         {
             var box = Box("ui.popup.green", "ui.title.green", "쉼터", Layout.EvBox, boxed: false);   // T141 — 판 없이 어둠 위(주인 «그 쉼터도 … 패널 없게»)
-            Sub(box, "모닥불 앞에서 잠시 쉬어갑니다", 9, 7, TextSize.Body, Palette.White);   // T141 ⓑ — 판이 없어졌으니 어두운 글자(InkSoft 기본값)를 흰 글자로
+            // T219 2단계 — 이름표(UiTag)가 없으면 §5 하니스의 layout.json 에 이 화면이 «빈 칸» 으로 남는다(T213 이 (악마)·(천사)에 한 것과 같다).
+            UiKit.Tag(box, "팝업 상자");
+            var rSub = Sub(box, "모닥불 앞에서 잠시 쉬어갑니다", 9, 7, TextSize.Body, Palette.White);   // T141 ⓑ — 판이 없어졌으니 어두운 글자(InkSoft 기본값)를 흰 글자로
+            UiKit.Tag(rSub.rectTransform, "대사");
             var ic = UiKit.Icon(box, "Fire", "ui.fire"); UiKit.Pct(ic.rectTransform, 37, 17, 26, 24);
+            UiKit.Tag(ic.rectTransform, "모닥불 아이콘");
             string heal = G.C.RestHeal <= 1 ? $"최대 체력 {Math.Round(G.C.RestHeal * 100)}%" : $"체력 {UiKit.Fmt(G.C.RestHeal)}";
-            UiKit.Button(box, "ui.btnGreen", $"체력 회복 (+{heal})", () => { Close(); onChoose(true); }, new Layout.R(10, 45, 80, 11));
-            UiKit.Button(box, "ui.btnBlue", $"경험치 +{G.C.RestExp}", () => { Close(); onChoose(false); }, new Layout.R(10, 58, 80, 11));
+            var rHeal = UiKit.Button(box, "ui.btnGreen", $"체력 회복 (+{heal})", () => { Close(); onChoose(true); }, new Layout.R(10, 45, 80, 11));
+            var rExp = UiKit.Button(box, "ui.btnBlue", $"경험치 +{G.C.RestExp}", () => { Close(); onChoose(false); }, new Layout.R(10, 58, 80, 11));
+            UiKit.Tag(rHeal, "체력 회복 버튼"); UiKit.Tag(rExp, "경험치 버튼");
             if (onBoth != null)
             {
                 var ad = UiKit.Button(box, "ui.btnOrange", "광고 보고 둘 다 얻기", () => AdCountdown(3, () => { Close(); onBoth(); }), new Layout.R(10, 71, 80, 12));
                 var adIc = UiKit.Icon(ad, "Ad", "hud.alertAd"); UiKit.Pct(adIc.rectTransform, 84, -22, 18, 50);
+                UiKit.Tag(ad, "광고 버튼");
             }
-            Sub(box, "다음 레벨에 가까워집니다", 86, 6, TextSize.Body, Palette.White);   // T141 ⓑ — 판이 사라져 어둠 위라 흰 글자(T63-perks 의 InkSoft 는 밝은 패널 전제였다)
+            var rNote = Sub(box, "다음 레벨에 가까워집니다", 86, 6, TextSize.Body, Palette.White);   // T141 ⓑ — 판이 사라져 어둠 위라 흰 글자(T63-perks 의 InkSoft 는 밝은 패널 전제였다)
+            UiKit.Tag(rNote.rectTransform, "아래 문구");
         }
 
         // ───────────────────────── 악마의 거래 ─────────────────────────
@@ -465,9 +472,12 @@ namespace KkomaKnight.Game
         public void DevilGift(PerkDef perk, Action onOk)
         {
             var box = Box("ui.popup.plum", "ui.title.plum", "악마의 선물", new Layout.R(6, 30, 88, 40), boxed: false);   // T141 — 같은 흐름의 뒷 팝업도 같이(판이 있었다 없어지면 어색하다)
-            Sub(box, "전설 특전을 얻었습니다", 11, 7, TextSize.Body, Palette.Yellow);   // T141 ⓑ
-            if (perk != null) { var card = PerkCard(box, perk, "yellow", null); UiKit.Pct(card, 2, 24, 96, 28); }
-            UiKit.Button(box, "ui.btnOrange", "계속", () => { Close(); onOk?.Invoke(); }, new Layout.R(25, 66, 50, 16));
+            UiKit.Tag(box, "팝업 상자");   // T219 2단계 — 이름표가 없으면 `ev_devil_gift` 가 layout.json 에서 빈 칸이다
+            var gSub = Sub(box, "전설 특전을 얻었습니다", 11, 7, TextSize.Body, Palette.Yellow);   // T141 ⓑ
+            UiKit.Tag(gSub.rectTransform, "대사");
+            if (perk != null) { var card = PerkCard(box, perk, "yellow", null); UiKit.Pct(card, 2, 24, 96, 28); UiKit.Tag(card, "특전 카드"); }
+            var gOk = UiKit.Button(box, "ui.btnOrange", "계속", () => { Close(); onOk?.Invoke(); }, new Layout.R(25, 66, 50, 16));
+            UiKit.Tag(gOk, "계속 버튼");
         }
 
         // ───────────────────────── 천사의 축복 ─────────────────────────
@@ -499,8 +509,11 @@ namespace KkomaKnight.Game
         public void AdCountdown(int seconds, Action onDone)
         {
             var box = Box("ui.popup", "ui.title.tangerine", "광고 시청 중...", new Layout.R(10, 36, 80, 28));
+            UiKit.Tag(box, "팝업 상자");   // T219 2단계 — `ev_ad` 도 이름표가 0 이라 §5 가 «—» 로 지나쳤다
             var ic = UiKit.Icon(box, "Ad", "ui.ad"); UiKit.Pct(ic.rectTransform, 38, 18, 24, 34);
+            UiKit.Tag(ic.rectTransform, "광고 아이콘");
             _countText = Sub(box, seconds.ToString(), 56, 30, AdCountSize, Palette.Ink);
+            UiKit.Tag(_countText.rectTransform, "남은 초 숫자");
             _countdown = seconds; _onCountdown = onDone;
         }
 
@@ -740,11 +753,14 @@ namespace KkomaKnight.Game
         public void ConfirmReset()
         {
             var box = Box("ui.popup.red", "ui.title.red", "데이터 삭제", new Layout.R(6, 32, 88, 36));
+            UiKit.Tag(box, "팝업 상자");   // T219 2단계
             // 크기는 종류로만(§1) · 가운뎃점 «·» 은 Jua 에 글리프가 없어 폭 0 으로 사라진다(«장비골드보석진행이…») → 쉼표 열거로(T63-toast)
-            Sub(box, "정말 삭제할까요?", 16, 12, TextSize.Body, Palette.Ink);
-            Sub(box, "장비, 골드, 보석, 진행이 모두 사라집니다.\n되돌릴 수 없습니다.", 34, 22, TextSize.Body);
-            UiKit.Button(box, "ui.btnRed", "삭제", () => _app.ResetSave(), new Layout.R(8, 66, 40, 18));
-            UiKit.Button(box, "ui.btnGray", "취소", () => Settings(), new Layout.R(52, 66, 40, 18));
+            var cAsk = Sub(box, "정말 삭제할까요?", 16, 12, TextSize.Body, Palette.Ink);
+            var cWarn = Sub(box, "장비, 골드, 보석, 진행이 모두 사라집니다.\n되돌릴 수 없습니다.", 34, 22, TextSize.Body);
+            UiKit.Tag(cAsk.rectTransform, "물음 문구"); UiKit.Tag(cWarn.rectTransform, "경고 문구");
+            var cDel = UiKit.Button(box, "ui.btnRed", "삭제", () => _app.ResetSave(), new Layout.R(8, 66, 40, 18));
+            var cCan = UiKit.Button(box, "ui.btnGray", "취소", () => Settings(), new Layout.R(52, 66, 40, 18));
+            UiKit.Tag(cDel, "삭제 버튼"); UiKit.Tag(cCan, "취소 버튼");
         }
 
         // ───────────────────────── 탤런트 / 펫 (주인 지정 Character_Talent_02 — 프리팹 «그대로» · 기능 없음 · T10) ─────────────────────────

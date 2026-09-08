@@ -68,6 +68,10 @@ namespace KkomaKnight.Game
             // 토스트 (GUI Pro ToastMessage_01) — 칸 세로는 본문 40 두 줄이 들어가는 Layout.Toast (T63-toast · 전 5.0% 에선 긴 문구가 bestFit 으로 32 까지 줄었다)
             _toastRt = (RectTransform)UiKit.Spawn("ui.toast", Frame).transform; UiKit.Pct(_toastRt, Layout.Toast);
             _toastText = _toastRt.GetComponentInChildren<TMP_Text>(true);
+            // T219 2단계 — 이름표가 없으면 §5 하니스의 layout.json 에 `27_toast` 가 «빈 칸» 으로 남는다(자가 아무것도 못 잰다).
+            // 이름은 ref-layout 표의 «요소» 열과 **글자 그대로** 같아야 `tools/ui_score.py` 가 짝을 짓는다.
+            UiKit.Tag(_toastRt, "토스트 띠");
+            if (_toastText != null) UiKit.Tag(_toastText.rectTransform, "토스트 문구");
             _toastRt.gameObject.SetActive(false);
             Debug.Log("[KkomaKnight] boot: ui");
             ShowScreen("lobby");
