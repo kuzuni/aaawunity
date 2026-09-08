@@ -3271,6 +3271,33 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > · `UiSmokeTests.BattleTicksAndAllBattlePopups` — 클리어 골드 «0» 이 bestFit 36(하한 40). ⓐ 와 같은 갈래로 보이나 이 자리는 **우리 코드가 세우는 글자**라 따로 재라.
 >
 > **순서 제안** — ⓑ 둘(각 한 줄)로 자를 새 세계에 맞춘 뒤 ⓐ 를 잡으면, ⓐ 를 고쳤는지가 자에 바로 보인다. ⓒ 는 그 다음.
+**▸ 회차 1 — 뿌리는 «설정 한 줄» 이었다(sess-0303-27371 · 워커 I · 02:1X · 결정 600 · lock 잡음)**
+
+위에 적힌 길 셋(ⓐ `NoWrap` · ⓑ 칸 넓히기 · ⓒ 금칙 손질)은 전부 **증상 쪽**이라 깨지는 화면 수만큼 되풀이해야 한다. 뿌리는 하나였다:
+
+    Assets/TextMesh Pro/Resources/TMP Settings.asset
+      m_UseModernHangulLineBreakingRules: 0   ← 기본값(전통 규칙 · 한글 음절마다 끊을 수 있다고 본다)
+      m_UseModernHangulLineBreakingRules: 1   ← 이 회차(현대 규칙 · **공백에서만** 끊는다 = uGUI `Text` 가 하던 것)
+
+즉 T207 ② 가 바꾼 것은 폰트가 아니라 **줄바꿈 규칙의 기본값**이었다. 화면·칸·문구 0줄이고 되돌리기도 그 한 줄이다.
+⚠ **에디터가 TMP 설정을 다시 저장하면 조용히 0 으로 돌아갈 수 있는 자리**다 — 주인이 에디터를 열고 난 뒤에는 이 줄을 한 번 본다.
+
+**▸ 자는 T207 ③ 임자에게 넘긴다 — 스텁에 멤버가 없어 이 회차에 못 세웠다**
+
+재려던 규칙은 한 줄이다: **어떤 줄의 끝 글자와 다음 줄의 첫 글자가 둘 다 한글 음절이면 낱말 한가운데서 끊긴 것**
+(한국어는 낱말 사이를 띄어 쓰므로 옳은 줄바꿈은 늘 공백 자리다). 좁은 칸에 «전설 4% / 희귀 30% / 일반 66%» 를 넣고 `ForceMeshUpdate()` 뒤 재면 된다.
+막힌 것은 **dotnet 스텁**이다 — `tools/dotnet/Stubs/TMPro.cs:35` 의 `TMP_TextInfo` 에 `characterCount·lineCount·pageCount` 뿐이라 로컬 컴파일이 안 된다. 필요한 것 넷:
+
+    TMP_TextInfo.lineInfo        (TMP_LineInfo[])
+    TMP_TextInfo.characterInfo   (TMP_CharacterInfo[])
+    TMP_LineInfo.firstCharacterIndex · lastVisibleCharacterIndex   (int)
+    TMP_CharacterInfo.character  (char)
+
+스텁을 **추측으로** 넓히는 것은 그 워커가 «로컬 초록 · 유니티 빨강» 이라고 못 박은 자리(결정 573·565)이고, 그 파일은 지금 ③ 로 그 워커가 쥐고 있다.
+③ 에서 스텁을 넓히는 김에 위 넷을 (필요하면 `TmpFontProbeTests` 의 «진짜 빌드에게 멤버 목록을 물어보는» 방법으로 확인해서) 같이 넣으면, 이 자는 20분짜리다.
+
+**확인 = 다음 `screens` 의 `10_shop_2.png` 같은 크롭(285,558)-(520,616) 에서 «일반» 이 붙어 나오는 것.**
+곁들여 신화 상자 줄의 «/» 가 줄 첫 글자로 내려오는 것은 **금칙 문자 목록**(`m_leadingCharacters`) 몫이라 이 한 줄로는 안 고쳐질 수 있다 — 그때는 그 목록에 «/» 를 넣는 회차를 따로 둔다.
 
 ### T207 — ⚑⚑⚑ 주인 승인: **글자를 TMP(SDF)로 되돌리고 아웃라인을 «진짜 머티리얼» 로** (주인 2026-09-07 17:2X «tmpro로 아웃라인 해야지 진짜 메테리얼로» · **구조 작업 · 큼** · 단계로 쪼갠다 · 자리·수치 표 0줄)
 
