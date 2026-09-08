@@ -80,6 +80,7 @@ namespace KkomaKnight.Tests.Play
             /// <b>고친 자</b> — <see cref="Overdraw"/> 와 같은 뜻이되 «자가 세지만 GPU 는 안 칠하는» 셋을 뺀 값(T223 회차 3·4 · 결정 617).
             /// <list type="bullet">
             /// <item>9-slice 링(<c>fillCenter = false</c>)은 가운데를 안 그린다 → rect 가 아니라 <b>테 띠</b>로 센다.</item>
+            /// <item>조각은 <b>제 rect</b> 만 그린다 → 자식 몫을 안 넣는다(회차 6 · 자식은 저마다 따로 세어지므로 이중 계산이었다).</item>
             /// <item><see cref="RectMask2D"/> 안 조각은 그 사각형 밖이 잘린다 → <b>교집합</b>으로 센다(빛살·글로우·스크롤 내용).</item>
             /// <item>알파 판정선을 <see cref="PaintAlpha"/> 로 내려 <b>배경 무늬를 전 화면에서 같이</b> 센다.</item>
             /// </list>
@@ -88,15 +89,20 @@ namespace KkomaKnight.Tests.Play
             /// </summary>
             public float Paint;
             /// <summary>
-            /// <b>고침 셋이 각각 얼마를 움직였나</b>(회차 5 · 결정 628) — <c>Overdraw + DAlpha + DMask + DRing = Paint</c>.
+            /// <b>고침이 각각 얼마를 움직였나</b>(회차 5·6 · 결정 628) — <c>Overdraw + DAlpha + DSelf + DMask + DRing = Paint</c>.
             /// <para>
             /// 왜 나눠서 내나 — 회차 4 는 셋의 합만 냈고, 셈으로 예고한 값(상점 6.7~7.4)이 실측(<b>7.806</b>)과 어긋났는데
             /// <b>어느 몫이 틀렸는지 가릴 수가 없었다</b>. 합계만 있는 자는 «움직였다» 는 알려 줘도 «왜» 는 못 알려 준다.
             /// </para>
             /// <see cref="DAlpha"/> 는 «판정선을 내려 새로 센 것»(≥0 · 대부분 배경 무늬 한 장),
+            /// <see cref="DSelf"/> 는 «자식 몫을 뺀 것»(≤0 · 회차 6),
             /// <see cref="DMask"/> 는 «마스크 밖이라 잘린 것»(≤0), <see cref="DRing"/> 은 «링의 가운데»(≤0).
+            /// <para>
+            /// 이 칸들이 곧바로 값을 했다 — 회차 5 의 첫 실측에서 <see cref="DMask"/> 가 여섯 화면 <b>전부 0.000</b> 이었고,
+            /// 그것이 «내 마스크 자르기가 한 번도 안 걸렸다» 를 한 줄로 알려 줬다(회차 6 이 그 뿌리를 고쳤다 · 결정 632).
+            /// </para>
             /// </summary>
-            public float DAlpha, DMask, DRing;
+            public float DAlpha, DSelf, DMask, DRing;
         }
         readonly List<Row> _rows = new List<Row>();
 
@@ -134,16 +140,48 @@ namespace KkomaKnight.Tests.Play
         /// 스크롤 내용(`ScrollRect` 뷰포트도 <c>RectMask2D</c> 다)도 같은 까닭으로 부풀려져 있었다. T223 회차 3.
         /// </para>
         /// <c>padding</c>·<c>softness</c> 는 이 저장소에서 전부 0 이라 안 본다(쓰기 시작하면 여기도 같이 봐야 한다).
+        /// <para>
+        /// ⚠ <b>회차 6 이 여기서 제 결함을 고쳤다</b> — 회차 4 는 마스크 사각형을
+        /// <c>RectTransformUtility.CalculateRelativeRectTransformBounds</c> 로 잡았는데 그 함수는
+        /// <b>«그 칸과 그 아래 모든 자식» 의 합집합</b>을 낸다. 마스크의 자식이 곧 잘릴 조각이므로
+        /// 그렇게 잡은 사각형은 <b>언제나 그 조각을 품는다</b> — 교집합이 아무것도 안 자른다.
+        /// 실측이 그대로 말해 줬다: 회차 5 가 붙인 <c>dMask</c> 가 여섯 화면 전부 <b>정확히 0.000</b> 이었다.
+        /// 그래서 지금은 <see cref="OwnRect"/>(<c>GetWorldCorners</c> = 그 칸 «자기» 네 귀퉁이)로 잡는다.
+        /// </para>
         /// </summary>
-        static void ClipByMasks(RectTransform frame, Transform t, ref float x0, ref float y0, ref float x1, ref float y1)
+        void ClipByMasks(RectTransform frame, Transform t, ref float x0, ref float y0, ref float x1, ref float y1)
         {
             for (var p = t; p != null && p != frame.parent; p = p.parent)
             {
                 var m = p.GetComponent<RectMask2D>();
                 if (m == null || !m.isActiveAndEnabled) continue;
-                var mb = RectTransformUtility.CalculateRelativeRectTransformBounds(frame, (RectTransform)p);
-                x0 = Mathf.Max(x0, mb.min.x); y0 = Mathf.Max(y0, mb.min.y);
-                x1 = Mathf.Min(x1, mb.max.x); y1 = Mathf.Min(y1, mb.max.y);
+                OwnRect(frame, (RectTransform)p, out float ax0, out float ay0, out float ax1, out float ay1);
+                x0 = Mathf.Max(x0, ax0); y0 = Mathf.Max(y0, ay0);
+                x1 = Mathf.Min(x1, ax1); y1 = Mathf.Min(y1, ay1);
+            }
+        }
+
+        readonly Vector3[] _corners = new Vector3[4];
+        /// <summary>
+        /// 그 칸 <b>«자기»</b> 사각형을 프레임 좌표로 낸다(자식은 안 넣는다).
+        /// <para>
+        /// <c>CalculateRelativeRectTransformBounds</c> 는 «칸 + 모든 자식» 의 합집합이라
+        /// ⓐ 마스크를 그것으로 잡으면 아무것도 안 잘리고(위) ⓑ <b>조각의 넓이도 자식 몫까지 부풀려진다</b> —
+        /// 자식은 저마다 따로 세어지므로 그것은 <b>이중 계산</b>이다. `Graphic` 은 언제나 <b>제 rect 만</b> 그린다.
+        /// </para>
+        /// 옛 계열(<see cref="Row.Overdraw"/>)은 이 고침을 안 받는다 — 그 수는 지난 실측과 잇는 것이 값이라 정의를 안 건드린다.
+        /// </summary>
+        void OwnRect(RectTransform frame, RectTransform rt, out float x0, out float y0, out float x1, out float y1)
+        {
+            rt.GetWorldCorners(_corners);
+            x0 = y0 = float.MaxValue; x1 = y1 = float.MinValue;
+            for (int i = 0; i < 4; i++)
+            {
+                var p = frame.InverseTransformPoint(_corners[i]);
+                if (p.x < x0) x0 = p.x;
+                if (p.x > x1) x1 = p.x;
+                if (p.y < y0) y0 = p.y;
+                if (p.y > y1) y1 = p.y;
             }
         }
 
@@ -153,7 +191,7 @@ namespace KkomaKnight.Tests.Play
             var frame = _app.Frame;
             Canvas.ForceUpdateCanvases();
             var fr = frame.rect; float frameArea = Mathf.Max(1f, fr.width * fr.height);
-            float sum = 0f, paint = 0f, rawPaint = 0f, maskPaint = 0f; int full = 0, n = 0; var names = new List<string>();
+            float sum = 0f, paint = 0f, rawPaint = 0f, selfPaint = 0f, maskPaint = 0f; int full = 0, n = 0; var names = new List<string>();
             var all = new List<KeyValuePair<string, float>>();
 
             foreach (var g in _app.UiCanvas.GetComponentsInChildren<Graphic>(false))
@@ -170,19 +208,29 @@ namespace KkomaKnight.Tests.Play
                 float w = x1 - x0, h = y1 - y0; if (w <= 0f || h <= 0f) continue;
                 float share = (w * h) / frameArea;
 
-                // ── 고친 자: 마스크 교집합 + 링은 테 띠만 ──
-                // 세 몫을 «따로» 쌓는다 — 합계만 내면 «값이 왜 움직였는가» 를 못 가른다.
-                // 회차 4 가 셈으로 예고한 수(상점 6.7~7.4)와 실측(7.806)이 어긋난 뒤 붙인 칸이다(회차 5 · 결정 628).
+                // ── 고친 자: 제 rect → 마스크 교집합 → 링은 테 띠만 ──
+                // 네 몫을 «따로» 쌓는다 — 합계만 내면 «값이 왜 움직였는가» 를 못 가른다.
+                // 회차 4 가 셈으로 예고한 수(상점 6.7~7.4)와 실측(7.806)이 어긋난 뒤 붙인 칸이고(회차 5 · 결정 628),
+                // 그 칸이 곧바로 «dMask 가 여섯 화면 전부 0.000» 으로 회차 4 의 결함을 짚어 줬다(회차 6).
                 rawPaint += share;
-                float mx0 = x0, my0 = y0, mx1 = x1, my1 = y1;
-                ClipByMasks(frame, g.transform.parent, ref mx0, ref my0, ref mx1, ref my1);
-                float mw = mx1 - mx0, mh = my1 - my0;
-                if (mw > 0f && mh > 0f)
+                // 조각은 «제 rect» 만 그린다 — 자식 몫까지 넣으면 자식이 따로 세어지므로 이중 계산이다
+                OwnRect(frame, g.rectTransform, out float sx0, out float sy0, out float sx1, out float sy1);
+                sx0 = Mathf.Max(fr.xMin, sx0); sx1 = Mathf.Min(fr.xMax, sx1);
+                sy0 = Mathf.Max(fr.yMin, sy0); sy1 = Mathf.Min(fr.yMax, sy1);
+                float sw = sx1 - sx0, sh = sy1 - sy0;
+                if (sw > 0f && sh > 0f)
                 {
-                    float masked = (mw * mh) / frameArea;
-                    maskPaint += masked;
-                    var lr = g.rectTransform.rect;
-                    paint += masked * RingFactor(g, lr.width, lr.height);
+                    selfPaint += (sw * sh) / frameArea;
+                    float mx0 = sx0, my0 = sy0, mx1 = sx1, my1 = sy1;
+                    ClipByMasks(frame, g.transform.parent, ref mx0, ref my0, ref mx1, ref my1);
+                    float mw = mx1 - mx0, mh = my1 - my0;
+                    if (mw > 0f && mh > 0f)
+                    {
+                        float masked = (mw * mh) / frameArea;
+                        maskPaint += masked;
+                        var lr = g.rectTransform.rect;
+                        paint += masked * RingFactor(g, lr.width, lr.height);
+                    }
                 }
 
                 // ── 옛 계열: 정의를 한 글자도 안 바꾼다(지난 세 런과 이어서 읽힌다) ──
@@ -196,7 +244,7 @@ namespace KkomaKnight.Tests.Play
             }
             all.Sort((x, y) => y.Value.CompareTo(x.Value));
             var row = new Row { Screen = screen, FullLayers = full, Overdraw = sum, Paint = paint, Graphics = n, FullNames = string.Join(" · ", names),
-                                DAlpha = rawPaint - sum, DMask = maskPaint - rawPaint, DRing = paint - maskPaint };
+                                DAlpha = rawPaint - sum, DSelf = selfPaint - rawPaint, DMask = maskPaint - selfPaint, DRing = paint - maskPaint };
             for (int i = 0; i < all.Count && i < TopCount; i++) row.Top.Add(all[i]);
             _rows.Add(row);
             return row;
@@ -227,6 +275,7 @@ namespace KkomaKnight.Tests.Play
                   .Append(",\"paint\":").Append(r.Paint.ToString("0.000"))
                   // T223 회차 5 — 고침 셋이 각각 얼마를 움직였나(overdraw + dAlpha + dMask + dRing = paint)
                   .Append(",\"dAlpha\":").Append(r.DAlpha.ToString("0.000"))
+                  .Append(",\"dSelf\":").Append(r.DSelf.ToString("0.000"))
                   .Append(",\"dMask\":").Append(r.DMask.ToString("0.000"))
                   .Append(",\"dRing\":").Append(r.DRing.ToString("0.000"))
                   .Append(",\"graphics\":").Append(r.Graphics)
@@ -269,15 +318,15 @@ namespace KkomaKnight.Tests.Play
 
             var sb = new StringBuilder();
             sb.AppendLine($"[OverdrawGate] 화면 {_rows.Count}개(보고만 · T217 회차 1 · 프레임 {_app.Frame.rect.width:0}×{_app.Frame.rect.height:0})");
-            sb.AppendLine("| 화면 | 전면 겹 | 오버드로(옛 계열) | **칠하는 넓이(고친 자)** | 차 | 무늬(+) | 마스크(−) | 링(−) | 조각 수 | 전면 겹 이름 | 가장 넓은 조각 다섯 |");
-            sb.AppendLine("|---|---|---|---|---|---|---|---|---|---|---|");
+            sb.AppendLine("| 화면 | 전면 겹 | 오버드로(옛 계열) | **칠하는 넓이(고친 자)** | 차 | 무늬(+) | 자식(−) | 마스크(−) | 링(−) | 조각 수 | 전면 겹 이름 | 가장 넓은 조각 다섯 |");
+            sb.AppendLine("|---|---|---|---|---|---|---|---|---|---|---|---|");
             foreach (var r in _rows)
             {
                 var top = new StringBuilder();
                 for (int k = 0; k < r.Top.Count; k++) { if (k > 0) top.Append(" · "); top.Append(r.Top[k].Key).Append(' ').Append(r.Top[k].Value.ToString("0.00")); }
-                sb.AppendLine($"| {r.Screen} | {r.FullLayers} | {r.Overdraw:0.00} | **{r.Paint:0.00}** | {r.Paint - r.Overdraw:+0.00;-0.00;0.00} | {r.DAlpha:+0.00;-0.00;0.00} | {r.DMask:+0.00;-0.00;0.00} | {r.DRing:+0.00;-0.00;0.00} | {r.Graphics} | {r.FullNames} | {top} |");
+                sb.AppendLine($"| {r.Screen} | {r.FullLayers} | {r.Overdraw:0.00} | **{r.Paint:0.00}** | {r.Paint - r.Overdraw:+0.00;-0.00;0.00} | {r.DAlpha:+0.00;-0.00;0.00} | {r.DSelf:+0.00;-0.00;0.00} | {r.DMask:+0.00;-0.00;0.00} | {r.DRing:+0.00;-0.00;0.00} | {r.Graphics} | {r.FullNames} | {top} |");
             }
-            sb.AppendLine("· 「칠하는 넓이」 = 오버드로 + 무늬(+) + 마스크(−) + 링(−) — 셋이 각각 얼마를 움직였는지 같이 찍는다(T223 회차 4·5 · 결정 617·630)");
+            sb.AppendLine("· 「칠하는 넓이」 = 오버드로 + 무늬(+) + 자식(−) + 마스크(−) + 링(−) — 셋이 각각 얼마를 움직였는지 같이 찍는다(T223 회차 4·5 · 결정 617·630)");
             Debug.Log(sb.ToString());
 
             // 판정(이 회차) — 달아나는 것만 잡는다. 로비가 넷(Background·Pattern·GradientTop·GradientBottom · T129 실측)이라
