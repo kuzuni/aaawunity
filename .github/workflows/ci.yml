@@ -105,6 +105,13 @@ jobs:
       - name: "지운 값을 아직 가리키는 테스트 — 보고만(빨개도 안 막는다 · 결정 493)"
         continue-on-error: true
         run: python3 tools/check_stale_asserts.py
+      - name: 표 행 이름 ↔ 화면 이름표 대조 자기 검사 (T279)
+        run: python3 tools/check_table_tags.py --self-test
+      # ⚑ 이 자는 **layout.json 을 안 본다**(소스와 표만 읽는다) — 그래서 채점보다 먼저,
+      #   새 화면이 `screens` 에 오르기 전에도 «맞댈 이름조차 없는 행» 을 말해 준다(T279).
+      - name: "표 행 이름 ↔ 화면 이름표 어긋남 — 보고만(빨개도 안 막는다 · 결정 493)"
+        continue-on-error: true
+        run: python3 tools/check_table_tags.py
       - name: aaaw main 체크아웃 (수치 정본)
         uses: actions/checkout@v4
         with:
