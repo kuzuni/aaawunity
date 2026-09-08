@@ -1178,6 +1178,8 @@ MonoBehaviour:
   - key: font.ui
     font: {fileID: 12800000, guid: 9ed266295f50e7dbc67d6d30ec7ff1eb, type: 3}
   colors:
+  - key: col.arenaVsBar
+    color: {r: 0.768627, g: 0.152941, b: 0.117647, a: 1}
   - key: col.gray
     color: {r: 0.639216, g: 0.607843, b: 0.615686, a: 1}
   - key: col.green

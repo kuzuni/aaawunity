@@ -23,6 +23,8 @@ namespace KkomaKnight.Game
         public static Color Orange => Cat("orange", "#FF8612");
         public static Color Plum => Cat("plum", "#C76EF7");
         public static Color Red => Cat("red", "#FB5951");
+        /// <summary>PvP 인게임(33)의 빨간 VS 바 — 레퍼런스 <c>33_pvp_battle.jpg</c> 실측 <c>#C4271E</c>(<c>tools/ref_color.py</c> · 다섯 띠가 전부 같은 값 = 그라디언트 아닌 한 색). <see cref="Red"/>(#FB5951)보다 훨씬 짙어 그것으로 대신할 수 없다.</summary>
+        public static Color ArenaVsBar => Cat("arenaVsBar", "#C4271E");
         public static Color Brown => Cat("brown", "#B97A54");
         public static Color Mint => Cat("mint", "#03E4B7");
         public static Color Ink => Cat("ink", "#341B19");          // 진한 코코아(제목)
