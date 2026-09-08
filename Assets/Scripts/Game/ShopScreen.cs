@@ -271,7 +271,10 @@ namespace KkomaKnight.Game
         {
             var D = App.Data; var o = new List<string>();
             for (int i = box.Rate.Length - 1; i >= 0; i--) if (box.Rate[i] > 0) o.Add($"<color=#{ColorUtility.ToHtmlStringRGB(Palette.ByName(Palette.RarName(i)))}>{GearUi.RarName(D, i)}</color> {box.Rate[i]:0.#}%");
-            return string.Join(" · ", o);
+            // T222 ⓑ — 구분자 앞은 «안 끊기는 빈칸»(U+00A0) 이다. `TextGlyphs` 가 «·» 를 «/» 로 바꾸므로(Jua 에 가운뎃점 글리프가 없다)
+            // 화면 글자는 «30% / 일반» 이 되고, 줄은 «/» **뒤** 에서만 끊긴다 — TMP 로 갈아탄 뒤 «/» 가 줄 첫 글자로 내려오던 것이 이 자리다.
+            // ⚠ TMP 의 금칙 문자 목록(`LineBreaking Following Characters.txt`)으로는 안 잡힌다 — 그 목록은 «공백에서 끊는 자리» 에 안 걸린다(결정 610).
+            return string.Join("\u00A0· ", o);   // \u00A0 = 안 끊기는 빈칸(눈에 안 보이므로 이스케이프로 적는다)
         }
         /// <summary>천장 줄들 — 신화 확정 · 전설 확정(있는 것만) 뒤에 «누적 N회» 로 채운다(pill 개수만큼).</summary>
         static List<string> PityLines(GachaBox box, GachaState st, int count)
