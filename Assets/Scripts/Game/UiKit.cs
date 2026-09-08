@@ -350,14 +350,16 @@ namespace KkomaKnight.Game
             if (t == null) return false;
             EnsureBright(t);   // T111 ⓑ — 아웃라인과 글자색은 짝이다(검은 아웃라인 + 밝은 글자) · 입구 다섯 곳이 전부 이 함수를 거친다
             // T207 ② — 주인이 말한 «진짜 메테리얼» 아웃라인으로 갈아탔다(2026-09-07 17:2X «tmpro로 아웃라인 해야지 진짜 메테리얼로»).
-            //  ⓐ 사본을 밀어 겹치던 컴포넌트(uGUI `Outline` 네 장 · T204 의 `TextOutline8` 여덟 방향)를 **걷어 낸다** —
+            //  ⓐ 사본을 밀어 겹치던 컴포넌트(uGUI `Outline` 네 장)를 **걷어 낸다** —
             //     SDF 셰이더가 테를 «거리장을 부풀려» 그리므로 정점이 안 늘고, 마름모꼴도 «없던 구멍» 도 원리적으로 안 생긴다(T204 2항).
             //  ⓑ 두께는 **글자 크기에 저절로 비례**한다(SDF 비율 0~1 · 픽셀이 아니다) — T194 가 세 회차 태운
             //     «규격 px ≠ 화면 px» 함정이 이 방식에는 없다. 그래서 `size` 인자는 이제 안 쓴다(호출부는 그대로 둔다).
             //  ⓒ 색·두께는 **폰트 애셋의 공유 머티리얼 한 장**에 건다 — 자리마다 인스턴스를 만들면 배칭이 깨진다(T153 이 shine 에서 겪은 결).
+            // uGUI `Outline` 은 유니티 내장이라 조각이 직렬화해 달고 올 수 있다 — 그래서 이 갈래는 남긴다.
+            // (T204 의 `TextOutline8` 갈래는 T232 에서 걷었다: 그 컴포넌트를 붙이던 코드가 T207 ② 에서 사라지고
+            //  직렬화 참조도 0 이라 «있을 수 없는 것» 을 지키고 있었다.)
             for (var i = 0; i < 2; i++)
             {
-                var old8 = t.GetComponent<TextOutline8>(); if (old8 != null) UnityEngine.Object.DestroyImmediate(old8);
                 var old4 = t.GetComponent<Outline>(); if (old4 != null) UnityEngine.Object.DestroyImmediate(old4);
             }
             var asset = TmpFont.Get();

@@ -93,20 +93,9 @@ namespace KkomaKnight.Game
         static string Short(string s) { if (string.IsNullOrEmpty(s)) return ""; s = s.Replace("\n", "⏎"); return s.Length > 18 ? s.Substring(0, 18) + "…" : s; }
 
         /// <summary>
-        /// 아웃라인 판정(T63-outline · 주인 04:4X «모든 글자들 다 검정 아웃라인 · 어떤 건 있고 어떤 건 없고»).
-        /// <para>
-        /// <b>T207 ② 로 판정이 바뀌었다</b> — 주인이 «tmpro로 아웃라인 해야지 진짜 메테리얼로» 를 정했으므로 테는 이제
-        /// <b>컴포넌트가 아니라 SDF 머티리얼</b>이 그린다. 그래서 «몇 개 붙었나» 가 아니라 <b>«이 글자가 쓰는 머티리얼이
-        /// 테를 켜고 있나»</b>를 본다: <c>_OutlineWidth &gt; 0</c> · <c>_OutlineColor</c> 가 우리 검정.
-        /// </para>
-        /// 그리고 <b>사본을 밀어 겹치던 옛 컴포넌트</b>(uGUI <see cref="Outline"/> 네 장 · <see cref="TextOutline8"/> 여덟 방향)가
-        /// 남아 있으면 테가 <b>두 겹</b>이 되므로 그것도 어긋남으로 센다 — <see cref="UiKit.EnsureOutline"/> 가 걷어 내지만 자도 본다.
-        /// 두께를 크기로 나눠 재던 옛 계산은 <b>사라졌다</b>: SDF 두께는 비율이라 글자 크기에 저절로 비례한다(T194 의 함정이 여기서 없어진다).
-        /// </summary>
-        /// <summary>
         /// 이 글자에 <b>우리 규격의 검은 테</b>가 걸려 있는가 — 자들이 «여기에 아웃라인이 있어야 읽힌다» 를 단언할 때 부른다.
         /// <para>
-        /// T207 ② 전에는 자들이 <c>GetComponent&lt;TextOutline8&gt;()</c> 로 물었는데, 테가 머티리얼로 옮겨간 뒤로 그 물음은
+        /// T207 ② 전에는 자들이 «테 컴포넌트가 붙었나» 로 물었는데, 테가 머티리얼로 옮겨간 뒤로 그 물음은
         /// <b>늘 «없다»</b> 가 된다 — 컴포넌트가 없어진 것이지 테가 없어진 것이 아니다. 판정을 한 곳(<see cref="FillOutline"/>)에
         /// 모아 두고 자들은 이 함수를 부른다(그러면 규격이 바뀔 때 고칠 자리가 하나다).
         /// </para>
@@ -119,14 +108,26 @@ namespace KkomaKnight.Game
             return !row.OutlineBad;
         }
 
+        /// <summary>
+        /// 아웃라인 판정(T63-outline · 주인 04:4X «모든 글자들 다 검정 아웃라인 · 어떤 건 있고 어떤 건 없고»).
+        /// <para>
+        /// <b>T207 ② 로 판정이 바뀌었다</b> — 주인이 «tmpro로 아웃라인 해야지 진짜 메테리얼로» 를 정했으므로 테는 이제
+        /// <b>컴포넌트가 아니라 SDF 머티리얼</b>이 그린다. 그래서 «몇 개 붙었나» 가 아니라 <b>«이 글자가 쓰는 머티리얼이
+        /// 테를 켜고 있나»</b>를 본다: <c>_OutlineWidth &gt; 0</c> · <c>_OutlineColor</c> 가 우리 검정.
+        /// </para>
+        /// 그리고 <b>사본을 밀어 겹치던 옛 컴포넌트</b>(uGUI <see cref="Outline"/> 네 장)가
+        /// 남아 있으면 테가 <b>두 겹</b>이 되므로 그것도 어긋남으로 센다 — <see cref="UiKit.EnsureOutline"/> 가 걷어 내지만 자도 본다.
+        /// 두께를 크기로 나눠 재던 옛 계산은 <b>사라졌다</b>: SDF 두께는 비율이라 글자 크기에 저절로 비례한다(T194 의 함정이 여기서 없어진다).
+        /// </summary>
         static void FillOutline(Row row, TMP_Text t)
         {
+            // 옛 컴포넌트 테(유니티 내장 `Outline`)가 남아 있으면 테가 두 겹이 된다 — 조각이 직렬화해 달고 올 수 있어 계속 본다.
+            // (`TextOutline8` 갈래는 T232 에서 걷었다 — 그 클래스 자체가 없어졌다.)
             var stale4 = t.GetComponents<Outline>();
-            var stale8 = t.GetComponents<TextOutline8>();
-            if (stale4.Length + stale8.Length > 0)
+            if (stale4.Length > 0)
             {
                 row.OutlineBad = true;
-                row.OutlineWhy = "옛 컴포넌트 테 " + (stale4.Length + stale8.Length) + "개(T207 ② 는 머티리얼로 그린다)";
+                row.OutlineWhy = "옛 컴포넌트 테 " + stale4.Length + "개(T207 ② 는 머티리얼로 그린다)";
                 return;
             }
             var mat = t.fontSharedMaterial != null ? t.fontSharedMaterial : t.materialForRendering;
