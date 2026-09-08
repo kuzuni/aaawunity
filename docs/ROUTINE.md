@@ -6266,6 +6266,14 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 6. 게이트 + PROGRESS T280 행 + 완료 기록(확인 = 첫 완주 런의 그 자 Passed).
 
+7. **잡아서 메웠다 — 4항의 «어려운 쪽»(ⓑ)으로 갔다** (2026-09-08 23:4X · sess-2328-11073 · 워커 F · 결정 768 · `Assets/Tests/PlayMode/ReviveButtonTests.cs`)
+   - **4항이 준 대안 ⓐ(손으로 만든 콜백)를 안 썼다.** 그 길은 «버튼을 누르면 **내가 방금 넘긴 람다**가 불린다» 를 잰다 — 그런데 여기서 비어 있던 물음은 «**`BattleScreen` 이 무엇을 넘기는가**» 라, 배선이 끊겨도 그 자는 초록이다. **자가 자기 손으로 만든 판을 재면 재려던 결함이 자 안으로 안 들어온다.**
+   - 그래서 **진짜 판을 태운다**: `StartBattle(1)` → `G.Dead = true` → 화면이 **스스로** 사망 팝업을 연다(`EndRun`) → `ReviveBtn` 을 누른다. 사슬 전체(`ReviveBtn` → `ReviveNow` → `Revive.Use` → `App.Persist()`)가 한 번에 걸린다.
+   - **가장 값이 큰 단언 = 디스크 한 줄** — `SaveStore.Load(D).Revive == 1`. `Revive` 는 순수 C# 이라 저장을 안 하므로 **Core 만으로는 설명이 안 되는 사실**이고, 곧 «화면 쪽이 실제로 불렸다» 는 증거다.
+   - 자 셋: ⓐ 누르면 살아난다(티켓 −1 · `RevivesUsed` 1 · `Dead` 내림 · 체력·실드 가득 · 팝업 닫힘 · 디스크) ⓑ 0개 판(선다 + 못 누른다 + `ReviveHint` + **억지로 `onClick.Invoke()` 해도 한 톨도 안 바뀐다**) ⓒ 한 판 두 번째 죽음은 **티켓이 남아도 자리 자체가 없다**(`PerRun` · 그 상수도 자가 직접 읽는다).
+   - **5항이 걱정한 자리는 안 밟았다** — `BattleScreen.cs`(T240 lock) 한 줄도 안 건드렸다. 자는 그 파일을 **부르기만** 한다: **읽는 자와 고치는 자는 같은 파일에서도 안 부딪친다.**
+   - 게이트: build 0 경고/0 오류 · test 382/382 · PlayMode 임시 csproj `-t:Rebuild` **0 경고/0 오류** · 검사 15종 rc=0. **확인** = 첫 완주 런의 `ReviveButtonTests` 셋 Passed(그때 lock 반납).
+
 
 ## 4. PROGRESS.md 기록 규약
 
