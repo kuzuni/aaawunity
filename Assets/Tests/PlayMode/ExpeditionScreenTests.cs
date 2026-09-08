@@ -225,6 +225,37 @@ namespace KkomaKnight.Tests.Play
                 "보유 충전이 한 칸 준다(안 줄면 무한으로 받을 수 있다)");
             _log.AssertNoRed("빠른 탐험 «광고 보고 무료» 지급");
 
+            // ⓖ ⚑ T272 의 셋째 물음 — «**다 쓰면 잠기는가**»(검수 Q 등재의 마지막 줄).
+            //   ⓕ 가 «누르면 준다» 를 쟀으니 남은 것은 **줄 게 없을 때 안 준다** 다. 이 둘은 다른 자리다 —
+            //   지급 코드가 멀쩡해도 잠금이 빠지면 광고 한 번에 몇 번이고 받힌다(그래도 위 자들은 전부 초록이다).
+            //   ⚠ 충전을 0 으로 두는 것만으로는 그 판이 안 만들어진다: T270 ⓐ 뒤로 «한 주기가 지나면 보유 = 상한» 이라
+            //   기준 시각(`ExpQuickAt`)이 낡아 있으면 팝업을 여는 그 순간 도로 가득 찬다. 그래서 «방금 다 썼다» 를
+            //   그대로 흉내 낸다 — 보유 0 + 기준 시각 = 지금.
+            _app.Overlay.Close(); yield return Frames(1);
+            S.ExpQuickCharge = 0; S.ExpQuickAt = LobbyPopups.NowSec();
+            Assert.AreEqual(0, Expedition.QuickLeft(S, D, LobbyPopups.NowSec(), SaveStore.Today()),
+                "«다 쓴 판» 을 만들었는지 먼저 확인한다(여기가 3 이면 아래 단언은 아무것도 안 잰다)");
+
+            LobbyPopups.QuickExplore(_app, null); yield return Frames(2);
+            ov = _app.Overlay.Root;
+            var spent = Find(ov, "QxFreeBtn");
+            Assert.IsNotNull(spent, "다 써도 버튼 자체는 있다(회색으로 남는다)");
+            Assert.IsFalse(spent.GetComponent<Button>().interactable, "다 쓰면 잠긴다");
+            Assert.IsNull(Find(ov, "QxBadge"), "남은 횟수가 0 이면 배지도 없다");
+
+            // 잠금이 «회색으로 보이기만» 하는 것이 아니라 **누르는 자리가 비어 있는가** 까지 본다.
+            // onClick.Invoke() 는 interactable 을 건너뛰므로, 여기서 재화가 늘면 잠금은 그림일 뿐이다.
+            double goldLocked = S.Gold, gemLocked = S.Gem;
+            spent.GetComponent<Button>().onClick.Invoke(); yield return Frames(2);
+            Assert.AreEqual(goldLocked, S.Gold, 1e-6, "잠긴 버튼은 눌러도 골드를 안 준다(광고도 안 뜬다)");
+            Assert.AreEqual(gemLocked, S.Gem, 1e-6, "다이아도 마찬가지");
+
+            // 그리고 그 판의 규칙 줄은 «충전 완료» 가 아니라 카운트다운이어야 한다(T265 ⓓ 의 나머지 반쪽).
+            string spentRule = Find(ov, "QxRule").GetComponent<TMP_Text>().text;
+            StringAssert.Contains("다음 충전까지", spentRule, "다 쓰면 «다음 충전까지 hh:mm:ss»");
+            StringAssert.DoesNotContain("충전 완료", spentRule, "0 인데 «충전 완료» 면 글자가 거짓말이다");
+            _log.AssertNoRed("빠른 탐험 «다 쓴 판»");
+
             _app.Overlay.Close(); yield return Frames(1);
             yield return Shutdown();
         }
