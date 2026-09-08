@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using KkomaKnight.Game;
 using UnityEngine;
@@ -40,7 +42,7 @@ namespace KkomaKnight.Tests.Play
         }
 
         /// <summary>«Overlay/Popup/Border» 꼴의 읽을 수 있는 경로(캔버스까지).</summary>
-        public static string Path(Transform t)
+        public static string PathOf(Transform t)   // ⚠ 이름이 Path 이면 System.IO.Path 와 부딪친다(같은 파일에서 Path.Combine 을 쓴다)
         {
             if (t == null) return "(없음)";
             var sb = new StringBuilder(t.name);
@@ -65,8 +67,8 @@ namespace KkomaKnight.Tests.Play
             var top = hits[0].gameObject != null ? hits[0].gameObject.transform : null;
             var sb = new StringBuilder();
             for (int i = 0; i < hits.Count && i < 8; i++) sb.Append(i == 0 ? "" : " < ").Append(hits[i].gameObject != null ? hits[i].gameObject.name : "(null)");
-            if (top != null && (top == btn || top.IsChildOf(btn))) { why = "맨 위 히트 = " + Path(top) + " · 쌓인 순서: " + sb; return Reach.Ok; }
-            why = "맨 위 히트가 그 버튼이 아니다 — " + Path(top) + " 가 탭을 먹는다 · 쌓인 순서(위→아래): " + sb;
+            if (top != null && (top == btn || top.IsChildOf(btn))) { why = "맨 위 히트 = " + PathOf(top) + " · 쌓인 순서: " + sb; return Reach.Ok; }
+            why = "맨 위 히트가 그 버튼이 아니다 — " + PathOf(top) + " 가 탭을 먹는다 · 쌓인 순서(위→아래): " + sb;
             return Reach.Blocked;
         }
 
@@ -83,6 +85,7 @@ namespace KkomaKnight.Tests.Play
         public static void Check(App app, RectTransform btn, string what, bool strict)
         {
             var r = Reaches(app, btn, out string why);
+            Row(what, btn, r, why);
             if (r == Reach.Ok) { Debug.Log($"[Tap] 닿음  «{what}» — {why}"); return; }
             if (r == Reach.NoHit) { Debug.Log($"[Tap] 못잼  «{what}» — {why}"); return; }
             string msg = $"[Tap] 막힘  «{what}» 에 탭이 안 닿는다(주인 손가락이 보는 그림 그대로 · T227) — {why}";
@@ -106,11 +109,43 @@ namespace KkomaKnight.Tests.Play
             foreach (var b in root.GetComponentsInChildren<Button>(false))
             {
                 if (b == null) continue;
-                var r = Reaches(app, (RectTransform)b.transform, out string why);
-                sb.Append("  ").Append(r == Reach.Ok ? "닿음  " : r == Reach.Blocked ? "막힘  " : "못잼  ").Append(Path(b.transform)).Append("  ← ").Append(why).Append('\n');
+                var rt = (RectTransform)b.transform;
+                var r = Reaches(app, rt, out string why);
+                Row(where + " · " + b.name, rt, r, why);
+                sb.Append("  ").Append(r == Reach.Ok ? "닿음  " : r == Reach.Blocked ? "막힘  " : "못잼  ").Append(PathOf(b.transform)).Append("  ← ").Append(why).Append('\n');
             }
             Debug.Log(sb.ToString());
             return sb.ToString();
+        }
+
+        // ───────────────────────── ui-screens/tap.json (워커가 읽을 수 있는 자리) ─────────────────────────
+        /// <summary>
+        /// ⚑ <b>찍기만 하면 아무도 못 읽는다.</b> 유니티 테스트의 <c>Debug.Log</c> 는 결과 XML(아티팩트) 안에만 남는데
+        /// 워커 환경에서 그 아티팩트는 프록시가 막고(블롭 403), <c>get_job_logs</c> 는 잡 로그 <b>끝 30KB 남짓</b>만 준다 —
+        /// 유니티 잡의 콘솔 출력은 그 창 앞에 있어 손이 안 닿는다(2026-09-08 실측 · 결정 636).
+        /// 그래서 이 표를 <see cref="PlayShot.Dirs"/> 폴더에 <c>tap.json</c> 으로도 쓴다 — CI 가 PNG·<c>layout.json</c>·
+        /// <c>overdraw.json</c> 과 같이 `screens` 브랜치로 올려 주므로 <c>git fetch origin screens</c> 한 번이면 읽힌다
+        /// (<see cref="OverdrawAuditTests"/> 가 같은 까닭으로 밟은 길이다).
+        /// </summary>
+        static readonly List<string> _rows = new List<string>();
+
+        static string J(string s) => (s ?? "").Replace("\\", "/").Replace("\"", "'").Replace("\n", " ");
+
+        static void Row(string what, RectTransform btn, Reach r, string why)
+        {
+            _rows.Add("{\"what\":\"" + J(what) + "\",\"btn\":\"" + J(btn != null ? PathOf(btn) : "(null)") + "\",\"reach\":\""
+                      + (r == Reach.Ok ? "ok" : r == Reach.Blocked ? "blocked" : "nohit") + "\",\"why\":\"" + J(why) + "\"}");
+            Flush();
+        }
+
+        static void Flush()
+        {
+            string json = "{\"_meta\":{\"task\":\"T227\",\"rows\":" + _rows.Count + "},\"rows\":[" + string.Join(",", _rows.ToArray()) + "]}";
+            foreach (var dir in PlayShot.Dirs())
+            {
+                try { Directory.CreateDirectory(dir); File.WriteAllText(Path.Combine(dir, "tap.json"), json); }
+                catch (Exception e) { Debug.LogWarning("[Tap] tap.json 저장 실패(" + dir + "): " + e.Message); }
+            }
         }
     }
 }
