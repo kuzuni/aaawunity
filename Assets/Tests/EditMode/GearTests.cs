@@ -211,6 +211,76 @@ namespace KkomaKnight.Tests
             }
         }
 
+        // ───────── T261 — 희귀 상자의 «희귀 확정» 천장(주인 2026-09-09 «희귀 확정까지 10회 … 실제로 그런 식으로 기능되게») ─────────
+        //  ⚠ 위 통계 자들은 이 천장을 **안 탄다** — `NaturalRollPct` 가 뽑을 때마다 새 카운터를 쓰기 때문이다(일부러 그렇게 만들었다:
+        //    «자연 굴림» 만 재려고). 그래서 «덮기가 정말 걸렸는가» 는 저 자들이 초록인 것으로는 알 수 없고, 여기서 따로 잰다.
+
+        [Test]
+        public void RareBoxHasTheOwnersRarePityEvenThoughTheSourceTableHasNone()
+        {
+            var d = TestData.Load();
+            var rare = d.Gacha.Box(GachaData.RareBoxKey);
+            // 원본(`data/gacha.json`)에는 천장이 없다 — 그 사실을 여기 못 박아 둔다. 어느 날 원본이 갖게 되면 이 줄이 알려 준다.
+            Assert.That(rare.PityMyth, Is.EqualTo(0), "희귀 상자에는 신화 천장이 없다(원본 그대로)");
+            Assert.That(rare.PityLegend, Is.EqualTo(0), "희귀 상자에는 전설 피티가 없다(원본 그대로)");
+            Assert.That(rare.PityRare, Is.EqualTo(GachaData.RarePity),
+                        "희귀 상자의 «희귀 확정» 천장은 유니티 쪽에서 얹는다(T261 · 원본과 다름 · 주인 지시)");
+            // 다른 상자는 안 건드린다 — 얹는 자리가 «rare 한 곳» 인지 확인한다.
+            Assert.That(d.Gacha.Box("legend").PityRare, Is.EqualTo(0), "전설 상자에는 희귀 천장을 안 얹는다");
+            Assert.That(d.Gacha.Box("myth").PityRare, Is.EqualTo(0), "신화 상자에도 안 얹는다");
+            Assert.That(d.Gear.RarRare, Is.EqualTo(d.Gear.RarLegend - 1), "«희귀» 는 전설 바로 아래 등급이다(표에서 온다)");
+        }
+
+        [Test]
+        public void RarePityFiresExactlyAtTheTenthMissAndResetsOnAnyRareOrBetter()
+        {
+            var d = TestData.Load(); var G = d.Gear;
+            var box = d.Gacha.Box(GachaData.RareBoxKey);
+            var st = new GachaState(); var rng = new Mulberry32(7);
+            int since = 0, hits = 0;
+            for (int i = 0; i < 20 * GachaSample / 100; i++)          // 2,000회면 천장이 여러 번 걸린다
+            {
+                since++;
+                bool expect = since >= box.PityRare;
+                Assert.That(since, Is.LessThanOrEqualTo(box.PityRare), "희귀 천장이 정해진 회수를 넘겨 걸렸다");
+                int rar = GearSystem.GachaPull(d, st, box, rng)[0].Rar;
+                if (expect) { Assert.That(rar, Is.GreaterThanOrEqualTo(G.RarRare), $"{box.PityRare}회째는 희귀 이상 확정"); hits++; }
+                if (rar >= G.RarRare) since = 0;                       // 희귀 «이상» 이면 되돌린다(전설·신화도 포함)
+                Assert.That(st.PRare, Is.EqualTo(since), "카운터가 시험이 세는 것과 같이 움직인다");
+            }
+            Assert.That(hits, Is.GreaterThan(0), "천장이 한 번도 안 걸렸다(표본 부족?)");
+        }
+
+        [Test]
+        public void RarePityRaisesRareShareWithoutBreakingTheRestOfTheDistribution()
+        {
+            // 천장은 «희귀 비율» 만 올린다 — 확률 0 인 등급(전설·신화)이 희귀 상자에서 나오면 안 된다.
+            var d = TestData.Load(); var G = d.Gear;
+            var box = d.Gacha.Box(GachaData.RareBoxKey);
+            var st = new GachaState(); var rng = new Mulberry32(99);
+            var cnt = new int[box.Rate.Length];
+            for (int i = 0; i < GachaSample; i++) cnt[GearSystem.GachaPull(d, st, box, rng)[0].Rar]++;
+            double rarePct = cnt[G.RarRare] * 100.0 / GachaSample;
+            Assert.That(rarePct, Is.GreaterThan(box.Rate[G.RarRare]),
+                        $"천장이 있으니 희귀 비율({rarePct:0.00}%)이 표({box.Rate[G.RarRare]}%)보다 높아야 한다");
+            for (int r = 0; r < box.Rate.Length; r++)
+                if (box.Rate[r] <= 0) Assert.That(cnt[r], Is.EqualTo(0), $"확률 0 인 등급 {r} 은 천장이 있어도 안 나온다");
+            Assert.That(cnt[G.RarRare] + cnt[0], Is.EqualTo(GachaSample), "희귀 상자는 일반·희귀 둘만 나온다");
+        }
+
+        [Test]
+        public void RarePityCounterSurvivesASaveRoundTripAndOldSavesStartAtZero()
+        {
+            // 옛 세이브에는 `pRare` 키가 없다 — 0 으로 읽혀야 하고(천장이 늦게 오지 빨리 오면 안 된다) 새 세이브는 값을 지켜야 한다.
+            var s = new SaveData();
+            s.GachaBoxes[GachaData.RareBoxKey] = new GachaState { P50 = 1, P10 = 2, Pulls = 3, PRare = 7 };
+            var D = TestData.Load();
+            var back = SaveData.FromJson(s.ToJson(), D);
+            Assert.That(back.GachaBoxes[GachaData.RareBoxKey].PRare, Is.EqualTo(7), "저장했다 읽으면 그대로다");
+            var old = SaveData.FromJson("{\"gachaBoxes\":{\"rare\":{\"p50\":1,\"p10\":2,\"pulls\":3}}}", D);
+            Assert.That(old.GachaBoxes[GachaData.RareBoxKey].PRare, Is.EqualTo(0), "옛 세이브는 0 에서 시작한다(손해 없음)");
+        }
+
         [Test]
         public void TenPullIsTenSinglePullsAndFreshCounterGuaranteesLegendPerTen()
         {

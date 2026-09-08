@@ -316,6 +316,12 @@ namespace KkomaKnight.Core
         public Dictionary<string, string[]> Types = new Dictionary<string, string[]>();
         public Dictionary<string, string> TypeName = new Dictionary<string, string>();
         public string[] RarName; public int RarLegend, RarMyth;
+        /// <summary>
+        /// «희귀» 등급 인덱스 — <b>전설 바로 아래</b>다(`gear.json` rarName = 일반·희귀·전설·신화 · rarLegend 2 · rarMyth 3).
+        /// <para>T261 이 «희귀 확정» 천장을 얹으면서 필요해졌다. 인덱스 <c>1</c> 을 코드에 박지 않는 까닭은 등급이 늘거나 이름이 바뀌어도
+        /// <b>«전설 아래가 희귀»</b> 라는 관계는 표에서 오기 때문이다 — 박아 두면 표를 고쳐도 여기만 안 따라온다.</para>
+        /// </summary>
+        public int RarRare => RarLegend - 1;
         public double[] Atk, Hp, Sh;
         public double PlusStep; public int LegendToMythPlus, LegendMaxPlus;
         public double SlotStep; public int SlotLvMax; public double SlotCostBase, SlotCostG; public double[] SlotCostTable;
@@ -428,6 +434,14 @@ namespace KkomaKnight.Core
     public sealed class GachaData
     {
         public List<GachaBox> Boxes = new List<GachaBox>();
+        /// <summary>
+        /// T261 — **희귀 상자의 «희귀 확정» 천장**(주인 2026-09-09 «희귀 확정까지 10회 … 실제로 그런 식으로 기능되게»).
+        /// <para><b>원본과 다른 유일한 값이다</b> — `data/gacha.json` 의 `rare` 는 `pityLegend 0 · pityMyth 0` 으로 천장이 없다.
+        /// 그 파일은 aaaw 정본이라 손대지 않으므로(§1) 읽은 뒤 <see cref="From"/> 한 곳에서만 얹는다. 되돌리려면 이 상수 하나다.</para>
+        /// </summary>
+        public const int RarePity = 10;
+        /// <summary>그 천장을 얹을 상자의 키 — 표의 상자 키다(`rare` · 「희귀 상자」).</summary>
+        public const string RareBoxKey = "rare";
         public int TenPullCount; public double TenPullDiscount;
         public double PullCost, DailyGem, IapGem; public int RunsPerDay;
         public GachaBox Box(string key) { foreach (var b in Boxes) if (b.Key == key) return b; throw new KeyNotFoundException("gacha box " + key); }
@@ -439,7 +453,13 @@ namespace KkomaKnight.Core
             foreach (var k in bx.Keys)
             {
                 var b = bx[k];
-                d.Boxes.Add(new GachaBox { Key = b["key"].Str(k), Name = b["name"].Str(), Cost = b["cost"].Num(), Rate = b["rate"].NumArray(), Cum = b["cum"].NumArray(), PityMyth = b["pityMyth"].Int(), PityLegend = b["pityLegend"].Int() });
+                var box = new GachaBox { Key = b["key"].Str(k), Name = b["name"].Str(), Cost = b["cost"].Num(), Rate = b["rate"].NumArray(), Cum = b["cum"].NumArray(),
+                                        PityMyth = b["pityMyth"].Int(), PityLegend = b["pityLegend"].Int(), PityRare = b["pityRare"].Int() };
+                // ⚑ T261 — **원본과 다르다(주인 지시 2026-09-09 06:0X «희귀 상자도 «희귀 확정까지 10회» … 실제로 그런 식으로 기능되게»).**
+                //   `data/gacha.json` 은 aaaw 정본이라 손대지 않는다(§1) — 그래서 **읽은 뒤 이 한 곳에서만** 희귀 상자의 천장을 얹는다.
+                //   원본이 언젠가 `pityRare` 를 갖게 되면 그 값이 이기고(위에서 이미 읽었다) 이 덮기는 저절로 안 걸린다.
+                if (box.PityRare <= 0 && box.Key == RareBoxKey) box.PityRare = RarePity;
+                d.Boxes.Add(box);
             }
             d.TenPullCount = j["tenPull"]["count"].Int(10); d.TenPullDiscount = j["tenPull"]["discount"].Num();
             var e = j["economy"]; d.PullCost = e["pullCost"].Num(); d.DailyGem = e["dailyGem"].Num(); d.IapGem = e["iapGem"].Num(); d.RunsPerDay = e["runsPerDay"].Int();
@@ -449,6 +469,8 @@ namespace KkomaKnight.Core
     public sealed class GachaBox
     {
         public string Key, Name; public double Cost; public double[] Rate, Cum; public int PityMyth, PityLegend;
+        /// <summary>«희귀 확정» 천장 — 이만큼 연속으로 희귀 미만이 나오면 다음 뽑기는 희귀 이상이 된다(0 = 천장 없음 · T261).</summary>
+        public int PityRare;
         /// <summary>sim.js `rarRoll(r)` — r 은 [0,100). 높은 등급부터 누적 임계와 비교.</summary>
         public int RarRoll(double r) { for (int i = Rate.Length - 1; i > 0; i--) if (r < Cum[i]) return i; return 0; }
     }

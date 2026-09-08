@@ -23,7 +23,8 @@ namespace KkomaKnight.Core
 
     public struct Power { public double Atk, Hp, Sh; }
 
-    public sealed class GachaState { public int P50, P10, Pulls; }
+    /// <summary>상자별 뽑기 카운터 — <c>P50</c> 신화 천장 · <c>P10</c> 전설 피티 · <c>PRare</c> **희귀 확정 천장**(T261) · <c>Pulls</c> 누적.</summary>
+    public sealed class GachaState { public int P50, P10, Pulls, PRare; }
 
     /// <summary>장비 수식 (PLAN §11) — sim.js 와 같은 동사: buildPower · gachaPull · fuseMake · fuseAll · autoEquip.</summary>
     public static class GearSystem
@@ -116,8 +117,10 @@ namespace KkomaKnight.Core
         public static List<GearItem> GachaPull(GameData D, GachaState st, GachaBox box, IRng rng)
         {
             var G = D.Gear;
-            st.Pulls++; st.P50++; st.P10++;
+            st.Pulls++; st.P50++; st.P10++; st.PRare++;
             bool pityM = box.PityMyth > 0 && st.P50 >= box.PityMyth, pityL = box.PityLegend > 0 && st.P10 >= box.PityLegend;
+            // T261 — 희귀 상자의 «희귀 확정» 천장(주인 2026-09-09). 다른 둘과 **같은 꼴**이다: 세는 자리·올리는 자리·0 으로 되돌리는 자리.
+            bool pityR = box.PityRare > 0 && st.PRare >= box.PityRare;
             int rar;
             if (pityM) rar = G.RarMyth;
             else
@@ -125,9 +128,13 @@ namespace KkomaKnight.Core
                 double r = rng.Next() * 100;
                 rar = box.RarRoll(r);
                 if (pityL && rar < G.RarLegend) rar = G.RarLegend;
+                // 전설 피티가 이미 올려 줬으면 이 줄은 아무 일도 안 한다(희귀보다 높으니까) — 순서가 «높은 천장이 이긴다» 다.
+                if (pityR && rar < G.RarRare) rar = G.RarRare;
             }
             if (rar == G.RarMyth) st.P50 = 0;
             if (rar >= G.RarLegend) st.P10 = 0;
+            // 희귀 «이상» 이 나오면 되돌린다 — 전설·신화도 희귀 이상이므로 그때도 0 이다(주인 «희귀 확정» 이지 «희귀만» 이 아니다).
+            if (rar >= G.RarRare) st.PRare = 0;
             GearItem Mk(int rr) { var t = G.AllTypes[(int)Math.Floor(rng.Next() * G.AllTypes.Count)]; return new GearItem { Part = t.Part, Type = t.Type, Rar = rr, Plus = 0 }; }
             var out_ = new List<GearItem> { Mk(rar) };
             if (pityM && pityL) out_.Add(Mk(G.RarLegend));

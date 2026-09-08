@@ -224,7 +224,7 @@ namespace KkomaKnight.Core
             foreach (var b in D.Gacha.Boxes)
             {
                 if (!GachaBoxes.TryGetValue(b.Key, out var st) || st == null) GachaBoxes[b.Key] = new GachaState();
-                else { st.P50 = Math.Max(0, st.P50); st.P10 = Math.Max(0, st.P10); st.Pulls = Math.Max(0, st.Pulls); }
+                else { st.P50 = Math.Max(0, st.P50); st.P10 = Math.Max(0, st.P10); st.Pulls = Math.Max(0, st.Pulls); st.PRare = Math.Max(0, st.PRare); }
             }
         }
 
@@ -284,7 +284,9 @@ namespace KkomaKnight.Core
             var cc = new Dictionary<string, object>(); foreach (var kv in ChestClaimed) cc[kv.Key.ToString(CultureInfo.InvariantCulture)] = (double)kv.Value; o["chestClaimed"] = cc;
             var ck = new Dictionary<string, object>(); foreach (var kv in ChestKills) ck[kv.Key.ToString(CultureInfo.InvariantCulture)] = (double)kv.Value; o["chestKills"] = ck;
             var gb = new Dictionary<string, object>();
-            foreach (var kv in GachaBoxes) gb[kv.Key] = new Dictionary<string, object> { ["p50"] = (double)kv.Value.P50, ["p10"] = (double)kv.Value.P10, ["pulls"] = (double)kv.Value.Pulls };
+            // T261 — `pRare`(희귀 확정 천장 카운터)를 같이 적는다. 옛 세이브에는 이 키가 없으니 읽을 때 0 이 되고,
+            //  0 이면 «막 리셋된 것» 과 같아 손해가 없다(천장이 늦게 오지 빨리 오지 않는다).
+            foreach (var kv in GachaBoxes) gb[kv.Key] = new Dictionary<string, object> { ["p50"] = (double)kv.Value.P50, ["p10"] = (double)kv.Value.P10, ["pulls"] = (double)kv.Value.Pulls, ["pRare"] = (double)kv.Value.PRare };
             o["gachaBoxes"] = gb;
             return MiniJson.Serialize(o);
         }
@@ -341,7 +343,7 @@ namespace KkomaKnight.Core
                     if (cc.IsArray) foreach (var c in cc.Items()) s.ChestClaimed[c.Int()] = ChapterChest.OldSaveAll;
                     else foreach (var k in cc.Keys) if (int.TryParse(k, NumberStyles.Integer, CultureInfo.InvariantCulture, out var c)) s.ChestClaimed[c] = cc[k].Int();
                     foreach (var k in j["chestKills"].Keys) if (int.TryParse(k, NumberStyles.Integer, CultureInfo.InvariantCulture, out var c)) s.ChestKills[c] = j["chestKills"][k].Int();
-                    foreach (var k in j["gachaBoxes"].Keys) s.GachaBoxes[k] = new GachaState { P50 = j["gachaBoxes"][k]["p50"].Int(), P10 = j["gachaBoxes"][k]["p10"].Int(), Pulls = j["gachaBoxes"][k]["pulls"].Int() };
+                    foreach (var k in j["gachaBoxes"].Keys) s.GachaBoxes[k] = new GachaState { P50 = j["gachaBoxes"][k]["p50"].Int(), P10 = j["gachaBoxes"][k]["p10"].Int(), Pulls = j["gachaBoxes"][k]["pulls"].Int(), PRare = j["gachaBoxes"][k]["pRare"].Int() };
                 }
                 catch (Exception) { s = new SaveData(); }
             }
