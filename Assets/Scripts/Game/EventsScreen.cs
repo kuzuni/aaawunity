@@ -89,14 +89,25 @@ namespace KkomaKnight.Game
         {
             var d = App != null && App.Data != null ? App.Data.ArenaDummy : null;
             if (d == null) return Dash;
-            return UiKit.FmtComma(ArenaDummy.Power(d, App.Power(), rank));
+            return ArenaNum(ArenaDummy.Power(d, App.Power(), rank));
         }
         /// <summary>순위의 더미 승점(🏆) 글자 — 계수 표가 없으면 «—».</summary>
         string DummyScore(int rank)
         {
             var d = App != null && App.Data != null ? App.Data.ArenaDummy : null;
-            return d == null ? Dash : UiKit.FmtComma(ArenaDummy.Score(d, rank));
+            return d == null ? Dash : ArenaNum(ArenaDummy.Score(d, rank));
         }
+
+        /// <summary>
+        /// 아레나 화면의 수 표기 — <b>콤마를 안 넣는다</b>(레퍼런스 실측: 24 의 «2624»·«976» · 25 의 «4000»).
+        /// <para>
+        /// 우리 기본 표기(<see cref="UiKit.FmtComma"/>)를 그대로 쓰면 «2,342» 가 되는데, 그 콤마 한 자가 상대 줄 pill 을 넘겨
+        /// 자동 크기를 하한 밑(35)으로 눌렀다 — T207 ② 전에는 uGUI 가 크기를 안 되써서 게이트에 안 걸렸을 뿐 <b>글자는 그때도 작았다</b>.
+        /// 그러니 이것은 «TMP 때문에 생긴 결함» 이 아니라 <b>TMP 가 드러낸 옛 결함</b>이고, 고칠 자리는 칸 폭이 아니라 표기다.
+        /// </para>
+        /// 같은 규칙을 이 저장소가 이미 두 번 세웠다 — 발밑 숫자(T125 회차 1)와 상인 값(T209 회차 2 · 결정 555).
+        /// </summary>
+        static string ArenaNum(double v) => v.ToString("0");
 
         static Color FootColor => Palette.Hex("#47443F");
         static Color BgColor => Palette.Hex("#2C2B29");
@@ -510,8 +521,8 @@ namespace KkomaKnight.Game
                 UiKit.Bordered(row);
                 Portrait(row, "Face", new Layout.R(2.5f, 12, 11.5f, 76), "ui.itemFrame.yellow", Foes[i % Foes.Length], true);
                 UiKit.Label(row, 16, 6, 44, 42, FoeName(FoeRank(i)), TextSize.Body, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyles.Bold;
-                _dummyPowerTexts.Add(new KeyValuePair<TMP_Text, int>(Pill(row, new Layout.R(16, 54, 19, 38), "ui.battle", DummyPower(FoeRank(i)), Palette.Orange), FoeRank(i)));
-                Pill(row, new Layout.R(37, 54, 19, 38), "ui.trophy", DummyScore(FoeRank(i)), Palette.Yellow);
+                _dummyPowerTexts.Add(new KeyValuePair<TMP_Text, int>(Pill(row, new Layout.R(16, 54, 22, 38), "ui.battle", DummyPower(FoeRank(i)), Palette.Orange), FoeRank(i)));
+                Pill(row, new Layout.R(39, 54, 22, 38), "ui.trophy", DummyScore(FoeRank(i)), Palette.Yellow);
                 var br = Layout.AcRowBtn; br.Y += i * Layout.AcRowPitch;
                 var b = UiKit.Button(box, "ui.btnOrange", "도전", Noop, br.Within(Layout.AcBox)); b.name = "FoeBtn:" + i; TicketCost(b, "ui.iconTokenRed");
                 if (i == 0) { UiKit.Tag(row, "상대 줄(1칸)"); UiKit.Tag(b, "줄 도전 버튼"); }
@@ -943,7 +954,9 @@ namespace KkomaKnight.Game
         {
             var p = UiKit.Panel(row, "Pill", "fr.r12", Palette.Hex("#1E1E1E")); UiKit.Pct(p.rectTransform, r);
             var ic = UiKit.Icon(p.transform, "Icon", icon); UiKit.Pct(ic.rectTransform, 6, 10, 26, 80);
-            var t = UiKit.Label(p.transform, 36, 0, 60, 100, text, TextSize.Body, color, TextAnchor.MiddleLeft); t.fontStyle = FontStyles.Bold;
+            // T207 ③ — 글자가 쓰는 폭을 아이콘 바로 뒤(32%)부터 칸 끝까지로 넓혔다. 60% 로는 네 자리 수가 본문 하한(40)에 안 들어간다
+            //   (워커 E 의 셈: 필요 폭 133.7px ↔ 옛 구도의 천장 126.5px · 결정 608). 아이콘은 6~32% 라 겹치지 않는다.
+            var t = UiKit.Label(p.transform, 32, 0, 68, 100, text, TextSize.Body, color, TextAnchor.MiddleLeft); t.fontStyle = FontStyles.Bold;
             return t;
         }
         /// <summary>공통 팝업 위에 레퍼런스의 <b>평평한 제목 띠</b> — 리본(Title 조각)은 끄고 박스 윗변에 색 띠 + 굵은 흰 글자(워커 결정 기록).</summary>
