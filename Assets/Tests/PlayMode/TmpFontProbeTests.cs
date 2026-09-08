@@ -61,6 +61,23 @@ namespace KkomaKnight.Tests.Play
             return n;
         }
 
+        /// <summary>같은 띠에서 «밝은» 픽셀 수 — 테가 정점 색(흰색)으로 물들었는지 가르는 데 쓴다(T224 2항-d).</summary>
+        static int BrightPixels(byte[] png, float y0, float y1, float threshold)
+        {
+            if (png == null) return -1;
+            var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            if (!tex.LoadImage(png)) { Object.Destroy(tex); return -1; }
+            int w = tex.width, h = tex.height, n = 0;
+            var px = tex.GetPixels32();
+            int yTop = Mathf.Clamp(Mathf.RoundToInt(h * (1f - y1)), 0, h - 1);
+            int yBot = Mathf.Clamp(Mathf.RoundToInt(h * (1f - y0)), 0, h - 1);
+            for (int y = yTop; y <= yBot; y++)
+                for (int x = 0; x < w; x++)
+                    if (Luma(px[x + y * w]) > threshold) n++;
+            Object.Destroy(tex);
+            return n;
+        }
+
         [UnityTest]
         public IEnumerator JuaTmpFontAssetBakesHangulAndDrawsWithAMaterialOutline()
         {
@@ -140,6 +157,25 @@ namespace KkomaKnight.Tests.Play
                 Debug.LogWarning("[T224②] ⛔ 테가 안 그려진다 — 흰 판 위 흰 글자인데 어두운 픽셀이 " + white +
                                  "(판만 있을 때 " + before + "). 값을 재는 단언(_OutlineWidth == 0.20)은 이 경우에도 통과하므로 그 자로는 못 잡는다. " +
                                  "고치면 이 줄을 Assert.Greater 로 되돌려라(T226 · 결정 625).");
+
+            // ⓖ T224 2항-d — **회색 판**에서 다시 잰다: 여기서 세 갈래가 갈린다(로그만 · 막지 않는다 · 결정 625).
+            //   run 480 실측으로 앞의 것이 다 죽었다 — 그리는 머티리얼이 공유와 «같은 객체» 이고(ⓑ 아님)
+            //   w=0.2 ratioA=0.9 grad=10 soft=0 dilate=0 kw=on 인데도 흰 판에서 어두운 픽셀이 10 → 10 이다.
+            //   손잡이가 다 맞는데 픽셀이 0 이면 남은 갈래는 «정점 색이 테까지 물들이는가» 다 —
+            //   uGUI `Outline` 은 테 색이 따로였지만 TMP 셰이더 갈래에 따라 `input.color` 가 테에도 곱해질 수 있고,
+            //   그러면 «흰 글자» 로 재는 순간 검은 테가 **흰 테**가 되어 흰 판에서 사라진다(내 ⓔ 설계의 구멍이다).
+            //   회색 판 + 흰 글자 + 검은 테로 찍으면 셋이 갈린다:
+            //     어두운 픽셀이 는다      → 테가 검게 그려진다(그러면 흰 판에서 안 보인 것은 ⓔ 설계 탓이고 진짜 결함은 다른 화면 쪽)
+            //     밝은 픽셀만 는다        → 테가 **정점 색으로 물든다**(고침 = 테 색을 정점 색과 무관하게 넣는 길)
+            //     둘 다 안 는다          → 테가 정말 안 그려진다(그때 «그 밖» 이 남는다)
+            bg.color = new Color(0.5f, 0.5f, 0.5f, 1f);
+            Canvas.ForceUpdateCanvases(); yield return Frames(2);
+            Assert.IsTrue(PlayShot.Save(_app, "t224_grey", null), "촬영(회색 판 · 흰 글자)");
+            int greyDark = DarkPixels(PlayShot.LastPng, 0.40f, 0.50f, 0.35f);
+            int greyBright = BrightPixels(PlayShot.LastPng, 0.40f, 0.50f, 0.65f);
+            Debug.Log($"[T224④] 회색 판 · 흰 글자 — 어두운(<0.35) {greyDark} · 밝은(>0.65) {greyBright} · " +
+                      $"판만 있을 때(흰 판) 어두운 {before}. 어두운 것이 늘면 «검은 테가 그려진다» · " +
+                      "밝은 것만 늘면 «테가 정점 색으로 물든다» · 둘 다 안 늘면 «정말 안 그려진다».");
 
             // ⓕ 그 «상태» 도 같이 못 박는다 — 픽셀 판정이 먼저이고, 이것은 되돌림을 막는 자다.
             Assert.IsTrue(TmpFont.OutlineDraws(asset.material),
