@@ -22,8 +22,11 @@ namespace KkomaKnight.Core
         public double QuickHours = 5;
         /// <summary>빠른 탐험 하루 횟수 — <b>T265 로 안 쓴다</b>(충전제로 바뀌었다 · 되돌릴 때만 되살린다).</summary>
         public int QuickAdsPerDay = 3;
-        /// <summary>빠른 탐험 <b>한 번이 차는 데 걸리는 시간</b>(주인 2026-09-09 «3시간에 한 번씩» · T265).</summary>
-        public double QuickChargeHours = 3;
+        /// <summary>
+        /// 빠른 탐험 <b>한 번이 차는 데 걸리는 시간</b> — <b>2시간</b>(주인 2026-09-09 08:2X «3시간에 한 번이라던 거 2시간으로 하자» · T270 이 T265 의 3시간을 정정).
+        /// <para>되돌리려면 <b>여기와 <c>expedition.json</c> 의 <c>quickChargeHours</c> 두 곳</b>만 3 으로 되돌린다 — 화면 글자·카운트다운은 이 값을 읽어 쓰므로 저절로 따라온다.</para>
+        /// </summary>
+        public double QuickChargeHours = 2;
         /// <summary>빠른 탐험 <b>최대 보유</b>(주인 «3번 받을 수 있는 거임» · 레퍼런스 31 버튼 배지 «3»).</summary>
         public int QuickMax = 3;
         public double QuickChargeSeconds => QuickChargeHours * 3600.0;
@@ -43,7 +46,7 @@ namespace KkomaKnight.Core
             d.QuickHours = j["quickHours"].ReqNum("quickHours");
             // T265 — 충전제. 옛 표(quickAdsPerDay 만 있는 것)도 그대로 읽히게 «없으면 기본값» 이다.
             d.QuickAdsPerDay = j.Has("quickAdsPerDay") ? (int)j["quickAdsPerDay"].Num() : 3;
-            d.QuickChargeHours = j.Has("quickChargeHours") ? j["quickChargeHours"].Num() : 3;
+            d.QuickChargeHours = j.Has("quickChargeHours") ? j["quickChargeHours"].Num() : 2;   // 기본값도 2 로(T270 · 표에 키가 없던 옛 판을 읽을 때만 쓰인다)
             d.QuickMax = j.Has("quickMax") ? (int)j["quickMax"].Num() : 3;
             if (d.MaxHours <= 0) throw new FormatException("expedition.json: maxHours 는 0 보다 커야 한다");
             if (d.QuickHours <= 0) throw new FormatException("expedition.json: quickHours 는 0 보다 커야 한다");
@@ -77,11 +80,11 @@ namespace KkomaKnight.Core
         }
 
         /// <summary>
-        /// 빠른 탐험 충전 (T265 · 주인 2026-09-09 «3시간에 한 번씩 초기화 · 3시간에 한 번씩 3번 받을 수 있는 거임»).
+        /// 빠른 탐험 충전 (T265 · 주인 원문 «3시간에 한 번씩 초기화 · 3시간에 한 번씩 3번 받을 수 있는 거임» → <b>주기는 T270 에서 2시간으로 정정됐다</b> · 횟수 3 은 그대로).
         /// <list type="bullet">
         /// <item><b>옛 세이브·첫 실행은 «가득» 으로 시작</b>한다(<c>ExpQuickAt == 0</c>). 0 으로 시작하면 여태 하루 3회를 쓰던 사람에게서
         /// 아무 말 없이 아홉 시간을 빼앗는 셈이라, 규칙이 바뀔 때 손해 보는 쪽이 사람이 되면 안 된다(결정 기록).</item>
-        /// <item><b>기준 시각을 «지금» 이 아니라 «찬 만큼» 만 민다</b> — 그래야 3시간 59분이 3시간으로 잘려 59분이 사라지지 않는다(오프라인 회복이 정확해진다).</item>
+        /// <item><b>기준 시각을 «지금» 이 아니라 «찬 만큼» 만 민다</b> — 그래야 «한 주기 + 59분» 이 한 주기로 잘려 59분이 사라지지 않는다(오프라인 회복이 정확해진다).</item>
         /// <item><b>꽉 차 있으면 기준 시각을 지금으로 붙든다</b> — 안 그러면 하루 꽉 차 있던 사람이 한 번 쓰는 순간 남은 여덟 칸이 한꺼번에 들어온다.</item>
         /// <item>시계를 뒤로 돌리면(지금 &lt; 기준) 기준을 지금으로 당긴다 — 되돌림 이득 0(누적 쪽과 같은 규약).</item>
         /// </list>

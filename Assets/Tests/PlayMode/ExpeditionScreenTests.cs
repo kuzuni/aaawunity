@@ -192,7 +192,35 @@ namespace KkomaKnight.Tests.Play
             StringAssert.Contains("충전 완료", ruleTxt, "가득 차 있으면 «충전 완료»");
             AssertNoPopupRibbon(ov, "빠른 탐험 팝업(31)");   // T146 ⓐ — 31 도 레퍼런스에 리본이 없다(명판이 제목)
             Assert.IsNull(EnglishLeftOver(ov), "영문 데모 글자 0 (T44)");
-            _log.AssertNoRed("빠른 탐험 팝업");
+
+            // ⓕ ⚑ T272(T270 이 흡수) — **여태 이 버튼을 아무 자도 «눌러 보지» 않았다.**
+            //   위 줄들은 «있다 + interactable 이다» 까지만 본다. 지급 버튼 가운데 이것 하나만 그랬다(검수 Q 등재).
+            //   그래서 «열려 있는데 눌러도 아무 일 없는» 꼴이 나도 이 자는 초록이다 — T228·T243 이 같은 갈래로 값을 치렀다.
+            //   여기서는 **누르고 나서 세 가지가 같이 움직이는가**를 잰다: 재화 · 보유 충전 · 배지 숫자.
+            //   ⚠ **이 버튼은 «그 자리에서» 주지 않는다** — 코드로 확인하고 그 순서대로 잰다(`LobbyPopups.cs:954`):
+            //   누르면 먼저 모의 광고(`Overlay.AdCountdown` · 3초)가 뜨고, **광고가 끝난 뒤에** `ClaimQuick` 이 불린다.
+            //   그래서 «누르고 두 프레임 뒤 골드» 를 재면 그 자가 빨개진다 — 자를 쓰기 전에 그 순서를 읽지 않았으면
+            //   오늘 배포를 두 번 세운 그 꼴(전제를 안 세운 단언)을 또 냈을 것이다. 기다리는 꼴은 `RestClearAdTests` 가 이미 쓴다.
+            double goldBefore = S.Gold, gemBefore = S.Gem;
+            int leftBefore = Expedition.QuickLeft(S, D, LobbyPopups.NowSec(), SaveStore.Today());
+            Expedition.QuickReward(_app.Data, S, D, out double wantG, out double wantM);
+            Assert.Greater(leftBefore, 0, "이 판은 충전이 남아 있어야 눌러 볼 수 있다(위에서 가득이라고 쟀다)");
+
+            Find(ov, "QxFreeBtn").GetComponent<Button>().onClick.Invoke();
+            yield return Frames(2);
+            Assert.IsTrue(_app.Overlay.IsOpen, "누르면 먼저 모의 광고가 뜬다(T23 AdCountdown · 여기서 바로 주지 않는다)");
+
+            float adT0 = Time.realtimeSinceStartup;                       // 광고 3초 + 여유
+            while (Expedition.QuickLeft(S, D, LobbyPopups.NowSec(), SaveStore.Today()) == leftBefore
+                   && Time.realtimeSinceStartup - adT0 < 8f) yield return null;
+            yield return Frames(2);
+
+            Assert.AreEqual(goldBefore + wantG, S.Gold, 1e-6,
+                "광고가 끝나면 골드가 실제로 는다 — Expedition.ClaimQuick 이 불렸는가(버튼이 열려 있는 것과 주는 것은 다르다)");
+            Assert.AreEqual(gemBefore + wantM, S.Gem, 1e-6, "다이아도 표대로 는다");
+            Assert.AreEqual(leftBefore - 1, Expedition.QuickLeft(S, D, LobbyPopups.NowSec(), SaveStore.Today()),
+                "보유 충전이 한 칸 준다(안 줄면 무한으로 받을 수 있다)");
+            _log.AssertNoRed("빠른 탐험 «광고 보고 무료» 지급");
 
             _app.Overlay.Close(); yield return Frames(1);
             yield return Shutdown();

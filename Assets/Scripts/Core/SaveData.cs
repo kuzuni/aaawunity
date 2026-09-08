@@ -52,12 +52,12 @@ namespace KkomaKnight.Core
         public string ExpQuickDay = "";
         /// <summary>오늘 쓴 빠른 탐험 횟수 — <b>T265 로 쓰이지 않는다</b>(위와 같은 까닭).</summary>
         public int ExpQuickUsed;
-        /// <summary>빠른 탐험 <b>보유 횟수</b>(T265 · 주인 2026-09-09 «3시간에 한 번씩 3번»). 상한 = expedition.json <c>quickMax</c>.
+        /// <summary>빠른 탐험 <b>보유 횟수</b>(T265 · 주인 «…에 한 번씩 3번» · <b>주기는 T270 에서 2시간</b> · 값은 <c>expedition.json</c> 이 든다). 상한 = expedition.json <c>quickMax</c>.
         /// 옛 세이브에는 없다 — 그때는 <see cref="ExpQuickAt"/> 가 0 이라 <see cref="Expedition.Roll"/> 이 «가득» 으로 시작시킨다(결정 기록 참조).</summary>
         public int ExpQuickCharge;
         /// <summary>빠른 탐험 <b>지금 차고 있는 몫의 기준 시각</b>(UTC 유닉스 초 · 0 이면 «아직 시작 안 함»).
         /// 날짜가 아니라 <b>시각</b>이라 앱을 꺼 둔 동안도 지난 시간만큼 찬다(오프라인 회복). 꽉 차 있으면 <see cref="Expedition.Roll"/> 이 «지금» 으로 붙들어
-        /// 다 쓴 <b>그 순간부터</b> 3시간이 시작되게 한다(안 그러면 오래 꽉 차 있던 만큼이 한꺼번에 들어온다).</summary>
+        /// 다 쓴 <b>그 순간부터</b> 한 주기(2시간)가 시작되게 한다(안 그러면 오래 꽉 차 있던 만큼이 한꺼번에 들어온다).</summary>
         public double ExpQuickAt;
         /// <summary>던전 티켓(T99 · 주인 2026-09-07) — 티켓·하루치 횟수가 살아 있는 날짜(<c>yyyy-MM-dd</c> · 바뀌면 <see cref="DungeonTickets.Roll"/> 이 보충한다).
         /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 기본값»(옛 세이브 호환 · <see cref="GiftDay"/> 와 같은 방식).</summary>
