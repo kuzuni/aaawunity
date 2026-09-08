@@ -125,6 +125,52 @@ namespace KkomaKnight.Core
             return t == null ? "" : t.Name;
         }
 
+        /// <summary>
+        /// 한 판이 끝난 뒤 <b>화면이 띄워야 하는 것 전부</b>(T240 4·5항 · 레퍼런스 <c>34_pvp_win.jpg</c> 의 «+8»/«−6» 과 명판이 이 값들이다).
+        /// <para>«전» 과 «후» 를 둘 다 들고 있는 까닭 — 결과 화면이 <b>올라가는 연출</b>(2400 → 2408 · 12위 → 11위)을 그리려면 시작점이 필요하고,
+        /// 화면이 그 시작점을 스스로 다시 계산하면 세이브가 이미 바뀐 뒤라 <b>같은 수가 안 나온다</b>.</para>
+        /// </summary>
+        public struct Outcome
+        {
+            /// <summary>이겼는가.</summary>
+            public bool Win;
+            /// <summary>판 전 승점 · 판 뒤 승점.</summary>
+            public double Before, After;
+            /// <summary><b>실제로 움직인</b> 승점 — 바닥에 걸리면 <c>lose</c> 보다 작다(화면은 <b>이 값</b>을 적어야 정직하다).</summary>
+            public double Delta;
+            /// <summary>판 전 순위 · 판 뒤 순위(1 이 가장 높다).</summary>
+            public int RankBefore, RankAfter;
+            /// <summary>판 뒤 승점의 티어 이름(결과 화면 명판).</summary>
+            public string Tier;
+            /// <summary>이 판으로 <b>최고 순위</b> 기록이 갱신됐는가(«최고 기록!» 을 띄울지 화면이 이걸로 정한다).</summary>
+            public bool BestImproved;
+        }
+
+        /// <summary>
+        /// 한 판의 결과를 <b>세이브에 반영하고</b> 화면이 쓸 값을 돌려준다(T240 5항 · 주인 «이기면 승점 올라가고 순위 올라가고 지면 승점 떨어지고»).
+        /// <para>⚠ <b>저장(디스크 쓰기)은 여기서 안 한다</b> — 이 함수는 순수 C# 이고 <c>SaveStore.Save</c> 는 게임 층 몫이다(부르는 쪽이 한 번만 부른다).</para>
+        /// <para>표가 없으면(<paramref name="m"/> null) <b>아무것도 안 바꾸고</b> 지금 상태를 그대로 돌려준다 — 표를 못 읽었다고 승점을 0 으로 만들면 그것이 더 나쁘다.</para>
+        /// </summary>
+        public static Outcome Settle(SaveData s, ArenaMatchData m, ArenaDummyData d, bool win)
+        {
+            var o = new Outcome { Win = win };
+            if (s == null) return o;
+            o.Before = s.ArenaScore;
+            o.RankBefore = RankOf(d, o.Before);
+            o.After = m == null ? o.Before : Apply(m, o.Before, win);
+            o.Delta = o.After - o.Before;
+            o.RankAfter = RankOf(d, o.After);
+            o.Tier = TierOf(m, o.After);
+            if (m != null)
+            {
+                s.ArenaScore = o.After;
+                int best = BetterRank(s.ArenaBest, o.RankAfter);
+                o.BestImproved = best != s.ArenaBest;
+                s.ArenaBest = best;
+            }
+            return o;
+        }
+
         /// <summary>둘 중 «더 높은» 순위(수가 작은 쪽) — 0 은 «아직 없다» 라 상대가 이긴다(세이브의 최고 순위에 쓴다).</summary>
         public static int BetterRank(int a, int b)
         {

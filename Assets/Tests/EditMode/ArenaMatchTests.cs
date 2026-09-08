@@ -133,6 +133,59 @@ namespace KkomaKnight.Tests
         }
 
         [Test]
+        public void SettleWritesTheSaveAndHandsTheScreenBothSidesOfTheMove()
+        {
+            var m = Load(); var d = Dummies();
+            var s = new SaveData { ArenaScore = 1000, ArenaBest = 0 };
+
+            var o = ArenaMatch.Settle(s, m, d, true);
+            Assert.IsTrue(o.Win);
+            Assert.AreEqual(1000, o.Before, "«전» 이 남아 있어야 화면이 올라가는 연출을 그린다");
+            Assert.AreEqual(1008, o.After);
+            Assert.AreEqual(8, o.Delta);
+            Assert.AreEqual(1008, s.ArenaScore, "세이브에 실제로 적힌다");
+            Assert.AreEqual(ArenaMatch.RankOf(d, 1000), o.RankBefore);
+            Assert.AreEqual(ArenaMatch.RankOf(d, 1008), o.RankAfter);
+            Assert.LessOrEqual(o.RankAfter, o.RankBefore, "이겼는데 순위가 나빠지면 안 된다");
+            Assert.AreEqual(ArenaMatch.TierOf(m, 1008), o.Tier);
+            Assert.AreEqual(o.RankAfter, s.ArenaBest, "첫 판이라 그대로 최고 기록이다");
+            Assert.IsTrue(o.BestImproved);
+
+            // 져서 순위가 내려가도 «최고 순위» 는 안 내려간다
+            int keep = s.ArenaBest;
+            var lose = ArenaMatch.Settle(s, m, d, false);
+            Assert.AreEqual(-6, lose.Delta);
+            Assert.AreEqual(1002, s.ArenaScore);
+            Assert.AreEqual(keep, s.ArenaBest, "최고 순위는 되돌아가지 않는다");
+            Assert.IsFalse(lose.BestImproved);
+        }
+
+        [Test]
+        public void SettleAtTheFloorReportsWhatItActuallyTookNotWhatTheTableSays()
+        {
+            var m = Load(); var d = Dummies();
+            var s = new SaveData { ArenaScore = 4 };
+            var o = ArenaMatch.Settle(s, m, d, false);
+            Assert.AreEqual(0, s.ArenaScore, "0 미만으로는 안 내려간다(주인 문장)");
+            Assert.AreEqual(-4, o.Delta, "화면이 «−6» 이라 적으면 거짓말이 된다 — 실제로 간 것은 −4 다");
+        }
+
+        [Test]
+        public void SettleWithoutTheTableChangesNothing()
+        {
+            // 표를 못 읽었다고 승점을 0 으로 만들면 그것이 더 나쁘다 — 지금 상태를 그대로 돌려준다
+            var d = Dummies();
+            var s = new SaveData { ArenaScore = 777, ArenaBest = 5 };
+            var o = ArenaMatch.Settle(s, null, d, true);
+            Assert.AreEqual(777, s.ArenaScore);
+            Assert.AreEqual(5, s.ArenaBest);
+            Assert.AreEqual(777, o.After);
+            Assert.AreEqual(0, o.Delta);
+            Assert.IsFalse(o.BestImproved);
+            Assert.AreEqual("", o.Tier);
+        }
+
+        [Test]
         public void BestRankKeepsTheHighestAndTreatsZeroAsNone()
         {
             Assert.AreEqual(3, ArenaMatch.BetterRank(0, 3), "0 은 «아직 없다» 라 상대가 이긴다");
