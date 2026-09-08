@@ -34,7 +34,12 @@ namespace KkomaKnight.Game
             public string Qty;
             /// <summary>칸 테두리 조각 키(등급색 · 비면 <see cref="DefaultFrame"/>).</summary>
             public string Frame;
-            public static Item Of(string icon, string qty = null, string frame = null) => new Item { Icon = icon, Qty = qty, Frame = frame };
+            /// <summary>
+            /// 받은 <b>개수</b>(T269 · 파티클을 이만큼 띄운다 · 0 이면 <see cref="Qty"/> 의 숫자에서 읽는다).
+            /// 글자(<see cref="Qty"/>)는 «×3»·«1,000» 처럼 보여 주려고 다듬은 것이라 세는 데 쓰기엔 약하다 — 아는 쪽이 수를 그대로 넘기는 길을 둔다.
+            /// </summary>
+            public int Amount;
+            public static Item Of(string icon, string qty = null, string frame = null, int amount = 0) => new Item { Icon = icon, Qty = qty, Frame = frame, Amount = amount };
         }
 
         /// <summary>기본 칸 테두리 — 레퍼런스 35 의 두 칸이 <b>파랑</b>이다(T103 정본 <c>ItemFrame_01_Normal_*</c> 계열).</summary>
@@ -67,6 +72,41 @@ namespace KkomaKnight.Game
 
         /// <summary>마지막으로 띄운 칸 수 — 테스트가 «지급한 만큼 칸이 섰나» 를 이걸로도 볼 수 있다.</summary>
         public static int LastCellCount { get; private set; }
+
+        // ───────────────────────── T269 · 닫으면 파티클로 흡수 ─────────────────────────
+        /// <summary>파티클 상한 — 주인 2026-09-09 «캡은 100개 파티클». 개수가 넘으면 <b>비율대로 줄이고</b> 값은 그대로다(지급은 이미 끝나 있다).</summary>
+        public const int MaxOrbs = 100;
+        /// <summary>
+        /// 튀어나온 자리에서 머무는 시간 — 전투(T109)는 «죽은 그 자리에 1초 남았다가» 지만 여기서는 <b>그 자리가 닫히며 사라진다</b>.
+        /// 주인 문장이 «화면 끄면 … 흡수되는 거로» 라 «끄는 동작 → 흡수» 가 바로 이어져야 한다(결정 기록).
+        /// </summary>
+        public const float AbsorbHoldSec = 0.06f;
+        /// <summary>구슬 층 이름 — 화면·팝업보다 위(마지막 형제)에 있어야 날아가는 길이 안 가려진다.</summary>
+        public const string OrbLayerName = "RewardOrbs";
+        /// <summary>탑바에 자리가 없는 재화(장비·키·펫알…)가 사라지는 자리 — 화면 가운데 아래(지시서 4항).</summary>
+        public const string OrbSinkName = "RewardOrbSink";
+        /// <summary>마지막으로 띄운 파티클 수 — PlayMode 자가 «개수만큼(캡 100)» 을 이걸로 본다.</summary>
+        public static int LastOrbCount { get; private set; }
+
+        static RewardOrbs _orbs; static RectTransform _orbLayer, _orbSink;
+
+        /// <summary>골드·다이아는 탑바의 그 pill 로 간다(지시서 4항) — 조각 이름은 <see cref="TopBar"/> 가 붙이는 그것이다.</summary>
+        static string PillFor(string icon)
+        {
+            if (icon == "ui.coin" || icon == "hud.gold") return "ResourceBar_Coin";
+            if (icon == "hud.gem" || icon == "ui.iconGemPurple" || icon == "ui.iconGemBlue") return "ResourceBar_Gem";
+            return null;
+        }
+
+        /// <summary>«×3»·«1,000» 같은 글자에서 수를 읽는다 — 숫자가 아니면 1(칸이 하나라도 날아가게).</summary>
+        static int QtyOf(Item it)
+        {
+            if (it.Amount > 0) return it.Amount;
+            string s = it.Qty ?? "";
+            long n = 0; bool any = false;
+            foreach (var ch in s) { if (ch >= '0' && ch <= '9') { any = true; n = n * 10 + (ch - '0'); if (n > MaxOrbs) return MaxOrbs; } }
+            return any && n > 0 ? (int)n : 1;
+        }
 
         /// <summary>보상 팝업을 띄운다. <paramref name="items"/> 가 비면 아무것도 안 한다(«얻은 게 없는데 뜨는» 팝업 금지).</summary>
         public static void Show(IList<Item> items, Action onClose = null)
@@ -123,7 +163,8 @@ namespace KkomaKnight.Game
             UiKit.Tag(close.transform, "닫기 안내");
 
             // ⓖ 어둠을 누르면 닫힌다 — punch(눌림 연출)는 끈다: 어둠은 «버튼처럼 보이는 것» 이 아니다(T139 ⓐ 와 같은 호출 꼴).
-            UiKit.Clickable(dim, () => { ov.Close(); onClose?.Invoke(); }, false);
+            //    T269 — 닫기 «직전» 에 파티클을 띄운다: 칸이 살아 있어야 «어디서 튀어나오는가» 를 잴 수 있다(닫으면 칸이 파괴된다).
+            UiKit.Clickable(dim, () => { Absorb(app, items, cells); ov.Close(); onClose?.Invoke(); }, false);
 
             Reveal(title.rectTransform, glow, cells);
         }
@@ -133,8 +174,84 @@ namespace KkomaKnight.Game
         {
             if (gained == null) { LastCellCount = 0; return; }
             var list = new List<Item>();
-            foreach (var kv in gained) if (kv.Value > 0) list.Add(Item.Of(kv.Key, UiKit.FmtQty(kv.Value)));
+            foreach (var kv in gained) if (kv.Value > 0) list.Add(Item.Of(kv.Key, UiKit.FmtQty(kv.Value), amount: kv.Value));   // T269 — 수를 아는 자리라 그대로 넘긴다(글자에서 되읽지 않는다)
             Show(list, onClose);
+        }
+
+        /// <summary>
+        /// T269 — 팝업을 닫는 순간 <b>칸마다 그 아이콘의 파티클</b>이 튀어나와 제자리로 날아간다(주인 2026-09-09 «화면 끄면 이제 해당 재화들 파티클로 돼서 흡수되는 거로»).
+        /// <para>
+        /// <b>새 연출을 짓지 않는다</b> — 곡선·트레일·시간은 <see cref="RewardOrbs"/>(T109 · 주인이 «랜덤 곡선 · 트레일 · 0.8초» 로 정한 그것) 그대로다.
+        /// 다른 것은 셋뿐: 상한 100(주인) · 머무름 거의 0(<see cref="AbsorbHoldSec"/> · 튀어나온 자리가 닫히며 사라진다) · 도착해도 <b>값을 안 더한다</b>(지급은 이미 끝났다 · 연출만).
+        /// </para>
+        /// <b>층은 지금 화면 안</b>에 둔다 — 화면을 옮기면 그 화면이 꺼지며 날아가던 것도 같이 사라진다(지시서 6항 «화면을 옮기면 즉시 정리» · 앱 층에 두면 새 화면 위로 엉뚱한 구슬이 날아간다).
+        /// </summary>
+        static void Absorb(App app, IList<Item> items, List<RectTransform> cells)
+        {
+            LastOrbCount = 0;
+            if (app == null || items == null || cells == null || cells.Count == 0) return;
+            var layer = Layer(app);
+            if (layer == null || _orbs == null) return;
+            _orbs.Clear();   // 앞 팝업의 잔여물부터 비운다(연타로 닫아도 겹치지 않는다 · 지시서 6항)
+
+            int n = Mathf.Min(items.Count, cells.Count);
+            var want = new int[n]; int total = 0;
+            for (int i = 0; i < n; i++) { want[i] = Mathf.Max(1, QtyOf(items[i])); total += want[i]; }
+            // 상한을 넘으면 «비율대로» 줄인다(칸마다 최소 하나는 난다) — 반올림으로 넘친 몫은 많은 칸부터 깎는다.
+            if (total > MaxOrbs)
+            {
+                int sum = 0;
+                for (int i = 0; i < n; i++) { want[i] = Mathf.Max(1, Mathf.RoundToInt(want[i] * (float)MaxOrbs / total)); sum += want[i]; }
+                while (sum > MaxOrbs)
+                {
+                    int mx = 0; for (int i = 1; i < n; i++) if (want[i] > want[mx]) mx = i;
+                    if (want[mx] <= 1) break;
+                    want[mx]--; sum--;
+                }
+            }
+
+            for (int i = 0; i < n; i++)
+            {
+                var cell = cells[i]; if (cell == null) continue;
+                var icon = UiKit.Find(cell, "Icon") as RectTransform;
+                var src = icon != null ? icon : cell;
+                var target = TargetFor(app, items[i].Icon);
+                if (target == null) continue;
+                float sizePx = Mathf.Max(16f, src.rect.height);   // 3항 «크기도 팝업 칸 그대로»
+                LastOrbCount += _orbs.Fly(_orbs.TargetPos(src), target, items[i].Icon, Color.white, want[i], want[i], sizePx, 1f, null, AbsorbHoldSec);
+            }
+        }
+
+        /// <summary>구슬 층(지금 화면의 맨 위) — 없으면 만든다. 화면이 바뀌면 새 화면에 다시 만든다.</summary>
+        static RectTransform Layer(App app)
+        {
+            var host = app.Current != null && app.Current.Root != null ? app.Current.Root : app.Frame;
+            if (host == null) return null;
+            if (_orbLayer == null || _orbLayer.parent != host)
+            {
+                _orbLayer = UiKit.Rect(host, OrbLayerName); UiKit.Stretch(_orbLayer);
+                _orbs = new RewardOrbs(_orbLayer, MaxOrbs);
+                _orbSink = null;
+            }
+            _orbLayer.SetAsLastSibling();
+            return _orbLayer;
+        }
+
+        /// <summary>이 아이콘이 날아갈 곳 — 골드·다이아는 탑바의 그 pill, 그 밖은 화면 가운데 아래로 사라진다(지시서 4항).</summary>
+        static RectTransform TargetFor(App app, string icon)
+        {
+            string pill = PillFor(icon);
+            if (pill != null && app.Current != null && app.Current.Root != null)
+            {
+                var t = UiKit.Find(app.Current.Root, pill) as RectTransform;
+                if (t != null) return t;
+            }
+            if (_orbSink == null && _orbLayer != null)
+            {
+                _orbSink = UiKit.Rect(_orbLayer, OrbSinkName);
+                UiKit.Pct(_orbSink, 48, 88, 4, 4);
+            }
+            return _orbSink;
         }
 
         static void Rule(RectTransform root, string name, Layout.R r, string tag)

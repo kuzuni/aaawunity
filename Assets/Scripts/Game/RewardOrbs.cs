@@ -34,7 +34,8 @@ namespace KkomaKnight.Game
         public const float FlySecMax = FlySec + FlyJitter;
         public const float StepSec = 0.07f;                   // 구슬 사이 시차(T109 1항 «0.05~0.1s 씩 어긋나게»)
         public const float PopSec = 0.08f;                    // 도착 뒤 «작게 튀고» 사라지는 꼬리
-        public const int MaxAlive = 40;                       // 화면 동시 상한 — 넘으면 개수를 줄인다(값은 그대로)
+        /// <summary>화면 동시 상한(기본) — 넘으면 개수를 줄인다(값은 그대로). 부르는 쪽이 <see cref="RewardOrbs(RectTransform,int)"/> 로 달리 줄 수 있다(T269 = 100 · 주인 «캡은 100개 파티클»).</summary>
+        public const int MaxAlive = 40;
         /// <summary>잔상을 남기는 간격(비행 시간을 이 값으로 나눠 등분한다) · 한 장이 사라지기까지 · 화면 동시 상한.</summary>
         public const float TrailStepSec = 0.04f, TrailFadeSec = 0.26f;
         public const int MaxTrail = 140;
@@ -69,7 +70,10 @@ namespace KkomaKnight.Game
         /// <summary>꼬리의 정렬 순서 — 캐릭터(0)보다 뒤에 깔아 그림을 안 가린다.</summary>
         public const int TrailSortOrder = -50;
 
-        public RewardOrbs(RectTransform layer) { _layer = layer; }
+        /// <summary>이 층이 한 번에 띄울 수 있는 구슬 수 — 전투는 <see cref="MaxAlive"/>(40), 리워드 팝업은 100(T269).</summary>
+        readonly int _max;
+
+        public RewardOrbs(RectTransform layer, int maxAlive = MaxAlive) { _layer = layer; _max = Mathf.Max(1, maxAlive); }
 
         /// <summary>날아가는 중인 구슬 수(테스트·진단용).</summary>
         public int Alive { get { Prune(); return _alive.Count; } }
@@ -89,11 +93,11 @@ namespace KkomaKnight.Game
         /// 값 <paramref name="total"/> 은 개수만큼 나눠 담고(나머지는 마지막 구슬), 도착할 때마다 <paramref name="onArrive"/> 로 그 몫을 넘긴다.
         /// 실제로 띄운 개수를 돌려준다(0 이면 호출자가 값을 바로 반영해야 한다).
         /// </summary>
-        public int Fly(Vector2 from, RectTransform target, string spriteKey, Color tint, int count, double total, float sizePx, float timeScale, Action<double> onArrive)
+        public int Fly(Vector2 from, RectTransform target, string spriteKey, Color tint, int count, double total, float sizePx, float timeScale, Action<double> onArrive, float holdSec = HoldSec)
         {
             Prune();
             if (_layer == null || target == null || count <= 0 || total <= 0) return 0;
-            count = Mathf.Min(count, Mathf.Max(0, MaxAlive - _alive.Count));
+            count = Mathf.Min(count, Mathf.Max(0, _max - _alive.Count));
             if (count <= 0) return 0;
             float sc = Mathf.Max(0.5f, timeScale);
             var to = TargetPos(target);
@@ -101,12 +105,12 @@ namespace KkomaKnight.Game
             for (int i = 0; i < count; i++)
             {
                 double val = i == count - 1 ? total - each * (count - 1) : each;
-                Make(from, to, spriteKey, tint, sizePx, i, count, sc, val, onArrive);
+                Make(from, to, spriteKey, tint, sizePx, i, count, sc, val, onArrive, Mathf.Max(0f, holdSec));
             }
             return count;
         }
 
-        void Make(Vector2 from, Vector2 to, string spriteKey, Color tint, float sizePx, int i, int count, float sc, double value, Action<double> onArrive)
+        void Make(Vector2 from, Vector2 to, string spriteKey, Color tint, float sizePx, int i, int count, float sc, double value, Action<double> onArrive, float holdSec)
         {
             var img = UiKit.Icon(_layer, OrbName, spriteKey, tint);
             var rt = img.rectTransform;
@@ -132,7 +136,8 @@ namespace KkomaKnight.Game
             seq.Append(rt.DOScale(1f, HopSec / sc).SetEase(Ease.OutBack));
             seq.Join(rt.DOAnchorPos(hop, HopSec / sc).SetEase(Ease.OutQuad));
             // T109 1항 «1초 정도 머물렀다가» — 그 자리에서 살짝 위아래로 흔들며 기다린다(요요라 끝나면 hop 자리로 정확히 돌아온다)
-            seq.Append(rt.DOAnchorPosY(hop.y + sizePx * 0.35f, HoldSec * 0.5f / sc).SetEase(Ease.InOutSine).SetLoops(2, LoopType.Yoyo));
+            // (T269) 머무름은 부르는 쪽이 정한다 — 전투는 «죽은 그 자리에 잠깐 남는» 1초이고, 리워드 팝업은 그 자리가 닫히며 사라지므로 거의 0 이다.
+            if (holdSec > 0.001f) seq.Append(rt.DOAnchorPosY(hop.y + sizePx * 0.35f, holdSec * 0.5f / sc).SetEase(Ease.InOutSine).SetLoops(2, LoopType.Yoyo));
             int trailSteps = Mathf.Max(4, Mathf.RoundToInt(fly / TrailStepSec));
             int lastTrail = -1;
             seq.Append(DOVirtual.Float(0f, 1f, fly / sc, p =>
