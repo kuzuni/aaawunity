@@ -211,4 +211,67 @@ namespace KkomaKnight.Core
             return false;
         }
     }
+
+    /// <summary>
+    /// 소탕 규칙(T228 · 순수 C# · 주인 2026-09-08 07:4X «<b>도전을 해서 클리어를 했었던 챕터만 소탕이 가능한 건데</b>»).
+    /// <list type="bullet">
+    /// <item><b>클리어한 층이 있어야</b> 된다 — <see cref="SaveData.DunFloor"/> 가 0 이면 못 한다(화면은 Dim + 이유 토스트).</item>
+    /// <item><b>티켓 1 개</b>를 쓰고 <b>전투는 안 돈다</b> — 그 자리에서 보상을 준다.</item>
+    /// <item>주는 것은 표의 <c>sweep</c> 이다 — <b><c>first</c>(첫 클리어 총액)는 소탕 경로에서 절대 안 읽는다</b>.
+    ///       주인이 두 번 말한 «최초 보상은 안 주고 나머지만» 이 그것이고, 표에도 그렇게 나뉘어 있다(지옥문 펫알 5·골드 1000 · 원정 골드 3500).</item>
+    /// <item><b>층별 차등은 없다</b> — 표에 던전마다 값이 <b>하나</b>다. 차등이 필요하면 주인이 표를 준다(§1 «수치는 표로») — 여기서 지어내지 않는다.</item>
+    /// </list>
+    /// 화면 배선(21 팝업 «소탕» 버튼)은 <c>EventsScreen</c> 몫이고 이 클래스는 규칙과 값만 갖는다.
+    /// </summary>
+    public static class DungeonSweep
+    {
+        /// <summary>이 던전에서 클리어한 가장 높은 층(0 = 없다).</summary>
+        public static int Floor(SaveData s, string key)
+        {
+            if (s == null || s.DunFloor == null || string.IsNullOrEmpty(key)) return 0;
+            int v; return s.DunFloor.TryGetValue(key, out v) && v > 0 ? v : 0;
+        }
+
+        /// <summary>클리어한 층을 올린다 — <b>내려가지 않는다</b>(더 낮은 층을 다시 깨도 최고 기록은 그대로). 바뀌었으면 true.</summary>
+        public static bool Record(SaveData s, string key, int floor)
+        {
+            if (s == null || string.IsNullOrEmpty(key) || floor <= 0) return false;
+            if (s.DunFloor == null) s.DunFloor = new Dictionary<string, int>();
+            if (Floor(s, key) >= floor) return false;
+            s.DunFloor[key] = floor;
+            return true;
+        }
+
+        /// <summary>이 던전을 지금 소탕할 수 있는가 = 클리어한 층이 있고 티켓도 있다.</summary>
+        public static bool Can(SaveData s, DungeonData d, string key, string today)
+            => Floor(s, key) > 0 && DungeonTickets.Tickets(s, d, key, today) > 0;
+
+        /// <summary>못 하는 까닭 한 줄(화면 토스트가 그대로 쓴다 · 할 수 있으면 빈 문자열).</summary>
+        public static string Why(SaveData s, DungeonData d, string key, string today)
+        {
+            if (Floor(s, key) <= 0) return "클리어한 층이 없다";
+            if (DungeonTickets.Tickets(s, d, key, today) <= 0) return "티켓이 없다";
+            return "";
+        }
+
+        /// <summary>소탕으로 받는 보상(못 하면 null) — 표의 <c>sweep</c> 그대로다(<c>first</c> 는 안 읽는다).</summary>
+        public static DungeonData.Reward Prize(SaveData s, DungeonData d, string key, string today)
+        {
+            if (!Can(s, d, key, today)) return null;
+            var e = d.Of(key);
+            return e != null ? e.Sweep : null;
+        }
+
+        /// <summary>
+        /// ⚠ <b>«주기»(지급)는 아직 여기 없다 — 넣을 곳이 없어서다.</b>
+        /// <para>
+        /// 표의 소탕 보상은 <b>펫알 + 골드</b>인데(지옥문 펫알 5·골드 1000) <see cref="SaveData"/> 에 <b>펫알을 담는 자리가 없다</b> —
+        /// 레포 전체에서 «펫알» 은 보상 «칸을 그리는» 자리(<c>EventsScreen</c> 의 <c>pet.egg</c> 아이콘) 한 곳뿐이고 세이브 필드도 재화도 아니다(전수 확인).
+        /// 골드만 주고 펫알을 조용히 버리면 <b>주인이 준 표의 절반을 말없이 삭제</b>하는 것이라 그렇게 하지 않았다.
+        /// </para>
+        /// 그래서 이 클래스는 «되는가·무엇을 주는가» 까지만 정하고, <b>실제 지급은 배선 회차</b>(21 팝업 «소탕» 버튼 · <c>EventsScreen</c>)가
+        /// 펫알 저장 자리를 함께 정하며 넣는다 — 그 회차의 첫 물음이 «펫알은 어디에 쌓이나» 다.
+        /// </summary>
+        public const string GrantNote = "펫알 저장 자리가 없어 지급은 배선 회차 몫(T228)";
+    }
 }

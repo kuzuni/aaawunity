@@ -60,6 +60,12 @@ namespace KkomaKnight.Core
         public Dictionary<string, int> DunAdUsed = new Dictionary<string, int>();
         /// <summary>던전 키 → 오늘 쓴 «다이아로 티켓» 횟수(상한 = dungeon.json <c>gemPerDay</c>).</summary>
         public Dictionary<string, int> DunGemUsed = new Dictionary<string, int>();
+        /// <summary>
+        /// 던전 키 → <b>클리어한 가장 높은 층</b>(0 = 한 번도 못 깼다 · T228 · 주인 2026-09-08 07:4X «도전을 해서 클리어를 했었던 챕터만 소탕이 가능한 건데»).
+        /// 소탕은 이 수 하나로 «되는가»(≥ 1)와 «무엇을 주는가»(그 층의 보상)가 정해진다 — <see cref="Dungeon"/> 의 <c>DungeonSweep</c> 이 규칙을 갖는다.
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 빈 목록»(옛 세이브 호환 · <see cref="DunDay"/> 와 같은 방식).
+        /// </summary>
+        public Dictionary<string, int> DunFloor = new Dictionary<string, int>();
         /// <summary>이미 받은 <b>챕터 보상</b>(Chapter Chest) — 챕터 → «받은 단» 비트(T137 · 주인 2026-09-07 «챕터 보상은 챕터당 3개» · 단 하나가 비트 하나).
         /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 빈 목록»(옛 세이브 호환 · <see cref="DunDay"/> 와 같은 방식) — 세이브 버전은 그대로 둔다.
         /// T98 때의 «챕터 번호 목록» 세이브는 <see cref="ChapterChest.OldSaveAll"/> 로 읽어 두었다가 <see cref="ChapterChest.Normalize"/> 가 «단 다 받음» 으로 옮긴다.</summary>
@@ -148,6 +154,7 @@ namespace KkomaKnight.Core
             o["inv"] = inv;
             var eq = new Dictionary<string, object>(); foreach (var kv in Eq) eq[kv.Key] = (double)kv.Value; o["eq"] = eq;
             var sl = new Dictionary<string, object>(); foreach (var kv in Slots) sl[kv.Key] = (double)kv.Value; o["slots"] = sl;
+            var df = new Dictionary<string, object>(); foreach (var kv in DunFloor) df[kv.Key] = (double)kv.Value; o["dunFloor"] = df;
             var dt = new Dictionary<string, object>(); foreach (var kv in DunTickets) dt[kv.Key] = (double)kv.Value; o["dunTickets"] = dt;
             var da = new Dictionary<string, object>(); foreach (var kv in DunAdUsed) da[kv.Key] = (double)kv.Value; o["dunAdUsed"] = da;
             var dgm = new Dictionary<string, object>(); foreach (var kv in DunGemUsed) dgm[kv.Key] = (double)kv.Value; o["dunGemUsed"] = dgm;
@@ -180,6 +187,7 @@ namespace KkomaKnight.Core
                     foreach (var k in j["slots"].Keys) s.Slots[k] = j["slots"][k].Int();
                     s.DunDay = j["dunDay"].Str("");
                     foreach (var k in j["dunTickets"].Keys) s.DunTickets[k] = j["dunTickets"][k].Int();
+                    foreach (var k in j["dunFloor"].Keys) s.DunFloor[k] = j["dunFloor"][k].Int();
                     foreach (var k in j["dunAdUsed"].Keys) s.DunAdUsed[k] = j["dunAdUsed"][k].Int();
                     foreach (var k in j["dunGemUsed"].Keys) s.DunGemUsed[k] = j["dunGemUsed"][k].Int();
                     // T137 — 새 세이브는 «챕터 → 비트» 표, T98 옛 세이브는 «챕터 번호 목록»(그 챕터는 «단 다 받음» = ChapterChest.Normalize 가 옮긴다)
