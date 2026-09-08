@@ -176,8 +176,38 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 15 퀘스트 ─────────────────────────
+        // ⚠ T257 — 아래 넷은 이제 **표가 없을 때의 대비**다(로드 실패 · `GameData.Quest == null`). 실물은 `quest.json` 이 정한다.
+        //   지우지 않는 까닭: 표를 못 읽는 판에서 화면이 빈 상자로 뜨는 것보다 종전 껍데기가 낫고, 그 갈래를 코드가 명시하는 편이 읽기 쉽다.
         static readonly string[] QuestTitles = { "적 50마리 처치", "캠페인 2회 도전", "던전 입장", "오늘 접속", "상자 2개 열기", "장비 2회 강화" };
         static readonly int[] QuestGoals = { 50, 2, 1, 1, 2, 2 };
+
+        /// <summary>
+        /// T257 — 이 팝업이 지금 그리는 «판»(일일/주간). 표가 있으면 줄·점수·트랙이 전부 여기서 나오고, 없으면 <c>null</c> 이라 껍데기 배열로 돌아간다.
+        /// <para>정적으로 두는 까닭은 <see cref="QuestRow"/> 가 줄 번호만 받는 옛 꼴이라서다 — 한 번에 한 팝업만 뜨므로 섞일 자리가 없다.</para>
+        /// </summary>
+        static QuestData _qd; static QuestData.Track _qt; static SaveData _qs; static bool _qDaily = true;
+
+        /// <summary>지금 판의 줄 수 — 표가 있으면 표가 정하고(일일·주간 8줄) 없으면 종전 6줄이다.</summary>
+        static int QuestRows => _qt != null ? _qt.Quests.Count : Layout.QsRowCount;
+
+        /// <summary>
+        /// T257 — 트랙 칸이 주는 물건의 아이콘. <b>이름 → 그림</b> 짝짓기는 화면 몫이라 여기 있다(표는 이름만 적는다 · <c>quest.json</c> 의 그 주석).
+        /// 키 셋은 <see cref="GachaKeys.Icon"/> 한 곳이 갖고(T255), 나머지는 이 레포가 이미 쓰는 그림이다.
+        /// 모르는 이름이면 메달로 — <b>빈 칸을 그리지 않는다</b>(그림이 없다고 트랙이 무너지면 안 된다).
+        /// </summary>
+        static string QuestRewardIcon(QuestData.Reward r)
+        {
+            if (r == null) return "ui.iconMedal";
+            if (GachaKeys.IsKey(r.Item)) return GachaKeys.Icon(r.Item);
+            switch (r.Item)
+            {
+                case Core.Mail.ItemGold: return "ui.coin";
+                case Core.Mail.ItemGem: return "hud.gem";
+                case Core.Mail.ItemPetEgg: return "pet.egg";   // 던전 보상 칸(EventsScreen:940)이 쓰는 그 그림
+                case QuestRun.ItemTicket: return "ui.iconTokenRed";
+                default: return "ui.iconMedal";
+            }
+        }
         static readonly string[] QuestNums = { "0", "20", "40", "60", "80", "100" };
         static readonly string[] TrackIcons = { "ui.iconMedal", "ui.coin", "ui.bookBlue", "ui.gemRed", "pi.magic", "ui.gemRed" };
 
@@ -236,6 +266,10 @@ namespace KkomaKnight.Game
         public static void Quest(App app)
         {
             var ov = app.Overlay; var B = Layout.QsBox;
+            // T257 — 그리기 전에 표를 잡고 날·주를 민다(어제 셈이 오늘 화면에 남지 않게 · 표가 없으면 종전 껍데기 그대로 뜬다).
+            _qd = app.Data != null ? app.Data.Quest : null; _qs = app.Save; _qDaily = true;
+            if (_qd != null && _qs != null) QuestRun.Roll(_qs, _qd, System.DateTime.Now);
+            _qt = _qd != null ? (_qDaily ? _qd.Daily : _qd.Weekly) : null;
             var root = (RectTransform)ov.OpenPrefab("ui.progressionMission2").transform;
             // 공통 팝업 문법(ROUTINE) — 배경 탭 = 닫기 · 닫기 X 는 안 쓴다(프리팹 조각은 지우지 않고 끈다)
             var dim = UiKit.Find(root, "Dimmed"); if (dim != null) UiKit.Clickable(dim, () => ov.Close(), false);
@@ -258,7 +292,20 @@ namespace KkomaKnight.Game
 
             // 점수 트랙 · 새로고침 줄 · 목록 상자 = 레퍼런스 15 그대로(프리팹에 없는 조각)
             var trackBox = UiKit.Panel(box, "TrackBox", "fr.r12", Palette.A(Palette.Dim, 0.55f)); UiKit.Pct(trackBox.rectTransform, Layout.QsTrackBox.Within(B));
-            Track(box, B, Layout.QsTrackIcon, Layout.QsTrackPitch, Layout.QsTrackCount, Layout.QsTrackNums, Palette.Yellow, TrackIcons, QuestNums, "트랙 아이콘 줄(6칸)", "트랙 아이콘(1칸)");
+            // T257 — 트랙 숫자·아이콘은 표가 정한다(첫 칸 «0» 은 시작점이라 표에 없다 · 상품 아이콘은 그 칸이 주는 물건에서).
+            string[] trackNums = QuestNums, trackIcons = TrackIcons;
+            if (_qt != null)
+            {
+                trackNums = new string[_qt.Steps.Count + 1]; trackIcons = new string[_qt.Steps.Count + 1];
+                trackNums[0] = "0"; trackIcons[0] = "ui.iconMedal";
+                for (int i = 0; i < _qt.Steps.Count; i++)
+                {
+                    trackNums[i + 1] = _qt.Steps[i].Points.ToString();
+                    var rw = _qt.Steps[i].Rewards.Count > 0 ? _qt.Steps[i].Rewards[0] : null;
+                    trackIcons[i + 1] = rw == null ? "ui.iconMedal" : QuestRewardIcon(rw);
+                }
+            }
+            Track(box, B, Layout.QsTrackIcon, Layout.QsTrackPitch, trackNums.Length, Layout.QsTrackNums, Palette.Yellow, trackIcons, trackNums, "트랙 아이콘 줄(" + trackNums.Length + "칸)", "트랙 아이콘(1칸)");
             var refresh = TimerRow(box, B, Layout.QsRefresh, "새로고침까지 " + Dashes, "Refresh");
             var listBox = UiKit.Panel(box, "ListBox", "fr.r12", Palette.A(Palette.Dim, 0.55f)); UiKit.Pct(listBox.rectTransform, Layout.QsListBox.Within(B));
 
@@ -276,7 +323,11 @@ namespace KkomaKnight.Game
                 grid.padding = new RectOffset(0, 0, 0, 0); grid.childAlignment = TextAnchor.UpperCenter;
             }
             RectTransform row1 = null, row2 = null, medal1 = null, title1 = null, bar1 = null, go1 = null;
-            int rows = content != null ? content.childCount : 0, want = Mathf.Min(Layout.QsRowCount, rows);
+            // T257 — 표가 프리팹 줄(6)보다 많으면(일일·주간 8줄) 첫 줄을 복제해 채운다. 목록은 ScrollView 안이라 넘치면 스크롤된다.
+            if (content != null && content.childCount > 0)
+                while (content.childCount < QuestRows)
+                    UnityEngine.Object.Instantiate(content.GetChild(0).gameObject, content).name = "Quest:" + content.childCount;   // `using System;` 때문에 «Object» 가 모호하다
+            int rows = content != null ? content.childCount : 0, want = Mathf.Min(QuestRows, rows);
             for (int i = rows - 1; i >= want; i--) content.GetChild(i).gameObject.SetActive(false);   // 프리팹 줄이 표(6줄)보다 많으면 남는 것은 지우지 말고 끈다
             for (int i = 0; i < want; i++)
             {
@@ -329,7 +380,12 @@ namespace KkomaKnight.Game
             var parts = new QuestRowParts();
             // 격자 칸 «자신» 이 `ListItem_Mission_02` 이고 `ListFrame_08`(원본의 ListFrame_07 을 갈아 끼운 것)은 그 «안쪽 바탕» 이다 — CI #142 가 잡아 준 계층(결정 173).
             var item = frame;
-            bool done = i >= 3;   // 레퍼런스 15 = 앞 3줄 «Go» · 뒤 3줄 ✅
+            // T257 — 표가 있으면 줄의 «무엇을 · 얼마나 · 얼마 받나» 가 전부 표와 세이브에서 온다.
+            //  표가 없을 때만 레퍼런스 15 의 «앞 3줄 Go · 뒤 3줄 ✅» 껍데기로 돌아간다.
+            var q = _qt != null && i < _qt.Quests.Count ? _qt.Quests[i] : null;
+            int have = q != null ? QuestRun.Count(_qs, _qDaily, q.Counter) : 0;
+            int goal = q != null ? q.Goal : (i < QuestGoals.Length ? QuestGoals[i] : 1);
+            bool done = q != null ? q.Done(have) : i >= 3;
 
             // 보상 칸(Group_Price) — 가로 레이아웃을 끄고 아이콘 위 · 점수 아래(레퍼런스 15 의 메달 + 숫자)
             var medal = (RectTransform)UiKit.Find(item, "Group_Price");
@@ -340,14 +396,14 @@ namespace KkomaKnight.Game
                 var mi = (RectTransform)UiKit.Find(medal, "Icon");
                 if (mi != null) { UiKit.Pct(mi, 0, 0, 100, 100); var img = UiKit.SetSprite(medal, "Icon", "ui.iconMedal"); if (img != null) { img.preserveAspect = true; img.color = Color.white; } }
                 // 점수 숫자 = 메달 아래(칸 높이의 72% · 본문 40 한 줄이 안 줄고 들어간다 — 전 코드와 같은 값)
-                var mt = OnDark(UiKit.SetText(medal, "Text (TMP)", QuestScores[i], Palette.Yellow, TextSize.Body), Palette.Yellow);
+                var mt = OnDark(UiKit.SetText(medal, "Text (TMP)", q != null ? q.Medal.ToString() : QuestScores[i], Palette.Yellow, TextSize.Body), Palette.Yellow);
                 // 전 코드(UiKit.Label(medal, -20, 98, 140, 72, …))와 같은 자리·규격 — 메달 아래 점수 한 줄
                 if (mt != null) { UiKit.Pct(mt.rectTransform, -20, 98, 140, 72); mt.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); mt.enableAutoSizing = true; mt.fontSizeMin = TextSize.BestFitMin; mt.fontSizeMax = TextSize.Body; mt.textWrappingMode = TextWrappingModes.NoWrap; }
                 parts.Medal = medal;
             }
             // 제목 — 줄의 밝은 바탕 위라 잉크색(T63 1항)
             // 줄 바탕이 프리팹 `ListFrame_08`(어두운 황갈색)이라 Ink 로는 안 읽힌다(screens run 148 눈 확인) → 흰 글자 + 외곽선
-            var title = OnDark(UiKit.SetText(item, "Text (TMP)", QuestTitles[i], Palette.White, TextSize.Body));
+            var title = OnDark(UiKit.SetText(item, "Text (TMP)", q != null ? q.Label : QuestTitles[i], Palette.White, TextSize.Body));
             if (title != null)
             {
                 var tr = title.rectTransform; UiKit.Pct(tr, Layout.QsRowTitle.WithH(Layout.LpLineH).Within(Layout.QsRow1));
@@ -362,7 +418,7 @@ namespace KkomaKnight.Game
             {
                 var sr = (RectTransform)slider.transform; sr.name = "Bar";
                 UiKit.Pct(sr, Layout.QsRowBar.WithH(Layout.LpBarH).Within(Layout.QsRow1));
-                slider.value = done ? 1f : 0f;
+                slider.value = q != null ? Mathf.Clamp01(goal > 0 ? (float)q.Shown(have) / goal : 0f) : (done ? 1f : 0f);
                 // T212 — 완료 줄만 채움을 «초록» 으로. 프리팹이 달고 온 노랑(`Slider_02_Yellow`)은 **미완** 에만 남긴다.
                 // 조각을 갈아 끼우지 않는 까닭: `Slider_02_LightGreen` 은 같은 흰 조각(`Slider_02_BasePrefab` 의 `Fill`)을
                 // rgb(130,215,60) 으로 tint 한 것뿐이라(두 프리팹의 차이는 `m_Color` 세 줄) **색 한 줄이면 그 프리팹과 같은 그림**이다.
@@ -371,7 +427,7 @@ namespace KkomaKnight.Game
                 if (done) { var fill = BarFill(slider); if (fill != null) fill.color = Palette.Green; }
                 var st = sr.GetComponentInChildren<TMP_Text>(true);
                 // 바 안 숫자는 UiKit.MakeBar 와 같은 규격(bestFit 32~40 · 가로 넘침 허용) — 바 칸(LpBarH 44px)이 40 한 줄(55px)보다 낮다
-                if (st != null) { st.text = (done ? QuestGoals[i] : 0) + "/" + QuestGoals[i]; st.fontSize = TextSize.Body; st.enableAutoSizing = true; st.fontSizeMin = TextSize.BestFitMin; st.fontSizeMax = TextSize.Body; st.textWrappingMode = TextWrappingModes.NoWrap; OnDark(st); TextAudit.Mark(st, TextKind.Body); }
+                if (st != null) { st.text = (q != null ? q.Shown(have) : (done ? goal : 0)) + "/" + goal; st.fontSize = TextSize.Body; st.enableAutoSizing = true; st.fontSizeMin = TextSize.BestFitMin; st.fontSizeMax = TextSize.Body; st.textWrappingMode = TextWrappingModes.NoWrap; OnDark(st); TextAudit.Mark(st, TextKind.Body); }
                 parts.Bar = sr;
             }
             // 받기 표시 / 이동 버튼 — Check 는 프리팹에서 슬라이더 밑에 있어 줄 오른쪽으로 옮긴다

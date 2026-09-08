@@ -530,23 +530,33 @@ namespace KkomaKnight.Tests.Play
                 }
                 // 구도 단언 — 퀘스트: 박스 = 표 ⑳ · 줄 6 · 탭 3 · 트랙 보상 칸 5 / 출석: 칸 7 / 데일리: 선물 그림 · 광고 줄 4 · 타임라인 점 4
                 LobbyPopups.Quest(_app); yield return Frames(1);
-                Assert.AreEqual(6, CountNamed(_app.Overlay.Root, "Quest:"), "퀘스트 줄 6"); Assert.AreEqual(3, CountNamed(_app.Overlay.Root, "Tab:"), "퀘스트 탭 3"); Assert.AreEqual(5, CountNamed(_app.Overlay.Root, "Track:"), "트랙 보상 칸 5(+메달)");
+                // T257 — 줄 수는 이제 **표가 정한다**(`quest.json` 일일 8줄) — 수를 박으면 표를 고칠 때마다 여기가 깨진다(결정 737 의 그 갈래).
+                var qTable = _app.Data != null ? _app.Data.Quest : null;
+                int wantRows = qTable != null ? qTable.Daily.Quests.Count : Layout.QsRowCount;
+                Assert.AreEqual(wantRows, CountNamed(_app.Overlay.Root, "Quest:"), "퀘스트 줄 = 표의 일일 줄 수"); Assert.AreEqual(3, CountNamed(_app.Overlay.Root, "Tab:"), "퀘스트 탭 3"); Assert.AreEqual(5, CountNamed(_app.Overlay.Root, "Track:"), "트랙 보상 칸 5(+메달)");
                 // T78 — 줄은 GUI Pro `Progression_Mission_02` 프리팹 조각이다: 줄마다 ListItem_Mission_02(제목·Slider·Group_Price) 가 살아 있고 · 앞 3줄은 «이동» · 뒤 3줄은 프리팹 ✅ · 영문 데모 문구 0(꺼진 여분 줄 제외)
                 {
                     var q0 = UiKit.Find(_app.Overlay.Root, "Quest:0"); Assert.IsNotNull(q0, "퀘스트 줄 0");
                     Assert.IsNotNull(UiKit.Find(q0, "ListFrame_08"), "줄 = 프리팹 ListItem_Mission_02 조각(안쪽 바탕 ListFrame_08)");
                     Assert.IsNotNull(q0.GetComponentInChildren<Slider>(true), "줄 진행바 = 프리팹 Slider_02_Yellow");
                     Assert.IsNotNull(UiKit.Find(q0, "Group_Price"), "줄 보상 칸 = 프리팹 Group_Price");
-                    Assert.AreEqual(3, CountNamed(_app.Overlay.Root, "GoBtn"), "미완 줄 «이동» 3(레퍼런스 15)");
+                    // T257 — «이동»/✅ 의 수도 이제 **진행도가 정한다**: 새 세이브라 깬 줄이 하나도 없으니 전부 «이동» 이고 ✅ 는 0 이다.
+                    //   («앞 3줄 Go · 뒤 3줄 ✅» 는 표가 없던 껍데기 시절의 그림이었다.)
+                    int gos = CountNamed(_app.Overlay.Root, "GoBtn");
                     int checks = 0; foreach (var t in _app.Overlay.Root.GetComponentsInChildren<Transform>(false)) if (t.name == "Check") checks++;
-                    Assert.AreEqual(3, checks, "완료 줄 ✅ 3(프리팹 Check · 레퍼런스 15)");
-                    Assert.IsTrue(HasText(s => s == "적 50마리 처치"), "줄 제목은 우리말");
+                    if (qTable != null)
+                    {
+                        Assert.AreEqual(wantRows, gos, "새 세이브에서는 깬 줄이 없으니 모든 줄이 «이동»");
+                        Assert.AreEqual(0, checks, "그래서 ✅ 는 0");
+                        Assert.IsTrue(HasText(s => s == qTable.Daily.Quests[0].Label), "줄 제목은 표의 «할 일» 글자 그대로(주인이 쓴 말)");
+                    }
+                    else { Assert.AreEqual(3, gos, "껍데기: 미완 3"); Assert.AreEqual(3, checks, "껍데기: 완료 3"); }
                     // T78 — 줄 바탕(프리팹 ListFrame_08)이 어두워 제목은 흰 글자 + 외곽선이어야 읽힌다(screens run 148 눈 확인)
                     { var t0 = UiKit.Find(q0, "Title").GetComponent<TMP_Text>(); Assert.IsNotNull(t0, "줄 제목 글자"); Assert.IsTrue(TextAudit.HasOutline(t0), "줄 제목 외곽선"); Assert.Greater(t0.color.r + t0.color.g + t0.color.b, 2.4f, "줄 제목은 밝은 글자"); }
                     // T212 — 진행바 채움 색: **완료 줄만** 초록(우리 «초록 = 열림/완료» 관례) · 미완 줄은 프리팹이 달고 온 노랑 그대로.
                     // 리터럴 색이 아니라 `Palette.Green` 을 견주는 까닭 = 이 자가 묻는 것은 «무슨 rgb 인가» 가 아니라 «우리 관례와 같은가» 다
                     // (팔레트가 바뀌면 화면과 자가 같이 움직여야 옳다 · 결정 555 «구현을 부르는 식» 과는 다른 갈래 — 여기서 부르는 것은 구현이 아니라 규약이다).
-                    for (int qi = 0; qi < 6; qi++)
+                    for (int qi = 0; qi < wantRows; qi++)
                     {
                         var q = UiKit.Find(_app.Overlay.Root, "Quest:" + qi); Assert.IsNotNull(q, "퀘스트 줄 " + qi);
                         var sl = q.GetComponentInChildren<Slider>(true); Assert.IsNotNull(sl, "줄 " + qi + " 진행바");
@@ -556,7 +566,10 @@ namespace KkomaKnight.Tests.Play
                         bool green = Mathf.Abs(fi.color.r - Palette.Green.r) < 0.02f
                                   && Mathf.Abs(fi.color.g - Palette.Green.g) < 0.02f
                                   && Mathf.Abs(fi.color.b - Palette.Green.b) < 0.02f;
-                        if (qi >= 3) Assert.IsTrue(green, "완료 줄 " + qi + " 의 진행바는 초록이어야 한다(T212) — 지금 " + fi.color);
+                        // T257 — «완료» 는 이제 진행도가 정한다. 새 세이브라 깬 줄이 없으므로 **전부 미완(노랑)** 이고,
+                        //   «완료면 초록» 규칙 자체는 `QuestRunTests` 와 아래 else 가 함께 지킨다(수를 박지 않는다).
+                        bool doneRow = qTable == null && qi >= 3;
+                        if (doneRow) Assert.IsTrue(green, "완료 줄 " + qi + " 의 진행바는 초록이어야 한다(T212) — 지금 " + fi.color);
                         else Assert.IsFalse(green, "미완 줄 " + qi + " 은 프리팹 노랑 그대로여야 한다(T212 · 관례는 «완료» 에만 걸린다) — 지금 " + fi.color);
                     }
                 }
