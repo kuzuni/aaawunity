@@ -5,7 +5,7 @@ namespace KkomaKnight.Tests
 {
     /// <summary>
     /// T228 — 소탕 규칙(<see cref="DungeonSweep"/>)의 자. 주인 2026-09-08 07:4X «도전을 해서 <b>클리어를 했었던 챕터만</b> 소탕이 가능한 건데».
-    /// 순수 C# 이라 <c>dotnet test</c> 가 매 커밋 잰다 — 화면 배선(21 팝업 «소탕» 버튼)은 다음 회차 몫이고 여기서는 규칙만 못 박는다.
+    /// 순수 C# 이라 <c>dotnet test</c> 가 매 커밋 잰다 — 화면 쪽(21 팝업 «소탕» 버튼 · Dim · 토스트 · 도전이 던전 키를 싣는가)은 PlayMode <c>DungeonTicketPlayTests</c> 가 본다.
     /// <b>표를 그대로 쓴다</b>: 값은 <c>dungeon.json</c> 에서 오고 이 자는 «어느 갈래를 읽는가»(<c>sweep</c> ↔ <c>first</c>)를 지킨다.
     /// </summary>
     public class DungeonSweepTests
@@ -45,7 +45,7 @@ namespace KkomaKnight.Tests
             var d = Table(); var s = Fresh(d);
             Assert.AreEqual(0, DungeonSweep.Floor(s, "hell"), "새 세이브는 클리어한 층 0");
             Assert.IsFalse(DungeonSweep.Can(s, d, "hell", Today), "층이 0 이면 티켓이 있어도 못 한다");
-            Assert.AreEqual("클리어한 층이 없다", DungeonSweep.Why(s, d, "hell", Today), "화면 토스트가 그대로 쓸 까닭");
+            Assert.AreEqual("아직 클리어한 적이 없습니다", DungeonSweep.Why(s, d, "hell", Today), "화면 토스트가 그대로 쓸 까닭");
             Assert.IsNull(DungeonSweep.Prize(s, d, "hell", Today), "못 하면 보상도 없다");
         }
 
@@ -107,7 +107,7 @@ namespace KkomaKnight.Tests
             DungeonSweep.Record(s, "hell", 1);
             while (DungeonTickets.Tickets(s, d, "hell", Today) > 0) DungeonTickets.Spend(s, d, "hell", Today);
             Assert.IsFalse(DungeonSweep.Can(s, d, "hell", Today));
-            Assert.AreEqual("티켓이 없다", DungeonSweep.Why(s, d, "hell", Today), "까닭이 «층» 이 아니라 «티켓» 이어야 한다");
+            Assert.AreEqual("티켓이 없습니다", DungeonSweep.Why(s, d, "hell", Today), "까닭이 «층» 이 아니라 «티켓» 이어야 한다");
         }
 
         [Test]
@@ -165,7 +165,7 @@ namespace KkomaKnight.Tests
             while (DungeonSweep.Grant(s, d, "hell", Today) != null) { n++; Assert.Less(n, 10, "무한히 주면 안 된다"); }
             Assert.AreEqual(2, n, "하루 티켓 2 장 = 소탕 2 번");
             Assert.AreEqual(2000, s.Gold, 1e-9); Assert.AreEqual(10, s.PetEgg, 1e-9, "두 번치가 쌓인다");
-            Assert.AreEqual("티켓이 없다", DungeonSweep.Why(s, d, "hell", Today));
+            Assert.AreEqual("티켓이 없습니다", DungeonSweep.Why(s, d, "hell", Today));
         }
 
         [Test]

@@ -247,11 +247,14 @@ namespace KkomaKnight.Core
         public static bool Can(SaveData s, DungeonData d, string key, string today)
             => Floor(s, key) > 0 && DungeonTickets.Tickets(s, d, key, today) > 0;
 
-        /// <summary>못 하는 까닭 한 줄(화면 토스트가 그대로 쓴다 · 할 수 있으면 빈 문자열).</summary>
+        /// <summary>
+        /// 못 하는 까닭 한 줄(할 수 있으면 빈 문자열) — <b>화면 토스트가 이 글자를 그대로 띄운다</b>.
+        /// 그래서 문구가 화면의 말투(«…없습니다» · <c>EventsScreen</c> 의 «다이아가 모자랍니다» 와 같은 꼴)여야 한다 — 여기 말고 화면에서 다시 짓지 않는다(T228 2단계).
+        /// </summary>
         public static string Why(SaveData s, DungeonData d, string key, string today)
         {
-            if (Floor(s, key) <= 0) return "클리어한 층이 없다";
-            if (DungeonTickets.Tickets(s, d, key, today) <= 0) return "티켓이 없다";
+            if (Floor(s, key) <= 0) return "아직 클리어한 적이 없습니다";
+            if (DungeonTickets.Tickets(s, d, key, today) <= 0) return "티켓이 없습니다";
             return "";
         }
 

@@ -472,10 +472,13 @@ namespace KkomaKnight.Game
             RectTransform sweep, chal;
             if (Dun == null || Tickets(key) > 0)
             {
-                // 티켓이 있으면 레퍼런스 21 그대로 — 소탕(파랑 · 클리어한 층만)·도전(주황) · 아직 껍데기라 눌러도 아무 일 없다
-                sweep = UiKit.Button(box, "ui.btnBlue", "소탕", Noop, leftRect); sweep.name = "SweepBtn"; TicketCost(sweep, d.ticket);
+                // 티켓이 있으면 레퍼런스 21 그대로 — 소탕(파랑 · 클리어한 던전만)·도전(주황).
+                // T228 2단계 — «소탕» 이 진짜로 준다: 클리어한 적이 있으면 티켓 1 을 쓰고 표의 sweep 을 그 자리에서 지급(전투는 안 돈다).
+                // 클리어한 적이 없으면 꺼져 보이게 두되 클릭은 살려 이유를 토스트로 알린다(T99 3항과 같은 «Dim + 이유» 문법 · 새 꼴 안 만든다).
+                string swKey = key;
+                sweep = UiKit.Button(box, "ui.btnBlue", "소탕", () => Sweep(swKey), leftRect); sweep.name = "SweepBtn"; TicketCost(sweep, d.ticket);
+                Dim(sweep, Dun == null || DungeonSweep.Can(App.Save, Dun, key, Today()));
                 // T183 3단계 — «도전» 이 진짜로 판을 연다: 티켓 1 소모 → 그 던전의 판 규칙(dungeon.json 의 run)으로 전투.
-                // «소탕» 은 주인이 이번에 말하지 않았으므로 그대로 껍데기다(지시서 5항).
                 string chKey = key;
                 chal = UiKit.Button(box, "ui.btnOrange", "도전", () => Challenge(chKey), rightRect); chal.name = "ChallengeBtn"; TicketCost(chal, d.ticket);
             }
@@ -603,7 +606,35 @@ namespace KkomaKnight.Game
             if (!DungeonTickets.Spend(App.Save, Dun, key, Today())) return;   // 티켓 1 소모(없으면 조용히 아무 일도 안 한다)
             App.Overlay.Close();
             SaveStore.Save(App.Save);
-            App.StartBattle(App.Save.SelChapter, e.Run);
+            App.StartBattle(App.Save.SelChapter, e.Run, key);   // T228 ⓓ — 어느 던전인지 실어 보낸다(클리어하면 그 키로 «깬 적 있다» 가 남는다)
+        }
+
+        /// <summary>
+        /// T228 — 던전 «소탕»: <b>클리어한 적이 있는 던전만</b> 되고(주인 2026-09-08 07:4X «도전을 해서 클리어를 했었던 챕터만 소탕이 가능한 건데»),
+        /// 티켓 1 을 쓰고 표(<c>dungeon.json</c>)의 <c>sweep</c> 을 <b>그 자리에서</b> 준다 — <b>전투는 안 돈다</b>.
+        /// <para>판정·지급은 전부 <see cref="DungeonSweep"/> 한 곳이다(화면은 «되나»·«안 되면 왜»·«눌렀다» 만 부른다).
+        /// 안 되는 까닭은 토스트로 그대로 알린다 — 꺼져 보이는 버튼이 «왜 안 되는지» 를 말 안 하면 사람이 고장으로 읽는다(T99 3항과 같은 갈래).</para>
+        /// </summary>
+        void Sweep(string key)
+        {
+            var d = Dun; if (d == null) return;
+            string why = DungeonSweep.Why(App.Save, d, key, Today());
+            if (why.Length > 0) { App.Toast(why); return; }
+            var got = DungeonSweep.Grant(App.Save, d, key, Today());
+            if (got == null) return;   // 그 사이 티켓이 0 이 됐다 — 조용히 아무 일도 안 한다(티켓도 안 쓰였다)
+            App.Persist();
+            App.Toast(SweepToast(got));
+            App.Current?.Refresh();
+            OpenDungeonDetail(key);   // 티켓 수·버튼 상태가 바뀌었으므로 팝업을 다시 연다(광고·다이아 티켓과 같은 방식)
+        }
+
+        /// <summary>소탕 보상 한 줄 — 표에 있는 것만 적는다(원정은 골드뿐이라 펫알 칸이 안 나온다).</summary>
+        static string SweepToast(DungeonData.Reward r)
+        {
+            string s = "";
+            if (r.Gold > 0) s += "골드 " + UiKit.FmtComma(r.Gold);
+            if (r.PetEgg > 0) s += (s.Length > 0 ? " · " : "") + "펫알 " + UiKit.FmtComma(r.PetEgg);
+            return s.Length > 0 ? "소탕 완료 — " + s : "소탕 완료";
         }
 
         /// <summary>보상 칸 한 개 — 아이콘 키 · 수량 글자 · «최초»(첫 클리어) 배지인가.</summary>

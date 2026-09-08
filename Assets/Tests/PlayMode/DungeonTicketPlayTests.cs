@@ -109,5 +109,66 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("로비 복귀");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T228 2단계 ⓑⓒⓓ — «소탕» 버튼의 화면 쪽. 규칙은 EditMode <c>DungeonSweepTests</c> 가 못 박고 여기서는
+        /// ⓐ <b>클리어한 적이 없으면</b> 꺼져 보이고 눌러도 티켓·재화가 안 움직이며 ⓑ 클리어 기록이 생기면 밝아지고
+        /// ⓒ 누르면 <b>티켓 1 이 빠지고 표의 sweep 이 실제로 들어오며</b> ⓓ «도전» 이 던전 키를 전투에 실어 보내는 것을 본다.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator SweepIsOffUntilTheDungeonHasBeenClearedAndThenActuallyPays()
+        {
+            yield return Boot();
+            var D = _app.Data.Dungeon;
+            string today = SaveStore.Today();
+            var entry = D.Of("hell");
+            Assert.IsNotNull(entry, "표에 지옥의 문이 있어야 한다");
+
+            EventsScreen.Open(_app, EventsScreen.PageDungeon); yield return Frames(2);
+            var root = _app.Current.Root;
+            _app.Save.Gold = 0; _app.Save.PetEgg = 0;
+
+            // ⓐ 클리어한 적이 없다 → 꺼져 보이고, 눌러도 티켓·골드·펫알이 그대로다(이유는 토스트로)
+            Assert.AreEqual(0, DungeonSweep.Floor(_app.Save, "hell"), "새 세이브는 클리어 기록 0");
+            Assert.IsTrue(ClickNamed(UiKit.Find(root, "Card:hell"), "EnterBtn")); yield return Frames(2);
+            var ov = _app.Overlay.Root;
+            int before = DungeonTickets.Tickets(_app.Save, D, "hell", today);
+            Assert.Greater(before, 0, "티켓은 있는 상태여야 «층» 때문에 막히는 것이 보인다");
+            var cg = UiKit.Find(ov, "SweepBtn").GetComponent<CanvasGroup>();
+            Assert.IsNotNull(cg, "못 하는 소탕은 CanvasGroup 으로 꺼져 보인다");
+            Assert.AreEqual(0.5f, cg.alpha, 1e-3f, "클리어한 적이 없으면 알파 0.5");
+            Assert.IsTrue(ClickNamed(ov, "SweepBtn"), "꺼져 보여도 클릭은 살아 있다(이유 토스트)"); yield return Frames(2);
+            Assert.AreEqual(before, DungeonTickets.Tickets(_app.Save, D, "hell", today), "막힌 소탕은 티켓을 안 쓴다");
+            Assert.AreEqual(0, _app.Save.Gold, 1e-9, "골드도 안 들어온다");
+            Assert.AreEqual(0, _app.Save.PetEgg, 1e-9, "펫알도 안 들어온다");
+            _log.AssertNoRed("클리어 전 소탕");
+
+            // ⓑⓒ 클리어 기록이 생기면 밝아지고, 누르면 티켓 1 이 빠지며 표의 sweep 이 실제로 들어온다
+            DungeonSweep.Record(_app.Save, "hell", 1);
+            _app.Overlay.Close(); yield return Frames(1);
+            Assert.IsTrue(ClickNamed(UiKit.Find(root, "Card:hell"), "EnterBtn")); yield return Frames(2);
+            ov = _app.Overlay.Root;
+            cg = UiKit.Find(ov, "SweepBtn").GetComponent<CanvasGroup>();
+            Assert.IsTrue(cg == null || cg.alpha > 0.99f, "클리어한 적이 있으면 밝다");
+            before = DungeonTickets.Tickets(_app.Save, D, "hell", today);
+            Assert.IsTrue(ClickNamed(ov, "SweepBtn"), "소탕"); yield return Frames(2);
+            Assert.AreEqual(before - 1, DungeonTickets.Tickets(_app.Save, D, "hell", today), "티켓 정확히 1 장");
+            Assert.AreEqual(entry.Sweep.Gold, _app.Save.Gold, 1e-9, "표의 sweep 골드가 들어왔다");
+            Assert.AreEqual(entry.Sweep.PetEgg, _app.Save.PetEgg, 1e-9, "펫알도 버려지지 않고 들어왔다");
+            Assert.AreNotEqual(entry.First.Gold + entry.First.PetEgg, _app.Save.Gold + _app.Save.PetEgg, "첫 클리어 총액은 소탕이 안 준다");
+            _log.AssertNoRed("소탕 지급");
+
+            // ⓓ «도전» 이 «어느 던전» 인지를 전투에 실어 보낸다(이게 없으면 클리어를 아무도 안 적는다)
+            _app.Overlay.Close(); yield return Frames(1);
+            Assert.IsTrue(ClickNamed(UiKit.Find(root, "Card:hell"), "EnterBtn")); yield return Frames(2);
+            ov = _app.Overlay.Root;
+            Assert.IsTrue(ClickNamed(ov, "ChallengeBtn"), "도전"); yield return Frames(2);
+            var battle = _app.GetScreen<BattleScreen>();
+            Assert.AreEqual("hell", battle.DungeonKey, "전투가 «어느 던전» 인지 안다 — 클리어하면 이 키로 기록이 남는다");
+            battle.Abort();
+            _app.ShowScreen("lobby"); yield return Frames(1);
+            _log.AssertNoRed("던전 도전 진입");
+            yield return Shutdown();
+        }
     }
 }

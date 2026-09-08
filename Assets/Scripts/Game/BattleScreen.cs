@@ -152,8 +152,9 @@ namespace KkomaKnight.Game
         /// 판을 시작한다. <paramref name="run"/> 는 <b>던전 판 규칙</b>(T183 · 시작 특전 N · 시작 레벨 · 특전 등급 하한)이고
         /// <c>null</c> 이면 <b>지금까지와 똑같은 일반 챕터 전투</b>다(기본값 = 아무 데도 안 닿는다).
         /// </summary>
-        public void Start(int chapter, DungeonData.RunRule run = null)
+        public void Start(int chapter, DungeonData.RunRule run = null, string dungeonKey = null)
         {
+            _dunKey = dungeonKey;   // T228 ⓓ — 이 판이 «어느 던전» 인가(null = 일반 챕터 전투)
             var D = App.Data;
             var rng = new Mulberry32((uint)Environment.TickCount ^ 0x9E3779B9u);
             var opt = new RunOptions { EmitEvents = true };
@@ -189,6 +190,14 @@ namespace KkomaKnight.Game
         string _exitPage;
         /// <summary>테스트·진단용 읽기 — 이 판이 끝나면 갈 곳(<c>null</c> = 로비).</summary>
         public string ExitPage => _exitPage;
+        /// <summary>
+        /// T228 ⓓ — 이 판이 <b>어느 던전</b> 에서 들어온 것인가(<c>null</c> = 일반 챕터 전투).
+        /// <para><see cref="_exitPage"/> 는 «던전 화면으로 돌아가라» 는 <b>페이지</b> 키 하나뿐이라 어느 던전인지 모른다 — 그래서 키를 따로 싣는다.
+        /// 이것이 없으면 «클리어한 던전만 소탕» 규칙이 영원히 안 켜진다(클리어를 아무도 안 적으므로).</para>
+        /// </summary>
+        string _dunKey;
+        /// <summary>테스트·진단용 읽기 — 이 판이 들어온 던전 키(<c>null</c> = 일반 전투).</summary>
+        public string DungeonKey => _dunKey;
         /// <summary>판이 끝나 화면을 뜨는 길 한 곳 — 클리어·사망·포기 셋이 모두 여기를 지난다(«로비로» 를 네 군데에 박아 두지 않는다).</summary>
         void ExitBattle()
         {
@@ -291,6 +300,10 @@ namespace KkomaKnight.Game
                 bool last = G.Chapter >= D.Tune.MaxChapter;
                 int next = Math.Min(G.Chapter + 1, D.Tune.MaxChapter);
                 S.MaxChapter = Math.Min(Math.Max(S.MaxChapter, G.Chapter + 1), D.Tune.MaxChapter);
+                // T228 ⓓ — 던전에서 들어온 판을 «깼다» 고 남긴다. 이것 하나가 소탕의 조건이다(주인 «도전을 해서 클리어를 했었던 챕터만 소탕이 가능한 건데»).
+                // ⚠ «층» 은 아직 이 게임에 없다(21 팝업의 층 화살표도 껍데기 · 표도 던전마다 값이 하나뿐) — 그래서 «깬 적 있다» 를 1 로 적는다.
+                //    층이 생기면 그 층 수를 그대로 넣으면 되고, DungeonSweep 은 이미 «올라가기만 한다» 로 그 날을 받아 놓았다.
+                DungeonSweep.Record(S, _dunKey, 1);
                 S.SelChapter = next; S.Gold += Math.Round(G.Gold); App.Persist();   // 1배는 여기서 은행에(«그냥 받기» = 이대로 로비로)
                 // T23 — «광고 보고 보상 ×2 받기» = 광고 카운트다운 뒤 이 판의 골드(처치 + 클리어 보너스)를 한 번 더 지급 → 2배 · 로비로. «다음 챕터» 는 로비의 챕터 화살표(SelChapter = next 로 이미 맞춰 둠).
                 App.Overlay.Clear(G, last,
