@@ -1054,6 +1054,90 @@ namespace KkomaKnight.Game
 
         static Layout.R Sh(Layout.R r, float dx, float dy) => new Layout.R(r.X + dx, r.Y + dy, r.W, r.H);
 
+        /// <summary>
+        /// T264 2단계 — 카드 넷의 <b>표 키</b>(화면 순서 그대로 · <c>privilege.json</c> 의 <c>cards[].key</c>).
+        /// 맨 위가 주인이 말한 «데일리 기프트»(공짜 · 하루 다이아 30)이고 아래 셋이 구매형이다.
+        /// ⚠ <b>로비 팝업의 «데일리 기프트»(17 · T254 의 5칸)와는 다른 것</b>이다 — 이름만 같고 세이브 칸도 따로다(ROUTINE §2 T264 1항).
+        /// </summary>
+        static readonly string[] CardKeys = { "dailyGift", "adRemove", "monthly", "lifetime" };
+
+        // T264 2단계 — Refresh 가 글자·상태만 갈아 끼우려고 붙잡아 두는 것들(ChapterChestScreen 과 같은 문법).
+        readonly RectTransform[] _cardBtn = new RectTransform[4];
+        readonly TMP_Text[] _cardQty = new TMP_Text[4];
+        readonly TMP_Text[] _cardState = new TMP_Text[4];
+
+        PrivilegeData PD => App != null && App.Data != null ? App.Data.Privilege : null;
+        PrivilegeData.Card CardOf(int i) { var d = PD; return d == null || i < 0 || i >= CardKeys.Length ? null : d.Of(CardKeys[i]); }
+
+        /// <summary>그 카드가 매일 주는 다이아(표가 없거나 카드가 없으면 0) — 보상 칸 수량이 이 값이다(코드에 안 박는다).</summary>
+        static double DailyGem(PrivilegeData.Card c)
+        {
+            if (c == null) return 0;
+            foreach (var r in c.Daily) if (r.Item == Mail.ItemGem) return r.Amount;
+            return c.Daily.Count > 0 ? c.Daily[0].Amount : 0;
+        }
+
+        /// <summary>
+        /// 카드 버튼 하나를 누른 결과 — <b>안 샀으면 «구매», 샀으면 «받기»</b>다(주인 원문의 두 동작이 카드 하나에 같이 산다).
+        /// 못 하는 자리면 <see cref="App.Toast"/> 한 줄로 까닭을 말하고 <b>아무것도 안 바꾼다</b>(<see cref="Privilege.Why"/> 가 그 글자를 준다 · T228 갈래).
+        /// </summary>
+        void TapCard(int i)
+        {
+            var d = PD; var c = CardOf(i);
+            if (d == null || c == null) return;                       // 표가 없으면 종전 껍데기 — 아무 일도 안 한다
+            string today = SaveStore.Today();
+            if (!Privilege.Owned(App.Save, c))
+            {
+                if (!Privilege.Buy(App.Save, c, today)) return;
+                App.Persist(); Refresh();
+                Pay(c.BuyNow);
+                return;
+            }
+            string why = Privilege.Why(App.Save, d, c, today);
+            if (why.Length > 0) { App.Toast(why); return; }
+            if (Privilege.Claim(App.Save, d, c, today) == null) return;
+            App.Persist(); Refresh();
+            Pay(c.Daily);
+        }
+
+        /// <summary>«전체 받기» — 오늘 받을 수 있는 카드를 <b>전부</b> 받고 한 번에 보여 준다(하나도 없으면 토스트 한 줄).</summary>
+        void TapClaimAll()
+        {
+            var d = PD; if (d == null) return;
+            string today = SaveStore.Today();
+            var got = new List<ArenaRankData.Reward>();
+            foreach (var c in d.Cards)
+                if (Privilege.Claim(App.Save, d, c, today) != null) got.AddRange(c.Daily);
+            if (got.Count == 0) { App.Toast("지금 받을 수 있는 특권 보상이 없습니다"); return; }
+            App.Persist(); Refresh();
+            Pay(got);
+        }
+
+        /// <summary>받은 것을 공용 리워드 팝업으로 띄운다(T241) — 지급 자체는 이미 <see cref="Privilege"/> 가 <see cref="Mail.Give"/> 로 했다(T243).</summary>
+        static void Pay(List<ArenaRankData.Reward> rewards)
+        {
+            if (rewards == null || rewards.Count == 0) return;
+            var items = new List<RewardPopup.Item>();
+            foreach (var r in rewards) items.Add(RewardPopup.Item.Of(RewardIcon(r.Item), UiKit.FmtQty(r.Amount)));
+            RewardPopup.Show(items);
+        }
+
+        /// <summary>
+        /// 보상 이름 → 아이콘 키(특권 표는 지금 전부 다이아지만 표가 바뀌어도 안 깨지게 갈라 둔다).
+        /// <para>
+        /// ⚠ <b>같은 매핑이 이 레포에 벌써 셋이다</b> — <c>Mailbox.cs:47</c> · <c>EventsScreen.cs:939</c> · 여기.
+        /// 하나로 모으는 것이 옳지만 그 셋은 각각 다른 작업의 lock 안이라 여기서 건드리지 않는다(규약 3항).
+        /// 처음에 없는 키(<c>ui.petEgg</c>)를 지어 썼다가 <c>check_catalog_keys</c> 가 잡았다 — 이 레포의 펫알 키는 <c>pet.egg</c> 다.
+        /// </para>
+        /// </summary>
+        static string RewardIcon(string item)
+        {
+            if (item == Mail.ItemGold) return "ui.coin";
+            if (item == Mail.ItemPetEgg) return "pet.egg";
+            return "ui.gemRed";
+        }
+
+
         protected override void Build()
         {
             var bg = UiKit.Ensure<Image>(Root.gameObject); bg.color = Color.Lerp(Palette.Slate, Palette.Dim, 0.6f); bg.raycastTarget = true;
@@ -1086,10 +1170,14 @@ namespace KkomaKnight.Game
             CardTexture(card1.rectTransform, GradCard1, Palette.Sky);
             var head1 = UiKit.Panel(content, "Head:1", "fr.r12", Palette.A(Palette.Blue, 0.9f)); UiKit.Pct(head1.rectTransform, new Layout.R(Layout.PrCard1.X, Layout.PrCard1.Y, Layout.PrCard1.W, 3.6f).Within(C));
             UiKit.Gradient(head1.rectTransform, inset: CardTextureInset);   // T72 ③ 카드 제목 띠(레퍼런스 11 의 띠도 위 밝고 아래 어둡다)
-            CardHead(head1.transform, "ui.iconGiftRed", "일일 선물", "초기화까지 " + LobbyPopups.Dashes);
-            var reward1 = LobbyPopups.Cell(content, C, Layout.PrCard1Reward, "plum", "ui.gemRed");
+            // T264 — 주인이 «맨 위에 «데일리 기프트» 라는 섹션» 이라고 부른 그 카드다. 이름·수량은 표에서 온다(코드에 안 박는다).
+            var c1 = CardOf(0);
+            _cardState[0] = CardHead(head1.transform, "ui.iconGiftRed", c1 != null ? c1.Name : "일일 선물", "초기화까지 " + LobbyPopups.Dashes);
+            var reward1 = LobbyPopups.Cell(content, C, Layout.PrCard1Reward, "plum", "ui.gemRed", c1 != null ? UiKit.FmtQty(DailyGem(c1)) : null);
+            _cardQty[0] = QtyOf(reward1);
             PlanRewardLight(reward1);
-            var btn1 = UiKit.Button(content, "ui.btnGray", "받기", () => { }, Layout.PrCard1Btn.Within(C)); btn1.name = "CardBtn:1";
+            var btn1 = UiKit.Button(content, "ui.btnGray", "받기", () => TapCard(0), Layout.PrCard1Btn.Within(C)); btn1.name = "CardBtn:1";
+            _cardBtn[0] = btn1;
             // 카드 2~4 = 긴 카드
             RectTransform card2 = null, cardTitle2 = null, desc2 = null, pic2 = null, reward2 = null, btn2 = null, card3 = null, card4 = null;
             (Layout.R rect, Color color, string icon, string name, string pic, string[] lines, string btnKey, string btnLabel, string grad)[] longs =
@@ -1105,7 +1193,8 @@ namespace KkomaKnight.Game
                 CardTexture(card.rectTransform, L.grad, L.color);
                 var head = UiKit.Panel(content, "Head:" + (k + 2), "fr.r12", Palette.A(Palette.Dim, 0.35f)); UiKit.Pct(head.rectTransform, Sh(Layout.PrCardTitle, 0, dy).Within(C));
                 UiKit.Gradient(head.rectTransform, inset: CardTextureInset);   // T72 ③ 카드 제목 띠
-                CardHead(head.transform, L.icon, L.name, "비활성");
+                var ck = CardOf(k + 1);
+                _cardState[k + 1] = CardHead(head.transform, L.icon, ck != null ? ck.Name : L.name, "비활성");
                 var desc = UiKit.Panel(content, "Desc:" + (k + 2), "fr.r12", Palette.A(Palette.Dim, 0.35f)); UiKit.Pct(desc.rectTransform, Sh(Layout.PrCardDesc, 0, dy).Within(C));
                 float lh = 100f / Mathf.Max(2, L.lines.Length);
                 for (int i = 0; i < L.lines.Length; i++)
@@ -1117,11 +1206,14 @@ namespace KkomaKnight.Game
                 var pic = UiKit.Icon(content, "Pic:" + (k + 2), L.pic); UiKit.Pct(pic.rectTransform, Sh(Layout.PrCardPic, 0, dy).Within(C));
                 var daily = UiKit.Label(content, 0, 0, 100, 100, "매일 수령", TextSize.Body, Palette.Yellow, TextAnchor.MiddleLeft); daily.name = "Daily"; daily.fontStyle = FontStyles.Bold;
                 UiKit.Pct(daily.rectTransform, new Layout.R(8.6f, Layout.PrCardReward.Y + dy, 26.0f, Layout.PrCardReward.H).Within(C));
-                var reward = LobbyPopups.Cell(content, C, Sh(Layout.PrCardReward, 0, dy), "plum", "ui.gemRed");
+                var reward = LobbyPopups.Cell(content, C, Sh(Layout.PrCardReward, 0, dy), "plum", "ui.gemRed", ck != null ? UiKit.FmtQty(DailyGem(ck)) : null);
+                _cardQty[k + 1] = QtyOf(reward);
                 PlanRewardLight(reward);
                 // T72 ② 카드 그림 뒤 빛살(주인 «특별 상품 … 아이콘 뒤에 Effect_Light 천천히 회전») — 그림은 카드의 «형제» 라 빛살은 카드 안(칸 밖으로 안 나가게 RectMask2D)에 걸고 그림은 그 위에 그대로 남는다
                 _lightPlan.Add((card.rectTransform, pic.rectTransform, UiKit.LightKey));
-                var btn = UiKit.Button(content, L.btnKey, L.btnLabel, () => { }, Sh(Layout.PrCardBtn, 0, dy).Within(C)); btn.name = "CardBtn:" + (k + 2);
+                int ki = k + 1;   // 람다가 붙잡는 것은 «지금 값» 이어야 한다(루프 변수를 그대로 넘기면 넷이 다 마지막 카드를 누른다)
+                var btn = UiKit.Button(content, L.btnKey, L.btnLabel, () => TapCard(ki), Sh(Layout.PrCardBtn, 0, dy).Within(C)); btn.name = "CardBtn:" + (k + 2);
+                _cardBtn[ki] = btn;
                 _prBordered.Add(card.rectTransform); _prBordered.Add(desc.rectTransform);
                 if (k == 0) { card2 = card.rectTransform; cardTitle2 = head.rectTransform; desc2 = desc.rectTransform; pic2 = pic.rectTransform; reward2 = reward; btn2 = btn; }
                 else if (k == 1) card3 = card.rectTransform; else card4 = card.rectTransform;
@@ -1131,7 +1223,7 @@ namespace KkomaKnight.Game
             var foot = UiKit.Panel(Root, "FootBar", "fr.rect", Palette.A(Palette.Dim, 0.9f)); UiKit.Pct(foot.rectTransform, Layout.PrFootBar);
             var back = UiKit.Button(Root, "ui.btnGray", "", () => App.ShowScreen("lobby"), Layout.PrBack); back.name = "BackBtn";
             var bi = UiKit.Icon(back, "Icon", "pi.arrow_left", Palette.Ink); UiKit.Pct(bi.rectTransform, 30, 18, 40, 64);
-            var claim = UiKit.Button(Root, "ui.btnGray", "전체 받기", () => { }, Layout.PrClaimAll); claim.name = "ClaimAllBtn";
+            var claim = UiKit.Button(Root, "ui.btnGray", "전체 받기", TapClaimAll, Layout.PrClaimAll); claim.name = "ClaimAllBtn";
             // 비평 이름표(표 ⑲)
             UiKit.Tag(_top.Root, "상단 바"); UiKit.Tag(title, "제목 줄"); UiKit.Tag(line.transform, "제목 밑줄"); UiKit.Tag(sub.transform, "부제");
             UiKit.Tag(card1.transform, "특권 카드 1"); UiKit.Tag(reward1, "카드 1 보상 칸"); UiKit.Tag(btn1, "카드 1 버튼");
@@ -1144,6 +1236,7 @@ namespace KkomaKnight.Game
             // 카드 그림(Pic)은 카드의 형제로 떠 있는 그림이고 레퍼런스에도 상자가 없어 담개다(BorderAudit.Exempt).
             foreach (var rt in _prBordered) if (rt != null) UiKit.Bordered(rt);
             _prBordered.Clear();
+            Refresh();   // T264 — 버튼 글자·«오늘 받기 완료» 상태를 세이브에서 한 번 칠한다
         }
         /// <summary>특권 카드·설명 상자 — 질감·빛살을 다 건 뒤에 테두리를 걸려고 모아 둔다(T69-lobbypopups).</summary>
         readonly List<RectTransform> _prBordered = new List<RectTransform>();
@@ -1188,13 +1281,51 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>카드 제목 띠 안 — 왼쪽 아이콘 + 이름 · 오른쪽 상태/타이머 글자.</summary>
-        static void CardHead(Transform head, string icon, string name, string right)
+        /// <summary>카드 제목 띠 — 오른쪽 글자(상태)를 돌려준다(T264 의 <see cref="Refresh"/> 가 그것만 갈아 끼운다).</summary>
+        static TMP_Text CardHead(Transform head, string icon, string name, string right)
         {
             var ic = UiKit.Icon(head, "Icon", icon); UiKit.Pct(ic.rectTransform, 2, 10, 8, 80);
             var t = UiKit.Label(head, 11, 0, 50, 100, name, TextSize.Body, Palette.White, TextAnchor.MiddleLeft); t.fontStyle = FontStyles.Bold;
-            UiKit.Label(head, 62, 0, 36, 100, right, TextSize.Body, Palette.White, TextAnchor.MiddleRight);
+            return UiKit.Label(head, 62, 0, 36, 100, right, TextSize.Body, Palette.White, TextAnchor.MiddleRight);
         }
 
-        public override void Refresh() { _top?.Refresh(); }
+        /// <summary>보상 칸의 수량 글자(없으면 null) — <see cref="Refresh"/> 가 표 값을 다시 쓸 자리다.</summary>
+        static TMP_Text QtyOf(RectTransform cell)
+        {
+            if (cell == null) return null;
+            var q = UiKit.Find(cell, "Qty");
+            return q != null ? q.GetComponent<TMP_Text>() : cell.GetComponentInChildren<TMP_Text>(true);
+        }
+
+        /// <summary>
+        /// T264 2단계 — 카드 넷의 <b>버튼 글자·상태 글자</b>를 세이브에서 다시 칠한다(배치·조각은 안 건드린다 · ChapterChestScreen 과 같은 문법).
+        /// <list type="bullet">
+        /// <item>안 산 카드 → «구매»(공짜 카드는 언제나 가진 것이라 여기 안 온다)</item>
+        /// <item>오늘 받을 수 있으면 → «받기» · 상태 «오늘 받기 가능»</item>
+        /// <item>오늘 이미 받았으면 → 버튼을 <b>회색·못 누름</b>으로 두고 상태 «오늘 받기 완료»(주인 «오늘 받기 완료» 상태)</item>
+        /// <item>월간 카드 기간이 끝났으면 → 상태 «기간 만료» · 다시 «구매» 로 (카드는 남는다 · 결정 712 ⓐ)</item>
+        /// </list>
+        /// </summary>
+        public override void Refresh()
+        {
+            _top?.Refresh();
+            var d = PD; if (d == null) return;                        // 표가 없으면 종전 껍데기 그대로
+            string today = SaveStore.Today();
+            for (int i = 0; i < CardKeys.Length; i++)
+            {
+                var c = d.Of(CardKeys[i]); if (c == null) continue;
+                bool owned = Privilege.Owned(App.Save, c);
+                bool expired = Privilege.Expired(App.Save, c, d.MonthlyDays, today);
+                bool can = Privilege.Can(App.Save, d, c, today);
+                if (_cardQty[i] != null) _cardQty[i].text = UiKit.FmtQty(DailyGem(c));
+                if (_cardState[i] != null)
+                    _cardState[i].text = !owned ? "비활성" : expired ? "기간 만료" : can ? "오늘 받기 가능" : "오늘 받기 완료";
+                var b = _cardBtn[i]; if (b == null) continue;
+                var bt = UiKit.ButtonText(b); if (bt != null) bt.text = TextGlyphs.Safe(!owned || expired ? "구매" : "받기");
+                // 오늘 몫을 이미 받은 «가진 카드» 만 잠근다 — 안 샀거나 기간이 끝난 카드는 «구매» 로 눌려야 한다.
+                var btn = b.GetComponent<UnityEngine.UI.Button>();
+                if (btn != null) btn.interactable = !owned || expired || can;
+            }
+        }
     }
 }

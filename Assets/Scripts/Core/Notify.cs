@@ -51,7 +51,10 @@ namespace KkomaKnight.Core
         public static bool MenuAny(GameData G, SaveData s, double nowSec, string today)
         {
             if (G == null || s == null) return false;
-            return DailyGiftClaimable(s, G.DailyGift, today) || DailyGiftAd(s, G.DailyGift, today);
+            // T264 — 특권 페이지도 메뉴(≡) 가 품은 항목이다(T44: 특권 = 페이지 · 메뉴에서 들어간다).
+            // 오늘 받을 수 있는 카드가 하나라도 있으면 점을 켠다 — 판정은 Privilege 한 곳이고 화면은 세지 않는다(T96 ⓔ 규약).
+            return DailyGiftClaimable(s, G.DailyGift, today) || DailyGiftAd(s, G.DailyGift, today)
+                || Privilege.AnyClaimable(s, G.Privilege, today);
         }
 
         /// <summary>화면 어디든 지금 받을 수 있는 것이 있는가(메뉴 + 로비에 남은 탐험 · 광고 재화 전부).</summary>
