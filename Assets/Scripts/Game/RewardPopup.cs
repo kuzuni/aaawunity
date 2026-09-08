@@ -41,11 +41,28 @@ namespace KkomaKnight.Game
         public const string DefaultFrame = "ui.itemFrame.blue";
 
         /// <summary>
-        /// 이 팝업의 어둠 알파. 공통 <see cref="UiKit.DimAlpha"/>(0.985)는 뒤 화면을 <b>거의 지워</b> 버리는데,
-        /// 주인 그림과 주인 문장은 둘 다 «뒤 화면은 그대로 보인다» 다 — 레퍼런스 35 의 뒤 화면(대장간) 평균 밝기가
-        /// <b>26~32/255</b> 로 살아 있다(실측). 그래서 이 팝업만 옅은 어둠을 쓴다(결정 기록).
+        /// 이 팝업의 어둠 알파. 공통 <see cref="UiKit.DimAlpha"/>(0.985)는 뒤 화면을 <b>거의 지워</b> 버리는데
+        /// 주인 그림과 주인 문장은 둘 다 «뒤 화면은 그대로 보인다» 다 — 그래서 이 팝업만 따로 잡는다.
+        /// <para>
+        /// ⚠ <b>값은 셈으로 잡았다(눈 확인이 첫 값을 잡아냈다 · T241 3단계)</b>. 첫 회차의 0.65 는 «0.985 보다 옅게» 라는
+        /// 방향만 맞고 세기가 모자랐다 — `screens` <c>35_reward</c>(run 533) 실측에서 뒤 화면이 <b>71~81/255</b> 로
+        /// 훤히 읽혔다(레퍼런스는 <b>26~32/255</b>). 어둠색(<see cref="Palette.Dim"/> ≈ 20/255)을 알파 a 로 덮으면
+        /// 결과 = (1−a)·원본 + a·20 이고, 로비 원본이 ≈110 이므로 <b>a = 0.88 이면 ≈ 30</b> = 레퍼런스 띠 안이다.
+        /// 다시 재려면 같은 자리(상단 재화 바·하단 네비·사이드 칸)의 평균 밝기를 <c>01_lobby</c> 와 견주면 된다.
+        /// </para>
         /// </summary>
-        public const float DimAlpha = 0.65f;
+        public const float DimAlpha = 0.88f;
+
+        /// <summary>
+        /// 빛살 조각의 한 변(프레임 폭의 비) — ⚠ <b>이것은 «자리» 가 아니라 «그림» 이라 표 ㊹ 가 못 잡는다.</b>
+        /// 첫 회차는 자리 rect 의 폭(0.84)을 그대로 한 변으로 줬는데, 조각이 <b>정사각</b>이라 907px 짜리 별빛이 되어
+        /// 화면 세로의 4할을 삼켰다(<c>screens</c> run 533 눈 확인 · 레퍼런스의 빛은 제목에 붙은 <b>납작한</b> 무리다).
+        /// 정사각 조각으로 납작한 무리를 낼 수는 없으니(새 그림은 §1 이 막는다) <b>한 변을 줄이고 옅게</b> 해서
+        /// 제목 둘레에만 머물게 한다 — T234 가 리본 뒤 빛에서 밟은 그 절충이다.
+        /// </summary>
+        public const float GlowSide = 0.40f;
+        /// <summary>빛살 짙기 — 위와 같은 까닭으로 0.55 → 0.35(뒤 화면을 지우지 않을 만큼).</summary>
+        public const float GlowAlpha = 0.35f;
 
         /// <summary>칸이 하나씩 뜨는 간격(초 · T95/T202 와 같은 결 · unscaled).</summary>
         public const float CellStagger = 0.05f;
@@ -73,13 +90,14 @@ namespace KkomaKnight.Game
             var di = dim.gameObject.AddComponent<Image>();
             di.color = Palette.A(Palette.Dim, DimAlpha); di.raycastTarget = true;
             UiKit.FadeIn(di, DimAlpha);
-            UiKit.Tag(dim, "어둠");
+            // ⚠ 어둠에는 이름표를 안 단다 — 프레임 «밖»(레터박스·노치)까지 덮으므로 자리로 재면 x−370 · w840 이 나온다(§5 가 0점을 준다).
+            //    어둠은 «자리» 가 아니라 «세기» 로 판정하는 것이라 표 ㊹ 머리에 그 수(알파·뒤 화면 밝기)를 적어 두었다.
 
             // ⓑ 빛살 — 제목 뒤. 여기는 «칸» 이 아니라 리본 자리와 같은 갈래라 clip 을 끈다(T189 예외 · Overlay 의 레벨업 빛과 같은 호출 꼴).
             var glow = UiKit.Rect(root, "RewardGlow");
             UiKit.Pct(glow, Layout.RwGlow);
-            UiKit.LightBehind(glow, null, UiKit.LightKey, UiKit.LightPeriod, Palette.A(Palette.Reward, 0.55f),
-                              sidePx: UiKit.FrameW * Layout.RwGlow.W / 100f, clip: false);
+            UiKit.LightBehind(glow, null, UiKit.LightKey, UiKit.LightPeriod, Palette.A(Palette.Reward, GlowAlpha),
+                              sidePx: UiKit.FrameW * GlowSide, clip: false);
             UiKit.Tag(glow, "빛살");
 
             // ⓒ 제목 — 노란 굵은 «리워드»

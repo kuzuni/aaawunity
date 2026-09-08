@@ -258,7 +258,7 @@ namespace KkomaKnight.Tests
             // T214 — 이 팝업만 닫기 안내를 표 자리(95.9)로 내렸다(공통 BookClose 91.5 는 ④ 가 쓴다) · x·w 는 표에 «—» 라 y 만 못 박는다
             SameV(s, "⑯", "닫기 안내", 1, Layout.AcClose.Y);
             Same(s, "⑰", "팝업 박스", Layout.RrBox); Same(s, "⑰", "제목 띠", Layout.RrHead); Same(s, "⑰", "티어 띠", Layout.RrTiers); Same(s, "⑰", "리셋 타이머", Layout.RrTimer);
-            Same(s, "⑰", "안내 문구", Layout.RrNote); Same(s, "⑰", "보상 목록(4줄)", Layout.RrList); Same(s, "⑰", "보상 줄(1칸)", Layout.RrRow); Same(s, "⑰", "하단 탭(2개)", Layout.RrTabs);
+            Same(s, "⑰", "안내 문구", Layout.RrNote); Same(s, "⑰", "보상 목록(16줄)", Layout.RrList);   // T237 이 주인 지시로 네 줄 → 열여섯 줄로 바꾸며 표 행 이름도 바뀌었다(자만 옛 이름을 들고 있어 main 이 빨갰다) Same(s, "⑰", "보상 줄(1칸)", Layout.RrRow); Same(s, "⑰", "하단 탭(2개)", Layout.RrTabs);
             Same(s, "⑱", "상단 바", Layout.LobbyTopBar); Same(s, "⑱", "상인 배너", Layout.MeBanner); Same(s, "⑱", "제목(Merchant)", Layout.MeTitle); Same(s, "⑱", "시즌 타이머", Layout.MeSeason);
             Same(s, "⑱", "상품 격자", Layout.MeGrid); Same(s, "⑱", "상품 카드(1칸)", Layout.MeCard); Same(s, "⑱", "하단 바", Layout.DgFoot); Same(s, "⑱", "뒤로 버튼", Layout.DgBack);
         }
