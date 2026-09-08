@@ -348,10 +348,24 @@ namespace KkomaKnight.Game
                 UiKit.Pct(glowHost, TitleGlowR.X, TitleGlowR.Y, TitleGlowR.W, TitleGlowR.H);
                 glowHost.SetSiblingIndex(ribbon.GetSiblingIndex());
                 Canvas.ForceUpdateCanvases();
-                UiKit.LightBehind(glowHost, null, UiKit.LightKey, UiKit.LightPeriod,
+                // ⚑ T234 회차 3 — **조각을 «가는 살»(ui.light2)로 바꾼다.** 새 그림이 아니라 이 저장소가 이미 쓰는 키다(T72 ② · 작은 칸용).
+                //   회차 2 의 그림(run 507)이 답을 줬다: 키운 빛이 «부드러운 부채» 가 아니라 **꽉 찬 노란 수레바퀴**가 되어 상단 재화 바까지 물었다.
+                //   까닭은 크기가 아니라 **조각의 알파 결**이다 — 두 조각의 반지름별 평균 알파를 재면:
+                //     ui.light1(지금)  r=0.3 211 · r=0.5 171 · r=0.7 110   ← 바깥까지 거의 불투명 = «원반»
+                //     ui.light2(바꿈)  r=0.3 104 · r=0.5  70 · r=0.7  31   ← 같은 살인데 절반 이하로 잦아든다 = «부채»
+                //     ui.glow1(아래 겹) 들쭉 0~3 = 살 없는 매끈한 원(레퍼런스의 «퍼짐» 은 이쪽 결이다)
+                //   레퍼런스 04 는 «가운데가 밝고 위로 잦아드는» 그림이라 light2 + 글로우 서클 쪽 결에 가깝다.
+                //   ⚠ 짙기(TitleGlowAlpha)는 이 회차에 안 건드린다 — 회차 2 가 «두 손잡이를 같이 밀면 못 읽는다» 를 값 주고 배웠다(결정 656).
+                UiKit.LightBehind(glowHost, null, UiKit.LightKeySmall, UiKit.LightPeriod,
                                   Palette.A(Palette.Yellow, TitleGlowAlpha),          // 레퍼런스의 빛은 «금빛» 이다(우리 흰빛은 회색 판처럼 보였다)
                                   sidePx: UiKit.FrameW * TitleGlowR.W / 100f,        // 한 변 = 그 판의 «가로» (세로에 안 끌려간다)
-                                  clip: false);                                     // T189 예외 — 여기는 «칸» 이 아니라 리본 자리다(빛이 잘리면 부채가 사각형으로 잘린다)
+                                  // T189 예외(마스크 없음) — **까닭을 T234 에서 주인 기준으로 다시 적는다.**
+                                  //  옛 까닭: «여기는 칸이 아니라 리본 자리다»(워커·등재의 판단).
+                                  //  참 까닭: **레퍼런스가 그렇게 생겼다**(주인 «레퍼런스랑 같아지게 해야 함 · 빛 효과가»).
+                                  //  실측이 그것을 뒷받침한다 — 리본 «아래» 로 새는 빛이 우리도 0px, 레퍼런스도 0px 이라
+                                  //  «마스크가 없어서» 달라진 것이 아니다. 사각형 마스크를 지금 씌우면 위로 퍼지는 부채 끝이
+                                  //  직선으로 잘려 **레퍼런스에서 더 멀어진다**. ⇒ 다음 워커는 «예외가 남아 있네» 로 다시 씌우지 마라.
+                                  clip: false);
             }
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "레벨 업!");
             var sub = UiKit.Find(rt, "Text (TMP)"); if (sub != null) { UiKit.Pct((RectTransform)sub, Layout.OvSub); UiKit.SetText(rt, "Text (TMP)", "새 특전을 고르세요"); }   // 레퍼런스 04 «Choose a New Perk»
