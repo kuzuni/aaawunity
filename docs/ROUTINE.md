@@ -3335,6 +3335,19 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 ### T207 — ⚑⚑⚑ 주인 승인: **글자를 TMP(SDF)로 되돌리고 아웃라인을 «진짜 머티리얼» 로** (주인 2026-09-07 17:2X «tmpro로 아웃라인 해야지 진짜 메테리얼로» · **구조 작업 · 큼** · 단계로 쪼갠다 · 자리·수치 표 0줄)
 
+> ❗ **실측 보고(2026-09-08 02:4X · sess-2041-14225 · 워커 C · 코드 0줄 · 임자 lock 이 살아 있어 알리기만 한다 · 결정 421) — ② 가 들어간 첫 완주 런의 빨강을 다 캐서 갈래로 묶어 둔다.** CI **런 457**(`10b48880` · `screens` `meta.json` `"tests":"failure"`) 의 PlayMode 실패는 **아홉**이고 갈래는 **넷**뿐이다 — 하나를 고치면 여럿이 같이 꺼진다:
+> 
+> | 갈래 | 실패 | 실측 문구 |
+> |---|---|---|
+> | **ⓐ TMP 자동 크기가 하한 아래로 고른다** | `EventsScreenTests.EventsTextsAreReadable` · `TextSizeGateTests.EveryActiveTextMeetsTheMinimumSize` · `UiSmokeTests.ShopBoxesAndChestOpenPopup` · `UiSmokeTests.BattleTicksAndAllBattlePopups` | «Tab:dungeon/Focus/Text (TMP) «던전» size **30**(min 40) bestFit 32~ used 30 rect 201×53» · «ResourceBar_Coin «0» size **39**(min 40)» · «클리어 보상 골드 «0» … 실제 **36**» |
+> | **ⓑ 정렬 enum 이 다른 이름으로 읽힌다** | `UiSmokeTests.LobbySettingsTalentPetToast` | «수량은 아이콘 오른쪽 아래 / Expected: **LowerRight** / But was: **BottomRight**» — `TMP` 는 `TextAlignmentOptions.BottomRight`, 자는 uGUI `TextAnchor.LowerRight` 로 묻는다 |
+> | **ⓒ `Text` 로 찾던 자식이 이제 `TMP_Text` 다** | `UiTextureTests.ResultPopupsCarryPatternAndRewardLights`(«설명 Text / Expected: not null») · `PercentGateTests.RatioStatsAreWrittenWithPercentEverywhere`(«장비 세부(07) 옵션 줄에 % 가 하나는» ) | 자가 `GetComponentInChildren<Text>()` 로 세는 자리 |
+> | **ⓓ 입력칸이 사라졌다** | `ProfileTests.NicknameEditsThroughThePrefabInputField` · `SettingsProfileRowsTests.SettingsHasProfileAndNicknameRowsThatOpenTheirPopups` | «입력칸(NickInput) / Expected: not null / But was: null» — ② 가 `TakeTmpInputs`(TMP 입력칸을 uGUI 로 갈아 끼우던 T96-profile 처방)를 없애면 그 이름표도 같이 사라진다(3항 ② 가 «통째로 사라진다» 고 예고한 자리다) |
+> 
+> **ⓐ 가 이 중 제일 큰 갈래이고 원인이 하나로 보인다** — uGUI `bestFit` 은 «최대에서 시작해 줄인다» 이고 TMP `enableAutoSizing` 은 `fontSizeMin`~`fontSizeMax` 안에서 고르는데, 옮기면서 **`fontSizeMin` 이 종류 하한(Body 40)이 아니라 `TextSize.BestFitMin`(32)으로 들어간 자리**가 남아 있는 것 같다(위 세 줄이 전부 «bestFit 32~» 로 찍힌다). 한 자리만 고치면 넷이 같이 꺼질 수 있다.
+> **ⓑ 는 `UiKit.TmpAlign`(`UiKit.cs:1239`)의 짝을 자 쪽에서도 쓰면 끝난다**(자가 `TextAnchor` 로 묻는 줄을 `TmpAlign(...)` 과 견주게).
+> ⚠ **급하다** — 유니티 잡이 빨개서 **gh-pages 배포가 막힌다**. 다만 이것은 ② 가 예고한 «받아 쓰는 쪽 107자리» 의 일부라 **되돌릴 일이 아니라 마저 밟을 일**로 보인다.
+
 > **⚑ (02:5X · 워커 J · ③ 회차 1 push `3970c15e`) — 워커 A(결정 599)·E(결정 601)가 갈라 준 아홉 중 ③④ 를 닫았고, ①② 도 같은 한 줄로 닫힐 것 같다.**
 > ③ `NickInput` ×2 = `Profile.cs` 와 자 둘이 아직 uGUI `InputField` 를 찾던 것(→ `TMP_InputField`) · ④ 07·05 «%» = `PercentGateTests` 만 `UnityEngine.UI.Text` 로 손수 훑던 고리(→ TMP · 치환기에도 «정규화된 이름» 규칙을 넣었다). **둘 다 E 의 진단 그대로였다.**
 > **①(ResourceBar 39 · 탭 30 · 클리어 골드 36)과 ②(토글 «ON» 36)은 내가 다른 뿌리로 고쳤다** — E 는 «`SetText` 가 크기 인자 없으면 하한을 안 건다» 로 봤는데, 내가 CI 로그로 다시 재 보니 **그 자리들은 자동 크기(autoSize) 글자**이고 **TMP 는 자동 크기가 «고른» 값을 `fontSize` 에 되써 넣는다**(uGUI 는 안 그랬다). 즉 하한을 `fontSize` 에 걸어 봐야 다음 레이아웃이 지운다 — 그래서 `SkinTmp` 가 **`fontSizeMax` 를 하한까지 올리게** 했다(판정식은 그대로라 계약이 옛 세계와 정확히 같다). ② 도 «우리가 안 부르는 글자» 라 `SetText` 로는 못 닿지만 `Adopt` 는 모든 조각 글자를 지나가므로 같이 잡힌다.
