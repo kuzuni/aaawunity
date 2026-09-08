@@ -164,6 +164,9 @@ namespace KkomaKnight.Game
 
         /// <summary>월드 루트(Ground·Props·Nodes 의 부모) — 테스트·진단용 읽기(T19 PlayMode 맵 테스트가 바닥·길·소품 스케일을 본다).</summary>
         public Transform Root => _root;
+        bool _isArena;
+        /// <summary>이 판이 아레나(PvP) 판인가 — 무대와 상대 외형이 이 값으로 갈린다(T240 1·2항). 테스트·진단용 읽기.</summary>
+        public bool IsArena => _isArena;
         /// <summary>이 판의 맵 테마 — 테스트·진단용 읽기.</summary>
         public Theme MapTheme => _theme;
 
@@ -222,7 +225,8 @@ namespace KkomaKnight.Game
             _app = app; G = g; D = g.D; _pops = popsLayer;
             _zoom = (float)D.Ui.CameraZoom; _playerX = (float)(D.Ui.PlayerX * WorldCam.LayoutW);
             // T240 1항 — 아레나 판은 챕터와 무관하게 «모래 마당»(레퍼런스 33). 일반 판은 종전대로 챕터가 무대를 정한다.
-            _theme = IsArenaRun(app) ? Theme.Arena : Theme.ForChapter(g.Chapter);
+            _isArena = IsArenaRun(app);
+            _theme = _isArena ? Theme.Arena : Theme.ForChapter(g.Chapter);
             _shownPX = G.P.WorldX; _heldPrevFrame = false;
             _root = new GameObject("World").transform;
             BuildGround(); BuildProps(); BuildNodes(); BuildPlayer();
@@ -400,6 +404,27 @@ namespace KkomaKnight.Game
             rig.Play(CharacterRig.Idle);
             return rig;
         }
+        /// <summary>
+        /// T240 2항 — 이 판의 <b>상대 외형</b>. 챕터 전투는 종전 몹 스킨이고, <b>아레나(PvP) 판은 «플레이어 캐릭터»</b> 다
+        /// (주인 메모: «적도 몹이 아니라 플레이어 캐릭터» · 레퍼런스 <c>33_pvp_battle.jpg</c>).
+        /// <para>
+        /// ⚠ <b>«상대 장비를 입힌 모습» 은 못 만든다</b> — 더미(<c>arenaDummy.json</c>)가 갖는 것은 이름·아바타·전투력뿐이라
+        /// 상대가 무엇을 꼈는지가 <b>어디에도 없다</b>. 그래서 <b>기사 기본 외형</b>(<c>PlayerSkin(D, null, …)</c> = 장비 0)으로 세운다 —
+        /// 없는 장비를 골라 입히면 그 순간 «지어낸 데이터» 가 된다(§1).
+        /// </para>
+        /// <para>
+        /// ⚠ <b>내 캐릭터와 같은 모습이 될 수 있다</b>(내가 장비를 안 꼈을 때). 그래도 <b>자리와 바라보는 쪽</b>이 갈린다 —
+        /// 상대는 화면 오른쪽에서 왼쪽을 본다(<c>faceRight: false</c>). 여기서 색을 섞어 «달라 보이게» 하는 것은
+        /// 주인이 말한 적 없는 연출이라 <b>안 했다</b>. 갈라 보이게 하려면 상대 장비가 데이터로 와야 한다.
+        /// </para>
+        /// <para>보스는 아레나에서 안 나오지만(1대1 은 적 하나 · 보스 아님) 갈래를 명시해 둔다 — 언젠가 «보스전 아레나» 가 생겨도 이 줄이 조용히 틀리지 않게.</para>
+        /// </summary>
+        CharacterRig.Skin FoeSkin(EnemyState e)
+        {
+            if (_isArena && !e.IsBoss) return CharacterRig.PlayerSkin(D, null, false);
+            return EnemySkin(e);
+        }
+
         /// <summary>적 스킨 — 전부 투구를 쓴다(주인 지시 «적들은 전부 모자 쓴 상태») · 원거리는 활+화살+시위.</summary>
         static CharacterRig.Skin EnemySkin(EnemyState e)
         {
@@ -559,7 +584,7 @@ namespace KkomaKnight.Game
             if (_enemies.TryGetValue(e, out var v)) return v;
             e.Skin = System.Math.Abs(e.Id * 2654435761L % 1000).GetHashCode();
             float h = e.IsBoss ? Layout.EnemyHeight * (float)D.Enemies.BossSizeMul : Layout.EnemyHeight;
-            v = new EnemyView { E = e, Rig = MakeChar("Enemy" + e.Id, EnemySkin(e), h, false), StrikeTick = e.StrikeT, ShownHp = e.Hp };
+            v = new EnemyView { E = e, Rig = MakeChar("Enemy" + e.Id, FoeSkin(e), h, false), StrikeTick = e.StrikeT, ShownHp = e.Hp };
             // 바 폭 = 표(ref-layout ② «적 발밑 바 폭» 9.7 · 플레이어 10.3 과 거의 같다) × FootBarScale(T63-battle · 플레이어 바와 같은 자) — ui.json enemyBarW(37px = 6.9%) 를 쓰면 플레이어 바의 2/3 폭이 돼 레퍼런스와 어긋났다(T47 회차 2). 보스는 ui.json 의 보스/잡몹 비율만 빌린다.
             float barW = WorldCam.PctW(Layout.EnemyFootBarW) * Layout.FootBarScale * (e.IsBoss && D.Ui.EnemyBarW > 0 ? (float)(D.Ui.BossBarW / D.Ui.EnemyBarW) : 1f);
             MakeBar(_root, barW, WorldCam.PctH(Layout.FootBarH), out v.BarBg, out v.BarFill, e.IsBoss ? Palette.Plum : Palette.Red, 395);

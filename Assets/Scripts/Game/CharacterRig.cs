@@ -144,8 +144,15 @@ namespace KkomaKnight.Game
             sr.sprite = sp; sr.gameObject.SetActive(sp != null || path == PathBody || path == PathHead);
         }
 
+        /// <summary>
+        /// 마지막으로 <see cref="Apply"/> 한 스킨 — 자·진단이 «무엇을 입혔나» 를 스프라이트에서 되읽지 않아도 되게 남긴다(T240 2항).
+        /// <para>되읽기가 나쁜 까닭: 조각이 없으면 <see cref="SetSprite"/> 가 조용히 지나가서, 자가 «안 입혔다» 와 «조각이 없다» 를 못 가른다.</para>
+        /// </summary>
+        public Skin Wearing { get; private set; }
+
         public void Apply(Skin s)
         {
+            Wearing = s;
             SetSprite(PathHelmet, s.Helmet); SetSprite(PathChest, s.Chest);
             SetSprite(PathSword, s.Sword); SetSprite(PathAxe, s.Axe); SetSprite(PathSpear, s.Spear); SetSprite(PathBlunt, s.Blunt);
             SetSprite(PathBow, s.Bow); SetSprite(PathArrow, s.Arrow); SetSprite(PathShield, s.Shield); SetSprite(PathSubItem, s.SubItem);

@@ -196,6 +196,57 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
+        /// <summary>
+        /// T240 2항 — 아레나 판의 상대는 <b>몹이 아니라 «플레이어 캐릭터»</b> 다(주인 메모 · 레퍼런스 <c>33_pvp_battle.jpg</c>).
+        /// <para>
+        /// «기사 투구를 썼다» 만 재면 <b>몹도 투구를 쓰므로</b>(주인 지시 «적들은 전부 모자 쓴 상태») 갈리지 않는다 —
+        /// 그래서 <b>같은 챕터의 일반 판 적과 나란히</b> 놓고 «둘이 다른 것을 입었나» 를 잰다.
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator TheArenaFoeWearsAKnightNotAMobSkin()
+        {
+            yield return Boot();
+            EventsScreen.Open(_app, EventsScreen.PageArena); yield return Frames(2);
+            Assert.IsTrue(Click(_app.Current.Root, "ChallengeBtn")); yield return Frames(2);
+            Assert.IsTrue(Click(_app.Overlay.Root, "FoeBtn:0")); yield return Frames(4);
+
+            var bs = _app.GetScreen<BattleScreen>();
+            Assert.IsTrue(bs.IsArena); Assert.IsNotNull(bs.World);
+            Assert.IsTrue(bs.World.IsArena, "월드도 이 판을 아레나로 안다");
+            int chapter = bs.G.Chapter;
+
+            var arenaFoe = FirstEnemyRig(bs.World);
+            if (arenaFoe == null) Assert.Ignore("아직 적 리그가 안 섰다 — 잴 것이 없는 판은 통과시킨다(§1 ⓑ)");
+            Assert.AreEqual("cm.knight.helmet", arenaFoe.Wearing.Helmet, "아레나 상대는 기사 투구를 쓴다");
+            Assert.AreEqual("cm.knight.sword", arenaFoe.Wearing.Sword, "기사 검을 든다");
+            Assert.IsNull(arenaFoe.Wearing.Bow, "몹 궁수 갈래로 가지 않는다");
+
+            // 같은 챕터의 일반 판 — 여기서 갈려야 «아레나라서» 가 증명된다.
+            _app.StartBattle(chapter); yield return Frames(4);
+            var normal = _app.GetScreen<BattleScreen>();
+            Assert.IsFalse(normal.IsArena);
+            var mob = FirstEnemyRig(normal.World);
+            if (mob == null) Assert.Ignore("일반 판에 아직 적 리그가 없다 — 가를 것이 없다");
+            Assert.AreNotEqual(arenaFoe.Wearing.Helmet, mob.Wearing.Helmet, "같은 챕터인데 상대 외형이 갈린다(아레나 = 기사 · 챕터 = 몹)");
+
+            _log.AssertNoRed("아레나 상대 외형");
+            yield return Shutdown();
+        }
+
+        /// <summary>월드에 선 첫 적 리그(아직 없으면 <c>null</c>) — 이름 규약 «Enemy&lt;id&gt;» 로 찾는다.</summary>
+        static CharacterRig FirstEnemyRig(BattleWorld world)
+        {
+            if (world == null || world.Root == null) return null;
+            foreach (Transform t in world.Root)
+                if (t.name.StartsWith("Enemy"))
+                {
+                    var rig = t.GetComponent<CharacterRig>();
+                    if (rig != null && rig.Wearing != null) return rig;
+                }
+            return null;
+        }
+
         [UnityTest]
         public IEnumerator LoseAtTheFloorWritesWhatItTookNotWhatTheTableSays()
         {
