@@ -32,8 +32,18 @@ namespace KkomaKnight.Tests.Play
     /// ⓑ <b>안 번쩍인 리그 둘이 누구인가</b>(이름을 적어 «아직 안 만난 적» 인지 «경로가 빠진 유닛» 인지 다음 회차가 가른다).
     /// </para>
     /// <para>
-    /// ⚠ <b>이 자는 아직도 막지 않는다</b>(결정 627 · T226 · 워커 G 의 «두 런 쌓이면 올린다») — 수가 한 런뿐이라
-    /// 단언으로 올리지 않는다. 같은 꼴이 두 런 나오면 그때 «번쩍 0회면 빨강» 을 세운다. 지금 막으면 배포가 선다.
+    /// <b>회차 3 — 두 런이 쌓여 이 자가 «막는 자» 가 됐다</b>(결정 690 · 사다리는 결정 493·627 · 워커 G 의 «두 런 쌓이면 올린다»):
+    /// <list type="bullet">
+    /// <item>run 529(0.1s): 424프레임 · 번쩍 5회 · 회당 5.8프레임</item>
+    /// <item>run 536(0.18s): 433프레임 · 번쩍 7회 · <b>회당 10.7프레임</b> · <c>matFrames 75 = onFrames 75</c> · <c>matMismatchFrames 0</c> · <c>neverFlashed "Enemy3,Enemy4"</c></item>
+    /// </list>
+    /// ⇒ 남은 갈래 둘이 다 닫혔다 — ⓐ <b>그림은 정말 갈린다</b>(깃발이 켜진 프레임마다 머티리얼도 붙어 있었다 · 두 런 다 어긋남 0) ·
+    /// ⓑ <b>안 번쩍인 둘은 «경로가 빠진 유닛» 이 아니라 «아직 안 만난 적»</b> 이다(이름이 <c>Enemy3</c>·<c>Enemy4</c> — 8초 창 안에 교전이 안 온 뒤쪽 적).
+    /// 그리고 0.18 이 실제로 먹었다(회당 프레임이 5.8 → 10.7 로 정확히 배가 됐다).
+    /// </para>
+    /// <para>
+    /// ⚠ <b>거는 것은 프레임과 무관한 셋뿐이다</b> — 러너 dt 가 판마다 다르므로(워커 K · T233 회차 3)
+    /// «회당 몇 프레임» 을 걸면 느린 판에서 애먼 빨강이 된다. 남은 일은 <b>주인 눈</b> 하나다.
     /// </para>
     /// </summary>
     public class HitFlashProbeTests
@@ -109,6 +119,16 @@ namespace KkomaKnight.Tests.Play
 
             WriteFlashJson(frames, rigs, flashed, totalCount, totalOn, totalMat, matMismatch, onPerFlash, lastSec, neverNames);
 
+            // ── 회차 3 — 여기서부터 막는다(결정 690). 두 런(529·536)이 같은 꼴을 냈으므로 «보고만» 을 졸업시킨다.
+            // 세 줄뿐인 까닭: 프레임 수에 딸리는 값은 **하나도 안 건다**. 러너 dt 가 판마다 달라(워커 K · T233 회차 3)
+            // «회당 몇 프레임» 을 걸면 느린 판에서 애먼 빨강이 된다 — 걸 수 있는 것은 프레임과 무관한 셋이다.
+            Assert.Greater(totalCount, 0,
+                "전투 8초 동안 피격 플래시가 한 번도 안 켜졌다 — 부르는 경로(BattleWorld.Present 의 Hit·PlayerHit)가 끊겼다는 뜻이다(실측 5회·7회)");
+            Assert.AreEqual(0, matMismatch,
+                "깃발(Flashing)은 켜졌는데 그림이 안 갈린 프레임이 있다 — 누군가 렌더러 머티리얼을 도로 돌려놓는다(실측 두 런 다 0)");
+            Assert.GreaterOrEqual(lastSec, 0.15f,
+                "피격 플래시 길이가 0.15초 밑으로 내려갔다 — 주인이 «확실하게» 를 지시한 자리다(CharacterRig.HitFlashSeconds · 결정 684)");
+
             _log.AssertNoRed("T242 피격 플래시 관측");
             if (_app != null) { if (_app.UiCanvas != null) Object.Destroy(_app.UiCanvas.gameObject); Object.Destroy(_app.gameObject); }
             yield return Frames(3);
@@ -128,7 +148,7 @@ namespace KkomaKnight.Tests.Play
         static void WriteFlashJson(int frames, int rigs, int flashed, int flashCount, int onFrames, int matFrames, int matMismatch, float onPerFlash, float lastSec, string neverNames)
         {
             var inv = System.Globalization.CultureInfo.InvariantCulture;
-            string json = "{\"_meta\":{\"task\":\"T242\",\"round\":2},"
+            string json = "{\"_meta\":{\"task\":\"T242\",\"round\":3},"
                         + "\"frames\":" + frames.ToString(inv)
                         + ",\"rigs\":" + rigs.ToString(inv)
                         + ",\"rigsFlashed\":" + flashed.ToString(inv)
