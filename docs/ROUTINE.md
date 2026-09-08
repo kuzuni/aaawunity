@@ -1676,7 +1676,7 @@ T95(소환 결과 = `Shop_Chest_Open` 프리팹 + 찰진 등장)가 ✅ 지만 *
 5. 게이트 + PROGRESS T203 행 + 완료 기록(확인 = CI + `screens` 14 PNG 확대).
 
 
-### T232 ✅ — **T207 ② 가 남긴 죽은 코드 걷기: `TextOutline8`**(sess-1917-23930 · 워커 J · 2026-09-08 10:3X · 결정 647)
+### T232 ✅ — **T207 ② 가 남긴 죽은 코드 걷기: `TextOutline8`**(sess-1917-23930 · 워커 J · 2026-09-08 10:3X · 결정 648)
 
 1. **무엇이 죽었나** — T204 가 만든 `TextOutline8`(글자 사본을 여덟 방향으로 미는 `BaseMeshEffect`)은 T207 ② 가 테를 **SDF 머티리얼**로 옮긴 뒤 **붙이는 코드가 사라졌다**. 남은 것은 «있을 수 없는 컴포넌트» 를 지키는 갈래 둘(`UiKit.EnsureOutline` 의 걷어내기 · `TextAudit.FillOutline` 의 어긋남 판정)뿐이었다.
 2. **삭제해도 되는 근거(실측)** — GUID `a8368c2fa02c5b5d7a080e8add54b9fb` 를 `.prefab`·`.unity`·`.asset` 에서 grep 하면 **0건**이다. 즉 어떤 조각도 그것을 직렬화해 달고 오지 않으므로 «스크립트 없음(missing script)» 이 생길 자리가 없다.
