@@ -60,6 +60,9 @@ namespace KkomaKnight.Game
         TopBar _top; TMP_Text _chap; Transform _tabs;
         /// <summary>«데일리 기프트» 사이드 아이콘의 빨간 알림 점 — 지금 받을 수 있는 줄이 하나라도 있으면 켠다(T77 · <see cref="Refresh"/>).</summary>
         GameObject _giftDot;
+        // T366(주인 2026-09-10 «특권에서 받을 수 있는 재화 있으면 특권 부분도 빨간점 알림») — 왼쪽 사이드 «특권» 칸의 빨간 점.
+        //   판정은 Core.Privilege.AnyClaimable 한 곳(오늘 아직 안 받은 «매일 수령» 이 하나라도 · 안 산 카드는 안 센다 · 특권 화면의 카드 «받기» 점도 같은 판정을 카드별로 쓴다).
+        GameObject _privDot;
         /// <summary>«출석» 칸의 빨간 점(T253 4항) — 오늘 받을 칸이 있을 때만 켠다.</summary>
         GameObject _attendDot;
         /// <summary>
@@ -206,6 +209,12 @@ namespace KkomaKnight.Game
                     var dot = UiKit.AlertDot(cell, "GiftDot", SubDotAnchor, SubDotOffset, SubDotSize);
                     _giftDot = dot; dot.SetActive(false);
                 }
+                // T366 — «특권» 칸도 빨간 점(오늘 받을 «매일 수령» 이 있을 때만 · 위와 같은 규칙 · 받으면 조건이 사라져 꺼진다 = T167)
+                if (it.key == SidePrivilege)
+                {
+                    var dot = UiKit.AlertDot(cell, "PrivDot", SubDotAnchor, SubDotOffset, SubDotSize);
+                    _privDot = dot; dot.SetActive(false);
+                }
                 // T253 4항 — «출석» 칸도 빨간 점(오늘 받을 칸이 있을 때만 · T96 ⓔ·T77 과 같은 규칙)
                 if (it.key == SideAttendance)
                 {
@@ -267,6 +276,9 @@ namespace KkomaKnight.Game
             _top?.Refresh();
             // T77 — 데일리 기프트에 받을 것이 있으면 사이드 아이콘에 빨간 점
             if (_giftDot != null) _giftDot.SetActive(Core.DailyGift.AnyClaimable(s, App.Data != null ? App.Data.DailyGift : null, SaveStore.Today()));
+            // T366 — 특권에 오늘 받을 «매일 수령» 이 있으면 «특권» 칸에 빨간 점(판정 = Core.Privilege.AnyClaimable · 데일리 기프트 칸과 같은 꼴)
+            if (_privDot != null) _privDot.SetActive(App.Data != null && App.Data.Privilege != null
+                && Core.Privilege.AnyClaimable(s, App.Data.Privilege, SaveStore.Today()));
             // T253 4항 — 오늘 받을 출석 칸이 있으면 «출석» 사이드 아이콘에 빨간 점(다 받았거나 오늘 이미 받았으면 안 켠다)
             if (_attendDot != null) _attendDot.SetActive(App.Data != null && App.Data.Attendance != null
                 && Core.Attendance.Can(s, App.Data.Attendance, SaveStore.Today()));
