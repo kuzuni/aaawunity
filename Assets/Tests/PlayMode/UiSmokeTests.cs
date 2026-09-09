@@ -1266,6 +1266,17 @@ namespace KkomaKnight.Tests.Play
                         Assert.AreEqual(Color.white, g.color, "슬롯 " + i + " 조각 Glow 는 완전 흰색·완전 불투명이어야 한다(T342 · 지금 " + g.color + ")");
                     }
                     string part = i < 3 ? GearUi.ColLeft[i] : GearUi.ColRight[i - 3];
+                    // T356(주인 2026-09-10 «장착슬롯 +2강인데 장착했을 때는 안 뜨네») — «+N» 글자는 **보이는 가지**에 있어야 한다.
+                    //   조각의 Text_Level 은 Lock 안에 있었고 Lock 을 끄니 글자가 써져도 안 보였다 — 글자가 아니라 activeInHierarchy 를 잰다.
+                    {
+                        var lvl = UiKit.Find(frame, "Text_Level");
+                        Assert.IsNotNull(lvl, "슬롯 " + i + " 의 Text_Level(«+N» 자리 · T356)");
+                        Assert.IsTrue(lvl.gameObject.activeInHierarchy, "슬롯 " + i + " 의 «+N» 글자가 꺼진 가지(Lock) 안에 있다 — 보이지 않는다(T356)");
+                        var eqP = _app.Save.EquippedGear(part);
+                        var tmp = lvl.GetComponentInChildren<TMPro.TMP_Text>(true);
+                        Assert.IsNotNull(tmp, "슬롯 " + i + " Text_Level 의 TMP");
+                        Assert.AreEqual(GearUi.PlusText(D, eqP).Trim(), tmp.text.Trim(), "슬롯 " + i + " «+N» = 표시 등급의 +N(T310·T316·T356)");
+                    }
                     float rot = Mathf.DeltaAngle(0f, rt.localEulerAngles.z);
                     if (GearLook.HasLook(part))
                     {

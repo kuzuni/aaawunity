@@ -109,7 +109,10 @@ namespace KkomaKnight.Tests
         {
             var s = Fresh();
             Assert.IsTrue(Notify.ShopAny(s, Today), "오늘 무료 보급을 아직 안 받았으면 상점 탭에 점이 뜬다");
+            // T355(주인 2026-09-10) — 다이아 자리(옛 FreeDay)만 받아도 골드·광고 상자가 남았으면 점은 켜져 있다(옛 판정이 여기서 거짓이었다)
             s.FreeDay = Today;
+            Assert.IsTrue(Notify.ShopAny(s, Today), "다이아만 받았다 — 나머지 셋이 남았으니 아직 켜진다(T355)");
+            foreach (var t in ShopFree.All) ShopFree.Take(s, t, Today);   // T355 — 옛 FreeDay(다이아 자리 하나)가 아니라 무료 보급 자리 넷을 다 써야 꺼진다
             Assert.IsFalse(Notify.ShopAny(s, Today), "받고 나면 꺼진다");
         }
 
@@ -127,7 +130,7 @@ namespace KkomaKnight.Tests
         public void TabAny_RoutesEachKeyToItsOwnRule()
         {
             var G = GearOnly(); var s = Fresh();
-            s.FreeDay = Today;                                  // 상점은 껐다
+            foreach (var t in ShopFree.All) ShopFree.Take(s, t, Today);   // T355 — 옛 FreeDay(다이아 자리 하나)가 아니라 무료 보급 자리 넷을 다 써야 꺼진다                                  // 상점은 껐다
             s.Inv.Add(Item("weapon", "crit", 0)); s.Inv[0].IsNew = true;   // 장비만 켠다
             Assert.IsTrue(Notify.TabAny("gear", G, s, 0, Today), "장비 탭은 장비 규칙을 본다");
             Assert.IsFalse(Notify.TabAny("shop", G, s, 0, Today), "상점 탭은 장비 사정에 안 흔들린다");

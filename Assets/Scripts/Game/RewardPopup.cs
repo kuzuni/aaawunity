@@ -260,10 +260,17 @@ namespace KkomaKnight.Game
             }
         }
 
-        /// <summary>구슬 층(지금 화면의 맨 위) — 없으면 만든다. 화면이 바뀌면 새 화면에 다시 만든다.</summary>
+        /// <summary>구슬 층 — <b>프레임(<c>app.Frame</c>) 밑 맨 위</b>. 없으면 만든다.
+        /// <para>
+        /// T354(주인 2026-09-10 «재화 흡수 이펙트가 레이어가 너무 낮음 · 리워드 팝업 닫고 나서 안 보여 · 팝업들보다 레이어가 낮아서») —
+        /// 여태는 <b>화면 루트(<c>app.Current.Root</c>)</b> 밑에 세웠다. 그런데 <see cref="Overlay.Root"/> 는 <c>app.Frame</c> 밑 <b>형제</b>(열 때마다 맨 위)라
+        /// 화면 루트 «안에서» 맨 위인 것은 오버레이 «아래» 다 — 형제 번호가 아니라 <b>부모가 달랐다</b>. 그래서 프레임 밑으로 올린다
+        /// (좌표는 둘 다 프레임 stretch 라 <see cref="RewardOrbs.TargetPos"/> 는 그대로 · 화면이 바뀌어도 층이 살아남는다).
+        /// </para>
+        /// </summary>
         static RectTransform Layer(App app)
         {
-            var host = app.Current != null && app.Current.Root != null ? app.Current.Root : app.Frame;
+            var host = app.Frame != null ? app.Frame : (app.Current != null ? app.Current.Root : null);
             if (host == null) return null;
             if (_orbLayer == null || _orbLayer.parent != host)
             {

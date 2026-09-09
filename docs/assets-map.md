@@ -184,7 +184,7 @@
 | sprites | `pi.video` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/video.png` | fileID 21300000 |  |
 | sprites | `pi.refresh` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/refresh.png` | fileID 21300000 |  |
 | sprites | `pi.cancle` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/cancle.png` | fileID 21300000 |  |
-| sprites | `pi.check` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/check.png` | fileID 21300000 |  |
+| sprites | `pi.check` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/Control/Toggle_Check_02_On.png` | fileID 21300000 |  |
 | sprites | `pi.lock` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/lock.png` | fileID 21300000 |  |
 | sprites | `pi.anvil` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/anvil.png` | fileID 21300000 | T39: 대장간 빈 결과 슬롯 안 모루 실루엣(레퍼런스 08 «선택 칸») |
 | sprites | `pi.chest` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/chest.png` | fileID 21300000 |  |
@@ -556,12 +556,12 @@
 | prefabs | `ui.frameDarkBorder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/BasicFrame/BasicFrame_SquareSharpEdge_01_l_Border_TransperDark.prefab` | root 450577865911699251 |  |
 | prefabs | `ui.lineTitle` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_LineDeco_01_s.prefab` | root 7786740578430808921 | 챕터 제목 밑줄 장식 (Title_LineDeco_01_s) |
 | prefabs | `ui.lineTitleL` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_LineDeco_01_l.prefab` | root 6209652781757596530 |  |
-| prefabs | `ui.title.tangerine` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_01_NoDeco_Tangerine.prefab` | root 5560263905569063613 | 팝업 리본 제목(기본) · plum=악마 · yellow=천사/클리어 · green=쉼터 · red=사망 · sky=보유 특전 |
-| prefabs | `ui.title.plum` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_01_NoDeco_Plum.prefab` | root 2306795138762171581 |  |
-| prefabs | `ui.title.yellow` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_01_NoDeco_Yellow.prefab` | root 5325593855183924205 |  |
-| prefabs | `ui.title.green` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_01_NoDeco_Green.prefab` | root 5467225822093011633 |  |
-| prefabs | `ui.title.red` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_01_NoDeco_Red.prefab` | root 9092593472852531757 |  |
-| prefabs | `ui.title.sky` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_01_NoDeco_Sky.prefab` | root 2565615909246734251 |  |
+| prefabs | `ui.title.tangerine` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_Tapered_01_Brown.prefab` | root 8538020173010104235 | T362 주인 «모든 리본 타이틀은 Title_Tapered_01_Brown 으로» — 키 이름은 그대로(코드·자가 이름으로 찾는다) · 옛 Title_01_NoDeco_Tangerine · 팝업 리본 제목(기본) · plum=악마 · yellow=천사/클리어 · green=쉼터 · red=사망 · sky=보유 특전 |
+| prefabs | `ui.title.plum` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_Tapered_01_Brown.prefab` | root 8538020173010104235 |  |
+| prefabs | `ui.title.yellow` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_Tapered_01_Brown.prefab` | root 8538020173010104235 |  |
+| prefabs | `ui.title.green` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_Tapered_01_Brown.prefab` | root 8538020173010104235 |  |
+| prefabs | `ui.title.red` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_Tapered_01_Brown.prefab` | root 8538020173010104235 |  |
+| prefabs | `ui.title.sky` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_Tapered_01_Brown.prefab` | root 8538020173010104235 |  |
 | prefabs | `ui.titleBrown` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Title/Title_Tapered_01_Brown.prefab` | root 8538020173010104235 | 설정/일시정지 팝업 명판(T41) |
 | prefabs | `ui.popup` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Popup/Popup_Box_02_DecoLine_Basic.prefab` | root 921659412208554214 | 팝업 상자(Popup_Box_02_DecoLine) — 색 변형은 이벤트별 |
 | prefabs | `ui.progressionMission2` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs~DemoScenes/Progression_Mission_02.prefab` | root 8695934003370001500 | 퀘스트 팝업(15) 통째 — 주인 2026-09-07(T78) «퀘스트는 팝업 걍 Progression_Mission_02 이거로 교체» · 상자(Popup_Box_01_Basic) + 제목 리본(Title_Tapered_01_Brown) + ScrollView(GridLayoutGroup) + 미션 줄 8(ListFrame_08 + ListItem_Mission_02 = 아이콘·제목·Slider_02_Yellow·Group_Price·Check) · 우리는 줄 6만 쓰고 나머지는 끈다 · 닫기 X 는 안 쓴다(배경 탭 = 닫기) |
@@ -670,8 +670,8 @@
 | colors | `col.grad.btnOrange.bottom` | `#F09600` | #F09600 | 주 버튼(주황) «아래» — 같은 값에서 어둡게(레퍼런스는 사실상 단색) |
 | colors | `col.grad.panelDark.top` | `#2C2829` | #2C2829 | 팝업 패널 «위» — 07_gear_detail.jpg (70,600)~(640,960) 실측(거의 단색) |
 | colors | `col.grad.panelDark.bottom` | `#201E1F` | #201E1F | 팝업 패널 «아래» — 같은 실측 |
-| colors | `col.grad.passFree.top` | `#1E63D6` | #1E63D6 | 패스 무료 열 **왼쪽** 색 — 주인 «서로 색 바꾸셈»(T353)으로 T344 의 하늘색과 자리를 바꿨다 = **파란색이 왼쪽**(열은 가로 그라데이션 · 옛 실측 #1F44AE) |
-| colors | `col.grad.passFree.bottom` | `#5BC8F5` | #5BC8F5 | 같은 열 **오른쪽** 색 = 하늘색(T353 · 옛 #286AC0) |
+| colors | `col.grad.passFree.top` | `#1E63D6` | #1E63D6 |  |
+| colors | `col.grad.passFree.bottom` | `#5BC8F5` | #5BC8F5 |  |
 | colors | `col.grad.passPaid1.top` | `#FF3B30` | #FF3B30 |  |
 | colors | `col.grad.passPaid1.bottom` | `#FF8612` | #FF8612 |  |
 | colors | `col.grad.passPaid2.top` | `#8B2FE0` | #8B2FE0 |  |

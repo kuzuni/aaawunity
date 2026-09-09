@@ -372,7 +372,7 @@ MonoBehaviour:
   - key: pi.cancle
     sprite: {fileID: 21300000, guid: e458da60709dd4216a3f99aa14e846e2, type: 3}
   - key: pi.check
-    sprite: {fileID: 21300000, guid: 5f7420f6c446946a693bf9583fbe898e, type: 3}
+    sprite: {fileID: 21300000, guid: da90dc77c6cba4babb53a7ae87af05a8, type: 3}
   - key: pi.lock
     sprite: {fileID: 21300000, guid: 81eb1b57926b246f2a036d332b0e2afc, type: 3}
   - key: pi.anvil
@@ -1117,17 +1117,17 @@ MonoBehaviour:
   - key: ui.lineTitleL
     prefab: {fileID: 6209652781757596530, guid: f6602dd009bd6435dab6416b208c2698, type: 3}
   - key: ui.title.tangerine
-    prefab: {fileID: 5560263905569063613, guid: 43138d2a4e5484437afc2f57bd168966, type: 3}
+    prefab: {fileID: 8538020173010104235, guid: f0b2faed36e684f10bd5482dfb04d570, type: 3}
   - key: ui.title.plum
-    prefab: {fileID: 2306795138762171581, guid: 73eb7ca8e58c34a0d965016e9aea1dc6, type: 3}
+    prefab: {fileID: 8538020173010104235, guid: f0b2faed36e684f10bd5482dfb04d570, type: 3}
   - key: ui.title.yellow
-    prefab: {fileID: 5325593855183924205, guid: 77af682c5d619464b8c5e1e557d52021, type: 3}
+    prefab: {fileID: 8538020173010104235, guid: f0b2faed36e684f10bd5482dfb04d570, type: 3}
   - key: ui.title.green
-    prefab: {fileID: 5467225822093011633, guid: 826ebef66141c4f3397d181629e41625, type: 3}
+    prefab: {fileID: 8538020173010104235, guid: f0b2faed36e684f10bd5482dfb04d570, type: 3}
   - key: ui.title.red
-    prefab: {fileID: 9092593472852531757, guid: 96fb6886321794f509164c9314c7533c, type: 3}
+    prefab: {fileID: 8538020173010104235, guid: f0b2faed36e684f10bd5482dfb04d570, type: 3}
   - key: ui.title.sky
-    prefab: {fileID: 2565615909246734251, guid: 4f2ceb62ddcfe4ae4a05facaef0ad2ea, type: 3}
+    prefab: {fileID: 8538020173010104235, guid: f0b2faed36e684f10bd5482dfb04d570, type: 3}
   - key: ui.titleBrown
     prefab: {fileID: 8538020173010104235, guid: f0b2faed36e684f10bd5482dfb04d570, type: 3}
   - key: ui.popup

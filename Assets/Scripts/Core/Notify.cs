@@ -116,8 +116,21 @@ namespace KkomaKnight.Core
             return false;
         }
 
-        /// <summary>상점 탭 — 오늘 «무료 보급»(하루 1회)을 아직 안 받았다(<c>ShopScreen.CanFree</c> 와 같은 판정).</summary>
-        public static bool ShopAny(SaveData s, string today) => s != null && s.FreeDay != today;
+        /// <summary>
+        /// 상점 탭 — 오늘 «무료 보급» 자리(<see cref="ShopFree.All"/> · 다이아·골드·광고 상자 둘) 중 <b>하나라도</b> 아직 안 썼다(<c>ShopScreen.CanFree</c> 와 같은 판정).
+        /// <para>
+        /// T355(주인 2026-09-10 «상점에 광고 보거나 free 로 얻을 수 있는 게 있는데 빨간점 알림이 하단 네비 상점 탭에 안 떠 있더라») —
+        /// 여태는 옛 칸 <see cref="SaveData.FreeDay"/>(= <see cref="ShopFree.Gem"/> 한 자리)만 봤다. T259 가 무료 보급을 자리별로 나눈 뒤
+        /// 다이아만 받아도 점이 꺼져 골드·광고 상자가 남아 있는데 «할 일 없음» 으로 보였다. 판정은 한 곳(T96 ⓔ) — 화면이 쓰는 <see cref="ShopFree.Can"/> 그대로.
+        /// </para>
+        /// </summary>
+        public static bool ShopAny(SaveData s, string today)
+        {
+            if (s == null) return false;
+            foreach (var target in ShopFree.All)
+                if (ShopFree.Can(s, target, today)) return true;
+            return false;
+        }
 
         /// <summary>
         /// 하단 탭 <paramref name="key"/> 에 빨간 점을 켜야 하는가 (T167 · 주인 2026-09-07 09:3X

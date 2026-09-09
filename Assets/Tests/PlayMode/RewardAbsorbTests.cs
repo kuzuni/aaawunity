@@ -83,6 +83,14 @@ namespace KkomaKnight.Tests.Play
 
             Assert.AreEqual(8, RewardPopup.LastOrbCount, "받은 개수만큼(3 + 5)");
             Assert.AreEqual(8, OrbCount(), "그만큼 실제로 떠 있다");
+            // T354(주인 2026-09-10 «재화 흡수 이펙트가 팝업들보다 레이어가 낮아서 안 보여») — 구슬 층은 프레임 밑이고 오버레이보다 «앞» 이다.
+            //   화면 루트 밑이면 그 안에서 맨 위여도 오버레이 아래다(부모가 다르다) — 그래서 부모와 형제 번호, 둘을 잰다.
+            {
+                var layer = UiKit.Find(_app.Frame, RewardPopup.OrbLayerName);
+                Assert.IsNotNull(layer, "구슬 층(" + RewardPopup.OrbLayerName + ")은 프레임 밑에 선다(T354)");
+                Assert.AreEqual(_app.Frame, layer.parent, "구슬 층의 부모 = 프레임(화면 루트가 아니다 · T354)");
+                Assert.Greater(layer.GetSiblingIndex(), _app.Overlay.Root.GetSiblingIndex(), "구슬 층은 오버레이보다 앞에 그려진다(T354)");
+            }
             Assert.IsFalse(_app.Overlay.IsOpen, "팝업은 닫혔다");
 
             bool same = false;

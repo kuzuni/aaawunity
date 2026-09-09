@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-10 · 주인 · T362 · 주인 자리 로컬 세션이 카탈로그로 바로 했다)** «ui.title.yellow 이런 거처럼 모든 리본 모양으로 타이틀 감싸는 프레임인 거 Title_Tapered_01_Brown 으로 교체하기» → 카탈로그 `ui.title.*` 여섯 키의 경로를 그 조각으로(키 이름 그대로 · 코드 0줄).
+
 - **(2026-09-10 · 주인 · 한 자리에서 여덟 · 주인 자리 로컬 세션이 등재 · 넷은 lock 잡고 바로 고친다)** — **T354** «재화 흡수 이펙트가 레이어가 너무 낮음 · 리워드 팝업 닫고 나서 안 보여» · **T355** «상점에 광고 보거나 free 로 얻을 수 있는 게 있는데 빨간점 알림이 하단 네비 상점 탭에 안 떠 있더라» · **T356** «장착슬롯 부분에 +2강인데 하단에서는 +2강이라 뜨는데 장착했을 때는 안 뜨네» · **T357** «장비에 슬롯 강화할 부분도 없는데 빨간점 안 꺼지더라» · **T358** «게임 입장할 때 로딩 좀 화면 되게 하기» · **T359** «퀘스트 상단 포인트로 얻을 수 있는 거는 빨간점 · 얻었으면 꺼멓게 · 맨 왼쪽 메달은 현재 포인트인데 0 으로 돼 있네 고쳐 · Line 은 게이지인데 통째로 노랑 — 흰색에 찬 부분만 노랑» · **T360** «체크 모양은 Toggle_Check_02_On 이거로 통일» · **T361** «타이틀 감싸고 있는 프레임들이 아래 팝업들이랑 떨어져 있어서 거슬림 · 위치는 괜찮으니 팝업 상단 부분만 늘려서 이어진 것처럼». T354~T356·T360 은 까닭을 코드·프리팹에서 실측했다(§2 각 절 0항) · T357·T358·T359·T361 은 루틴 몫(T359 는 `LobbyPopups.cs` lock 들 뒤).
 
 - **(2026-09-10 · 주인 · T344 의 뒤 → T353 · 주인 자리 로컬 세션이 lock 잡고 바로 했다)** «그 패스에 하늘색, 파란색 그라디안트 서로 색 바꾸셈 · 그리고 패스들 다 중앙에 셀 있어야 함 · 로우에 셀이 중앙에 · 현재 오른쪽에 치우쳐 있더라 파란색 쪽 꺼» → 무료 열 = **파랑(왼쪽) → 하늘(오른쪽)** · 세 열 보상 칸 x = **열 가운데 − 폭/2**(실측 표는 3.5%p 오른쪽이었다).
@@ -9044,6 +9046,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/RewardPopup.cs` · `Tests/PlayMode/RewardAbsorbTests.cs`. lock `T354`.
 
+> **🔄 push · 확인 전(19:4X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 993 · lock `T354` 쥔 채)** — `RewardPopup.Layer()` host = `app.Frame` · 자 = 부모·형제 번호. 확인 = 다음 완주 런 `RewardAbsorbTests` + 주인 폰.
+
 ### T355 — ⚑ 주인: **하단 네비 «상점» 탭 빨간 점이 안 뜬다** (주인 2026-09-10 «상점에 광고 보거나 free 로 얻을 수 있는 게 있는데 빨간점 알림이 하단 네비 상점 탭에 안 떠 있더라»)
 
 0. **까닭(실측)** — `Notify.ShopAny(s, today)` = `s.FreeDay != today`. 그런데 T259 가 «무료 보급» 을 **자리별**(`ShopFree` · `SaveData.FreeDays[target]` · 다이아·골드·광고 상자 둘 = `ShopFree.All`)로 바꾸면서 옛 `FreeDay` 칸은 **아무도 안 쓴다** → 판정이 화면과 다른 칸을 본다. `ShopScreen.CanFree` 는 이미 `ShopFree.Can` 이다.
@@ -9053,6 +9057,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Core/Notify.cs` · `Tests/EditMode/NotifyShopTests.cs`(신규). lock `T355`.
 
+> **🔄 push · 확인 전(19:4X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 994 · lock `T355` 쥔 채)** — `ShopAny` = `ShopFree.All` 중 하나라도 `Can` · `NotifyShopTests` 3(EditMode). 확인 = 주인 폰.
+
 ### T356 — ⚑ 주인: **장착 슬롯에 «+N» 이 안 뜬다** (주인 2026-09-10 «장착슬롯 부분에 +2강인데 하단에서는 +2강이라 뜨는데 장착했을 때는 +2강이라 안 뜨네»)
 
 0. **까닭(프리팹 YAML 실측)** — `ItemFrame_01.prefab` 의 자식 순서는 `NormalArea · Disable · Focus · Item · Lock · Add_1 · Add_2` 이고 **`Text_Level` 은 루트가 아니라 `Lock/Text_Level`** 이다. `GearScreen` 이 슬롯을 세울 때 `UiKit.Hide(frame, "Focus", "Disable", "Lock", "Add_2")` 로 **Lock 가지를 끈다** → T310 이 «인벤과 같은 함수» 로 부르는 `GearUi.SetPlus` 는 글자를 쓰긴 하는데(`SetText` 가 꺼진 것도 찾는다) **부모가 꺼져 있어 안 보인다**. 인벤 조각(`ListItem_EquipMent`)은 `Text_Level` 이 따로 있어 보인다. T310 회차 3·4 가 «글자 크기» 만 맞추고 이 자리를 못 본 까닭 — 자가 `Text_Level` 의 **글자**만 재고 **보이는가**를 안 쟀다.
@@ -9061,6 +9067,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 3. **확인** — `screens` 05 + 주인 폰.
 
 순서 — `Game/GearScreen.cs` · `Tests/PlayMode/UiSmokeTests.cs`. lock `T356`.
+
+> **🔄 push · 확인 전(19:4X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 995 · lock `T356` 쥔 채)** — `Lock/Text_Level` 을 루트로(Lock 끄기 전) · Refresh 뒤 맨 위 · 자 = `activeInHierarchy` + 글자. 확인 = 다음 완주 런 `UiSmokeTests` + `screens` 05.
 
 ### T357 — ⚑ 주인: **장비 탭 빨간 점이 «강화할 것이 없는데» 안 꺼진다** (주인 2026-09-10 «장비에 슬롯 강화할 부분도 없는데 빨간점 안 꺼지더라 알림»)
 
@@ -9099,6 +9107,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — ⓐ `catalog.json` · `docs/assets-map.md`(lock `T360` · 로컬) → ⓑ `Game/GearUi.cs` · `Game/Profile.cs` · `Game/LobbyPopups.cs`(루틴 · lock 들 뒤).
 
+> **🔄 push · 확인 전(19:4X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 996 · lock `T360` 쥔 채)** — ⓐ 카탈로그 `pi.check` → `Toggle_Check_02_On.png`(코드 0줄). ⓑ 조각 «Check» 넷은 루틴. 확인 = `screens` 16·17·19.
+
 ### T361 — ⚑⚑ 주인: **리본 제목과 팝업 상자 사이가 떠 있다 — 상자의 «위쪽만» 늘려 이어 붙인다** (주인 2026-09-10 «`Title_Tapered_01_Brown` 이런 식으로 타이틀 감싸고 있는 프레임들이 아래 팝업들이랑 거리가 떨어져 있어서 거슬림 · 위치 자체는 괜찮아서 · 팝업 중에 그렇게 떨어져 있는 거 있으면 팝업에 상단 부분만 좀 늘려서 그거랑 이어진 거처럼 보이게 딱 해 줘»)
 
 0. **뜻** — 리본(`ui.title.*` · `Title_Tapered_01_*`)은 **안 움직인다**. 리본 밑단과 상자 윗단 사이에 틈이 있는 팝업만, 상자의 **위 변**(`offsetMax.y`)을 리본 밑단(살짝 겹치게 + 몇 px)까지 올린다. 아랫단·좌우는 그대로.
@@ -9107,4 +9117,15 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 3. **확인** — `screens` 15·16·17 + 주인 폰.
 
 순서 — `Game/Overlay.cs` · `Game/UiKit.cs` · (리본을 따로 세우는 자리) `Game/LobbyPopups.cs`. lock `T361`.
+
+### T362 — ⚑⚑ 주인: **리본 제목 조각을 전부 `Title_Tapered_01_Brown` 으로** (주인 2026-09-10 «ui.title.yellow 이런 거처럼 모든 리본 모양으로 타이틀 감싸는 프레임인 거 Title_Tapered_01_Brown 으로 교체하기»)
+
+0. **실측** — 리본 제목은 전부 카탈로그 키 `ui.title.tangerine/plum/yellow/green/red/sky`(`Title_01_NoDeco_<색>` 조각 · 코드 28곳) + `ui.titleBrown`(이미 그 조각 · T324 장비 세부). 두 조각의 자식은 `Text (TMP)` 하나로 **같다**(YAML).
+1. **고침** — 여섯 키의 **경로만** `Title_Tapered_01_Brown.prefab` 으로(`gen_catalog.py`). 키 이름은 그대로 — 코드·자가 그 이름으로 찾는다. 다음 회차가 원하면 `ui.titleBrown` 하나로 모은다(그때는 이름 바꾸기 = 28곳 + 자).
+2. **자** — 없음(카탈로그 게이트가 경로 실재를 본다). ⚠ 리본 뒤 빛(T320)·리본-상자 이어 붙이기(T361)는 조각 크기가 같으므로 그대로.
+3. **확인** — `screens` 15·16·17·35 + 주인 폰.
+
+> **🔄 push · 확인 전(19:4X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 996 에 같이 · lock `T362` 쥔 채)** — 1항 그대로.
+
+순서 — `catalog.json`. lock `T362`.
 

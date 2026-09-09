@@ -97,6 +97,11 @@ namespace KkomaKnight.Game
                 s.Root = UiKit.Rect(grp, "Slot:" + part); UiKit.Pct(s.Root, col.X, col.Y + row * Layout.GearSlotPitch, Layout.GearSlot.W, Layout.GearSlotH);
                 var frame = UiKit.Spawn("ui.itemFrame.empty", s.Root); frame.name = "ItemFrame_01"; s.Frame = frame.transform;
                 UiKit.FitScale((RectTransform)s.Frame, UiKit.PxSize(Layout.GearSlot));
+                // T356(주인 2026-09-10 «장착슬롯 부분에 +2강인데 하단에서는 +2강이라 뜨는데 장착했을 때는 안 뜨네») —
+                //   조각 `ItemFrame_01` 의 `Text_Level` 은 루트가 아니라 **`Lock/Text_Level`** 이다(프리팹 YAML 실측). 바로 아래에서 Lock 을 끄니
+                //   T310 이 «인벤과 같은 함수» 로 부르는 `GearUi.SetPlus` 가 글자는 써도 **부모가 꺼져 있어** 안 보였다(자는 글자만 재고 «보이는가» 를 안 쟀다).
+                //   → 글자를 프레임 루트로 옮기고 맨 위로 둔다(Lock 은 프레임을 꽉 채우는 stretch 라 앵커가 그대로 맞는다 · 조각 원본 불변 §1). **Lock 을 끄기 전**이어야 한다.
+                { var lvl = UiKit.Find(s.Frame, "Lock/Text_Level"); if (lvl != null) { lvl.SetParent(s.Frame, false); lvl.SetAsLastSibling(); } }
                 UiKit.Hide(s.Frame, "Focus", "Disable", "Lock", "Add_2");   // 조각의 데모 상태 켜짐은 끈다 · Add_1(+) 은 빈 슬롯 표시
                 // T310 — `Text_Level` 은 이제 **끄는 자리가 아니라 쓰는 자리**다(인벤 칸과 같은 조각·같은 함수 · GearUi.SetPlus). 데모 글자는 빈 글자로 지운다.
                 GearUi.SetPlus(s.Frame, null);
@@ -172,6 +177,8 @@ namespace KkomaKnight.Game
                 UiKit.Show(s.Frame, "Add_1", g == null);
                 if (s.Lv != null) s.Lv.text = $"Lv. {lv}";
                 GearUi.SetPlus(s.Frame, D, g);   // T310 — 인벤 칸과 **같은 함수**(꼴이 갈릴 자리를 아예 안 만든다) · T316 — 표를 넘겨 «+N» 이 표시 등급 기준이 되게
+                // T356 — 위 DarkFrame 이 테두리 링을 맨 위로 올렸으니 «+N» 글자는 그보다 위에(가려지지 않게).
+                { var lvl = UiKit.Find(s.Frame, "Text_Level"); if (lvl != null) lvl.SetAsLastSibling(); }
                 // T105 — 부위 아이콘은 **늘 켜 둔다**(빈 슬롯이면 흐리게 · 끼우면 또렷하게). 세트 아이콘이 아니다.
                 if (s.PartIcon != null) { s.PartIcon.gameObject.SetActive(true); s.PartIcon.sprite = App.Assets.Sprite(GearLook.PartIcon(s.Part)); s.PartIcon.color = g != null ? Palette.White : Palette.A(Palette.White, PartIconEmptyAlpha); }
                 if (s.Dot != null) s.Dot.SetActive(GearUi.BetterInInv(S, s.Part));
