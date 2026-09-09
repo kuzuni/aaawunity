@@ -9314,6 +9314,14 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/Overlay.cs`(`PlaceRibbonGlow`·`TitleGlowMask` · 악마의 거래 662) · `Game/RewardPopup.cs` · `Game/RibbonGlowFollow.cs` · 자. lock `T369`. **T361(상자 위 변을 리본까지)과 같은 자리**라 한 사람이 같이 잡으면 좋다.
 
+### T371 — ⛑ 런 885 빨강: **T357 이 뺀 규칙을 PlayMode 단언 하나가 아직 요구한다**(배포가 막혔다) (워커 판단 · 화면 0줄 · 자만)
+
+1. **드러난 자리** — 런 885 `[CI실패]` 1건 = `UiSmokeTests.LobbySettingsTalentPetToast` (`UiSmokeTests.cs:398` · «안 본 새 장비가 있으면 장비 탭 점이 켜진다(T167)» / Expected True / But was False). 유니티 잡이 빨개서 **Android·WebGL 잡이 둘 다 skipped** — 주인 폰에 빌드가 안 나간다.
+2. **까닭** — 바로 앞 커밋 T357(주인 «장비에 슬롯 강화할 부분도 없는데 빨간점 안 꺼지더라»)이 탭 점에서 **`IsNew` 갈래를 일부러 뺐다**. 그 단언은 **주인이 빼라고 한 그 동작**을 요구하고 있었다 — 고장이 아니라 **낡은 자**다(T184 · 결정 425 «규칙을 바꾸는 커밋이 그 규칙을 전제한 단언을 같은 커밋에서 쓸어낸다»).
+3. **왜 새 지 않았나** — T357 은 EditMode `NotifyTests` 는 같이 고쳤다. 빠진 것은 **PlayMode** 쪽 한 줄이고, 이 컨테이너의 임시 csproj 는 PlayMode 를 **컴파일만** 하지 **돌리지 않는다**. T278 의 «초록 ≠ 돌았다» 가 이 자리에서 값을 치렀다.
+4. **고침** — 켜는 조건을 **스스로 꺼지는 것**(합성 가능 = 같은 `FuseKey` 3개 · Notify ⓑ)으로 갈고, **주인이 짚은 자국을 되돌아오지 못하게 막는 단언을 하나 더** 놓는다(«`IsNew` 만 있으면 점은 꺼져 있다»). 단언을 지우지 않는다 — 지우면 «조건이 생기면 켜진다» 를 아무도 안 잰다.
+5. **확인** = 다음 완주 런 `[CI실패]` 에 `LobbySettingsTalentPetToast` 가 없고 Android·WebGL 잡이 다시 돈다.
+
 ### T370 — ⚑ 주인: **프로필 그림 선택지가 4개뿐 — 늘린다** (주인 2026-09-10 «그 프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라»)
 
 0. **자리** — 프로필 팝업(`Game/Profile.cs` · T350 이 지금 만지는 중)의 초상 선택 격자. 지금 4장.

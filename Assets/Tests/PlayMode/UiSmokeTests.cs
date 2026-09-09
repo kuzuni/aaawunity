@@ -392,10 +392,21 @@ namespace KkomaKnight.Tests.Play
                 _app.Save.Inv.Clear();
                 _app.ShowScreen("lobby"); yield return Frames(1);
                 Assert.IsFalse(GearDot().gameObject.activeSelf, "장비에 할 일이 없으면 장비 탭 점이 꺼진다(T167)");
-                // 조건을 만든다 — 안 본 새 장비 하나
+                // T371 — 여기 있던 «안 본 새 장비(IsNew)로 켠다» 를 갈았다. **T357 이 그 갈래를 뺐다**
+                //   (주인 2026-09-10 «장비에 슬롯 강화할 부분도 없는데 빨간점 안 꺼지더라»):
+                //   IsNew 는 세부 팝업을 열어야만 꺼져서 «할 일» 이 아니라 «지워지지 않는 자국» 이 된다.
+                //   ⇒ 켜는 조건은 **스스로 꺼지는 것**으로 잡는다 — 합성 가능한 묶음(같은 FuseKey 3개 · Notify ⓑ).
+                //   ⚠ 이 자리를 그냥 지우지 않았다: 지우면 «조건이 생기면 켜진다» 를 아무도 안 재게 된다(T184).
+                Give("weapon"); Give("weapon"); Give("weapon");
+                _app.ShowScreen("lobby"); yield return Frames(1);
+                Assert.IsTrue(GearDot().gameObject.activeSelf, "합성할 묶음이 있으면 장비 탭 점이 켜진다(T167 · 조건은 T357 ⓑ)");
+                // T371 — 그리고 **주인이 짚은 그 자국**을 되돌아오지 못하게 막는다:
+                //   IsNew «만» 있는 인벤은 점을 켜면 안 된다. 이 줄이 없으면 T357 은 다음 사람이 조용히 되돌린다.
+                _app.Save.Inv.Clear();
                 Give("weapon").IsNew = true;
                 _app.ShowScreen("lobby"); yield return Frames(1);
-                Assert.IsTrue(GearDot().gameObject.activeSelf, "안 본 새 장비가 있으면 장비 탭 점이 켜진다(T167)");
+                Assert.IsFalse(GearDot().gameObject.activeSelf,
+                    "안 본 새 장비«만» 있으면 장비 탭 점은 꺼져 있다 — 세부를 열어야만 꺼지는 조건은 알림이 아니다(T357 · 주인 «빨간점 안 꺼지더라»)");
                 _app.Save.Inv.Clear();
                 _app.ShowScreen("lobby"); yield return Frames(1);
                 Assert.IsFalse(GearDot().gameObject.activeSelf, "조건이 사라지면 다시 꺼진다 — «봤다» 상태를 새로 만들지 않는다(T167 4항)");
