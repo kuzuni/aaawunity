@@ -9527,6 +9527,17 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/Overlay.cs`(`PlaceRibbonGlow`·`TitleGlowMask` · 악마의 거래 662) · `Game/RewardPopup.cs` · `Game/RibbonGlowFollow.cs` · 자. lock `T369`. **T361(상자 위 변을 리본까지)과 같은 자리**라 한 사람이 같이 잡으면 좋다.
 
+### T372 🔄 — ⛑ 런 914·915 빨강: **T293 ⓘ 가 되살린 소환 버튼을 PlayMode 단언 넷이 아직 «껍데기» 로 요구한다**(배포가 또 막혔다) (워커 판단 · 화면 0줄 · 자만)
+
+0. **잡은 까닭** — `Assets/Tests/PlayMode/UiSmokeTests.cs` 는 **어느 살아 있는 lock 의 범위 열에도 없다**(T293 의 범위는 `Game/PetScreen` 까지다). 넘을 lock 자체가 없고, 그 빨강이 **주인 폰·웹 빌드를 멈춰 두고 있다**(결정 1010 이 그은 경계 · 전례 결정 1007 ⑤).
+1. **드러난 자리** — 런 **914**(22:07)·**915**(22:18) 두 완주 런의 `[CI실패]` 가 **둘 다 이것 하나**다: `UiSmokeTests.LobbySettingsTalentPetToast` (`UiSmokeTests.cs:989` · «SummonBtn 는 «못 누르는 것» 으로 보여야 한다(CanvasGroup 알파 · T178)» / Expected: not null / But was: null). 유니티 잡이 빨개 **Android·WebGL 이 skipped** — `gh-pages` 는 런 907(20:45)에 멈춰 있다.
+2. **까닭 — 고장난 것은 화면이 아니라 자다** — `a83bfcbb`(**T293 ⓘ** · 21:41 · 워커 K)가 «펫 소환이 실제로 돈다» 를 넣었다. `PetScreen.SummonButton` 은 표가 없을 때만(`PD == null`) 옛 껍데기 갈래(글자만 · `Dim(shell,false)` = `CanvasGroup` 0.5 · 누르면 «준비 중» 토스트 · T178)로 서는데, **T293 ⓗ 가 `D.Pet` 을 실어 그 조건이 거짓이 됐다** ⇒ 살아 있는 갈래에는 `CanvasGroup` 이 없고 값 줄(`Cost/Icon`·`Qty`)이 대신 선다. 단언은 **주인이 되살리라고 한 그 동작**을 «없어야 한다» 고 요구하고 있었다(T184 · 결정 425).
+3. ⚠ **낡은 단언이 하나가 아니다 — 넷이다.** NUnit 이 989 에서 멈춰 `[CI실패]` 에는 한 줄만 뜨지만, 그 뒤에 같은 옛 계약이 셋 더 있다: ⓑ `cg.alpha == 0.5`(990) · ⓒ 소환을 «껍데기»(눌러도 아무 일 없음) 목록에 넣은 줄(993) · ⓓ «누르면 `NotReadyMsg`(«준비 중») 토스트»(996). **989 만 고치면 빨강이 996 으로 옮겨 갈 뿐이다** — 한 회차에 넷을 같이 본다.
+4. **고침의 꼴**(결정 778·1007 ③④ 의 꼴 — 기댓값을 낮추지 말고 계약을 옮긴다) — ⓐ «흐리다» 대신 **«값을 말한다»** 를 잰다(`Cost` 줄의 `Icon`+`Qty` · 무엇으로 몇 개인지는 `Pets.Offer` 가 답한다 · 화면이 다시 세지 않는다) ⓑ 옛 껍데기 갈래도 **지우지 않는다** — 표가 없으면 그 길로 서는 것이 지금도 참이라 그쪽을 재는 자리는 남긴다 ⓒ «준비 중» 글자가 **버튼 안에 없다** 는 T178 의 단언은 그대로 둔다(주인이 지우라 한 표기다) ⓓ 누른 뒤의 계약을 **지금 코드가 실제로 하는 것**으로 옮긴다 — `Pull` 은 못 치르면 «다이아가 모자랍니다»/«펫알이 모자랍니다» 토스트만 내고 팝업을 안 연다.
+5. **확인** = 다음 완주 런 `[CI실패]` 에 `LobbySettingsTalentPetToast` 가 없고 **Android·WebGL 잡이 다시 도는 것** + `gh-pages` 가 907 에서 전진.
+
+순서 — `Tests/PlayMode/UiSmokeTests.cs`(펫 소환 블록만 · 게임 코드 0줄). lock `T372`. **T293 의 몫이 아니다** — 그 절이 한 일은 옳고, 남은 것은 낡은 자 하나다.
+
 ### T371 ✅ — ⛑ 런 885 빨강: **T357 이 뺀 규칙을 PlayMode 단언 하나가 아직 요구한다**(배포가 막혔다) (워커 판단 · 화면 0줄 · 자만)
 
 1. **드러난 자리** — 런 885 `[CI실패]` 1건 = `UiSmokeTests.LobbySettingsTalentPetToast` (`UiSmokeTests.cs:398` · «안 본 새 장비가 있으면 장비 탭 점이 켜진다(T167)» / Expected True / But was False). 유니티 잡이 빨개서 **Android·WebGL 잡이 둘 다 skipped** — 주인 폰에 빌드가 안 나간다.
