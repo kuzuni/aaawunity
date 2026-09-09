@@ -291,6 +291,54 @@ namespace KkomaKnight.Game
         /// 그래서 90/255 이고, 그것이 T155 ⓒ 가 눈으로 골라 둔 값이다.
         /// </summary>
         public const float TitleGlowAlpha = 130f / 255f;
+
+        // ───────── T320 — 제목 빛 «반 잘린 마스크» (값 출처 = 주인 2026-09-09 인스펙터 스샷 · 지어낸 수 0) ─────────
+        /// <summary>제목 빛을 자르는 사각 마스크(<c>TitleGlow/Mask</c>) — 가운데 앵커 · 자리 (0, −63.2592) · 크기 555 × 428.4817.
+        /// <para>주인이 준 값은 <b>우리 <see cref="TitleGlowR"/> 호스트 안 좌표</b>다(주인이 그 호스트 밑에 직접 세웠다) — 호스트가 584×584 라 이 사각형이 그 안에 든다.
+        /// 셈으로 확인: 호스트 y 2.9~27.9% → 마스크 바닥 <b>27.28%</b> = 리본 띠(19.3~27.2%)의 <b>바닥</b>이라 «리본 아래로 새는 빛 0» 이 자리로 지켜진다(4항).</para></summary>
+        public const float TitleMaskW = 555f, TitleMaskH = 428.4817f, TitleMaskY = -63.2592f;
+        /// <summary>마스크 «안» 에서 빛 세 겹이 올라앉는 판(<c>LightMask</c>)의 여백 — 인스펙터 Left/Right/Top/Bottom = −292.14 / −292.14 / −84.38837 / −500.3884.
+        /// <para>Unity 인스펙터의 네 값은 <c>offsetMin=(Left, Bottom)</c> · <c>offsetMax=(−Right, −Top)</c> 로 옮긴다 — 음수 여백이라 판이 마스크보다 <b>크다</b>:
+        /// 1139.28 × 1013.26. 판의 가운데는 마스크 가운데보다 <b>208px 아래</b>(= 마스크 바닥에서 6px 위)라, 빛 원의 <b>아래 절반이 잘리고 위 절반만</b> 보인다
+        /// — 주인 11:5X «저렇게 반 잘리는 식으로 마스크 되게» 가 이 수의 뜻이다.</para></summary>
+        public const float TitleLightL = -292.14f, TitleLightR = -292.14f, TitleLightT = -84.38837f, TitleLightB = -500.3884f;
+        /// <summary>위 값이 잰 리본의 폭(<c>Title_01_NoDeco_Tangerine</c> 프리팹 본래 656 × 115) — ⓑ(다른 리본 팝업)가 «리본 폭 ÷ 656» 으로 환산할 기준이다.</summary>
+        public const float TitleRibbonRefW = 656f;
+
+        /// <summary>
+        /// T320 ⓐ — 제목 리본 뒤 빛을 <b>주인이 준 구조</b>(<c>TitleGlow › Mask › LightMask › Glow·Light·Dust</c>)로 세운다.
+        /// <para>
+        /// <b>레포에 이미 있던 것</b>: <see cref="UiKit.LightBehind"/> 가 <c>LightMask › Glow·Light·Dust</c> 를 그대로 만든다(이름까지 같다).
+        /// <b>없던 것 하나</b>: 그 사이의 <c>Mask</c> — 사각형 스텐실 마스크다. 그래서 이 함수는 «마스크를 끼우고 빛판 여백을 주인 값으로 다시 잡는» 일만 한다.
+        /// </para>
+        /// ⚠ <b>T234 3항의 «사각 마스크를 씌우지 마라» 는 여기서 닫힌다</b> — 그때는 워커가 «씌우면 레퍼런스에서 멀어진다» 고 판단한 것이었고,
+        /// 이번엔 <b>주인이 마스크 구조를 직접 줬다</b>(그 절에도 한 줄 적었다). 판단이 지시를 이기지 않는다.
+        /// <param name="scale">리본 폭 ÷ <see cref="TitleRibbonRefW"/> — ⓑ 가 다른 팝업에 쓸 배율. 특전 팝업은 1.</param>
+        /// </summary>
+        public static RectTransform TitleGlowMask(RectTransform host, float scale = 1f)
+        {
+            if (host == null) return null;
+            if (scale <= 0f) scale = 1f;
+            var m = host.Find("Mask") as RectTransform;   // 직계만 본다 — 깊이 검색은 빛 조각 «안» 의 같은 이름을 집을 수 있다
+            if (m == null) m = UiKit.Rect(host, "Mask");
+            m.anchorMin = m.anchorMax = new Vector2(0.5f, 0.5f); m.pivot = new Vector2(0.5f, 0.5f);
+            m.sizeDelta = new Vector2(TitleMaskW * scale, TitleMaskH * scale);
+            m.anchoredPosition = new Vector2(0f, TitleMaskY * scale);
+            // 스텐실 마스크는 «그릴 것이 있는» 그래픽에만 걸린다 — 그래서 빈 흰 Image 를 두고 그것 자체는 안 그린다(showMaskGraphic ✗).
+            var mi = UiKit.Ensure<Image>(m.gameObject); mi.sprite = null; mi.color = Palette.White; mi.raycastTarget = true; mi.maskable = true;
+            var mk = UiKit.Ensure<Mask>(m.gameObject); mk.showMaskGraphic = false;
+            return m;
+        }
+        /// <summary>빛판(<c>LightMask</c>)의 여백을 주인 값으로 — <see cref="UiKit.LightBehind"/> 가 «마스크에 딱 맞춰» 놓은 뒤에 부른다.</summary>
+        public static void TitleGlowPlate(RectTransform mask, float scale = 1f)
+        {
+            if (mask == null) return;
+            if (scale <= 0f) scale = 1f;
+            var plate = mask.Find(UiKit.LightMaskName) as RectTransform; if (plate == null) return;
+            plate.anchorMin = Vector2.zero; plate.anchorMax = Vector2.one; plate.pivot = new Vector2(0.5f, 0.5f);
+            plate.offsetMin = new Vector2(TitleLightL * scale, TitleLightB * scale);
+            plate.offsetMax = new Vector2(-TitleLightR * scale, -TitleLightT * scale);
+        }
         // ⚑ T234 회차 4 — 90 → 130. **조각을 바꾼 만큼(회차 3) 짙기에 여유가 생겼다.**
         //   같은 자리에서 실제로 칠해지는 진하기는 «조각 알파 × 이 값» 이다 — 반지름 0.5 에서:
         //     옛 수레바퀴(light1 × 90)  = 171/255 × 90/255  = 0.237   ← 주인 눈에 «꽉 찬 원반» 이던 그 값
@@ -364,16 +412,25 @@ namespace KkomaKnight.Game
                 //     ui.glow1(아래 겹) 들쭉 0~3 = 살 없는 매끈한 원(레퍼런스의 «퍼짐» 은 이쪽 결이다)
                 //   레퍼런스 04 는 «가운데가 밝고 위로 잦아드는» 그림이라 light2 + 글로우 서클 쪽 결에 가깝다.
                 //   ⚠ 짙기(TitleGlowAlpha)는 이 회차에 안 건드린다 — 회차 2 가 «두 손잡이를 같이 밀면 못 읽는다» 를 값 주고 배웠다(결정 656).
-                UiKit.LightBehind(glowHost, null, UiKit.LightKeySmall, UiKit.LightPeriod,
+                // ⚑ T320(주인 2026-09-09 인스펙터 · 결정 참조) — 호스트와 빛 사이에 **사각 마스크 한 겹**을 끼운다.
+                //   빛 세 겹은 마스크보다 큰 판 위에 놓이고 그 판의 가운데가 마스크 바닥 근처라 **원의 아래 절반이 잘린다**
+                //   (주인 «저렇게 반 잘리는 식으로 마스크 되게» · 빛이 리본 뒤에서 «위로만» 보인다).
+                //   ⚠ 아래 `clip: false` 는 이제 «자를 것이 없다» 가 아니라 «자르는 것은 이 Mask 다» 라는 뜻이다 —
+                //   `LightBehind` 가 붙이는 RectMask2D 를 겹쳐 걸면 마스크가 둘이 된다.
+                var glowMask = TitleGlowMask(glowHost);
+                UiKit.LightBehind(glowMask, null, UiKit.LightKeySmall, UiKit.LightPeriod,
                                   Palette.A(Palette.Yellow, TitleGlowAlpha),          // 레퍼런스의 빛은 «금빛» 이다(우리 흰빛은 회색 판처럼 보였다)
                                   sidePx: UiKit.FrameW * TitleGlowR.W / 100f,        // 한 변 = 그 판의 «가로» (세로에 안 끌려간다)
                                   // T189 예외(마스크 없음) — **까닭을 T234 에서 주인 기준으로 다시 적는다.**
                                   //  옛 까닭: «여기는 칸이 아니라 리본 자리다»(워커·등재의 판단).
                                   //  참 까닭: **레퍼런스가 그렇게 생겼다**(주인 «레퍼런스랑 같아지게 해야 함 · 빛 효과가»).
                                   //  실측이 그것을 뒷받침한다 — 리본 «아래» 로 새는 빛이 우리도 0px, 레퍼런스도 0px 이라
-                                  //  «마스크가 없어서» 달라진 것이 아니다. 사각형 마스크를 지금 씌우면 위로 퍼지는 부채 끝이
-                                  //  직선으로 잘려 **레퍼런스에서 더 멀어진다**. ⇒ 다음 워커는 «예외가 남아 있네» 로 다시 씌우지 마라.
+                                  //  «마스크가 없어서» 달라진 것이 아니다.
+                                  //  ⚑ **T320 에서 이 판단은 닫혔다** — 주인이 마스크 구조를 직접 줬다(위 `TitleGlowMask`).
+                                  //  `clip: false` 는 남지만 뜻이 바뀌었다: «자를 것이 없다» 가 아니라 **«자르는 것은 위 Mask 다»** —
+                                  //  `LightBehind` 의 RectMask2D 를 겹쳐 걸면 마스크가 둘이 되어 빛판 여백(아래 한 줄)이 무의미해진다.
                                   clip: false);
+                TitleGlowPlate(glowMask);   // 빛판을 주인 여백으로 — LightBehind 가 «마스크에 딱 맞춰» 놓은 다음이라야 한다
             }
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "레벨 업!");
             var sub = UiKit.Find(rt, "Text (TMP)"); if (sub != null) { UiKit.Pct((RectTransform)sub, Layout.OvSub); UiKit.SetText(rt, "Text (TMP)", "새 특전을 고르세요"); }   // 레퍼런스 04 «Choose a New Perk»

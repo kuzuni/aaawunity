@@ -113,5 +113,68 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("shine 등속");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T320 ⓐ — 제목 빛이 <b>주인이 준 구조·값</b>으로 서는가(주인 2026-09-09 인스펙터 스샷 · «저렇게 반 잘리는 식으로 마스크 되게»).
+        /// <para>
+        /// 여기서 재는 것은 <b>계층 이름 계약</b>과 <b>네 수</b>다 — 그 수는 워커가 고른 것이 아니라 주인이 준 것이라
+        /// «px 을 베끼지 않는다»(결정 555)의 예외가 아니라 <b>원문</b>이다(<see cref="Overlay.TitleMaskW"/> 등 상수가 그 출처를 적고 있다).
+        /// </para>
+        /// ⚠ <b>마지막 한 줄이 요점이다</b> — 빛판 가운데가 마스크 바닥보다 <b>아래</b>여야 «아래 절반이 잘린다».
+        /// 여백 부호를 하나라도 뒤집으면 판이 위로 올라가 <b>온전한 원</b>이 되는데, 그것은 이름·크기 단언을 전부 통과한다.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator TitleGlowIsMaskedSoOnlyTheTopHalfShows()
+        {
+            yield return Boot();
+            Time.timeScale = 0f;
+            var D = _app.Data;
+            var rng = new Mulberry32(11u);
+            var G = new BattleState(D, 1, _app.Save.CurBuild(D), rng, new InteractivePolicy(), new RunOptions { EmitEvents = true });
+            var offer = Perks.Offer(D, G.Taken, false, rng);
+            Assert.Greater(offer.Count, 0, "특전 제안");
+            G.Pending = new PendingDecision { Kind = PendingKind.LevelUp, Offer = offer };
+            _app.Overlay.LevelUp(G, pick => G.ResolveLevelUp(pick));
+            yield return Frames(2);
+            UiKit.CompleteAllTweens(); yield return Frames(1);
+
+            var host = UiKit.Find(_app.Overlay.Root, "TitleGlow") as RectTransform;
+            Assert.IsNotNull(host, "제목 빛 호스트(TitleGlow)");
+            var mask = host.Find("Mask") as RectTransform;
+            Assert.IsNotNull(mask, "사각 마스크(TitleGlow/Mask · 주인 구조)");
+            var plate = mask.Find(UiKit.LightMaskName) as RectTransform;
+            Assert.IsNotNull(plate, "빛판(Mask/LightMask)");
+            foreach (var n in new[] { UiKit.GlowName, UiKit.LightName, UiKit.DustName })
+                Assert.IsNotNull(plate.Find(n), "빛 세 겹 중 " + n + " (LightMask 아래)");
+
+            var mk = mask.GetComponent<Mask>();
+            Assert.IsNotNull(mk, "Mask 컴포넌트");
+            Assert.IsFalse(mk.showMaskGraphic, "마스크 판 자체는 안 그린다(Show Mask Graphic ✗)");
+            Assert.IsNotNull(mask.GetComponent<Image>(), "스텐실은 그래픽이 있어야 걸린다(빈 흰 Image)");
+            Assert.IsNull(mask.GetComponent<RectMask2D>(), "마스크는 하나다(RectMask2D 를 겹쳐 걸지 않는다)");
+
+            Assert.AreEqual(Overlay.TitleMaskW, mask.rect.width, 0.5f, "마스크 폭(주인 값)");
+            Assert.AreEqual(Overlay.TitleMaskH, mask.rect.height, 0.5f, "마스크 높이(주인 값)");
+            Assert.AreEqual(0f, mask.anchoredPosition.x, 0.5f, "마스크는 가운데");
+            Assert.AreEqual(Overlay.TitleMaskY, mask.anchoredPosition.y, 0.5f, "마스크 세로 자리(주인 값)");
+
+            Assert.AreEqual(Overlay.TitleLightL, plate.offsetMin.x, 0.5f, "빛판 Left(주인 값)");
+            Assert.AreEqual(Overlay.TitleLightB, plate.offsetMin.y, 0.5f, "빛판 Bottom(주인 값)");
+            Assert.AreEqual(-Overlay.TitleLightR, plate.offsetMax.x, 0.5f, "빛판 Right(인스펙터 Right → offsetMax 는 부호가 뒤집힌다)");
+            Assert.AreEqual(-Overlay.TitleLightT, plate.offsetMax.y, 0.5f, "빛판 Top(같은 부호 규칙)");
+            Assert.Greater(plate.rect.width, mask.rect.width, "빛판은 마스크보다 넓다(음수 여백)");
+            Assert.Greater(plate.rect.height, mask.rect.height, "빛판은 마스크보다 높다");
+
+            // ⓐ 의 뜻 — 빛판 가운데가 마스크 바닥보다 «아래» 라야 원의 아래 절반이 잘린다.
+            float plateCenterY = (plate.offsetMin.y + plate.offsetMax.y) * 0.5f;   // 마스크 가운데 기준
+            Assert.Less(plateCenterY, -mask.rect.height * 0.5f + 20f,
+                "빛판 가운데가 마스크 바닥 언저리다 = 빛의 아래 절반이 잘린다(주인 «반 잘리는 식으로»)");
+
+            Debug.Log($"[T320] 마스크 {mask.rect.width:0.0}×{mask.rect.height:0.0} @y{mask.anchoredPosition.y:0.0} · " +
+                      $"빛판 {plate.rect.width:0.0}×{plate.rect.height:0.0} 가운데 y{plateCenterY:0.0}(마스크 바닥 {-mask.rect.height * 0.5f:0.0})");
+
+            _log.AssertNoRed("제목 빛 마스크");
+            yield return Shutdown();
+        }
     }
 }
