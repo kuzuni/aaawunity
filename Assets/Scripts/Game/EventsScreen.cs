@@ -759,10 +759,13 @@ namespace KkomaKnight.Game
         /// 던전 세부(21)의 보상 칸 목록을 표(<c>dungeon.json</c>)에서 만든다 — «첫 클리어 총액» 칸들(배지) 다음에 «이후 클리어» 칸들.
         /// 표가 없으면 옛 껍데기 그대로(카드의 아이콘 목록을 네 칸으로 채운다 · 수량 글자 없음).
         /// </summary>
-        List<RewardCellDef> RewardCells(string key, string[] fallbackIcons) => CellsOf(Dun, key, fallbackIcons);
+        List<RewardCellDef> RewardCells(string key, string[] fallbackIcons)
+            => CellsOf(Dun, key, fallbackIcons, DungeonSweep.Challenge(App != null ? App.Save : null, Dun, key));
 
         /// <summary>표에서 «세부 팝업 칸» 을 뽑는 규칙(위 <see cref="RewardCells"/> 의 static 짝 · <see cref="CardRewardKinds"/> 가 이것을 쓴다).</summary>
-        static List<RewardCellDef> CellsOf(DungeonData dun, string key, string[] fallbackIcons)
+        /// <param name="floor">T291 — 몇 층의 보상을 그릴 것인가(0 이면 «표의 한 벌» = 층이 없던 시절 그대로).
+        /// 층이 있는 던전(원정)은 층마다 레시피가 갈리고 3의 배수 층엔 키가 붙으므로 <b>이 수가 없으면 칸이 거짓말을 한다</b>.</param>
+        static List<RewardCellDef> CellsOf(DungeonData dun, string key, string[] fallbackIcons, int floor = 0)
         {
             var list = new List<RewardCellDef>();
             var e = dun != null ? dun.Of(key) : null;
@@ -773,7 +776,8 @@ namespace KkomaKnight.Game
                 for (int i = 0; i < icons.Count; i++) list.Add(new RewardCellDef(icons[i], "", i < 2));
                 return list;
             }
-            Add(list, e.First, true); Add(list, e.Clear, false);
+            Add(list, DungeonSweep.FloorReward(e, floor, true), true);
+            Add(list, DungeonSweep.FloorReward(e, floor, false), false);
             return list;
         }
         static void Add(List<RewardCellDef> list, DungeonData.Reward r, bool first)
@@ -781,6 +785,9 @@ namespace KkomaKnight.Game
             if (r == null) return;
             if (r.PetEgg > 0) list.Add(new RewardCellDef("pet.egg", UiKit.FmtComma(r.PetEgg), first));
             if (r.Gold > 0) list.Add(new RewardCellDef("ui.coin", UiKit.FmtComma(r.Gold), first));
+            // T291 — 층 보상 두 가지. 아이콘은 각 절이 갖고 있는 것을 그대로 쓴다(여기서 새로 정하지 않는다).
+            if (r.Recipe > 0 && !string.IsNullOrEmpty(r.RecipePart)) list.Add(new RewardCellDef(Recipes.Icon(r.RecipePart), UiKit.FmtComma(r.Recipe), first));
+            if (r.Key > 0 && !string.IsNullOrEmpty(r.KeyItem)) list.Add(new RewardCellDef(GachaKeys.Icon(r.KeyItem), UiKit.FmtComma(r.Key), first));
         }
         /// <summary>
         /// T251 — 던전 <b>카드</b>(20)의 «획득 가능» 줄에 그릴 아이콘. <b>세부 팝업(21)과 같은 원천</b>(<see cref="RewardCells"/>)에서
@@ -792,7 +799,8 @@ namespace KkomaKnight.Game
         /// 표가 실린 지금은 이 갈래로 안 오지만, «대비용» 이 대비용답게 남으려면 여기서 갈라야 한다.
         /// </para>
         /// </summary>
-        string[] CardRewardIcons(string key, string[] fallbackIcons) => CardRewardKinds(Dun, key, fallbackIcons);
+        string[] CardRewardIcons(string key, string[] fallbackIcons)
+            => CardRewardKinds(Dun, key, fallbackIcons, DungeonSweep.Challenge(App != null ? App.Save : null, Dun, key));
 
         /// <summary>
         /// 위 규칙의 <b>static 짝</b> — 자가 «몇 칸이 그려져야 하나» 를 물어보는 자리다(T251 확인 회차 · 워커 J).
@@ -802,11 +810,11 @@ namespace KkomaKnight.Game
         /// 자가 <b>규칙 그 자체</b>에 물어보면 표가 바뀌어도 안 깨지고, 그리는 쪽만 틀어졌을 때는 그대로 빨개진다(결정 704·785 와 같은 결).
         /// </para>
         /// </summary>
-        public static string[] CardRewardKinds(DungeonData dun, string key, string[] fallbackIcons)
+        public static string[] CardRewardKinds(DungeonData dun, string key, string[] fallbackIcons, int floor = 0)
         {
             if (dun == null || dun.Of(key) == null) return fallbackIcons;
             var kinds = new List<string>();
-            foreach (var c in CellsOf(dun, key, fallbackIcons)) if (!kinds.Contains(c.icon)) kinds.Add(c.icon);
+            foreach (var c in CellsOf(dun, key, fallbackIcons, floor)) if (!kinds.Contains(c.icon)) kinds.Add(c.icon);
             return kinds.Count > 0 ? kinds.ToArray() : fallbackIcons;   // 표는 있는데 보상이 0 이면 옛 그림이 낫다(빈 줄보다)
         }
         static string[] Icons(List<RewardCellDef> cells)

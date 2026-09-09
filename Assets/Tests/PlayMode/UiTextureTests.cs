@@ -370,8 +370,9 @@ namespace KkomaKnight.Tests.Play
             }
             // T251 — 여기도 수를 안 박는다(위 EventsScreenTests 와 같은 까닭 · CI run 645 에서 «6 / was 3» 으로 빨갰다).
             //   두 카드가 표에서 받는 종류 수의 합이 곧 그려져야 할 칸 수다.
-            int wantCells = EventsScreen.CardRewardKinds(_app.Data.Dungeon, "hell", new string[0]).Length
-                          + EventsScreen.CardRewardKinds(_app.Data.Dungeon, "expedition", new string[0]).Length;
+            // T291 — 층이 생겼으므로 규칙에 «몇 층» 을 같이 묻는다(화면이 그리는 층 = 도전 층). 안 물으면 표의 한 벌을 기대해 그리는 쪽이 빨개진다.
+            int wantCells = EventsScreen.CardRewardKinds(_app.Data.Dungeon, "hell", new string[0], DungeonSweep.Challenge(_app.Save, _app.Data.Dungeon, "hell")).Length
+                          + EventsScreen.CardRewardKinds(_app.Data.Dungeon, "expedition", new string[0], DungeonSweep.Challenge(_app.Save, _app.Data.Dungeon, "expedition")).Length;
             Assert.Greater(wantCells, 0, "표가 보상 종류를 준다(이게 0 이면 아래 단언이 헛돈다)");
             Assert.AreEqual(wantCells, cells, "던전 보상 아이콘 = 두 카드가 표에서 받는 종류 수의 합");
 

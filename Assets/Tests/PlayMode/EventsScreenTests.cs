@@ -115,7 +115,10 @@ namespace KkomaKnight.Tests.Play
             //   표가 바뀌어도 안 깨지고, **그리는 쪽만 틀어졌을 때는 그대로 빨개진다**.
             foreach (var (card, key, label) in new[] { (hell, "hell", "카드 1"), (exp, "expedition", "카드 2") })
             {
-                int want = EventsScreen.CardRewardKinds(_app.Data.Dungeon, key, new string[0]).Length;
+                // T291 — 규칙이 «몇 층» 을 알아야 한다: 층이 있는 던전(원정)은 층마다 레시피가 갈리고 3의 배수 층엔 키가 붙는다.
+                //   화면이 그리는 층(= 도전 층)을 자도 그대로 물어본다 — 여기서 층을 안 주면 자가 «표의 한 벌» 을 기대하며 그리는 쪽을 빨갛게 만든다.
+                int floor = DungeonSweep.Challenge(_app.Save, _app.Data.Dungeon, key);
+                int want = EventsScreen.CardRewardKinds(_app.Data.Dungeon, key, new string[0], floor).Length;
                 Assert.Greater(want, 0, label + ": 표가 보상 종류를 하나는 준다(이게 0 이면 아래 단언이 헛돈다)");
                 Assert.AreEqual(want, CountNamed(card, "Cell:"), label + " 보상 아이콘 = 표가 준 종류 수");
             }
@@ -164,7 +167,8 @@ namespace KkomaKnight.Tests.Play
                 // ⓑ **그린 것이 그 규칙과 같은가** — 칸마다 «표가 준 물건의 색» 이어야 한다.
                 //   전부 초록으로 되돌아가면(= 색을 안 고르면) 여기서 빨개진다. 개수는 표에서 오므로 안 박는다.
                 var wantFrames = new System.Collections.Generic.List<string>();
-                foreach (var icon in EventsScreen.CardRewardKinds(_app.Data.Dungeon, "expedition", new string[0]))
+                foreach (var icon in EventsScreen.CardRewardKinds(_app.Data.Dungeon, "expedition", new string[0],
+                                                                 DungeonSweep.Challenge(_app.Save, _app.Data.Dungeon, "expedition")))   // T291 — 화면과 같은 층
                     wantFrames.Add(EventsScreen.RewardFrame(icon));
                 Assert.Greater(wantFrames.Count, 0, "표가 원정에 보상을 하나는 준다(이게 0 이면 아래 단언이 헛돈다)");
                 var gotFrames = new System.Collections.Generic.List<string>();
