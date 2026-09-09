@@ -225,6 +225,45 @@ namespace KkomaKnight.Game
             if (items.Count > 0) RewardPopup.Show(items, null);
         }
 
+        /// <summary>그 펫이 낀 칸(없으면 -1) — «장착 ↔ 해제» 를 한 버튼으로 쓰려면 이것 하나면 된다.</summary>
+        int WornSlot(string id)
+        {
+            var d = PD; var s = App != null ? App.Save : null; if (d == null || s == null) return -1;
+            for (int i = 0; i < Pets.SlotsOpen(d, s); i++) if (Pets.EquippedAt(d, s, i) == id) return i;
+            return -1;
+        }
+
+        /// <summary>
+        /// 강화 한 번 — 조각을 <see cref="Pets.Need"/> 만큼 쓰고 Lv +1(규칙은 Core 가 갖는다 · 화면은 부르기만).
+        /// <para>⚑ 여기가 <b>퀘스트·업적이 기다리던 «펫 강화» 카운터의 유일한 자리</b>다(T257 ⓑ · 광고·다른 입구에 겹쳐 걸지 않는다).</para>
+        /// </summary>
+        void Upgrade(string id, int index)
+        {
+            var d = PD; var s = App.Save; if (d == null || s == null) return;
+            if (!Pets.LevelUp(d, s, id)) { App.Toast("조각이 모자랍니다"); return; }
+            Quests.Bump(App, Quests.PetUpgrade);
+            App.Persist(); Refresh();
+            App.Overlay.Close(); OpenDetail(index);   // 팝업을 다시 열어 새 레벨·새 목표를 그대로 보여 준다(업적 «받기» 와 같은 길)
+        }
+
+        /// <summary>장착 ↔ 해제 — 낀 칸이 있으면 비우고, 없으면 <b>빈 칸부터</b> 채운다(빈 칸이 없으면 첫 칸을 바꿔 낀다).</summary>
+        void ToggleEquip(string id, int index)
+        {
+            var d = PD; var s = App.Save; if (d == null || s == null) return;
+            int worn = WornSlot(id);
+            if (worn >= 0) Pets.Unequip(s, worn);
+            else
+            {
+                int open = Pets.SlotsOpen(d, s);
+                if (open <= 0) { App.Toast("장착 칸이 아직 안 열렸습니다"); return; }
+                int slot = 0;
+                for (int i = 0; i < open; i++) if (string.IsNullOrEmpty(Pets.EquippedAt(d, s, i))) { slot = i; break; }
+                if (!Pets.Equip(d, s, id, slot)) return;
+            }
+            App.Persist(); Refresh();
+            App.Overlay.Close(); OpenDetail(index);
+        }
+
         /// <summary>펫 한 마리의 칸 그림 — 표의 차례가 곧 격자 차례라 그 자리의 아이콘을 쓴다(그림 9벌은 <see cref="PetLook"/> 이 따로 갖는다 · 격자 칸은 아이콘 문법).</summary>
         static string PetIcon(PetData d, string id)
         {
@@ -253,12 +292,47 @@ namespace KkomaKnight.Game
             // 펫 «탭»(13)의 풀스크린 무늬(위 Build 의 UiKit.PatternBg)는 주인이 말한 자리가 아니므로 그대로 둔다.
             Overlay.NoPattern(box);
             var desc = UiKit.Panel(box, "Desc", "fr.r12", Palette.A(Palette.Dim, 0.6f)); UiKit.Pct(desc.rectTransform, Layout.PdDesc.Within(Layout.PdBox));
-            UiKit.Label(desc.transform, 4, 8, 92, 84, "펫 시스템은 준비 중입니다.\n업데이트로 만나요.", 32, Palette.White);
+            // T293 ⓘ — 표가 실렸으면 «그 펫이 무엇을 하는가» 를 표에서 조립한 글자로 말한다(사람이 따로 안 적는다 · `Pets.Effect`).
+            //   표가 없으면(옛 껍데기) 종전 안내 그대로 — 그때는 지어낼 값이 없는 것이 사실이다.
+            var dp = PD; var pet = dp != null && index < dp.Pets.Count ? dp.Pets[index] : null;
+            int petLv = pet != null ? Pets.Lv(App.Save, pet.Id) : 0;
+            string descText = pet == null ? "펫 시스템은 준비 중입니다.\n업데이트로 만나요."
+                            : petLv >= 1 ? pet.Name + " · Lv " + petLv + "\n" + Pets.Effect(dp, pet)
+                                         : pet.Name + " · 아직 없다\n" + Pets.Effect(dp, pet) + "\n소환으로 얻을 수 있습니다.";
+            UiKit.Label(desc.transform, 4, 8, 92, 84, descText, 32, Palette.White);
             var pt = UiKit.Label(box, 0, 0, 100, 100, "패시브:", 34, Palette.Cream); pt.name = "PassiveTitle"; pt.fontStyle = FontStyles.Bold; UiKit.Pct(pt.rectTransform, Layout.PdPassiveTitle.Within(Layout.PdBox));
             var pv = UiKit.Rect(box, "PassiveRow"); UiKit.Pct(pv, Layout.PdPassive.Within(Layout.PdBox));
             SumGroup(pv, 0, 40, "pi.attack", Palette.White); Sep(pv, 47); SumGroup(pv, 60, 40, "pi.shield", Palette.Sky);
-            var upB = UiKit.Button(box, "ui.btnGray", "강화", () => { }, Layout.PdBtnL.Within(Layout.PdBox)); upB.name = "PetUpgradeBtn";
-            var eqB = UiKit.Button(box, "ui.btnOrange", "장착", () => { }, Layout.PdBtnR.Within(Layout.PdBox)); eqB.name = "PetEquipBtn";
+            // T293 ⓘ — 세부 칸의 «Lv. N» · 진행바(조각/필요) · 패시브 수치를 세이브에서 칠한다(값은 전부 Core 가 낸다).
+            if (pet != null)
+            {
+                int need = Pets.Need(dp, petLv < 1 ? 1 : petLv), frag = Pets.Frag(App.Save, pet.Id);
+                var lvT = UiKit.Find(cell, "Lv"); var lvTx = lvT != null ? lvT.GetComponent<TMP_Text>() : null;
+                if (lvTx != null) lvTx.text = "Lv. " + petLv;
+                var sl = bar != null ? bar.GetComponentInChildren<Slider>(true) : null;
+                if (sl != null) sl.value = need > 0 ? Mathf.Clamp01((float)frag / need) : 0f;
+                var bt = bar != null ? bar.GetComponentInChildren<TMP_Text>(true) : null;
+                if (bt != null) bt.text = frag + "/" + need;   // «Lv N → N+1 : 조각 a/b»(5항) 를 바 안 숫자로
+                var pw = Pets.Equip(App.Data, dp, pet, petLv < 1 ? 1 : petLv);
+                int k = 0; var vals = new[] { pw.Atk, pw.Sh };
+                foreach (var t in pv.GetComponentsInChildren<TMP_Text>(true))
+                {
+                    if (t == null || t.text == "|") continue;
+                    if (k < vals.Length) t.text = "+" + UiKit.FmtQty(Math.Round(vals[k]));
+                    k++;
+                }
+            }
+            // T293 5항 ⓗ(주인 «강화 가능할 때는 해당 거 버튼 주황») — 옷·눌림이 **한 값**에서 나온다(갈라지면 «주황인데 안 눌리는» 자리가 생긴다 · 결정 1027 과 같은 자리).
+            bool canUp = pet != null && Pets.CanLevelUp(dp, App.Save, pet.Id);
+            var upB = UiKit.Button(box, canUp ? "ui.btnOrange" : "ui.btnGray", "강화", canUp ? (Action)(() => Upgrade(pet.Id, index)) : () => { }, Layout.PdBtnL.Within(Layout.PdBox)); upB.name = "PetUpgradeBtn";
+            if (!canUp) UiKit.SetInteractable(upB.GetComponent<Button>(), false);
+            // 장착/해제 — 낀 칸이 있으면 «해제», 없으면 열린 칸에 낀다. 가진 펫이 아니면 눌리지 않는다.
+            bool own = pet != null && Pets.Has(App.Save, pet.Id);
+            int wornSlot = pet != null ? WornSlot(pet.Id) : -1;
+            var eqB = UiKit.Button(box, own ? "ui.btnOrange" : "ui.btnGray", wornSlot >= 0 ? "해제" : "장착",
+                                   own ? (Action)(() => ToggleEquip(pet.Id, index)) : () => { }, Layout.PdBtnR.Within(Layout.PdBox));
+            eqB.name = "PetEquipBtn";
+            if (!own) UiKit.SetInteractable(eqB.GetComponent<Button>(), false);
             // 비평 이름표(ref-layout ⑪)
             UiKit.Tag(box, "팝업 박스"); UiKit.Tag(cell, "펫 칸(세부)"); UiKit.Tag(bar, "진행바(세부)"); UiKit.Tag(desc.transform, "설명 박스");
             UiKit.Tag(pt.transform, "패시브 제목"); UiKit.Tag(pv, "패시브 수치 줄"); UiKit.Tag(upB, "강화 버튼"); UiKit.Tag(eqB, "장착 버튼");
@@ -270,6 +344,55 @@ namespace KkomaKnight.Game
             _top?.Refresh();
             NavBar.Refresh(App, Root);   // T167 — 탭 점도 같이 갱신(합성·NEW 가 사라지면 장비 탭 점이 꺼진다)
             RefreshSummon();
+            RefreshCells();
+            RefreshSum();
+        }
+
+        /// <summary>
+        /// 격자 아홉 칸의 «Lv. N» 과 진행바(<c>조각/필요</c>) 를 세이브에서 다시 칠한다 — 안 가진 펫은 <b>Lv. 0 · 흐림</b>.
+        /// <para>표의 차례가 곧 격자 차례라(9종 = 칸 9) 칸 <c>i</c> 는 표의 <c>i</c> 번째 펫이다. «가진 것만 보이기»(주인 5항 ⓙ)는 다음 회차 몫 — 칸 이름 계약을 건드리기 때문이다.</para>
+        /// </summary>
+        void RefreshCells()
+        {
+            var d = PD; var s = App != null ? App.Save : null; if (d == null || s == null) return;
+            for (int i = 0; i < _cells.Length; i++)
+            {
+                var cell = _cells[i]; if (cell == null) continue;
+                var p = i < d.Pets.Count ? d.Pets[i] : null;
+                int lv = p != null ? Pets.Lv(s, p.Id) : 0;
+                bool own = lv >= 1;
+                var lvT = UiKit.Find(cell, "Lv"); var lvTx = lvT != null ? lvT.GetComponent<TMP_Text>() : null;
+                if (lvTx != null) lvTx.text = own ? "Lv. " + lv : "Lv. 0";
+                var barT = UiKit.Find(cell, "Bar");
+                if (barT != null)
+                {
+                    int need = p != null ? Pets.Need(d, lv < 1 ? 1 : lv) : 0;
+                    int frag = p != null ? Pets.Frag(s, p.Id) : 0;
+                    var sl = barT.GetComponentInChildren<Slider>(true);
+                    if (sl != null) sl.value = need > 0 ? Mathf.Clamp01((float)frag / need) : 0f;
+                    var bt = barT.GetComponentInChildren<TMP_Text>(true);
+                    if (bt != null) bt.text = frag + "/" + need;
+                }
+                // 안 가진 칸은 흐리게 — 지우지 않는다(칸 이름·자리는 계약이다 · 주인의 «가진 것만» 은 다음 회차에서 칸 수로 푼다)
+                UiKit.Ensure<CanvasGroup>(cell.gameObject).alpha = own ? 1f : 0.45f;
+            }
+        }
+
+        /// <summary>합계 줄 — 장착한 펫들이 더해 주는 공·체·실(<see cref="Pets.EquipPower"/> 한 곳에서 온다 · 화면이 다시 세지 않는다).</summary>
+        void RefreshSum()
+        {
+            var d = PD; var s = App != null ? App.Save : null; var G = App != null ? App.Data : null;
+            var row = UiKit.Find(Root, "SumRow"); if (row == null || d == null || s == null || G == null) return;
+            var p = Pets.EquipPower(G, d, s);
+            var texts = row.GetComponentsInChildren<TMP_Text>(true);
+            // 줄은 «+수 아이콘» 세 묶음 + 구분자 둘 — 숫자 글자만 골라 순서대로(체·실·공: SumGroup 을 세운 차례 그대로) 칠한다.
+            int k = 0; var vals = new[] { p.Hp, p.Sh, p.Atk };
+            foreach (var t in texts)
+            {
+                if (t == null || t.text == "|") continue;
+                if (k < vals.Length) t.text = "+" + UiKit.FmtQty(Math.Round(vals[k]));
+                k++;
+            }
         }
 
         /// <summary>

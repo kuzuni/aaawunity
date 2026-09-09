@@ -117,6 +117,76 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
+
+        [UnityTest]
+        public IEnumerator 세부_팝업이_표와_세이브를_그대로_말하고_강화가_돈다()
+        {
+            yield return Boot();
+            var d = _app.Data != null ? _app.Data.Pet : null;
+            if (d == null) { yield return Shutdown(); Assert.Ignore("펫 표가 없다"); }
+
+            // 표의 첫 펫을 «가진 것 + 강화할 수 있는 것» 으로 만든다(규칙은 Core 가 낸다 — 자가 수를 안 적는다).
+            var pet = d.Pets[0];
+            Pets.Gain(_app.Save, pet.Id);
+            int need = Pets.Need(d, 1);
+            for (int i = 0; i < need; i++) Pets.Gain(_app.Save, pet.Id);
+            Assert.IsTrue(Pets.CanLevelUp(d, _app.Save, pet.Id), "전제 — 조각이 찼다");
+            _app.Persist();
+
+            _app.ShowScreen("pet"); yield return Frames(1);
+            ((PetScreen)_app.Current).OpenDetail(0); yield return Frames(1);
+            var ov = _app.Overlay.Root;
+
+            var up = UiKit.Find(ov, "PetUpgradeBtn"); Assert.IsNotNull(up, "강화 버튼");
+            Assert.IsTrue(up.GetComponent<Button>().interactable, "강화할 수 있으면 눌린다(주인 «가능할 때는 주황»)");
+            int questBefore = QuestRun.Count(_app.Save, true, Quests.PetUpgrade);
+
+            up.GetComponent<Button>().onClick.Invoke(); yield return Frames(2);
+
+            Assert.AreEqual(2, Pets.Lv(_app.Save, pet.Id), "강화하면 Lv 가 하나 오른다");
+            Assert.AreEqual(0, Pets.Frag(_app.Save, pet.Id), "쓴 조각만큼 빠진다");
+            Assert.AreEqual(questBefore + 1, QuestRun.Count(_app.Save, true, Quests.PetUpgrade),
+                            "퀘스트 «펫 강화» 카운터는 이 자리 하나에서 오른다(T257 ⓑ)");
+
+            // 다시 열린 팝업은 새 레벨을 말한다(팝업이 스스로 다시 열린다)
+            var ov2 = _app.Overlay.Root;
+            var up2 = UiKit.Find(ov2, "PetUpgradeBtn"); Assert.IsNotNull(up2, "다시 열린 팝업의 강화 버튼");
+            Assert.AreEqual(Pets.CanLevelUp(d, _app.Save, pet.Id), up2.GetComponent<Button>().interactable,
+                            "옷·눌림은 규칙 하나를 따른다(주황인데 안 눌리는 자리를 안 만든다)");
+
+            yield return Shutdown();
+        }
+
+        [UnityTest]
+        public IEnumerator 장착_버튼이_칸을_채우고_합계가_따라_오른다()
+        {
+            yield return Boot();
+            var d = _app.Data != null ? _app.Data.Pet : null;
+            if (d == null) { yield return Shutdown(); Assert.Ignore("펫 표가 없다"); }
+
+            var pet = d.Pets[0];
+            Pets.Gain(_app.Save, pet.Id); _app.Persist();
+            Assert.AreEqual(0, Pets.Equipped(d, _app.Save).Count, "전제 — 아직 아무것도 안 꼈다");
+
+            _app.ShowScreen("pet"); yield return Frames(1);
+            ((PetScreen)_app.Current).OpenDetail(0); yield return Frames(1);
+            var eq = UiKit.Find(_app.Overlay.Root, "PetEquipBtn"); Assert.IsNotNull(eq, "장착 버튼");
+            eq.GetComponent<Button>().onClick.Invoke(); yield return Frames(2);
+
+            var worn = Pets.Equipped(d, _app.Save);
+            Assert.AreEqual(1, worn.Count, "열린 칸에 한 마리가 낀다");
+            Assert.AreEqual(pet.Id, worn[0], "낀 것은 그 펫이다");
+            var sum = Pets.EquipPower(_app.Data, d, _app.Save);
+            Assert.Greater(sum.Atk, 0, "합계가 0 이면 «더하는 자리» 가 안 붙은 것이다");
+
+            // 한 번 더 누르면 해제 — 같은 버튼이 두 뜻을 갖는다(낀 칸이 있으면 «해제»)
+            var eq2 = UiKit.Find(_app.Overlay.Root, "PetEquipBtn"); Assert.IsNotNull(eq2, "다시 열린 팝업의 장착 버튼");
+            eq2.GetComponent<Button>().onClick.Invoke(); yield return Frames(2);
+            Assert.AreEqual(0, Pets.Equipped(d, _app.Save).Count, "다시 누르면 해제된다");
+
+            yield return Shutdown();
+        }
+
         /// <summary>버튼의 값 줄이 지금 어느 그림을 쓰고 있나 — 카탈로그 키로 되짚는다(그림 파일이 아니라 «무엇으로 치르나» 를 재는 자리).</summary>
         static string CostIcon(Transform root, string btnName)
         {
