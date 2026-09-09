@@ -70,23 +70,30 @@ namespace KkomaKnight.Tests.Play
             _app.Save.GiftDay = ""; _app.Save.GiftAds = 0; _app.Save.GiftFree = false; _app.Save.GiftClaimed.Clear();
             KkomaKnight.Core.DailyGift.Roll(_app.Save, GD, SaveStore.Today());
             LobbyPopups.DailyGift(_app); yield return Frames(1);
-            AssertSealed("데일리 기프트 17", "DailyGiftBox", "Title_", Layout.GfBox);
+            AssertSealed("데일리 기프트 17", "DailyGiftBox", "ui.title.", Layout.GfBox);   // Spawn 으로 선 리본 = 열쇠 이름(결정 1036)
             _app.Overlay.Close(); yield return Frames(1);
 
             _log.AssertNoRed("리본 팝업 셋 열고 닫기");
             yield return Shutdown();
         }
 
-        /// <summary>상자 안에서 이름이 <paramref name="prefix"/> 로 시작하는 첫 자식(리본 조각).</summary>
+        /// <summary>
+        /// 상자 안의 리본 조각 — 이름이 <paramref name="prefix"/> 로 시작하는 첫 자식.
+        /// ⚠ 조각의 «주소» 는 어느 길로 세워졌는가가 정한다(런 908 빨강 · 결정 1036): 프리팹째 들어온 조각(15·16)은 <b>프리팹 이름</b>(<c>Title_Tapered_01</c>·<c>Title_01_Deco</c>) ·
+        /// <c>Spawn</c> 으로 세운 조각(17 · <c>UiKit.Popup</c>)은 <b>카탈로그 열쇠</b>(<c>ui.title.yellow</c>) 다 — 그래서 앞머리를 둘 받는다(<paramref name="prefix"/> 또는 <c>ui.title.</c>).
+        /// </summary>
         static RectTransform ChildStarting(Transform root, string prefix)
         {
             for (int i = 0; i < root.childCount; i++)
             {
                 var c = root.GetChild(i);
-                if (c.name.StartsWith(prefix, System.StringComparison.Ordinal) && c.GetComponent<Image>() != null) return (RectTransform)c;
+                bool named = c.name.StartsWith(prefix, System.StringComparison.Ordinal) || c.name.StartsWith(SpawnedRibbonPrefix, System.StringComparison.Ordinal);
+                if (named && c.GetComponent<Image>() != null) return (RectTransform)c;
             }
             return null;
         }
+        /// <summary><c>Spawn</c> 으로 선 리본의 이름 앞머리 = 카탈로그 열쇠(<c>ui.title.yellow</c> …).</summary>
+        const string SpawnedRibbonPrefix = "ui.title.";
 
         void AssertSealed(string what, string boxName, string ribbonPrefix, Layout.R table)
         {

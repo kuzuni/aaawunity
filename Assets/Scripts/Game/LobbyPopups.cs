@@ -54,7 +54,8 @@ namespace KkomaKnight.Game
         /// 테두리 = 조각 스프라이트의 9-slice 위 폭(<c>sprite.border.w</c> · <c>Popup_Box</c> 38px 안에 검은 선이 들어 있다) ·
         /// 조각의 <b>지금 윗변</b>(월드)도 잰다 — 15 의 <c>Popup_Box_01_Basic</c> 은 프리팹에서 이미 상자 rect 보다 37px 아래에서 시작하므로(sizeDelta −37) 표로 셈하면 덜 올린다.
         /// </para>
-        /// <para>⚠ 9-slice 가 아닌 조각(테두리 0)이거나 이미 닿아 있으면 <b>안 올린다</b>(«위로만» · 내리지는 않는다).</para>
+        /// <para>⚠ 9-slice 가 아닌 조각(테두리 0)뿐이거나 이미 닿아 있으면 <b>안 올린다</b>(«위로만» · 내리지는 않는다).</para>
+        /// <para>6회차(런 911 실측) — 틀만 올리면 틀이 올라간 자리에 <c>Pattern</c>·<c>Gradient</c> 가 안 닿는 맨 <c>Bg</c> 색이 inset 만큼 띠로 남는다 ⇒ 결 층도 같은 양 올린다.</para>
         /// 돌려주는 값 = 올린 px(자·진단용 · 0 이면 안 올렸다). 상자 이름별로 <see cref="SealedPx"/> 에도 남긴다.
         /// </summary>
         public static float SealRibbonSeam(RectTransform box, RectTransform ribbon)
@@ -65,21 +66,26 @@ namespace KkomaKnight.Game
             foreach (var pc in pieces) border = Mathf.Max(border, SealBorderPx(pc));
             if (pieces.Count == 0 || border <= 0f) { SealedPx[box.name] = 0f; return 0f; }
             float bodyBottom = RibbonBodyBottomWorldY(ribbon);
-            float lifted = 0f;
+            // 올릴 양은 «틀»(9-slice 조각 · Bg·Border·DecoLine / Popup_Box_*)에서 잰다 — 틀은 전부 상자 rect 에 딱 맞아 같은 값이 나온다.
+            float lift = 0f;
             foreach (var pc in pieces)
             {
+                if (SealBorderPx(pc) <= 0f) continue;
                 float scaleY = Mathf.Max(0.0001f, pc.lossyScale.y);
-                float topW = PieceTopWorldY(pc);
-                float targetW = bodyBottom + border * scaleY;
-                float d = (targetW - topW) / scaleY;
-                if (d <= 0f) continue;
-                pc.offsetMax = new Vector2(pc.offsetMax.x, pc.offsetMax.y + d);
-                lifted = Mathf.Max(lifted, d);
+                float d = (bodyBottom + border * scaleY - PieceTopWorldY(pc)) / scaleY;
+                lift = Mathf.Max(lift, d);
             }
-            SealedPx[box.name] = lifted;
-            return lifted;
+            if (lift <= 0f) { SealedPx[box.name] = 0f; return 0f; }
+            // 틀과 «면의 결»(Pattern · GradientTop/Bottom — inset 10 으로 틀 안에 깔린 층)을 **같은 양** 올린다 — 결이 안 따라오면 틀이 올라간 자리에
+            // 결 없는 맨 Bg 색(#343434)이 inset 만큼(5px@540) 띠로 남는다(런 911 `17` 실측 · 결정 1037). 각 층의 inset 은 그대로다(같이 미니까).
+            foreach (var pc in pieces) pc.offsetMax = new Vector2(pc.offsetMax.x, pc.offsetMax.y + lift);
+            SealedPx[box.name] = lift;
+            return lift;
         }
-        /// <summary>상자 안에서 «상자 그림» 인 자식 — stretch(0,0)~(1,1) 이고 <see cref="SealPiecePrefix"/> 로 시작하거나(15·16) <see cref="Image"/> 를 단 것(17 의 Bg·Border·DecoLine) · 무늬·그라데이션·빛·Dimmed 는 아니다.</summary>
+        /// <summary>
+        /// 상자 안에서 «상자 그림» 인 자식 — stretch(0,0)~(1,1) 이고 <see cref="SealPiecePrefix"/> 로 시작하거나(15·16) <see cref="Graphic"/> 을 단 것
+        /// (17 의 <c>Bg</c>·<c>Border</c>·<c>DecoLine</c> 틀 + 그 위에 깔린 <c>Pattern</c>(RawImage)·<c>GradientTop/Bottom</c> 결) · 리본 뒤 빛(<c>TitleGlow</c>)·어둠(<c>Dimmed</c>)은 아니다.
+        /// </summary>
         public static List<RectTransform> SealPieces(RectTransform box)
         {
             var pieces = new List<RectTransform>();
@@ -89,8 +95,8 @@ namespace KkomaKnight.Game
                 var c = box.GetChild(i) as RectTransform; if (c == null) continue;
                 if (!(c.anchorMin == Vector2.zero && c.anchorMax == Vector2.one)) continue;
                 if (c.name.StartsWith(SealPiecePrefix, StringComparison.Ordinal)) { pieces.Add(c); continue; }
-                if (c.name == UiKit.PatternName || c.name == UiKit.GradientTopName || c.name == UiKit.GradientBottomName || c.name == "TitleGlow" || c.name == "Dimmed") continue;
-                if (c.GetComponent<Image>() != null) pieces.Add(c);
+                if (c.name == "TitleGlow" || c.name == "Dimmed") continue;
+                if (c.GetComponent<Graphic>() != null) pieces.Add(c);
             }
             return pieces;
         }
@@ -889,6 +895,8 @@ namespace KkomaKnight.Game
             {
                 // T311 5항(주인 «체크 표시 된 거 원본 비율로») — 버튼 자리(가로 18.4% × 세로 4.4% · 2:1 가까운 직사각형)를 그대로 채우면 ✓ 가 가로로 늘어난다.
                 //   «버튼 높이만큼의 정사각 · 오른쪽 가운데»(레퍼런스 15)로 — 폭은 높이를 프레임 비(1080:2337)로 되돌린 값이고 그림도 preserveAspect 로 못 박는다.
+                // T360 ⓑ(주인 «체크 모양은 Toggle_Check_02_On 으로 통일») — 조각이 달고 온 체크 그림을 공용 ✓(pi.check)으로(새 그림 0).
+                UiKit.SetSprite(item, "Check", "pi.check");
                 check.SetParent(item, false); UiKit.Pct((RectTransform)check, SquareRight(Layout.QsRowGo).Within(Layout.QsRow1));
                 foreach (var im in check.GetComponentsInChildren<Image>(true)) im.preserveAspect = true;
                 check.gameObject.SetActive(done);
