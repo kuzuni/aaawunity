@@ -88,12 +88,24 @@ CLAIMS = os.path.join(os.path.dirname(DOC), "claims")
 
 
 def live_lock_ids(claims_dir=None):
-    """`docs/claims/*.lock` 이 실제로 있는 작업 ID 들 — ⓕ 가 «반납했다는 말» 과 함께 본다."""
+    """`docs/claims/*.lock` 이 실제로 있는 작업 ID 들 — ⓕ 가 «반납했다는 말» 과 함께 본다.
+
+    ⚑ **쪼갠 lock 도 그 작업의 lock 이다**(T288 · 이 자보다 나중에 생긴 규약) — 한 절이 자 여럿을
+       «자 하나씩» 나눠 잡을 때 이름이 `T288-4.lock` 처럼 «작업 ID + `-` + 번호» 가 된다.
+       그 꼴을 모르면 **T288 절이 살아 있는데도 «아무도 안 잡는 줄»** 로 읽혀 ⓕ 가 거짓 경고를 낸다
+       (2026-09-09 실측 · 결정 837). 그래서 `T288-4` 는 `T288-4` 와 **`T288` 둘 다**로 센다.
+    """
     d = claims_dir or CLAIMS
     try:
-        return {f[:-5] for f in os.listdir(d) if f.endswith(".lock")}
+        names = {f[:-5] for f in os.listdir(d) if f.endswith(".lock")}
     except OSError:
         return set()
+    out = set(names)
+    for n in names:
+        head = n.split("-", 1)[0]
+        if head != n and head:
+            out.add(head)          # «T288-4» → 「T288」 도 잡혀 있는 것으로 본다
+    return out
 
 
 def main():

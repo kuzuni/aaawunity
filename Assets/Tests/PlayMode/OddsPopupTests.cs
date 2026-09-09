@@ -37,6 +37,28 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("부팅");
         }
 
+        /// <summary>
+        /// 등장 연출(<see cref="UiKit.PopIn"/> 스케일 0.82 → 1)이 <b>끝났는가</b>. T288 ④ 로 고친 자리다.
+        /// <para>
+        /// ⚠ <b>`lossyScale` 을 1 과 견주면 안 된다</b> — 그 값에는 <b>캔버스 배율</b>이 곱해져 있다(CanvasScaler 가
+        /// 기준 해상도에 맞춰 늘이고 줄인다). CI 러너의 창은 우리 기준 해상도가 아니라 배율이 1 이 아니고,
+        /// 그래서 <b>연출이 멀쩡히 끝났는데도</b> «스케일 1 기대 · 실제 0.205» 로 빨갰다(run 675 실측 · 결정 838).
+        /// 0.205 는 «연출 중간» 이 아니라 <b>그 런의 캔버스 배율 그 자체</b>였다.
+        /// </para>
+        /// 그래서 <b>캔버스 배율을 기준</b>으로 견준다 — 그러면 창 크기가 어떻든 «지역 스케일이 1 인가» 만 재어진다.
+        /// </summary>
+        float CanvasScaleY() => _app != null && _app.UiCanvas != null ? _app.UiCanvas.transform.lossyScale.y : 1f;
+        /// <summary>연출이 끝날 때까지 트윈을 마저 돌린다(넉넉히 · 한 번의 `CompleteAll` 로 안 끝나는 판을 위해).</summary>
+        IEnumerator Settle(Transform t)
+        {
+            float t0 = Time.realtimeSinceStartup;
+            do
+            {
+                UiKit.CompleteAllTweens(); yield return null;
+                if (t == null) yield break;
+            } while (Mathf.Abs(t.lossyScale.y - CanvasScaleY()) > 1e-3f && Time.realtimeSinceStartup - t0 < 3f);
+        }
+
         static Transform Find(Transform root, string name)
         {
             if (root == null) return null;
@@ -159,10 +181,10 @@ namespace KkomaKnight.Tests.Play
             //   그래서 «연출 중간» 에 재면 같은 자리인데도 두 값이 어긋난다(런 645 실측 2px · 결정 826).
             //   `UiShotsTests.Shot` 이 PNG 를 찍기 전에 부르는 그 줄과 같은 까닭이다(T49).
             GearUi.OpenInfo(_app, g); yield return Frames(2);
-            UiKit.CompleteAllTweens(); yield return Frames(1);
             var oi = Find(_app.Overlay.Root, "Options"); Assert.IsNotNull(oi, "보기 전용 팝업의 옵션 목록");
             var si = Find(_app.Overlay.Root, "Stats"); Assert.IsNotNull(si, "보기 전용 팝업의 스탯 박스");
-            Assert.AreEqual(1f, oi.lossyScale.y, 1e-3f, "연출이 끝난 뒤에 잰다(보기 전용) — 스케일이 1 이 아니면 아래 자리 값은 연출 중간이다");
+            yield return Settle(oi);
+            Assert.AreEqual(CanvasScaleY(), oi.lossyScale.y, 1e-3f, "연출이 끝난 뒤에 잰다(보기 전용) — 캔버스 배율과 다르면 지역 스케일이 1 이 아니다 = 연출 중간");
             Assert.IsNull(Find(_app.Overlay.Root, "Cost"), "비용 줄은 잘려 나간 쪽이다");
             float optH = ((RectTransform)oi).rect.height, stH = ((RectTransform)si).rect.height;
             float optY = oi.position.y, stY = si.position.y;
@@ -171,10 +193,10 @@ namespace KkomaKnight.Tests.Play
             _app.Overlay.Close(); yield return Frames(2);
 
             GearUi.OpenDetail(_app, g, null); yield return Frames(2);
-            UiKit.CompleteAllTweens(); yield return Frames(1);
             var od = Find(_app.Overlay.Root, "Options"); Assert.IsNotNull(od, "장비 세부 팝업의 옵션 목록");
             var sd = Find(_app.Overlay.Root, "Stats"); Assert.IsNotNull(sd, "장비 세부 팝업의 스탯 박스");
-            Assert.AreEqual(1f, od.lossyScale.y, 1e-3f, "연출이 끝난 뒤에 잰다(장비 세부) — 스케일이 1 이 아니면 아래 자리 값은 연출 중간이다");
+            yield return Settle(od);
+            Assert.AreEqual(CanvasScaleY(), od.lossyScale.y, 1e-3f, "연출이 끝난 뒤에 잰다(장비 세부) — 캔버스 배율과 다르면 지역 스케일이 1 이 아니다 = 연출 중간");
             Assert.AreEqual(((RectTransform)od).rect.height, optH, 1.5f, "옵션 목록 높이가 두 팝업에서 같다");
             Assert.AreEqual(od.position.y, optY, 1.5f, "옵션 목록 자리가 두 팝업에서 같다");
             Assert.AreEqual(((RectTransform)sd).rect.height, stH, 1.5f, "스탯 박스 높이가 두 팝업에서 같다");
