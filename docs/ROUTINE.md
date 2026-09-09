@@ -7614,6 +7614,15 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 순서 — `KkomaKnight/quest.json`(`go`) · `Core/Quest.cs`(파싱) · `Game/LobbyPopups.cs:586` · `Game/App.cs`(`Hint`) · `catalog.json`. **T311·T258 이 `LobbyPopups.cs` 를 쥐면 기다린다.** lock `T318`.
 
+> **🔄 1회차 push · 확인 전(2026-09-09 14:5X · sess-1425-9466 · 워커 N · 결정 933(커밋 메시지의 932 는 933) · lock `T318` 쥔 채)** — 1·2·3항 중 **`LobbyPopups.cs` 를 안 여는 전부**를 했다.
+> · **표** `quest.json`: 줄마다 `go` (로그인·로그인 5일은 명시적 `null`) · `hint{iconPx 110·bobPx 22·periodSec 0.45·lifeSec 8·glowSec 0.8}`. `point` 는 글자 하나 또는 **후보 목록**(대장간 «합성» = `["FuseBtnOn","FuseBtn"]` · 켜진 첫 것).
+> · **Core** `Quest.cs`: `Quest.Go{Screen,Points}` · `GoScreens` 여섯 · `Hint` 다섯 값 — **키 없음·모르는 화면·빈 버튼·hint 없음/0 은 읽는 순간 운다.**
+> · **화면** `Game/QuestGo.cs`(신규): `Open(app, go)` = lobby→로비 · dungeon→`EventsScreen.Open(PageDungeon)` · chest→상점 `ScrollTo(1)` · forge/pet→그 화면 · expedition→로비+`LobbyPopups.Expedition`. 그 화면(팝업이면 팝업 층)에서 이름이 `point` 인 **켜진** 버튼을 찾아 `HintFinger`(버튼 자식 «Hint» · `pi.hand` · 오른쪽 아래 · 위아래 콕콕 · unscaled) + 버튼 뒤 형제 «HintGlow»(글로우 서클 한 번). 끄는 조건 셋 = onClick · OnDisable(화면 벗어남·팝업 치워짐) · lifeSec. `App.Hint(go)` · `App.Hint(point)`.
+> · **자**: EditMode `QuestGoTests` 9(표 완전성 · **지시서 1항 표와 대조** · 낱말 여섯이 전부 쓰인다 · 빠뜨림 5종이 운다 · 후보 목록) · PlayMode `QuestGoPlayTests` 5(**표의 모든 목적지를 실제로 열어 그 이름의 켜진 버튼 자식에 손가락이 선다** · 누르면 사라진다 · lifeSec · 벗어나면 사라지고 되돌아와도 없다 · null 은 아무 데도 안 간다 · 빨간 줄 0).
+> · ⚠ **남은 것 = 배선 한 줄 + P7** — `LobbyPopups.cs:586` `() => ov.Close()` → `() => { ov.Close(); app.Hint(q.Go); }`(줄의 `q` 가 이미 있다) 와 T300 P7 각본에 «이동» 한 번. 그 파일이 **T258(워커 K) 의 살아 있는 lock** 안이라 이 회차는 못 연다(README «같은 파일이면 뒤 번호가 기다린다»). 그때까지 «이동» 은 지금처럼 닫기만 한다.
+> · 게이트: build 0/0 · test **477/477**(신규 9) · gen_meta ✔ · gen_catalog ✔(`pi.hand` · 724) · catalog_keys ✔ · asmdef ✔ · test_usings ✔ · stale_asserts 0 · unity_null 0 · font_glyphs ✔ · split_push ✔ · PlayMode 임시 csproj(유니티 asmdef 와 같은 참조) **내 파일 0 오류**.
+> · **확인** = 다음 완주 런 `[CI명부] QuestGoTests(9)`·`QuestGoPlayTests(5)` 실패 0 · 주인 폰은 배선 뒤(«이동» → 그 자리 · 손가락).
+
 ### T326 ✅ — **표 ㊺ 의 «오른쪽 짝» 셋을 재서 넣었다 — 6.4 → 7.1, 남은 감점은 전부 T240 이 답을 적어 둔 자리** (2026-09-09 11:1X · sess-2157-4152 · 워커 H · **문서만 · C# 0줄** · 결정 886)
 
 1. **왜** — T323 을 끝내고 §5 를 다시 도니 10.0 미만이 셋뿐이었고(33 **6.4** · 34 9.2 · 19 9.6) 33 의 꼬리에 «표에 없는 이름표 **11개**» 가 붙어 있었다. ㊺ 머리가 스스로 «**표에 없는 것 = 아직 안 잰 것**» 이라 적어 뒀고, 판정 칸에는 이미 «오른쪽은 x 86.4 로 좌우 대칭» 같은 말이 있었다 — **그것을 행으로 세우는 일**이다.
