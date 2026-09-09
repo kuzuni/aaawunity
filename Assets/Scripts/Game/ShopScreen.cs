@@ -82,7 +82,11 @@ namespace KkomaKnight.Game
         const float PriceGap = 10f;
 
         TopBar _top; RectTransform _content; ScrollRect _scroll;
-        TMP_Text _freeTxt; readonly List<Button> _freeBtns = new List<Button>(); readonly List<GameObject> _freeDots = new List<GameObject>();
+        TMP_Text _freeTxt;
+        /// <summary>상자 카드의 광고 오픈 버튼(T259 1항) — 버튼 · 빨간 점 · «하루 1번» 자리 이름(<see cref="ShopFree"/>). 자리 이름이 null 이면 그 상자엔 광고 오픈이 없다.</summary>
+        readonly List<(Button btn, GameObject dot, string slot)> _adBtns = new List<(Button, GameObject, string)>();
+        /// <summary>무료 보급 상품(다이아 100 · 골드 1,000 · T259 3항) — 가격 글자 · 빨간 점 · 자리 이름 · 원래 가격 글자.</summary>
+        readonly List<(TMP_Text price, GameObject dot, string slot, string paid)> _freePacks = new List<(TMP_Text, GameObject, string, string)>();
         readonly Dictionary<string, BoxWidgets> _box = new Dictionary<string, BoxWidgets>();
         readonly List<(Button btn, Func<bool> can)> _gated = new List<(Button, Func<bool>)>();
         /// <summary>빛살이 도는 칸(T72 ② · 4항 «보이는 칸만» — 스크롤 밖 칸은 <see cref="UiKit.SetLightSpinning"/> 으로 멈춘다).</summary>
@@ -92,8 +96,11 @@ namespace KkomaKnight.Game
         float _timerT;
         sealed class BoxWidgets { public Button One, Ten, Key; public TMP_Text KeyCount, KeyLabel; public readonly List<TMP_Text> Pills = new List<TMP_Text>(); }
 
-        static string Today() => DateTime.Now.ToString("yyyy-MM-dd");
-        static bool CanFree(SaveData S) => S.FreeDay != Today();
+        static string Today() => SaveStore.Today();
+        /// <summary>그 «하루 1번» 자리를 오늘 아직 안 썼는가(<see cref="ShopFree"/> · T259 4항). 자리 이름은 <c>ShopFree.Gem</c>·<c>Gold</c>·<c>BoxRare</c>·<c>BoxLegend</c>.</summary>
+        static bool CanFree(SaveData S, string target) => ShopFree.Can(S, target, Today());
+        /// <summary>상자 키(<c>rare</c>·<c>legend</c>) → 광고 오픈 자리 이름. 주인이 말한 둘 말고는 <b>null</b>(= 그 상자엔 광고 오픈이 없다 · 신화는 말한 적 없다).</summary>
+        static string AdSlot(string boxKey) => boxKey == "rare" ? ShopFree.BoxRare : boxKey == "legend" ? ShopFree.BoxLegend : null;
 
         protected override void Build()
         {
@@ -152,7 +159,13 @@ namespace KkomaKnight.Game
                 var p = gems[i]; var slot = Place(UiKit.Rect(_content, "GemPack:" + i), CardRect(i < 3 ? Row1Y : Row2Y, i % 3));
                 if (i == 0) UiKit.Tag(slot, "상품 카드(1칸)"); else if (i == 3) UiKit.Tag(slot, "상품 카드 2행");
                 BuildPack(slot, UiKit.FmtQty(p.Gem), "shop.gem." + Mathf.Clamp(i + 1, 1, 6), "다이아 · 모의 결제", null, $"{p.Won:#,0}원", Color.Lerp(Palette.Plum, Palette.Ink, 0.35f),
-                    () => { App.Save.Gem += p.Gem; App.Persist(); Refresh(); App.Toast($"다이아 {UiKit.FmtQty(p.Gem)} 지급 (모의 결제)"); }, "cardGem");
+                    () =>
+                    {
+                        // T259 3항 — 표가 «무료 보급 줄» 로 지목한 칸이고 오늘 몫이 남았으면 값을 안 받는다(가격 버튼이 «Free» 로 떠 있는 그 상태다).
+                        if (p.Free && TakeFree(ShopFree.Gem)) { App.Save.Gem += p.Gem; App.Persist(); Refresh(); App.Toast($"무료 보급 다이아 {UiKit.FmtQty(p.Gem)} 수령!"); return; }
+                        App.Save.Gem += p.Gem; App.Persist(); Refresh(); App.Toast($"다이아 {UiKit.FmtQty(p.Gem)} 지급 (모의 결제)");
+                    }, "cardGem");
+                if (p.Free) RegisterFreePack(slot, ShopFree.Gem, $"{p.Won:#,0}원");
             }
             UiKit.Tag(Header(SecGoldY, "골드"), "두 번째 섹션 헤더");
             for (int i = 0; i < golds.Count && i < 3; i++)
@@ -161,10 +174,16 @@ namespace KkomaKnight.Game
                 if (i == 0) UiKit.Tag(slot, "두 번째 섹션 카드행");
                 var btn = BuildPack(slot, UiKit.FmtQty(p.Gold), "shop.gold." + Mathf.Clamp(i + 1, 1, 3), "골드", "hud.gem", UiKit.FmtQty(p.Gem), Color.Lerp(Palette.Sky, Palette.Ink, 0.35f), () =>
                 {
-                    var S = App.Save; if (S.Gem < p.Gem) { App.Toast("다이아가 부족합니다"); return; }
+                    var S = App.Save;
+                    // T259 3항 — 무료 보급 줄이고 오늘 몫이 남았으면 다이아를 안 받는다.
+                    if (p.Free && TakeFree(ShopFree.Gold)) { S.Gold += p.Gold; App.Persist(); Refresh(); Audio.Sfx("snd.coin"); App.Toast($"무료 보급 골드 {UiKit.Fmt(p.Gold)} 수령!"); return; }
+                    if (S.Gem < p.Gem) { App.Toast("다이아가 부족합니다"); return; }
                     S.Gem -= p.Gem; S.Gold += p.Gold; App.Persist(); Refresh(); Audio.Sfx("snd.coin"); App.Toast($"골드 {UiKit.Fmt(p.Gold)} 구매!");
                 }, "cardGold");
-                foreach (var b in btn) _gated.Add((b, () => App.Save.Gem >= p.Gem));
+                if (p.Free) RegisterFreePack(slot, ShopFree.Gold, UiKit.FmtQty(p.Gem));
+                // T259 3항 — 무료 보급이 살아 있는 동안은 다이아가 없어도 눌린다(값을 안 치르니까).
+                // 이 줄을 안 고치면 «Free» 라고 써 있는데 회색이라 «안 눌리는 무료» 가 된다 — 화면이 제 글자와 어긋나는 자리다.
+                foreach (var b in btn) _gated.Add((b, () => (p.Free && CanFree(App.Save, ShopFree.Gold)) || App.Save.Gem >= p.Gem));
             }
 
             // ⑥ 상단 재화 바(공용 헬퍼 · 스크롤 위에 그린다) + 하단 탭 5칸(상점 활성)
@@ -465,10 +484,13 @@ namespace KkomaKnight.Game
             // T275 ⓑ — 광고 칸을 18% → 13% 로 좁혀 그 5%p 를 키 버튼에 준다(결정 761 · `screens:t275.json` 실측 «넘침 +16.9px»).
             // 좁혀도 잃는 것이 없는 칸이 여기뿐이다: 광고는 아이콘 하나뿐이라 잘릴 글자가 없고, 칸 안 비율을 48% → 62% 로 올려
             // 그려지는 아이콘 크기는 전과 거의 같게(42 → 40px) 뒀다. 다이아 버튼(«1회 💎80»)은 T255 경고대로 한 자도 안 건드린다.
-            var ad = UiKit.Button(card, "ui.btnBlue", "", OnFree, new Layout.R(6, 83, 13, 14)); ad.name = "Ad";
+            // T259 1항 — 이 버튼은 이제 **그 상자를 1회 연다**(주인 «광고 버튼 클릭 시 광고를 본 다음에 해당 상자 1회 오픈 · 지금 다른 방식인 것 같음»).
+            // 여태 하던 «무료 다이아 보급» 은 상품 쪽(다이아 100 · 골드 1,000)으로 옮겼다(3항 · 그것이 주인이 말한 자리다).
+            string adSlot = AdSlot(key);
+            var ad = UiKit.Button(card, "ui.btnBlue", "", () => OnAdOpen(box), new Layout.R(6, 83, 13, 14)); ad.name = "Ad";
             var adIc = UiKit.Icon(ad, "Icon", "ui.ad"); UiKit.Pct(adIc.rectTransform, 19, 12, 62, 76);
-            var dot = UiKit.AlertDot(ad, "FreeDot", new Vector2(1, 1), new Vector2(-6, -2), 44);   // T136
-            _freeBtns.Add(ad.GetComponent<Button>()); _freeDots.Add(dot);
+            var dot = UiKit.AlertDot(ad, "AdDot", new Vector2(1, 1), new Vector2(-6, -2), 44);   // T136
+            _adBtns.Add((ad.GetComponent<Button>(), dot, adSlot));
             KeyButton(card, box, new Layout.R(21, 83, 31, 14), false, w);   // T275 ⓑ — 26% → 31%(127.8 → 152.4px · 필요 136.7px · 결정 761)
             var one = PriceButton(card, "One", "1회", box.Cost, () => Pull(1, key), new Layout.R(54, 83, 40, 14), false);
             w.One = one.GetComponent<Button>();
@@ -520,9 +542,20 @@ namespace KkomaKnight.Game
         {
             var D = App.Data; var S = App.Save;
             _top?.Refresh();
-            bool canFree = CanFree(S);
-            foreach (var b in _freeBtns) UiKit.SetInteractable(b, canFree);
-            foreach (var d in _freeDots) if (d != null) d.SetActive(canFree);
+            // T259 1항 — 상자 광고 오픈 버튼(희귀·전설): 오늘 몫이 남았으면 켜지고 빨간 점이 뜬다. 상자마다 따로 센다.
+            foreach (var a in _adBtns)
+            {
+                bool can = a.slot != null && CanFree(S, a.slot);
+                UiKit.SetInteractable(a.btn, can);
+                if (a.dot != null) a.dot.SetActive(can);
+            }
+            // T259 3항 — 무료 보급 상품: 오늘 몫이 남았으면 가격 버튼이 «Free» 로 바뀌고, 쓰고 나면 제 가격으로 돌아온다.
+            foreach (var f in _freePacks)
+            {
+                bool can = CanFree(S, f.slot);
+                if (f.price != null) f.price.text = TextGlyphs.Safe(can ? FreeLabel : f.paid);
+                if (f.dot != null) f.dot.SetActive(can);
+            }
             foreach (var box in D.Gacha.Boxes)
             {
                 if (!_box.TryGetValue(box.Key, out var w)) continue;
@@ -545,21 +578,81 @@ namespace KkomaKnight.Game
             UpdateTimer(); UpdateLightSpin();
         }
         public override void Tick(float dt) { _timerT += dt; if (_timerT >= 1f) { _timerT = 0f; UpdateTimer(); } }
-        /// <summary>«무료 보급까지 hh:mm:ss»(자정 리셋) · 받을 수 있으면 «지금 수령 가능».</summary>
+        /// <summary>
+        /// «무료 보급까지 hh:mm:ss»(자정 리셋) · 받을 게 있으면 «지금 수령 가능».
+        /// <para>
+        /// T259 2항 — <b>가리키는 대상이 바뀌었다</b>. 여태는 상자 카드의 광고 버튼이 주던 «무료 다이아» 였는데,
+        /// 그 버튼은 이제 상자를 열고(1항) 무료 보급은 <b>상품 쪽</b>(다이아 100 · 골드 1,000)으로 갔다.
+        /// 줄만 그대로 두면 «무료 보급까지» 가 아무 데도 안 가리키는 글이 된다 — 화면에서 가장 조용한 거짓말이다.
+        /// </para>
+        /// <para>둘은 각각 하루 1번이라 «둘 중 하나라도 남았으면 수령 가능», 둘 다 썼으면 자정까지를 센다.</para>
+        /// </summary>
         void UpdateTimer()
         {
             if (_freeTxt == null) return;
+            var S = App.Save; var shop = App.Data != null ? App.Data.Shop : null;
+            bool gem = shop != null && shop.FreeGemPack != null && CanFree(S, ShopFree.Gem);
+            bool gold = shop != null && shop.FreeGoldPack != null && CanFree(S, ShopFree.Gold);
             // 💎 글리프 없음(결정 142) → «다이아» 글자로 · 40 한 줄이 줄(934px)에 들어가게 문구를 줄임
-            // T75 ⓒ — 이 두 줄은 Text.text 에 «직접» 넣어서 UiKit 입구의 TextGlyphs.Safe 를 안 거친다(«—» 는 Jua 에 글리프가 없어 폭 0 으로 사라졌다 · «[GlyphGate]» 표의 09·10 두 줄)
-            if (CanFree(App.Save)) { _freeTxt.text = TextGlyphs.Safe($"무료 보급 다이아 {UiKit.FmtQty(App.Data.Gacha.DailyGem)} — 지금 수령 가능"); return; }
+            // T75 ⓒ — 이 줄들은 Text.text 에 «직접» 넣어서 UiKit 입구의 TextGlyphs.Safe 를 안 거친다(«—» 는 Jua 에 글리프가 없어 폭 0 으로 사라졌다 · «[GlyphGate]» 표의 09·10 두 줄)
+            if (gem && gold) { _freeTxt.text = TextGlyphs.Safe("무료 보급 다이아·골드 — 지금 수령 가능"); return; }
+            if (gem) { _freeTxt.text = TextGlyphs.Safe($"무료 보급 다이아 {UiKit.FmtQty(shop.FreeGemPack.Gem)} — 지금 수령 가능"); return; }
+            if (gold) { _freeTxt.text = TextGlyphs.Safe($"무료 보급 골드 {UiKit.FmtQty(shop.FreeGoldPack.Gold)} — 지금 수령 가능"); return; }
             var left = DateTime.Today.AddDays(1) - DateTime.Now; if (left.Ticks < 0) left = TimeSpan.Zero;
             _freeTxt.text = TextGlyphs.Safe($"무료 보급까지 {(int)left.TotalHours:00}:{left.Minutes:00}:{left.Seconds:00}");
         }
 
-        void OnFree()
+        /// <summary>
+        /// T259 1항 — <b>광고를 보고 그 상자를 1회 연다</b>(주인 «광고 버튼 클릭 시 광고를 본 다음에 해당 상자 1회 오픈»).
+        /// <para>
+        /// 순서가 규칙이다: ⓐ 오늘 몫이 남았나 → ⓑ <b>광고를 끝까지 본다</b>(중간에 닫으면 아무 일도 없다 · 주인 «취소하면 지급 없음») →
+        /// ⓒ 오늘 몫을 <b>쓴 것으로 적고</b>(<see cref="ShopFree.Take"/>) → ⓓ 연다.
+        /// ⓒ 를 ⓓ 뒤에 두면 «열렸는데 못 열었다고 적히는» 자리가 생기고, ⓑ 앞에 두면 «광고를 안 봤는데 오늘 몫이 사라지는» 자리가 생긴다.
+        /// </para>
+        /// <para>⚠ 광고 창이 뜬 사이 날이 바뀔 수 있어 <b>끝난 뒤에 한 번 더</b> 본다(<see cref="ShopFree.Take"/> 가 false 면 그때는 그만둔다).</para>
+        /// </summary>
+        /// <summary>
+        /// T259 3항 — 무료 보급 상품 칸 하나를 <see cref="_freePacks"/> 에 올린다(가격 글자 · 빨간 점 · 자리 이름 · <b>원래 가격 글자</b>).
+        /// <para>«원래 가격 글자» 를 같이 들고 있는 까닭 — 받고 나면 <b>그 줄만</b> 제 가격으로 돌아와야 한다(주인 «쓰고 나면 원래 가격 버튼으로»).
+        /// 다시 만들어 붙이면 «1,000원» 을 두 곳(만들 때·되돌릴 때)에서 짓게 되고, 그 둘이 갈리는 날 화면이 거짓말을 한다.</para>
+        /// </summary>
+        void RegisterFreePack(RectTransform slot, string slotName, string paidText)
         {
-            var S = App.Save; if (!CanFree(S)) { App.Toast("오늘 무료 보급은 받았습니다 — 내일 다시"); return; }
-            S.Gem += App.Data.Gacha.DailyGem; S.FreeDay = Today(); App.Persist(); Refresh(); App.Toast($"다이아 {UiKit.FmtQty(App.Data.Gacha.DailyGem)} 수령!");
+            var btn = UiKit.Find(slot, "Button_Price"); if (btn == null) return;
+            var price = UiKit.Find(btn, "GroupArea/Group/Text (TMP)")?.GetComponent<TMP_Text>();
+            var dot = UiKit.AlertDot(slot, "FreeDot", new Vector2(1, 1), new Vector2(-6, -2), 44);   // T136 — 받을 게 있으면 빨간 점(데일리 기프트와 같은 문법)
+            _freePacks.Add((price, dot, slotName, paidText));
+        }
+
+        /// <summary>무료 보급이 살아 있을 때 가격 버튼에 뜨는 글자(주인 ««1000원» 이라는 버튼이 «Free» 로 바뀌고»).</summary>
+        const string FreeLabel = "Free";
+
+        /// <summary>모의 광고 카운트다운 길이(초) — 데일리 기프트(<see cref="LobbyPopups.GiftAdSeconds"/>)·던전 티켓과 같은 값이다.</summary>
+        const int AdSeconds = LobbyPopups.GiftAdSeconds;
+
+        void OnAdOpen(GachaBox box)
+        {
+            string slot = AdSlot(box.Key);
+            if (slot == null) return;
+            var S = App.Save;
+            if (!CanFree(S, slot)) { App.Toast($"오늘 {box.Name} 광고 오픈은 받았습니다 — 내일 다시"); return; }
+            App.Overlay.AdCountdown(AdSeconds, () =>
+            {
+                if (!ShopFree.Take(App.Save, slot, Today())) { Refresh(); return; }
+                App.Persist();
+                Pull(1, box.Key, false, true);
+            });
+        }
+
+        /// <summary>
+        /// T259 3항 — <b>무료 보급 상품</b>(주인 «100다이아 부분 상품도 무료 보급 때마다 1회 Free … 1000골드 부분도 마찬가지»).
+        /// <para>어느 줄이 무료인지는 <b>표가 지목한다</b>(<c>shop.json</c> 의 <c>free</c> · <see cref="ShopData.FreeGemPack"/> · 결정 766) — 순서로 정하지 않는다.</para>
+        /// <para>돌려주는 값 = «이번 누름을 무료로 처리했는가». false 면 부르는 쪽이 <b>원래 값을 치르는 길</b>로 간다(다이아 결제·원화 모의 결제).</para>
+        /// </summary>
+        bool TakeFree(string slot)
+        {
+            if (!ShopFree.Take(App.Save, slot, Today())) return false;
+            return true;
         }
 
         // ───────────────────────── 정보 팝업 (확률 · 천장) ─────────────────────────
@@ -598,12 +691,19 @@ namespace KkomaKnight.Game
             Pull(n, boxKey, true);
         }
 
-        void Pull(int n, string boxKey, bool withKey = false)
+        /// <summary>
+        /// 상자를 <paramref name="n"/> 회 연다. <b>값을 치르는 방법만 셋으로 갈리고</b> 확률·천장·결과는 한 톨도 다르지 않다 —
+        /// 다이아(기본) · 열쇠(<paramref name="withKey"/> · T255) · <b>광고</b>(<paramref name="free"/> · T259 1항).
+        /// <para>⚠ <paramref name="free"/> 는 «공짜로 준다» 가 아니라 «값을 <b>여기서</b> 안 치른다» 는 뜻이다 —
+        /// 하루 1회 빗장은 부르는 쪽(<see cref="OnAdOpen"/>)이 <see cref="ShopFree.Take"/> 로 <b>이미</b> 치렀다.</para>
+        /// </summary>
+        void Pull(int n, string boxKey, bool withKey = false, bool free = false)
         {
             var D = App.Data; var S = App.Save;
             GachaBox box = null; foreach (var b in D.Gacha.Boxes) if (b.Key == boxKey) box = b; if (box == null) return;
             var st = State(boxKey);
-            if (withKey) { if (!GachaKeys.Open(S, boxKey, n)) return; }
+            if (free) { }
+            else if (withKey) { if (!GachaKeys.Open(S, boxKey, n)) return; }
             else
             {
                 double cost = box.Cost * n; if (S.Gem < cost) { App.Toast("다이아가 부족합니다"); return; }

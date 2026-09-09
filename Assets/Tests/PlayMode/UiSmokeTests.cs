@@ -1379,8 +1379,17 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNotNull(UiKit.Find(bigCard, "Ten"), "큰 카드에만 «10회» 버튼");
                 Assert.AreEqual(0.03f, bigCard.anchorMin.x, 1e-3f, "큰 카드 x = 표 ⑤ 배너(3.0)"); Assert.AreEqual(0.97f, bigCard.anchorMax.x, 1e-3f, "큰 카드 폭 = 94");
                 Assert.AreEqual(1f - Layout.TabBar.Y / 100f, ((RectTransform)bar).anchorMax.y, 1e-3f, "탭 바 = 표 자리");
-                int freeInv = (int)S.Gem; Assert.IsTrue(ClickNamed(bigCard.parent, "Ad"), "작은 카드의 광고(무료 보급) 버튼"); yield return Frames(1);
-                Assert.AreEqual(freeInv + D.Gacha.DailyGem, S.Gem, 1e-6, "무료 보급 = dailyGem 지급"); Assert.IsFalse(_app.Overlay.IsOpen, "무료 보급은 팝업 없음");
+                // T259 1항 — 이 버튼의 계약이 주인 지시로 **바뀌었다**: 여태 «누르면 그 자리에서 무료 다이아» 였는데
+                // 이제 «광고를 본 뒤 그 상자 1회 오픈» 이다(무료 보급은 상품 쪽으로 갔다 · 2·3항).
+                // 그래서 옛 단언(«누르면 dailyGem 이 는다»)은 지우지 않고 **새 계약으로 옮겼다** — 여기서는 «광고가 먼저 뜬다»
+                // 와 «취소하면 아무 일도 없다»(주인 «취소하면 지급 없음»)까지만 잰다.
+                // ⚠ 여기서 광고를 끝까지 기다리지 않는 까닭: 이 자는 아래로 계속 이어져 (i) 팝업을 여는데,
+                //   상자가 열리면 그 위에 결과 창이 덮여 뒤가 전부 무너진다. 끝까지 도는 갈래는 ShopFreePlayTests 가 따로 잰다.
+                double gemBeforeAd = S.Gem;
+                Assert.IsTrue(ClickNamed(bigCard.parent, "Ad"), "작은 카드의 광고 버튼"); yield return Frames(2);
+                Assert.IsTrue(_app.Overlay.IsOpen, "누르면 먼저 모의 광고가 뜬다(그 자리에서 주지 않는다)");
+                _app.Overlay.Close(); yield return Frames(1);
+                Assert.AreEqual(gemBeforeAd, S.Gem, 1e-6, "광고를 끊으면 아무것도 안 준다(주인 «취소하면 지급 없음»)");
                 Assert.IsTrue(ClickNamed(bigCard, "Info"), "(i) 버튼"); yield return Frames(2);
                 Check("상자 정보 팝업", expectOverlay: true); Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.popup"), "정보 팝업 = 공통 팝업 문법");
                 AssertNoTextClip("상자 정보 팝업", _app.Overlay.Root);
