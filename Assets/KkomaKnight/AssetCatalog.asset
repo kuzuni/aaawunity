@@ -1405,6 +1405,12 @@ MonoBehaviour:
     text: {fileID: 4900000, guid: b0a365b4676e4d3a095949932cf7202f, type: 3}
   - key: data.combatOverride
     text: {fileID: 4900000, guid: 3f666be8faab6ec62f596ecabf6d7cbb, type: 3}
+  - key: data.gearOverride
+    text: {fileID: 4900000, guid: 6d54afa6a861540f1f095545781e6a61, type: 3}
+  - key: data.gachaOverride
+    text: {fileID: 4900000, guid: 2ecf3793a52f3fa88d07f5ce4ca0ce11, type: 3}
+  - key: data.tuneOverride
+    text: {fileID: 4900000, guid: dbdbd1e8609992ee43e03068dedcc683, type: 3}
   - key: data.arenaShop
     text: {fileID: 4900000, guid: 53ac548ae01a73e2d587755cd32206a7, type: 3}
   - key: data.arenaRank
