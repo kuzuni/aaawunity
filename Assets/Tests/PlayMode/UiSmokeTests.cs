@@ -677,6 +677,17 @@ namespace KkomaKnight.Tests.Play
                 double gem0 = _app.Save.Gem;
                 LobbyPopups.DailyGift(_app); yield return Frames(1);
                 Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "GiftPic"), "선물 그림");
+                {
+                    // T343(주인 2026-09-10 «선물상자 이미지가 라이트보다 뒤에 있네») — «앞에 그려진다» 를 픽셀이 아니라 **관계**로 잰다.
+                    //   주인이 말한 «라이트» 는 제목 리본 뒤 빛(`TitleGlow`)이고 그것은 **상자의 자식**이라,
+                    //   그림이 상자보다 뒤에 있으면 형제 번호를 어떻게 만져도 그 빛 뒤다 — 그래서 재는 것은 «그림 > 상자» 하나면 된다.
+                    var gp = UiKit.Find(_app.Overlay.Root, "GiftPic");
+                    var gb = UiKit.Find(_app.Overlay.Root, "DailyGiftBox");
+                    Assert.IsNotNull(gb, "데일리 기프트 상자");
+                    Assert.AreSame(gp.parent, gb.parent, "그림과 상자가 같은 부모라야 형제 번호로 앞뒤를 잴 수 있다");
+                    Assert.Greater(gp.GetSiblingIndex(), gb.GetSiblingIndex(),
+                        "선물 그림이 상자보다 **나중에** 그려져야 한다(형제 번호가 더 크다 = 눈에는 앞) — 상자보다 앞 번호면 리본 빛에 가린다");
+                }
                 Assert.AreEqual(GD.Milestones.Count, CountNamed(_app.Overlay.Root, "Ad:"), "광고 줄 = dailyGift.json milestones 수(코드에 개수 없음)");
                 // 주인 추가(2026-09-07 00:3X) — 왼쪽 노란 타임라인(선 + 육각 점)은 넣지 않는다 · 행은 상자 가로 중앙
                 Assert.AreEqual(0, CountNamed(_app.Overlay.Root, "Dot:"), "타임라인 점 없음"); Assert.IsNull(UiKit.Find(_app.Overlay.Root, "Timeline"), "타임라인 선 없음");

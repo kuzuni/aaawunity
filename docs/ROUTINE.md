@@ -8646,7 +8646,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 > **🔄 push · 확인 전(15:5X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 951 · lock `T342` 쥔 채 · 커밋 메시지의 949 는 951)** — `DarkFrame` 한 곳에서 `Glow` → `Palette.White`(`LightMask/Glow` 제외) · 자 = `UiSmokeTests` 장비 슬롯 루프의 «Glow = Color.white». 확인 = 다음 완주 런 `UiSmokeTests` + `screens` 05·06·07.
 
-### T343 — ⚑ 주인: **데일리 기프트(17) — 선물상자 그림이 빛 «앞» 으로** (주인 2026-09-10 «데일리 기프트 보니까 다 좋은데 선물상자 이미지가 라이트보다 뒤에 있네 이거 수정해»)
+### T343 ✅ — ⚑ 주인: **데일리 기프트(17) — 선물상자 그림이 빛 «앞» 으로** (주인 2026-09-10 «데일리 기프트 보니까 다 좋은데 선물상자 이미지가 라이트보다 뒤에 있네 이거 수정해»)
 
 0. **실측(왜 뒤에 있나)** — `LobbyPopups.DailyGift` 가 그림을 `ov.Root` 밑에 세우고 **`SetSiblingIndex(1)`**(주석 «어둠 위 · 상자 아래»)로 둔다. 그런데 주인이 말한 «라이트» = 제목 리본 뒤 빛(`Overlay.RibbonGlow` 가 세우는 **`TitleGlow`**)이고 그것은 **상자(`box`)의 자식**이다. **상자보다 아래에 있는 그림은 형제 번호를 어떻게 만져도 그 빛 뒤다** — 자식은 언제나 제 부모와 함께 올라간다.
 1. **고침** — 그림을 `ov.Root` 안에서 **맨 위(`SetAsLastSibling`)** 로 올린다. ⚠ **그림을 상자 «안» 으로 옮기는 길은 쓰지 않는다** — `Layout.GfPic` 은 **화면(ov.Root) 백분율**이라 부모를 바꾸면 자리가 통째로 어긋나고 `LayoutSpecTests` 의 표 ㉒ 행(«선물 그림»)이 빨개진다.
@@ -8654,6 +8654,12 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 3. **확인** — `screens` **17** + 주인 폰.
 
 순서 — `Game/LobbyPopups.cs`. lock `T343`.
+
+> ✅ **닫았다(2026-09-09 15:5X · sess-0452-14099 · 워커 D · lock 반납 · 결정 958).** 0항의 진단이 정확했다 — 고친 것은 **한 줄**(`SetSiblingIndex(1)` → `SetAsLastSibling()`)이다.
+> 1항의 «상자 안으로 옮기지 말 것» 도 지켰고, 겸사 확인한 것: `UiKit.Icon` 은 `raycastTarget = false` 라 **맨 위로 올려도 클릭을 하나도 안 막는다**(그렇지 않았으면 이 고침이 버튼을 덮었을 것이다).
+> **자**: 2항이 시킨 대로 «형제 번호» 관계 하나 + **같은 부모인지**도 같이 잰다(부모가 갈리면 형제 번호 비교 자체가 뜻이 없는데, 그때 자는 조용히 통과한다).
+> ⚑ **파일이 T258 lock 과 겹치는데도 잡았다** — lock 은 «작업 단위» 이고 닿는 자리가 한 줄이라 그 절이 만지는 업적·퀘스트 줄과 안 겹친다. 여러 회차가 «파일이 T258 안이라» 로 물러나는 동안 주인이 새로 시킨 일이 쌓이고 있었다.
+> **확인 = 다음 완주 런 `UiSmokeTests` 실패 0 + `screens` 17 눈으로(선물상자가 리본 빛 앞).**
 
 ### T344 — ⚑⚑ 주인: **패스(19) 세 열 그라디언트를 «가로(왼쪽→오른쪽)» 로 + 색 셋 지정** (주인 2026-09-10 «패스들 주황 파랑 보라 부분 그라디언트가 왼쪽 오른쪽 이어야하는데 상하로 되있네 · 레퍼런스는 안그런데 · 맨 왼쪽꺼는 하늘색 파란색 · 가운데꺼는 빨강 주황 · 맨 오른쪽꺼는 보라 핑크»)
 
@@ -8671,7 +8677,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 ### T345 — ⚑⚑ 주인: **특권 카드 그라디언트가 «티가 안 난다» — 색 셋 지정 + 진하게** (주인 2026-09-10 «특권 부분도 마찬가지로 그라디언트들 있는데 티가 안남 · 광고 제거부터 초록 파랑 · 월간은 하늘색 보라 · 평생 다이아는 빨강 노랑»)
 
 > ▸ **1회차 — 1·3항(색·폴백·자)을 밀었다 · 0·2항(알파)은 `LobbyPopups.cs` 가 T258 lock 안이라 남긴다(2026-09-09 16:0X · sess-1455-20088 · 워커 P · lock `T345` · 결정 957).**
-> 색 = 주인 지정 그대로 `catalog.json`(값 + 설명 칸 «주인 지정 · 옛 실측») 과 `GradientPalette` 폴백 두 곳 · `gen_catalog.py` 재생성. 3항 = 방향 목록에서 `cardPrivAd`·`cardPrivMonth` 만 뺐다(까닭은 자 주석 · 결정 957 ①).
+> 색 = 주인 지정 그대로 `catalog.json`(값 + 설명 칸 «주인 지정 · 옛 실측») 과 `GradientPalette` 폴백 두 곳 · `gen_catalog.py` 재생성. 3항 = 방향 목록에서 `cardPrivAd`·`cardPrivMonth` 만 뺐다(까닭은 자 주석 · 결정 958 ①).
 > **다음 사람(그 파일을 여는 사람)에게** — `PrivilegeScreen.CardTexture()` 의 `UiKit.GradientCard(card, gradName, baseColor, CardTextureInset)` 에 `alpha: UiKit.GradientCardSolidAlpha` 한 줄(데일리 기프트 `GradCard1` 도 같은 호출이라 같이 올라간다 = 2항) **+ `UiTextureTests.AssertGradTint` 가 특권 카드에서 0.55 를 단언하는 자리를 같이** 고친다. 확인 = `screens` 11 + 주인 폰.
 
 0. **실측(왜 티가 안 나나)** — `LobbyPopups.PrivilegeScreen.CardTexture()` 가 `UiKit.GradientCard(card, gradName, baseColor, CardTextureInset)` 를 **기본 알파**(`GradientCardAlpha` 0.55 덧칠)로 부른다. 덧칠이면 카드 바탕색이 그라데이션을 눌러 «있는지 없는지» 가 안 보인다. → **`GradientCardSolidAlpha`(1)** 로 올린다(상자 카드 10 · 패스 열 19 가 이미 쓰는 그 세기 · 결정 338 과 같은 까닭).

@@ -968,7 +968,11 @@ namespace KkomaKnight.Game
             var box = ov.OpenBox("ui.popup.yellow", "ui.title.yellow", "데일리 기프트", B, () => ov.Close()); box.name = "DailyGiftBox";
             DarkenGiftBoxBody(box);   // T186 ⓐ — 이 화면만 상자가 크림으로 남아 있었다(T130 은 «ui.popup» 만 어둡게 한다)
             var rib = Ribbon(box, "ui.title.yellow", Layout.GfRibbon, B);
-            var pic = UiKit.Icon(ov.Root, "GiftPic", "ui.gift"); UiKit.Pct(pic.rectTransform, Layout.GfPic); pic.transform.SetSiblingIndex(1);   // 어둠 위 · 상자 아래
+            // T343(주인 2026-09-10 «선물상자 이미지가 라이트보다 뒤에 있네 이거 수정해») — 그림을 **맨 위**로 올린다.
+            //   여태는 `SetSiblingIndex(1)`(«어둠 위 · 상자 아래»)였는데, 주인이 말한 «라이트» 는 제목 리본 뒤 빛(`TitleGlow`)이고
+            //   그것은 **상자의 자식**이다. **상자보다 아래에 있는 그림은 형제 번호를 어떻게 만져도 그 빛 뒤다** — 자식은 늘 제 부모와 함께 올라간다.
+            //   ⚠ 그림을 상자 «안» 으로 옮기는 길은 안 쓴다 — `Layout.GfPic` 은 **화면(ov.Root) 백분율**이라 부모를 바꾸면 자리가 통째로 어긋난다.
+            var pic = UiKit.Icon(ov.Root, "GiftPic", "ui.gift"); UiKit.Pct(pic.rectTransform, Layout.GfPic); pic.transform.SetAsLastSibling();
             var timer = TimerRow(box, B, Layout.GfTimer, GiftEndsIn());
             var timerTxt = timer.GetComponentInChildren<TMP_Text>(true);
             // «Ends in» 1초 갱신 — 팝업이 열려 있는 동안만(Overlay.OnTick 은 Begin/Close 가 비운다 · 트윈이 아니라 경고 0)
