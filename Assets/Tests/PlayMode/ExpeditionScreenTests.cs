@@ -127,8 +127,9 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(knight, "그림 띠의 기사(T146 ⓑ)"); Assert.IsNotNull(foe, "그림 띠의 적(T146 ⓑ)");
             Assert.IsNotNull(knight.GetComponentInChildren<HeroView>(true), "기사는 HeroView 조각으로 세운다(새 그림 0)");
             Assert.IsNotNull(foe.GetComponentInChildren<HeroView>(true), "적도 HeroView 조각으로 세운다");
-            float KneeY(Transform t) { var c = new Vector3[4]; ((RectTransform)t).GetWorldCorners(c); return picRt.InverseTransformPoint(c[0]).y; }
-            Assert.AreEqual(KneeY(knight), KneeY(foe), picRt.rect.height * 0.06f, "기사와 적의 발이 길 위 같은 높이에 선다(레퍼런스 30)");
+            // ⚠ 여기 있던 «발 높이가 같다» 단언은 **호스트 바닥**을 쟀다 — 그림이 아니라 칸이다.
+            //   호스트 차가 1.9%p 라 6% 문턱을 늘 지났고, 실제 그림의 발은 76.2 ↔ 77.6 으로 어긋난 채였다.
+            //   아래 T303 ⓑ 블록이 **그림의 발밑**을 되짚어 절대값·상대값 둘 다로 잰다(결정 968·970).
             Assert.Less(((RectTransform)knight).anchorMin.x, ((RectTransform)foe).anchorMin.x, "기사가 왼쪽 · 적이 오른쪽(레퍼런스 30)");
             // T303(주인 2026-09-09 09:0X «탐험 팝업 플레이어 그림 찌그러짐») — HeroView 의 그림판은 언제나 정사각(size × size)이라
             //   호스트가 정사각이 아니면 그대로 늘어난다. 여기 칸은 112×187px 이라 가로 60% 로 눌려 있었다.
@@ -148,10 +149,16 @@ namespace KkomaKnight.Tests.Play
             //   ⚠ 그림판은 칸을 가득 안 채운다 — 세로의 66.0% 만 쓰고 아래 21.5% 는 투명 여백이다(실측).
             //     그래서 «그림의 키·발밑» 을 그림판 rect 에서 되짚어 잰다.
             const float RefArtH = 44.9f, RefFootY = 83.5f;      // 레퍼런스 30 · 무대 안 %
-            const float ArtFill = 0.660f, ArtBottomPad = 0.215f; // 그림판 안에서 그림이 차지하는 세로 / 아래 여백
+            // ⚑ **아래 여백은 기사와 적이 다르다** — 리그의 키가 달라 그림이 정사각 그림판 안에 앉는 자리가 다르다.
+            //   첫 회차에 «같은 HeroView 니 같겠지» 로 한 값을 둘에 다 썼고, 그 바람에 **적이 4.8%p 낮게 섰는데 이 자는 초록이었다**
+            //   (자가 그 «같겠지» 를 그대로 믿고 있었으니 무엇을 재도 맞는 답이 나온다 · 결정 970).
+            //   ⚠ 두 수는 `screens` 30(run 865) 실측이다 — **스킨이 바뀌면 다시 재야 한다**. 그것이 이 자의 사각지대다(T198 규약).
+            const float ArtFill = 0.631f;                        // 그림판 세로 중 그림이 쓰는 몫(기사 실측)
+            const float KnightPad = 0.229f, FoePad = 0.134f;     // 그림판 아래에 남는 투명 여백
             float stageH = picRt.rect.height;
             // ⚠ 무대 위끝을 «0» 으로 놓고 잰다 — `UiKit.Pct` 가 피벗을 가운데(0.5)로 두므로 local y 0 은 위끝이 아니라 한가운데다.
             //   그래서 무대 자신의 모서리에서 위끝을 먼저 읽는다(피벗이 무엇이든 같은 값이 나온다).
+            var foot = new float[2];
             var sc = new Vector3[4]; picRt.GetWorldCorners(sc);
             float stageTopY = picRt.InverseTransformPoint(sc[1]).y;
             foreach (var (who, host) in new[] { ("기사", knight), ("적", foe) })
@@ -161,13 +168,18 @@ namespace KkomaKnight.Tests.Play
                 var c = new Vector3[4]; pr.GetWorldCorners(c);
                 float panelH = pr.rect.height;
                 float panelBottomFromTop = stageTopY - picRt.InverseTransformPoint(c[0]).y;   // 무대 위끝에서 아래로 몇 px
-                float footPct = (panelBottomFromTop - panelH * ArtBottomPad) / stageH * 100f;
+                float pad = who == "기사" ? KnightPad : FoePad;
+                float footPct = (panelBottomFromTop - panelH * pad) / stageH * 100f;
                 Assert.AreEqual(RefFootY, footPct, 3.0f,
                     who + " 의 발이 레퍼런스처럼 땅 위(무대 " + RefFootY + "%)에 서야 한다 — 지금 " + footPct.ToString("0.0") + "% (T303 ⓑ)");
                 if (who == "기사")
                     Assert.AreEqual(RefArtH, panelH * ArtFill / stageH * 100f, 3.0f,
                         "기사 그림 키가 레퍼런스만큼 커야 한다(무대의 " + RefArtH + "%) — 작으면 «떠 있는 콩알» 로 보인다 (T303 ⓑ)");
+                foot[who == "기사" ? 0 : 1] = footPct;
             }
+            // 그리고 «둘이 같은 줄에 서는가» — 절대값 둘이 다 문턱 안이어도 서로 2%p 어긋나면 눈에는 «한 명만 빠진» 것으로 보인다.
+            Assert.AreEqual(foot[0], foot[1], 1.5f,
+                "기사와 적이 같은 땅 줄에 서야 한다 — 지금 " + foot[0].ToString("0.0") + "% ↔ " + foot[1].ToString("0.0") + "% (T303 ⓑ)");
 
             // 쌓인 값이 화면에 «0» 이 아니라 실제 계산값으로 찍힌다
             Expedition.Pending(_app.Data, S, D, LobbyPopups.NowSec(), SaveStore.Today(), out double pg, out double pm);
