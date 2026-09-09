@@ -62,7 +62,10 @@ namespace KkomaKnight.Tests.Play
             {
                 var t = UiKit.Find(day, n);
                 if (t == null || !t.gameObject.activeInHierarchy) continue;
-                var im = t.GetComponent<Image>(); if (im != null) return im.color;
+                // T305 회차 2 — 상태 바탕은 «껍데기» 이고 그림은 그 안 Bg 가 갖는다(프리팹 실측).
+                //   여기서 GetComponent 로만 물으면 늘 null 이라, 이 자는 «칠했나» 가 아니라 «찾았나» 를 재게 된다.
+                //   칠하는 쪽과 **같은 함수**로 잉크를 고른다(결정 858 — 규칙이 인자를 얻으면 자도 그 인자를 물어야 한다).
+                var im = LobbyPopups.Ink(t); if (im != null) return im.color;
             }
             return Color.clear;
         }

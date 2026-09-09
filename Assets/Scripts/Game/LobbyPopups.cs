@@ -793,8 +793,27 @@ namespace KkomaKnight.Game
         /// <summary>조각 하나의 그림 색을 바꾼다 — 없으면 아무 일도 안 한다(조각이 빠진 프리팹에서도 화면이 안 깨지게).</summary>
         static void Paint(Transform root, string path, Color c)
         {
-            var t = UiKit.Find(root, path); if (t == null) return;
-            var im = t.GetComponent<Image>(); if (im != null) im.color = c;
+            var im = Ink(UiKit.Find(root, path)); if (im != null) im.color = c;
+        }
+
+        /// <summary>
+        /// T305 회차 2 — <b>상태 바탕(<c>Bg_Normal</c>·<c>Bg_Focus1</c>·<c>Bg_Disable</c>)은 «껍데기» 이고 그림은 그 안 <c>Bg</c> 가 갖는다.</b>
+        /// <para>
+        /// 프리팹 실측(<c>DailyFrame_01_BasePrefab</c>): <c>Bg_Disable</c> 의 컴포넌트는 <b>RectTransform 하나뿐</b>이고 자식이 <c>Bg</c>·<c>Border</c> 다.
+        /// 그래서 그 조각에서 <c>GetComponent&lt;Image&gt;()</c> 를 물으면 <b>null</b> 이고, 칠하는 쪽은 «아무 일도 안 하고» 조용히 지나간다 —
+        /// 주인이 «받은 칸이 거의 구분이 안 감» 이라 한 뒤 1회차가 «칠했다» 고 적었지만 <b>실제로는 한 픽셀도 안 칠해졌다</b>(run 816 이 그것을 잡았다).
+        /// </para>
+        /// <b>채움을 고른다 — 테두리가 아니라</b>: 이름이 <c>Bg</c> 인 자식이 있으면 그것, 없으면 제 것, 그것도 없으면 처음 만나는 그림.
+        /// <para>자(<c>AttendancePlayTests</c>)도 <b>이 함수로 같은 잉크를 읽는다</b> — 칠하는 쪽과 재는 쪽이 다른 곳을 보면 자가 초록인 채로 화면만 틀린다(결정 858).</para>
+        /// </summary>
+        public static Image Ink(Transform t)
+        {
+            if (t == null) return null;
+            var fill = UiKit.Find(t, "Bg");
+            var im = fill != null ? fill.GetComponent<Image>() : null;
+            if (im != null) return im;
+            im = t.GetComponent<Image>();
+            return im != null ? im : t.GetComponentInChildren<Image>(true);
         }
 
         /// <summary>
