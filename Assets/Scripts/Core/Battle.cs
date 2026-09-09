@@ -802,6 +802,24 @@ namespace KkomaKnight.Core
                 if (hit || a.X < P.WorldX + EngineConst.ArrowCullDx) Arrows.RemoveAt(i);
             }
             if (Dead) return true;
+            StepProjectiles(dt);
+            if (Pending == null && PendingLevelUps > 0) { PendingLevelUps--; OpenLevelUp(); }
+            return true;
+        }
+
+        /// <summary>
+        /// 날아가는 투사체만 <paramref name="dt"/> 초만큼 나아가게 하고 맞은 것을 처리한다 — <see cref="Tick"/> 안의 그 자리를 그대로 떼어 낸 것이다.
+        /// <para>
+        /// <b>왜 따로 부를 수 있어야 하는가</b>(T312 · 주인 2026-09-09 10:0X «도끼가 적에 닿았는데 바로 안 사라지고 데미지도 늦다») —
+        /// 화면은 킬 연출 동안 엔진 틱을 통째로 보류한다(<c>BattleWorld.HoldEngine</c> · T50). 그 동안 <b>도끼의 그림만</b> 나아가고(T86 ⓐ)
+        /// 엔진 <c>pr.X</c> 는 멎어 있어서, 그림이 맞는 자리(<c>ProjLimit</c> = 엔진이 맞힌다고 보는 그 선)에 <b>닿은 채로 서서 기다린다</b>.
+        /// 데미지는 보류가 풀린 뒤에야 들어간다 — 주인이 본 «닿았는데 안 사라지고 늦다» 가 이것이다.
+        /// </para>
+        /// <b>시뮬(<see cref="RunToEnd"/>)은 보류가 없으므로 이 함수를 따로 부르지 않는다</b> — 틱 안에서 예전과 같은 자리에 같은 차례로 불린다(시드 골든 불변).
+        /// </summary>
+        public void StepProjectiles(double dt)
+        {
+            if (Dead || dt <= 0) return;
             for (int i = Projs.Count - 1; i >= 0; i--)
             {
                 var pr = Projs[i]; pr.X += pr.Spd * dt; bool done = false;
@@ -825,8 +843,6 @@ namespace KkomaKnight.Core
                 }
                 if (done) Projs.RemoveAt(i);
             }
-            if (Pending == null && PendingLevelUps > 0) { PendingLevelUps--; OpenLevelUp(); }
-            return true;
         }
         static readonly string[] BuffKeys = { "atk", "aspd", "critR", "critF", "def", "evade" };
 

@@ -459,8 +459,13 @@ namespace KkomaKnight.Game
                 {
                     // 팝업(레벨업·이벤트)은 남은 타격 연출(칼이 내려오는 순간)이 끝난 뒤 연다 — 그 동안 엔진 시간은 멈춘 채 애니만 돈다
                     if (G.Pending != null) { if (!_world.Busy && !Absorbing) OpenPending(); _acc = 0; break; }
-                    // 킬 연출(칼 내려옴 → 적 사망 → 플레이어 공격 모션 끝) 동안 엔진 틱 보류(T50) — 틱 순서 불변 · 풀리면 격차 없이 원래 걷기 속도로 출발(누적분은 버려 몰아치기 없음)
-                    if (_world.HoldEngine) { _acc = 0; break; }
+                    // 킬 연출(칼 내려옴 → 적 사망 → 플레이어 공격 모션 끝) 동안 엔진 틱 보류(T50) — 틱 순서 불변 · 풀리면 격차 없이 원래 걷기 속도로 출발.
+                    // T312(주인 2026-09-09 10:0X «도끼가 적에 닿았는데 바로 안 사라지고 데미지도 늦다») — 보류 중에도 **투사체만** 엔진을 나아가게 한다.
+                    //   여태는 여기서 누적분을 버리고 빠져나갔다(_acc = 0). 그러면 엔진 pr.X 가 멎은 채 **그림만** 나아가(T86 ⓐ)
+                    //   맞는 자리(ProjLimit)에 닿아 서서 기다리고, 데미지는 보류가 풀린 뒤에야 들어간다 — 주인이 본 그 꼴이다.
+                    //   ⚠ 걸음·공격·적 행동은 여전히 보류다(그것이 T50 이 지키는 것) — 나아가는 것은 이미 떠 있는 투사체뿐이다.
+                    //   ⚠ 누적분을 버리지 않고 한 틱씩 쓰므로 풀린 뒤 몰아치기도 없다(버리던 때와 같은 자리에서 이어진다).
+                    if (_world.HoldEngine) { G.StepProjectiles(EngineConst.Dt); _acc -= EngineConst.Dt; if (G.Dead || G.Over) break; continue; }
                     _world.BeforeTick(); G.Tick(); _world.AfterTick();
                     _acc -= EngineConst.Dt;
                     if (G.Pending != null) { if (!_world.Busy && !Absorbing) OpenPending(); _acc = 0; break; }
