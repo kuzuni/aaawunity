@@ -3253,6 +3253,22 @@ Caught fatal signal - signo:6 (SIGABRT) · Unexpected exit code 134
 
 ### T283 — **유니티 라이선스가 거절된다 → CI 유니티 잡이 계속 빨갛다**(주인이 시크릿을 갈아야 풀린다) (워커 등재 2026-09-09 02:2X · sess-1917-23930 · 워커 J)
 
+> **⚑ 실측 보탬(2026-09-09 04:4X · 대화형 세션 · 코드 0줄) — «낡은 파일이라서» 는 틀렸다. 새 `.ulf` 도 같은 에러다.**
+> 주인이 `UNITY_LICENSE` 를 **새로 뽑은 `.ulf`** 로 교체했고(시크릿 «Last updated: now» 확인), 그 뒤 두 판을 실제로 돌려 봤다 — **런 638 재실행**과 **런 640**(`31e2e494`). **둘 다 같은 자리에서 죽었고 에러 문구가 한 글자도 안 바뀌었다**:
+> ```
+> Licensing method: file
+> [Licensing::Module] Loading manual activation license file UnityLicenseFile.ulf.
+> [Licensing::Client] Error: Code 400 while processing request (status: TimeStamp validation failed)
+> ```
+> ⇒ **«시크릿이 낡아서» 라는 이 절의 1항 진단은 그대로 두면 안 된다** — 새 파일로 갈아도 안 풀렸다.
+>
+> **주인이 알려 준 결정적인 것 하나** — 그 새 `.ulf` 는 **주인 PC 의 `C:\ProgramData\Unity\Unity_lic.ulf` 를 복사한 것**이다.
+> **그래서 남은 갈래는 «파일이 낡았나» 가 아니라 «어느 기계 몫으로 발급됐나» 다.** 로그의 `Machine Id: D7nTUnjNAmtsUMcnoyrqkgIbYdM=` 는 **CI 러너의 것**이고, PC 에서 활성화된 `.ulf` 는 그 기계 몫이 아니다. **`activation.yml` 이 `.alf` 를 «CI 컨테이너 안에서» 만드는 까닭이 바로 이것**이다(그 워크플로 머리 주석이 절차를 그렇게 적어 두었다).
+> **뒷받침** — `activation.yml` 은 **Sep 6 에 딱 한 번** 돌았고 그 뒤 **이틀간 CI 가 초록**이었다. 즉 **여태 통하던 `.ulf` 는 그 `.alf` 에서 나온 것**일 가능성이 높다.
+>
+> **⇒ 2항의 처방은 그대로 유효하되 «PC 파일 복사» 는 길이 아니다.** 반드시 **① `activation.yml` 실행 → ② Artifact 의 `.alf` 내려받아 압축 풀기 → ③ `license.unity3d.com/manual` 에 그 `.alf` 업로드 → Personal 선택 → `.ulf` → ④ `UNITY_LICENSE` 교체** 순서로 간다. **주인이 ③ 에서 막혀 있다**(«사이트에서 막혀서») — 대화형 세션이 그 자리를 돕고 있다. `.alf` 는 04:3X 에 미리 한 번 돌려 두었다.
+> ⚠ **워커는 이 자리를 다시 진단하지 마라** — 로그는 열세 판째 같은 문구다. **바뀌는 것은 주인이 ④ 를 끝냈을 때뿐이고, 그때 자동으로 초록이 된다.**
+
 > 주인 지시가 아니라 **워커가 로그를 읽어 등재한 사고**다. **코드로는 못 고친다** — 고칠 수 있는 사람은 주인 하나뿐이라, 워커가 할 일은 «다시 진단하지 않는 것» 과 «막힌 확인을 잃지 않는 것» 이다.
 
 **실측** — 마지막 초록 run **618**(`5d68b0a8` · 01:16). 그 뒤 **619~626 여덟 판 연속 실패**. 매번 `dotnet` 잡은 초록이고 «Unity EditMode + PlayMode 테스트» 잡만 **1~3분** 만에 죽는다(정상 8~9분). 결과 XML 이 없어 `[CI명부]`·`[§5]`·`[그림차]` 가 전부 «못 잰다» 로 끝난다.
