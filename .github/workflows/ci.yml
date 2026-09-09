@@ -303,6 +303,32 @@ jobs:
       #   그래서 «새로 세운 자가 이 런에 **실렸는가**» 를 확인할 길이 없었다 — 초록은 «안 깨졌다» 일 뿐 «돌았다» 가 아니다.
       #   명부는 `이름(건수)` 로 촘촘히 붙여 71개가 11줄이다(실측). ⚠ **순서를 뒤집지 마라** —
       #   `[CI실패] 요약` 이 로그의 **마지막 줄**이어야 한다는 계약(결정 678)이 명부를 뒤에 붙이는 순간 깨진다.
+      # T296 — **테스트는 0건인데 잡이 빨간 런**을 읽는 자(2026-09-09 run 684 실측: `[CI실패] 요약 0건` 인데
+      #   `game-ci/unity-test-runner` 단계가 failure). 그 꼴이 왜 위험한가: `build-webgl` 이 `needs: [unity-test]` 이고
+      #   `deploy-last-green` 은 «유니티 잡이 **초록**이던 커밋» 을 고른다 — 자를 다 고쳐도 잡이 계속 빨가면
+      #   **폰 빌드가 영영 안 나간다**(T283 과 증상이 같고 원인이 다르다).
+      #   그런데 러너가 남긴 까닭은 **꼬리 밖**이다: 뒤에 오는 [그림차]·screens 배포가 100줄 넘게 찍어 밀어낸다
+      #   (T239 가 제 자리를 맨 끝으로 옮긴 것과 같은 사고). 그래서 «실패했을 때만» 그 까닭을 꼬리로 끌어온다.
+      #   ⚠ **T239 보다 앞이다** — `[CI실패] 요약` 이 로그의 마지막 줄이어야 한다는 계약(결정 678)은 그대로 지킨다.
+      #   ⚠ 늘 exit 0 — 이 자는 알리기만 한다(잡을 빨갛게 하는 것은 러너 몫이다 · 결정 493).
+      - name: "[T296] 자가 아니라 러너가 죽은 런의 까닭을 꼬리에 — 보고만(실패했을 때만)"
+        if: failure()
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" unity-test-results 2>/dev/null || true
+          echo "[T296] unity-test-results 안에 있는 것:"
+          ls -la unity-test-results 2>/dev/null || echo "[T296]   (디렉터리가 없다 — 러너가 결과를 쓰기도 전에 죽었다)"
+          found=0
+          for f in $(find unity-test-results -maxdepth 2 -name '*.log' 2>/dev/null | head -3); do
+            found=1
+            echo "[T296] ── $f 꼬리 40줄"
+            tail -n 40 "$f" | sed 's/^/[T296]   /'
+          done
+          [ "$found" = 1 ] || echo "[T296] 러너가 남긴 .log 가 없다 — 아래 골라낸 줄만 본다."
+          echo "[T296] 골라낸 줄(라이선스·종료 코드·예외 · 마지막 20줄):"
+          grep -rhoiE '.{0,120}(licens|exit code|unhandled|aborting|fatal error|failed to activate|returning license).{0,120}' \
+            --include='*.log' --include='*.txt' unity-test-results 2>/dev/null | tail -n 20 | sed 's/^/[T296]   /' \
+            || echo "[T296]   (해당 줄 없음)"
+          exit 0
       - name: "[T239·T278] 돌아간 자 명부 + 실패한 테스트 이름·메시지를 로그 꼬리에 찍는다(이 단계는 늘 마지막)"
         if: always()
         run: |
