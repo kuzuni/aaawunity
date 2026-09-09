@@ -1,4 +1,4 @@
-# CI — 시크릿(UNITY_LICENSE·UNITY_EMAIL·UNITY_PASSWORD)이 없으면 dotnet 검사만 돌고 초록이어야 한다.
+# CI — 시크릿(UNITY_EMAIL·UNITY_PASSWORD)이 없으면 dotnet 검사만 돌고 초록이어야 한다.
 # 시크릿이 있으면: PR·push 마다 EditMode/PlayMode 테스트, main 에 push 될 때만 WebGL 빌드 → gh-pages 배포 + Android APK Artifact.
 name: CI
 
@@ -149,12 +149,12 @@ jobs:
     steps:
       - id: check
         env:
-          LIC: ${{ secrets.UNITY_LICENSE }}
           EM: ${{ secrets.UNITY_EMAIL }}
           PW: ${{ secrets.UNITY_PASSWORD }}
         run: |
-          if [ -n "$LIC" ] && [ -n "$EM" ] && [ -n "$PW" ]; then echo "has=true" >> "$GITHUB_OUTPUT"; echo "유니티 시크릿 있음 → 테스트/빌드 진행";
-          else echo "has=false" >> "$GITHUB_OUTPUT"; echo "::notice::UNITY_LICENSE/UNITY_EMAIL/UNITY_PASSWORD 시크릿이 없어 유니티 단계를 건너뛴다 (README «해야 할 일» 참조)"; fi
+          # T283 — UNITY_LICENSE 는 더 이상 안 본다(계정 방식 · 위 unity-test 의 주석).
+          if [ -n "$EM" ] && [ -n "$PW" ]; then echo "has=true" >> "$GITHUB_OUTPUT"; echo "유니티 시크릿 있음 → 테스트/빌드 진행";
+          else echo "has=false" >> "$GITHUB_OUTPUT"; echo "::notice::UNITY_EMAIL/UNITY_PASSWORD 시크릿이 없어 유니티 단계를 건너뛴다 (README «해야 할 일» 참조)"; fi
 
   unity-test:
     name: Unity EditMode + PlayMode 테스트
@@ -173,26 +173,12 @@ jobs:
           restore-keys: |
             Library-test-
             Library-
-      # T283 진단(임시) — UNITY_LICENSE 시크릿이 «온전한 .ulf 텍스트인가» 만 잰다.
-      #   ⚠ 내용은 한 글자도 안 찍는다(길이·형식 표식만). 라이선스 파일은 노출되면 안 된다.
-      #   이 단계는 T283 이 풀리면 지운다.
-      - name: "[T283] 라이선스 시크릿 형식 검사 (내용은 안 찍는다)"
-        env:
-          LIC: ${{ secrets.UNITY_LICENSE }}
-        run: |
-          printf '%s' "$LIC" > /tmp/lic.txt
-          echo "[T283] 바이트 수      : $(wc -c < /tmp/lic.txt)"
-          echo "[T283] 줄 수          : $(wc -l < /tmp/lic.txt)"
-          echo "[T283] <?xml 로 시작  : $(head -c 5 /tmp/lic.txt | grep -q '<?xml' && echo yes || echo NO)"
-          echo "[T283] </root> 있음   : $(grep -q '</root>' /tmp/lic.txt && echo yes || echo NO)"
-          echo "[T283] <TimeStamp 있음: $(grep -qi 'TimeStamp' /tmp/lic.txt && echo yes || echo NO)"
-          echo "[T283] CRLF 개행      : $(grep -qU $'\r' /tmp/lic.txt && echo yes || echo no)"
-          echo "[T283] BOM 으로 시작  : $(head -c 3 /tmp/lic.txt | od -An -tx1 | tr -d ' \n' | grep -q '^efbbbf' && echo yes || echo no)"
-          rm -f /tmp/lic.txt
       - uses: game-ci/unity-test-runner@v4
         id: tests
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          # T283 — UNITY_LICENSE(.ulf 파일) 를 일부러 안 준다. 주면 game-ci 가 «file» 방식을 골라 그 파일이
+          #   «TimeStamp validation failed» 로 거절되고(2026-09-09 열다섯 판), 빼면 «personal(계정)» 방식으로
+          #   런마다 새로 활성화해 통한다(탐침 런 license-probe #1 · 388/388). 되살리지 마라.
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
@@ -349,7 +335,9 @@ jobs:
             Library-
       - uses: game-ci/unity-builder@v4
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          # T283 — UNITY_LICENSE(.ulf 파일) 를 일부러 안 준다. 주면 game-ci 가 «file» 방식을 골라 그 파일이
+          #   «TimeStamp validation failed» 로 거절되고(2026-09-09 열다섯 판), 빼면 «personal(계정)» 방식으로
+          #   런마다 새로 활성화해 통한다(탐침 런 license-probe #1 · 388/388). 되살리지 마라.
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
@@ -422,7 +410,9 @@ jobs:
             Library-
       - uses: game-ci/unity-builder@v4
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          # T283 — UNITY_LICENSE(.ulf 파일) 를 일부러 안 준다. 주면 game-ci 가 «file» 방식을 골라 그 파일이
+          #   «TimeStamp validation failed» 로 거절되고(2026-09-09 열다섯 판), 빼면 «personal(계정)» 방식으로
+          #   런마다 새로 활성화해 통한다(탐침 런 license-probe #1 · 388/388). 되살리지 마라.
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:

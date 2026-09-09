@@ -3253,6 +3253,12 @@ Caught fatal signal - signo:6 (SIGABRT) · Unexpected exit code 134
 
 ### T283 — **유니티 라이선스가 거절된다 → CI 유니티 잡이 계속 빨갛다**(주인이 시크릿을 갈아야 풀린다) (워커 등재 2026-09-09 02:2X · sess-1917-23930 · 워커 J)
 
+> **⚑⚑⚑ 보탬 4(2026-09-09 05:1X · 대화형 세션) — 원인을 찾았고 고쳤다. 주인 손은 필요 없었다.**
+> **④ 탐침 결과**(`license-probe.yml` 런 #1 · `1d41cfa0`): `UNITY_LICENSE` 를 빼고 이메일·비번만 주니 새 game-ci CLI 가 **`Licensing method: personal` → «Requesting activation (personal license via Unity account)» → `Status: [200] ASSIGN_SEAT` → `Activation complete.`** 로 활성화했고 **EditMode 388/388 초록**(13.5초)이었다. **즉 `.ulf` 파일 방식만 죽어 있었고, 계정 방식은 산다.**
+> **고친 것(`ci.yml` · 코드 0줄)** — 유니티 세 자리(`unity-test`·WebGL·Android)의 `env` 에서 **`UNITY_LICENSE` 를 뺐다**(주면 CLI 가 파일 방식을 먼저 고른다) · 게이트는 `UNITY_EMAIL`·`UNITY_PASSWORD` 둘만 본다 · 임시 `[T283]` 형식 검사 단계는 지웠다. **`UNITY_LICENSE` 시크릿 자체는 안 지웠다**(레포 설정 · 이제 안 읽는다 · 주인이 지워도 된다).
+> **그러므로** ③ 허브 갈래 · ⓙ Pro 시리얼 은 **할 필요가 없다.** 보탬 2 의 «이메일·비번만으로는 길이 아니다» 는 **옛 docker 스크립트 기준의 틀린 말**이었다 — 새 CLI(v0.1.53)는 personal 방식이 있다. 정정한다.
+> ⚠ **지켜볼 것 하나** — 탐침 로그 꼬리에 «Returning personal license seat … Ulf license file not found … **Failed to return the Personal license seat after 4 attempts** … later runs on this account will fail with 'no available seats'» 경고가 있다. 즉 **런마다 좌석을 잡고 못 돌려준다.** 세 잡(test·WebGL·Android)이 push 마다 돌면 좌석이 쌓일 수 있다. **첫 몇 판을 보고**: 계속 초록이면 그대로 두고, `no available seats` 가 뜨면 주인이 https://id.unity.com 의 활성화 목록에서 오래된 것을 풀어 주면 된다(그때 이 절에 «누가·몇 시» 를 적는다). 닫는 조건은 5항 그대로 — **완주 런의 [CI명부] 가 다시 뜨면** 이 절을 ✅ 로 닫고 머리 ❗❗ 공지와 `license-probe.yml` 을 지운다.
+
 > **⚑⚑ 보탬 3(2026-09-09 05:3X · 대화형 세션 · 코드 0줄) — 시크릿은 온전하다. 거절되는 것은 «파일 그 자체» 다. 그리고 ⓘ 길은 닫혀 있었다.**
 > **① 실측(런 642 · `11c94326` · `ci.yml` 의 임시 `[T283]` 단계가 내용은 안 찍고 형식만 쟀다)** — `UNITY_LICENSE` = **2,603 바이트 · 40 줄 · `<?xml` 로 시작 · `</root>` 있음 · `<TimeStamp` 있음 · CRLF 없음 · BOM 없음**. 즉 **붙여넣다 잘리거나 개행이 깨진 것이 아니다** — 완전한 `.ulf` 가 그대로 들어가 있고, 유니티 licensing 서버가 **그 파일의 TimeStamp 서명을** 400 으로 거절한다. game-ci 문서의 «환경변수에 여러 줄을 넣다 인코딩이 깨져 signature invalid» 갈래(base64 처방)도 **이 실측으로 지워졌다.**
 > **② ⓘ 는 길이 아니었다 — 보탬 2 의 «공식 경로» 는 틀렸다. 정정한다.** game-ci 이슈 [documentation#408](https://github.com/game-ci/documentation/issues/408)(2023-08) — `license.unity3d.com/manual` 은 **이제 Pro 전용**이고 Personal 은 그 사이트에서 막힌다. **주인이 «사이트에서 막혔다» 고 한 것이 바로 그것**이다 — 주인 잘못이 아니고, 그 길로 다시 보내지 마라. `activation.yml` 머리 주석의 절차도 Personal 에는 더 이상 맞지 않는다(라이선스가 풀리면 주석을 고친다 · 지금은 안 만진다).
