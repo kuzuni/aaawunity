@@ -4,16 +4,6 @@ using System.Collections.Generic;
 namespace KkomaKnight.Core
 {
     /// <summary>
-    /// 펫 <b>표</b>(<c>Assets/KkomaKnight/pet.json</c> · T293 · 주인 2026-09-09 06:0X · 06:1X «이름은 펫으로 다 통일»).
-    /// <para>
-    /// 9종 = <b>등급 3</b>(일반·희귀·전설) × <b>발동 3</b>(회피·공격·피격). 뽑기 확률 70/25/5 · 슬롯 3(0·100·200회 해금) ·
-    /// 발동 33% 로 «도끼 1 / 도끼 2 / 번개 2» 를 랜덤 적에게 · 장착 스탯 = «같은 등급 장비의 절반 · 레벨당 +10%».
-    /// <b>값·개수·이름은 전부 파일에서 온다</b>(<see cref="PrivilegeData"/>·<see cref="AchievementData"/> 와 같은 문법 — 새 꼴 안 만든다).
-    /// </para>
-    /// ⚠ 이 회차(T293 ⓐ)는 <b>세이브를 안 본다</b> — <see cref="SaveData"/> 가 남의 살아 있는 lock 안이라(T290·T258) 배선은 다음 회차의 일이다.
-    /// 그래서 여기 있는 것은 전부 «수를 받아 수를 돌려주는» 순수 규칙이고, 세이브가 열리면 그 위에 얹기만 하면 된다.
-    /// </summary>
-    /// <summary>
     /// 표와 엔진이 <b>같은 낱말</b>을 쓰게 하는 이름들(T293) — 표에 이 밖의 이름이 적히면 엔진에 그 갈래가 없어
     /// <b>발동은 하는데 아무 일도 안 일어나는</b> 펫이 된다. 그래서 <see cref="PetData.From"/> 가 읽는 순간 막는다.
     /// </summary>
@@ -23,6 +13,16 @@ namespace KkomaKnight.Core
         public const string ShotAxe = "axe", ShotBolt = "bolt";
     }
 
+    /// <summary>
+    /// 펫 <b>표</b>(<c>Assets/KkomaKnight/pet.json</c> · T293 · 주인 2026-09-09 06:0X · 06:1X «이름은 펫으로 다 통일»).
+    /// <para>
+    /// 9종 = <b>등급 3</b>(일반·희귀·전설) × <b>발동 3</b>(회피·공격·피격). 뽑기 확률 70/25/5 · 슬롯 3(0·100·200회 해금) ·
+    /// 발동 33% 로 «도끼 1 / 도끼 2 / 번개 2» 를 랜덤 적에게 · 장착 스탯 = «같은 등급 장비의 절반 · 레벨당 +10%».
+    /// <b>값·개수·이름은 전부 파일에서 온다</b>(<see cref="PrivilegeData"/>·<see cref="AchievementData"/> 와 같은 문법 — 새 꼴 안 만든다).
+    /// </para>
+    /// ⚠ 아직 <b>세이브를 안 본다</b> — <see cref="SaveData"/> 가 남의 살아 있는 lock 안이라(T258) 배선은 다음 회차의 일이다.
+    /// 그래서 여기 있는 것은 전부 «수를 받아 수를 돌려주는» 순수 규칙이고, 세이브가 열리면 그 위에 얹기만 하면 된다.
+    /// </summary>
     public sealed class PetData
     {
         /// <summary>발동 자리 하나 — 키(<c>evade</c>·<c>attack</c>·<c>hit</c>)와 화면 글자(«회피»·«공격»·«피격»).</summary>
