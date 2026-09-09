@@ -9429,7 +9429,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `catalog.json` · `Game/GradientPalette.cs`. lock `T365`.
 
-### T366 — ⚑ 주인: **특권(11) — 받을 것이 있으면 로비 «특권» 칸 빨간 점 · 카드 «받기» 버튼 빨간 점** (주인 2026-09-10 «특권에서 받을 수 있는 재화 있으면 특권 부분도 빨간점 알림 · 받기 버튼에도 빨간점 알림 뜨게»)
+### T366 ✅ — ⚑ 주인: **특권(11) — 받을 것이 있으면 로비 «특권» 칸 빨간 점 · 카드 «받기» 버튼 빨간 점** (주인 2026-09-10 «특권에서 받을 수 있는 재화 있으면 특권 부분도 빨간점 알림 · 받기 버튼에도 빨간점 알림 뜨게»)
 
 0. **자리** — 특권 화면(`LobbyPopups.PrivilegeScreen` · 카드 넷 · T264 표 `privilege.json`): 맨 위 «데일리 기프트» 카드(공짜 · 하루 다이아)와 산 카드들의 «매일 수령». 로비 왼쪽 사이드 «특권» 칸(`Screens.cs` · `LobbySideL`)은 출석·데일리 기프트 칸처럼 점(`_giftDot` 꼴 · `UiKit.AlertDot`)을 달 수 있다.
 1. **셋** — ⓐ 판정 `Notify.PrivilegeAny(G, s, today)` = 오늘 아직 안 받은 «매일 수령» 이 하나라도(산 카드는 산 것만) — **한 곳** ⓑ 로비 «특권» 칸 점 = 그 판정(T167 «조건이 사라져야 꺼진다» · 로비 `Refresh` 에서 갱신) ⓒ 특권 카드의 «받기» 버튼 점 = 카드별 같은 판정. 메뉴(≡) 안 «특권» 줄이 있다면 거기도(`LobbyMenu`).
@@ -9438,6 +9438,10 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Core/Notify.cs` · `Game/Screens.cs` · `Game/LobbyPopups.cs` · 자. **`LobbyPopups.cs` lock 들 뒤** lock `T366`(T359·T363·T364 와 한 사람이 같이).
 
+> **✅ 2회차 확인 끝 · 이 절 종결 · lock 반납(21:4X · sess-1735-9f41 · 워커 C · 결정 1037)** — 런 **907**(`ca75b875`) **초록**: 유니티 잡 success · `[CI명부]` playmode 195건 실패 0 에 **`PrivilegeDotPlayTests(2)`** · editmode 521건 실패 0 에 `PrivilegeDotTests(3)` · `[CI실패]` 0건.
+> **눈 확인**(screens run 911 · 내 코드가 든 뒤 사진): 카드 1 «받기» 버튼 **오른쪽 위에 빨간 점**(순수 빨강 10×10px = 34px 점의 속살 · 둥글고 안 잘렸다) · «구매» 인 카드 2·3 에는 **없다** — 주인 문장(«받을 수 있는 재화 있으면»)대로다.
+> ⚑ **다음 사람이 걸릴 자리 하나** — **특권 화면의 사진 이름은 `11_shop_special.png` 다**(`UiShotsTests:118` 이 `ShowScreen("privilege")` 를 찍어 그 이름으로 저장한다). «11 = 상점 특별» 로 읽고 파일 목록에서 «privilege» 를 찾으면 **없다고 결론짓게 된다** — 나도 한 번 그랬다(결정 1037 ②).
+>
 > **🔄 2회차 push · 확인 전(20:5X · sess-1735-9f41 · 워커 C · 결정 1028 · lock `T366` 쥔 채)** — 1항 ⓒ(카드 «받기» 버튼 점)를 붙여 **이 절의 두 점이 다 섰다**.
 > `PrivilegeScreen.PlanCardDot(i, skin)` 이 카드 넷의 **주황 벌 버튼**에 `UiKit.AlertDot(…, "ClaimDot", (1,1), (-10,-6), 34)` 을 달고(태어날 때 꺼짐), `Refresh` 가 `_cardDot[i].SetActive(Privilege.Can(...))` 한 줄로 켜고 끈다.
 > **판정은 한 곳 그대로다** — 로비 칸 점이 보는 `Privilege.AnyClaimable` 이 카드마다 `Privilege.Can` 을 부르므로 두 점은 «전체 ↔ 낱개» 다(갈릴 수 없다 · 1항 ⓐ 가 말한 «한 곳» 을 `Notify` 대신 `Privilege` 로 읽은 1회차 선택을 그대로 잇는다).
