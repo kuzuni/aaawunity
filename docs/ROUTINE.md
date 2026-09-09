@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-10 · 주인 · T368 · 등재만 · 엔진 동일성 자 주의)** «게임할 때 화폐 흡수돼서 경험치 올라서 레벨업 되기 전까지는 행동들 멈추면 안 됨 · 걷는 거·전투 멈추는 거 ㄴㄴ · 흡수돼서 레벨업 되고 나서 특전 화면 뜰 때 멈춰야 함» → `BattleScreen` 틱 루프의 `Pending && Absorbing → break` 가 그 멈춤 · 화면만 흐르게, 엔진 스텝은 sim.js 규약대로.
+
 - **(2026-09-10 · 주인 · T367 · 주인 자리 로컬 세션이 바로 했다)** «다이아 흡수, 골드 흡수는 상단에 재화들 각각 표시되는 부분 — 다이아는 다이아 쪽, 골드는 골드 쪽으로» → `RewardPopup.PillFor` 가 `ui.gemRed` 를 몰랐다(다이아 키 셋만) → 키에 `gem`/`coin`/`gold` 가 있으면 그 pill.
 
 - **(2026-09-10 · 주인 · T366 · 등재만)** «특권에서 받을 수 있는 재화 있으면 특권 부분도 빨간점 알림 · 받기 버튼에도 빨간점» → 로비 «특권» 칸 점 + 특권 카드 «받기» 버튼 점(판정은 `Notify` 한 곳 · `LobbyPopups.cs` lock 들 뒤).
@@ -9228,4 +9230,14 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 > **🔄 push · 확인 전(19:3X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 1002 · lock `T367` 쥔 채)** — 1·2항 그대로.
 
 순서 — `Game/RewardPopup.cs` · `Tests/PlayMode/RewardAbsorbTests.cs`. lock `T367`.
+
+### T368 — ⚑⚑ 주인: **전투 — 흡수 동안 걷기·전투를 멈추지 않는다 · 멈추는 것은 특전 창이 뜰 때뿐** (주인 2026-09-10 «게임할 때 화폐 흡수돼서 경험치 올라서 레벨업 되기 전까지는 행동들 멈추면 안 됨 · 걷는 거를 멈춘다던지 전투를 멈춘다던지 그런 거 ㄴㄴ · 걍 정상적으로 하다가 흡수돼서 레벨업 되고 나서 특전 화면 뜰 때 멈춰야 함 진행들»)
+
+0. **자리(실측)** — `BattleScreen.cs` 틱 루프 두 곳(461·475): `if (G.Pending != null) { if (!_world.Busy && !Absorbing) OpenPending(); _acc = 0; break; }` — 레벨업이 걸리면(`Pending`) 구슬·골드·경험치가 날아가는 동안(`Absorbing` · `BattleScreen.cs:603`) **틱을 통째로 건너뛴다** → 캐릭터 걷기·애니·투사체가 그 자리에 선다. 주인이 본 «멈춤» 이 이것이다.
+1. ⚠ **엔진 동일성(T2)** — 엔진(`Core/Battle*`)의 시계가 `Pending` 에서 서는 것은 **sim.js 와 같은 규약**이고 시드 11·12·13 의 21칸이 비트까지 같아야 한다(`BattleParityTests`). 그러니 **엔진 스텝은 그대로 세운 채**, 화면(`BattleWorld` 의 걷기·애니·투사체 그림·배경 스크롤)만 계속 흐르게 한다 — «보이는 것은 흐르고 셈은 서 있다». 엔진을 흘리면 특전 선택 전에 적이 때리고 21칸이 깨진다.
+2. **고침** — 그 `break` 를 «엔진 스텝만 건너뛰기» 로 바꾼다: `Pending && Absorbing` 이면 `_world.Step(dt)`(엔진)은 안 부르고 `_world.Animate(dt)`(그림·걷기·애니)는 부른다(둘이 한 함수면 가른다 — `BattleWorld` 가 이미 «그림» 과 «셈» 을 나눠 두었는지 먼저 본다 · T14 «공속 비례 애니» 자리). 흡수가 끝나면 `OpenPending()` — 여기서 비로소 멈춘다(팝업 timeScale 0 · T3).
+3. **자** — PlayMode `BattleWorldTests`: Pending + Absorbing 프레임들에서 ⓐ 캐릭터 애니 시간·걷기 위치가 **흐른다** ⓑ 엔진 상태(적 HP·난수 호출 수)는 **안 변한다** ⓒ 흡수 끝 → 특전 창 → 그때 멈춤. `BattleParityTests` 21칸 그대로.
+4. **확인** — 주인 폰(레벨업 직전에 캐릭터가 안 멈춘다).
+
+순서 — `Game/BattleScreen.cs` · `Game/BattleWorld.cs` · 자. lock `T368`.
 
