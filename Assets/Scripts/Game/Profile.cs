@@ -371,7 +371,15 @@ namespace KkomaKnight.Game
             //     (`ui_score` SCREENS 가 `profile_nick` 을 «이름» 앞머리 행만 보도록 갈라 뒀다 · T332 2항).
             //     둘 다 달면 같은 행이 두 화면에서 세어져 «고친 자리가 둘» 로 보인다.
             { var popupN = UiKit.Find(rt, "Popup"); if (popupN != null) UiKit.Tag(popupN, "이름 판"); }
-            if (title != null) UiKit.Tag(title.transform, "이름 제목(이름 바꾸기)");
+            // T374 — 여기서 **글자**에 이름표를 달았던 것이 T350 1회차의 내 버그다. 표 ㉟ 의 «이름 제목» 은
+            //   «아바타와 같은 **리본 조각**·같은 걸침»(554.19×98px)을 가리키는데, 글자는 그 리본 **안에** 있어
+            //   더 좁고 가운데로 몰린다 ⇒ §5 가 «x+5.8 w−11.5» 를 **화면 탈**로 보고했다(화면은 멀쩡했다).
+            //   아바타 쪽은 처음부터 리본(`NickBtn`)에 달려 있었고 그 행은 ±0.0 으로 맞는다 — 둘을 같은 것에 단다.
+            if (title != null)
+            {
+                var popupR = UiKit.Find(rt, "Popup") as RectTransform;
+                UiKit.Tag(Ribbon(title.transform, popupR != null ? popupR : rt), "이름 제목(이름 바꾸기)");
+            }
             if (desc != null) UiKit.Tag(desc.transform, "이름 안내(2~12자로 지어 주세요)");
             if (input != null) UiKit.Tag(input.transform, "이름 입력칸(`NickInput`)");
             if (count != null) UiKit.Tag(count.transform, "이름 글자 수(`NickCount`)");
