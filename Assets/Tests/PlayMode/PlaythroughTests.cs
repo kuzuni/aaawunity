@@ -509,6 +509,73 @@ namespace KkomaKnight.Tests.Play
         }
 
         // ─────────────────────────────────────────────────────────────────────────────
+        // P11 설정 — ≡ 메뉴 → 설정 → 프로필 아바타 바꾸기 · 다시 설정 → 데이터 삭제 → 확인 → 로비.
+        // ─────────────────────────────────────────────────────────────────────────────
+        /// <summary>
+        /// P11 설정(T300 1항) — 노는 것: 로비 ≡ → «설정» → 프로필 «변경» → 다른 초상을 고르고 «선택» → 다시 ≡ → «설정» → «데이터 삭제» → «삭제».
+        /// 재는 것: <b>도달(로비로 돌아온다) · 팝업이 닫힌다 · 배선(고른 초상이 세이브에 붙고, 삭제 뒤 세이브가 새것이다) · 빨간 줄 0</b>.
+        /// <para>
+        /// ⚠ <b>팝업을 손으로 안 연다</b>(P2 · 결정 922 ③) — <c>Overlay.Settings()</c>·<c>Profile.OpenAvatar()</c> 를 직접 부르면
+        /// 메뉴 줄·«변경» 버튼의 배선이 끊겨 있어도 초록이다. 봇은 사람이 누르는 자리(<c>Button_Menu</c> → <c>Menu:settings</c> → <c>ProfileBtn</c>)를 누른다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>값은 안 잰다</b>(3항 ⓐ) — «삭제 뒤 골드 0» 같은 것은 <c>SaveStore.Reset</c> 의 자(EditMode) 몫이다. 여기서 보는 것은
+        /// «삭제를 눌렀더니 세이브 <b>객체가 갈렸다</b>» 는 배선 하나뿐이다 — 그것이 끊기면 팝업은 그대로 닫히고 로비도 그대로 서서 다른 자는 아무도 안 운다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>버튼은 이름보다 글자로 집는다</b> — 설정 팝업의 «데이터 삭제»·확인 팝업의 «삭제» 는 <c>UiKit.Button</c> 이 이름을 안 준다(조각 키가 이름이 된다).
+        /// 이름 계약이 있는 것(<c>ProfileBtn</c>·<c>Avatar:…</c>·<c>ChooseBtn</c>)만 이름으로 — <c>ProfileTests</c>·<c>LobbyMenuTests</c> 가 이미 밟은 관용구 그대로다.
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator P11_설정에서_아바타를_바꾸고_데이터를_지워도_죽지_않는다()
+        {
+            yield return Boot();
+            _app.ShowScreen("lobby"); yield return Frames(3);
+            Assert.AreEqual("lobby", _app.Current.Name, "도달 — 로비");
+
+            // ⓐ ≡ → «설정» → 프로필 «변경» — 사람이 누르는 길 그대로
+            Tap(_app.Current.Root, "Button_Menu"); yield return Frames(2);
+            Assert.IsTrue(_app.Overlay.IsOpen, "≡ 메뉴가 열린다");
+            Tap(_app.Overlay.Root, "Menu:" + LobbyMenu.ItemSettings); yield return Frames(2);
+            Assert.IsTrue(_app.Overlay.IsOpen, "«설정» 줄이 설정 팝업을 연다");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "BGM"), "설정 팝업(음악 줄) — 메뉴 줄이 설정으로 이어졌다");
+            _log.AssertNoRed("P11 설정 팝업");
+
+            Tap(_app.Overlay.Root, "ProfileBtn"); yield return Frames(2);
+            Assert.IsTrue(_app.Overlay.IsOpen, "프로필 «변경» 이 아바타 팝업을 연다");
+            // 지금 것이 아닌 초상을 고른다 — 같은 것을 고르면 «붙었다» 를 못 가른다
+            string before = Profile.CurrentIcon(_app.Save);
+            string want = null;
+            foreach (var icon in Profile.Icons) if (icon != before) { want = icon; break; }
+            Assert.IsNotNull(want, "고를 다른 초상이 하나는 있다");
+            Tap(_app.Overlay.Root, Profile.RowPrefix + want); yield return Frames(1);
+            Tap(_app.Overlay.Root, Profile.ChooseName); yield return Frames(3);
+            yield return UntilClosed(3f, "아바타 «선택»");
+            Assert.AreEqual(want, _app.Save.ProfileIcon, "고른 초상이 세이브에 붙었다 — «선택» 이 그림이 아니라 길인가는 여기서만 갈린다");
+            Assert.AreEqual("lobby", _app.Current.Name, "아바타를 바꾸고도 로비에 서 있다");
+            _log.AssertNoRed("P11 아바타 바꾸기");
+
+            // ⓑ 다시 ≡ → «설정» → «데이터 삭제» → «삭제» → 로비
+            Tap(_app.Current.Root, "Button_Menu"); yield return Frames(2);
+            Tap(_app.Overlay.Root, "Menu:" + LobbyMenu.ItemSettings); yield return Frames(2);
+            Assert.IsTrue(_app.Overlay.IsOpen, "설정 팝업(다시)");
+            Assert.IsTrue(Click(_app.Overlay.Root, s => s == "데이터 삭제"), "설정 아래 «데이터 삭제» 버튼");
+            yield return Frames(2);
+            Assert.IsTrue(_app.Overlay.IsOpen, "확인 팝업이 선다(바로 지우지 않는다)");
+            var saveBefore = _app.Save;
+            Assert.IsTrue(Click(_app.Overlay.Root, s => s == "삭제"), "확인 팝업 «삭제»");
+            yield return Frames(3);
+            yield return UntilClosed(3f, "데이터 삭제");
+            Assert.AreEqual("lobby", _app.Current.Name, "지우면 로비로 돌아온다");
+            Assert.AreNotSame(saveBefore, _app.Save, "세이브가 새것으로 갈렸다 — «삭제» 가 ResetSave 에 닿았는가는 여기서만 갈린다");
+            Assert.IsNotNull(UiKit.Find(_app.Current.Root, "Start"), "새 세이브로 그린 로비에도 START 가 있다");
+            _log.AssertNoRed("P11 데이터 삭제 → 로비");
+
+            yield return Shutdown();
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────────
         // 각본 ↔ 자 대조 — 목록과 실제 자가 어긋나면 «봇이 도는 줄 알았는데 안 노는» 단계가 생긴다(4항).
         // ─────────────────────────────────────────────────────────────────────────────
         /// <summary>
@@ -518,7 +585,8 @@ namespace KkomaKnight.Tests.Play
         /// 이 절이 끝날 때까지 CI 가 계속 빨개서 <b>진짜 빨강이 안 보인다</b>. 대신 두 가지를 잰다:
         /// ⓐ <b>목록에 없는 자가 있으면 빨강</b>(오타·유령 단계) ⓑ 아직 없는 단계는 <b>로그로 이름을 부른다</b>.
         /// </para>
-        /// <para><b>P11 이 들어오는 커밋에서</b> ⓑ 를 «전부 있다» 단언으로 올린다 — 그 한 줄이 이 절의 마지막 일이다(절 4항에 적어 뒀다).</para>
+        /// <para><b>마지막 남은 단계가 들어오는 커밋에서</b> ⓑ 를 «전부 있다» 단언으로 올린다 — 그 한 줄이 이 절의 마지막 일이다(절 4항에 적어 뒀다).
+        /// ⚠ 처음엔 «P11 커밋에서» 라 적혀 있었는데 P11 이 P3~P10 보다 먼저 들어왔다(설정이 가장 잠잠한 자리라서) — 번호가 아니라 «빈 칸이 0 이 되는 커밋» 이 그 자리다.</para>
         /// </summary>
         [Test]
         public void 각본_목록과_자가_짝이_맞는다()
@@ -545,7 +613,7 @@ namespace KkomaKnight.Tests.Play
             foreach (var s in Playthrough.Stages) if (!written.Contains(s.Id)) missing.Add(s.ToString());
             if (missing.Count > 0)
                 Debug.Log("[T300] 아직 안 쓴 단계 " + missing.Count + "개 — " + string.Join(" · ", missing.ToArray())
-                          + " (P11 이 들어오는 커밋에서 이 로그를 «전부 있다» 단언으로 올린다)");
+                          + " (마지막 단계가 들어오는 커밋에서 이 로그를 «전부 있다» 단언으로 올린다)");
         }
 
         /// <summary>배포 스모크가 세는 줄의 꼴(T300 2항) — 그 글자를 <c>webgl_smoke.js</c> 가 문자열로 찾으므로 여기서 못 박는다.</summary>
