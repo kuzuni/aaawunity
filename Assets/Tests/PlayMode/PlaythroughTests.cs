@@ -1089,5 +1089,109 @@ namespace KkomaKnight.Tests.Play
         {
             int n = 0; foreach (var pt in D.Gear.Parts) n += S.SlotLv(pt); return n;
         }
+
+        // ─────────────────────────────────────────────────────────────────────────────
+        // P8 출석 · 데일리 기프트 · 우편 — 셋 다 «열고 · 받고 · 닫는다».
+        // ─────────────────────────────────────────────────────────────────────────────
+        /// <summary>닫기 X 를 눌러 팝업을 닫는다. 조각마다 이름이 달라(<c>Button_Close</c> ↔ <c>Button_Close_Square_01</c> …) <b>앞머리</b>로 고른다(<c>LobbyMenuTests</c> 가 적어 둔 그 까닭).</summary>
+        IEnumerator ClosePopup(string what)
+        {
+            Button close = null;
+            foreach (var b in _app.Overlay.Root.GetComponentsInChildren<Button>(false))
+                if (b.name.StartsWith("Button_Close", StringComparison.Ordinal)) { close = b; break; }
+            if (close != null) { close.onClick.Invoke(); yield return Frames(2); }
+            // X 가 없는 조각은 어둠 탭으로 닫는다 — 봇은 «닫히기만» 하면 된다(어느 길인지는 그 화면의 자 몫)
+            if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(2); }
+            Assert.IsFalse(_app.Overlay.IsOpen, what + " — 팝업이 닫힌다");
+        }
+
+        /// <summary>
+        /// P8(T300 1항) — 노는 것: 로비 사이드 «출석» → 오늘 칸을 눌러 받는다 · 사이드 «데일리 기프트» → «받기» ·
+        /// ≡ 메뉴 → «우편» → 받는다. 재는 것: <b>도달 · 배선 · 빨간 줄 0</b>.
+        /// <para>
+        /// ⚑ <b>배선을 «세이브가 달라졌다» 로 잰다</b> — 무엇이 얼마나 들어오는지는 표(출석·기프트·우편 보상)의 몫이고
+        /// 그 표는 주인이 자주 바꾼다. 그래서 값이 아니라 <b>«누른 것이 세이브에 닿았는가»</b> 만 본다(<c>SaveData.ToJson</c> 이 달라졌다).
+        /// 이 잣대는 어떤 보상이 들어오든, 표가 어떻게 바뀌든 그대로 선다(3항 ⓐ · 결정 922·956 의 같은 결).
+        /// </para>
+        /// <para>⚠ <b>«받을 것이 없으면» 안 받는다</b> — 규칙(<c>Attendance.Can</c>·<c>DailyGift.AnyClaimable</c>·<c>Mailbox.Any</c>)이 먼저 말하고,
+        /// 그때만 «누를 자리가 있어야 한다» 를 단언한다. 없는 것을 «잡았다» 고 적지 않는다.</para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator P8_출석과_기프트와_우편을_받아도_죽지_않는다()
+        {
+            yield return Boot();
+            var D = _app.Data; var S = _app.Save;
+            string today = SaveStore.Today();
+
+            // 조건은 이 단계가 만든다(1항) — 새 세이브의 우편함은 비어 있으므로 한 통 넣는다(아레나 갈래만 들어간다 · T243)
+            var mail = new MailItem { Id = "p8-bot", Kind = KkomaKnight.Core.Mail.KindArena, Title = "아레나 순위 보상", Desc = "" };
+            mail.Rewards.Add(new ArenaRankData.Reward { Item = KkomaKnight.Core.Mail.ItemGold, Amount = 1000 });
+            KkomaKnight.Core.Mail.Add(S, mail);
+            _app.Persist();
+
+            _app.ShowScreen("lobby"); yield return Frames(3);
+            Assert.AreEqual("lobby", _app.Current.Name, "도달 — 로비");
+            _log.AssertNoRed("P8 로비");
+
+            // ⓐ 출석 — 사이드 칸 «출석» 을 눌러 열고, 오늘 받을 것이 있으면 그 칸을 누른다
+            bool canAtt = D.Attendance != null && KkomaKnight.Core.Attendance.Can(S, D.Attendance, today);
+            Tap(_app.Current.Root, "Side:" + LobbyScreen.SideAttendance); yield return Frames(2);
+            yield return UntilOpen(5f, "출석 팝업");
+            if (canAtt)
+            {
+                var day = UiKit.Find(_app.Overlay.Root, "Day:1");
+                Assert.IsNotNull(day, "오늘 받을 것이 있으면 1일차 칸이 있다");
+                var b = day.GetComponentInChildren<Button>(true);
+                Assert.IsNotNull(b, "출석 칸은 눌리는 것이어야 한다");
+                string before = S.ToJson();
+                b.onClick.Invoke(); yield return Frames(3);
+                Assert.AreNotEqual(before, S.ToJson(), "출석을 받으면 세이브가 달라진다 — 여기가 끊기면 팝업은 그대로 열리고 닫힌다");
+                Assert.IsFalse(KkomaKnight.Core.Attendance.Can(S, D.Attendance, today), "오늘 몫은 한 번만 받는다");
+            }
+            else Debug.Log("[T300] P8 ⓐ 출석 — 오늘 받을 것이 없어 «받기» 는 건너뛴다(열고 닫기만)");
+            _log.AssertNoRed("P8 출석");
+            yield return ClosePopup("출석");
+
+            // ⓑ 데일리 기프트 — 사이드 칸 «데일리 기프트» → «받기»
+            bool canGift = D.DailyGift != null && KkomaKnight.Core.DailyGift.AnyClaimable(S, D.DailyGift, today);
+            Tap(_app.Current.Root, "Side:" + LobbyScreen.SideDailyGift); yield return Frames(2);
+            yield return UntilOpen(5f, "데일리 기프트 팝업");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "DailyGiftBox"), "기프트 상자(이름 계약)");
+            {
+                // ⚠ «받을 것이 있다»(AnyClaimable)가 곧 «지금 «받기» 버튼이 있다» 는 아니다 — 광고로 여는 칸은 «광고 보기» 다(GiftBtn.Ad).
+                //    그래서 «있어야 한다» 로 굳히지 않고, 있으면 눌러 보고 그때만 배선을 잰다. 없는 것을 «잡았다» 고 적지 않는다.
+                string before = S.ToJson();
+                if (Click(_app.Overlay.Root, s => s == "받기"))
+                {
+                    yield return Frames(3);
+                    Assert.AreNotEqual(before, S.ToJson(), "기프트를 받으면 세이브가 달라진다");
+                }
+                else Debug.Log("[T300] P8 ⓑ 데일리 기프트 — 지금 그냥 받을 칸이 없다(canGift=" + canGift + " · 광고 칸뿐이거나 오늘 몫을 이미 받았다) — 열고 닫기만");
+            }
+            _log.AssertNoRed("P8 데일리 기프트");
+            yield return ClosePopup("데일리 기프트");
+
+            // ⓒ 우편 — ≡ 메뉴 → «우편» → 받는다(위에서 한 통 넣어 뒀다)
+            Assert.IsTrue(Mailbox.Any(_app), "이 단계가 넣은 우편 한 통이 있다");
+            Tap(_app.Current.Root, "Button_Menu"); yield return Frames(2);
+            yield return UntilOpen(5f, "≡ 메뉴");
+            Tap(_app.Overlay.Root, "Menu:" + LobbyMenu.ItemMail); yield return Frames(3);
+            Assert.IsTrue(_app.Overlay.IsOpen, "우편함이 선다");
+            UiKit.CompleteAllTweens(); yield return Frames(1);
+            {
+                string before = S.ToJson();
+                var all = UiKit.Find(_app.Overlay.Root, Mailbox.ClaimAllName);
+                if (all != null) { all.GetComponent<Button>().onClick.Invoke(); yield return Frames(3); }
+                else { Assert.IsTrue(Click(_app.Overlay.Root, s => s == "받기"), "«전체 받기» 가 없으면 줄마다 «받기» 가 있다"); yield return Frames(3); }
+                Assert.AreNotEqual(before, S.ToJson(), "우편을 받으면 세이브가 달라진다");
+                Assert.IsFalse(Mailbox.Any(_app), "받은 우편은 우편함에서 빠진다");
+            }
+            _log.AssertNoRed("P8 우편");
+            yield return ClosePopup("우편");
+
+            Assert.AreEqual("lobby", _app.Current.Name, "셋을 다 지나고도 로비에 서 있다");
+            _log.AssertNoRed("P8 한 바퀴");
+            yield return Shutdown();
+        }
     }
 }
