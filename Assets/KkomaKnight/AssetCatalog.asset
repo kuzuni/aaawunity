@@ -1413,6 +1413,8 @@ MonoBehaviour:
     text: {fileID: 4900000, guid: 16d814e592e3e47ca150a063e4a00569, type: 3}
   - key: data.recipe
     text: {fileID: 4900000, guid: 5960350d7e56a06c2da503ee26c96e95, type: 3}
+  - key: data.pass
+    text: {fileID: 4900000, guid: ec2771f396f4c0943918846d759ed876, type: 3}
   - key: data.pet
     text: {fileID: 4900000, guid: e472fba7231cee2b0b4575199bcb7b65, type: 3}
   audio:

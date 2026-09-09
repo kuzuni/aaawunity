@@ -98,6 +98,41 @@ namespace KkomaKnight.Tests.Play
             }
             Object.Destroy(tex);
 
+            // ── T322: 줄 1~100 스크롤 · «💎100» 삭제 · 표가 모르는 줄은 «?»
+            {
+                var sp = _app.Current.Root;
+                var track = UiKit.Find(sp, "Track");
+                Assert.IsNotNull(track, "트랙");
+                var scroll = track.GetComponent<UnityEngine.UI.ScrollRect>();
+                Assert.IsNotNull(scroll, "트랙이 세로 스크롤이다(주인 «1~100까지 있어야»)");
+                Assert.IsFalse(scroll.horizontal, "가로로는 안 굴린다");
+                Assert.IsNull(UiKit.Find(sp, "SegBand"), "구간 노란 띠는 지웠다(주인 T322)");
+                Assert.IsNull(UiKit.Find(sp, "SegBadge"), "«💎100» 배지는 지웠다(주인 T322)");
+
+                // 열었을 때 레퍼런스와 같은 자리 — 맨 위 줄이 보인다
+                int top = SeasonPassScreen.TopLevel;
+                Assert.IsNotNull(UiKit.Find(sp, "Badge:" + top), "열자마자 맨 위 줄(" + top + ")이 서 있다");
+                Assert.IsNotNull(UiKit.Find(sp, "Cell:free:" + top), "그 줄의 무료 칸");
+
+                // ⚠ **미리 다 만들지 않는다** — 100줄 × 3칸을 한 번에 세우면 페이지가 멈춘다(T322 ⓐ).
+                //    그러니 «맨 아래 줄» 은 지금 없어야 하고, 굴리면 생겨야 한다. 둘 다 재야 «재활용» 이 증명된다.
+                int last = _app.Data != null && _app.Data.Pass != null ? _app.Data.Pass.MaxLevel : 100;
+                Assert.IsNull(UiKit.Find(sp, "Badge:" + last), "맨 아래 줄(" + last + ")은 아직 안 만든다(보이는 줄만)");
+                scroll.verticalNormalizedPosition = 0f;                 // 끝까지 내린다
+                Canvas.ForceUpdateCanvases();
+                yield return Frames(2);
+                Assert.IsNotNull(UiKit.Find(sp, "Badge:" + last), "끝까지 내리면 마지막 줄 " + last + " 이 선다(주인 «1~100까지»)");
+                Assert.IsNull(UiKit.Find(sp, "Badge:" + (last + 1)), last + " 을 넘는 줄은 없다");
+
+                // 표가 모르는 줄은 «?» — 수를 지어내지 않는다(T322 ⓒ · 주인 값 미제공)
+                var pass = _app.Data != null ? _app.Data.Pass : null;
+                Assert.IsNotNull(pass, "패스 표(pass.json)가 실렸다");
+                Assert.IsFalse(pass.Known(last), "마지막 줄은 주인이 값을 안 준 줄이다");
+                var qty = UiKit.Find(UiKit.Find(sp, "Cell:free:" + last), "Qty");
+                Assert.IsNotNull(qty, "그 줄 무료 칸의 수량 글자");
+                Assert.AreEqual("?", qty.GetComponent<TMPro.TMP_Text>().text, "표가 모르는 줄은 «?» 로 그린다(수를 지어내지 않는다)");
+            }
+
             _log.AssertNoRed("패스 열 그라데이션(T302)");
             if (_app != null) { if (_app.UiCanvas != null) Object.Destroy(_app.UiCanvas.gameObject); Object.Destroy(_app.gameObject); }
             yield return Frames(2);

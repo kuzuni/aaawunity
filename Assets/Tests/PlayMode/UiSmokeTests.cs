@@ -731,9 +731,13 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual("seasonPass", _app.Current.Name, "시즌 패스 페이지가 열린다(T266)");
                 var sp = _app.Current.Root;
                 foreach (var n in new[] { "Banner", "PassName", "SeasonEnds", "ProgressBar", "LevelBadge", "Notice", "Track",
-                                          "Col:free", "Col:paid1", "Col:paid2", "Line", "SegBand", "SegBadge",
-                                          "ClaimAllBtn", "BuyBtn:1", "BuyBtn:2", "BackBtn" })   // T304 — «방랑자의 보상» 탭은 주인이 지웠다
+                                          "Col:free", "Col:paid1", "Col:paid2", "Line",
+                                          "ClaimAllBtn", "BuyBtn:1", "BuyBtn:2", "BackBtn" })   // T304 — «방랑자의 보상» 탭 · T322 — 구간 띠·«💎100» 배지는 주인이 지웠다
                     Assert.IsNotNull(UiKit.Find(sp, n), "시즌 패스 조각 «" + n + "»(표 ㊼)");
+                // T322(주인 «다이아 100 이라고 써 있는 부분 없애기») — 지운 것이 **정말 없는지**도 잰다.
+                //   목록에서 이름만 빼면 «안 그린다» 가 아니라 «안 본다» 다(T184 가 값을 치른 자리).
+                foreach (var n in new[] { "SegBand", "SegBadge" })
+                    Assert.IsNull(UiKit.Find(sp, n), "구간 조각 «" + n + "» 은 지웠다(주인 T322)");
                 // 3열 전부 실측 그라데이션이 깔려 있다 — 주인이 «그 그라데이션도 잘 해서» 라고 못 박은 자리다
                 foreach (var n in new[] { "Col:free", "Col:paid1", "Col:paid2" })
                     Assert.IsTrue(UiKit.HasGradient(UiKit.Find(sp, n)), "«" + n + "» 에 그라데이션이 없다(주인 지시 · 표 ㊼ 실측값)");

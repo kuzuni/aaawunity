@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using KkomaKnight.Core;
 using TMPro;
 using UnityEngine;
@@ -15,7 +16,7 @@ namespace KkomaKnight.Game
     /// 수치가 오면 <see cref="Rows"/>·<see cref="Levels"/> 자리에 표(<c>seasonPass.json</c>)를 끼우면 된다 — 그 표가 없는 지금 지어내지 않는다(§1).
     /// </para>
     /// 구도(표 ㊼): 상단 재화 바 → <b>머리 배너</b>(패스 이름 · 시즌 종료 줄 · 메달 + 진행 바 + 육각 레벨 배지) → 안내 띠 →
-    /// <b>3열 트랙</b>(무료 파랑 · 유료 1 주황 · 유료 2 자주 · 가운데 노란 줄에 레벨 배지) → 구간 노란 띠(«💎100») →
+    /// <b>3열 트랙</b>(무료 파랑 · 유료 1 주황 · 유료 2 자주 · 가운데 노란 줄에 레벨 배지 · <b>1~100 세로 스크롤</b> · T322) →
     /// 버튼 셋(«모두 받기» · ₩9,900 · ₩49,000) → 왼쪽 아래 뒤로. (오른쪽 아래 «방랑자의 보상» 탭은 <b>주인이 지웠다</b> — T304 · 2026-09-09 «그 버튼이 필요 없음».)
     /// <para>
     /// 그라데이션은 <b>레퍼런스 실측</b>이다(1단계 · 결정 723): 열 셋 <c>passFree</c>·<c>passPaid1</c>·<c>passPaid2</c> ·
@@ -24,7 +25,7 @@ namespace KkomaKnight.Game
     /// </para>
     /// 이름 계약(스모크 테스트): 배너 <c>Banner</c> · <c>PassName</c> · <c>SeasonEnds</c> · <c>ProgressBar</c> · <c>LevelBadge</c> ·
     /// 안내 띠 <c>Notice</c> · 트랙 <c>Track</c> · 열 <c>Col:free</c>/<c>Col:paid1</c>/<c>Col:paid2</c> · 가운데 줄 <c>Line</c> ·
-    /// 레벨 배지 <c>Badge:29</c>… · 보상 칸 <c>Cell:free:29</c>… · 구간 <c>SegBand</c>/<c>SegBadge</c> ·
+    /// 레벨 배지 <c>Badge:N</c> · 보상 칸 <c>Cell:free:N</c>… · 줄 <c>Row:N</c> · 어둠 <c>Dim:free</c>… ·
     /// 버튼 <c>ClaimAllBtn</c>/<c>BuyBtn:1</c>/<c>BuyBtn:2</c>/<c>BackBtn</c>.
     /// </summary>
     public sealed class SeasonPassScreen : GameScreen
@@ -60,8 +61,6 @@ namespace KkomaKnight.Game
         static readonly Layout.R RCellPaid1 = new Layout.R(41.7f, 35.1f, 19.4f, 6.5f);
         static readonly Layout.R RCellPaid2 = new Layout.R(75.0f, 35.1f, 17.8f, 6.5f);
         static readonly Layout.R RLvBadge = new Layout.R(29.6f, 35.9f, 7.9f, 4.5f);
-        static readonly Layout.R RSegBand = new Layout.R(1.9f, 73.7f, 96.3f, 1.0f);
-        static readonly Layout.R RSegBadge = new Layout.R(26.4f, 71.8f, 15.3f, 3.8f);
         static readonly Layout.R RClaimAll = new Layout.R(4.0f, 86.5f, 28.6f, 4.6f);
         static readonly Layout.R RBuy1 = new Layout.R(36.1f, 86.3f, 28.1f, 4.7f);
         static readonly Layout.R RBuy2 = new Layout.R(68.3f, 86.3f, 27.9f, 4.7f);
@@ -70,20 +69,6 @@ namespace KkomaKnight.Game
         const float RowPitch = 10.3f;
 
         // ───────────────────────── 레퍼런스에 그려진 값(게임 수치 아님) ─────────────────────────
-        /// <summary>레퍼런스에 보이는 레벨 다섯(29~33) — 마지막 33 은 구간 띠 <b>아래</b>라 «아직 못 연 행» 이다.</summary>
-        static readonly int[] Levels = { 29, 30, 31, 32, 33 };
-        /// <summary>행마다 세 열의 «아이콘 키 · 수량 · 상태» — 전부 레퍼런스 그림 그대로다(주인 수치 아님 · T268 ⓑ).</summary>
-        static readonly (string Icon, string Qty, bool Claimed)[,] Rows =
-        {
-            //  무료(파랑)                      유료 1(주황)                      유료 2(자주)
-            { ("ui.coin", "5", true),   ("ui.iconScroll", "20", false), ("ui.iconScroll", "60", false) },
-            { ("ui.gemRed", "65", true), ("ui.gemRed", "260", false),   ("ui.gemRed", "660", false) },
-            { ("ui.coin", "5", true),   ("ui.iconScroll", "20", false), ("ui.iconScroll", "60", false) },
-            { ("ui.coin", "5", true),   ("ui.iconTicketBlue", "2", false), ("ui.iconTicketBlue", "4", false) },
-            { ("ui.coin", "5", false),  ("ui.iconScroll", "20", false), ("ui.iconScroll", "60", false) },
-        };
-        /// <summary>구간 띠 아래(아직 못 연 행)의 첫 index — 레퍼런스에서 띠가 4번째와 5번째 행 사이에 있다.</summary>
-        const int DimFrom = 4;
 
         TopBar _top;
 
@@ -144,45 +129,144 @@ namespace KkomaKnight.Game
             UiKit.Tag(strip, "안내 띠");
         }
 
+        /// <summary>행 하나가 차지하는 세로 px — 표 ㊼ 의 행 피치(%p)를 캔버스 px 로 옮긴 값이다(그림 px 을 그대로 쓰지 않는다 · 결정 839).</summary>
+        static float PitchPx => UiKit.FrameH * RowPitch / 100f;
+        /// <summary>레퍼런스 그림의 «지금 레벨» — 배너 배지도 이 수를 쓴다(주인 수치가 오면 세이브에서 온다 · T266 ⓑ).</summary>
+        public const int CurLevel = 32;
+        /// <summary>열었을 때 <b>맨 위에 보이는 줄</b> — 레퍼런스 19 가 29~33 을 보여 주는 상태(= 지금 레벨에서 셋 위)다. §5 표 ㊼ 의 «첫 행» 이 이 줄이다.</summary>
+        public static int TopLevel => Mathf.Max(1, CurLevel - 3);
+
+        ScrollRect _scroll;
+        RectTransform _content;
+        PassData _pass;
+        readonly Dictionary<int, RectTransform> _rows = new Dictionary<int, RectTransform>();
+
+        int MaxLevel => _pass != null ? _pass.MaxLevel : 100;
+
+        /// <summary>
+        /// 트랙 — 세 열 그라데이션은 <b>스크롤 뒤에 붙박이</b>로 서고(레퍼런스도 그렇다 · T302 가 고친 그 열이다),
+        /// 줄 1~<see cref="MaxLevel"/> 은 스크롤 안에서 <b>보이는 것만</b> 만들어진다(주인 «1~100까지 있어야» · T322).
+        /// <para>
+        /// ⚠ <b>100×3 칸을 한 번에 세우지 않는다</b> — 300칸을 미리 만들면 페이지를 열 때 눈에 띄게 멈춘다.
+        /// 그래서 스크롤이 움직일 때마다 <see cref="RefreshRows"/> 가 «보이는 구간 ± 한 줄» 만 남기고 나머지를 지운다.
+        /// </para>
+        /// «아직 못 연 줄» 의 어둠도 <b>스크롤 안</b>에 있다 — 붙박이로 두면 줄이 움직일 때 어둠만 제자리에 남아 엉뚱한 줄을 덮는다.
+        /// </summary>
         void BuildTrack()
         {
-            var track = UiKit.Rect(Root, "Track"); UiKit.Pct(track, RTrack);
+            _pass = App != null && App.Data != null ? App.Data.Pass : null;
 
-            Column("Col:free", RColFree, "passFree", "col.passFreeDim");
-            Column("Col:paid1", RColPaid1, "passPaid1", "col.passPaid1Dim");
-            Column("Col:paid2", RColPaid2, "passPaid2", "col.passPaid2Dim");
-
+            // ① 붙박이 배경 — 열 셋 + 가운데 노란 줄(스크롤과 무관하게 선다)
+            Column("Col:free", RColFree, "passFree");
+            Column("Col:paid1", RColPaid1, "passPaid1");
+            Column("Col:paid2", RColPaid2, "passPaid2");
             var line = UiKit.Panel(Root, "Line", "fr.rect", App.Assets != null ? App.Assets.Color("col.passLine", Palette.Hex("#FFF43B")) : Palette.Hex("#FFF43B")).rectTransform;
             UiKit.Pct(line, RLine);
 
-            for (int i = 0; i < Levels.Length; i++)
-            {
-                float dy = RowPitch * i;
-                bool dim = i >= DimFrom;
-                var cFree = Cell("Cell:free:" + Levels[i], RCellFree, dy, Rows[i, 0], dim);
-                var cPaid1 = Cell("Cell:paid1:" + Levels[i], RCellPaid1, dy, Rows[i, 1], dim);
-                var cPaid2 = Cell("Cell:paid2:" + Levels[i], RCellPaid2, dy, Rows[i, 2], dim);
-                if (i == 0)
-                {   // 표 ㊼ 는 «첫 행» 만 재고 아래 행은 피치 10.3%p 로 따라온다 — 이름표도 첫 행에만 단다
-                    UiKit.Tag(cFree, "보상 칸(무료 · 첫 행)"); UiKit.Tag(cPaid1, "보상 칸(유료 1 · 첫 행)"); UiKit.Tag(cPaid2, "보상 칸(유료 2 · 첫 행)");
-                }
+            // ② 스크롤 창 — 자리는 표 ㊼ 의 트랙 그대로다
+            var track = UiKit.Rect(Root, "Track"); UiKit.Pct(track, RTrack);
+            track.gameObject.AddComponent<RectMask2D>();
+            var timg = UiKit.Ensure<Image>(track.gameObject); timg.color = new Color(0, 0, 0, 0); timg.raycastTarget = true;
+            _scroll = track.gameObject.AddComponent<ScrollRect>();
+            _scroll.horizontal = false; _scroll.movementType = ScrollRect.MovementType.Clamped; _scroll.scrollSensitivity = 40;
+            _content = UiKit.Rect(track, "Content");
+            _content.anchorMin = new Vector2(0, 1); _content.anchorMax = new Vector2(1, 1); _content.pivot = new Vector2(0.5f, 1);
+            _content.offsetMin = Vector2.zero; _content.offsetMax = Vector2.zero;
+            _content.sizeDelta = new Vector2(0, MaxLevel * PitchPx);
+            _scroll.content = _content; _scroll.viewport = track;
 
-                var b = UiKit.Panel(Root, "Badge:" + Levels[i], "fr.r12", Palette.A(dim ? Palette.Ink : Palette.Hex("#96793B"), 0.95f)).rectTransform;
-                UiKit.Pct(b, new Layout.R(RLvBadge.X, RLvBadge.Y + dy, RLvBadge.W, RLvBadge.H)); UiKit.Bordered(b);
-                UiKit.Label(b, 0, 0, 100, 100, Levels[i].ToString(), TextSize.Aux, dim ? Palette.CreamDark : Palette.White).name = "BadgeText";
-                if (i == 0) UiKit.Tag(b, "레벨 배지(행마다)");   // 표 ㊼ 는 첫 배지를 재고 나머지는 피치로 따라온다
-            }
+            // ③ «아직 못 연 줄» 어둠 — 지금 레벨 **아래 줄부터** 끝까지(구간 띠 기준이 아니라 레벨 기준 · T322 ⓑ)
+            Dim("Dim:free", RColFree, "col.passFreeDim");
+            Dim("Dim:paid1", RColPaid1, "col.passPaid1Dim");
+            Dim("Dim:paid2", RColPaid2, "col.passPaid2Dim");
 
-            // 구간 노란 띠 + «💎100» 배지 — 위는 연 구간 · 아래는 아직
-            var band = UiKit.Panel(Root, "SegBand", "fr.rect", App.Assets != null ? App.Assets.Color("col.passLine", Palette.Hex("#FFF43B")) : Palette.Hex("#FFF43B")).rectTransform;
-            UiKit.Pct(band, RSegBand);
-            var seg = UiKit.Panel(Root, "SegBadge", "fr.r12", App.Assets != null ? App.Assets.Color("col.passSegBadge", Palette.Hex("#EE9B19")) : Palette.Hex("#EE9B19")).rectTransform;
-            UiKit.Pct(seg, RSegBadge); UiKit.Bordered(seg);
-            var segIcon = UiKit.Icon(seg, "Icon", "ui.gemRed", Color.white); UiKit.Pct(segIcon.rectTransform, 6, 12, 30, 76);
-            UiKit.Label(seg, 36, 0, 60, 100, "100", TextSize.Body, Palette.White).name = "SegText";
+            // ④ 열자마자 레퍼런스와 같은 자리(맨 위 = TopLevel)로 굴려 둔다
+            _content.anchoredPosition = new Vector2(0, (TopLevel - 1) * PitchPx);
+            _scroll.onValueChanged.AddListener(_ => RefreshRows());
+            RefreshRows();
 
             UiKit.Tag(track, "트랙(3열 전체)"); UiKit.Tag(line, "가운데 노란 줄");
-            UiKit.Tag(band, "구간 노란 띠"); UiKit.Tag(seg, "구간 배지(«💎100»)");
+        }
+
+        /// <summary>스크롤 안 자리 — x·w 는 트랙 안 %(표 값을 그대로 옮긴다) · y 는 «레벨 번호 × 행 피치» px.</summary>
+        void PlaceRow(RectTransform rt, Layout.R screenR, int level)
+        {
+            var loc = screenR.Within(RTrack);
+            rt.anchorMin = new Vector2(loc.X / 100f, 1f);
+            rt.anchorMax = new Vector2((loc.X + loc.W) / 100f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            float hPx = screenR.H / 100f * UiKit.FrameH;
+            float topPx = (level - 1) * PitchPx + (screenR.Y - RTrack.Y) / 100f * UiKit.FrameH;
+            rt.sizeDelta = new Vector2(0, hPx);
+            rt.anchoredPosition = new Vector2(0, -topPx);
+        }
+
+        /// <summary>«아직 못 연 줄» 어둠 한 열 — 지금 레벨 아래 줄 꼭대기부터 내용 끝까지. 스크롤 안이라 줄과 같이 움직인다.</summary>
+        void Dim(string name, Layout.R colR, string dimKey)
+        {
+            float topPx = CurLevel * PitchPx;                       // 레벨 CurLevel+1 줄의 꼭대기
+            float hPx = Mathf.Max(0f, MaxLevel * PitchPx - topPx);
+            var loc = colR.Within(RTrack);
+            var d = UiKit.Panel(_content, name, "fr.rect", App.Assets != null ? App.Assets.Color(dimKey, Palette.Ink) : Palette.Ink).rectTransform;
+            d.anchorMin = new Vector2(loc.X / 100f, 1f);
+            d.anchorMax = new Vector2((loc.X + loc.W) / 100f, 1f);
+            d.pivot = new Vector2(0.5f, 1f);
+            d.sizeDelta = new Vector2(0, hPx);
+            d.anchoredPosition = new Vector2(0, -topPx);
+        }
+
+        /// <summary>
+        /// 보이는 줄만 남긴다 — 위아래로 한 줄씩 넉넉히 두고(스크롤이 빨라도 빈 칸이 안 보이게) 나머지는 지운다.
+        /// <para>줄을 만드는 값은 전부 표(<see cref="PassData"/>)에서 온다 — <b>표가 모르는 줄은 «?» 로 그리고 수를 지어내지 않는다</b>(T322 ⓒ).</para>
+        /// </summary>
+        void RefreshRows()
+        {
+            if (_content == null || _scroll == null) return;
+            float top = _content.anchoredPosition.y;
+            float viewH = ((RectTransform)_scroll.viewport).rect.height;
+            int first = Mathf.Max(1, Mathf.FloorToInt(top / PitchPx));
+            int last = Mathf.Min(MaxLevel, Mathf.CeilToInt((top + viewH) / PitchPx) + 1);
+
+            var drop = new List<int>();
+            foreach (var kv in _rows) if (kv.Key < first || kv.Key > last) drop.Add(kv.Key);
+            foreach (var k in drop) { if (_rows[k] != null) Object.Destroy(_rows[k].gameObject); _rows.Remove(k); }
+
+            for (int lv = first; lv <= last; lv++) if (!_rows.ContainsKey(lv)) _rows[lv] = BuildRow(lv);
+        }
+
+        /// <summary>줄 하나 = 레벨 배지 + 세 칸. 이름은 옛 계약 그대로(<c>Badge:N</c> · <c>Cell:free:N</c> …).</summary>
+        RectTransform BuildRow(int level)
+        {
+            bool dim = level > CurLevel;
+            var row = UiKit.Rect(_content, "Row:" + level);
+            row.anchorMin = new Vector2(0, 1); row.anchorMax = new Vector2(1, 1); row.pivot = new Vector2(0.5f, 1);
+            row.sizeDelta = new Vector2(0, PitchPx);
+            row.anchoredPosition = new Vector2(0, -(level - 1) * PitchPx);
+
+            var cFree = Cell(row, "Cell:free:" + level, RCellFree, level, PassData.ColFree, dim);
+            var cPaid1 = Cell(row, "Cell:paid1:" + level, RCellPaid1, level, PassData.ColPaid1, dim);
+            var cPaid2 = Cell(row, "Cell:paid2:" + level, RCellPaid2, level, PassData.ColPaid2, dim);
+            if (level == TopLevel)
+            {   // 표 ㊼ 는 «첫 행» 만 재고 아래 행은 피치로 따라온다 — 열었을 때 맨 위에 오는 줄이 그 «첫 행» 이다
+                UiKit.Tag(cFree, "보상 칸(무료 · 첫 행)"); UiKit.Tag(cPaid1, "보상 칸(유료 1 · 첫 행)"); UiKit.Tag(cPaid2, "보상 칸(유료 2 · 첫 행)");
+            }
+
+            var b = UiKit.Panel(row, "Badge:" + level, "fr.r12", Palette.A(dim ? Palette.Ink : Palette.Hex("#96793B"), 0.95f)).rectTransform;
+            PlaceRowIn(b, row, RLvBadge, level); UiKit.Bordered(b);
+            UiKit.Label(b, 0, 0, 100, 100, level.ToString(), TextSize.Aux, dim ? Palette.CreamDark : Palette.White).name = "BadgeText";
+            if (level == TopLevel) UiKit.Tag(b, "레벨 배지(행마다)");
+            return row;
+        }
+
+        /// <summary>줄 상자 안 자리 — 줄이 이미 제 y 에 있으므로 여기서는 <b>줄 안 오프셋</b>만 준다.</summary>
+        void PlaceRowIn(RectTransform rt, RectTransform row, Layout.R screenR, int level)
+        {
+            var loc = screenR.Within(RTrack);
+            rt.anchorMin = new Vector2(loc.X / 100f, 1f);
+            rt.anchorMax = new Vector2((loc.X + loc.W) / 100f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            rt.sizeDelta = new Vector2(0, screenR.H / 100f * UiKit.FrameH);
+            rt.anchoredPosition = new Vector2(0, -(screenR.Y - RTrack.Y) / 100f * UiKit.FrameH);
         }
 
         /// <summary>
@@ -196,15 +280,13 @@ namespace KkomaKnight.Game
         /// </para>
         /// 그래서 바탕을 <b>표의 위·아래 가운데 색</b>으로 깐다 — 위는 위 색, 아래는 아래 색, 가운데는 그 중간이 되어 흰색이 비칠 자리가 없다.
         /// </summary>
-        void Column(string name, Layout.R r, string grad, string dimKey)
+        void Column(string name, Layout.R r, string grad)
         {
             var col = UiKit.Panel(Root, name, "fr.rect", ColumnBase(grad)).rectTransform;
             UiKit.Pct(col, r);
             UiKit.GradientCard(col, grad, alpha: UiKit.GradientCardSolidAlpha);
-            // «아직 못 연 행» — 열 안에서 구간 띠 아래쪽만 어둡다(레퍼런스 실측은 위아래로 평평한 단색이라 그라데이션이 아니다)
-            float dimTop = (RSegBand.Y - r.Y) / r.H * 100f;
-            var dim = UiKit.Panel(col, "Dim", "fr.rect", App.Assets != null ? App.Assets.Color(dimKey, Palette.Ink) : Palette.Ink).rectTransform;
-            UiKit.Pct(dim, 0f, dimTop, 100f, 100f - dimTop);
+            // ⚠ «아직 못 연 줄» 어둠은 **여기 없다** — 줄이 스크롤을 타므로 어둠도 같이 움직여야 한다(<see cref="Dim"/> · T322 ⓑ).
+            //    붙박이로 두면 줄만 지나가고 어둠은 제자리에 남아 **엉뚱한 줄을 덮는다**.
             UiKit.Tag(col, name == "Col:free" ? "무료 열(파랑)" : name == "Col:paid1" ? "유료 1 열(주황)" : "유료 2 열(자주)");
         }
 
@@ -220,17 +302,29 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>보상 칸 하나 — 아이콘 + 수량, 받은 칸은 초록 체크, 잠긴 칸은 자물쇠(레퍼런스 그대로).</summary>
-        RectTransform Cell(string name, Layout.R r, float dy, (string Icon, string Qty, bool Claimed) v, bool dim)
+        /// <summary>
+        /// 보상 칸 하나 — 아이콘 + 수량, 받은 칸은 초록 체크, 잠긴 칸은 자물쇠(레퍼런스 그대로).
+        /// <para>
+        /// ⚠ <b>표가 모르는 줄은 «?» 로 그린다</b>(T322 ⓒ) — 주인이 아직 값을 안 줬고(T266 ⓑ), 없는 수를 그리면
+        /// 주인이 그것을 «정한 값» 으로 읽는다. 빈 칸에는 두루마리 «?» + 자물쇠만 둔다.
+        /// </para>
+        /// «받았다» 는 <b>지금 레벨보다 위 줄의 무료 열</b>만이다 — 세이브가 없으므로(디자인만) 그 이상은 꾸미지 않는다.
+        /// </summary>
+        RectTransform Cell(RectTransform row, string name, Layout.R r, int level, int col, bool dim)
         {
-            var cell = UiKit.Panel(Root, name, "fr.itemBg", Palette.A(Palette.Ink, dim ? 0.75f : 0.5f)).rectTransform;
-            UiKit.Pct(cell, new Layout.R(r.X, r.Y + dy, r.W, r.H)); UiKit.Bordered(cell);
-            var icon = UiKit.Icon(cell, "Icon", v.Icon, dim ? Palette.A(Color.white, 0.45f) : Color.white);
+            var v = _pass != null ? _pass.At(level, col) : default;
+            bool claimed = !dim && col == PassData.ColFree && level < CurLevel;
+            var cell = UiKit.Panel(row, name, "fr.itemBg", Palette.A(Palette.Ink, dim ? 0.75f : 0.5f)).rectTransform;
+            PlaceRowIn(cell, row, r, level); UiKit.Bordered(cell);
+            var icon = UiKit.Icon(cell, "Icon", v.Known ? v.Icon : UnknownIcon, dim || !v.Known ? Palette.A(Color.white, 0.45f) : Color.white);
             UiKit.Pct(icon.rectTransform, 14, 8, 72, 66);
-            UiKit.Label(cell, 45, 66, 52, 30, v.Qty, TextSize.Aux, dim ? Palette.CreamDark : Palette.White).name = "Qty";
-            if (v.Claimed) { var ck = UiKit.Icon(cell, "Check", "pi.check", Palette.Hex("#3FD214")); UiKit.Pct(ck.rectTransform, 18, 18, 64, 64); }
-            else if (name.StartsWith("Cell:paid")) { var lk = UiKit.Icon(cell, "Lock", "pi.lock", dim ? Palette.CreamDark : Color.white); UiKit.Pct(lk.rectTransform, 62, -6, 40, 40); }
+            UiKit.Label(cell, 45, 66, 52, 30, v.Known ? v.Qty : "?", TextSize.Aux, dim || !v.Known ? Palette.CreamDark : Palette.White).name = "Qty";
+            if (claimed) { var ck = UiKit.Icon(cell, "Check", "pi.check", Palette.Hex("#3FD214")); UiKit.Pct(ck.rectTransform, 18, 18, 64, 64); }
+            else if (col != PassData.ColFree) { var lk = UiKit.Icon(cell, "Lock", "pi.lock", dim ? Palette.CreamDark : Color.white); UiKit.Pct(lk.rectTransform, 62, -6, 40, 40); }
             return cell;
         }
+        /// <summary>표가 값을 모르는 칸의 그림 — 레퍼런스의 «두루마리» 그대로다(수는 «?» 로 적는다).</summary>
+        const string UnknownIcon = "ui.iconScroll";
 
         void BuildButtons()
         {

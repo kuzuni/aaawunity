@@ -1,0 +1,11 @@
+{
+  "_note": "시즌 패스 보상 표 — 이 레포 전용(aaaw data/ 에 없다 · T322). ⚠ **주인이 아직 값을 안 줬다**(T266 ⓑ 그대로): 여기 적힌 다섯 줄(29~33)은 주인 레퍼런스 그림 19_pass.jpg 에 «그려져 있는» 것을 옮긴 것이고 게임 수치가 아니다. 나머지 95줄은 비워 둔다 — 화면은 빈 줄을 «?» 두루마리 + 자물쇠로 그리고 **수를 지어내지 않는다**(없는 수를 그리면 주인이 그것을 값으로 읽는다).",
+  "maxLevel": 100,
+  "levels": {
+    "29": { "free": { "icon": "ui.coin",   "qty": "5"  }, "paid1": { "icon": "ui.iconScroll",     "qty": "20"  }, "paid2": { "icon": "ui.iconScroll",     "qty": "60"  } },
+    "30": { "free": { "icon": "ui.gemRed", "qty": "65" }, "paid1": { "icon": "ui.gemRed",         "qty": "260" }, "paid2": { "icon": "ui.gemRed",         "qty": "660" } },
+    "31": { "free": { "icon": "ui.coin",   "qty": "5"  }, "paid1": { "icon": "ui.iconScroll",     "qty": "20"  }, "paid2": { "icon": "ui.iconScroll",     "qty": "60"  } },
+    "32": { "free": { "icon": "ui.coin",   "qty": "5"  }, "paid1": { "icon": "ui.iconTicketBlue", "qty": "2"   }, "paid2": { "icon": "ui.iconTicketBlue", "qty": "4"   } },
+    "33": { "free": { "icon": "ui.coin",   "qty": "5"  }, "paid1": { "icon": "ui.iconScroll",     "qty": "20"  }, "paid2": { "icon": "ui.iconScroll",     "qty": "60"  } }
+  }
+}
