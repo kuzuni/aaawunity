@@ -284,7 +284,9 @@ namespace KkomaKnight.Game
         {
             var col = UiKit.Panel(Root, name, "fr.rect", ColumnBase(grad)).rectTransform;
             UiKit.Pct(col, r);
-            UiKit.GradientCard(col, grad, alpha: UiKit.GradientCardSolidAlpha);
+            // T344(주인 2026-09-10 «패스들 주황 파랑 보라 부분 그라디언트가 왼쪽 오른쪽 이어야 하는데 상하로 되어 있네 · 레퍼런스는 안 그런데») —
+            // 세로(GradientCard)에서 **가로**(GradientCardSide)로 바꾼다. 표의 Top 이 왼쪽 색 · Bottom 이 오른쪽 색이다(색도 주인 지정 · GradientPalette 참조).
+            UiKit.GradientCardSide(col, grad, alpha: UiKit.GradientCardSolidAlpha);
             // T328(주인 2026-09-09 «그것들도 다 패턴 효과 있어야 하는데 없네») — 열 위에 흐르는 무늬 한 장.
             // ⚠ **그라데이션 «위» 에 얹는다** — 이 레포의 공통 순서는 «바탕 → 무늬 → 그라데이션»(결정 171)인데,
             //    그 순서가 통하는 것은 공통 팝업처럼 그라데이션이 **옅을 때**(알파 0.12·0.18)다.
@@ -294,7 +296,7 @@ namespace KkomaKnight.Game
             UiKit.PatternBg(col, Palette.A(Color.white, PatternAlpha), UiKit.PatternTileSeconds, col.childCount, UiKit.PatternTilePx);
             // ⚠ «아직 못 연 줄» 어둠은 **여기 없다** — 줄이 스크롤을 타므로 어둠도 같이 움직여야 한다(<see cref="Dim"/> · T322 ⓑ).
             //    붙박이로 두면 줄만 지나가고 어둠은 제자리에 남아 **엉뚱한 줄을 덮는다**.
-            UiKit.Tag(col, name == "Col:free" ? "무료 열(파랑)" : name == "Col:paid1" ? "유료 1 열(주황)" : "유료 2 열(자주)");
+            UiKit.Tag(col, name == "Col:free" ? "무료 열(하늘→파랑)" : name == "Col:paid1" ? "유료 1 열(빨강→주황)" : "유료 2 열(보라→핑크)");
         }
 
         /// <summary>

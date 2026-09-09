@@ -77,6 +77,19 @@ namespace KkomaKnight.Tests.Play
             {
                 Assert.IsTrue(GradientPalette.Has(c.Grad), "표에 " + c.Grad + " 가 있다");
                 var pair = GradientPalette.Of(c.Grad);
+                // T344(주인 2026-09-10 «그라디언트가 왼쪽 오른쪽 이어야 하는데 상하로 되어 있네») — 열의 두 겹이 **눕혀져** 있는가.
+                //   눕히면 표의 Top 이 **왼쪽** 색이 된다 — 아래 픽셀 표본(c.X = 열의 왼쪽 가장자리 근처)이 여전히 pair.Top 을 재는 까닭이다.
+                //   «가로» 는 픽셀로 안 재고 관계로 잰다(90° · 가운데 앵커 · 가로·세로가 부모와 바뀜) — 워커 환경에서도 읽히는 단언.
+                {
+                    var colRt = UiKit.Find(_app.Current.Root, c.Col) as RectTransform;
+                    Assert.IsNotNull(colRt, c.Col);
+                    foreach (var layerName in new[] { UiKit.GradientTopName, UiKit.GradientBottomName })
+                    {
+                        var layer = colRt.Find(layerName) as RectTransform;
+                        Assert.IsNotNull(layer, c.Col + " 의 " + layerName);
+                        Assert.IsTrue(GradientSideways.IsSideways(layer), c.Col + " 의 " + layerName + " 은 가로(90° · 가로·세로 바꿈)여야 한다(T344) — z=" + layer.localEulerAngles.z + " size=" + layer.sizeDelta + " parent=" + colRt.rect.size);
+                    }
+                }
 
                 int ix = Mathf.Clamp(Mathf.RoundToInt(W * c.X / 100f), 0, W - 1);
                 int iy = Mathf.Clamp(Mathf.RoundToInt(H * (1f - TopY / 100f)), 0, H - 1);   // 화면 %는 위에서, 텍스처는 아래에서 센다

@@ -965,6 +965,23 @@ namespace KkomaKnight.Game
             Gradient(rt, top, bottom, GradTopKey, GradBottomKey, inset, siblingIndex);
         }
 
+        /// <summary>
+        /// T344 — <see cref="GradientCard"/> 와 같은데 <b>가로(왼쪽 → 오른쪽)</b>다(주인 2026-09-10 «그라디언트가 왼쪽 오른쪽 이어야 하는데 상하로 되어 있네»).
+        /// <para>
+        /// 표(<see cref="GradientPalette"/>)의 <c>Top</c> 이 <b>왼쪽</b>, <c>Bottom</c> 이 <b>오른쪽</b> 색이 된다 —
+        /// 눕히는 일은 <see cref="GradientSideways"/> 가 하고(왜 늘리기로 못 하는지도 그 자의 주석에 있다), 여기서는 색과 층만 <see cref="GradientCard"/> 와 똑같이 준다.
+        /// </para>
+        /// ⚠ 세로(<see cref="GradientCard"/>)와 <b>같은 사각형에 둘 다 걸지 않는다</b> — 조각 이름이 같아 나중 것이 앞 것을 덮어쓴다.
+        /// </summary>
+        public static void GradientCardSide(RectTransform rt, string paletteName = null, Color? baseColor = null, float inset = 0f, int siblingIndex = 0, float alpha = GradientCardAlpha)
+        {
+            if (rt == null) return;
+            GradientCard(rt, paletteName, baseColor, inset, siblingIndex, alpha);
+            var side = Ensure<GradientSideways>(rt.gameObject);
+            // 크기를 이미 알면 이 프레임에 눕는다(모르면 다음 프레임에 저 스스로)
+            if (side != null) side.Apply(true);
+        }
+
         static Image GradientLayer(RectTransform rt, string name, string key, Color tint, float inset)
         {
             var sp = Cat != null ? Cat.Sprite(key) : null; if (sp == null) return null;

@@ -670,12 +670,12 @@
 | colors | `col.grad.btnOrange.bottom` | `#F09600` | #F09600 | 주 버튼(주황) «아래» — 같은 값에서 어둡게(레퍼런스는 사실상 단색) |
 | colors | `col.grad.panelDark.top` | `#2C2829` | #2C2829 | 팝업 패널 «위» — 07_gear_detail.jpg (70,600)~(640,960) 실측(거의 단색) |
 | colors | `col.grad.panelDark.bottom` | `#201E1F` | #201E1F | 팝업 패널 «아래» — 같은 실측 |
-| colors | `col.grad.passFree.top` | `#1F44AE` | #1F44AE |  |
-| colors | `col.grad.passFree.bottom` | `#286AC0` | #286AC0 |  |
-| colors | `col.grad.passPaid1.top` | `#DF7708` | #DF7708 |  |
-| colors | `col.grad.passPaid1.bottom` | `#E99A0A` | #E99A0A |  |
-| colors | `col.grad.passPaid2.top` | `#6D04A6` | #6D04A6 |  |
-| colors | `col.grad.passPaid2.bottom` | `#930DBC` | #930DBC |  |
+| colors | `col.grad.passFree.top` | `#5BC8F5` | #5BC8F5 | 패스 무료 열 **왼쪽** 색 — 주인 지정 «하늘색 → 파란색»(2026-09-10 · T344 · 열은 이제 가로 그라데이션 · 옛 실측 #1F44AE) |
+| colors | `col.grad.passFree.bottom` | `#1E63D6` | #1E63D6 | 같은 열 **오른쪽** 색(T344 · 옛 #286AC0) |
+| colors | `col.grad.passPaid1.top` | `#FF3B30` | #FF3B30 | 패스 유료 1 열 **왼쪽** 색 — 주인 지정 «빨강 → 주황»(T344 · 옛 #DF7708) |
+| colors | `col.grad.passPaid1.bottom` | `#FF8612` | #FF8612 | 같은 열 **오른쪽** 색(T344 · 옛 #E99A0A) |
+| colors | `col.grad.passPaid2.top` | `#8B2FE0` | #8B2FE0 | 패스 유료 2 열 **왼쪽** 색 — 주인 지정 «보라 → 핑크»(T344 · 옛 #6D04A6) |
+| colors | `col.grad.passPaid2.bottom` | `#F45FB0` | #F45FB0 | 같은 열 **오른쪽** 색(T344 · 옛 #930DBC) |
 | colors | `col.passFreeDim` | `#0D233B` | #0D233B |  |
 | colors | `col.passPaid1Dim` | `#473203` | #473203 |  |
 | colors | `col.passPaid2Dim` | `#30053B` | #30053B |  |

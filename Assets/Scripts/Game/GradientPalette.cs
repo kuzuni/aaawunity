@@ -61,9 +61,12 @@ namespace KkomaKnight.Game
                 // T266 1단계(주인 2026-09-09 «레퍼런스 이미지 그대로 만들고, 그 그라데이션도 잘 해서») — docs/ref/19_pass.jpg 를
                 // tools/ref_color.py 로 5등분해 잰 값이다. 잰 자리는 **아이콘을 피한 열의 왼쪽 여백**이고(가운데를 물면 아이콘 색이 섞인다),
                 // 세로 범위는 «밝은 구간»(y 495~1140)만 — 그 아래는 «아직 못 연 행» 이라 같은 열이라도 어둡다(그 어둠은 col.passFreeDim 등 단색).
-                case "passFree": return new Pair(Cat("passFree.top", "#1F44AE"), Cat("passFree.bottom", "#286AC0"));
-                case "passPaid1": return new Pair(Cat("passPaid1.top", "#DF7708"), Cat("passPaid1.bottom", "#E99A0A"));
-                case "passPaid2": return new Pair(Cat("passPaid2.top", "#6D04A6"), Cat("passPaid2.bottom", "#930DBC"));
+                // T344 주인 «맨 왼쪽 = 하늘색 → 파란색»(가로 · Top = 왼쪽)
+                case "passFree": return new Pair(Cat("passFree.top", "#5BC8F5"), Cat("passFree.bottom", "#1E63D6"));
+                // T344 주인 «가운데 = 빨강 → 주황»(가로)
+                case "passPaid1": return new Pair(Cat("passPaid1.top", "#FF3B30"), Cat("passPaid1.bottom", "#FF8612"));
+                // T344 주인 «맨 오른쪽 = 보라 → 핑크»(가로)
+                case "passPaid2": return new Pair(Cat("passPaid2.top", "#8B2FE0"), Cat("passPaid2.bottom", "#F45FB0"));
                 // 아래 버튼 둘 — «₩9,900»(주황)·«₩49,000»(자주). 열 색과 계열은 같지만 훨씬 밝다(버튼이라 눈에 먼저 들어와야 한다).
                 case "btnPassPaid1": return new Pair(Cat("btnPassPaid1.top", "#F7C70F"), Cat("btnPassPaid1.bottom", "#F39018"));
                 case "btnPassPaid2": return new Pair(Cat("btnPassPaid2.top", "#F453DF"), Cat("btnPassPaid2.bottom", "#D343E3"));

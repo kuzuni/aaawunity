@@ -57,11 +57,15 @@ namespace KkomaKnight.Tests.Play
             var bg = GradientPalette.Of("bgLobby");
             Assert.Greater(Luma(bg.Top), Luma(bg.Bottom), "화면 배경은 위가 밝고 아래가 어두워야 한다(레퍼런스 01 실측)");
 
-            // T266 1단계 — 시즌 패스 3열(주인 2026-09-09 «그라데이션도 잘 해서»). 레퍼런스 19 실측이고 셋 다 카드류와 같은 방향이다.
+            // T344 — 시즌 패스 3열은 이제 **가로**다(주인 2026-09-10 «그라디언트가 왼쪽 오른쪽 이어야 하는데 상하로 되어 있네»).
+            //   Top = 왼쪽 색 · Bottom = 오른쪽 색이고 두 색은 주인이 지목했다(하늘→파랑 · 빨강→주황 · 보라→핑크) —
+            //   그래서 «위가 어둡다» 를 재던 옛 단언(T266)은 폐기하고, **두 색이 눈에 띄게 다른가**(그라데이션이 티가 나는가)를 잰다.
+            //   문턱 0.25 = 세 쌍의 실측 거리(0.76·0.41·0.79) 아래이면서, 거의 같은 두 색(«티가 안 남»)은 못 넘는 자리다.
             foreach (var col in new[] { "passFree", "passPaid1", "passPaid2" })
             {
                 var p = GradientPalette.Of(col);
-                Assert.Less(Luma(p.Top), Luma(p.Bottom), col + " 열은 위가 어둡고 아래가 밝아야 한다(레퍼런스 19 실측 방향)");
+                float d = Mathf.Abs(p.Top.r - p.Bottom.r) + Mathf.Abs(p.Top.g - p.Bottom.g) + Mathf.Abs(p.Top.b - p.Bottom.b);
+                Assert.Greater(d, 0.25f, col + " 열의 왼쪽·오른쪽 두 색이 너무 닮았다(그라데이션이 안 보인다) — 지금 거리 " + d.ToString("0.00"));
             }
             // «아직 못 연 행» 의 어둠은 같은 열의 밝은 색보다 확실히 어둡다 — 실측 비율 0.19~0.33 이라 «절반 아래» 로 못 박는다.
             // (이 셋은 그라데이션이 아니라 단색이라 표가 아니라 카탈로그 색 키로 들어갔다.)
