@@ -230,7 +230,7 @@ namespace KkomaKnight.Tests.Play
             var D = _app.Data; string part = D.Gear.Parts[0];
             _app.ShowScreen("gear"); yield return Frames(2);
 
-            var badges = new List<string>(); var nameColors = new List<Color>();
+            var badges = new List<string>(); var nameColors = new List<Color>(); var frames = new List<string>();
             int rarMax = Mathf.Min(4, D.Gear.RarName.Length);
             Assert.GreaterOrEqual(rarMax, 2, "등급이 둘은 있어야 «등급마다 다르다» 를 잴 수 있다");
             for (int rar = 0; rar < rarMax; rar++)
@@ -245,11 +245,19 @@ namespace KkomaKnight.Tests.Play
                 foreach (var old in new[] { "ui.title.sky", "ui.title.yellow", "ui.title.plum", "ui.title.red", "ui.title.green" })
                     Assert.IsNull(UiKit.Find(_app.Overlay.Root, old), $"등급 {rar} 에 옛 등급색 제목 조각 «{old}» 이 남으면 안 된다");
 
-                // ⓑ 그런데 등급은 여전히 말한다 — 배지 글자와 이름 색을 모아 뒀다가 아래에서 «서로 다른가» 를 본다.
+                // ⓑ 그런데 등급은 여전히 말한다 — «배지 글자» 와 «아이콘 테두리»(ui.itemFrame.<등급색>) 둘이다.
+                //   ⚠ **이름 «색» 이 아니다.** 회차 1 의 이 자는 «이름 색이 등급마다 다르다» 를 재다 런 822 에서 빨갰다 —
+                //     `GearUi.OnPopupBox` 는 인자를 안 보고 **늘 흰색**을 주고, 그 함수 주석이 이미 그 까닭을 적어 두었다
+                //     («레퍼런스 07 의 이름은 등급색이 아니라 흰색이고, 등급은 위 리본과 아이콘 테두리가 말한다»).
+                //     ⇒ 자를 고칠 때 고친 것은 «기댓값» 이 아니라 **어디를 보는가** 다(결정 923).
                 var rib = UiKit.Find(_app.Overlay.Root, GearUi.TitleBadge);
                 var badgeTxt = rib.GetComponentInChildren<TMP_Text>(true);
                 Assert.IsNotNull(badgeTxt, "제목 조각 안 글자(등급 이름)");
                 badges.Add(badgeTxt.text ?? "");
+                string frameKey = "ui.itemFrame." + Palette.RarName(rar);
+                Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, frameKey),
+                    $"등급 {rar} 의 아이콘 테두리가 «{frameKey}» 여야 한다 — 제목 조각을 갈색 하나로 모아도 등급색은 여기 남는다");
+                frames.Add(frameKey);
                 var nm = UiKit.Find(_app.Overlay.Root, "Name"); Assert.IsNotNull(nm, "이름 줄");
                 nameColors.Add(nm.GetComponent<TMP_Text>().color);
 
@@ -259,9 +267,11 @@ namespace KkomaKnight.Tests.Play
             // 모은 것으로 «등급이 아직 읽히는가» 를 본다 — 수를 안 박고 «서로 다른가» 만 묻는다(결정 555).
             for (int i = 1; i < badges.Count; i++)
                 Assert.AreNotEqual(badges[0], badges[i], $"제목 조각은 같아도 그 «글자» 는 등급마다 달라야 한다(0 «{badges[0]}» ↔ {i} «{badges[i]}»)");
-            bool anyColorDiffers = false;
-            for (int i = 1; i < nameColors.Count; i++) if (nameColors[i] != nameColors[0]) anyColorDiffers = true;
-            Assert.IsTrue(anyColorDiffers, "이름 색이 등급마다 달라야 한다 — 제목 조각을 하나로 모으면서 색까지 지우면 등급을 못 읽는다");
+            for (int i = 1; i < frames.Count; i++)
+                Assert.AreNotEqual(frames[0], frames[i], $"아이콘 테두리는 등급마다 달라야 한다(0 «{frames[0]}» ↔ {i} «{frames[i]}») — 제목 조각을 하나로 모으면서 이것까지 지우면 등급을 못 읽는다");
+            // 그리고 이름 색은 «등급을 말하지 않는다» 를 못 박아 둔다 — 다음 사람이 내가 한 오해(런 822)를 되풀이하지 않게.
+            for (int i = 1; i < nameColors.Count; i++)
+                Assert.AreEqual(nameColors[0], nameColors[i], "이름 색은 등급을 말하지 않는다(늘 흰색 · 레퍼런스 07) — 등급은 배지 글자와 아이콘 테두리다");
 
             _log.AssertNoRed("등급별 세부 팝업 제목 조각");
             yield return Shutdown();
