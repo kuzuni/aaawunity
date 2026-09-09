@@ -904,11 +904,14 @@ namespace KkomaKnight.Tests.Play
             }
             Assert.Greater(written.Count, 0, "단계 자가 하나도 없다");
 
+            // T300 4항 ⓑ(결정 938) — **빈 칸이 0 이 된 커밋에서 로그를 단언으로 올린다.** P10(펫)이 들어와 열한 단계가 다 찼다(결정 1049).
+            //   ⚑ 이 줄이 지키는 것은 «지금 다 있다» 가 아니라 **«단계를 표에 적고 자를 안 쓰는 길을 막는 것»** 이다 —
+            //     로그였을 때는 아무도 안 읽어서 여섯 시간 동안 빈 칸 하나가 그대로 있었다(P10).
+            //   ⚠ 그래서 **표에 P12 를 적는 회차가 그 자도 같이 쓴다**. 자를 나중에 쓰려면 표의 줄도 그때 적어라 —
+            //     둘의 순서를 바꾸는 순간 «적어 놓고 아무도 안 노는 단계» 가 생기고, 그것이 이 절이 막으려던 그것이다.
             var missing = new List<string>();
             foreach (var s in Playthrough.Stages) if (!written.Contains(s.Id)) missing.Add(s.ToString());
-            if (missing.Count > 0)
-                Debug.Log("[T300] 아직 안 쓴 단계 " + missing.Count + "개 — " + string.Join(" · ", missing.ToArray())
-                          + " (마지막 단계가 들어오는 커밋에서 이 로그를 «전부 있다» 단언으로 올린다)");
+            Assert.IsEmpty(missing, "각본 표에 있는데 이 파일에 자가 없는 단계 — 표에 단계를 적는 회차가 그 자도 같이 쓴다");
         }
 
         /// <summary>
