@@ -89,6 +89,11 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(UiKit.Find(root, "VsBadge"), "VS 배지");
             Assert.IsNotNull(UiKit.Find(root, "MyFace"), "내 초상 칸");
             Assert.IsNotNull(UiKit.Find(root, "FoeFace"), "상대 초상 칸");
+            // T262 3항 — 34 도 23·24·33 과 같은 조각·같은 얼굴이다(주인 «프레임이 실제 프로필 프레임이랑 디자인이 다르네»).
+            Assert.IsNotNull(UiKit.Find(UiKit.Find(root, "MyFace"), Profile.FrameKey(_app.Save)), "내 칸은 내가 고른 프로필 프레임");
+            Assert.IsNotNull(UiKit.Find(UiKit.Find(root, "MyFace"), Profile.FaceName), "내 칸에 초상이 서 있다(종전에는 빈 칸이었다)");
+            Assert.IsNotNull(UiKit.Find(UiKit.Find(root, "FoeFace"), Profile.FaceName), "상대 칸에도 초상이 선다");
+            Assert.IsFalse(GearUi.HasItemFrame(UiKit.Find(root, "MyFace")), "옛 물건 칸(ItemFrame_01)이 남으면 안 된다");
 
             // 눌러서 닫힌다 — «닫는 길이 코드에 있다» 가 아니라 «눌리면 닫힌다» 를 잰다(T169 2항)
             var btn = UiKit.Find(root, "ContinueBtn")?.GetComponent<Button>();

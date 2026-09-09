@@ -68,14 +68,13 @@ namespace KkomaKnight.Game
         /// </summary>
         const float MeCounterY = 82f;
         /// <summary>
-        /// 아레나 상대 초상(껍데기 · 순환) · 순위 목록 줄 수 · 도전 팝업 줄 수 · 순위 보상 줄 수 · 상인 상품.
+        /// 순위 목록 줄 수 · 도전 팝업 줄 수 · 순위 보상 줄 수.
         /// <para>
-        /// ⚑ T262 ⓑ — 초상 목록의 <b>정본은 <see cref="Profile.Icons"/> 하나</b>다. 주인이 «프로필 이미지를 PvP 더미들 아이콘처럼» 이라고 한 뒤로
-        /// 두 곳이 <b>같은 넷을 각자 적고 있었고</b>, 그 꼴이면 한쪽만 늘어나는 날 «프로필에서 고른 초상이 아레나에는 없는» 짝이 난다.
-        /// 여기서 베껴 적지 않고 그쪽을 가리킨다(값은 그대로 <c>ui.iconFoe1~4</c>).
+        /// ⚑ T262 ⓑ·3항 — 더미 초상은 여기서 목록을 들고 있지 않는다. 정본은 <see cref="Profile.Icons"/> 하나이고
+        /// «어느 순위가 어느 얼굴인가» 는 <see cref="Profile.DummyIcon"/> 한 규칙이다(종전에는 <b>줄 번호</b>로 골라서
+        /// 도전 팝업(rank = i+2)과 순위 목록(rank = i+4)이 <b>같은 «도전자 4» 에 다른 얼굴</b>을 냈다).
         /// </para>
         /// </summary>
-        static string[] Foes { get { return Profile.Icons; } }
         const int RankRows = 7, FoeRows = 5, RewardRows = 4;
         /// <summary>
         /// 시상대 2·3위 초상의 <b>프로필 프레임 색</b>(T262 ⓑ). 1위는 내 자리라 색도 내가 고른 것을 쓴다(<see cref="Profile.FrameKey"/>).
@@ -247,7 +246,7 @@ namespace KkomaKnight.Game
                 if (kv.Key == null) { _ticketDots.RemoveAt(i); continue; }
                 kv.Key.SetActive(Dun == null || DungeonTickets.Ready(App.Save, Dun, kv.Value, Today()));
             }
-            Dress(_mePortrait, Profile.FrameKey(App.Save), Profile.CurrentIcon(App.Save));   // T262 ⓑ — 아바타를 바꾸면 시상대 1위도 따라간다
+            Profile.Frame(_mePortrait, Profile.FrameKey(App.Save), Profile.CurrentIcon(App.Save));   // T262 ⓑ — 아바타를 바꾸면 시상대 1위도 따라간다
         }
 
         // ───────────────────────── ⑩ 던전 페이지 (20) ─────────────────────────
@@ -371,8 +370,8 @@ namespace KkomaKnight.Game
             // 시상대 초상 3(가운데 = 나 · 프로필에서 고른 초상 그대로 · T262 ⓑ) + 왕관 번호 · 배너 3 = Social_Ranking 조각(T62) · 맨 위에 «나» 꼬리표
             var podium = UiKit.Rect(pg, "Podium"); UiKit.Stretch(podium);
             var p1 = Portrait(podium, "Portrait:1", Layout.AePortrait1, Profile.FrameKey(App.Save), Profile.CurrentIcon(App.Save)); _mePortrait = p1;
-            var p2 = Portrait(podium, "Portrait:2", Layout.AePortrait2, PodiumFrame2, Foes[0]);
-            var p3 = Portrait(podium, "Portrait:3", Layout.AePortrait3, PodiumFrame3, Foes[1]);
+            var p2 = Portrait(podium, "Portrait:2", Layout.AePortrait2, PodiumFrame2, Profile.DummyIcon(2));
+            var p3 = Portrait(podium, "Portrait:3", Layout.AePortrait3, PodiumFrame3, Profile.DummyIcon(3));
             Crown(podium, Layout.AePortrait1, "ui.iconCrownGold", "1"); Crown(podium, Layout.AePortrait2, "ui.iconCrownSilver", "2"); Crown(podium, Layout.AePortrait3, "ui.iconCrownBronze", "3");
             UiKit.TagGroup(podium, "시상대 초상(3개)", p1, p2, p3); UiKit.Tag(p1, "1위 초상");
             var proto = RankProto(pg);
@@ -388,7 +387,7 @@ namespace KkomaKnight.Game
             {
                 var r = Layout.AeRow; r.Y += i * Layout.AeRowPitch;
                 var row = Place(content, "RankRow:" + (i + 4), r, Layout.AeList.Y);
-                RankItem(row, i + 4, Foes[i % Foes.Length]);
+                RankItem(row, i + 4, Profile.DummyIcon(i + 4));
                 if (i == 0) UiKit.Tag(row, "순위 줄(1칸)");
             }
             // T124 — 승급 안내 띠는 «불투명» 이다: 레퍼런스 23 도 목록 마지막 줄 위에 걸치지만 띠가 꽉 찬 어두운 막대라 뒤 줄이 안 비친다.
@@ -562,7 +561,7 @@ namespace KkomaKnight.Game
                 // T69-events: 줄 자체에 Ink 링(레퍼런스 24 는 상대 5줄이 각자 검은 외곽선 상자다) — 조각 «ui.frameDark» 는 이름 그대로 NoBorder 라 링이 없었다.
                 // 게이트는 줄 안 초상 프레임(ItemFrame)의 링 때문에 이미 통과했지만 눈에는 줄 테두리가 없었다 — 결정 184 와 같은 함정이라 줄에 직접 건다.
                 UiKit.Bordered(row);
-                Portrait(row, "Face", new Layout.R(2.5f, 12, 11.5f, 76), Profile.FrameKeyPrefix + Profile.Colors[0], Foes[i % Foes.Length], true);
+                Portrait(row, "Face", new Layout.R(2.5f, 12, 11.5f, 76), Profile.FrameKeyPrefix + Profile.Colors[0], Profile.DummyIcon(FoeRank(i)), true);
                 UiKit.Label(row, 16, 6, 44, 42, FoeName(FoeRank(i)), TextSize.Body, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyles.Bold;
                 _dummyPowerTexts.Add(new KeyValuePair<TMP_Text, int>(Pill(row, new Layout.R(16, 54, 22, 38), "ui.battle", DummyPower(FoeRank(i)), Palette.Orange), FoeRank(i)));
                 Pill(row, new Layout.R(39, 54, 22, 38), "ui.trophy", DummyScore(FoeRank(i)), Palette.Yellow);
@@ -1063,27 +1062,8 @@ namespace KkomaKnight.Game
             var cell = UiKit.Rect(parent, name); UiKit.Pct(cell, r);
             // 정사각 맞춤은 HeightControlsWidth — FitInParent 는 앵커를 부모(줄) 전체로 펴고 가운데 정렬해 초상이 줄 한가운데로 갔다(T43 비평 회차 1 · 23·24 감점 원인)
             if (aspect) { var arf = UiKit.Ensure<AspectRatioFitter>(cell.gameObject); arf.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth; arf.aspectRatio = 1f; }
-            Dress(cell, frameKey, icon);
+            Profile.Frame(cell, frameKey, icon);
             return cell;
-        }
-        /// <summary>
-        /// 초상 칸 안을 «프레임 조각 + 초상» 으로 채운다(비었으면 세우고, 이미 서 있으면 <b>색이 바뀐 때만</b> 다시 세운다).
-        /// <para>
-        /// 조각을 매번 부수고 다시 세우지 않는 까닭은 값이 아니라 <b>깜빡임</b>이다 — Refresh 는 화면이 뜬 채로 자주 돈다.
-        /// 색이 그대로면 <see cref="Profile.Face"/> 만 다시 불러 그림만 갈아 끼운다(그 함수가 옛 초상을 지우고 새로 넣는다).
-        /// </para>
-        /// </summary>
-        static void Dress(RectTransform cell, string frameKey, string icon)
-        {
-            if (cell == null || string.IsNullOrEmpty(frameKey)) return;
-            var frame = UiKit.Find(cell, frameKey) as RectTransform;
-            if (frame == null)
-            {
-                UiKit.Clear(cell);                                   // 색이 바뀌었다 = 옛 조각을 걷는다
-                var f = UiKit.Spawn(frameKey, cell); frame = (RectTransform)f.transform; UiKit.Stretch(frame);
-                GearUi.DarkFrame(f.transform);   // T115 — 프로필 조각에는 ItemFrame 링이 없어 «HighLight 끄기» 만 남는다(결정 433)
-            }
-            Profile.Face(frame, icon);
         }
         static void Crown(RectTransform parent, Layout.R portrait, string icon, string num)
         {
@@ -1153,7 +1133,7 @@ namespace KkomaKnight.Game
                 // T262 ⓑ — 줄 초상도 «프로필과 같은 조각» 이다(주인 지시 2항은 23 의 시상대와 «순위 줄» 을 같이 든다).
                 // 종전에는 조각(ListItem_Ranking)이 달고 온 제 그림(Character)에 스프라이트만 갈아 끼웠다 — 그러면
                 // 조각이 바뀌는 날 이 줄만 다른 테두리가 되고, 그것이 주인이 «디자인이 다르네» 라고 짚은 꼴이다.
-                Dress(face as RectTransform, Profile.FrameKeyPrefix + Profile.Colors[0], icon);
+                Profile.Frame(face as RectTransform, Profile.FrameKeyPrefix + Profile.Colors[0], icon);
             }
         }
         /// <summary>

@@ -52,6 +52,8 @@ namespace KkomaKnight.Game
         /// </summary>
         RectTransform[] _chapterHud;
         TMP_Text _pvpMyName, _pvpFoeName, _pvpMyPower, _pvpFoePower;
+        /// <summary>PvP 머리의 초상 칸 둘(T262 3항) — 조각은 <see cref="Profile.Frame"/> 이 세운다. 판마다 얼굴이 달라지므로 «세우는 자리» 가 아니라 «켜는 자리»(ShowPvpHead)에서 채운다.</summary>
+        RectTransform _pvpMyFace, _pvpFoeFace;
         UiKit.Bar _prog, _exp, _hp, _sh; Image _progFill;
         RectTransform _buffBar, _perkStrip; TMP_Text _perkCount; HorizontalLayoutGroup _perkStripLayout;
         readonly TMP_Text[] _statVals = new TMP_Text[StatDefs.Length];
@@ -174,7 +176,7 @@ namespace KkomaKnight.Game
         public void Start(int chapter, DungeonData.RunRule run = null, string dungeonKey = null, string arenaFoe = null, int arenaFoeRank = 0)
         {
             _dunKey = dungeonKey;
-            _arenaFoe = arenaFoe;   // T240 — 아레나 «도전» 으로 들어온 판이면 상대 이름(null = 아니다)   // T228 ⓓ — 이 판이 «어느 던전» 인가(null = 일반 챕터 전투)
+            _arenaFoe = arenaFoe; _arenaFoeRank = arenaFoeRank;   // T240 — 아레나 «도전» 으로 들어온 판이면 상대 이름(null = 아니다) · 순위는 결과 화면(34)의 얼굴에도 쓴다(T262 3항)   // T228 ⓓ — 이 판이 «어느 던전» 인가(null = 일반 챕터 전투)
             var D = App.Data;
             var rng = new Mulberry32((uint)Environment.TickCount ^ 0x9E3779B9u);
             var opt = new RunOptions { EmitEvents = true };
@@ -256,8 +258,9 @@ namespace KkomaKnight.Game
             string who = mine ? "My" : "Foe";
 
             var box = UiKit.Rect(_pvpHead, who + "Face"); UiKit.Pct(box, faceR);
-            var frame = UiKit.Spawn("ui.itemFrame.yellow", box);
-            if (frame != null) UiKit.Stretch((RectTransform)frame.transform);
+            // T262 3항 — 조각을 여기서 박지 않는다. 종전에는 `ui.itemFrame.yellow`(팔각 물건 칸)를 세워 두고 **안이 비어 있었다** —
+            // 레퍼런스 33 의 머리 양쪽은 «프로필 프레임 + 얼굴» 이다(좌상단 프로필과 같은 둥근 네모). 얼굴은 판마다 달라지므로 ShowPvpHead 가 채운다.
+            if (mine) _pvpMyFace = box; else _pvpFoeFace = box;
             UiKit.Tag(box, mine ? "아바타 칸(왼쪽)" : "아바타 칸(오른쪽)");
 
             // 이름 — 내 쪽은 칸 오른쪽에 붙어 왼쪽 정렬, 상대 쪽은 칸 왼쪽에 붙어 오른쪽 정렬(레퍼런스 33 그대로).
@@ -313,6 +316,9 @@ namespace KkomaKnight.Game
             if (_prog != null && _prog.Root != null) _prog.Root.gameObject.SetActive(!on);
             if (!on) return;
 
+            // T262 3항 — 왼쪽은 «나»(프로필에서 고른 프레임 색·얼굴), 오른쪽은 그 순위의 더미 얼굴(23·24 목록과 같은 얼굴 · Profile.DummyIcon)
+            Profile.Frame(_pvpMyFace, Profile.FrameKey(App.Save), Profile.CurrentIcon(App.Save));
+            Profile.Frame(_pvpFoeFace, Profile.FrameKeyPrefix + Profile.Colors[0], Profile.DummyIcon(foeRank));
             if (_pvpMyName != null) _pvpMyName.text = Nickname.Of(App.Save);
             if (_pvpFoeName != null) _pvpFoeName.text = foeName ?? "";
             if (_pvpMyPower != null) _pvpMyPower.text = UiKit.Fmt(App.Power());
@@ -350,7 +356,7 @@ namespace KkomaKnight.Game
         /// </summary>
         string _dunKey;
         /// <summary>T240 — 아레나 «도전» 으로 들어온 판의 <b>상대 이름</b>(<c>null</c> = 아레나가 아니다). 이 값 하나가 <see cref="EndRun"/> 의 아레나 갈래를 켠다.</summary>
-        string _arenaFoe;
+        string _arenaFoe; int _arenaFoeRank;
         /// <summary>T254 — 이 판에서 이미 쓴 부활 횟수(<see cref="KkomaKnight.Core.Revive.PerRun"/> 까지). 새 판마다 0 으로 돌아간다.</summary>
         int _revivesUsed;
         /// <summary>이 판에서 쓴 부활 횟수(자가 읽는다).</summary>
@@ -559,7 +565,8 @@ namespace KkomaKnight.Game
             var o = ArenaMatch.Settle(S, D != null ? D.ArenaMatch : null, D != null ? D.ArenaDummy : null, G.Cleared);
             App.Persist();                                     // 저장은 여기 한 번뿐이다(Settle 은 순수 C# 이라 디스크를 안 만진다)
             Debug.Log($"[T240] 아레나 결과 {(o.Win ? "승" : "패")} · 승점 {o.Before:0} → {o.After:0}({o.Delta:+0;-0;0}) · 순위 {o.RankBefore} → {o.RankAfter} · 티어 {o.Tier}");
-            ArenaResult.Show(o, Nickname.Of(S), _arenaFoe, null, null, ExitBattle);
+            // T262 3항 — 34 도 33·23·24 와 같은 얼굴이어야 한다(내 것은 프로필에서 고른 것 · 상대는 그 순위의 더미)
+            ArenaResult.Show(o, Nickname.Of(S), _arenaFoe, Profile.CurrentIcon(S), Profile.DummyIcon(_arenaFoeRank), ExitBattle);
         }
 
         // ───────────────────────── T85 · 보상 흡수(표시값) ─────────────────────────

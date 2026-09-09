@@ -93,6 +93,43 @@ namespace KkomaKnight.Game
         /// <summary>탑바·팝업 칸 안 초상 그림의 오브젝트 이름(자가 «HeroView 가 아니라 아이콘이다» 를 이 이름으로 잰다).</summary>
         public const string FaceName = "AvatarFace";
 
+        /// <summary>
+        /// 초상 칸 하나를 «프로필 프레임 조각 + 그 안의 초상» 으로 채운다(T262 ⓑ·3항) — 비었으면 세우고, 이미 서 있으면 <b>색이 바뀐 때만</b> 다시 세운다.
+        /// <para>
+        /// 주인이 «프레임 부분이 실제 프로필 프레임이랑 디자인이 다르네» 라고 짚은 뒤로 <b>아레나 23·도전 24·PvP 인게임 33·결과 34 가 전부 이 함수 하나</b>를 쓴다 —
+        /// 초상 칸을 세우는 자리가 네 파일에 흩어져 있어서, 규칙을 글로 적어 두면 반드시 한 곳이 뒤처진다.
+        /// </para>
+        /// 조각을 매번 부수고 다시 세우지 않는 까닭은 값이 아니라 <b>깜빡임</b>이다(Refresh 는 화면이 뜬 채로 자주 돈다) — 색이 그대로면 <see cref="Face"/> 만 다시 불러 그림만 갈아 끼운다.
+        /// </summary>
+        public static void Frame(RectTransform cell, string frameKey, string iconKey)
+        {
+            if (cell == null || string.IsNullOrEmpty(frameKey)) return;
+            var frame = UiKit.Find(cell, frameKey) as RectTransform;
+            if (frame == null)
+            {
+                UiKit.Clear(cell);                                   // 색이 바뀌었다(또는 옛 조각이 서 있다) = 걷어 낸다
+                var go = UiKit.Spawn(frameKey, cell);
+                if (go == null) return;                              // 카탈로그 미스 — 조용히 빈 칸(빨간 줄 0)
+                frame = (RectTransform)go.transform; UiKit.Stretch(frame);
+                GearUi.DarkFrame(go.transform);   // T115 — 프로필 조각에는 ItemFrame 링이 없어 «HighLight 끄기» 만 남는다(결정 433)
+            }
+            Face(frame, iconKey);
+        }
+
+        /// <summary>
+        /// 더미(아레나 상대)의 초상 아이콘 — <b>순위 하나가 언제나 같은 얼굴</b>을 갖게 하는 규칙(T262 3항).
+        /// <para>
+        /// ⚠ 종전에는 <b>줄 번호</b>로 골랐고, 두 목록의 줄 번호 셈이 달랐다: 도전 팝업은 <c>rank = i + 2</c>, 순위 목록은 <c>rank = i + 4</c> 인데
+        /// 둘 다 아이콘은 <c>i % 4</c> 였다 — 그래서 <b>«도전자 4» 가 23 화면과 24 팝업에서 다른 얼굴</b>이었다(같은 화면에서 나란히 보이는데도).
+        /// 이제 <b>순위로</b> 고르므로 시상대·순위 줄·도전 줄·PvP 머리·결과 화면이 전부 같은 얼굴을 낸다.
+        /// </para>
+        /// </summary>
+        public static string DummyIcon(int rank)
+        {
+            int n = Icons.Length;
+            return Icons[((rank % n) + n) % n];
+        }
+
         /// <summary>아바타(초상) 고르기 팝업 — 탑바 아바타를 누르면 열린다.</summary>
         public static void OpenAvatar(App app)
         {

@@ -98,8 +98,10 @@ namespace KkomaKnight.Game
             UiKit.Tag(plate.transform, "티어 명판");
 
             // ⓔ 아바타 VS 아바타
-            Face(root, "MyFace", Layout.ArrMyFace, myFace, "내 초상");
-            Face(root, "FoeFace", Layout.ArrFoeFace, foeFace, "상대 초상");
+            // 내 칸은 «내가 고른 프레임 색» 까지 그대로(33 머리·탑바와 같은 얼굴이 서야 «내 자리» 로 읽힌다) · 상대는 기본 색
+            Face(root, "MyFace", Layout.ArrMyFace, string.IsNullOrEmpty(myFace) ? Profile.CurrentIcon(app.Save) : myFace,
+                 Profile.FrameKey(app.Save), "내 초상");
+            Face(root, "FoeFace", Layout.ArrFoeFace, foeFace, null, "상대 초상");
             var vs = UiKit.Icon(root, "VsBadge", "ui.iconPvp", Palette.A(Palette.White, 0.9f));
             UiKit.Pct(vs.rectTransform, Layout.ArrVs);
             var vsText = UiKit.Label(vs.transform, 0, 0, 100, 100, "VS", TextSize.Body, Palette.White);
@@ -124,15 +126,15 @@ namespace KkomaKnight.Game
             Reveal(emblem.rectTransform, title.rectTransform, plate.rectTransform, cont);
         }
 
-        static void Face(RectTransform root, string name, Layout.R r, string spriteKey, string tag)
+        /// <summary>
+        /// 초상 칸(34) — T262 3항으로 <b>프로필 프레임</b>이 됐다(종전 <c>ui.itemFrame.yellow</c> = 팔각 물건 칸).
+        /// 주인 «프레임 부분이 실제 프로필 프레임이랑 디자인이 다르네» 는 아레나 화면 전부에 걸리는 말이고, 결과 화면도 그중 하나다.
+        /// 세우는 법은 <see cref="Profile.Frame"/> 한 곳뿐이라 23·24·33·34 가 같이 움직인다.
+        /// </summary>
+        static void Face(RectTransform root, string name, Layout.R r, string spriteKey, string frameKey, string tag)
         {
             var box = UiKit.Rect(root, name); UiKit.Pct(box, r);
-            var frame = UiKit.Spawn("ui.itemFrame.yellow", box); if (frame != null) UiKit.Stretch((RectTransform)frame.transform);
-            if (!string.IsNullOrEmpty(spriteKey))
-            {
-                var img = UiKit.Icon(box, "Img", spriteKey);
-                UiKit.Pct(img.rectTransform, 10, 10, 80, 80);
-            }
+            Profile.Frame(box, string.IsNullOrEmpty(frameKey) ? Profile.FrameKeyPrefix + Profile.Colors[0] : frameKey, spriteKey);
             UiKit.Tag(box, tag);
         }
 

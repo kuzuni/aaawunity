@@ -59,6 +59,14 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(on, ActiveByName(root, n), $"[{where}] «{n}» 은 {(on ? "켜져" : "꺼져")} 있어야 한다");
         }
 
+        /// <summary>칸 안 초상 그림(<see cref="Profile.FaceName"/>)의 스프라이트 — 없으면 null(T262 3항).</summary>
+        static Sprite FaceSprite(Transform cell)
+        {
+            var f = UiKit.Find(cell, Profile.FaceName);
+            var im = f != null ? f.GetComponent<Image>() : null;
+            return im != null ? im.sprite : null;
+        }
+
         /// <summary>T240 ⓑ — 아레나 판은 하단 HUD 없이 서고, <b>챕터 판으로 돌아오면 다시 선다</b>.</summary>
         [UnityTest]
         public IEnumerator ArenaRunHidesTheChapterHudAndAChapterRunBringsItBack()
@@ -75,6 +83,19 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(bs.IsArena, "아레나 판이다");
             AssertHud(false, "아레나 판");
             Assert.IsTrue(ActiveByName(_app.Current.Root, "PvpHead"), "아레나 판에는 PvP 머리가 선다");
+            // T262 3항 — 머리 양쪽 초상은 «프로필과 같은 조각 + 얼굴» 이다(주인 «프레임이 실제 프로필 프레임이랑 디자인이 다르네»).
+            //   종전에는 `ui.itemFrame.yellow`(팔각 물건 칸)를 세워 두고 **안이 비어 있었다** — 레퍼런스 33 은 양쪽에 얼굴이 있다.
+            {
+                var head = UiKit.Find(_app.Current.Root, "PvpHead");
+                var my = UiKit.Find(head, "MyFace"); var foe = UiKit.Find(head, "FoeFace");
+                Assert.IsNotNull(my, "왼쪽(나) 아바타 칸"); Assert.IsNotNull(foe, "오른쪽(상대) 아바타 칸");
+                Assert.IsNotNull(UiKit.Find(my, Profile.FrameKey(_app.Save)), "왼쪽은 내가 고른 프로필 프레임");
+                Assert.IsNotNull(UiKit.Find(my, Profile.FaceName), "왼쪽 칸이 비어 있으면 안 된다(내 초상)");
+                Assert.IsNotNull(UiKit.Find(foe, Profile.FaceName), "오른쪽 칸이 비어 있으면 안 된다(상대 초상)");
+                Assert.IsFalse(GearUi.HasItemFrame(my), "옛 물건 칸(ItemFrame_01)이 남으면 안 된다");
+                Assert.AreEqual(_app.Assets.Sprite(Profile.DummyIcon(3)), FaceSprite(foe),
+                    "상대 얼굴은 그 순위(3위)의 더미 얼굴 — 23·24 목록이 보여 준 그 얼굴이어야 한다(T262 3항)");
+            }
 
             // ⚑ 여기가 이 자의 핵심 — 끄기만 하고 켜기를 잊는 사고는 아레나만 보면 안 잡힌다.
             _app.StartBattle(1); yield return Frames(3);

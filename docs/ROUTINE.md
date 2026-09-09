@@ -2939,6 +2939,21 @@ Caught fatal signal - signo:6 (SIGABRT) · Unexpected exit code 134
 >
 > **남은 것 = 3항**(T240 인게임 상단 초상·결과 34 도 같은 규칙) — `BattleScreen.cs` 는 **T240 의 살아 있는 lock 안**이고 240 이 앞 번호라 기다린다. **확인** = 라이선스가 풀린 뒤 첫 완주 런의 `ProfileTests`·`EventsScreenTests`·`BorderGateTests` + `screens` **23·24 를 레퍼런스와 나란히**.
 
+> **▸ 3항 끝 — PvP 인게임 33 · 결과 34 · 그리고 «순위 하나가 두 얼굴» 이던 것 (2026-09-09 05:2X · sess-2005-9317 · 워커 A · 결정 813 · lock 쥔 채)**
+>
+> **열린 까닭**: `T240.lock` 이 반납됐다(워커 F · 결정 808). 이 절의 3항은 처음부터 «그 파일이 열리면» 이었다.
+>
+> **ⓐ 인게임 머리(33)** — `BattleScreen.PvpSide` 는 `ui.itemFrame.yellow`(팔각 물건 칸)를 세워 두고 **안이 비어 있었다**. 레퍼런스 33 의 머리 양쪽은 «둥근 네모 프레임 + 얼굴» 이다. 조각을 세우는 자리를 `PvpSide`(빌드 1회)에서 `ShowPvpHead`(판마다)로 옮기고 `Profile.Frame(...)` 하나로 채운다 — **왼쪽은 내가 고른 프레임 색·얼굴**, 오른쪽은 그 순위의 더미 얼굴.
+>
+> **ⓑ 결과 화면(34)** — `ArenaResult.Face` 도 같은 조각으로. 이 함수는 **처음부터 `myFace`·`foeFace` 를 받게 돼 있었는데 `BattleScreen` 이 `null, null` 을 넘기고 있었다**(칸은 있고 얼굴이 없었다). 부르는 쪽에서 얼굴을 넘긴다.
+>
+> **ⓒ 그러다 진짜를 하나 봤다 — «도전자 4» 가 두 얼굴이었다.** 더미 얼굴을 **줄 번호**로 고르고 있었는데 두 목록의 줄↔순위 셈이 다르다: 도전 팝업은 `rank = i + 2`, 순위 목록은 `rank = i + 4`, 그런데 아이콘은 둘 다 `i % 4`. ⇒ **같은 «도전자 4» 가 23 화면과 24 팝업에서 다른 얼굴**이었다(같은 화면에서 버튼 하나 사이로 나란히 보이는데도). 규칙을 `Profile.DummyIcon(rank)` **하나**로 옮겨 시상대·순위 줄·도전 줄·PvP 머리·결과 화면이 전부 같은 얼굴을 낸다. **주인이 시킨 것은 «프레임» 이었지만, 그 자리를 고치려고 원천을 하나로 모으자 이 어긋남이 저절로 드러났다** — 정본을 모으는 일의 값이 여기에 있다.
+>
+> **ⓓ 조각을 세우는 규칙도 한 곳으로** — `EventsScreen` 이 갖고 있던 `Dress(...)` 를 `Profile.Frame(cell, frameKey, iconKey)` 로 올렸다. 초상 칸을 세우는 파일이 넷(`EventsScreen`·`BattleScreen`·`ArenaResult`·`Screens`)이라, 규칙을 글로만 적어 두면 반드시 한 곳이 뒤처진다.
+>
+> **자**: `PvpHudTests` 에 머리 양쪽(프로필 조각 · 얼굴이 **비어 있지 않다** · 상대 얼굴 = `DummyIcon(3)`) · `ArenaResultTests` 에 34 의 같은 넷 · 옛 물건 칸 0. **확인** = 다음 완주 런의 `PvpHudTests`·`ArenaResultTests`·`ProfileTests`·`EventsScreenTests`·`BorderGateTests` + `screens` **23·24·33 + res_win**.
+
+
 
 
 ### T264 ✅ — 특권(11)을 **실제 시스템**으로: 맨 위 «데일리 기프트» 카드(다이아 30/일) + 카드 3종의 **즉시·매일 지급값 확정** (주인 2026-09-09 · 값 확정)
