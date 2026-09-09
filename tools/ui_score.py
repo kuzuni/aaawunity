@@ -175,15 +175,25 @@ def main():
             score, _ = score_screen(tables, layout, screen)
             (no_table if score is None else scored).append(screen if score is None else (score, screen))
         low = sorted(s for s in scored if s[0] < 10.0)
-        print(f'[§5] 화면 {len(scored) + len(no_table)}개 · **10.0 미만 {len(low)}건** · 표 없음(«—») {len(no_table)}건')
+        missing = layout.get('_missing', [])
         for sc, nm in low:
             print(f'[§5]   {nm} — {fmt(sc)}   ← `python3 tools/ui_score.py {nm}` 로 어느 행인지 본다')
         if no_table:
             print('[§5]   표 없음(ref-layout.md 에 그 화면 절이 없다): ' + ' · '.join(no_table))
-        missing = layout.get('_missing', [])
         if missing:
             print('[§5]   화면 자체가 안 찍혔다: ' + ' · '.join(map(str, missing)))
-        print('[§5] (보고만 — 이 자는 빨갛게 하지 않는다 · T277)')
+        # T281 — **마지막 줄은 판정이다.** 처음 판(T277)은 어느 갈래로 나가든 «(보고만 …)» 한 줄로 끝나서
+        # 꼬리로 읽으면 **빨강과 초록이 글자까지 똑같았다** — T281 이 `check_decisions` 에서 «가장 나쁜 꼴» 이라 부른 그것이다.
+        # 이 자는 늘 0 으로 끝나므로(§5 표는 «회귀 자» 라 뜻한 변경도 점수를 떨어뜨린다 · T277 3항)
+        # `✗` 는 «막는다» 가 아니라 «볼 것이 있다» 는 뜻이고, 그래서 «보고만» 을 판정 줄 안에 같이 적는다.
+        n_all = len(scored) + len(no_table)
+        if low or no_table or missing:
+            head = ' · '.join(f'{nm} {fmt(sc)}' for sc, nm in low[:3]) + (' …' if len(low) > 3 else '')
+            print(f'✗ [§5] 화면 {n_all}개 · 10.0 미만 {len(low)}건{" (" + head + ")" if low else ""}'
+                  f' · 표 없음 {len(no_table)}건 · 안 찍힌 화면 {len(missing)}개'
+                  f' — 보고만(막지 않는다 · T277) · `python3 tools/ui_score.py <화면>` 으로 어느 행인지 본다')
+        else:
+            print(f'✓ [§5] 화면 {n_all}개 전부 10.0 · 표 없음 0건 · 안 찍힌 화면 0개 (보고만 · T277)')
         sys.exit(0)
     if '--all' in flags:
         summary = ['| 화면 | 표 점수 |', '|---|---|']
