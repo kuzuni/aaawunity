@@ -6784,6 +6784,24 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 9. **전투 — 장착 펫이 플레이어 뒤를 따라 걷는다**(주인 06:1X «플레이어 뒤에 따라오는 느낌»). `BattleWorld` 가 플레이어 리그(`_player` · `CharacterRig` · `:57`)를 세우는 자리에서 **열린 슬롯의 장착 펫 수만큼(최대 3)** 같은 리그를 더 세운다: 펫 i 의 월드 x = `P.WorldX − petGapDx × (i+1)`(표 값 `battle.gapDx` · 뒤로 한 칸씩) · 같은 걷기/대기 클립 · 크기는 플레이어의 `battle.scale`(표 · 기본 **0.8**) · 그리는 순서는 플레이어보다 **뒤**(가려진다). 플레이어가 멈추면(킬 연출·보류) 펫도 같이 멈춘다 — **엔진 상태는 안 만든다**(펫은 화면 몫 · 시뮬 불변). 발동 효과(도끼·번개)는 엔진이 플레이어 자리(`ProjSpawnDx`)에서 내는 지금 그대로 둔다 — «펫 자리에서 날아가는» 연출은 주인이 원하면 다음 절. 사망·승리 클립도 플레이어와 같이. 표: `companion.json` → **`pet.json`** 으로 이름을 맞춘다(«펫» 통일 · `data.pet`). 자: PlayMode «장착 2면 리그가 플레이어 뒤에 2 · 스크롤 따라감 · 미장착이면 0».
 
+> **▸ ⓐ 1회차 끝 — 표 + Core 규칙 + EditMode 자 열(2026-09-09 07:2X · sess-2005-9317 · 워커 A · 결정 843 · lock `T293-core` 쥔 채)**
+>
+> **⚠ 이 회차는 세이브를 한 줄도 안 건드렸다** — `Core/SaveData.cs` 가 **T290(워커 I)·T258(워커 K)의 살아 있는 범위 안**이고 293 이 뒤 번호다.
+> 그래서 Core 를 **«수를 받아 수를 돌려주는 순수 규칙»** 으로 지었다: 세이브가 열리는 회차는 **규칙을 다시 짜지 않고 그 위에 얹기만** 하면 된다.
+>
+> **선 것** — `Assets/KkomaKnight/pet.json`(신규) · `Core/Pet.cs`(신규 · `PetData` 파싱 + `Pets` 규칙) · `Tests/EditMode/PetTests.cs`(신규 · 자 열).
+> · `Pets.RollGrade`(70/25/5) · `Pets.Pull`(등급 굴린 뒤 **그 등급 안에서 균등** · 굴림은 언제나 두 번이라 시드가 같으면 결과도 같다)
+> · `Pets.Need(lv)` = `min(2 + 1×(lv-1), 10)` · `CanLevelUp` · `SlotsOpen(pulls)`·`PullsToOpen(slot, pulls)`(«뽑기 100회 해금» 글자를 여기서 만든다)
+> · `Pets.Equip(D, d, pet, lv)` = **`gear.json` 의 그 등급 기여 × 0.5 × (1 + 0.10×(lv-1))** — 장비 수를 펫 표에 **베껴 적지 않았다**(장비가 바뀌면 펫도 따라 움직인다)
+> · `Pets.Effect` = «회피 시 33% 확률로 도끼 2개 발사» 를 **표에서 조립**한다(사람이 따로 안 적는다).
+>
+> **정한 것 — 9종의 이름**(주인이 이름은 안 줬다): **역할 + 등급 재료**로 지었다 — 역할 `그림자`(회피)·`돌격`(공격)·`방패`(피격) × 재료 `도끼병`(일반)·`도끼대장`(희귀)·`번개술사`(전설).
+> 그래서 이름만 보면 **무엇에 발동하고 무엇을 쏘는지**가 읽힌다(«그림자 번개술사» = 회피 시 번개). 표의 `grade.rar`(0·1·2)도 워커가 정했다 — `gear.json` 의 `rarName`(일반·희귀·전설·신화)과 같은 번호를 쓴다.
+>
+> **표가 조용히 어긋나는 자리는 읽는 순간 운다**(결정 818 갈래): 확률 합 ≠ 100 · `slotUnlockPulls` 길이 ≠ `slots` · 해금 횟수가 줄어듦 · `count` 0(«발동은 하는데 아무것도 안 쏘는» 펫) · 등급 × 발동 짝이 빔.
+>
+> **다음 회차가 할 것**(순서 그대로): ⓐ `SaveData.Pets`/`PetPulls`(그 lock 이 풀리면) → ⓑ `GearSystem.Power` 에 장착 합 더하기 → ⓒ `Battle` 발동 갈래 → ⓓ 화면 13·14 → ⓔ 그림 9벌 + `catalog.json`(**`catalog.json` 도 T290 범위라 이번에 안 건드렸다** — 그래서 `pet.json` 은 아직 `data.pet` 으로 등재되지 않았고, 자는 파일을 직접 읽는다).
+>
 순서 — `Core/Pet.cs`(신규 · 앞 항의 `Companion` 이름은 전부 `Pet`/`Pets` 로 읽는다) · `Core/SaveData.cs` · `Core/GearSystem.cs` · `Core/Battle.cs` · `Game/PetScreen.cs` · `Game/BattleWorld.cs`(9항) · `Game/CharacterRig.cs`(스킨 표) · `KkomaKnight/pet.json`·`catalog.json`. **큰 절이라 둘로 나눠 잡아도 된다**(ⓐ Core+표+자 · ⓑ 화면+전투 그림) — lock 은 `T293-core`·`T293-ui`.
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
