@@ -105,6 +105,55 @@ namespace KkomaKnight.Tests.Play
         }
 
         /// <summary>
+        /// T314(주인 2026-09-09 10:1X «던전 팝업 보상 칸 2개가 양 끝으로 벌어짐 → 붙여서 가운데» · 원정 2층 스샷) —
+        /// 세부 팝업(21)의 보상 칸은 <b>칸 수와 상관없이 가운데로 모인다</b>.
+        /// <para>
+        /// ⚠ px 을 안 박는다(결정 555). 재는 것은 <b>관계</b> 둘이다: ⓐ 묶음이 줄 가운데인가(왼쪽 여백 ≈ 오른쪽 여백)
+        /// ⓑ 칸과 칸 사이가 «칸 하나» 보다 좁은가. 종전 <c>fill: true</c> 는 남는 폭을 전부 틈에 줘서
+        /// <b>칸이 둘일 때 틈이 칸의 세 배</b>가 됐다 — 주인이 본 그 그림이고, 이 자가 그것을 잡는다.
+        /// </para>
+        /// <para>
+        /// <b>넷일 때도 같이 잰다</b> — 지옥의 문(넉 장)은 레퍼런스 21 대로 줄을 꽉 채우는 자리라(T214),
+        /// 이 고침이 그쪽을 좁혀 놓지 않았는지 같은 자가 함께 본다. 두 던전을 한 자에서 보는 까닭이다.
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator PopupRewardCellsStayCenteredWhateverTheCount()
+        {
+            yield return Boot();
+            EventsScreen.Open(_app, EventsScreen.PageDungeon); yield return Frames(3);
+            var pg = UiKit.Find(_app.Current.Root, "Page:" + EventsScreen.PageDungeon);
+
+            foreach (var key in new[] { "hell", "expedition" })
+            {
+                var card = UiKit.Find(pg, "Card:" + key); Assert.IsNotNull(card, key + " 카드");
+                Assert.IsTrue(ClickNamed(card, "EnterBtn"), key + " 세부 팝업 열기"); yield return Frames(3);
+
+                var rowRt = UiKit.Find(_app.Overlay.Root, "RewardCells"); Assert.IsNotNull(rowRt, key + " 보상 줄");
+                var cells = Cells(_app.Overlay.Root, "RewardCell:");
+                Assert.Greater(cells.Count, 0, key + " 보상 칸");
+                cells.Sort((a, b) => World(a).xMin.CompareTo(World(b).xMin));
+
+                var rowR = World((RectTransform)rowRt);
+                var firstR = World(cells[0]); var lastR = World(cells[cells.Count - 1]);
+                float left = firstR.xMin - rowR.xMin, right = rowR.xMax - lastR.xMax;
+                Assert.AreEqual(left, right, rowR.width * 0.02f,
+                    key + ": 보상 묶음이 줄 가운데다(왼쪽 " + left.ToString("0") + " ↔ 오른쪽 " + right.ToString("0") + "px)");
+
+                for (int i = 1; i < cells.Count; i++)
+                {
+                    float gap = World(cells[i]).xMin - World(cells[i - 1]).xMax;
+                    Assert.LessOrEqual(gap, firstR.width,
+                        key + ": 칸 사이가 «칸 하나» 보다 넓으면 양 끝으로 벌어진 것이다(틈 " + gap.ToString("0") + "px · 칸 " + firstR.width.ToString("0") + "px)");
+                }
+                _app.Overlay.Close(); yield return Frames(2);
+            }
+
+            _log.AssertNoRed("던전 세부 보상 칸 가운데 모임(T314)");
+            yield return Shutdown();
+        }
+
+        /// <summary>
         /// T251 ⓑ — 카드는 <b>«무엇이 나오나» 만</b> 말한다: 수량 글자도 «최초» 배지도 없다(그것은 팝업 몫 · T123).
         /// <para>같은 화면에서 팝업 쪽에는 <b>있다</b>는 것도 같이 잰다 — 안 그러면 «둘 다 없어진» 회귀를 이 자가 통과시킨다.</para>
         /// </summary>

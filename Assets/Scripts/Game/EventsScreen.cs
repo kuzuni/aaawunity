@@ -58,6 +58,15 @@ namespace KkomaKnight.Game
         static readonly Color CardRingInk = new Color(0f, 0f, 0f, 1f);
         /// <summary>보상 칸 사이 틈 = 칸 폭의 몇 배인가(T150 ⓐ · 레퍼런스 20·21 은 아이콘이 서로 붙어 가운데에 모여 있다).</summary>
         const float IconRowGapPct = 0.12f;
+        /// <summary>
+        /// 던전 세부(21) 보상 줄의 칸 사이 틈 — <b>레퍼런스 21 실측에서 온 비</b>(720폭 그림에서 칸 ≈78px · 틈 ≈28px).
+        /// <para>
+        /// 공용 <see cref="IconRowGapPct"/>(12%)를 안 쓰는 까닭: 이 줄은 레퍼런스가 <b>넉 장으로 줄을 꽉 채우는</b> 자리라
+        /// 틈이 훨씬 넓다(T214). 12% 로 모으면 묶음이 좁아져 그 절이 고쳐 놓은 §5 점수가 도로 내려간다.
+        /// 반대로 공용 값을 이 값으로 올리면 20·30·31 의 두 칸짜리 줄까지 벌어져 T150 이 되돌아간다 — 그래서 <b>이 줄에만</b> 준다.
+        /// </para>
+        /// </summary>
+        const float DdRewardGapPct = 28f / 78f;
         /// <summary>팝업 제목 띠를 상자 테두리 안쪽으로 들이는 폭(px · T150 ⓒ · 주인 인스펙터 offset L1 T1 R1 B0).</summary>
         const float HeadInsetPx = 1f;
         /// <summary>버튼 글자를 좌우로 들이는 비율(T151 2항 · 주인 «여백 조금 있어 보일 정도로» · 앵커 0.06~0.94).</summary>
@@ -515,7 +524,14 @@ namespace KkomaKnight.Game
             var rewardDefs = RewardCells(key, d.rewards, floorView);   // T291 — 보고 있는 층의 보상
             // T214 — 이 줄만 «꽉 채운다»(fill): 레퍼런스 21 은 넉 장이 보상 상자 폭을 그대로 쓴다(칸 ≈78px · 틈 ≈28px · 720폭 그림 실측).
             // 고정 틈(칸 폭의 12%)으로 모으면 묶음이 55.6 → 48.1%(−7.5%p)로 좁아져 §5 에서 0점이었다.
-            var cellRts = IconRow(cells, Layout.DdRewardCells, Icons(rewardDefs), "ui.itemFrame.green", "RewardCell:", true, fill: true);
+            // T314(주인 2026-09-09 10:1X «던전 팝업 보상 칸 2개가 양 끝으로 벌어짐» · 원정 2층 스샷) —
+            //   `fill: true` 는 **남는 폭을 전부 틈에** 준다(space-between). 칸이 넷인 지옥의 문에서는 그것이 레퍼런스 21 과 같았지만,
+            //   **원정처럼 칸이 둘이면** 그 틈이 60% 까지 벌어져 보상이 줄 양 끝에 하나씩 선다 — 주인이 본 그림이 그것이다.
+            //   ⚠ **행에 적힌 «그냥 fill: false»** 로 고치면 **넷일 때가 깨진다**(실측): 공용 고정 틈은 칸 폭의 12% 인데
+            //      레퍼런스 21 의 틈은 칸 폭의 **약 36%**(78px 칸에 28px 틈)라, 12% 로 모으면 묶음이 좁아져 T214 가 고쳐 놓은
+            //      §5 점수가 도로 내려간다. 그래서 **틈을 «레퍼런스에서 온 값» 으로** 준다.
+            //   그러면 넷일 때는 그 값이 `spread`(6.87%)에 걸려 **오늘과 한 픽셀도 안 달라지고**, 둘일 때만 가운데로 모인다.
+            var cellRts = IconRow(cells, Layout.DdRewardCells, Icons(rewardDefs), "ui.itemFrame.green", "RewardCell:", true, gapPct: DdRewardGapPct);
             for (int i = 0; i < cellRts.Count && i < rewardDefs.Count; i++)
             {
                 UiKit.Label(cellRts[i], 0, 58, 100, 42, rewardDefs[i].amount, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyles.Bold;
@@ -1018,7 +1034,7 @@ namespace KkomaKnight.Game
         /// 공용 상수 <see cref="IconRowGapPct"/> 를 키우면 20·30·31 의 두 칸짜리 줄까지 같이 벌어져 T150 이 되돌아간다.
         /// </para>
         /// </summary>
-        static List<RectTransform> IconRow(RectTransform row, Layout.R rowRect, string[] icons, string frameKey, string namePrefix = "Cell:", bool amountBelow = false, bool frameByIcon = false, bool fill = false)
+        static List<RectTransform> IconRow(RectTransform row, Layout.R rowRect, string[] icons, string frameKey, string namePrefix = "Cell:", bool amountBelow = false, bool frameByIcon = false, bool fill = false, float gapPct = IconRowGapPct)
         {
             var res = new List<RectTransform>();
             float rowW = Mathf.Max(1e-3f, rowRect.W / 100f * UiKit.FrameW), rowH = Mathf.Max(1e-3f, rowRect.H / 100f * UiKit.FrameH);
@@ -1028,7 +1044,7 @@ namespace KkomaKnight.Game
             // 칸이 많아 고정 틈으로도 넘치면 예전처럼 남는 자리를 나눠 준다(상한).
             int n = icons.Length;
             float spread = n > 1 ? Mathf.Max(0f, (100f - n * cellW) / (n - 1)) : 0f;   // 줄을 꽉 채우는 틈(= 옛 space-between)
-            float gap = n > 1 ? (fill ? spread : Mathf.Min(cellW * IconRowGapPct, spread)) : 0;
+            float gap = n > 1 ? (fill ? spread : Mathf.Min(cellW * gapPct, spread)) : 0;
             float start = Mathf.Max(0f, (100f - (n * cellW + (n - 1) * gap)) * 0.5f);
             for (int i = 0; i < n; i++)
             {
