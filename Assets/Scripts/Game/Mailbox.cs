@@ -31,11 +31,12 @@ namespace KkomaKnight.Game
         /// <summary>줄 키 = 우편 하나의 <see cref="MailItem.Id"/> 그대로(줄 이름 = <c>Mail:&lt;id&gt;</c>). 아레나 순위 보상 우편의 id 앞머리.</summary>
         public const string KeyArena = "arenaRank";
 
-        /// <summary>우편함 줄 하나 — 제목·설명·아이콘과 «받기»(지급하고 토스트 문구를 돌려준다 · 못 받으면 null).</summary>
+        /// <summary>우편함 줄 하나 — 제목·설명·아이콘과 «받기»(지급하고 <b>받은 우편</b>을 돌려준다 · 못 받으면 null).
+        /// <para>T241 — 전에는 토스트 문구(글줄)를 돌려줬다. 리워드 팝업은 «칸» 을 그려야 해서 항목이 필요하다(<see cref="Core.Mail.Claim(SaveData, string, out MailItem)"/>).</para></summary>
         public sealed class Entry
         {
             public string Key, Title, Desc, Icon;
-            public Func<App, string> Claim;
+            public Func<App, MailItem> Claim;
         }
 
         /// <summary>보상 이름 → 줄 아이콘(카탈로그 키). 모르는 이름이면 코인 — 아이콘 때문에 우편이 안 뜨는 일은 없게.</summary>
@@ -73,7 +74,7 @@ namespace KkomaKnight.Game
                     Title = string.IsNullOrEmpty(m.Title) ? "아레나 보상" : m.Title,
                     Desc = string.IsNullOrEmpty(m.Desc) ? Core.Mail.Summary(m) : m.Desc,
                     Icon = IconOf(m),
-                    Claim = a => Core.Mail.Claim(a.Save, id),
+                    Claim = a => { Core.Mail.Claim(a.Save, id, out var got); return got; },
                 });
             }
             return list;
@@ -187,13 +188,46 @@ namespace KkomaKnight.Game
             UiKit.Clickable(row, () => Grant(app, e));
         }
 
-        /// <summary>받기 — Core 가 지급하고(세이브에 바로 들어간다) 저장·토스트·화면 갱신 뒤 우편함을 다시 그린다.</summary>
+        /// <summary>
+        /// 받기 — Core 가 지급하고(세이브에 바로 들어간다) 저장·화면 갱신 뒤 <b>리워드 팝업</b>(T241)을 띄운다.
+        /// <para>
+        /// 여기는 <b>팝업 안</b>이라 닫으면 우편함을 다시 그린다(<c>onClose</c> · 결정 671) — 화면에서 부르는 자리(챕터 보상)와 다른 점이다(결정 701).
+        /// 못 받는 까닭은 <b>토스트 그대로</b> 남긴다 — <b>보상 팝업은 실제 지급에만 뜬다</b>(결정 715 와 같은 규약).
+        /// </para>
+        /// </summary>
         static void Grant(App app, Entry e)
         {
-            string msg = e.Claim != null ? e.Claim(app) : null;
-            if (string.IsNullOrEmpty(msg)) { app.Toast("지금은 받을 수 없습니다"); return; }
-            app.Persist(); app.Current?.Refresh(); app.Toast(msg);
-            Open(app);   // 남은 줄로 다시 그린다(하나도 안 남으면 «비었음» 프리팹)
+            var got = e.Claim != null ? e.Claim(app) : null;
+            if (got == null) { app.Toast("지금은 받을 수 없습니다"); return; }
+            app.Persist(); app.Current?.Refresh();
+            Pay(app, got.Rewards);
+        }
+
+        /// <summary>
+        /// 받은 것을 칸으로 띄운다 — <b>줄에 있던 것과 같은 차례·같은 아이콘</b>(결정 715).
+        /// 닫으면 우편함을 다시 그린다(남은 줄로 · 하나도 안 남으면 «비었음» 프리팹).
+        /// 칸이 하나도 안 나오면(표가 모르는 이름뿐) 팝업 대신 <b>글줄 토스트</b>로 물러난다 — 받은 것을 조용히 삼키지 않는다.
+        /// </summary>
+        static void Pay(App app, List<ArenaRankData.Reward> rewards)
+        {
+            var items = new List<RewardPopup.Item>();
+            if (rewards != null)
+                foreach (var r in rewards)
+                {
+                    int n = (int)System.Math.Round(r.Amount);
+                    if (n > 0) items.Add(RewardPopup.Item.Of(RewardIcon(r.Item), UiKit.FmtQty(r.Amount), amount: n));
+                }
+            if (items.Count == 0) { app.Toast("우편을 받았습니다"); Open(app); return; }
+            RewardPopup.Show(items, () => Open(app));
+        }
+
+        /// <summary>보상 이름 → <b>칸 아이콘</b>(줄 아이콘 <see cref="IconOf"/> 는 우편 하나에 하나지만 칸은 보상마다 하나다).</summary>
+        static string RewardIcon(string item)
+        {
+            if (item == Core.Mail.ItemGem) return "ui.gemRed";
+            if (item == Core.Mail.ItemPetEgg) return "pet.egg";
+            if (item == Core.Mail.ItemArenaCoin) return "ui.iconArenaCoin";
+            return "ui.coin";
         }
 
         /// <summary>조각이 들고 오는 닫기 버튼의 이름 — 인스턴스는 <c>Button_Close_01</c> 로 이름이 덮여 있고 원본 조각은 <c>Button_Close_Square_01</c> 다(둘 다 찾는다 · Profile 과 같은 꼴).</summary>
@@ -223,12 +257,19 @@ namespace KkomaKnight.Game
         static void GrantAll(App app)
         {
             var list = Entries(app);
-            int n = 0; double before = app.Save.Gem + app.Save.Gold;
-            foreach (var e in list) { if (e.Claim != null && !string.IsNullOrEmpty(e.Claim(app))) n++; }
+            int n = 0;
+            var got = new List<ArenaRankData.Reward>();
+            foreach (var e in list)
+            {
+                if (e.Claim == null) continue;
+                var m = e.Claim(app);
+                if (m == null) continue;
+                n++; if (m.Rewards != null) got.AddRange(m.Rewards);
+            }
             if (n == 0) { app.Toast("지금은 받을 수 없습니다"); return; }
             app.Persist(); app.Current?.Refresh();
-            app.Toast("우편 " + n + "건 수령! (합계 +" + UiKit.Fmt(app.Save.Gem + app.Save.Gold - before) + ")");
-            Open(app);
+            // T241 — 여러 건을 한 번에 받아도 팝업은 하나다(칸은 우편 차례 그대로 이어 붙는다).
+            Pay(app, got);
         }
     }
 }

@@ -69,7 +69,16 @@ namespace KkomaKnight.Core
         }
 
         /// <summary>우편 하나를 받는다 — 보상을 세이브에 더하고 목록에서 지운다. 받은 것을 한 줄로 돌려준다(없으면 null).</summary>
-        public static string Claim(SaveData s, string id)
+        public static string Claim(SaveData s, string id) => Claim(s, id, out _);
+
+        /// <summary>
+        /// 같은 것을 받되 <b>받은 우편 자체</b>를 함께 돌려준다(T241 · 화면이 보상 «칸» 을 그리려면 글줄이 아니라 항목이 필요하다).
+        /// <para>
+        /// 글줄만 돌려주던 시절에는 화면이 토스트밖에 못 띄웠다 — 그것이 «우편함 → 리워드 팝업» 이 T241 에서 마지막까지 남았던 까닭이다.
+        /// 목록에서 빼기 <b>전에</b> 잡아 두고 돌려준다(뺀 뒤에는 그 항목을 다시 찾을 길이 없다).
+        /// </para>
+        /// </summary>
+        public static string Claim(SaveData s, string id, out MailItem got)
         {
             var list = Pending(s);
             for (int i = 0; i < list.Count; i++)
@@ -78,8 +87,10 @@ namespace KkomaKnight.Core
                 var m = list[i];
                 foreach (var r in m.Rewards) Pay(s, r.Item, r.Amount);
                 list.RemoveAt(i);
+                got = m;
                 return Summary(m);
             }
+            got = null;
             return null;
         }
 

@@ -119,6 +119,16 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(coin0 + 30, S.ArenaCoin, 1e-9, "아레나 코인도 버려지지 않고 들어온다");
             Assert.AreEqual(0, Mailbox.Entries(_app).Count, "받고 나면 그 줄은 사라진다");
 
+            // T241 — 받은 것은 이제 토스트 한 줄이 아니라 공통 «리워드» 팝업이 보여 준다.
+            // 이 우편은 골드·아레나 코인 둘이므로 칸도 둘이고, 탭해 닫으면 우편함이 다시 그려진다(결정 671: 팝업 안이면 onClose).
+            {
+                var rv = _app.Overlay.Root;
+                Assert.IsNotNull(UiKit.Find(rv, "RewardTitle"), "우편 받기 → 리워드 팝업(T241)");
+                Assert.AreEqual(2, RewardPopup.LastCellCount, "골드·아레나 코인 두 칸");
+                var tap = UiKit.Find(rv, "Dimmed")?.GetComponent<Button>(); Assert.IsNotNull(tap, "리워드 팝업의 탭하여 닫기");
+                tap.onClick.Invoke(); yield return Frames(2);
+            }
+
             // ⓓ 다 받으면 다시 «비었음»
             Canvas.ForceUpdateCanvases();
             Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.mailboxEmpty"), "다 받으면 «비었음» 프리팹으로 다시 그린다");
