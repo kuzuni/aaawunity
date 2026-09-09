@@ -9329,7 +9329,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `docs/ref-layout.md` 표 ㉞ 두 행. lock `T373`.
 
-### T360 — ⚑ 주인: **체크 표시 그림을 `Toggle_Check_02_On` 하나로 통일** (주인 2026-09-10 «이 게임에 체크 모양은 Toggle_Check_02_On 이거로 통일하기 · `Theme_Light/Sprites/Control` 여기 있는 거»)
+### T360 ✅ — ⚑ 주인: **체크 표시 그림을 `Toggle_Check_02_On` 하나로 통일** (주인 2026-09-10 «이 게임에 체크 모양은 Toggle_Check_02_On 이거로 통일하기 · `Theme_Light/Sprites/Control` 여기 있는 거»)
 
 0. **실측** — 우리가 세우는 체크(출석 받은 칸 · 데일리 기프트 받은 칸 · 패스 받은 칸 · 퀘스트 «받기» 완료 · 트랙 칸)는 전부 카탈로그 키 **`pi.check`**(PictoIcon `check.png`) 한 갈래다. 조각이 제 «Check» 를 달고 오는 자리도 있다: 인벤 칸 장착 표시(`GearUi.cs:176` `Show(cell, "Check")`) · 퀘스트 줄(`LobbyPopups.cs:604·703·883`) · 프로필 줄(`Profile.cs:180`).
 1. **고침 ⓐ(카탈로그 · 로컬이 한다)** — `pi.check` 의 경로를 `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/Control/Toggle_Check_02_On.png` 으로(`gen_catalog.py` 재생성 · assets-map 한 줄). 여섯 자리가 한 번에 바뀐다.
@@ -9339,7 +9339,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — ⓐ `catalog.json` · `docs/assets-map.md`(lock `T360` · 로컬) → ⓑ `Game/GearUi.cs` · `Game/Profile.cs` · `Game/LobbyPopups.cs`(루틴 · lock 들 뒤).
 
-> **🔄 ⓑ Profile 한 줄 push · 확인 전(21:5X · sess-1455-20088 · 워커 P · 결정 1043 · lock `T360-profile` 쥔 채)** — 프로필 초상 칸의 «Check» 에 `UiKit.SetSprite(rows[i], "Check", "pi.check")`(GearUi·퀘스트 줄과 같은 한 줄). 이로써 ⓑ 넷이 다 됐다. 자 = `ProfileTests` 에 «고른 칸 ✓ 켜짐 + 스프라이트 이름 `Toggle_Check_02_On` · 안 고른 칸 꺼짐». 확인 = 다음 완주 런 `ProfileTests(4)` ✗ 0 + `screens` `profile_avatar` → ✅ · 반납.
+> **✅ 확인 끝 — 절 종결(22:5X · sess-1455-20088 · 워커 P · 결정 1051 · lock `T360-profile` 반납)** — 런 915·918 `[CI명부] ProfileTests(4)` ✗ 0(918 은 전부 초록) · `screens` 918 `profile_avatar` 눈: 첫 칸 초록 ✓ 하나 · 나머지 없음. ⓐ + ⓑ 셋(GearUi · 퀘스트 줄 · 프로필 줄) 다 `pi.check`. 인벤 장착 ✓ 의 눈 확인만 «켜는 화면이 없어» 남는다(결정 1040 ⑤) — 그 화면이 생기는 회차의 사진이 마지막 확인.
+> **◦진행 ⓑ Profile 한 줄 push · 확인 전(21:5X · sess-1455-20088 · 워커 P · 결정 1043 · lock `T360-profile` 쥔 채)** — 프로필 초상 칸의 «Check» 에 `UiKit.SetSprite(rows[i], "Check", "pi.check")`(GearUi·퀘스트 줄과 같은 한 줄). 이로써 ⓑ 넷이 다 됐다. 자 = `ProfileTests` 에 «고른 칸 ✓ 켜짐 + 스프라이트 이름 `Toggle_Check_02_On` · 안 고른 칸 꺼짐». 확인 = 다음 완주 런 `ProfileTests(4)` ✗ 0 + `screens` `profile_avatar` → ✅ · 반납.
 > **✔ ⓑ GearUi — CI 돌았음(런 908·911 빨강 0) · lock `T360-gear` 반납 · ⚠ 눈 확인 불가(21:5X · sess-1439-32420 · 워커 O · 결정 1040 ⑤)** — 인벤 칸 «Check» 는 `CellOpts.EquippedMark` 가 true 일 때만 보이는데 그렇게 주는 화면이 지금 0 이다(`ForgeScreen.cs:120` 도 false). 그림은 `pi.check` 로 갈아 두었다 — 켜지는 화면이 생기면 그 사진이 확인. 퀘스트 줄(`LobbyPopups.cs:893` · T361 lock 안)도 같은 push 에 한 줄 — 확인 = `screens` 15 받은 줄 ✓. **남은 것 = `Profile.cs:217` 하나.**
 > **🔄 ⓑ GearUi 한 줄 push · 확인 전(21:0X · sess-1439-32420 · 워커 O · 결정 1031 ⑤ · lock `T360-gear` 쥔 채)** — `GearUi.cs` 인벤 칸: `UiKit.SetSprite(cell, "Check", "pi.check")` 뒤 `Show`. 남은 셋(`Profile.cs:180` · `LobbyPopups.cs` 셋)은 T370 · T363/T364 lock 의 주인 몫. 확인 = `screens` 06 장비(장착 칸 체크가 초록 둥근 `Toggle_Check_02_On`).
 > **✔ ⓐ 확인 끝 · lock 반납 · ⓑ 는 남았다(20:3X · sess-1425-9466 · 워커 N · 결정 1024(커밋 메시지의 1023 은 1024) · 죽은 lock 인수)** — 런 900 `screens` 16·17·19 눈: 받은 칸의 체크가 초록 둥근 `Toggle_Check_02_On`. ⓑ 조각 «Check» 넷은 전부 살아 있는 남의 lock 안 파일(`LobbyPopups` T363/T364 · `Profile` T370 · `GearUi`)이라 여는 사람 몫 — lock 을 쥐고 기다리지 않는다.
