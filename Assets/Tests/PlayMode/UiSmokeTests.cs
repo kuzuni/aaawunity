@@ -970,39 +970,33 @@ namespace KkomaKnight.Tests.Play
                     Assert.AreEqual(Layout.GearSlot.W, (sl.anchorMax.x - sl.anchorMin.x) * 100f, 0.5f, "슬롯 " + i + " 폭"); Assert.AreEqual(Layout.GearSlotH, (sl.anchorMax.y - sl.anchorMin.y) * 100f, 0.5f, "슬롯 " + i + " 높이");
                     Assert.IsTrue(HasText(s => s == "Lv. 0"), "슬롯 위 «Lv. N»");
                 }
-                // T63-gear — 슬롯 위 «Lv. N» 은 본문 40 한 줄(bestFit 이 안 줄임) · «+N» 배지는 Small(SlotBadgeSize) · 배지(칸 아래 가장자리)와 아래 칸의 «Lv. N» 라벨이 겹치지 않는다(CI #95 screens 06: 피치 7.3 에선 «+1» 위에 «Lv. 0» 이 얹혀 «Lv.10» 으로 읽혔다)
+                // T63-gear — 슬롯 위 «Lv. N» 은 본문 40 한 줄(bestFit 이 안 줄임).
+                // T310(주인 2026-09-09 «장착한 거는 그렇게 안 돼 있더라 · 통일시켜 아래 거랑») — «+N» 은 이제 **노란 알약 배지가 아니라**
+                //   인벤 칸과 같은 조각 글자(`Text_Level`)다. 그래서 옛 «배지 ↔ 아래 칸 라벨 겹침» 단언은 뜻을 잃었다(알약이 칸 밖 74~101% 로 튀어나와 있어서 났던 일이다).
+                //   지우지 않고 **자리를 옮겼다**: ⓐ 알약이 어디에도 없다 ⓑ «+N» 글자가 칸 «안» 에 있다(튀어나오지 않으니 아래 칸을 덮을 수 없다).
+                //   «인벤과 같은 꼴인가» 는 GearSlotPlusTests 가 둘을 재서 견준다(수를 안 박는다).
                 {
-                    var lvRect = new RectTransform[6]; var badgeRect = new RectTransform[6];
                     for (int i = 0; i < 6; i++)
                     {
                         var sl = slots.GetChild(i);
+                        Assert.IsNull(UiKit.Find(sl, "PlusBadge"), "슬롯 " + i + " 에 노란 «+N» 알약이 남아 있다(T310 이 없앤 것)");
+                        var lv = (RectTransform)null;
                         foreach (var t in sl.GetComponentsInChildren<TMP_Text>(true))
-                        {
                             if (t.text.StartsWith("Lv.") && t.transform.parent == sl)
                             {
-                                lvRect[i] = t.rectTransform;
+                                lv = t.rectTransform;
                                 Assert.AreEqual(TextSize.Body, t.fontSize, "슬롯 " + i + " «Lv. N» 크기 = 본문 하한");
-                                int genUsed = TextAudit.BestFitSize(t); int genLines = TextAudit.LineCount(t);   // T207 ② — TMP 는 자동 크기를 «그릴 때» 정하므로 TextGenerator 를 손으로 돌릴 일이 없다
+                                int genUsed = TextAudit.BestFitSize(t); int genLines = TextAudit.LineCount(t);   // T207 ② — TMP 는 자동 크기를 «그릴 때» 정한다
                                 Assert.GreaterOrEqual(genUsed, TextSize.Body, "슬롯 " + i + " «Lv. N» 이 칸에 40 으로 안 들어가 bestFit 이 줄였다"); Assert.AreEqual(1, genLines, "슬롯 " + i + " «Lv. N» 한 줄");
                             }
-                            else if (t.transform.parent != null && t.transform.parent.name == "PlusBadge")
-                            {
-                                badgeRect[i] = (RectTransform)t.transform.parent;
-                                Assert.AreEqual(GearScreen.SlotBadgeSize, t.fontSize, "슬롯 " + i + " «+N» 배지 = Small 크기"); Assert.AreEqual(TextKind.Small, TextAudit.KindOf(t), "«+N» 배지는 Small 표식");
-                                Assert.LessOrEqual(t.preferredHeight, badgeRect[i].rect.height + 1f, "슬롯 " + i + " «+N» 이 배지 높이에 들어간다");
-                            }
-                        }
-                        Assert.IsNotNull(lvRect[i], "슬롯 " + i + " «Lv. N» 라벨"); Assert.IsNotNull(badgeRect[i], "슬롯 " + i + " «+N» 배지");
-                    }
-                    var c = new Vector3[4];
-                    for (int i = 0; i < 6; i++)
-                    {
-                        // 열의 마지막 칸 아래엔 칸이 없다
-                        if (i % 3 == 2) continue;
-                        badgeRect[i].GetWorldCorners(c); float badgeBottom = c[0].y;
-                        lvRect[i + 1].GetWorldCorners(c); float lvBottom = c[0].y, lvH = c[1].y - c[0].y;
-                        // «Lv. N» 은 LowerCenter 라 잉크가 rect 아래쪽 ≈70% 안에 있다 — 배지 아래 끝이 그 위여야 잉크가 안 겹친다
-                        Assert.GreaterOrEqual(badgeBottom, lvBottom + lvH * 0.7f, $"슬롯 {i} «+N» 배지가 슬롯 {i + 1} «Lv. N» 라벨과 겹친다(T63-gear)");
+                        Assert.IsNotNull(lv, "슬롯 " + i + " «Lv. N» 라벨");
+
+                        var plus = UiKit.Find(sl, "Text_Level"); Assert.IsNotNull(plus, "슬롯 " + i + " 의 «+N» 자리(조각의 Text_Level)");
+                        var frame = plus.parent; Assert.IsNotNull(frame, "그 글자는 칸 조각의 자식이다");
+                        var pc = new Vector3[4]; ((RectTransform)plus).GetWorldCorners(pc);
+                        var fc = new Vector3[4]; ((RectTransform)frame).GetWorldCorners(fc);
+                        Assert.GreaterOrEqual(pc[0].y, fc[0].y - 1f, "슬롯 " + i + " «+N» 이 칸 아래로 튀어나온다(알약 시절의 그 자리)");
+                        Assert.LessOrEqual(pc[1].y, fc[1].y + 1f, "슬롯 " + i + " «+N» 이 칸 위로 튀어나온다");
                     }
                 }
                 Assert.AreEqual(3, CountNamed(gear, "Stat:"), "스탯 3칸(공·❤·🛡)");

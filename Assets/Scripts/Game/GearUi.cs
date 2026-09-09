@@ -21,6 +21,15 @@ namespace KkomaKnight.Game
         /// </summary>
         public static readonly Layout.R PartBadge = new Layout.R(16.9f - 25.5f / 2f, 17.3f - 25.5f / 2f, 25.5f, 25.5f);
         /// <summary>
+        /// 칸·슬롯의 <b>«+N» 강화 표시</b> — 조각(GUI Pro 아이템 프레임)이 이미 갖고 있는 <c>Text_Level</c> 에 쓴다(오른쪽 아래 흰 글자). 0 이면 빈 글자.
+        /// <para>
+        /// <b>T310(주인 2026-09-09 09:2X «합성 강화 시 오른쪽 아래에 +1 표시가 있는데 장착한 거는 그렇게 안 돼 있더라 · 통일시켜 아래 거랑»)</b> —
+        /// 장착 슬롯은 여태 <b>따로 만든 노란 알약 배지</b>(`PlusBadge`)를 아이콘 아래에 달고 있었다. 주인이 «아래 거랑 통일» 이라 했으므로 <b>인벤 꼴이 정본</b>이고,
+        /// 그 알약을 지운 자리를 이 함수가 대신한다. <b>두 곳이 같은 함수를 부르는 것이 핵심</b>이다 — 자리·크기·색을 두 곳에 각각 적으면 한쪽만 고쳐지는 날 다시 갈린다(T176 이 부위 배지에서 겪은 그 자리).
+        /// </para>
+        /// </summary>
+        public static void SetPlus(Transform frameOrCell, GearItem g) => UiKit.SetText(frameOrCell, "Text_Level", g != null && g.Plus > 0 ? "+" + g.Plus : "");
+        /// <summary>
         /// 등급 탭(<see cref="Layout.GdBadge"/>)의 <b>세로</b>에만 더하는 여유(px · T214) — 리본 글자가 제목 60 이라 칸이 <see cref="TextSize.BoxHeight"/>(84px) 는 돼야 하는데
         /// 표 높이 2.3%(53.8px)로는 못 담는다(<c>UiKit.RibbonFit</c> 이 공통 팝업 리본에 거는 규칙과 같다 · T75 4항). <b>가로에는 아무것도 안 더한다</b> — 폭은 표 22.0% 그대로다.
         /// </summary>
@@ -100,7 +109,7 @@ namespace KkomaKnight.Game
                 UiKit.Show(frame, "Focus", g != null && o.Selected);   // 프리팹의 Focus(테두리 글로우) = 선택
                 DarkFrame(frame);   // T69-gear · 7항: 아이템 칸의 테두리 링 = 검은 아웃라인(등급색은 Bg·InnerBorder 가 낸다)
             }
-            UiKit.SetText(cell, "Text_Level", g != null && g.Plus > 0 ? "+" + g.Plus : "");
+            SetPlus(cell, g);
             var type = UiKit.Find(cell, "TypeArea");
             // 다이아 배지 = **부위** 아이콘(T105 · 주인 «무슨 장비 부위인지 알려주는 아이콘» · 세트 아이콘은 세부 팝업 옵션 줄에서만 쓴다)
             if (type != null) { type.gameObject.SetActive(g != null); if (g != null) UiKit.SetSprite(type, "Icon", GearLook.PartIcon(g.Part), Palette.White); }

@@ -418,9 +418,12 @@ namespace KkomaKnight.Tests.Play
             foreach (var p in D.Gear.Parts) { var g = Give(p, rar: 1, plus: 1); S.Eq[p] = g.Uid; }
             for (int i = 0; i < 10; i++) { var g = Give(D.Gear.Parts[i % D.Gear.Parts.Length], rar: i % 3, plus: i % 2); if (firstFree == null) firstFree = g; }
             _app.ShowScreen("gear"); yield return Frames(2); yield return Check("06_gear");
-            // T69-gear(strict) — 스탯 3칸 Bordered · 장착 슬롯(변형 프레임 + 빈 칸)·인벤 첫 칸 = ItemFrame Border → Ink(7항) · T72 ① 패턴 배경
+            // T69-gear(strict) — 장착 슬롯(변형 프레임 + 빈 칸)·인벤 첫 칸 = ItemFrame Border → Ink(7항) · T72 ① 패턴 배경
             var gearRoot = _app.Current.Root;
-            foreach (var n in new[] { "Stat:atk", "Stat:hp", "Stat:sh" }) Assert.IsTrue(UiKit.HasDarkBorder(UiKit.Find(gearRoot, n)), "장비 «" + n + "» 스탯 칸에 어두운 테두리(T69-gear)");
+            // T309(주인 2026-09-09 «장비에서 공 체 실 부분에 보더 부분 빼기») — 스탯 3칸은 **이제 링이 없어야 한다.**
+            //   여기 있던 «있어야 한다» 를 지우지 않고 **뒤집었다**: 누가 T69 를 되짚어 링을 도로 얹으면 이 줄이 그날 운다.
+            //   ⚠ 칸 조각(`ui.frameDark`)의 제 테두리는 그대로다 — 이 자가 보는 것은 «덧댄 링»(`UiKit.Bordered` 가 만드는 직계 Border) 하나뿐이다.
+            foreach (var n in new[] { "Stat:atk", "Stat:hp", "Stat:sh" }) Assert.IsFalse(UiKit.HasDarkBorder(UiKit.Find(gearRoot, n)), "장비 «" + n + "» 스탯 칸에 덧댄 검은 링이 남아 있다(T309 가 뺀 것)");
             foreach (var p in D.Gear.Parts) AssertItemFrameBorder(UiKit.Find(gearRoot, "Slot:" + p), "장착 슬롯 " + p);
             var invContent = UiKit.Find(gearRoot, "Content"); Assert.IsNotNull(invContent, "인벤 Content"); Assert.Greater(invContent.childCount, 0, "인벤에 미장착 장비");
             AssertItemFrameBorder(invContent.GetChild(0), "인벤 첫 칸");

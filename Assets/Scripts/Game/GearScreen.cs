@@ -30,12 +30,11 @@ namespace KkomaKnight.Game
         const float StageEdgeAspect = 253f / 33f;
         static readonly Layout.R[] StageTrees = { new Layout.R(-4, -6, 22, 58), new Layout.R(16, -10, 22, 60), new Layout.R(39, -8, 22, 58), new Layout.R(61, -10, 22, 60), new Layout.R(82, -6, 22, 58) };
         static readonly Layout.R[] StageBushes = { new Layout.R(24, 44, 12, 16), new Layout.R(66, 46, 12, 16), new Layout.R(45, 84, 10, 14) };
-        /// <summary>슬롯 칸(147px) 기준 % — 위 «Lv. N» 라벨(본문 40 · 한 줄 49px 이 36% = 53px 에 들어간다 · 아래 끝 = 프레임 위 2%) · «+N» 배지(칸 아래 가장자리에 걸침 · 74~101%). T63-gear.</summary>
-        public static readonly Layout.R SlotLv = new Layout.R(-12, -34, 124, 36), SlotBadge = new Layout.R(22, 74, 56, 27);
-        /// <summary>«+N» 배지 글자 — 아이콘 위 배지는 ROUTINE T63 1항의 명시 예외(<see cref="TextKind.Small"/>) · 레퍼런스 06 의 «+1»(≈27px 상당)보다 조금 크게 · 배지 높이 40px 에 한 줄(37px).</summary>
-        public const int SlotBadgeSize = 30;
+        /// <summary>슬롯 칸(147px) 기준 % — 위 «Lv. N» 라벨(본문 40 · 한 줄 49px 이 36% = 53px 에 들어간다 · 아래 끝 = 프레임 위 2%). T63-gear.
+        /// <para>여기 있던 <c>SlotBadge</c>·<c>SlotBadgeSize</c>(노란 «+N» 알약)는 <b>T310 으로 없앴다</b> — 강화 표시는 인벤 칸과 같은 조각 글자(<see cref="GearUi.SetPlus"/>)가 낸다.</para></summary>
+        public static readonly Layout.R SlotLv = new Layout.R(-12, -34, 124, 36);
 
-        sealed class SlotUi { public RectTransform Root; public Transform Frame; public TMP_Text Lv, Plus; public GameObject PlusBadge, Dot; public Image PartIcon; public string Part; }
+        sealed class SlotUi { public RectTransform Root; public Transform Frame; public TMP_Text Lv; public GameObject Dot; public Image PartIcon; public string Part; }
         readonly SlotUi[] _slot = new SlotUi[SlotCount];
         TopBar _top; HeroView _hero; Transform _content; TMP_Text _atk, _hp, _sh; GameObject _forgeDot;
 
@@ -98,9 +97,10 @@ namespace KkomaKnight.Game
                 s.Root = UiKit.Rect(grp, "Slot:" + part); UiKit.Pct(s.Root, col.X, col.Y + row * Layout.GearSlotPitch, Layout.GearSlot.W, Layout.GearSlotH);
                 var frame = UiKit.Spawn("ui.itemFrame.empty", s.Root); frame.name = "ItemFrame_01"; s.Frame = frame.transform;
                 UiKit.FitScale((RectTransform)s.Frame, UiKit.PxSize(Layout.GearSlot));
-                UiKit.Hide(s.Frame, "Text_Level", "Focus", "Disable", "Lock", "Add_2");   // 조각의 데모 글자·상태 켜짐은 끈다 · Add_1(+) 은 빈 슬롯 표시
-                // «Lv. N» = 본문 40(T63-gear · 줄 높이 49px ≤ 칸 36% = 53px · 아래 끝이 칸 위 2% 에 걸쳐 레퍼런스처럼 프레임 바로 위) · «+N» 배지 = 아이콘 위 배지라 Small(SlotBadgeSize)
-                // 배지(74~101%)와 다음 칸 «Lv. N»(−34~+2%) 은 피치 8.0(틈 40px)에서 잉크가 안 겹친다(UiSmokeTests ② 가 사각형으로 단언)
+                UiKit.Hide(s.Frame, "Focus", "Disable", "Lock", "Add_2");   // 조각의 데모 상태 켜짐은 끈다 · Add_1(+) 은 빈 슬롯 표시
+                // T310 — `Text_Level` 은 이제 **끄는 자리가 아니라 쓰는 자리**다(인벤 칸과 같은 조각·같은 함수 · GearUi.SetPlus). 데모 글자는 빈 글자로 지운다.
+                GearUi.SetPlus(s.Frame, null);
+                // «Lv. N» = 본문 40(T63-gear · 줄 높이 49px ≤ 칸 36% = 53px · 아래 끝이 칸 위 2% 에 걸쳐 레퍼런스처럼 프레임 바로 위)
                 s.Lv = UiKit.Label(s.Root, SlotLv.X, SlotLv.Y, SlotLv.W, SlotLv.H, "Lv. 0", TextSize.Body, Palette.White, TextAnchor.LowerCenter);
                 // 부위 아이콘 — 빈 슬롯에도 «여기는 무슨 자리» 로 흐리게 깔아 둔다(T105 3항 · Refresh 가 장착 여부로 색만 바꾼다)
                 // T176 ⓑ(주인 2026-09-07 11:0X «장착 슬롯 부분이랑 아래에 있는 장비 모양일 때랑 형식이 똑같지가 않네 통일해 줘») —
@@ -114,8 +114,6 @@ namespace KkomaKnight.Game
                 badgeGo.transform.SetAsLastSibling();
                 s.PartIcon = UiKit.SetSprite(badgeGo.transform, "Icon", GearLook.PartIcon(part), Palette.White);
                 if (s.PartIcon != null) s.PartIcon.gameObject.name = "PartIcon";
-                var badge = UiKit.Panel(s.Root, "PlusBadge", "fr.r12", Palette.Yellow); UiKit.Pct(badge.rectTransform, SlotBadge); s.PlusBadge = badge.gameObject;
-                s.Plus = UiKit.Text(badge.transform, "+0", SlotBadgeSize, Palette.Ink, TextAnchor.MiddleCenter, false, false, TextKind.Small); UiKit.Stretch(s.Plus.rectTransform);
                 var dot = UiKit.AlertDot(s.Root, "Alert_Dot_01_Red", new Vector2(1, 1), new Vector2(-6, -6), 44); s.Dot = dot;   // T136 — 점은 헬퍼 한 곳에서만 세운다
                 int idx = i; UiKit.Clickable(s.Root, () => OnSlot(idx));
             }
@@ -144,7 +142,9 @@ namespace KkomaKnight.Game
         {
             var r = Layout.GearStats; float gap = 2f, w = (r.W - gap * 2) / 3f;
             var cell = UiKit.Spawn("ui.frameDark", Root); var crt = (RectTransform)cell.transform; crt.name = "Stat:" + key; UiKit.Pct(crt, r.X + i * (w + gap), r.Y, w, r.H);
-            UiKit.Bordered(crt);   // T69-gear: 레퍼런스 06 의 스탯 3칸은 검은 외곽선 상자 — 아이콘·숫자는 이 뒤에 얹혀 테두리 위
+            // T309(주인 2026-09-09 09:2X «장비에서 공 체 실 부분에 보더 부분 빼기») — 여기 있던 `UiKit.Bordered(crt)`(T69-gear 의 검은 링)를 **없앴다.**
+            // 조각(`ui.frameDark`)의 제 테두리는 그대로다 — 주인이 지목한 것은 그 위에 한 장 더 얹던 검은 링이다.
+            // 감사(`BorderAudit`)는 이 칸들을 «테두리가 있어야 하는 칸» 으로 세므로 예외 목록에 이름표를 같이 넣었다(로비 T94 ⓑ 와 같은 꼴 — 새 지시가 T69 보다 뒤다).
             var ic = UiKit.Icon(crt, "Icon", icon, tint); UiKit.Pct(ic.rectTransform, 6, 14, 20, 72);
             value = UiKit.Label(crt, 28, 0, 66, 100, "0", 40, Palette.White, TextAnchor.MiddleCenter);
             return crt;
@@ -171,7 +171,7 @@ namespace KkomaKnight.Game
                 if (item != null) { item.gameObject.SetActive(g != null); if (g != null) { var im = UiKit.SetSprite(s.Frame, "Item", GearLook.IconKey(D, g), Palette.White); GearUi.FitIcon(im, g); } }
                 UiKit.Show(s.Frame, "Add_1", g == null);
                 if (s.Lv != null) s.Lv.text = $"Lv. {lv}";
-                if (s.PlusBadge != null) s.PlusBadge.SetActive(g != null && g.Plus > 0); if (s.Plus != null && g != null) s.Plus.text = "+" + g.Plus;
+                GearUi.SetPlus(s.Frame, g);   // T310 — 인벤 칸과 **같은 함수**(꼴이 갈릴 자리를 아예 안 만든다)
                 // T105 — 부위 아이콘은 **늘 켜 둔다**(빈 슬롯이면 흐리게 · 끼우면 또렷하게). 세트 아이콘이 아니다.
                 if (s.PartIcon != null) { s.PartIcon.gameObject.SetActive(true); s.PartIcon.sprite = App.Assets.Sprite(GearLook.PartIcon(s.Part)); s.PartIcon.color = g != null ? Palette.White : Palette.A(Palette.White, PartIconEmptyAlpha); }
                 if (s.Dot != null) s.Dot.SetActive(GearUi.BetterInInv(S, s.Part));
