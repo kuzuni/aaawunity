@@ -308,11 +308,14 @@ namespace KkomaKnight.Game
         /// 표 ④ 의 공통 뼈대: 어둠 + 패널(GdBox) + 박스 윗변 <b>등급 탭</b>(GdBadge · 등급색 명판) → 왼쪽 <b>아이콘 칸</b>(GdIcon · 장비 칸 Cell «+N» 포함 · 빈 슬롯은 빈 프레임) · 오른쪽 <b>이름 굵게</b>(GdName) + <b>pill 2</b>(GdMeta · «슬롯 Lv. N/최대» · «부위») → «탭하여 닫기»(배경 탭 = 닫기 · 닫기 X 없음).
         /// 돌려주는 box 안에 스탯 박스(GdStats) · 옵션 줄(GdOpts) · 비용 줄(GdCost) · 버튼 2(GdBtnL/R) 를 Pct 로 놓는다(<see cref="OpenDetail"/> · <see cref="OpenSlot"/>).
         /// </summary>
-        static RectTransform DetailFrame(App app, string badge, string colorName, GearItem g, string name, Color nameColor, string pill1, string pill2)
+        static RectTransform DetailFrame(App app, string badge, string colorName, GearItem g, string name, Color nameColor, string pill1, string pill2, Layout.R? boxOverride = null, Action onTapClose = null)
         {
-            var ov = app.Overlay; var B = Layout.GdBox;
+            // boxOverride — 아래 두 버튼이 없는 «보기 전용» 모드(T267 4항 · 주인 «아래 두 버튼만 없애고 레이아웃 좀만 조절하면 똑같음»)에서
+            //   상자를 짧게 자른다. 안쪽 자리는 전부 «화면 %» 를 `.Within(B)` 로 상자 안 %로 다시 그리는 꼴이라,
+            //   **x·w 를 그대로 두고 h 만 줄이면 잘린 선 위의 요소는 화면에서 한 픽셀도 안 움직인다** — 그래서 안쪽 rect 를 하나도 안 고친다.
+            var ov = app.Overlay; var B = boxOverride ?? Layout.GdBox;
             string bk = BadgeKey(colorName);
-            var box = ov.OpenBox("ui.popup", bk, badge, B, () => ov.Close());
+            var box = ov.OpenBox("ui.popup", bk, badge, B, onTapClose ?? (Action)(() => ov.Close()));
             // 등급 탭 = 표 ④ 배지 크기. **가로는 표 그대로**(T214 · 예전에는 +70px 를 더해 폭이 22.0 → 28.5%(+6.5%p)로 벌어져 §5 에서 0점이었다 · 결정 96 이 «22×2.3» 이라고 적어 둔 자리다).
             // **세로만 +36px 를 남긴다** — 리본 글자는 제목 60 이고 그 칸은 84px 이 필요한데(<see cref="TextSize.BoxHeight"/> · T75 4항 · <c>UiKit.RibbonFit</c> 이 공통 팝업에 거는 것과 같은 규칙)
             // 표 h 2.3%(53.8px)로는 못 담는다. 세로 차 +1.5%p·자리 −1.7%p 는 §5 판정 ±3%p 안이라 이 한 줄로 행이 0 → 1 점이 된다.
@@ -417,6 +420,9 @@ namespace KkomaKnight.Game
             string s = maxed ? $"슬롯 MAX (Lv.{maxLv})" : $"<color=#{Hex(S.Gold >= cost ? Palette.Green : Palette.Red)}>{UiKit.Fmt(S.Gold)}</color>/{UiKit.Fmt(cost)}";
             var t = UiKit.Label(row, 36, 0, 40, 100, s, TextSize.Body, Palette.Cream, TextAnchor.MiddleLeft, true, true); t.name = "CostText";
         }
+        /// <summary>«보기 전용» 세부 팝업의 상자 — <see cref="Layout.GdBox"/> 에서 비용 줄·버튼 자리(아래 8%p)를 잘라 낸 것이다(T267 4항).</summary>
+        public static readonly Layout.R InfoBox = new Layout.R(6.5f, 28.0f, 87.0f, 38.5f);
+
         /// <summary>비용 줄 재화 아이콘 칸의 폭(줄 %) — 줄이 732.9×32.6px 이라 높이 84%(27.4px)와 같은 폭이 되는 값이다(T159 · 정사각).</summary>
         public const float CostIconWPct = 3.74f;
         /// <summary>표 ④ «장비 세부 팝업»: 등급 탭 → 아이콘 칸(+N) · 이름 · «슬롯 Lv. N/최대»·«부위» pill → 스탯 박스(초록 +값) → 옵션 줄(등급색 · 잠금 흐림) → 비용 줄 → 해제/장착(파랑) · 슬롯 강화(주황) → «탭하여 닫기». 규칙·수치는 예전 그대로.</summary>
@@ -443,6 +449,27 @@ namespace KkomaKnight.Game
             }, Layout.GdBtnR.Within(B)); up.name = "BtnR";
             UiKit.SetInteractable(up.GetComponent<Button>(), !maxed && S.Gold >= cost);
             UiKit.TagGroup(box, "버튼 2개", left, up);
+        }
+
+        /// <summary>«보기 전용» 장비 세부 팝업 — 아래 두 버튼(장착/해제 · 슬롯 강화)과 비용 줄이 없다.
+/// (T267 4항 · 주인 2026-09-09 «거기서 아이템 클릭 시 세부 정보 뜨는 팝업도 잘 만드쇼. 아마 원래 장비 클릭 시 세부 정보 뜨는 거에서
+/// 아래 두 버튼만 없애고 레이아웃 좀만 조절하면 똑같음.»)
+/// <para>
+/// <b>새로 만들지 않고 인자 하나로 갈랐다</b>(지시서 4항이 그렇게 권했다) — 같은 <see cref="DetailFrame"/>·<see cref="StatsBox"/>·<see cref="OptionRows"/> 를 그대로 쓰고
+/// 상자만 짧게 잘라(<see cref="InfoBox"/>) 비용 줄·버튼 자리를 없앤다. 안쪽 자리는 «화면 %» 라 잘린 선 위는 한 픽셀도 안 움직인다.
+/// </para>
+/// <paramref name="onClose"/> — 닫을 때 돌아갈 곳(확률 팝업이 제 자신을 다시 연다 · 프로필 팝업 둘이 쓰는 그 꼴 · 표 ㉟).
+/// ⚠ 이 팝업은 <b>아무것도 안 바꾼다</b> — 세이브도 지갑도 안 만진다(보여 주기 전용).</summary>
+        public static void OpenInfo(App app, GearItem g, Action onClose = null)
+        {
+            if (app == null || g == null) return;
+            var D = app.Data; var S = app.Save; var ov = app.Overlay;
+            string colorName = Palette.RarName(g.Rar);
+            var box = DetailFrame(app, RarName(D, g.Rar), colorName, g, Name(D, g), OnPopupBox(Palette.ByName(colorName)),
+                PartName(D, g.Part), RarName(D, g.Rar), InfoBox, onClose != null ? onClose : (Action)(() => ov.Close()));
+            // 스탯·옵션은 «이 등급의 이 부위» 가 어떤 물건인지를 보여 준다 — 슬롯 레벨은 내 세이브 것이라 0 으로 본다(남의 상자 안 물건이다).
+            StatsBox(box, D, S, g, g.Part, 0, false);
+            OptionRows(box, D, g);
         }
 
         /// <summary>빈 부위 팝업 — 같은 구도(장비 없는 상태 · 등급 탭 = «부위 슬롯» · 빈 아이콘 칸 · 스탯 박스에 슬롯 안내 · 옵션 자리에 «장착된 장비가 없습니다» · 비용 줄 · 강화만 · 탭하여 닫기).</summary>

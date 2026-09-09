@@ -68,7 +68,7 @@ namespace KkomaKnight.Game
             float y = 0f;
             foreach (var r in rows)
             {
-                y += Section(D, content, r, y, n, lines);
+                y += Section(app, D, content, r, y, n, lines, boxKey);
                 y += GapPx;
             }
             content.sizeDelta = new Vector2(0f, Mathf.Max(0f, y));
@@ -83,7 +83,7 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>구간 하나(등급 머리 + 칸 격자)를 <paramref name="y"/> 아래에 놓고 그 높이를 돌려준다.</summary>
-        static float Section(GameData D, RectTransform content, GachaOddsRow r, float y, int n, int lines)
+        static float Section(App app, GameData D, RectTransform content, GachaOddsRow r, float y, int n, int lines, string boxKey)
         {
             string color = Palette.RarName(r.Rar);
             var head = UiKit.Rect(content, "Sec:" + r.Rar);
@@ -107,6 +107,11 @@ namespace KkomaKnight.Game
                 var frt = (RectTransform)frame.transform; UiKit.Pct(frt, 6, 2, 88, 66);
                 UiKit.SetSprite(frt, "Item", GearLook.IconKey(t.Part, D.Gear.SetOf(t.Type), r.Rar), Palette.White);
                 UiKit.Label(cell, 0, 70, 100, 26, Pct(r.Each), TextSize.Aux, Palette.White).name = "Pct";
+                // 4항 — 칸을 누르면 «보기 전용» 세부 팝업. 닫으면 **이 팝업으로 돌아온다**(프로필 팝업 둘이 쓰는 그 꼴 · 표 ㉟).
+                //   Overlay 는 한 겹이라 «겹쳐 뜨기» 가 아니라 «갔다 돌아오기» 로 같은 결과를 낸다(결정 기록).
+                var item = new GearItem { Part = t.Part, Type = t.Type, Rar = r.Rar, Plus = 0 };
+                string key = boxKey;
+                UiKit.Clickable(cell, () => GearUi.OpenInfo(app, item, () => Open(app, key)));
             }
             return HeadPx + lines * RowPx;
         }

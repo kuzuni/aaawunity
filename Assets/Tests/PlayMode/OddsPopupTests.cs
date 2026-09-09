@@ -97,6 +97,27 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(has, Find(box2, "Sec:" + rr) != null, "희귀 상자 등급 " + rr + " 구간은 rate > 0 일 때만 선다");
             }
 
+            // 4항 — 칸을 누르면 «보기 전용» 세부 팝업이 뜨고 **아래 두 버튼이 없다**(주인 «아래 두 버튼만 없애고»).
+            //   닫으면 이 확률 팝업으로 돌아온다(Overlay 가 한 겹이라 «겹쳐 뜨기» 를 «갔다 돌아오기» 로 낸다).
+            {
+                var cell = Find(box2, "Odds:" + rare[0].Rar + ":0");
+                Assert.IsNotNull(cell, "누를 칸");
+                var btn = cell.GetComponent<Button>(); Assert.IsNotNull(btn, "칸이 눌린다(4항)");
+                btn.onClick.Invoke(); yield return Frames(2);
+                var info = _app.Overlay.Root;
+                Assert.IsNull(Find(info, "OddsBox"), "확률 목록이 아니라 세부 팝업이 떠 있다");
+                Assert.IsNotNull(Find(info, "Name"), "세부 팝업의 이름줄");
+                Assert.IsNull(Find(info, "BtnL"), "장착/해제 버튼이 없다(보기 전용)");
+                Assert.IsNull(Find(info, "BtnR"), "슬롯 강화 버튼이 없다(보기 전용)");
+                // 아무것도 안 바꾼다 — 세이브도 지갑도
+                double g0 = _app.Save.Gold, m0 = _app.Save.Gem;
+                var back = Find(info, "Dimmed")?.GetComponent<Button>(); Assert.IsNotNull(back, "세부 팝업 배경 탭");
+                back.onClick.Invoke(); yield return Frames(2);
+                Assert.IsNotNull(Find(_app.Overlay.Root, "OddsBox"), "닫으면 확률 팝업으로 돌아온다");
+                Assert.AreEqual(g0, _app.Save.Gold, 1e-9, "보기 전용 팝업은 지갑을 안 만진다");
+                Assert.AreEqual(m0, _app.Save.Gem, 1e-9, "보기 전용 팝업은 지갑을 안 만진다");
+            }
+
             // «탭하여 닫기» — 공통 정보 팝업 문법
             var dim = Find(_app.Overlay.Root, "Dimmed")?.GetComponent<Button>();
             Assert.IsNotNull(dim, "배경 탭으로 닫힌다");
