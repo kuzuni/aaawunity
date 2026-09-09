@@ -7969,8 +7969,9 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 순서 — `Game/Overlay.cs`(특전 팝업 · 헬퍼 원형) → `Game/UiKit.cs`(헬퍼) → 리본 팝업들(`LobbyPopups`·`EventsScreen`·`Mailbox`·`OddsPopup`). **큰 절이라 ⓐ 특전(원형+헬퍼) / ⓑ 나머지 팝업 둘로 나눠 잡아도 된다**(lock `T320-a/b`).
 
-### T321 — ⚑⚑ 주인: **탐험 방치 보상에 «레시피 시간당 1개»(장비 부위 무작위)** (주인 2026-09-09 12:0X «탐험 보상으로 1시간에 1개씩 레시피 중 하나 드랍되게 · 투구, 무기 그런 식의 장비 부위 레시피» · T290 의 뒤 · `expedition.json` 한 줄)
+### T321 ✅ — ⚑⚑ 주인: **탐험 방치 보상에 «레시피 시간당 1개»(장비 부위 무작위)** (주인 2026-09-09 12:0X «탐험 보상으로 1시간에 1개씩 레시피 중 하나 드랍되게 · 투구, 무기 그런 식의 장비 부위 레시피» · T290 의 뒤 · `expedition.json` 한 줄)
 
+> ✅ **확인 끝 · lock 반납(2026-09-09 19:0X · sess-1455-20088 · 워커 P)** — 런 875 dotnet 잡 success + `[CI명부]` `ExpeditionScreenTests(2)` ✗ 없음 · `screens` 30(pill ③ «1/시간» · 두루마리 «8»)·31(«5») 눈으로 확인. 남은 것 = 주인 폰.
 > ▸ **2회차 — 3항(화면) + ④ 표 0→1 + ③ 난수 오버로드, 1회차가 적은 넷을 한 커밋에(2026-09-09 18:2X · sess-1455-20088 · 워커 P · lock `T321` · 결정 983).** 팝업 30: 셋째 pill «📜 1/시간»(`RateRecipe` · `Layout.ExRatePill3` = ② 오른쪽 · 표 ㉕ 두 행 불변) + 격자 셋째 칸 «레시피 N»(`ExpCellRecipe` · 받기 전엔 총 개수) · 31: `QxCellRecipe`(5). «받기»·«광고 보고 무료» 둘 다 난수 오버로드(`G.Recipe` + `Mulberry32`)로 부르고 리워드 팝업에 부위별 칸(빠른 탐험의 토스트도 리워드 팝업으로). ⚠ **자 열 줄이 옛 서명을 부르고 있었다** — 표가 켜지면 «아무것도 안 준다» 는 1회차의 안전장치가 EditMode «골드·충전» 자들도 멈춘다 → 화면과 같은 길(`ClaimNow`/`QuickNow`)로 옮겼다(결정 983 ①). **확인** = 다음 완주 런 `ExpeditionTests`·`ExpeditionScreenTests(2)` ✗ 없음 + `screens` 30·31 + 주인 폰.
 > **⬜ 1회차 push · lock 반납 (sess-0303-27371 · 워커 I · 10:3X · 결정 875)** — Core 는 다 섰고 **남은 것은 화면뿐인데 그 파일을 내가 못 연다**(T258·T311 lock · 워커 A 가 방금 T303 으로 같은 팝업을 잡았다). **lock 을 쥐고 기다리지 않는다** — 그 파일을 여는 사람이 아래 넷을 한 커밋에 하면 끝난다.
 > **1회차 몫** — 1·2·4항. **3항(화면)은 `Game/LobbyPopups.cs` 가 T258·T311 의 살아 있는 lock 안**이라 못 했다.
@@ -9035,6 +9036,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `tools/check_claim_scope.py`(신규) · `.github/workflows/ci.yml` · `docs/PROGRESS.md`(범위 칸 다섯). lock `T347`(반납).
 ### T353 — ⚑ 주인: **패스(19) 무료 열 색 뒤집기(파랑→하늘) + 세 열 보상 칸을 열 가운데로** (주인 2026-09-10 «그 패스에 하늘색, 파란색 그라디안트 서로 색 바꾸셈 · 패스들 다 중앙에 셀 있어야 함 · 로우에 셀이 중앙에 · 현재 오른쪽에 치우쳐 있더라 파란색 쪽 꺼» · T344 의 뒤)
+
+> ⛑ **장애 고침(2026-09-09 19:0X · sess-1455-20088 · 워커 P · 결정 999)** — 이 절의 커밋이 `catalog.json` 설명 칸(`passFree.top/bottom`)을 고치고 생성기를 안 돌려 `docs/assets-map.md` 가 낡았고, dotnet 잡의 «생성물이 최신인가(T211)» 단계가 런 879 부터 막혔다. `python3 tools/gen_catalog.py` 로 재생성만 했다(코드·값 0줄).
 
 0. **실측** — 무료 열 가운데 16.9(1.9+30.0/2) ↔ 칸 가운데 20.45(11.7+17.5/2) = **3.5%p 오른쪽**. 유료 1 은 0.8 · 유료 2 는 1.45 오른쪽. 표 ㊼ 의 «실측 px · 열 가운데» 는 레퍼런스 그림을 잰 값이었다.
 1. **색** — `passFree` 의 top/bottom 두 값을 **바꾼다**(hex 는 그대로 · T344 가 Top = 왼쪽으로 눕혀 둔 채) → 왼쪽 파랑 `#1E63D6` · 오른쪽 하늘 `#5BC8F5`. 카탈로그·`GradientPalette` 폴백·assets-map·표 ㊼ 열 이름.
