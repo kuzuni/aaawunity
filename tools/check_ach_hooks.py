@@ -59,6 +59,11 @@ CALL = re.compile(
 )
 CONST = re.compile(r"\bconst\s+string\s+(?P<body>[^;]+);", re.S)
 PAIR = re.compile(r"(\w+)\s*=\s*\"([^\"]*)\"")
+# 한 파일 안에서 «상수를 담아 두었다가 넘기는» 지역 변수 (T287 뒷맛 · 결정 825)
+#   `string achBox = boxKey == "rare" ? Quests.AchChestRare : … : null;  if (achBox != null) Quests.Ach(App, achBox, n);`
+#   부르는 자리가 **버젓이 있는데** 자가 «훅이 없다» 고 울었다(ShopScreen.cs:762 · 실측 2026-09-09 06:1X).
+LOCAL = re.compile(r"\bstring\s+(?P<name>[A-Za-z_]\w*)\s*=\s*(?P<rhs>[^;{}]+);")
+TOKEN = re.compile(r"\"[^\"]*\"|[A-Za-z_][\w.]*")
 
 
 def read(path):
@@ -92,6 +97,32 @@ def lit_of(tok, cm):
     if tok in cm:
         return cm[tok]
     return cm.get(tok.split(".")[-1]) if "." in tok else None
+
+
+def locals_of(src, cm):
+    """
+    한 파일 안의 «상수를 담아 두는» 지역 변수 → 담길 수 있는 글자들 (T287 뒷맛).
+
+    ⚠ <b>왜 필요한가</b> — 이름을 «고르는» 자리는 갈래를 타는 것이 자연스럽다:
+        `string achBox = boxKey == "rare" ? Quests.AchChestRare : … : null;` 뒤에 `Quests.Ach(App, achBox, n)`.
+    첫 판의 자는 «둘째 인자가 글자로 풀리는 것만» 셌으므로 <b>부르는 자리가 버젓이 있는데 «훅이 없다» 고 울었다</b>
+    (`ShopScreen.cs:762` · 실측 2026-09-09 06:1X · 세운 지 한 시간 만이다). 자가 헛울면 다음 사람은 그 자를 안 본다.
+
+    ⚠ <b>한 홉만 간다</b> — 오른쪽에서 <b>상수로 풀리는 낱말만</b> 거둔다. 변수에서 변수로 타고 가지 않는다:
+    `string c = row.Counter;` 같은 자리는 여전히 <b>안 풀리고</b>, 그것이 옳다(그 자리는 배관이지 훅이 아니다).
+    이 한 겹이 이 레포의 실제 꼴을 다 덮는다 — 더 따라가면 «자가 코드를 흉내 내기» 시작하고, 그때부터 자가 거짓말을 한다.
+    """
+    out = {}
+    for m in LOCAL.finditer(src):
+        rhs = m.group("rhs")
+        # 갈래를 고르는 오른쪽(`boxKey == "rare" ? …`)에서는 **비교에 쓰인 글자**를 거두지 않는다 —
+        # 그것은 «담길 이름» 이 아니라 «어느 갈래인가» 다. 안 걸러 두면 `counter == "adWatch"` 한 줄이
+        # 지워진 훅을 살아 있는 것처럼 덮어 버린다(자를 눈멀게 하는 쪽으로 틀린다).
+        toks = [t for t in TOKEN.findall(rhs) if not (t.startswith('"') and ("==" in rhs or "!=" in rhs))]
+        lits = {lit for t in toks if (lit := lit_of(t, cm)) is not None}
+        if lits:
+            out.setdefault(m.group("name"), set()).update(lits)
+    return out
 
 
 def ach_name_map(quests_src, cm):
@@ -133,12 +164,15 @@ def measure(sources, table, tl):
 
     direct, bumped, sites = set(), set(), 0
     for _, src in sources:
+        loc = locals_of(src, cm)                 # 그 파일 안에서 «상수를 담아 두는» 지역 변수(T287 뒷맛)
         for tok in CALL.findall(src):
             lit = lit_of(tok, cm)
-            if lit is None:      # 변수를 받는 자리 = 배관(Ach·Bump 의 몸통) — 훅이 아니다
+            lits = {lit} if lit is not None else loc.get(tok, set())
+            if not lits:         # 끝내 안 풀리는 자리 = 배관(Ach·Bump 의 몸통) — 훅이 아니다
                 continue
             sites += 1
-            (direct if lit in rows else bumped).add(lit)
+            for x in lits:
+                (direct if x in rows else bumped).add(x)
 
     reached = set(direct)
     orphan = set()
@@ -200,6 +234,7 @@ def self_test():
         public const string Kill = "kill", ChestOpen = "chestOpen", PetUpgrade = "petUpgrade";
         public const string AchAdWatch = "adWatch", AchArenaTry = "arenaTry", AchExpeditionQuick = "expeditionQuick";
         public const string ExpeditionFastClaim = "expeditionFastClaim";
+        public const string AchChestRare = "chestOpenRare", AchChestEpic = "chestOpenEpic";
         static string AchName(string counter)
         {
             if (counter == Kill || counter == PetUpgrade) return counter;
@@ -215,9 +250,12 @@ def self_test():
         Quests.Bump(App, Quests.Kill, add);
         Quests.Bump(App, Quests.ChestOpen, n);
         Quests.Bump(app, Quests.ExpeditionFastClaim);
+        string achBox = boxKey == "rare" ? Quests.AchChestRare : boxKey == "legend" ? Quests.AchChestEpic : null;
+        if (achBox != null) Quests.Ach(App, achBox, n);
 '''
-    table = ["kill", "adWatch", "arenaTry", "expeditionQuick", "petUpgrade"]
-    tl = {"hooked": {"kill", "adWatch", "arenaTry", "expeditionQuick", "petUpgrade"}, "notYet": set()}
+    table = ["kill", "adWatch", "arenaTry", "expeditionQuick", "petUpgrade", "chestOpenRare", "chestOpenEpic"]
+    tl = {"hooked": {"kill", "adWatch", "arenaTry", "expeditionQuick", "petUpgrade", "chestOpenRare", "chestOpenEpic"},
+          "notYet": set()}
 
     def run(game_src, tbl=table):
         return measure([("Quests.cs", quests), ("Game.cs", game_src)], tbl, tl)
@@ -232,16 +270,29 @@ def self_test():
         print(f"  {'✔' if okk else '✘'} {name} — 잰 것 {sorted(got)} / 기대 {sorted(want)}")
 
     reached, zero, orphan, amap, sites = run(ok_game)
-    check("성한 판: 넷이 오르고 petUpgrade 만 0", reached, {"kill", "adWatch", "arenaTry", "expeditionQuick"})
+    check("성한 판: 여섯이 오르고 petUpgrade 만 0", reached,
+          {"kill", "adWatch", "arenaTry", "expeditionQuick", "chestOpenRare", "chestOpenEpic"})
     check("성한 판: 표에 없는 이름 없음", orphan, set())
     n += 1
-    okk = sites == 5
+    okk = sites == 6
     bad += 0 if okk else 1
-    print(f"  {'✔' if okk else '✘'} 배관은 안 센다 — 부르는 자리 {sites}곳(기대 5 · `Ach` 몸통의 `Achievement.Add(…, counter, …)` 는 변수라 제외)")
+    print(f"  {'✔' if okk else '✘'} 배관은 안 센다 — 부르는 자리 {sites}곳(기대 6 · `Ach` 몸통의 `Achievement.Add(…, counter, …)` 는 변수라 제외)")
 
     # ⓐ 훅 한 줄을 지운다 → 그 줄이 «영원히 0» 으로 잡혀야 한다(자의 목록은 이것을 못 본다)
     reached, zero, _, _, _ = run(ok_game.replace("Quests.Ach(app, Quests.AchAdWatch);\n", ""))
     check("훅 한 줄을 지우면 adWatch 가 0 으로 잡힌다", zero, {"adWatch", "petUpgrade"})
+
+    # ⓐ' 이름을 «담아 두었다가 넘기는» 갈래 — 첫 판의 자가 여기서 헛울었다(ShopScreen.cs:762 · T287 뒷맛)
+    reached, zero, _, _, _ = run(ok_game)
+    check("상수를 지역 변수에 담아 넘겨도 «걸렸다» 로 센다", reached & {"chestOpenRare", "chestOpenEpic"},
+          {"chestOpenRare", "chestOpenEpic"})
+    # 그 갈래가 «담는 줄» 을 지우면 도로 0 이어야 한다 — 무는 것까지 봐야 갈래를 잰 것이다
+    reached, zero, _, _, _ = run(ok_game.replace("if (achBox != null) Quests.Ach(App, achBox, n);\n", ""))
+    check("담아 놓고 안 부르면 도로 0 이다", zero, {"chestOpenRare", "chestOpenEpic", "petUpgrade"})
+    # 비교에 쓰인 글자는 «담길 이름» 이 아니다 — 안 걸러 두면 지워진 훅을 살아 있는 것처럼 덮는다
+    sneak = ok_game.replace('Quests.Ach(app, Quests.AchAdWatch);\n', '') + '\n        string x = s == "adWatch" ? A : B;\n        Quests.Ach(app, x);\n'
+    _, zero, _, _, _ = run(sneak)
+    check("비교에 쓰인 글자로는 안 살아난다", zero & {"adWatch"}, {"adWatch"})
 
     # ⓑ 상수의 글자를 오타 낸다 → 표에 없는 이름으로 잡혀야 한다
     reached, zero, orphan, _, _ = run(ok_game.replace("AchArenaTry", "AchAdWatch"))
@@ -259,7 +310,7 @@ def self_test():
     if bad:
         print(f"✗ check_ach_hooks --self-test: 갈래 {bad}/{n} 이 기대와 다르다 — 위 줄의 «잰 것 ↔ 기대» 를 보라")
         return 1
-    print(f"✓ check_ach_hooks --self-test: 갈래 {n}개가 전부 기대대로 갈린다(훅 지움 · 상수 오타 · 잇기 끊김 · 표에서 빠짐 · 배관 제외)")
+    print(f"✓ check_ach_hooks --self-test: 갈래 {n}개가 전부 기대대로 갈린다(훅 지움 · 상수 오타 · 잇기 끊김 · 표에서 빠짐 · 배관 제외 · **담아 넘기기** 세 갈래)")
     return 0
 
 
