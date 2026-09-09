@@ -67,6 +67,7 @@ namespace KkomaKnight.Game
             d.ArenaMatch = LoadArenaMatch(catalog);
             d.ArenaFoe = LoadArenaFoe(catalog);   // 같은 파일의 foe 칸(T240 3항)
             d.Achievement = LoadAchievement(catalog);
+            d.Recipe = LoadRecipe(catalog);   // T290
             ApplyCombatOverride(d, catalog);   // T173 — 전투 규칙 덮어쓰기(창 사거리·관통)는 App 이 서기 «전» 에 먹인다
             App.Create(d, catalog, uiFont, Camera.main);
             PostFx.Enable(App.I != null ? App.I.transform : null, Camera.main);   // T181 — 월드 Bloom(UI 에는 안 먹는다 · PostFx 주석 참조)
@@ -176,6 +177,18 @@ namespace KkomaKnight.Game
             if (ta == null) { Debug.LogError("[KkomaKnight] achievement.json 이 카탈로그(data.achievement)에 없다 — 업적 표 없음"); return null; }
             try { return AchievementData.Parse(ta.text); }
             catch (Exception e) { Debug.LogError("[KkomaKnight] achievement.json 파싱 실패: " + e.Message); return null; }
+        }
+
+        /// <summary>
+        /// 장비 레시피 표 — 이 레포 전용 <c>Assets/KkomaKnight/recipe.json</c>(카탈로그 텍스트 «data.recipe» · T290).
+        /// 못 읽으면 null 이고, 그러면 슬롯 강화가 <b>옛 그대로 골드만</b> 든다(강화가 막히지 않는다 — «표를 못 읽어 아무도 강화를 못 한다» 가 더 나쁘다).
+        /// </summary>
+        static RecipeData LoadRecipe(AssetCatalog catalog)
+        {
+            var ta = catalog != null ? catalog.Text("data.recipe") : null;
+            if (ta == null) { Debug.LogError("[KkomaKnight] recipe.json 이 카탈로그(data.recipe)에 없다 — 레시피 표 없음"); return null; }
+            try { return RecipeData.Parse(ta.text); }
+            catch (Exception e) { Debug.LogError("[KkomaKnight] recipe.json 파싱 실패: " + e.Message); return null; }
         }
 
         /// <summary>아레나 한 판의 규칙표 — 이 레포 전용 <c>Assets/KkomaKnight/arenaMatch.json</c>(카탈로그 텍스트 «data.arenaMatch» · T240). 못 읽으면 null(승점이 안 움직인다 — 아레나 껍데기는 종전 그대로 뜬다).</summary>

@@ -37,7 +37,8 @@ namespace KkomaKnight.Core
 
         /// <summary>이 보상을 세이브에 담을 수 있는가 — 모르는 이름은 <b>우편함에 안 들어간다</b>(조용히 버리지 않는다).</summary>
         public static bool CanPay(string item)
-            => item == ItemGold || item == ItemGem || item == ItemPetEgg || item == ItemArenaCoin || item == ItemRevive || GachaKeys.IsKey(item);   // 키 3종 = T255 · 부활권 = T254
+            => item == ItemGold || item == ItemGem || item == ItemPetEgg || item == ItemArenaCoin || item == ItemRevive
+               || GachaKeys.IsKey(item) || Recipes.IsRecipe(item);   // 키 3종 = T255 · 부활권 = T254 · 레시피 = T290
 
         /// <summary>우편함에 든 것(없으면 빈 목록 · 옛 세이브 호환).</summary>
         public static List<MailItem> Pending(SaveData s)
@@ -142,6 +143,7 @@ namespace KkomaKnight.Core
             if (item == ItemArenaCoin) return s.ArenaCoin;
             if (item == ItemRevive) return s.Revive;
             if (GachaKeys.IsKey(item)) return GachaKeys.Count(s, item);
+            if (Recipes.IsRecipe(item)) return Recipes.Count(s, Recipes.PartOf(item));   // T290
             return 0;
         }
 
@@ -154,6 +156,8 @@ namespace KkomaKnight.Core
             else if (item == ItemArenaCoin) s.ArenaCoin += amount;
             else if (item == ItemRevive) s.Revive += (int)System.Math.Round(amount);   // T254
             else if (GachaKeys.IsKey(item)) GachaKeys.Add(s, item, amount);   // T255 — 담는 자리도 GachaKeys 가 안다
+            // T290 — 부위별 레시피(recipe.<부위>). 개수라 반올림한다(키·부활권과 같은 갈래) · 담는 자리는 Recipes 가 안다.
+            else if (Recipes.IsRecipe(item)) Recipes.Add(s, Recipes.PartOf(item), (int)System.Math.Round(amount));
             // 그 밖의 이름은 Add 가 이미 막았다 — 여기까지 오지 않는다.
         }
     }

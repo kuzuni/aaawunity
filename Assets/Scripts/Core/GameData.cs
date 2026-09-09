@@ -51,6 +51,8 @@ namespace KkomaKnight.Core
         public ArenaFoeData ArenaFoe;
         /// <summary>업적(반복 퀘스트) 표 — 이 레포의 <c>Assets/KkomaKnight/achievement.json</c>(카탈로그 텍스트 «data.achievement» · T258). 로드는 Bootstrap 이 따로 한다 · 없으면 null(업적 탭이 비어 뜨고 받기가 없다).</summary>
         public AchievementData Achievement;
+        /// <summary>장비 레시피 표 — 이 레포의 <c>Assets/KkomaKnight/recipe.json</c>(카탈로그 텍스트 «data.recipe» · T290). 로드는 Bootstrap 이 따로 한다 · 없으면 null(레시피가 안 드는 옛 그대로 = 골드만).</summary>
+        public RecipeData Recipe;
 
         public static readonly string[] Files = { "tune.json", "enemies.json", "perks.json", "gear.json", "gacha.json", "combat.json", "ui.json" };
 

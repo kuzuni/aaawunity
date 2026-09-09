@@ -91,6 +91,12 @@ namespace KkomaKnight.Core
         public Dictionary<string, int> AchClaimed = new Dictionary<string, int>();
         /// <summary>업적 중 <b>하루 한 번만</b> 오르는 것의 «마지막으로 센 날짜»(<c>yyyy-MM-dd</c> · 지금은 출석 하나 · 주인 명시).</summary>
         public Dictionary<string, string> AchDay = new Dictionary<string, string>();
+        /// <summary>
+        /// 가진 <b>장비 레시피</b>(T290 · 부위 → 개수 · 주인 2026-09-09 «부위마다 레시피가 있게 해»).
+        /// 슬롯 강화가 <see cref="GearSystem.SlotUp"/> 에서 골드와 <b>같이</b> 뺀다 — 담는 자리는 여기 하나다(<see cref="Recipes"/> 가 규칙을 갖는다).
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 빈 표»(옛 세이브 호환 · <see cref="DunFloor"/> 와 같은 꼴).
+        /// </summary>
+        public Dictionary<string, int> Recipes = new Dictionary<string, int>();
         public Dictionary<string, int> DunTickets = new Dictionary<string, int>();
         /// <summary>던전 키 → 오늘 쓴 «광고 보고 티켓» 횟수(상한 = dungeon.json <c>adPerDay</c>).</summary>
         public Dictionary<string, int> DunAdUsed = new Dictionary<string, int>();
@@ -298,6 +304,7 @@ namespace KkomaKnight.Core
             var ac = new Dictionary<string, object>(); foreach (var kv in Ach) ac[kv.Key] = (double)kv.Value; o["ach"] = ac;                 // T258
             var acc = new Dictionary<string, object>(); foreach (var kv in AchClaimed) acc[kv.Key] = (double)kv.Value; o["achClaimed"] = acc;
             var acd = new Dictionary<string, object>(); foreach (var kv in AchDay) acd[kv.Key] = kv.Value ?? ""; o["achDay"] = acd;
+            var rc = new Dictionary<string, object>(); foreach (var kv in Recipes) rc[kv.Key] = (double)kv.Value; o["recipes"] = rc;   // T290
             // T259 — 상점 «하루 1번» 자리 넷의 날짜 도장. 옛 키 `freeDay` 도 위에서 그대로 적는다(다이아 칸의 짧은 길) —
             //        옛 판으로 되돌아가도 다이아 보급만은 오늘 몫을 지킨다. 두 이름이 같은 칸을 보므로 갈라질 자리가 없다.
             var fd = new Dictionary<string, object>(); foreach (var kv in FreeDays) fd[kv.Key] = kv.Value ?? ""; o["freeDays"] = fd;
@@ -358,6 +365,7 @@ namespace KkomaKnight.Core
                     foreach (var k in j["ach"].Keys) s.Ach[k] = j["ach"][k].Int();                             // T258 — 없으면 빈 표(옛 세이브)
                     foreach (var k in j["achClaimed"].Keys) s.AchClaimed[k] = j["achClaimed"][k].Int();
                     foreach (var k in j["achDay"].Keys) s.AchDay[k] = j["achDay"][k].Str("");
+                    foreach (var k in j["recipes"].Keys) s.Recipes[k] = j["recipes"][k].Int();                 // T290 — 없으면 빈 표(옛 세이브)
                     foreach (var k in j["dunTickets"].Keys) s.DunTickets[k] = j["dunTickets"][k].Int();
                     foreach (var k in j["dunFloor"].Keys) s.DunFloor[k] = j["dunFloor"][k].Int();
                     s.PetEgg = j["petEgg"].Num();   // 없으면 0(옛 세이브 호환 · T228)
