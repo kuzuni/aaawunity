@@ -644,10 +644,10 @@
 | colors | `col.slate` | `#415760` | #415760 |  |
 | colors | `col.topFrame` | `#2C2B29` | #2C2B29 |  |
 | colors | `col.topCell` | `#12110F` | #12110F |  |
-| colors | `col.grad.cardGem.top` | `#8200FF` | #8200FF | 상점 다이아 카드 «위» 색 — 주인 지정 #8200FF(T341 · 2026-09-10 «상단 그라디언트 8200FF · 완전 불투명») · 옛 실측 #40116D(09_shop_1.jpg (40,440)~(225,645) · T116) |
-| colors | `col.grad.cardGem.bottom` | `#EA00FF` | #EA00FF | 상점 다이아 카드 «아래» 색 — 주인 지정 #EA00FF(T341) · 옛 실측 #AA0CB8 · 방향은 그대로 어두운 위 → 밝은 아래 |
-| colors | `col.grad.cardGold.top` | `#183D6A` | #183D6A | 상점 골드 카드 «위» 색 — 주인 지정 #183D6A(T341 · 옛 실측과 같은 값 · 09_shop_1.jpg (40,1130)~(225,1335)) |
-| colors | `col.grad.cardGold.bottom` | `#14ADFF` | #14ADFF | 상점 골드 카드 «아래» 색 — 주인 지정 #14ADFF(T341) · 옛 실측 #1683BE |
+| colors | `col.grad.cardGem.top` | `#AE59FF` | #AE59FF | T365 주인 «채도 떨어뜨려 · 다른 상자 카드들처럼» — T341 주인 값 #8200FF 의 색상·명도는 그대로 두고 채도만 ×0.65 · 상점 다이아 카드 «위» 색 — 주인 지정 #8200FF(T341 · 2026-09-10 «상단 그라디언트 8200FF · 완전 불투명») · 옛 실측 #40116D(09_shop_1.jpg (40,440)~(225,645) · T116) |
+| colors | `col.grad.cardGem.bottom` | `#F159FF` | #F159FF | T365 주인 «채도 떨어뜨려 · 다른 상자 카드들처럼» — T341 주인 값 #EA00FF 의 색상·명도는 그대로 두고 채도만 ×0.65 · 상점 다이아 카드 «아래» 색 — 주인 지정 #EA00FF(T341) · 옛 실측 #AA0CB8 · 방향은 그대로 어두운 위 → 밝은 아래 |
+| colors | `col.grad.cardGold.top` | `#354D6A` | #354D6A | T365 주인 «채도 떨어뜨려 · 다른 상자 카드들처럼» — T341 주인 값 #183D6A 의 색상·명도는 그대로 두고 채도만 ×0.65 · 상점 골드 카드 «위» 색 — 주인 지정 #183D6A(T341 · 옛 실측과 같은 값 · 09_shop_1.jpg (40,1130)~(225,1335)) |
+| colors | `col.grad.cardGold.bottom` | `#66CAFF` | #66CAFF | T365 주인 «채도 떨어뜨려 · 다른 상자 카드들처럼» — T341 주인 값 #14ADFF 의 색상·명도는 그대로 두고 채도만 ×0.65 · 상점 골드 카드 «아래» 색 — 주인 지정 #14ADFF(T341) · 옛 실측 #1683BE |
 | colors | `col.grad.cardBlue.top` | `#50A1E0` | #50A1E0 | 특권 카드 «위» 색 — 11_shop_special.jpg (40,300)~(680,430) 실측 |
 | colors | `col.grad.cardBlue.bottom` | `#5CC6F8` | #5CC6F8 | 특권 카드 «아래» 색 — 같은 실측 |
 | colors | `col.grad.cardChestLegend.top` | `#BA8BFF` | #BA8BFF |  |
