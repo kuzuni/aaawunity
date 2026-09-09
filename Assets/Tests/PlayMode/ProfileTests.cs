@@ -54,9 +54,12 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(avatar, "탑바 아바타 칸");
             var avBtn = avatar.GetComponent<Button>();
             Assert.IsNotNull(avBtn, "아바타 칸에 버튼(조각에는 없어 Clickable 이 붙인다)");
-            // 기본 색 = 첫 색(노랑) 조각이 서 있다
+            // 기본 = 첫 색 테두리 + 첫 초상 아이콘(T262 ⓐ · 주인 «플레이어 이미지 말고»)
             Assert.AreEqual(Profile.Colors[0], Profile.Current(_app.Save), "안 고르면 기본 색");
             Assert.IsNotNull(UiKit.Find(avatar, "ui.profileFrame." + Profile.Colors[0]), "기본 테두리 조각이 탑바에 서 있다");
+            Assert.AreEqual(Profile.Icons[0], Profile.CurrentIcon(_app.Save), "안 고르면 기본 초상 아이콘");
+            Assert.IsNotNull(UiKit.Find(avatar, Profile.FaceName), "탑바 초상은 아이콘 그림이다");
+            Assert.IsNull(avatar.GetComponentInChildren<HeroView>(true), "내 캐릭터 그림(HeroView)은 아바타 자리에 없다(주인 «플레이어 이미지 말고»)");
 
             // ⓑ 누르면 주인 지목 팝업
             avBtn.onClick.Invoke(); yield return Frames(2); Canvas.ForceUpdateCanvases();
@@ -66,7 +69,7 @@ namespace KkomaKnight.Tests.Play
             int rows = 0;
             foreach (var t in ov.GetComponentsInChildren<Transform>(true))
                 if (t.name.StartsWith(Profile.RowPrefix, StringComparison.Ordinal) && t.gameObject.activeInHierarchy) rows++;
-            Assert.AreEqual(Profile.Colors.Length, rows, "칸 = 우리 색 다섯(남는 칸은 끈다)");
+            Assert.AreEqual(Profile.Icons.Length, rows, "칸 = 고를 수 있는 초상 아이콘 넷(남는 칸은 끈다 · T262 ⓐ)");
             foreach (var t in ov.GetComponentsInChildren<TMP_Text>(true))
             {
                 string s = (t.text ?? "").Trim();
@@ -74,8 +77,8 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreNotEqual("Choose", s, "영문 데모 글자 0(버튼은 «선택»)");
             }
 
-            // ⓒ 두 번째 색을 고르고 «선택»
-            string want = Profile.Colors[1];
+            // ⓒ 두 번째 초상을 고르고 «선택»
+            string want = Profile.Icons[1];
             var row = UiKit.Find(ov, Profile.RowPrefix + want);
             Assert.IsNotNull(row, "그 색 칸");
             var rowBtn = row.GetComponent<Button>(); Assert.IsNotNull(rowBtn, "칸에 버튼(Clickable 이 붙인다)");
@@ -85,11 +88,13 @@ namespace KkomaKnight.Tests.Play
             var chooseBtn = choose.GetComponent<Button>(); Assert.IsNotNull(chooseBtn, "그 버튼의 Button");
             chooseBtn.onClick.Invoke(); yield return Frames(3); Canvas.ForceUpdateCanvases();
 
-            Assert.AreEqual(want, _app.Save.ProfileColor, "고른 색이 세이브에 남는다");
+            Assert.AreEqual(want, _app.Save.ProfileIcon, "고른 초상이 세이브에 남는다");
             Assert.IsFalse(_app.Overlay.IsOpen, "고르면 닫힌다");
             var avatar2 = UiKit.Find(_app.Current.Root, "Avatar");
             Assert.IsNotNull(avatar2, "탑바 아바타 칸(다시)");
-            Assert.IsNotNull(UiKit.Find(avatar2, "ui.profileFrame." + want), "탑바 테두리가 고른 색 조각으로 선다");
+            Assert.IsNotNull(UiKit.Find(avatar2, Profile.FaceName), "탑바에 초상 아이콘이 선다");
+            Assert.AreEqual(want, Profile.CurrentIcon(_app.Save), "그 초상이 고른 것이다");
+            Assert.IsNull(avatar2.GetComponentInChildren<HeroView>(true), "고른 뒤에도 HeroView 는 안 돌아온다");
             Assert.IsNotNull(avatar2.GetComponentInChildren<HeroView>(true), "초상(HeroView)은 그대로 그 안에");
 
             _log.AssertNoRed("T96-profile 아바타 고르기");

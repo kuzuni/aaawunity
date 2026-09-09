@@ -37,8 +37,28 @@ namespace KkomaKnight.Game
         /// <summary>이름 바꾸기 팝업의 입력칸·확인 버튼·글자 수 표시(고정 이름).</summary>
         public const string NickInputName = "NickInput", NickOkName = "NickOkBtn", NickCountName = "NickCount";
 
-        /// <summary>고를 수 있는 테두리 색 — 팩의 <c>ProfileFrame_02_*</c> 변형 다섯. 첫 값이 기본이다.</summary>
+        /// <summary>고를 수 있는 테두리 색 — 팩의 <c>ProfileFrame_02_*</c> 변형 다섯. 첫 값이 기본이다.
+        /// <para>⚠ T262 ⓐ 뒤로 <b>팝업이 고르는 것은 색이 아니라 초상 아이콘</b>이다. 색은 세이브에 남아 테두리로 쓰이지만 지금 고르는 길은 없다(주인이 색 고르기를 없애라고 한 적은 없어 지우지 않았다).</para></summary>
         public static readonly string[] Colors = { "yellow", "blue", "red", "plum", "gray" };
+
+        /// <summary>
+        /// 고를 수 있는 <b>초상 아이콘</b>(T262 ⓐ · 주인 2026-09-09 «프로필 … 이미지가 PvP 에서 더미 데이터들 부분 아이콘들처럼 설정하게 해야 함. <b>플레이어 이미지 말고</b>»).
+        /// <para>
+        /// 아레나가 더미 상대에게 쓰는 그 넷과 <b>같은 키</b>다 — 주인이 «그 아이콘들처럼» 이라고 한 것이 이것이다.
+        /// ⚠ 지금 같은 목록이 <c>EventsScreen.Foes</c> 에도 있다. <b>여기가 정본</b>이고 그쪽을 이리로 돌리는 것은 T262 ⓑ 의 일이다
+        /// (그 파일이 T251 lock 안이라 이 회차에서 못 건드린다 · 규약 3항).
+        /// </para>
+        /// 첫 값이 기본이다(안 고르면 종전처럼 아무거나 아니라 <b>언제나 같은</b> 초상이 선다).
+        /// </summary>
+        public static readonly string[] Icons = { "ui.iconFoe1", "ui.iconFoe2", "ui.iconFoe3", "ui.iconFoe4" };
+
+        /// <summary>지금 고른 초상 아이콘(세이브에 없거나 모르는 값이면 기본 = 첫 아이콘).</summary>
+        public static string CurrentIcon(SaveData s)
+        {
+            string k = s != null ? s.ProfileIcon : null;
+            if (!string.IsNullOrEmpty(k)) foreach (var i in Icons) if (i == k) return i;
+            return Icons[0];
+        }
 
         /// <summary>지금 색(세이브에 없거나 모르는 값이면 기본 = 첫 색).</summary>
         public static string Current(SaveData s)
@@ -52,7 +72,28 @@ namespace KkomaKnight.Game
         public const string FrameKeyPrefix = "ui.profileFrame.";
         public static string FrameKey(SaveData s) => FrameKeyPrefix + Current(s);
 
-        /// <summary>아바타(테두리) 고르기 팝업 — 탑바 아바타를 누르면 열린다.</summary>
+        /// <summary>
+        /// 테두리 조각(<c>ProfileFrame_02</c>) 안에 <b>초상 아이콘</b>을 넣는다(T262 ⓐ) — 팝업 칸과 탑바가 <b>같은 함수</b>를 쓴다.
+        /// <para>
+        /// 조각의 마스크 안에는 데모의 <c>Character</c> 그림이 들어 있어 먼저 끈다(종전 <see cref="HeroView"/> 자리와 같은 처리).
+        /// 마스크를 못 찾으면 조각 자신에 넣는다 — 조각 구성이 바뀌어도 <b>초상이 사라지지는 않게</b>.
+        /// </para>
+        /// </summary>
+        public static void Face(RectTransform frame, string iconKey)
+        {
+            if (frame == null || string.IsNullOrEmpty(iconKey)) return;
+            var mask = UiKit.FindAny(frame, "Bg_MainColor(Mask)", "Mask") ?? frame;
+            UiKit.Hide(mask, "Character");
+            var old = UiKit.Find(mask, FaceName);
+            if (old != null) Object.Destroy(old.gameObject);
+            var im = UiKit.Icon(mask, FaceName, iconKey);
+            if (im != null) { im.preserveAspect = true; UiKit.Stretch(im.rectTransform); }
+        }
+
+        /// <summary>탑바·팝업 칸 안 초상 그림의 오브젝트 이름(자가 «HeroView 가 아니라 아이콘이다» 를 이 이름으로 잰다).</summary>
+        public const string FaceName = "AvatarFace";
+
+        /// <summary>아바타(초상) 고르기 팝업 — 탑바 아바타를 누르면 열린다.</summary>
         public static void OpenAvatar(App app)
         {
             if (app == null) return;
@@ -62,7 +103,7 @@ namespace KkomaKnight.Game
             if (popup == null) return;                                   // 조각 구성이 바뀌면 조용히 빈 어둠(빨간 줄 0)
             Retitle(app, popup);
 
-            string picked = Current(app.Save);
+            string picked = CurrentIcon(app.Save);
             var rows = new List<RectTransform>();
             foreach (var t in rt.GetComponentsInChildren<Transform>(true))
             {
@@ -74,27 +115,28 @@ namespace KkomaKnight.Game
             var checks = new List<Transform>();
             for (int i = 0; i < rows.Count; i++)
             {
-                bool on = i < Colors.Length;
+                bool on = i < Icons.Length;
                 rows[i].gameObject.SetActive(on);
                 if (!on) continue;
-                string color = Colors[i];
-                rows[i].name = RowPrefix + color;
-                // 칸 안 그림을 우리 색 조각으로 — 팝업에서 보는 것이 곧 탑바에 서는 것
+                string icon = Icons[i];
+                rows[i].name = RowPrefix + icon;
+                // 칸 안 그림 = «테두리 조각 + 그 안에 초상 아이콘» — 팝업에서 보는 것이 곧 탑바에 서는 것(T262 ⓐ)
                 var area = UiKit.Find(rows[i], "ProfileArea") as RectTransform;
                 if (area != null)
                 {
                     UiKit.Clear(area);
-                    var piece = UiKit.Spawn("ui.profileFrame." + color, area);
+                    var piece = UiKit.Spawn(FrameKey(app.Save), area);
                     var prt = (RectTransform)piece.transform;
                     UiKit.FitScale(prt, area.rect.size);
+                    Face(prt, icon);
                 }
                 var check = UiKit.Find(rows[i], "Check");
-                if (check != null) { check.gameObject.SetActive(color == picked); checks.Add(check); }
-                string c2 = color; int idx = i;
+                if (check != null) { check.gameObject.SetActive(icon == picked); checks.Add(check); }
+                string c2 = icon; int idx = i;
                 UiKit.Clickable(rows[idx], () =>
                 {
                     picked = c2;
-                    for (int k = 0; k < checks.Count && k < Colors.Length; k++) checks[k].gameObject.SetActive(Colors[k] == picked);
+                    for (int k = 0; k < checks.Count && k < Icons.Length; k++) checks[k].gameObject.SetActive(Icons[k] == picked);
                 });
             }
 
@@ -107,7 +149,7 @@ namespace KkomaKnight.Game
                 if (label != null) UiKit.SetText(label.transform, "", "선택", kind: TextKind.Button);
                 UiKit.Clickable(choose.transform, () =>
                 {
-                    app.Save.ProfileColor = picked;
+                    app.Save.ProfileIcon = picked;
                     app.Persist();
                     app.Overlay.Close();
                     app.Current?.Refresh();

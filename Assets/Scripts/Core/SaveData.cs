@@ -57,6 +57,9 @@ namespace KkomaKnight.Core
         /// <c>ui.profileFrame.&lt;색&gt;</c>(ProfileFrame_02 다섯 변형)의 색 이름. 빈 값 = 기본(노랑 · 종전과 같은 조각).
         /// 이 레포 전용 필드라 «없으면 기본값»(옛 세이브 호환).</summary>
         public string ProfileColor = "";
+        /// <summary>프로필 <b>초상 아이콘</b> 키(T262 ⓐ · 주인 2026-09-09 «플레이어 이미지 말고» — 더미 초상 아이콘에서 고른다).
+        /// 비었거나 모르는 값이면 기본(<c>Profile.Icons[0]</c>)이라 옛 세이브도 그대로 읽힌다(세이브 버전 안 올림).</summary>
+        public string ProfileIcon = "";
         /// <summary>플레이어 이름(T96-profile 2단계 · 주인 2026-09-07 «<c>Social_Profile_Nickname</c> 이거 좀 써라 프리팹들») —
         /// 규칙·기본값은 <see cref="Nickname"/> 한 곳이 갖는다. 빈 값 = 안 지었다(= <see cref="Nickname.Default"/>).
         /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 기본값»(옛 세이브 호환 · <see cref="ProfileColor"/> 와 같은 방식).</summary>
@@ -255,7 +258,7 @@ namespace KkomaKnight.Core
                 ["giftDay"] = GiftDay ?? "", ["giftAds"] = (double)GiftAds, ["giftFree"] = GiftFree,
                 ["expSettle"] = ExpSettle, ["expQuickDay"] = ExpQuickDay ?? "", ["expQuickUsed"] = (double)ExpQuickUsed,
                 ["expQuickCharge"] = (double)ExpQuickCharge, ["expQuickAt"] = ExpQuickAt,   // T265 충전제
-                ["profileColor"] = ProfileColor ?? "", ["nick"] = Nick ?? "",
+                ["profileColor"] = ProfileColor ?? "", ["profileIcon"] = ProfileIcon ?? "", ["nick"] = Nick ?? "",   // profileIcon = T262 ⓐ
             };
             var gc = new List<object>(); foreach (var b in GiftClaimed) gc.Add(b); o["giftClaimed"] = gc;
             o["dunDay"] = DunDay ?? "";
@@ -345,7 +348,7 @@ namespace KkomaKnight.Core
                     s.GiftDay = j["giftDay"].Str(""); s.GiftAds = j["giftAds"].Int(); s.GiftFree = j["giftFree"].Bool();
                     s.ExpSettle = j["expSettle"].Num(); s.ExpQuickDay = j["expQuickDay"].Str(""); s.ExpQuickUsed = j["expQuickUsed"].Int();
                     s.ExpQuickCharge = j["expQuickCharge"].Int(); s.ExpQuickAt = j["expQuickAt"].Num();   // 없으면 0 — Roll 이 «가득» 으로 시작시킨다(T265)
-                    s.ProfileColor = j["profileColor"].Str(""); s.Nick = j["nick"].Str("");
+                    s.ProfileColor = j["profileColor"].Str(""); s.ProfileIcon = j["profileIcon"].Str(""); s.Nick = j["nick"].Str("");   // 없으면 빈 값 = 기본 초상(옛 세이브 호환 · T262 ⓐ)
                     foreach (var c in j["giftClaimed"].Items()) s.GiftClaimed.Add(c.Bool());
                     foreach (var g in j["inv"].Items())
                         s.Inv.Add(new GearItem { Uid = g["u"].Int(), Part = g["part"].Str(), Type = g["type"].Str(), Rar = g["rar"].Int(), Plus = g["plus"].Int(), IsNew = g["nw"].Num() != 0 });

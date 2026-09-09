@@ -353,7 +353,7 @@ namespace KkomaKnight.Game
             // 아바타를 누르면 프로필(아바타 고르기) — T96-profile · 조각에 버튼이 없으므로 칸 자체에 붙인다
             UiKit.Clickable(slot, () => Profile.OpenAvatar(app));
             // 상단 초상은 정지 그림(T68 ② · 주인 «로비 주인공 아이콘이 계속 움직인다») — 장비 화면 가운데 큰 캐릭터(GearScreen)는 그대로 움직인다
-            tb.Hero.SetStill(true);
+            tb.Hero?.SetStill(true);   // T262 ⓐ — 아바타가 아이콘이 된 뒤로 Hero 는 null 일 수 있다
             // 전투력 — 칼 아이콘 + 주황 큰 숫자(숫자만 · 레퍼런스에 라벨 없음)
             if (showPower)
             {
@@ -423,13 +423,12 @@ namespace KkomaKnight.Game
             {
                 var frt = (RectTransform)frame;
                 UiKit.FitScale(frt, UiKit.PxSize(Layout.LobbyAvatar));
-                var mask = UiKit.FindAny(frt, "Bg_MainColor(Mask)", "Mask"); if (mask == null) mask = frt;
-                UiKit.Hide(mask, "Character");
-                tb.Hero = HeroView.Attach((RectTransform)mask, HeroView.PlayerSkin(app));
-                tb.Hero.SetFraming(1.6f, 0.45f);   // 가슴 위(레퍼런스 아바타)
+                // T262 ⓐ(주인 2026-09-09 «플레이어 이미지 말고») — 여기 있던 HeroView(내 캐릭터를 실시간으로 그린 초상)를
+                // 프로필에서 고른 «더미 초상 아이콘» 으로 갈아 끼웠다. 넣는 법은 팝업 칸과 같은 함수(Profile.Face)를 쓴다.
+                Profile.Face(frt, Profile.CurrentIcon(app.Save));
             }
-            else { tb.Hero = HeroView.Attach(slot, HeroView.PlayerSkin(app)); tb.Hero.SetFraming(1.6f, 0.45f); }
-            tb.Hero?.SetStill(true);   // 상단 초상은 정지 그림(T68 ② · 갈아 끼운 뒤에도 그대로)
+            else Profile.Face((RectTransform)slot, Profile.CurrentIcon(app.Save));
+            tb.Hero?.SetStill(true);   // Hero 는 이제 null 이다(위 주석) — 다른 화면이 이 헬퍼를 쓰는 자리를 위해 남겨 둔다
         }
     }
 
