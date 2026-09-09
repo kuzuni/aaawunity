@@ -64,6 +64,7 @@ namespace KkomaKnight.Game
         {
             Begin();
             var parts = UiKit.Popup(Root, title, rect, onTapClose, popupKey, titleKey, true, boxed);
+            RibbonGlow(parts.Box, parts.Ribbon, titleKey);   // T320 ⓑ — 리본 제목 팝업 «전부» 에 같은 반 잘림(주인 4항)
             _cur = parts.Box.gameObject;
             return parts.Box;
         }
@@ -329,6 +330,49 @@ namespace KkomaKnight.Game
             var mk = UiKit.Ensure<Mask>(m.gameObject); mk.showMaskGraphic = false;
             return m;
         }
+        /// <summary>빛 한 변 ÷ 마스크 폭 — ⓐ 에서 쓴 두 수(584.3 ↔ 555)의 비다. 지어낸 값이 아니라 <b>ⓐ 에서 파생</b>했다(ⓑ 가 리본 폭에 맞춰 쓴다).</summary>
+        public const float TitleLightSidePerMask = 584.3f / TitleMaskW;
+
+        /// <summary>
+        /// T320 ⓑ — <b>리본 제목 팝업 전부</b>에 ⓐ 와 같은 «반 잘림» 빛을 단다(주인 4항 «퀘스트·출석·기프트·우편·던전·아레나·확률 …»).
+        /// <para>
+        /// <b>부르는 곳이 하나다</b> — 이 저장소의 공통 팝업은 전부 <see cref="Box"/> → <see cref="UiKit.Popup"/> 한 길로 서므로(직접 부르는 곳 0),
+        /// 여기 한 줄이면 목록의 팝업이 같이 받는다. 주인이 말한 «한 헬퍼로» 가 이 자리다.
+        /// </para>
+        /// <b>자리 규칙 = ⓐ 에서 «관계» 로 뽑았다</b> — ⓐ 의 주인 값은 <c>마스크 바닥 ≈ 리본 바닥</c>(실측 27.28% ↔ 리본 27.2%)이다.
+        /// 그래서 ⓑ 도 «마스크 바닥 = 리본 바닥 · 가로 가운데» 로 놓는다.
+        /// ⚠ 주인 문장은 «마스크 바닥 = 리본 <b>가운데</b> 쯤» 이지만 <b>주인이 실제로 넣은 수</b>는 리본 바닥이다 —
+        /// 말과 수가 어긋나면 <b>수를 따른다</b>(주인이 손으로 맞춰 본 것이 수다). 뜻(«아래로 새는 빛 0»)은 둘 다 지킨다.
+        /// <b>배율은 1 이다</b> — 공통 리본 폭(<see cref="UiKit.PopupRibbonSize"/> 656)이 ⓐ 가 잰 리본 폭(<see cref="TitleRibbonRefW"/>)과 같다.
+        /// </summary>
+        public static void RibbonGlow(RectTransform box, RectTransform ribbon, string titleKey)
+        {
+            // 등급 배지처럼 «제목 리본이 아닌» 조각은 뺀다(장비 세부 팝업의 작은 배지 뒤에 큰 빛을 깔지 않는다 · 주인 목록에 없다).
+            if (box == null || ribbon == null || titleKey == null || !titleKey.StartsWith("ui.title")) return;
+            // ⚠ `sizeDelta` 로 읽으면 안 된다 — 화면이 리본을 `UiKit.Pct`(늘림 앵커)로 옮겨 두면 그 값은 «여백» 이라 0 근처다.
+            //   실제 크기는 `rect` 다(레이아웃 뒤). 레이아웃 전이면 공통 팝업이 방금 넣은 `sizeDelta` 가 참값이므로 그것으로 대신한다.
+            float rw = ribbon.rect.width > 1f ? ribbon.rect.width : ribbon.sizeDelta.x;
+            float rh = ribbon.rect.height > 1f ? ribbon.rect.height : ribbon.sizeDelta.y;
+            if (rw <= 1f || rh <= 1f) return;
+            float scale = rw / TitleRibbonRefW;
+
+            // 두 번 불러도 조각이 늘지 않는다 — 화면이 리본을 «표 자리» 로 옮긴 뒤(예: 확률 팝업의 명판) 다시 부르면 **자리만** 따라간다.
+            var host = box.Find("TitleGlow") as RectTransform;
+            if (host == null) host = UiKit.Rect(box, "TitleGlow");   // ⚠ `??` 는 못 쓴다 — 유니티의 «가짜 null»(파괴된 개체)이 그 연산자를 통과한다(check_unity_null)
+            host.anchorMin = ribbon.anchorMin; host.anchorMax = ribbon.anchorMax; host.pivot = ribbon.pivot;
+            host.sizeDelta = ribbon.sizeDelta; host.anchoredPosition = ribbon.anchoredPosition;
+            host.SetSiblingIndex(ribbon.GetSiblingIndex());   // 리본 «뒤» — 자식으로 넣으면 리본 «위» 로 그려진다(T155 ⓒ 가 값 주고 배운 자리)
+
+            var mask = TitleGlowMask(host, scale);
+            // 마스크 바닥을 리본 바닥에 맞춘다(위 요약의 «관계»). 호스트가 리본과 같은 사각형이라 셈이 한 줄이다.
+            mask.anchoredPosition = new Vector2(0f, -rh * 0.5f + mask.sizeDelta.y * 0.5f);   // rh 는 리본의 «실제» 높이다(위 주석)
+            UiKit.LightBehind(mask, null, UiKit.LightKeySmall, UiKit.LightPeriod,
+                              Palette.A(Palette.Yellow, TitleGlowAlpha),
+                              sidePx: mask.sizeDelta.x * TitleLightSidePerMask,
+                              clip: false);   // 자르는 것은 위 Mask 다(RectMask2D 를 겹쳐 걸면 마스크가 둘이 된다)
+            TitleGlowPlate(mask, scale);
+        }
+
         /// <summary>빛판(<c>LightMask</c>)의 여백을 주인 값으로 — <see cref="UiKit.LightBehind"/> 가 «마스크에 딱 맞춰» 놓은 뒤에 부른다.</summary>
         public static void TitleGlowPlate(RectTransform mask, float scale = 1f)
         {

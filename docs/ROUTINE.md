@@ -7563,7 +7563,16 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > **부호** — 인스펙터 Left/Right/Top/Bottom → `offsetMin=(Left, Bottom)` · `offsetMax=(−Right, −Top)`. 음수 여백이라 빛판이 마스크보다 크고(1139.28 × 1013.26) 판 가운데가 마스크 가운데보다 **208px 아래** = 마스크 바닥에서 6px 위 ⇒ **원의 아래 절반이 잘린다**(주인 «반 잘리는 식으로»).
 > **T234 3항 «사각 마스크를 씌우지 마라» 는 닫혔다** — 다만 **주석을 지우지 않았다**: `clip: false` 는 남기고 뜻을 «자를 것이 없다» → **«자르는 것은 이 `Mask` 다»** 로 갈아 끼웠다(RectMask2D 를 겹쳐 걸면 마스크가 둘이 되어 빛판 여백이 무의미해진다). **막아 둔 문을 열 때는 «왜 막았었나» 를 지우는 대신 «무엇이 달라졌나» 를 옆에 적는다.**
 > **자**(`PerkShineTests.TitleGlowIsMaskedSoOnlyTheTopHalfShows`) — 계층 이름 계약 · 마스크 555×428.48 ±0.5 · 자리 (0, −63.26) ±0.5 · `showMaskGraphic == false` · 빈 흰 `Image` 있음 · `RectMask2D` 없음 · 빛판 네 여백 ±0.5 · **마지막 줄이 요점**: «빛판 가운데가 마스크 바닥보다 아래인가»(부호를 뒤집으면 이름·크기 단언은 전부 통과하고 원만 온전해진다).
-> **ⓑ 를 위해** `Overlay.TitleGlowMask(host, scale)`·`TitleGlowPlate(mask, scale)` 가 **배율 인자**를 이미 받는다 — `scale = 리본 폭 ÷ Overlay.TitleRibbonRefW(656)`. 특전은 1 이고 **새 수는 0** 이다. (`UiKit.cs` 가 아니라 `Overlay.cs` 에 둔 까닭은 `FitRibbonText` 와 같다 — 그 파일이 남의 lock 이면 헬퍼가 못 선다.)
+> **▸ ⓑ 고쳐 밀었다 · 확인 전**(2026-09-09 13:2X · sess-1735-9f41 · 워커 C · 결정 907 · lock `T320-b`)
+> **«전부» 를 화면 수만큼 세지 말고 길목 수만큼 센다** — `grep` 한 번으로 `UiKit.Popup` 을 직접 부르는 곳이 **`Overlay.Box` 하나뿐**임을 확인했다. 거기서 `Overlay.RibbonGlow(box, ribbon, titleKey)` 한 줄이면 목록(퀘스트·출석·기프트·우편·던전·아레나·확률 …)이 통째로 선다.
+> **자리 규칙 = ⓐ 의 주인 값에서 «관계» 로** — ⓐ 를 실측하면 **마스크 바닥 ≈ 리본 바닥**(27.28% ↔ 27.2%)이다. 주인 문장은 «리본 **가운데** 쯤» 이지만 **주인이 실제로 넣은 수**는 바닥이다 ⇒ **말과 수가 어긋나면 수를 따른다**(뜻 «아래로 새는 빛 0» 은 둘 다 지킨다).
+> **배율 1** — 공통 리본 폭(`UiKit.PopupRibbonSize` 656)이 ⓐ 가 잰 폭(`Overlay.TitleRibbonRefW`)과 같아 주인 값이 한 자도 안 바뀐다.
+> ⚠ **`sizeDelta` 로 리본 크기를 읽지 마라** — 화면이 리본을 `UiKit.Pct`(늘림 앵커)로 옮겨 두면 그 값은 «여백» 이라 0 근처다(확률 팝업 명판이 그 꼴이라 내 첫 판은 그 팝업에서 **조용히 아무 일도 안 했다**). `rect` 를 먼저 보고 없으면 `sizeDelta` 로 대신한다(`Overlay.RewardFrame` 의 그 꼴) · 리본을 옮긴 화면은 **옮긴 뒤 한 번 더** 부른다(두 번 불러도 조각이 안 늘게 지었다).
+> ⚠ **등급 배지 팝업은 뺐다** — 장비 세부 팝업의 «리본» 은 작은 등급 배지라 그 뒤에 큰 빛을 깔면 딴 물건이 된다(주인 목록에도 없다). `titleKey` 가 `ui.title*` 인 것만 받는다.
+> **남은 것 = 리워드 팝업 35**(주인 12:1X «리워드 부분도 반 잘린 마스크») — 그 팝업은 리본이 아니라 **글자 제목 + 노란 가로줄**이라 «리본 바닥» 규칙이 그대로 안 맞는다. 자리 기준을 «위 노란 줄» 로 잡을지 «제목 글자» 로 잡을지 한 번 재고 붙여야 한다.
+> **확인** = 다음 완주 런 `screens` **15·16·17·21·24·36** 에 리본 뒤 반 잘린 빛 + `OddsPopupTests` 새 단언 초록.
+>
+> **ⓑ 이전 메모** — `Overlay.TitleGlowMask(host, scale)`·`TitleGlowPlate(mask, scale)` 가 **배율 인자**를 이미 받는다 — `scale = 리본 폭 ÷ Overlay.TitleRibbonRefW(656)`. 특전은 1 이고 **새 수는 0** 이다. (`UiKit.cs` 가 아니라 `Overlay.cs` 에 둔 까닭은 `FitRibbonText` 와 같다 — 그 파일이 남의 lock 이면 헬퍼가 못 선다.)
 > **✔ 확인 끝(런 783)** — `screens` **04** 눈 확인: 빛이 **리본 위로만** 부채꼴로 뜨고 **리본 아래로 새는 빛이 0** 이다(주인 «반 잘리는 식으로 마스크 되게» 그대로) · `[CI명부] PerkShineTests(3)` 실패 0.
 > ⚠ **대신 남의 자 하나가 부러졌고 그것도 이 회차에 고쳤다** — `UiTextureTests:536` 이 `TitleGlow` **직계**에서 빛을 찾고 있었는데(`UiKit.HasLight(titleGlow)` · `titleGlow.Find("LightMask/Light")`) 내가 그 사이에 `Mask` 를 끼웠다. **찾는 곳만 한 겹 내렸다**(기댓값은 한 자도 안 바꿨다 — 그 자가 재는 것은 여전히 «빛이 있는가» 이고 마스크의 수는 `PerkShineTests` 가 잰다).
 > ⚑ **ⓑ 를 하는 사람에게** — **계층에 한 겹을 끼우면 `check_stale_asserts` 가 못 잡는다**(그 자는 «지운 이름» 을 보는데 여기서는 아무것도 안 지우고 경로만 길어진다). 리본 팝업마다 `Find("<부모>/LightMask/...")`·`Has*(<부모>)` 를 **`grep` 한 번으로 직접 세고** 시작해라 — 이번엔 두 파일 세 줄이었다.

@@ -100,6 +100,27 @@ namespace KkomaKnight.Tests.Play
             Assert.Greater(rows.Count, 1, "신화 상자는 구간이 여럿이다");
             Assert.Greater(n, 0, "아이템 목록");
 
+            // T320 ⓑ(주인 4항 «같은 것을 리본 제목 팝업 전부에») — 이 팝업은 «공통 리본 팝업» 의 대표로 선다.
+            //   부르는 곳이 `Overlay.Box` 한 곳이라 여기서 서면 목록(퀘스트·출석·기프트·우편·던전·아레나·확률 …)이 같이 선다.
+            //   ⚠ 재는 것은 px 이 아니라 **관계**다: «마스크 바닥 = 리본 바닥» · «빛판 가운데가 마스크 바닥보다 아래»(= 아래 절반이 잘린다).
+            {
+                var ribbon = Find(box, "ui.title.tangerine") as RectTransform;
+                Assert.IsNotNull(ribbon, "공통 팝업 리본");
+                var host = box.Find("TitleGlow") as RectTransform;
+                Assert.IsNotNull(host, "리본 뒤 빛 담개(T320 ⓑ)");
+                Assert.Less(host.GetSiblingIndex(), ribbon.GetSiblingIndex(), "빛은 리본 «뒤»(형제 순서 앞)");
+                var gm = host.Find("Mask") as RectTransform;
+                Assert.IsNotNull(gm, "사각 마스크");
+                Assert.IsTrue(UiKit.HasLight(gm), "마스크 안 도는 빛살");
+                Assert.IsTrue(UiKit.HasGlow(gm), "마스크 안 글로우 서클");
+                float maskBottom = gm.anchoredPosition.y - gm.sizeDelta.y * 0.5f;   // 리본 사각형 기준
+                Assert.AreEqual(-ribbon.rect.height * 0.5f, maskBottom, 1.5f, "마스크 바닥 = 리본 바닥(ⓐ 에서 뽑은 관계 · 늘림 앵커라 rect 로 잰다)");
+                var gp = gm.Find(UiKit.LightMaskName) as RectTransform;
+                Assert.IsNotNull(gp, "빛판");
+                float plateCenterY = (gp.offsetMin.y + gp.offsetMax.y) * 0.5f;
+                Assert.Less(plateCenterY, -gm.sizeDelta.y * 0.5f + 20f, "빛의 아래 절반이 잘린다(주인 «반 잘리는 식으로»)");
+            }
+
             // T267 — 명판은 **상자 «안» 맨 위**에 붙고 상자 폭을 거의 다 쓴다(레퍼런스 36 · 표 ㊾).
             //   공통 팝업이 세워 주는 리본은 좁고 상자 «위로» 걸쳐 있어서, 자리를 다시 안 잡으면 그 행이 혼자 ✗ 다.
             //   px 이 아니라 «상자 안인가 · 상자 폭을 쓰는가» 두 가지를 잰다 — 표가 바뀌어도 이 뜻은 안 바뀐다.
