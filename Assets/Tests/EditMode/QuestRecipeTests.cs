@@ -125,6 +125,36 @@ namespace KkomaKnight.Tests
             Assert.IsTrue(QuestRun.Claim(s, d, false, step, new Mulberry32(5), rd), "나중에 제대로 부르면 그때 받아진다");
         }
 
+        /// <summary>
+        /// ⚠ 이 회차가 <b>연 덫</b>을 막는 자다 — «<c>recipeRandom</c>» 은 <see cref="Mail"/> 이 모르고 <see cref="QuestRun.Claim"/> 만 아는 이름이고,
+        /// <see cref="QuestRun"/> 은 <c>quest.json</c> 만 읽는다. 그래서 이 이름이 <b>다른 보상 표</b>(업적·아레나·출석·데일리 기프트·특권)에 적히면
+        /// <see cref="Mail.Give"/> 가 <b>조용히 아무 일도 안 한다</b> — 화면에는 «레시피 20» 이라 뜨고 세이브에는 안 들어온다.
+        /// <para>
+        /// 표를 베끼는 것은 흔한 일이라(«quest.json 에 이렇게 적혀 있네») 이 덫은 <b>언젠가 밟힌다</b>.
+        /// 지금 막는 값이 한 자이고, 안 막으면 그때는 «주인이 못 받았다» 로 나타난다.
+        /// </para>
+        /// 고치는 길 둘 — 그 표를 읽는 절이 <c>recipeRandom</c> 을 <b>직접 주게</b> 하거나(퀘스트가 그랬다),
+        /// 부위가 정해진 <c>recipe.&lt;부위&gt;</c>(그것은 <see cref="Mail"/> 이 안다 · T290)로 적거나.
+        /// </summary>
+        [Test]
+        public void 무작위_레시피_이름은_퀘스트_표에만_있다()
+        {
+            // Mail 이 «모른다» 는 것이 이 자의 전제다 — 누가 Mail 에 이름만 더하면(담을 자리 없이) 여기서 먼저 운다.
+            Assert.IsFalse(Mail.CanPay(QuestRun.ItemRecipeRandom),
+                "«" + QuestRun.ItemRecipeRandom + "» 은 재화가 아니다 — Mail 이 알게 만들려면 담을 자리(부위별 보유량)부터 정해야 한다");
+
+            var dir = Path.GetDirectoryName(TestData.RepoFile(Path.Combine("Assets", "KkomaKnight", "quest.json")));
+            var offenders = new List<string>();
+            foreach (var f in Directory.GetFiles(dir, "*.json"))
+            {
+                if (Path.GetFileName(f) == "quest.json") continue;
+                if (File.ReadAllText(f).Contains(QuestRun.ItemRecipeRandom)) offenders.Add(Path.GetFileName(f));
+            }
+            CollectionAssert.IsEmpty(offenders,
+                "이 표들이 «" + QuestRun.ItemRecipeRandom + "» 을 적었는데 그 표를 읽는 절은 그 이름을 못 준다 — 조용히 안 들어간다: "
+                + string.Join(", ", offenders));
+        }
+
         [Test]
         public void 다른_칸은_난수_없이도_그대로_받아진다()
         {
