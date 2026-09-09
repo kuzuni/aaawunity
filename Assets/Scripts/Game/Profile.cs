@@ -85,7 +85,17 @@ namespace KkomaKnight.Game
             var mask = UiKit.FindAny(frame, "Bg_MainColor(Mask)", "Mask") ?? frame;
             UiKit.Hide(mask, "Character");
             var old = UiKit.Find(mask, FaceName);
-            if (old != null) Object.Destroy(old.gameObject);
+            if (old != null)
+            {
+                // T301 — 이미 그 얼굴이면 아무것도 안 한다(부수고 다시 세우면 매 Refresh 마다 그림 하나가 죽었다 살아난다).
+                var im0 = old.GetComponent<Image>();
+                var cat = App.I != null ? App.I.Assets : null;
+                if (im0 != null && cat != null && im0.sprite == cat.Sprite(iconKey)) return;
+                // ⚠ 떼고 나서 지운다 — Destroy 는 프레임 끝에 처리되므로, 안 떼면 같은 프레임에 옛 얼굴과 새 얼굴이
+                //   **둘 다** UiKit.Find 에 걸린다(Screens.AvatarFrame 이 조각을 갈아 끼울 때 쓰는 그 법과 같다).
+                //   그 사이에 그림을 읽는 쪽(자·다음 Refresh)은 «바꿨는데 옛 얼굴» 을 본다 — 이 절이 고치는 바로 그 증상이다.
+                old.SetParent(null, false); old.gameObject.SetActive(false); Object.Destroy(old.gameObject);
+            }
             var im = UiKit.Icon(mask, FaceName, iconKey);
             if (im != null) { im.preserveAspect = true; UiKit.Stretch(im.rectTransform); }
         }
@@ -190,7 +200,11 @@ namespace KkomaKnight.Game
                     app.Persist();
                     app.Overlay.Close();
                     app.Current?.Refresh();
-                    app.ShowScreen(app.Current != null ? app.Current.Name : "lobby");   // 탑바를 새 색으로 다시 세운다
+                    // ⚠ T301 — 이 줄의 옛 주석은 «탑바를 새 색으로 다시 세운다» 였는데 **거짓이다**:
+                    //   GameScreen.Show 는 _built 로 한 번만 Build 하므로 지금 화면을 다시 보여 줘도 탑바는 **안 세워지고** Refresh 만 돈다.
+                    //   그래서 갱신은 전적으로 TopBar.Refresh → Screens.AvatarFrame 에 달려 있고, 그것이 «이미 있다» 로 돌아가던 것이 이 절의 고장이었다.
+                    //   («다시 세운다» 고 적혀 있었기 때문에 아무도 그 자리를 다시 안 봤다 — 결정 845 가 적은 그 꼴이다.)
+                    app.ShowScreen(app.Current != null ? app.Current.Name : "lobby");
                     app.Toast("아바타를 바꿨습니다");
                 });
             }

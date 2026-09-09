@@ -427,7 +427,17 @@ namespace KkomaKnight.Game
         {
             if (app == null || tb == null || slot == null) return;
             string key = Profile.FrameKey(app.Save);
-            if (UiKit.Find(slot, key) != null) return;
+            var have = UiKit.Find(slot, key);
+            if (have != null)
+            {
+                // T301(주인 2026-09-09 09:0X «프로필 이미지 바꿨는데 적용 안 되더라») — 여기서 그냥 돌아가면 **얼굴이 안 바뀐다.**
+                // key 는 **테두리 색** 조각 이름이라, 색이 그대로고 아이콘만 바뀐 경우(= 아바타 고르기 T262 ⓐ 가 하는 일)
+                // «이미 있다» 로 걸려 Profile.Face 를 못 부른다 — 세이브에는 쓰이고 아레나·PvP 초상은 새로 그려 맞는데
+                // **탑바만** 옛 얼굴로 남았다(색 고르기 자리를 아이콘 고르기가 물려받으며 생긴 회귀다).
+                // 조각은 그대로 두고 **얼굴만** 다시 넣는다 — 같은 얼굴이면 Profile.Face 가 아무 일도 안 하므로 깜빡임도 없다.
+                Profile.Face((RectTransform)have, Profile.CurrentIcon(app.Save));
+                return;
+            }
             for (int i = slot.childCount - 1; i >= 0; i--)
             {
                 var c = slot.GetChild(i);
