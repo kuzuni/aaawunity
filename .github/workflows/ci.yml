@@ -215,6 +215,26 @@ jobs:
           echo "[T185] ui-screens PNG $shots 장 (0 이면 배포하지 않는다 — force_orphan 이라 지난 PNG 가 지워진다)"
           printf '{"sha":"%s","run":%s,"run_id":%s,"utc":"%s","tests":"%s","shots":%s}\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$GITHUB_RUN_ID" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${{ steps.tests.outcome }}" "$shots" > ui-screens/meta.json
           ls -la ui-screens
+      # T282 — **«이 커밋이 어느 화면 그림을 바꿨나» 를 자가 말한다.** §5 점수(T277)는 이름표의 «자리» 만 재므로
+      #   글자가 음절 중간에서 끊기거나(T222) 색·잘림이 달라진 것은 10.0 인 채로 지나간다. 그것을 잡는 유일한 방법이
+      #   «전·후 그림 맞대기» 였는데(결정 598) 여태 사람 손이었다.
+      # ⚠ **자리 — 이 단계는 아래 «screens 배포» 앞이어야 한다.** 그 배포가 `force_orphan` 으로 옛 그림을 지우므로,
+      #   뒤에 두면 견줄 대상이 방금 올린 제 그림이 된다(늘 «바뀐 화면 0»).
+      # 재료는 이미 여기 있다: 이 잡이 찍은 `ui-screens/*.png` + 지난 런이 올려 둔 `origin/screens`(얕게 한 번 fetch).
+      #   자는 표준 라이브러리만으로 PNG 를 읽는다(러너에 PIL 이 있다고 믿지 않는다 · 실측으로 PIL 과 픽셀까지 같음).
+      # **알리기만 한다**(늘 exit 0 · `continue-on-error`) — 그림이 바뀌는 것은 대개 뜻한 변경이라 막을 일이 아니다(결정 740 과 같은 셈).
+      - name: "[그림차] 지난 런과 달라진 화면만 짚는다 — 보고만(T282)"
+        if: ${{ !cancelled() && steps.shots.outputs.count != '0' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
+        continue-on-error: true
+        run: |
+          git fetch --no-tags --depth=1 origin +refs/heads/screens:refs/remotes/origin/screens 2>/dev/null || true
+          if git rev-parse --verify -q refs/remotes/origin/screens >/dev/null; then
+            python3 tools/screens_diff.py ui-screens --old-ref origin/screens > /tmp/screens_diff.txt 2>&1 || true
+          else
+            echo "[그림차] origin/screens 가 없다(첫 런이거나 브랜치가 아직 없다) — 이번 런은 견줄 옛 그림이 없다." > /tmp/screens_diff.txt
+          fi
+          cat /tmp/screens_diff.txt
+          cat /tmp/screens_diff.txt >> "$GITHUB_STEP_SUMMARY" || true
       - name: "screens 브랜치로 배포 (UI 비평 · ROUTINE §5)"
         # T134 — 수동 실행(workflow_dispatch)도 같이 돈다: 워커 12명이 몇 분 간격으로 밀면 대기 런이 계속 밀려 취소돼
         # «최신 트리를 담은 런이 하나도 없는» 상태가 생기는데, 그때 사람이 미는 유일한 지렛대가 수동 실행이다(결정 379).
@@ -246,6 +266,14 @@ jobs:
           else
             echo "[§5] ui-screens/layout.json 이 없다 — 유니티 잡이 화면을 못 찍었다(위 단계를 보라). 점수는 이번 런에서 안 센다."
           fi
+
+      # T282 — 위 «그림차» 는 `screens` 배포보다 **앞**에 서야 해서(force_orphan 이 옛 그림을 지운다) 그 줄이
+      #   배포 로그 120여 줄에 밀려 꼬리에서 안 보인다. 그래서 그때 적어 둔 것을 여기서 한 번 더 뱉는다 —
+      #   워커가 실제로 읽는 자리가 꼬리이기 때문이다(T239 회차 1 → 2 가 배운 것이 바로 이것이다).
+      #   ⚠ T239 단계보다 **앞**이어야 한다(`[CI실패] 요약` 이 마지막 줄이라는 계약 · 결정 678).
+      - name: "[그림차] 위에서 잰 것을 꼬리에 한 번 더 (T282)"
+        if: always()
+        run: cat /tmp/screens_diff.txt 2>/dev/null || echo "[그림차] 이번 런은 그림차를 재지 않았다(찍는 단계가 건너뛰었거나 죽었다)."
 
       # T239 회차 2 — **이 단계는 잡의 «맨 끝» 이어야 한다.** 회차 1 은 아티팩트 업로드 바로 뒤에 뒀는데
       # 그 뒤의 `screens` 배포가 120줄 넘게 찍어 목록을 꼬리 밖으로 밀어냈다(CI #512 실측: tail 130줄로도 못 읽었다).
