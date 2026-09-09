@@ -817,7 +817,29 @@ namespace KkomaKnight.Game
         /// 그 사이가 비어 보이지 않게 아주 작은 «두근두근»(<see cref="ChestBeat"/>) 두 번이 들어간다(지시서 2항 «스케일 ±2% 두 번»).
         /// 무작위를 안 쓰므로 <c>screens</c> 스샷이 회차마다 안 흔들린다(T174 가 알갱이에서 정한 것과 같은 규약).
         /// </summary>
-        public const float ChestHoldSec = 1.0f, ChestBeat = 0.02f, ChestBeatSec = 0.22f;
+        /// <para>
+        /// ⚑ <b>T315(주인 2026-09-09 10:1X «착지하자마자 <b>0.5초</b> 만에 열리면서 아이템 뭐 뽑혔는지 보여 줘야 함»)로 1.0 → 0.5</b> —
+        /// T202 의 «1초» 를 주인이 반으로 줄인 것이다. 두근두근 둘은 시각이 <b>비율</b>(×0.30·×0.65)이라 저절로 따라 들어온다.
+        /// </para>
+        public const float ChestHoldSec = 0.5f, ChestBeat = 0.02f, ChestBeatSec = 0.22f;
+        /// <summary>
+        /// T315 ⓐ — 착지 «푸딩»(주인 «상자 착지했을 때 <b>푸딩처럼</b> 착지돼야 함 · 지금 그 느낌이 아니다»). 닿는 순간 <b>가로 ↑ 세로 ↓</b> 로 눌렸다가
+        /// <c>Ease.OutElastic</c> 으로 (1,1) 에 돌아온다.
+        /// <para>
+        /// ⚠ <b>피벗을 바닥 가운데로 옮겨야 한다</b> — 가운데(0.5) 피벗이면 세로가 눌릴 때 상자가 <b>바닥에서 뜬다</b>(위아래로 같이 줄어든다).
+        /// 옮기면서 <c>anchoredPosition</c> 을 높이의 절반만큼 내려 <b>보이는 자리는 그대로</b> 둔다 — 안 그러면 상자가 통째로 반 칸 올라가고
+        /// 그 회귀는 <c>screens</c> 정지 그림에서만 보인다(연출은 0.6초에 지나간다).
+        /// </para>
+        /// <para>
+        /// ⚠ <b>위치 펀치(<c>DOPunchAnchorPos</c>)는 뺐다</b> — 지시서 1항 ⓐ: «둘이 겹치면 «덜컹» 이 남는다». 스쿼시가 그 자리를 대신한다.
+        /// <see cref="ChestShake"/>(0.18)는 <b>안 쓴다</b> — 지우지 않고 두는 까닭은 <see cref="ChestOpenAt"/> 이 같은 줄에 선언돼 있고,
+        /// 그 수가 «펀치 길이» 였다는 것이 T180 의 기록이라서다. 스쿼시가 돌아오는 시간은 <see cref="ChestSquashBack"/> 이 따로 갖는다
+        /// (0.18 을 그대로 쓰면 너무 빨라 «찰싹» 이 안 읽힌다).
+        /// </para>
+        /// <para>수를 표가 아니라 여기 두는 까닭 — 이 창의 연출 수 다섯(<see cref="ChestFallSec"/>·<see cref="ChestHoldSec"/>·<see cref="ChestBeat"/>·
+        /// <see cref="ChestCellStep"/>·<see cref="ChestCellFrom"/>)이 이미 여기 <c>const</c> 로 서 있다. 넷만 새 표로 빼면 <b>같은 종류의 값이 두 집에 살게 된다</b>(결정 기록).</para>
+        /// </summary>
+        public const float ChestSquashX = 1.18f, ChestSquashY = 0.82f, ChestSquashBack = 0.35f;
         /// <summary>열림 시각 = <b>착지 + 정지</b>. 리터럴(옛 0.30)이 아니라 <b>관계</b>로 적는다 — 낙하 시간을 누가 바꾸면 «1초 뒤» 가 저절로 따라간다(§1).</summary>
         public const float ChestShake = 0.18f, ChestOpenAt = ChestFallSec + ChestHoldSec, ChestCellStep = 0.05f, ChestCellFrom = 0.55f;
 
@@ -921,6 +943,17 @@ namespace KkomaKnight.Game
             seq = DOTween.Sequence().SetUpdate(true).SetTarget(root).SetLink(rootGo);
             if (chestGrp != null)
             {
+                // T315 ⓐ — **피벗을 바닥 가운데로 먼저 내린다.** 가운데(0.5) 피벗이면 세로가 눌릴 때 상자가 **바닥에서 뜬다**
+                //   (위아래로 같이 줄어든다). 옮기면서 anchoredPosition 을 그만큼 내려 **보이는 자리는 그대로** 둔다 —
+                //   안 그러면 상자가 통째로 반 칸 올라가고, 그 회귀는 연출이 아니라 screens **정지 그림**에서만 보인다.
+                // ⚠ **반드시 `home` 을 읽기 전이다** — 아래 `DOAnchorPos(home, …)` 는 값을 그 자리에서 복사해 가므로,
+                //   피벗을 뒤에 옮기면 낙하가 **옛 피벗 기준의 자리**로 내려앉는다(눈에는 «반 칸 위에 뜬 상자»).
+                if (chestGrp.pivot.y != 0f)
+                {
+                    float dy = chestGrp.rect.height * chestGrp.pivot.y;
+                    chestGrp.pivot = new Vector2(chestGrp.pivot.x, 0f);
+                    chestGrp.anchoredPosition -= new Vector2(0f, dy);
+                }
                 // «떨어진다» — 제자리(조각이 준 자리 · ChestGroupY)는 그대로 두고 그 «위» 에서 내려온다(자리를 바꾸는 것이 아니다 · 지시서 3항).
                 // Ease.InQuad = 갈수록 빨라진다 = 떨어지는 느낌(OutQuad 는 느려져서 «내려놓는» 느낌이 된다).
                 var home = chestGrp.anchoredPosition;
@@ -930,8 +963,12 @@ namespace KkomaKnight.Game
                 LastChestScale = ChestScaleFrom;
                 seq.Insert(0f, chestGrp.DOScale(1f, ChestFallSec).SetEase(Ease.OutBack).SetUpdate(true).SetLink(chestGrp.gameObject));
                 seq.Insert(0f, chestGrp.DOAnchorPos(home, ChestFallSec).SetEase(Ease.InQuad).SetUpdate(true).SetLink(chestGrp.gameObject));
-                // 착지 «쿵» — 예전에는 이 펀치가 0초에 있었다(떨어지기 전에 흔들렸다). 이제 «닿는 순간» 이다.
-                seq.Insert(ChestFallSec, chestGrp.DOPunchAnchorPos(new Vector2(0f, 22f), ChestShake, 12, 1f).SetUpdate(true).SetLink(chestGrp.gameObject));
+                // 착지 «푸딩» — T315 ⓐ. 예전에는 여기가 위아래 위치 펀치(«덜컹»)였다(주인 «지금 그 느낌이 아니다»).
+                // .From 으로 «닿는 순간 눌린 채로 시작» 한다 — 콜백으로 배율을 넣고 트윈을 따로 걸면
+                // 같은 시각의 둘 중 어느 것이 먼저 도는지에 기대게 된다(그 기대는 조용히 뒤집힌다).
+                seq.Insert(ChestFallSec, chestGrp.DOScale(Vector3.one, ChestSquashBack).SetEase(Ease.OutElastic)
+                                                 .From(new Vector3(ChestSquashX, ChestSquashY, 1f))
+                                                 .SetUpdate(true).SetLink(chestGrp.gameObject));
                 seq.InsertCallback(ChestFallSec, () => Audio.Sfx("snd.gacha"));   // 착지음(T28) — 뽑기 직후가 아니라 «닿는 순간»(결정 420)
                 // T202 2항 — 착지와 열림 사이 «1초 정지» 가 죽은 시간으로 보이지 않게 아주 작은 두근두근 두 번(±2%).
                 // 자리(anchoredPosition)가 아니라 **배율**을 건드리므로 착지 펀치와 겹쳐도 서로 안 밀어낸다.
@@ -947,6 +984,16 @@ namespace KkomaKnight.Game
                 // 낙하 동안에는 빛이 없어야 «열리면서 터진다» 로 읽힌다 → 0 에서 시작(예전 0.55 는 처음부터 보였다).
                 light.localScale = Vector3.zero;
                 seq.Insert(ChestOpenAt, light.DOScale(1f, 0.32f).SetEase(Ease.OutBack).SetUpdate(true).SetLink(light.gameObject));
+                // T307 ⓐ(주인 2026-09-09 09:1X «상자 부분에 파티클 이펙트 … 안 움직이네 움직이게 하셈») — 커진 뒤로 **계속 돈다**.
+                // ⚠ `UiKit.SetLightSpinning` 은 여기에 못 쓴다 — 그 함수는 «LightMask/Light» 를 찾아 **이미 걸린 트윈을 재생/정지**할 뿐이고,
+                //    이 빛은 조각(Shop_Chest_Open)이 제 자식으로 들고 온 것이라 그 구조도, 그 트윈도 없다. 그래서 카드와 **같은 꼴**로 여기서 건다.
+                //    도는 방향·주기는 `UiKit.LightBehind` 와 글자 그대로 같다(시계방향 · UiKit.LightPeriod) — 한 화면에서 둘이 반대로 돌면 그것이 눈에 띈다.
+                // ⚠ 시퀀스에 **넣지 않는다**: 무한 루프 트윈을 Sequence 에 끼우면 그 시퀀스가 영영 안 끝나고,
+                //    탭 스킵(`DOTween.CompleteAll`)이 «끝낼 수 없는 것» 을 만나 연출 마무리가 통째로 어그러진다.
+                //    창이 사라지면 SetLink 가 같이 죽인다(§1 «has been destroyed» 경고 0).
+                light.localEulerAngles = Vector3.zero;
+                light.DOLocalRotate(new Vector3(0f, 0f, -360f), UiKit.LightPeriod, RotateMode.FastBeyond360)
+                     .SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart).SetUpdate(true).SetLink(light.gameObject);
             }
             float end = UiKit.Stagger(seq, cells, ChestOpenAt + 0.06f, ChestCellStep, ChestCellFrom);
             // 최고 등급 한 칸만 한 번 더 튄다(등급이 여럿이어도 하나 · 연출 길이는 그대로)

@@ -1499,15 +1499,36 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(chestImg0.sprite, "상자 스프라이트");
             StringAssert.DoesNotContain("open", chestImg0.sprite.name.ToLowerInvariant(),
                 "팝업이 뜬 직후에는 «닫힌» 상자여야 한다 — 지금 스프라이트: " + chestImg0.sprite.name + " (T180)");
-            // T202(주인 2026-09-07 09:0X «상자가 바닥에 착지하고 **1초 뒤**에 열리는 애니메이션») —
-            // «지금 몇 초냐» 를 묻지 않는다(그 함정은 T158 ⓐ 가 세 회차에 걸쳐 밟았다 · 결정 395). 상수 사이의 **관계**로 잰다:
-            Assert.AreEqual(1.0f, ShopScreen.ChestOpenAt - ShopScreen.ChestFallSec, 0.2f,
-                "착지(ChestFallSec) 와 열림(ChestOpenAt) 사이가 «1초» 여야 한다 — 지금 "
-                + (ShopScreen.ChestOpenAt - ShopScreen.ChestFallSec).ToString("0.##") + "s (T202 2항)");
+            // T202(주인 2026-09-07 «착지하고 **1초 뒤**») → **T315 로 주인이 반으로 줄였다**(2026-09-09 10:1X
+            // «착지하자마자 **0.5초** 만에 열리면서 아이템 뭐 뽑혔는지 보여 줘야 함»). 옛 «1.0» 을 그대로 두면
+            // **주인 지시를 지킨 쪽이 빨개진다** — 오늘 두 번 본 그 꼴이다(결정 866).
+            // «지금 몇 초냐» 를 묻지 않는 것은 그대로다(그 함정은 T158 ⓐ 가 세 회차에 걸쳐 밟았다 · 결정 395) — 상수 사이의 **관계**로 잰다.
+            // 여유는 0.2 → 0.1 로 좁혔다: 0.5 짜리 값에 ±0.2 면 0.3~0.7 이 다 통과라 «반 초» 를 안 지켜도 초록이다.
+            Assert.AreEqual(0.5f, ShopScreen.ChestOpenAt - ShopScreen.ChestFallSec, 0.1f,
+                "착지(ChestFallSec) 와 열림(ChestOpenAt) 사이가 «0.5초» 여야 한다 — 지금 "
+                + (ShopScreen.ChestOpenAt - ShopScreen.ChestFallSec).ToString("0.##") + "s (T315 1항 ⓑ · 주인이 T202 의 1초를 줄였다)");
             Assert.LessOrEqual(ShopScreen.ChestOpenAt + 1.2f, 2.7f,
                 "연출 총 길이(착지 + 정지 + 열림 ≈ 1.2s)가 2.7s 를 넘으면 주인이 여러 번 돌릴 때 답답하다(T202 4항)");
             var chestGrp0 = UiKit.Find(_app.Overlay.Root, "Chest") as RectTransform;
             Assert.IsNotNull(chestGrp0, "조각의 상자 묶음(Chest)");
+            // T315 ⓐ — «푸딩» 착지. **시간을 재지 않는다**: 눌린 순간(가로↑ 세로↓)은 0.35초에 지나가는 값이라
+            //   그것을 샘플로 잡으려 들면 T158 ⓐ 가 세 회차에 걸쳐 밟은 함정(결정 395)을 그대로 다시 밟는다.
+            //   대신 «그 연출이 성립하기 위한 조건» 둘을 잰다 — 둘 다 정적이고, 깨지면 반드시 화면이 틀린다.
+            //   ⓐ 피벗이 **바닥**이다: 가운데 피벗으로 세로를 누르면 상자가 바닥에서 «뜬다»(위아래로 같이 줄어든다).
+            Assert.AreEqual(0f, chestGrp0.pivot.y, 0.001f,
+                "상자 묶음의 피벗 y 가 바닥(0)이어야 «눌린다» 가 된다 — 가운데면 눌릴 때 상자가 뜬다(T315 ⓐ)");
+            //   ⓑ 상수가 실제로 «가로 ↑ 세로 ↓» 다(누가 1,1 로 «정리» 하면 연출이 조용히 사라진다).
+            Assert.Greater(ShopScreen.ChestSquashX, 1f, "푸딩 = 가로가 늘어난다(T315 ⓐ)");
+            Assert.Less(ShopScreen.ChestSquashY, 1f, "푸딩 = 세로가 눌린다(T315 ⓐ)");
+            // T307 ⓐ — 상자 뒤 빛이 **돈다**(주인 «안 움직이네 움직이게 하셈»).
+            //   이 트윈은 일부러 시퀀스 «밖» 에 걸었다(무한 루프를 시퀀스에 끼우면 그 시퀀스가 영영 안 끝난다) —
+            //   그래서 `DOTween.IsTweening` 이 **볼 수 있다**(시퀀스에 끼운 트윈은 활성 목록에서 빠져 안 보인다 · 이 파일 위쪽 T158 ⓐ 주석과 같은 함정).
+            {
+                var light0 = UiKit.Find(chestGrp0, "Light");
+                Assert.IsNotNull(light0, "조각의 상자 뒤 빛(Light)");
+                Assert.IsTrue(DG.Tweening.DOTween.IsTweening(light0, true),
+                              "상자 뒤 빛에 도는 트윈이 걸려 있어야 한다(T307 ⓐ · 주인 «안 움직이네 움직이게 하셈»)");
+            }
             float chestY0 = chestGrp0.anchoredPosition.y;   // «떨어지기 전» 높이 — 연출이 끝난 뒤와 맞대 본다(상수에 안 기댄다)
             // T158 ⓐ — «작았다» 는 여기서 잰다(가장 이른 자리). 뒤에서 재면 커지는 중이라 값이 흐른다.
             float chestScale0 = chestGrp0.localScale.x;
