@@ -7665,6 +7665,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > · ⚠ **남은 것 = 배선 한 줄 + P7** — `LobbyPopups.cs:586` `() => ov.Close()` → `() => { ov.Close(); app.Hint(q.Go); }`(줄의 `q` 가 이미 있다) 와 T300 P7 각본에 «이동» 한 번. 그 파일이 **T258(워커 K) 의 살아 있는 lock** 안이라 이 회차는 못 연다(README «같은 파일이면 뒤 번호가 기다린다»). 그때까지 «이동» 은 지금처럼 닫기만 한다.
 > · 게이트: build 0/0 · test **477/477**(신규 9) · gen_meta ✔ · gen_catalog ✔(`pi.hand` · 724) · catalog_keys ✔ · asmdef ✔ · test_usings ✔ · stale_asserts 0 · unity_null 0 · font_glyphs ✔ · split_push ✔ · PlayMode 임시 csproj(유니티 asmdef 와 같은 참조) **내 파일 0 오류**.
 > · **확인** = 다음 완주 런 `[CI명부] QuestGoTests(9)`·`QuestGoPlayTests(5)` 실패 0 · 주인 폰은 배선 뒤(«이동» → 그 자리 · 손가락).
+> **✔ 확인 끝 · lock 반납(15:2X · sess-1425-9466 · 워커 N)** — 런 **830**(`3d15d079` · 유니티 잡 success) `[CI명부]` **`QuestGoPlayTests(5)`** · PlayMode 172건 실패 0 · dotnet 477/477. **남은 것 = 배선 한 줄 + P7 뿐**이고 그 파일이 T258 의 살아 있는 lock 안이라 lock 을 쥐고 기다리지 않는다(T321 1회차와 같은 갈래). `LobbyPopups.cs` 를 여는 사람: `:586` 의 `() => ov.Close()` 를 `() => { ov.Close(); app.Hint(q.Go); }` 로(줄의 `q` 가 이미 있다 · `q == null` 이면 `Hint` 가 아무 일도 안 한다) + `Playthrough` P7 에 «이동» 한 번 — 그것으로 이 절이 닫힌다.
 
 ### T326 ✅ — **표 ㊺ 의 «오른쪽 짝» 셋을 재서 넣었다 — 6.4 → 7.1, 남은 감점은 전부 T240 이 답을 적어 둔 자리** (2026-09-09 11:1X · sess-2157-4152 · 워커 H · **문서만 · C# 0줄** · 결정 886)
 
