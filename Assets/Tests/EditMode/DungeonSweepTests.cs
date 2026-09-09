@@ -188,5 +188,76 @@ namespace KkomaKnight.Tests
             Assert.AreEqual(3500, got.Gold, 1e-9, "표의 sweep(첫 클리어 5800 이 아니다)");
             Assert.AreEqual(0, s.PetEgg, 1e-9, "원정은 표에 펫알이 없다 — 없는 것을 지어내지 않는다");
         }
+
+        // ───────── T241 — «판을 실제로 깼을 때» 받는 보상(소탕과 다른 길) ─────────
+
+        /// <summary>
+        /// 주인 표 그대로: 지옥의 문 <b>첫 클리어 = 펫알 11 · 골드 1,000</b>, 그 뒤 클리어 = 펫알 5 · 골드 1,000.
+        /// <para>여태 이 자리는 <b>주는 사람이 없었다</b> — 세부 팝업(21)이 표를 보여 주기만 했다(T241 · 결정 아래).</para>
+        /// </summary>
+        [Test]
+        public void FirstClearPaysFirstAndLaterClearsPayClear()
+        {
+            var d = Table(); var s = Fresh(d);
+            Assert.AreEqual(0, DungeonSweep.Floor(s, "hell"), "아직 깬 적이 없다");
+
+            var first = DungeonSweep.GrantClear(s, d, "hell");
+            Assert.IsNotNull(first, "첫 클리어 보상");
+            Assert.AreEqual(11, first.PetEgg, 1e-9); Assert.AreEqual(1000, first.Gold, 1e-9);
+            Assert.AreEqual(11, s.PetEgg, 1e-9, "세이브에 실제로 들어간다");
+            Assert.AreEqual(1000, s.Gold, 1e-9);
+            Assert.AreEqual(1, DungeonSweep.Floor(s, "hell"), "«깬 적 있다» 가 같이 남는다 — 소탕의 조건");
+
+            var again = DungeonSweep.GrantClear(s, d, "hell");
+            Assert.IsNotNull(again);
+            Assert.AreEqual(5, again.PetEgg, 1e-9, "두 번째부터는 clear 다(first 를 다시 주지 않는다)");
+            Assert.AreEqual(16, s.PetEgg, 1e-9, "11 + 5");
+            Assert.AreEqual(2000, s.Gold, 1e-9);
+        }
+
+        /// <summary>«첫» 은 <b>기록보다 먼저</b> 판정된다 — 부르는 쪽이 순서를 틀릴 자리를 없앴다(그 순서가 뒤집히면 첫 클리어가 영영 안 온다).</summary>
+        [Test]
+        public void TheFirstClearIsJudgedBeforeTheRecordIsWritten()
+        {
+            var d = Table(); var s = Fresh(d);
+            DungeonSweep.Record(s, "hell", 1);          // 누가 먼저 기록을 남겨 버린 세상
+            var got = DungeonSweep.GrantClear(s, d, "hell");
+            Assert.AreEqual(5, got.PetEgg, 1e-9, "이미 기록이 있으면 그 판은 «첫» 이 아니다");
+        }
+
+        /// <summary>소탕과 갈린다 — 소탕은 티켓을 쓰고 <c>sweep</c> 을 주지만, 클리어는 <b>티켓을 안 쓴다</b>(판을 이미 돌았다).</summary>
+        [Test]
+        public void ClearingDoesNotSpendATicket()
+        {
+            var d = Table(); var s = Fresh(d);
+            int before = DungeonTickets.Tickets(s, d, "hell", Today);
+            DungeonSweep.GrantClear(s, d, "hell");
+            Assert.AreEqual(before, DungeonTickets.Tickets(s, d, "hell", Today), "클리어 보상은 티켓을 안 먹는다");
+        }
+
+        /// <summary>표에 없는 키·빈 표·던전 판이 아닌 경우는 <c>null</c> 이고 재화가 한 톨도 안 움직인다.</summary>
+        [Test]
+        public void UnknownDungeonsPayNothing()
+        {
+            var d = Table(); var s = Fresh(d);
+            Assert.IsNull(DungeonSweep.GrantClear(s, d, "noSuchDungeon"));
+            Assert.IsNull(DungeonSweep.GrantClear(s, d, ""), "던전 판이 아니면(키가 없다) 아무 일도 없다");
+            Assert.IsNull(DungeonSweep.GrantClear(s, null, "hell"));
+            Assert.AreEqual(0, s.Gold, 1e-9); Assert.AreEqual(0, s.PetEgg, 1e-9);
+            Assert.AreEqual(0, DungeonSweep.Floor(s, "noSuchDungeon"), "모르는 키는 기록도 안 남는다");
+        }
+
+        /// <summary>원정은 표에 펫알이 없다 — 없는 것을 지어내지 않는다(첫 5,800 → 이후 3,500).</summary>
+        [Test]
+        public void ExpeditionClearPaysGoldOnly()
+        {
+            var d = Table(); var s = Fresh(d);
+            var first = DungeonSweep.GrantClear(s, d, "expedition");
+            Assert.AreEqual(5800, first.Gold, 1e-9); Assert.AreEqual(0, first.PetEgg, 1e-9);
+            var next = DungeonSweep.GrantClear(s, d, "expedition");
+            Assert.AreEqual(3500, next.Gold, 1e-9);
+            Assert.AreEqual(0, s.PetEgg, 1e-9);
+        }
+
     }
 }

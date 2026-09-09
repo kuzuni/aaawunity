@@ -294,5 +294,29 @@ namespace KkomaKnight.Core
 
         /// <summary>1단계에 «지급을 왜 뗐나» 를 적어 두었던 자리 — 2단계가 <see cref="Grant"/> 로 채웠다(문구는 옛 기록이 가리키므로 남긴다).</summary>
         public const string GrantNote = "펫알은 SaveData.PetEgg 에 쌓는다 — 지급은 Grant 가 한다(T228 2단계)";
+
+        /// <summary>
+        /// <b>던전 판을 실제로 깼을 때</b> 받는 보상 — 첫 클리어면 표의 <c>first</c>(총액), 그 뒤로는 <c>clear</c>(T241 · 소탕 <see cref="Grant"/> 와 다른 길이다).
+        /// <para>
+        /// ⚠ <b>이 자리가 여태 비어 있었다</b> — 표의 <c>first</c>·<c>clear</c> 는 세부 팝업(21)이 <b>보여 주기만</b> 했고 주는 사람이 없었다.
+        /// 화면이 «첫 클리어 펫알 11 · 골드 1,000» 이라고 약속하는데 판을 깨도 아무것도 안 들어오는 상태였다(결정 633 과 같은 갈래 · 이번은 «자리» 도 «길» 도 아니고 **주는 손**이 없었다).
+        /// </para>
+        /// <b>«첫» 의 판정은 <see cref="Record"/> 보다 먼저**여야 한다</b> — 기록을 남긴 뒤에 물으면 첫 클리어가 영영 안 온다.
+        /// 그래서 이 함수가 <b>판정 → 지급 → 기록</b>을 한 묶음으로 한다(부르는 쪽이 순서를 틀릴 자리를 없앤다).
+        /// 던전 판이 아니거나(<paramref name="key"/> 가 비었다) 표에 없는 키면 <c>null</c> 이고 아무것도 안 바뀐다.
+        /// </summary>
+        public static DungeonData.Reward GrantClear(SaveData s, DungeonData d, string key)
+        {
+            if (s == null || d == null || string.IsNullOrEmpty(key)) return null;
+            var e = d.Of(key);
+            if (e == null) return null;
+            bool first = Floor(s, key) <= 0;               // 기록을 남기기 «전» 에 물어야 첫 클리어를 알아본다
+            var prize = first ? e.First : e.Clear;
+            Record(s, key, 1);                             // T228 ⓓ — «깬 적 있다»(층은 아직 없다 · 소탕의 조건)
+            if (prize == null || !prize.Any) return null;  // 표가 비었으면 줄 것이 없다(기록은 그래도 남는다)
+            s.Gold += prize.Gold;
+            s.PetEgg += prize.PetEgg;
+            return prize;
+        }
     }
 }

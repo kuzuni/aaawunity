@@ -342,6 +342,25 @@ namespace KkomaKnight.Game
             if (_exitPage != null) EventsScreen.Open(App, _exitPage);
             else App.ShowScreen("lobby");
         }
+
+        /// <summary>
+        /// T241 — 판을 나간 <b>뒤에</b> «무엇을 받았는지» 를 공통 리워드 팝업으로 보여 준다(던전 클리어 보상).
+        /// <para>
+        /// <b>왜 나간 뒤인가</b> — 지급은 판이 끝나는 순간 이미 끝났고(T243 «즉시 지급»), 이 팝업은 <b>보여 주는 것</b>이다.
+        /// 클리어 팝업(«그냥 받기»·«광고 ×2»)이 떠 있는 위에 겹쳐 띄우면 두 팝업이 한 층을 다투고, 뒤엣것이 앞엣것의 트윈을 죽인다(<c>RewardPopup.Show</c> 첫 줄이 <c>Overlay.Close</c> 다).
+        /// 나간 자리(던전 페이지)는 <b>화면</b>이라 <c>onClose</c> 도 필요 없다(결정 701).
+        /// </para>
+        /// 보상이 없으면(표가 비었거나 던전 판이 아니면) 그냥 나가기만 한다 — <b>얻은 게 없는데 뜨는 팝업은 금지</b>다.
+        /// </summary>
+        void ExitBattleWithPrize(DungeonData.Reward prize)
+        {
+            ExitBattle();
+            if (prize == null || !prize.Any) return;
+            var items = new List<RewardPopup.Item>();
+            if (prize.PetEgg > 0) items.Add(RewardPopup.Item.Of("pet.egg", UiKit.FmtComma(prize.PetEgg), amount: (int)Math.Round(prize.PetEgg)));
+            if (prize.Gold > 0) items.Add(RewardPopup.Item.Of("ui.coin", UiKit.FmtComma(prize.Gold), amount: (int)Math.Round(prize.Gold)));
+            RewardPopup.Show(items);
+        }
         void EndAndExit()
         {
             if (G != null && !_ended) { _ended = true; App.Save.Gold += Math.Round(G.Gold); App.Persist(); }
@@ -441,12 +460,16 @@ namespace KkomaKnight.Game
                 // T228 ⓓ — 던전에서 들어온 판을 «깼다» 고 남긴다. 이것 하나가 소탕의 조건이다(주인 «도전을 해서 클리어를 했었던 챕터만 소탕이 가능한 건데»).
                 // ⚠ «층» 은 아직 이 게임에 없다(21 팝업의 층 화살표도 껍데기 · 표도 던전마다 값이 하나뿐) — 그래서 «깬 적 있다» 를 1 로 적는다.
                 //    층이 생기면 그 층 수를 그대로 넣으면 되고, DungeonSweep 은 이미 «올라가기만 한다» 로 그 날을 받아 놓았다.
-                DungeonSweep.Record(S, _dunKey, 1);
+                // T241 — **던전 판을 깼으면 표(dungeon.json)의 클리어 보상을 준다**(첫 클리어면 first · 그 뒤 clear).
+                //   여태 이 자리는 «깼다» 만 남기고 보상은 아무도 안 줬다 — 세부 팝업(21)이 그 표를 보여 주기만 했다.
+                //   판정·지급·기록을 GrantClear 한 곳이 순서대로 한다(«첫» 은 기록 전에 물어야 한다).
+                var dunPrize = _dunKey != null ? DungeonSweep.GrantClear(S, D.Dungeon, _dunKey) : null;
+                if (_dunKey != null) DungeonSweep.Record(S, _dunKey, 1);   // 표가 없거나 비어도 «깬 적 있다» 는 남는다(소탕의 조건 · GrantClear 가 이미 남겼으면 무해한 두 번째 호출이다)
                 S.SelChapter = next; S.Gold += Math.Round(G.Gold); App.Persist();   // 1배는 여기서 은행에(«그냥 받기» = 이대로 로비로)
                 // T23 — «광고 보고 보상 ×2 받기» = 광고 카운트다운 뒤 이 판의 골드(처치 + 클리어 보너스)를 한 번 더 지급 → 2배 · 로비로. «다음 챕터» 는 로비의 챕터 화살표(SelChapter = next 로 이미 맞춰 둠).
                 App.Overlay.Clear(G, last,
-                    () => { S.Gold += Math.Round(G.Gold); App.Persist(); App.Toast($"광고 보상 ×2 · +{UiKit.Fmt(Math.Round(G.Gold))} G"); ExitBattle(); },
-                    () => ExitBattle());
+                    () => { S.Gold += Math.Round(G.Gold); App.Persist(); App.Toast($"광고 보상 ×2 · +{UiKit.Fmt(Math.Round(G.Gold))} G"); ExitBattleWithPrize(dunPrize); },
+                    () => ExitBattleWithPrize(dunPrize));
             }
             else
             {
