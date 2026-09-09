@@ -94,7 +94,14 @@ namespace KkomaKnight.Game
         /// <summary>빛살을 걸 자리(칸 · 아이콘 · 조각 키) — <b>배치가 끝난 뒤</b> 한꺼번에 건다(아이콘 rect 가 % 앵커라 Build 중에는 0 이고, 그러면 빛살 한 변이 0 이 된다).</summary>
         readonly List<(RectTransform host, RectTransform icon, string key)> _lightPlan = new List<(RectTransform, RectTransform, string)>();
         float _timerT;
-        sealed class BoxWidgets { public Button One, Ten, Key; public TMP_Text KeyCount, KeyLabel; public readonly List<TMP_Text> Pills = new List<TMP_Text>(); }
+        /// <summary>상자 카드 한 장의 움직이는 조각들. <b>T289 — 열쇠 버튼이 따로 있지 않다</b>: 1회·10회 자리에 다이아 옷(<see cref="One"/>·<see cref="Ten"/>)과
+        /// 열쇠 옷(<see cref="OneKey"/>·<see cref="TenKey"/>)이 <b>같은 rect 에 겹쳐</b> 서 있고 <see cref="Refresh"/> 가 하나만 켠다.</summary>
+        sealed class BoxWidgets
+        {
+            public Button One, Ten, OneKey, TenKey;
+            public TMP_Text OneKeyCount, TenKeyCount, OneKeyLabel, TenKeyLabel;
+            public readonly List<TMP_Text> Pills = new List<TMP_Text>();
+        }
 
         static string Today() => SaveStore.Today();
         /// <summary>그 «하루 1번» 자리를 오늘 아직 안 썼는가(<see cref="ShopFree"/> · T259 4항). 자리 이름은 <c>ShopFree.Gem</c>·<c>Gold</c>·<c>BoxRare</c>·<c>BoxLegend</c>.</summary>
@@ -296,21 +303,26 @@ namespace KkomaKnight.Game
         /// 큰 카드 윗줄의 «1회» 도 <b>«쓸 개수»회</b> 로 같이 움직인다 — 누르면 10 회가 나가는데 «1회» 라고 적혀 있으면 그것이 거짓말이다.
         /// 0개면 누를 수 없으므로 윗줄은 T255 때의 «1회» 그대로 쉰다.
         /// </para>
-        /// 0개면 비활성이고(개수는 그대로 「0/0」 이 보인다 — 어디서 구하는지는 아레나 상인·출석이 안다), 키가 없는 상자면 버튼 자체를 안 만든다.
+        /// <b>T289(주인 2026-09-09 «열쇠 버튼은 없어야 하고 … 1회, 10회 버튼이»)</b> — 이제 이 자리는 <b>따로 선 버튼이 아니라 «다이아 버튼의 열쇠 옷»</b> 이다.
+        /// 같은 rect 에 겹쳐 두고 <see cref="Refresh"/> 가 하나만 켠다. <b>왜 옷을 «갈아입히지» 않고 두 벌을 겹치나</b> — 버튼 스킨은 프리팹 그림 한 장이 아니라
+        /// <c>ButtonGradient</c> 까지 딸려 오므로 런타임에 갈아입히면 색이 두 곳에서 갈린다(그리고 되돌릴 때 한쪽만 남는다). 겹쳐 두면 각자 제 옷·제 손잡이를 갖는다.
+        /// 열쇠가 없는 상자(<see cref="GachaKeys.KeyOf"/> 가 null)면 옷 자체를 안 만든다 — 그 카드는 언제나 다이아다.
         /// </summary>
-        RectTransform KeyButton(RectTransform card, GachaBox box, Layout.R rect, bool twoLine, BoxWidgets w)
+        RectTransform KeyButton(RectTransform card, GachaBox box, Layout.R rect, bool twoLine, string name, out Button btn, out TMP_Text count, out TMP_Text label)
         {
+            btn = null; count = null; label = null;
             string item = GachaKeys.KeyOf(box.Key); if (item == null) return null;
-            var b = UiKit.Button(card, "ui.btnGreen", "", () => PullWithKey(box.Key), rect); b.name = "Key";
+            var b = UiKit.Button(card, "ui.btnGreen", "", () => PullWithKey(box.Key), rect); b.name = name;
             var own = UiKit.ButtonText(b); if (own != null) own.gameObject.SetActive(false);
             var row = twoLine
                 ? PriceRow(b, new Layout.R(0, 50, 100, 44), "0/0", null, GachaKeys.Icon(item), "KeyIcon")
                 // T275 ⓑ — 작은 카드는 글자가 Aux(36) 이므로 아이콘도 Aux 로 맞춘다(큰 카드는 Button 44 로 그대로):
                 // 글자·아이콘 크기가 한 줄 안에서 어긋날 까닭이 없고, «17/10» 다섯 자가 들어갈 8px 이 여기서 난다(결정 761).
                 : PriceRow(b, new Layout.R(0, 0, 100, 100), "0/0", null, GachaKeys.Icon(item), "KeyIcon", TextSize.Aux, TextKind.Aux, TextSize.Aux);
-            if (twoLine) { var top = UiKit.Label(b, 0, 6, 100, 44, "1회", TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); top.name = "Label"; w.KeyLabel = top; }
-            w.Key = b.GetComponent<Button>();
-            w.KeyCount = row.Find("Cost") != null ? row.Find("Cost").GetComponent<TMP_Text>() : null;
+            if (twoLine) { var top = UiKit.Label(b, 0, 6, 100, 44, "1회", TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); top.name = "Label"; label = top; }
+            btn = b.GetComponent<Button>();
+            count = row.Find("Cost") != null ? row.Find("Cost").GetComponent<TMP_Text>() : null;
+            b.gameObject.SetActive(false);   // 켜는 것은 Refresh 하나뿐이다 — 첫 프레임에 두 옷이 같이 보이지 않게
             return b;
         }
         /// <summary>(i) 버튼 = Button_Info 조각 → 확률·천장 팝업.</summary>
@@ -451,13 +463,16 @@ namespace KkomaKnight.Game
             UiKit.Label(card, 42, 20, 54, 16, RatesText(box), TextSize.Body, Palette.White);
             w.Pills.Add(Pill(card, new Layout.R(42, 45, 55, 10), ""));
             w.Pills.Add(Pill(card, new Layout.R(42, 58.5f, 55, 10), ""));
-            // T255 3항 — 세 갈래가 «같은 줄» 에 선다(높이·y 는 종전 그대로 · 폭만 나눈다). 큰 카드는 1,015px 라 «💎4,000» 도 305px 칸에 넉넉히 든다.
-            var one = PriceButton(card, "One", "1회", box.Cost, () => Pull(1, key), new Layout.R(2.5f, 74, 30, 21), true);
-            var ten = PriceButton(card, "Ten", $"{D.Gacha.TenPullCount}회", box.Cost * D.Gacha.TenPullCount, () => Pull(D.Gacha.TenPullCount, key), new Layout.R(34, 74, 30, 21), true);
+            // T289 — **버튼은 둘뿐이다**(주인 «열쇠 버튼은 없어야 하고»). T255 3항이 셋을 한 줄에 세우려고 좁혀 둔 폭(30·30·32)을
+            // **T255 이전의 둘(46·46)** 로 되돌린다 — 표 ⑤ 의 «(뽑기 화면) 상자 버튼 2개» 도 레퍼런스 10 도 버튼 둘이다.
+            var oneR = new Layout.R(2.5f, 74, 46, 21); var tenR = new Layout.R(51.5f, 74, 46, 21);
+            var one = PriceButton(card, "One", "1회", box.Cost, () => Pull(1, key), oneR, true);
+            var ten = PriceButton(card, "Ten", $"{D.Gacha.TenPullCount}회", box.Cost * D.Gacha.TenPullCount, () => Pull(D.Gacha.TenPullCount, key), tenR, true);
             w.One = one.GetComponent<Button>(); w.Ten = ten.GetComponent<Button>();
             btnsOut.Add(one); btnsOut.Add(ten);
-            var bigKey = KeyButton(card, box, new Layout.R(65.5f, 74, 32, 21), true, w);
-            if (bigKey != null) btnsOut.Add(bigKey);
+            // 같은 두 자리에 열쇠 옷을 겹쳐 둔다(꺼진 채로 태어난다 · Refresh 가 고른다).
+            KeyButton(card, box, oneR, true, "OneKey", out w.OneKey, out w.OneKeyCount, out w.OneKeyLabel);
+            KeyButton(card, box, tenR, true, "TenKey", out w.TenKey, out w.TenKeyCount, out w.TenKeyLabel);
             // T69-shop «검은 아웃라인» — CardFrame_04 조각의 제 외곽선은 프레임 3~4px 라 폰에서 1px 남짓(8px 규칙 미달) → 카드 위에 Ink 링 한 장(가운데 비움 · raycast 끔 · 표 % 불변)
             UiKit.Bordered(card);
             _box[key] = w;
@@ -484,19 +499,21 @@ namespace KkomaKnight.Game
             // T255 3항 — 작은 카드는 폭이 324px 뿐이라 셋을 같은 줄에 세울 때 «글자를 가진 칸» 을 먼저 지켰다:
             // 광고는 원래 아이콘 하나뿐이라 좁혀도 잘릴 글자가 없고(20% = 65px · 아이콘 44), 키는 [아이콘][개수] 라 짧다.
             // 다이아 버튼(«1회 💎80»)만 종전 폭에 가깝게 남긴다 — 여기서 한 자라도 줄면 그 줄이 먼저 줄어든다(T63 하한).
-            // T275 ⓑ — 광고 칸을 18% → 13% 로 좁혀 그 5%p 를 키 버튼에 준다(결정 761 · `screens:t275.json` 실측 «넘침 +16.9px»).
-            // 좁혀도 잃는 것이 없는 칸이 여기뿐이다: 광고는 아이콘 하나뿐이라 잘릴 글자가 없고, 칸 안 비율을 48% → 62% 로 올려
-            // 그려지는 아이콘 크기는 전과 거의 같게(42 → 40px) 뒀다. 다이아 버튼(«1회 💎80»)은 T255 경고대로 한 자도 안 건드린다.
+            // T289 — 열쇠 버튼이 사라져 **광고 + 1회 둘만** 남는다(주인 지시) → T275 ⓑ 가 키 자리를 만들려고 좁혔던 광고 칸(18% → 13%)과
+            // 칸 안 비율(48% → 62%)을 **T255 이전 값(42% · 48%)** 으로 되돌린다. 되돌리는 것이 옳은 까닭: 그 좁힘은 «셋을 한 줄에» 세우려던 셈이었고
+            // 이제 셋이 아니다 — 레퍼런스 10 의 그 줄도 좌우 두 칸이다(옛 값이 그 실측에서 나왔다).
             // T259 1항 — 이 버튼은 이제 **그 상자를 1회 연다**(주인 «광고 버튼 클릭 시 광고를 본 다음에 해당 상자 1회 오픈 · 지금 다른 방식인 것 같음»).
             // 여태 하던 «무료 다이아 보급» 은 상품 쪽(다이아 100 · 골드 1,000)으로 옮겼다(3항 · 그것이 주인이 말한 자리다).
             string adSlot = AdSlot(key);
-            var ad = UiKit.Button(card, "ui.btnBlue", "", () => OnAdOpen(box), new Layout.R(6, 83, 13, 14)); ad.name = "Ad";
-            var adIc = UiKit.Icon(ad, "Icon", "ui.ad"); UiKit.Pct(adIc.rectTransform, 19, 12, 62, 76);
+            var ad = UiKit.Button(card, "ui.btnBlue", "", () => OnAdOpen(box), new Layout.R(6, 83, 42, 14)); ad.name = "Ad";
+            var adIc = UiKit.Icon(ad, "Icon", "ui.ad"); UiKit.Pct(adIc.rectTransform, 26, 12, 48, 76);
             var dot = UiKit.AlertDot(ad, "AdDot", new Vector2(1, 1), new Vector2(-6, -2), 44);   // T136
             _adBtns.Add((ad.GetComponent<Button>(), dot, adSlot));
-            KeyButton(card, box, new Layout.R(21, 83, 31, 14), false, w);   // T275 ⓑ — 26% → 31%(127.8 → 152.4px · 필요 136.7px · 결정 761)
-            var one = PriceButton(card, "One", "1회", box.Cost, () => Pull(1, key), new Layout.R(54, 83, 40, 14), false);
+            // T289 — 1회 자리 하나가 두 옷을 입는다(작은 카드엔 10회 버튼이 없다 · 열쇠가 있으면 `min(K,캡)회`).
+            var oneR = new Layout.R(52, 83, 42, 14);
+            var one = PriceButton(card, "One", "1회", box.Cost, () => Pull(1, key), oneR, false);
             w.One = one.GetComponent<Button>();
+            KeyButton(card, box, oneR, false, "OneKey", out w.OneKey, out w.OneKeyCount, out w.OneKeyLabel);
             // T69-shop — 큰 카드와 같은 Ink 링(광고·가격 버튼 줄은 카드 «안» 이라 따로 상자를 두지 않는다 · 레퍼런스 10 도 그렇다 · BorderAudit.Exempt)
             UiKit.Bordered(card);
             _box[key] = w;
@@ -567,18 +584,32 @@ namespace KkomaKnight.Game
                 if (!_box.TryGetValue(box.Key, out var w)) continue;
                 var st = State(box.Key); var lines = PityLines(box, st, w.Pills.Count);
                 for (int i = 0; i < w.Pills.Count; i++) if (w.Pills[i] != null) w.Pills[i].text = lines[i];
-                UiKit.SetInteractable(w.One, S.Gem >= box.Cost); UiKit.SetInteractable(w.Ten, S.Gem >= box.Cost * D.Gacha.TenPullCount);
-                // T255·T275 — 키 버튼은 «보유/이번에 쓸 개수» 를 찍고 0개면 비활성(개수는 그대로 보인다 · 지시서 5항)
-                // 쓸 개수 = min(보유, 캡) 이고 캡은 표 값이다(코드에 10 을 안 박는다 · §1). 뽑고 나면 Pull 이 이 Refresh 를 불러 17 → 7/7 로 바로 갈린다.
-                if (w.Key != null)
+                // ── T289 «열쇠 먼저 소진» — 버튼이 옷을 갈아입는 자리다(주인 2026-09-09 05:4X) ──────────────────
+                //   K = 보유 열쇠 · 캡 = 표 값(코드에 10 을 안 박는다 · §1)
+                //     K = 0      둘 다 다이아(옛 그대로)
+                //     K = 1~9    1회 자리만 열쇠 «K회 🔑 K/K»(가진 것을 다 쓴다) · 10회 자리는 다이아
+                //     K ≥ 캡     둘 다 열쇠 «캡회 🔑 K/캡» — **일부러 같은 일을 하는 버튼 둘**이다(주인이 다이아 길을 막으려고 그렇게 시켰다).
+                //   17 → 누르면 7 → 1회 자리만 «7회 7/7» 로 돌아오는 갈아입기는 Pull 이 이 Refresh 를 불러 저절로 된다.
+                //   ⚠ 열쇠 옷은 «다이아가 모자라다» 와 무관하게 눌린다 — 값을 열쇠로 치르기 때문이다. 그래서 켜진 옷에만 그 조건을 건다.
+                int cap = D.Gacha.TenPullCount;
+                var item = GachaKeys.KeyOf(box.Key);
+                double have = item != null ? GachaKeys.Count(S, item) : 0;
+                int use = item != null ? GachaKeys.UseCount(S, box.Key, cap) : 0;
+                bool oneKey = use > 0, tenKey = have >= cap;
+                if (w.OneKey != null)
                 {
-                    var item = GachaKeys.KeyOf(box.Key);
-                    double have = GachaKeys.Count(S, item);
-                    int use = GachaKeys.UseCount(S, box.Key, D.Gacha.TenPullCount);
-                    if (w.KeyCount != null) w.KeyCount.text = UiKit.FmtQty(have) + "/" + use;
-                    if (w.KeyLabel != null) w.KeyLabel.text = (use > 0 ? use : 1) + "회";
-                    UiKit.SetInteractable(w.Key, use > 0);
+                    w.OneKey.gameObject.SetActive(oneKey);
+                    if (w.OneKeyCount != null) w.OneKeyCount.text = UiKit.FmtQty(have) + "/" + use;
+                    if (w.OneKeyLabel != null) w.OneKeyLabel.text = use + "회";
                 }
+                if (w.TenKey != null)
+                {
+                    w.TenKey.gameObject.SetActive(tenKey);
+                    if (w.TenKeyCount != null) w.TenKeyCount.text = UiKit.FmtQty(have) + "/" + cap;
+                    if (w.TenKeyLabel != null) w.TenKeyLabel.text = cap + "회";
+                }
+                if (w.One != null) { w.One.gameObject.SetActive(!oneKey); UiKit.SetInteractable(w.One, S.Gem >= box.Cost); }
+                if (w.Ten != null) { w.Ten.gameObject.SetActive(!tenKey); UiKit.SetInteractable(w.Ten, S.Gem >= box.Cost * cap); }
             }
             foreach (var g in _gated) UiKit.SetInteractable(g.btn, g.can());
             UpdateTimer(); UpdateLightSpin();
