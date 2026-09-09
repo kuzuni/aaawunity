@@ -644,10 +644,10 @@
 | colors | `col.slate` | `#415760` | #415760 |  |
 | colors | `col.topFrame` | `#2C2B29` | #2C2B29 |  |
 | colors | `col.topCell` | `#12110F` | #12110F |  |
-| colors | `col.grad.cardGem.top` | `#40116D` | #40116D | 상점 다이아 카드 «위» 색 — 레퍼런스 09_shop_1.jpg (40,440)~(225,645) 실측(tools/ref_color.py · T116) |
-| colors | `col.grad.cardGem.bottom` | `#AA0CB8` | #AA0CB8 | 상점 다이아 카드 «아래» 색 — 같은 실측(어두운 위 → 밝은 아래 · 레퍼런스 카드의 방향) |
-| colors | `col.grad.cardGold.top` | `#183D6A` | #183D6A | 상점 골드 카드 «위» 색 — 09_shop_1.jpg (40,1130)~(225,1335) 실측 |
-| colors | `col.grad.cardGold.bottom` | `#1683BE` | #1683BE | 상점 골드 카드 «아래» 색 — 같은 실측 |
+| colors | `col.grad.cardGem.top` | `#8200FF` | #8200FF | 상점 다이아 카드 «위» 색 — 주인 지정 #8200FF(T341 · 2026-09-10 «상단 그라디언트 8200FF · 완전 불투명») · 옛 실측 #40116D(09_shop_1.jpg (40,440)~(225,645) · T116) |
+| colors | `col.grad.cardGem.bottom` | `#EA00FF` | #EA00FF | 상점 다이아 카드 «아래» 색 — 주인 지정 #EA00FF(T341) · 옛 실측 #AA0CB8 · 방향은 그대로 어두운 위 → 밝은 아래 |
+| colors | `col.grad.cardGold.top` | `#183D6A` | #183D6A | 상점 골드 카드 «위» 색 — 주인 지정 #183D6A(T341 · 옛 실측과 같은 값 · 09_shop_1.jpg (40,1130)~(225,1335)) |
+| colors | `col.grad.cardGold.bottom` | `#14ADFF` | #14ADFF | 상점 골드 카드 «아래» 색 — 주인 지정 #14ADFF(T341) · 옛 실측 #1683BE |
 | colors | `col.grad.cardBlue.top` | `#50A1E0` | #50A1E0 | 특권 카드 «위» 색 — 11_shop_special.jpg (40,300)~(680,430) 실측 |
 | colors | `col.grad.cardBlue.bottom` | `#5CC6F8` | #5CC6F8 | 특권 카드 «아래» 색 — 같은 실측 |
 | colors | `col.grad.cardChestLegend.top` | `#BA8BFF` | #BA8BFF |  |

@@ -171,7 +171,7 @@ namespace KkomaKnight.Game
                         // T259 3항 — 표가 «무료 보급 줄» 로 지목한 칸이고 오늘 몫이 남았으면 값을 안 받는다(가격 버튼이 «Free» 로 떠 있는 그 상태다).
                         if (p.Free && TakeFree(ShopFree.Gem)) { App.Save.Gem += p.Gem; App.Persist(); Refresh(); App.Toast($"무료 보급 다이아 {UiKit.FmtQty(p.Gem)} 수령!"); return; }
                         App.Save.Gem += p.Gem; App.Persist(); Refresh(); App.Toast($"다이아 {UiKit.FmtQty(p.Gem)} 지급 (모의 결제)");
-                    }, "cardGem");
+                    }, PackGradGem);
                 if (p.Free) RegisterFreePack(slot, ShopFree.Gem, $"{p.Won:#,0}원");
             }
             UiKit.Tag(Header(SecGoldY, "골드"), "두 번째 섹션 헤더");
@@ -186,7 +186,7 @@ namespace KkomaKnight.Game
                     if (p.Free && TakeFree(ShopFree.Gold)) { S.Gold += p.Gold; App.Persist(); Refresh(); Audio.Sfx("snd.coin"); App.Toast($"무료 보급 골드 {UiKit.Fmt(p.Gold)} 수령!"); return; }
                     if (S.Gem < p.Gem) { App.Toast("다이아가 부족합니다"); return; }
                     S.Gem -= p.Gem; S.Gold += p.Gold; App.Persist(); Refresh(); Audio.Sfx("snd.coin"); App.Toast($"골드 {UiKit.Fmt(p.Gold)} 구매!");
-                }, "cardGold");
+                }, PackGradGold);
                 if (p.Free) RegisterFreePack(slot, ShopFree.Gold, UiKit.FmtQty(p.Gem));
                 // T259 3항 — 무료 보급이 살아 있는 동안은 다이아가 없어도 눌린다(값을 안 치르니까).
                 // 이 줄을 안 고치면 «Free» 라고 써 있는데 회색이라 «안 눌리는 무료» 가 된다 — 화면이 제 글자와 어긋나는 자리다.
@@ -369,6 +369,9 @@ namespace KkomaKnight.Game
         // ───────────────────────── 상자 카드 ─────────────────────────
         /// <summary>상자 카드 3장의 그라데이션 이름(레퍼런스 10 실측 · <see cref="GradientPalette"/> · 카탈로그 <c>col.grad.cardChest*</c>) — 문자열을 두 곳에 안 박는다(§1).</summary>
         public const string ChestGradBig = "cardChestLegend", ChestGradLeft = "cardChestRare", ChestGradRight = "cardChestEpic";
+
+        /// <summary>다이아·골드 팩 카드의 그라데이션 표 이름(<see cref="GradientPalette"/> · T341 «상점 부분만» — 이 둘을 쓰는 자리는 이 파일뿐이다). 자(UiSmokeTests)가 같은 상수를 읽는다.</summary>
+        public const string PackGradGem = "cardGem", PackGradGold = "cardGold";
         /// <summary>
         /// 전설 상자 카드 안 무늬의 짙기(T308 ⓑ) — 화면 전체 무늬(<see cref="UiKit.PatternAlpha"/> = 3/255)보다 <b>진하다</b>.
         /// <para><b>왜 공용 값을 안 쓰나</b>: 3/255 는 «폰 한 화면을 덮는 넓이» 에서 결이 느껴지라고 고른 값이고, 카드 한 칸(324×… px)에서는
@@ -400,9 +403,10 @@ namespace KkomaKnight.Game
         /// 조각의 바탕(<paramref name="bgName"/>) «바로 위» 형제에 <see cref="UiKit.GradientCard"/> 두 장을 깐다(글자·아이콘·버튼·테두리는 그 위 · T72 ③ 층 순서).
         /// 색은 <see cref="GradientPalette"/> 의 <b>레퍼런스 실측 두 색</b>(T116) — 코드에 색을 박지 않는다(§1).
         /// <para>
-        /// <paramref name="alpha"/> — 상품 카드(09)는 조각 바탕이 어두운 제 색이라 덧칠(<see cref="UiKit.GradientCardAlpha"/>)로 레퍼런스와 맞는데,
+        /// <paramref name="alpha"/> — 상품 카드(09)는 조각 바탕이 어두운 제 색이라 덧칠(<see cref="UiKit.GradientCardAlpha"/>)로 레퍼런스와 맞췄었는데,
         /// <b>상자 카드(10)는 조각 바탕이 회색</b>이라 덧칠이면 색이 죽는다(회차 1 실측: 레퍼런스 «Rare» #0182C3 → 우리 #8997A2) →
         /// 몸통을 <see cref="UiKit.GradientCardSolidAlpha"/> 로 덮는다(T100 ⓓ 회차 2 · 결정 338).
+        /// <b>T341 부터는 상품 카드(09)도 Solid 다</b>(주인 «완전 불투명» · 주인이 준 색이 그대로 앉아야 한다) — 즉 이 화면의 카드는 전부 몸통 채우기다.
         /// </para>
         /// <para>
         /// T147 — 바탕은 <b>직계 자식이 아닐 수 있다</b>. 다이아·골드 카드(<c>ui.shopItem</c>)의 계층은 «카드 → <c>ShopFrame_01</c> → <c>Bg(Mask)</c>» 라
@@ -541,7 +545,10 @@ namespace KkomaKnight.Game
             foreach (var im in cell.GetComponentsInChildren<Image>(true)) { if (im.name == "Bg(Mask)") im.color = tint; else if (im.name == "Botton") im.color = Palette.Cream; }
             UiKit.Hide(crt, "ItemFrameArea", "Text_ItemNum");
             // T100 ⓓ — 상품 카드도 같은 규칙(한 화면에서 상자만 화려하면 어색하다 · 지시서 ⓓⓒ 기본값 · 결정 313)
-            CardGradient(crt, gradName, "Bg(Mask)");
+            // T341(주인 2026-09-10 «다이아·골드 카드 … 완전 불투명 · 둘 다 상점 부분만») — 덧칠(GradientCardAlpha 0.55)이면 조각의 바탕이 비쳐
+            //   주인이 준 색(#8200FF→#EA00FF · #183D6A→#14ADFF)이 그대로 안 앉는다 → 상자 카드(10)와 같은 «몸통 채우기»(Solid · 결정 338).
+            //   ⚠ «상점 부분만» 은 저절로 지켜진다 — BuildPack 을 부르는 곳은 이 파일의 다이아·골드 팩 둘뿐이고, 전역 상수(UiKit.GradientCardAlpha)는 안 건드렸다.
+            CardGradient(crt, gradName, "Bg(Mask)", UiKit.GradientCardSolidAlpha);
             // 수량 = 띠 높이에서 계산(≈51 · T63-shop) — 띠 14% × 카드 18.5% = 60px ≥ 선호 50
             var q = UiKit.SetText(crt, "Text_Title", qty, Palette.White, QtySize);
             if (q != null) { UiKit.Pct(q.rectTransform, 5, 5, 90, QtyBandH); q.fontStyle = FontStyles.Bold; q.enableAutoSizing = true; q.fontSizeMin = TextSize.BestFitMin; q.fontSizeMax = QtySize; }

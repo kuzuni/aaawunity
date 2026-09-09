@@ -8620,6 +8620,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Assets/KkomaKnight/catalog.json` · `Game/GradientPalette.cs` · `Game/ShopScreen.cs` · `docs/assets-map.md`. lock `T341`.
 
+> ▸ **1회차 — 0~3항 전부 push(2026-09-09 15:5X · sess-1439-32420 · 워커 O · lock `T341` · 결정 952).** 색 두 곳(카탈로그 + 폴백) · `BuildPack` Solid 한 줄 · `PackGradGem/PackGradGold` 상수 · `UiSmokeTests` 가 상품 카드도 Solid 로 잰다(값은 표에서 읽는다). 전역 알파는 안 건드렸다(2항의 «저절로» 를 주석·자에 적었다). **확인** = 다음 완주 런 `UiSmokeTests` ✗ 없음 + `screens` 09 + 주인 폰. 눈 확인이 오면 lock 반납.
+
 ### T342 — ⚑ 주인: **모든 장비 프레임의 «Glow» 를 완전 흰색·완전 불투명으로** (주인 2026-09-10 «그리고 모든 장비 부분 프레임 들에 있는 글로우 부분 완전 흰색에 완전 불투명으로 해줘야함»)
 
 0. **실측(그 «Glow» 가 어디서 오나)** — 장비 칸 조각의 뿌리는 `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Prefabs_CommonBase/Base_Frame/ItemFrame_01_Normal_BasePrefab.prefab` 이고 그 안에 **`Glow` 라는 자식**이 있다(형제: `Bg`·`Border`·`InnerBorder1~3`·`SpecialBorder`·`HighLight1·2`). **원본은 이미 흰색 α1** 인데 등급 변형(`ItemFrame_01_Normal_<색>`)이 그 색을 **제 등급색으로 덮어** 온다 — 그래서 칸마다 다른 색·다른 짙기로 보인다.

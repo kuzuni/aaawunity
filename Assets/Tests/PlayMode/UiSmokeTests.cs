@@ -299,12 +299,13 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(raw, what + ": 무늬는 RawImage 라야 uvRect 가 흐른다 — 조각의 정적 Image 그대로면 안 움직인다(T157 ⓑ)");
             Assert.IsTrue(UiKit.IsTweening(raw), what + ": 무늬가 실제로 돌아야 한다(주인 «뽑기 결과에서도 패턴들 움직여야 함» · T157 ⓑ)");
         }
-        static void AssertSolidGradient(Transform piece, string what, string paletteName)
+        /// <param name="bgName">조각의 바탕 이름 — 상자 카드(ui.cardFrame)는 «Bg» · 상품 카드(ui.shopItem)는 «Bg(Mask)»(T147 · T341 부터 상품 카드도 Solid 라 같은 자로 잰다).</param>
+        static void AssertSolidGradient(Transform piece, string what, string paletteName, string bgName = "Bg")
         {
             // 회차 3 — 바탕도 두 색의 «가운데 색» 이라야 한다(결정 344). 두 조각이 가운데서 교차하며 반쯤만 덮으므로
             // 비치는 것이 조각의 회색이면 채도가 죽는다(실측: 희귀 0.60 ↔ 레퍼런스 0.98).
-            var bg = UiKit.Find(piece, "Bg");
-            Assert.IsNotNull(bg, what + " 카드 조각의 «Bg»");
+            var bg = DeepFind(piece, bgName);
+            Assert.IsNotNull(bg, what + " 카드 조각의 «" + bgName + "»");
             var bgImg = bg.GetComponent<Image>();
             Assert.IsNotNull(bgImg, what + " 카드 «Bg» 그림");
             var pair = GradientPalette.Of(paletteName);
@@ -1517,12 +1518,22 @@ namespace KkomaKnight.Tests.Play
                     // 바탕 이름은 조각마다 다르다: 상자 카드(ui.cardFrame)는 «Bg» 가 직계 · 상품 카드(ui.shopItem)는 «Bg(Mask)» 가 ShopFrame_01 안의 손자.
                     AssertGradientAboveBg(c.GetChild(0), c.name.StartsWith("Box:") ? "Bg" : "Bg(Mask)", c.name);
                     // T100 ⓓ 회차 2 — 상자 카드(10)는 조각 바탕이 회색이라 «덧칠» 이면 색이 죽는다(실측: 레퍼런스 «Rare» #0182C3 → 회차 1 의 우리 #8997A2).
-                    // 몸통을 꽉 채워야 레퍼런스 색감이 난다 → 위·아래 두 조각의 tint 알파가 1(결정 338). 상품 카드(09)는 덧칠 그대로라 여기서 안 잰다.
+                    // 몸통을 꽉 채워야 레퍼런스 색감이 난다 → 위·아래 두 조각의 tint 알파가 1(결정 338).
                     if (c.name.StartsWith("Box:"))
                     {
                         var grad = ShopScreen.ChestGradName(D, c.name.Substring("Box:".Length));
                         Assert.IsNotNull(grad, c.name + " 의 그라데이션 이름(ShopScreen.ChestGradName)");
                         AssertSolidGradient(c.GetChild(0), c.name, grad);
+                    }
+                    // T341(주인 2026-09-10 «다이아·골드 카드 … 완전 불투명 · 둘 다 상점 부분만») — 상품 카드(09)도 이제 Solid 다.
+                    //   종전 «덧칠 그대로라 여기서 안 잰다» 를 뒤집는다. 색 값은 안 박는다 — 표(GradientPalette)의 두 색과 그 가운데 색을 자가 그 자리에서 읽는다
+                    //   (주인이 색을 또 바꾸면 catalog.json 한 줄이고 이 자는 그대로다). 바탕 이름은 «Bg(Mask)»(손자 · T147).
+                    else
+                    {
+                        string grad = c.name.StartsWith("GemPack:") ? ShopScreen.PackGradGem : ShopScreen.PackGradGold;
+                        AssertSolidGradient(c.GetChild(0), c.name, grad, "Bg(Mask)");
+                        var pair = GradientPalette.Of(grad);
+                        Assert.Less(UiKit.Luma(pair.Top), UiKit.Luma(pair.Bottom), c.name + " 의 두 색은 «어두운 위 → 밝은 아래» 다(주인 지정 값도 그 방향이다 · T341 3항)");
                     }
                     gradCards++;
                 }
