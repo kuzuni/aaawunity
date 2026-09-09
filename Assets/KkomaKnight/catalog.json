@@ -681,7 +681,8 @@
     "data.privilege": "Assets/KkomaKnight/privilege.json",
     "data.arenaMatch": "Assets/KkomaKnight/arenaMatch.json",
     "data.quest": "Assets/KkomaKnight/quest.json",
-    "data.achievement": "Assets/KkomaKnight/achievement.json"
+    "data.achievement": "Assets/KkomaKnight/achievement.json",
+    "data.recipe": "Assets/KkomaKnight/recipe.json"
   },
   "audio": {
     "bgm.lobby": "Assets/Audio/bgm/lobby.ogg",
@@ -710,6 +711,7 @@
     "data.expedition": "탐험(방치·오프라인 보상) 수치표 JSON(이 레포 전용 · 주인 2026-09-07 «탐험 = 방치 + 오프라인 보상 · 골드·다이아 쌓이게 · 빠른 탐험은 광고» · T97) — 상한 8h · 시간당 골드는 tune.json 의 처치 골드에서 유도 · Bootstrap 이 읽어 GameData.Expedition 에 올린다. 수치를 바꾸려면 이 파일만",
     "data.combatOverride": "이 레포 전용 전투 수치 덮어쓰기 JSON(T173 · 주인 2026-09-07 «창은 화면 넘어서 10 정도 더 가면 지워지게 / 관통 8개까지 말고 걍 닿으면 다 데미지») — data/combat.json 은 aaaw 정본이라 불변이고 여기 적은 키만 로드 뒤에 덮는다(range.spearReach · pierce.spear = 0 은 무제한). Bootstrap 이 게임에, GameData.LoadFromDirectory 가 Sim·EditMode 에 같은 파일을 먹인다 — 값을 바꾸려면 이 파일만",
     "data.achievement": "업적(반복 퀘스트) 표 JSON(이 레포 전용 · 주인 2026-09-09 05:2X · T258) — 17줄의 첫 목표·보상을 **주인이 다 줬다**(전부 다이아 · 지어낸 수 0 · label 은 주인이 쓴 글자 그대로). **메달 없이 즉시 지급**이고 단계가 끝없이 늘어난다(단계 N 목표 = goal × N) · 진행도는 누적이라 초기화가 없다(일일·주간 quest.json 과 다르다) · Bootstrap 이 읽어 GameData.Achievement 에 올린다 · 화면(15 «업적» 탭)은 다음 회차(그 팝업이 T257 lock 안이라 표와 규칙만 먼저 놓았다)",
+    "data.recipe": "장비 «레시피» 표 JSON(이 레포 전용 · 주인 2026-09-09 05:5X «강화하려면 레시피도 필요하게 · 부위마다 · 1강 2개+골드 · 강화마다 2개씩 늘어남» · T290) — 부위 슬롯 Lv L → L+1 에 그 부위 레시피 perLevel × (L+1) 개가 든다(골드는 gear.json slot 그대로) · Bootstrap 이 읽어 GameData.Recipe 에 올리고 GearSystem.SlotUp 한 곳이 골드와 같이 뺀다 · ⚠ 지금 perLevel 이 **0**(= 안 든다)인 까닭은 레시피를 **주는 곳**(T291 원정 층 · T292 주간 트랙 90점)이 아직 없어서다 — T291 이 들어오는 커밋에서 2 로 올린다",
     "data.quest": "퀘스트 표 JSON(이 레포 전용 · 주인 2026-09-09 04:5X · T257) — 일일(동메달) 8줄 합 130 · 주간(은메달) 8줄 합 210 · 트랙 일일 20·40·60·80·100 / 주간 30·60·90·120·150 까지 **목록·점수·상품을 전부 주인이 줬다**(지어낸 수 0 · label 은 주인이 쓴 글자 그대로라 화면이 그대로 띄운다) · Bootstrap 이 읽어 GameData.Quest 에 올린다 · 진행도·지급은 2단계(팝업이 T254 lock 안이라 표와 규칙만 먼저 놓았다)",
     "data.arenaMatch": "아레나 한 판의 규칙표 JSON(이 레포 전용 · 주인 2026-09-08 11:2X «이기면 승점 올라가고 순위 올라가고 지면 승점 떨어지고» · T240) — 승 +8 · 패 −6 · 승점 바닥 0 은 주인이 준 값(레퍼런스 34_pvp_win.jpg)이고 시작 승점·티어 구간은 워커가 정했다(결정 659 · ROUTINE §2 T240 5항이 맡긴 자리) · Bootstrap 이 읽어 GameData.ArenaMatch 에 올린다",
     "data.attendance": "출석(16) 7일 보상표 JSON(이 레포 전용 · 주인 2026-09-09 04:3X «출석 날짜별 (7일) 보상 — 1. 3000골드 2. 파란키 2 3. 100다이아 4. 펫알 10 5. 5000골드 6. 보라키 1 7. 10k골드, 1000다이아» · T253) — 일곱 줄 전부 주인이 준 값이다 · Bootstrap 이 읽어 GameData.Attendance 에 올린다. 값을 바꾸려면 이 파일만",

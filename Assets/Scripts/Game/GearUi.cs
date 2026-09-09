@@ -453,10 +453,11 @@ namespace KkomaKnight.Game
             left.name = "BtnL";
             var up = UiKit.Button(box, "ui.btnOrange", maxed ? "슬롯 MAX" : "슬롯 강화", () =>
             {
-                double c2 = D.Gear.SlotCost(S.SlotLv(g.Part)); if (S.Gold < c2 || S.SlotLv(g.Part) >= D.Gear.SlotLvMax) { app.Toast("골드가 부족합니다"); return; }
-                S.Gold -= c2; S.Slots[g.Part] = S.SlotLv(g.Part) + 1; app.Persist(); onChanged?.Invoke(); OpenDetail(app, g, onChanged);
+                // T290 — 거래는 GearSystem.SlotUp 한 곳이다(골드·레시피를 같이 보고 같이 뺀다 · 모자라면 아무것도 안 바뀐다).
+                if (!GearSystem.SlotUp(D, S, g.Part, out string why)) { app.Toast(why); return; }
+                app.Persist(); onChanged?.Invoke(); OpenDetail(app, g, onChanged);
             }, Layout.GdBtnR.Within(B)); up.name = "BtnR";
-            UiKit.SetInteractable(up.GetComponent<Button>(), !maxed && S.Gold >= cost);
+            UiKit.SetInteractable(up.GetComponent<Button>(), GearSystem.CanSlotUp(D, S, g.Part, out _));   // T290 — 누를 수 있는 조건도 같은 함수가 정한다
             UiKit.TagGroup(box, "버튼 2개", left, up);
         }
 
@@ -495,10 +496,11 @@ namespace KkomaKnight.Game
             CostRow(box, S, cost, maxed, D.Gear.SlotLvMax);
             var up = UiKit.Button(box, "ui.btnOrange", maxed ? "슬롯 MAX" : "슬롯 강화", () =>
             {
-                double c2 = D.Gear.SlotCost(S.SlotLv(part)); if (S.Gold < c2 || S.SlotLv(part) >= D.Gear.SlotLvMax) { app.Toast("골드가 부족합니다"); return; }
-                S.Gold -= c2; S.Slots[part] = S.SlotLv(part) + 1; app.Persist(); onChanged?.Invoke(); OpenSlot(app, part, onChanged);
+                // T290 — 거래는 GearSystem.SlotUp 한 곳이다(위 OpenDetail 의 강화 버튼과 같은 함수를 쓴다).
+                if (!GearSystem.SlotUp(D, S, part, out string why)) { app.Toast(why); return; }
+                app.Persist(); onChanged?.Invoke(); OpenSlot(app, part, onChanged);
             }, Layout.GdBtnR.Within(Layout.GdBox)); up.name = "BtnR";
-            UiKit.SetInteractable(up.GetComponent<Button>(), !maxed && S.Gold >= cost);
+            UiKit.SetInteractable(up.GetComponent<Button>(), GearSystem.CanSlotUp(D, S, part, out _));   // T290
             UiKit.TagGroup(box, "버튼 2개", up);
         }
     }

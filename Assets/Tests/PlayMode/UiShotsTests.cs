@@ -72,7 +72,6 @@ namespace KkomaKnight.Tests.Play
             _layout[name] = PlayShot.Layout(_app);
             yield return Frames(1);
         }
-        /// <summary>이름으로 버튼을 누른다(onClick 직접 호출 · 입력 장치 없이).</summary>
         /// <summary>이름이 <paramref name="prefix"/> 로 시작하는 첫 조각(`UiKit.Find` 는 «똑같은 이름» 만 찾는다 — 확률 팝업 칸은 «Odds:등급:번호» 라 등급을 미리 모른다).</summary>
         static Transform FirstNamed(Transform root, string prefix)
         {
@@ -81,6 +80,7 @@ namespace KkomaKnight.Tests.Play
             for (int i = 0; i < root.childCount; i++) { var r = FirstNamed(root.GetChild(i), prefix); if (r != null) return r; }
             return null;
         }
+        /// <summary>이름으로 버튼을 누른다(onClick 직접 호출 · 입력 장치 없이).</summary>
         static bool Press(Transform root, string name) { if (root == null) return false; var t = UiKit.Find(root, name); var b = t != null ? t.GetComponent<UnityEngine.UI.Button>() : null; if (b == null) return false; b.onClick.Invoke(); return true; }
         GearItem Give(string part, int rar = 0, int plus = 0)
         {

@@ -233,6 +233,43 @@ namespace KkomaKnight.Core
             }
         }
 
+        /// <summary>
+        /// 부위 슬롯 강화가 <b>지금 되는가</b> — 아무것도 바꾸지 않는다(버튼 interactable 이 이것 하나를 본다 · T290 3항).
+        /// <paramref name="why"/> 는 안 될 때의 토스트 글이고 될 때는 빈 글자다.
+        /// </summary>
+        public static bool CanSlotUp(GameData D, SaveData S, string part, out string why)
+        {
+            why = "";
+            if (D == null || S == null || string.IsNullOrEmpty(part)) { why = "강화할 수 없습니다"; return false; }
+            int lv = S.SlotLv(part);
+            if (lv >= D.Gear.SlotLvMax) { why = "이미 최대 레벨입니다"; return false; }
+            if (S.Gold < D.Gear.SlotCost(lv)) { why = "골드가 부족합니다"; return false; }
+            // 레시피는 표가 있을 때만 든다 — 표를 못 읽었거나 perLevel 0 이면 Need 가 0 이라 이 갈래가 통째로 없는 것과 같다(T290 4항).
+            int need = Recipes.Need(D.Recipe, lv);
+            if (need > 0 && Recipes.Count(S, part) < need) { why = Recipes.Name(D.Recipe, part) + "가 부족합니다"; return false; }
+            return true;
+        }
+
+        /// <summary>
+        /// 부위 슬롯 <b>강화 한 단계</b> — 골드와 레시피를 <b>같이 확인하고 같이 뺀다</b>(T290 3항).
+        /// <para>
+        /// <b>왜 한 곳인가</b> — 종전에는 세부 팝업(<c>GearUi.OpenDetail</c>)과 빈 부위 팝업(<c>GearUi.OpenSlot</c>) 두 곳이
+        /// «골드 확인 → 빼기 → Lv+1» 을 <b>각자</b> 했다. 드는 것이 둘(골드·레시피)로 늘면 그 두 벌이 어긋나는 순간
+        /// 한쪽에서만 레시피가 빠지는 자리가 생긴다. 거래는 여기 하나다.
+        /// </para>
+        /// 하나라도 모자라면 <b>아무것도 안 바꾼다</b>(false · <paramref name="why"/> 에 까닭).
+        /// </summary>
+        public static bool SlotUp(GameData D, SaveData S, string part, out string why)
+        {
+            if (!CanSlotUp(D, S, part, out why)) return false;
+            int lv = S.SlotLv(part);
+            int need = Recipes.Need(D.Recipe, lv);
+            if (!Recipes.Spend(S, part, need)) { why = Recipes.Name(D.Recipe, part) + "가 부족합니다"; return false; }   // 위에서 봤지만 «빼는 쪽» 이 마지막 판정이다
+            S.Gold -= D.Gear.SlotCost(lv);
+            S.Slots[part] = lv + 1;
+            return true;
+        }
+
         public static int GearScore(GearItem g) => g.Rar * 1000 + g.Plus;
 
         /// <summary>sim.js `autoEquip(inv)` — 부위마다 점수 최고품 (시뮬 측정 정책 · 게임은 «↑ 표시» 에만 쓴다).</summary>

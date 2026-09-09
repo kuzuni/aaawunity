@@ -145,9 +145,15 @@ namespace KkomaKnight.Tests.Play
             var t0 = D.Gear.AllTypes[0];
             var g = new GearItem { Part = t0.Part, Type = t0.Type, Rar = 0, Plus = 0 };
 
+            // ⚠ **자리를 재기 전에 등장 연출을 끝낸다** — 공통 팝업은 `UiKit.PopIn`(스케일 0.82 → 1 · 0.28초 · OutBack)으로 뜬다.
+            //   두 팝업은 **상자 높이가 다르므로**(46.5 vs 38.5%) 옵션 목록이 상자 한가운데서 떨어진 거리도 다르고,
+            //   그래서 «연출 중간» 에 재면 같은 자리인데도 두 값이 어긋난다(런 645 실측 2px · 결정 826).
+            //   `UiShotsTests.Shot` 이 PNG 를 찍기 전에 부르는 그 줄과 같은 까닭이다(T49).
             GearUi.OpenInfo(_app, g); yield return Frames(2);
+            UiKit.CompleteAllTweens(); yield return Frames(1);
             var oi = Find(_app.Overlay.Root, "Options"); Assert.IsNotNull(oi, "보기 전용 팝업의 옵션 목록");
             var si = Find(_app.Overlay.Root, "Stats"); Assert.IsNotNull(si, "보기 전용 팝업의 스탯 박스");
+            Assert.AreEqual(1f, oi.lossyScale.y, 1e-3f, "연출이 끝난 뒤에 잰다(보기 전용) — 스케일이 1 이 아니면 아래 자리 값은 연출 중간이다");
             Assert.IsNull(Find(_app.Overlay.Root, "Cost"), "비용 줄은 잘려 나간 쪽이다");
             float optH = ((RectTransform)oi).rect.height, stH = ((RectTransform)si).rect.height;
             float optY = oi.position.y, stY = si.position.y;
@@ -156,8 +162,10 @@ namespace KkomaKnight.Tests.Play
             _app.Overlay.Close(); yield return Frames(2);
 
             GearUi.OpenDetail(_app, g, null); yield return Frames(2);
+            UiKit.CompleteAllTweens(); yield return Frames(1);
             var od = Find(_app.Overlay.Root, "Options"); Assert.IsNotNull(od, "장비 세부 팝업의 옵션 목록");
             var sd = Find(_app.Overlay.Root, "Stats"); Assert.IsNotNull(sd, "장비 세부 팝업의 스탯 박스");
+            Assert.AreEqual(1f, od.lossyScale.y, 1e-3f, "연출이 끝난 뒤에 잰다(장비 세부) — 스케일이 1 이 아니면 아래 자리 값은 연출 중간이다");
             Assert.AreEqual(((RectTransform)od).rect.height, optH, 1.5f, "옵션 목록 높이가 두 팝업에서 같다");
             Assert.AreEqual(od.position.y, optY, 1.5f, "옵션 목록 자리가 두 팝업에서 같다");
             Assert.AreEqual(((RectTransform)sd).rect.height, stH, 1.5f, "스탯 박스 높이가 두 팝업에서 같다");
