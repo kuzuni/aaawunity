@@ -9229,6 +9229,10 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/Overlay.cs` · `Game/UiKit.cs` · (리본을 따로 세우는 자리) `Game/LobbyPopups.cs`. lock `T361`.
 
+> ---
+>
+> **▸ 참고(T369 1회차 실측 · 2026-09-09 19:4X · sess-1910-19132 · 워커 M · 결정 1012)** — 이 절의 «뜬 자리» 의 수치가 나왔다: 리본 조각은 **꼬리가 몸통보다 아래로 늘어진 그림**이라 몸통이 rect 밑단보다 **rect 높이의 18.26%**(`Title_01_(No)Deco_*` 36장 전부 · 가운데 열 α>16 마지막 행 93/115) · `Title_02_*` 17.5% · `Title_Tapered_01` 1.0% 위에서 끝난다 — `Overlay.RibbonBodyBottomFrac(spriteName)` 에 표로 있다. Sliced 에 세로 테두리 0 이라 «비» 로 선다(결정 1006 ⓒ). 앞 회차의 «17 = 24% · 15 = 7%» 는 17 = Deco(18.26% + 윤곽선) · 15 = Tapered(1% + 상자 자리) 로 맞아떨어진다 — 조각이 이제 하나(Tapered)인 공통 팝업은 틈이 1% 뿐이고, **출석 16(프리팹에 박힌 Deco)** 이 남는다. 상자 위 변을 올릴 양 = `rh × RibbonBodyBottomFrac(ribbon)` 이면 PNG 를 다시 안 재도 된다(자는 PNG 로 · 앞 회차 함정 그대로).
+
 ### T362 — ⚑⚑ 주인: **리본 제목 조각을 전부 `Title_Tapered_01_Brown` 으로** (주인 2026-09-10 «ui.title.yellow 이런 거처럼 모든 리본 모양으로 타이틀 감싸는 프레임인 거 Title_Tapered_01_Brown 으로 교체하기»)
 
 0. **실측** — 리본 제목은 전부 카탈로그 키 `ui.title.tangerine/plum/yellow/green/red/sky`(`Title_01_NoDeco_<색>` 조각 · 코드 28곳) + `ui.titleBrown`(이미 그 조각 · T324 장비 세부). 두 조각의 자식은 `Text (TMP)` 하나로 **같다**(YAML).
