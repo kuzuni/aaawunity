@@ -79,9 +79,21 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(d.List[0].Label, title.GetComponent<TMP_Text>().text, "제목은 표의 글자 그대로(주인이 쓴 말)");
             Assert.AreEqual("0/" + d.List[0].Goal, BarText(row0), "새 세이브의 진행도 = «0/첫 목표»");
 
-            // 새 세이브에서는 깬 단계가 없으니 «받기» 가 하나도 안 눌린다.
-            foreach (var b in root.GetComponentsInChildren<Button>(true))
-                if (b.name == "AchBtn") Assert.IsFalse(b.interactable, "깬 단계가 없으면 «받기» 는 안 눌린다");
+            // T288-1 — 처음에 «새 세이브면 «받기» 가 하나도 안 눌린다» 로 적었다가 CI run 645 에서 빨개졌다.
+            //   까닭: **앱을 켠 것만으로 «출석 1회»(목표 1)가 깨진다**(App.Create → Quests.Login → Achievement.AddOncePerDay).
+            //   즉 자가 틀렸고 화면은 옳았다. 퀘스트 탭에서 «로그인하기» 로 한 번 밟은 함정을 업적에서 그대로 다시 밟은 것이다.
+            //   ⇒ 수를 적지 않고 **규칙**으로 잰다: 줄마다 «눌리는가» = `CanClaim` 이어야 한다.
+            //   그리고 규칙만 재면 «훅이 통째로 빠져도 양쪽이 같이 false» 라 초록이므로, 출석 한 줄은 **못 박아** 둔다.
+            for (int i = 0; i < d.List.Count; i++)
+            {
+                var r = UiKit.Find(root, "Ach:" + i); Assert.IsNotNull(r, "줄 " + i);
+                var rb = UiKit.Find(r, "AchBtn"); Assert.IsNotNull(rb, "줄 " + i + " 의 «받기»");
+                bool can = Achievement.CanClaim(_app.Save, d, d.List[i].Counter);
+                Assert.AreEqual(can, rb.GetComponent<Button>().interactable,
+                                "«" + d.List[i].Label + "» 의 «받기» 는 받을 수 있을 때만 눌린다");
+            }
+            Assert.IsTrue(Achievement.CanClaim(_app.Save, d, Achievement.DailyOnce),
+                          "켠 것만으로 «출석» 업적은 받을 수 있어야 한다(T258 훅 · App.Create → Quests.Login)");
 
             yield return Shutdown();
         }
