@@ -173,6 +173,22 @@ jobs:
           restore-keys: |
             Library-test-
             Library-
+      # T283 진단(임시) — UNITY_LICENSE 시크릿이 «온전한 .ulf 텍스트인가» 만 잰다.
+      #   ⚠ 내용은 한 글자도 안 찍는다(길이·형식 표식만). 라이선스 파일은 노출되면 안 된다.
+      #   이 단계는 T283 이 풀리면 지운다.
+      - name: "[T283] 라이선스 시크릿 형식 검사 (내용은 안 찍는다)"
+        env:
+          LIC: ${{ secrets.UNITY_LICENSE }}
+        run: |
+          printf '%s' "$LIC" > /tmp/lic.txt
+          echo "[T283] 바이트 수      : $(wc -c < /tmp/lic.txt)"
+          echo "[T283] 줄 수          : $(wc -l < /tmp/lic.txt)"
+          echo "[T283] <?xml 로 시작  : $(head -c 5 /tmp/lic.txt | grep -q '<?xml' && echo yes || echo NO)"
+          echo "[T283] </root> 있음   : $(grep -q '</root>' /tmp/lic.txt && echo yes || echo NO)"
+          echo "[T283] <TimeStamp 있음: $(grep -qi 'TimeStamp' /tmp/lic.txt && echo yes || echo NO)"
+          echo "[T283] CRLF 개행      : $(grep -qU $'\r' /tmp/lic.txt && echo yes || echo no)"
+          echo "[T283] BOM 으로 시작  : $(head -c 3 /tmp/lic.txt | od -An -tx1 | tr -d ' \n' | grep -q '^efbbbf' && echo yes || echo no)"
+          rm -f /tmp/lic.txt
       - uses: game-ci/unity-test-runner@v4
         id: tests
         env:
