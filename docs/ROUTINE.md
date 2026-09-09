@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-09 · 10:4X UTC) ⚑⚑ 주인 — «탐험 부분 얻을 거 없을 때도 빨간 점 알림 뜨네 · 해결해라 수정해» → T317:** 원인(코드) = `Expedition.AnyClaimable = CanClaim || CanQuick` — **빠른 탐험 충전이 남아 있기만 해도**(광고를 봐야 받는 것) 점이 켜지고, `minClaimMinutes 1` 이라 받고 1분만 지나도 다시 켜진다. → 점 = **쌓인 보상을 지금 받을 수 있을 때만**(충전 남음은 제외) · 문턱은 주인 답(4항).
+
 - **(2026-09-09 · 10:3X UTC) ⚑⚑⚑ 주인 — 신화 위에 등급 넷 더 → T316:** «**신화 3강 시 갓 · 6강 시 초월 · 9강 시 불멸 · 12강 시 무한**으로 바꾸고 그 뒤엔 계속 무한 — **신화 13강 = 무한 1강**. 등급 시스템 더 추가하겠다는 거임. **갓 = 빨강 · 그다음(초월) = 분홍 · 그다음(불멸) = 갈색 · 그다음(무한) = 빨강·초록 그라데이션**». → 장비의 «표시 등급» 이 `Plus` 로 갈린다(이름·색·+N 표기) · 수치는 그대로(주인이 안 말했다 · 4항 물음).
 
 - **(2026-09-09 · 10:2X UTC) ⚑⚑ 주인 — 상자 확률 팝업(36) → T267 ⓙ 보탬:** «**상자에 확률 정보 팝업 봤는데 아이템들이 비율이 실제 다른 곳이랑 다르네 · 아이콘이 걍 존나 크게 표시돼 있네 · 수정해라**». 실측(run 700 `36_box_rates.png` vs `06_gear.png`): 확률 팝업의 칸은 **아이콘이 칸을 꽉 채워 프레임을 덮는다**(여백 0), 인벤 칸은 아이콘이 **프레임 안에 여백을 두고**(`GearUi.FitIcon` · 파츠 불투명 bbox 기준) 앉는다. → 확률 팝업 칸도 **인벤 칸과 같은 조합**(같은 프레임 조각 + `GearUi.FitIcon`)으로. `Assets/Scripts/Game/OddsPopup.cs`. **T267 lock(워커 C)이 살아 있으니 그 절 안에서 ⓙ 로 잡는다.**
@@ -7143,6 +7145,16 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 6. **확인** — `screens` **06·07**(셋업 세이브에 신화 +3·+6·+9·+13 장비를 하나씩 두게 `UiShotsTests` 세팅 보탬) + 주인 폰.
 
 순서 — `Core/GearTier.cs`(신규) · `Game/GearUi.cs`·`Palette.cs`·인벤/세부/합성/결과/확률 팝업의 그 18곳 · `KkomaKnight/gearTier.json`·`catalog.json`. lock `T316`. **T267(확률 팝업)·T309/T310(장비 화면) lock 이 살아 있으면 그 파일은 기다린다.**
+
+### T317 — ⚑⚑ 주인: **탐험 빨간 점이 «얻을 것이 없을 때도» 켜진다** (주인 2026-09-09 10:4X «탐험 부분 얻을 거 없을 때도 빨간 점 알림 뜨네 · 해결해라 수정해» · T265·T270 의 뒤)
+
+0. **원인(등재 세션 · 코드로 확정)** — 로비 «탐험» 점과 메뉴 합산 점은 `Notify.ExpeditionClaimable` → **`Expedition.AnyClaimable = CanClaim || CanQuick`**(`Expedition.cs:211~212`). ⓐ **`CanQuick`** = 빠른 탐험 **충전(2시간마다 3회 리필)이 남아 있다** — 광고를 봐야 받는 것이라 «얻을 것» 이 아닌데 점을 켠다(주인이 본 «없을 때도» 의 정체 · 받은 직후에도 충전이 남아 있으면 켜진 채다). ⓑ `CanClaim` 은 `minClaimMinutes = 1`(`expedition.json:9`) 이라 **받고 1분** 지나 골드 1 이상 쌓이면 다시 켜진다 — 사실상 늘 켜져 있다.
+1. **고침** — ⓐ **점의 조건에서 `CanQuick` 을 뺀다**: 로비 «탐험» 점 = `Expedition.CanClaim(...)` 만(충전 남음은 팝업 안 «빠른 탐험 N» 배지가 이미 보여 준다 · T265). `Notify.AdReward`(광고 재화 합산 · 데일리 기프트 점) 쪽은 **그대로**(그 점은 «광고 보면 받을 것» 이 뜻이다) — 단 `Notify.Any` 가 로비 «탐험» 점에도 쓰이면 갈라 준다(어느 점이 어느 함수를 부르는지 `Screens.cs:69`·`LobbyMenu` 에서 실측). ⓑ **문턱**: `minClaimMinutes` 는 «받기» 버튼의 문턱이라 그대로 두고, **점의 문턱**을 따로 표에(`dotAfterMinutes` · 기본값은 4항) — 점은 `Elapsed ≥ dotAfterMinutes` 일 때만.
+2. **자** — EditMode `ExpeditionTests`(있다 · 13건)에: 충전만 남고 쌓인 것 0 → 점 ✗ · 받은 직후 → ✗ · `dotAfterMinutes` 직전 ✗ / 직후 ✓ · «받기» 문턱(1분)은 그대로. PlayMode `LobbyMenuTests`: 세이브 «받은 직후 + 충전 3» 에서 탐험 점 비활성.
+3. **⚠ 주인에게 묻는 것(기본값으로 먼저)** — 점을 켜는 문턱: **기본 = 받기 문턱과 같게(1분)** 로 두면 «받고 1분 뒤 다시 점» 이라 여전히 거의 늘 켜진다. **30분** 같은 값을 주면 표 한 줄이다(`dotAfterMinutes`). 답이 오기 전 기본값은 **`maxHours`(8시간) 의 1/8 = 1시간**? — 아니다, 값을 지어내지 않는다 → **기본 = 1분(지금 규칙) · 충전 제외만 먼저**. 주인이 «그래도 너무 자주» 라고 하면 그때 값을 받는다.
+4. **확인** — `screens` **01**(셋업 세이브 = 받은 직후 · 충전 3 → 탐험 점 없음 · `UiShotsTests` 세팅 확인) + 주인 폰(받고 나면 점이 꺼지고 충전만 남아 있을 땐 안 켜짐).
+
+순서 — `Core/Expedition.cs`·`Core/Notify.cs` · 점을 다는 자리(`Screens.cs`·`LobbyMenu.cs`) · `expedition.json`. lock `T317`.
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
