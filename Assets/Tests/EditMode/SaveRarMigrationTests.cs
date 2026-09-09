@@ -30,10 +30,11 @@ namespace KkomaKnight.Tests
         public void TodayNothingMoves()
         {
             var D = Canon();
-            var s = WithGear(D, 0, 1, 2, D.Gear.RarMyth);
-            s.RarN = 0;                                   // 이 칸이 없던 옛 세이브
+            var s = WithGear(D, 0, 1, D.Gear.RarLegend, D.Gear.RarMyth);
+            s.RarN = D.Gear.RarName.Length;               // «지금 표로 적힌» 세이브
+            var before = new[] { s.Inv[0].Rar, s.Inv[1].Rar, s.Inv[2].Rar, s.Inv[3].Rar };
             s.Normalize(D);
-            Assert.AreEqual(new[] { 0, 1, 2, D.Gear.RarMyth }, new[] { s.Inv[0].Rar, s.Inv[1].Rar, s.Inv[2].Rar, s.Inv[3].Rar },
+            Assert.AreEqual(before, new[] { s.Inv[0].Rar, s.Inv[1].Rar, s.Inv[2].Rar, s.Inv[3].Rar },
                 "등급 수가 그대로면 이관은 아무 일도 안 해야 한다");
             Assert.AreEqual(D.Gear.RarName.Length, s.RarN, "이관이 돌든 안 돌든 «이 표로 적혔다» 는 남는다");
         }
@@ -49,19 +50,18 @@ namespace KkomaKnight.Tests
         public void ASaveWithNoRarNAtAllIsTreatedAsTheOldTable()
         {
             var D = Canon();
-            var s = WithGear(D, 2, 3);                    // 옛 전설 · 옛 신화
+            int oldLegend = D.Gear.RarLegend, oldMyth = D.Gear.RarMyth;
+            var s = WithGear(D, oldLegend, oldMyth);      // 옛 표의 전설 · 신화
             var json = s.ToJson().Replace("\"rarN\":", "\"_rarN\":");
             Assert.IsFalse(json.Contains("\"rarN\":"), "이 자가 재려는 «칸이 없는 세이브» 를 실제로 만들었는지부터 본다");
 
-            // 읽는 쪽의 표를 다섯으로 넓혀 둔다 — FromJson 이 그 표로 Normalize 를 돌린다
-            D.ApplyGearOverride(@"{ ""rarName"": [""일반"", ""희귀"", ""영웅"", ""전설"", ""신화""], ""rarLegend"": 3, ""rarMyth"": 4,
-              ""contribution"": { ""atk"": [30, 60, 90, 120, 150], ""hp"": [60, 120, 180, 240, 300], ""sh"": [90, 180, 270, 360, 450] },
-              ""optionLadder"": { ""optCount"": [0, 1, 2, 3, 4], ""mythPlusAt"": [3, 6] }, ""look"": { ""rarSprite"": [0, 1, 1, 2, 3] } }");
+            // 읽는 쪽의 표를 한 칸 넓혀 둔다 — FromJson 이 그 표로 Normalize 를 돌린다(넓히는 표는 지금 표에서 낸다)
+            D.ApplyGearOverride(TestData.WidenByOneGrade(D));
 
             var back = SaveData.FromJson(json, D);
-            Assert.AreEqual(new[] { 3, 4 }, new[] { back.Inv[0].Rar, back.Inv[1].Rar },
+            Assert.AreEqual(new[] { oldLegend + 1, oldMyth + 1 }, new[] { back.Inv[0].Rar, back.Inv[1].Rar },
                 "칸이 없는 옛 세이브가 안 옮겨졌다 — «없음» 을 «지금 표» 로 읽으면 주인 폰의 장비가 한 등급 떨어진다");
-            Assert.AreEqual(5, back.RarN, "옮긴 뒤에는 새 표로 도장을 찍는다");
+            Assert.AreEqual(D.Gear.RarName.Length, back.RarN, "옮긴 뒤에는 새 표로 도장을 찍는다");
         }
 
         /// <summary>적고 다시 읽으면 도장이 따라온다 — 안 따라오면 옮긴 세이브가 다음 로드에 또 옮겨진다.</summary>
@@ -82,24 +82,20 @@ namespace KkomaKnight.Tests
         {
             var D = Canon();
             int oldN = D.Gear.RarName.Length;
-            var s = WithGear(D, 0, 1, 2, 3);
+            int at = D.Gear.RarLegend;                    // 새 등급이 끼는 자리 = 이 칸부터 한 칸씩 밀린다
+            var s = WithGear(D, 0, 1, at, D.Gear.RarMyth);
             s.RarN = oldN;                                // 옛 표로 적힌 세이브
 
-            // 표를 다섯으로 넓힌다(값이 들어가는 회차가 할 일을 여기서만 흉내낸다 — 파일은 안 건드린다)
-            D.ApplyGearOverride(@"{
-              ""rarName"": [""일반"", ""희귀"", ""영웅"", ""전설"", ""신화""],
-              ""rarLegend"": 3, ""rarMyth"": 4,
-              ""contribution"": { ""atk"": [30, 60, 90, 120, 150], ""hp"": [60, 120, 180, 240, 300], ""sh"": [90, 180, 270, 360, 450] },
-              ""optionLadder"": { ""optCount"": [0, 1, 2, 3, 4], ""mythPlusAt"": [3, 6] },
-              ""look"": { ""rarSprite"": [0, 1, 1, 2, 3] }
-            }");
+            // ⚑ «한 칸 늘어난 표» 를 **지금 표에서 낸다**(TestData.WidenByOneGrade) — 다섯을 손으로 적으면
+            //   주인 값이 들어가 표가 이미 다섯인 날 이 자가 통째로 뜻을 잃는다.
+            D.ApplyGearOverride(TestData.WidenByOneGrade(D));
             s.Normalize(D);
 
-            Assert.AreEqual(0, s.Inv[0].Rar, "일반은 그대로");
-            Assert.AreEqual(1, s.Inv[1].Rar, "희귀는 그대로");
-            Assert.AreEqual(3, s.Inv[2].Rar, "옛 전설(2)은 새 전설(3)이 된다 — 안 옮기면 «영웅» 으로 떨어진다");
-            Assert.AreEqual(4, s.Inv[3].Rar, "옛 신화(3)는 새 신화(4)가 된다");
-            Assert.AreEqual(5, s.RarN, "옮긴 뒤에는 새 표로 도장을 찍어 두 번 안 옮긴다");
+            Assert.AreEqual(0, s.Inv[0].Rar, "맨 아래 등급은 그대로(끼는 자리보다 아래다)");
+            Assert.AreEqual(1, s.Inv[1].Rar, "그 위 등급도 그대로");
+            Assert.AreEqual(at + 1, s.Inv[2].Rar, "끼는 자리에 있던 등급은 한 칸 올라간다 — 안 옮기면 새 등급으로 떨어진다");
+            Assert.AreEqual(D.Gear.RarMyth, s.Inv[3].Rar, "옛 신화는 새 신화가 된다(새 표의 rarMyth)");
+            Assert.AreEqual(oldN + 1, s.RarN, "옮긴 뒤에는 새 표로 도장을 찍어 두 번 안 옮긴다");
         }
 
         /// <summary>두 번 돌려도 한 번만 옮긴다 — 도장(<c>RarN</c>)이 그것을 막는다.</summary>
@@ -107,11 +103,9 @@ namespace KkomaKnight.Tests
         public void MigratingTwiceMovesNothingTheSecondTime()
         {
             var D = Canon();
-            var s = WithGear(D, 2, 3);
+            var s = WithGear(D, D.Gear.RarLegend, D.Gear.RarMyth);
             s.RarN = D.Gear.RarName.Length;
-            D.ApplyGearOverride(@"{ ""rarName"": [""일반"", ""희귀"", ""영웅"", ""전설"", ""신화""], ""rarLegend"": 3, ""rarMyth"": 4,
-              ""contribution"": { ""atk"": [30, 60, 90, 120, 150], ""hp"": [60, 120, 180, 240, 300], ""sh"": [90, 180, 270, 360, 450] },
-              ""optionLadder"": { ""optCount"": [0, 1, 2, 3, 4], ""mythPlusAt"": [3, 6] }, ""look"": { ""rarSprite"": [0, 1, 1, 2, 3] } }");
+            D.ApplyGearOverride(TestData.WidenByOneGrade(D));
             s.Normalize(D);
             var once = new[] { s.Inv[0].Rar, s.Inv[1].Rar };
             s.Normalize(D);
@@ -131,11 +125,9 @@ namespace KkomaKnight.Tests
             var g = s.NewGear(D.Gear.Parts[0], D.Gear.Types[D.Gear.Parts[0]][0], oldMyth, D.Gear.LegendToMythPlus + 4);
             s.Inv.Add(g);
             s.RarN = D.Gear.RarName.Length;
-            D.ApplyGearOverride(@"{ ""rarName"": [""일반"", ""희귀"", ""영웅"", ""전설"", ""신화""], ""rarLegend"": 3, ""rarMyth"": 4,
-              ""contribution"": { ""atk"": [30, 60, 90, 120, 150], ""hp"": [60, 120, 180, 240, 300], ""sh"": [90, 180, 270, 360, 450] },
-              ""optionLadder"": { ""optCount"": [0, 1, 2, 3, 4], ""mythPlusAt"": [3, 6] }, ""look"": { ""rarSprite"": [0, 1, 1, 2, 3] } }");
+            D.ApplyGearOverride(TestData.WidenByOneGrade(D));
             s.Normalize(D);
-            Assert.AreEqual(4, s.Inv[0].Rar, "옛 신화는 새 신화여야 한다");
+            Assert.AreEqual(D.Gear.RarMyth, s.Inv[0].Rar, "옛 신화는 새 신화여야 한다(새 표의 rarMyth)");
             Assert.AreEqual(D.Gear.LegendToMythPlus + 4, s.Inv[0].Plus,
                 "강화가 0 이 됐다 — 이관이 «전설 → 신화 승격» 줄보다 늦게 돌았다는 뜻이다(차례를 되돌리지 마라)");
         }

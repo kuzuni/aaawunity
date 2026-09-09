@@ -18,37 +18,110 @@ namespace KkomaKnight.Tests
     {
         static GameData Fresh() => GameData.LoadFromDirectory(TestData.Dir);
         static JNode Canon(string file) => new JNode(MiniJson.Parse(File.ReadAllText(Path.Combine(TestData.Dir, file))));
+        static JNode Over(string file) => new JNode(MiniJson.Parse(File.ReadAllText(TestData.RepoFile("Assets/KkomaKnight/" + file))));
 
-        // ───────────────────── ① 오늘은 아무것도 안 바뀐다 ─────────────────────
+        static JNode Walk(JNode n, string path) { foreach (var seg in path.Split('.')) n = n[seg]; return n; }
 
         /// <summary>
-        /// 새 덮어쓰기 파일 셋이 들어왔는데 <b>실린 값이 정본과 한 톨도 다르지 않아야</b> 한다.
-        /// 이 자가 빨개지는 날 = 누가 «값 0줄» 약속을 깬 날이고, 그 순간 주인 폰의 밸런스가 움직인다.
+        /// <b>그 칸에 실려 있어야 할 값</b> — 덮어쓰기 파일이 그 칸을 <i>적었으면</i> 그 값이고, <i>안 적었으면</i> 정본 값이다.
+        /// 이것이 이 기계가 약속한 규칙 전부이고(«적힌 키만 바뀐다»), 그래서 이 자는 값이 0줄인 오늘도 값이 다 찬 뒤에도 같은 말을 한다.
+        /// </summary>
+        static JNode Want(JNode over, JNode canon, string path)
+        {
+            var o = Walk(over, path);
+            return o.IsNull ? Walk(canon, path) : o;
+        }
+
+        /// <summary>«_note» 처럼 밑줄로 시작하는 글칸은 값이 아니다 — 나머지 잎사귀 칸의 점 경로를 모은다.</summary>
+        static void CollectPaths(JNode n, string prefix, System.Collections.Generic.List<string> into)
+        {
+            foreach (var k in n.Keys)
+            {
+                if (k.Length > 0 && k[0] == '_') continue;
+                var child = n[k];
+                string path = prefix.Length == 0 ? k : prefix + "." + k;
+                if (child.IsObject) CollectPaths(child, path, into);
+                else into.Add(path);
+            }
+        }
+
+        static void OnlyKnownKeys(string file, params string[] known)
+        {
+            var got = new System.Collections.Generic.List<string>();
+            CollectPaths(Over(file), "", got);
+            foreach (var p in got)
+                Assert.Contains(p, known,
+                    $"{file} 이 «{p}» 를 적었는데 기계가 안 읽는 칸이다 — 오타 하나로 «값을 바꿨는데 안 바뀌는» 제일 조용한 고장이 된다(있는 칸: {string.Join(" · ", known)})");
+        }
+
+        // ───────────────────── ① 적힌 키만 바뀌고, 나머지는 정본 그대로다 ─────────────────────
+
+        /// <summary>
+        /// 덮어쓰기 표 셋이 <b>제가 적은 칸만</b> 옮기고 <b>안 적은 칸은 정본 그대로</b> 두는가.
+        /// <para>
+        /// ⚑ 이 자는 «오늘은 안 바뀐다» 를 재지 않는다 — 그러면 주인 값이 들어가는 날 <b>설계대로</b> 빨개져서
+        /// 그날 «값이 틀렸나 기계가 틀렸나» 를 못 가르게 된다. 대신 <b>기계가 약속한 규칙 자체</b>를 재므로
+        /// 값이 0줄인 오늘도, 다섯 등급 표가 다 들어간 뒤에도 같은 말을 한다.
+        /// </para>
+        /// <para>그래서 이 자가 빨개지는 뜻은 하나뿐이다 — <b>파일에 적은 것과 실제로 실린 것이 다르다</b>.</para>
         /// </summary>
         [Test]
-        public void TodayTheNewOverridesChangeNothingAtAll()
+        public void EachOverrideMovesExactlyTheKeysItDeclaresAndLeavesTheRestAtCanon()
         {
             var D = Fresh();
-            var gear = Canon("gear.json");
-            Assert.AreEqual(gear["rarName"].StrArray(), D.Gear.RarName, "등급 이름이 정본과 달라졌다 — gearOverride.json 에 값이 들어갔다");
-            Assert.AreEqual(gear["rarLegend"].Int(), D.Gear.RarLegend, "rarLegend 가 움직였다");
-            Assert.AreEqual(gear["rarMyth"].Int(), D.Gear.RarMyth, "rarMyth 가 움직였다");
-            // RarRare 의 «유도하는 식» 을 바꿨다(전설 아래 → 일반 위) — 오늘 값은 그대로 1 이어야 한다(T261 천장이 가리키는 등급이 안 움직였다)
-            Assert.AreEqual(1, D.Gear.RarRare, "오늘의 «희귀» 인덱스는 옛 식과 같은 1 이어야 한다");
-            Assert.AreEqual("희귀", D.Gear.RarName[D.Gear.RarRare], "그 칸이 실제로 «희귀» 여야 한다");
-            var c = gear["contribution"];
-            Assert.AreEqual(c["atk"].NumArray(), D.Gear.Atk, "기여(공)가 움직였다");
-            Assert.AreEqual(c["hp"].NumArray(), D.Gear.Hp, "기여(체)가 움직였다");
-            Assert.AreEqual(c["sh"].NumArray(), D.Gear.Sh, "기여(실)가 움직였다");
 
-            var tune = Canon("tune.json")["tune"];
-            Assert.AreEqual(tune["maxChapter"].Int(), D.Tune.MaxChapter, "챕터 수가 움직였다 — tuneOverride.json 에 값이 들어갔다");
-            Assert.AreEqual(tune["eBaseHp"].Num(), D.Tune.EBaseHp, 1e-12, "적 기저 체력이 움직였다");
-            Assert.AreEqual(tune["eBaseDmg"].Num(), D.Tune.EBaseDmg, 1e-12, "적 기저 공격이 움직였다");
+            var gc = Canon("gear.json");
+            var go = Over(GameData.GearOverrideFile);
+            Assert.AreEqual(Want(go, gc, "rarName").StrArray(), D.Gear.RarName, "등급 이름이 gearOverride.json 이 적은 것과 다르다");
+            Assert.AreEqual(Want(go, gc, "rarLegend").Int(), D.Gear.RarLegend, "rarLegend 가 적은 것과 다르다");
+            Assert.AreEqual(Want(go, gc, "rarMyth").Int(), D.Gear.RarMyth, "rarMyth 가 적은 것과 다르다");
+            Assert.AreEqual(Want(go, gc, "contribution.atk").NumArray(), D.Gear.Atk, "기여(공)가 적은 것과 다르다");
+            Assert.AreEqual(Want(go, gc, "contribution.hp").NumArray(), D.Gear.Hp, "기여(체)가 적은 것과 다르다");
+            Assert.AreEqual(Want(go, gc, "contribution.sh").NumArray(), D.Gear.Sh, "기여(실)가 적은 것과 다르다");
 
-            var boxes = Canon("gacha.json")["boxes"];
+            // T261 천장이 가리키는 등급 — 표가 몇 칸이 되든 «희귀 확정» 은 희귀를 가리켜야 한다(영웅이 끼면 조용히 «영웅 확정» 이 된다)
+            Assert.AreEqual("희귀", D.Gear.RarName[D.Gear.RarRare], "RarRare 가 «희귀» 가 아닌 칸을 가리킨다 — T261 천장의 뜻이 바뀐다");
+
+            var to = Over(GameData.TuneOverrideFile); if (to.Has("tune")) to = to["tune"];
+            var tc = Canon("tune.json")["tune"];
+            Assert.AreEqual(Want(to, tc, "maxChapter").Int(), D.Tune.MaxChapter, "챕터 수가 tuneOverride.json 이 적은 것과 다르다");
+            Assert.AreEqual(Want(to, tc, "eBaseHp").Num(), D.Tune.EBaseHp, 1e-12, "적 기저 체력이 적은 것과 다르다");
+            Assert.AreEqual(Want(to, tc, "eBaseDmg").Num(), D.Tune.EBaseDmg, 1e-12, "적 기저 공격이 적은 것과 다르다");
+
+            var ac = Canon("gacha.json");
+            var ao = Over(GameData.GachaOverrideFile);
             foreach (var b in D.Gacha.Boxes)
-                Assert.AreEqual(boxes[b.Key]["rate"].NumArray(), b.Rate, $"상자 «{b.Key}» 확률이 움직였다 — gachaOverride.json 에 값이 들어갔다");
+            {
+                Assert.AreEqual(Want(ao, ac, "boxes." + b.Key + ".rate").NumArray(), b.Rate, $"상자 «{b.Key}» 확률이 적은 것과 다르다");
+                // 굴림이 보는 것은 rate 가 아니라 cum 이다 — rate 만 맞고 cum 이 옛것이면 아무 자도 안 운다
+                Assert.AreEqual(GameData.CumOf(b.Rate), b.Cum, $"상자 «{b.Key}» 의 cum 이 rate 에서 다시 계산되지 않았다");
+            }
+        }
+
+        /// <summary>
+        /// 덮어쓰기 파일이 <b>기계가 안 읽는 칸</b>을 적지 않았는가 — <c>rarNam</c> 같은 오타 하나면
+        /// «값을 바꿨는데 게임이 그대로» 가 되고, 장비·손잡이·적 표는 모르는 키를 <b>조용히 흘린다</b>(상자만 던진다).
+        /// <para>이 자도 값이 아니라 <b>칸 이름</b>을 재므로 값이 들어간 뒤에도 그대로 산다.</para>
+        /// </summary>
+        [Test]
+        public void NoOverrideFileDeclaresAKeyTheMachineDoesNotRead()
+        {
+            OnlyKnownKeys(GameData.CombatOverrideFile,
+                "range.spearReach", "range.waveReach", "pierce.spear", "pierce.wave", "pierce.waveBig");
+            OnlyKnownKeys(GameData.GearOverrideFile,
+                "rarName", "rarLegend", "rarMyth",
+                "contribution.atk", "contribution.hp", "contribution.sh",
+                "optionLadder.optCount", "optionLadder.mythPlusAt", "look.rarSprite");
+            OnlyKnownKeys(GameData.TuneOverrideFile,
+                "maxChapter", "eBaseHp", "eBaseDmg", "eHpSeg", "eDmgSeg",
+                "tune.maxChapter", "tune.eBaseHp", "tune.eBaseDmg", "tune.eHpSeg", "tune.eDmgSeg");
+            OnlyKnownKeys(GameData.EnemiesOverrideFile, "hpSeg", "dmgSeg");
+
+            var known = new System.Collections.Generic.List<string>();
+            foreach (var b in Fresh().Gacha.Boxes)
+                foreach (var k in new[] { "rate", "cost", "pityMyth", "pityLegend", "pityRare" })
+                    known.Add("boxes." + b.Key + "." + k);
+            OnlyKnownKeys(GameData.GachaOverrideFile, known.ToArray());
         }
 
         /// <summary>
@@ -79,9 +152,14 @@ namespace KkomaKnight.Tests
         {
             var D = Fresh();
             var slotStep = D.Gear.SlotStep; var plusStep = D.Gear.PlusStep; var parts = D.Gear.Parts.Length;
-            D.ApplyGearOverride("{ \"contribution\": { \"atk\": [1, 2, 3, 4] } }");
-            Assert.AreEqual(new double[] { 1, 2, 3, 4 }, D.Gear.Atk, "기여(공)는 덮여야 한다");
-            Assert.AreEqual(Canon("gear.json")["contribution"]["hp"].NumArray(), D.Gear.Hp, "안 적은 기여(체)는 정본 그대로여야 한다");
+            // ⚠ «안 적은 칸» 의 대조는 **덮기 직전의 값**이지 «정본 파일» 이 아니다 —
+            //   이 레포는 주인 지시로 정본 위에 값을 덮으므로(T325) 정본과 비교하면 «내가 안 적은 칸» 도 다르게 나온다.
+            var hpBefore = (double[])D.Gear.Hp.Clone();
+            var atk = new double[D.Gear.RarName.Length];
+            for (int i = 0; i < atk.Length; i++) atk[i] = i + 1;          // 칸 수는 표에서 낸다(등급이 늘어도 이 자가 산다)
+            D.ApplyGearOverride("{ \"contribution\": { \"atk\": [" + string.Join(", ", atk) + "] } }");
+            Assert.AreEqual(atk, D.Gear.Atk, "기여(공)는 덮여야 한다");
+            Assert.AreEqual(hpBefore, D.Gear.Hp, "안 적은 기여(체)는 덮기 전 그대로여야 한다");
             Assert.AreEqual(slotStep, D.Gear.SlotStep, 1e-12, "슬롯 배율은 이 표의 칸이 아니다(주인이 노강 값만 줬다)");
             Assert.AreEqual(plusStep, D.Gear.PlusStep, 1e-12, "강화 배율도 이 표의 칸이 아니다");
             Assert.AreEqual(parts, D.Gear.Parts.Length, "부위는 안 건드린다");
@@ -126,7 +204,9 @@ namespace KkomaKnight.Tests
         public void GachaOverrideRebuildsTheCumSoTheRollFollows()
         {
             var D = Fresh();
-            D.ApplyGachaOverride("{ \"boxes\": { \"rare\": { \"rate\": [50, 50, 0, 0], \"cost\": 90 } } }");
+            // 칸 수를 표에서 낸다 — 앞 둘이 50/50 이고 나머지는 0(합 100). 등급이 늘어도 이 자가 그대로 산다.
+            var rate = new double[D.Gear.RarName.Length]; rate[0] = 50; rate[1] = 50;
+            D.ApplyGachaOverride("{ \"boxes\": { \"rare\": { \"rate\": [" + string.Join(", ", rate) + "], \"cost\": 90 } } }");
             var box = D.Gacha.Box("rare");
             Assert.AreEqual(90, box.Cost, 1e-12, "비용도 덮인다");
             Assert.AreEqual(50, box.Cum[1], 1e-9, "cum 이 새 rate 로 다시 서야 한다");
@@ -135,7 +215,7 @@ namespace KkomaKnight.Tests
             Assert.AreEqual(1, box.RarRoll(0), "0 은 희귀 — 굴림이 새 확률을 본다");
             Assert.AreEqual(1, box.RarRoll(49.999), "49.999 까지 희귀");
             Assert.AreEqual(0, box.RarRoll(50), "50 부터 일반 — 옛 cum(33.3) 이 남아 있으면 여기가 빨개진다");
-            Assert.AreEqual(Canon("gacha.json")["boxes"]["legend"]["rate"].NumArray(), D.Gacha.Box("legend").Rate, "안 적은 상자는 정본 그대로");
+            Assert.AreEqual(Fresh().Gacha.Box("legend").Rate, D.Gacha.Box("legend").Rate, "안 적은 상자는 덮기 전 그대로");
         }
 
         /// <summary>없는 상자 키는 <b>조용히 안 넘긴다</b> — 오타 하나로 «확률을 바꿨는데 안 바뀌는» 것이 제일 찾기 어려운 고장이다.</summary>
@@ -158,8 +238,11 @@ namespace KkomaKnight.Tests
         public void HalfWidenedTablesThrowRightAfterTheOverridesInsteadOfMuchLater()
         {
             var D = Fresh();
-            D.ApplyGearOverride("{ \"rarName\": [\"일반\", \"희귀\", \"영웅\", \"전설\", \"신화\"] }");
-            var e = Assert.Throws<System.FormatException>(() => D.ValidateOverridden(), "등급만 다섯이고 기여가 넷이면 던져야 한다");
+            // 이름만 한 칸 늘리고 기여는 그대로 둔다 — «반만 넓힌 표» (넓힌 이름은 지금 표에서 낸다)
+            var names = new System.Collections.Generic.List<string>(D.Gear.RarName);
+            names.Insert(D.Gear.RarLegend, "새등급");
+            D.ApplyGearOverride("{ \"rarName\": [\"" + string.Join("\", \"", names) + "\"] }");
+            var e = Assert.Throws<System.FormatException>(() => D.ValidateOverridden(), "등급만 한 칸 늘고 기여가 그대로면 던져야 한다");
             StringAssert.Contains("contribution", e.Message, "무엇이 안 맞는지 이름을 대야 한다");
         }
 
@@ -168,14 +251,9 @@ namespace KkomaKnight.Tests
         public void ABoxWhoseRateHasTooFewSlotsThrows()
         {
             var D = Fresh();
-            D.Gear.RarName = new[] { "일반", "희귀", "영웅", "전설", "신화" };
-            D.Gear.Atk = new double[] { 30, 60, 90, 120, 150 };
-            D.Gear.Hp = new double[] { 60, 120, 180, 240, 300 };
-            D.Gear.Sh = new double[] { 90, 180, 270, 360, 450 };
-            D.Gear.OptCountByRar = new[] { 0, 1, 2, 3, 4 };
-            D.Gear.RarLegend = 3; D.Gear.RarMyth = 4;
-            D.Gear.LookRarTable = new[] { 0, 1, 1, 2, 3 };   // 문 ⓑ 는 여기서 재는 것이 아니다 — 답을 주고 상자 쪽만 남긴다
-            var e = Assert.Throws<System.FormatException>(() => D.ValidateOverridden(), "상자 rate 가 넷인 채로는 지나가면 안 된다");
+            // 장비 쪽만 한 칸 넓힌다(상자는 그대로) — 그러면 남는 어긋남은 «상자 칸 수» 하나뿐이다
+            D.ApplyGearOverride(TestData.WidenByOneGrade(D));
+            var e = Assert.Throws<System.FormatException>(() => D.ValidateOverridden(), "상자 rate 가 한 칸 모자란 채로는 지나가면 안 된다");
             StringAssert.Contains("rate", e.Message);
         }
 
@@ -184,11 +262,12 @@ namespace KkomaKnight.Tests
         public void TheOtherBrokenShapesThrowToo()
         {
             var a = Fresh();
-            a.ApplyGachaOverride("{ \"boxes\": { \"rare\": { \"rate\": [50, 40, 0, 0] } } }");
+            var bad = new double[a.Gear.RarName.Length]; bad[0] = 50; bad[1] = 40;   // 합 90 — 칸 수는 표에서 낸다
+            a.ApplyGachaOverride("{ \"boxes\": { \"rare\": { \"rate\": [" + string.Join(", ", bad) + "] } } }");
             StringAssert.Contains("합", Assert.Throws<System.FormatException>(() => a.ValidateOverridden()).Message, "합 90 은 못 지나간다");
 
             var b = Fresh();
-            b.ApplyGearOverride("{ \"rarLegend\": 3, \"rarMyth\": 2 }");
+            b.ApplyGearOverride("{ \"rarLegend\": " + b.Gear.RarMyth + ", \"rarMyth\": " + b.Gear.RarLegend + " }");   // 둘을 맞바꾼다
             StringAssert.Contains("등급 인덱스", Assert.Throws<System.FormatException>(() => b.ValidateOverridden()).Message, "전설이 신화보다 위면 못 지나간다");
 
             var c = Fresh();
@@ -246,23 +325,50 @@ namespace KkomaKnight.Tests
             Assert.AreEqual(Fresh().Enemies.Chapter(3).Waves[0].Dmg * 9, b.Enemies.Chapter(3).Waves[0].Dmg, 1e-6, "3챕터 공격은 3² 배여야 한다");
         }
 
-        /// <summary>오늘은 배수가 전부 1 이라 적 수치가 정본 그대로여야 한다 — «값 0줄» 약속을 이 표에도 건다.</summary>
+        /// <summary>
+        /// 적 표에 실제로 실린 수가 <b>정본 × 제 파일이 적은 곡선</b> 과 정확히 같은가 — 챕터마다 다시 센다.
+        /// <para>
+        /// ⚑ 여기도 «오늘은 배수가 1 이다» 를 재지 않는다. 곡선이 들어가는 날 설계대로 빨개지면
+        /// 그날 «곡선이 틀렸나 곱하는 자리가 틀렸나» 를 못 가른다. 대신 <b>같은 셈(<c>ChapterLayout.SegGrow</c>)으로 다시 재서 맞대므로</b>
+        /// 곡선이 0줄인 오늘은 «전부 1배» 를, 곡선이 들어간 뒤에는 «챕터마다 그 배수» 를 말한다.
+        /// </para>
+        /// <para>이 자가 빨개지는 뜻 — 파일이 적은 곡선과 실제로 곱해진 배수가 다르다(경계를 한 칸 밀었거나 1챕터부터 곱했거나).</para>
+        /// </summary>
         [Test]
-        public void TodayTheEnemiesOverrideIsIdentity()
+        public void TheEnemiesOverrideMultipliesCanonByExactlyTheCurveItDeclares()
         {
             var D = Fresh();
+            var over = Over(GameData.EnemiesOverrideFile);
+            double[][] hpSeg = over.Has("hpSeg") ? Seg(over["hpSeg"]) : null;
+            double[][] dmgSeg = over.Has("dmgSeg") ? Seg(over["dmgSeg"]) : null;
+
             var canon = new JNode(MiniJson.Parse(File.ReadAllText(Path.Combine(TestData.Dir, "enemies.json"))));
             int c = 0;
             foreach (var ch in canon["chapters"].Items())
             {
                 int cc = ch["c"].Int();
                 var mine = D.Enemies.Chapter(cc);
+                double kh = hpSeg != null ? ChapterLayout.SegGrow(hpSeg, cc) : 1;
+                double kd = dmgSeg != null ? ChapterLayout.SegGrow(dmgSeg, cc) : 1;
                 var w0 = ch["waves"][0];
-                Assert.AreEqual(w0["hp"].Num(), mine.Waves[0].Hp, 1e-9, $"{cc}챕터 첫 물결 체력이 정본과 다르다 — enemiesOverride.json 에 값이 들어갔다");
-                Assert.AreEqual(ch["boss"]["hp"].Num(), mine.Boss.Hp, 1e-9, $"{cc}챕터 보스 체력이 정본과 다르다");
-                if (++c >= 30) break;                       // 앞 서른 챕터면 «배수가 안 걸렸다» 를 말하기에 넉넉하다(420 을 다 도는 것은 느리다)
+                Near(w0["hp"].Num() * kh, mine.Waves[0].Hp, $"{cc}챕터 첫 물결 체력이 «정본 × {kh}» 이 아니다");
+                Near(w0["dmg"].Num() * kd, mine.Waves[0].Dmg, $"{cc}챕터 첫 물결 공격이 «정본 × {kd}» 이 아니다");
+                Near(ch["boss"]["hp"].Num() * kh, mine.Boss.Hp, $"{cc}챕터 보스 체력이 «정본 × {kh}» 이 아니다");
+                Near(ch["boss"]["dmg"].Num() * kd, mine.Boss.Dmg, $"{cc}챕터 보스 공격이 «정본 × {kd}» 이 아니다");
+                if (++c >= 30) break;                       // 앞 서른 챕터면 곡선의 앞 경계 몇 개를 넘기에 넉넉하다(420 을 다 도는 것은 느리다)
             }
+            Assert.AreEqual(1.0, hpSeg != null ? ChapterLayout.SegGrow(hpSeg, 1) : 1.0, 1e-12, "1챕터는 늘 1배여야 한다 — 아니면 곡선이 한 칸 일찍 곱해진 것이다");
         }
+
+        static double[][] Seg(JNode a)
+        {
+            var r = new double[a.Count][];
+            for (int i = 0; i < a.Count; i++) r[i] = a[i].NumArray();
+            return r;
+        }
+
+        /// <summary>큰 수일수록 오차가 커지므로 상대 오차로 잰다(정본 체력은 수만까지 간다).</summary>
+        static void Near(double want, double got, string msg) => Assert.AreEqual(want, got, 1e-9 * System.Math.Max(1, System.Math.Abs(want)), msg);
 
         // ───────────────────── ④ 다음 회차의 진짜 값을 실어 나를 수 있는가 ─────────────────────
 

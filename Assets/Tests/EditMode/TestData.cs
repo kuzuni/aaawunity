@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using KkomaKnight.Core;
 
@@ -46,6 +47,51 @@ namespace KkomaKnight.Tests
             if (File.Exists(combat)) d.ApplyCombatOverride(File.ReadAllText(combat));
             d.ValidateOverridden();
             return _preBalance = d;
+        }
+
+        /// <summary>
+        /// <b>지금 표에 등급 하나를 «전설 바로 앞» 에 끼운</b> 덮어쓰기 JSON — 표가 넷이든 다섯이든 <b>«한 칸 늘어난 표»</b> 를 만든다.
+        /// <para>이 레포의 자 여럿이 «등급이 가운데에 하나 늘면 …» 을 재는데, 그것을 <c>[일반, 희귀, 영웅, 전설, 신화]</c> 처럼
+        /// <b>손으로 적으면 주인 값이 들어가는 날 그 자들이 통째로 뜻을 잃는다</b>(이미 다섯인 표에 «다섯으로 넓힌다» 는 아무 뜻이 없다).
+        /// 그래서 <b>지금 표에서 낸다</b> — 값 커밋 전에도 뒤에도 같은 것을 잰다.</para>
+        /// <para>끼우는 자리는 <c>RarLegend</c>(= 전설 바로 앞)다. 새 표에서 그 칸이 «전설 바로 아래» 가 되므로
+        /// <c>SaveData.MigrateGearRar</c> 가 쓰는 <c>RarLegend - 1</c> 과 같은 자리를 가리킨다.</para>
+        /// <para>칸 값은 <b>아무 수나 안 지어낸다</b> — 기여·옵션은 <b>바로 아래 칸을 복사</b>하고, 그림 칸도 아래 칸을 같이 쓰고(§1 새 그림 0),
+        /// 상자 확률은 <b>0</b> 을 끼운다(합 100 이 그대로 선다). 이 자들이 재는 것은 «칸 수와 자리» 이지 값이 아니다.</para>
+        /// </summary>
+        public static string WidenByOneGrade(GameData D)
+        {
+            int at = D.Gear.RarLegend;                       // 새 등급이 끼는 자리(전설 바로 앞)
+            var names = new List<string>(D.Gear.RarName); names.Insert(at, "새등급");
+            string Nums(double[] a) { var l = new List<double>(a); l.Insert(at, a[at - 1]); return "[" + string.Join(", ", l.ConvertAll(v => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture))) + "]"; }
+            string Ints(int[] a) { var l = new List<int>(a); l.Insert(at, a[at - 1]); return "[" + string.Join(", ", l) + "]"; }
+            var looks = new List<int>();
+            for (int r = 0; r < D.Gear.RarName.Length; r++) looks.Add(D.Gear.LookRar(r));
+            looks.Insert(at, looks[at - 1]);                 // 새 등급은 아래 칸의 그림을 같이 쓴다(새 그림 0)
+            var sb = new System.Text.StringBuilder();
+            sb.Append("{ \"rarName\": [");
+            for (int i = 0; i < names.Count; i++) { if (i > 0) sb.Append(", "); sb.Append('"').Append(names[i]).Append('"'); }
+            sb.Append("], \"rarLegend\": ").Append(D.Gear.RarLegend + 1).Append(", \"rarMyth\": ").Append(D.Gear.RarMyth + 1);
+            sb.Append(", \"contribution\": { \"atk\": ").Append(Nums(D.Gear.Atk)).Append(", \"hp\": ").Append(Nums(D.Gear.Hp)).Append(", \"sh\": ").Append(Nums(D.Gear.Sh)).Append(" }");
+            sb.Append(", \"optionLadder\": { \"optCount\": ").Append(Ints(D.Gear.OptCountByRar)).Append(" }");
+            sb.Append(", \"look\": { \"rarSprite\": [").Append(string.Join(", ", looks)).Append("] } }");
+            return sb.ToString();
+        }
+
+        /// <summary>위와 짝 — 상자 확률에도 같은 자리에 <c>0</c> 을 끼운 덮어쓰기 JSON(칸 수를 등급 수와 맞춘다).</summary>
+        public static string WidenBoxesByOneGrade(GameData D)
+        {
+            int at = D.Gear.RarLegend;
+            var sb = new System.Text.StringBuilder("{ \"boxes\": {");
+            bool first = true;
+            foreach (var b in D.Gacha.Boxes)
+            {
+                var l = new List<double>(b.Rate); l.Insert(at, 0);
+                if (!first) sb.Append(',');
+                first = false;
+                sb.Append(" \"").Append(b.Key).Append("\": { \"rate\": [").Append(string.Join(", ", l.ConvertAll(v => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture)))).Append("] }");
+            }
+            return sb.Append(" } }").ToString();
         }
 
         /// <summary>레포 루트(= data 폴더의 세 단계 위) 기준 파일 경로 — 이 레포 전용 JSON(Assets/KkomaKnight/shop.json 등)을 읽을 때.</summary>
