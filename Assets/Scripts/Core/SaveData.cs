@@ -226,6 +226,20 @@ namespace KkomaKnight.Core
         public GearItem EquippedGear(string part) => Eq.TryGetValue(part, out var u) ? InvById(u) : null;
         public bool IsEquipped(GearItem g) => Eq.TryGetValue(g.Part, out var u) && u == g.Uid;
         public int SlotLv(string part) => Slots.TryGetValue(part, out var l) ? l : 0;
+        /// <summary>
+        /// 이 세이브를 적을 때 <b>등급이 몇 칸이었나</b>(T325 4항 ⓔ). 없으면(옛 세이브) 지금과 같다고 본다 — 그래서 오늘은 아무 일도 안 난다.
+        /// <para>주인이 «영웅 등급 다시 넣고» 라고 해서 등급이 <b>가운데에</b> 하나 늘면, 옛 세이브의 <c>rar 2</c>(옛 전설)·<c>3</c>(옛 신화)은
+        /// 새 표에서 <b>영웅·전설</b> 을 가리키게 된다 — <b>주인 폰의 장비가 한 등급씩 떨어진다.</b>
+        /// 컴파일도 되고 빨간 줄도 안 나며, 더 나쁜 것은 그 다음 줄(«전설 +N 이면 신화로 승격»)이 옛 신화 장비의 <b>강화를 0 으로 지운다</b>는 것이다.</para>
+        /// </summary>
+        public int RarN;
+        /// <summary>
+        /// <see cref="RarN"/> 칸이 <b>없던</b> 세이브의 등급 수 — <c>4</c>(일반·희귀·전설·신화).
+        /// <para>이 칸이 생기기 전(2026-09-09 · T325)에 적힌 세이브는 전부 그 표로 적혔다. 그것이 사실이므로 수를 적는다 —
+        /// «지금 표와 같다고 보자» 로 두면 <b>정작 옮겨야 할 세이브만 안 옮겨진다</b>(옛 세이브에는 이 칸이 없으니까).</para>
+        /// </summary>
+        public const int RarNLegacy = 4;
+
         public GearItem NewGear(string part, string type, int rar, int plus) => new GearItem { Uid = Uid++, Part = part, Type = type, Rar = rar, Plus = plus };
 
         public Build CurBuild(GameData D)
@@ -254,6 +268,7 @@ namespace KkomaKnight.Core
             if (ExpSettle < 0) ExpSettle = 0; ExpQuickUsed = Math.Max(0, ExpQuickUsed);   // 빠른 탐험 상한은 Expedition.Roll (표를 여기서 모른다) · 시계 되돌림도 거기서
             ExpQuickCharge = Math.Max(0, ExpQuickCharge); if (ExpQuickAt < 0) ExpQuickAt = 0;   // 상한(quickMax)도 Roll 이 안다(T265)
             PetPulls = Math.Max(0, PetPulls); Pets.NormalizeSave(this);   // T293 — 펫 «표» 는 여기서 모른다(GameData 가 아직 안 든다) · 표가 필요한 정리는 Pets.Equipped 가 한다
+            MigrateGearRar(D);   // ⚠ 아래 두 줄보다 «먼저» 다 — 안 그러면 옛 신화가 «전설» 로 읽혀 강화가 0 이 된다
             Inv.RemoveAll(g => g == null || Array.IndexOf(D.Gear.Parts, g.Part) < 0 || !D.Gear.Options.ContainsKey(g.Type) || g.Rar < 0 || g.Rar >= D.Gear.RarName.Length);
             foreach (var g in Inv) { g.Plus = Math.Max(0, g.Plus); if (g.Rar == D.Gear.RarLegend && g.Plus >= D.Gear.LegendToMythPlus) { g.Rar = D.Gear.RarMyth; g.Plus = 0; } }
             Uid = Math.Max(1, Uid);
@@ -275,12 +290,34 @@ namespace KkomaKnight.Core
             }
         }
 
+        /// <summary>
+        /// 등급이 <b>가운데에</b> 하나 늘었을 때 옛 세이브의 장비 등급을 한 칸 올려 읽는다 (T325 4항 ⓔ · 주인 «영웅 등급 다시 넣고»).
+        /// <para>끼어든 자리는 <b>«전설 바로 아래»</b>(<c>RarLegend - 1</c>)다 — 새 표에서 그 칸이 곧 영웅이고, 그 위(옛 전설·옛 신화)가 한 칸씩 밀린다.
+        /// 인덱스 <c>2</c> 를 박지 않는 까닭은 <see cref="GearData.RarRare"/> 주석과 같다: 표가 또 바뀌면 박은 수만 안 따라온다.</para>
+        /// <para><b>오늘은 아무 일도 안 한다</b> — <see cref="RarN"/> 이 없거나 지금 등급 수와 같으면 곧바로 돌아간다.
+        /// 한 칸이 아닌 차이는 <b>일부러 안 건드린다</b>: 그런 표는 아직 아무도 안 썼고, 지어낸 규칙으로 남의 세이브를 옮기는 것보다
+        /// 그 다음 줄(<c>Inv.RemoveAll</c>)이 범위 밖 장비를 버리는 편이 <b>눈에 보이는 고장</b>이다.</para>
+        /// </summary>
+        void MigrateGearRar(GameData D)
+        {
+            int now = D.Gear.RarName != null ? D.Gear.RarName.Length : 0;
+            if (now <= 0) return;
+            if (RarN <= 0) RarN = RarNLegacy;                // ⚠ «지금과 같다» 가 아니라 «이 칸이 없던 시절의 표» 다 — 위 RarNLegacy 주석
+            if (RarN == now) return;
+            if (now - RarN == 1)
+            {
+                int at = D.Gear.RarLegend - 1;               // 끼어든 자리 = 새 표의 «전설 바로 아래» = 영웅
+                foreach (var g in Inv) if (g != null && g.Rar >= at) g.Rar++;
+            }
+            RarN = now;
+        }
+
         public string ToJson()
         {
             var o = new Dictionary<string, object>
             {
                 ["v"] = (double)Version, ["gold"] = Gold, ["gem"] = Gem, ["maxChapter"] = (double)MaxChapter, ["selChapter"] = (double)SelChapter,
-                ["muted"] = MuteBgm, ["muteBgm"] = MuteBgm, ["muteSfx"] = MuteSfx, ["speed"] = (double)Speed, ["pulls"] = (double)Pulls, ["fuses"] = (double)Fuses, ["uid"] = (double)Uid, ["freeDay"] = FreeDay ?? "",
+                ["muted"] = MuteBgm, ["muteBgm"] = MuteBgm, ["muteSfx"] = MuteSfx, ["speed"] = (double)Speed, ["pulls"] = (double)Pulls, ["fuses"] = (double)Fuses, ["uid"] = (double)Uid, ["rarN"] = (double)RarN, ["freeDay"] = FreeDay ?? "",
                 ["giftDay"] = GiftDay ?? "", ["giftAds"] = (double)GiftAds, ["giftFree"] = GiftFree,
                 ["expSettle"] = ExpSettle, ["expQuickDay"] = ExpQuickDay ?? "", ["expQuickUsed"] = (double)ExpQuickUsed,
                 ["expQuickCharge"] = (double)ExpQuickCharge, ["expQuickAt"] = ExpQuickAt,   // T265 충전제
@@ -375,7 +412,7 @@ namespace KkomaKnight.Core
                 {
                     var j = new JNode(MiniJson.Parse(json));
                     s.Gold = j["gold"].Num(); s.Gem = j["gem"].Num(); s.MaxChapter = j["maxChapter"].Int(1); s.SelChapter = j["selChapter"].Int(1);
-                    s.MuteBgm = j.Has("muteBgm") ? j["muteBgm"].Bool() : j["muted"].Bool(); s.MuteSfx = j["muteSfx"].Bool(); s.Speed = j["speed"].Int(SpeedMin); s.Pulls = j["pulls"].Int(); s.Fuses = j["fuses"].Int(); s.Uid = j["uid"].Int(1); s.ReadFreeDays(j);
+                    s.MuteBgm = j.Has("muteBgm") ? j["muteBgm"].Bool() : j["muted"].Bool(); s.MuteSfx = j["muteSfx"].Bool(); s.Speed = j["speed"].Int(SpeedMin); s.Pulls = j["pulls"].Int(); s.Fuses = j["fuses"].Int(); s.Uid = j["uid"].Int(1); s.RarN = j["rarN"].Int();   /* 없으면 0 → Normalize 가 RarNLegacy 로 읽는다 */ s.ReadFreeDays(j);
                     s.GiftDay = j["giftDay"].Str(""); s.GiftAds = j["giftAds"].Int(); s.GiftFree = j["giftFree"].Bool();
                     s.ExpSettle = j["expSettle"].Num(); s.ExpQuickDay = j["expQuickDay"].Str(""); s.ExpQuickUsed = j["expQuickUsed"].Int();
                     s.ExpQuickCharge = j["expQuickCharge"].Int(); s.ExpQuickAt = j["expQuickAt"].Num();   // 없으면 0 — Roll 이 «가득» 으로 시작시킨다(T265)
