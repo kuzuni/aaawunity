@@ -120,6 +120,17 @@ namespace KkomaKnight.Tests.Play
             float KneeY(Transform t) { var c = new Vector3[4]; ((RectTransform)t).GetWorldCorners(c); return picRt.InverseTransformPoint(c[0]).y; }
             Assert.AreEqual(KneeY(knight), KneeY(foe), picRt.rect.height * 0.06f, "기사와 적의 발이 길 위 같은 높이에 선다(레퍼런스 30)");
             Assert.Less(((RectTransform)knight).anchorMin.x, ((RectTransform)foe).anchorMin.x, "기사가 왼쪽 · 적이 오른쪽(레퍼런스 30)");
+            // T303(주인 2026-09-09 09:0X «탐험 팝업 플레이어 그림 찌그러짐») — HeroView 의 그림판은 언제나 정사각(size × size)이라
+            //   호스트가 정사각이 아니면 그대로 늘어난다. 여기 칸은 112×187px 이라 가로 60% 로 눌려 있었다.
+            //   ⚠ 재는 것은 «호스트» 가 아니라 «그림이 실제로 그려지는 RawImage» 다 — 호스트는 자리를 잡는 칸이고 늘어나는 것은 그 안이다.
+            Canvas.ForceUpdateCanvases();
+            foreach (var (who, host) in new[] { ("기사", knight), ("적", foe) })
+            {
+                var hv = host.GetComponentInChildren<HeroView>(true);
+                var r = ((RectTransform)hv.transform).rect;
+                Assert.AreEqual(r.height, r.width, 1f,
+                    who + " 그림판이 정사각이어야 늘어나지 않는다 — 지금 " + r.width.ToString("0.#") + "×" + r.height.ToString("0.#") + "px (T303)");
+            }
 
             // 쌓인 값이 화면에 «0» 이 아니라 실제 계산값으로 찍힌다
             Expedition.Pending(_app.Data, S, D, LobbyPopups.NowSec(), SaveStore.Today(), out double pg, out double pm);

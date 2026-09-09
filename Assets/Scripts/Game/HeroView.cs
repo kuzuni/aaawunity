@@ -37,10 +37,21 @@ namespace KkomaKnight.Game
         /// <summary>RawImage 안에서 <b>몸(리그 스프라이트 경계)이 실제로 보이는 사각형</b> — 그림 없는 빈 Rect(앵커 = 텍스처 정규 좌표 · <see cref="Fit"/> 마다 갱신). UI 비평 이름표(«캐릭터» 행 · T46)가 이걸 잰다.</summary>
         public RectTransform Body { get; private set; }
 
-        /// <summary>host(프리팹의 초상 마스크 등) 안을 가득 채우는 RawImage 로 세운다. skin 이 null 이면 기본 기사 외형.</summary>
+        /// <summary>
+        /// host(프리팹의 초상 마스크 등) 안에 <b>정사각</b> RawImage 로 세운다. skin 이 null 이면 기본 기사 외형.
+        /// <para>
+        /// ⚠ <b>그림판은 언제나 정사각</b>(<see cref="CreateTargetTexture"/> 가 <c>size × size</c>)이라, 호스트가 정사각이 아니면 그림이 그대로 <b>늘어난다</b> —
+        /// 주인 2026-09-09 09:0X «탐험 팝업 플레이어 그림 찌그러짐»(T303)이 정확히 그 꼴이었다(탐험 띠의 기사 칸이 112×187px 이라 가로 60% 로 눌렸다).
+        /// 그래서 <b>여기서</b> 비례를 못 박는다 — 부르는 쪽이 호스트를 정사각으로 맞춰 주기를 기다리지 않는다(<see cref="GearScreen"/> 은 맞춰 줬고 탐험은 안 맞춰 줬다 · 규칙을 글로만 적으면 한 곳이 뒤처진다).
+        /// </para>
+        /// <b>세로를 기준으로 가로를 정한다</b>(<see cref="AspectRatioFitter.AspectMode.HeightControlsWidth"/> · 피벗이 가운데라 <b>자리는 그대로</b> 두고 폭만 넓어진다) —
+        /// 아레나 초상(<c>EventsScreen.Portrait</c>)이 쓰는 그 문법 그대로다. 이미 정사각인 호스트에서는 <b>아무것도 안 바뀐다</b>.
+        /// </summary>
         public static HeroView Attach(RectTransform host, CharacterRig.Skin skin = null, int texSize = 512)
         {
             var rt = UiKit.Rect(host, "HeroView"); UiKit.Stretch(rt);
+            var arf = UiKit.Ensure<AspectRatioFitter>(rt.gameObject);
+            arf.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth; arf.aspectRatio = 1f;
             var img = UiKit.Ensure<RawImage>(rt.gameObject); img.raycastTarget = false; img.color = Color.white;
             var hv = UiKit.Ensure<HeroView>(rt.gameObject);
             hv._img = img;
