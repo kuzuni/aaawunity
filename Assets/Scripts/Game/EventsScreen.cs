@@ -30,6 +30,9 @@ namespace KkomaKnight.Game
 
         /// <summary>던전 카드 2장(레퍼런스 «Portal to Hell»·«Expedition» → 우리말 · 시스템 없음 · 그림 = Environment 조각 · 티켓 아이콘 · 보상 아이콘 키).</summary>
         static readonly (string key, string title, string ticket, string field, Color tint, string[] props, string[] rewards)[] Dungeons =
+        // ⚠ T251 — `rewards` 는 이제 **«세부 팝업 표(dungeon.json)가 비었을 때의 대체» 뿐**이다.
+        //   카드의 «획득 가능» 줄도 팝업과 같은 원천(RewardCells)에서 종류를 받는다 — 여기 손으로 박은 그림은
+        //   표가 실려 있는 한 화면에 안 나온다. **여기 아이콘을 고쳐도 화면이 안 바뀐다**(보상을 바꾸려면 표를 고친다).
         {
             ("hell", "지옥의 문", "ui.iconTicketGold", "env.desert.field", new Color(0.55f, 0.18f, 0.12f), new[] { "env.desert.Stone_Gray1_07", "env.monolith", "env.desert.Stone_Gray1_03", "env.desert.Tree_Bare_01" }, new[] { "ui.iconOrb", "ui.bookBlue" }),
             ("expedition", "원정", "ui.iconTicketBlue", "env.forest.field", new Color(0.72f, 0.88f, 1.0f), new[] { "env.deepForest.Dead_Tree_Brown_01", "env.stoneBig", "env.deepForest.Dead_Tree_Brown_02", "env.forest.Stone_Gray1_11" }, new[] { "ui.iconScroll", "ui.iconKeyBlue", "ui.iconKeyPurple", "ui.iconKeyGold" }),
@@ -249,11 +252,19 @@ namespace KkomaKnight.Game
                 // «획득 가능» + 보상 아이콘(초록 프레임) 줄 · 입장(주황 · 빨간 !)
                 var fl = Shift(FoundLabel, dy).Within(rect);
                 UiKit.Label(card, fl.X, fl.Y, fl.W, fl.H, "획득 가능", TextSize.Aux, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Aux);
-                var rew = UiKit.Rect(card, "Rewards"); var rr = Layout.DgRewards; rr.W = d.rewards.Length == 2 ? rr.W : 40.0f;
+                // T251(주인 «획득 가능 부분에 실제 던전 클리어하면 획득하는 거를 … 세부 팝업에 있는 거 종류로») —
+                //   여기서 그리던 것은 표에 손으로 박아 둔 «대비용» 배열이라 세부 팝업(21)과 원천이 갈려 있었다.
+                //   이제 팝업과 같은 자리(RewardCells)에서 «종류만» 받는다.
+                var icons = CardRewardIcons(d.key, d.rewards);
+                var rew = UiKit.Rect(card, "Rewards"); var rr = Layout.DgRewards;
+                // 줄 폭은 «개수 × 한 칸» 이다 — 표의 W(20) 가 **두 칸** 값이라 한 칸은 그 절반이다.
+                //   옛 줄(`Length == 2 ? W : 40`)은 «둘이냐 아니냐» 로만 갈라서, 개수가 바뀌면 칸이 커지거나 겹쳤다.
+                //   n=2 → 20(표 그대로 · §5 20 화면의 «보상 아이콘 줄» 행이 이 값을 잰다) · n=4 → 40(옛 값과 같다) · n=1 → 10.
+                rr.W = Layout.DgRewards.W * 0.5f * Mathf.Max(1, icons.Length);
                 UiKit.Pct(rew, Shift(rr, dy).Within(rect));
                 // T72 ② 보상 아이콘 뒤 빛살(작은 칸이라 Effect_Light_02) — 던전 카드는 항상 보이므로 스크롤 제한 없이 돈다
                 // T128 — 칸 색은 물건마다(레퍼런스 20 · 표에 없으면 초록). 21 세부 팝업의 보상 칸은 레퍼런스도 전부 초록이라 그대로 둔다.
-                foreach (var cell in IconRow(rew, rr, d.rewards, RewardFrameDefault, frameByIcon: true)) PlanLight(cell);
+                foreach (var cell in IconRow(rew, rr, icons, RewardFrameDefault, frameByIcon: true)) PlanLight(cell);
                 var enter = UiKit.Button(card, "ui.btnOrange", "입장", Noop, Shift(Layout.DgEnter, dy).Within(rect)); enter.name = "EnterBtn"; ButtonPad(enter);
                 // T99 6항 — 빨간 점은 «지금 할 일이 있을 때만»(티켓이 있거나 광고로 하나 받을 수 있다) · 상태가 바뀌면 Refresh 가 켜고 끈다
                 var dot = AlertDot(enter);
@@ -741,6 +752,23 @@ namespace KkomaKnight.Game
             if (r == null) return;
             if (r.PetEgg > 0) list.Add(new RewardCellDef("pet.egg", UiKit.FmtComma(r.PetEgg), first));
             if (r.Gold > 0) list.Add(new RewardCellDef("ui.coin", UiKit.FmtComma(r.Gold), first));
+        }
+        /// <summary>
+        /// T251 — 던전 <b>카드</b>(20)의 «획득 가능» 줄에 그릴 아이콘. <b>세부 팝업(21)과 같은 원천</b>(<see cref="RewardCells"/>)에서
+        /// <b>«종류» 만</b> 뽑는다(주인 «세부 팝업에 있는 거 종류로 보여주면 됨»): 같은 종류가 «첫 클리어»·«이후» 로 두 번 나와도 <b>한 번만</b>.
+        /// <para>수량 글자와 «최초» 배지는 <b>안 넣는다</b> — 그것은 세부 팝업의 몫이다(T123). 카드는 «무엇이 나오나» 만 말한다.</para>
+        /// <para>
+        /// ⚠ <b>표가 없으면 지금까지 그리던 배열을 그대로 쓴다</b> — <see cref="RewardCells"/> 의 «네 칸이 될 때까지 채우기» 는
+        /// <b>세부 팝업이 넉 칸을 요구해서</b> 있는 것이라(레퍼런스 21), 그것을 카드에 들이면 <b>없는 보상 두 개</b>를 더 그리게 된다.
+        /// 표가 실린 지금은 이 갈래로 안 오지만, «대비용» 이 대비용답게 남으려면 여기서 갈라야 한다.
+        /// </para>
+        /// </summary>
+        string[] CardRewardIcons(string key, string[] fallbackIcons)
+        {
+            if (Dun == null || Dun.Of(key) == null) return fallbackIcons;
+            var kinds = new List<string>();
+            foreach (var c in RewardCells(key, fallbackIcons)) if (!kinds.Contains(c.icon)) kinds.Add(c.icon);
+            return kinds.Count > 0 ? kinds.ToArray() : fallbackIcons;   // 표는 있는데 보상이 0 이면 옛 그림이 낫다(빈 줄보다)
         }
         static string[] Icons(List<RewardCellDef> cells)
         {
