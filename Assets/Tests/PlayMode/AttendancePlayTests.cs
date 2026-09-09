@@ -52,6 +52,30 @@ namespace KkomaKnight.Tests.Play
             return t != null && t.gameObject.activeInHierarchy;
         }
 
+        /// <summary>
+        /// T305 — 하루 칸이 <b>지금 실제로 입고 있는 바탕</b>의 색(켜져 있는 조각 하나). 이름을 셋 다 물어보는 까닭은
+        /// 칸마다 켜지는 조각이 다르기 때문이다(받음 = <c>Bg_Disable</c> · 오늘 = <c>Bg_Focus1</c> · 나머지 = <c>Bg_Normal</c>).
+        /// </summary>
+        static Color BgInk(Transform day)
+        {
+            foreach (var n in new[] { "Bg_Disable", "Bg_Focus1", "Bg_Normal" })
+            {
+                var t = UiKit.Find(day, n);
+                if (t == null || !t.gameObject.activeInHierarchy) continue;
+                var im = t.GetComponent<Image>(); if (im != null) return im.color;
+            }
+            return Color.clear;
+        }
+        /// <summary>T305 — 하루 칸의 재화 아이콘 색(보상 칸 <c>Cell</c> 안의 <c>Item</c>).</summary>
+        static Color IconInk(Transform day)
+        {
+            var cell = UiKit.Find(day, "Cell"); if (cell == null) return Color.clear;
+            var item = UiKit.Find(cell, "Item"); if (item == null) return Color.clear;
+            var im = item.GetComponent<Image>(); return im != null ? im.color : Color.clear;
+        }
+        /// <summary>사람 눈이 느끼는 밝기 — «어둡다» 를 채널 셋으로 따로 재면 색이 다른 두 칸을 비교할 수 없다.</summary>
+        static float Lum(Color c) => 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
+
         [UnityTest]
         public IEnumerator AttendanceCellsComeFromTheTableAndClaimingPaysAtOnce()
         {
@@ -91,6 +115,29 @@ namespace KkomaKnight.Tests.Play
             day1 = UiKit.Find(ov, "Day:1"); Assert.IsNotNull(day1);
             Assert.IsTrue(ShownIn(day1, "Check"), "받은 칸에 ✅ 가 붙는다");
             Assert.IsFalse(ShownIn(day1, "Bg_Focus1"), "오늘은 이미 받았으니 강조 칸이 없다");
+
+            // ── T305(주인 2026-09-09 09:0X «받은 다음에는 해당 칸 꺼매지면서 재화 부분에 체크 … 지금 거의 구분이 안 감») —
+            //    «✅ 가 켜져 있다» 만으로는 주인이 본 것을 못 잡는다(그때도 켜져 있었다). 재는 것은 **옆 칸과의 차이** 셋이다.
+            Canvas.ForceUpdateCanvases(); yield return Frames(1);
+            var day2 = UiKit.Find(ov, "Day:2"); Assert.IsNotNull(day2, "2일차 칸(아직 안 받은 칸 = 대조군)");
+            //   ⓐ 바탕: 받은 칸이 안 받은 칸보다 **눈에 띄게** 어둡다(레퍼런스 16 은 휘도가 3분의 1 이하로 떨어진다).
+            Color bgGotInk = BgInk(day1);
+            Assert.Greater(bgGotInk.a, 0.5f,
+                "받은 칸에도 **보이는 바탕이 있어야** 한다 — 바탕 조각을 못 찾으면 아래 «더 어둡다» 는 0 과 비교하는 헛말이 된다");
+            float bgGot = Lum(bgGotInk), bgLeft = Lum(BgInk(day2));
+            Assert.Greater(bgLeft, 0.01f, "안 받은 칸의 바탕을 읽을 수 있어야 한다(못 읽으면 아래 비교가 뜻이 없다)");
+            Assert.Less(bgGot, bgLeft * 0.5f,
+                "주인 «칸이 꺼매져야» — 받은 칸 바탕이 안 받은 칸의 절반보다 어두워야 한다(지금 " + bgGot.ToString("0.000") + " ↔ " + bgLeft.ToString("0.000") + ")");
+            //   ⓑ 그림: 재화 아이콘도 같이 눌린다 — 바탕만 어둡고 아이콘이 제 색이면 칸이 «반만» 꺼진다.
+            float icGot = Lum(IconInk(day1)), icLeft = Lum(IconInk(day2));
+            Assert.Greater(icLeft, 0.01f, "안 받은 칸의 재화 아이콘 색을 읽을 수 있어야 한다");
+            Assert.Less(icGot, icLeft * 0.6f, "받은 칸의 재화 아이콘이 같이 어두워진다");
+            //   ⓒ 크기: ✅ 가 «재화 부분» 을 실제로 덮는다 — 구석의 작은 표시는 폰에서 그림에 먹힌다(그것이 주인이 본 화면이다).
+            var check = UiKit.Find(day1, "Check"); var cell = check.parent as RectTransform;
+            Assert.IsNotNull(cell, "✅ 는 보상 칸 안에 있어야 한다(칸 밖 구석이 아니라)");
+            var ck = (RectTransform)check;
+            Assert.Greater(ck.rect.width, cell.rect.width * 0.5f,
+                "✅ 가 재화 칸의 절반보다 커야 한다(폭 " + ck.rect.width.ToString("0") + " ↔ 칸 " + cell.rect.width.ToString("0") + ")");
             day1.GetComponentInChildren<Button>(true).onClick.Invoke(); yield return Frames(2);
             Assert.AreEqual(gold1, S.Gold, 1e-9, "같은 날 두 번 눌러도 안 준다");
             _log.AssertNoRed("출석 두 번 누르기");

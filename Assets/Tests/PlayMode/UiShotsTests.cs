@@ -107,7 +107,13 @@ namespace KkomaKnight.Tests.Play
             // T258 4항 — 같은 팝업의 «업적» 판. 주인이 보는 길이 `screens` PNG 라 판마다 한 장씩 남긴다
             //   (한 장만 찍으면 «업적 탭이 어떻게 생겼나» 를 아무도 못 본다). §5 채점 행은 아직 «일일» 판만 잰다(ref-layout ⑳).
             LobbyPopups.Achievements(_app); yield return Frames(2); yield return Shot("15b_quest_ach"); _app.Overlay.Close(); yield return Frames(1);
+            // T305 — «아무것도 안 받음» 으로 찍으면 이 화면의 핵심(받은 칸이 어떻게 갈리는가)이 그림에 안 나온다.
+            //   주인이 «거의 구분이 안 감» 이라고 한 것도 그 그림으로는 확인이 안 되던 자리다. ⇒ 1~3일차 받음 · 오늘은 4일차로 찍는다.
+            //   찍고 나서 되돌린다 — 뒤에 오는 장들이 «출석 안 받음» 을 전제로 서 있을 수 있다.
+            int attDone0 = S.AttDone; string attDay0 = S.AttDay;
+            S.AttDone = 3; S.AttDay = "2000-01-01";   // 어제까지 셋 받았다 = 오늘(4일차)은 받을 수 있다
             LobbyPopups.Attendance(_app); yield return Frames(2); yield return Shot("16_attendance"); _app.Overlay.Close(); yield return Frames(1);
+            S.AttDone = attDone0; S.AttDay = attDay0;
             LobbyPopups.DailyGift(_app); yield return Frames(2); yield return Shot("17_daily_gift"); _app.Overlay.Close(); yield return Frames(1);
             // 35 공통 «리워드» 획득 팝업(T241 · 표 ㊹) — 어느 지급 자리에서 뜨든 그림은 같으므로 «팝업 그 자체» 를 찍는다.
             // 레퍼런스 35 도 두 칸이라 칸 수를 둘로 맞춘다(칸 수가 바뀌면 칸 폭·묶음 폭이 달라져 표와 어긋난다).

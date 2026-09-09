@@ -655,6 +655,22 @@ namespace KkomaKnight.Game
         const string AttendQty = "1";
 
         /// <summary>
+        /// T305 — <b>받은 칸의 바탕</b>(주인 2026-09-09 09:0X «받은 다음에는 해당 칸 꺼매지면서 … 지금 거의 구분이 안 감»).
+        /// <c>docs/ref/16_attendance.jpg</c> 실측 = 받은 칸 (97,91,79) ↔ 오늘 칸 (237,222,189) — 즉 <b>휘도가 3분의 1 이하</b>로 떨어진다.
+        /// 프리팹의 <c>Bg_Disable</c> 을 켜기만 하던 것이 «거의 구분이 안 가던» 자리라, 그 조각에 <b>레퍼런스에서 온 색을 실제로 칠한다</b>.
+        /// </summary>
+        static Color ClaimedBg => Palette.Hex("#615B4F");
+        /// <summary>
+        /// T305 — 받은 칸 안의 그림을 누르는 배수. 레퍼런스에서 받은 칸 아이콘 (102,106,89) ↔ 안 받은 칸 아이콘 (255,255,207) 을 채널마다 나누면
+        /// 0.40 · 0.42 · 0.43 이라 <b>가운데 값</b>을 쓴다. <b>색을 갈아치우지 않고 곱하는</b> 까닭 = 무엇을 받았는지(금·다이아·물약)는 여전히 보여야 한다.
+        /// </summary>
+        const float ClaimedDark = 0.42f;
+        /// <summary>T305 — 받은 표시 ✅ 의 초록. 시즌 패스가 이미 쓰는 그 값이다(두 화면의 «받았다» 가 다른 초록이면 그것이 더 이상하다).</summary>
+        static Color ClaimedCheck => Palette.Hex("#3FD214");
+        /// <summary>T305 — ✅ 가 재화 칸에서 먹는 자리(칸의 64% · <c>SeasonPassScreen</c> 과 같은 수). 주인 말 «재화 부분에 체크 표시».</summary>
+        static readonly Layout.R ClaimedCheckRect = new Layout.R(18, 18, 64, 64);
+
+        /// <summary>
         /// 출석 팝업(표 ㉑) — <b>주인 2026-09-07(T76): «출석 보상 Rewards_Daily7_Popup 프리팹 이거로 해줘»</b>.
         /// 프리팹을 팝업 층에 통째로 세우고(<see cref="Overlay.OpenPrefab"/>) 조각을 표 ㉑ 자리로 <b>옮기기만</b> 한다 —
         /// 상자(<c>Popup_Box_01</c>) · 제목 리본(<c>Title_01_Deco_Yellow</c>) · 3×2 격자(<c>Group_DailyList7</c> 의 <see cref="GridLayoutGroup"/>) ·
@@ -712,12 +728,14 @@ namespace KkomaKnight.Game
                 {
                     int no = i + 1;
                     var frame = (RectTransform)group.GetChild(i); frame.name = "Day:" + no; frame.gameObject.SetActive(true);
-                    DayFrame(frame, no == todayNo, AT != null && Core.Attendance.Claimed(app.Save, no));
+                    bool got = AT != null && Core.Attendance.Claimed(app.Save, no);
+                    DayFrame(frame, no == todayNo, got);
                     var head = Head(frame, Layout.AtCell, Layout.AtCellHead, no + "일차", HeadBand);
                     var day = AT != null ? AT.Of(no) : null;
                     string color = AttendColors[i], icon = AttendIcons[i], qty = AttendQty;
                     if (day != null && day.Rewards.Count > 0) { AttendArt(day.Rewards[0].Item, out color, out icon); qty = AttendQtyText(day.Rewards[0].Amount); }
                     var ic = Cell(frame, Layout.AtCell, Layout.AtCellIcon, color, icon, qty, qtyBand: true);
+                    ClaimedMark(ic, got);   // T305 — 받은 날이면 칸을 누르고 ✅ 를 얹는다(칸을 만든 뒤에)
                     UiKit.Clickable(frame, () => ClaimAttendance(app));
                     cells[i] = frame; if (i == 0) { head0 = head.transform.parent as RectTransform; icon0 = ic; }
                 }
@@ -728,7 +746,8 @@ namespace KkomaKnight.Game
             if (day7 != null)
             {
                 day7.name = "Day:7"; UiKit.Pct(day7, Layout.AtDay7.Within(B));
-                DayFrame(day7, todayNo == 7, AT != null && Core.Attendance.Claimed(app.Save, 7));
+                bool got7 = AT != null && Core.Attendance.Claimed(app.Save, 7);
+                DayFrame(day7, todayNo == 7, got7);
                 head7 = Head(day7, Layout.AtDay7, Layout.AtDay7Head, "7일차", HeadBand, "Head7").transform.parent as RectTransform;
                 var d7 = AT != null ? AT.Of(7) : null;
                 string c70 = "green", i70 = "ui.coin", q70 = AttendQty, c71 = "plum", i71 = "ui.gemRed", q71 = AttendQty;
@@ -736,6 +755,7 @@ namespace KkomaKnight.Game
                 if (d7 != null && d7.Rewards.Count > 1) { AttendArt(d7.Rewards[1].Item, out c71, out i71); q71 = AttendQtyText(d7.Rewards[1].Amount); }
                 r7[0] = Cell(day7, Layout.AtDay7, Layout.AtDay7Cell, c70, i70, q70, qtyBand: true);
                 r7[1] = Cell(day7, Layout.AtDay7, Sh(Layout.AtDay7Cell, Layout.AtDay7Pitch, 0), c71, i71, q71, qtyBand: true);
+                ClaimedMark(r7[0], got7); ClaimedMark(r7[1], got7);   // T305 — 7일 칸은 재화가 둘이라 ✅ 도 둘이다(주인 «재화 부분에»)
                 UiKit.Clickable(day7, () => ClaimAttendance(app));
             }
             // 비평 이름표(표 ㉑)
@@ -752,12 +772,52 @@ namespace KkomaKnight.Game
         /// </summary>
         static void DayFrame(RectTransform frame, bool today, bool claimed = false)
         {
-            // T253 4항 — 받은 날은 ✅(프리팹의 Check)를 켜고 바탕을 «다 쓴» 것으로, 오늘 받을 칸은 Bg_Focus1 로 강조한다.
+            // T253 4항 — 받은 날은 바탕을 «다 쓴» 것으로, 오늘 받을 칸은 Bg_Focus1 로 강조한다.
             UiKit.Show(frame, "Bg_Normal", !today && !claimed); UiKit.Show(frame, "Bg_Focus1", today);
             UiKit.Hide(frame, "Bg_Focus2", "Bg_Focus3", "SampleEffect", "SampleParticle", "Icon", "Text_Num", "Text_Day");
-            UiKit.Show(frame, "Bg_Disable", claimed); UiKit.Show(frame, "Check", claimed);
+            // T305 — 「켜기만」 하던 것을 「칠한다」. 주인이 «거의 구분이 안 감» 이라고 한 자리가 정확히 여기다:
+            //   조각의 Bg_Disable 은 제 색이 옅어 크림 바탕과 거의 같아 보였다. 레퍼런스 16 의 받은 칸은 (97,91,79) 로
+            //   오늘 칸(237,222,189)보다 휘도가 3분의 1 이하다 — 그 값을 실제로 입힌다.
+            UiKit.Show(frame, "Bg_Disable", claimed);
+            if (claimed) Paint(frame, "Bg_Disable", ClaimedBg);
+            // 프리팹의 작은 Check 는 안 쓴다 — 주인 말은 «재화 부분에» 이고, 그 조각은 칸 구석에 작게 붙어 그림에 먹힌다.
+            // ✅ 는 ClaimedMark 가 보상 칸 위에 크게 얹는다(부르는 쪽이 칸을 만든 «뒤» 에 부른다).
+            // ⚠ 끄기만 하지 않고 **이름도 바꾼다** — 이름이 «Check» 인 조각이 둘이면 이름으로 찾는 자·하니스가
+            //    어느 쪽을 보는지 알 수 없고, 하필 꺼진 쪽을 집으면 «✅ 가 없다» 는 거짓 판정이 난다(결정 906 이 값을 치른 자리).
+            var oldCheck = UiKit.Find(frame, "Check");
+            if (oldCheck != null) { oldCheck.gameObject.SetActive(false); oldCheck.name = "Check_Prefab"; }
             foreach (var deco in frame.GetComponentsInChildren<Transform>(true)) if (deco.name == "Deco") deco.gameObject.SetActive(false);
             UiKit.Bordered(frame);   // T69 — 칸 테두리(레퍼런스 16 도 칸마다 검은 외곽선)
+        }
+
+        /// <summary>조각 하나의 그림 색을 바꾼다 — 없으면 아무 일도 안 한다(조각이 빠진 프리팹에서도 화면이 안 깨지게).</summary>
+        static void Paint(Transform root, string path, Color c)
+        {
+            var t = UiKit.Find(root, path); if (t == null) return;
+            var im = t.GetComponent<Image>(); if (im != null) im.color = c;
+        }
+
+        /// <summary>
+        /// T305 — <b>받은 날의 보상 칸 표시</b>(주인 «재화 부분에 체크 표시 되면서 수령 이미 됐다는 표시»).
+        /// <para>
+        /// 칸 안의 그림을 <see cref="ClaimedDark"/> 로 <b>곱해서</b> 누르고(색을 갈아치우지 않으므로 무엇을 받았는지는 그대로 보인다)
+        /// 그 위에 큰 ✅ 를 얹는다. <b>누르는 것이 먼저</b>여야 ✅ 자신이 같이 어두워지지 않는다.
+        /// </para>
+        /// <para>
+        /// ⚠ 이 함수는 보상 칸을 <b>만든 뒤</b>에 부른다 — <see cref="DayFrame"/> 은 칸이 생기기 전에 도므로 거기서는 아이콘을 못 만진다.
+        /// </para>
+        /// </summary>
+        static void ClaimedMark(RectTransform cell, bool claimed)
+        {
+            if (cell == null || !claimed) return;
+            foreach (var im in cell.GetComponentsInChildren<Image>(true))
+            {
+                if (im == null) continue;
+                var c = im.color; im.color = new Color(c.r * ClaimedDark, c.g * ClaimedDark, c.b * ClaimedDark, c.a);
+            }
+            var ck = UiKit.Icon(cell, "Check", "pi.check", ClaimedCheck);
+            UiKit.Pct(ck.rectTransform, ClaimedCheckRect);
+            ck.transform.SetAsLastSibling();
         }
 
         /// <summary>
