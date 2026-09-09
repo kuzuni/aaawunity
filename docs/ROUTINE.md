@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-10 · 주인 · 한 자리에서 여덟 · 주인 자리 로컬 세션이 등재 · 넷은 lock 잡고 바로 고친다)** — **T354** «재화 흡수 이펙트가 레이어가 너무 낮음 · 리워드 팝업 닫고 나서 안 보여» · **T355** «상점에 광고 보거나 free 로 얻을 수 있는 게 있는데 빨간점 알림이 하단 네비 상점 탭에 안 떠 있더라» · **T356** «장착슬롯 부분에 +2강인데 하단에서는 +2강이라 뜨는데 장착했을 때는 안 뜨네» · **T357** «장비에 슬롯 강화할 부분도 없는데 빨간점 안 꺼지더라» · **T358** «게임 입장할 때 로딩 좀 화면 되게 하기» · **T359** «퀘스트 상단 포인트로 얻을 수 있는 거는 빨간점 · 얻었으면 꺼멓게 · 맨 왼쪽 메달은 현재 포인트인데 0 으로 돼 있네 고쳐 · Line 은 게이지인데 통째로 노랑 — 흰색에 찬 부분만 노랑» · **T360** «체크 모양은 Toggle_Check_02_On 이거로 통일» · **T361** «타이틀 감싸고 있는 프레임들이 아래 팝업들이랑 떨어져 있어서 거슬림 · 위치는 괜찮으니 팝업 상단 부분만 늘려서 이어진 것처럼». T354~T356·T360 은 까닭을 코드·프리팹에서 실측했다(§2 각 절 0항) · T357·T358·T359·T361 은 루틴 몫(T359 는 `LobbyPopups.cs` lock 들 뒤).
+
 - **(2026-09-10 · 주인 · T344 의 뒤 → T353 · 주인 자리 로컬 세션이 lock 잡고 바로 했다)** «그 패스에 하늘색, 파란색 그라디안트 서로 색 바꾸셈 · 그리고 패스들 다 중앙에 셀 있어야 함 · 로우에 셀이 중앙에 · 현재 오른쪽에 치우쳐 있더라 파란색 쪽 꺼» → 무료 열 = **파랑(왼쪽) → 하늘(오른쪽)** · 세 열 보상 칸 x = **열 가운데 − 폭/2**(실측 표는 3.5%p 오른쪽이었다).
 
 - **(2026-09-10 · 주인 · 한 자리에서 일곱 · 세션이 받아 적음 · 코드 0줄 — «너가 수정하고 있는 거 아니지? 그거 todo 에 써서 루틴이 하게 시켜야 하는데»)** — 아래 일곱은 **주인이 말로 준 것을 그대로 등재만** 한 것이다. §2 에 T340~T346 로 절을 폈고(실측·함정·자 깨지는 자리까지 미리 적어 뒀다) **작업은 루틴 워커가 한다**:
@@ -9032,4 +9034,77 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 > **🔄 push · 확인 전(18:5X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 990 · lock `T353` 쥔 채 · 커밋 메시지의 989 는 990)** — 0~3항 그대로. 확인 = 다음 완주 런 `SeasonPassLookTests` + `screens` 19.
 
 순서 — `Game/SeasonPassScreen.cs` · `catalog.json` · `Game/GradientPalette.cs` · `docs/assets-map.md` · `docs/ref-layout.md` · `Tests/PlayMode/SeasonPassLookTests.cs`. lock `T353`.
+
+### T354 — ⚑⚑ 주인: **리워드 팝업 «재화 흡수» 구슬이 팝업 뒤에 그려진다** (주인 2026-09-10 «재화 흡수 이펙트가 레이어가 너무 낮음 · 안 보여 리워드 팝업 닫고 나서 · 팝업들보다 레이어가 낮아서 안 보이나봐»)
+
+0. **까닭(실측)** — `RewardPopup.Layer()` 가 구슬 층(`RewardOrbs`)을 **`app.Current.Root`(화면 루트)** 밑에 세우고 `SetAsLastSibling` 한다. 그런데 `Overlay.Root` 는 **`app.Frame` 밑 형제**(`Overlay.cs:45` · 열 때마다 `SetAsLastSibling`)라, 화면 루트 «안에서» 맨 위인 것은 오버레이 «아래» 다. 주인 진단 그대로다 — 형제 번호가 아니라 **부모가 다르다**.
+1. **고침** — 층의 host 를 `app.Frame` 으로(«화면이 바뀌면 다시 만든다» 조건은 `parent != host` 그대로 · 이제 화면이 바뀌어도 살아남는다 · 좌표는 둘 다 프레임 stretch 라 `TargetPos` 불변). `Fly` 마다 `SetAsLastSibling` 은 그대로 — 오버레이가 열릴 때마다 맨 위로 가므로 **부를 때마다** 다시 올려야 한다.
+2. **자** — `RewardAbsorbTests` 는 `UiCanvas` 전체에서 구슬을 세므로 그대로 통과. 더한다: 구슬 층의 부모 = `app.Frame` · 형제 번호 > `Overlay.Root` 의 형제 번호(«앞에 그려진다» 를 관계로).
+3. **확인** — 주인 폰(팝업 닫힌 뒤 구슬이 보인다).
+
+순서 — `Game/RewardPopup.cs` · `Tests/PlayMode/RewardAbsorbTests.cs`. lock `T354`.
+
+### T355 — ⚑ 주인: **하단 네비 «상점» 탭 빨간 점이 안 뜬다** (주인 2026-09-10 «상점에 광고 보거나 free 로 얻을 수 있는 게 있는데 빨간점 알림이 하단 네비 상점 탭에 안 떠 있더라»)
+
+0. **까닭(실측)** — `Notify.ShopAny(s, today)` = `s.FreeDay != today`. 그런데 T259 가 «무료 보급» 을 **자리별**(`ShopFree` · `SaveData.FreeDays[target]` · 다이아·골드·광고 상자 둘 = `ShopFree.All`)로 바꾸면서 옛 `FreeDay` 칸은 **아무도 안 쓴다** → 판정이 화면과 다른 칸을 본다. `ShopScreen.CanFree` 는 이미 `ShopFree.Can` 이다.
+1. **고침** — `ShopAny` = `ShopFree.All` 중 **하나라도** `ShopFree.Can(s, target, today)` 이면 참(화면과 같은 판정 · T96 ⓔ «판정은 한 곳»). 옛 `FreeDay` 는 안 본다.
+2. **자** — EditMode(순수 C#): 아무것도 안 받은 오늘 → 참 · 넷 다 오늘 받음 → 거짓 · 하나만 남아도 참 · **옛 `FreeDay` 만 오늘이고 `FreeDays` 는 비었으면 참**(옛 칸을 안 보는 것을 못 박는다).
+3. **확인** — 주인 폰(상점 탭 점).
+
+순서 — `Core/Notify.cs` · `Tests/EditMode/NotifyShopTests.cs`(신규). lock `T355`.
+
+### T356 — ⚑ 주인: **장착 슬롯에 «+N» 이 안 뜬다** (주인 2026-09-10 «장착슬롯 부분에 +2강인데 하단에서는 +2강이라 뜨는데 장착했을 때는 +2강이라 안 뜨네»)
+
+0. **까닭(프리팹 YAML 실측)** — `ItemFrame_01.prefab` 의 자식 순서는 `NormalArea · Disable · Focus · Item · Lock · Add_1 · Add_2` 이고 **`Text_Level` 은 루트가 아니라 `Lock/Text_Level`** 이다. `GearScreen` 이 슬롯을 세울 때 `UiKit.Hide(frame, "Focus", "Disable", "Lock", "Add_2")` 로 **Lock 가지를 끈다** → T310 이 «인벤과 같은 함수» 로 부르는 `GearUi.SetPlus` 는 글자를 쓰긴 하는데(`SetText` 가 꺼진 것도 찾는다) **부모가 꺼져 있어 안 보인다**. 인벤 조각(`ListItem_EquipMent`)은 `Text_Level` 이 따로 있어 보인다. T310 회차 3·4 가 «글자 크기» 만 맞추고 이 자리를 못 본 까닭 — 자가 `Text_Level` 의 **글자**만 재고 **보이는가**를 안 쟀다.
+1. **고침** — 슬롯을 세울 때 `Lock/Text_Level` 을 **프레임 루트로 옮기고 맨 위로**(`SetParent(frame, false)` · `SetAsLastSibling`) — Lock 은 프레임을 꽉 채우는 stretch 라 앵커가 그대로 맞는다. 그 뒤 Lock 을 끈다(순서 중요). 조각 원본은 안 고친다(§1).
+2. **자** — `UiSmokeTests` 장비 절: 슬롯마다 `Text_Level` 이 **`activeInHierarchy`**(끄진 가지 안이면 여기서 빨감) · 장착 장비의 표시 «+N» 이 0 보다 크면 글자 = «+N».
+3. **확인** — `screens` 05 + 주인 폰.
+
+순서 — `Game/GearScreen.cs` · `Tests/PlayMode/UiSmokeTests.cs`. lock `T356`.
+
+### T357 — ⚑ 주인: **장비 탭 빨간 점이 «강화할 것이 없는데» 안 꺼진다** (주인 2026-09-10 «장비에 슬롯 강화할 부분도 없는데 빨간점 안 꺼지더라 알림»)
+
+0. **실측** — `Notify.GearAny` = «아직 안 본 새 장비(`GearItem.IsNew`)가 있다» ∨ «같은 `FuseKey` 3개 이상(합성 가능)». `IsNew` 는 **세부 팝업을 열어야만** 꺼진다(`GearUi.cs:550` · 장착해도 꺼진다). 그래서 뽑기로 여러 개 얻고 안 열어 보면 점이 영영 켜져 있다 — 주인은 이 점을 «슬롯 강화 가능» 으로 읽는다.
+1. **정할 것(워커 결정)** — 판정을 주인 뜻에 맞춘다: ⓐ 슬롯 강화 가능(골드 + T290 레시피 충족 · `GearSystem` 의 그 판정) ⓑ 더 좋은 장비가 인벤에 있다(`GearUi.BetterInInv`) ⓒ 합성 가능은 대장간 점이 이미 따로 낸다 — 장비 탭에서 뺄지 남길지 정한다. `IsNew` 는 «장비 화면을 열면» 일괄로 끄든지(«봤다»), 판정에서 빼든지 — T167 이 «봤다 칸을 만들지 않는다» 고 했으니 **판정에서 뺀다** 쪽이 규약에 맞다.
+2. **자** — EditMode: 강화 가능 판이면 참 · 강화 불가·더 좋은 것 없음이면 거짓 · **IsNew 만 있으면 거짓**.
+3. **확인** — 주인 폰.
+
+순서 — `Core/Notify.cs` · `Game/GearUi.cs` · `Tests/EditMode`. lock `T357`.
+
+### T358 — ⚑⚑ 주인: **게임(전투) 들어갈 때 로딩 화면** (주인 2026-09-10 «게임 입장할 때 로딩 좀 화면 되게 하기 그리고 게임 입장»)
+
+0. **있는 것** — 부팅 로딩 `LoadingScreen`(`Title_Loading` 조각 그대로 · T96 · `MinSeconds` 0.3 · 진행 바) 이 `Bootstrap` 에서만 뜬다. 씬 분리(T229)는 주인 지시로 **✂ 취소**됐다 — 씬을 안 나눈다.
+1. **고침** — `App.StartBattle(...)` 이 전투 화면을 세우기 **전에** 같은 조각을 띄우고(`LoadingScreen.Show(Frame, Assets)` · `Overlay.Root` 보다 위), 전투 월드가 다 서면(`BattleScreen` 이 첫 프레임을 그린 뒤 · 최소 `MinSeconds`) 내린다. 진행 바는 «전투 월드 스폰 단계» 로 채우거나 실제 단계가 없으면 시간으로. 던전·아레나 입장도 같은 길(`StartBattle` 한 곳).
+2. **자** — `UiSmokeTests`/`PlaythroughTests`: START 뒤 로딩 조각이 **떴다 사라졌다**(`LoadingScreen.LastShownWasPrefab` 꼴의 기록 · 결정 329) · 전투 화면이 선 뒤에는 없다.
+3. **확인** — 주인 폰.
+
+순서 — `Game/App.cs` · `Game/LoadingScreen.cs` · `Game/BattleScreen.cs` · 자. lock `T358`.
+
+### T359 — ⚑⚑ 주인: **퀘스트(15) 포인트 트랙 넷 — 빨간 점 · 받은 칸 어둡게 · 맨 왼쪽 메달 = 현재 포인트 · Line 게이지** (주인 2026-09-10 «상단에 포인트 얻어서 얻을 수 있는 거는 빨간점 알림 · 얻었으면 꺼멓게 되서 얻은 거처럼 · 메달 맨 왼쪽은 현재 얻은 포인트 표시인데 0 으로 돼 있네 더 얻었는데 고쳐 · Line 은 게이지인데 걍 생으로 노란색 · 안 됐을 때는 흰색, 차 있는 부분은 노랑»)
+
+0. **자리** — 퀘스트 팝업 상단 트랙(`LobbyPopups.cs` · T311 이 «칸 아이콘·개수·새로고침 시간» 으로 같은 트랙을 만지는 중 · T292 도 «90점 = 레시피 20»).
+1. **넷** — ⓐ 트랙 칸: 포인트가 문턱 이상이고 아직 안 받았으면 **빨간 점**(`UiKit.AlertDot` · 판정은 `Core.Notify`/`QuestRun` 한 곳) ⓑ 받은 칸은 **어둡게**(`CanvasGroup`/tint · 출석 받은 칸과 같은 꼴) ⓒ 맨 왼쪽 메달 글자 = **현재 포인트**(지금 «0» 고정 — 값 배선이 빠졌다 · `QuestRun` 의 점수를 읽는다) ⓓ `Line` 은 **게이지**: 흰 바탕 한 장 + 그 위 노란 `Image.fillAmount` = 포인트 ÷ 마지막 문턱(지금은 노란 한 장뿐).
+2. **자** — PlayMode: 점수 0 → 메달 «0» · 게이지 0 · 점 0 / 점수 = 첫 문턱 → 첫 칸 점 켜짐 · 게이지 비율 / 받으면 점 꺼지고 칸 어둡다.
+3. **확인** — `screens` 15 + 주인 폰.
+
+순서 — `Game/LobbyPopups.cs` · `Core/QuestRun.cs` · 자. **T311·T292 lock 안 파일** — 그 절들이 닫힌 뒤 lock `T359`(한 사람이 T311 과 같이 잡아도 된다).
+
+### T360 — ⚑ 주인: **체크 표시 그림을 `Toggle_Check_02_On` 하나로 통일** (주인 2026-09-10 «이 게임에 체크 모양은 Toggle_Check_02_On 이거로 통일하기 · `Theme_Light/Sprites/Control` 여기 있는 거»)
+
+0. **실측** — 우리가 세우는 체크(출석 받은 칸 · 데일리 기프트 받은 칸 · 패스 받은 칸 · 퀘스트 «받기» 완료 · 트랙 칸)는 전부 카탈로그 키 **`pi.check`**(PictoIcon `check.png`) 한 갈래다. 조각이 제 «Check» 를 달고 오는 자리도 있다: 인벤 칸 장착 표시(`GearUi.cs:176` `Show(cell, "Check")`) · 퀘스트 줄(`LobbyPopups.cs:604·703·883`) · 프로필 줄(`Profile.cs:180`).
+1. **고침 ⓐ(카탈로그 · 로컬이 한다)** — `pi.check` 의 경로를 `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/Control/Toggle_Check_02_On.png` 으로(`gen_catalog.py` 재생성 · assets-map 한 줄). 여섯 자리가 한 번에 바뀐다.
+2. **고침 ⓑ(조각 «Check» · 루틴)** — 위 넷은 `UiKit.SetSprite(…, "Check", "pi.check", …)` 로 같은 그림을 씌운다(조각 원본 불변). `LobbyPopups.cs` 는 lock 안이라 그 절 뒤.
+3. **자** — 체크를 세우는 자리 하나(출석)에서 스프라이트 이름이 `Toggle_Check_02_On` 으로 시작하는가 · ⓑ 뒤에는 인벤 장착 표시도.
+4. **확인** — `screens` 16·17·19 + 주인 폰.
+
+순서 — ⓐ `catalog.json` · `docs/assets-map.md`(lock `T360` · 로컬) → ⓑ `Game/GearUi.cs` · `Game/Profile.cs` · `Game/LobbyPopups.cs`(루틴 · lock 들 뒤).
+
+### T361 — ⚑⚑ 주인: **리본 제목과 팝업 상자 사이가 떠 있다 — 상자의 «위쪽만» 늘려 이어 붙인다** (주인 2026-09-10 «`Title_Tapered_01_Brown` 이런 식으로 타이틀 감싸고 있는 프레임들이 아래 팝업들이랑 거리가 떨어져 있어서 거슬림 · 위치 자체는 괜찮아서 · 팝업 중에 그렇게 떨어져 있는 거 있으면 팝업에 상단 부분만 좀 늘려서 그거랑 이어진 거처럼 보이게 딱 해 줘»)
+
+0. **뜻** — 리본(`ui.title.*` · `Title_Tapered_01_*`)은 **안 움직인다**. 리본 밑단과 상자 윗단 사이에 틈이 있는 팝업만, 상자의 **위 변**(`offsetMax.y`)을 리본 밑단(살짝 겹치게 + 몇 px)까지 올린다. 아랫단·좌우는 그대로.
+1. **자리** — 공통 팝업 문법 한 곳(`UiKit.Popup` / `Overlay.OpenBox` / `LobbyPopups.Ribbon`)에서 그린 뒤 **틈을 재서**(`ribbon.rect.yMin` ↔ `box.rect.yMax` · 월드 → 상자 부모 좌표) 틈 > 0 이면 그만큼 올린다. 표(`Layout.*Box`)는 안 바꾼다 — «표 = 레퍼런스 자리, 그린 뒤 이어 붙이기» 로 두어야 `LayoutSpecTests`·`ui_score` 가 안 흔들린다(T320 ⓑ 가 리본 뒤 빛에 쓴 «그린 뒤 맞춘다» 와 같은 꼴). 상자 안 내용은 `Pct(box, …)` 라 위 변이 올라가면 같이 늘어난다 — **내용이 위로 딸려 올라가면 안 되는 팝업**(줄 목록 등)은 내용 컨테이너를 옛 rect 에 고정한다.
+2. **자** — PlayMode: 리본 팝업 전부(퀘스트 15 · 출석 16 · 데일리 17 · 우편 · 던전/아레나 세부 · 리워드 35 · 특전) 열어 «리본 밑단 − 상자 윗단 ≤ 0» · 상자 아랫단은 열기 전과 같다.
+3. **확인** — `screens` 15·16·17 + 주인 폰.
+
+순서 — `Game/Overlay.cs` · `Game/UiKit.cs` · (리본을 따로 세우는 자리) `Game/LobbyPopups.cs`. lock `T361`.
 
