@@ -156,12 +156,27 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(Overlay.TitleMaskW, mask.rect.width, 0.5f, "마스크 폭(주인 값)");
             Assert.AreEqual(Overlay.TitleMaskH, mask.rect.height, 0.5f, "마스크 높이(주인 값)");
             Assert.AreEqual(0f, mask.anchoredPosition.x, 0.5f, "마스크는 가운데");
-            Assert.AreEqual(Overlay.TitleMaskY, mask.anchoredPosition.y, 0.5f, "마스크 세로 자리(주인 값)");
+            // T369(주인 2026-09-10 «타이틀 밑으로 라이트 보이는 경우들 … 타이틀 위로만») — 마스크 바닥은 리본 **몸통** 밑단보다 아래면 안 된다.
+            //   이 리본(`Title_01_NoDeco_Tangerine`)의 몸통은 rect 높이의 18.26% 위에서 끝난다(꼬리가 아래로 늘어진 조각 · PNG 실측).
+            //   주인 값의 마스크 바닥(27.27%)은 이 리본 몸통 밑단(런 875 `04_perks` 실측 29.5%)보다 **이미 위**라 여기서는 올릴 것이 0 이고
+            //   (리본 밑이 (42,32,29) 배경 · 새는 띠 0), `Overlay.RibbonGlowLift` 는 그때만 0 이 아닌 안전망이다 — 올린 만큼은 마스크 자신에서 읽는다.
+            var ribbon = UiKit.Find(_app.Overlay.Root, "Title_01_NoDeco_Tangerine") as RectTransform;
+            Assert.IsNotNull(ribbon, "«레벨 업» 리본");
+            float frac = Overlay.RibbonBodyBottomFrac(ribbon);
+            Assert.AreEqual(21f / 115f, frac, 1e-4f, "이 리본 조각(Title_01 계열)의 몸통 밑 여백 비 = 21/115(PNG 실측)");
+            float lift = mask.anchoredPosition.y - Overlay.TitleMaskY;
+            Assert.GreaterOrEqual(lift, -0.5f, "마스크는 주인 값보다 아래로 내려가지 않는다(«위로만»)");
+            float maskBottomW = mask.TransformPoint(new Vector3(0f, mask.rect.yMin, 0f)).y;
+            float bodyBottomW = ribbon.TransformPoint(new Vector3(0f, ribbon.rect.yMin + ribbon.rect.height * frac, 0f)).y;
+            float k = _app.UiCanvas.transform.lossyScale.y;
+            Assert.GreaterOrEqual(maskBottomW, bodyBottomW - 1f * k, "마스크 바닥 ≥ 리본 «몸통» 밑단(월드 · T369 «리본 밑으로 새는 빛 0»)");
+            if (maskBottomW >= bodyBottomW) Assert.AreEqual(0f, lift, 0.5f, "몸통보다 이미 위면 주인 값 그대로다(올림 0)");
+            Assert.AreEqual(Overlay.TitleMaskY + lift, mask.anchoredPosition.y, 0.5f, "마스크 세로 자리 = 주인 값 + 올린 만큼");
 
             Assert.AreEqual(Overlay.TitleLightL, plate.offsetMin.x, 0.5f, "빛판 Left(주인 값)");
-            Assert.AreEqual(Overlay.TitleLightB, plate.offsetMin.y, 0.5f, "빛판 Bottom(주인 값)");
+            Assert.AreEqual(Overlay.TitleLightB - lift, plate.offsetMin.y, 0.5f, "빛판 Bottom(주인 값 − 올린 만큼 · 부채 자리는 그대로)");
             Assert.AreEqual(-Overlay.TitleLightR, plate.offsetMax.x, 0.5f, "빛판 Right(인스펙터 Right → offsetMax 는 부호가 뒤집힌다)");
-            Assert.AreEqual(-Overlay.TitleLightT, plate.offsetMax.y, 0.5f, "빛판 Top(같은 부호 규칙)");
+            Assert.AreEqual(-Overlay.TitleLightT - lift, plate.offsetMax.y, 0.5f, "빛판 Top(같은 부호 규칙 · 같은 되내림)");
             Assert.Greater(plate.rect.width, mask.rect.width, "빛판은 마스크보다 넓다(음수 여백)");
             Assert.Greater(plate.rect.height, mask.rect.height, "빛판은 마스크보다 높다");
 

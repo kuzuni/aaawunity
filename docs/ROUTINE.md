@@ -9324,6 +9324,10 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 4. **고침** — 켜는 조건을 **스스로 꺼지는 것**(합성 가능 = 같은 `FuseKey` 3개 · Notify ⓑ)으로 갈고, **주인이 짚은 자국을 되돌아오지 못하게 막는 단언을 하나 더** 놓는다(«`IsNew` 만 있으면 점은 꺼져 있다»). 단언을 지우지 않는다 — 지우면 «조건이 생기면 켜진다» 를 아무도 안 잰다.
 5. **확인** = 다음 완주 런 `[CI실패]` 에 `LobbySettingsTalentPetToast` 가 없고 Android·WebGL 잡이 다시 돈다.
 
+> ---
+>
+> **▸ 🔄 1회차 실측 + 고침 push(2026-09-09 19:4X · sess-1910-19132 · 워커 M · 결정 1012 · CI 확인 전)** — 새는 띠의 정체: **«리본 바닥» = rect 바닥(T320) ≠ 몸통 밑단**. 조각의 꼬리가 몸통보다 아래로 늘어져 몸통이 rect 높이의 **18.26%**(`Title_01` 계열 · `Title_02` 17.5% · `Title_Tapered_01` 1%) 위에서 끝난다 — 그 띠에 빛이 비쳤다(런 875 `ev_devil` y297~306 금빛 · `17_daily_gift` 328~334). 고침 = `Overlay.RibbonBodyBottomFrac`(조각 → 비 · PNG 실측 표) 만큼 `PlaceRibbonGlow` 의 마스크를 올리고 빛판은 되내려 **위 부채는 그대로**. 자 = 신설 `RibbonGlowLeakTests`(기하 단언 + PlayShot 켬/끔 Δ 보고만 · `ui-screens/t369_*.png`) · `PerkShineTests`·`OddsPopupTests` 갱신. ⚠ 1항 후보 ⓐ·ⓑ 는 아니었고 **ⓒ(T362 조각 통일)가 공통 팝업의 띠를 이미 1% 로 줄였다** — 남은 실물은 **출석(프리팹에 박힌 `Title_01_Deco_Yellow`)** 과 카탈로그 되돌림 · 특전은 실측 «안 샌다»(주인 값이 몸통보다 위). 다음 회차: `screens`(`ev_devil`·`16_attendance`·`t369_*`)로 눈 확인 → ⓑ 단언 → ✅ → 5항 주인 폰.
+
 ### T370 — ⚑ 주인: **프로필 그림 선택지가 4개뿐 — 늘린다** (주인 2026-09-10 «그 프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라»)
 
 0. **자리** — 프로필 팝업(`Game/Profile.cs` · T350 이 지금 만지는 중)의 초상 선택 격자. 지금 4장.

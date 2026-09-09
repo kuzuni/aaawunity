@@ -385,6 +385,54 @@ namespace KkomaKnight.Game
             PlaceRibbonGlow(host, ribbon);   // 첫 자리는 지금 바로(다음 프레임을 기다리면 첫 캡처가 빈다)
         }
 
+        // ───────── T369 — 리본 «몸통» 밑단(주인 2026-09-10 폰 스샷 «타이틀 밑으로 라이트 보이는 경우들 · 타이틀 위로만») ─────────
+        /// <summary>
+        /// 리본 조각의 <b>가운데 몸통이 제 rect 바닥보다 얼마나 위에서 끝나는가</b>(rect 높이에 대한 비).
+        /// <para>
+        /// <b>왜 있나</b> — T320 은 «마스크 바닥 = 리본 <b>rect</b> 바닥» 으로 놓았는데(ⓐ 의 주인 값 27.28% ↔ 리본 27.2%),
+        /// 리본 조각은 <b>양쪽 꼬리가 몸통보다 아래로 늘어진</b> 그림이라 rect 바닥은 꼬리 끝이고 몸통은 그보다 위에서 끝난다.
+        /// 그 사이 띠(가운데 x)에 빛이 그대로 비쳤다 — `screens` 런 875 `ev_devil` 실측: 리본 밑 윤곽선 y294 아래 <b>y297~306 이 금빛</b>
+        /// (가운데 (208,168,28) · 옆 x=100 은 배경 (36,34,32)) · `17_daily_gift` 도 윤곽선 326 아래 328~334 가 (204,164,29).
+        /// 주인 폰의 «악마의 거래» 사진이 그 띠다.
+        /// </para>
+        /// <para>
+        /// <b>값의 출처 = 조각 PNG 실측</b>(지어낸 수 0 · 가운데 열에서 α&gt;16 인 마지막 행 · `PIL`):
+        /// `Title_01_(No)Deco_*` 36장 전부 273/324×115 · 가운데 열 1~93 ⇒ 밑 여백 <b>21px(18.26%)</b> · 양끝 열은 113 까지(꼬리) ·
+        /// `Title_02_*` 4장 273/343×114 · 1~93 ⇒ <b>20px(17.5%)</b> · `Title_Tapered_01` 115×98 · 0~96 ⇒ <b>1px(1.0%)</b> ·
+        /// `Title_Tapered_02~06`·`Title_Ribbon_01` 은 0. 조각은 전부 Sliced 에 세로 테두리 0 이라 <b>세로로 고르게</b> 늘어나므로
+        /// 이 «비» 가 어떤 rect 높이에서도 그대로 선다(T361 2회차 결정 1006 의 그 관찰).
+        /// ⚠ 텍스처를 런타임에 읽을 수 없어(`isReadable: 0`) 표로 둔다 — 새 조각을 쓰면 같은 자로 재서 한 줄 보탠다.
+        /// </para>
+        /// </summary>
+        public static float RibbonBodyBottomFrac(string spriteName)
+        {
+            if (string.IsNullOrEmpty(spriteName)) return 0f;
+            if (spriteName.StartsWith("Title_01_", StringComparison.Ordinal)) return 21f / 115f;
+            if (spriteName.StartsWith("Title_02_", StringComparison.Ordinal)) return 20f / 114f;
+            if (spriteName.StartsWith("Title_Tapered_01", StringComparison.Ordinal)) return 1f / 98f;
+            return 0f;
+        }
+        /// <summary><see cref="RibbonBodyBottomFrac(string)"/> 를 리본 개체에서 — 조각은 리본 루트의 <see cref="Image"/> 다(프리팹 여덟 장 전부 그렇다).</summary>
+        public static float RibbonBodyBottomFrac(RectTransform ribbon)
+        {
+            var img = ribbon != null ? ribbon.GetComponent<Image>() : null;
+            var sp = img != null ? img.sprite : null;
+            return RibbonBodyBottomFrac(sp != null ? sp.name : null);
+        }
+        /// <summary>
+        /// 마스크 바닥을 «리본 rect 바닥» 에서 «리본 <b>몸통</b> 밑단» 으로 올릴 px — 두 사각형이 <b>다른 담개</b> 안에 있어도 된다(월드로 환산).
+        /// 돌려주는 값은 0 이상이다(마스크가 이미 몸통보다 위면 0 · 내리지는 않는다 — «위로만» 은 자르는 쪽으로만 간다).
+        /// </summary>
+        public static float RibbonGlowLift(RectTransform mask, RectTransform ribbon)
+        {
+            if (mask == null || ribbon == null || mask.parent == null) return 0f;
+            float rh = ribbon.rect.height; if (rh <= 1f) return 0f;
+            var bodyW = ribbon.TransformPoint(new Vector3(ribbon.rect.center.x, ribbon.rect.yMin + rh * RibbonBodyBottomFrac(ribbon), 0f));
+            var bodyL = mask.parent.InverseTransformPoint(bodyW);
+            float maskBottomL = mask.localPosition.y - mask.rect.height * mask.pivot.y;
+            return Mathf.Max(0f, bodyL.y - maskBottomL);
+        }
+
         /// <summary>담개·마스크·빛판을 <b>지금 리본 자리</b>로 다시 잡는다 — <see cref="RibbonGlowFollow"/> 가 매 판 부른다(값이 바뀌었을 때만).</summary>
         public static void PlaceRibbonGlow(RectTransform host, RectTransform ribbon)
         {
@@ -402,24 +450,30 @@ namespace KkomaKnight.Game
             host.offsetMin = ribbon.offsetMin; host.offsetMax = ribbon.offsetMax;
 
             var mask = TitleGlowMask(host, scale);
-            // 마스크 바닥을 리본 바닥에 맞춘다(ⓐ 의 주인 값에서 뽑은 «관계»). 담개가 리본과 같은 사각형이라 셈이 한 줄이다.
-            mask.anchoredPosition = new Vector2(0f, -rh * 0.5f + mask.sizeDelta.y * 0.5f);
+            // T369 — 마스크 바닥 = 리본 «몸통» 밑단(rect 바닥이 아니다 · 꼬리 아래로 늘어진 만큼 위 · `RibbonBodyBottomFrac`).
+            //   T320 의 «마스크 바닥 = 리본 바닥» 관계는 그대로이고, «리본 바닥» 이 무엇인지만 몸통으로 바로잡는다. 담개가 리본과 같은 사각형이라 셈이 한 줄이다.
+            float lift = rh * RibbonBodyBottomFrac(ribbon);
+            mask.anchoredPosition = new Vector2(0f, -rh * 0.5f + lift + mask.sizeDelta.y * 0.5f);
             var light = mask.Find(UiKit.LightMaskName + "/" + UiKit.LightName) as RectTransform;
             if (light != null) light.sizeDelta = new Vector2(mask.sizeDelta.x * TitleLightSidePerMask, mask.sizeDelta.x * TitleLightSidePerMask);
             var glow = mask.Find(UiKit.LightMaskName + "/" + UiKit.GlowName) as RectTransform;
             if (glow != null && light != null) glow.sizeDelta = light.sizeDelta;
-            TitleGlowPlate(mask, scale);
+            TitleGlowPlate(mask, scale, lift);
         }
 
-        /// <summary>빛판(<c>LightMask</c>)의 여백을 주인 값으로 — <see cref="UiKit.LightBehind"/> 가 «마스크에 딱 맞춰» 놓은 뒤에 부른다.</summary>
-        public static void TitleGlowPlate(RectTransform mask, float scale = 1f)
+        /// <summary>
+        /// 빛판(<c>LightMask</c>)의 여백을 주인 값으로 — <see cref="UiKit.LightBehind"/> 가 «마스크에 딱 맞춰» 놓은 뒤에 부른다.
+        /// <paramref name="lift"/>(T369) = 마스크를 리본 몸통 밑단까지 올린 px — 빛판은 그만큼 <b>되내려</b> 빛의 자리(리본 위 부채)는 그대로 두고
+        /// 잘리는 선만 올라간다(빛을 같이 올리면 리본 위 그림이 T320 회차와 달라진다 · 주인이 바꾸라 한 것은 «밑» 뿐이다).
+        /// </summary>
+        public static void TitleGlowPlate(RectTransform mask, float scale = 1f, float lift = 0f)
         {
             if (mask == null) return;
             if (scale <= 0f) scale = 1f;
             var plate = mask.Find(UiKit.LightMaskName) as RectTransform; if (plate == null) return;
             plate.anchorMin = Vector2.zero; plate.anchorMax = Vector2.one; plate.pivot = new Vector2(0.5f, 0.5f);
-            plate.offsetMin = new Vector2(TitleLightL * scale, TitleLightB * scale);
-            plate.offsetMax = new Vector2(-TitleLightR * scale, -TitleLightT * scale);
+            plate.offsetMin = new Vector2(TitleLightL * scale, TitleLightB * scale - lift);
+            plate.offsetMax = new Vector2(-TitleLightR * scale, -TitleLightT * scale - lift);
         }
         // ⚑ T234 회차 4 — 90 → 130. **조각을 바꾼 만큼(회차 3) 짙기에 여유가 생겼다.**
         //   같은 자리에서 실제로 칠해지는 진하기는 «조각 알파 × 이 값» 이다 — 반지름 0.5 에서:
@@ -512,7 +566,13 @@ namespace KkomaKnight.Game
                                   //  `clip: false` 는 남지만 뜻이 바뀌었다: «자를 것이 없다» 가 아니라 **«자르는 것은 위 Mask 다»** —
                                   //  `LightBehind` 의 RectMask2D 를 겹쳐 걸면 마스크가 둘이 되어 빛판 여백(아래 한 줄)이 무의미해진다.
                                   clip: false);
-                TitleGlowPlate(glowMask);   // 빛판을 주인 여백으로 — LightBehind 가 «마스크에 딱 맞춰» 놓은 다음이라야 한다
+                // T369 — 주인 값의 마스크 바닥(27.28%)은 리본 **rect** 바닥(27.2%)이었고, 이 리본(`Title_01_NoDeco`)의 몸통은 그보다
+                //   rect 높이의 18.26% 위에서 끝난다(꼬리가 아래로 늘어진 조각) — 그 띠로 빛이 새는 것이 주인 폰 사진이다. 마스크만 몸통 밑단까지 올린다.
+                //   여기 담개는 리본이 아니라 빛의 정사각형(TitleGlowR)이라 셈을 월드로 한다(`RibbonGlowLift`). 빛판은 그만큼 되내려 부채는 그대로.
+                float glowLift = RibbonGlowLift(glowMask, (RectTransform)ribbon);
+                glowMask.anchoredPosition = new Vector2(glowMask.anchoredPosition.x, glowMask.anchoredPosition.y + glowLift);
+                // 빛판을 주인 여백으로 — LightBehind 가 «마스크에 딱 맞춰» 놓은 다음이라야 한다
+                TitleGlowPlate(glowMask, 1f, glowLift);
             }
             UiKit.SetText(rt, "Title_01_NoDeco_Tangerine/Text (TMP)", "레벨 업!");
             var sub = UiKit.Find(rt, "Text (TMP)"); if (sub != null) { UiKit.Pct((RectTransform)sub, Layout.OvSub); UiKit.SetText(rt, "Text (TMP)", "새 특전을 고르세요"); }   // 레퍼런스 04 «Choose a New Perk»

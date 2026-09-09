@@ -117,7 +117,9 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(UiKit.HasLight(gm), "마스크 안 도는 빛살");
                 Assert.IsTrue(UiKit.HasGlow(gm), "마스크 안 글로우 서클");
                 float maskBottom = gm.anchoredPosition.y - gm.sizeDelta.y * 0.5f;   // 리본 사각형 기준
-                Assert.AreEqual(-ribbon.rect.height * 0.5f, maskBottom, 1.5f, "마스크 바닥 = 리본 바닥(ⓐ 에서 뽑은 관계 · 늘림 앵커라 rect 로 잰다)");
+                // T369 — «리본 바닥» 은 rect 바닥이 아니라 **몸통** 밑단이다(꼬리가 아래로 늘어진 조각 · `Overlay.RibbonBodyBottomFrac` · PNG 실측).
+                float bodyBottom = -ribbon.rect.height * 0.5f + ribbon.rect.height * Overlay.RibbonBodyBottomFrac(ribbon);
+                Assert.AreEqual(bodyBottom, maskBottom, 1.5f, "마스크 바닥 = 리본 몸통 밑단(ⓐ 에서 뽑은 관계 · T369 로 몸통 기준 · 늘림 앵커라 rect 로 잰다)");
                 var gp = gm.Find(UiKit.LightMaskName) as RectTransform;
                 Assert.IsNotNull(gp, "빛판");
                 float plateCenterY = (gp.offsetMin.y + gp.offsetMax.y) * 0.5f;
