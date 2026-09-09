@@ -68,7 +68,7 @@ namespace KkomaKnight.Game
         public delegate System.Collections.IEnumerator Step(App app);
 
         static readonly System.Collections.Generic.Dictionary<string, Step> Steps =
-            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P4", P4Shop } };
+            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P4", P4Shop }, { "P10", P10Pet } };
 
         /// <summary>이 단계가 게임 안에서 놀 수 있는가(= 누가 각본을 붙였는가).</summary>
         public static bool HasStep(string id) => Steps.ContainsKey(id);
@@ -151,6 +151,56 @@ namespace KkomaKnight.Game
         /// 뽑기 결과 창(<c>ui.chestOpen</c>)이 서기를 기다렸다가 <b>배경 탭</b>으로 닫는다 — 첫 탭은 연출 «건너뛰기», 다음 탭이 «닫기»(T202).
         /// 두 번 안에 안 닫히면 그 단계는 «죽었다» 로 적힌다.
         /// </summary>
+        /// <summary>
+        /// P10 펫(T300 1항 · 배포 갈래) — PlayMode <c>PlaythroughTests.P10_…</c> 와 <b>같은 길</b>을 게임 안에서 누른다. 단언은 없다(3항 ⓐ):
+        /// 탭 «펫» → <b>소환</b>(결과 창은 배경 탭으로) → <b>가진 펫</b>의 칸 → 세부(14) → 강화(잠겨 있지 않을 때만) → 장착 → 로비.
+        /// <para>⚠ <b>여는 칸은 «가진 펫»</b> 이다 — 소환은 표의 확률이라 0번이 뽑힌다는 보장이 없고, 안 가진 펫의 세부는 강화·장착이 둘 다 잠겨 있어
+        /// 봇이 «아무것도 안 누르고» ok 를 찍는다(결정 1049 ④ 와 같은 까닭 · 여기서는 단언이 없으니 더 조용하다).</para>
+        /// <para>⚠ 세이브(다이아·펫알)는 봇이 제 조건을 만든다(1항) — 값은 <see cref="Pets.Offer"/> 가 말하는 그대로라 표가 바뀌어도 안 운다.</para>
+        /// </summary>
+        static System.Collections.IEnumerator P10Pet(App app)
+        {
+            var D = app.Data; var S = app.Save;
+            if (D == null || D.Pet == null) throw new MissingException("펫 표(data.pet)");
+            int cap = D.Gacha != null ? D.Gacha.TenPullCount : 10;
+            var offer = Pets.Offer(D.Pet, false, S.PetEgg, cap);
+            if (offer.ByEgg) S.PetEgg += offer.Egg; else S.Gem += offer.Diamond;
+            app.Persist();
+
+            app.ShowScreen("lobby"); yield return Frames(2);
+            Tap(app, "Tab:pet"); yield return Frames(3);
+            Reach(app, "pet");
+            TapIn(app.Current.Root, "SummonBtn", true);
+            yield return CloseChest(app, "펫 소환");
+
+            int idx = -1;
+            for (int i = 0; i < D.Pet.Pets.Count; i++) if (Pets.Has(S, D.Pet.Pets[i].Id)) { idx = i; break; }
+            if (idx < 0) throw new MissingException("소환하고도 가진 펫이 없다(뽑은 것이 세이브에 안 닿았다)");
+            TapIn(app.Current.Root, "Pet:" + idx, true); yield return Frames(2);
+            if (!app.Overlay.IsOpen) throw new MissingException("펫 세부 팝업(칸 뒤)");
+
+            // 강화 — 갓 뽑은 펫은 조각이 모자랄 수 있다. 잠겨 있으면 «없는 것을 눌렀다» 고 적지 않고 지나간다.
+            var up = UiKit.Find(app.Overlay.Root, "PetUpgradeBtn");
+            if (up == null) throw new MissingException("«강화» 버튼");
+            var upBtn = up.GetComponent<UnityEngine.UI.Button>();
+            if (upBtn != null && upBtn.interactable) { upBtn.onClick.Invoke(); yield return Frames(3); }
+
+            // 장착 — 강화는 팝업을 닫았다 다시 연다(PetScreen.Upgrade) · 닫혀 있으면 칸을 다시 누른다
+            if (!app.Overlay.IsOpen) { TapIn(app.Current.Root, "Pet:" + idx, true); yield return Frames(2); }
+            TapIn(app.Overlay.Root, "PetEquipBtn", true); yield return Frames(3);
+
+            if (app.Overlay.IsOpen)
+            {
+                var dim = UiKit.Find(app.Overlay.Root, "Dimmed");
+                if (dim == null) dim = UiKit.Find(app.Overlay.Root, "Background");
+                if (dim == null) throw new MissingException("세부 팝업을 닫을 어둠(Dimmed·Background)");
+                var db = dim.GetComponent<UnityEngine.UI.Button>();
+                if (db == null) throw new MissingException("어둠이 눌리는 것이 아니다");
+                db.onClick.Invoke(); yield return Frames(2);
+            }
+            app.ShowScreen("lobby"); yield return null;
+        }
+
         static System.Collections.IEnumerator CloseChest(App app, string what)
         {
             var w = new Waiter("결과 창(" + what + ")");
