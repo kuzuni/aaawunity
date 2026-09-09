@@ -147,6 +147,19 @@ def usual_of(hist):
     return s[int(0.8 * (len(s) - 1))]
 
 
+def notable(pct, screen, hist, big_min):
+    """«크게 바뀜» 으로 셀 것인가 — 두 잣대를 다 넘어야 한다(절대값 · 그 화면의 평소 폭).
+
+    자기 검사가 이 함수를 그대로 부른다(판정을 main 안에 두면 시험이 그 판정을 못 만진다).
+    """
+    if pct < 0:
+        return True                                      # 크기가 달라진 것은 늘 크게
+    if pct < big_min:
+        return False
+    u = usual_of(hist.get(screen))
+    return u is None or pct > max(u * 1.5, u + 0.5)
+
+
 def main(argv):
     d, ref, mn, top, big_min, touched, hist_name = 'ui-screens', 'origin/screens', 0.2, 5, 3.0, None, None
     rest = []
@@ -214,16 +227,8 @@ def main(argv):
                 seen[nm[:-4]] = round(pct, 3)
 
     changed.sort(reverse=True)
-    # «크게» 로 셀지는 두 잣대를 다 넘어야 한다: 절대값(--big) 과 «그 화면의 평소 폭»(있을 때만).
-    def notable(pct, nm):
-        if pct < 0:
-            return True                                  # 크기가 달라진 것은 늘 크게
-        if pct < big_min:
-            return False
-        u = usual_of(hist.get(nm[:-4]))
-        return u is None or pct > max(u * 1.5, u + 0.5)
-
-    big = [c for c in changed if notable(c[0], c[1])]
+    # «크게» 로 셀지는 두 잣대를 다 넘어야 한다: 절대값(--big) 과 «그 화면의 평소 폭»(있을 때만) — `notable`.
+    big = [c for c in changed if notable(c[0], c[1][:-4], hist, big_min)]
     usualy = [c for c in changed if c[0] >= big_min and c not in big]  # 크지만 «그 화면치고는 평소»
     mid = [c for c in changed if mn <= c[0] < big_min]                 # 애매한 자리 — 이름만
     tiny = len(changed) - len(big) - len(usualy) - len(mid)
@@ -271,5 +276,78 @@ def main(argv):
     return 0
 
 
+def _png(w, h, fill, box=None, color=None):
+    """시험용 PNG 한 장을 표준 라이브러리로 만든다(8비트 RGBA · 필터 0)."""
+    rows = []
+    for y in range(h):
+        row = bytearray()
+        for x in range(w):
+            c = color if (box and box[0] <= x <= box[2] and box[1] <= y <= box[3]) else fill
+            row += bytes((c[0], c[1], c[2], 255))
+        rows.append(b'\x00' + bytes(row))
+    def chunk(t, b):
+        return struct.pack('>I', len(b)) + t + b + struct.pack('>I', zlib.crc32(t + b) & 0xffffffff)
+    ihdr = struct.pack('>IIBBBBB', w, h, 8, 6, 0, 0, 0)
+    return (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', ihdr)
+            + chunk(b'IDAT', zlib.compress(b''.join(rows))) + chunk(b'IEND', b''))
+
+
+def self_test():
+    """다섯 경우로 깨뜨려 본다 — 읽기 · 같은 그림 · 아는 크기의 변경 · 크기 다름 · «평소 폭» 접기.
+
+    T278 이 제 자리에 적어 둔 까닭 그대로다: 이 자가 조용히 망가지면 «[그림차] 가 아무 말도 안 하는»
+    꼴이 되는데, 그때는 런이 이미 지나간 뒤라 아무도 못 알아챈다. 순수 함수라 dotnet 잡에서 막는다.
+    """
+    ok = True
+
+    a = _png(20, 10, (10, 20, 30))
+    got = read_png(a)
+    r1 = got is not None and got[0] == 20 and got[1] == 10 and got[2] == 4 and len(got[3]) == 20 * 10 * 4
+    ok &= r1
+    print('ⓐ PNG 읽기 —', 'OK' if r1 else '실패')
+
+    p, span = diff(a, _png(20, 10, (10, 20, 30)))
+    r2 = p == 0.0 and span is None
+    ok &= r2
+    print('ⓑ 같은 그림 = 0.00% —', 'OK' if r2 else f'실패({p})')
+
+    # 20×10 중 5×4(=20칸)만 바꾸면 정확히 10.00% 여야 한다. y 범위도 그 자리를 집어야 한다.
+    b = _png(20, 10, (10, 20, 30), box=(2, 3, 6, 6), color=(200, 200, 200))
+    p, span = diff(a, b)
+    r3 = abs(p - 10.0) < 1e-6 and span == (3, 6)
+    ok &= r3
+    print('ⓒ 아는 크기의 변경 = 10.00% · y 3~6 —', 'OK' if r3 else f'실패({p} {span})')
+
+    p, _ = diff(a, _png(21, 10, (10, 20, 30)))
+    r4 = p == -1.0
+    ok &= r4
+    print('ⓓ 크기가 다르면 −1 —', 'OK' if r4 else f'실패({p})')
+
+    # ⓔ 판정 함수를 그대로 부른다 — 같은 10% 라도 «늘 흔들리는 화면» 은 접히고 «조용하던 화면» 은 남는다.
+    hist = {'shaky': [9, 10, 11, 12, 13, 10], 'calm': [0, 0, 0, 0, 0, 0]}
+    r5 = (not notable(10.0, 'shaky', hist, 3.0)          # 평소 12% 인 화면의 10% = 접힌다
+          and notable(10.0, 'calm', hist, 3.0)           # 평소 0% 인 화면의 10% = 크게
+          and not notable(2.0, 'calm', hist, 3.0)        # --big 아래는 아무리 조용해도 «크게» 가 아니다
+          and notable(-1.0, 'shaky', hist, 3.0))         # 크기가 달라진 것은 평소와 무관하게 크게
+    ok &= r5
+    print(f'ⓔ 평소 폭 접기(흔들림 평소 {usual_of(hist["shaky"])} · 조용 {usual_of(hist["calm"])}) —',
+          'OK' if r5 else '실패')
+
+    r6 = usual_of([1, 2, 3]) is None and notable(4.0, 'new', {'new': [0, 0, 0]}, 3.0)
+    ok &= r6                                              # 표본이 모자라면 «평소» 를 말하지 않고 그냥 크게 센다
+    print('ⓕ 표본 5런 미만이면 평소를 말하지 않는다 —', 'OK' if r6 else '실패')
+
+    print('✓ screens_diff 자기 검사 통과' if ok else '✗ 자기 검사 실패')
+    return 0 if ok else 1
+
+
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
+    try:
+        sys.exit(self_test() if '--self-test' in sys.argv[1:] else main(sys.argv[1:]))
+    except BrokenPipeError:
+        # 사람이 `| head` 로 잘라 읽는 자다 — 파이프가 닫혔다고 «자가 터졌다» 로 보이면 안 된다.
+        try:
+            sys.stdout.close()
+        except Exception:
+            pass
+        sys.exit(0)

@@ -107,6 +107,12 @@ jobs:
         run: python3 tools/check_stale_asserts.py
       - name: 표 행 이름 ↔ 화면 이름표 대조 자기 검사 (T279)
         run: python3 tools/check_table_tags.py --self-test
+      # T282 회차 4 — 그림차 자도 제 자신은 아무도 안 재고 있었다(T278 이 제 자리에 적어 둔 그 꼴).
+      # 이 자가 조용히 망가지면 «[그림차] 가 아무 말도 안 하는» 런이 되는데, 그때는 이미 지나간 뒤라
+      # 아무도 못 알아챈다. 순수 함수 자기 검사라 여기서 막는다(유니티 잡이 아니라 **이 잡**인 것이 값이다 —
+      # 라이선스 사고(T283)처럼 유니티가 통째로 멈춘 동안에도 이 검사는 돈다).
+      - name: 그림차 자 자기 검사 (T282)
+        run: python3 tools/screens_diff.py --self-test
       - name: aaaw main 체크아웃 (수치 정본)
         uses: actions/checkout@v4
         with:
