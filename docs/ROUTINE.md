@@ -7260,6 +7260,25 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 순서 — `Core/Battle.cs`(투사체 루프 분리) · `Game/BattleScreen.cs:465` · `Game/BattleWorld.cs`. lock `T312`. **T233 절의 실측 방법(적 화살)을 먼저 읽는다.**
 
+> **⛑ 확인이 돌아왔다 — 빨강이다**(검수 Q 실측 · sess-1808-28610 · 2026-09-09 12:1X · **선점 안 함** · 코드 0줄 · 이 절은 워커 I 의 살아 있는 lock 안이다)
+> 런 [793](https://github.com/kuzuni/aaawunity/actions/runs/34347305652)(`7d173a74` · 12:02 · 이 고침 `f3a4e80a` 를 담았다)의 `[CI실패]` 셋 중 **둘이 이 절의 것**이다.
+> ```
+> BattleWorldTests.ProjectileFlightTimeGrowsWithDistanceNotFixedDuration  (:287)
+>   거리가 3배면 비행 시간도 3배(T86 4-1) / Expected 3.0 ±0.3 · But was 2.4386
+> BattleWorldTests.SpearNeverStallsAndFliesThroughEnemiesWithoutSnapping  (:373)
+>   표적이 살아 있는 유도형은 «맞는 자리» 에 서야 한다(T171) / Expected False · But was True
+> ```
+> ⚠ **둘 다 «갈아 끼울 옛 계약» 이 아니다** — 주인 지시에서 나온 살아 있는 규칙이다(T86 4-1 «시간 고정이면 안 된다» · T171 «유도형은 맞는 자리에 선다»). 「Expected 3.0 · But was 2.44」를 보고 **허용 오차를 넓히는 쪽으로 가면 이 절이 고치려던 병을 다시 묻는다**(T249 · 워커 J 의 T251 기록과 같은 함정).
+> **짚어 둔 것 하나 — ⓐ 는 «셈이 틀렸다» 가 아니라 «자의 시계와 새 엔진이 어긋난다» 로 보인다.** 그 자는 시간을 이렇게 잰다(`:278~281`):
+> ```csharp
+> bool ran = !world.HoldEngine;
+> yield return null;
+> if (ran) engine_t += Time.deltaTime * bs.Speed;   // 보류 프레임은 «엔진 시간이 안 흐른다» 로 친다
+> ```
+> 그런데 이 절의 고침이 바로 **«보류 프레임에도 투사체는 한 틱씩 나아간다»** 이다. 즉 창은 나아가는데 **자의 스톱워치는 그 프레임을 안 센다** — 그래서 먼 창의 시간이 짧게 잡히고 비율이 3.0 에서 2.44 로 내려앉는다. 고칠 자리는 허용 오차가 아니라 **그 `if (ran)` 줄**(투사체를 재는 시계는 이제 보류 프레임도 세야 한다)일 공산이 크다.
+> ⓑ 는 그 꼴이 아니다 — `ProjLimit(axe)` 가 표적이 살아 있는데 무한을 돌려준다는 뜻이라 **셈 쪽을 봐야 한다**(자의 시계와 무관하다).
+> ⓐ·ⓑ 둘 다 이 절이 «아직 안 잰 것» 으로 적어 둔 바로 그 자리다(«보류 프레임에서 실제로 그렇게 도는가»). 검수 Q 는 `dotnet` 이 없어 PlayMode 를 못 돌리고 **이 절은 남의 lock 이라 손대지 않았다** — 자리와 까닭만 적어 둔다.
+
 ### T313 ✅ — ⚑⚑ 주인: **보상 흡수 파티클이 느릿느릿 — 뜨고 나서 1초 안에 전부 흡수돼야 한다** (주인 2026-09-09 10:0X «뭐 받았을 때 파티클 재화 흡수 이펙트 뜨고 나서 바로 1초 만에 전부 흡수돼야 하는데 느릿느릿 가네 · 해결해야 함» · T269 의 뒤)
 
 > **▸ 고침 push(2026-09-09 09:3X · sess-2005-9317 · 워커 A · 결정 862 · `docs/claims/T313.lock`)** — 등재 세션이 확정해 둔 원인 그대로였다:
