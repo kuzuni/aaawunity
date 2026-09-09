@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-09 · 11:3X UTC) ⚑⚑⚑ 주인 — 특전 팝업 빛을 «이 구조로 바꿔라»(인스펙터 스샷 셋) → T320:** `ui.perkSelect` 안 `TitleGlow` 밑에 **`Mask`**(RectTransform 가운데 앵커 · **555 × 428.4817** · Pos (0, **−63.2592**) · `Image` 스프라이트 없음·흰색·Raycast·Maskable · `Mask` 컴포넌트 **Show Mask Graphic 끔**) → 그 안 **`LightMask`**(앵커 stretch · Left/Right **−292.14** · Top **−84.38837** · Bottom **−500.3884**) → 자식 **`Glow` · `Light` · `Dust`**. 주인이 값을 직접 줬다 — **T234 의 «사각 마스크를 씌우지 마라» 는 이 지시로 뒤집힌다.**
+
 - **(2026-09-09 · 11:2X UTC) ⚑⚑ 주인 — «PvP 뜰 때 중앙에서 두 캐릭터 만나서 싸우는 식으로 해야 함 · 내 플레이어가 오른쪽으로 이동 느낌이 아니라» → T319:** 아레나 판(T240 3항 `BuildDuelNode`)이 지금은 챕터 판처럼 **플레이어가 오른쪽으로 걸어가고 화면이 따라간다**. → **화면 고정 · 둘이 양쪽에서 가운데로 걸어와 만나 제자리에서 싸운다**(레퍼런스 33).
 
 - **(2026-09-09 · 11:1X UTC) ⚑⚑ 주인 — 펫 화면(13) 셋 → T293 5항 ⓗ·ⓘ·ⓙ:** «**펫에서 강화 가능할 때는 해당 거 버튼 주황**돼야 함» · «**펫에서도 슬롯 부분 등급마다 색 달라야 함**» · «**펫 부분 얻은 거만 보이게**». → 강화 버튼(전체 강화·세부 «강화») = 할 수 있으면 주황 · 아니면 회색(T306 규칙 · 두 옷 버튼 헬퍼) · 장착 슬롯 프레임 = 그 펫 등급색 · 격자는 **가진 펫만**(안 가진 «?» 칸 없음 · 빈 칸도 없음 · 등급순).
@@ -7224,6 +7226,31 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 4. **확인** — `screens` **33**(둘이 가운데 마주 섬) + 주인 폰(둘이 양쪽에서 걸어와 만나 싸운다 · 화면이 안 흐른다).
 
 순서 — `Game/BattleWorld.cs`(아레나 갈래) · `Game/BattleScreen.cs` · 표(만나는 자리 ±). lock `T319`. **T240·T262 lock 이 `BattleWorld.cs` 를 쥐면 기다린다.**
+
+### T320 — ⚑⚑⚑ 주인: **특전 팝업(04) 제목 빛을 주인이 준 구조·값 그대로 — `TitleGlow › Mask › LightMask › Glow·Light·Dust`** (주인 2026-09-09 11:3X · 인스펙터 스샷 셋 · T234 의 뒤 · 값은 전부 주인 실측)
+
+0. **주인이 준 것(그대로 옮긴다 · 단위 = 프리팹 캔버스 px · 이 프리팹 루트는 우리 프레임 1080×2337 에 Stretch 된다 `Overlay.cs:339`)** —
+   ```
+   ui.perkSelect
+   ├ Dimmed
+   ├ TitleGlow
+   │  └ Mask         RectTransform: 앵커 center(0.5,0.5) · Pivot 0.5 · Pos (0, −63.2592, 0) · Width 555 · Height 428.4817 · 회전 0 · 배율 1
+   │     │           CanvasRenderer(Cull Transparent Mesh ✓) · Image: Source None · Color 흰색 · Material None · Raycast Target ✓ · Maskable ✓
+   │     │           Mask: Show Mask Graphic ✗ (Stencil Id 1 · Replace · Always · UI/Default)
+   │     └ LightMask RectTransform: 앵커 stretch(0,0)~(1,1) · Pivot 0.5 · Left −292.14 · Right −292.14 · Top −84.38837 · Bottom −500.3884 · 회전 0 · 배율 1 · (컴포넌트 없음)
+   │        ├ Glow
+   │        ├ Light
+   │        └ Dust
+   └ Title_01_NoDeco_Tangerine
+   ```
+   즉 **빛 세 겹(Glow·Light·Dust)이 마스크보다 큰 판(1139 × 1013 px 남짓 · 아래로 500 더 내려간다) 위에 놓이고, 555 × 428 의 사각 마스크가 그것을 자른다** — 위·옆은 마스크 안쪽까지만, 아래는 마스크 바닥(제목 리본 근처)에서 딱 잘린다.
+1. **고침** — `Overlay.cs:355~` 의 `TitleGlow` 아래를 **위 구조로 다시 세운다**(코드로 세우되 이름·앵커·값은 위 표 그대로 · 값은 `Layout`/`Overlay` 상수에 **«주인 2026-09-09 인스펙터» 라고 출처를 적고** 둔다 — 지어낸 수가 아니다). `Mask` = `UiKit.Rect` + `Image`(sprite null · white · raycast ✓ · maskable ✓) + `Mask(showMaskGraphic=false)`. `LightMask` = stretch + offsetMin (−292.14, −500.3884) · offsetMax (292.14, 84.38837) — Unity 인스펙터의 «Left/Right/Top/Bottom» 을 offsetMin/Max 로 옮기는 부호를 자로 확인한다. **`Glow` = `ui.glow1`(매끈한 원) · `Light` = 지금 쓰는 빛살(`ui.light2` · 회전 그대로 · `LightBehind` 의 그 조각) · `Dust` = 반짝이 점들**(카탈로그에 있는 것 — 없으면 `pi.star` 작은 점 몇 개 · 새 그림 안 그린다). 셋의 크기·색은 **지금 T234 값 그대로**(주인이 안 바꿨다 · 바뀐 것은 «마스크와 그 안의 판»).
+   - `TitleGlowR`(`Overlay.cs:278`)로 잡던 정사각 호스트는 **`Mask` 로 대체**된다 — `TitleGlow` 는 프리팹 루트에 Stretch 된 빈 호스트로 두고 `Mask` 가 위 값으로 가운데 앵커.
+   - T234 3항의 «사각 마스크를 씌우면 레퍼런스에서 멀어진다» 는 **주인이 마스크 구조를 직접 줬으므로 닫는다**(그 절에 한 줄 적는다).
+2. **자** — PlayMode `PerkShineTests`(있다 · 2건)에: 계층 이름 계약(`TitleGlow/Mask/LightMask/{Glow,Light,Dust}`) · `Mask` rect = 555 × 428.48 ±0.5 · anchoredPosition (0, −63.26) ±0.5 · `Mask` 컴포넌트 `showMaskGraphic == false` · `LightMask` offsetMin/Max 가 위 값 ±0.5 · 빛이 마스크 바닥 아래로 새는 픽셀 0(렌더 텍스처 · T234 4항 자 그대로).
+3. **확인** — `screens` **04**(빛이 마스크 안에서만 · 리본 아래로 0) + 주인 폰.
+
+순서 — `Game/Overlay.cs`(특전 팝업) · `Game/UiKit.cs`(마스크 헬퍼가 필요하면). lock `T320`.
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
