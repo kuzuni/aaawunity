@@ -564,6 +564,28 @@ namespace KkomaKnight.Tests.Play
                         Assert.IsTrue(HasText(s => s == qTable.Daily.Quests[0].Label), "줄 제목은 표의 «할 일» 글자 그대로(주인이 쓴 말)");
                     }
                     else { Assert.AreEqual(3, gos, "껍데기: 미완 3"); Assert.AreEqual(3, checks, "껍데기: 완료 3"); }
+                    // T258 — 줄 바탕색은 «줄 번호» 가 아니라 **«다 했는가»** 를 말해야 한다(레퍼런스 15: 할 일 남은 줄 = 밝은 크림 · 다 한 줄 = 어두운 회갈).
+                    //   여태 프리팹이 들고 온 두 꼴이 줄 번호대로 섞여 있어 색이 아무 뜻도 없었다(실측 #B49E4C / #A8917A).
+                    //   수를 적지 않고 **관계**를 잰다: 깬 줄의 바탕이 못 깬 줄보다 **어둡다**. (새 세이브의 첫 줄 «로그인하기» 는 켠 것만으로 깨진다 · T257 훅.)
+                    if (qTable != null && wantRows >= 2)
+                    {
+                        float LumOf(int rowIdx)
+                        {
+                            var fr = UiKit.Find(UiKit.Find(_app.Overlay.Root, "Quest:" + rowIdx), "Bg");
+                            Assert.IsNotNull(fr, "줄 " + rowIdx + " 의 바탕(ListFrame_08/…/Bg)");
+                            var c = fr.GetComponent<Image>().color; return c.r * 0.299f + c.g * 0.587f + c.b * 0.114f;
+                        }
+                        int doneIdx = -1, todoIdx = -1;
+                        for (int qi = 0; qi < wantRows; qi++)
+                        {
+                            var qq = qTable.Daily.Quests[qi];
+                            bool dn = qq.Done(QuestRun.Count(_app.Save, true, qq.Counter));
+                            if (dn && doneIdx < 0) doneIdx = qi; else if (!dn && todoIdx < 0) todoIdx = qi;
+                        }
+                        Assert.GreaterOrEqual(doneIdx, 0, "새 세이브에도 깬 줄이 하나는 있어야 한다(«로그인하기» · T257 훅이 도는 증거)");
+                        Assert.GreaterOrEqual(todoIdx, 0, "못 깬 줄도 있어야 한다");
+                        Assert.Less(LumOf(doneIdx), LumOf(todoIdx), "다 한 줄의 바탕이 할 일 남은 줄보다 어두워야 한다(레퍼런스 15)");
+                    }
                     // T78 — 줄 바탕(프리팹 ListFrame_08)이 어두워 제목은 흰 글자 + 외곽선이어야 읽힌다(screens run 148 눈 확인)
                     { var t0 = UiKit.Find(q0, "Title").GetComponent<TMP_Text>(); Assert.IsNotNull(t0, "줄 제목 글자"); Assert.IsTrue(TextAudit.HasOutline(t0), "줄 제목 외곽선"); Assert.Greater(t0.color.r + t0.color.g + t0.color.b, 2.4f, "줄 제목은 밝은 글자"); }
                     // T212 — 진행바 채움 색: **완료 줄만** 초록(우리 «초록 = 열림/완료» 관례) · 미완 줄은 프리팹이 달고 온 노랑 그대로.

@@ -432,6 +432,28 @@ namespace KkomaKnight.Game
             UiKit.PopIn(box);   // 공통 팝업 등장 연출(T49 · UiKit.Popup 이 상자에 거는 것과 같다)
         }
 
+        /// <summary>
+        /// 줄 바탕색 — <b>레퍼런스 15 는 «할 일 남은 줄 = 밝은 크림 · 다 한 줄 = 어두운 회갈»</b> 이고, 그 색이 «다 했는가» 를 한눈에 말한다.
+        /// <para>
+        /// 우리 화면은 여태 <b>줄 번호</b>를 따르고 있었다(실측: 앞 두 줄 <c>#B49E4C</c> · 나머지 <c>#A8917A</c> — 프리팹이 들고 온 두 가지 꼴).
+        /// 즉 «로그인하기»(완료)도 밝고 «적 50개»(미완)도 밝아 <b>색이 아무 뜻이 없었다</b>.
+        /// </para>
+        /// 값은 눈대중이 아니라 <c>tools/ref_color.py</c> 로 주인 그림에서 잰 것이다(미완 <c>#F1E2C1</c> · 완료 <c>#625A4F</c>).
+        /// 조각(테두리·9-slice)은 그대로 두고 <b>바탕 한 장만</b> 칠한다 — `EventsScreen.DarkenListFrame`(T62)이 이미 쓰는 꼴이다.
+        /// <para>⚠ 업적 판은 «영영 완료» 가 없다(단계가 계속 늘어난다) — 그래서 <b>늘 밝다</b>. «밝음 = 할 일이 있다» 로 읽으면 두 판이 한 규칙이다.</para>
+        /// </summary>
+        static void RowTint(Transform item, bool done)
+        {
+            var frame = UiKit.Find(item, "ListFrame_08"); if (frame == null) return;
+            var bg = UiKit.Find(frame, "Bg"); if (bg == null) return;          // 조각 계층은 `Nomal/Bg`(프리팹 철자 그대로) · Find 는 깊이를 안 따진다
+            var im = bg.GetComponent<Image>(); if (im == null) return;
+            im.color = done ? RowDoneColor : RowTodoColor;
+        }
+        /// <summary>할 일이 남은 줄의 바탕 — 주인 그림 실측 <c>#F1E2C1</c>.</summary>
+        static Color RowTodoColor => Palette.Hex("#F1E2C1");
+        /// <summary>다 한 줄의 바탕 — 주인 그림 실측 <c>#625A4F</c>.</summary>
+        static Color RowDoneColor => Palette.Hex("#625A4F");
+
         struct QuestRowParts { public RectTransform Medal, Title, Bar, Go; }
 
         /// <summary>줄 이름의 머리 — 판마다 다르다(자·§5 가 «Quest:0» 과 «Ach:0» 을 헷갈리지 않게).</summary>
@@ -458,6 +480,7 @@ namespace KkomaKnight.Game
             int shown = Core.Achievement.Shown(save, _ad, row.Counter);
             bool can = Core.Achievement.CanClaim(save, _ad, row.Counter);
             AttendArt(row.Item, out _, out string icon);   // 이름 → 그림 짝짓기는 이 화면이 이미 한 곳에서 한다(T253 4항)
+            RowTint(item, false);   // T258 — 업적에는 «영영 완료» 가 없다(단계가 계속 는다) ⇒ 늘 밝다(= 할 일이 있다)
 
             // 보상 칸(Group_Price) — 퀘스트의 «메달 + 점수» 자리에 «상품 + 수량» 을 둔다(자리·규격은 그대로).
             var medal = (RectTransform)UiKit.Find(item, "Group_Price");
@@ -541,6 +564,8 @@ namespace KkomaKnight.Game
             int have = q != null ? QuestRun.Count(_qs, _qDaily, q.Counter) : 0;
             int goal = q != null ? q.Goal : (i < QuestGoals.Length ? QuestGoals[i] : 1);
             bool done = q != null ? q.Done(have) : i >= 3;
+
+            RowTint(item, done);   // T258 — 줄 바탕은 «줄 번호» 가 아니라 «다 했는가» 를 말한다(레퍼런스 15)
 
             // 보상 칸(Group_Price) — 가로 레이아웃을 끄고 아이콘 위 · 점수 아래(레퍼런스 15 의 메달 + 숫자)
             var medal = (RectTransform)UiKit.Find(item, "Group_Price");
