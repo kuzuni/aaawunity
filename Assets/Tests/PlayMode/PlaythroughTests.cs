@@ -1193,5 +1193,87 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("P8 한 바퀴");
             yield return Shutdown();
         }
+
+        // ─────────────────────────────────────────────────────────────────────────────
+        // P9 탐험 — 방치 보상을 받고, «빠른 탐험»(광고)을 한 번 지난다.
+        // ─────────────────────────────────────────────────────────────────────────────
+        static double NowSec() => (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+
+        /// <summary>
+        /// P9 탐험(T300 1항) — 노는 것: 로비 보조 버튼 «탐험» → «받기» → «빠른 탐험» → «광고 보고 무료»(카운트다운) → 닫기.
+        /// 재는 것: <b>도달 · 배선(세이브가 달라졌다) · 빨간 줄 0</b>.
+        /// <para>
+        /// ⚑ P8 과 같은 잣대다(결정 979) — 골드·다이아·레시피가 <b>얼마나</b> 들어오는지는 표(<c>expedition.json</c>)의 몫이고
+        /// 그 표는 지금도 바뀌는 중이다(T321 이 «레시피 시간당 1개» 를 넣는다). 값이 아니라 <b>«누른 것이 세이브에 닿았는가»</b> 만 본다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>«빠른 탐험» 은 한 번만 논다</b> — 절 표에는 «3회 → 0» 이라 적혀 있지만 한 번이 광고 카운트다운
+        /// (<c>Overlay.AdCountdown</c>)이라 세 번이면 그만큼 실시간을 먹는다. 이 절은 봇 전체를 <b>5분 이내</b>로 묶어 뒀다(1항 «시간 예산»).
+        /// «남은 횟수가 준다» 는 한 번으로도 같은 것을 말한다 — 세 번을 다 도는 것은 <b>규칙</b>을 재는 일이고 그것은 <c>ExpeditionTests</c> 의 몫이다(3항 ⓐ).
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator P9_탐험_보상을_받아도_죽지_않는다()
+        {
+            yield return Boot();
+            var D = _app.Data; var S = _app.Save;
+            string today = SaveStore.Today();
+
+            // 조건은 이 단계가 만든다(1항) — 정산 시각을 여덟 시간 뒤로 밀어 «받을 것» 을 만든다(표의 상한은 표가 정한다)
+            S.ExpSettle = NowSec() - 8 * 3600.0;
+            _app.Persist();
+
+            _app.ShowScreen("lobby"); yield return Frames(3);
+            Tap(_app.Current.Root, "Side:" + LobbyScreen.SideExplore); yield return Frames(2);
+            yield return UntilOpen(5f, "탐험 팝업");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ExpeditionBox"), "탐험 상자(이름 계약)");
+            _log.AssertNoRed("P9 탐험 팝업");
+
+            // ⓐ 받기 — 규칙이 «지금 받을 수 있다» 고 할 때만 단언한다(없는 것을 «잡았다» 고 적지 않는다)
+            bool canClaim = D.Expedition != null && KkomaKnight.Core.Expedition.CanClaim(D, S, D.Expedition, NowSec(), today);
+            if (canClaim)
+            {
+                var claim = UiKit.Find(_app.Overlay.Root, "ClaimBtn");
+                Assert.IsNotNull(claim, "받을 것이 있으면 «받기» 가 있다");
+                string before = S.ToJson();
+                claim.GetComponent<Button>().onClick.Invoke(); yield return Frames(3);
+                Assert.AreNotEqual(before, S.ToJson(), "탐험 보상을 받으면 세이브가 달라진다 — 여기가 끊기면 팝업은 그대로 뜨고 닫힌다");
+            }
+            else Debug.Log("[T300] P9 ⓐ 탐험 — 지금 받을 것이 없다(표의 최소 누적을 못 넘겼다) — 열고 지나간다");
+            _log.AssertNoRed("P9 받기");
+
+            // ⓑ 빠른 탐험 — 팝업이 서고, 남은 횟수가 있으면 «광고 보고 무료» 를 한 번 지난다
+            if (!_app.Overlay.IsOpen) { Tap(_app.Current.Root, "Side:" + LobbyScreen.SideExplore); yield return UntilOpen(5f, "탐험 팝업(다시)"); }
+            int left0 = D.Expedition != null ? KkomaKnight.Core.Expedition.QuickLeft(S, D.Expedition, NowSec(), today) : 0;
+            var quick = UiKit.Find(_app.Overlay.Root, "QuickBtn");
+            if (quick != null)
+            {
+                quick.GetComponent<Button>().onClick.Invoke(); yield return Frames(3);
+                Assert.IsTrue(_app.Overlay.IsOpen, "«빠른 탐험» 팝업이 선다");
+                Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "QuickExploreBox"), "빠른 탐험 상자(이름 계약)");
+                _log.AssertNoRed("P9 빠른 탐험 팝업");
+                if (left0 > 0)
+                {
+                    string before = S.ToJson();
+                    Assert.IsTrue(Click(_app.Overlay.Root, s => s == "광고 보고 무료"), "남은 횟수가 있으면 «광고 보고 무료» 가 있다");
+                    yield return Frames(2);
+                    // ⚠ **«팝업이 닫혔다» 로 기다리면 안 된다** — 빠른 탐험 상자는 닫히면서 **탐험 팝업을 다시 연다**
+                    //    (`LobbyPopups` 의 그 상자 onClose). 그래서 기다리는 것은 «화면 상태» 가 아니라 **결과**다:
+                    //    광고 카운트다운(`Overlay.AdCountdown`)이 끝나 세이브가 달라질 때까지 본다.
+                    //    «무엇을 기다리는가» 를 UI 로 잡으면 그 UI 가 바뀌는 날 봇이 «못 놀았다» 가 아니라 «못 기다렸다» 로 운다.
+                    float t0 = Time.realtimeSinceStartup;
+                    while (S.ToJson() == before && Time.realtimeSinceStartup - t0 < 12f) yield return Frames(5);
+                    yield return Frames(2);
+                    Assert.AreNotEqual(before, S.ToJson(), "빠른 탐험을 받으면 세이브가 달라진다(광고 카운트다운 뒤)");
+                }
+                else Debug.Log("[T300] P9 ⓑ 빠른 탐험 — 남은 횟수가 0 이라 «광고 보고 무료» 는 건너뛴다");
+            }
+            else Debug.Log("[T300] P9 ⓑ 탐험 팝업에 «빠른 탐험» 자리가 없다 — 지나간다");
+
+            if (_app.Overlay.IsOpen) yield return ClosePopup("탐험");
+            Assert.AreEqual("lobby", _app.Current.Name, "지나고도 로비에 서 있다");
+            _log.AssertNoRed("P9 한 바퀴");
+            yield return Shutdown();
+        }
     }
 }
