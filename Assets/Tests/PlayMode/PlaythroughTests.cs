@@ -1275,5 +1275,115 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("P9 한 바퀴");
             yield return Shutdown();
         }
+
+        // ─────────────────────────────────────────────────────────────────────────────
+        // P10 펫 — 소환하고, 세부를 열어 강화하고 장착한다.
+        // ─────────────────────────────────────────────────────────────────────────────
+        /// <summary>
+        /// P10 펫(T300 1항) — 노는 것: 하단 탭 «펫» → <b>소환</b>(결과 창을 닫고) → 격자 첫 칸 → 세부(14) → <b>강화</b> → 다시 열어 <b>장착</b> → 로비로.
+        /// 재는 것: <b>도달 · 이름 계약 · 배선(세이브가 달라졌다) · 빨간 줄 0</b>.
+        /// <para>
+        /// ⚑ <b>값은 안 잰다</b>(3항 ⓐ) — 무엇이 몇 마리 나오는지·강화가 얼마나 세지는지는 표(<c>pet.json</c>)와 <c>PetTests</c>·<c>PetGachaTests</c> 의 몫이다.
+        /// 이 단계가 지키는 것은 «주인이 누를 수 있는 길이 살아 있는가» 뿐이다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>조건은 이 단계가 만든다</b>(1항) — 새 세이브는 다이아가 모자라 소환이 토스트로 끝난다. 값을 지어내지 않고
+        /// <see cref="Pets.Offer"/> 가 말하는 값을 <b>그대로 채워 넣는다</b>(표가 바뀌어도 이 단계는 안 운다 · 결정 941 의 «표에서 읽어 늘었다/줄었다만 본다» 와 같은 결).
+        /// </para>
+        /// <para>
+        /// ⚠ <b>강화·장착은 «할 수 있을 때만» 단언한다</b> — 소환은 표의 확률이라 어떤 펫이 나올지 모르고, 갓 뽑은 펫은 조각이 모자라 강화가 잠겨 있을 수 있다.
+        /// 없는 것을 «잡았다» 고 적지 않는다(P9 ⓐ 와 같은 꼴) — 대신 <b>버튼이 서 있는가</b> 는 늘 잰다.
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator P10_펫을_소환하고_강화하고_장착해도_죽지_않는다()
+        {
+            yield return Boot();
+            var D = _app.Data; var S = _app.Save;
+            if (D == null || D.Pet == null) { yield return Shutdown(); Assert.Ignore("펫 표가 없다 — 이 단계가 놀 것이 없다(T293 ⓗ 로더)"); }
+
+            // 조건은 이 단계가 만든다 — «한 번 소환할 값»을 표에서 읽어 그만큼 채운다(수를 안 박는다)
+            int cap = D.Gacha != null ? D.Gacha.TenPullCount : 10;
+            var offer1 = Pets.Offer(D.Pet, false, S.PetEgg, cap);
+            if (offer1.ByEgg) S.PetEgg += offer1.Egg; else S.Gem += offer1.Diamond;
+            _app.Persist();
+
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            Tap(_app.Current.Root, NavBar.TabName("pet")); yield return Frames(3);
+            Assert.AreEqual("pet", _app.Current.Name, "도달 — 하단 탭 «펫»");
+            var root = _app.Current.Root;
+            Assert.IsNotNull(UiKit.Find(root, "PetGrid"), "펫 격자(이름 계약)");
+            Assert.IsNotNull(UiKit.Find(root, "SummonBtn"), "«소환» 버튼(이름 계약)");
+            Assert.IsNotNull(UiKit.Find(root, "Summon10Btn"), "«소환 x10» 버튼(이름 계약)");
+            Assert.IsNotNull(UiKit.Find(root, "UpgradeAllBtn"), "«전체 강화» 버튼(이름 계약)");
+            Assert.IsNotNull(UiKit.Find(root, "QuickEquipBtn"), "«빠른 장착» 버튼(이름 계약)");
+            _log.AssertNoRed("P10 펫 도달");
+
+            // ⓐ 소환 한 번 — 세이브가 달라지고 결과 창이 선다(창은 닫고 지나간다)
+            {
+                string before = S.ToJson();
+                Tap(root, "SummonBtn"); yield return Frames(3);
+                Assert.AreNotEqual(before, S.ToJson(), "소환하면 세이브가 달라진다 — 여기가 끊기면 버튼은 눌리는데 아무 일도 안 난다(결정 771)");
+                if (_app.Overlay.IsOpen) yield return ClosePopup("소환 결과");
+                _log.AssertNoRed("P10 ⓐ 소환");
+            }
+
+            // ⓑ 세부(14) — 격자 첫 칸을 눌러 연다
+            var grid = UiKit.Find(_app.Current.Root, "PetGrid");
+            Assert.IsNotNull(grid, "격자는 소환 뒤에도 서 있다");
+            var cell = UiKit.Find(grid, "Pet:0");
+            Assert.IsNotNull(cell, "격자 첫 칸(이름 계약 PetGrid/Pet:N)");
+            var cellBtn = cell.GetComponentInChildren<Button>();
+            Assert.IsNotNull(cellBtn, "펫 칸은 눌리는 것이어야 한다");
+            cellBtn.onClick.Invoke();
+            yield return UntilOpen(5f, "펫 세부 팝업(14)");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "PetDetailCell"), "세부 칸(이름 계약)");
+            var upBtn = UiKit.Find(_app.Overlay.Root, "PetUpgradeBtn");
+            var eqBtn = UiKit.Find(_app.Overlay.Root, "PetEquipBtn");
+            Assert.IsNotNull(upBtn, "«강화» 버튼(이름 계약)");
+            Assert.IsNotNull(eqBtn, "«장착» 버튼(이름 계약)");
+            _log.AssertNoRed("P10 ⓑ 세부 팝업");
+
+            // ⓒ 강화 — 잠겨 있지 않을 때만 누른다(갓 뽑은 펫은 조각이 모자랄 수 있다)
+            {
+                var b = upBtn.GetComponent<Button>();
+                if (b != null && b.interactable)
+                {
+                    string before = S.ToJson();
+                    b.onClick.Invoke(); yield return Frames(3);
+                    // 강화는 팝업을 닫았다 다시 연다(PetScreen.Upgrade) — 그러니 «닫혔는가» 가 아니라 세이브를 본다
+                    if (before != S.ToJson()) Debug.Log("[T300] P10 ⓒ 강화 — 세이브가 달라졌다");
+                    else Debug.Log("[T300] P10 ⓒ 강화 — 눌렀지만 규칙이 막았다(조각·골드) — 지나간다");
+                }
+                else Debug.Log("[T300] P10 ⓒ 강화 — 지금 강화할 수 없는 펫이라 버튼이 잠겨 있다 — 지나간다");
+                _log.AssertNoRed("P10 ⓒ 강화");
+            }
+
+            // ⓓ 장착 — 세부를 (다시) 열고 «장착» 을 누른다. 가진 펫이면 세이브가 달라진다
+            if (!_app.Overlay.IsOpen)
+            {
+                var again = UiKit.Find(UiKit.Find(_app.Current.Root, "PetGrid"), "Pet:0");
+                if (again != null) { again.GetComponentInChildren<Button>().onClick.Invoke(); yield return UntilOpen(5f, "펫 세부 팝업(다시)"); }
+            }
+            {
+                var e = UiKit.Find(_app.Overlay.Root, "PetEquipBtn");
+                Assert.IsNotNull(e, "«장착» 버튼은 다시 열어도 서 있다");
+                var b = e.GetComponent<Button>();
+                if (b != null && b.interactable)
+                {
+                    string before = S.ToJson();
+                    b.onClick.Invoke(); yield return Frames(3);
+                    Assert.AreNotEqual(before, S.ToJson(), "가진 펫을 장착하면 세이브가 달라진다");
+                }
+                else Debug.Log("[T300] P10 ⓓ 장착 — 안 가진 펫이라 버튼이 잠겨 있다 — 지나간다");
+                _log.AssertNoRed("P10 ⓓ 장착");
+            }
+
+            if (_app.Overlay.IsOpen) yield return ClosePopup("펫 세부");
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            Assert.AreEqual("lobby", _app.Current.Name, "지나고도 로비에 서 있다");
+            _log.AssertNoRed("P10 한 바퀴");
+            yield return Shutdown();
+        }
     }
 }
