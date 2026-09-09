@@ -1349,9 +1349,9 @@ MonoBehaviour:
   - key: col.grad.panelDark.bottom
     color: {r: 0.12549, g: 0.117647, b: 0.121569, a: 1}
   - key: col.grad.passFree.top
-    color: {r: 0.356863, g: 0.784314, b: 0.960784, a: 1}
-  - key: col.grad.passFree.bottom
     color: {r: 0.117647, g: 0.388235, b: 0.839216, a: 1}
+  - key: col.grad.passFree.bottom
+    color: {r: 0.356863, g: 0.784314, b: 0.960784, a: 1}
   - key: col.grad.passPaid1.top
     color: {r: 1, g: 0.231373, b: 0.188235, a: 1}
   - key: col.grad.passPaid1.bottom

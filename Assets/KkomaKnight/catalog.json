@@ -744,6 +744,8 @@
     "snd.axe": "Assets/Audio/sfx/axe.ogg"
   },
   "_notes": {
+    "col.grad.passFree.top": "패스 무료 열 **왼쪽** 색 — 주인 «서로 색 바꾸셈»(T353)으로 T344 의 하늘색과 자리를 바꿨다 = **파란색이 왼쪽**(열은 가로 그라데이션 · 옛 실측 #1F44AE)",
+    "col.grad.passFree.bottom": "같은 열 **오른쪽** 색 = 하늘색(T353 · 옛 #286AC0)",
     "data.arenaDummy": "아레나 껍데기의 상대 승점·전투력 표시용 계수 JSON(이 레포 전용 · 주인 2026-09-07 «아레나 부분에 적들 승점이랑 전투력 더미값으로» · T81) — 밸런스 아님 · 전투 엔진은 안 쓴다 · Core/ArenaDummy 가 읽는다",
     "data.expedition": "탐험(방치·오프라인 보상) 수치표 JSON(이 레포 전용 · 주인 2026-09-07 «탐험 = 방치 + 오프라인 보상 · 골드·다이아 쌓이게 · 빠른 탐험은 광고» · T97) — 상한 8h · 시간당 골드는 tune.json 의 처치 골드에서 유도 · Bootstrap 이 읽어 GameData.Expedition 에 올린다. 수치를 바꾸려면 이 파일만",
     "data.combatOverride": "이 레포 전용 전투 수치 덮어쓰기 JSON(T173 · 주인 2026-09-07 «창은 화면 넘어서 10 정도 더 가면 지워지게 / 관통 8개까지 말고 걍 닿으면 다 데미지») — data/combat.json 은 aaaw 정본이라 불변이고 여기 적은 키만 로드 뒤에 덮는다(range.spearReach · pierce.spear = 0 은 무제한). Bootstrap 이 게임에, GameData.LoadFromDirectory 가 Sim·EditMode 에 같은 파일을 먹인다 — 값을 바꾸려면 이 파일만",
