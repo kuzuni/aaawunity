@@ -99,9 +99,11 @@ namespace KkomaKnight.Game
 
             // ⓔ 아바타 VS 아바타
             // 내 칸은 «내가 고른 프레임 색» 까지 그대로(33 머리·탑바와 같은 얼굴이 서야 «내 자리» 로 읽힌다) · 상대는 기본 색
+            // ⚠ 얼굴을 안 넘긴 부름이 있어도 «빈 칸» 이 되면 안 된다 — 그것이 T262 3항이 고치러 온 바로 그 꼴이다(칸은 있고 얼굴이 없었다).
+            //    부르는 쪽이 아는 것이 있으면 그것을, 없으면 기본 초상을 세운다(결정 818 과 같은 결: «없으면 조용히 안 그린다» 를 없앤다).
             Face(root, "MyFace", Layout.ArrMyFace, string.IsNullOrEmpty(myFace) ? Profile.CurrentIcon(app.Save) : myFace,
                  Profile.FrameKey(app.Save), "내 초상");
-            Face(root, "FoeFace", Layout.ArrFoeFace, foeFace, null, "상대 초상");
+            Face(root, "FoeFace", Layout.ArrFoeFace, string.IsNullOrEmpty(foeFace) ? Profile.Icons[0] : foeFace, null, "상대 초상");
             var vs = UiKit.Icon(root, "VsBadge", "ui.iconPvp", Palette.A(Palette.White, 0.9f));
             UiKit.Pct(vs.rectTransform, Layout.ArrVs);
             var vsText = UiKit.Label(vs.transform, 0, 0, 100, 100, "VS", TextSize.Body, Palette.White);

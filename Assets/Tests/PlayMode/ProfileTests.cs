@@ -160,8 +160,11 @@ namespace KkomaKnight.Tests.Play
                 var face = UiKit.Find(UiKit.Find(ov, "FoeRow:" + i), "Face"); Assert.IsNotNull(face, "상대 줄 초상 " + i);
                 Assert.IsTrue(HasProfileFrame(face), "상대 줄 초상 " + i + " 도 프로필 프레임(주인 «도전 부분 팝업도 마찬가지»)");
                 Assert.IsFalse(GearUi.HasItemFrame(face), "상대 줄 초상 " + i + " 에 옛 물건 칸이 남으면 안 된다");
-                Assert.AreEqual(_app.Assets.Sprite(Profile.Icons[i % Profile.Icons.Length]), FaceSprite(face),
-                    "더미 초상은 프로필이 고르는 그 넷을 돌려 쓴다 — 목록을 두 곳에 베껴 적으면 한쪽만 늘어나는 날 짝이 어긋난다(T262 ⓑ)");
+                // ⚠ 줄 번호가 아니라 «순위» 로 고른다(T262 3항 · 결정 813) — 도전 팝업의 줄 i 는 순위 i+2 다.
+                //    이 줄 자신이 ⓑ 회차에 «i % 4» 로 적혀 있었고 3항이 규칙을 바꾸자 그대로 빨개졌다:
+                //    내가 «계약을 뒤집으면 자를 같이 고쳐라» 를 적어 둔 그 다음 커밋에서 내가 그것을 어겼다(결정 825).
+                Assert.AreEqual(_app.Assets.Sprite(Profile.DummyIcon(i + 2)), FaceSprite(face),
+                    "더미 초상은 «순위 하나가 언제나 같은 얼굴» 이다 — 23 목록과 24 팝업이 같은 «도전자 N» 에 다른 얼굴을 내면 안 된다(T262 3항)");
             }
 
             _log.AssertNoRed("T262 ⓑ 아레나 초상 프레임");
