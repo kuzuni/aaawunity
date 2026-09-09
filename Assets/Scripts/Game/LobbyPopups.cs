@@ -268,7 +268,7 @@ namespace KkomaKnight.Game
         /// 보상 칸(줄 안 <c>Group_Price</c> = 아이콘 + 점수) · 받기 표시(<c>Check</c>)가 프리팹 구성 그대로다(새로 그린 조각 0).
         /// 프리팹에 <b>없는</b> 것(점수 트랙 · 새로고침 줄 · 목록 상자 · 탭 3)은 레퍼런스 15 구도 그대로 남긴다(ROUTINE §2 T78 2항이 프리팹에서 가져올 조각을 다섯으로 못박았다).
         /// 줄 배치는 프리팹의 <see cref="GridLayoutGroup"/> 을 1열 · 칸 = 표 ⑳ «퀘스트 줄 1» · 간격 = 피치 − 줄로 바꿔 만든다(줄마다 좌표를 박지 않는다).
-        /// 껍데기 규칙(T44)은 그대로 — 진행 0/N · «이동» 은 닫기만 · 완료 줄은 프리팹 ✅.
+        /// 껍데기 규칙(T44)은 표가 없을 때만 — 진행 0/N · «이동» 은 닫기만 · 완료 줄은 프리팹 ✅. 표가 있으면 «이동» 은 T318 의 길잡이(<see cref="App.Hint(QuestData.Go)"/>)로 간다.
         /// </summary>
         /// <param name="daily">true = 일일(동메달) · false = 주간(은메달). 탭은 <b>닫고 다시 여는</b> 길로 갈아탄다 —
         /// 이미 잘 도는 길이라 조립을 반쯤 되돌리는 것보다 안전하다(줄 수·트랙 칸 수가 판마다 다르다).</param>
@@ -394,7 +394,7 @@ namespace KkomaKnight.Game
                 //   — `screens/15b_quest_ach.png` 의 «아래 두 줄을 덮은 반투명 사각형» 이 이것이다(실측 x29.6~67.5% · y64.6~75.3%).
                 //   판을 안 가리고 **모든 줄에서** 끈다: 일일 판에도 같은 덮개가 살아 있었고 보이지 않았을 뿐이다.
                 UiKit.Hide(frame, "Disabled");
-                var parts = _qAch ? AchRow(app, frame, i) : QuestRow(frame, i, ov);
+                var parts = _qAch ? AchRow(app, frame, i) : QuestRow(app, frame, i, ov);
                 if (i == 0) { row1 = frame; medal1 = parts.Medal; title1 = parts.Title; bar1 = parts.Bar; go1 = parts.Go; } else if (i == 1) row2 = frame;
             }
 
@@ -564,11 +564,11 @@ namespace KkomaKnight.Game
         /// 미션 줄 한 개 — 프리팹 <c>ListFrame_08</c>(칸 바탕) 안의 <c>ListItem_Mission_02</c> 조각을 표 ⑳ 의 줄 안 자리로 옮긴다.
         /// 격자 칸 자신이 <c>ListItem_Mission_02</c> 이고 그 안에 바탕 <c>ListFrame_08</c> · 제목 · <c>Slider_02_Yellow</c> · <c>Group_Price</c> · <c>Check</c> 가 있다(이름은 <c>Quest:i</c> 로 바꾼다 · 프리팹 유래 증거는 안쪽 <c>ListFrame_08</c>).
         /// 옮기는 것: 보상(<c>Group_Price</c> = 아이콘 + 점수 · 가로 배치를 끄고 레퍼런스처럼 «아이콘 위 · 숫자 아래») · 제목 · 진행바(<c>Slider_02_Yellow</c>) · 받기 표시(<c>Check</c> · 슬라이더 밑에 있던 것을 줄 오른쪽으로).
-        /// 미완 줄(앞 3개)은 레퍼런스 15 처럼 주황 «이동» 버튼(껍데기 = 닫기만) · 완료 줄(뒤 3개)은 프리팹 ✅.
+        /// 미완 줄(앞 3개)은 레퍼런스 15 처럼 주황 «이동» 버튼(표가 있으면 T318 길잡이 · 껍데기면 닫기만) · 완료 줄(뒤 3개)은 프리팹 ✅.
         /// <b>진행바 채움은 «완료» 에만 초록</b>(T212 · 우리가 이미 쓰는 «초록 = 열림/완료» — 레퍼런스 15 도 완료 줄이 초록이다) ·
         /// 미완 줄은 프리팹이 달고 온 노랑 그대로다. <b>다른 화면의 노란 진행바(로딩·경험치 등)는 이 관례에 안 걸린다.</b>
         /// </summary>
-        static QuestRowParts QuestRow(RectTransform frame, int i, Overlay ov)
+        static QuestRowParts QuestRow(App app, RectTransform frame, int i, Overlay ov)
         {
             var parts = new QuestRowParts();
             // 격자 칸 «자신» 이 `ListItem_Mission_02` 이고 `ListFrame_08`(원본의 ListFrame_07 을 갈아 끼운 것)은 그 «안쪽 바탕» 이다 — CI #142 가 잡아 준 계층(결정 173).
@@ -635,8 +635,13 @@ namespace KkomaKnight.Game
             }
             if (!done)
             {
-                var go = UiKit.Button(item, "ui.btnOrange", "이동", () => ov.Close(), Layout.QsRowGo.Within(Layout.QsRow1));
+                // T318 — «이동» 은 닫고 **표의 목적지로 간다**(`app.Hint(go)` = `QuestGo.Open` · 그 화면의 버튼에 손가락 힌트).
+                //   갈 데가 없는 줄(로그인류 · 표의 `go` 가 명시적 null)은 **눌리지 않는다**(지시서 1항 «버튼은 ✓ 나 비활성» · 눌리는데 아무 일도 안 나는 자리 금지 · 결정 771).
+                //   표가 없는 껍데기(q == null)는 종전 그대로 «닫기만» 이다.
+                var goTo = q != null ? q.Go : null;
+                var go = UiKit.Button(item, "ui.btnOrange", "이동", () => { ov.Close(); if (goTo != null) app.Hint(goTo); }, Layout.QsRowGo.Within(Layout.QsRow1));
                 go.name = "GoBtn"; parts.Go = go;
+                if (q != null && goTo == null) UiKit.SetInteractable(go.GetComponent<Button>(), false);
             }
             // T69 — 줄 바탕과 보상 칸에 «검은 아웃라인»(레퍼런스 15 도 줄·메달이 검은 외곽선)
             UiKit.Bordered(frame);

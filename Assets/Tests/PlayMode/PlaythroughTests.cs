@@ -682,6 +682,128 @@ namespace KkomaKnight.Tests.Play
         }
 
         // ─────────────────────────────────────────────────────────────────────────────
+        // P7 퀘스트·업적 — 로비 «퀘스트» → 일일 트랙 첫 칸 «받기» → 주간·업적 탭 → 업적 «받기» → 일일 «이동» → 목적지 화면 + 손가락.
+        // ─────────────────────────────────────────────────────────────────────────────
+        // 표의 화면 낱말 → 실제로 열려야 하는 GameScreen.Name (탐험은 로비 위 팝업) — QuestGoPlayTests 의 그 표 그대로.
+        static readonly Dictionary<string, string> GoScreenOf = new Dictionary<string, string>
+        {
+            { "lobby", "lobby" }, { "dungeon", "events" }, { "chest", "shop" }, { "forge", "forge" }, { "pet", "pet" }, { "expedition", "lobby" },
+        };
+        /// <summary>퀘스트 팝업의 줄 중 제목이 <paramref name="label"/> 인 것(줄 이름 계약 <c>Quest:i</c> · 제목 <c>Title</c>). 줄 차례를 안 믿는다 — 정렬(T311 6항)이 들어와도 그대로다.</summary>
+        Transform QuestRowOf(string label)
+        {
+            for (int i = 0; ; i++)
+            {
+                var row = UiKit.Find(_app.Overlay.Root, "Quest:" + i); if (row == null) return null;
+                var t = UiKit.Find(row, "Title"); var x = t != null ? t.GetComponent<TMP_Text>() : null;
+                if (x != null && (x.text ?? "").Trim() == label) return row;
+            }
+        }
+
+        /// <summary>
+        /// P7 퀘스트·업적(T300 1항) — 노는 것: 로비 오른쪽 사이드 «퀘스트» → 일일 트랙 첫 칸을 받는다(리워드 팝업 → 어둠 탭 → 팝업이 다시 선다) →
+        /// «주간»·«업적» 탭 → 업적 첫 줄 «받기»(리워드 → 어둠 탭) → «일일» 탭 → 미완 줄의 «이동» → 표의 목적지 화면이 열리고 그 버튼에 손가락(<c>Hint</c>)이 선다(T318).
+        /// 재는 것: <b>도달 · 팝업이 서고 닫히고 다시 섬 · 배선(받은 칸이 세이브에 적힘 · 업적 단계 +1 · «이동» 이 화면을 열고 손가락을 세움) · 빨간 줄 0</b>.
+        /// <para>
+        /// ⚠ <b>값은 안 잰다</b>(3항 ⓐ) — 트랙 점수·보상 수·업적 목표는 전부 표에서 읽고, 조건은 세이브에 직접 만든다(줄을 목표까지 채워 첫 칸을 연다 · 업적은 <c>Achievement.Add</c>).
+        /// 첫 칸이 안 열리는 표(첫 칸 점수 &gt; 메달 합)면 그 조각은 로그로 남기고 건너뛴다 — 지어내지 않는다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>«이동» 을 누를 줄 하나는 일부러 미완으로 남긴다</b>(표의 <c>go</c> 가 있는 첫 줄) — 전부 채우면 «이동» 버튼이 하나도 안 남는다(완료 줄은 ✅).
+        /// 로그인류(<c>go = null</c>)는 «이동» 이 눌리지 않아야 한다(T318 1항) — 그 줄이 미완이면 <c>interactable = false</c> 를 같이 본다.
+        /// </para>
+        /// <para>⚠ 팝업은 손으로 안 연다(결정 922 ③) — 로비 사이드 버튼 · 탭 · «받기» · «이동» 을 실제로 누른다. <c>LobbyPopups.Quest(app)</c> 직접 호출이면 사이드 버튼의 배선이 끊겨도 초록이다.</para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator P7_퀘스트와_업적을_받고_이동해도_죽지_않는다()
+        {
+            yield return Boot();
+            var D = _app.Data; var S = _app.Save;
+            var QD = D.Quest; Assert.IsNotNull(QD, "quest.json 이 카탈로그(data.quest)로 실려야 한다");
+            var AD = D.Achievement; Assert.IsNotNull(AD, "achievement.json 이 카탈로그(data.achievement)로 실려야 한다");
+            Assert.Greater(AD.List.Count, 0, "업적 줄이 하나는 있다");
+
+            // 조건(1항) — 날·주를 먼저 민 뒤(안 그러면 팝업이 열리며 Roll 이 오늘 것을 지운다) 일일 줄을 목표까지 채운다.
+            //   단 «이동» 을 누를 줄(go 가 있는 첫 미완 줄) 하나는 남긴다.
+            QuestRun.Roll(S, QD, DateTime.Now);
+            QuestData.Quest goQ = null;
+            foreach (var q in QD.Daily.Quests) if (q.Go != null && !q.Done(QuestRun.Count(S, true, q.Counter))) { goQ = q; break; }
+            foreach (var q in QD.Daily.Quests)
+            {
+                if (q == goQ) continue;
+                int have = QuestRun.Count(S, true, q.Counter);
+                if (have < q.Goal) QuestRun.Bump(S, q.Counter, q.Goal - have);
+            }
+            // 업적 첫 줄은 한 단계치를 쌓아 «받기» 가 켜지게(AchievementTabTests 의 꼴 · 값은 표의 Goal)
+            var achRow = AD.List[0];
+            if (!Achievement.CanClaim(S, AD, achRow.Counter)) Achievement.Add(S, achRow.Counter, achRow.Goal);
+            _app.Persist();
+
+            // ⓐ 도달 — 로비 오른쪽 사이드 «퀘스트»
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            Tap(_app.Current.Root, "Side:" + LobbyScreen.SideQuest); yield return Frames(3);
+            Assert.IsTrue(_app.Overlay.IsOpen, "사이드 «퀘스트» 가 퀘스트 팝업을 연다");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "QuestBox"), "퀘스트 팝업 상자");
+            _log.AssertNoRed("P7 퀘스트 팝업");
+
+            // ⓑ 일일 트랙 첫 칸 «받기» — 열려 있을 때만(표의 첫 칸 점수가 메달 합보다 크면 그 판은 없다 · 지어내지 않는다)
+            if (QuestRun.CanClaim(S, QD, true, 0))
+            {
+                Tap(_app.Overlay.Root, "Track:1"); yield return Frames(2);
+                Assert.IsTrue(_app.Overlay.IsOpen, "받으면 리워드 팝업(T241)이 선다");
+                Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "RewardTitle"), "떠 있는 것은 리워드 팝업이다");
+                Assert.IsTrue(S.QuestDailyGot.Count > 0 && S.QuestDailyGot[0], "받은 칸이 세이브에 적혔다(배선) — 이것이 없으면 «받기» 는 그림이다");
+                yield return TapDimmed("트랙 리워드 팝업");
+                Assert.IsTrue(_app.Overlay.IsOpen && UiKit.Find(_app.Overlay.Root, "QuestBox") != null, "리워드를 닫으면 퀘스트 팝업이 다시 선다(받은 칸이 꺼진 채)");
+                _log.AssertNoRed("P7 트랙 받기");
+            }
+            else Debug.Log("[T300] P7 — 일일 트랙 첫 칸이 안 열린다(표의 첫 칸 점수 > 메달 합) · 받기 조각은 건너뛴다");
+
+            // ⓒ 탭 셋 — «주간» → «업적»(판이 갈아탄다 · 팝업은 계속 서 있다)
+            Tap(_app.Overlay.Root, "Tab:1"); yield return Frames(3);
+            Assert.IsTrue(_app.Overlay.IsOpen && UiKit.Find(_app.Overlay.Root, "QuestBox") != null, "«주간» 탭 뒤에도 팝업이 서 있다");
+            Tap(_app.Overlay.Root, "Tab:2"); yield return Frames(3);
+            Assert.IsTrue(_app.Overlay.IsOpen, "«업적» 탭 뒤에도 팝업이 서 있다");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Ach:0"), "업적 첫 줄");
+            _log.AssertNoRed("P7 탭 셋");
+
+            // ⓓ 업적 «받기» — 한 단계치를 쌓아 뒀으니 눌린다(Tap 이 interactable 을 잰다) → 리워드 → 어둠 탭 → 업적 판이 다시 선다
+            {
+                int claimed0 = Achievement.Claimed(S, achRow.Counter);
+                Tap(UiKit.Find(_app.Overlay.Root, "Ach:0"), "AchBtn"); yield return Frames(2);
+                Assert.AreEqual(claimed0 + 1, Achievement.Claimed(S, achRow.Counter), "받은 단계가 하나 올랐다(배선)");
+                if (UiKit.Find(_app.Overlay.Root, "RewardTitle") != null) yield return TapDimmed("업적 리워드 팝업");
+                Assert.IsTrue(_app.Overlay.IsOpen && UiKit.Find(_app.Overlay.Root, "Ach:0") != null, "받고 나면 업적 판이 다시 선다");
+                _log.AssertNoRed("P7 업적 받기");
+            }
+
+            // ⓔ «일일» 탭 → 미완 줄의 «이동» → 목적지 화면 + 손가락(T318)
+            Tap(_app.Overlay.Root, "Tab:0"); yield return Frames(3);
+            Assert.IsTrue(_app.Overlay.IsOpen && UiKit.Find(_app.Overlay.Root, "QuestBox") != null, "«일일» 탭으로 돌아온다");
+            if (goQ != null)
+            {
+                var row = QuestRowOf(goQ.Label); Assert.IsNotNull(row, "«이동» 을 누를 미완 줄(«" + goQ.Label + "»)이 목록에 있다");
+                TapLive(row, "GoBtn"); yield return Frames(3);
+                string want = GoScreenOf[goQ.Go.Screen];
+                Assert.AreEqual(want, _app.Current.Name, "«이동» 이 표의 목적지 화면을 연다(배선 · T318) — «" + goQ.Go.Screen + "»");
+                Transform hintRoot = goQ.Go.Screen == "expedition" ? _app.Overlay.Root : _app.Current.Root;
+                if (goQ.Go.Screen == "expedition") Assert.IsTrue(_app.Overlay.IsOpen, "탐험은 로비 위 팝업이다");
+                else Assert.IsFalse(_app.Overlay.IsOpen, "«이동» 은 퀘스트 팝업을 닫는다");
+                var hint = UiKit.Find(hintRoot, QuestGo.HintName);
+                Assert.IsNotNull(hint, "그 화면의 버튼에 손가락(«Hint»)이 선다(T318 2항)");
+                Assert.IsTrue(hint.gameObject.activeInHierarchy, "손가락이 켜져 있다");
+                QuestGo.Dismiss(); yield return Frames(1);
+                _log.AssertNoRed("P7 이동 → " + goQ.Go.Screen);
+            }
+            else Debug.Log("[T300] P7 — go 가 있는 미완 일일 줄이 없다(표) · «이동» 조각은 건너뛴다");
+
+            if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(1); }
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            _log.AssertNoRed("P7 퀘스트·업적");
+            yield return Shutdown();
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────────
         // P11 설정 — ≡ 메뉴 → 설정 → 프로필 아바타 바꾸기 · 다시 설정 → 데이터 삭제 → 확인 → 로비.
         // ─────────────────────────────────────────────────────────────────────────────
         /// <summary>
