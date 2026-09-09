@@ -348,7 +348,21 @@ namespace KkomaKnight.Game
         public static void RibbonGlow(RectTransform box, RectTransform ribbon, string titleKey)
         {
             // 등급 배지처럼 «제목 리본이 아닌» 조각은 뺀다(장비 세부 팝업의 작은 배지 뒤에 큰 빛을 깔지 않는다 · 주인 목록에 없다).
-            if (box == null || ribbon == null || titleKey == null || !titleKey.StartsWith("ui.title")) return;
+            if (titleKey == null || !titleKey.StartsWith("ui.title")) return;
+            RibbonGlowOn(box, ribbon);
+        }
+
+        /// <summary>
+        /// T320 ⓑ — <b>제 프리팹으로 서는 팝업</b>(퀘스트 15 · 출석 16 처럼 공통 팝업 문법을 안 지나는 화면)이 부르는 문.
+        /// <para>
+        /// 공통 팝업은 <see cref="Box"/> 가 알아서 부르지만, 프리팹 팝업은 <b>제 리본을 제가 잡으므로</b> 그 화면이 리본을 놓은 다음 이 한 줄을 부른다.
+        /// 여기서 <c>titleKey</c> 를 안 받는 까닭 = 프리팹 리본은 카탈로그 키 이름이 아니다(<c>Title_Tapered_01</c>·<c>Title_01_Deco</c> …) —
+        /// <b>«제목 리본인가» 는 부르는 쪽이 안다.</b>
+        /// </para>
+        /// </summary>
+        public static void RibbonGlowOn(RectTransform box, RectTransform ribbon)
+        {
+            if (box == null || ribbon == null) return;
 
             // 두 번 불러도 조각이 늘지 않는다.
             var host = box.Find("TitleGlow") as RectTransform;

@@ -312,6 +312,9 @@ namespace KkomaKnight.Game
                 UiKit.Pct(band, Layout.QsTitleBand.Within(B));
                 var bt = UiKit.SetText(band, "Text (TMP)", _qAch ? "업적" : "퀘스트", null, TextSize.Title, TextKind.Title);   // T258 — 같은 리본, 판 이름만 바뀐다
                 if (bt != null) { bt.enableAutoSizing = true; bt.fontSizeMin = TextSize.BestFitMin; bt.fontSizeMax = TextSize.Title; RibbonTextFit(bt); }
+                // T320 ⓑ(주인 «퀘스트, 출석 … 리본 제목 팝업 전부에») — 리본 뒤 «반 잘린» 빛.
+                //   이 팝업은 제 프리팹으로 서서 `Overlay.Box` 를 안 지나므로 공통 배선이 안 닿는다 ⇒ 리본을 놓은 다음 한 줄로 부른다.
+                Overlay.RibbonGlowOn(box, (RectTransform)band);
             }
 
             // 점수 트랙 · 새로고침 줄 · 목록 상자 = 레퍼런스 15 그대로(프리팹에 없는 조각)
@@ -723,6 +726,8 @@ namespace KkomaKnight.Game
                 UiKit.Pct(rib, Layout.AtRibbon.Within(B));
                 var rt = UiKit.SetText(rib, "Text (TMP)", "출석 보상", null, TextSize.Title, TextKind.Title);
                 if (rt != null) { rt.enableAutoSizing = true; rt.fontSizeMin = TextSize.BestFitMin; rt.fontSizeMax = TextSize.Title; RibbonTextFit(rt); }
+                // T320 ⓑ — 퀘스트와 같은 자리(이 팝업도 제 프리팹으로 선다).
+                Overlay.RibbonGlowOn(box, (RectTransform)rib);
             }
 
             // 3열×2행 격자 = 프리팹 Group_DailyList7(GridLayoutGroup) — 칸·피치는 표 ㉑
