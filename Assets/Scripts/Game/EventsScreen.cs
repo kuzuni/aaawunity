@@ -740,14 +740,8 @@ namespace KkomaKnight.Game
         /// 소탕 보상 칸 — 표에 있는 것만 담는다(원정은 골드뿐이라 펫알 칸이 안 나온다).
         /// 칸 그림·차례는 세부 팝업의 보상 칸(<see cref="Add"/>)과 <b>같은 규칙</b>이다 — 같은 표를 두 자리가 다르게 보이면 사람이 다른 보상으로 읽는다.
         /// </summary>
-        static List<RewardPopup.Item> SweepItems(DungeonData.Reward r)
-        {
-            var list = new List<RewardPopup.Item>();
-            if (r == null) return list;
-            if (r.PetEgg > 0) list.Add(RewardPopup.Item.Of("pet.egg", UiKit.FmtComma(r.PetEgg)));
-            if (r.Gold > 0) list.Add(RewardPopup.Item.Of("ui.coin", UiKit.FmtComma(r.Gold)));
-            return list;
-        }
+        /// <summary>T291 — 셈은 <see cref="RewardPopup.ItemsOf"/> 한 곳이다(여기서 다시 세면 레시피·키가 또 빠진다).</summary>
+        static List<RewardPopup.Item> SweepItems(DungeonData.Reward r) => RewardPopup.ItemsOf(r);
 
         /// <summary>보상 칸 한 개 — 아이콘 키 · 수량 글자 · «최초»(첫 클리어) 배지인가.</summary>
         readonly struct RewardCellDef

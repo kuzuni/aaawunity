@@ -42,6 +42,29 @@ namespace KkomaKnight.Game
             public static Item Of(string icon, string qty = null, string frame = null, int amount = 0) => new Item { Icon = icon, Qty = qty, Frame = frame, Amount = amount };
         }
 
+        /// <summary>
+        /// T291 — 던전 보상 한 벌(<see cref="DungeonData.Reward"/>) → 팝업 칸들. <b>이 자리는 하나여야 한다.</b>
+        /// <para>
+        /// 여태 소탕(<c>EventsScreen.SweepItems</c>)과 판 클리어(<c>BattleScreen.ExitBattleWithPrize</c>)가 <b>같은 셈을 각자</b> 하고 있었고,
+        /// 층 보상으로 <b>레시피·키</b> 두 칸이 늘자 **둘 다 그것을 안 그렸다** — 세이브에는 들어오는데 «무엇을 받았는지» 화면이 말을 안 한다.
+        /// 주는 손을 <c>DungeonSweep.Pay</c> 하나로 모은 것과 같은 까닭으로 <b>보여 주는 손도</b> 하나로 모은다(결정 836 ④의 짝).
+        /// </para>
+        /// <b>개수는 글자에서 읽지 않고 그대로 넘긴다</b>(<see cref="Item.Amount"/>) — 골드는 «3,500» 처럼 쉼표가 든 글자라
+        /// 거기서 수를 세면 파티클이 3 개만 뜬다(소탕 쪽이 그랬다).
+        /// </summary>
+        public static List<Item> ItemsOf(DungeonData.Reward r)
+        {
+            var list = new List<Item>();
+            if (r == null) return list;
+            if (r.PetEgg > 0) list.Add(Item.Of("pet.egg", UiKit.FmtComma(r.PetEgg), amount: (int)Math.Round(r.PetEgg)));
+            if (r.Gold > 0) list.Add(Item.Of("ui.coin", UiKit.FmtComma(r.Gold), amount: (int)Math.Round(r.Gold)));
+            if (r.Recipe > 0 && !string.IsNullOrEmpty(r.RecipePart))
+                list.Add(Item.Of(Recipes.Icon(r.RecipePart), UiKit.FmtComma(r.Recipe), amount: (int)Math.Round(r.Recipe)));
+            if (r.Key > 0 && !string.IsNullOrEmpty(r.KeyItem))
+                list.Add(Item.Of(GachaKeys.Icon(r.KeyItem), UiKit.FmtComma(r.Key), amount: (int)Math.Round(r.Key)));
+            return list;
+        }
+
         /// <summary>기본 칸 테두리 — 레퍼런스 35 의 두 칸이 <b>파랑</b>이다(T103 정본 <c>ItemFrame_01_Normal_*</c> 계열).</summary>
         public const string DefaultFrame = "ui.itemFrame.blue";
 

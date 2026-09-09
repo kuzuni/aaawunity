@@ -402,10 +402,8 @@ namespace KkomaKnight.Game
         {
             ExitBattle();
             if (prize == null || !prize.Any) return;
-            var items = new List<RewardPopup.Item>();
-            if (prize.PetEgg > 0) items.Add(RewardPopup.Item.Of("pet.egg", UiKit.FmtComma(prize.PetEgg), amount: (int)Math.Round(prize.PetEgg)));
-            if (prize.Gold > 0) items.Add(RewardPopup.Item.Of("ui.coin", UiKit.FmtComma(prize.Gold), amount: (int)Math.Round(prize.Gold)));
-            RewardPopup.Show(items);
+            // T291 — 칸을 여기서 세지 않는다: 소탕 쪽과 셈이 갈리면 한쪽만 새 보상(레시피·키)을 빠뜨린다(실제로 그랬다).
+            RewardPopup.Show(RewardPopup.ItemsOf(prize));
         }
         void EndAndExit()
         {
