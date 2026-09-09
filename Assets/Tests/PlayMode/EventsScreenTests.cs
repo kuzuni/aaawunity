@@ -110,7 +110,15 @@ namespace KkomaKnight.Tests.Play
             var hell = UiKit.Find(pg, "Card:hell") as RectTransform; var exp = UiKit.Find(pg, "Card:expedition") as RectTransform;
             Assert.IsNotNull(hell, "던전 카드 1"); Assert.IsNotNull(exp, "던전 카드 2"); Assert.IsTrue(HasText(s => s == "지옥의 문") && HasText(s => s == "원정"), "카드 제목 우리말");
             Assert.AreEqual(2, CountNamed(pg, "EnterBtn"), "입장 버튼 2"); Assert.IsTrue(HasText(s => s == "획득 가능"), "«획득 가능»");
-            Assert.AreEqual(2, CountNamed(hell, "Cell:"), "카드 1 보상 아이콘 2"); Assert.AreEqual(4, CountNamed(exp, "Cell:"), "카드 2 보상 아이콘 4");
+            // T251 — 개수를 **수로 박지 않는다**: 그 절이 원정을 «골드 1칸»(표에 골드뿐)으로 뜻하고 고친 날
+            //   여기 박아 둔 «4» 가 빨개졌다(CI run 645). 규칙 그 자체(`EventsScreen.CardRewardKinds`)에 물어보면
+            //   표가 바뀌어도 안 깨지고, **그리는 쪽만 틀어졌을 때는 그대로 빨개진다**.
+            foreach (var (card, key, label) in new[] { (hell, "hell", "카드 1"), (exp, "expedition", "카드 2") })
+            {
+                int want = EventsScreen.CardRewardKinds(_app.Data.Dungeon, key, new string[0]).Length;
+                Assert.Greater(want, 0, label + ": 표가 보상 종류를 하나는 준다(이게 0 이면 아래 단언이 헛돈다)");
+                Assert.AreEqual(want, CountNamed(card, "Cell:"), label + " 보상 아이콘 = 표가 준 종류 수");
+            }
             // T101 ⓑ(주인 «준비 중이라 써 있는 거 없애줘») — 20·22 두 페이지에서 사라졌다
             Assert.IsNull(UiKit.Find(pg, "SoonCard"), "준비 중 카드는 없어야 한다(T101 ⓑ)"); Assert.IsFalse(HasText(s => s == "준비 중"), "«준비 중» 글자도 없다");
             // T101 ⓐ — 두 카드 사이에 눈에 보이는 빈칸(카드 높이의 6% 이상)

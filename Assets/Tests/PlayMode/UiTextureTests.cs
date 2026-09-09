@@ -368,7 +368,12 @@ namespace KkomaKnight.Tests.Play
                     cells++;
                 }
             }
-            Assert.AreEqual(6, cells, "던전 보상 아이콘 = 카드 1 의 2 + 카드 2 의 4(레퍼런스 20)");
+            // T251 — 여기도 수를 안 박는다(위 EventsScreenTests 와 같은 까닭 · CI run 645 에서 «6 / was 3» 으로 빨갰다).
+            //   두 카드가 표에서 받는 종류 수의 합이 곧 그려져야 할 칸 수다.
+            int wantCells = EventsScreen.CardRewardKinds(_app.Data.Dungeon, "hell", new string[0]).Length
+                          + EventsScreen.CardRewardKinds(_app.Data.Dungeon, "expedition", new string[0]).Length;
+            Assert.Greater(wantCells, 0, "표가 보상 종류를 준다(이게 0 이면 아래 단언이 헛돈다)");
+            Assert.AreEqual(wantCells, cells, "던전 보상 아이콘 = 두 카드가 표에서 받는 종류 수의 합");
 
             // ⓓ 그라데이션 = 카드 제목 띠(위 밝음 · 아래 어둠)
             Assert.IsTrue(UiKit.HasGradient(UiKit.Find(hell, "Head")), "던전 카드 제목 띠에 그라데이션(T72 ③)");
