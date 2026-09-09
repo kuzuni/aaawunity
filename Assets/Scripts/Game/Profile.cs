@@ -210,6 +210,21 @@ namespace KkomaKnight.Game
             }
             var close = UiKit.FindAny(rt, "Button_Close_01", "Button_Close_Square_01");
             if (close != null) UiKit.Clickable(close, () => app.Overlay.Close());
+
+            // T350 — 표 ㉟ 의 «아바타 …» 행이 부르는 이름 그대로 이름표를 단다.
+            //   ⚠ **이 화면에는 이름표가 한 개도 없었다** — T332 가 처음 찍고 나서야 드러났다(§5 0.0 · 모든 행 «없음» ·
+            //      «표에 없는 이름표» 줄조차 안 나온다 = 잴 것이 아예 없다는 뜻이다). 표는 2026-09-08 에 프리팹 실측으로 섰는데
+            //      살아 있는 화면과 **한 번도 맞대진 적이 없다**.
+            //   ⚠ 이름은 **표 쪽을 그대로 베낀다**(`docs/ref-layout.md` 는 T346 lock 안이라 고칠 수 없고, 고칠 이유도 없다 —
+            //      표가 «요소» 열에 적은 말이 곧 사람이 그 자리를 부르는 말이다).
+            //   ⚠ `UiKit.Tag` 는 그리는 것을 한 픽셀도 안 바꾼다(이름만 붙인다) — 이 회차의 화면 회귀는 0 이다.
+            UiKit.Tag(popup, "아바타 판");
+            { var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) UiKit.Tag(dim, "어둠(Dimmed)"); }
+            { var nick = UiKit.Find(popup, NickName); if (nick != null) UiKit.Tag(nick, "아바타 제목(= 내 이름 · `NickBtn`)"); }
+            // 격자는 «칸들의 부모» 다 — 칸을 이름으로 찾아 그 부모를 집는다(조각이 그 묶음에 이름을 안 준다).
+            if (rows.Count > 0 && rows[0].parent is RectTransform grid) UiKit.Tag(grid, "아바타 칸 격자(3열)");
+            if (choose != null) UiKit.Tag(choose, "아바타 «선택»");
+            if (close != null) UiKit.Tag(close, "아바타 닫기(X)");
         }
 
         /// <summary>«Choose» 버튼 조각 — 칸(줄)이 아닌 버튼 가운데 아래쪽 것 하나(조각 이름 <c>Button_02_Blue</c>).</summary>
@@ -265,13 +280,13 @@ namespace KkomaKnight.Game
             // T207 ② — 조각의 입력칸을 부수고 uGUI InputField 로 다시 세우던 자리가 사라졌다(Adopt 가 TMP 를 그대로 둔다).
             //   그러니 여기서 찾는 것도 조각이 달고 온 `TMP_InputField` 다 — 안 바꾸면 이 팝업이 «입력칸 없음» 이 된다(CI #455).
             var input = rt.GetComponentInChildren<TMP_InputField>(true);
-            TMP_Text count = null, desc = null, okLabel = null;
+            TMP_Text count = null, desc = null, okLabel = null, title = null;   // title = T350 이름표를 달 자리(표 ㉟ «이름 제목»)
             foreach (var t in rt.GetComponentsInChildren<TMP_Text>(true))
             {
                 if (t == null) continue;
                 if (input != null && t.transform.IsChildOf(input.transform)) continue;   // 입력칸 제 글자·자리표시는 건드리지 않는다
                 string s = (t.text ?? "").Trim();
-                if (s == "Nickname") UiKit.SetText(t.transform, "", "이름 바꾸기", kind: TextKind.Title);
+                if (s == "Nickname") { UiKit.SetText(t.transform, "", "이름 바꾸기", kind: TextKind.Title); title = t; }
                 else if (s == "Choose") okLabel = t;
                 else if (s.StartsWith("Enter", System.StringComparison.OrdinalIgnoreCase)) desc = t;
                 else if (s.IndexOf('/') >= 0) count = t;
@@ -308,6 +323,18 @@ namespace KkomaKnight.Game
 
             var close = UiKit.FindAny(rt, "Button_Close_01", "Button_Close_Square_01");
             if (close != null) UiKit.Clickable(close, () => OpenAvatar(app));
+
+            // T350 — 표 ㉟ 의 «이름 …» 행. 위 아바타 쪽과 같은 까닭이다(이 화면에도 이름표가 한 개도 없었다).
+            //   ⚠ «어둠» 은 여기서 안 단다 — 표의 «어둠(Dimmed)» 은 **두 팝업 공통 한 행**이고 채점은 아바타 쪽에서 한다
+            //     (`ui_score` SCREENS 가 `profile_nick` 을 «이름» 앞머리 행만 보도록 갈라 뒀다 · T332 2항).
+            //     둘 다 달면 같은 행이 두 화면에서 세어져 «고친 자리가 둘» 로 보인다.
+            { var popupN = UiKit.Find(rt, "Popup"); if (popupN != null) UiKit.Tag(popupN, "이름 판"); }
+            if (title != null) UiKit.Tag(title.transform, "이름 제목(이름 바꾸기)");
+            if (desc != null) UiKit.Tag(desc.transform, "이름 안내(2~12자로 지어 주세요)");
+            if (input != null) UiKit.Tag(input.transform, "이름 입력칸(`NickInput`)");
+            if (count != null) UiKit.Tag(count.transform, "이름 글자 수(`NickCount`)");
+            if (ok != null) UiKit.Tag(ok.transform, "이름 «확인»(`NickOkBtn`)");
+            if (close != null) UiKit.Tag(close, "이름 닫기(X)");
         }
 
         /// <summary>글자 수 표시 갱신 + «확인» 을 쓸 수 있는지 — 규칙(<see cref="Nickname"/>)이 판정한다.</summary>
