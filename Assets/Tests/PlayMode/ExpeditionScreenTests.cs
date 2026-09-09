@@ -52,6 +52,13 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(0, on, what + " 에 글자 없는 공통 제목 리본이 떠 있다(T146 ⓐ · 레퍼런스에는 없다)");
         }
 
+        /// <summary>T321 — 세이브에 든 레시피 총합(부위 여섯 전부 · 표 recipe.json).</summary>
+        int RecipeSum(SaveData s)
+        {
+            var rd = _app != null && _app.Data != null ? _app.Data.Recipe : null; if (rd == null) return 0;
+            int n = 0; foreach (var pt in rd.Parts) n += Recipes.Count(s, pt); return n;
+        }
+
         static Transform Find(Transform root, string name)
         {
             if (root == null) return null;
@@ -108,6 +115,9 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(Find(ov, "ExpeditionBox"), "팝업 상자");
             foreach (var n in new[] { "Picture", "Plate", "ExpTime", "RateGold", "RateGem", "ExpCellGold", "ExpCellGem", "QuickBtn", "ClaimBtn", "CapNote" })
                 Assert.IsNotNull(Find(ov, n), "조각 " + n + " (표 ㉕)");
+            // T321 3항(주인 «탐험 보상으로 1시간에 1개씩 레시피») — 표가 켜져 있으면 셋째 pill «📜 N/시간» 과 두루마리 칸이 선다(레퍼런스 30 의 두루마리 칸).
+            Assert.Greater(D.RecipePerHour, 0, "표 recipePerHour 가 켜져 있다(주인 값 1 · 0 이면 아래 두 조각이 없는 것이 옳다)");
+            Assert.IsNotNull(Find(ov, "RateRecipe"), "시간당 레시피 pill(T321)"); Assert.IsNotNull(Find(ov, "ExpCellRecipe"), "쌓인 레시피 칸(T321)");
             // T146 ⓐ — 레퍼런스 30 에는 공통 제목 리본이 없다(제목은 상자 폭 «명판»). 종전 코드는 리본을 «Title_01» 이라는 프리팹 이름으로 찾아 껐는데
             // UiKit.Spawn 이 이름을 카탈로그 키로 바꿔 놓아 한 번도 안 맞았고, 글자 없는 초록 리본이 그림 띠 위에 떠 있었다(결정 388).
             AssertNoPopupRibbon(ov, "탐험 팝업(30)");
@@ -164,6 +174,10 @@ namespace KkomaKnight.Tests.Play
             Assert.Greater(pg, 0, "8시간이면 골드가 쌓여 있다"); Assert.Greater(pm, 0, "다이아도 쌓여 있다");
             Assert.AreEqual(UiKit.Fmt(pg), CellQty(ov, "ExpCellGold"), "골드 칸 숫자 = 규칙이 계산한 값");
             Assert.AreEqual(UiKit.FmtQty(pm), CellQty(ov, "ExpCellGem"), "다이아 칸 숫자 = 규칙이 계산한 값");
+            int wantR = Expedition.RecipesPending(S, D, LobbyPopups.NowSec(), SaveStore.Today());
+            Assert.Greater(wantR, 0, "8시간이면 레시피도 쌓여 있다(T321 · 시간당 1개)");
+            Assert.AreEqual(UiKit.FmtQty(wantR), CellQty(ov, "ExpCellRecipe"), "레시피 칸 숫자 = 규칙이 계산한 값(받기 전에는 부위 없이 총 개수)");
+            int recipes0 = RecipeSum(S);
             Assert.IsNull(EnglishLeftOver(ov), "영문 데모 글자 0 (T44)");
 
             // «받기» — 실제로 재화가 늘고, 칸은 0 으로 돌아간다
@@ -175,13 +189,16 @@ namespace KkomaKnight.Tests.Play
             {
                 var rv = _app.Overlay.Root;
                 Assert.IsNotNull(Find(rv, "RewardTitle"), "받기 → 리워드 팝업(T241)");
-                Assert.AreEqual(2, RewardPopup.LastCellCount, "골드·다이아 두 칸");
+                // T321 ② — 골드·다이아 두 칸 + 부위별 레시피 칸(받는 순간 뽑히므로 몇 부위인지는 판마다 다르다 · 1 이상 · 여섯 이하).
+                Assert.GreaterOrEqual(RewardPopup.LastCellCount, 3, "골드·다이아 + 레시피 부위 칸이 최소 하나");
+                Assert.LessOrEqual(RewardPopup.LastCellCount, 2 + _app.Data.Recipe.Parts.Length, "부위 수를 넘는 칸은 없다");
                 var dim = Find(rv, "Dimmed")?.GetComponent<Button>(); Assert.IsNotNull(dim, "리워드 팝업의 탭하여 닫기");
                 dim.onClick.Invoke(); yield return Frames(2);
                 Assert.IsNotNull(Find(_app.Overlay.Root, "ExpeditionBox"), "닫으면 탐험 팝업으로 돌아온다");
             }
             Assert.AreEqual(pg, S.Gold - gold0, 1.0, "받기 = 보이던 골드만큼 지급");
             Assert.AreEqual(pm, S.Gem - gem0, 1.0, "받기 = 보이던 다이아만큼 지급");
+            Assert.AreEqual(wantR, RecipeSum(S) - recipes0, "받기 = 보이던 레시피 개수만큼 세이브에 들어온다(T321 ③ 난수 오버로드가 실제로 불렸는가)");
             Assert.AreEqual("0", CellQty(_app.Overlay.Root, "ExpCellGold"), "받은 뒤에는 0 부터 다시 쌓인다");
             var claim2 = Find(_app.Overlay.Root, "ClaimBtn");
             Assert.IsFalse(claim2.GetComponent<Button>().interactable, "받은 직후에는 받기가 잠긴다(«다음까지 mm:ss»)");
@@ -228,9 +245,11 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(Find(ov, "QuickExploreBox"), "빠른 탐험 상자");
             foreach (var n in new[] { "QxPlate", "QxSub", "QxTitle", "QxGridBg", "QxCellGold", "QxCellGem", "QxNote", "QxFreeBtn", "QxRule" })
                 Assert.IsNotNull(Find(ov, n), "조각 " + n + " (표 ㉖)");
+            Assert.IsNotNull(Find(ov, "QxCellRecipe"), "빠른 탐험도 레시피 칸(T321 2항 · quickHours 시간분)");
             Expedition.QuickReward(_app.Data, S, D, out double qg, out double qm);
             Assert.AreEqual(UiKit.Fmt(qg), CellQty(ov, "QxCellGold"), "빠른 탐험 골드 = 시간당 × quickHours");
             Assert.AreEqual(UiKit.FmtQty(qm), CellQty(ov, "QxCellGem"), "빠른 탐험 다이아");
+            Assert.AreEqual(UiKit.FmtQty(Expedition.QuickRecipes(D)), CellQty(ov, "QxCellRecipe"), "빠른 탐험 레시피 = 시간당 × quickHours(주인 5)");
             Assert.IsTrue(Find(ov, "QxFreeBtn").GetComponent<Button>().interactable, "횟수가 남으면 광고 버튼이 열린다");
             Assert.IsNotNull(Find(ov, "QxBadge"), "남은 횟수 배지");
             Assert.AreEqual(Expedition.QuickLeft(S, D, LobbyPopups.NowSec(), SaveStore.Today()).ToString(),
@@ -263,6 +282,7 @@ namespace KkomaKnight.Tests.Play
             double goldBefore = S.Gold, gemBefore = S.Gem;
             int leftBefore = Expedition.QuickLeft(S, D, LobbyPopups.NowSec(), SaveStore.Today());
             Expedition.QuickReward(_app.Data, S, D, out double wantG, out double wantM);
+            int quickRecipes0 = RecipeSum(S); int wantQR = Expedition.QuickRecipes(D);
             Assert.Greater(leftBefore, 0, "이 판은 충전이 남아 있어야 눌러 볼 수 있다(위에서 가득이라고 쟀다)");
 
             Find(ov, "QxFreeBtn").GetComponent<Button>().onClick.Invoke();
@@ -277,6 +297,7 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(goldBefore + wantG, S.Gold, 1e-6,
                 "광고가 끝나면 골드가 실제로 는다 — Expedition.ClaimQuick 이 불렸는가(버튼이 열려 있는 것과 주는 것은 다르다)");
             Assert.AreEqual(gemBefore + wantM, S.Gem, 1e-6, "다이아도 표대로 는다");
+            Assert.AreEqual(wantQR, RecipeSum(S) - quickRecipes0, "레시피도 quickHours 시간분만큼 들어온다(T321 · ClaimQuick 난수 오버로드)");
             Assert.AreEqual(leftBefore - 1, Expedition.QuickLeft(S, D, LobbyPopups.NowSec(), SaveStore.Today()),
                 "보유 충전이 한 칸 준다(안 줄면 무한으로 받을 수 있다)");
             _log.AssertNoRed("빠른 탐험 «광고 보고 무료» 지급");

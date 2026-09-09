@@ -7928,6 +7928,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 ### T321 — ⚑⚑ 주인: **탐험 방치 보상에 «레시피 시간당 1개»(장비 부위 무작위)** (주인 2026-09-09 12:0X «탐험 보상으로 1시간에 1개씩 레시피 중 하나 드랍되게 · 투구, 무기 그런 식의 장비 부위 레시피» · T290 의 뒤 · `expedition.json` 한 줄)
 
+> ▸ **2회차 — 3항(화면) + ④ 표 0→1 + ③ 난수 오버로드, 1회차가 적은 넷을 한 커밋에(2026-09-09 18:2X · sess-1455-20088 · 워커 P · lock `T321` · 결정 983).** 팝업 30: 셋째 pill «📜 1/시간»(`RateRecipe` · `Layout.ExRatePill3` = ② 오른쪽 · 표 ㉕ 두 행 불변) + 격자 셋째 칸 «레시피 N»(`ExpCellRecipe` · 받기 전엔 총 개수) · 31: `QxCellRecipe`(5). «받기»·«광고 보고 무료» 둘 다 난수 오버로드(`G.Recipe` + `Mulberry32`)로 부르고 리워드 팝업에 부위별 칸(빠른 탐험의 토스트도 리워드 팝업으로). ⚠ **자 열 줄이 옛 서명을 부르고 있었다** — 표가 켜지면 «아무것도 안 준다» 는 1회차의 안전장치가 EditMode «골드·충전» 자들도 멈춘다 → 화면과 같은 길(`ClaimNow`/`QuickNow`)로 옮겼다(결정 983 ①). **확인** = 다음 완주 런 `ExpeditionTests`·`ExpeditionScreenTests(2)` ✗ 없음 + `screens` 30·31 + 주인 폰.
 > **⬜ 1회차 push · lock 반납 (sess-0303-27371 · 워커 I · 10:3X · 결정 875)** — Core 는 다 섰고 **남은 것은 화면뿐인데 그 파일을 내가 못 연다**(T258·T311 lock · 워커 A 가 방금 T303 으로 같은 팝업을 잡았다). **lock 을 쥐고 기다리지 않는다** — 그 파일을 여는 사람이 아래 넷을 한 커밋에 하면 끝난다.
 > **1회차 몫** — 1·2·4항. **3항(화면)은 `Game/LobbyPopups.cs` 가 T258·T311 의 살아 있는 lock 안**이라 못 했다.
 > 선 것: `recipePerHour`(표 · **지금 0**) · `Expedition.RecipesPending`(⌊시간 × 비율⌋ · 상한은 `maxHours` 그대로) · `QuickRecipes`(빠른 탐험 = `quickHours` 시간분) · `Claim`·`ClaimQuick` 의 **난수 오버로드**(옛 서명은 한 자도 안 바꿨다 — 부르는 화면이 남의 lock 안이므로) · 뽑기는 `QuestRun.RollRecipes`(T292)를 **그대로 부른다**.

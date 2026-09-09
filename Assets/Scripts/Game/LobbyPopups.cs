@@ -1336,14 +1336,20 @@ namespace KkomaKnight.Game
             timeTxt.name = "ExpTime"; timeTxt.fontStyle = FontStyles.Bold;
             var p1 = RatePill(host, B, Layout.ExRatePill1, "ui.coin", UiKit.Fmt(Math.Floor(perGold)) + "/시간", "RateGold");
             var p2 = RatePill(host, B, Layout.ExRatePill2, "ui.gemRed", UiKit.FmtQty(Math.Floor(perGem)) + "/시간", "RateGem");
+            // T321 3항(주인 2026-09-09 12:0X «탐험 보상으로 1시간에 1개씩 레시피») — 셋째 pill «📜 N/시간». 표가 0 이면 옛 화면 그대로(pill 도 칸도 없다).
+            //   자리는 ①·② 오른쪽(Layout.ExRatePill3) — 레퍼런스 30 에 없는 pill 이라 표 ㉕ 의 두 행을 안 움직인다(결정 983).
+            bool recipesOn = D != null && D.RecipePerHour > 0;
+            if (recipesOn) RatePill(host, B, Layout.ExRatePill3, Recipes.IconKey, UiKit.FmtQty(D.RecipePerHour) + "/시간", "RateRecipe");
 
             var gridBg = UiKit.Panel(host, "GridBg", "fr.r12", Palette.A(Palette.Dim, 0.55f));
             UiKit.Pct(gridBg.rectTransform, Layout.ExGridBg.Within(B)); UiKit.Bordered(gridBg.rectTransform);
 
             double gold = 0, gem = 0; if (D != null) Core.Expedition.Pending(G, S, D, now, today, out gold, out gem);
-            // 쌓인 보상 칸 — 우리 시스템의 보상은 골드·다이아 둘뿐이라 레퍼런스의 장비 조각 자리는 비워 둔다(결정 기록)
+            // 쌓인 보상 칸 — 골드·다이아 + (T321) 레시피. 부위는 «받는 순간» 뽑히므로 받기 전에는 두루마리 한 칸에 총 개수(레퍼런스 30 의 두루마리 칸 넷은 부위별 · 결정 875 ⓑ).
             Cell(host, B, Layout.ExCell, "green", "ui.coin", UiKit.Fmt(gold), name: "ExpCellGold");
             Cell(host, B, Sh(Layout.ExCell, Layout.ExCellPitchX, 0), "plum", "ui.gemRed", UiKit.FmtQty(gem), name: "ExpCellGem");
+            int recipesPending = D != null ? Core.Expedition.RecipesPending(S, D, now, today) : 0;
+            if (recipesOn) Cell(host, B, Sh(Layout.ExCell, Layout.ExCellPitchX * 2, 0), "blue", Recipes.IconKey, UiKit.FmtQty(recipesPending), name: "ExpCellRecipe");
 
             var capR = Layout.ExCapNote.Within(B);
             double maxH = D != null ? D.MaxHours : 0;
@@ -1366,15 +1372,21 @@ namespace KkomaKnight.Game
                 can ? "받기" : "다음까지 " + (D != null ? Mmss(Core.Expedition.SecondsToClaim(S, D, now, today)) : "--:--"),
                 can ? (Action)(() =>
                 {
-                    Core.Expedition.Claim(G, S, D, NowSec(), today, out double gg, out double mm);
+                    // T321 ③ — 난수 오버로드로 부른다(옛 4인자 서명은 레시피가 쌓인 판에서 «아무것도 안 주고» 멈춘다 = 1회차의 안전장치 · 결정 875).
+                    //   난수는 퀘스트 90점 칸(T292 · :415)과 같은 꼴 — 시드 있는 Mulberry32 · 부위는 QuestRun.RollRecipes 가 여섯 중 균등하게.
+                    var rng = new Mulberry32((uint)Environment.TickCount ^ 0x3C6EF372u);
+                    Core.Expedition.Claim(G, S, D, NowSec(), today, G.Recipe, rng, out double gg, out double mm, out var recipesGot);
                     Quests.Bump(app, Quests.ExpeditionClaim);   // T257 4항 — 일일 «탐험 보상 받기» · 주간 «탐험 7번 보상 받기»(빠른 탐험은 주인이 다른 줄로 썼다 = 다른 counter)
                     app.Persist(); app.Current?.Refresh();
                     // T241 — 골드·다이아 두 칸을 공통 «리워드» 팝업이 보여 준다(토스트 대신) · 닫으면 탐험 팝업이 다시 뜬다(칸은 0 부터 다시 쌓인다)
-                    RewardPopup.Show(new List<RewardPopup.Item>
+                    // T321 ② — 레시피는 부위별로 묶어 «투구 레시피 ×2 …» 칸(Claim 이 돌려준 부위별 개수 그대로 · 0 인 부위는 안 온다).
+                    var items = new List<RewardPopup.Item>
                     {
                         RewardPopup.Item.Of("ui.coin", UiKit.Fmt(gg)),
                         RewardPopup.Item.Of("ui.gemRed", UiKit.FmtQty(mm)),
-                    }, () => Expedition(app));
+                    };
+                    foreach (var kv in recipesGot) items.Add(RewardPopup.Item.Of(Recipes.Icon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
+                    RewardPopup.Show(items, () => Expedition(app));
                 }) : () => { }, Layout.ExClaimBtn.Within(B));
             cb.name = "ClaimBtn";
             if (!can) UiKit.SetInteractable(cb.GetComponent<Button>(), false); else BtnBadge(cb, "!", "ClaimBadge");
@@ -1428,6 +1440,9 @@ namespace KkomaKnight.Game
             double gold = 0, gem = 0; if (D != null) Core.Expedition.QuickReward(G, S, D, out gold, out gem);
             Cell(box, B, Layout.QxCell, "green", "ui.coin", UiKit.Fmt(gold), name: "QxCellGold");
             Cell(box, B, Sh(Layout.QxCell, Layout.QxCellPitchX, 0), "plum", "ui.gemRed", UiKit.FmtQty(gem), name: "QxCellGem");
+            // T321 2항 — 빠른 탐험도 quickHours 시간분의 레시피(주인 «1시간에 1개» × 5시간 = 5). 표가 0 이면 칸이 없다(옛 화면 그대로).
+            int quickRecipes = Core.Expedition.QuickRecipes(D);
+            if (quickRecipes > 0) Cell(box, B, Sh(Layout.QxCell, Layout.QxCellPitchX * 2, 0), "blue", Recipes.IconKey, UiKit.FmtQty(quickRecipes), name: "QxCellRecipe");
 
             var noteR = Layout.QxNote.Within(B);
             var note = UiKit.Label(box, noteR.X, noteR.Y, noteR.W, noteR.H,
@@ -1440,12 +1455,21 @@ namespace KkomaKnight.Game
                 {
                     ov.AdCountdown(GiftAdSeconds, () =>
                     {
-                        Core.Expedition.ClaimQuick(G, S, D, NowSec(), today, out double gg, out double mm);
+                        // T321 ③ — 난수 오버로드(옛 서명은 레시피가 있는 판에서 «충전도 안 쓰고 아무것도 안 준다» · 1회차의 안전장치).
+                        var rng = new Mulberry32((uint)Environment.TickCount ^ 0x9E3779B9u);
+                        Core.Expedition.ClaimQuick(G, S, D, NowSec(), today, G.Recipe, rng, out double gg, out double mm, out var recipesGot);
                         Quests.Bump(app, Quests.ExpeditionFastClaim);   // T257 4항 — 일일 «빠른 탐험 보상 받기» 만 센다(위 «받기» 와 한 줄로 묶지 않는다 · 결정 705 ⓒ) · T258 업적 `expeditionQuick` 도 이 줄이 잇는다
                         Quests.Ach(app, Quests.AchAdWatch);             // T258 — 이 길은 광고를 본 길이기도 하다(«광고 10회 시청»)
                         app.Persist();
-                        app.Toast($"골드 +{UiKit.Fmt(gg)} · 다이아 +{UiKit.FmtQty(mm)}");
-                        LobbyPopups.Expedition(app);   // 광고가 끝나면 탐험 팝업으로 돌아간다(남은 횟수·버튼이 갱신된다)
+                        // T321 ② — 토스트 한 줄로는 «어느 부위 레시피» 를 못 말한다 → «받기» 와 같은 리워드 팝업(T241 · 골드·다이아 + 부위별 레시피 칸) ·
+                        //   닫으면 탐험 팝업으로 돌아간다(남은 횟수·버튼이 갱신된다 = 옛 흐름의 마지막 줄 그대로).
+                        var items = new List<RewardPopup.Item>
+                        {
+                            RewardPopup.Item.Of("ui.coin", UiKit.Fmt(gg)),
+                            RewardPopup.Item.Of("ui.gemRed", UiKit.FmtQty(mm)),
+                        };
+                        foreach (var kv in recipesGot) items.Add(RewardPopup.Item.Of(Recipes.Icon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
+                        RewardPopup.Show(items, () => LobbyPopups.Expedition(app));
                     });
                 }) : () => { }, Layout.QxFreeBtn.Within(B));
             fb.name = "QxFreeBtn";

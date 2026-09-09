@@ -79,7 +79,7 @@ namespace KkomaKnight.Tests
             Expedition.Roll(s, d, T0, D0);
             double now = T0 + 3 * H, gold0 = s.Gold, gem0 = s.Gem;
             Expedition.Pending(G, s, d, now, D0, out double pg, out double pm);
-            Expedition.Claim(G, s, d, now, D0, out double gg, out double mm);
+            ClaimNow(G, s, d, now, D0, out double gg, out double mm);
             Assert.That(gg, Is.EqualTo(pg).Within(1e-6), "받은 값 = 보이던 값");
             Assert.That(s.Gold - gold0, Is.EqualTo(pg).Within(1e-6));
             Assert.That(s.Gem - gem0, Is.EqualTo(pm).Within(1e-6));
@@ -114,7 +114,7 @@ namespace KkomaKnight.Tests
             Expedition.QuickReward(G, s, d, out double qg, out double qm);
             Assert.That(qg, Is.EqualTo(System.Math.Floor(Expedition.GoldPerHour(G, s, d) * d.QuickHours)).Within(1e-6), "= 시간당 × 5시간");
             double gold0 = s.Gold;
-            Expedition.ClaimQuick(G, s, d, now, D0, out double gg, out double mm);
+            QuickNow(G, s, d, now, D0, out double gg, out double mm);
             Assert.That(gg, Is.EqualTo(qg).Within(1e-6)); Assert.That(mm, Is.EqualTo(qm).Within(1e-6));
             Assert.That(s.Gold - gold0, Is.EqualTo(qg).Within(1e-6), "즉시 지급");
             Expedition.Pending(G, s, d, now, D0, out double after, out double afterGem);
@@ -132,11 +132,11 @@ namespace KkomaKnight.Tests
             Expedition.Roll(s, d, T0, D0);
             Assert.That(Expedition.QuickLeft(s, d, T0, D0), Is.EqualTo(d.QuickMax), "처음에는 가득");
 
-            for (int i = 0; i < d.QuickMax; i++) Expedition.ClaimQuick(G, s, d, T0, D0, out _, out _);
+            for (int i = 0; i < d.QuickMax; i++) QuickNow(G, s, d, T0, D0, out _, out _);
             Assert.That(Expedition.QuickLeft(s, d, T0, D0), Is.EqualTo(0), "다 쓰면 0");
 
             double gold = s.Gold;
-            Expedition.ClaimQuick(G, s, d, T0, D0, out double gg, out double mm);
+            QuickNow(G, s, d, T0, D0, out double gg, out double mm);
             Assert.That(gg, Is.EqualTo(0).Within(1e-9)); Assert.That(mm, Is.EqualTo(0).Within(1e-9));
             Assert.That(s.Gold, Is.EqualTo(gold).Within(1e-9), "없으면 지급 0");
 
@@ -154,7 +154,7 @@ namespace KkomaKnight.Tests
             var G = Data(); var d = Load(); var s = NewSave(); s.MaxChapter = 10;
             double per = d.QuickChargeSeconds;
             Expedition.Roll(s, d, T0, D0);
-            for (int i = 0; i < d.QuickMax; i++) Expedition.ClaimQuick(G, s, d, T0, D0, out _, out _);
+            for (int i = 0; i < d.QuickMax; i++) QuickNow(G, s, d, T0, D0, out _, out _);
 
             // T270 ⓐ — 한 주기가 지나면 «전부» 차므로 이월할 남는 시간이 없다. 대신 «덜 지났으면 0 · 지나면 가득» 을 잰다.
             double t = T0 + 0.75 * per;                              // 아직 4분의 3
@@ -167,7 +167,7 @@ namespace KkomaKnight.Tests
             double full = T0 + 10 * per;
             Assert.That(Expedition.QuickLeft(s, d, full, D0), Is.EqualTo(d.QuickMax));
             Assert.That(Expedition.NextQuickSec(s, d, full), Is.EqualTo(0).Within(1e-9), "꽉 차면 0 = «충전 완료»");
-            Expedition.ClaimQuick(G, s, d, full, D0, out _, out _);
+            QuickNow(G, s, d, full, D0, out _, out _);
             Assert.That(Expedition.NextQuickSec(s, d, full), Is.EqualTo(per).Within(1e-6), "쓴 순간부터 꽉 찬 한 주기");
             Assert.That(Expedition.QuickLeft(s, d, full + per - 1, D0), Is.EqualTo(d.QuickMax - 1), "1초 모자라면 아직 안 찬다");
         }
@@ -179,8 +179,8 @@ namespace KkomaKnight.Tests
             var G = Data(); var d = Load(); var s = NewSave(); s.MaxChapter = 10;
             double per = d.QuickChargeSeconds;
             Expedition.Roll(s, d, T0, D0);
-            Expedition.ClaimQuick(G, s, d, T0, D0, out _, out _);   // 3 → 2
-            Expedition.ClaimQuick(G, s, d, T0, D0, out _, out _);   // 2 → 1
+            QuickNow(G, s, d, T0, D0, out _, out _);   // 3 → 2
+            QuickNow(G, s, d, T0, D0, out _, out _);   // 2 → 1
             Assert.That(Expedition.QuickLeft(s, d, T0, D0), Is.EqualTo(d.QuickMax - 2), "둘 썼으니 1 남았다");
             Assert.That(Expedition.QuickLeft(s, d, T0 + per, D0), Is.EqualTo(d.QuickMax), "한 주기 뒤 3(4 가 아니다)");
             Assert.That(Expedition.QuickLeft(s, d, T0 + 5 * per, D0), Is.EqualTo(d.QuickMax), "더 기다려도 3");
@@ -192,7 +192,7 @@ namespace KkomaKnight.Tests
             var G = Data(); var d = Load(); var s = NewSave(); s.MaxChapter = 10;
             double per = d.QuickChargeSeconds;
             Expedition.Roll(s, d, T0, D0);
-            for (int i = 0; i < d.QuickMax; i++) Expedition.ClaimQuick(G, s, d, T0, D0, out _, out _);
+            for (int i = 0; i < d.QuickMax; i++) QuickNow(G, s, d, T0, D0, out _, out _);
 
             double back = T0 - 50 * per;                             // 시계를 한참 뒤로
             Assert.That(Expedition.QuickLeft(s, d, back, D0), Is.EqualTo(0), "되돌려도 안 는다");
@@ -230,7 +230,7 @@ namespace KkomaKnight.Tests
                         "«받기» 는 여전히 minClaimMinutes 에 열린다(점 문턱을 올린 것이 버튼을 늦추지 않는다)");
 
             // 받은 직후 = 다시 0 부터 — 주인이 본 «받았는데 또 점» 이 사라졌는지 정면으로 잰다.
-            Expedition.Claim(G, s, d, T0 + H, D0, out double gold, out double gem);
+            ClaimNow(G, s, d, T0 + H, D0, out double gold, out double gem);
             Assert.That(gold + gem, Is.GreaterThan(0), "시험이 성립한다: 한 시간치를 실제로 받았다");
             Assert.That(Expedition.AnyClaimable(G, s, d, T0 + H, D0), Is.False, "받은 직후에는 점이 꺼진다");
             Assert.That(Expedition.AnyClaimable(G, s, d, T0 + H + d.MinClaimSeconds + 1, D0), Is.False,
@@ -300,13 +300,22 @@ namespace KkomaKnight.Tests
             Assert.That(back.ExpQuickCharge, Is.EqualTo(s.ExpQuickCharge), "보유 충전");
             Assert.That(back.ExpQuickAt, Is.EqualTo(s.ExpQuickAt).Within(1e-6), "충전 기준 시각");
         }
-        /// <summary>T321 표 — 지금은 «주는 화면» 이 없어 0 이다(주인 값 1 은 화면 회차가 켠다 · T290 perLevel 과 같은 순서).</summary>
+        /// <summary>T321 표 — 주인 값 «1시간에 1개». 2회차(화면)가 켰다 — 1회차는 «주는 화면이 없어» 0 으로 내보냈었다(T290 perLevel 과 같은 순서 · 결정 983).</summary>
         [Test]
-        public void Json_RecipePerHourIsOffUntilTheScreenGivesIt()
+        public void Json_RecipePerHourIsTheOwnersOnePerHour()
         {
-            Assert.That(Load().RecipePerHour, Is.EqualTo(0).Within(1e-9),
-                "지금은 0 — 탐험 팝업이 아직 난수를 안 넘긴다(그 회차가 1 로 올린다)");
+            Assert.That(Load().RecipePerHour, Is.EqualTo(1).Within(1e-9),
+                "주인 «1시간에 1개씩» — 0 으로 되돌리면 탐험 팝업의 레시피 pill·칸·지급이 전부 사라진다(옛 화면)");
         }
+
+        /// <summary>
+        /// T321 2회차 — 표가 켜진 뒤로 <b>옛 서명(난수 없음)은 레시피가 쌓인 판에서 아무것도 안 준다</b>(1회차의 안전장치 · 아래 OldClaim_Refuses…).
+        /// 화면은 이제 난수 오버로드로 부르므로, «골드·충전» 을 재는 위 자들도 화면과 같은 길로 부른다 — 레시피는 버린다(그 자들은 레시피를 안 잰다).
+        /// </summary>
+        static void ClaimNow(GameData G, SaveData s, ExpeditionData d, double now, string today, out double gold, out double gem)
+            => Expedition.Claim(G, s, d, now, today, RecipeTable(), new Mulberry32(7u), out gold, out gem, out _);
+        static void QuickNow(GameData G, SaveData s, ExpeditionData d, double now, string today, out double gold, out double gem)
+            => Expedition.ClaimQuick(G, s, d, now, today, RecipeTable(), new Mulberry32(7u), out gold, out gem, out _);
 
         /// <summary>T321 — 쌓이는 개수는 ⌊시간 × recipePerHour⌋ 이고 상한은 maxHours 그대로다.</summary>
         [Test]

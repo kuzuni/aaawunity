@@ -603,6 +603,8 @@ namespace KkomaKnight.Core
         public static readonly R ExTime = new R(4.6f, 44.0f, 91.0f, 3.6f);         // 제목 60 한 줄(84px = 3.6%) — 레퍼런스 2.3 에서 +1.3%p (T63 하한 · 레퍼런스도 이 줄이 가장 큰 글자다)
         public static readonly R ExRatePill1 = new R(28.5f, 47.8f, 19.7f, 2.6f);   // 본문 40(56px = 2.4%)이 들어간다 · 경과 시간이 커진 만큼 +0.8%p 내려온다
         public static readonly R ExRatePill2 = new R(50.1f, 47.8f, 20.4f, 2.6f);
+        /// <summary>T321 — 시간당 레시피 pill(«📜 1/시간» · 주인 2026-09-09 12:0X). 레퍼런스 30 에는 없는 우리 pill 이라 ①·② 의 자리(표 ㉕ 행)는 그대로 두고 ② 의 오른쪽에 같은 폭으로 잇는다(결정 983).</summary>
+        public static readonly R ExRatePill3 = new R(71.7f, 47.8f, 19.7f, 2.6f);
         public static readonly R ExGridBg = new R(4.6f, 50.3f, 91.0f, 17.2f);
         public static readonly R ExCell = new R(11.8f, 51.3f, 11.4f, 5.4f);
         public const float ExCellPitchX = 13.0f, ExCellPitchY = 6.1f; public const int ExCols = 6;
