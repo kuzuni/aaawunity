@@ -100,6 +100,17 @@ namespace KkomaKnight.Tests.Play
             Assert.Greater(rows.Count, 1, "신화 상자는 구간이 여럿이다");
             Assert.Greater(n, 0, "아이템 목록");
 
+            // T267 — **그림 px 이 캔버스 px 로 옮겨졌는가**(결정 839). 레퍼런스 36(720×1560)에서 잰 세로 수를 그대로 쓰면
+            //   캔버스 기준(2337)이 그림(1560)의 1.498배라 세로가 전부 2/3 로 눌린다 — §5 표 ㊾ 가 «구간 머리 h 4.3 → 2.9» 로
+            //   그 눌림을 이미 가리키고 있었다. 여기서 재는 것은 **비율**이지 px 이 아니다: 잰 값(67/1560)이 화면에서 같은 몫을 차지하는가.
+            //   px 을 베끼지 않는다(결정 555) — 그림의 수가 바뀌면 이 자도 같이 따라간다.
+            {
+                var head0 = Find(box, "Sec:" + rows[0].Rar);
+                Assert.IsNotNull(head0, "맨 위 구간 머리");
+                float share = ((RectTransform)head0).rect.height / UiKit.FrameH;   // 화면 높이에서 머리 띠가 차지하는 몫
+                Assert.AreEqual(67f / 1560f, share, 0.003f, "구간 머리 띠 높이 몫 = 레퍼런스 36 실측(67/1560) — 그림 px 을 캔버스로 옮겨 쓴다");
+            }
+
             foreach (var r in rows)
             {
                 var sec = Find(box, "Sec:" + r.Rar);

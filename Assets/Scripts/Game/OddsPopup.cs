@@ -37,9 +37,29 @@ namespace KkomaKnight.Game
 
         /// <summary>격자 열 수 — 레퍼런스 36 실측(한 줄에 다섯 칸).</summary>
         const int Cols = 5;
-        /// <summary>구간 머리 띠 높이 · 칸 한 줄(행 피치) · 구간 사이 틈 — 전부 레퍼런스 36 실측(px · 720×1560 기준 · 표 ㊾).
-        /// 머리 띠 677~743 = 67px · 행 피치 = 칸 위 끝 간격 126px · 틈은 구간이 붙어 보이지 않을 만큼만.</summary>
-        const float HeadPx = 67f, RowPx = 126f, GapPx = 18f;
+        /// <summary>구간 머리 띠 높이 · 칸 한 줄(행 피치) · 구간 사이 틈 — 전부 레퍼런스 36 실측(px · <b>720×1560 그림 기준</b> · 표 ㊾).
+        /// 머리 띠 677~743 = 67px · 행 피치 = 칸 위 끝 간격 126px · 틈은 구간이 붙어 보이지 않을 만큼만.
+        /// <para>⚠ <b>이 수는 그림 px 이지 캔버스 px 이 아니다</b> — 캔버스 기준 해상도는 <see cref="UiKit.FrameH"/>(2337)라
+        /// 그림(1560)의 <b>1.498배</b>다. 그대로 쓰면 세로가 전부 2/3 로 눌린다(§5 표 ㊾ 에서 구간 머리 h 가 4.3 → 2.9 로 나온 그 수 ·
+        /// 칸이 정사각이 아니라 납작해지고 확률 글자가 아랫줄 칸에 겹친다). <see cref="RefY"/> 로 한 번 옮겨 쓴다.</para></summary>
+        const float HeadRefPx = 67f, RowRefPx = 126f, GapRefPx = 18f;
+        /// <summary>레퍼런스 그림(720×1560)에서 잰 <b>세로</b> px → 캔버스 px. 가로는 % 로 놓으므로 세로만 옮기면 된다.</summary>
+        static float RefY(float refPx) => refPx / 1560f * UiKit.FrameH;
+        /// <summary>머리 띠 바닥 → 그 아래 첫 칸 위(그림 px 743 → 775 = 32px · 표 ㊾ 비고).</summary>
+        const float CellTopRefPx = 32f;
+        /// <summary>위 실측을 캔버스 px 로 옮긴 것 — 자리를 놓는 곳은 <b>이쪽만</b> 쓴다(원값은 «무엇을 쟀나» 를 남기려고 둔다).</summary>
+        static readonly float HeadPx = RefY(HeadRefPx), RowPx = RefY(RowRefPx), GapPx = RefY(GapRefPx), CellTopPx = RefY(CellTopRefPx);
+
+        // ───────── 칸 격자 — 스크롤 창(그림 px 70~650 = 580px) 안에서 잰 값이다 ─────────
+        // 레퍼런스 첫 줄 조각: 왼쪽 끝 102 · 폭 84 · 열 피치 106(102·208·314·420·526) · 마지막 오른쪽 끝 610.
+        // 스크롤 창을 그냥 5등분하면 열이 116px 이 되어 조각이 가로로 늘어난다 — 여백이 있는 격자다.
+        const float ScrollRefPx = 580f, ColLeftRefPx = 32f, ColPitchRefPx = 106f, TileWRefPx = 84f, TileHRefPx = 80f;
+        /// <summary>칸 왼쪽 첫 자리 · 열 피치 · 칸 폭 — 전부 스크롤 창 폭에 대한 %(가로는 % 로 놓으므로 배율이 필요 없다).</summary>
+        const float ColX0 = ColLeftRefPx / ScrollRefPx * 100f,
+                    ColPitch = ColPitchRefPx / ScrollRefPx * 100f,
+                    ColW = TileWRefPx / ScrollRefPx * 100f;
+        /// <summary>칸 안에서 조각이 차지하는 세로 몫 · 그 아래 확률 글자가 시작하는 자리(행 피치에 대한 %).</summary>
+        const float TilePct = TileHRefPx / RowRefPx * 100f, TextTopPct = 71f;
 
         /// <summary>퍼센트 글자 — 등급 확률은 «39.68%» 꼴, 개별은 작아서 «1.89%»·«0.189%» 처럼 유효숫자를 하나 더 준다(레퍼런스와 같은 꼴).</summary>
         public static string Pct(double v) => v >= 1.0 ? v.ToString("0.00") + "%" : v.ToString("0.000") + "%";
@@ -132,28 +152,31 @@ namespace KkomaKnight.Game
             var rate = UiKit.Label(head, 28, 0, 70, 100, sb.ToString(), TextSize.Aux, Palette.Cream, TextAnchor.MiddleRight);
             rate.name = "SecRate"; rate.richText = true;
 
-            float gy = y + HeadPx;
+            float gy = y + HeadPx + CellTopPx;
             for (int i = 0; i < n; i++)
             {
                 var t = D.Gear.AllTypes[i];
                 var cell = UiKit.Rect(content, "Odds:" + r.Rar + ":" + i);
-                float cw = 100f / Cols;
-                Place(cell, (i % Cols) * cw, gy + (i / Cols) * RowPx, cw, RowPx);
+                // 칸은 스크롤 폭을 5등분한 것이 **아니다** — 레퍼런스는 좌우에 여백을 두고 106px 피치로 84px 조각을 놓는다.
+                //   5등분(20%)으로 놓으면 조각이 열 폭을 다 먹어 «가로로 늘어난 칸» 이 된다(표 ㊾ 의 그 행이 가리키던 것).
+                Place(cell, ColX0 + (i % Cols) * ColPitch, gy + (i / Cols) * RowPx, ColW, RowPx);
                 // T288-8 — 물건 칸은 **두 겹**이다: 바깥 `ui.itemFrame.empty`(여기에만 `Item`·`NormalArea` 가 있다) 안 `NormalArea` 에 등급색 변형.
                 //   등급색 변형을 «바로» 세우면 그 조각에는 `Item` 자식이 없어 그림이 아예 안 그려지고
                 //   칸 수만큼 «[UiKit] 이미지 없음: ui.itemFrame.<색>/Item» 이 뜬다(run 649 에서 72건 · 확률 팝업이 빈 테두리로 떴다).
                 //   이 두 겹은 이 파일이 정하는 것이 아니라 레포의 정본 문법이다 — `LobbyPopups.Cell` · `PetScreen` 이 같은 꼴을 쓴다.
                 var frame = UiKit.Spawn("ui.itemFrame.empty", cell); frame.name = "ItemFrame_01";
-                var frt = (RectTransform)frame.transform; UiKit.Pct(frt, 8, 2, 84, 58);
+                // 조각은 칸을 가로로 꽉 채우고 세로는 «칸 위 80px ÷ 행 피치 126px»(레퍼런스 36 실측) — 그래야 거의 정사각이다.
+                var frt = (RectTransform)frame.transform; UiKit.Pct(frt, 0, 0, 100, TilePct);
                 UiKit.Hide(frt, "Text_Level", "Focus", "Disable", "Lock", "Add_1", "Add_2");
                 var area = UiKit.Find(frt, "NormalArea");
                 if (area != null) { UiKit.Clear(area); var f = UiKit.Spawn("ui.itemFrame." + color, area); UiKit.Stretch((RectTransform)f.transform); }
                 var pic = UiKit.Find(frt, "Item");
                 if (pic != null) { pic.gameObject.SetActive(true); UiKit.SetSprite(frt, "Item", GearLook.IconKey(t.Part, D.Gear.SetOf(t.Type), r.Rar), Palette.White); }
                 GearUi.DarkFrame(frt, frt.localScale.x);   // T69 7항 — 물건 칸은 전부 이 문을 지난다(조각 제 Border 로는 굵기 계약이 안 선다)
-                // ⚠ 글자 칸 세로는 «크기 × 1.4» 여야 잘리지 않는다(T63 · TextSize.LineBox) — Aux 36 → 50.4px.
-                //   행 피치가 126px 이라 40% = 50.4px 이 그 하한이다. 조각을 58% 로 줄여 그 자리를 냈다.
-                UiKit.Label(cell, 0, 60, 100, 40, Pct(r.Each), TextSize.Aux, Palette.White).name = "Pct";
+                // ⚠ 글자 칸 세로는 «크기 × 1.4» 여야 잘리지 않는다(T63 · TextSize.LineBox) — Aux 36 → 50.4 캔버스 px.
+                //   행 피치가 캔버스 188.8px(그림 126px)이라 여기 29% = 54.7px 로 그 하한을 넘는다.
+                //   ⚠ 그림 px 을 그대로 쓰던 때는 이 자리가 50.4px «딱» 이었다 — 한 눈금만 줄어도 잘리는 자리였다(결정 839).
+                UiKit.Label(cell, 0, TextTopPct, 100, 100f - TextTopPct, Pct(r.Each), TextSize.Aux, Palette.White).name = "Pct";
                 if (i == 0 && r.Rar == D.Gear.RarRare) UiKit.Tag(cell, "보상 칸(구간 첫 칸)");
                 // 4항 — 칸을 누르면 «보기 전용» 세부 팝업. 닫으면 **이 팝업으로 돌아온다**(프로필 팝업 둘이 쓰는 그 꼴 · 표 ㉟).
                 //   Overlay 는 한 겹이라 «겹쳐 뜨기» 가 아니라 «갔다 돌아오기» 로 같은 결과를 낸다(결정 기록).
@@ -161,7 +184,7 @@ namespace KkomaKnight.Game
                 string key = boxKey;
                 UiKit.Clickable(cell, () => GearUi.OpenInfo(app, item, () => Open(app, key)));
             }
-            return HeadPx + lines * RowPx;
+            return HeadPx + CellTopPx + lines * RowPx;   // 머리 띠 + 그 아래 여백 + 칸 줄(여백을 빼면 다음 구간이 마지막 줄을 덮는다)
         }
 
         /// <summary>스크롤 Content 안의 자리 — x·w 는 %, y·h 는 px(위에서 아래로 쌓는다).</summary>
