@@ -6846,6 +6846,26 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 >
 > **다음 회차가 할 것**(순서 그대로): ⓐ `SaveData.Pets`/`PetPulls`(그 lock 이 풀리면) → ⓑ `GearSystem.Power` 에 장착 합 더하기 → ⓒ `Battle` 발동 갈래 → ⓓ 화면 13·14 → ⓔ 그림 9벌 + `catalog.json`(**`catalog.json` 도 T290 범위라 이번에 안 건드렸다** — 그래서 `pet.json` 은 아직 `data.pet` 으로 등재되지 않았고, 자는 파일을 직접 읽는다).
 >
+> **▸ ⓑ 2회차 끝 — 엔진 발동 갈래 셋(2026-09-09 08:2X · sess-2005-9317 · 워커 A · 결정 852 · lock `T293-core` 쥔 채)**
+>
+> **여전히 세이브를 안 건드렸다** — `SaveData.cs` 가 아직 T290·T258 의 살아 있는 범위 안이다. 그래서 이번에도 «그 파일을 안 보는 모양» 으로 갔다:
+> 장착 펫을 **`RunOptions.Pets`(발동 목록)로 판에 들려 보낸다** — `ArenaDuelFoe`(T240 3항)가 선 그 자리, 그 문법이다.
+> 세이브가 열리는 회차는 **`Opt.Pets = Pets.Procs(D.Pet, 장착 id 들)` 한 줄**만 쓰면 된다(그 함수도 이번에 같이 넣었다).
+>
+> **엔진** — `Battle.PetProcs(trigger)` 하나가 자리 셋에서 불린다: `ProcOnAttack` 끝(공격) · `HitPlayer` 의 회피 갈래 끝(회피) · 같은 함수의 «맞을 때 소환» 들 뒤(피격).
+> · **펫마다 따로 굴린다**(주인 «33% 확률로») · `ProcN < ProcTickCap` 을 특전·장비와 **같이** 쓴다(무한 연쇄 방지) · «랜덤한 적» 은 `FireAxe`·`FireBolts` 가 이미 그렇게 고른다(새 규칙 0).
+> · **붙인 자리는 전부 «있던 줄 뒤»** 다 — 앞에 두면 펫을 낀 판에서 옛 굴림 차례가 밀린다.
+>
+> ⚑ **이 절에서 가장 중요한 한 줄**: `if (list == null || list.Count == 0) return;` — **펫이 없으면 굴림 자체를 안 한다.**
+> 여기서 `Rng.Next()` 를 한 번이라도 더 부르면 **펫과 아무 상관없는 시드 골든(T2)이 통째로 밀린다.** 자도 그것을 정면으로 잰다
+> (`펫을_안_끼면_난수_열이_한_톨도_안_움직인다` — `null`·빈 목록·종전 셋을 같은 시드로 돌려 시간·시도·미스가 **완전히 같은지**) ·
+> 반대쪽도 같이 잰다(`펫을_끼면_판이_실제로_달라진다` — «안 움직인다» 만 재면 «갈래가 아예 안 붙었다» 도 통과한다).
+>
+> **표 검사 둘을 더했다** — 발동 이름이 `evade`·`attack`·`hit` 밖이거나 발사체가 `axe`·`bolt` 밖이면 **읽는 순간 운다**(`PetKey`).
+> 한 글자만 틀려도 «발동은 하는데 아무 일도 안 일어나는» 펫이 되고 **빨간 줄도 안 난다**(결정 818 갈래).
+>
+> **자 넷 더**(EditMode · test 424 → 428). **다음 회차**: `SaveData.Pets`/`PetPulls` → `GearSystem.Power` 합 → 화면 13·14 → 그림 9벌 + `catalog.json`.
+>
 순서 — `Core/Pet.cs`(신규 · 앞 항의 `Companion` 이름은 전부 `Pet`/`Pets` 로 읽는다) · `Core/SaveData.cs` · `Core/GearSystem.cs` · `Core/Battle.cs` · `Game/PetScreen.cs` · `Game/BattleWorld.cs`(9항) · `Game/CharacterRig.cs`(스킨 표) · `KkomaKnight/pet.json`·`catalog.json`. **큰 절이라 둘로 나눠 잡아도 된다**(ⓐ Core+표+자 · ⓑ 화면+전투 그림) — lock 은 `T293-core`·`T293-ui`.
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)

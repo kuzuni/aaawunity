@@ -493,6 +493,32 @@ namespace KkomaKnight.Core
         void ProcOnAttack(EnemyState e)
         {
             if (P.Has("p_aspdAtk")) AddBuff("aspd", PK.C("PERK_ASPDATK_A"), PK.C("PERK_ASPDATK_T"));
+            PetProcs(PetKey.Attack);
+        }
+
+        /// <summary>
+        /// T293 — <b>장착 펫의 발동</b>(주인 «33% 확률로 도끼 1개 / 도끼 2개 / 번개 2개를 랜덤한 적에게»).
+        /// 자리 셋(<see cref="PetKey.Evade"/>·<see cref="PetKey.Attack"/>·<see cref="PetKey.Hit"/>)에서 <b>펫마다 따로</b> 굴린다.
+        /// <para>
+        /// ⚠ <b>펫이 없으면 굴림 자체를 안 한다</b>(<c>Opt.Pets</c> 가 <c>null</c>·빈 목록) — 이 한 줄이 시드 골든(T2)의 안전장치다.
+        /// 여기서 <c>Rng.Next()</c> 를 한 번이라도 더 부르면 <b>펫을 안 낀 판의 난수 열이 통째로 밀린다</b>(지시서 §2 T293 3항 «시뮬 동일성»).
+        /// </para>
+        /// 무한 연쇄는 기존 규칙 그대로 <see cref="EngineConst"/> 의 <c>ProcTickCap</c> 이 막는다(특전·장비 발동이 쓰는 그 셈을 같이 쓴다).
+        /// «랜덤한 적» 은 <see cref="FireAxe"/>·<see cref="FireBolts"/> 가 이미 그렇게 고른다 — 새 규칙을 안 만든다.
+        /// </summary>
+        void PetProcs(string trigger)
+        {
+            var list = Opt.Pets;
+            if (list == null || list.Count == 0) return;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var pet = list[i];
+                if (pet.Trigger != trigger) continue;
+                if (ProcN >= C.ProcTickCap) return;
+                if (!(Rng.Next() * 100 < pet.Chance)) continue;
+                ProcN++;
+                if (pet.Shot == PetKey.ShotBolt) FireBolts(pet.Count); else FireAxe(pet.Count);
+            }
         }
 
         // ───────────────────────── 반격 · 피격 (sim.js doCounter · hitPlayer) ─────────────────────────
@@ -528,6 +554,7 @@ namespace KkomaKnight.Core
                 if (P.Has("p_arrowEvL") && Pkk(PK.C("PERK_SUMMON_L"))) FireArrows(1);
                 if (P.Has("p_spearEvL") && Pkk(PK.C("PERK_SUMMON_SP"))) FireSpear(1);
                 if (P.Has("p_evHealR") && Pkk(PK.C("PERK_EVHEAL_R"))) Heal(P.MaxHp * PK.C("PERK_EVHEAL_F"));
+                PetProcs(PetKey.Evade);   // T293 — 있던 줄 «뒤» 에 붙인다(앞에 두면 펫을 낀 판에서 옛 굴림 차례가 밀린다)
                 if (P.Has("p_evHealL") && Pkk(PK.C("PERK_EVHEAL_L"))) Heal(P.MaxHp * PK.C("PERK_EVHEAL_F"));
                 if (P.Has("p_evRepairR") && Pkk(PK.C("PERK_EVREP_R"))) Repair(P.MaxSh * PK.C("PERK_EVREP_F"));
                 if (P.Has("p_evRepairL") && Pkk(PK.C("PERK_EVREP_L"))) Repair(P.MaxSh * PK.C("PERK_EVREP_F"));
@@ -564,6 +591,7 @@ namespace KkomaKnight.Core
             if (P.Has("p_spearHitL") && Pkk(PK.C("PERK_SUMMON_SP"))) FireSpear(1);
             int gha = (int)P.PxGet("g_hitAxe");
             for (int i = 0; i < gha; i++) if (Pkk(EngineConst.GearAxeCh)) FireAxe(1);
+            PetProcs(PetKey.Hit);   // T293 — 같은 뜻의 «맞을 때 소환» 들 바로 뒤(반격 굴림보다 앞이라 순서가 특전과 같다)
             if (isMelee && src != null && src.Hp > 0)
             {
                 bool cc = Rng.Next() * 100 < EffCounter();

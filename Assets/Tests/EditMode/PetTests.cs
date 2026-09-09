@@ -212,6 +212,66 @@ namespace KkomaKnight.Tests
                 "    { \"id\": \"legend_hit\",    \"grade\": \"legend\", \"trigger\": \"hit\",    \"name\": \"방패 번개술사\" }\n", "")));
         }
 
+        // ───────────────────────── 엔진(T293 ⓑ) — 장착 펫이 실제로 쏘는가 · 안 끼면 난수 열이 한 톨도 안 움직이는가 ─────────────────────────
+
+        static RunOptions Ladder() => new RunOptions { LadderPerkMode = true, BaseStatsLegacy20 = true, GearOpts = false };
+
+        [Test]
+        public void 펫을_안_끼면_난수_열이_한_톨도_안_움직인다()
+        {
+            // ⚑ 이 자가 이 절에서 가장 중요한 자다 — 펫 갈래가 «펫이 없어도» 굴림을 한 번 하면
+            //    시드 골든(T2 · BattleTests)이 통째로 밀린다. 그 사고는 «펫» 과 아무 상관없어 보이는 자리에서 터진다.
+            var d = TestData.Load(); var b = GearSystem.MkBuild(d, -1, 0, 0);
+
+            var a1 = new BattleState(d, 3, b, new Mulberry32(11), new SimPolicy(), Ladder()).RunToEnd();
+            var a2 = new BattleState(d, 3, b, new Mulberry32(11), new SimPolicy(), new RunOptions { LadderPerkMode = true, BaseStatsLegacy20 = true, GearOpts = false, Pets = null }).RunToEnd();
+            var a3 = new BattleState(d, 3, b, new Mulberry32(11), new SimPolicy(), new RunOptions { LadderPerkMode = true, BaseStatsLegacy20 = true, GearOpts = false, Pets = new List<RunOptions.PetProc>() }).RunToEnd();
+
+            Assert.AreEqual(a1.Time, a2.Time, 1e-9, "Pets = null 은 종전과 같은 판이어야 한다");
+            Assert.AreEqual(a1.AtkTries, a2.AtkTries); Assert.AreEqual(a1.Miss, a2.Miss); Assert.AreEqual(a1.Kills, a2.Kills);
+            Assert.AreEqual(a1.Time, a3.Time, 1e-9, "빈 목록도 «없음» 과 같아야 한다 — 빈 목록에서 굴리면 그것도 밀린다");
+            Assert.AreEqual(a1.AtkTries, a3.AtkTries); Assert.AreEqual(a1.Miss, a3.Miss);
+        }
+
+        [Test]
+        public void 펫을_끼면_판이_실제로_달라진다()
+        {
+            // «안 움직인다» 만 재면 «갈래가 아예 안 붙었다» 도 통과한다 — 반대쪽도 같이 잰다(결정 818 의 «빈 칸» 갈래).
+            var d = TestData.Load(); var b = GearSystem.MkBuild(d, -1, 0, 0);
+            var pd = Load();
+            var procs = Pets.Procs(pd, new[] { "legend_hit", "legend_evade", "legend_attack" });
+            Assert.IsNotNull(procs); Assert.AreEqual(3, procs.Count);
+
+            var plain = new BattleState(d, 3, b, new Mulberry32(11), new SimPolicy(), Ladder()).RunToEnd();
+            var withPets = new BattleState(d, 3, b, new Mulberry32(11), new SimPolicy(),
+                new RunOptions { LadderPerkMode = true, BaseStatsLegacy20 = true, GearOpts = false, Pets = procs }).RunToEnd();
+
+            Assert.AreNotEqual(plain.Time, withPets.Time, "펫 셋을 끼면 판이 달라져야 한다 — 같으면 갈래가 안 붙은 것이다");
+        }
+
+        [Test]
+        public void 발동_목록은_표에서_그대로_온다()
+        {
+            var d = Load();
+            var procs = Pets.Procs(d, new[] { "common_evade", "legend_hit" });
+            Assert.AreEqual(2, procs.Count);
+            Assert.AreEqual(PetKey.Evade, procs[0].Trigger); Assert.AreEqual(PetKey.ShotAxe, procs[0].Shot);
+            Assert.AreEqual(1, procs[0].Count); Assert.AreEqual(33, procs[0].Chance, 1e-9);
+            Assert.AreEqual(PetKey.Hit, procs[1].Trigger); Assert.AreEqual(PetKey.ShotBolt, procs[1].Shot);
+            Assert.AreEqual(2, procs[1].Count);
+
+            Assert.IsNull(Pets.Procs(d, new string[0]), "빈 목록은 null — 엔진이 «없음» 으로 읽는 그 값이다");
+            Assert.IsNull(Pets.Procs(d, new[] { "없는펫" }), "모르는 id 만 있으면 null(표에서 펫이 빠져도 판은 열린다)");
+        }
+
+        [Test]
+        public void 표에_엔진이_모르는_이름이_적히면_읽는_순간_운다()
+        {
+            // 이름이 한 글자 틀리면 «발동은 하는데 아무 일도 안 일어나는» 펫이 된다 — 빨간 줄도 안 난다(결정 818 갈래).
+            Assert.Throws<System.FormatException>(() => PetData.Parse(Bad("\"key\": \"evade\",  \"name\": \"회피\"", "\"key\": \"dodge\",  \"name\": \"회피\"")));
+            Assert.Throws<System.FormatException>(() => PetData.Parse(Bad("\"shot\": \"bolt\", \"count\": 2", "\"shot\": \"lightning\", \"count\": 2")));
+        }
+
         /// <summary>표 한 곳만 망가뜨린 사본 — 자가 «무엇을 막는가» 를 그 자리에서 보여 준다.</summary>
         static string Bad(string from, string to)
         {

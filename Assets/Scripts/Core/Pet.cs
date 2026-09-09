@@ -13,6 +13,16 @@ namespace KkomaKnight.Core
     /// ⚠ 이 회차(T293 ⓐ)는 <b>세이브를 안 본다</b> — <see cref="SaveData"/> 가 남의 살아 있는 lock 안이라(T290·T258) 배선은 다음 회차의 일이다.
     /// 그래서 여기 있는 것은 전부 «수를 받아 수를 돌려주는» 순수 규칙이고, 세이브가 열리면 그 위에 얹기만 하면 된다.
     /// </summary>
+    /// <summary>
+    /// 표와 엔진이 <b>같은 낱말</b>을 쓰게 하는 이름들(T293) — 표에 이 밖의 이름이 적히면 엔진에 그 갈래가 없어
+    /// <b>발동은 하는데 아무 일도 안 일어나는</b> 펫이 된다. 그래서 <see cref="PetData.From"/> 가 읽는 순간 막는다.
+    /// </summary>
+    public static class PetKey
+    {
+        public const string Evade = "evade", Attack = "attack", Hit = "hit";
+        public const string ShotAxe = "axe", ShotBolt = "bolt";
+    }
+
     public sealed class PetData
     {
         /// <summary>발동 자리 하나 — 키(<c>evade</c>·<c>attack</c>·<c>hit</c>)와 화면 글자(«회피»·«공격»·«피격»).</summary>
@@ -103,6 +113,9 @@ namespace KkomaKnight.Core
                 var tr = new Trigger { Key = t["key"].Str(""), Name = t["name"].Str("") };
                 if (string.IsNullOrEmpty(tr.Key) || string.IsNullOrEmpty(tr.Name)) throw new FormatException("pet.json: triggers[] 의 key·name 이 비었다");
                 if (d.TriggerOf(tr.Key) != null) throw new FormatException("pet.json: 발동 키가 겹친다 — " + tr.Key);
+                // 엔진에 그 자리가 없으면 «발동은 하는데 아무 일도 안 일어나는» 펫이 된다 — 빨간 줄도 안 난다(결정 818 갈래).
+                if (tr.Key != PetKey.Evade && tr.Key != PetKey.Attack && tr.Key != PetKey.Hit)
+                    throw new FormatException("pet.json: 엔진이 모르는 발동 «" + tr.Key + "» — 있는 자리는 " + PetKey.Evade + "·" + PetKey.Attack + "·" + PetKey.Hit + " 셋뿐이다");
                 d.Triggers.Add(tr);
             }
             if (d.Triggers.Count == 0) throw new FormatException("pet.json: triggers 가 비었다");
@@ -118,6 +131,8 @@ namespace KkomaKnight.Core
                 if (d.GradeOf(gr.Key) != null) throw new FormatException("pet.json: 등급 키가 겹친다 — " + gr.Key);
                 if (gr.Rar < 0) throw new FormatException("pet.json: " + gr.Key + " 의 rar 이 없다 — 장착 스탯을 뽑을 등급을 못 정한다");
                 if (string.IsNullOrEmpty(gr.Shot)) throw new FormatException("pet.json: " + gr.Key + " 의 shot 이 비었다");
+                if (gr.Shot != PetKey.ShotAxe && gr.Shot != PetKey.ShotBolt)
+                    throw new FormatException("pet.json: 엔진이 모르는 발사체 «" + gr.Shot + "» — 있는 것은 " + PetKey.ShotAxe + "·" + PetKey.ShotBolt + " 둘뿐이다");
                 // 0발이면 «발동은 하는데 아무 일도 안 일어나는» 펫이 된다 — 화면에도 로그에도 안 보인다(결정 818 과 같은 갈래).
                 if (gr.Count <= 0) throw new FormatException("pet.json: " + gr.Key + " 의 count 가 0 이다 — 발동해도 아무것도 안 쏜다");
                 d.Grades.Add(gr);
@@ -258,6 +273,30 @@ namespace KkomaKnight.Core
             if (g == null || t == null) return "";
             string shot = d.ShotName.TryGetValue(g.Shot, out var s) ? s : g.Shot;
             return t.Name + " 시 " + Fmt(d.ProcChance) + "% 확률로 " + shot + " " + g.Count + "개 발사";
+        }
+
+        /// <summary>
+        /// 장착한 펫 id 목록 → <b>엔진이 읽는 발동 목록</b>(<see cref="RunOptions.Pets"/>). 판을 열 때 한 번 만든다.
+        /// <para>
+        /// ⚠ <b>빈 목록이면 <c>null</c> 을 돌려준다</b> — 엔진이 «펫이 없으면 굴림 자체를 안 한다» 를 그 <c>null</c> 로 판단하고,
+        /// 그것이 시드 골든(T2)의 안전장치다. «빈 목록» 과 «없음» 을 굳이 가르지 않는 것이 이 자리의 계약이다.
+        /// </para>
+        /// 모르는 id 는 조용히 건너뛴다 — 표에서 펫이 하나 빠지는 날 세이브에 남은 옛 id 때문에 판이 안 열리면 안 된다.
+        /// </summary>
+        public static List<RunOptions.PetProc> Procs(PetData d, IEnumerable<string> equippedIds)
+        {
+            if (d == null || equippedIds == null) return null;
+            List<RunOptions.PetProc> list = null;
+            foreach (var id in equippedIds)
+            {
+                var p = d.Of(id); if (p == null) continue;
+                var g = d.GradeOfPet(p); if (g == null) continue;
+                (list ?? (list = new List<RunOptions.PetProc>())).Add(new RunOptions.PetProc
+                {
+                    Trigger = p.TriggerKey, Shot = g.Shot, Count = g.Count, Chance = d.ProcChance,
+                });
+            }
+            return list;
         }
 
         static string Fmt(double v) => v == Math.Floor(v) ? ((long)v).ToString() : v.ToString("0.#");

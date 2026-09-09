@@ -161,6 +161,30 @@ namespace KkomaKnight.Core
         public ArenaFoe.Stats? ArenaDuelFoe;
         /// <summary>이 판이 아레나 1대1 인가 — 엔진이 갈래를 볼 때 쓰는 한 줄.</summary>
         public bool IsArenaDuel => ArenaDuelFoe.HasValue;
+
+        /// <summary>
+        /// T293 — <b>장착 펫의 발동 한 줄</b>(«회피 시 33% 로 도끼 2개»). 표에서 나온 것을 엔진이 읽는 꼴로만 옮긴 것이라 수가 없다.
+        /// </summary>
+        public struct PetProc
+        {
+            /// <summary>어느 자리에서 굴리나 — <see cref="PetKey.Evade"/>·<see cref="PetKey.Attack"/>·<see cref="PetKey.Hit"/>.</summary>
+            public string Trigger;
+            /// <summary>무엇을 쏘나 — <see cref="PetKey.ShotAxe"/>·<see cref="PetKey.ShotBolt"/>.</summary>
+            public string Shot;
+            /// <summary>몇 발인가(1·2).</summary>
+            public int Count;
+            /// <summary>발동 확률(%) — 펫마다 <b>따로</b> 굴린다.</summary>
+            public double Chance;
+        }
+
+        /// <summary>
+        /// T293 — 이 판에 데리고 들어간 <b>장착 펫</b>들(<see cref="Pets.Procs"/> 가 만든다). <c>null</c>·빈 목록이면 엔진이 <b>굴림 자체를 안 한다</b>.
+        /// <para>
+        /// ⚠ <b>기본값이 <c>null</c> 인 것이 시드 골든(T2)의 안전장치다</b> — 위 <see cref="ArenaDuelFoe"/> 와 같은 자리·같은 까닭이다.
+        /// 펫을 안 낀 판은 난수 열이 한 톨도 안 달라진다(지시서 §2 T293 3항 «시뮬 동일성»).
+        /// </para>
+        /// </summary>
+        public List<PetProc> Pets;
     }
 
     public struct RunResult
