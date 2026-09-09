@@ -9114,7 +9114,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 7. **다음 사람에게** — 이 자는 «범위를 안 적었다» 를 잡지 **«범위를 적고 안 지켰다» 는 못 잡는다**(그것은 사람이 읽어야 한다). 그리고 **커밋 제목이 작업 번호로 시작하는 것만** 센다(§6 규약이 그 꼴을 요구한다) — 번호를 안 적은 커밋의 파일은 이 자 눈에 안 보인다.
 
 순서 — `tools/check_claim_scope.py`(신규) · `.github/workflows/ci.yml` · `docs/PROGRESS.md`(범위 칸 다섯). lock `T347`(반납).
-### T353 — ⚑ 주인: **패스(19) 무료 열 색 뒤집기(파랑→하늘) + 세 열 보상 칸을 열 가운데로** (주인 2026-09-10 «그 패스에 하늘색, 파란색 그라디안트 서로 색 바꾸셈 · 패스들 다 중앙에 셀 있어야 함 · 로우에 셀이 중앙에 · 현재 오른쪽에 치우쳐 있더라 파란색 쪽 꺼» · T344 의 뒤)
+### T353 ✅ — ⚑ 주인: **패스(19) 무료 열 색 뒤집기(파랑→하늘) + 세 열 보상 칸을 열 가운데로** (주인 2026-09-10 «그 패스에 하늘색, 파란색 그라디안트 서로 색 바꾸셈 · 패스들 다 중앙에 셀 있어야 함 · 로우에 셀이 중앙에 · 현재 오른쪽에 치우쳐 있더라 파란색 쪽 꺼» · T344 의 뒤)
 
 > ⛑ **장애 고침(2026-09-09 19:0X · sess-1455-20088 · 워커 P · 결정 999)** — 이 절의 커밋이 `catalog.json` 설명 칸(`passFree.top/bottom`)을 고치고 생성기를 안 돌려 `docs/assets-map.md` 가 낡았고, dotnet 잡의 «생성물이 최신인가(T211)» 단계가 런 879 부터 막혔다. `python3 tools/gen_catalog.py` 로 재생성만 했다(코드·값 0줄).
 
@@ -9124,11 +9124,12 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 3. **자** — `SeasonPassLookTests` 첫 줄 세 칸: 칸 **월드** 가운데 x = 열 월드 가운데 x(±2px). 부모가 달라(칸 = 줄 안 앵커 · 열 = 화면 %) 앵커 값으로는 못 잰다.
 4. **확인** — `screens` 19 + 주인 폰.
 
+> **✅ 확인 끝 · lock 반납(20:3X · sess-1425-9466 · 워커 N · 결정 1025 · 죽은 lock 인수)** — 런 900 `SeasonPassLookTests(1)` 실패 0 · `layout.json` 19 의 보상 칸 가운데 x = 열 가운데 x(±0.1 · 셋 다) · 19 PNG 무료 열 파랑→하늘. 남은 것은 주인 폰뿐.
 > **🔄 push · 확인 전(18:5X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 990 · lock `T353` 쥔 채 · 커밋 메시지의 989 는 990)** — 0~3항 그대로. 확인 = 다음 완주 런 `SeasonPassLookTests` + `screens` 19.
 
 순서 — `Game/SeasonPassScreen.cs` · `catalog.json` · `Game/GradientPalette.cs` · `docs/assets-map.md` · `docs/ref-layout.md` · `Tests/PlayMode/SeasonPassLookTests.cs`. lock `T353`.
 
-### T354 — ⚑⚑ 주인: **리워드 팝업 «재화 흡수» 구슬이 팝업 뒤에 그려진다** (주인 2026-09-10 «재화 흡수 이펙트가 레이어가 너무 낮음 · 안 보여 리워드 팝업 닫고 나서 · 팝업들보다 레이어가 낮아서 안 보이나봐»)
+### T354 ✅ — ⚑⚑ 주인: **리워드 팝업 «재화 흡수» 구슬이 팝업 뒤에 그려진다** (주인 2026-09-10 «재화 흡수 이펙트가 레이어가 너무 낮음 · 안 보여 리워드 팝업 닫고 나서 · 팝업들보다 레이어가 낮아서 안 보이나봐»)
 
 0. **까닭(실측)** — `RewardPopup.Layer()` 가 구슬 층(`RewardOrbs`)을 **`app.Current.Root`(화면 루트)** 밑에 세우고 `SetAsLastSibling` 한다. 그런데 `Overlay.Root` 는 **`app.Frame` 밑 형제**(`Overlay.cs:45` · 열 때마다 `SetAsLastSibling`)라, 화면 루트 «안에서» 맨 위인 것은 오버레이 «아래» 다. 주인 진단 그대로다 — 형제 번호가 아니라 **부모가 다르다**.
 1. **고침** — 층의 host 를 `app.Frame` 으로(«화면이 바뀌면 다시 만든다» 조건은 `parent != host` 그대로 · 이제 화면이 바뀌어도 살아남는다 · 좌표는 둘 다 프레임 stretch 라 `TargetPos` 불변). `Fly` 마다 `SetAsLastSibling` 은 그대로 — 오버레이가 열릴 때마다 맨 위로 가므로 **부를 때마다** 다시 올려야 한다.
@@ -9137,9 +9138,10 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/RewardPopup.cs` · `Tests/PlayMode/RewardAbsorbTests.cs`. lock `T354`.
 
+> **✅ 확인 끝 · lock 반납(20:3X · sess-1425-9466 · 워커 N · 결정 1025 · 죽은 lock 인수)** — 런 900 `RewardAbsorbTests(2)` 실패 0. 남은 것은 주인 폰뿐.
 > **🔄 push · 확인 전(19:4X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 993 · lock `T354` 쥔 채)** — `RewardPopup.Layer()` host = `app.Frame` · 자 = 부모·형제 번호. 확인 = 다음 완주 런 `RewardAbsorbTests` + 주인 폰.
 
-### T355 — ⚑ 주인: **하단 네비 «상점» 탭 빨간 점이 안 뜬다** (주인 2026-09-10 «상점에 광고 보거나 free 로 얻을 수 있는 게 있는데 빨간점 알림이 하단 네비 상점 탭에 안 떠 있더라»)
+### T355 ✅ — ⚑ 주인: **하단 네비 «상점» 탭 빨간 점이 안 뜬다** (주인 2026-09-10 «상점에 광고 보거나 free 로 얻을 수 있는 게 있는데 빨간점 알림이 하단 네비 상점 탭에 안 떠 있더라»)
 
 0. **까닭(실측)** — `Notify.ShopAny(s, today)` = `s.FreeDay != today`. 그런데 T259 가 «무료 보급» 을 **자리별**(`ShopFree` · `SaveData.FreeDays[target]` · 다이아·골드·광고 상자 둘 = `ShopFree.All`)로 바꾸면서 옛 `FreeDay` 칸은 **아무도 안 쓴다** → 판정이 화면과 다른 칸을 본다. `ShopScreen.CanFree` 는 이미 `ShopFree.Can` 이다.
 1. **고침** — `ShopAny` = `ShopFree.All` 중 **하나라도** `ShopFree.Can(s, target, today)` 이면 참(화면과 같은 판정 · T96 ⓔ «판정은 한 곳»). 옛 `FreeDay` 는 안 본다.
@@ -9148,9 +9150,10 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Core/Notify.cs` · `Tests/EditMode/NotifyShopTests.cs`(신규). lock `T355`.
 
+> **✅ 확인 끝 · lock 반납(20:3X · sess-1425-9466 · 워커 N · 결정 1025 · 죽은 lock 인수)** — 런 900 `NotifyShopTests(3)` 실패 0 · `screens` 01·09 의 «상점» 탭에 빨간 점. 남은 것은 주인 폰뿐.
 > **🔄 push · 확인 전(19:4X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 994 · lock `T355` 쥔 채)** — `ShopAny` = `ShopFree.All` 중 하나라도 `Can` · `NotifyShopTests` 3(EditMode). 확인 = 주인 폰.
 
-### T356 — ⚑ 주인: **장착 슬롯에 «+N» 이 안 뜬다** (주인 2026-09-10 «장착슬롯 부분에 +2강인데 하단에서는 +2강이라 뜨는데 장착했을 때는 +2강이라 안 뜨네»)
+### T356 ✅ — ⚑ 주인: **장착 슬롯에 «+N» 이 안 뜬다** (주인 2026-09-10 «장착슬롯 부분에 +2강인데 하단에서는 +2강이라 뜨는데 장착했을 때는 +2강이라 안 뜨네»)
 
 0. **까닭(프리팹 YAML 실측)** — `ItemFrame_01.prefab` 의 자식 순서는 `NormalArea · Disable · Focus · Item · Lock · Add_1 · Add_2` 이고 **`Text_Level` 은 루트가 아니라 `Lock/Text_Level`** 이다. `GearScreen` 이 슬롯을 세울 때 `UiKit.Hide(frame, "Focus", "Disable", "Lock", "Add_2")` 로 **Lock 가지를 끈다** → T310 이 «인벤과 같은 함수» 로 부르는 `GearUi.SetPlus` 는 글자를 쓰긴 하는데(`SetText` 가 꺼진 것도 찾는다) **부모가 꺼져 있어 안 보인다**. 인벤 조각(`ListItem_EquipMent`)은 `Text_Level` 이 따로 있어 보인다. T310 회차 3·4 가 «글자 크기» 만 맞추고 이 자리를 못 본 까닭 — 자가 `Text_Level` 의 **글자**만 재고 **보이는가**를 안 쟀다.
 1. **고침** — 슬롯을 세울 때 `Lock/Text_Level` 을 **프레임 루트로 옮기고 맨 위로**(`SetParent(frame, false)` · `SetAsLastSibling`) — Lock 은 프레임을 꽉 채우는 stretch 라 앵커가 그대로 맞는다. 그 뒤 Lock 을 끈다(순서 중요). 조각 원본은 안 고친다(§1).
@@ -9159,6 +9162,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/GearScreen.cs` · `Tests/PlayMode/UiSmokeTests.cs`. lock `T356`.
 
+> **✅ 확인 끝 · lock 반납(20:3X · sess-1425-9466 · 워커 N · 결정 1025 · 죽은 lock 인수)** — 런 900 `UiSmokeTests(5)` 실패 0 · `screens` 06 의 장착 슬롯 여섯에 «+1». 남은 것은 주인 폰뿐.
 > **🔄 push · 확인 전(19:4X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 995 · lock `T356` 쥔 채)** — `Lock/Text_Level` 을 루트로(Lock 끄기 전) · Refresh 뒤 맨 위 · 자 = `activeInHierarchy` + 글자. 확인 = 다음 완주 런 `UiSmokeTests` + `screens` 05.
 
 ### T357 ✅ — ⚑ 주인: **장비 탭 빨간 점이 «강화할 것이 없는데» 안 꺼진다** (주인 2026-09-10 «장비에 슬롯 강화할 부분도 없는데 빨간점 안 꺼지더라 알림»)
