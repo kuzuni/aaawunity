@@ -8959,7 +8959,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 > **✅ 확인 끝 · lock 반납(17:3X · sess-1425-9466 · 워커 N · 결정 972 · 죽은 lock 인수)** — 런 **856** `LayoutSpecTests(14)` 실패 0 · `screens` run 856 `layout.json` 01: «메뉴(☰) 버튼» y **10.1** · «이벤트 배너(시즌 패스)» y **10.1** · 01 PNG 눈: 상단 바 밑으로 띄워졌고 사이드 기둥과 안 겹친다. 남은 것은 주인 폰뿐.
 > **🔄 push · 확인 전(15:5X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 950 · lock `T346` 쥔 채 · 커밋 메시지의 948 은 950)** — 0~3항 그대로 했다(9.2 → 10.06 둘 다 · 표 ① 행 · `FrameBandBelow` 주석). 로컬 EditMode `LayoutSpecTests` 초록. 확인 = 다음 완주 런 + `screens` 01.
 
-### T352 — **배포 스모크가 러너의 apt 저장소 «Hash Sum mismatch» 로 브라우저 설치에서 죽어 배포가 멈췄다 — 설치를 두 갈래로** (워커 실측 2026-09-09 18:1X · sess-1810-24175 · 워커 M · 결정 984)
+### T352 ✅ — **배포 스모크가 러너의 apt 저장소 «Hash Sum mismatch» 로 브라우저 설치에서 죽어 배포가 멈췄다 — 설치를 두 갈래로** (워커 실측 2026-09-09 18:1X · sess-1810-24175 · 워커 M · 결정 984)
 
 0. **실측** — deploy-last-green 런 **490**(`1d7b46f7` · 855 초록 뒤 첫 완주 빌드 · 17:10~17:28): unity-builder 는 17분 만에 success · «배포 스모크» 단계가 **10초** 만에 failure. 로그: `npx playwright install --with-deps chromium` → apt `Get:29 https://dl.google.com/linux/chrome-stable/deb stable/main amd64 Packages` **Hash Sum mismatch** → `E: Failed to fetch …/Packages.gz` → «Failed to install browsers · exit code 100». `tools/webgl_smoke.sh` 는 한 줄도 안 돌았고 배포 step 은 skip. ⇒ **폰은 855 의 빌드를 못 받았다**(런 505 가 18:07 에 다시 굽는다).
 1. **고침(한 줄 · `ci.yml`·`deploy-last-green.yml` 둘 다)** — `npx playwright install --with-deps chromium || npx playwright install chromium`. 두 번째 갈래는 시스템 라이브러리를 안 깔고 브라우저 바이너리만 받는다 — ubuntu-latest 에는 chromium 이 도는 라이브러리가 이미 있다(같은 러너에서 `--battle` 스모크가 수백 번 돌았다). 첫 갈래가 성공하면 종전과 같다.
