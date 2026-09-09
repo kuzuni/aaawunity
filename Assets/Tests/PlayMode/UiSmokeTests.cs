@@ -715,18 +715,22 @@ namespace KkomaKnight.Tests.Play
                     Assert.AreEqual(g0, _app.Save.Gold, 1e-9, "시즌 패스는 아직 아무것도 안 준다(T268 ⓑ «디자인만»)");
                     Assert.AreEqual(m0, _app.Save.Gem, 1e-9, "시즌 패스는 아직 아무것도 안 준다(T268 ⓑ «디자인만»)");
                 }
-                {   // [T266] §5 회차 1 에서 «시즌 종료까지 20일 8시간» 행이 ✗ 였다(ref 33.3% = 영문 잉크 폭).
-                    //   좁히면 우리말이 bestFit 하한 밑으로 내려갈 셈이 나오는데 **워커는 그 수를 로컬에서 못 잰다** —
-                    //   그래서 단언 대신 «실제로 몇 으로 놓였나» 를 찍는다(T260 4단계·결정 739 와 같은 순서).
+                {   // [T266] «시즌 종료까지 20일 8시간» 행이 §5 에서 ✗ 인 까닭을 **수로 닫았다**(6단계 · 결정 아래).
+                    //   run 613 실측: 놓인 크기 40.0 · 칸 폭 648px · **글자가 먹는 폭 395px** ↔ **표 ref 폭 360px**.
+                    //   ⇒ ref 폭으로 좁히면 bestFit 이 40 → 약 36 으로 눌러 **Body 하한(40) 아래**로 내려간다(T63) —
+                    //     점수 한 행보다 글자 크기가 먼저라 표 ㊼ 의 ⚑ 대로 **안 좁힌다**. 물음은 끝났으므로 로그를 «지키는 자» 로 바꾼다.
                     var endsT = UiKit.Find(sp, "SeasonEnds")?.GetComponent<TMPro.TMP_Text>();
-                    if (endsT != null)
-                        // 회차 1(run 610)에서 «놓인 크기 40.0 · 칸 폭 648px» 이 나왔다 — 안 줄었다는 뜻이지만
-                        //   «표 ref 폭(33.3% ≈ 360px)에서도 안 줄까» 는 그 수로 못 판정한다. 필요한 것은 **글자가 실제로 먹는 폭**이라
-                        //   TMP 의 preferredWidth 를 같이 찍는다(회차 2). 그 수가 ref 폭보다 작으면 좁혀도 되고, 크면 표 ⚑ 대로 둔다.
-                        Debug.Log("[T266] 시즌 종료 줄 — 글자 «" + endsT.text + "» · 놓인 크기 " + endsT.fontSize.ToString("0.0")
-                            + "(하한 " + TextSize.BestFitMin + ") · 칸 폭 " + endsT.rectTransform.rect.width.ToString("0")
-                            + "px · 글자가 먹는 폭 " + endsT.GetPreferredValues().x.ToString("0")
-                            + "px · 표 ref 폭 " + (UiKit.FrameW * 0.333f).ToString("0") + "px");
+                    Assert.IsNotNull(endsT, "시즌 종료 줄");
+                    // ⓐ 지금 상태를 지킨다 — 누가 칸을 좁히면(그것이 §5 한 행을 얻는 가장 쉬운 길이다) 이 줄이 먼저 빨개진다.
+                    Assert.GreaterOrEqual(endsT.fontSize, TextSize.Body,
+                        "시즌 종료 줄이 Body 하한(40) 아래로 눌렸다 — 칸을 좁혔다면 되돌려라(표 ㊼ ⚑ · 우리말은 ref 폭 360px 에 안 들어간다)");
+                    // ⓑ 반대 방향의 자백 자리 — 글자가 짧아져 ref 폭에 들어가게 되면 그때는 좁혀서 §5 10.0 을 받는 것이 옳다.
+                    //    그 판정을 다음 사람이 다시 재지 않게 두 수를 그대로 남긴다(단언으로 막지는 않는다 · 결정 493 사다리).
+                    Debug.Log("[T266] 시즌 종료 줄 — 글자 «" + endsT.text + "» · 놓인 크기 " + endsT.fontSize.ToString("0.0")
+                        + "(Body 하한 " + TextSize.Body + ") · 칸 폭 " + endsT.rectTransform.rect.width.ToString("0")
+                        + "px · 글자가 먹는 폭 " + endsT.GetPreferredValues().x.ToString("0")
+                        + "px · 표 ref 폭 " + (UiKit.FrameW * 0.333f).ToString("0")
+                        + "px → 먹는 폭이 ref 폭보다 작아지면 그때 좁혀서 §5 10.0 을 받는다");
                 }
                 Check("시즌 패스 페이지");
                 Assert.IsTrue(ClickNamed(sp, "BackBtn"), "시즌 패스 뒤로"); yield return Frames(2);
