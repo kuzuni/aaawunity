@@ -53,6 +53,15 @@ namespace KkomaKnight.Core
         public AchievementData Achievement;
         /// <summary>장비 레시피 표 — 이 레포의 <c>Assets/KkomaKnight/recipe.json</c>(카탈로그 텍스트 «data.recipe» · T290). 로드는 Bootstrap 이 따로 한다 · 없으면 null(레시피가 안 드는 옛 그대로 = 골드만).</summary>
         public RecipeData Recipe;
+        /// <summary>
+        /// 펫 표 — 이 레포의 <c>Assets/KkomaKnight/pet.json</c>(카탈로그 텍스트 «data.pet» · T293). 로드는 Bootstrap 이 따로 한다.
+        /// <para>
+        /// <b>없으면 null</b> 이고, 그러면 펫이 <b>통째로 없던 옛 그대로</b>다 — 화면 13 이 «표가 아직 없다» 로 뜨고, 장착 합도 발동도 0 이다.
+        /// 규칙 쪽은 이미 그렇게 서 있다(<see cref="Pets.Equipped"/>·<see cref="Pets.EquipPower"/>·<see cref="Pets.Procs(PetData, SaveData)"/> 가 전부 <c>d == null</c> 이면 빈 값).
+        /// </para>
+        /// <para>⚑ 세이브는 이 표를 <b>안 본다</b> — <see cref="SaveData"/> 가 든 것은 수(<c>PetPulls</c>·<c>PetLv</c>·<c>PetFrag</c>·<c>PetEq</c>)뿐이고, 표가 필요한 정리는 <see cref="Pets.Equipped"/> 가 한다(T293 ⓕ).</para>
+        /// </summary>
+        public PetData Pet;
         /// <summary>신화 위 «표시 등급» 표(갓·초월·불멸·무한) — 이 레포의 <c>Assets/KkomaKnight/gearTier.json</c>(카탈로그 텍스트 «data.gearTier» · T316). 로드는 Bootstrap 이 따로 한다 · 없으면 null(신화 위 등급이 없던 옛 그대로 = 전부 «신화 +N»).</summary>
         public GearTierData GearTier;
         /// <summary>시즌 패스 보상 표 — 이 레포의 <c>Assets/KkomaKnight/pass.json</c>(카탈로그 텍스트 «data.pass» · T322). 로드는 Bootstrap 이 따로 한다 · 없으면 null(패스 화면이 모든 줄을 «?» 로 그린다 — 화면이 막히지는 않는다).</summary>

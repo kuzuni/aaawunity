@@ -7179,6 +7179,29 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > **다음 회차**(순서 그대로): ⓖ `GearSystem.Power` 에 장착 합 더하기(지금 **T325-a lock**) → ⓗ `D.Pet` 로더 한 줄(`Game/Bootstrap.cs` · 같은 lock) → ⓘ 화면 13·14(5항 ⓖⓗⓘⓙ).
 > ⚑ **화면 13·14 를 여는 사람에게 두 줄** — 소환 자리에 `Quests.Ach(app, Quests.AchPetGacha);`(T258 이 남긴 마지막 훅 · `AchievementTests` 의 «아직» 목록에서 `petGacha` 를 지운다) · 강화 자리에 `Quests.Bump(app, Quests.PetUpgrade)`(T257 ⓑ). 둘 다 **그 화면을 세우는 사람 말고는 걸 자리를 못 찾는다.**
 >
+> **▸ ⓗ 표 로더 — 부팅이 `pet.json` 을 든다(2026-09-09 21:2X · sess-2005-9317 · 워커 A · 결정 1035 · `T293-core` 재선점)**
+>
+> **왜 지금 열렸나** — 16:1X 에 «남은 조각이 전부 남의 lock 안» 이라며 이 lock 을 놓았었다. 셋이 바뀌었다:
+> ① 워커 K 가 **ⓕ(`SaveData.Pets`/`PetPulls`)를 놓았다**(런 874 초록 · `PetSaveTests` 13) — **놓은 lock 이 돌려준 값이다**(결정 959: «나를 막은 사람이 그 조각을 가장 싸게 할 수 있는 사람»).
+> ② `T325` 의 범위 칸이 스스로 «**(이미 끝나서 안 만진다 · 비켜 갈 것 없다) `Core/GameData.cs` · `Game/Bootstrap.cs`**» 라고 적었다 — **lock 은 살아 있어도 그 파일들은 그 절에서 끝났다.**
+> ③ `Core/GearSystem.cs` 를 잡은 살아 있는 lock 이 없다.
+> ⚑ 결정 968 ① 의 두 번째 판이다 — **문이 열린 것은 «lock 이 사라졌나» 가 아니라 «그 절이 무엇을 남겼다고 말하나» 로 안다.**
+>
+> **놓은 것** — `GameData.Pet` · `Bootstrap.LoadPet(catalog)`. **다른 표 로더(`LoadRecipe`·`LoadPass`·`LoadGearTier`)와 같은 꼴**이고,
+> 못 읽으면 null 이라 **펫이 통째로 없던 옛 그대로**가 된다(부팅이 안 막힌다) — 규칙 쪽이 이미 «표가 null 이면 빈 값» 으로 서 있어서 그 물러섬이 공짜다.
+> `catalog` 의 `data.pet` 등재는 **ⓒ 에서 이미** 해 뒀으므로 이번 회차는 한 줄이었다 — **막힌 회차에 «막힌 파일 바로 옆» 을 해 둔 값이 여기서 돌아온다**(결정 900 ④).
+>
+> ⚑ **자를 «파일을 다시 읽는» 것에서 «부팅이 든 표를 보는» 것으로 옮겼다**(`BattleWorldTests`) —
+> 자가 제 손으로 파싱하면 **부팅이 표를 안 들어도 초록**이라 로더가 죽은 것을 아무도 못 본다.
+>
+> **안 한 것 = ⓖ(`GearSystem` 장착 합) · 그리고 그 까닭** — 합 함수 `Pets.EquipPower(D, d, s)` 는 워커 K 가 이미 놓았다.
+> 그런데 붙일 자리가 `GearSystem.BuildPower(D, Build)` 를 부르는 **다섯 곳**이고(`GearScreen`·`HeroView`·`App`·`BattleScreen`·**`Core/Battle.cs`**),
+> 마지막 하나가 **엔진**이다. «장착 펫의 공·체·실이 시드 골든(T2)을 움직이는가» 는 한 줄로 정할 일이 아니라 **제 회차가 필요하다** —
+> 그래서 셈만 적어 두고 손대지 않았다. **다음 회차가 먼저 답할 물음**: 펫 스탯은 «화면에만 보이는 합» 인가, «판이 실제로 세지는 값» 인가.
+> (주인 원문은 «장착 효과 있음 — 공·체·실 채워 줌» 이라 **판이 세지는 쪽**으로 읽히지만, 그러면 `RunOptions` 로 들려 보내야 하고 골든을 다시 떠야 한다.)
+>
+> **확인** = 다음 완주 런의 `BattleWorldTests`(부팅이 `D.Pet` 을 든다).
+>
 순서 — `Core/Pet.cs`(신규 · 앞 항의 `Companion` 이름은 전부 `Pet`/`Pets` 로 읽는다) · `Core/SaveData.cs` · `Core/GearSystem.cs` · `Core/Battle.cs` · `Game/PetScreen.cs` · `Game/BattleWorld.cs`(9항) · `Game/CharacterRig.cs`(스킨 표) · `KkomaKnight/pet.json`·`catalog.json`. **큰 절이라 둘로 나눠 잡아도 된다**(ⓐ Core+표+자 · ⓑ 화면+전투 그림) — lock 은 `T293-core`·`T293-ui`.
 
 ### T300 — ⚑⚑⚑ 주인: **플레이 봇 — 한 판을 끝까지 실제로 놀아 보고 에러를 찾는 자**(PlayMode + 배포 WebGL) (주인 2026-09-09 08:5X «플레이해서 에러 테스트도 하라» · §1 상시 규칙과 한 벌)

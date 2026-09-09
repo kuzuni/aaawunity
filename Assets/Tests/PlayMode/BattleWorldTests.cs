@@ -132,8 +132,10 @@ namespace KkomaKnight.Tests.Play
 
             Assert.AreEqual(0, world.PetRigs.Count, "아무것도 안 꼈으면 펫 리그가 한 개도 없다(세이브 배선 전의 기본값)");
 
-            var ta = _app.Assets.Text("data.pet"); Assert.IsNotNull(ta, "catalog 에 data.pet 이 등재돼 있어야 한다(T293 ⓒ)");
-            var d = PetData.Parse(ta.text);
+            // T293 ⓗ — 이제 표는 부팅이 들고 있다(GameData.Pet). 여기서 파일을 다시 읽지 않는다 —
+            //   자가 제 손으로 파싱하면 «부팅이 표를 안 들어도» 초록이라, 로더가 죽은 것을 못 본다.
+            var d = _app.Data.Pet;
+            Assert.IsNotNull(d, "부팅이 pet.json 을 GameData.Pet 에 올려야 한다(catalog «data.pet» · T293 ⓗ)");
             Assert.GreaterOrEqual(d.Pets.Count, 2, "표에 펫이 둘 이상 있어야 이 시험이 성립한다");
             world.SetPets(d, new List<PetData.Pet> { d.Pets[0], d.Pets[1] });
             yield return Frames(2);

@@ -68,6 +68,7 @@ namespace KkomaKnight.Game
             d.ArenaFoe = LoadArenaFoe(catalog);   // 같은 파일의 foe 칸(T240 3항)
             d.Achievement = LoadAchievement(catalog);
             d.Recipe = LoadRecipe(catalog);   // T290
+            d.Pet = LoadPet(catalog);         // T293 ⓗ
             d.Pass = LoadPass(catalog);       // T322
             d.GearTier = LoadGearTier(catalog);   // T316
             ApplyOverrides(d, catalog);   // T173·T325 — 덮어쓰기 표 넷은 App 이 서기 «전» 에 먹인다
@@ -197,6 +198,19 @@ namespace KkomaKnight.Game
         /// 장비 레시피 표 — 이 레포 전용 <c>Assets/KkomaKnight/recipe.json</c>(카탈로그 텍스트 «data.recipe» · T290).
         /// 못 읽으면 null 이고, 그러면 슬롯 강화가 <b>옛 그대로 골드만</b> 든다(강화가 막히지 않는다 — «표를 못 읽어 아무도 강화를 못 한다» 가 더 나쁘다).
         /// </summary>
+        /// <summary>
+        /// 펫 표 — 이 레포 전용 <c>Assets/KkomaKnight/pet.json</c>(카탈로그 텍스트 «data.pet» · T293).
+        /// 못 읽으면 null 이고, 그러면 펫이 <b>통째로 없던 옛 그대로</b>다(화면 13 이 «표가 아직 없다» · 장착 합 0 · 발동 0) —
+        /// 규칙 쪽이 전부 «표가 null 이면 빈 값» 으로 서 있어서 <b>부팅이 막히지 않는다</b>(다른 표 로더와 같은 결).
+        /// </summary>
+        static PetData LoadPet(AssetCatalog catalog)
+        {
+            var ta = catalog != null ? catalog.Text("data.pet") : null;
+            if (ta == null) { Debug.LogError("[KkomaKnight] pet.json 이 카탈로그(data.pet)에 없다 — 펫 표 없음"); return null; }
+            try { return PetData.Parse(ta.text); }
+            catch (Exception e) { Debug.LogError("[KkomaKnight] pet.json 파싱 실패: " + e.Message); return null; }
+        }
+
         static RecipeData LoadRecipe(AssetCatalog catalog)
         {
             var ta = catalog != null ? catalog.Text("data.recipe") : null;
