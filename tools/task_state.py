@@ -164,6 +164,29 @@ def lock_of(tid):
     return (sid, age)
 
 
+SHALLOW_MIN = 50        # 이만큼도 안 되는 역사면 «그 SID 가 최근에 커밋했나» 를 판단하지 않는다(아래 T329)
+
+
+def stale_but_alive(lock_age_min, sid_commit_age_min):
+    """
+    T329 — «시각으로는 죽었는데 임자는 살아 있는» lock 인가.
+
+    90분 규약은 «시각» 하나만 보는데, 워커가 **일은 계속하면서 lock 파일 갱신만 잊는** 일이 잦다.
+    그때 규약대로 «지났으니 뺏는다» 로 가면 **살아 있는 워커의 파일을 헤집는다** —
+    `docs/claims/README.md` 가 «실사고 2건» 으로 적어 둔 그 꼴이다.
+
+    «살아 있다» 의 잣대는 **90분 규약과 같은 자**를 쓴다: 그 SID 가 90분 안에 커밋했으면 살아 있다.
+    lock 보다 최근이기만 하면 되는 것이 아니다 — lock 이 다섯 시간 전이고 커밋이 네 시간 전이면 둘 다 죽은 것이다.
+
+    `sid_commit_age_min` 이 None 이면 **판단하지 않는다**(거짓으로 «죽었다» 고 말하지 않는다).
+    """
+    if lock_age_min is None or lock_age_min <= STALE_MIN:
+        return False
+    if sid_commit_age_min is None:
+        return False
+    return sid_commit_age_min <= STALE_MIN
+
+
 def _git(args):
     try:
         return subprocess.run(["git"] + args, cwd=ROOT, stdout=subprocess.PIPE,
@@ -322,6 +345,46 @@ def cmd_check(heads, rows, dups=None):
         print("             ⓑ «90분 지났나» 를 재는 쪽은 음수 나이를 받고, 그것은 늘 «방금 잡았다» 로 읽힌다")
         print("  고침: 갱신할 때 `date -u +%Y-%m-%dT%H:%M:%SZ` 가 준 값을 그대로 적는다(앞당겨 적지 않는다).")
         notes.append("lock 시각이 미래 %s" % " ".join(t[0] for t in future))
+
+    # ⓘ **«90분 지났다» 를 «잡아도 된다» 로 읽으면 안 되는 자리** — 임자가 lock 갱신만 잊고 일은 하고 있다 (T329 · 2026-09-09 14:2X 실측).
+    #    실측(그 순간 동시에 둘): `T320-b.lock` 12:38(106분 전)인데 그 SID 의 마지막 커밋은 **13:43**(41분 전) ·
+    #                            `T322.lock`   12:27(117분 전)인데 마지막 커밋은 **13:28**(56분 전).
+    #    ⚠ 이 자의 ⓖ 갈래는 «죽은 lock 은 안 찍는다 — 규약상 «잡아도 되는» 자리라 찍으면 거짓 경고» 라고 **일부러** 적혀 있는데,
+    #      지금 그 전제가 두 자리에서 거짓이다. ⓗ(«미래로 적힌 lock»)의 **대칭**이다 —
+    #      그쪽은 시각이 앞서 적혀 lock 이 **너무 오래 살고**, 이쪽은 갱신을 잊어 **너무 일찍 죽은 것으로 읽힌다**.
+    #    ⚠ **남의 lock 시각을 자가 고쳐 주지 않는다** — 그것은 «살아 있음» 을 위조하는 것이다. 사람에게 알리기만 한다.
+    #    ⚠ **CI 에서는 조용하다** — `actions/checkout@v4` 가 `fetch-depth` 없이 도는 잡은 역사가 한 판뿐이라
+    #      «그 SID 가 최근에 커밋했나» 를 물을 수가 없다. 그때는 아무 말도 안 한다(모르면 «죽었다» 고 하지 않는다).
+    #      ⇒ 이 갈래가 값을 하는 자리는 **lock 을 뺏을지 말지 정하는 워커의 터미널**이고, 거기서는 역사가 있다.
+    #      («CI 에서도 보이게» 하려고 fetch-depth 0 을 켜지 마라 — 이 참고 한 줄 값이 매 런 전체 클론 값보다 싸지 않다.)
+    #    ⚠ 막지 않는다(결정 493·627 · 조율 결함) — notes 에 실어 끝줄에만 남긴다.
+    alive = []
+    if os.path.isdir(CLAIMS) and _git(["rev-list", "--count", "HEAD"]).strip().isdigit() \
+       and int(_git(["rev-list", "--count", "HEAD"]).strip() or 0) >= SHALLOW_MIN:
+        for name in sorted(os.listdir(CLAIMS)):
+            if not name.endswith(".lock"):
+                continue
+            lk = lock_of(name[:-5])
+            if not lk or lk[1] <= STALE_MIN:
+                continue
+            when = _git(["log", "-1", "--format=%cI", "--fixed-strings", "--grep", lk[0]]).strip()
+            if not when:
+                continue
+            try:
+                t = datetime.datetime.fromisoformat(when)
+            except ValueError:
+                continue
+            age = (datetime.datetime.now(datetime.timezone.utc) - t).total_seconds() / 60.0
+            if stale_but_alive(lk[1], age):
+                alive.append((name[:-5], lk[0], lk[1], age))
+    if alive:
+        print("· (참고 · 실패 아님) **lock 시각은 90분을 넘겼는데 임자가 살아 있는 작업** — 규약대로 뺏으면 남의 일을 헤집는다:")
+        for tid, sid, lock_age, commit_age in alive:
+            print("  · %-8s docs/claims/%s.lock 은 %d분 전인데  %s 의 마지막 커밋은 **%d분 전**이다"
+                  % (tid, tid, lock_age, sid, commit_age))
+        print("  잡기 전에: 그 SID 의 최근 커밋을 읽어라(`git log --grep <SID>`) — 그 절을 아직 밀고 있으면 다른 일을 잡는다.")
+        print("  임자가 할 것: 90분 전에 `date -u +%Y-%m-%dT%H:%M:%SZ` 로 갱신해 push — 그것이 «살아 있다» 는 유일한 신호다(README).")
+        notes.append("lock 은 낡았는데 임자는 살아 있음 %s" % " ".join(t[0] for t in alive))
 
     bad = mismatches(heads, rows)
     if not bad:
@@ -557,12 +620,29 @@ def self_test():
             if "«미래»" in out_near:
                 print("⛔ 자기 검사 실패 — 1분 차(시계 차이)에 울었다(거짓 경고):\n%s" % out_near)
                 return 1
+
+            # ⓙ **«낡은 lock 인데 임자는 살아 있다»(T329)** — 순수 함수라 git 없이 그대로 잰다.
+            #    네 갈래를 다 본다: 잡아야 하는 것 하나 + 안 잡아야 하는 것 셋.
+            #    ⚠ «판단 못 함(None)» 이 «죽었다» 로 새면 CI(얕은 클론)에서 매 런 거짓 경고가 난다 — 그 갈래를 따로 잰다.
+            cases = [
+                # (lock 나이, 그 SID 의 마지막 커밋 나이, 잡아야 하나, 무엇을 재나)
+                (STALE_MIN + 20, 40,             True,  "낡은 lock + 최근 커밋 = 살아 있다(실측 T320-b·T322 꼴)"),
+                (STALE_MIN + 20, STALE_MIN + 10, False, "둘 다 낡았다 = 진짜로 죽은 자리(뺏어도 된다)"),
+                (STALE_MIN - 10, 1,              False, "lock 이 아직 살아 있으면 ⓖ 몫이지 이 갈래가 아니다"),
+                (STALE_MIN + 20, None,           False, "판단 못 함(얕은 클론 · CI) — 모르면 아무 말도 안 한다"),
+            ]
+            for lock_age, commit_age, want, why in cases:
+                got = stale_but_alive(lock_age, commit_age)
+                if got != want:
+                    print("⛔ 자기 검사 실패 — stale_but_alive(%s, %s) = %s (기대 %s) · %s"
+                          % (lock_age, commit_age, got, want, why))
+                    return 1
         finally:
             CLAIMS = keep_claims
 
         print("✓ task_state --self-test: 어긋난 짝을 잡고(T161) · ✅ 를 달면 조용하고 · 빈 번호는 통과하고 ·"
               " 같은 번호 두 제목을 잡고 · «행 없음 ↔ 접힌 행만» 을 가르고 · ⛔ 와 `\\|` 도 읽고 ·"
-              " 참고 줄이 마지막 요약에도 실리고(T231) · «⬜ + 살아 있는 lock» 을 잡되 죽은 lock 은 안 잡고(T238) · **미래로 적힌 lock 을 잡되 1분 차에는 안 울고**(T294) · **본문에 ✂ 를 인용한 살아 있는 줄을 접힘으로 안 센다**(T249)")
+              " 참고 줄이 마지막 요약에도 실리고(T231) · «⬜ + 살아 있는 lock» 을 잡되 죽은 lock 은 안 잡고(T238) · **미래로 적힌 lock 을 잡되 1분 차에는 안 울고**(T294) · **본문에 ✂ 를 인용한 살아 있는 줄을 접힘으로 안 센다**(T249) · **«낡은 lock 인데 임자는 살아 있다» 를 잡되 «둘 다 낡음»·«아직 살아 있음»·«판단 못 함» 셋에는 안 울고**(T329)")
         return 0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
