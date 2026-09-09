@@ -6,12 +6,16 @@
 지금도 어느 자도 이것을 안 본다. §5 점수(`ui_score`)는 **이름표의 자리**만 재므로 글자·색·잘림은 못 본다.
 
 사용:
-  python3 tools/screens_diff.py [<새 PNG 디렉터리>] [--old-ref origin/screens] [--min 0.2] [--top 8]
+  python3 tools/screens_diff.py [<새 PNG 디렉터리>] [--old-ref origin/screens]
+                                [--min 0.2] [--big 3] [--top 5] [--touched-assets yes|no]
     · 새 PNG 디렉터리 = 기본 `ui-screens`(CI 유니티 잡이 그 자리에 찍는다).
     · 옛 그림 = `git show <ref>:<이름>.png` — 기본은 지난 런이 올려 둔 `origin/screens`.
       (CI 에서는 그 앞에 `git fetch --no-tags --depth=1 origin screens` 가 있어야 한다.)
-    · --min = 이 비율(%) 이상 바뀐 화면만 적는다(기본 0.2% · 안티에일리어싱 잡음을 지나치기 위함).
-    · --top = 많이 바뀐 순으로 몇 개까지 적을지(기본 8 · 꼬리를 짧게 두려는 것이다 · T239 의 교훈).
+    · --min(0.2%) 아래 = «잡음» 으로 접는다 · --min~--big(3%) = «조금 바뀜» 으로 **이름만** 한 줄 ·
+      --big 이상 = 이름·비율·바뀐 y 범위까지 적는다. --top = 그 목록의 최대 줄 수(기본 5).
+    · --touched-assets = 이 커밋이 `Assets/` 를 건드렸는가. **회차 2 에서 붙인 자다** —
+      안 건드린 커밋인데 그림이 다르면 그것은 «이 커밋이 바꾼 것» 이 아니라 런마다 흔들리는 폭이고,
+      자가 그 한 줄을 스스로 붙인다(실측 근거는 ROUTINE §2 T282 6항).
 
 이 자는 **알리기만 한다 — 늘 `exit 0`.** 그림이 바뀌는 것은 대개 «뜻한 변경» 이라 빨갛게 할 일이 아니고,
 빨갛게 두면 워커가 «급하니 지나가자» 로 흐른다(결정 740 과 같은 셈). 사람이 «내가 안 바꾼 화면이 왜 바뀌었지» 를
@@ -128,7 +132,7 @@ def old_bytes(ref, name):
 
 
 def main(argv):
-    d, ref, mn, top = 'ui-screens', 'origin/screens', 0.2, 8
+    d, ref, mn, top, big_min, touched = 'ui-screens', 'origin/screens', 0.2, 5, 3.0, None
     rest = []
     i = 0
     while i < len(argv):
@@ -137,8 +141,12 @@ def main(argv):
             ref = argv[i + 1]; i += 2
         elif a == '--min' and i + 1 < len(argv):
             mn = float(argv[i + 1]); i += 2
+        elif a == '--big' and i + 1 < len(argv):
+            big_min = float(argv[i + 1]); i += 2
         elif a == '--top' and i + 1 < len(argv):
             top = int(argv[i + 1]); i += 2
+        elif a == '--touched-assets' and i + 1 < len(argv):
+            touched = argv[i + 1].strip().lower() in ('1', 'yes', 'true', 'y'); i += 2
         else:
             rest.append(a); i += 1
     if rest:
@@ -169,11 +177,12 @@ def main(argv):
             changed.append((pct, nm, span))
 
     changed.sort(reverse=True)
-    big = [c for c in changed if c[0] >= mn or c[0] < 0]
-    tiny = len(changed) - len(big)
-    print(f'[그림차] 화면 {len(names)}장 · **바뀐 화면 {len(big)}개**'
+    big = [c for c in changed if c[0] >= big_min or c[0] < 0]         # 눈에 보일 만큼
+    mid = [c for c in changed if mn <= c[0] < big_min]                # 애매한 자리 — 이름만
+    tiny = len(changed) - len(big) - len(mid)
+    print(f'[그림차] 화면 {len(names)}장 · **크게 바뀜(≥{big_min:g}%) {len(big)}개** · 조금 바뀜 {len(mid)}개'
           f'{f" · 새 화면 {len(new)}개" if new else ""}'
-          f'{f" · 잡음(<{mn}%) {tiny}개" if tiny else ""}'
+          f'{f" · 잡음(<{mn:g}%) {tiny}개" if tiny else ""}'
           f'{f" · 못 읽음 {len(unread)}개" if unread else ""}  (옛 그림 = {ref})')
     for pct, nm, span in big[:top]:
         where = f' · y {span[0]}~{span[1]}' if span else ''
@@ -181,10 +190,18 @@ def main(argv):
         print(f'[그림차]   {nm[:-4]} — {amount}{where}')
     if len(big) > top:
         print(f'[그림차]   … 그 밖 {len(big) - top}개')
+    if mid:
+        print('[그림차]   조금: ' + ' · '.join(f'{nm[:-4]} {pct:.1f}%' for pct, nm, _ in mid[:10]))
     for nm in new[:4]:
         print(f'[그림차]   {nm[:-4]} — **새 화면**(옛 그림에 없다)')
+    # T282 회차 2 — «이 런이 그림을 바꿀 수 있었나» 를 같이 말한다. Assets 를 안 건드린 커밋인데도
+    # 화면이 달라졌다면 그것은 이 커밋의 일이 아니라 **런마다 흔들리는 자리**다(실측: run 611 은 C# 0줄인데 열 장이 달랐다).
+    if touched is False and (big or mid):
+        print('[그림차] ⚠ 이 커밋은 `Assets/` 를 한 줄도 안 건드렸다 — 위는 «이 커밋이 바꾼 것» 이 아니라 **런마다 흔들리는 폭**이다(움직이는 화면·연출 위상).')
+    elif touched is True and not big and not mid:
+        print('[그림차] `Assets/` 를 건드린 커밋인데 달라진 그림이 없다 — 코드가 화면에 안 닿았거나(배선 빠짐) 원래 안 보이는 자리다.')
     if len(names) and len(big) > len(names) * 0.7:
-        print('[그림차] ⚠ 거의 다 바뀌었다 — 공통 요소(폰트·팔레트·해상도)를 건드렸거나 그리기가 흔들린 것이다. 둘은 다른 일이니 한 장을 눈으로 볼 것.')
+        print('[그림차] ⚠ 거의 다 크게 바뀌었다 — 공통 요소(폰트·팔레트·해상도)를 건드린 것이다. 한 장을 눈으로 볼 것.')
     print('[그림차] (보고만 — 이 자는 빨갛게 하지 않는다 · T282 · 뜻한 변경이면 그대로 두면 된다)')
     return 0
 
