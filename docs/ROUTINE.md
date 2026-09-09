@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-09 · 11:0X UTC) ⚑⚑ 주인 — «퀘스트에 이동 버튼 누르면 해당 거 가능하게 이동할 수 있게 해 주고, 혹은 뭔 거 게임 도전해야 하면 해당 거 손가락으로 가리키면서 클릭하라는 식으로 힌트 주기» → T318:** 실측 = «이동» 은 지금 **팝업만 닫는다**(`LobbyPopups.cs:586` `() => ov.Close()`). → 카운터별 목적지 표 + 목적지 버튼 위 **손가락 힌트**(GUI Pro `PictoIcon/hand.png` · 주인 에셋).
+
 - **(2026-09-09 · 10:5X UTC) ⚑⚑ 주인 — 퀘스트(15) 셋 더 → T311 6·7·8항:** «**받기 가능 퀘스트 맨 위로 올려 줘야 함**» · «**퀘스트 부분 다 어두컴컴하게 돼 있는데 완료됐을 때만 그래야 함**»(실측: run 700 `15_quest.png` 의 줄이 전부 어두운 갈색 · 레퍼런스는 미완료 = 크림 · 완료 = 어두움) · «**Disabled 라는 오브젝트 있던데 존나 튀고 별로임 · 없애든지**»(프리팹 조각 `Disable`/`Bg_Disable` 류가 켜져 있다).
 
 - **(2026-09-09 · 10:4X UTC) ⚑⚑ 주인 — «탐험 부분 얻을 거 없을 때도 빨간 점 알림 뜨네 · 해결해라 수정해» → T317:** 원인(코드) = `Expedition.AnyClaimable = CanClaim || CanQuick` — **빠른 탐험 충전이 남아 있기만 해도**(광고를 봐야 받는 것) 점이 켜지고, `minClaimMinutes 1` 이라 받고 1분만 지나도 다시 켜진다. → 점 = **쌓인 보상을 지금 받을 수 있을 때만**(충전 남음은 제외) · 문턱은 주인 답(4항).
@@ -7160,6 +7162,26 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 4. **확인** — `screens` **01**(셋업 세이브 = 받은 직후 · 충전 3 → 탐험 점 없음 · `UiShotsTests` 세팅 확인) + 주인 폰(받고 나면 점이 꺼지고 충전만 남아 있을 땐 안 켜짐).
 
 순서 — `Core/Expedition.cs`·`Core/Notify.cs` · 점을 다는 자리(`Screens.cs`·`LobbyMenu.cs`) · `expedition.json`. lock `T317`.
+
+### T318 — ⚑⚑ 주인: **퀘스트 «이동» 이 실제로 그 자리로 데려가고, 도전해야 하는 것은 손가락으로 가리키며 «눌러라» 힌트** (주인 2026-09-09 11:0X · T311 의 옆 · 자리 표 0줄)
+
+0. **주인 원문** — «퀘스트에 **이동 버튼 누르면 해당 거 가능하게 이동**할 수 있게 해 주고, 혹은 **뭔 거 게임 도전해야 하면 해당 거 손가락으로 가리키면서 클릭하라는 식으로 힌트** 주기». **지금**: «이동»(`LobbyPopups.cs:586`) 은 `ov.Close()` — 팝업만 닫고 아무 데도 안 간다.
+1. **목적지 표(`quest.json` 의 각 퀘스트에 `go` 키 · 코드에 문자열 매핑을 안 박는다)** — `go = {"screen": "...", "point": "..."}`:
+   | 카운터 | 이동 | 손가락이 가리키는 것 |
+   |---|---|---|
+   | `kill` · `chapterTry` | 로비 | **START** 버튼 |
+   | `dungeonTry` · `dungeonClear` | 이벤트 화면 던전 탭(20) | 첫 던전 «입장» |
+   | `chestOpen` | 상점 «상자» 절(10) | 첫 카드의 «1회» |
+   | `gearFuse` | 장비 → 대장간(08) | «합성» 버튼 |
+   | `petUpgrade` | 펫(13) | «전체 강화»(T293 뒤엔 «강화») |
+   | `expeditionClaim` · `expeditionFastClaim` | 로비 → 탐험 팝업(30) | «받기» / «빠른 탐험» |
+   | `login` · `loginDays` | (이동 없음 · 버튼은 ✓ 나 비활성) | — |
+   화면 이름·버튼 이름은 각 화면의 **이름 계약**(`.cs` 머리 주석)으로 찾는다 — 없으면 그 화면에 이름을 단다(태그와 별개).
+2. **손가락 힌트** — `App.Hint(screen, buttonName)`: 목적지 화면이 뜬 뒤 그 버튼 위에 **손가락 픽토**(`Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/256/hand.png` → `catalog.json` `pi.hand` 등재 · 주인 에셋 · 새 그림 아님)가 버튼 오른쪽 아래에서 **위아래로 콕콕**(DOTween · `SetLink` · 표 값 진폭·주기) + 버튼에 T234 류 빛 테두리 한 번. **끄는 조건**: 그 버튼을 누르거나 · 화면을 벗어나거나 · 표 값 초(예 8s) 가 지나면. 한 번에 힌트 하나. 튜토리얼이 아니다 — 저장 안 한다.
+3. **자** — EditMode: 표의 모든 퀘스트에 `go` 가 있거나(로그인류는 명시적으로 `null`) 운다 · `go.screen` 이 아는 화면 이름. PlayMode: «이동» 을 누르면 목적지 화면이 열리고 `Hint` 오브젝트가 그 버튼 자식으로 생기며 · 버튼을 누르면 사라진다 · 8초 뒤 사라진다. T300 P7 각본에 «이동» 한 번.
+4. **확인** — `screens` 로는 못 본다(동작) → 주인 폰(«이동» → 그 자리 · 손가락이 버튼을 가리킨다).
+
+순서 — `KkomaKnight/quest.json`(`go`) · `Core/Quest.cs`(파싱) · `Game/LobbyPopups.cs:586` · `Game/App.cs`(`Hint`) · `catalog.json`. **T311·T258 이 `LobbyPopups.cs` 를 쥐면 기다린다.** lock `T318`.
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
