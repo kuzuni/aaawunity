@@ -26,6 +26,12 @@ namespace KkomaKnight.Game
         readonly App _app; readonly BattleState G; readonly GameData D;
         readonly Transform _root; readonly RectTransform _pops;
         readonly float _zoom; readonly float _playerX;             // ui.json camera.zoom · playerX(프레임 폭 비율)
+        // ⚑ T319(주인 2026-09-09 11:2X «PvP 뜰 때 중앙에서 두 캐릭터 만나서 싸우는 식 · 내 플레이어가 오른쪽으로 이동 느낌이 아니라») —
+        //   챕터 판은 «플레이어를 화면 한 자리(_playerX)에 붙들고 세상을 흘려보내는» 꼴이다(LayoutX 의 원점이 _shownPX 라서).
+        //   그래서 1대1 판에서도 배경이 흐르고 **내가 오른쪽으로 가는 느낌**이 난다.
+        //   아레나 판은 그 반대로 둔다: **원점을 «둘이 만나는 점» 에 못 박고**(배경이 안 흐른다) 화면 가운데를 그 점으로 삼는다 —
+        //   그러면 내가 왼쪽에서 걸어 들어와 가운데에서 상대와 마주 선다(엔진 좌표·틱은 한 줄도 안 바뀐다).
+        readonly bool _fixedOrigin; readonly double _originPX; readonly float _originScreenX;
         public const float CharBaseHeight = 0.85f;                          // Character.prefab 스케일 1 의 키(유니티 단위 · 조사값)
         const float FootY = Layout.PlayerFootY / 100f;
         const float RoadCenterFrac = 0.41f;                          // 데모 씬의 길 중심(y −0.402)이 놓이는 프레임 비율 — 발 줄 40% 을 품는다(띠는 이 줄을 가운데로 ±RoadBandH/2 = 30.5~51.5% · ref-layout 지면 띠 30~51 과 같은 자리)
@@ -216,7 +222,7 @@ namespace KkomaKnight.Game
             foreach (var kv in _enemies)
             {
                 var v = kv.Value; if (v.E.Dead || v.Rig == null || v.DieT >= 0) continue;
-                float lx = LayoutX(v.E.WorldX); if (lx >= WorldCam.LayoutW || lx >= nearLx) continue;
+                float lx = FoeLayoutX(v.E.WorldX); if (lx >= WorldCam.LayoutW || lx >= nearLx) continue;
                 near = v; nearLx = lx;
             }
             if (near != null)
@@ -235,6 +241,15 @@ namespace KkomaKnight.Game
             // T240 1항 — 아레나 판은 챕터와 무관하게 «모래 마당»(레퍼런스 33). 일반 판은 종전대로 챕터가 무대를 정한다.
             _isArena = IsArenaRun(app);
             _theme = _isArena ? Theme.Arena : Theme.ForChapter(g.Chapter);
+            // T319 — 아레나 판의 «만나는 점» = 둘의 한가운데다.
+            //   1대1 판은 상대가 `D.Enemies.NodeGap` 에 서 있고(Battle.BuildDuelNode) 내가 거기서 StopDistance 만큼 앞에 멈춘다.
+            //   즉 만난 뒤 두 사람은 [gap − stop, gap] 에 서므로 그 한가운데(gap − stop/2)를 화면 가운데에 둔다 — 좌우 대칭이다.
+            if (_isArena)
+            {
+                _fixedOrigin = true;
+                _originPX = D.Enemies.NodeGap - g.C.StopDistance * 0.5;
+                _originScreenX = WorldCam.LayoutW * 0.5f;
+            }
             _shownPX = G.P.WorldX; _heldPrevFrame = false;
             _root = new GameObject("World").transform;
             BuildGround(); BuildProps(); BuildNodes(); BuildPlayer();
@@ -258,8 +273,24 @@ namespace KkomaKnight.Game
             if (u <= SpreadRamp) return stop + u + (mul - 1f) * u * u / (2f * SpreadRamp);
             return stop + SpreadRamp + (mul - 1f) * SpreadRamp / 2f + mul * (u - SpreadRamp);
         }
-        float LayoutX(double worldX) => Spread(worldX - _shownPX) * _zoom + _playerX;   // 원점 = 표시 기준 x(T20) — 킬 연출 중에는 엔진 x 보다 뒤
+        // 원점 = 표시 기준 x(T20) — 킬 연출 중에는 엔진 x 보다 뒤.
+        // T319 — 아레나 판만 «만나는 점» 에 못 박는다: 원점이 안 움직이므로 **배경이 안 흐르고** 플레이어 그림이 제 엔진 x 를 따라 걸어 들어온다.
+        float LayoutX(double worldX) => _fixedOrigin
+            ? Spread(worldX - _originPX) * _zoom + _originScreenX
+            : Spread(worldX - _shownPX) * _zoom + _playerX;
         Vector3 Pos(double worldX, float yFrac, float z = 0) => WorldCam.ToWorld(LayoutX(worldX), yFrac, z);
+        /// <summary>
+        /// T319 ⓑ — 아레나 판의 상대가 «오른쪽 밖에서 같은 속도로 가운데를 향해 걸어오는» 그림.
+        /// <para>
+        /// 엔진은 1대1 상대를 <c>NodeGap</c> 에 <b>세워 둔다</b>(적은 안 걷는다) — 그래서 화면 쪽에서만 <b>플레이어의 화면 x 를 가운데 기준으로 거울</b> 삼는다.
+        /// 값(거리·속도·판정·시드)은 한 줄도 안 본다: 거울이라 다가오는 속도가 플레이어와 <b>정확히 같고</b>, 둘이 만나는 순간
+        /// (플레이어 엔진 x = <c>NodeGap − StopDistance</c>) 이 식은 <see cref="LayoutX"/> 와 <b>같은 값</b>이 된다 —
+        /// <c>2·가운데 − (−stop/2·zoom + 가운데) = 가운데 + stop/2·zoom = LayoutX(NodeGap)</c>.
+        /// 즉 <b>싸움이 시작된 뒤로는 아무것도 안 바뀐다</b>(투사체·이펙트가 쓰는 자리도 그대로). 다른 판(챕터)에서는 손대지 않는다.
+        /// </para>
+        /// </summary>
+        float FoeLayoutX(double worldX) => _fixedOrigin ? 2f * _originScreenX - LayoutX(_shownPX) : LayoutX(worldX);
+        Vector3 FoePos(double worldX, float yFrac, float z = 0) => WorldCam.ToWorld(FoeLayoutX(worldX), yFrac, z);
         static float ScaleForHeightPct(float pct) => WorldCam.PctH(pct) / CharBaseHeight;
         static int SortBase(float layoutX) => 100 + Mathf.Clamp((int)((WorldCam.LayoutW + 200 - layoutX) / 6f), 0, 180);
         static bool OnScreen(Vector3 p, float margin = 4.5f) => p.x > -margin && p.x < margin;
@@ -306,7 +337,9 @@ namespace KkomaKnight.Game
         }
         void ScrollGround()
         {
-            float scroll = (float)(_shownPX * _zoom / WorldCam.PPU);
+            // T319 ⓒ — 아레나 판은 바닥도 안 흐른다. 땅 타일만 «표시 원점» 이 아니라 _shownPX 를 직접 봤는데(원점은 LayoutX 가 든다)
+            //   그대로 두면 소품·노드·사람은 서 있는데 바닥 무늬만 흘러 «내가 오른쪽으로 가는 느낌» 이 그대로 남는다 — 주인이 지적한 그 느낌이다.
+            float scroll = (float)((_fixedOrigin ? _originPX : _shownPX) * _zoom / WorldCam.PPU);
             float left = WorldCam.ToWorld(0, 0).x - _tileW;
             float off = Mathf.Repeat(scroll, _tileW);
             for (int i = 0; i < _fieldTiles.Count; i++) { var p = _fieldTiles[i].transform.position; p.x = left + (i % _tileCols) * _tileW - off + _tileW * 0.5f; _fieldTiles[i].transform.position = p; }
@@ -720,11 +753,11 @@ namespace KkomaKnight.Game
             var seen = new HashSet<EnemyState>(); bool engaged = false;
             foreach (var n in G.Nodes) foreach (var e in n.Enemies)
             {
-                float lx = LayoutX(e.WorldX);
+                float lx = FoeLayoutX(e.WorldX);
                 if (lx > WorldCam.LayoutW + 120 || (e.Dead && !_enemies.ContainsKey(e))) continue;
                 var v = Ensure(e); seen.Add(e);
                 v.Rig.Tick(dt);
-                v.Rig.transform.position = Pos(e.WorldX, FootY);
+                v.Rig.transform.position = FoePos(e.WorldX, FootY);
                 v.Rig.SetSortingBase(SortBase(lx));
                 if (v.Hold == 0) v.ShownHp = e.Hp;
                 if (e.Dead && v.Hold == 0)
@@ -736,8 +769,10 @@ namespace KkomaKnight.Game
                     continue;
                 }
                 if (e.Stun > 0 && !e.Dead) { v.Rig.Play(CharacterRig.Stun); if (v.StunFx == null) { v.StunFx = Fx.Spawn("fx.stun", Vector3.zero, 0.5f, 0, v.Rig.transform, true); if (v.StunFx != null) { v.StunFx.transform.localPosition = new Vector3(0, CharBaseHeight * 1.05f, -0.3f); v.StunFx.transform.localRotation = Quaternion.identity; } } }
-                else { if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } if (!v.Rig.Attacking) v.Rig.Play(CharacterRig.Idle); }
-                v.BarBg.transform.position = Pos(e.WorldX, Layout.FootHpBarY / 100f);
+                // T319 ⓑ — 아레나 판에서 상대가 «걸어오는» 동안에는 걷기 클립을 돈다(거울이라 플레이어가 걸으면 상대도 그만큼 다가온다).
+                //   만나면 플레이어와 같은 시각에 멎으므로(_moving = false) 대기 클립으로 돌아온다.
+                else { if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } if (!v.Rig.Attacking) v.Rig.Play(_fixedOrigin && _moving ? CharacterRig.Walk : CharacterRig.Idle); }
+                v.BarBg.transform.position = FoePos(e.WorldX, Layout.FootHpBarY / 100f);
                 SetBar(v.BarBg, v.BarFill, e.MaxHp > 0 ? v.ShownHp / e.MaxHp : 0);
                 PlaceFootText(v.BarTxt, v.BarBg.transform.position, FootNum(v.ShownHp), v.BarBg.gameObject.activeSelf, Layout.EnemyFootBarW * Layout.FootBarScale);
                 if (!e.Dead && lx < WorldCam.LayoutW) engaged = true;
@@ -934,7 +969,7 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 연출 이벤트 ─────────────────────────
-        Vector3 EnemyPos(EnemyState e, float up = 0.45f) => e != null ? Pos(e.WorldX, FootY) + Vector3.up * up : _player.transform.position + Vector3.up * up;
+        Vector3 EnemyPos(EnemyState e, float up = 0.45f) => e != null ? FoePos(e.WorldX, FootY) + Vector3.up * up : _player.transform.position + Vector3.up * up;
 
         // ───────────────────────── 번개 특전(T70 · 주인 «번개 이펙트 인터넷에서 에셋 받아서 되게 해줘») ─────────────────────────
         /// <summary>번개 한 줄기의 세로 길이 = 적 키의 이 배(지시서 T70 2항 «적 키의 1.5~2배»).</summary>
