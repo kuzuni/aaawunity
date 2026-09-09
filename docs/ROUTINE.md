@@ -9222,6 +9222,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — ⓐ `catalog.json` · `docs/assets-map.md`(lock `T360` · 로컬) → ⓑ `Game/GearUi.cs` · `Game/Profile.cs` · `Game/LobbyPopups.cs`(루틴 · lock 들 뒤).
 
+> **✔ ⓐ 확인 끝 · lock 반납 · ⓑ 는 남았다(20:3X · sess-1425-9466 · 워커 N · 결정 1024(커밋 메시지의 1023 은 1024) · 죽은 lock 인수)** — 런 900 `screens` 16·17·19 눈: 받은 칸의 체크가 초록 둥근 `Toggle_Check_02_On`. ⓑ 조각 «Check» 넷은 전부 살아 있는 남의 lock 안 파일(`LobbyPopups` T363/T364 · `Profile` T370 · `GearUi`)이라 여는 사람 몫 — lock 을 쥐고 기다리지 않는다.
 > **🔄 push · 확인 전(19:4X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 996 · lock `T360` 쥔 채)** — ⓐ 카탈로그 `pi.check` → `Toggle_Check_02_On.png`(코드 0줄). ⓑ 조각 «Check» 넷은 루틴. 확인 = `screens` 16·17·19.
 
 ### T361 — ⚑⚑ 주인: **리본 제목과 팝업 상자 사이가 떠 있다 — 상자의 «위쪽만» 늘려 이어 붙인다** (주인 2026-09-10 «`Title_Tapered_01_Brown` 이런 식으로 타이틀 감싸고 있는 프레임들이 아래 팝업들이랑 거리가 떨어져 있어서 거슬림 · 위치 자체는 괜찮아서 · 팝업 중에 그렇게 떨어져 있는 거 있으면 팝업에 상단 부분만 좀 늘려서 그거랑 이어진 거처럼 보이게 딱 해 줘»)
@@ -9307,13 +9308,14 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 >
 > **▸ 참고(T369 1회차 실측 · 2026-09-09 19:4X · sess-1910-19132 · 워커 M · 결정 1012)** — 이 절의 «뜬 자리» 의 수치가 나왔다: 리본 조각은 **꼬리가 몸통보다 아래로 늘어진 그림**이라 몸통이 rect 밑단보다 **rect 높이의 18.26%**(`Title_01_(No)Deco_*` 36장 전부 · 가운데 열 α>16 마지막 행 93/115) · `Title_02_*` 17.5% · `Title_Tapered_01` 1.0% 위에서 끝난다 — `Overlay.RibbonBodyBottomFrac(spriteName)` 에 표로 있다. Sliced 에 세로 테두리 0 이라 «비» 로 선다(결정 1006 ⓒ). 앞 회차의 «17 = 24% · 15 = 7%» 는 17 = Deco(18.26% + 윤곽선) · 15 = Tapered(1% + 상자 자리) 로 맞아떨어진다 — 조각이 이제 하나(Tapered)인 공통 팝업은 틈이 1% 뿐이고, **출석 16(프리팹에 박힌 Deco)** 이 남는다. 상자 위 변을 올릴 양 = `rh × RibbonBodyBottomFrac(ribbon)` 이면 PNG 를 다시 안 재도 된다(자는 PNG 로 · 앞 회차 함정 그대로).
 
-### T362 — ⚑⚑ 주인: **리본 제목 조각을 전부 `Title_Tapered_01_Brown` 으로** (주인 2026-09-10 «ui.title.yellow 이런 거처럼 모든 리본 모양으로 타이틀 감싸는 프레임인 거 Title_Tapered_01_Brown 으로 교체하기»)
+### T362 ✅ — ⚑⚑ 주인: **리본 제목 조각을 전부 `Title_Tapered_01_Brown` 으로** (주인 2026-09-10 «ui.title.yellow 이런 거처럼 모든 리본 모양으로 타이틀 감싸는 프레임인 거 Title_Tapered_01_Brown 으로 교체하기»)
 
 0. **실측** — 리본 제목은 전부 카탈로그 키 `ui.title.tangerine/plum/yellow/green/red/sky`(`Title_01_NoDeco_<색>` 조각 · 코드 28곳) + `ui.titleBrown`(이미 그 조각 · T324 장비 세부). 두 조각의 자식은 `Text (TMP)` 하나로 **같다**(YAML).
 1. **고침** — 여섯 키의 **경로만** `Title_Tapered_01_Brown.prefab` 으로(`gen_catalog.py`). 키 이름은 그대로 — 코드·자가 그 이름으로 찾는다. 다음 회차가 원하면 `ui.titleBrown` 하나로 모은다(그때는 이름 바꾸기 = 28곳 + 자).
 2. **자** — 없음(카탈로그 게이트가 경로 실재를 본다). ⚠ 리본 뒤 빛(T320)·리본-상자 이어 붙이기(T361)는 조각 크기가 같으므로 그대로.
 3. **확인** — `screens` 15·16·17·35 + 주인 폰.
 
+> **✅ 확인 끝 · lock 반납(20:3X · sess-1425-9466 · 워커 N · 결정 1024(커밋 메시지의 1023 은 1024) · 죽은 lock 인수)** — 런 900 `screens` 15·17 눈: 갈색 `Title_Tapered_01_Brown`(35 는 리본 없음). ⚠ **16 출석의 노란 리본은 여섯 키 밖** — 출석 팝업의 프리팹 제 조각(`Deco`)이다. 주인 «모든 리본» 이 그쪽도 가리키면 `LobbyPopups.cs` 를 여는 사람이 한 줄(살아 있는 lock 안이라 이 회차는 안 넓혔다).
 > **🔄 push · 확인 전(19:4X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 996 에 같이 · lock `T362` 쥔 채)** — 1항 그대로.
 
 4. ⚠ **ⓑ — 조각 안에 박힌 리본은 ⓐ 로 안 바뀐다(주인 2026-09-10 «출석보상은? 아직도 리본인데»).** 조각 통째로 서는 팝업은 리본이 프리팹 자식이라 카탈로그 키를 안 거친다 — 자리: LobbyPopups.cs:342 · LobbyPopups.cs:797 · Overlay.cs:473 · Overlay.cs:776. **고침** = 세우는 자리에서 `UiKit.Spawn("ui.titleBrown", …)` 을 옛 리본과 **같은 rect** 에 세우고 글자(`Text (TMP)`)를 옮긴 뒤 옛 리본을 끈다(조각 원본 불변 §1 · `RibbonGlowOn` 은 새 리본에). 자 = 켜진 리본 조각 이름이 `Title_Tapered_01_Brown` 으로 시작. **확인 = `screens` 15·16 을 찍어서 본다**(주인 상시 지시).
@@ -9352,7 +9354,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 >
 순서 — `Game/LobbyPopups.cs` · `Core/QuestRun.cs` · 자. **T311·T292·T321·T303 lock 안 파일** — 그 절들 뒤 lock `T364`(T359·T363 과 한 사람이 같이).
 
-### T365 — ⚑ 주인: **상점 다이아·골드 카드 그라디언트 채도 낮추기 — 상자 카드들처럼** (주인 2026-09-10 «그 상점 다이아카드, 골드 카드 부분 채도 떨어뜨려줘 그라디안트들 다른 상자들 카드들처럼» · T341 의 뒤)
+### T365 ✅ — ⚑ 주인: **상점 다이아·골드 카드 그라디언트 채도 낮추기 — 상자 카드들처럼** (주인 2026-09-10 «그 상점 다이아카드, 골드 카드 부분 채도 떨어뜨려줘 그라디안트들 다른 상자들 카드들처럼» · T341 의 뒤)
 
 0. **실측** — T341 주인 값의 채도: 다이아 1.0/1.0 · 골드 0.77/0.92. 상자 카드 셋(`cardChestLegend/Rare/Epic`)은 0.45~0.99(평균 0.79).
 1. **고침** — HSV 로 갈라 **H·V 는 그대로, S 만 ×0.65** → `#AE59FF`/`#F159FF` · `#354D6A`/`#66CAFF`. 카탈로그 `col.grad.cardGem.*`·`cardGold.*` + `GradientPalette` 폴백 + 설명 줄. 더/덜 은 비율 하나로.
@@ -9361,6 +9363,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 > **🔄 push · 확인 전(19:1X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 1000 · lock `T365` 쥔 채)** — 1항 그대로.
 > **🔄 2회차 push(주인 «다이아 카드 채도 더 떨궈야 할 듯»)** — 다이아만 ×0.45(#C78CFF/#F68CFF) · 골드 ×0.65 그대로.
+> **✅ 확인 끝 · lock 반납(20:3X · sess-1425-9466 · 워커 N · 결정 1024(커밋 메시지의 1023 은 1024) · 죽은 lock 인수)** — 런 900 `screens` 09 눈: 다이아 연보라→연분홍 · 골드 남→하늘 · 상자 카드와 같은 가라앉은 채도 · `GradientPaletteTests(2)` 실패 0. 남은 것은 주인 폰뿐.
 
 순서 — `catalog.json` · `Game/GradientPalette.cs`. lock `T365`.
 
@@ -9373,15 +9376,17 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Core/Notify.cs` · `Game/Screens.cs` · `Game/LobbyPopups.cs` · 자. **`LobbyPopups.cs` lock 들 뒤** lock `T366`(T359·T363·T364 와 한 사람이 같이).
 
+> **✔ 1회차 확인 끝 · lock 반납(20:3X · sess-1425-9466 · 워커 N)** — 런 900 `[CI명부]` `PrivilegeDotTests(3)`·`PrivilegeDotPlayTests(1)` 실패 0 · `screens` 01 눈: «특권» 칸 오른쪽 위 빨간 점. **남은 것 = ⓒ 카드 «받기» 버튼 점**(`LobbyPopups.PrivilegeScreen` · T363/T364 lock 안 · 여는 사람이 카드별 `Privilege.Can` 으로 `UiKit.AlertDot` 한 줄).
 > **🔄 1회차 push · 확인 전(19:4X · sess-1425-9466 · 워커 N · 결정 1009(커밋 메시지의 1008 은 1009) · lock `T366` 쥔 채)** — 1항 ⓑ(로비 «특권» 칸 점 · `Screens.cs` `PrivDot`)를 했다. ⓐ 판정은 **새로 안 만들었다** — `Core.Privilege.AnyClaimable` 이 이미 «점이 이것만 본다» 는 함수다(`Notify.cs` 는 T355 lock 안). 자 = EditMode `PrivilegeDotTests` 3(안 산 카드는 못 켠다 포함) · PlayMode `PrivilegeDotPlayTests` 1. **ⓒ 카드 «받기» 버튼 점은 남았다** — `LobbyPopups.PrivilegeScreen` 이 T360 lock 안 · 여는 사람이 버튼마다 `Privilege.Can` 으로 `UiKit.AlertDot` 한 줄. 확인 = 다음 완주 런 두 자 + `screens` 01.
 
-### T367 — ⚑ 주인: **재화 흡수 — 다이아는 다이아 pill · 골드는 골드 pill 로** (주인 2026-09-10 «다이아 흡수, 골드 흡수는 상단에 재화들 각각 표시되는 부분 · 다이아는 다이아 쪽 골드는 골드 쪽으로 흡수 되야함» · T354 의 뒤)
+### T367 ✅ — ⚑ 주인: **재화 흡수 — 다이아는 다이아 pill · 골드는 골드 pill 로** (주인 2026-09-10 «다이아 흡수, 골드 흡수는 상단에 재화들 각각 표시되는 부분 · 다이아는 다이아 쪽 골드는 골드 쪽으로 흡수 되야함» · T354 의 뒤)
 
 0. **까닭(실측)** — `RewardPopup.PillFor(icon)` 이 다이아를 `hud.gem`·`ui.iconGemPurple`·`ui.iconGemBlue` **셋**으로만 알았다. 보상 칸 대부분은 **`ui.gemRed`** 를 쓴다(데일리 기프트 `GiftArt` · 출석 `AttendIcons` · 챕터 상자 · 퀘스트 트랙) → 그 다이아는 «탑바에 자리 없는 재화» 로 화면 가운데 아래(`OrbSinkName`)로 빨려 들어갔다. 골드는 `ui.coin` 하나라 맞았다.
 1. **고침** — 목록에 하나를 더하지 않고 **뜻으로** 가른다: 키에 `gem` 이 들어 있으면 다이아 pill, `coin`/`gold` 면 골드 pill(카탈로그 재화 키가 전부 그 꼴). `PillFor` 는 public.
 2. **자** — `RewardAbsorbTests`: `ui.gemRed`·`hud.gem` → `ResourceBar_Gem` · `ui.coin`·`hud.gold` → `ResourceBar_Coin` · 책·열쇠 → null.
 3. **확인** — 주인 폰(다이아가 다이아 칸으로).
 
+> **✅ 확인 끝 · lock 반납(20:3X · sess-1425-9466 · 워커 N · 결정 1024(커밋 메시지의 1023 은 1024) · 죽은 lock 인수)** — 런 900 `[CI명부]` `RewardAbsorbTests(2)` 실패 0(`PillFor` 자 여섯이 그 안 · `:96~101`). 남은 것은 주인 폰뿐.
 > **🔄 push · 확인 전(19:3X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 1002 · lock `T367` 쥔 채)** — 1·2항 그대로.
 
 순서 — `Game/RewardPopup.cs` · `Tests/PlayMode/RewardAbsorbTests.cs`. lock `T367`.
