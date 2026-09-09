@@ -145,6 +145,10 @@ def main(argv):
         for line in h:
             print("      %s" % line[:180])
     print("고칠 것이면 같은 커밋에서 고치고, 우연히 같은 글자면 그냥 지나간다(이 자는 찾아 줄 뿐 판정하지 않는다).")
+    # T281 — 마지막 줄은 판정이다(꼬리 한 줄로 읽는 워커가 빨강을 초록으로 읽지 않게).
+    #   ⚑ 이 자는 «판정하지 않는» 자라 표시도 그렇게 읽히게 쓴다 — «걸린 자리 N건(사람이 본다)».
+    print("✗ check_stale_asserts: 지운 값을 아직 가리키는 자리 %d건 — 우연히 같은 글자일 수 있다(사람이 하나씩 본다%s)"
+          % (len(found), " · --strict 라 rc=1" if strict else " · rc=0"))
     return 1 if strict else 0
 
 

@@ -77,7 +77,11 @@ def main(argv):
             print("  %d 이 %d 곳:" % (n, len(dup[n])))
             for ln, head in dup[n]:
                 print("    %s:%d  %s" % (DOC, ln, head))
-        print("다음에 쓸 번호: %d" % nxt)
+        # T281 — **마지막 줄은 판정이어야 한다.** 여기 있던 «다음에 쓸 번호: N» 은 초록일 때와
+        #   똑같이 생겨서, 꼬리 한 줄로 읽는 워커가 **빨강을 초록으로 읽는다**(2026-09-08 실측 사고).
+        #   그 수는 버리지 않고 판정 줄 안으로 옮겼다.
+        print("✗ check_decisions: %d 이상 번호 겹침 %d건 — %s · 다음에 쓸 번호: %d (늦게 push 한 쪽이 옮긴다 · 참조 «결정 N» 도 같이)"
+              % (FROZEN_BELOW, len(new), ", ".join(str(n) for n in new), nxt))
         return 1
     print("✓ check_decisions: 결정 %d개 · %d 이상 번호 겹침 0 (다음 번호 %d)" % (len(rows), FROZEN_BELOW, nxt))
     return 0
