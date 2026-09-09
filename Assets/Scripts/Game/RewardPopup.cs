@@ -158,8 +158,22 @@ namespace KkomaKnight.Game
             // ⚠ 조각은 `ui.light2`(LightKeySmall)다 — `ui.light1` 은 살이 꽉 찬 «수레바퀴» 라 제목 뒤가 **노란 원반**이 된다
             //    (`screens` run 542 눈 확인). 워커 G 가 T234 회차 3 에서 리본 뒤 빛에 같은 교체를 하고 «부채처럼 살이 퍼진다» 를 확인했다 —
             //    레퍼런스 35 의 빛도 그 꼴이라 같은 조각을 쓴다. 크기·짙기는 이 회차에 안 건드린다(한 번에 손잡이 하나 · T234 회차 2).
-            UiKit.LightBehind(glow, null, UiKit.LightKeySmall, UiKit.LightPeriod, Palette.A(Palette.Reward, GlowAlpha),
-                              sidePx: UiKit.FrameW * GlowSide, clip: false);
+            // ⚑ T320(주인 2026-09-09 12:1X «리워드 부분도 반 잘린 마스크») — 리본 팝업들과 **같은 «반 잘림»** 을 여기에도.
+            //   이 팝업엔 리본이 없다(글자 제목 + 노란 가로줄) ⇒ 자르는 줄은 **위 노란 줄**(표 ㊹ `RwLineTop`)로 잡는다.
+            //   그러면 빛이 제목 «리워드» 뒤에서 위로만 오르고 줄 아래로는 한 픽셀도 안 샌다 — 리본 팝업의 «리본 바닥» 과 같은 뜻이다.
+            //   배율은 빛 한 변에서 되돌려 낸다(마스크가 빛보다 좁아야 옆도 살짝 잘린다 — ⓐ 의 555 ↔ 584.3 그 비).
+            float glowSide = UiKit.FrameW * GlowSide;
+            float glowScale = glowSide / (Overlay.TitleMaskW * Overlay.TitleLightSidePerMask);
+            var gmask = Overlay.TitleGlowMask(glow, glowScale);
+            {
+                float hostH = UiKit.FrameH * Layout.RwGlow.H / 100f;
+                float cutFromTop = (Layout.RwLineTop.Y - Layout.RwGlow.Y) / Layout.RwGlow.H * hostH;   // 담개 위끝 → 노란 줄
+                float cutY = hostH * 0.5f - cutFromTop;                                                // 담개 가운데 기준(위가 +)
+                gmask.anchoredPosition = new Vector2(0f, cutY + gmask.sizeDelta.y * 0.5f);             // 마스크 «바닥» 이 그 줄
+            }
+            UiKit.LightBehind(gmask, null, UiKit.LightKeySmall, UiKit.LightPeriod, Palette.A(Palette.Reward, GlowAlpha),
+                              sidePx: glowSide, clip: false);   // 자르는 것은 위 Mask 다(RectMask2D 를 겹쳐 걸면 마스크가 둘)
+            Overlay.TitleGlowPlate(gmask, glowScale);
             UiKit.Tag(glow, "빛살");
 
             // ⓒ 제목 — 노란 굵은 «리워드»

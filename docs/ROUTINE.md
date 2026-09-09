@@ -7695,7 +7695,21 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > **화면마다 한 줄 더 부르는 길은 안 골랐다** — 부르는 곳이 다시 여러 곳이 되고, 그 파일들은 자주 **남의 lock 안**이다(`LobbyPopups.cs` = T258). ⇒ **`RibbonGlowFollow`**(신규 · `Assets/Scripts/Game/`)가 리본 rect 가 바뀐 판에만 다시 잡는다. **화면 코드는 한 줄도 안 바뀐다.**
 > ⚑ **남기는 규칙** — «부르는 곳을 한 곳으로 모았다» 는 **세우는 곳**만의 이야기다. 그 뒤에 **고치는 곳이 여럿이면 결과는 여럿**이다. 모으려면 «바뀌는 것을 따라가는 책임» 도 한 곳에 둔다.
 > ⚑ **형제 순서** — `SetSiblingIndex(리본 자리)` 는 **이미 앞에 있으면 뒤로 민다**(나를 빼는 순간 리본이 한 칸 당겨진다). 런 810 의 유일한 빨강이 그것이었고 `UiKit.LightBehind` 의 보정을 그대로 가져와 고쳤다 — **레포가 이미 아는 함정은 레포에서 베낀다.**
-> **확인** = 다음 완주 런 `screens` **15·16·17·21·24·36** 에 리본 뒤 반 잘린 빛 + `OddsPopupTests` 새 단언 초록.
+> **✔ ⓑ 확인(런 823 · 닿는 범위 안에서는 끝났다)** — `OddsPopupTests` 초록 + `screens` **36 눈 확인: 반 잘린 부채가 명판 뒤에서 위로만** 뜬다(리본 아래로 0). `Overlay.OpenBox` 로 서는 팝업은 전부 같이 받는다.
+> ⚠ **`screens` 15(퀘스트)·16(출석)에는 안 뜬다 — 자는 그것을 모른다.** 두 팝업은 **제 프리팹으로 서고 제 리본을 쓴다**(`LobbyPopups:304`·`:701` 이 `UiKit.Find(root, "Popup")` 로 프리팹 상자를 집는다) ⇒ `Overlay.OpenBox` 를 **안 지나므로** ⓑ 의 한 줄이 안 닿는다. (`LobbyPopups` 에서 `OpenBox` 로 서는 것은 데일리 기프트·탐험·빠른 탐험 셋뿐이다.)
+> ⚑ **«한 곳으로 모았다» 의 세 번째 얼굴** — ① 세우는 곳이 여럿 ② 세운 뒤 고치는 곳이 여럿(결정 920) ③ **그 문으로 아예 안 들어오는 화면**. **«전부» 를 주장하기 전에 그 문을 안 쓰는 쪽을 세어 본다.**
+> **▸ 그 둘을 고치는 사람에게(한 줄 처방)** — `LobbyPopups.cs` 는 지금 **T258 lock** 안이라 내가 못 댄다(출석 빛은 T305 가 따로 부른 자리이기도 하다). 프리팹 리본(`rib`)을 제 자리로 잡은 **다음** 줄에 이것만 넣으면 된다:
+> ```csharp
+> var glowHost = UiKit.Rect(box, "TitleGlow");           // 리본 «앞» 형제로 — Overlay.RibbonGlow 의 그 보정을 그대로
+> int t = rib.GetSiblingIndex(); if (glowHost.GetSiblingIndex() < t) t--; glowHost.SetSiblingIndex(Mathf.Max(0, t));
+> var m = Overlay.TitleGlowMask(glowHost, rib.rect.width / Overlay.TitleRibbonRefW);
+> UiKit.LightBehind(m, null, UiKit.LightKeySmall, UiKit.LightPeriod, Palette.A(Palette.Yellow, Overlay.TitleGlowAlpha),
+>                   sidePx: m.sizeDelta.x * Overlay.TitleLightSidePerMask, clip: false);
+> var f = UiKit.Ensure<RibbonGlowFollow>(glowHost.gameObject); f.Ribbon = (RectTransform)rib;
+> Overlay.PlaceRibbonGlow(glowHost, (RectTransform)rib);
+> ```
+> **▸ 리워드 35 는 붙였다**(주인 12:1X «리워드 부분도 반 잘린 마스크») — 그 팝업엔 리본이 없어 **자르는 줄을 «위 노란 줄»**(표 ㊹ `RwLineTop`)로 잡았다(리본 팝업의 «리본 바닥» 과 같은 뜻). 배율은 **빛 한 변에서 되돌려** 냈다 — 마스크가 빛보다 좁아야 옆도 살짝 잘린다(ⓐ 의 555 ↔ 584.3 그 비). **새 수 0.**
+> **남은 확인** = 다음 완주 런 `screens` **35**(리워드) · **17·21·24**(리본 팝업들).
 >
 > **ⓑ 이전 메모** — `Overlay.TitleGlowMask(host, scale)`·`TitleGlowPlate(mask, scale)` 가 **배율 인자**를 이미 받는다 — `scale = 리본 폭 ÷ Overlay.TitleRibbonRefW(656)`. 특전은 1 이고 **새 수는 0** 이다. (`UiKit.cs` 가 아니라 `Overlay.cs` 에 둔 까닭은 `FitRibbonText` 와 같다 — 그 파일이 남의 lock 이면 헬퍼가 못 선다.)
 > **✔ 확인 끝(런 783)** — `screens` **04** 눈 확인: 빛이 **리본 위로만** 부채꼴로 뜨고 **리본 아래로 새는 빛이 0** 이다(주인 «반 잘리는 식으로 마스크 되게» 그대로) · `[CI명부] PerkShineTests(3)` 실패 0.
