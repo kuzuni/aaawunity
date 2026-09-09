@@ -104,6 +104,9 @@ namespace KkomaKnight.Tests.Play
             // T78(주인 2026-09-07) — 18_challenge7 · 19_pass 는 화면째 삭제돼 촬영 대상이 아니다
             _app.ShowScreen("privilege"); yield return Frames(3); yield return Shot("11_shop_special"); _app.ShowScreen("lobby"); yield return Frames(1);
             LobbyPopups.Quest(_app); yield return Frames(2); yield return Shot("15_quest"); _app.Overlay.Close(); yield return Frames(1);
+            // T258 4항 — 같은 팝업의 «업적» 판. 주인이 보는 길이 `screens` PNG 라 판마다 한 장씩 남긴다
+            //   (한 장만 찍으면 «업적 탭이 어떻게 생겼나» 를 아무도 못 본다). §5 채점 행은 아직 «일일» 판만 잰다(ref-layout ⑳).
+            LobbyPopups.Achievements(_app); yield return Frames(2); yield return Shot("15b_quest_ach"); _app.Overlay.Close(); yield return Frames(1);
             LobbyPopups.Attendance(_app); yield return Frames(2); yield return Shot("16_attendance"); _app.Overlay.Close(); yield return Frames(1);
             LobbyPopups.DailyGift(_app); yield return Frames(2); yield return Shot("17_daily_gift"); _app.Overlay.Close(); yield return Frames(1);
             // 35 공통 «리워드» 획득 팝업(T241 · 표 ㊹) — 어느 지급 자리에서 뜨든 그림은 같으므로 «팝업 그 자체» 를 찍는다.
