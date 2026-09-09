@@ -158,13 +158,23 @@ namespace KkomaKnight.Core
             return t.IsOpen(index, Medal(s, t, daily));
         }
 
+        /// <summary>
+        /// <b>그 판</b>(일일 또는 주간)에 받을 것이 하나라도 있는가 — T364 ⓑ 의 <b>탭 점</b>이 물어보는 자리다(팝업 안 탭은 판마다 따로 켜진다).
+        /// <para>둘을 합친 <see cref="AnyClaimable(SaveData, QuestData)"/> 가 이것을 부른다 — 판정이 두 곳에 적히지 않게.</para>
+        /// </summary>
+        public static bool AnyClaimable(SaveData s, QuestData d, bool daily)
+        {
+            if (s == null || d == null) return false;
+            var t = daily ? d.Daily : d.Weekly;
+            for (int i = 0; i < t.Steps.Count; i++) if (CanClaim(s, d, daily, i)) return true;
+            return false;
+        }
+
         /// <summary>받을 것이 하나라도 있는가 — 빨간 점(T96 ⓔ)이 물어보는 자리다.</summary>
         public static bool AnyClaimable(SaveData s, QuestData d)
         {
             if (s == null || d == null) return false;
-            for (int i = 0; i < d.Daily.Steps.Count; i++) if (CanClaim(s, d, true, i)) return true;
-            for (int i = 0; i < d.Weekly.Steps.Count; i++) if (CanClaim(s, d, false, i)) return true;
-            return false;
+            return AnyClaimable(s, d, true) || AnyClaimable(s, d, false);
         }
 
         /// <summary>

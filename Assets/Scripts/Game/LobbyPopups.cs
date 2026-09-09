@@ -215,6 +215,44 @@ namespace KkomaKnight.Game
             return order.ToArray();
         }
         static int[] _qOrder;
+        /// <summary>T363 — 퀘스트 목록 상자 바탕의 알파(주인 «255 중에 1»). 0 이 아닌 까닭은 그 자리에서 조각이 살아 있어야 하기 때문이다.</summary>
+        public const float ListBoxAlpha = 1f / 255f;
+        /// <summary>
+        /// T364 ⓐ(주인 2026-09-10 «받기 가능한 퀘스트들을 맨 위로») — <b>업적 판</b>의 화면 줄 → 표 줄.
+        /// 받을 수 있는 것 먼저, 그 안은 표 순서 그대로(안정 정렬 · 받고 나면 제자리로 내려간다).
+        /// <para>
+        /// ⚑ <b>일일·주간 판에는 이 묶음이 없다</b> — 퀘스트 줄에는 «받기» 단추가 없고 메달은 깨는 순간 저절로 쌓인다(<see cref="QuestRun.Medal"/>).
+        /// 그 판에서 «받는» 것은 <b>점수 트랙 칸</b>이고 그것은 줄이 아니다(T359 의 자리). 그래서 줄 정렬은 <see cref="QuestOrder"/> 그대로 둔다
+        /// (레퍼런스 15 도 «Go» 줄이 위 · ✓ 줄이 아래다 — 주인 지시와 부딪히지 않는다).
+        /// </para>
+        /// </summary>
+        static int[] AchOrder(SaveData s, AchievementData d)
+        {
+            if (s == null || d == null) return null;
+            var order = new List<int>();
+            for (int i = 0; i < d.List.Count; i++) if (Core.Achievement.CanClaim(s, d, d.List[i].Counter)) order.Add(i);
+            for (int i = 0; i < d.List.Count; i++) if (!Core.Achievement.CanClaim(s, d, d.List[i].Counter)) order.Add(i);
+            return order.ToArray();
+        }
+        static int[] _aOrder;
+        /// <summary>
+        /// T364 ⓑ — 팝업 안 탭(0 일일 · 1 주간 · 2 업적)에 <b>지금 받을 것</b>이 있는가.
+        /// <para>
+        /// 판정을 여기서 새로 세지 않는다: 일일·주간은 <see cref="QuestRun.AnyClaimable(SaveData, QuestData, bool)"/>(그 판의 점수 트랙) ·
+        /// 업적은 <see cref="Core.Notify.AchievementClaimable"/>. 로비 사이드의 빨간 점이 보는 것과 <b>같은 수</b>라
+        /// «로비에는 점이 있는데 탭에는 없는» 자리가 생기지 않는다.
+        /// </para>
+        /// <para>날 넘김은 팝업이 열릴 때 이미 밀었다(<see cref="QuestRun.Roll"/> · 이 함수보다 먼저 불린다).</para>
+        /// </summary>
+        static bool TabClaimable(App app, int tab)
+        {
+            if (tab == 2)
+            {
+                var G = app != null ? app.Data : null;
+                return G != null && app.Save != null && Core.Notify.AchievementClaimable(G, app.Save);
+            }
+            return _qs != null && _qd != null && QuestRun.AnyClaimable(_qs, _qd, tab == 0);
+        }
         /// <summary>T311 5항 — 직사각 자리(프레임 %)의 오른쪽에 «높이만큼의 정사각» 을 잡는다(폭 = 높이 × 프레임 세로/가로).</summary>
         static Layout.R SquareRight(Layout.R r)
         {
@@ -433,7 +471,17 @@ namespace KkomaKnight.Game
             var listR = _qAch ? new Layout.R(Layout.QsListBox.X, Layout.QsTrackBox.Y, Layout.QsListBox.W,
                                              Layout.QsListBox.Y + Layout.QsListBox.H - Layout.QsTrackBox.Y)
                               : Layout.QsListBox;
-            var listBox = UiKit.Panel(box, "ListBox", "fr.r12", Palette.A(Palette.Dim, 0.55f)); UiKit.Pct(listBox.rectTransform, listR.Within(B));
+            // T363(주인 2026-09-10 «퀘스트 부분에 ListBox 이거 투명도 1로 해 255 중에») — 목록 상자 바탕은 **거의 투명**하다.
+            //   주인이 0 이 아니라 **1** 을 불렀다: 완전히 지우면 조각이 사라지고(자리·마스크·레이캐스트가 같이 없어진다),
+            //   1/255 면 «보이지는 않는데 여전히 거기 있는» 상자다. 그래서 끄지 않고 알파만 내린다.
+            var listBox = UiKit.Panel(box, "ListBox", "fr.r12", Palette.A(Palette.Dim, ListBoxAlpha)); UiKit.Pct(listBox.rectTransform, listR.Within(B));
+            // 조각(`Progression_Mission_02`)이 제 `ListBox` 를 들고 있으면 그것도 같이 내린다 — 주인이 보는 것은 «화면의 ListBox» 지 «누가 세웠나» 가 아니다.
+            foreach (var t2 in box.GetComponentsInChildren<Transform>(true))
+            {
+                if (t2.name != "ListBox" || t2 == listBox.transform) continue;
+                var im2 = t2.GetComponent<Image>(); if (im2 == null) continue;
+                var c2 = im2.color; c2.a = ListBoxAlpha; im2.color = c2;
+            }
 
             // 미션 줄 = 프리팹 ScrollView/Content(GridLayoutGroup) — 1열 · 칸 = 표 ⑳ 줄 · 세로 간격 = 피치 − 줄
             var sv = (RectTransform)UiKit.Find(box, "ScrollView");
@@ -451,6 +499,7 @@ namespace KkomaKnight.Game
             }
             RectTransform row1 = null, row2 = null, medal1 = null, title1 = null, bar1 = null, go1 = null;
             _qOrder = QuestOrder(_qt, _qs, _qDaily);   // T311 6항 — 할 일 남은 줄이 위 · 다 한 줄이 아래(레퍼런스 15 · «Go» 줄이 위, ✓ 줄이 아래)
+            _aOrder = AchOrder(app.Save, _ad);          // T364 ⓐ — 업적 판은 «받을 수 있는 줄» 이 맨 위(주인)
             // T257 — 표가 프리팹 줄(6)보다 많으면(일일·주간 8줄) 첫 줄을 복제해 채운다. 목록은 ScrollView 안이라 넘치면 스크롤된다.
             if (content != null && content.childCount > 0)
                 while (content.childCount < QuestRows)
@@ -485,6 +534,10 @@ namespace KkomaKnight.Game
                 if (!tabOn) foreach (var im in t.GetComponentsInChildren<Image>(true)) im.color = Color.Lerp(im.color, Palette.Dim, 0.45f);   // 비활성 탭은 어둡게(첫 탭 «일일» 활성)
                 // T69-lobbypopups — 탭마다 «검은 아웃라인»(레퍼런스 15 도 세 탭이 각자 어두운 외곽선이다) · 어둡게 칠한 «뒤» 에 걸어야 링이 Dim 쪽으로 섞이지 않는다
                 UiKit.Bordered(t);
+                // T364 ⓑ(주인 «받을 수 있는 퀘스트 있으면 퀘스트 해당 탭에 빨간점 알림») — **그 탭에 받을 것이 있으면** 점.
+                //   ⚑ 판정은 판마다 다르다: 일일·주간은 그 판의 점수 트랙(`QuestRun.AnyClaimable(s, d, daily)`) · 업적은 `Achievement`.
+                //     지금 보고 있는 탭에도 켠다 — «봤다» 칸이 없으므로 조건이 사라져야 꺼진다(T167).
+                if (TabClaimable(app, ti)) UiKit.AlertDot(t, "TabDot", new Vector2(1, 1), new Vector2(-4, 4), 52);
             }
             // 비평 이름표(표 ⑳)
             if (band != null) UiKit.Tag(band, "제목 리본"); UiKit.Tag(box, "팝업 박스"); UiKit.Tag(listBox.transform, "목록 상자");
@@ -559,7 +612,9 @@ namespace KkomaKnight.Game
         {
             var parts = new QuestRowParts();
             var item = frame;
-            var row = _ad != null && i < _ad.List.Count ? _ad.List[i] : null;
+            // T364 ⓐ — i 는 «화면의 몇 번째 줄» 이고 표의 줄은 `_aOrder` 가 정한다(받을 수 있는 줄 먼저 · 퀘스트의 `_qOrder` 와 같은 문법).
+            int ai = _aOrder != null && i < _aOrder.Length ? _aOrder[i] : i;
+            var row = _ad != null && ai < _ad.List.Count ? _ad.List[ai] : null;
             if (row == null) return parts;
             var save = app.Save;
             int have = Core.Achievement.Count(save, row.Counter);
@@ -614,6 +669,9 @@ namespace KkomaKnight.Game
             }, Layout.QsRowGo.Within(Layout.QsRow1));
             btn.name = "AchBtn"; parts.Go = btn;
             if (!can) UiKit.SetInteractable(btn.GetComponent<Button>(), false);
+            // T364 ⓒ(주인 «받기 버튼에도 빨간점 알림 떠야 함») — 받을 수 있을 때만 점. 판정은 위의 `can` 하나뿐이다
+            //   (버튼의 옷·눌림·점이 **같은 수**에서 나온다 — 셋이 갈라지면 «주황인데 안 눌리는» 자리가 생긴다).
+            if (can) UiKit.AlertDot(btn, "ClaimDot", new Vector2(1, 1), new Vector2(-4, 4), 52);   // 자리·크기 = T136 의 버튼 점 규격
             UiKit.Bordered(frame);
             if (parts.Medal != null) UiKit.Bordered(parts.Medal, UiKit.BorderKeySmall);
             return parts;

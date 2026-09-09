@@ -1,0 +1,169 @@
+using System.Collections;
+using KkomaKnight.Core;
+using KkomaKnight.Game;
+using NUnit.Framework;
+using TMPro;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
+using UnityEngine.UI;
+
+namespace KkomaKnight.Tests.Play
+{
+    /// <summary>
+    /// T363·T364 — 퀘스트 팝업(15)의 <b>목록 상자 알파</b>와 <b>«받을 것이 있다» 를 말하는 세 자리</b>(줄 차례 · 탭 점 · 버튼 점).
+    /// <list type="bullet">
+    /// <item><b>T363</b> — 목록 상자 바탕 알파 = 1/255(주인 «255 중에 1»). 0 이 아니라 1 이라 조각은 그 자리에 살아 있다.</item>
+    /// <item><b>T364 ⓐ</b> — 업적 판은 «받을 수 있는 줄» 이 위로 온다. <b>수를 안 적고 규칙으로 잰다</b>: 화면을 위에서 훑을 때
+    ///   «받을 수 있음» 이 한 번 false 가 되면 다시 true 가 되면 안 된다(안정 정렬이라 그 안의 차례는 표 그대로).</item>
+    /// <item><b>T364 ⓑ</b> — 탭 점은 <b>그 탭</b>의 판정을 따른다(일일·주간은 그 판의 점수 트랙 · 업적은 업적 판정).</item>
+    /// <item><b>T364 ⓒ</b> — 줄의 «받기» 버튼 점도 같은 판정 하나에서 나온다(옷·눌림·점이 갈라지면 «주황인데 안 눌리는» 자리가 생긴다).</item>
+    /// </list>
+    /// <para>⚠ <b>«켠 것만으로 출석 업적 하나가 받을 수 있다»</b>(App.Create → Quests.Login · T288-1 이 치른 값) — 그래서 이 자는
+    /// «새 세이브면 받을 것이 없다» 를 절대 전제하지 않는다. 대신 <b>판정과 화면이 같은가</b>만 잰다.</para>
+    /// </summary>
+    public class QuestClaimDotTests
+    {
+        App _app; PlayLog _log;
+
+        [SetUp] public void SetUp() { _log = new PlayLog(); }
+        [TearDown] public void TearDown() { _log?.Dispose(); _log = null; Time.timeScale = 1f; try { PlayerPrefs.DeleteKey(SaveStore.Key); } catch { } }
+
+        IEnumerator Boot()
+        {
+            try { PlayerPrefs.DeleteKey(SaveStore.Key); } catch { }
+            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            float t0 = Time.realtimeSinceStartup;
+            while (App.I == null && Time.realtimeSinceStartup - t0 < 60f) yield return null;
+            Assert.IsNotNull(App.I, "Bootstrap 이 60초 안에 App 을 세워야 한다");
+            _app = App.I;
+            yield return Frames(2);
+        }
+        IEnumerator Shutdown()
+        {
+            if (_app != null) { if (_app.UiCanvas != null) Object.Destroy(_app.UiCanvas.gameObject); Object.Destroy(_app.gameObject); }
+            _app = null;
+            yield return Frames(3);
+        }
+        static IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
+
+        /// <summary>그 자리(버튼·탭) 아래에 켜진 빨간 점이 있는가 — 이름은 세우는 쪽이 정한다(`ClaimDot`·`TabDot`).</summary>
+        static bool HasDot(Transform t, string name)
+        {
+            if (t == null) return false;
+            foreach (var k in t.GetComponentsInChildren<Transform>(true))
+                if (k.name == name && k.gameObject.activeInHierarchy) return true;
+            return false;
+        }
+
+        [UnityTest]
+        public IEnumerator 목록_상자는_거의_투명하다_255분의_1()
+        {
+            yield return Boot();
+            LobbyPopups.Quest(_app);
+            yield return Frames(1);
+
+            int seen = 0;
+            foreach (var t in _app.Overlay.Root.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name != "ListBox") continue;
+                var im = t.GetComponent<Image>(); if (im == null) continue;
+                seen++;
+                Assert.AreEqual(LobbyPopups.ListBoxAlpha, im.color.a, 1e-3,
+                                "목록 상자 바탕은 알파 1/255(주인 2026-09-10 «255 중에 1»)");
+            }
+            Assert.GreaterOrEqual(seen, 1, "목록 상자가 한 개는 있어야 이 자가 뜻이 있다");
+            yield return Shutdown();
+        }
+
+        [UnityTest]
+        public IEnumerator 업적판은_받을_수_있는_줄이_위로_오고_버튼에_점이_붙는다()
+        {
+            yield return Boot();
+            var d = _app.Data != null ? _app.Data.Achievement : null;
+            Assert.IsNotNull(d, "업적 표가 실려야 한다");
+
+            // 표의 **마지막** 줄을 깬다 — 차례가 정말 바뀌는지 보려면 «원래 아래에 있던 줄» 이어야 한다.
+            var last = d.List[d.List.Count - 1];
+            Achievement.Add(_app.Save, last.Counter, Achievement.Goal(_app.Save, d, last.Counter));
+            _app.Persist();
+            Assert.IsTrue(Achievement.CanClaim(_app.Save, d, last.Counter), "깼으니 받을 수 있어야 한다(전제)");
+
+            LobbyPopups.Achievements(_app);
+            yield return Frames(1);
+            var root = _app.Overlay.Root;
+
+            // ⓐ 규칙 — 위에서 훑어 «받을 수 있음» 이 꺼진 뒤에 다시 켜지면 안 된다(받을 수 있는 것이 전부 위에 모여 있다).
+            bool seenNotClaimable = false; int claimTop = 0; int lastRowIndex = -1;
+            for (int i = 0; i < d.List.Count; i++)
+            {
+                var r = UiKit.Find(root, "Ach:" + i); Assert.IsNotNull(r, "줄 " + i);
+                var title = UiKit.Find(r, "Title"); Assert.IsNotNull(title, "줄 " + i + " 의 제목");
+                string label = title.GetComponent<TMP_Text>().text;
+                var btn = UiKit.Find(r, "AchBtn"); Assert.IsNotNull(btn, "줄 " + i + " 의 «받기»");
+                bool can = btn.GetComponent<Button>().interactable;   // 눌림 = CanClaim(AchievementTabTests 가 그 짝을 이미 못 박았다)
+
+                if (can) { Assert.IsFalse(seenNotClaimable, "받을 수 있는 줄(" + label + ")이 못 받는 줄 아래에 있다"); claimTop++; }
+                else seenNotClaimable = true;
+
+                // ⓒ — 버튼 점은 «받을 수 있을 때만»
+                Assert.AreEqual(can, HasDot(btn, "ClaimDot"), "«" + label + "» 의 받기 점은 받을 수 있을 때만 뜬다");
+                if (label == last.Label) lastRowIndex = i;
+            }
+            Assert.GreaterOrEqual(claimTop, 1, "받을 수 있는 줄이 하나는 있어야 이 자가 뜻이 있다");
+            Assert.Less(lastRowIndex, d.List.Count - 1, "표의 마지막 줄이 깼으니 제 자리보다 위로 올라와야 한다");
+
+            // ⓑ — 업적 탭 점
+            Assert.IsTrue(HasDot(UiKit.Find(root, "Tab:2"), "TabDot"), "받을 업적이 있으면 «업적» 탭에 점");
+
+            yield return Shutdown();
+        }
+
+        [UnityTest]
+        public IEnumerator 다_받으면_점이_꺼지고_줄이_표_차례로_돌아간다()
+        {
+            yield return Boot();
+            var d = _app.Data.Achievement;
+            foreach (var row in d.List)
+                while (Achievement.CanClaim(_app.Save, d, row.Counter))
+                    Achievement.Claim(_app.Save, d, row.Counter, out _, out _);
+            _app.Persist();
+
+            LobbyPopups.Achievements(_app);
+            yield return Frames(1);
+            var root = _app.Overlay.Root;
+
+            Assert.IsFalse(HasDot(UiKit.Find(root, "Tab:2"), "TabDot"), "받을 것이 없으면 탭 점은 꺼진다(T167 — «봤다» 칸이 없다)");
+            for (int i = 0; i < d.List.Count; i++)
+            {
+                var r = UiKit.Find(root, "Ach:" + i);
+                Assert.IsFalse(HasDot(UiKit.Find(r, "AchBtn"), "ClaimDot"), "줄 " + i + " 의 받기 점도 꺼진다");
+                var title = UiKit.Find(r, "Title");
+                Assert.AreEqual(d.List[i].Label, title.GetComponent<TMP_Text>().text, "받을 것이 없으면 줄은 표 차례 그대로다");
+            }
+            yield return Shutdown();
+        }
+
+        [UnityTest]
+        public IEnumerator 일일_주간_탭_점은_그_판의_트랙을_따른다()
+        {
+            yield return Boot();
+            var q = _app.Data != null ? _app.Data.Quest : null;
+            Assert.IsNotNull(q, "퀘스트 표가 실려야 한다");
+
+            // 일일 판의 줄을 전부 깨서 메달을 쌓는다 — 그러면 그 판의 첫 트랙 칸이 열린다(받을 수 있다).
+            foreach (var quest in q.Daily.Quests) QuestRun.Bump(_app.Save, quest.Counter, quest.Goal);
+            _app.Persist();
+            Assert.IsTrue(QuestRun.AnyClaimable(_app.Save, q, true), "일일 트랙에 받을 칸이 생겨야 한다(전제)");
+
+            LobbyPopups.Quest(_app, true);
+            yield return Frames(1);
+            var root = _app.Overlay.Root;
+            Assert.IsTrue(HasDot(UiKit.Find(root, "Tab:0"), "TabDot"), "일일에 받을 것이 있으면 «일일» 탭에 점");
+            Assert.AreEqual(QuestRun.AnyClaimable(_app.Save, q, false), HasDot(UiKit.Find(root, "Tab:1"), "TabDot"),
+                            "«주간» 탭 점은 주간 판의 판정만 따른다(일일 것을 빌려 오지 않는다)");
+
+            yield return Shutdown();
+        }
+    }
+}
