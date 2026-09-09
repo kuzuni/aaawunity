@@ -16,7 +16,36 @@ namespace KkomaKnight.Core
             /// <summary>펫알 개수(지옥의 문).</summary>
             public double PetEgg;
             public double Gold;
-            public bool Any => PetEgg > 0 || Gold > 0;
+            /// <summary>T291 — 층 보상 레시피의 <b>부위</b>(<c>helm</c>·<c>boot</c>… · 아이템 이름은 <see cref="Recipes.Item"/> 가 만든다). 없으면 빈 글자.</summary>
+            public string RecipePart = "";
+            /// <summary>T291 — 그 부위 레시피 개수.</summary>
+            public double Recipe;
+            /// <summary>T291 — 3의 배수 층에 주는 키 이름(<see cref="GachaKeys.Blue"/> 계열). 없으면 빈 글자.</summary>
+            public string KeyItem = "";
+            /// <summary>T291 — 그 키 개수.</summary>
+            public double Key;
+            public bool Any => PetEgg > 0 || Gold > 0 || Recipe > 0 || Key > 0;
+        }
+
+        /// <summary>
+        /// T291 — <b>층이 있는 던전</b>의 층별 보상 규칙(<c>dungeon.json</c> 의 <c>floors</c>). 이 블록이 <b>없으면 그 던전은 층을 안 센다</b>(지옥의 문).
+        /// <para>수는 한 자도 코드에 없다 — 주인이 답을 바꾸면 이 블록만 고친다(§2 T291 5항의 기본값 넷도 여기 값이다).</para>
+        /// </summary>
+        public sealed class FloorRule
+        {
+            /// <summary>층 → 부위 차례(순환) — <c>N</c> 층은 <c>RecipeOrder[(N-1) % Count]</c>.</summary>
+            public List<string> RecipeOrder = new List<string>();
+            /// <summary>첫 클리어 = 층수 × 이 값 · 그 뒤(클리어·소탕) = 층수 × <see cref="RecipeClearPer"/>.</summary>
+            public double RecipeFirstPer = 2, RecipeClearPer = 1;
+            /// <summary>이 수의 배수 층에 키를 준다(0 이면 키 없음).</summary>
+            public int KeyEvery = 3;
+            /// <summary>키 차례(순환) — <c>N</c> 층은 <c>KeyOrder[(N/KeyEvery - 1) % Count]</c>.</summary>
+            public List<string> KeyOrder = new List<string>();
+            public double KeyAmount = 1;
+            /// <summary>키를 <b>첫 클리어에만</b> 주는가(기본 true — 소탕마다 주면 티켓 두 장으로 키가 매일 난다 · §2 T291 5항 ⓑ).</summary>
+            public bool KeyFirstOnly = true;
+            /// <summary>표의 골드를 <b>모든 층에</b> 그대로 얹는가(주인이 «골드 대신» 이라 하지 않았다).</summary>
+            public bool GoldEveryFloor = true;
         }
 
         public sealed class Entry
@@ -31,6 +60,8 @@ namespace KkomaKnight.Core
             public Reward Sweep = new Reward();
             /// <summary>이 던전으로 «실제 도전» 할 때의 판 규칙(T183 · 주인 2026-09-07 12:0X) — 표는 <c>dungeon.json</c> 의 <c>run</c> 이고 코드에 숫자를 안 박는다.</summary>
             public RunRule Run = new RunRule();
+            /// <summary>T291 — 층 규칙(<c>floors</c>). <b><c>null</c> 이면 이 던전은 층이 없다</b>(지옥의 문 — 옛 한 벌 보상 그대로).</summary>
+            public FloorRule Floors;
         }
 
         /// <summary>하루가 바뀌면 <b>이 수 미만일 때만</b> 이 수로 채운다(주인 «2개 미만일 시에 2개로» — 더하지 않는다).</summary>
@@ -77,7 +108,7 @@ namespace KkomaKnight.Core
             {
                 var key = e["key"].Str("");
                 if (string.IsNullOrEmpty(key)) throw new FormatException("dungeon.json: dungeons[].key 가 비었다");
-                d.Dungeons.Add(new Entry { Key = key, First = Rew(e["first"]), Clear = Rew(e["clear"]), Sweep = Rew(e["sweep"]), Run = Rule(e["run"], key) });
+                d.Dungeons.Add(new Entry { Key = key, First = Rew(e["first"]), Clear = Rew(e["clear"]), Sweep = Rew(e["sweep"]), Run = Rule(e["run"], key), Floors = Fl(e["floors"], key) });
             }
             if (d.Dungeons.Count == 0) throw new FormatException("dungeon.json: dungeons 가 비어 있다");
             if (d.DailyRefill < 0) throw new FormatException("dungeon.json: dailyRefill 은 0 이상이어야 한다");
@@ -86,6 +117,28 @@ namespace KkomaKnight.Core
             return d;
         }
         static Reward Rew(JNode j) => new Reward { PetEgg = j["petEgg"].Num(), Gold = j["gold"].Num() };
+
+        /// <summary>
+        /// T291 — «floors» 블록 → <see cref="FloorRule"/>. <b>블록이 없으면 <c>null</c></b>(그 던전은 층이 없다 · 지옥의 문).
+        /// <para>있으면서 <c>recipeOrder</c> 가 비면 <b>던진다</b> — 표를 반쯤 적어 두면 «층은 세는데 보상이 안 나오는» 조용한 판이 된다.</para>
+        /// </summary>
+        static FloorRule Fl(JNode j, string key)
+        {
+            if (!j.IsObject) return null;
+            var f = new FloorRule();
+            foreach (var p in j["recipeOrder"].Items()) { var s = p.Str(""); if (!string.IsNullOrEmpty(s)) f.RecipeOrder.Add(s); }
+            foreach (var p in j["keyOrder"].Items()) { var s = p.Str(""); if (!string.IsNullOrEmpty(s)) f.KeyOrder.Add(s); }
+            f.RecipeFirstPer = j["recipeFirstPer"].Num(f.RecipeFirstPer);
+            f.RecipeClearPer = j["recipeClearPer"].Num(f.RecipeClearPer);
+            f.KeyEvery = (int)j["keyEvery"].Num(f.KeyEvery);
+            f.KeyAmount = j["keyAmount"].Num(f.KeyAmount);
+            f.KeyFirstOnly = j["keyFirstOnly"].Bool(f.KeyFirstOnly);
+            f.GoldEveryFloor = j["goldEveryFloor"].Bool(f.GoldEveryFloor);
+            if (f.RecipeOrder.Count == 0) throw new FormatException("dungeon.json: " + key + ".floors.recipeOrder 가 비었다");
+            if (f.KeyEvery > 0 && f.KeyOrder.Count == 0) throw new FormatException("dungeon.json: " + key + ".floors.keyOrder 가 비었다(keyEvery 가 0 이 아니다)");
+            if (f.RecipeFirstPer < 0 || f.RecipeClearPer < 0 || f.KeyAmount < 0) throw new FormatException("dungeon.json: " + key + ".floors 의 개수는 0 이상이어야 한다");
+            return f;
+        }
         /// <summary>«run» 블록 → <see cref="RunRule"/>(없으면 기본값 = 일반 전투와 같은 판 · T183).</summary>
         static RunRule Rule(JNode j, string key)
         {
@@ -264,12 +317,49 @@ namespace KkomaKnight.Core
             return "";
         }
 
-        /// <summary>소탕으로 받는 보상(못 하면 null) — 표의 <c>sweep</c> 그대로다(<c>first</c> 는 안 읽는다).</summary>
+        /// <summary>
+        /// T291 — <b>층 보상 셈은 여기 한 곳</b>이다(화면 셋 — 카드 «획득 가능»·세부 팝업·리워드 팝업 — 이 전부 이것을 부른다).
+        /// <para>
+        /// 층이 없는 던전(<c>floors</c> 없음 · 지옥의 문)이면 <b>표의 한 벌을 그대로</b> 돌려준다 — 옛 동작이 한 치도 안 바뀐다.
+        /// 층이 있으면 <b>새 <see cref="DungeonData.Reward"/> 를 만들어</b> 돌려준다(표를 절대 안 건드린다 — 표를 고치면 다음 층 셈이 오염된다).
+        /// </para>
+        /// <b>부위·키는 «순환»</b> 이다 — 7층은 다시 투구, 12층 키는 다시 파랑. 주인이 «이런 식으로» 라고만 했으므로 표의 차례를 돌린다(§2 T291 5항 ⓐⓒ).
+        /// </summary>
+        /// <param name="floor">몇 층인가(1 부터).</param>
+        /// <param name="first">그 층을 <b>처음</b> 깨는가(첫 클리어면 레시피가 두 배 · 키도 여기서만 난다).</param>
+        /// <param name="sweep">소탕인가 — 골드 바탕만 표의 <c>sweep</c> 줄에서 읽는다(레시피는 «첫 아님» 과 같다).</param>
+        public static DungeonData.Reward FloorReward(DungeonData.Entry e, int floor, bool first, bool sweep = false)
+        {
+            if (e == null) return null;
+            var base_ = sweep ? e.Sweep : (first ? e.First : e.Clear);
+            var f = e.Floors;
+            if (f == null || floor <= 0) return base_;                  // 층이 없는 던전 — 옛 그대로
+            var r = new DungeonData.Reward
+            {
+                PetEgg = base_ != null ? base_.PetEgg : 0,
+                Gold = (f.GoldEveryFloor && base_ != null) ? base_.Gold : 0,
+            };
+            if (f.RecipeOrder.Count > 0)
+            {
+                r.RecipePart = f.RecipeOrder[(floor - 1) % f.RecipeOrder.Count];
+                r.Recipe = (first ? f.RecipeFirstPer : f.RecipeClearPer) * floor;
+            }
+            bool keyFloor = f.KeyEvery > 0 && floor % f.KeyEvery == 0 && f.KeyOrder.Count > 0;
+            if (keyFloor && (first || !f.KeyFirstOnly))
+            {
+                r.KeyItem = f.KeyOrder[(floor / f.KeyEvery - 1) % f.KeyOrder.Count];
+                r.Key = f.KeyAmount;
+            }
+            return r;
+        }
+
+        /// <summary>소탕으로 받는 보상(못 하면 null) — 층이 있으면 <b>최고층의 «첫 아님» 보상</b>(T291 · 주인 «클리어한 최고층 보상 · 최초 보상은 안 줌»), 없으면 표의 <c>sweep</c> 그대로.</summary>
         public static DungeonData.Reward Prize(SaveData s, DungeonData d, string key, string today)
         {
             if (!Can(s, d, key, today)) return null;
             var e = d.Of(key);
-            return e != null ? e.Sweep : null;
+            if (e == null) return null;
+            return e.Floors == null ? e.Sweep : FloorReward(e, Floor(s, key), false, sweep: true);
         }
 
         /// <summary>
@@ -287,9 +377,21 @@ namespace KkomaKnight.Core
             var prize = Prize(s, d, key, today);
             if (prize == null) return null;
             if (!DungeonTickets.Spend(s, d, key, today)) return null;   // 티켓이 그 사이 0 이 됐으면 보상도 없다
+            Pay(s, prize);
+            return prize;
+        }
+
+        /// <summary>
+        /// T291 — 보상 한 벌을 세이브에 <b>실제로 얹는다</b>(골드·펫알·레시피·키). 주는 자리가 둘(<see cref="Grant"/> 소탕 · <see cref="GrantClear"/> 클리어)이라 한 곳에 모은다 —
+        /// 나뉘어 있으면 한쪽만 새 칸을 얹는 날 <b>그 경로에서만 조용히 안 주는</b> 사고가 난다(T257 훅이 겪은 것과 같은 갈래).
+        /// </summary>
+        static void Pay(SaveData s, DungeonData.Reward prize)
+        {
+            if (s == null || prize == null) return;
             s.Gold += prize.Gold;
             s.PetEgg += prize.PetEgg;
-            return prize;
+            if (prize.Recipe > 0 && !string.IsNullOrEmpty(prize.RecipePart)) Recipes.Add(s, prize.RecipePart, (int)Math.Round(prize.Recipe));
+            if (prize.Key > 0 && !string.IsNullOrEmpty(prize.KeyItem)) GachaKeys.Add(s, prize.KeyItem, prize.Key);
         }
 
         /// <summary>1단계에 «지급을 왜 뗐나» 를 적어 두었던 자리 — 2단계가 <see cref="Grant"/> 로 채웠다(문구는 옛 기록이 가리키므로 남긴다).</summary>
@@ -306,16 +408,34 @@ namespace KkomaKnight.Core
         /// 던전 판이 아니거나(<paramref name="key"/> 가 비었다) 표에 없는 키면 <c>null</c> 이고 아무것도 안 바뀐다.
         /// </summary>
         public static DungeonData.Reward GrantClear(SaveData s, DungeonData d, string key)
+            => GrantClear(s, d, key, Challenge(s, d, key));
+
+        /// <summary>
+        /// T291 — <b>지금 도전하는 층</b> = 최고층 + 1(층이 있는 던전) · 층이 없으면 언제나 1(옛 그대로).
+        /// <para>화면(카드 «획득 가능»·세부 팝업의 층 원·«도전» 버튼)이 이 한 곳에 물어본다 — 세 자리가 각자 «+1» 을 하면 한 자리만 어긋나는 날이 온다.</para>
+        /// </summary>
+        public static int Challenge(SaveData s, DungeonData d, string key)
+        {
+            var e = d != null ? d.Of(key) : null;
+            if (e == null || e.Floors == null) return 1;
+            return Floor(s, key) + 1;
+        }
+
+        /// <summary>
+        /// T291 — 층을 받아 깬다. <b>«첫» 은 «그 층을 처음 깼는가»</b>(= 도전 층이 최고층보다 위인가)이고,
+        /// 옛 던전(층 없음)에서는 «한 번이라도 깬 적 있는가» 라는 종전 뜻 그대로다(<see cref="Challenge"/> 가 늘 1 을 주므로 판정이 같아진다).
+        /// </summary>
+        public static DungeonData.Reward GrantClear(SaveData s, DungeonData d, string key, int floor)
         {
             if (s == null || d == null || string.IsNullOrEmpty(key)) return null;
             var e = d.Of(key);
             if (e == null) return null;
-            bool first = Floor(s, key) <= 0;               // 기록을 남기기 «전» 에 물어야 첫 클리어를 알아본다
-            var prize = first ? e.First : e.Clear;
-            Record(s, key, 1);                             // T228 ⓓ — «깬 적 있다»(층은 아직 없다 · 소탕의 조건)
+            if (floor <= 0) floor = 1;
+            bool first = floor > Floor(s, key);            // 기록을 남기기 «전» 에 물어야 첫 클리어를 알아본다
+            var prize = FloorReward(e, e.Floors == null ? 0 : floor, first);
+            Record(s, key, floor);                         // T228 ⓓ «깬 적 있다» → T291 «어디까지 깼나»(Record 는 내려가지 않는다)
             if (prize == null || !prize.Any) return null;  // 표가 비었으면 줄 것이 없다(기록은 그래도 남는다)
-            s.Gold += prize.Gold;
-            s.PetEgg += prize.PetEgg;
+            Pay(s, prize);
             return prize;
         }
     }

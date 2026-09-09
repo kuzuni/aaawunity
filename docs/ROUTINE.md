@@ -6644,6 +6644,21 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 ### T291 — ⚑⚑⚑ 주인: **원정에 «층» 을 세우고 층별 보상 = 레시피(부위 순서) + 3의 배수 층 키**(첫클리어 2N · 아닌 거 N) (주인 2026-09-09 05:5X · T290 의 뒤 · `dungeon.json` 원정 블록 확장)
 
+
+> **🔄 1회차 push = 표·Core·자 (2026-09-09 07:2X · sess-1447-1691 · 워커 L · 결정 836 · lock 쥔 채 · 로컬 게이트 전부 초록)**
+> · **층이 섰다** — `DungeonSweep.Challenge(s, d, key)` = 최고층 + 1(층 없는 던전은 늘 1) · `GrantClear(s, d, key, **floor**)` 가 «그 층을 처음 깼는가» 로 첫/그 뒤를 가르고 `Record` 로 올린다. 옛 서명 `GrantClear(s, d, key)` 는 그대로 살아 있고 **안에서 `Challenge` 를 부른다** — 부르는 화면(`BattleScreen`)을 아직 안 고쳐도 층이 오른다.
+> · **보상표** = `dungeon.json` 원정 `floors` 블록(3항 그대로 · `recipeOrder`·`recipeFirstPer` 2·`recipeClearPer` 1·`keyEvery` 3·`keyOrder`·`keyFirstOnly` true·`goldEveryFloor` true). **코드에 수 0.**
+> · **셈은 한 곳** `DungeonSweep.FloorReward(e, floor, first, sweep)` — 소탕은 최고층의 «첫 아님». **표 객체를 절대 안 고친다**(층마다 새 `Reward` · 자가 그것도 잰다).
+> · **주는 손도 한 곳** `Pay(s, prize)` — 소탕·클리어 둘이 각자 더하던 것을 모았다(레시피·키가 는 지금 나뉘어 있으면 한 경로에서만 조용히 안 준다).
+> · **지옥의 문은 한 톨도 안 바뀐다** — `floors` 가 없으면 표의 한 벌을 **그대로**(자가 `AreSame` 으로 잰다).
+> · **자** `DungeonFloorTests` 10케이스 — 주인이 말로 준 표(1·2·3·4·5·6·7·9·12층 첫/그 뒤·키) · 순환 · 골드 매 층 · 표 불변 · 도전 층 · 실제 지급 · 소탕 · 지옥의 문 · 부위 집합 ↔ `recipe.json` · 키 이름 ↔ `GachaKeys`.
+> 게이트: build 0 경고/0 오류 · **test 407/407**(신규 10) · PlayMode 임시 csproj 0 오류 · gen_meta(신규 .meta 1) · 검사 8종 통과.
+>
+> **8. 다음 사람이 할 것(2회차 이후)**
+> ⓐ **화면** — `EventsScreen` 팝업 층 원 = `Challenge` · ◀▶ 로 1~도전층 보기 · `RewardCells(key, **floor**)` · 카드 «획득 가능» · `:939` 아이콘 매핑에 레시피·키 · `RewardPopup` 에 레시피·키 칸. `BattleScreen`(:531~532)이 **어느 층으로 들어왔는지**를 들고 와 `GrantClear(…, floor)` 로 넘긴다(지금은 옛 서명이 `Challenge` 로 채운다).
+> ⓑ **적 세기** — N층 = 챕터 N(2항 기본값)을 `App.StartBattle` 의 던전 갈래에 잇는다.
+> ⓒ ⚠ **`recipe.json` 의 `perLevel` 0 → 2 는 T290 이 한다** — «주는 곳이 서면 올린다» 고 그 절이 적어 뒀고 **이번 회차가 그 «주는 곳»** 이다(원정 층 보상으로 레시피가 실제로 들어온다). 다만 그 파일과 `RecipeTests`(0 을 못 박는 자)가 **T290 의 lock 안**이라 내가 안 건드렸다 — **그 절이 제 자와 함께 올려야 한 커밋에서 앞뒤가 맞는다**.
+
 0. **주인 원문** — «**원정 부분에서는 보상을 레시피를 부위 순서대로 주기** — 1층 투구 2개 첫클리어, 첫클리어 보상 아닌 거 투구 1개 / 2층 신발 4개 첫클리어, 아닌 거 신발 2개 / 3층 무기 6개 첫클리어, 아닌 거 무기 3개 — 이런 식으로. 그리고 원정 부분에서는 **3의 배수 층마다 키 주기** — 순서는 파란키·보라키·노란키 — 3: 파란 · 6: 보라 · 9: 노란 이런 식».
 
 1. **⚠ 먼저 알 것 — 원정(던전)에 «층» 이 아직 없다**(등재 세션 실측). `DungeonSweep.Record(s, key, 1)` 이 **늘 1** 을 남기고(`Dungeon.cs:317` 주석 «층은 아직 없다» · `BattleScreen.cs:532`), 세부 팝업(21)의 층 원은 `"1"` 글자를 박아 두었고(`EventsScreen.cs:479`) ◀ 화살표는 `Noop`(`:477`). 표(`dungeon.json`)도 던전마다 `first/clear/sweep` **한 벌**뿐이다. **그러므로 이 절의 절반은 «층 시스템»** 이고 보상표는 그 위에 얹는다.
