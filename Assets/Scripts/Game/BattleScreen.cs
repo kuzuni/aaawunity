@@ -58,6 +58,7 @@ namespace KkomaKnight.Game
         double _goldRate, _expRate;          // 카운트업 속도(초당) — 목표가 늘면 다시 계산해 CountUpSec 안에 따라잡는다
         double _flyGold, _flyExp;            // 아직 날아가는 중인 구슬이 들고 있는 값
         float _overWait;                     // 사망·클리어에서 흡수를 기다린 시간(AbsorbMaxWaitSec 넘으면 강제 완료)
+        int _questKills;                     // T257 4항 — 퀘스트에 이미 넘긴 처치 수(이 판) · 판이 끝날 때 «G.Kills - 이것» 만 넘긴다
         const float CountUpSec = 0.2f, AbsorbMaxWaitSec = 0.6f, OrbSizePx = 64f;
         const int OrbMinCount = 3, OrbBossCount = 8;
 
@@ -175,6 +176,7 @@ namespace KkomaKnight.Game
             _world = new BattleWorld(App, G, _pops);
             _world.KillShown = OnKillShown;   // T85 — 시체가 쓰러지는 순간 그 자리에서 보상 구슬이 튀어나온다
             SnapShown();                      // 새 판은 표시값 = 엔진 값(0)에서 시작
+            _questKills = 0;   // T257 — 새 판은 «넘긴 처치» 도 0 부터(부활은 판을 잇는 것이라 여기 안 온다)
             _acc = 0; _speed = App.Save.Speed; _paused = false; _ended = false; _revivesUsed = 0; _perkStripKey = ""; _buffKey = ""; _lastReal = 0;   // 배속은 세이브에서(T18 · 클리어 뒤 다음 챕터도 그대로) · 새 판 첫 프레임이 «공백» 으로 잡히지 않게
             Audio.Bgm("bgm.battle");   // 새 판(클리어 뒤 다음 챕터 포함)은 전투 곡부터 — 보스 곡이었으면 되돌린다(T28)
             ShowPvpHead(D, arenaFoe, arenaFoeRank);   // T240 1항 — 아레나면 PvP 머리를 켜고 챕터 제목·진행 바를 끈다
@@ -363,8 +365,26 @@ namespace KkomaKnight.Game
         }
         void EndAndExit()
         {
-            if (G != null && !_ended) { _ended = true; App.Save.Gold += Math.Round(G.Gold); App.Persist(); }
+            if (G != null && !_ended) { _ended = true; FlushQuestKills(); App.Save.Gold += Math.Round(G.Gold); App.Persist(); }
             ExitBattle();
+        }
+
+        /// <summary>
+        /// T257 4항 — 이 판에서 죽인 적을 퀘스트에 <b>판이 끝날 때 한 번에</b> 넘긴다(«적 50개 죽이기» · 주간 «2,500»).
+        /// <para>
+        /// 틱마다 넘기지 않는 까닭: <see cref="Quests.Bump"/> 는 셀 때마다 세이브를 쓴다. 한 판에 수십 번 죽는 자리라
+        /// 그대로 걸면 <b>죽을 때마다 세이브 전체를 직렬화</b>하게 된다(WebGL 에선 그것이 곧 프레임이다).
+        /// 골드도 판이 끝나야 은행에 들어가는 게임이라(«판을 버리면 골드도 없다» · <see cref="Abort"/>) 셈이 같은 결을 탄다.
+        /// </para>
+        /// 클리어·사망(<see cref="EndRun"/>)·포기(<see cref="EndAndExit"/>) 셋에서 부르고, 두 번 불려도 넘긴 몫만큼은 다시 안 센다.
+        /// </summary>
+        void FlushQuestKills()
+        {
+            if (G == null) return;
+            int add = G.Kills - _questKills;
+            if (add <= 0) return;
+            _questKills = G.Kills;
+            Quests.Bump(App, Quests.Kill, add);
         }
         /// <summary>판을 버린다(T29 «데이터 삭제» — 골드를 은행에 넣지 않는다 · 로비 전환은 호출자가). 전투 중이 아니면 아무 일 없음.</summary>
         public void Abort()
@@ -446,6 +466,7 @@ namespace KkomaKnight.Game
         void EndRun()
         {
             _ended = true;
+            FlushQuestKills();   // T257 — 아레나 갈래로 갈라지기 «전에»: 죽인 것은 어느 판에서든 죽인 것이다(표도 판 종류를 안 따진다)
             var D = App.Data; var S = App.Save;
             if (_arenaFoe != null) { EndArenaRun(D, S); return; }   // T240 — 아레나 판은 챕터 진행·클리어 보상이 아니라 «승점» 이 결과다
             // T137 — 챕터 보상 진행도(적 1/3·2/3·전멸)는 «이기든 지든» 여기 한 곳에서 남는다: max(기존, 이번 판 처치)
@@ -465,6 +486,8 @@ namespace KkomaKnight.Game
                 //   판정·지급·기록을 GrantClear 한 곳이 순서대로 한다(«첫» 은 기록 전에 물어야 한다).
                 var dunPrize = _dunKey != null ? DungeonSweep.GrantClear(S, D.Dungeon, _dunKey) : null;
                 if (_dunKey != null) DungeonSweep.Record(S, _dunKey, 1);   // 표가 없거나 비어도 «깬 적 있다» 는 남는다(소탕의 조건 · GrantClear 가 이미 남겼으면 무해한 두 번째 호출이다)
+                // T257 4항 — 주간 «던전 클리어 20회». 던전에서 들어온 판을 «깬» 이 한 자리가 그 사건이다(일반 챕터 클리어는 아니다 · T241 의 지급과 같은 조건을 본다).
+                if (!string.IsNullOrEmpty(_dunKey)) Quests.Bump(App, Quests.DungeonClear);
                 S.SelChapter = next; S.Gold += Math.Round(G.Gold); App.Persist();   // 1배는 여기서 은행에(«그냥 받기» = 이대로 로비로)
                 // T23 — «광고 보고 보상 ×2 받기» = 광고 카운트다운 뒤 이 판의 골드(처치 + 클리어 보너스)를 한 번 더 지급 → 2배 · 로비로. «다음 챕터» 는 로비의 챕터 화살표(SelChapter = next 로 이미 맞춰 둠).
                 App.Overlay.Clear(G, last,

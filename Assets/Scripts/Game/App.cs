@@ -40,6 +40,9 @@ namespace KkomaKnight.Game
             if (font != null) UiKit.DefaultFont = font;
             app.Save = SaveStore.Load(data);
             Debug.Log("[KkomaKnight] boot: save");   // T59 진단 마커 — 브라우저 콘솔에서 어디까지 왔는지(WebGL 크래시 위치 좁히기 · 릴리스에서도 무해한 한 줄)
+            // T257 4항 — «접속했다». **화면을 세우기 전에** 부른다: 여기서 날·주가 밀리고(QuestRun.Roll) 로비의 빨간 점·퀘스트 줄이
+            // 첫 그림부터 오늘 값으로 선다. 뒤에 두면 «켠 직후 한 번은 어제 것이 보였다가 다음 새로고침에 바뀌는» 자리가 생긴다.
+            Quests.Login(app);
             Audio.Create(app);   // 배경음·효과음(T28) — 세이브(음소거)와 카탈로그(bgm.*/snd.*)를 읽는다 · BuildUi 의 첫 ShowScreen 이 로비 곡을 튼다
             Debug.Log("[KkomaKnight] boot: audio");
             app.BuildUi();
@@ -101,6 +104,10 @@ namespace KkomaKnight.Game
         public void StartBattle(int chapter, DungeonData.RunRule run = null, string dungeonKey = null, string arenaFoe = null, int arenaFoeRank = 0)
         {
             chapter = Mathf.Clamp(chapter, 1, Math.Max(1, Save.MaxChapter));
+            // T257 4항 — «도전했다» 를 세는 자리는 **여기 하나다**. 판에 들어오는 길이 셋(로비 START · 던전 «도전» · 아레나 «도전») 인데
+            // 셋 다 이 문을 지나므로, 부르는 쪽마다 한 줄씩 박으면 길이 하나 늘 때 조용히 안 세는 자리가 생긴다(결정 787).
+            // 아레나는 어느 쪽도 아니다(챕터 진행도 던전도 아닌 판이다) · 던전이면 던전 도전 · 나머지가 챕터 도전이다.
+            if (arenaFoe == null) Quests.Bump(this, string.IsNullOrEmpty(dungeonKey) ? Quests.ChapterTry : Quests.DungeonTry);
             ShowScreen("battle");
             GetScreen<BattleScreen>().Start(chapter, run, dungeonKey, arenaFoe, arenaFoeRank);   // T183 — run 이 null 이면 지금까지와 똑같은 일반 전투다
             Debug.Log("[KkomaKnight] ready battle");   // T60 배포 스모크 마커

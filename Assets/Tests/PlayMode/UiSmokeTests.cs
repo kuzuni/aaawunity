@@ -540,14 +540,19 @@ namespace KkomaKnight.Tests.Play
                     Assert.IsNotNull(UiKit.Find(q0, "ListFrame_08"), "줄 = 프리팹 ListItem_Mission_02 조각(안쪽 바탕 ListFrame_08)");
                     Assert.IsNotNull(q0.GetComponentInChildren<Slider>(true), "줄 진행바 = 프리팹 Slider_02_Yellow");
                     Assert.IsNotNull(UiKit.Find(q0, "Group_Price"), "줄 보상 칸 = 프리팹 Group_Price");
-                    // T257 — «이동»/✅ 의 수도 이제 **진행도가 정한다**: 새 세이브라 깬 줄이 하나도 없으니 전부 «이동» 이고 ✅ 는 0 이다.
-                    //   («앞 3줄 Go · 뒤 3줄 ✅» 는 표가 없던 껍데기 시절의 그림이었다.)
+                    // T257 — «이동»/✅ 의 수도 이제 **진행도가 정한다**. («앞 3줄 Go · 뒤 3줄 ✅» 는 표가 없던 껍데기 시절의 그림이었다.)
+                    //   4항 훅이 붙은 뒤로 «새 세이브 = 전부 미완» 도 더는 참이 아니다 — **앱을 켠 것만으로 «로그인하기» 가 깨진다**(App.Create → Quests.Login).
+                    //   그래서 수를 박지 않고 «표 × 지금 셈» 으로 센다. 다만 그 한 줄은 훅이 살아 있다는 증거라 아래에서 따로 못 박는다.
                     int gos = CountNamed(_app.Overlay.Root, "GoBtn");
                     int checks = 0; foreach (var t in _app.Overlay.Root.GetComponentsInChildren<Transform>(false)) if (t.name == "Check") checks++;
                     if (qTable != null)
                     {
-                        Assert.AreEqual(wantRows, gos, "새 세이브에서는 깬 줄이 없으니 모든 줄이 «이동»");
-                        Assert.AreEqual(0, checks, "그래서 ✅ 는 0");
+                        int wantDone = 0;
+                        foreach (var qq in qTable.Daily.Quests) if (qq.Done(QuestRun.Count(_app.Save, true, qq.Counter))) wantDone++;
+                        Assert.IsTrue(qTable.Daily.Quests[0].Done(QuestRun.Count(_app.Save, true, qTable.Daily.Quests[0].Counter)),
+                                      "켠 것만으로 «" + qTable.Daily.Quests[0].Label + "» 는 깨져 있어야 한다(T257 login 훅 · App.Create)");
+                        Assert.AreEqual(wantRows - wantDone, gos, "«이동» = 아직 못 깬 줄");
+                        Assert.AreEqual(wantDone, checks, "✅ = 깬 줄");
                         Assert.IsTrue(HasText(s => s == qTable.Daily.Quests[0].Label), "줄 제목은 표의 «할 일» 글자 그대로(주인이 쓴 말)");
                     }
                     else { Assert.AreEqual(3, gos, "껍데기: 미완 3"); Assert.AreEqual(3, checks, "껍데기: 완료 3"); }
@@ -566,9 +571,10 @@ namespace KkomaKnight.Tests.Play
                         bool green = Mathf.Abs(fi.color.r - Palette.Green.r) < 0.02f
                                   && Mathf.Abs(fi.color.g - Palette.Green.g) < 0.02f
                                   && Mathf.Abs(fi.color.b - Palette.Green.b) < 0.02f;
-                        // T257 — «완료» 는 이제 진행도가 정한다. 새 세이브라 깬 줄이 없으므로 **전부 미완(노랑)** 이고,
-                        //   «완료면 초록» 규칙 자체는 `QuestRunTests` 와 아래 else 가 함께 지킨다(수를 박지 않는다).
-                        bool doneRow = qTable == null && qi >= 3;
+                        // T257 — «완료» 는 이제 진행도가 정한다(껍데기 시절엔 «뒤 3줄» 이었다). 4항 훅 뒤로 켠 직후에도 «로그인하기» 한 줄은 초록이다.
+                        bool doneRow = qTable != null
+                                     ? qTable.Daily.Quests[qi].Done(QuestRun.Count(_app.Save, true, qTable.Daily.Quests[qi].Counter))
+                                     : qi >= 3;
                         if (doneRow) Assert.IsTrue(green, "완료 줄 " + qi + " 의 진행바는 초록이어야 한다(T212) — 지금 " + fi.color);
                         else Assert.IsFalse(green, "미완 줄 " + qi + " 은 프리팹 노랑 그대로여야 한다(T212 · 관례는 «완료» 에만 걸린다) — 지금 " + fi.color);
                     }
