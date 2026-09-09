@@ -571,8 +571,10 @@ namespace KkomaKnight.Tests.Play
                     {
                         float LumOf(int rowIdx)
                         {
-                            var fr = UiKit.Find(UiKit.Find(_app.Overlay.Root, "Quest:" + rowIdx), "Bg");
-                            Assert.IsNotNull(fr, "줄 " + rowIdx + " 의 바탕(ListFrame_08/…/Bg)");
+                            // ⚠ 조각은 가지가 둘이다(`Nomal/Bg` ↔ `Focus/Bg` · 이름이 같다) — **보이는 쪽**을 짚어야 한다.
+                            //   첫 회차엔 `Find(frame,"Bg")` 로 잡아 «안 보이는 가지» 를 재고 있었다(화면은 안 바뀌는데 자는 초록 · 결정 894 의 되짚음).
+                            var fr = UiKit.Find(UiKit.Find(_app.Overlay.Root, "Quest:" + rowIdx), "Nomal/Bg");
+                            Assert.IsNotNull(fr, "줄 " + rowIdx + " 의 «보이는» 바탕(ListFrame_08/Nomal/Bg)");
                             var c = fr.GetComponent<Image>().color; return c.r * 0.299f + c.g * 0.587f + c.b * 0.114f;
                         }
                         int doneIdx = -1, todoIdx = -1;

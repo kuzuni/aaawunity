@@ -445,7 +445,10 @@ namespace KkomaKnight.Game
         static void RowTint(Transform item, bool done)
         {
             var frame = UiKit.Find(item, "ListFrame_08"); if (frame == null) return;
-            var bg = UiKit.Find(frame, "Bg"); if (bg == null) return;          // 조각 계층은 `Nomal/Bg`(프리팹 철자 그대로) · Find 는 깊이를 안 따진다
+            // ⚠ 이 조각은 **가지가 둘**이다 — `Nomal/{Bg,Border,BottomBar}` 과 `Focus/{Bg,Border,BottomBar}`(이름이 똑같다 · 철자도 프리팹 그대로 «Nomal»).
+            //   `UiKit.Find(frame, "Bg")` 는 **먼저 찾은 하나**를 주는데 그것이 «Focus» 쪽이라, 첫 고침(결정 894)은 **안 보이는 가지를 칠했다**
+            //   — 사진에서 색이 거의 안 바뀐 까닭이 이것이다(실측: 완료 줄 #B49E4C → #B49D4C). **보이는 가지를 이름으로 짚는다.**
+            var bg = UiKit.Find(frame, "Nomal/Bg"); if (bg == null) return;   // 길 꼴: 첫 조각만 깊이 검색 · 뒤는 직계(UiKit.Find)
             var im = bg.GetComponent<Image>(); if (im == null) return;
             im.color = done ? RowDoneColor : RowTodoColor;
         }
