@@ -296,6 +296,33 @@ def cmd_check(heads, rows, dups=None):
         print("  고침: 임자가 상태 칸을 🔄 로 올린다(또는 일을 접었으면 lock 을 지운다).")
         notes.append("⬜ 인데 lock 살아 있음 %s" % " ".join(t[0] for t in trap))
 
+    # ⓗ **lock 시각이 «미래» 다** — 90분 규약의 셈이 통째로 밀린다 (T294 · 검수 Q · 2026-09-09 실측).
+    #    실측: `T288-9.lock` 이 07:35 인데 그 파일을 담은 커밋은 **07:03** 이고(+31분),
+    #          `T291.lock` 이 07:28 인데 커밋은 **06:57** 이다(+31분). 두 세션이 같은 폭으로 어긋났으니
+    #          컨테이너 시계가 아니라 **적는 방식**이 그런 것이다(커밋 시각들은 서로 맞물린다).
+    #    왜 나쁜가 — 90분은 «죽은 세션의 자리를 되찾는» 유일한 장치인데, 시각이 앞서 적히면
+    #      ⓐ 그 lock 은 실제로 **90 + N 분**을 산다(되찾기가 그만큼 늦다)
+    #      ⓑ «90분 지났나» 를 재는 쪽은 **음수 나이**를 받고, 그것은 어떤 셈에서도 «방금 잡았다» 로 읽힌다
+    #    ⚠ 막지 않는다(결정 493·627 · 조율 결함) — notes 에 실어 끝줄에만 남긴다.
+    #    ⚠ 2분은 봐준다 — 컨테이너마다 시계가 조금씩 다르고, 그 폭으로는 위 둘 중 어느 것도 안 일어난다.
+    future = []
+    if os.path.isdir(CLAIMS):
+        now = datetime.datetime.now(datetime.timezone.utc)
+        for name in sorted(os.listdir(CLAIMS)):
+            if not name.endswith(".lock"):
+                continue
+            lk = lock_of(name[:-5])
+            if lk and lk[1] < -2:
+                future.append((name[:-5], lk[0], -lk[1]))
+    if future:
+        print("· (참고 · 실패 아님) **lock 시각이 «미래» 로 적힌 작업** — 90분 규약의 셈이 그만큼 밀린다:")
+        for tid, sid, ahead in future:
+            print("  · %-7s docs/claims/%s.lock  %s · **%d분 뒤** 시각이 적혀 있다" % (tid, tid, sid, ahead))
+        print("  왜 나쁜가: ⓐ 그 lock 이 90분이 아니라 90+N 분을 산다(죽은 자리 되찾기가 늦다)")
+        print("             ⓑ «90분 지났나» 를 재는 쪽은 음수 나이를 받고, 그것은 늘 «방금 잡았다» 로 읽힌다")
+        print("  고침: 갱신할 때 `date -u +%Y-%m-%dT%H:%M:%SZ` 가 준 값을 그대로 적는다(앞당겨 적지 않는다).")
+        notes.append("lock 시각이 미래 %s" % " ".join(t[0] for t in future))
+
     bad = mismatches(heads, rows)
     if not bad:
         if rc == 0:
@@ -513,12 +540,29 @@ def self_test():
             if "lock 이 살아 있는" in out_stale:
                 print("⛔ 자기 검사 실패 — 죽은 lock(90분 초과)인데 «잡지 마라» 로 찍었다(거짓 경고):\n%s" % out_stale)
                 return 1
+
+            # ⓘ **«미래로 적힌 lock»(T294)** — 잡는가 · 그리고 **시계 차이만 한 것은 안 잡는가**.
+            #    여기서도 거짓 경고 쪽이 더 나쁘다: 컨테이너마다 시계가 조금씩 다른데 1~2분마다 울면
+            #    워커가 이 참고 줄 전체를 흘려 읽게 되고, 그러면 ⓖ 도 같이 묻힌다.
+            _write(-30)                    # 30분 «뒤» 시각이 적힌 lock
+            rc_fut, out_fut = _run()
+            if rc_fut != 0:
+                print("⛔ 자기 검사 실패 — ⓘ 가 막았다(조율 결함은 알리기만 · 결정 493): rc=%s" % rc_fut)
+                return 1
+            if "«미래»" not in out_fut:
+                print("⛔ 자기 검사 실패 — 미래로 적힌 lock 을 못 잡았다:\n%s" % out_fut)
+                return 1
+            _write(-1)                     # 1분 차 = 시계 차이 · 봐주는 폭
+            _, out_near = _run()
+            if "«미래»" in out_near:
+                print("⛔ 자기 검사 실패 — 1분 차(시계 차이)에 울었다(거짓 경고):\n%s" % out_near)
+                return 1
         finally:
             CLAIMS = keep_claims
 
         print("✓ task_state --self-test: 어긋난 짝을 잡고(T161) · ✅ 를 달면 조용하고 · 빈 번호는 통과하고 ·"
               " 같은 번호 두 제목을 잡고 · «행 없음 ↔ 접힌 행만» 을 가르고 · ⛔ 와 `\\|` 도 읽고 ·"
-              " 참고 줄이 마지막 요약에도 실리고(T231) · «⬜ + 살아 있는 lock» 을 잡되 죽은 lock 은 안 잡고(T238) · **본문에 ✂ 를 인용한 살아 있는 줄을 접힘으로 안 센다**(T249)")
+              " 참고 줄이 마지막 요약에도 실리고(T231) · «⬜ + 살아 있는 lock» 을 잡되 죽은 lock 은 안 잡고(T238) · **미래로 적힌 lock 을 잡되 1분 차에는 안 울고**(T294) · **본문에 ✂ 를 인용한 살아 있는 줄을 접힘으로 안 센다**(T249)")
         return 0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
