@@ -134,7 +134,7 @@ namespace KkomaKnight.Game
                 var basis = Basis(mats); var made = GearSystem.FuseMake(D, basis);
                 var cell = GearUi.Cell(_result, D, made, new GearUi.CellOpts(), null);
                 bool conv = basis.Rar == D.Gear.RarLegend && made.Rar == D.Gear.RarMyth;
-                _banner.text = $"<b>{GearUi.RarName(D, made.Rar)} {GearUi.Name(D, made)}</b>{(made.Plus > 0 ? $" <b>+{made.Plus}</b>" : "")}\n" +
+                _banner.text = $"<b>{GearUi.Tier(D, made).Name} {GearUi.Name(D, made)}</b>{(GearUi.PlusText(D, made).Length > 0 ? $" <b>{GearUi.PlusText(D, made).Trim()}</b>" : "")}\n" +
                     (conv ? $"<color=#F3A80E>전설 +{D.Gear.LegendToMythPlus}강 대신 <b>신화 0강</b>으로 바뀝니다</color>\n" : "") + "<size=20>재료 3개가 사라지고 위 장비 1개가 됩니다</size>";
             }
             else
@@ -210,7 +210,7 @@ namespace KkomaKnight.Game
             Quests.Bump(App, Quests.GearFuse);   // T257 — «장비 합성 2회»(일일)·«30회»(주간)
             GearSystem.ReEquipAfterFuse(S, mats, made);   // 장착분이 재료였으면 산출물을 그 슬롯에(T24 · 승인 대기 29) — 세이브·전투력·외형은 Persist/화면 Refresh 가 S.Eq 에서 다시 읽는다
             App.Persist(); Refresh(); Audio.Sfx("snd.fuse");
-            App.Toast($"🔨 {GearUi.RarName(D, made.Rar)} {GearUi.Name(D, made)}{(made.Plus > 0 ? $" +{made.Plus}" : "")} 완성!" + (S.IsEquipped(made) ? " (장착 중이던 재료 자리에 장착)" : ""));
+            App.Toast($"🔨 {GearUi.Tier(D, made).Name} {GearUi.Name(D, made)}{GearUi.PlusText(D, made)} 완성!" + (S.IsEquipped(made) ? " (장착 중이던 재료 자리에 장착)" : ""));
         }
         void OnAuto()
         {

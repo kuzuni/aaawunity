@@ -35,9 +35,49 @@ namespace KkomaKnight.Game
         /// 곧 슬롯의 «+N» 은 아래 <b>가운데</b>에 떠 있었다 — 주인이 «장착한 거는 그렇게 안 돼 있더라» 라고 한 것이 바로 이것이고,
         /// 알약을 조각 글자로 바꾼 회차 1 만으로는 <b>안 닫혔다</b>. 세로(<c>512 = Middle</c>)는 둘이 같으므로 <b>가로만</b> 못 박는다(조각은 안 고친다).
         /// </remarks>
-        public static void SetPlus(Transform frameOrCell, GearItem g)
+        /// <summary>
+        /// <b>이 장비를 무엇으로 그릴 것인가</b>(T316 3회차) — 이름·«+N»·색을 <see cref="GearTier.Of(GameData, GearItem, string, string)"/> 하나가 정한다.
+        /// <para>여태 이름은 <see cref="RarName"/>, 색은 <see cref="Palette.RarName"/> 이 <b>rar 만 보고</b> 정했다 —
+        /// 표시 등급(갓·초월·불멸·무한)은 같은 신화 안에서 <c>Plus</c> 로 갈리므로 그 둘로는 넷이 전부 «신화» 로 보인다.</para>
+        /// </summary>
+        public static GearTier.Shown Tier(GameData D, GearItem g)
+            => GearTier.Of(D, g, g != null ? RarName(D, g.Rar) : "", g != null ? Palette.RarName(g.Rar) : Palette.RarColors[0]);
+
+        /// <summary>
+        /// 등급색 <b>칸 조각</b>(<c>ui.itemFrame.&lt;색&gt;</c>) 의 색 이름 — <b>조각이 있는 색만</b> 쓰고 없으면 여태 등급색으로 물러선다.
+        /// <para>
+        /// ⚑ <b>T316 3회차의 실측</b>: 카탈로그의 칸 조각은 <c>gray·blue·green·plum·red·yellow</c> <b>여섯</b>뿐이다.
+        /// 주인이 준 표시 등급 색 넷 중 <b>갓(red)만 조각이 있고</b> 초월(<c>pink</c>)·불멸(<c>brown</c>)·무한(<c>redGreen</c> 그라데이션)은 <b>없다</b>.
+        /// 새 그림을 지어내는 것은 §1 이 막았으므로, <b>있는 것은 쓰고 없는 것은 신화 그대로</b> 둔다 —
+        /// 없는 색을 문자열로 조립해 넘기면 카탈로그에 없는 키가 되어 부팅이 운다(CI #66).
+        /// </para>
+        /// <para>⛔ <b>주인이 그림을 줘야 열리는 자리</b>: 초월·불멸·무한의 칸 조각. 그때 이 함수는 <b>한 줄도 안 바뀌고</b> 저절로 그 색을 쓴다.</para>
+        /// </summary>
+        public static string FrameColor(GameData D, GearItem g)
         {
-            var t = UiKit.SetText(frameOrCell, "Text_Level", g != null && g.Plus > 0 ? "+" + g.Plus : "");
+            if (g == null) return Palette.RarColors[0];
+            string rar = Palette.RarName(g.Rar), tier = Tier(D, g).Color;
+            if (tier == rar) return rar;
+            var cat = App.I != null ? App.I.Assets : null;
+            return cat != null && cat.Prefab("ui.itemFrame." + tier) != null ? tier : rar;
+        }
+
+        /// <summary>이름 옆 «+N» — <b>표시 등급 기준</b>이다(주인 «신화 13강 = 무한 1강»). 0 이면 빈 글자.</summary>
+        public static string PlusText(GameData D, GearItem g)
+        {
+            if (g == null) return "";
+            int p = Tier(D, g).Plus;
+            return p > 0 ? " +" + p : "";
+        }
+
+        public static void SetPlus(Transform frameOrCell, GearItem g) => SetPlus(frameOrCell, null, g);
+        /// <summary>표를 아는 꼴 — «+N» 이 <b>표시 등급 기준</b>이 된다(T316 · <paramref name="D"/> 가 null 이면 옛 그대로).</summary>
+        public static void SetPlus(Transform frameOrCell, GameData D, GearItem g)
+        {
+            // T316 3회차 — 적는 수는 «표시 등급 안에서 몇 강인가» 다: 신화 +13 은 «무한 +1»(주인 «신화 13강 = 무한 1강»).
+            //   D 가 없으면(옛 서명) 예전처럼 g.Plus 를 그대로 적는다 — 부르는 쪽이 표를 아는 자리부터 바뀐다.
+            int plus = D != null ? Tier(D, g).Plus : (g != null ? g.Plus : 0);
+            var t = UiKit.SetText(frameOrCell, "Text_Level", g != null && plus > 0 ? "+" + plus : "");
             if (t == null) return;
             t.horizontalAlignment = HorizontalAlignmentOptions.Right;
             // T310 회차 3·4 — 남은 어긋남 하나는 **글자 크기**였다(런 783·795 실측: 인벤 **40** ↔ 슬롯 **32**).
@@ -122,14 +162,14 @@ namespace KkomaKnight.Game
             if (frame != null)
             {
                 var area = UiKit.Find(frame, "NormalArea");
-                if (area != null) { UiKit.Clear(area); if (g != null) { var f = UiKit.Spawn("ui.itemFrame." + Palette.RarName(g.Rar), area); UiKit.Stretch((RectTransform)f.transform, -1, -1, -1, -1); } }   // 프리팹의 Normal_Plum 자리(+2px) 에 등급색 변형
+                if (area != null) { UiKit.Clear(area); if (g != null) { var f = UiKit.Spawn("ui.itemFrame." + FrameColor(D, g), area); UiKit.Stretch((RectTransform)f.transform, -1, -1, -1, -1); } }   // 프리팹의 Normal_Plum 자리(+2px) 에 등급색 변형
                 var item = UiKit.Find(frame, "Item");
                 if (item != null) { item.gameObject.SetActive(g != null); if (g != null) { var im = UiKit.SetSprite(frame, "Item", IconKey(D, g), Palette.White); FitIcon(im, g); } }   // GUI Pro 아이콘은 프리팹 Item 크기 그대로 · 파츠 아이콘은 같은 눈높이로 맞춤(T17)
                 UiKit.Show(frame, "Add_1", g == null); UiKit.Show(frame, "Add_2", false); UiKit.Show(frame, "Lock", false); UiKit.Show(frame, "Disable", false);
                 UiKit.Show(frame, "Focus", g != null && o.Selected);   // 프리팹의 Focus(테두리 글로우) = 선택
                 DarkFrame(frame);   // T69-gear · 7항: 아이템 칸의 테두리 링 = 검은 아웃라인(등급색은 Bg·InnerBorder 가 낸다)
             }
-            SetPlus(cell, g);
+            SetPlus(cell, D, g);
             var type = UiKit.Find(cell, "TypeArea");
             // 다이아 배지 = **부위** 아이콘(T105 · 주인 «무슨 장비 부위인지 알려주는 아이콘» · 세트 아이콘은 세부 팝업 옵션 줄에서만 쓴다)
             if (type != null) { type.gameObject.SetActive(g != null); if (g != null) UiKit.SetSprite(type, "Icon", GearLook.PartIcon(g.Part), Palette.White); }
@@ -494,8 +534,8 @@ namespace KkomaKnight.Game
             if (g == null) { ov.Close(); return; }
             if (g.IsNew) { g.IsNew = false; app.Persist(); onChanged?.Invoke(); }
             int lv = S.SlotLv(g.Part); double cost = D.Gear.SlotCost(lv); bool eqd = S.IsEquipped(g); bool maxed = lv >= D.Gear.SlotLvMax;
-            string colorName = Palette.RarName(g.Rar);
-            var box = DetailFrame(app, RarName(D, g.Rar), g, Name(D, g) + (g.Plus > 0 ? " +" + g.Plus : ""), OnPopupBox(Palette.ByName(colorName)), $"슬롯 Lv. {lv}/{D.Gear.SlotLvMax}", PartName(D, g.Part));
+            var shown = Tier(D, g); string colorName = FrameColor(D, g);   // T316 — 이름·«+N» 은 표시 등급(갓·초월·불멸·무한) 기준
+            var box = DetailFrame(app, shown.Name, g, Name(D, g) + PlusText(D, g), OnPopupBox(Palette.ByName(colorName)), $"슬롯 Lv. {lv}/{D.Gear.SlotLvMax}", PartName(D, g.Part));
             StatsBox(box, D, S, g, g.Part, lv, eqd);
             OptionRows(box, D, g);
             CostRow(box, D, S, g.Part, cost, maxed, D.Gear.SlotLvMax);
@@ -529,9 +569,9 @@ namespace KkomaKnight.Game
         {
             if (app == null || g == null) return;
             var D = app.Data; var S = app.Save; var ov = app.Overlay;
-            string colorName = Palette.RarName(g.Rar);
-            var box = DetailFrame(app, RarName(D, g.Rar), g, Name(D, g), OnPopupBox(Palette.ByName(colorName)),
-                PartName(D, g.Part), RarName(D, g.Rar), InfoBox, onClose != null ? onClose : (Action)(() => ov.Close()));
+            var shown = Tier(D, g); string colorName = FrameColor(D, g);   // T316 — 보기 전용 팝업(38)도 같은 규칙
+            var box = DetailFrame(app, shown.Name, g, Name(D, g) + PlusText(D, g), OnPopupBox(Palette.ByName(colorName)),
+                PartName(D, g.Part), shown.Name, InfoBox, onClose != null ? onClose : (Action)(() => ov.Close()));
             // 스탯·옵션은 «이 등급의 이 부위» 가 어떤 물건인지를 보여 준다 — 슬롯 레벨은 내 세이브 것이라 0 으로 본다(남의 상자 안 물건이다).
             StatsBox(box, D, S, g, g.Part, 0, false, InfoBox);
             OptionRows(box, D, g, InfoBox);

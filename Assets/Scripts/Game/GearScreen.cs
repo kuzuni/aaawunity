@@ -165,13 +165,13 @@ namespace KkomaKnight.Game
                 var s = _slot[i]; if (s == null || s.Frame == null) continue;
                 var g = S.EquippedGear(s.Part); int lv = S.SlotLv(s.Part);
                 var area = UiKit.Find(s.Frame, "NormalArea");
-                if (area != null) { UiKit.Clear(area); if (g != null) { var f = UiKit.Spawn("ui.itemFrame." + Palette.RarName(g.Rar), area); UiKit.Stretch((RectTransform)f.transform); } }
+                if (area != null) { UiKit.Clear(area); if (g != null) { var f = UiKit.Spawn("ui.itemFrame." + GearUi.FrameColor(D, g), area); UiKit.Stretch((RectTransform)f.transform); } }   // T316 — 조각이 있는 표시 등급 색(갓 = red)만 쓴다(GearUi.FrameColor)
                 GearUi.DarkFrame(s.Frame, s.Frame.localScale.x);   // T69-gear · 7항: 등급 변형(막 스폰)·빈 칸 Add_1 의 테두리 링을 검은 아웃라인으로 · 슬롯은 FitScale 0.8 이라 선을 그만큼 더 굵게(화면 8px)
                 var item = UiKit.Find(s.Frame, "Item");
                 if (item != null) { item.gameObject.SetActive(g != null); if (g != null) { var im = UiKit.SetSprite(s.Frame, "Item", GearLook.IconKey(D, g), Palette.White); GearUi.FitIcon(im, g); } }
                 UiKit.Show(s.Frame, "Add_1", g == null);
                 if (s.Lv != null) s.Lv.text = $"Lv. {lv}";
-                GearUi.SetPlus(s.Frame, g);   // T310 — 인벤 칸과 **같은 함수**(꼴이 갈릴 자리를 아예 안 만든다)
+                GearUi.SetPlus(s.Frame, D, g);   // T310 — 인벤 칸과 **같은 함수**(꼴이 갈릴 자리를 아예 안 만든다) · T316 — 표를 넘겨 «+N» 이 표시 등급 기준이 되게
                 // T105 — 부위 아이콘은 **늘 켜 둔다**(빈 슬롯이면 흐리게 · 끼우면 또렷하게). 세트 아이콘이 아니다.
                 if (s.PartIcon != null) { s.PartIcon.gameObject.SetActive(true); s.PartIcon.sprite = App.Assets.Sprite(GearLook.PartIcon(s.Part)); s.PartIcon.color = g != null ? Palette.White : Palette.A(Palette.White, PartIconEmptyAlpha); }
                 if (s.Dot != null) s.Dot.SetActive(GearUi.BetterInInv(S, s.Part));

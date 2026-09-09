@@ -276,5 +276,44 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("등급별 세부 팝업 제목 조각");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T316 3회차 — 주인 «신화 3강 시 <b>갓</b> · 6강 초월 · 9강 불멸 · 12강 무한 · 그 뒤 계속 무한 — 즉 <b>신화 13강은 무한 1강</b>».
+        /// <para>
+        /// 표·규칙은 EditMode `GearTierTests` 가 잰다. <b>여기가 재는 것은 «그리는 쪽이 그 규칙을 실제로 부르는가» 다</b> —
+        /// 규칙이 맞아도 화면이 옛 `RarName(rar)` 을 부르면 갓·초월·불멸·무한이 전부 «신화» 로 보이고, 그 고장은 규칙 자에게 안 잡힌다(결정 914).
+        /// </para>
+        /// <para>⚠ «+N» 이 핵심이다 — 장비의 <c>g.Plus</c> 를 그대로 적으면 «무한 +13» 이 뜬다.</para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator MythTiersAreDrawnByTheTableNotByRarityAlone()
+        {
+            yield return Boot();
+            var D = _app.Data;
+            if (D.GearTier == null) Assert.Ignore("gearTier.json 이 없다 — 표가 없으면 옛 그대로가 옳다(그 갈래는 EditMode 가 잰다)");
+            string part = D.Gear.Parts[0]; int myth = D.Gear.RarMyth;
+            _app.ShowScreen("gear"); yield return Frames(2);
+
+            // 신화 +13 = «무한 +1»(주인 문장 그대로). 표가 무엇이든 «규칙이 낸 답» 과 «화면이 적은 글자» 가 같아야 한다 —
+            // 수를 안 박는 까닭이다(표를 고치면 이 자도 따라간다 · 결정 555).
+            var g = Give(part, myth, 13);
+            var want = KkomaKnight.Core.GearTier.Of(D, g, GearUi.RarName(D, g.Rar), Palette.RarName(g.Rar));
+            Assert.IsTrue(want.IsTier, "신화 +13 은 표시 등급이어야 한다(표가 그렇게 적혀 있다)");
+            Assert.AreNotEqual(GearUi.RarName(D, myth), want.Name, "표시 등급 이름은 «신화» 와 달라야 한다 — 같으면 이 자가 아무것도 안 잰다");
+
+            GearUi.OpenDetail(_app, g, _app.Current.Refresh); yield return Frames(2);
+            var rib = UiKit.Find(_app.Overlay.Root, GearUi.TitleBadge); Assert.IsNotNull(rib, "제목 조각");
+            var badge = rib.GetComponentInChildren<TMP_Text>(true); Assert.IsNotNull(badge, "제목 조각 글자");
+            Assert.AreEqual(want.Name, (badge.text ?? "").Trim(), $"배지가 표시 등급 이름을 적어야 한다(신화 +13 → «{want.Name}»)");
+
+            var nm = UiKit.Find(_app.Overlay.Root, "Name"); Assert.IsNotNull(nm, "이름 줄");
+            string nameText = (nm.GetComponent<TMP_Text>().text ?? "");
+            Assert.IsTrue(nameText.EndsWith("+" + want.Plus), $"이름 옆 «+N» 은 표시 등급 기준이어야 한다(신화 +13 → «+{want.Plus}») — 지금 «{nameText}»");
+            Assert.IsFalse(nameText.EndsWith("+13"), "장비의 Plus 를 그대로 적으면 «무한 +13» 이 된다(주인 «신화 13강 = 무한 1강»)");
+
+            ClickNamed(_app.Overlay.Root, "Dimmed"); yield return Frames(2);
+            _log.AssertNoRed("표시 등급 세부 팝업");
+            yield return Shutdown();
+        }
     }
 }
