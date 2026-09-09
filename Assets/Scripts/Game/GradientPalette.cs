@@ -68,12 +68,16 @@ namespace KkomaKnight.Game
                 // 머리 배너 — 레퍼런스의 무지개·성 그림은 주인 에셋에 없다. 실측한 «맑은 하늘»(y 255~290)과 «풀밭»(y 355~375) 두 색으로
                 // 세워 두고, 그림 조각이 생기면 이 판만 갈아 끼운다(새 그림 0 · ROUTINE ⓑ).
                 case "passBanner": return new Pair(Cat("passBanner.top", "#5AAECA"), Cat("passBanner.bottom", "#425E1E"));
+                // T316 — «무한» 등급(신화 +12 부터)의 빨강↔초록(주인 2026-09-09 10:3X «그다음 = 빨강초록 그라데이션»).
+                //   두 색은 이 팔레트가 이미 쓰는 빨강(#FB5951 = Palette.Red)과 초록 계열이라 새 색을 지어내지 않았다 —
+                //   등급색은 한 화면에 다른 등급과 나란히 서므로 «이 게임의 빨강·초록» 이어야 남의 색으로 안 보인다.
+                case "tierInfinite": return new Pair(Cat("tierInfinite.top", "#FB5951"), Cat("tierInfinite.bottom", "#4CC96A"));
                 default: return new Pair(Color.white, Color.white);
             }
         }
 
         /// <summary>표에 든 이름 전부(테스트·감사용 · 순서는 «카드 → 배경 → 버튼 → 패널 → 패스 3열·패스 버튼 2»).</summary>
-        public static readonly string[] Names = { "cardGem", "cardGold", "cardBlue", "cardChestLegend", "cardChestRare", "cardChestEpic", "cardPrivAd", "cardPrivMonth", "cardPrivLife", "bgLobby", "btnBlue", "btnOrange", "panelDark", "passFree", "passPaid1", "passPaid2", "btnPassPaid1", "btnPassPaid2", "passBanner" };
+        public static readonly string[] Names = { "cardGem", "cardGold", "cardBlue", "cardChestLegend", "cardChestRare", "cardChestEpic", "cardPrivAd", "cardPrivMonth", "cardPrivLife", "bgLobby", "btnBlue", "btnOrange", "panelDark", "passFree", "passPaid1", "passPaid2", "btnPassPaid1", "btnPassPaid2", "passBanner", "tierInfinite" };
 
         /// <summary>표에 이름이 있는가.</summary>
         public static bool Has(string name)

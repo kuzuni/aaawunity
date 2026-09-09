@@ -1250,6 +1250,8 @@ MonoBehaviour:
     color: {r: 1, g: 0.52549, b: 0.0705882, a: 1}
   - key: col.plum
     color: {r: 0.780392, g: 0.431373, b: 0.968627, a: 1}
+  - key: col.pink
+    color: {r: 0.956863, g: 0.372549, b: 0.690196, a: 1}
   - key: col.red
     color: {r: 0.984314, g: 0.34902, b: 0.317647, a: 1}
   - key: col.brown
@@ -1376,6 +1378,10 @@ MonoBehaviour:
     color: {r: 0.827451, g: 0.262745, b: 0.890196, a: 1}
   - key: col.btnPassClaimAll
     color: {r: 0.45098, g: 0.45098, b: 0.45098, a: 1}
+  - key: col.grad.tierInfinite.top
+    color: {r: 0.984314, g: 0.34902, b: 0.317647, a: 1}
+  - key: col.grad.tierInfinite.bottom
+    color: {r: 0.298039, g: 0.788235, b: 0.415686, a: 1}
   - key: col.grad.passBanner.top
     color: {r: 0.352941, g: 0.682353, b: 0.792157, a: 1}
   - key: col.grad.passBanner.bottom

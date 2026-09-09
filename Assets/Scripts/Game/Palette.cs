@@ -26,6 +26,16 @@ namespace KkomaKnight.Game
         /// <summary>PvP 인게임(33)의 빨간 VS 바 — 레퍼런스 <c>33_pvp_battle.jpg</c> 실측 <c>#C4271E</c>(<c>tools/ref_color.py</c> · 다섯 띠가 전부 같은 값 = 그라디언트 아닌 한 색). <see cref="Red"/>(#FB5951)보다 훨씬 짙어 그것으로 대신할 수 없다.</summary>
         public static Color ArenaVsBar => Cat("arenaVsBar", "#C4271E");
         public static Color Brown => Cat("brown", "#B97A54");
+        /// <summary>
+        /// <b>분홍</b> — T316 «초월» 등급 색(주인 2026-09-09 10:3X «갓 = 빨강 · 그다음 = 분홍 · 그다음 = 갈색 · 그다음 = 빨강·초록 그라데이션»).
+        /// <para>
+        /// <b>주인이 이름만 줬고 값은 안 줬다</b>(§5 — 판단이 필요한 자리는 워커가 정하고 까닭을 적는다). <c>#F45FB0</c> 을 고른 까닭:
+        /// 이웃한 두 등급 사이에 서야 읽힌다 — <see cref="Red"/>(#FB5951)와 <see cref="Plum"/>(#C76EF7) <b>사이의 색상각</b>(H 3° ↔ 279° 의 중간 쪽 = 자홍)이고,
+        /// 밝기·채도는 그 둘과 같은 자리에 뒀다(이 팔레트의 등급색은 전부 어두운 바탕 위에서 읽히도록 밝다).
+        /// 주인이 다른 분홍을 주면 <c>catalog.json</c> 의 <c>col.pink</c> 한 줄만 고치면 된다(이 상수는 폴백이다).
+        /// </para>
+        /// </summary>
+        public static Color Pink => Cat("pink", "#F45FB0");
         public static Color Mint => Cat("mint", "#03E4B7");
         public static Color Ink => Cat("ink", "#341B19");          // 진한 코코아(제목)
         public static Color InkSoft => Cat("inkSoft", "#633B37");  // 본문 갈색
@@ -102,7 +112,9 @@ namespace KkomaKnight.Game
             switch (name)
             {
                 case "green": return Green; case "blue": return Blue; case "sky": return Sky; case "yellow": return Yellow; case "orange": return Orange;
-                case "plum": return Plum; case "red": return Red; case "brown": return Brown; case "mint": return Mint; default: return Gray;
+                case "plum": return Plum; case "red": return Red; case "brown": return Brown; case "mint": return Mint;
+                case "pink": return Pink;   // T316 «초월»
+                default: return Gray;
             }
         }
         public static Color PerkColor(PerkDef p) => ByName(PerkGradeName(p.Grade));

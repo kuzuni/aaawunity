@@ -627,6 +627,7 @@
     "col.reward": "#F8DF16",
     "col.orange": "#FF8612",
     "col.plum": "#C76EF7",
+    "col.pink": "#F45FB0",
     "col.red": "#FB5951",
     "col.brown": "#B97A54",
     "col.mint": "#03E4B7",
@@ -690,6 +691,8 @@
     "col.grad.btnPassPaid2.top": "#F453DF",
     "col.grad.btnPassPaid2.bottom": "#D343E3",
     "col.btnPassClaimAll": "#737373",
+    "col.grad.tierInfinite.top": "#FB5951",
+    "col.grad.tierInfinite.bottom": "#4CC96A",
     "col.grad.passBanner.top": "#5AAECA",
     "col.grad.passBanner.bottom": "#425E1E",
     "col.passNotice": "#182210"

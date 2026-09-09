@@ -7486,7 +7486,8 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > **선 것**: `gearTier.json`(주인 값 넷 그대로 · `data.gearTier` 등재) · `Core/GearTier.cs` — `Of(...)` 하나가 **이름·색·«+N»·그라데이션 여부**를 정한다(`Shown.IsGradient` 로 «한 색이 아니다» 를 규칙이 알려 준다 — 그 지식이 18곳에 흩어지지 않게).
 > **엔진 불변**: 기여식·합성 규칙·정렬(`GearScore`) 한 자도 안 건드렸다(주인이 수치를 안 줬다) — 표 `_rule` 과 코드 주석 양쪽에 못 박았다.
 > **되돌리기**: `gearTier.json` 을 지우면 `Of` 가 옛 값을 그대로 돌려줘 화면이 정확히 예전이 된다(자가 그 갈래도 잰다).
-> **2회차에 같이 해야 하는 셋**: ① `RarName` 두 곳을 부르는 자리를 `GearTier.Of` 로(‌`rar` 만 받던 자리는 `GearItem` 을 받게) ② `Palette` 에 `pink`(hex 를 결정에 적는다) ③ 무한 그라데이션(글자 = TMP 정점 · 칸 = `GradientCard` · 프레임 조각에 빨강·분홍·갈색 변형이 있는지 먼저 본다).
+> **▸ 2회차 push — 색 (14:2X · 결정 924)**: `Palette.Pink`(`#F45FB0`) · `GradientPalette.tierInfinite`(빨강 `Palette.Red` ↔ 이 게임의 초록) · `catalog.json` 세 색. 자 `GearTierColorTests`(PlayMode) 가 **«표가 부르는 색 이름을 팔레트가 전부 아는가»** 를 표와 맞대어 잰다 — `ByName` 의 `default: return Gray` 때문에 이름을 모르면 **조용히 회색**으로 뜬다. 등급끼리·신화와도 서로 다른가까지 본다.
+> **남은 3회차에 같이 해야 하는 둘**(색은 이제 다 깔려 있다): ① `RarName` 두 곳을 부르는 자리를 `GearTier.Of` 로(‌`rar` 만 받던 자리는 `GearItem` 을 받게) ② `Palette` 에 `pink`(hex 를 결정에 적는다) ③ 무한 그라데이션(글자 = TMP 정점 · 칸 = `GradientCard` · 프레임 조각에 빨강·분홍·갈색 변형이 있는지 먼저 본다).
 >
 0. **주인 원문** — «신화 3강 시 **갓** · 6강 시 **초월** · 9강 시 **불멸** · 12강 시 **무한**으로 바꾸고, 그 뒤에 걍 계속 무한인 거로. 즉 **신화 13강은 무한 1강**임. 걍 **등급 시스템 더 추가**하겠다는 거임. 갓 = 빨강 · 그다음 = 분홍 · 그다음 = 갈색 · 그다음 = 빨강·초록 그라데이션».
 1. **규칙 — «표시 등급» = 신화(`Rar 3`) 장비의 `Plus` 로 갈린다.** 표 `Assets/KkomaKnight/gearTier.json`(신규 · `catalog.json` `data.gearTier` · `_note` 원문):
