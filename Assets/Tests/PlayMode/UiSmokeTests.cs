@@ -391,7 +391,11 @@ namespace KkomaKnight.Tests.Play
                 _app.ShowScreen("lobby"); yield return Frames(1);
                 Assert.IsFalse(GearDot().gameObject.activeSelf, "조건이 사라지면 다시 꺼진다 — «봤다» 상태를 새로 만들지 않는다(T167 4항)");
             }
-            Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 1, "로비 초상(HeroView · 상단 바 아바타)");
+            // T262 ⓐ — 옛 계약은 «로비에 HeroView 가 하나는 있다(= 상단 바 아바타)» 였는데 주인이 «플레이어 이미지 말고» 라고 해서 그 자리가 초상 아이콘이 됐다.
+            // 그러면 로비의 HeroView 는 0 이 된다 — «≥1» 은 이제 반드시 빨개지는 줄이다. 지키려던 것(«아바타 칸이 비어 있지 않다»)을 새 재료로 다시 잰다.
+            { var av = UiKit.Find(_app.Current.Root, "Avatar"); Assert.IsNotNull(av, "상단 바 아바타 칸");
+              Assert.IsNotNull(UiKit.Find(av, Profile.FaceName), "아바타 칸에 초상 아이콘이 서 있다(T262 ⓐ)");
+              Assert.IsNull(av.GetComponentInChildren<HeroView>(true), "내 캐릭터 그림은 아바타 자리에 없다(주인 «플레이어 이미지 말고»)"); }
             Assert.IsTrue(HasText(s => s == "START"), "START 버튼");
             // T227 4항 — «주인이 실제로 누르는 버튼» 이 탭으로 닿는가.
             // 표(`Tap.Report`)는 그대로 둔다 — 그것이 «새로 생긴 자리» 를 찾아 주는 눈이고, 표는 `screens:tap.json` 으로 나간다.
@@ -452,8 +456,12 @@ namespace KkomaKnight.Tests.Play
                     var bg = UiKit.Find(lobby, "Background"); Assert.IsNotNull(bg, "배경"); int decoOn = 0;
                     for (int i = 0; i < bg.childCount; i++) if (bg.GetChild(i).name.StartsWith("Deco") && bg.GetChild(i).gameObject.activeSelf) decoOn++;
                     Assert.AreEqual(0, decoOn, "배경 Deco 는 전부 꺼진다(T68 ③)");
-                    var hv = UiKit.Find(lobby, "TopBar").GetComponentInChildren<HeroView>(true); Assert.IsNotNull(hv, "상단 초상 HeroView");
-                    Assert.IsTrue(hv.Still, "상단 초상 = 정지(T68 ②)"); Assert.AreEqual(0f, hv.Rig.AnimSpeed, 1e-3f, "상단 초상 Animator 속도 0");
+                    // T68 ②(주인 «로비 주인공 아이콘이 계속 움직인다»)는 T262 ⓐ 로 «세울 것이 없어» 끝났다 — 아바타가 그림 한 장이라 Animator 가 아예 없다.
+                    // 옛 줄(HeroView 를 찾아 Still·AnimSpeed 0 을 재는 셋)은 이제 첫 줄에서 반드시 빨개진다. 주인이 실제로 싫어한 것(«움직인다»)을 새 꼴로 다시 잰다.
+                    var topBar = UiKit.Find(lobby, "TopBar"); Assert.IsNotNull(topBar, "상단 바");
+                    Assert.IsNull(topBar.GetComponentInChildren<HeroView>(true), "상단 초상은 이제 HeroView 가 아니다(T262 ⓐ)");
+                    foreach (var an in topBar.GetComponentsInChildren<Animator>(true))
+                        Assert.AreEqual(0f, an.speed, 1e-3f, "상단 바에 남은 Animator 가 있다면 정지여야 한다(T68 ② 의 남은 몫 · " + an.name + ")");
                 }
                 Assert.AreEqual(2, CountNamed(UiKit.Find(lobby, "SubRow"), "Side:"), "보조 버튼 2(탐험·클리어 보상)");
                 Assert.IsNull(UiKit.Find(lobby, "Castle"), "왼쪽 아래 «성» 은 삭제됐다(T78)");

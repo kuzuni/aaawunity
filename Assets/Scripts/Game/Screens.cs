@@ -274,7 +274,10 @@ namespace KkomaKnight.Game
     /// </summary>
     public sealed class TopBar
     {
-        public RectTransform Root; public HeroView Hero; public TMP_Text Power, Gold, Gem;
+        // T262 ⓐ — 종전의 `public HeroView Hero` 를 걷었다. 아바타가 초상 아이콘이 된 뒤로 그 칸에는 아무도 값을 안 넣어
+        // «언제나 null» 인 칸이었고, `Hero?.SetSkin(...)`·`Hero?.SetStill(true)` 셋이 조용히 아무 일도 안 하고 있었다
+        // (다음 사람은 그 줄을 보고 «상단 초상이 아직 HeroView 구나» 로 읽는다 — 죽은 칸은 틀린 설명이 된다).
+        public RectTransform Root; public TMP_Text Power, Gold, Gem;
         /// <summary>UI 비평 이름표용 조각(T46) — 아바타 칸 · 전투력 칸 · 골드 pill · 보석 pill. 화면이 표의 이름으로 <see cref="UiKit.Tag"/>/<see cref="UiKit.TagGroup"/> 을 단다.</summary>
         public RectTransform Avatar, PowerCell, GoldPill, GemPill;
         readonly App _app;
@@ -352,8 +355,8 @@ namespace KkomaKnight.Game
             AvatarFrame(app, tb, slot);
             // 아바타를 누르면 프로필(아바타 고르기) — T96-profile · 조각에 버튼이 없으므로 칸 자체에 붙인다
             UiKit.Clickable(slot, () => Profile.OpenAvatar(app));
-            // 상단 초상은 정지 그림(T68 ② · 주인 «로비 주인공 아이콘이 계속 움직인다») — 장비 화면 가운데 큰 캐릭터(GearScreen)는 그대로 움직인다
-            tb.Hero?.SetStill(true);   // T262 ⓐ — 아바타가 아이콘이 된 뒤로 Hero 는 null 일 수 있다
+            // T68 ②(주인 «로비 주인공 아이콘이 계속 움직인다»)는 T262 ⓐ 로 «세울 것이 없어» 끝났다 —
+            // 아바타가 그림 한 장(초상 아이콘)이라 Animator 자체가 없다. 장비 화면 가운데 큰 캐릭터(GearScreen)는 그대로 움직인다.
             // 전투력 — 칼 아이콘 + 주황 큰 숫자(숫자만 · 레퍼런스에 라벨 없음)
             if (showPower)
             {
@@ -392,7 +395,6 @@ namespace KkomaKnight.Game
             if (Power != null) Power.text = UiKit.Fmt(_app.Power());
             if (Gold != null) Gold.text = UiKit.Fmt(s.Gold);
             if (Gem != null) Gem.text = UiKit.Fmt(s.Gem);
-            Hero?.SetSkin(HeroView.PlayerSkin(_app));
             AvatarFrame(_app, this, Avatar);   // T96-profile — 프로필에서 색을 고르면 세이브만 바뀌므로 여기서 조각을 갈아 끼운다(색이 같으면 아무 일도 안 한다)
         }
 
@@ -428,7 +430,6 @@ namespace KkomaKnight.Game
                 Profile.Face(frt, Profile.CurrentIcon(app.Save));
             }
             else Profile.Face((RectTransform)slot, Profile.CurrentIcon(app.Save));
-            tb.Hero?.SetStill(true);   // Hero 는 이제 null 이다(위 주석) — 다른 화면이 이 헬퍼를 쓰는 자리를 위해 남겨 둔다
         }
     }
 

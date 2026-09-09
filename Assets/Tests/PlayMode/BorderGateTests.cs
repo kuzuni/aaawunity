@@ -392,7 +392,15 @@ namespace KkomaKnight.Tests.Play
             {
                 yield return Check("24_arena_challenge");
                 for (int i = 0; i < 5; i++) AssertUiBarBorder(_app.Overlay.Root, "FoeRow:" + i);
-                AssertItemFrameBorder(UiKit.Find(UiKit.Find(_app.Overlay.Root, "FoeRow:0"), "Face"), "도전 상대 줄 초상");   // T115
+                // T262 ⓑ — 줄 초상이 «물건 칸»(ItemFrame_01)에서 «프로필 프레임»(ProfileFrame_02)으로 바뀌었다
+                // (주인 «도전 부분 팝업도 마찬가지» · 레퍼런스 24 의 줄 초상은 좌상단 프로필과 같은 둥근 네모다).
+                // 7항 «물건 칸 = 장비 화면의 그 프레임» 은 물건에 거는 계약이고 초상은 물건이 아니다 —
+                // 줄 자체의 링은 바로 윗줄 AssertUiBarBorder 가 계속 잰다. 여기서는 «프로필과 같은 조각인가» 를 잰다.
+                {
+                    var face = UiKit.Find(UiKit.Find(_app.Overlay.Root, "FoeRow:0"), "Face"); Assert.IsNotNull(face, "도전 상대 줄 초상");
+                    Assert.IsNotNull(UiKit.Find(face, Profile.FrameKeyPrefix + Profile.Colors[0]), "줄 초상은 프로필 프레임 조각이다(T262 ⓑ)");
+                    Assert.IsFalse(GearUi.HasItemFrame(face), "옛 물건 칸(ItemFrame_01)이 남아 있으면 안 된다 — 주인이 «디자인이 다르다» 고 짚은 그 조각이다");
+                }
                 _app.Overlay.Close(); yield return Frames(1);
             }
             if (Press(evRoot, "RewardsBtn"))
