@@ -31,6 +31,13 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          # T347 — `check_claim_scope` 는 «그 작업의 커밋이 실제로 만진 파일» 을 이력에서 읽는다.
+          #   checkout 기본값은 `fetch-depth: 1`(얕은 클론)이라 이력이 통째로 없고, 그러면 그 자는
+          #   **아무 말도 못 하면서 조용히 초록**이 된다(그 꼴을 막으려고 자가 «못 봤다» 고 말하게 해 뒀다).
+          #   `0`(전부) 대신 **300** 인 까닭: lock 은 90분이면 죽으므로 볼 이력은 늘 최근 몇 시간뿐인데,
+          #   이 레포는 유니티 에셋을 들고 있어 전체 이력은 blob 이 무겁다. 300 이면 워커 12개 속도로도 하루치가 넘는다.
+          fetch-depth: 300
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
@@ -117,6 +124,13 @@ jobs:
       - name: "지운 값을 아직 가리키는 테스트 — 보고만(빨개도 안 막는다 · 결정 493)"
         continue-on-error: true
         run: python3 tools/check_stale_asserts.py
+      # T347 — lock 은 «작업» 을 잡는데 부딪히는 것은 «파일» 이고, 그 둘을 잇는 것은 표의 «범위» 칸뿐이다.
+      #   그 칸이 실제로 여는 파일을 안 적으면 일감을 고르는 워커에게 그 파일은 «비어 있는» 것으로 보인다.
+      #   `continue-on-error` 조차 필요 없다 — 이 자는 rc=1 을 낼 갈래가 없다(늘 알리기만 · 결정 493).
+      - name: "살아 있는 lock 이 «범위 열에 없는 파일» 을 쥐고 있는가 — 알리기만 (T347)"
+        run: python3 tools/check_claim_scope.py
+      - name: 선점 범위 자 자기 검사 (T347)
+        run: python3 tools/check_claim_scope.py --selftest
       - name: 표 행 이름 ↔ 화면 이름표 대조 자기 검사 (T279)
         run: python3 tools/check_table_tags.py --self-test
       # T282 회차 4 — 그림차 자도 제 자신은 아무도 안 재고 있었다(T278 이 제 자리에 적어 둔 그 꼴).
