@@ -1,0 +1,11 @@
+{
+  "_note": "신화 위 «표시 등급» 표 — 이 레포 전용(T316 · 주인 2026-09-09 10:3X 「신화 3강 시 갓 · 6강 시 초월 · 9강 시 불멸 · 12강 시 무한으로 바꾸고, 그 뒤에 걍 계속 무한인 거로. 즉 신화 13강은 무한 1강임. 걍 등급 시스템 더 추가하겠다는 거임. 갓 = 빨강 · 그다음 = 분홍 · 그다음 = 갈색 · 그다음 = 빨강·초록 그라데이션」). gear.json 은 aaaw 동기 폴더라 손대지 않고 여기 둔다. 코드는 카탈로그 텍스트 「data.gearTier」 로 읽는다 — 코드에 숫자·이름·색 하드코딩 0.",
+  "_rule": "신화(rar = rarMyth) 장비의 Plus 로만 갈린다. fromPlus 가 가장 큰 것부터 맞는 줄을 고르고, 표시 +N = Plus − fromPlus 다(주인 「신화 13강은 무한 1강」 · 주인 13:0X 「이제 신화 12강은 없는 거임 · 신화 3강 → 갓 0강 이런 식」 = 갓·초월·불멸·무한 전부 +0 부터 다시 센다). open: true 인 마지막 줄만 끝이 없다. ⚠ 엔진 값은 한 자도 안 바뀐다 — 기여(1 + plusStep × Plus)도 합성 규칙도 정렬(GearScore)도 그대로고, 이 표가 정하는 것은 **이름·색·표기**뿐이다.",
+  "_color": "색 이름은 Palette 가 아는 이름이다(red·brown 은 이미 있다). pink 는 T316 이 더한다. redGreen 은 한 색이 아니라 «빨강↔초록 세로 그라데이션» 이라는 뜻이고, 그리는 쪽이 그것을 그라데이션으로 읽는다(글자 = TMP 정점 그라데이션 · 칸 = GradientCard).",
+  "tiers": [
+    { "key": "god",      "name": "갓",   "fromPlus": 3,  "color": "red" },
+    { "key": "beyond",   "name": "초월", "fromPlus": 6,  "color": "pink" },
+    { "key": "immortal", "name": "불멸", "fromPlus": 9,  "color": "brown" },
+    { "key": "infinite", "name": "무한", "fromPlus": 12, "color": "redGreen", "open": true }
+  ]
+}

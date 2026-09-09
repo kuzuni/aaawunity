@@ -53,6 +53,8 @@ namespace KkomaKnight.Core
         public AchievementData Achievement;
         /// <summary>장비 레시피 표 — 이 레포의 <c>Assets/KkomaKnight/recipe.json</c>(카탈로그 텍스트 «data.recipe» · T290). 로드는 Bootstrap 이 따로 한다 · 없으면 null(레시피가 안 드는 옛 그대로 = 골드만).</summary>
         public RecipeData Recipe;
+        /// <summary>신화 위 «표시 등급» 표(갓·초월·불멸·무한) — 이 레포의 <c>Assets/KkomaKnight/gearTier.json</c>(카탈로그 텍스트 «data.gearTier» · T316). 로드는 Bootstrap 이 따로 한다 · 없으면 null(신화 위 등급이 없던 옛 그대로 = 전부 «신화 +N»).</summary>
+        public GearTierData GearTier;
         /// <summary>시즌 패스 보상 표 — 이 레포의 <c>Assets/KkomaKnight/pass.json</c>(카탈로그 텍스트 «data.pass» · T322). 로드는 Bootstrap 이 따로 한다 · 없으면 null(패스 화면이 모든 줄을 «?» 로 그린다 — 화면이 막히지는 않는다).</summary>
         public PassData Pass;
 

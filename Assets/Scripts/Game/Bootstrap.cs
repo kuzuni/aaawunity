@@ -69,6 +69,7 @@ namespace KkomaKnight.Game
             d.Achievement = LoadAchievement(catalog);
             d.Recipe = LoadRecipe(catalog);   // T290
             d.Pass = LoadPass(catalog);       // T322
+            d.GearTier = LoadGearTier(catalog);   // T316
             ApplyCombatOverride(d, catalog);   // T173 — 전투 규칙 덮어쓰기(창 사거리·관통)는 App 이 서기 «전» 에 먹인다
             App.Create(d, catalog, uiFont, Camera.main);
             PostFx.Enable(App.I != null ? App.I.transform : null, Camera.main);   // T181 — 월드 Bloom(UI 에는 안 먹는다 · PostFx 주석 참조)
@@ -202,6 +203,18 @@ namespace KkomaKnight.Game
             if (ta == null) { Debug.LogError("[KkomaKnight] pass.json 이 카탈로그(data.pass)에 없다 — 패스 보상 표 없음"); return null; }
             try { return PassData.Parse(ta.text); }
             catch (Exception e) { Debug.LogError("[KkomaKnight] pass.json 파싱 실패: " + e.Message); return null; }
+        }
+
+        /// <summary>
+        /// 신화 위 «표시 등급» 표 — 이 레포 전용 <c>Assets/KkomaKnight/gearTier.json</c>(카탈로그 텍스트 «data.gearTier» · T316).
+        /// 못 읽으면 null 이고, 그러면 <b>신화 위 등급이 없던 옛 그대로</b> 뜬다(전부 «신화 +N» · 화면이 막히지 않는다).
+        /// </summary>
+        static GearTierData LoadGearTier(AssetCatalog catalog)
+        {
+            var ta = catalog != null ? catalog.Text("data.gearTier") : null;
+            if (ta == null) { Debug.LogError("[KkomaKnight] gearTier.json 이 카탈로그(data.gearTier)에 없다 — 표시 등급 표 없음"); return null; }
+            try { return GearTierData.Parse(ta.text); }
+            catch (Exception e) { Debug.LogError("[KkomaKnight] gearTier.json 파싱 실패: " + e.Message); return null; }
         }
 
         /// <summary>아레나 한 판의 규칙표 — 이 레포 전용 <c>Assets/KkomaKnight/arenaMatch.json</c>(카탈로그 텍스트 «data.arenaMatch» · T240). 못 읽으면 null(승점이 안 움직인다 — 아레나 껍데기는 종전 그대로 뜬다).</summary>
