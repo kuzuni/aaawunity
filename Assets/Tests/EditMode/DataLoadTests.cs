@@ -9,7 +9,11 @@ namespace KkomaKnight.Tests
         [Test]
         public void LoadsAllSevenFiles()
         {
-            var d = TestData.Load();
+            // ⚑ 정본 일곱 파일이 «제대로 실렸는가» 를 재는 자다 — 그래서 밸런스 덮어쓰기를 안 먹인 표로 본다.
+            //   «챕터 수 == maxChapter» 는 정본끼리의 약속이고, 이 레포는 주인 지시로 maxChapter 를 줄인다(T325 ⓑ · 챕터 100).
+            //   그 줄임은 «덜 실렸다» 가 아니라 «주인이 100 까지만 쓰기로 했다» 이므로 여기서 잴 것이 아니다
+            //   (덮어쓰기 뒤의 관계는 GameData.ValidateOverridden 이 «정본이 더 많아도 된다» 로 따로 잰다).
+            var d = TestData.PreBalance();
             Assert.That(d.Tune.MaxChapter, Is.GreaterThan(0));
             Assert.That(d.Enemies.Chapters.Count, Is.EqualTo(d.Tune.MaxChapter));
             Assert.That(d.Perks.Perks.Count, Is.EqualTo(d.Perks.Count));

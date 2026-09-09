@@ -37,10 +37,17 @@ namespace KkomaKnight.Tests
             }
         }
 
+        /// <summary>
+        /// <c>enemies.json</c> 이 구워 둔 적 수치가 <c>tune.json</c> 의 공식과 맞는가 — <b>aaaw 정본끼리의 대조</b>다.
+        /// <para>⚠ 그래서 <see cref="TestData.PreBalance"/>(밸런스 덮어쓰기를 안 먹인 표)로 잰다.
+        /// 이 레포는 주인 지시로 적 수치에 배수를 얹으므로(<c>enemiesOverride</c> · T325 ⓑ) <c>TestData.Load()</c> 로 재면
+        /// <b>공식이 틀려서가 아니라 주인이 밸런스를 바꿔서</b> 빨개진다 — 그 빨강은 이 자가 재려는 것에 대해 아무 말도 안 한다.</para>
+        /// <para>⚑ 그리고 이 자가 <b>그 공식이 전투에 안 닿는다는 것을 아는 유일한 자리</b>이기도 하다 — 결정 985 를 보라.</para>
+        /// </summary>
         [Test]
         public void EnemyStatsFormulaMatchesJsonForEveryChapter()
         {
-            var d = TestData.Load();
+            var d = TestData.PreBalance();
             for (int c = 1; c <= d.Tune.MaxChapter; c++)
             {
                 var js = d.Enemies.Chapter(c);

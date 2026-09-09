@@ -44,13 +44,18 @@ namespace KkomaKnight.Tests
         public void EveryLookPartSetRarityHasCatalogSprite()
         {
             var d = TestData.Load(); var sprites = CatalogSprites();
+            // ⚠ 도는 것은 «등급» 인데 키가 받는 것은 «그림 칸» 이다 — 반드시 D.Gear.LookRar 를 거친다(T325 문 ⓑ).
+            //   등급을 그대로 넘기면 등급이 다섯이 되는 날 있지도 않은 «.4» 를 찾아 이 자가 «카탈로그에 없음» 으로 운다.
+            //   ⚑ GearLookWiringTests 는 자 폴더를 일부러 안 세므로(거기서는 그림 칸을 직접 다루는 것이 옳다) 이 자리는 그 자에 안 걸린다 —
+            //     예외 안에서 같은 고장이 나면 아무도 안 잡는다는 것을 값 회차가 값을 치르고 알았다(결정 1033 ④).
             foreach (var part in GearLook.LookParts)
                 foreach (var set in d.Gear.Sets)
-                    for (int r = 0; r < d.Gear.RarName.Length; r++)
+                    for (int rar = 0; rar < d.Gear.RarName.Length; rar++)
                     {
+                        int r = d.Gear.LookRar(rar);
                         var key = GearLook.PartKey(part, set, r);
-                        Assert.That(key, Is.Not.Null, part + "/" + set + "/" + r);
-                        Assert.That(sprites.Contains(key), Is.True, "catalog.json 에 없음: " + key);
+                        Assert.That(key, Is.Not.Null, part + "/" + set + "/" + d.Gear.RarName[rar]);
+                        Assert.That(sprites.Contains(key), Is.True, $"catalog.json 에 없음: {key}(등급 «{d.Gear.RarName[rar]}» → 그림 칸 {r})");
                         var icon = GearLook.IconKey(part, set, r);
                         Assert.That(icon, Is.EqualTo(GearLook.IconPrefix + part + "." + set + "." + r), "아이콘 키는 cmi.* (T31)");
                         Assert.That(sprites.Contains(icon), Is.True, "catalog.json 에 없음: " + icon);
@@ -91,10 +96,14 @@ namespace KkomaKnight.Tests
             var path = Path.GetFullPath(Path.Combine(TestData.Dir, "..", "..", "KkomaKnight", "catalog.json"));
             var sprites = new JNode(MiniJson.Parse(File.ReadAllText(path)))["sprites"];
             int n = 0;
+            // ⚠ 여기도 «등급» 을 «그림 칸» 자리에 넘기고 있었다 — 그런데 이쪽은 **조용히 통과한다**:
+            //   Suffix 의 클램프가 범위 밖 등급을 마지막 칸으로 눌러 «신화를 전설 그림으로 재고도» 초록이기 때문이다.
+            //   빨개지는 쪽(EveryLookPartSetRarityHasCatalogSprite)보다 이쪽이 더 나쁘다 — 아무도 안 운다. LookRar 를 거친다(T325 문 ⓑ).
             foreach (var part in GearLook.LookParts)
                 foreach (var set in d.Gear.Sets)
-                    for (int r = 0; r < d.Gear.RarName.Length; r++)
+                    for (int rar = 0; rar < d.Gear.RarName.Length; rar++)
                     {
+                        int r = d.Gear.LookRar(rar);
                         var worn = sprites[GearLook.PartKey(part, set, r)].Str(); var icon = sprites[GearLook.IconKey(part, set, r)].Str();
                         Assert.That(worn.Contains("/Parts Pack Base/Parts/"), Is.True, "착용 그림은 Parts/: " + worn);
                         Assert.That(icon.Contains("/Parts Pack Base/Thumbnail/"), Is.True, "아이콘 그림은 Thumbnail/: " + icon);
@@ -128,7 +137,12 @@ namespace KkomaKnight.Tests
         {
             var d = TestData.Load();
             var g = new GearItem { Part = "weapon", Type = "hpsh_weapon", Rar = 2, Plus = 0 };
-            Assert.That(GearLook.PartKey(d, g), Is.EqualTo("cm.gear.weapon.hpsh.2"));
+            // ⚑ 장착품 갈래는 «등급 → 그림 칸» 을 거친다(T325 문 ⓑ) — 그래서 기대값을 «.2» 로 박지 않고 그 관계로 적는다.
+            //   등급이 넷인 오늘은 항등이라 여전히 «.2» 이고, 다섯이 되는 날에는 표가 답하는 칸을 따라간다.
+            Assert.That(GearLook.PartKey(d, g), Is.EqualTo("cm.gear.weapon.hpsh." + d.Gear.LookRar(g.Rar)),
+                "장착품 키의 등급 자리는 GearData.LookRar 를 거친 «그림 칸» 이어야 한다");
+            Assert.That(GearLook.PartKey(d, g), Is.EqualTo(GearLook.PartKey("weapon", "hpsh", d.Gear.LookRar(g.Rar))),
+                "두 갈래(장착품·문자열)가 같은 키를 내야 한다");
             Assert.That(GearLook.PartKey("weapon", "crit", 99), Is.EqualTo("cm.gear.weapon.crit.3"));
             Assert.That(GearLook.PartKey("weapon", "crit", -1), Is.EqualTo("cm.gear.weapon.crit.0"));
         }
