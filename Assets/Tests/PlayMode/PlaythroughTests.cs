@@ -70,7 +70,7 @@ namespace KkomaKnight.Tests.Play
         // ─────────────────────────────────────────────────────────────────────────────
         // P1 로비 — START 가 있고, 하단 탭 다섯을 왕복하고, 챕터 ◀▶ 를 눌러도 죽지 않는가.
         // ─────────────────────────────────────────────────────────────────────────────
-        /// <summary>P1 로비(T300 1항) — 노는 것: 탭 다섯 왕복 · 챕터 ◀▶. 재는 것: 이름 계약 · HeroView ≥ 1 · 빨간 줄 0.</summary>
+        /// <summary>P1 로비(T300 1항) — 노는 것: 탭 다섯 왕복 · 챕터 ◀▶. 재는 것: 이름 계약 · 아바타 칸의 초상 · 빨간 줄 0.</summary>
         [UnityTest]
         public IEnumerator P1_로비를_돌아다녀도_죽지_않는다()
         {
@@ -81,8 +81,23 @@ namespace KkomaKnight.Tests.Play
             // 도달 — 로비의 이름 계약(이것이 없으면 아래 «놀기» 가 헛돈다)
             Assert.IsNotNull(UiKit.Find(lobby, "Start"), "로비 START");
             Assert.IsNotNull(UiKit.Find(lobby, "ChapterCard"), "챕터 카드");
-            Assert.Greater(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 0,
-                "로비에 플레이어 초상(HeroView)이 있다 — 주인이 바로 보는 자리다");
+            // T300-p1 — 여기 있던 «로비에 `HeroView` 가 ≥ 1» 은 **주인이 지우라고 한 것을 단언하고 있었다**(런 711 빨강 1건).
+            //   `Screens.cs:453` — **T262 ⓐ**(주인 2026-09-09 «플레이어 이미지 말고»)가 로비 아바타의 `HeroView`(내 캐릭터를
+            //   실시간으로 그린 초상)를 **프로필에서 고른 초상 아이콘**(`Profile.Face`)으로 갈아 끼웠다. 즉 로비에 그것이 **없는 것이
+            //   지금 옳은 상태**이고, 이 단언은 로비가 옳을수록 빨개진다. 재려던 것(«주인이 바로 보는 자리»)은 살리고
+            //   **재는 대상만 실제로 서 있는 것**으로 바꾼다 — 아바타 칸의 초상(`Profile.FaceName`)이 그 자리다.
+            //   ⚠ `FindObjectsByType` 는 **씬 전체**를 뒤진다 — 이름이 «로비에 …» 여도 로비 안인지는 안 본다.
+            //      화면 하나를 재려면 그 화면의 루트에서 찾아야 한다(로비 밖 `HeroView` 가 켜져 있으면 통과해 버린다).
+            //   ⚠ **그리고 이 고침은 이미 한 번 있었다** — `HeroViewTests` 가 같은 줄을 T262 ⓐ 때 같은 까닭으로 이미 갈아 끼웠다.
+            //      그래서 새로 짓지 않고 **그 자의 꼴을 그대로** 쓴다(칸을 집고 → 그 안의 초상 → 그 자리에 `HeroView` 는 없다).
+            //      `check_stale_asserts` 는 이 부류를 못 잡는다 — 그 자는 **이 diff 가 지운 값**을 보는데, 여기서는
+            //      «이미 지워진 것을 **새로 단언**» 했다. 지운 쪽이 아니라 **더한 쪽**이라 자의 눈 밖이다.
+            {
+                var av = UiKit.Find(lobby, "Avatar"); Assert.IsNotNull(av, "로비 상단 바 아바타 칸");
+                Assert.IsNotNull(UiKit.Find(av, Profile.FaceName),
+                                 "아바타 칸에 내 초상이 서 있다 — 주인이 바로 보는 자리다(T262 ⓐ 뒤로 그것은 프로필 초상 아이콘이다)");
+                Assert.IsNull(av.GetComponentInChildren<HeroView>(true), "내 캐릭터 그림은 아바타 자리에 없다(주인 «플레이어 이미지 말고»)");
+            }
 
             // 놀기 ⓐ 하단 탭 다섯을 한 바퀴 돌고 로비로 돌아온다
             foreach (var key in NavBar.Keys)

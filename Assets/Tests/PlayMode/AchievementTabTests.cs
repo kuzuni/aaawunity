@@ -95,6 +95,15 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(Achievement.CanClaim(_app.Save, d, Achievement.DailyOnce),
                           "켠 것만으로 «출석» 업적은 받을 수 있어야 한다(T258 훅 · App.Create → Quests.Login)");
 
+            // T258 — 프리팹이 데모용 «Disabled» 덮개(크림색 알파 0.70)를 둘 달고 온다. 일일 판에서는 안 띄는 자리라 아무도 안 껐는데,
+            //   목록이 위로 늘어난 업적 판에서 **아래 두 줄을 덮은 반투명 사각형**으로 드러났다(run 694 사진).
+            //   §5 는 **이름표 없는 조각을 못 재므로** 표 점수는 그때도 10.0 이었다 — 그래서 그 갈래를 자로 옮겨 둔다.
+            //   ⚠ **꺼진 것까지 세면 안 된다** — 고침은 조각을 지우는 것이 아니라 «끄는» 것이라(프리팹 조각은 안 지운다 · 공통 문법)
+            //   `activeInHierarchy` 만 본다. 이것을 안 가리면 고쳐도 자가 빨갛다.
+            foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                if (t.gameObject.activeInHierarchy)
+                    Assert.AreNotEqual("Disabled", t.name, "프리팹 데모 덮개(«Disabled»)가 켜져 있으면 줄을 가린다");
+
             yield return Shutdown();
         }
 
