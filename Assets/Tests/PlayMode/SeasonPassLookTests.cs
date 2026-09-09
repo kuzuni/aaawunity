@@ -133,6 +133,30 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual("?", qty.GetComponent<TMPro.TMP_Text>().text, "표가 모르는 줄은 «?» 로 그린다(수를 지어내지 않는다)");
             }
 
+            // ── T328(주인 «그것들도 다 패턴 효과 있어야 하는데 없네») — 열마다 흐르는 무늬 한 장
+            {
+                var sp = _app.Current.Root;
+                foreach (var c in Cols)
+                {
+                    var col = UiKit.Find(sp, c.Col);
+                    Assert.IsNotNull(col, c.Col);
+                    var pat = col.Find(UiKit.PatternName);
+                    Assert.IsNotNull(pat, c.Col + " 에 무늬 한 장(T328)");
+                    var raw = pat.GetComponent<UnityEngine.UI.RawImage>();
+                    Assert.IsNotNull(raw, "무늬는 RawImage(uvRect 로 흐른다)");
+                    Assert.AreEqual(SeasonPassScreen.PatternAlpha, raw.color.a, 1e-4f, "무늬 알파 = 레퍼런스 실측 상수");
+                    // ⚠ **그라데이션 «위»** 여야 한다 — 밑에 깔면 불투명한 페이드 조각에 가려 가운데만 비친다(T328 주석).
+                    var grad = col.Find(UiKit.GradientBottomName) ?? col.Find(UiKit.GradientTopName);
+                    Assert.IsNotNull(grad, "그라데이션 조각");
+                    Assert.Greater(pat.GetSiblingIndex(), grad.GetSiblingIndex(), c.Col + " 무늬는 그라데이션 위다");
+                }
+                // 흐른다 — 두 프레임 사이에 uvRect 가 움직인다(«한 장 깔아 두고 안 돌리는» 것과 갈린다)
+                var p0 = UiKit.Find(sp, Cols[0].Col).Find(UiKit.PatternName).GetComponent<UnityEngine.UI.RawImage>();
+                var uv0 = p0.uvRect;
+                yield return Frames(3);
+                Assert.AreNotEqual(uv0.x, p0.uvRect.x, "무늬가 흐른다(uvRect 가 움직인다)");
+            }
+
             _log.AssertNoRed("패스 열 그라데이션(T302)");
             if (_app != null) { if (_app.UiCanvas != null) Object.Destroy(_app.UiCanvas.gameObject); Object.Destroy(_app.gameObject); }
             yield return Frames(2);
