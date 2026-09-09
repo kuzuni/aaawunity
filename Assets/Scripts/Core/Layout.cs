@@ -269,7 +269,7 @@ namespace KkomaKnight.Core
         public static readonly R PvpFoePower = new R(61.4f, 16.3f, 21.8f, 0.9f);
 
         // ───────── T240 1항 «원형 버튼 셋»(AUTO · 천사 · 악마) — 표 ㊺ 실측(밝은 테 bbox) ─────────
-        // ⚠ 이 셋은 <b>자리와 그림만</b> 있다 — 우리 전투에 그 기능이 없다(결정 799). 그 판단의 까닭은 ROUTINE §2 T240 ⓐ 에 적었다.
+        // ⚠ 이 셋은 <b>자리와 그림만</b> 있다 — 우리 전투에 그 기능이 없다(결정 800). 그 판단의 까닭은 ROUTINE §2 T240 ⓐ 에 적었다.
         //   기능이 생기는 날 여기 자리는 그대로 두고 <c>BattleScreen</c> 의 «누르면» 만 붙이면 된다.
         /// <summary>AUTO(노란 알) — 실측 bbox. 셋 중 가장 왼쪽.</summary>
         public static readonly R PvpAuto = new R(58.3f, 90.4f, 15.3f, 9.6f);
