@@ -247,7 +247,8 @@ namespace KkomaKnight.Tests.Play
 
         /// <summary>
         /// T72 2단계 2차(상점 09·10) — 주인 원문 «상점 아이템, 특별 상품 이런 것들 아이콘 뒤에 Effect_Light_01_512 이런 거 있어야 하고 천천히 오른쪽으로 회전하는 느낌» +
-        /// «Pattern_01_256 이거들이 모든 UI 에 다 있어야 함». ⓐ 상점 풀스크린 배경에 패턴(어두운 회색 바탕 → 흰 무늬 · 배경 조각 바로 위) ⓑ 대형 상자 배너·상자 카드 2·다이아 6·골드 3 의 그림 뒤 빛살 ⓒ 빛살은 <b>시계방향</b>
+        /// «Pattern_01_256 이거들이 모든 UI 에 다 있어야 함». ⓐ 상점 풀스크린 배경에 패턴(어두운 회색 바탕 → 흰 무늬 · 배경 조각 바로 위) ⓑ 빛살은 <b>대형 상자 배너 하나뿐</b>이고
+        /// 작은 상자 카드 2·다이아 6·골드 3 에는 <b>없다</b>(T308 · 주인 2026-09-09 09:1X — 옛 계약 «전부 있다» 를 갈아 끼웠다 · T184) ⓒ 그 하나는 <b>시계방향</b>
         /// ⓓ T72 4항 = 스크롤 밖 칸은 멈춘다(맨 위로 올리면 아래 칸이 정지 · 내리면 다시 돈다). 빨간 줄 0.
         /// </summary>
         [UnityTest]
@@ -272,14 +273,23 @@ namespace KkomaKnight.Tests.Play
             for (int i = 0; i < content.childCount; i++)
             {
                 var c = content.GetChild(i);
-                if (c.name.StartsWith("Box:")) { Assert.IsTrue(UiKit.HasLight(c), c.name + " 상자 그림 뒤 빛살"); if (firstBox == null) firstBox = c; boxes++; }
+                if (c.name.StartsWith("Box:"))
+                {
+                    // T308(주인 09:1X «희귀 상자랑 전설 상자는 카드에서 라이트 이펙트 빼기») — 빛살이 남는 것은 **맨 위 대형 배너 하나뿐**이다.
+                    // 신화 큰 카드는 주인이 말을 안 해 그대로 두었으므로, 여기서도 «첫 상자만 켜짐» 으로 못 박는다(아래 ⓒ 의 회전 검사가 그 하나를 쓴다).
+                    if (firstBox == null) { firstBox = c; Assert.IsTrue(UiKit.HasLight(c), c.name + " 대형 배너는 빛살이 남는다(주인이 말을 안 한 자리)"); }
+                    else Assert.IsFalse(UiKit.HasLight(c), c.name + " 작은 상자 카드에는 빛살이 없다(T308 · 주인 지시)");
+                    boxes++;
+                }
                 else if (c.name.StartsWith("GemPack:") || c.name.StartsWith("GoldPack:"))
                 {
                     var cell = c.childCount > 0 ? c.GetChild(0) : null;   // 조각(ListItem_ShopItem)
                     Assert.IsNotNull(cell, c.name + " 안의 상품 조각");
-                    Assert.IsTrue(UiKit.HasLight(cell), c.name + " 상품 아이콘 뒤 빛살");
-                    var icon = cell.Find("Icon"); Assert.IsNotNull(icon, c.name + " 아이콘");
-                    Assert.Less(cell.Find(UiKit.LightMaskName).GetSiblingIndex(), icon.GetSiblingIndex(), c.name + ": 빛살은 아이콘 «뒤»(형제 순서 앞)");
+                    // T308(주인 «다이아 골드 카드도 라이트 이펙트 빼기») — 담개째로 안 선다.
+                    // ⚠ 그래서 «빛살이 아이콘 뒤인가» 를 여기서 더 재면 안 된다 — `cell.Find(LightMaskName)` 이 null 이라 그 줄이 터진다.
+                    Assert.IsFalse(UiKit.HasLight(cell), c.name + " 상품 아이콘 뒤 빛살은 없다(T308 · 주인 지시)");
+                    Assert.IsFalse(UiKit.HasLightMask(cell), c.name + " 빛 담개도 안 선다(조각을 아예 안 세운다)");
+                    Assert.IsNotNull(cell.Find("Icon"), c.name + " 아이콘");
                     packs++;
                 }
             }

@@ -1447,12 +1447,16 @@ namespace KkomaKnight.Tests.Play
                 foreach (var r in TextAudit.Collect("shop", shop))
                     if (r.Kind != TextKind.Small && r.Used > 0 && r.Used < r.Min && r.Path.IndexOf("TopBar", StringComparison.Ordinal) < 0 && r.Path.IndexOf("ui.tabBar", StringComparison.Ordinal) < 0) shrunk.Add(r.ToString());
                 Assert.AreEqual(0, shrunk.Count, "상점 글자가 bestFit 으로 종류 하한 아래로 줄었다(T63-shop):\n" + string.Join("\n", shrunk));
-                // T190 ⓑ — **남기는 자리를 못 박는다**: 상점 상품 카드의 빛은 그대로다(주인 13:1X «상점은 바꾸기 전이 맞았음»).
-                // 이 줄이 없으면 «빛 효과 없게» 를 읽은 다음 워커가 상점 것까지 지운다. 상품 카드는 조각이 달라(ListItem_ShopItem) «아이템 칸» 판정에도 안 걸린다.
+                // ⚠ **주인이 계약을 뒤집었다 — 옛 줄을 지우지 않고 갈아 끼웠다**(T184 · T327 · 검수 Q 2026-09-09 11:1X).
+                //   옛 계약(T190 ⓑ · 주인 2026-09-08 13:1X «상점은 바꾸기 전이 맞았음») = 상품 카드의 빛은 **남는다**.
+                //   새 계약(T308 · 주인 2026-09-09 09:1X «**다이아 골드 카드도 라이트 이펙트 빼기**») = **뺀다**.
+                //   그래서 이 자리는 이제 «없다» 를 못 박는다. 남은 빛은 신화 큰 카드 하나뿐이다(주인이 그 하나만 말을 안 했다).
+                //   ⓐ 옛 줄을 통째로 지우면 다음 사람이 «원래 없었나» 로 읽고 T190 을 되살릴 여지가 남는다 — 그래서 두 지시를 나란히 적어 둔다.
+                //   ⓑ 아래 «아이템 칸이 아니다» 는 T190 1항의 근거라 **그대로 산다**(빛과 무관한 판정이다).
                 {
                     var pack = UiKit.Find(content, "GemPack:0"); Assert.IsNotNull(pack, "다이아 상품 카드");
                     var icon = UiKit.Find(pack, "Icon"); Assert.IsNotNull(icon, "상품 아이콘");
-                    Assert.IsTrue(UiKit.HasLight(icon.parent), "상점 상품 아이콘 뒤 빛살은 **남는다**(T190 ⓑ · 주인 13:1X)");
+                    Assert.IsFalse(UiKit.HasLight(icon.parent), "상점 상품 아이콘 뒤 빛살은 **뺀다**(T308 · 주인 2026-09-09 09:1X)");
                     Assert.IsFalse(UiKit.IsItemCell(icon.parent), "상품 카드는 «아이템 칸»(ItemFrame_01) 이 아니다 — 판정이 상점을 안 건드린다는 근거(T190 1항)");
                 }
                 var qty = UiKit.Find(UiKit.Find(content, "GemPack:0"), "Text_Title"); Assert.IsNotNull(qty, "다이아 카드 수량 글자");
