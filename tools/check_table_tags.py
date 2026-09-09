@@ -28,6 +28,15 @@
 월드 행 — 캔버스 밖이라 이름표가 없고 `BattleWorld` 가 표의 이름 그대로 사전에 담아 돌려준다
 (`d["지면(길) 띠"] = …`). 그래서 그 사전 키도 이름의 출처로 센다.
 
+⛔ **«아직 만들 수 없는 요소» 는 안 센다**(3회차) — 표의 **비고**에 `⛔` 가 있으면 그 행은 이름을 적기만 하고
+   요약에서 뺀다. 까닭: 그런 행은 **코드로 고칠 수가 없어**(기능 자체가 없다 · 주인 답을 기다린다) 요약에
+   눌러앉는데, 그러면 «초록이면 어긋남 0» 이 영영 성립하지 않고 다음 사람이 이 줄을 통째로 무시한다 —
+   알리기만 하는 자가 죽는 방식이 정확히 그것이다. 실례: 표 ㊺ 의 «원형 버튼 AUTO·천사·악마» 는
+   우리 전투에 그 기능이 **없고**, T240 이 «주인께 물을 것» 으로 올려 두었다(결정 777).
+   ⚠ **숨기는 것이 아니다** — 이름은 따로 한 줄로 그대로 찍고 요약 꼬리에 건수를 붙인다.
+   ⚠ 표시는 «비고» 에만 단다(행 이름·수치는 안 건드린다) — `ui_score` 채점은 이 표시를 안 보므로
+      그 행은 여전히 «요소 없음 ✗0» 이다(점수를 깎는 것과 «고칠 수 있는가» 는 다른 물음이다).
+
 ⚑ 워커가 읽는 법 — **dotnet 잡 꼬리 50줄**을 당겨 «[표이름] 요약» 줄부터 본다.
    이 단계는 그 잡의 **마지막**이다(결정 769) — 처음엔 다른 «보고만» 자들 옆(위쪽)에 뒀는데
    뒤에 오는 aaaw 체크아웃(git 잡음 ~40줄)·아티팩트 업로드가 이 줄을 **꼬리 96줄 밖으로** 밀어냈다
@@ -54,6 +63,7 @@ CALL = re.compile(r'\b(?:UiKit\.)?(?:Tag|TagGroup)\s*\(')
 SIG = re.compile(r'^\s*(?:public|private|protected|internal|static|\s)*[\w<>,\[\]\.]+\s+(\w+)\s*\(([^)]*)\)\s*$', re.M)
 DICT_KEY = re.compile(r'\w\["((?:[^"\\]|\\.)*)"\]\s*=')     # 월드 행 — BattleWorld 의 사전 키
 MIN_PREFIX = 4      # 이보다 짧은 앞머리는 아무 행이나 삼킨다 — 안 받는다
+NOT_YET = '⛔'      # 표의 «비고» 에 이 표가 있으면 «아직 만들 수 없는 요소» — 이름을 적되 어긋남으로 안 센다(3회차)
 
 
 def _skip_string(s, i):
@@ -139,15 +149,17 @@ def known(name, exact, prefix):
     return name in exact or any(name.startswith(p) for p in prefix)
 
 
-def rows_by_table():
-    """{표 기호: [행 이름]} — SCREENS 로 화면과 짝지어진 표만(짝 없는 표는 조용히 건너뛴다 · 절 3항)."""
-    tables = ui_score.parse_ref()
+def rows_by_table(tables=None):
+    """{표 기호: [(행 이름, 아직 없는 요소인가)]} — SCREENS 로 화면과 짝지어진 표만(짝 없는 표는 조용히 건너뛴다 · 절 3항).
+
+    `tables` 를 주면 그것을 읽는다(자기 검사가 가짜 표를 먹인다 · 안 주면 `docs/ref-layout.md`)."""
+    if tables is None: tables = ui_score.parse_ref()
     out, seen = {}, set()
     for screen in sorted(ui_score.SCREENS):
         sym, only, exclude = ui_score.SCREENS[screen]
         t = tables.get(sym)
         if not t: continue
-        for name, ref, _note in t['rows']:
+        for name, ref, note in t['rows']:
             if '(참고·컨테이너)' in name: continue
             if name.startswith('~~'): continue                 # 지운 요소(취소선)는 이름표가 없는 것이 맞다
             # 값이 h 하나뿐인 행은 **요소가 아니라 거리**다(«상단 스탯 줄 ↔ 카드1 간격 — — — 26.5» · ⚑ T154).
@@ -157,28 +169,32 @@ def rows_by_table():
             if exclude and name.startswith(exclude): continue
             if (sym, name) in seen: continue
             seen.add((sym, name))
-            out.setdefault(sym, []).append(name)
+            out.setdefault(sym, []).append((name, NOT_YET in note))
     return tables, out
 
 
 def report(out=print):
     exact, prefix = collect_tags()
     tables, per_table = rows_by_table()
-    total = missing = 0
-    lines = []
-    for sym in sorted(per_table, key=lambda s: -sum(1 for n in per_table[s] if not known(n, exact, prefix))):
+    total = missing = notyet = 0
+    lines, notyet_lines = [], []
+    for sym in sorted(per_table, key=lambda s: -sum(1 for n, _y in per_table[s] if not known(n, exact, prefix))):
         rows = per_table[sym]
         total += len(rows)
-        bad = [n for n in rows if not known(n, exact, prefix)]
-        missing += len(bad)
+        title = tables[sym]['title'][:40]
+        bad = [n for n, yet in rows if not yet and not known(n, exact, prefix)]
+        pend = [n for n, yet in rows if yet and not known(n, exact, prefix)]
+        missing += len(bad); notyet += len(pend)
         if bad:
-            title = tables[sym]['title'][:40]
             lines.append(f'{TAG} {sym} «{title}» {len(bad)}/{len(rows)}행 — ' + ' · '.join(bad))
-    for line in lines: out(line)
+        if pend:
+            notyet_lines.append(f'{TAG} ({NOT_YET} 아직 없는 요소 · 안 센다) {sym} {len(pend)}건 — ' + ' · '.join(pend))
+    for line in lines + notyet_lines: out(line)
+    tail = f' · {NOT_YET} 아직 없는 요소 {notyet}건은 안 셌다(위에 이름을 적었다)' if notyet else ''
     if missing:
-        out(f'{TAG} 요약 {missing}건 / 재는 행 {total} — 이 이름의 행은 §5 에서 «요소 없음 ✗0» 이다(자리 문제가 아니다)')
+        out(f'{TAG} 요약 {missing}건 / 재는 행 {total} — 이 이름의 행은 §5 에서 «요소 없음 ✗0» 이다(자리 문제가 아니다){tail}')
     else:
-        out(f'{TAG} 요약 0건 / 재는 행 {total} — 표 행 이름과 화면 이름표가 다 맞물린다')
+        out(f'{TAG} 요약 0건 / 재는 행 {total} — 표 행 이름과 화면 이름표가 다 맞물린다{tail}')
     return missing
 
 
@@ -219,6 +235,14 @@ def self_test():
     print('없는 이름은 없다고 한다 —', 'OK' if miss else '실패')
     bad = known('좌', exact, prefix); ok &= not bad      # 짧은 앞머리가 아무 행이나 삼키면 안 된다
     print(f'짧은 앞머리(<{MIN_PREFIX}자)는 안 삼킨다 —', 'OK' if not bad else '실패')
+    # ⛔ 표시(3회차) — 가짜 표를 먹여 «안 센다 · 그러나 이름은 찍는다» 를 둘 다 본다.
+    ref4 = [1.0, 2.0, 3.0, 4.0]
+    fake = {'㊺': {'title': '가짜 표', 'rows': [('있는 요소', ref4, '보통 비고'),
+                                               ('없는 요소', ref4, '뭐라뭐라'),
+                                               ('아직 못 만드는 요소', ref4, f'{NOT_YET} 아직 없다 · 주인 답 대기')]}}
+    rows = rows_by_table(fake)[1]['㊺']
+    ok &= rows == [('있는 요소', False), ('없는 요소', False), ('아직 못 만드는 요소', True)]
+    print(f'{NOT_YET} 는 비고에서만 읽는다 —', 'OK' if rows[2][1] and not rows[1][1] else '실패')
     sink = []
     n = report(sink.append); ok &= isinstance(n, int) and sink and sink[-1].startswith(f'{TAG} 요약')
     print('마지막 줄은 늘 «요약» —', 'OK' if sink and sink[-1].startswith(f'{TAG} 요약') else '실패')
