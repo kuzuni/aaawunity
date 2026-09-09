@@ -187,8 +187,15 @@ namespace KkomaKnight.Game
         /// </summary>
         static QuestData _qd; static QuestData.Track _qt; static SaveData _qs; static bool _qDaily = true;
 
-        /// <summary>지금 판의 줄 수 — 표가 있으면 표가 정하고(일일·주간 8줄) 없으면 종전 6줄이다.</summary>
-        static int QuestRows => _qt != null ? _qt.Quests.Count : Layout.QsRowCount;
+        /// <summary>
+        /// T258 4항 — 지금 «업적» 탭을 그리는 중인가(표 <c>_ad</c> 가 같이 선다). 업적은 <b>일일·주간과 다른 표</b>라 판이 셋이 된다.
+        /// <para>업적 탭은 <b>메달 트랙도 새로고침 줄도 안 그린다</b>(주인 «메달 없음» · 누적은 초기화되지 않으니 «새로고침까지» 가 거짓말이 된다).</para>
+        /// </summary>
+        static bool _qAch; static AchievementData _ad;
+
+        /// <summary>지금 판의 줄 수 — 업적이면 표의 17줄 · 퀘스트면 표가 정하고(일일·주간 8줄) 표가 없으면 종전 6줄이다.</summary>
+        static int QuestRows => _qAch ? (_ad != null ? _ad.List.Count : 0)
+                              : _qt != null ? _qt.Quests.Count : Layout.QsRowCount;
 
         /// <summary>
         /// T257 — 트랙 칸이 주는 물건의 아이콘. <b>이름 → 그림</b> 짝짓기는 화면 몫이라 여기 있다(표는 이름만 적는다 · <c>quest.json</c> 의 그 주석).
@@ -265,11 +272,20 @@ namespace KkomaKnight.Game
         /// </summary>
         /// <param name="daily">true = 일일(동메달) · false = 주간(은메달). 탭은 <b>닫고 다시 여는</b> 길로 갈아탄다 —
         /// 이미 잘 도는 길이라 조립을 반쯤 되돌리는 것보다 안전하다(줄 수·트랙 칸 수가 판마다 다르다).</param>
-        public static void Quest(App app, bool daily = true)
+        public static void Quest(App app, bool daily = true) { _qAch = false; QuestPopup(app, daily); }
+
+        /// <summary>
+        /// T258 4항 — 같은 팝업의 «업적» 판. 퀘스트와 <b>한 함수를 같이 쓴다</b> — 상자·리본·목록·탭이 전부 같은 자리라
+        /// 따로 짜면 «같은 것 두 벌» 이 되어 한쪽만 고쳐지는 날이 온다(T267 3단계가 같은 자리에서 한 판단).
+        /// </summary>
+        public static void Achievements(App app) { _qAch = true; QuestPopup(app, true); }
+
+        static void QuestPopup(App app, bool daily)
         {
             var ov = app.Overlay; var B = Layout.QsBox;
             // T257 — 그리기 전에 표를 잡고 날·주를 민다(어제 셈이 오늘 화면에 남지 않게 · 표가 없으면 종전 껍데기 그대로 뜬다).
             _qd = app.Data != null ? app.Data.Quest : null; _qs = app.Save; _qDaily = daily;
+            _ad = app.Data != null ? app.Data.Achievement : null;   // T258 — 업적은 표가 따로다(못 읽으면 줄이 0 이고 다른 탭은 멀쩡하다)
             if (_qd != null && _qs != null) QuestRun.Roll(_qs, _qd, System.DateTime.Now);
             _qt = _qd != null ? (_qDaily ? _qd.Daily : _qd.Weekly) : null;
             var root = (RectTransform)ov.OpenPrefab("ui.progressionMission2").transform;
@@ -288,12 +304,17 @@ namespace KkomaKnight.Game
             if (band != null)
             {
                 UiKit.Pct(band, Layout.QsTitleBand.Within(B));
-                var bt = UiKit.SetText(band, "Text (TMP)", "퀘스트", null, TextSize.Title, TextKind.Title);
+                var bt = UiKit.SetText(band, "Text (TMP)", _qAch ? "업적" : "퀘스트", null, TextSize.Title, TextKind.Title);   // T258 — 같은 리본, 판 이름만 바뀐다
                 if (bt != null) { bt.enableAutoSizing = true; bt.fontSizeMin = TextSize.BestFitMin; bt.fontSizeMax = TextSize.Title; RibbonTextFit(bt); }
             }
 
             // 점수 트랙 · 새로고침 줄 · 목록 상자 = 레퍼런스 15 그대로(프리팹에 없는 조각)
-            var trackBox = UiKit.Panel(box, "TrackBox", "fr.r12", Palette.A(Palette.Dim, 0.55f)); UiKit.Pct(trackBox.rectTransform, Layout.QsTrackBox.Within(B));
+            // T258 4항 — **업적 탭에는 트랙도 새로고침 줄도 없다**: 메달이 없고(주인 «메달 없음») 누적은 초기화되지 않으니
+            //   «새로고침까지 mm:ss» 는 그 탭에서 **거짓말**이 된다. 대신 목록이 그 자리까지 올라와 빈 구멍이 안 생긴다.
+            RectTransform trackBox = null, refresh = null;
+            if (!_qAch)
+            {
+            var trackPanel = UiKit.Panel(box, "TrackBox", "fr.r12", Palette.A(Palette.Dim, 0.55f)); UiKit.Pct(trackPanel.rectTransform, Layout.QsTrackBox.Within(B)); trackBox = trackPanel.rectTransform;
             // T257 — 트랙 숫자·아이콘은 표가 정한다(첫 칸 «0» 은 시작점이라 표에 없다 · 상품 아이콘은 그 칸이 주는 물건에서).
             string[] trackNums = QuestNums, trackIcons = TrackIcons;
             if (_qt != null)
@@ -311,7 +332,7 @@ namespace KkomaKnight.Game
             // T257 — 주인 «20포인트 채워지면 퀘스트 팝업 상단에 20포인트 부분 것 얻을 수 있고». **채운 칸만** 눌린다.
             //  받으면 즉시 지급(`QuestRun.Claim`)하고 T241 리워드 팝업을 띄운 뒤, 닫을 때 이 팝업을 **다시 연다**(결정 671 의 그 꼴).
             //  못 받는 칸은 아예 안 걸어 둔다 — 눌리는데 아무 일도 안 나는 것이 제일 나쁘다.
-            if (_qd != null && _qt != null && _qs != null)
+            if (!_qAch && _qd != null && _qt != null && _qs != null)
                 for (int k = 0; k < _qt.Steps.Count; k++)
                 {
                     if (!QuestRun.CanClaim(_qs, _qd, _qDaily, k)) continue;
@@ -329,12 +350,18 @@ namespace KkomaKnight.Game
                         RewardPopup.Show(got, () => Quest(app, dailyNow));   // 닫으면 이 팝업을 다시(받은 칸이 꺼진 채로)
                     });
                 }
-            var refresh = TimerRow(box, B, Layout.QsRefresh, "새로고침까지 " + Dashes, "Refresh");
-            var listBox = UiKit.Panel(box, "ListBox", "fr.r12", Palette.A(Palette.Dim, 0.55f)); UiKit.Pct(listBox.rectTransform, Layout.QsListBox.Within(B));
+            refresh = TimerRow(box, B, Layout.QsRefresh, "새로고침까지 " + Dashes, "Refresh");
+            }
+            // 업적이면 목록 상자가 트랙 자리까지 올라온다 — 표에 새 수를 넣지 않고 **있는 두 수로** 만든다(위=트랙 상자의 위 · 아래=목록 상자의 아래).
+            var listR = _qAch ? new Layout.R(Layout.QsListBox.X, Layout.QsTrackBox.Y, Layout.QsListBox.W,
+                                             Layout.QsListBox.Y + Layout.QsListBox.H - Layout.QsTrackBox.Y)
+                              : Layout.QsListBox;
+            var listBox = UiKit.Panel(box, "ListBox", "fr.r12", Palette.A(Palette.Dim, 0.55f)); UiKit.Pct(listBox.rectTransform, listR.Within(B));
 
             // 미션 줄 = 프리팹 ScrollView/Content(GridLayoutGroup) — 1열 · 칸 = 표 ⑳ 줄 · 세로 간격 = 피치 − 줄
             var sv = (RectTransform)UiKit.Find(box, "ScrollView");
-            var viewR = new Layout.R(Layout.QsRow1.X, Layout.QsRow1.Y, Layout.QsRow1.W, Layout.QsListBox.Y + Layout.QsListBox.H - 0.8f - Layout.QsRow1.Y);
+            float rowTop = _qAch ? listR.Y + (Layout.QsRow1.Y - Layout.QsListBox.Y) : Layout.QsRow1.Y;   // 상자 안 여백은 그대로 두고 위만 올린다
+            var viewR = new Layout.R(Layout.QsRow1.X, rowTop, Layout.QsRow1.W, listR.Y + listR.H - 0.8f - rowTop);
             UiKit.Pct(sv, viewR.Within(B));
             var content = (RectTransform)UiKit.Find(sv, "Content");
             var grid = content != null ? content.GetComponent<GridLayoutGroup>() : null;
@@ -349,13 +376,13 @@ namespace KkomaKnight.Game
             // T257 — 표가 프리팹 줄(6)보다 많으면(일일·주간 8줄) 첫 줄을 복제해 채운다. 목록은 ScrollView 안이라 넘치면 스크롤된다.
             if (content != null && content.childCount > 0)
                 while (content.childCount < QuestRows)
-                    UnityEngine.Object.Instantiate(content.GetChild(0).gameObject, content).name = "Quest:" + content.childCount;   // `using System;` 때문에 «Object» 가 모호하다
+                    UnityEngine.Object.Instantiate(content.GetChild(0).gameObject, content).name = RowName + content.childCount;   // `using System;` 때문에 «Object» 가 모호하다
             int rows = content != null ? content.childCount : 0, want = Mathf.Min(QuestRows, rows);
             for (int i = rows - 1; i >= want; i--) content.GetChild(i).gameObject.SetActive(false);   // 프리팹 줄이 표(6줄)보다 많으면 남는 것은 지우지 말고 끈다
             for (int i = 0; i < want; i++)
             {
-                var frame = (RectTransform)content.GetChild(i); frame.name = "Quest:" + i; frame.gameObject.SetActive(true);
-                var parts = QuestRow(frame, i, ov);
+                var frame = (RectTransform)content.GetChild(i); frame.name = RowName + i; frame.gameObject.SetActive(true);
+                var parts = _qAch ? AchRow(app, frame, i) : QuestRow(frame, i, ov);
                 if (i == 0) { row1 = frame; medal1 = parts.Medal; title1 = parts.Title; bar1 = parts.Bar; go1 = parts.Go; } else if (i == 1) row2 = frame;
             }
 
@@ -366,22 +393,100 @@ namespace KkomaKnight.Game
                 // T257 — «일일»·«주간» 은 판을 갈아탄다(닫고 다시 연다) · «업적» 은 T258 절이라 여기서는 껍데기 그대로 둔다.
                 int ti = i;
                 System.Action onTab = ti == 0 ? (System.Action)(() => Quest(app, true))
-                                    : ti == 1 ? (System.Action)(() => Quest(app, false)) : null;
+                                    : ti == 1 ? (System.Action)(() => Quest(app, false))
+                                              : (System.Action)(() => Achievements(app));   // T258 4항 — «업적» 도 이제 판을 갈아탄다
                 var t = tabs[i] = UiKit.Button(ov.Root, "ui.btnGray", tabNames[i], () => { if (onTab != null) onTab(); }, Sh(Layout.QsTab, i * Layout.QsTabPitch, 0)); t.name = "Tab:" + i;
                 // 지금 보는 판만 밝다 — 표가 없으면 종전처럼 첫 탭이 밝다.
-                bool tabOn = _qd == null ? i == 0 : (i == (_qDaily ? 0 : 1));
+                bool tabOn = _qAch ? i == 2 : _qd == null ? i == 0 : (i == (_qDaily ? 0 : 1));
                 if (!tabOn) foreach (var im in t.GetComponentsInChildren<Image>(true)) im.color = Color.Lerp(im.color, Palette.Dim, 0.45f);   // 비활성 탭은 어둡게(첫 탭 «일일» 활성)
                 // T69-lobbypopups — 탭마다 «검은 아웃라인»(레퍼런스 15 도 세 탭이 각자 어두운 외곽선이다) · 어둡게 칠한 «뒤» 에 걸어야 링이 Dim 쪽으로 섞이지 않는다
                 UiKit.Bordered(t);
             }
             // 비평 이름표(표 ⑳)
-            if (band != null) UiKit.Tag(band, "제목 리본"); UiKit.Tag(box, "팝업 박스"); UiKit.Tag(trackBox.transform, "점수 트랙 상자"); UiKit.Tag(refresh, "새로고침 줄"); UiKit.Tag(listBox.transform, "목록 상자");
+            if (band != null) UiKit.Tag(band, "제목 리본"); UiKit.Tag(box, "팝업 박스"); UiKit.Tag(listBox.transform, "목록 상자");
+            if (trackBox != null) UiKit.Tag(trackBox, "점수 트랙 상자");   // 업적 탭에는 없는 조각이다(§5 는 판마다 재는 표가 다르다)
+            if (refresh != null) UiKit.Tag(refresh, "새로고침 줄");
             UiKit.Tag(row1, "퀘스트 줄 1"); UiKit.Tag(row2, "퀘스트 줄 2"); UiKit.Tag(medal1, "퀘스트 보상 메달(1줄)"); UiKit.Tag(title1, "퀘스트 제목(1줄)"); UiKit.Tag(bar1, "퀘스트 진행바(1줄)"); UiKit.Tag(go1, "이동 버튼(1줄)");
             UiKit.TagGroup(ov.Root, "탭 줄(3칸)", tabs); UiKit.Tag(tabs[0], "탭(1칸)"); TagClose(app);
             UiKit.PopIn(box);   // 공통 팝업 등장 연출(T49 · UiKit.Popup 이 상자에 거는 것과 같다)
         }
 
         struct QuestRowParts { public RectTransform Medal, Title, Bar, Go; }
+
+        /// <summary>줄 이름의 머리 — 판마다 다르다(자·§5 가 «Quest:0» 과 «Ach:0» 을 헷갈리지 않게).</summary>
+        static string RowName => _qAch ? "Ach:" : "Quest:";
+
+        /// <summary>
+        /// T258 4항 — 업적 줄 하나. 퀘스트 줄(<see cref="QuestRow"/>)과 <b>같은 프리팹 조각</b>을 쓰고 갈리는 것만 갈린다:
+        /// <list type="bullet">
+        /// <item>보상 칸이 <b>메달이 아니라 실제 상품</b>이다(주인은 전부 다이아로 줬다 — 표가 정한다).</item>
+        /// <item>진행도가 «누적 / <b>이번 단계</b> 목표» 다(단계 N 목표 = 첫 목표 × N · 5/10 처럼).</item>
+        /// <item>오른쪽이 «이동» 이 아니라 <b>«받기»</b> 다 — 깬 단계가 있으면 살아 있고, 없으면 눌리지 않는다(«눌리는데 아무 일도 안 나는 것» 금지 · 결정 771).</item>
+        /// </list>
+        /// 밀린 단계는 한 번에 하나씩이라(주인 «순차») 받고 나면 이 팝업을 <b>다시 연다</b> — 남은 단계가 있으면 «받기» 가 그대로 살아 있다.
+        /// </summary>
+        static QuestRowParts AchRow(App app, RectTransform frame, int i)
+        {
+            var parts = new QuestRowParts();
+            var item = frame;
+            var row = _ad != null && i < _ad.List.Count ? _ad.List[i] : null;
+            if (row == null) return parts;
+            var save = app.Save;
+            int have = Core.Achievement.Count(save, row.Counter);
+            int goal = Core.Achievement.Goal(save, _ad, row.Counter);
+            int shown = Core.Achievement.Shown(save, _ad, row.Counter);
+            bool can = Core.Achievement.CanClaim(save, _ad, row.Counter);
+            AttendArt(row.Item, out _, out string icon);   // 이름 → 그림 짝짓기는 이 화면이 이미 한 곳에서 한다(T253 4항)
+
+            // 보상 칸(Group_Price) — 퀘스트의 «메달 + 점수» 자리에 «상품 + 수량» 을 둔다(자리·규격은 그대로).
+            var medal = (RectTransform)UiKit.Find(item, "Group_Price");
+            if (medal != null)
+            {
+                var hlg = medal.GetComponent<HorizontalLayoutGroup>(); if (hlg != null) hlg.enabled = false;
+                UiKit.Pct(medal, Layout.QsRowMedal.Within(Layout.QsRow1));
+                var mi = (RectTransform)UiKit.Find(medal, "Icon");
+                if (mi != null) { UiKit.Pct(mi, 0, 0, 100, 100); var img = UiKit.SetSprite(medal, "Icon", icon); if (img != null) { img.preserveAspect = true; img.color = Color.white; } }
+                var mt = OnDark(UiKit.SetText(medal, "Text (TMP)", UiKit.FmtQty(row.Amount), Palette.Yellow, TextSize.Body), Palette.Yellow);
+                if (mt != null) { UiKit.Pct(mt.rectTransform, -20, 98, 140, 72); mt.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); mt.enableAutoSizing = true; mt.fontSizeMin = TextSize.BestFitMin; mt.fontSizeMax = TextSize.Body; mt.textWrappingMode = TextWrappingModes.NoWrap; }
+                parts.Medal = medal;
+            }
+            var title = OnDark(UiKit.SetText(item, "Text (TMP)", row.Label, Palette.White, TextSize.Body));
+            if (title != null)
+            {
+                var tr = title.rectTransform; UiKit.Pct(tr, Layout.QsRowTitle.WithH(Layout.LpLineH).Within(Layout.QsRow1));
+                title.alignment = UiKit.TmpAlign(TextAnchor.MiddleLeft); title.name = "Title"; parts.Title = tr;
+                title.enableAutoSizing = true; title.fontSizeMin = TextSize.BestFitMin; title.fontSizeMax = TextSize.Body;
+                title.textWrappingMode = TextWrappingModes.Normal; title.overflowMode = TextOverflowModes.Truncate;
+            }
+            var slider = item.GetComponentInChildren<Slider>(true);
+            if (slider != null)
+            {
+                var sr = (RectTransform)slider.transform; sr.name = "Bar";
+                UiKit.Pct(sr, Layout.QsRowBar.WithH(Layout.LpBarH).Within(Layout.QsRow1));
+                slider.value = goal > 0 ? Mathf.Clamp01((float)shown / goal) : 0f;
+                // «초록 = 열림/완료» 관례(T212)는 여기서 «받을 수 있다» 를 뜻한다 — 업적에는 «영영 완료» 가 없다(단계가 계속 늘어난다).
+                if (can) { var fill = BarFill(slider); if (fill != null) fill.color = Palette.Green; }
+                var st = sr.GetComponentInChildren<TMP_Text>(true);
+                if (st != null) { st.text = shown + "/" + goal; st.fontSize = TextSize.Body; st.enableAutoSizing = true; st.fontSizeMin = TextSize.BestFitMin; st.fontSizeMax = TextSize.Body; st.textWrappingMode = TextWrappingModes.NoWrap; OnDark(st); TextAudit.Mark(st, TextKind.Body); }
+                parts.Bar = sr;
+            }
+            var check = UiKit.Find(item, "Check"); if (check != null) check.gameObject.SetActive(false);   // ✅ 는 업적에 없다(끝이 없다)
+            string counter = row.Counter;
+            var btn = UiKit.Button(item, can ? "ui.btnOrange" : "ui.btnGray", "받기", () =>
+            {
+                var d2 = app.Data != null ? app.Data.Achievement : null; if (d2 == null) return;
+                if (!Core.Achievement.Claim(app.Save, d2, counter, out string it, out double amt)) return;
+                Core.Mail.Give(app.Save, it, amt);   // 이름 → 담는 자리는 Mail.Give 한 곳이다(«우편으로 받은 다이아» 와 갈라지지 않게 · T257 과 같은 규약)
+                app.Persist(); app.Current?.Refresh();
+                AttendArt(it, out _, out string ic);
+                RewardPopup.Show(new List<RewardPopup.Item> { RewardPopup.Item.Of(ic, UiKit.FmtQty(amt), amount: (int)amt) }, () => Achievements(app));
+            }, Layout.QsRowGo.Within(Layout.QsRow1));
+            btn.name = "AchBtn"; parts.Go = btn;
+            if (!can) UiKit.SetInteractable(btn.GetComponent<Button>(), false);
+            UiKit.Bordered(frame);
+            if (parts.Medal != null) UiKit.Bordered(parts.Medal, UiKit.BorderKeySmall);
+            return parts;
+        }
 
         /// <summary>
         /// 슬라이더의 «채움» 그림 — <see cref="Slider.fillRect"/> 를 먼저 보고, 그 참조가 비어 있으면 이름 <c>Fill</c> 로 찾는다(T212).

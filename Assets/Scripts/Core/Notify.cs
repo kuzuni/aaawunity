@@ -75,6 +75,16 @@ namespace KkomaKnight.Core
             return QuestRun.AnyClaimable(s, G.Quest);
         }
 
+        /// <summary>
+        /// 업적(T258)에 <b>지금 받을 단계</b>가 있는가 — 같은 팝업(15)의 «업적» 탭이라 <b>같은 빨간 점</b>이 대답한다.
+        /// <para>
+        /// 퀘스트와 달리 <b>날을 안 민다</b> — 업적의 누적은 초기화되지 않는다(«평생»). 그래서 날짜 글자도 안 받는다.
+        /// 표가 없으면(로드 실패) false — «받을 게 있다» 고 거짓말하지 않는다.
+        /// </para>
+        /// </summary>
+        public static bool AchievementClaimable(GameData G, SaveData s)
+            => G != null && s != null && G.Achievement != null && Achievement.AnyClaimable(s, G.Achievement);
+
         /// <summary>화면 어디든 지금 받을 수 있는 것이 있는가(메뉴 + 로비에 남은 탐험 · 광고 재화 전부).</summary>
         public static bool Any(GameData G, SaveData s, double nowSec, string today)
         {
@@ -82,6 +92,7 @@ namespace KkomaKnight.Core
             return MenuAny(G, s, nowSec, today)
                 || ExpeditionClaimable(G, s, G.Expedition, nowSec, today)
                 || QuestClaimable(G, s, today)          // T257 — 퀘스트는 T148 로 로비 사이드 기둥에 있다(메뉴 ≡ 가 아니라 여기)
+                || AchievementClaimable(G, s)           // T258 — 업적은 그 팝업의 세 번째 탭이라 같은 점이 대답한다
                 || AdReward(G, s, nowSec, today);
         }
 
