@@ -1328,11 +1328,16 @@ namespace KkomaKnight.Tests.Play
                 _log.AssertNoRed("P10 ⓐ 소환");
             }
 
-            // ⓑ 세부(14) — 격자 첫 칸을 눌러 연다
+            // ⓑ 세부(14) — **가진 펫**의 칸을 눌러 연다
+            //   ⚠ 첫 칸(`Pet:0`)을 그냥 열면 안 된다 — 소환은 확률이라 표의 0번이 뽑힌다는 보장이 없고,
+            //     안 가진 펫의 세부는 강화·장착이 둘 다 잠겨 있어 이 단계가 «이름만 보고» 지나간다(재는 것이 사라진다).
             var grid = UiKit.Find(_app.Current.Root, "PetGrid");
             Assert.IsNotNull(grid, "격자는 소환 뒤에도 서 있다");
-            var cell = UiKit.Find(grid, "Pet:0");
-            Assert.IsNotNull(cell, "격자 첫 칸(이름 계약 PetGrid/Pet:N)");
+            int idx = 0;
+            for (int i = 0; i < D.Pet.Pets.Count; i++) if (Pets.Has(S, D.Pet.Pets[i].Id)) { idx = i; break; }
+            Assert.IsTrue(Pets.Has(S, D.Pet.Pets[idx].Id), "소환 뒤에는 가진 펫이 하나는 있다(전제 — 없으면 아래 강화·장착이 거저 지나간다)");
+            var cell = UiKit.Find(grid, "Pet:" + idx);
+            Assert.IsNotNull(cell, "가진 펫의 칸(이름 계약 PetGrid/Pet:N)");
             var cellBtn = cell.GetComponentInChildren<Button>();
             Assert.IsNotNull(cellBtn, "펫 칸은 눌리는 것이어야 한다");
             cellBtn.onClick.Invoke();
@@ -1362,7 +1367,7 @@ namespace KkomaKnight.Tests.Play
             // ⓓ 장착 — 세부를 (다시) 열고 «장착» 을 누른다. 가진 펫이면 세이브가 달라진다
             if (!_app.Overlay.IsOpen)
             {
-                var again = UiKit.Find(UiKit.Find(_app.Current.Root, "PetGrid"), "Pet:0");
+                var again = UiKit.Find(UiKit.Find(_app.Current.Root, "PetGrid"), "Pet:" + idx);
                 if (again != null) { again.GetComponentInChildren<Button>().onClick.Invoke(); yield return UntilOpen(5f, "펫 세부 팝업(다시)"); }
             }
             {
@@ -1375,7 +1380,7 @@ namespace KkomaKnight.Tests.Play
                     b.onClick.Invoke(); yield return Frames(3);
                     Assert.AreNotEqual(before, S.ToJson(), "가진 펫을 장착하면 세이브가 달라진다");
                 }
-                else Debug.Log("[T300] P10 ⓓ 장착 — 안 가진 펫이라 버튼이 잠겨 있다 — 지나간다");
+                else Assert.Fail("가진 펫인데 «장착» 이 잠겨 있다 — 화면이 세이브를 안 보고 있다");
                 _log.AssertNoRed("P10 ⓓ 장착");
             }
 
