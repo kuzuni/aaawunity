@@ -25,6 +25,60 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 39b95b080ce80ba4399445ddcdf700b0, type: 3}
   - key: cm.meleeA.helmet
     sprite: {fileID: 21300000, guid: f7158e75b52b5dd4aa0e838ee2dd5794, type: 3}
+  - key: cm.pet.common_evade.helmet
+    sprite: {fileID: 21300000, guid: 6b10c23e00ec11e4b873a38d17591440, type: 3}
+  - key: cm.pet.common_evade.chest
+    sprite: {fileID: 21300000, guid: ce3f656eb91707d488591298988c2618, type: 3}
+  - key: cm.pet.common_evade.hand
+    sprite: {fileID: 21300000, guid: b4010af7ef2cb0f498ac2ff21bb480f8, type: 3}
+  - key: cm.pet.common_attack.helmet
+    sprite: {fileID: 21300000, guid: 60e31fe90caf0014ba90d711e1566a06, type: 3}
+  - key: cm.pet.common_attack.chest
+    sprite: {fileID: 21300000, guid: 02d7f001593d7a242bcf516fa7749866, type: 3}
+  - key: cm.pet.common_attack.hand
+    sprite: {fileID: 21300000, guid: b4010af7ef2cb0f498ac2ff21bb480f8, type: 3}
+  - key: cm.pet.common_hit.helmet
+    sprite: {fileID: 21300000, guid: 6265cc3cea2b7df48a5bba78c53307d8, type: 3}
+  - key: cm.pet.common_hit.chest
+    sprite: {fileID: 21300000, guid: 8ca1fc1cabcf5e84fbaa5c1afdaa53cc, type: 3}
+  - key: cm.pet.common_hit.hand
+    sprite: {fileID: 21300000, guid: b4010af7ef2cb0f498ac2ff21bb480f8, type: 3}
+  - key: cm.pet.rare_evade.helmet
+    sprite: {fileID: 21300000, guid: 26d5f7fc89630064ea0de5f1868871af, type: 3}
+  - key: cm.pet.rare_evade.chest
+    sprite: {fileID: 21300000, guid: 0af1a2318118a6d478210edea8e8d85c, type: 3}
+  - key: cm.pet.rare_evade.hand
+    sprite: {fileID: 21300000, guid: 799d9557164bf7247be6d47e9e5f3932, type: 3}
+  - key: cm.pet.rare_attack.helmet
+    sprite: {fileID: 21300000, guid: a7e1ac5f7b74e4d41916e5a38efc1326, type: 3}
+  - key: cm.pet.rare_attack.chest
+    sprite: {fileID: 21300000, guid: f1293c2d89a856c49a11a56ee2459781, type: 3}
+  - key: cm.pet.rare_attack.hand
+    sprite: {fileID: 21300000, guid: 799d9557164bf7247be6d47e9e5f3932, type: 3}
+  - key: cm.pet.rare_hit.helmet
+    sprite: {fileID: 21300000, guid: 4042b867c7c766e4bb7f3094bcfadeca, type: 3}
+  - key: cm.pet.rare_hit.chest
+    sprite: {fileID: 21300000, guid: 26f2f56da25a22e448dfb7f85a27f60d, type: 3}
+  - key: cm.pet.rare_hit.hand
+    sprite: {fileID: 21300000, guid: 799d9557164bf7247be6d47e9e5f3932, type: 3}
+  - key: cm.pet.legend_evade.helmet
+    sprite: {fileID: 21300000, guid: ba956edceb9398844b2fb1b7e26a3623, type: 3}
+  - key: cm.pet.legend_evade.chest
+    sprite: {fileID: 21300000, guid: 3ac39b813de1d0f4fbf0baefd45adf9c, type: 3}
+  - key: cm.pet.legend_evade.hand
+    sprite: {fileID: 21300000, guid: c44c26ea28a34fe499497c708b13e6cf, type: 3}
+  - key: cm.pet.legend_attack.helmet
+    sprite: {fileID: 21300000, guid: d4111087155043849acf097c02a0a5ee, type: 3}
+  - key: cm.pet.legend_attack.chest
+    sprite: {fileID: 21300000, guid: d47f9d4bb4ab0e84c82908103cbb7ded, type: 3}
+  - key: cm.pet.legend_attack.hand
+    sprite: {fileID: 21300000, guid: c44c26ea28a34fe499497c708b13e6cf, type: 3}
+  - key: cm.pet.legend_hit.helmet
+    sprite: {fileID: 21300000, guid: 2b5a9b8626b98fa458f752fedeffeb3c, type: 3}
+  - key: cm.pet.legend_hit.chest
+    sprite: {fileID: 21300000, guid: a27d1fe7748b10345b7ce5ba68a97f43, type: 3}
+  - key: cm.pet.legend_hit.hand
+    sprite: {fileID: 21300000, guid: c44c26ea28a34fe499497c708b13e6cf, type: 3}
   - key: cm.meleeA.chest
     sprite: {fileID: 21300000, guid: 35b42c3ce32c504469489b34765eb310, type: 3}
   - key: cm.meleeA.sword
@@ -1359,6 +1413,8 @@ MonoBehaviour:
     text: {fileID: 4900000, guid: 16d814e592e3e47ca150a063e4a00569, type: 3}
   - key: data.recipe
     text: {fileID: 4900000, guid: 5960350d7e56a06c2da503ee26c96e95, type: 3}
+  - key: data.pet
+    text: {fileID: 4900000, guid: e472fba7231cee2b0b4575199bcb7b65, type: 3}
   audio:
   - key: bgm.lobby
     clip: {fileID: 8300000, guid: e8ab4b520cd1ceb6fa53ae0b8ce16276, type: 3}

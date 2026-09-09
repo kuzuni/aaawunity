@@ -6977,6 +6977,39 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 >
 > **자 넷 더**(EditMode · test 424 → 428). **다음 회차**: `SaveData.Pets`/`PetPulls` → `GearSystem.Power` 합 → 화면 13·14 → 그림 9벌 + `catalog.json`.
 >
+> **▸ ⓒ 3회차 끝 — 그림 9벌 + `catalog.json`(6항 · 2026-09-09 12:3X · sess-2005-9317 · 워커 A · 결정 900 · lock `T293-core` 쥔 채)**
+>
+> **순서를 건너뛴 까닭** — 앞 회차가 적어 둔 다음 차례는 `SaveData` 인데 그 파일이 **아직도 T258(워커 K)의 살아 있는 lock 안**이다(11:34 갱신).
+> 남은 조각 중 **아무 lock 에도 안 걸린 것이 6항(그림)뿐**이라 그것을 했다 — `catalog.json`·`Game/CharacterRig.cs` 는 T293 제 범위이고 남이 안 잡았다.
+> (T290 이 lock 을 반납해서 `catalog.json` 이 이번에 처음 열렸다 — ⓐ 가 «`data.pet` 등재를 못 했다» 고 적어 둔 자리가 이번에 닫힌다.)
+>
+> **선 것**
+> · `Core/PetLook.cs`(신규) — **키의 꼴만** 코드가 정한다(`cm.pet.<id>.helmet`·`.chest`·`.hand`) · **어느 파일인가는 `catalog.json`**. `GearLook` 과 같은 결이라 그림을 갈아 끼울 때 C# 은 0줄이다.
+> · `catalog.json` — 펫 그림 **27키**(9벌 × 3) + **`data.pet` 등재**(ⓐ 가 못 했던 것) + `_notes` 28줄 · `AssetCatalog.asset`·`docs/assets-map.md` 재생성.
+> · `CharacterRig` — `Skin.Staff` + `PathStaff`(`HandRight/Staff` · 프리팹에 이미 있는 슬롯을 실측 확인) + `CharacterRig.PetSkin(d, p)`.
+> · `Tests/EditMode/PetLookTests.cs`(신규 · 자 6) — test **445 → 451**.
+>
+> **정한 것 — 무엇이 무엇을 말하는가**(주인이 그림 조합은 안 줬다): **오른손 무기 = 등급** · **투구·갑옷 = 발동 역할**.
+> 일반 도끼(Wood/Gray) → 희귀 도끼(GrayBlue) → 전설 **지팡이**(Gold) · 그림자 = 어둠/보라 · 돌격 = 붉은 · 방패 = 푸른/은.
+> 그래서 **한 마리를 보면 «무엇에 발동하고 무엇을 쏘는지» 가 옷과 손에서 같이 읽힌다**(이름 규칙 결정 843 과 같은 짝).
+> **«방패» 역할만 왼손에 방패**를 든다 — `cm.knight.shield` 를 그대로 써서 **새 키 0**.
+>
+> ⚑ **오른손 슬롯을 코드가 안 고른다 — 표의 등급 `shot` 이 고른다**(`PetLook.HandSlot`): `bolt` 면 `HandRight/Staff`, `axe` 면 `HandRight/Axe`.
+> 곧 «번개를 쏘는 펫은 지팡이를 든다» 가 **규칙 하나**로 서고, 표에서 등급의 발사체를 바꾸면 손에 든 것도 저절로 따라온다. 사람이 두 곳을 맞출 일이 없다.
+>
+> ⚑ **§1 3항의 «지팡이 금지» 와 부딪히지 않는다** — 그것은 **장비 무기** 규칙이고(주인 T17 «Axe, Blunt, Sword 중에 골라서»),
+> 펫 그림은 이 절 6항이 «전설 = 지팡이/완드» 라고 **따로 적어 둔** 자리다. 두 규칙은 서로 다른 것을 말한다(그 까닭을 `PetLook` 머리에 적어 뒀다).
+>
+> **자가 재는 것** — «어떤 그림이 예쁜가» 가 아니라 **표·키·카탈로그 셋이 어긋나지 않는가**:
+> ① 9벌 × 3키가 카탈로그에 다 있다(없으면 부팅이 울고 **PlayMode 가 통째로 빨개진다** · T211) ·
+> ② 아홉 벌이 **파일 경로로** 서로 다르다(키로 세면 언제나 다르다 — 키에 id 가 들어 있으니까 · 눈이 보는 것은 파일이다) ·
+> ③ 손 그림이 **그 슬롯 폴더**다(슬롯만 맞고 그림이 딴것이면 «도끼 슬롯에 지팡이» 가 된다) ·
+> ④ 방패는 피격 발동만 · ⑤ 펫 그림이 **기사·장비 그림과 한 장도 안 겹친다**(겹치면 «전설 펫» 이 «신화 갑옷 입은 나» 로 보인다) ·
+> ⑥ **키 수 = 펫 수 × 3** — «표에 열 번째 펫을 적었는데 그림을 안 넣었다» 를 사람이 아니라 자가 먼저 본다.
+> 자 셋을 **일부러 깨서** 빨강 셋을 확인하고 되돌렸다(전설 손을 도끼로 · 두 펫에 같은 옷 · 기사 도끼를 펫 손에).
+>
+> **다음 회차**: `SaveData.Pets`/`PetPulls`(그 lock 이 풀리면) → `GearSystem.Power` 합 → 화면 13·14(5항 ⓖ·ⓗ·ⓘ·ⓙ 주인 보탬 포함) → 9항 전투 따라 걷기(`BattleWorld` 는 지금 T312 lock 안).
+>
 순서 — `Core/Pet.cs`(신규 · 앞 항의 `Companion` 이름은 전부 `Pet`/`Pets` 로 읽는다) · `Core/SaveData.cs` · `Core/GearSystem.cs` · `Core/Battle.cs` · `Game/PetScreen.cs` · `Game/BattleWorld.cs`(9항) · `Game/CharacterRig.cs`(스킨 표) · `KkomaKnight/pet.json`·`catalog.json`. **큰 절이라 둘로 나눠 잡아도 된다**(ⓐ Core+표+자 · ⓑ 화면+전투 그림) — lock 은 `T293-core`·`T293-ui`.
 
 ### T300 — ⚑⚑⚑ 주인: **플레이 봇 — 한 판을 끝까지 실제로 놀아 보고 에러를 찾는 자**(PlayMode + 배포 WebGL) (주인 2026-09-09 08:5X «플레이해서 에러 테스트도 하라» · §1 상시 규칙과 한 벌)

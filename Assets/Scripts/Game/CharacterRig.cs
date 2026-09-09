@@ -18,14 +18,14 @@ namespace KkomaKnight.Game
         // 프리팹 자식 경로 (조사 결과 A.2)
         public const string PathBody = "Body", PathHead = "Body/Head", PathEye = "Body/Head/Eye", PathHair = "Body/Head/Hair", PathHairHelmet = "Body/Head/Hair_Helmet",
             PathHelmet = "Body/Head/Helmet", PathBeard = "Body/Head/Beard", PathChest = "Body/Chest",
-            PathSword = "HandRight/Sword", PathAxe = "HandRight/Axe", PathSpear = "HandRight/Spear", PathBlunt = "HandRight/Blunt",
+            PathSword = "HandRight/Sword", PathAxe = "HandRight/Axe", PathSpear = "HandRight/Spear", PathBlunt = "HandRight/Blunt", PathStaff = "HandRight/Staff",
             PathBow = "HandRight/Bow/Bow", PathBowLineUp = "HandRight/Bow/Bow_Line_Up", PathBowLineDown = "HandRight/Bow/Bow_Line_Down", PathArrow = "HandRight/Bow/Arrow",
             PathShield = "HandLeft/Shield", PathSubItem = "HandLeft/Sub_Item", PathShadow = "Shadow";
 
         /// <summary>스킨 명세 — 값은 카탈로그 스프라이트 키(null = 비움). 색은 Body/Head 틴트.</summary>
         public sealed class Skin
         {
-            public string Helmet, Chest, Sword, Axe, Spear, Blunt, Bow, Arrow, Shield, SubItem, Hair, HairHelmet, Beard, Eye;
+            public string Helmet, Chest, Sword, Axe, Spear, Blunt, Staff, Bow, Arrow, Shield, SubItem, Hair, HairHelmet, Beard, Eye;
             public Color SkinColor = Color.white;
             public bool BowLines;
         }
@@ -47,6 +47,30 @@ namespace KkomaKnight.Game
                 string k = GearLook.PartKey(D, w); s.Sword = null;
                 switch (GearLook.WeaponSlot(D.Gear.SetOf(w.Type))) { case "Blunt": s.Blunt = k; break; case "Spear": s.Spear = k; break; default: s.Sword = k; break; }
             }
+            return s;
+        }
+
+        /// <summary>
+        /// 펫 스킨 — 표(<c>pet.json</c>)의 펫 한 마리를 <see cref="PetLook"/> 규약대로 입힌다(T293 6항).
+        /// <para>
+        /// 플레이어와 <b>같은 CharacterMaker</b> 조합이고(주인 «플레이어 썼던 Maker 그대로») 새 그림은 하나도 안 만든다 —
+        /// 다른 것은 <c>catalog.json</c> 이 그 키에 물린 파일뿐이다.
+        /// 오른손은 <b>표의 등급 <c>shot</c></b> 이 고른 슬롯 하나에만 꽂는다(도끼 ↔ 지팡이) — 둘 다 꽂으면 두 개를 들고 선다.
+        /// «방패» 역할(피격)만 왼손에 방패를 든다.
+        /// </para>
+        /// </summary>
+        public static Skin PetSkin(PetData d, PetData.Pet p)
+        {
+            if (p == null) return new Skin();
+            var s = new Skin
+            {
+                Helmet = PetLook.HelmetKey(p.Id),
+                HairHelmet = "cm.knight.hairHelmet",   // 투구를 쓰면 머리는 «투구용 머리» 로 (Apply 의 규칙과 같은 짝)
+                Chest = PetLook.ChestKey(p.Id),
+                Shield = PetLook.Shield(p),
+            };
+            var hand = PetLook.HandKey(p.Id);
+            if (PetLook.HandSlot(d, p) == PetLook.SlotStaff) s.Staff = hand; else s.Axe = hand;
             return s;
         }
 
@@ -154,7 +178,7 @@ namespace KkomaKnight.Game
         {
             Wearing = s;
             SetSprite(PathHelmet, s.Helmet); SetSprite(PathChest, s.Chest);
-            SetSprite(PathSword, s.Sword); SetSprite(PathAxe, s.Axe); SetSprite(PathSpear, s.Spear); SetSprite(PathBlunt, s.Blunt);
+            SetSprite(PathSword, s.Sword); SetSprite(PathAxe, s.Axe); SetSprite(PathSpear, s.Spear); SetSprite(PathBlunt, s.Blunt); SetSprite(PathStaff, s.Staff);
             SetSprite(PathBow, s.Bow); SetSprite(PathArrow, s.Arrow); SetSprite(PathShield, s.Shield); SetSprite(PathSubItem, s.SubItem);
             SetSprite(PathBeard, s.Beard);
             if (!string.IsNullOrEmpty(s.Eye)) SetSprite(PathEye, s.Eye);
