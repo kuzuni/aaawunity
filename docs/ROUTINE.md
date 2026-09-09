@@ -6438,6 +6438,17 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 | 6 | `UiSmokeTests.ShopBoxesAndChestOpenPopup` (`UiSmokeTests.cs:135`) | «[상자 정보 팝업] 경고 0» · **72건** `[UiKit] 이미지 없음: ui.itemFrame.plum/Item` | **T267**(상자 확률 팝업) — 카탈로그 키 `ui.itemFrame.plum` 프리팹에 자식 `Item` 이 없다(잘못된 자식 경로). `tools/gen_catalog.py --check` 는 키만 보고 자식 경로는 못 본다 |
 | 7 | `UiTextureTests.DungeonArenaScreensCarryPatternAndRewardLights` (`UiTextureTests.cs:371`) | «던전 보상 아이콘 = 카드 1 의 2 + 카드 2 의 4(레퍼런스 20)» 6 · **3** | **2번과 같은 뿌리** — 한 사람이 둘을 같이 잡는다(lock `T288-2`) |
 
+
+> **보탬 — 6번의 뿌리를 짚었다**(검수 Q · sess-1808-28610 · 05:3X · **선점 안 함** · 코드 0줄). 표의 «프리팹에 자식 `Item` 이 없다» 는 증상이 맞고, **왜 없는가**가 여기 있다: `Game/OddsPopup.cs:135~137` 이 **등급색 조각을 바로 세우고 그 안에서 `Item` 을 찾는다.**
+> ```csharp
+> var frame = UiKit.Spawn("ui.itemFrame." + color, cell);          // ← 등급색 변형에는 Item 자식이 없다
+> var frt = (RectTransform)frame.transform; UiKit.Pct(frt, 8, 2, 84, 58);
+> UiKit.SetSprite(frt, "Item", GearLook.IconKey(...), Palette.White);   // ← 그래서 늘 «이미지 없음» · 칸 수만큼 72건
+> ```
+> **레포의 정본 꼴은 두 겹**이다 — 바깥에 **`ui.itemFrame.empty`**(여기에 `Item`·`NormalArea`·`Text_Level` 이 있다) → 그 안 `NormalArea` 에 **등급색 `ui.itemFrame.<색>`** → 그림은 **바깥 것의 `Item`** 에. 다섯 자리가 전부 이 꼴이고(`LobbyPopups.Cell:78~84` · `Overlay:658~666` · `PetScreen:121` · `GearScreen:99` · `GearUi:96`) `GearUi.cs:146~147` 주석이 그 규칙을 적어 두었다. ⇒ **처방**: `OddsPopup` 의 그 세 줄을 `LobbyPopups.Cell` 과 같은 두 겹으로 바꾼다(칸이 작으니 `UiKit.Hide(frt, "Text_Level", "Focus", "Disable", "Lock", "Add_1", "Add_2")` 도 같이).
+> ⚠ **자만의 문제가 아니다** — 확률 팝업의 물건 칸이 **그림 없이 빈 테두리로 뜬다.** §5 에서 `36_box_rates` 가 **4.0**(43개 중 꼴찌)인 것과 같은 자리를 가리킬 공산이 크다 — 6번을 잡는 사람이 그 점수도 같이 확인하면 두 일이 한 번에 끝난다. 4번(2px)이 같은 파일 계열이라 **한 사람이 4·6 을 같이 잡는 것이 싸다.**
+> **검수 Q 가 선점 안 한 까닭** = 이 컨테이너에 `dotnet` 이 없고 설치도 조직 정책으로 막혀 있다(§6 ⑨) — 컴파일도 PlayMode 도 못 돌리는 손으로 C# 을 미는 것이 이 목록을 만든 사고보다 나쁘다.
+
 1. **잡는 법** — `docs/claims/T288-<번호>.lock` 하나씩. 고치면 그 줄 상태를 ✅ 로, 다 ✅ 면 이 절 제목에 ✅. **기댓값을 실제값으로 바꿔 초록을 만드는 것은 금지**(결정 555 · «px 를 베끼지 않는다») — 화면이 맞는지 레퍼런스(`docs/ref`)로 먼저 판정하고, 뜻한 변경이면 자를 «새 뜻» 으로 고친다.
 2. **폰 빌드** — `deploy-last-green` 은 «유니티 잡 초록» 커밋만 굽는다(T187). **7건이 0 이 될 때까지 폰은 run 618 그대로다.** 그래서 이 절이 지금 가장 급하다.
 3. ⚠ **이 절이 열려 있는 동안 새 빨강을 더 얹지 마라** — push 전에 로컬 게이트(§3) + `dotnet test` 를 돌리는 것은 그대로고, PlayMode 를 건드리는 작업은 **run 의 `[CI실패]` 가 자기 것을 늘리지 않았는지** 확인하고 lock 을 놓는다.
