@@ -132,6 +132,33 @@ namespace KkomaKnight.Tests.Play
                     who + " 그림판이 정사각이어야 늘어나지 않는다 — 지금 " + r.width.ToString("0.#") + "×" + r.height.ToString("0.#") + "px (T303)");
             }
 
+            // T303 ⓑ — «레퍼런스는 기사가 땅 위에 크게 · 우리 것은 작고 위에 떠 있다»(절 1항).
+            //   ⚑ 이 자는 **표(ExKnight)가 아니라 레퍼런스**를 잰다 — 표를 읽어 표와 견주면 그것은 거울이고,
+            //     누가 값을 반으로 줄여도 초록이다(결정 555). 그래서 아래 두 수는 주인 그림 30 에서 잰 것이다(결정 891).
+            //   ⚠ 그림판은 칸을 가득 안 채운다 — 세로의 66.0% 만 쓰고 아래 21.5% 는 투명 여백이다(실측).
+            //     그래서 «그림의 키·발밑» 을 그림판 rect 에서 되짚어 잰다.
+            const float RefArtH = 44.9f, RefFootY = 83.5f;      // 레퍼런스 30 · 무대 안 %
+            const float ArtFill = 0.660f, ArtBottomPad = 0.215f; // 그림판 안에서 그림이 차지하는 세로 / 아래 여백
+            float stageH = picRt.rect.height;
+            // ⚠ 무대 위끝을 «0» 으로 놓고 잰다 — `UiKit.Pct` 가 피벗을 가운데(0.5)로 두므로 local y 0 은 위끝이 아니라 한가운데다.
+            //   그래서 무대 자신의 모서리에서 위끝을 먼저 읽는다(피벗이 무엇이든 같은 값이 나온다).
+            var sc = new Vector3[4]; picRt.GetWorldCorners(sc);
+            float stageTopY = picRt.InverseTransformPoint(sc[1]).y;
+            foreach (var (who, host) in new[] { ("기사", knight), ("적", foe) })
+            {
+                var hv = host.GetComponentInChildren<HeroView>(true);
+                var pr = (RectTransform)hv.transform;
+                var c = new Vector3[4]; pr.GetWorldCorners(c);
+                float panelH = pr.rect.height;
+                float panelBottomFromTop = stageTopY - picRt.InverseTransformPoint(c[0]).y;   // 무대 위끝에서 아래로 몇 px
+                float footPct = (panelBottomFromTop - panelH * ArtBottomPad) / stageH * 100f;
+                Assert.AreEqual(RefFootY, footPct, 3.0f,
+                    who + " 의 발이 레퍼런스처럼 땅 위(무대 " + RefFootY + "%)에 서야 한다 — 지금 " + footPct.ToString("0.0") + "% (T303 ⓑ)");
+                if (who == "기사")
+                    Assert.AreEqual(RefArtH, panelH * ArtFill / stageH * 100f, 3.0f,
+                        "기사 그림 키가 레퍼런스만큼 커야 한다(무대의 " + RefArtH + "%) — 작으면 «떠 있는 콩알» 로 보인다 (T303 ⓑ)");
+            }
+
             // 쌓인 값이 화면에 «0» 이 아니라 실제 계산값으로 찍힌다
             Expedition.Pending(_app.Data, S, D, LobbyPopups.NowSec(), SaveStore.Today(), out double pg, out double pm);
             Assert.Greater(pg, 0, "8시간이면 골드가 쌓여 있다"); Assert.Greater(pm, 0, "다이아도 쌓여 있다");
