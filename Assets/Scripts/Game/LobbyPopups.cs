@@ -33,9 +33,92 @@ namespace KkomaKnight.Game
             float cy = (boxR.Y - (ribbonR.Y + ribbonR.H / 2f)) / 100f * UiKit.FrameH;
             rr.anchoredPosition = new Vector2(cx, cy);
             // 명판 글자 = 제목 종류(T63 · 60 · 리본이 좁으면 bestFit 으로 32 까지)
+            // T361 — 상자 그림의 «위쪽만» 리본 몸통 밑까지 늘린다(상자 rect 는 그대로).
+            SealRibbonSeam(box, rr);
             var t = rr.GetComponentInChildren<TMP_Text>(true); if (t != null) { t.fontSize = TextSize.Title; t.enableAutoSizing = true; t.fontSizeMin = TextSize.BestFitMin; t.fontSizeMax = TextSize.Title; TextAudit.Mark(t, TextKind.Title); RibbonTextFit(t); UiKit.EnsureOutline(t); }
             return rr;
         }
+
+        /// <summary>
+        /// T361(주인 2026-09-10 «타이틀 감싸는 프레임들이 아래 팝업이랑 거리가 떨어져 있어 거슬림 · 팝업에 상단 부분만 좀 늘려서 이어진 것처럼») —
+        /// 상자 <b>그림</b>(조각의 <c>Bg</c>·<c>Border</c>·<c>DecoLine</c> · 또는 프리팹 팝업이 물고 온 <c>Popup_Box_*</c> 조각)의 <b>위 변만</b>
+        /// «리본 몸통 밑단 + 조각 위 테두리 두께» 까지 올린다 — 상자 위 검은 선이 리본 몸통 <b>아래</b> 로 들어가 숨는다.
+        /// <para>
+        /// <b>왜 «그림» 만인가(3회차 ⚠ · 결정 1015)</b> — 상자 <c>RectTransform</c> 을 키우면 안쪽 내용이 전부 <c>.Within(B)</c> 로 놓여 있어 통째로 아래로 밀린다.
+        /// 조각의 면·테두리는 상자 안에서 <b>전부 stretch(0,0)~(1,1)</b> 인 자식이라(프리팹 실측 · 15·16 의 <c>Popup_Box_01_Basic</c> 도 그렇다)
+        /// 그 <c>offsetMax.y</c> 만 올리면 내용은 한 픽셀도 안 움직이고 그림만 위로 자란다 — 주인이 말한 «상단 부분만 늘려서» 그대로다.
+        /// </para>
+        /// <para>
+        /// <b>얼마나(수를 박지 않는다 · 표로 셈하지도 않는다)</b> — 4회차(결정 1016)가 잰 «틈 = 리본 꼬리 + 상자 테두리» 를 <b>세운 것에서 직접</b> 잰다:
+        /// 리본 몸통 밑단 = 리본 rect 밑단 + 높이 × <see cref="Overlay.RibbonBodyBottomFrac(RectTransform)"/>(조각 PNG 실측 표 · T369) 를 월드로 ·
+        /// 테두리 = 조각 스프라이트의 9-slice 위 폭(<c>sprite.border.w</c> · <c>Popup_Box</c> 38px 안에 검은 선이 들어 있다) ·
+        /// 조각의 <b>지금 윗변</b>(월드)도 잰다 — 15 의 <c>Popup_Box_01_Basic</c> 은 프리팹에서 이미 상자 rect 보다 37px 아래에서 시작하므로(sizeDelta −37) 표로 셈하면 덜 올린다.
+        /// </para>
+        /// <para>⚠ 9-slice 가 아닌 조각(테두리 0)이거나 이미 닿아 있으면 <b>안 올린다</b>(«위로만» · 내리지는 않는다).</para>
+        /// 돌려주는 값 = 올린 px(자·진단용 · 0 이면 안 올렸다). 상자 이름별로 <see cref="SealedPx"/> 에도 남긴다.
+        /// </summary>
+        public static float SealRibbonSeam(RectTransform box, RectTransform ribbon)
+        {
+            if (box == null || ribbon == null) return 0f;
+            var pieces = SealPieces(box);
+            float border = 0f;
+            foreach (var pc in pieces) border = Mathf.Max(border, SealBorderPx(pc));
+            if (pieces.Count == 0 || border <= 0f) { SealedPx[box.name] = 0f; return 0f; }
+            float bodyBottom = RibbonBodyBottomWorldY(ribbon);
+            float lifted = 0f;
+            foreach (var pc in pieces)
+            {
+                float scaleY = Mathf.Max(0.0001f, pc.lossyScale.y);
+                float topW = PieceTopWorldY(pc);
+                float targetW = bodyBottom + border * scaleY;
+                float d = (targetW - topW) / scaleY;
+                if (d <= 0f) continue;
+                pc.offsetMax = new Vector2(pc.offsetMax.x, pc.offsetMax.y + d);
+                lifted = Mathf.Max(lifted, d);
+            }
+            SealedPx[box.name] = lifted;
+            return lifted;
+        }
+        /// <summary>상자 안에서 «상자 그림» 인 자식 — stretch(0,0)~(1,1) 이고 <see cref="SealPiecePrefix"/> 로 시작하거나(15·16) <see cref="Image"/> 를 단 것(17 의 Bg·Border·DecoLine) · 무늬·그라데이션·빛·Dimmed 는 아니다.</summary>
+        public static List<RectTransform> SealPieces(RectTransform box)
+        {
+            var pieces = new List<RectTransform>();
+            if (box == null) return pieces;
+            for (int i = 0; i < box.childCount; i++)
+            {
+                var c = box.GetChild(i) as RectTransform; if (c == null) continue;
+                if (!(c.anchorMin == Vector2.zero && c.anchorMax == Vector2.one)) continue;
+                if (c.name.StartsWith(SealPiecePrefix, StringComparison.Ordinal)) { pieces.Add(c); continue; }
+                if (c.name == UiKit.PatternName || c.name == UiKit.GradientTopName || c.name == UiKit.GradientBottomName || c.name == "TitleGlow" || c.name == "Dimmed") continue;
+                if (c.GetComponent<Image>() != null) pieces.Add(c);
+            }
+            return pieces;
+        }
+        /// <summary>조각(과 그 아래)의 Sliced 그림 중 가장 두꺼운 위 테두리(px · <c>sprite.border.w</c> ÷ <c>pixelsPerUnitMultiplier</c>) · 9-slice 가 없으면 0.</summary>
+        public static float SealBorderPx(RectTransform piece)
+        {
+            float border = 0f;
+            if (piece == null) return 0f;
+            foreach (var img in piece.GetComponentsInChildren<Image>(true))
+                if (img.sprite != null && img.type == Image.Type.Sliced) border = Mathf.Max(border, img.sprite.border.w / Mathf.Max(0.01f, img.pixelsPerUnitMultiplier));
+            return border;
+        }
+        /// <summary>리본 <b>몸통</b> 밑단의 월드 y(rect 밑단이 아니다 · T369 의 표).</summary>
+        public static float RibbonBodyBottomWorldY(RectTransform ribbon)
+        {
+            var r = ribbon.rect;
+            return ribbon.TransformPoint(new Vector3(r.center.x, r.yMin + r.height * Overlay.RibbonBodyBottomFrac(ribbon), 0f)).y;
+        }
+        /// <summary>조각 윗변의 월드 y.</summary>
+        public static float PieceTopWorldY(RectTransform piece)
+        {
+            var r = piece.rect;
+            return piece.TransformPoint(new Vector3(r.center.x, r.yMax, 0f)).y;
+        }
+        /// <summary>프리팹 팝업 안의 상자 조각 이름 앞머리(<c>Popup_Box_01_Basic</c> …).</summary>
+        public const string SealPiecePrefix = "Popup_Box";
+        /// <summary>상자 이름 → <see cref="SealRibbonSeam"/> 이 올린 px(자·진단용).</summary>
+        public static readonly Dictionary<string, float> SealedPx = new Dictionary<string, float>();
 
         // T221 — 여기 있던 `RibbonOutlineRatio`(= UiKit.OutlineRatio 별칭)를 걷었다.
         //  T186 ⓒ 는 «이 리본만 테를 두껍게» 를 시도했다가 되돌린 자리이고(효과 0.006 · 결정 483),
@@ -406,6 +489,8 @@ namespace KkomaKnight.Game
                 // T320 ⓑ(주인 «퀘스트, 출석 … 리본 제목 팝업 전부에») — 리본 뒤 «반 잘린» 빛.
                 //   이 팝업은 제 프리팹으로 서서 `Overlay.Box` 를 안 지나므로 공통 배선이 안 닿는다 ⇒ 리본을 놓은 다음 한 줄로 부른다.
                 Overlay.RibbonGlowOn(box, (RectTransform)band);
+                // T361 — 상자 그림 위쪽을 리본 밑까지(내용은 B 기준 그대로).
+                SealRibbonSeam(box, band);
             }
 
             // 점수 트랙 · 새로고침 줄 · 목록 상자 = 레퍼런스 15 그대로(프리팹에 없는 조각)
@@ -901,6 +986,8 @@ namespace KkomaKnight.Game
                 if (rt != null) { rt.enableAutoSizing = true; rt.fontSizeMin = TextSize.BestFitMin; rt.fontSizeMax = TextSize.Title; RibbonTextFit(rt); }
                 // T320 ⓑ — 퀘스트와 같은 자리(이 팝업도 제 프리팹으로 선다).
                 Overlay.RibbonGlowOn(box, (RectTransform)rib);
+                // T361 — 16 은 Deco 리본이라 꼬리(rect 의 약 18%)가 길다 · 그만큼 더 올린다.
+                SealRibbonSeam(box, rib);
             }
 
             // 3열×2행 격자 = 프리팹 Group_DailyList7(GridLayoutGroup) — 칸·피치는 표 ㉑

@@ -173,6 +173,8 @@ namespace KkomaKnight.Game
             var type = UiKit.Find(cell, "TypeArea");
             // 다이아 배지 = **부위** 아이콘(T105 · 주인 «무슨 장비 부위인지 알려주는 아이콘» · 세트 아이콘은 세부 팝업 옵션 줄에서만 쓴다)
             if (type != null) { type.gameObject.SetActive(g != null); if (g != null) UiKit.SetSprite(type, "Icon", GearLook.PartIcon(g.Part), Palette.White); }
+            // T360 ⓑ(주인 «체크 모양은 Toggle_Check_02_On 으로 통일») — 조각이 달고 온 체크 그림을 공용 ✓(pi.check)으로 갈아 끼운다(새 그림 0).
+            UiKit.SetSprite(cell, "Check", "pi.check");
             UiKit.Show(cell, "Check", g != null && o.Equipped && o.EquippedMark);
             if (g != null && o.Fusable && o.FusableDot) UiKit.AlertDot(cell, "FuseDot", new Vector2(1, 1), new Vector2(-14, -14), 47);   // T136
             // T176 ⓐ(주인 2026-09-07 11:0X «왼쪽 하단에 N 표시 … 그거 필요 없음 장비 부분») — **그림만** 없앤다.

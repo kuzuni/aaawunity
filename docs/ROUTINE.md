@@ -9229,11 +9229,14 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — ⓐ `catalog.json` · `docs/assets-map.md`(lock `T360` · 로컬) → ⓑ `Game/GearUi.cs` · `Game/Profile.cs` · `Game/LobbyPopups.cs`(루틴 · lock 들 뒤).
 
+> **🔄 ⓑ GearUi 한 줄 push · 확인 전(21:0X · sess-1439-32420 · 워커 O · 결정 1031 ⑤ · lock `T360-gear` 쥔 채)** — `GearUi.cs` 인벤 칸: `UiKit.SetSprite(cell, "Check", "pi.check")` 뒤 `Show`. 남은 셋(`Profile.cs:180` · `LobbyPopups.cs` 셋)은 T370 · T363/T364 lock 의 주인 몫. 확인 = `screens` 06 장비(장착 칸 체크가 초록 둥근 `Toggle_Check_02_On`).
 > **✔ ⓐ 확인 끝 · lock 반납 · ⓑ 는 남았다(20:3X · sess-1425-9466 · 워커 N · 결정 1024(커밋 메시지의 1023 은 1024) · 죽은 lock 인수)** — 런 900 `screens` 16·17·19 눈: 받은 칸의 체크가 초록 둥근 `Toggle_Check_02_On`. ⓑ 조각 «Check» 넷은 전부 살아 있는 남의 lock 안 파일(`LobbyPopups` T363/T364 · `Profile` T370 · `GearUi`)이라 여는 사람 몫 — lock 을 쥐고 기다리지 않는다.
 > **🔄 push · 확인 전(19:4X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 996 · lock `T360` 쥔 채)** — ⓐ 카탈로그 `pi.check` → `Toggle_Check_02_On.png`(코드 0줄). ⓑ 조각 «Check» 넷은 루틴. 확인 = `screens` 16·17·19.
 
 ### T361 — ⚑⚑ 주인: **리본 제목과 팝업 상자 사이가 떠 있다 — 상자의 «위쪽만» 늘려 이어 붙인다** (주인 2026-09-10 «`Title_Tapered_01_Brown` 이런 식으로 타이틀 감싸고 있는 프레임들이 아래 팝업들이랑 거리가 떨어져 있어서 거슬림 · 위치 자체는 괜찮아서 · 팝업 중에 그렇게 떨어져 있는 거 있으면 팝업에 상단 부분만 좀 늘려서 그거랑 이어진 거처럼 보이게 딱 해 줘»)
 
+> **▸ 🔄 5회차 — 코드 push · 확인 전(2026-09-09 21:0X · sess-1439-32420 · 워커 O · 결정 1031 · lock `T361` 쥔 채)** — `LobbyPopups.SealRibbonSeam(box, ribbon)`: 상자 rect 는 표 그대로(3회차 ⚠) · **stretch 자식인 그림 조각**(`Bg`·`Border`·`DecoLine` / 프리팹의 `Popup_Box_*`)의 `offsetMax.y` 만 «리본 **몸통** 밑단 + 조각 9-slice 위 테두리» 까지(세운 것에서 월드로 잰다 · 수 0 · `RibbonBodyBottomFrac` + `sprite.border.w`). 4회차의 «꼬리는 T369 몫» 은 거뒀다 — T369 는 마스크만 올리고 상자는 안 건드리므로 그 자리가 빈 틈으로 남는다(결정 1031 ③). ⚠ 15 의 `Popup_Box_01_Basic` 은 상자 rect 보다 37px 아래에서 시작해 표로 셈하면 덜 올린다 — 조각의 «지금 윗변» 을 잰다. 부르는 자리 = `Ribbon()`(17) · 15 띠 뒤 · 16 리본 뒤. 자 = `RibbonSeamTests`(조각 윗변 ≥ 몸통 밑단 + 테두리 · 리본 rect 위로는 안 나감 · 리본이 뒤 형제 · 상자 앵커 = 표). **확인** = 다음 런 `[CI실패]` 0 + `screens` 15·16·17 눈(리본 밑 검정 띠 0 · **올린 모서리가 리본 옆으로 삐져나오지 않는가** — 15 는 리본 폭 = 상자 폭) · 주인 폰. 삐져나오면 다음 회차는 올리는 조각의 좌우를 리본 몸통 폭 안으로 좁힌다.
+>
 > **▸ 4회차 — 두 실측이 «합» 이었다 · 자를 도구로 남겼다(2026-09-09 20:0X · sess-1735-9f41 · 워커 C · `tools/seam_scan.py` · 게임 코드 0줄 · lock 반납 · 결정 1016)**
 > `python3 tools/seam_scan.py <png> --y <시작>:<끝>` — 열 셋(기본 18·30·70%)을 세로로 훑어 «같은 색 토막» 으로 찍는다. **세 열의 경계가 같은 y 면 층(테두리·상자면) · 한 열만 다르면 가운데만 밝은 것(빛무리·글자)** 이다(결정 1006 ③·1012 ① 의 논법을 도구로 박았다 · `--selftest` 있음).
 > **런 889 `screens` 를 그 자로 다시 읽은 값**(모두 540×1168):
