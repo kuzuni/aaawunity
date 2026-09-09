@@ -340,12 +340,15 @@ namespace KkomaKnight.Game
             // ⚠ TMP 의 금칙 문자 목록(`LineBreaking Following Characters.txt`)으로는 안 잡힌다 — 그 목록은 «공백에서 끊는 자리» 에 안 걸린다(결정 610).
             return string.Join("\u00A0· ", o);   // \u00A0 = 안 끊기는 빈칸(눈에 안 보이므로 이스케이프로 적는다)
         }
-        /// <summary>천장 줄들 — 신화 확정 · 전설 확정(있는 것만) 뒤에 «누적 N회» 로 채운다(pill 개수만큼).</summary>
+        /// <summary>천장 줄들 — 신화 확정 · 전설 확정 · 희귀 확정(있는 것만) 뒤에 «누적 N회» 로 채운다(pill 개수만큼).
+        /// 차례는 <b>높은 등급부터</b>이고 pill 이 모자라면 뒤가 잘린다 — 희귀 천장이 붙은 상자(희귀 상자)는
+        /// 위 둘이 0 이라 잘릴 일이 없다(T261 2단계 · `gacha.json` 실측: rare = 신화·전설 천장 0).</summary>
         static List<string> PityLines(GachaBox box, GachaState st, int count)
         {
             var o = new List<string>();
             if (box.PityMyth > 0) o.Add($"신화 확정까지 <color=#FFCC00>{Math.Max(0, box.PityMyth - st.P50)}</color>회");
             if (box.PityLegend > 0) o.Add($"전설 확정까지 <color=#FFCC00>{Math.Max(0, box.PityLegend - st.P10)}</color>회");
+            if (box.PityRare > 0) o.Add($"희귀 확정까지 <color=#FFCC00>{Math.Max(0, box.PityRare - st.PRare)}</color>회");
             while (o.Count < count) o.Add($"누적 <color=#FFCC00>{st.Pulls}</color>회 열었습니다");
             return o.GetRange(0, count);
         }
