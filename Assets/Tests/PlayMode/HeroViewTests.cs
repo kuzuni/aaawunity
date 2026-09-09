@@ -80,13 +80,22 @@ namespace KkomaKnight.Tests.Play
             var app = App.I;
             Assert.IsNotNull(app.Assets, "AssetCatalog 이 씬에 연결돼 있어야 한다");
 
-            yield return RenderFrames(3);                       // 로비(HeroView 1)
+            yield return RenderFrames(3);                       // 로비 — T262 ⓐ 뒤로 여기엔 HeroView 가 «없다»
             Assert.AreEqual("lobby", app.Current.Name);
-            Assert.GreaterOrEqual(Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 1, "로비에 플레이어 초상(HeroView)이 있어야 한다");
+            // ⚠ 옛 계약은 «로비에 HeroView 가 하나는 있다»(= 상단 바 아바타)였는데, 주인이 «플레이어 이미지 말고» 라고 해서
+            //   그 자리가 초상 아이콘이 됐다(T262 ⓐ). 로비의 HeroView 는 이제 0 이고 이 줄은 반드시 빨개진다 —
+            //   지키려던 것(«아바타 칸이 비어 있지 않다»)을 새 재료로 다시 잰다. HeroView 자체는 바로 아래 장비 화면에서 잰다.
+            {
+                var av = UiKit.Find(app.Current.Root, "Avatar"); Assert.IsNotNull(av, "로비 상단 바 아바타 칸");
+                Assert.IsNotNull(UiKit.Find(av, Profile.FaceName), "아바타 칸에 초상 아이콘이 서 있다(T262 ⓐ)");
+                Assert.IsNull(av.GetComponentInChildren<HeroView>(true), "내 캐릭터 그림은 아바타 자리에 없다(주인 «플레이어 이미지 말고»)");
+            }
             _log.AssertNoRed("HeroView");
 
-            app.ShowScreen("gear"); yield return RenderFrames(3);   // 장비(HeroView 2)
+            app.ShowScreen("gear"); yield return RenderFrames(3);   // 장비 — 큰 캐릭터가 HeroView 다(이 자의 본디 관심)
             Assert.AreEqual("gear", app.Current.Name);
+            Assert.GreaterOrEqual(Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 1,
+                "장비 화면에는 플레이어 초상(HeroView)이 있어야 한다 — 아바타가 아이콘이 된 뒤로 «살아 있는 HeroView» 를 잴 수 있는 자리가 여기다");
             _log.AssertNoRed("HeroView");
 
             app.StartBattle(1);                                 // 전투 진입 — 월드 카메라는 HeroView 레이어를 안 본다
