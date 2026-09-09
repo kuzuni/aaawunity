@@ -105,6 +105,86 @@ namespace KkomaKnight.Tests.Play
         }
 
         /// <summary>
+        /// T262 ⓑ — 아레나 23·도전 팝업 24 의 초상 <b>프레임이 프로필 프레임과 같은 조각</b>인가
+        /// (주인 2026-09-09 «프레임 부분이 실제 프로필 프레임이랑 디자인이 다르네 수정» · «도전 부분 팝업도 마찬가지»).
+        /// <para>
+        /// 종전에는 <c>ItemFrame_01</c>(모서리를 자른 팔각 물건 칸)이었고 탑바 아바타는 <c>ProfileFrame_02</c>(둥근 네모 + 금테)였다 — <b>조각 자체가 달랐다.</b>
+        /// 이 자는 이름만 보고 넘기지 않는다: <b>1위 초상의 그림과 탑바 아바타의 그림이 같은 <see cref="Sprite"/> 인가</b>까지 맞댄다
+        /// («같은 키를 적었다» 가 아니라 «같은 것이 섰다» 를 재야 조각이 바뀌는 날 이 자가 먼저 말한다 · 결정 785 와 같은 결).
+        /// </para>
+        /// ⓐ 시상대 초상 셋 = 프로필 프레임 + 초상 아이콘 · 옛 물건 칸 0 ⓑ 1위는 «내» 자리라 내가 고른 초상 그대로
+        /// ⓒ 도전 팝업 줄 초상도 같은 조각 ⓓ 더미 초상 목록의 정본은 <see cref="Profile.Icons"/> 하나다 ⓔ 빨간 줄 0.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ArenaPortraitsUseTheSameFrameAsTheProfile()
+        {
+            yield return Boot();
+            _app.Save.ProfileIcon = Profile.Icons[2];        // 기본값이 아닌 초상을 골라 둔다 — 기본값이면 «따라왔다» 를 못 가른다
+            _app.ShowScreen("events"); yield return Frames(2);
+            var ev = _app.Current as EventsScreen; Assert.IsNotNull(ev, "이벤트 화면");
+            ev.ShowPage(EventsScreen.PageArena); yield return Frames(3);
+            var ar = UiKit.Find(_app.Current.Root, "Page:arena"); Assert.IsNotNull(ar, "아레나 입장 페이지(23)");
+
+            // ⓐ 시상대 초상 셋 — 프로필 프레임 조각 + 그 안의 초상 · 옛 물건 칸(ItemFrame_01)은 한 칸도 없다
+            for (int i = 1; i <= 3; i++)
+            {
+                var p = UiKit.Find(ar, "Portrait:" + i); Assert.IsNotNull(p, "시상대 초상 " + i);
+                Assert.IsTrue(HasProfileFrame(p), "시상대 초상 " + i + " 은 프로필 프레임 조각이어야 한다(주인 «실제 프로필 프레임이랑 디자인이 다르네»)");
+                Assert.IsNotNull(UiKit.Find(p, Profile.FaceName), "시상대 초상 " + i + " 안에 초상 아이콘");
+                Assert.IsFalse(GearUi.HasItemFrame(p), "시상대 초상 " + i + " 에 옛 물건 칸(ItemFrame_01)이 남으면 안 된다");
+            }
+
+            // ⓑ 1위는 «나» — 내가 고른 프레임 색·초상이 그대로 선다(그림을 맞댄다)
+            var me = UiKit.Find(ar, "Portrait:1");
+            Assert.IsNotNull(UiKit.Find(me, Profile.FrameKey(_app.Save)), "1위 프레임 = 내가 고른 프로필 프레임 색");
+            var top = UiKit.Find(_app.Current.Root, "Avatar"); Assert.IsNotNull(top, "탑바 아바타 칸");
+            Assert.AreEqual(FaceSprite(top), FaceSprite(me), "1위 초상과 탑바 아바타는 같은 그림이어야 한다(둘 다 «프로필에서 고른 초상»)");
+            Assert.AreEqual(_app.Assets.Sprite(Profile.Icons[2]), FaceSprite(me), "그 그림이 내가 고른 그것이다");
+            Assert.AreEqual(0, UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length,
+                "아레나에도 내 캐릭터 그림은 없다(T262 ⓐ 와 같은 까닭 · 주인 «플레이어 이미지 말고»)");
+
+            // ⓑ' 순위 줄(4위~)도 같은 조각이다 — 주인 지시 2항은 시상대와 «순위 줄» 을 같이 든다
+            {
+                var r4 = UiKit.Find(ar, "RankRow:4"); Assert.IsNotNull(r4, "순위 줄 4위");
+                var f4 = UiKit.Find(r4, "Face"); Assert.IsNotNull(f4, "순위 줄 초상");
+                Assert.IsTrue(HasProfileFrame(f4), "순위 줄 초상도 프로필 프레임 조각(조각이 달고 온 제 그림이 아니다)");
+                Assert.AreEqual(_app.Assets.Sprite(Profile.Icons[0]), FaceSprite(f4), "4위 더미 초상 = 목록 첫 아이콘");
+            }
+
+            // ⓒ·ⓓ 도전 팝업(24) 줄 초상 — 같은 조각이고, 그림은 «프로필이 고르는 그 넷»(정본 하나)에서 온다
+            var btn = UiKit.Find(ar, "ChallengeBtn"); Assert.IsNotNull(btn, "도전 버튼");
+            btn.GetComponent<Button>().onClick.Invoke(); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var ov = _app.Overlay.Root;
+            for (int i = 0; i < 5; i++)
+            {
+                var face = UiKit.Find(UiKit.Find(ov, "FoeRow:" + i), "Face"); Assert.IsNotNull(face, "상대 줄 초상 " + i);
+                Assert.IsTrue(HasProfileFrame(face), "상대 줄 초상 " + i + " 도 프로필 프레임(주인 «도전 부분 팝업도 마찬가지»)");
+                Assert.IsFalse(GearUi.HasItemFrame(face), "상대 줄 초상 " + i + " 에 옛 물건 칸이 남으면 안 된다");
+                Assert.AreEqual(_app.Assets.Sprite(Profile.Icons[i % Profile.Icons.Length]), FaceSprite(face),
+                    "더미 초상은 프로필이 고르는 그 넷을 돌려 쓴다 — 목록을 두 곳에 베껴 적으면 한쪽만 늘어나는 날 짝이 어긋난다(T262 ⓑ)");
+            }
+
+            _log.AssertNoRed("T262 ⓑ 아레나 초상 프레임");
+            yield return Shutdown();
+        }
+
+        /// <summary>칸 안에 «프로필 프레임» 조각이 서 있는가(색은 안 따진다 — 조각 계열만 본다).</summary>
+        static bool HasProfileFrame(Transform cell)
+        {
+            if (cell == null) return false;
+            foreach (var t in cell.GetComponentsInChildren<Transform>(true))
+                if (t != null && t.name.StartsWith(Profile.FrameKeyPrefix, StringComparison.Ordinal)) return true;
+            return false;
+        }
+        /// <summary>칸 안 초상 그림(<see cref="Profile.FaceName"/>)의 스프라이트 — 없으면 null.</summary>
+        static Sprite FaceSprite(Transform cell)
+        {
+            var f = UiKit.Find(cell, Profile.FaceName);
+            var im = f != null ? f.GetComponent<Image>() : null;
+            return im != null ? im.sprite : null;
+        }
+
+        /// <summary>
         /// T96-profile 2단계 — 아바타 팝업 제목(= 지금 내 이름)을 누르면 주인 지목 <c>Social_Profile_Nickname</c> 이 뜨고,
         /// TMP 입력칸이 uGUI <see cref="InputField"/> 로 서 있어 이름을 지을 수 있다.
         /// ⓐ 제목이 «Avatar» 가 아니라 내 이름 ⓑ 눌러서 열리는 조각 = <c>ui.profileNick</c> · 입력칸·확인·글자 수가 다 있다

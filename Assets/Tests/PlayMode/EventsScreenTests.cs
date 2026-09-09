@@ -312,7 +312,14 @@ namespace KkomaKnight.Tests.Play
               // 회차 1 감점: ListFrame_02 는 Theme_Light 의 밝은 크림 줄이라 레퍼런스(어두운 줄)와 정반대 + 흰 이름 글자가 안 읽혔다 → 어둡게 덮는다
               var bg = UiKit.Find(r4, "ListFrame_02/Normal/Bg"); Assert.IsNotNull(bg, "순위 줄 프레임 몸통"); var bgc = bg.GetComponent<Image>().color; Assert.Less(bgc.r + bgc.g + bgc.b, 1.5f, "순위 줄은 어두워야 한다(밝은 크림 프리팹 색 회귀)"); }
             Assert.IsTrue(HasText(s => s == "도전자 4") && HasText(s => s == "꼬마기사"), "순위 이름(껍데기 · 상대 «도전자 N» · 내 자리 «꼬마기사»)");
-            Assert.GreaterOrEqual(UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, 2, "HeroView 2(상단 바 아바타 + 1위 초상 «나»)");
+            // T262 ⓐ·ⓑ — 옛 계약 «HeroView 2(상단 바 아바타 + 1위 초상 «나»)» 는 둘 다 사라졌다(주인 «플레이어 이미지 말고»).
+            // 지키려던 것은 «내 자리가 비어 있지 않다» 이므로 새 재료(프로필 프레임 + 프로필에서 고른 초상)로 다시 잰다.
+            {
+                var p1 = UiKit.Find(ar, "Portrait:1"); Assert.IsNotNull(p1, "시상대 1위 초상 칸");
+                Assert.IsNotNull(UiKit.Find(p1, Profile.FrameKey(_app.Save)), "1위 칸은 «내 프로필 프레임» 조각을 그대로 쓴다(주인 «프레임이 실제 프로필 프레임이랑 디자인이 다르네»)");
+                Assert.IsNotNull(UiKit.Find(p1, Profile.FaceName), "그 안에 프로필에서 고른 초상 아이콘");
+                Assert.AreEqual(0, UnityEngine.Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length, "아레나 입장 화면에는 내 캐릭터 그림이 없다");
+            }
             Assert.IsNotNull(UiKit.Find(ar, "ChallengeBtn"), "도전"); Assert.IsNotNull(UiKit.Find(ar, "RewardsBtn"), "보상"); Assert.IsNotNull(UiKit.Find(ar, "MerchantBtn"), "상인");
             AtY((RectTransform)UiKit.Find(ar, "Stage"), Layout.AeStage, "무대"); AtX((RectTransform)UiKit.Find(ar, "ChallengeBtn"), Layout.AeChallenge, "도전 버튼"); AtX((RectTransform)UiKit.Find(ar, "RankList"), Layout.AeList, "순위 목록");
             // T124 — 승급 안내 띠는 목록 마지막 줄 위에 걸치므로(레퍼런스 23 도 그렇다) «불투명 + 목록보다 뒤 형제» 라야 뒤 글자가 안 비친다.
