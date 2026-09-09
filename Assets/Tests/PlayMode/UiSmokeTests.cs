@@ -979,23 +979,49 @@ namespace KkomaKnight.Tests.Play
                 AssertNoHighlights("13_pet");
                 // T178 — 주인이 던전 20 에서 지우라고 한 «준비 중» 표기가 이 화면에도 남아 있었다(소환 버튼 가격 자리).
                 // 값을 지어내지 않고 «흐리게 + 누르면 까닭을 토스트» 로 바꿨다(T99 티켓과 같은 문법 · 결정 432).
+                //
+                // ⛑ T372 — **이 자리의 계약은 T293 ⓘ 로 뒤집혔다.** 위 T178 문단은 «표가 없어 못 누른다» 를 적은 것이고,
+                //   그때 `PetScreen.SummonButton` 은 글자만 세우고 `CanvasGroup` 0.5 로 흐리게 한 뒤 누르면 «준비 중» 을 토스트했다.
+                //   그런데 그 갈래는 **표가 없을 때만**(`PD == null`) 선다 — T293 ⓗ 가 `D.Pet` 을 실으면서 조건이 거짓이 됐고,
+                //   살아 있는 갈래는 값 줄(`Cost/Icon`·`Qty`)을 달고 **누르면 실제로 뽑는다**.
+                //   ⇒ «흐린가» 를 재던 자리에서 **«값을 말하는가»** 를 잰다. 기댓값을 낮추는 것이 아니라 계약을 옮기는 것이다(T184 · 결정 425·778).
+                //   ⚠ 옛 껍데기 갈래를 «틀렸다» 고 지우지 않았다 — 표를 못 읽으면 지금도 그 길로 서고 그때는 흐린 것이 옳다.
+                //     한 스모크 회차에서 두 갈래를 다 세울 수는 없으니, 여기서는 «표가 실린» 쪽만 재고 그 전제를 먼저 못 박는다.
+                Assert.IsNotNull(_app.Data.Pet, "펫 표(D.Pet)가 실려 있어야 이 블록이 «살아 있는 소환» 을 잰다(T293 ⓗ)");
                 foreach (var n in new[] { "SummonBtn", "Summon10Btn" })
                 {
                     var btn = UiKit.Find(pet, n);
                     Assert.IsNotNull(btn, "펫 소환 버튼 " + n);
                     foreach (var t in btn.GetComponentsInChildren<TMP_Text>(true))
                         StringAssert.DoesNotContain("준비 중", t.text, n + " 안에 «준비 중» 글자가 남으면 안 된다(T178 · 주인이 던전에서 지우라 한 그 표기)");
+                    // 살아 있는 소환은 «지금 무엇으로 몇 개» 를 버튼 위에 적는다(T293 ⓘ · 무엇으로/몇 개는 Pets.Offer 하나가 답한다).
+                    var cost = UiKit.Find(btn, "Cost");
+                    Assert.IsNotNull(cost, n + " 는 값 줄(Cost)로 무엇을 치르는지 보여야 한다(T293 ⓘ)");
+                    Assert.IsNotNull(UiKit.Find(cost, "Icon"), n + " 값 줄에 재화 아이콘(펫알 또는 다이아)");
+                    var qty = UiKit.Find(cost, "Qty"); Assert.IsNotNull(qty, n + " 값 줄에 숫자");
+                    var qt = qty.GetComponent<TMP_Text>(); Assert.IsNotNull(qt, n + " 값 숫자 글자");
+                    Assert.IsNotEmpty((qt.text ?? "").Trim(), n + " 값 숫자가 비어 있으면 «얼마인지 모르는 버튼» 이다(RefreshSummon 이 칠한다)");
+                    // ⚑ 살아난 버튼을 누가 다시 흐리게 만들면 여기서 운다 — «되돌린 것» 을 지키는 자가 없으면 그 고침은 조용히 되돌아간다(결정 1007 ④).
                     var cg = btn.GetComponent<CanvasGroup>();
-                    Assert.IsNotNull(cg, n + " 는 «못 누르는 것» 으로 보여야 한다(CanvasGroup 알파 · T178)");
-                    Assert.AreEqual(0.5f, cg.alpha, 0.01f, n + " 알파 0.5(흐리게 · T99 티켓과 같은 문법)");
+                    Assert.IsTrue(cg == null || cg.alpha > 0.99f, n + " 는 이제 «못 누르는 것» 이 아니다 — 흐리게(0.5) 두면 안 된다(T293 ⓘ 가 T178 을 갈음한다)");
                 }
                 // 껍데기 버튼·슬롯 — 눌러도 아무 일 없음(팝업 안 열림 · 화면 그대로 · 빨간 줄 0)
-                foreach (var n in new[] { "UpgradeAllBtn", "QuickEquipBtn", "SummonBtn", "Summon10Btn", "Slot:0", "Slot:3" }) Assert.IsTrue(ClickNamed(pet, n), "껍데기 " + n);
+                // ⛑ T372 — 소환 둘은 이 목록에서 뺐다. 더는 껍데기가 아니다(아래에서 따로 잰다).
+                foreach (var n in new[] { "UpgradeAllBtn", "QuickEquipBtn", "Slot:0", "Slot:3" }) Assert.IsTrue(ClickNamed(pet, n), "껍데기 " + n);
                 yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen, "껍데기 버튼은 팝업을 열지 않는다"); Assert.AreEqual("pet", _app.Current.Name, "화면 그대로");
-                // 소환을 «마지막에» 눌렀으므로 토스트가 그 까닭을 말하고 있어야 한다(T178 · 팝업이 아니라 토스트라 위 «팝업 안 열림» 과 어긋나지 않는다)
-                Assert.IsTrue(HasText(s => s.Contains(PetScreen.NotReadyMsg)),
-                    "소환을 누르면 «" + PetScreen.NotReadyMsg + "» 토스트로 까닭을 말해야 한다(T178)");
-                Check("펫 껍데기 버튼");
+                // ⛑ T372 — 소환의 «못 치르는» 갈래를 잰다. Pull 은 못 치르면 세이브를 한 글자도 안 건드리고 까닭만 토스트한다(결정 771).
+                //   치를 것을 0 으로 만들어 그 갈래를 확실히 밟고, 재고 나서 세이브를 그대로 되돌린다 — 이 자는 뒤에서 다른 화면을 계속 본다.
+                var gem0 = _app.Save.Gem; var egg0 = _app.Save.PetEgg;
+                _app.Save.Gem = 0; _app.Save.PetEgg = 0;
+                Assert.IsTrue(ClickNamed(pet, "SummonBtn"), "소환 버튼"); yield return Frames(1);
+                Assert.IsFalse(_app.Overlay.IsOpen, "치를 것이 없으면 소환은 결과 팝업을 열지 않는다(T293 ⓘ)");
+                Assert.AreEqual("pet", _app.Current.Name, "화면 그대로");
+                Assert.IsTrue(HasText(s => s.Contains("모자")),
+                    "치를 것이 없이 소환을 누르면 «…이 모자랍니다» 로 까닭을 말해야 한다 — 눌리는데 아무 일도 안 나는 자리를 안 만든다(결정 771)");
+                Assert.IsFalse(HasText(s => s.Contains(PetScreen.NotReadyMsg)),
+                    "«" + PetScreen.NotReadyMsg + "» 는 표가 없을 때만 나온다 — 표가 실렸는데 이 말이 뜨면 소환이 껍데기로 되돌아간 것이다(T372)");
+                _app.Save.Gem = gem0; _app.Save.PetEgg = egg0;
+                Check("펫 소환 버튼");
                 // 세부 팝업(14) — 칸 클릭 → 명판 없음 · 세부 칸 · «패시브:» · 강화/장착(껍데기) · «탭하여 닫기» · 배경 탭으로 닫힘
                 Assert.IsTrue(ClickNamed(pet, "Pet:0"), "펫 칸 클릭"); yield return Frames(2);
                 Check("펫 세부 팝업", expectOverlay: true);
