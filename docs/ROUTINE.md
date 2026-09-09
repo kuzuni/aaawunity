@@ -7761,7 +7761,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
    **주인 폰(ⓒ)은 주인 몫으로 남긴다** — 받고 나면 점이 꺼지고, 충전만 남은 동안에는 안 켜지며, 30분 뒤부터 다시 켜진다.
 
-### T318 — ⚑⚑ 주인: **퀘스트 «이동» 이 실제로 그 자리로 데려가고, 도전해야 하는 것은 손가락으로 가리키며 «눌러라» 힌트** (주인 2026-09-09 11:0X · T311 의 옆 · 자리 표 0줄)
+### T318 ✅ — ⚑⚑ 주인: **퀘스트 «이동» 이 실제로 그 자리로 데려가고, 도전해야 하는 것은 손가락으로 가리키며 «눌러라» 힌트** (주인 2026-09-09 11:0X · T311 의 옆 · 자리 표 0줄)
 
 0. **주인 원문** — «퀘스트에 **이동 버튼 누르면 해당 거 가능하게 이동**할 수 있게 해 주고, 혹은 **뭔 거 게임 도전해야 하면 해당 거 손가락으로 가리키면서 클릭하라는 식으로 힌트** 주기». **지금**: «이동»(`LobbyPopups.cs:586`) 은 `ov.Close()` — 팝업만 닫고 아무 데도 안 간다.
 1. **목적지 표(`quest.json` 의 각 퀘스트에 `go` 키 · 코드에 문자열 매핑을 안 박는다)** — `go = {"screen": "...", "point": "..."}`:
@@ -7793,6 +7793,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > **▸ 2회차 push · 확인 전 — «이동» 배선 한 줄 + P7 각본(2026-09-09 17:2X · sess-1711-3581 · 워커 M · 결정 970 · lock `T318`)** — 1회차가 적어 둔 그 한 줄 그대로: `QuestRow` 의 «이동» → `() => { ov.Close(); if (goTo != null) app.Hint(goTo); }`(`QuestRow` 에 `app` 인자를 하나 더 넘겼다). **로그인류(`go = null`)는 눌리지 않는다**(1항 표 마지막 줄 · `UiKit.SetInteractable(false)`) · 표 없는 껍데기(q == null)는 종전 «닫기만». 파일을 연 근거: T258 이 «남은 것 하나: petGacha» 라 스스로 적어 LobbyPopups 쪽은 끝났고, 닿는 자리가 한 블록이다(워커 A 의 T303 재선점 · 워커 P 의 T345 와 같은 판단).
 > · **T300 P7** 을 같은 커밋에 썼다(«이동» 한 번 + 3항의 나머지): 사이드 «퀘스트» → 일일 트랙 첫 칸 «받기» → 리워드 → 어둠 탭 → 팝업 재개 → «주간»·«업적» 탭 → 업적 «받기» → «일일» → 미완 줄 «이동» → 목적지 화면 + `Hint`. 봇은 값을 안 잰다(3항 ⓐ · 조건은 세이브에 직접 · 첫 칸이 안 열리는 표면 로그로 건너뛴다). «이동» 줄은 일부러 하나 남긴다 — 전부 채우면 «이동» 이 하나도 안 남는다.
 > · **확인** = 다음 완주 런 `[CI명부]` `PlaythroughTests` 에 `P7_…` ✗ 없음 · `QuestGoPlayTests(5)` 그대로 · 주인 폰(«이동» → 그 자리 · 손가락). 배포 갈래(`Playthrough.Steps` 의 P7)는 안 넣었다 — 결정 961 ⑤ 와 같은 까닭(fail 0 이 이어진 뒤 옮긴다).
+> **✔ 확인 끝 · lock 반납(18:1X · sess-1810-24175 · 워커 M)** — 런 **859**(`807f477` · 유니티 잡 success · `[CI실패] 0건`) `PlaythroughTests` ✗ 0 · `QuestGoPlayTests(5)` ✗ 0. 남은 것 = 주인 폰(«이동» → 그 자리 · 손가락).
 
 ### T326 ✅ — **표 ㊺ 의 «오른쪽 짝» 셋을 재서 넣었다 — 6.4 → 7.1, 남은 감점은 전부 T240 이 답을 적어 둔 자리** (2026-09-09 11:1X · sess-2157-4152 · 워커 H · **문서만 · C# 0줄** · 결정 886)
 
@@ -8868,6 +8869,15 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 > **✅ 확인 끝 · lock 반납(17:3X · sess-1425-9466 · 워커 N · 결정 972 · 죽은 lock 인수)** — 런 **856** `LayoutSpecTests(14)` 실패 0 · `screens` run 856 `layout.json` 01: «메뉴(☰) 버튼» y **10.1** · «이벤트 배너(시즌 패스)» y **10.1** · 01 PNG 눈: 상단 바 밑으로 띄워졌고 사이드 기둥과 안 겹친다. 남은 것은 주인 폰뿐.
 > **🔄 push · 확인 전(15:5X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 950 · lock `T346` 쥔 채 · 커밋 메시지의 948 은 950)** — 0~3항 그대로 했다(9.2 → 10.06 둘 다 · 표 ① 행 · `FrameBandBelow` 주석). 로컬 EditMode `LayoutSpecTests` 초록. 확인 = 다음 완주 런 + `screens` 01.
+
+### T352 — **배포 스모크가 러너의 apt 저장소 «Hash Sum mismatch» 로 브라우저 설치에서 죽어 배포가 멈췄다 — 설치를 두 갈래로** (워커 실측 2026-09-09 18:1X · sess-1810-24175 · 워커 M · 결정 984)
+
+0. **실측** — deploy-last-green 런 **490**(`1d7b46f7` · 855 초록 뒤 첫 완주 빌드 · 17:10~17:28): unity-builder 는 17분 만에 success · «배포 스모크» 단계가 **10초** 만에 failure. 로그: `npx playwright install --with-deps chromium` → apt `Get:29 https://dl.google.com/linux/chrome-stable/deb stable/main amd64 Packages` **Hash Sum mismatch** → `E: Failed to fetch …/Packages.gz` → «Failed to install browsers · exit code 100». `tools/webgl_smoke.sh` 는 한 줄도 안 돌았고 배포 step 은 skip. ⇒ **폰은 855 의 빌드를 못 받았다**(런 505 가 18:07 에 다시 굽는다).
+1. **고침(한 줄 · `ci.yml`·`deploy-last-green.yml` 둘 다)** — `npx playwright install --with-deps chromium || npx playwright install chromium`. 두 번째 갈래는 시스템 라이브러리를 안 깔고 브라우저 바이너리만 받는다 — ubuntu-latest 에는 chromium 이 도는 라이브러리가 이미 있다(같은 러너에서 `--battle` 스모크가 수백 번 돌았다). 첫 갈래가 성공하면 종전과 같다.
+2. **안 한 것** — apt 저장소 목록에서 dl.google.com 을 빼는 것(러너 이미지 몫 · 우리 파일이 아니다) · 재시도 루프(설치 실패의 까닭이 «저장소 순간 불일치» 하나뿐이라는 보장이 없다 — 두 갈래면 그 까닭이 무엇이든 브라우저는 깔린다).
+3. **확인** — 다음 deploy-last-green 런(또는 ci.yml build-webgl)의 «배포 스모크» 단계가 설치를 지나 `[smoke]` 줄을 찍는가. 두 갈래 다 죽으면 그때는 러너 자체의 문제라 로그에 두 실패가 나란히 남는다.
+
+순서 — `.github/workflows/ci.yml` · `.github/workflows/deploy-last-green.yml`. lock `T352`.
 
 ### T351 ✅ — **«닫혔다» 를 낱말로 찾는 자는 낱말이 바뀌면 눈이 먼다 — 그런데 낱말을 넓히면 이력에서 먼저 걸린다** (워커 실측 등재 2026-09-09 17:5X · sess-1447-1691 · 워커 L)
 

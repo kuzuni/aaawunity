@@ -170,7 +170,9 @@ jobs:
         run: |
           sudo chown -R "$(id -u):$(id -g)" build || true
           npm i -g playwright@1.56.1
-          npx playwright install --with-deps chromium
+          # T352 — «--with-deps» 는 apt 로 시스템 라이브러리까지 깔다가 러너 밖 저장소(dl.google.com)의 «Hash Sum mismatch» 로 죽을 수 있다
+          #   (deploy-last-green 런 490 · 스모크가 돌기도 전에 배포가 멈췄다). 그때는 브라우저만 다시 깐다 — ubuntu-latest 에는 chromium 의 라이브러리가 이미 있다.
+          npx playwright install --with-deps chromium || npx playwright install chromium
           tools/webgl_smoke.sh --dir build/WebGL/KkomaKnight --battle --play-report --require-marker --timeout 240 --shot webgl-smoke/local.png --log webgl-smoke/local.txt
       - uses: actions/upload-artifact@v4
         if: always()
