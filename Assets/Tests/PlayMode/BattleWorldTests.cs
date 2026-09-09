@@ -675,5 +675,44 @@ namespace KkomaKnight.Tests.Play
                 catch (Exception e) { Debug.LogWarning("[T233] t233.json 저장 실패(" + dir + "): " + e.Message); }
             }
         }
+
+        /// <summary>
+        /// T368 — <b>화면이 엔진에게 «지금은 레벨업 창을 못 연다» 를 실제로 말하는가</b>(주인 2026-09-10 «흡수 동안 행동들 멈추면 안 됨»).
+        /// <para>
+        /// ⚑ <b>왜 이 자가 따로 필요한가</b> — 이 절의 규칙은 <c>LevelUpHoldTests</c>(EditMode)가 잰다. 그런데 그 자는
+        /// <c>HoldLevelUp</c> 을 <b>제 손으로 세워 놓고</b> 재므로, <c>BattleScreen</c> 이 그것을 세우는 세 줄을 누가 지워도
+        /// <b>그대로 초록</b>이다. 곧 규칙은 지켜지는데 아무도 그 규칙을 켜지 않는 꼴을 못 본다 —
+        /// 배선을 재는 자는 배선이 있는 쪽(PlayMode)에 있어야 한다.
+        /// </para>
+        /// <para>
+        /// 재는 것은 <b>«한 번이라도 켜졌는가»</b> 하나다. 킬 연출·구슬이 나는 프레임은 전투 몇 초에 반드시 있으므로
+        /// (<c>_world.Busy</c> 는 칼이 내려오는 동안 참) 흔들리지 않고, 판이 어떻게 굴러도 값이 안 변한다 —
+        /// «몇 프레임이나» 를 재면 배속·프레임 길이에 흔들린다(결정 877 ④ · 못 재는 자리는 느슨하게).
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator BattleScreenTellsTheEngineToHoldTheLevelUpWhileOrbsAreFlying()
+        {
+            yield return Boot();
+            _app.StartBattle(1);
+            var bs = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bs); var G = bs.G; Assert.IsNotNull(G, "전투 상태");
+            Arm(G);
+            yield return Frames(2);
+
+            bool everHeld = false, everAbsorbing = false;
+            float t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < 6f && !G.Over && !_app.Overlay.IsOpen)
+            {
+                yield return null;
+                if (bs.Absorbing) everAbsorbing = true;
+                if (G.HoldLevelUp) everHeld = true;
+                if (everHeld && everAbsorbing) break;
+            }
+
+            Assert.IsTrue(everAbsorbing, "6초 안에 구슬이 한 번은 날아야 한다 — 안 날면 이 자는 아무것도 못 잰 것이다(판 자체를 보라)");
+            Assert.IsTrue(everHeld, "BattleScreen 이 흡수·킬 연출 동안 G.HoldLevelUp 을 세워야 한다 — 안 세우면 레벨업이 그 자리에서 창이 되어 엔진이 얼고, 주인이 본 «걷기·전투가 멈춘다» 가 그대로 돌아온다");
+            _log.AssertNoRed("T368 흡수 중 붙잡기");
+            yield return Shutdown();
+        }
     }
 }
