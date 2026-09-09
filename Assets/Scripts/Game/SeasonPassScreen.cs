@@ -57,9 +57,14 @@ namespace KkomaKnight.Game
         static readonly Layout.R RLine = new Layout.R(32.2f, 31.4f, 2.6f, 53.2f);
         static readonly Layout.R RColPaid1 = new Layout.R(35.3f, 31.4f, 30.6f, 53.2f);
         static readonly Layout.R RColPaid2 = new Layout.R(66.7f, 31.4f, 31.5f, 53.2f);
-        static readonly Layout.R RCellFree = new Layout.R(11.7f, 35.1f, 17.5f, 6.5f);
-        static readonly Layout.R RCellPaid1 = new Layout.R(41.7f, 35.1f, 19.4f, 6.5f);
-        static readonly Layout.R RCellPaid2 = new Layout.R(75.0f, 35.1f, 17.8f, 6.5f);
+        // T353(주인 2026-09-10 «패스들 다 중앙에 셀 있어야 함 · 로우에 셀이 중앙에 · 현재 오른쪽에 치우쳐 있더라 파란색 쪽 꺼») —
+        //   칸의 x 를 **열에서 셈한다**(열 가운데 − 칸 폭/2). 실측 표(11.7 / 41.7 / 75.0)는 레퍼런스 그림의 자리였고 무료 칸이 열 가운데(16.9)보다
+        //   3.5%p 오른쪽이었다. 수를 다시 박지 않고 관계로 두면 열을 옮겨도 칸이 따라온다(표 ㊼ 의 세 행은 그 셈의 결과값으로 고쳐 뒀다).
+        static readonly Layout.R RCellFree = CenteredIn(RColFree, 35.1f, 17.5f, 6.5f);
+        static readonly Layout.R RCellPaid1 = CenteredIn(RColPaid1, 35.1f, 19.4f, 6.5f);
+        static readonly Layout.R RCellPaid2 = CenteredIn(RColPaid2, 35.1f, 17.8f, 6.5f);
+        /// <summary>열 <paramref name="col"/> 의 가로 가운데에 폭 <paramref name="w"/> 인 사각형(y·h 는 그대로) — T353 «칸은 열 가운데».</summary>
+        static Layout.R CenteredIn(Layout.R col, float y, float w, float h) => new Layout.R(col.X + (col.W - w) / 2f, y, w, h);
         static readonly Layout.R RLvBadge = new Layout.R(29.6f, 35.9f, 7.9f, 4.5f);
         static readonly Layout.R RClaimAll = new Layout.R(4.0f, 86.5f, 28.6f, 4.6f);
         static readonly Layout.R RBuy1 = new Layout.R(36.1f, 86.3f, 28.1f, 4.7f);
@@ -296,7 +301,7 @@ namespace KkomaKnight.Game
             UiKit.PatternBg(col, Palette.A(Color.white, PatternAlpha), UiKit.PatternTileSeconds, col.childCount, UiKit.PatternTilePx);
             // ⚠ «아직 못 연 줄» 어둠은 **여기 없다** — 줄이 스크롤을 타므로 어둠도 같이 움직여야 한다(<see cref="Dim"/> · T322 ⓑ).
             //    붙박이로 두면 줄만 지나가고 어둠은 제자리에 남아 **엉뚱한 줄을 덮는다**.
-            UiKit.Tag(col, name == "Col:free" ? "무료 열(하늘→파랑)" : name == "Col:paid1" ? "유료 1 열(빨강→주황)" : "유료 2 열(보라→핑크)");
+            UiKit.Tag(col, name == "Col:free" ? "무료 열(파랑→하늘)" : name == "Col:paid1" ? "유료 1 열(빨강→주황)" : "유료 2 열(보라→핑크)");
         }
 
         /// <summary>

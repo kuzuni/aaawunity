@@ -126,6 +126,15 @@ namespace KkomaKnight.Tests.Play
                 int top = SeasonPassScreen.TopLevel;
                 Assert.IsNotNull(UiKit.Find(sp, "Badge:" + top), "열자마자 맨 위 줄(" + top + ")이 서 있다");
                 Assert.IsNotNull(UiKit.Find(sp, "Cell:free:" + top), "그 줄의 무료 칸");
+                // T353(주인 2026-09-10 «패스들 다 중앙에 셀 있어야 함 · 파란색 쪽이 오른쪽에 치우쳐 있더라») — 첫 줄 세 칸의 가운데가 제 열의 가운데다.
+                //   픽셀이 아니라 **월드 x** 로 잰다(칸은 줄 안 앵커 · 열은 화면 % 라 부모가 다르다) · 여유 2px = 반올림 몫.
+                foreach (var (colName, cellName) in new[] { ("Col:free", "Cell:free:"), ("Col:paid1", "Cell:paid1:"), ("Col:paid2", "Cell:paid2:") })
+                {
+                    var colRt = UiKit.Find(sp, colName) as RectTransform; var cellRt = UiKit.Find(sp, cellName + top) as RectTransform;
+                    Assert.IsNotNull(colRt, colName); Assert.IsNotNull(cellRt, cellName + top);
+                    float cx = colRt.TransformPoint(colRt.rect.center).x, ex = cellRt.TransformPoint(cellRt.rect.center).x;
+                    Assert.AreEqual(cx, ex, 2f, cellName + top + " 은 " + colName + " 의 가운데에 서야 한다(T353) — 열 " + cx.ToString("0.0") + " · 칸 " + ex.ToString("0.0"));
+                }
 
                 // ⚠ **미리 다 만들지 않는다** — 100줄 × 3칸을 한 번에 세우면 페이지가 멈춘다(T322 ⓐ).
                 //    그러니 «맨 아래 줄» 은 지금 없어야 하고, 굴리면 생겨야 한다. 둘 다 재야 «재활용» 이 증명된다.
