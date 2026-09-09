@@ -23,7 +23,10 @@ namespace KkomaKnight.Core
         public static readonly R LobbyAvatar = new R(2.5f, 3.8f, 10.2f, 4.4f);
         public static readonly R LobbyPills = new R(13.2f, 4.5f, 85.4f, 2.9f);
         // T78(주인 2026-09-07) — 이벤트 배너(시즌 패스)는 삭제 · 표 ① 의 그 자리(24.5/9.2/51.6/5.6)는 비워 둔다(다른 요소를 끌어올리지 않는다)
-        public static readonly R LobbyMenu = new R(88.3f, 9.2f, 9.0f, 4.1f);
+        /// <summary>로비 ≡ 메뉴 버튼 — <b>T346(주인 2026-09-10 «패스 버튼, 메뉴 버튼, 이거 20씩 내려와 줘 · 간격이 너무 상단이랑 딱 붙어 있음»)</b>로
+        /// 표 ① 의 9.2%(215px)에서 <b>20px 아래</b>(235px = 10.06%)로 내렸다. 옆의 패스 배너(<c>Screens.LobbyPassBanner</c>)도 같은 만큼 내려간다.
+        /// <para>1%p = 프레임 세로 2337px 의 1% = 23.37px 이므로 20px = 0.86%p 다(9.2 → 10.06).</para></summary>
+        public static readonly R LobbyMenu = new R(88.3f, 10.06f, 9.0f, 4.1f);
         // 사이드 기둥 · 보조 줄은 T68(아이콘 1.5~1.8배 · 칸 폭 ≥75%) + T63-lobby(라벨 36 · 2줄) 가 레퍼런스(16.4×21.5 · 37.2×7.0)에서 ±3%p 안으로 키운 값 — ref-layout ① «⚑ T68 회차 정정»
         /// <summary>왼쪽 사이드 기둥 — T78(주인 2026-09-07)로 «특권» 1칸만 남아 높이가 3칸(24.0)의 1/3 = 8.0 이다(x·y·폭·칸 크기는 오른쪽 기둥과 같게 유지 · 위 정렬).</summary>
         public static readonly R LobbySideL = new R(1.4f, 16.0f, 19.0f, 8.0f);

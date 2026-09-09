@@ -27,8 +27,11 @@ namespace KkomaKnight.Game
         public const string SideExplore = "explore", SideClearReward = "clearReward";
         /// <summary>시즌 패스 입구 — T78(주인 2026-09-07)로 지웠다가 <b>주인 2026-09-09 «걍 다시 넣기»</b> 로 되살렸다(T266). 자리는 T78 이 비워 둔 표 ① 의 배너 그대로.</summary>
         public const string SidePass = "pass";
-        /// <summary>로비 이벤트 배너 자리(표 ① 24.5/9.2/51.6/5.6) — T78 이 «비워 두고 아래를 끌어올리지 않는다» 로 남겨 둔 그 rect 다.</summary>
-        static readonly Layout.R LobbyPassBanner = new Layout.R(24.5f, 9.2f, 51.6f, 5.6f);
+        /// <summary>로비 이벤트 배너 자리(표 ① 24.5/9.2/51.6/5.6) — T78 이 «비워 두고 아래를 끌어올리지 않는다» 로 남겨 둔 그 rect 다.
+        /// <para><b>T346(주인 2026-09-10 «패스 버튼, 메뉴 버튼, 이거 20씩 내려와 줘»)</b> — y 만 20px(0.86%p) 내려 9.2 → 10.06.
+        /// 옆의 ≡ 메뉴(<see cref="Layout.LobbyMenu"/>)와 <b>같은 줄에 서야 하므로 둘을 같은 값으로 움직인다</b>(한쪽만 내리면 줄이 어긋난다).
+        /// 밑단은 10.06 + 5.6 = 15.66% 라 바로 아래 사이드 기둥(<see cref="Layout.LobbySideL"/> y 16.0)과 안 겹친다.</para></summary>
+        static readonly Layout.R LobbyPassBanner = new Layout.R(24.5f, 10.06f, 51.6f, 5.6f);
         /// <summary>
         /// 아이콘 라벨 칸(사이드·보조·모서리 · <see cref="BuildColumn"/>) 안의 아이콘 자리 / 글자 띠 자리(칸 %) — T68 ①(주인 «아이콘 너무 작음» · 1.5~1.8배 · 칸 폭의 ≥ 75%) + T63-lobby(라벨 보조 36 · 2줄 · 잘림 0).
         /// 아이콘이 칸 위 82% 를 차지하고 글자 띠(아래 50%)가 아이콘 아랫부분에 겹친다 — 레퍼런스 01 도 «Daily Gifts»·«7-Day Challenge» 가 아이콘 밑단 위에 얹혀 있다(외곽선 글자).
@@ -315,7 +318,8 @@ namespace KkomaKnight.Game
         /// 아바타 칸(<see cref="Layout.LobbyAvatar"/>)의 밑단과 탑바 줄(<see cref="Layout.LobbyTopBar"/>)의 밑단이 <b>같은 8.2%</b>(192px)이고 띠는 거기서 딱 끊겼다 —
         /// 그래서 노란 초상 테두리가 띠 끝에 붙어 보였다. <b>요소는 하나도 안 움직인다</b>(배치 표 ① 불변) — 띠만 아래로 자란다.
         /// </para>
-        /// 상한은 23px 다: 바로 아래 이웃인 로비 ≡ 메뉴(<see cref="Layout.LobbyMenu"/> y 9.2% = 215px)와 줄 밑단(192px) 사이가 그만큼이다.
+        /// 상한은 <b>본래</b> 23px 였다: 바로 아래 이웃인 로비 ≡ 메뉴와 줄 밑단(192px) 사이가 그만큼이었다.
+        /// T346 이 그 메뉴를 20px 내려(<see cref="Layout.LobbyMenu"/> y 10.06% = 235px) 사이가 43px 로 늘었으니 이 값은 여유 안에 그대로 있다.
         /// 띠는 형제 맨 앞(= 맨 뒤에 그려진다)이라 조금 겹쳐도 버튼을 가리지 않지만, 표를 안 흔들리게 그 안에서 고른다(권장 20~23 · 결정 기록).
         /// </summary>
         public const float FrameBandBelow = 22f;
