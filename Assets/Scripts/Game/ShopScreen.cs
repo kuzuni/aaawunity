@@ -86,7 +86,7 @@ namespace KkomaKnight.Game
         /// <summary>상자 카드의 광고 오픈 버튼(T259 1항) — 버튼 · 빨간 점 · «하루 1번» 자리 이름(<see cref="ShopFree"/>). 자리 이름이 null 이면 그 상자엔 광고 오픈이 없다.</summary>
         readonly List<(Button btn, GameObject dot, string slot)> _adBtns = new List<(Button, GameObject, string)>();
         /// <summary>무료 보급 상품(다이아 100 · 골드 1,000 · T259 3항) — 가격 글자 · 빨간 점 · 자리 이름 · 원래 가격 글자.</summary>
-        readonly List<(TMP_Text price, GameObject dot, string slot, string paid)> _freePacks = new List<(TMP_Text, GameObject, string, string)>();
+        readonly List<(TMP_Text price, GameObject icon, GameObject dot, string slot, string paid)> _freePacks = new List<(TMP_Text, GameObject, GameObject, string, string)>();
         readonly Dictionary<string, BoxWidgets> _box = new Dictionary<string, BoxWidgets>();
         readonly List<(Button btn, Func<bool> can)> _gated = new List<(Button, Func<bool>)>();
         /// <summary>빛살이 도는 칸(T72 ② · 4항 «보이는 칸만» — 스크롤 밖 칸은 <see cref="UiKit.SetLightSpinning"/> 으로 멈춘다).</summary>
@@ -554,6 +554,9 @@ namespace KkomaKnight.Game
             {
                 bool can = CanFree(S, f.slot);
                 if (f.price != null) f.price.text = TextGlyphs.Safe(can ? FreeLabel : f.paid);
+                // 무료일 때는 가격 아이콘을 끈다 — 켜 두면 «다이아 Free» 가 된다(위 RegisterFreePack 의 ⚑).
+                // 원래 아이콘이 없던 줄(다이아 상품 = 원화)은 위에서 아예 안 들었으므로 여기서 켜질 일이 없다.
+                if (f.icon != null) f.icon.SetActive(!can);
                 if (f.dot != null) f.dot.SetActive(can);
             }
             foreach (var box in D.Gacha.Boxes)
@@ -620,8 +623,15 @@ namespace KkomaKnight.Game
         {
             var btn = UiKit.Find(slot, "Button_Price"); if (btn == null) return;
             var price = UiKit.Find(btn, "GroupArea/Group/Text (TMP)")?.GetComponent<TMP_Text>();
+            // T259 3항 회차 2 — 가격 <b>아이콘</b>도 같이 들고 있어야 한다. 첫 회차에 안 들었더니 골드 줄이 «💎Free» 로 찍혔다
+            // (`screens` run 618 실측 · 09_shop_1.png): 아이콘은 «이 값을 다이아로 치른다» 는 뜻인데 무료일 때는 치를 값이 없다.
+            // 글자만 «Free» 로 바꾸고 아이콘을 두면 화면이 «다이아 Free» 라는 없는 말을 한다 — 눈으로 봐야 잡히는 갈래다.
+            // ⚠ **켜져 있는 아이콘만** 든다 — 다이아 줄은 값이 원화라 아이콘이 처음부터 꺼져 있고(`BuildPack` 의 `priceIconKey == null`),
+            //   그것까지 들면 아래 `SetActive(!can)` 가 무료가 끝나는 순간 **없던 아이콘을 켜** 버린다(«1,000원» 옆에 다이아가 뜬다).
+            var icon = UiKit.Find(btn, "GroupArea/Group/Icon");
+            var iconGo = icon != null && icon.gameObject.activeSelf ? icon.gameObject : null;
             var dot = UiKit.AlertDot(slot, "FreeDot", new Vector2(1, 1), new Vector2(-6, -2), 44);   // T136 — 받을 게 있으면 빨간 점(데일리 기프트와 같은 문법)
-            _freePacks.Add((price, dot, slotName, paidText));
+            _freePacks.Add((price, iconGo, dot, slotName, paidText));
         }
 
         /// <summary>무료 보급이 살아 있을 때 가격 버튼에 뜨는 글자(주인 ««1000원» 이라는 버튼이 «Free» 로 바뀌고»).</summary>

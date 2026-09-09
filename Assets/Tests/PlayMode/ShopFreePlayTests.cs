@@ -154,5 +154,35 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("무료 보급 상품");
             yield return Shutdown();
         }
+        /// <summary>
+        /// T259 3항 회차 2 — <b>무료일 때 가격 아이콘이 꺼진다.</b> 눈으로 잡은 결함을 자로 옮긴 자리다:
+        /// 첫 회차는 글자만 «Free» 로 바꿔서 골드 줄이 «💎Free» 로 찍혔다(`screens` run 618 실측).
+        /// 아이콘은 «이 값을 다이아로 치른다» 는 뜻인데 무료일 때는 치를 값이 없다 — 화면이 없는 말을 한다.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator TheFreeGoldRowDoesNotShowAGemIconWhileItIsFree()
+        {
+            yield return Boot();
+            var D = _app.Data; var S = _app.Save;
+            var pack = D.Shop != null ? D.Shop.FreeGoldPack : null;
+            Assert.IsNotNull(pack, "표가 지목한 «무료 보급» 골드 줄");
+            int idx = D.Shop.GoldPacks.IndexOf(pack);
+            S.Gem = pack.Gem;   // 값을 치를 수도 있는 상태로 둔다 — 그래야 «무료라서 껐다» 와 «못 사서 껐다» 가 안 섞인다
+            yield return OpenShop();
+
+            var slot = UiKit.Find(_app.Current.Root, "GoldPack:" + idx);
+            Assert.IsNotNull(slot, "그 상품 칸");
+            var icon = UiKit.Find(slot, "Button_Price/GroupArea/Group/Icon");
+            Assert.IsNotNull(icon, "골드 줄은 원래 다이아 아이콘을 갖는다");
+            Assert.AreEqual("Free", PriceText(slot), "지금은 무료다");
+            Assert.IsFalse(icon.gameObject.activeSelf, "무료일 때는 다이아 아이콘이 꺼져 있다(«💎Free» 는 없는 말이다)");
+
+            Btn(slot, "Button_Price").onClick.Invoke(); yield return Frames(2);
+            Assert.AreNotEqual("Free", PriceText(slot), "받고 나면 제 가격으로 돌아온다");
+            Assert.IsTrue(icon.gameObject.activeSelf, "그때는 다이아 아이콘도 같이 돌아온다");
+
+            _log.AssertNoRed("무료 보급 골드 줄 아이콘");
+            yield return Shutdown();
+        }
     }
 }
