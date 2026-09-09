@@ -960,8 +960,16 @@ namespace KkomaKnight.Game
             ("ui.iconKeyBlue", "ui.itemFrame.blue"), ("ui.iconKeyPurple", "ui.itemFrame.plum"),
             ("ui.iconKeyGold", "ui.itemFrame.yellow"), ("ui.iconScroll", "ui.itemFrame.blue"),
         };
-        const string RewardFrameDefault = "ui.itemFrame.green";
-        static string RewardFrame(string icon)
+        public const string RewardFrameDefault = "ui.itemFrame.green";
+        /// <summary>
+        /// 아이콘 → 칸 테두리 색(T128). <b>자가 물어보는 자리라 `public` 이다</b>(T288-2 · <see cref="CardRewardKinds"/> 와 같은 결).
+        /// <para>
+        /// <b>왜 냈나</b> — 자가 «원정 카드에 색이 셋 이상» 이라고 <b>수로</b> 박아 두었는데, 표가 원정을 «골드 한 칸» 으로 주는 날
+        /// (주인 «원정 첫 클리어 골드 5800 · 클리어 3500») 색이 하나뿐이라 빨개졌다(run 657). 그런데 <b>T128 이 지키려던 것은
+        /// «색이 셋» 이 아니라 «색이 물건을 따라간다»</b> 이고, 그것은 표가 무엇을 주든 참이다. 그래서 자가 이 규칙에 직접 물어본다.
+        /// </para>
+        /// </summary>
+        public static string RewardFrame(string icon)
         {
             foreach (var f in RewardFrames) if (f.icon == icon) return f.frame;
             return RewardFrameDefault;

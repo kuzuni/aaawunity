@@ -153,11 +153,25 @@ namespace KkomaKnight.Tests.Play
             // 조각 이름 = 카탈로그 키다(`UiKit.Spawn` 이 그렇게 이름 짓는다 · 결정 325). 전부 초록으로 되돌아가면 색 수가 1 이 되어 빨개진다.
             {
                 var rew = UiKit.Find(exp, "Rewards"); Assert.IsNotNull(rew, "원정 카드 보상 줄");
-                var kinds = new System.Collections.Generic.HashSet<string>();
+                // ⓐ **규칙 자체를 못 박는다** — «파랑 열쇠 = 파랑 · 보라 열쇠 = 자주 · 금 열쇠 = 노랑»(레퍼런스 20)은
+                //   **표가 무엇을 주든 참인 사실**이라 여기서 직접 잰다. 여태는 이것을 «원정 카드에 그 셋이 떠 있다» 로
+                //   에둘러 쟀는데, 그러면 표가 원정 보상을 바꾸는 날(주인 «원정 첫 클리어 골드 5800 · 클리어 3500» →
+                //   골드 한 칸) 규칙은 멀쩡한데 자가 빨개진다 — run 657 에서 실제로 그렇게 빨갰다(T288 ②).
+                Assert.AreEqual("ui.itemFrame.blue", EventsScreen.RewardFrame("ui.iconKeyBlue"), "파랑 열쇠 = 파랑 칸(레퍼런스 20 · T128)");
+                Assert.AreEqual("ui.itemFrame.plum", EventsScreen.RewardFrame("ui.iconKeyPurple"), "보라 열쇠 = 자주 칸");
+                Assert.AreEqual("ui.itemFrame.yellow", EventsScreen.RewardFrame("ui.iconKeyGold"), "금 열쇠 = 노랑 칸");
+                Assert.AreEqual(EventsScreen.RewardFrameDefault, EventsScreen.RewardFrame("ui.coin"), "표에 없는 물건은 초록(레퍼런스 20 지옥의 문 두 칸)");
+                // ⓑ **그린 것이 그 규칙과 같은가** — 칸마다 «표가 준 물건의 색» 이어야 한다.
+                //   전부 초록으로 되돌아가면(= 색을 안 고르면) 여기서 빨개진다. 개수는 표에서 오므로 안 박는다.
+                var wantFrames = new System.Collections.Generic.List<string>();
+                foreach (var icon in EventsScreen.CardRewardKinds(_app.Data.Dungeon, "expedition", new string[0]))
+                    wantFrames.Add(EventsScreen.RewardFrame(icon));
+                Assert.Greater(wantFrames.Count, 0, "표가 원정에 보상을 하나는 준다(이게 0 이면 아래 단언이 헛돈다)");
+                var gotFrames = new System.Collections.Generic.List<string>();
                 foreach (var t in rew.GetComponentsInChildren<Transform>(false))
-                    if (t.name.StartsWith("ui.itemFrame.", System.StringComparison.Ordinal)) kinds.Add(t.name);
-                Assert.GreaterOrEqual(kinds.Count, 3, "원정 카드 보상 칸의 테두리 색이 셋 이상(지금 " + string.Join("·", kinds) + " · T128)");
-                Assert.IsTrue(kinds.Contains("ui.itemFrame.blue") && kinds.Contains("ui.itemFrame.plum") && kinds.Contains("ui.itemFrame.yellow"), "파랑·자주·노랑 칸(레퍼런스 20 · T128)");
+                    if (t.name.StartsWith("ui.itemFrame.", System.StringComparison.Ordinal)) gotFrames.Add(t.name);
+                CollectionAssert.AreEquivalent(wantFrames, gotFrames,
+                    "원정 카드 보상 칸의 테두리 색 = 표가 준 물건이 정하는 색(T128 · 지금 그린 것 " + string.Join("·", gotFrames.ToArray()) + ")");
             }
             // T101 ⓓ → T170 — 제목 줄이 가운데(아이콘 + 글자 덩어리의 좌우 여백 차 ≤ 2%p)
             AssertTitleCentered(pg, "Title", "던전 제목");
