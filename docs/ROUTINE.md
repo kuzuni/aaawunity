@@ -7242,7 +7242,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 순서 — `Core/GearTier.cs`(신규) · `Game/GearUi.cs`·`Palette.cs`·인벤/세부/합성/결과/확률 팝업의 그 18곳 · `KkomaKnight/gearTier.json`·`catalog.json`. lock `T316`. **T267(확률 팝업)·T309/T310(장비 화면) lock 이 살아 있으면 그 파일은 기다린다.**
 
-### T317 — ⚑⚑ 주인: **탐험 빨간 점이 «얻을 것이 없을 때도» 켜진다** (주인 2026-09-09 10:4X «탐험 부분 얻을 거 없을 때도 빨간 점 알림 뜨네 · 해결해라 수정해» · T265·T270 의 뒤)
+### T317 🔄 — ⚑⚑ 주인: **탐험 빨간 점이 «얻을 것이 없을 때도» 켜진다** (주인 2026-09-09 10:4X «탐험 부분 얻을 거 없을 때도 빨간 점 알림 뜨네 · 해결해라 수정해» · T265·T270 의 뒤)
 
 0. **원인(등재 세션 · 코드로 확정)** — 로비 «탐험» 점과 메뉴 합산 점은 `Notify.ExpeditionClaimable` → **`Expedition.AnyClaimable = CanClaim || CanQuick`**(`Expedition.cs:211~212`). ⓐ **`CanQuick`** = 빠른 탐험 **충전(2시간마다 3회 리필)이 남아 있다** — 광고를 봐야 받는 것이라 «얻을 것» 이 아닌데 점을 켠다(주인이 본 «없을 때도» 의 정체 · 받은 직후에도 충전이 남아 있으면 켜진 채다). ⓑ `CanClaim` 은 `minClaimMinutes = 1`(`expedition.json:9`) 이라 **받고 1분** 지나 골드 1 이상 쌓이면 다시 켜진다 — 사실상 늘 켜져 있다.
 1. **고침** — ⓐ **점의 조건에서 `CanQuick` 을 뺀다**: 로비 «탐험» 점 = `Expedition.CanClaim(...)` 만(충전 남음은 팝업 안 «빠른 탐험 N» 배지가 이미 보여 준다 · T265). `Notify.AdReward`(광고 재화 합산 · 데일리 기프트 점) 쪽은 **그대로**(그 점은 «광고 보면 받을 것» 이 뜻이다) — 단 `Notify.Any` 가 로비 «탐험» 점에도 쓰이면 갈라 준다(어느 점이 어느 함수를 부르는지 `Screens.cs:69`·`LobbyMenu` 에서 실측). ⓑ **문턱**: `minClaimMinutes` 는 «받기» 버튼의 문턱이라 그대로 두고, **점의 문턱**을 따로 표에(`dotAfterMinutes` · 기본값은 4항) — 점은 `Elapsed ≥ dotAfterMinutes` 일 때만.
@@ -7251,6 +7251,31 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 4. **확인** — `screens` **01**(셋업 세이브 = 받은 직후 · 충전 3 → 탐험 점 없음 · `UiShotsTests` 세팅 확인) + 주인 폰(받고 나면 점이 꺼지고 충전만 남아 있을 땐 안 켜짐).
 
 순서 — `Core/Expedition.cs`·`Core/Notify.cs` · 점을 다는 자리(`Screens.cs`·`LobbyMenu.cs`) · `expedition.json`. lock `T317`.
+
+5. **1회차 push — Core + 표 + 자 셋 (2026-09-09 10:3X · sess-1917-23930 · 워커 J · 결정 879 · lock 쥔 채 · 화면 코드 0줄)**
+
+   **고친 것은 한 함수의 몸통뿐이다** — `Expedition.AnyClaimable(...)`:
+   ```csharp
+   if (ElapsedSec(s, d, nowSec, today) < d.DotAfterSeconds) return false;
+   return CanClaim(G, s, d, nowSec, today);      // 옛것: CanClaim(...) || CanQuick(...)
+   ```
+   ⓐ **`CanQuick` 을 뺐다** — 충전은 «광고를 봐야 받는 것» 이라 «쌓여 있는 얻을 것» 이 아니고, 팝업 «빠른 탐험 N» 배지가 이미 보여 준다(T265). ⓑ **점 문턱을 따로 뒀다**(`dotAfterMinutes`) — `minClaimMinutes`(1분)를 점에도 쓰면 **받은 지 1분 뒤 다시 켜져** 주인이 본 그 꼴이 그대로 남는다.
+
+   ⚑ **이름을 안 바꿨다 — 그것이 이 회차의 판단이다.** 처음엔 «`AnyClaimable` 은 이제 quick 을 안 세니 `DotOn` 으로 고치자» 로 갔는데, 훑어 보니 **이 레포의 여덟 시스템이 전부 `AnyClaimable` 을 «빨간 점 규칙» 이라는 뜻으로 쓰고 `Notify` 가 점마다 그 이름으로 묻는다**(`DailyGift`·`ChapterChest`·`Achievement`·`Privilege`·`QuestRun`·`Expedition` …). 하나만 정확한 이름으로 바꾸면 **다음 사람이 점을 달 때 찾는 이름이 일곱 곳과 달라진다** — 규약이 자산이라 정확성보다 앞선다. 대신 **주석이 규칙을 말하게** 했다.
+
+   **주인이 안 준 수 하나를 정했다(지시 5항) — `dotAfterMinutes` = 30.** 3항이 «기본 = 1분이면 여전히 거의 늘 켜진다 · 30분 같은 값을 주면 표 한 줄» 로 남겨 둔 자리다. **까닭**: 받고 나서 30분은 점이 꺼져 있다가 그 뒤 켜진다 — `maxHours 8` 의 6.25% 이고, 주인 불만(«받았는데 또 점»)이 사라지는 가장 작은 값이다. ⚠ **이것은 보상 수치가 아니라 알림 문턱**이다 — 골드·다이아·레시피 지급량은 한 톨도 안 바뀌었으므로 §1 의 «주인이 시키지 않은 밸런스 수치 변경» 이 아니다. 주인이 다른 값을 원하면 **표 한 줄**이고, 키를 **지우면** 코드가 `minClaimMinutes` 를 써서 옛 규칙으로 정확히 돌아간다.
+
+   **자 셋(EditMode · 로컬에서 실제로 돌렸다 · 440/440)**
+   · `RedDot_OnlyCountsWhatIsAlreadyPiledUp` — 충전 가득인데 점 ✗ · **그런데 `CanQuick` 자체는 여전히 참**(배지가 읽는 값 · **옛 단언이 지키던 사실을 따로 세웠다**) · 문턱 직전 ✗ / 직후 ✓ · 받기 문턱은 안 늦어졌다 · **받은 직후 ✗ 이고 1분 뒤에도 ✗ · 문턱 뒤 ✓**(주인 불만을 정면으로 잰다)
+   · `RedDot_NeverLiesAboutTheButton` — **점 문턱을 0 으로 적은 표**로 두 시간을 20초씩 훑어 «점이 켜진 순간에는 «받기» 도 눌린다» 를 잰다. 표 한 줄로 «점은 켜졌는데 버튼이 죽은» 판이 되살아나는 것을 막는 자리다.
+   · `DotThreshold_FallsBackToTheClaimThreshold_WhenTheTableOmitsIt` — 키가 없으면 `minClaimMinutes`(시험은 7로 둔다) · 그리고 **지금 표에서 «점 문턱 > 받기 문턱» 이라는 관계만** 잰다(30 을 못 박지 않는다 · 결정 555).
+   **수를 안 베꼈다** — 자는 `d.DotAfterSeconds` 를 표에서 읽는다.
+
+   **일부러 깨서 물리는지 봤다** — `AnyClaimable` 을 옛 규칙으로 되돌려 심으니 **정확히 위 자 둘이 빨개졌다**(438/440). 세 번째(파싱)는 그대로 초록인 것이 옳다.
+
+   **남은 것 = 2항의 PlayMode 한 줄**(`LobbyMenuTests` — 세이브 «받은 직후 + 충전 3» 에서 로비 탐험 점이 꺼져 있는가). 배선(`Screens.cs:276`)은 **한 줄도 안 고쳤다**(서명이 그대로다) — 그래서 이 회차는 규칙만으로 끝나고, 그 자는 «배선이 이 규칙을 실제로 읽는가» 를 재는 별개 물음이다.
+
+   **확인** = ⓐ 다음 완주 런의 `[CI명부] ExpeditionTests`(13 → **17** · T321 이 넷 더한 뒤 내가 셋 · 실제 수는 명부가 말한다) ⓑ `screens` **01**(셋업 세이브 = 받은 직후 · 충전 3 → **탐험 점 없음**) ⓒ 주인 폰.
 
 ### T318 — ⚑⚑ 주인: **퀘스트 «이동» 이 실제로 그 자리로 데려가고, 도전해야 하는 것은 손가락으로 가리키며 «눌러라» 힌트** (주인 2026-09-09 11:0X · T311 의 옆 · 자리 표 0줄)
 
