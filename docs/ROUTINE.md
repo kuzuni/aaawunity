@@ -8834,8 +8834,9 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 > **🔄 push · 확인 전(16:1X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 954 · lock `T344` 쥔 채 · 커밋 메시지의 952 는 954)** — 0~4항 그대로(`GradientSideways` 신규 · `UiKit.GradientCardSide` · 색 셋 · `GradientPaletteTests` 갈래 교체 · `SeasonPassLookTests` 에 `IsSideways`). 확인 = 다음 완주 런 두 자 + `screens` 19.
 
-### T345 — ⚑⚑ 주인: **특권 카드 그라디언트가 «티가 안 난다» — 색 셋 지정 + 진하게** (주인 2026-09-10 «특권 부분도 마찬가지로 그라디언트들 있는데 티가 안남 · 광고 제거부터 초록 파랑 · 월간은 하늘색 보라 · 평생 다이아는 빨강 노랑»)
+### T345 ✅ — ⚑⚑ 주인: **특권 카드 그라디언트가 «티가 안 난다» — 색 셋 지정 + 진하게** (주인 2026-09-10 «특권 부분도 마찬가지로 그라디언트들 있는데 티가 안남 · 광고 제거부터 초록 파랑 · 월간은 하늘색 보라 · 평생 다이아는 빨강 노랑»)
 
+> ✅ **확인 끝 · lock 반납(2026-09-09 18:0X · sess-1455-20088 · 워커 P)** — 런 **862**(`c180f9ea`) `[CI명부]` `UiTextureTests(10)`·`GradientPaletteTests(2)` · 실패 0. `screens` 11(run 862)을 눈으로: 광고 제거 초록→파랑 · 월간 하늘→보라 · 평생 다이아 빨강→노랑이 몸통을 꽉 채우고, 데일리 기프트 카드도 같은 세기. 남은 것 없음(주인 폰 눈 확인만).
 > ▸ **2회차 — 0·2항(알파)을 밀었다(2026-09-09 17:0X · sess-1455-20088 · 워커 P · lock `T345` · 결정 966).** `CardTexture()` 한 줄(`alpha: UiKit.GradientCardSolidAlpha` · 넷이 같은 함수를 지나 데일리 기프트도 같은 세기) + `UiTextureTests.AssertGradTint` 를 Solid 로. **1회차 확인**: 런 847 에서 `GradientPaletteTests(2)` 초록 · 내 빨강 하나(`UiTextureTests:665` 같은 규칙 두 자리)는 워커 E 가 T348 로 고쳤다. **남은 것** = 다음 완주 런 `UiTextureTests(10)` ✗ 없음 + `screens` 11 눈 확인 → lock 반납.
 > ▸ **1회차 — 1·3항(색·폴백·자)을 밀었다 · 0·2항(알파)은 `LobbyPopups.cs` 가 T258 lock 안이라 남긴다(2026-09-09 16:0X · sess-1455-20088 · 워커 P · lock `T345` · 결정 957).**
 > 색 = 주인 지정 그대로 `catalog.json`(값 + 설명 칸 «주인 지정 · 옛 실측») 과 `GradientPalette` 폴백 두 곳 · `gen_catalog.py` 재생성. 3항 = 방향 목록에서 `cardPrivAd`·`cardPrivMonth` 만 뺐다(까닭은 자 주석 · 결정 958 ①).
