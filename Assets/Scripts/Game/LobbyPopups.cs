@@ -202,6 +202,38 @@ namespace KkomaKnight.Game
         /// 키 셋은 <see cref="GachaKeys.Icon"/> 한 곳이 갖고(T255), 나머지는 이 레포가 이미 쓰는 그림이다.
         /// 모르는 이름이면 메달로 — <b>빈 칸을 그리지 않는다</b>(그림이 없다고 트랙이 무너지면 안 된다).
         /// </summary>
+        /// <summary>트랙 칸 개수 글자의 칸(칸 %) — 출석 칸의 수량(<see cref="QtyW"/>·<see cref="QtyH"/>)보다 작다: 트랙 칸(79px)은 «작은 개수» 자리다(레퍼런스 15).</summary>
+        const float TrackQtyW = 66f, TrackQtyH = 46f;
+        /// <summary>T311 6항 — 화면 줄 → 표 줄. 할 일 남은 줄(표 순서) 다음에 다 한 줄(표 순서). 표가 없으면 null(줄 = 표 번호 그대로).
+        /// <para>«받기 가능» 묶음은 없다 — 퀘스트 줄은 받는 단추가 없고 메달은 깨는 순간 저절로 쌓인다(<see cref="QuestRun.Medal"/>). 그래서 지시서 6항의 세 묶음은 여기서 둘이다.</para></summary>
+        static int[] QuestOrder(QuestData.Track t, SaveData s, bool daily)
+        {
+            if (t == null || s == null) return null;
+            var order = new List<int>();
+            for (int i = 0; i < t.Quests.Count; i++) if (!t.Quests[i].Done(QuestRun.Count(s, daily, t.Quests[i].Counter))) order.Add(i);
+            for (int i = 0; i < t.Quests.Count; i++) if (t.Quests[i].Done(QuestRun.Count(s, daily, t.Quests[i].Counter))) order.Add(i);
+            return order.ToArray();
+        }
+        static int[] _qOrder;
+        /// <summary>T311 5항 — 직사각 자리(프레임 %)의 오른쪽에 «높이만큼의 정사각» 을 잡는다(폭 = 높이 × 프레임 세로/가로).</summary>
+        static Layout.R SquareRight(Layout.R r)
+        {
+            float w = r.H * UiKit.FrameH / UiKit.FrameW;
+            return new Layout.R(r.X + r.W - w, r.Y, w, r.H);
+        }
+        /// <summary>새로고침 줄 글자 — 표가 있으면 «새로고침까지 hh:mm:ss»(시간은 초록 · 레퍼런스 15 «Refresh timer: 08:33:37») · 표가 없으면 종전 «--:--:--».</summary>
+        static string QuestRefreshText()
+        {
+            if (_qd == null) return "새로고침까지 " + Dashes;
+            var now = DateTime.Now;
+            double secs = _qDaily ? QuestRun.SecondsToDailyReset(now) : QuestRun.SecondsToWeeklyReset(_qd, now);
+            if (secs < 0) secs = 0;
+            var left = TimeSpan.FromSeconds(secs);
+            return "새로고침까지 <color=#3FD214>" + $"{(int)left.TotalHours:00}:{left.Minutes:00}:{left.Seconds:00}" + "</color>";
+        }
+        /// <summary>새로고침 시간 글자의 꼴(자가 읽는 계약) — «새로고침까지 » 뒤에 hh:mm:ss(리치 텍스트 색 태그 안).</summary>
+        public static readonly System.Text.RegularExpressions.Regex RefreshClock = new System.Text.RegularExpressions.Regex(@"새로고침까지 <color=#[0-9A-Fa-f]{6}>\d{2,}:\d{2}:\d{2}</color>");
+
         static string QuestRewardIcon(QuestData.Reward r)
         {
             if (r == null) return "ui.iconMedal";
@@ -212,6 +244,7 @@ namespace KkomaKnight.Game
                 case Core.Mail.ItemGem: return "hud.gem";
                 case Core.Mail.ItemPetEgg: return "pet.egg";   // 던전 보상 칸(EventsScreen:940)이 쓰는 그 그림
                 case QuestRun.ItemTicket: return "ui.iconTokenRed";
+                case QuestRun.ItemRecipeRandom: return Recipes.IconKey;   // T292 3항 — 90점 칸 = 두루마리(부위는 받을 때 뽑힌다 · T290 이 여섯 부위를 이미 이 한 그림으로 그린다)
                 default: return "ui.iconMedal";
             }
         }
@@ -338,6 +371,30 @@ namespace KkomaKnight.Game
                 }
             }
             Track(box, B, Layout.QsTrackIcon, Layout.QsTrackPitch, trackNums.Length, Layout.QsTrackNums, Palette.Yellow, trackIcons, trackNums, "트랙 아이콘 줄(" + trackNums.Length + "칸)", "트랙 아이콘(1칸)");
+            // T311 1항(주인 «아이템 아이콘 + 개수도 표시 · 몇 개 받는지») — 칸 오른쪽 아래에 **작은 개수**(레퍼런스 15: 60 칸 «50» · 100 칸 «100» · 1개짜리는 안 적는다).
+            //   상품이 둘 이상인 칸은 첫 것만(아이콘과 같은 규칙) · `recipeRandom 20`(T292) 은 «20».
+            //   글자는 «정말 작아야 하는 배지»(T63 · TextKind.Small · 하한 없음) — 칸이 79px 라 본문 40 은 못 들어간다(들어가면 그림을 덮는다).
+            //   받은 칸은 개수 위에 ✅ 가 덮인다(레퍼런스 20·40·60 칸) — 여태 «받은 칸» 은 눌리지만 않을 뿐 그림이 없었다.
+            if (_qt != null)
+            {
+                var gotList = _qs != null ? (_qDaily ? _qs.QuestDailyGot : _qs.QuestWeeklyGot) : null;
+                for (int k = 0; k < _qt.Steps.Count; k++)
+                {
+                    var cell = UiKit.Find(box, "Track:" + (k + 1)); if (cell == null) continue;
+                    var rw = _qt.Steps[k].Rewards.Count > 0 ? _qt.Steps[k].Rewards[0] : null;
+                    if (rw != null && rw.Amount > 1)
+                    {
+                        var q = UiKit.Label(cell, 100f - TrackQtyW + QtyOver, 100f - TrackQtyH + QtyOver, TrackQtyW, TrackQtyH, UiKit.FmtQty(rw.Amount),
+                                            UiKit.FontForHeight(Layout.QsTrackIcon.H * TrackQtyH / 100f), Palette.White, TextAnchor.LowerRight, kind: TextKind.Small);
+                        q.name = "Qty"; q.fontStyle = FontStyles.Bold;
+                    }
+                    if (gotList != null && k < gotList.Count && gotList[k])
+                    {
+                        // 출석(16)의 받은 칸과 같은 ✓ · 같은 자리
+                        var ck = UiKit.Icon(cell, "Got", "pi.check", ClaimedCheck); UiKit.Pct(ck.rectTransform, ClaimedCheckRect); ck.preserveAspect = true;
+                    }
+                }
+            }
             // T257 — 주인 «20포인트 채워지면 퀘스트 팝업 상단에 20포인트 부분 것 얻을 수 있고». **채운 칸만** 눌린다.
             //  받으면 즉시 지급(`QuestRun.Claim`)하고 T241 리워드 팝업을 띄운 뒤, 닫을 때 이 팝업을 **다시 연다**(결정 671 의 그 꼴).
             //  못 받는 칸은 아예 안 걸어 둔다 — 눌리는데 아무 일도 안 나는 것이 제일 나쁘다.
@@ -353,13 +410,24 @@ namespace KkomaKnight.Game
                         var d2 = app.Data != null ? app.Data.Quest : null; if (d2 == null) return;
                         var step = (dailyNow ? d2.Daily : d2.Weekly).Steps[idx];
                         var got = new List<RewardPopup.Item>();
-                        foreach (var rw in step.Rewards) got.Add(RewardPopup.Item.Of(QuestRewardIcon(rw), UiKit.FmtQty(rw.Amount), amount: (int)rw.Amount));
-                        if (!QuestRun.Claim(app.Save, d2, dailyNow, idx)) return;
+                        // T292 3항 — 무작위 레시피(recipeRandom)가 든 칸은 **난수·레시피 표를 주는 갈래**로 받는다(옛 4인자 갈래는 그 칸에서 일부러 false 다 · 결정 853).
+                        //   리워드 팝업은 «부위별 몇 개»(given)로 보여 준다 — «두루마리 ×20» 한 칸이 아니라 «투구 ×4 · 무기 ×3 …»(주인 «무작위로 20개»가 눈에 보이는 자리).
+                        var rng = new Mulberry32((uint)Environment.TickCount ^ 0x7F4A7C15u);
+                        if (!QuestRun.Claim(app.Save, d2, dailyNow, idx, rng, app.Data.Recipe, out var given)) return;
+                        foreach (var rw in step.Rewards) if (rw.Item != QuestRun.ItemRecipeRandom) got.Add(RewardPopup.Item.Of(QuestRewardIcon(rw), UiKit.FmtQty(rw.Amount), amount: (int)rw.Amount));
+                        if (given != null) foreach (var kv in given) got.Add(RewardPopup.Item.Of(Recipes.Icon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
                         app.Persist(); app.Current?.Refresh();
                         RewardPopup.Show(got, () => Quest(app, dailyNow));   // 닫으면 이 팝업을 다시(받은 칸이 꺼진 채로)
                     });
                 }
-            refresh = TimerRow(box, B, Layout.QsRefresh, "새로고침까지 " + Dashes, "Refresh");
+            refresh = TimerRow(box, B, Layout.QsRefresh, QuestRefreshText(), "Refresh");
+            // T311 2항(주인 «새로고침 언제 되는지도 써 줘야») — 매초 다시 쓴다(데일리 기프트의 «종료까지» 와 같은 문법 · Overlay.OnTick 은 Close 가 비운다).
+            //   초는 Core 시계(QuestRun.SecondsToDailyReset/SecondsToWeeklyReset · 결정 863)가 낸다 — 화면은 hh:mm:ss 로 쓰기만 한다.
+            {
+                var refreshTxt = refresh.GetComponentInChildren<TMP_Text>(true);
+                float acc = 0f;
+                ov.OnTick = () => { acc += Time.unscaledDeltaTime; if (acc < 1f) return; acc = 0f; if (refreshTxt != null) refreshTxt.text = QuestRefreshText(); };
+            }
             }
             // 업적이면 목록 상자가 트랙 자리까지 올라온다 — 표에 새 수를 넣지 않고 **있는 두 수로** 만든다(위=트랙 상자의 위 · 아래=목록 상자의 아래).
             var listR = _qAch ? new Layout.R(Layout.QsListBox.X, Layout.QsTrackBox.Y, Layout.QsListBox.W,
@@ -382,6 +450,7 @@ namespace KkomaKnight.Game
                 grid.padding = new RectOffset(0, 0, 0, 0); grid.childAlignment = TextAnchor.UpperCenter;
             }
             RectTransform row1 = null, row2 = null, medal1 = null, title1 = null, bar1 = null, go1 = null;
+            _qOrder = QuestOrder(_qt, _qs, _qDaily);   // T311 6항 — 할 일 남은 줄이 위 · 다 한 줄이 아래(레퍼런스 15 · «Go» 줄이 위, ✓ 줄이 아래)
             // T257 — 표가 프리팹 줄(6)보다 많으면(일일·주간 8줄) 첫 줄을 복제해 채운다. 목록은 ScrollView 안이라 넘치면 스크롤된다.
             if (content != null && content.childCount > 0)
                 while (content.childCount < QuestRows)
@@ -578,7 +647,9 @@ namespace KkomaKnight.Game
             var item = frame;
             // T257 — 표가 있으면 줄의 «무엇을 · 얼마나 · 얼마 받나» 가 전부 표와 세이브에서 온다.
             //  표가 없을 때만 레퍼런스 15 의 «앞 3줄 Go · 뒤 3줄 ✅» 껍데기로 돌아간다.
-            var q = _qt != null && i < _qt.Quests.Count ? _qt.Quests[i] : null;
+            // T311 6항 — i 는 «화면의 몇 번째 줄» 이고 표의 줄은 `_qOrder` 가 정한다(할 일 남은 줄 먼저). 껍데기(표 없음)는 종전 그대로 i.
+            int qi = _qOrder != null && i < _qOrder.Length ? _qOrder[i] : i;
+            var q = _qt != null && qi < _qt.Quests.Count ? _qt.Quests[qi] : null;
             int have = q != null ? QuestRun.Count(_qs, _qDaily, q.Counter) : 0;
             int goal = q != null ? q.Goal : (i < QuestGoals.Length ? QuestGoals[i] : 1);
             bool done = q != null ? q.Done(have) : i >= 3;
@@ -632,7 +703,10 @@ namespace KkomaKnight.Game
             var check = UiKit.Find(item, "Check");
             if (check != null)
             {
-                check.SetParent(item, false); UiKit.Pct((RectTransform)check, Layout.QsRowGo.Within(Layout.QsRow1));
+                // T311 5항(주인 «체크 표시 된 거 원본 비율로») — 버튼 자리(가로 18.4% × 세로 4.4% · 2:1 가까운 직사각형)를 그대로 채우면 ✓ 가 가로로 늘어난다.
+                //   «버튼 높이만큼의 정사각 · 오른쪽 가운데»(레퍼런스 15)로 — 폭은 높이를 프레임 비(1080:2337)로 되돌린 값이고 그림도 preserveAspect 로 못 박는다.
+                check.SetParent(item, false); UiKit.Pct((RectTransform)check, SquareRight(Layout.QsRowGo).Within(Layout.QsRow1));
+                foreach (var im in check.GetComponentsInChildren<Image>(true)) im.preserveAspect = true;
                 check.gameObject.SetActive(done);
                 if (done) parts.Go = (RectTransform)check;
             }

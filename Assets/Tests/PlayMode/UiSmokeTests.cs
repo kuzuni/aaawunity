@@ -259,6 +259,14 @@ namespace KkomaKnight.Tests.Play
         /// 직계 검색이 못 찾고 형제 0(= 불투명 프레임 «뒤»)으로 떨어졌던 것이다(주인 2026-09-07 05:5X 지적 · 결정 374).
         /// 그래서 «있다» 가 아니라 <b>«바탕과 같은 부모에서 바탕보다 뒤에 그려진다»</b> 를 못 박는다 — 이 한 줄이 그 결함을 그대로 잡는다.
         /// </summary>
+        /// <summary>T311 6항 — 퀘스트 줄(«Quest:i»)이 표의 어느 줄인가를 **제목**으로 찾는다(줄 순서가 «할 일 남은 것 먼저» 라 번호로는 못 잇는다).</summary>
+        static QuestData.Quest QuestOfRow(QuestData.Track t, Transform row)
+        {
+            var tt = row != null ? UiKit.Find(row, "Title")?.GetComponent<TMP_Text>() : null;
+            if (t == null || tt == null) return null;
+            foreach (var q in t.Quests) if (q.Label == tt.text) return q;
+            return null;
+        }
         static void AssertGradientAboveBg(Transform piece, string bgName, string what)
         {
             var bg = DeepFind(piece, bgName);
@@ -578,12 +586,15 @@ namespace KkomaKnight.Tests.Play
                             Assert.IsNotNull(fr, "줄 " + rowIdx + " 의 «보이는» 바탕(ListFrame_08/Nomal/Bg)");
                             var c = fr.GetComponent<Image>().color; return c.r * 0.299f + c.g * 0.587f + c.b * 0.114f;
                         }
-                        int doneIdx = -1, todoIdx = -1;
+                        // T311 6항 — 줄은 이제 «표 번호» 순이 아니다(할 일 남은 줄이 위 · 다 한 줄이 아래). 그래서 줄 → 표는 **제목**으로 잇는다(P7 봇과 같은 길).
+                        int doneIdx = -1, todoIdx = -1; bool sawDone = false;
                         for (int qi = 0; qi < wantRows; qi++)
                         {
-                            var qq = qTable.Daily.Quests[qi];
+                            var qq = QuestOfRow(qTable.Daily, UiKit.Find(_app.Overlay.Root, "Quest:" + qi)); Assert.IsNotNull(qq, "줄 " + qi + " 의 제목이 표의 줄과 짝이 맞아야 한다");
                             bool dn = qq.Done(QuestRun.Count(_app.Save, true, qq.Counter));
                             if (dn && doneIdx < 0) doneIdx = qi; else if (!dn && todoIdx < 0) todoIdx = qi;
+                            // 순서 자체도 잰다 — 다 한 줄 «뒤» 에 할 일 남은 줄이 오면 정렬이 죽은 것이다(주인 «받기 가능 퀘스트 맨 위로»).
+                            if (dn) sawDone = true; else Assert.IsFalse(sawDone, "줄 " + qi + "(«" + qq.Label + "» · 미완)이 다 한 줄 아래에 있다 — 할 일 남은 줄이 위여야 한다(T311 6항)");
                         }
                         Assert.GreaterOrEqual(doneIdx, 0, "새 세이브에도 깬 줄이 하나는 있어야 한다(«로그인하기» · T257 훅이 도는 증거)");
                         Assert.GreaterOrEqual(todoIdx, 0, "못 깬 줄도 있어야 한다");
@@ -612,12 +623,45 @@ namespace KkomaKnight.Tests.Play
                                   && Mathf.Abs(fi.color.g - Palette.Green.g) < 0.02f
                                   && Mathf.Abs(fi.color.b - Palette.Green.b) < 0.02f;
                         // T257 — «완료» 는 이제 진행도가 정한다(껍데기 시절엔 «뒤 3줄» 이었다). 4항 훅 뒤로 켠 직후에도 «로그인하기» 한 줄은 초록이다.
-                        bool doneRow = qTable != null
-                                     ? qTable.Daily.Quests[qi].Done(QuestRun.Count(_app.Save, true, qTable.Daily.Quests[qi].Counter))
-                                     : qi >= 3;
+                        var rowQ = qTable != null ? QuestOfRow(qTable.Daily, q) : null;   // T311 6항 — 줄 번호 ≠ 표 번호
+                        bool doneRow = rowQ != null ? rowQ.Done(QuestRun.Count(_app.Save, true, rowQ.Counter)) : qi >= 3;
                         if (doneRow) Assert.IsTrue(green, "완료 줄 " + qi + " 의 진행바는 초록이어야 한다(T212) — 지금 " + fi.color);
                         else Assert.IsFalse(green, "미완 줄 " + qi + " 은 프리팹 노랑 그대로여야 한다(T212 · 관례는 «완료» 에만 걸린다) — 지금 " + fi.color);
                     }
+                }
+                // T311(주인 2026-09-09 09:4X~10:5X) — ⓐ 트랙 칸의 개수 글자 = 표의 첫 상품 Amount(1 이면 없다) ⓑ 새로고침 줄이 «--:--:--» 가 아니라 hh:mm:ss ⓒ ✓ 는 정사각.
+                //   값은 표에서 읽는다(수를 안 박는다) · 초가 «맞게» 세나는 EditMode QuestResetClockTests 의 몫이고 여기서는 꼴만 본다(시간을 기다리는 단언은 두지 않는다 · §1 ⓑ).
+                if (qTable != null)
+                {
+                    for (int k = 0; k < qTable.Daily.Steps.Count; k++)
+                    {
+                        var cell = UiKit.Find(_app.Overlay.Root, "Track:" + (k + 1)); Assert.IsNotNull(cell, "트랙 칸 " + (k + 1));
+                        var rw = qTable.Daily.Steps[k].Rewards.Count > 0 ? qTable.Daily.Steps[k].Rewards[0] : null;
+                        var qtyT = UiKit.Find(cell, "Qty");
+                        if (rw != null && rw.Amount > 1)
+                        {
+                            Assert.IsNotNull(qtyT, "트랙 칸 " + (k + 1) + " 의 개수 글자(표 Amount " + rw.Amount + " · T311 1항)");
+                            Assert.AreEqual(UiKit.FmtQty(rw.Amount), qtyT.GetComponent<TMP_Text>().text, "트랙 칸 " + (k + 1) + " 개수 = 표의 첫 상품 Amount");
+                        }
+                        else Assert.IsNull(qtyT, "1개짜리(또는 상품 없는) 칸에는 개수를 안 적는다(레퍼런스 15 의 80 칸)");
+                    }
+                    var refreshRow = UiKit.Find(_app.Overlay.Root, "Refresh"); Assert.IsNotNull(refreshRow, "새로고침 줄");
+                    var refreshT = refreshRow.GetComponentInChildren<TMP_Text>(true); Assert.IsNotNull(refreshT, "새로고침 글자");
+                    Assert.IsTrue(LobbyPopups.RefreshClock.IsMatch(refreshT.text), "새로고침 줄은 «새로고침까지 hh:mm:ss»(초록) 꼴이어야 한다 — 지금 «" + refreshT.text + "»(T311 2항)");
+                    StringAssert.DoesNotContain(LobbyPopups.Dashes, refreshT.text, "표가 있으면 «--:--:--» 가 아니다");
+                    // ✓ — 줄 안 «Check» 의 앵커 상자를 픽셀로 되돌려 가로세로비를 잰다(줄 rect = 표 ⑳ 「퀘스트 줄 1」).
+                    int squares = 0;
+                    foreach (var t in _app.Overlay.Root.GetComponentsInChildren<Transform>(false))
+                    {
+                        if (t.name != "Check") continue;
+                        var rt = (RectTransform)t;
+                        float wpx = (rt.anchorMax.x - rt.anchorMin.x) * Layout.QsRow1.W / 100f * UiKit.FrameW;
+                        float hpx = (rt.anchorMax.y - rt.anchorMin.y) * Layout.QsRow1.H / 100f * UiKit.FrameH;
+                        Assert.AreEqual(1f, wpx / hpx, 0.05f, "✓ 는 정사각이어야 한다(가로로 늘어나면 안 된다 · T311 5항) — 지금 " + wpx.ToString("0") + "×" + hpx.ToString("0"));
+                        foreach (var im in t.GetComponentsInChildren<Image>(true)) Assert.IsTrue(im.preserveAspect, "✓ 그림은 preserveAspect");
+                        squares++;
+                    }
+                    Assert.Greater(squares, 0, "✓ 가 하나는 있다(«로그인하기» 는 켠 것만으로 깨진다 · T257)");
                 }
                 { var bx = (RectTransform)UiKit.Find(_app.Overlay.Root, "QuestBox"); Assert.IsNotNull(bx, "퀘스트 박스"); Assert.AreEqual(Layout.QsBox.X, bx.anchorMin.x * 100f, 0.5f, "퀘스트 박스 x = 표 ⑬"); Assert.AreEqual(1f - Layout.QsBox.Y / 100f, bx.anchorMax.y, 1e-3f, "퀘스트 박스 y = 표 ⑬"); }
                 // T63-lobbypopups — 글자 잘림 0 + 제목/카운터가 본문 40 아래로 안 줄어듦(팝업 4종) · 리본 명판 60 이 안 잘림
