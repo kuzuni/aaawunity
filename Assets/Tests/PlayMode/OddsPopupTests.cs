@@ -64,6 +64,15 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(Find(box, "OddsScroll"), "스크롤 창");
             Assert.IsNotNull(Find(box, "OddsFoot"), "바닥 안내 띠");
 
+            // T288 — 두 이름 계약이 **같이** 선다(한쪽을 세우려고 다른 쪽을 덮었던 자리다).
+            //   ⓐ 루트는 공통 팝업 프리팹 이름 그대로다 — UiSmokeTests 의 «정보 팝업 = 공통 팝업 문법» 이 이것을 잰다.
+            //   ⓑ 표식 OddsBox 는 루트가 아니라 «꺼진 자식» 이라, 있어도 그리거나 막지 않는다.
+            // 여기서 같이 재는 까닭: ⓐ 만 재는 자는 다른 파일에 있어서, 이 파일을 고치는 사람 눈에 안 들어온다.
+            Assert.AreEqual(UiKit.PopupKeyPlain, box.name, "팝업 루트 이름 = 공통 팝업 프리팹 키(덮지 않는다)");
+            var mark = Find(box, "OddsBox");
+            Assert.IsNotNull(mark, "«확률 팝업이다» 표식");
+            Assert.IsFalse(mark.gameObject.activeSelf, "표식은 꺼져 있다(그리지도 막지도 않는다)");
+
             var rows = GachaOdds.Of(D, "myth");
             int n = GachaOdds.ItemCount(D);
             Assert.Greater(rows.Count, 1, "신화 상자는 구간이 여럿이다");

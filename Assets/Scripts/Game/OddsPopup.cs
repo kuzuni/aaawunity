@@ -20,7 +20,8 @@ namespace KkomaKnight.Game
     /// 개별 = 등급 ÷ 아이템 수. <b>그 분모는 «화면에 그릴 칸 수» 가 아니라 «뽑기가 실제로 고르는 목록» 이다</b>(결정 746) —
     /// 그래서 이 화면은 그 목록을 <b>그대로</b> 그린다(칸을 따로 고르지 않는다). 둘이 어긋나면 적힌 확률이 거짓말이 된다.
     /// </para>
-    /// 이름 계약(테스트): 상자 <c>OddsBox</c> · 구간 머리 <c>Sec:&lt;등급&gt;</c>(이름 <c>SecName</c> · 확률 <c>SecRate</c>) ·
+    /// 이름 계약(테스트): 상자 표식 <c>OddsBox</c>(<b>루트가 아니라 꺼진 표식 자식</b> — 루트 이름은 프리팹 키 <c>ui.popup</c> 그대로다 · 아래 <see cref="Open"/> 주석) ·
+    /// 구간 머리 <c>Sec:&lt;등급&gt;</c>(이름 <c>SecName</c> · 확률 <c>SecRate</c>) ·
     /// 칸 <c>Odds:&lt;등급&gt;:&lt;번호&gt;</c>(개별 확률 <c>Pct</c>) · 스크롤 <c>OddsScroll</c> · 바닥 띠 <c>OddsFoot</c>.
     /// </summary>
     public static class OddsPopup
@@ -52,7 +53,13 @@ namespace KkomaKnight.Game
             string title = box != null && !string.IsNullOrEmpty(box.Name) ? box.Name + " 확률" : "확률";
             var b = app.Overlay.OpenBox(UiKit.PopupKeyPlain, "ui.title.tangerine", title, RBox, app.Overlay.Close);
             if (b == null) return null;
-            b.name = "OddsBox";
+            // 두 계약이 «루트 이름» 한 칸을 두고 부딪쳤던 자리다(T288 · 워커 J 가 blame 으로 짚었다).
+            //   ⓐ 공통 문법 — 팝업 루트에 프리팹 키 이름 `ui.popup` 이 있어야 한다(UiSmokeTests «정보 팝업 = 공통 팝업 문법»).
+            //   ⓑ 이 팝업만의 이름 — 세부 팝업(38)이 이 위로 오가므로 «지금 어느 쪽이 떠 있나» 를 이름으로 갈라야 한다(OddsPopupTests).
+            // 루트 이름을 덮으면 ⓐ 가 깨지고, ⓑ 를 버리면 두 팝업을 못 가린다 ⇒ **표식만 자식으로 내린다.**
+            // UiKit.Find 는 «이름이 같은 자식» 을 깊이 검색하고 꺼진 것도 본다 — 그래서 표식은 꺼 둔다(그리지도 막지도 않는다).
+            // ⚠ UiKit.Tag(UiTag 컴포넌트)로는 안 된다 — 그것은 오브젝트 «이름» 이 아니라 표식 이름이라 Find 가 못 집는다.
+            UiKit.Rect(b, "OddsBox").gameObject.SetActive(false);
 
             // 스크롤 창 — 내용은 «구간 머리 + 칸 줄» 을 세로로 이어 붙인 것이라 격자 레이아웃이 아니라 자리로 놓는다.
             var view = UiKit.Rect(b, "OddsScroll"); UiKit.Pct(view, RScroll);
