@@ -1018,6 +1018,7 @@ namespace KkomaKnight.Game
                 can ? (Action)(() =>
                 {
                     Core.Expedition.Claim(G, S, D, NowSec(), today, out double gg, out double mm);
+                    Quests.Bump(app, Quests.ExpeditionClaim);   // T257 4항 — 일일 «탐험 보상 받기» · 주간 «탐험 7번 보상 받기»(빠른 탐험은 주인이 다른 줄로 썼다 = 다른 counter)
                     app.Persist(); app.Current?.Refresh();
                     // T241 — 골드·다이아 두 칸을 공통 «리워드» 팝업이 보여 준다(토스트 대신) · 닫으면 탐험 팝업이 다시 뜬다(칸은 0 부터 다시 쌓인다)
                     RewardPopup.Show(new List<RewardPopup.Item>
@@ -1091,6 +1092,7 @@ namespace KkomaKnight.Game
                     ov.AdCountdown(GiftAdSeconds, () =>
                     {
                         Core.Expedition.ClaimQuick(G, S, D, NowSec(), today, out double gg, out double mm);
+                        Quests.Bump(app, Quests.ExpeditionFastClaim);   // T257 4항 — 일일 «빠른 탐험 보상 받기» 만 센다(위 «받기» 와 한 줄로 묶지 않는다 · 결정 705 ⓒ)
                         app.Persist();
                         app.Toast($"골드 +{UiKit.Fmt(gg)} · 다이아 +{UiKit.FmtQty(mm)}");
                         LobbyPopups.Expedition(app);   // 광고가 끝나면 탐험 팝업으로 돌아간다(남은 횟수·버튼이 갱신된다)
