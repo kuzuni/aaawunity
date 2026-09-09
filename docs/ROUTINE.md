@@ -448,7 +448,7 @@
   - CI: 시크릿 없으면 dotnet 검사만(빨개지면 안 됨) · 있으면 PR/push 마다 EditMode/PlayMode, main push 시 WebGL→gh-pages + Android APK Artifact.
   - 판단이 필요한 건 한 번에 모아서 묻고(PROGRESS «주인 승인 대기»), 나머지는 기본값으로 진행.
 
-## 0. 세션 시작 절차 (모든 워커 공통 · 계정 1 = A~D · 계정 2 = E~H · §6)
+## 0. 세션 시작 절차 (모든 워커 공통 · 계정 1 = A~D · 계정 2 = E~H · 계정 3 = I~L·Q(검수) · 계정 4 = M~P · §6)
 
 1. `git fetch && git checkout -B main origin/main` (pull --rebase 금지, 로컬 잔재 위에서 작업 금지)
 2. SID 발급: `sess-HHMM-$RANDOM` (예: sess-0512-23481)
@@ -3592,7 +3592,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 7. ⚠ **«빨간 런의 그림» 을 읽을 때(T185 뒤)**: `meta.json` 의 `tests` 가 `failure` 면 그 런의 **실패 목록**을 먼저 보고 «내가 보려는 화면의 테스트» 가 거기 있는지 가른다 — 있으면 그 화면 PNG 는 못 믿고(촬영이 중간에 죽었을 수 있다), 없으면 그대로 쓴다. `shots` 장수도 같이 본다(평소 29 · 크게 모자라면 촬영이 끊긴 것이다 · 결정 450).
 6. ⚠ **`screens` PNG 의 «색» 을 자로 쓸 때(T126)**: run **≤ 239** 의 PNG 는 sRGB 가 아니라 **선형(linear)** 값이라 화면보다 훨씬 어둡고 붉다(상단 띠 `#2C2B29` → `#060606` · 주 버튼 `#FF8612` → `#F93C02`). `desc.sRGB = true` 가 든 첫 런부터 고쳐진다 — **색을 재서 기록에 남길 때는 어느 run 의 PNG 인지 같이 적고**, run ≤ 239 를 자로 삼아 등재한 색 항목(T100 ⓓ · T116 3단계 대상 · T121)은 새 PNG 로 한 번 다시 잰다.
 
-## 6. 다른 계정의 워커 합류 (E~H · 주인 지시 2026-09-06 «aaaw 처럼 루틴 다른 계정도 같이»)
+## 6. 다른 계정의 워커 합류 (E~H · I~L·Q · M~P · 주인 지시 2026-09-06 «aaaw 처럼 루틴 다른 계정도 같이»)
 
 > 이 절은 **두 번째 claude.ai 계정에서 연 Claude Code 세션**이 그대로 따라 하면 되게 써 두었다. 그 세션은 이 절만 읽고 `/schedule` 로 루틴 4개를 만든다. 주인이 할 일은 ①뿐이다.
 
