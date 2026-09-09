@@ -185,6 +185,20 @@ namespace KkomaKnight.Core
         /// </para>
         /// </summary>
         public List<PetProc> Pets;
+
+        /// <summary>
+        /// 장착 펫이 더해 주는 공·체·실(T293 ⓖ · 주인 «장착 효과 있음 — 공·체·실 채워 줌» · 값은 <see cref="KkomaKnight.Core.Pets.EquipPower"/>).
+        /// <para>
+        /// ⚑ <b>기본값이 0 이라 지금까지의 판은 한 톨도 안 달라진다</b> — 시드 골든(T2)이 걸리는 자리라
+        /// <see cref="Pets"/>(발동 목록)와 <b>같은 안전장치</b>를 쓴다: 펫이 없으면 더하는 것도 0 이다.
+        /// </para>
+        /// <para>
+        /// ⚑ <b>왜 <see cref="GearSystem.BuildPower"/> 를 안 고쳤나</b> — 그 함수는 «장비만으로 나오는 힘» 이고
+        /// 시뮬(<c>tools/sim</c>)·재적합 자·골든이 전부 그 뜻으로 부른다. 거기에 펫을 섞으면 <b>장비를 재는 모든 자리가 같이 흔들린다.</b>
+        /// 펫은 «이 판에 들고 들어가는 것» 이므로 판의 옵션으로 들려 보낸다(ⓑ 의 발동 목록과 같은 결).
+        /// </para>
+        /// </summary>
+        public Power PetPower;
     }
 
     public struct RunResult

@@ -182,6 +182,11 @@ namespace KkomaKnight.Game
             var rng = new Mulberry32((uint)Environment.TickCount ^ 0x9E3779B9u);
             var opt = new RunOptions { EmitEvents = true };
             if (run != null) { opt.StartPerks = run.StartPerks; opt.StartLevel = run.StartLevel; opt.MinPerkGrade = run.MinPerkGrade; }
+            // T293 ⓑ·ⓖ — 장착 펫을 이 판에 들려 보낸다: 발동 목록(도끼·번개)과 공·체·실 합.
+            //   둘 다 «펫이 없으면 0/null» 이라 펫을 안 낀 판은 종전과 한 톨도 안 다르다(시드 골든 T2).
+            //   ⚑ 표(D.Pet)가 없으면(로더 실패) 규칙 쪽이 빈 값을 돌려주므로 여기서 따로 안 막는다.
+            opt.Pets = Pets.Procs(D.Pet, App.Save);
+            opt.PetPower = Pets.EquipPower(D, D.Pet, App.Save);
             opt.ArenaDuelFoe = DuelFoe(D, arenaFoe, arenaFoeRank);   // T240 3항 — 아레나 판이면 «웨이브 없는 1대1»(null 이면 종전 챕터 전투 그대로)
             _exitPage = _arenaFoe != null ? EventsScreen.PageArena       // T240 — 아레나 판은 아레나 화면(23)으로 되돌린다
                       : run != null ? EventsScreen.PageDungeon : null;   // T183 4단계 — 던전에서 들어온 판은 던전 화면으로 되돌린다(일반 전투는 그대로 로비)

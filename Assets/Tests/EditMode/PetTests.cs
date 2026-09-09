@@ -234,6 +234,31 @@ namespace KkomaKnight.Tests
         }
 
         [Test]
+        public void 장착_스탯이_0이면_판이_한_톨도_안_달라진다()
+        {
+            // T293 ⓖ — 발동 목록(ⓑ)과 **같은 안전장치**를 스탯 쪽에도 세운다.
+            //   `RunOptions.PetPower` 는 구조체라 기본값이 0/0/0 이고, 그 판은 종전과 완전히 같아야 한다.
+            //   ⚑ 이것이 «BuildPower 를 안 고치고 옵션으로 들려 보낸» 까닭 그 자체다 — 여기가 무너지면 시드 골든(T2)이 통째로 밀린다.
+            var d = TestData.Load(); var b = GearSystem.MkBuild(d, -1, 0, 0);
+            var a1 = new BattleState(d, 3, b, new Mulberry32(23), new SimPolicy(), Ladder()).RunToEnd();
+            var o = Ladder(); o.PetPower = new Power();          // 명시적으로 0 을 줘도 같아야 한다
+            var a2 = new BattleState(d, 3, b, new Mulberry32(23), new SimPolicy(), o).RunToEnd();
+            Assert.AreEqual(a1.Time, a2.Time, 1e-9, "PetPower 0 은 종전과 같은 판이어야 한다");
+            Assert.AreEqual(a1.AtkTries, a2.AtkTries); Assert.AreEqual(a1.Miss, a2.Miss); Assert.AreEqual(a1.Kills, a2.Kills);
+        }
+
+        [Test]
+        public void 장착_스탯을_주면_판이_실제로_세진다()
+        {
+            // «안 달라진다» 만 재면 «갈래가 아예 안 붙었다» 도 통과한다 — 반대쪽을 같이 잰다(ⓑ 와 같은 짝).
+            var d = TestData.Load(); var b = GearSystem.MkBuild(d, -1, 0, 0);
+            var a1 = new BattleState(d, 3, b, new Mulberry32(23), new SimPolicy(), Ladder()).RunToEnd();
+            var o = Ladder(); o.PetPower = new Power { Atk = 500, Hp = 3000, Sh = 300 };
+            var a2 = new BattleState(d, 3, b, new Mulberry32(23), new SimPolicy(), o).RunToEnd();
+            Assert.AreNotEqual(a1.Time, a2.Time, "장착 스탯을 주면 판이 달라져야 한다 — 같으면 더하는 줄이 안 붙은 것이다");
+        }
+
+        [Test]
         public void 펫을_끼면_판이_실제로_달라진다()
         {
             // «안 움직인다» 만 재면 «갈래가 아예 안 붙었다» 도 통과한다 — 반대쪽도 같이 잰다(결정 818 의 «빈 칸» 갈래).

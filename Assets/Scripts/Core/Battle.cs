@@ -70,6 +70,8 @@ namespace KkomaKnight.Core
         {
             var T_ = D.Tune; var G = D.Gear;
             var pw = GearSystem.BuildPower(D, build);
+            // T293 ⓖ — 장착 펫의 공·체·실을 여기서 더한다. 기본값이 0 이라 펫 없는 판은 종전과 완전히 같다(시드 골든 T2).
+            pw.Atk += Opt.PetPower.Atk; pw.Hp += Opt.PetPower.Hp; pw.Sh += Opt.PetPower.Sh;
             var p = new PlayerState
             {
                 Dmg = pw.Atk, Aspd = T_.PAspd0, CritR = T_.PCrit0, CritF = T_.PCritF0, Def = T_.PDef0, Counter = T_.PCounter0, Evade = T_.PEvade0,
