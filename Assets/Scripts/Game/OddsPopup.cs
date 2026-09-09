@@ -177,7 +177,10 @@ namespace KkomaKnight.Game
                 //   행 피치가 캔버스 188.8px(그림 126px)이라 여기 29% = 54.7px 로 그 하한을 넘는다.
                 //   ⚠ 그림 px 을 그대로 쓰던 때는 이 자리가 50.4px «딱» 이었다 — 한 눈금만 줄어도 잘리는 자리였다(결정 839).
                 UiKit.Label(cell, 0, TextTopPct, 100, 100f - TextTopPct, Pct(r.Each), TextSize.Aux, Palette.White).name = "Pct";
-                if (i == 0 && r.Rar == D.Gear.RarRare) UiKit.Tag(cell, "보상 칸(구간 첫 칸)");
+                // 이름표는 **칸 상자가 아니라 조각**에 단다 — 표 ㊾ 의 그 행이 잰 것은 레퍼런스의 «파란 타일 bbox»(84×80px)이지
+                //   그 아래 확률 글자까지 낀 행 상자가 아니다. 칸 상자로 재면 h 가 8.1(ref 5.2 · +2.9)로 «턱걸이 통과» 라
+                //   무엇이 맞았는지 알 수 없다 — 같은 것끼리 재야 다음 사람이 그 수를 믿는다(결정 848).
+                if (i == 0 && r.Rar == D.Gear.RarRare) UiKit.Tag(frt, "보상 칸(구간 첫 칸)");
                 // 4항 — 칸을 누르면 «보기 전용» 세부 팝업. 닫으면 **이 팝업으로 돌아온다**(프로필 팝업 둘이 쓰는 그 꼴 · 표 ㉟).
                 //   Overlay 는 한 겹이라 «겹쳐 뜨기» 가 아니라 «갔다 돌아오기» 로 같은 결과를 낸다(결정 기록).
                 var item = new GearItem { Part = t.Part, Type = t.Type, Rar = r.Rar, Plus = 0 };
