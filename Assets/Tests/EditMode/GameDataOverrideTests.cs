@@ -174,6 +174,7 @@ namespace KkomaKnight.Tests
             D.Gear.Sh = new double[] { 90, 180, 270, 360, 450 };
             D.Gear.OptCountByRar = new[] { 0, 1, 2, 3, 4 };
             D.Gear.RarLegend = 3; D.Gear.RarMyth = 4;
+            D.Gear.LookRarTable = new[] { 0, 1, 1, 2, 3 };   // 문 ⓑ 는 여기서 재는 것이 아니다 — 답을 주고 상자 쪽만 남긴다
             var e = Assert.Throws<System.FormatException>(() => D.ValidateOverridden(), "상자 rate 가 넷인 채로는 지나가면 안 된다");
             StringAssert.Contains("rate", e.Message);
         }
@@ -227,7 +228,8 @@ namespace KkomaKnight.Tests
               ""rarName"": [""일반"", ""희귀"", ""영웅"", ""전설"", ""신화""],
               ""rarLegend"": 3, ""rarMyth"": 4,
               ""contribution"": { ""atk"": [30, 60, 90, 120, 150], ""hp"": [60, 120, 180, 240, 300], ""sh"": [90, 180, 270, 360, 450] },
-              ""optionLadder"": { ""optCount"": [0, 1, 2, 3, 4], ""mythPlusAt"": [3, 6] }
+              ""optionLadder"": { ""optCount"": [0, 1, 2, 3, 4], ""mythPlusAt"": [3, 6] },
+              ""look"": { ""rarSprite"": [0, 1, 1, 2, 3] }
             }");
             D.ApplyGachaOverride(@"{ ""boxes"": {
               ""rare"":   { ""rate"": [66.7, 33.3, 0, 0, 0] },
@@ -261,6 +263,13 @@ namespace KkomaKnight.Tests
             Assert.AreEqual(4, D.Gear.OptCount(4, 0), "신화 노강");
             Assert.AreEqual(6, D.Gear.OptCount(4, 6), "신화 +6 은 두 단계가 열린다 — mythPlusAt 이 표에서 온다");
             Assert.AreEqual("영웅", D.Gear.RarName[2], "가운데가 영웅이다");
+
+            // 문 ⓑ — «영웅은 어느 그림인가» 에 새 그림 0 으로 답한다(희귀 그림을 같이 쓴다 · 회차 1 이 남긴 답).
+            //   그림 칸은 넷뿐인데 등급이 다섯이 되므로, 이 표가 없으면 GearLook 이 조용히 마지막 칸으로 눌러
+            //   **신화가 전설 그림을 입는다**(컴파일도 되고 빨간 줄도 안 난다).
+            Assert.AreEqual(1, D.Gear.LookRar(2), "영웅은 희귀 그림을 같이 쓴다 — 새 그림 0");
+            Assert.AreEqual(2, D.Gear.LookRar(3), "전설은 옛 전설 그림 그대로");
+            Assert.AreEqual(3, D.Gear.LookRar(4), "신화는 옛 신화 그림 그대로 — 여기가 밀리면 주인 눈에 바로 보인다");
 
             // ⚑ 여기가 이 회차에서 실제로 고친 «자리» 다 — 자세한 까닭은 GearData.RarRare 주석.
             Assert.AreEqual("희귀", D.Gear.RarName[D.Gear.RarRare],

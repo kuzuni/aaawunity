@@ -169,6 +169,8 @@ namespace KkomaKnight.Core
             var ol = j["optionLadder"];
             if (ol.Has("optCount")) Gear.OptCountByRar = ol["optCount"].IntArray();
             if (ol.Has("mythPlusAt")) Gear.MythPlusOptAt = ol["mythPlusAt"].IntArray();
+            var lk = j["look"];
+            if (lk.Has("rarSprite")) Gear.LookRarTable = lk["rarSprite"].IntArray();
         }
 
         /// <summary>
@@ -250,6 +252,21 @@ namespace KkomaKnight.Core
                     throw new FormatException($"덮어쓰기 뒤 optionLadder.optCount 칸 수 {Gear.OptCountByRar.Length} ≠ 등급 수 {n}");
                 if (Gear.RarLegend < 1 || Gear.RarMyth <= Gear.RarLegend || Gear.RarMyth >= n)
                     throw new FormatException($"덮어쓰기 뒤 등급 인덱스가 어긋난다 — rarLegend {Gear.RarLegend} · rarMyth {Gear.RarMyth} · 등급 수 {n}");
+                // 문 ⓑ — 등급이 그림 칸보다 많아지면 «영웅은 어느 그림인가» 를 표가 답해야 한다(§1 이 새 그림을 금한다).
+                // 답이 없으면 GearLook 이 조용히 마지막 칸으로 눌러 신화가 전설 그림을 쓴다 — 그러니 여기서 먼저 운다.
+                if (Gear.LookRarTable == null || Gear.LookRarTable.Length == 0)
+                {
+                    if (n > GearLook.RarCount)
+                        throw new FormatException($"등급이 {n} 인데 외형 그림 칸은 {GearLook.RarCount} 다 — gearOverride.json 의 look.rarSprite 로 «어느 등급이 어느 그림을 쓰는가» 를 적어라(새 그림을 만들지 않으려면 기존 칸을 같이 쓴다)");
+                }
+                else
+                {
+                    if (Gear.LookRarTable.Length != n)
+                        throw new FormatException($"덮어쓰기 뒤 look.rarSprite 칸 수 {Gear.LookRarTable.Length} ≠ 등급 수 {n}");
+                    foreach (var v in Gear.LookRarTable)
+                        if (v < 0 || v >= GearLook.RarCount)
+                            throw new FormatException($"look.rarSprite 에 그림 칸 {v} 가 있다 — 있는 칸은 0..{GearLook.RarCount - 1} 뿐이다");
+                }
                 if (Gacha != null)
                     foreach (var b in Gacha.Boxes)
                     {
@@ -507,6 +524,24 @@ namespace KkomaKnight.Core
         /// <c>GameDataOverrideTests</c> 가 «넷일 때도 다섯일 때도 희귀» 를 잰다.</para>
         /// </summary>
         public int RarRare => 1;
+        /// <summary>
+        /// 등급 → <b>외형 그림 칸</b>(<c>gearOverride.json</c> 의 <c>look.rarSprite</c> · null = 항등 · T325 문 ⓑ).
+        /// <para>등급 수와 그림 칸 수는 <b>같은 수가 아니다</b> — 주인이 «영웅 등급 다시 넣고» 라고 했지만 <b>파츠 그림은 안 줬고 §1 이 새 그림을 금한다</b>.
+        /// 그래서 «영웅은 어느 그림을 쓰는가» 를 이 표가 답한다(회차 1 이 남긴 답 = «기존 넷 중 하나를 같이 쓴다» · 예: <c>[0, 1, 1, 2, 3]</c> = 영웅이 희귀 그림 재사용).</para>
+        /// </summary>
+        public int[] LookRarTable;
+        /// <summary>
+        /// 등급 <paramref name="rar"/> 이 쓸 <b>그림 칸</b>. 표가 없으면 항등(오늘 = 등급 넷 · 그림 넷이라 한 톨도 안 바뀐다).
+        /// <para>⚠ <c>GearLook</c> 의 등급 인자는 <b>이 함수를 거친 수</b>여야 한다 — 안 거치면 등급이 다섯이 되는 날
+        /// 그림이 위로 한 칸씩 밀리는데(신화가 전설 그림을 쓴다) <b>컴파일도 되고 빨간 줄도 안 난다</b>. <c>GearLookWiringTests</c> 가 그 호출부를 센다.</para>
+        /// </summary>
+        public int LookRar(int rar)
+        {
+            if (rar < 0) rar = 0;
+            var t = LookRarTable;
+            if (t == null || t.Length == 0) return rar;
+            return rar < t.Length ? t[rar] : t[t.Length - 1];
+        }
         public double[] Atk, Hp, Sh;
         public double PlusStep; public int LegendToMythPlus, LegendMaxPlus;
         public double SlotStep; public int SlotLvMax; public double SlotCostBase, SlotCostG; public double[] SlotCostTable;

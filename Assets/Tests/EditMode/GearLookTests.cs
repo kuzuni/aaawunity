@@ -15,11 +15,29 @@ namespace KkomaKnight.Tests
             var set = new HashSet<string>(); foreach (var k in root["sprites"].Keys) set.Add(k); return set;
         }
 
+        /// <summary>
+        /// 등급마다 <b>쓸 그림 칸이 정해져 있는가</b> (T325 문 ⓑ 로 뜻을 옮겼다).
+        /// <para>여기는 «등급 수 == 그림 칸 수» 를 재던 자리다. 그 단언은 <b>주인이 «영웅 등급 다시 넣고» 라고 한 순간 반드시 깨지는데</b>,
+        /// 깨지는 방향이 «고쳐라» 가 아니라 «그림을 새로 만들어라» 로 읽혀서 <b>§1(새 그림 금지)과 정면으로 부딪힌다</b> —
+        /// 실제로 이 한 줄이 T325 의 문 ⓑ 로 두 회차를 막았다.</para>
+        /// 재는 것을 «두 수가 같은가» 에서 <b>«등급마다 실재하는 그림 칸이 배정됐는가»</b> 로 옮긴다 —
+        /// 오늘(등급 넷·그림 넷·항등)은 옛 단언과 똑같은 것을 재고, 등급이 다섯이 되는 날에는
+        /// «영웅은 어느 그림인가» 를 표(<c>gearOverride.json look.rarSprite</c>)가 답해야 통과한다. 그것이 §1 이 허락하는 답이다.
+        /// </summary>
         [Test]
-        public void RarCountMatchesGearJson()
+        public void EveryGradeIsAssignedAnExistingSpriteSlot()
         {
             var d = TestData.Load();
-            Assert.That(d.Gear.RarName.Length, Is.EqualTo(GearLook.RarCount));
+            for (int rar = 0; rar < d.Gear.RarName.Length; rar++)
+            {
+                int slot = d.Gear.LookRar(rar);
+                Assert.That(slot, Is.InRange(0, GearLook.RarCount - 1),
+                    $"«{d.Gear.RarName[rar]}» 이 쓸 그림 칸이 {slot} 인데 있는 칸은 0~{GearLook.RarCount - 1} 뿐이다 — look.rarSprite 를 보라");
+            }
+            // 오늘은 표가 없어 항등이다. 그 «오늘» 이 참인지도 같이 못 박는다 — 조용히 표가 생기면 여기가 먼저 말한다.
+            if (d.Gear.LookRarTable == null)
+                Assert.That(d.Gear.RarName.Length, Is.EqualTo(GearLook.RarCount),
+                    "look.rarSprite 가 없으면 등급 수와 그림 칸 수가 같아야 한다(항등이라서) — 등급을 늘렸다면 그 표를 같이 적어라");
         }
 
         [Test]

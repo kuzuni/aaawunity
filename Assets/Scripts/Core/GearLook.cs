@@ -15,7 +15,13 @@ namespace KkomaKnight.Core
         public const string Helm = "helm", Weapon = "weapon", Armor = "armor";
         /// <summary>외형이 바뀌는 부위(가진 그림이 있는 부위).</summary>
         public static readonly string[] LookParts = { Helm, Weapon, Armor };
-        /// <summary>등급 수 — gear.json rarName(일반·희귀·전설·신화)과 같아야 한다(테스트가 대조).</summary>
+        /// <summary>
+        /// <b>외형 그림 칸의 수</b> — 부위·세트마다 카탈로그에 실제로 들어 있는 파츠 그림의 개수다(<c>cm.gear.&lt;부위&gt;.&lt;세트&gt;.0~3</c>).
+        /// <para>⚠ <b>«등급 수» 가 아니다.</b> 오늘은 둘이 같은 <c>4</c> 라 헷갈리기 쉽지만, 주인이 «영웅 등급 다시 넣고» 라고 한 순간(T325)
+        /// 등급은 다섯이 되고 그림은 <b>여전히 넷</b>이다 — §1 이 새 그림 만들기를 금하기 때문이다.
+        /// 그때 «어느 등급이 어느 그림을 쓰는가» 는 <c>GearData.LookRar</c>(표 <c>gearOverride.json look.rarSprite</c>)가 답한다.
+        /// 이 수를 등급 수라고 읽고 5 로 올리면 있지도 않은 <c>.4</c> 그림을 찾아 <b>빈 칸</b>이 그려진다.</para>
+        /// </summary>
         public const int RarCount = 4;
 
         /// <summary>
@@ -63,6 +69,11 @@ namespace KkomaKnight.Core
         /// <summary>착용 키 접두(입는 파츠 · Parts/) 와 아이콘 키 접두(Thumbnail/) — 카탈로그 키는 <c>접두 + 부위.세트.등급</c>.</summary>
         public const string PartPrefix = "cm.gear.", IconPrefix = "cmi.gear.";
 
+        /// <summary>
+        /// ⚠ <paramref name="rar"/> 은 <b>등급이 아니라 그림 칸</b>이다 — 부르는 쪽이 <c>GameData.Gear.LookRar(등급)</c> 를 거쳐 준다.
+        /// 범위 밖은 마지막 칸으로 누른다(옛 그대로) — 그 누름이 «조용한 한 칸 밀림» 의 자리라서, 등급 인자를 그냥 넘기는 호출부가 없는지
+        /// <c>GearLookWiringTests</c> 가 게임 코드를 훑어 센다.
+        /// </summary>
         static string Suffix(string part, string set, int rar)
         {
             if (rar < 0) rar = 0; if (rar >= RarCount) rar = RarCount - 1;
@@ -71,11 +82,13 @@ namespace KkomaKnight.Core
 
         /// <summary>착용(입는) 파츠 스프라이트 키 <c>cm.gear.*</c> — 캐릭터 외형 전용. 그림 없는 부위는 null.</summary>
         public static string PartKey(string part, string set, int rar) => HasLook(part) ? PartPrefix + Suffix(part, set, rar) : null;
-        public static string PartKey(GameData D, GearItem g) => PartKey(g.Part, D.Gear.SetOf(g.Type), g.Rar);
+        /// <summary>장착품의 착용 파츠 키 — <b>등급을 그림 칸으로 옮겨서</b>(<c>GearData.LookRar</c>) 준다. 게임 코드는 늘 이 갈래로 부른다.</summary>
+        public static string PartKey(GameData D, GearItem g) => PartKey(g.Part, D.Gear.SetOf(g.Type), D.Gear.LookRar(g.Rar));
 
         /// <summary>장비 아이콘 키 — 그림 있는 부위는 같은 이름의 Thumbnail <c>cmi.gear.*</c>(T31 · 입는 파츠와 분리), 나머지는 GUI Pro 아이콘 <c>gi.&lt;부위&gt;.&lt;세트&gt;</c>.</summary>
         public static string IconKey(string part, string set, int rar) => HasLook(part) ? IconPrefix + Suffix(part, set, rar) : ("gi." + part + "." + set);
-        public static string IconKey(GameData D, GearItem g) => IconKey(g.Part, D.Gear.SetOf(g.Type), g.Rar);
+        /// <summary>장착품의 아이콘 키 — 위와 같이 <b>등급을 그림 칸으로 옮겨서</b> 준다.</summary>
+        public static string IconKey(GameData D, GearItem g) => IconKey(g.Part, D.Gear.SetOf(g.Type), D.Gear.LookRar(g.Rar));
 
         /// <summary>무기 세트 → Character 프리팹의 오른손 슬롯: 체력실드 = 둔기(Blunt) · 치명·회피 = 검(Sword) — 카탈로그의 해당 파츠 폴더(HandRight/Sword·Blunt·Axe)와 맞아야 한다(GearLookTests). 창(Spear)·활(Bow) 슬롯은 장비에 쓰지 않는다(T17).</summary>
         public static string WeaponSlot(string set) => set == "hpsh" ? "Blunt" : "Sword";

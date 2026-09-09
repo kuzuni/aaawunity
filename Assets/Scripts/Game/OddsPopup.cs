@@ -197,7 +197,10 @@ namespace KkomaKnight.Game
                 if (pic != null)
                 {
                     pic.gameObject.SetActive(true);
-                    var im = UiKit.SetSprite(frt, "Item", GearLook.IconKey(t.Part, D.Gear.SetOf(t.Type), r.Rar), Palette.White);
+                    // ⚠ 등급을 그대로 넘기지 않는다 — `GearLook` 의 등급 인자는 «그림 칸» 이라 `LookRar` 를 거쳐야 한다(T325 문 ⓑ).
+                    //   그냥 넘기면 등급이 다섯이 되는 날 이 팝업의 그림만 위로 한 칸씩 밀리고(신화 줄에 전설 그림) 아무 자도 안 운다.
+                    //   여기는 장착품(GearItem)이 아니라 «등급 줄» 을 그리는 자리라 GameData 갈래가 없다 — 그래서 손으로 옮긴다.
+                    var im = UiKit.SetSprite(frt, "Item", GearLook.IconKey(t.Part, D.Gear.SetOf(t.Type), D.Gear.LookRar(r.Rar)), Palette.White);
                     // ⓙ(주인 2026-09-09 «아이템들이 비율이 실제 다른 곳이랑 다르네 · 아이콘이 걍 존나 크게 표시돼 있네»)
                     //   — 그림을 넣기만 하면 파츠 아이콘(투구·무기·갑옷)이 **프레임을 꽉 채운다**. 인벤 칸은 `GearUi.FitIcon` 이
                     //   불투명 bbox 로 «같은 눈높이» 를 만들어 여백을 남긴다(T17 · `GearUi:98`·`GearScreen:171` 이 쓰는 그 한 줄).
