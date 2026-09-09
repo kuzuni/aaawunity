@@ -125,5 +125,26 @@ namespace KkomaKnight.Tests.Play
 
             yield return Shutdown();
         }
+
+        [UnityTest]
+        public IEnumerator 퀘스트_사이드_아이콘의_빨간_점이_업적도_본다()
+        {
+            // T258 6항 — 판정(`Notify`)은 T257 이 세웠는데 **그것을 켜는 점이 로비에 없었다**(기프트·출석·탐험·챕터 보상 넷뿐).
+            //   판정만 있고 보여 주는 조각이 없으면 사용자에게는 없는 기능이다 — 그래서 점을 달고 그 점을 여기서 잰다.
+            //   퀘스트 탭과 업적 탭은 **같은 팝업**이라 점도 하나다(둘 중 아무거나 받을 것이 있으면 켠다).
+            yield return Boot();
+            var d = _app.Data.Achievement;
+            var dot = UiKit.Find(_app.Current.Root, "QuestDot");
+            Assert.IsNotNull(dot, "로비 «퀘스트» 칸에 빨간 점이 있어야 한다");
+            Assert.IsTrue(dot.gameObject.activeSelf, "켠 것만으로 «출석» 업적을 받을 수 있으니 점이 켜져 있다");
+
+            // 받을 것을 다 받으면 꺼진다 — 새 세이브의 퀘스트 트랙은 아직 한 칸도 안 열린다(메달 10 < 첫 구간 20).
+            while (Achievement.AnyClaimable(_app.Save, d))
+                foreach (var r in d.List) Achievement.Claim(_app.Save, d, r.Counter, out _, out _);
+            _app.Persist(); _app.Current.Refresh(); yield return Frames(1);
+            Assert.IsFalse(dot.gameObject.activeSelf, "받을 것이 없으면 점이 꺼진다");
+
+            yield return Shutdown();
+        }
     }
 }
