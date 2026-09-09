@@ -1051,6 +1051,20 @@ namespace KkomaKnight.Game
             if (bestCell != null) seq.Insert(end, bestCell.DOPunchScale(Vector3.one * 0.12f, 0.22f, 8, 1f).SetUpdate(true).SetLink(bestCell.gameObject));
             seq.Insert(end, UiKit.Reveal(title.rectTransform));
             if (touch != null) seq.Insert(end + 0.12f, UiKit.Reveal(touch.rectTransform));
+
+            // T350 ⓒ — 표 ㉞ 이 부르는 이름 그대로 이름표를 단다. **이 창에는 이름표가 한 개도 없었다** —
+            //   T332 가 처음 찍고 나서야 드러났다(§5 shop_chest_open 0.0 · 모든 행 «없음» = 잴 것이 아예 없다).
+            //   표(2026-09-08 조각 실측)와 살아 있는 화면이 그때까지 한 번도 안 맞대졌다.
+            //   ⚠ `UiKit.Tag` 는 그리는 것을 한 픽셀도 안 바꾼다(이름만 붙인다) — 화면 회귀 0.
+            //   ⚠ 표의 «안내 줄(최고 등급)» 은 **주인이 지운 글자**다(T158 ⓑ · 위 주석) — 없는 것에 이름표를 달 수 없고
+            //      달아서도 안 된다. 그 행은 표 쪽에서 «(참고·컨테이너)» 로 돌려 셈 밖에 뒀다(지운 이력은 남긴다).
+            if (chestGrp != null) UiKit.Tag(chestGrp, "상자 묶음(Chest)");
+            if (touch != null) UiKit.Tag(touch.transform, "터치 안내");
+            if (title != null) UiKit.Tag(title.transform, "제목(상자 N회)");
+            UiKit.Tag(grid, "얻은 장비 격자");
+            //   ⚠ `??` 를 쓰면 안 된다 — 유니티 «가짜 null»(파괴된 오브젝트)이 그 연산자를 통과한다(T11 · 게이트가 잡는다).
+            //      `UiKit.FindAny` 가 그 자리를 위해 있는 함수다(조각 이름이 둘 중 하나다).
+            { var dim = UiKit.FindAny(root.transform, "Background", "Dimmed"); if (dim != null) UiKit.Tag(dim, "어둠(Background)"); }
         }
 
         /// <summary>
