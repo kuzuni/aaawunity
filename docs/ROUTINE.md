@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-10 · 주인 · T367 · 주인 자리 로컬 세션이 바로 했다)** «다이아 흡수, 골드 흡수는 상단에 재화들 각각 표시되는 부분 — 다이아는 다이아 쪽, 골드는 골드 쪽으로» → `RewardPopup.PillFor` 가 `ui.gemRed` 를 몰랐다(다이아 키 셋만) → 키에 `gem`/`coin`/`gold` 가 있으면 그 pill.
+
 - **(2026-09-10 · 주인 · T366 · 등재만)** «특권에서 받을 수 있는 재화 있으면 특권 부분도 빨간점 알림 · 받기 버튼에도 빨간점» → 로비 «특권» 칸 점 + 특권 카드 «받기» 버튼 점(판정은 `Notify` 한 곳 · `LobbyPopups.cs` lock 들 뒤).
 
 - **(2026-09-10 · 주인 · T365 · 주인 자리 로컬 세션이 바로 했다)** «그 상점 다이아카드, 골드 카드 부분 채도 떨어뜨려줘 그라디안트들 다른 상자들 카드들처럼» → T341 값의 색상·명도는 그대로, **채도만 ×0.65**(#AE59FF/#F159FF · #354D6A/#66CAFF).
@@ -9215,4 +9217,15 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 3. **확인** — `screens` 01·11 + 주인 폰.
 
 순서 — `Core/Notify.cs` · `Game/Screens.cs` · `Game/LobbyPopups.cs` · 자. **`LobbyPopups.cs` lock 들 뒤** lock `T366`(T359·T363·T364 와 한 사람이 같이).
+
+### T367 — ⚑ 주인: **재화 흡수 — 다이아는 다이아 pill · 골드는 골드 pill 로** (주인 2026-09-10 «다이아 흡수, 골드 흡수는 상단에 재화들 각각 표시되는 부분 · 다이아는 다이아 쪽 골드는 골드 쪽으로 흡수 되야함» · T354 의 뒤)
+
+0. **까닭(실측)** — `RewardPopup.PillFor(icon)` 이 다이아를 `hud.gem`·`ui.iconGemPurple`·`ui.iconGemBlue` **셋**으로만 알았다. 보상 칸 대부분은 **`ui.gemRed`** 를 쓴다(데일리 기프트 `GiftArt` · 출석 `AttendIcons` · 챕터 상자 · 퀘스트 트랙) → 그 다이아는 «탑바에 자리 없는 재화» 로 화면 가운데 아래(`OrbSinkName`)로 빨려 들어갔다. 골드는 `ui.coin` 하나라 맞았다.
+1. **고침** — 목록에 하나를 더하지 않고 **뜻으로** 가른다: 키에 `gem` 이 들어 있으면 다이아 pill, `coin`/`gold` 면 골드 pill(카탈로그 재화 키가 전부 그 꼴). `PillFor` 는 public.
+2. **자** — `RewardAbsorbTests`: `ui.gemRed`·`hud.gem` → `ResourceBar_Gem` · `ui.coin`·`hud.gold` → `ResourceBar_Coin` · 책·열쇠 → null.
+3. **확인** — 주인 폰(다이아가 다이아 칸으로).
+
+> **🔄 push · 확인 전(19:3X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 1002 · lock `T367` 쥔 채)** — 1·2항 그대로.
+
+순서 — `Game/RewardPopup.cs` · `Tests/PlayMode/RewardAbsorbTests.cs`. lock `T367`.
 

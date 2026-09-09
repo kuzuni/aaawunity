@@ -91,6 +91,14 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(_app.Frame, layer.parent, "구슬 층의 부모 = 프레임(화면 루트가 아니다 · T354)");
                 Assert.Greater(layer.GetSiblingIndex(), _app.Overlay.Root.GetSiblingIndex(), "구슬 층은 오버레이보다 앞에 그려진다(T354)");
             }
+            // T367(주인 2026-09-10 «다이아는 다이아 쪽, 골드는 골드 쪽으로 흡수») — 보상 칸이 실제로 쓰는 키(ui.gemRed · ui.coin)가 제 pill 로 간다.
+            //   옛 판정은 다이아 키 셋만 알아 `ui.gemRed`(출석·데일리·챕터 상자·퀘스트 트랙)가 가운데 아래 «자리 없음» 으로 빨려 들어갔다.
+            Assert.AreEqual("ResourceBar_Gem", RewardPopup.PillFor("ui.gemRed"), "ui.gemRed(보상 칸의 다이아) → 다이아 pill(T367)");
+            Assert.AreEqual("ResourceBar_Gem", RewardPopup.PillFor("hud.gem"), "hud.gem → 다이아 pill");
+            Assert.AreEqual("ResourceBar_Coin", RewardPopup.PillFor("ui.coin"), "ui.coin → 골드 pill");
+            Assert.AreEqual("ResourceBar_Coin", RewardPopup.PillFor("hud.gold"), "hud.gold → 골드 pill");
+            Assert.IsNull(RewardPopup.PillFor("ui.bookBlue"), "재화 아닌 것은 pill 없음(가운데 아래로)");
+            Assert.IsNull(RewardPopup.PillFor("ui.keyBlue"), "열쇠는 pill 없음");
             Assert.IsFalse(_app.Overlay.IsOpen, "팝업은 닫혔다");
 
             bool same = false;

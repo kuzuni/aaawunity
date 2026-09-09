@@ -113,11 +113,22 @@ namespace KkomaKnight.Game
 
         static RewardOrbs _orbs; static RectTransform _orbLayer, _orbSink;
 
-        /// <summary>골드·다이아는 탑바의 그 pill 로 간다(지시서 4항) — 조각 이름은 <see cref="TopBar"/> 가 붙이는 그것이다.</summary>
-        static string PillFor(string icon)
+        /// <summary>
+        /// 골드·다이아는 탑바의 그 pill 로 간다(지시서 4항) — 조각 이름은 <see cref="TopBar"/> 가 붙이는 그것이다.
+        /// <para>
+        /// T367(주인 2026-09-10 «다이아 흡수, 골드 흡수는 상단에 재화들 각각 표시되는 부분 — 다이아는 다이아 쪽, 골드는 골드 쪽으로 흡수되어야 함») —
+        /// 여태는 다이아 키를 **셋만** 알았다(`hud.gem`·`ui.iconGemPurple`·`ui.iconGemBlue`). 그런데 보상 칸 대부분(출석·데일리 기프트·챕터 상자·퀘스트 트랙)은
+        /// <b>`ui.gemRed`</b> 를 쓴다 — 그 다이아는 이름을 못 알아봐 «자리 없는 재화» 로 화면 가운데 아래(<see cref="OrbSinkName"/>)로 빨려 들어갔다.
+        /// 키를 하나 더 외우는 대신 <b>뜻으로</b> 가른다: 키에 <c>gem</c> 이 들어 있으면 다이아, <c>coin</c>/<c>gold</c> 가 들어 있으면 골드(카탈로그의 재화 키가 전부 그 꼴이다).
+        /// 새 다이아 그림이 생겨도 여기 한 줄은 안 바뀐다.
+        /// </para>
+        /// </summary>
+        public static string PillFor(string icon)
         {
-            if (icon == "ui.coin" || icon == "hud.gold") return "ResourceBar_Coin";
-            if (icon == "hud.gem" || icon == "ui.iconGemPurple" || icon == "ui.iconGemBlue") return "ResourceBar_Gem";
+            if (string.IsNullOrEmpty(icon)) return null;
+            var k = icon.ToLowerInvariant();
+            if (k.Contains("gem")) return "ResourceBar_Gem";
+            if (k.Contains("coin") || k.Contains("gold")) return "ResourceBar_Coin";
             return null;
         }
 
