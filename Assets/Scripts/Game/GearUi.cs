@@ -28,7 +28,18 @@ namespace KkomaKnight.Game
         /// 그 알약을 지운 자리를 이 함수가 대신한다. <b>두 곳이 같은 함수를 부르는 것이 핵심</b>이다 — 자리·크기·색을 두 곳에 각각 적으면 한쪽만 고쳐지는 날 다시 갈린다(T176 이 부위 배지에서 겪은 그 자리).
         /// </para>
         /// </summary>
-        public static void SetPlus(Transform frameOrCell, GearItem g) => UiKit.SetText(frameOrCell, "Text_Level", g != null && g.Plus > 0 ? "+" + g.Plus : "");
+        /// <remarks>
+        /// <b>T310 회차 2(sess-1027-30514 · 워커 F · 첫 완주 런이 빨갛게 알려 준 자리)</b> — 위 글에 «오른쪽 아래 흰 글자» 라고 적혀 있었는데 <b>한쪽만 참이었다</b>.
+        /// 두 조각의 <c>Text_Level</c> 은 <b>가로 정렬이 다르다</b>(프리팹 실측 <c>m_HorizontalAlignment</c>):
+        /// 인벤 칸 <c>ListItem_EquipMent</c> = <b>4 = Right</b> · 장착 슬롯 <c>ItemFrame_01</c> = <b>2 = Center</b>.
+        /// 곧 슬롯의 «+N» 은 아래 <b>가운데</b>에 떠 있었다 — 주인이 «장착한 거는 그렇게 안 돼 있더라» 라고 한 것이 바로 이것이고,
+        /// 알약을 조각 글자로 바꾼 회차 1 만으로는 <b>안 닫혔다</b>. 세로(<c>512 = Middle</c>)는 둘이 같으므로 <b>가로만</b> 못 박는다(조각은 안 고친다).
+        /// </remarks>
+        public static void SetPlus(Transform frameOrCell, GearItem g)
+        {
+            var t = UiKit.SetText(frameOrCell, "Text_Level", g != null && g.Plus > 0 ? "+" + g.Plus : "");
+            if (t != null) t.horizontalAlignment = HorizontalAlignmentOptions.Right;
+        }
         /// <summary>
         /// 등급 탭(<see cref="Layout.GdBadge"/>)의 <b>세로</b>에만 더하는 여유(px · T214) — 리본 글자가 제목 60 이라 칸이 <see cref="TextSize.BoxHeight"/>(84px) 는 돼야 하는데
         /// 표 높이 2.3%(53.8px)로는 못 담는다(<c>UiKit.RibbonFit</c> 이 공통 팝업 리본에 거는 규칙과 같다 · T75 4항). <b>가로에는 아무것도 안 더한다</b> — 폭은 표 22.0% 그대로다.
