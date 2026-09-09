@@ -27,9 +27,10 @@ const args = process.argv.slice(2);
 const url = args.find(a => !a.startsWith('--') && !/^\d+$/.test(a) && !a.endsWith('.png') && !a.endsWith('.txt'));
 const flag = n => args.includes('--' + n);
 const opt = (n, d) => { const i = args.indexOf('--' + n); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
-if (!url && !flag('self-test')) { console.error('usage: node tools/webgl_smoke.js <URL> [--battle] [--require-marker] [--strict-audio] [--strict-net] [--no-fps] [--timeout SEC] [--shot out.png] [--log out.txt] | --self-test'); process.exit(2); }
+if (!url && !flag('self-test')) { console.error('usage: node tools/webgl_smoke.js <URL> [--battle] [--play] [--require-marker] [--strict-audio] [--strict-net] [--no-fps] [--timeout SEC] [--shot out.png] [--log out.txt] | --self-test'); process.exit(2); }
 const timeoutSec = parseInt(opt('timeout', '180'), 10);
 const wantBattle = flag('battle'), requireMarker = flag('require-marker'), strictAudio = flag('strict-audio'), strictNet = flag('strict-net');
+const wantPlay = flag('play');   // T300 2항 — 봇을 돌린다(기본은 안 돈다: 옛 배포엔 그 갈래가 없다)
 const shotPath = opt('shot', ''), logPath = opt('log', '');
 // 오디오 문구(주인 종결 지시 2026-09-07 · 결정 219) — 「Streaming of 'ogg' … not supported」 는 유니티 WebGL 네이티브가
 // UnityWebRequestMultimedia 의 ogg 스트리밍을 거부하며 찍는 줄이라 위 넷과 같은 갈래로 본다.
@@ -42,6 +43,21 @@ const AUDIO_RE = /no supported source was found|The element has no supported sou
 // 브라우저 없이 도는 자가 점검(T134) — 「이 문구가 오디오인가」 를 실제 CI 로그에서 오려 온 줄로 못 박는다.
 // 배포 스모크는 25분짜리 WebGL 빌드 뒤에야 도는 자라 분류가 틀린 것을 «빌드 한 판» 쓰고 나서야 안다
 // (T134 가 그랬다: #252·#255 두 런이 통째로 버려졌다). 셸 래퍼가 브라우저를 켜기 전에 이걸 먼저 돌린다.
+// T300 2항 — «플레이 봇» 이 찍은 줄을 읽는 순수 함수. 게임 쪽 꼴은 `Assets/Scripts/Game/Playthrough.cs` 가 만든다
+//   (`[KkomaKnight] play P1 ok` · `… play P5 fail 까닭` · 마지막 `… play done 1/1 fail 0`).
+//   ⚠ 꼴을 여기서 다시 짜지 않는다 — 두 곳에 두면 한쪽만 바뀐다(그 파일 주석과 한 벌).
+function playReport(lines) {
+  const ok = [], fail = [];
+  let done = null;
+  for (const t of lines) {
+    let m = t.match(/\[KkomaKnight\] play (P\d+) ok/);      if (m) { ok.push(m[1]); continue; }
+    m = t.match(/\[KkomaKnight\] play (P\d+) fail (.*)$/);   if (m) { fail.push({ id: m[1], why: m[2].trim() }); continue; }
+    m = t.match(/\[KkomaKnight\] play done (\d+)\/(\d+) fail (\d+)/);
+    if (m) done = { ok: Number(m[1]), ran: Number(m[2]), fail: Number(m[3]) };
+  }
+  return { ok, fail, done };
+}
+
 if (flag('self-test')) {
   const cases = [
     // [문구, 오디오로 봐야 하는가] — 참인 것들은 CI 로그 원문에서 그대로 옮겼다
@@ -82,7 +98,21 @@ if (flag('self-test')) {
     const r = frameStats(dts);
     if (!ok(r)) { bad++; console.error(`  ✗ frameStats «${name}» → ${JSON.stringify(r)}`); }
   }
-  const total = cases.length + fs.length;
+  // T300 2항 — 봇 줄 읽기. «없는 것과 못 읽은 것이 같은 글자» 가 되지 않게 양쪽을 다 심어 본다.
+  const pr = [
+    ['한 단계 초록', ['[KkomaKnight] play P1 ok', '[KkomaKnight] play done 1/1 fail 0'],
+      r => r.ok.length === 1 && r.fail.length === 0 && r.done && r.done.fail === 0],
+    ['한 단계 빨강', ['[KkomaKnight] play P5 fail MissingException 못 찾았다: EnterBtn', '[KkomaKnight] play done 0/1 fail 1'],
+      r => r.fail.length === 1 && r.fail[0].id === 'P5' && /EnterBtn/.test(r.fail[0].why) && r.done.fail === 1],
+    // 마지막 줄이 없으면 «돌다 죽었다» 다 — 초록으로 읽으면 안 된다
+    ['done 줄이 없다', ['[KkomaKnight] play P1 ok'], r => r.done === null],
+    ['봇을 안 돌린 런', ['[KkomaKnight] ready lobby'], r => r.done === null && r.ok.length === 0],
+  ];
+  for (const [name, lines, ok] of pr) {
+    const r = playReport(lines);
+    if (!ok(r)) { bad++; console.error(`  ✗ playReport «${name}» → ${JSON.stringify(r)}`); }
+  }
+  const total = cases.length + fs.length + pr.length;
   console.log(bad ? `[smoke] ❌ 자가 점검 ${bad}/${total} 어긋남` : `[smoke] ✅ 자가 점검 ${total}/${total} — 오디오 문구 분류 + 프레임 통계`);
   process.exit(bad ? 1 : 0);
 }
@@ -133,6 +163,7 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
   const page = await browser.newPage({ viewport: { width: 540, height: 1170 } });
   const errors = [], audioWarn = [], netWarn = [];
   let readyLobby = false, readyBattle = false, loaded = false, tweens = null, screen = null, lobbyP50 = null, bloom = null;
+  const playLines = [];   // T300 2항
   // where = 그 console 메시지가 가리키는 자원 URL(«Failed to load resource» 는 막힌 그 파일을 가리킨다)
   const noteError = (text, where) => {
     if (!strictAudio && AUDIO_RE.test(text)) { audioWarn.push(text); log('AUDIO⚠', text); return; }
@@ -145,6 +176,7 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
     if (t === 'error') noteError('console.error: ' + text, (m.location() || {}).url);
     else if (t === 'warning') log('warn', text.slice(0, 300));
     else log('log', text.slice(0, 300));
+    if (text.startsWith('[KkomaKnight] play ')) playLines.push(text);   // T300 2항 — 봇 줄은 그대로 모아 둔다(읽기는 playReport 가)
     if (text.includes('[KkomaKnight] ready lobby')) readyLobby = true;
     if (text.includes('[KkomaKnight] ready battle')) readyBattle = true;
     { const p = text.match(/\[KkomaKnight\] perf tweens=(\d+)/); if (p) tweens = Number(p[1]); }   // T129 ⓑ — DebugGo perf 의 답(Assets/Scripts/Game/App.cs)
@@ -230,6 +262,31 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
       log('perf', `fps=${fps.avg.toFixed(1)} min=${fps.min.toFixed(1)} tweens=${tweens === null ? '?' : tweens} build=${build || '?'} target=${mode()}${extra} screen=${screen || '?'}`);
     }
   }
+  // ── T300 2항 — 플레이 봇을 배포 빌드에서 돌린다(주인 «플레이해서 에러 테스트도 하라»).
+  //    ⚠ `--play` 를 줄 때만 돈다. 옛 배포에는 그 갈래가 없어 «모르는 목적지» 한 줄만 찍히는데,
+  //       그때 이 자가 «봇이 실패했다» 고 말하면 **빌드가 아니라 자가 거짓말**을 하는 것이다 —
+  //       그래서 «done 줄이 아예 없다» 와 «done 줄이 fail>0» 을 갈라서 말한다.
+  if (loaded && wantPlay) {
+    const sentPlay = await page.evaluate(() => {
+      const inst = window.unityInstance; if (inst && inst.SendMessage) { inst.SendMessage('App', 'DebugGo', 'play'); return 'unityInstance'; }
+      const M = window.Module || (window.unityFramework && window.unityFramework.Module); if (M && M.SendMessage) { M.SendMessage('App', 'DebugGo', 'play'); return 'Module'; }
+      return null;
+    }).catch(e => { noteError('SendMessage(play) 실패: ' + e.message); return null; });
+    if (!sentPlay) noteError('SendMessage 경로 없음(play)');
+    else log('send', 'DebugGo play via ' + sentPlay);
+    const dPlay = Date.now() + 300000;   // 5분 예산(T300 1항) — 봇이 그 안에 끝내야 한다
+    while (Date.now() < dPlay && !playReport(playLines).done) await page.waitForTimeout(250);
+    const rep = playReport(playLines);
+    if (!rep.done) {
+      // 한 줄도 안 왔으면 «이 빌드에 봇이 없다», 오다 말았으면 «돌다 죽었다» — 둘은 다른 고장이다
+      if (rep.ok.length === 0 && rep.fail.length === 0) noteError('play: 봇이 한 줄도 안 찍었다 — 이 빌드에 DebugGo("play") 가 없거나 부팅 전이다');
+      else noteError(`play: 끝 줄(done)이 안 왔다 — 돌다 죽었다(ok ${rep.ok.length} · fail ${rep.fail.length})`);
+    } else {
+      log('play', `done ${rep.done.ok}/${rep.done.ran} fail ${rep.done.fail}` + (rep.ok.length ? ' · ok=' + rep.ok.join(',') : ''));
+      for (const f of rep.fail) noteError(`play ${f.id} fail — ${f.why}`);
+    }
+  }
+
   if (loaded && wantBattle) {
     // 템플릿은 unityInstance 를 지역 변수로만 두므로 SendMessage 는 Module(unityFramework) 경유가 안 되면 실패 — App 이 없으면 에러 1건
     const sent = await page.evaluate(() => {

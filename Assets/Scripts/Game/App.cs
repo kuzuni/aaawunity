@@ -147,6 +147,10 @@ namespace KkomaKnight.Game
                     PostFx.Enabled = what == "bloom" ? !PostFx.Enabled : what == "bloom:on";
                     Debug.Log("[KkomaKnight] perf bloom=" + (PostFx.Enabled ? "on" : "off"));
                     break;
+                // T300 2항 — «플레이 봇» 을 배포 빌드 안에서 돌린다(주인 «플레이해서 에러 테스트도 하라»).
+                //   각본은 PlayMode 자와 **같은 한 벌**(`Playthrough.Stages`)이고, 단계마다 로그 한 줄을 찍는다.
+                //   ⚠ 이 갈래는 스모크가 부를 때만 돈다 — 보통 플레이에는 한 줄도 안 걸린다(주인 폰에 아무것도 안 보인다 · 5항).
+                case "play": StartCoroutine(Playthrough.Run(this)); break;
                 default: Debug.Log("[KkomaKnight] DebugGo: 모르는 목적지 — " + what); break;
             }
         }

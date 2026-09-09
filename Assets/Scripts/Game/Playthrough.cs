@@ -60,5 +60,91 @@ namespace KkomaKnight.Game
         public const string LogPrefix = "[KkomaKnight] play ";
         public static string Line(string id, bool ok, string why = null)
             => LogPrefix + id + (ok ? " ok" : " fail " + (string.IsNullOrEmpty(why) ? "(까닭 없음)" : why));
+        // ─────────────────────────────────────────────────────────────────────────────
+        // 배포 빌드에서 실제로 «노는» 쪽(T300 2항) — `App.DebugGo("play")` 가 이것을 돌린다.
+        // ─────────────────────────────────────────────────────────────────────────────
+        /// <summary>한 단계가 «게임 안에서» 하는 일. 없는 단계는 아직 아무도 안 썼다는 뜻이다(등록 안 함).</summary>
+        public delegate System.Collections.IEnumerator Step(App app);
+
+        static readonly System.Collections.Generic.Dictionary<string, Step> Steps =
+            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby } };
+
+        /// <summary>이 단계가 게임 안에서 놀 수 있는가(= 누가 각본을 붙였는가).</summary>
+        public static bool HasStep(string id) => Steps.ContainsKey(id);
+
+        /// <summary>
+        /// P1 로비 — 탭 다섯을 왕복하고 챕터 ◀▶ 를 눌러 본다. <b>단언은 하나도 없다</b>(3항 ⓐ):
+        /// 봇은 «죽지 않고 지나가는가» 만 본다. 못 찾은 자리는 <see cref="MissingException"/> 로 알린다.
+        /// </summary>
+        static System.Collections.IEnumerator P1Lobby(App app)
+        {
+            app.ShowScreen("lobby");
+            yield return null; yield return null;
+            Need(app, "Start"); Need(app, "ChapterCard");
+            foreach (var key in NavBar.Keys)
+            {
+                Tap(app, "Tab:" + key);
+                yield return null; yield return null;
+            }
+            app.ShowScreen("lobby");
+            yield return null;
+            for (int i = 0; i < 2; i++) { Tap(app, "ArrowR"); yield return null; }
+            for (int i = 0; i < 3; i++) { Tap(app, "ArrowL"); yield return null; }
+        }
+
+        /// <summary>각본이 «있어야 한다» 고 여기는 자리가 없을 때 — 봇은 이것을 <c>fail</c> 로 적고 다음 단계로 간다.</summary>
+        public class MissingException : System.Exception
+        {
+            public MissingException(string name) : base("못 찾았다: " + name) { }
+        }
+        static UnityEngine.Transform Need(App app, string name)
+        {
+            var root = app.Current != null ? app.Current.Root : null;
+            var t = root != null ? UiKit.Find(root, name) : null;
+            if (t == null) throw new MissingException(name);
+            return t;
+        }
+        static void Tap(App app, string name)
+        {
+            var b = Need(app, name).GetComponent<UnityEngine.UI.Button>();
+            if (b == null || !b.interactable) throw new MissingException(name + "(눌리지 않는다)");
+            b.onClick.Invoke();
+        }
+
+        /// <summary>
+        /// 각본을 처음부터 끝까지 돌린다(T300 2항). 단계마다 <see cref="Line"/> 한 줄을 찍고,
+        /// <b>어느 단계가 터져도 다음 단계로 간다</b> — 봇이 게임을 멈추면 그것이 더 나쁜 고장이다.
+        /// <para>마지막 줄은 늘 <c>[KkomaKnight] play done &lt;성공&gt;/&lt;돈 것&gt; fail &lt;실패&gt;</c> 다 —
+        /// 스모크가 꼬리에서 그 한 줄만 찾으면 되게(T239 결정 678 과 같은 계약).</para>
+        /// </summary>
+        public static System.Collections.IEnumerator Run(App app)
+        {
+            int ok = 0, bad = 0, ran = 0;
+            foreach (var st in Stages)
+            {
+                Step step;
+                if (!Steps.TryGetValue(st.Id, out step)) continue;   // 아직 아무도 안 쓴 단계는 조용히 건너뛴다
+                ran++;
+                var it = step(app);
+                bool alive = true;
+                while (alive)
+                {
+                    try { alive = it.MoveNext(); }
+                    catch (System.Exception e)
+                    {
+                        UnityEngine.Debug.Log(Line(st.Id, false, e.GetType().Name + " " + e.Message));
+                        bad++; alive = false; it = null;
+                    }
+                    if (it == null) break;
+                    if (alive) yield return it.Current;
+                }
+                if (it != null) { UnityEngine.Debug.Log(Line(st.Id, true)); ok++; }
+            }
+            UnityEngine.Debug.Log(DoneLine(ok, ran, bad));
+        }
+
+        /// <summary>스모크가 꼬리에서 찾는 마지막 한 줄.</summary>
+        public const string DonePrefix = LogPrefix + "done ";
+        public static string DoneLine(int ok, int ran, int bad) => DonePrefix + ok + "/" + ran + " fail " + bad;
     }
 }
