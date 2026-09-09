@@ -62,6 +62,16 @@ namespace KkomaKnight.Game
         // 플레이어
         CharacterRig _player; SpriteRenderer _pBarBg, _pBarFill, _pShBg, _pShFill; TMP_Text _pHpTxt, _pShTxt; double _pStrikeTick; bool _pDeadShown; EnemyState _pTarget;
         int _holdPlayer;                                             // 아직 «칼이 안 내려온» 적 공격 수 — 0 일 때만 표시 체력을 엔진 값으로 맞춘다
+
+        // 펫 — 장착 펫이 플레이어 뒤를 따라 걷는다(T293 9항 · 주인 «플레이어 뒤에 따라오는 느낌»).
+        // ⚑ 엔진 상태를 하나도 안 만든다 — 시뮬은 펫이 있든 없든 한 톨도 안 달라지고, 여기 있는 것은 «플레이어를 따라 그리는 그림» 뿐이다.
+        readonly List<CharacterRig> _pets = new List<CharacterRig>();
+        PetData _petData;
+        // 캐릭터 프리팹 안 조각 순서가 0~13 이라 이만큼 내려야 펫이 «통째로» 플레이어 뒤에 간다.
+        // (자리로만 정하면 안 된다 — SortBase 는 왼쪽일수록 앞이라, 뒤에 선 펫이 오히려 앞에 그려진다.)
+        const int PetSortBack = 14;
+        /// <summary>자·진단용 — 지금 세워 둔 펫 리그(읽기 전용 · 미장착이면 빈 목록).</summary>
+        public IReadOnlyList<CharacterRig> PetRigs => _pets;
         public double ShownHp { get; private set; } public double ShownSh { get; private set; }
         /// <summary>플레이어 발밑 2단 바(T35) — 테스트·진단용 읽기: 빨강 HP 바 · 파랑 실드 바 · 각 단 안의 숫자 글자.</summary>
         public SpriteRenderer PlayerHpBar => _pBarBg; public SpriteRenderer PlayerShBar => _pShBg; public TMP_Text PlayerHpText => _pHpTxt; public TMP_Text PlayerShText => _pShTxt;
@@ -611,6 +621,54 @@ namespace KkomaKnight.Game
         public static int FootFontSize => Mathf.Max(MinFootFont, Mathf.RoundToInt(UiKit.FrameH * Layout.FootBarH / 100f * FootTextHeight));
         /// <summary>발밑 바 숫자 표기 — 레퍼런스 02·03 처럼 <b>천 단위 콤마 없이</b>(«1239») 쓴다. 큰 수의 K/M 꼬리표는 <see cref="UiKit.Fmt"/> 그대로 남는다(T125 ⓑ).</summary>
         static string FootNum(double v) => UiKit.Fmt(System.Math.Ceiling(v)).Replace(",", "");
+        /// <summary>
+        /// 이 판에서 <b>플레이어 뒤를 따라 걸을 펫</b>을 정한다(T293 9항). 빈 목록·null 이면 한 마리도 안 세운다.
+        /// <para>
+        /// ⚠ <b>세이브를 여기서 안 읽는다</b> — 무엇을 꼈는지는 <b>부르는 쪽</b>이 준다(<c>Battle</c> 의 <c>RunOptions.Pets</c> 와 같은 꼴 · ⓑ).
+        /// <c>SaveData.Pets</c> 가 열리는 회차는 이 함수를 <b>한 번 부르기만</b> 하면 되고, 그 전까지는 아무 일도 안 일어난다.
+        /// </para>
+        /// <para>다시 부르면 세워 둔 것을 지우고 새로 세운다 — 판 도중에 장착이 바뀌는 길은 아직 없지만, 남겨 두면 «두 벌이 겹쳐 선» 판이 된다.</para>
+        /// </summary>
+        public void SetPets(PetData d, IList<PetData.Pet> pets)
+        {
+            foreach (var r in _pets) if (r != null) Object.Destroy(r.gameObject);
+            _pets.Clear();
+            _petData = d;
+            if (d == null || pets == null) return;
+            int n = pets.Count < d.Slots ? pets.Count : d.Slots;   // 열린 칸보다 많이 들어와도 표가 정한 수까지만 선다
+            for (int i = 0; i < n; i++)
+            {
+                var p = pets[i]; if (p == null) continue;
+                var rig = MakeChar("Pet" + i, CharacterRig.PetSkin(d, p), Layout.PlayerHeight * (float)d.BattleScale, true);
+                rig.transform.position = Pos(_shownPX - d.BattleGapDx * (i + 1), FootY);
+                _pets.Add(rig);
+            }
+            SyncPets();
+        }
+
+        /// <summary>
+        /// 펫을 플레이어에 맞춰 놓는다 — 자리(뒤로 <c>gapDx</c> 씩) · 그리는 순서(플레이어보다 뒤) · 동작.
+        /// <para>
+        /// 동작은 <b>플레이어가 지금 하는 것</b>을 따라간다(걷기·대기·사망·승리·패배). 다만 <b>공격은 안 따라한다</b> —
+        /// 9항이 준 것은 «따라 걷는다» 이고, 펫의 발동 효과(도끼·번개)는 엔진이 플레이어 자리에서 이미 낸다(ⓑ).
+        /// 여기서 펫에게 공격 모션을 주면 «때리는 것처럼 보이는데 아무 데미지도 안 나는» 그림이 된다.
+        /// </para>
+        /// </summary>
+        void SyncPets()
+        {
+            if (_pets.Count == 0 || _petData == null) return;
+            int baseOrder = SortBase(LayoutX(_shownPX));
+            string state = _player == null ? CharacterRig.Idle : _player.Current;
+            if (state == CharacterRig.Attack || state == CharacterRig.Skill) state = _moving ? CharacterRig.Walk : CharacterRig.Idle;
+            for (int i = 0; i < _pets.Count; i++)
+            {
+                var r = _pets[i]; if (r == null) continue;
+                r.transform.position = Pos(_shownPX - _petData.BattleGapDx * (i + 1), FootY);
+                r.SetSortingBase(baseOrder - PetSortBack * (i + 1));
+                r.Play(state);
+            }
+        }
+
         void BuildPlayer()
         {
             _player = MakeChar("Player", CharacterRig.PlayerSkin(D, _app.Save, G.P.MaxSh > 0), Layout.PlayerHeight, true);   // 장착 외형 반영 — 장비 화면(HeroView)과 같은 표(GearLook)
@@ -742,6 +800,7 @@ namespace KkomaKnight.Game
             if (G.Dead) { if (!_pDeadShown && _holdPlayer == 0) { _pDeadShown = true; _player.Play(CharacterRig.Dead, true); } }
             else if (G.Cleared) { if (!_player.Attacking) _player.Play(CharacterRig.Victory); }
             else if (!_player.Attacking) _player.Play(_moving ? CharacterRig.Walk : CharacterRig.Idle);
+            SyncPets();   // ⚑ 플레이어 동작을 정한 «뒤» 에 — 앞에 두면 펫이 한 프레임 늦은 동작을 따라한다
             _pBarBg.transform.position = Pos(_shownPX, Layout.FootHpBarY / 100f); SetBar(_pBarBg, _pBarFill, P.MaxHp > 0 ? ShownHp / P.MaxHp : 0);
             _pBarBg.gameObject.SetActive(!_pDeadShown);
             _pShBg.transform.position = Pos(_shownPX, Layout.FootShBarY / 100f); SetBar(_pShBg, _pShFill, P.MaxSh > 0 ? ShownSh / P.MaxSh : 0);

@@ -110,6 +110,67 @@ namespace KkomaKnight.Tests.Play
             foreach (var n in G.Nodes) if (n.Type == NodeType.Rest || n.Type == NodeType.Devil || n.Type == NodeType.Angel) n.Done = true;
         }
 
+        /// <summary>
+        /// T293 9항 — 장착 펫이 <b>플레이어 뒤를 따라 걷는다</b>(주인 2026-09-09 06:1X «동료는 플레이어 뒤에 따라오는 느낌»).
+        /// <para>
+        /// 재는 것 셋: ① <b>미장착이면 한 마리도 안 선다</b>(지금 세이브 배선이 없으므로 이것이 기본값이다) ·
+        /// ② 세우면 <b>플레이어보다 뒤(왼쪽)</b>에 표 간격만큼 · ③ <b>스크롤을 따라간다</b>(플레이어와의 화면 거리가 안 변한다).
+        /// </para>
+        /// <para>
+        /// ⚠ <b>«엔진이 안 달라진다» 도 같이 잰다</b> — 펫은 화면 몫이라 시뮬은 한 톨도 안 움직여야 한다(9항).
+        /// 자리만 재면 «펫을 세웠더니 판이 달라졌다» 를 못 본다.
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator EquippedPetsWalkBehindThePlayerAndKeepTheirGapWhileScrolling()
+        {
+            yield return Boot();
+            _app.StartBattle(1);
+            var bs = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bs); var G = bs.G; Assert.IsNotNull(G, "전투 상태");
+            var world = bs.World; Assert.IsNotNull(world, "BattleWorld");
+            yield return RealSeconds(0.3f);
+
+            Assert.AreEqual(0, world.PetRigs.Count, "아무것도 안 꼈으면 펫 리그가 한 개도 없다(세이브 배선 전의 기본값)");
+
+            var ta = _app.Assets.Text("data.pet"); Assert.IsNotNull(ta, "catalog 에 data.pet 이 등재돼 있어야 한다(T293 ⓒ)");
+            var d = PetData.Parse(ta.text);
+            Assert.GreaterOrEqual(d.Pets.Count, 2, "표에 펫이 둘 이상 있어야 이 시험이 성립한다");
+            world.SetPets(d, new List<PetData.Pet> { d.Pets[0], d.Pets[1] });
+            yield return Frames(2);
+
+            Assert.AreEqual(2, world.PetRigs.Count, "장착 둘이면 리그가 둘이다");
+            float px = world.PetRigs[0].transform.position.x, py = world.PetRigs[1].transform.position.x;
+            float me = PlayerX();
+            Assert.Less(px, me, "펫 1은 플레이어보다 뒤(왼쪽)에 선다");
+            Assert.Less(py, px, "펫 2는 펫 1보다 더 뒤에 선다");
+
+            // 스크롤을 따라가나 — 플레이어와의 «화면 거리» 가 그대로여야 한다(자리를 절대 좌표로 재면 걷는 동안 늘 틀린다)
+            float gap0 = me - px, gap1 = me - py;
+            double engineX0 = G.P.WorldX;
+            Arm(G); Time.timeScale = 3f;
+            yield return RealSeconds(1.5f);
+            Time.timeScale = 1f;
+            Assert.Greater(G.P.WorldX, engineX0, "이 시험이 성립하려면 그동안 실제로 걸었어야 한다");
+            float me2 = PlayerX();
+            Assert.AreEqual(gap0, me2 - world.PetRigs[0].transform.position.x, 0.05f, "펫 1이 스크롤을 따라간다(플레이어와의 거리 불변)");
+            Assert.AreEqual(gap1, me2 - world.PetRigs[1].transform.position.x, 0.05f, "펫 2도 같다");
+
+            // 미장착으로 되돌리면 한 마리도 안 남는다 — 남으면 «두 벌이 겹쳐 선» 판이 된다
+            world.SetPets(d, null);
+            yield return Frames(2);
+            Assert.AreEqual(0, world.PetRigs.Count, "빈 목록이면 세워 둔 것을 지운다");
+
+            yield return Shutdown();
+        }
+
+        /// <summary>플레이어 리그의 화면 x — <see cref="BattleWorld.ShownPX"/>(월드 좌표)이 아니라 <b>실제로 그려진 자리</b>를 쓴다(펫도 같은 자로 잰다).</summary>
+        static float PlayerX()
+        {
+            var go = GameObject.Find("Player");
+            Assert.IsNotNull(go, "플레이어 리그를 찾아야 한다");
+            return go.transform.position.x;
+        }
+
         [UnityTest]
         public IEnumerator PlayerNeverWalksWhileAKilledEnemyStillLooksAlive()
         {

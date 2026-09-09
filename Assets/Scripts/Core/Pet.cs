@@ -66,6 +66,13 @@ namespace KkomaKnight.Core
         /// <summary>다이아 소환 값 — 1회 · 10회(주인 2026-09-09 09:3X «1회 소환 다이아 100개 · 10회는 1,000개»). 펫알로 뽑을 때는 안 쓴다.</summary>
         public double CostOne = 100, CostTen = 1000;
 
+        /// <summary>
+        /// 전투에서 <b>플레이어 뒤를 따라 걷는</b> 값(T293 9항 · 주인 «플레이어 뒤에 따라오는 느낌»):
+        /// <c>BattleGapDx</c> = 펫 사이 월드 x 간격(sim.js 좌표) · <c>BattleScale</c> = 플레이어 키 대비 배율.
+        /// <para>둘 다 <b>보이기 값</b>이라 엔진은 안 본다 — 시뮬은 펫이 있든 없든 한 톨도 안 달라진다.</para>
+        /// </summary>
+        public double BattleGapDx = 16, BattleScale = 0.8;
+
         public Pet Of(string id)
         {
             if (string.IsNullOrEmpty(id)) return null;
@@ -107,6 +114,11 @@ namespace KkomaKnight.Core
             for (int i = 1; i < d.SlotUnlockPulls.Length; i++)
                 if (d.SlotUnlockPulls[i] < d.SlotUnlockPulls[i - 1])
                     throw new FormatException("pet.json: slotUnlockPulls 가 줄어든다 — 뒤 칸이 앞 칸보다 먼저 열린다");
+
+            d.BattleGapDx = j["battle"]["gapDx"].Num(d.BattleGapDx);
+            d.BattleScale = j["battle"]["scale"].Num(d.BattleScale);
+            // 0 이하면 펫이 플레이어와 같은 자리에 겹쳐 서거나(간격 0) 아예 안 보인다(배율 0) — 눈으로만 드러나는 자리라 여기서 운다.
+            if (d.BattleGapDx <= 0 || d.BattleScale <= 0) throw new FormatException("pet.json: battle.gapDx·battle.scale 은 0 보다 커야 한다 — 지금 " + d.BattleGapDx + "·" + d.BattleScale);
 
             d.CostOne = j["cost"]["one"].Num(d.CostOne);
             d.CostTen = j["cost"]["ten"].Num(d.CostTen);

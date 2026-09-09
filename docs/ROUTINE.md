@@ -7052,6 +7052,30 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 >
 > **아직 안 한 것**(화면 회차 몫): 버튼 두 벌의 옷(펫알 ↔ 다이아)을 **T289 헬퍼로 뽑아 상점과 같이 쓰기** — 그 코드가 `Game/ShopScreen.cs` 에 있고 이번엔 안 열었다(Core 만 하는 회차라 한 파일도 안 늘렸다).
 >
+> **▸ ⓔ 5회차 끝 — 9항: 장착 펫이 플레이어 뒤를 따라 걷는다(2026-09-09 14:4X · sess-2005-9317 · 워커 A · 결정 924 · lock `T293-ui` 새로 잡음)**
+>
+> **왜 지금 열렸나** — `Game/BattleWorld.cs` 가 **T312 반납으로 비었다**(T293 제 범위다). `SaveData` 는 여전히 T258 안이라 ⓔ(세이브 배선)는 아직이다.
+> 그래서 lock 을 **`T293-ui`** 로 새로 잡았다(이 절이 «둘로 나눠 잡아도 된다» 고 적어 둔 그 반쪽).
+>
+> **선 것** — `pet.json` 에 `battle {gapDx, scale}` · `PetData.BattleGapDx`/`BattleScale` · `BattleWorld.SetPets(d, pets)`·`SyncPets()`·`PetRigs` ·
+> PlayMode 자 하나(`BattleWorldTests.EquippedPetsWalkBehindThePlayerAndKeepTheirGapWhileScrolling`) · EditMode 자 하나. test **462 → 468**.
+>
+> ⚑ **또 세이브를 안 봤다** — 무엇을 꼈는지는 **부르는 쪽이 준다**(`SetPets`). ⓑ 의 `RunOptions.Pets` 와 **같은 꼴**이라,
+> `SaveData.Pets` 가 열리는 회차는 **`world.SetPets(D.Pet, 장착 목록)` 한 줄**만 쓰면 된다. 그 전까지는 리그가 0 이고 아무 일도 안 일어난다.
+>
+> ⚑ **«뒤에 그린다» 를 자리로 정하면 거꾸로 된다** — `SortBase` 는 **왼쪽일수록 앞**이라(`(LayoutW + 200 − layoutX) / 6`),
+> 뒤에 선 펫이 오히려 플레이어를 **가린다**. 그래서 순서는 자리에서 뽑지 않고 **플레이어 값에서 빼서** 준다(`PetSortBack = 14` × (i+1)).
+> 14 인 까닭은 `Character.prefab` 안 조각 순서가 **0~13** 이라 그만큼 내려야 «통째로» 뒤로 가기 때문이다(실측).
+>
+> ⚑ **공격은 안 따라한다** — 9항이 준 것은 «따라 걷는다» 이고 펫의 발동(도끼·번개)은 엔진이 이미 플레이어 자리에서 낸다(ⓑ).
+> 펫에게 공격 모션을 주면 **«때리는 것처럼 보이는데 아무 데미지도 안 나는» 그림**이 된다. 걷기·대기·사망·승리만 플레이어를 따라간다.
+>
+> ⚑ **`gapDx` 는 워커가 재서 골랐다 — 그리고 그 셈을 자에 넣었다.** 플레이어는 화면 **왼쪽 16%**(`ui.json camera.playerX` · 레이아웃 540 의 86.4)에 붙어 서고,
+> 뒤쪽은 `Spread` 가 1배라 레이아웃 거리 = `gapDx × zoom(1.5)` 다. **16** 이면 셋이 62·38·14px 에 서서 «줄지어» 겹치고, 더 벌리면 **셋째가 화면 밖으로 나간다**.
+> 그 «화면 밖» 을 EditMode 자가 직접 센다 — 표를 40 으로 올려 **빨강을 확인**하고 되돌렸다. **주인이 보고 고치고 싶으면 표의 두 수만.**
+>
+> **다음 회차**: `SaveData.Pets`/`PetPulls` → `GearSystem.Power` 합 → 화면 13·14(5항 ⓖⓗⓘⓙ).
+>
 순서 — `Core/Pet.cs`(신규 · 앞 항의 `Companion` 이름은 전부 `Pet`/`Pets` 로 읽는다) · `Core/SaveData.cs` · `Core/GearSystem.cs` · `Core/Battle.cs` · `Game/PetScreen.cs` · `Game/BattleWorld.cs`(9항) · `Game/CharacterRig.cs`(스킨 표) · `KkomaKnight/pet.json`·`catalog.json`. **큰 절이라 둘로 나눠 잡아도 된다**(ⓐ Core+표+자 · ⓑ 화면+전투 그림) — lock 은 `T293-core`·`T293-ui`.
 
 ### T300 — ⚑⚑⚑ 주인: **플레이 봇 — 한 판을 끝까지 실제로 놀아 보고 에러를 찾는 자**(PlayMode + 배포 WebGL) (주인 2026-09-09 08:5X «플레이해서 에러 테스트도 하라» · §1 상시 규칙과 한 벌)

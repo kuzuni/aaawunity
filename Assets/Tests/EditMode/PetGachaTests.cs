@@ -94,6 +94,20 @@ namespace KkomaKnight.Tests
         }
 
         [Test]
+        public void 전투_따라_걷기_값이_표에서_온다()
+        {
+            // T293 9항 — «플레이어 뒤에 따라오는 느낌». 두 수 다 보이기 값이라 엔진은 안 본다.
+            var d = Load();
+            Assert.Greater(d.BattleGapDx, 0, "간격이 0 이면 펫이 플레이어와 겹쳐 선다");
+            Assert.Greater(d.BattleScale, 0, "배율이 0 이면 아무것도 안 보인다");
+            Assert.LessOrEqual(d.BattleScale, 1.0, "펫이 플레이어보다 크면 «뒤에 따라오는» 으로 안 읽힌다");
+            // 세 마리가 다 화면 안에 서는가 — 플레이어는 화면 왼쪽 16%(ui.json camera.playerX · 레이아웃 540 의 86.4)에 붙어 서고
+            // 뒤쪽은 Spread 가 1배라 레이아웃 거리 = gapDx × zoom(1.5). 셋째까지가 0 보다 커야 «줄지어 따라오는» 그림이 된다.
+            double lastX = 86.4 - d.BattleGapDx * 1.5 * d.Slots;
+            Assert.Greater(lastX, 0, "마지막 펫이 화면 왼쪽 밖으로 나간다 — gapDx 를 줄여야 한다(지금 " + d.BattleGapDx + ")");
+        }
+
+        [Test]
         public void 표의_소환_값이_0이면_읽는_순간_운다()
         {
             // 조용히 어긋나면 «공짜 소환» 이 되고 아무도 안 운다(결정 818 갈래).
