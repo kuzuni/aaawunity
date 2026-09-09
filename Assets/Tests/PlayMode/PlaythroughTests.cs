@@ -119,6 +119,171 @@ namespace KkomaKnight.Tests.Play
         }
 
         // ─────────────────────────────────────────────────────────────────────────────
+        // P2 전투 — 판을 굴리고 · 특전을 고르고 · 이벤트 셋을 지나고 · 죽고 부활하고 또 죽고 포기하고 · 이겨서 결과 화면까지.
+        // ─────────────────────────────────────────────────────────────────────────────
+        /// <summary>화면이 <b>스스로</b> 팝업을 열 때까지 기다린다 — 손으로 <c>Overlay.…</c> 를 부르면 배선이 끊겨 있어도 초록이다(T280 이 값 주고 세운 규칙).</summary>
+        IEnumerator UntilOpen(float maxSec, string what)
+        {
+            float t0 = Time.realtimeSinceStartup;
+            while (!_app.Overlay.IsOpen && Time.realtimeSinceStartup - t0 < maxSec) yield return null;
+            Assert.IsTrue(_app.Overlay.IsOpen, what + " — 화면이 스스로 열어야 한다");
+            UiKit.CompleteAllTweens();
+            yield return Frames(2);
+        }
+        IEnumerator UntilClosed(float maxSec, string what)
+        {
+            float t0 = Time.realtimeSinceStartup;
+            while (_app.Overlay.IsOpen && Time.realtimeSinceStartup - t0 < maxSec) yield return null;
+            Assert.IsFalse(_app.Overlay.IsOpen, what + " — 고르고 나면 팝업이 닫혀야 한다");
+        }
+        /// <summary>글자로 버튼을 찾아 누른다(<c>RestClearAdTests</c> 의 꼴 그대로 — 이벤트 팝업들은 이름이 아니라 글자로 갈린다).</summary>
+        static bool Click(Transform root, Func<string, bool> label)
+        {
+            foreach (var b in root.GetComponentsInChildren<Button>(false))
+                foreach (var t in b.GetComponentsInChildren<TMP_Text>(false))
+                    if (label(t.text ?? "")) { b.onClick.Invoke(); return true; }
+            return false;
+        }
+
+        /// <summary>
+        /// P2 전투(T300 1항) — 노는 것: 배속 3 으로 판을 굴리고 · 특전 3택에서 하나 고르고 · 쉼터(광고)·천사·악마를 지나고 ·
+        /// 죽고 부활하고 또 죽고 포기하고 · 다시 이겨서 결과 화면까지. 재는 것: <b>도달 · 팝업이 스스로 열고 닫힘 · 빨간 줄 0</b>.
+        /// <para>
+        /// ⚠ <b>표의 «잰다» 칸(«골드·경험치가 늘었다»)을 그대로 안 옮겼다</b> — 절 3항 ⓐ 와 이 파일 머리가 «봇은 규칙을 확인하지 않는다» 로
+        /// 못 박고 있고, P1 도 그렇게 섰다. 값을 여기서 재면 밸런스 회차(T325)가 표를 바꾸는 날 <b>봇이 먼저 운다</b> —
+        /// 그때 빨개지는 것은 «놀 수 없게 됐다» 가 아니라 «수가 달라졌다» 라, 이 자가 잡으려던 고장이 그 빨강에 묻힌다.
+        /// 대신 <b>«누른 것이 게임에 닿았는가»</b> 는 잰다(특전이 <c>Taken</c> 에 붙는다 · 부활 횟수가 1 이 된다) —
+        /// 그것은 값이 아니라 <b>배선</b>이고, 끊기면 팝업은 그대로 열리고 닫히므로 다른 자는 아무도 안 운다(T280 이 부활 버튼에서 밝힌 그 자리).
+        /// </para>
+        /// <para>
+        /// ⚠ <b>이 단계는 «화면 이름 계약» 을 거의 안 잰다</b> — 지금 전투 HUD 는 주인 지시(T3xx)로 자주 바뀌는 중이고,
+        /// 이름 하나가 바뀔 때마다 봇이 빨개지면 이 절이 잡으려는 진짜 고장이 그 빨강에 묻힌다(P1 이 런 711 에서 값 주고 배운 것).
+        /// 봇이 붙잡는 것은 «판이 열리고(<c>Current.Name</c>) 끝까지 지나가는가» 다.
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator P2_전투를_한_판_놀아도_죽지_않는다()
+        {
+            yield return Boot();
+            var S = _app.Save; S.Revive = 1; _app.Persist();   // 각 단계가 제 조건을 만들어 시작한다(1항) — 부활권 하나
+
+            _app.StartBattle(1); yield return Frames(2);
+            var bs = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bs, "전투 화면");
+            var G = bs.G; Assert.IsNotNull(G, "전투 상태");
+            Assert.AreEqual("battle", _app.Current.Name, "도달 — «도전» 이 전투 화면을 연다");
+            _log.AssertNoRed("P2 판 열기");
+
+            // ⓐ 실제로 굴린다(배속 3 · 실제 1.5초) — 여기서 죽는 것은 ⓓ 의 몫이라 체력을 받쳐 준다.
+            //    ⚠ 엔진이 스스로 레벨업 팝업을 열 수도 있다 — 그러면 거기서 멈추고 아래에서 정리한다(그것도 «지나간» 것이다).
+            Time.timeScale = 3f;
+            float t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < 1.5f && !G.Over && !_app.Overlay.IsOpen)
+            {
+                if (G.P.Hp < G.P.MaxHp * 0.5) G.P.Hp = G.P.MaxHp;
+                yield return null;
+            }
+            Time.timeScale = 1f;
+            Assert.Greater(G.T, 0.0, "엔진이 실제로 돌았다 — 이 한 줄이 없으면 아래 전부가 «판을 안 굴린 채» 통과한다");
+            if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(1); }
+            // ⚠ 엔진이 쌓아 둔 레벨업(`PendingLevelUps`)까지 비운다 — 안 비우면 아래 각본 «사이»에 팝업 하나가 저 혼자 끼어들고,
+            //    그러면 봇이 «어느 팝업의 버튼을 눌렀는지» 가 흐려진다. 봇은 각본 순서대로 놀아야 잡은 고장을 이름으로 말할 수 있다.
+            G.Pending = null; G.PendingLevelUps = 0;
+            // 짧은 챕터라 그 사이에 판이 끝났으면 새 판으로 이어 간다 — «끝난 판» 위에 아래 각본을 얹으면 재는 것이 달라진다.
+            if (G.Over)
+            {
+                _app.StartBattle(1); yield return Frames(2);
+                bs = _app.GetScreen<BattleScreen>(); G = bs.G; Assert.IsNotNull(G, "이어 붙인 판");
+            }
+            _log.AssertNoRed("P2 판 굴리기");
+
+            // ⓑ 특전 3택 — 화면이 스스로 열고(`BattleScreen.OpenPending`), 카드를 누르면 그 특전이 실제로 붙는다.
+            var rng = new Mulberry32(7u);
+            var offer = Perks.Offer(_app.Data, G.Taken, false, rng);
+            Assert.Greater(offer.Count, 0, "특전 제안이 하나는 있다");
+            G.Pending = new PendingDecision { Kind = PendingKind.LevelUp, Offer = offer };
+            yield return UntilOpen(5f, "특전 3택 팝업");
+            var cards = UiKit.Find(_app.Overlay.Root, "Group_Card");
+            Assert.IsNotNull(cards, "3택 카드 담개(Group_Card)");
+            Assert.Greater(cards.childCount, 0, "고를 카드가 있다");
+            var cardBtn = cards.GetChild(0).GetComponent<Button>();
+            Assert.IsNotNull(cardBtn, "카드는 눌리는 것이어야 한다");
+            int taken0 = G.Taken.Count;
+            cardBtn.onClick.Invoke(); yield return Frames(2);
+            yield return UntilClosed(3f, "특전 3택");
+            Assert.Greater(G.Taken.Count, taken0, "고른 특전이 실제로 붙었다 — 카드가 «그림» 이 아니라 «길» 인가는 여기서만 갈린다");
+            G.Pending = null; G.PendingLevelUps = 0;
+            _log.AssertNoRed("P2 특전 3택");
+
+            // ⓒ 이벤트 — 쉼터(광고 카운트다운까지) · 천사 · 악마(수락 → 선물 «계속»)
+            G.P.Hp = G.P.MaxHp * 0.5;
+            G.Pending = new PendingDecision { Kind = PendingKind.Rest };
+            yield return UntilOpen(5f, "쉼터 팝업");
+            Assert.IsTrue(Click(_app.Overlay.Root, s => s == "광고 보고 둘 다 얻기"), "쉼터 «광고 보고 둘 다 얻기»");
+            yield return Frames(2);
+            yield return UntilClosed(8f, "쉼터 광고");   // AdCountdown 3초 — 봇이 지나가는 유일한 «광고» 자리다
+            if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(1); }   // 쉼터 뒤에 레벨업이 이어 뜰 수 있다
+            G.Pending = null; G.PendingLevelUps = 0;
+            _log.AssertNoRed("P2 쉼터+광고");
+
+            G.Pending = new PendingDecision { Kind = PendingKind.Angel };
+            yield return UntilOpen(5f, "천사 팝업");
+            Assert.IsTrue(Click(_app.Overlay.Root, s => s.StartsWith("무료 축복")), "천사 «무료 축복»");
+            yield return Frames(2);
+            yield return UntilClosed(3f, "천사");
+            G.Pending = null; G.PendingLevelUps = 0;
+            _log.AssertNoRed("P2 천사");
+
+            var devilPerk = Perks.OfferDevil(_app.Data, G.Taken, rng);
+            if (devilPerk != null)   // 줄 특전이 남아 있을 때만 악마가 나온다 — 없으면 «지어내지 않고» 이 조각을 건너뛴다
+            {
+                G.Pending = new PendingDecision { Kind = PendingKind.Devil, DevilPerk = devilPerk };
+                yield return UntilOpen(5f, "악마 팝업");
+                Assert.IsTrue(Click(_app.Overlay.Root, s => s == "거래 수락"), "악마 «거래 수락»");
+                yield return Frames(2);
+                // 수락하면 «선물» 팝업이 이어 뜬다 — 그 «계속» 까지 눌러야 판으로 돌아온다(둘을 한 짝으로 안 보면 다음 조각이 엉킨다)
+                if (_app.Overlay.IsOpen)
+                {
+                    Assert.IsTrue(Click(_app.Overlay.Root, s => s == "계속"), "악마 선물 «계속»");
+                    yield return Frames(2);
+                    yield return UntilClosed(3f, "악마 선물");
+                }
+                G.Pending = null; G.PendingLevelUps = 0;
+                _log.AssertNoRed("P2 악마");
+            }
+
+            // ⓓ 죽는다 → 부활 → 다시 죽는다 → 포기
+            G.P.Hp = 0; G.Dead = true;
+            yield return UntilOpen(10f, "사망 팝업");
+            var revive = UiKit.Find(_app.Overlay.Root, "ReviveBtn");
+            Assert.IsNotNull(revive, "부활권 1 개 · 이 판 첫 죽음이면 자리가 있다(T254)");
+            var rb = revive.GetComponent<Button>(); Assert.IsNotNull(rb, "부활 버튼");
+            rb.onClick.Invoke(); yield return Frames(2);
+            Assert.IsFalse(G.Dead, "부활 — 판이 이어진다");
+            Assert.AreEqual(1, bs.RevivesUsed, "이 판의 부활 횟수가 1 이 된다");
+            _log.AssertNoRed("P2 부활");
+
+            G.P.Hp = 0; G.Dead = true;
+            yield return UntilOpen(10f, "두 번째 사망 팝업");
+            Assert.IsNull(UiKit.Find(_app.Overlay.Root, "ReviveBtn"), "한 판에 한 번 — 두 번째 죽음에는 자리 자체가 없다");
+            Assert.IsTrue(Click(_app.Overlay.Root, s => s == "로비로"), "«로비로»(= 포기)");
+            yield return Frames(3);
+            Assert.AreEqual("lobby", _app.Current.Name, "포기하면 로비로 돌아온다");
+            _log.AssertNoRed("P2 죽음 → 부활 → 죽음 → 포기");
+
+            // ⓔ 이겨서 결과 화면(res_win)까지 한 번 — «그냥 받기» 로 로비까지 돌아온다
+            _app.StartBattle(1); yield return Frames(2);
+            bs = _app.GetScreen<BattleScreen>(); G = bs.G; Assert.IsNotNull(G, "둘째 판");
+            G.Cleared = true;
+            yield return UntilOpen(8f, "클리어 팝업");
+            Assert.IsTrue(Click(_app.Overlay.Root, s => s == "그냥 받기"), "«그냥 받기»");
+            yield return Frames(3);
+            Assert.AreEqual("lobby", _app.Current.Name, "결과 화면을 지나 로비로 돌아온다");
+            _log.AssertNoRed("P2 승리 결과 화면");
+
+            yield return Shutdown();
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────────
         // 각본 ↔ 자 대조 — 목록과 실제 자가 어긋나면 «봇이 도는 줄 알았는데 안 노는» 단계가 생긴다(4항).
         // ─────────────────────────────────────────────────────────────────────────────
         /// <summary>
