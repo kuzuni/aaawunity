@@ -45,7 +45,7 @@ namespace KkomaKnight.Sim
         {
             var seeds = new List<int> { 11, 12, 13 }; int n = 1000; string mode = "both";
             int oneChapter = 0, oneRar = -1, onePlus = 0, oneSlot = 0; bool trace = false; int trace2 = -1;
-            bool blockTable = Environment.GetEnvironmentVariable("BLOCK_TABLE") == "1"; int maxPlus = 12; bool nGiven = false;
+            bool blockTable = Environment.GetEnvironmentVariable("BLOCK_TABLE") == "1"; int maxPlus = 12; bool nGiven = false; bool fitCurve = false;
             for (int i = 0; i < args.Length; i++)
             {
                 switch (args[i])
@@ -61,12 +61,14 @@ namespace KkomaKnight.Sim
                     case "--trace2": trace2 = int.Parse(args[++i]); break;
                     case "--block-table": blockTable = true; break;
                     case "--max-plus": maxPlus = int.Parse(args[++i]); break;
+                    case "--fit-curve": fitCurve = true; break;
                 }
             }
             var d = GameData.LoadFromDirectory(FindDataDir());
             Console.WriteLine($"data {d.Tune.Source} · chapters {d.Enemies.Chapters.Count} · perks {d.Perks.Perks.Count}");
 
             // 막힘 표는 판 수를 적게 쓴다(이분 탐색이 챕터마다 도므로) — 다만 «--n 을 줬는데 조용히 다른 수로 도는» 일은 없게 한다.
+            if (fitCurve) return FitCurve(d, seeds.Count > 0 ? seeds[0] : 11, nGiven ? n : 150);
             if (blockTable) return BlockTable(d, seeds.Count > 0 ? seeds[0] : 11, nGiven ? n : 200, maxPlus);
 
             if (oneChapter > 0 && trace2 >= 0)
@@ -225,6 +227,129 @@ namespace KkomaKnight.Sim
             }
             Console.WriteLine("(과녁 = 주인이 준 표에서 낸 값 · 실제 = 지금 이 레포의 수치로 잰 값 · 둘이 벌어진 만큼이 tuneOverride 곡선이 메울 몫이다)");
             return 0;
+        }
+
+        // ───────────────────── «적 곡선 맞추기» (T325 ⓑ 8항) ─────────────────────
+
+        /// <summary>
+        /// 8항의 절차를 그대로 도는 자 — <b>구간 경계를 새 과녁</b>(0·5·10·…)에 두고 <b>앞 구간부터 차례로</b> 그 구간의 배율 하나를 찾는다.
+        /// <para>구간 <c>i</c> 가 끝나는 챕터가 곧 빌드 <c>i</c> 의 과녁이므로, «그 빌드가 그 챕터에서 딱 10%» 가 되는 배율을 이분 탐색으로 찾으면 된다
+        /// (막히는 챕터를 다시 찾을 필요가 없다 — 과녁 한 칸만 재면 된다).</para>
+        /// <para>⚠ <b>이 자는 과녁을 정하지 않는다</b> — 과녁은 주인이 준 표에서 오고(<see cref="TargetChapter"/>), 이 자가 움직이는 것은
+        /// 주인이 «챕터 밸런스도 다시» 로 **열어 준 것**(적 쪽 곡선) 하나뿐이다. 플레이어·장비·특전·강화 배율은 손대지 않는다(§1).</para>
+        /// <para>⚠ <b>파일을 안 쓴다.</b> 찾은 곡선을 <c>tuneOverride.json</c> 꼴로 화면에 찍기만 하고, 그것을 레포에 넣는 것은 사람이 본 뒤에 한다
+        /// (결정 969 ⑦ 과 같은 자리 — 자가 곧바로 게임을 고치면 아무도 그 수를 읽지 않는다).</para>
+        /// <para>⚑⚑ <b>지금 이 자는 «맞췄다» 는 표를 찍고도 게임을 못 바꾼다 — 손잡이가 전투에 안 닿아 있다(결정 985).</b>
+        /// <c>Tune.EBaseHp</c>·<c>EHpSeg</c> 를 읽는 곳은 <c>ChapterLayout.EnemyStats</c> 하나이고 그것을 부르는 것은 <c>LayoutTests</c>(«JSON 대조용») 뿐이다 —
+        /// 진짜 전투(<c>Battle.cs</c>)는 <c>enemies.json</c> 에 <b>챕터마다 구워진</b> <c>Waves[].Hp/Dmg</c>·<c>Boss</c> 를 그대로 읽는다.
+        /// 실측: 기저를 1/60000 로 낮추고 성장률을 1.0 으로 둬도 노템·3챕터 클리어율이 10.5% → 10.5% 로 안 움직였다.
+        /// ⇒ <b>적 표에 덮어쓰기를 놓아 그 구운 값에 배수를 먹이기 전까지</b>, 여기서 찾은 배율은 «그 식이 참이라면» 의 답일 뿐이다.</para>
+        /// <para>⚠ <b>hp·dmg 에 같은 배율을 준다</b> — 8항이 «구간마다 배율 하나씩» 이라 했고, 정본도 두 값이 거의 같다(1.0292 ↔ 1.0265 …).
+        /// 둘을 따로 찾으면 자유도가 둘인데 과녁은 하나라 답이 안 정해진다.</para>
+        /// </summary>
+        /// <summary>
+        /// 구간 배율을 찾는 범위. 아래는 «안 자란다»(1.0).
+        /// <para>⚠ 위 끝은 처음에 <b>1.60</b>(정본에서 제일 가파른 구간 1.127 의 갑절 남짓)으로 뒀다가 <b>실측하고 넓혔다</b> —
+        /// 주인의 과녁 표(등급마다 5챕터 · +3강마다 5챕터)는 <b>정본 aaaw 곡선보다 훨씬 가파른 성장</b>을 요구해서
+        /// 1.60 에서는 열아홉 구간이 전부 위 끝에 붙었다. «정본이 이만하니 이 언저리겠지» 는 잰 값이 아니었다.</para>
+        /// </summary>
+        const double RateLo = 1.0, RateHi = 4.0;
+
+        /// <summary>적 «기저» 를 찾는 범위 — 8항이 «노템이 5 에서 10% 가 되게 <b>eBase</b>·0~5 구간» 이라 한 그 손잡이(체력·공격을 같은 배로 옮긴다).</summary>
+        const double BaseLo = 0.02, BaseHi = 3.0;
+
+        static int FitCurve(GameData d, int seed, int n)
+        {
+            int maxCh = Math.Min(d.Tune.MaxChapter, d.Enemies.Chapters.Count);
+            var builds = new List<(string id, int rar, int plus, int at)>();
+            foreach (var (id, rar, plus) in BlockBuilds(d, MaxPlusForChapters(d, maxCh)))
+            {
+                int at = TargetChapter(d, rar, plus);
+                if (at <= maxCh) builds.Add((id, rar, plus, at));
+            }
+            builds.Sort((a, b) => a.at.CompareTo(b.at));
+
+            Console.WriteLine($"\n=== 적 곡선 맞추기 · 시드 {seed} · 각 {n}판 · 과녁마다 클리어율 {BlockPct:F0}% · 챕터 1~{maxCh} ===");
+            Console.WriteLine("| 구간 | 그 구간이 맞추는 빌드 | 과녁 | 찾은 배율 | 그 배율에서 % |");
+            Console.WriteLine("|---|---|---|---|---|");
+
+            // ⓐ 먼저 «기저» 를 맞춘다 — 8항의 «노템이 5 에서 10% 가 되게 eBase·0~5 구간».
+            //    구간 배율만으로는 첫 과녁을 못 맞춘다: 0~5 를 «안 자란다»(1.0)로 둬도 노템이 5챕터에서 0% 였다(실측).
+            //    성장은 «5챕터까지 얼마나 세지나» 만 정하고, «1챕터가 얼마나 센가» 는 기저가 정하기 때문이다.
+            double hp0 = d.Tune.EBaseHp, dmg0 = d.Tune.EBaseDmg;
+            var seg = new List<double[]> { new double[] { 0, 1.0 } };
+            ApplySeg(d, seg);
+            var first = builds[0];
+            {
+                double blo = BaseLo, bhi = BaseHi;
+                for (int step = 0; step < 10; step++)
+                {
+                    double mid = (blo + bhi) / 2;
+                    d.Tune.EBaseHp = hp0 * mid; d.Tune.EBaseDmg = dmg0 * mid;
+                    if (ClearPct(d, first.rar, first.plus, first.at, seed, n) > BlockPct) blo = mid; else bhi = mid;
+                }
+                double k = (blo + bhi) / 2;
+                d.Tune.EBaseHp = hp0 * k; d.Tune.EBaseDmg = dmg0 * k;
+                double got0 = ClearPct(d, first.rar, first.plus, first.at, seed, n);
+                string nb = k > BaseHi - 1e-3 ? " ⚠ 위 끝" : k < BaseLo + 1e-3 ? " ⚠ 아래 끝" : "";
+                Console.WriteLine($"| (기저) | {first.id} | {first.at} | ×{k:F4}{nb} → eBaseHp {hp0 * k:F5} · eBaseDmg {dmg0 * k:F5} | {got0:F1}% |");
+            }
+
+            int from = first.at;
+            seg[0][1] = 1.0;                                              // 0~첫 과녁 구간은 기저가 맡았으므로 «안 자란다» 로 둔다
+            seg[0] = new double[] { 0, 1.0 };
+            foreach (var b in builds.GetRange(1, builds.Count - 1))
+            {
+                seg.Add(new double[] { from, 1.0 });                       // 자리부터 만들고 아래에서 값을 넣는다
+                int idx = seg.Count - 1;
+                // 이분 탐색 — 배율이 클수록 적이 세지므로 클리어율은 내려간다(단조).
+                double lo = RateLo, hi = RateHi, got = 0;
+                for (int step = 0; step < 9; step++)
+                {
+                    double mid = (lo + hi) / 2;
+                    seg[idx][1] = mid;
+                    ApplySeg(d, seg);
+                    got = ClearPct(d, b.rar, b.plus, b.at, seed, n);
+                    if (got > BlockPct) lo = mid; else hi = mid;           // 너무 쉬우면 더 세게
+                }
+                seg[idx][1] = (lo + hi) / 2;
+                ApplySeg(d, seg);
+                got = ClearPct(d, b.rar, b.plus, b.at, seed, n);
+                // 위·아래 끝에 붙으면 «찾은 값» 이 아니라 «범위가 모자라다» 는 뜻이다 — 조용히 그럴듯한 수를 적지 않는다.
+                string note = seg[idx][1] > RateHi - 1e-3 ? " ⚠ 위 끝(더 세게 못 간다)" : seg[idx][1] < RateLo + 1e-3 ? " ⚠ 아래 끝(더 약하게 못 간다)" : "";
+                Console.WriteLine($"| {from}~{b.at} | {b.id} | {b.at} | {seg[idx][1]:F6}{note} | {got:F1}% |");
+                from = b.at;
+            }
+
+            Console.WriteLine("\n찾은 곡선 — tuneOverride.json 에 넣을 꼴(사람이 보고 넣는다 · 이 자는 파일을 안 쓴다):");
+            Console.WriteLine($"  \"eBaseHp\": {d.Tune.EBaseHp:F5}, \"eBaseDmg\": {d.Tune.EBaseDmg:F5},");
+            Console.WriteLine("  \"maxChapter\": " + maxCh + ",");
+            Console.WriteLine("  \"eHpSeg\": [" + SegJson(seg) + "],");
+            Console.WriteLine("  \"eDmgSeg\": [" + SegJson(seg) + "]");
+            Console.WriteLine("⚠ 넣기 전에 `--block-table` 로 한 번 더 재라 — 이 자는 과녁 «한 칸» 만 봤고, 막히는 챕터는 그 옆 칸에서 정해질 수도 있다.");
+            return 0;
+        }
+
+        /// <summary>과녁이 <paramref name="maxCh"/> 를 넘지 않는 마지막 신화 강화 단계 — 표에서 낸다(«+3강마다 +5챕터» · 주인).</summary>
+        static int MaxPlusForChapters(GameData d, int maxCh)
+        {
+            int baseAt = TargetCommon + TargetStep * d.Gear.RarMyth, p = 0;
+            while (baseAt + TargetStep * ((p + MythPlusStep) / MythPlusStep) <= maxCh) p += MythPlusStep;
+            return p;
+        }
+
+        /// <summary>찾는 중인 구간 표를 <see cref="TuneData"/> 에 먹인다 — 아직 안 정해진 뒤 구간은 마지막 값으로 잇는다(엔진이 표 밖을 안 보게).</summary>
+        static void ApplySeg(GameData d, List<double[]> seg)
+        {
+            var a = seg.ToArray();
+            d.Tune.EHpSeg = a; d.Tune.EDmgSeg = a;
+        }
+
+        static string SegJson(List<double[]> seg)
+        {
+            var parts = new List<string>();
+            foreach (var r in seg) parts.Add($"[{r[0]:F0}, {r[1]:F6}]");
+            return string.Join(", ", parts);
         }
 
         static string FindDataDir()
