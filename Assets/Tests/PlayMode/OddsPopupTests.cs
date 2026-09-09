@@ -126,6 +126,29 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(67f / 1560f, share, 0.003f, "구간 머리 띠 높이 몫 = 레퍼런스 36 실측(67/1560) — 그림 px 을 캔버스로 옮겨 쓴다");
             }
 
+            // ⓙ(주인 2026-09-09 «아이템들이 비율이 실제 다른 곳이랑 다르네 · 아이콘이 걍 존나 크게 표시돼 있네»)
+            //   — 파츠 아이콘(투구·무기·갑옷)은 인벤 칸과 **같은 조합**(`GearUi.FitIcon`)으로 앉아야 한다.
+            //   ⚠ 조합을 빼면 아이콘이 프리팹 `Item` 크기 그대로 프레임을 꽉 채우므로 이 자가 바로 빨개진다.
+            {
+                int pi = -1;
+                for (int i = 0; i < n; i++) if (GearLook.HasLook(D.Gear.AllTypes[i].Part)) { pi = i; break; }
+                Assert.GreaterOrEqual(pi, 0, "파츠 아이콘을 쓰는 부위가 목록에 있다");
+                var cell = Find(box, "Odds:" + rows[0].Rar + ":" + pi);
+                var frame = (RectTransform)Find(cell, "ItemFrame_01");
+                Assert.IsNotNull(frame, "물건 칸 조각");
+                var icon = (RectTransform)Find(frame, "Item");
+                Assert.IsNotNull(icon, "칸 안 그림");
+                Assert.IsNotNull(icon.GetComponent<PartIconFit>(), "GearUi.FitIcon 을 지났다(인벤 칸과 같은 조합)");
+
+                // 그리고 **그 문을 실제로 지나서 크기가 바뀌었다** — `PartIconFit` 은 프리팹 원래 값을 담아 두므로
+                //   «담긴 값과 지금 값이 다르다» 가 곧 «맞춤이 돌았다» 다(파츠 아이콘이라 `Restore` 갈래가 아니다).
+                //   ⚠ 여기서 px 로 «프레임을 안 넘는다» 를 재지 않는 까닭: `FitIcon` 이 맞추는 것은 **불투명 bbox** 라
+                //   여백이 넓은 그림은 rect 가 프레임보다 커도 **보이는 그림은 안 넘친다**. 자가 rect 를 재면
+                //   화면이 옳은데도 빨개진다 — 눈으로 볼 것은 `screens` 36 ↔ 06 을 나란히 놓는 쪽이다.
+                var fit = icon.GetComponent<PartIconFit>();
+                Assert.AreNotEqual(fit.Size, icon.sizeDelta, "프리팹 크기 그대로가 아니라 «같은 눈높이» 로 다시 잡혔다");
+            }
+
             foreach (var r in rows)
             {
                 var sec = Find(box, "Sec:" + r.Rar);

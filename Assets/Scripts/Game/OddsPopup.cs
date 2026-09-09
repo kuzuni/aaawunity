@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text;
 using KkomaKnight.Core;
 using TMPro;
@@ -101,9 +102,11 @@ namespace KkomaKnight.Game
             int n = GachaOdds.ItemCount(D);
             int lines = n > 0 ? (n + Cols - 1) / Cols : 0;
             float y = 0f;
+            // ⓙ — 아이콘 «같은 눈높이» 맞춤은 칸이 **실제 크기를 가진 뒤에** 해야 한다(아래 한 번에 돈다).
+            var fits = new List<(Image im, bool part)>();
             foreach (var r in rows)
             {
-                y += Section(app, D, content, r, y, n, lines, boxKey);
+                y += Section(app, D, content, r, y, n, lines, boxKey, fits);
                 y += GapPx;
             }
             // 천장·누적 — 레퍼런스에는 없지만 **옛 ⓘ 팝업이 보여 주던 것**이라 지우면 정보가 준다(T125 천장 · T261 희귀 천장).
@@ -129,6 +132,11 @@ namespace KkomaKnight.Game
                 Overlay.FitRibbonText(prt);   // 리본을 표 자리로 옮기면 제목 60 한 줄(84px) 규칙이 풀린다(T75 4항)
                 UiKit.Tag(prt, "명판(«확률»)");
             }
+
+            // ⓙ — 여기서 아이콘을 «인벤 칸과 같은 눈높이» 로 맞춘다. 칸을 다 세운 **뒤**라야 칸이 제 크기를 갖는다
+            //   (`Overlay.RewardFrame` 이 같은 까닭으로 이 줄을 먼저 부른다). 한 번 돌고 칸 수만큼 맞춘다.
+            Canvas.ForceUpdateCanvases();
+            foreach (var f in fits) GearUi.FitIcon(f.im, f.part);
             return b;
         }
 
@@ -151,7 +159,7 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>구간 하나(등급 머리 + 칸 격자)를 <paramref name="y"/> 아래에 놓고 그 높이를 돌려준다.</summary>
-        static float Section(App app, GameData D, RectTransform content, GachaOddsRow r, float y, int n, int lines, string boxKey)
+        static float Section(App app, GameData D, RectTransform content, GachaOddsRow r, float y, int n, int lines, string boxKey, List<(Image im, bool part)> fits)
         {
             string color = Palette.RarName(r.Rar);
             var head = UiKit.Rect(content, "Sec:" + r.Rar);
@@ -184,7 +192,20 @@ namespace KkomaKnight.Game
                 var area = UiKit.Find(frt, "NormalArea");
                 if (area != null) { UiKit.Clear(area); var f = UiKit.Spawn("ui.itemFrame." + color, area); UiKit.Stretch((RectTransform)f.transform); }
                 var pic = UiKit.Find(frt, "Item");
-                if (pic != null) { pic.gameObject.SetActive(true); UiKit.SetSprite(frt, "Item", GearLook.IconKey(t.Part, D.Gear.SetOf(t.Type), r.Rar), Palette.White); }
+                if (pic != null)
+                {
+                    pic.gameObject.SetActive(true);
+                    var im = UiKit.SetSprite(frt, "Item", GearLook.IconKey(t.Part, D.Gear.SetOf(t.Type), r.Rar), Palette.White);
+                    // ⓙ(주인 2026-09-09 «아이템들이 비율이 실제 다른 곳이랑 다르네 · 아이콘이 걍 존나 크게 표시돼 있네»)
+                    //   — 그림을 넣기만 하면 파츠 아이콘(투구·무기·갑옷)이 **프레임을 꽉 채운다**. 인벤 칸은 `GearUi.FitIcon` 이
+                    //   불투명 bbox 로 «같은 눈높이» 를 만들어 여백을 남긴다(T17 · `GearUi:98`·`GearScreen:171` 이 쓰는 그 한 줄).
+                    //   같은 물건을 그리는 자리는 같은 조합을 쓴다 — 두 화면이 갈리면 사용자가 «다른 아이템» 으로 읽는다.
+                    // ⚠ **여기서 바로 부르면 안 된다** — `FitIcon` 은 «프레임의 짧은 변» 을 기준으로 크기를 내는데
+                    //   방금 만든 칸은 아직 레이아웃 전이라 `rect` 가 0 이고, 그러면 인벤 칸 본래 한 변(188)으로 대신 잰다.
+                    //   인벤은 그 값이 진짜라 맞지만 이 팝업 칸은 그보다 작아서 **여전히 넘친다**(`Overlay.RewardFrame` 이 같은 함정을 피한 자리다).
+                    //   ⇒ 목록에 담아 두고 `Open` 끝에서 `Canvas.ForceUpdateCanvases()` 뒤에 한 번에 맞춘다.
+                    fits.Add((im, GearLook.HasLook(t.Part)));
+                }
                 GearUi.DarkFrame(frt, frt.localScale.x);   // T69 7항 — 물건 칸은 전부 이 문을 지난다(조각 제 Border 로는 굵기 계약이 안 선다)
                 // ⚠ 글자 칸 세로는 «크기 × 1.4» 여야 잘리지 않는다(T63 · TextSize.LineBox) — Aux 36 → 50.4 캔버스 px.
                 //   행 피치가 캔버스 188.8px(그림 126px)이라 여기 29% = 54.7px 로 그 하한을 넘는다.
