@@ -275,9 +275,11 @@ namespace KkomaKnight.Tests.Play
             float engine_t = 0; double tNear = -1, tFar = -1; float t0 = Time.realtimeSinceStartup;
             while ((tNear < 0 || tFar < 0) && Time.realtimeSinceStartup - t0 < 30f && !G.Over && !_app.Overlay.IsOpen)
             {
-                bool ran = !world.HoldEngine;
                 yield return null;
-                if (ran) engine_t += Time.deltaTime * bs.Speed;   // 엔진이 보류된 프레임(킬 연출)은 엔진 시간이 흐르지 않는다
+                // T312 회차 2 — **투사체 시계는 보류 프레임에도 흐른다.** 종전에는 `if (!world.HoldEngine)` 일 때만 셌는데(킬 연출 = 엔진 정지),
+                //   이제 화면이 보류 중에도 `G.StepProjectiles` 를 부르므로 창은 그 프레임에도 나아간다 — 안 세면 **먼 창의 시간만 짧게 잡혀**
+                //   비율이 3.0 에서 2.44 로 내려앉는다(런 793 실측). 재는 규칙(T86 4-1 «거리가 3배면 시간도 3배»)은 그대로고, 그것을 재는 **시계만** 맞췄다.
+                engine_t += Time.deltaTime * bs.Speed;
                 if (tNear < 0 && !G.Projs.Contains(near)) tNear = engine_t;
                 if (tFar < 0 && !G.Projs.Contains(far)) tFar = engine_t;
             }
@@ -369,7 +371,13 @@ namespace KkomaKnight.Tests.Play
             // 여기서는 **고침 그 자체 = 상한이 없다** 를 결정적으로 잰다. 상한이 무한이면 `shown > lim` 가지가 아예 닿지 않아 «눌려 서는» 일이 성립하지 않는다.
             {
                 // ⓑ 표적이 먼저 죽은 유도형(도끼) — 예전 상한은 «pr.X(엔진 x)» 라 보류 중엔 안 움직여 도끼가 공중에 섰다(주인 T108 1-b «도끼가 여전히 멈춘다»).
-                var axe = Ghost(G, ProjKind.Axe, ahead.Wave, ahead, G.P.WorldX + EngineConst.ProjSpawnDx, 0);
+                // ⚠ T312 회차 2 — 표적을 **자가 세운다**(위 `ahead` 를 안 쓴다). 그 적은 방금 0.8초 loop 에서 창에 꿰이며 죽을 수 있고,
+                //   그러면 «표적이 살아 있는 유도형» 갈래가 성립하지 않아 자가 «상한이 무한» 으로 빨개진다(런 786·793 이 그 꼴이었다 —
+                //   **셈이 틀린 것이 아니라 자의 전제가 전투 진행에 기대고 있었다**). 두 갈래를 다 재려면 살아 있는 표적이 손에 있어야 한다.
+                var axeWave = new BattleNode();
+                var axeFoe = new EnemyState { Hp = 1e9, MaxHp = 1e9, WorldX = G.P.WorldX + 4000, Wave = axeWave };
+                var axe = Ghost(G, ProjKind.Axe, axeWave, axeFoe, G.P.WorldX + EngineConst.ProjSpawnDx, 0);
+                Assert.Greater(axe.Target.Hp, 0, "이 갈래는 «표적이 살아 있는» 판이라야 성립한다(자가 세운 표적이라 전투 진행과 무관하다)");
                 Assert.IsFalse(double.IsPositiveInfinity(world.ProjLimit(axe)),
                     "표적이 살아 있는 유도형은 «맞는 자리» 에 서야 한다 — 이 상한까지 풀면 도끼가 표적을 지나쳐 날아간 뒤에 맞는다(T171 이 건드리지 않는 자리)");
                 axe.Target = null;   // 표적이 이미 사라진 상태(엔진이 아직 못 지운 프레임)
