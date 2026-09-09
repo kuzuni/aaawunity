@@ -9014,7 +9014,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `tools/check_task_rows.py` · `.github/workflows/ci.yml`. lock `T351`(반납).
 
-### T350 — **찍고 보니 셋이 0.0 이었다: 그 화면들엔 이름표가 아예 없다**(㉜·㉟·㉞) (2026-09-09 17:4X · sess-1424-31894 · 워커 B · 결정 975 · `Game/Profile.cs`·`Game/LobbyMenu.cs`)
+### T350 ✅ — **찍고 보니 셋이 0.0 이었다: 그 화면들엔 이름표가 아예 없다**(㉜·㉟·㉞) (2026-09-09 17:4X · sess-1424-31894 · 워커 B · 결정 975 · `Game/Profile.cs`·`Game/LobbyMenu.cs`)
 
 > **T332 가 찍기 전에는 이 사실을 볼 길이 없었다.** 셋(`profile_avatar`·`profile_nick`·`shop_chest_open`)은 layout 에 `UiKit.Tag` 가 **한 개도 없어** 모든 행이 «없음» 이고, `lobby_menu` 는 이름표 넷 중 표와 겹치는 것이 «메뉴 판» 하나다. 이 표들은 **프리팹 실측**으로 섰고 살아 있는 화면과 한 번도 맞대진 적이 없다.
 
@@ -9320,7 +9320,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/Overlay.cs`(`PlaceRibbonGlow`·`TitleGlowMask` · 악마의 거래 662) · `Game/RewardPopup.cs` · `Game/RibbonGlowFollow.cs` · 자. lock `T369`. **T361(상자 위 변을 리본까지)과 같은 자리**라 한 사람이 같이 잡으면 좋다.
 
-### T371 — ⛑ 런 885 빨강: **T357 이 뺀 규칙을 PlayMode 단언 하나가 아직 요구한다**(배포가 막혔다) (워커 판단 · 화면 0줄 · 자만)
+### T371 ✅ — ⛑ 런 885 빨강: **T357 이 뺀 규칙을 PlayMode 단언 하나가 아직 요구한다**(배포가 막혔다) (워커 판단 · 화면 0줄 · 자만)
 
 1. **드러난 자리** — 런 885 `[CI실패]` 1건 = `UiSmokeTests.LobbySettingsTalentPetToast` (`UiSmokeTests.cs:398` · «안 본 새 장비가 있으면 장비 탭 점이 켜진다(T167)» / Expected True / But was False). 유니티 잡이 빨개서 **Android·WebGL 잡이 둘 다 skipped** — 주인 폰에 빌드가 안 나간다.
 2. **까닭** — 바로 앞 커밋 T357(주인 «장비에 슬롯 강화할 부분도 없는데 빨간점 안 꺼지더라»)이 탭 점에서 **`IsNew` 갈래를 일부러 뺐다**. 그 단언은 **주인이 빼라고 한 그 동작**을 요구하고 있었다 — 고장이 아니라 **낡은 자**다(T184 · 결정 425 «규칙을 바꾸는 커밋이 그 규칙을 전제한 단언을 같은 커밋에서 쓸어낸다»).
