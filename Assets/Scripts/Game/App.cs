@@ -108,6 +108,11 @@ namespace KkomaKnight.Game
             // 셋 다 이 문을 지나므로, 부르는 쪽마다 한 줄씩 박으면 길이 하나 늘 때 조용히 안 세는 자리가 생긴다(결정 787).
             // 아레나는 어느 쪽도 아니다(챕터 진행도 던전도 아닌 판이다) · 던전이면 던전 도전 · 나머지가 챕터 도전이다.
             if (arenaFoe == null) Quests.Bump(this, string.IsNullOrEmpty(dungeonKey) ? Quests.ChapterTry : Quests.DungeonTry);
+            // T258 3항 — 업적은 같은 사건을 **더 잘게** 센다: 아레나 도전이 따로 있고, 던전은 지옥문·원정이 갈린다.
+            // 그래서 퀘스트의 `dungeonTry` 한 줄로는 못 담는다 — 어느 던전인지 아는 자리가 여기뿐이라 여기서 이름을 댄다.
+            if (arenaFoe != null) Quests.Ach(this, Quests.AchArenaTry);
+            else if (dungeonKey == "hell") Quests.Ach(this, Quests.AchDungeonHell);
+            else if (dungeonKey == "expedition") Quests.Ach(this, Quests.AchDungeonExpd);
             ShowScreen("battle");
             GetScreen<BattleScreen>().Start(chapter, run, dungeonKey, arenaFoe, arenaFoeRank);   // T183 — run 이 null 이면 지금까지와 똑같은 일반 전투다
             Debug.Log("[KkomaKnight] ready battle");   // T60 배포 스모크 마커

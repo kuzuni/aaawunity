@@ -146,6 +146,7 @@ namespace KkomaKnight.Game
             if (!ChapterChest.Cell(App.Data, _cell, out var chapter, out var step)) return;
             if (!ChapterChest.Claim(App.Data, App.Save, chapter, step, out var gem, out var gold)) { App.Toast("아직 받을 수 없습니다"); return; }
             App.Save.Gem += gem; App.Save.Gold += gold; App.Persist();
+            Quests.Ach(App, Quests.AchChapterChestClaim);   // T258 — 업적 «클리어 보상 수령 5회»(퀘스트 표에는 없는 업적 전용 줄이다)
             Audio.Sfx("snd.coin");
             // T241 2단계 — 받은 것은 공통 «리워드» 팝업이 보여 준다(토스트 대신 · 지시서 2항 «각 화면이 제 나름의 토스트·팝업을 따로 만들지 않는다»).
             // 여기는 팝업이 아니라 «화면» 이라 닫으면 그대로 이 화면이 남는다 — onClose 가 필요 없다(아래 Go/Refresh 는 팝업 뒤에서 이미 돌았다).

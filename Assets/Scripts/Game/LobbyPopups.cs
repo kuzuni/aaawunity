@@ -621,6 +621,7 @@ namespace KkomaKnight.Game
             if (why.Length > 0) { app.Toast(why); return; }
             var got = Core.Attendance.Claim(app.Save, AT, today);
             if (got == null) return;
+            Quests.Ach(app, Quests.AchAttendClaim);   // T258 — 업적 «출석 보상 1회 수령»(«출석 1회» 는 접속 자체라 App.Create 쪽이다)
             app.Persist(); app.Current?.Refresh();
             var items = new List<RewardPopup.Item>();
             foreach (var r in got.Rewards) { AttendArt(r.Item, out _, out string icon); items.Add(RewardPopup.Item.Of(icon, AttendQtyText(r.Amount))); }
@@ -792,6 +793,7 @@ namespace KkomaKnight.Game
             {
                 double g = Core.DailyGift.ClaimFree(S, D, today);
                 if (g <= 0) return;
+                Quests.Ach(app, Quests.AchGiftClaim);   // T258 — 업적 «데일리 기프트 5회 수령»(무료 칸도 수령이다)
                 app.Persist(); app.Current?.Refresh();
                 // T241 — 받은 것은 공통 «리워드» 팝업이 보여 준다(토스트 대신 · 지시서 2항 «각 화면이 제 나름의 토스트·팝업을 따로 만들지 않는다»).
                 // 닫으면 이 팝업을 다시 연다 — 아래 «광고 보기» 길이 이미 쓰는 그 꼴(`DailyGift(app)`)이라 흐름이 하나로 모인다.
@@ -827,12 +829,15 @@ namespace KkomaKnight.Game
                     {
                         double g = Core.DailyGift.Claim(S, D, idx, today);
                         if (g <= 0) return;
+                        Quests.Ach(app, Quests.AchGiftClaim);   // T258 — 위 무료 칸과 같은 사건이다(줄이 다르다고 다른 업적이 아니다)
                         app.Persist(); app.Current?.Refresh();
                         RewardPopup.Show(new List<RewardPopup.Item> { RewardPopup.Item.Of(mIcon, UiKit.FmtQty(g)) }, () => DailyGift(app));   // T241 · 아이콘은 그 줄이 실제로 준 것(T254)
                     }
                     else   // 광고 보기 — 실제 광고 SDK 없음: T23 과 같은 모의 카운트다운 3초 뒤 누적 +1 (팝업을 다시 연다)
                     {
-                        ov.AdCountdown(GiftAdSeconds, () => { Core.DailyGift.WatchAd(S, D, today); app.Persist(); app.Current?.Refresh(); DailyGift(app); });
+                        // T258 — 업적 «광고 10회 시청» 은 **광고를 부르는 자리마다** 센다. `Overlay.AdCountdown` 안에 걸면
+                        //   나중에 누가 광고를 퀘스트로도 세는 날 두 번 세는 덫이 된다(워커 A 가 썼다가 되돌린 자리 · 결정 763).
+                        ov.AdCountdown(GiftAdSeconds, () => { Core.DailyGift.WatchAd(S, D, today); Quests.Ach(app, Quests.AchAdWatch); app.Persist(); app.Current?.Refresh(); DailyGift(app); });
                     }
                 });
                 if (i == 0) { row1 = row.rectTransform; title1 = title.rectTransform; bar1 = bar.Root; reward1 = reward; btn1 = btn; } else if (i == 1) row2 = row.rectTransform;
@@ -1092,7 +1097,8 @@ namespace KkomaKnight.Game
                     ov.AdCountdown(GiftAdSeconds, () =>
                     {
                         Core.Expedition.ClaimQuick(G, S, D, NowSec(), today, out double gg, out double mm);
-                        Quests.Bump(app, Quests.ExpeditionFastClaim);   // T257 4항 — 일일 «빠른 탐험 보상 받기» 만 센다(위 «받기» 와 한 줄로 묶지 않는다 · 결정 705 ⓒ)
+                        Quests.Bump(app, Quests.ExpeditionFastClaim);   // T257 4항 — 일일 «빠른 탐험 보상 받기» 만 센다(위 «받기» 와 한 줄로 묶지 않는다 · 결정 705 ⓒ) · T258 업적 `expeditionQuick` 도 이 줄이 잇는다
+                        Quests.Ach(app, Quests.AchAdWatch);             // T258 — 이 길은 광고를 본 길이기도 하다(«광고 10회 시청»)
                         app.Persist();
                         app.Toast($"골드 +{UiKit.Fmt(gg)} · 다이아 +{UiKit.FmtQty(mm)}");
                         LobbyPopups.Expedition(app);   // 광고가 끝나면 탐험 팝업으로 돌아간다(남은 횟수·버튼이 갱신된다)

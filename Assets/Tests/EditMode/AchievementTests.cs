@@ -166,5 +166,37 @@ namespace KkomaKnight.Tests
             Achievement.Claim(s, d, "kill", out _, out _);
             Assert.That(Achievement.AnyClaimable(s, d), Is.False, "받고 나면 다시 끈다");
         }
+
+        [Test]
+        public void 표의_이름과_훅이_대는_이름이_같다()
+        {
+            // 표의 counter 는 게임 코드가 부르는 이름이다(`Game/Quests` 의 상수). 한 글자만 달라도 그 줄은
+            // **영원히 0** 인 채로 화면에 뜬다 — 화면에는 «아직 안 했나 보다» 로 보여서 아무도 안 잡는다.
+            //  ⚠ 자가 Game 어셈블리를 못 보므로(테스트는 Core 만 참조) 이름을 글자로 적는다 —
+            //     `Game/Quests` 의 상수를 고치면 이 목록도 같이 고쳐야 한다(그 번거로움이 이 자의 값이다 · T257 ⑸ 와 같은 꼴).
+            // 두 갈래로 나눠 적는 까닭: «아직 못 건» 줄이 몇이고 왜인지가 표에 남아야 다음 사람이 그 자리를 찾는다.
+            var hooked = new System.Collections.Generic.HashSet<string>
+            {
+                // Game/Quests.Bump 가 퀘스트 이름에서 이어 주는 것(AchName)
+                "kill", "gearFuse", "expeditionClaim", "petUpgrade", "expeditionQuick",
+                // Game/Quests.Ach 로 부르는 자리가 있는 것
+                "dungeonTryHell", "dungeonTryExpd", "arenaTry", "adWatch",
+                "attend", "attendClaim", "giftClaim", "chapterChestClaim",
+            };
+            var notYet = new System.Collections.Generic.HashSet<string>
+            {
+                "chestOpenRare", "chestOpenEpic", "chestOpenMythic",   // ShopScreen — 남의 lock 이 풀리면 한 줄씩
+                "petGacha",                                            // 펫 시스템이 없다(T273)
+            };
+            var d = Load();
+            foreach (var r in d.List)
+                Assert.IsTrue(hooked.Contains(r.Counter) || notYet.Contains(r.Counter),
+                              "표에 «" + r.Counter + "» 이 들어왔는데 부르는 자리도 없고 «아직» 목록에도 없다 — 그 줄은 영원히 0 이다(«" + r.Label + "»)");
+            foreach (var name in hooked)
+                Assert.IsNotNull(d.Find(name), "훅은 «" + name + "» 을 세는데 표에는 그 줄이 없다 — 세는 값을 아무도 안 읽는다");
+            // petUpgrade 는 퀘스트에도 업적에도 있는데 **양쪽 다 걸 자리가 없다**(펫 시스템 미구현 · T273).
+            // 그래도 «훅» 쪽에 둔 까닭은 Quests.Bump 의 이름 잇기(AchName)가 이미 그 이름을 이어 두어,
+            // T273 이 열려 Bump 한 줄이 생기는 순간 업적까지 같이 살아나기 때문이다.
+        }
     }
 }
