@@ -312,7 +312,8 @@ namespace KkomaKnight.Game
         {
             // boxOverride — 아래 두 버튼이 없는 «보기 전용» 모드(T267 4항 · 주인 «아래 두 버튼만 없애고 레이아웃 좀만 조절하면 똑같음»)에서
             //   상자를 짧게 자른다. 안쪽 자리는 전부 «화면 %» 를 `.Within(B)` 로 상자 안 %로 다시 그리는 꼴이라,
-            //   **x·w 를 그대로 두고 h 만 줄이면 잘린 선 위의 요소는 화면에서 한 픽셀도 안 움직인다** — 그래서 안쪽 rect 를 하나도 안 고친다.
+            //   **x·w 를 그대로 두고 h 만 줄이면 잘린 선 위의 요소는 화면에서 한 픽셀도 안 움직인다** — 단 그것은
+            //   `.Within` 에 **실제로 그려질 상자** 를 넘겼을 때만이다(T267 6단계에서 이 조건이 깨져 있던 것을 실측으로 잡았다 · 결정 809).
             var ov = app.Overlay; var B = boxOverride ?? Layout.GdBox;
             string bk = BadgeKey(colorName);
             var box = ov.OpenBox("ui.popup", bk, badge, B, onTapClose ?? (Action)(() => ov.Close()));
@@ -346,9 +347,11 @@ namespace KkomaKnight.Game
         /// 값은 <see cref="GearSystem.ContributionIn"/> 재분배 결과 — 이 장비를 그 부위에 넣은 빌드에서 «같은 역할끼리 원래 비율대로 나눠 가진» 몫이라 합계는 그대로다.
         /// 줄 수가 달라지므로 남은 높이(76%)를 줄 수로 다시 나눈다(빈 줄 없음 · 아이콘 크기는 그대로 두고 줄 가운데에).
         /// </summary>
-        static RectTransform StatsBox(RectTransform box, GameData D, SaveData S, GearItem g, string part, int lv, bool eqd)
+        static RectTransform StatsBox(RectTransform box, GameData D, SaveData S, GearItem g, string part, int lv, bool eqd, Layout.R? boxOverride = null)
         {
-            var st = Layout.GdStats.Within(Layout.GdBox);
+            // ⚠ `.Within` 에는 **이 요소가 실제로 들어앉을 상자**를 넘겨야 한다 — 넘기는 상자와 그려지는 상자가 다르면
+            //    안쪽 자리가 그 높이 비(比)만큼 조용히 눌린다(T267 6단계 실측 · 결정 809).
+            var st = Layout.GdStats.Within(boxOverride ?? Layout.GdBox);
             var sp = Pill(box, "Stats", st, 0.75f); UiKit.Tag(sp, "스탯 섹션");
             string gh = Hex(Palette.Green);
             // 글자 전부 본문 40(T63-gear) — 상자 9.0% = 210px: 머리 24%(50px) + 줄 3 × 25%(52px ≥ 한 줄 49px) = 99%
@@ -380,9 +383,11 @@ namespace KkomaKnight.Game
         /// 옵션 줄(GdOpts · 줄 피치 ≤ 2.4%) — 해금 = 등급색 세트 아이콘 + 등급색 글자 · 잠금 = 자물쇠 + 흐린 글자 «(등급)». 규칙(OptCount) 은 기존 그대로.
         /// 글자 = 본문 40 한 줄(T63-gear): 7줄 × 53px 피치(16%) · 줄 94% = 50px ≥ 한 줄 49px · 문구는 <see cref="GearText.Shorten"/>(«치명타 시 50%: 도끼 1개(공격력 50%)») · 잠금 꼬리 «(희귀)»(«이상» 은 자물쇠가 대신) — 가장 긴 잠금 줄도 bestFit 36 이상.
         /// </summary>
-        static void OptionRows(RectTransform box, GameData D, GearItem g)
+        static void OptionRows(RectTransform box, GameData D, GearItem g, Layout.R? boxOverride = null)
         {
-            var region = Layout.GdOpts.Within(Layout.GdBox);
+            // ⚠ 위 <see cref="StatsBox"/> 와 같은 까닭 — 여기서 눌리면 줄 높이까지 같이 눌려 **본문 40 이 잘린다**
+            //    (보기 전용 팝업에서 16.0% → 13.25% · 줄 53px → 44px · 결정 809).
+            var region = Layout.GdOpts.Within(boxOverride ?? Layout.GdBox);
             var opts = D.Gear.Options.TryGetValue(g.Type, out var ol) ? ol : new List<GearOption>();
             int n = D.Gear.OptCount(g.Rar, g.Plus);
             var host = UiKit.Rect(box, "Options"); UiKit.Pct(host, region); UiKit.Tag(host, "옵션 목록");
@@ -420,7 +425,11 @@ namespace KkomaKnight.Game
             string s = maxed ? $"슬롯 MAX (Lv.{maxLv})" : $"<color=#{Hex(S.Gold >= cost ? Palette.Green : Palette.Red)}>{UiKit.Fmt(S.Gold)}</color>/{UiKit.Fmt(cost)}";
             var t = UiKit.Label(row, 36, 0, 40, 100, s, TextSize.Body, Palette.Cream, TextAnchor.MiddleLeft, true, true); t.name = "CostText";
         }
-        /// <summary>«보기 전용» 세부 팝업의 상자 — <see cref="Layout.GdBox"/> 에서 비용 줄·버튼 자리(아래 8%p)를 잘라 낸 것이다(T267 4항).</summary>
+        /// <summary>
+        /// «보기 전용» 세부 팝업의 상자 — <see cref="Layout.GdBox"/> 에서 비용 줄·버튼 자리(아래 8%p)를 잘라 낸 것이다(T267 4항 · 표 ㊿).
+        /// <para>바닥 66.5% 는 주인 그림 `38_box_item_detail.jpg` 실측 바닥 66.74% 와 0.24%p 차다 — <b>자른 자리는 레퍼런스와 같다</b>.
+        /// 윗변만 레퍼런스(33.2%)보다 5.2%p 위인데, 그것은 이 표가 아니라 <b>표 ④ 가 T63-gear 로 안쪽 칸을 키운 몫</b>이 그대로 따라온 것이다(표 ㊿ 의 ⚑).</para>
+        /// </summary>
         public static readonly Layout.R InfoBox = new Layout.R(6.5f, 28.0f, 87.0f, 38.5f);
 
         /// <summary>비용 줄 재화 아이콘 칸의 폭(줄 %) — 줄이 732.9×32.6px 이라 높이 84%(27.4px)와 같은 폭이 되는 값이다(T159 · 정사각).</summary>
@@ -457,6 +466,8 @@ namespace KkomaKnight.Game
 /// <para>
 /// <b>새로 만들지 않고 인자 하나로 갈랐다</b>(지시서 4항이 그렇게 권했다) — 같은 <see cref="DetailFrame"/>·<see cref="StatsBox"/>·<see cref="OptionRows"/> 를 그대로 쓰고
 /// 상자만 짧게 잘라(<see cref="InfoBox"/>) 비용 줄·버튼 자리를 없앤다. 안쪽 자리는 «화면 %» 라 잘린 선 위는 한 픽셀도 안 움직인다.
+/// <b>그러려면 셋 다에 같은 상자를 넘겨야 한다</b> — 4항에서는 <see cref="DetailFrame"/> 에만 넘기고 나머지 둘은 <see cref="Layout.GdBox"/> 를 박아 두어
+/// 스탯·옵션이 38.5/46.5 = 0.83 배로 눌려 있었다(옵션 줄 53px → 44px 라 <b>본문 40 이 잘릴 자리</b>였다). T267 6단계 실측이 잡았다 — 결정 809.
 /// </para>
 /// <paramref name="onClose"/> — 닫을 때 돌아갈 곳(확률 팝업이 제 자신을 다시 연다 · 프로필 팝업 둘이 쓰는 그 꼴 · 표 ㉟).
 /// ⚠ 이 팝업은 <b>아무것도 안 바꾼다</b> — 세이브도 지갑도 안 만진다(보여 주기 전용).</summary>
@@ -468,8 +479,8 @@ namespace KkomaKnight.Game
             var box = DetailFrame(app, RarName(D, g.Rar), colorName, g, Name(D, g), OnPopupBox(Palette.ByName(colorName)),
                 PartName(D, g.Part), RarName(D, g.Rar), InfoBox, onClose != null ? onClose : (Action)(() => ov.Close()));
             // 스탯·옵션은 «이 등급의 이 부위» 가 어떤 물건인지를 보여 준다 — 슬롯 레벨은 내 세이브 것이라 0 으로 본다(남의 상자 안 물건이다).
-            StatsBox(box, D, S, g, g.Part, 0, false);
-            OptionRows(box, D, g);
+            StatsBox(box, D, S, g, g.Part, 0, false, InfoBox);
+            OptionRows(box, D, g, InfoBox);
         }
 
         /// <summary>빈 부위 팝업 — 같은 구도(장비 없는 상태 · 등급 탭 = «부위 슬롯» · 빈 아이콘 칸 · 스탯 박스에 슬롯 안내 · 옵션 자리에 «장착된 장비가 없습니다» · 비용 줄 · 강화만 · 탭하여 닫기).</summary>

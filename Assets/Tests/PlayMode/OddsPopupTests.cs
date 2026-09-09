@@ -128,5 +128,50 @@ namespace KkomaKnight.Tests.Play
             if (_app != null) { if (_app.UiCanvas != null) Object.Destroy(_app.UiCanvas.gameObject); Object.Destroy(_app.gameObject); }
             yield return Frames(2);
         }
+
+        /// <summary>
+        /// T267 6단계 — «보기 전용» 세부 팝업은 <b>아래(비용 줄·버튼)만 잘라 낸 것</b>이다(표 ㊿ · 주인 «아래 두 버튼만 없애고»).
+        /// <para>
+        /// ⚠ 이 자가 재는 것: <b>스탯 박스·옵션 목록이 장비 세부 팝업과 같은 자리·같은 높이인가.</b>
+        /// 상자만 짧게(46.5 → 38.5%) 잘라 놓고 안쪽 자리를 <b>긴 상자 기준</b>으로 계산하면 안쪽이 0.83 배로 눌리는데,
+        /// 팝업은 멀쩡히 뜨고 빨간 줄도 안 난다 — 옵션 줄이 53px → 44px 이 되어 <b>본문 40 이 조용히 잘릴 뿐</b>이다(결정 809).
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ViewOnlyPopupCutsOnlyTheBottom()
+        {
+            yield return Boot();
+            var D = _app.Data;
+            var t0 = D.Gear.AllTypes[0];
+            var g = new GearItem { Part = t0.Part, Type = t0.Type, Rar = 0, Plus = 0 };
+
+            GearUi.OpenInfo(_app, g); yield return Frames(2);
+            var oi = Find(_app.Overlay.Root, "Options"); Assert.IsNotNull(oi, "보기 전용 팝업의 옵션 목록");
+            var si = Find(_app.Overlay.Root, "Stats"); Assert.IsNotNull(si, "보기 전용 팝업의 스탯 박스");
+            Assert.IsNull(Find(_app.Overlay.Root, "Cost"), "비용 줄은 잘려 나간 쪽이다");
+            float optH = ((RectTransform)oi).rect.height, stH = ((RectTransform)si).rect.height;
+            float optY = oi.position.y, stY = si.position.y;
+            int optRows = oi.childCount;
+            float rowH = optRows > 0 ? ((RectTransform)oi.GetChild(0)).rect.height : 0f;
+            _app.Overlay.Close(); yield return Frames(2);
+
+            GearUi.OpenDetail(_app, g, null); yield return Frames(2);
+            var od = Find(_app.Overlay.Root, "Options"); Assert.IsNotNull(od, "장비 세부 팝업의 옵션 목록");
+            var sd = Find(_app.Overlay.Root, "Stats"); Assert.IsNotNull(sd, "장비 세부 팝업의 스탯 박스");
+            Assert.AreEqual(((RectTransform)od).rect.height, optH, 1.5f, "옵션 목록 높이가 두 팝업에서 같다");
+            Assert.AreEqual(od.position.y, optY, 1.5f, "옵션 목록 자리가 두 팝업에서 같다");
+            Assert.AreEqual(((RectTransform)sd).rect.height, stH, 1.5f, "스탯 박스 높이가 두 팝업에서 같다");
+            Assert.AreEqual(sd.position.y, stY, 1.5f, "스탯 박스 자리가 두 팝업에서 같다");
+
+            // 그리고 그 결과가 무엇을 지키는지 — **줄 하나의 높이**까지 같다(여기가 눌리면 본문 40 이 잘린다).
+            // ⚠ «몇 px 이상» 으로 안 적는다 — 그 수는 캔버스 기준 해상도에 매인 값이라 베껴 두면 화면 규격이 바뀔 때
+            //    자가 «틀린 채로 초록» 이 된다(결정 555). 지켜야 할 것은 «장비 세부 팝업과 같다» 이고 그쪽은 T63-gear 가 이미 재고 있다.
+            if (optRows > 0 && od.childCount > 0)
+                Assert.AreEqual(((RectTransform)od.GetChild(0)).rect.height, rowH, 1.5f, "옵션 줄 하나의 높이가 두 팝업에서 같다");
+
+            _log.AssertNoRed("보기 전용 세부 팝업(T267 6단계)");
+            if (_app != null) { if (_app.UiCanvas != null) Object.Destroy(_app.UiCanvas.gameObject); Object.Destroy(_app.gameObject); }
+            yield return Frames(2);
+        }
     }
 }

@@ -73,6 +73,14 @@ namespace KkomaKnight.Tests.Play
             yield return Frames(1);
         }
         /// <summary>이름으로 버튼을 누른다(onClick 직접 호출 · 입력 장치 없이).</summary>
+        /// <summary>이름이 <paramref name="prefix"/> 로 시작하는 첫 조각(`UiKit.Find` 는 «똑같은 이름» 만 찾는다 — 확률 팝업 칸은 «Odds:등급:번호» 라 등급을 미리 모른다).</summary>
+        static Transform FirstNamed(Transform root, string prefix)
+        {
+            if (root == null) return null;
+            if (root.name.StartsWith(prefix)) return root;
+            for (int i = 0; i < root.childCount; i++) { var r = FirstNamed(root.GetChild(i), prefix); if (r != null) return r; }
+            return null;
+        }
         static bool Press(Transform root, string name) { if (root == null) return false; var t = UiKit.Find(root, name); var b = t != null ? t.GetComponent<UnityEngine.UI.Button>() : null; if (b == null) return false; b.onClick.Invoke(); return true; }
         GearItem Give(string part, int rar = 0, int plus = 0)
         {
@@ -144,7 +152,16 @@ namespace KkomaKnight.Tests.Play
                 var big = UiKit.Find(_app.Current.Root, "Box:" + ShopScreen.BigBox(_app.Data).Key);
                 var info = big != null ? UiKit.Find(big, "Info") : null;
                 var ib = info != null ? info.GetComponent<UnityEngine.UI.Button>() : null;
-                if (ib != null) { ib.onClick.Invoke(); yield return Frames(3); yield return Shot("36_box_rates"); _app.Overlay.Close(); yield return Frames(1); }
+                if (ib != null)
+                {
+                    ib.onClick.Invoke(); yield return Frames(3); yield return Shot("36_box_rates");
+                    // 38 확률 팝업 안 «아이템 세부» 팝업 (T267 6단계 · 표 ㊿ · 첫 칸을 눌러 연다 — 닫으면 확률 팝업으로 돌아온다)
+                    var cell = FirstNamed(_app.Overlay.Root, "Odds:");
+                    var cb = cell != null ? cell.GetComponent<UnityEngine.UI.Button>() : null;
+                    if (cb != null) { cb.onClick.Invoke(); yield return Frames(3); yield return Shot("38_box_item_detail"); }
+                    else _missing.Add("38_box_item_detail (확률 팝업에 칸이 없다)");
+                    _app.Overlay.Close(); yield return Frames(1);
+                }
             }
             (_app.Current as ShopScreen)?.ScrollTo(0f); yield return Frames(2); yield return Shot("09_shop_1");
 
