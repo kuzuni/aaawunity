@@ -132,9 +132,18 @@ namespace KkomaKnight.Game
                 var cell = UiKit.Rect(content, "Odds:" + r.Rar + ":" + i);
                 float cw = 100f / Cols;
                 Place(cell, (i % Cols) * cw, gy + (i / Cols) * RowPx, cw, RowPx);
-                var frame = UiKit.Spawn("ui.itemFrame." + color, cell);
+                // T288-8 — 물건 칸은 **두 겹**이다: 바깥 `ui.itemFrame.empty`(여기에만 `Item`·`NormalArea` 가 있다) 안 `NormalArea` 에 등급색 변형.
+                //   등급색 변형을 «바로» 세우면 그 조각에는 `Item` 자식이 없어 그림이 아예 안 그려지고
+                //   칸 수만큼 «[UiKit] 이미지 없음: ui.itemFrame.<색>/Item» 이 뜬다(run 649 에서 72건 · 확률 팝업이 빈 테두리로 떴다).
+                //   이 두 겹은 이 파일이 정하는 것이 아니라 레포의 정본 문법이다 — `LobbyPopups.Cell` · `PetScreen` 이 같은 꼴을 쓴다.
+                var frame = UiKit.Spawn("ui.itemFrame.empty", cell); frame.name = "ItemFrame_01";
                 var frt = (RectTransform)frame.transform; UiKit.Pct(frt, 8, 2, 84, 58);
-                UiKit.SetSprite(frt, "Item", GearLook.IconKey(t.Part, D.Gear.SetOf(t.Type), r.Rar), Palette.White);
+                UiKit.Hide(frt, "Text_Level", "Focus", "Disable", "Lock", "Add_1", "Add_2");
+                var area = UiKit.Find(frt, "NormalArea");
+                if (area != null) { UiKit.Clear(area); var f = UiKit.Spawn("ui.itemFrame." + color, area); UiKit.Stretch((RectTransform)f.transform); }
+                var pic = UiKit.Find(frt, "Item");
+                if (pic != null) { pic.gameObject.SetActive(true); UiKit.SetSprite(frt, "Item", GearLook.IconKey(t.Part, D.Gear.SetOf(t.Type), r.Rar), Palette.White); }
+                GearUi.DarkFrame(frt, frt.localScale.x);   // T69 7항 — 물건 칸은 전부 이 문을 지난다(조각 제 Border 로는 굵기 계약이 안 선다)
                 // ⚠ 글자 칸 세로는 «크기 × 1.4» 여야 잘리지 않는다(T63 · TextSize.LineBox) — Aux 36 → 50.4px.
                 //   행 피치가 126px 이라 40% = 50.4px 이 그 하한이다. 조각을 58% 로 줄여 그 자리를 냈다.
                 UiKit.Label(cell, 0, 60, 100, 40, Pct(r.Each), TextSize.Aux, Palette.White).name = "Pct";

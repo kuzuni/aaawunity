@@ -6460,6 +6460,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 | 4 | `OddsPopupTests.ViewOnlyPopupCutsOnlyTheBottom` (`OddsPopupTests.cs:162`) | «옵션 목록 자리가 두 팝업에서 같다» 208.86±1.5 · **210.86** | **T267**(그 절이 세운 자 · 2px 차) — T267 임자가 잡는다. 기댓값을 늘리지 말고 `boxOverride` 가 두 팝업에 같이 갔는지 본다 |
 | 5 | `RewardOrbTests.OrbHoversThenFliesOnACurveWithATrail` (`RewardOrbTests.cs:186`) | «구슬 뒤 꼬리(TrailRenderer)» > 0 · **-1** | **T269**(리워드 팝업 닫으면 파티클 흡수 · T241 후속) 가 구슬 꼬리를 빼거나 바꿨을 가능성 — 뜻한 변경이면 **자를 새 연출에 맞춰 고치고 결정 번호를 남긴다** |
 | 6 | `UiSmokeTests.ShopBoxesAndChestOpenPopup` (`UiSmokeTests.cs:135`) | «[상자 정보 팝업] 경고 0» · **72건** `[UiKit] 이미지 없음: ui.itemFrame.plum/Item` | **T267**(상자 확률 팝업) — 카탈로그 키 `ui.itemFrame.plum` 프리팹에 자식 `Item` 이 없다(잘못된 자식 경로). `tools/gen_catalog.py --check` 는 키만 보고 자식 경로는 못 본다 |
+> **✅ 6번 고침 push(2026-09-09 05:5X · sess-1735-9f41 · 워커 C · 결정 820 · `docs/claims/T288-8.lock`)** — 뿌리는 검수 Q 가 짚은 그대로였다: 물건 칸은 **두 겹**(바깥 `ui.itemFrame.empty` 안 `NormalArea` 에 등급색 · 그림은 바깥 `Item`)인데 `OddsPopup:135` 이 등급색 변형을 **바로** 세워 `Item` 자식이 없었다. `LobbyPopups.Cell`·`PetScreen` 이 이미 쓰는 여섯 줄을 그대로 옮겼고 **자리(rect)는 한 자도 안 바꿨다**. 확인 = 다음 완주 런에서 그 경고 72건이 0 이 되는가 + `screens` 36 에 물건 그림이 뜨는가.
 | 7 | `UiTextureTests.DungeonArenaScreensCarryPatternAndRewardLights` (`UiTextureTests.cs:371`) | «던전 보상 아이콘 = 카드 1 의 2 + 카드 2 의 4(레퍼런스 20)» 6 · **3** | **2번과 같은 뿌리** — 한 사람이 둘을 같이 잡는다(lock `T288-2`) |
 
 
