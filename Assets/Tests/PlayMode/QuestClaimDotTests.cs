@@ -165,5 +165,76 @@ namespace KkomaKnight.Tests.Play
 
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T359 — 포인트 트랙 넷(주인 2026-09-10). 재는 것은 <b>«화면이 규칙과 같은 말을 하는가»</b> 다:
+        /// ⓒ 맨 왼쪽 메달 글자 = <see cref="QuestRun.Medal"/>(여태 «0» 이 글자 그대로 박혀 있었다) ·
+        /// ⓓ <c>LineFill</c> 게이지가 0 에서 시작해 점수만큼 찬다 · ⓐ 받을 수 있는 칸에 점이 켜지고 <b>못 받는 칸에는 없다</b>.
+        /// <para>⚠ «켜졌다» 만 재면 늘 켜져 있는 코드도 통과한다 — 그래서 **점수 0 인 판**을 먼저 재고 그 다음 쌓는다.</para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 포인트_트랙이_지금_점수를_말한다()
+        {
+            yield return Boot();
+            var q = _app.Data != null ? _app.Data.Quest : null;
+            Assert.IsNotNull(q, "퀘스트 표가 실려야 한다");
+            Assert.Greater(q.Daily.Steps.Count, 0, "일일 트랙에 칸이 있어야 이 자가 성립한다");
+
+            // ── 점수 0 인 판 — 셈이 «지금 점수» 를 읽는지 보려면 «0 이 아닌 판» 만으로는 모자라다(0 이 박혀 있어도 통과하니까).
+            LobbyPopups.Quest(_app, true); yield return Frames(1);
+            var root = _app.Overlay.Root;
+            int m0 = QuestRun.Medal(_app.Save, q.Daily, true);
+            Assert.AreEqual(m0.ToString(), TrackScoreText(root), "맨 왼쪽 메달 글자 = 지금 점수(T359 ⓒ)");
+            float f0 = Fill(root);
+            Assert.GreaterOrEqual(f0, 0f, "게이지가 서 있어야 한다(T359 ⓓ)");
+            _app.Overlay.Close(); yield return Frames(1);
+
+            // ── 일일 줄을 전부 깨서 점수를 쌓는다.
+            foreach (var quest in q.Daily.Quests) QuestRun.Bump(_app.Save, quest.Counter, quest.Goal);
+            _app.Persist();
+            int m1 = QuestRun.Medal(_app.Save, q.Daily, true);
+            Assert.Greater(m1, m0, "쌓았으니 점수가 늘어야 한다(전제)");
+
+            LobbyPopups.Quest(_app, true); yield return Frames(1);
+            root = _app.Overlay.Root;
+            Assert.AreEqual(m1.ToString(), TrackScoreText(root),
+                            "점수가 늘면 메달 글자도 같이 는다 — 여기 «0» 이 박혀 있던 것이 주인이 짚은 그 자리다(T359 ⓒ)");
+            int last = q.Daily.Steps[q.Daily.Steps.Count - 1].Points;
+            Assert.AreEqual(Mathf.Clamp01(m1 / (float)last), Fill(root), 0.001f,
+                            "게이지는 «지금 점수 ÷ 마지막 문턱» 만큼 찬다(T359 ⓓ)");
+            Assert.Greater(Fill(root), f0, "점수가 늘었으니 게이지도 더 차 있어야 한다");
+
+            // ── ⓐ 점은 «받을 수 있는 칸» 에만.
+            int dots = 0, canCount = 0;
+            for (int k = 0; k < q.Daily.Steps.Count; k++)
+            {
+                var cell = UiKit.Find(root, "Track:" + (k + 1)); if (cell == null) continue;
+                bool can = QuestRun.CanClaim(_app.Save, q, true, k);
+                if (can) canCount++;
+                if (HasDot(cell, "TrackDot")) dots++;
+                Assert.AreEqual(can, HasDot(cell, "TrackDot"),
+                                "칸 " + k + ": 점은 «지금 받을 수 있는가»(QuestRun.CanClaim) 하나만 따른다 — 받는 쪽이 쓰는 그 판정이다(T359 ⓐ)");
+            }
+            Assert.Greater(canCount, 0, "이 판에는 받을 수 있는 칸이 있어야 한다(전제 · 없으면 위 단언이 전부 공허하다)");
+            Assert.AreEqual(canCount, dots, "점 수 = 받을 수 있는 칸 수");
+
+            _log.AssertNoRed("퀘스트 포인트 트랙");
+            yield return Shutdown();
+        }
+
+        /// <summary>맨 왼쪽 메달 아래 숫자(트랙 숫자 줄의 첫 글자) — 화면이 그린 그대로 읽는다.</summary>
+        static string TrackScoreText(Transform root)
+        {
+            var nums = UiKit.Find(root, "Nums");
+            var t = nums != null ? nums.GetComponentInChildren<TMP_Text>(true) : null;
+            return t != null ? t.text.Trim() : null;
+        }
+        /// <summary>게이지가 찬 정도 — 없으면 -1(그러면 위 단언이 바로 운다).</summary>
+        static float Fill(Transform root)
+        {
+            var t = UiKit.Find(root, "LineFill");
+            var im = t != null ? t.GetComponent<Image>() : null;
+            return im != null ? im.fillAmount : -1f;
+        }
     }
 }

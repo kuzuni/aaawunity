@@ -120,12 +120,29 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>점수 트랙 — 가로 줄(<paramref name="lineColor"/>) 위에 칸 <paramref name="count"/>개(첫 칸 = 점수 메달 · 나머지 = 보상 칸) + 아래 숫자 줄. 이름표 «트랙 아이콘 줄(N칸)» 은 칸 합집합 · «트랙 아이콘(1칸)» 은 첫 칸.</summary>
-        static RectTransform Track(Transform parent, Layout.R parentR, Layout.R icon1, float pitch, int count, Layout.R numsR, Color lineColor, string[] icons, string[] nums, string tagRow, string tagCell)
+        static RectTransform Track(Transform parent, Layout.R parentR, Layout.R icon1, float pitch, int count, Layout.R numsR, Color lineColor, string[] icons, string[] nums, string tagRow, string tagCell, float fill = -1f)
         {
             var host = UiKit.Rect(parent, "Track"); UiKit.Stretch(host);
             float lastX = icon1.X + (count - 1) * pitch;
-            var line = UiKit.Panel(host, "Line", "fr.rect", lineColor);
-            UiKit.Pct(line.rectTransform, new Layout.R(icon1.X + icon1.W / 2f, icon1.Y + icon1.H * 0.36f, lastX - icon1.X, icon1.H * 0.28f).Within(parentR));
+            var lineR = new Layout.R(icon1.X + icon1.W / 2f, icon1.Y + icon1.H * 0.36f, lastX - icon1.X, icon1.H * 0.28f);
+            // T359 ⓓ(주인 2026-09-10 «Line 은 게이지인데 걍 생으로 노란색 · 안 됐을 때는 흰색, 차 있는 부분은 노랑») —
+            //   여태는 노란 판 **한 장**이라 «얼마나 왔는지» 를 아무것도 말하지 않았다. 흰 바탕 위에 노란 채움 한 장을 얹는다.
+            //   ⚠ 채움은 **왼쪽부터**(`FillMethod.Horizontal` · origin 왼쪽) — 트랙이 왼쪽(0점)에서 오른쪽(마지막 문턱)으로 가기 때문이다.
+            //   `fill < 0` 이면 옛 그대로 한 장이다 — 아레나 등 «게이지가 아닌» 트랙이 이 함수를 같이 쓰므로 부르는 쪽이 정한다.
+            if (fill >= 0f)
+            {
+                var bg = UiKit.Panel(host, "Line", "fr.rect", Palette.White);
+                UiKit.Pct(bg.rectTransform, lineR.Within(parentR));
+                var fg = UiKit.Panel(host, "LineFill", "fr.rect", lineColor);
+                UiKit.Pct(fg.rectTransform, lineR.Within(parentR));
+                fg.type = Image.Type.Filled; fg.fillMethod = Image.FillMethod.Horizontal; fg.fillOrigin = (int)Image.OriginHorizontal.Left;
+                fg.fillAmount = Mathf.Clamp01(fill);
+            }
+            else
+            {
+                var line = UiKit.Panel(host, "Line", "fr.rect", lineColor);
+                UiKit.Pct(line.rectTransform, lineR.Within(parentR));
+            }
             var cells = new RectTransform[count];
             for (int i = 0; i < count; i++)
             {
@@ -204,6 +221,9 @@ namespace KkomaKnight.Game
         /// </summary>
         /// <summary>트랙 칸 개수 글자의 칸(칸 %) — 출석 칸의 수량(<see cref="QtyW"/>·<see cref="QtyH"/>)보다 작다: 트랙 칸(79px)은 «작은 개수» 자리다(레퍼런스 15).</summary>
         const float TrackQtyW = 66f, TrackQtyH = 46f;
+        /// <summary>T359 ⓐ — 트랙 칸의 빨간 점 지름 = 칸 높이의 이 비율. 하단 탭 점(52px)을 그대로 쓰면 79px 칸을 반이나 덮는다 —
+        /// 점은 «여기 할 일이 있다» 를 말하는 표시이지 칸을 가리는 물건이 아니다. 칸에서 재므로 표가 칸을 키우면 점도 같이 큰다.</summary>
+        const float TrackDotPct = 0.42f;
         /// <summary>T311 6항 — 화면 줄 → 표 줄. 할 일 남은 줄(표 순서) 다음에 다 한 줄(표 순서). 표가 없으면 null(줄 = 표 번호 그대로).
         /// <para>«받기 가능» 묶음은 없다 — 퀘스트 줄은 받는 단추가 없고 메달은 깨는 순간 저절로 쌓인다(<see cref="QuestRun.Medal"/>). 그래서 지시서 6항의 세 묶음은 여기서 둘이다.</para></summary>
         static int[] QuestOrder(QuestData.Track t, SaveData s, bool daily)
@@ -400,7 +420,10 @@ namespace KkomaKnight.Game
             if (_qt != null)
             {
                 trackNums = new string[_qt.Steps.Count + 1]; trackIcons = new string[_qt.Steps.Count + 1];
-                trackNums[0] = "0"; trackIcons[0] = "ui.iconMedal";
+                // T359 ⓒ(주인 2026-09-10 «메달 맨 왼쪽은 현재 얻은 포인트 표시인데 0 으로 돼 있네 더 얻었는데 고쳐») —
+                //   여기 «0» 이 **글자 그대로 박혀** 있었다. 그 칸은 «시작점 0» 이 아니라 **지금 쌓인 점수**를 보여 주는 자리다.
+                //   값은 `QuestRun.Medal`(깬 줄의 medal 합 · 따로 저장하지 않는다) — 화면이 제 셈을 만들지 않는다.
+                trackNums[0] = QuestRun.Medal(_qs, _qt, _qDaily).ToString(); trackIcons[0] = "ui.iconMedal";
                 for (int i = 0; i < _qt.Steps.Count; i++)
                 {
                     trackNums[i + 1] = _qt.Steps[i].Points.ToString();
@@ -408,7 +431,14 @@ namespace KkomaKnight.Game
                     trackIcons[i + 1] = rw == null ? "ui.iconMedal" : QuestRewardIcon(rw);
                 }
             }
-            Track(box, B, Layout.QsTrackIcon, Layout.QsTrackPitch, trackNums.Length, Layout.QsTrackNums, Palette.Yellow, trackIcons, trackNums, "트랙 아이콘 줄(" + trackNums.Length + "칸)", "트랙 아이콘(1칸)");
+            // T359 ⓓ — 게이지 비율 = 지금 점수 ÷ **마지막 문턱**(트랙의 오른쪽 끝이 그 값이다). 표가 없으면 옛 한 장 그대로(-1).
+            float trackFill = -1f;
+            if (_qt != null && _qt.Steps.Count > 0)
+            {
+                int last = _qt.Steps[_qt.Steps.Count - 1].Points;
+                trackFill = last > 0 ? QuestRun.Medal(_qs, _qt, _qDaily) / (float)last : 0f;
+            }
+            Track(box, B, Layout.QsTrackIcon, Layout.QsTrackPitch, trackNums.Length, Layout.QsTrackNums, Palette.Yellow, trackIcons, trackNums, "트랙 아이콘 줄(" + trackNums.Length + "칸)", "트랙 아이콘(1칸)", trackFill);
             // T311 1항(주인 «아이템 아이콘 + 개수도 표시 · 몇 개 받는지») — 칸 오른쪽 아래에 **작은 개수**(레퍼런스 15: 60 칸 «50» · 100 칸 «100» · 1개짜리는 안 적는다).
             //   상품이 둘 이상인 칸은 첫 것만(아이콘과 같은 규칙) · `recipeRandom 20`(T292) 은 «20».
             //   글자는 «정말 작아야 하는 배지»(T63 · TextKind.Small · 하한 없음) — 칸이 79px 라 본문 40 은 못 들어간다(들어가면 그림을 덮는다).
@@ -428,9 +458,20 @@ namespace KkomaKnight.Game
                     }
                     if (gotList != null && k < gotList.Count && gotList[k])
                     {
-                        // 출석(16)의 받은 칸과 같은 ✓ · 같은 자리
+                        // T359 ⓑ(주인 «얻었으면 꺼멓게 되서 얻은 거처럼») — ✓ «앞에» 칸을 누른다.
+                        //   누르는 방법은 출석(16)과 **같은 함수**다(`DimClaimed`) — 같은 뜻(«이미 받았다»)이 두 화면에서 다른 어둡기면 그것이 더 이상하다.
+                        //   ⚠ ✓ 는 그 «뒤에» 얹는다 — 순서를 바꾸면 ✓ 자신이 같이 어두워진다.
+                        //   ⚠ 이 칸의 ✓ 는 이름이 «Got» 이라 출석의 «Check» 와 다르다 — 이름은 안 바꿨다(T311 이 붙인 이름이고, 바꾸면 그 절의 자·하니스가 못 찾는다).
+                        DimClaimed(cell as RectTransform);
                         var ck = UiKit.Icon(cell, "Got", "pi.check", ClaimedCheck); UiKit.Pct(ck.rectTransform, ClaimedCheckRect); ck.preserveAspect = true;
+                        ck.transform.SetAsLastSibling();
                     }
+                    // T359 ⓐ(주인 «포인트 얻어서 얻을 수 있는 거는 빨간점 알림» + 재차 «그 버튼들 빨간점 알림 있어야 함») —
+                    //   받을 수 있는 칸에 점을 켠다. **판정은 `QuestRun.CanClaim` 한 곳**이고 아래 «누르면 받는다» 가 쓰는 그 함수와 같다 —
+                    //   그래서 «점은 켜졌는데 안 눌린다»(또는 그 반대)가 구조적으로 생기지 않는다.
+                    //   칸 자체가 버튼이라(아래 `UiKit.Clickable(cell, …)`) 주인이 말한 «그 버튼» 과 «그 칸» 은 여기서 같은 것이다.
+                    if (_qd != null && _qs != null && QuestRun.CanClaim(_qs, _qd, _qDaily, k))
+                        UiKit.AlertDot(cell, "TrackDot", new Vector2(1, 1), new Vector2(-2, 2), UiKit.PxSize(Layout.QsTrackIcon).y * TrackDotPct);
                 }
             }
             // T257 — 주인 «20포인트 채워지면 퀘스트 팝업 상단에 20포인트 부분 것 얻을 수 있고». **채운 칸만** 눌린다.
@@ -944,6 +985,25 @@ namespace KkomaKnight.Game
             UiKit.Bordered(frame);   // T69 — 칸 테두리(레퍼런스 16 도 칸마다 검은 외곽선)
         }
 
+        /// <summary>
+        /// «이미 받았다» 로 칸을 누른다 — 칸 안의 <b>모든 그림</b>에 <see cref="ClaimedDark"/> 를 곱한다(색을 갈아치우지 않으므로 무엇이었는지는 그대로 보인다).
+        /// <para>
+        /// T359 ⓑ(주인 2026-09-10 «얻었으면 꺼멓게 되서 얻은 거처럼») 때 <see cref="ClaimedMark"/> 에서 떼어 냈다 —
+        /// 퀘스트 트랙은 <b>제 ✓(«Got»)를 이미 갖고 있어서</b> 그 함수를 통째로 쓰면 ✓ 가 둘이 되고 이름도 갈린다.
+        /// <b>같은 뜻(«이미 받았다»)은 같은 모양이어야 하지만, 같은 «묶음» 일 필요는 없다</b> — 겹치는 부분만 나눈다.
+        /// </para>
+        /// ⚠ 부르는 쪽은 <b>✓ 를 얹기 «전에»</b> 부른다 — 뒤에 부르면 ✓ 자신이 같이 어두워진다.
+        /// </summary>
+        static void DimClaimed(RectTransform cell)
+        {
+            if (cell == null) return;
+            foreach (var im in cell.GetComponentsInChildren<Image>(true))
+            {
+                if (im == null) continue;
+                var c = im.color; im.color = new Color(c.r * ClaimedDark, c.g * ClaimedDark, c.b * ClaimedDark, c.a);
+            }
+        }
+
         /// <summary>조각 하나의 그림 색을 바꾼다 — 없으면 아무 일도 안 한다(조각이 빠진 프리팹에서도 화면이 안 깨지게).</summary>
         static void Paint(Transform root, string path, Color c)
         {
@@ -983,11 +1043,7 @@ namespace KkomaKnight.Game
         static void ClaimedMark(RectTransform cell, bool claimed)
         {
             if (cell == null || !claimed) return;
-            foreach (var im in cell.GetComponentsInChildren<Image>(true))
-            {
-                if (im == null) continue;
-                var c = im.color; im.color = new Color(c.r * ClaimedDark, c.g * ClaimedDark, c.b * ClaimedDark, c.a);
-            }
+            DimClaimed(cell);
             var ck = UiKit.Icon(cell, "Check", "pi.check", ClaimedCheck);
             UiKit.Pct(ck.rectTransform, ClaimedCheckRect);
             ck.transform.SetAsLastSibling();
