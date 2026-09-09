@@ -533,11 +533,15 @@ namespace KkomaKnight.Tests.Play
 
                 // T155 ⓒ(주인 ««레벨 업» 위에 글로우 서클이랑 이펙트 라이트 있어야 하는데 없더라 · 회전하게») — 리본 «뒤» 에 빛 두 겹
                 var titleGlow = UiKit.Find(perk, "TitleGlow"); Assert.IsNotNull(titleGlow, "«레벨 업» 리본 뒤 빛 담개(T155 ⓒ)");
-                Assert.IsTrue(UiKit.HasLight(titleGlow), "리본 뒤 도는 이펙트 라이트(T155 ⓒ)");
-                Assert.IsTrue(UiKit.HasGlow(titleGlow), "리본 뒤 글로우 서클(T155 ⓒ · 아래 겹)");
+                // ⚑ T320(주인 2026-09-09 인스펙터) — 빛 두 겹이 이제 **한 겹 더 안**에 있다: `TitleGlow › Mask › LightMask › Glow·Light·Dust`.
+                //   그 `Mask` 가 «빛의 아래 절반» 을 잘라 리본 뒤에서 위로만 보이게 한다(주인 «반 잘리는 식으로»).
+                //   이 자는 «빛이 있는가» 를 재는 자리라 **찾는 곳만** 한 겹 내린다 — 마스크 자체의 수는 `PerkShineTests` 가 잰다.
+                var glowMask = titleGlow.Find("Mask"); Assert.IsNotNull(glowMask, "제목 빛을 자르는 사각 마스크(T320 · 주인 구조)");
+                Assert.IsTrue(UiKit.HasLight(glowMask), "리본 뒤 도는 이펙트 라이트(T155 ⓒ)");
+                Assert.IsTrue(UiKit.HasGlow(glowMask), "리본 뒤 글로우 서클(T155 ⓒ · 아래 겹)");
                 var rib = UiKit.Find(perk, "Title_01_NoDeco_Tangerine");
                 if (rib != null) Assert.Less(titleGlow.GetSiblingIndex(), rib.GetSiblingIndex(), "빛 두 겹은 리본 «뒤»(형제 순서 앞 — 자식으로 넣으면 리본 «위» 로 그려진다)");
-                var ribLight = (RectTransform)titleGlow.Find(UiKit.LightMaskName + "/" + UiKit.LightName);
+                var ribLight = (RectTransform)glowMask.Find(UiKit.LightMaskName + "/" + UiKit.LightName);
                 Assert.IsTrue(UiKit.IsTweening(ribLight), "리본 뒤 빛살은 돈다(주인 «회전하게») — 글로우 서클은 원이라 안 돌린다");
                 // 회차 2(결정 479) — 크기를 «칸 긴 변 × 1.9» 에 맡겼더니 리본이 가로로 길어 한 변이 1231px 가 되고
                 // 빛이 화면 위 절반을 덮었다(screens run 360 눈 확인). 레퍼런스의 빛은 화면 폭의 47.1% 안이다.

@@ -7467,7 +7467,9 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > **T234 3항 «사각 마스크를 씌우지 마라» 는 닫혔다** — 다만 **주석을 지우지 않았다**: `clip: false` 는 남기고 뜻을 «자를 것이 없다» → **«자르는 것은 이 `Mask` 다»** 로 갈아 끼웠다(RectMask2D 를 겹쳐 걸면 마스크가 둘이 되어 빛판 여백이 무의미해진다). **막아 둔 문을 열 때는 «왜 막았었나» 를 지우는 대신 «무엇이 달라졌나» 를 옆에 적는다.**
 > **자**(`PerkShineTests.TitleGlowIsMaskedSoOnlyTheTopHalfShows`) — 계층 이름 계약 · 마스크 555×428.48 ±0.5 · 자리 (0, −63.26) ±0.5 · `showMaskGraphic == false` · 빈 흰 `Image` 있음 · `RectMask2D` 없음 · 빛판 네 여백 ±0.5 · **마지막 줄이 요점**: «빛판 가운데가 마스크 바닥보다 아래인가»(부호를 뒤집으면 이름·크기 단언은 전부 통과하고 원만 온전해진다).
 > **ⓑ 를 위해** `Overlay.TitleGlowMask(host, scale)`·`TitleGlowPlate(mask, scale)` 가 **배율 인자**를 이미 받는다 — `scale = 리본 폭 ÷ Overlay.TitleRibbonRefW(656)`. 특전은 1 이고 **새 수는 0** 이다. (`UiKit.cs` 가 아니라 `Overlay.cs` 에 둔 까닭은 `FitRibbonText` 와 같다 — 그 파일이 남의 lock 이면 헬퍼가 못 선다.)
-> **확인** = 다음 완주 런 `screens` **04** — 빛이 리본 뒤에서 **위로만** 보이고 리본 아래로 새는 픽셀이 0 인가 + `PerkShineTests` 새 자 초록.
+> **✔ 확인 끝(런 783)** — `screens` **04** 눈 확인: 빛이 **리본 위로만** 부채꼴로 뜨고 **리본 아래로 새는 빛이 0** 이다(주인 «반 잘리는 식으로 마스크 되게» 그대로) · `[CI명부] PerkShineTests(3)` 실패 0.
+> ⚠ **대신 남의 자 하나가 부러졌고 그것도 이 회차에 고쳤다** — `UiTextureTests:536` 이 `TitleGlow` **직계**에서 빛을 찾고 있었는데(`UiKit.HasLight(titleGlow)` · `titleGlow.Find("LightMask/Light")`) 내가 그 사이에 `Mask` 를 끼웠다. **찾는 곳만 한 겹 내렸다**(기댓값은 한 자도 안 바꿨다 — 그 자가 재는 것은 여전히 «빛이 있는가» 이고 마스크의 수는 `PerkShineTests` 가 잰다).
+> ⚑ **ⓑ 를 하는 사람에게** — **계층에 한 겹을 끼우면 `check_stale_asserts` 가 못 잡는다**(그 자는 «지운 이름» 을 보는데 여기서는 아무것도 안 지우고 경로만 길어진다). 리본 팝업마다 `Find("<부모>/LightMask/...")`·`Has*(<부모>)` 를 **`grep` 한 번으로 직접 세고** 시작해라 — 이번엔 두 파일 세 줄이었다.
 
 0. **주인이 준 것(그대로 옮긴다 · 단위 = 프리팹 캔버스 px · 이 프리팹 루트는 우리 프레임 1080×2337 에 Stretch 된다 `Overlay.cs:339`)** —
    ```
