@@ -462,7 +462,15 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── ⑪ 던전 세부 팝업 (21) ─────────────────────────
-        void OpenDungeonDetail(string key)
+        /// <summary>
+        /// 던전 세부 팝업(21). <paramref name="view"/> = <b>보고 있는 층</b>(T291 5회차 · 0 이면 «도전 층» = 깬 최고층 + 1).
+        /// <para>
+        /// ◀▶ 는 <b>이 함수를 다시 부른다</b> — 칸만 갈아 끼우지 않는다. 이 파일이 이미 그 길을 쓰고 있고(소탕 뒤 <c>onClose</c> 가 팝업을 다시 연다),
+        /// <c>Overlay.Begin()</c> 이 팝업 층을 통째로 비우므로 <b>반쯤 지운 화면</b>이 생길 자리가 없다. 층은 보기만 바뀌고
+        /// <b>«도전» 은 언제나 도전 층 · «소탕» 은 언제나 최고층</b>이다(§2 T291 2항).
+        /// </para>
+        /// </summary>
+        void OpenDungeonDetail(string key, int view = 0)
         {
             var d = Dungeons[0]; foreach (var x in Dungeons) if (x.key == key) d = x;
             RollTickets();
@@ -474,17 +482,37 @@ namespace KkomaKnight.Game
             var note = UiKit.Panel(box, "Note", "fr.r12", Palette.A(Palette.Hex("#3A1216"), 0.92f)); UiKit.Pct(note.rectTransform, Layout.DdNote.Within(Layout.DdBox)); UiKit.Tag(note.transform, "조건 문구");
             UiKit.Label(note.transform, 2, 0, 96, 100, "전설·신화 특전만 등장", TextSize.Body, Palette.Red);
             // 층수 ◀ 색 = Gray: 크림 패널 위라 Cream 이면 안 보인다(T43 비평 회차 1 · 21 감점 원인) · 레퍼런스도 회색 화살표. ⚠ 한 줄에 문장 4개 — 뒤에 // 주석을 붙이면 Pct·Clickable·Tag 가 주석 처리된다(CI #87 회귀)
-            var arrow = UiKit.Icon(box, "FloorPrev", "pi.arrow_left", Palette.Gray); UiKit.Pct(arrow.rectTransform, Layout.DdArrow.Within(Layout.DdBox)); UiKit.Clickable(arrow.transform, Noop); UiKit.Tag(arrow.transform, "층수 화살표");
+            // T291 5회차 — 층 보기. 레퍼런스 21 은 «43 Floor» 에 ◀ 하나뿐인데, 그 그림은 **맨 위 층에 서 있는 판**이라 오른쪽이 없는 것이다.
+            //   그래서 ◀ 는 1층 위에서만 · ▶ 는 도전 층 아래에서만 산다(맨 위에서는 레퍼런스와 똑같이 ◀ 하나만 보인다).
+            //   ▶ 는 **같은 조각을 좌우로 뒤집어** 쓴다 — 새 그림도, 표 ⑬ 의 새 행도 만들지 않는다(자리는 ◀ 를 원 기준으로 마주 본 자리).
+            int challengeFloor = DungeonSweep.Challenge(App != null ? App.Save : null, Dun, key);
+            int floorView = view > 0 ? Math.Min(view, challengeFloor) : challengeFloor;
+            if (floorView < 1) floorView = 1;
+            var arrow = UiKit.Icon(box, "FloorPrev", "pi.arrow_left", Palette.Gray); UiKit.Pct(arrow.rectTransform, Layout.DdArrow.Within(Layout.DdBox)); UiKit.Tag(arrow.transform, "층수 화살표");
+            if (floorView > 1) { int prev = floorView - 1; UiKit.Clickable(arrow.transform, () => OpenDungeonDetail(key, prev)); }
+            else UiKit.Clickable(arrow.transform, Noop);   // 1층에서는 내려갈 데가 없다(레퍼런스처럼 회색으로 서 있기만 한다)
+            if (floorView < challengeFloor)
+            {
+                int next = floorView + 1;
+                var fwd = UiKit.Icon(box, "FloorNext", "pi.arrow_left", Palette.Gray);
+                var ar = Layout.DdArrow; var mirrored = new Layout.R(100f - ar.X - ar.W, ar.Y, ar.W, ar.H);
+                UiKit.Pct(fwd.rectTransform, mirrored.Within(Layout.DdBox));
+                fwd.rectTransform.localScale = new Vector3(-1f, 1f, 1f);   // 같은 조각을 뒤집어 ▶ 로
+                UiKit.Clickable(fwd.transform, () => OpenDungeonDetail(key, next));
+                // ⚠ 이름표(UiKit.Tag)를 일부러 안 단다 — 이름표는 «표 ⑬ 의 행과 짝» 이라는 뜻인데(T279 대조 자),
+                //   레퍼런스 21 에는 오른쪽 화살표가 없어 줄 수 있는 행이 없다. 없는 행을 가리키는 이름표는 그 자를 헛돌게 한다.
+                //   (자리는 표의 «층수 화살표» 를 원 기준으로 마주 본 값이라, 표가 바뀌면 이쪽도 저절로 따라간다.)
+            }
             var circle = UiKit.Panel(box, "FloorCircle", "fr.circle", Palette.Hex("#141414")); UiKit.Pct(circle.rectTransform, Layout.DdFloor.Within(Layout.DdBox)); UiKit.Tag(circle.transform, "층수 원");
             // T291 2회차 — 층 원에 **도전 층**(= 깬 최고층 + 1)을 찍는다. 여태 «1» 이 글자로 박혀 있었다(층이 없던 시절의 자리).
             // 층이 없는 던전(지옥의 문)에서는 Challenge 가 늘 1 이라 이 화면은 한 픽셀도 안 바뀐다.
-            UiKit.Label(circle.transform, 0, 8, 100, 56, DungeonSweep.Challenge(App.Save, App.Data.Dungeon, key).ToString(), 56, Palette.Orange).fontStyle = FontStyles.Bold; UiKit.Label(circle.transform, 0, 62, 100, 32, "층", TextSize.Aux, Palette.Orange, kind: TextKind.Aux);
+            UiKit.Label(circle.transform, 0, 8, 100, 56, floorView.ToString(), 56, Palette.Orange).fontStyle = FontStyles.Bold; UiKit.Label(circle.transform, 0, 62, 100, 32, "층", TextSize.Aux, Palette.Orange, kind: TextKind.Aux);
             var rewards = UiKit.Spawn("ui.frameDark", box); var rrt = (RectTransform)rewards.transform; rrt.name = "Rewards"; UiKit.Pct(rrt, Layout.DdRewards.Within(Layout.DdBox)); UiKit.Tag(rrt, "보상 박스");
             UiKit.Label(rrt, 0, 3, 100, 24, "보상", TextSize.Body, Palette.White).fontStyle = FontStyles.Bold;
             var cells = UiKit.Rect(box, "RewardCells"); UiKit.Pct(cells, Layout.DdRewardCells.Within(Layout.DdBox));
             // T99 4항 — 보상 칸은 표(dungeon.json)가 만든다: «첫 클리어 총액» 칸들(빨간 «최초» 배지 · T123) + «이후 클리어» 칸들.
             // 지옥의 문 = 펫알 11 · 골드 1,000(첫) + 펫알 5 · 골드 1,000 = 네 칸이라 레퍼런스 21(초록 프레임 4 · 앞 두 칸에 FIRST 배지)과 같은 꼴이고 표 ⑪ 도 그대로다.
-            var rewardDefs = RewardCells(key, d.rewards);
+            var rewardDefs = RewardCells(key, d.rewards, floorView);   // T291 — 보고 있는 층의 보상
             // T214 — 이 줄만 «꽉 채운다»(fill): 레퍼런스 21 은 넉 장이 보상 상자 폭을 그대로 쓴다(칸 ≈78px · 틈 ≈28px · 720폭 그림 실측).
             // 고정 틈(칸 폭의 12%)으로 모으면 묶음이 55.6 → 48.1%(−7.5%p)로 좁아져 §5 에서 0점이었다.
             var cellRts = IconRow(cells, Layout.DdRewardCells, Icons(rewardDefs), "ui.itemFrame.green", "RewardCell:", true, fill: true);
@@ -753,8 +781,8 @@ namespace KkomaKnight.Game
         /// 던전 세부(21)의 보상 칸 목록을 표(<c>dungeon.json</c>)에서 만든다 — «첫 클리어 총액» 칸들(배지) 다음에 «이후 클리어» 칸들.
         /// 표가 없으면 옛 껍데기 그대로(카드의 아이콘 목록을 네 칸으로 채운다 · 수량 글자 없음).
         /// </summary>
-        List<RewardCellDef> RewardCells(string key, string[] fallbackIcons)
-            => CellsOf(Dun, key, fallbackIcons, DungeonSweep.Challenge(App != null ? App.Save : null, Dun, key));
+        List<RewardCellDef> RewardCells(string key, string[] fallbackIcons, int floor = 0)
+            => CellsOf(Dun, key, fallbackIcons, floor > 0 ? floor : DungeonSweep.Challenge(App != null ? App.Save : null, Dun, key));
 
         /// <summary>표에서 «세부 팝업 칸» 을 뽑는 규칙(위 <see cref="RewardCells"/> 의 static 짝 · <see cref="CardRewardKinds"/> 가 이것을 쓴다).</summary>
         /// <param name="floor">T291 — 몇 층의 보상을 그릴 것인가(0 이면 «표의 한 벌» = 층이 없던 시절 그대로).
