@@ -63,6 +63,9 @@ namespace KkomaKnight.Core
         /// <summary>장착 스탯 = 같은 등급 장비 기여 × <see cref="GearFactor"/> × (1 + <see cref="PerLevel"/> × (Lv-1)).</summary>
         public double GearFactor = 0.5, PerLevel = 0.10;
 
+        /// <summary>다이아 소환 값 — 1회 · 10회(주인 2026-09-09 09:3X «1회 소환 다이아 100개 · 10회는 1,000개»). 펫알로 뽑을 때는 안 쓴다.</summary>
+        public double CostOne = 100, CostTen = 1000;
+
         public Pet Of(string id)
         {
             if (string.IsNullOrEmpty(id)) return null;
@@ -104,6 +107,11 @@ namespace KkomaKnight.Core
             for (int i = 1; i < d.SlotUnlockPulls.Length; i++)
                 if (d.SlotUnlockPulls[i] < d.SlotUnlockPulls[i - 1])
                     throw new FormatException("pet.json: slotUnlockPulls 가 줄어든다 — 뒤 칸이 앞 칸보다 먼저 열린다");
+
+            d.CostOne = j["cost"]["one"].Num(d.CostOne);
+            d.CostTen = j["cost"]["ten"].Num(d.CostTen);
+            // 값이 0 이하면 «공짜 소환» 이 되고 아무도 안 운다 — 표가 조용히 어긋나는 자리라 읽는 순간 운다(결정 818 갈래).
+            if (d.CostOne <= 0 || d.CostTen <= 0) throw new FormatException("pet.json: cost.one·cost.ten 은 0 보다 커야 한다 — 지금 " + d.CostOne + "·" + d.CostTen);
 
             d.ProcChance = j["proc"]["chance"].Num(d.ProcChance);
             if (d.ProcChance <= 0 || d.ProcChance > 100) throw new FormatException("pet.json: proc.chance 는 0 초과 100 이하여야 한다 — 지금 " + d.ProcChance);
@@ -191,6 +199,61 @@ namespace KkomaKnight.Core
     /// </summary>
     public static class Pets
     {
+        /// <summary>
+        /// 소환 버튼 한 개가 «지금 무엇으로 몇 번» 뽑는지 — 화면이 글자·아이콘·눌림을 전부 여기서 읽는다(T293 5항 ⓖ).
+        /// <para>버튼이 스스로 세지 않게 하려는 것이다 — 두 버튼이 각자 세면 «소환은 펫알인데 x10 은 다이아» 같은 어긋남이 화면에서만 산다.</para>
+        /// </summary>
+        public struct PullOffer
+        {
+            /// <summary>펫알로 뽑나(false = 다이아).</summary>
+            public bool ByEgg;
+            /// <summary>이번 누름에 뽑는 횟수.</summary>
+            public int Count;
+            /// <summary>치를 펫알(<see cref="ByEgg"/> 면 <see cref="Count"/> 와 같다 · 아니면 0).</summary>
+            public double Egg;
+            /// <summary>치를 다이아(<see cref="ByEgg"/> 면 0).</summary>
+            public double Diamond;
+        }
+
+        /// <summary>
+        /// <b>이번에 한 번에 쓸 펫알 개수</b> = <c>min(가진 개수, 캡)</c> — <see cref="GachaKeys.UseCount"/> 와 <b>같은 규칙</b>이다
+        /// (주인 «키로 상자 소환할 때랑 같은 느낌» · T275 «17개면 10회 뽑고 7/7»).
+        /// <para><b>캡은 부르는 쪽이 준다</b> — 표 값(<c>gacha.json</c> 의 <c>tenPull.count</c>)이라 여기에 10 을 안 박는다(§1).
+        /// 0 이하로 들어오면 1 로 본다 — 표가 비었다고 버튼을 죽이는 것보다 «펫알 1개 = 1회»(T273)로 물러서는 쪽이 덜 다친다.</para>
+        /// </summary>
+        public static int EggUse(double eggs, int cap)
+        {
+            if (eggs < 1) return 0;
+            int c = cap > 0 ? cap : 1;
+            return eggs >= c ? c : (int)eggs;
+        }
+
+        /// <summary>
+        /// 소환 버튼 하나의 값 — 주인 09:3X 확정. 펫알 K 개일 때:
+        /// <list type="bullet">
+        /// <item><b>K = 0</b> — 둘 다 다이아(1회 <c>cost.one</c> · x10 <c>cost.ten</c>).</item>
+        /// <item><b>1 ≤ K &lt; 캡</b> — «소환» 만 펫알로 <b>K 회</b>(가진 것을 다 쓴다) · «x10» 은 그대로 다이아.</item>
+        /// <item><b>K ≥ 캡</b> — <b>둘 다</b> 펫알로 캡(10)회.</item>
+        /// </list>
+        /// <para>
+        /// ⚑ 갈림길은 <b>«펫알을 쓸 수 있나» 하나뿐이고, x10 쪽만 «캡을 채웠나» 를 더 본다.</b>
+        /// 두 버튼이 같은 함수를 부르므로 규칙이 한 곳에 있다 — T289 가 상점에서 세운 그 꼴이다.
+        /// </para>
+        /// <para>펫알 모드는 <b>다이아가 모자라도 눌린다</b>(T289 3항) — 치르는 것이 다이아가 아니기 때문이다.</para>
+        /// </summary>
+        /// <param name="ten">«x10» 버튼인가(false = «소환»).</param>
+        /// <param name="eggs">가진 펫알(<c>SaveData.PetEgg</c>).</param>
+        /// <param name="cap">한 번에 쓸 수 있는 최대 개수(<c>D.Gacha.TenPullCount</c> · 표 값).</param>
+        public static PullOffer Offer(PetData d, bool ten, double eggs, int cap)
+        {
+            int use = EggUse(eggs, cap);
+            int c = cap > 0 ? cap : 1;
+            bool byEgg = ten ? use >= c : use >= 1;
+            if (byEgg) return new PullOffer { ByEgg = true, Count = use, Egg = use };
+            double one = d != null ? d.CostOne : 0, tenCost = d != null ? d.CostTen : 0;
+            return new PullOffer { ByEgg = false, Count = ten ? c : 1, Diamond = ten ? tenCost : one };
+        }
+
         /// <summary>등급 하나를 <see cref="PetData.Rate"/> 대로 굴린다(70/25/5). 굴림은 게임 <see cref="IRng"/> 하나만 쓴다.</summary>
         public static PetData.Grade RollGrade(PetData d, IRng rng)
         {
