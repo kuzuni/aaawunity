@@ -8611,6 +8611,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/ShopScreen.cs` + `Game/UiParticles.cs`(신규) · `Tests/PlayMode/UiSmokeTests.cs`. lock `T340`.
 
+> **🔄 push · 확인 전(16:1X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 955 · lock `T340` 쥔 채 · 커밋 메시지의 953 은 955)** — 1~5항 그대로(회전 뗌 · `UiParticles` 신규 · 열림 시각 48개 · 칸 터짐도 같은 자 · 자 셋). ⚠ 헤드리스 PlayMode 에서 처음 도는 자리 — 빨가면 `OnPopulateMesh`·`IsAlive`. 확인 = 다음 완주 런 `UiSmokeTests` + `screens` 10 + 주인 폰.
+
 ### T341 — ⚑ 주인: **상점 다이아·골드 카드 그라디언트 = 주인 지정 색 · 완전 불투명** (주인 2026-09-10 «다이아 카드 하단꺼 그라디언트 색깔 EA00FF 에 완전불투명하게하기 · 상단 그라디언트는 색깔 8200FF 에 완전불투명하게하기 · 골드카드는 상단꺼 183D6A, 하단꺼 14ADFF 로 하고 완전 불투명으로 · 둘다 상점 부분 만하는거임»)
 
 0. **값(주인이 직접 줬다 — 레퍼런스 실측을 덮는다)** — 다이아 `col.grad.cardGem.top` = **#8200FF** · `.bottom` = **#EA00FF**(옛 실측 #40116D/#AA0CB8) · 골드 `col.grad.cardGold.top` = **#183D6A**(그대로) · `.bottom` = **#14ADFF**(옛 #1683BE). 색은 **카탈로그(`col.grad.*`)와 `GradientPalette` 의 폴백 두 곳**에 같이 있다 — 한쪽만 고치면 카탈로그를 못 읽는 자리에서 옛 색이 나온다.
@@ -8654,6 +8656,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 5. **확인** — `screens` **19** + 주인 폰.
 
 순서 — `Game/SeasonPassScreen.cs` · `Game/UiKit.cs`(가로 입구 한 줄) · `Game/GradientSideways.cs`(신규) · `catalog.json` · `Game/GradientPalette.cs` · `Tests/PlayMode/GradientPaletteTests.cs` · `docs/assets-map.md`. **T322·T328 과 같은 파일**이라 그 lock 이 살아 있으면 그 절에서 같이, 아니면 lock `T344`.
+
+> **🔄 push · 확인 전(16:1X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 954 · lock `T344` 쥔 채 · 커밋 메시지의 952 는 954)** — 0~4항 그대로(`GradientSideways` 신규 · `UiKit.GradientCardSide` · 색 셋 · `GradientPaletteTests` 갈래 교체 · `SeasonPassLookTests` 에 `IsSideways`). 확인 = 다음 완주 런 두 자 + `screens` 19.
 
 ### T345 — ⚑⚑ 주인: **특권 카드 그라디언트가 «티가 안 난다» — 색 셋 지정 + 진하게** (주인 2026-09-10 «특권 부분도 마찬가지로 그라디언트들 있는데 티가 안남 · 광고 제거부터 초록 파랑 · 월간은 하늘색 보라 · 평생 다이아는 빨강 노랑»)
 

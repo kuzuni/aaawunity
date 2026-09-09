@@ -1582,6 +1582,9 @@ namespace KkomaKnight.Tests.Play
             {
                 var light0 = UiKit.Find(chestGrp0, "Light");
                 Assert.IsNotNull(light0, "조각의 상자 뒤 빛(Light)");
+                // T340(주인 2026-09-10 «라이트 이펙트가 존나 회전하고 있네 · 그거는 멈추고») — T307 ⓐ 의 무한 회전 트윈은 시퀀스 «밖»에 따로 걸려 있었으므로
+                //   `DOTween.IsTweening(light)` 이 그것을 본다(시퀀스 안 배율 트윈은 안 보인다 · T158 회차 2 주석). 되돌리면 여기서 빨개진다.
+                Assert.IsFalse(DOTween.IsTweening(light0), "상자 뒤 빛살은 돌지 않는다(T340 · 주인 «회전 멈추고») — 지금 트윈이 걸려 있다");
                 Assert.IsTrue(DG.Tweening.DOTween.IsTweening(light0, true),
                               "상자 뒤 빛에 도는 트윈이 걸려 있어야 한다(T307 ⓐ · 주인 «안 움직이네 움직이게 하셈»)");
             }
@@ -1661,6 +1664,12 @@ namespace KkomaKnight.Tests.Play
                 //      그래서 이 단언은 반드시 위 `CompleteAllTweens()` **뒤**여야 한다(앞에 두면 아직 0 이다).
                 Assert.Greater(ShopScreen.LastBurstShards, 0,
                     "얻은 칸이 나타날 때 파티클 조각이 터져야 한다(T307 ⓑ) — 지금 " + ShopScreen.LastBurstShards + "개");
+                // T340 — 열림 시각의 «상자 알갱이» 도 이 기록에 더해진다(상자 48 + 칸마다 10·최고 칸 20) 그리고 **진짜 ParticleSystem** 이 창에 선다.
+                Assert.GreaterOrEqual(ShopScreen.LastBurstShards, ShopScreen.ChestGrainCount + ShopScreen.ChestBurstShards,
+                    "상자 알갱이(" + ShopScreen.ChestGrainCount + ") + 칸 알갱이가 다 기록돼야 한다(T340) — 지금 " + ShopScreen.LastBurstShards);
+                var grains = _app.Overlay.Root.GetComponentsInChildren<UiParticles>(true);
+                Assert.Greater(grains.Length, 0, "열린 뒤 창에 진짜 파티클(UiParticles · ParticleSystem)이 서야 한다(T340 · 주인 «파티클 시스템으로 하지»)");
+                Assert.IsTrue(System.Array.Exists(grains, g => g.GetComponent<ParticleSystem>() != null), "UiParticles 는 ParticleSystem 을 실제로 달고 있어야 한다(T340)");
                 var got = UiKit.Find(_app.Overlay.Root, "Got");
                 for (int i = 0; i < got.childCount; i++)
                 {

@@ -864,8 +864,16 @@ namespace KkomaKnight.Game
         public const int ChestBurstShards = 10;
         /// <summary>튀는 거리(px) · 도는 시간(초) · 조각 크기(px) — <see cref="ChestBurstShards"/> 와 같은 집에 둔다(결정 893).</summary>
         public const float ChestBurstRadius = 96f, ChestBurstSec = 0.45f, ChestBurstSizePx = 26f;
-        /// <summary>터짐 조각의 이름 — 자가 «남아 있는가» 를 이 이름으로 센다.</summary>
+        /// <summary>(T307 ⓑ 시절의 별 조각 이름 · T340 부터 조각은 <see cref="UiParticles.ObjName"/> 이다 — 옛 자가 이 이름을 볼 수 있어 남긴다.)</summary>
         public const string ChestBurstName = "ChestBurst";
+        /// <summary>
+        /// T340 — <b>상자가 열리는 순간</b> 상자 한가운데서 터지는 알갱이(주인 2026-09-10 «오픈됐을 때 알갱이 파티클 이펙트 터져야 하는데»).
+        /// <para>칸에서 터지는 것(<see cref="ChestBurstShards"/>)보다 <b>수가 많고 멀리·크게</b> 간다 — 그것은 «아이템 하나가 왔다» 이고 이것은 «상자가 열렸다» 라서다.</para>
+        /// <para>수를 여기 <c>const</c> 로 두는 까닭은 <see cref="ChestBurstShards"/> 주석과 같다(이 창의 연출 수는 전부 이 집에 산다 · 결정 893).</para>
+        /// </summary>
+        public const int ChestGrainCount = 48;
+        /// <summary>나는 자리의 반지름(px) · 퍼지는 빠르기(px/초) · 알갱이 한 변(px) · 나서 사라지기까지(초).</summary>
+        public const float ChestGrainRadius = 40f, ChestGrainSpeed = 520f, ChestGrainSizePx = 22f, ChestGrainSec = 0.9f;
         /// <summary>
         /// 마지막 결과 창이 <b>실제로 띄운</b> 조각 수 — 0 이면 «연출이 안 걸렸다»(<see cref="LastChestScale"/> 와 같은 방법 · T158 ⓐ 결정 329).
         /// <para>«지금 화면에 몇 개 있나» 로는 못 잰다 — 0.45초에 지나가고 스스로 지워진다.</para>
@@ -1015,17 +1023,18 @@ namespace KkomaKnight.Game
                 // 낙하 동안에는 빛이 없어야 «열리면서 터진다» 로 읽힌다 → 0 에서 시작(예전 0.55 는 처음부터 보였다).
                 light.localScale = Vector3.zero;
                 seq.Insert(ChestOpenAt, light.DOScale(1f, 0.32f).SetEase(Ease.OutBack).SetUpdate(true).SetLink(light.gameObject));
-                // T307 ⓐ(주인 2026-09-09 09:1X «상자 부분에 파티클 이펙트 … 안 움직이네 움직이게 하셈») — 커진 뒤로 **계속 돈다**.
-                // ⚠ `UiKit.SetLightSpinning` 은 여기에 못 쓴다 — 그 함수는 «LightMask/Light» 를 찾아 **이미 걸린 트윈을 재생/정지**할 뿐이고,
-                //    이 빛은 조각(Shop_Chest_Open)이 제 자식으로 들고 온 것이라 그 구조도, 그 트윈도 없다. 그래서 카드와 **같은 꼴**로 여기서 건다.
-                //    도는 방향·주기는 `UiKit.LightBehind` 와 글자 그대로 같다(시계방향 · UiKit.LightPeriod) — 한 화면에서 둘이 반대로 돌면 그것이 눈에 띈다.
-                // ⚠ 시퀀스에 **넣지 않는다**: 무한 루프 트윈을 Sequence 에 끼우면 그 시퀀스가 영영 안 끝나고,
-                //    탭 스킵(`DOTween.CompleteAll`)이 «끝낼 수 없는 것» 을 만나 연출 마무리가 통째로 어그러진다.
-                //    창이 사라지면 SetLink 가 같이 죽인다(§1 «has been destroyed» 경고 0).
+                // T340(주인 2026-09-10 «라이트 이펙트가 존나 회전하고 있네 · 그거는 멈추고 알갱이 파티클이 퍼지는 이펙트로») —
+                //   여기 있던 T307 ⓐ 의 **무한 회전**(DOLocalRotate · UiKit.LightPeriod)을 뗀다. 주인이 09-09 에 «움직이게» 라 한 것의
+                //   답은 «빛을 돌리기» 가 아니라 **퍼지는 알갱이**였다(아래 Grains). ⚠ 다시 넣지 말 것 —
+                //   빛살은 열리는 순간 한 번 **커지기만** 하고 그 자리에 멎어 있는다.
                 light.localEulerAngles = Vector3.zero;
-                light.DOLocalRotate(new Vector3(0f, 0f, -360f), UiKit.LightPeriod, RotateMode.FastBeyond360)
-                     .SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart).SetUpdate(true).SetLink(light.gameObject);
             }
+            // T340 — **열리는 그 시각에 상자에서 알갱이가 터진다**(주인 «오픈됐을 때 알갱이 파티클 이펙트 터져야 하는데»).
+            //   나게 하고 움직이는 것은 **진짜 `ParticleSystem`** 이다(<see cref="UiParticles"/> · 주인 «파티클 시스템으로 하지») —
+            //   ScreenSpaceOverlay 를 넘는 법(그리는 자만 갈아 끼운다)은 그 자의 주석에 적혀 있다.
+            //   자리를 **부를 때 재는** 까닭은 <see cref="Grains"/> 와 같다(시퀀스를 짜는 시각에는 상자가 아직 낙하 시작 자리에 있다).
+            if (chestGrp != null)
+                seq.InsertCallback(ChestOpenAt, () => Grains(root, chestGrp, Palette.Cream, ChestGrainCount, ChestGrainRadius, ChestGrainSpeed, ChestGrainSizePx, ChestGrainSec));
             // T307 ⓑ — 칸이 «나타나는 그 시각» 에 그 칸에서 터진다. `Stagger` 와 **같은 셈**으로 시각을 낸다(그 함수가 t = start + i×step 로 넣는다) —
             //   두 벌로 적으면 한쪽이 낡는다. 조각을 만드는 것은 **그 시각의 콜백 안**이다:
             //   지금은 `GridLayoutGroup` 이 아직 안 돌아 칸의 자리가 (0,0) 이라, 여기서 좌표를 재면 전부 가운데서 터진다.
@@ -1035,7 +1044,7 @@ namespace KkomaKnight.Game
                 var c = cells[i]; if (c == null) continue;
                 var tint = Palette.ByName(Palette.RarName(got[i].Rar));
                 int shards = c == bestCell ? ChestBurstShards * 2 : ChestBurstShards;
-                seq.InsertCallback(ChestOpenAt + 0.06f + ChestCellStep * i, () => Burst(root, c, tint, shards));
+                seq.InsertCallback(ChestOpenAt + 0.06f + ChestCellStep * i, () => Grains(root, c, tint, shards, ChestBurstSizePx, ChestBurstRadius / ChestBurstSec, ChestBurstSizePx, ChestBurstSec));
             }
             float end = UiKit.Stagger(seq, cells, ChestOpenAt + 0.06f, ChestCellStep, ChestCellFrom);
             // 최고 등급 한 칸만 한 번 더 튄다(등급이 여럿이어도 하나 · 연출 길이는 그대로)
@@ -1045,45 +1054,29 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>
-        /// T307 ⓑ — <paramref name="cell"/> 한가운데에서 별 조각 <paramref name="count"/> 개가 방사로 튀며 사라진다.
+        /// T340 — <paramref name="target"/> 한가운데에서 <b>빛 알갱이</b>가 방사로 퍼진다.
+        /// 나게 하고 움직이는 것은 <b>진짜 <c>ParticleSystem</c></b> 이다(<see cref="UiParticles"/> · 주인 2026-09-10 «파티클 시스템으로 하지»).
         /// <para>
-        /// 자리를 <b>부를 때 잰다</b> — 시퀀스를 짜는 시각에는 <c>GridLayoutGroup</c> 이 아직 안 돌아 칸이 전부 (0,0) 이다(그때 재면 전부 가운데서 터진다).
-        /// 재는 법은 <see cref="RewardOrbs.TargetPos"/> 와 같은 꼴이다(월드 → 층의 왼쪽 아래 0,0).
+        /// ⚠ <b>여기서 하는 일은 «어디서 터지나» 를 재는 것뿐</b> — 분출·수명·색·크기 곡선은 전부 파티클 시스템이 돈다.
+        /// 예전(T307 ⓑ)에는 <c>pi.star</c> <c>Image</c> 를 개수만큼 세워 트윈 셋씩 걸었다(조각 10개 = 트윈 30개).
         /// </para>
         /// <para>
-        /// ⚠ <b>층은 칸이 아니라 창(<paramref name="layer"/>)이다</b> — 칸에 붙이면 칸의 등장 배율(<see cref="ChestCellFrom"/> → 1)이 조각까지 늘여
-        /// «터지는 거리» 가 칸마다 달라지고, 격자가 자르는 자리에서는 잘린다.
+        /// 자리를 <b>부를 때 잰다</b> — 시퀀스를 짜는 시각에는 <c>GridLayoutGroup</c> 이 아직 안 돌아 칸이 전부 (0,0) 이고,
+        /// 상자도 아직 낙하 시작 자리(<see cref="ChestFallFrom"/> px 위)에 있다. 재는 법은 <see cref="RewardOrbs.TargetPos"/> 와 같은 꼴이다.
         /// </para>
         /// <para>
-        /// ⚠ 트윈은 시퀀스에 <b>안 넣는다</b>(부를 때 이미 그 시퀀스가 도는 중이다) — 유한 트윈이라 탭 스킵(<c>DOTween.CompleteAll</c>)이 끝까지 돌려 주고,
-        /// 끝나면 스스로 지운다. 창이 먼저 사라지면 <c>SetLink</c> 가 같이 죽인다(§1 «has been destroyed» 경고 0).
+        /// ⚠ <b>층은 칸이 아니라 창(<paramref name="layer"/>)이다</b> — 칸에 붙이면 칸의 등장 배율(<see cref="ChestCellFrom"/> → 1)이 알갱이까지 늘여
+        /// «퍼지는 거리» 가 칸마다 달라지고, 격자가 자르는 자리에서는 잘린다.
         /// </para>
         /// </summary>
-        static void Burst(RectTransform layer, RectTransform cell, Color tint, int count)
+        static void Grains(RectTransform layer, RectTransform target, Color tint, int count,
+                           float radius, float speed, float sizePx, float sec)
         {
-            if (layer == null || cell == null || count <= 0) return;
-            var world = cell.TransformPoint(cell.rect.center);
+            if (layer == null || target == null || count <= 0) return;
+            var world = target.TransformPoint(target.rect.center);
             var at = (Vector2)layer.InverseTransformPoint(world) - layer.rect.min;
-            for (int i = 0; i < count; i++)
-            {
-                var img = UiKit.Icon(layer, ChestBurstName, "pi.star", tint);
-                if (img == null) return;                      // 조각을 못 세우면 조용히 그만둔다(창은 그대로 돈다)
-                img.raycastTarget = false;                    // 「터지는 것」이 탭을 먹으면 스킵·닫기가 안 먹는다
-                var rt = img.rectTransform;
-                rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f);
-                rt.sizeDelta = new Vector2(ChestBurstSizePx, ChestBurstSizePx);
-                rt.anchoredPosition = at;
-                rt.localScale = Vector3.one;
-                // 무작위 0 — 방향을 고르게 편다(같은 판이면 같은 그림 · T174 규약).
-                float rad = 2f * Mathf.PI * i / count;
-                var to = at + new Vector2(Mathf.Cos(rad), Mathf.Sin(rad)) * ChestBurstRadius;
-                var go = img.gameObject;
-                rt.DOAnchorPos(to, ChestBurstSec).SetEase(Ease.OutCubic).SetUpdate(true).SetLink(go);
-                rt.DOScale(0.25f, ChestBurstSec).SetEase(Ease.InQuad).SetUpdate(true).SetLink(go);
-                img.DOFade(0f, ChestBurstSec).SetEase(Ease.InQuad).SetUpdate(true).SetLink(go)
-                   .OnComplete(() => { if (go != null) UnityEngine.Object.Destroy(go); });
-                LastBurstShards++;
-            }
+            if (UiParticles.Burst(layer, at, tint, count, radius, speed, sizePx, sec) == null) return;
+            LastBurstShards += count;
         }
     }
 }
