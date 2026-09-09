@@ -17,13 +17,13 @@
 
 시크릿이 없으면 CI 는 dotnet 검사만 돌고 **초록**이다. 유니티 테스트·WebGL/Android 빌드를 켜려면:
 
-1. **Actions → «Unity 라이선스 활성화 파일(.alf)» → Run workflow** (`.github/workflows/activation.yml`).
-2. 끝나면 그 실행의 **Artifact `Unity_v6000.3.8f1.alf`** 를 내려받아 압축을 푼다.
-3. <https://license.unity3d.com/manual> 에 로그인 → `.alf` 업로드 → **Personal** 선택 → `.ulf` 다운로드.
-4. 레포 **Settings → Secrets and variables → Actions** 에 시크릿 3개 등록:
-   - `UNITY_LICENSE` = `.ulf` 파일 **내용 전체**(텍스트를 그대로 붙인다)
+1. 레포 **Settings → Secrets and variables → Actions** 에 시크릿 2개 등록(**계정 방식** · Unity Personal 이면 된다):
    - `UNITY_EMAIL` = 유니티 계정 이메일
    - `UNITY_PASSWORD` = 유니티 계정 비밀번호
+   - ⚠ `UNITY_LICENSE`(`.ulf` 파일) 는 **넣지 않는다** — 있으면 game-ci 가 파일 방식을 먼저 골라 «TimeStamp validation failed» 로 죽는다(2026-09-09 T283). `license.unity3d.com/manual` 은 Pro 전용이라 Personal 은 `.ulf` 를 못 받는다.
+2. (참고) `.github/workflows/activation.yml` 은 `.alf` 를 만드는 옛 절차다 — **Pro/Plus 시리얼로 갈 때만** 쓴다.
+3. 계정 방식은 런마다 좌석을 잡는다. 어느 런이 `no available seats` 로 죽으면 <https://id.unity.com> 의 활성화 목록에서 옛 것을 푼다.
+4. (비워 둠 — 번호를 유지한다)
 5. **Settings → Pages → Build and deployment → Source: «Deploy from a branch» → Branch `gh-pages` / `(root)`** → Save.
    (gh-pages 브랜치는 main 에 첫 push 가 빌드를 끝낸 뒤 생긴다. 주소: `https://kuzuni.github.io/aaawunity/`)
 

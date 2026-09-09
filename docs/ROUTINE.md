@@ -5,29 +5,9 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
-> ## ❗❗ **CI 가 01:18 부터 계속 빨갛다 — 워커 코드 탓이 아니다. 유니티 라이선스가 거절당한다(주인만 고칠 수 있다).**
-> **(2026-09-09 02:2X UTC · sess-1917-23930 · 워커 J · 코드 0줄 · T283 으로 등재)**
->
-> **증상** — run **619 부터 626 까지 여덟 판 연속 실패**(마지막 초록 = run **618** · `5d68b0a8` · 01:16). `dotnet` 잡은 **매번 초록**이고 죽는 것은 «Unity EditMode + PlayMode 테스트» 잡 하나다.
-> 그 잡이 **1~3분** 만에 죽는다(정상 8~9분) — **테스트가 시작조차 못 한다.** 결과 XML 이 안 나오므로 `[CI명부]` 도 «못 만든다» 로 끝난다.
->
-> **원인(로그 실측 · run 625 · 그 위 런들도 같은 꼴)**:
-> ```
-> [Licensing::Module] Loading manual activation license file UnityLicenseFile.ulf.
-> [Licensing::Client] Error: Code 400 while processing request (status: TimeStamp validation failed)
-> Unclassified error occured while trying to activate license.  Exit code was: 1
-> ```
-> 즉 **`UNITY_LICENSE` 시크릿(.ulf)이 유니티 서버에서 거절된다.** 도커 이미지·캐시·러너는 멀쩡하다(이미지 pull 까지 정상).
->
-> **⚠ 워커가 할 일 / 하지 말 일**
-> - **자기 커밋 탓이 아니다.** 619 는 초록 런과 13분 차이고 그 커밋도 `dotnet` 은 통과했다. **«내 자가 깼나» 를 찾느라 회차를 버리지 마라.**
-> - **재실행(re-run)해도 안 된다** — 여덟 판이 같은 곳에서 죽었다. 워커에게는 시크릿을 고칠 권한이 없다.
-> - **CI 확인이 필요한 일은 지금 «확인 대기» 로 남는다.** lock 을 놓지 말고 회차마다 게이트만 다시 돌려라(로컬 `dotnet test` 는 그대로 유효하다).
-> - **막힌 것**: PlayMode·EditMode 유니티 자 · `screens` 그림(41장이 run 618 에 멈춰 있다) · **WebGL 배포 → 주인 폰 빌드가 그 시각에 얼어 있다**.
->
-> **주인이 할 일** = 유니티 라이선스 파일을 다시 받아 GitHub 시크릿 `UNITY_LICENSE` 를 갈아 끼운다(레포 Settings → Secrets and variables → Actions). 자세한 것은 §2 **T283**.
->
-> ⚑ **주인 폰으로 알렸다 — 02:45 UTC · sess-1842-31994 · 워커 G**(결정 795). **그러니 다른 워커는 이 사고를 다시 진단하지 마라** — 같은 로그를 열둘이 다시 읽는 것이 이 사고의 두 번째 손실이다. 그때 다시 센 수: **619~628 열 판 연속**(628 = 02:40 · 여덟 판이 아니라 열 판) · 초록이 끊긴 지 **1시간 29분** · `screens` 브랜치 마지막 배포도 **01:16(run 618 · 41장)** 에 그대로 멈춰 있다(`git show origin/screens:meta.json` 으로 누구나 1초에 확인할 수 있다 — 이 파일이 지금 «라이선스가 풀렸나» 를 재는 가장 싼 자다).
+> ## ✅ **CI 유니티 잡이 돌아왔다(05:1X · run 645) — T283 닫힘. 대신 «막혀 있던 4시간의 빚» 이 PlayMode 빨강 7건으로 한꺼번에 나왔다 → T288.**
+> **(2026-09-09 05:2X UTC · 대화형 세션 · 코드 0줄)** 원인은 `.ulf` 파일 방식이 죽은 것이었고 `ci.yml` 이 **계정(personal) 방식**으로 바뀌었다(`UNITY_LICENSE` 를 안 준다 · 자세한 것은 §2 **T283**). **run 645 부터 [CI명부]·`screens` 그림(43장)·폰 빌드가 다시 산다.**
+> ⚠ **run 619~644 사이에 push 한 워커 전원** — 그 커밋들은 유니티 자를 한 번도 못 거쳤다. **run 645 의 빨강 7건은 «라이선스 탓» 이 아니라 그 사이 코드가 낸 진짜 빨강**이다. §2 **T288** 이 7건을 자별로 나눠 두었다 — **자기 자가 거기 있으면 그것부터 잡아라**(lock 은 T288 안의 자 단위).
 
 - **(2026-09-08 · 12:3X UTC) ⚑⚑ 주인 — **열쇠 뽑기를 «가진 만큼 한 번에»(캡 10)로** → **T275**(T255 의 열쇠 버튼을 넓힌다):** «**열쇠가 있으면 1회 뽑기 쪽에 열쇠 아이콘 뜨면서 1/1 · 8개 있으면 8/8 · 클릭 시 있는 열쇠 다 써서 열쇠 개수만큼 뽑게 · 캡이 10 · 17개면 17/10 으로 떠서 누르면 10회 뽑고 7/7 이 되고 그거 클릭 시 7회 · 10회 뽑기 버튼도 17/10 으로 떠야 하고 클릭 시 열쇠로 10회**». **표시 규칙 = `보유/이번에 쓸 개수`**(보유 ≤ 캡 → `N/N` · 보유 > 캡 → `N/캡`). **바탕은 이미 있다** — `GachaKeys.CanOpen(s, boxKey, **n**)`·`Open(s, boxKey, **n**)` 이 **이미 개수를 받고**, `ShopScreen.Pull(**n**, boxKey, withKey)` 도 그렇다. 지금 `PullWithKey` 가 **`Pull(1, …)` 로 1 을 박아 부르는 것**과 열쇠 버튼이 **«가진 개수» 만 찍는 것**만 고치면 된다. **캡 10 도 이미 표 값이다**(`D.Gacha.TenPullCount` · §1 «수치는 표로» — 코드에 10 을 박지 않는다). ⚠ **한 가지 애매한 것을 주인에게 묻는다(3항)** — 열쇠가 10 이상이면 «열쇠 버튼» 과 «10회 버튼» 이 **둘 다 `17/10`** 이 되어 **같은 일을 하는 버튼이 둘**이 된다.
 
@@ -3268,7 +3248,10 @@ Caught fatal signal - signo:6 (SIGABRT) · Unexpected exit code 134
 5b. **대신 남은 것 = `TextSizeGateTests` 승격**(2단계가 로그만 깔아 뒀다). 그 자의 단언은 **전 화면 한 통**이라 새 화면 하나가 배포 전체를 세운다 — 그래서 2단계는 `UiShotsTests` 안에서 `TextAudit.Collect` 를 그대로 불러 두 줄만 **로그**로 남겼다(§1 «조사 중인 탐침은 막는 자로 세우지 않는다» · T226). **다음 회차가 할 일**: CI 로그의 `[T274]` 두 줄을 읽고 — ⓐ `⛔`·`⚠` 표식이 없으면 `TextSizeGateTests` 의 `res_lose` 줄 뒤에 `Dead(G, () => { }, () => { }, 0, true)` + `Check("res_lose_revive")` 를 넣어 승격하고 이 절을 닫는다 · ⓑ `⚠잘림` 이면 **먼저 칸을 넓히고**(«부활 안내» 를 팁 줄과 같은 `20 → 7.8` · `60 → 84.4` 로 두면 넉넉하다) 그 뒤 승격한다. ⚠ 하한(`floorBad`)은 bestFit 이 **줄인 값이 아니라** `max(fontSize, fontSizeMax)` 로 재므로(`TextAudit.cs:238`) 이 둘이 하한으로 걸릴 일은 없다 — 걸린다면 **잘림** 쪽이다.
 6. 게이트 + PROGRESS T274 행 + 완료 기록.
 
-### T283 — **유니티 라이선스가 거절된다 → CI 유니티 잡이 계속 빨갛다**(주인이 시크릿을 갈아야 풀린다) (워커 등재 2026-09-09 02:2X · sess-1917-23930 · 워커 J)
+### T283 ✅ — **유니티 라이선스가 거절된다 → CI 유니티 잡이 계속 빨갛다**(`.ulf` 파일 방식 → 계정 방식으로 바꿔 풀림) (워커 등재 2026-09-09 02:2X · sess-1917-23930 · 워커 J · 닫음 05:2X 대화형 세션)
+
+> **✅ 닫음(2026-09-09 05:2X · 대화형 세션 · 결정 813)** — 고친 `ci.yml`(`ec51f845`) 로 돈 **run [645](https://github.com/kuzuni/aaawunity/actions/runs/34313636522)** 의 유니티 잡이 **7분 41초를 완주**했다: `[CI명부] editmode-results.xml — 388건 · 실패 0` · `playmode-results.xml — 142건 · 실패 7` · `screens` 43장 배포(`ab6f729`). **5항의 «풀렸는지 아는 법» 그대로다.** 빨강 7건은 라이선스가 아니라 run 619~644 사이 코드의 빚이다 → **T288**. 머리 ❗❗ 공지는 ✅ 로 바꿨고 `license-probe.yml` 은 지웠다. README «내가 할 일» 도 계정 방식으로 고쳤다.
+> ⚠ **남는 감시 하나** — 계정 방식은 런마다 좌석을 잡고 **되돌려주기가 실패**한다(«Failed to return the Personal license seat»). 앞으로 어느 런이 `no available seats` 로 죽으면 **그것은 이 절의 후속**이다: 주인이 https://id.unity.com → 활성화 목록에서 옛 것을 풀면 되고, 워커는 이 줄에 «누가·몇 시·런 번호» 만 적고 재진단하지 않는다.
 
 > **⚑⚑⚑ 보탬 4(2026-09-09 05:1X · 대화형 세션) — 원인을 찾았고 고쳤다. 주인 손은 필요 없었다.**
 > **④ 탐침 결과**(`license-probe.yml` 런 #1 · `1d41cfa0`): `UNITY_LICENSE` 를 빼고 이메일·비번만 주니 새 game-ci CLI 가 **`Licensing method: personal` → «Requesting activation (personal license via Unity account)» → `Status: [200] ASSIGN_SEAT` → `Activation complete.`** 로 활성화했고 **EditMode 388/388 초록**(13.5초)이었다. **즉 `.ulf` 파일 방식만 죽어 있었고, 계정 방식은 산다.**
@@ -6439,6 +6422,25 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 6. **확인** — `screens` 09·10 PNG(버튼 글자) + **주인 폰**(17개로 눌러 10회가 한 창에 나오고 다시 누르면 7회).
 
 순서 — `Game/ShopScreen`·`Core/GachaKeys` 다. **T255(열쇠 버튼을 만든 절)의 뒤**이고 같은 자리를 만지므로 그 절의 lock 이 살아 있으면 기다린다.
+
+### T288 — **라이선스 복구 뒤 첫 완주 런 645 의 PlayMode 빨강 7건**(처음 T287 로 적었다가 워커 sess-1808 이 먼저 밀어 **T288 로 옮김** · 늦게 push 한 쪽이 옮긴다)(run 619~644 사이 26판이 유니티 자를 못 거친 «빚» · 자별로 임자가 다르다) (대화형 세션 등재 2026-09-09 05:2X · 코드 0줄)
+
+> **왜 한 절인가** — 4시간 동안 유니티 자가 안 돌아 워커 열둘의 커밋이 한꺼번에 처음 재졌다. **7건이 한 커밋 탓이 아니라 여러 작업의 것**이라 자마다 임자를 적어 두고, **잡는 단위는 «자 하나»** 다(lock 이름 `T288-<번호>`). 라이선스 탓으로 돌리지 마라 — 같은 런에서 EditMode 388 이 전부 초록이고 `screens` 43장이 찍혔다.
+> **읽을 자리** — run [645](https://github.com/kuzuni/aaawunity/actions/runs/34313636522) 유니티 잡 로그 꼬리 `[CI실패]` 7줄(아래에 그대로 옮겼다). 그 뒤 런의 `[CI실패]` 가 줄어드는 것이 진행이다.
+
+| # | 자 | 기댓값 / 실제 | 짚이는 임자(확정 아님 · 잡는 사람이 `git log -S` 로 확인) |
+|---|---|---|---|
+| 1 | `AchievementTabTests.업적탭은_표를_그리고_트랙이_없다` (`AchievementTabTests.cs:84`) | «깬 단계가 없으면 «받기» 는 안 눌린다» False 기대 · **True** | 업적 탭 «받기» 버튼의 interactable 조건이 풀렸다 — 업적·퀘스트 탭을 만진 작업 |
+| 2 | `EventsScreenTests.DungeonArenaPagesAndPopups` (`EventsScreenTests.cs:113`) | «카드 2 보상 아이콘 4» · **1** | **7번과 같은 뿌리** — 던전 카드의 보상 아이콘 줄이 «첫클리어·클리어·소탕» 로 갈리며 줄었다(T228 소탕 배선 · `dungeon.json` `first`/`clear`/`sweep`). **`20_dungeon.png`(run 645) 실측: 카드 1 «지옥의 문» 아이콘 2개(펫알·골드) · 카드 2 «원정» 아이콘 1개(골드만)** → 자가 아니라 **화면이 덜 그린다**. 원정의 «획득 가능» 줄이 `sweep`(골드 3500) 한 줄만 읽는 꼴 — 레퍼런스 20 은 카드 2 에 4개 |
+| 3 | `HeroViewTests.SceneLobbyGearBattleRoundTripNoErrors` (`HeroViewTests.cs:85`) | «로비에 플레이어 초상(HeroView) ≥ 1» · **0** | ⚠ **주인이 바로 보는 자리** — 로비에 캐릭터가 없으면 폰에서도 없다. **`01_lobby.png`(run 645) 실측: 로비에 캐릭터가 없다** — 맵 타일·버튼만 있고 초상 자리가 비었다. 씬 분리(T240 «게임씬 분리 안 해도 될 것 같다») · 로비 정리 작업이 후보 |
+| 4 | `OddsPopupTests.ViewOnlyPopupCutsOnlyTheBottom` (`OddsPopupTests.cs:162`) | «옵션 목록 자리가 두 팝업에서 같다» 208.86±1.5 · **210.86** | **T267**(그 절이 세운 자 · 2px 차) — T267 임자가 잡는다. 기댓값을 늘리지 말고 `boxOverride` 가 두 팝업에 같이 갔는지 본다 |
+| 5 | `RewardOrbTests.OrbHoversThenFliesOnACurveWithATrail` (`RewardOrbTests.cs:186`) | «구슬 뒤 꼬리(TrailRenderer)» > 0 · **-1** | **T269**(리워드 팝업 닫으면 파티클 흡수 · T241 후속) 가 구슬 꼬리를 빼거나 바꿨을 가능성 — 뜻한 변경이면 **자를 새 연출에 맞춰 고치고 결정 번호를 남긴다** |
+| 6 | `UiSmokeTests.ShopBoxesAndChestOpenPopup` (`UiSmokeTests.cs:135`) | «[상자 정보 팝업] 경고 0» · **72건** `[UiKit] 이미지 없음: ui.itemFrame.plum/Item` | **T267**(상자 확률 팝업) — 카탈로그 키 `ui.itemFrame.plum` 프리팹에 자식 `Item` 이 없다(잘못된 자식 경로). `tools/gen_catalog.py --check` 는 키만 보고 자식 경로는 못 본다 |
+| 7 | `UiTextureTests.DungeonArenaScreensCarryPatternAndRewardLights` (`UiTextureTests.cs:371`) | «던전 보상 아이콘 = 카드 1 의 2 + 카드 2 의 4(레퍼런스 20)» 6 · **3** | **2번과 같은 뿌리** — 한 사람이 둘을 같이 잡는다(lock `T288-2`) |
+
+1. **잡는 법** — `docs/claims/T288-<번호>.lock` 하나씩. 고치면 그 줄 상태를 ✅ 로, 다 ✅ 면 이 절 제목에 ✅. **기댓값을 실제값으로 바꿔 초록을 만드는 것은 금지**(결정 555 · «px 를 베끼지 않는다») — 화면이 맞는지 레퍼런스(`docs/ref`)로 먼저 판정하고, 뜻한 변경이면 자를 «새 뜻» 으로 고친다.
+2. **폰 빌드** — `deploy-last-green` 은 «유니티 잡 초록» 커밋만 굽는다(T187). **7건이 0 이 될 때까지 폰은 run 618 그대로다.** 그래서 이 절이 지금 가장 급하다.
+3. ⚠ **이 절이 열려 있는 동안 새 빨강을 더 얹지 마라** — push 전에 로컬 게이트(§3) + `dotnet test` 를 돌리는 것은 그대로고, PlayMode 를 건드리는 작업은 **run 의 `[CI실패]` 가 자기 것을 늘리지 않았는지** 확인하고 lock 을 놓는다.
 
 ### ① 주인이 먼저 할 것 (계정 2 쪽에서 · 한 번만)
 1. 계정 2 의 claude.ai → **GitHub 연결**에 `kuzuni/aaawunity` 가 보이고 **push 가 되어야** 한다(같은 GitHub 사용자 kuzuni 를 연결하면 끝 · 다른 GitHub 사용자면 레포 Settings → Collaborators 에 **Write** 로 추가). 확인법: 계정 2 에서 클라우드 세션을 열어 `git push origin main` 이 되는지(빈 커밋 말고 `docs/claims/README.md` 끝에 «계정 2 확인 YYYY-MM-DD» 한 줄 추가로).
