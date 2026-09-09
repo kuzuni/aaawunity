@@ -211,6 +211,34 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(l33.ContainsKey("빨간 VS 바") && l33.ContainsKey("VS 배지(금·원)"), "33 은 PvP 머리를 찍어야 한다(빨간 VS 바 · VS 배지)");
                 Assert.IsFalse(l33.ContainsKey("챕터 제목"), "PvP 판에는 «챕터 N» 제목이 없다(웨이브가 없어 뜻이 없다)");
             }
+            // T299 ⓑ — PvP 결과(34). **표 ㊻ 는 2026-09-08 12:2X 에 섰고 화면(`ArenaResult`)도 14:4X 에 섰는데
+            //   여기 찍는 자리가 없어 §5 가 스무 시간 동안 이 화면을 한 번도 안 셌다** — 요약이 «찍힌 화면» 만 돌기 때문이고,
+            //   그래서 «안 찍힌 화면 0개» 라는 초록말이 계속 나왔다(그 눈은 이 회차 ⓐ 가 고쳤다 · ui_score.unscored_tables).
+            //   ⚠ **승점을 실제로 굴리지 않는다**(`ArenaMatch.Settle` 은 세이브를 고친다) — 여기서 굴리면
+            //     뒤에 찍는 아레나 화면(22·23·24)이 이 판 때문에 흔들려 «그 화면이 바뀌었나» 를 못 읽게 된다.
+            //     화면은 «받은 Outcome 을 그대로 그리고 다시 계산하지 않는다» 니(ArenaResult 주석) 여기서는 값을 들려 보낸다.
+            {
+                var oc = new ArenaMatch.Outcome
+                {
+                    Win = true, Before = 1000, After = 1008, Delta = 8,
+                    RankBefore = 12, RankAfter = 11, BestImproved = true,
+                    Tier = ArenaMatch.TierOf(D != null ? D.ArenaMatch : null, 1008),
+                };
+                ArenaResult.Show(oc, "나", "도전자 1", null, null, null);
+                yield return Frames(2);
+                yield return Shot("34_pvp_win");
+                {   // ⚠ 33 과 같은 까닭으로 가드(ContainsKey)를 두지 않는다 — Shot 은 _layout[name] 을 늘 채우므로
+                    //    가드는 «못 찍었을 때 조용히 넘어가는» 구멍만 만든다.
+                    var l34 = (Dictionary<string, object>)_layout["34_pvp_win"];
+                    Assert.IsTrue(l34.ContainsKey("방패 엠블럼") && l34.ContainsKey("티어 명판"),
+                                  "34 는 결과 화면을 찍어야 한다(방패 엠블럼 · 티어 명판)");
+                }
+                // ⚠ 여기서 `Overlay.Close()` 로 지우면 **`ArenaResult.Open` 이 true 로 남는다**(그 static 은 «계속» 만 내린다) —
+                //    같은 판에서 뒤에 도는 자가 그 값을 물으면 «안 눌렀는데 떠 있다» 는 거짓을 읽는다. 닫는 길로 닫는다.
+                var contBtn = UiKit.Find(_app.Overlay.Root, "ContinueBtn")?.GetComponent<UnityEngine.UI.Button>();
+                Assert.IsNotNull(contBtn, "34 를 닫는 길은 «계속» 버튼 하나다");
+                contBtn.onClick.Invoke(); yield return Frames(1);
+            }
             // ev_devil · ev_angel — T141 6항 «워커가 한 장 찍어 04 와 나란히 눈으로»(판 없이 어둠 위인가).
             // 레퍼런스 그림이 없는 화면이라 번호 대신 이름으로 남긴다.
             // ⚠ T213 — «표가 없어 채점 대상이 아니다» 는 반쪽이었다: 이 둘은 **이름표(UiTag)조차 없어** layout.json 에

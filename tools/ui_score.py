@@ -62,6 +62,9 @@ SCREENS = {
     # T240 1항 — PvP 인게임(주인 레퍼런스 33). 표 ㊺ 의 열 행 중 «모래 마당» 은 월드(캔버스 밖)라 이름표가 없고,
     #            «원형 버튼 셋» 은 아직 그 기능 자체가 우리 전투에 없다 — 둘 다 «—»(못 잼)로 빠진다.
     '33_pvp_battle': ('㊺', None, None),
+    # T299 — PvP 결과(주인 레퍼런스 34). 표 ㊻ 는 2026-09-08 12:2X 에 섰는데 **찍는 자리가 없어**
+    #        스무 시간 동안 §5 밖이었다. 이름으로 찾는 갈래에 맡기지 않는 까닭은 ㊱·㊴·㊹ 이 세 번 데인 그것이다.
+    '34_pvp_win': ('㊻', None, None),
     # T266 — 시즌 패스(주인 레퍼런스 19). 이름으로 찾는 갈래도 «19_» 로 이 표를 집기는 하지만,
     #        그 갈래는 «어느 표가 먼저 오는가» 에 기대는 것이라 표가 늘면 조용히 바뀐다(㊱·㊴·㊹ 이 세 번 데인 자리).
     '19_pass': ('㊼', None, None),
@@ -128,6 +131,39 @@ def load_layout(path):
 def fmt(v): return '—' if v is None else ('%.1f' % v)
 def fmt4(vals): return ' '.join(a + fmt(v) for a, v in zip('xywh', vals))
 
+def unscored_tables(tables, layout):
+    """T299 — **행이 있는데 이번 layout 의 어떤 화면도 집지 않는 표**.
+
+    `--summary` 는 `layout` 의 «키» 를 돌며 셌다. 그러니 **찍힌 화면만** 세는 셈이고,
+    표만 서 있고 아무도 안 찍는 화면은 «10.0 미만» 에도 «표 없음» 에도 «안 찍힌 화면»(`_missing`
+    = 찍으려다 실패한 것)에도 안 들어가 **영영 안 보였다**. 실제로 ㊻(`34_pvp_win`)이 표가 선
+    2026-09-08 12:2X 부터 스무 시간을 그 구멍에 있었고 손으로 재 보니 0.0/10 이었다.
+    행이 0인 표(⑧ 공통 · ㉓ 폐기)는 화면이 아니라 저절로 빠진다.
+    """
+    claimed = set()
+    for screen in [k for k in layout if not str(k).startswith('_')]:
+        sym, t, _, _ = find_table(tables, screen)
+        if t is not None: claimed.add(sym)
+    return [(sym, tables[sym]['title']) for sym in tables if tables[sym]['rows'] and sym not in claimed]
+
+def selfcheck():
+    """이 자가 «못 찾은 것» 과 «없는 것» 을 가르는지 한 번 심어 본다(워커 E 결정 852 의 규칙).
+
+    폴더·정규식을 잘못 짚어 **늘 0 을 돌려주는 자**는 없는 것보다 나쁘다 — 있다고 믿게 한다.
+    """
+    tables = parse_ref()
+    rows_syms = [s for s in tables if tables[s]['rows']]
+    none = unscored_tables(tables, {})
+    if len(none) != len(rows_syms):
+        sys.exit(f'✗ [§5자] 아무것도 안 찍은 layout 인데 {len(none)}개만 짚었다(행 있는 표 {len(rows_syms)}개) — 이 자는 못 본다')
+    some = unscored_tables(tables, {k: {} for k in SCREENS})
+    if len(some) >= len(none):
+        sys.exit(f'✗ [§5자] 화면을 {len(SCREENS)}개 찍어 줬는데 짚는 표가 안 줄었다({len(none)} → {len(some)}) — 표를 못 집는다')
+    still = [s for s, _ in some if s in {SCREENS[k][0] for k in SCREENS}]
+    if still:
+        sys.exit('✗ [§5자] SCREENS 가 이름을 박아 둔 표인데도 «아무도 안 찍는다» 로 남았다: ' + ' '.join(still))
+    print(f'✓ [§5자] 안 찍는 표를 세는 눈 — 빈 layout 이면 {len(none)}개 전부 · SCREENS 를 채우면 {len(some)}개 (T299)')
+
 def score_screen(tables, layout, screen):
     sym, table, only, exclude = find_table(tables, screen)
     if table is None: return None, f'«{screen}» 에 맞는 표가 docs/ref-layout.md 에 없다 — ⑨~ 로 표를 추가(§5.5)'
@@ -170,6 +206,7 @@ def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     flags = [a for a in sys.argv[1:] if a.startswith('--')]
     wide = '--all' in flags or '--summary' in flags
+    if '--selfcheck' in flags: selfcheck(); sys.exit(0)   # T299 — layout 없이 돈다(자기 검사 · 인자 검사보다 **먼저**)
     if not args and not wide: print(__doc__); sys.exit(2)
     tables = parse_ref()
     layout, src = load_layout(args[1] if len(args) > 1 else (args[0] if wide and args else None))
@@ -184,24 +221,30 @@ def main():
             (no_table if score is None else scored).append(screen if score is None else (score, screen))
         low = sorted(s for s in scored if s[0] < 10.0)
         missing = layout.get('_missing', [])
+        unshot = unscored_tables(tables, layout)   # T299 — 표는 섰는데 아무도 안 찍는 화면
         for sc, nm in low:
             print(f'[§5]   {nm} — {fmt(sc)}   ← `python3 tools/ui_score.py {nm}` 로 어느 행인지 본다')
         if no_table:
             print('[§5]   표 없음(ref-layout.md 에 그 화면 절이 없다): ' + ' · '.join(no_table))
         if missing:
             print('[§5]   화면 자체가 안 찍혔다: ' + ' · '.join(map(str, missing)))
+        for sym, title in unshot:
+            print(f'[§5]   {sym} 표를 아무도 안 찍는다 — 이 표는 이번 런에서 **한 행도 안 세어졌다**: {title[:70]}')
         # T281 — **마지막 줄은 판정이다.** 처음 판(T277)은 어느 갈래로 나가든 «(보고만 …)» 한 줄로 끝나서
         # 꼬리로 읽으면 **빨강과 초록이 글자까지 똑같았다** — T281 이 `check_decisions` 에서 «가장 나쁜 꼴» 이라 부른 그것이다.
         # 이 자는 늘 0 으로 끝나므로(§5 표는 «회귀 자» 라 뜻한 변경도 점수를 떨어뜨린다 · T277 3항)
         # `✗` 는 «막는다» 가 아니라 «볼 것이 있다» 는 뜻이고, 그래서 «보고만» 을 판정 줄 안에 같이 적는다.
         n_all = len(scored) + len(no_table)
-        if low or no_table or missing:
+        # T299 — 판정 줄에 «아무도 안 찍는 표» 를 같이 적는다. 이 수가 빠져 있는 동안
+        #        «안 찍힌 화면 0개» 라는 말이 «전부 재고 있다» 로 읽혔다(실제로는 표 하나가 통째로 밖이었다).
+        if low or no_table or missing or unshot:
             head = ' · '.join(f'{nm} {fmt(sc)}' for sc, nm in low[:3]) + (' …' if len(low) > 3 else '')
             print(f'✗ [§5] 화면 {n_all}개 · 10.0 미만 {len(low)}건{" (" + head + ")" if low else ""}'
                   f' · 표 없음 {len(no_table)}건 · 안 찍힌 화면 {len(missing)}개'
+                  f' · 아무도 안 찍는 표 {len(unshot)}개{" (" + " ".join(s for s, _ in unshot) + ")" if unshot else ""}'
                   f' — 보고만(막지 않는다 · T277) · `python3 tools/ui_score.py <화면>` 으로 어느 행인지 본다')
         else:
-            print(f'✓ [§5] 화면 {n_all}개 전부 10.0 · 표 없음 0건 · 안 찍힌 화면 0개 (보고만 · T277)')
+            print(f'✓ [§5] 화면 {n_all}개 전부 10.0 · 표 없음 0건 · 안 찍힌 화면 0개 · 아무도 안 찍는 표 0개 (보고만 · T277)')
         sys.exit(0)
     if '--all' in flags:
         summary = ['| 화면 | 표 점수 |', '|---|---|']

@@ -114,6 +114,12 @@ jobs:
       # 라이선스 사고(T283)처럼 유니티가 통째로 멈춘 동안에도 이 검사는 돈다).
       - name: 그림차 자 자기 검사 (T282)
         run: python3 tools/screens_diff.py --self-test
+      # T299 — §5 요약이 «표는 있는데 아무도 안 찍는 화면» 을 세는 눈(`unscored_tables`).
+      # 그 눈이 조용히 0 을 돌려주게 되면 **없는 것과 못 찾은 것이 같은 글자**가 되고,
+      # 그때는 «안 찍는 표 0개» 라는 초록말만 남는다(그 침묵이 ㊻ 를 스무 시간 숨겼다).
+      # 순수 함수라 layout.json 없이 돌고(유니티 잡과 무관) 양쪽을 다 심어 본다 — 여기서 막는다.
+      - name: §5 «아무도 안 찍는 표» 자기 검사 (T299)
+        run: python3 tools/ui_score.py --selfcheck
       - name: aaaw main 체크아웃 (수치 정본)
         uses: actions/checkout@v4
         with:
