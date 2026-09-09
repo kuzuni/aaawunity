@@ -7710,7 +7710,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 순서 — `Game/GearUi.cs` 한 함수. **T267·T309·T310 이 `GearUi.cs` 를 쥐면 기다린다.** lock `T324`.
 
-5. **회차 1(sess-1327-30514 · 워커 F · 2026-09-09 13:5X · 결정 916 · 고침 push · 확인 전)** — 2항의 기본 갈래(«그대로 갈색»)를 그대로 했다. 주인 말이 «그거로 써 줘. **걍**» 이라 tint 갈래(2항 ⚠)는 안 갔다.
+5. **회차 1(sess-1327-30514 · 워커 F · 2026-09-09 13:5X · 결정 919 · 고침 push · 확인 전)** — 2항의 기본 갈래(«그대로 갈색»)를 그대로 했다. 주인 말이 «그거로 써 줘. **걍**» 이라 tint 갈래(2항 ⚠)는 안 갔다.
    - **고침** — `BadgeKey(colorName)` 의 등급 갈래 여섯 줄을 지우고 상수 하나로 바꿨다(`GearUi.TitleBadge = "ui.titleBrown"`). 부르는 자리는 **한 곳**(`DetailFrame`)뿐이라 세부 팝업·보기 전용 팝업(T267 · 38)·빈 부위 팝업이 **저절로 같이** 따라온다. 카탈로그의 `ui.title.*` 변형은 다른 화면(데일리 기프트·챕터 상자·탐험·확률)이 쓰므로 **그대로 뒀다**. 옛 표(어느 색이 어느 조각이었나)는 상수 주석에 남겼다 — **되돌리려면 그 여섯 줄을 되살리면 된다.**
    - **곁들여 죽은 인자를 뺐다** — 갈래가 사라지자 `DetailFrame(..., string colorName, ...)` 이 **아무 데서도 안 쓰이게** 됐다. 그대로 두면 «이 값이 상자 꼴을 정한다» 는 **거짓말이 남는다**(결정 861 이 «틀린 주석은 틀린 코드보다 오래 산다» 고 적은 자리와 같은 종류). 인자를 빼고 부르는 세 곳을 고쳤다 — 등급은 `badge`(«희귀»·«전설» 글자)와 `nameColor` 가 그대로 말한다.
    - **자** — `GearOptionRowsTests` 에 신설(`EveryRarityUsesTheSameBrownTitlePieceButStillShowsItsGrade`). 등급 0~3 의 세부 팝업을 차례로 열어 ⓐ 제목 조각이 `ui.titleBrown` 이고 **옛 다섯 키가 하나도 없다** ⓑ **그런데 배지 «글자» 와 이름 «색» 은 등급마다 다르다**. **절반이 ⓑ 인 까닭**: «전부 갈색» 만 재면 다음 사람이 «등급색을 다 지우라는 뜻이었나» 로 읽고 배지 글자·이름 색까지 지워도 자가 초록이다. 수는 안 박고 «서로 다른가» 만 묻는다(결정 555).
@@ -7723,6 +7723,18 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
    **§1 과의 관계** — aaaw `data/gear.json`·`gacha.json`·`tune.json`·`enemies.json` 은 **손대지 않는다**. T173 이 세운 **덮어쓰기 표** 방식(`Assets/KkomaKnight/combatOverride.json` → `GameData.ApplyCombatOverride`)을 그대로 넓혀 **`gearOverride.json`·`gachaOverride.json`·`tuneOverride.json`** 을 둔다(있는 키만 덮는다 · `_note` 에 원문). 값은 전부 주인이 줬으니 «밸런스 지어내기» 가 아니다 — **주인이 안 준 칸만** 4항에서 기본값과 함께 묻는다.
 
 **ⓐ 표·Core(먼저 · lock `T325-a`)**
+
+> **▸ 회차 1 — «자리» 만 먼저(2026-09-09 13:4X · sess-1424-31894 · 워커 B · 결정 918 · lock `T325-a` 쥔 채 · **값 0줄**)**
+> **값이 바뀌는 회차와 자리가 바뀌는 회차를 갈랐다** — 섞으면 시드 골든이 흔들렸을 때 그것이 «영웅 때문» 인지 «리터럴 때문» 인지 못 가른다.
+> 실측: 1항이 말한 «rar 인덱스를 박은 자리» 는 **거의 다 이미 표를 읽고 있었다**(`GearSystem` 은 `G.RarMyth`·`RarLegend`·`RarRare` · `GameData` 도 같다) —
+> **남아 있던 진짜 한 자리는 `Palette.RarName`** 의 «`rar >= 3 ? plum : rar == 2 ? yellow : rar == 1 ? blue : gray`» 사슬이다.
+> ⚠ **이 사슬이 왜 위험한가** — 새 등급이 **가운데** 끼면 위쪽이 통째로 한 칸씩 어긋나는데 **컴파일도 되고 빨간 줄도 안 난다**.
+> 전설이 노랑에서 초록이 되어도 아무 자도 안 운다. ⇒ 배열(`Palette.RarColors`)로 바꾸고 **«칸 수가 표와 같은가» 를 자가 잡게** 했다(`GearOptionRowsTests`).
+> 영웅이 들어오는 회차는 그 배열 가운데에 `"green"` 한 칸을 넣으면 되고, 그 순간 이 자가 먼저 운다.
+> ⚠ **범위 밖 처리를 옛 사슬 그대로 옮겼다** — «0 미만이면 회색 · 끝 이상이면 자주». 배열로 바꾸며 한쪽만 물리면 음수 rar 이 자주가 된다(값은 안 바뀌었는데 색만 바뀌는 꼴).
+> ⚠ **`GearLook.RarCount`(=4)는 안 건드렸다** — `GearLookTests.RarCountMatchesGearJson` 이 이미 «표의 등급 수와 같은가» 를 잡고 있어 조용히 어긋날 수 없다. 그 자리는 값이 바뀌는 회차 몫이다.
+> ⚠ **`Palette`·`GearUi` 의 «등급 색» 을 더 손대지 않았다** — **T316**(신화 위 등급 넷)이 살아 있는 lock 으로 그 언저리를 만진다. 한 줄 함수 하나로 끊었다.
+> 게이트: build 0/0 · test **467/467** · `Sim --seeds 11,12,13` rc=0(사다리 표 불변) · PlayMode 임시 csproj 0 오류 · 검사 18종 rc=0.
 1. **등급 다섯** — `rarName = [일반, 희귀, 영웅, 전설, 신화]`(0~4) · `rarLegend 3` · `rarMyth 4`. **색**: 일반 회색 · 희귀 파랑 · **영웅 초록**(카탈로그에 있는 변형 `ui.itemFrame.green`·`ui.title.green`·`ui.popup.green` · 4항 ⓐ) · 전설 노랑 · 신화 자주(그대로) · T316 갓~무한은 신화 위에 그대로. `Palette.RarName(rar)`·`GearUi.RarName` 등 **rar 인덱스를 박은 자리 전부**(`rar >= 3`·`rar == 2` 류 · `GearSystem.cs:125~156`·`Palette.cs:83`·`GearTier`(T316)·`GearScore`) 를 표의 `rarLegend/rarMyth` 로 바꾼다 — 인덱스 리터럴 0.
 2. **기여(노강 · 슬롯 0 · 장비 1개)** —
    | 등급 | 공 | 체 | 실 |

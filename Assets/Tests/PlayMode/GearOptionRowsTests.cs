@@ -152,6 +152,13 @@ namespace KkomaKnight.Tests.Play
             yield return Boot();
             var D = _app.Data; string part = D.Gear.Parts[0];
 
+            // T325-a — **등급 색 칸 수 = 표의 등급 수.** 여기 있던 «rar >= 3 ? plum : rar == 2 ? yellow …» 인덱스 사슬은
+            //   새 등급이 **가운데** 끼면(주인 «영웅 등급 다시 넣고») 위쪽이 통째로 한 칸씩 어긋나면서도
+            //   **컴파일도 되고 빨간 줄도 안 난다** — 전설이 노랑에서 초록이 되어도 아무 자도 안 울었다.
+            //   배열로 바꿨으니 이제 «칸 수가 안 맞는다» 를 이 한 줄이 잡는다(영웅을 넣는 회차는 여기서 먼저 운다).
+            Assert.AreEqual(D.Gear.RarName.Length, Palette.RarColorCount,
+                "등급 색이 표의 등급 수와 같아야 한다 — 표 " + D.Gear.RarName.Length + "칸 ↔ 색 " + Palette.RarColorCount + "칸 (T325-a)");
+
             // ⓐ 일반 — 켜진 줄 0 · 잠긴 줄 7
             var common = Give(part, rar: 0, plus: 0);
             Assert.AreEqual(0, D.Gear.OptCount(common.Rar, common.Plus), "일반 = 옵션 0개(주인 지시 T89)");

@@ -155,5 +155,53 @@ namespace KkomaKnight.Tests.Play
 
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T258 탐침 — <b>줄 바탕을 실제로 칠하는 조각이 무엇인가</b>를 «가정» 대신 «실측» 으로 남긴다(<c>ui-screens/t258rows.json</c> → `screens` 브랜치).
+        /// <para>
+        /// 두 회차 연속으로 틀렸다: 처음엔 `Find(frame,"Bg")` 가 **안 보이는 «Focus» 가지**를 잡았고(결정 906), 길을 `Nomal/Bg` 로 못 박은 뒤에도
+        /// 사진의 색이 **한 단계도 안 움직였다**(실측 `#B49E4C` 그대로 · run 810). 즉 보이는 면은 그 둘 중 어느 것도 아니다.
+        /// </para>
+        /// 그래서 <b>줄 안의 모든 <see cref="Image"/></b> 를 이름·자리·색·스프라이트·켜짐과 함께 적어 둔다 — 다음 회차가 그 표를 읽고 **한 번에** 고친다.
+        /// 자는 아무것도 단언하지 않는다(늘 초록): 이것은 «자» 가 아니라 «자 대신 사진을 읽는 우리를 위한 계기» 다(T233 의 `t233.json` 과 같은 꼴).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 줄바탕_조각_탐침_t258rows_json()
+        {
+            yield return Boot();
+            LobbyPopups.Quest(_app);   // 일일 판 — 첫 줄은 깬 줄(로그인) · 둘째는 못 깬 줄이라 «두 상태» 가 한 화면에 있다
+            yield return Frames(1);
+            var root = _app.Overlay.Root;
+            var sb = new System.Text.StringBuilder();
+            sb.Append("{\n  \"rows\": [");
+            for (int i = 0; i < 3; i++)
+            {
+                var row = UiKit.Find(root, "Quest:" + i); if (row == null) continue;
+                if (i > 0) sb.Append(',');
+                sb.Append("\n    { \"row\": ").Append(i).Append(", \"images\": [");
+                bool first = true;
+                foreach (var im in row.GetComponentsInChildren<Image>(true))
+                {
+                    var rt = (RectTransform)im.transform;
+                    var c = im.color;
+                    string path = im.name; var t = im.transform.parent;
+                    while (t != null && t != row) { path = t.name + "/" + path; t = t.parent; }
+                    if (!first) sb.Append(',');
+                    first = false;
+                    sb.Append("\n      { \"path\": \"").Append(path).Append("\", \"on\": ").Append(im.gameObject.activeInHierarchy ? "true" : "false")
+                      .Append(", \"color\": \"").Append(ColorUtility.ToHtmlStringRGBA(c)).Append("\", \"sprite\": \"").Append(im.sprite != null ? im.sprite.name : "-")
+                      .Append("\", \"w\": ").Append(rt.rect.width.ToString("0.0")).Append(", \"h\": ").Append(rt.rect.height.ToString("0.0")).Append(" }");
+                }
+                sb.Append("\n    ] }");
+            }
+            sb.Append("\n  ]\n}\n");
+            foreach (var dir in PlayShot.Dirs())
+            {
+                try { System.IO.Directory.CreateDirectory(dir); System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "t258rows.json"), sb.ToString()); }
+                catch (System.Exception e) { Debug.LogWarning("[T258] 탐침 저장 실패: " + e.Message); }
+            }
+            Debug.Log("[T258] 줄 조각 탐침:\n" + sb);
+            yield return Shutdown();
+        }
     }
 }

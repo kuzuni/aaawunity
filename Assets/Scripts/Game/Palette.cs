@@ -79,8 +79,22 @@ namespace KkomaKnight.Game
         /// </summary>
         public static Color OnFrame(string colorName) => White;
         public const string DevilName = "plum";
-        /// <summary>장비 등급(gear.json rar 0~3) → 테마 색 이름.</summary>
-        public static string RarName(int rar) => rar >= 3 ? "plum" : rar == 2 ? "yellow" : rar == 1 ? "blue" : "gray";
+        /// <summary>
+        /// 장비 등급(<c>gear.json</c> <c>rar</c>) → 테마 색 이름 — <b>표의 등급 순서와 한 칸씩 짝</b>이다.
+        /// <para>
+        /// ⚠ <b>T325-a — 여기 있던 «<c>rar &gt;= 3 ? plum : rar == 2 ? yellow …</c>» 인덱스 사슬을 걷었다.</b>
+        /// 주인이 **영웅 등급을 되살리라**고 했는데(2026-09-09 12:5X · T325 1항), 그 사슬은 새 등급이 **가운데** 끼면
+        /// 위쪽이 통째로 한 칸씩 어긋나면서도 <b>컴파일도 되고 빨간 줄도 안 난다</b> — 전설이 노랑에서 초록이 되어도
+        /// 아무 자도 안 운다. 배열로 두면 «칸 수가 안 맞는다» 를 자 하나가 잡는다(아래 <see cref="RarColorCount"/>).
+        /// </para>
+        /// <para>영웅이 들어오는 회차는 이 배열 가운데에 <c>"green"</c> 한 칸을 넣으면 된다(주인 «영웅 = 초록» · T325 4항 ⓐ).</para>
+        /// </summary>
+        public static readonly string[] RarColors = { "gray", "blue", "yellow", "plum" };
+        /// <summary>등급 색이 몇 칸인가 — 자가 <c>gear.json</c> 의 <c>rarName</c> 수와 맞대 본다(둘이 갈리면 화면이 조용히 틀린다).</summary>
+        public static int RarColorCount => RarColors.Length;
+        /// <summary>등급 색 이름. 범위 밖은 <b>양쪽으로 물린다</b> — 옛 사슬도 «0 미만이면 회색 · 3 이상이면 자주» 였다(그 뜻을 그대로 옮긴다).</summary>
+        public static string RarName(int rar)
+            => rar <= 0 ? RarColors[0] : rar >= RarColors.Length ? RarColors[RarColors.Length - 1] : RarColors[rar];
         /// <summary>장비 세트(crit/hpsh/evade) → 테마 색 이름.</summary>
         public static string SetName(string set) => set == "crit" ? "red" : set == "hpsh" ? "green" : "sky";
         public static Color ByName(string name)
