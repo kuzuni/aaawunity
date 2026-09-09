@@ -9381,6 +9381,11 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 순서 — `Core/Notify.cs` · `Game/Screens.cs` · `Game/LobbyPopups.cs` · 자. **`LobbyPopups.cs` lock 들 뒤** lock `T366`(T359·T363·T364 와 한 사람이 같이).
 
 > **✔ 1회차 확인 끝 · lock 반납(20:3X · sess-1425-9466 · 워커 N)** — 런 900 `[CI명부]` `PrivilegeDotTests(3)`·`PrivilegeDotPlayTests(1)` 실패 0 · `screens` 01 눈: «특권» 칸 오른쪽 위 빨간 점. **남은 것 = ⓒ 카드 «받기» 버튼 점**(`LobbyPopups.PrivilegeScreen` · T363/T364 lock 안 · 여는 사람이 카드별 `Privilege.Can` 으로 `UiKit.AlertDot` 한 줄).
+> **▸ ⓒ 를 짜 보고 놓았다 — 함정 셋만 남긴다(20:5X · sess-0132-18539 · 워커 K · 결정 1027 · 커밋된 코드 0줄)** — 20:33 목록으로 잡았는데 워커 C 의 lock 이 **20:37** 로 먼저였다(§3) ⇒ 다 짜고 자까지 초록이었지만 버렸다.
+> ⚑ **ⓐ 점을 «주황» 에 붙이면 안 된다** — 특권의 주황(T306)은 «구매» 도 주황이라 **안 산 카드에도 점이 뜬다**. 점은 카드마다 **`Privilege.Can` 하나**만 본다(로비 칸 점과 같은 수).
+> ⚑ **ⓑ 두 벌 버튼이라 점도 두 벌에**(`SkinPair.Warm`·`Cold` · 한 벌에만 붙이면 옷이 바뀌는 순간 사라진다).
+> ⚑ **ⓒ `Refresh` 는 여러 번 불린다** — 거기서 점을 «세우면» 부르는 만큼 쌓인다. 처음 한 번만 `UiKit.AlertDot(rt, "ClaimDot", (1,1), (-4,4), 52)` 로 세우고 그 뒤엔 켜고 끄기만.
+> **자리** = `Refresh` 의 `s.Set(warm, …)` 바로 뒤 · **자** = `PrivilegeDotPlayTests` 에 «카드마다 점 = Can · 다 받으면 넷 다 꺼진다»(버튼 이름 `CardBtn:(i+1)` · `CardKeys` 는 `static readonly` 라 자에서 보려면 `public`).
 > **🔄 1회차 push · 확인 전(19:4X · sess-1425-9466 · 워커 N · 결정 1009(커밋 메시지의 1008 은 1009) · lock `T366` 쥔 채)** — 1항 ⓑ(로비 «특권» 칸 점 · `Screens.cs` `PrivDot`)를 했다. ⓐ 판정은 **새로 안 만들었다** — `Core.Privilege.AnyClaimable` 이 이미 «점이 이것만 본다» 는 함수다(`Notify.cs` 는 T355 lock 안). 자 = EditMode `PrivilegeDotTests` 3(안 산 카드는 못 켠다 포함) · PlayMode `PrivilegeDotPlayTests` 1. **ⓒ 카드 «받기» 버튼 점은 남았다** — `LobbyPopups.PrivilegeScreen` 이 T360 lock 안 · 여는 사람이 버튼마다 `Privilege.Can` 으로 `UiKit.AlertDot` 한 줄. 확인 = 다음 완주 런 두 자 + `screens` 01.
 
 ### T367 ✅ — ⚑ 주인: **재화 흡수 — 다이아는 다이아 pill · 골드는 골드 pill 로** (주인 2026-09-10 «다이아 흡수, 골드 흡수는 상단에 재화들 각각 표시되는 부분 · 다이아는 다이아 쪽 골드는 골드 쪽으로 흡수 되야함» · T354 의 뒤)
