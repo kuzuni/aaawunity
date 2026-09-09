@@ -51,6 +51,21 @@ namespace KkomaKnight.Tests.Play
                 if (tr.name.StartsWith(head) && tr.gameObject.activeInHierarchy) n++;
             return n;
         }
+        /// <summary>
+        /// 제목이 그 글자인 줄 — T364 ⓐ 뒤로 <b>화면 줄 번호 ≠ 표 줄 번호</b>라(받을 수 있는 줄이 위로 온다) 자는 <b>이름으로</b> 집는다.
+        /// <para>«화면의 정렬을 그대로 베끼는 자»(<c>_aOrder[0]</c> 를 쓰는 꼴)는 정렬이 틀려도 늘 통과한다 — 그 병을 여기서 피한다(결정 986·992).
+        /// 정렬 자체는 따로 잰다(<c>QuestClaimDotTests</c> — 위에서 훑어 «받을 수 있음» 이 꺼진 뒤 다시 켜지면 빨강).</para>
+        /// </summary>
+        static Transform RowByLabel(Transform root, string label)
+        {
+            foreach (var tr in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (!tr.name.StartsWith("Ach:") || !tr.gameObject.activeInHierarchy) continue;
+                var t = UiKit.Find(tr, "Title"); if (t == null) continue;
+                var tx = t.GetComponent<TMP_Text>(); if (tx != null && tx.text == label) return tr;
+            }
+            return null;
+        }
         static string BarText(Transform row)
         {
             var sl = row.GetComponentInChildren<Slider>(true); if (sl == null) return null;
@@ -74,9 +89,12 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNull(UiKit.Find(root, "Refresh"), "업적 누적은 초기화되지 않으니 «새로고침까지» 도 없다");
             Assert.AreEqual(3, CountNamed(root, "Tab:"), "탭은 셋 그대로");
 
-            var row0 = UiKit.Find(root, "Ach:0"); Assert.IsNotNull(row0, "첫 줄");
-            var title = UiKit.Find(row0, "Title"); Assert.IsNotNull(title, "줄 제목");
-            Assert.AreEqual(d.List[0].Label, title.GetComponent<TMP_Text>().text, "제목은 표의 글자 그대로(주인이 쓴 말)");
+            // T364 ⓐ 뒤(런 900 빨강 · 워커 B 진단 · 결정 1023) — **줄 차례는 더 이상 표 차례가 아니다**(받을 수 있는 줄이 위로 온다).
+            //   ⚠ 그렇다고 자를 `_aOrder[0]` 으로 «옮기면» 안 된다 — 화면의 정렬을 그대로 베끼는 자는 정렬이 틀려도 늘 통과한다(결정 986·992).
+            //   ⇒ **자리로 집지 말고 이름으로 집는다**: 표의 첫 줄을 «그 제목을 가진 줄» 로 찾아 그 줄의 진행도를 본다.
+            //   (부팅만으로 «출석 1회» 가 받을 수 있게 되어 맨 위로 오므로 `Ach:0` 은 그 줄이 아니다 · T288-1 의 그 함정)
+            var row0 = RowByLabel(root, d.List[0].Label);
+            Assert.IsNotNull(row0, "표의 첫 줄(«" + d.List[0].Label + "»)이 화면 어딘가에 있어야 한다 — 제목은 표의 글자 그대로(주인이 쓴 말)");
             Assert.AreEqual("0/" + d.List[0].Goal, BarText(row0), "새 세이브의 진행도 = «0/첫 목표»");
 
             // T288-1 — 처음에 «새 세이브면 «받기» 가 하나도 안 눌린다» 로 적었다가 CI run 645 에서 빨개졌다.
@@ -84,10 +102,11 @@ namespace KkomaKnight.Tests.Play
             //   즉 자가 틀렸고 화면은 옳았다. 퀘스트 탭에서 «로그인하기» 로 한 번 밟은 함정을 업적에서 그대로 다시 밟은 것이다.
             //   ⇒ 수를 적지 않고 **규칙**으로 잰다: 줄마다 «눌리는가» = `CanClaim` 이어야 한다.
             //   그리고 규칙만 재면 «훅이 통째로 빠져도 양쪽이 같이 false» 라 초록이므로, 출석 한 줄은 **못 박아** 둔다.
+            //   ⚠ T364 뒤 — 여기서도 줄을 **번호가 아니라 이름으로** 집는다(화면 i 는 이제 표 i 가 아니다).
             for (int i = 0; i < d.List.Count; i++)
             {
-                var r = UiKit.Find(root, "Ach:" + i); Assert.IsNotNull(r, "줄 " + i);
-                var rb = UiKit.Find(r, "AchBtn"); Assert.IsNotNull(rb, "줄 " + i + " 의 «받기»");
+                var r = RowByLabel(root, d.List[i].Label); Assert.IsNotNull(r, "표의 줄 «" + d.List[i].Label + "» 이 화면에 있어야 한다");
+                var rb = UiKit.Find(r, "AchBtn"); Assert.IsNotNull(rb, "«" + d.List[i].Label + "» 의 «받기»");
                 bool can = Achievement.CanClaim(_app.Save, d, d.List[i].Counter);
                 Assert.AreEqual(can, rb.GetComponent<Button>().interactable,
                                 "«" + d.List[i].Label + "» 의 «받기» 는 받을 수 있을 때만 눌린다");
@@ -119,7 +138,8 @@ namespace KkomaKnight.Tests.Play
             LobbyPopups.Achievements(_app);
             yield return Frames(1);
             var root = _app.Overlay.Root;
-            var btn = UiKit.Find(UiKit.Find(root, "Ach:0"), "AchBtn").GetComponent<Button>();
+            // T364 ⓐ 뒤 — 줄은 이름으로 집는다(받을 수 있는 줄이 위로 오므로 «0번» 이 이 줄이라는 보장이 없다).
+            var btn = UiKit.Find(RowByLabel(root, row.Label), "AchBtn").GetComponent<Button>();
             Assert.IsTrue(btn.interactable, "깬 단계가 있으면 «받기» 가 산다");
 
             double gemBefore = _app.Save.Gem;
