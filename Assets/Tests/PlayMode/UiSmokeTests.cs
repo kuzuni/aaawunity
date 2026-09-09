@@ -955,7 +955,15 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNotNull(UiKit.Find(pet, "TopBar"), "펫 탭 상단 재화 바"); Assert.IsNull(UiKit.Find(pet, "ui.talent"), "Character_Talent_02 통째 스폰 0(부품 규칙)");
                 Assert.AreEqual(Layout.PetCount, CountNamed(UiKit.Find(pet, "PetGrid"), "Pet:"), "펫 격자 9칸"); Assert.AreEqual(PetScreen.SlotCount, CountNamed(UiKit.Find(pet, "Slots"), "Slot:"), "장착 슬롯 4");
                 Assert.AreEqual(Layout.PetCount, CountNamed(UiKit.Find(pet, "PetGrid"), "Bar"), "칸마다 진행바"); Assert.AreEqual(Layout.PetCount, CountNamed(UiKit.Find(pet, "PetGrid"), "Lv"), "칸마다 Lv 글자");
-                Assert.IsTrue(HasText(s => s == "Lv. 0") && HasText(s => s == "0/0"), "숫자는 0(레퍼런스 숫자 베끼지 않음)");
+                // ⛑ T372 2회차 — `aaf78fb3`(T293 ⓘ 2회차)가 격자 숫자를 **세이브+표**로 칠하면서 «0/0» 이 «0/N» 이 됐다
+                //   (`RefreshCells`: 진행바 = `Pets.Frag` + "/" + `Pets.Need(d, 1)` · 필요 수는 표의 `NeedBase` 에서 온다).
+                //   T42 가 이 자리에서 지키려던 것은 **«레퍼런스 JPG 의 장식 숫자를 베끼지 않는다»** 이고,
+                //   그 뜻은 이제 «숫자가 표·세이브에서 나온다» 로 지켜야 한다 — 리터럴 «0/0» 은 그 뜻의 옛 껍데기였다.
+                //   필요 수를 자가 다시 세지 않고 **화면이 쓰는 그 함수**(`Pets.Need`)에서 받는다.
+                int need1 = Pets.Need(_app.Data.Pet, 1);
+                Assert.Greater(need1, 0, "펫 조각 필요 수는 표(NeedBase)에서 온다 — 0 이면 표를 못 읽은 것이다");
+                Assert.IsTrue(HasText(s => s == "Lv. 0") && HasText(s => s == "0/" + need1),
+                    "안 가진 칸의 숫자는 세이브·표에서 나온다(«Lv. 0» · «0/" + need1 + "») — 레퍼런스 숫자를 베끼지 않는다(T42 · T293 ⓘ)");
                 // T63-pet — 글자 가독성: 진행바 «0/0» 본문 40 이 바 안에 들어가고(바 높이 = Layout.PetBarH · 표 중심 유지) 펫 탭의 활성 Text 에 잘림/넘침 0(게이트 표와 같은 판정)
                 Canvas.ForceUpdateCanvases();
                 var barTxt0 = UiKit.Find(pet, "Pet:0/Bar").GetComponentInChildren<TMP_Text>(true); Assert.IsNotNull(barTxt0, "진행바 글자");
@@ -1022,7 +1030,7 @@ namespace KkomaKnight.Tests.Play
                     "«" + PetScreen.NotReadyMsg + "» 는 표가 없을 때만 나온다 — 표가 실렸는데 이 말이 뜨면 소환이 껍데기로 되돌아간 것이다(T372)");
                 _app.Save.Gem = gem0; _app.Save.PetEgg = egg0;
                 Check("펫 소환 버튼");
-                // 세부 팝업(14) — 칸 클릭 → 명판 없음 · 세부 칸 · «패시브:» · 강화/장착(껍데기) · «탭하여 닫기» · 배경 탭으로 닫힘
+                // 세부 팝업(14) — 칸 클릭 → 명판 없음 · 세부 칸 · «패시브:» · 강화/장착(⛑ T372 2회차 — 이제 껍데기가 아니라 «상태를 따르는» 버튼) · «탭하여 닫기» · 배경 탭으로 닫힘
                 Assert.IsTrue(ClickNamed(pet, "Pet:0"), "펫 칸 클릭"); yield return Frames(2);
                 Check("펫 세부 팝업", expectOverlay: true);
                 var ov = _app.Overlay.Root;
@@ -1030,13 +1038,27 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(HasText(s => s == "패시브:") && HasText(s => s == "강화") && HasText(s => s == "장착") && HasText(s => s == "탭하여 닫기"), "세부 팝업 글자");
                 var rib = UiKit.Find(ov, "ui.title.tangerine"); Assert.IsTrue(rib == null || !rib.gameObject.activeSelf, "세부 팝업은 명판 없음(레퍼런스 14)"); Assert.IsNull(UiKit.Find(ov, "Button_Close_01"), "닫기 X 없음");
                 var bx = (RectTransform)UiKit.Find(ov, "ui.popup"); Assert.IsNotNull(bx, "세부 패널(ui.popup)"); Assert.AreEqual(Layout.PdBox.X, bx.anchorMin.x * 100f, 0.5f, "패널 x = 표 ⑪"); Assert.AreEqual(1f - Layout.PdBox.Y / 100f, bx.anchorMax.y, 1e-3f, "패널 y = 표 ⑪");
-                // T63-pet — 세부 팝업 글자: 진행바 «0/0» 40 이 바 안에(PdBar 1.4% → Layout.PetBarH) · 팝업 안 활성 Text 잘림/넘침 0
+                // T63-pet — 세부 팝업 글자: 진행바 숫자(조각/필요 · T293 ⓘ) 40 이 바 안에(PdBar 1.4% → Layout.PetBarH) · 팝업 안 활성 Text 잘림/넘침 0
                 Canvas.ForceUpdateCanvases();
                 var dBar = UiKit.Find(ov, "PetDetailCell/Bar"); Assert.IsNotNull(dBar, "세부 진행바"); var dBarTxt = dBar.GetComponentInChildren<TMP_Text>(true); Assert.IsNotNull(dBarTxt, "세부 진행바 글자");
                 Assert.GreaterOrEqual(TextAudit.BestFitSize(dBarTxt), TextSize.Body, "세부 진행바 숫자 40 그대로"); Assert.GreaterOrEqual(dBarTxt.rectTransform.rect.height + 1f, dBarTxt.preferredHeight, "세부 진행바 글자 rect 높이 ≥ 선호 높이");
                 var pdClip = TextAudit.Collect("14_pet_detail", ov).FindAll(r => r.Clipped);
                 Assert.AreEqual(0, pdClip.Count, "펫 세부 팝업 잘림/넘침 0(T63-pet) — " + string.Join(" · ", pdClip.ConvertAll(r => r.ToString())));
-                Assert.IsTrue(ClickNamed(ov, "PetUpgradeBtn") && ClickNamed(ov, "PetEquipBtn"), "세부 버튼 2"); yield return Frames(1); Assert.IsTrue(_app.Overlay.IsOpen, "껍데기 버튼은 팝업을 닫지 않는다");
+                // ⛑ T372 2회차 — `aaf78fb3`(T293 ⓘ 2회차)가 이 둘을 «껍데기» 에서 **상태를 따르는 버튼**으로 바꿨다:
+                //   주인 5항 ⓗ(«강화 가능할 때는 그 버튼 주황») 대로 **옷과 눌림이 한 값에서** 나온다
+                //   (강화 = `Pets.CanLevelUp` · 장착 = `Pets.Has`). 갈라지면 «주황인데 안 눌리는» 자리가 생긴다.
+                //   ⚠ 옛 줄은 «눌러도 팝업이 안 닫힌다»(껍데기)를 쟀다. 그 자로는 **«회색인데 눌리는»** 어긋남을 못 잡고,
+                //     지금은 안 가진 펫이면 `SetInteractable(false)` 라 클릭 자체가 안 되어 옛 줄이 그냥 빨개진다.
+                //   ⇒ «눌러 보고» 가 아니라 **눌림이 규칙과 같은가**를 잰다. 기댓값을 «안 눌린다» 로 박지 않고
+                //     Core 에 물어 맞대므로, 시작 펫이 생기는 날에도 이 자는 옳은 것을 잰다.
+                var pet0 = _app.Data.Pet.Pets[0];
+                var upBtn = UiKit.Find(ov, "PetUpgradeBtn"); var eqBtn = UiKit.Find(ov, "PetEquipBtn");
+                Assert.IsNotNull(upBtn, "세부 강화 버튼"); Assert.IsNotNull(eqBtn, "세부 장착 버튼");
+                Assert.AreEqual(Pets.CanLevelUp(_app.Data.Pet, _app.Save, pet0.Id), upBtn.GetComponent<Button>().interactable,
+                    "강화 눌림 = Pets.CanLevelUp(옷과 눌림이 한 값 · 주인 5항 ⓗ)");
+                Assert.AreEqual(Pets.Has(_app.Save, pet0.Id), eqBtn.GetComponent<Button>().interactable,
+                    "장착 눌림 = 가진 펫인가(Pets.Has)");
+                yield return Frames(1); Assert.IsTrue(_app.Overlay.IsOpen, "세부 팝업은 그대로 열려 있다");
                 Assert.IsTrue(ClickNamed(ov, "Dimmed"), "배경 탭 = 닫기"); yield return Frames(2); Assert.IsFalse(_app.Overlay.IsOpen, "세부 팝업 닫힘");
                 Check("펫 세부 닫힘");
                 _app.ShowScreen("lobby"); yield return Frames(1); Check("펫 → 로비");
