@@ -171,6 +171,7 @@
 | sprites | `pi.target` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/target_1.png` | fileID 21300000 |  |
 | sprites | `pi.swirl` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/swirl.png` | fileID 21300000 |  |
 | sprites | `pi.pause` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/pause.png` | fileID 21300000 | HUD 일시정지 버튼 |
+| sprites | `pi.hand` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/256/hand.png` | fileID 21300000 | T318 퀘스트 «이동» 뒤 목적지 버튼을 가리키는 손가락 힌트(주인 에셋 · 256) — QuestGo.Hint 가 버튼 오른쪽 아래에 세워 위아래로 콕콕 · 누르거나 벗어나거나 quest.json hint.lifeSec 이 지나면 사라진다 |
 | sprites | `pi.play` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/play.png` | fileID 21300000 |  |
 | sprites | `pi.info` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/info_round.png` | fileID 21300000 |  |
 | sprites | `pi.book` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/book_open.png` | fileID 21300000 | 보유 특전(PERKS) 책 아이콘 — HUD Info 버튼 |

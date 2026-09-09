@@ -158,6 +158,14 @@ namespace KkomaKnight.Game
         public void Persist() => SaveStore.Save(Save);
 
         /// <summary>
+        /// T318 — 퀘스트 «이동»: 표의 목적지(<see cref="QuestData.Go"/>)로 화면을 열고 그 버튼 위에 손가락 힌트를 세운다(<see cref="QuestGo.Open"/>).
+        /// <paramref name="go"/> 가 null 이면(로그인류) 아무 일도 안 한다. 돌려주는 값 = 손가락이 선 버튼(못 찾으면 null · 경고 한 줄).
+        /// </summary>
+        public RectTransform Hint(QuestData.Go go) => QuestGo.Open(this, go);
+        /// <summary>T318 — 지금 화면(팝업이 열려 있으면 팝업)에서 이름이 <paramref name="point"/> 인 켜진 버튼에 손가락 힌트. 못 찾으면 null.</summary>
+        public RectTransform Hint(string point) => QuestGo.Hint(this, point);
+
+        /// <summary>
         /// «데이터 삭제»(T29) — 세이브 키 삭제 → 새 세이브로 교체 → 전투 중이면 판을 버리고(골드 은행 없음) → 로비를 새로 그린다. 설정 팝업의 확인(«삭제»)에서만 부른다.
         /// 화면들은 전부 <see cref="Save"/> 를 매번 읽으므로(캐시 없음) 교체 뒤 <see cref="ShowScreen"/> 의 Refresh 가 새 값을 그린다. 음소거는 새 세이브(해제)로 바로 반영.
         /// </summary>

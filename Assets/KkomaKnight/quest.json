@@ -6,19 +6,32 @@
   "_key": "키 셋의 이름은 T255 가 정본으로 세운 것 그대로다 — Core/GachaKeys 의 keyBlue·keyPurple·keyYellow(그 절이 색↔상자·이름·아이콘을 한 곳에서 갖고, 우편/지급 길목 Mail.CanPay 가 그 절에 물어본다). ⚠ 이 이름을 아레나 상인 상품표의 rareKey·epicKey·legendKey 와 헷갈리지 말 것 — 그 셋은 «상인이 파는 물건 줄» 의 이름이고, 재화를 더하고 빼는 길이 아는 이름은 이 색 이름이다. 주인이 준 짝이 한 칸씩 어긋나 보이는 것(«희귀 열쇠» = 파랑인데 여는 것은 희귀 상자 · «에픽 열쇠» = 보라인데 여는 것은 전설 상자)도 오타가 아니라 주인 규칙이다(T255 결정 704).",
   "_reset": "일일 = 날짜가 바뀌면 0(출석·데일리 기프트와 같은 규칙 = SaveStore.Today() 의 yyyy-MM-dd) · 주간 = weekStartDow 요일 0시에 0. 누적 메달·받은 구간도 같이 0 이 된다.",
 
+  "_go": "go = «이동» 이 데려가는 자리(T318 · 주인 2026-09-09 11:0X «이동 버튼 누르면 해당 거 가능하게 이동 · 도전해야 하면 손가락으로 가리키면서 클릭하라는 식으로 힌트»). screen 은 Core/Quest.cs GoScreens 의 낱말(lobby·dungeon·chest·forge·pet·expedition) · point 는 그 화면에서 손가락이 가리킬 버튼의 오브젝트 이름(각 화면 .cs 의 이름 계약 · 글자 하나 또는 후보 목록 — 목록이면 켜져 있는 첫 것). 로그인류는 갈 데가 없어 명시적으로 null(버튼은 ✓ 나 비활성). 키를 빠뜨리면 읽는 순간 운다 — «이동이 아무 데도 안 간다» 가 조용히 남지 않게.",
+  "_hint": "hint = 손가락 힌트의 값(T318 2항 · 코드 상수 0). iconPx = 손가락 그림 한 변(프레임 px) · bobPx = 위아래 콕콕 진폭 · periodSec = 콕콕 한 번 · lifeSec = 아무것도 안 누르면 이만큼 뒤 사라진다 · glowSec = 버튼 뒤 빛 테두리가 한 번 떠올랐다 꺼지는 시간.",
+
+  "hint": { "iconPx": 110, "bobPx": 22, "periodSec": 0.45, "lifeSec": 8, "glowSec": 0.8 },
+
   "weekStartDow": 1,
 
   "daily": {
     "medal": "bronze",
     "quests": [
-      { "label": "로그인하기",          "counter": "login",               "goal": 1,    "medal": 10 },
-      { "label": "적 50개 죽이기",       "counter": "kill",                "goal": 50,   "medal": 20 },
-      { "label": "챕터 두 번 도전",      "counter": "chapterTry",          "goal": 2,    "medal": 20 },
-      { "label": "상자 2번 오픈",        "counter": "chestOpen",           "goal": 2,    "medal": 20 },
-      { "label": "장비 합성 2회",        "counter": "gearFuse",            "goal": 2,    "medal": 20 },
-      { "label": "던전 도전 1회",        "counter": "dungeonTry",          "goal": 1,    "medal": 20 },
-      { "label": "탐험 보상 받기",       "counter": "expeditionClaim",     "goal": 1,    "medal": 10 },
-      { "label": "빠른 탐험 보상 받기",  "counter": "expeditionFastClaim", "goal": 1,    "medal": 10 }
+      { "label": "로그인하기",          "counter": "login",               "goal": 1,    "medal": 10,
+        "go": null },
+      { "label": "적 50개 죽이기",       "counter": "kill",                "goal": 50,   "medal": 20,
+        "go": { "screen": "lobby",      "point": "Start" } },
+      { "label": "챕터 두 번 도전",      "counter": "chapterTry",          "goal": 2,    "medal": 20,
+        "go": { "screen": "lobby",      "point": "Start" } },
+      { "label": "상자 2번 오픈",        "counter": "chestOpen",           "goal": 2,    "medal": 20,
+        "go": { "screen": "chest",      "point": "One" } },
+      { "label": "장비 합성 2회",        "counter": "gearFuse",            "goal": 2,    "medal": 20,
+        "go": { "screen": "forge",      "point": ["FuseBtnOn", "FuseBtn"] } },
+      { "label": "던전 도전 1회",        "counter": "dungeonTry",          "goal": 1,    "medal": 20,
+        "go": { "screen": "dungeon",    "point": "EnterBtn" } },
+      { "label": "탐험 보상 받기",       "counter": "expeditionClaim",     "goal": 1,    "medal": 10,
+        "go": { "screen": "expedition", "point": "ClaimBtn" } },
+      { "label": "빠른 탐험 보상 받기",  "counter": "expeditionFastClaim", "goal": 1,    "medal": 10,
+        "go": { "screen": "expedition", "point": "QuickBtn" } }
     ],
     "track": [
       { "points": 20,  "rewards": [ { "item": "keyBlue", "amount": 1 } ] },
@@ -32,14 +45,22 @@
   "weekly": {
     "medal": "silver",
     "quests": [
-      { "label": "적 2,500 죽이기",      "counter": "kill",            "goal": 2500, "medal": 30 },
-      { "label": "로그인 5일",           "counter": "loginDays",       "goal": 5,    "medal": 20 },
-      { "label": "챕터 도전 25회",       "counter": "chapterTry",      "goal": 25,   "medal": 30 },
-      { "label": "상자 오픈 30회",       "counter": "chestOpen",       "goal": 30,   "medal": 30 },
-      { "label": "장비 합성 30회",       "counter": "gearFuse",        "goal": 30,   "medal": 30 },
-      { "label": "던전 클리어 20회",     "counter": "dungeonClear",    "goal": 20,   "medal": 30 },
-      { "label": "펫 업그레이드 10번",   "counter": "petUpgrade",      "goal": 10,   "medal": 20 },
-      { "label": "탐험 7번 보상 받기",   "counter": "expeditionClaim", "goal": 7,    "medal": 20 }
+      { "label": "적 2,500 죽이기",      "counter": "kill",            "goal": 2500, "medal": 30,
+        "go": { "screen": "lobby",      "point": "Start" } },
+      { "label": "로그인 5일",           "counter": "loginDays",       "goal": 5,    "medal": 20,
+        "go": null },
+      { "label": "챕터 도전 25회",       "counter": "chapterTry",      "goal": 25,   "medal": 30,
+        "go": { "screen": "lobby",      "point": "Start" } },
+      { "label": "상자 오픈 30회",       "counter": "chestOpen",       "goal": 30,   "medal": 30,
+        "go": { "screen": "chest",      "point": "One" } },
+      { "label": "장비 합성 30회",       "counter": "gearFuse",        "goal": 30,   "medal": 30,
+        "go": { "screen": "forge",      "point": ["FuseBtnOn", "FuseBtn"] } },
+      { "label": "던전 클리어 20회",     "counter": "dungeonClear",    "goal": 20,   "medal": 30,
+        "go": { "screen": "dungeon",    "point": "EnterBtn" } },
+      { "label": "펫 업그레이드 10번",   "counter": "petUpgrade",      "goal": 10,   "medal": 20,
+        "go": { "screen": "pet",        "point": "UpgradeAllBtn" } },
+      { "label": "탐험 7번 보상 받기",   "counter": "expeditionClaim", "goal": 7,    "medal": 20,
+        "go": { "screen": "expedition", "point": "ClaimBtn" } }
     ],
     "track": [
       { "points": 30,  "rewards": [ { "item": "petEgg",    "amount": 10 } ] },

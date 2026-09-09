@@ -345,6 +345,8 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: cbad2b9bee9df4907ad83adcc9efada2, type: 3}
   - key: pi.pause
     sprite: {fileID: 21300000, guid: f1bff306d27224ee78fef821a7073511, type: 3}
+  - key: pi.hand
+    sprite: {fileID: 21300000, guid: d1ee0813a6b2a47b18b7e8cf40be6a03, type: 3}
   - key: pi.play
     sprite: {fileID: 21300000, guid: 197a11757bfeb463f8e462019310f72d, type: 3}
   - key: pi.info

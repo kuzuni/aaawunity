@@ -46,7 +46,39 @@ namespace KkomaKnight.Core
             public bool Done(int count) => count >= Goal;
             /// <summary>줄에 보이는 «진행/목표» 의 진행 쪽 — 목표를 넘어도 목표에서 멈춘다(«34/50» · «50/50»).</summary>
             public int Shown(int count) => count < 0 ? 0 : (count > Goal ? Goal : count);
+            /// <summary>
+            /// T318 — «이동» 이 데려가는 자리. <b>null = 갈 데가 없다</b>(로그인류 · 표가 명시적으로 <c>null</c> 을 적은 줄).
+            /// 표에 키 자체가 없으면 읽는 순간 운다 — «이동이 아무 데도 안 간다» 가 조용히 남지 않게(<see cref="ReadGo"/>).
+            /// </summary>
+            public Go Go;
         }
+
+        /// <summary>
+        /// T318 — «이동» 의 목적지(표 <c>go</c>). <see cref="Screen"/> 은 <see cref="GoScreens"/> 의 낱말이고 <see cref="Points"/> 는
+        /// 그 화면에서 손가락이 가리킬 버튼의 <b>오브젝트 이름</b>(각 화면 .cs 의 이름 계약). 후보가 여럿이면(대장간 «합성» 은 회색·주황 두 벌이
+        /// 겹쳐 있고 하나만 켜진다) <b>켜져 있는 첫 것</b>을 가리킨다 — 그 규칙은 화면 쪽(<c>QuestGo</c>)이 갖고 여기는 목록만 든다.
+        /// </summary>
+        public sealed class Go
+        {
+            public string Screen = "";
+            public string[] Points = System.Array.Empty<string>();
+        }
+
+        /// <summary>
+        /// T318 — <c>go.screen</c> 이 쓸 수 있는 낱말 전부. 화면 쪽 길잡이(<c>Game/QuestGo.Open</c>)가 이 여섯을 <b>하나씩 다</b> 맡는다 —
+        /// 여기 낱말을 늘리면 그쪽 갈래도 같이 늘려야 하고, 그것을 PlayMode 자(<c>QuestGoPlayTests</c>)가 표의 모든 줄로 밟아 확인한다.
+        /// <para>lobby = 로비(START) · dungeon = 이벤트 화면 던전 탭(20) · chest = 상점 «상자» 절(10) · forge = 대장간(08) · pet = 펫(13) · expedition = 로비 → 탐험 팝업(30).</para>
+        /// </summary>
+        public static readonly string[] GoScreens = { "lobby", "dungeon", "chest", "forge", "pet", "expedition" };
+        public static bool KnownGoScreen(string s) { foreach (var k in GoScreens) if (k == s) return true; return false; }
+
+        /// <summary>T318 2항 — 손가락 힌트의 값(표 <c>hint</c> · 코드 상수 0). 단위: px 는 프레임(1080×2337) px · Sec 는 초(unscaled).</summary>
+        public sealed class HintSpec
+        {
+            public double IconPx, BobPx, PeriodSec, LifeSec, GlowSec;
+        }
+        /// <summary>손가락 힌트 값 — 표가 없으면 <c>null</c> 이 아니라 읽는 순간 운다(힌트가 «값 없이 그려지는» 일이 없게).</summary>
+        public HintSpec Hint = new HintSpec();
 
         /// <summary>트랙 한 칸 — «이만큼 채우면 이것을 받는다».</summary>
         public sealed class Step
@@ -115,9 +147,42 @@ namespace KkomaKnight.Core
             var d = new QuestData { WeekStartDow = (int)j["weekStartDow"].Num(1) };
             if (d.WeekStartDow < 0 || d.WeekStartDow > 6)
                 throw new FormatException("quest.json: weekStartDow 는 0(일)~6(토) 이어야 한다 — 지금 " + d.WeekStartDow);
+            d.Hint = ReadHint(j.Req("hint"));
             ReadTrack(j["daily"], d.Daily, "daily");
             ReadTrack(j["weekly"], d.Weekly, "weekly");
             return d;
+        }
+
+        /// <summary>T318 — 손가락 힌트 값 다섯. 전부 0 보다 커야 한다(0 이면 «안 움직이는 손가락» · «영원한 힌트» 가 조용히 생긴다).</summary>
+        static HintSpec ReadHint(JNode j)
+        {
+            var h = new HintSpec
+            {
+                IconPx = j.Req("iconPx").Num(), BobPx = j.Req("bobPx").Num(), PeriodSec = j.Req("periodSec").Num(),
+                LifeSec = j.Req("lifeSec").Num(), GlowSec = j.Req("glowSec").Num(),
+            };
+            if (h.IconPx <= 0 || h.BobPx <= 0 || h.PeriodSec <= 0 || h.LifeSec <= 0 || h.GlowSec <= 0)
+                throw new FormatException("quest.json: hint 의 값(iconPx·bobPx·periodSec·lifeSec·glowSec)은 전부 0 보다 커야 한다");
+            return h;
+        }
+
+        /// <summary>
+        /// T318 — 한 줄의 <c>go</c>. 키가 <b>없으면</b> 운다(빠뜨린 줄의 «이동» 이 조용히 아무 데도 안 가는 일이 없게) ·
+        /// <c>null</c> 이면 «갈 데 없음» · 있으면 <c>screen</c> 은 <see cref="GoScreens"/> 안이어야 하고 <c>point</c> 는 글자 하나 또는 글자 목록(비면 운다).
+        /// </summary>
+        static Go ReadGo(JNode e, string where, string label)
+        {
+            if (!e.Has("go")) throw new FormatException("quest.json: " + where + " «" + label + "» 에 go 가 없다 — 갈 데가 없으면 null 이라고 적는다(T318)");
+            var g = e["go"];
+            if (g.IsNull) return null;
+            var go = new Go { Screen = g["screen"].Str("") };
+            if (!KnownGoScreen(go.Screen))
+                throw new FormatException("quest.json: " + where + " «" + label + "» 의 go.screen «" + go.Screen + "» 은 모르는 화면이다 — " + string.Join("·", GoScreens) + " 중 하나");
+            var p = g["point"];
+            go.Points = p.IsArray ? p.StrArray() : (p.Str(null) != null ? new[] { p.Str() } : System.Array.Empty<string>());
+            foreach (var s in go.Points) if (string.IsNullOrEmpty(s)) throw new FormatException("quest.json: " + where + " «" + label + "» 의 go.point 에 빈 글자가 있다");
+            if (go.Points.Length == 0) throw new FormatException("quest.json: " + where + " «" + label + "» 의 go.point 가 비었다 — 손가락이 가리킬 버튼 이름");
+            return go;
         }
 
         static void ReadTrack(JNode j, Track t, string where)
@@ -137,6 +202,7 @@ namespace KkomaKnight.Core
                 if (string.IsNullOrEmpty(q.Counter)) throw new FormatException("quest.json: " + where + " «" + q.Label + "» 의 counter 가 비었다");
                 if (q.Goal < 1) throw new FormatException("quest.json: " + where + " «" + q.Label + "» 의 goal 은 1 이상이어야 한다");
                 if (q.Medal < 1) throw new FormatException("quest.json: " + where + " «" + q.Label + "» 의 medal 은 1 이상이어야 한다");
+                q.Go = ReadGo(e, where, q.Label);
                 t.Quests.Add(q);
             }
             if (t.Quests.Count == 0) throw new FormatException("quest.json: " + where + ".quests 가 비었다");
