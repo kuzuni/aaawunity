@@ -284,6 +284,179 @@ namespace KkomaKnight.Tests.Play
         }
 
         // ─────────────────────────────────────────────────────────────────────────────
+        // P4 상점 — 탭으로 들어가 · 다이아 1회·10회 · 열쇠 옷(캡+7 → 캡 회 → 나머지) · 무료 보급 다이아·골드 · 상자 ⓘ → 아이템 세부 → 돌아오기.
+        // ─────────────────────────────────────────────────────────────────────────────
+        /// <summary>
+        /// <b>켜진</b> 것만 누른다 — 상자 카드의 «1회»·«10회» 자리에는 다이아 옷과 열쇠 옷 두 벌이 <b>같은 rect 에 겹쳐</b> 있고 <c>Refresh</c> 가 하나만 켠다(T289).
+        /// <see cref="UiKit.Find"/> 는 꺼진 것도 집으므로 <see cref="Tap"/> 만 쓰면 봇이 «사람 눈에 안 보이는 버튼» 을 누르고도 초록이다 — 그것은 «논 것» 이 아니다.
+        /// </summary>
+        void TapLive(Transform root, string name)
+        {
+            var t = UiKit.Find(root, name); Assert.IsNotNull(t, "누를 자리 " + name);
+            Assert.IsTrue(t.gameObject.activeInHierarchy, name + " 은 지금 «켜진 옷» 이어야 한다 — 꺼진 버튼을 누르는 것은 노는 것이 아니다");
+            Tap(root, name);
+        }
+        /// <summary>지금 켜진 상자 카드(<c>Content › Box:&lt;상자&gt;</c> · <c>ShopKeyPlayTests</c> 의 꼴). <b>도달</b>을 같이 잰다(화면이 «shop»).</summary>
+        Transform ShopCard(string boxKey)
+        {
+            Assert.AreEqual("shop", _app.Current.Name, "도달 — 상점이 켜져 있다");
+            var content = UiKit.Find(_app.Current.Root, "Content"); Assert.IsNotNull(content, "상점 Content");
+            var card = UiKit.Find(content, "Box:" + boxKey); Assert.IsNotNull(card, "상자 카드 " + boxKey);
+            return card;
+        }
+        /// <summary>
+        /// 뽑기 결과 창(<c>ui.chestOpen</c>)을 <b>사람이 닫는 길</b>로 닫는다 — 배경 탭. 첫 탭은 «연출 건너뛰기», 그 다음 탭이 «닫기» 다(T202 · <c>ShopScreen.ChestResult</c>).
+        /// <para>재는 것은 «창이 섰다 · 배경 탭으로 닫힌다» 둘뿐 — 무엇이 나왔는지(등급·개수)는 안 잰다(3항 ⓐ).</para>
+        /// </summary>
+        IEnumerator CloseChestResult(string what)
+        {
+            Assert.IsTrue(_app.Overlay.IsOpen, what + " — 뽑기 결과 창이 선다");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Chest"), what + " — 결과 창의 상자 묶음(조각 «Chest»)");
+            _log.AssertNoRed(what + " 결과 창");
+            // 첫 탭 — 연출이 도는 중이면 «건너뛰기»(창은 그대로 서 있다)
+            Tap(_app.Overlay.Root, "Background"); yield return Frames(2);
+            // 다 보인 뒤의 탭 = «닫기»
+            if (_app.Overlay.IsOpen) { Tap(_app.Overlay.Root, "Background"); yield return Frames(2); }
+            Assert.IsFalse(_app.Overlay.IsOpen, what + " — 배경을 탭하면 닫힌다(두 번 안에)");
+        }
+
+        /// <summary>
+        /// P4 상점(T300 1항) — 노는 것: 로비 탭 «상점» → 큰 상자 다이아 1회·10회 → 열쇠 «캡+7» 을 쥐고 10회 자리(«17/10») → 1회 자리(«7/7») →
+        /// 무료 보급 다이아·골드 «Free» → 상자 ⓘ(확률 팝업) → 칸 하나 → 아이템 세부(보기 전용) → 돌아와서 닫기.
+        /// 재는 것: <b>도달 · 결과 창이 서고 배경 탭으로 닫힘 · 배선(뽑은 수가 늘고 · 다이아/열쇠가 빠지고 · 옷이 갈아입고 · 무료 보급이 들어오고 · 세부에서 확률로 돌아옴) · 빨간 줄 0</b>.
+        /// <para>
+        /// ⚠ <b>값은 안 잰다</b>(3항 ⓐ) — 상자 값·캡·무료 보급 수는 전부 표에서 읽어 «줄었다/늘었다» 만 본다. 캡은 <c>D.Gacha.TenPullCount</c> 라 주인이 10 을 바꿔도 각본은 그대로다.
+        /// 열쇠 규칙(«1~9 = 1회만 · 10 이상 = 둘 다») 자체는 <c>ShopKeyPlayTests</c>·<c>GachaKeysTests</c> 몫이고, 여기서는 그 옷을 <b>실제로 눌러 한 판이 나가는가</b> 만 본다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>겹쳐 있는 두 옷 중 켜진 것만 누른다</b>(<see cref="TapLive"/>) — <c>UiKit.Find</c> 는 꺼진 버튼도 집고 <c>onClick.Invoke</c> 는 꺼진 버튼에서도 돈다.
+        /// 그러면 «다이아 10회» 를 누른 줄 알았는데 열쇠 옷이 켜진 판에서 다이아 옷을 누른 꼴이 되고, 그 판은 사람이 낼 수 없다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>팝업은 손으로 안 연다</b>(결정 922 ③) — ⓘ 버튼 → 확률 팝업 → 칸 → 세부 → 어둠 탭 → 확률로 «돌아온다» 까지 전부 누른다.
+        /// 세부에서 확률로 돌아오는 것은 <c>GearUi.OpenInfo(onClose)</c> 배선이고, 그것이 끊기면 세부는 그냥 닫히고 다른 자는 아무도 안 운다(결정 880 이 그 자리를 «갔다 돌아오기» 로 정했다).
+        /// </para>
+        /// <para>⚠ 무료 보급 줄이 <b>표에 없으면 그 조각은 건너뛴다</b>(로그로 남긴다) — 주인이 무료 보급을 없애는 날 봇이 먼저 울면 안 된다(«지어내지 않는다»).</para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator P4_상점을_한_바퀴_놀아도_죽지_않는다()
+        {
+            yield return Boot();
+            var D = _app.Data; var S = _app.Save;
+            Assert.IsNotNull(D.Gacha, "gacha.json 이 카탈로그(data.gacha)로 실려야 한다");
+            int cap = D.Gacha.TenPullCount; Assert.Greater(cap, 1, "표의 «N회» 값이 캡이다");
+            var big = ShopScreen.BigBox(D); Assert.IsNotNull(big, "10회 버튼이 있는 큰 카드의 상자");
+            string keyItem = GachaKeys.KeyOf(big.Key); Assert.IsNotNull(keyItem, "그 상자를 여는 열쇠(T252)");
+            // 각 단계가 제 조건을 만들어 시작한다(1항) — 다이아는 «1회 + 10회 + 여유» 만큼(표 값 · 수를 안 박는다) · 열쇠는 아직 0(다이아 옷부터 논다)
+            S.Gem = big.Cost * (cap + 1) * 2; _app.Persist();
+
+            // ⓐ 도달 — 사람이 들어가는 길: 로비 하단 탭 «상점»
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            Tap(_app.Current.Root, NavBar.TabName("shop")); yield return Frames(3);
+            var card = ShopCard(big.Key);
+            _log.AssertNoRed("P4 상점 입장");
+
+            // ⓑ 다이아 1회 → 결과 창 → 배경 탭 닫기 · 다이아 10회 → 같은 길
+            {
+                int pulls0 = S.Pulls; double gem0 = S.Gem;
+                TapLive(card, "One"); yield return Frames(2);
+                yield return CloseChestResult("P4 다이아 1회");
+                Assert.Greater(S.Pulls, pulls0, "1회가 실제로 나갔다(배선 · 뽑은 수)");
+                Assert.Less(S.Gem, gem0, "다이아가 빠졌다(배선)");
+                _log.AssertNoRed("P4 다이아 1회");
+
+                pulls0 = S.Pulls; gem0 = S.Gem;
+                TapLive(card, "Ten"); yield return Frames(2);
+                yield return CloseChestResult("P4 다이아 " + cap + "회");
+                Assert.Greater(S.Pulls, pulls0, cap + "회가 실제로 나갔다(배선)");
+                Assert.Less(S.Gem, gem0, "다이아가 빠졌다(배선)");
+                _log.AssertNoRed("P4 다이아 " + cap + "회");
+            }
+
+            // ⓒ 열쇠 «캡+7»(주인 예의 17) — 10회 자리가 열쇠 옷을 입는다 → 누르면 캡만큼 한 판 → 남은 것은 1회 자리 «N/N» → 누르면 다 쓴다 → 다이아 옷으로 돌아온다
+            {
+                int have = cap + 7;
+                GachaKeys.Add(S, keyItem, have); _app.Persist();
+                // 옷은 Refresh 가 갈아입힌다 — 사람이 하듯 화면을 다시 연다(탭 왕복)
+                Tap(_app.Current.Root, NavBar.TabName("battle")); yield return Frames(2);
+                Tap(_app.Current.Root, NavBar.TabName("shop")); yield return Frames(3);
+                card = ShopCard(big.Key);
+
+                int pulls0 = S.Pulls; double gem0 = S.Gem;
+                TapLive(card, "TenKey"); yield return Frames(2);
+                yield return CloseChestResult("P4 열쇠 " + have + "/" + cap);
+                Assert.Greater(S.Pulls, pulls0, "열쇠 옷을 누르면 한 판이 나간다(배선)");
+                Assert.Less(GachaKeys.Count(S, keyItem), have, "열쇠가 빠졌다(배선)");
+                Assert.AreEqual(gem0, S.Gem, 1e-6, "열쇠로 열면 다이아는 한 톨도 안 빠진다(값을 열쇠로 치른 것이 이 판의 요점)");
+                _log.AssertNoRed("P4 열쇠 캡 회");
+
+                pulls0 = S.Pulls; double left = GachaKeys.Count(S, keyItem);
+                Assert.Greater(left, 0, "캡보다 많이 가졌으니 남는다 — 남은 것이 «1회 자리» 의 몫이다");
+                TapLive(card, "OneKey"); yield return Frames(2);
+                yield return CloseChestResult("P4 열쇠 나머지 " + left);
+                Assert.Greater(S.Pulls, pulls0, "1회 자리의 열쇠 옷도 한 판을 낸다(배선)");
+                Assert.AreEqual(0, GachaKeys.Count(S, keyItem), 1e-6, "가진 열쇠를 다 썼다(배선 · 주인 «열쇠 먼저 소진»)");
+                var one = UiKit.Find(card, "One"); Assert.IsNotNull(one, "1회 자리(다이아 옷)");
+                Assert.IsTrue(one.gameObject.activeInHierarchy, "열쇠가 0 이면 1회 자리는 다이아 옷으로 돌아온다(배선 · Refresh)");
+                _log.AssertNoRed("P4 열쇠 나머지 → 다이아 옷");
+            }
+
+            // ⓓ 무료 보급 — 표가 지목한 다이아 줄·골드 줄의 «Free» 버튼(T259 3항). 표에 없으면 건너뛴다(지어내지 않는다).
+            {
+                string today = SaveStore.Today();
+                var gp = D.Shop != null ? D.Shop.FreeGemPack : null;
+                if (gp != null && ShopFree.Can(S, ShopFree.Gem, today))
+                {
+                    var slot = UiKit.Find(_app.Current.Root, "GemPack:" + D.Shop.GemPacks.IndexOf(gp)); Assert.IsNotNull(slot, "무료 보급 다이아 줄");
+                    double gem0 = S.Gem;
+                    Tap(slot, "Button_Price"); yield return Frames(2);
+                    Assert.Greater(S.Gem, gem0, "«Free» 를 누르면 다이아가 들어온다(배선)");
+                    Assert.IsFalse(ShopFree.Can(S, ShopFree.Gem, today), "오늘 몫을 썼다(배선)");
+                    _log.AssertNoRed("P4 무료 보급 다이아");
+                }
+                else Debug.Log("[T300] P4 — 표에 무료 보급 다이아 줄이 없다(shop.json free) · 건너뛴다");
+                var gd = D.Shop != null ? D.Shop.FreeGoldPack : null;
+                if (gd != null && ShopFree.Can(S, ShopFree.Gold, today))
+                {
+                    var slot = UiKit.Find(_app.Current.Root, "GoldPack:" + D.Shop.GoldPacks.IndexOf(gd)); Assert.IsNotNull(slot, "무료 보급 골드 줄");
+                    double gold0 = S.Gold; double gem0 = S.Gem;
+                    Tap(slot, "Button_Price"); yield return Frames(2);
+                    Assert.Greater(S.Gold, gold0, "«Free» 를 누르면 골드가 들어온다(배선)");
+                    Assert.AreEqual(gem0, S.Gem, 1e-6, "무료라 다이아는 안 빠진다");
+                    _log.AssertNoRed("P4 무료 보급 골드");
+                }
+                else Debug.Log("[T300] P4 — 표에 무료 보급 골드 줄이 없다(shop.json free) · 건너뛴다");
+            }
+
+            // ⓔ 상자 ⓘ → 확률 팝업(T267) → 칸 하나 → 아이템 세부(보기 전용) → 어둠 탭 → 확률 팝업으로 «돌아온다» → 어둠 탭 → 닫힘
+            {
+                card = ShopCard(big.Key);
+                Tap(card, "Info"); yield return Frames(2);
+                Assert.IsTrue(_app.Overlay.IsOpen, "ⓘ 가 확률 팝업을 연다");
+                Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "OddsBox"), "떠 있는 것은 «확률» 팝업이다(표식 OddsBox)");
+                var rows = GachaOdds.Of(D, big.Key); Assert.Greater(rows.Count, 0, "그 상자의 등급 구간이 하나는 있다");
+                Assert.Greater(GachaOdds.ItemCount(D), 0, "칸이 하나는 있다");
+                _log.AssertNoRed("P4 확률 팝업");
+
+                Tap(_app.Overlay.Root, "Odds:" + rows[0].Rar + ":0"); yield return Frames(2);
+                Assert.IsTrue(_app.Overlay.IsOpen, "칸을 누르면 아이템 세부 팝업(38)이 선다");
+                Assert.IsNull(UiKit.Find(_app.Overlay.Root, "OddsBox"), "지금 떠 있는 것은 확률이 아니라 세부다(Overlay 는 한 겹 · «갔다 돌아오기»)");
+                _log.AssertNoRed("P4 아이템 세부");
+
+                yield return TapDimmed("아이템 세부 «탭하여 닫기»");
+                Assert.IsTrue(_app.Overlay.IsOpen, "세부를 닫으면 확률 팝업으로 «돌아온다»(배선 · GearUi.OpenInfo 의 onClose)");
+                Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "OddsBox"), "돌아온 것이 확률 팝업이다");
+                yield return TapDimmed("확률 팝업 «탭하여 닫기»");
+                Assert.IsFalse(_app.Overlay.IsOpen, "확률 팝업의 어둠을 탭하면 닫힌다");
+                _log.AssertNoRed("P4 세부 → 확률 → 닫기");
+            }
+
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            _log.AssertNoRed("P4 상점");
+            yield return Shutdown();
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────────
         // P5 던전 — 지옥의 문 도전 → 클리어 → 리워드 → 소탕 → 티켓 0 → 광고 · 다이아 → 원정 1층 → 2층.
         // ─────────────────────────────────────────────────────────────────────────────
         /// <summary>
