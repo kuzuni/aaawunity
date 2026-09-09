@@ -34,6 +34,11 @@ namespace KkomaKnight.Game
         static readonly Layout.R RScroll = new Layout.R(0.5f, 8.4f, 98.8f, 82.3f);
         /// <summary>바닥 회색 띠(상자 %) — 실측 화면 y 71.2 h 4.0.</summary>
         static readonly Layout.R RFoot = new Layout.R(0.5f, 90.7f, 98.8f, 7.8f);
+        /// <summary>명판(상자 %) — 실측 화면 x 9.7 y 24.8 w 80.5 h 4.1(그림 px 70~649 · 387~450)을 상자 안 %로 옮긴 것.
+        /// <para>레퍼런스 명판은 <b>상자 폭을 거의 다 쓰고 상자 «안» 맨 위에</b> 붙어 있다 — 공통 팝업이 세워 주는 리본은
+        /// 좁고(60.7) 상자 «위로» 걸쳐 있어(y 21.5 ↔ 상자 24.6) 표 ㊾ 의 그 행이 혼자 ✗ 였다. 조각(스프라이트)은 그대로 두고
+        /// <b>자리만</b> 표대로 다시 잡는다 — 공통 조각을 건드리면 팝업 전부가 따라 움직인다(`ChapterChestScreen:56` 이 쓰는 그 길).</para></summary>
+        static readonly Layout.R RPlate = new Layout.R(0.5f, 0.4f, 98.8f, 8.0f);
 
         /// <summary>격자 열 수 — 레퍼런스 36 실측(한 줄에 다섯 칸).</summary>
         const int Cols = 5;
@@ -115,7 +120,15 @@ namespace KkomaKnight.Game
             // §5 는 이름표를 **표 ㊾ 의 행 이름 그대로** 맞춘다(결정 592) — 한 글자만 달라도 그 행이 0 점이 된다(결정 756 이 여섯 건을 그렇게 잡았다).
             UiKit.Tag(b, "팝업 상자"); UiKit.Tag(foot, "바닥 회색 띠");
             // 명판은 공통 팝업(`UiKit.Popup`)이 세운 조각이라 이름표가 없다 — 표 ㊾ 가 그 자리를 재므로 여기서 붙인다(GearUi 가 등급 배지에 하는 것과 같은 꼴).
-            var plate = UiKit.Find(b, "ui.title.tangerine"); if (plate != null) UiKit.Tag(plate, "명판(«확률»)");
+            var plate = UiKit.Find(b, "ui.title.tangerine");
+            if (plate != null)
+            {
+                // 자리만 표대로 다시 잡는다(<see cref="RPlate"/> 의 까닭). 조각·색은 안 건드린다 —
+                //   레퍼런스의 «회색 판» 을 흉내 내려면 없는 그림을 지어내야 하고 그것은 §1 이 막는다.
+                var prt = (RectTransform)plate; UiKit.Pct(prt, RPlate);
+                Overlay.FitRibbonText(prt);   // 리본을 표 자리로 옮기면 제목 60 한 줄(84px) 규칙이 풀린다(T75 4항)
+                UiKit.Tag(prt, "명판(«확률»)");
+            }
             return b;
         }
 

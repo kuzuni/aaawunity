@@ -100,6 +100,21 @@ namespace KkomaKnight.Tests.Play
             Assert.Greater(rows.Count, 1, "신화 상자는 구간이 여럿이다");
             Assert.Greater(n, 0, "아이템 목록");
 
+            // T267 — 명판은 **상자 «안» 맨 위**에 붙고 상자 폭을 거의 다 쓴다(레퍼런스 36 · 표 ㊾).
+            //   공통 팝업이 세워 주는 리본은 좁고 상자 «위로» 걸쳐 있어서, 자리를 다시 안 잡으면 그 행이 혼자 ✗ 다.
+            //   px 이 아니라 «상자 안인가 · 상자 폭을 쓰는가» 두 가지를 잰다 — 표가 바뀌어도 이 뜻은 안 바뀐다.
+            {
+                var plate = Find(box, "ui.title.tangerine");
+                Assert.IsNotNull(plate, "명판(공통 팝업 리본)");
+                var prt = (RectTransform)plate;
+                Assert.LessOrEqual(prt.rect.height, box.rect.height * 0.2f, "명판은 상자 한 귀퉁이다(상자를 덮지 않는다)");
+                Assert.GreaterOrEqual(prt.rect.width, box.rect.width * 0.9f, "명판이 상자 폭을 거의 다 쓴다(레퍼런스 36)");
+                // 상자 «안» = 명판 위 끝이 상자 위 끝보다 아래다. 상자 기준 지역 좌표로 잰다
+                //   (anchoredPosition 은 늘어난 rect 에서 0 근처라 못 쓴다 — 늘림 앵커의 «중심 어긋남» 이라서다).
+                float plateTop = prt.localPosition.y + prt.rect.height * (1f - prt.pivot.y);
+                Assert.LessOrEqual(plateTop, box.rect.height * 0.52f, "명판 위 끝이 상자 «안» 이다(상자 위로 안 걸친다)");
+            }
+
             // T267 — **그림 px 이 캔버스 px 로 옮겨졌는가**(결정 839). 레퍼런스 36(720×1560)에서 잰 세로 수를 그대로 쓰면
             //   캔버스 기준(2337)이 그림(1560)의 1.498배라 세로가 전부 2/3 로 눌린다 — §5 표 ㊾ 가 «구간 머리 h 4.3 → 2.9» 로
             //   그 눌림을 이미 가리키고 있었다. 여기서 재는 것은 **비율**이지 px 이 아니다: 잰 값(67/1560)이 화면에서 같은 몫을 차지하는가.
