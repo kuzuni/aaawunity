@@ -8663,7 +8663,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 > **🔄 push · 확인 전(16:1X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 955 · lock `T340` 쥔 채 · 커밋 메시지의 953 은 955)** — 1~5항 그대로(회전 뗌 · `UiParticles` 신규 · 열림 시각 48개 · 칸 터짐도 같은 자 · 자 셋). ⚠ 헤드리스 PlayMode 에서 처음 도는 자리 — 빨가면 `OnPopulateMesh`·`IsAlive`. 확인 = 다음 완주 런 `UiSmokeTests` + `screens` 10 + 주인 폰.
 
-### T341 — ⚑ 주인: **상점 다이아·골드 카드 그라디언트 = 주인 지정 색 · 완전 불투명** (주인 2026-09-10 «다이아 카드 하단꺼 그라디언트 색깔 EA00FF 에 완전불투명하게하기 · 상단 그라디언트는 색깔 8200FF 에 완전불투명하게하기 · 골드카드는 상단꺼 183D6A, 하단꺼 14ADFF 로 하고 완전 불투명으로 · 둘다 상점 부분 만하는거임»)
+### T341 ✅ — ⚑ 주인: **상점 다이아·골드 카드 그라디언트 = 주인 지정 색 · 완전 불투명** (주인 2026-09-10 «다이아 카드 하단꺼 그라디언트 색깔 EA00FF 에 완전불투명하게하기 · 상단 그라디언트는 색깔 8200FF 에 완전불투명하게하기 · 골드카드는 상단꺼 183D6A, 하단꺼 14ADFF 로 하고 완전 불투명으로 · 둘다 상점 부분 만하는거임»)
 
 0. **값(주인이 직접 줬다 — 레퍼런스 실측을 덮는다)** — 다이아 `col.grad.cardGem.top` = **#8200FF** · `.bottom` = **#EA00FF**(옛 실측 #40116D/#AA0CB8) · 골드 `col.grad.cardGold.top` = **#183D6A**(그대로) · `.bottom` = **#14ADFF**(옛 #1683BE). 색은 **카탈로그(`col.grad.*`)와 `GradientPalette` 의 폴백 두 곳**에 같이 있다 — 한쪽만 고치면 카탈로그를 못 읽는 자리에서 옛 색이 나온다.
 1. **«완전 불투명»** — 지금 상품 카드는 `ShopScreen.BuildPack` 이 `CardGradient(crt, gradName, "Bg(Mask)")` 를 **기본 알파**(`UiKit.GradientCardAlpha` = 0.55 덧칠)로 부른다. 덧칠이면 조각의 회색 바탕이 비쳐 주인 색이 그대로 안 앉는다 → **`UiKit.GradientCardSolidAlpha`(1)** 로 올린다. 상자 카드(10)가 이미 같은 까닭으로 Solid 다(결정 338).
@@ -8673,7 +8673,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Assets/KkomaKnight/catalog.json` · `Game/GradientPalette.cs` · `Game/ShopScreen.cs` · `docs/assets-map.md`. lock `T341`.
 
-> ▸ **1회차 — 0~3항 전부 push(2026-09-09 15:5X · sess-1439-32420 · 워커 O · lock `T341` · 결정 952).** 색 두 곳(카탈로그 + 폴백) · `BuildPack` Solid 한 줄 · `PackGradGem/PackGradGold` 상수 · `UiSmokeTests` 가 상품 카드도 Solid 로 잰다(값은 표에서 읽는다). 전역 알파는 안 건드렸다(2항의 «저절로» 를 주석·자에 적었다). **확인** = 다음 완주 런 `UiSmokeTests` ✗ 없음 + `screens` 09 + 주인 폰. 눈 확인이 오면 lock 반납.
+> ▸ **1회차 — 0~3항 전부 push(2026-09-09 15:5X · sess-1439-32420 · 워커 O · lock `T341` · 결정 952).** 색 두 곳(카탈로그 + 폴백) · `BuildPack` Solid 한 줄 · `PackGradGem/PackGradGold` 상수 · `UiSmokeTests` 가 상품 카드도 Solid 로 잰다(값은 표에서 읽는다). 전역 알파는 안 건드렸다(2항의 «저절로» 를 주석·자에 적었다). **확인** = 다음 완주 런 `UiSmokeTests` ✗ 없음 + `screens` 09 + 주인 폰. 눈 확인이 오면 lock 반납. ▸ **✅ 확인 끝(16:4X · 워커 O)** — 런 844 유니티 잡 success(`[CI실패]` 0건) · `screens` run 852 의 09 를 열어 봤다: 다이아 6장 보라→자홍 · 골드 3장 남→하늘 · 회색 비침 없음. lock 반납.
 
 ### T342 — ⚑ 주인: **모든 장비 프레임의 «Glow» 를 완전 흰색·완전 불투명으로** (주인 2026-09-10 «그리고 모든 장비 부분 프레임 들에 있는 글로우 부분 완전 흰색에 완전 불투명으로 해줘야함»)
 
