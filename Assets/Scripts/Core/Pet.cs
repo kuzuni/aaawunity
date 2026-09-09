@@ -205,8 +205,13 @@ namespace KkomaKnight.Core
     /// <summary>
     /// 펫 <b>규칙</b>(T293 ⓐ) — 뽑기 · 레벨 필요치 · 슬롯 해금 · 장착 스탯 · 효과 글자.
     /// <para>
-    /// ⚠ <b>세이브를 안 본다.</b> 전부 «수를 받아 수를 돌려주는» 순수 함수이고, 세이브 배선(<c>SaveData.Pets</c>·<c>PetPulls</c>)은
-    /// 그 파일의 lock 이 풀린 뒤 회차가 이 위에 얹는다(그 회차가 규칙을 다시 짜지 않도록 여기서 다 정해 둔다).
+    /// <b>두 켜가 있다</b>(T293 ⓕ · 2026-09-09 17:5X):
+    /// <list type="number">
+    /// <item><b>순수 규칙</b>(ⓐ~ⓔ 가 세운 것) — 수를 받아 수를 돌려준다. 세이브를 안 본다.</item>
+    /// <item><b>세이브를 보는 것</b>(이 파일 아래쪽 «세이브» 묶음) — 가진 펫·조각·장착 칸·누적 뽑기를 <see cref="SaveData"/> 에서 읽고 쓴다.</item>
+    /// </list>
+    /// 두 켜를 <b>한 클래스에 두되 순서로 가른다</b> — 화면·엔진이 «펫 규칙» 을 찾을 자리가 하나여야 하고(<see cref="Achievement"/> 와 같은 꼴),
+    /// 아래 묶음은 전부 위의 순수 규칙을 <b>부르기만</b> 한다(규칙을 두 번 적지 않는다).
     /// </para>
     /// </summary>
     public static class Pets
@@ -375,5 +380,184 @@ namespace KkomaKnight.Core
         }
 
         static string Fmt(double v) => v == Math.Floor(v) ? ((long)v).ToString() : v.ToString("0.#");
+
+        // ───────────────────────────── 세이브를 보는 묶음 (T293 ⓕ) ─────────────────────────────
+        // 위쪽 순수 규칙을 «부르기만» 한다 — 필요치·해금·장착 스탯을 여기서 다시 세지 않는다.
+
+        /// <summary>그 펫의 레벨 — <b>0 이면 아직 안 가진 것</b>(첫 획득이 곧 Lv 1 이라 «가졌나» 를 따로 안 적는다).</summary>
+        public static int Lv(SaveData s, string id)
+        {
+            if (s == null || s.PetLv == null || string.IsNullOrEmpty(id)) return 0;
+            int v; return s.PetLv.TryGetValue(id, out v) && v > 0 ? v : 0;
+        }
+
+        /// <summary>그 펫에 쌓인 조각(중복으로 나온 수 · 레벨업 재료).</summary>
+        public static int Frag(SaveData s, string id)
+        {
+            if (s == null || s.PetFrag == null || string.IsNullOrEmpty(id)) return 0;
+            int v; return s.PetFrag.TryGetValue(id, out v) && v > 0 ? v : 0;
+        }
+
+        /// <summary>가진 펫인가.</summary>
+        public static bool Has(SaveData s, string id) => Lv(s, id) >= 1;
+
+        /// <summary>
+        /// 펫 하나를 <b>얻는다</b> — 처음이면 Lv 1, 이미 가진 것이면 조각 +1(주인 «같은 게 또 나오면 조각»).
+        /// <para>표를 안 본다 — 무엇이 나왔는지는 <see cref="Pull"/> 이 이미 정했고, 여기는 그것을 세이브에 담기만 한다.</para>
+        /// </summary>
+        public static void Gain(SaveData s, string id)
+        {
+            if (s == null || string.IsNullOrEmpty(id)) return;
+            if (s.PetLv == null) s.PetLv = new Dictionary<string, int>();
+            if (s.PetFrag == null) s.PetFrag = new Dictionary<string, int>();
+            if (Has(s, id)) s.PetFrag[id] = Frag(s, id) + 1;
+            else s.PetLv[id] = 1;
+        }
+
+        /// <summary>지금 이 펫을 강화할 수 있는가(가졌고 조각이 <see cref="Need"/> 에 닿았다).</summary>
+        public static bool CanLevelUp(PetData d, SaveData s, string id)
+        {
+            int lv = Lv(s, id);
+            return lv >= 1 && CanLevelUp(d, lv, Frag(s, id));
+        }
+
+        /// <summary>강화 한 번 — 조각을 <see cref="Need"/> 만큼 <b>빼고</b> Lv +1(했으면 true). 저장은 호출부가 한다(<see cref="Dungeon"/> 규약과 같다).</summary>
+        public static bool LevelUp(PetData d, SaveData s, string id)
+        {
+            if (!CanLevelUp(d, s, id)) return false;
+            int lv = Lv(s, id);
+            s.PetFrag[id] = Frag(s, id) - Need(d, lv);
+            s.PetLv[id] = lv + 1;
+            return true;
+        }
+
+        /// <summary>세이브의 누적 뽑기 횟수로 열린 장착 칸 수.</summary>
+        public static int SlotsOpen(PetData d, SaveData s) => SlotsOpen(d, s != null ? s.PetPulls : 0);
+
+        /// <summary>
+        /// 지금 <b>실제로</b> 장착된 펫 id 들 — 칸 순서 그대로.
+        /// <para>
+        /// ⚑ <b>거르는 것이 이 함수의 일이다</b>: 잠긴 칸 · 빈 칸 · 표에서 사라진 id · 안 가진 펫 · 같은 펫이 두 칸.
+        /// 세이브는 펫 표를 못 보므로(<see cref="GameData"/> 가 아직 그 표를 안 든다) <b>표가 필요한 정리는 전부 여기</b>서 한다 —
+        /// 그래야 «해금 전에 끼워 둔 칸» 이 뽑기 횟수가 줄어드는 날에도 조용히 살아 있지 않는다.
+        /// </para>
+        /// </summary>
+        public static List<string> Equipped(PetData d, SaveData s)
+        {
+            var list = new List<string>();
+            if (d == null || s == null || s.PetEq == null) return list;
+            int open = SlotsOpen(d, s);
+            for (int i = 0; i < open && i < s.PetEq.Count; i++)
+            {
+                var id = s.PetEq[i];
+                if (string.IsNullOrEmpty(id) || d.Of(id) == null || !Has(s, id) || list.Contains(id)) continue;
+                list.Add(id);
+            }
+            return list;
+        }
+
+        /// <summary>칸 <paramref name="slot"/> 에 낀 펫 id(빈 칸·잠긴 칸이면 빈 글자) — 화면이 슬롯 하나를 그릴 때 본다.</summary>
+        public static string EquippedAt(PetData d, SaveData s, int slot)
+        {
+            if (d == null || s == null || s.PetEq == null || slot < 0 || slot >= SlotsOpen(d, s) || slot >= s.PetEq.Count) return "";
+            var id = s.PetEq[slot];
+            return !string.IsNullOrEmpty(id) && d.Of(id) != null && Has(s, id) ? id : "";
+        }
+
+        /// <summary>
+        /// 펫을 칸에 <b>낀다</b>(꼈으면 true). 잠긴 칸·모르는 id·안 가진 펫은 거절한다.
+        /// <para>같은 펫이 다른 칸에 있으면 그 칸을 <b>비운다</b> — 한 마리가 두 칸에서 두 번 세어지지 않게(효과·스탯 둘 다).</para>
+        /// </summary>
+        public static bool Equip(PetData d, SaveData s, string id, int slot)
+        {
+            if (d == null || s == null || string.IsNullOrEmpty(id)) return false;
+            if (slot < 0 || slot >= SlotsOpen(d, s)) return false;
+            if (d.Of(id) == null || !Has(s, id)) return false;
+            if (s.PetEq == null) s.PetEq = new List<string>();
+            while (s.PetEq.Count <= slot) s.PetEq.Add("");
+            for (int i = 0; i < s.PetEq.Count; i++) if (i != slot && s.PetEq[i] == id) s.PetEq[i] = "";
+            s.PetEq[slot] = id;
+            return true;
+        }
+
+        /// <summary>칸을 <b>비운다</b>(비웠으면 true).</summary>
+        public static bool Unequip(SaveData s, int slot)
+        {
+            if (s == null || s.PetEq == null || slot < 0 || slot >= s.PetEq.Count) return false;
+            if (string.IsNullOrEmpty(s.PetEq[slot])) return false;
+            s.PetEq[slot] = "";
+            return true;
+        }
+
+        /// <summary>장착한 펫들이 더해 주는 공·체·실 <b>합</b> — 화면 13 의 «+0 ❤ | +0 🛡 | +0 🗡» 줄이 이것을 찍는다.</summary>
+        public static Power EquipPower(GameData D, PetData d, SaveData s)
+        {
+            var sum = new Power();
+            if (D == null || d == null || s == null) return sum;
+            foreach (var id in Equipped(d, s))
+            {
+                var p = Equip(D, d, d.Of(id), Lv(s, id));
+                sum.Atk += p.Atk; sum.Hp += p.Hp; sum.Sh += p.Sh;
+            }
+            return sum;
+        }
+
+        /// <summary>엔진에 들려 보낼 발동 목록 — 지금 장착한 것들로 만든다(<see cref="Procs(PetData, IEnumerable{string})"/> 의 짧은 길).</summary>
+        public static List<RunOptions.PetProc> Procs(PetData d, SaveData s) => Procs(d, Equipped(d, s));
+
+        /// <summary>이 값(<see cref="Offer"/>)으로 지금 뽑을 수 있는가 — 치를 것이 있고 횟수가 1 이상이다.</summary>
+        public static bool CanDraw(SaveData s, PullOffer o)
+        {
+            if (s == null || o.Count <= 0) return false;
+            return o.ByEgg ? s.PetEgg >= o.Egg : s.Gem >= o.Diamond;
+        }
+
+        /// <summary>
+        /// 소환 — <b>치르고</b>(펫알 또는 다이아) <b>뽑고</b> <b>담고</b> 누적 횟수를 올린다. 못 치르면 <c>null</c>(세이브는 한 글자도 안 바뀐다).
+        /// <para>
+        /// ⚑ 값·횟수를 여기서 다시 세지 않는다 — <see cref="Offer"/> 가 정한 것을 그대로 치른다. 그래서 버튼 둘이 무엇으로 몇 번 뽑는지는
+        /// 화면에도 여기에도 두 번 적히지 않는다(T293 ⓓ 가 세운 계약).
+        /// </para>
+        /// <para>돌려주는 목록은 <b>뽑힌 순서</b>다 — 결과 창(T158 길)이 그대로 그린다. 저장은 호출부가 한다.</para>
+        /// </summary>
+        public static List<PetData.Pet> Draw(PetData d, SaveData s, IRng rng, PullOffer o)
+        {
+            if (d == null || rng == null || !CanDraw(s, o)) return null;
+            if (o.ByEgg) s.PetEgg -= o.Egg; else s.Gem -= o.Diamond;
+            var got = new List<PetData.Pet>();
+            for (int i = 0; i < o.Count; i++)
+            {
+                var p = Pull(d, rng);
+                if (p == null) continue;
+                Gain(s, p.Id);
+                got.Add(p);
+            }
+            s.PetPulls += o.Count;   // 해금은 «뽑은 횟수» 로 센다(x10 = 10 · 주인 확정) — 얻은 마리 수가 아니다
+            return got;
+        }
+
+        /// <summary>
+        /// 세이브만 보고 하는 정리(<see cref="SaveData.Normalize"/> 가 부른다) — 음수·빈 id·«레벨 0 인데 조각만 있는» 자리를 없앤다.
+        /// <para>⚠ <b>표가 필요한 정리는 안 한다</b>(모르는 id·잠긴 칸) — 세이브 층은 펫 표를 못 보고, 그 몫은 <see cref="Equipped"/> 가 한다.</para>
+        /// </summary>
+        public static void NormalizeSave(SaveData s)
+        {
+            if (s == null) return;
+            if (s.PetLv == null) s.PetLv = new Dictionary<string, int>();
+            if (s.PetFrag == null) s.PetFrag = new Dictionary<string, int>();
+            if (s.PetEq == null) s.PetEq = new List<string>();
+            var drop = new List<string>();
+            foreach (var kv in s.PetLv) if (string.IsNullOrEmpty(kv.Key) || kv.Value < 1) drop.Add(kv.Key);
+            foreach (var k in drop) s.PetLv.Remove(k);
+            drop.Clear();
+            foreach (var kv in s.PetFrag) if (string.IsNullOrEmpty(kv.Key) || kv.Value < 1 || !s.PetLv.ContainsKey(kv.Key)) drop.Add(kv.Key);
+            foreach (var k in drop) s.PetFrag.Remove(k);
+            for (int i = 0; i < s.PetEq.Count; i++)
+            {
+                var id = s.PetEq[i];
+                if (string.IsNullOrEmpty(id) || !s.PetLv.ContainsKey(id)) { s.PetEq[i] = ""; continue; }
+                for (int k = 0; k < i; k++) if (s.PetEq[k] == id) { s.PetEq[i] = ""; break; }
+            }
+        }
     }
 }

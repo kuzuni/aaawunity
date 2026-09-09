@@ -7123,6 +7123,30 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 >
 > **다음 회차**: `SaveData.Pets`/`PetPulls` → `GearSystem.Power` 합 → 화면 13·14(5항 ⓖⓗⓘⓙ).
 >
+> **▸ ⓕ 6회차 끝 — 세이브 배선(2026-09-09 17:5X · sess-0132-18539 · 워커 K · 결정 978 · lock `T293-save` · 반납)**
+>
+> **여섯 시간 막혀 있던 그 파일을 내가 쥐고 있었다.** 앞 다섯 회차가 «`SaveData` lock 이 풀리면» 이라 적어 둔 자리인데, 그 lock 이 내 T258 이었다(결정 974).
+> 17:4X 에 놓고 **같은 회차에 이 자리를 이었다** — 놓은 사람이 곧장 이으면 «놓았는데 아무도 안 잡는» 빈 시간이 0 이다.
+>
+> **세이브(`Core/SaveData.cs`)** — `PetLv`(id → 레벨) · `PetFrag`(조각) · `PetEq`(칸 → id · 빈 글자 = 빈 칸) · `PetPulls`(누적 뽑기) · JSON `petLv`·`petFrag`·`petEq`·`petPulls`(옛 세이브는 «없으면 빈 표/0»).
+> ⚑ **«가졌나» 를 따로 안 적는다** — 첫 획득이 곧 Lv 1 이라 `PetLv` 하나가 그 물음에 답한다(두 자리로 적으면 어긋날 자리가 생긴다).
+>
+> ⚑ **세이브 층은 펫 표를 못 본다** — `GameData` 에 아직 `Pet` 이 없다(그 한 줄 로더가 `Game/Bootstrap.cs` 에 있고 **T325-a lock 안**이다).
+> 그래서 `Normalize` 는 **표가 필요 없는 것만** 치우고(음수 · 빈 id · «레벨 0 인데 조각만»), **표가 필요한 정리는 읽는 쪽 `Pets.Equipped` 가 한다**:
+> 모르는 id · **잠긴 칸** · 같은 펫이 두 칸. 덕에 «해금 횟수가 표에서 바뀌는 날 잠긴 칸의 펫이 조용히 살아 있는» 자리가 없다(자가 그것을 정면으로 잰다).
+>
+> **규칙(`Core/Pet.cs` 아래쪽 묶음)** — `Lv`·`Frag`·`Has`·`Gain`·`CanLevelUp`·`LevelUp`·`SlotsOpen(d,s)`·`Equipped`·`EquippedAt`·`Equip(d,s,id,slot)`·`Unequip`·`EquipPower`·`Procs(d,s)`·`CanDraw`·`Draw`·`NormalizeSave`.
+> **두 켜를 한 클래스에 두되 순서로 갈랐다**(위 = 순수 규칙 · 아래 = 세이브를 보는 것) — 아래는 위를 **부르기만** 한다. 화면·엔진이 «펫 규칙» 을 찾을 자리는 하나여야 한다(`Achievement` 와 같은 꼴).
+>
+> ⚑ **소환은 `Pets.Draw` 한 곳에서 치른다** — `Offer`(주인 09:3X 값)가 정한 것을 그대로 치르고 · 뽑고 · 담고 · `PetPulls` 를 올린다.
+> **못 치르면 세이브가 한 글자도 안 바뀐다**(자가 `ToJson` 을 앞뒤로 견준다 — 반쯤 치르고 실패하는 자리가 없다). 누적은 **뽑은 횟수**로 센다(x10 = 10 · 얻은 마리 수가 아니다).
+>
+> **자 13**(`PetSaveTests` · EditMode · test **490 → 503**) — 옛 세이브가 열린다 · 한 바퀴 돌려도 같다 · 중복 = 조각 · 강화는 필요치만큼만 뺀다 · 잠긴 칸 · 같은 펫 두 칸 · 합 = 한 마리씩 더한 것 · 소환 셋 · 정규화.
+> 셋을 **일부러 깨서**(같은 펫 두 칸 허용 · 누적 안 올림 · 펫알 안 뺌) **빨강 4** 를 확인하고 되돌렸다.
+>
+> **다음 회차**(순서 그대로): ⓖ `GearSystem.Power` 에 장착 합 더하기(지금 **T325-a lock**) → ⓗ `D.Pet` 로더 한 줄(`Game/Bootstrap.cs` · 같은 lock) → ⓘ 화면 13·14(5항 ⓖⓗⓘⓙ).
+> ⚑ **화면 13·14 를 여는 사람에게 두 줄** — 소환 자리에 `Quests.Ach(app, Quests.AchPetGacha);`(T258 이 남긴 마지막 훅 · `AchievementTests` 의 «아직» 목록에서 `petGacha` 를 지운다) · 강화 자리에 `Quests.Bump(app, Quests.PetUpgrade)`(T257 ⓑ). 둘 다 **그 화면을 세우는 사람 말고는 걸 자리를 못 찾는다.**
+>
 순서 — `Core/Pet.cs`(신규 · 앞 항의 `Companion` 이름은 전부 `Pet`/`Pets` 로 읽는다) · `Core/SaveData.cs` · `Core/GearSystem.cs` · `Core/Battle.cs` · `Game/PetScreen.cs` · `Game/BattleWorld.cs`(9항) · `Game/CharacterRig.cs`(스킨 표) · `KkomaKnight/pet.json`·`catalog.json`. **큰 절이라 둘로 나눠 잡아도 된다**(ⓐ Core+표+자 · ⓑ 화면+전투 그림) — lock 은 `T293-core`·`T293-ui`.
 
 ### T300 — ⚑⚑⚑ 주인: **플레이 봇 — 한 판을 끝까지 실제로 놀아 보고 에러를 찾는 자**(PlayMode + 배포 WebGL) (주인 2026-09-09 08:5X «플레이해서 에러 테스트도 하라» · §1 상시 규칙과 한 벌)
