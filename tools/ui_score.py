@@ -86,7 +86,9 @@ def parse_ref():
     for line in open(REF, encoding='utf-8'):
         # T213 — 번호가 ㉟ 을 넘겼다(㊱ 부터). 옛 문자 범위는 ㉟ 까지만 받아 **새 표를 조용히 못 본다** —
         #        표를 세워도 «표가 없다» 고 하고 그 화면은 영영 «—» 다(그 침묵이 이 작업을 부른 자리다).
-        m = re.match(r'^## ([①-⑳㉑-㉟㊱-㊿])\s*(.*)$', line)
+        # T258 — 그리고 **㊿ 에서 기호가 동났다**(유니코드 ㊱~㊿ 은 51 이 끝이다). 같은 침묵이 다시 날 자리라
+        #        Ⓐ~Ⓩ 를 이어 붙였다(26칸 더). ⓐ~ⓩ 는 이 레포가 글머리(«ⓐ 무엇을»)로 쓰므로 **대문자 쪽**을 쓴다.
+        m = re.match(r'^## ([①-⑳㉑-㉟㊱-㊿Ⓐ-Ⓩ])\s*(.*)$', line)
         if m:
             cur = m.group(1); tables[cur] = {'title': m.group(2).strip(), 'rows': []}; in_table = False; continue
         if line.startswith('## '): cur = None; in_table = False; continue   # 기호 없는 절(«⚑ U01 회차 정정» 등)은 표가 아니다 — 마지막 표에 그 절의 표 행이 섞이던 것을 막는다(T44)

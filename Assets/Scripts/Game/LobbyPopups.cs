@@ -406,7 +406,16 @@ namespace KkomaKnight.Game
             if (band != null) UiKit.Tag(band, "제목 리본"); UiKit.Tag(box, "팝업 박스"); UiKit.Tag(listBox.transform, "목록 상자");
             if (trackBox != null) UiKit.Tag(trackBox, "점수 트랙 상자");   // 업적 탭에는 없는 조각이다(§5 는 판마다 재는 표가 다르다)
             if (refresh != null) UiKit.Tag(refresh, "새로고침 줄");
-            UiKit.Tag(row1, "퀘스트 줄 1"); UiKit.Tag(row2, "퀘스트 줄 2"); UiKit.Tag(medal1, "퀘스트 보상 메달(1줄)"); UiKit.Tag(title1, "퀘스트 제목(1줄)"); UiKit.Tag(bar1, "퀘스트 진행바(1줄)"); UiKit.Tag(go1, "이동 버튼(1줄)");
+            // T258 §5 — 이름표는 **판마다 다르다**: 업적 판의 오른쪽 버튼은 «이동» 이 아니라 «받기» 이고 보상 칸은 메달이 아니라 상품이다.
+            //   같은 이름을 쓰면 표 ⓐ 와 ⑳ 이 서로의 값을 잰다(자리는 같아도 «무엇인가» 가 다르다 · 결정 756 의 이름표 대조가 그것을 잡는다).
+            if (_qAch)
+            {
+                UiKit.Tag(row1, "업적 줄 1"); UiKit.Tag(row2, "업적 줄 2"); UiKit.Tag(medal1, "업적 보상 칸(1줄)"); UiKit.Tag(title1, "업적 제목(1줄)"); UiKit.Tag(bar1, "업적 진행바(1줄)"); UiKit.Tag(go1, "받기 버튼(1줄)");
+            }
+            else
+            {
+                UiKit.Tag(row1, "퀘스트 줄 1"); UiKit.Tag(row2, "퀘스트 줄 2"); UiKit.Tag(medal1, "퀘스트 보상 메달(1줄)"); UiKit.Tag(title1, "퀘스트 제목(1줄)"); UiKit.Tag(bar1, "퀘스트 진행바(1줄)"); UiKit.Tag(go1, "이동 버튼(1줄)");
+            }
             UiKit.TagGroup(ov.Root, "탭 줄(3칸)", tabs); UiKit.Tag(tabs[0], "탭(1칸)"); TagClose(app);
             UiKit.PopIn(box);   // 공통 팝업 등장 연출(T49 · UiKit.Popup 이 상자에 거는 것과 같다)
         }
