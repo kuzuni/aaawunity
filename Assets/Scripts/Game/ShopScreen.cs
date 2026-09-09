@@ -840,6 +840,30 @@ namespace KkomaKnight.Game
         /// <see cref="ChestCellStep"/>·<see cref="ChestCellFrom"/>)이 이미 여기 <c>const</c> 로 서 있다. 넷만 새 표로 빼면 <b>같은 종류의 값이 두 집에 살게 된다</b>(결정 기록).</para>
         /// </summary>
         public const float ChestSquashX = 1.18f, ChestSquashY = 0.82f, ChestSquashBack = 0.35f;
+
+        /// <summary>
+        /// T307 ⓑ — 얻은 칸이 <b>나타나는 순간</b> 그 자리에서 별 조각이 방사로 튀어 사라진다(주인 «아이템 나올 때 아이템 파티클 터지면서 나오게 하셈»).
+        /// <para>
+        /// 조각은 <b>이미 있는 것</b>(<c>pi.star</c>)이다 — 새 그림 0(§1). 색은 그 칸의 등급색이고 최고 등급 칸(<c>bestCell</c>)만 두 배로 튄다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>무작위를 안 쓴다</b> — 방향은 <c>360° × i ÷ n</c> 로 고르게 편다. 이 창의 다른 연출도 같은 규약이고(<see cref="ChestBeat"/> 주석 · T174),
+        /// 무작위를 넣으면 <c>screens</c> 스샷과 자가 회차마다 흔들린다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>월드 <c>ParticleSystem</c>(CFXR)은 안 쓴다</b> — 이 캔버스는 ScreenSpaceOverlay 라 <see cref="Fx"/> 의 월드 정렬이 UI 위로 안 올라온다(지시서 2항 ⓑ).
+        /// </para>
+        /// </summary>
+        public const int ChestBurstShards = 10;
+        /// <summary>튀는 거리(px) · 도는 시간(초) · 조각 크기(px) — <see cref="ChestBurstShards"/> 와 같은 집에 둔다(결정 893).</summary>
+        public const float ChestBurstRadius = 96f, ChestBurstSec = 0.45f, ChestBurstSizePx = 26f;
+        /// <summary>터짐 조각의 이름 — 자가 «남아 있는가» 를 이 이름으로 센다.</summary>
+        public const string ChestBurstName = "ChestBurst";
+        /// <summary>
+        /// 마지막 결과 창이 <b>실제로 띄운</b> 조각 수 — 0 이면 «연출이 안 걸렸다»(<see cref="LastChestScale"/> 와 같은 방법 · T158 ⓐ 결정 329).
+        /// <para>«지금 화면에 몇 개 있나» 로는 못 잰다 — 0.45초에 지나가고 스스로 지워진다.</para>
+        /// </summary>
+        public static int LastBurstShards;
         /// <summary>열림 시각 = <b>착지 + 정지</b>. 리터럴(옛 0.30)이 아니라 <b>관계</b>로 적는다 — 낙하 시간을 누가 바꾸면 «1초 뒤» 가 저절로 따라간다(§1).</summary>
         public const float ChestShake = 0.18f, ChestOpenAt = ChestFallSec + ChestHoldSec, ChestCellStep = 0.05f, ChestCellFrom = 0.55f;
 
@@ -995,11 +1019,64 @@ namespace KkomaKnight.Game
                 light.DOLocalRotate(new Vector3(0f, 0f, -360f), UiKit.LightPeriod, RotateMode.FastBeyond360)
                      .SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart).SetUpdate(true).SetLink(light.gameObject);
             }
+            // T307 ⓑ — 칸이 «나타나는 그 시각» 에 그 칸에서 터진다. `Stagger` 와 **같은 셈**으로 시각을 낸다(그 함수가 t = start + i×step 로 넣는다) —
+            //   두 벌로 적으면 한쪽이 낡는다. 조각을 만드는 것은 **그 시각의 콜백 안**이다:
+            //   지금은 `GridLayoutGroup` 이 아직 안 돌아 칸의 자리가 (0,0) 이라, 여기서 좌표를 재면 전부 가운데서 터진다.
+            LastBurstShards = 0;
+            for (int i = 0; i < cells.Count; i++)
+            {
+                var c = cells[i]; if (c == null) continue;
+                var tint = Palette.ByName(Palette.RarName(got[i].Rar));
+                int shards = c == bestCell ? ChestBurstShards * 2 : ChestBurstShards;
+                seq.InsertCallback(ChestOpenAt + 0.06f + ChestCellStep * i, () => Burst(root, c, tint, shards));
+            }
             float end = UiKit.Stagger(seq, cells, ChestOpenAt + 0.06f, ChestCellStep, ChestCellFrom);
             // 최고 등급 한 칸만 한 번 더 튄다(등급이 여럿이어도 하나 · 연출 길이는 그대로)
             if (bestCell != null) seq.Insert(end, bestCell.DOPunchScale(Vector3.one * 0.12f, 0.22f, 8, 1f).SetUpdate(true).SetLink(bestCell.gameObject));
             seq.Insert(end, UiKit.Reveal(title.rectTransform));
             if (touch != null) seq.Insert(end + 0.12f, UiKit.Reveal(touch.rectTransform));
+        }
+
+        /// <summary>
+        /// T307 ⓑ — <paramref name="cell"/> 한가운데에서 별 조각 <paramref name="count"/> 개가 방사로 튀며 사라진다.
+        /// <para>
+        /// 자리를 <b>부를 때 잰다</b> — 시퀀스를 짜는 시각에는 <c>GridLayoutGroup</c> 이 아직 안 돌아 칸이 전부 (0,0) 이다(그때 재면 전부 가운데서 터진다).
+        /// 재는 법은 <see cref="RewardOrbs.TargetPos"/> 와 같은 꼴이다(월드 → 층의 왼쪽 아래 0,0).
+        /// </para>
+        /// <para>
+        /// ⚠ <b>층은 칸이 아니라 창(<paramref name="layer"/>)이다</b> — 칸에 붙이면 칸의 등장 배율(<see cref="ChestCellFrom"/> → 1)이 조각까지 늘여
+        /// «터지는 거리» 가 칸마다 달라지고, 격자가 자르는 자리에서는 잘린다.
+        /// </para>
+        /// <para>
+        /// ⚠ 트윈은 시퀀스에 <b>안 넣는다</b>(부를 때 이미 그 시퀀스가 도는 중이다) — 유한 트윈이라 탭 스킵(<c>DOTween.CompleteAll</c>)이 끝까지 돌려 주고,
+        /// 끝나면 스스로 지운다. 창이 먼저 사라지면 <c>SetLink</c> 가 같이 죽인다(§1 «has been destroyed» 경고 0).
+        /// </para>
+        /// </summary>
+        static void Burst(RectTransform layer, RectTransform cell, Color tint, int count)
+        {
+            if (layer == null || cell == null || count <= 0) return;
+            var world = cell.TransformPoint(cell.rect.center);
+            var at = (Vector2)layer.InverseTransformPoint(world) - layer.rect.min;
+            for (int i = 0; i < count; i++)
+            {
+                var img = UiKit.Icon(layer, ChestBurstName, "pi.star", tint);
+                if (img == null) return;                      // 조각을 못 세우면 조용히 그만둔다(창은 그대로 돈다)
+                img.raycastTarget = false;                    // 「터지는 것」이 탭을 먹으면 스킵·닫기가 안 먹는다
+                var rt = img.rectTransform;
+                rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f);
+                rt.sizeDelta = new Vector2(ChestBurstSizePx, ChestBurstSizePx);
+                rt.anchoredPosition = at;
+                rt.localScale = Vector3.one;
+                // 무작위 0 — 방향을 고르게 편다(같은 판이면 같은 그림 · T174 규약).
+                float rad = 2f * Mathf.PI * i / count;
+                var to = at + new Vector2(Mathf.Cos(rad), Mathf.Sin(rad)) * ChestBurstRadius;
+                var go = img.gameObject;
+                rt.DOAnchorPos(to, ChestBurstSec).SetEase(Ease.OutCubic).SetUpdate(true).SetLink(go);
+                rt.DOScale(0.25f, ChestBurstSec).SetEase(Ease.InQuad).SetUpdate(true).SetLink(go);
+                img.DOFade(0f, ChestBurstSec).SetEase(Ease.InQuad).SetUpdate(true).SetLink(go)
+                   .OnComplete(() => { if (go != null) UnityEngine.Object.Destroy(go); });
+                LastBurstShards++;
+            }
         }
     }
 }
