@@ -118,6 +118,11 @@ jobs:
       - name: "결정 번호 겹침 — 보고만(빨개도 안 막는다 · 결정 493)"
         continue-on-error: true
         run: python3 tools/check_decisions.py
+      # T351 — 이 자는 «닫혔다/반납했다» 를 **낱말**로 찾는다. 낱말은 워커마다 다르게 쓰고,
+      #   실제로 T344 가 «✅ 확인 끝 · 죽은 lock 인수 · 반납» 이라 적어 **두 갈래 다 조용**했다.
+      #   낱말 갈래는 순수 함수라 여기서 막는다(문서 어긋남과 무관하다 · 아래 «보고만» 과 잣대가 다르다).
+      - name: 표 행 자 자기 검사 (낱말 갈래 ⓓ·ⓕ · T351)
+        run: python3 tools/check_task_rows.py --selftest
       - name: "PROGRESS 표 행 어긋남 — 보고만(빨개도 안 막는다 · 결정 493)"
         continue-on-error: true
         run: python3 tools/check_task_rows.py
