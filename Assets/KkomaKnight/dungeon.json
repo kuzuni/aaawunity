@@ -50,7 +50,9 @@
         "keyOrder": ["keyBlue", "keyPurple", "keyYellow"],
         "keyAmount": 1,
         "keyFirstOnly": true,
-        "goldEveryFloor": true
+        "goldEveryFloor": true,
+        "_난이도": "T291 — N층의 적 세기 = 챕터 (N × chapterPerFloor). 주인이 층 난이도를 안 정했고(§2 T291 5항 ⓓ) 기본값은 «N층 = 챕터 N» 이다. 답이 오면 이 수 하나만 고친다 — 코드에는 수가 없다. 표의 마지막 챕터(tune.maxChapter)를 넘지 않는다.",
+        "chapterPerFloor": 1
       },
       "run": {
         "_note": "T183 — 주인 «원정은 시작부터 특전 5개 · 레벨 5 로 시작(다음 렙업 경험치도 레벨 5 기준) · 일반도 뜸». 등급 제한 없음(minPerkGrade 0).",

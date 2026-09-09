@@ -46,6 +46,8 @@ namespace KkomaKnight.Core
             public bool KeyFirstOnly = true;
             /// <summary>표의 골드를 <b>모든 층에</b> 그대로 얹는가(주인이 «골드 대신» 이라 하지 않았다).</summary>
             public bool GoldEveryFloor = true;
+            /// <summary>T291 — <b>N층의 적 세기 = 챕터 (N × 이 값)</b>. 주인이 층 난이도를 안 정했고 기본값은 «N층 = 챕터 N»(§2 T291 5항 ⓓ).</summary>
+            public double ChapterPerFloor = 1;
         }
 
         public sealed class Entry
@@ -134,6 +136,7 @@ namespace KkomaKnight.Core
             f.KeyAmount = j["keyAmount"].Num(f.KeyAmount);
             f.KeyFirstOnly = j["keyFirstOnly"].Bool(f.KeyFirstOnly);
             f.GoldEveryFloor = j["goldEveryFloor"].Bool(f.GoldEveryFloor);
+            f.ChapterPerFloor = j["chapterPerFloor"].Num(f.ChapterPerFloor);
             if (f.RecipeOrder.Count == 0) throw new FormatException("dungeon.json: " + key + ".floors.recipeOrder 가 비었다");
             if (f.KeyEvery > 0 && f.KeyOrder.Count == 0) throw new FormatException("dungeon.json: " + key + ".floors.keyOrder 가 비었다(keyEvery 가 0 이 아니다)");
             if (f.RecipeFirstPer < 0 || f.RecipeClearPer < 0 || f.KeyAmount < 0) throw new FormatException("dungeon.json: " + key + ".floors 의 개수는 0 이상이어야 한다");
@@ -351,6 +354,24 @@ namespace KkomaKnight.Core
                 r.Key = f.KeyAmount;
             }
             return r;
+        }
+
+        /// <summary>
+        /// T291 — <b>그 층의 적 세기를 «챕터 몇» 으로 볼 것인가</b>(층이 없는 던전이면 0 = «부르는 쪽이 정하던 대로»).
+        /// <para>
+        /// 층 던전의 판 세기는 <b>얼마나 올라왔는가</b> 로 정해진다 — 그래서 챕터 진행도(<c>SaveData.MaxChapter</c>)가 아니라 <b>층</b>이 원천이다.
+        /// 그 대신 표의 마지막 챕터(<paramref name="maxChapter"/> = <c>tune.maxChapter</c>)를 넘지 않는다 — 넘으면 적 표에 없는 칸을 묻게 된다.
+        /// </para>
+        /// 수(층당 챕터 몇)는 <b>표</b>에 있다(<see cref="DungeonData.FloorRule.ChapterPerFloor"/>) — 주인 답이 오면 그 한 칸만 고친다.
+        /// </summary>
+        public static int FloorChapter(DungeonData.Entry e, int floor, int maxChapter)
+        {
+            if (e == null || e.Floors == null || floor <= 0) return 0;
+            // ⚠ 반올림은 «사람이 표를 읽는 대로»(2.5 → 3) — C# 기본 Math.Round 는 짝수로 붙어(2.5 → 2) 표를 반값으로 적은 사람을 놀래킨다.
+            int chap = (int)Math.Round(floor * e.Floors.ChapterPerFloor, MidpointRounding.AwayFromZero);
+            if (chap < 1) chap = 1;
+            if (maxChapter > 0 && chap > maxChapter) chap = maxChapter;
+            return chap;
         }
 
         /// <summary>소탕으로 받는 보상(못 하면 null) — 층이 있으면 <b>최고층의 «첫 아님» 보상</b>(T291 · 주인 «클리어한 최고층 보상 · 최초 보상은 안 줌»), 없으면 표의 <c>sweep</c> 그대로.</summary>

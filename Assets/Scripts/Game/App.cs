@@ -103,7 +103,14 @@ namespace KkomaKnight.Game
         /// 1대1 판의 스탯을 풀 수 있다(<c>ArenaDummy.Power</c> → <c>ArenaFoe.Of</c>) — 이름만으로는 상대가 얼마나 센지 알 길이 없다.</param>
         public void StartBattle(int chapter, DungeonData.RunRule run = null, string dungeonKey = null, string arenaFoe = null, int arenaFoeRank = 0)
         {
-            chapter = Mathf.Clamp(chapter, 1, Math.Max(1, Save.MaxChapter));
+            // T291 — **층 던전은 «얼마나 올라왔는가» 가 세기라 챕터 진행도로 깎지 않는다.**
+            //   층 5 를 여는 사람은 층 4 를 깬 사람이고, 그 판의 세기는 표가 정한다(FloorChapter). 진행도로 깎으면
+            //   챕터를 덜 깬 사람에게만 깊은 층이 쉬워져 **같은 층이 사람마다 다른 판**이 된다.
+            //   층이 없는 던전·챕터·아레나는 예전 그대로 진행도까지가 상한이다.
+            bool floorRun = !string.IsNullOrEmpty(dungeonKey) && Data != null && Data.Dungeon != null
+                            && Data.Dungeon.Of(dungeonKey) != null && Data.Dungeon.Of(dungeonKey).Floors != null;
+            int cap = floorRun ? Math.Max(1, Data.Tune.MaxChapter) : Math.Max(1, Save.MaxChapter);
+            chapter = Mathf.Clamp(chapter, 1, cap);
             // T257 4항 — «도전했다» 를 세는 자리는 **여기 하나다**. 판에 들어오는 길이 셋(로비 START · 던전 «도전» · 아레나 «도전») 인데
             // 셋 다 이 문을 지나므로, 부르는 쪽마다 한 줄씩 박으면 길이 하나 늘 때 조용히 안 세는 자리가 생긴다(결정 787).
             // 아레나는 어느 쪽도 아니다(챕터 진행도 던전도 아닌 판이다) · 던전이면 던전 도전 · 나머지가 챕터 도전이다.

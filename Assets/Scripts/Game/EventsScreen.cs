@@ -740,7 +740,10 @@ namespace KkomaKnight.Game
             if (!DungeonTickets.Spend(App.Save, Dun, key, Today())) return;   // 티켓 1 소모(없으면 조용히 아무 일도 안 한다)
             App.Overlay.Close();
             SaveStore.Save(App.Save);
-            App.StartBattle(App.Save.SelChapter, e.Run, key);   // T228 ⓓ — 어느 던전인지 실어 보낸다(클리어하면 그 키로 «깬 적 있다» 가 남는다)
+            // T291 6회차 — **층이 있는 던전은 «몇 층에 도전하는가» 가 판의 세기다**(§2 T291 2항 · 기본값 N층 = 챕터 N · 수는 표에).
+            //   층이 없는 던전(지옥의 문)은 예전 그대로 «지금 고른 챕터» 로 들어간다 — 그 던전엔 올라갈 층이 없기 때문이다.
+            int dunChap = DungeonSweep.FloorChapter(e, DungeonSweep.Challenge(App.Save, Dun, key), App.Data != null ? App.Data.Tune.MaxChapter : 0);
+            App.StartBattle(dunChap > 0 ? dunChap : App.Save.SelChapter, e.Run, key);   // T228 ⓓ — 어느 던전인지 실어 보낸다(클리어하면 그 키로 «깬 적 있다» 가 남는다)
         }
 
         /// <summary>

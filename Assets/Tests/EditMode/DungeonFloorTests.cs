@@ -179,6 +179,41 @@ namespace KkomaKnight.Tests
             foreach (var p in parts) Assert.Contains(p, floors.RecipeOrder, "레시피 표의 부위가 층 차례에 있어야 한다: " + p);
         }
 
+        /// <summary>
+        /// T291 6회차 — <b>층의 적 세기 = 챕터 몇</b>(기본 «N층 = 챕터 N» · 수는 표의 <c>chapterPerFloor</c>).
+        /// <para>표의 마지막 챕터를 넘지 않는다 — 넘으면 적 표에 없는 칸을 묻게 된다. 층이 없는 던전은 <b>0</b>(= 부르는 쪽이 정하던 대로).</para>
+        /// </summary>
+        [Test]
+        public void FloorChapterFollowsTheTableAndStopsAtTheLastChapter()
+        {
+            var e = Exp(); const int Max = 420;
+            Assert.AreEqual(1, DungeonSweep.FloorChapter(e, 1, Max), "1층 = 챕터 1");
+            Assert.AreEqual(5, DungeonSweep.FloorChapter(e, 5, Max), "5층 = 챕터 5");
+            Assert.AreEqual(37, DungeonSweep.FloorChapter(e, 37, Max));
+            Assert.AreEqual(Max, DungeonSweep.FloorChapter(e, Max + 50, Max), "표의 마지막 챕터를 넘지 않는다");
+            Assert.AreEqual(1, DungeonSweep.FloorChapter(e, 1, 0), "상한을 모르면(0) 깎지 않는다");
+            Assert.AreEqual(0, DungeonSweep.FloorChapter(Hell(), 3, Max), "층이 없는 던전은 0 — 부르는 쪽이 정하던 대로 간다");
+            Assert.AreEqual(0, DungeonSweep.FloorChapter(e, 0, Max), "층이 0 이면 셀 것이 없다");
+        }
+
+        /// <summary>수는 표에 있다 — 코드에 «1» 이 박혀 있지 않다는 것을 «표를 바꾸면 답이 바뀐다» 로 잰다.</summary>
+        [Test]
+        public void TheDifficultyNumberLivesInTheTableNotInTheCode()
+        {
+            var e = Exp();
+            double keep = e.Floors.ChapterPerFloor;
+            try
+            {
+                e.Floors.ChapterPerFloor = 3;
+                Assert.AreEqual(15, DungeonSweep.FloorChapter(e, 5, 420), "표를 3 으로 바꾸면 5층 = 챕터 15");
+                e.Floors.ChapterPerFloor = 0.5;
+                Assert.AreEqual(3, DungeonSweep.FloorChapter(e, 5, 420), "0.5 면 5층 = 챕터 2.5 → 반올림 3");
+                e.Floors.ChapterPerFloor = 0;
+                Assert.AreEqual(1, DungeonSweep.FloorChapter(e, 5, 420), "0 이어도 챕터 1 아래로는 안 간다");
+            }
+            finally { e.Floors.ChapterPerFloor = keep; }
+        }
+
         /// <summary>키 이름은 <see cref="GachaKeys"/> 가 아는 것이어야 한다 — 모르는 이름이면 지급이 조용히 사라진다.</summary>
         [Test]
         public void KeyNamesAreOnesTheKeyCodeKnows()
