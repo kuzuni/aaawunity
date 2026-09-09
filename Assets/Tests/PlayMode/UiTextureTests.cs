@@ -325,16 +325,17 @@ namespace KkomaKnight.Tests.Play
                 }
             }
 
-            // ⓓ 4항 «보이는 칸만» — 맨 위(10) 에서는 맨 아래 골드 칸이 멈춰 있다
-            var lastGold = UiKit.Find(content, "GoldPack:2");
-            Assert.IsNotNull(lastGold, "골드 마지막 칸");
-            var goldLight = lastGold.GetChild(0).Find(UiKit.LightMaskName + "/" + UiKit.LightName);
+            // ⓓ 4항 «보이는 칸만» — 스크롤 밖 칸의 빛살은 멈춘다.
+            // ⚠ T308 로 **재는 대상이 바뀌었다**: 여태는 맨 아래 골드 칸의 빛살로 쟀는데 그 빛을 주인 지시로 뺐다(위 ⓑ).
+            //   자를 지우지 않고 **남은 하나(대형 배너)로 옮긴다** — 규칙(T72 4항)은 그대로 살아 있고, 그것을 재는 유일한 빛이 이제 이 하나다.
+            //   방향만 뒤집혔다: 배너는 맨 «위» 에 있으므로 맨 아래로 내리면 화면 밖이 된다.
             // 멈춤은 «트윈이 없다» 가 아니라 «각이 안 변한다» 로 잰다 — DOTween.IsTweening 은 멈춘(Pause) 트윈도 «활성» 으로 본다(CI #145 에서 확인)
-            var stop0 = goldLight.localRotation; yield return RealSeconds(0.4f);
-            Assert.AreEqual(0f, Quaternion.Angle(stop0, goldLight.localRotation), 0.01f, "스크롤 밖 칸(맨 아래 골드)은 빛살이 멈춘다(T72 4항)");
             shopScreen.ScrollTo(0f); yield return Frames(2); Canvas.ForceUpdateCanvases();
-            var g1 = goldLight.localRotation; yield return RealSeconds(0.4f);
-            Assert.Less(Vector3.SignedAngle(g1 * Vector3.up, goldLight.localRotation * Vector3.up, Vector3.forward), -0.5f, "맨 아래로 내리면 그 칸 빛살이 다시 돈다");
+            var stop0 = bigLight.localRotation; yield return RealSeconds(0.4f);
+            Assert.AreEqual(0f, Quaternion.Angle(stop0, bigLight.localRotation), 0.01f, "스크롤 밖 칸(맨 위 대형 배너)은 빛살이 멈춘다(T72 4항)");
+            shopScreen.ScrollTo(1f); yield return Frames(2); Canvas.ForceUpdateCanvases();
+            var g1 = bigLight.localRotation; yield return RealSeconds(0.4f);
+            Assert.Less(Vector3.SignedAngle(g1 * Vector3.up, bigLight.localRotation * Vector3.up, Vector3.forward), -0.5f, "다시 맨 위로 올리면 그 빛살이 또 돈다");
 
             _log.AssertNoRed("T72 화면 적용(상점)");
             yield return Shutdown();
