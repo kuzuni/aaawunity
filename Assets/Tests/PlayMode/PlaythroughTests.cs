@@ -284,6 +284,231 @@ namespace KkomaKnight.Tests.Play
         }
 
         // ─────────────────────────────────────────────────────────────────────────────
+        // P5 던전 — 지옥의 문 도전 → 클리어 → 리워드 → 소탕 → 티켓 0 → 광고 · 다이아 → 원정 1층 → 2층.
+        // ─────────────────────────────────────────────────────────────────────────────
+        /// <summary>
+        /// 지금 켜진 던전·아레나 페이지의 루트. <b>도달</b>을 같이 잰다(화면이 «events» · 보고 있는 페이지가 그것).
+        /// <para>⚠ <see cref="UiKit.Find"/> 는 <b>꺼진 형제 페이지까지</b> 뒤진다 — «BackBtn»·«ChallengeBtn» 은 페이지마다 하나씩이라
+        /// 화면 루트에서 찾으면 다른 페이지의 것을 누를 수 있다. 그래서 늘 <c>Page:…</c> 안에서 찾는다(이름 계약 · <c>EventsScreen</c> 머리).</para>
+        /// </summary>
+        Transform Page(string page)
+        {
+            Assert.AreEqual("events", _app.Current.Name, "도달 — 던전·아레나 화면이 켜져 있다(«" + page + "» 를 기다렸다)");
+            var ev = _app.GetScreen<EventsScreen>(); Assert.IsNotNull(ev, "던전·아레나 화면");
+            Assert.AreEqual(page, ev.Page, "보고 있는 페이지");
+            var pg = UiKit.Find(_app.Current.Root, "Page:" + page); Assert.IsNotNull(pg, "페이지 «" + page + "» 의 루트");
+            return pg;
+        }
+        /// <summary>«탭하여 닫기» 어둠을 눌러 팝업을 닫는다 — 리워드 팝업(T241)은 이 길로만 닫히고, 그 뒤 <c>onClose</c> 가 세부 팝업을 다시 연다.</summary>
+        IEnumerator TapDimmed(string what)
+        {
+            var dim = UiKit.Find(_app.Overlay.Root, "Dimmed")?.GetComponent<Button>();
+            Assert.IsNotNull(dim, what + " — «탭하여 닫기» 어둠");
+            dim.onClick.Invoke(); yield return Frames(2);
+        }
+        /// <summary>
+        /// 세부 팝업(21)이 떠 있는 상태에서 던전 판 하나를 «도전 → 잠깐 굴리고 → 깨고 → «그냥 받기» → 던전 페이지» 로 지나간다.
+        /// 판을 나간 뒤 리워드 팝업(T241)이 떴으면 닫는다 — 표에 보상이 없으면 안 뜨는 것이 맞다(«얻은 게 없는데 뜨는 팝업 금지»)라 있을 때만.
+        /// <para>재는 것은 배선 둘뿐 — 판이 «어느 던전» 인지 안다(<c>DungeonKey</c>) · 나가면 로비가 아니라 던전 페이지다. 보상 수는 안 잰다(3항 ⓐ).</para>
+        /// </summary>
+        IEnumerator ClearDungeonRun(string key)
+        {
+            Tap(_app.Overlay.Root, "ChallengeBtn"); yield return Frames(2);
+            Assert.AreEqual("battle", _app.Current.Name, "«도전» 이 판을 연다(" + key + ")");
+            var bs = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bs, "전투 화면"); var G = bs.G; Assert.IsNotNull(G, "전투 상태");
+            Assert.AreEqual(key, bs.DungeonKey, "판이 «어느 던전» 인지 안다 — 이것이 없으면 클리어를 아무도 안 적는다(T228 ⓓ)");
+            _log.AssertNoRed("P5 " + key + " 판 열기");
+
+            // 잠깐 굴린다(배속 3 · 실제 0.5초) — 시작 특전·레벨(원정 · T183)을 실은 판이 실제로 돌기는 하는가. 죽는 것은 이 단계의 몫이 아니라 체력을 받쳐 준다.
+            Time.timeScale = 3f;
+            float t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < 0.5f && !G.Over && !_app.Overlay.IsOpen)
+            {
+                if (G.P.Hp < G.P.MaxHp * 0.5) G.P.Hp = G.P.MaxHp;
+                yield return null;
+            }
+            Time.timeScale = 1f;
+            Assert.Greater(G.T, 0.0, "엔진이 실제로 돌았다");
+            if (!G.Over)
+            {
+                if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(1); }   // 엔진이 스스로 연 레벨업이면 여기서 정리한다(P2 와 같은 이유)
+                G.Pending = null; G.PendingLevelUps = 0;
+                G.Cleared = true;
+            }
+            else Assert.IsTrue(G.Cleared, "체력을 받쳐 준 0.5초 안에 판이 끝났다면 이긴 쪽이어야 한다");
+            yield return UntilOpen(8f, "클리어 팝업(" + key + ")");
+            Assert.IsTrue(Click(_app.Overlay.Root, s => s == "그냥 받기"), "«그냥 받기»");
+            yield return Frames(3);
+            Page(EventsScreen.PageDungeon);   // 도달 — 던전 판을 나가면 던전 페이지로 돌아온다(로비가 아니다 · ExitPage)
+            if (_app.Overlay.IsOpen)
+            {
+                Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "RewardTitle"), "판을 나간 뒤 떠 있는 것은 «리워드» 팝업(T241)이어야 한다");
+                yield return TapDimmed("리워드 팝업(" + key + ")");
+            }
+            else Debug.Log("[T300] P5 " + key + " — 리워드 팝업이 없다(표에 클리어 보상이 없으면 그것이 맞다)");
+            Assert.IsFalse(_app.Overlay.IsOpen, "리워드 팝업을 닫으면 던전 페이지만 남는다");
+            _log.AssertNoRed("P5 " + key + " 클리어 → 리워드");
+        }
+
+        /// <summary>
+        /// P5 던전(T300 1항) — 노는 것: 지옥의 문 도전 → 클리어 → 리워드 → 소탕 → 티켓 0 → 광고 1 → 다이아 티켓 → 원정 1층 → 2층(T291).
+        /// 재는 것: <b>도달 · 팝업이 스스로 열리고 닫힘 · 배선(티켓이 줄고 늘고 · 층이 오른다) · 빨간 줄 0</b>.
+        /// <para>
+        /// ⚠ 표 값(보충 2 · 광고 1 · 다이아 50 · 보상 수)은 <b>안 잰다</b>(3항 ⓐ · P2 와 같은 까닭). 티켓을 «0 으로 만드는 것» 도 표를 세지 않고
+        /// 세이브에 직접 놓는다(<c>DunTickets</c> · <c>DungeonTicketPlayTests</c> 의 꼴) — 하루 보충이 2 가 아니어도 각본은 그대로다.
+        /// </para>
+        /// <para>⚠ 팝업은 손으로 안 연다 — «입장» 을 눌러 세부 팝업이, «도전» 이 판을, 판이 끝나야 클리어·리워드 팝업이 스스로 뜬다(T280 규칙).</para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator P5_던전을_한_바퀴_놀아도_죽지_않는다()
+        {
+            yield return Boot();
+            var D = _app.Data.Dungeon; Assert.IsNotNull(D, "dungeon.json 이 카탈로그(data.dungeon)로 실려야 한다");
+            var S = _app.Save; string today = SaveStore.Today();
+            // 각 단계가 제 조건을 만들어 시작한다(1항) — 다이아 티켓을 살 만큼(표 값 · 수를 안 박는다)
+            S.Gem = D.GemCost * 2; _app.Persist();
+
+            EventsScreen.Open(_app, EventsScreen.PageDungeon); yield return Frames(3);
+            var pg = Page(EventsScreen.PageDungeon);
+            Assert.IsNotNull(UiKit.Find(pg, "Card:hell"), "지옥의 문 카드"); Assert.IsNotNull(UiKit.Find(pg, "Card:expedition"), "원정 카드");
+            _log.AssertNoRed("P5 던전 페이지");
+
+            // ⓐ 지옥의 문 — 입장 → 세부 팝업(21) → 도전 → 클리어 → «그냥 받기» → 던전 페이지 + 리워드
+            Tap(UiKit.Find(pg, "Card:hell"), "EnterBtn"); yield return Frames(2);
+            Assert.IsTrue(_app.Overlay.IsOpen, "던전 세부 팝업(21)이 열린다");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "FloorCircle"), "세부 팝업의 층수 원");
+            int floor0 = DungeonSweep.Floor(S, "hell");
+            yield return ClearDungeonRun("hell");
+            Assert.Greater(DungeonSweep.Floor(S, "hell"), floor0, "«깬 적 있다» 가 남았다 — 이것 하나가 소탕의 조건이다(배선 · T228)");
+
+            // ⓑ 소탕 — 클리어한 던전이라 되고, 누르면 리워드 팝업 → 닫으면 세부 팝업이 다시 선다
+            // 소탕할 티켓 한 장은 있게(보충 수를 안 믿는다)
+            if (DungeonTickets.Tickets(S, D, "hell", today) < 1) S.DunTickets["hell"] = 1;
+            Tap(UiKit.Find(Page(EventsScreen.PageDungeon), "Card:hell"), "EnterBtn"); yield return Frames(2);
+            int tk0 = DungeonTickets.Tickets(S, D, "hell", today);
+            Tap(_app.Overlay.Root, "SweepBtn"); yield return Frames(2);
+            if (UiKit.Find(_app.Overlay.Root, "RewardTitle") != null) yield return TapDimmed("소탕 리워드 팝업");
+            else Debug.Log("[T300] P5 소탕 — 리워드 팝업이 없다(표의 sweep 이 비었으면 그것이 맞다)");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "SweepBtn"), "소탕 뒤 세부 팝업이 다시 서 있다");
+            Assert.Less(DungeonTickets.Tickets(S, D, "hell", today), tk0, "소탕이 티켓을 썼다(배선) — 안 줄었으면 «소탕» 이 그림이다");
+            _log.AssertNoRed("P5 소탕");
+
+            // ⓒ 티켓 0 → 두 버튼이 «광고 · 다이아» 가 된다(T99 3항) → 광고(모의 카운트다운)로 1 → 다시 0 → 다이아로 1
+            _app.Overlay.Close(); yield return Frames(1);
+            S.DunTickets["hell"] = 0;
+            Tap(UiKit.Find(Page(EventsScreen.PageDungeon), "Card:hell"), "EnterBtn"); yield return Frames(2);
+            // 티켓 0 이면 왼쪽 = 광고
+            Tap(_app.Overlay.Root, "SweepBtn"); yield return Frames(2);
+            { float t0 = Time.realtimeSinceStartup; while (DungeonTickets.Tickets(S, D, "hell", today) == 0 && Time.realtimeSinceStartup - t0 < 8f) yield return null; }
+            Assert.Greater(DungeonTickets.Tickets(S, D, "hell", today), 0, "광고 카운트다운이 끝나면 티켓이 들어온다(배선)");
+            yield return Frames(2);
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "SweepBtn"), "광고 뒤 세부 팝업이 다시 선다");
+            _log.AssertNoRed("P5 광고 티켓");
+
+            _app.Overlay.Close(); yield return Frames(1);
+            S.DunTickets["hell"] = 0; double gem0 = S.Gem;
+            Tap(UiKit.Find(Page(EventsScreen.PageDungeon), "Card:hell"), "EnterBtn"); yield return Frames(2);
+            // 티켓 0 이면 오른쪽 = 다이아
+            Tap(_app.Overlay.Root, "ChallengeBtn"); yield return Frames(2);
+            Assert.Greater(DungeonTickets.Tickets(S, D, "hell", today), 0, "다이아로 티켓을 샀다(배선)");
+            Assert.Less(S.Gem, gem0, "다이아가 빠졌다(배선)");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "SweepBtn"), "산 뒤 세부 팝업이 다시 선다");
+            _log.AssertNoRed("P5 다이아 티켓");
+
+            // ⓓ 원정 — 1층을 깨면 다음 도전은 2층이다(T291 층). 층이 없는 지옥의 문과 달리 여기서만 «올라간다» 가 보인다.
+            _app.Overlay.Close(); yield return Frames(1);
+            if (DungeonTickets.Tickets(S, D, "expedition", today) < 1) S.DunTickets["expedition"] = 1;
+            int ch0 = DungeonSweep.Challenge(S, D, "expedition");
+            Tap(UiKit.Find(Page(EventsScreen.PageDungeon), "Card:expedition"), "EnterBtn"); yield return Frames(2);
+            yield return ClearDungeonRun("expedition");
+            int ch1 = DungeonSweep.Challenge(S, D, "expedition");
+            Assert.Greater(ch1, ch0, "1층을 깨면 도전 층이 올라간다(배선 · T291)");
+            if (DungeonTickets.Tickets(S, D, "expedition", today) < 1) S.DunTickets["expedition"] = 1;
+            Tap(UiKit.Find(Page(EventsScreen.PageDungeon), "Card:expedition"), "EnterBtn"); yield return Frames(2);
+            yield return ClearDungeonRun("expedition");
+            Assert.Greater(DungeonSweep.Challenge(S, D, "expedition"), ch1, "2층도 깨면 또 올라간다");
+            _log.AssertNoRed("P5 원정 1층 → 2층");
+
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            _log.AssertNoRed("P5 던전");
+            yield return Shutdown();
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────────
+        // P6 아레나 — 도전 팝업 → PvP 판 → 결과 화면 → 순위 보상 팝업 → 상인.
+        // ─────────────────────────────────────────────────────────────────────────────
+        /// <summary>
+        /// P6 아레나(T300 1항) — 노는 것: 도전 팝업(24)에서 줄 «도전» → 아레나 판(33)을 굴리고 이긴다 → 결과 화면(34) «계속» → 순위 보상 팝업(25) → 상인(26).
+        /// 재는 것: <b>도달 · 판이 «아레나 판» 으로 열림 · 결과 화면이 스스로 뜨고 «계속» 으로 아레나 페이지로 돌아옴 · 빨간 줄 0</b>. 승점·순위 값은 안 잰다(3항 ⓐ).
+        /// <para>⚠ 상인의 «구매» 는 <b>아직 배선이 없다</b>(<c>EventsScreen</c> 머리 «전부 표시만» · 카드 = <c>Clickable(card, Noop)</c>) — 각본은 «눌러도 죽지 않는가» 까지만 논다.
+        /// 구매가 서는 회차가 이 줄을 «산 것이 세이브에 닿았는가» 로 올린다(절 «다른 워커» 조항).</para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator P6_아레나를_한_판_놀아도_죽지_않는다()
+        {
+            yield return Boot();
+            EventsScreen.Open(_app, EventsScreen.PageArena); yield return Frames(3);
+            var pg = Page(EventsScreen.PageArena);
+            Assert.IsNotNull(UiKit.Find(pg, "Podium"), "시상대");
+            _log.AssertNoRed("P6 아레나 입장 페이지");
+
+            // ⓐ 도전 팝업(24) → 줄 «도전» → 판이 열린다(아레나 판)
+            Tap(pg, "ChallengeBtn"); yield return Frames(2);
+            Assert.IsTrue(_app.Overlay.IsOpen, "도전 팝업(24)이 열린다");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "FoeRow:0"), "상대 줄");
+            Tap(_app.Overlay.Root, "FoeBtn:0"); yield return Frames(2);
+            Assert.AreEqual("battle", _app.Current.Name, "줄 «도전» 이 판을 연다");
+            var bs = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bs, "전투 화면"); var G = bs.G; Assert.IsNotNull(G, "전투 상태");
+            Assert.IsTrue(bs.IsArena, "그 판은 «아레나 판» 이다 — 이 표식 하나가 끝났을 때 승점 갈래를 켠다(T240)");
+            _log.AssertNoRed("P6 아레나 판 열기");
+
+            // ⓑ 굴리고(배속 3 · 실제 1초) → 이긴다 → 결과 화면(34)이 스스로 뜬다 → «계속» → 아레나 페이지
+            //    1대1 이라 1초 안에 실제로 끝날 수도 있다 — 그러면 결과 화면이 이미 뜨는 중이니 손대지 않는다(레벨업 팝업과 가른다).
+            Time.timeScale = 3f;
+            float t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < 1.0f && !G.Over && !_app.Overlay.IsOpen)
+            {
+                if (G.P.Hp < G.P.MaxHp * 0.5) G.P.Hp = G.P.MaxHp;
+                yield return null;
+            }
+            Time.timeScale = 1f;
+            Assert.Greater(G.T, 0.0, "엔진이 실제로 돌았다");
+            if (!G.Over)
+            {
+                if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(1); }
+                G.Pending = null; G.PendingLevelUps = 0;
+                G.Cleared = true;
+            }
+            else Assert.IsTrue(G.Cleared, "체력을 받쳐 준 1초 안에 판이 끝났다면 이긴 쪽이어야 한다");
+            yield return UntilOpen(8f, "PvP 결과 화면(34)");
+            Assert.IsTrue(ArenaResult.Open, "떠 있는 것은 PvP 결과 화면이다 — 아레나 판은 클리어 팝업이 아니라 승점 결과로 끝난다(T240)");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ResultTitle"), "결과 제목");
+            Tap(_app.Overlay.Root, "ContinueBtn"); yield return Frames(3);
+            Assert.IsFalse(ArenaResult.Open, "«계속» 으로 닫힌다");
+            pg = Page(EventsScreen.PageArena);   // 도달 — 결과를 지나 아레나 페이지로 돌아온다(로비가 아니다 · ExitPage)
+            _log.AssertNoRed("P6 판 → 결과 → 아레나");
+
+            // ⓒ 순위 보상 팝업(25) → 닫기 → 상인(26) → 상품 한 칸(표시만) → 뒤로
+            Tap(pg, "RewardsBtn"); yield return Frames(2);
+            Assert.IsTrue(_app.Overlay.IsOpen, "순위 보상 팝업(25)이 열린다");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "RewardRow:0"), "보상 줄");
+            _app.Overlay.Close(); yield return Frames(1);
+            _log.AssertNoRed("P6 순위 보상");
+
+            Tap(pg, "MerchantBtn"); yield return Frames(2);
+            pg = Page(EventsScreen.PageMerchant);
+            Assert.IsNotNull(UiKit.Find(pg, "Goods:0"), "상품 칸");
+            Tap(pg, "Goods:0"); yield return Frames(2);
+            Tap(pg, "BackBtn"); yield return Frames(2);
+            Page(EventsScreen.PageArena);
+            _log.AssertNoRed("P6 상인");
+
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            _log.AssertNoRed("P6 아레나");
+            yield return Shutdown();
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────────
         // 각본 ↔ 자 대조 — 목록과 실제 자가 어긋나면 «봇이 도는 줄 알았는데 안 노는» 단계가 생긴다(4항).
         // ─────────────────────────────────────────────────────────────────────────────
         /// <summary>
