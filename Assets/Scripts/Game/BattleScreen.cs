@@ -46,6 +46,11 @@ namespace KkomaKnight.Game
         TMP_Text _kills, _gold, _chapTitle, _speedTxt;
         // T240 1항 — PvP 머리(빨간 VS 바 · 금테 배지 · 아바타 칸 둘 · 이름 둘 · 전투력 줄 둘). 챕터 판에서는 꺼 둔다.
         RectTransform _chapTitleBox, _pvpHead;
+        /// <summary>
+        /// T240 ⓑ(결정 799) — <b>PvP 에서 끄는</b> 챕터 전투 HUD 묶음(하단 패널 · 바 셋 · 스탯 8칸 · 특전 줄 · 책 · 배속 · 우하단 원형 · 상단 pill 둘).
+        /// <para>주인 레퍼런스 <c>33_pvp_battle.jpg</c> 의 PvP 화면에는 <b>하단 패널이 통째로 없다</b> — 바닥이 잔디이고 우하단에 원형 버튼만 있다.</para>
+        /// </summary>
+        RectTransform[] _chapterHud;
         TMP_Text _pvpMyName, _pvpFoeName, _pvpMyPower, _pvpFoePower;
         UiKit.Bar _prog, _exp, _hp, _sh; Image _progFill;
         RectTransform _buffBar, _perkStrip; TMP_Text _perkCount; HorizontalLayoutGroup _perkStripLayout;
@@ -149,6 +154,13 @@ namespace KkomaKnight.Game
             UiKit.TagGroup(Root, "스탯 그리드", cells); UiKit.Tag(cells[0], "스탯칸(1칸)"); UiKit.Tag(info, "인포(책) 버튼");
 
             BuildPvpHead();   // T240 1항 — 아레나 판에서만 켜진다(Start 가 IsArena 로 켠다)
+            BuildPvpRound();  // T240 1항 — 우하단 «AUTO» (PvpHead 안이라 같이 켜지고 꺼진다)
+            // T240 ⓑ(결정 799) — PvP 에서 **끄는** 챕터 전투 HUD 묶음. 만들어 두고 끄는 꼴은 PvP 머리와 같다:
+            //   지우지 않으므로 RefreshHud 가 그대로 써도 되고(꺼진 글자에 쓰는 것은 값이 없을 뿐 탈이 없다),
+            //   챕터 판으로 돌아오면 다시 켜기만 하면 된다(한 화면이 두 판을 번갈아 연다).
+            var hud = new List<RectTransform> { pills, spd, pet, UiKit.Find(Root, "HudPanel") as RectTransform, _exp.Root, _hp.Root, _sh.Root, _perkStrip, info };
+            hud.AddRange(cells);
+            _chapterHud = hud.ToArray();
             // T85 — 보상 구슬 층은 HUD «위» (마지막 형제): 구슬이 하단 패널 안의 EXP 바까지 가려지지 않고 날아가야 한다. 글자·이름표 없음(비평 표·게이트 불변).
             _orbLayer = UiKit.Rect(Root, "Orbs"); UiKit.Stretch(_orbLayer); _orbLayer.SetAsLastSibling();
             _orbs = new RewardOrbs(_orbLayer);
@@ -264,6 +276,29 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>
+        /// T240 1항 «원형 버튼» — 레퍼런스 33 의 우하단 셋 가운데 <b>AUTO 하나만</b> 세운다(결정 799 ⓐ).
+        /// <para>
+        /// <b>천사·악마는 안 만들었다</b> — 기능이 없는 것보다 <b>그림이 없는 것</b>이 먼저다:
+        /// 카탈로그에 천사·악마 <b>UI 아이콘이 없고</b>(<c>fx.angel</c>·<c>fx.devil</c> 은 월드 파티클 프리팹이다) §1 이 <b>새 그림을 금한다</b>.
+        /// 다른 아이콘을 끼워 «비슷하게» 만드는 순간 그 화면은 지어낸 것이 된다(워커 B 가 상대 장비에서 선 자리와 같다 · 결정 749).
+        /// </para>
+        /// <para>
+        /// <b>누르는 길을 안 걸었다</b>(<see cref="UiKit.Clickable"/> 없음) — 우리 전투에 «자동» 이라는 기능 자체가 없다(판은 원래 스스로 돈다).
+        /// 걸어 두면 «눌리는데 아무 일도 안 나는 버튼» 이 되는데, 그것을 막는 싼 길은 «못 누르게» 가 아니라 <b>«안 걸어 두기»</b> 다(T257 · 결정 768).
+        /// 기능이 생기는 날 <see cref="Layout.PvpAuto"/> 자리는 그대로 두고 여기에 한 줄만 더하면 된다.
+        /// </para>
+        /// </summary>
+        void BuildPvpRound()
+        {
+            var auto = UiKit.Rect(_pvpHead, "PvpAutoBtn"); UiKit.Pct(auto, Layout.PvpAuto);
+            var bg = UiKit.Icon(auto, "Bg", "fr.circle", Palette.Yellow); UiKit.Stretch(bg.rectTransform);
+            var bd = UiKit.Icon(auto, "Border", "fr.circleBorder", Palette.Cream); UiKit.Stretch(bd.rectTransform);
+            var t = UiKit.Label(auto, 0, 0, 100, 100, "AUTO", TextSize.Aux, Palette.Ink, kind: TextKind.Aux);
+            t.name = "AutoText"; t.fontStyle = FontStyles.Bold;
+            UiKit.Tag(auto, "원형 버튼 AUTO");
+        }
+
+        /// <summary>
         /// T240 1항 — 이 판이 아레나면 PvP 머리를 켜고 «챕터 N» 제목·진행 바를 끈다(챕터 판이면 그 반대).
         /// <paramref name="foeRank"/> 가 0(모름)이면 상대 전투력은 «—» 로 둔다 — <b>모르는 수를 지어내지 않는다</b>.
         /// </summary>
@@ -271,6 +306,9 @@ namespace KkomaKnight.Game
         {
             bool on = IsArena;
             if (_pvpHead != null) _pvpHead.gameObject.SetActive(on);
+            // T240 ⓑ — PvP 면 챕터 HUD 를 통째로 끈다(레퍼런스 33 에 하단 패널이 없다 · 결정 799).
+            //   ⚠ 켜는 쪽도 반드시 있어야 한다 — 한 BattleScreen 이 아레나 판과 챕터 판을 번갈아 연다.
+            if (_chapterHud != null) foreach (var rt in _chapterHud) if (rt != null) rt.gameObject.SetActive(!on);
             if (_chapTitleBox != null) _chapTitleBox.gameObject.SetActive(!on);
             if (_prog != null && _prog.Root != null) _prog.Root.gameObject.SetActive(!on);
             if (!on) return;

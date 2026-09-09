@@ -268,6 +268,16 @@ namespace KkomaKnight.Core
         /// <summary>상대 전투력 줄 — 오른쪽 정렬(칸 오른쪽 끝 = 100 − 16.8 = 83.2 · 실측 글자 왼쪽 끝 80.1 과 맞는다).</summary>
         public static readonly R PvpFoePower = new R(61.4f, 16.3f, 21.8f, 0.9f);
 
+        // ───────── T240 1항 «원형 버튼 셋»(AUTO · 천사 · 악마) — 표 ㊺ 실측(밝은 테 bbox) ─────────
+        // ⚠ 이 셋은 <b>자리와 그림만</b> 있다 — 우리 전투에 그 기능이 없다(결정 799). 그 판단의 까닭은 ROUTINE §2 T240 ⓐ 에 적었다.
+        //   기능이 생기는 날 여기 자리는 그대로 두고 <c>BattleScreen</c> 의 «누르면» 만 붙이면 된다.
+        /// <summary>AUTO(노란 알) — 실측 bbox. 셋 중 가장 왼쪽.</summary>
+        public static readonly R PvpAuto = new R(58.3f, 90.4f, 15.3f, 9.6f);
+        /// <summary>천사(보라 알) — 셋이 가로로 붙는다(가운데 간격 실측 ≈13.9%p).</summary>
+        public static readonly R PvpAngel = new R(72.2f, 90.4f, 13.9f, 9.4f);
+        /// <summary>악마(검은 알) — 오른쪽 끝이 화면에 거의 닿는다.</summary>
+        public static readonly R PvpDevil = new R(85.8f, 90.4f, 14.0f, 9.5f);
+
         // ───────── T240 4항 PvP 결과(승리/패배) — 값은 전부 주인 레퍼런스 `docs/ref/34_pvp_win.jpg`(720×1560) 실측이다(표 ㊻) ─────────
         // 이 화면도 «상자» 가 아니라 어두운 전면 위 **가운데 세로 한 줄**이다: 방패 엠블럼 → 승리/패배 → 티어 명판 → 아바타 VS 아바타 → 이름 → 승점 변화 → 계속.
         /// <summary>금빛 방패 엠블럼 — 실측 px 192~526 · 436~689.</summary>
