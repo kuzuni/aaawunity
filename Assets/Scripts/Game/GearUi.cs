@@ -38,7 +38,13 @@ namespace KkomaKnight.Game
         public static void SetPlus(Transform frameOrCell, GearItem g)
         {
             var t = UiKit.SetText(frameOrCell, "Text_Level", g != null && g.Plus > 0 ? "+" + g.Plus : "");
-            if (t != null) t.horizontalAlignment = HorizontalAlignmentOptions.Right;
+            if (t == null) return;
+            t.horizontalAlignment = HorizontalAlignmentOptions.Right;
+            // T310 회차 3 — 남은 어긋남 하나는 **글자 크기**였다(런 783 실측: 인벤 40 ↔ 슬롯 32).
+            //   두 조각이 서로 다른 <c>fontSizeMax</c>(28 ↔ 32)를 들고 오고 자동 크기가 그 위에서 각자 답을 낸다.
+            //   ⇒ 크기의 **위아래 문턱을 여기서 같게** 준다: 위는 본문 하한(40 · 인벤이 실제로 그리던 크기) · 아래는 자동 축소 바닥(32).
+            //   자동 크기를 끄지 않는 까닭은 «+12» 처럼 긴 글자다 — 끄면 칸을 넘고, 문턱만 맞추면 같은 글자에 같은 크기가 나온다.
+            t.enableAutoSizing = true; t.fontSizeMin = TextSize.BestFitMin; t.fontSizeMax = TextSize.Body;
         }
         /// <summary>
         /// 등급 탭(<see cref="Layout.GdBadge"/>)의 <b>세로</b>에만 더하는 여유(px · T214) — 리본 글자가 제목 60 이라 칸이 <see cref="TextSize.BoxHeight"/>(84px) 는 돼야 하는데

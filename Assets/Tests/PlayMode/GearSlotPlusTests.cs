@@ -130,7 +130,11 @@ namespace KkomaKnight.Tests.Play
             var b = PlusRightBottom(cellPlus, VisibleFrame(cellPlus));
             Assert.AreEqual(b.x, a.x, 0.04f, $"«+N» 띠의 오른쪽 끝이 다르다(슬롯 {a.x:0.000} ↔ 인벤 {b.x:0.000})");
             Assert.AreEqual(b.y, a.y, 0.04f, $"«+N» 띠의 아래 끝이 다르다(슬롯 {a.y:0.000} ↔ 인벤 {b.y:0.000})");
-            Assert.AreEqual(cellTxt.fontSize, slotTxt.fontSize, 0.5f, "«+N» 글자 크기가 다르다");
+            // 글자 크기 — 회차 2 에서 여기가 빨갰다(런 783 · 인벤 **40** ↔ 슬롯 **32**): 두 조각이 서로 다른 `fontSizeMax`(28 ↔ 32)를 들고 오고
+            //   자동 크기가 그 위에서 각자 답을 냈다. 회차 3 이 `SetPlus` 에서 위아래 문턱을 같게 주므로 이제 같은 글자에 같은 크기가 나온다.
+            //   ⚠ 문턱 3 은 일부러 넓다 — 띠 폭·높이가 조금 달라(148.98×46.37 ↔ 160.45×50) 자동 크기가 한두 단계 어긋날 여지가 있고,
+            //     못 돌려 보고 넣는 값은 «맞히려» 하지 말고 «틀려도 안전한 쪽» 으로 잡는다(결정 877). 잡으려는 어긋남(40 ↔ 32 = 8)은 그대로 잡힌다.
+            Assert.AreEqual(cellTxt.fontSize, slotTxt.fontSize, 3f, $"«+N» 글자 크기가 다르다(슬롯 {slotTxt.fontSize:0.0} ↔ 인벤 {cellTxt.fontSize:0.0})");
 
             _log.AssertNoRed("장비(강화 표시)");
             yield return Shutdown();
