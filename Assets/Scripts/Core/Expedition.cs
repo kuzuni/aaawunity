@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace KkomaKnight.Core
 {
@@ -29,6 +30,16 @@ namespace KkomaKnight.Core
         public double QuickChargeHours = 2;
         /// <summary>빠른 탐험 <b>최대 보유</b>(주인 «3번 받을 수 있는 거임» · 레퍼런스 31 버튼 배지 «3»).</summary>
         public int QuickMax = 3;
+        /// <summary>
+        /// <b>시간당 레시피</b>(T321 · 주인 2026-09-09 12:0X «탐험 보상으로 1시간에 1개씩 레시피 중 하나 드랍되게 · 투구, 무기 그런 식의 장비 부위 레시피»).
+        /// 부위는 <b>여섯 중 균등 무작위</b>이고 <b>받는 순간</b> 정해진다(<see cref="QuestRun.RollRecipes"/> 와 같은 규칙 한 벌).
+        /// <para>
+        /// <b>0 이면 레시피가 아예 안 나온다</b> — 지금 0 인 까닭은 <b>주는 화면이 아직 없기 때문</b>이다.
+        /// 탐험 팝업(<c>LobbyPopups</c>)이 남의 lock 안이라 «받기» 가 아직 난수를 안 넘긴다(<see cref="Claim(GameData, SaveData, ExpeditionData, double, string, out double, out double)"/> 참조).
+        /// 화면 회차가 이 수를 1 로 올린다 — T290 의 <c>perLevel</c> 이 밟은 그 순서다.
+        /// </para>
+        /// </summary>
+        public double RecipePerHour;
         public double QuickChargeSeconds => QuickChargeHours * 3600.0;
 
         public double MaxSeconds => MaxHours * 3600.0;
@@ -48,6 +59,8 @@ namespace KkomaKnight.Core
             d.QuickAdsPerDay = j.Has("quickAdsPerDay") ? (int)j["quickAdsPerDay"].Num() : 3;
             d.QuickChargeHours = j.Has("quickChargeHours") ? j["quickChargeHours"].Num() : 2;   // 기본값도 2 로(T270 · 표에 키가 없던 옛 판을 읽을 때만 쓰인다)
             d.QuickMax = j.Has("quickMax") ? (int)j["quickMax"].Num() : 3;
+            d.RecipePerHour = j.Has("recipePerHour") ? j["recipePerHour"].Num() : 0;   // T321 — 없으면 0(옛 표 호환 · 레시피가 안 나온다)
+            if (d.RecipePerHour < 0) throw new FormatException("expedition.json: recipePerHour 는 0 이상이어야 한다");
             if (d.MaxHours <= 0) throw new FormatException("expedition.json: maxHours 는 0 보다 커야 한다");
             if (d.QuickHours <= 0) throw new FormatException("expedition.json: quickHours 는 0 보다 커야 한다");
             if (d.QuickAdsPerDay < 0) throw new FormatException("expedition.json: quickAdsPerDay 는 0 이상이어야 한다");
@@ -151,21 +164,64 @@ namespace KkomaKnight.Core
             gem = Math.Floor(GemPerHour(d) * h);
         }
 
-        /// <summary>«받기» 를 지금 누를 수 있는가 = 최소 누적(분)을 넘겼고 받을 것이 1 이상 있다.</summary>
+        /// <summary>
+        /// 지금까지 쌓여 «받을 수 있는» <b>레시피 개수</b>(T321 · 내림 — 화면 숫자와 지급이 같아야 한다).
+        /// 부위는 여기서 안 정한다 — <b>받는 순간</b> 난수가 정한다(<see cref="Claim(GameData, SaveData, ExpeditionData, double, string, RecipeData, IRng, out double, out double, out Dictionary{string, int})"/>).
+        /// </summary>
+        public static int RecipesPending(SaveData s, ExpeditionData d, double nowSec, string today)
+        {
+            if (s == null || d == null || d.RecipePerHour <= 0) return 0;
+            double n = Math.Floor(d.RecipePerHour * (ElapsedSec(s, d, nowSec, today) / 3600.0));
+            return n <= 0 ? 0 : (n > int.MaxValue ? int.MaxValue : (int)n);
+        }
+
+        /// <summary>«받기» 를 지금 누를 수 있는가 = 최소 누적(분)을 넘겼고 받을 것이 1 이상 있다(골드·다이아·레시피 중 하나라도).</summary>
         public static bool CanClaim(GameData G, SaveData s, ExpeditionData d, double nowSec, string today)
         {
             if (G == null || s == null || d == null) return false;
             if (ElapsedSec(s, d, nowSec, today) < d.MinClaimSeconds) return false;
             Pending(G, s, d, nowSec, today, out double gold, out double gem);
-            return gold >= 1 || gem >= 1;
+            return gold >= 1 || gem >= 1 || RecipesPending(s, d, nowSec, today) >= 1;   // T321
         }
 
-        /// <summary>«받기» — 쌓인 골드·다이아를 주고 마지막 정산 시각을 지금으로. 못 받으면 0(저장은 호출부가 한다).</summary>
+        /// <summary>
+        /// «받기»(<b>옛 서명</b> · 난수를 안 받는다) — 쌓인 골드·다이아를 주고 마지막 정산 시각을 지금으로. 못 받으면 0(저장은 호출부가 한다).
+        /// <para>
+        /// ⚠ <b>T321 — 레시피가 쌓여 있으면 이 서명은 아무것도 안 준다</b>(0 · 정산 시각도 안 건드린다).
+        /// 까닭: 이 갈래가 골드·다이아만 주고 <see cref="SaveData.ExpSettle"/> 을 지금으로 밀면 <b>쌓인 레시피가 조용히 사라진다</b> —
+        /// 빨간 줄도 자도 안 나고 주인 폰에서만 «레시피가 안 오는데?» 로 나타난다(워커 E 가 T292 에서 «반쪽으로 주느니 안 준다» 로 적은 그 자리).
+        /// <b>멈추는 쪽으로 틀리게</b> 둔 것이다 — 표를 1 로 켜는 회차가 부르는 쪽을 아래 서명으로 안 바꾸면 «받기가 안 된다» 로 시끄럽게 드러난다(조용히 먹지 않는다).
+        /// 표가 <c>recipePerHour 0</c> 인 동안은 이 갈래가 예전과 정확히 같다.
+        /// </para>
+        /// </summary>
         public static void Claim(GameData G, SaveData s, ExpeditionData d, double nowSec, string today, out double gold, out double gem)
         {
             gold = 0; gem = 0;
+            if (RecipesPending(s, d, nowSec, today) >= 1) return;   // T321 — 위 주석: 반쪽으로 주느니 안 준다
             if (!CanClaim(G, s, d, nowSec, today)) return;
             Pending(G, s, d, nowSec, today, out gold, out gem);
+            s.Gold += gold; s.Gem += gem;
+            s.ExpSettle = nowSec;
+        }
+
+        /// <summary>
+        /// «받기»(T321 · <b>레시피까지</b>) — 골드·다이아에 더해 쌓인 레시피를 <b>부위 무작위</b>로 준다.
+        /// <paramref name="recipes"/> 는 부위별 개수(리워드 팝업이 «투구 레시피 ×2 …» 로 묶어 그리는 값 · 없으면 빈 표).
+        /// <para>난수·표가 없으면 레시피 갈래만 0 이고 골드·다이아는 그대로 준다 — 단 <b>줄 것이 있는데 못 주는</b> 판이면 아무것도 안 준다(위 옛 서명과 같은 규칙).</para>
+        /// </summary>
+        public static void Claim(GameData G, SaveData s, ExpeditionData d, double nowSec, string today,
+                                 RecipeData rd, IRng rng, out double gold, out double gem, out Dictionary<string, int> recipes)
+        {
+            gold = 0; gem = 0; recipes = new Dictionary<string, int>();
+            int n = RecipesPending(s, d, nowSec, today);
+            if (n >= 1 && (rd == null || rng == null)) return;   // 줄 것이 있는데 줄 길이 없다 — 정산 시각을 안 밀어 다음 기회에 그대로 남는다
+            if (!CanClaim(G, s, d, nowSec, today)) return;
+            Pending(G, s, d, nowSec, today, out gold, out gem);
+            if (n >= 1)
+            {
+                recipes = QuestRun.RollRecipes(rd, rng, n);
+                foreach (var kv in recipes) Recipes.Add(s, kv.Key, kv.Value);
+            }
             s.Gold += gold; s.Gem += gem;
             s.ExpSettle = nowSec;
         }
@@ -196,14 +252,44 @@ namespace KkomaKnight.Core
             gem = Math.Floor(GemPerHour(d) * h);
         }
 
-        /// <summary>빠른 탐험 수령(광고를 다 본 뒤에 부른다) — <b>누적에 더하지 않고 즉시 지급</b>하고 오늘 횟수를 하나 쓴다. 못 쓰면 0.</summary>
+        /// <summary>빠른 탐험 한 번이 주는 <b>레시피 개수</b>(= <see cref="ExpeditionData.QuickHours"/> 시간분 · T321 2항 «빠른 탐험도 레시피 5개»).</summary>
+        public static int QuickRecipes(ExpeditionData d)
+        {
+            if (d == null || d.RecipePerHour <= 0) return 0;
+            double n = Math.Floor(d.RecipePerHour * d.QuickHours);
+            return n <= 0 ? 0 : (int)n;
+        }
+
+        /// <summary>
+        /// 빠른 탐험 수령(<b>옛 서명</b> · 광고를 다 본 뒤에 부른다) — <b>누적에 더하지 않고 즉시 지급</b>하고 충전을 하나 쓴다. 못 쓰면 0.
+        /// <para>⚠ T321 — 줄 레시피가 있는 판이면 <b>아무것도 안 준다</b>(충전도 안 쓴다). 까닭은 <see cref="Claim(GameData, SaveData, ExpeditionData, double, string, out double, out double)"/> 와 같다.</para>
+        /// </summary>
         public static void ClaimQuick(GameData G, SaveData s, ExpeditionData d, double nowSec, string today, out double gold, out double gem)
         {
             gold = 0; gem = 0;
+            if (QuickRecipes(d) >= 1) return;   // T321 — 반쪽으로 주느니 안 준다(충전은 그대로 남는다)
             if (!CanQuick(s, d, nowSec, today)) return;
             QuickReward(G, s, d, out gold, out gem);
             s.Gold += gold; s.Gem += gem;
             // 쓰는 순간이 다음 충전의 시작이다 — Roll 이 꽉 찬 동안 기준을 지금으로 붙들어 두므로 여기서 시각을 안 만져도 된다.
+            s.ExpQuickCharge--;
+        }
+
+        /// <summary>빠른 탐험 수령(T321 · <b>레시피까지</b>) — <paramref name="recipes"/> 는 부위별 개수(리워드 팝업이 묶어 그리는 값).</summary>
+        public static void ClaimQuick(GameData G, SaveData s, ExpeditionData d, double nowSec, string today,
+                                      RecipeData rd, IRng rng, out double gold, out double gem, out Dictionary<string, int> recipes)
+        {
+            gold = 0; gem = 0; recipes = new Dictionary<string, int>();
+            int n = QuickRecipes(d);
+            if (n >= 1 && (rd == null || rng == null)) return;   // 줄 것이 있는데 줄 길이 없다 — 충전을 안 쓴다
+            if (!CanQuick(s, d, nowSec, today)) return;
+            QuickReward(G, s, d, out gold, out gem);
+            if (n >= 1)
+            {
+                recipes = QuestRun.RollRecipes(rd, rng, n);
+                foreach (var kv in recipes) Recipes.Add(s, kv.Key, kv.Value);
+            }
+            s.Gold += gold; s.Gem += gem;
             s.ExpQuickCharge--;
         }
 

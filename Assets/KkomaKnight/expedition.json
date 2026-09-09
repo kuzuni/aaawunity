@@ -9,5 +9,7 @@
   "minClaimMinutes": 1,
   "quickHours": 5,
   "quickChargeHours": 2,
-  "quickMax": 3
+  "quickMax": 3,
+  "_recipe": "T321(주인 2026-09-09 12:0X 「탐험 보상으로 1시간에 1개씩 레시피 중 하나 드랍되게 · 투구, 무기 그런 식의 장비 부위 레시피」) — recipePerHour 시간당 그 개수만큼 쌓이고(상한은 maxHours 그대로 = 한 번에 최대 8개) 부위는 여섯 중 균등 무작위로 **받는 순간** 정해진다. 빠른 탐험도 quickHours 시간분(5개)을 같은 규칙으로 준다. ⚠ 지금 0 인 까닭은 **주는 화면이 아직 없어서**다 — 탐험 팝업이 남의 lock 안이라 「받기」가 아직 난수를 안 넘긴다. 화면 회차가 이 수를 1 로 올린다(T290 의 perLevel 이 밟은 그 순서).",
+  "recipePerHour": 0
 }

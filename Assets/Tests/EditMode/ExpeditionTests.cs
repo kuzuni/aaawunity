@@ -234,5 +234,89 @@ namespace KkomaKnight.Tests
             Assert.That(back.ExpQuickCharge, Is.EqualTo(s.ExpQuickCharge), "보유 충전");
             Assert.That(back.ExpQuickAt, Is.EqualTo(s.ExpQuickAt).Within(1e-6), "충전 기준 시각");
         }
+        /// <summary>T321 표 — 지금은 «주는 화면» 이 없어 0 이다(주인 값 1 은 화면 회차가 켠다 · T290 perLevel 과 같은 순서).</summary>
+        [Test]
+        public void Json_RecipePerHourIsOffUntilTheScreenGivesIt()
+        {
+            Assert.That(Load().RecipePerHour, Is.EqualTo(0).Within(1e-9),
+                "지금은 0 — 탐험 팝업이 아직 난수를 안 넘긴다(그 회차가 1 로 올린다)");
+        }
+
+        /// <summary>T321 — 쌓이는 개수는 ⌊시간 × recipePerHour⌋ 이고 상한은 maxHours 그대로다.</summary>
+        [Test]
+        public void RecipesPending_IsFlooredHoursAndCappedByMaxHours()
+        {
+            var d = Tbl(1); var s = NewSave();
+            Expedition.Roll(s, d, T0, D0);
+            s.ExpSettle = T0 - 59 * 60;                     // 59분
+            Assert.That(Expedition.RecipesPending(s, d, T0, D0), Is.EqualTo(0), "한 시간을 못 채우면 0");
+            s.ExpSettle = T0 - 1 * H;
+            Assert.That(Expedition.RecipesPending(s, d, T0, D0), Is.EqualTo(1), "1시간 → 1개(주인)");
+            s.ExpSettle = T0 - 8 * H;
+            Assert.That(Expedition.RecipesPending(s, d, T0, D0), Is.EqualTo(8), "8시간 → 8개");
+            s.ExpSettle = T0 - 9 * H;
+            Assert.That(Expedition.RecipesPending(s, d, T0, D0), Is.EqualTo(8), "9시간도 8개 — 상한은 maxHours 그대로");
+            Assert.That(Expedition.RecipesPending(s, Tbl(0), T0, D0), Is.EqualTo(0), "0 이면 아예 안 나온다");
+            Assert.That(Expedition.QuickRecipes(Tbl(1)), Is.EqualTo(5), "빠른 탐험은 quickHours 시간분(주인 5시간)");
+            Assert.That(Expedition.QuickRecipes(Tbl(0)), Is.EqualTo(0));
+        }
+
+        /// <summary>T321 — 받으면 그 수만큼 실제로 들어오고, 부위는 표 안의 여섯 중에서만 나온다.</summary>
+        [Test]
+        public void Claim_GivesExactlyThatManyRecipesAcrossTheSixParts()
+        {
+            var G = Data(); var d = Tbl(1); var s = NewSave();
+            var rd = RecipeTable();
+            Expedition.Roll(s, d, T0, D0);
+            s.ExpSettle = T0 - 8 * H;
+            int want = Expedition.RecipesPending(s, d, T0, D0);
+
+            Expedition.Claim(G, s, d, T0, D0, rd, new Mulberry32(4242), out double gold, out double gem, out var got);
+            Assert.That(gold, Is.GreaterThan(0), "골드도 같이 준다");
+            int sum = 0; foreach (var kv in got) { sum += kv.Value; Assert.That(rd.Has(kv.Key), Is.True, "표 밖 부위: " + kv.Key); }
+            Assert.That(sum, Is.EqualTo(want), "받은 합 = 쌓여 있던 수");
+            int inSave = 0; foreach (var pt in rd.Parts) inSave += Recipes.Count(s, pt);
+            Assert.That(inSave, Is.EqualTo(want), "세이브에도 그만큼 들어온다");
+            Assert.That(s.ExpSettle, Is.EqualTo(T0).Within(1e-9), "정산 시각이 지금으로");
+            Assert.That(Expedition.RecipesPending(s, d, T0, D0), Is.EqualTo(0), "받고 나면 다시 0");
+        }
+
+        /// <summary>
+        /// T321 — <b>줄 것이 있는데 줄 길이 없으면 아무것도 안 준다.</b> 옛 서명(난수 없음)이 골드만 주고 정산 시각을 밀면
+        /// 쌓인 레시피가 <b>조용히 사라진다</b> — 빨간 줄도 자도 안 나는 종류다. 멈추는 쪽으로 틀리게 둔다(워커 E 의 T292 와 같은 규칙).
+        /// </summary>
+        [Test]
+        public void OldClaim_RefusesRatherThanSilentlyDroppingRecipes()
+        {
+            var G = Data(); var d = Tbl(1); var s = NewSave();
+            Expedition.Roll(s, d, T0, D0);
+            s.ExpSettle = T0 - 3 * H;
+            double gold0 = s.Gold, settle0 = s.ExpSettle;
+
+            Expedition.Claim(G, s, d, T0, D0, out double gold, out double gem);
+            Assert.That(gold, Is.EqualTo(0).Within(1e-9), "줄 레시피가 있으면 옛 서명은 아무것도 안 준다");
+            Assert.That(s.Gold, Is.EqualTo(gold0).Within(1e-9), "골드도 안 늘었다");
+            Assert.That(s.ExpSettle, Is.EqualTo(settle0).Within(1e-9), "정산 시각을 안 밀었다 — 쌓인 것이 그대로 남는다");
+
+            // 난수만 없어도 같다(표는 있는데 난수가 없는 판).
+            Expedition.Claim(G, s, d, T0, D0, RecipeTable(), null, out gold, out gem, out var got);
+            Assert.That(gold, Is.EqualTo(0).Within(1e-9), "난수가 없으면 안 준다");
+            Assert.That(got.Count, Is.EqualTo(0));
+            Assert.That(s.ExpSettle, Is.EqualTo(settle0).Within(1e-9), "그대로 남는다");
+
+            // 표가 0 인 판(지금 배포되는 모습)에서는 옛 서명이 예전과 정확히 같다.
+            var off = Tbl(0);
+            Expedition.Claim(G, s, off, T0, D0, out gold, out gem);
+            Assert.That(gold, Is.GreaterThan(0), "레시피가 안 드는 판에서는 옛 그대로 받힌다");
+            Assert.That(s.ExpSettle, Is.EqualTo(T0).Within(1e-9));
+        }
+
+        /// <summary>주인 규칙(시간당 1개)이 켜진 표 — 진짜 표의 수가 화면 회차에서 바뀌어도 규칙 자가 안 흔들리게 여기서 짓는다.</summary>
+        static ExpeditionData Tbl(double recipePerHour)
+        {
+            var d = Load(); d.RecipePerHour = recipePerHour; return d;
+        }
+        static RecipeData RecipeTable() => RecipeData.Parse(
+            File.ReadAllText(TestData.RepoFile(Path.Combine("Assets", "KkomaKnight", "recipe.json"))));
     }
 }
