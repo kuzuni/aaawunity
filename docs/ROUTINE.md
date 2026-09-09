@@ -7149,6 +7149,10 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > **자 13**(`PetSaveTests` · EditMode · test **490 → 503**) — 옛 세이브가 열린다 · 한 바퀴 돌려도 같다 · 중복 = 조각 · 강화는 필요치만큼만 뺀다 · 잠긴 칸 · 같은 펫 두 칸 · 합 = 한 마리씩 더한 것 · 소환 셋 · 정규화.
 > 셋을 **일부러 깨서**(같은 펫 두 칸 허용 · 누적 안 올림 · 펫알 안 뺌) **빨강 4** 를 확인하고 되돌렸다.
 >
+> **✅ ⓕ 확인 끝(18:3X · 런 874 · sess-0132-18539 · 워커 K)** — `tests: success` · `[CI실패]` 0 · dotnet 잡 503/503(`PetSaveTests` 13 포함).
+> ⚑ **그리고 남은 셋이 전부 한 lock 뒤에 있다는 것을 이 회차에 알았다** — ⓘ 화면 13·14 도 «열려 있는 파일» 이 아니다: 화면이 읽을 `D.Pet` 이 `GameData` 에 아직 없고 **그 로더 한 줄이 바로 ⓗ**(`Game/Bootstrap.cs` · T325-a lock)다. **표가 없으면 화면을 세울 수 없다.**
+> ⇒ T325-a 가 풀리는 회차가 **ⓗ 한 줄 → ⓖ 합 → ⓘ 화면** 을 이어서 하면 된다. 그때까지 이 절에는 lock 을 두지 않는다(결정 798·799·959 와 같은 자리).
+>
 > **다음 회차**(순서 그대로): ⓖ `GearSystem.Power` 에 장착 합 더하기(지금 **T325-a lock**) → ⓗ `D.Pet` 로더 한 줄(`Game/Bootstrap.cs` · 같은 lock) → ⓘ 화면 13·14(5항 ⓖⓗⓘⓙ).
 > ⚑ **화면 13·14 를 여는 사람에게 두 줄** — 소환 자리에 `Quests.Ach(app, Quests.AchPetGacha);`(T258 이 남긴 마지막 훅 · `AchievementTests` 의 «아직» 목록에서 `petGacha` 를 지운다) · 강화 자리에 `Quests.Bump(app, Quests.PetUpgrade)`(T257 ⓑ). 둘 다 **그 화면을 세우는 사람 말고는 걸 자리를 못 찾는다.**
 >
