@@ -70,7 +70,7 @@ namespace KkomaKnight.Game
             d.Recipe = LoadRecipe(catalog);   // T290
             d.Pass = LoadPass(catalog);       // T322
             d.GearTier = LoadGearTier(catalog);   // T316
-            ApplyCombatOverride(d, catalog);   // T173 — 전투 규칙 덮어쓰기(창 사거리·관통)는 App 이 서기 «전» 에 먹인다
+            ApplyOverrides(d, catalog);   // T173·T325 — 덮어쓰기 표 넷은 App 이 서기 «전» 에 먹인다
             App.Create(d, catalog, uiFont, Camera.main);
             PostFx.Enable(App.I != null ? App.I.transform : null, Camera.main);   // T181 — 월드 Bloom(UI 에는 안 먹는다 · PostFx 주석 참조)
             _loading?.SetProgress(1f);
@@ -107,15 +107,27 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>
-        /// 이 레포 전용 전투 수치 덮어쓰기 — <c>Assets/KkomaKnight/combatOverride.json</c>(카탈로그 텍스트 «data.combatOverride» · T173).
-        /// <c>data/combat.json</c> 은 aaaw 정본이라 손대지 않고(§1) 여기 적은 키만 덮는다. 없으면 정본 그대로 간다(부팅은 막히지 않는다).
-        /// 헤드리스 하니스(Sim·EditMode)는 <see cref="GameData.LoadFromDirectory"/> 가 같은 파일을 직접 읽어 먹인다 — 두 길이 같은 규칙으로 돈다.
+        /// 이 레포 전용 덮어쓰기 표 넷 — <c>Assets/KkomaKnight/*Override.json</c>(카탈로그 텍스트 «data.combatOverride» 류 · T173·T325).
+        /// <c>data/*.json</c> 은 aaaw 정본이라 손대지 않고(§1) 여기 적은 키만 덮는다. 없으면 정본 그대로 간다(부팅은 막히지 않는다).
+        /// 헤드리스 하니스(Sim·EditMode)는 <see cref="GameData.LoadFromDirectory"/> 가 <b>같은 목록</b>(<c>GameData.OverrideFiles</c>)을 돌아
+        /// 같은 파일을 직접 읽어 먹인다 — 두 길이 같은 규칙으로 돈다.
+        /// <para>⚠ 다 먹인 <b>뒤</b> 의 <c>ValidateOverridden</c> 은 <b>붉은 로그로 운다</b>(던져서 부팅을 막지는 않는다).
+        /// 표끼리 어긋나면 «영웅이 영영 안 나온다» 같은 고장이 예외도 로그도 없이 지나가기 때문이다(결정 851 과 같은 갈래).
+        /// 붉은 로그로 두는 까닭은 결정 493 의 기준 그대로 — 표가 어긋났다고 게임을 못 켜게 만들 일은 아니다.
+        /// <b>PlayMode 하니스의 <c>AssertNoRed</c> 가 그 붉은 줄을 실패로 읽으므로</b> 표가 어긋난 채로는 초록 런이 안 나온다.</para>
         /// </summary>
-        static void ApplyCombatOverride(GameData d, AssetCatalog catalog)
+        static void ApplyOverrides(GameData d, AssetCatalog catalog)
         {
-            var ta = catalog != null ? catalog.Text("data.combatOverride") : null;
-            if (ta == null) { Debug.LogWarning("[KkomaKnight] combatOverride.json 이 카탈로그(data.combatOverride)에 없다 — combat.json 정본 값 그대로 간다"); return; }
-            d.ApplyCombatOverride(ta.text);
+            foreach (var file in GameData.OverrideFiles)
+            {
+                var key = GameData.OverrideCatalogKey(file);
+                var ta = catalog != null ? catalog.Text(key) : null;
+                if (ta == null) { Debug.LogWarning($"[KkomaKnight] {file} 이 카탈로그({key})에 없다 — 그 표는 정본 값 그대로 간다"); continue; }
+                try { d.ApplyOverride(file, ta.text); }
+                catch (Exception e) { Debug.LogError($"[KkomaKnight] {file} 먹이기 실패: {e.Message}"); }
+            }
+            try { d.ValidateOverridden(); }
+            catch (Exception e) { Debug.LogError("[KkomaKnight] 덮어쓰기 뒤 표가 서로 어긋난다 — " + e.Message); }
         }
 
         /// <summary>던전 티켓·보상 수치표 — 이 레포 전용 <c>Assets/KkomaKnight/dungeon.json</c>(카탈로그 텍스트 «data.dungeon» · T99). 못 읽으면 null(티켓이 «--» 로 뜨고 보충·구매 없음).</summary>

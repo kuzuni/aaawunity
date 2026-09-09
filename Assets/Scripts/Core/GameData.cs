@@ -77,21 +77,57 @@ namespace KkomaKnight.Core
 
         /// <summary>
         /// 디스크 폴더에서 로드 (dotnet 하니스·EditMode 테스트용).
-        /// <b>이 레포 전용 전투 덮어쓰기</b>(<c>Assets/KkomaKnight/combatOverride.json</c> · T173)도 같이 먹인다 —
+        /// <b>이 레포 전용 덮어쓰기 넷</b>(<see cref="OverrideFiles"/> · <c>Assets/KkomaKnight/*Override.json</c> · T173·T325)도 같이 먹인다 —
         /// 안 그러면 Sim 시드 골든·EditMode 가 «게임과 다른 규칙» 으로 돌아 서로 어긋난다(게임 쪽은 <c>Bootstrap</c> 이 카탈로그로 먹인다).
         /// 파일이 없으면 조용히 정본 그대로다.
+        /// <para>⚠ <b>정본 그대로를 원하는 자</b>(T2 이식 동일성 골든)는 이 길로 오면 안 된다 — <see cref="Load"/> 를 직접 쓴다.</para>
         /// </summary>
         public static GameData LoadFromDirectory(string dir)
         {
             var d = Load(f => System.IO.File.ReadAllText(System.IO.Path.Combine(dir, f)));
             // data 폴더는 <레포>/Assets/StreamingAssets/data → 덮어쓰기는 <레포>/Assets/KkomaKnight/
-            var path = System.IO.Path.GetFullPath(System.IO.Path.Combine(dir, "..", "..", "KkomaKnight", CombatOverrideFile));
-            if (System.IO.File.Exists(path)) d.ApplyCombatOverride(System.IO.File.ReadAllText(path));
+            foreach (var file in OverrideFiles)
+            {
+                var path = System.IO.Path.GetFullPath(System.IO.Path.Combine(dir, "..", "..", "KkomaKnight", file));
+                if (System.IO.File.Exists(path)) d.ApplyOverride(file, System.IO.File.ReadAllText(path));
+            }
+            d.ValidateOverridden();
             return d;
         }
 
         /// <summary>이 레포 전용 전투 덮어쓰기 파일 이름(카탈로그 텍스트 키는 <c>data.combatOverride</c>).</summary>
         public const string CombatOverrideFile = "combatOverride.json";
+        /// <summary>이 레포 전용 장비 덮어쓰기 파일 이름 — 등급·기여·옵션 칸 수(카탈로그 텍스트 키 <c>data.gearOverride</c> · T325).</summary>
+        public const string GearOverrideFile = "gearOverride.json";
+        /// <summary>이 레포 전용 상자 덮어쓰기 파일 이름 — 등급 확률·비용·천장(카탈로그 텍스트 키 <c>data.gachaOverride</c> · T325).</summary>
+        public const string GachaOverrideFile = "gachaOverride.json";
+        /// <summary>이 레포 전용 손잡이 덮어쓰기 파일 이름 — 챕터 수·적 세기 곡선(카탈로그 텍스트 키 <c>data.tuneOverride</c> · T325).</summary>
+        public const string TuneOverrideFile = "tuneOverride.json";
+
+        /// <summary>
+        /// 이 레포가 정본 위에 얹는 덮어쓰기 표 넷 — <b>먹이는 순서</b>다(장비가 먼저여야 상자의 «칸 수 = 등급 수» 대조가 새 등급으로 선다).
+        /// <para>두 길(게임 = <c>Bootstrap</c> 이 카탈로그로 · 하니스 = <see cref="LoadFromDirectory"/> 가 파일로)이
+        /// <b>이 한 목록</b>을 돌아 같은 규칙으로 돈다 — 다섯 번째를 더하는 사람은 여기 한 줄과 <see cref="ApplyOverride"/> 의 가지 하나면 된다.</para>
+        /// </summary>
+        public static readonly string[] OverrideFiles = { CombatOverrideFile, GearOverrideFile, GachaOverrideFile, TuneOverrideFile };
+
+        /// <summary>덮어쓰기 파일 이름 → 카탈로그 텍스트 키(<c>data.&lt;이름&gt;</c>). 두 곳에서 같은 규칙으로 짓는다.</summary>
+        public static string OverrideCatalogKey(string file) => "data." + file.Substring(0, file.Length - ".json".Length);
+
+        /// <summary>
+        /// 파일 이름으로 알맞은 덮어쓰기를 먹인다 — <see cref="OverrideFiles"/> 를 도는 두 호출부가 <c>switch</c> 를 각자 안 쓰게.
+        /// 모르는 이름은 아무 일도 안 한다(목록에 더하고 가지를 안 더하면 조용히 안 먹으므로 <c>GameDataOverrideTests</c> 가 그 짝을 잰다).
+        /// </summary>
+        public void ApplyOverride(string file, string json)
+        {
+            switch (file)
+            {
+                case CombatOverrideFile: ApplyCombatOverride(json); break;
+                case GearOverrideFile: ApplyGearOverride(json); break;
+                case GachaOverrideFile: ApplyGachaOverride(json); break;
+                case TuneOverrideFile: ApplyTuneOverride(json); break;
+            }
+        }
 
         /// <summary>
         /// <c>combat.json</c>(aaaw 정본 · 불변) 위에 <b>이 레포가 정한 값만</b> 덮는다 (T173 · 주인 지시로 바뀐 전투 규칙).
@@ -109,6 +145,144 @@ namespace KkomaKnight.Core
             if (p.Has("spear")) Combat.PierceSpear = p["spear"].Int(Combat.PierceSpear);
             if (p.Has("wave")) Combat.PierceWave = p["wave"].Int(Combat.PierceWave);
             if (p.Has("waveBig")) Combat.PierceWaveBig = p["waveBig"].Int(Combat.PierceWaveBig);
+        }
+
+        /// <summary>
+        /// <c>gear.json</c>(aaaw 정본 · 불변) 위에 <b>등급·기여·옵션 칸 수</b>만 덮는다 (T325 ⓐ · 주인 2026-09-09 «영웅 등급 다시 넣고 … 30씩 증가»).
+        /// <para>덮는 키는 <c>rarName</c> · <c>rarLegend</c> · <c>rarMyth</c> · <c>contribution.atk/hp/sh</c> ·
+        /// <c>optionLadder.optCount</c> · <c>optionLadder.mythPlusAt</c> — 적힌 것만 바뀌고 나머지는 정본 그대로다.</para>
+        /// <para>⚠ <c>optCount</c> 는 <b>«민 뒤» 의 최종 칸 수</b>다 — <c>GearData.ShiftOptionLadderOneStep</c>(주인 «일반은 옵션 안 열리게»)는
+        /// 정본을 읽을 때 이미 돌았고 여기서 다시 돌지 않는다. 곧 «일반 0» 을 원하면 표에 <c>0</c> 이라고 적는다 — 한 칸 더 밀리지 않는다.</para>
+        /// </summary>
+        public void ApplyGearOverride(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json) || Gear == null) return;
+            var j = new JNode(MiniJson.Parse(json));
+            if (!j.IsObject) return;
+            if (j.Has("rarName")) Gear.RarName = j["rarName"].StrArray();
+            if (j.Has("rarLegend")) Gear.RarLegend = j["rarLegend"].Int(Gear.RarLegend);
+            if (j.Has("rarMyth")) Gear.RarMyth = j["rarMyth"].Int(Gear.RarMyth);
+            var c = j["contribution"];
+            if (c.Has("atk")) Gear.Atk = c["atk"].NumArray();
+            if (c.Has("hp")) Gear.Hp = c["hp"].NumArray();
+            if (c.Has("sh")) Gear.Sh = c["sh"].NumArray();
+            var ol = j["optionLadder"];
+            if (ol.Has("optCount")) Gear.OptCountByRar = ol["optCount"].IntArray();
+            if (ol.Has("mythPlusAt")) Gear.MythPlusOptAt = ol["mythPlusAt"].IntArray();
+        }
+
+        /// <summary>
+        /// <c>gacha.json</c>(aaaw 정본 · 불변) 위에 <b>상자 칸</b>만 덮는다 (T325 ⓐ 3항 · 주인 «전설 상자는 66% 희귀 · 30% 영웅 · 4% 전설»).
+        /// <para>덮는 키는 <c>boxes.&lt;상자키&gt;</c> 아래의 <c>rate</c> · <c>cost</c> · <c>pityMyth</c> · <c>pityLegend</c> · <c>pityRare</c>.
+        /// 없는 상자 키는 <b>조용히 넘기지 않고 던진다</b> — 오타 하나로 «확률을 바꿨는데 안 바뀌는» 꼴이 제일 조용한 고장이다.</para>
+        /// <para>⚠ <c>cum</c> 은 <b>표에 안 적는다</b> — <c>rate</c> 를 덮으면 여기서 다시 계산한다(<see cref="GachaBox.RarRoll"/> 이 보는 것은 <c>cum</c> 이라
+        /// 옛 <c>cum</c> 이 남으면 «표는 새 확률인데 굴림은 옛 확률» 이 되고 아무도 안 운다).</para>
+        /// </summary>
+        public void ApplyGachaOverride(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json) || Gacha == null) return;
+            var j = new JNode(MiniJson.Parse(json));
+            if (!j.IsObject) return;
+            var bx = j["boxes"];
+            if (!bx.IsObject) return;
+            foreach (var k in bx.Keys)
+            {
+                var box = Gacha.Box(k);          // 없으면 KeyNotFoundException — 오타를 조용히 안 넘긴다
+                var b = bx[k];
+                if (b.Has("rate")) { box.Rate = b["rate"].NumArray(); box.Cum = CumOf(box.Rate); }
+                if (b.Has("cost")) box.Cost = b["cost"].Num(box.Cost);
+                if (b.Has("pityMyth")) box.PityMyth = b["pityMyth"].Int(box.PityMyth);
+                if (b.Has("pityLegend")) box.PityLegend = b["pityLegend"].Int(box.PityLegend);
+                if (b.Has("pityRare")) box.PityRare = b["pityRare"].Int(box.PityRare);
+            }
+        }
+
+        /// <summary>
+        /// <c>rate</c> → <c>cum</c> — 정본 <c>gacha.json</c> 이 적어 둔 뜻 그대로다: <c>cum[i]</c> = 등급 <c>i</c> <b>이상</b> 이 나올 확률의 합
+        /// (<c>cum[0]</c> 은 늘 100 · 예: rate [66, 30, 4, 0] → cum [100, 34, 4, 0]).
+        /// 뒤에서부터 더해 <see cref="GachaBox.RarRoll"/> 의 «높은 등급부터 누적 임계와 비교» 와 짝이 맞는다.
+        /// </summary>
+        public static double[] CumOf(double[] rate)
+        {
+            if (rate == null || rate.Length == 0) return rate;
+            var cum = new double[rate.Length];
+            double acc = 0;
+            for (int i = rate.Length - 1; i >= 0; i--) { acc += rate[i]; cum[i] = acc; }
+            cum[0] = 100;                        // 첫 칸은 «무엇이든 나온다» 로 못 박는다(정본도 그렇게 적혀 있다)
+            return cum;
+        }
+
+        /// <summary>
+        /// <c>tune.json</c>(aaaw 정본 · 불변) 위에 <b>챕터 수와 적 세기 곡선</b>만 덮는다 (T325 ⓑ · 주인 «챕터 수는 100 으로 하자»).
+        /// <para>덮는 키는 <c>maxChapter</c> · <c>eBaseHp</c> · <c>eBaseDmg</c> · <c>eHpSeg</c> · <c>eDmgSeg</c>
+        /// (<c>seg</c> 는 정본과 같은 꼴 <c>[[시작 챕터, 챕터당 배율], …]</c>).</para>
+        /// <para>⚠ <b>플레이어·장비·특전 값은 여기 없다</b> — 주인이 준 값이라 손잡이가 아니다(§1). 밸런스는 «적 쪽 곡선» 으로만 맞춘다.</para>
+        /// </summary>
+        public void ApplyTuneOverride(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json) || Tune == null) return;
+            var j = new JNode(MiniJson.Parse(json));
+            if (!j.IsObject) return;
+            var t = j.Has("tune") ? j["tune"] : j;      // 정본과 같은 «tune» 껍질을 써도 되고 안 써도 된다
+            if (t.Has("maxChapter")) Tune.MaxChapter = t["maxChapter"].Int(Tune.MaxChapter);
+            if (t.Has("eBaseHp")) Tune.EBaseHp = t["eBaseHp"].Num(Tune.EBaseHp);
+            if (t.Has("eBaseDmg")) Tune.EBaseDmg = t["eBaseDmg"].Num(Tune.EBaseDmg);
+            if (t.Has("eHpSeg")) Tune.EHpSeg = TuneData.Seg(t["eHpSeg"]);
+            if (t.Has("eDmgSeg")) Tune.EDmgSeg = TuneData.Seg(t["eDmgSeg"]);
+        }
+
+        /// <summary>
+        /// 덮어쓰기를 다 먹인 <b>뒤</b> 에 «표들끼리 아직 맞는가» 를 다시 잰다 (T325).
+        /// <para><see cref="Validate"/> 는 정본을 읽는 순간 한 번 돌고 끝나므로 <b>덮어쓰기가 깬 것은 아무도 못 본다</b> —
+        /// 예를 들어 등급을 다섯으로 늘리고 <c>contribution</c> 을 넷으로 두면 신화 장비를 낀 순간에야 <c>IndexOutOfRange</c> 가 나고,
+        /// 상자 <c>rate</c> 를 넷으로 두면 <b>영웅이 영영 안 나온다</b>(예외도 없다). 그래서 부팅에서 먼저 던진다.</para>
+        /// <para>⚠ 챕터 수는 정본이 «같은가» 로 재지만 여기서는 <b>«정본이 더 많아도 된다»</b> 로 잰다 —
+        /// 100 챕터로 줄이는 것이 주인 지시이고 <c>enemies.json</c> 은 420 줄 그대로 남기 때문이다(§1).</para>
+        /// </summary>
+        public void ValidateOverridden()
+        {
+            if (Gear != null)
+            {
+                int n = Gear.RarName != null ? Gear.RarName.Length : 0;
+                if (n < 2) throw new FormatException("덮어쓰기 뒤 등급 수가 " + n + " 이다 — rarName 은 둘 이상이어야 한다");
+                Len("contribution.atk", Gear.Atk, n); Len("contribution.hp", Gear.Hp, n); Len("contribution.sh", Gear.Sh, n);
+                if (Gear.OptCountByRar != null && Gear.OptCountByRar.Length != n)
+                    throw new FormatException($"덮어쓰기 뒤 optionLadder.optCount 칸 수 {Gear.OptCountByRar.Length} ≠ 등급 수 {n}");
+                if (Gear.RarLegend < 1 || Gear.RarMyth <= Gear.RarLegend || Gear.RarMyth >= n)
+                    throw new FormatException($"덮어쓰기 뒤 등급 인덱스가 어긋난다 — rarLegend {Gear.RarLegend} · rarMyth {Gear.RarMyth} · 등급 수 {n}");
+                if (Gacha != null)
+                    foreach (var b in Gacha.Boxes)
+                    {
+                        Len($"상자 «{b.Key}» 의 rate", b.Rate, n);
+                        double sum = 0; foreach (var r in b.Rate) { if (r < 0) throw new FormatException($"상자 «{b.Key}» 에 음수 확률이 있다"); sum += r; }
+                        if (Math.Abs(sum - 100) > 0.01) throw new FormatException($"상자 «{b.Key}» 확률 합이 {sum} 이다 — 100 이어야 한다");
+                    }
+            }
+            if (Tune != null)
+            {
+                if (Tune.MaxChapter < 1) throw new FormatException("덮어쓰기 뒤 maxChapter 가 " + Tune.MaxChapter + " 이다");
+                if (Enemies != null && Enemies.Chapters.Count < Tune.MaxChapter)
+                    throw new FormatException($"덮어쓰기 뒤 maxChapter {Tune.MaxChapter} 가 enemies.json 챕터 수 {Enemies.Chapters.Count} 보다 많다");
+                Seg("eHpSeg", Tune.EHpSeg); Seg("eDmgSeg", Tune.EDmgSeg);
+            }
+        }
+
+        static void Len(string what, double[] a, int n)
+        {
+            if (a == null || a.Length != n) throw new FormatException($"덮어쓰기 뒤 {what} 칸 수 {(a == null ? 0 : a.Length)} ≠ 등급 수 {n}");
+        }
+
+        static void Seg(string what, double[][] seg)
+        {
+            if (seg == null || seg.Length == 0) throw new FormatException($"덮어쓰기 뒤 {what} 가 비었다");
+            double prev = double.NegativeInfinity;
+            foreach (var row in seg)
+            {
+                if (row == null || row.Length < 2) throw new FormatException($"{what} 의 줄은 [시작 챕터, 배율] 이어야 한다");
+                if (row[0] <= prev) throw new FormatException($"{what} 의 시작 챕터가 오름차순이 아니다 ({prev} → {row[0]})");
+                if (row[1] <= 0) throw new FormatException($"{what} 의 배율이 {row[1]} 이다 — 0 보다 커야 한다");
+                prev = row[0];
+            }
         }
 
         void Validate()
@@ -167,7 +341,7 @@ namespace KkomaKnight.Core
             return d;
         }
 
-        static double[][] Seg(JNode a)
+        internal static double[][] Seg(JNode a)
         {
             var list = new List<double[]>();
             foreach (var row in a.Items()) list.Add(row.NumArray());
@@ -323,11 +497,16 @@ namespace KkomaKnight.Core
         public Dictionary<string, string> TypeName = new Dictionary<string, string>();
         public string[] RarName; public int RarLegend, RarMyth;
         /// <summary>
-        /// «희귀» 등급 인덱스 — <b>전설 바로 아래</b>다(`gear.json` rarName = 일반·희귀·전설·신화 · rarLegend 2 · rarMyth 3).
-        /// <para>T261 이 «희귀 확정» 천장을 얹으면서 필요해졌다. 인덱스 <c>1</c> 을 코드에 박지 않는 까닭은 등급이 늘거나 이름이 바뀌어도
-        /// <b>«전설 아래가 희귀»</b> 라는 관계는 표에서 오기 때문이다 — 박아 두면 표를 고쳐도 여기만 안 따라온다.</para>
+        /// «희귀» 등급 인덱스 — <b>맨 아래(일반 = 0) 바로 위</b>다.
+        /// <para>T261 이 «희귀 확정» 천장을 얹으면서 필요해졌다(<c>GearSystem</c> 의 <c>pityR</c> 두 줄).</para>
+        /// <para>⚠ <b>여기는 «전설 바로 아래»(<c>RarLegend - 1</c>) 였다 — T325 가 그 뜻을 무너뜨려서 바꿨다.</b>
+        /// 옛 표(일반·희귀·전설·신화)에서는 두 뜻이 같은 수 <c>1</c> 이었지만, 주인이 <b>영웅을 가운데</b> 넣으면
+        /// (일반·희귀·<b>영웅</b>·전설·신화) «전설 바로 아래» 는 <b>영웅</b> 이 된다 — 그러면 희귀 상자의 «희귀 확정» 천장이
+        /// 말없이 <b>«영웅 확정»</b> 이 되고, 컴파일도 되고 빨간 줄도 안 난다(워커 B 가 결정 918 에서 <c>Palette.RarName</c> 사슬을 두고 적은 그 위험이 여기에도 있었다).
+        /// 참인 관계는 «희귀 = 일반 바로 위» 다 — 등급이 위쪽에 얼마나 늘든 안 흔들린다. 오늘 값은 <c>1</c> 로 <b>그대로</b>이고
+        /// <c>GameDataOverrideTests</c> 가 «넷일 때도 다섯일 때도 희귀» 를 잰다.</para>
         /// </summary>
-        public int RarRare => RarLegend - 1;
+        public int RarRare => 1;
         public double[] Atk, Hp, Sh;
         public double PlusStep; public int LegendToMythPlus, LegendMaxPlus;
         public double SlotStep; public int SlotLvMax; public double SlotCostBase, SlotCostG; public double[] SlotCostTable;
