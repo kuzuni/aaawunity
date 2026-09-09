@@ -51,9 +51,13 @@ namespace KkomaKnight.Game
                 case "cardBlue": return new Pair(Cat("cardBlue.top", "#50A1E0"), Cat("cardBlue.bottom", "#5CC6F8"));
                 // T116 3단계 ⓑ(특권 11 카드 2~4) — docs/ref/11_shop_special.jpg 실측. 이 카드들은 몸통이 «왼 여백은 어둡고 그림 쪽은 밝은» 두 색인데
                 // 우리 헬퍼는 세로로만 깔 수 있어 «어두운 위 → 밝은 아래» 로 옮겼다(카드류의 방향 · 결정 357).
-                case "cardPrivAd": return new Pair(Cat("cardPrivAd.top", "#1A61C9"), Cat("cardPrivAd.bottom", "#3A91FA"));
-                case "cardPrivMonth": return new Pair(Cat("cardPrivMonth.top", "#5115C5"), Cat("cardPrivMonth.bottom", "#7436DE"));
-                case "cardPrivLife": return new Pair(Cat("cardPrivLife.top", "#FF6501"), Cat("cardPrivLife.bottom", "#FFB833"));
+                // T345(주인 2026-09-10 «특권 부분도 그라디언트들 있는데 티가 안 남 · 광고 제거부터 초록 파랑 · 월간은 하늘색 보라 · 평생 다이아는 빨강 노랑») —
+                //   주인이 직접 준 색이 위 실측(#1A61C9/#3A91FA · #5115C5/#7436DE · #FF6501/#FFB833)을 덮는다. 폴백도 카탈로그와 같은 값(T341 과 같은 까닭).
+                //   ⚠ 광고 제거(초록 → 파랑)·월간(하늘 → 보라)은 밝기가 «내려가는» 쌍이다 — «어두운 위 → 밝은 아래» 는 레퍼런스에서 잰 규칙이고,
+                //   주인이 색을 직접 지목한 자리에는 그 규칙을 대지 않는다(GradientPaletteTests 의 방향 목록에서 그 둘을 뺐다 · 결정 957).
+                case "cardPrivAd": return new Pair(Cat("cardPrivAd.top", "#2FB84A"), Cat("cardPrivAd.bottom", "#1E7FE0"));
+                case "cardPrivMonth": return new Pair(Cat("cardPrivMonth.top", "#4FC3F7"), Cat("cardPrivMonth.bottom", "#8B2FE0"));
+                case "cardPrivLife": return new Pair(Cat("cardPrivLife.top", "#FF3B30"), Cat("cardPrivLife.bottom", "#FFC61E"));
                 case "bgLobby": return new Pair(Cat("bgLobby.top", "#3C6833"), Cat("bgLobby.bottom", "#315529"));
                 case "btnBlue": return new Pair(Cat("btnBlue.top", "#188AFA"), Cat("btnBlue.bottom", "#096CFD"));
                 case "btnOrange": return new Pair(Cat("btnOrange.top", "#FDA406"), Cat("btnOrange.bottom", "#F09600"));

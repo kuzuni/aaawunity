@@ -49,7 +49,10 @@ namespace KkomaKnight.Tests.Play
 
             // 방향 — 카드류는 «어두운 위 → 밝은 아래»(레퍼런스 09·11 실측), 배경은 «밝은 위 → 어두운 아래»(레퍼런스 01 실측)
             // 3단계 ⓑ 에서 특권 카드 2~4 의 실측 쌍이 늘었다(cardPriv*) — 카드류는 다 같은 방향이어야 한다
-            foreach (var card in new[] { "cardGem", "cardGold", "cardBlue", "cardPrivAd", "cardPrivMonth", "cardPrivLife" })
+            // T345(주인 2026-09-10) — cardPrivAd(초록 → 파랑)·cardPrivMonth(하늘 → 보라)는 **주인이 색을 직접 지목한 쌍**이고 밝기가 되레 내려간다.
+            //   «어두운 위 → 밝은 아래» 는 레퍼런스에서 잰 규칙이라 주인이 색을 지목한 자리에는 안 댄다 → 그 둘을 이 목록에서 뺐다(결정 957).
+            //   cardPrivLife(빨강 → 노랑)는 방향을 지키므로 남긴다. 위 «두 색이 다르다 · 카탈로그에서 읽힌다» 는 여전히 여섯 전부 잰다.
+            foreach (var card in new[] { "cardGem", "cardGold", "cardBlue", "cardPrivLife" })
             {
                 var p = GradientPalette.Of(card);
                 Assert.Less(Luma(p.Top), Luma(p.Bottom), card + " 카드는 위가 어둡고 아래가 밝아야 한다(레퍼런스 방향)");

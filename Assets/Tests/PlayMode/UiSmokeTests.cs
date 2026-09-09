@@ -1584,9 +1584,12 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNotNull(light0, "조각의 상자 뒤 빛(Light)");
                 // T340(주인 2026-09-10 «라이트 이펙트가 존나 회전하고 있네 · 그거는 멈추고») — T307 ⓐ 의 무한 회전 트윈은 시퀀스 «밖»에 따로 걸려 있었으므로
                 //   `DOTween.IsTweening(light)` 이 그것을 본다(시퀀스 안 배율 트윈은 안 보인다 · T158 회차 2 주석). 되돌리면 여기서 빨개진다.
-                Assert.IsFalse(DOTween.IsTweening(light0), "상자 뒤 빛살은 돌지 않는다(T340 · 주인 «회전 멈추고») — 지금 트윈이 걸려 있다");
-                Assert.IsTrue(DG.Tweening.DOTween.IsTweening(light0, true),
-                              "상자 뒤 빛에 도는 트윈이 걸려 있어야 한다(T307 ⓐ · 주인 «안 움직이네 움직이게 하셈»)");
+                // ⛑ 장애 고침(워커 P · sess-1455-20088 · 결정 957 ②) — 이 파일에는 `using DG.Tweening;` 이 없어 바로 위 줄의 맨 `DOTween` 이
+                //   PlayMode 어셈블리 컴파일을 깼다(CS0103 · 조립 csc 실측 · dotnet 하니스는 PlayMode 를 안 컴파일해 로컬 게이트가 못 잡는다).
+                //   바로 아래 줄처럼 온 이름으로 부른다(§1 «컴파일 파손은 장애 — 남의 lock 안이라도 using 한 줄이면 바로 고친다»).
+                Assert.IsFalse(DG.Tweening.DOTween.IsTweening(light0), "상자 뒤 빛살은 돌지 않는다(T340 · 주인 «회전 멈추고») — 지금 트윈이 걸려 있다");
+                // ⛑ 같은 자리 — 여기 있던 T307 ⓐ 의 «도는 트윈이 걸려 있어야 한다»(IsTweening == true)는 바로 위 줄과 **반드시 하나가 빨간** 짝이었다.
+                //   T340(주인 «회전 멈추고»)이 T307 ⓐ 를 뒤집었으므로 그 단언은 «주인 지시를 지킨 쪽이 빨개지는» 옛 단언이다(§1 T184 · 결정 866 의 꼴) → 지웠다.
             }
             float chestY0 = chestGrp0.anchoredPosition.y;   // «떨어지기 전» 높이 — 연출이 끝난 뒤와 맞대 본다(상수에 안 기댄다)
             // T158 ⓐ — «작았다» 는 여기서 잰다(가장 이른 자리). 뒤에서 재면 커지는 중이라 값이 흐른다.

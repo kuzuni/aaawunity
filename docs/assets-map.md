@@ -656,12 +656,12 @@
 | colors | `col.grad.cardChestRare.bottom` | `#18B2E6` | #18B2E6 |  |
 | colors | `col.grad.cardChestEpic.top` | `#3F14A1` | #3F14A1 |  |
 | colors | `col.grad.cardChestEpic.bottom` | `#C959E1` | #C959E1 |  |
-| colors | `col.grad.cardPrivAd.top` | `#1A61C9` | #1A61C9 | 특권 카드 2(광고 제거) «어두운» 색 — 11_shop_special.jpg 왼 여백 (34,572)~(46,840) 실측 |
-| colors | `col.grad.cardPrivAd.bottom` | `#3A91FA` | #3A91FA | 같은 카드 «밝은» 색 — 그림 쪽 몸통 (430,600)~(466,745) 실측(레퍼런스는 그림 뒤가 밝다) |
-| colors | `col.grad.cardPrivMonth.top` | `#5115C5` | #5115C5 | 특권 카드 3(월간) «어두운» 색 — 왼 여백 (34,934)~(46,1242) 실측 |
-| colors | `col.grad.cardPrivMonth.bottom` | `#7436DE` | #7436DE | 같은 카드 «밝은» 색 — 그림 쪽 몸통 (430,960)~(466,1230) 실측 |
-| colors | `col.grad.cardPrivLife.top` | `#FF6501` | #FF6501 | 특권 카드 4(평생 다이아) «어두운» 색 — 왼 여백 (34,1310)~(46,1432) 실측 |
-| colors | `col.grad.cardPrivLife.bottom` | `#FFB833` | #FFB833 | 같은 카드 «밝은» 색 — 그림 쪽 몸통 (430,1315)~(466,1425) 실측 |
+| colors | `col.grad.cardPrivAd.top` | `#2FB84A` | #2FB84A | 특권 카드 2(광고 제거) «위» 색 — 주인 지정 #2FB84A(T345 · 2026-09-10 «광고 제거부터 초록 파랑») · 옛 실측 #1A61C9(11_shop_special.jpg 왼 여백 (34,572)~(46,840)) |
+| colors | `col.grad.cardPrivAd.bottom` | `#1E7FE0` | #1E7FE0 | 같은 카드 «아래» 색 — 주인 지정 #1E7FE0(T345 · 초록 → 파랑 · 밝기는 내려간다 = 방향 규칙 예외) · 옛 실측 #3A91FA(그림 쪽 몸통 (430,600)~(466,745)) |
+| colors | `col.grad.cardPrivMonth.top` | `#4FC3F7` | #4FC3F7 | 특권 카드 3(월간) «위» 색 — 주인 지정 #4FC3F7(T345 «월간은 하늘색 보라») · 옛 실측 #5115C5(왼 여백 (34,934)~(46,1242)) |
+| colors | `col.grad.cardPrivMonth.bottom` | `#8B2FE0` | #8B2FE0 | 같은 카드 «아래» 색 — 주인 지정 #8B2FE0(T345 · 하늘 → 보라 · 밝기는 내려간다 = 방향 규칙 예외) · 옛 실측 #7436DE(그림 쪽 몸통 (430,960)~(466,1230)) |
+| colors | `col.grad.cardPrivLife.top` | `#FF3B30` | #FF3B30 | 특권 카드 4(평생 다이아) «위» 색 — 주인 지정 #FF3B30(T345 «평생 다이아는 빨강 노랑») · 옛 실측 #FF6501(왼 여백 (34,1310)~(46,1432)) |
+| colors | `col.grad.cardPrivLife.bottom` | `#FFC61E` | #FFC61E | 같은 카드 «아래» 색 — 주인 지정 #FFC61E(T345 · 빨강 → 노랑 · 어두운 위 → 밝은 아래 그대로) · 옛 실측 #FFB833(그림 쪽 몸통 (430,1315)~(466,1425)) |
 | colors | `col.grad.bgLobby.top` | `#3C6833` | #3C6833 | 로비 배경 «위» 색 — 01_lobby.jpg (40,600)~(120,700) 실측(배경만 위가 밝고 아래가 어둡다) |
 | colors | `col.grad.bgLobby.bottom` | `#315529` | #315529 | 로비 배경 «아래» 색 — 01_lobby.jpg (40,1300)~(120,1400) 실측 |
 | colors | `col.grad.btnBlue.top` | `#188AFA` | #188AFA | 파란(광고) 버튼 «위» — 09_shop_1.jpg (45,225)~(190,275) 실측 |
@@ -670,12 +670,12 @@
 | colors | `col.grad.btnOrange.bottom` | `#F09600` | #F09600 | 주 버튼(주황) «아래» — 같은 값에서 어둡게(레퍼런스는 사실상 단색) |
 | colors | `col.grad.panelDark.top` | `#2C2829` | #2C2829 | 팝업 패널 «위» — 07_gear_detail.jpg (70,600)~(640,960) 실측(거의 단색) |
 | colors | `col.grad.panelDark.bottom` | `#201E1F` | #201E1F | 팝업 패널 «아래» — 같은 실측 |
-| colors | `col.grad.passFree.top` | `#5BC8F5` | #5BC8F5 | 패스 무료 열 **왼쪽** 색 — 주인 지정 «하늘색 → 파란색»(2026-09-10 · T344 · 열은 이제 가로 그라데이션 · 옛 실측 #1F44AE) |
-| colors | `col.grad.passFree.bottom` | `#1E63D6` | #1E63D6 | 같은 열 **오른쪽** 색(T344 · 옛 #286AC0) |
-| colors | `col.grad.passPaid1.top` | `#FF3B30` | #FF3B30 | 패스 유료 1 열 **왼쪽** 색 — 주인 지정 «빨강 → 주황»(T344 · 옛 #DF7708) |
-| colors | `col.grad.passPaid1.bottom` | `#FF8612` | #FF8612 | 같은 열 **오른쪽** 색(T344 · 옛 #E99A0A) |
-| colors | `col.grad.passPaid2.top` | `#8B2FE0` | #8B2FE0 | 패스 유료 2 열 **왼쪽** 색 — 주인 지정 «보라 → 핑크»(T344 · 옛 #6D04A6) |
-| colors | `col.grad.passPaid2.bottom` | `#F45FB0` | #F45FB0 | 같은 열 **오른쪽** 색(T344 · 옛 #930DBC) |
+| colors | `col.grad.passFree.top` | `#5BC8F5` | #5BC8F5 |  |
+| colors | `col.grad.passFree.bottom` | `#1E63D6` | #1E63D6 |  |
+| colors | `col.grad.passPaid1.top` | `#FF3B30` | #FF3B30 |  |
+| colors | `col.grad.passPaid1.bottom` | `#FF8612` | #FF8612 |  |
+| colors | `col.grad.passPaid2.top` | `#8B2FE0` | #8B2FE0 |  |
+| colors | `col.grad.passPaid2.bottom` | `#F45FB0` | #F45FB0 |  |
 | colors | `col.passFreeDim` | `#0D233B` | #0D233B |  |
 | colors | `col.passPaid1Dim` | `#473203` | #473203 |  |
 | colors | `col.passPaid2Dim` | `#30053B` | #30053B |  |
