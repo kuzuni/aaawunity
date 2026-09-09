@@ -145,6 +145,99 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
+        /// <summary>
+        /// T306 — <b>켜져 있는 버튼 옷</b>(주황·회색 두 벌 가운데). 이름은 «어느 것을 볼까» 의 손잡이일 뿐이고,
+        /// 재는 것은 <see cref="SkinInk"/> 가 주는 <b>조각이 들고 온 색</b>이다(이름으로 판정하면 내가 붙인 이름을 내가 다시 읽는 거울이 된다 · 결정 906).
+        /// </summary>
+        static Transform LiveSkin(Transform page, string name)
+        {
+            var warm = Find(page, name); var cold = Find(page, name + "#Gray");
+            if (warm != null && warm.gameObject.activeInHierarchy) return warm;
+            if (cold != null && cold.gameObject.activeInHierarchy) return cold;
+            return null;
+        }
+        /// <summary>
+        /// 버튼이 실제로 입고 있는 <b>잉크</b> — 조각(프리팹)이 제 배경 그림에 박아 둔 색이다.
+        /// <para>
+        /// ⚠ <b>스프라이트 이름으로 재면 안 된다</b> — 이 조각들의 <c>m_Sprite</c> 는 레포에 없는 guid 를 가리켜 런타임에 null 이고
+        /// (Layer Lab 원본 텍스처가 안 들어와 있다), 눈에 보이는 것은 조각이 박아 둔 <c>m_Color</c> 다. 즉 «그림 이름» 으로 재는 자는
+        /// 두 옷 다 빈 글자를 보고 <b>조용히 통과</b>한다. 여기서 읽는 색은 <b>내 코드가 쓰는 값이 아니라</b> 조각이 들고 온 값이라 거울이 아니다(결정 906).
+        /// </para>
+        /// </summary>
+        static Color SkinInk(Transform t)
+        {
+            if (t == null) return Color.clear;
+            var g = UiKit.PressTarget(t, t.GetComponent<Image>());
+            return g != null ? g.color : Color.clear;
+        }
+        static bool SameInk(Color a, Color b) =>
+            Mathf.Abs(a.r - b.r) < 0.01f && Mathf.Abs(a.g - b.g) < 0.01f && Mathf.Abs(a.b - b.b) < 0.01f;
+
+        /// <summary>
+        /// T306(주인 2026-09-09 09:1X «구매 전 주황 · 받기 전 주황 · 받은 후 못 받는 상태 회색 · 전체 받기는 받을 게 있을 때만 주황») —
+        /// <b>버튼 옷이 «지금 할 것이 있는가» 를 따라간다.</b>
+        /// <para>
+        /// 색 이름(#RRGGBB)도, 조각 키도 안 박는다. 재는 것은 <b>관계</b> 셋이다 —
+        /// ⓐ «구매 전» 과 «받기 전» 이 <b>같은 옷</b>이고 ⓑ «받은 뒤» 는 <b>다른 옷</b>이며 ⓒ 그 다른 옷이 «받을 것이 없는 전체 받기» 와 <b>같은 옷</b>이다.
+        /// 조각을 갈아 끼우거나 주황이 다른 주황이 되어도 이 셋은 그대로 서고, 규칙이 끊기면 셋 다 무너진다.
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ButtonSkinFollowsWhetherThereIsAnythingToDo()
+        {
+            yield return Boot();
+            var D = _app.Data; var S = _app.Save; var PD = D.Privilege;
+            Assert.IsNotNull(PD, "privilege.json");
+            string today = SaveStore.Today();
+
+            _app.ShowScreen("privilege");
+            yield return Frames(2);
+            var page = _app.Current.Root;
+
+            // ── ⓐ 아직 아무것도 안 한 화면: 공짜 카드는 «받기 전», 산 적 없는 카드는 «구매 전» — 주인 말로 둘 다 주황이다.
+            Assert.IsFalse(Privilege.Owned(S, PD.Of("lifetime")), "«평생 다이아» 는 아직 안 샀다");
+            Assert.IsTrue(Privilege.Can(S, PD, PD.Of("dailyGift"), today), "공짜 카드의 오늘 몫이 남아 있다");
+            var warm = SkinInk(LiveSkin(page, "CardBtn:4"));   // 구매 전
+            Assert.Greater(warm.a, 0.01f, "«구매 전» 카드에 켜져 있는(= 보이는) 버튼 옷이 있어야 한다");
+            // 두 벌이 정말 «다른 옷» 인가 — 같은 옷을 두 벌 세워 두면 아래 단언이 전부 조용히 통과한다.
+            Assert.IsFalse(SameInk(warm, SkinInk(Find(page, "CardBtn:4#Gray"))),
+                "겹쳐 둔 두 벌은 서로 다른 색이어야 한다(같으면 이 자가 아무것도 못 잰다)");
+            Assert.IsTrue(SameInk(warm, SkinInk(LiveSkin(page, "CardBtn:1"))),
+                "주인 규칙 — «구매 전» 과 «받기 전» 은 같은 옷(주황)이다");
+
+            // ── ⓑ 공짜 카드를 받으면 그 카드는 «오늘은 더 할 것이 없다» → 옷이 바뀐다.
+            Assert.IsTrue(ClickNamed(page, "CardBtn:1"), "«받기» 가 눌린다");
+            yield return CloseReward();
+            var cold = SkinInk(LiveSkin(page, "CardBtn:1"));
+            Assert.IsFalse(SameInk(warm, cold),
+                "주인 규칙 — 받은 뒤(이제 못 받는 상태)의 옷은 앞의 주황과 달라야 한다(회색)");
+
+            // ── ⓒ 사고 그날치까지 받은 카드도 같은 «회색» 으로 간다 — 갈래가 달라도 도착하는 옷은 하나다.
+            Assert.IsTrue(ClickNamed(page, "CardBtn:4"), "«구매» 가 눌린다");
+            yield return CloseReward();
+            Assert.IsTrue(SameInk(warm, SkinInk(LiveSkin(page, "CardBtn:4"))),
+                "산 그날 아직 그날치가 남았으면 여전히 주황(«받기 전»)이다");
+            Assert.IsTrue(ClickNamed(page, "CardBtn:4"), "산 그날의 «받기» 가 눌린다");
+            yield return CloseReward();
+            Assert.IsTrue(SameInk(cold, SkinInk(LiveSkin(page, "CardBtn:4"))),
+                "다 받은 카드는 공짜 카드와 같은 회색으로 간다");
+
+            // ── ⓓ «전체 받기» — 지금 남은 것은 안 산 카드 둘뿐이라 받을 것이 없다 → 회색.
+            Assert.IsFalse(Privilege.AnyClaimable(S, PD, today), "받을 것이 없는 상태를 만든다");
+            Assert.IsTrue(SameInk(cold, SkinInk(LiveSkin(page, "ClaimAllBtn"))),
+                "주인 규칙 — 받을 것이 없으면 «전체 받기» 는 회색");
+
+            // ── ⓔ 카드 하나를 더 사서 받을 것을 만들면 «전체 받기» 가 주황으로 돌아온다(한 방향만 재면 늘 회색인 코드도 통과한다).
+            Assert.IsTrue(Privilege.Buy(S, PD.Of("monthly"), today), "월간 카드를 산다");
+            _app.Current.Refresh();
+            yield return Frames(1);
+            Assert.IsTrue(Privilege.AnyClaimable(S, PD, today), "이제 받을 것이 있다");
+            Assert.IsTrue(SameInk(warm, SkinInk(LiveSkin(page, "ClaimAllBtn"))),
+                "주인 규칙 — 받을 것이 있으면 «전체 받기» 는 주황");
+
+            yield return Shutdown();
+        }
+
         [UnityTest]
         public IEnumerator ClaimAllSweepsEveryCardThatIsDueInOnepress()
         {

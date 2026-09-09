@@ -1310,9 +1310,59 @@ namespace KkomaKnight.Game
         static readonly string[] CardKeys = { "dailyGift", "adRemove", "monthly", "lifetime" };
 
         // T264 2단계 — Refresh 가 글자·상태만 갈아 끼우려고 붙잡아 두는 것들(ChapterChestScreen 과 같은 문법).
-        readonly RectTransform[] _cardBtn = new RectTransform[4];
+        readonly SkinPair[] _cardBtn = new SkinPair[4];
         readonly TMP_Text[] _cardQty = new TMP_Text[4];
         readonly TMP_Text[] _cardState = new TMP_Text[4];
+        SkinPair _claimAll;
+
+        /// <summary>
+        /// T306 — <b>주황·회색 두 벌을 같은 자리에 겹쳐 두고 한 벌만 켜는 버튼</b>(주인 2026-09-09 09:1X 특권 버튼 색 규칙).
+        /// <para>
+        /// <b>왜 옷을 «갈아입히지» 않나</b> — 버튼 스킨은 그림 한 장이 아니라 <c>ButtonGradient</c> 덧칠까지 딸려 오므로
+        /// 런타임에 sprite 만 바꾸면 색이 두 곳에서 갈리고, 되돌릴 때 한쪽만 남는다(T289 가 상점 열쇠 옷에서 실측한 자리).
+        /// 겹쳐 두면 두 벌이 각자 제 옷·제 덧칠을 갖고, <see cref="Set"/> 은 «어느 쪽을 켜나» 만 고른다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>글자·눌림은 두 벌을 늘 같게 둔다</b> — 꺼진 쪽도 같이 맞춰야 «이름으로 버튼을 집는» 자·하니스가
+        /// 어느 벌을 집든 같은 답을 본다(꺼진 벌만 낡으면 그 어긋남은 화면에 안 보여 아무도 못 찾는다).
+        /// </para>
+        /// <para>
+        /// ⚑ <b>이 자리에 두는 까닭</b>: 공용으로 올릴 곳(<c>UiKit</c>)이 지금 남의 살아 있는 lock(T320) 안이다.
+        /// 두 번째 쓸 곳(T305 출석 등)이 생기는 회차에 <c>UiKit.TwoSkinButton</c> 으로 올리면 된다 — 지금 올리면 남의 절과 부딪힌다.
+        /// </para>
+        /// </summary>
+        sealed class SkinPair
+        {
+            public readonly RectTransform Warm;   // 주황 — «할 것이 있다»
+            public readonly RectTransform Cold;   // 회색 — «할 것이 없다»
+            public SkinPair(RectTransform warm, RectTransform cold) { Warm = warm; Cold = cold; }
+
+            /// <summary>규칙이 준 «주황인가» 로 한 벌만 켠다. 글자·눌림은 두 벌 다 같은 값으로 둔다.</summary>
+            public void Set(bool warm, string label, bool interactable)
+            {
+                Dress(Warm, label, interactable); Dress(Cold, label, interactable);
+                if (Warm != null) Warm.gameObject.SetActive(warm);
+                if (Cold != null) Cold.gameObject.SetActive(!warm);
+            }
+            static void Dress(RectTransform rt, string label, bool interactable)
+            {
+                if (rt == null) return;
+                var t = UiKit.ButtonText(rt); if (t != null) t.text = TextGlyphs.Safe(label);
+                var b = rt.GetComponent<UnityEngine.UI.Button>(); if (b != null) b.interactable = interactable;
+            }
+        }
+
+        /// <summary>꺼져 있는 회색 벌의 오브젝트 이름 — 자·하니스가 «두 벌 중 어느 쪽이 켜져 있나» 를 물을 때 쓰는 손잡이다.</summary>
+        public static string GrayName(string name) => name + "#Gray";
+
+        /// <summary>두 벌을 같은 자리에 세운다 — 태어날 때는 주황만 보이고, 고르는 것은 <see cref="Refresh"/> 하나뿐이다.</summary>
+        SkinPair TwoSkin(Transform parent, Layout.R rect, string label, System.Action onClick, string name)
+        {
+            var warm = UiKit.Button(parent, "ui.btnOrange", label, onClick, rect); warm.name = name;
+            var cold = UiKit.Button(parent, "ui.btnGray", label, onClick, rect); cold.name = GrayName(name);
+            cold.gameObject.SetActive(false);
+            return new SkinPair(warm, cold);
+        }
 
         PrivilegeData PD => App != null && App.Data != null ? App.Data.Privilege : null;
         PrivilegeData.Card CardOf(int i) { var d = PD; return d == null || i < 0 || i >= CardKeys.Length ? null : d.Of(CardKeys[i]); }
@@ -1440,15 +1490,19 @@ namespace KkomaKnight.Game
             var reward1 = LobbyPopups.Cell(content, C, Layout.PrCard1Reward, "plum", "ui.gemRed", c1 != null ? UiKit.FmtQty(DailyGem(c1)) : null);
             _cardQty[0] = QtyOf(reward1);
             PlanRewardLight(reward1);
-            var btn1 = UiKit.Button(content, "ui.btnGray", "받기", () => TapCard(0), Layout.PrCard1Btn.Within(C)); btn1.name = "CardBtn:1";
-            _cardBtn[0] = btn1;
+            // T306 — 옷 두 벌(주황·회색)을 겹쳐 둔다. 어느 쪽을 켜는지는 Refresh 가 규칙으로 정한다(여기서 색을 정하지 않는다).
+            var skin1 = TwoSkin(content, Layout.PrCard1Btn.Within(C), "받기", () => TapCard(0), "CardBtn:1");
+            var btn1 = skin1.Warm;
+            _cardBtn[0] = skin1;
             // 카드 2~4 = 긴 카드
             RectTransform card2 = null, cardTitle2 = null, desc2 = null, pic2 = null, reward2 = null, btn2 = null, card3 = null, card4 = null;
-            (Layout.R rect, Color color, string icon, string name, string pic, string[] lines, string btnKey, string btnLabel, string grad)[] longs =
+            // T306 — 옛 `btnKey`(카드마다 박아 둔 버튼 옷)를 뺐다: 색은 이제 «상태» 가 정하므로 여기 적을 것이 없다.
+            // 남긴 `btnLabel` 은 표가 없을 때(껍데기)의 첫 글자일 뿐이고, 표가 있으면 Refresh 가 곧바로 갈아 끼운다.
+            (Layout.R rect, Color color, string icon, string name, string pic, string[] lines, string btnLabel, string grad)[] longs =
             {
-                (Layout.PrCard2, Palette.Blue, "ui.ad", "광고 제거 카드", "ui.ad", new[] { "영구 광고 제거 특권", "구매 시 💎 지급" }, "ui.btnGray", "받기", GradCard2),
-                (Layout.PrCard3, Palette.Plum, "ui.iconCalendar", "월간 카드", "ui.iconMedal", new[] { "최대 탐험 시간 24시간", "던전 티켓 +2 / 일", "최대 배속 +1", "구매 시 💎 지급" }, "ui.btnOrange", "구매", GradCard3),
-                (Layout.PrCard4, Palette.Orange, "ui.gemRed", "평생 다이아", "ui.trophy", new[] { "매일 다이아 대량 수령", "구매 시 💎 지급" }, "ui.btnOrange", "구매", GradCard4),
+                (Layout.PrCard2, Palette.Blue, "ui.ad", "광고 제거 카드", "ui.ad", new[] { "영구 광고 제거 특권", "구매 시 💎 지급" }, "받기", GradCard2),
+                (Layout.PrCard3, Palette.Plum, "ui.iconCalendar", "월간 카드", "ui.iconMedal", new[] { "최대 탐험 시간 24시간", "던전 티켓 +2 / 일", "최대 배속 +1", "구매 시 💎 지급" }, "구매", GradCard3),
+                (Layout.PrCard4, Palette.Orange, "ui.gemRed", "평생 다이아", "ui.trophy", new[] { "매일 다이아 대량 수령", "구매 시 💎 지급" }, "구매", GradCard4),
             };
             for (int k = 0; k < longs.Length; k++)
             {
@@ -1480,8 +1534,10 @@ namespace KkomaKnight.Game
                 // T72 ② 카드 그림 뒤 빛살(주인 «특별 상품 … 아이콘 뒤에 Effect_Light 천천히 회전») — 그림은 카드의 «형제» 라 빛살은 카드 안(칸 밖으로 안 나가게 RectMask2D)에 걸고 그림은 그 위에 그대로 남는다
                 _lightPlan.Add((card.rectTransform, pic.rectTransform, UiKit.LightKey));
                 int ki = k + 1;   // 람다가 붙잡는 것은 «지금 값» 이어야 한다(루프 변수를 그대로 넘기면 넷이 다 마지막 카드를 누른다)
-                var btn = UiKit.Button(content, L.btnKey, L.btnLabel, () => TapCard(ki), Sh(Layout.PrCardBtn, 0, dy).Within(C)); btn.name = "CardBtn:" + (k + 2);
-                _cardBtn[ki] = btn;
+                // T306 — 표의 `btnKey`(고정 색)를 안 쓴다: 색은 카드마다 상태가 정한다(주황/회색 두 벌 · Refresh 가 고른다).
+                var skin = TwoSkin(content, Sh(Layout.PrCardBtn, 0, dy).Within(C), L.btnLabel, () => TapCard(ki), "CardBtn:" + (k + 2));
+                var btn = skin.Warm;
+                _cardBtn[ki] = skin;
                 _prBordered.Add(card.rectTransform); _prBordered.Add(desc.rectTransform);
                 if (k == 0) { card2 = card.rectTransform; cardTitle2 = head.rectTransform; desc2 = desc.rectTransform; pic2 = pic.rectTransform; reward2 = reward; btn2 = btn; }
                 else if (k == 1) card3 = card.rectTransform; else card4 = card.rectTransform;
@@ -1491,13 +1547,20 @@ namespace KkomaKnight.Game
             var foot = UiKit.Panel(Root, "FootBar", "fr.rect", Palette.A(Palette.Dim, 0.9f)); UiKit.Pct(foot.rectTransform, Layout.PrFootBar);
             var back = UiKit.Button(Root, "ui.btnGray", "", () => App.ShowScreen("lobby"), Layout.PrBack); back.name = "BackBtn";
             var bi = UiKit.Icon(back, "Icon", "pi.arrow_left", Palette.Ink); UiKit.Pct(bi.rectTransform, 30, 18, 40, 64);
-            var claim = UiKit.Button(Root, "ui.btnGray", "전체 받기", TapClaimAll, Layout.PrClaimAll); claim.name = "ClaimAllBtn";
+            // T306 — «전체 받기» 도 두 벌이다(받을 것이 있으면 주황 · 없으면 회색).
+            // ⚑ 다만 «회색이어도 눌린다» 는 그대로 둔다 — 누르면 까닭 한 줄(App.Toast)이 뜨고, 그 말은 주인이 지우라고 한 적이 없다.
+            //    색만 바꾸라는 지시였으므로 색만 바꾼다(카드 버튼의 잠금은 옛날부터 있던 것이라 그대로).
+            _claimAll = TwoSkin(Root, Layout.PrClaimAll, "전체 받기", TapClaimAll, "ClaimAllBtn");
+            var claim = _claimAll.Warm;
             // 비평 이름표(표 ⑲)
             UiKit.Tag(_top.Root, "상단 바"); UiKit.Tag(title, "제목 줄"); UiKit.Tag(line.transform, "제목 밑줄"); UiKit.Tag(sub.transform, "부제");
             UiKit.Tag(card1.transform, "특권 카드 1"); UiKit.Tag(reward1, "카드 1 보상 칸"); UiKit.Tag(btn1, "카드 1 버튼");
             UiKit.Tag(card2, "특권 카드 2"); UiKit.Tag(cardTitle2, "카드 제목 띠(2)"); UiKit.Tag(desc2, "카드 설명 상자(2)"); UiKit.Tag(pic2, "카드 그림(2)"); UiKit.Tag(reward2, "카드 보상 칸(2)"); UiKit.Tag(btn2, "카드 버튼(2)");
             UiKit.Tag(card3, "특권 카드 3"); UiKit.Tag(card4, "특권 카드 4 (참고·컨테이너)");
             UiKit.Tag(foot.transform, "바닥 바"); UiKit.Tag(back, "뒤로 버튼"); UiKit.Tag(claim, "전체 받기 버튼");
+            // T306 — 겹쳐 둔 회색 벌에도 **같은 이름표**를 단다. 이름표는 «켜져 있는 것» 만 모이므로(UiTag 수집은 active 만)
+            // 표에 잡히는 것은 늘 하나지만, 회색이 켜진 화면에서 이름표가 통째로 사라지면 §5 하니스가 그 자리를 «빈 칸» 으로 적는다.
+            UiKit.Tag(_cardBtn[0].Cold, "카드 1 버튼"); UiKit.Tag(_cardBtn[1].Cold, "카드 버튼(2)"); UiKit.Tag(_claimAll.Cold, "전체 받기 버튼");
             ApplyLights();
             // T69-lobbypopups(11) — 카드 4장과 설명 상자에 «검은 아웃라인»(레퍼런스 11 도 카드마다·설명 상자마다 외곽선이다).
             // 질감(무늬·그라데이션)과 빛살을 다 건 «뒤» 에 걸어야 링이 그 층들 위에 남는다(빛살은 ApplyLights 가 카드 안에 끼워 넣는다 · 결정 224).
@@ -1588,12 +1651,16 @@ namespace KkomaKnight.Game
                 if (_cardQty[i] != null) _cardQty[i].text = UiKit.FmtQty(DailyGem(c));
                 if (_cardState[i] != null)
                     _cardState[i].text = !owned ? "비활성" : expired ? "기간 만료" : can ? "오늘 받기 가능" : "오늘 받기 완료";
-                var b = _cardBtn[i]; if (b == null) continue;
-                var bt = UiKit.ButtonText(b); if (bt != null) bt.text = TextGlyphs.Safe(!owned || expired ? "구매" : "받기");
+                var s = _cardBtn[i]; if (s == null) continue;
+                // T306 — 주인 규칙: «구매 전 주황 · 받기 전 주황 · 받은 뒤/못 받는 상태 회색».
+                // 셋을 하나로 적으면 «지금 할 것이 있는가» 다 — 그것이 옛날부터 있던 «눌리는가» 와 정확히 같은 값이라
+                // 색과 잠금을 **한 값으로** 둔다(둘로 적으면 언젠가 «회색인데 눌리는» 칸이 생긴다).
                 // 오늘 몫을 이미 받은 «가진 카드» 만 잠근다 — 안 샀거나 기간이 끝난 카드는 «구매» 로 눌려야 한다.
-                var btn = b.GetComponent<UnityEngine.UI.Button>();
-                if (btn != null) btn.interactable = !owned || expired || can;
+                bool warm = !owned || expired || can;
+                s.Set(warm, !owned || expired ? "구매" : "받기", warm);
             }
+            // T306 — «전체 받기» = 받을 것이 있으면 주황, 없으면 회색(누르는 것은 늘 되고, 없으면 까닭을 말한다).
+            if (_claimAll != null) _claimAll.Set(Privilege.AnyClaimable(App.Save, d, today), "전체 받기", true);
         }
     }
 }
