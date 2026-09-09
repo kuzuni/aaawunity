@@ -798,5 +798,143 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(Playthrough.TryFind("P11", out var last) && last.Name == "설정", "번호로 단계를 찾는다");
             Assert.IsFalse(Playthrough.TryFind("P12", out _), "없는 번호는 못 찾는다고 말한다");
         }
+
+        // ─────────────────────────────────────────────────────────────────────────────
+        // P3 장비 — 장착 · 슬롯 강화(레시피 있음/없음) · 해제 · 대장간에서 합성 3 → 1.
+        // ─────────────────────────────────────────────────────────────────────────────
+        /// <summary>
+        /// P3 장비(T300 1항) — 노는 것: 하단 탭 «장비» → 인벤 칸 → 세부 팝업 «장착» → 슬롯 → «슬롯 강화» →
+        /// 레시피를 비우고 <b>잠긴 채로 한 번 더</b> → «해제» → «대장간» → 재료 셋을 골라 «합성 (3/3)» → «뒤로».
+        /// 재는 것: <b>도달 · 배선 · 빨간 줄 0</b>.
+        /// <para>
+        /// ⚠ <b>어느 슬롯이 어느 부위인지로 자를 굳히지 않는다</b> — 여섯 칸의 차례는 표(<c>D.Gear.Parts</c>)가 정하고
+        /// 주인 지시로 바뀔 수 있다. 그래서 «부위 이름» 이 아니라 <b>«어딘가 한 칸 올랐다»</b>(슬롯 Lv 합)로 잰다.
+        /// 봇이 잡으려는 것은 «그 부위가 맞나» 가 아니라 «누른 것이 거래에 닿았나» 다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>골드는 «안 늘었다» 까지만 잰다</b> — 얼마가 드는지는 표(<c>D.Gear.SlotCost</c>)의 몫이고
+        /// T325(밸런스 개편)가 그 수를 바꾸는 중이다. 값을 여기서 재면 그날 봇이 먼저 운다(3항 ⓐ · 결정 922).
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator P3_장비를_한_바퀴_놀아도_죽지_않는다()
+        {
+            yield return Boot();
+            var D = _app.Data; var S = _app.Save;
+
+            // 조건은 이 단계가 만든다(1항) — 인벤을 비우고 «같은 종류 넷»(셋은 합성거리 · 하나는 입어 볼 것) + 골드·레시피
+            S.Inv.Clear(); S.Eq.Clear();
+            var t0 = D.Gear.AllTypes[0];
+            for (int i = 0; i < 4; i++) S.Inv.Add(S.NewGear(t0.Part, t0.Type, 0, 0));
+            S.Gold += 1e9;
+            foreach (var pt in D.Gear.Parts) Recipes.Add(S, pt, 999);
+            _app.Persist();
+
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            Tap(_app.Current.Root, NavBar.TabName("gear")); yield return Frames(3);
+            Assert.AreEqual("gear", _app.Current.Name, "도달 — 하단 탭 «장비»");
+            Assert.IsNotNull(UiKit.Find(_app.Current.Root, "Group_Slot"), "슬롯 묶음(이름 계약)");
+            Assert.IsNotNull(UiKit.Find(_app.Current.Root, "Content"), "인벤 격자(이름 계약)");
+            Assert.IsNotNull(UiKit.Find(_app.Current.Root, "ForgeBtn"), "«대장간» 버튼(이름 계약)");
+            _log.AssertNoRed("P3 장비 도달");
+
+            // ⓐ 인벤 칸 → 세부 팝업 → «장착»
+            var content = UiKit.Find(_app.Current.Root, "Content");
+            Assert.Greater(content.childCount, 0, "인벤에 고를 것이 있다");
+            var cellBtn = content.GetChild(0).GetComponentInChildren<Button>();
+            Assert.IsNotNull(cellBtn, "인벤 칸은 눌리는 것이어야 한다");
+            cellBtn.onClick.Invoke(); yield return Frames(2);
+            yield return UntilOpen(5f, "장비 세부 팝업");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Options"), "세부 팝업의 옵션 줄");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "Stats"), "세부 팝업의 스탯 박스");
+            Tap(_app.Overlay.Root, "BtnL"); yield return Frames(3);
+            Assert.IsFalse(_app.Overlay.IsOpen, "«장착» 을 누르면 팝업이 닫힌다");
+            Assert.AreEqual(1, S.Eq.Count, "장착이 실제로 세이브에 들어간다 — 여기가 끊기면 팝업은 그대로 열리고 닫힌다");
+            _log.AssertNoRed("P3 장착");
+
+            // ⓑ 슬롯 → «슬롯 강화» (빈 슬롯이든 장착 슬롯이든 그 버튼은 같은 거래를 부른다 · GearSystem.SlotUp)
+            var group = UiKit.Find(_app.Current.Root, "Group_Slot");
+            Assert.AreEqual(6, group.childCount, "슬롯 여섯");
+            var slotBtn = group.GetChild(0).GetComponent<Button>();
+            Assert.IsNotNull(slotBtn, "슬롯은 눌리는 것이어야 한다");
+            slotBtn.onClick.Invoke(); yield return Frames(2);
+            yield return UntilOpen(5f, "슬롯 팝업");
+            int lvSum0 = SlotLvSum(D, S); double gold0 = S.Gold;
+            var up = UiKit.Find(_app.Overlay.Root, "BtnR"); Assert.IsNotNull(up, "«슬롯 강화» 버튼");
+            up.GetComponent<Button>().onClick.Invoke(); yield return Frames(3);
+            Assert.AreEqual(lvSum0 + 1, SlotLvSum(D, S), "슬롯이 어딘가 한 칸 오른다");
+            Assert.LessOrEqual(S.Gold, gold0, "골드는 늘지 않는다(드는 값은 표의 몫이라 얼마인지는 안 잰다)");
+            _log.AssertNoRed("P3 슬롯 강화");
+
+            // ⓒ 레시피를 비우고 «잠긴 버튼» 을 한 번 더 — 회색으로 «보이기만» 하는 잠금은 눌러 봐야 걸린다(T272 꼴)
+            //    ⚠ 표가 레시피를 안 쓰는 판(PerLevel 0)에서는 이 갈래가 통째로 없는 것과 같으므로 건너뛴다.
+            if (Recipes.Need(D.Recipe, S.SlotLv(t0.Part) + 1) > 0)
+            {
+                S.Recipes.Clear(); _app.Persist();
+                var up2 = UiKit.Find(_app.Overlay.Root, "BtnR");
+                if (up2 != null)
+                {
+                    int before = SlotLvSum(D, S);
+                    up2.GetComponent<Button>().onClick.Invoke(); yield return Frames(3);
+                    Assert.AreEqual(before, SlotLvSum(D, S), "레시피가 모자라면 눌러도 아무것도 안 바뀐다(거래는 GearSystem.SlotUp 한 곳이다)");
+                    _log.AssertNoRed("P3 레시피 부족");
+                }
+                foreach (var pt in D.Gear.Parts) Recipes.Add(S, pt, 999);
+                _app.Persist();
+            }
+            if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(2); }
+
+            // ⓓ 해제 — 여섯 칸 가운데 «장착된» 하나를 찾아 누른다(어느 칸인지는 표가 정한다)
+            bool unequipped = false;
+            for (int i = 0; i < 6 && !unequipped; i++)
+            {
+                var g2 = UiKit.Find(_app.Current.Root, "Group_Slot");
+                if (g2 == null || i >= g2.childCount) break;
+                var b = g2.GetChild(i).GetComponent<Button>(); if (b == null) continue;
+                b.onClick.Invoke(); yield return Frames(2);
+                if (!_app.Overlay.IsOpen) continue;
+                UiKit.CompleteAllTweens(); yield return Frames(1);
+                if (Click(_app.Overlay.Root, s => s == "해제")) { yield return Frames(3); unequipped = true; }
+                else { _app.Overlay.Close(); yield return Frames(2); }
+            }
+            Assert.IsTrue(unequipped, "장착한 것을 여섯 슬롯 어딘가에서 «해제» 할 수 있다");
+            Assert.AreEqual(0, S.Eq.Count, "해제가 세이브에 들어간다");
+            _log.AssertNoRed("P3 해제");
+
+            // ⓔ 대장간 — 재료 셋을 «골라» 합성한다(«자동» 은 한 번에 다 태워서 «3 → 1» 을 안 논다)
+            if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(2); }
+            Assert.AreEqual("gear", _app.Current.Name, "해제 뒤에도 장비 화면");
+            Tap(_app.Current.Root, "ForgeBtn"); yield return Frames(3);
+            Assert.AreEqual("forge", _app.Current.Name, "도달 — «대장간»");
+            Assert.IsNotNull(UiKit.Find(_app.Current.Root, "Content"), "대장간 인벤(이름 계약)");
+            _log.AssertNoRed("P3 대장간 도달");
+
+            int fuses0 = S.Fuses, inv0 = S.Inv.Count;
+            for (int i = 0; i < 3; i++)
+            {
+                var c = UiKit.Find(_app.Current.Root, "Content");
+                Assert.IsNotNull(c, "대장간 인벤");
+                Assert.Greater(c.childCount, i, "고를 재료가 남아 있다");
+                var b = c.GetChild(i).GetComponentInChildren<Button>();
+                Assert.IsNotNull(b, "대장간 칸은 눌리는 것이어야 한다");
+                b.onClick.Invoke(); yield return Frames(2);   // 고를 때마다 격자가 다시 그려진다(선택 표시)
+            }
+            TapLive(_app.Current.Root, "FuseBtnOn"); yield return Frames(3);
+            Assert.AreEqual(fuses0 + 1, S.Fuses, "합성이 실제로 한 번 일어난다");
+            Assert.AreEqual(inv0 - 2, S.Inv.Count, "셋이 하나가 된다(−3 +1)");
+            _log.AssertNoRed("P3 합성");
+
+            Tap(_app.Current.Root, "BackBtn"); yield return Frames(3);
+            Assert.AreEqual("gear", _app.Current.Name, "대장간에서 장비로 돌아온다");
+            _log.AssertNoRed("P3 장비 한 바퀴");
+
+            yield return Shutdown();
+        }
+
+        /// <summary>슬롯 강화 «어딘가 한 칸» 을 재는 자 — 부위 이름으로 굳히지 않으려고 합으로 본다.</summary>
+        static int SlotLvSum(GameData D, SaveData S)
+        {
+            int n = 0; foreach (var pt in D.Gear.Parts) n += S.SlotLv(pt); return n;
+        }
     }
 }
