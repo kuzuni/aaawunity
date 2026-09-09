@@ -2933,6 +2933,19 @@ Caught fatal signal - signo:6 (SIGABRT) · Unexpected exit code 134
 >
 > **ⓓ 조각을 세우는 규칙도 한 곳으로** — `EventsScreen` 이 갖고 있던 `Dress(...)` 를 `Profile.Frame(cell, frameKey, iconKey)` 로 올렸다. 초상 칸을 세우는 파일이 넷(`EventsScreen`·`BattleScreen`·`ArenaResult`·`Screens`)이라, 규칙을 글로만 적어 두면 반드시 한 곳이 뒤처진다.
 >
+> **▸ ⓐ 의 마지막 시체 — «빨간 줄 없이 사라진 연출» (2026-09-09 05:3X · sess-2005-9317 · 워커 A · 결정 818 · lock 쥔 채)**
+>
+> 워커 B 가 런 645 의 «상관없어 보이는» 실패 하나(`RewardOrbTests` 의 꼬리)를 **이 절 것으로 짚어 줬다**(결정 816). 원인이 정확했다:
+> `RewardOrbs.TrailMaterial()` 은 `Shader.Find` 를 피하려고 **씬에 있는 아무 `SpriteRenderer` 의 머티리얼을 빌려** 쓰고 **못 찾으면 조용히 꼬리 없이** 갔는데,
+> ⓐ 가 로비 아바타의 `HeroView` 를 걷자 **로비의 활성 `SpriteRenderer` 가 0** 이 됐다.
+>
+> **고침은 «빌릴 것이 없을 때» 를 덮는 것이다** — 빈 `GameObject` 에 `SpriteRenderer` 를 하나 붙이면 유니티가 기본 머티리얼을 넣어 준다. 그 사본만 챙기고 바로 버린다.
+> **이름으로 셰이더를 찾지 않으므로 종전 규칙(§1 · 스트리핑)을 그대로 지킨다.** 곁들여 빌릴 대상에 **꺼져 있는 스프라이트도** 넣었다(머티리얼은 켜짐과 무관하다).
+>
+> ⚑ **배운 것 — «없으면 조용히 넘어간다» 는 갈래는 «없을 리 없다» 는 전제 위에 서 있다.** 그 전제를 깬 것이 내 커밋이었고, 깨진 것을 알려 준 것은
+> 빨간 줄이 아니라 **그 연출을 재던 자 하나**였다. 자가 없었으면 주인이 «꼬리가 없어졌네» 라고 말할 때까지 아무도 몰랐다.
+> 이 절이 ⓐ 로 남긴 시체는 이로써 **다섯**이고(`ProfileTests` 98 · `UiSmokeTests` 둘 · `EventsScreenTests` · `HeroViewTests` · 그리고 이 «코드» 하나), **넷은 자였고 하나는 진짜 기능이었다.**
+>
 > **자**: `PvpHudTests` 에 머리 양쪽(프로필 조각 · 얼굴이 **비어 있지 않다** · 상대 얼굴 = `DummyIcon(3)`) · `ArenaResultTests` 에 34 의 같은 넷 · 옛 물건 칸 0. **확인** = 다음 완주 런의 `PvpHudTests`·`ArenaResultTests`·`ProfileTests`·`EventsScreenTests`·`BorderGateTests` + `screens` **23·24·33 + res_win**.
 
 

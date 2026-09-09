@@ -219,17 +219,46 @@ namespace KkomaKnight.Game
             _worldTrails.Add(go);
         }
 
-        /// <summary>씬의 월드 스프라이트에서 머티리얼을 한 번 빌려 캐시한다(위 설명).</summary>
+        /// <summary>
+        /// 꼬리 머티리얼을 한 번 만들어 캐시한다(위 설명).
+        /// <para>
+        /// ⚠ <b>«씬에서 빌린다» 만으로는 부족하다 — 빌릴 것이 하나도 없는 화면이 실제로 생겼다.</b>
+        /// 이 자리는 <c>Shader.Find("Sprites/Default")</c> 를 피하려고 «씬에 이미 있는 월드 스프라이트의 머티리얼» 을 빌려 썼고,
+        /// <b>못 찾으면 조용히 꼬리 없이</b> 갔다. 그런데 T262 ⓐ 가 로비 아바타의 <see cref="HeroView"/> 를 초상 아이콘으로 갈아 끼우자
+        /// <b>로비의 활성 <see cref="SpriteRenderer"/> 가 0</b> 이 됐고, 로비에서 나는 흡수 구슬의 꼬리가 <b>빨간 줄 하나 없이 사라졌다</b>
+        /// (런 645 의 <c>RewardOrbTests</c> 가 그것을 잡았다 · 워커 B 실측 · 결정 816).
+        /// </para>
+        /// <para>
+        /// 그래서 <b>빌릴 것이 없을 때는 «기본 스프라이트 머티리얼» 을 유니티에게 직접 받는다</b> —
+        /// 빈 <see cref="GameObject"/> 에 <see cref="SpriteRenderer"/> 를 하나 붙이면 유니티가 기본 머티리얼을 넣어 주고, 그 사본만 챙긴 뒤 바로 버린다.
+        /// <b>이름으로 셰이더를 찾지 않으므로</b>(§1 · 스트리핑) 종전 규칙을 그대로 지키면서 «빌릴 것이 없는 화면» 을 덮는다.
+        /// </para>
+        /// 곁들여 <b>꺼져 있는</b> 스프라이트도 빌릴 대상에 넣는다(<see cref="FindObjectsInactive.Include"/>) — 머티리얼은 켜져 있든 아니든 같은 물건이다.
+        /// </summary>
         Material TrailMaterial()
         {
             if (_trailMat != null) return _trailMat;
-            var sr = UnityEngine.Object.FindFirstObjectByType<SpriteRenderer>(FindObjectsInactive.Exclude);
-            if (sr == null || sr.sharedMaterial == null) return null;
-            _sortLayer = sr.sortingLayerID;
-            // 빌린 셰이더를 그대로 쓰되 «그림» 은 흰 텍스처로 바꾼 사본을 하나 만든다 — 안 그러면 꼬리가 그 스프라이트의 그림을 물고 늘어진다.
-            // (스프라이트 셰이더는 텍스처를 SpriteRenderer 가 넣어 주는데 TrailRenderer 는 안 넣어 주므로 머티리얼의 것이 그대로 쓰인다.)
-            _trailMat = new Material(sr.sharedMaterial) { name = "OrbTrailMat" };
-            if (_trailMat.HasProperty(MainTex)) _trailMat.SetTexture(MainTex, Texture2D.whiteTexture);
+            var sr = UnityEngine.Object.FindFirstObjectByType<SpriteRenderer>(FindObjectsInactive.Include);
+            var src = sr != null ? sr.sharedMaterial : null;
+            if (sr != null) _sortLayer = sr.sortingLayerID;
+
+            GameObject probe = null;
+            if (src == null)
+            {
+                probe = new GameObject("~OrbTrailMatProbe") { hideFlags = HideFlags.HideAndDontSave };
+                var psr = probe.AddComponent<SpriteRenderer>();
+                src = psr.sharedMaterial;          // 유니티가 넣어 주는 기본 스프라이트 머티리얼 — Shader.Find 를 안 쓴다
+                _sortLayer = psr.sortingLayerID;
+            }
+
+            if (src != null)
+            {
+                // 빌린 셰이더를 그대로 쓰되 «그림» 은 흰 텍스처로 바꾼 사본을 하나 만든다 — 안 그러면 꼬리가 그 스프라이트의 그림을 물고 늘어진다.
+                // (스프라이트 셰이더는 텍스처를 SpriteRenderer 가 넣어 주는데 TrailRenderer 는 안 넣어 주므로 머티리얼의 것이 그대로 쓰인다.)
+                _trailMat = new Material(src) { name = "OrbTrailMat" };
+                if (_trailMat.HasProperty(MainTex)) _trailMat.SetTexture(MainTex, Texture2D.whiteTexture);
+            }
+            if (probe != null) UnityEngine.Object.Destroy(probe);
             return _trailMat;
         }
         int SortLayer() { return _sortLayer; }
