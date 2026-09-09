@@ -130,11 +130,8 @@ namespace KkomaKnight.Game
                 //   레퍼런스의 «회색 판» 을 흉내 내려면 없는 그림을 지어내야 하고 그것은 §1 이 막는다.
                 var prt = (RectTransform)plate; UiKit.Pct(prt, RPlate);
                 Overlay.FitRibbonText(prt);   // 리본을 표 자리로 옮기면 제목 60 한 줄(84px) 규칙이 풀린다(T75 4항)
-                // T320 ⓑ — 리본을 옮겼으니 그 «뒤 빛» 도 따라와야 한다(공통 팝업이 세울 때는 옛 자리 기준이었다).
-                //   `RibbonGlow` 는 두 번 불러도 조각이 안 늘고 자리만 다시 잡는다.
-                //   ⚠ 먼저 레이아웃을 돌린다 — 옮긴 명판은 늘림 앵커라 `rect` 가 서야 «리본의 실제 크기» 가 읽힌다.
-                Canvas.ForceUpdateCanvases();
-                Overlay.RibbonGlow(b, prt, "ui.title.tangerine");
+                // T320 ⓑ — 명판을 옮겼지만 «뒤 빛» 은 **부를 필요가 없다**: 담개(`RibbonGlowFollow`)가 리본을 따라온다.
+                //   화면마다 «빛도 옮겨라» 를 부르게 하면 부르는 곳이 다시 여러 곳이 되고 하나를 빠뜨리면 그 팝업만 빛이 옛 자리에 남는다.
                 UiKit.Tag(prt, "명판(«확률»)");
             }
 

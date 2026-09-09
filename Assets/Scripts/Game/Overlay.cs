@@ -349,6 +349,32 @@ namespace KkomaKnight.Game
         {
             // 등급 배지처럼 «제목 리본이 아닌» 조각은 뺀다(장비 세부 팝업의 작은 배지 뒤에 큰 빛을 깔지 않는다 · 주인 목록에 없다).
             if (box == null || ribbon == null || titleKey == null || !titleKey.StartsWith("ui.title")) return;
+
+            // 두 번 불러도 조각이 늘지 않는다.
+            var host = box.Find("TitleGlow") as RectTransform;
+            if (host == null) host = UiKit.Rect(box, "TitleGlow");   // ⚠ `??` 는 못 쓴다 — 유니티의 «가짜 null»(파괴된 개체)이 그 연산자를 통과한다(check_unity_null)
+
+            // 리본 «뒤» = 형제 순서로 리본 «바로 앞». ⚠ 이미 앞에 있는 것을 다시 옮기면 **뒤로 밀린다** —
+            //   나를 빼는 순간 리본이 한 칸 당겨지기 때문이다(`UiKit.LightBehind` 가 쓰는 그 보정을 그대로 쓴다).
+            int target = ribbon.GetSiblingIndex();
+            if (host.GetSiblingIndex() < target) target--;
+            host.SetSiblingIndex(Mathf.Max(0, target));
+
+            var mask = TitleGlowMask(host);
+            UiKit.LightBehind(mask, null, UiKit.LightKeySmall, UiKit.LightPeriod,
+                              Palette.A(Palette.Yellow, TitleGlowAlpha),
+                              sidePx: TitleMaskW * TitleLightSidePerMask,
+                              clip: false);   // 자르는 것은 위 Mask 다(RectMask2D 를 겹쳐 걸면 마스크가 둘이 된다)
+
+            // 화면이 «나중에» 리본을 옮겨도 따라간다 — 화면 코드는 한 줄도 안 바뀐다(까닭은 그 컴포넌트 주석).
+            var follow = UiKit.Ensure<RibbonGlowFollow>(host.gameObject); follow.Ribbon = ribbon; follow.enabled = true;
+            PlaceRibbonGlow(host, ribbon);   // 첫 자리는 지금 바로(다음 프레임을 기다리면 첫 캡처가 빈다)
+        }
+
+        /// <summary>담개·마스크·빛판을 <b>지금 리본 자리</b>로 다시 잡는다 — <see cref="RibbonGlowFollow"/> 가 매 판 부른다(값이 바뀌었을 때만).</summary>
+        public static void PlaceRibbonGlow(RectTransform host, RectTransform ribbon)
+        {
+            if (host == null || ribbon == null) return;
             // ⚠ `sizeDelta` 로 읽으면 안 된다 — 화면이 리본을 `UiKit.Pct`(늘림 앵커)로 옮겨 두면 그 값은 «여백» 이라 0 근처다.
             //   실제 크기는 `rect` 다(레이아웃 뒤). 레이아웃 전이면 공통 팝업이 방금 넣은 `sizeDelta` 가 참값이므로 그것으로 대신한다.
             float rw = ribbon.rect.width > 1f ? ribbon.rect.width : ribbon.sizeDelta.x;
@@ -356,20 +382,18 @@ namespace KkomaKnight.Game
             if (rw <= 1f || rh <= 1f) return;
             float scale = rw / TitleRibbonRefW;
 
-            // 두 번 불러도 조각이 늘지 않는다 — 화면이 리본을 «표 자리» 로 옮긴 뒤(예: 확률 팝업의 명판) 다시 부르면 **자리만** 따라간다.
-            var host = box.Find("TitleGlow") as RectTransform;
-            if (host == null) host = UiKit.Rect(box, "TitleGlow");   // ⚠ `??` 는 못 쓴다 — 유니티의 «가짜 null»(파괴된 개체)이 그 연산자를 통과한다(check_unity_null)
+            // 담개를 리본과 같은 사각형으로(앵커까지 그대로 베낀다 — 늘림 앵커면 늘림 그대로).
             host.anchorMin = ribbon.anchorMin; host.anchorMax = ribbon.anchorMax; host.pivot = ribbon.pivot;
             host.sizeDelta = ribbon.sizeDelta; host.anchoredPosition = ribbon.anchoredPosition;
-            host.SetSiblingIndex(ribbon.GetSiblingIndex());   // 리본 «뒤» — 자식으로 넣으면 리본 «위» 로 그려진다(T155 ⓒ 가 값 주고 배운 자리)
+            host.offsetMin = ribbon.offsetMin; host.offsetMax = ribbon.offsetMax;
 
             var mask = TitleGlowMask(host, scale);
-            // 마스크 바닥을 리본 바닥에 맞춘다(위 요약의 «관계»). 호스트가 리본과 같은 사각형이라 셈이 한 줄이다.
-            mask.anchoredPosition = new Vector2(0f, -rh * 0.5f + mask.sizeDelta.y * 0.5f);   // rh 는 리본의 «실제» 높이다(위 주석)
-            UiKit.LightBehind(mask, null, UiKit.LightKeySmall, UiKit.LightPeriod,
-                              Palette.A(Palette.Yellow, TitleGlowAlpha),
-                              sidePx: mask.sizeDelta.x * TitleLightSidePerMask,
-                              clip: false);   // 자르는 것은 위 Mask 다(RectMask2D 를 겹쳐 걸면 마스크가 둘이 된다)
+            // 마스크 바닥을 리본 바닥에 맞춘다(ⓐ 의 주인 값에서 뽑은 «관계»). 담개가 리본과 같은 사각형이라 셈이 한 줄이다.
+            mask.anchoredPosition = new Vector2(0f, -rh * 0.5f + mask.sizeDelta.y * 0.5f);
+            var light = mask.Find(UiKit.LightMaskName + "/" + UiKit.LightName) as RectTransform;
+            if (light != null) light.sizeDelta = new Vector2(mask.sizeDelta.x * TitleLightSidePerMask, mask.sizeDelta.x * TitleLightSidePerMask);
+            var glow = mask.Find(UiKit.LightMaskName + "/" + UiKit.GlowName) as RectTransform;
+            if (glow != null && light != null) glow.sizeDelta = light.sizeDelta;
             TitleGlowPlate(mask, scale);
         }
 

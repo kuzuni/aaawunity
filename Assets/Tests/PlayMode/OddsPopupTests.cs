@@ -109,6 +109,9 @@ namespace KkomaKnight.Tests.Play
                 var host = box.Find("TitleGlow") as RectTransform;
                 Assert.IsNotNull(host, "리본 뒤 빛 담개(T320 ⓑ)");
                 Assert.Less(host.GetSiblingIndex(), ribbon.GetSiblingIndex(), "빛은 리본 «뒤»(형제 순서 앞)");
+                var follow = host.GetComponent<RibbonGlowFollow>();
+                Assert.IsNotNull(follow, "빛 담개가 리본을 따라간다(화면이 리본을 옮겨도 · T320 ⓑ)");
+                Assert.AreSame(ribbon, follow.Ribbon, "따라가는 대상 = 이 팝업의 리본");
                 var gm = host.Find("Mask") as RectTransform;
                 Assert.IsNotNull(gm, "사각 마스크");
                 Assert.IsTrue(UiKit.HasLight(gm), "마스크 안 도는 빛살");
