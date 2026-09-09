@@ -448,6 +448,11 @@ namespace KkomaKnight.Game
             // ⚠ 이 조각은 **가지가 둘**이다 — `Nomal/{Bg,Border,BottomBar}` 과 `Focus/{Bg,Border,BottomBar}`(이름이 똑같다 · 철자도 프리팹 그대로 «Nomal»).
             //   `UiKit.Find(frame, "Bg")` 는 **먼저 찾은 하나**를 주는데 그것이 «Focus» 쪽이라, 첫 고침(결정 894)은 **안 보이는 가지를 칠했다**
             //   — 사진에서 색이 거의 안 바뀐 까닭이 이것이다(실측: 완료 줄 #B49E4C → #B49D4C). **보이는 가지를 이름으로 짚는다.**
+            // ⚑ **탐침이 답을 줬다**(`screens/t258rows.json` · run 822) — 내 색은 제대로 들어가 있었다(`Nomal/Bg` = `625A4F`/`F1E2C1`).
+            //   그런데 **프리팹 줄 0·1 은 «Focus» 가지가 켜진 채로** 온다(데모의 «선택된 줄» 표시 · `Focus/Bg` = `FFF88F` 연노랑).
+            //   그 가지가 `Nomal` **위에** 그려져 색을 통째로 덮는다 — 줄 0·1 만 올리브였던 까닭이고, 두 번의 헛고침이 이것을 못 본 까닭이다.
+            //   ⇒ **가지를 끈다.** 「같은 이름의 상태 가지(Nomal/Focus/Disabled)를 들고 오는 조각은 «어느 가지가 켜져 있나» 부터 본다」(결정 906·916).
+            var focus = UiKit.Find(frame, "Focus"); if (focus != null) focus.gameObject.SetActive(false);
             var bg = UiKit.Find(frame, "Nomal/Bg"); if (bg == null) return;   // 길 꼴: 첫 조각만 깊이 검색 · 뒤는 직계(UiKit.Find)
             var im = bg.GetComponent<Image>(); if (im == null) return;
             im.color = done ? RowDoneColor : RowTodoColor;

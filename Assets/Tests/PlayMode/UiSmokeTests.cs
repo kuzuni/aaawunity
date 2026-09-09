@@ -587,6 +587,13 @@ namespace KkomaKnight.Tests.Play
                         Assert.GreaterOrEqual(doneIdx, 0, "새 세이브에도 깬 줄이 하나는 있어야 한다(«로그인하기» · T257 훅이 도는 증거)");
                         Assert.GreaterOrEqual(todoIdx, 0, "못 깬 줄도 있어야 한다");
                         Assert.Less(LumOf(doneIdx), LumOf(todoIdx), "다 한 줄의 바탕이 할 일 남은 줄보다 어두워야 한다(레퍼런스 15)");
+                        // ⚑ 색만 재면 «칠했다» 만 알고 «보인다» 는 모른다 — 프리팹이 줄 0·1 에 **«Focus» 가지를 켜서** 보내는 바람에
+                        //   그 연노랑(`FFF88F`)이 내 색을 덮고 있었다(탐침 `t258rows.json` · run 822). 그래서 **덮는 가지가 꺼졌는지**를 같이 못 박는다.
+                        for (int qi = 0; qi < wantRows; qi++)
+                        {
+                            var fc = UiKit.Find(UiKit.Find(_app.Overlay.Root, "Quest:" + qi), "Focus");
+                            if (fc != null) Assert.IsFalse(fc.gameObject.activeInHierarchy, "줄 " + qi + " 의 «Focus» 가지가 켜져 있으면 바탕색을 덮는다");
+                        }
                     }
                     // T78 — 줄 바탕(프리팹 ListFrame_08)이 어두워 제목은 흰 글자 + 외곽선이어야 읽힌다(screens run 148 눈 확인)
                     { var t0 = UiKit.Find(q0, "Title").GetComponent<TMP_Text>(); Assert.IsNotNull(t0, "줄 제목 글자"); Assert.IsTrue(TextAudit.HasOutline(t0), "줄 제목 외곽선"); Assert.Greater(t0.color.r + t0.color.g + t0.color.b, 2.4f, "줄 제목은 밝은 글자"); }
