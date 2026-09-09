@@ -20,6 +20,51 @@ namespace KkomaKnight.Tests.Play
     {
         PlayLog _log; App _app;
         [SetUp] public void SetUp() { _log = new PlayLog(); }
+
+        /// <summary>
+        /// T313 — <b>리워드 팝업의 흡수는 개수와 상관없이 1초 안에 끝난다</b>(주인 2026-09-09 10:0X «흡수 파티클이 느리다 — 1초 안에 전부 흡수»).
+        /// <para>
+        /// 종전에는 구슬 사이 시차가 개수만큼 쌓여 <b>많이 받을수록 느려졌다</b>(100개면 마지막 구슬이 8초쯤 뒤). 수로 재는 자라 씬을 안 올린다.
+        /// </para>
+        /// ⚠ <b>전투 구슬은 안 건드렸다</b> 도 같이 잰다 — 예산을 안 넘긴 부름(전투)은 종전 값 그대로여야 한다.
+        /// «빨라졌다» 만 재면 «전투까지 같이 빨라졌다» 를 못 잡는다.
+        /// </summary>
+        [Test]
+        public void PopupAbsorbFinishesWithinItsBudgetNoMatterHowManyOrbs()
+        {
+            float budget = RewardOrbs.PopupBudgetSec;
+            foreach (int n in new[] { 1, 2, 5, 20, 50, 100 })
+            {
+                float last = RewardOrbs.LastArrivalSec(n, 0f, budget);
+                Assert.LessOrEqual(last, budget + 1e-4f,
+                    "구슬 " + n + "개의 마지막 도착이 예산(" + budget + "초)을 넘었다 — 지금 " + last.ToString("0.###") + "초");
+            }
+
+            // 적게 받을 때는 종전 연출이 그대로여야 한다(주인이 정한 «0.8초 곡선» · T109) — 예산은 «넘칠 때만» 조인다.
+            RewardOrbs.Pace(1, 0f, budget, out float step1, out float fly1, out float jit1);
+            Assert.AreEqual(RewardOrbs.StepSec, step1, 1e-6f, "구슬 하나짜리는 시차가 종전 그대로");
+            Assert.AreEqual(RewardOrbs.FlySec, fly1, 1e-6f, "구슬 하나짜리는 비행 시간이 종전 그대로");
+            Assert.AreEqual(RewardOrbs.FlyJitter, jit1, 1e-6f, "안 조인 판은 흔들림도 그대로");
+
+            // 조금 받을 때는 시차를 «늘리지» 않는다 — 남는 시간은 비행에 준다(눈으로는 종전과 거의 같다).
+            RewardOrbs.Pace(3, 0f, budget, out float step3, out float fly3, out _);
+            Assert.AreEqual(RewardOrbs.StepSec, step3, 1e-6f, "구슬 셋이면 시차는 종전 그대로");
+            Assert.Greater(fly3, RewardOrbs.FlySec * 0.8f, "그 대신 비행이 거의 종전 길이로 남는다");
+
+            // 조인 판에서는 흔들지 않는다 — 흔들면 마지막 구슬이 예산을 넘는다.
+            RewardOrbs.Pace(100, 0f, budget, out float step100, out float fly100, out float jit100);
+            Assert.AreEqual(0f, jit100, 1e-6f, "예산에 맞추는 판은 비행 시간을 안 흔든다");
+            Assert.Less(step100, RewardOrbs.StepSec, "100개짜리는 시차가 줄어야 한다");
+            Assert.GreaterOrEqual(fly100, RewardOrbs.FlyMinSec - 1e-4f, "그래도 «날아간다» 로 보이는 하한은 지킨다");
+
+            // ⚑ 전투(예산 0)는 종전 그대로 — 여기가 «남의 연출을 같이 줄이지 않았나» 를 재는 자리다.
+            RewardOrbs.Pace(100, RewardOrbs.HoldSec, 0f, out float bs, out float bf, out float bj);
+            Assert.AreEqual(RewardOrbs.StepSec, bs, 1e-6f, "전투 구슬의 시차는 그대로");
+            Assert.AreEqual(RewardOrbs.FlySec, bf, 1e-6f, "전투 구슬의 비행 시간도 그대로");
+            Assert.AreEqual(RewardOrbs.FlyJitter, bj, 1e-6f);
+            Assert.Greater(RewardOrbs.LastArrivalSec(100, RewardOrbs.HoldSec, 0f), 5f,
+                "전투 구슬 100개는 여전히 오래 걸린다 — 그것이 종전 연출이고 주인이 고쳐 달라고 한 자리가 아니다");
+        }
         [TearDown] public void TearDown() { Time.timeScale = 1f; _log?.Dispose(); _log = null; }
 
         // 구슬 한 벌(시차 + 홉 + 머무름 + 비행 + 도착 팝)의 상한 — RewardOrbs 상수에서 계산해 박은 값이 아니다(결정 191 · T109 로 머무름이 늘었다)

@@ -34,6 +34,19 @@ namespace KkomaKnight.Game
         public const float FlySecMax = FlySec + FlyJitter;
         public const float StepSec = 0.07f;                   // 구슬 사이 시차(T109 1항 «0.05~0.1s 씩 어긋나게»)
         public const float PopSec = 0.08f;                    // 도착 뒤 «작게 튀고» 사라지는 꼬리
+        /// <summary>
+        /// T313 — <b>리워드 팝업</b>이 한 번에 흡수하는 데 쓰는 <b>총 예산</b>(초). 주인 2026-09-09 10:0X «흡수 파티클이 느리다 — <b>1초 안에</b> 전부 흡수».
+        /// <para>
+        /// 종전에는 구슬 사이 시차(<see cref="StepSec"/> 0.07)가 개수만큼 그대로 쌓여서 <b>100개면 마지막 구슬이 8초쯤 뒤에 닿았다</b>
+        /// (0.07 × 99 + 0.15 + 0.8 + 0.08). 개수가 늘수록 느려지는 꼴이라 «많이 받을수록 답답한» 연출이었다.
+        /// </para>
+        /// ⚠ <b>전투 구슬은 그대로다</b> — 예산은 <see cref="Fly"/> 에 값을 넘긴 자리(팝업)에서만 걸린다. 전투는 «죽은 자리에 1초 머물렀다가» 가 주인이 정한 연출이다(T109).
+        /// </summary>
+        public const float PopupBudgetSec = 1.0f;
+        /// <summary>예산에 맞춰 줄일 때 <b>비행 시간의 하한</b> — 이보다 짧으면 «날아갔다» 가 아니라 «순간이동» 으로 보인다.</summary>
+        public const float FlyMinSec = 0.25f;
+        /// <summary>예산에서 비행이 가져가는 몫(나머지는 구슬 사이 시차) — 반씩이면 «줄지어 날아가는» 꼴이 남는다.</summary>
+        public const float BudgetFlyShare = 0.5f;
         /// <summary>화면 동시 상한(기본) — 넘으면 개수를 줄인다(값은 그대로). 부르는 쪽이 <see cref="RewardOrbs(RectTransform,int)"/> 로 달리 줄 수 있다(T269 = 100 · 주인 «캡은 100개 파티클»).</summary>
         public const int MaxAlive = 40;
         /// <summary>잔상을 남기는 간격(비행 시간을 이 값으로 나눠 등분한다) · 한 장이 사라지기까지 · 화면 동시 상한.</summary>
@@ -93,7 +106,7 @@ namespace KkomaKnight.Game
         /// 값 <paramref name="total"/> 은 개수만큼 나눠 담고(나머지는 마지막 구슬), 도착할 때마다 <paramref name="onArrive"/> 로 그 몫을 넘긴다.
         /// 실제로 띄운 개수를 돌려준다(0 이면 호출자가 값을 바로 반영해야 한다).
         /// </summary>
-        public int Fly(Vector2 from, RectTransform target, string spriteKey, Color tint, int count, double total, float sizePx, float timeScale, Action<double> onArrive, float holdSec = HoldSec)
+        public int Fly(Vector2 from, RectTransform target, string spriteKey, Color tint, int count, double total, float sizePx, float timeScale, Action<double> onArrive, float holdSec = HoldSec, float budgetSec = 0f)
         {
             Prune();
             if (_layer == null || target == null || count <= 0 || total <= 0) return 0;
@@ -102,15 +115,54 @@ namespace KkomaKnight.Game
             float sc = Mathf.Max(0.5f, timeScale);
             var to = TargetPos(target);
             double each = total / count;
+            Pace(count, Mathf.Max(0f, holdSec), budgetSec, out float step, out float flyBase, out float flyJit);
             for (int i = 0; i < count; i++)
             {
                 double val = i == count - 1 ? total - each * (count - 1) : each;
-                Make(from, to, spriteKey, tint, sizePx, i, count, sc, val, onArrive, Mathf.Max(0f, holdSec));
+                Make(from, to, spriteKey, tint, sizePx, i, count, sc, val, onArrive, Mathf.Max(0f, holdSec), step, flyBase, flyJit);
             }
             return count;
         }
 
-        void Make(Vector2 from, Vector2 to, string spriteKey, Color tint, float sizePx, int i, int count, float sc, double value, Action<double> onArrive, float holdSec)
+        /// <summary>
+        /// T313 — <b>예산 안에 다 들어오게</b> 시차와 비행 시간을 정한다(예산 0 = 종전 그대로).
+        /// <para>
+        /// <b>필요할 때만 줄인다</b> — 개수가 적어 예산 안에 이미 들어오면 종전 값을 그대로 쓴다(주인이 좋아한 «0.8초 곡선» 이 적게 받을 때는 안 바뀐다).
+        /// 줄일 때는 튀어오름(<see cref="HopSec"/>)과 머무름은 건드리지 않고 <b>비행 + 시차</b>만 남은 예산에 맞춘다 — 그 둘이 «개수에 비례해 길어지는» 유일한 자리다.
+        /// </para>
+        /// 마지막 구슬의 <b>도착</b>이 예산 안이다(뒤에 붙는 <see cref="PopSec"/> 꼬리는 값이 이미 들어간 뒤의 장식이라 예산 밖으로 센다).
+        /// </summary>
+        public static void Pace(int count, float holdSec, float budgetSec, out float step, out float flyBase, out float flyJit)
+        {
+            step = StepSec; flyBase = FlySec; flyJit = FlyJitter;
+            if (budgetSec <= 0f || count <= 0) return;
+            // «평소» 로 재고 지터는 안 센다 — 그래야 구슬 하나짜리 판이 지터 때문에 압축되지 않는다(주인이 좋아한 0.8초 곡선이 그대로 남는다).
+            // 안 줄인 판의 최악값도 예산 안이다: 안 줄이는 것은 count 1 · hold 0 뿐이고 그때 최악은 HopSec + FlySecMax = 1.00 이다.
+            float natural = (count - 1) * StepSec + HopSec + holdSec + FlySec;
+            if (natural <= budgetSec) return;                       // 이미 예산 안 — 종전 연출 그대로
+            float room = Mathf.Max(0f, budgetSec - HopSec - holdSec);
+            flyBase = Mathf.Clamp(room * BudgetFlyShare, Mathf.Min(FlyMinSec, room), FlySec);
+            flyJit = 0f;                                            // 예산에 맞추는 판에서는 흔들지 않는다(흔들면 마지막 구슬이 예산을 넘는다)
+            step = count > 1 ? Mathf.Max(0f, (room - flyBase) / (count - 1)) : 0f;
+            // ⚠ 시차를 «늘리지는» 않는다 — 반씩 나눈 몫이 종전 시차보다 크면(구슬이 두셋뿐일 때) 종전 시차를 쓰고
+            //    남은 시간을 전부 비행에 준다. 그러면 조금 받을 때는 주인이 좋아한 0.8초 곡선이 거의 그대로 남는다
+            //    (구슬 둘이면 시차 0.07 · 비행 0.78 — 눈으로는 종전과 같다).
+            if (step > StepSec)
+            {
+                step = StepSec;
+                flyBase = Mathf.Clamp(room - step * (count - 1), Mathf.Min(FlyMinSec, room), FlySec);
+            }
+        }
+
+        /// <summary>마지막 구슬이 <b>닿기까지</b> 걸리는 시간 — 자와 부르는 쪽이 «예산 안인가» 를 같은 셈으로 볼 수 있게 한 곳에 둔다.</summary>
+        public static float LastArrivalSec(int count, float holdSec = 0f, float budgetSec = 0f)
+        {
+            if (count <= 0) return 0f;
+            Pace(count, holdSec, budgetSec, out float step, out float flyBase, out float flyJit);
+            return (count - 1) * step + HopSec + holdSec + flyBase + flyJit;
+        }
+
+        void Make(Vector2 from, Vector2 to, string spriteKey, Color tint, float sizePx, int i, int count, float sc, double value, Action<double> onArrive, float holdSec, float stepSec, float flyBase, float flyJit)
         {
             var img = UiKit.Icon(_layer, OrbName, spriteKey, tint);
             var rt = img.rectTransform;
@@ -122,7 +174,7 @@ namespace KkomaKnight.Game
             rt.localScale = Vector3.one * 0.7f;
             var hop = start + new Vector2(UnityEngine.Random.Range(-spread, spread), sizePx * UnityEngine.Random.Range(1.4f, 2.6f));
             // T109 2항 — 비행 시간은 거리와 무관하게 고정(구슬마다 ±FlyJitter 만 흔든다)
-            float fly = FlySec + UnityEngine.Random.Range(-FlyJitter, FlyJitter);
+            float fly = flyBase + (flyJit > 0f ? UnityEngine.Random.Range(-flyJit, flyJit) : 0f);   // T313 — 값은 Pace 가 정한다(예산이 있으면 줄어든 값)
             // T109 2항 «랜덤 곡선» — 제어점을 진행 방향의 «옆»(좌·우 랜덤)으로 밀어 구슬마다 다른 활을 그린다.
             // 옆으로 벌어졌다 목적지에서 다시 모이므로 여러 개가 한꺼번에 날 때 겹쳐 보이지 않는다.
             var seg = to - hop; float segLen = seg.magnitude;
@@ -132,7 +184,7 @@ namespace KkomaKnight.Game
             var ctrl = (hop + to) * 0.5f + perp * bow + Vector2.up * UnityEngine.Random.Range(sizePx, sizePx * 3f);
             var orb = new Orb { Rt = rt, Value = value, OnArrive = onArrive };
             var seq = DOTween.Sequence().SetLink(rt.gameObject);   // SetLink(T56) — 전투 종료로 층이 먼저 파괴돼도 경고 0
-            if (i > 0) seq.AppendInterval(i * StepSec / sc);
+            if (i > 0 && stepSec > 0f) seq.AppendInterval(i * stepSec / sc);
             seq.Append(rt.DOScale(1f, HopSec / sc).SetEase(Ease.OutBack));
             seq.Join(rt.DOAnchorPos(hop, HopSec / sc).SetEase(Ease.OutQuad));
             // T109 1항 «1초 정도 머물렀다가» — 그 자리에서 살짝 위아래로 흔들며 기다린다(요요라 끝나면 hop 자리로 정확히 돌아온다)

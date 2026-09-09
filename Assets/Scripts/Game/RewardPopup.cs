@@ -218,7 +218,8 @@ namespace KkomaKnight.Game
                 var target = TargetFor(app, items[i].Icon);
                 if (target == null) continue;
                 float sizePx = Mathf.Max(16f, src.rect.height);   // 3항 «크기도 팝업 칸 그대로»
-                LastOrbCount += _orbs.Fly(_orbs.TargetPos(src), target, items[i].Icon, Color.white, want[i], want[i], sizePx, 1f, null, AbsorbHoldSec);
+                // T313(주인 «흡수 파티클이 느리다 — 1초 안에 전부 흡수») — 예산을 넘긴다. 개수가 적어 이미 예산 안이면 종전 연출 그대로다.
+                LastOrbCount += _orbs.Fly(_orbs.TargetPos(src), target, items[i].Icon, Color.white, want[i], want[i], sizePx, 1f, null, AbsorbHoldSec, RewardOrbs.PopupBudgetSec);
             }
         }
 
