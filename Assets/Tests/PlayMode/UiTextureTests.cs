@@ -662,7 +662,15 @@ namespace KkomaKnight.Tests.Play
                     var gcBot = c.Find(UiKit.GradientBottomName).GetComponent<Image>();
                     AssertGradTint(want.Top, gcTop.color, c.name + " 위 색 = col.grad." + wantGrad + ".top");
                     AssertGradTint(want.Bottom, gcBot.color, c.name + " 아래 색 = col.grad." + wantGrad + ".bottom");
-                    Assert.Greater(UiKit.Luma(gcBot.color), UiKit.Luma(gcTop.color), c.name + " 카드류는 «어두운 위 → 밝은 아래»(T116 · 레퍼런스 방향)");
+                    // ⚠ T348 — T345(주인 2026-09-10)가 지목한 두 쌍(cardPrivAd 초록→파랑 · cardPrivMonth 하늘→보라)은
+                    //    밝기가 되레 «내려간다». «어두운 위 → 밝은 아래» 는 레퍼런스에서 잰 규칙이라 주인이 색을 직접
+                    //    지목한 자리에는 대지 않는다 — `GradientPaletteTests` 가 같은 까닭으로 이미 뺐다(결정 957 ①).
+                    //    ⚑ 그때 그쪽만 고치고 **여기를 못 봤다**(같은 규칙이 두 자리에 적혀 있었다 · T184 꼴) → main 이 빨갰다.
+                    //    같은 규칙이 아직 세 자리에 있다: 여기 · `GradientPaletteTests` · `UiSmokeTests`(상점 카드 T341 · 그쪽은
+                    //    주인 값도 방향을 지켜 초록이다). 이 목록을 또 고칠 사람은 **셋을 한 번에** 훑어라.
+                    //    위 «표 값 그대로인가»(AssertGradTint) 는 여섯 전부 그대로 잰다 — 빼는 것은 방향 하나뿐이다.
+                    if (wantGrad != "cardPrivAd" && wantGrad != "cardPrivMonth")
+                        Assert.Greater(UiKit.Luma(gcBot.color), UiKit.Luma(gcTop.color), c.name + " 카드류는 «어두운 위 → 밝은 아래»(T116 · 레퍼런스 방향)");
                     var mask = c.Find(UiKit.LightMaskName);
                     if (mask != null)
                     {

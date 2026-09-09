@@ -71,6 +71,14 @@ namespace KkomaKnight.Game
             color = tint;
 
             _ps = gameObject.AddComponent<ParticleSystem>();
+            // ⚠ T348 — `AddComponent<ParticleSystem>()` 로 붙인 것은 **이미 돌고 있다**(새 ParticleSystem 의 playOnAwake
+            //    기본값이 true 라 붙는 그 프레임에 Awake 가 Play 를 부른다). 돌고 있는 동안 `main.duration` 을 주면
+            //    유니티가 «Setting the duration while system is still playing is not supported» 를 **Assert** 로 뱉고,
+            //    그것은 콘솔 빨강이라 `PlayLog.AssertNoRed` 를 쓰는 자가 전부 빨개진다(§1 «플레이 콘솔 에러 0»).
+            //    아래 `main.playOnAwake = false` 는 **다음 Awake** 를 막을 뿐 이미 시작한 이 판을 못 멈춘다 —
+            //    그래서 값을 하나라도 주기 «전에» 여기서 세운다. 유니티가 시키는 그 말대로 Stop 한다.
+            _ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
             var psr = GetComponent<ParticleSystemRenderer>();
             // 월드로는 한 점도 안 그린다 — 그리는 것은 아래 OnPopulateMesh 뿐
             if (psr != null) psr.enabled = false;

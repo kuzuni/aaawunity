@@ -871,8 +871,15 @@ namespace KkomaKnight.Tests.Play
 
             // ⓑ 슬롯 → «슬롯 강화» (빈 슬롯이든 장착 슬롯이든 그 버튼은 같은 거래를 부른다 · GearSystem.SlotUp)
             var group = UiKit.Find(_app.Current.Root, "Group_Slot");
-            Assert.AreEqual(6, group.childCount, "슬롯 여섯");
-            var slotBtn = group.GetChild(0).GetComponent<Button>();
+            // ⚠ T348 — `childCount` 로 세지 않는다. `Group_Slot` 에는 슬롯 여섯 말고도 **비평 이름표**
+            //    (`UiKit.TagGroup` 이 만드는 `Tag:좌 슬롯열(3칸)`·`Tag:우 슬롯열(3칸)` · T46)가 자식으로 붙어 있어
+            //    실제 자식은 8 이다. 이름표는 화면에 안 그려지는 자라 늘어도 «슬롯이 늘었다» 가 아니다 —
+            //    세는 것은 언제나 이름 계약(`Slot:<부위>`)이어야 한다.
+            var slots = new List<Transform>();
+            for (int i = 0; i < group.childCount; i++)
+                if (group.GetChild(i).name.StartsWith("Slot:")) slots.Add(group.GetChild(i));
+            Assert.AreEqual(6, slots.Count, "슬롯 여섯(이름 계약 Slot:<부위> · 비평 이름표는 안 센다)");
+            var slotBtn = slots[0].GetComponent<Button>();
             Assert.IsNotNull(slotBtn, "슬롯은 눌리는 것이어야 한다");
             slotBtn.onClick.Invoke(); yield return Frames(2);
             yield return UntilOpen(5f, "슬롯 팝업");
@@ -905,9 +912,16 @@ namespace KkomaKnight.Tests.Play
             bool unequipped = false;
             for (int i = 0; i < 6 && !unequipped; i++)
             {
+                // 화면이 다시 서므로 매번 찾는다. ⚠ 여기도 `GetChild(i)` 가 아니라 이름 계약으로 고른다(위 T348) —
+                //    지금은 이름표가 뒤에 붙어 앞 여섯이 우연히 슬롯이지만, 그 차례가 바뀌면 이 갈래는
+                //    «버튼이 없다 → continue» 로 조용히 지나가 «해제할 수 있다» 가 빨개진다(원인은 안 보이는 채로).
                 var g2 = UiKit.Find(_app.Current.Root, "Group_Slot");
-                if (g2 == null || i >= g2.childCount) break;
-                var b = g2.GetChild(i).GetComponent<Button>(); if (b == null) continue;
+                if (g2 == null) break;
+                var six = new List<Transform>();
+                for (int k = 0; k < g2.childCount; k++)
+                    if (g2.GetChild(k).name.StartsWith("Slot:")) six.Add(g2.GetChild(k));
+                if (i >= six.Count) break;
+                var b = six[i].GetComponent<Button>(); if (b == null) continue;
                 b.onClick.Invoke(); yield return Frames(2);
                 if (!_app.Overlay.IsOpen) continue;
                 UiKit.CompleteAllTweens(); yield return Frames(1);
