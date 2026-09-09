@@ -1637,13 +1637,40 @@ namespace KkomaKnight.Game
         /// 맨 위가 주인이 말한 «데일리 기프트»(공짜 · 하루 다이아 30)이고 아래 셋이 구매형이다.
         /// ⚠ <b>로비 팝업의 «데일리 기프트»(17 · T254 의 5칸)와는 다른 것</b>이다 — 이름만 같고 세이브 칸도 따로다(ROUTINE §2 T264 1항).
         /// </summary>
-        static readonly string[] CardKeys = { "dailyGift", "adRemove", "monthly", "lifetime" };
+        public static readonly string[] CardKeys = { "dailyGift", "adRemove", "monthly", "lifetime" };   // T366 — 자가 «카드 i 의 판정» 을 물으려면 이 순서를 알아야 한다(키를 자에 또 적으면 두 곳이 된다 · §1)
 
         // T264 2단계 — Refresh 가 글자·상태만 갈아 끼우려고 붙잡아 두는 것들(ChapterChestScreen 과 같은 문법).
         readonly SkinPair[] _cardBtn = new SkinPair[4];
         readonly TMP_Text[] _cardQty = new TMP_Text[4];
         readonly TMP_Text[] _cardState = new TMP_Text[4];
         SkinPair _claimAll;
+
+        /// <summary>
+        /// T366 — 카드 «받기» 버튼의 빨간 점(주인 2026-09-10 «특권에서 받을 수 있는 재화 있으면 … 받기 버튼에도 빨간점 알림 뜨게»).
+        /// <para>
+        /// 판정은 <b>새로 짓지 않는다</b> — 카드마다 <see cref="Privilege.Can"/> 이고, 그것은 로비 «특권» 칸 점이 보는
+        /// <see cref="Privilege.AnyClaimable"/> 의 낱개다(그 함수가 카드마다 <c>Can</c> 을 부른다) ⇒ <b>칸 점이 켜진 날은 반드시 어떤 카드 점이 켜져 있다.</b>
+        /// 두 점이 갈리려면 판정이 두 곳이어야 하는데, 여기는 그 한 곳을 그대로 부른다(T96 ⓔ·T167 규칙 그대로).
+        /// </para>
+        /// <para>
+        /// ⚠ <b>점은 주황 벌에만 단다</b> — <see cref="Privilege.Can"/> 이 참이면 <see cref="Refresh"/> 가 반드시 주황을 켠다(<c>warm = !owned || expired || can</c>).
+        /// 회색 벌에도 달면 «점이 둘» 이 되고, 그중 하나는 <b>영원히 안 보이는 채로</b> 남아 다음 사람이 «왜 안 뜨나» 를 두 곳에서 찾게 된다.
+        /// </para>
+        /// </summary>
+        public const string CardDotName = "ClaimDot";
+        /// <summary>점 지름·자리(버튼 오른쪽 위 모서리 안쪽) — 탭 점(<see cref="LobbyScreen.TabDotSize"/> 34)과 같은 눈금이다(버튼은 사이드 칸보다 작다).</summary>
+        public const float CardDotSize = 34f;
+        public static readonly Vector2 CardDotAnchor = new Vector2(1, 1), CardDotOffset = new Vector2(-10f, -6f);
+        readonly GameObject[] _cardDot = new GameObject[4];
+
+        /// <summary>카드 버튼 하나에 점을 달아 둔다(태어날 때는 꺼짐 · 켜고 끄는 것은 <see cref="Refresh"/> 하나뿐이다 · T77·T253 칸 점과 같은 문법).</summary>
+        void PlanCardDot(int i, SkinPair skin)
+        {
+            if (skin == null || skin.Warm == null || i < 0 || i >= _cardDot.Length) return;
+            var dot = UiKit.AlertDot(skin.Warm, CardDotName, CardDotAnchor, CardDotOffset, CardDotSize);
+            dot.SetActive(false);
+            _cardDot[i] = dot;
+        }
 
         /// <summary>
         /// T306 — <b>주황·회색 두 벌을 같은 자리에 겹쳐 두고 한 벌만 켜는 버튼</b>(주인 2026-09-09 09:1X 특권 버튼 색 규칙).
@@ -1831,6 +1858,7 @@ namespace KkomaKnight.Game
             var skin1 = TwoSkin(content, Layout.PrCard1Btn.Within(C), "받기", () => TapCard(0), "CardBtn:1");
             var btn1 = skin1.Warm;
             _cardBtn[0] = skin1;
+            PlanCardDot(0, skin1);   // T366 — 카드 1(공짜 «데일리 기프트»)의 받기 점
             // 카드 2~4 = 긴 카드
             RectTransform card2 = null, cardTitle2 = null, desc2 = null, pic2 = null, reward2 = null, btn2 = null, card3 = null, card4 = null;
             // T306 — 옛 `btnKey`(카드마다 박아 둔 버튼 옷)를 뺐다: 색은 이제 «상태» 가 정하므로 여기 적을 것이 없다.
@@ -1875,6 +1903,7 @@ namespace KkomaKnight.Game
                 var skin = TwoSkin(content, Sh(Layout.PrCardBtn, 0, dy).Within(C), L.btnLabel, () => TapCard(ki), "CardBtn:" + (k + 2));
                 var btn = skin.Warm;
                 _cardBtn[ki] = skin;
+                PlanCardDot(ki, skin);   // T366 — 산 카드가 오늘 받을 것이 있으면 이 점이 켜진다
                 _prBordered.Add(card.rectTransform); _prBordered.Add(desc.rectTransform);
                 if (k == 0) { card2 = card.rectTransform; cardTitle2 = head.rectTransform; desc2 = desc.rectTransform; pic2 = pic.rectTransform; reward2 = reward; btn2 = btn; }
                 else if (k == 1) card3 = card.rectTransform; else card4 = card.rectTransform;
@@ -1999,6 +2028,8 @@ namespace KkomaKnight.Game
                 // 오늘 몫을 이미 받은 «가진 카드» 만 잠근다 — 안 샀거나 기간이 끝난 카드는 «구매» 로 눌려야 한다.
                 bool warm = !owned || expired || can;
                 s.Set(warm, !owned || expired ? "구매" : "받기", warm);
+                // T366 — 점은 «오늘 받을 것이 있는가» 하나만 본다(사야 하는 카드·기간 만료 카드는 «구매» 라 점이 없다 — 주인 문장은 «받을 수 있는 재화» 다).
+                if (_cardDot[i] != null) _cardDot[i].SetActive(can);
             }
             // T306 — «전체 받기» = 받을 것이 있으면 주황, 없으면 회색(누르는 것은 늘 되고, 없으면 까닭을 말한다).
             if (_claimAll != null) _claimAll.Set(Privilege.AnyClaimable(App.Save, d, today), "전체 받기", true);

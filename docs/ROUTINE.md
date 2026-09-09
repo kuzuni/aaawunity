@@ -9380,6 +9380,12 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Core/Notify.cs` · `Game/Screens.cs` · `Game/LobbyPopups.cs` · 자. **`LobbyPopups.cs` lock 들 뒤** lock `T366`(T359·T363·T364 와 한 사람이 같이).
 
+> **🔄 2회차 push · 확인 전(20:5X · sess-1735-9f41 · 워커 C · 결정 1028 · lock `T366` 쥔 채)** — 1항 ⓒ(카드 «받기» 버튼 점)를 붙여 **이 절의 두 점이 다 섰다**.
+> `PrivilegeScreen.PlanCardDot(i, skin)` 이 카드 넷의 **주황 벌 버튼**에 `UiKit.AlertDot(…, "ClaimDot", (1,1), (-10,-6), 34)` 을 달고(태어날 때 꺼짐), `Refresh` 가 `_cardDot[i].SetActive(Privilege.Can(...))` 한 줄로 켜고 끈다.
+> **판정은 한 곳 그대로다** — 로비 칸 점이 보는 `Privilege.AnyClaimable` 이 카드마다 `Privilege.Can` 을 부르므로 두 점은 «전체 ↔ 낱개» 다(갈릴 수 없다 · 1항 ⓐ 가 말한 «한 곳» 을 `Notify` 대신 `Privilege` 로 읽은 1회차 선택을 그대로 잇는다).
+> ⚠ **회색 벌에는 점을 안 단다** — `can` 이면 `Refresh` 가 반드시 주황을 켜므로(`warm = !owned || expired || can`) 회색 쪽 점은 영영 안 보인다.
+> **자** = PlayMode `PrivilegeDotPlayTests` 둘째(카드 넷의 점 = `Privilege.Can` · 전제 «켜진 것 ≥ 1» · 다 받고 `Refresh` → 전부 꺼짐). **확인** = 다음 완주 런 `[CI명부] PrivilegeDotPlayTests(2)` 실패 0 + `screens` 11.
+>
 > **✔ 1회차 확인 끝 · lock 반납(20:3X · sess-1425-9466 · 워커 N)** — 런 900 `[CI명부]` `PrivilegeDotTests(3)`·`PrivilegeDotPlayTests(1)` 실패 0 · `screens` 01 눈: «특권» 칸 오른쪽 위 빨간 점. **남은 것 = ⓒ 카드 «받기» 버튼 점**(`LobbyPopups.PrivilegeScreen` · T363/T364 lock 안 · 여는 사람이 카드별 `Privilege.Can` 으로 `UiKit.AlertDot` 한 줄).
 > **▸ ⓒ 를 짜 보고 놓았다 — 함정 셋만 남긴다(20:5X · sess-0132-18539 · 워커 K · 결정 1027 · 커밋된 코드 0줄)** — 20:33 목록으로 잡았는데 워커 C 의 lock 이 **20:37** 로 먼저였다(§3) ⇒ 다 짜고 자까지 초록이었지만 버렸다.
 > ⚑ **ⓐ 점을 «주황» 에 붙이면 안 된다** — 특권의 주황(T306)은 «구매» 도 주황이라 **안 산 카드에도 점이 뜬다**. 점은 카드마다 **`Privilege.Can` 하나**만 본다(로비 칸 점과 같은 수).

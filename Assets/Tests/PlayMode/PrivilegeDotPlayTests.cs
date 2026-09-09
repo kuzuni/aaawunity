@@ -11,7 +11,7 @@ namespace KkomaKnight.Tests.Play
     /// <summary>
     /// T366 — 로비 왼쪽 사이드 «특권» 칸의 빨간 점(<c>PrivDot</c>)이 판정(<see cref="Privilege.AnyClaimable"/>)을 따른다.
     /// 새 세이브 = 공짜 «데일리 기프트» 카드를 오늘 받을 수 있으므로 <b>켜져</b> 있고, 오늘 것을 다 받고 로비를 다시 그리면 <b>꺼진다</b>.
-    /// (카드 «받기» 버튼의 점은 <c>LobbyPopups.PrivilegeScreen</c> 몫 — 그 파일이 열리는 회차에 같은 판정으로 붙는다.)
+    /// (카드 «받기» 버튼의 점은 아래 둘째 자 — 2회차에 <see cref="PrivilegeScreen"/> 에 같은 판정으로 붙였다.)
     /// </summary>
     public class PrivilegeDotPlayTests
     {
@@ -60,6 +60,53 @@ namespace KkomaKnight.Tests.Play
             Assert.IsFalse(dot.gameObject.activeInHierarchy, "받고 나면 점이 꺼진다");
 
             _log.AssertNoRed("T366 로비 특권 점");
+            yield return Shutdown();
+        }
+
+        /// <summary>
+        /// T366 2회차 — 특권 화면(11) 카드 «받기» 버튼의 점.
+        /// 새 세이브에서 <b>공짜 카드만</b> 오늘 받을 수 있으므로 그 카드 버튼에만 점이 켜지고(안 산 카드는 «구매» 라 없다),
+        /// 오늘 몫을 받고 다시 그리면 꺼진다 — 로비 칸 점과 <b>같은 판정</b>(<see cref="Privilege.Can"/>)을 본다.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 특권_카드_받기_점은_그_카드를_오늘_받을_수_있을_때만_켜진다()
+        {
+            yield return Boot();
+            var d = _app.Data != null ? _app.Data.Privilege : null;
+            if (d == null) { yield return Shutdown(); Assert.Ignore("특권 표가 없다 — 잴 것이 없다"); }
+            _app.ShowScreen("privilege"); yield return Frames(1);
+            var root = _app.Current.Root;
+            string today = SaveStore.Today();
+
+            // 카드 넷의 버튼(주황 벌)에 점이 하나씩 달려 있고, 켜진 것은 «오늘 받을 수 있는 카드» 뿐이다.
+            int on = 0, seen = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                var btn = UiKit.Find(root, "CardBtn:" + (i + 1));
+                if (btn == null) continue;
+                seen++;
+                var dot = UiKit.Find(btn, PrivilegeScreen.CardDotName);
+                Assert.IsNotNull(dot, "카드 " + (i + 1) + " «받기» 버튼에 점(" + PrivilegeScreen.CardDotName + ")이 달려 있어야 한다");
+                var c = i < PrivilegeScreen.CardKeys.Length ? d.Of(PrivilegeScreen.CardKeys[i]) : null;
+                bool can = Privilege.Can(_app.Save, d, c, today);
+                Assert.AreEqual(can, dot.gameObject.activeInHierarchy,
+                    "카드 " + (i + 1) + " 점은 «오늘 받을 수 있는가»(Privilege.Can) 와 같아야 한다");
+                if (can) on++;
+            }
+            Assert.AreEqual(4, seen, "카드 버튼 넷을 다 찾아야 한다");
+            Assert.Greater(on, 0, "새 세이브는 공짜 카드를 오늘 받을 수 있다(전제 — 이 값이 0 이면 아래 «꺼진다» 가 거저 통과한다)");
+
+            // 오늘 몫을 다 받는다 → 판정이 거짓이 되고 → 다시 그리면 점이 전부 꺼진다(T167 «조건이 사라져야 꺼진다»)
+            foreach (var c in d.Cards) if (Privilege.Can(_app.Save, d, c, today)) Privilege.Claim(_app.Save, d, c, today);
+            _app.Current.Refresh(); yield return Frames(1);
+            for (int i = 0; i < 4; i++)
+            {
+                var btn = UiKit.Find(root, "CardBtn:" + (i + 1)); if (btn == null) continue;
+                var dot = UiKit.Find(btn, PrivilegeScreen.CardDotName); if (dot == null) continue;
+                Assert.IsFalse(dot.gameObject.activeInHierarchy, "다 받고 나면 카드 " + (i + 1) + " 점이 꺼진다");
+            }
+
+            _log.AssertNoRed("T366 특권 카드 받기 점");
             yield return Shutdown();
         }
     }
