@@ -291,6 +291,12 @@ namespace KkomaKnight.Game
             var root = (RectTransform)ov.OpenPrefab("ui.progressionMission2").transform;
             // 공통 팝업 문법(ROUTINE) — 배경 탭 = 닫기 · 닫기 X 는 안 쓴다(프리팹 조각은 지우지 않고 끈다)
             var dim = UiKit.Find(root, "Dimmed"); if (dim != null) UiKit.Clickable(dim, () => ov.Close(), false);
+            // T258 — 프리팹에 **«Disabled» 덮개 둘**이 들어 있다(크림색 알파 0.70 · 439×284 = 상자 폭의 절반쯤). 데모에서 «잠긴 자리» 를
+            //   흐리게 보이려고 둔 조각이라 우리 화면에는 뜻이 없는데 여태 아무도 안 껐다. 일일 판에서는 눈에 안 띄는 자리에 있었고,
+            //   **업적 판(줄 17 · 목록이 트랙 자리까지 늘었다)에서 드러났다** — `screens/15b_quest_ach.png` 의 «아래 두 줄을 덮은
+            //   반투명 사각형» 이 그것이다(실측 화면 x29.6~67.5% · y64.6~75.3%). §5 는 **이름표 없는 조각을 못 재므로** 표 점수는 10.0 이었다.
+            //   ⚠ 이름으로 **전부** 끈다(`UiKit.Hide` 는 첫 하나만 찾는다) · 줄을 복제하기 **전에** 끄므로 복제본도 꺼진 채로 태어난다.
+            foreach (var dis in root.GetComponentsInChildren<Transform>(true)) if (dis.name == "Disabled") dis.gameObject.SetActive(false);
             UiKit.Hide(root, "Button_Close_01");
             var tc = UiKit.Text(ov.Root, "탭하여 닫기", TextSize.Body, Palette.White, TextAnchor.MiddleCenter, false, true);
             tc.name = "TapToClose"; tc.fontStyle = FontStyles.Bold; UiKit.Pct(tc.rectTransform, Layout.BookClose);
@@ -382,6 +388,12 @@ namespace KkomaKnight.Game
             for (int i = 0; i < want; i++)
             {
                 var frame = (RectTransform)content.GetChild(i); frame.name = RowName + i; frame.gameObject.SetActive(true);
+                // T258 — 프리팹 데모 줄 여덟 중 **둘(7·8번)에 «Disabled» 덮개**가 달려 있다(크림색 알파 0.70 · 439×284).
+                //   데모에서 «잠긴 줄» 을 흐리게 보이려고 둔 조각이라 우리 화면에는 뜻이 없는데, 여태 아무도 안 껐다.
+                //   일일 판(줄 8)에서는 그 두 줄이 목록 밖으로 밀려 안 보였고, **업적 판(줄 17 · 목록이 위로 늘었다)에서 드러났다**
+                //   — `screens/15b_quest_ach.png` 의 «아래 두 줄을 덮은 반투명 사각형» 이 이것이다(실측 x29.6~67.5% · y64.6~75.3%).
+                //   판을 안 가리고 **모든 줄에서** 끈다: 일일 판에도 같은 덮개가 살아 있었고 보이지 않았을 뿐이다.
+                UiKit.Hide(frame, "Disabled");
                 var parts = _qAch ? AchRow(app, frame, i) : QuestRow(frame, i, ov);
                 if (i == 0) { row1 = frame; medal1 = parts.Medal; title1 = parts.Title; bar1 = parts.Bar; go1 = parts.Go; } else if (i == 1) row2 = frame;
             }
