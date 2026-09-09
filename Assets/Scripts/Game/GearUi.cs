@@ -40,11 +40,14 @@ namespace KkomaKnight.Game
             var t = UiKit.SetText(frameOrCell, "Text_Level", g != null && g.Plus > 0 ? "+" + g.Plus : "");
             if (t == null) return;
             t.horizontalAlignment = HorizontalAlignmentOptions.Right;
-            // T310 회차 3 — 남은 어긋남 하나는 **글자 크기**였다(런 783 실측: 인벤 40 ↔ 슬롯 32).
-            //   두 조각이 서로 다른 <c>fontSizeMax</c>(28 ↔ 32)를 들고 오고 자동 크기가 그 위에서 각자 답을 낸다.
-            //   ⇒ 크기의 **위아래 문턱을 여기서 같게** 준다: 위는 본문 하한(40 · 인벤이 실제로 그리던 크기) · 아래는 자동 축소 바닥(32).
-            //   자동 크기를 끄지 않는 까닭은 «+12» 처럼 긴 글자다 — 끄면 칸을 넘고, 문턱만 맞추면 같은 글자에 같은 크기가 나온다.
-            t.enableAutoSizing = true; t.fontSizeMin = TextSize.BestFitMin; t.fontSizeMax = TextSize.Body;
+            // T310 회차 3·4 — 남은 어긋남 하나는 **글자 크기**였다(런 783·795 실측: 인벤 **40** ↔ 슬롯 **32**).
+            //   회차 3 은 «두 조각의 자동 크기 문턱이 다르다»(`m_fontSizeMax` 28 ↔ 32)고 보고 **문턱을 같게** 줬는데(min 32 · max 40)
+            //   런 795 에서 값이 **한 자도 안 움직였다**(여전히 40 ↔ 32). 곧 갈림은 문턱이 아니라 **자동 크기가 각 칸에 맞춰 스스로 정하는 답**이다 —
+            //   두 조각의 글자 띠가 서로 다르고(148.98×46.37 ↔ 160.45×50) 슬롯은 배율(`FitScale` ≈ 0.8)까지 받는다.
+            //   ⇒ **맞춤을 끄고 크기를 못 박는다.** «같게 그린다» 를 맞춤 알고리즘에 맡기는 한 두 칸은 계속 각자 답을 낸다.
+            //   값은 인벤이 실제로 그리던 크기(`TextSize.Body` 40)다 — 주인이 정본으로 지목한 쪽이고 새 수가 아니다.
+            //   넘칠 걱정은 셈으로 닫았다: «+12» 도 40 에서 ≈72px 라 좁은 쪽 띠(148.98)의 절반이다.
+            t.enableAutoSizing = false; t.fontSize = TextSize.Body;
         }
         /// <summary>
         /// 등급 탭(<see cref="Layout.GdBadge"/>)의 <b>세로</b>에만 더하는 여유(px · T214) — 리본 글자가 제목 60 이라 칸이 <see cref="TextSize.BoxHeight"/>(84px) 는 돼야 하는데
