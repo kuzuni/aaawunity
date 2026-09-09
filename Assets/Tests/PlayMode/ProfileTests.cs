@@ -16,7 +16,11 @@ namespace KkomaKnight.Tests.Play
     /// 고른 테두리 색이 세이브에 남아 탑바 조각이 그 색으로 선다.
     /// ⓐ 아바타 칸에 버튼이 붙어 있다(조각에는 버튼이 없어 <see cref="UiKit.Clickable"/> 이 붙인다 — 결정 303 의 함정)
     /// ⓑ 팝업 = <c>ui.profileAvatar</c> 조각 · 칸 다섯(<c>Avatar:&lt;색&gt;</c>) · 영문 «Avatar»·«Choose» 0
-    /// ⓒ 다른 색을 고르고 «선택» 하면 <see cref="SaveData.ProfileColor"/> 가 바뀌고 탑바가 그 조각으로 다시 선다 · 빨간 줄 0.
+    /// ⓒ 다른 <b>초상 아이콘</b>을 고르고 «선택» 하면 <see cref="SaveData.ProfileIcon"/> 가 바뀌고 탑바가 그 초상으로 다시 선다 · 빨간 줄 0.
+    /// <para>
+    /// ⚠ T262 ⓐ 뒤로 이 자의 계약이 뒤집혔다 — 아바타 자리에 <see cref="HeroView"/> 가 <b>없어야</b> 한다(주인 «플레이어 이미지 말고»).
+    /// 옛 계약(«초상(HeroView)은 그대로 그 안에»)을 지운 줄은 <b>새 줄 바로 옆에 남아 서로를 부정하고 있었다</b> — 라이선스가 풀린 첫 완주 런에서 그대로 빨개졌을 자리다 — <b>검수 Q 가 먼저 정적으로 짚었고</b>(결정 804) 임자가 지웠다(결정 805).
+    /// </para>
     /// </summary>
     public class ProfileTests
     {
@@ -95,7 +99,6 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(UiKit.Find(avatar2, Profile.FaceName), "탑바에 초상 아이콘이 선다");
             Assert.AreEqual(want, Profile.CurrentIcon(_app.Save), "그 초상이 고른 것이다");
             Assert.IsNull(avatar2.GetComponentInChildren<HeroView>(true), "고른 뒤에도 HeroView 는 안 돌아온다");
-            Assert.IsNotNull(avatar2.GetComponentInChildren<HeroView>(true), "초상(HeroView)은 그대로 그 안에");
 
             _log.AssertNoRed("T96-profile 아바타 고르기");
             yield return Shutdown();
