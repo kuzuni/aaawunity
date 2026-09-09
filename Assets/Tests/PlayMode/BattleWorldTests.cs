@@ -380,12 +380,20 @@ namespace KkomaKnight.Tests.Play
                 Assert.Greater(axe.Target.Hp, 0, "이 갈래는 «표적이 살아 있는» 판이라야 성립한다(자가 세운 표적이라 전투 진행과 무관하다)");
                 Assert.IsFalse(double.IsPositiveInfinity(world.ProjLimit(axe)),
                     "표적이 살아 있는 유도형은 «맞는 자리» 에 서야 한다 — 이 상한까지 풀면 도끼가 표적을 지나쳐 날아간 뒤에 맞는다(T171 이 건드리지 않는 자리)");
-                axe.Target = null;   // 표적이 이미 사라진 상태(엔진이 아직 못 지운 프레임)
+                // ⚠ T312-proj — **그림을 먼저 세우고 그 다음에 표적을 지운다.** 순서를 뒤집으면 자가 성립하지 않는다:
+                //   엔진은 «표적이 없는 유도형» 을 다음 걸음에 곧바로 목록에서 지우는데(`Battle.StepProjectiles` · `pr.Target == null → done`),
+                //   T312 회차 2 부터는 그 걸음이 **킬 연출로 보류된 프레임에도** 돈다(`BattleScreen`: `if (HoldEngine) G.StepProjectiles(_acc)`).
+                //   그래서 표적을 먼저 지우고 목록에 넣으면 **표시 층이 그림을 세우기 전에 사라질 수 있고**, 그러면 «그림이 없다» 로 빨개진다.
+                //   ⚠ **이것은 «가끔» 이다 — 그래서 더 나쁘다**: 그 2 프레임 안에 엔진 걸음이 실제로 도는지는 프레임 길이와 킬 연출 여부에 달렸다.
+                //     런 810 은 초록이었고(그 런의 빨강은 OddsPopup 하나뿐) 815·816 에서 빨갰다 — **같은 코드가 런마다 다른 답을 냈다.**
+                //   **엔진이 옳고 자의 전제가 낡았다** — 이 자가 재려는 것은 «표시 층의 살림(만들고 지운다)» 이지 «엔진이 언제 지우나» 가 아니다.
+                //   순서를 뒤집으면 표적이 살아 있어(Hp 1e9 · 4000 밖) 엔진이 지울 까닭이 없으므로 **그 경주 자체가 사라진다.**
+                G.Projs.Add(axe); yield return Frames(2);
+                Assert.IsNotNull(world.ProjGo(axe), "표시 층이 도끼 그림을 세워야 시험이 성립한다");
+                axe.Target = null;   // 이제 표적이 사라진다(엔진이 아직 못 지운 프레임)
                 Assert.IsTrue(double.IsPositiveInfinity(world.ProjLimit(axe)),
                     "표적이 사라진 유도형은 «엔진 x» 에 묶이면 안 된다 — 그러면 킬 연출 동안 공중에 선다(T171 3항)");
                 // 누수 0(T171 4항 ⓓ) — 표시 층이 만든 그림·좌표는 엔진 목록에서 빠지면 같이 사라져야 한다.
-                G.Projs.Add(axe); yield return Frames(2);
-                Assert.IsNotNull(world.ProjGo(axe), "표시 층이 도끼 그림을 세워야 시험이 성립한다");
                 G.Projs.Remove(axe); yield return Frames(2);
                 Assert.IsNull(world.ProjGo(axe), "사라진 도끼의 그림이 남으면 안 된다(누수 0 · T171 4항 ⓓ)");
             }
