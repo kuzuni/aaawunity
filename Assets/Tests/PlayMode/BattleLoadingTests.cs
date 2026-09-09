@@ -75,6 +75,10 @@ namespace KkomaKnight.Tests.Play
             float t0 = Time.realtimeSinceStartup;
             while (_app.BattleLoading != null && Time.realtimeSinceStartup - t0 < 5f) yield return null;
             Assert.IsNull(_app.BattleLoading, "전투가 선 뒤에는 로딩이 내려가야 한다(5초 안)");
+            // ⚠ 런 889 빨강(«Expected: null / But was: <Transform>» · 워커 B 가 결정 1008 에 짚어 뒀다) — `HideBattleLoading` 의 `_battleLoading = null` 은
+            //   즉시지만 `LoadingScreen.Hide` 의 `Object.Destroy` 는 **프레임 끝까지** 미뤄진다. 위 while 이 그 프레임에 빠져나오므로 같은 프레임에서
+            //   찾으면 «아직 있다». 한 프레임 넘겨서 잰다 — `IsTrue(x == null)`(가짜 null)로 바꾸면 «있는데 없다» 를 통과시키므로 그 길은 안 쓴다(T11).
+            yield return null;
             Assert.IsNull(UiKit.Find(_app.Frame, LoadingScreen.Key), "조각도 파괴됐다(전투 화면이 선 뒤에는 없다 · 절 2항)");
             Assert.AreEqual("battle", _app.Current.Name, "그 뒤에도 전투 화면이다");
             _log.AssertNoRed("전투 입장 로딩");

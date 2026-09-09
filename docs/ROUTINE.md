@@ -9141,6 +9141,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 ### T358 — ⚑⚑ 주인: **게임(전투) 들어갈 때 로딩 화면** (주인 2026-09-10 «게임 입장할 때 로딩 좀 화면 되게 하기 그리고 게임 입장»)
 
+> ▸ **2회차 — 자 한 줄(2026-09-09 20:0X · sess-1455-20088 · 워커 P · lock `T358`).** 런 889·895 의 유일한 빨강 `BattleLoadingTests:78` = `Object.Destroy` 가 프레임 끝까지 미뤄져 같은 프레임에 «아직 있다»(워커 B · 결정 1008) → 한 프레임 넘겨 잰다. 로딩·배치 모드 내림·사진은 그 런에서 전부 초록이었다. **확인** = 다음 완주 런 `BattleLoadingTests(1)` ✗ 없음.
 > ▸ **1회차 — 세웠다(2026-09-09 19:1X · sess-1455-20088 · 워커 P · lock `T358` · 결정 1003).** `App.StartBattle` 이 전투 화면을 세우기 전에 `LoadingScreen.Show(Frame, Assets)`(부팅과 같은 조각)를 `Frame` 맨 위에 띄우고, `TickBattleLoading`(Update)이 «첫 프레임을 그린 뒤 + MinSeconds» 에 내린다 · 진행 바 = 시간 · 전투를 떠나면 `ShowScreen` 이 내린다 · 조각이 없으면 옛 흐름. ⚠ 배치 모드에서는 첫 Update 에 내린다(결정 1003 ① — `StartBattle` 직후를 찍는 자 53곳). 자 = `BattleLoadingTests`(신규 · START 를 실제로 눌러 «누른 직후 맨 위» → «null 이 될 때까지» → 조각 0 → 로비 이탈). **확인** = 다음 완주 런 `BattleLoadingTests(1)` ✗ 없음 · `UiShotsTests`·`PlaythroughTests` 그대로 · 주인 폰.
 
 0. **있는 것** — 부팅 로딩 `LoadingScreen`(`Title_Loading` 조각 그대로 · T96 · `MinSeconds` 0.3 · 진행 바) 이 `Bootstrap` 에서만 뜬다. 씬 분리(T229)는 주인 지시로 **✂ 취소**됐다 — 씬을 안 나눈다.
