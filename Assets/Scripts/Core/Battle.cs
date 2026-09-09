@@ -30,6 +30,24 @@ namespace KkomaKnight.Core
         public bool Dead, Cleared;
         public PendingDecision Pending;
         public int PendingLevelUps;
+        /// <summary>
+        /// T368 — 화면이 «지금은 레벨업 창을 못 연다»(구슬 흡수·킬 연출 중)고 말하는 자리. 서 있는 동안
+        /// <see cref="PendingLevelUps"/> 는 <b>줄에 그대로 쌓이기만 하고 <see cref="Tick"/> 은 평소대로 돈다</b> — 걷기·전투가 안 멈춘다.
+        /// <para>
+        /// <b>왜 이 자리인가</b>(주인 2026-09-10 «화폐 흡수돼서 경험치 올라서 레벨업 되기 전까지는 행동들 멈추면 안 됨 …
+        /// 특전 화면 뜰 때 멈춰야 함») — 멈춤은 <c>Pending</c> 에서 나는데, 종전에는 레벨을 딴 <b>바로 다음 틱</b>에 엔진이
+        /// <see cref="OpenLevelUp"/> 를 불러 <c>Pending</c> 을 세워 놓고, 화면은 흡수가 끝날 때까지 창을 안 열었다.
+        /// 그 사이(흡수 구간 내내) 엔진이 얼어 캐릭터가 <b>제자리에 선다</b>. 이 값은 <b>«엔진을 Pending 에서 돌린다»가 아니라
+        /// «아직 Pending 을 세우지 않는다»</b> 다 — 그래서 «엔진은 <c>Pending</c> 에서 선다»는 규약(T2)은 한 자도 안 바뀐다.
+        /// </para>
+        /// <para>
+        /// <b>원본이 그렇다</b>(aaaw <c>index.html</c>): 레벨업은 <c>G.pendingLevels</c> 에 쌓이기만 하고 <c>update()</c> 는 계속 돌며,
+        /// 멈추는 것은 창이 실제로 열려 <c>G.paused = true</c> 가 되는 그 순간뿐이다(<c>openOverlay</c>). 원본엔 흡수 대기 자체가 없어
+        /// «창이 아직 안 떴는데 엔진만 멈춘» 구간이 <b>존재하지 않는다</b> — 우리는 T85 로 그 구간을 만들었고 이것이 그 구간을 되돌린다.
+        /// </para>
+        /// ⚠ 기본값 <c>false</c> 이고 <b>화면만</b> 세운다 — 헤드리스(<c>RunToEnd</c>)·골든·시뮬 대조는 이 값을 안 건드리므로 결과가 같다.
+        /// </summary>
+        public bool HoldLevelUp;
         /// <summary>천사 축복 등 «특전이 아닌 획득물» 표시용.</summary>
         public readonly List<string> Blessings = new List<string>();
         int _enemyId;
@@ -741,7 +759,7 @@ namespace KkomaKnight.Core
                 if (!n.Done && (n.Type == NodeType.Rest || n.Type == NodeType.Devil || n.Type == NodeType.Angel) && P.WorldX > n.X - EngineConst.EventTriggerDist)
                 {
                     HandleEvent(n);
-                    if (Pending == null && PendingLevelUps > 0) { PendingLevelUps--; OpenLevelUp(); }
+                    if (Pending == null && PendingLevelUps > 0 && !HoldLevelUp) { PendingLevelUps--; OpenLevelUp(); }   // T368 — 화면이 «아직 못 연다» 면 줄에 둔 채 계속 돈다
                     return true;
                 }
             }
@@ -803,7 +821,7 @@ namespace KkomaKnight.Core
             }
             if (Dead) return true;
             StepProjectiles(dt);
-            if (Pending == null && PendingLevelUps > 0) { PendingLevelUps--; OpenLevelUp(); }
+            if (Pending == null && PendingLevelUps > 0 && !HoldLevelUp) { PendingLevelUps--; OpenLevelUp(); }   // T368 — 화면이 «아직 못 연다» 면 줄에 둔 채 계속 돈다
             return true;
         }
 

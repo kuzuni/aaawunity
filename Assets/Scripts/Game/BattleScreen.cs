@@ -65,6 +65,7 @@ namespace KkomaKnight.Game
         double _goldRate, _expRate;          // 카운트업 속도(초당) — 목표가 늘면 다시 계산해 CountUpSec 안에 따라잡는다
         double _flyGold, _flyExp;            // 아직 날아가는 중인 구슬이 들고 있는 값
         float _overWait;                     // 사망·클리어에서 흡수를 기다린 시간(AbsorbMaxWaitSec 넘으면 강제 완료)
+        float _lvUpWait;                     // T368 — 레벨업(또는 이벤트) 결정이 «떠야 하는데 아직 못 뜬» 채 기다린 시간
         int _questKills;                     // T257 4항 — 퀘스트에 이미 넘긴 처치 수(이 판) · 판이 끝날 때 «G.Kills - 이것» 만 넘긴다
         const float CountUpSec = 0.2f, AbsorbMaxWaitSec = 0.6f, OrbSizePx = 64f;
         const int OrbMinCount = 3, OrbBossCount = 8;
@@ -451,6 +452,17 @@ namespace KkomaKnight.Game
             float now = Time.realtimeSinceStartup; float gap = _lastReal > 0 ? now - _lastReal - dt : 0; _lastReal = now;
             int maxTicks = 8; bool catchUp = false;
             if (gap > 1f && !App.Overlay.IsOpen && !_paused && !G.Over) { float add = Mathf.Min(gap, CatchUpMaxSec); _acc += add * _speed; maxTicks += Mathf.CeilToInt(add * _speed / (float)EngineConst.Dt); catchUp = true; _world.Silent = true; }
+            // T368(주인 2026-09-10 «화폐 흡수돼서 경험치 올라서 레벨업 되기 전까지는 행동들 멈추면 안 됨 · 걷는 거를 멈춘다던지 전투를 멈춘다던지 그런 거 ㄴㄴ ·
+            //   정상적으로 하다가 흡수돼서 레벨업 되고 나서 특전 화면 뜰 때 멈춰야 함») — 흡수·킬 연출 동안 «레벨업 창을 아직 열지 마라» 를 엔진에 말한다.
+            //   그러면 레벨업이 `PendingLevelUps` 줄에 쌓이기만 하고 `Pending` 은 안 서므로 **엔진이 평소대로 돌아 걷기·전투가 안 멈춘다**.
+            //   ⚠ «Pending 인데도 돌린다» 가 아니다 — «아직 Pending 을 안 세운다» 다. 엔진이 `Pending` 에서 서는 규약(T2)은 그대로다.
+            //   원본(aaaw index.html)이 바로 이 꼴이다: `G.pendingLevels` 는 쌓이기만 하고 `update()` 는 돌며, 멈추는 것은 창이 실제로 열리는 순간(`G.paused = true`)뿐이다.
+            // ⚠ **상한을 둔다** — `Absorbing` 은 «엔진이 이미 준 값이 화면에 아직 안 올라온 구간» 도 참이라(그 프로퍼티 끝줄),
+            //   쉬지 않고 잡는 구간에서는 계속 참일 수 있고 그러면 특전 창이 영영 안 열려 **주는 것을 안 주는** 회귀가 된다.
+            //   기다린 시간이 `AbsorbMaxWaitSec` 를 넘으면 흡수가 남았어도 연다(바로 아래 «판 끝» 이 쓰는 그 상한과 같은 값·같은 까닭).
+            if ((G.PendingLevelUps > 0 || G.Pending != null) && !App.Overlay.IsOpen) _lvUpWait += dt; else _lvUpWait = 0;
+            bool showNow = _lvUpWait >= AbsorbMaxWaitSec;
+            G.HoldLevelUp = (_world.Busy || Absorbing) && !showNow;
             if (!App.Overlay.IsOpen && !_paused && !G.Over)
             {
                 _acc += dt * _speed;
@@ -458,7 +470,7 @@ namespace KkomaKnight.Game
                 while (_acc >= EngineConst.Dt && guard++ < maxTicks)
                 {
                     // 팝업(레벨업·이벤트)은 남은 타격 연출(칼이 내려오는 순간)이 끝난 뒤 연다 — 그 동안 엔진 시간은 멈춘 채 애니만 돈다
-                    if (G.Pending != null) { if (!_world.Busy && !Absorbing) OpenPending(); _acc = 0; break; }
+                    if (G.Pending != null) { if ((!_world.Busy && !Absorbing) || showNow) OpenPending(); _acc = 0; break; }   // T368 — 상한을 넘으면 흡수가 남았어도 연다(안 그러면 영영 안 열릴 수 있다)
                     // 킬 연출(칼 내려옴 → 적 사망 → 플레이어 공격 모션 끝) 동안 엔진 틱 보류(T50) — 틱 순서 불변 · 풀리면 격차 없이 원래 걷기 속도로 출발.
                     // ⚑ T312 회차 2(주인 «도끼가 적에 닿았는데 바로 안 없어지고 데미지도 늦다») — **보류 중에도 «투사체만» 은 나아가고 맞는다.**
                     //   여태는 보류가 엔진 전체를 세웠는데 투사체 **그림**은 T86 ⓐ 로 계속 날아가서, 도끼가 맞는 자리(`ProjLimit`)에 **닿은 채로 서서**
@@ -472,10 +484,11 @@ namespace KkomaKnight.Game
                     if (_world.HoldEngine) { G.StepProjectiles(_acc); _acc = 0; break; }
                     _world.BeforeTick(); G.Tick(); _world.AfterTick();
                     _acc -= EngineConst.Dt;
-                    if (G.Pending != null) { if (!_world.Busy && !Absorbing) OpenPending(); _acc = 0; break; }
+                    if (G.Pending != null) { if ((!_world.Busy && !Absorbing) || showNow) OpenPending(); _acc = 0; break; }   // T368 — 상한을 넘으면 흡수가 남았어도 연다(안 그러면 영영 안 열릴 수 있다)
                     if (G.Over) break;
                 }
-                if (G.Pending == null && G.PendingLevelUps > 0 && !G.Over) { /* 엔진이 다음 틱에 스스로 연다 */ }
+                // 엔진이 다음 틱에 스스로 연다 — 단 T368 의 `HoldLevelUp` 이 서 있는 동안은 줄에 둔 채 계속 돈다(그것이 «안 멈춤» 이다).
+                if (G.Pending == null && G.PendingLevelUps > 0 && !G.Over) { }
             }
             if (catchUp) { _world.Silent = false; _acc = Math.Min(_acc, EngineConst.Dt); }
             foreach (var ev in G.Events) _world.Handle(ev);   // AfterTick 이 틱마다 비우므로 보통 비어 있다
