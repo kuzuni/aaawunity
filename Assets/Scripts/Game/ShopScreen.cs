@@ -369,6 +369,15 @@ namespace KkomaKnight.Game
         // ───────────────────────── 상자 카드 ─────────────────────────
         /// <summary>상자 카드 3장의 그라데이션 이름(레퍼런스 10 실측 · <see cref="GradientPalette"/> · 카탈로그 <c>col.grad.cardChest*</c>) — 문자열을 두 곳에 안 박는다(§1).</summary>
         public const string ChestGradBig = "cardChestLegend", ChestGradLeft = "cardChestRare", ChestGradRight = "cardChestEpic";
+        /// <summary>
+        /// 전설 상자 카드 안 무늬의 짙기(T308 ⓑ) — 화면 전체 무늬(<see cref="UiKit.PatternAlpha"/> = 3/255)보다 <b>진하다</b>.
+        /// <para><b>왜 공용 값을 안 쓰나</b>: 3/255 는 «폰 한 화면을 덮는 넓이» 에서 결이 느껴지라고 고른 값이고, 카드 한 칸(324×… px)에서는
+        /// 눈에 아무것도 안 보인다 — 주인 지시가 «패턴 효과 <b>있게</b> 하기» 이므로 안 보이면 지시를 안 지킨 것이다.
+        /// 그래서 카드 전용 값을 여기 하나 두고 까닭을 적는다(밸런스 수치가 아니라 보이기 값 · 결정 883). 되돌리려면 이 상수.</para>
+        /// </summary>
+        public const float CardPatternAlpha = 22f / 255f;
+        /// <summary>그 무늬가 카드 «테두리 안» 에만 깔리게 하는 안쪽 여백(px) — 조각 테두리 위로 무늬가 올라타면 카드가 흐릿해 보인다.</summary>
+        public const float CardPatternInset = 6f;
         /// <summary>대형 카드가 되는 상자 = 가장 비싼 것(<c>gacha.json</c> 순서와 무관) — <see cref="Build"/> 와 테스트가 같은 표를 본다.</summary>
         public static GachaBox BigBox(GameData d)
         {
@@ -492,8 +501,13 @@ namespace KkomaKnight.Game
             InfoButton(card, new Layout.R(84, 2, 12, 9), box);
             Pill(card, new Layout.R(6, 12.5f, 88, 14), RatesText(box));
             var chest = UiKit.Icon(card, "Chest", "chest." + box.Key); UiKit.Pct(chest.rectTransform, 22, 28, 56, 37);
-            // T72 ② 상자 카드 그림 뒤 빛살(작은 칸이라 Effect_Light_02)
-            _lightPlan.Add((card, chest.rectTransform, UiKit.LightKeySmall)); _lightCells.Add(card);
+            // T308 ⓐ(주인 2026-09-09 09:1X «희귀 상자랑 전설 상자는 카드에서 라이트 이펙트 빼기») —
+            //   여기 있던 T72 ② 빛살(`_lightPlan.Add(… LightKeySmall)`)을 **없앴다**. 조각을 안 세우므로 `UpdateLightSpin` 대상에서도 빠진다.
+            //   큰 카드(신화)는 주인이 말한 적 없어 **그대로** 둔다.
+            // T308 ⓑ(«전설 상자 거는 패턴 효과 있게 하기») — 전설 카드에만 화면 배경과 같은 무늬(RawImage `uvRect` 트윈 · T72 ①)를 카드 «안» 에 깐다.
+            //   ⚠ 색은 **카드 색에서 온다**(`GradientPalette.Of(gradName).Top`) — 등급색을 코드에 안 박는다(§1).
+            if (box.Key == GachaKeys.BoxLegend)
+                UiKit.PatternBg(card, Palette.A(GradientPalette.Of(gradName).Top, CardPatternAlpha), UiKit.PatternTileSeconds, 1, UiKit.PatternTilePx, CardPatternInset);
             w.Pills.Add(Pill(card, new Layout.R(6, 67, 88, 14), ""));
             // 광고 버튼(파랑 · 클래퍼) = 일일 무료 보급(gacha.json dailyGem · 하루 1회) — 받을 수 있으면 빨간 점
             // T255 3항 — 작은 카드는 폭이 324px 뿐이라 셋을 같은 줄에 세울 때 «글자를 가진 칸» 을 먼저 지켰다:
@@ -535,8 +549,7 @@ namespace KkomaKnight.Game
             if (im2 != null)
             {
                 im2.preserveAspect = true; UiKit.Pct(im2.rectTransform, 14, 20, 72, 44);
-                // T72 ② 상점 상품 아이콘 뒤 빛살 — 아이콘은 조각(ListItem_ShopItem)의 바로 아래 자식이라 «아이콘 앞 형제» 가 곧 «그림 뒤»
-                _lightPlan.Add(((RectTransform)im2.rectTransform.parent, im2.rectTransform, UiKit.LightKeySmall)); _lightCells.Add(crt);
+                // T308 ⓒ(주인 «다이아 골드 카드도 라이트 이펙트 빼기») — 여기 있던 T72 ② 빛살을 **없앴다**(조각도 안 세운다).
             }
             var nm = UiKit.SetText(crt, "Text_Limit", name, Palette.White, TextSize.Body); if (nm != null) { UiKit.Pct(nm.rectTransform, 4, 66, 92, 11); nm.enableAutoSizing = true; nm.fontSizeMin = TextSize.BestFitMin; nm.fontSizeMax = TextSize.Body; }
             var btns = new List<Button>();
