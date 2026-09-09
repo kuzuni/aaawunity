@@ -6656,7 +6656,16 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 ### T290 — ⚑⚑⚑ 주인: **부위별 «레시피» 아이템 + 슬롯 강화에 레시피 요구**(1강 2개 · 강화마다 +2) (주인 2026-09-09 05:5X · 이 레포 전용 표 1개 신규)
 
-> **🔄 2회차 push (sess-0303-27371 · 워커 I) — 1·2·3항이 다 섰다. 켰다(`perLevel` 0 → 2). 남은 것은 매핑 셋뿐이고 그 둘은 남의 lock 안이다.**
+> **⬜ 3회차 · lock 반납 (sess-0303-27371 · 워커 I · 08:2X · 결정 851) — 확인이 둘 다 왔다. 남은 것은 «지나는 김에 한 줄» 둘뿐이고 그 둘은 남의 lock 안이다.**
+> **확인 끝**: 런 **690**(`4ff9923f` · 잡 success)의 `[CI명부]` 에 `RecipeTests(10)`·`GearUiRecipeTests(2)` 가 ✗ 없이 있고 `[CI실패] 요약 0건` — **초록이 아니라 이름으로** 확인했다(T278). `screens` **07** 도 잘라 눈으로 봤다: 비용 줄이 «🪙 11.5K/600(초록) · 📜 0/2(0 이 빨강)» 두 칸으로 뜨고 잘림·겹침이 없다.
+> **매핑 셋 중 하나(`Mailbox`)를 하며 이미 새고 있던 둘을 잡았다** — 그 함수의 «모르면 금화» 가 **열쇠 3종(T255)·부활권(T254)** 까지 금화로 그리고 있었다(셋 다 `Mail.CanPay` 를 통과하므로 우편이 나를 수 있는 이름이다). 줄(`IconOf`)·칸(`RewardIcon`) 두 벌을 `Mailbox.Icon` 한 곳으로 모으고, 자를 «`CanPay` 가 참인 이름은 전부 제 그림이 있다» 로 적었다(`MailboxTests` 신규 1) — 두 함수가 같이 늘어야 한다는 것을 자가 말하게 했다.
+> **⚑ 남은 것 = 한 줄짜리 둘** (이 절을 위해 lock 을 다시 잡을 필요 없다 · 그 파일을 이미 쥔 사람이 지나는 김에 넣는 것이 옳다):
+> - `Game/LobbyPopups.cs` 의 `RewardIcon`(≈:1357 · T258·T292 가 쥔다)
+> - `Game/EventsScreen.cs` 의 보상 아이콘 매핑(T291 이 제 목록에 이미 적어 뒀다)
+> 둘 다 넣을 줄은 같다 — `if (Recipes.IsRecipe(item)) return Recipes.Icon(Recipes.PartOf(item));`
+> **안 넣으면 레시피 보상이 «다이아» 그림으로 뜬다**(`LobbyPopups.RewardIcon` 의 떨어지는 갈래가 `ui.gemRed` 다) — 빨간 줄도 자도 안 나는 종류의 고장이다.
+>
+> **▸ 2회차 push (sess-0303-27371 · 워커 I) — 1·2·3항이 다 섰다. 켰다(`perLevel` 0 → 2). 남은 것은 매핑 셋뿐이고 그 둘은 남의 lock 안이다.**
 > **켠 근거**: T291 1회차가 «주는 곳» 을 세웠다 — 원정 층 보상이 `DungeonSweep.GrantClear` → `Recipes.Add` 로 **실제로 세이브에 담는다**(자 `RecipeTests.GivingSideExists_SoTheCostIsReachable` 가 그것을 매번 돌려 본다 · 「T291 이 머지됐다」 는 커밋의 사실이지 코드의 사실이 아니라서).
 > **화면**(3항): 비용 줄이 두 칸 — 골드 · `[ui.iconScroll] 보유/필요`(모자라면 빨강 · 골드와 같은 색 규칙). **줄(`Layout.GdCost`)·글자 크기·골드 칸 폭 40% 는 그대로**이고 옮긴 것은 골드 묶음의 시작 x(30 → 6)뿐이라 **표 ④ «비용줄» 은 한 자도 안 고쳤다**(`LayoutSpecTests` 초록). `need 0`(표 없음·`perLevel 0`)이면 **옛 자리 그대로 한 칸**만 그린다.
 > **아이콘**(2항): **`ui.iconScroll`** — 새로 고르지 않았다. T43 이 레퍼런스의 «무기 도안·갑옷 도안…» 여섯을 이미 그 한 그림으로 그리고 있다(`EventsScreen` 던전 보상 목록). 부위는 그림이 아니라 **이름**이 가른다(`Recipes.Name`). 카탈로그에 이미 있는 키라 등재할 것이 없었다.
@@ -6664,7 +6673,7 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > **남은 것 = 매핑 셋**(2항) — `LobbyPopups.cs:1348` 은 T258, `EventsScreen.cs:939` 는 T291 의 살아 있는 lock 안이라 **기다린다**. `Mailbox.cs:225` 만 비어 있다. 「이 김에 하나로 모은다」 는 셋이 다 열렸을 때 할 일이다.
 > **확인** = 다음 완주 런의 `GearUiRecipeTests` 2 + `screens` **07**(비용 줄 두 칸) + 주인 폰. 결정 842.
 >
-> **🔄 1회차 push (sess-0303-27371 · 워커 I) — 1·2항과 3항의 «거래» 는 섰다. 남은 것은 3항의 «화면» 과 2항의 «아이콘».**
+> **▸ 1회차 push (sess-0303-27371 · 워커 I) — 1·2항과 3항의 «거래» 는 섰다. 남은 것은 3항의 «화면» 과 2항의 «아이콘».**
 > 선 것: 표 `recipe.json`(`data.recipe` 등재 · **`perLevel 0`** = 4항이 시킨 순서) · `Core/Recipes.cs` · `SaveData.Recipes`(왕복) · `Mail` 세 갈래(`CanPay`·`Held`·`Pay` — **T291·T292 는 이 길로 준다**: `Mail.Give(s, "recipe.helm", 3)`) · **`GearSystem.SlotUp`/`CanSlotUp`**(골드·레시피를 같이 보고 같이 뺀다 · `GearUi` 두 곳이 그것만 부른다) · `RecipeTests` 9케이스.
 > 남은 것: ⓐ **비용 줄 «보유/필요» 칸**(3항 · `GearUi.CostRow`·`Layout.GdCost` 를 둘로 · 표 ④ 가 흔들리면 표를 고치고 결정에 적는다) · ⓑ **아이콘 고르기 + `catalog.json` 등재 + `Recipes.Icon`**(2항 · **고르기 전에 키 이름을 먼저 적지 마라** — `check_catalog_keys` 가 문다) · ⓒ **매핑 셋**(`LobbyPopups.cs:1348` 은 T258 lock 안이라 그 자리는 기다린다) · ⓓ **`perLevel` 0 → 2** 는 **T291 이 들어오는 커밋**이 한다(4항).
 > ⚠ 지금 상태에서 **화면·수치는 한 자도 안 바뀐다**(`perLevel 0` = 레시피가 안 든다) — 그러니 이 회차를 «PlayMode 로 확인» 할 자리는 없다. 확인은 ⓐ 가 선 뒤 `screens` **07** 이다.

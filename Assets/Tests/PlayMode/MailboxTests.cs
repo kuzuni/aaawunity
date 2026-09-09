@@ -168,5 +168,29 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("우편함(T243 · 아레나 전용)");
             yield return Shutdown();
         }
+        /// <summary>
+        /// T290 — <b>우편이 나를 수 있는 이름은 전부 제 그림이 있어야 한다</b>. <see cref="Mailbox.Icon"/> 의 마지막 줄이 «모르면 금화» 라
+        /// 빠뜨린 이름은 <b>빨간 줄도 자도 안 내고 금화로 그려진다</b> — 사람 눈에만 «금화를 받은 줄 알았는데 열쇠» 로 나타난다.
+        /// <para>실제로 이 자를 세우다 <b>이미 새고 있던 둘</b>을 잡았다: 열쇠 3종(T255)과 부활권(T254).</para>
+        /// ⚠ <c>Core.Mail.CanPay</c> 에 이름을 더하는 사람은 <b>이 목록도 같이</b> 늘려야 한다(그 둘이 곧 «우편이 나르는 것» 의 정의다).
+        /// </summary>
+        [Test]
+        public void EveryMailableRewardHasItsOwnIcon()
+        {
+            var names = new System.Collections.Generic.List<string>
+            {
+                Mail.ItemGem, Mail.ItemPetEgg, Mail.ItemArenaCoin, Mail.ItemRevive,
+                GachaKeys.Blue, GachaKeys.Purple, GachaKeys.Yellow,
+            };
+            foreach (var part in new[] { "weapon", "helm", "armor", "glove", "boot", "neck" }) names.Add(Recipes.Item(part));
+
+            foreach (var n in names)
+            {
+                Assert.IsTrue(Mail.CanPay(n), $"{n} 은 우편이 나를 수 있는 이름이어야 한다(이 자의 전제)");
+                Assert.AreNotEqual("ui.coin", Mailbox.Icon(n), $"{n} 이 금화 그림으로 샌다 — Mailbox.Icon 에 가지를 더해라");
+            }
+            Assert.AreEqual("ui.coin", Mailbox.Icon(Mail.ItemGold), "골드는 금화가 맞다");
+            Assert.AreEqual("ui.coin", Mailbox.Icon("그런 이름 없음"), "모르는 이름은 금화로 떨어진다(우편이 안 뜨는 것보다 낫다)");
+        }
     }
 }

@@ -42,12 +42,8 @@ namespace KkomaKnight.Game
         /// <summary>보상 이름 → 줄 아이콘(카탈로그 키). 모르는 이름이면 코인 — 아이콘 때문에 우편이 안 뜨는 일은 없게.</summary>
         static string IconOf(MailItem m)
         {
-            foreach (var r in m.Rewards)
-            {
-                if (r.Item == Core.Mail.ItemGem) return "ui.gemRed";
-                if (r.Item == Core.Mail.ItemPetEgg) return "pet.egg";
-                if (r.Item == Core.Mail.ItemArenaCoin) return "ui.iconArenaCoin";
-            }
+            // 줄 아이콘은 «금화가 아닌 것» 을 앞세운다 — 골드는 거의 모든 우편에 끼어 있어 그것을 고르면 줄마다 같은 그림이 된다.
+            foreach (var r in m.Rewards) { var ic = Icon(r.Item); if (ic != "ui.coin") return ic; }
             return "ui.coin";
         }
 
@@ -221,12 +217,31 @@ namespace KkomaKnight.Game
             RewardPopup.Show(items, () => Open(app));
         }
 
-        /// <summary>보상 이름 → <b>칸 아이콘</b>(줄 아이콘 <see cref="IconOf"/> 는 우편 하나에 하나지만 칸은 보상마다 하나다).</summary>
-        static string RewardIcon(string item)
+        /// <summary>
+        /// 보상 이름 → <b>칸 아이콘</b>(줄 아이콘 <see cref="IconOf"/> 는 우편 하나에 하나지만 칸은 보상마다 하나다) —
+        /// 둘이 <see cref="Icon"/> 한 곳을 본다(같은 물건이 줄과 칸에서 다르게 생기지 않게).
+        /// </summary>
+        static string RewardIcon(string item) => Icon(item);
+
+        /// <summary>
+        /// 우편이 나를 수 있는 이름 → 그림. <b>덮는 범위는 <see cref="Core.Mail.CanPay"/> 와 같아야 한다</b> —
+        /// 그 함수가 «우편함에 들어올 수 있는 것» 을 정하므로, 여기 없는 이름은 <b>조용히 금화로 그려진다</b>.
+        /// <para>
+        /// T290 에서 레시피를 <c>CanPay</c> 에 더하며 이 자리를 보다가, <b>이미 그렇게 새고 있던 둘</b>을 같이 잡았다 —
+        /// 열쇠 3종(T255)과 부활권(T254)이 우편 칸에서 <b>금화 그림</b>으로 뜨고 있었다(둘 다 <c>CanPay</c> 는 통과한다).
+        /// 아레나 우편이 그것들을 나르는 날 «금화를 받은 줄 알았는데 열쇠» 가 된다.
+        /// </para>
+        /// </summary>
+        public static string Icon(string item)
         {
             if (item == Core.Mail.ItemGem) return "ui.gemRed";
             if (item == Core.Mail.ItemPetEgg) return "pet.egg";
             if (item == Core.Mail.ItemArenaCoin) return "ui.iconArenaCoin";
+            if (item == Core.Mail.ItemRevive) return "ui.iconRevive";                       // T254
+            if (item == GachaKeys.Blue) return "ui.iconKeyBlue";                            // T255 — 세 열쇠
+            if (item == GachaKeys.Purple) return "ui.iconKeyPurple";
+            if (item == GachaKeys.Yellow) return "ui.iconKeyGold";
+            if (Recipes.IsRecipe(item)) return Recipes.Icon(Recipes.PartOf(item));          // T290 — 부위별 레시피(여섯이 같은 그림)
             return "ui.coin";
         }
 
