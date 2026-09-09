@@ -740,7 +740,9 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(want.r, got.r, 0.01f, what + " (R)");
             Assert.AreEqual(want.g, got.g, 0.01f, what + " (G)");
             Assert.AreEqual(want.b, got.b, 0.01f, what + " (B)");
-            Assert.AreEqual(UiKit.GradientCardAlpha, got.a, 0.01f, what + " 세기 = 카드 덧칠(GradientCardAlpha)");
+            // T345(주인 2026-09-10 «티가 안 남») — 특권 카드 넷은 이제 덧칠(0.55)이 아니라 몸통 채우기(GradientCardSolidAlpha · 상자·상품 카드와 같은 세기)다.
+            //   이 자는 특권 카드 루프에서만 불린다(다른 화면의 덧칠 세기는 GradientPaletteTests:114 가 따로 잰다).
+            Assert.AreEqual(UiKit.GradientCardSolidAlpha, got.a, 0.01f, what + " 세기 = 몸통 채우기(GradientCardSolidAlpha · T345 «티가 안 남»)");
             float spread = Mathf.Max(got.r, Mathf.Max(got.g, got.b)) - Mathf.Min(got.r, Mathf.Min(got.g, got.b));
             Assert.Greater(spread, 0.1f, what + " 은 무채색 덧칠이 아니라 계열색이어야 한다(주인 «더 화려하게 색깔»)");
         }

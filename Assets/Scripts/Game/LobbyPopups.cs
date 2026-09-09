@@ -1672,14 +1672,18 @@ namespace KkomaKnight.Game
         /// 카드의 내용(제목 띠·설명·그림·보상·버튼)은 카드의 <b>형제</b> 라 이 두 층 위에 그대로 남는다.
         /// <para>
         /// T116 3단계 ⓑ — 그라데이션은 무채색 덧칠(<see cref="UiKit.Gradient"/>)이 아니라 <b>레퍼런스에서 잰 두 색</b>(<paramref name="gradName"/> · <see cref="GradientPalette"/>)이다.
-        /// 카드 몸통이 제 색(하늘·파랑·자주·주황)으로 살아 있는 자리라 세기는 덧칠(<see cref="UiKit.GradientCardAlpha"/>)이고, 이름이 표에 없으면 카드 바탕색에서 만든다.
+        /// 세기는 처음엔 덧칠(<see cref="UiKit.GradientCardAlpha"/>)이었는데 주인이 «티가 안 난다» 고 해(T345) 몸통 채우기(<see cref="UiKit.GradientCardSolidAlpha"/>)로 올렸다. 이름이 표에 없으면 카드 바탕색에서 만든다.
         /// </para>
         /// </summary>
         static void CardTexture(RectTransform card, string gradName, Color baseColor)
         {
             if (card == null) return;
             UiKit.PatternBg(card, UiKit.PatternTintDark, UiKit.PatternTileSeconds, 0, UiKit.PatternTilePx, CardTextureInset);
-            UiKit.GradientCard(card, gradName, baseColor, CardTextureInset);
+            // T345(주인 2026-09-10 «특권 부분도 그라디언트들 있는데 티가 안 남») — 덧칠(GradientCardAlpha 0.55)이면 카드 바탕색이 두 색을 눌러
+            //   주인이 지목한 쌍(초록→파랑 · 하늘→보라 · 빨강→노랑)이 «있는지 없는지» 가 안 보인다 → 상자 카드(10)·상품 카드(09 · T341)와 같은
+            //   몸통 채우기(GradientCardSolidAlpha · 결정 338). 맨 위 데일리 기프트 카드(GradCard1)도 같은 호출이라 같은 세기로 간다(절 2항 · 결정 966).
+            //   ⚠ 이 세기를 재는 자는 UiTextureTests.AssertGradTint 하나다 — 여기를 되돌리면 그 자가 먼저 운다.
+            UiKit.GradientCard(card, gradName, baseColor, CardTextureInset, alpha: UiKit.GradientCardSolidAlpha);
         }
 
         /// <summary>T72 ② 보상 칸(다이아) 그림 뒤 빛살 예약 — 칸 조각(ItemFrame_01) 안 «Item» 바로 뒤(프레임 안쪽에서만 보인다 · 작은 조각).</summary>

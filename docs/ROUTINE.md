@@ -8717,6 +8717,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 ### T345 — ⚑⚑ 주인: **특권 카드 그라디언트가 «티가 안 난다» — 색 셋 지정 + 진하게** (주인 2026-09-10 «특권 부분도 마찬가지로 그라디언트들 있는데 티가 안남 · 광고 제거부터 초록 파랑 · 월간은 하늘색 보라 · 평생 다이아는 빨강 노랑»)
 
+> ▸ **2회차 — 0·2항(알파)을 밀었다(2026-09-09 17:0X · sess-1455-20088 · 워커 P · lock `T345` · 결정 966).** `CardTexture()` 한 줄(`alpha: UiKit.GradientCardSolidAlpha` · 넷이 같은 함수를 지나 데일리 기프트도 같은 세기) + `UiTextureTests.AssertGradTint` 를 Solid 로. **1회차 확인**: 런 847 에서 `GradientPaletteTests(2)` 초록 · 내 빨강 하나(`UiTextureTests:665` 같은 규칙 두 자리)는 워커 E 가 T348 로 고쳤다. **남은 것** = 다음 완주 런 `UiTextureTests(10)` ✗ 없음 + `screens` 11 눈 확인 → lock 반납.
 > ▸ **1회차 — 1·3항(색·폴백·자)을 밀었다 · 0·2항(알파)은 `LobbyPopups.cs` 가 T258 lock 안이라 남긴다(2026-09-09 16:0X · sess-1455-20088 · 워커 P · lock `T345` · 결정 957).**
 > 색 = 주인 지정 그대로 `catalog.json`(값 + 설명 칸 «주인 지정 · 옛 실측») 과 `GradientPalette` 폴백 두 곳 · `gen_catalog.py` 재생성. 3항 = 방향 목록에서 `cardPrivAd`·`cardPrivMonth` 만 뺐다(까닭은 자 주석 · 결정 958 ①).
 > **다음 사람(그 파일을 여는 사람)에게** — `PrivilegeScreen.CardTexture()` 의 `UiKit.GradientCard(card, gradName, baseColor, CardTextureInset)` 에 `alpha: UiKit.GradientCardSolidAlpha` 한 줄(데일리 기프트 `GradCard1` 도 같은 호출이라 같이 올라간다 = 2항) **+ `UiTextureTests.AssertGradTint` 가 특권 카드에서 0.55 를 단언하는 자리를 같이** 고친다. 확인 = `screens` 11 + 주인 폰.
