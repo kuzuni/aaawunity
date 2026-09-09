@@ -3564,6 +3564,7 @@ python3 tools/check_catalog_keys.py                               # 반대 방�
 tools/check_unity_null.sh                                         # 유니티 가짜 null 게이트: Assets/Scripts 에 «GetComponent…() ??»·«Find(…) ??» 0건 (있으면 에디터 MissingComponentException — UiKit.Ensure<T> 로 · T11 · CI dotnet 잡에도 있음)
 python3 tools/check_audio_webgl.py                                # 오디오가 WebGL 에서 읽히는 형식인가 (PCM/MP3/AAC · Vorbis·ADPCM 금지 — 브라우저가 디코드한다 · T68 · CI dotnet 잡에도 있음)
 tools/check_data_sync.sh [.aaaw-src]                              # data ↔ aaaw main
+python3 tools/check_docs_intact.py                                # **문서가 통째로 깨졌는가**(T330 · CI 에서 **막는 자**): 충돌 표식 남음 · 결정 기록이 비었음 · 결정 꼬리가 잘림 · 표 행/§2 제목 0개. **충돌 해소·리베이스 뒤에 이것부터 돌린다** — 2026-09-09 에 PROGRESS.md 3168줄이 날아간 채 push 됐다(복구 `a7c35c3e`). 줄 수 문턱은 안 쓴다(접는 회차가 정상적으로 줄인다)
 python3 tools/check_decisions.py                                  # PROGRESS «워커 결정 기록» 번호 겹침(T131) — `--next` 로 «다음에 쓸 번호» 만 찍을 수도 있다
 python3 tools/check_stale_asserts.py                              # 바꾼 값·이름을 «아직 박아 둔» 테스트 자리(T184) — `--strict` 면 있을 때 1 로 끝난다
 python3 tools/check_asmdef.py                                     # 유니티 «패키지» using 이 그 폴더 asmdef 참조에 있는가(T189) — 없으면 CI 가 컴파일에서 죽는다
