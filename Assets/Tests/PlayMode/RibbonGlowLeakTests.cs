@@ -139,7 +139,32 @@ namespace KkomaKnight.Tests.Play
                       $"아래띠(몸통 밑단~+{BandPx}px · 켬/끔 Δmax) {dBelow} · 위띠 Δmax {dAbove} · fill {fill:0.###} · 띠 px 아래 {belowTL}~{belowBR} 위 {aboveTL}~{aboveBR}");
             Assert.GreaterOrEqual(dBelow, 0, name + ": 찍은 PNG 두 장을 되읽는다(아래띠)");
             Assert.GreaterOrEqual(dAbove, 0, name + ": 찍은 PNG 두 장을 되읽는다(위띠)");
-            // ⚠ 문턱 단언은 아직 없다 — 결정 625(새 탐침은 먼저 보고만). 다음 회차가 CI 로그의 Δ 를 보고 «아래 ≤ N · 위 > N» 으로 올린다.
+            // 2회차 — 위 로그는 CI 잡 로그에 안 나온다(런 897 실측 · 초록 자의 Debug.Log 0줄 · 결정 675 의 그 벽) ⇒ 파일로 내보낸다.
+            WriteJson(name, frac, rh, rh * frac, dBelow, dAbove, fill, belowTL, belowBR, aboveTL, aboveBR);
+            // ⚠ 문턱 단언은 아직 없다 — 결정 625(새 탐침은 먼저 보고만). 다음 회차가 `screens:t369_<이름>.json` 의 Δ 를 보고 «아래 ≤ N · 위 > N» 으로 올린다.
+        }
+
+        /// <summary>
+        /// 잰 수를 <c>ui-screens/t369_&lt;이름&gt;.json</c> 으로 남긴다 — <see cref="PlayShot.Dirs"/> 라 `screens` 브랜치로 배포된다(`t242.json`·`tap.json` 과 같은 문법).
+        /// <b>왜 파일인가</b>: 초록 런의 <c>Debug.Log</c> 는 워커에게 오지 않는다(잡 로그는 배포 단계 꼬리뿐 · 결정 675). 소수점은 불변 문화권. 실패해도 시험을 안 깬다.
+        /// </summary>
+        static void WriteJson(string name, float frac, float rh, float lift, int dBelow, int dAbove, float fill, Vector2 bTL, Vector2 bBR, Vector2 aTL, Vector2 aBR)
+        {
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            string json = "{\"_meta\":{\"task\":\"T369\",\"round\":2,\"popup\":\"" + name + "\"},"
+                        + "\"bodyBottomFrac\":" + frac.ToString("0.0000", inv)
+                        + ",\"ribbonH\":" + rh.ToString("0.0", inv)
+                        + ",\"liftPx\":" + lift.ToString("0.0", inv)
+                        + ",\"deltaBelow\":" + dBelow.ToString(inv)
+                        + ",\"deltaAbove\":" + dAbove.ToString(inv)
+                        + ",\"frameFill\":" + fill.ToString("0.000", inv)
+                        + ",\"belowPx\":[" + bTL.x.ToString("0", inv) + "," + bTL.y.ToString("0", inv) + "," + bBR.x.ToString("0", inv) + "," + bBR.y.ToString("0", inv) + "]"
+                        + ",\"abovePx\":[" + aTL.x.ToString("0", inv) + "," + aTL.y.ToString("0", inv) + "," + aBR.x.ToString("0", inv) + "," + aBR.y.ToString("0", inv) + "]}";
+            foreach (var dir in PlayShot.Dirs())
+            {
+                try { System.IO.Directory.CreateDirectory(dir); System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "t369_" + name + ".json"), json); }
+                catch (System.Exception e) { Debug.LogWarning("[T369] t369_" + name + ".json 저장 실패(" + dir + "): " + e.Message); }
+            }
         }
 
         BattleState NewBattle()
