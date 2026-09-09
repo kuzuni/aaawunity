@@ -203,5 +203,61 @@ namespace KkomaKnight.Tests.Play
 
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T324 — 주인 «일반 부분의 <c>ui.titleBrown</c> 디자인이 맘에 드는데 그 디자인대로 나머지 등급들도 그거로 써 줘. 걍».
+        /// <para>
+        /// 제목 조각은 <b>등급과 무관하게 갈색 하나</b>다(전에는 등급색으로 <c>ui.title.sky/yellow/plum/red/green</c> 을 갈아 끼웠다).
+        /// </para>
+        /// <para>
+        /// ⚑ <b>이 자의 절반은 «등급이 아직 보이는가» 다.</b> «전부 갈색» 만 재면 다음 사람이 «등급색을 다 지우라는 뜻이었나» 로 읽고
+        /// 배지 글자나 이름 색까지 회색으로 만들 수 있는데, 주인이 바꾸라 한 것은 <b>조각 하나</b>다.
+        /// 그래서 같은 자에서 «배지 글자는 등급마다 다르다»·«이름 색은 등급마다 다르다» 를 같이 못 박는다 —
+        /// 한쪽만 재는 자는 «너무 많이 지운 고침» 을 초록으로 통과시킨다(T310 회차 2 에서 배운 자리).
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator EveryRarityUsesTheSameBrownTitlePieceButStillShowsItsGrade()
+        {
+            yield return Boot();
+            var D = _app.Data; string part = D.Gear.Parts[0];
+            _app.ShowScreen("gear"); yield return Frames(2);
+
+            var badges = new List<string>(); var nameColors = new List<Color>();
+            int rarMax = Mathf.Min(4, D.Gear.RarName.Length);
+            Assert.GreaterOrEqual(rarMax, 2, "등급이 둘은 있어야 «등급마다 다르다» 를 잴 수 있다");
+            for (int rar = 0; rar < rarMax; rar++)
+            {
+                var g = Give(part, rar, 0);
+                GearUi.OpenDetail(_app, g, _app.Current.Refresh); yield return Frames(2);
+                Assert.IsTrue(_app.Overlay.IsOpen, "세부 팝업이 열린다(등급 " + rar + ")");
+
+                // ⓐ 제목 조각 = 갈색 하나. UiKit.Spawn 이 조각 이름을 «카탈로그 키» 로 바꿔 두므로 이름으로 찾는다.
+                Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, GearUi.TitleBadge),
+                    $"등급 {rar}({D.Gear.RarName[rar]})의 제목 조각이 «{GearUi.TitleBadge}» 여야 한다(주인 T324)");
+                foreach (var old in new[] { "ui.title.sky", "ui.title.yellow", "ui.title.plum", "ui.title.red", "ui.title.green" })
+                    Assert.IsNull(UiKit.Find(_app.Overlay.Root, old), $"등급 {rar} 에 옛 등급색 제목 조각 «{old}» 이 남으면 안 된다");
+
+                // ⓑ 그런데 등급은 여전히 말한다 — 배지 글자와 이름 색을 모아 뒀다가 아래에서 «서로 다른가» 를 본다.
+                var rib = UiKit.Find(_app.Overlay.Root, GearUi.TitleBadge);
+                var badgeTxt = rib.GetComponentInChildren<TMP_Text>(true);
+                Assert.IsNotNull(badgeTxt, "제목 조각 안 글자(등급 이름)");
+                badges.Add(badgeTxt.text ?? "");
+                var nm = UiKit.Find(_app.Overlay.Root, "Name"); Assert.IsNotNull(nm, "이름 줄");
+                nameColors.Add(nm.GetComponent<TMP_Text>().color);
+
+                ClickNamed(_app.Overlay.Root, "Dimmed"); yield return Frames(2);
+            }
+
+            // 모은 것으로 «등급이 아직 읽히는가» 를 본다 — 수를 안 박고 «서로 다른가» 만 묻는다(결정 555).
+            for (int i = 1; i < badges.Count; i++)
+                Assert.AreNotEqual(badges[0], badges[i], $"제목 조각은 같아도 그 «글자» 는 등급마다 달라야 한다(0 «{badges[0]}» ↔ {i} «{badges[i]}»)");
+            bool anyColorDiffers = false;
+            for (int i = 1; i < nameColors.Count; i++) if (nameColors[i] != nameColors[0]) anyColorDiffers = true;
+            Assert.IsTrue(anyColorDiffers, "이름 색이 등급마다 달라야 한다 — 제목 조각을 하나로 모으면서 색까지 지우면 등급을 못 읽는다");
+
+            _log.AssertNoRed("등급별 세부 팝업 제목 조각");
+            yield return Shutdown();
+        }
     }
 }

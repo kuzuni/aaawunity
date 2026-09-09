@@ -291,20 +291,21 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 장비 세부 팝업 — 레퍼런스 docs/ref/07_gear_detail.jpg 구도(표 ④ · 공통 팝업 문법 UiKit.Popup · T38 · T27 «Character_Hero_Item_Detail_01 그대로» 폐기) ─────────────────────────
-        /// <summary>등급 색 이름 → 박스 윗변 등급 탭(Title_01 명판 변형) 키 — gray(일반)는 갈색 명판.</summary>
-        static string BadgeKey(string colorName)
-        {
-            // 카탈로그에 있는 Title_01 변형만(tangerine·sky·green·plum·yellow·red · 갈색) — 문자열 조립 금지(CI #66: «ui.title.blue» 없음 → 경고 2건)
-            switch (colorName)
-            {
-                case "blue": return "ui.title.sky";
-                case "yellow": return "ui.title.yellow";
-                case "plum": return "ui.title.plum";
-                case "red": return "ui.title.red";
-                case "green": return "ui.title.green";
-                default: return "ui.titleBrown";   // gray(일반) 등
-            }
-        }
+        /// <summary>
+        /// 박스 윗변 등급 탭(Title_01 명판) 조각 — <b>등급과 무관하게 갈색 하나</b>.
+        /// <para>
+        /// <b>T324(주인 2026-09-09 12:3X «일반 부분의 <c>ui.titleBrown</c> 디자인이 맘에 드는데 그 디자인대로 나머지 등급들도 그거로 써 줘. 걍»)</b> —
+        /// 전에는 <c>BadgeKey(colorName)</c> 이 등급색으로 조각을 갈아 끼웠다:
+        /// <c>blue → ui.title.sky · yellow → ui.title.yellow · plum → ui.title.plum · red → ui.title.red · green → ui.title.green · 그 밖(gray) → ui.titleBrown</c>.
+        /// 주인이 고른 것은 그 <b>갈색 조각의 디자인</b> 하나이므로 갈래를 지웠다 — <b>되돌리려면 그 여섯 줄을 되살리면 된다</b>
+        /// (카탈로그의 <c>ui.title.*</c> 변형은 다른 화면이 쓰므로 그대로 있다 · 문자열 조립은 여전히 금지 · CI #66).
+        /// </para>
+        /// <para>
+        /// ⚠ <b>등급이 안 보이게 된 것이 아니다</b> — 배지 «글자»(«희귀»·«전설»…) · 이름 색(<c>nameColor</c>) · 팝업 상자 색(<c>ui.popup.&lt;색&gt;</c>)은 <b>한 줄도 안 바뀐다</b>.
+        /// 주인이 바꾸라 한 것은 «제목 조각» 하나이고, 그 셋이 남아 있어서 이 화면은 여전히 등급을 말한다. <b>T316</b>(갓·초월·불멸·무한)의 제목 조각도 이 규칙을 그대로 받는다.
+        /// </para>
+        /// </summary>
+        public const string TitleBadge = "ui.titleBrown";
         static string Hex(Color c) => ColorUtility.ToHtmlStringRGB(c);
         /// <summary>어두운 pill(fr.r12 · 잉크색) + 글자 — 메타줄 «슬롯 Lv. N/최대»·«부위», 스탯 박스, 옵션 줄, 비용 줄이 같은 조각을 쓴다. 전부 «검은 아웃라인»(T69-gear · 레퍼런스 07 의 pill·스탯 상자·옵션 줄·비용 줄은 모두 검은 외곽선) — <see cref="UiKit.Bordered"/> 를 먼저 덧대고 글자·아이콘은 그 뒤에 얹혀 테두리 위에 온다.</summary>
         /// <summary>
@@ -337,14 +338,17 @@ namespace KkomaKnight.Game
         /// 표 ④ 의 공통 뼈대: 어둠 + 패널(GdBox) + 박스 윗변 <b>등급 탭</b>(GdBadge · 등급색 명판) → 왼쪽 <b>아이콘 칸</b>(GdIcon · 장비 칸 Cell «+N» 포함 · 빈 슬롯은 빈 프레임) · 오른쪽 <b>이름 굵게</b>(GdName) + <b>pill 2</b>(GdMeta · «슬롯 Lv. N/최대» · «부위») → «탭하여 닫기»(배경 탭 = 닫기 · 닫기 X 없음).
         /// 돌려주는 box 안에 스탯 박스(GdStats) · 옵션 줄(GdOpts) · 비용 줄(GdCost) · 버튼 2(GdBtnL/R) 를 Pct 로 놓는다(<see cref="OpenDetail"/> · <see cref="OpenSlot"/>).
         /// </summary>
-        static RectTransform DetailFrame(App app, string badge, string colorName, GearItem g, string name, Color nameColor, string pill1, string pill2, Layout.R? boxOverride = null, Action onTapClose = null)
+        static RectTransform DetailFrame(App app, string badge, GearItem g, string name, Color nameColor, string pill1, string pill2, Layout.R? boxOverride = null, Action onTapClose = null)
         {
             // boxOverride — 아래 두 버튼이 없는 «보기 전용» 모드(T267 4항 · 주인 «아래 두 버튼만 없애고 레이아웃 좀만 조절하면 똑같음»)에서
             //   상자를 짧게 자른다. 안쪽 자리는 전부 «화면 %» 를 `.Within(B)` 로 상자 안 %로 다시 그리는 꼴이라,
             //   **x·w 를 그대로 두고 h 만 줄이면 잘린 선 위의 요소는 화면에서 한 픽셀도 안 움직인다** — 단 그것은
             //   `.Within` 에 **실제로 그려질 상자** 를 넘겼을 때만이다(T267 6단계에서 이 조건이 깨져 있던 것을 실측으로 잡았다 · 결정 809).
             var ov = app.Overlay; var B = boxOverride ?? Layout.GdBox;
-            string bk = BadgeKey(colorName);
+            // T324 — 등급색 갈래는 없다(위 주석에 옛 표와 되돌리는 법이 있다).
+            //   그래서 이 함수가 받던 `colorName` 도 같이 뺐다 — 안 쓰는 인자는 «이 값이 상자 꼴을 정한다» 는 거짓말을 남긴다.
+            //   등급은 부르는 쪽이 넘기는 `badge`(«희귀»·«전설» 글자)와 `nameColor`(이름 색)가 그대로 말한다.
+            string bk = TitleBadge;
             var box = ov.OpenBox("ui.popup", bk, badge, B, onTapClose ?? (Action)(() => ov.Close()));
             // 등급 탭 = 표 ④ 배지 크기. **가로는 표 그대로**(T214 · 예전에는 +70px 를 더해 폭이 22.0 → 28.5%(+6.5%p)로 벌어져 §5 에서 0점이었다 · 결정 96 이 «22×2.3» 이라고 적어 둔 자리다).
             // **세로만 +36px 를 남긴다** — 리본 글자는 제목 60 이고 그 칸은 84px 이 필요한데(<see cref="TextSize.BoxHeight"/> · T75 4항 · <c>UiKit.RibbonFit</c> 이 공통 팝업에 거는 것과 같은 규칙)
@@ -491,7 +495,7 @@ namespace KkomaKnight.Game
             if (g.IsNew) { g.IsNew = false; app.Persist(); onChanged?.Invoke(); }
             int lv = S.SlotLv(g.Part); double cost = D.Gear.SlotCost(lv); bool eqd = S.IsEquipped(g); bool maxed = lv >= D.Gear.SlotLvMax;
             string colorName = Palette.RarName(g.Rar);
-            var box = DetailFrame(app, RarName(D, g.Rar), colorName, g, Name(D, g) + (g.Plus > 0 ? " +" + g.Plus : ""), OnPopupBox(Palette.ByName(colorName)), $"슬롯 Lv. {lv}/{D.Gear.SlotLvMax}", PartName(D, g.Part));
+            var box = DetailFrame(app, RarName(D, g.Rar), g, Name(D, g) + (g.Plus > 0 ? " +" + g.Plus : ""), OnPopupBox(Palette.ByName(colorName)), $"슬롯 Lv. {lv}/{D.Gear.SlotLvMax}", PartName(D, g.Part));
             StatsBox(box, D, S, g, g.Part, lv, eqd);
             OptionRows(box, D, g);
             CostRow(box, D, S, g.Part, cost, maxed, D.Gear.SlotLvMax);
@@ -526,7 +530,7 @@ namespace KkomaKnight.Game
             if (app == null || g == null) return;
             var D = app.Data; var S = app.Save; var ov = app.Overlay;
             string colorName = Palette.RarName(g.Rar);
-            var box = DetailFrame(app, RarName(D, g.Rar), colorName, g, Name(D, g), OnPopupBox(Palette.ByName(colorName)),
+            var box = DetailFrame(app, RarName(D, g.Rar), g, Name(D, g), OnPopupBox(Palette.ByName(colorName)),
                 PartName(D, g.Part), RarName(D, g.Rar), InfoBox, onClose != null ? onClose : (Action)(() => ov.Close()));
             // 스탯·옵션은 «이 등급의 이 부위» 가 어떤 물건인지를 보여 준다 — 슬롯 레벨은 내 세이브 것이라 0 으로 본다(남의 상자 안 물건이다).
             StatsBox(box, D, S, g, g.Part, 0, false, InfoBox);
@@ -538,7 +542,7 @@ namespace KkomaKnight.Game
         {
             var D = app.Data; var S = app.Save; var ov = app.Overlay;
             int lv = S.SlotLv(part); double cost = D.Gear.SlotCost(lv); bool maxed = lv >= D.Gear.SlotLvMax;
-            var box = DetailFrame(app, $"{PartName(D, part)} 슬롯", "gray", null, "비어 있음", Palette.InkLight, $"슬롯 Lv. {lv}/{D.Gear.SlotLvMax}", PartName(D, part));
+            var box = DetailFrame(app, $"{PartName(D, part)} 슬롯", null, "비어 있음", Palette.InkLight, $"슬롯 Lv. {lv}/{D.Gear.SlotLvMax}", PartName(D, part));
             StatsBox(box, D, S, null, part, lv, false);
             var region = Layout.GdOpts.Within(Layout.GdBox);
             UiKit.Label(box, region.X, region.Y, region.W, region.H, "장착된 장비가 없습니다\n인벤에서 이 부위의 장비를 골라 장착하세요", TextSize.Body, Palette.InkLight, TextAnchor.MiddleCenter, true, false).name = "EmptyHint";
