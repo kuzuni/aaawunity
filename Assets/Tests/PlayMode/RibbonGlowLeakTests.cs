@@ -141,8 +141,17 @@ namespace KkomaKnight.Tests.Play
             Assert.GreaterOrEqual(dAbove, 0, name + ": 찍은 PNG 두 장을 되읽는다(위띠)");
             // 2회차 — 위 로그는 CI 잡 로그에 안 나온다(런 897 실측 · 초록 자의 Debug.Log 0줄 · 결정 675 의 그 벽) ⇒ 파일로 내보낸다.
             WriteJson(name, frac, rh, rh * frac, dBelow, dAbove, fill, belowTL, belowBR, aboveTL, aboveBR);
-            // ⚠ 문턱 단언은 아직 없다 — 결정 625(새 탐침은 먼저 보고만). 다음 회차가 `screens:t369_<이름>.json` 의 Δ 를 보고 «아래 ≤ N · 위 > N» 으로 올린다.
+            // 3회차 — 문턱을 박는다(2회차 «보고만» 의 값 = 런 907 `screens:t369_*.json`: 아래띠 Δ 1·1·5 · 위띠 Δ 180·149·199 · fill 1.000).
+            //   아래 ≤ MaxBelow: 빛을 켜고 끄고의 차가 잡음 수준(PNG 인코딩·안티앨리어싱)이면 «리본 밑으로 새는 빛 0» 이다.
+            //   위 ≥ MinAbove: 같은 두 장에서 리본 위 띠는 확실히 달라야 한다 — «빛을 통째로 껐다» 나 «마스크를 리본 위로 올려 버렸다» 를 가른다.
+            //   두 문턱 모두 관측값과 한 자릿수 넘게 떨어져 있다(1~5 ↔ 8 · 149~199 ↔ 40) — 러너의 잡음이 아니라 «구조» 만 잰다.
+            Assert.LessOrEqual(dBelow, MaxBelow, name + $": 리본 몸통 밑단 ~ +{BandPx}px 띠는 빛을 켜도 안 변한다(Δmax {dBelow} > {MaxBelow} · T369 «타이틀 위로만»)");
+            Assert.GreaterOrEqual(dAbove, MinAbove, name + $": 리본 위 {BandPx}px 띠에는 빛이 있다(Δmax {dAbove} < {MinAbove} · «아예 껐다» 와 가른다)");
         }
+        /// <summary>아래띠 Δmax 상한 — 관측 1·1·5(런 907)에 잡음 여유. 이 수를 올려서 초록을 만드는 것은 «새는 빛을 허용하는» 것이니 사진(`t369_*.png`)부터 본다.</summary>
+        const int MaxBelow = 8;
+        /// <summary>위띠 Δmax 하한 — 관측 149~199(런 907). 짙기(<see cref="Overlay.TitleGlowAlpha"/>)를 크게 낮추는 회차가 오면 이 수를 같이 잰다.</summary>
+        const int MinAbove = 40;
 
         /// <summary>
         /// 잰 수를 <c>ui-screens/t369_&lt;이름&gt;.json</c> 으로 남긴다 — <see cref="PlayShot.Dirs"/> 라 `screens` 브랜치로 배포된다(`t242.json`·`tap.json` 과 같은 문법).
@@ -151,7 +160,7 @@ namespace KkomaKnight.Tests.Play
         static void WriteJson(string name, float frac, float rh, float lift, int dBelow, int dAbove, float fill, Vector2 bTL, Vector2 bBR, Vector2 aTL, Vector2 aBR)
         {
             var inv = System.Globalization.CultureInfo.InvariantCulture;
-            string json = "{\"_meta\":{\"task\":\"T369\",\"round\":2,\"popup\":\"" + name + "\"},"
+            string json = "{\"_meta\":{\"task\":\"T369\",\"round\":3,\"popup\":\"" + name + "\"},"
                         + "\"bodyBottomFrac\":" + frac.ToString("0.0000", inv)
                         + ",\"ribbonH\":" + rh.ToString("0.0", inv)
                         + ",\"liftPx\":" + lift.ToString("0.0", inv)
