@@ -119,11 +119,15 @@ namespace KkomaKnight.Tests
             Assert.AreEqual(GachaKeys.Blue, d.Daily.Steps[0].Rewards[0].Item, "일일 20 = 파란 키");
             Assert.AreEqual(GachaKeys.Purple, d.Weekly.Steps[1].Rewards[0].Item, "주간 60 = 보라 키");
             Assert.AreEqual(GachaKeys.Yellow, d.Weekly.Steps[3].Rewards[0].Item, "주간 120 = 노란 키");
-            // 그리고 트랙 상품이 **전부 지급 길이 아는 이름**이어야 한다(티켓은 재화가 아니라 던전 보유량이라 뺀다).
+            // 그리고 트랙 상품이 **전부 지급 길이 아는 이름**이어야 한다.
+            // 둘만 뺀다 — 재화가 아니라서 <see cref="Mail"/> 이 모르고 <see cref="QuestRun.Claim"/> 이 직접 넣는 이름이다:
+            //   티켓(던전마다 따로인 보유량 · T99) · 무작위 레시피(부위별 보유량 · T292).
+            // ⚠ **«빼는 이름» 은 상수로만 뺀다** — 글자로 빼면 오타 하나(«recipeRandom2»)가 같이 빠져 나가고,
+            //   그때 이 자는 조용해지는데 화면은 «받았다» 로 잠긴다. 아래 둘은 그래서 상수를 그대로 쓴다.
             foreach (var tr in new[] { d.Daily, d.Weekly })
                 foreach (var st in tr.Steps)
                     foreach (var rw in st.Rewards)
-                        if (rw.Item != "ticket")
+                        if (rw.Item != QuestRun.ItemTicket && rw.Item != QuestRun.ItemRecipeRandom)
                             Assert.IsTrue(Mail.CanPay(rw.Item), "지급 길이 모르는 상품 이름 «" + rw.Item + "» — 2단계에서 조용히 안 들어온다");
             foreach (var s in d.Daily.Steps) Assert.IsNotEmpty(s.Rewards, "일일 트랙 " + s.Points + " 의 상품");
             foreach (var s in d.Weekly.Steps) Assert.IsNotEmpty(s.Rewards, "주간 트랙 " + s.Points + " 의 상품");

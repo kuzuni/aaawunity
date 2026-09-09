@@ -44,7 +44,7 @@
     "track": [
       { "points": 30,  "rewards": [ { "item": "petEgg",    "amount": 10 } ] },
       { "points": 60,  "rewards": [ { "item": "keyPurple", "amount": 2 } ] },
-      { "points": 90,  "rewards": [ { "item": "gold",      "amount": 3000 } ] },
+      { "points": 90,  "rewards": [ { "item": "recipeRandom", "amount": 20 } ] },
       { "points": 120, "rewards": [ { "item": "keyYellow", "amount": 1 } ] },
       { "points": 150, "rewards": [ { "item": "gem",       "amount": 300 } ] }
     ]

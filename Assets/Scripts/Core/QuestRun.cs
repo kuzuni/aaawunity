@@ -141,18 +141,42 @@ namespace KkomaKnight.Core
         /// </para>
         /// 못 받는 칸이면 <b>아무 일도 안 한다</b>(false) — 두 번 눌러도 두 번 안 들어온다.
         /// </summary>
-        public static bool Claim(SaveData s, QuestData d, bool daily, int index)
+        public static bool Claim(SaveData s, QuestData d, bool daily, int index) => Claim(s, d, daily, index, null, null, out _);
+
+        /// <summary>
+        /// 난수를 받는 갈래 — <b>무작위 레시피</b>(<see cref="ItemRecipeRandom"/> · T292 · 주인 «주간 90점 보상을 레시피 20개로 · 무작위로»)가 든 칸은 이쪽으로 받는다.
+        /// <para>
+        /// ⚠ <b>난수·표가 없으면 «아무것도 안 주고» false 다</b> — 골드만 주고 레시피를 빠뜨리면 그 칸은 «받았다» 로 잠기고 **20개는 영영 안 온다**.
+        /// 반쪽으로 주느니 안 주는 쪽이 되돌릴 수 있다(옛 4인자 갈래로 이 칸을 부르면 그래서 false 다).
+        /// </para>
+        /// <paramref name="given"/> — 부위별로 몇 개를 줬는가(리워드 팝업이 «투구 레시피 ×4 · 무기 레시피 ×3» 으로 묶어 보여 줄 자리 · 3항).
+        /// </summary>
+        public static bool Claim(SaveData s, QuestData d, bool daily, int index, IRng rng, RecipeData rd) => Claim(s, d, daily, index, rng, rd, out _);
+
+        public static bool Claim(SaveData s, QuestData d, bool daily, int index, IRng rng, RecipeData rd, out Dictionary<string, int> given)
         {
+            given = null;
             if (!CanClaim(s, d, daily, index)) return false;
             var t = daily ? d.Daily : d.Weekly;
             var got = daily ? s.QuestDailyGot : s.QuestWeeklyGot;
-            foreach (var r in t.Steps[index].Rewards)
+            var rewards = t.Steps[index].Rewards;
+            // «줄 수 있는가» 를 **먼저 전부** 본다 — 하나라도 못 주면 세이브를 한 칸도 안 만진다(위 ⚠).
+            foreach (var r in rewards)
+                if (r.Item == ItemRecipeRandom && (rng == null || rd == null || rd.Parts.Length == 0)) return false;
+            foreach (var r in rewards)
             {
                 if (r.Item == ItemTicket)
                 {
                     if (string.IsNullOrEmpty(r.Dungeon)) continue;   // 어느 던전인지 없으면 줄 곳이 없다(표 검사가 먼저 울어야 하는 자리)
                     s.DunTickets.TryGetValue(r.Dungeon, out int have);
                     s.DunTickets[r.Dungeon] = have + (int)Math.Round(r.Amount);
+                }
+                else if (r.Item == ItemRecipeRandom)
+                {
+                    var tally = RollRecipes(rd, rng, (int)Math.Round(r.Amount));
+                    foreach (var kv in tally) Recipes.Add(s, kv.Key, kv.Value);
+                    if (given == null) given = tally;
+                    else foreach (var kv in tally) { given.TryGetValue(kv.Key, out int had); given[kv.Key] = had + kv.Value; }
                 }
                 else Mail.Give(s, r.Item, r.Amount);
             }
@@ -161,7 +185,29 @@ namespace KkomaKnight.Core
             return true;
         }
 
+        /// <summary>
+        /// 무작위 레시피 <paramref name="n"/> 개를 <b>뽑기만</b> 한다(세이브는 안 만진다) — 부위별 개수를 돌려준다.
+        /// <para>
+        /// 여섯 부위 <b>균등</b>이다 — 주인이 가중치를 안 줬으므로 표에 <c>recipeRandomWeights</c> 같은 칸을 두지 않는다(없는 수를 지어내지 않는다).
+        /// 스무 번을 <b>따로</b> 뽑는다(«부위마다 몇 개» 를 한 번에 나누지 않는다) — 그래야 주인이 본 «무작위로 20개 줌» 그대로다.
+        /// </para>
+        /// 난수는 게임의 <see cref="IRng"/> 라 시드가 같으면 결과도 같다(자가 그것을 잰다).
+        /// </summary>
+        public static Dictionary<string, int> RollRecipes(RecipeData rd, IRng rng, int n)
+        {
+            var tally = new Dictionary<string, int>();
+            if (rd == null || rng == null || rd.Parts.Length == 0 || n <= 0) return tally;
+            for (int i = 0; i < n; i++)
+            {
+                string part = rng.Pick(rd.Parts);
+                tally.TryGetValue(part, out int had); tally[part] = had + 1;
+            }
+            return tally;
+        }
+
         /// <summary>보상 이름 중 «재화가 아닌» 하나 — 던전 티켓은 던전마다 따로라 <see cref="Mail"/> 이 모른다.</summary>
         public const string ItemTicket = "ticket";
+        /// <summary>보상 이름 «무작위 레시피»(T292) — 개수만큼 여섯 부위에서 균등하게 뽑아 <see cref="Recipes.Add"/> 로 넣는다.</summary>
+        public const string ItemRecipeRandom = "recipeRandom";
     }
 }
