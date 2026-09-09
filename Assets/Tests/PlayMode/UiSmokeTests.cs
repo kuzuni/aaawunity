@@ -1620,6 +1620,13 @@ namespace KkomaKnight.Tests.Play
                     "상자는 위에서 «떨어져» 내려와 있어야 한다(시작 y=" + chestY0.ToString("0.0") + " → 끝 y=" + chestGrp0.anchoredPosition.y.ToString("0.0") + " · T180)");
                 // T158 ⓐ — 커지는 연출이 끝나면 «제 크기»(오버슛이 남아 있으면 안 된다)
                 Assert.AreEqual(1f, chestGrp0.localScale.x, 0.02f, "연출이 끝나면 상자는 제 크기(T158 ⓐ)");
+                // T307 ⓑ — 칸이 나타날 때 파티클이 «터진다»(주인 «아이템 파티클 터지면서 나오게 하셈»).
+                //   ⚠ «지금 화면에 몇 개 있나» 로는 못 잰다 — 0.45초에 지나가고 스스로 지운다.
+                //      그래서 «이번 창이 실제로 몇 개를 띄웠나» 를 화면이 기록해 두고(LastChestScale 와 같은 방법 · T158 ⓐ 결정 329) 그것을 읽는다.
+                //   ⚠ 조각을 만드는 것은 CompleteAll(withCallbacks) 이 InsertCallback 을 돌려 줄 때다 —
+                //      그래서 이 단언은 반드시 위 `CompleteAllTweens()` **뒤**여야 한다(앞에 두면 아직 0 이다).
+                Assert.Greater(ShopScreen.LastBurstShards, 0,
+                    "얻은 칸이 나타날 때 파티클 조각이 터져야 한다(T307 ⓑ) — 지금 " + ShopScreen.LastBurstShards + "개");
                 var got = UiKit.Find(_app.Overlay.Root, "Got");
                 for (int i = 0; i < got.childCount; i++)
                 {
