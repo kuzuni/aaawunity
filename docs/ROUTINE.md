@@ -9187,7 +9187,10 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 > **🔄 push · 확인 전(19:4X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 996 에 같이 · lock `T362` 쥔 채)** — 1항 그대로.
 
-순서 — `catalog.json`. lock `T362`.
+4. ⚠ **ⓑ — 조각 안에 박힌 리본은 ⓐ 로 안 바뀐다(주인 2026-09-10 «출석보상은? 아직도 리본인데»).** 조각 통째로 서는 팝업은 리본이 프리팹 자식이라 카탈로그 키를 안 거친다 — 자리: LobbyPopups.cs:342 · LobbyPopups.cs:797 · Overlay.cs:473 · Overlay.cs:776. **고침** = 세우는 자리에서 `UiKit.Spawn("ui.titleBrown", …)` 을 옛 리본과 **같은 rect** 에 세우고 글자(`Text (TMP)`)를 옮긴 뒤 옛 리본을 끈다(조각 원본 불변 §1 · `RibbonGlowOn` 은 새 리본에). 자 = 켜진 리본 조각 이름이 `Title_Tapered_01_Brown` 으로 시작. **확인 = `screens` 15·16 을 찍어서 본다**(주인 상시 지시).
+5. ⚠ 주인 폰은 `13831974`(18:30) 빌드라 ⓐ 도 아직 안 보인다 — `0d87acd7`(18:52) 뒤 초록 완주 런이 아직 없다. «안 됐다» 로 읽히면 먼저 배포 sha 를 본다.
+
+순서 — ⓐ `catalog.json`(끝) → ⓑ `Game/LobbyPopups.cs`·`Game/Overlay.cs`(lock 들 뒤 · 루틴 · T359·T363·T364·T366 과 한 묶음). lock `T362`.
 
 ### T363 — ⚑ 주인: **퀘스트(15) 팝업의 `ListBox` 알파를 1/255 로** (주인 2026-09-10 «퀘스트 부분에 ListBox 이거 투명도 1로 해 255 중에»)
 
@@ -9215,6 +9218,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 3. **확인** — `screens` 09 + 주인 폰.
 
 > **🔄 push · 확인 전(19:1X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 1000 · lock `T365` 쥔 채)** — 1항 그대로.
+> **🔄 2회차 push(주인 «다이아 카드 채도 더 떨궈야 할 듯»)** — 다이아만 ×0.45(#C78CFF/#F68CFF) · 골드 ×0.65 그대로.
 
 순서 — `catalog.json` · `Game/GradientPalette.cs`. lock `T365`.
 
