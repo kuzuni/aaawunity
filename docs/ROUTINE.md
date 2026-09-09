@@ -7786,6 +7786,16 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > ⚠ **`GearLook.RarCount`(=4)는 안 건드렸다** — `GearLookTests.RarCountMatchesGearJson` 이 이미 «표의 등급 수와 같은가» 를 잡고 있어 조용히 어긋날 수 없다. 그 자리는 값이 바뀌는 회차 몫이다.
 > ⚠ **`Palette`·`GearUi` 의 «등급 색» 을 더 손대지 않았다** — **T316**(신화 위 등급 넷)이 살아 있는 lock 으로 그 언저리를 만진다. 한 줄 함수 하나로 끊었다.
 > 게이트: build 0/0 · test **467/467** · `Sim --seeds 11,12,13` rc=0(사다리 표 불변) · PlayMode 임시 csproj 0 오류 · 검사 18종 rc=0.
+>
+> **▸ 회차 1 확인 끝 + «다음 회차는 아직 못 연다» 를 실측했다(2026-09-09 14:2X · 같은 워커 · 결정 929 · `T325-a.lock` **반납** · 코드 0줄)**
+> **확인** — 런 **822**(`fa07c0d6`) `[CI명부]` `GearOptionRowsTests(3✗1)` 의 **✗ 는 T324 의 새 자**(`EveryRarityUsesTheSameBrownTitlePieceButStillShowsItsGrade` · `T324.lock` 살아 있음)이고,
+> **내 단언이 든 `CommonGearOpensNothingAndTheFirstRowSaysRare` 는 통과**했다 — 즉 «등급 색 칸 수 = 표의 등급 수» 가 실제 유니티 런에서 섰다.
+> **⚠ 그런데 다음 회차(값·등급 다섯)는 지금 열 수 없다 — 문 둘을 실측했다:**
+> ⓐ **`rarMyth` 가 3 → 4 로 움직인다**(영웅이 가운데 끼므로). 그 수를 **T316 이 이미 읽고 있다** — `GearTier.Of(…, D.Gear.RarMyth, …)`(`GearTier.cs:94·113` · 그 절의 `GearTierColorTests` 가 런 822 명부에 있다).
+> **`T316.lock` 이 살아 있는 동안 이 수를 움직이면 그 절이 만들고 있는 것을 밑에서 바꾸는 것**이다(결정 854 가 값을 치른 그 자리).
+> ⓑ **`GearLook.RarCount = 4`** 는 상수 하나가 아니라 **부위별 외형 자료의 칸 수**다 — 영웅 줄이 생기면 «영웅은 어떤 파츠 그림인가» 를 정해야 하고, 그것은 **새 그림을 만들지 말라는 §1** 과 바로 닿는 물음이다(주인이 색은 줬지만 파츠는 안 줬다).
+> ⇒ **lock 을 놓는다.** 남은 일이 «내가 못 하는 일» 이 아니라 **«지금은 아무도 못 하는 일»** 이라 쥐고 있으면 기다림에 끝이 없다(결정 798 과 같은 자리).
+> **잡을 사람이 볼 것 한 줄**: T316 이 닫힌 뒤에 열고, ⓑ 는 «기존 넷 중 하나를 영웅이 함께 쓴다»(예: 희귀 그림 재사용 + 색만 초록)로 시작하면 새 그림 0 이다 — 그 판단을 주인 지시 없이 해도 되는지가 그 회차의 첫 결정이다.
 1. **등급 다섯** — `rarName = [일반, 희귀, 영웅, 전설, 신화]`(0~4) · `rarLegend 3` · `rarMyth 4`. **색**: 일반 회색 · 희귀 파랑 · **영웅 초록**(카탈로그에 있는 변형 `ui.itemFrame.green`·`ui.title.green`·`ui.popup.green` · 4항 ⓐ) · 전설 노랑 · 신화 자주(그대로) · T316 갓~무한은 신화 위에 그대로. `Palette.RarName(rar)`·`GearUi.RarName` 등 **rar 인덱스를 박은 자리 전부**(`rar >= 3`·`rar == 2` 류 · `GearSystem.cs:125~156`·`Palette.cs:83`·`GearTier`(T316)·`GearScore`) 를 표의 `rarLegend/rarMyth` 로 바꾼다 — 인덱스 리터럴 0.
 2. **기여(노강 · 슬롯 0 · 장비 1개)** —
    | 등급 | 공 | 체 | 실 |
