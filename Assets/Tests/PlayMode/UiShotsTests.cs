@@ -99,6 +99,13 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual("lobby", _app.Current.Name);
             yield return Shot("01_lobby");
             _app.Overlay.Settings(); yield return Frames(2); yield return Shot("12_settings"); _app.Overlay.Close(); yield return Frames(1);
+            // T332 — §5 꼬리가 일곱 시간째 «아무도 안 찍는다» 고 부르던 표 셋 중 둘(㉜ 로비 메뉴 · ㉟ 프로필 둘).
+            //   셋 다 «프리팹 그대로 · 레퍼런스 그림 없음» = **회귀 자**인데, 찍히지 않는 동안은 그 회귀 자가 **한 번도 안 돈 것과 같다**.
+            //   레퍼런스 번호가 없는 화면이라 이름으로 남긴다(`ev_*`·`res_*` 와 같은 규약).
+            LobbyMenu.Open(_app); yield return Frames(2); yield return Shot("lobby_menu"); _app.Overlay.Close(); yield return Frames(1);
+            //   ㉟ 는 **한 표에 두 팝업**이라 행 앞머리(«아바타 …»·«이름 …»)로 갈린다 — `ui_score` 의 SCREENS 가 그 갈래를 안다(⑤·⑦ 과 같은 꼴).
+            Profile.OpenAvatar(_app); yield return Frames(2); yield return Shot("profile_avatar"); _app.Overlay.Close(); yield return Frames(1);
+            Profile.OpenNickname(_app); yield return Frames(2); yield return Shot("profile_nick"); _app.Overlay.Close(); yield return Frames(1);
 
             // 11 특권 · 15 퀘스트 · 16 출석 · 17 데일리 기프트 · 18 7일 챌린지 · 19 시즌 패스 (T44 로비 사이드 껍데기 — 페이지 2 + 팝업 4)
             // T78(주인 2026-09-07) — 18_challenge7 · 19_pass 는 화면째 삭제돼 촬영 대상이 아니다
@@ -173,6 +180,26 @@ namespace KkomaKnight.Tests.Play
                 }
             }
             (_app.Current as ShopScreen)?.ScrollTo(0f); yield return Frames(2); yield return Shot("09_shop_1");
+            // T332 — ㉞ 소환(뽑기) 결과 창. **09 를 찍은 «뒤»** 에 뽑는다: 뽑으면 세이브가 바뀌어(인벤·Pulls·무료 배지) 앞 장들이 흔들린다.
+            //   ⚠ 손으로 `ChestResult` 를 부르지 않는다 — 그러면 «상점에서 뽑으면 결과 창이 뜬다» 는 배선이 끊겨 있어도 초록이다(T280 이 값 주고 세운 규칙).
+            //      카드의 «1회» 를 실제로 눌러 화면이 **스스로** 열게 한다.
+            //   ⚠ 이 화면은 방금 T315(푸딩 착지 · 상자 피벗을 바닥으로)가 손댄 자리다 — 표 ㉞ 의 «상자 묶음(Chest)» 행이
+            //      그 피벗 보정이 **보이는 자리를 안 옮겼는지**를 처음으로 채점한다(그 회귀는 정지 그림에서만 보인다).
+            {
+                double gem0 = _app.Save.Gem; _app.Save.Gem = 999999;   // 값이 모자라 안 눌리면 그림이 아예 안 나온다(찍는 판의 재화는 표시용이다)
+                _app.Current.Refresh(); yield return Frames(1);
+                var box = UiKit.Find(_app.Current.Root, "Box:" + ShopScreen.BigBox(_app.Data).Key);
+                var one = box != null ? UiKit.Find(box, "One") : null;
+                var ob = one != null ? one.GetComponent<UnityEngine.UI.Button>() : null;
+                if (ob != null && ob.interactable)
+                {
+                    ob.onClick.Invoke(); yield return Frames(3);
+                    if (_app.Overlay.IsOpen) { yield return Shot("shop_chest_open"); _app.Overlay.Close(); yield return Frames(1); }
+                    else _missing.Add("shop_chest_open («1회» 를 눌렀는데 결과 창이 안 열렸다)");
+                }
+                else _missing.Add("shop_chest_open (큰 상자 카드의 «1회» 버튼을 못 찾았거나 안 눌린다)");
+                _app.Save.Gem = gem0; _app.Current?.Refresh(); yield return Frames(1);
+            }
 
             // 02 전투(3초) · 03 적 조우(8초 안에 Engaged 가 되면) · 04 레벨업 · 05 보유 특전
             _app.StartBattle(1); yield return RealSeconds(3f);

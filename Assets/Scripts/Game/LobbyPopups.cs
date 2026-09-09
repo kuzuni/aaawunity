@@ -453,9 +453,16 @@ namespace KkomaKnight.Game
             //   그 가지가 `Nomal` **위에** 그려져 색을 통째로 덮는다 — 줄 0·1 만 올리브였던 까닭이고, 두 번의 헛고침이 이것을 못 본 까닭이다.
             //   ⇒ **가지를 끈다.** 「같은 이름의 상태 가지(Nomal/Focus/Disabled)를 들고 오는 조각은 «어느 가지가 켜져 있나» 부터 본다」(결정 906·916).
             var focus = UiKit.Find(frame, "Focus"); if (focus != null) focus.gameObject.SetActive(false);
-            var bg = UiKit.Find(frame, "Nomal/Bg"); if (bg == null) return;   // 길 꼴: 첫 조각만 깊이 검색 · 뒤는 직계(UiKit.Find)
-            var im = bg.GetComponent<Image>(); if (im == null) return;
-            im.color = done ? RowDoneColor : RowTodoColor;
+            // ⚑ 탐침 2회차(run 832 사진 + `t258rows.json`) — 가지를 끄자 올리브는 사라졌는데 **색은 여전히 안 바뀌었다**(#A8917A ↔ #AA9F88).
+            //   표를 다시 읽으면 까닭이 보인다: `Nomal/Bg` 는 **스프라이트가 없고**(`"sprite": "-"`) 그 **뒤에 오는 형제** `BottomBar`·`Border`
+            //   가 **줄 전체 크기**(820.2 × 138.0)에 실제 그림(`ListFrame_08_White_BorderNomal`)을 들고 **위에** 그린다.
+            //   즉 «바탕» 한 장이 아니라 **세 장이 겹친 면**이고, 보이는 것은 마지막 장이다. ⇒ 셋을 같이 칠한다.
+            var col = done ? RowDoneColor : RowTodoColor;
+            foreach (var part in new[] { "Nomal/Bg", "Nomal/BottomBar", "Nomal/Border" })
+            {
+                var t = UiKit.Find(frame, part); if (t == null) continue;
+                var im = t.GetComponent<Image>(); if (im != null) im.color = col;
+            }
         }
         /// <summary>할 일이 남은 줄의 바탕 — 주인 그림 실측 <c>#F1E2C1</c>.</summary>
         static Color RowTodoColor => Palette.Hex("#F1E2C1");
