@@ -8258,6 +8258,31 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 > ⚠ **거울 하나를 잡았다** — 「칸이 없으면 지금 표로 본다」로 쓰면 **정작 옮겨야 할 세이브만 안 옮겨진다**. 그리고 오늘은 `now`·`RarNLegacy` 가 둘 다 4 라 **어느 쪽으로 고쳐도 자가 초록**이다 — 그래서 그 자는 **표를 다섯으로 넓힌 뒤에** 잰다(결정 906 의 거울).
 > 게이트: build 0/0 · test **521/521** · PlayMode 임시 csproj 0 오류 · 검사 rc=0 · 커밋된 값 0줄.
 > **잡을 사람이 볼 것 — 값 커밋(마지막)**: ① `BattleTests`·`LayoutTests` 를 `GameData.Load`(덮어쓰기 없는 길)로 옮긴다 ② `OutsideTheTableRepeatsTheLastChapter` 를 `maxChapter` 와 무관하게 ③ `Palette.RarColors = { gray, blue, red, yellow, plum }` ④ 위 네 표(장비·상자·챕터수·곡선)를 **한 커밋에** ⑤ 넣고 `--block-table` 로 한 번 더.
+
+> **▸ ⓑ 회차 5 — 값을 한 번 다 넣어 보고 «무엇이 우는지» 를 <b>세어서</b> 되돌렸다 · 그중 5항 조각 하나를 올린다(2026-09-09 21:1X · sess-0303-27371 · 워커 I · 결정 1033 · 자 파일 둘 · **커밋된 값 0줄**)**
+> 회차 4 가 찾은 곡선까지 네 표를 다 넣고 `Palette.RarColors` 를 다섯으로 만든 뒤 돌렸다 — **자 36개가 빨갛다.**
+> 그 36 을 하나씩 «새 수가 옳은가» 로 다시 재는 것이 값 커밋의 실제 내용이고, 서두르면 «통과시키려고 기댓값을 낮추는» 짓이 된다(결정 904 가 값을 치른 자리). 그래서 **세어서 갈라 적고 되돌렸다.**
+>
+> **갈래 다섯 — 잡을 사람은 이 순서로 간다**
+> **ⓐ 내 «값 0줄» 파수꾼(9) — 우는 것이 설계다.** 고칠 것은 값이 아니라 **자의 뜻**이다(«오늘은 안 바뀐다» → «주인이 준 값이 실렸다»):
+> `TodayTheNewOverridesChangeNothingAtAll` · `TodayTheEnemiesOverrideIsIdentity` · `TodayNothingMoves` · `GearOverrideChangesOnlyTheKeysItNames` · `GachaOverrideRebuildsTheCumSoTheRollFollows` · `HalfWidenedTablesThrowRightAfterTheOverrides…` · `ABoxWhoseRateHasTooFewSlotsThrows` · `TheOtherBrokenShapesThrowToo` · `OneGradeInsertedInTheMiddleShiftsEverythingAboveIt`.
+> ⚠ 뒤 넷은 «표를 손으로 다섯으로 넓혀» 재던 자다 — 이제 표가 진짜 다섯이라 **넓히는 줄을 빼야** 뜻이 산다.
+> **ⓑ 옛 표의 수를 박은 자(17) — 새 표로 다시 재야 한다.** `BuildPowerMatchesLadderTable`(6) · `BuildPowerIsUnchangedByTheRoleSplit`(5) · `FuseRules` · `FuseAllChainKeepsTheSlotOnTheFinalProduct` · `OptCountByRarity_IsZeroForCommonAndOpensFromRare` · `MythEnhance_OpensOneRowAtEachStepUpToTwelve` · `EveryGearTypeHasFullOptionLadder` · `GachaCumulativeThresholdsMatchRates` · `RareBoxHasTheOwnersRarePity…` · `TierName_ReadsTheLadderTable…` · `TierRarAndMythPlusFlag_…`.
+> ⚠ **여기가 제일 위험한 갈래다** — 수를 새 값으로 «고쳐 주면» 다 초록이 되는데, 그중 어떤 것은 **주인이 안 시킨 변화를 그냥 받아들이는 것**이다. 줄마다 «이 수가 주인 표에서 나오는가» 를 되짚어라.
+> **ⓒ 챕터 100 이 바꾸는 것(3)** — `LoadsAllSevenFiles`(`maxChapter == 챕터 수` 를 잰다) · `EnemyStatsFormulaMatchesJsonForEveryChapter` · `OutsideTheTableRepeatsTheLastChapter`.
+> ⚠ 앞 둘은 **aaaw 대조 자**이므로 답이 정해져 있다 — 이 회차가 올린 `TestData.PreBalance()` 로 옮기면 된다.
+> 셋째는 «표 밖 챕터가 실제로 있다»(420 > 100)를 재는데 그 문장이 거짓이 된다 — **거짓이 된 쪽이 더 좋은 상태**이므로(보상표가 게임 전체를 덮는다) 단언을 **«표가 게임 전체를 덮는다»(`TableMax >= MaxChapter`)** 로 뒤집는 것이 옳다(이 회차에 써 보고 되돌렸다 · 값이 없으면 그 자체가 빨개져서).
+> **ⓓ 등급 다섯이 그림에 닿는 것(2)** — `EveryLookPartSetRarityHasCatalogSprite` · `ItemKeysFollowTypeSet`.
+> ⚑ **둘 다 «등급» 을 «그림 칸» 자리에 그대로 넘긴다**(문자열 갈래를 직접 부른다). 그림은 넷뿐이라 `rar 4` 가 없는 `.4` 를 찾는다 ⇒ **`D.Gear.LookRar(r)` 를 거치게** 고친다.
+> ⚠ 회차 3 의 `GearLookWiringTests` 는 **자 폴더를 일부러 안 센다**(거기서는 그림 칸을 직접 다루는 것이 옳아서) — 그래서 이 둘은 그 자에 안 걸렸다. 그 예외가 값 회차에 값을 치렀다.
+> **ⓔ 나머지(5)** — `TheDefaultRunIsUntouched_…` · `BetweenSteps_TheCountDoesNotGrow` · `HoldLevelUp_기본값은_꺼짐이라_헤드리스는_그대로다` 등. 하나씩 읽어야 한다.
+>
+> **이 회차가 올린 것 — `TestData.PreBalance()`(5항 조각) · 커밋된 값 0줄**
+> 5항이 «T2 시드 골든은 «옛 표» 로 돌리는 자를 따로 두어 이식 동일성은 계속 지킨다» 고 시켜 둔 그것이다. `BattleTests` 아홉 자리를 그리로 옮겼다.
+> ⚑ **그런데 «정본만» 이 아니다** — 처음엔 `GameData.Load` 만 써서 «덮어쓰기 0» 으로 만들었더니 `GoldenRate_Seed11_Chapter60_Myth_ThreePick` 이 **83 → 82** 로 어긋났다.
+> `combatOverride`(T173 · 주인 «창은 화면 넘어서 10 …»)는 **주인이 바꾼 전투 «규칙»** 이고 **T2 골든은 그 규칙 위에서 잰 수**다. 빼는 것은 T325 가 더한 **밸런스 넷**뿐이다.
+> **«옛 표» 가 «정본» 과 같은 말이 아니었다** — 그 사이에 주인 지시가 한 겹 있었고, 그것을 자가 82 라는 수로 말해 줬다.
+> 게이트: build 0/0 · test **521/521** · 검사 rc=0 · 커밋된 값 0줄.
 6. **챕터 수 100** — `tuneOverride.json maxChapter 100` + 로더가 `enemies.json` 의 **앞 100 챕터만** 읽게(`GameData.cs:112` 의 «챕터 수 ≠ maxChapter» 검사를 «≥» 로) · 로비 «챕터 ◀▶»·클리어 보상 표(chapterChest)·PvP 더미 전투력 표가 100 을 넘지 않게 확인.
 7. **과녁(«풀» = 6부위 그 등급 · 노강 · 슬롯 0 · 장비 옵션 없음 · sim.js 실험1 조건)** —
    | 빌드 | 막히는 챕터 |

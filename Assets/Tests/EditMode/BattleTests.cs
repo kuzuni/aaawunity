@@ -4,6 +4,10 @@ using NUnit.Framework;
 
 namespace KkomaKnight.Tests
 {
+    // ⚑ 이 파일의 자는 전부 TestData.PreBalance() 을 쓴다 — «aaaw sim.js 와 같은 수가 나오는가»(T2 이식 동일성)를 재기 때문이다.
+    //   이 레포는 주인 지시로 정본 위에 값을 덮으므로(T325 의 gearOverride·enemiesOverride …) TestData.Load() 로 재면
+    //   «이식이 틀렸다» 가 아니라 «주인이 밸런스를 바꿨다» 로 빨개진다 — §2 T325 5항이 미리 시켜 둔 가름이다.
+    //   ⚠ 새 자를 여기 더할 때 «정본과 같은 수» 를 재는 것이 아니면 이 파일이 아니라 다른 파일에 두어라.
     /// <summary>
     /// 전투 엔진 이식 검증. 황금값은 aaaw sim.js 를 같은 시드로 돌려 얻은 실측이다
     /// (SEED 하니스: setSeed(11) → runChapter(...) 첫 판들). 난수 소비 순서가 한 곳이라도 어긋나면 여기서 빨개진다.
@@ -16,7 +20,7 @@ namespace KkomaKnight.Tests
         public void GoldenRun_Seed11_Chapter3_NoGear_Ladder()
         {
             // node: SEED=11 · mkBuild(-1,0,0) · LADDER_OPTS · 첫 두 판 → clear=false t=83.17 lv=6 tries=73 miss=14 / clear=true t=88.43 tries=83 miss=11
-            var d = TestData.Load(); var rng = new Mulberry32(11); var b = GearSystem.MkBuild(d, -1, 0, 0);
+            var d = TestData.PreBalance(); var rng = new Mulberry32(11); var b = GearSystem.MkBuild(d, -1, 0, 0);
             var r0 = new BattleState(d, 3, b, rng, new SimPolicy(), Ladder()).RunToEnd();
             Assert.That(r0.Clear, Is.False); Assert.That(r0.Time, Is.EqualTo(83.17).Within(0.01)); Assert.That(r0.Level, Is.EqualTo(6));
             Assert.That(r0.AtkTries, Is.EqualTo(73)); Assert.That(r0.Miss, Is.EqualTo(14)); Assert.That(r0.Gold, Is.EqualTo(30));
@@ -29,7 +33,7 @@ namespace KkomaKnight.Tests
         public void GoldenRun_Seed11_Chapter15_Rare_ThreePick()
         {
             // node: SEED=11 · mkBuild(1,0,5) · 3pick · 첫 판 → clear=false t=80.33 lv=7 tries=79 miss=15 · 둘째 판 clear=true t=61.17 tries=71
-            var d = TestData.Load(); var rng = new Mulberry32(11); var b = GearSystem.MkBuild(d, 1, 0, 5);
+            var d = TestData.PreBalance(); var rng = new Mulberry32(11); var b = GearSystem.MkBuild(d, 1, 0, 5);
             var r0 = new BattleState(d, 15, b, rng, new SimPolicy(), Ladder(true)).RunToEnd();
             Assert.That(r0.Clear, Is.False); Assert.That(r0.Time, Is.EqualTo(80.33).Within(0.01)); Assert.That(r0.AtkTries, Is.EqualTo(79)); Assert.That(r0.Miss, Is.EqualTo(15));
             Assert.That(r0.Taken, Is.EqualTo(new[] { "p_evade", "p_evadeHeal", "p_stunCritL", "p_critFR", "p_atk", "p_killArrowR", "p_critStack" }));
@@ -46,7 +50,7 @@ namespace KkomaKnight.Tests
             //   창이 8 마리에서 끊기지 않고 사거리 안 적을 전부 때리므로 클리어가 한 판 더 난다 — 규칙이 바뀐 만큼 골든도 다시 뽑았다(§1 규약).
             //   재도출 = 옆에 둔 aaaw 사본 sim.js 에 **같은 규칙**(SPEAR_PIERCE = Infinity · SPEAR_REACH = 312)을 먹여 실험1 표를 다시 뽑고
             //   이 엔진의 Sim 표와 대조했다(전·후 21칸 표는 PROGRESS T173 행 · aaaw 원본 저장소는 불변).
-            var d = TestData.Load(); var rng = new Mulberry32(11); var b = GearSystem.MkBuild(d, 3, 0, 25);
+            var d = TestData.PreBalance(); var rng = new Mulberry32(11); var b = GearSystem.MkBuild(d, 3, 0, 25);
             int w = 0;
             for (int i = 0; i < 100; i++) if (new BattleState(d, 60, b, rng, new SimPolicy(), Ladder(true)).RunToEnd().Clear) w++;
             Assert.That(w, Is.EqualTo(83));
@@ -55,7 +59,7 @@ namespace KkomaKnight.Tests
         [Test]
         public void GoldenRate_Seed11_Chapter3_Ladder_200Runs_IsTenPointFive()
         {
-            var d = TestData.Load(); var rng = new Mulberry32(11); var b = GearSystem.MkBuild(d, -1, 0, 0);
+            var d = TestData.PreBalance(); var rng = new Mulberry32(11); var b = GearSystem.MkBuild(d, -1, 0, 0);
             int w = 0;
             for (int i = 0; i < 200; i++) if (new BattleState(d, 3, b, rng, new SimPolicy(), Ladder()).RunToEnd().Clear) w++;
             Assert.That(w, Is.EqualTo(21));   // node: 10.5%
@@ -64,7 +68,7 @@ namespace KkomaKnight.Tests
         [Test]
         public void InteractivePolicy_PausesOnRestAndResumesAfterResolve()
         {
-            var d = TestData.Load(); var rng = new Mulberry32(5); var b = GearSystem.MkBuild(d, 3, 9, 100);
+            var d = TestData.PreBalance(); var rng = new Mulberry32(5); var b = GearSystem.MkBuild(d, 3, 9, 100);
             var G = new BattleState(d, 1, b, rng, new InteractivePolicy(), new RunOptions { EmitEvents = true });
             int guard = 0;
             while (G.Pending == null && !G.Over && guard++ < 100000) G.Tick();
@@ -89,7 +93,7 @@ namespace KkomaKnight.Tests
         [Test]
         public void InteractiveRun_FinishesWhenAllDecisionsAnswered()
         {
-            var d = TestData.Load(); var rng = new Mulberry32(3); var b = GearSystem.MkBuild(d, 3, 9, 100);
+            var d = TestData.PreBalance(); var rng = new Mulberry32(3); var b = GearSystem.MkBuild(d, 3, 9, 100);
             var G = new BattleState(d, 2, b, rng, new InteractivePolicy(), new RunOptions());
             int guard = 0; int levelUps = 0;
             while (!G.Over && G.AliveList().Count > 0 && guard++ < 200000)
@@ -116,7 +120,7 @@ namespace KkomaKnight.Tests
         [Test]
         public void DevilTakesThirtyPercentOfMaxHpFromMax()
         {
-            var d = TestData.Load(); var b = GearSystem.MkBuild(d, 1, 0, 0);
+            var d = TestData.PreBalance(); var b = GearSystem.MkBuild(d, 1, 0, 0);
             var G = new BattleState(d, 1, b, new Mulberry32(1), new SimPolicy(), new RunOptions());
             double max = G.P.MaxHp; G.P.Hp = max;
             G.PayDevilCost();
@@ -127,7 +131,7 @@ namespace KkomaKnight.Tests
         [Test]
         public void PerkApply_MultiplicativeAndAdditiveAxes()
         {
-            var d = TestData.Load(); var b = GearSystem.MkBuild(d, 1, 0, 0);
+            var d = TestData.PreBalance(); var b = GearSystem.MkBuild(d, 1, 0, 0);
             var G = new BattleState(d, 1, b, new Mulberry32(1), new SimPolicy(), new RunOptions { BaseStatsLegacy20 = true });
             double dmg0 = G.P.Dmg, def0 = G.P.Def;
             G.PickPerk(d.Perks.ById("p_atk")); Assert.That(G.P.Dmg, Is.EqualTo(dmg0 * d.Perks.C("PERK_ATK_M")).Within(1e-9));
@@ -144,7 +148,7 @@ namespace KkomaKnight.Tests
         [Test]
         public void OfferPerks_SameGradeAndNoDuplicates()
         {
-            var d = TestData.Load(); var rng = new Mulberry32(9); var taken = new List<PerkDef>();
+            var d = TestData.PreBalance(); var rng = new Mulberry32(9); var taken = new List<PerkDef>();
             for (int i = 0; i < 200; i++)
             {
                 var o = Perks.Offer(d, taken, false, rng);
