@@ -218,9 +218,24 @@ namespace KkomaKnight.Game
             // (CI #311·#315 «켜진 하이라이트 3개»). 그래서 이름이 «HighLight» 로 시작하는 **자손 전부**를 끈다(결정 433).
             foreach (var t in frame.GetComponentsInChildren<Transform>(true))
                 if (t != null && t.name.StartsWith(HighlightPrefix, StringComparison.Ordinal)) t.gameObject.SetActive(false);
+            // T342(주인 2026-09-10 «모든 장비 부분 프레임 들에 있는 글로우 부분 완전 흰색에 완전 불투명으로 해줘야함») —
+            // 조각 `ItemFrame_01_Normal_BasePrefab` 이 달고 오는 «Glow» 는 **원본은 흰색 α1** 인데
+            // 등급 변형(`ItemFrame_01_Normal_<색>`)이 그 색을 제 등급색으로 덮어 온다(그래서 칸마다 다른 색·다른 짙기로 보였다).
+            // 여기서 **다시 흰색 α1** 로 되돌린다 — 등급은 테두리(`Border`)와 조각 교체로만 나타내고, 글로우는 어느 등급에서나 같다.
+            // ⚠ 조각 원본은 안 고친다(§1 «프리팹은 부품 · 원본 불변») — 세우는 공용 자리인 여기서만 칠한다.
+            // ⚠ 우리 빛 담개(`LightMask`) 안의 글로우 서클은 **이름만 같은 다른 물건**이라 건너뛴다(T155 ⓓ · 짙기 UiKit.GlowAlpha).
             foreach (var im in frame.GetComponentsInChildren<Image>(true))
             {
-                if (im == null || im.name != UiKit.BorderName || im.sprite == null || !im.sprite.name.StartsWith(ItemBorderSprite, StringComparison.Ordinal)) continue;
+                if (im == null) continue;
+                if (im.name == UiKit.GlowName)
+                {
+                    var par = im.transform.parent;
+                    if (par != null && par.name == UiKit.LightMaskName) continue;
+                    // 완전 흰색 · 완전 불투명(Palette.White = Color.white · α1)
+                    im.color = Palette.White;
+                    continue;
+                }
+                if (im.name != UiKit.BorderName || im.sprite == null || !im.sprite.name.StartsWith(ItemBorderSprite, StringComparison.Ordinal)) continue;
                 im.type = Image.Type.Sliced;
                 im.fillCenter = false; im.raycastTarget = false; im.transform.SetAsLastSibling();
             }

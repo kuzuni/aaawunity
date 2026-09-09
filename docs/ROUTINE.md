@@ -8630,6 +8630,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/GearUi.cs`. lock `T342`.
 
+> **🔄 push · 확인 전(15:5X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 951 · lock `T342` 쥔 채 · 커밋 메시지의 949 는 951)** — `DarkFrame` 한 곳에서 `Glow` → `Palette.White`(`LightMask/Glow` 제외) · 자 = `UiSmokeTests` 장비 슬롯 루프의 «Glow = Color.white». 확인 = 다음 완주 런 `UiSmokeTests` + `screens` 05·06·07.
+
 ### T343 — ⚑ 주인: **데일리 기프트(17) — 선물상자 그림이 빛 «앞» 으로** (주인 2026-09-10 «데일리 기프트 보니까 다 좋은데 선물상자 이미지가 라이트보다 뒤에 있네 이거 수정해»)
 
 0. **실측(왜 뒤에 있나)** — `LobbyPopups.DailyGift` 가 그림을 `ov.Root` 밑에 세우고 **`SetSiblingIndex(1)`**(주석 «어둠 위 · 상자 아래»)로 둔다. 그런데 주인이 말한 «라이트» = 제목 리본 뒤 빛(`Overlay.RibbonGlow` 가 세우는 **`TitleGlow`**)이고 그것은 **상자(`box`)의 자식**이다. **상자보다 아래에 있는 그림은 형제 번호를 어떻게 만져도 그 빛 뒤다** — 자식은 언제나 제 부모와 함께 올라간다.
@@ -8669,3 +8671,5 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 4. **확인** — `screens` **01**(로비) + 주인 폰.
 
 순서 — `Core/Layout.cs` · `Game/Screens.cs` · `docs/ref-layout.md`. lock `T346`.
+
+> **🔄 push · 확인 전(15:5X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 950 · lock `T346` 쥔 채 · 커밋 메시지의 948 은 950)** — 0~3항 그대로 했다(9.2 → 10.06 둘 다 · 표 ① 행 · `FrameBandBelow` 주석). 로컬 EditMode `LayoutSpecTests` 초록. 확인 = 다음 완주 런 + `screens` 01.

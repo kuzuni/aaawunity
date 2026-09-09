@@ -1199,6 +1199,16 @@ namespace KkomaKnight.Tests.Play
                     Assert.IsNotNull(item, "슬롯 " + i + " Item"); Assert.IsTrue(item.gameObject.activeSelf, "슬롯 " + i + " 아이콘 켜짐(전부 장착)");
                     var im = item.GetComponent<Image>(); var rt = (RectTransform)item; var fr = (RectTransform)frame;
                     Assert.IsNotNull(im.sprite, "슬롯 " + i + " 스프라이트");
+                    // T342(주인 2026-09-10 «모든 장비 부분 프레임 들에 있는 글로우 부분 완전 흰색에 완전 불투명») —
+                    //   조각의 «Glow» 는 등급 변형이 제 색으로 덮어 오는데 `GearUi.DarkFrame` 이 흰색 α1 로 되돌린다.
+                    //   여섯 슬롯은 등급이 제각각이라 «어느 등급이든 흰색» 을 한 자리에서 잰다.
+                    //   ⚠ 우리 빛 담개(`LightMask/Glow`)는 이름만 같은 다른 물건이라 뺀다(T155 ⓓ · 짙기 GlowAlpha).
+                    foreach (var g in frame.GetComponentsInChildren<Image>(true))
+                    {
+                        if (g == null || g.name != UiKit.GlowName) continue;
+                        if (g.transform.parent != null && g.transform.parent.name == UiKit.LightMaskName) continue;
+                        Assert.AreEqual(Color.white, g.color, "슬롯 " + i + " 조각 Glow 는 완전 흰색·완전 불투명이어야 한다(T342 · 지금 " + g.color + ")");
+                    }
                     string part = i < 3 ? GearUi.ColLeft[i] : GearUi.ColRight[i - 3];
                     float rot = Mathf.DeltaAngle(0f, rt.localEulerAngles.z);
                     if (GearLook.HasLook(part))
