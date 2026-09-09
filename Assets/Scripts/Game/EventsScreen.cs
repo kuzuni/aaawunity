@@ -476,7 +476,9 @@ namespace KkomaKnight.Game
             // 층수 ◀ 색 = Gray: 크림 패널 위라 Cream 이면 안 보인다(T43 비평 회차 1 · 21 감점 원인) · 레퍼런스도 회색 화살표. ⚠ 한 줄에 문장 4개 — 뒤에 // 주석을 붙이면 Pct·Clickable·Tag 가 주석 처리된다(CI #87 회귀)
             var arrow = UiKit.Icon(box, "FloorPrev", "pi.arrow_left", Palette.Gray); UiKit.Pct(arrow.rectTransform, Layout.DdArrow.Within(Layout.DdBox)); UiKit.Clickable(arrow.transform, Noop); UiKit.Tag(arrow.transform, "층수 화살표");
             var circle = UiKit.Panel(box, "FloorCircle", "fr.circle", Palette.Hex("#141414")); UiKit.Pct(circle.rectTransform, Layout.DdFloor.Within(Layout.DdBox)); UiKit.Tag(circle.transform, "층수 원");
-            UiKit.Label(circle.transform, 0, 8, 100, 56, "1", 56, Palette.Orange).fontStyle = FontStyles.Bold; UiKit.Label(circle.transform, 0, 62, 100, 32, "층", TextSize.Aux, Palette.Orange, kind: TextKind.Aux);
+            // T291 2회차 — 층 원에 **도전 층**(= 깬 최고층 + 1)을 찍는다. 여태 «1» 이 글자로 박혀 있었다(층이 없던 시절의 자리).
+            // 층이 없는 던전(지옥의 문)에서는 Challenge 가 늘 1 이라 이 화면은 한 픽셀도 안 바뀐다.
+            UiKit.Label(circle.transform, 0, 8, 100, 56, DungeonSweep.Challenge(App.Save, App.Data.Dungeon, key).ToString(), 56, Palette.Orange).fontStyle = FontStyles.Bold; UiKit.Label(circle.transform, 0, 62, 100, 32, "층", TextSize.Aux, Palette.Orange, kind: TextKind.Aux);
             var rewards = UiKit.Spawn("ui.frameDark", box); var rrt = (RectTransform)rewards.transform; rrt.name = "Rewards"; UiKit.Pct(rrt, Layout.DdRewards.Within(Layout.DdBox)); UiKit.Tag(rrt, "보상 박스");
             UiKit.Label(rrt, 0, 3, 100, 24, "보상", TextSize.Body, Palette.White).fontStyle = FontStyles.Bold;
             var cells = UiKit.Rect(box, "RewardCells"); UiKit.Pct(cells, Layout.DdRewardCells.Within(Layout.DdBox));
