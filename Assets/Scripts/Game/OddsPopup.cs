@@ -25,17 +25,20 @@ namespace KkomaKnight.Game
     /// </summary>
     public static class OddsPopup
     {
-        /// <summary>팝업 상자 자리(화면 %) — 공통 정보 팝업 문법(뽑기 결과와 같은 결). 표 ㊾ 는 이 값을 잰 것이다.</summary>
-        static readonly Layout.R RBox = new Layout.R(6f, 22f, 88f, 56f);
-        /// <summary>스크롤 창(상자 %) — 머리 명판 아래부터 바닥 띠 위까지.</summary>
-        static readonly Layout.R RScroll = new Layout.R(3f, 13f, 94f, 74f);
-        /// <summary>바닥 회색 띠(상자 %).</summary>
-        static readonly Layout.R RFoot = new Layout.R(3f, 88f, 94f, 9f);
+        // ───────── 자리 — 전부 레퍼런스 36 실측(표 ㊾) ─────────
+        // 처음엔 눈대중으로 두었다가 표 ㊾ 를 재고 나서 그 값으로 바꿨다 — 재기 전에 놓은 수는 «잰 값» 이 아니다.
+        /// <summary>팝업 상자(화면 %) — 실측 px 67~653 · 383~1185.</summary>
+        static readonly Layout.R RBox = new Layout.R(9.3f, 24.6f, 81.5f, 51.4f);
+        /// <summary>스크롤 창(상자 %) — 명판 아래(화면 28.9%)부터 바닥 띠 위(71.2%)까지.</summary>
+        static readonly Layout.R RScroll = new Layout.R(0.5f, 8.4f, 98.8f, 82.3f);
+        /// <summary>바닥 회색 띠(상자 %) — 실측 화면 y 71.2 h 4.0.</summary>
+        static readonly Layout.R RFoot = new Layout.R(0.5f, 90.7f, 98.8f, 7.8f);
 
         /// <summary>격자 열 수 — 레퍼런스 36 실측(한 줄에 다섯 칸).</summary>
         const int Cols = 5;
-        /// <summary>구간 머리 높이 · 칸 한 줄 높이 · 구간 사이 틈(스크롤 창 폭 대비 px 로 환산해 쓴다).</summary>
-        const float HeadPx = 78f, RowPx = 168f, GapPx = 18f;
+        /// <summary>구간 머리 띠 높이 · 칸 한 줄(행 피치) · 구간 사이 틈 — 전부 레퍼런스 36 실측(px · 720×1560 기준 · 표 ㊾).
+        /// 머리 띠 677~743 = 67px · 행 피치 = 칸 위 끝 간격 126px · 틈은 구간이 붙어 보이지 않을 만큼만.</summary>
+        const float HeadPx = 67f, RowPx = 126f, GapPx = 18f;
 
         /// <summary>퍼센트 글자 — 등급 확률은 «39.68%» 꼴, 개별은 작아서 «1.89%»·«0.189%» 처럼 유효숫자를 하나 더 준다(레퍼런스와 같은 꼴).</summary>
         public static string Pct(double v) => v >= 1.0 ? v.ToString("0.00") + "%" : v.ToString("0.000") + "%";
@@ -78,7 +81,10 @@ namespace KkomaKnight.Game
             UiKit.Pct(foot, RFoot);
             UiKit.Label(foot, 2, 0, 96, 100, "확정 보상도 같은 확률을 쓴다", TextSize.Aux, Palette.CreamDark).name = "FootText";
 
-            UiKit.Tag(b, "확률 팝업 상자"); UiKit.Tag(view, "확률 목록(스크롤)"); UiKit.Tag(foot, "바닥 안내 띠");
+            // §5 는 이름표를 **표 ㊾ 의 행 이름 그대로** 맞춘다(결정 592) — 한 글자만 달라도 그 행이 0 점이 된다(결정 756 이 여섯 건을 그렇게 잡았다).
+            UiKit.Tag(b, "팝업 상자"); UiKit.Tag(foot, "바닥 회색 띠");
+            // 명판은 공통 팝업(`UiKit.Popup`)이 세운 조각이라 이름표가 없다 — 표 ㊾ 가 그 자리를 재므로 여기서 붙인다(GearUi 가 등급 배지에 하는 것과 같은 꼴).
+            var plate = UiKit.Find(b, "ui.title.tangerine"); if (plate != null) UiKit.Tag(plate, "명판(«확률»)");
             return b;
         }
 
@@ -90,6 +96,7 @@ namespace KkomaKnight.Game
             Place(head, 0f, y, 100f, HeadPx);
             var hb = UiKit.Panel(head, "HeadBg", "fr.r12", Palette.A(Palette.Ink, 0.35f)).rectTransform; UiKit.Stretch(hb);
             UiKit.Label(head, 2, 0, 26, 100, r.Name, TextSize.Body, Palette.ByName(color), TextAnchor.MiddleLeft).name = "SecName";
+            if (r.Rar == D.Gear.RarRare) UiKit.Tag(head, "구간 머리 띠");   // 표 ㊾ 는 «희귀» 구간 하나를 잰다(스크롤에 따라 움직이는 행이라 표 꼬리에 ⚑ 로 적어 뒀다)
             // «기본 확률(확정 보상 제외): NN.NN%» — 퍼센트만 초록(레퍼런스 36 그대로). 리치 텍스트 한 조각이라 T52 의 «섞어 쓰지 마라» 와 다르다:
             // 여기서 색이 갈라 주는 것은 «수» 이고 그 수가 이 줄의 요점이다.
             var sb = new StringBuilder("기본 확률(확정 보상 제외): <color=#3FD214>").Append(Pct(r.Percent)).Append("</color>");
@@ -107,6 +114,7 @@ namespace KkomaKnight.Game
                 var frt = (RectTransform)frame.transform; UiKit.Pct(frt, 6, 2, 88, 66);
                 UiKit.SetSprite(frt, "Item", GearLook.IconKey(t.Part, D.Gear.SetOf(t.Type), r.Rar), Palette.White);
                 UiKit.Label(cell, 0, 70, 100, 26, Pct(r.Each), TextSize.Aux, Palette.White).name = "Pct";
+                if (i == 0 && r.Rar == D.Gear.RarRare) UiKit.Tag(cell, "보상 칸(구간 첫 칸)");
                 // 4항 — 칸을 누르면 «보기 전용» 세부 팝업. 닫으면 **이 팝업으로 돌아온다**(프로필 팝업 둘이 쓰는 그 꼴 · 표 ㉟).
                 //   Overlay 는 한 겹이라 «겹쳐 뜨기» 가 아니라 «갔다 돌아오기» 로 같은 결과를 낸다(결정 기록).
                 var item = new GearItem { Part = t.Part, Type = t.Type, Rar = r.Rar, Plus = 0 };
