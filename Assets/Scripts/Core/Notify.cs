@@ -97,18 +97,41 @@ namespace KkomaKnight.Core
         }
 
         /// <summary>
-        /// 장비 탭에 «지금 할 일» 이 있는가(T167) — ⓐ 아직 안 본 새 장비(<see cref="GearItem.IsNew"/>)가 있거나
+        /// 장비 탭에 «지금 할 일» 이 있는가(T167) — ⓐ <b>슬롯 강화가 되는 부위</b>가 하나라도 있거나
         /// ⓑ 합성 가능한 묶음이 있다(같은 <see cref="GearSystem.FuseKey"/> 3개 이상 = 대장간 «자동» 점과 **같은 판정**).
         /// 화면(장비·대장간)이 제각각 세지 않게 판정을 여기 한 곳에 둔다(T96 ⓔ 규약).
+        /// <para>
+        /// <b>T357(주인 2026-09-10 «장비에 슬롯 강화할 부분도 없는데 빨간점 안 꺼지더라»)</b> — 여기 있던
+        /// «아직 안 본 새 장비(<see cref="GearItem.IsNew"/>)» 갈래를 <b>뺐다</b>.
+        /// </para>
+        /// <para>
+        /// <b>남기는 기준은 «이 점을 끄는 일이 무엇인가» 하나다.</b> 슬롯 강화와 합성은 <b>사용자가 그 일을 하면 저절로 꺼진다</b> —
+        /// 강화하면 골드·레시피가 줄어 판정이 거짓이 되고, 합성하면 묶음이 3 밑으로 떨어진다.
+        /// 그런데 <c>IsNew</c> 는 <b>세부 팝업을 열어야만</b> 꺼진다(<c>GearUi</c>) — 뽑기로 여럿 얻고 안 열어 보면 점이 영영 켜져 있고,
+        /// 그 점은 «강화할 것이 있다» 로 읽힌다. 주인이 본 것이 그것이다.
+        /// <b>스스로 안 꺼지는 조건을 알림에 넣으면 그 알림은 «할 일» 이 아니라 «지워지지 않는 자국» 이 된다.</b>
+        /// </para>
+        /// <para>
+        /// ⚠ <c>IsNew</c> 자체는 그대로 둔다 — 인벤 칸의 «NEW» 표시가 쓰는 값이고, 그것은 «칸 하나» 를 가리키므로 안 꺼져도 거짓말이 아니다.
+        /// 없앤 것은 <b>탭 점이 그 값을 읽는 것</b>뿐이다(T167 «봤다 칸을 만들지 않는다» 와 같은 방향).
+        /// </para>
+        /// <para>
+        /// ⚑ <b>합성은 남겼다</b> — 주인이 짚은 것은 «안 꺼지는» 점이고 합성은 스스로 꺼진다. 대장간 버튼에 제 점이 따로 있지만
+        /// (<c>GearScreen</c> · <c>GearUi.FusableKeys</c>) 그것은 <b>장비 화면에 들어와야</b> 보인다 — 탭 점을 빼면 들어올 까닭이 사라진다.
+        /// </para>
         /// </summary>
         public static bool GearAny(GameData G, SaveData s)
         {
             if (s == null || s.Inv == null) return false;
+            // ⓐ 슬롯 강화 — 주인이 이 점을 그렇게 읽는다(«슬롯 강화할 부분»). 판정은 화면의 버튼이 쓰는 그 함수 그대로다(GearSystem 한 곳 · T290 3항).
+            if (G != null && G.Gear != null && G.Gear.Parts != null)
+                foreach (var part in G.Gear.Parts)
+                    if (GearSystem.CanSlotUp(G, s, part, out _)) return true;
+            // ⓑ 합성 가능한 묶음
             var cnt = new Dictionary<string, int>();
             foreach (var g in s.Inv)
             {
                 if (g == null) continue;
-                if (g.IsNew) return true;
                 var k = GearSystem.FuseKey(G, g);
                 int c = (cnt.TryGetValue(k, out var v) ? v : 0) + 1; cnt[k] = c;
                 if (c >= 3) return true;

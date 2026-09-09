@@ -88,20 +88,46 @@ namespace KkomaKnight.Tests
         static GearItem Item(string part, string type, int rar) => new GearItem { Part = part, Type = type, Rar = rar };
 
         [Test]
-        public void TabAny_Gear_IsTrueWhenSomethingIsNewOrFusable()
+        public void TabAny_Gear_IsTrueWhenSlotCanBeUpgradedOrSomethingIsFusable()
         {
             var G = GearOnly(); var s = Fresh();
             Assert.IsFalse(Notify.GearAny(G, s), "인벤이 비면 장비 탭에 할 일이 없다");
 
             s.Inv.Add(Item("weapon", "crit", 0));
-            Assert.IsFalse(Notify.GearAny(G, s), "한 개만 있고 새것도 아니면 아직 아니다");
+            Assert.IsFalse(Notify.GearAny(G, s), "한 개만 있고 합성도 안 되면 아직 아니다");
 
+            // T357(주인 2026-09-10 «슬롯 강화할 부분도 없는데 빨간점 안 꺼지더라») — «안 본 새 장비» 는 이제 점을 안 켠다.
+            //   그 갈래만 스스로 안 꺼졌다(세부 팝업을 열어야 꺼진다) — 뽑기로 여럿 얻고 안 열어 보면 점이 영영 켜져 있었다.
             s.Inv[0].IsNew = true;
-            Assert.IsTrue(Notify.GearAny(G, s), "안 본 새 장비가 있으면 점이 뜬다");
+            Assert.IsFalse(Notify.GearAny(G, s),
+                "«안 본 새 장비» 만으로는 점이 안 뜬다 — 스스로 안 꺼지는 조건은 «할 일» 이 아니라 «지워지지 않는 자국» 이다(T357)");
 
             s.Inv[0].IsNew = false;
             s.Inv.Add(Item("weapon", "crit", 0)); s.Inv.Add(Item("weapon", "crit", 0));
             Assert.IsTrue(Notify.GearAny(G, s), "같은 묶음 3개 = 합성 가능하면 점이 뜬다(대장간 «자동» 과 같은 판정)");
+        }
+
+        /// <summary>
+        /// T357 — 주인이 이 점을 읽는 뜻(«슬롯 강화할 부분»)이 실제로 점을 켜고, <b>강화하고 나면 꺼지는가</b>.
+        /// <para>재는 것이 «켜진다» 만이면 늘 켜져 있는 코드도 통과한다 — 이 절이 고친 고장이 바로 그 꼴이므로 <b>끄는 쪽</b>을 같이 잰다.</para>
+        /// </summary>
+        [Test]
+        public void TabAny_Gear_TurnsOffOnceTheSlotHasBeenUpgraded()
+        {
+            var G = GearOnly(); var s = Fresh();
+            G.Gear.Parts = new[] { "weapon" };
+            //   ⚠ 표를 두 칸 준다 — 한 칸만 주면 Lv 1 의 값이 표 밖이라 `SlotCostBase·G`(둘 다 0)로 떨어져
+            //     «공짜로 또 강화된다» 가 되고, 그러면 아래 «꺼진다» 가 내 fixture 때문에 빨개진다(실제로 한 번 그랬다).
+            G.Gear.SlotLvMax = 5; G.Gear.SlotCostTable = new double[] { 100, 500 };
+            s.Gold = 0;
+            Assert.IsFalse(Notify.GearAny(G, s), "골드가 없으면 강화할 수 없으니 점이 꺼져 있다");
+
+            s.Gold = 100;
+            Assert.IsTrue(Notify.GearAny(G, s), "강화할 골드가 생기면 점이 뜬다 — 주인이 이 점을 그렇게 읽는다");
+
+            Assert.IsTrue(GearSystem.SlotUp(G, s, "weapon", out _), "강화가 실제로 된다");
+            Assert.IsFalse(Notify.GearAny(G, s),
+                "강화하고 나면 골드가 빠져 점이 저절로 꺼진다 — «사용자가 그 일을 하면 꺼진다» 가 이 점의 조건이다(T357)");
         }
 
         [Test]
@@ -131,7 +157,10 @@ namespace KkomaKnight.Tests
         {
             var G = GearOnly(); var s = Fresh();
             foreach (var t in ShopFree.All) ShopFree.Take(s, t, Today);   // T355 — 옛 FreeDay(다이아 자리 하나)가 아니라 무료 보급 자리 넷을 다 써야 꺼진다                                  // 상점은 껐다
-            s.Inv.Add(Item("weapon", "crit", 0)); s.Inv[0].IsNew = true;   // 장비만 켠다
+            // T357 — 장비를 켜는 방법을 «안 본 새 장비» 에서 «합성 가능» 으로 바꿨다.
+            //   이 자가 재는 것은 «gear 키가 장비 규칙으로 가는가»(라우팅)이지 무엇이 점을 켜는가가 아니다 —
+            //   그 «무엇» 은 위 두 자가 따로 잰다. 켜는 방법이 바뀌었으니 여기서는 **살아 있는 조건** 으로 켠다.
+            for (int i = 0; i < 3; i++) s.Inv.Add(Item("weapon", "crit", 0));   // 장비만 켠다(합성 가능)
             Assert.IsTrue(Notify.TabAny("gear", G, s, 0, Today), "장비 탭은 장비 규칙을 본다");
             Assert.IsFalse(Notify.TabAny("shop", G, s, 0, Today), "상점 탭은 장비 사정에 안 흔들린다");
         }
