@@ -20,6 +20,12 @@ namespace KkomaKnight.Tests.Play
         /// <summary>가장 긴 실제 토스트 문구(T161 · 대장간 재료 안내 · 최악의 이름 «암살자의 목걸이») — `TextSizeGateTests` 와 <b>같은 글</b>이라 두 자가 같은 화면을 본다(T216).</summary>
         const string LongToast = "같은 부위·종류·등급만 재료가 됩니다 (목걸이 · 암살자의 목걸이 · 신화)";
 
+        /// <summary>
+        /// T349 — <c>screens</c> 06·07 셋업이 들고 갈 <b>가장 높은 강화 값</b>. 신화 +13 = 표시 등급 «무한 +1»(T316 표: 3 갓 · 6 초월 · 9 불멸 · 12 무한).
+        /// <para>12 가 아니라 13 인 까닭 — 12 는 «무한 <b>+0</b>» 이라 화면에 «+N» 이 안 붙는다. 한 칸 더 올려야 «표시 등급 + 다시 센 강화» 둘 다 사진에 나온다.</para>
+        /// </summary>
+        const int MythPlusForShot = 13;
+
         App _app; PlayLog _log;
         readonly Dictionary<string, object> _layout = new Dictionary<string, object>();
         readonly List<object> _missing = new List<object>();
@@ -158,8 +164,24 @@ namespace KkomaKnight.Tests.Play
             GearItem firstFree = null;
             foreach (var p in D.Gear.Parts) { var g = Give(p, rar: 1, plus: 1); S.Eq[p] = g.Uid; }
             for (int i = 0; i < 10; i++) { var g = Give(D.Gear.Parts[i % D.Gear.Parts.Length], rar: i % 3, plus: i % 2); if (firstFree == null) firstFree = g; }
+            // T349 — **사진이 등급 축의 «한 값» 만 담고 있었다.** 07 이 열던 것은 `firstFree`(= 위 루프의 i=0 = **일반 +0**)라
+            //   T324(«모든 등급 제목을 갈색으로»)가 고침 «전에도» 갈색인 사진을 남겼고, 신화가 아예 없어 T316 의 표시 등급(«무한 +1»)은
+            //   06·07 어디에도 안 나왔다. 자는 초록이고 사진은 아무 말이 없는 자리다 — 등급·강화는 이 게임에서 가장 자주 바뀌는 축인데.
+            //   ⇒ **사진 장수는 안 늘리고**(같은 06·07 이 더 많은 것을 말하게 한다) 셋업에 «가장 높은 값» 하나를 더 얹고, 07 이 그것을 연다.
+            var mythPlus = Give(D.Gear.Parts[0], rar: D.Gear.RarMyth, plus: MythPlusForShot);
+            {
+                // T349 3항 — 재는 것은 **사진이 아니라 셋업**이다. 사진은 사람이 보고, 이 둘은 «사람이 볼 것이 사진에 들어 있는가» 를 지킨다.
+                //   누가 이 셋업을 «정리» 하면(옛 두 줄로 되돌리면) 사진은 여전히 찍히고 자도 전부 초록이라 **아무도 못 알아챈다** — 그때 우는 것이 이 둘이다.
+                int topRar = 0, topPlus = -1;
+                foreach (var g in S.Inv) { if (g.Rar > topRar) topRar = g.Rar; if (g.Rar >= D.Gear.RarMyth && g.Plus > topPlus) topPlus = g.Plus; }
+                Assert.GreaterOrEqual(topRar, 1, "06 셋업에 «일반» 말고도 등급이 있어야 한다 — 등급색·배지가 한 값뿐이면 그 축의 회귀는 사진으로 안 잡힌다(T349)");
+                Assert.GreaterOrEqual(topPlus, 12, "06 셋업에 «신화 +12 이상» 이 있어야 T316 의 표시 등급(갓·초월·불멸·무한)이 사진에 나온다(T349)");
+            }
             _app.ShowScreen("gear"); yield return Frames(3); yield return Shot("06_gear");
-            if (firstFree != null) { GearUi.OpenDetail(_app, firstFree, null); yield return Frames(2); yield return Shot("07_gear_detail"); _app.Overlay.Close(); yield return Frames(1); }
+            // 07 은 **신화 +13** 을 연다 — 그 한 장이 주인 지시 둘을 같이 보여 준다(T324 = 제목이 갈색인가 · T316 = 배지가 «무한 +1» 인가).
+            //   그것이 없으면(표가 등급을 못 주면) 예전처럼 첫 장비로 물러난다 — 사진이 통째로 빠지는 것보다 낫다.
+            var detail = mythPlus != null ? mythPlus : firstFree;
+            if (detail != null) { GearUi.OpenDetail(_app, detail, null); yield return Frames(2); yield return Shot("07_gear_detail"); _app.Overlay.Close(); yield return Frames(1); }
             _app.ShowScreen("forge"); yield return Frames(3); yield return Shot("08_gear_fuse");
             // 상점(T40) = 세로 스크롤 한 화면 — 레퍼런스 10 = 맨 위(상자 배너 · 상자 카드 2) · 09 = 끝까지 내린 상태(다이아 · 골드)
             _app.ShowScreen("shop"); yield return Frames(3); yield return Shot("10_shop_2");
