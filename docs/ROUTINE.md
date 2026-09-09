@@ -9185,8 +9185,9 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 > ⚑ 그 «꺼진다» 자가 처음에 빨갰는데 **내 fixture 탓**이었다(`SlotCostTable` 을 한 칸만 줘 Lv 1 값이 표 밖으로 떨어져 `SlotCostBase·G`(둘 다 0) = 공짜 강화). 코드가 아니라 자를 고쳤고 그 까닭을 자에 적어 뒀다.
 > **확인 = 주인 폰**(강화할 것이 없으면 장비 탭 점이 꺼져 있다 · 골드가 차면 다시 켜진다). 기계 = 다음 완주 런 `NotifyTests` 실패 0.
 
-### T358 — ⚑⚑ 주인: **게임(전투) 들어갈 때 로딩 화면** (주인 2026-09-10 «게임 입장할 때 로딩 좀 화면 되게 하기 그리고 게임 입장»)
+### T358 ✅ — ⚑⚑ 주인: **게임(전투) 들어갈 때 로딩 화면** (주인 2026-09-10 «게임 입장할 때 로딩 좀 화면 되게 하기 그리고 게임 입장»)
 
+> ▸ **확인 끝 — ✅(2026-09-09 20:5X · sess-1455-20088 · 워커 P · lock `T358` 반납 · 결정 1032).** 런 905(`4cc1973f` · 2회차 `2893e8c9` 를 품는다) `[CI명부] BattleLoadingTests(1)` · `[CI실패] 0건` · PlayMode 194건 실패 0 · 900·901·904 에서도 이 자는 조용했다. 사진으로는 못 본다(배치 모드에서 첫 Update 에 내린다 · 결정 1003 ①) — 남은 확인은 3항 **주인 폰**(START 를 누르면 `Title_Loading` 이 0.3초 떴다 내린다).
 > ▸ **2회차 — 자 한 줄(2026-09-09 20:0X · sess-1455-20088 · 워커 P · lock `T358`).** 런 889·895 의 유일한 빨강 `BattleLoadingTests:78` = `Object.Destroy` 가 프레임 끝까지 미뤄져 같은 프레임에 «아직 있다»(워커 B · 결정 1008) → 한 프레임 넘겨 잰다. 로딩·배치 모드 내림·사진은 그 런에서 전부 초록이었다. **확인** = 다음 완주 런 `BattleLoadingTests(1)` ✗ 없음.
 > ▸ **1회차 — 세웠다(2026-09-09 19:1X · sess-1455-20088 · 워커 P · lock `T358` · 결정 1003).** `App.StartBattle` 이 전투 화면을 세우기 전에 `LoadingScreen.Show(Frame, Assets)`(부팅과 같은 조각)를 `Frame` 맨 위에 띄우고, `TickBattleLoading`(Update)이 «첫 프레임을 그린 뒤 + MinSeconds» 에 내린다 · 진행 바 = 시간 · 전투를 떠나면 `ShowScreen` 이 내린다 · 조각이 없으면 옛 흐름. ⚠ 배치 모드에서는 첫 Update 에 내린다(결정 1003 ① — `StartBattle` 직후를 찍는 자 53곳). 자 = `BattleLoadingTests`(신규 · START 를 실제로 눌러 «누른 직후 맨 위» → «null 이 될 때까지» → 조각 0 → 로비 이탈). **확인** = 다음 완주 런 `BattleLoadingTests(1)` ✗ 없음 · `UiShotsTests`·`PlaythroughTests` 그대로 · 주인 폰.
 
