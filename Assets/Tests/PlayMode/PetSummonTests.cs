@@ -187,6 +187,56 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
+
+        [UnityTest]
+        public IEnumerator 전체_강화와_빠른_장착이_실제로_돈다()
+        {
+            yield return Boot();
+            var d = _app.Data != null ? _app.Data.Pet : null;
+            if (d == null) { yield return Shutdown(); Assert.Ignore("펫 표가 없다"); }
+
+            // 두 마리를 가지게 하고, 한 마리는 강화까지 되게 조각을 채운다(수는 Core 가 낸다).
+            var a = d.Pets[0]; var b = d.Pets[d.Pets.Count - 1];
+            Pets.Gain(_app.Save, a.Id); Pets.Gain(_app.Save, b.Id);
+            for (int i = 0; i < Pets.Need(d, 1); i++) Pets.Gain(_app.Save, a.Id);
+            _app.Persist();
+            int upsWanted = 0;
+            foreach (var p in d.Pets) if (Pets.CanLevelUp(d, _app.Save, p.Id)) upsWanted++;
+            Assert.Greater(upsWanted, 0, "전제 — 올릴 수 있는 펫이 있다");
+
+            _app.ShowScreen("pet"); yield return Frames(1);
+            var root = _app.Current.Root;
+            int questBefore = QuestRun.Count(_app.Save, true, Quests.PetUpgrade);
+
+            var up = UiKit.Find(root, "UpgradeAllBtn"); Assert.IsNotNull(up, "전체 강화 버튼");
+            up.GetComponent<Button>().onClick.Invoke(); yield return Frames(1);
+            foreach (var p in d.Pets)
+                Assert.IsFalse(Pets.CanLevelUp(d, _app.Save, p.Id), "«전체» 는 더 못 올릴 때까지 올린다 — " + p.Name);
+            Assert.AreEqual(questBefore + upsWanted, QuestRun.Count(_app.Save, true, Quests.PetUpgrade),
+                            "퀘스트 카운터는 «올린 횟수만큼» 오른다(세부 팝업의 강화와 같은 수)");
+
+            // 빠른 장착 — 열린 빈 칸을 «등급 → 레벨 → 표 차례» 로 채운다(이미 낀 것은 안 건드린다)
+            int open = Pets.SlotsOpen(d, _app.Save);
+            Assert.Greater(open, 0, "전제 — 첫 칸은 0회부터 열려 있다");
+            var qe = UiKit.Find(root, "QuickEquipBtn"); Assert.IsNotNull(qe, "빠른 장착 버튼");
+            qe.GetComponent<Button>().onClick.Invoke(); yield return Frames(1);
+            var worn = Pets.Equipped(d, _app.Save);
+            Assert.AreEqual(Mathf.Min(open, 2), worn.Count, "열린 칸만큼(가진 만큼) 채운다");
+            var g0 = d.GradeOfPet(d.Of(worn[0]));
+            foreach (var id in worn)
+            {
+                var g = d.GradeOfPet(d.Of(id));
+                Assert.LessOrEqual(g != null ? g.Rar : -1, g0 != null ? g0.Rar : -1, "등급 높은 것부터 들어간다");
+            }
+
+            // 한 번 더 눌러도 이미 찼으면 아무 일도 안 난다(«빠른» 은 다시 짜기가 아니다)
+            var before = _app.Save.ToJson();
+            qe.GetComponent<Button>().onClick.Invoke(); yield return Frames(1);
+            Assert.AreEqual(before, _app.Save.ToJson(), "채울 칸이 없으면 세이브는 그대로다(까닭은 토스트가 말한다)");
+
+            yield return Shutdown();
+        }
+
         /// <summary>버튼의 값 줄이 지금 어느 그림을 쓰고 있나 — 카탈로그 키로 되짚는다(그림 파일이 아니라 «무엇으로 치르나» 를 재는 자리).</summary>
         static string CostIcon(Transform root, string btnName)
         {

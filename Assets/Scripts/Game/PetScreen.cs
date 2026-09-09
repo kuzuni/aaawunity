@@ -98,8 +98,10 @@ namespace KkomaKnight.Game
             }
 
             // ⑤ 회색 보조 버튼 2 → ⑥ 주황 소환 버튼 2(가격 자리 없음 · 흐리게 + 누르면 «준비 중» 토스트 · T178) → ⑦ 탭 바
-            var up = UiKit.Button(Root, "ui.btnGray", "전체 강화", () => { }, Layout.PetUpgradeAll); up.name = "UpgradeAllBtn";
-            var qe = UiKit.Button(Root, "ui.btnGray", "빠른 장착", () => { }, Layout.PetQuickEquip); qe.name = "QuickEquipBtn";
+            // T293 5항 ⓗ(주인 «강화 가능할 때는 해당 거 버튼 주황») — 옷은 «지금 할 것이 있나» 를 따르되 **누르는 것은 늘 된다**:
+            //   없으면 까닭을 토스트로 말한다(특권 «전체 받기» 가 세운 그 문법 · T306). 회색인데 아무 말도 안 하는 버튼을 안 만든다.
+            var up = UiKit.Button(Root, "ui.btnGray", "전체 강화", UpgradeAll, Layout.PetUpgradeAll); up.name = "UpgradeAllBtn"; _upAll = up;
+            var qe = UiKit.Button(Root, "ui.btnGray", "빠른 장착", QuickEquip, Layout.PetQuickEquip); qe.name = "QuickEquipBtn"; _quickEq = qe;
             var sm = SummonButton("SummonBtn", "소환", Layout.PetSummon); var sm10 = SummonButton("Summon10Btn", "소환 x10", Layout.PetSummon10);
             NavBar.Attach(this, Root, "pet");
 
@@ -225,6 +227,76 @@ namespace KkomaKnight.Game
             if (items.Count > 0) RewardPopup.Show(items, null);
         }
 
+        RectTransform _upAll, _quickEq;
+
+        /// <summary>지금 강화할 수 있는 펫이 몇 마리인가 — 버튼 글자와 «누르면 무슨 일이 나나» 가 같은 값에서 나온다.</summary>
+        int UpgradableCount()
+        {
+            var d = PD; var s = App != null ? App.Save : null; if (d == null || s == null) return 0;
+            int n = 0;
+            foreach (var p in d.Pets) if (Pets.CanLevelUp(d, s, p.Id)) n++;
+            return n;
+        }
+        /// <summary>빠른 장착이 지금 채울 수 있는 칸 수 = min(열린 빈 칸, 아직 안 낀 가진 펫).</summary>
+        int QuickEquipCount()
+        {
+            var d = PD; var s = App != null ? App.Save : null; if (d == null || s == null) return 0;
+            int open = Pets.SlotsOpen(d, s); if (open <= 0) return 0;
+            int empty = 0;
+            for (int i = 0; i < open; i++) if (string.IsNullOrEmpty(Pets.EquippedAt(d, s, i))) empty++;
+            if (empty <= 0) return 0;
+            int spare = 0;
+            foreach (var p in d.Pets) if (Pets.Has(s, p.Id) && WornSlot(p.Id) < 0) spare++;
+            return spare < empty ? spare : empty;
+        }
+
+        /// <summary>
+        /// «전체 강화» — 올릴 수 있는 펫을 <b>더 못 올릴 때까지</b> 전부 올린다(주인 5항 «올릴 수 있는 동료 전부»).
+        /// <para>규칙은 <see cref="Pets.LevelUp"/> 한 곳이고 여기는 <b>몇 번 부를지</b>만 정한다. 퀘스트 카운터는 <b>올린 횟수만큼</b> 오른다(세부 팝업의 «강화» 와 같은 수 · T257 ⓑ).</para>
+        /// </summary>
+        void UpgradeAll()
+        {
+            var d = PD; var s = App.Save; if (d == null || s == null) { App.Toast(NotReadyMsg); return; }
+            int ups = 0;
+            foreach (var p in d.Pets)
+                while (Pets.LevelUp(d, s, p.Id)) ups++;
+            if (ups <= 0) { App.Toast("강화할 펫이 없습니다"); return; }
+            Quests.Bump(App, Quests.PetUpgrade, ups);
+            App.Persist(); Refresh();
+            App.Toast(ups + "번 강화했습니다");
+        }
+
+        /// <summary>
+        /// «빠른 장착» — 열린 <b>빈 칸</b>에 «등급 높은 순 → 레벨 높은 순 → 표 차례» 로 채운다(주인 5항 «열린 슬롯에 등급·레벨 높은 순»).
+        /// <para>이미 낀 펫은 건드리지 않는다 — «빠른» 은 «다시 짜기» 가 아니라 «빈 자리 채우기» 다(누른 사람이 고른 것을 안 뒤집는다).</para>
+        /// </summary>
+        void QuickEquip()
+        {
+            var d = PD; var s = App.Save; if (d == null || s == null) { App.Toast(NotReadyMsg); return; }
+            int open = Pets.SlotsOpen(d, s);
+            if (open <= 0) { App.Toast("장착 칸이 아직 안 열렸습니다"); return; }
+            var pool = new List<PetData.Pet>();
+            foreach (var p in d.Pets) if (Pets.Has(s, p.Id) && WornSlot(p.Id) < 0) pool.Add(p);
+            pool.Sort((a, b) =>
+            {
+                var ga = d.GradeOfPet(a); var gb = d.GradeOfPet(b);
+                int ra = ga != null ? ga.Rar : -1, rb = gb != null ? gb.Rar : -1;
+                if (ra != rb) return rb.CompareTo(ra);                       // 등급 내림차순
+                int la = Pets.Lv(s, a.Id), lb = Pets.Lv(s, b.Id);
+                if (la != lb) return lb.CompareTo(la);                       // 그 안에서 레벨 내림차순
+                return d.Pets.IndexOf(a).CompareTo(d.Pets.IndexOf(b));       // 마지막은 표 차례(같은 값이면 늘 같은 답)
+            });
+            int put = 0;
+            for (int i = 0; i < open && put < pool.Count; i++)
+            {
+                if (!string.IsNullOrEmpty(Pets.EquippedAt(d, s, i))) continue;
+                if (Pets.Equip(d, s, pool[put].Id, i)) put++;
+            }
+            if (put <= 0) { App.Toast("장착할 펫이 없습니다"); return; }
+            App.Persist(); Refresh();
+            App.Toast(put + "마리 장착했습니다");
+        }
+
         /// <summary>그 펫이 낀 칸(없으면 -1) — «장착 ↔ 해제» 를 한 버튼으로 쓰려면 이것 하나면 된다.</summary>
         int WornSlot(string id)
         {
@@ -346,6 +418,29 @@ namespace KkomaKnight.Game
             RefreshSummon();
             RefreshCells();
             RefreshSum();
+            RefreshHelpers();
+        }
+
+        /// <summary>
+        /// 보조 버튼 둘의 «지금 할 것이 있나» — 글자 뒤에 <b>할 수 있는 수</b>를 붙여 그것을 말한다.
+        /// <para>
+        /// ⚠ <b>옷(주황/회색)은 이 회차에 안 바꿨다</b> — 이 레포의 두 벌 버튼은 <b>프리팹이 서로 다른 조각</b>이라
+        /// (<c>ui.btnOrange</c> ↔ <c>ui.btnGray</c>) 색만 갈아입힐 수 없고, <see cref="LobbyPopups.PrivilegeScreen"/> 처럼
+        /// <b>두 벌을 겹쳐 세우고 한 벌만 켜는</b> 꼴이어야 한다. 그 꼴은 이름이 하나 늘어(<c>…#Gray</c>) <b>스모크 자의 이름 계약</b>을 건드리므로
+        /// 그 자를 같은 회차에 옮길 수 있을 때 한다(T184 · 결정 425 — 오늘 이 절이 낡은 자를 두 번 깨뜨렸다).
+        /// </para>
+        /// <para>그때까지도 «지금 할 것이 있나» 는 <b>글자로</b> 보인다 — 색만 못 쓸 뿐 아무것도 안 보이는 자리는 없다.</para>
+        /// </summary>
+        void RefreshHelpers()
+        {
+            Count(_upAll, "전체 강화", UpgradableCount());
+            Count(_quickEq, "빠른 장착", QuickEquipCount());
+        }
+        static void Count(RectTransform btn, string label, int n)
+        {
+            if (btn == null) return;
+            var t = UiKit.ButtonText(btn); if (t == null) return;
+            t.text = TextGlyphs.Safe(n > 0 ? label + " " + n : label);
         }
 
         /// <summary>
