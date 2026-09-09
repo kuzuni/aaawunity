@@ -1,4 +1,5 @@
 using System;
+using KkomaKnight.Core;
 
 namespace KkomaKnight.Game
 {
@@ -67,7 +68,7 @@ namespace KkomaKnight.Game
         public delegate System.Collections.IEnumerator Step(App app);
 
         static readonly System.Collections.Generic.Dictionary<string, Step> Steps =
-            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby } };
+            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P4", P4Shop } };
 
         /// <summary>이 단계가 게임 안에서 놀 수 있는가(= 누가 각본을 붙였는가).</summary>
         public static bool HasStep(string id) => Steps.ContainsKey(id);
@@ -90,6 +91,106 @@ namespace KkomaKnight.Game
             yield return null;
             for (int i = 0; i < 2; i++) { Tap(app, "ArrowR"); yield return null; }
             for (int i = 0; i < 3; i++) { Tap(app, "ArrowL"); yield return null; }
+        }
+
+        /// <summary>
+        /// P4 상점(T300 1항 · 배포 갈래) — PlayMode <c>PlaythroughTests.P4_…</c> 와 <b>같은 길</b>을 게임 안에서 누른다. 단언은 없다(3항 ⓐ):
+        /// 탭 «상점» → 큰 상자 다이아 1회·10회(결과 창은 배경 탭으로) → 열쇠 «캡+7» 을 쥐고 탭 왕복으로 다시 열어 10회 자리·1회 자리 열쇠 옷 →
+        /// 무료 보급 다이아·골드(표에 있을 때만) → 상자 ⓘ → 확률 칸 → 아이템 세부 → 어둠 탭(확률로 돌아옴) → 어둠 탭(닫힘).
+        /// <para>⚠ 겹친 두 옷(<c>One</c>/<c>OneKey</c> · <c>Ten</c>/<c>TenKey</c>) 중 <b>켜진</b> 것만 누른다(<see cref="TapIn"/> · 결정 941 ①) —
+        /// 꺼진 버튼도 <c>onClick.Invoke</c> 는 돌아서, 안 가리면 봇이 사람 눈에 없는 버튼을 누르고 «ok» 를 찍는다.</para>
+        /// <para>⚠ 세이브(다이아·열쇠)는 봇이 제 조건을 만든다(1항) — 스모크의 브라우저는 일회용이라 누구의 세이브도 아니다.</para>
+        /// </summary>
+        static System.Collections.IEnumerator P4Shop(App app)
+        {
+            var D = app.Data; var S = app.Save;
+            var big = ShopScreen.BigBox(D); if (big == null) throw new MissingException("큰 상자(가장 비싼 상자)");
+            string keyItem = GachaKeys.KeyOf(big.Key); if (keyItem == null) throw new MissingException("큰 상자를 여는 열쇠");
+            int cap = D.Gacha.TenPullCount;
+            // 표 값으로 «1회 + 캡 회 + 여유» 만큼 — 수를 안 박는다. 열쇠는 아직 0(다이아 옷부터 논다).
+            S.Gem = big.Cost * (cap + 1) * 2; app.Persist();
+
+            app.ShowScreen("lobby"); yield return Frames(2);
+            Tap(app, "Tab:shop"); yield return Frames(3);
+            Reach(app, "shop");
+            var card = Need(app, "Box:" + big.Key);
+            TapIn(card, "One", true); yield return CloseChest(app, "다이아 1회");
+            TapIn(card, "Ten", true); yield return CloseChest(app, "다이아 " + cap + "회");
+
+            // 열쇠 «캡+7»(주인 예의 17) — 옷은 Refresh 가 갈아입히므로 사람이 하듯 화면을 다시 연다(탭 왕복)
+            GachaKeys.Add(S, keyItem, cap + 7); app.Persist();
+            Tap(app, "Tab:battle"); yield return Frames(2);
+            Tap(app, "Tab:shop"); yield return Frames(3);
+            Reach(app, "shop");
+            card = Need(app, "Box:" + big.Key);
+            TapIn(card, "TenKey", true); yield return CloseChest(app, "열쇠 " + (cap + 7) + "/" + cap);
+            TapIn(card, "OneKey", true); yield return CloseChest(app, "열쇠 나머지");
+
+            // 무료 보급 — 표가 지목한 줄이 있을 때만(없으면 지어내지 않고 지나간다)
+            string today = SaveStore.Today();
+            var gp = D.Shop != null ? D.Shop.FreeGemPack : null;
+            if (gp != null && ShopFree.Can(S, ShopFree.Gem, today)) { TapIn(Need(app, "GemPack:" + D.Shop.GemPacks.IndexOf(gp)), "Button_Price", false); yield return Frames(2); }
+            var gd = D.Shop != null ? D.Shop.FreeGoldPack : null;
+            if (gd != null && ShopFree.Can(S, ShopFree.Gold, today)) { TapIn(Need(app, "GoldPack:" + D.Shop.GoldPacks.IndexOf(gd)), "Button_Price", false); yield return Frames(2); }
+
+            // 상자 ⓘ → 확률 팝업 → 칸 → 세부 → 어둠 탭(확률로 돌아온다) → 어둠 탭(닫힌다)
+            card = Need(app, "Box:" + big.Key);
+            TapIn(card, "Info", false); yield return Frames(2);
+            if (!app.Overlay.IsOpen) throw new MissingException("확률 팝업(ⓘ 뒤)");
+            var rows = GachaOdds.Of(D, big.Key); if (rows.Count == 0) throw new MissingException("확률 구간(" + big.Key + ")");
+            TapIn(app.Overlay.Root, "Odds:" + rows[0].Rar + ":0", false); yield return Frames(2);
+            if (!app.Overlay.IsOpen) throw new MissingException("아이템 세부 팝업(칸 뒤)");
+            TapIn(app.Overlay.Root, "Dimmed", false); yield return Frames(2);
+            if (!app.Overlay.IsOpen) throw new MissingException("세부를 닫으면 돌아올 확률 팝업");
+            TapIn(app.Overlay.Root, "Dimmed", false); yield return Frames(2);
+            if (app.Overlay.IsOpen) throw new MissingException("확률 팝업 닫힘(어둠 탭 뒤에도 열려 있다)");
+            app.ShowScreen("lobby"); yield return null;
+        }
+
+        /// <summary>
+        /// 뽑기 결과 창(<c>ui.chestOpen</c>)이 서기를 기다렸다가 <b>배경 탭</b>으로 닫는다 — 첫 탭은 연출 «건너뛰기», 다음 탭이 «닫기»(T202).
+        /// 두 번 안에 안 닫히면 그 단계는 «죽었다» 로 적힌다.
+        /// </summary>
+        static System.Collections.IEnumerator CloseChest(App app, string what)
+        {
+            var w = new Waiter("결과 창(" + what + ")");
+            while (!app.Overlay.IsOpen && w.Tick()) yield return null;
+            yield return Frames(2);
+            TapIn(app.Overlay.Root, "Background", false); yield return Frames(2);
+            if (app.Overlay.IsOpen) { TapIn(app.Overlay.Root, "Background", false); yield return Frames(2); }
+            if (app.Overlay.IsOpen) throw new MissingException("결과 창 닫힘(" + what + " · 배경 탭 두 번 뒤에도 열려 있다)");
+        }
+
+        /// <summary>
+        /// 봇이 무엇을 «기다리는» 프레임 상한(3항 ⓓ 타임아웃). 게임 수치가 아니라 봇 자신의 인내심이라 표에 두지 않았다 —
+        /// 30fps 에서 20초. 넘으면 <see cref="MissingException"/> 으로 «무엇을 기다리다 죽었나» 를 남기고 다음 단계로 간다.
+        /// </summary>
+        public const int WaitFrames = 600;
+        /// <summary>«아직 안 왔다» 를 세는 자 — <c>while (!cond && w.Tick()) yield return null;</c> 꼴로 쓴다(상한을 넘기면 던진다).</summary>
+        sealed class Waiter
+        {
+            readonly string _what; int _n;
+            public Waiter(string what) { _what = what; }
+            public bool Tick() { if (++_n > WaitFrames) throw new MissingException(_what + "(" + WaitFrames + "프레임 안에 안 왔다)"); return true; }
+        }
+        static System.Collections.IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
+        /// <summary>도달 — 지금 화면이 그 이름이 아니면 «죽었다».</summary>
+        static void Reach(App app, string screen)
+        {
+            if (app.Current == null || app.Current.Name != screen) throw new MissingException("화면 «" + screen + "»(지금 " + (app.Current != null ? app.Current.Name : "없음") + ")");
+        }
+        /// <summary>
+        /// 주어진 뿌리 아래의 이름을 누른다. <paramref name="live"/> 면 <b>켜진</b> 것만 — 같은 rect 에 옷 두 벌이 겹친 자리(상점 1회·10회)에서
+        /// 꺼진 옷을 누르는 것은 노는 것이 아니다(<c>UiKit.Find</c> 는 꺼진 것도 집고 <c>onClick.Invoke</c> 는 꺼진 버튼에서도 돈다 · 결정 941 ①).
+        /// </summary>
+        static void TapIn(UnityEngine.Transform root, string name, bool live)
+        {
+            var t = root != null ? UiKit.Find(root, name) : null;
+            if (t == null) throw new MissingException(name);
+            if (live && !t.gameObject.activeInHierarchy) throw new MissingException(name + "(꺼진 옷 — 지금 켜진 옷이 아니다)");
+            var b = t.GetComponent<UnityEngine.UI.Button>();
+            if (b == null || !b.interactable) throw new MissingException(name + "(눌리지 않는다)");
+            b.onClick.Invoke();
         }
 
         /// <summary>각본이 «있어야 한다» 고 여기는 자리가 없을 때 — 봇은 이것을 <c>fail</c> 로 적고 다음 단계로 간다.</summary>
@@ -125,20 +226,26 @@ namespace KkomaKnight.Game
                 Step step;
                 if (!Steps.TryGetValue(st.Id, out step)) continue;   // 아직 아무도 안 쓴 단계는 조용히 건너뛴다
                 ran++;
-                var it = step(app);
-                bool alive = true;
-                while (alive)
+                // 단계 안의 «작은 걸음»(Frames · CloseChest …)은 여기서 손으로 돌린다 — 유니티에 그대로 넘기면(중첩 코루틴) 그 안에서 난
+                //   예외를 이 try 가 못 잡고, 봇이 «fail 한 줄» 대신 조용히 멈춘다(그러면 done 줄이 안 와서 «돌다 죽었다» 만 남는다).
+                var stack = new System.Collections.Generic.Stack<System.Collections.IEnumerator>();
+                stack.Push(step(app));
+                bool failed = false;
+                while (stack.Count > 0)
                 {
-                    try { alive = it.MoveNext(); }
+                    var top = stack.Peek();
+                    bool alive;
+                    try { alive = top.MoveNext(); }
                     catch (System.Exception e)
                     {
                         UnityEngine.Debug.Log(Line(st.Id, false, e.GetType().Name + " " + e.Message));
-                        bad++; alive = false; it = null;
+                        bad++; failed = true; break;
                     }
-                    if (it == null) break;
-                    if (alive) yield return it.Current;
+                    if (!alive) { stack.Pop(); continue; }
+                    if (top.Current is System.Collections.IEnumerator sub) stack.Push(sub);
+                    else yield return top.Current;
                 }
-                if (it != null) { UnityEngine.Debug.Log(Line(st.Id, true)); ok++; }
+                if (!failed) { UnityEngine.Debug.Log(Line(st.Id, true)); ok++; }
             }
             UnityEngine.Debug.Log(DoneLine(ok, ran, bad));
         }

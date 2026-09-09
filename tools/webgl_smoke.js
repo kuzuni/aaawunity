@@ -27,10 +27,14 @@ const args = process.argv.slice(2);
 const url = args.find(a => !a.startsWith('--') && !/^\d+$/.test(a) && !a.endsWith('.png') && !a.endsWith('.txt'));
 const flag = n => args.includes('--' + n);
 const opt = (n, d) => { const i = args.indexOf('--' + n); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
-if (!url && !flag('self-test')) { console.error('usage: node tools/webgl_smoke.js <URL> [--battle] [--play] [--require-marker] [--strict-audio] [--strict-net] [--no-fps] [--timeout SEC] [--shot out.png] [--log out.txt] | --self-test'); process.exit(2); }
+if (!url && !flag('self-test')) { console.error('usage: node tools/webgl_smoke.js <URL> [--battle] [--play | --play-report] [--require-marker] [--strict-audio] [--strict-net] [--no-fps] [--timeout SEC] [--shot out.png] [--log out.txt] | --self-test'); process.exit(2); }
 const timeoutSec = parseInt(opt('timeout', '180'), 10);
 const wantBattle = flag('battle'), requireMarker = flag('require-marker'), strictAudio = flag('strict-audio'), strictNet = flag('strict-net');
-const wantPlay = flag('play');   // T300 2항 — 봇을 돌린다(기본은 안 돈다: 옛 배포엔 그 갈래가 없다)
+const wantPlay = flag('play') || flag('play-report');   // T300 2항 — 봇을 돌린다(기본은 안 돈다: 옛 배포엔 그 갈래가 없다)
+// T300 2항 «보고만»(§1 결정 625 · 새 자는 먼저 보고만 → 값이 0 이 되면 strict) — 봇의 fail·done 없음·봇이 도는 동안의 콘솔 에러를
+//   «빨강» 이 아니라 «봇 경고» 로 센다. 배포를 막지 않으면서 «배포 빌드에서 봇이 어디까지 가는가» 를 런마다 남긴다.
+//   --play 와 같이 주면 --play(strict)가 이긴다. strict 로 올리는 것은 «fail 0 이 몇 런 이어진 뒤» 의 회차 몫이다.
+const playReportOnly = flag('play-report') && !flag('play');
 const shotPath = opt('shot', ''), logPath = opt('log', '');
 // 오디오 문구(주인 종결 지시 2026-09-07 · 결정 219) — 「Streaming of 'ogg' … not supported」 는 유니티 WebGL 네이티브가
 // UnityWebRequestMultimedia 의 ogg 스트리밍을 거부하며 찍는 줄이라 위 넷과 같은 갈래로 본다.
@@ -164,10 +168,13 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
   const errors = [], audioWarn = [], netWarn = [];
   let readyLobby = false, readyBattle = false, loaded = false, tweens = null, screen = null, lobbyP50 = null, bloom = null;
   const playLines = [];   // T300 2항
+  const playWarn = [];    // T300 2항 «보고만» — 봇의 fail · done 없음 · 봇이 도는 동안 난 콘솔 에러
+  let inPlay = false;
   // where = 그 console 메시지가 가리키는 자원 URL(«Failed to load resource» 는 막힌 그 파일을 가리킨다)
   const noteError = (text, where) => {
     if (!strictAudio && AUDIO_RE.test(text)) { audioWarn.push(text); log('AUDIO⚠', text); return; }
     if (!strictNet && NET_RE.test(text) && isOffOrigin(where)) { netWarn.push(where + ' · ' + text); log('NET⚠', where + ' · ' + text); return; }
+    if (inPlay && playReportOnly) { playWarn.push(text); log('PLAY⚠', text); return; }   // 봇이 도는 동안의 에러는 «보고만» 갈래로(T300 2항)
     errors.push(text); log('ERROR', text);
   };
   page.on('pageerror', e => noteError('pageerror: ' + (e.stack || e.message)));
@@ -267,24 +274,28 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
   //       그때 이 자가 «봇이 실패했다» 고 말하면 **빌드가 아니라 자가 거짓말**을 하는 것이다 —
   //       그래서 «done 줄이 아예 없다» 와 «done 줄이 fail>0» 을 갈라서 말한다.
   if (loaded && wantPlay) {
+    // «보고만» 모드에서는 봇 자신의 빨강(fail · done 없음)도 경고로 — 빨강은 --play(strict)만 낸다
+    const playBad = t => { if (playReportOnly) { playWarn.push(t); log('PLAY⚠', t); } else noteError(t); };
+    inPlay = true;
     const sentPlay = await page.evaluate(() => {
       const inst = window.unityInstance; if (inst && inst.SendMessage) { inst.SendMessage('App', 'DebugGo', 'play'); return 'unityInstance'; }
       const M = window.Module || (window.unityFramework && window.unityFramework.Module); if (M && M.SendMessage) { M.SendMessage('App', 'DebugGo', 'play'); return 'Module'; }
       return null;
-    }).catch(e => { noteError('SendMessage(play) 실패: ' + e.message); return null; });
-    if (!sentPlay) noteError('SendMessage 경로 없음(play)');
+    }).catch(e => { playBad('SendMessage(play) 실패: ' + e.message); return null; });
+    if (!sentPlay) playBad('SendMessage 경로 없음(play)');
     else log('send', 'DebugGo play via ' + sentPlay);
     const dPlay = Date.now() + 300000;   // 5분 예산(T300 1항) — 봇이 그 안에 끝내야 한다
     while (Date.now() < dPlay && !playReport(playLines).done) await page.waitForTimeout(250);
     const rep = playReport(playLines);
     if (!rep.done) {
       // 한 줄도 안 왔으면 «이 빌드에 봇이 없다», 오다 말았으면 «돌다 죽었다» — 둘은 다른 고장이다
-      if (rep.ok.length === 0 && rep.fail.length === 0) noteError('play: 봇이 한 줄도 안 찍었다 — 이 빌드에 DebugGo("play") 가 없거나 부팅 전이다');
-      else noteError(`play: 끝 줄(done)이 안 왔다 — 돌다 죽었다(ok ${rep.ok.length} · fail ${rep.fail.length})`);
+      if (rep.ok.length === 0 && rep.fail.length === 0) playBad('play: 봇이 한 줄도 안 찍었다 — 이 빌드에 DebugGo("play") 가 없거나 부팅 전이다');
+      else playBad(`play: 끝 줄(done)이 안 왔다 — 돌다 죽었다(ok ${rep.ok.length} · fail ${rep.fail.length})`);
     } else {
       log('play', `done ${rep.done.ok}/${rep.done.ran} fail ${rep.done.fail}` + (rep.ok.length ? ' · ok=' + rep.ok.join(',') : ''));
-      for (const f of rep.fail) noteError(`play ${f.id} fail — ${f.why}`);
+      for (const f of rep.fail) playBad(`play ${f.id} fail — ${f.why}`);
     }
+    inPlay = false;
   }
 
   if (loaded && wantBattle) {
@@ -353,7 +364,8 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
 
   const markerOk = readyLobby || !requireMarker;
   const ok = errors.length === 0 && loaded && markerOk && (!wantBattle || readyBattle);
-  const netTail = netWarn.length ? ` · 망 경고 ${netWarn.length}(게임 밖 호스트 · T83)` : '';
+  const netTail = (netWarn.length ? ` · 망 경고 ${netWarn.length}(게임 밖 호스트 · T83)` : '')
+                + (playWarn.length ? ` · 봇 경고 ${playWarn.length}(보고만 · T300 2항 · --play 로 올리면 빨강)` : '');
   console.log(ok ? `[smoke] ✅ 초록: 콘솔 에러 0 · 로딩 완료 · ${readyLobby ? '로비 도달' : '로비 마커 없음(구 빌드 · ⚠)'}${wantBattle ? ' · 전투 진입' : ''}${audioWarn.length ? ` · 오디오 경고 ${audioWarn.length}(판정 밖 · 주인 실기가 정본)` : ''}${netTail}`
                  : `[smoke] ❌ 빨강: errors=${errors.length} loaded=${loaded} readyLobby=${readyLobby}${wantBattle ? ` readyBattle=${readyBattle}` : ''} audioWarn=${audioWarn.length}${netTail}`);
   // 오디오 경고는 같은 문구가 수십 줄 반복되므로 «문구 ×N» 으로 묶어 찍는다(주인 지시 2026-09-07 · 결정 219).
@@ -363,6 +375,7 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
     for (const [k, n] of [...tally.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10)) console.log(`   ⚠ 오디오 ${k} ×${n}`);
   }
   for (const w of netWarn.slice(0, 10)) console.log('   ⚠ 망 ' + w.slice(0, 200));
+  for (const w of playWarn.slice(0, 20)) console.log('   ⚠ 봇 ' + w.split('\n')[0].slice(0, 300));
   for (const e of errors.slice(0, 20)) console.log('   - ' + e.split('\n').slice(0, 8).join('\n     '));
   process.exit(ok ? 0 : 1);
 })().catch(e => { console.error('[smoke] 실행 실패: ' + (e.stack || e.message)); process.exit(4); });

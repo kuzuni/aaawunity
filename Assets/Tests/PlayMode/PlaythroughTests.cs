@@ -789,6 +789,23 @@ namespace KkomaKnight.Tests.Play
                           + " (마지막 단계가 들어오는 커밋에서 이 로그를 «전부 있다» 단언으로 올린다)");
         }
 
+        /// <summary>
+        /// T300 2항 — 배포 갈래(<see cref="Playthrough.HasStep"/>)가 있는 단계는 <b>이 파일의 자도 있어야 한다</b>.
+        /// 게임 안 각본은 단언이 없어(3항 ⓐ) «죽지 않고 지나가는가» 만 보고, 배선은 PlayMode 자가 잰다 — 배포 갈래만 있으면 그 단계는 절반만 논 것이다.
+        /// </summary>
+        [Test]
+        public void 배포_갈래가_있는_단계는_자도_있다()
+        {
+            var written = new HashSet<string>();
+            foreach (var m in typeof(PlaythroughTests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            {
+                int us = m.Name.IndexOf('_');
+                if (us > 0 && m.Name[0] == 'P') written.Add(m.Name.Substring(0, us));
+            }
+            foreach (var s in Playthrough.Stages)
+                if (Playthrough.HasStep(s.Id)) Assert.IsTrue(written.Contains(s.Id), "배포 갈래 «" + s + "» 의 PlayMode 자가 없다 — 배선을 재는 쪽이 먼저다");
+        }
+
         /// <summary>배포 스모크가 세는 줄의 꼴(T300 2항) — 그 글자를 <c>webgl_smoke.js</c> 가 문자열로 찾으므로 여기서 못 박는다.</summary>
         [Test]
         public void 스모크가_세는_줄의_꼴이_고정이다()

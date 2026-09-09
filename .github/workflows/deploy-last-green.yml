@@ -171,7 +171,7 @@ jobs:
           sudo chown -R "$(id -u):$(id -g)" build || true
           npm i -g playwright@1.56.1
           npx playwright install --with-deps chromium
-          tools/webgl_smoke.sh --dir build/WebGL/KkomaKnight --battle --require-marker --timeout 240 --shot webgl-smoke/local.png --log webgl-smoke/local.txt
+          tools/webgl_smoke.sh --dir build/WebGL/KkomaKnight --battle --play-report --require-marker --timeout 240 --shot webgl-smoke/local.png --log webgl-smoke/local.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -226,7 +226,7 @@ jobs:
       # 안 밀었으면 재확인도 안 한다 — 그 스모크는 «내가 방금 올린 것» 을 보는 자다(남이 올린 것을 내 이름으로 판정하지 않는다 · T208).
       - name: "배포 뒤 gh-pages 재확인 (같은 스모크 · 재시도 5회)"
         if: steps.recheck.outputs.go == 'true'
-        run: tools/webgl_smoke.sh https://kuzuni.github.io/aaawunity/ --battle --require-marker --retries 5 --timeout 240 --shot webgl-smoke/ghpages.png --log webgl-smoke/ghpages.txt
+        run: tools/webgl_smoke.sh https://kuzuni.github.io/aaawunity/ --battle --play-report --require-marker --retries 5 --timeout 240 --shot webgl-smoke/ghpages.png --log webgl-smoke/ghpages.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:

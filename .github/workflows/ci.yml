@@ -401,7 +401,7 @@ jobs:
           sudo chown -R "$(id -u):$(id -g)" build || true
           npm i -g playwright@1.56.1
           npx playwright install --with-deps chromium
-          tools/webgl_smoke.sh --dir build/WebGL/KkomaKnight --battle --require-marker --timeout 240 --shot webgl-smoke/local.png --log webgl-smoke/local.txt
+          tools/webgl_smoke.sh --dir build/WebGL/KkomaKnight --battle --play-report --require-marker --timeout 240 --shot webgl-smoke/local.png --log webgl-smoke/local.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -418,7 +418,7 @@ jobs:
           commit_message: 'WebGL 배포 ${{ github.sha }}'
       # T60-2 — 배포 뒤 실제 gh-pages URL 로 한 번 더(경로·캐시·CDN 반영 지연 → 60초 간격 5회 재시도). 여기가 빨강이면 잡은 빨강이지만 배포는 이미 됐다(원인은 Artifact 로그).
       - name: "배포 뒤 gh-pages 재확인 (같은 스모크 · 재시도 5회)"
-        run: tools/webgl_smoke.sh https://kuzuni.github.io/aaawunity/ --battle --require-marker --retries 5 --timeout 240 --shot webgl-smoke/ghpages.png --log webgl-smoke/ghpages.txt
+        run: tools/webgl_smoke.sh https://kuzuni.github.io/aaawunity/ --battle --play-report --require-marker --retries 5 --timeout 240 --shot webgl-smoke/ghpages.png --log webgl-smoke/ghpages.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
