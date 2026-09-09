@@ -90,6 +90,17 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(row, "그 색 칸");
             var rowBtn = row.GetComponent<Button>(); Assert.IsNotNull(rowBtn, "칸에 버튼(Clickable 이 붙인다)");
             rowBtn.onClick.Invoke(); yield return Frames(1);
+            // T360 ⓑ — 고른 칸의 ✓ 는 조각이 달고 온 그림이 아니라 공용 «Toggle_Check_02_On»(pi.check)이다. «켜졌다» 만 재면 옛 그림도 통과하므로 스프라이트 이름까지 본다.
+            var pickedCheck = UiKit.Find(row, "Check");
+            Assert.IsNotNull(pickedCheck, "초상 칸의 «Check» 조각");
+            Assert.IsTrue(pickedCheck.gameObject.activeSelf, "고른 칸의 ✓ 가 켜진다");
+            var pickedImg = pickedCheck.GetComponent<Image>();
+            Assert.IsNotNull(pickedImg, "«Check» 는 Image");
+            Assert.IsNotNull(pickedImg.sprite, "✓ 에 그림이 있다");
+            Assert.IsTrue(pickedImg.sprite.name.StartsWith("Toggle_Check_02_On", StringComparison.Ordinal), "✓ 그림 = Toggle_Check_02_On(T360) · 실제: " + pickedImg.sprite.name);
+            var otherCheck = UiKit.Find(UiKit.Find(ov, Profile.RowPrefix + Profile.Faces[0]), "Check");
+            Assert.IsNotNull(otherCheck, "안 고른 칸의 «Check» 조각");
+            Assert.IsFalse(otherCheck.gameObject.activeSelf, "안 고른 칸의 ✓ 는 꺼져 있다");
             var choose = UiKit.Find(_app.Overlay.Root, Profile.ChooseName);
             Assert.IsNotNull(choose, "«선택» 버튼");
             var chooseBtn = choose.GetComponent<Button>(); Assert.IsNotNull(chooseBtn, "그 버튼의 Button");

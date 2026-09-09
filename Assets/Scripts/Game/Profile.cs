@@ -215,7 +215,8 @@ namespace KkomaKnight.Game
                     Face(prt, icon);
                 }
                 var check = UiKit.Find(rows[i], "Check");
-                if (check != null) { check.gameObject.SetActive(icon == picked); checks.Add(check); }
+                // T360 ⓑ(주인 «체크 모양은 Toggle_Check_02_On 으로 통일») — 조각이 달고 온 체크 그림을 공용 ✓(pi.check)으로 갈아 끼운다(새 그림 0 · GearUi·퀘스트 줄과 같은 한 줄).
+                if (check != null) { UiKit.SetSprite(rows[i], "Check", "pi.check"); check.gameObject.SetActive(icon == picked); checks.Add(check); }
                 string c2 = icon; int idx = i;
                 UiKit.Clickable(rows[idx], () =>
                 {
