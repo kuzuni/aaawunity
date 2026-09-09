@@ -16,6 +16,10 @@
     · --touched-assets = 이 커밋이 `Assets/` 를 건드렸는가. **회차 2 에서 붙인 자다** —
       안 건드린 커밋인데 그림이 다르면 그것은 «이 커밋이 바꾼 것» 이 아니라 런마다 흔들리는 폭이고,
       자가 그 한 줄을 스스로 붙인다(실측 근거는 ROUTINE §2 T282 6항).
+    · --history <이름> = **회차 3**. 화면별 폭을 그 파일에 쌓아 다음 런이 이어받는다
+      (옛 값은 `git show <old-ref>:<이름>` 으로 읽고, 새 값은 <디렉터리>/<이름> 으로 써서 `screens` 에 같이 실린다).
+      런 5개가 쌓인 화면은 «평소 폭»(최근 값들의 80분위)을 알게 되고, 그때부터 `--big` 을 넘겨도
+      **제 평소 폭 안이면 «크게» 로 안 센다** — `27_toast` 처럼 늘 흔들리는 화면이 매 런 목록을 차지하는 것을 막는다.
 
 이 자는 **알리기만 한다 — 늘 `exit 0`.** 그림이 바뀌는 것은 대개 «뜻한 변경» 이라 빨갛게 할 일이 아니고,
 빨갛게 두면 워커가 «급하니 지나가자» 로 흐른다(결정 740 과 같은 셈). 사람이 «내가 안 바꾼 화면이 왜 바뀌었지» 를
@@ -25,7 +29,7 @@ PNG 는 **표준 라이브러리만으로** 읽는다(zlib) — CI 러너에 PIL
 유니티 `EncodeToPNG` 는 8비트 RGBA · 인터레이스 없음이라 그 갈래만 읽으면 된다.
 읽을 수 없는 꼴이면 그 화면은 «바이트가 다르다» 까지만 말하고 비율은 «—» 로 둔다.
 """
-import os, re, struct, subprocess, sys, zlib
+import json, os, struct, subprocess, sys, time, zlib
 
 
 def _paeth(a, b, c):
@@ -131,8 +135,20 @@ def old_bytes(ref, name):
     return r.stdout if r.returncode == 0 else None
 
 
+KEEP = 12          # 화면마다 최근 몇 런을 기억할지
+NEED = 5           # 이만큼 쌓여야 «그 화면의 평소 폭» 을 말한다
+
+
+def usual_of(hist):
+    """그 화면이 «가만히 둬도 흔들리는 폭» = 최근 값들의 80분위(표본이 적으면 None)."""
+    if not hist or len(hist) < NEED:
+        return None
+    s = sorted(hist)
+    return s[int(0.8 * (len(s) - 1))]
+
+
 def main(argv):
-    d, ref, mn, top, big_min, touched = 'ui-screens', 'origin/screens', 0.2, 5, 3.0, None
+    d, ref, mn, top, big_min, touched, hist_name = 'ui-screens', 'origin/screens', 0.2, 5, 3.0, None, None
     rest = []
     i = 0
     while i < len(argv):
@@ -147,6 +163,8 @@ def main(argv):
             top = int(argv[i + 1]); i += 2
         elif a == '--touched-assets' and i + 1 < len(argv):
             touched = argv[i + 1].strip().lower() in ('1', 'yes', 'true', 'y'); i += 2
+        elif a == '--history' and i + 1 < len(argv):
+            hist_name = argv[i + 1]; i += 2
         else:
             rest.append(a); i += 1
     if rest:
@@ -160,7 +178,23 @@ def main(argv):
         print(f'[그림차] 볼 것이 없다 — «{d}» 에 PNG 0장.')
         return 0
 
-    changed, new, unread = [], [], []
+    # T282 회차 3 — 지난 런들이 남긴 «화면별 폭» 을 이어받는다. `screens` 는 force_orphan 이라
+    # 커밋 이력이 없지만, 파일 자체가 값을 안고 다니면 `git show <ref>:diff.json` 으로 지난 값을 읽을 수 있다.
+    hist = {}
+    if hist_name:
+        raw = old_bytes(ref, hist_name)
+        if raw is None and os.path.exists(os.path.join(d, hist_name)):
+            with open(os.path.join(d, hist_name), 'rb') as fh:   # 손으로 돌릴 때 — 옆에 둔 지난 파일을 읽는다
+                raw = fh.read()
+        if raw:
+            try:
+                got = json.loads(raw.decode('utf-8'))
+                if isinstance(got.get('screens'), dict):
+                    hist = {k: [float(x) for x in v][-KEEP:] for k, v in got['screens'].items() if isinstance(v, list)}
+            except Exception:
+                hist = {}                                # 못 읽으면 처음부터 다시 쌓는다 — 이 자 때문에 런이 멈추지는 않는다
+
+    changed, new, unread, seen = [], [], [], {}
     for nm in names:
         with open(os.path.join(d, nm), 'rb') as fh:
             cur = fh.read()
@@ -169,17 +203,30 @@ def main(argv):
             new.append(nm)
             continue
         if old == cur:
+            seen[nm[:-4]] = 0.0
             continue                                     # 바이트가 같으면 그림도 같다 — 여는 값이 없다
         pct, span = diff(cur, old)
         if pct is None:
             unread.append(nm)
         else:
             changed.append((pct, nm, span))
+            if pct >= 0:
+                seen[nm[:-4]] = round(pct, 3)
 
     changed.sort(reverse=True)
-    big = [c for c in changed if c[0] >= big_min or c[0] < 0]         # 눈에 보일 만큼
-    mid = [c for c in changed if mn <= c[0] < big_min]                # 애매한 자리 — 이름만
-    tiny = len(changed) - len(big) - len(mid)
+    # «크게» 로 셀지는 두 잣대를 다 넘어야 한다: 절대값(--big) 과 «그 화면의 평소 폭»(있을 때만).
+    def notable(pct, nm):
+        if pct < 0:
+            return True                                  # 크기가 달라진 것은 늘 크게
+        if pct < big_min:
+            return False
+        u = usual_of(hist.get(nm[:-4]))
+        return u is None or pct > max(u * 1.5, u + 0.5)
+
+    big = [c for c in changed if notable(c[0], c[1])]
+    usualy = [c for c in changed if c[0] >= big_min and c not in big]  # 크지만 «그 화면치고는 평소»
+    mid = [c for c in changed if mn <= c[0] < big_min]                 # 애매한 자리 — 이름만
+    tiny = len(changed) - len(big) - len(usualy) - len(mid)
     print(f'[그림차] 화면 {len(names)}장 · **크게 바뀜(≥{big_min:g}%) {len(big)}개** · 조금 바뀜 {len(mid)}개'
           f'{f" · 새 화면 {len(new)}개" if new else ""}'
           f'{f" · 잡음(<{mn:g}%) {tiny}개" if tiny else ""}'
@@ -190,6 +237,9 @@ def main(argv):
         print(f'[그림차]   {nm[:-4]} — {amount}{where}')
     if len(big) > top:
         print(f'[그림차]   … 그 밖 {len(big) - top}개')
+    if usualy:
+        print('[그림차]   평소 폭(그 화면은 늘 이만큼 흔들린다): '
+              + ' · '.join(f'{nm[:-4]} {pct:.1f}%(평소 {usual_of(hist.get(nm[:-4])):.1f}%)' for pct, nm, _ in usualy[:6]))
     if mid:
         print('[그림차]   조금: ' + ' · '.join(f'{nm[:-4]} {pct:.1f}%' for pct, nm, _ in mid[:10]))
     for nm in new[:4]:
@@ -203,6 +253,21 @@ def main(argv):
     if len(names) and len(big) > len(names) * 0.7:
         print('[그림차] ⚠ 거의 다 크게 바뀌었다 — 공통 요소(폰트·팔레트·해상도)를 건드린 것이다. 한 장을 눈으로 볼 것.')
     print('[그림차] (보고만 — 이 자는 빨갛게 하지 않는다 · T282 · 뜻한 변경이면 그대로 두면 된다)')
+
+    # 이번 값을 이어 붙여 다시 내보낸다(다음 런이 `git show <ref>:<이 파일>` 로 읽는다).
+    if hist_name:
+        for k, v in seen.items():
+            hist.setdefault(k, []).append(v)
+            hist[k] = hist[k][-KEEP:]
+        ready = sum(1 for v in hist.values() if len(v) >= NEED)
+        try:
+            with open(os.path.join(d, hist_name), 'w', encoding='utf-8') as fh:
+                json.dump({'v': 1, 'keep': KEEP, 'need': NEED, 'utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+                           'screens': {k: v for k, v in sorted(hist.items())}}, fh, ensure_ascii=False)
+            print(f'[그림차] 폭 기록 {hist_name} — 화면 {len(hist)}개 · «평소» 를 말할 수 있는 화면 {ready}개'
+                  f'(런 {NEED}개부터 · 최근 {KEEP}런까지 기억)')
+        except OSError as e:
+            print(f'[그림차] 폭 기록을 못 남겼다({e}) — 다음 런은 처음부터 쌓는다(이 자는 그래도 돈다).')
     return 0
 
 

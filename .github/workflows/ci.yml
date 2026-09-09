@@ -237,7 +237,9 @@ jobs:
             if git diff --name-only "HEAD^" HEAD -- Assets | grep -q . ; then ARGS="--touched-assets yes"; else ARGS="--touched-assets no"; fi
           fi
           if git rev-parse --verify -q refs/remotes/origin/screens >/dev/null; then
-            python3 tools/screens_diff.py ui-screens --old-ref origin/screens $ARGS > /tmp/screens_diff.txt 2>&1 || true
+            # `--history diff.json`(회차 3): 지난 런의 폭을 `git show origin/screens:diff.json` 으로 이어받고
+            # 이번 값을 더해 `ui-screens/diff.json` 으로 쓴다 → 아래 배포에 같이 실려 다음 런이 또 이어받는다(1KB 남짓).
+            python3 tools/screens_diff.py ui-screens --old-ref origin/screens --history diff.json $ARGS > /tmp/screens_diff.txt 2>&1 || true
           else
             echo "[그림차] origin/screens 가 없다(첫 런이거나 브랜치가 아직 없다) — 이번 런은 견줄 옛 그림이 없다." > /tmp/screens_diff.txt
           fi
