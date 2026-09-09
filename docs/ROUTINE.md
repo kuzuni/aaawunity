@@ -9282,6 +9282,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Core/Notify.cs` · `Game/Screens.cs` · `Game/LobbyPopups.cs` · 자. **`LobbyPopups.cs` lock 들 뒤** lock `T366`(T359·T363·T364 와 한 사람이 같이).
 
+> **🔄 1회차 push · 확인 전(19:4X · sess-1425-9466 · 워커 N · 결정 1009(커밋 메시지의 1008 은 1009) · lock `T366` 쥔 채)** — 1항 ⓑ(로비 «특권» 칸 점 · `Screens.cs` `PrivDot`)를 했다. ⓐ 판정은 **새로 안 만들었다** — `Core.Privilege.AnyClaimable` 이 이미 «점이 이것만 본다» 는 함수다(`Notify.cs` 는 T355 lock 안). 자 = EditMode `PrivilegeDotTests` 3(안 산 카드는 못 켠다 포함) · PlayMode `PrivilegeDotPlayTests` 1. **ⓒ 카드 «받기» 버튼 점은 남았다** — `LobbyPopups.PrivilegeScreen` 이 T360 lock 안 · 여는 사람이 버튼마다 `Privilege.Can` 으로 `UiKit.AlertDot` 한 줄. 확인 = 다음 완주 런 두 자 + `screens` 01.
+
 ### T367 — ⚑ 주인: **재화 흡수 — 다이아는 다이아 pill · 골드는 골드 pill 로** (주인 2026-09-10 «다이아 흡수, 골드 흡수는 상단에 재화들 각각 표시되는 부분 · 다이아는 다이아 쪽 골드는 골드 쪽으로 흡수 되야함» · T354 의 뒤)
 
 0. **까닭(실측)** — `RewardPopup.PillFor(icon)` 이 다이아를 `hud.gem`·`ui.iconGemPurple`·`ui.iconGemBlue` **셋**으로만 알았다. 보상 칸 대부분은 **`ui.gemRed`** 를 쓴다(데일리 기프트 `GiftArt` · 출석 `AttendIcons` · 챕터 상자 · 퀘스트 트랙) → 그 다이아는 «탑바에 자리 없는 재화» 로 화면 가운데 아래(`OrbSinkName`)로 빨려 들어갔다. 골드는 `ui.coin` 하나라 맞았다.
