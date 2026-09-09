@@ -67,6 +67,10 @@ namespace KkomaKnight.Game
             var panel = UiKit.Find(rt, PanelName) as RectTransform;
             if (panel == null) return;                                  // 프리팹이 없으면(카탈로그 결손) 조용히 빈 어둠 — 빨간 줄 0
             UiKit.Tag(panel, "메뉴 판");
+            // T350 — 표 ㉜ 의 나머지 두 행. T332 가 이 화면을 처음 찍고 나서야 «표는 다섯 행인데 이름표는 셋이고
+            //   그중 표와 이름이 겹치는 것은 «메뉴 판» 하나» 라는 것이 보였다(§5 lobby_menu 0.0).
+            //   ⚠ `UiKit.Tag` 는 그리는 것을 한 픽셀도 안 바꾼다(이름만 붙인다).
+            { var dim = UiKit.Find(rt, "Dimmed"); if (dim != null) UiKit.Tag(dim, "어둠(Dimmed)"); }
 
             var rows = new List<RectTransform>();
             for (int i = 0; i < PrefabRows.Length; i++)
@@ -95,7 +99,9 @@ namespace KkomaKnight.Game
 
             for (int i = 0; i < items.Count; i++) Row(app, rows[i], i, items[i]);
             for (int i = items.Count; i < rows.Count; i++) rows[i].gameObject.SetActive(false);
-            UiKit.TagGroup(panel, "메뉴 항목 줄", rows.ToArray());
+            // T350 — 표 ㉜ 은 여섯 줄을 «메뉴 줄 6» **한 행**으로 묶어 잰다(줄마다 따로 재지 않는다) ⇒ 묶음 이름을 표와 같게 한다.
+            //   ⚠ 줄마다 붙는 «메뉴 «우편함» 줄» 류는 그대로 둔다 — 표에 없는 이름표지만 그것이 있어야 «어느 줄이 비었나» 를 사람이 읽는다.
+            UiKit.TagGroup(panel, "메뉴 줄 6", rows.ToArray());
         }
 
         /// <summary>메뉴 항목 표 — 순서·라벨·아이콘(새 줄만)·누르면 할 일 · 점을 켤 조건.</summary>
