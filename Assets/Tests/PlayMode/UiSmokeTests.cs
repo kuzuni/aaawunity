@@ -1123,8 +1123,15 @@ namespace KkomaKnight.Tests.Play
             GearUi.OpenDetail(_app, g0, _app.Current.Refresh); yield return Frames(2);
             Check("장비 세부 팝업(장착중)", expectOverlay: true);
             Assert.IsTrue(HasText(s => s == "해제"), "«해제» 버튼"); Assert.IsTrue(HasText(s => s.StartsWith("슬롯 강화") || s == "슬롯 MAX"), "슬롯 강화 버튼");
+            // T290 — 이제 슬롯 강화는 골드 **와** 그 부위 레시피를 같이 든다(주인 «강화하려면 레시피도 필요하게»).
+            // 새 세이브는 레시피가 0 이라 여기서 채워 준다 — 그러지 않으면 이 자는 «강화가 막힌다» 를 재게 되는데,
+            // 그것은 이 줄이 재려던 것(«눌리면 Lv 이 오른다»)이 아니다. 레시피가 없을 때 안 눌리는 것은 GearUiRecipeTests 가 잰다.
+            int needR = Recipes.Need(D.Recipe, S.SlotLv(g0.Part));
+            Recipes.Add(S, g0.Part, needR);
+            GearUi.OpenDetail(_app, g0, _app.Current.Refresh); yield return Frames(2);   // 비용 줄·버튼 상태를 새 개수로 다시 그린다
             Assert.IsTrue(Click(_app.Overlay.Root, s => s == "슬롯 강화"), "슬롯 강화 클릭"); yield return Frames(2);
             Assert.AreEqual(1, S.SlotLv(g0.Part), "슬롯 Lv 0 → 1"); Check("슬롯 강화 뒤(팝업 다시 열림)", expectOverlay: true);
+            Assert.AreEqual(0, Recipes.Count(S, g0.Part), "T290 — 강화가 레시피도 같이 뺐다");
             Assert.IsTrue(ClickNamed(_app.Overlay.Root, "Dimmed"), "세부 팝업 배경 탭 = 닫기(T38)"); yield return Frames(1);
             Assert.IsFalse(_app.Overlay.IsOpen);
 

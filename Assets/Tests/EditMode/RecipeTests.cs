@@ -26,11 +26,26 @@ namespace KkomaKnight.Tests
             "{\"perLevel\": " + perLevel + ", \"parts\": [\"weapon\",\"helm\",\"armor\",\"glove\",\"boot\",\"neck\"], \"name\": {\"helm\": \"투구 레시피\"}}");
 
         [Test]
-        public void Json_PerLevelIsZeroUntilRecipesAreGiven()
+        public void Json_IsOwnersRule()
         {
-            // T290 4항 — 레시피를 **주는 곳**(T291 원정 층 · T292 주간 트랙)이 아직 없다. 2 인 채로 먼저 배포되면 슬롯 강화가 «영원히 부족» 이 된다.
-            // T291 이 같은 초록 런에 들어가는 커밋이 이 수를 2 로 올리고, 그때 이 자는 그 커밋과 함께 고쳐진다(그것이 이 자의 목적이다).
-            Assert.That(Load().PerLevel, Is.EqualTo(0), "지금은 0 — 주는 곳이 서기 전에는 레시피가 들면 안 된다");
+            // 주인 «1강 = 해당 레시피 2개 + 골드 · 강화할 때마다 2개씩 늘어남».
+            // 1회차에는 이 자가 «지금은 0» 을 못 박고 있었다 — 레시피를 **주는 곳**이 없었기 때문이다(T290 4항).
+            // T291 1회차(원정 층 보상)가 그 자리를 세웠고(GrantClear → Recipes.Add), 그래서 2회차가 0 → 2 로 켰다.
+            Assert.That(Load().PerLevel, Is.EqualTo(2), "주인 값 2(1강 2개 · 2강 4개 · …)");
+        }
+
+        [Test]
+        public void GivingSideExists_SoTheCostIsReachable()
+        {
+            // 켜 두고 «줄 곳이 없는» 판이 이 절이 가장 두려워한 자리다(슬롯 강화가 영원히 부족).
+            // 그래서 표의 수가 아니라 **길이 살아 있는가**를 잰다 — 원정 1층을 처음 깨면 그 부위 레시피가 세이브에 담기는가.
+            var s = NewSave();
+            // 던전 표는 Bootstrap 이 싣는 것이라 EditMode 의 GameData 에는 없다 — DungeonFloorTests 와 같은 방식으로 파일에서 읽는다.
+            var dun = DungeonData.Parse(File.ReadAllText(TestData.RepoFile(Path.Combine("Assets", "KkomaKnight", "dungeon.json"))));
+            Assert.That(dun.Of("expedition"), Is.Not.Null, "원정 던전이 표에 있어야 한다");
+            DungeonSweep.GrantClear(s, dun, "expedition");
+            int total = 0; foreach (var pt in Load().Parts) total += Recipes.Count(s, pt);
+            Assert.That(total, Is.GreaterThan(0), "원정을 깨면 레시피가 실제로 들어와야 한다(T291) — 이것이 perLevel 2 를 켤 수 있는 근거다");
         }
 
         [Test]

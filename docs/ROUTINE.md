@@ -6628,6 +6628,14 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 
 ### T290 — ⚑⚑⚑ 주인: **부위별 «레시피» 아이템 + 슬롯 강화에 레시피 요구**(1강 2개 · 강화마다 +2) (주인 2026-09-09 05:5X · 이 레포 전용 표 1개 신규)
 
+> **🔄 2회차 push (sess-0303-27371 · 워커 I) — 1·2·3항이 다 섰다. 켰다(`perLevel` 0 → 2). 남은 것은 매핑 셋뿐이고 그 둘은 남의 lock 안이다.**
+> **켠 근거**: T291 1회차가 «주는 곳» 을 세웠다 — 원정 층 보상이 `DungeonSweep.GrantClear` → `Recipes.Add` 로 **실제로 세이브에 담는다**(자 `RecipeTests.GivingSideExists_SoTheCostIsReachable` 가 그것을 매번 돌려 본다 · 「T291 이 머지됐다」 는 커밋의 사실이지 코드의 사실이 아니라서).
+> **화면**(3항): 비용 줄이 두 칸 — 골드 · `[ui.iconScroll] 보유/필요`(모자라면 빨강 · 골드와 같은 색 규칙). **줄(`Layout.GdCost`)·글자 크기·골드 칸 폭 40% 는 그대로**이고 옮긴 것은 골드 묶음의 시작 x(30 → 6)뿐이라 **표 ④ «비용줄» 은 한 자도 안 고쳤다**(`LayoutSpecTests` 초록). `need 0`(표 없음·`perLevel 0`)이면 **옛 자리 그대로 한 칸**만 그린다.
+> **아이콘**(2항): **`ui.iconScroll`** — 새로 고르지 않았다. T43 이 레퍼런스의 «무기 도안·갑옷 도안…» 여섯을 이미 그 한 그림으로 그리고 있다(`EventsScreen` 던전 보상 목록). 부위는 그림이 아니라 **이름**이 가른다(`Recipes.Name`). 카탈로그에 이미 있는 키라 등재할 것이 없었다.
+> **자**: PlayMode 신규 `GearUiRecipeTests` 2(모자라면 빨강·비활성 / 채우면 초록·Lv+1·개수 감소 / 빈 부위 팝업도 같은 규칙). `UiSmokeTests` 의 «슬롯 강화 → Lv 0 → 1» 은 새 세이브에 레시피가 0 이라 거짓이 됐는데 **기댓값을 낮추지 않고** 레시피를 채운 뒤 누르게 고쳤다(«모자라면 안 눌린다» 는 새 자의 물음이다).
+> **남은 것 = 매핑 셋**(2항) — `LobbyPopups.cs:1348` 은 T258, `EventsScreen.cs:939` 는 T291 의 살아 있는 lock 안이라 **기다린다**. `Mailbox.cs:225` 만 비어 있다. 「이 김에 하나로 모은다」 는 셋이 다 열렸을 때 할 일이다.
+> **확인** = 다음 완주 런의 `GearUiRecipeTests` 2 + `screens` **07**(비용 줄 두 칸) + 주인 폰. 결정 842.
+>
 > **🔄 1회차 push (sess-0303-27371 · 워커 I) — 1·2항과 3항의 «거래» 는 섰다. 남은 것은 3항의 «화면» 과 2항의 «아이콘».**
 > 선 것: 표 `recipe.json`(`data.recipe` 등재 · **`perLevel 0`** = 4항이 시킨 순서) · `Core/Recipes.cs` · `SaveData.Recipes`(왕복) · `Mail` 세 갈래(`CanPay`·`Held`·`Pay` — **T291·T292 는 이 길로 준다**: `Mail.Give(s, "recipe.helm", 3)`) · **`GearSystem.SlotUp`/`CanSlotUp`**(골드·레시피를 같이 보고 같이 뺀다 · `GearUi` 두 곳이 그것만 부른다) · `RecipeTests` 9케이스.
 > 남은 것: ⓐ **비용 줄 «보유/필요» 칸**(3항 · `GearUi.CostRow`·`Layout.GdCost` 를 둘로 · 표 ④ 가 흔들리면 표를 고치고 결정에 적는다) · ⓑ **아이콘 고르기 + `catalog.json` 등재 + `Recipes.Icon`**(2항 · **고르기 전에 키 이름을 먼저 적지 마라** — `check_catalog_keys` 가 문다) · ⓒ **매핑 셋**(`LobbyPopups.cs:1348` 은 T258 lock 안이라 그 자리는 기다린다) · ⓓ **`perLevel` 0 → 2** 는 **T291 이 들어오는 커밋**이 한다(4항).

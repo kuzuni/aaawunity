@@ -413,17 +413,37 @@ namespace KkomaKnight.Game
         }
         /// <summary>옵션 줄이 피치에서 차지하는 비율 — 16% ÷ 7줄 = 53px 피치 × 0.94 = 50px(본문 40 한 줄 49px 이 들어간다 · 줄 사이 3px).</summary>
         public const float OptRowFill = 0.94f;
-        /// <summary>비용 줄(GdCost) — 🪙 «보유/비용»(보유가 모자라면 빨강 · 충분하면 초록) · MAX 면 «슬롯 MAX (Lv.N)».</summary>
-        static void CostRow(RectTransform box, SaveData S, double cost, bool maxed, int maxLv)
+        /// <summary>
+        /// 비용 줄(GdCost) — 🪙 «보유/비용»(보유가 모자라면 빨강 · 충분하면 초록) · MAX 면 «슬롯 MAX (Lv.N)».
+        /// <para>
+        /// T290 3항 — 드는 것이 둘이면(골드 + 그 부위 레시피) <b>줄 하나를 두 칸으로 나눈다</b>. 나누는 것은 <b>폭뿐</b>이다:
+        /// 줄 자체(<see cref="Layout.GdCost"/>)도, 글자 크기(<see cref="TextSize.Body"/>)도, 골드 글자칸의 폭(40%)도 그대로라
+        /// 표 ④ «비용줄» 행과 <c>LayoutSpecTests</c> 가 흔들리지 않는다 — 옮긴 것은 골드 묶음의 <b>시작 x</b>(30 → 6)뿐이고
+        /// 그렇게 비운 오른쪽 절반에 레시피 칸이 들어간다.
+        /// </para>
+        /// <para>
+        /// <b>레시피가 안 드는 판</b>(표가 없거나 <c>perLevel 0</c> · <c>need == 0</c>)이면 <b>옛 자리 그대로</b> 골드 한 칸만 그린다 —
+        /// 안 드는 것을 «0/0» 으로 그리면 사람은 그것을 «못 채운 조건» 으로 읽는다.
+        /// </para>
+        /// </summary>
+        static void CostRow(RectTransform box, GameData D, SaveData S, string part, double cost, bool maxed, int maxLv)
         {
             var r = Layout.GdCost.Within(Layout.GdBox);
             var row = Pill(box, "Cost", r, 0.75f); UiKit.Tag(row, "비용줄");
+            int need = maxed ? 0 : Recipes.Need(D != null ? D.Recipe : null, S.SlotLv(part));
             // T159(주인 «가격 표시 옆에 재화가 골드 아이콘이어야») — 이 게임의 골드 재화 아이콘은 ui.coin 이다
             // (클리어·사망 보상 · 출석 · 탐험 · 챕터 보상 · 던전 보상이 전부 같은 키를 쓴다 · pi.coins 는 픽토 그림이라 이 팝업만 달랐다).
             // 칸은 줄 높이에 맞춘 정사각으로 — 폭 5%(36.6px) × 높이 84%(27.4px) 라 가로로 남던 자리를 지운다(그림 크기는 그대로 27.4px · T136 과 같은 갈래).
-            var ic = UiKit.Icon(row, "ic", "ui.coin"); UiKit.Pct(ic.rectTransform, 30, 8, CostIconWPct, 84);
+            float goldIconX = need > 0 ? 6f : 30f, goldTextX = goldIconX + 6f;
+            var ic = UiKit.Icon(row, "ic", "ui.coin"); UiKit.Pct(ic.rectTransform, goldIconX, 8, CostIconWPct, 84);
             string s = maxed ? $"슬롯 MAX (Lv.{maxLv})" : $"<color=#{Hex(S.Gold >= cost ? Palette.Green : Palette.Red)}>{UiKit.Fmt(S.Gold)}</color>/{UiKit.Fmt(cost)}";
-            var t = UiKit.Label(row, 36, 0, 40, 100, s, TextSize.Body, Palette.Cream, TextAnchor.MiddleLeft, true, true); t.name = "CostText";
+            var t = UiKit.Label(row, maxed ? 36f : goldTextX, 0, 40, 100, s, TextSize.Body, Palette.Cream, TextAnchor.MiddleLeft, true, true); t.name = "CostText";
+            if (need <= 0) return;
+            // 레시피 칸 — 골드와 같은 색 규칙(모자라면 빨강)·같은 글자 크기. 개수라 K·M 으로 줄이지 않는다(FmtQty).
+            var ic2 = UiKit.Icon(row, "icRecipe", Recipes.Icon(part)); UiKit.Pct(ic2.rectTransform, 55, 8, CostIconWPct, 84);
+            int have = Recipes.Count(S, part);
+            string s2 = $"<color=#{Hex(have >= need ? Palette.Green : Palette.Red)}>{UiKit.FmtQty(have)}</color>/{UiKit.FmtQty(need)}";
+            var t2 = UiKit.Label(row, 61, 0, 37, 100, s2, TextSize.Body, Palette.Cream, TextAnchor.MiddleLeft, true, true); t2.name = "RecipeText";
         }
         /// <summary>
         /// «보기 전용» 세부 팝업의 상자 — <see cref="Layout.GdBox"/> 에서 비용 줄·버튼 자리(아래 8%p)를 잘라 낸 것이다(T267 4항 · 표 ㊿).
@@ -445,7 +465,7 @@ namespace KkomaKnight.Game
             var box = DetailFrame(app, RarName(D, g.Rar), colorName, g, Name(D, g) + (g.Plus > 0 ? " +" + g.Plus : ""), OnPopupBox(Palette.ByName(colorName)), $"슬롯 Lv. {lv}/{D.Gear.SlotLvMax}", PartName(D, g.Part));
             StatsBox(box, D, S, g, g.Part, lv, eqd);
             OptionRows(box, D, g);
-            CostRow(box, S, cost, maxed, D.Gear.SlotLvMax);
+            CostRow(box, D, S, g.Part, cost, maxed, D.Gear.SlotLvMax);
             var B = Layout.GdBox;
             RectTransform left;
             if (eqd) left = UiKit.Button(box, "ui.btnBlue", "해제", () => { S.Eq.Remove(g.Part); app.Persist(); Audio.Sfx("snd.equip"); ov.Close(); onChanged?.Invoke(); }, Layout.GdBtnL.Within(B));
@@ -493,7 +513,7 @@ namespace KkomaKnight.Game
             StatsBox(box, D, S, null, part, lv, false);
             var region = Layout.GdOpts.Within(Layout.GdBox);
             UiKit.Label(box, region.X, region.Y, region.W, region.H, "장착된 장비가 없습니다\n인벤에서 이 부위의 장비를 골라 장착하세요", TextSize.Body, Palette.InkLight, TextAnchor.MiddleCenter, true, false).name = "EmptyHint";
-            CostRow(box, S, cost, maxed, D.Gear.SlotLvMax);
+            CostRow(box, D, S, part, cost, maxed, D.Gear.SlotLvMax);
             var up = UiKit.Button(box, "ui.btnOrange", maxed ? "슬롯 MAX" : "슬롯 강화", () =>
             {
                 // T290 — 거래는 GearSystem.SlotUp 한 곳이다(위 OpenDetail 의 강화 버튼과 같은 함수를 쓴다).

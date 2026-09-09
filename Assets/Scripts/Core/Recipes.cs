@@ -44,13 +44,25 @@ namespace KkomaKnight.Core
     /// <item><b>드는 개수는 슬롯 Lv 이 정한다</b> — Lv L 에서 L+1 로 올릴 때 <c>perLevel × (L+1)</c> 개.</item>
     /// <item><b>빼는 곳은 <see cref="GearSystem.SlotUp"/> 한 곳</b> — 골드와 레시피를 <b>같이</b> 확인하고 <b>같이</b> 뺀다.</item>
     /// </list>
-    /// ⚠ <b>아이콘(<c>Recipes.Icon</c>)은 아직 없다</b> — 카탈로그에 두루마리·레시피 그림이 0건이라 주인 에셋에서 골라 등재해야 하고,
-    /// 그림을 고르기 전에 키 이름만 먼저 적으면 «없는 키» 경고가 뜬다(<c>tools/check_catalog_keys.py</c>). 2회차에서 고른다.
     /// </summary>
     public static class Recipes
     {
         /// <summary>아이템 이름의 밑동 — <c>recipe.helm</c> 처럼 뒤에 부위가 붙는다.</summary>
         public const string Prefix = "recipe.";
+
+        /// <summary>
+        /// 레시피 그림 — <b>여섯 부위가 같은 그림</b>을 쓴다(지시서 2항 «6종을 다른 그림으로 지어내지 않는다»).
+        /// <para>
+        /// <b>고른 것이 아니라 찾은 것이다</b> — 이 레포는 T43 때 이미 레퍼런스의 «무기 도안·갑옷 도안…» 여섯을
+        /// <c>ui.iconScroll</c>(<c>Item_Scroll_01_Red</c>) 한 그림으로 그리고 있다(<c>EventsScreen</c> 의 던전 보상 목록).
+        /// 주인 레퍼런스가 «부위별 도안» 을 그 그림으로 보여 준 자리가 곧 지금의 레시피라, 새 그림을 고르면
+        /// <b>같은 물건이 화면마다 다르게 생기는</b> 쪽이 된다. 부위는 그림이 아니라 <b>이름</b>이 가른다(<see cref="Name"/>).
+        /// </para>
+        /// </summary>
+        public const string IconKey = "ui.iconScroll";
+
+        /// <summary>부위별 그림 — 지금은 여섯이 같다(위 <see cref="IconKey"/> 참조). 부르는 쪽이 부위를 넘기게 두는 것은 나중에 갈릴 자리를 여기 한 곳으로 모아 두기 위해서다.</summary>
+        public static string Icon(string part) => IconKey;
 
         /// <summary>부위 → 아이템 이름(<c>recipe.helm</c>). 빈 부위면 빈 글자.</summary>
         public static string Item(string part) => string.IsNullOrEmpty(part) ? "" : Prefix + part;
