@@ -710,7 +710,7 @@ namespace KkomaKnight.Tests.Play
                 var sp = _app.Current.Root;
                 foreach (var n in new[] { "Banner", "PassName", "SeasonEnds", "ProgressBar", "LevelBadge", "Notice", "Track",
                                           "Col:free", "Col:paid1", "Col:paid2", "Line", "SegBand", "SegBadge",
-                                          "ClaimAllBtn", "BuyBtn:1", "BuyBtn:2", "BackBtn", "PassIconBtn" })
+                                          "ClaimAllBtn", "BuyBtn:1", "BuyBtn:2", "BackBtn" })   // T304 — «방랑자의 보상» 탭은 주인이 지웠다
                     Assert.IsNotNull(UiKit.Find(sp, n), "시즌 패스 조각 «" + n + "»(표 ㊼)");
                 // 3열 전부 실측 그라데이션이 깔려 있다 — 주인이 «그 그라데이션도 잘 해서» 라고 못 박은 자리다
                 foreach (var n in new[] { "Col:free", "Col:paid1", "Col:paid2" })
