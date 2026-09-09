@@ -1638,6 +1638,13 @@ namespace KkomaKnight.Game
         {
             if (item == Mail.ItemGold) return "ui.coin";
             if (item == Mail.ItemPetEgg) return "pet.egg";
+            // T290 마지막 한 줄 — 레시피는 «부위별 아이템» 이라 `Mail` 이 이미 나르는데(T290 이 `CanPay`·`Held`·`Pay` 에 가지를 넣었다)
+            //   여기만 그것을 몰라서, 특권 표에 레시피가 한 줄이라도 생기면 **조용히 다이아 그림**을 그린다(아래 `return` 이 받아 버린다).
+            //   `Mailbox.cs:244` 가 쓰는 그 한 줄과 같은 꼴이다 — 같은 뜻은 같은 모양으로 적는다.
+            //   ⚑ 오늘은 `privilege.json` 에 레시피가 없어 이 가지가 안 돈다. 그래서 자를 새로 안 세웠다 —
+            //     못 도는 길에 자를 세우면 그 자는 «내가 부른 함수가 내가 준 값을 돌려주는가» 만 재는 거울이 된다(결정 906).
+            //     이 줄의 값은 «주인이 표에 한 줄 넣는 날 화면이 저절로 맞는다» 이고, 그때 거짓이면 눈에 바로 보인다.
+            if (Recipes.IsRecipe(item)) return Recipes.Icon(Recipes.PartOf(item));
             return "ui.gemRed";
         }
 
