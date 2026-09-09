@@ -1,0 +1,44 @@
+# T283 탐침(임시) — «UNITY_LICENSE 없이 이메일·비번만 주면 game-ci CLI 가 어떤 활성화 방식을 고르는가» 를 2분 안에 잰다.
+# 코드·게임과 무관. 라이선스가 풀리면 이 파일은 지운다(T283 이 ✅ 될 때 같이).
+# 읽는 자리: 유니티 잡 로그의 «Licensing method: …» 한 줄과 그 뒤 «Requesting activation …» 결과.
+name: "[T283] 라이선스 탐침 (이메일·비번만)"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    name: 이메일·비번만으로 활성화 시도
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-test-probe
+          restore-keys: |
+            Library-test-
+            Library-
+
+      - name: 시크릿 있는지만 본다 (내용은 안 찍는다)
+        env:
+          EM: ${{ secrets.UNITY_EMAIL }}
+          PW: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          echo "[T283] UNITY_EMAIL 있음   : $([ -n "$EM" ] && echo yes || echo NO)"
+          echo "[T283] UNITY_PASSWORD 있음: $([ -n "$PW" ] && echo yes || echo NO)"
+
+      - uses: game-ci/unity-test-runner@v4
+        continue-on-error: true
+        env:
+          # ⚠ 일부러 UNITY_LICENSE 를 안 준다 — 그것이 이 탐침의 전부다.
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: .
+          testMode: editmode
+          artifactsPath: probe-results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: "[T283] 탐침 결과"
