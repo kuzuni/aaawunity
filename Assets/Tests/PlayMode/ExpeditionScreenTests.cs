@@ -174,10 +174,26 @@ namespace KkomaKnight.Tests.Play
             S.ExpQuickDay = SaveStore.Today(); S.ExpQuickUsed = 0;   // 옛 필드(T265 로 안 쓴다) — 그래도 «가득» 이어야 한다: 아래 Roll 이 충전을 채운다
             _app.ShowScreen("lobby"); yield return Frames(2);
 
-            // ⓔ 빨간 점 — 빠른 탐험 횟수가 남아 있으면 켜져 있다
+            // ⓔ 빨간 점 — ⚠ T317 로 **계약이 뒤집혔다**(주인 2026-09-09 10:4X «탐험 부분 얻을 거 없을 때도 빨간 점 알림 뜨네 · 해결해라 수정해»).
+            //   옛 단언은 «빠른 탐험 횟수가 남아 있으면 켜져 있다» 였는데, 주인이 바로 그것을 «얻을 것 없는데 켜진다» 로 짚었다 —
+            //   충전은 «광고를 봐야 받는 것» 이라 «쌓여 있는 얻을 것» 이 아니다. 그 줄을 **지운 것이 아니라 새 계약으로 옮기고**,
+            //   그것이 지키던 사실 둘(조각이 있다 · 충전 자체는 남아 있다)은 아래에 그대로 세웠다(결정 778 의 꼴).
             var dot = Find(_app.UiCanvas.transform, "ExpDot");
             Assert.IsNotNull(dot, "«탐험» 칸에 알림 점 조각이 있어야 한다");
-            Assert.IsTrue(dot.gameObject.activeInHierarchy, "받을 게 있으면(빠른 탐험 횟수) 빨간 점이 켜진다");
+            Assert.IsFalse(dot.gameObject.activeInHierarchy,
+                "T317 — 충전만 남고 쌓인 것이 없으면 점을 안 켠다(주인 «얻을 거 없을 때도 빨간 점 알림 뜨네»)");
+            Assert.IsTrue(Expedition.CanQuick(S, D, LobbyPopups.NowSec(), SaveStore.Today()),
+                "그래도 충전은 그대로 남아 있다 — 점에서만 뺐다(아래 «남은 횟수 배지» 가 이 값을 읽는다)");
+
+            // T317 2항 — **배선이 그 규칙을 실제로 읽는가**(EditMode 는 규칙만 잰다 · 여기는 화면이다).
+            //   점 문턱을 넘겨 두고 로비를 다시 그리면 점이 켜져야 한다. 안 켜지면 «규칙은 고쳤는데 화면이 옛 값을 붙들고 있는» 판이다.
+            double keepSettle = S.ExpSettle;
+            S.ExpSettle = LobbyPopups.NowSec() - (D.DotAfterSeconds + 60);   // 문턱 + 1분치가 쌓인 판
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            Assert.IsTrue(Find(_app.UiCanvas.transform, "ExpDot").gameObject.activeInHierarchy,
+                "쌓인 것이 점 문턱을 넘으면 로비 점이 켜진다(배선이 T317 규칙을 읽는다)");
+            S.ExpSettle = keepSettle;                                        // 아래 팝업 검사는 «갓 연 판» 을 전제한다
+            _app.ShowScreen("lobby"); yield return Frames(2);
 
             // ⓓ 빠른 탐험 팝업
             LobbyPopups.QuickExplore(_app, null); yield return Frames(2);
