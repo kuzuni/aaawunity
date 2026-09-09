@@ -99,9 +99,11 @@ namespace KkomaKnight.Game
 
             for (int i = 0; i < items.Count; i++) Row(app, rows[i], i, items[i]);
             for (int i = items.Count; i < rows.Count; i++) rows[i].gameObject.SetActive(false);
-            // T350 — 표 ㉜ 은 여섯 줄을 «메뉴 줄 6» **한 행**으로 묶어 잰다(줄마다 따로 재지 않는다) ⇒ 묶음 이름을 표와 같게 한다.
+            // T350 — 표 ㉜ 은 줄 전부를 «메뉴 줄 N» **한 행**으로 묶어 잰다(줄마다 따로 재지 않는다) ⇒ 묶음 이름을 표와 같게 한다.
             //   ⚠ 줄마다 붙는 «메뉴 «우편함» 줄» 류는 그대로 둔다 — 표에 없는 이름표지만 그것이 있어야 «어느 줄이 비었나» 를 사람이 읽는다.
-            UiKit.TagGroup(panel, "메뉴 줄 6", rows.ToArray());
+            //   T350 3회차 — **켠 줄만** 넘긴다. 프리팹 줄은 넷이고 T148 뒤로 items 는 둘이라 나머지 둘은 위에서 껐다.
+            //   합집합을 «꺼진 것은 알아서 빠지겠지» 에 맡기면, 그 규칙이 바뀌는 날 표 ㉜ 이 소리 없이 갑절을 잰다.
+            UiKit.TagGroup(panel, "메뉴 줄 " + items.Count, rows.GetRange(0, items.Count).ToArray());
         }
 
         /// <summary>메뉴 항목 표 — 순서·라벨·아이콘(새 줄만)·누르면 할 일 · 점을 켤 조건.</summary>
