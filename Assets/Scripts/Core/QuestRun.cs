@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace KkomaKnight.Core
 {
@@ -93,6 +94,40 @@ namespace KkomaKnight.Core
             Add(s.QuestDaily, "login", 1);
             string day = QuestData.DayKey(now);
             if (s.QuestLoginDay != day) { s.QuestLoginDay = day; Add(s.QuestWeekly, "loginDays", 1); }
+        }
+
+        /// <summary>
+        /// 이번 주가 <b>시작한 날 00:00</b>(T311 2항) — <see cref="Roll"/> 이 «주가 넘어갔는가» 를 재는 그 경계다.
+        /// <para>
+        /// ⚠ <b>요일 산수를 여기 다시 쓰지 않는다</b> — <see cref="QuestData.WeekKey(DateTime)"/> 가 낸 글자를 되읽는다.
+        /// 산수를 베껴 두면 주인이 <c>weekStartDow</c> 를 바꿨을 때 <b>«지워지는 시각» 과 «남았다고 적힌 시각» 이 갈라진다</b> —
+        /// 화면은 «3일 남음» 이라 적는데 이미 지워져 있는 꼴이고, 그것은 빨간 줄도 자도 안 난다.
+        /// 같은 글자를 되읽으면 <b>갈라질 수가 없다</b>.
+        /// </para>
+        /// </summary>
+        public static DateTime WeekStart(QuestData d, DateTime now)
+            => d == null ? now.Date
+                         : DateTime.ParseExact(d.WeekKey(now), "yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+        /// <summary>
+        /// <b>다음 일일 초기화까지 남은 초</b>(T311 2항 · 다음 날 00:00). 화면의 «새로고침까지» 가 이 수를 그린다.
+        /// <para>
+        /// 시계는 <see cref="Roll"/> 에 넘기는 것과 <b>같은 것</b>을 넘겨야 한다(그쪽이 <see cref="QuestData.DayKey"/> 로 날을 가른다).
+        /// 벽시계 산수라 서머타임에는 물리적 초와 어긋날 수 있는데, <b>맞춰야 할 것은 물리적 초가 아니라 «언제 지워지는가»</b> 라서 이쪽이 옳다.
+        /// </para>
+        /// 음수는 안 돌려준다(시계가 뒤로 간 판에서도 0 이 바닥이다).
+        /// </summary>
+        public static double SecondsToDailyReset(DateTime now)
+        {
+            double sec = (now.Date.AddDays(1) - now).TotalSeconds;
+            return sec < 0 ? 0 : sec;
+        }
+
+        /// <summary><b>다음 주간 초기화까지 남은 초</b>(T311 2항 · 이번 주 시작 + 7일 00:00). 위 <see cref="SecondsToDailyReset"/> 과 같은 규칙이다.</summary>
+        public static double SecondsToWeeklyReset(QuestData d, DateTime now)
+        {
+            double sec = (WeekStart(d, now).AddDays(7) - now).TotalSeconds;
+            return sec < 0 ? 0 : sec;
         }
 
         /// <summary>그 줄의 지금 셈(표에 없던 이름이면 0).</summary>
