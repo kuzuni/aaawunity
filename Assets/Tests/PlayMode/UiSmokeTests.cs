@@ -720,8 +720,13 @@ namespace KkomaKnight.Tests.Play
                     //   그래서 단언 대신 «실제로 몇 으로 놓였나» 를 찍는다(T260 4단계·결정 739 와 같은 순서).
                     var endsT = UiKit.Find(sp, "SeasonEnds")?.GetComponent<TMPro.TMP_Text>();
                     if (endsT != null)
+                        // 회차 1(run 610)에서 «놓인 크기 40.0 · 칸 폭 648px» 이 나왔다 — 안 줄었다는 뜻이지만
+                        //   «표 ref 폭(33.3% ≈ 360px)에서도 안 줄까» 는 그 수로 못 판정한다. 필요한 것은 **글자가 실제로 먹는 폭**이라
+                        //   TMP 의 preferredWidth 를 같이 찍는다(회차 2). 그 수가 ref 폭보다 작으면 좁혀도 되고, 크면 표 ⚑ 대로 둔다.
                         Debug.Log("[T266] 시즌 종료 줄 — 글자 «" + endsT.text + "» · 놓인 크기 " + endsT.fontSize.ToString("0.0")
-                            + "(하한 " + TextSize.BestFitMin + ") · 칸 폭 " + endsT.rectTransform.rect.width.ToString("0") + "px");
+                            + "(하한 " + TextSize.BestFitMin + ") · 칸 폭 " + endsT.rectTransform.rect.width.ToString("0")
+                            + "px · 글자가 먹는 폭 " + endsT.GetPreferredValues().x.ToString("0")
+                            + "px · 표 ref 폭 " + (UiKit.FrameW * 0.333f).ToString("0") + "px");
                 }
                 Check("시즌 패스 페이지");
                 Assert.IsTrue(ClickNamed(sp, "BackBtn"), "시즌 패스 뒤로"); yield return Frames(2);
