@@ -504,9 +504,11 @@ namespace KkomaKnight.Game
             var rHeal = UiKit.Button(box, "ui.btnGreen", $"체력 회복 (+{heal})", () => { Close(); onChoose(true); }, new Layout.R(10, 45, 80, 11));
             var rExp = UiKit.Button(box, "ui.btnBlue", $"경험치 +{G.C.RestExp}", () => { Close(); onChoose(false); }, new Layout.R(10, 58, 80, 11));
             UiKit.Tag(rHeal, "체력 회복 버튼"); UiKit.Tag(rExp, "경험치 버튼");
+            // T258 3항 — 업적 «광고 10회 시청» 은 **광고를 부르는 자리마다** 센다(아래 셋 · `AdCountdown` 안에 걸면 두 번 세는 덫 · 결정 763).
+            //   전투 중 광고 셋(휴식 «둘 다» · 천사 축복 · 클리어 ×2)도 사람이 본 광고라 같이 센다.
             if (onBoth != null)
             {
-                var ad = UiKit.Button(box, "ui.btnOrange", "광고 보고 둘 다 얻기", () => AdCountdown(3, () => { Close(); onBoth(); }), new Layout.R(10, 71, 80, 12));
+                var ad = UiKit.Button(box, "ui.btnOrange", "광고 보고 둘 다 얻기", () => AdCountdown(3, () => { Quests.Ach(_app, Quests.AchAdWatch); Close(); onBoth(); }), new Layout.R(10, 71, 80, 12));
                 var adIc = UiKit.Icon(ad, "Ad", "hud.alertAd"); UiKit.Pct(adIc.rectTransform, 84, -22, 18, 50);
                 UiKit.Tag(ad, "광고 버튼");
             }
@@ -553,7 +555,7 @@ namespace KkomaKnight.Game
             var ic = UiKit.Icon(box, "Wing", "pi.wing", Palette.Yellow); UiKit.Pct(ic.rectTransform, 35, 20, 30, 26);
             UiKit.Tag(ic.rectTransform, "(천사) 날개 아이콘");
             var aFree = UiKit.Button(box, "ui.btnGreen", $"무료 축복 · 공격력 +{Math.Round((SimPolicy.AngelFree - 1) * 100)}%", () => { Close(); onChoose(SimPolicy.AngelFree); }, new Layout.R(10, 54, 80, 12));
-            var ad = UiKit.Button(box, "ui.btnOrange", $"광고 보고 공격력 +{Math.Round((SimPolicy.AngelAd - 1) * 100)}%", () => AdCountdown(3, () => Blessed(onChoose)), new Layout.R(10, 70, 80, 12));
+            var ad = UiKit.Button(box, "ui.btnOrange", $"광고 보고 공격력 +{Math.Round((SimPolicy.AngelAd - 1) * 100)}%", () => AdCountdown(3, () => { Quests.Ach(_app, Quests.AchAdWatch); Blessed(onChoose); }), new Layout.R(10, 70, 80, 12));
             var adIc = UiKit.Icon(ad, "Ad", "hud.alertAd"); UiKit.Pct(adIc.rectTransform, 84, -22, 18, 50);
             UiKit.Tag(aFree, "(천사) 무료 버튼"); UiKit.Tag(ad, "(천사) 광고 버튼");
             var aNote = Sub(box, "더 강한 축복", 85, 6, TextSize.Body, Palette.White);   // T141 ⓑ
@@ -611,7 +613,7 @@ namespace KkomaKnight.Game
             UiKit.Hide(rt, "Text_TouchContionue");
             var grp = UiKit.Find(rt, "Group_Buttons");
             var b1 = grp != null && grp.childCount > 0 ? grp.GetChild(0) : null; var b2 = grp != null && grp.childCount > 1 ? grp.GetChild(1) : null;
-            if (b1 != null) { UiKit.SetText(b1, "Text (TMP)", ClearAdLabel); UiKit.Clickable(b1, () => AdCountdown(3, () => { Close(); onDouble(); })); }
+            if (b1 != null) { UiKit.SetText(b1, "Text (TMP)", ClearAdLabel); UiKit.Clickable(b1, () => AdCountdown(3, () => { Quests.Ach(_app, Quests.AchAdWatch); Close(); onDouble(); })); }
             if (b2 != null) { UiKit.SetText(b2, "Text (TMP)", "그냥 받기"); UiKit.Clickable(b2, () => { Close(); onLobby(); }); }
             SpinTitleEffect(rt);   // T110 ⓒ — 제목 빛살은 계속 시계방향으로 돈다
             Confetti(rt);          // T110 ⓓ — 등장 폭죽(프리팹 조각을 되살려 좌우 두 번 · 새 에셋 0)

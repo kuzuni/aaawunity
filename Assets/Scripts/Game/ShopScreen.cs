@@ -652,6 +652,7 @@ namespace KkomaKnight.Game
             App.Overlay.AdCountdown(AdSeconds, () =>
             {
                 if (!ShopFree.Take(App.Save, slot, Today())) { Refresh(); return; }
+                Quests.Ach(App, Quests.AchAdWatch);   // T258 — «광고 10회 시청». 여기서 센다(공통 `Overlay.AdCountdown` 안에 걸면 두 번 세는 덫이 된다 · 결정 763)
                 App.Persist();
                 Pull(1, box.Key, false, true);
             });
@@ -724,6 +725,11 @@ namespace KkomaKnight.Game
                 S.Pulls++;
             }
             Quests.Bump(App, Quests.ChestOpen, n);   // T257 — «상자 2번 오픈»(일일)·«30회»(주간) · n 연차면 n 번이다
+            // T258 3항 — 업적은 **상자 등급마다 따로** 센다(희귀 5회 · 전설 5회 · 신화 5회). 어느 상자인지 아는 자리가 여기라 여기서 이름을 댄다.
+            // ⚠ 표의 이름과 상자 키가 한 글자씩 어긋난다: 전설 상자의 키는 `legend` 인데 업적 카운터는 `chestOpenEpic` 이다
+            //    (등급 이름은 «희귀·전설·신화» = rare·epic·myth 계열이고 상자 키만 `legend` 다) — 글자가 닮았다고 짝지으면 틀린다.
+            string achBox = boxKey == "rare" ? Quests.AchChestRare : boxKey == "legend" ? Quests.AchChestEpic : boxKey == "myth" ? Quests.AchChestMythic : null;
+            if (achBox != null) Quests.Ach(App, achBox, n);
             App.Persist(); Refresh();
             // 소리는 «착지하는 순간» 에 난다 — ChestResult 의 연출 시퀀스가 낸다(T180 · 결정 420). 여기서 미리 내면 상자가 아직 공중이다.
             var best = got[0]; foreach (var g in got) if (GearSystem.GearScore(g) > GearSystem.GearScore(best)) best = g;

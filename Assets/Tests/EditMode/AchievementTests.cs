@@ -182,11 +182,11 @@ namespace KkomaKnight.Tests
                 // Game/Quests.Ach 로 부르는 자리가 있는 것
                 "dungeonTryHell", "dungeonTryExpd", "arenaTry", "adWatch",
                 "attend", "attendClaim", "giftClaim", "chapterChestClaim",
+                "chestOpenRare", "chestOpenEpic", "chestOpenMythic",
             };
             var notYet = new System.Collections.Generic.HashSet<string>
             {
-                "chestOpenRare", "chestOpenEpic", "chestOpenMythic",   // ShopScreen — 남의 lock 이 풀리면 한 줄씩
-                "petGacha",                                            // 펫 시스템이 없다(T273)
+                "petGacha",   // 펫 뽑기 자체가 없다(T273 — 펫 목록·확률표가 어디에도 없다). 그 절이 열리면 여기서 위로 옮긴다.
             };
             var d = Load();
             foreach (var r in d.List)
