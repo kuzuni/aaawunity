@@ -139,6 +139,13 @@ namespace KkomaKnight.Tests.Play
             _app.ShowScreen("forge"); yield return Frames(3); yield return Shot("08_gear_fuse");
             // 상점(T40) = 세로 스크롤 한 화면 — 레퍼런스 10 = 맨 위(상자 배너 · 상자 카드 2) · 09 = 끝까지 내린 상태(다이아 · 골드)
             _app.ShowScreen("shop"); yield return Frames(3); yield return Shot("10_shop_2");
+            // 36 상자 «확률 정보» 팝업 (T267 · 표 ㊾ · 큰 카드의 (i) 를 눌러 연다 — 37 은 같은 화면의 스크롤 다른 구간이라 안 찍는다)
+            {
+                var big = UiKit.Find(_app.Current.Root, "Box:" + ShopScreen.BigBox(_app.Data).Key);
+                var info = big != null ? UiKit.Find(big, "Info") : null;
+                var ib = info != null ? info.GetComponent<UnityEngine.UI.Button>() : null;
+                if (ib != null) { ib.onClick.Invoke(); yield return Frames(3); yield return Shot("36_box_rates"); _app.Overlay.Close(); yield return Frames(1); }
+            }
             (_app.Current as ShopScreen)?.ScrollTo(0f); yield return Frames(2); yield return Shot("09_shop_1");
 
             // 02 전투(3초) · 03 적 조우(8초 안에 Engaged 가 되면) · 04 레벨업 · 05 보유 특전

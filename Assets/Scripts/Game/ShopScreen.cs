@@ -666,23 +666,17 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 정보 팝업 (확률 · 천장) ─────────────────────────
-        void ShowInfo(GachaBox box)
-        {
-            var D = App.Data; var st = State(box.Key);
-            var b = App.Overlay.OpenBox("ui.popup", "ui.title.tangerine", box.Name, InfoBox, () => App.Overlay.Close());
-            var chest = UiKit.Icon(b, "Chest", "chest." + box.Key); UiKit.Pct(chest.rectTransform, 32, 7, 36, 30);
-            // 글자 = 본문 40(T63-shop) · 최대 9줄 × 선호 49px = 441 ≤ 칸 54% × 상자 42% = 530px — 빈 줄을 빼고 마지막 줄을 둘로 나눠(💎 글리프 없음 · 결정 142) 한 줄이 접히지 않게
-            var lines = new List<string> { "<b>등급 확률</b>" };
-            for (int i = box.Rate.Length - 1; i >= 0; i--) if (box.Rate[i] > 0) lines.Add($"<color=#{ColorUtility.ToHtmlStringRGB(Palette.ByName(Palette.RarName(i)))}>{GearUi.RarName(D, i)}</color>  {box.Rate[i]:0.#}%");
-            if (box.PityMyth > 0) lines.Add($"신화 확정: {box.PityMyth}회마다 (남은 {Math.Max(0, box.PityMyth - st.P50)}회)");
-            if (box.PityLegend > 0) lines.Add($"전설 확정: {box.PityLegend}회마다 (남은 {Math.Max(0, box.PityLegend - st.P10)}회)");
-            if (box.PityMyth == 0 && box.PityLegend == 0) lines.Add("천장 없음");
-            lines.Add($"누적 {st.Pulls}회 열었습니다");
-            lines.Add($"1회 다이아 {UiKit.FmtQty(box.Cost)} · {D.Gacha.TenPullCount}회 다이아 {UiKit.FmtQty(box.Cost * D.Gacha.TenPullCount)}");
-            UiKit.Label(b, 8, 40, 84, 54, string.Join("\n", lines), TextSize.Body, Palette.InkSoft, TextAnchor.UpperCenter, true, false);
-        }
-
-        // ───────────────────────── 뽑기 → 결과 팝업 (공통 팝업 문법 · 명판 · 열린 상자 · 격자 = GearUi.Cell · 탭하여 닫기) ─────────────────────────
+        /// <summary>
+        /// (i) 버튼 → 상자 «확률 정보» 팝업(T267 · 주인 2026-09-09 «상점에 상자 부분에 인포 버튼 클릭 시 이런 게 떠야 함» · 레퍼런스 36·37).
+        /// <para>
+        /// <b>옛 팝업은 등급 확률을 «글 목록» 으로만 보여 줬다</b> — 주인이 준 그림은 <b>아이템 칸 격자</b>다(칸마다 개별 확률).
+        /// 그 화면은 <see cref="OddsPopup"/> 이 세우고, 수는 <see cref="Core.GachaOdds"/> 가 표에서 계산한다(코드에 확률 0줄).
+        /// </para>
+        /// ⚠ 옛 팝업이 보여 주던 <b>천장·누적·값</b>은 안 지웠다 — 레퍼런스에는 없지만 지우면 정보가 준다(T125·T261).
+        /// 레퍼런스 바닥 문장이 «확정 보상도 같은 확률을 쓴다» 이고 그 «확정 보상» 이 곧 천장이라, 그 목록 맨 끝에 한 덩이로 붙였다.
+        /// </summary>
+        void ShowInfo(GachaBox box) => OddsPopup.Open(App, box.Key);
+      // ───────────────────────── 뽑기 → 결과 팝업 (공통 팝업 문법 · 명판 · 열린 상자 · 격자 = GearUi.Cell · 탭하여 닫기) ─────────────────────────
         /// <summary>
         /// 키로 그 상자를 <b>가진 만큼(캡까지) 한 번에</b> 연다(T255 3항 → T275 · 주인 2026-09-08 «있는 열쇠 다 써서 열쇠 개수만큼 · 캡이 10»).
         /// 키는 «비용 수단» 만 바꾸므로(<see cref="GachaKeys"/>) 확률·천장·결과가 다이아로 연 것과 한 톨도 다르지 않다.

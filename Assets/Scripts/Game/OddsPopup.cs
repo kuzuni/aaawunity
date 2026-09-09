@@ -74,6 +74,10 @@ namespace KkomaKnight.Game
                 y += Section(app, D, content, r, y, n, lines, boxKey);
                 y += GapPx;
             }
+            // 천장·누적 — 레퍼런스에는 없지만 **옛 ⓘ 팝업이 보여 주던 것**이라 지우면 정보가 준다(T125 천장 · T261 희귀 천장).
+            //   레퍼런스의 바닥 문장이 «확정 보상도 같은 확률을 쓴다» 인데 그 «확정 보상» 이 바로 천장이다 —
+            //   그래서 목록 맨 끝에 한 덩이로 붙인다(스크롤 안이라 자리를 뺏지 않는다 · 결정 기록).
+            if (box != null) y += Pity(app, content, box, y);
             content.sizeDelta = new Vector2(0f, Mathf.Max(0f, y));
 
             // 바닥 띠 — 주인 문장(«확정 보상 제외» 와 짝이 되는 안내)
@@ -86,6 +90,24 @@ namespace KkomaKnight.Game
             // 명판은 공통 팝업(`UiKit.Popup`)이 세운 조각이라 이름표가 없다 — 표 ㊾ 가 그 자리를 재므로 여기서 붙인다(GearUi 가 등급 배지에 하는 것과 같은 꼴).
             var plate = UiKit.Find(b, "ui.title.tangerine"); if (plate != null) UiKit.Tag(plate, "명판(«확률»)");
             return b;
+        }
+
+        /// <summary>천장·누적 덩이 — 옛 ⓘ 팝업이 보여 주던 것을 목록 끝에 잇는다(레퍼런스에는 없다 · 지우면 정보가 준다).</summary>
+        static float Pity(App app, RectTransform content, GachaBox box, float y)
+        {
+            // 세이브의 그 상자 상태 — 없으면 «아직 안 연 상자» 로 읽는다(여기서 만들지 않는다 · 보여 주기 팝업이 세이브를 늘리면 안 된다).
+            var st = app.Save != null && app.Save.GachaBoxes.TryGetValue(box.Key, out var s0) ? s0 : new GachaState();
+            var lines = new System.Collections.Generic.List<string>();
+            if (box.PityMyth > 0) lines.Add("신화 확정: " + box.PityMyth + "회마다 (남은 " + System.Math.Max(0, box.PityMyth - st.P50) + "회)");
+            if (box.PityLegend > 0) lines.Add("전설 확정: " + box.PityLegend + "회마다 (남은 " + System.Math.Max(0, box.PityLegend - st.P10) + "회)");
+            if (lines.Count == 0) lines.Add("천장 없음");
+            lines.Add("누적 " + st.Pulls + "회 열었습니다");
+            lines.Add("1회 다이아 " + UiKit.FmtQty(box.Cost) + " · " + app.Data.Gacha.TenPullCount + "회 다이아 " + UiKit.FmtQty(box.Cost * app.Data.Gacha.TenPullCount));
+            float h = HeadPx + lines.Count * 44f;
+            var blk = UiKit.Rect(content, "OddsPity"); Place(blk, 0f, y + GapPx, 100f, h);
+            var bg = UiKit.Panel(blk, "PityBg", "fr.r12", Palette.A(Palette.Ink, 0.35f)).rectTransform; UiKit.Stretch(bg);
+            UiKit.Label(blk, 3, 4, 94, 92, string.Join("\n", lines), TextSize.Aux, Palette.Cream, TextAnchor.UpperLeft, true, false).name = "PityText";
+            return GapPx + h;
         }
 
         /// <summary>구간 하나(등급 머리 + 칸 격자)를 <paramref name="y"/> 아래에 놓고 그 높이를 돌려준다.</summary>
@@ -111,9 +133,11 @@ namespace KkomaKnight.Game
                 float cw = 100f / Cols;
                 Place(cell, (i % Cols) * cw, gy + (i / Cols) * RowPx, cw, RowPx);
                 var frame = UiKit.Spawn("ui.itemFrame." + color, cell);
-                var frt = (RectTransform)frame.transform; UiKit.Pct(frt, 6, 2, 88, 66);
+                var frt = (RectTransform)frame.transform; UiKit.Pct(frt, 8, 2, 84, 58);
                 UiKit.SetSprite(frt, "Item", GearLook.IconKey(t.Part, D.Gear.SetOf(t.Type), r.Rar), Palette.White);
-                UiKit.Label(cell, 0, 70, 100, 26, Pct(r.Each), TextSize.Aux, Palette.White).name = "Pct";
+                // ⚠ 글자 칸 세로는 «크기 × 1.4» 여야 잘리지 않는다(T63 · TextSize.LineBox) — Aux 36 → 50.4px.
+                //   행 피치가 126px 이라 40% = 50.4px 이 그 하한이다. 조각을 58% 로 줄여 그 자리를 냈다.
+                UiKit.Label(cell, 0, 60, 100, 40, Pct(r.Each), TextSize.Aux, Palette.White).name = "Pct";
                 if (i == 0 && r.Rar == D.Gear.RarRare) UiKit.Tag(cell, "보상 칸(구간 첫 칸)");
                 // 4항 — 칸을 누르면 «보기 전용» 세부 팝업. 닫으면 **이 팝업으로 돌아온다**(프로필 팝업 둘이 쓰는 그 꼴 · 표 ㉟).
                 //   Overlay 는 한 겹이라 «겹쳐 뜨기» 가 아니라 «갔다 돌아오기» 로 같은 결과를 낸다(결정 기록).
