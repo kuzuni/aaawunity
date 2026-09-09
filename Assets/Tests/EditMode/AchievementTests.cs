@@ -183,11 +183,10 @@ namespace KkomaKnight.Tests
                 "dungeonTryHell", "dungeonTryExpd", "arenaTry", "adWatch",
                 "attend", "attendClaim", "giftClaim", "chapterChestClaim",
                 "chestOpenRare", "chestOpenEpic", "chestOpenMythic",
+                "petGacha",   // T293 ⓘ — 펫 소환이 서면서 걸렸다(PetScreen.Pull · 뽑기 입구는 그 한 곳뿐이다). T258 이 마지막까지 기다린 훅이다.
             };
-            var notYet = new System.Collections.Generic.HashSet<string>
-            {
-                "petGacha",   // 펫 뽑기 자체가 없다(T273 — 펫 목록·확률표가 어디에도 없다). 그 절이 열리면 여기서 위로 옮긴다.
-            };
+            // 이제 «아직 걸 자리가 없는» 카운터는 하나도 없다. 표에 새 줄이 생기면 여기 두 목록 중 하나에 들어가야 이 자가 초록이다.
+            var notYet = new System.Collections.Generic.HashSet<string>();
             var d = Load();
             foreach (var r in d.List)
                 Assert.IsTrue(hooked.Contains(r.Counter) || notYet.Contains(r.Counter),

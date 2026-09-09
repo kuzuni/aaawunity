@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using KkomaKnight.Core;
 using TMPro;
 using UnityEngine;
@@ -152,14 +153,83 @@ namespace KkomaKnight.Game
         /// 가격 숫자를 지어내지 않고, 새 기능도 만들지 않는다(결정 <b>432</b>).
         /// </para>
         /// </summary>
-        RectTransform SummonButton(string name, string label, Layout.R r)
+        RectTransform SummonButton(string name, string label, Layout.R r) => SummonButton(name, label, r, name == "Summon10Btn");
+
+        /// <summary>
+        /// 주황 소환 버튼 — 위 줄 «소환»/«소환 x10», 아래 줄 <b>지금 치를 값</b>(펫알 🥚 또는 다이아 💎).
+        /// <para>
+        /// T293 ⓘ — 표(<see cref="GameData.Pet"/>)가 실린 뒤로 <b>값을 지어내지 않고 표에서 읽는다</b>. «무엇으로 몇 번» 은 화면이 세지 않고
+        /// <see cref="Pets.Offer"/> 하나가 답한다(T293 ⓓ 의 계약 — 두 버튼이 각자 세면 «소환은 펫알인데 x10 은 다이아» 같은 어긋남이 화면에서만 산다).
+        /// </para>
+        /// <para>표가 없으면(옛 껍데기) 종전 그대로 — 글자만, 흐리게, 누르면 «준비 중» 토스트(T178 · 결정 432).</para>
+        /// </summary>
+        RectTransform SummonButton(string name, string label, Layout.R r, bool ten)
         {
-            var b = UiKit.Button(Root, "ui.btnOrange", label, () => App.Toast(NotReadyMsg), r); b.name = name;
-            // 가격 줄이 없으니 글자가 버튼 «전체» 를 쓴다(예전엔 위 46% 만 쓰고 아래에 «💎 준비 중» 이 있었다).
-            // 💎 아이콘도 세우지 않는다 — 뒤에 숫자가 없는 다이아 아이콘은 «값이 있는데 안 보이는» 것처럼 읽혀 빈 자리보다 나쁘다.
-            var txt = UiKit.ButtonText(b); if (txt != null) { UiKit.Pct(txt.rectTransform, 4, 6, 92, 88); txt.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); }
-            Dim(b, false);
+            var d = PD;
+            if (d == null)
+            {
+                var shell = UiKit.Button(Root, "ui.btnOrange", label, () => App.Toast(NotReadyMsg), r); shell.name = name;
+                var st = UiKit.ButtonText(shell); if (st != null) { UiKit.Pct(st.rectTransform, 4, 6, 92, 88); st.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); }
+                Dim(shell, false);
+                return shell;
+            }
+            var b = UiKit.Button(Root, "ui.btnOrange", label, () => Pull(ten), r); b.name = name;
+            var txt = UiKit.ButtonText(b); if (txt != null) { UiKit.Pct(txt.rectTransform, 4, 46, 92, 48); txt.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); }
+            // 값 줄 — 아이콘 + 숫자. 어느 쪽인지는 `Refresh` 가 세이브를 보고 다시 칠한다(태어날 때는 표의 다이아 값).
+            var cost = UiKit.Rect(b, "Cost"); UiKit.Pct(cost, 4, 6, 92, 38);
+            UiKit.Icon(cost, "Icon", "hud.gem", Palette.White);
+            UiKit.Label(cost, 0, 0, 100, 100, "", 30, Palette.White, TextAnchor.MiddleCenter).name = "Qty";
+            if (ten) _sum10 = b; else _sum1 = b;
             return b;
+        }
+        RectTransform _sum1, _sum10;
+
+        /// <summary>펫 표(부팅이 든 것) — 없으면 종전 껍데기 그대로 돈다(T293 ⓗ 로더가 못 읽으면 null).</summary>
+        PetData PD => App != null && App.Data != null ? App.Data.Pet : null;
+        /// <summary>한 번에 쓸 수 있는 최대 개수 = 상자 «10회» 와 같은 표 값(코드에 10 을 안 박는다 · T293 ⓓ).</summary>
+        int PullCap => App != null && App.Data != null && App.Data.Gacha != null ? App.Data.Gacha.TenPullCount : 10;
+
+        /// <summary>
+        /// 소환 한 번 — <see cref="Pets.Offer"/> 가 정한 값으로 <see cref="Pets.Draw"/> 가 치르고 뽑고 담는다(화면은 값을 다시 세지 않는다).
+        /// <para>못 치르면 까닭을 토스트로 말한다 — 눌리는데 아무 일도 안 나는 자리를 안 만든다(결정 771).</para>
+        /// </summary>
+        void Pull(bool ten)
+        {
+            var d = PD; var s = App.Save; if (d == null || s == null) return;
+            var offer = Pets.Offer(d, ten, s.PetEgg, PullCap);
+            if (!Pets.CanDraw(s, offer))
+            {
+                App.Toast(offer.ByEgg ? "펫알이 모자랍니다" : "다이아가 모자랍니다");
+                return;
+            }
+            // 뽑기 난수는 이 레포의 다른 뽑기 자리와 같은 꼴 — 시드 있는 Mulberry32(엔진 시드 골든과 아무 상관이 없다)
+            var rng = new Mulberry32((uint)Environment.TickCount ^ 0x2545F491u);
+            var got = Pets.Draw(d, s, rng, offer);
+            if (got == null || got.Count == 0) return;
+            Quests.Ach(App, Quests.AchPetGacha, got.Count);   // T258 이 자리를 기다리고 있었다 — 펫 뽑기 입구는 여기 하나뿐이다(두 번 세지 않게 다른 자리에 안 건다) · **누른 횟수가 아니라 뽑은 횟수**로 센다(x10 = 10)
+            App.Persist();
+            Refresh();
+            // 결과는 보상 팝업 한 벌로 — 같은 펫이 여러 마리 나오면 한 칸에 개수로 모은다(상자 결과 창과 같은 읽는 법).
+            var order = new List<string>(); var count = new Dictionary<string, int>();
+            foreach (var p in got)
+            {
+                if (!count.ContainsKey(p.Id)) { count[p.Id] = 0; order.Add(p.Id); }
+                count[p.Id]++;
+            }
+            var items = new List<RewardPopup.Item>();
+            foreach (var id in order)
+            {
+                var p = d.Of(id); if (p == null) continue;
+                items.Add(RewardPopup.Item.Of(PetIcon(d, id), p.Name + (count[id] > 1 ? " x" + count[id] : ""), amount: count[id]));
+            }
+            if (items.Count > 0) RewardPopup.Show(items, null);
+        }
+
+        /// <summary>펫 한 마리의 칸 그림 — 표의 차례가 곧 격자 차례라 그 자리의 아이콘을 쓴다(그림 9벌은 <see cref="PetLook"/> 이 따로 갖는다 · 격자 칸은 아이콘 문법).</summary>
+        static string PetIcon(PetData d, string id)
+        {
+            int i = d != null ? d.Pets.FindIndex(p => p.Id == id) : -1;
+            return Icons[(i < 0 ? 0 : i) % Icons.Length];
         }
         /// <summary>«눌리기는 하되 꺼져 보이는» 버튼(알파 0.5) — 까닭을 토스트로 알려야 해서 <see cref="UiKit.SetInteractable"/>(클릭까지 막는다) 대신 쓴다(<c>EventsScreen.Dim</c> 과 같은 문법 · T99 · 결정 205).</summary>
         static void Dim(RectTransform btn, bool on)
@@ -199,6 +269,27 @@ namespace KkomaKnight.Game
         {
             _top?.Refresh();
             NavBar.Refresh(App, Root);   // T167 — 탭 점도 같이 갱신(합성·NEW 가 사라지면 장비 탭 점이 꺼진다)
+            RefreshSummon();
+        }
+
+        /// <summary>
+        /// 소환 버튼 두 벌의 «지금 무엇으로 몇 번» 을 다시 칠한다 — 값도 아이콘도 <see cref="Pets.Offer"/> 하나에서 나온다.
+        /// <para>⚑ 버튼이 스스로 세지 않는다: 펫알이 늘거나 줄면 두 버튼이 <b>같은 함수</b>로 같이 바뀐다(T293 ⓓ).</para>
+        /// </summary>
+        void RefreshSummon()
+        {
+            var d = PD; var s = App != null ? App.Save : null; if (d == null || s == null) return;
+            Paint(_sum1, Pets.Offer(d, false, s.PetEgg, PullCap), "소환");
+            Paint(_sum10, Pets.Offer(d, true, s.PetEgg, PullCap), "소환 x" + PullCap);
+        }
+        static void Paint(RectTransform btn, Pets.PullOffer o, string label)
+        {
+            if (btn == null) return;
+            var t = UiKit.ButtonText(btn); if (t != null) t.text = TextGlyphs.Safe(o.ByEgg ? label + " (" + o.Count + "회)" : label);
+            var cost = UiKit.Find(btn, "Cost"); if (cost == null) return;
+            UiKit.SetSprite(cost, "Icon", o.ByEgg ? "pet.egg" : "hud.gem", Palette.White);
+            var q = UiKit.Find(cost, "Qty"); var qt = q != null ? q.GetComponent<TMP_Text>() : null;
+            if (qt != null) qt.text = UiKit.FmtComma(o.ByEgg ? o.Egg : o.Diamond);
         }
     }
 }
