@@ -103,13 +103,15 @@ namespace KkomaKnight.Core
         public const string GachaOverrideFile = "gachaOverride.json";
         /// <summary>이 레포 전용 손잡이 덮어쓰기 파일 이름 — 챕터 수·적 세기 곡선(카탈로그 텍스트 키 <c>data.tuneOverride</c> · T325).</summary>
         public const string TuneOverrideFile = "tuneOverride.json";
+        /// <summary>이 레포 전용 <b>적 세기</b> 덮어쓰기 파일 이름 — 챕터별 체력·공격 배수(카탈로그 텍스트 키 <c>data.enemiesOverride</c> · T325 ⓑ).</summary>
+        public const string EnemiesOverrideFile = "enemiesOverride.json";
 
         /// <summary>
         /// 이 레포가 정본 위에 얹는 덮어쓰기 표 넷 — <b>먹이는 순서</b>다(장비가 먼저여야 상자의 «칸 수 = 등급 수» 대조가 새 등급으로 선다).
         /// <para>두 길(게임 = <c>Bootstrap</c> 이 카탈로그로 · 하니스 = <see cref="LoadFromDirectory"/> 가 파일로)이
         /// <b>이 한 목록</b>을 돌아 같은 규칙으로 돈다 — 다섯 번째를 더하는 사람은 여기 한 줄과 <see cref="ApplyOverride"/> 의 가지 하나면 된다.</para>
         /// </summary>
-        public static readonly string[] OverrideFiles = { CombatOverrideFile, GearOverrideFile, GachaOverrideFile, TuneOverrideFile };
+        public static readonly string[] OverrideFiles = { CombatOverrideFile, GearOverrideFile, GachaOverrideFile, TuneOverrideFile, EnemiesOverrideFile };
 
         /// <summary>덮어쓰기 파일 이름 → 카탈로그 텍스트 키(<c>data.&lt;이름&gt;</c>). 두 곳에서 같은 규칙으로 짓는다.</summary>
         public static string OverrideCatalogKey(string file) => "data." + file.Substring(0, file.Length - ".json".Length);
@@ -126,6 +128,7 @@ namespace KkomaKnight.Core
                 case GearOverrideFile: ApplyGearOverride(json); break;
                 case GachaOverrideFile: ApplyGachaOverride(json); break;
                 case TuneOverrideFile: ApplyTuneOverride(json); break;
+                case EnemiesOverrideFile: ApplyEnemiesOverride(json); break;
             }
         }
 
@@ -231,6 +234,41 @@ namespace KkomaKnight.Core
             if (t.Has("eBaseDmg")) Tune.EBaseDmg = t["eBaseDmg"].Num(Tune.EBaseDmg);
             if (t.Has("eHpSeg")) Tune.EHpSeg = TuneData.Seg(t["eHpSeg"]);
             if (t.Has("eDmgSeg")) Tune.EDmgSeg = TuneData.Seg(t["eDmgSeg"]);
+        }
+
+        /// <summary>
+        /// <c>enemies.json</c>(aaaw 정본 · 불변) 이 <b>챕터마다 구워 둔</b> 적 체력·공격에 <b>배수</b>를 먹인다 (T325 ⓑ · 주인 «챕터 밸런스도 다시»).
+        /// <para>⚑ <b>왜 이 표가 따로 필요한가(결정 985).</b> 지시서 8항은 «적 세기 = <c>eBaseHp</c> × 구간 성장률» 이라는 <c>tune.json</c> 손잡이로 밸런스를 잡으라 했는데,
+        /// <b>이 레포의 전투는 그 식을 안 쓴다</b> — <c>Battle</c> 는 <c>enemies.json</c> 의 <c>waves[].hp/dmg</c>·<c>boss</c> 를 그대로 읽고,
+        /// 그 식(<c>ChapterLayout.EnemyStats</c>)을 부르는 것은 «JSON 이 그 공식과 맞는가» 를 재는 <c>LayoutTests</c> 뿐이다.
+        /// 실측: 기저를 1/60000 로 낮추고 성장률을 1.0 으로 둬도 노템·3챕터 클리어율이 10.5% → 10.5% 로 <b>한 자도 안 움직였다</b>.
+        /// aaaw 의 <c>sim.js</c> 에서는 그 식이 실제로 적을 만들었고, 이식하면서 «값을 미리 굽는» 쪽으로 한 칸 움직인 것이다.</para>
+        /// <para>그래서 곡선을 <b>구운 값 위의 배수</b>로 표현한다 — 정본 <c>enemies.json</c> 은 한 줄도 안 바뀌고(§1),
+        /// 표가 비면 배수가 1 이라 <b>오늘과 한 톨도 다르지 않다</b>. 8항의 절차(구간마다 배율 하나씩 · 앞 구간부터)는 그대로 살고 <b>닿는 곳만 바뀐다</b>.</para>
+        /// <para>칸은 <c>hpSeg</c>·<c>dmgSeg</c> 이고 꼴은 정본 <c>tune.json</c> 과 같다(<c>[[시작 챕터, 챕터당 배율], …]</c>).
+        /// 챕터 <c>c</c> 의 배수 = <c>ChapterLayout.SegGrow(seg, c)</c> — 곧 <b>«aaaw 보다 몇 배 센가»</b> 다(1챕터는 늘 1배).</para>
+        /// <para>⚠ <b>한 번만 먹인다</b> — 구운 값을 제자리에서 곱하므로 두 번 부르면 배수가 제곱된다.
+        /// 두 길(<see cref="LoadFromDirectory"/> · <c>Bootstrap</c>)은 로드마다 한 번씩만 부른다.</para>
+        /// </summary>
+        public void ApplyEnemiesOverride(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json) || Enemies == null) return;
+            var j = new JNode(MiniJson.Parse(json));
+            if (!j.IsObject) return;
+            var hp = j.Has("hpSeg") ? TuneData.Seg(j["hpSeg"]) : null;
+            var dmg = j.Has("dmgSeg") ? TuneData.Seg(j["dmgSeg"]) : null;
+            if (hp == null && dmg == null) return;
+            Seg("enemiesOverride.hpSeg", hp ?? new[] { new double[] { 0, 1 } });
+            Seg("enemiesOverride.dmgSeg", dmg ?? new[] { new double[] { 0, 1 } });
+            for (int i = 0; i < Enemies.Chapters.Count; i++)
+            {
+                var ch = Enemies.Chapters[i];
+                double kh = hp != null ? ChapterLayout.SegGrow(hp, ch.C) : 1;
+                double kd = dmg != null ? ChapterLayout.SegGrow(dmg, ch.C) : 1;
+                if (kh == 1 && kd == 1) continue;
+                foreach (var w in ch.Waves) { w.Hp *= kh; w.Dmg *= kd; }
+                if (ch.Boss != null) { ch.Boss.Hp *= kh; ch.Boss.Dmg *= kd; }
+            }
         }
 
         /// <summary>

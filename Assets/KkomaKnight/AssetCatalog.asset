@@ -1411,6 +1411,8 @@ MonoBehaviour:
     text: {fileID: 4900000, guid: 2ecf3793a52f3fa88d07f5ce4ca0ce11, type: 3}
   - key: data.tuneOverride
     text: {fileID: 4900000, guid: dbdbd1e8609992ee43e03068dedcc683, type: 3}
+  - key: data.enemiesOverride
+    text: {fileID: 4900000, guid: 758678453a2e194937bf487f7431c0b2, type: 3}
   - key: data.arenaShop
     text: {fileID: 4900000, guid: 53ac548ae01a73e2d587755cd32206a7, type: 3}
   - key: data.arenaRank

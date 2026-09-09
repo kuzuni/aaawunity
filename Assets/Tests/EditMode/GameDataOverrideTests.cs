@@ -60,7 +60,7 @@ namespace KkomaKnight.Tests
         public void EveryOverrideFileExistsAndIsRegisteredInTheCatalog()
         {
             var texts = new JNode(MiniJson.Parse(File.ReadAllText(TestData.RepoFile("Assets/KkomaKnight/catalog.json"))))["texts"];
-            Assert.That(GameData.OverrideFiles.Length, Is.GreaterThanOrEqualTo(4), "덮어쓰기 표는 넷 이상이다(combat·gear·gacha·tune)");
+            Assert.That(GameData.OverrideFiles.Length, Is.GreaterThanOrEqualTo(5), "덮어쓰기 표는 다섯 이상이다(combat·gear·gacha·tune·enemies)");
             foreach (var file in GameData.OverrideFiles)
             {
                 var path = TestData.RepoFile("Assets/KkomaKnight/" + file);
@@ -211,6 +211,57 @@ namespace KkomaKnight.Tests
             D.ApplyTuneOverride("{ \"maxChapter\": 100 }");
             Assert.DoesNotThrow(() => D.ValidateOverridden(), "정본이 더 많이 들고 있는 것은 어긋난 것이 아니다");
             Assert.That(D.Enemies.Chapters.Count, Is.GreaterThan(100), "정본은 100 보다 많은 챕터를 그대로 들고 있다");
+        }
+
+        // ───────────────────── ③-ⓑ 적 세기 손잡이가 «전투에» 걸려 있는가 ─────────────────────
+
+        /// <summary>
+        /// ⚑ <b>이 절이 한 회차를 통째로 값을 치른 자리다(결정 985).</b>
+        /// <para>지시서 8항은 «적 세기 = <c>eBaseHp</c> × 구간 성장률» 이라는 <c>tune.json</c> 손잡이로 챕터 밸런스를 잡으라 했는데,
+        /// <b>이 레포의 전투는 그 식을 안 읽는다</b> — <c>Battle</c> 는 <c>enemies.json</c> 에 <b>챕터마다 구워진</b> 값을 그대로 쓰고,
+        /// 그 식을 부르는 것은 «JSON 이 그 공식과 맞는가» 를 재는 <c>LayoutTests</c> 뿐이다.
+        /// 곡선을 끝까지 돌려 놓고도 «왜 아무 일도 안 나지» 로 세 번을 헤맸다.</para>
+        /// 그래서 그 사실을 <b>자로 못 박는다</b> — 다음 사람이 같은 자리에서 또 헤매지 않게, 그리고 누가 두 손잡이를 헷갈려 tune 쪽에 곡선을 적으면 여기가 말하게.
+        /// </summary>
+        [Test]
+        public void TheTuneCurveDoesNotReachTheBattleButTheEnemiesOverrideDoes()
+        {
+            var a = Fresh();
+            double waveHp0 = a.Enemies.Chapter(3).Waves[0].Hp, bossHp0 = a.Enemies.Chapter(3).Boss.Hp;
+
+            // ⓐ tune 쪽 곡선을 끝까지 돌려도 «전투가 읽는 값» 은 한 자도 안 움직인다
+            a.ApplyTuneOverride("{ \"eBaseHp\": 0.001, \"eBaseDmg\": 0.001, \"eHpSeg\": [[0, 1.0]], \"eDmgSeg\": [[0, 1.0]] }");
+            Assert.AreEqual(waveHp0, a.Enemies.Chapter(3).Waves[0].Hp, 1e-9,
+                "tune 의 곡선은 전투가 읽는 적 수치에 안 닿는다 — 닿게 되었다면 이 자를 지우지 말고 «어디서 닿는가» 를 여기 적어라");
+            Assert.AreEqual(bossHp0, a.Enemies.Chapter(3).Boss.Hp, 1e-9, "보스도 마찬가지다");
+
+            // ⓑ 적 표 덮어쓰기는 닿는다 — 3챕터의 배수는 1챕터부터 두 번 곱한 2² 이어야 한다(1챕터는 늘 1배)
+            var b = Fresh();
+            b.ApplyEnemiesOverride("{ \"hpSeg\": [[0, 2.0]], \"dmgSeg\": [[0, 3.0]] }");
+            Assert.AreEqual(waveHp0 * 4, b.Enemies.Chapter(3).Waves[0].Hp, 1e-6, "3챕터 체력은 2² 배여야 한다");
+            Assert.AreEqual(bossHp0 * 4, b.Enemies.Chapter(3).Boss.Hp, 1e-6, "보스도 같은 배수를 받는다");
+            Assert.AreEqual(a.Enemies.Chapter(1).Waves[0].Hp, b.Enemies.Chapter(1).Waves[0].Hp, 1e-9, "1챕터는 늘 1배다(누적이 아직 없다)");
+
+            // ⓒ 체력과 공격은 따로 움직인다
+            Assert.AreEqual(Fresh().Enemies.Chapter(3).Waves[0].Dmg * 9, b.Enemies.Chapter(3).Waves[0].Dmg, 1e-6, "3챕터 공격은 3² 배여야 한다");
+        }
+
+        /// <summary>오늘은 배수가 전부 1 이라 적 수치가 정본 그대로여야 한다 — «값 0줄» 약속을 이 표에도 건다.</summary>
+        [Test]
+        public void TodayTheEnemiesOverrideIsIdentity()
+        {
+            var D = Fresh();
+            var canon = new JNode(MiniJson.Parse(File.ReadAllText(Path.Combine(TestData.Dir, "enemies.json"))));
+            int c = 0;
+            foreach (var ch in canon["chapters"].Items())
+            {
+                int cc = ch["c"].Int();
+                var mine = D.Enemies.Chapter(cc);
+                var w0 = ch["waves"][0];
+                Assert.AreEqual(w0["hp"].Num(), mine.Waves[0].Hp, 1e-9, $"{cc}챕터 첫 물결 체력이 정본과 다르다 — enemiesOverride.json 에 값이 들어갔다");
+                Assert.AreEqual(ch["boss"]["hp"].Num(), mine.Boss.Hp, 1e-9, $"{cc}챕터 보스 체력이 정본과 다르다");
+                if (++c >= 30) break;                       // 앞 서른 챕터면 «배수가 안 걸렸다» 를 말하기에 넉넉하다(420 을 다 도는 것은 느리다)
+            }
         }
 
         // ───────────────────── ④ 다음 회차의 진짜 값을 실어 나를 수 있는가 ─────────────────────

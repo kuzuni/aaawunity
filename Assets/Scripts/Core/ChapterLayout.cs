@@ -76,6 +76,11 @@ namespace KkomaKnight.Core
         }
 
         static double SegRate(double[][] seg, int c) { double r = seg[0][1]; foreach (var s in seg) if (c >= s[0]) r = s[1]; return r; }
-        static double SegGrow(double[][] seg, int c) { double v = 1; for (int k = 1; k < c; k++) v *= SegRate(seg, k); return v; }
+        /// <summary>
+        /// 구간 성장률 표를 챕터 <paramref name="c"/> 까지 누적한 배수 — 1챕터는 1.0 이고 챕터가 오를 때마다 그 구간의 배율을 한 번씩 곱한다.
+        /// <para><b>이 레포에서는 «적 세기» 자체가 아니라 «배수» 를 내는 셈으로도 쓰인다</b>(T325 ⓑ · <c>GameData.ApplyEnemiesOverride</c>) —
+        /// 전투가 읽는 적 수치는 <c>enemies.json</c> 에 구워져 있고, 그 위에 이 셈으로 낸 배수를 곱하는 것이 이 레포의 «곡선» 이다.</para>
+        /// </summary>
+        public static double SegGrow(double[][] seg, int c) { double v = 1; for (int k = 1; k < c; k++) v *= SegRate(seg, k); return v; }
     }
 }

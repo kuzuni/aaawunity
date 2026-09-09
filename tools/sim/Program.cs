@@ -239,11 +239,12 @@ namespace KkomaKnight.Sim
         /// 주인이 «챕터 밸런스도 다시» 로 **열어 준 것**(적 쪽 곡선) 하나뿐이다. 플레이어·장비·특전·강화 배율은 손대지 않는다(§1).</para>
         /// <para>⚠ <b>파일을 안 쓴다.</b> 찾은 곡선을 <c>tuneOverride.json</c> 꼴로 화면에 찍기만 하고, 그것을 레포에 넣는 것은 사람이 본 뒤에 한다
         /// (결정 969 ⑦ 과 같은 자리 — 자가 곧바로 게임을 고치면 아무도 그 수를 읽지 않는다).</para>
-        /// <para>⚑⚑ <b>지금 이 자는 «맞췄다» 는 표를 찍고도 게임을 못 바꾼다 — 손잡이가 전투에 안 닿아 있다(결정 985).</b>
-        /// <c>Tune.EBaseHp</c>·<c>EHpSeg</c> 를 읽는 곳은 <c>ChapterLayout.EnemyStats</c> 하나이고 그것을 부르는 것은 <c>LayoutTests</c>(«JSON 대조용») 뿐이다 —
-        /// 진짜 전투(<c>Battle.cs</c>)는 <c>enemies.json</c> 에 <b>챕터마다 구워진</b> <c>Waves[].Hp/Dmg</c>·<c>Boss</c> 를 그대로 읽는다.
-        /// 실측: 기저를 1/60000 로 낮추고 성장률을 1.0 으로 둬도 노템·3챕터 클리어율이 10.5% → 10.5% 로 안 움직였다.
-        /// ⇒ <b>적 표에 덮어쓰기를 놓아 그 구운 값에 배수를 먹이기 전까지</b>, 여기서 찾은 배율은 «그 식이 참이라면» 의 답일 뿐이다.</para>
+        /// <para>⚑ <b>움직이는 것은 <c>enemiesOverride</c>(적 표 배수)이지 <c>tuneOverride</c> 의 곡선이 아니다(결정 985).</b>
+        /// <c>Tune.EBaseHp</c>·<c>EHpSeg</c> 를 읽는 곳은 <c>ChapterLayout.EnemyStats</c> 하나이고 그것을 부르는 것은 <c>LayoutTests</c>(«JSON 대조용») 뿐이라
+        /// 진짜 전투에 안 닿는다 — 실측으로 못 박았다(기저 1/60000 · 성장 1.0 에서 노템·3챕터 10.5% → 10.5%).
+        /// 그래서 이 자는 <c>enemies.json</c> 에 <b>구워진</b> 값 위에 곱하는 <b>배수</b>를 찾는다. 배수 1 = aaaw 그대로.</para>
+        /// <para>⚠ 그래서 배율 범위가 <b>1 아래로도</b> 열려 있다 — «aaaw 보다 약하게» 도 답이 될 수 있다(노템은 지금 과녁보다 <b>일찍</b> 막힌다).
+        /// 그리고 <b>1챕터는 늘 1배</b>다(누적이 아직 없다) — 1챕터를 이 손잡이로는 못 바꾼다.</para>
         /// <para>⚠ <b>hp·dmg 에 같은 배율을 준다</b> — 8항이 «구간마다 배율 하나씩» 이라 했고, 정본도 두 값이 거의 같다(1.0292 ↔ 1.0265 …).
         /// 둘을 따로 찾으면 자유도가 둘인데 과녁은 하나라 답이 안 정해진다.</para>
         /// </summary>
@@ -253,10 +254,8 @@ namespace KkomaKnight.Sim
         /// 주인의 과녁 표(등급마다 5챕터 · +3강마다 5챕터)는 <b>정본 aaaw 곡선보다 훨씬 가파른 성장</b>을 요구해서
         /// 1.60 에서는 열아홉 구간이 전부 위 끝에 붙었다. «정본이 이만하니 이 언저리겠지» 는 잰 값이 아니었다.</para>
         /// </summary>
-        const double RateLo = 1.0, RateHi = 4.0;
+        const double RateLo = 0.50, RateHi = 4.0;
 
-        /// <summary>적 «기저» 를 찾는 범위 — 8항이 «노템이 5 에서 10% 가 되게 <b>eBase</b>·0~5 구간» 이라 한 그 손잡이(체력·공격을 같은 배로 옮긴다).</summary>
-        const double BaseLo = 0.02, BaseHi = 3.0;
 
         static int FitCurve(GameData d, int seed, int n)
         {
@@ -273,32 +272,11 @@ namespace KkomaKnight.Sim
             Console.WriteLine("| 구간 | 그 구간이 맞추는 빌드 | 과녁 | 찾은 배율 | 그 배율에서 % |");
             Console.WriteLine("|---|---|---|---|---|");
 
-            // ⓐ 먼저 «기저» 를 맞춘다 — 8항의 «노템이 5 에서 10% 가 되게 eBase·0~5 구간».
-            //    구간 배율만으로는 첫 과녁을 못 맞춘다: 0~5 를 «안 자란다»(1.0)로 둬도 노템이 5챕터에서 0% 였다(실측).
-            //    성장은 «5챕터까지 얼마나 세지나» 만 정하고, «1챕터가 얼마나 센가» 는 기저가 정하기 때문이다.
-            double hp0 = d.Tune.EBaseHp, dmg0 = d.Tune.EBaseDmg;
-            var seg = new List<double[]> { new double[] { 0, 1.0 } };
-            ApplySeg(d, seg);
-            var first = builds[0];
-            {
-                double blo = BaseLo, bhi = BaseHi;
-                for (int step = 0; step < 10; step++)
-                {
-                    double mid = (blo + bhi) / 2;
-                    d.Tune.EBaseHp = hp0 * mid; d.Tune.EBaseDmg = dmg0 * mid;
-                    if (ClearPct(d, first.rar, first.plus, first.at, seed, n) > BlockPct) blo = mid; else bhi = mid;
-                }
-                double k = (blo + bhi) / 2;
-                d.Tune.EBaseHp = hp0 * k; d.Tune.EBaseDmg = dmg0 * k;
-                double got0 = ClearPct(d, first.rar, first.plus, first.at, seed, n);
-                string nb = k > BaseHi - 1e-3 ? " ⚠ 위 끝" : k < BaseLo + 1e-3 ? " ⚠ 아래 끝" : "";
-                Console.WriteLine($"| (기저) | {first.id} | {first.at} | ×{k:F4}{nb} → eBaseHp {hp0 * k:F5} · eBaseDmg {dmg0 * k:F5} | {got0:F1}% |");
-            }
-
-            int from = first.at;
-            seg[0][1] = 1.0;                                              // 0~첫 과녁 구간은 기저가 맡았으므로 «안 자란다» 로 둔다
-            seg[0] = new double[] { 0, 1.0 };
-            foreach (var b in builds.GetRange(1, builds.Count - 1))
+            // 정본 적 수치를 먼저 떠 둔다 — 배수는 늘 이 사본에서 다시 계산한다(제자리 곱셈은 거듭하면 제곱된다).
+            SnapCanon(d);
+            var seg = new List<double[]>();
+            int from = 0;
+            foreach (var b in builds)
             {
                 seg.Add(new double[] { from, 1.0 });                       // 자리부터 만들고 아래에서 값을 넣는다
                 int idx = seg.Count - 1;
@@ -321,11 +299,10 @@ namespace KkomaKnight.Sim
                 from = b.at;
             }
 
-            Console.WriteLine("\n찾은 곡선 — tuneOverride.json 에 넣을 꼴(사람이 보고 넣는다 · 이 자는 파일을 안 쓴다):");
-            Console.WriteLine($"  \"eBaseHp\": {d.Tune.EBaseHp:F5}, \"eBaseDmg\": {d.Tune.EBaseDmg:F5},");
-            Console.WriteLine("  \"maxChapter\": " + maxCh + ",");
-            Console.WriteLine("  \"eHpSeg\": [" + SegJson(seg) + "],");
-            Console.WriteLine("  \"eDmgSeg\": [" + SegJson(seg) + "]");
+            Console.WriteLine("\n찾은 곡선 — enemiesOverride.json 에 넣을 꼴(사람이 보고 넣는다 · 이 자는 파일을 안 쓴다):");
+            Console.WriteLine("  \"hpSeg\": [" + SegJson(seg) + "],");
+            Console.WriteLine("  \"dmgSeg\": [" + SegJson(seg) + "]");
+            Console.WriteLine("  (그리고 tuneOverride.json 에 \"maxChapter\": " + maxCh + " — 챕터 수는 tune 쪽 칸이고 그쪽은 실제로 닿는다)");
             Console.WriteLine("⚠ 넣기 전에 `--block-table` 로 한 번 더 재라 — 이 자는 과녁 «한 칸» 만 봤고, 막히는 챕터는 그 옆 칸에서 정해질 수도 있다.");
             return 0;
         }
@@ -338,11 +315,37 @@ namespace KkomaKnight.Sim
             return p;
         }
 
-        /// <summary>찾는 중인 구간 표를 <see cref="TuneData"/> 에 먹인다 — 아직 안 정해진 뒤 구간은 마지막 값으로 잇는다(엔진이 표 밖을 안 보게).</summary>
+        /// <summary>정본 적 수치의 사본 — 배수는 <b>늘 이 사본에서</b> 다시 계산한다(제자리에서 거듭 곱하면 배수가 제곱된다).</summary>
+        static double[][] _canonHp, _canonDmg; static double[] _canonBossHp, _canonBossDmg;
+
+        static void SnapCanon(GameData d)
+        {
+            int n = d.Enemies.Chapters.Count;
+            _canonHp = new double[n][]; _canonDmg = new double[n][];
+            _canonBossHp = new double[n]; _canonBossDmg = new double[n];
+            for (int i = 0; i < n; i++)
+            {
+                var ch = d.Enemies.Chapters[i];
+                _canonHp[i] = new double[ch.Waves.Count]; _canonDmg[i] = new double[ch.Waves.Count];
+                for (int w = 0; w < ch.Waves.Count; w++) { _canonHp[i][w] = ch.Waves[w].Hp; _canonDmg[i][w] = ch.Waves[w].Dmg; }
+                if (ch.Boss != null) { _canonBossHp[i] = ch.Boss.Hp; _canonBossDmg[i] = ch.Boss.Dmg; }
+            }
+        }
+
+        /// <summary>
+        /// 찾는 중인 구간 표를 <b>적 표</b>(전투가 실제로 읽는 곳)에 배수로 먹인다 — <c>GameData.ApplyEnemiesOverride</c> 와 같은 셈이다.
+        /// 정본 사본에서 다시 계산하므로 몇 번을 불러도 배수가 안 쌓인다.
+        /// </summary>
         static void ApplySeg(GameData d, List<double[]> seg)
         {
             var a = seg.ToArray();
-            d.Tune.EHpSeg = a; d.Tune.EDmgSeg = a;
+            for (int i = 0; i < d.Enemies.Chapters.Count; i++)
+            {
+                var ch = d.Enemies.Chapters[i];
+                double k = ChapterLayout.SegGrow(a, ch.C);
+                for (int w = 0; w < ch.Waves.Count; w++) { ch.Waves[w].Hp = _canonHp[i][w] * k; ch.Waves[w].Dmg = _canonDmg[i][w] * k; }
+                if (ch.Boss != null) { ch.Boss.Hp = _canonBossHp[i] * k; ch.Boss.Dmg = _canonBossDmg[i] * k; }
+            }
         }
 
         static string SegJson(List<double[]> seg)
