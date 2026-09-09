@@ -199,15 +199,81 @@ namespace KkomaKnight.Tests
             Assert.That(Expedition.QuickLeft(s, d, back + per, D0), Is.EqualTo(d.QuickMax), "되돌린 시각이 새 기준 — 거기서 한 주기가 지나면 전부 찬다(T270 ⓐ)");
         }
 
+        /// <summary>
+        /// T317(주인 2026-09-09 10:4X «탐험 부분 얻을 거 없을 때도 빨간 점 알림 뜨네 · 해결해라 수정해»).
+        /// <para>
+        /// ⚠ <b>옛 단언 «빠른 탐험 횟수가 남아 있으면 켠다» 는 지운 것이 아니라 계약이 뒤집힌 것이다</b> —
+        /// 주인이 «충전만 남은 판에서는 점을 켜지 말라» 고 했다. 그래서 그 줄이 지키던 사실(«충전은 그대로 남아 있다» ·
+        /// 팝업 배지가 읽는 값)은 <b>아래에 따로 세웠다</b> — 계약이 바뀌면 자를 새 계약으로 옮기되 못 재는 갈래는 따로 둔다.
+        /// </para>
+        /// </summary>
         [Test]
-        public void RedDot_IsOnWhenThereIsSomethingToTake()
+        public void RedDot_OnlyCountsWhatIsAlreadyPiledUp()
         {
             var G = Data(); var d = Load(); var s = NewSave(); s.MaxChapter = 10;
             Expedition.Roll(s, d, T0, D0);
-            Assert.That(Expedition.AnyClaimable(G, s, d, T0, D0), Is.True, "빠른 탐험 횟수가 남아 있으면 켠다");
-            for (int i = 0; i < d.QuickMax; i++) Expedition.ClaimQuick(G, s, d, T0, D0, out _, out _);
-            Assert.That(Expedition.AnyClaimable(G, s, d, T0, D0), Is.False, "횟수도 없고 쌓인 것도 없으면 끈다");
-            Assert.That(Expedition.AnyClaimable(G, s, d, T0 + H, D0), Is.True, "한 시간 쌓이면 다시 켠다");
+
+            // ⓐ 주인 지시의 핵심 — 충전이 가득해도 점은 안 켜진다(충전은 «광고를 봐야 얻는 것» 이라 «쌓인 것» 이 아니다).
+            Assert.That(Expedition.QuickLeft(s, d, T0, D0), Is.EqualTo(d.QuickMax), "시험이 성립한다: 충전은 가득이다");
+            Assert.That(Expedition.AnyClaimable(G, s, d, T0, D0), Is.False,
+                        "T317 ⓐ — 충전만 남고 쌓인 것이 0 이면 점을 안 켠다");
+            // 그리고 «충전이 남아 있다» 자체는 그대로여야 한다 — 점에서만 뺐다(옛 단언이 지키던 사실).
+            Assert.That(Expedition.CanQuick(s, d, T0, D0), Is.True, "충전은 그대로 남아 있다(팝업 «빠른 탐험 N» 배지 · T265)");
+
+            // ⓑ 점 문턱 — 직전은 꺼지고 직후는 켜진다. **수를 베끼지 않고 표에서 읽는다**(결정 555).
+            double dot = d.DotAfterSeconds;
+            Assert.That(Expedition.AnyClaimable(G, s, d, T0 + dot - 1, D0), Is.False, "T317 ⓑ — 점 문턱 직전에는 안 켠다");
+            Assert.That(Expedition.AnyClaimable(G, s, d, T0 + dot + 1, D0), Is.True, "문턱을 넘으면 켠다");
+
+            // 받기 문턱은 한 톨도 안 늦어졌다 — 점과 버튼은 다른 물음이고, 이 절은 점만 만졌다.
+            Assert.That(Expedition.CanClaim(G, s, d, T0 + d.MinClaimSeconds + 1, D0), Is.True,
+                        "«받기» 는 여전히 minClaimMinutes 에 열린다(점 문턱을 올린 것이 버튼을 늦추지 않는다)");
+
+            // 받은 직후 = 다시 0 부터 — 주인이 본 «받았는데 또 점» 이 사라졌는지 정면으로 잰다.
+            Expedition.Claim(G, s, d, T0 + H, D0, out double gold, out double gem);
+            Assert.That(gold + gem, Is.GreaterThan(0), "시험이 성립한다: 한 시간치를 실제로 받았다");
+            Assert.That(Expedition.AnyClaimable(G, s, d, T0 + H, D0), Is.False, "받은 직후에는 점이 꺼진다");
+            Assert.That(Expedition.AnyClaimable(G, s, d, T0 + H + d.MinClaimSeconds + 1, D0), Is.False,
+                        "T317 ⓑ 의 알맹이 — 받기 문턱(1분)만 지났다고 점이 다시 켜지지 않는다");
+            Assert.That(Expedition.AnyClaimable(G, s, d, T0 + H + dot + 1, D0), Is.True, "점 문턱을 넘으면 다시 켜진다");
+        }
+
+        /// <summary>
+        /// T317 — <b>점이 버튼에 대해 거짓말하지 않는다</b>: 점이 켜진 판에서는 «받기» 가 반드시 눌린다.
+        /// «점은 켜졌는데 눌러도 안 되는» 판은 주인이 말한 «얻을 거 없는데 점» 의 다른 얼굴이라, 표를 어떻게 적어도 안 생겨야 한다.
+        /// 그래서 점 문턱을 <b>받기 문턱보다 낮게</b>(0) 적어 놓고 두 시간을 훑는다 — 이 갈래가 없으면 표 한 줄로 그 판이 되살아난다.
+        /// </summary>
+        [Test]
+        public void RedDot_NeverLiesAboutTheButton()
+        {
+            var G = Data(); var d = Load(); var s = NewSave(); s.MaxChapter = 10;
+            d.DotAfterMinutes = 0;                                   // 표에 0 을 적은 판(«문턱 없음»)
+            Expedition.Roll(s, d, T0, D0);
+            int on = 0;
+            for (double t = T0; t <= T0 + 2 * H; t += 20)
+            {
+                if (!Expedition.AnyClaimable(G, s, d, t, D0)) continue;
+                on++;
+                Assert.That(Expedition.CanClaim(G, s, d, t, D0), Is.True,
+                            "점이 켜진 순간에는 «받기» 도 눌려야 한다(t = " + (t - T0) + "초)");
+            }
+            Assert.That(on, Is.GreaterThan(0), "시험이 성립한다: 훑는 구간에 점이 켜진 순간이 있었다");
+        }
+
+        /// <summary>T317 — 표에 <c>dotAfterMinutes</c> 가 <b>없으면</b> 받기 문턱을 쓴다(= 옛 규칙 그대로 · 코드에 새 수를 안 박았다).</summary>
+        [Test]
+        public void DotThreshold_FallsBackToTheClaimThreshold_WhenTheTableOmitsIt()
+        {
+            var d = ExpeditionData.Parse(
+                "{\"maxHours\":8,\"goldKillsPerHour\":120,\"goldRandAvg\":1.4,\"gemPerHour\":10," +
+                "\"minClaimMinutes\":7,\"quickHours\":5}");
+            Assert.That(d.DotAfterMinutes, Is.EqualTo(7).Within(1e-9), "키가 없으면 minClaimMinutes 를 쓴다");
+
+            // 그리고 지금 쓰는 표에서는 «점 문턱 > 받기 문턱» 이어야 뜻이 있다 —
+            // 수 자체(30)는 주인이 바꿀 수 있으므로 **못 박지 않고 그 관계만** 잰다(결정 555).
+            var real = Load();
+            Assert.That(real.DotAfterMinutes, Is.GreaterThan(real.MinClaimMinutes),
+                        "점 문턱이 받기 문턱과 같거나 작으면 «받고 1분 뒤 다시 점» 으로 되돌아간다(T317 이 고친 그 꼴)");
         }
 
         [Test]

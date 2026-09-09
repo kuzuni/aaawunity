@@ -40,10 +40,21 @@ namespace KkomaKnight.Core
         /// </para>
         /// </summary>
         public double RecipePerHour;
+        /// <summary>
+        /// <b>빨간 점이 켜지는 최소 누적(분)</b> — T317(주인 2026-09-09 10:4X «탐험 부분 얻을 거 없을 때도 빨간 점 알림 뜨네 · 해결해라 수정해»).
+        /// <para>
+        /// <b><see cref="MinClaimMinutes"/> 와 왜 다른 값인가</b>: 그쪽은 «누를 수 있나»(버튼이 열리는 문턱)이고 이쪽은 «돌아올 값어치가 있나»(점을 켜는 문턱)다.
+        /// 둘을 같은 값으로 두면 <b>받은 지 1분 뒤 점이 다시 켜져</b> 주인이 본 그 꼴이 그대로 남는다 — 한 물음에 한 수다.
+        /// </para>
+        /// <b>표에 키가 없으면 <see cref="MinClaimMinutes"/> 를 쓴다</b>(= 옛 규칙 그대로 · 코드에 새 수를 안 박는다).
+        /// </summary>
+        public double DotAfterMinutes = 1;
         public double QuickChargeSeconds => QuickChargeHours * 3600.0;
 
         public double MaxSeconds => MaxHours * 3600.0;
         public double MinClaimSeconds => MinClaimMinutes * 60.0;
+        /// <summary>점 문턱(초) — <see cref="DotAfterMinutes"/>.</summary>
+        public double DotAfterSeconds => DotAfterMinutes * 60.0;
 
         public static ExpeditionData Parse(string json) => From(new JNode(MiniJson.Parse(json)));
         public static ExpeditionData From(JNode j)
@@ -60,7 +71,10 @@ namespace KkomaKnight.Core
             d.QuickChargeHours = j.Has("quickChargeHours") ? j["quickChargeHours"].Num() : 2;   // 기본값도 2 로(T270 · 표에 키가 없던 옛 판을 읽을 때만 쓰인다)
             d.QuickMax = j.Has("quickMax") ? (int)j["quickMax"].Num() : 3;
             d.RecipePerHour = j.Has("recipePerHour") ? j["recipePerHour"].Num() : 0;   // T321 — 없으면 0(옛 표 호환 · 레시피가 안 나온다)
+            // T317 — 없으면 «받기 문턱과 같게» = 옛 규칙 그대로다(코드에 새 수를 안 박는다 · 값은 표가 든다).
+            d.DotAfterMinutes = j.Has("dotAfterMinutes") ? j["dotAfterMinutes"].Num() : d.MinClaimMinutes;
             if (d.RecipePerHour < 0) throw new FormatException("expedition.json: recipePerHour 는 0 이상이어야 한다");
+            if (d.DotAfterMinutes < 0) throw new FormatException("expedition.json: dotAfterMinutes 는 0 이상이어야 한다");
             if (d.MaxHours <= 0) throw new FormatException("expedition.json: maxHours 는 0 보다 커야 한다");
             if (d.QuickHours <= 0) throw new FormatException("expedition.json: quickHours 는 0 보다 커야 한다");
             if (d.QuickAdsPerDay < 0) throw new FormatException("expedition.json: quickAdsPerDay 는 0 이상이어야 한다");
@@ -293,8 +307,27 @@ namespace KkomaKnight.Core
             s.ExpQuickCharge--;
         }
 
-        /// <summary>로비 아이콘 빨간 점 — 받을 것이 있거나(누적) 빠른 탐험 횟수가 남았다(ROUTINE T97 5항).</summary>
+        /// <summary>
+        /// 로비 아이콘 빨간 점 — 이 레포의 다른 일곱 <c>AnyClaimable</c>(<see cref="DailyGift"/>·<see cref="ChapterChest"/>·<see cref="Achievement"/>·
+        /// <see cref="Privilege"/>·<see cref="QuestRun"/> …)과 <b>같은 자리·같은 이름</b>이다 — <see cref="Notify"/> 가 점마다 이 이름으로 묻는다.
+        /// <para>
+        /// <b>T317 — 주인 «얻을 거 없을 때도 빨간 점 알림 뜨네 · 해결해라 수정해»(2026-09-09 10:4X)로 두 갈래를 뺐다:</b>
+        /// <list type="bullet">
+        /// <item>ⓐ <b>빠른 탐험 충전</b>(<see cref="CanQuick"/>) — 충전은 «광고를 봐야 받는 것» 이라 <b>«쌓여 있는 얻을 것» 이 아니다</b>.
+        ///   팝업 안 «빠른 탐험 N» 배지가 이미 그것을 보여 준다(T265) ⇒ 충전만 남은 판은 점을 켜지 않는다.</item>
+        /// <item>ⓑ <b>받기 문턱 직후</b> — <see cref="ExpeditionData.MinClaimMinutes"/>(1분)를 점에도 쓰면 <b>받은 지 1분 뒤 다시 켜진다</b>.
+        ///   점은 <see cref="ExpeditionData.DotAfterMinutes"/> 를 따로 본다(그 필드 주석에 «왜 두 수인가» 를 적었다).</item>
+        /// </list>
+        /// </para>
+        /// <b>점은 «눌러도 안 되는 판» 에서는 절대 안 켜진다</b> — 문턱을 넘었더라도 <see cref="CanClaim"/> 이 참이어야 한다.
+        /// 그래서 표에 <c>dotAfterMinutes</c> 를 <c>minClaimMinutes</c> 보다 작게 적어도 «점은 켜졌는데 버튼이 죽은» 판이 안 생긴다.
+        /// <para>⚠ <see cref="Notify.AdReward"/> 의 <see cref="CanQuick"/> 은 <b>그대로 두었다</b> — 그쪽은 «광고로 얻을 것» 을 세는 자리다(T317 1항).</para>
+        /// </summary>
         public static bool AnyClaimable(GameData G, SaveData s, ExpeditionData d, double nowSec, string today)
-            => CanClaim(G, s, d, nowSec, today) || CanQuick(s, d, nowSec, today);
+        {
+            if (G == null || s == null || d == null) return false;
+            if (ElapsedSec(s, d, nowSec, today) < d.DotAfterSeconds) return false;
+            return CanClaim(G, s, d, nowSec, today);
+        }
     }
 }
