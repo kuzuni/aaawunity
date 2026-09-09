@@ -22,8 +22,9 @@
 쓰는 법
     python3 tools/check_gate_age.py            # 기본: 빚 1개 이상 + 45분 넘으면 ✗
     python3 tools/check_gate_age.py --minutes 90
+    python3 tools/check_gate_age.py --no-fetch  # 이미 받아 둔 자리(CI·오프라인)에서 당기지 않고 잰다
     python3 tools/check_gate_age.py --self-test
-  `git fetch origin screens main` 을 먼저 해 두면 정확하다(안 해도 있는 것으로 잰다).
+  당기는 것은 **자가 스스로** 한다(T286) — 못 당기면 «내 ref 로 잰 값» 이라고 첫 줄에 적는다.
 """
 import datetime
 import json
@@ -35,6 +36,24 @@ DEFAULT_MINUTES = 45   # 유니티 잡 ~9분 + CI 를 부르는 커밋이 ~5분�
 
 def sh(*a):
     return subprocess.run(a, capture_output=True, text=True).stdout.strip()
+
+
+def refresh():
+    """
+    재기 «전에» 자가 스스로 `origin/screens`·`origin/main` 을 당겨 온다 (T286).
+
+    안 당기면 **이 세션이 시작할 때 받은 ref 로 잰다** — 워커 세션은 `screens` 를 따로 안 당기므로
+    그것이 곧 «며칠 전 것으로 잰다» 이고, 자는 그 사실을 모른 채 «마지막 답이 2343분 전 · 빚 306개» 를 찍는다(실측 · 2026-09-09 04:3X).
+    틀린 방향이 나쁘다: 괜찮은데 우는 것이 아니라 **세 시간짜리 사고를 이틀짜리로 키워 보여 준다**.
+
+    돌려주는 값은 «지금 갔다 왔는가» — 못 갔으면 부르는 쪽이 그 사실을 <b>출력에 적는다</b>(조용히 낡은 수를 내놓지 않는다 · 결정 690).
+
+    ⚠ <b>`--depth` 를 쓰지 않는다</b> — 이 회차에 `--depth 1` 로 당겼다가 <b>워커의 온전한 클론이 shallow 로 바뀌어</b>
+    바로 아래 <see cref="debt"/> 의 «빚 세기» 가 1 로 주저앉았다(그리고 이력을 읽는 다른 자들도 같이 눈이 먼다).
+    빠르자고 붙인 한 낱말이 «이 자가 재려던 바로 그 수» 를 망가뜨렸다 — 자기 검사에 그 갈래를 넣어 뒀다.
+    """
+    r = subprocess.run(["git", "fetch", "--quiet", "origin", "screens", "main"], capture_output=True, text=True)
+    return r.returncode == 0
 
 
 def read_meta():
@@ -68,6 +87,12 @@ def main():
     if "--minutes" in args:
         limit = int(args[args.index("--minutes") + 1])
 
+    # T286 — 먼저 당기고 잰다. 못 당기면 그 사실이 첫 줄에 뜬다(«내 ref 로 잰 값» 이라는 말이 없으면 낡은 수가 사고처럼 보인다).
+    fresh = False if "--no-fetch" in args else refresh()
+    if not fresh:
+        why = "--no-fetch 로 껐다" if "--no-fetch" in args else "`git fetch` 가 안 됐다(네트워크·권한)"
+        print(f"⚠ 지금 갔다 오지 못했다({why}) — 아래는 **내 ref 로 잰 값**이라 실제보다 낡았을 수 있다(T286).")
+
     m = read_meta()
     if m is None:
         print("· screens 의 meta.json 을 못 읽었다 — `git fetch origin screens` 를 먼저 하거나, 아직 첫 배포 전이다.")
@@ -91,11 +116,12 @@ def main():
     if m.get("shots", 1) == 0:
         bad.append("그 런이 PNG 를 0장 만들었다(테스트가 시작조차 못 했을 수 있다)")
 
+    stale = "" if fresh else " · ⚠ 낡은 ref 로 잰 값이다(T286 — 위 첫 줄)"
     if bad:
         print("✗ check_gate_age: " + " · ".join(bad) +
-              " — 유니티 잡 로그의 **머리**를 보라(라이선스·러너는 꼬리에 안 나온다 · T283/T284) · 보고만(막지 않는다)")
+              " — 유니티 잡 로그의 **머리**를 보라(라이선스·러너는 꼬리에 안 나온다 · T283/T284) · 보고만(막지 않는다)" + stale)
     else:
-        print(f"✓ check_gate_age: 마지막 답이 {age}분 전 · 빚 {calling}개 · tests=success (보고만 · T285)")
+        print(f"✓ check_gate_age: 마지막 답이 {age}분 전 · 빚 {calling}개 · tests=success (보고만 · T285){stale}")
     return 0
 
 
@@ -120,6 +146,13 @@ def self_test():
         (1, 10, "success", 0, "✗", "완주했는데 PNG 0장 = 테스트가 시작도 못 했다"),
     ]
     bad = 0
+    # T286 — 갈래 표 밖의 덫 하나를 같이 지킨다: refresh 가 «--depth» 로 당기면
+    #   워커의 온전한 클론이 shallow 가 되고, 그러면 이 자가 재려던 «빚» 이 1 로 주저앉는다(2026-09-09 실측).
+    import inspect
+    body = inspect.getsource(refresh).replace(refresh.__doc__ or "", "")   # 설명글에는 그 낱말이 «하지 마라» 로 들어 있다
+    deep = "--depth" not in body
+    bad += 0 if deep else 1
+    print(f"  {'✔' if deep else '✘'} refresh 가 --depth 없이 당긴다 — shallow 로 바뀌면 debt() 가 눈이 먼다(T286)")
     for calling, age, tests, shots, want, why in cases:
         got = verdict(calling, age, tests, shots)
         ok = got == want
