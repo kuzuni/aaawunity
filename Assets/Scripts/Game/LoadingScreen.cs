@@ -43,6 +43,12 @@ namespace KkomaKnight.Game
         /// <summary>진행 바 최대(0~1 계약 확인용).</summary>
         public static float LastBarMax { get; private set; }
 
+        /// <summary>
+        /// T358 — 마지막 <see cref="App.StartBattle"/> 이 <b>전투 입장 로딩</b>을 실제로 띄웠는가(같은 까닭 · 지나가는 오브젝트라 «떴다» 를 기록한다).
+        /// <see cref="App"/> 이 조각을 세운 순간 참으로 놓고, 자는 START 를 누르기 전에 거짓으로 되돌려 놓고 잰다.
+        /// </summary>
+        public static bool LastBattleShown { get; set; }
+
         /// <summary>부팅마다 초기화 — 앞 부팅의 흔적을 다음 판정에 쓰지 않는다(<see cref="Bootstrap"/> 가 Show 직전에 부른다).</summary>
         public static void ResetLastShown() { LastShownWasPrefab = false; LastBarMin = 0f; LastBarMax = 0f; }
 

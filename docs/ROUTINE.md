@@ -9112,6 +9112,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 ### T358 — ⚑⚑ 주인: **게임(전투) 들어갈 때 로딩 화면** (주인 2026-09-10 «게임 입장할 때 로딩 좀 화면 되게 하기 그리고 게임 입장»)
 
+> ▸ **1회차 — 세웠다(2026-09-09 19:1X · sess-1455-20088 · 워커 P · lock `T358` · 결정 1003).** `App.StartBattle` 이 전투 화면을 세우기 전에 `LoadingScreen.Show(Frame, Assets)`(부팅과 같은 조각)를 `Frame` 맨 위에 띄우고, `TickBattleLoading`(Update)이 «첫 프레임을 그린 뒤 + MinSeconds» 에 내린다 · 진행 바 = 시간 · 전투를 떠나면 `ShowScreen` 이 내린다 · 조각이 없으면 옛 흐름. ⚠ 배치 모드에서는 첫 Update 에 내린다(결정 1003 ① — `StartBattle` 직후를 찍는 자 53곳). 자 = `BattleLoadingTests`(신규 · START 를 실제로 눌러 «누른 직후 맨 위» → «null 이 될 때까지» → 조각 0 → 로비 이탈). **확인** = 다음 완주 런 `BattleLoadingTests(1)` ✗ 없음 · `UiShotsTests`·`PlaythroughTests` 그대로 · 주인 폰.
+
 0. **있는 것** — 부팅 로딩 `LoadingScreen`(`Title_Loading` 조각 그대로 · T96 · `MinSeconds` 0.3 · 진행 바) 이 `Bootstrap` 에서만 뜬다. 씬 분리(T229)는 주인 지시로 **✂ 취소**됐다 — 씬을 안 나눈다.
 1. **고침** — `App.StartBattle(...)` 이 전투 화면을 세우기 **전에** 같은 조각을 띄우고(`LoadingScreen.Show(Frame, Assets)` · `Overlay.Root` 보다 위), 전투 월드가 다 서면(`BattleScreen` 이 첫 프레임을 그린 뒤 · 최소 `MinSeconds`) 내린다. 진행 바는 «전투 월드 스폰 단계» 로 채우거나 실제 단계가 없으면 시간으로. 던전·아레나 입장도 같은 길(`StartBattle` 한 곳).
 2. **자** — `UiSmokeTests`/`PlaythroughTests`: START 뒤 로딩 조각이 **떴다 사라졌다**(`LoadingScreen.LastShownWasPrefab` 꼴의 기록 · 결정 329) · 전투 화면이 선 뒤에는 없다.

@@ -29,6 +29,11 @@ namespace KkomaKnight.Game
         readonly Dictionary<string, GameScreen> _screens = new Dictionary<string, GameScreen>();
         GameScreen _current;
         RectTransform _toastRt; TMP_Text _toastText; float _toastT;
+        // T358(주인 2026-09-10 «게임 입장할 때 로딩 좀 화면 되게 하기») — 전투 입장 로딩 조각(부팅과 같은 Title_Loading · LoadingScreen).
+        //   StartBattle 이 전투 화면을 세우기 «전에» 띄우고, 전투가 첫 프레임을 그린 뒤 + 최소 표시 시간(LoadingScreen.MinSeconds)이 지나면 Update 가 내린다.
+        LoadingScreen _battleLoading; int _battleLoadFrames;
+        /// <summary>T358 — 지금 떠 있는 전투 입장 로딩(없으면 null · 자가 «떴다 사라졌다» 를 잰다).</summary>
+        public LoadingScreen BattleLoading => _battleLoading;
 
         public static App Create(GameData data, AssetCatalog catalog, Font font, Camera worldCamera)
         {
@@ -86,6 +91,7 @@ namespace KkomaKnight.Game
         public void ShowScreen(string name)
         {
             if (!_screens.TryGetValue(name, out var s)) { Debug.LogError("화면 없음: " + name); return; }
+            if (name != "battle") HideBattleLoading();   // T358 — 전투를 떠나면(포기·로비) 로딩이 남아 있을 수 없다
             if (_current != null && _current != s) _current.Hide();
             _current = s;
             s.Show();
@@ -120,8 +126,15 @@ namespace KkomaKnight.Game
             if (arenaFoe != null) Quests.Ach(this, Quests.AchArenaTry);
             else if (dungeonKey == "hell") Quests.Ach(this, Quests.AchDungeonHell);
             else if (dungeonKey == "expedition") Quests.Ach(this, Quests.AchDungeonExpd);
+            // T358 — 로딩 조각을 전투 화면을 세우기 «전에» 띄운다(부팅과 같은 Title_Loading · Frame 의 맨 위 = Overlay·토스트보다 위).
+            //   세우는 일(BattleState + BattleWorld 스폰)은 이 프레임 안에서 동기로 끝나므로, 조각이 «가리는» 것은 그 스폰 프레임과
+            //   첫 그린 프레임이다 — 그 뒤엔 Update(TickBattleLoading)가 MinSeconds 를 채우고 내린다. 조각이 없으면(카탈로그 결손) 옛 흐름 그대로.
+            HideBattleLoading();
+            _battleLoading = LoadingScreen.Show(Frame, Assets); _battleLoadFrames = 0;
+            if (_battleLoading != null) LoadingScreen.LastBattleShown = true;
             ShowScreen("battle");
             GetScreen<BattleScreen>().Start(chapter, run, dungeonKey, arenaFoe, arenaFoeRank);   // T183 — run 이 null 이면 지금까지와 똑같은 일반 전투다
+            if (_battleLoading != null && _battleLoading.Root != null) _battleLoading.Root.transform.SetAsLastSibling();   // ShowScreen 이 Overlay·토스트를 맨 위로 올린 뒤라 다시 맨 위로
             Debug.Log("[KkomaKnight] ready battle");   // T60 배포 스모크 마커
         }
 
@@ -194,6 +207,29 @@ namespace KkomaKnight.Game
             if (_toastT > 0) { _toastT -= Time.unscaledDeltaTime; if (_toastT <= 0) _toastRt.gameObject.SetActive(false); }
             _current?.Tick(Time.deltaTime);
             Overlay?.Tick(Time.unscaledDeltaTime);
+            TickBattleLoading();
+        }
+
+        /// <summary>
+        /// T358 — 전투 입장 로딩을 내리는 조건: 전투 화면이 <b>첫 프레임을 그린 뒤</b>(StartBattle 이 든 프레임 다음 프레임부터 셈) + 최소 표시
+        /// <see cref="LoadingScreen.MinSeconds"/>(깜빡임 방지 · 부팅과 같은 값). 진행 바는 실제 «단계» 가 없으므로(스폰은 한 프레임에 동기로 끝난다) 시간으로 채운다(절 1항).
+        /// <para>⚠ 배치 모드(CI PlayMode·screens)에서는 첫 Update 에 바로 내린다 — 보는 사람이 없어 «깜빡임 방지» 가 뜻이 없고, 0.3초를 지키면
+        /// StartBattle 직후 화면을 찍는 자·사진 수십 장이 로딩 조각을 찍는다(결정 1003). «떴다» 는 <see cref="LoadingScreen.LastBattleShown"/> 이 기록한다.</para>
+        /// </summary>
+        void TickBattleLoading()
+        {
+            if (_battleLoading == null) return;
+            if (_battleLoading.Root == null || _current == null || _current.Name != "battle") { HideBattleLoading(); return; }
+            _battleLoadFrames++;
+            bool batch = Application.isBatchMode;
+            _battleLoading.SetProgress(batch ? 1f : _battleLoading.Elapsed / LoadingScreen.MinSeconds);
+            bool drawn = _battleLoadFrames >= 2;
+            if (batch || (drawn && _battleLoading.Elapsed >= LoadingScreen.MinSeconds)) HideBattleLoading();
+        }
+        void HideBattleLoading()
+        {
+            if (_battleLoading == null) return;
+            _battleLoading.Hide(); _battleLoading = null; _battleLoadFrames = 0;
         }
 
         /// <summary>전투력 표시식 (index.html `power()` · 주인 확정 2026-09-03) = 공×8 + (체+실)×1.5 — 표시 전용.</summary>
