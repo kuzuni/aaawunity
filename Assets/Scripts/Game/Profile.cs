@@ -32,8 +32,10 @@ namespace KkomaKnight.Game
         public const string ChooseName = "ChooseBtn";
         /// <summary>팝업 안 칸 조각 이름(데모 프리팹).</summary>
         public const string RowPiece = "ListItem_Avatar";
-        /// <summary>아바타 팝업 제목 = «지금 이름» 이자 이름 바꾸기 입구(테스트가 찾는다).</summary>
+        /// <summary>아바타 팝업 제목 리본 = 이름 바꾸기 입구(테스트가 찾는다). ⚠ T370 뒤로 <b>글자는 이름이 아니라 <see cref="AvatarTitle"/></b> 다.</summary>
         public const string NickName = "NickBtn";
+        /// <summary>아바타 팝업 리본 글자(주인 T370 1항 «프로필 선택이라 떠야지»).</summary>
+        public const string AvatarTitle = "프로필 선택";
         /// <summary>이름 바꾸기 팝업의 입력칸·확인 버튼·글자 수 표시(고정 이름).</summary>
         public const string NickInputName = "NickInput", NickOkName = "NickOkBtn", NickCountName = "NickCount";
 
@@ -52,12 +54,34 @@ namespace KkomaKnight.Game
         /// </summary>
         public static readonly string[] Icons = { "ui.iconFoe1", "ui.iconFoe2", "ui.iconFoe3", "ui.iconFoe4" };
 
+        /// <summary>
+        /// 프로필 팝업에서 <b>고를 수 있는</b> 초상 — T370(주인 2026-09-10 «그 프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라»).
+        /// <para>
+        /// ⚑ <b><see cref="Icons"/> 를 늘리지 않고 목록을 갈랐다.</b> 그 넷은 <see cref="DummyIcon"/> 가 «순위 하나가 언제나 같은 얼굴» 을 내는 데 쓰는 자다(T262 3항) —
+        /// 길이가 4 에서 12 로 바뀌면 <c>rank % n</c> 이 통째로 달라져 <b>아레나 더미 전원의 얼굴이 조용히 바뀐다</b>(22~26·33·34 가 한꺼번에).
+        /// 컴파일도 되고 빨간 줄도 안 난다 — 그래서 «늘린다» 는 지시를 그 배열에 적용하는 것이 이 절의 유일한 함정이었다.
+        /// </para>
+        /// <para>
+        /// 앞 넷은 종전 그대로다(이미 고른 사람의 초상이 안 바뀐다). 뒤 여덟은 <b>주인 에셋 안에서만</b> 골랐다(§1 «새 그림 0» ·
+        /// 투구 다섯 · 해골 · 눈 · 유물 — 카탈로그 키는 이 회차가 더했고 그림 파일은 이미 있던 것이다).
+        /// </para>
+        /// <para>⚠ 늘리려면 <b>이 배열 한 줄</b>과 카탈로그 키만 더하면 된다. 표(<c>profile.json</c>)로 옮기는 것은 절 2항의 뜻이지만
+        /// 그 로더가 <c>Core/GameData</c>·<c>Game/Bootstrap</c>(지금 <b>T325-a lock</b>)에 붙어야 해서 이 회차에서 못 한다 — 그 lock 이 풀린 회차의 몫이다.</para>
+        /// </summary>
+        public static readonly string[] Faces =
+        {
+            "ui.iconFoe1", "ui.iconFoe2", "ui.iconFoe3", "ui.iconFoe4",
+            "ui.face5", "ui.face6", "ui.face7", "ui.face8", "ui.face9", "ui.face10", "ui.face11", "ui.face12",
+        };
+
         /// <summary>지금 고른 초상 아이콘(세이브에 없거나 모르는 값이면 기본 = 첫 아이콘).</summary>
         public static string CurrentIcon(SaveData s)
         {
             string k = s != null ? s.ProfileIcon : null;
-            if (!string.IsNullOrEmpty(k)) foreach (var i in Icons) if (i == k) return i;
-            return Icons[0];
+            // ⚠ **`Faces` 로 판정한다** — `Icons`(더미 넷)로 재면 새로 고른 초상이 «모르는 값» 이 되어
+            //    다시 열 때마다 기본으로 되돌아간다(고르기는 되는데 안 남는 꼴 · 빨간 줄 0).
+            if (!string.IsNullOrEmpty(k)) foreach (var i in Faces) if (i == k) return i;
+            return Faces[0];
         }
 
         /// <summary>지금 색(세이브에 없거나 모르는 값이면 기본 = 첫 색).</summary>
@@ -159,13 +183,26 @@ namespace KkomaKnight.Game
             }
             rows.Sort((a, b) => a.GetSiblingIndex().CompareTo(b.GetSiblingIndex()));
 
+            // T370 — 조각이 들고 온 칸은 **일곱**이다. 목록이 그보다 길면 마지막 칸을 그만큼 **찍어 낸다**
+            //   (자리·크기는 담개의 레이아웃이 정하므로 여기서 안 잰다 · 새 그림 0 · 조각의 꼴 그대로).
+            //   ⚠ 목록을 늘리면서 이 줄을 안 두면 «표는 열둘인데 화면은 일곱» 이 되는데, 그것은
+            //     빨간 줄도 안 나고 자도 안 울고 **주인 눈에만 보인다**(이 절이 고치라고 온 그 꼴 그대로다).
+            while (rows.Count < Faces.Length && rows.Count > 0)
+            {
+                var src = rows[rows.Count - 1];
+                var copy = UnityEngine.Object.Instantiate(src.gameObject, src.parent);
+                var crt = (RectTransform)copy.transform;
+                crt.SetSiblingIndex(src.GetSiblingIndex() + 1);
+                rows.Add(crt);
+            }
+
             var checks = new List<Transform>();
             for (int i = 0; i < rows.Count; i++)
             {
-                bool on = i < Icons.Length;
+                bool on = i < Faces.Length;
                 rows[i].gameObject.SetActive(on);
                 if (!on) continue;
-                string icon = Icons[i];
+                string icon = Faces[i];
                 rows[i].name = RowPrefix + icon;
                 // 칸 안 그림 = «테두리 조각 + 그 안에 초상 아이콘» — 팝업에서 보는 것이 곧 탑바에 서는 것(T262 ⓐ)
                 var area = UiKit.Find(rows[i], "ProfileArea") as RectTransform;
@@ -183,7 +220,7 @@ namespace KkomaKnight.Game
                 UiKit.Clickable(rows[idx], () =>
                 {
                     picked = c2;
-                    for (int k = 0; k < checks.Count && k < Icons.Length; k++) checks[k].gameObject.SetActive(Icons[k] == picked);
+                    for (int k = 0; k < checks.Count && k < Faces.Length; k++) checks[k].gameObject.SetActive(Faces[k] == picked);
                 });
             }
 
@@ -250,7 +287,11 @@ namespace KkomaKnight.Game
                 string s = (t.text ?? "").Trim();
                 if (s == "Avatar")
                 {
-                    UiKit.SetText(t.transform, "", Nickname.Of(app.Save), kind: TextKind.Title);
+                    // T370 1항(주인 2026-09-10 «프로필 선택 부분에 꼬마기사라고 타이틀 뜨지 말고 프로필 선택이라 떠야지») —
+                    //   제목은 **«프로필 선택»** 이다. 종전에는 여기에 지금 이름(«꼬마기사»)을 넣었다.
+                    //   ⚠ 이 리본은 **이름 바꾸기 입구**이기도 하다(누르면 열린다 · 이름은 `NickBtn`). 주인이 없애라고 한 것은
+                    //     «제목이 이름인 것» 이지 «여기서 이름을 못 바꾸는 것» 이 아니므로 **누르는 길은 그대로 둔다**.
+                    UiKit.SetText(t.transform, "", AvatarTitle, kind: TextKind.Title);
                     var strip = Ribbon(t.transform, popup);
                     strip.name = NickName;
                     UiKit.Clickable(strip, () => OpenNickname(app));

@@ -73,7 +73,10 @@ namespace KkomaKnight.Tests.Play
             int rows = 0;
             foreach (var t in ov.GetComponentsInChildren<Transform>(true))
                 if (t.name.StartsWith(Profile.RowPrefix, StringComparison.Ordinal) && t.gameObject.activeInHierarchy) rows++;
-            Assert.AreEqual(Profile.Icons.Length, rows, "칸 = 고를 수 있는 초상 아이콘 넷(남는 칸은 끈다 · T262 ⓐ)");
+            // T370 — 목록이 넷에서 열둘로 늘었고 조각이 들고 온 칸은 일곱이라 **모자란 칸은 찍어 낸다**.
+            //   그래서 이 줄은 «넷» 이 아니라 **«목록만큼»** 을 잰다 — 늘리는 회차가 이 자를 안 고쳐도 되고,
+            //   «표는 열둘인데 화면은 일곱» 이 되는 순간 여기서 운다(그 꼴은 빨간 줄이 안 난다).
+            Assert.AreEqual(Profile.Faces.Length, rows, "칸 = 고를 수 있는 초상 수(모자라면 찍어 내고 남으면 끈다 · T370)");
             foreach (var t in ov.GetComponentsInChildren<TMP_Text>(true))
             {
                 string s = (t.text ?? "").Trim();
@@ -82,7 +85,7 @@ namespace KkomaKnight.Tests.Play
             }
 
             // ⓒ 두 번째 초상을 고르고 «선택»
-            string want = Profile.Icons[1];
+            string want = Profile.Faces[Profile.Faces.Length - 1];   // T370 — **새로 늘어난 쪽**을 고른다(늘린 것이 실제로 골라지는가)
             var row = UiKit.Find(ov, Profile.RowPrefix + want);
             Assert.IsNotNull(row, "그 색 칸");
             var rowBtn = row.GetComponent<Button>(); Assert.IsNotNull(rowBtn, "칸에 버튼(Clickable 이 붙인다)");
@@ -190,9 +193,31 @@ namespace KkomaKnight.Tests.Play
         /// <summary>
         /// T96-profile 2단계 — 아바타 팝업 제목(= 지금 내 이름)을 누르면 주인 지목 <c>Social_Profile_Nickname</c> 이 뜨고,
         /// TMP 입력칸이 uGUI <see cref="InputField"/> 로 서 있어 이름을 지을 수 있다.
-        /// ⓐ 제목이 «Avatar» 가 아니라 내 이름 ⓑ 눌러서 열리는 조각 = <c>ui.profileNick</c> · 입력칸·확인·글자 수가 다 있다
-        /// ⓒ 2자 미만이면 «확인» 이 흐리고 안 눌린다 ⓓ 지으면 세이브에 남고 아바타 팝업 제목이 새 이름이 된다 ⓔ 빨간 줄 0.
+        /// ⓐ 제목이 «Avatar» 가 아니라 «프로필 선택»(T370 1항 · 종전에는 내 이름이었다) ⓑ 눌러서 열리는 조각 = <c>ui.profileNick</c> · 입력칸·확인·글자 수가 다 있다
+        /// ⓒ 2자 미만이면 «확인» 이 흐리고 안 눌린다 ⓓ 지으면 세이브에 남고 아바타 팝업으로 돌아온다 ⓔ 빨간 줄 0.
         /// </summary>
+        /// <summary>
+        /// T370 3항 — <b>목록 자체</b>를 잰다(화면을 안 켜고). ⓐ 여덟 장 이상 ⓑ 중복 0 ⓒ 앞 넷은 종전 그대로(이미 고른 사람의 초상이 안 바뀐다)
+        /// ⓓ <b><see cref="Profile.Icons"/> 는 안 늘었다</b> — 그 배열은 아레나 더미의 얼굴을 정하는 자라(<see cref="Profile.DummyIcon"/> · T262 3항)
+        /// 길이가 바뀌면 <c>rank % n</c> 이 통째로 달라져 22~26·33·34 의 얼굴이 한꺼번에 조용히 바뀐다.
+        /// <b>이 자가 그 함정을 이름으로 지킨다</b> — «늘려라» 는 지시를 받은 다음 사람이 그 배열에 손대면 여기서 먼저 운다.
+        /// </summary>
+        [Test]
+        public void FaceListIsLongEnoughAndDoesNotMoveTheArenaFaces()
+        {
+            Assert.GreaterOrEqual(Profile.Faces.Length, 8, "고를 수 있는 초상은 여덟 장 이상이다(주인 «4개밖에 없던데 좀 늘려봐라»)");
+            var seen = new System.Collections.Generic.HashSet<string>();
+            foreach (var k in Profile.Faces)
+            {
+                Assert.IsFalse(string.IsNullOrEmpty(k), "빈 키 0");
+                Assert.IsTrue(seen.Add(k), "같은 초상이 두 번 있으면 안 된다: " + k);
+            }
+            Assert.AreEqual(4, Profile.Icons.Length,
+                            "아레나 더미 얼굴 목록은 넷 그대로다 — 늘리면 DummyIcon 의 rank % n 이 달라져 22~26·33·34 의 얼굴이 한꺼번에 바뀐다(T262 3항)");
+            for (int i = 0; i < Profile.Icons.Length; i++)
+                Assert.AreEqual(Profile.Icons[i], Profile.Faces[i], "앞 넷은 종전 그대로 — 이미 고른 사람의 초상이 안 바뀐다");
+        }
+
         [UnityTest]
         public IEnumerator NicknameEditsThroughThePrefabInputField()
         {
@@ -208,7 +233,9 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(nickBtn, "아바타 팝업 제목 = 이름 바꾸기 입구(NickBtn)");
             var nickLabel = nickBtn.GetComponentInChildren<TMP_Text>(true);
             Assert.IsNotNull(nickLabel, "제목 글자");
-            Assert.AreEqual(Nickname.Default, nickLabel.text, "안 지었으면 기본 이름이 제목에 선다");
+            // T370 1항(주인 «프로필 선택 부분에 꼬마기사라고 타이틀 뜨지 말고 프로필 선택이라 떠야지») —
+            //   제목은 이제 이름이 아니라 «프로필 선택» 이다. **누르는 길(이름 바꾸기 입구)은 그대로**라 아래 ⓑ 는 안 바뀐다.
+            Assert.AreEqual(Profile.AvatarTitle, nickLabel.text, "제목은 «프로필 선택»(이름이 아니다 · T370 1항)");
 
             // ⓑ 누르면 주인 지목 이름 조각
             var nickBtnB = nickBtn.GetComponent<Button>();
@@ -250,7 +277,10 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(_app.Overlay.IsOpen, "지으면 왔던 아바타 팝업으로 돌아간다");
             var back = UiKit.Find(_app.Overlay.Root, Profile.NickName);
             Assert.IsNotNull(back, "돌아온 아바타 팝업의 제목");
-            Assert.AreEqual("용감한 기사", back.GetComponentInChildren<TMP_Text>(true).text, "제목이 새 이름");
+            // T370 1항 뒤로 **제목은 이름이 아니다** — 지운 것이 아니라 **재는 대상을 옮긴다**:
+            //   «지은 이름이 실제로 반영된다» 는 바로 위 `_app.Save.Nick` 이 이미 재고 있고,
+            //   이 줄이 재던 나머지(«돌아온 팝업이 제 자리에 섰다»)는 제목이 그 팝업의 것인가로 잰다.
+            Assert.AreEqual(Profile.AvatarTitle, back.GetComponentInChildren<TMP_Text>(true).text, "돌아온 곳은 아바타 팝업이다(제목 «프로필 선택» · T370 1항)");
 
             _log.AssertNoRed("T96-profile 이름 바꾸기");
             yield return Shutdown();

@@ -305,6 +305,14 @@
 | sprites | `ui.iconFoe2` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Consumable_Food_Mushroom_02.png` | fileID 21300000 | T43 아레나 상대 초상 2 |
 | sprites | `ui.iconFoe3` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Egg_02.png` | fileID 21300000 | T43 아레나 상대 초상 3 |
 | sprites | `ui.iconFoe4` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Misc_Fist_01_Gold.png` | fileID 21300000 | T43 아레나 상대 초상 4 |
+| sprites | `ui.face5` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Helmet_01.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
+| sprites | `ui.face6` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Helmet_02.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
+| sprites | `ui.face7` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Helmet_03.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
+| sprites | `ui.face8` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Helmet_04.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
+| sprites | `ui.face9` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Helmet_05_Purple.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
+| sprites | `ui.face10` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Skull_04.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
+| sprites | `ui.face11` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Eye_01.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
+| sprites | `ui.face12` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Artifact_01_Gold.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
 | sprites | `hud.gold` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/ResourceBar_Icon_Gold.png` | fileID 21300000 |  |
 | sprites | `hud.gem` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/ResourceBar_Icon_Gem.png` | fileID 21300000 |  |
 | sprites | `hud.resourceBg` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/ResourceBar_Bg.png` | fileID 21300000 |  |

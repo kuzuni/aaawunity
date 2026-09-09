@@ -613,6 +613,22 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 2f9eae816fd4140108313b73a8071911, type: 3}
   - key: ui.iconFoe4
     sprite: {fileID: 21300000, guid: 17c06ffdd50374a5b9e629e61d397e51, type: 3}
+  - key: ui.face5
+    sprite: {fileID: 21300000, guid: 6093f621de51a4ea5a6b044665a9613e, type: 3}
+  - key: ui.face6
+    sprite: {fileID: 21300000, guid: 98fed2897788549ec8a6719cc76dcbcc, type: 3}
+  - key: ui.face7
+    sprite: {fileID: 21300000, guid: 0ce2437d66b9244809735f00c9471931, type: 3}
+  - key: ui.face8
+    sprite: {fileID: 21300000, guid: 160e024c163af4e62a9b4036e9c6ca02, type: 3}
+  - key: ui.face9
+    sprite: {fileID: 21300000, guid: d65167ad98cc548a7be10522652f0a36, type: 3}
+  - key: ui.face10
+    sprite: {fileID: 21300000, guid: 5894aa6b93ae7405c97996e628477329, type: 3}
+  - key: ui.face11
+    sprite: {fileID: 21300000, guid: 60bf2486006834a1bb14473682285362, type: 3}
+  - key: ui.face12
+    sprite: {fileID: 21300000, guid: 719875d9de1e64a219ac49c5c270b1b8, type: 3}
   - key: hud.gold
     sprite: {fileID: 21300000, guid: 1a9ecca12e9da45568bcb8fc473f7c74, type: 3}
   - key: hud.gem
