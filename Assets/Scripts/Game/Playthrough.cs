@@ -749,8 +749,24 @@ namespace KkomaKnight.Game
             if (bs == null || bs.G == null) throw new MissingException("전투 화면·전투 상태(" + key + ")");
             if (bs.DungeonKey != key) throw new MissingException("판이 «어느 던전» 인지 아는 것(" + key + " · 지금 " + (bs.DungeonKey ?? "없음") + ") — 이것이 없으면 클리어를 아무도 안 적는다(T228 ⓓ)");
             yield return WinTheRun(app, bs.G, 0.5f, "던전 판(" + key + ")");
-            yield return UntilOpen(app, "클리어 팝업(" + key + ")");
-            if (!TapLabel(app.Overlay.Root, "그냥 받기")) throw new MissingException("클리어 팝업의 «그냥 받기»(" + key + ")");
+            // ⛑ **클리어 팝업이 «다음에 서는 것» 이라는 보장이 없다**(T417) — 원정은 시작 특전을 **다섯 번 고르는** 판이라(T411 · 결정 1179)
+            //    3택이 여러 겹 서 있을 수 있고, 판 안에서 뜬 이벤트가 남아 있을 수도 있다.
+            //    ⇒ «열렸으니 그것이 클리어 팝업이다» 로 읽지 말고, **«그냥 받기» 가 나올 때까지 사람처럼 민다**.
+            //    ⚠ 미는 순서가 중요하다 — **먼저 «그냥 받기» 를 찾고** 없을 때만 Poke 한다.
+            //       거꾸로 하면 클리어 팝업에서 Poke 가 그 옆의 «광고로 더 받기» 를 대신 누른다(그것은 노는 것이 아니다).
+            {
+                var w = new Waiter("클리어 팝업의 «그냥 받기»(" + key + ")");
+                bool got = false;
+                while (!got && w.Tick())
+                {
+                    if (app.Overlay.IsOpen)
+                    {
+                        if (TapLabel(app.Overlay.Root, "그냥 받기")) { got = true; break; }
+                        Poke(app);
+                    }
+                    yield return Frames(2);
+                }
+            }
             yield return Frames(3);
             Page(app, EventsScreen.PageDungeon);   // 도달 — 던전 판을 나가면 던전 페이지로 돌아온다(로비가 아니다 · ExitPage)
         }
