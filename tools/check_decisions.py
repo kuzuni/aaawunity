@@ -69,6 +69,14 @@ def issued_in_history(limit=4000):
 
     ⚠ 이 수는 «지금» 의 답이다 — 같은 순간 남도 같은 답을 얻는다. 동시에 뽑는 갈래는 이 자가 못 막고,
       그것을 가르는 것은 규약의 push 순서다(늦게 민 쪽이 옮긴다).
+
+    ⚠⚑ **«결정» 뒤에 오는 것이 다 번호는 아니다**(T420 · 2026-09-10 실측) — 이 레포는 본문에
+      «(테마 팔레트 색은 주인 **결정 2026-09-05** «등급·버튼 색은 …»)» 처럼 쓴다(`5b279052`).
+      거기 «결정» 은 번호를 가리키는 말이 아니라 «정했다» 는 **낱말**이고 뒤따르는 것은 **날짜**다.
+      옛 정규식은 그 **연도 2026** 을 번호로 집었고, 그래서 `--next` 가 **2027** 을 내놓았다 —
+      첫 줄만 읽는 손이 그것을 적으면 기록에 번호 구멍 830개가 나고 그 뒤로 계속 올라간다(T281).
+      ⇒ **상한을 짐작해 막지 않는다**(«2000 넘으면 버린다» 는 짐작한 만큼만 맞다 · T330).
+        **꼴로 가른다**: 숫자 뒤에 `-` 나 숫자가 이어지면 그것은 날짜(또는 더 긴 수)이지 번호가 아니다.
     """
     try:
         out = subprocess.run(["git", "log", "--format=%s%n%b", "-%d" % limit],
@@ -76,14 +84,44 @@ def issued_in_history(limit=4000):
                              text=True, timeout=60).stdout
     except (OSError, subprocess.SubprocessError):
         return 0
+    return max_issued(out)
+
+
+def max_issued(text):
+    """글 안의 «결정 N» 중 가장 큰 번호(없으면 0) — 날짜꼴(`결정 2026-09-05`)은 안 센다(T420)."""
     best = 0
-    for m in re.finditer(r"결정\s*(\d{2,5})", out):
+    for m in re.finditer(r"결정\s*(\d{2,5})(?![\d-])", text):
         v = int(m.group(1))
         if v > best:
             best = v
     return best
 
+
+def self_test():
+    """T420 — 이 눈이 «번호» 와 «날짜» 를 실제로 가르는지 본다."""
+    ok = True
+
+    def want(label, got, exp):
+        nonlocal ok
+        if got != exp:
+            ok = False
+            print("✗ %s — 기대 %s / 실제 %s" % (label, exp, got))
+
+    want("번호를 읽는다", max_issued("… (sess-1 · 워커 G · 결정 1197)"), 1197)
+    want("사이 공백이 없어도 읽는다", max_issued("결정1150 을 적었다"), 1150)
+    want("여럿이면 큰 쪽", max_issued("결정 990 · 결정 1152 · 결정 77"), 1152)
+    # ⚑ 이 셋이 이 자가 생긴 까닭이다 — 실제 커밋 `5b279052` 의 문장 그대로
+    want("날짜는 안 읽는다", max_issued("테마 팔레트 색은 주인 결정 2026-09-05 «등급·버튼 색은»"), 0)
+    want("날짜 + 번호가 같이 있으면 번호만", max_issued("주인 결정 2026-09-05 … (결정 1152)"), 1152)
+    want("더 긴 수도 안 읽는다", max_issued("결정 123456 은 번호가 아니다"), 0)
+    want("아무것도 없으면 0", max_issued("결정을 적지 않은 커밋"), 0)
+
+    print("✓ check_decisions 자기 검사 통과" if ok else "✗ check_decisions 자기 검사 실패")
+    return 0 if ok else 1
+
 def main(argv):
+    if "--self-test" in argv:
+        return self_test()
     try:
         rows = entries()
     except OSError as e:
