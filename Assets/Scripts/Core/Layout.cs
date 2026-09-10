@@ -561,6 +561,10 @@ namespace KkomaKnight.Core
         public const int QsTrackCount = 6; public const float QsTrackPitch = 13.5f;
         public static readonly R QsTrackNums = new R(12.8f, 31.0f, 74.4f, 1.4f);
         public static readonly R QsRefresh = new R(28.5f, 34.4f, 39.0f, 1.7f);
+        /// <summary>퀘스트 «전부 받기»(T391 · 주인 2026-09-10) — 새로고침 줄 <b>오른쪽 빈 자리</b>.
+        /// 레퍼런스 15 에서 그 줄은 가운데 39%(x28.5~67.5)뿐이고 양옆이 비어 있다 · 목록 상자 오른쪽 끝은 91.4 다.
+        /// 세로는 트랙 숫자(끝 32.4)와 목록 상자(시작 37.1) 사이의 빈 띠 안이라 <b>기존 요소를 한 칸도 안 민다</b>.</summary>
+        public static readonly R QsClaimAll = new R(71.4f, 33.6f, 20.0f, 3.0f);
         public static readonly R QsListBox = new R(8.6f, 37.1f, 82.8f, 37.8f);
         public static readonly R QsRow1 = new R(12.0f, 38.3f, 76.0f, 5.9f);
         public static readonly R QsRow2 = new R(12.0f, 45.1f, 76.0f, 5.9f);
