@@ -509,9 +509,7 @@ namespace KkomaKnight.Tests.Play
                 G.Cleared = true;
             }
             else Assert.IsTrue(G.Cleared, "체력을 받쳐 준 0.5초 안에 판이 끝났다면 이긴 쪽이어야 한다");
-            yield return UntilOpen(8f, "클리어 팝업(" + key + ")");
-            Assert.IsTrue(Click(_app.Overlay.Root, s => s == "그냥 받기"), "«그냥 받기»");
-            yield return Frames(3);
+            yield return TakeThePlainReward(key);
             Page(EventsScreen.PageDungeon);   // 도달 — 던전 판을 나가면 던전 페이지로 돌아온다(로비가 아니다 · ExitPage)
             if (_app.Overlay.IsOpen)
             {
@@ -521,6 +519,88 @@ namespace KkomaKnight.Tests.Play
             else Debug.Log("[T300] P5 " + key + " — 리워드 팝업이 없다(표에 클리어 보상이 없으면 그것이 맞다)");
             Assert.IsFalse(_app.Overlay.IsOpen, "리워드 팝업을 닫으면 던전 페이지만 남는다");
             _log.AssertNoRed("P5 " + key + " 클리어 → 리워드");
+        }
+
+        /// <summary>
+        /// 클리어 팝업의 «그냥 받기» 가 나올 때까지 <b>사람처럼 민다</b>(T423 · 배포 봇 <c>Playthrough.ClearDungeonRun</c> 과 한 꼴 · 결정 1198).
+        /// <para>
+        /// ⛑ <b>판이 끝난 «다음에 서는 것» 이 클리어 팝업이라는 보장이 없다</b> — T411(결정 1179)이 원정을 «시작 특전을 다섯 번 고르는» 판으로
+        /// 바꾼 뒤로 3택이 여러 겹 서 있을 수 있고, 판 안에서 뜬 이벤트가 남아 있을 수도 있다. 옛 꼴은 <see cref="UntilOpen"/> 으로
+        /// «처음 열린 것 = 클리어 팝업» 이라 읽고 곧바로 «그냥 받기» 를 단언해서, <b>느린 런에서만</b> 다른 얼굴을 만나 흔들렸다 —
+        /// 런 1037 빨강(<c>:513</c> «그냥 받기» Expected True) · 런 1032·1033·1038·1039 초록이고 <b>그 사이 게임 코드는 0줄</b>이다.
+        /// T417 이 배포 봇 쪽에서 같은 함정을 고쳤는데 이 쌍둥이만 남아 있었다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>미는 순서가 이 자의 알맹이다 — 먼저 «그냥 받기» 를 찾고, 없을 때만 민다.</b>
+        /// 거꾸로 하면 클리어 팝업에서 미는 손이 바로 옆의 «광고로 더 받기» 를 대신 누른다(그것은 «노는 것» 이 아니라 다른 일이다).
+        /// </para>
+        /// <para>
+        /// ⚠ <b>그래도 단언은 그대로 남는다</b> — 8초를 밀어도 «그냥 받기» 가 끝내 안 나오면 빨갛다.
+        /// 흔들림을 지운다는 것이 «못 찾아도 지나간다» 는 뜻이면 그때부터 이 자는 아무것도 안 재는 자다.
+        /// </para>
+        /// </summary>
+        IEnumerator TakeThePlainReward(string key)
+        {
+            float t0 = Time.realtimeSinceStartup;
+            bool got = false;
+            string seen = "팝업이 한 번도 안 열렸다";
+            while (!got && Time.realtimeSinceStartup - t0 < 8f)
+            {
+                if (_app.Overlay.IsOpen)
+                {
+                    UiKit.CompleteAllTweens();
+                    if (Click(_app.Overlay.Root, s => s == "그냥 받기")) { got = true; break; }
+                    seen = Labels(_app.Overlay.Root);   // 빨개질 때 «그때 무엇이 서 있었나» 를 말하려고 마지막 얼굴을 들고 있는다
+                    PokeOnce();
+                }
+                yield return Frames(2);
+            }
+            Assert.IsTrue(got, "클리어 팝업의 «그냥 받기»(" + key + ") — 8초를 밀어도 안 나왔다. 마지막에 선 팝업의 글자: " + seen);
+            yield return Frames(3);
+        }
+
+        /// <summary>
+        /// 지금 선 팝업을 <b>한 번</b> 민다 — 고를 것이 있으면 고르고(3택), 없으면 그 팝업의 제 단추, 그것도 없으면 어둠.
+        /// <c>Playthrough.Poke</c> 와 <b>차례가 같아야 한다</b>(봇과 자가 다른 길로 놀면 한쪽만 빨개진다).
+        /// <para>⚠ 어둠은 <see cref="UiKit.Tap"/> 이라 <c>Button</c> 이 없을 수 있다 — T410 1회차가 런 1023 에서 그 자리에 걸렸다.</para>
+        /// </summary>
+        void PokeOnce()
+        {
+            var root = _app.Overlay.Root;
+            if (root == null) return;
+            var group = UiKit.Find(root, "Group_Card");   // ① 고를 것 — 카드가 아직 안 켜졌으면(등장 연출) 이번 프레임은 그냥 넘긴다
+            if (group != null) { FirstButtonIn(group); return; }
+            if (FirstButtonIn(root)) return;              // ② 그 팝업의 제 단추(«확인»·«로비로» …)
+            foreach (var nm in DimNames)                  // ③ 단추가 없으면 어둠
+            {
+                var dim = UiKit.Find(root, nm);
+                if (dim == null || !dim.gameObject.activeInHierarchy) continue;
+                var b = dim.GetComponent<Button>();
+                if (b != null && b.interactable) { b.onClick.Invoke(); return; }
+                var tap = dim.GetComponent<UiKit.Tap>();
+                if (tap != null) { tap.Fire(); return; }
+            }
+        }
+        static readonly string[] DimNames = { "Dimmed", "Background" };
+        static bool FirstButtonIn(Transform root)
+        {
+            foreach (var b in root.GetComponentsInChildren<Button>(false))
+                if (b.interactable) { b.onClick.Invoke(); return true; }
+            return false;
+        }
+        /// <summary>팝업에 <b>보이는</b> 글자를 이어 붙인다 — 빨개졌을 때 «그때 무엇이 서 있었나» 를 말하려고. 없으면 다음 사람이 런을 처음부터 되짚는다.</summary>
+        static string Labels(Transform root)
+        {
+            var sb = new System.Text.StringBuilder();
+            foreach (var t in root.GetComponentsInChildren<TMP_Text>(false))
+            {
+                var s = (t.text ?? "").Trim();
+                if (s.Length == 0) continue;
+                if (sb.Length > 0) sb.Append(" · ");
+                sb.Append(s);
+                if (sb.Length > 200) { sb.Append(" …"); break; }
+            }
+            return sb.Length > 0 ? sb.ToString() : "(글자 없음)";
         }
 
         /// <summary>
