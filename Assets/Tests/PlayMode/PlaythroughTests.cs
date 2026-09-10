@@ -1646,5 +1646,80 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("배포 갈래 P11");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T418 — 열한 갈래를 <b>한 판에서 이어서</b> 돈다(배포가 실제로 도는 그 꼴 · <see cref="Playthrough.Run"/>).
+        /// <para>
+        /// ⚑ <b>위의 열한 자와 이 자는 같은 «걸음» 이지 같은 «판» 이 아니다.</b> 위 자들은 저마다 <see cref="Boot"/>(새 세이브) → 한 갈래 → <see cref="Shutdown"/> 이라
+        /// <b>열한 번의 서로 다른 새 판</b>이다. 배포는 <b>한 판에서 P1 → P11 을 이어서</b> 돈다.
+        /// ⇒ <b>단계 사이에 남는 상태</b>(재화·세이브·열린 팝업·배속)로 나는 고장은 <b>위 열한 자가 원리적으로 못 본다</b> — 저마다 그 상태를 지우고 시작하기 때문이다.
+        /// </para>
+        /// <para>
+        /// ⚑⚑ 그 축의 계약을 이 레포는 <b>글로는 이미 적어 뒀다</b> — <c>Playthrough.cs</c> 의 «이 갈래는 세이브를 지운다 ⇒ <see cref="Playthrough.Stages"/> 의 맨 끝이어야 한다»
+        /// (바로 위 P11 자의 ⚠ 도 같은 말). <b>그런데 그 «맨 끝» 을 재는 자가 없었다</b>: 자마다 판이 따로라 <b>순서가 아무 뜻이 없어</b>
+        /// P11 을 목록 가운데로 옮겨도 열한 자가 전부 초록이다. 이 자가 그 자리를 막는다(검수 Q · 결정 1196 ③).
+        /// </para>
+        /// <para>
+        /// 재는 것은 넷이다 — ⓐ <b>열한 단계가 다 돌았다</b>(등록이 하나 빠지면 <c>Run</c> 이 조용히 건너뛴다) ⓑ <b>돈 차례가 표 차례 그대로</b>(= «P11 이 맨 끝» 이 여기서 실제로 재진다)
+        /// ⓒ 실패 0 · 끝나면 로비 · 배속 되돌림 ⓓ 빨간 줄 0.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>예산은 아직 짐작이 아니라 «재는 중» 이다</b>(결정 1196 ⑤) — T408 이 «다섯 갈래 41.4s / 예산 300s» 를 실측했지만 판을 굴리는 P2·P5 가 든 열한 갈래는 처음이다.
+        /// 그래서 <b>초를 단언하지 않고 찍기만 한다</b> — 다음 회차가 그 수를 보고 정한다. 못 재 본 값으로 문턱을 박으면 애먼 빨강이 뜨고 다음 사람이 문턱을 낮춘다(결정 930).
+        /// </para>
+        /// </summary>
+        // ⚠ 이 레포에서 [Timeout] 을 쓰는 첫 자리다. 까닭: 이 자만 열한 갈래를 **한 번에** 돌고 그 안에 판을 굴리는 P2·P5·P6 이 들어 있다.
+        //    유니티의 기본 한 자당 한도(3분)를 넘으면 «각본이 막혔다» 가 아니라 «자가 시간에 걸렸다» 로 빨개지고,
+        //    그 빨강은 다음 사람을 엉뚱한 데로 보낸다(결정 1196 ⑤ 가 경고한 그 자리). 10분은 배포 예산(300s)의 두 배라 진짜 막힘은 그대로 잡힌다.
+        [Timeout(600000)]
+        [UnityTest]
+        public IEnumerator 열한_갈래를_한_판에서_이어서_돈다()
+        {
+            yield return Boot();
+
+            // Run 은 결과를 Debug.Log 로만 말한다(스모크가 그 줄을 읽는다) — 그래서 여기서도 그 줄을 주워 읽는다.
+            var said = new List<string>();
+            void Cap(string msg, string stack, LogType t)
+            {
+                if (!string.IsNullOrEmpty(msg) && msg.StartsWith(Playthrough.LogPrefix, StringComparison.Ordinal)) said.Add(msg);
+            }
+            Application.logMessageReceived += Cap;
+            // ⚠ try 에 catch 를 달면 그 안에서 yield 를 못 쓴다 — finally 만 단다(줍는 손은 어떤 길로 끝나도 뗀다).
+            try { yield return Playthrough.Run(_app); }
+            finally { Application.logMessageReceived -= Cap; }
+
+            Assert.IsNotEmpty(said, "Run 이 한 줄도 안 말했다 — 각본이 아예 안 돌았다");
+            var done = said[said.Count - 1];
+            Assert.IsTrue(done.StartsWith(Playthrough.DonePrefix, StringComparison.Ordinal),
+                          "마지막 줄은 늘 done 줄이다(스모크가 꼬리에서 찾는 그 줄) — 실제로는 «" + done + "»");
+            Debug.Log("[T418] " + done + "  ← 다음 회차가 이 초를 보고 예산(300s)을 정한다");
+
+            // ⓐ·ⓑ 돈 차례 — 표 차례 그대로여야 한다. 이 두 줄이 «P11 이 맨 끝» 계약을 처음으로 재는 자리다.
+            var ranIds = new List<string>();
+            foreach (var l in said)
+            {
+                if (l.StartsWith(Playthrough.DonePrefix, StringComparison.Ordinal)) continue;
+                var rest = l.Substring(Playthrough.LogPrefix.Length);
+                int sp = rest.IndexOf(' ');
+                ranIds.Add(sp < 0 ? rest : rest.Substring(0, sp));
+            }
+            var want = new List<string>();
+            foreach (var st in Playthrough.Stages) want.Add(st.Id);
+            Assert.AreEqual(want, ranIds,
+                            "열한 갈래가 표 차례 그대로 돌아야 한다 — 빠진 것이 있으면 Steps 등록이 빠진 것이고, 차례가 다르면 "
+                            + "«세이브를 지우는 P11 은 맨 끝» 계약이 깨진 것이다(그 뒤 단계는 지워진 세이브로 놀아 재는 것이 거짓이 된다)");
+            Assert.AreEqual("P11", want[want.Count - 1], "세이브를 지우는 갈래는 표의 맨 끝이다");
+
+            // ⓒ fail 0 — done 줄이 «done ok/ran fail bad» 다.
+            int fi = done.IndexOf(" fail ", StringComparison.Ordinal);
+            Assert.Greater(fi, 0, "done 줄에 fail 칸이 있다 — «" + done + "»");
+            var failWord = done.Substring(fi + 6).Split(' ')[0];
+            Assert.AreEqual("0", failWord, "한 판에서 이어 돌 때 죽은 단계가 있다 — 위 [KkomaKnight] play … fail 줄이 어느 단계인지 말한다");
+
+            Assert.AreEqual("lobby", _app.Current.Name, "열한 갈래를 다 돌고 나면 로비에 서 있다");
+            Assert.AreEqual(1f, Time.timeScale, "이어 도는 길에서도 배속이 1 로 돌아온다 — 안 돌아오면 뒤 단계가 전부 세 배로 흐른다");
+            _log.AssertNoRed("열한 갈래 이어 돌기");
+            yield return Shutdown();
+        }
     }
 }
