@@ -162,9 +162,13 @@ namespace KkomaKnight.Core
         /// <summary>
         /// <c>gear.json</c>(aaaw 정본 · 불변) 위에 <b>등급·기여·옵션 칸 수</b>만 덮는다 (T325 ⓐ · 주인 2026-09-09 «영웅 등급 다시 넣고 … 30씩 증가»).
         /// <para>덮는 키는 <c>rarName</c> · <c>rarLegend</c> · <c>rarMyth</c> · <c>contribution.atk/hp/sh</c> ·
-        /// <c>optionLadder.optCount</c> · <c>optionLadder.mythPlusAt</c> — 적힌 것만 바뀌고 나머지는 정본 그대로다.</para>
+        /// <c>optionLadder.optCount</c> · <c>optionLadder.mythPlusAt</c> · <c>enhance.plusStep/legendToMythPlus/legendMaxPlus</c>
+        /// — 적힌 것만 바뀌고 나머지는 정본 그대로다.</para>
         /// <para>⚠ <c>optCount</c> 는 <b>«민 뒤» 의 최종 칸 수</b>다 — <c>GearData.ShiftOptionLadderOneStep</c>(주인 «일반은 옵션 안 열리게»)는
         /// 정본을 읽을 때 이미 돌았고 여기서 다시 돌지 않는다. 곧 «일반 0» 을 원하면 표에 <c>0</c> 이라고 적는다 — 한 칸 더 밀리지 않는다.</para>
+        /// <para>⚑ <c>enhance</c> 칸은 T405 가 열었다(주인 2026-09-10 «그 전설 2강보다 신화 0강이 세야 함»). 주인의 등차 표(+30)에서는
+        /// 정본 <c>plusStep 2.111</c> 이 등급을 통째로 덮으므로(일반 +2 &gt; 신화 0강) 이 표가 그 배율을 줄인다.
+        /// <b>세 칸을 다 연다</b> — 반만 열면 <c>legendToMythPlus</c> 를 적어 놓고 «안 먹는» 제일 조용한 고장이 난다(상자 표가 오타에 던지는 것과 같은 자리).</para>
         /// </summary>
         public void ApplyGearOverride(string json)
         {
@@ -181,6 +185,10 @@ namespace KkomaKnight.Core
             var ol = j["optionLadder"];
             if (ol.Has("optCount")) Gear.OptCountByRar = ol["optCount"].IntArray();
             if (ol.Has("mythPlusAt")) Gear.MythPlusOptAt = ol["mythPlusAt"].IntArray();
+            var en = j["enhance"];
+            if (en.Has("plusStep")) Gear.PlusStep = en["plusStep"].Num(Gear.PlusStep);
+            if (en.Has("legendToMythPlus")) Gear.LegendToMythPlus = en["legendToMythPlus"].Int(Gear.LegendToMythPlus);
+            if (en.Has("legendMaxPlus")) Gear.LegendMaxPlus = en["legendMaxPlus"].Int(Gear.LegendMaxPlus);
             var lk = j["look"];
             if (lk.Has("rarSprite")) Gear.LookRarTable = lk["rarSprite"].IntArray();
         }

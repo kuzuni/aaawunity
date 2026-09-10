@@ -21,8 +21,32 @@ namespace KkomaKnight.Core
         /// <summary>«막힌다» 의 값 — 그 빌드로 그 챕터의 클리어율이 이만큼(%) 아래로 내려가면 막힌 것이다(주인 «예전에 챕터들 밸런스 맞췄던 식으로» = sim.js 실험1 기준 ≈10%).</summary>
         public const double BlockPct = 10.0;
 
-        /// <summary>과녁 셈(주인 2026-09-09 12:5X) — 노템 5 · 일반 풀 10 · 그 위 등급마다 +5 · 신화 위는 <b>+3강마다 +5</b>(갓 35 · 초월 40 · 불멸 45 · 무한 50 · …).</summary>
-        public const int TargetNoGear = 5, TargetCommon = 10, TargetStep = 5, MythPlusStep = 3;
+        /// <summary>과녁 셈(주인 2026-09-09 12:5X) — 노템 5 · 일반 풀 10 · 그 위 등급마다 +5 · 신화 위는 <b>«한 칸» 마다 +5</b>(갓 35 · 초월 40 · 불멸 45 · 무한 50 · …).</summary>
+        public const int TargetNoGear = 5, TargetCommon = 10, TargetStep = 5;
+
+        /// <summary>주인이 «+3강마다 +5챕터» 를 말한 그 시절의 강화 배율(<c>gear.json enhance.plusStep</c> = 19/9)과 그 «한 칸».</summary>
+        /// <remarks>
+        /// ⚠ <b>지금 표를 따라가면 안 되는 수</b>다 — 이것은 «주인이 그 말을 했을 때 서 있던 자리» 라 <b>굳어 있어야</b> 한다.
+        /// 살아 있는 값(<c>d.Gear.PlusStep</c>)은 <see cref="MythPlusStepFor"/> 가 읽는다.
+        /// </remarks>
+        public const double OwnerPlusStep = 19.0 / 9.0;
+        /// <summary><see cref="OwnerPlusStep"/> 참조 — 주인이 말한 «+3강».</summary>
+        public const int OwnerMythPlusStep = 3;
+
+        /// <summary>
+        /// 신화 위 사다리의 <b>«한 칸» 이 강화 몇 단계인가</b> — 주인 «+3강마다 +5챕터»(T325 4항 ⓕ)를 <b>지금 배율에서 같은 뜻으로</b> 읽는다.
+        /// <para>힘은 <c>1 + plusStep × plus</c> 로 <b>plus 에 대해 선형</b>이라, 배율이 <c>k</c> 배 줄면 <b>같은 힘을 얻는 데 강화가 <c>k</c> 배 든다</b> —
+        /// 곧 <c>plus</c> 를 <c>k</c> 배로 늘리면 사다리 스물한 줄이 <b>하나도 안 움직인다</b>(적 곡선·장비 기여를 한 자도 안 건드리고).</para>
+        /// <para>T405(주인 2026-09-10 «그 전설 2강보다 신화 0강이 세야 함»)가 배율을 2.111 → 0.1 로 줄이며 열었다 —
+        /// 그 제약은 <c>1 + 2·plusStep &lt; 1.25</c>(전설 120 → 신화 150) 이라 배율을 줄이는 것 말고 길이 없고,
+        /// 줄이면 «+3강» 이 ×7.33 에서 ×1.3 이 되어 <b>주인이 준 다른 말(«챕터 수는 100»)이 같이 죽는다</b>. 이 한 칸이 그 둘을 같이 살린다.</para>
+        /// </summary>
+        public static int MythPlusStepFor(GameData d)
+        {
+            double p = d != null && d.Gear != null ? d.Gear.PlusStep : OwnerPlusStep;
+            if (p <= 0) return OwnerMythPlusStep;
+            return Math.Max(1, (int)Math.Round(OwnerMythPlusStep * OwnerPlusStep / p));
+        }
 
         /// <summary>과녁 챕터 — <b>표에서 낸다</b>(등급 수·<c>rarMyth</c> 가 바뀌면 저절로 따라온다 · 인덱스 리터럴 0).</summary>
         public static int TargetChapter(GameData d, int rar, int plus)
@@ -30,7 +54,7 @@ namespace KkomaKnight.Core
             if (rar < 0) return TargetNoGear;
             int baseAt = TargetCommon + TargetStep * rar;
             if (plus <= 0) return baseAt;
-            return baseAt + TargetStep * (plus / MythPlusStep);
+            return baseAt + TargetStep * (plus / MythPlusStepFor(d));
         }
 
         /// <summary>재는 빌드 목록 — 전부 <b>노강·슬롯 0</b>(주인 «풀» 의 뜻). 이름은 표에서 낸다.</summary>
@@ -38,7 +62,8 @@ namespace KkomaKnight.Core
         {
             var list = new List<(string, int, int)> { ("노템", -1, 0) };
             for (int r = 0; r < d.Gear.RarName.Length; r++) list.Add(($"{d.Gear.RarName[r]} 풀", r, 0));
-            for (int p = MythPlusStep; p <= maxPlus; p += MythPlusStep)
+            int step = MythPlusStepFor(d);
+            for (int p = step; p <= maxPlus; p += step)
             {
                 string nm = TierName(d, p);
                 list.Add(($"{(nm ?? d.Gear.RarName[d.Gear.RarMyth] + " +" + p)} 풀", d.Gear.RarMyth, p));
@@ -89,8 +114,8 @@ namespace KkomaKnight.Core
         /// <summary>과녁이 <paramref name="maxCh"/> 안에 드는 가장 높은 신화 강화 단계(<see cref="Builds"/> 의 끝을 정한다).</summary>
         public static int MaxPlusForChapters(GameData d, int maxCh)
         {
-            int baseAt = TargetCommon + TargetStep * d.Gear.RarMyth, p = 0;
-            while (baseAt + TargetStep * ((p + MythPlusStep) / MythPlusStep) <= maxCh) p += MythPlusStep;
+            int baseAt = TargetCommon + TargetStep * d.Gear.RarMyth, p = 0, step = MythPlusStepFor(d);
+            while (baseAt + TargetStep * ((p + step) / step) <= maxCh) p += step;
             return p;
         }
     }

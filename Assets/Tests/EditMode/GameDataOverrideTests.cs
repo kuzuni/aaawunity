@@ -111,7 +111,8 @@ namespace KkomaKnight.Tests
             OnlyKnownKeys(GameData.GearOverrideFile,
                 "rarName", "rarLegend", "rarMyth",
                 "contribution.atk", "contribution.hp", "contribution.sh",
-                "optionLadder.optCount", "optionLadder.mythPlusAt", "look.rarSprite");
+                "optionLadder.optCount", "optionLadder.mythPlusAt", "look.rarSprite",
+                "enhance.plusStep", "enhance.legendToMythPlus", "enhance.legendMaxPlus");
             OnlyKnownKeys(GameData.TuneOverrideFile,
                 "maxChapter", "eBaseHp", "eBaseDmg", "eHpSeg", "eDmgSeg",
                 "tune.maxChapter", "tune.eBaseHp", "tune.eBaseDmg", "tune.eHpSeg", "tune.eDmgSeg");
@@ -161,8 +162,30 @@ namespace KkomaKnight.Tests
             Assert.AreEqual(atk, D.Gear.Atk, "기여(공)는 덮여야 한다");
             Assert.AreEqual(hpBefore, D.Gear.Hp, "안 적은 기여(체)는 덮기 전 그대로여야 한다");
             Assert.AreEqual(slotStep, D.Gear.SlotStep, 1e-12, "슬롯 배율은 이 표의 칸이 아니다(주인이 노강 값만 줬다)");
-            Assert.AreEqual(plusStep, D.Gear.PlusStep, 1e-12, "강화 배율도 이 표의 칸이 아니다");
+            Assert.AreEqual(plusStep, D.Gear.PlusStep, 1e-12, "«enhance» 를 안 적었으면 강화 배율은 덮기 전 그대로여야 한다");
             Assert.AreEqual(parts, D.Gear.Parts.Length, "부위는 안 건드린다");
+        }
+
+        /// <summary>T405 가 연 <c>enhance</c> 칸 — 강화 배율이 <b>진짜로 덮인다</b>(적어 놓고 안 먹는 것이 제일 조용한 고장이다).</summary>
+        [Test]
+        public void GearOverrideCarriesTheEnhanceBlock()
+        {
+            var D = Fresh();
+            var atkBefore = (double[])D.Gear.Atk.Clone();
+            D.ApplyGearOverride("{ \"enhance\": { \"plusStep\": 0.25, \"legendToMythPlus\": 4, \"legendMaxPlus\": 3 } }");
+            Assert.AreEqual(0.25, D.Gear.PlusStep, 1e-12, "강화 배율이 덮여야 한다(T405 · 주인 «그 전설 2강보다 신화 0강이 세야 함»)");
+            Assert.AreEqual(4, D.Gear.LegendToMythPlus, "전설→신화 강화 단계도 같은 칸이다 — 반만 열면 조용히 안 먹는다");
+            Assert.AreEqual(3, D.Gear.LegendMaxPlus, "전설 최대강도 같은 칸이다");
+            Assert.AreEqual(atkBefore, D.Gear.Atk, "안 적은 기여는 그대로여야 한다");
+        }
+
+        /// <summary>그리고 <b>레포에 실제로 든 표</b>가 주인 제약 안이다 — 이 자가 «파일에 값이 있나» 를 지킨다(위 자는 «기계가 먹나» 다).</summary>
+        [Test]
+        public void TheRepoGearTableActuallyReducesThePlusStep()
+        {
+            var D = Fresh();
+            Assert.Less(D.Gear.PlusStep, 0.125,
+                "gearOverride.json 의 enhance.plusStep 이 0.125 미만이어야 한다 — 경계는 1 + 2·plusStep < 신화/전설 비율 1.25(T405)");
         }
 
         /// <summary>손잡이 덮어쓰기 — 정본과 같은 «tune» 껍질을 써도 되고 안 써도 된다(둘 다 같은 곳에 닿는다).</summary>

@@ -75,10 +75,17 @@ namespace KkomaKnight.Tests
             for (int r = 1; r < d.Gear.RarName.Length; r++)
                 Assert.That(BalanceLadder.TargetChapter(d, r, 0), Is.EqualTo(10 + 5 * r),
                     $"«{d.Gear.RarName[r]} 풀» 은 등급마다 +5 다");
-            // 신화 위는 «+3강마다 +5챕터»(4항 ⓕ)
+            // 신화 위는 «한 칸마다 +5챕터»(4항 ⓕ «+3강마다 +5») — ⚠ 그 «+3» 은 **정본 강화 배율(19/9)에서 한 말**이라
+            // 배율이 줄면(T405) 같은 힘까지 강화가 그만큼 더 든다. 한 칸은 표에서 낸다 — 여기 3 을 손으로 적으면
+            // 배율이 움직이는 날 이 자가 «주인 말이 틀렸다» 고 거짓말한다(틀린 것은 말이 아니라 칸이다).
             int myth = BalanceLadder.TargetChapter(d, d.Gear.RarMyth, 0);
-            Assert.That(BalanceLadder.TargetChapter(d, d.Gear.RarMyth, 3), Is.EqualTo(myth + 5), "신화 +3 = 신화 +5챕터");
-            Assert.That(BalanceLadder.TargetChapter(d, d.Gear.RarMyth, 12), Is.EqualTo(myth + 20), "신화 +12 = 신화 +20챕터");
+            int step = BalanceLadder.MythPlusStepFor(d);
+            Assert.That(BalanceLadder.TargetChapter(d, d.Gear.RarMyth, step), Is.EqualTo(myth + 5), "신화 한 칸 = 신화 +5챕터");
+            Assert.That(BalanceLadder.TargetChapter(d, d.Gear.RarMyth, step * 4), Is.EqualTo(myth + 20), "신화 네 칸 = 신화 +20챕터");
+            // 한 칸의 뜻 — «주인의 +3강이 정본 배율에서 얻던 그 힘» 이다(줄어든 배율에서 같은 힘까지 걸리는 강화 수).
+            Assert.That(1 + d.Gear.PlusStep * step,
+                        Is.EqualTo(1 + BalanceLadder.OwnerPlusStep * BalanceLadder.OwnerMythPlusStep).Within(2.0).Percent,
+                        "사다리 한 칸이 주인이 말한 «+3강» 과 같은 힘이어야 한다 — 아니면 스물한 줄이 통째로 옮겨간다");
             // 주인 «챕터 수는 100» — 그 끝이 사다리의 마지막 줄과 맞는가
             Assert.That(BalanceLadder.TargetChapter(d, d.Gear.RarMyth, BalanceLadder.MaxPlusForChapters(d, d.Tune.MaxChapter)),
                         Is.EqualTo(d.Tune.MaxChapter), "사다리의 마지막 줄이 마지막 챕터에 닿는다");

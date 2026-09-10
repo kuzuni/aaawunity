@@ -34,8 +34,22 @@ namespace KkomaKnight.Tests
         [Test]
         public void PlusNineIsExactlyTwentyTimes()
         {
-            var d = TestData.Load();
+            // ⚑ **정본(aaaw) 쪽 자다** — «+9강 = ×20 정확» 은 `gear.json enhance.formula` 가 적어 둔 이식 동일성이고,
+            //   이 레포가 도는 표는 T405 로 배율이 0.1 이다(주인 «그 전설 2강보다 신화 0강이 세야 함»).
+            //   `Load()` 로 두면 주인이 제약을 지키라고 한 날 «이식이 틀어졌다» 고 거짓말한다 —
+            //   틀어진 것은 이식이 아니라 값이고, 그 값은 `BuildPowerMatchesLadderTable` 과 같은 손으로 갈라 둔다(결정 1033 과 같은 자리).
+            var d = TestData.PreBalance();
             Assert.That(1 + d.Gear.PlusStep * 9, Is.EqualTo(20.0));
+        }
+
+        /// <summary>이 레포가 실제로 도는 배율은 <b>주인 제약 안</b>이다 — 경계는 <c>1 + 2·plusStep &lt; 1.25</c>(전설 120 → 신화 150).</summary>
+        [Test]
+        public void ThisRepoPlusStepStaysInsideTheOwnersConstraint()
+        {
+            var G = TestData.Load().Gear;
+            double ratio = G.Atk[G.RarMyth] / G.Atk[G.RarLegend];              // 등급 사이 비율의 최솟값(등차 표라 맨 위가 가장 좁다)
+            Assert.That(1 + G.PlusStep * (G.LegendToMythPlus - 1), Is.LessThan(ratio),
+                $"강화 배율 {G.PlusStep} 이 전설→신화 비율({ratio:F3})을 넘는다 — 강화가 등급을 덮는다(T405)");
         }
 
         [Test]
@@ -61,14 +75,18 @@ namespace KkomaKnight.Tests
             // 등급이 오르면 노강 공격이 오른다 — 표가 몇 칸이든 이것은 서야 한다.
             Assert.That(G.Atk[G.RarMyth], Is.GreaterThan(G.Atk[G.RarLegend]), "신화 노강 > 전설 노강");
             //
-            // ⚑⚑ 여기 있던 «주인 확정 제약: 신화 0강 > 전설 최대강» 은 **주인의 새 표에서 못 선다**(T325 · 결정 아래).
-            //   실측(주인 값 30·60·90·120·150 · plusStep 2.111 · legendToMythPlus 3):
-            //     전설 최대강(+2) 공 = 626.7  vs  신화 노강 공 = 150.0
-            //     **일반 +2(156.7)조차 신화 노강(150)을 넘는다** — 강화가 등급을 통째로 덮는다.
-            //   정본은 등급마다 공이 ×3~×6 으로 뛰어서(4.167 → 12.5 → 62.5 → 395.8) 그 제약이 섰다.
-            //   주인의 새 표는 **등차(+30)** 라 같은 강화 배율에서는 설 수가 없다 — 살리려면 plusStep 을
-            //   2.111 → 0.125 이하로 줄여야 하고, 그것은 «신화 +9 가 ×20 → ×2.1» 이 되는 **훨씬 큰, 주인이 안 시킨 변경**이다.
-            //   ⇒ 주인이 명시한 새 값을 그대로 넣고, 이 제약은 «노강끼리» 로만 남긴다. 주인에게 알릴 것은 §2 T325 에 적어 뒀다.
+            // ⚑⚑ **주인 확정 제약(T405 · 주인 2026-09-10 «그 전설 2강보다 신화 0강이 세야 함»)** — 이 자가 T405 의 잣대다.
+            //   T325 가 주인의 등차 표(30·60·90·120·150)를 넣으며 이 줄을 «못 선다» 고 지웠었다(정본 plusStep 2.111 이면
+            //   전설 +2 = 626.7 > 신화 150 이고 **일반 +2(156.7)조차 신화 노강을 넘었다** — 강화가 등급을 통째로 덮었다).
+            //   주인 답은 «제약을 지킨다» 였고, 그래서 gearOverride 의 enhance.plusStep 이 0.1 이 되었다(경계는 1 + 2p < 1.25 → p < 0.125).
+            //   ⇒ 그 줄을 **되세운다**. 이 자가 빨개지면 뜻은 «강화 배율이 다시 등급을 덮었다» 이지 «표가 이상하다» 가 아니다.
+            double legMaxAtk = G.Atk[G.RarLegend] * (1 + G.PlusStep * (G.LegendToMythPlus - 1));
+            Assert.That(G.Atk[G.RarMyth], Is.GreaterThan(legMaxAtk),
+                $"신화 노강({G.Atk[G.RarMyth]:F1}) > 전설 최대강(+{G.LegendToMythPlus - 1} = {legMaxAtk:F1}) — 주인 확정 제약(T405)");
+            // 그리고 그 아래 등급도 같다 — «한 등급 최대강 < 다음 등급 노강» 이 표 전체에서 서야 강화가 등급을 안 덮는다.
+            for (int r = 0; r < G.RarLegend; r++)
+                Assert.That(G.Atk[r + 1], Is.GreaterThan(G.Atk[r] * (1 + G.PlusStep * (G.LegendToMythPlus - 1))),
+                    $"«{G.RarName[r]}» 최대강 < «{G.RarName[r + 1]}» 노강");
         }
 
         [Test]
