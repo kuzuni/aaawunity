@@ -876,12 +876,23 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNotNull(UiKit.Find(sp, "Cell:free:" + lv), "무료 칸 " + lv);
                 Assert.IsNotNull(UiKit.Find(sp, "Cell:paid2:" + lv), "유료 2 칸 " + lv);
             }
-            { // «디자인만» — 눌러도 재화가 한 톨도 안 는다
+            { // T392(주인 2026-09-10 «패스도 전부 받기 버튼 있게 하라») — «모두 받기» 는 이제 **진짜로 준다**(Pass.ClaimAll → 저장 → 리워드 팝업 한 번 → 닫으면 화면 다시). 사는 버튼 둘은 아직 «준비 중»(디자인만 · T268 ⓑ).
+              //   ⛑ T379 4회차 뒤 런 996 `:884` — 옛 «아직 아무것도 안 준다» 는 T392 로 낡았다(규칙을 바꾼 커밋이 그 규칙을 전제한 자를 못 쓸어냈다 · T184 · 결정 425).
+              //   수(100·500)는 여기 안 박는다 — PassClaimAllTests(EditMode)가 표로 잰다. 여기서는 «받을 수 있다 → 누르면 준다 → 다 받았다» 관계와 배선만 잰다.
                 double g0 = _app.Save.Gold, m0 = _app.Save.Gem;
+                var passD = _app.Data != null ? _app.Data.Pass : null;
+                Assert.IsTrue(Pass.AnyClaimable(_app.Save, passD), "갓 켠 판(레벨 1)에는 무료 열 1레벨 칸이 받을 수 있어야 한다 — 아니면 아래 «준다» 가 아무것도 안 가른다(공허 방지)");
                 Assert.IsTrue(ClickNamed(sp, "ClaimAllBtn"), "«모두 받기»"); yield return Frames(2);
+                yield return CloseReward("패스 «모두 받기»");   // T241 — 받으면 공통 리워드 팝업이 먼저 뜬다 · 닫으면 패스 화면이 다시 선다(SeasonPassScreen.ClaimAll → Open)
+                Assert.Greater(SeasonPassScreen.LastClaimAll, 0, "화면이 «받았다» 를 기록한다(T392 LastClaimAll)");
+                Assert.Greater(_app.Save.Gem + _app.Save.Gold, g0 + m0, "«모두 받기» 는 재화를 실제로 준다(T392) — 얼마인지는 PassClaimAllTests 가 표로 잰다");
+                Assert.IsFalse(Pass.AnyClaimable(_app.Save, passD), "다 받은 뒤에는 받을 것이 없다(두 번째는 아무것도 안 준다)");
+                Assert.AreEqual("seasonPass", _app.Current.Name, "리워드 팝업을 닫으면 패스 화면이 다시 선다");
+                sp = _app.Current.Root;   // 화면이 다시 섰으므로 루트를 다시 잡는다(아래 SeasonEnds·BackBtn 이 이것을 쓴다)
+                double g1 = _app.Save.Gold, m1 = _app.Save.Gem;
                 Assert.IsTrue(ClickNamed(sp, "BuyBtn:1"), "«₩9,900»"); yield return Frames(2);
-                Assert.AreEqual(g0, _app.Save.Gold, 1e-9, "시즌 패스는 아직 아무것도 안 준다(T268 ⓑ «디자인만»)");
-                Assert.AreEqual(m0, _app.Save.Gem, 1e-9, "시즌 패스는 아직 아무것도 안 준다(T268 ⓑ «디자인만»)");
+                Assert.AreEqual(g1, _app.Save.Gold, 1e-9, "사는 버튼은 아직 «준비 중» — 아무것도 안 준다(T268 ⓑ «디자인만»)");
+                Assert.AreEqual(m1, _app.Save.Gem, 1e-9, "사는 버튼은 아직 «준비 중» — 아무것도 안 준다(T268 ⓑ «디자인만»)");
             }
             {   // [T266] «시즌 종료까지 20일 8시간» 행이 §5 에서 ✗ 인 까닭을 **수로 닫았다**(6단계 · 결정 아래).
                 //   run 613 실측: 놓인 크기 40.0 · 칸 폭 648px · **글자가 먹는 폭 395px** ↔ **표 ref 폭 360px**.
