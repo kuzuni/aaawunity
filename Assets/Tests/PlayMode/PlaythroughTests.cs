@@ -1535,6 +1535,25 @@ namespace KkomaKnight.Tests.Play
         }
 
         /// <summary>
+        /// T409 — P6(아레나)의 <b>배포 갈래</b>. 꼴은 앞의 것들과 같다(결정 1101).
+        /// <para>
+        /// ⚑ <b>판을 굴리는 첫 배포 갈래다</b> — 그래서 이 자가 새로 지키는 것은 «각본이 배속을 되돌려 놓는가» 이기도 하다.
+        /// <c>Time.timeScale</c> 을 3 으로 둔 채 나가면 <b>뒤에 도는 모든 것</b>(다음 단계 · 다음 자)이 세 배로 흐른다 — 그것은 조용히 퍼지는 고장이라 여기서 못 박는다.
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 배포_갈래_P6_도_자에서_한_번_돈다()
+        {
+            yield return Boot();
+            Assert.IsTrue(Playthrough.HasStep("P6"), "P6 의 배포 갈래가 등록돼 있다");
+            yield return Playthrough.RunOne(_app, "P6");
+            Assert.AreEqual("lobby", _app.Current.Name, "각본이 끝나면 로비에 서 있다");
+            Assert.AreEqual(1f, Time.timeScale, "각본이 배속을 되돌려 놓는다 — 안 되돌리면 뒤에 도는 모든 것이 세 배로 흐른다");
+            _log.AssertNoRed("배포 갈래 P6");
+            yield return Shutdown();
+        }
+
+        /// <summary>
         /// T407 — P7(퀘스트·업적)의 <b>배포 갈래</b>. 꼴은 위 다섯과 같다(결정 1101).
         /// <para>
         /// ⚑ 이 각본이 잡는 것: 팝업 <b>안</b>의 탭 셋(일일·주간·업적)이 판을 갈아타는 배선이다. 그 셋은 팝업을 <b>통째로 다시 여는</b> 길이라

@@ -82,7 +82,7 @@ namespace KkomaKnight.Game
         public delegate System.Collections.IEnumerator Step(App app);
 
         static readonly System.Collections.Generic.Dictionary<string, Step> Steps =
-            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P3", P3Gear }, { "P4", P4Shop }, { "P7", P7Quest }, { "P8", P8Boxes }, { "P9", P9Expedition }, { "P10", P10Pet } };
+            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P3", P3Gear }, { "P4", P4Shop }, { "P6", P6Arena }, { "P7", P7Quest }, { "P8", P8Boxes }, { "P9", P9Expedition }, { "P10", P10Pet } };
 
         /// <summary>
         /// 단계 하나만 돌린다 — <b>자가 «배포 갈래도 실제로 도는가» 를 재는 입구</b>(T300 2항 · 결정 1101).
@@ -463,6 +463,94 @@ namespace KkomaKnight.Game
             if (b == null || !b.interactable) return false;
             b.onClick.Invoke();
             return true;
+        }
+
+        /// <summary>
+        /// P6 아레나(T300 1항 · 배포 갈래 · T409) — PlayMode <c>PlaythroughTests.P6_…</c> 와 <b>같은 길</b>. 단언은 없다(3항 ⓐ):
+        /// 아레나 페이지 → «도전» 팝업(24) → 줄 «도전» → <b>아레나 판을 굴린다</b> → 결과 화면(34) «계속» → 순위 보상 팝업(25) → 상인(26) → «뒤로».
+        /// <para>
+        /// ⚑ <b>판을 굴리는 첫 배포 갈래다</b> — 여기까지는 어느 각본도 전투를 안 열었다. 그래서 <b>시간이 이 각본의 유일한 새 위험</b>이고,
+        /// T408 이 «다섯 단계 41.4s / 예산 300s» 를 재 둔 덕에 붙일 수 있었다(결정 1172). 다음 배포의 <c>시간 …s/300s</c> 줄이 그 판단을 되짚는다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>판은 «이기게» 해 준다</b> — 봇이 재는 것은 «결과 화면까지 지나가는가» 지 «이 판을 이길 수 있는가» 가 아니다(밸런스는 그 절의 몫 · 3항 ⓐ).
+        /// 그래서 배속을 올리고 체력을 받쳐 주다가, 상한 안에 안 끝나면 <c>Cleared</c> 로 끝을 낸다 — PlayMode 자가 쓰는 그 손잡이 그대로다.
+        /// </para>
+        /// </summary>
+        static System.Collections.IEnumerator P6Arena(App app)
+        {
+            EventsScreen.Open(app, EventsScreen.PageArena); yield return Frames(3);
+            var pg = Page(app, EventsScreen.PageArena);
+
+            // ⓐ 도전 팝업(24) → 첫 상대 줄
+            TapIn(pg, "ChallengeBtn", true); yield return Frames(2);
+            if (!app.Overlay.IsOpen) throw new MissingException("아레나 도전 팝업(24)");
+            TapIn(app.Overlay.Root, "FoeBtn:0", true); yield return Frames(2);
+            Reach(app, "battle");
+            var bs = app.GetScreen<BattleScreen>();
+            if (bs == null || bs.G == null) throw new MissingException("전투 화면·전투 상태");
+            if (!bs.IsArena) throw new MissingException("«아레나 판» 표식(IsArena) — 이 표식이 없으면 끝났을 때 승점 갈래가 안 켜진다(T240)");
+
+            // ⓑ 굴린다 → 결과 화면(34) → «계속» → 아레나 페이지
+            yield return WinTheRun(app, bs.G, 1.0f, "아레나 판");
+            yield return UntilOpen(app, "PvP 결과 화면(34)");
+            if (!ArenaResult.Open) throw new MissingException("PvP 결과 화면(아레나 판은 클리어 팝업이 아니라 승점 결과로 끝난다 · T240)");
+            TapIn(app.Overlay.Root, "ContinueBtn", true); yield return Frames(3);
+            if (ArenaResult.Open) throw new MissingException("«계속» 뒤 결과 화면 닫힘");
+            pg = Page(app, EventsScreen.PageArena);
+
+            // ⓒ 순위 보상 팝업(25) → 닫기 → 상인(26) → 상품 한 칸(표시만) → 뒤로
+            TapIn(pg, "RewardsBtn", true); yield return Frames(2);
+            if (!app.Overlay.IsOpen) throw new MissingException("순위 보상 팝업(25)");
+            if (UiKit.Find(app.Overlay.Root, "RewardRow:0") == null) throw new MissingException("순위 보상 줄");
+            yield return CloseAll(app, "순위 보상 팝업");
+
+            pg = Page(app, EventsScreen.PageArena);
+            TapIn(pg, "MerchantBtn", true); yield return Frames(2);
+            pg = Page(app, EventsScreen.PageMerchant);
+            TapIn(pg, "Goods:0", true); yield return Frames(2);   // ⚠ 상인의 «구매» 는 아직 배선이 없다 — «눌러도 죽지 않는가» 까지만
+            TapIn(Page(app, EventsScreen.PageMerchant), "BackBtn", true); yield return Frames(3);
+
+            app.ShowScreen("lobby"); yield return null;
+        }
+
+        /// <summary>
+        /// 판을 <paramref name="maxSec"/> 초 안에 <b>이기게</b> 끝낸다 — 배속을 올리고 체력을 받쳐 주다가, 그 안에 안 끝나면 <c>Cleared</c> 로 끝을 낸다.
+        /// <para>
+        /// ⚠ <b>«이기는 것» 은 봇이 재는 것이 아니다</b>(3항 ⓐ) — 봇이 보는 것은 «판이 열리고 결과까지 지나가는가» 뿐이고,
+        /// «이 판을 이길 수 있는가» 는 밸런스 절(T325)의 몫이다. 그것을 봇이 재면 표가 바뀌는 날 <b>봇이 먼저 운다</b>.
+        /// </para>
+        /// <para>⚠ <b>배속은 반드시 되돌린다</b> — 여기서 <c>timeScale</c> 을 3 으로 두고 나가면 <b>뒤 단계가 전부 세 배로 흐른다</b>(그 단계들이 재는 «몇 초» 도 거짓이 된다).</para>
+        /// </summary>
+        static System.Collections.IEnumerator WinTheRun(App app, BattleState g, float maxSec, string what)
+        {
+            UnityEngine.Time.timeScale = 3f;
+            float t0 = UnityEngine.Time.realtimeSinceStartup;
+            while (UnityEngine.Time.realtimeSinceStartup - t0 < maxSec && !g.Over && !app.Overlay.IsOpen)
+            {
+                if (g.P.Hp < g.P.MaxHp * 0.5) g.P.Hp = g.P.MaxHp;
+                yield return null;
+            }
+            UnityEngine.Time.timeScale = 1f;
+            if (g.T <= 0.0) throw new MissingException(what + "(엔진이 한 틱도 안 돌았다)");
+            if (!g.Over)
+            {
+                // 엔진이 스스로 연 레벨업 팝업이면 여기서 정리한다 — 각본 순서대로 놀아야 잡은 고장을 이름으로 말할 수 있다(결정 922).
+                if (app.Overlay.IsOpen) { app.Overlay.Close(); yield return Frames(1); }
+                g.Pending = null; g.PendingLevelUps = 0;
+                g.Cleared = true;
+            }
+        }
+
+        /// <summary>던전·아레나 화면(<see cref="EventsScreen"/>)의 페이지 루트 — 도달 확인을 겸한다(꺼진 형제 페이지에서 이름을 집지 않으려고 · 결정 936).</summary>
+        static UnityEngine.Transform Page(App app, string page)
+        {
+            Reach(app, "events");
+            var ev = app.GetScreen<EventsScreen>();
+            if (ev == null || ev.Page != page) throw new MissingException("페이지 «" + page + "»(지금 " + (ev != null ? ev.Page : "없음") + ")");
+            var pg = UiKit.Find(app.Current.Root, "Page:" + page);
+            if (pg == null) throw new MissingException("페이지 «" + page + "» 의 루트");
+            return pg;
         }
 
         /// <summary>팝업이 설 때까지 기다린다 — <see cref="WaitFrames"/> 를 넘기면 «무엇을 기다리다 죽었나» 를 남긴다.</summary>
