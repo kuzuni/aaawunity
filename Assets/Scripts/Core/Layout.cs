@@ -148,7 +148,10 @@ namespace KkomaKnight.Core
 
         // ④ 장비 세부 팝업 — 장비 세부팝업.jpg (ov-gear · 닫기는 상자 밖)
         // T63-gear (표 ±3%p 보정 · docs/ref-layout.md «T63-gear 회차 정정»): 옵션 7줄이 본문 40 으로 한 줄씩 들어가게 옵션 목록 48/14 → 49/16 · 스탯 9.5 → 9.0 · 비용 62.5 → 65 · 버튼 66 → 68.5 · 박스 44 → 46.5
-        public static readonly R GdBox = new R(6.5f, 28.0f, 87.0f, 46.5f);
+        /// <summary>T381(주인 2026-09-10 «장비 팝업 하단에 해제·슬롯 강화 버튼 위아래로 여백 좀 있게 · 너무 빡빡») — 상자 바닥을 74.5 → **77.5%**(h 46.5 → 49.5).
+        /// 버튼(<see cref="GdBtns"/>)이 상자 바닥에 딱 붙어 있었다(68.5+6.0 = 74.5 = 바닥). 버튼은 70.0 으로 내려 비용줄(65~68)과 2.0 · 바닥과 1.5 를 둔다.
+        /// «보기 전용» 상자(<c>GearUi.InfoBox</c> · h 38.5)는 따로 적은 값이라 안 움직인다.</summary>
+        public static readonly R GdBox = new R(6.5f, 28.0f, 87.0f, 49.5f);
         public static readonly R GdBadge = new R(39.0f, 27.5f, 22.0f, 2.3f);
         public static readonly R GdIcon = new R(11.0f, 30.5f, 15.0f, 7.0f);
         public static readonly R GdName = new R(28.0f, 31.0f, 50.0f, 3.0f);
@@ -157,9 +160,10 @@ namespace KkomaKnight.Core
         public static readonly R GdOpts = new R(11.0f, 49.0f, 78.0f, 16.0f);
         public const float GdOptPitch = 2.4f;
         public static readonly R GdCost = new R(11.0f, 65.0f, 78.0f, 3.0f);
-        public static readonly R GdBtns = new R(15.5f, 68.5f, 69.0f, 6.0f);
-        public static readonly R GdBtnL = new R(15.5f, 68.5f, 33.0f, 6.0f);
-        public static readonly R GdBtnR = new R(51.5f, 68.5f, 33.0f, 6.0f);
+        // T381 — 68.5 → 70.0(위 여백 2.0 · 아래 1.5)
+        public static readonly R GdBtns = new R(15.5f, 70.0f, 69.0f, 6.0f);
+        public static readonly R GdBtnL = new R(15.5f, 70.0f, 33.0f, 6.0f);
+        public static readonly R GdBtnR = new R(51.5f, 70.0f, 33.0f, 6.0f);
         public static readonly R GdClose = new R(30.0f, 91.5f, 40.0f, 2.0f);
 
         // ⑤ 상점 — 상점 (1).jpg
