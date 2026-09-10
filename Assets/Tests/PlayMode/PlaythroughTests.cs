@@ -1401,5 +1401,30 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("P10 한 바퀴");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T300 2항 — <b>배포 갈래(게임 안 각본)를 CI 가 한 번은 실제로 돌려 본다</b>(결정 1101).
+        /// <para>
+        /// ⚑ <b>왜</b>: 배포 갈래는 배포 스모크 안에서만 도는데, 그 스모크는 «마지막 초록 커밋» 이 있어야 돈다 —
+        /// main 이 빨간 동안(2026-09-10 새벽엔 다섯 시간) 각본이 낡아도 <b>아무 데서도 안 운다</b>.
+        /// 게다가 꺼진 버튼도 <c>onClick</c> 은 돌아서, 각본이 «사람 눈에 없는 것» 을 누르며 <c>ok</c> 를 찍기까지 한다(결정 941 ①).
+        /// </para>
+        /// <para>
+        /// ⚠ <b>단언을 새로 얹지 않는다</b> — 이 자가 재는 것은 «각본이 끝까지 지나가는가» 하나다.
+        /// 각본 안의 <c>MissingException</c>(«못 찾았다: …»)이 곧 이 자의 실패 메시지가 된다(3항 ⓐ 그대로).
+        /// </para>
+        /// <para>지금은 P10 하나만 돈다 — P1·P4 는 배포 스모크에서 여러 판 초록이었고, 한 회차에 한 손잡이다(결정 656).</para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 배포_갈래_P10_도_자에서_한_번_돈다()
+        {
+            yield return Boot();
+            if (_app.Data == null || _app.Data.Pet == null) { yield return Shutdown(); Assert.Ignore("펫 표가 없다 — 이 각본이 놀 것이 없다"); }
+            Assert.IsTrue(Playthrough.HasStep("P10"), "P10 의 배포 갈래가 등록돼 있다(없으면 이 자가 잴 것이 없다)");
+            yield return Playthrough.RunOne(_app, "P10");
+            Assert.AreEqual("lobby", _app.Current.Name, "각본이 끝나면 로비에 서 있다");
+            _log.AssertNoRed("배포 갈래 P10");
+            yield return Shutdown();
+        }
     }
 }

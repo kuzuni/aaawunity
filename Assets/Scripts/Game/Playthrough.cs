@@ -70,6 +70,22 @@ namespace KkomaKnight.Game
         static readonly System.Collections.Generic.Dictionary<string, Step> Steps =
             new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P4", P4Shop }, { "P10", P10Pet } };
 
+        /// <summary>
+        /// 단계 하나만 돌린다 — <b>자가 «배포 갈래도 실제로 도는가» 를 재는 입구</b>(T300 2항 · 결정 1101).
+        /// <para>
+        /// ⚑ <b>왜 필요한가</b>: 배포 갈래는 <c>webgl_smoke</c> 안에서만 돌아서, 낡으면 <b>CI 는 초록인 채</b>로 배포 로그에만 fail 이 뜬다.
+        /// 그 로그는 «마지막 초록 커밋» 이 있어야 나오므로 main 이 빨간 동안은 몇 시간이고 안 나온다(2026-09-10 새벽에 실제로 그랬다).
+        /// ⇒ 같은 각본을 PlayMode 자가 한 번 돌려 주면 <b>낡음이 CI 한 회전 안에서 잡힌다</b>.
+        /// </para>
+        /// <para>⚠ <see cref="Run"/> 과 달리 <b>예외를 안 삼킨다</b> — 자에서는 «못 찾았다: Background» 같은 줄이 그대로 빨강이 되는 것이 맞다.</para>
+        /// </summary>
+        public static System.Collections.IEnumerator RunOne(App app, string id)
+        {
+            Step step;
+            if (!Steps.TryGetValue(id, out step)) throw new MissingException("배포 갈래 " + id + "(등록 안 됨)");
+            yield return step(app);
+        }
+
         /// <summary>이 단계가 게임 안에서 놀 수 있는가(= 누가 각본을 붙였는가).</summary>
         public static bool HasStep(string id) => Steps.ContainsKey(id);
 
