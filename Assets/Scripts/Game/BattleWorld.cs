@@ -127,6 +127,11 @@ namespace KkomaKnight.Game
         /// 전투 배속(x1/x2 · <see cref="BattleScreen"/> 이 매 프레임 넣어 준다 · T108).
         /// 엔진 배속은 <c>Time.timeScale</c> 이 아니라 «한 프레임에 도는 틱 수» 라서, 표시 x 도 같은 배로 가야 엔진과 안 벌어진다
         /// (지시서 T108 1항 «unscaled 아님 = 전투 배속은 따른다»). 예전에는 벌어진 만큼을 <c>shown = pr.X</c> 로 스냅해 메웠고 그게 «튀는 순간» 이었다.
+        /// <para>
+        /// ⚠ <b>T397 — 걸음에는 이 값을 곱하지 않는다.</b> <see cref="Sync"/> 가 받는 <c>dt</c> 는 <see cref="BattleScreen"/> 이 이미 배속을 곱해 넣는 «엔진 초»다
+        /// (<c>_world.Sync(dt * _speed)</c>). 여기서 한 번 더 곱하면 x2 에서 그림이 엔진의 <b>두 배</b>로 날아 «맞는 자리»(<see cref="ProjLimit"/>)에 먼저 닿아
+        /// 엔진이 올 때까지 <b>서 있는다</b> — 주인이 본 «적 앞에서 멈추는 경우» 와 «닿았는데 데미지가 늦다» 가 그것이다(결정 1136). 값은 진단·자(배속 읽기)용으로만 남는다.
+        /// </para>
         /// </summary>
         public int Speed = 1;
         // 투사체
@@ -932,6 +937,32 @@ namespace KkomaKnight.Game
         /// </summary>
         public const float ProjCatchUpMul = 1.5f;
 
+        /// <summary>투사체 그림을 표시 x <paramref name="shown"/> 에 놓는다(도끼는 포물선 y + 회전 · 나머지는 각만). <see cref="SyncProjectiles"/> 와 «지우는 프레임의 닿음»(T397 ⓑ)이 같이 쓴다.</summary>
+        void PlaceProjectile(Projectile pr, GameObject go, double shown)
+        {
+            float yf = FootY - 0.045f;
+            if (pr.Kind == ProjKind.Axe)
+            {
+                double span = System.Math.Max(1, pr.TargetX0 - pr.StartX); float t = Mathf.Clamp01((float)((shown - pr.StartX) / span));
+                yf -= (float)(D.Ui.AxeArc * span / WorldCam.LayoutW) * Mathf.Sin(t * Mathf.PI) * 0.5f;
+                float flownSec = pr.Spd > 1e-6 ? (float)((shown - pr.StartX) / pr.Spd) : 0f;      // ⓒ 날아간 «시간» × 360°/s = 초당 1바퀴(반시계 · 방향 종전 그대로)
+                go.transform.rotation = Quaternion.Euler(0, 0, -flownSec * AxeSpinDegPerSec);
+            }
+            else go.transform.rotation = Quaternion.Euler(0, 0, pr.Kind == ProjKind.Wave ? 0 : pr.Kind == ProjKind.Spear ? SpearAngle : ArrowAngle);
+            go.transform.position = Pos(shown, yf, -0.2f);
+        }
+        /// <summary>
+        /// 엔진이 뺀 투사체 → 지우던 프레임의 표시 x(T397 ⓑ 로 끌어다 놓은 뒤의 값 · 자·진단용). 최근 <see cref="GoneKeep"/> 개만 둔다 — 한 판에 투사체가 수백이라 다 들고 있지 않는다.
+        /// </summary>
+        public readonly Dictionary<Projectile, double> ProjGoneAt = new Dictionary<Projectile, double>();
+        readonly Queue<Projectile> _goneOrder = new Queue<Projectile>();
+        public const int GoneKeep = 32;
+        void RememberGone(Projectile pr, double shownAtGone)
+        {
+            ProjGoneAt[pr] = shownAtGone; _goneOrder.Enqueue(pr);
+            while (_goneOrder.Count > GoneKeep) { var old = _goneOrder.Dequeue(); if (!_goneOrder.Contains(old)) ProjGoneAt.Remove(old); }
+        }
+
         void SyncProjectiles(float dt)
         {
             var live = new HashSet<Projectile>(G.Projs);
@@ -957,29 +988,26 @@ namespace KkomaKnight.Game
                 else
                 {
                     // 팝업·일시정지·판 종료(EngineRunning=false)일 때만 선다 — 킬 연출로 엔진이 보류된 동안에도 간다(T108 1항)
-                    double frameStep = pr.Spd * dt * System.Math.Max(1, Speed) * ProjCatchUpMul;   // 이 프레임에 화면이 움직일 수 있는 최대(스냅 금지의 상한)
+                    // T397 — dt 는 이미 배속이 곱해진 «엔진 초» 다(BattleScreen `Sync(dt * _speed)`). 여기서 Speed 를 또 곱으면 x2 에서 그림이 엔진의 두 배로 난다.
+                    double frameStep = pr.Spd * dt * ProjCatchUpMul;   // 이 프레임에 화면이 움직일 수 있는 최대(스냅 금지의 상한)
                     if (EngineRunning)
                     {
-                        double step = pr.Spd * dt * System.Math.Max(1, Speed);
+                        double step = pr.Spd * dt;
                         // 엔진이 앞서 있으면 스냅하지 않고 «조금 더 빨리» 좁힌다(T108 2항 · 최대 ProjCatchUpMul 배)
                         if (shown < pr.X) step = System.Math.Min(pr.X - shown, step * ProjCatchUpMul);
                         shown += step;
                     }
+                    // T397 ⓐ — 유도형(도끼·화살)의 그림은 엔진 x 를 «한 틱 걸음» 이상 앞서지 않는다. 엔진은 틱(1/30초) 단위로, 그림은 프레임 단위로 가므로 한 틱 안의 보간은
+                    //   허용하되, 엔진이 늦어지면(틱 상한 · 따라잡기) 그림이 먼저 «맞는 자리» 에 가서 서 있는 대신 엔진 걸음에 맞춰 늦어진다 — 닿는 순간 = 엔진 타격 틱.
+                    //   관통형(창·검기)은 안 건다 — 그쪽은 «어떤 상태에서도 안 멈춘다»(T108·T171)가 계약이고 맞는 자리가 없다.
+                    bool homingKind = pr.Kind != ProjKind.Spear && pr.Kind != ProjKind.Wave;
+                    if (homingKind) { double lead = pr.X + pr.Spd * EngineConst.Dt; if (shown > lead) shown = lead; }
                     // 적중 자리(ProjLimit)를 앞질렀으면 되돌리되 «한 프레임 걸음» 까지만 — 여기서 바로 끌어당기면 그것도 스냅이다(T108 2항 · 표적이 걸어오면 유도형의 상한이 뒤로 밀린다).
                     double lim = ProjLimit(pr);
                     if (shown > lim) { double target = System.Math.Max(pr.X, lim); shown = target >= shown ? target : System.Math.Max(target, shown - frameStep); }
                 }
                 _projX[pr] = shown;
-                float yf = FootY - 0.045f;
-                if (pr.Kind == ProjKind.Axe)
-                {
-                    double span = System.Math.Max(1, pr.TargetX0 - pr.StartX); float t = Mathf.Clamp01((float)((shown - pr.StartX) / span));
-                    yf -= (float)(D.Ui.AxeArc * span / WorldCam.LayoutW) * Mathf.Sin(t * Mathf.PI) * 0.5f;
-                    float flownSec = pr.Spd > 1e-6 ? (float)((shown - pr.StartX) / pr.Spd) : 0f;      // ⓒ 날아간 «시간» × 360°/s = 초당 1바퀴(반시계 · 방향 종전 그대로)
-                    go.transform.rotation = Quaternion.Euler(0, 0, -flownSec * AxeSpinDegPerSec);
-                }
-                else go.transform.rotation = Quaternion.Euler(0, 0, pr.Kind == ProjKind.Wave ? 0 : pr.Kind == ProjKind.Spear ? SpearAngle : ArrowAngle);
-                go.transform.position = Pos(shown, yf, -0.2f);
+                PlaceProjectile(pr, go, shown);
                 // T171 — 사거리 끝을 한참 지나면 그림만 끈다(화면 밖이라 안 보이던 것이지만 좌표가 커지는 것을 여기서 멈춘다).
                 // 엔진 목록·_projs 는 안 건드린다 — 정리는 아래 dead 한 곳이라야 누수가 없다.
                 // **관통형에만 건다** — `MaxX` 를 엔진이 채우는 것은 창·검기뿐이고(Battle.cs 431·436), 유도형(도끼·화살)은 0 으로 남는다.
@@ -989,7 +1017,21 @@ namespace KkomaKnight.Game
                 if (go.activeSelf == gone) go.SetActive(!gone);
             }
             var dead = new List<Projectile>(); foreach (var kv in _projs) if (!live.Contains(kv.Key)) dead.Add(kv.Key);
-            foreach (var k in dead) { Object.Destroy(_projs[k]); _projs.Remove(k); _projX.Remove(k); }
+            foreach (var k in dead)
+            {
+                // T397 ⓑ — 엔진이 이번 틱에 «맞혀서» 뺀 유도형(도끼·화살)인데 그림이 아직 맞는 자리 앞이면, 지우는 이 프레임에 그 자리까지 끌어다 놓고 지운다
+                //   (Destroy 는 프레임 끝이라 이 프레임은 그 자리에 그려진다 = «닿음» · 피격 연출(Hit 이벤트)도 같은 프레임). 표적이 먼저 죽어 빠진 것(엔진 x 가 맞는 자리 앞)은
+                //   닿은 적이 없으니 그대로 지운다. 유도형은 ⓐ 로 늘 엔진 한 틱 안에 붙어 있어 이 걸음은 길어야 한 틱이다 — 순간이동이 아니다.
+                double gx = _projX.TryGetValue(k, out double sx) ? sx : k.X;
+                bool homing = k.Kind != ProjKind.Spear && k.Kind != ProjKind.Wave;
+                if (homing && k.Target != null && !Silent)
+                {
+                    double arrive = k.Target.WorldX - EngineConst.ProjArriveDx;
+                    if (k.X >= arrive && gx < arrive) { gx = arrive; PlaceProjectile(k, _projs[k], gx); }
+                }
+                RememberGone(k, gx);
+                Object.Destroy(_projs[k]); _projs.Remove(k); _projX.Remove(k);
+            }
             var liveA = new HashSet<EnemyArrow>(G.Arrows);
             foreach (var a in G.Arrows)
             {
@@ -1006,9 +1048,11 @@ namespace KkomaKnight.Game
                 if (Silent) ashown = a.X;
                 else if (EngineRunning)   // 팝업·일시정지·판 종료일 때만 선다 — 킬 연출로 엔진이 보류된 동안에도 간다(그래서 화살이 공중에 안 뜬다)
                 {
-                    double astep = D.Combat.EnemyArrowSpeed * dt * System.Math.Max(1, Speed);
+                    double astep = D.Combat.EnemyArrowSpeed * dt;   // T397 — dt 는 이미 배속이 곱해진 엔진 초(투사체와 같은 고침)
                     if (ashown > a.X) astep = System.Math.Min(ashown - a.X, astep * ProjCatchUpMul);   // 엔진이 앞서(= 더 왼쪽) 있으면 스냅하지 않고 조금 더 빨리 좁힌다
                     ashown -= astep;
+                    double alead = a.X - D.Combat.EnemyArrowSpeed * EngineConst.Dt;   // T397 ⓐ — 엔진보다 한 틱 이상 앞서(= 더 왼쪽으로) 가지 않는다
+                    if (ashown < alead) ashown = alead;
                 }
                 // 엔진이 «맞았다» 고 보는 자리(Battle.cs `a.X <= P.WorldX + ArrowHitDx`)를 앞지르지 않는다 — 앞지르면 맞기도 전에 플레이어를 지나가 버린다(투사체의 ProjLimit 과 같은 구실).
                 double ahit = G.P.WorldX + EngineConst.ArrowHitDx;

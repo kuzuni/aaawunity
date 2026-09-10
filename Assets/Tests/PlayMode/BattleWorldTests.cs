@@ -328,6 +328,73 @@ namespace KkomaKnight.Tests.Play
         }
 
         /// <summary>
+        /// T397(주인 2026-09-10 «도끼 같은 거 여전히 적 쪽에서 멈추는 경우 있는 듯» · «도달하자마자 바로 데미지 들어가야 하는데») —
+        /// 뿌리는 <b>배속 두 번 곱하기</b>였다: <see cref="BattleScreen"/> 이 <c>Sync(dt × 배속)</c> 으로 엔진 초를 넣는데 <c>SyncProjectiles</c> 가 걸음에 <c>Speed</c> 를 또 곱해
+        /// x2 에서 그림이 엔진의 <b>두 배</b>로 날아 «맞는 자리» 에 먼저 닿아 서 있었다(그래서 x1 만 재던 자에는 안 걸렸다). 여기서 재는 것(<b>x2 로</b>):
+        /// ⓐ 그림 전진 ≈ 엔진 전진(도끼 표시 x 가 엔진 x 를 <b>한 틱 걸음</b> 이상 앞서지 않는다 · 뒤처짐도 따라잡기 상한 안) ⓑ 엔진이 도끼를 뺀(맞힌) 프레임의 그림 x ≥ 맞는 자리 − 한 걸음(닿은 채로 사라진다).
+        /// ⚠ «맞힘» 이 이 판에서 나는가는 전제하지 않는다(§1 ⓑ) — 못 보면 ⓑ 는 건너뛰고 ⓐ 만 잰다.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator AxePictureKeepsEnginePaceAtDoubleSpeedAndTouchesOnTheHitFrame()
+        {
+            yield return Boot();
+            _app.Save.Speed = SaveData.SpeedMax;   // 전투가 열릴 때 세이브의 배속을 읽는다(BattleScreen) — x2 가 이 병이 보이는 자리다
+            _app.StartBattle(1);
+            var bs = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bs); var G = bs.G; Assert.IsNotNull(G, "전투 상태");
+            var world = bs.World; Assert.IsNotNull(world, "BattleWorld");
+            Assert.AreEqual(SaveData.SpeedMax, bs.Speed, "x2 로 열려야 이 자가 재는 것이 있다(세이브 Speed → BattleScreen)");
+            Arm(G);
+            // 살아 있는 적 중 «가장 먼» 것을 표적으로 — 비행이 길수록 재는 프레임이 많다
+            float t0 = Time.realtimeSinceStartup;
+            while (G.AliveList().Count == 0 && Time.realtimeSinceStartup - t0 < 20f && !G.Over && !_app.Overlay.IsOpen) yield return null;
+            EnemyState far = null;
+            foreach (var e in G.AliveList()) if (e.WorldX > G.P.WorldX && (far == null || e.WorldX > far.WorldX)) far = e;
+            Assert.IsNotNull(far, "앞에 살아 있는 적");
+            double x0 = G.P.WorldX + EngineConst.ProjSpawnDx;
+            var axe = Ghost(G, ProjKind.Axe, far.Wave, far, x0, 0);
+            G.Projs.Add(axe);
+            yield return null;
+            Assert.IsNotNull(world.ProjGo(axe), "도끼 오브젝트");
+
+            int frames = 0; double worstLead = 0, worstLag = 0; double prev = world.ProjShownX(axe); int backward = 0;
+            float t1 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t1 < 6f && !G.Over && !_app.Overlay.IsOpen && G.Projs.Contains(axe))
+            {
+                float dtBefore = Time.deltaTime; bool running = world.EngineRunning;
+                yield return null;
+                if (!G.Projs.Contains(axe)) break;   // 이 프레임에 엔진이 뺐다 — ⓑ 는 아래에서
+                double shown = world.ProjShownX(axe);
+                if (!running || !world.EngineRunning) { prev = shown; continue; }
+                frames++;
+                if (shown < prev - 1e-6) backward++;
+                // ⓐ 앞섬 ≤ 한 틱 걸음 — 옛 코드는 x2 에서 프레임마다 (배속−1)×걸음 만큼 더 앞서 나가 곧 맞는 자리에 서 있었다
+                worstLead = Math.Max(worstLead, shown - (axe.X + axe.Spd * EngineConst.Dt));
+                // 뒤처짐 ≤ 한 프레임 걸음(둘 중 큰 dt · 따라잡기 상한 · CI 프레임 지터 여유)
+                double dt = Math.Max(dtBefore, Time.deltaTime) * bs.Speed;
+                worstLag = Math.Max(worstLag, axe.X - shown - axe.Spd * Math.Max(dt, EngineConst.Dt) * BattleWorld.ProjCatchUpMul - 1.0);
+                prev = shown;
+            }
+            Assert.Greater(frames, 3, "재는 프레임이 있어야 한다(x2 · 가장 먼 적까지의 비행)");
+            Assert.AreEqual(0, backward, "그림이 뒤로 간 프레임 " + backward + " — 앞섬 상한은 단조여야 한다");
+            Assert.LessOrEqual(worstLead, 1.0, "도끼 그림이 엔진 x 를 한 틱 걸음보다 " + worstLead.ToString("0.0") + "px 더 앞섰다 — x2 에서 배속을 두 번 곱한 병(T397 ⓐ)");
+            Assert.LessOrEqual(worstLag, 0.0, "도끼 그림이 엔진보다 따라잡기 상한 이상 뒤처졌다(" + worstLag.ToString("0.0") + "px)");
+            // ⓑ 엔진이 뺀 프레임 — 그림이 «맞는 자리» 에 닿은 채로 지워졌는가(못 본 판이면 건너뛴다 · §1 ⓑ)
+            if (world.ProjGoneAt.TryGetValue(axe, out double goneAt))
+            {
+                double arrive = far.WorldX - EngineConst.ProjArriveDx;
+                if (axe.X >= arrive)   // 표적이 먼저 죽어 빠진 것이 아니라 «맞혀서» 뺀 것일 때만
+                    Assert.GreaterOrEqual(goneAt + 1.0, arrive, "맞힌 프레임의 도끼 그림 x(" + goneAt.ToString("0") + ")가 맞는 자리(" + arrive.ToString("0") + ") 앞이다 — 닿기 전에 사라졌다(T397 ⓑ)");
+                else Debug.Log("[T397] 표적이 먼저 죽어 도끼가 빠졌다 — ⓑ 는 이 판에서 안 잰다");
+            }
+            else Debug.Log("[T397] 6초 안에 엔진이 도끼를 빼지 않았다(팝업·판 종료) — ⓑ 는 이 판에서 안 잰다");
+            _log.AssertNoRed("도끼 x2 비행");
+            G.Projs.Remove(axe); yield return Frames(2);
+            _app.ShowScreen("lobby"); yield return Frames(2);
+            _log.AssertNoRed("로비 복귀");
+            yield return Shutdown();
+        }
+
+        /// <summary>
         /// T86 ⓐ 4-1(주인 2026-09-07 보탬) — «투사체는 거리당 속도(px/s)다 · 시작~도착 시간 고정 금지».
         /// 같은 순간에 사거리 300px·900px 짜리 창을 쏘아 <b>엔진이 실제로 시간을 흘린 만큼</b>(보류 프레임 제외) 비행 시간을 재고 그 비가 거리 비(3배)와 같은지 본다.
         /// </summary>
