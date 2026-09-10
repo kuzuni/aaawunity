@@ -620,6 +620,7 @@
 | controllers | `cm.controller` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Common/Animations/_Controller.controller` | fileID 9100000 |  |
 | materials | `mat.hitFlash` | `Assets/KkomaKnight/HitFlash.mat` | fileID 2100000 | AllIn1SpriteShader(URP 2D) HITEFFECT_ON 머티리얼 — 피격 순간 0.1초 하양 플래시 |
 | materials | `mat.perkShine` | `Assets/KkomaKnight/PerkShine.mat` | fileID 2100000 | AllIn1SpriteShaderUiMask SHINE_ON 머티리얼(T61) — 특전 카드 프레임 조각(CardFrame_04_* 의 Image) 에 카드마다 인스턴스로 붙여 등장 순서대로 _ShineLocation −0.2→1.2 를 훑는다(3택·보유 특전) · 흰 빛 · 폭 0.12 · 0.6rad · 글로우 1 |
+| materials | `mat.uiMergedBg` | `Assets/KkomaKnight/Shaders/UiMergedBg.mat` | fileID 2100000 | T225 — 자작 셰이더 KkomaKnight/UiMergedBg 머티리얼(이 레포의 첫 자작 셰이더). 로비 배경의 «무늬 + 위 그라데이션 + 아래 그라데이션» 세 겹을 한 번에 합성해 오버드로 4 → 2 로 줄인다(UiKit.MergedBg · 스위치는 UiKit.UseMergedBg 한 상수). 재료(ui.pattern · ui.gradTop1 · ui.gradBottom)와 색은 옛 세 겹과 같은 키·같은 상수라 값이 두 벌이 되지 않는다 |
 | fonts | `font.ui` | `Assets/Fonts/Jua-Regular.ttf` | fileID 12800000 | UI 글꼴 Jua (Google Fonts OFL) — GUI Pro 의 SDF 폰트에 한글이 없어 TMP 를 런타임에 legacy Text 로 바꿔 쓴다 |
 | colors | `col.arenaVsBar` | `#C4271E` | #C4271E |  |
 | colors | `col.gray` | `#A39B9D` | #A39B9D | GUI Pro Theme_Light 팔레트 (Button_01 색 오버라이드에서 읽음) — 등급/세트/텍스트 색은 전부 여기서 고른다 |

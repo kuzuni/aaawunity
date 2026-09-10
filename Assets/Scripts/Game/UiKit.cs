@@ -545,6 +545,20 @@ namespace KkomaKnight.Game
         /// <summary>빛 알갱이 묶음 이름(T174 · 담개 <see cref="LightMaskName"/> 안 · 알갱이는 그 자식 «Dust0»~).</summary>
         public const string DustName = "Dust";
         public const string PatternKey = "ui.pattern", LightKey = "ui.light1", LightKeySmall = "ui.light2", GradTopKey = "ui.gradTop1", GradBottomKey = "ui.gradBottom";
+        /// <summary>
+        /// T225 — 무늬 + 두 그라데이션을 한 겹으로 합친 배경(<see cref="MergedBg"/>)의 조각 이름·머티리얼 키.
+        /// <para>
+        /// ⚑ <b><see cref="UseMergedBg"/> 하나가 되살리는 스위치다</b> — false 면 로비는 옛 세 겹 길(<see cref="PatternBg"/> + <see cref="Gradient"/>) 그대로다.
+        /// 되돌릴 일이 생기면 <b>이 상수 하나</b>를 false 로 둔다(코드를 걷어내지 않는다 · 주인 «최적화는 해봐라 걍» 이지 «바꿔라» 가 아니다).
+        /// 지금 false 인 까닭은 §2 T225 6항 ⓓ — 워커는 셰이더를 컴파일해 볼 수 없고 화면도 못 본다. CI 가 한 번 돌아 컴파일이 서는 것을 본 뒤 켠다.
+        /// </para>
+        /// </summary>
+        public const bool UseMergedBg = false;
+        public const string MergedBgName = "MergedBg", MergedBgMatKey = "mat.uiMergedBg";
+        static readonly int MergedTopTexId = Shader.PropertyToID("_TopTex"), MergedBotTexId = Shader.PropertyToID("_BotTex");
+        static readonly int MergedTopRectId = Shader.PropertyToID("_TopRect"), MergedBotRectId = Shader.PropertyToID("_BotRect");
+        static readonly int MergedPatternColId = Shader.PropertyToID("_PatternColor"), MergedTopColId = Shader.PropertyToID("_TopColor"), MergedBotColId = Shader.PropertyToID("_BotColor");
+        static readonly int MergedPatTileId = Shader.PropertyToID("_PatternTile"), MergedPatOffId = Shader.PropertyToID("_PatternOffset");
         /// <summary>버튼 아래 어둠(Button_03_White_Gradient · 버튼 모양 9-slice) · 카드 위 밝음(CardFrame_03_White_Gradient) — ③ 그라데이션 3항 우선순위 1·3.</summary>
         public const string BtnGradientKey = "ui.btnGradient", CardGradientKey = "fr.cardGradient3";
         /// <summary>패턴 한 타일이 지나가는 시간(초 · 주인 확정 2026-09-07 «속도 2배» → ROUTINE T72 1항 10~15 · 종전 25).</summary>
@@ -680,6 +694,72 @@ namespace KkomaKnight.Game
             Apply(0f);
             DOTween.To(() => p, Apply, 1f, Mathf.Max(0.1f, tileSeconds)).SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart).SetUpdate(true).SetTarget(raw).SetLink(raw.gameObject);
             return raw;
+        }
+
+        /// <summary>
+        /// T225 — «무늬 + 위 그라데이션 + 아래 그라데이션» <b>세 겹을 한 겹으로</b> 합친 배경(주인 2026-09-10 «로비 별문제는 없는데 최적화는 해봐라 걍»).
+        /// 로비 배경은 지금 <b>네 겹</b>(바탕 Image → <see cref="PatternBg"/> → GradientTop → GradientBottom)이 화면 전체를 덮어 겹칠 때마다 픽셀을 다시 칠한다(오버드로 4).
+        /// 이 자가 뒤 세 겹을 셰이더 한 장(<c>KkomaKnight/UiMergedBg</c>)에서 <b>한 번에</b> 합성해 겹을 둘로 줄인다.
+        /// <para>
+        /// <b>왜 그림이 안 바뀌나</b> — over 합성은 결합법칙이 성립한다(<c>α = a₁ + a₂(1−a₁)</c>). 그리고 그것을 글로 믿지 않고
+        /// 이 레포의 <b>실제 조각·tint·화면 높이</b>로 재 봤다: 세 겹 따로 ↔ 합쳐 한 번 = 최대 차 2.8e-17 = <b>0.000000 LSB(8비트)</b>(결정 1090 · §2 T225 6항 ⓒ).
+        /// </para>
+        /// <para>
+        /// <b>⚑ 지금은 꺼져 있다</b>(<see cref="UseMergedBg"/> = false). 워커는 셰이더를 컴파일해 볼 수도, 화면을 볼 수도 없다 —
+        /// 켜는 판정은 «<c>screens</c> 37장 PNG 차 0 + <c>overdraw.json</c> 로비 4 → 2» 라 CI 가 한 번 돈 뒤에 켠다(§2 T225 6항 ⓓ).
+        /// 켤 때 같이 손봐야 하는 것: <see cref="HasPattern"/>·<see cref="HasGradient"/> 는 자식 이름 «Pattern»·«GradientTop/Bottom» 으로 세므로
+        /// 합친 겹만 남으면 <b>둘 다 false 가 된다</b> — 그 두 자가 이 겹도 «있다» 로 세게 고쳐야 T72 감사가 안 빨개진다.
+        /// </para>
+        /// 재료(무늬·두 곡선)는 <see cref="PatternBg"/>·<see cref="Gradient"/> 와 <b>같은 카탈로그 키</b>고, 색도 같은 상수라 값이 두 벌이 되지 않는다.
+        /// 머티리얼이나 조각이 하나라도 없으면 <c>null</c> — 부르는 쪽은 그때 옛 세 겹 길로 간다.
+        /// </summary>
+        public static RawImage MergedBg(RectTransform host, Color? pattern = null, Color? top = null, Color? bottom = null,
+                                        float tileSeconds = PatternTileSeconds, int siblingIndex = 0, float tilePx = PatternTilePx, float inset = 0f)
+        {
+            if (host == null || Cat == null) return null;
+            var pat = Cat.Sprite(PatternKey); var spTop = Cat.Sprite(GradTopKey); var spBot = Cat.Sprite(GradBottomKey);
+            var src = Cat.Material(MergedBgMatKey);
+            if (pat == null || pat.texture == null || spTop == null || spBot == null || src == null) return null;
+
+            RawImage raw = null;
+            for (int i = 0; i < host.childCount; i++) if (host.GetChild(i).name == MergedBgName) { raw = host.GetChild(i).GetComponent<RawImage>(); break; }
+            if (raw == null) { var r = Rect(host, MergedBgName); raw = r.gameObject.AddComponent<RawImage>(); }
+            // UI Image/RawImage 는 MaterialPropertyBlock 을 못 쓴다 — 겹마다 값이 다르므로 인스턴스가 필요하고, 그것은 조각이 죽을 때 같이 죽어야 한다(ShineMaterial 과 같은 길).
+            var mo = Ensure<MaterialOwner>(raw.gameObject);
+            if (mo.Mat == null) { mo.Mat = new Material(src) { name = src.name + " (Instance)" }; }
+            var mat = mo.Mat;
+
+            mat.SetTexture(MergedTopTexId, spTop.texture); mat.SetTexture(MergedBotTexId, spBot.texture);
+            mat.SetVector(MergedTopRectId, SpriteUvRect(spTop)); mat.SetVector(MergedBotRectId, SpriteUvRect(spBot));
+            mat.SetColor(MergedPatternColId, pattern ?? PatternTintLobby);
+            mat.SetColor(MergedTopColId, top ?? Palette.A(Palette.White, GradientTopAlpha));
+            mat.SetColor(MergedBotColId, bottom ?? Palette.A(Palette.Ink, GradientBottomAlpha));
+
+            raw.texture = pat.texture; raw.material = mat; raw.color = Color.white; raw.raycastTarget = false;
+            raw.uvRect = new UnityEngine.Rect(0f, 0f, 1f, 1f);   // ⚠ 0~1 그대로 둔다 — 무늬가 흐르는 일은 셰이더의 _PatternTile/_PatternOffset 이 한다(그래야 두 곡선이 사각형 세로를 그대로 받는다)
+            Stretch(raw.rectTransform, inset, inset, inset, inset);
+            raw.transform.SetSiblingIndex(Mathf.Clamp(siblingIndex, 0, Mathf.Max(0, host.childCount - 1)));
+
+            float px = Mathf.Max(1f, tilePx); var rr = raw.rectTransform;
+            DOTween.Kill(raw);
+            float p = 0f;
+            void Apply(float v)
+            {
+                p = v; if (raw == null || mat == null) return;
+                // PatternBg 와 **같은 식**이다(uvRect = (1−v, 1−v, w/px, h/px) · 결정 157 «값이 줄어야 그림이 오른쪽 위로 간다»)
+                mat.SetVector(MergedPatTileId, new Vector4(Mathf.Max(0.01f, rr.rect.width / px), Mathf.Max(0.01f, rr.rect.height / px), 0f, 0f));
+                mat.SetVector(MergedPatOffId, new Vector4(1f - v, 1f - v, 0f, 0f));
+            }
+            Apply(0f);
+            DOTween.To(() => p, Apply, 1f, Mathf.Max(0.1f, tileSeconds)).SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart).SetUpdate(true).SetTarget(raw).SetLink(raw.gameObject);
+            return raw;
+        }
+        /// <summary>조각이 자기 텍스처의 어느 사각형인가(0~1) — 아틀라스에 묶여도 <see cref="MergedBg"/> 의 식이 그대로이게 하는 값.</summary>
+        static Vector4 SpriteUvRect(Sprite sp)
+        {
+            var t = sp.texture; if (t == null || t.width <= 0 || t.height <= 0) return new Vector4(0f, 0f, 1f, 1f);
+            var r = sp.textureRect;
+            return new Vector4(r.x / t.width, r.y / t.height, r.width / t.width, r.height / t.height);
         }
 
         /// <summary>
