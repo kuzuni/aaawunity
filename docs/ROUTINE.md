@@ -10036,7 +10036,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/PetScreen.cs` · `Game/UiKit.cs`(`PriceRow`) · `Game/ShopScreen.cs`(위임 3줄) · `Tests/PlayMode/PetSummonTests.cs`·`UiSmokeTests.cs`(펫 블록). lock 없음(주인 자리 세션 · 바로 고침).
 
-### T379 — **`UiSmokeTests.LobbySettingsTalentPetToast` 하나가 화면 아홉을 훑는다 — CI 한 회전에 결함이 하나씩만 나온다** (검수 Q 등재 · **선점 안 함 · 코드 0줄** · 값은 여섯 회전으로 실측됐다)
+### T379 🔄 — **`UiSmokeTests.LobbySettingsTalentPetToast` 하나가 화면 아홉을 훑는다 — CI 한 회전에 결함이 하나씩만 나온다** (검수 Q 등재 · **선점 안 함 · 코드 0줄** · 값은 여섯 회전으로 실측됐다)
 
 0. **왜 지금 등재하나** — 이것은 «자가 틀렸다» 가 아니라 **«자를 어떻게 묶어 놨나» 문제**다. 그래서 회차 33 에 한 번 접어 두고 «이 자가 또 이런 꼴로 물면 그때 등재한다» 고 적었다(검수 Q). **또 물었다 — 다섯 번째다.** 접어 둘 근거가 없어졌으므로 재는 것을 여기 적는다.
 
