@@ -980,7 +980,7 @@ namespace KkomaKnight.Tests.Play
                 _app.ShowScreen("lobby"); yield return Frames(2);
             }
 
-            // T42 — 펫 탭 = 레퍼런스 13_pet.jpg 구도(PetScreen · 껍데기): 상단 바 · 4열 격자 9칸(Lv · 진행바) · 합계 줄 · «장착중» 띠 + 슬롯 4 · 회색 2 · 주황 소환 2 · 탭 5 → 칸 클릭 = 세부 팝업(14 · 명판 없음 · 탭하여 닫기)
+            // T42 — 펫 탭 = 레퍼런스 13_pet.jpg 구도(PetScreen · 껍데기): 상단 바 · 4열 격자 9칸(Lv · 진행바) · 합계 줄 · «장착중» 띠 + 슬롯 3 · 회색 2 · 주황 소환 2 · 탭 5 → 칸 클릭 = 세부 팝업(14 · 명판 없음 · 탭하여 닫기)
             {
                 // ⛑ T293 ⓘ 4회차(주인 5항 ⓙ «얻은 거만 보이게») — 격자는 이제 **가진 펫만** 그린다.
                 //   이 블록이 재는 것은 «배치·글자·계약» 이지 «몇 마리 가졌나» 가 아니므로, 재기 전에 표의 펫을 **다 가지게** 해서
@@ -991,7 +991,7 @@ namespace KkomaKnight.Tests.Play
                 var pet = _app.Current.Root;
                 Check("펫 탭");
                 Assert.IsNotNull(UiKit.Find(pet, "TopBar"), "펫 탭 상단 재화 바"); Assert.IsNull(UiKit.Find(pet, "ui.talent"), "Character_Talent_02 통째 스폰 0(부품 규칙)");
-                Assert.AreEqual(Layout.PetCount, CountNamed(UiKit.Find(pet, "PetGrid"), "Pet:"), "펫 격자 9칸"); Assert.AreEqual(PetScreen.SlotCount, CountNamed(UiKit.Find(pet, "Slots"), "Slot:"), "장착 슬롯 4");
+                Assert.AreEqual(Layout.PetCount, CountNamed(UiKit.Find(pet, "PetGrid"), "Pet:"), "펫 격자 9칸"); Assert.AreEqual(PetScreen.SlotCount, CountNamed(UiKit.Find(pet, "Slots"), "Slot:"), "장착 슬롯 3(주인 «장착 최대 3개» · 레퍼런스 13 의 4칸은 옛 판이다)");
                 Assert.AreEqual(Layout.PetCount, CountNamed(UiKit.Find(pet, "PetGrid"), "Bar"), "칸마다 진행바"); Assert.AreEqual(Layout.PetCount, CountNamed(UiKit.Find(pet, "PetGrid"), "Lv"), "칸마다 Lv 글자");
                 // ⛑ T372 2회차 — `aaf78fb3`(T293 ⓘ 2회차)가 격자 숫자를 **세이브+표**로 칠하면서 «0/0» 이 «0/N» 이 됐다
                 //   (`RefreshCells`: 진행바 = `Pets.Frag` + "/" + `Pets.Need(d, 1)` · 필요 수는 표의 `NeedBase` 에서 온다).
@@ -1055,10 +1055,21 @@ namespace KkomaKnight.Tests.Play
                     var cg = btn.GetComponent<CanvasGroup>();
                     Assert.IsTrue(cg == null || cg.alpha > 0.99f, n + " 는 이제 «못 누르는 것» 이 아니다 — 흐리게(0.5) 두면 안 된다(T293 ⓘ 가 T178 을 갈음한다)");
                 }
-                // 껍데기 버튼·슬롯 — 눌러도 아무 일 없음(팝업 안 열림 · 화면 그대로 · 빨간 줄 0)
+                // 눌러도 팝업이 안 열리는 것들 — 화면 그대로 · 빨간 줄 0
                 // ⛑ T372 — 소환 둘은 이 목록에서 뺐다. 더는 껍데기가 아니다(아래에서 따로 잰다).
-                foreach (var n in new[] { "UpgradeAllBtn", "QuickEquipBtn", "Slot:0", "Slot:3" }) Assert.IsTrue(ClickNamed(pet, n), "껍데기 " + n);
-                yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen, "껍데기 버튼은 팝업을 열지 않는다"); Assert.AreEqual("pet", _app.Current.Name, "화면 그대로");
+                // ⛑ T293 ⓘ 5회차 — 장착 칸은 **셋**이고(주인 «최대 3 · 처음 1 · 100회·200회») 마지막 칸은 아직 **잠겨** 있다: 누르면 «뽑기 N회에 열립니다» 만 말한다.
+                //   그리고 바로 위에서 «빠른 장착» 을 누르므로 **열린 첫 칸에는 펫이 낀다** → `Slot:0` 은 이 목록에서 빼고
+                //   아래에서 «낀 칸을 누르면 세부 팝업» 으로 **따로** 잰다. 기댓값을 낮춘 것이 아니라 계약이 옮겨 간 자리다(T184 · 결정 425).
+                Assert.Less(Pets.SlotsOpen(_app.Data.Pet, _app.Save), PetScreen.SlotCount, "이 자리의 세이브는 뽑기 0회 — 마지막 장착 칸은 잠겨 있어야 이 아래가 «잠긴 칸» 을 잰다");
+                foreach (var n in new[] { "UpgradeAllBtn", "QuickEquipBtn", "Slot:" + (PetScreen.SlotCount - 1) }) Assert.IsTrue(ClickNamed(pet, n), "누르는 자리 " + n);
+                yield return Frames(1); Assert.IsFalse(_app.Overlay.IsOpen, "보조 버튼·잠긴 칸은 팝업을 열지 않는다"); Assert.AreEqual("pet", _app.Current.Name, "화면 그대로");
+                Assert.IsTrue(HasText(s => s.Contains("뽑기") && s.Contains("열립니다")), "잠긴 장착 칸은 누르면 까닭을 말한다(«뽑기 N회에 열립니다» · 결정 771)");
+                // 낀 칸 = 그 펫의 세부 팝업(T293 ⓘ) — «빠른 장착» 이 열린 빈 칸을 채웠으니 여기가 비어 있으면 그쪽이 틀린 것이다.
+                Assert.IsNotEmpty(Pets.EquippedAt(_app.Data.Pet, _app.Save, 0), "«빠른 장착» 은 열린 빈 칸을 채운다(T293 ⓘ · 가진 펫이 아홉이다)");
+                Assert.IsTrue(ClickNamed(pet, "Slot:0"), "낀 장착 칸"); yield return Frames(1);
+                Assert.IsTrue(_app.Overlay.IsOpen, "낀 장착 칸을 누르면 그 펫의 세부 팝업이 열린다(T293 ⓘ)");
+                _app.Overlay.Close(); yield return Frames(1);
+                Assert.IsFalse(_app.Overlay.IsOpen, "세부 팝업은 닫힌다"); Assert.AreEqual("pet", _app.Current.Name, "화면 그대로");
                 // ⛑ T372 — 소환의 «못 치르는» 갈래를 잰다. Pull 은 못 치르면 세이브를 한 글자도 안 건드리고 까닭만 토스트한다(결정 771).
                 //   치를 것을 0 으로 만들어 그 갈래를 확실히 밟고, 재고 나서 세이브를 그대로 되돌린다 — 이 자는 뒤에서 다른 화면을 계속 본다.
                 var gem0 = _app.Save.Gem; var egg0 = _app.Save.PetEgg;

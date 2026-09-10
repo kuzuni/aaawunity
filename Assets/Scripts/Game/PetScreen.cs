@@ -11,7 +11,7 @@ namespace KkomaKnight.Game
     /// 펫 탭 = 레퍼런스 <c>docs/ref/13_pet.jpg</c> 구도 · 펫 세부 팝업 = <c>14_pet_detail.jpg</c> (T42 · 주인 2026-09-06 «UI 는 무조건 레퍼런스 기준» · T32 «Character_Skill 그대로» 폐기 · 주인 ⓔ «시스템이 없는 화면은 레이아웃 껍데기»).
     /// 펫 시스템은 없다 — <b>전부 표시만</b>(버튼은 눌러도 아무 일 없음 · 숫자는 0 · 슬롯은 잠금/빈 칸 · 레퍼런스 숫자를 베끼지 않는다). ref-layout ⑩·⑪ 표(<see cref="Layout.PetGrid"/> …) 자리에 GUI Pro 조각을 조립한다:
     /// ① 상단 재화 바(<see cref="TopBar"/>) → ② <b>4열 격자 9칸</b>(칸 = ItemFrame_01 조각 + 파란 등급 변형 + GUI Pro 아이콘 · 칸 위 «Lv. 0» · 칸 아래 진행바 «0/0») → ③ <b>합계 줄</b>(«+0 ❤ | +0 🛡 | +0 🗡»)
-    /// → ④ <b>«장착중» 띠</b>(어두운 패널 + 초록 라벨 + 슬롯 4 = 잠금 원 2 · 빈 칸 2) → ⑤ 회색 <b>전체 강화 · 빠른 장착</b> → ⑥ 주황 <b>소환 · 소환 x10</b>(가격 자리는 <b>비어 있다</b> — 펫 시스템이 없어 값을 지어내지 않는다 · 흐리게 + 누르면 토스트 · T178) → ⑦ 탭 바.
+    /// → ④ <b>«장착중» 띠</b>(어두운 패널 + 초록 라벨 + 슬롯 3 = 열린 빈 칸 1 · 잠금 원 2) → ⑤ 회색 <b>전체 강화 · 빠른 장착</b> → ⑥ 주황 <b>소환 · 소환 x10</b>(가격 자리는 <b>비어 있다</b> — 펫 시스템이 없어 값을 지어내지 않는다 · 흐리게 + 누르면 토스트 · T178) → ⑦ 탭 바.
     /// 칸을 누르면 세부 팝업(공통 팝업 문법 <see cref="UiKit.Popup"/> · 명판 없음 · 칸이 상자 윗변에 걸침 · 설명 박스 · «패시브:» 수치 줄 · 강화(회색) · 장착(주황) · «탭하여 닫기»).
     /// 글자(T63-pet · 주인 «글씨 너무 작다»): 전부 <see cref="UiKit"/> 하한(본문 40 · 버튼 44) — 직접 박은 크기는 없다. 진행바 «n/m» 만 표 높이에 안 들어가 바를 <see cref="Layout.PetBarH"/> 로 키웠다(13·14 게이트 잘림 0).
     /// 테두리(T69-pet · 주인 «행·카드·칸마다 검은 아웃라인» + 7항 «아이템류 칸 = 장비 화면의 그 프레임»): 격자 9칸·빈 장착 슬롯·세부 칸의 ItemFrame Border 링을 <see cref="GearUi.DarkFrame"/> 로 Ink 8px · 잠금 슬롯(원)은 <see cref="CircleBorderKey"/> 굵은 원형 조각.
@@ -22,7 +22,11 @@ namespace KkomaKnight.Game
     public sealed class PetScreen : GameScreen
     {
         public override string Name => "pet";
-        public const int SlotCount = 4, LockedSlots = 2;
+        /// <summary>장착 칸 수 — <b>주인 지시 3</b>(T293 «장착 최대 3개 · 처음 1개 · 100회·200회 해금»).
+        /// ⚠ 레퍼런스 <c>13_pet.jpg</c> 는 <b>4칸</b>이다(옛 HTML 판) — <b>주인 지시가 이긴다</b>. 표 ⑩ 도 3칸으로 다시 적었고 그 까닭을 그 자리에 남겼다.</summary>
+        public const int SlotCount = Layout.PetSlotCount;
+        /// <summary>새 세이브에서 <b>잠겨 있는</b> 칸 수(뽑기 0회 = 첫 칸만 열린다) — 자가 «잠금 원» 을 찾을 때 쓰는 값이고, 잠김 여부 자체는 세이브가 정한다(<see cref="Pets.SlotsOpen(PetData, SaveData)"/>).</summary>
+        public const int LockedSlots = SlotCount - 1;
         /// <summary>잠금 슬롯(원)의 «검은 아웃라인» 조각(T69-pet) = <c>BasicFrame_Circle_H69_White_Border2</c>(82×84 · 선 8px = 지름의 9.8% 실측) · 슬롯 rect 보다 <see cref="CircleBorderOut"/> px 밖으로 키워 지름 ≈ 84 → 선 ≈ 8.2px(≥ <see cref="UiKit.BorderPx"/>). 원형은 9-slice 가 없어 multiplier 로는 못 굵힌다(결정 171).</summary>
         public const string CircleBorderKey = "fr.circleBorder2";
         public const float CircleBorderOut = 3f;
@@ -64,7 +68,7 @@ namespace KkomaKnight.Game
             var sum = UiKit.Rect(Root, "SumRow"); UiKit.Pct(sum, Layout.PetSum);
             SumGroup(sum, 0, 26, "pi.heart", Palette.Red); Sep(sum, 30); SumGroup(sum, 38, 26, "pi.shield", Palette.Sky); Sep(sum, 66); SumGroup(sum, 74, 26, "pi.attack", Palette.White);
 
-            // ④ «장착중» 띠 — 어두운 패널 + 초록 꼬리 라벨(조각을 표 칸에 배율로) + 슬롯 4(잠금 원 2 · 빈 칸 2)
+            // ④ «장착중» 띠 — 어두운 패널 + 초록 꼬리 라벨(조각을 표 칸에 배율로) + 슬롯 3(열린 칸 1 · 잠금 원 2 · 어느 쪽인지는 세이브가 정한다 · RefreshSlots)
             var band = UiKit.Spawn("ui.frameDark", Root); var brt = (RectTransform)band.transform; brt.name = "EqBand"; UiKit.Pct(brt, Layout.PetEqBand);
             var eqLabel = UiKit.Rect(Root, "EqLabel"); UiKit.Pct(eqLabel, Layout.PetEqLabel);
             {
@@ -81,27 +85,32 @@ namespace KkomaKnight.Game
                 if (t != null) { t.text = "장착중"; UiKit.Pct(t.rectTransform, 8, 0, 84, 100); t.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); t.enableAutoSizing = true; t.fontSizeMin = TextSize.BestFitMin; t.fontSizeMax = 44; t.textWrappingMode = TextWrappingModes.NoWrap; UiKit.EnsureOutline(t); }
             }
             var slotsHost = UiKit.Rect(Root, "Slots"); UiKit.Stretch(slotsHost);
-            var slots = new RectTransform[SlotCount];
+            var slots = _slots;
             for (int i = 0; i < SlotCount; i++)
             {
                 var s = slots[i] = UiKit.Rect(slotsHost, "Slot:" + i); UiKit.Pct(s, Shift(Layout.PetSlot, i * Layout.PetSlotPitch, 0));
-                if (i < LockedSlots)
+                // T293 5항 ⓘ — 칸 하나에 **두 벌**을 세우고 세이브가 고른다: 잠금 원(«Lock» 묶음) ↔ 물건 칸(«Frame» 묶음).
+                //   태어날 때 둘 다 세워 두는 까닭 = `Refresh` 가 여러 번 불리므로 그때마다 조각을 새로 spawn 하면 쌓인다(결정 1027 ③ 과 같은 자리).
+                var lockPart = UiKit.Rect(s, "LockPart"); UiKit.Stretch(lockPart);
                 {
-                    var c = UiKit.Icon(s, "Bg", "fr.circle", Palette.A(Palette.Dim, 0.7f)); UiKit.Stretch(c.rectTransform);
+                    var c = UiKit.Icon(lockPart, "Bg", "fr.circle", Palette.A(Palette.Dim, 0.7f)); UiKit.Stretch(c.rectTransform);
                     // T69-pet «검은 아웃라인»: 원형 조각은 9-slice 가 없어 multiplier 로 못 굵힌다 → 굵은 조각(Border2 · 선 9.8%)을 슬롯보다 CircleBorderOut px 크게 = 선 ≥ 8px(폰 3px) · Ink α0.9
-                    var b = UiKit.Icon(s, UiKit.BorderName, CircleBorderKey, UiKit.BorderInk); UiKit.Stretch(b.rectTransform, -CircleBorderOut, -CircleBorderOut, -CircleBorderOut, -CircleBorderOut);
-                    var lk = UiKit.Icon(s, "Lock", "ui.iconLock"); UiKit.Pct(lk.rectTransform, 28, 28, 44, 44);
+                    var b = UiKit.Icon(lockPart, UiKit.BorderName, CircleBorderKey, UiKit.BorderInk); UiKit.Stretch(b.rectTransform, -CircleBorderOut, -CircleBorderOut, -CircleBorderOut, -CircleBorderOut);
+                    var lk = UiKit.Icon(lockPart, "Lock", "ui.iconLock"); UiKit.Pct(lk.rectTransform, 28, 28, 44, 44);
+                    // 잠긴 칸 밑의 «뽑기 N회 해금» — 수는 표(`slotUnlockPulls`)에서 오고 `Refresh` 가 쓴다(주인 5항).
+                    var need = UiKit.Label(lockPart, -30, 104, 160, 34, "", 28, Palette.Cream, TextAnchor.MiddleCenter); need.name = "LockText";
                 }
-                else
+                var framePart = UiKit.Rect(s, "FramePart"); UiKit.Stretch(framePart);
                 {
                     // 빈 칸 = 회색 등급 프레임 + «+»(Add_1) — ItemFrame_01 은 NormalArea 가 비어 있고 Add_1 이 기본 꺼짐이라 그대로 두면 아무것도 안 보인다(회차 1 감점 · 슬롯 3·4 빠짐)
-                    var f = UiKit.Spawn("ui.itemFrame.empty", s); f.name = "ItemFrame_01"; var frt = (RectTransform)f.transform; UiKit.FitScale(frt, UiKit.PxSize(Layout.PetSlot));
+                    var f = UiKit.Spawn("ui.itemFrame.empty", framePart); f.name = "ItemFrame_01"; var frt = (RectTransform)f.transform; UiKit.FitScale(frt, UiKit.PxSize(Layout.PetSlot));
                     UiKit.Hide(f.transform, "Text_Level", "Focus", "Disable", "Lock", "Add_2", "Item");
                     var area = UiKit.Find(f.transform, "NormalArea"); if (area != null) { UiKit.Clear(area); var v = UiKit.Spawn("ui.itemFrame.gray", area); UiKit.Stretch((RectTransform)v.transform); }
                     UiKit.Show(f.transform, "Add_1", true);
                     GearUi.DarkFrame(frt, frt.localScale.x);   // T69-pet · 7항: 빈 장착 슬롯도 «물건 칸» = ItemFrame 의 Border 링을 Ink 로(조각 배율 0.41 만큼 더 굵게 · 결정 171)
                 }
-                UiKit.Clickable(s, () => { });   // 껍데기 — 눌러도 아무 일 없음
+                int si = i;
+                UiKit.Clickable(s, () => TapSlot(si));   // T293 5항 — 낀 칸을 누르면 그 펫의 세부 팝업(빈 칸·잠긴 칸은 까닭을 토스트)
             }
 
             // ⑤ 회색 보조 버튼 2 → ⑥ 주황 소환 버튼 2(가격 자리 없음 · 흐리게 + 누르면 «준비 중» 토스트 · T178) → ⑦ 탭 바
@@ -116,7 +125,7 @@ namespace KkomaKnight.Game
             UiKit.Tag(_top.Root, "상단 바");
             UiKit.TagGroup(grid, "펫 격자(9칸)", _cells); UiKit.Tag(_cells[0], "펫 칸(1칸)"); UiKit.Tag(lv0, "펫 Lv 라벨(1칸)"); UiKit.Tag(bar0, "펫 진행바(1칸)");
             UiKit.Tag(sum, "합계 줄"); UiKit.Tag(brt, "장착 띠"); UiKit.Tag(eqLabel, "«장착중» 라벨");
-            UiKit.TagGroup(slotsHost, "장착 슬롯 줄(4칸)", slots); UiKit.Tag(slots[0], "장착 슬롯 1칸");
+            UiKit.TagGroup(slotsHost, "장착 슬롯 줄(3칸)", slots); UiKit.Tag(slots[0], "장착 슬롯 1칸");
             UiKit.Tag(up, "전체 강화 버튼"); UiKit.Tag(qe, "빠른 장착 버튼"); UiKit.Tag(sm, "소환 버튼"); UiKit.Tag(sm10, "소환 x10 버튼");
             UiKit.Tag(UiKit.Find(Root, "ui.tabBar"), "하단 탭바");
         }
@@ -430,6 +439,63 @@ namespace KkomaKnight.Game
             RefreshCells();
             RefreshSum();
             RefreshHelpers();
+            RefreshSlots();
+        }
+
+        readonly RectTransform[] _slots = new RectTransform[SlotCount];
+
+        /// <summary>
+        /// 장착 칸 셋을 세이브대로 칠한다(주인 5항 ⓘ) — <b>열린 칸</b>은 물건 칸(낀 펫이 있으면 그 그림 + <b>등급색</b> 프레임 · 없으면 «+»),
+        /// <b>잠긴 칸</b>은 잠금 원 + «뽑기 N회 해금»(수는 표가 준다 · <see cref="Pets.PullsToOpen"/>).
+        /// </summary>
+        void RefreshSlots()
+        {
+            var d = PD; var s = App != null ? App.Save : null; if (d == null || s == null) return;
+            int open = Pets.SlotsOpen(d, s);
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                var slot = _slots[i]; if (slot == null) continue;
+                bool unlocked = i < open;
+                var lockPart = UiKit.Find(slot, "LockPart"); var framePart = UiKit.Find(slot, "FramePart");
+                if (lockPart != null) lockPart.gameObject.SetActive(!unlocked);
+                if (framePart != null) framePart.gameObject.SetActive(unlocked);
+                if (!unlocked)
+                {
+                    var lt = UiKit.Find(slot, "LockPart/LockText"); var ltx = lt != null ? lt.GetComponent<TMP_Text>() : null;
+                    if (ltx != null) ltx.text = TextGlyphs.Safe("뽑기 " + Pets.PullsToOpen(d, i, s.PetPulls) + "회");
+                    continue;
+                }
+                string id = Pets.EquippedAt(d, s, i);
+                var p = string.IsNullOrEmpty(id) ? null : d.Of(id);
+                var frame = UiKit.Find(framePart, "ItemFrame_01"); if (frame == null) continue;
+                // 낀 펫이 있으면 그 그림 + 등급색 · 없으면 «+» 그대로(빈 칸)
+                UiKit.Show(frame, "Add_1", p == null);
+                var item = UiKit.Find(frame, "Item");
+                if (item != null)
+                {
+                    item.gameObject.SetActive(p != null);
+                    if (p != null) UiKit.SetSprite(frame, "Item", PetIcon(d, p.Id), Palette.White);
+                }
+                // 프레임 색 = 그 펫의 등급색(주인 5항 ⓘ «슬롯 부분 등급마다 색») — 색 이름은 `Palette.RarColors` 한 곳에서 온다.
+                var area = UiKit.Find(frame, "NormalArea");
+                if (area != null)
+                {
+                    var g = p != null ? d.GradeOfPet(p) : null;
+                    string key = Palette.FrameKey("ui.itemFrame", g != null ? Palette.RarName(g.Rar) : "gray");
+                    UiKit.Clear(area); var v = UiKit.Spawn(key, area); UiKit.Stretch((RectTransform)v.transform);
+                }
+            }
+        }
+
+        /// <summary>장착 칸을 눌렀을 때 — 낀 펫이 있으면 그 <b>세부 팝업</b>, 없으면 까닭을 토스트(눌리는데 아무 일도 안 나는 자리를 안 만든다 · 결정 771).</summary>
+        void TapSlot(int slot)
+        {
+            var d = PD; var s = App != null ? App.Save : null; if (d == null || s == null) { App.Toast(NotReadyMsg); return; }
+            if (slot >= Pets.SlotsOpen(d, s)) { App.Toast("뽑기 " + Pets.PullsToOpen(d, slot, s.PetPulls) + "회에 열립니다"); return; }
+            string id = Pets.EquippedAt(d, s, slot);
+            if (string.IsNullOrEmpty(id)) { App.Toast("빈 칸입니다 — 펫을 골라 장착하세요"); return; }
+            int cell = _cellPet != null ? _cellPet.FindIndex(x => x.Id == id) : -1;
+            if (cell >= 0) OpenDetail(cell);
         }
 
         /// <summary>

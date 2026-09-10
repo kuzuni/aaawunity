@@ -354,12 +354,15 @@ namespace KkomaKnight.Core
         /// 바만 표 중심을 지켜 이 높이로 키운다(44px → 글자 rect 42px ≥ 39). 되돌리려면 PetCell 의 <c>WithH</c> 호출을 빼면 표값(1.6/1.4)으로.
         /// </summary>
         public const float PetBarH = 1.9f;
-        /// <summary>합계 줄(«+N ❤ | +N 🛡 | +N 🗡») → «장착중» 띠(어두운 패널) + 초록 «장착중» 라벨 + 장착 슬롯 4(잠금 2 · 빈 칸 2 · 피치 11.9).</summary>
+        /// <summary>합계 줄(«+N ❤ | +N 🛡 | +N 🗡») → «장착중» 띠(어두운 패널) + 초록 «장착중» 라벨 + 장착 슬롯 3(피치 11.9 · 처음 1칸만 열린다).</summary>
         public static readonly R PetSum = new R(18.8f, 58.3f, 63.2f, 2.6f);
         public static readonly R PetEqBand = new R(8.3f, 61.9f, 83.3f, 6.6f);
         public static readonly R PetEqLabel = new R(7.2f, 63.8f, 23.6f, 2.4f);
-        public static readonly R PetSlots = new R(43.9f, 63.5f, 42.9f, 3.4f);
-        public static readonly R PetSlot = new R(43.9f, 63.5f, 7.2f, 3.4f);
+        /// <summary>장착 칸 수 — <b>주인 지시 3</b>. 레퍼런스 <c>13_pet.jpg</c> 는 4칸이지만(옛 HTML 판) 주인 지시가 이긴다. 화면(<c>PetScreen.SlotCount</c>)도 이 수를 쓴다.</summary>
+        public const int PetSlotCount = 3;
+        // 4칸 → 3칸으로 줄이면서 **줄의 중심(65.4)** 을 지켰다: 칸 하나가 빠져도 띠 안에서 무리가 서는 축이 안 움직인다(왼쪽 «장착중» 라벨과의 관계가 그대로).
+        public static readonly R PetSlots = new R(49.9f, 63.5f, 31.0f, 3.4f);
+        public static readonly R PetSlot = new R(49.9f, 63.5f, 7.2f, 3.4f);
         public const float PetSlotPitch = 11.9f;
         /// <summary>회색 «전체 강화»·«빠른 장착» 한 줄 → 주황 «소환»·«소환 x10» 한 줄(가격 줄 포함 · 더 크다).</summary>
         public static readonly R PetUpgradeAll = new R(11.4f, 72.8f, 36.5f, 6.0f);

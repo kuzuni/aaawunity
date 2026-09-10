@@ -224,13 +224,13 @@ namespace KkomaKnight.Tests
             var s = Parse();
             Same(s, "⑩", "상단 바", Layout.LobbyTopBar); Same(s, "⑩", "펫 격자(9칸)", Layout.PetGrid); Same(s, "⑩", "펫 칸(1칸)", Layout.PetCell);
             Same(s, "⑩", "펫 Lv 라벨(1칸)", Layout.PetLv); Same(s, "⑩", "펫 진행바(1칸)", Layout.PetBar); Same(s, "⑩", "합계 줄", Layout.PetSum);
-            Same(s, "⑩", "장착 띠", Layout.PetEqBand); Same(s, "⑩", "«장착중» 라벨", Layout.PetEqLabel); Same(s, "⑩", "장착 슬롯 줄(4칸)", Layout.PetSlots); Same(s, "⑩", "장착 슬롯 1칸", Layout.PetSlot);
+            Same(s, "⑩", "장착 띠", Layout.PetEqBand); Same(s, "⑩", "«장착중» 라벨", Layout.PetEqLabel); Same(s, "⑩", "장착 슬롯 줄(3칸)", Layout.PetSlots); Same(s, "⑩", "장착 슬롯 1칸", Layout.PetSlot);
             Same(s, "⑩", "전체 강화 버튼", Layout.PetUpgradeAll); Same(s, "⑩", "빠른 장착 버튼", Layout.PetQuickEquip); Same(s, "⑩", "소환 버튼", Layout.PetSummon); Same(s, "⑩", "소환 x10 버튼", Layout.PetSummon10);
             Same(s, "⑩", "하단 탭바", Layout.TabBar);
-            // 격자 = 4열 × 3행이 표의 합집합과 맞는가(마지막 열 우변 · 마지막 행 아랫변) · 슬롯 줄 = 4칸 피치
+            // 격자 = 4열 × 3행이 표의 합집합과 맞는가(마지막 열 우변 · 마지막 행 아랫변) · 슬롯 줄 = 칸 수(Layout.PetSlotCount) 만큼의 피치
             Assert.That(Layout.PetCell.X + 3 * Layout.PetColPitch + Layout.PetCell.W, Is.EqualTo(Layout.PetGrid.X + Layout.PetGrid.W).Within(0.15f));
             Assert.That(Layout.PetCell.Y + 2 * Layout.PetRowPitch + Layout.PetCell.H, Is.EqualTo(Layout.PetGrid.Y + Layout.PetGrid.H).Within(0.15f));
-            Assert.That(Layout.PetSlot.X + 3 * Layout.PetSlotPitch + Layout.PetSlot.W, Is.EqualTo(Layout.PetSlots.X + Layout.PetSlots.W).Within(0.15f));
+            Assert.That(Layout.PetSlot.X + (Layout.PetSlotCount - 1) * Layout.PetSlotPitch + Layout.PetSlot.W, Is.EqualTo(Layout.PetSlots.X + Layout.PetSlots.W).Within(0.15f));
             Same(s, "⑪", "팝업 박스", Layout.PdBox); Same(s, "⑪", "펫 칸(세부)", Layout.PdCell); Same(s, "⑪", "진행바(세부)", Layout.PdBar); Same(s, "⑪", "설명 박스", Layout.PdDesc);
             Same(s, "⑪", "패시브 제목", Layout.PdPassiveTitle); Same(s, "⑪", "패시브 수치 줄", Layout.PdPassive); Same(s, "⑪", "강화 버튼", Layout.PdBtnL); Same(s, "⑪", "장착 버튼", Layout.PdBtnR);
             SameV(s, "⑪", "닫기 안내", 1, Layout.BookClose.Y - 1.1f);   // 표 90.4 = 공통 «탭하여 닫기» 줄(BookClose 91.5) 과 1.1 차 · 팝업은 BookClose 줄을 그대로 쓴다(±3%p 안)

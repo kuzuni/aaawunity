@@ -358,8 +358,18 @@ namespace KkomaKnight.Tests.Play
                 Assert.Greater(shown.Count, 1, "펫을 다 가지게 했으니 켜진 칸이 둘 이상이어야 이 자가 뜻이 있다");
                 AssertItemFrameBorder(shown[0], "펫 격자 첫 칸(켜진 것 중)");
                 AssertItemFrameBorder(shown[shown.Count - 1], "펫 격자 마지막 칸(켜진 것 중)");
-                AssertCircleBorder(UiKit.Find(petRoot, "Slot:0"), "펫 잠금 슬롯 0"); AssertCircleBorder(UiKit.Find(petRoot, "Slot:1"), "펫 잠금 슬롯 1");
-                AssertItemFrameBorder(UiKit.Find(petRoot, "Slot:" + PetScreen.LockedSlots), "펫 빈 장착 슬롯(ItemFrame · Add_1)");
+                // 장착 칸은 «열린 것 = 물건 칸 · 잠긴 것 = 잠금 원» 이고, 어디까지 열렸는지는 **Core 가 낸다**(`Pets.SlotsOpen` · 수는 표 `slotUnlockPulls`).
+                //   자리를 손으로 «0 은 잠김» 이라고 적어 두면 해금 순서가 바뀌는 날 이 자가 거짓으로 붉어진다 → 규칙을 낸 쪽에 물어서 가른다.
+                //   새 세이브는 뽑기 0회라 **한 칸 이상 열리고 한 칸 이상 잠겨** 두 갈래가 다 실제로 돈다(빈 갈래로 늘 통과하는 자를 안 만든다 · 결정 1070).
+                int open = Pets.SlotsOpen(_app.Data.Pet, _app.Save);
+                Assert.Greater(open, 0, "새 세이브에서도 장착 칸 하나는 열려 있다(주인 5항)");
+                Assert.Less(open, PetScreen.SlotCount, "새 세이브에서 잠긴 칸이 하나도 없으면 잠금 원 갈래를 아무도 안 잰다");
+                for (int i = 0; i < PetScreen.SlotCount; i++)
+                {
+                    var slot = UiKit.Find(petRoot, "Slot:" + i);
+                    if (i < open) AssertItemFrameBorder(UiKit.Find(slot, "FramePart"), "펫 빈 장착 슬롯 " + i + "(ItemFrame · Add_1)");
+                    else AssertCircleBorder(UiKit.Find(slot, "LockPart"), "펫 잠금 슬롯 " + i);
+                }
                 Assert.IsTrue(UiKit.HasPattern(petRoot), "펫 탭 배경 패턴(T72 ①)");
                 Assert.IsTrue(BorderAudit.Exempt.Contains("합계 줄"), "합계 줄은 맨 글자(레퍼런스 13 에 상자 없음) → 감사 예외");
             }
