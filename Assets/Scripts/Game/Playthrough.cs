@@ -171,7 +171,7 @@ namespace KkomaKnight.Game
             Tap(app, "Tab:pet"); yield return Frames(3);
             Reach(app, "pet");
             TapIn(app.Current.Root, "SummonBtn", true);
-            yield return CloseChest(app, "펫 소환");
+            yield return CloseByDim(app, "펫 소환 결과");
 
             int idx = -1;
             for (int i = 0; i < D.Pet.Pets.Count; i++) if (Pets.Has(S, D.Pet.Pets[i].Id)) { idx = i; break; }
@@ -189,16 +189,31 @@ namespace KkomaKnight.Game
             if (!app.Overlay.IsOpen) { TapIn(app.Current.Root, "Pet:" + idx, true); yield return Frames(2); }
             TapIn(app.Overlay.Root, "PetEquipBtn", true); yield return Frames(3);
 
-            if (app.Overlay.IsOpen)
-            {
-                var dim = UiKit.Find(app.Overlay.Root, "Dimmed");
-                if (dim == null) dim = UiKit.Find(app.Overlay.Root, "Background");
-                if (dim == null) throw new MissingException("세부 팝업을 닫을 어둠(Dimmed·Background)");
-                var db = dim.GetComponent<UnityEngine.UI.Button>();
-                if (db == null) throw new MissingException("어둠이 눌리는 것이 아니다");
-                db.onClick.Invoke(); yield return Frames(2);
-            }
+            if (app.Overlay.IsOpen) yield return CloseByDim(app, "펫 세부 팝업");
             app.ShowScreen("lobby"); yield return null;
+        }
+
+        /// <summary>
+        /// 어둠(<c>Dimmed</c>)을 눌러 닫는 팝업 — 결과 팝업(<see cref="RewardPopup"/>)·펫 세부가 이 꼴이다.
+        /// <para>
+        /// ⚠ <b><see cref="CloseChest"/> 의 «Background» 와 다른 이름이다.</b> 그쪽은 상자 결과 <b>프리팹</b>이 갖고 온 이름이고,
+        /// 코드가 세우는 팝업의 어둠은 <c>Dimmed</c> 다(<c>RewardPopup:158</c> · <c>UiKit.Clickable(dim, …)</c> 로 눌린다).
+        /// 배포 갈래 P10 1회차가 이것을 «닫는 이름은 하나겠지» 로 읽어 <c>CloseChest</c> 를 그대로 부르다 «못 찾았다: Background» 로 죽었다(결정 1065).
+        /// </para>
+        /// </summary>
+        static System.Collections.IEnumerator CloseByDim(App app, string what)
+        {
+            var w = new Waiter("팝업(" + what + ")");
+            while (!app.Overlay.IsOpen && w.Tick()) yield return null;
+            yield return Frames(2);
+            var dim = UiKit.Find(app.Overlay.Root, "Dimmed");
+            if (dim == null) dim = UiKit.Find(app.Overlay.Root, "Background");
+            if (dim == null) throw new MissingException(what + " 를 닫을 어둠(Dimmed·Background)");
+            var b = dim.GetComponent<UnityEngine.UI.Button>();
+            if (b == null) throw new MissingException(what + " 의 어둠이 눌리는 것이 아니다");
+            b.onClick.Invoke(); yield return Frames(2);
+            if (app.Overlay.IsOpen) { b.onClick.Invoke(); yield return Frames(2); }
+            if (app.Overlay.IsOpen) throw new MissingException(what + " 닫힘(어둠 두 번 뒤에도 열려 있다)");
         }
 
         static System.Collections.IEnumerator CloseChest(App app, string what)

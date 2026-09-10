@@ -55,7 +55,10 @@ function playReport(lines) {
   let done = null;
   for (const t of lines) {
     let m = t.match(/\[KkomaKnight\] play (P\d+) ok/);      if (m) { ok.push(m[1]); continue; }
-    m = t.match(/\[KkomaKnight\] play (P\d+) fail (.*)$/);   if (m) { fail.push({ id: m[1], why: m[2].trim() }); continue; }
+    // ⚠ `$` 를 안 붙인다 — 유니티 WebGL 은 `Debug.Log` 한 줄에 **스택을 덧붙여** 보낼 때가 있어(여러 줄) `.` 가 줄바꿈을 안 넘는 `$` 앵커면 통째로 안 맞는다.
+    //   그러면 «done 줄이 fail 1 이라고 말하는데 까닭 줄은 하나도 없는» 꼴이 된다(배포 런 565 에서 실제로 났다 · 결정 1065) —
+    //   세는 곳과 이름 대는 곳이 갈리면, 봇이 잡은 고장을 아무도 못 읽는다. 첫 줄만 까닭으로 쓴다.
+    m = t.match(/\[KkomaKnight\] play (P\d+) fail ([^\n]*)/);   if (m) { fail.push({ id: m[1], why: m[2].trim() }); continue; }
     m = t.match(/\[KkomaKnight\] play done (\d+)\/(\d+) fail (\d+)/);
     if (m) done = { ok: Number(m[1]), ran: Number(m[2]), fail: Number(m[3]) };
   }
@@ -108,6 +111,12 @@ if (flag('self-test')) {
       r => r.ok.length === 1 && r.fail.length === 0 && r.done && r.done.fail === 0],
     ['한 단계 빨강', ['[KkomaKnight] play P5 fail MissingException 못 찾았다: EnterBtn', '[KkomaKnight] play done 0/1 fail 1'],
       r => r.fail.length === 1 && r.fail[0].id === 'P5' && /EnterBtn/.test(r.fail[0].why) && r.done.fail === 1],
+    // ⚑ 스택이 덧붙어 **여러 줄로 온 fail** 도 읽어야 한다(배포 런 565 · 결정 1065) — 예전 `$` 앵커면 이 줄이 통째로 안 잡혀
+    //   «done 은 fail 1 인데 까닭은 하나도 없는» 침묵이 됐다. 세는 곳과 이름 대는 곳은 같은 줄을 봐야 한다.
+    ['빨강에 스택이 붙어 여러 줄로 온다',
+      ['[KkomaKnight] play P10 fail MissingException 못 찾았다: Background\n  at Playthrough.CloseChest (…)\n  at …',
+       '[KkomaKnight] play done 2/3 fail 1'],
+      r => r.fail.length === 1 && r.fail[0].id === 'P10' && /Background/.test(r.fail[0].why) && !/\n/.test(r.fail[0].why) && r.done.fail === 1],
     // 마지막 줄이 없으면 «돌다 죽었다» 다 — 초록으로 읽으면 안 된다
     ['done 줄이 없다', ['[KkomaKnight] play P1 ok'], r => r.done === null],
     ['봇을 안 돌린 런', ['[KkomaKnight] ready lobby'], r => r.done === null && r.ok.length === 0],
