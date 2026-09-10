@@ -76,10 +76,8 @@ namespace KkomaKnight.Game
         public static int HeaderSize => UiKit.FontForHeight(Layout.ShopSec1.H);
         /// <summary>섹션을 나누는 라인 데코(<c>LineDeco</c>)의 알파 — <b>주인 2026-09-07 · 255 중 13</b>(T100 ⓒ). 제목 글자는 그대로 두고 선만 옅게.</summary>
         public const float SecLineAlpha = 13f / 255f;
-        /// <summary>가격 줄의 다이아 아이콘 한 변 = 버튼 글자 크기(정사각 · 글자 높이와 같게).</summary>
-        public const int PriceIconSize = TextSize.Button;
-        /// <summary>가격 줄 요소 간격(px).</summary>
-        const float PriceGap = 10f;
+        /// <summary>가격 줄의 다이아 아이콘 한 변 = 버튼 글자 크기(정사각 · 글자 높이와 같게). T380 — 값은 <see cref="UiKit.PriceIconSize"/> 한 곳(펫 소환 버튼과 같은 줄 꼴).</summary>
+        public const int PriceIconSize = UiKit.PriceIconSize;
 
         TopBar _top; RectTransform _content; ScrollRect _scroll;
         TMP_Text _freeTxt;
@@ -279,18 +277,9 @@ namespace KkomaKnight.Game
             else PriceRow(b, new Layout.R(0, 0, 100, 100), UiKit.FmtQty(cost), label);
             return b;
         }
-        /// <summary>[라벨][💎 아이콘][가격] 한 줄 — HorizontalLayoutGroup 이 자식을 선호 크기로 가운데 정렬(글자는 Overflow · rect 가 선호 폭과 같아 반올림으로 줄이 접히지 않게).
-        /// <para>T255 — 아이콘·글자 크기를 인자로 받는다(키 버튼이 같은 줄 꼴을 쓴다 · 기본값은 종전 그대로라 다이아 버튼은 한 픽셀도 안 바뀐다).</para></summary>
-        RectTransform PriceRow(RectTransform parent, Layout.R r, string cost, string before = null, string iconKey = "hud.gem", string iconName = "Gem", int costSize = TextSize.Button, TextKind costKind = TextKind.Button, int iconSize = PriceIconSize)
-        {
-            var row = UiKit.Rect(parent, "Price"); UiKit.Pct(row, r);
-            var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>(); hl.childAlignment = TextAnchor.MiddleCenter; hl.spacing = PriceGap; hl.childForceExpandWidth = false; hl.childForceExpandHeight = false; hl.childControlWidth = true; hl.childControlHeight = true;
-            if (!string.IsNullOrEmpty(before)) { var t = UiKit.Text(row, before, TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); t.name = "Label"; t.textWrappingMode = TextWrappingModes.NoWrap; }
-            var ic = UiKit.Icon(row, iconName, iconKey); ic.preserveAspect = true;
-            var le = ic.gameObject.AddComponent<LayoutElement>(); le.preferredWidth = iconSize; le.preferredHeight = iconSize;
-            var c = UiKit.Text(row, cost, costSize, Palette.White, TextAnchor.MiddleCenter, false, true, costKind); c.name = "Cost"; c.textWrappingMode = TextWrappingModes.NoWrap;
-            return row;
-        }
+        /// <summary>[라벨][💎 아이콘][가격] 한 줄 — 몸은 <see cref="UiKit.PriceRow"/> 로 올라갔다(T380 · 펫 소환 버튼과 한 꼴). 여기는 상점 이름 계약(Price/Cost)만 고정한다.</summary>
+        static RectTransform PriceRow(RectTransform parent, Layout.R r, string cost, string before = null, string iconKey = "hud.gem", string iconName = "Gem", int costSize = TextSize.Button, TextKind costKind = TextKind.Button, int iconSize = PriceIconSize)
+            => UiKit.PriceRow(parent, r, cost, before, iconKey, iconName, costSize, costKind, iconSize);
 
         /// <summary>
         /// 상자 카드의 <b>«키로 열기»</b> 버튼(T255 3항 · 주인 2026-09-09 «파란색 키로 1회 뽑기 가능 …») — 초록 버튼에 [열쇠 아이콘][<b>가진 개수</b>].

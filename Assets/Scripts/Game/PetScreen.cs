@@ -11,7 +11,7 @@ namespace KkomaKnight.Game
     /// 펫 탭 = 레퍼런스 <c>docs/ref/13_pet.jpg</c> 구도 · 펫 세부 팝업 = <c>14_pet_detail.jpg</c> (T42 · 주인 2026-09-06 «UI 는 무조건 레퍼런스 기준» · T32 «Character_Skill 그대로» 폐기 · 주인 ⓔ «시스템이 없는 화면은 레이아웃 껍데기»).
     /// 펫 시스템은 없다 — <b>전부 표시만</b>(버튼은 눌러도 아무 일 없음 · 숫자는 0 · 슬롯은 잠금/빈 칸 · 레퍼런스 숫자를 베끼지 않는다). ref-layout ⑩·⑪ 표(<see cref="Layout.PetGrid"/> …) 자리에 GUI Pro 조각을 조립한다:
     /// ① 상단 재화 바(<see cref="TopBar"/>) → ② <b>4열 격자 9칸</b>(칸 = ItemFrame_01 조각 + 파란 등급 변형 + GUI Pro 아이콘 · 칸 위 «Lv. 0» · 칸 아래 진행바 «0/0») → ③ <b>합계 줄</b>(«+0 ❤ | +0 🛡 | +0 🗡»)
-    /// → ④ <b>«장착중» 띠</b>(어두운 패널 + 초록 라벨 + 슬롯 3 = 열린 빈 칸 1 · 잠금 원 2) → ⑤ 회색 <b>전체 강화 · 빠른 장착</b> → ⑥ 주황 <b>소환 · 소환 x10</b>(가격 자리는 <b>비어 있다</b> — 펫 시스템이 없어 값을 지어내지 않는다 · 흐리게 + 누르면 토스트 · T178) → ⑦ 탭 바.
+    /// → ④ <b>«장착중» 띠</b>(어두운 패널 + 초록 라벨 + 슬롯 3 = 열린 빈 칸 1 · 잠금 원 2) → ⑤ 주황 <b>전체 강화 · 빠른 장착</b>(할 것이 있으면 빨간 점 · T380) → ⑥ 주황 <b>소환 · 소환 x10</b>(가격 자리는 <b>비어 있다</b> — 펫 시스템이 없어 값을 지어내지 않는다 · 흐리게 + 누르면 토스트 · T178) → ⑦ 탭 바.
     /// 칸을 누르면 세부 팝업(공통 팝업 문법 <see cref="UiKit.Popup"/> · 명판 없음 · 칸이 상자 윗변에 걸침 · 설명 박스 · «패시브:» 수치 줄 · 강화(회색) · 장착(주황) · «탭하여 닫기»).
     /// 글자(T63-pet · 주인 «글씨 너무 작다»): 전부 <see cref="UiKit"/> 하한(본문 40 · 버튼 44) — 직접 박은 크기는 없다. 진행바 «n/m» 만 표 높이에 안 들어가 바를 <see cref="Layout.PetBarH"/> 로 키웠다(13·14 게이트 잘림 0).
     /// 테두리(T69-pet · 주인 «행·카드·칸마다 검은 아웃라인» + 7항 «아이템류 칸 = 장비 화면의 그 프레임»): 격자 9칸·빈 장착 슬롯·세부 칸의 ItemFrame Border 링을 <see cref="GearUi.DarkFrame"/> 로 Ink 8px · 잠금 슬롯(원)은 <see cref="CircleBorderKey"/> 굵은 원형 조각.
@@ -113,12 +113,14 @@ namespace KkomaKnight.Game
                 UiKit.Clickable(s, () => TapSlot(si));   // T293 5항 — 낀 칸을 누르면 그 펫의 세부 팝업(빈 칸·잠긴 칸은 까닭을 토스트)
             }
 
-            // ⑤ 회색 보조 버튼 2 → ⑥ 주황 소환 버튼 2(가격 자리 없음 · 흐리게 + 누르면 «준비 중» 토스트 · T178) → ⑦ 탭 바
-            // T293 5항 ⓗ(주인 «강화 가능할 때는 해당 거 버튼 주황») — 옷은 «지금 할 것이 있나» 를 따르되 **누르는 것은 늘 된다**:
-            //   없으면 까닭을 토스트로 말한다(특권 «전체 받기» 가 세운 그 문법 · T306). 회색인데 아무 말도 안 하는 버튼을 안 만든다.
-            var up = UiKit.Button(Root, "ui.btnGray", "전체 강화", UpgradeAll, Layout.PetUpgradeAll); up.name = "UpgradeAllBtn"; _upAll = up;
-            var qe = UiKit.Button(Root, "ui.btnGray", "빠른 장착", QuickEquip, Layout.PetQuickEquip); qe.name = "QuickEquipBtn"; _quickEq = qe;
-            var sm = SummonButton("SummonBtn", "소환", Layout.PetSummon); var sm10 = SummonButton("Summon10Btn", "소환 x10", Layout.PetSummon10);
+            // ⑤ 주황 보조 버튼 2 → ⑥ 주황 소환 버튼 2(가격 자리 없음 · 흐리게 + 누르면 «준비 중» 토스트 · T178) → ⑦ 탭 바
+            // T380(주인 2026-09-10 «펫꺼 전체강화·빠른장착 둘다 주황으로 · 할 거리 있으면 빨간점») — 옷은 **늘 주황**이고 «지금 할 것이 있나» 는
+            //   **빨간 점**이 말한다(옷을 두 벌 겹치는 T306 꼴을 안 쓴다 — 주인이 색을 고정했으므로 갈아입힐 것이 없다). **누르는 것은 늘 된다**:
+            //   없으면 까닭을 토스트로 말한다(특권 «전체 받기» 가 세운 그 문법 · T306). 점이 꺼진 채 아무 말도 안 하는 버튼을 안 만든다.
+            var up = UiKit.Button(Root, "ui.btnOrange", "전체 강화", UpgradeAll, Layout.PetUpgradeAll); up.name = "UpgradeAllBtn"; _upAll = up;
+            var qe = UiKit.Button(Root, "ui.btnOrange", "빠른 장착", QuickEquip, Layout.PetQuickEquip); qe.name = "QuickEquipBtn"; _quickEq = qe;
+            _upAllDot = HelperDot(up, UpgradeDotName); _quickEqDot = HelperDot(qe, QuickEquipDotName);
+            var sm = SummonButton("SummonBtn", CountLabel(1), Layout.PetSummon); var sm10 = SummonButton("Summon10Btn", CountLabel(PullCap), Layout.PetSummon10);
             NavBar.Attach(this, Root, "pet");
 
             // 비평 이름표(T46 · ref-layout ⑩ 의 «요소» 이름 그대로)
@@ -174,11 +176,14 @@ namespace KkomaKnight.Game
         RectTransform SummonButton(string name, string label, Layout.R r) => SummonButton(name, label, r, name == "Summon10Btn");
 
         /// <summary>
-        /// 주황 소환 버튼 — 위 줄 «소환»/«소환 x10», 아래 줄 <b>지금 치를 값</b>(펫알 🥚 또는 다이아 💎).
+        /// 주황 소환 버튼 — <b>상점 신화 상자 큰 카드의 가격 버튼과 한 꼴</b>(T380 · 주인 2026-09-10 «펫부분도 뽑기 버튼 내부 디자인 신화상자 버튼처럼 · 1회 / 다이아 아이콘 100»):
+        /// 위 줄 «<b>N회</b>»(지금 몇 번 뽑나 · 펫알이면 그 수) / 아래 줄 [아이콘][값] 한 줄(<see cref="UiKit.PriceRow"/> · 상점과 같은 함수라 간격·크기가 같다).
         /// <para>
         /// T293 ⓘ — 표(<see cref="GameData.Pet"/>)가 실린 뒤로 <b>값을 지어내지 않고 표에서 읽는다</b>. «무엇으로 몇 번» 은 화면이 세지 않고
         /// <see cref="Pets.Offer"/> 하나가 답한다(T293 ⓓ 의 계약 — 두 버튼이 각자 세면 «소환은 펫알인데 x10 은 다이아» 같은 어긋남이 화면에서만 산다).
+        /// 윗줄의 «N회» 도 그 답의 <c>Count</c> 다 — 상점 열쇠 버튼이 «쓸 개수»회 로 움직이는 것과 같은 까닭(«1회» 라 적고 3 회가 나가면 거짓말이다 · T255).
         /// </para>
+        /// <para>이름 계약(자): 윗줄 <c>Label</c> · 값 줄 <c>Cost</c> 안 <c>Icon</c>·<c>Qty</c>. 프리팹 버튼 자체의 글자는 비워 숨긴다(상점과 같다).</para>
         /// <para>표가 없으면(옛 껍데기) 종전 그대로 — 글자만, 흐리게, 누르면 «준비 중» 토스트(T178 · 결정 432).</para>
         /// </summary>
         RectTransform SummonButton(string name, string label, Layout.R r, bool ten)
@@ -191,12 +196,11 @@ namespace KkomaKnight.Game
                 Dim(shell, false);
                 return shell;
             }
-            var b = UiKit.Button(Root, "ui.btnOrange", label, () => Pull(ten), r); b.name = name;
-            var txt = UiKit.ButtonText(b); if (txt != null) { UiKit.Pct(txt.rectTransform, 4, 46, 92, 48); txt.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); }
-            // 값 줄 — 아이콘 + 숫자. 어느 쪽인지는 `Refresh` 가 세이브를 보고 다시 칠한다(태어날 때는 표의 다이아 값).
-            var cost = UiKit.Rect(b, "Cost"); UiKit.Pct(cost, 4, 6, 92, 38);
-            UiKit.Icon(cost, "Icon", "hud.gem", Palette.White);
-            UiKit.Label(cost, 0, 0, 100, 100, "", 30, Palette.White, TextAnchor.MiddleCenter).name = "Qty";
+            var b = UiKit.Button(Root, "ui.btnOrange", "", () => Pull(ten), r); b.name = name;
+            var own = UiKit.ButtonText(b); if (own != null) own.gameObject.SetActive(false);
+            // 위 «N회» / 아래 [아이콘][값] — 상점 `ShopScreen.PriceButton(twoLine)` 의 자리·크기 그대로(0~50 / 50~94). 글자·그림은 `Refresh` 가 세이브를 보고 다시 칠한다.
+            var top = UiKit.Label(b, 0, 6, 100, 44, label, TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); top.name = "Label";
+            UiKit.PriceRow(b, new Layout.R(0, 50, 100, 44), "", null, "hud.gem", "Icon", TextSize.Button, TextKind.Button, UiKit.PriceIconSize, "Cost", "Qty");
             if (ten) _sum10 = b; else _sum1 = b;
             return b;
         }
@@ -244,6 +248,22 @@ namespace KkomaKnight.Game
         }
 
         RectTransform _upAll, _quickEq;
+        GameObject _upAllDot, _quickEqDot;
+
+        /// <summary>보조 버튼 둘의 빨간 점 이름(자가 이 이름으로 짚는다 · T380).</summary>
+        public const string UpgradeDotName = "UpgradeDot", QuickEquipDotName = "QuickEquipDot";
+        /// <summary>점 지름·자리(버튼 오른쪽 위 모서리 안쪽) — 특권 카드 «받기» 버튼의 점(<see cref="PrivilegeScreen.CardDotSize"/>)과 같은 눈금이다(버튼 높이가 비슷하다).</summary>
+        public const float HelperDotSize = 34f;
+        public static readonly Vector2 HelperDotAnchor = new Vector2(1, 1), HelperDotOffset = new Vector2(-10f, -6f);
+
+        /// <summary>보조 버튼 하나에 점을 달아 둔다(태어날 때는 꺼짐 · 켜고 끄는 것은 <see cref="RefreshHelpers"/> 하나뿐이다 · T366 카드 점과 같은 문법).</summary>
+        static GameObject HelperDot(RectTransform btn, string name)
+        {
+            if (btn == null) return null;
+            var dot = UiKit.AlertDot(btn, name, HelperDotAnchor, HelperDotOffset, HelperDotSize);
+            dot.SetActive(false);
+            return dot;
+        }
 
         /// <summary>지금 강화할 수 있는 펫이 몇 마리인가 — 버튼 글자와 «누르면 무슨 일이 나나» 가 같은 값에서 나온다.</summary>
         int UpgradableCount()
@@ -499,22 +519,21 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>
-        /// 보조 버튼 둘의 «지금 할 것이 있나» — 글자 뒤에 <b>할 수 있는 수</b>를 붙여 그것을 말한다.
+        /// 보조 버튼 둘의 «지금 할 것이 있나» — 글자 뒤에 <b>할 수 있는 수</b>를 붙이고, 같은 수로 <b>빨간 점</b>을 켠다(T380).
         /// <para>
-        /// ⚠ <b>옷(주황/회색)은 이 회차에 안 바꿨다</b> — 이 레포의 두 벌 버튼은 <b>프리팹이 서로 다른 조각</b>이라
-        /// (<c>ui.btnOrange</c> ↔ <c>ui.btnGray</c>) 색만 갈아입힐 수 없고, <see cref="LobbyPopups.PrivilegeScreen"/> 처럼
-        /// <b>두 벌을 겹쳐 세우고 한 벌만 켜는</b> 꼴이어야 한다. 그 꼴은 이름이 하나 늘어(<c>…#Gray</c>) <b>스모크 자의 이름 계약</b>을 건드리므로
-        /// 그 자를 같은 회차에 옮길 수 있을 때 한다(T184 · 결정 425 — 오늘 이 절이 낡은 자를 두 번 깨뜨렸다).
+        /// 옷은 <b>늘 주황</b>이다(주인 2026-09-10 «둘다 주황으로») — 전에 여기 적혀 있던 «두 벌 겹치기» 걱정은 옷을 상태로 바꾸려던 때의 것이라
+        /// 이제 없다. 점과 글자 뒤 수는 <b>한 값</b>(<see cref="UpgradableCount"/>·<see cref="QuickEquipCount"/>)에서 나온다 — 갈라지면
+        /// «점은 켜졌는데 수는 없는» 자리가 생긴다(T366 ⓑ 가 같은 까닭으로 판정을 한 곳에 뒀다).
         /// </para>
-        /// <para>그때까지도 «지금 할 것이 있나» 는 <b>글자로</b> 보인다 — 색만 못 쓸 뿐 아무것도 안 보이는 자리는 없다.</para>
         /// </summary>
         void RefreshHelpers()
         {
-            Count(_upAll, "전체 강화", UpgradableCount());
-            Count(_quickEq, "빠른 장착", QuickEquipCount());
+            Count(_upAll, _upAllDot, "전체 강화", UpgradableCount());
+            Count(_quickEq, _quickEqDot, "빠른 장착", QuickEquipCount());
         }
-        static void Count(RectTransform btn, string label, int n)
+        static void Count(RectTransform btn, GameObject dot, string label, int n)
         {
+            if (dot != null) dot.SetActive(n > 0);
             if (btn == null) return;
             var t = UiKit.ButtonText(btn); if (t == null) return;
             t.text = TextGlyphs.Safe(n > 0 ? label + " " + n : label);
@@ -604,13 +623,15 @@ namespace KkomaKnight.Game
         void RefreshSummon()
         {
             var d = PD; var s = App != null ? App.Save : null; if (d == null || s == null) return;
-            Paint(_sum1, Pets.Offer(d, false, s.PetEgg, PullCap), "소환");
-            Paint(_sum10, Pets.Offer(d, true, s.PetEgg, PullCap), "소환 x" + PullCap);
+            Paint(_sum1, Pets.Offer(d, false, s.PetEgg, PullCap));
+            Paint(_sum10, Pets.Offer(d, true, s.PetEgg, PullCap));
         }
-        static void Paint(RectTransform btn, Pets.PullOffer o, string label)
+        /// <summary>윗줄 «N회» — 이 제안이 몇 번을 뽑는가(T380 · 상점 «1회»·«10회» 와 같은 낱말).</summary>
+        public static string CountLabel(int count) => count + "회";
+        static void Paint(RectTransform btn, Pets.PullOffer o)
         {
             if (btn == null) return;
-            var t = UiKit.ButtonText(btn); if (t != null) t.text = TextGlyphs.Safe(o.ByEgg ? label + " (" + o.Count + "회)" : label);
+            var l = UiKit.Find(btn, "Label"); var lt = l != null ? l.GetComponent<TMP_Text>() : null; if (lt != null) lt.text = TextGlyphs.Safe(CountLabel(o.Count));
             var cost = UiKit.Find(btn, "Cost"); if (cost == null) return;
             UiKit.SetSprite(cost, "Icon", o.ByEgg ? "pet.egg" : "hud.gem", Palette.White);
             var q = UiKit.Find(cost, "Qty"); var qt = q != null ? q.GetComponent<TMP_Text>() : null;

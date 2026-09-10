@@ -1168,6 +1168,29 @@ namespace KkomaKnight.Game
         /// <summary>빨간 알림 점 조각의 카탈로그 키(<see cref="AlertDot"/> · 게이트가 이 키로 조각을 집어 스프라이트를 찾는다).</summary>
         public const string AlertDotKey = "ui.alertDot";
 
+        /// <summary>가격 줄의 다이아 아이콘 한 변 = 버튼 글자 크기(정사각 · 글자 높이와 같게 · 상점 T63 값 그대로).</summary>
+        public const int PriceIconSize = TextSize.Button;
+        /// <summary>가격 줄 요소 간격(px).</summary>
+        public const float PriceGap = 10f;
+
+        /// <summary>
+        /// [라벨][아이콘][값] 한 줄 — HorizontalLayoutGroup 이 자식을 선호 크기로 가운데 정렬(글자는 Overflow · rect 가 선호 폭과 같아 반올림으로 줄이 접히지 않게).
+        /// <para>상점 상자 카드의 «1회 / [💎 400]» 버튼이 세운 꼴(T63-shop · 결정 142)을 <b>T380 이 여기로 올렸다</b> — 펫 소환 버튼이 같은 꼴을 쓴다
+        /// (주인 2026-09-10 «펫부분도 뽑기 버튼 내부 디자인 신화상자 버튼 디자인처럼 · 1회 / 다이아 아이콘 100»). 한 화면에서 «값 줄» 이 두 꼴이면 사람이 두 번 배운다.</para>
+        /// <para>T255 — 아이콘·글자 크기를 인자로 받는다(키 버튼이 같은 줄 꼴을 쓴다 · 기본값은 종전 그대로라 다이아 버튼은 한 픽셀도 안 바뀐다).
+        /// 줄·값 글자의 이름(<paramref name="rowName"/>·<paramref name="costName"/>)은 부르는 쪽의 이름 계약을 따른다(상점 = Price/Cost · 펫 = Cost/Qty).</para>
+        /// </summary>
+        public static RectTransform PriceRow(RectTransform parent, Layout.R r, string cost, string before = null, string iconKey = "hud.gem", string iconName = "Gem", int costSize = TextSize.Button, TextKind costKind = TextKind.Button, int iconSize = PriceIconSize, string rowName = "Price", string costName = "Cost")
+        {
+            var row = Rect(parent, rowName); Pct(row, r);
+            var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>(); hl.childAlignment = TextAnchor.MiddleCenter; hl.spacing = PriceGap; hl.childForceExpandWidth = false; hl.childForceExpandHeight = false; hl.childControlWidth = true; hl.childControlHeight = true;
+            if (!string.IsNullOrEmpty(before)) { var t = Text(row, before, TextSize.Button, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Button); t.name = "Label"; t.textWrappingMode = TextWrappingModes.NoWrap; }
+            var ic = Icon(row, iconName, iconKey); ic.preserveAspect = true;
+            var le = ic.gameObject.AddComponent<LayoutElement>(); le.preferredWidth = iconSize; le.preferredHeight = iconSize;
+            var c = Text(row, cost, costSize, Palette.White, TextAnchor.MiddleCenter, false, true, costKind); c.name = costName; c.textWrappingMode = TextWrappingModes.NoWrap;
+            return row;
+        }
+
         /// <summary>
         /// 빨간 알림 점(T136 · 주인 2026-09-07 «빨간점들이 찌그러져있더라») — **점을 세우는 유일한 입구**.
         /// 조각 <c>Alert_Dot_01_Red</c> 는 그림 하나라 rect 가 정사각이 아니면 그대로 늘어난다.
