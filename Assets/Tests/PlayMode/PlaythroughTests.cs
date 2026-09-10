@@ -1336,11 +1336,15 @@ namespace KkomaKnight.Tests.Play
             //     안 가진 펫의 세부는 강화·장착이 둘 다 잠겨 있어 이 단계가 «이름만 보고» 지나간다(재는 것이 사라진다).
             var grid = UiKit.Find(_app.Current.Root, "PetGrid");
             Assert.IsNotNull(grid, "격자는 소환 뒤에도 서 있다");
-            int idx = 0;
-            for (int i = 0; i < D.Pet.Pets.Count; i++) if (Pets.Has(S, D.Pet.Pets[i].Id)) { idx = i; break; }
-            Assert.IsTrue(Pets.Has(S, D.Pet.Pets[idx].Id), "소환 뒤에는 가진 펫이 하나는 있다(전제 — 없으면 아래 강화·장착이 거저 지나간다)");
-            var cell = UiKit.Find(grid, "Pet:" + idx);
-            Assert.IsNotNull(cell, "가진 펫의 칸(이름 계약 PetGrid/Pet:N)");
+            //   ⛑ T293 ⓘ 4회차(주인 5항 ⓙ) 뒤 — 격자는 **가진 펫만** 켜므로 «표의 몇 번째» 로 칸을 집으면 어긋난다.
+            //     켜진 칸은 그 자체가 «가진 펫» 이라 **처음 켜진 칸**을 집는 것이 곧 이 단계가 원하던 것이다(자리 대신 뜻 · 결정 1070).
+            int owned = 0;
+            for (int i = 0; i < D.Pet.Pets.Count; i++) if (Pets.Has(S, D.Pet.Pets[i].Id)) owned++;
+            Assert.Greater(owned, 0, "소환 뒤에는 가진 펫이 하나는 있다(전제 — 없으면 아래 강화·장착이 거저 지나간다)");
+            Transform cell = null;
+            foreach (var c in grid.GetComponentsInChildren<Transform>(true))
+                if (c.name.StartsWith("Pet:") && c.gameObject.activeInHierarchy) { cell = c; break; }
+            Assert.IsNotNull(cell, "가진 펫의 칸(이름 계약 PetGrid/Pet:N · 켜진 칸 = 가진 펫)");
             var cellBtn = cell.GetComponentInChildren<Button>();
             Assert.IsNotNull(cellBtn, "펫 칸은 눌리는 것이어야 한다");
             cellBtn.onClick.Invoke();
@@ -1370,7 +1374,11 @@ namespace KkomaKnight.Tests.Play
             // ⓓ 장착 — 세부를 (다시) 열고 «장착» 을 누른다. 가진 펫이면 세이브가 달라진다
             if (!_app.Overlay.IsOpen)
             {
-                var again = UiKit.Find(UiKit.Find(_app.Current.Root, "PetGrid"), "Pet:" + idx);
+                Transform again = null;
+                var grid2 = UiKit.Find(_app.Current.Root, "PetGrid");
+                if (grid2 != null)
+                    foreach (var c in grid2.GetComponentsInChildren<Transform>(true))
+                        if (c.name.StartsWith("Pet:") && c.gameObject.activeInHierarchy) { again = c; break; }   // 켜진 첫 칸 = 가진 펫(위와 같은 규칙)
                 if (again != null) { again.GetComponentInChildren<Button>().onClick.Invoke(); yield return UntilOpen(5f, "펫 세부 팝업(다시)"); }
             }
             {

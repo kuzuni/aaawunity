@@ -341,11 +341,23 @@ namespace KkomaKnight.Tests.Play
             LobbyPopups.DailyGift(_app); yield return Check("17_daily_gift"); _app.Overlay.Close(); yield return Frames(1);
 
             // 13 펫 · 14 펫 세부 (T69-pet · strict) — 격자 칸·빈 장착 슬롯·세부 칸 = ItemFrame Border → Ink 8px(7항) · 잠금 슬롯 = 굵은 원형 조각 · 합계 줄은 맨 글자(Exempt) · T72 ①② 는 있음만
+            // ⛑ T293 ⓘ 4회차(주인 5항 ⓙ «얻은 거만 보이게») — 격자는 이제 **가진 펫만** 켠다.
+            //   이 자가 재는 것은 «켜진 칸이 제 조각 자식을 안 끄는가»(T103 1항)이지 «몇 마리 가졌나» 가 아니므로,
+            //   재기 전에 표의 펫을 **다 가지게** 해서 칸이 다 서게 한다(값은 Core 가 낸다 · 자가 수를 안 적는다).
+            //   ⚠ `if (활성이면)` 으로 감싸는 쪽은 안 쓴다 — 새 세이브에서 갈래가 통째로 안 돌아 **늘 통과**한다(결정 953 ③ · 1070).
+            if (_app.Data.Pet != null) { foreach (var p in _app.Data.Pet.Pets) Pets.Gain(_app.Save, p.Id); _app.Persist(); }
             _app.ShowScreen("pet"); yield return Frames(2); yield return Check("13_pet");
             {
                 var petRoot = _app.Current.Root;
-                AssertItemFrameBorder(UiKit.Find(petRoot, "Pet:0"), "펫 격자 첫 칸");
-                AssertItemFrameBorder(UiKit.Find(petRoot, "Pet:" + (Layout.PetCount - 1)), "펫 격자 마지막 칸");
+                // 자리가 아니라 **뜻**으로 집는다 — «켜진 칸 중 처음과 마지막»(결정 1070 · 자리로 집으면 «가진 만큼만 켜지는» 날 뜻을 잃는다).
+                var shown = new List<Transform>();
+                var gridRoot = UiKit.Find(petRoot, "PetGrid");
+                if (gridRoot != null)
+                    foreach (var c in gridRoot.GetComponentsInChildren<Transform>(true))
+                        if (c.name.StartsWith("Pet:") && c.gameObject.activeInHierarchy) shown.Add(c);
+                Assert.Greater(shown.Count, 1, "펫을 다 가지게 했으니 켜진 칸이 둘 이상이어야 이 자가 뜻이 있다");
+                AssertItemFrameBorder(shown[0], "펫 격자 첫 칸(켜진 것 중)");
+                AssertItemFrameBorder(shown[shown.Count - 1], "펫 격자 마지막 칸(켜진 것 중)");
                 AssertCircleBorder(UiKit.Find(petRoot, "Slot:0"), "펫 잠금 슬롯 0"); AssertCircleBorder(UiKit.Find(petRoot, "Slot:1"), "펫 잠금 슬롯 1");
                 AssertItemFrameBorder(UiKit.Find(petRoot, "Slot:" + PetScreen.LockedSlots), "펫 빈 장착 슬롯(ItemFrame · Add_1)");
                 Assert.IsTrue(UiKit.HasPattern(petRoot), "펫 탭 배경 패턴(T72 ①)");
