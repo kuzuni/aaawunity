@@ -42,6 +42,9 @@ namespace KkomaKnight.Tests.Play
         struct Cost
         {
             public int graphics, images, raws, texts, masks, canvases;
+            /// <summary>회차 8(T396) — 살아 있는 <b>초상</b>(<see cref="HeroView"/>) 수. 하나가 «카메라 + RenderTexture 한 벌» 이라 UI 조각 수로는 안 잡히는 값이다.
+            /// 펫 격자가 아홉 칸이면 그만큼 서므로 <b>여기 안 세면 아무 표에도 안 나온다</b>(그래서 «무거울 수도» 가 글로만 남는다).</summary>
+            public int views;
             /// <summary>회차 6 — <b>화면 안으로 잘라 낸</b> 넓이의 합. 이것이 «실제로 칠하는 양»(오버드로)에 가깝다.</summary>
             public float area;
             /// <summary>회차 5 까지 쓰던 «사각형 넓이» 합(자르기 전) — 화면 밖으로 뻗은 몫까지 센다. 회차 사이 비교용으로 남긴다.</summary>
@@ -49,7 +52,7 @@ namespace KkomaKnight.Tests.Play
             public System.Collections.Generic.List<KeyValuePair<string, float>> big;   // 회차 5 — 그 넓이를 «누가» 먹는가
             public override string ToString() =>
                 "그림 " + graphics + "(Image " + images + " · RawImage " + raws + " · Text " + texts + ")"
-                + " · 담개 " + masks + " · 캔버스 " + canvases
+                + " · 담개 " + masks + " · 캔버스 " + canvases + " · **초상 " + views + "**(카메라+텍스처 한 벌씩 · T396)"
                 + " · **보이는 넓이 " + area.ToString("0.00") + "화면**(사각형 넓이 " + rawArea.ToString("0.00") + ")";
         }
 
@@ -74,6 +77,9 @@ namespace KkomaKnight.Tests.Play
         {
             var c = new Cost();
             c.big = new System.Collections.Generic.List<KeyValuePair<string, float>>();
+            // 초상은 UI 조각이 아니라 «카메라 + RenderTexture» 라 아래 Graphic 훑기에 안 잡힌다 — 따로 센다(T396).
+            foreach (var hv in Object.FindObjectsByType<HeroView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+                if (hv != null && hv.isActiveAndEnabled) c.views++;
             float screen = Mathf.Max(1f, Screen.width * (float)Screen.height);
             foreach (var g in Object.FindObjectsByType<Graphic>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
             {
@@ -137,6 +143,17 @@ namespace KkomaKnight.Tests.Play
             var lobby = Measure();
             Assert.IsFalse(BootCanvasAlive(), "부팅 캔버스가 사라진 뒤에 재야 로비 표에 남의 화면이 안 섞인다(회차 7)");
 
+            // 회차 8(T396) — **펫 탭도 같이 잰다.** 격자 칸 그림이 조각 아이콘에서 **메이커 초상**으로 바뀌면서
+            //   화면 하나가 «카메라 + RenderTexture» 를 아홉 벌까지 들 수 있게 됐다. 그 값을 아무 표도 안 세고 있었다.
+            //   ⚠ 재기 전에 표의 펫을 **다 가지게** 한다 — 칸은 «가진 것만» 서므로(T293 ⓙ) 새 세이브에서는 0개라 아무것도 안 재게 된다.
+            if (_app.Data != null && _app.Data.Pet != null)
+            {
+                foreach (var p in _app.Data.Pet.Pets) Pets.Gain(_app.Save, p.Id);
+                _app.Persist();
+            }
+            _app.ShowScreen("pet"); yield return Frames(3); Canvas.ForceUpdateCanvases();
+            var pet = Measure();
+
             _app.StartBattle(1); yield return Frames(3); Canvas.ForceUpdateCanvases();
             Assert.AreEqual("battle", _app.Current.Name, "전투로 들어가야 두 화면을 맞댈 수 있다");
             var battle = Measure();
@@ -145,18 +162,23 @@ namespace KkomaKnight.Tests.Play
             var sb = new StringBuilder();
             sb.Append("[T129] 화면별 그리는 양(에디터 PlayMode · fps 아님)\n");
             sb.Append("  로비 = ").Append(lobby).Append('\n');
+            sb.Append("  펫   = ").Append(pet).Append('\n');
             sb.Append("  전투 = ").Append(battle).Append('\n');
             sb.Append("  비(로비÷전투) = 그림 ").Append((battle.graphics > 0 ? lobby.graphics / (float)battle.graphics : 0f).ToString("0.00"))
               .Append(" · 보이는 넓이 ").Append((battle.area > 0.01f ? lobby.area / battle.area : 0f).ToString("0.00"))
               .Append(" (사각형 넓이 비 ").Append((battle.rawArea > 0.01f ? lobby.rawArea / battle.rawArea : 0f).ToString("0.00")).Append(")\n");
             // 회차 5 — 넓이는 몇몇 «큰 장» 이 거의 다 먹는다. **누가** 먹는지 이름으로 대야 다음 회차가 그 자리를 열 수 있다.
-            Append(sb, "로비", lobby); Append(sb, "전투", battle);
+            Append(sb, "로비", lobby); Append(sb, "펫", pet); Append(sb, "전투", battle);
             Debug.Log(sb.ToString());
 
             // ⚠ 단언은 «잰 것이 실제로 있다» 만 — 조각 수에 상한을 걸면 다음 UI 작업이 이 자에 걸려 죽는다.
             Assert.Greater(lobby.graphics, 0, "로비에서 그림을 세야 한다(0이면 이 자가 아무것도 안 재고 있다)");
             Assert.Greater(battle.graphics, 0, "전투에서 그림을 세야 한다");
             Assert.Greater(lobby.area, 0f, "칠하는 넓이가 0이면 rect 를 못 읽고 있는 것이다");
+            // 회차 8 — 여기서도 «상한» 은 안 건다(이 자의 규칙). 다만 **펫 탭에서 초상이 하나도 없으면** 그것은
+            //   «가벼워졌다» 가 아니라 **칸 그림이 통째로 사라진 것**이다(T396) — 그 갈래는 표가 아니라 단언이 잡아야 한다.
+            if (_app.Data != null && _app.Data.Pet != null)
+                Assert.Greater(pet.views, 0, "펫을 다 가진 판에서 격자 칸 초상이 0이면 칸 그림이 안 선 것이다(T396)");
 
             _log.AssertNoRed("화면별 그리는 양");
             if (_app != null) { if (_app.UiCanvas != null) Object.Destroy(_app.UiCanvas.gameObject); Object.Destroy(_app.gameObject); }
