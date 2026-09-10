@@ -1183,11 +1183,21 @@ namespace KkomaKnight.Tests.Play
             UiKit.CompleteAllTweens(); yield return Frames(1);
             {
                 string before = S.ToJson();
+                // ⛑ T385 — «세이브가 달라졌다» 는 «버튼이 무언가 썼다» 이지 «시킨 일이 됐다» 가 아니다.
+                //   `SaveData.ToJson` 은 `o["mail"]` 을 담으므로(SaveData.cs:384~390) **우편이 우편함에서 빠지는 것만으로**
+                //   아래 `AreNotEqual` 이 참이 된다 — 곧 그 줄은 바로 다음 줄에서 논리적으로 따라 나오고,
+                //   **보상이 어디로 갔는지는 아무 줄도 안 보고 있었다**(받기가 `Give` 를 안 부르거나 다른 칸에 넣거나 0 을 넣어도 초록).
+                //   ⇒ 이 단계가 **제 손으로 넣은** 우편(:1130~1131 · `ItemGold` 1000)이 **골드로** 들어왔는지를 잰다.
+                //   ⚑ 1000 은 표의 수가 아니라 **이 자가 정한 수**라 못 박아도 안 낡는다(표가 바뀌어도 이 줄은 그대로다).
+                //   ⚑ `Mail.Held` 는 이미 있고 그 주석이 «자·화면이 «받기 전 ↔ 받은 뒤» 를 견줄 때 쓴다» 라고 적어 둔 자리다(Mail.cs:133~137).
+                double gold0 = KkomaKnight.Core.Mail.Held(S, KkomaKnight.Core.Mail.ItemGold);
                 var all = UiKit.Find(_app.Overlay.Root, Mailbox.ClaimAllName);
                 if (all != null) { all.GetComponent<Button>().onClick.Invoke(); yield return Frames(3); }
                 else { Assert.IsTrue(Click(_app.Overlay.Root, s => s == "받기"), "«전체 받기» 가 없으면 줄마다 «받기» 가 있다"); yield return Frames(3); }
                 Assert.AreNotEqual(before, S.ToJson(), "우편을 받으면 세이브가 달라진다");
                 Assert.IsFalse(Mailbox.Any(_app), "받은 우편은 우편함에서 빠진다");
+                Assert.AreEqual(gold0 + 1000, KkomaKnight.Core.Mail.Held(S, KkomaKnight.Core.Mail.ItemGold), 1e-6,
+                    "이 단계가 넣은 우편(골드 1000)이 실제로 골드로 들어온다 — «세이브가 달라졌다» 는 그것을 안 말한다(T385)");
             }
             _log.AssertNoRed("P8 우편");
             yield return ClosePopup("우편");
@@ -1390,6 +1400,10 @@ namespace KkomaKnight.Tests.Play
                     string before = S.ToJson();
                     b.onClick.Invoke(); yield return Frames(3);
                     Assert.AreNotEqual(before, S.ToJson(), "가진 펫을 장착하면 세이브가 달라진다");
+                    // ⛑ T385 — 위 줄은 «세이브의 어딘가가 바뀌었다» 일 뿐이라, 이 클릭이 **아무 칸에도 안 끼우고**
+                    //   다른 것만 써도 초록이다. «시킨 일이 됐는가» 는 Core 에 묻는다(결정 1078 ⑤ 의 꼴 · UiSmokeTests 가 쓰는 그 함수).
+                    //   ⚑ «몇 번 칸» 은 안 적는다 — 빈 칸부터 채우는 규칙이 바뀌면 그 수가 낡는다. «낀 칸이 생겼다» 만 잰다.
+                    Assert.IsNotEmpty(Pets.Equipped(D.Pet, S), "장착을 누르면 실제로 낀 칸이 생긴다 — «세이브가 달라졌다» 는 그것을 안 말한다(T385)");
                 }
                 else Assert.Fail("가진 펫인데 «장착» 이 잠겨 있다 — 화면이 세이브를 안 보고 있다");
                 _log.AssertNoRed("P10 ⓓ 장착");
