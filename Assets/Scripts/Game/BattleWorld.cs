@@ -1051,8 +1051,9 @@ namespace KkomaKnight.Game
                     double astep = D.Combat.EnemyArrowSpeed * dt;   // T397 — dt 는 이미 배속이 곱해진 엔진 초(투사체와 같은 고침)
                     if (ashown > a.X) astep = System.Math.Min(ashown - a.X, astep * ProjCatchUpMul);   // 엔진이 앞서(= 더 왼쪽) 있으면 스냅하지 않고 조금 더 빨리 좁힌다
                     ashown -= astep;
-                    double alead = a.X - D.Combat.EnemyArrowSpeed * EngineConst.Dt;   // T397 ⓐ — 엔진보다 한 틱 이상 앞서(= 더 왼쪽으로) 가지 않는다
-                    if (ashown < alead) ashown = alead;
+                    // ⚠ T397 ⛑ — 적 화살에는 «엔진 한 틱 앞섬 상한» 을 걸지 않는다. 도끼·창은 킬 연출 보류 중에도 `StepProjectiles` 로 엔진 x 가 흐르지만
+                    //   적 화살은 `Tick` 안에서만 나아가 보류 동안 `a.X` 가 멎는다 — 상한을 걸면 그림도 한 틱 뒤에 서서 «보류 중에도 안 멈춘다»(T179 ⓑ)가 깨진다(런 997 빨강 · 결정 1141 ⛑).
+                    //   맞는 자리 클램프(아래 `ahit`)가 화살의 상한이다.
                 }
                 // 엔진이 «맞았다» 고 보는 자리(Battle.cs `a.X <= P.WorldX + ArrowHitDx`)를 앞지르지 않는다 — 앞지르면 맞기도 전에 플레이어를 지나가 버린다(투사체의 ProjLimit 과 같은 구실).
                 double ahit = G.P.WorldX + EngineConst.ArrowHitDx;
