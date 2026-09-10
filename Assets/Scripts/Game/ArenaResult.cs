@@ -74,6 +74,22 @@ namespace KkomaKnight.Game
             UiKit.FadeIn(di, UiKit.DimAlpha);
             UiKit.Tag(dim, "어둠");
 
+            // ⓐ' 컨페티(T384) — 레퍼런스 34 의 맨 위 켜다. 어둠 바로 «위» · 엠블럼보다 «아래» 라 여기서 세운다.
+            // ⚑ 이 조각은 파티클도 프리팹도 아니다 — `Play_Result_Win_01` 안의 `SampleEffect_Confetti` 는
+            //    `RectTransform`+`CanvasRenderer`+`Image` 뿐이고 그 스프라이트가 `ui.confetti` 다(카탈로그에 키만 얹었다 · 새 그림 0).
+            //    그래서 «다른 화면을 통째로 띄워 자식 하나를 빼 쓰는» 길도, `Overlay.cs` 를 건드리는 길도 안 갔다.
+            // ⚠ **터뜨렸다 사라지는 연출로 안 한다**(그 절에 «Burst 처럼» 이라 적어 두었던 것을 여기서 뒤집는다) — 까닭 둘:
+            //    ① 레퍼런스 34 는 **멈춘 그림**이고 거기 컨페티가 **떠 있다**(연출의 한 순간이 아니라 이 화면의 얼굴이다).
+            //    ② 사라지는 조각은 사진을 찍는 순간에 따라 «있다/없다» 가 갈려 §5 가 재던 그 0점이 **되돌아온다**.
+            //    ⇒ 뜰 때 한 번 흐리게 들어오고 그대로 **머문다**. `Overlay.Burst` 를 따오려면 이 파일에 DOTween 을 들여야 하는데
+            //      이 화면은 `UiKit.FadeIn`·`UiKit.PopIn` 만으로 서 있다(그 결을 이 절이 바꿀 까닭이 없다).
+            var confetti = UiKit.Icon(root, "Confetti", "ui.confetti");
+            UiKit.Pct(confetti.rectTransform, Layout.ArrConfetti);
+            confetti.raycastTarget = false;   // 위 81% 를 통째로 덮는다 — 켜 두면 «계속»(y76.7) 위쪽 탭을 이 장이 먹는다
+            confetti.preserveAspect = false;  // 표 ㊻ 가 «x0 w100 · y0 h81» 로 잰 그 칸을 그대로 채운다
+            UiKit.FadeIn(confetti, 1f);
+            UiKit.Tag(confetti.transform, "컨페티");
+
             // ⓑ 방패 엠블럼 + 뒤 빛무리 — 조각은 이미 있는 것(ui.iconPvp = 금빛 방패)이다. 새 그림 0(§1).
             var glow = UiKit.Rect(root, "EmblemGlow"); UiKit.Pct(glow, Layout.ArrEmblem);
             UiKit.LightBehind(glow, null, UiKit.LightKey, UiKit.LightPeriod, Palette.A(Palette.Yellow, 0.5f),

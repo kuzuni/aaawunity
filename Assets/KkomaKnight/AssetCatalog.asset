@@ -595,6 +595,8 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: df2d9e132ef294fd1a73e740489a68a3, type: 3}
   - key: ui.iconPvp
     sprite: {fileID: 21300000, guid: d8b11767c058145748aad39df5a9a801, type: 3}
+  - key: ui.confetti
+    sprite: {fileID: 21300000, guid: ee312d4acbb8047b582eb0202e1239df, type: 3}
   - key: ui.iconGiftBlue
     sprite: {fileID: 21300000, guid: 3decf037bc4dc44879511a37d8de29cf, type: 3}
   - key: ui.iconMerchant

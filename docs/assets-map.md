@@ -296,6 +296,7 @@
 | sprites | `ui.iconCrownSilver` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Crown_01_Silver.png` | fileID 21300000 | T43 아레나 2위 왕관 |
 | sprites | `ui.iconCrownBronze` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Crown_01_Bronze.png` | fileID 21300000 | T43 아레나 3위 왕관 |
 | sprites | `ui.iconPvp` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Shield_03_Gold.png` | fileID 21300000 | T43 «PvP» 탭·제목 아이콘(레퍼런스의 월계관 방패 자리) |
+| sprites | `ui.confetti` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/~Demo/Demo_Image/SampleEffect_Confetti.png` | fileID 21300000 | 승리 컨페티 한 장 (Play_Result_Win_01 프리팹 안 SampleEffect_Confetti 가 쓰던 바로 그 PNG · T384) — 그 조각은 Image 하나뿐이라 프리팹을 띄울 까닭이 없다. PvP 결과 화면(34)이 이 키로 제 손으로 세운다 |
 | sprites | `ui.iconGiftBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Gift_01_Blue.png` | fileID 21300000 | T43 아레나 입장 화면 오른쪽 위 «보상» 아이콘(→ 순위 보상 팝업) |
 | sprites | `ui.iconMerchant` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Shop_01_Green.png` | fileID 21300000 | T43 아레나 입장 화면 오른쪽 위 «상인» 아이콘(→ 상인 페이지) · 아이콘 자리에만 쓴다(상인 «사람» 은 env.keeper* 다 · T209 ⓑ) |
 | sprites | `env.keeperHead` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/CharacterParts/Large/Characters_05_Head.png` | fileID 21300000 | T209 ⓑ 상인 배너(26)의 상인 머리 — GUI Pro CharacterParts 05(대머리). 레퍼런스 26 의 상인도 대머리라 여섯 조각 중 이것을 골랐다. tint 없음(눈 흰자가 같이 어두워진다) |

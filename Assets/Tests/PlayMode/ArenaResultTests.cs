@@ -95,6 +95,29 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(UiKit.Find(UiKit.Find(root, "FoeFace"), Profile.FaceName), "상대 칸에도 초상이 선다");
             Assert.IsFalse(GearUi.HasItemFrame(UiKit.Find(root, "MyFace")), "옛 물건 칸(ItemFrame_01)이 남으면 안 된다");
 
+            // T384 — 컨페티. 표 ㊻ 의 유일한 0점이던 자리라 «있다» 만 재면 다시 사라져도 아무 자도 안 운다.
+            {
+                var conf = UiKit.Find(root, "Confetti") as RectTransform;
+                Assert.IsNotNull(conf, "컨페티 한 장(표 ㊻ 의 그 행 · T384)");
+                var ci = conf.GetComponent<Image>(); Assert.IsNotNull(ci, "컨페티는 Image 한 장이다");
+                // ⓐ 자리 = 표 그대로(§5 가 이 값을 잰다 · 앵커로 본다 — UiKit.Pct 가 놓는 자리)
+                Assert.AreEqual(Layout.ArrConfetti.X, conf.anchorMin.x * 100f, 0.5f, "컨페티 x = 표 ㊻");
+                Assert.AreEqual(1f - Layout.ArrConfetti.Y / 100f, conf.anchorMax.y, 1e-3f, "컨페티 y = 표 ㊻");
+                Assert.AreEqual(Layout.ArrConfetti.W, (conf.anchorMax.x - conf.anchorMin.x) * 100f, 0.5f, "컨페티 폭 = 표 ㊻(가로 전부)");
+                Assert.AreEqual(Layout.ArrConfetti.H, (conf.anchorMax.y - conf.anchorMin.y) * 100f, 0.5f, "컨페티 높이 = 표 ㊻(위 81%)");
+                // ⓑ 클릭을 안 먹는다 — 위 81% 를 통째로 덮으므로 켜 두면 그 아래 자리들의 탭을 이 장이 가로챈다
+                Assert.IsFalse(ci.raycastTarget, "컨페티는 클릭을 먹지 않는다(위 81% 를 덮는 장이다)");
+                // ⓒ 층 — 어둠보다 위 · 엠블럼보다 아래(가려 버리면 «장식» 이 «가림막» 이 된다)
+                var dimT = UiKit.Find(root, "Dimmed"); var emT = UiKit.Find(root, "Emblem");
+                Assert.IsNotNull(dimT, "어둠"); Assert.IsNotNull(emT, "엠블럼");
+                Assert.Greater(conf.GetSiblingIndex(), dimT.GetSiblingIndex(), "컨페티는 어둠 위에 있다");
+                Assert.Less(conf.GetSiblingIndex(), emT.GetSiblingIndex(), "컨페티는 엠블럼 아래에 있다(엠블럼을 덮으면 안 된다)");
+                // ⓓ ⚠ «머문다» 를 못 박는다 — 사라지는 연출로 바꾸면 사진 찍는 순간에 따라 §5 의 그 0점이 되돌아온다.
+                yield return Frames(30);
+                Assert.IsTrue(conf.gameObject.activeInHierarchy, "컨페티는 연출 뒤에도 서 있다(터뜨렸다 사라지는 조각이 아니다 · T384)");
+                Assert.Greater(ci.color.a, 0.5f, "컨페티는 연출 뒤에도 보인다 — 흐려져 사라지면 표 ㊻ 의 그 행이 다시 0점이 된다");
+            }
+
             // 눌러서 닫힌다 — «닫는 길이 코드에 있다» 가 아니라 «눌리면 닫힌다» 를 잰다(T169 2항)
             var btn = UiKit.Find(root, "ContinueBtn")?.GetComponent<Button>();
             Assert.IsNotNull(btn, "«계속» 버튼");
