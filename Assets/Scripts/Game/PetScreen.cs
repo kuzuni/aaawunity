@@ -59,7 +59,8 @@ namespace KkomaKnight.Game
 
             // T293 5항 ⓙ — 0마리일 때의 한 줄(그 자리에 칸이 하나도 안 켜지므로 «무엇을 하면 되는지» 를 말한다)
             {
-                var hint = UiKit.Label(grid, Layout.PetCell.X, Layout.PetCell.Y + Layout.PetCell.H * 0.5f, 100 - Layout.PetCell.X * 2, 6,
+                // 자리 = **격자 한가운데**(`PetGrid` 의 세로 중앙) — 종전에는 첫 줄 언저리라 텅 빈 격자 위쪽에 홀로 떠서 «고장난 화면» 처럼 보였다(런 971 screens 13 눈 확인).
+                var hint = UiKit.Label(grid, Layout.PetCell.X, Layout.PetGrid.Y + Layout.PetGrid.H * 0.5f - 3f, 100 - Layout.PetCell.X * 2, 6,
                                        "펫알로 소환해 보세요", 36, Palette.Cream, TextAnchor.MiddleCenter);
                 hint.name = "EmptyHint"; _emptyHint = hint.rectTransform; _emptyHint.gameObject.SetActive(false);
             }
@@ -420,7 +421,9 @@ namespace KkomaKnight.Game
             UiKit.Label(desc.transform, 4, 8, 92, 84, descText, 32, Palette.White);
             var pt = UiKit.Label(box, 0, 0, 100, 100, "패시브:", 34, Palette.Cream); pt.name = "PassiveTitle"; pt.fontStyle = FontStyles.Bold; UiKit.Pct(pt.rectTransform, Layout.PdPassiveTitle.Within(Layout.PdBox));
             var pv = UiKit.Rect(box, "PassiveRow"); UiKit.Pct(pv, Layout.PdPassive.Within(Layout.PdBox));
-            SumGroup(pv, 0, 40, "pi.attack", Palette.White); Sep(pv, 47); SumGroup(pv, 60, 40, "pi.shield", Palette.Sky);
+            // 셋을 13 의 합계 줄과 **같은 차례·같은 자리 규칙**으로 세운다(❤ · 🛡 · 🗡) — 한 화면에서 두 차례를 배우게 하지 않는다(격자 차례 = 빠른 장착 차례와 같은 까닭 · 결정 1064).
+            //   ⚑ 레퍼런스 14 는 둘(🗡·🛡)뿐이다 — 옛 HTML 판의 펫은 공·실만 줬고, **주인은 «공·체·실» 을 준다고 했다**(슬롯 4 → 3 과 같은 자리: 그림이 아니라 지시를 따른다).
+            SumGroup(pv, 0, 26, "pi.heart", Palette.Red); Sep(pv, 30); SumGroup(pv, 38, 26, "pi.shield", Palette.Sky); Sep(pv, 66); SumGroup(pv, 74, 26, "pi.attack", Palette.White);
             // T293 ⓘ — 세부 칸의 «Lv. N» · 진행바(조각/필요) · 패시브 수치를 세이브에서 칠한다(값은 전부 Core 가 낸다).
             if (pet != null)
             {
@@ -431,8 +434,10 @@ namespace KkomaKnight.Game
                 if (sl != null) sl.value = need > 0 ? Mathf.Clamp01((float)frag / need) : 0f;
                 var bt = bar != null ? bar.GetComponentInChildren<TMP_Text>(true) : null;
                 if (bt != null) bt.text = frag + "/" + need;   // «Lv N → N+1 : 조각 a/b»(5항) 를 바 안 숫자로
+                // 세부 칸도 그 펫의 **등급색**(격자·장착 칸과 같은 헬퍼 · 주인 5항 ⓘ) — `PetCell` 은 태어날 때 파랑 하나로 서므로 여기서 갈아 끼운다.
+                PaintFrame(UiKit.Find(cell, "ItemFrame_01"), FrameKeyOf(dp, pet), null);
                 var pw = Pets.Equip(App.Data, dp, pet, petLv < 1 ? 1 : petLv);
-                int k = 0; var vals = new[] { pw.Atk, pw.Sh };
+                int k = 0; var vals = new[] { pw.Hp, pw.Sh, pw.Atk };   // 위 SumGroup 차례와 같아야 한다(❤ · 🛡 · 🗡)
                 foreach (var t in pv.GetComponentsInChildren<TMP_Text>(true))
                 {
                     if (t == null || t.text == "|") continue;

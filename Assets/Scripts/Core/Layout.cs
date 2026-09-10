@@ -380,7 +380,9 @@ namespace KkomaKnight.Core
         public static readonly R PdBar = new R(39.2f, 41.5f, 21.7f, 1.4f);
         public static readonly R PdDesc = new R(11.1f, 44.9f, 77.8f, 8.0f);
         public static readonly R PdPassiveTitle = new R(42.4f, 54.2f, 15.3f, 2.2f);
-        public static readonly R PdPassive = new R(34.7f, 56.7f, 31.3f, 2.6f);
+        // T293 5항 — 패시브 줄은 **셋**(공·체·실)이다(주인 «장착 효과 있음 — 공·체·실 채워 줌»). 레퍼런스 14 는 둘(🗡·🛡)뿐인데 그것은 옛 HTML 판이고 **주인 지시가 이긴다**(슬롯 4 → 3 과 같은 자리 · 표 ⑪ 에도 그 까닭을 적었다).
+        //   줄의 **중심(50.35)** 은 지켰다 — 칸이 하나 늘어도 상자 안에서 무리가 서는 축이 안 움직인다(폭 31.3 → 47.0 · x 34.7 → 26.9).
+        public static readonly R PdPassive = new R(26.9f, 56.7f, 47.0f, 2.6f);
         public static readonly R PdBtnL = new R(13.5f, 59.9f, 35.1f, 5.1f);
         public static readonly R PdBtnR = new R(51.4f, 59.9f, 35.1f, 5.1f);
 

@@ -140,6 +140,22 @@ namespace KkomaKnight.Tests.Play
             ((PetScreen)_app.Current).OpenDetail(0); yield return Frames(1);
             var ov = _app.Overlay.Root;
 
+            // 패시브 줄 — **공·체·실 셋**이 표에서 온 값 그대로다(주인 «장착 효과 있음 — 공·체·실 채워 줌»).
+            //   ⚑ 레퍼런스 14 는 둘(🗡·🛡)뿐이라 화면도 둘만 그리고 있었다 — 옛 HTML 판의 펫은 체력을 안 줬고, 우리 펫은 준다(그림이 아니라 지시를 따른다 · 슬롯 4 → 3 과 같은 자리).
+            //   기댓값은 자가 다시 안 적고 화면이 읽는 그 함수(`Pets.Equip`)로 되짚는다 · 차례는 13 의 합계 줄과 같다(❤ · 🛡 · 🗡).
+            var pv = UiKit.Find(ov, "PassiveRow"); Assert.IsNotNull(pv, "패시브 수치 줄");
+            var eq = Pets.Equip(_app.Data, d, pet, Pets.Lv(_app.Save, pet.Id));
+            Assert.Greater(System.Math.Round(eq.Hp), 0, "이 펫은 체력을 준다 — 0 이면 아래가 «둘만 그린다» 와 구별이 안 된다");
+            var nums = new System.Collections.Generic.List<string>();
+            foreach (var t in pv.GetComponentsInChildren<TMP_Text>(true)) if (t != null && t.text != "|") nums.Add(t.text);
+            Assert.AreEqual(3, nums.Count, "패시브는 셋(공·체·실)이다 — 둘이면 체력이 화면에서 사라진 것이다");
+            Assert.AreEqual("+" + UiKit.FmtQty(System.Math.Round(eq.Hp)), nums[0], "첫 칸 = 체력(13 의 합계 줄과 같은 차례)");
+            Assert.AreEqual("+" + UiKit.FmtQty(System.Math.Round(eq.Sh)), nums[1], "둘째 칸 = 실드");
+            Assert.AreEqual("+" + UiKit.FmtQty(System.Math.Round(eq.Atk)), nums[2], "셋째 칸 = 공격");
+            // 세부 칸도 그 펫의 등급색(주인 5항 ⓘ) — 표의 첫 펫은 일반이라 파랑이면 옛 «파랑 하나» 가 남은 것이다.
+            var gd = d.GradeOfPet(pet); Assert.IsNotNull(gd, "표의 등급");
+            Assert.IsNotNull(UiKit.Find(UiKit.Find(ov, "PetDetailCell"), "ui.itemFrame." + Palette.RarName(gd.Rar)), "세부 칸 프레임 = 그 펫의 등급색");
+
             var up = UiKit.Find(ov, "PetUpgradeBtn"); Assert.IsNotNull(up, "강화 버튼");
             Assert.IsTrue(up.GetComponent<Button>().interactable, "강화할 수 있으면 눌린다(주인 «가능할 때는 주황»)");
             int questBefore = QuestRun.Count(_app.Save, true, Quests.PetUpgrade);
