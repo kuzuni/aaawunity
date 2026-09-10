@@ -1784,6 +1784,21 @@ namespace KkomaKnight.Tests.Play
                     var icon = UiKit.Find(pack, "Icon"); Assert.IsNotNull(icon, "상품 아이콘");
                     Assert.IsFalse(UiKit.HasLight(icon.parent), "상점 상품 아이콘 뒤 빛살은 **뺀다**(T308 · 주인 2026-09-09 09:1X)");
                     Assert.IsFalse(UiKit.IsItemCell(icon.parent), "상품 카드는 «아이템 칸»(ItemFrame_01) 이 아니다 — 판정이 상점을 안 건드린다는 근거(T190 1항)");
+                    // T395(주인 2026-09-10 «상점에서 못 산다고 해서 버튼 투명되지 말기 · 광고 버튼 빼고») — 다이아 0 이어도 가격 버튼은 알파 1 · 눌린다.
+                    {
+                        double gem0 = _app.Save.Gem; _app.Save.Gem = 0; _app.ShowScreen("lobby"); yield return Frames(1); _app.ShowScreen("shop"); yield return Frames(2);
+                        int priced = 0;
+                        foreach (var b in _app.Current.Root.GetComponentsInChildren<Button>(true))
+                        {
+                            if (b.name != "One" && b.name != "Ten" && b.name != "Button_Price") continue;
+                            priced++;
+                            var cg = b.GetComponent<CanvasGroup>();
+                            Assert.IsTrue(b.interactable, b.name + " 가격 버튼은 다이아가 없어도 눌린다(T395 · 눌러야 «부족» 토스트가 난다)");
+                            Assert.IsTrue(cg == null || cg.alpha > 0.99f, b.name + " 가격 버튼은 다이아가 없어도 흐려지지 않는다(T395)");
+                        }
+                        Assert.Greater(priced, 0, "가격 버튼이 하나는 있어야 이 자가 뜻이 있다(One/Ten/Button_Price)");
+                        _app.Save.Gem = gem0; _app.ShowScreen("lobby"); yield return Frames(1); _app.ShowScreen("shop"); yield return Frames(2);
+                    }
                 }
                 var qty = UiKit.Find(UiKit.Find(content, "GemPack:0"), "Text_Title"); Assert.IsNotNull(qty, "다이아 카드 수량 글자");
                 Assert.GreaterOrEqual(qty.GetComponent<TMP_Text>().fontSize, ShopScreen.QtySize, "상품 수량 크기 = 수량 띠 높이에서 계산(≈51)");

@@ -617,11 +617,23 @@ namespace KkomaKnight.Game
                     if (w.TenKeyCount != null) w.TenKeyCount.text = UiKit.FmtQty(have) + "/" + cap;
                     if (w.TenKeyLabel != null) w.TenKeyLabel.text = cap + "회";
                 }
-                if (w.One != null) { w.One.gameObject.SetActive(!oneKey); UiKit.SetInteractable(w.One, S.Gem >= box.Cost); }
-                if (w.Ten != null) { w.Ten.gameObject.SetActive(!tenKey); UiKit.SetInteractable(w.Ten, S.Gem >= box.Cost * cap); }
+                if (w.One != null) { w.One.gameObject.SetActive(!oneKey); Affordable(w.One); }
+                if (w.Ten != null) { w.Ten.gameObject.SetActive(!tenKey); Affordable(w.Ten); }
             }
-            foreach (var g in _gated) UiKit.SetInteractable(g.btn, g.can());
+            foreach (var g in _gated) Affordable(g.btn);
             UpdateTimer(); UpdateLightSpin();
+        }
+        /// <summary>
+        /// T395(주인 2026-09-10 «상점에서 못 산다고 해서 버튼 투명되지 말기 · 광고 버튼 빼고») — 가격 버튼(1회·10회·골드 팩)은 다이아가 모자라도
+        /// <b>제 모습 그대로</b>(알파 1 · 눌린다). 여태는 <see cref="UiKit.SetInteractable"/>(반투명 0.5 + 안 눌림)이었다. 눌렀을 때의 답은 이미 각 손잡이가 낸다
+        /// («다이아가 부족합니다» 토스트 · `Pull`·골드 팩) — 그래서 여기서는 «눌리게 두고 흐리지 않는다» 가 전부다.
+        /// <para>⚠ 광고 버튼(<c>_adBtns</c>)은 그대로 <see cref="UiKit.SetInteractable"/> — 오늘 몫을 다 쓴 광고는 흐려지는 것이 맞다(주인 «광고 버튼 빼고»).</para>
+        /// </summary>
+        static void Affordable(Button b)
+        {
+            if (b == null) return;
+            b.interactable = true;
+            var cg = b.GetComponent<CanvasGroup>(); if (cg != null) cg.alpha = 1f;
         }
         public override void Tick(float dt) { _timerT += dt; if (_timerT >= 1f) { _timerT = 0f; UpdateTimer(); } }
         /// <summary>
