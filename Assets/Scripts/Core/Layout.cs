@@ -417,6 +417,16 @@ namespace KkomaKnight.Core
         public static readonly R PdBox = new R(7.6f, 34.9f, 84.7f, 31.7f);
         public static readonly R PdCell = new R(41.7f, 32.4f, 16.7f, 7.7f);
         public static readonly R PdBar = new R(39.2f, 41.5f, 21.7f, 1.4f);
+        /// <summary>
+        /// T404 ⓑ — 펫 세부 팝업의 <b>등급 배지</b>(«일반/희귀/전설» · 등급색). 자리는 <b>상자 윗머리 · 걸친 칸의 오른쪽</b>이다.
+        /// <para>
+        /// ⚑ 1회차에는 설명 박스 안 오른쪽 위에 뒀는데 <b>사진을 열어 보니 글자가 배지 위아래로 삐져나왔다</b> —
+        /// 그 박스는 세로 187px 이고 배지에 줄 수 있는 것이 41px 인데, 글자 하한(30)이 담기려면 칸이 <see cref="TextSize.BoxHeight"/> = 44px 은 돼야 한다.
+        /// 키우면 이번엔 설명 글자와 겹친다(글자가 박스 가운데에 선다). ⇒ <b>그 박스 안에는 자리가 없다</b>.
+        /// </para>
+        /// 여기는 상자 윗변(34.9)과 진행바(41.5) 사이의 빈 띠고, 가로로는 <see cref="PdCell"/>(41.7~58.4)의 <b>오른쪽</b>이라 걸친 칸과도 안 부딪친다.
+        /// </summary>
+        public static readonly R PdGrade = new R(62.0f, 35.6f, 20.0f, 3.2f);
         public static readonly R PdDesc = new R(11.1f, 44.9f, 77.8f, 8.0f);
         public static readonly R PdPassiveTitle = new R(42.4f, 54.2f, 15.3f, 2.2f);
         // T293 5항 — 패시브 줄은 **셋**(공·체·실)이다(주인 «장착 효과 있음 — 공·체·실 채워 줌»). 레퍼런스 14 는 둘(🗡·🛡)뿐인데 그것은 옛 HTML 판이고 **주인 지시가 이긴다**(슬롯 4 → 3 과 같은 자리 · 표 ⑪ 에도 그 까닭을 적었다).

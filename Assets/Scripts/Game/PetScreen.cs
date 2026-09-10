@@ -476,9 +476,8 @@ namespace KkomaKnight.Game
                                          : pet.Name + " · 아직 없다\n" + Pets.Effect(dp, pet) + "\n소환으로 얻을 수 있습니다.";
             UiKit.Label(desc.transform, 4, 8, 92, 84, descText, 32, Palette.White);
             // T404 ⓑ(주인 2026-09-10 «세부 팝업에 등급 뭔지 안 써 있음») — 등급 이름 + 등급색 배지.
-            //   ⚑ 자리를 «상자 윗변»(장비 세부 GdBadge 꼴)이 아니라 **설명 박스 안 오른쪽 위**로 잡았다 —
-            //     이 팝업은 레퍼런스 14 대로 명판이 없고 **칸이 윗변에 걸쳐** 있어서(위 PetDetailCell) 그 자리에 배지를 얹으면 칸과 겹친다.
-            //     설명 박스 안은 이미 이 팝업이 쓰는 칸이라 새 자리를 만들지 않고, 글자 줄(왼쪽 정렬)과도 안 부딪친다.
+            //   ⚑ 자리는 Layout.PdGrade — 상자 윗변과 진행바 사이의 빈 띠 · 걸친 칸(PdCell)의 **오른쪽**.
+            //     1회차에는 설명 박스 안에 뒀다가 사진에서 글자가 배지 위아래로 삐져나온 것을 보고 옮겼다(까닭은 PdGrade 주석에 수로).
             //   색은 등급 rar 한 곳에서 온다(격자 칸 프레임과 **같은 자**: Palette.RarName · 결정 1096 이 세운 문법).
             if (pet != null && dp != null)
             {
@@ -486,8 +485,8 @@ namespace KkomaKnight.Game
                 if (gd != null && !string.IsNullOrEmpty(gd.Name))
                 {
                     var rc = Palette.ByName(Palette.RarName(gd.Rar));
-                    var badge = UiKit.Panel(desc.transform, PetGradeBadgeName, "fr.r12", rc);
-                    UiKit.Pct(badge.rectTransform, 62, 4, 34, 22);
+                    var badge = UiKit.Panel(box, PetGradeBadgeName, "fr.r12", rc);
+                    UiKit.Pct(badge.rectTransform, Layout.PdGrade.Within(Layout.PdBox));
                     UiKit.Bordered(badge.rectTransform);
                     var bt2 = UiKit.Label(badge.transform, 0, 0, 100, 100, gd.Name, 30, Palette.OnFrame(Palette.RarName(gd.Rar)));
                     bt2.alignment = TextAlignmentOptions.Center; bt2.fontStyle = FontStyles.Bold; bt2.name = "GradeText";
