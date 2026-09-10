@@ -11146,3 +11146,20 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 5. **확인** — 다음 완주 런 `[CI명부]` 의 `PlaythroughTests(N)` 에 ✗ 없음. ⇒ **등재된 각본이 열하나 중 열**(P5 가 닫히면 열하나 전부).
 
 순서 — `Game/Playthrough.cs` · `Tests/PlayMode/PlaythroughTests.cs`. lock `T414`.
+
+> **▸ 1회차 — 각본 하나 · 남은 것이 P5 하나가 됐다(2026-09-10 16:3X · sess-1424-31894 · 워커 B · 결정 1185 · lock 쥔 채)**
+>
+> `Playthrough.P11Settings` + `Steps` 등재 + 자 한 줄. **단언 0줄 추가 · 게임 화면 코드 0줄.**
+> 상단 `Avatar` → 프로필 팝업 칸 하나(`Avatar:<색>`) → `ChooseBtn` → ≡ 메뉴 «설정» → «데이터 삭제» → 확인 팝업의 «삭제» → 로비.
+>
+> ⛑ **밀기 전에 두 자리를 읽어서 잡았다**
+> ① `TapIn(row, row.name, …)` 은 **못 찾는다** — `UiKit.Find` → `FindByName` 은 `GetChild` 부터 도는 **자식 전용**이라 «자기 자신» 을 안 본다. 찾은 이름을 **팝업 뿌리에서 다시** 집는다.
+> 컴파일도 되고 자도 없어서 **CI 한 회전을 태우고서야** 드러났을 자리다.
+> ② 닫기는 `CloseAll` 이 아니라 **`ShutPopups`(`Poke` 기반)** — 어둠이 `OnTap` 인 팝업 앞에서 `CloseAll` 은 «닫을 것이 없다» 로 **틀린 까닭**을 남긴다(결정 1181 · 바로 앞 회차가 값을 치렀다).
+>
+> ⚠ **차례가 이 각본의 전제다** — 세이브를 지우므로 `Stages` 의 맨 끝이어야 한다. 지금 이미 끝이고, **각본을 더하는 사람이 차례를 바꾸면 안 된다.**
+>
+> 게이트: build 0 · `dotnet test` **558/558** · PlayMode 임시 csproj `-t:Rebuild` 0 오류 · 파이썬 게이트 11종 rc=0 · `webgl_smoke --self-test` 21/21.
+> **확인** = 다음 완주 런 `[CI명부]` 의 `PlaythroughTests` 에 `배포_갈래_P11_…` ✗ 없음 → 반납.
+>
+> ⇒ **배포 갈래는 P5(T409 · 워커 C) 하나만 남는다.**

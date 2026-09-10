@@ -82,7 +82,7 @@ namespace KkomaKnight.Game
         public delegate System.Collections.IEnumerator Step(App app);
 
         static readonly System.Collections.Generic.Dictionary<string, Step> Steps =
-            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P2", P2Battle }, { "P3", P3Gear }, { "P4", P4Shop }, { "P5", P5Dungeon }, { "P6", P6Arena }, { "P7", P7Quest }, { "P8", P8Boxes }, { "P9", P9Expedition }, { "P10", P10Pet } };
+            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P2", P2Battle }, { "P3", P3Gear }, { "P4", P4Shop }, { "P5", P5Dungeon }, { "P6", P6Arena }, { "P7", P7Quest }, { "P8", P8Boxes }, { "P9", P9Expedition }, { "P10", P10Pet }, { "P11", P11Settings } };
 
         /// <summary>
         /// 단계 하나만 돌린다 — <b>자가 «배포 갈래도 실제로 도는가» 를 재는 입구</b>(T300 2항 · 결정 1101).
@@ -834,6 +834,75 @@ namespace KkomaKnight.Game
         /// 봇이 «아무것도 안 누르고» ok 를 찍는다(결정 1049 ④ 와 같은 까닭 · 여기서는 단언이 없으니 더 조용하다).</para>
         /// <para>⚠ 세이브(다이아·펫알)는 봇이 제 조건을 만든다(1항) — 값은 <see cref="Pets.Offer"/> 가 말하는 그대로라 표가 바뀌어도 안 운다.</para>
         /// </summary>
+        /// <summary>
+        /// P11 설정(T300 1항 표 · 배포 갈래 · T414) — 상단 아바타 → 프로필 팝업에서 테두리 하나 → «선택» → 닫기 →
+        /// ≡ 메뉴 «설정» → «데이터 삭제» → 확인 팝업의 «삭제» → 로비. <b>단언은 하나도 없다</b>(3항 ⓐ).
+        /// <para>
+        /// ⚠ <b>이 갈래는 세이브를 지운다</b> — 그래서 <see cref="Stages"/> 의 <b>맨 끝</b>이어야 한다(뒤에 오는 단계가 지워진 세이브로 놀면
+        /// 그 단계들이 재는 것이 거짓이 된다). <b>그 차례가 이 각본의 전제</b>다 — 각본을 더하는 사람이 차례를 바꾸면 안 된다.
+        /// </para>
+        /// <para>
+        /// ⚑ 이 갈래가 잡는 것: 상단 재화 바의 <b>아바타 → 프로필 팝업</b> 배선(조각에 버튼이 없어 <c>Clickable</c> 이 붙이는 자리다) ·
+        /// ≡ 메뉴의 «설정» 줄 · 그리고 <b>«데이터 삭제» 의 두 단(확인 팝업 → 삭제)</b>. 화면 자들은 팝업을 제 손으로 열어 재므로 그 배선이 끊겨도 안 운다(T280).
+        /// </para>
+        /// <para>⚠ 테두리·단추는 <b>이름 계약</b>으로 집는다(<c>Profile.RowPrefix</c>·<c>Profile.ChooseName</c> · T96-profile) — 설정·확인 팝업의 단추만 글자로 집는다(제 이름이 없다).</para>
+        /// </summary>
+        static System.Collections.IEnumerator P11Settings(App app)
+        {
+            app.ShowScreen("lobby"); yield return Frames(3);
+            Reach(app, "lobby");
+
+            // ⓐ 상단 아바타 → 프로필 팝업 → 테두리 하나 → «선택»
+            Tap(app, "Avatar"); yield return Frames(2);
+            yield return UntilOpen(app, "프로필 팝업");
+            var row = FirstNamed(app.Overlay.Root, Profile.RowPrefix);
+            if (row == null) throw new MissingException("프로필 칸(" + Profile.RowPrefix + "…)");
+            // ⚠ 뿌리를 `row` 로 주면 안 된다 — `UiKit.Find` 는 **자식만** 뒤진다(자기 자신은 안 본다).
+            //   찾은 이름을 팝업 뿌리에서 다시 집는다.
+            TapIn(app.Overlay.Root, row.name, true); yield return Frames(2);
+            TapIn(app.Overlay.Root, Profile.ChooseName, true); yield return Frames(3);
+            // «선택» 이 스스로 닫는다(`Overlay.Close()`) — 그래도 남아 있으면 사람처럼 민다.
+            // ⚠ 여기서 `CloseAll` 을 쓰지 않는다: 어둠이 `OnTap` 인 팝업 앞에서 «닫을 것이 없다» 로 **틀린 까닭**을 적는다(결정 1181).
+            yield return ShutPopups(app, "프로필 팝업");
+            Reach(app, "lobby");
+
+            // ⓑ ≡ 메뉴 → «설정»
+            Tap(app, "Button_Menu"); yield return Frames(2);
+            yield return UntilOpen(app, "≡ 메뉴");
+            TapIn(app.Overlay.Root, "Menu:" + LobbyMenu.ItemSettings, true); yield return Frames(3);
+            if (!app.Overlay.IsOpen) throw new MissingException("설정 팝업(메뉴 줄 뒤)");
+
+            // ⓒ «데이터 삭제» → 확인 팝업의 «삭제». ⚠ 여기서부터 세이브가 사라진다 — 이 갈래의 마지막 일이다.
+            if (!TapLabel(app.Overlay.Root, "데이터 삭제")) throw new MissingException("설정의 «데이터 삭제»");
+            yield return Frames(3);
+            if (!TapLabel(app.Overlay.Root, "삭제")) throw new MissingException("확인 팝업의 «삭제»(«데이터 삭제» 는 두 단이다)");
+            yield return Frames(4);
+
+            yield return ShutPopups(app, "데이터 삭제 뒤 남은 팝업");
+            if (app.Current == null || app.Current.Name != "lobby") { app.ShowScreen("lobby"); yield return Frames(2); }
+            Reach(app, "lobby");
+            yield return null;
+        }
+
+        /// <summary>
+        /// 팝업이 남아 있으면 <see cref="Poke"/> 로 밀어 없앤다 — <see cref="CloseAll"/> 과 갈리는 자리는 <b>까닭을 바르게 적는 것</b>이다.
+        /// <para>어둠이 <c>UiKit.OnTap</c> 인 팝업 앞에서 <see cref="CloseAll"/> 은 «닫을 것이 없다» 로 <b>틀린 까닭</b>을 남긴다(결정 1181 · T410 1회차가 값을 치렀다).</para>
+        /// </summary>
+        static System.Collections.IEnumerator ShutPopups(App app, string what)
+        {
+            for (int k = 0; k < WaitFrames && app.Overlay.IsOpen; k++) { if (Poke(app)) yield return Frames(2); else yield return null; }
+            if (app.Overlay.IsOpen) throw new MissingException(what + "(" + WaitFrames + "프레임 동안 안 닫힌다 — 누를 것이 없다)");
+        }
+
+        /// <summary>앞머리로 <b>첫 번째 켜진</b> 자리를 찾는다 — 이름에 값이 붙는 계약(<c>Avatar:&lt;색&gt;</c>)에서 «아무거나 하나» 를 집을 때.</summary>
+        static UnityEngine.Transform FirstNamed(UnityEngine.Transform root, string prefix)
+        {
+            if (root == null) return null;
+            foreach (var t in root.GetComponentsInChildren<UnityEngine.Transform>(false))
+                if (t.name.StartsWith(prefix, StringComparison.Ordinal) && t.gameObject.activeInHierarchy) return t;
+            return null;
+        }
+
         static System.Collections.IEnumerator P10Pet(App app)
         {
             var D = app.Data; var S = app.Save;

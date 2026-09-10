@@ -1627,5 +1627,24 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("배포 갈래 P2");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T414 — P11(설정)의 <b>배포 갈래</b>. 꼴은 위와 같다(결정 1101). <b>남은 마지막 한 칸</b>이다.
+        /// <para>
+        /// ⚑ 이 갈래가 잡는 것: 상단 재화 바의 <b>아바타 → 프로필 팝업</b> 배선(조각에 버튼이 없어 <c>Clickable</c> 이 붙이는 자리) ·
+        /// ≡ 메뉴의 «설정» 줄 · <b>«데이터 삭제» 의 두 단</b>(확인 팝업 → 삭제).
+        /// </para>
+        /// <para>⚠ 이 각본은 <b>세이브를 지운다</b> — <c>Playthrough.Stages</c> 의 맨 끝이라는 것이 전제다(뒤 단계가 지워진 세이브로 놀면 그 단계들이 재는 것이 거짓이 된다).</para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 배포_갈래_P11_도_자에서_한_번_돈다()
+        {
+            yield return Boot();
+            Assert.IsTrue(Playthrough.HasStep("P11"), "P11 의 배포 갈래가 등록돼 있다");
+            yield return Playthrough.RunOne(_app, "P11");
+            Assert.AreEqual("lobby", _app.Current.Name, "각본이 끝나면 로비에 서 있다");
+            _log.AssertNoRed("배포 갈래 P11");
+            yield return Shutdown();
+        }
     }
 }
