@@ -7535,13 +7535,15 @@ dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이�
 >
 순서 — `Core/Pet.cs`(신규 · 앞 항의 `Companion` 이름은 전부 `Pet`/`Pets` 로 읽는다) · `Core/SaveData.cs` · `Core/GearSystem.cs` · `Core/Battle.cs` · `Game/PetScreen.cs` · `Game/BattleWorld.cs`(9항) · `Game/CharacterRig.cs`(스킨 표) · `KkomaKnight/pet.json`·`catalog.json`. **큰 절이라 둘로 나눠 잡아도 된다**(ⓐ Core+표+자 · ⓑ 화면+전투 그림) — lock 은 `T293-core`·`T293-ui`.
 
-### T300 — ⚑⚑⚑ 주인: **플레이 봇 — 한 판을 끝까지 실제로 놀아 보고 에러를 찾는 자**(PlayMode + 배포 WebGL) (주인 2026-09-09 08:5X «플레이해서 에러 테스트도 하라» · §1 상시 규칙과 한 벌)
+### T300 ✅ — ⚑⚑⚑ 주인: **플레이 봇 — 한 판을 끝까지 실제로 놀아 보고 에러를 찾는 자**(PlayMode + 배포 WebGL) (주인 2026-09-09 08:5X «플레이해서 에러 테스트도 하라» · §1 상시 규칙과 한 벌)
 
 > ▸ **7회차 — 배포 갈래를 «보고만» 으로 켰다 + P4 의 게임 안 각본(2026-09-09 16:3X · sess-1613-24012 · 워커 M · lock `T300-f` · 결정 961).** 2항의 남은 셋을 한 회차에 — ⓐ `tools/webgl_smoke.js` 에 **`--play-report`**: 봇을 돌리되 봇의 fail·«done 없음»·**봇이 도는 동안의 콘솔 에러**를 «빨강» 이 아니라 «봇 경고» 로 센다(요약 줄 «봇 경고 N(보고만)» + 앞 20줄). `--play` 는 종전 그대로 strict. ⓑ `ci.yml`·`deploy-last-green.yml` 의 스모크 넷(빌드 폴더·gh-pages)에 `--play-report`. ⓒ `Playthrough.Steps` 에 **P4Shop**(PlayMode P4 와 같은 길 · 단언 0 · 켜진 옷만 누르는 `TapIn` · 결과 창은 배경 탭 두 번 · 기다림 상한 `WaitFrames` 600).
 > **왜 strict 가 아니라 «보고만» 인가** — §1 결정 625: «아직 한 번도 초록인 적 없는 새 물음» 은 먼저 보고만 하고 값이 0 이 되면 strict 로 올린다. 배포 빌드에서 봇이 돈 적이 한 번도 없고, `build-webgl` 의 스모크는 빨강이면 **배포가 통째로 멈추는 자리**다(T226 이 4시간 25분을 치른 그곳). 이 회차부터 런마다 `webgl-smoke/local.txt` 에 `play done N/N fail M` 과 «PLAY⚠» 줄이 남는다 → **fail 0 이 몇 런 이어지면** 그 회차가 `--play-report` 를 `--play` 로 바꾼다(한 낱말).
 > **`Run` 을 «중첩 코루틴을 손으로 도는» 꼴로 바꿨다** — 단계가 `yield return Frames(2)` 처럼 작은 걸음을 넘기면 유니티가 그 안의 예외를 삼켜 이 `try` 가 못 잡고, 봇은 «fail 한 줄» 대신 조용히 멈춘다(done 줄 없음 = «돌다 죽었다» 만 남는다). 스택으로 직접 돌리니 어느 깊이의 `MissingException` 도 그 단계의 fail 로 적힌다. P1 은 `yield return null` 뿐이라 한 프레임도 안 달라진다.
 > **자** — PlayMode `배포_갈래가_있는_단계는_자도_있다`(HasStep 인 단계는 이 파일의 자도 있어야 한다 — 배선은 자가 재고 게임 안 각본은 «죽지 않는가» 만 본다) · `node tools/webgl_smoke.js --self-test` 18/18 · YAML 파싱 둘 · 조립 csc 네 어셈블리 0 오류.
 > **확인** = 다음 완주 런의 `build-webgl` «배포 스모크» 로그 꼬리에 `play done 2/2 fail 0`(P1·P4) — fail 이 있으면 «PLAY⚠» 줄이 까닭을 말한다(그것이 이 회차의 목적이다 · 배포는 그대로 나간다). **남은 것**: P7·P8·P9(`LobbyPopups` T258 뒤) · P10(펫 · T293 lock 이 방금 반납됐다) · P2·P3·P5·P6·P11 의 게임 안 각본(각각 그 자를 쓴 사람이 옮기는 것이 싸다) · fail 0 이 이어진 뒤 `--play` 로 올리기 · «전부 있다» 단언(결정 938).
+>
+> ▸ **✅✅ P10 확인 완결 · lock 반납(2026-09-10 07:4X · sess-1735-9f41 · 워커 C · 결정 1117).** 두 확인 다 초록: **CI 자** 런 971 `PlaythroughTests(15)` ✗ 0(`배포_갈래_P10_도_자에서_한_번_돈다` 가 돌았다) · **배포 스모크** 런 601 `play done 3/3 fail 0 · ok=P1,P4,P10`. ⇒ 플레이 봇 열한 단계가 **자로도 배포로도** 돈다. **남은 것**은 배포 갈래 P2·P3·P5~P9·P11(각각 그 자를 쓴 사람이 각본 + `RunOne` 자 한 줄로 옮긴다 · 이번에 그 꼴이 CI 자로 증명됐다) · fail 0 이 이어진 뒤 `--play` 승격.
 >
 > ▸ **✅ 배포 스모크 초록 — `play done 3/3 fail 0 · ok=P1,P4,P10`(2026-09-10 06:4X · 배포 런 601 · 고른 커밋 `621830de` · 결정 1110).** 굽기 직후 스모크와 gh-pages 재확인 **둘 다** 3/3 · `PLAY⚠` 0 · gh-pages `eee3791a` 로 전진 ⇒ **주인 폰 빌드에서 P10 이 실제로 논다.** 남은 확인은 새 자(`배포_갈래_P10_도_자에서_한_번_돈다`)의 첫 완주 런 하나뿐이고 그 뒤 `T300-p10` 을 반납한다.
 >
