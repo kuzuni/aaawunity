@@ -237,6 +237,55 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
+
+        [UnityTest]
+        public IEnumerator 격자는_가진_펫만_그리고_0마리면_한_줄로_말한다()
+        {
+            yield return Boot();
+            var d = _app.Data != null ? _app.Data.Pet : null;
+            if (d == null) { yield return Shutdown(); Assert.Ignore("펫 표가 없다"); }
+
+            // ⓐ 0마리 — 칸이 하나도 안 켜지고 «무엇을 하면 되는지» 한 줄이 뜬다(주인 5항 ⓙ «얻은 거만 보이게»)
+            _app.ShowScreen("pet"); yield return Frames(1);
+            var root = _app.Current.Root;
+            Assert.AreEqual(0, ShownCells(root), "아무것도 안 가졌으면 칸도 하나도 없다(빈 칸을 안 남긴다)");
+            var hint = UiKit.Find(root, "EmptyHint");
+            Assert.IsNotNull(hint, "0마리 안내 줄");
+            Assert.IsTrue(hint.gameObject.activeInHierarchy, "0마리면 안내 줄이 뜬다");
+
+            // ⓑ 두 마리 — 칸이 딱 둘, 안내 줄은 꺼지고, 앞자리가 등급이 높다
+            var low = d.Pets[0]; var high = d.Pets[d.Pets.Count - 1];
+            Pets.Gain(_app.Save, low.Id); Pets.Gain(_app.Save, high.Id); _app.Persist();
+            _app.Current.Refresh(); yield return Frames(1);
+            Assert.AreEqual(2, ShownCells(root), "가진 만큼만 켜진다");
+            Assert.IsFalse(hint.gameObject.activeInHierarchy, "한 마리라도 있으면 안내 줄은 꺼진다");
+
+            var g0 = d.GradeOfPet(low); var g1 = d.GradeOfPet(high);
+            if (g0 != null && g1 != null && g0.Rar != g1.Rar)
+            {
+                // 앞 칸을 눌러 세부 팝업을 열면 «등급 높은 쪽» 이 나온다 — 격자 차례가 «빠른 장착» 과 같은 규칙이라는 뜻이다
+                ((PetScreen)_app.Current).OpenDetail(0); yield return Frames(1);
+                var eq = UiKit.Find(_app.Overlay.Root, "PetEquipBtn");
+                Assert.IsNotNull(eq, "세부 팝업이 열린다");
+                eq.GetComponent<Button>().onClick.Invoke(); yield return Frames(2);
+                var worn = Pets.Equipped(d, _app.Save);
+                Assert.AreEqual(1, worn.Count, "그 칸의 펫이 장착된다");
+                Assert.AreEqual(g0.Rar > g1.Rar ? low.Id : high.Id, worn[0], "앞 칸 = 등급이 높은 펫(격자 차례 = 등급 내림차순)");
+            }
+
+            yield return Shutdown();
+        }
+
+        /// <summary>지금 켜져 있는 격자 칸 수 — 꺼진 칸은 «안 그린 것» 이다(이름·자리는 그대로 살아 있다).</summary>
+        static int ShownCells(Transform root)
+        {
+            var grid = UiKit.Find(root, "PetGrid"); if (grid == null) return 0;
+            int n = 0;
+            foreach (var t in grid.GetComponentsInChildren<Transform>(true))
+                if (t.name.StartsWith("Pet:") && t.gameObject.activeInHierarchy) n++;
+            return n;
+        }
+
         /// <summary>버튼의 값 줄이 지금 어느 그림을 쓰고 있나 — 카탈로그 키로 되짚는다(그림 파일이 아니라 «무엇으로 치르나» 를 재는 자리).</summary>
         static string CostIcon(Transform root, string btnName)
         {

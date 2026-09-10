@@ -948,6 +948,10 @@ namespace KkomaKnight.Tests.Play
 
             // T42 — 펫 탭 = 레퍼런스 13_pet.jpg 구도(PetScreen · 껍데기): 상단 바 · 4열 격자 9칸(Lv · 진행바) · 합계 줄 · «장착중» 띠 + 슬롯 4 · 회색 2 · 주황 소환 2 · 탭 5 → 칸 클릭 = 세부 팝업(14 · 명판 없음 · 탭하여 닫기)
             {
+                // ⛑ T293 ⓘ 4회차(주인 5항 ⓙ «얻은 거만 보이게») — 격자는 이제 **가진 펫만** 그린다.
+                //   이 블록이 재는 것은 «배치·글자·계약» 이지 «몇 마리 가졌나» 가 아니므로, 재기 전에 표의 펫을 **다 가지게** 해서
+                //   칸 아홉이 서는 상태로 만든다(값은 Core 가 낸다 · 자가 수를 안 적는다). 0마리 상태는 PetSummonTests 가 따로 잰다.
+                if (_app.Data.Pet != null) { foreach (var p in _app.Data.Pet.Pets) Pets.Gain(_app.Save, p.Id); _app.Persist(); }
                 _app.ShowScreen("pet"); yield return Frames(2);
                 Assert.AreEqual("pet", _app.Current.Name, "펫 탭은 팝업이 아니라 화면(PetScreen)"); Assert.IsFalse(_app.Overlay.IsOpen, "펫 탭 진입에 팝업 없음");
                 var pet = _app.Current.Root;
@@ -962,8 +966,10 @@ namespace KkomaKnight.Tests.Play
                 //   필요 수를 자가 다시 세지 않고 **화면이 쓰는 그 함수**(`Pets.Need`)에서 받는다.
                 int need1 = Pets.Need(_app.Data.Pet, 1);
                 Assert.Greater(need1, 0, "펫 조각 필요 수는 표(NeedBase)에서 온다 — 0 이면 표를 못 읽은 것이다");
-                Assert.IsTrue(HasText(s => s == "Lv. 0") && HasText(s => s == "0/" + need1),
-                    "안 가진 칸의 숫자는 세이브·표에서 나온다(«Lv. 0» · «0/" + need1 + "») — 레퍼런스 숫자를 베끼지 않는다(T42 · T293 ⓘ)");
+                //   ⛑ 4회차 — 켜진 칸은 이제 **전부 가진 펫**이라 «Lv. 0» 은 더 없다: 갓 얻은 펫은 «Lv. 1 · 0/N» 이다.
+                //     지키는 뜻은 그대로다 — 숫자가 **표·세이브에서** 나온다(레퍼런스 JPG 의 장식 숫자를 안 베낀다 · T42).
+                Assert.IsTrue(HasText(s => s == "Lv. 1") && HasText(s => s == "0/" + need1),
+                    "갓 얻은 칸의 숫자는 세이브·표에서 나온다(«Lv. 1» · «0/" + need1 + "») — 레퍼런스 숫자를 베끼지 않는다(T42 · T293 ⓘ)");
                 // T63-pet — 글자 가독성: 진행바 «0/0» 본문 40 이 바 안에 들어가고(바 높이 = Layout.PetBarH · 표 중심 유지) 펫 탭의 활성 Text 에 잘림/넘침 0(게이트 표와 같은 판정)
                 Canvas.ForceUpdateCanvases();
                 var barTxt0 = UiKit.Find(pet, "Pet:0/Bar").GetComponentInChildren<TMP_Text>(true); Assert.IsNotNull(barTxt0, "진행바 글자");

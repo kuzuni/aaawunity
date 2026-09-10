@@ -53,6 +53,13 @@ namespace KkomaKnight.Game
                 if (i == 0) { lv0 = lv; bar0 = bar; }
             }
 
+            // T293 5항 ⓙ — 0마리일 때의 한 줄(그 자리에 칸이 하나도 안 켜지므로 «무엇을 하면 되는지» 를 말한다)
+            {
+                var hint = UiKit.Label(grid, Layout.PetCell.X, Layout.PetCell.Y + Layout.PetCell.H * 0.5f, 100 - Layout.PetCell.X * 2, 6,
+                                       "펫알로 소환해 보세요", 36, Palette.Cream, TextAnchor.MiddleCenter);
+                hint.name = "EmptyHint"; _emptyHint = hint.rectTransform; _emptyHint.gameObject.SetActive(false);
+            }
+
             // ③ 합계 줄 — «+0 ❤ | +0 🛡 | +0 🗡»(펫 시스템 없음 → 0)
             var sum = UiKit.Rect(Root, "SumRow"); UiKit.Pct(sum, Layout.PetSum);
             SumGroup(sum, 0, 26, "pi.heart", Palette.Red); Sep(sum, 30); SumGroup(sum, 38, 26, "pi.shield", Palette.Sky); Sep(sum, 66); SumGroup(sum, 74, 26, "pi.attack", Palette.White);
@@ -366,7 +373,11 @@ namespace KkomaKnight.Game
             var desc = UiKit.Panel(box, "Desc", "fr.r12", Palette.A(Palette.Dim, 0.6f)); UiKit.Pct(desc.rectTransform, Layout.PdDesc.Within(Layout.PdBox));
             // T293 ⓘ — 표가 실렸으면 «그 펫이 무엇을 하는가» 를 표에서 조립한 글자로 말한다(사람이 따로 안 적는다 · `Pets.Effect`).
             //   표가 없으면(옛 껍데기) 종전 안내 그대로 — 그때는 지어낼 값이 없는 것이 사실이다.
-            var dp = PD; var pet = dp != null && index < dp.Pets.Count ? dp.Pets[index] : null;
+            // 칸 번호는 «화면의 몇 번째» 다 — 무엇이 앉아 있는지는 격자를 채운 그 목록(`_cellPet`)이 안다(T293 5항 ⓙ).
+            //   목록이 아직 없으면(껍데기·표 없음) 종전처럼 표 차례로 읽는다.
+            var dp = PD;
+            var pet = _cellPet != null && index < _cellPet.Count ? _cellPet[index]
+                    : dp != null && index < dp.Pets.Count ? dp.Pets[index] : null;
             int petLv = pet != null ? Pets.Lv(App.Save, pet.Id) : 0;
             string descText = pet == null ? "펫 시스템은 준비 중입니다.\n업데이트로 만나요."
                             : petLv >= 1 ? pet.Name + " · Lv " + petLv + "\n" + Pets.Effect(dp, pet)
@@ -450,12 +461,20 @@ namespace KkomaKnight.Game
         void RefreshCells()
         {
             var d = PD; var s = App != null ? App.Save : null; if (d == null || s == null) return;
+            // T293 5항 ⓙ(주인 2026-09-09 11:1X «얻은 거만 보이게») — **가진 펫만** 앞에서부터 채우고 나머지 칸은 끈다(빈 칸을 안 남긴다).
+            //   차례 = 등급 내림차순 → 표 차례(«빠른 장착» 이 고르는 차례와 같은 규칙 · 사람이 두 곳에서 다른 차례를 보면 안 된다).
+            _cellPet = OwnedOrder(d, s);
             for (int i = 0; i < _cells.Length; i++)
             {
                 var cell = _cells[i]; if (cell == null) continue;
-                var p = i < d.Pets.Count ? d.Pets[i] : null;
-                int lv = p != null ? Pets.Lv(s, p.Id) : 0;
+                bool shown = i < _cellPet.Count;
+                cell.gameObject.SetActive(shown);
+                if (!shown) continue;
+                var p = _cellPet[i];
+                int lv = Pets.Lv(s, p.Id);
                 bool own = lv >= 1;
+                // 칸 그림도 그 펫의 것으로 — 칸 자리는 «화면의 몇 번째» 이고 무엇이 앉는지는 이 목록이 정한다.
+                UiKit.SetSprite(cell, "ItemFrame_01/Item", PetIcon(d, p.Id), Palette.White);
                 var lvT = UiKit.Find(cell, "Lv"); var lvTx = lvT != null ? lvT.GetComponent<TMP_Text>() : null;
                 if (lvTx != null) lvTx.text = own ? "Lv. " + lv : "Lv. 0";
                 var barT = UiKit.Find(cell, "Bar");
@@ -468,10 +487,32 @@ namespace KkomaKnight.Game
                     var bt = barT.GetComponentInChildren<TMP_Text>(true);
                     if (bt != null) bt.text = frag + "/" + need;
                 }
-                // 안 가진 칸은 흐리게 — 지우지 않는다(칸 이름·자리는 계약이다 · 주인의 «가진 것만» 은 다음 회차에서 칸 수로 푼다)
-                UiKit.Ensure<CanvasGroup>(cell.gameObject).alpha = own ? 1f : 0.45f;
+                UiKit.Ensure<CanvasGroup>(cell.gameObject).alpha = 1f;   // 켜진 칸은 전부 «가진 것» 이다(흐린 칸은 이제 없다)
             }
+            // 0마리면 «무엇을 하면 되는지» 한 줄로 말한다(주인 5항 ⓙ) — 빈 격자만 두면 «고장난 화면» 으로 읽힌다.
+            if (_emptyHint != null) _emptyHint.gameObject.SetActive(_cellPet.Count == 0);
         }
+
+        /// <summary>
+        /// 지금 격자에 그릴 차례 — <b>가진 펫만</b>, 등급 내림차순 → 표 차례(주인 5항 ⓙ).
+        /// <para>«빠른 장착» 이 고르는 차례와 <b>같은 규칙</b>이다 — 사람이 두 자리에서 다른 차례를 보면 «무엇이 센 펫인가» 를 화면마다 다시 배워야 한다.</para>
+        /// </summary>
+        List<PetData.Pet> OwnedOrder(PetData d, SaveData s)
+        {
+            var list = new List<PetData.Pet>();
+            if (d == null || s == null) return list;
+            foreach (var p in d.Pets) if (Pets.Has(s, p.Id)) list.Add(p);
+            list.Sort((a, b) =>
+            {
+                var ga = d.GradeOfPet(a); var gb = d.GradeOfPet(b);
+                int ra = ga != null ? ga.Rar : -1, rb = gb != null ? gb.Rar : -1;
+                if (ra != rb) return rb.CompareTo(ra);
+                return d.Pets.IndexOf(a).CompareTo(d.Pets.IndexOf(b));
+            });
+            return list;
+        }
+        List<PetData.Pet> _cellPet = new List<PetData.Pet>();
+        RectTransform _emptyHint;
 
         /// <summary>합계 줄 — 장착한 펫들이 더해 주는 공·체·실(<see cref="Pets.EquipPower"/> 한 곳에서 온다 · 화면이 다시 세지 않는다).</summary>
         void RefreshSum()
