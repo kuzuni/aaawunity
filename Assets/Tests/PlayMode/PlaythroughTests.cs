@@ -1492,5 +1492,23 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("배포 갈래 P3");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T399 — P8(출석·데일리 기프트·우편)의 <b>배포 갈래</b>. 꼴은 위 넷과 같다(결정 1101).
+        /// <para>
+        /// ⚑ 이 각본은 <b>사이드 칸 둘과 ≡ 메뉴 줄</b>을 실제로 눌러 팝업을 연다 — 로비에서 팝업으로 가는 배선 셋이 한 갈래에 모여 있는 유일한 단계다.
+        /// 그 배선이 끊기면 «팝업은 코드로는 열리는데 아무 데서도 못 연다» 가 되고, 화면 자들은 팝업을 <b>제 손으로 열어</b> 재므로 아무도 안 운다(T280).
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 배포_갈래_P8_도_자에서_한_번_돈다()
+        {
+            yield return Boot();
+            Assert.IsTrue(Playthrough.HasStep("P8"), "P8 의 배포 갈래가 등록돼 있다");
+            yield return Playthrough.RunOne(_app, "P8");
+            Assert.AreEqual("lobby", _app.Current.Name, "각본이 끝나면 로비에 서 있다");
+            _log.AssertNoRed("배포 갈래 P8");
+            yield return Shutdown();
+        }
     }
 }

@@ -68,7 +68,7 @@ namespace KkomaKnight.Game
         public delegate System.Collections.IEnumerator Step(App app);
 
         static readonly System.Collections.Generic.Dictionary<string, Step> Steps =
-            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P3", P3Gear }, { "P4", P4Shop }, { "P10", P10Pet } };
+            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P3", P3Gear }, { "P4", P4Shop }, { "P8", P8Boxes }, { "P10", P10Pet } };
 
         /// <summary>
         /// 단계 하나만 돌린다 — <b>자가 «배포 갈래도 실제로 도는가» 를 재는 입구</b>(T300 2항 · 결정 1101).
@@ -268,6 +268,95 @@ namespace KkomaKnight.Game
             TapIn(app.Overlay.Root, "Dimmed", false); yield return Frames(2);
             if (app.Overlay.IsOpen) throw new MissingException("확률 팝업 닫힘(어둠 탭 뒤에도 열려 있다)");
             app.ShowScreen("lobby"); yield return null;
+        }
+
+        /// <summary>
+        /// P8 출석·데일리 기프트·우편(T300 1항 · 배포 갈래 · T399) — PlayMode <c>PlaythroughTests.P8_…</c> 와 <b>같은 길</b>. 단언은 없다(3항 ⓐ):
+        /// 사이드 «출석» → (오늘 몫이 있으면) 1일차 칸 → 닫기 → 사이드 «데일리 기프트» → (그냥 받는 칸이 있으면) «받기» → 닫기 →
+        /// ≡ → «우편» → «전체 받기»(없으면 줄의 «받기») → 닫기 → 로비.
+        /// <para>⚠ <b>팝업은 손으로 안 연다</b> — <c>LobbyPopups.Attendance(app)</c> 를 직접 부르면 사이드 칸·메뉴 줄의 배선이 끊겨도 봇이 «ok» 를 찍는다(결정 922 ③ · 979).</para>
+        /// <para>⚠ <b>«받을 것이 있다» 와 «지금 그 버튼이 있다» 는 다른 말이다</b>(결정 979) — 기프트의 칸은 «광고 보기» 일 수 있고 출석은 오늘 몫을 이미 받았을 수 있다.
+        /// 그런 자리는 <b>지나간다</b>. 없는 것을 «잡았다» 고 적지 않는다 — 다만 <b>팝업이 서고 닫히는가</b> 는 늘 잰다.</para>
+        /// <para>⚠ <b>우편 한 통은 이 단계가 넣는다</b>(1항) — 새 세이브의 우편함은 비어 있어 그냥 열면 «받기» 가 없다.</para>
+        /// </summary>
+        static System.Collections.IEnumerator P8Boxes(App app)
+        {
+            var D = app.Data; var S = app.Save;
+            string today = SaveStore.Today();
+
+            // 조건은 이 단계가 만든다 — 우편 한 통(아레나 갈래만 들어간다 · T243). 수(1000)는 표의 값이 아니라 이 각본이 정한 값이라 안 낡는다.
+            var mail = new MailItem { Id = "p8-play", Kind = Core.Mail.KindArena, Title = "아레나 순위 보상", Desc = "" };
+            mail.Rewards.Add(new ArenaRankData.Reward { Item = Core.Mail.ItemGold, Amount = 1000 });
+            Core.Mail.Add(S, mail);
+            app.Persist();
+
+            app.ShowScreen("lobby"); yield return Frames(3);
+            Reach(app, "lobby");
+
+            // ⓐ 출석 — 사이드 칸을 눌러 연다. 오늘 몫이 남아 있을 때만 1일차 칸을 누른다.
+            Tap(app, "Side:" + LobbyScreen.SideAttendance); yield return Frames(2);
+            yield return UntilOpen(app, "출석 팝업");
+            if (D != null && D.Attendance != null && Core.Attendance.Can(S, D.Attendance, today))
+            {
+                TapDeep(app.Overlay.Root, "Day:1", "출석 1일차 칸");
+                yield return Frames(3);
+            }
+            yield return CloseByX(app, "출석 팝업");
+
+            // ⓑ 데일리 기프트 — «받기» 글자가 있을 때만 누른다(광고로 여는 칸은 «광고 보기» 다 · 결정 979)
+            Tap(app, "Side:" + LobbyScreen.SideDailyGift); yield return Frames(2);
+            yield return UntilOpen(app, "데일리 기프트 팝업");
+            if (UiKit.Find(app.Overlay.Root, "DailyGiftBox") == null) throw new MissingException("기프트 상자(DailyGiftBox)");
+            if (TapLabel(app.Overlay.Root, "받기")) yield return Frames(3);
+            yield return CloseByX(app, "데일리 기프트 팝업");
+
+            // ⓒ 우편 — ≡ 메뉴 줄로 연다(사이드 칸이 없는 유일한 자리라 이 갈래가 메뉴 배선도 같이 잰다)
+            Tap(app, "Button_Menu"); yield return Frames(2);
+            yield return UntilOpen(app, "≡ 메뉴");
+            TapIn(app.Overlay.Root, "Menu:" + LobbyMenu.ItemMail, true); yield return Frames(3);
+            if (!app.Overlay.IsOpen) throw new MissingException("우편함(메뉴 줄 뒤)");
+            UiKit.CompleteAllTweens(); yield return Frames(1);
+            if (UiKit.Find(app.Overlay.Root, Mailbox.ClaimAllName) != null) TapIn(app.Overlay.Root, Mailbox.ClaimAllName, true);
+            else if (!TapLabel(app.Overlay.Root, "받기")) throw new MissingException("우편의 «전체 받기»·«받기»(이 단계가 넣은 한 통이 있는데 받을 자리가 없다)");
+            yield return Frames(3);
+            if (Mailbox.Any(app)) throw new MissingException("받고 나면 비는 우편함(아직 그 통이 남아 있다)");
+            if (app.Overlay.IsOpen) yield return CloseByX(app, "우편함");
+
+            app.ShowScreen("lobby"); yield return null;
+        }
+
+        /// <summary>팝업이 설 때까지 기다린다 — <see cref="WaitFrames"/> 를 넘기면 «무엇을 기다리다 죽었나» 를 남긴다.</summary>
+        static System.Collections.IEnumerator UntilOpen(App app, string what)
+        {
+            var w = new Waiter(what);
+            while (!app.Overlay.IsOpen && w.Tick()) yield return null;
+            yield return Frames(2);
+        }
+
+        /// <summary>
+        /// 닫기 <b>X</b> 로 닫고, X 가 없는 팝업이면 어둠으로 닫는다 — 사람이 닫는 두 길이 그 둘뿐이다.
+        /// <para>⚠ <c>Overlay.Close()</c> 를 손으로 부르지 않는다 — 그러면 «X 가 아무 데도 안 이어져 있어도» 봇이 «닫았다» 고 적는다(T280 이 부활 버튼에서 세운 규칙).</para>
+        /// <para>⚠ 닫기 X 는 <b>앞머리</b>로 고른다 — 조각마다 이름이 다르다(<c>Button_Close_01</c> ↔ <c>Button_Close_Square_01</c>).
+        /// 꺼진 X 는 «안 쓰는 것»(출석·퀘스트 팝업이 <c>UiKit.Hide</c> 로 끈다 · 결정 168)이라 <b>켜진 것만</b> 센다.</para>
+        /// </summary>
+        static System.Collections.IEnumerator CloseByX(App app, string what)
+        {
+            if (!app.Overlay.IsOpen) yield break;
+            UnityEngine.UI.Button close = null;
+            foreach (var b in app.Overlay.Root.GetComponentsInChildren<UnityEngine.UI.Button>(false))
+                if (b.name.StartsWith("Button_Close", StringComparison.Ordinal) && b.interactable) { close = b; break; }
+            if (close != null) { close.onClick.Invoke(); yield return Frames(2); }
+            if (app.Overlay.IsOpen) yield return CloseByDim(app, what);
+        }
+
+        /// <summary>이름으로 찾은 자리 «안»의 첫 손잡이를 누른다 — 칸 자신이 아니라 자식이 눌리는 자리(출석 칸 <c>Day:N</c>)에 쓴다.</summary>
+        static void TapDeep(UnityEngine.Transform root, string name, string what)
+        {
+            var t = root != null ? UiKit.Find(root, name) : null;
+            if (t == null) throw new MissingException(name);
+            var b = t.GetComponentInChildren<UnityEngine.UI.Button>(true);
+            if (b == null || !b.interactable) throw new MissingException(what + "(눌리지 않는다)");
+            b.onClick.Invoke();
         }
 
         /// <summary>
