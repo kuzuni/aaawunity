@@ -96,9 +96,29 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(cv.overrideSorting, "구슬 층 Canvas 는 overrideSorting(T428)");
                 Assert.AreEqual(RewardPopup.OrbSortingOrder, cv.sortingOrder, "구슬 층 sortingOrder = 최상위(T428)");
                 // 앞 팝업이 다시 열려 오버레이가 맨 위로 가도(형제 순서로는 구슬이 뒤) Canvas 정렬로 이긴다 — 그 상황을 만들어 재확인
+                int ovIndex0 = _app.Overlay.Root.GetSiblingIndex();
                 _app.Overlay.Root.SetAsLastSibling();
                 Assert.Less(layer.GetSiblingIndex(), _app.Overlay.Root.GetSiblingIndex(), "(상황 재현) 형제 순서로는 오버레이가 위");
-                Assert.IsTrue(layer.GetComponent<Canvas>().overrideSorting && layer.GetComponent<Canvas>().sortingOrder > 0, "그래도 Canvas 정렬로 구슬이 위(T428)");
+                // ⛑ T430 — «유일하다» 가 아니라 «**이긴다**» 를 잰다.
+                //   종전 줄은 `overrideSorting && sortingOrder > 0` 이었는데 그 둘은 **세 줄 위에서 이미 단언한 그 필드**다 —
+                //   `SetAsLastSibling()` 은 형제 번호만 바꾸고 Canvas 필드는 못 건드리므로 **재현은 코드에 있고 잰 것은 글에만 있었다**.
+                //   «위» 를 만드는 진짜 까닭은 «정렬을 무르는 경쟁자가 없다» 는 사실인데, 그것이 주석에만 있었다.
+                //   ⚠ 그 전제를 깰 손이 **주인의 말 그 자체**다 — 처방이 «캔버스를 따로 하던지» 였으니, 다음에 무엇이 가려질 때
+                //     누가 그 팝업에 `overrideSorting` 을 다는 것은 이 레포에서 가장 자연스러운 손이다. 그날 구슬은 다시 가려지는데
+                //     종전 단언은 **한 줄도 안 빨개진다** — 주인이 T354·T428 로 **두 번** 말한 자리라 조용한 되돌아감이 특히 비싸다.
+                //   ⚠ 재는 것은 «그리기 결과» 가 아니라 **정렬 값**이다(유니티가 Canvas 정렬로 형제 순서를 이긴다는 규칙 자체는 안 돌려 봤다 · 검수 Q 7항).
+                int rivalTop = int.MinValue; string rivalName = null;
+                foreach (var c in _app.Frame.GetComponentsInChildren<Canvas>(true))
+                {
+                    if (c == cv || !c.overrideSorting || c.sortingOrder <= rivalTop) continue;
+                    rivalTop = c.sortingOrder; rivalName = c.name;
+                }
+                if (rivalName != null)
+                    Assert.Greater(cv.sortingOrder, rivalTop,
+                        $"정렬을 무르는(overrideSorting) Canvas 가운데 구슬 층이 가장 위여야 한다 — «{rivalName}»({rivalTop})가 구슬({cv.sortingOrder})을 덮는다(T430)");
+                // ⛑ T430 — 만든 상황을 되돌린다. 지금은 뒤 단언이 순수 계산이라 탈이 없지만,
+                //   뒤에 형제 순서를 보는 단언이 붙는 날 **조용히 바뀐 판**을 보게 된다.
+                _app.Overlay.Root.SetSiblingIndex(ovIndex0);
             }
             // T367(주인 2026-09-10 «다이아는 다이아 쪽, 골드는 골드 쪽으로 흡수») — 보상 칸이 실제로 쓰는 키(ui.gemRed · ui.coin)가 제 pill 로 간다.
             //   옛 판정은 다이아 키 셋만 알아 `ui.gemRed`(출석·데일리·챕터 상자·퀘스트 트랙)가 가운데 아래 «자리 없음» 으로 빨려 들어갔다.
