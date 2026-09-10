@@ -9823,7 +9823,17 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 > · **나머지 셋은 그대로 «같다» 다** — «장착중»(슬롯 줄 띠 · 실측: 펫과 무관한 붙박이 글자)·«소환»·«소환 x10» 에는 `Count()` 가 안 닿는다.
 > **게이트**: build 0 Error/0 Warning · `dotnet test` **524/524** · PlayMode 임시 csproj `-t:Rebuild` **0 오류** · gen_meta·gen_catalog·catalog_keys·asmdef·test_usings·stale_asserts·font_glyphs·task_rows·task_state·split_push·table_tags·decisions·docs_intact·claim_scope rc=0 · unity_null·data_sync rc=0. C# 자 한 파일 · 게임 코드 0줄 · `data/*.json` 0줄 · aaaw 0줄 · 밸런스 0줄.
 
-순서 — `Tests/PlayMode/UiSmokeTests.cs`(펫 라벨 두 줄만 · 게임 코드 0줄). lock `T378`. **T293 의 몫이 아니다** — 그 절이 한 일은 옳고(주인 5항 ⓙ), 남은 것은 낡은 자 하나다.
+> **🔄 2회차 push · 확인 전(2026-09-10 02:5X · sess-1842-31994 · 워커 G · 결정 1078 · lock 갱신해 쥔 채)** — 1회차가 `:981` 을 닫자 빨강이 **`:1069`(세부 팝업 글자)** 로 옮겼다(런 938·939). 셋이 답을 놓고 갔고 **셋 다 조금씩 달랐다** — 그래서 셋을 합치지 않고 다시 골랐다.
+> · **ⓐ `«장착»` 을 `&&` 사슬에서 뺐다** — `PetScreen:415` 가 `wornSlot >= 0 ? "해제" : "장착"` 이라 **상태에 따라 낱말이 바뀐다**. 이 자리는 앞에서 «빠른 장착» 이 눌린 뒤라 «해제» 다(워커 K · 결정 1076 · 런 939 가 실제로 그것을 보였다 — `s == "장착"` 이 화면 **어디에도** 없었다).
+> · **ⓑ 넷을 한 `&&` 로 묶은 것을 갈랐다**(워커 E) — 묶여 있으면 «어느 낱말이 깨졌는지» 를 메시지가 안 말한다. 런 938 이 그 값을 치렀다.
+> · **ⓒ `HasText` 대신 버튼을 짚었다**(워커 A · 결정 1075 ③) — «화면 어딘가에 그 글자» 는 무엇을 짚는지 흐리다.
+> · **ⓓ 그런데 «해제» 를 박지도, «장착 또는 해제» 로 풀지도 않았다**(결정 1078 ⑤) — 뒤로 풀면 **끼우는 배선이 끊겨도 초록**이고(워커 K 의 걱정), 앞으로 박으면 «왜 해제인가» 를 다음 사람이 다시 캔다. ⇒ 두 줄로 나눴다: «빠른 장착이 이 펫을 실제로 끼웠는가»(`Pets.Equipped`) + «낱말이 그 답을 그대로 말하는가».
+> · **⚑ ⓔ 곁들여 «거짓 초록» 하나를 고쳤다(워커 K 가 넘긴 «덤» · `:1094`)** — `_app.Data.Pet.Pets[0]` 은 T293 ⓘ 4회차 뒤 **`Pet:0` 이 아니다**(격자 = 가진 펫만 · 등급 내림차순). 그런데 이 스모크가 펫을 다 가지게 해서 `Pets.Has` 가 늘 참이라 **빨개지지 않은 채 엉뚱한 펫을 재고 있었다.** 결정 1073 ④ 의 «안 깨진 것은 미룬다» 는 **옳은 것을 좁게 재는 자**에게 쓰는 규칙이고, **틀린 것을 재는 자**에게는 안 쓴다(결정 1078 ②③).
+> · **순서 규칙을 자에 옮겨 적지 않았다** — 어느 펫인지는 **화면이 스스로 말하는 것**에서 읽는다(`Desc` 첫 줄 «<이름> · Lv N»). 자가 «등급 내림차순» 을 다시 짜면 차례가 틀어지는 날 자도 같이 틀어져 아무것도 못 잡는다.
+> · **안 건드린 것** — 워커 E 가 적어 준 큰 갈래(«이 블록의 «글자» 단언을 `PetSummonTests` 로 옮기고 스모크에는 이름 계약만 남긴다»)는 **T293 임자가 정할 일**이라 그대로 뒀다. `:1058`(«모자»)은 `Contains` 라 안 깨진다.
+> **게이트**: build 0 Error · `dotnet test` **530/530** · PlayMode 임시 csproj `-t:Rebuild` **0 오류** · gen_meta·gen_catalog·catalog_keys·asmdef·test_usings·stale_asserts·font_glyphs·task_rows·task_state·split_push·table_tags·decisions·docs_intact·claim_scope rc=0 · unity_null·data_sync rc=0. 자 한 파일 · 게임 코드 0줄 · `data/*.json` 0줄 · aaaw 0줄 · 밸런스 0줄.
+
+순서 — `Tests/PlayMode/UiSmokeTests.cs`(펫 블록만 · 게임 코드 0줄). lock `T378`. **T293 의 몫이 아니다** — 그 절이 한 일은 옳고(주인 5항 ⓙ), 남은 것은 낡은 자들이다.
 
 ### T372 ✅ — ⛑ 런 914·915 빨강: **T293 ⓘ 가 되살린 소환 버튼을 PlayMode 단언 넷이 아직 «껍데기» 로 요구한다**(배포가 또 막혔다 · **런 927 초록으로 닫음 · gh-pages 3시간 33분 만에 전진**) (워커 판단 · 화면 0줄 · 자만)
 

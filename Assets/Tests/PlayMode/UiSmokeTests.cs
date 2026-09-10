@@ -1066,7 +1066,12 @@ namespace KkomaKnight.Tests.Play
                 Check("펫 세부 팝업", expectOverlay: true);
                 var ov = _app.Overlay.Root;
                 Assert.IsNotNull(UiKit.Find(ov, "PetDetailCell"), "세부 칸"); Assert.IsNotNull(UiKit.Find(ov, "Desc"), "설명 박스"); Assert.IsNotNull(UiKit.Find(ov, "PassiveRow"), "패시브 수치 줄");
-                Assert.IsTrue(HasText(s => s == "패시브:") && HasText(s => s == "강화") && HasText(s => s == "장착") && HasText(s => s == "탭하여 닫기"), "세부 팝업 글자");
+                // ⛑ T378 2회차 — 넷을 한 `&&` 로 묶어 두면 **어느 낱말이 깨졌는지 메시지가 말을 안 한다**(워커 E · 런 938 이 그 값을 치렀다). 갈라 둔다.
+                //   ⚑ «장착» 은 이 목록에서 **뺐다** — `PetScreen:415` 가 «낀 칸이 있으면 «해제»» 라 상태에 따라 낱말이 바뀐다.
+                //     그 자리는 아래에서 **버튼을 직접 짚어** 잰다(`HasText` 는 «화면 어딘가» 라 무엇을 짚는지 흐리다 · 워커 A · 결정 1075 ③).
+                Assert.IsTrue(HasText(s => s == "패시브:"), "세부 팝업 글자 «패시브:»");
+                Assert.IsTrue(HasText(s => s == "강화"), "세부 팝업 글자 «강화»");
+                Assert.IsTrue(HasText(s => s == "탭하여 닫기"), "세부 팝업 글자 «탭하여 닫기»");
                 var rib = UiKit.Find(ov, "ui.title.tangerine"); Assert.IsTrue(rib == null || !rib.gameObject.activeSelf, "세부 팝업은 명판 없음(레퍼런스 14)"); Assert.IsNull(UiKit.Find(ov, "Button_Close_01"), "닫기 X 없음");
                 var bx = (RectTransform)UiKit.Find(ov, "ui.popup"); Assert.IsNotNull(bx, "세부 패널(ui.popup)"); Assert.AreEqual(Layout.PdBox.X, bx.anchorMin.x * 100f, 0.5f, "패널 x = 표 ⑪"); Assert.AreEqual(1f - Layout.PdBox.Y / 100f, bx.anchorMax.y, 1e-3f, "패널 y = 표 ⑪");
                 // T63-pet — 세부 팝업 글자: 진행바 숫자(조각/필요 · T293 ⓘ) 40 이 바 안에(PdBar 1.4% → Layout.PetBarH) · 팝업 안 활성 Text 잘림/넘침 0
@@ -1082,13 +1087,32 @@ namespace KkomaKnight.Tests.Play
                 //     지금은 안 가진 펫이면 `SetInteractable(false)` 라 클릭 자체가 안 되어 옛 줄이 그냥 빨개진다.
                 //   ⇒ «눌러 보고» 가 아니라 **눌림이 규칙과 같은가**를 잰다. 기댓값을 «안 눌린다» 로 박지 않고
                 //     Core 에 물어 맞대므로, 시작 펫이 생기는 날에도 이 자는 옳은 것을 잰다.
-                var pet0 = _app.Data.Pet.Pets[0];
+                // ⛑ T378 2회차 — 여기 있던 `_app.Data.Pet.Pets[0]` 은 **틀린 전제**였다(워커 K 가 넘긴 «덤» · 결정 1076).
+                //   T293 ⓘ 4회차 뒤 격자는 «가진 펫만 · 등급 내림차순» 이라 `Pet:0` 은 **표의 0번이 아니다**.
+                //   그런데 이 스모크는 재기 전에 표의 펫을 **다 가지게** 해서 `Pets.Has` 가 어느 펫이든 참이다 —
+                //   곧 이 두 줄은 **빨개지지 않은 채로 엉뚱한 펫을 재고 있었다**(빨강보다 나쁜 «거짓 초록»).
+                //   ⇒ 어느 펫인지는 **화면이 스스로 말한다**: `Desc` 첫 줄이 «<이름> · Lv N». 순서 규칙을 자가 다시 짜면
+                //     차례가 틀어지는 날 자도 같이 틀어져 아무것도 못 잡는다 — **보이는 것에서 읽는다**(T258 이 남긴 읽는 법).
+                var descTx = UiKit.Find(ov, "Desc").GetComponentInChildren<TMP_Text>(true);
+                Assert.IsNotNull(descTx, "세부 설명 글자");
+                var shownName = (descTx.text ?? "").Split('\n')[0].Split(new[] { " · " }, StringSplitOptions.None)[0];
+                var pet0 = _app.Data.Pet.Pets.Find(p => p.Name == shownName);
+                Assert.IsNotNull(pet0, "세부 팝업 설명은 표에 있는 펫 이름으로 시작해야 한다 — 읽은 이름 «" + shownName + "»");
                 var upBtn = UiKit.Find(ov, "PetUpgradeBtn"); var eqBtn = UiKit.Find(ov, "PetEquipBtn");
                 Assert.IsNotNull(upBtn, "세부 강화 버튼"); Assert.IsNotNull(eqBtn, "세부 장착 버튼");
                 Assert.AreEqual(Pets.CanLevelUp(_app.Data.Pet, _app.Save, pet0.Id), upBtn.GetComponent<Button>().interactable,
                     "강화 눌림 = Pets.CanLevelUp(옷과 눌림이 한 값 · 주인 5항 ⓗ)");
                 Assert.AreEqual(Pets.Has(_app.Save, pet0.Id), eqBtn.GetComponent<Button>().interactable,
                     "장착 눌림 = 가진 펫인가(Pets.Has)");
+                // ⛑ T378 2회차 — «장착» 낱말은 상태를 따른다(`PetScreen:415` · `wornSlot >= 0 ? "해제" : "장착"`). 두 줄로 나눠 잰다:
+                //   ⓐ 앞에서 누른 «빠른 장착» 이 **이 펫을 실제로 끼웠는가**(끼우는 배선이 끊기면 여기서 먼저 운다) ·
+                //   ⓑ 낱말이 **그 상태를 그대로 말하는가**.
+                //   ⚠ «장착 또는 해제» 로 둘 다 받으면 ⓐ 가 끊겨도 초록이다 — 워커 K 가 제 절의 계약(격자 차례 = 빠른 장착 차례 · 결정 1064)을
+                //     지키라고 짚어 준 자리다. 그렇다고 «해제» 를 박아만 두면 «왜 해제인가» 를 다음 사람이 다시 캔다 ⇒ 까닭을 ⓐ 로 세워 둔다.
+                bool worn = Pets.Equipped(_app.Data.Pet, _app.Save).Contains(pet0.Id);
+                Assert.IsTrue(worn, "앞에서 누른 «빠른 장착» 이 격자 첫 칸의 펫(«" + pet0.Name + "»)을 끼웠어야 한다 — 안 꼈으면 그 버튼 배선이 끊긴 것이다(결정 1064)");
+                var eqTx = UiKit.ButtonText(eqBtn); Assert.IsNotNull(eqTx, "세부 장착 버튼 글자");
+                Assert.AreEqual(worn ? "해제" : "장착", eqTx.text, "장착 버튼 낱말은 «낀 칸이 있는가» 를 그대로 말한다(PetScreen:415)");
                 yield return Frames(1); Assert.IsTrue(_app.Overlay.IsOpen, "세부 팝업은 그대로 열려 있다");
                 Assert.IsTrue(ClickNamed(ov, "Dimmed"), "배경 탭 = 닫기"); yield return Frames(2); Assert.IsFalse(_app.Overlay.IsOpen, "세부 팝업 닫힘");
                 Check("펫 세부 닫힘");
