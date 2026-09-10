@@ -188,8 +188,11 @@ def report(path, echo=print):
     for f, e in broken:
         echo(f"{TAG} ⚠ XML 을 못 읽었다: {f} — {e}")
     if not got:
-        echo(f"{TAG} 요약 0건 — XML {len(files)}개에 실패한 케이스가 없다. "
-             "이 런의 빨강은 **테스트가 아니다**(러너·빌드·라이선스 쪽을 보라).")
+        # ⚑ T400 — 이 줄이 «이 런의 빨강은 테스트가 아니다» 였다. 그런데 이 갈래는 **런이 초록일 때도** 지나간다
+        #   (런 1007 이 그랬다) — 그러면 꼬리가 있지도 않은 빨강을 말한다. 이 자는 XML 만 보므로 잡이 빨간지 모른다
+        #   ⇒ **아는 것만 말하고**(실패 0) 빨강은 «있다면» 으로 둔다.
+        echo(f"{TAG} 요약 0건 — XML {len(files)}개에 실패한 케이스가 0. "
+             "**이 잡이 빨갛다면** 그 빨강은 테스트가 아니다(러너·빌드·라이선스 · 위 단계를 보라).")
         return 0
     echo(f"{TAG} {len(got)}건 — XML {len(files)}개에서 모았다(아티팩트는 프록시에 막히므로 이 목록이 워커가 읽는 유일한 자리다).")
     for i, (name, msg, where) in enumerate(got[:MAX_CASES], 1):
