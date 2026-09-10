@@ -173,10 +173,17 @@ namespace KkomaKnight.Game
             TapIn(app.Current.Root, "SummonBtn", true);
             yield return CloseByDim(app, "펫 소환 결과");
 
-            int idx = -1;
-            for (int i = 0; i < D.Pet.Pets.Count; i++) if (Pets.Has(S, D.Pet.Pets[i].Id)) { idx = i; break; }
-            if (idx < 0) throw new MissingException("소환하고도 가진 펫이 없다(뽑은 것이 세이브에 안 닿았다)");
-            TapIn(app.Current.Root, "Pet:" + idx, true); yield return Frames(2);
+            // ⛑ T293 ⓘ 4회차(주인 5항 ⓙ) 뒤 — 격자는 **가진 펫만** 앞에서부터 켜므로 칸 이름 `Pet:N` 의 N 은 «표의 몇 번째» 가 아니라 «화면의 몇 번째» 다.
+            //    표 자리로 집으면 꺼진 칸을 누르고, 꺼진 것도 `onClick` 은 돌아서 봇이 «사람 눈에 없는 것» 을 누른 채 ok 를 찍는다(결정 941 ① · 1071).
+            //    ⇒ **켜진 첫 칸**을 집는다 — 켜져 있다는 것이 곧 «가진 펫» 이다(자리 대신 뜻으로 집는다).
+            string slot = null;
+            for (int i = 0; i < D.Pet.Pets.Count && slot == null; i++)
+            {
+                var c = UiKit.Find(app.Current.Root, "Pet:" + i);
+                if (c != null && c.gameObject.activeInHierarchy) slot = "Pet:" + i;
+            }
+            if (slot == null) throw new MissingException("소환하고도 격자에 켜진 칸이 없다(뽑은 것이 화면에 안 닿았다)");
+            TapIn(app.Current.Root, slot, true); yield return Frames(2);
             if (!app.Overlay.IsOpen) throw new MissingException("펫 세부 팝업(칸 뒤)");
 
             // 강화 — 갓 뽑은 펫은 조각이 모자랄 수 있다. 잠겨 있으면 «없는 것을 눌렀다» 고 적지 않고 지나간다.
@@ -186,7 +193,7 @@ namespace KkomaKnight.Game
             if (upBtn != null && upBtn.interactable) { upBtn.onClick.Invoke(); yield return Frames(3); }
 
             // 장착 — 강화는 팝업을 닫았다 다시 연다(PetScreen.Upgrade) · 닫혀 있으면 칸을 다시 누른다
-            if (!app.Overlay.IsOpen) { TapIn(app.Current.Root, "Pet:" + idx, true); yield return Frames(2); }
+            if (!app.Overlay.IsOpen) { TapIn(app.Current.Root, slot, true); yield return Frames(2); }
             TapIn(app.Overlay.Root, "PetEquipBtn", true); yield return Frames(3);
 
             if (app.Overlay.IsOpen) yield return CloseByDim(app, "펫 세부 팝업");
