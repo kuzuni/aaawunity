@@ -385,7 +385,7 @@ namespace KkomaKnight.Tests.Play
             Assert.Fail("gear.json 에 부위가 없다: " + part); return null;
         }
 
-        // ───────────────────────── ① 로비 · 설정 · 탤런트/펫 · 토스트 ─────────────────────────
+        // ───────────────────────── ① 로비 · 설정 · 탤런트 (펫 탭·토스트는 ①-e PetTabAndToast 로 · T379 첫 조각) ─────────────────────────
         [UnityTest]
         public IEnumerator LobbySettingsTalentPetToast()
         {
@@ -979,6 +979,27 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsFalse(_app.Overlay.IsOpen, "닫힘");
                 _app.ShowScreen("lobby"); yield return Frames(2);
             }
+            yield return Shutdown();
+        }
+
+        // ───────────────────────── ①-e 펫 탭 · 세부 팝업 · 토스트 (T379 첫 조각 · 옛 LobbySettingsTalentPetToast :983~1158) ─────────────────────────
+        /// <summary>
+        /// T379 — «한 자가 화면 아홉을 훑으면 CI 한 회전에 결함이 하나만 나온다» 의 첫 조각. <see cref="LobbySettingsTalentPetToast"/> 에서 <b>펫 탭 · 세부 팝업 · 토스트</b> 블록을
+        /// 제 이름으로 떼어 냈다(검수 Q ④ 표의 다섯째 · 오늘 절 셋(T293 ⓘ·T378·T322)이 다투던 바로 그 자리). 단언은 <b>하나도 안 지웠다 — 옮기기만 했다</b>.
+        /// <para>
+        /// ⚠ <b>상태 물려받기(결정 1100)</b> — 이 블록은 원래 «데이터 삭제»(옛 :952 «삭제» → <see cref="App.ResetSave"/>) 뒤의 <b>지워진 판</b> 위에서 돌았다.
+        /// 갓 켠 판(<see cref="Boot"/> → <c>Quests.Login</c> · attend 1)과는 다른 판이므로 <b>같은 지우기 경로</b>를 먼저 탄다 — 그래야 «갓 켠 판에서만 통과하는» 거짓 초록이 안 생긴다(결정 1078 ②).
+        /// </para>
+        /// 옛 줄 번호 → 이 자(결정 1091 의 대응표): <c>:992</c> «펫 탭» · <c>:1018</c> 라벨 · <c>:1070~1073</c> 잠긴 칸 · <c>:1092</c> «펫 소환 버튼» · <c>:1095</c> «펫 세부 팝업» · <c>:1132~1148</c> 세부 버튼 낱말 · <c>:1151</c> «펫 세부 닫힘» · <c>:1158</c> «토스트».
+        /// </summary>
+        [UnityTest]
+        public IEnumerator PetTabAndToast()
+        {
+            yield return Boot();
+            // 결정 1100 ④ — 셋째 조각(설정 · 데이터 삭제)이 만들던 «지워진 판» 을 같은 경로로 재현한다. ResetSave 는 Quests.Login 을 다시 안 부른다(App.cs) — 그것이 그 판의 정체다.
+            _app.ResetSave(); yield return Frames(2);
+            Assert.AreEqual("lobby", _app.Current.Name, "지운 뒤 로비(옛 :953 의 자리)"); Assert.IsFalse(_app.Overlay.IsOpen, "지운 뒤 팝업 없음");
+            Assert.AreEqual(0, _app.Save.Inv.Count, "지워진 판 — 장비 0(옛 :955)"); Assert.AreEqual(0, _app.Save.Gem, 1e-6, "지워진 판 — 보석 0");
 
             // T42 — 펫 탭 = 레퍼런스 13_pet.jpg 구도(PetScreen · 껍데기): 상단 바 · 4열 격자 9칸(Lv · 진행바) · 합계 줄 · «장착중» 띠 + 슬롯 3 · 회색 2 · 주황 소환 2 · 탭 5 → 칸 클릭 = 세부 팝업(14 · 명판 없음 · 탭하여 닫기)
             {

@@ -10094,6 +10094,10 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Assets/Tests/PlayMode/UiSmokeTests.cs` 하나(**게임 코드 0줄 · `data/*.json` 0줄**). lock `T379`. 확인 = 쪼갠 뒤 완주 런의 `[CI명부]` 에 `UiSmokeTests(9)` 가 서고, 빨강이 있으면 **어느 화면인지 자 이름이 스스로 말한다**.
 
+> ---
+>
+> **▸ 🔄 1회차 push · CI 확인 전(2026-09-10 06:2X · sess-0612-40617 · 워커 M · 결정 1107 · lock `T379`)** — 예고한 임자(B)의 lock 이 조건 충족(04:46) 뒤 86분 없어 §3 대로 잡았다. **첫 조각 = 다섯째 `PetTabAndToast`**(옛 `:983~1158` · Q ⓒ 의 «값이 가장 큰 조각») · 단언 0줄 삭제 · 상태 물려받기는 `Boot` 뒤 `App.ResetSave()`(원래 그 판을 만든 길 · 결정 1100 ④) · 대응표는 PROGRESS 행과 자 주석에. 남은 넷은 `LobbySettingsTalentPetToast` 안 그대로(`:389~981`). 다음: 완주 런 `[CI명부]` `UiSmokeTests(6)` 확인 → 둘째 조각.
+
 ### T378 ✅ — ⛑ 런 932·935 빨강: **«전체 강화» 는 할 것이 있으면 «전체 강화 2» 다 — 라벨을 `==` 로 못 박은 자가 낡았다**(배포가 한 시간째 옛 커밋에 멈춰 있다) (워커 판단 · 화면 0줄 · 자만)
 
 0. **잡은 까닭(T372 0항 과 같은 잣대)** — `Assets/Tests/PlayMode/UiSmokeTests.cs` 는 **어느 살아 있는 lock 의 범위 열에도 없다**(T293 의 범위는 `Game/PetScreen`·`Core/*`·`pet.json`·`catalog.json` 까지다 · 실측 2026-09-10 01:4X). 넘을 lock 이 없고, 그 빨강이 **주인 폰·웹 빌드를 옛 커밋에 묶어 두고 있다**(`deploy-last-green` 은 «마지막 초록» 을 고른다 · 런 930 = `1763455e` 에 멈춰 있다 · 결정 1010 이 그은 경계).
