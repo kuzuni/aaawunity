@@ -1554,6 +1554,23 @@ namespace KkomaKnight.Tests.Play
         }
 
         /// <summary>
+        /// T409 — P5(던전)의 <b>배포 갈래</b>. 판을 <b>둘</b> 굴리고 광고 카운트다운까지 지나는, 지금 각본 중 가장 긴 것이다.
+        /// <para>⚑ 그래서 이 자도 <b>배속을 되돌렸는가</b> 를 잰다 — P6 자와 같은 까닭이고, 판을 굴리는 각본이 늘 때마다 이 한 줄이 같이 늘어야 한다.</para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 배포_갈래_P5_도_자에서_한_번_돈다()
+        {
+            yield return Boot();
+            if (_app.Data == null || _app.Data.Dungeon == null) { yield return Shutdown(); Assert.Ignore("던전 표가 없다 — 이 각본이 놀 것이 없다"); }
+            Assert.IsTrue(Playthrough.HasStep("P5"), "P5 의 배포 갈래가 등록돼 있다");
+            yield return Playthrough.RunOne(_app, "P5");
+            Assert.AreEqual("lobby", _app.Current.Name, "각본이 끝나면 로비에 서 있다");
+            Assert.AreEqual(1f, Time.timeScale, "각본이 배속을 되돌려 놓는다");
+            _log.AssertNoRed("배포 갈래 P5");
+            yield return Shutdown();
+        }
+
+        /// <summary>
         /// T407 — P7(퀘스트·업적)의 <b>배포 갈래</b>. 꼴은 위 다섯과 같다(결정 1101).
         /// <para>
         /// ⚑ 이 각본이 잡는 것: 팝업 <b>안</b>의 탭 셋(일일·주간·업적)이 판을 갈아타는 배선이다. 그 셋은 팝업을 <b>통째로 다시 여는</b> 길이라

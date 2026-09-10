@@ -82,7 +82,7 @@ namespace KkomaKnight.Game
         public delegate System.Collections.IEnumerator Step(App app);
 
         static readonly System.Collections.Generic.Dictionary<string, Step> Steps =
-            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P2", P2Battle }, { "P3", P3Gear }, { "P4", P4Shop }, { "P6", P6Arena }, { "P7", P7Quest }, { "P8", P8Boxes }, { "P9", P9Expedition }, { "P10", P10Pet } };
+            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P2", P2Battle }, { "P3", P3Gear }, { "P4", P4Shop }, { "P5", P5Dungeon }, { "P6", P6Arena }, { "P7", P7Quest }, { "P8", P8Boxes }, { "P9", P9Expedition }, { "P10", P10Pet } };
 
         /// <summary>
         /// 단계 하나만 돌린다 — <b>자가 «배포 갈래도 실제로 도는가» 를 재는 입구</b>(T300 2항 · 결정 1101).
@@ -643,6 +643,89 @@ namespace KkomaKnight.Game
             TapIn(Page(app, EventsScreen.PageMerchant), "BackBtn", true); yield return Frames(3);
 
             app.ShowScreen("lobby"); yield return null;
+        }
+
+        /// <summary>
+        /// P5 던전(T300 1항 · 배포 갈래 · T409) — PlayMode <c>PlaythroughTests.P5_…</c> 와 <b>같은 길</b>. 단언은 없다(3항 ⓐ):
+        /// 던전 페이지 → 지옥의 문 «입장» → 세부(21) → «도전» → 판을 굴려 클리어 → «그냥 받기» → <b>소탕</b> →
+        /// 티켓 0 에서 <b>광고</b>로 한 장 → 티켓 0 에서 <b>다이아</b>로 한 장 → 원정 한 층 → 로비.
+        /// <para>⚠ <b>티켓·다이아는 봇이 제 조건을 만든다</b>(1항) — 보충 수를 세서 만들지 않는다(주인이 그 수를 바꾸는 날 봇이 먼저 운다). 다이아는 표(<c>GemCost</c>)에서 읽는다.</para>
+        /// <para>⚠ <b>«소탕 리워드 팝업» 은 있을 수도 없을 수도 있다</b> — 표의 <c>sweep</c> 이 비면 안 뜬다. 없는 것을 «잡았다» 고 적지 않고 지나간다.</para>
+        /// <para>⚠ <b>광고는 카운트다운이 끝나야 티켓이 들어온다</b> — «팝업이 닫혔다» 가 아니라 <b>결과</b>(티켓이 늘었다)로 기다린다(결정 997 이 P9 에서 세운 그 잣대).</para>
+        /// </summary>
+        static System.Collections.IEnumerator P5Dungeon(App app)
+        {
+            var D = app.Data != null ? app.Data.Dungeon : null;
+            if (D == null) throw new MissingException("던전 표(data.dungeon)");
+            var S = app.Save; string today = SaveStore.Today();
+            S.Gem = D.GemCost * 2; app.Persist();   // 다이아로 티켓 한 장 살 만큼 — 수는 표에서 읽는다
+
+            EventsScreen.Open(app, EventsScreen.PageDungeon); yield return Frames(3);
+            var pg = Page(app, EventsScreen.PageDungeon);
+            if (UiKit.Find(pg, "Card:hell") == null) throw new MissingException("지옥의 문 카드(Card:hell)");
+
+            // ⓐ 지옥의 문 — 입장 → 세부(21) → 도전 → 클리어 → «그냥 받기»
+            yield return OpenDungeon(app, "hell");
+            yield return ClearDungeonRun(app, "hell");
+
+            // ⓑ 소탕 — 클리어한 던전이라 된다. 리워드 팝업은 표에 따라 있을 수도 없을 수도.
+            if (DungeonTickets.Tickets(S, D, "hell", today) < 1) { S.DunTickets["hell"] = 1; app.Persist(); }
+            yield return OpenDungeon(app, "hell");
+            TapIn(app.Overlay.Root, "SweepBtn", true); yield return Frames(3);
+            if (UiKit.Find(app.Overlay.Root, "RewardTitle") != null) yield return CloseAll(app, "소탕 리워드 팝업");
+            if (UiKit.Find(app.Overlay.Root, "SweepBtn") == null) throw new MissingException("소탕 뒤 다시 서는 세부 팝업");
+
+            // ⓒ 티켓 0 → 왼쪽이 «광고» 가 된다(T99 3항). 카운트다운이 끝나야 티켓이 들어오므로 «결과» 로 기다린다.
+            yield return CloseAll(app, "던전 세부 팝업");
+            S.DunTickets["hell"] = 0; app.Persist();
+            yield return OpenDungeon(app, "hell");
+            TapIn(app.Overlay.Root, "SweepBtn", true);
+            {
+                var w = new Waiter("광고 뒤 들어오는 티켓");
+                while (DungeonTickets.Tickets(S, D, "hell", today) == 0 && w.Tick()) yield return null;
+            }
+            yield return Frames(2);
+
+            // ⓓ 티켓 0 → 오른쪽이 «다이아» 가 된다
+            yield return CloseAll(app, "던전 세부 팝업(광고 뒤)");
+            S.DunTickets["hell"] = 0; app.Persist();
+            yield return OpenDungeon(app, "hell");
+            TapIn(app.Overlay.Root, "ChallengeBtn", true); yield return Frames(3);
+            if (DungeonTickets.Tickets(S, D, "hell", today) == 0) throw new MissingException("다이아로 산 티켓(눌렸는데 안 들어왔다)");
+
+            // ⓔ 원정 한 층 — 층이 없는 지옥의 문과 달리 여기서만 «올라간다» 가 보인다(T291).
+            //    ⚠ 두 층째는 안 논다 — «올라간다» 는 규칙이라 DungeonSweep 자의 몫이고, 판 하나가 곧 시간이다(T408 의 예산).
+            yield return CloseAll(app, "던전 세부 팝업(다이아 뒤)");
+            if (DungeonTickets.Tickets(S, D, "expedition", today) < 1) { S.DunTickets["expedition"] = 1; app.Persist(); }
+            yield return OpenDungeon(app, "expedition");
+            yield return ClearDungeonRun(app, "expedition");
+
+            app.ShowScreen("lobby"); yield return null;
+        }
+
+        /// <summary>던전 카드의 «입장» 을 눌러 세부 팝업(21)을 연다 — 화면을 손으로 안 연다(그 배선이 끊겨도 초록이 되지 않게 · T280).</summary>
+        static System.Collections.IEnumerator OpenDungeon(App app, string key)
+        {
+            var pg = Page(app, EventsScreen.PageDungeon);
+            var card = UiKit.Find(pg, "Card:" + key);
+            if (card == null) throw new MissingException("던전 카드(Card:" + key + ")");
+            TapIn(card, "EnterBtn", true); yield return Frames(2);
+            if (!app.Overlay.IsOpen) throw new MissingException("던전 세부 팝업(21 · " + key + ")");
+        }
+
+        /// <summary>세부 팝업의 «도전» → 판을 굴려 이기고 → 클리어 팝업의 «그냥 받기» → 던전 페이지로 돌아온다.</summary>
+        static System.Collections.IEnumerator ClearDungeonRun(App app, string key)
+        {
+            TapIn(app.Overlay.Root, "ChallengeBtn", true); yield return Frames(2);
+            Reach(app, "battle");
+            var bs = app.GetScreen<BattleScreen>();
+            if (bs == null || bs.G == null) throw new MissingException("전투 화면·전투 상태(" + key + ")");
+            if (bs.DungeonKey != key) throw new MissingException("판이 «어느 던전» 인지 아는 것(" + key + " · 지금 " + (bs.DungeonKey ?? "없음") + ") — 이것이 없으면 클리어를 아무도 안 적는다(T228 ⓓ)");
+            yield return WinTheRun(app, bs.G, 0.5f, "던전 판(" + key + ")");
+            yield return UntilOpen(app, "클리어 팝업(" + key + ")");
+            if (!TapLabel(app.Overlay.Root, "그냥 받기")) throw new MissingException("클리어 팝업의 «그냥 받기»(" + key + ")");
+            yield return Frames(3);
+            Page(app, EventsScreen.PageDungeon);   // 도달 — 던전 판을 나가면 던전 페이지로 돌아온다(로비가 아니다 · ExitPage)
         }
 
         /// <summary>
