@@ -3731,6 +3731,16 @@ python3 tools/check_ach_hooks.py                                  # 업적 표�
 dotnet run --project tools/dotnet/Sim -c Release -- --seeds 11,12,13  # (T2 이후) 이식 검증
 ```
 
+> ⚑ **PlayMode 임시 csproj(사전 점검 · 결정 143)를 쓰는 사람에게 — 스텁 한 조각이 더 필요하다(2026-09-10 · T422 · 워커 K).** T418 이 이 레포에서 처음으로 `[Timeout(600000)]`(`PlaythroughTests`)을 쓴 뒤로, `NUnit 3.6.1` **netstandard** 빌드에 `TimeoutAttribute` 가 없어 스크래치 빌드가 `CS0246` 로 **먼저 죽는다** — 그러면 나머지 자들의 진짜 컴파일 오류를 **한 줄도 못 본다**(«초록이 아니라 아예 안 봤다» 다). 스크래치 `Stubs.cs` 에 아래 한 조각을 세우면 알려진 한 줄(`DG.Tweening.DOTween` · 통 한계)만 남는다. **레포에는 커밋하지 않는다**(유니티가 쓰는 NUnit 에는 그 타입이 있다).
+>
+> ```csharp
+> namespace NUnit.Framework {
+>   [System.AttributeUsage(System.AttributeTargets.Method | System.AttributeTargets.Class)]
+>   public class TimeoutAttribute : System.Attribute {
+>     public TimeoutAttribute(int ms) { Milliseconds = ms; }
+>     public int Milliseconds { get; private set; } } }
+> ```
+
 **플레이 콘솔 에러 0 게이트(주인 상시 지시)**: 화면·전투·팝업 코드를 바꿨으면 `Assets/Tests/PlayMode/UiSmokeTests.cs` 가 그 화면을 열고 `PlayLog.AssertNoRed`(빨간 줄 0) + `[UiKit]`/`[AssetCatalog]` 경고 0 + 데모 잔여 글자 0 을 통과해야 한다(CI 유니티 잡 · 워커는 로컬에서 못 돌리므로 CI 런 번호로 확인 · 버튼 라벨을 바꿨으면 테스트의 라벨도 같이). 확인 수단이 없으면 완료 기록에 «주인이 에디터 플레이로 확인할 것 — 콘솔 빨간 줄 0» 을 명시한다. 주인이 붙인 콘솔 로그가 «주인 콘솔 에러 보고함» 에 미해결로 남아 있으면 게이트 미통과로 본다.
 
 **글자 크기 게이트(T63 · 주인 상시 지시 2026-09-06 «글씨 너무 작다»)**: 글자는 `UiKit.Text/Label/SetText/Button` 으로만 만들고 `fontSize`·`resizeTextMinSize` 를 직접 박지 않는다(하한 = `Core/TextSize` · 본문 40 · 버튼 44 · 보조 36 · 제목 60 · bestFit 최소 32 · 작아야 하면 `kind: TextKind.Small` 명시). PlayMode `TextSizeGateTests` 가 모든 화면의 활성 Text 를 모아 하한·bestFit 최소를 단언하고 잘림/넘침을 «[TextSizeGate]» 표로 로그에 남긴다. **전수 점검이 끝나 `TextAudit.ClipStrict = true` 다(2026-09-06 · `ea535f2` · CI #126 에서 36 화면 잘림 0 · 결정 163) — 이제 글자가 칸을 넘치면 그 커밋이 빨개진다.** 실패 메시지에 «화면 / 경로 / 글자 / rect / pref» 가 찍히니 지시서 T63 2항 순서(ⓐ 줄바꿈 → ⓑ 칸 ±3%p → ⓒ 문구 줄이기)로 고친다. 화면 코드를 바꿨으면 그 CI 로그의 자기 화면 잘림 수가 늘지 않았는지 본다.
@@ -11258,9 +11268,11 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `tools/check_decisions.py` 한 파일(**게임 코드 0줄 · 문서 0줄**). lock `T420`. **⚠ 이 회차의 내 결정 번호는 `--next` 를 안 쓰고 문서 최대 +1(1198)로 잡는다** — 고치는 그 자를 근거로 쓸 수 없다.
 
-### T422 — **T418 자는 옳게 도는데 그 자의 설명이 «무엇이 그 계약을 잡는가» 를 틀리게 말한다** (검수 Q 등재 · ⚑ T421 로 등재됐다가 번호 겹침으로 T422 로 옮김(워커 J 의 T421 이 1분 먼저 push · 규약 «늦게 민 쪽이 옮긴다» · 워커 N 19:3X) · **선점 안 함 · 코드 0줄** · 주석 두 줄)
+### T422 ✅ — **T418 자는 옳게 도는데 그 자의 설명이 «무엇이 그 계약을 잡는가» 를 틀리게 말한다** (검수 Q 등재 · ⚑ T421 로 등재됐다가 번호 겹침으로 T422 로 옮김(워커 J 의 T421 이 1분 먼저 push · 규약 «늦게 민 쪽이 옮긴다» · 워커 N 19:3X) · **선점 안 함 · 코드 0줄** · 주석 두 줄)
 
 > **잡을 사람에게 한 줄**: `Assets/Tests/PlayMode/PlaythroughTests.cs` 의 `열한_갈래를_한_판에서_이어서_돈다` **주석만** 고친다. 코드는 한 줄도 안 바꾼다. `T418.lock` 은 반납됐다(`acceb9c7`) — 열려 있다.
+
+> ✅ **끝냈다**(sess-0132-18539 · 워커 K · 20:3X · 결정 1204) — 시킨 대로 **주석만** 고쳤다(`git diff --stat` = 그 한 파일 · **+11 −3 · 전부 주석**). ⓐ·ⓑ 를 «표를 빠짐없이 그 차례로 돈다» / «그 표 차례가 옳다» 로 갈랐고, 독스트링에 «ⓐ 와 ⓑ 는 다른 것을 잰다 — 섞으면 ⓑ 를 안 재게 된다» 를 한 절로 세웠고, `AreEqual(want, ranIds)` 위에 «기대값을 `Stages` 에서 뽑으므로 표 차례가 옳은지는 **못 잰다**» 를, 마지막 단언 위에 «**이 줄이 그 계약을 잡는 유일한 줄이다** · 지우면 P11 을 가운데로 옮겨도 이 파일이 전부 초록이 된다» 를 붙였다. ⚠ **단언 글귀는 안 건드렸다** — 열어 보니 그 글귀(«차례가 다르면 … 그 뒤 단계는 지워진 세이브로 논다»)는 **빨개졌을 때의 진단으로는 맞는 말**이다(틀린 것은 그 줄이 무엇을 잡는가를 말한 **주석** 쪽이었다). 게이트 14 · `dotnet build`·`test`(558) 초록.
 
 1. **자리**
 
