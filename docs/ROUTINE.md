@@ -10959,3 +10959,33 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Core/DungeonData.cs` · `Core/Battle*` · `Game/BattleScreen.cs` · `dungeon.json` · 자. lock `T411`.
 
+> **▸ 1회차 — 고쳤다 · 만진 것은 `Battle.StartRun()` 한 함수뿐이다(2026-09-10 14:5X · sess-1447-1691 · 워커 L · 결정 1179 · lock 쥔 채)**
+>
+> ⚑ **1항(실측)의 답부터: 표는 처음부터 옳았다.** `dungeon.json` 원정 칸이 `startPerks 5 · startLevel 5 · minPerkGrade 0` 이고 `DungeonTicketTests` 의 세 줄이 T183 이래 내내 초록이었다 — **그래서 표를 보면 «다 돼 있다» 로 읽힌다.** 고장은 `Battle.StartRun()` 이 그 다섯을 `Perks.SimPick`(시뮬 봇의 고르기)으로 **자동으로 집는** 데 있었다. T183 이 세운 것은 «다섯 개를 **준다**» 였고 주인 뜻은 «다섯 번 **고른다**» 였다 — 그 한 낱말이다. **`dungeon.json` 도 `DungeonData.cs` 도 한 줄 안 고쳤다**(2항의 범위 넷 중 둘은 고칠 것이 없었다).
+>
+> **고침(한 갈래)** — 사람 판이면 쌓아 두고, 봇은 옛길 그대로다:
+> ```csharp
+> if (Opt.StartPerks <= 0) return;
+> if (Policy is InteractivePolicy)
+> {
+>     PendingLevelUps += Math.Min(Opt.StartPerks, Math.Max(0, PK.PicksPerRun - Taken.Count));
+>     return;
+> }
+> // ↓ 옛길(SimPick 루프) 그대로
+> ```
+> 쌓아 두면 화면이 3택을 다섯 번 **연달아** 띄운다 — `OpenLevelUp` 이 창을 세우고 `AfterResolve` 가 다음 것을 이어 연다. **`GrantNextPerk` 이 이미 쓰던 갈래라 새 개념이 0개**이고, `BattleScreen` 은 한 줄도 안 고쳤다(그 화면은 이미 `PendingLevelUps` 를 이 꼴로 소화한다 · T368).
+>
+> ⚑ **회귀 관문은 고친 쪽이 아니라 «안 고친 쪽» 에 있다**(3항 난수) — 봇까지 쌓아 두기로 바꾸면 헤드리스(`RunToEnd`)·시뮬 대조가 팝업을 볼 눈이 없어 **첫 틱에서 `Pending` 에 걸려 판이 안 끝나고** 챕터 판 sim.js 21칸 골든이 통째로 흔들린다. 그래서 `봇_판은_옛길_그대로_판이_설_때_자동으로_집는다` 를 자로 박았다. 굴림 시점이 «판이 설 때 → 창이 열릴 때» 로 옮겨지는 것은 **사람 판에서만** 이다.
+>
+> **워커 결정 — «생성자에서 바로 열기» 대신 «줄에 쌓기»**(결정 1179 ⑤). 바로 열면 «판이 서자마자» 가 한 프레임 더 정확하지만 T368 의 `HoldLevelUp` 을 건너뛰고 «`Pending` 은 엔진이 연다»(T2)에 예외를 하나 만든다. 쌓아 두면 첫 틱 **1/30초**를 걷고 뜨는데 눈에 안 보이고 규약은 한 자도 안 바뀐다 — **안 보이는 값보다 안 늘어나는 규약을 골랐다.**
+>
+> **자 여섯(`ExpeditionStartPerkTests` · EditMode)** — ① 판이 서면 특전 0 · 줄에 5 ② 3택이 다섯 번 연달아 뜨고 다 고르면 특전 5 · 줄 0(여섯 번째 없음) ③ 레벨 5 · 다음 요구량 `ExpNeed(5)` ④ 시드 열둘에서 시작 후보에 **가장 낮은 등급이 뜬다**(주인 «모든 등급» · 지옥의 문 `minGrade 2` 와 갈리는 자리) ⑤ 봇은 옛길 ⑥ 일반 챕터 판 불변.
+> ⚑ **고침을 빼서 재 봤다 — 여섯 중 셋이 빨강**이고 나머지 셋(봇 길·일반 판·레벨)은 초록인 것이 맞다. 「빨개지는 것을 봤다」 가 없으면 이 자도 표 자와 같은 종류가 된다.
+>
+> **7항(레벨)은 고칠 것이 없었다** — `StartLevel = 5` 가 `P.Level 5 · P.Exp 0` 을 세우고 `GainExp` 가 `ExpNeed(P.Level)` 을 묻는다 ⇒ 다음 렙업 요구량이 이미 레벨 5 기준이다. **안 깨졌음만 자로 지켰다.**
+>
+> 게이트 18종 rc=0 · build 0/0 · `dotnet test` **558/558**(552 → 558). **`data/*.json` 0줄 · aaaw 0줄 · 밸런스 0줄 · 화면 코드 0줄.**
+> **확인** = 다음 완주 런 `[CI명부]` 의 `ExpeditionStartPerkTests(6)` 에 ✗ 없음 + **주인 폰**(원정 입장 → 3택 다섯 번 → 레벨 5 로 출발). 그 둘이 오면 닫고 반납한다.
+>
+> ⚠ **T409(P5 던전 각본 · 워커 C)에게 한 줄** — 원정에 들어가는 각본은 이제 **시작 3택 다섯 번**을 치러야 한다. `Playthrough` 가 이미 쓰는 «`Pending`·`PendingLevelUps` 비우기» 그 자리에서 다섯 번 고르거나 비우면 된다(지옥의 문은 시작 특전 0 이라 그대로다).
+

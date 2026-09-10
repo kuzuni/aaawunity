@@ -291,10 +291,25 @@ namespace KkomaKnight.Core
         /// (<see cref="RunOptions.StartLevel"/> 1 · <see cref="RunOptions.StartPerks"/> 0) — 일반 챕터 전투는 한 치도 안 바뀐다(시드 골든 근거).
         /// 레벨은 숫자만 올린다(우리 엔진의 렙업은 스탯을 안 준다 — 주는 것은 «특전 기회» 뿐이라 그 몫이 시작 특전 N 이다).
         /// 굴림은 판의 같은 <see cref="Rng"/> 를 쓰므로 시드가 같으면 판도 같다.
+        /// <para>
+        /// <b>T411(주인 2026-09-10 «시작부터 특전 5개 선택하고 시작하는 거로 하라고 했는데 안 돼 있네»)</b> — 사람이 보는 판에서는
+        /// <b>고르게 한다</b>: <see cref="RunOptions.StartPerks"/> 만큼 <see cref="PendingLevelUps"/> 에 쌓아 두면 화면이 3택 팝업을
+        /// 그 수만큼 연달아 띄운다(<see cref="OpenLevelUp"/> → <see cref="AfterResolve"/> 가 다음 것을 이어 연다).
+        /// T183 이 세운 것은 «다섯 개를 <b>준다</b>» 였고 주인 뜻은 «다섯 번 <b>고른다</b>» 였다 — 그 한 낱말이 이 갈래다.
+        /// <b>봇(<see cref="SimPolicy"/> · 헤드리스 <c>RunToEnd</c> · 골든·시뮬 대조)은 옛길 그대로</b> <see cref="Perks.SimPick"/> 으로
+        /// 집는다 — 팝업을 볼 눈이 없어 쌓아 두면 판이 서지도 못한 채 멎는다. 그래서 갈래가 <see cref="GrantNextPerk"/> 의 그것과 같다.
+        /// ⚠ 굴림 시점이 사람 판에서만 «판이 설 때» → «팝업이 열릴 때» 로 옮겨진다. 챕터 판(sim.js 21칸 골든)은 봇이 돌리므로 한 자도 안 바뀐다.
+        /// </para>
         /// </summary>
         void StartRun()
         {
             if (Opt.StartLevel > 1) { P.Level = Opt.StartLevel; P.Exp = 0; }
+            if (Opt.StartPerks <= 0) return;
+            if (Policy is InteractivePolicy)
+            {
+                PendingLevelUps += Math.Min(Opt.StartPerks, Math.Max(0, PK.PicksPerRun - Taken.Count));
+                return;
+            }
             for (int i = 0; i < Opt.StartPerks; i++)
             {
                 if (Taken.Count >= PK.PicksPerRun) break;
