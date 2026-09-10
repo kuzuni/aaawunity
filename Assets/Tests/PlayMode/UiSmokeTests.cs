@@ -959,6 +959,22 @@ namespace KkomaKnight.Tests.Play
                 Check("데이터 삭제 뒤 로비");
             }
 
+            yield return Shutdown();
+        }
+
+        // ───────────────────────── ①-d 이벤트 탭 · 탤런트 팝업 (T379 둘째 조각 · 옛 LobbySettingsTalentPetToast :962~981) ─────────────────────────
+        /// <summary>
+        /// T379 둘째 조각 — <see cref="LobbySettingsTalentPetToast"/> 의 «이벤트 탭 = 던전 페이지 · 탤런트 팝업(입구 없음 · 조각만)» 블록을 제 이름으로. 단언 0줄 삭제.
+        /// ⚠ 상태 물려받기(결정 1100 ④): 원래 «데이터 삭제» 뒤의 <b>지워진 판</b> 위에서 돌았다 ⇒ <see cref="PetTabAndToast"/> 와 같이 <see cref="App.ResetSave"/> 를 먼저 탄다.
+        /// 옛 줄 번호 → 이 자: <c>:967~973</c> 이벤트 탭 · <c>:975~979</c> 탤런트 팝업 «탤런트 팝업(입구 없음 · 조각만 확인)».
+        /// </summary>
+        [UnityTest]
+        public IEnumerator LobbyTalentPopup()
+        {
+            yield return Boot();
+            _app.ResetSave(); yield return Frames(2);
+            Assert.AreEqual("lobby", _app.Current.Name, "지운 뒤 로비(옛 :953 의 자리)"); Assert.IsFalse(_app.Overlay.IsOpen, "지운 뒤 팝업 없음");
+
             // T168 — 맨 오른쪽(다섯째) 탭은 **«이벤트»** 이고 누르면 **던전 페이지**가 열린다(T107 이 정한 «이벤트는 무조건 던전부터» 를 지킨다).
             // 앞 블록이 세이브를 지우며 로비를 다시 세우므로 탭 바를 새로 찾는다. 탭은 자리번호가 아니라 **이름**으로 집는다(T168 의 «Tab:<키>»).
             {
@@ -1776,7 +1792,16 @@ namespace KkomaKnight.Tests.Play
             }
 
             int inv = S.Inv.Count;
-            Assert.IsTrue(Click(shop, s => s.Contains("1회")), "«1회» 뽑기 버튼"); yield return Frames(2);
+            Assert.IsTrue(Click(shop, s => s.Contains("1회")), "«1회» 뽑기 버튼"); yield return Frames(1);
+            // ⛑ T379 2회차(런 967 `:1893` · 워커 G 진단 · 결정 1112) — «떨어지기 전» 높이·배율은 팝업이 선 **첫 프레임**에 읽는다.
+            //   낙하 창은 ChestFallSec 0.24초(SetUpdate(true) = 실제 시계)인데 옛 자리는 `Frames(2)` + 단언 마흔 줄 «뒤» 였다 — 그 사이가 0.24초를 넘기면
+            //   이미 착지해 «시작 y = 끝 y» 가 되고, T340 이 이 창에 진짜 ParticleSystem 을 얹은 뒤로는 첫 프레임이 무거워 점점 자주 난다.
+            //   단언(:«떨어져 내려와 있어야 한다»)은 그대로다 — 읽는 «때» 만 화면이 선언한 창 안으로 당겼다(«두 값을 견주는 자는 언제 읽는지가 계약» · 결정 1112).
+            var chestGrpEarly = UiKit.Find(_app.Overlay.Root, "Chest") as RectTransform;
+            Assert.IsNotNull(chestGrpEarly, "조각의 상자 묶음(Chest) — 첫 프레임");
+            float chestY0 = chestGrpEarly.anchoredPosition.y;   // «떨어지기 전» 높이 — 연출이 끝난 뒤와 맞대 본다(상수에 안 기댄다)
+            float chestScale0 = chestGrpEarly.localScale.x;     // T158 ⓐ — «작았다» 도 가장 이른 자리에서(뒤에서 재면 커지는 중이라 값이 흐른다)
+            yield return Frames(1);
             Check("뽑기 결과 팝업(1회)", expectOverlay: true);
             // T95(주인 2026-09-07 «소환 결과 창이 Shop_Chest_Open 이거로 돼야 하는데 안 됐더라») — 조각 그대로 · 우리 격자는 그 위에
             Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "ui.chestOpen"), "뽑기 결과 = 주인 지정 조각(Shop_Chest_Open) 그대로(T95)");
@@ -1825,9 +1850,8 @@ namespace KkomaKnight.Tests.Play
                 // ⛑ 같은 자리 — 여기 있던 T307 ⓐ 의 «도는 트윈이 걸려 있어야 한다»(IsTweening == true)는 바로 위 줄과 **반드시 하나가 빨간** 짝이었다.
                 //   T340(주인 «회전 멈추고»)이 T307 ⓐ 를 뒤집었으므로 그 단언은 «주인 지시를 지킨 쪽이 빨개지는» 옛 단언이다(§1 T184 · 결정 866 의 꼴) → 지웠다.
             }
-            float chestY0 = chestGrp0.anchoredPosition.y;   // «떨어지기 전» 높이 — 연출이 끝난 뒤와 맞대 본다(상수에 안 기댄다)
-            // T158 ⓐ — «작았다» 는 여기서 잰다(가장 이른 자리). 뒤에서 재면 커지는 중이라 값이 흐른다.
-            float chestScale0 = chestGrp0.localScale.x;
+            // (chestY0 · chestScale0 는 위에서 «첫 프레임» 에 읽었다 · T379 2회차) — 여기서 읽으면 낙하 창(0.24초)을 놓친다.
+            Assert.AreEqual(chestGrpEarly, chestGrp0, "첫 프레임에 읽은 상자 묶음과 지금의 묶음은 같은 개체다(다시 세워졌으면 표본이 뜻을 잃는다)");
             // T202 4항 — **첫 탭 = 건너뛰기**(그 다음 탭이 닫기). 연출이 1초 길어졌으므로 이 갈래가 없으면 탭 한 번에 창이 닫혀 결과를 못 본다.
             // ⚠ 자리는 «재기 전» 값(chestY0·chestScale0)을 다 읽은 «뒤» 여야 한다 — 건너뛰기는 낙하를 끝까지 돌려 놓으므로
             //    앞에 두면 «떨어지기 전 높이» 가 이미 착지 높이가 되어 아래 «떨어져 내려왔나» 단언이 스스로 빨개진다(CI #404 에서 실제로 그랬다 · 결정 527).
