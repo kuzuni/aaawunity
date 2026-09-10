@@ -9,15 +9,16 @@ namespace KkomaKnight.Game
 {
     /// <summary>
     /// 펫 탭 = 레퍼런스 <c>docs/ref/13_pet.jpg</c> 구도 · 펫 세부 팝업 = <c>14_pet_detail.jpg</c> (T42 · 주인 2026-09-06 «UI 는 무조건 레퍼런스 기준» · T32 «Character_Skill 그대로» 폐기 · 주인 ⓔ «시스템이 없는 화면은 레이아웃 껍데기»).
-    /// 펫 시스템은 없다 — <b>전부 표시만</b>(버튼은 눌러도 아무 일 없음 · 숫자는 0 · 슬롯은 잠금/빈 칸 · 레퍼런스 숫자를 베끼지 않는다). ref-layout ⑩·⑪ 표(<see cref="Layout.PetGrid"/> …) 자리에 GUI Pro 조각을 조립한다:
+    /// ⚑ <b>이 머리글은 «껍데기» 시절의 것이었다(T293 이 닫히며 고쳤다).</b> 지금 이 화면은 <b>다 산다</b> — 소환이 치르고 뽑고 담고(<see cref="Pets.Draw"/>),
+    /// 강화·장착이 세이브를 바꾸고, 숫자는 전부 표·세이브에서 온다(<see cref="Pets.EquipPower"/>·<see cref="Pets.TotalPower"/>). ref-layout ⑩·⑪ 표(<see cref="Layout.PetGrid"/> …) 자리에 GUI Pro 조각을 조립한다:
     /// ① 상단 재화 바(<see cref="TopBar"/>) → ② <b>4열 격자 9칸</b>(칸 = ItemFrame_01 조각 + 파란 등급 변형 + GUI Pro 아이콘 · 칸 위 «Lv. 0» · 칸 아래 진행바 «0/0») → ③ <b>합계 줄</b>(«+0 ❤ | +0 🛡 | +0 🗡»)
-    /// → ④ <b>«장착중» 띠</b>(어두운 패널 + 초록 라벨 + 슬롯 3 = 열린 빈 칸 1 · 잠금 원 2) → ⑤ 주황 <b>전체 강화 · 빠른 장착</b>(할 것이 있으면 빨간 점 · T380) → ⑥ 주황 <b>소환 · 소환 x10</b>(가격 자리는 <b>비어 있다</b> — 펫 시스템이 없어 값을 지어내지 않는다 · 흐리게 + 누르면 토스트 · T178) → ⑦ 탭 바.
+    /// → ④ <b>«장착중» 띠</b>(어두운 패널 + 초록 라벨 + 슬롯 3 = 열린 빈 칸 1 · 잠금 원 2 · 잠긴 칸은 «N회») → ⑤ 주황 <b>전체 강화 · 빠른 장착</b>(할 것이 있으면 빨간 점 · T380) → ⑥ 주황 <b>소환 · 소환 x10</b>(윗줄 «N회» · 아랫줄 값 줄 🥚/💎 — 무엇으로 몇 번인지는 <see cref="Pets.Offer"/> 하나가 답한다 · T380) → ⑦ 탭 바.
     /// 칸을 누르면 세부 팝업(공통 팝업 문법 <see cref="UiKit.Popup"/> · 명판 없음 · 칸이 상자 윗변에 걸침 · 설명 박스 · «패시브:» 수치 줄 · 강화(회색) · 장착(주황) · «탭하여 닫기»).
     /// 글자(T63-pet · 주인 «글씨 너무 작다»): 전부 <see cref="UiKit"/> 하한(본문 40 · 버튼 44) — 직접 박은 크기는 없다. 진행바 «n/m» 만 표 높이에 안 들어가 바를 <see cref="Layout.PetBarH"/> 로 키웠다(13·14 게이트 잘림 0).
     /// 테두리(T69-pet · 주인 «행·카드·칸마다 검은 아웃라인» + 7항 «아이템류 칸 = 장비 화면의 그 프레임»): 격자 9칸·빈 장착 슬롯·세부 칸의 ItemFrame Border 링을 <see cref="GearUi.DarkFrame"/> 로 Ink 8px · 잠금 슬롯(원)은 <see cref="CircleBorderKey"/> 굵은 원형 조각.
     /// 합계 줄(«+0 ❤ | +0 🛡 | +0 🗡»)은 레퍼런스 13 에 상자가 없는 맨 글자라 <see cref="BorderAudit.Exempt"/>(결정 171). 13·14 는 BorderAudit strict.
     /// 이름 계약(스모크 테스트): 격자 <c>PetGrid/Pet:N</c> · 슬롯 <c>Slots/Slot:N</c> · 버튼 <c>UpgradeAllBtn/QuickEquipBtn/SummonBtn/Summon10Btn</c> · 세부 <c>PetDetailCell/PetUpgradeBtn/PetEquipBtn</c> · 탭 바 <c>ui.tabBar</c>.
-    /// 펫 시스템이 생기면 <see cref="Icons"/>·«0/0»·«+0» 자리에 pets.json 값을 넣는다(배치는 그대로).
+    /// 값은 <b>전부 표(<c>pet.json</c>)와 세이브</b>에서 온다 — 화면이 수를 다시 적는 자리는 없다(격자 «Lv. N»·진행바 «조각/필요»·합계 줄·패시브 셋·소환 값 줄 모두).
     /// </summary>
     public sealed class PetScreen : GameScreen
     {
