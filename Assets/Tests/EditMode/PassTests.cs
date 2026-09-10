@@ -60,9 +60,9 @@ namespace KkomaKnight.Tests
         public void 표에_없는_줄은_모른다고_답한다()
         {
             var d = Load();
-            int unknown = -1;
-            for (int lv = 1; lv <= d.MaxLevel; lv++) if (!d.Levels.ContainsKey(lv)) { unknown = lv; break; }
-            Assert.Greater(unknown, 0, "표에 없는 줄이 있어야 한다(주인 값 미제공)");
+            // T266 ⓑ — 주인이 값을 줘 1~100 이 다 찼으니 «표에 없는 줄» 은 표 밖(MaxLevel+1)이다. 표 밖도 던지지 않고 «모른다» 로 답해야 한다(보여 주기 화면).
+            int unknown = d.MaxLevel + 1;
+            Assert.IsFalse(d.Levels.ContainsKey(unknown), "표 밖 줄은 표에 없다");
             Assert.IsFalse(d.Known(unknown), "표에 없는 줄은 «모른다»");
             for (int c = 0; c < PassData.Cols; c++)
                 Assert.IsFalse(d.At(unknown, c).Known, "모르는 줄의 칸은 «모르는 칸» 이다 — 화면이 «?» 로 그린다");
