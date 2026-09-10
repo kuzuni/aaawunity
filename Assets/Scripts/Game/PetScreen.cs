@@ -502,18 +502,36 @@ namespace KkomaKnight.Game
                     item.gameObject.SetActive(p != null);
                     if (p != null) UiKit.SetSprite(frame, "Item", PetIcon(d, p.Id), Palette.White);
                 }
-                // 프레임 색 = 그 펫의 등급색(주인 5항 ⓘ «슬롯 부분 등급마다 색») — 색 이름은 `Palette.RarColors` 한 곳에서 온다.
-                var area = UiKit.Find(frame, "NormalArea");
-                if (area != null)
-                {
-                    var g = p != null ? d.GradeOfPet(p) : null;
-                    string key = Palette.FrameKey("ui.itemFrame", g != null ? Palette.RarName(g.Rar) : "gray");
-                    UiKit.Clear(area); var v = UiKit.Spawn(key, area); UiKit.Stretch((RectTransform)v.transform);
-                    // ⛑ 런 951 빨강(`BorderGateTests` :160 «Border 는 가운데 비움») — 갈아 끼운 등급 변형이 **제 Border 를 달고 온다**.
-                    //   태어날 때 한 번 손질한 것(`GearUi.DarkFrame`)은 그때 있던 조각에만 걸렸으므로, **바꿔 끼운 자리에서 다시 손질한다**(격자 칸 `PetCell` 이 세운 그 차례 — 갈아 끼우고 → 손질).
-                    GearUi.DarkFrame(frame, frame.localScale.x);
-                }
+                // 프레임 색 = 그 펫의 등급색(주인 5항 ⓘ «슬롯 부분 등급마다 색») — 빈 칸은 회색.
+                { string fk = FrameKeyOf(d, p); if (PaintFrame(frame, fk, _slotFrame[i])) _slotFrame[i] = fk; }
             }
+        }
+
+        readonly string[] _slotFrame = new string[SlotCount];
+        readonly string[] _cellFrame = new string[Layout.PetCount];
+
+        /// <summary>
+        /// 펫 등급 → 칸 변형 키. 장비 칸과 <b>같은 문법</b>(<c>GearUi.Cell</c> <c>:165</c>) = <c>ui.itemFrame.&lt;색 이름&gt;</c> · 없는 펫(빈 칸)은 회색.
+        /// <para>⚠ 여기서 <see cref="Palette.FrameKey"/> 를 쓰면 안 된다 — 그 함수는 <b>gray 변형이 없는 조각</b>(팔각 <c>ui.itemFrame4</c>)을 위해 gray 를 green 으로 바꿔 돌려준다.
+        /// 이 조각(<c>ui.itemFrame</c>)에는 <b>gray 변형이 실제로 있어서</b>, 그 함수를 쓰면 <b>일반 등급 펫이 초록 칸으로</b> 뜬다.</para>
+        /// </summary>
+        static string FrameKeyOf(PetData d, PetData.Pet p)
+        {
+            var g = d != null && p != null ? d.GradeOfPet(p) : null;
+            return "ui.itemFrame." + (g != null ? Palette.RarName(g.Rar) : Palette.RarColors[0]);
+        }
+
+        /// <summary>
+        /// 칸(<c>ItemFrame_01</c>) 안쪽 변형을 <paramref name="key"/> 로 갈아 끼운다 — <b>이미 그 색이면 아무것도 안 한다</b>(아바타 테두리 <c>Screens.cs:439</c> 와 같은 문법 · <c>Refresh</c> 마다 조각을 새로 세우지 않게).
+        /// <para>⚑ 갈아 끼운 뒤 <see cref="GearUi.DarkFrame"/> 을 <b>다시</b> 부른다 — 변형이 제 <c>Border</c> 를 달고 오므로 태어날 때 한 번 한 손질은 새 조각에 안 걸린다(결정 1096 · 런 951 빨강).</para>
+        /// </summary>
+        static bool PaintFrame(Transform frame, string key, string cur)
+        {
+            if (frame == null || key == cur) return false;
+            var area = UiKit.Find(frame, "NormalArea"); if (area == null) return false;
+            UiKit.Clear(area); var v = UiKit.Spawn(key, area); UiKit.Stretch((RectTransform)v.transform);
+            GearUi.DarkFrame(frame, frame.localScale.x);
+            return true;
         }
 
         /// <summary>장착 칸을 눌렀을 때 — 낀 펫이 있으면 그 <b>세부 팝업</b>, 없으면 까닭을 토스트(눌리는데 아무 일도 안 나는 자리를 안 만든다 · 결정 771).</summary>
@@ -569,6 +587,9 @@ namespace KkomaKnight.Game
                 bool own = lv >= 1;
                 // 칸 그림도 그 펫의 것으로 — 칸 자리는 «화면의 몇 번째» 이고 무엇이 앉는지는 이 목록이 정한다.
                 UiKit.SetSprite(cell, "ItemFrame_01/Item", PetIcon(d, p.Id), Palette.White);
+                // 칸 프레임 = 그 펫의 등급색(주인 5항 ⓘ «격자 칸도 등급색») — 태어날 때는 파랑 하나로 세우고 여기서 목록대로 갈아 끼운다
+                //   (칸 자리는 고정이고 앉는 펫이 바뀌므로, 색은 «누가 앉았나» 를 따라야 한다 · 장착 칸과 같은 헬퍼를 쓴다).
+                { string fk = FrameKeyOf(d, p); if (PaintFrame(UiKit.Find(cell, "ItemFrame_01"), fk, _cellFrame[i])) _cellFrame[i] = fk; }
                 var lvT = UiKit.Find(cell, "Lv"); var lvTx = lvT != null ? lvT.GetComponent<TMP_Text>() : null;
                 if (lvTx != null) lvTx.text = own ? "Lv. " + lv : "Lv. 0";
                 var barT = UiKit.Find(cell, "Bar");

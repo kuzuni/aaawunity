@@ -339,6 +339,51 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
+        [UnityTest]
+        public IEnumerator 칸_프레임은_그_펫의_등급색이다()
+        {
+            // T293 5항 ⓘ(주인 2026-09-09 11:1X «슬롯 부분 등급마다 색» + «격자 칸도 등급색») — 격자 칸은 여태 **파랑 하나**로 서 있었다.
+            //   ⚑ 색 이름은 자가 다시 안 적는다 — 표의 등급 번호 → `Palette.RarName` 으로 되짚는다(색을 바꾸면 자도 따라간다).
+            yield return Boot();
+            var d = _app.Data != null ? _app.Data.Pet : null;
+            if (d == null) { yield return Shutdown(); Assert.Ignore("펫 표가 없다 — 부팅이 안 들었다(T293 ⓗ)"); }
+
+            PetData.Pet low = null, high = null;
+            foreach (var p in d.Pets)
+            {
+                var g = d.GradeOfPet(p); if (g == null) continue;
+                if (low == null || g.Rar < d.GradeOfPet(low).Rar) low = p;
+                if (high == null || g.Rar > d.GradeOfPet(high).Rar) high = p;
+            }
+            Assert.IsNotNull(low); Assert.IsNotNull(high);
+            string kLow = "ui.itemFrame." + Palette.RarName(d.GradeOfPet(low).Rar);
+            string kHigh = "ui.itemFrame." + Palette.RarName(d.GradeOfPet(high).Rar);
+            Assert.AreNotEqual(kLow, kHigh, "등급 둘의 색 키가 같으면 이 자는 아무것도 안 가른다(공허 방지)");
+
+            Pets.Gain(_app.Save, low.Id); Pets.Gain(_app.Save, high.Id); _app.Persist();
+            _app.ShowScreen("pet"); yield return Frames(2);
+            var root = _app.Current.Root;
+
+            // 격자 — 차례가 등급 내림차순이라 첫 칸이 높은 등급이다(그 차례 자체는 다른 자가 잰다).
+            var c0 = UiKit.Find(root, "PetGrid/Pet:0/ItemFrame_01"); Assert.IsNotNull(c0, "격자 첫 칸");
+            Assert.IsNotNull(UiKit.Find(c0, kHigh), "격자 첫 칸은 그 펫의 등급색 변형을 쓴다(주인 «격자 칸도 등급색»)");
+            Assert.IsNull(UiKit.Find(c0, kLow), "옛 색 조각이 같이 남아 있으면 «갈아 끼우기» 가 아니라 «겹치기» 다");
+            var c1 = UiKit.Find(root, "PetGrid/Pet:1/ItemFrame_01"); Assert.IsNotNull(c1, "격자 둘째 칸");
+            Assert.IsNotNull(UiKit.Find(c1, kLow), "둘째 칸은 낮은 등급의 색");
+
+            // 장착 칸 — 끼우면 그 등급색, 빼면 빈 칸(회색)으로 돌아온다.
+            Assert.IsTrue(Pets.Equip(d, _app.Save, high.Id, 0), "새 세이브의 첫 칸은 열려 있다");
+            _app.Persist(); _app.Current.Refresh(); yield return Frames(1);
+            var slot0 = UiKit.Find(root, "Slots/Slot:0/FramePart/ItemFrame_01"); Assert.IsNotNull(slot0, "열린 장착 칸");
+            Assert.IsNotNull(UiKit.Find(slot0, kHigh), "낀 펫의 등급색(주인 «슬롯 부분 등급마다 색»)");
+            Assert.IsTrue(Pets.Unequip(_app.Save, 0), "칸을 비운다");
+            _app.Persist(); _app.Current.Refresh(); yield return Frames(1);
+            Assert.IsNotNull(UiKit.Find(slot0, "ui.itemFrame." + Palette.RarColors[0]), "빈 칸은 회색으로 돌아온다");
+            Assert.IsNull(UiKit.Find(slot0, kHigh), "뺐는데 옛 등급색이 남아 있으면 안 된다");
+
+            yield return Shutdown();
+        }
+
         /// <summary>장비 화면 스탯 칸의 숫자 글자(<c>Stat:atk</c>·<c>Stat:hp</c>·<c>Stat:sh</c>).</summary>
         static string StatText(Transform gear, string key)
         {
