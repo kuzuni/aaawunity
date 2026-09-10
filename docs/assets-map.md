@@ -592,7 +592,7 @@
 | prefabs | `ui.itemFrame4.plum` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_04_Plum.prefab` | root 555581468595160020 |  |
 | prefabs | `ui.itemFrame4.red` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_04_Red.prefab` | root 8815560267049084126 |  |
 | prefabs | `ui.itemFrame4.brown` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_04_Brown.prefab` | root 3784552692394773143 |  |
-| prefabs | `ui.itemFrame.gray` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01_Normal_Gray.prefab` | root 1201065372117892905 | 장비 등급 색 — 일반=gray · 희귀=blue · 전설=yellow · 신화=plum (4단계) |
+| prefabs | `ui.itemFrame.gray` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01_Normal_Gray.prefab` | root 1201065372117892905 | 장비 등급 색 — 일반=gray · 희귀=green · 영웅=blue · 전설=plum · 신화=yellow (5단계 · T402 주인 지정 · 정본은 Palette.RarColors) |
 | prefabs | `ui.itemFrame.blue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01_Normal_Blue.prefab` | root 8934315173311436198 |  |
 | prefabs | `ui.itemFrame.yellow` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01_Normal_Yellow.prefab` | root 4448737683355882266 |  |
 | prefabs | `ui.itemFrame.plum` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Prefabs/Prefabs_Frame/ItemFrame/ItemFrame_01_Normal_Plum.prefab` | root 2235254707959506410 |  |

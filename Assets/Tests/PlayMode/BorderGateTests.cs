@@ -494,9 +494,15 @@ namespace KkomaKnight.Tests.Play
                 Transform fusable = null;
                 for (int i = 0; i < forgeInv.childCount; i++) { var c = forgeInv.GetChild(i); if (c.gameObject.activeSelf && c.Find("FuseDot") != null) { fusable = c; break; } }
                 Assert.IsNotNull(fusable, "합성 가능 칸(빨간 점 · 같은 키 3개)이 하나는 있어야 한다");
-                // T113 ⓑ — 초록 프레임은 없앴다(주인 «완성됐을 때의 슬롯 부분이 초록인데 그러지 말고 색 통일»).
-                // «합성 가능» 은 색이 아니라 빨간 점(FuseDot · 바로 위에서 그것으로 칸을 찾았다)으로 알린다.
-                Assert.IsNull(UiKit.Find(fusable, "ui.itemFrame.green"), "합성 가능 칸에 초록 변형 프레임이 남으면 안 된다(T113 ⓑ · 색 통일)");
+                // T113 ⓑ — «합성 가능» 을 초록 프레임으로 알리던 것은 없앴다(빨간 점 FuseDot 으로 · 바로 위에서 그것으로 칸을 찾았다).
+                // T402 — 초록이 이제 **희귀 등급색**이라 «초록이 없다» 로는 못 잰다 → 칸의 등급 변형이 **등급색 배열 중 하나**인가로 잰다(합성 표시가 따로 색을 입히면 여기서 빨감).
+                {
+                    string frameColor = null;
+                    foreach (var t in fusable.GetComponentsInChildren<Transform>(true))
+                        if (t.name.StartsWith("ui.itemFrame.", System.StringComparison.Ordinal) && t.name != "ui.itemFrame.empty") { frameColor = t.name.Substring("ui.itemFrame.".Length); break; }
+                    Assert.IsNotNull(frameColor, "합성 가능 칸에 등급 변형 조각이 있다");
+                    Assert.Contains(frameColor, Palette.RarColors, "합성 가능 칸의 변형 색은 등급색(Palette.RarColors) 중 하나다 — 합성 표시가 색을 입히지 않는다(T113 ⓑ · T402)");
+                }
                 AssertItemFrameBorder(fusable, "대장간 합성 가능 칸");
                 Assert.IsTrue(UiKit.HasPattern(forgeRoot), "대장간 배경 패턴(T72 ① · T69-forge 가 같이)");
 

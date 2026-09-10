@@ -99,7 +99,10 @@ namespace KkomaKnight.Game
         /// </para>
         /// <para>영웅이 들어오는 회차는 이 배열 가운데에 <c>"green"</c> 한 칸을 넣으면 된다(주인 «영웅 = 초록» · T325 4항 ⓐ).</para>
         /// </summary>
-        public static readonly string[] RarColors = { "gray", "blue", "red", "yellow", "plum" };
+        // T402(주인 2026-09-10 «희귀 초록 · 영웅 파랑 · 전설 보라 · 신화 노랑») — T325 의 { gray, blue, red, yellow, plum } 에서 바꿨다.
+        //   조각(ui.itemFrame.<색>)·글자·배지·pill 이 전부 이 배열 하나를 부르므로 여기 한 줄이 정본이다(새 그림 0 · 여섯 색 조각이 다 있다).
+        //   ⚠ «초록 = 합성 가능» 표시는 T113 ⓑ 가 없앴다(빨간 점으로) — 그래서 초록을 희귀에 줘도 대장간과 안 겹친다.
+        public static readonly string[] RarColors = { "gray", "green", "blue", "plum", "yellow" };
         /// <summary>등급 색이 몇 칸인가 — 자가 <c>gear.json</c> 의 <c>rarName</c> 수와 맞대 본다(둘이 갈리면 화면이 조용히 틀린다).</summary>
         public static int RarColorCount => RarColors.Length;
         /// <summary>등급 색 이름. 범위 밖은 <b>양쪽으로 물린다</b> — 옛 사슬도 «0 미만이면 회색 · 3 이상이면 자주» 였다(그 뜻을 그대로 옮긴다).</summary>
