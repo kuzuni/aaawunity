@@ -132,6 +132,28 @@ namespace KkomaKnight.Core
         /// <para>잠긴 칸·모르는 id 는 <b>읽는 쪽</b>(<see cref="Pets.Equipped"/>)이 거른다 — 세이브는 펫 표를 못 본다(<see cref="GameData"/> 에 아직 그 표가 없다).</para>
         /// </summary>
         public List<string> PetEq = new List<string>();
+
+        // ───────────────────────── 시즌 패스 (T322 ⓓ 세이브 배선) ─────────────────────────
+        /// <summary>
+        /// 시즌 패스의 <b>지금 레벨</b>(1부터 · <c>pass.json maxLevel</c> 까지 · T322).
+        /// <para>
+        /// ⚑ <b>여기가 서기 전에는 화면이 «32» 를 리터럴로 들고 있었다</b>(<c>SeasonPassScreen.CurLevel</c> = 주인 레퍼런스 그림에서 베낀 수).
+        /// 그래서 누가 놀아도 늘 32 였고, «어디까지 왔나» 를 담을 자리가 아예 없었다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>무엇으로 오르는가는 아직 주인 몫이다</b>(패스 점수를 무엇이 주는지 지시가 없다 · T377 표) —
+        /// 이 칸은 <b>담는 자리</b>일 뿐이고, 올리는 규칙이 서면 그 절이 여기에 쓴다(<see cref="Pets"/>·<see cref="Ach"/> 와 같은 꼴).
+        /// </para>
+        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 1»(옛 세이브 호환).
+        /// </summary>
+        public int PassLv = 1;
+        /// <summary>유료 트랙 둘을 샀는가(₩9,900 · ₩49,000 · T322 화면의 `BuyBtn:1`·`BuyBtn:2`). 안 산 열의 칸은 못 받는다.</summary>
+        public bool PassPaid1, PassPaid2;
+        /// <summary>
+        /// 받은 칸 — <b>레벨 → 열 비트</b>(<c>1 = 무료 · 2 = 유료1 · 4 = 유료2</c> · <see cref="ChestClaimed"/> 과 같은 꼴).
+        /// <para>줄이 100 이고 받은 칸은 드문드문이라 «레벨마다 세 칸» 을 다 적지 않는다 — <b>받은 레벨만</b> 담는다.</para>
+        /// </summary>
+        public Dictionary<int, int> PassClaimed = new Dictionary<int, int>();
         /// <summary>
         /// <b>누적</b> 펫 뽑기 횟수(x10 은 10 으로 센다 · 주인 확정) — 장착 칸 해금(0·100·200회)이 이 수 하나로 정해진다(<see cref="Pets.SlotsOpen"/>).
         /// 받아도 줄지 않는다. index.html 세이브에 없는 이 레포 전용 필드라 «없으면 0»(옛 세이브 호환).
@@ -267,7 +289,8 @@ namespace KkomaKnight.Core
             if (ChestClaimed == null) ChestClaimed = new Dictionary<int, int>(); ChapterChest.Normalize(this, D);
             if (ExpSettle < 0) ExpSettle = 0; ExpQuickUsed = Math.Max(0, ExpQuickUsed);   // 빠른 탐험 상한은 Expedition.Roll (표를 여기서 모른다) · 시계 되돌림도 거기서
             ExpQuickCharge = Math.Max(0, ExpQuickCharge); if (ExpQuickAt < 0) ExpQuickAt = 0;   // 상한(quickMax)도 Roll 이 안다(T265)
-            PetPulls = Math.Max(0, PetPulls); Pets.NormalizeSave(this);   // T293 — 펫 «표» 는 여기서 모른다(GameData 가 아직 안 든다) · 표가 필요한 정리는 Pets.Equipped 가 한다
+            PetPulls = Math.Max(0, PetPulls); Pets.NormalizeSave(this);
+            Pass.NormalizeSave(this);   // T322 — 패스 «표»(maxLevel)는 여기서 모른다: 레벨 상한은 읽는 쪽(Pass.Lv)이 표를 보고 자른다   // T293 — 펫 «표» 는 여기서 모른다(GameData 가 아직 안 든다) · 표가 필요한 정리는 Pets.Equipped 가 한다
             MigrateGearRar(D);   // ⚠ 아래 두 줄보다 «먼저» 다 — 안 그러면 옛 신화가 «전설» 로 읽혀 강화가 0 이 된다
             Inv.RemoveAll(g => g == null || Array.IndexOf(D.Gear.Parts, g.Part) < 0 || !D.Gear.Options.ContainsKey(g.Type) || g.Rar < 0 || g.Rar >= D.Gear.RarName.Length);
             foreach (var g in Inv) { g.Plus = Math.Max(0, g.Plus); if (g.Rar == D.Gear.RarLegend && g.Plus >= D.Gear.LegendToMythPlus) { g.Rar = D.Gear.RarMyth; g.Plus = 0; } }
@@ -341,6 +364,8 @@ namespace KkomaKnight.Core
             var pf = new Dictionary<string, object>(); foreach (var kv in PetFrag) pf[kv.Key] = (double)kv.Value; o["petFrag"] = pf;     // T293
             var pe = new List<object>(); foreach (var id in PetEq) pe.Add(id ?? ""); o["petEq"] = pe;                                    // T293 — 칸 순서 그대로
             o["petPulls"] = (double)PetPulls;                                                                                            // T293
+            o["passLv"] = (double)PassLv; o["passPaid1"] = PassPaid1; o["passPaid2"] = PassPaid2;                                        // T322
+            var pc = new Dictionary<string, object>(); foreach (var kv in PassClaimed) pc[kv.Key.ToString(CultureInfo.InvariantCulture)] = (double)kv.Value; o["passClaimed"] = pc;   // T322 — 레벨 → 열 비트
             o["arenaScore"] = ArenaScore; o["arenaBest"] = (double)ArenaBest;   // T240
             o["arenaTicket"] = (double)ArenaTicket; o["arenaDay"] = ArenaDay ?? "";   // T240 6항
             o["revive"] = (double)Revive;   // T254
@@ -434,6 +459,9 @@ namespace KkomaKnight.Core
                     foreach (var k in j["petFrag"].Keys) s.PetFrag[k] = j["petFrag"][k].Int();     // T293
                     foreach (var e in j["petEq"].Items()) s.PetEq.Add(e.Str(""));                  // T293 — 빈 글자 = 빈 칸
                     s.PetPulls = j["petPulls"].Int();                                              // T293
+                    s.PassLv = j.Has("passLv") ? j["passLv"].Int() : 1;                            // T322 — 없으면 1(옛 세이브)
+                    s.PassPaid1 = j["passPaid1"].Num() != 0; s.PassPaid2 = j["passPaid2"].Num() != 0;
+                    foreach (var k in j["passClaimed"].Keys) if (int.TryParse(k, NumberStyles.Integer, CultureInfo.InvariantCulture, out var pl2)) s.PassClaimed[pl2] = j["passClaimed"][k].Int();
                     s.ArenaScore = j["arenaScore"].Num(); s.ArenaBest = j["arenaBest"].Int();   // 없으면 0 = «아직 한 판도 안 했다»(옛 세이브 호환 · T240)
                     s.ArenaTicket = j["arenaTicket"].Int(); s.ArenaDay = j["arenaDay"].Str("");   // 없으면 0/빈 값 → 첫 접근에 그날치가 채워진다(T240 6항)
                     s.Revive = j["revive"].Int();   // 없으면 0(옛 세이브 호환 · T254)

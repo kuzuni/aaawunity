@@ -142,7 +142,17 @@ namespace KkomaKnight.Tests.Play
             _app.ShowScreen("lobby"); yield return Frames(1);
 
             // 19 시즌 패스 (T266 · 표 ㊼ · 주인 2026-09-09 «걍 다시 넣기» 가 T78 삭제를 뒤집었다 · 지금은 «디자인만»)
+            // T322 ⓓ — 레벨이 «세이브에서 온다» 가 되면서(옛 const 32 폐지) **새 세이브는 1 레벨**이다.
+            //   그대로 찍으면 이 사진이 «전부 어두운 트랙» 이 되어 주인 레퍼런스 19(29~33 이 밝다)와 견줄 수 없고 §5 도 그 상태를 잰다.
+            //   ⇒ 찍기 직전에 세이브를 그 자리로 놓는다(T349 가 장비 사진에 한 것과 같은 손짓 · «셋업이 그 축의 한 값만 담으면 사진이 그 축을 못 본다»).
+            //   ⚠ 되돌린다 — 이 세이브는 뒤에 찍는 화면들도 읽는다(T299 ⓑ 가 «승점을 굴리지 않는다» 로 데인 자리).
+            int passLv0 = _app.Save.PassLv; bool paid1_0 = _app.Save.PassPaid1;
+            var passClaimed0 = new System.Collections.Generic.Dictionary<int, int>(_app.Save.PassClaimed);
+            _app.Save.PassLv = 32; _app.Save.PassPaid1 = true;                    // 레퍼런스와 같은 자리(29~33 이 보인다) · 유료 1 열도 열어 «산 열» 꼴을 보여 준다
+            for (int lv = 29; lv < 32; lv++) _app.Save.PassClaimed[lv] = Pass.Bit(PassData.ColFree);   // 지난 줄 무료 칸은 «받음»
             SeasonPassScreen.Open(_app); yield return Frames(3); yield return Shot("19_pass");
+            _app.Save.PassLv = passLv0; _app.Save.PassPaid1 = paid1_0;
+            _app.Save.PassClaimed.Clear(); foreach (var kv in passClaimed0) _app.Save.PassClaimed[kv.Key] = kv.Value;
             _app.ShowScreen("lobby"); yield return Frames(1);
 
             // 13 펫 탭 · 14 펫 세부 (T42 껍데기)

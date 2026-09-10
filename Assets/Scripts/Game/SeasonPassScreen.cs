@@ -136,8 +136,16 @@ namespace KkomaKnight.Game
 
         /// <summary>행 하나가 차지하는 세로 px — 표 ㊼ 의 행 피치(%p)를 캔버스 px 로 옮긴 값이다(그림 px 을 그대로 쓰지 않는다 · 결정 839).</summary>
         static float PitchPx => UiKit.FrameH * RowPitch / 100f;
-        /// <summary>레퍼런스 그림의 «지금 레벨» — 배너 배지도 이 수를 쓴다(주인 수치가 오면 세이브에서 온다 · T266 ⓑ).</summary>
-        public const int CurLevel = 32;
+        /// <summary>
+        /// <b>지금 레벨 — 세이브에서 온다</b>(<see cref="SaveData.PassLv"/> · T322 ⓓ). 배너 배지도 이 수를 쓴다.
+        /// <para>
+        /// ⚑ 여기 오래 <c>const int CurLevel = 32</c> 가 박혀 있었다 — 주인 레퍼런스 그림에서 베낀 수다.
+        /// 그래서 <b>누가 놀아도 늘 32 레벨</b>이었고, «어디까지 왔나» 를 담을 자리가 아예 없어 «받았다» 표시도
+        /// «무료 열이고 지금 레벨보다 아래면 받은 것» 이라는 <b>짐작</b>으로 그렸다. 이제 둘 다 세이브가 말한다.
+        /// </para>
+        /// <para>⚠ <b>무엇으로 레벨이 오르는가는 아직 주인 몫</b>이다(T377 표) — 이 화면은 «오른 결과» 만 읽는다.</para>
+        /// </summary>
+        public static int CurLevel => Pass.Lv(App.I != null ? App.I.Save : null, App.I != null && App.I.Data != null ? App.I.Data.Pass : null);
         /// <summary>열었을 때 <b>맨 위에 보이는 줄</b> — 레퍼런스 19 가 29~33 을 보여 주는 상태(= 지금 레벨에서 셋 위)다. §5 표 ㊼ 의 «첫 행» 이 이 줄이다.</summary>
         public static int TopLevel => Mathf.Max(1, CurLevel - 3);
 
@@ -353,7 +361,8 @@ namespace KkomaKnight.Game
         RectTransform Cell(RectTransform row, string name, Layout.R r, int level, int col, bool dim)
         {
             var v = _pass != null ? _pass.At(level, col) : default;
-            bool claimed = !dim && col == PassData.ColFree && level < CurLevel;
+            // T322 ⓓ — «받았다» 도 세이브가 말한다(전에는 «무료 열 · 지금 레벨 아래» 라는 짐작이었다).
+            bool claimed = Pass.Claimed(App != null ? App.Save : null, level, col);
             var cell = UiKit.Panel(row, name, "fr.itemBg", Palette.A(Palette.Ink, dim ? 0.75f : 0.5f)).rectTransform;
             PlaceRowIn(cell, row, r, level); UiKit.Bordered(cell);
             var icon = UiKit.Icon(cell, "Icon", v.Known ? v.Icon : UnknownIcon, dim || !v.Known ? Palette.A(Color.white, 0.45f) : Color.white);
