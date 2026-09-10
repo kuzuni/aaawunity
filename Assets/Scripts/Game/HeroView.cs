@@ -65,9 +65,11 @@ namespace KkomaKnight.Game
         public static CharacterRig.Skin PlayerSkin(App app)
         {
             if (app == null || app.Data == null || app.Save == null) return DefaultKnightSkin();
-            // T293 ⓖ — «실드가 있으면 방패» 의 실드는 **장비 + 낀 펫**이다(`Pets.TotalPower`).
-            //   전투 쪽은 이미 그렇게 서 있다(`BattleWorld:674` 가 `G.P.MaxSh > 0` 으로 고르는데 그 값에 펫 몫이 들어간다) —
-            //   여기만 장비만 보면 **같은 세이브인데 장비 화면의 기사는 방패가 없고 전투의 기사는 든다**(T7 «둘은 같은 함수» 가 깨진다).
+            // T293 ⓖ — «실드가 있으면 방패» 의 실드는 **기저 + 장비 + 낀 펫**이다(`Pets.TotalPower` · 전투 `BattleWorld:674` 의 `G.P.MaxSh` 와 같은 뜻).
+            // ⚠ **지금 이 갈래는 늘 참이다** — 표의 기저 실드(`tune.json pSh0`)가 250 이라 `BuildPower.Sh` 부터 이미 0 이 아니다(워커 I · 결정 1108 ②).
+            //   곧 T7 의 «실드가 있으면» 은 **아무것도 안 가르고 기사는 언제나 방패를 든다.** 그래서 이 줄은 **어떤 자로도 못 집는다** —
+            //   자를 하나 세워 «지켰다» 고 적는 대신 그 사실을 여기 적어 둔다(결정 1108 ④ · 공허 방지 단언도 공허할 수 있다).
+            //   고치려면 «기저 위에 실드가 얹혔는가» 같은 **다른 규칙**이 필요하고 그것은 기사 그림이 바뀌는 일이라 주인 몫이다(T293 행에 올려 뒀다).
             bool shield = KkomaKnight.Core.Pets.TotalPower(app.Data, app.Save).Sh > 0;
             return CharacterRig.PlayerSkin(app.Data, app.Save, shield);
         }

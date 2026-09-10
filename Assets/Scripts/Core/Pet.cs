@@ -505,7 +505,8 @@ namespace KkomaKnight.Core
         /// <summary>
         /// <b>보여 주는 힘 = 장비 + 장착 펫</b>(주인 2026-09-10 «펫 전투력 숫자에 들어가야지 · 장착할 때 공체실 늘어나게»).
         /// <para>
-        /// ⚑ <see cref="GearSystem.BuildPower"/> 는 <b>손대지 않는다</b> — 그 함수는 «장비만으로 나오는 힘» 이고 시뮬·재적합 자·시드 골든(T2)이 전부 그 뜻으로 부른다(<see cref="RunOptions.PetPower"/> 주석과 같은 까닭).
+        /// ⚑ <see cref="GearSystem.BuildPower"/> 는 <b>손대지 않는다</b> — 그 함수는 «<b>기저 + 장비</b>»(<c>(T.PSh0 + sh) * ev</c> · 펫이 안 든 힘)이고 시뮬·재적합 자·시드 골든(T2)이 전부 그 뜻으로 부른다(<see cref="RunOptions.PetPower"/> 주석과 같은 까닭).
+        /// ⚠ 이름이 «Build(장비)Power» 라 «장비만» 으로 읽히는데 <b>아니다</b> — 표의 기저(<c>pAtk0/pHp0/pSh0</c>)가 이미 들어 있다. 앞 회차가 그렇게 읽고 자에 «새 세이브는 장비 실드가 0» 을 박아 런 962 가 빨갰다(결정 1108).
         /// 펫은 <b>여기서 더한다</b>. 그래서 화면(전투력 숫자 · 장비 화면 스탯 3칸)과 판(<see cref="RunOptions.PetPower"/>)이 **같은 두 함수의 합**이 되어 갈릴 자리가 없다.
         /// </para>
         /// <para>표(<c>D.Pet</c>)가 없거나 낀 펫이 없으면 <see cref="EquipPower"/> 가 0 을 주므로 값은 장비 그대로다.</para>

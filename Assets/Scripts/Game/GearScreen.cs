@@ -184,7 +184,7 @@ namespace KkomaKnight.Game
                 if (s.Dot != null) s.Dot.SetActive(GearUi.BetterInInv(S, s.Part));
             }
             // 스탯 · 상단 바 · 대장간 ! · 캐릭터 외형
-            // 스탯 3칸 = **장비 + 장착 펫**(주인 2026-09-10 «장착할 때 공체실 늘어나게» · `Pets.TotalPower` — 전투력 숫자·판과 같은 함수).
+            // 스탯 3칸 = **기저 + 장비 + 장착 펫**(주인 2026-09-10 «장착할 때 공체실 늘어나게» · `Pets.TotalPower` — 전투력 숫자·판과 같은 함수 · 기저는 `BuildPower` 안에 이미 들어 있다).
             //   ⚠ 위 슬롯별 «기여» 줄은 그대로 장비의 몫만 나눈다 — 펫은 부위가 없어 나눠 붙일 자리가 없다(GearRole 머리의 그 규칙).
             var pw = Pets.TotalPower(D, S);
             if (_atk != null) _atk.text = UiKit.Fmt(Math.Round(pw.Atk)); if (_hp != null) _hp.text = UiKit.Fmt(Math.Round(pw.Hp)); if (_sh != null) _sh.text = UiKit.Fmt(Math.Round(pw.Sh));
