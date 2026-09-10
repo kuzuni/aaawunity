@@ -385,9 +385,9 @@ namespace KkomaKnight.Tests.Play
             Assert.Fail("gear.json 에 부위가 없다: " + part); return null;
         }
 
-        // ───────────────────────── ① 로비 · 설정 · 탤런트 (펫 탭·토스트는 ①-e PetTabAndToast 로 · T379 첫 조각) ─────────────────────────
+        // ───────────────────────── ①-a 로비 탭·점 · 구도 · 사이드 팝업 3종 · 데일리 기프트 (T379 로 다섯 조각이 됐다 — ①-b 특권/패스 · ①-c 설정/삭제 · ①-d 탤런트 · ①-e 펫/토스트) ─────────────────────────
         [UnityTest]
-        public IEnumerator LobbySettingsTalentPetToast()
+        public IEnumerator LobbyTabsAndSideOverlays()
         {
             yield return Boot();
             Assert.AreEqual("lobby", _app.Current.Name);
@@ -809,95 +809,111 @@ namespace KkomaKnight.Tests.Play
                 Check("데일리 기프트 광고 → 수령", expectOverlay: true);
                 _app.Overlay.Close(); yield return Frames(1);
                 Check("사이드 팝업 3종 열고 닫음");
-                // 페이지 1(특권)
-                Assert.IsTrue(ClickNamed(lobby, "Side:" + LobbyScreen.SidePrivilege), "로비 «특권» 칸(T148)"); yield return Frames(3);
-                Assert.AreEqual("privilege", _app.Current.Name, "특권 페이지"); var pv = _app.Current.Root;
-                Assert.IsNotNull(UiKit.Find(pv, "TopBar"), "특권: 상단 바"); Assert.AreEqual(4, CountNamed(pv, "Card:"), "특권 카드 4"); Assert.IsTrue(HasText(s => s == "특권") && HasText(s => s == "전체 받기"), "특권: 제목 · 전체 받기");
-                Assert.IsNull(UiKit.Find(pv, "ui.tabBar"), "특권: 탭 바 없음"); Assert.IsFalse(HasText(s => s == "START"), "로비는 숨겨져 있다");
-                // T63-lobbypopups — 특권: 잘림 0 · 부제 40 안 줄어듦(문구 «활성화해») · 제목 «특권» 은 제목 종류 60
-                AssertNoTextClip("특권 페이지", pv); AssertUsedAtLeast("특권 부제", pv, "Sub", TextSize.Body);
-                { TMP_Text pt = null; foreach (var t in pv.GetComponentsInChildren<TMP_Text>(false)) if (t.text == "특권") pt = t; Assert.IsNotNull(pt, "«특권» 글자"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(pt), "«특권» = 제목 종류"); Assert.GreaterOrEqual(TextAudit.BestFitSize(pt), TextSize.Title, "«특권» 실제 크기 ≥ 60");
-                  // T170 회차 3 — 위 한 줄이 55 로 빨개졌을 때 «왜» 를 바로 말해 주는 자(결정 490): 60 이 들어가려면 칸이 한 줄(≈66px)보다 커야 하고
-                  // 그 칸을 세운 것은 Label(…, -10, …, 120) 이다. 가운데 정렬 함수가 세로를 0/100 으로 덮으면 70px 이 되어 bestFit 이 글자를 줄인다.
-                  float ptH = pt.rectTransform.rect.height;   // 앵커 비율이 아니라 «놓이고 난 실제 px» 를 잰다(부모가 줄이라 비율만 보면 헛값이다)
-                  Assert.GreaterOrEqual(ptH, TextSize.Title * 1.2f, "«특권» 글자 칸 세로(px) — 가운데 정렬은 가로만 옮긴다(세로를 덮으면 여기서 먼저 빨개진다)"); }
-                Check("특권 페이지");
-                Assert.IsTrue(ClickNamed(pv, "BackBtn"), "특권 뒤로"); yield return Frames(2); Assert.AreEqual("lobby", _app.Current.Name, "뒤로 → 로비");
-                // T266 — 시즌 패스 페이지가 **되살아났다**(주인 2026-09-09). 로비 배너로 들어가고, 지금은 «디자인만» 이라
-                //   버튼 셋은 아무것도 지급하지 않고 «준비 중» 토스트만 띄운다(T268 ⓑ). 그 «안 준다» 가 이 자의 요점이다 —
-                //   수치가 오기 전에 조용히 지급하기 시작하면 세이브가 지어낸 값으로 더러워지고 되돌릴 수 없다.
-                Assert.IsTrue(ClickNamed(lobby, "PassBanner"), "로비 이벤트 배너 → 시즌 패스"); yield return Frames(2);
-                Assert.AreEqual("seasonPass", _app.Current.Name, "시즌 패스 페이지가 열린다(T266)");
-                var sp = _app.Current.Root;
-                foreach (var n in new[] { "Banner", "PassName", "SeasonEnds", "ProgressBar", "LevelBadge", "Notice", "Track",
-                                          "Col:free", "Col:paid1", "Col:paid2", "Line",
-                                          "ClaimAllBtn", "BuyBtn:1", "BuyBtn:2", "BackBtn" })   // T304 — «방랑자의 보상» 탭 · T322 — 구간 띠·«💎100» 배지는 주인이 지웠다
-                    Assert.IsNotNull(UiKit.Find(sp, n), "시즌 패스 조각 «" + n + "»(표 ㊼)");
-                // T322(주인 «다이아 100 이라고 써 있는 부분 없애기») — 지운 것이 **정말 없는지**도 잰다.
-                //   목록에서 이름만 빼면 «안 그린다» 가 아니라 «안 본다» 다(T184 가 값을 치른 자리).
-                foreach (var n in new[] { "SegBand", "SegBadge" })
-                    Assert.IsNull(UiKit.Find(sp, n), "구간 조각 «" + n + "» 은 지웠다(주인 T322)");
-                // 3열 전부 실측 그라데이션이 깔려 있다 — 주인이 «그 그라데이션도 잘 해서» 라고 못 박은 자리다
-                foreach (var n in new[] { "Col:free", "Col:paid1", "Col:paid2" })
-                    Assert.IsTrue(UiKit.HasGradient(UiKit.Find(sp, n)), "«" + n + "» 에 그라데이션이 없다(주인 지시 · 표 ㊼ 실측값)");
-                // 레벨 배지·보상 칸은 행마다 선다(레퍼런스에 보이는 다섯 줄).
-                //   ⚑ 여기 오래 { 29,…,33 } 이 자리로 박혀 있었다 — 화면이 «지금 레벨» 을 const 32 로 들던 시절의 TopLevel~+4 다.
-                //   T322 ⓓ 가 그 수를 세이브로 옮기자 새 세이브(1레벨)에서는 1~5 줄이 서서 이 다섯이 통째로 null 이 됐다(런 940·941 · 결정 1079).
-                //   그래서 «어느 줄이 보이는가» 를 자리로 박지 않고 **화면이 스스로 말하는 지금 레벨**(머리 배지 글자)에서 센다.
-                //   ⚠ SeasonPassScreen.TopLevel 을 부르지 않는다 — 화면의 셈을 자에 옮겨 적으면 그 셈이 틀어지는 날 자도 같이 틀어져 아무것도 못 잡는다(결정 1078).
-                var lvT = UiKit.Find(sp, "LevelBadge")?.Find("LevelText")?.GetComponent<TMPro.TMP_Text>();
-                Assert.IsNotNull(lvT, "머리 배지가 지금 레벨을 글자로 말한다");
-                Assert.IsTrue(int.TryParse(lvT.text, out int curLv) && curLv >= 1, "배지 글자 «" + lvT.text + "» 가 레벨(1 이상의 수)이 아니다");
-                //   그리고 그 글자가 **세이브가 말하는 레벨**이어야 한다 — 이 한 줄이 «배지에 수를 다시 박는 손» 을 잡는다(이번 빨강의 뿌리).
-                Assert.AreEqual(Pass.Lv(_app.Save, _app.Data != null ? _app.Data.Pass : null), curLv,
-                    "머리 배지가 세이브의 패스 레벨과 다른 수를 말한다(그림에서 베낀 수가 남았는가)");
-                int top = Mathf.Max(1, curLv - 3);                 // 레퍼런스 19 의 구도 = 지금 레벨에서 셋 위가 맨 윗줄
-                for (int lv = top; lv <= top + 4; lv++)
-                {
-                    Assert.IsNotNull(UiKit.Find(sp, "Badge:" + lv), "레벨 배지 " + lv + "(지금 레벨 " + curLv + ")");
-                    Assert.IsNotNull(UiKit.Find(sp, "Cell:free:" + lv), "무료 칸 " + lv);
-                    Assert.IsNotNull(UiKit.Find(sp, "Cell:paid2:" + lv), "유료 2 칸 " + lv);
-                }
-                { // «디자인만» — 눌러도 재화가 한 톨도 안 는다
-                    double g0 = _app.Save.Gold, m0 = _app.Save.Gem;
-                    Assert.IsTrue(ClickNamed(sp, "ClaimAllBtn"), "«모두 받기»"); yield return Frames(2);
-                    Assert.IsTrue(ClickNamed(sp, "BuyBtn:1"), "«₩9,900»"); yield return Frames(2);
-                    Assert.AreEqual(g0, _app.Save.Gold, 1e-9, "시즌 패스는 아직 아무것도 안 준다(T268 ⓑ «디자인만»)");
-                    Assert.AreEqual(m0, _app.Save.Gem, 1e-9, "시즌 패스는 아직 아무것도 안 준다(T268 ⓑ «디자인만»)");
-                }
-                {   // [T266] «시즌 종료까지 20일 8시간» 행이 §5 에서 ✗ 인 까닭을 **수로 닫았다**(6단계 · 결정 아래).
-                    //   run 613 실측: 놓인 크기 40.0 · 칸 폭 648px · **글자가 먹는 폭 395px** ↔ **표 ref 폭 360px**.
-                    //   ⇒ ref 폭으로 좁히면 bestFit 이 40 → 약 36 으로 눌러 **Body 하한(40) 아래**로 내려간다(T63) —
-                    //     점수 한 행보다 글자 크기가 먼저라 표 ㊼ 의 ⚑ 대로 **안 좁힌다**. 물음은 끝났으므로 로그를 «지키는 자» 로 바꾼다.
-                    var endsT = UiKit.Find(sp, "SeasonEnds")?.GetComponent<TMPro.TMP_Text>();
-                    Assert.IsNotNull(endsT, "시즌 종료 줄");
-                    // ⓐ 지금 상태를 지킨다 — 누가 칸을 좁히면(그것이 §5 한 행을 얻는 가장 쉬운 길이다) 이 줄이 먼저 빨개진다.
-                    Assert.GreaterOrEqual(endsT.fontSize, TextSize.Body,
-                        "시즌 종료 줄이 Body 하한(40) 아래로 눌렸다 — 칸을 좁혔다면 되돌려라(표 ㊼ ⚑ · 우리말은 ref 폭 360px 에 안 들어간다)");
-                    // ⓑ 반대 방향의 자백 자리 — 글자가 짧아져 ref 폭에 들어가게 되면 그때는 좁혀서 §5 10.0 을 받는 것이 옳다.
-                    //    그 판정을 다음 사람이 다시 재지 않게 두 수를 그대로 남긴다(단언으로 막지는 않는다 · 결정 493 사다리).
-                    Debug.Log("[T266] 시즌 종료 줄 — 글자 «" + endsT.text + "» · 놓인 크기 " + endsT.fontSize.ToString("0.0")
-                        + "(Body 하한 " + TextSize.Body + ") · 칸 폭 " + endsT.rectTransform.rect.width.ToString("0")
-                        + "px · 글자가 먹는 폭 " + endsT.GetPreferredValues().x.ToString("0")
-                        + "px · 표 ref 폭 " + (UiKit.FrameW * 0.333f).ToString("0")
-                        + "px → 먹는 폭이 ref 폭보다 작아지면 그때 좁혀서 §5 10.0 을 받는다");
-                }
-                Check("시즌 패스 페이지");
-                Assert.IsTrue(ClickNamed(sp, "BackBtn"), "시즌 패스 뒤로"); yield return Frames(2);
-                Assert.AreEqual("lobby", _app.Current.Name, "뒤로 → 로비");
-                Check("로비 복귀");
             }
+
+            yield return Shutdown();
+        }
+
+        // ───────────────────────── ①-b 특권 페이지 · 시즌 패스 페이지 · 챕터 ◀▶ (T379 다섯째 조각 · 옛 LobbySettingsTalentPetToast :812~893) ─────────────────────────
+        /// <summary>
+        /// T379 마지막 조각 — 옛 <c>LobbySettingsTalentPetToast</c> 의 «특권 페이지(T148) · 시즌 패스 페이지(T266) · 챕터 ◀▶» 블록을 제 이름으로. 단언 0줄 삭제.
+        /// 상태 물려받기(결정 1100): 이 블록은 <c>lobby</c> 루트만 쓰고 앞 블록(탭 점·사이드 팝업·기프트 수령)의 상태에 기대는 단언이 없다 —
+        /// 카드 4·글자 · 패스 레벨 = 세이브(<c>Pass.Lv</c>) · «디자인만»(재화 불변) · «최고 챕터 1 이라 그대로» 는 갓 켠 판이 곧 그 판이다 ⇒ <see cref="Boot"/> 만.
+        /// 옛 줄 번호 → 이 자: <c>:824</c> «특권 페이지» · <c>:885</c> «시즌 패스 페이지» · <c>:888</c> «로비 복귀» · <c>:893</c> «로비 챕터 이동».
+        /// </summary>
+        [UnityTest]
+        public IEnumerator LobbyPrivilegeAndSeasonPass()
+        {
+            yield return Boot();
+            Assert.AreEqual("lobby", _app.Current.Name);
+            var lobby = _app.Current.Root;
+            // 페이지 1(특권)
+            Assert.IsTrue(ClickNamed(lobby, "Side:" + LobbyScreen.SidePrivilege), "로비 «특권» 칸(T148)"); yield return Frames(3);
+            Assert.AreEqual("privilege", _app.Current.Name, "특권 페이지"); var pv = _app.Current.Root;
+            Assert.IsNotNull(UiKit.Find(pv, "TopBar"), "특권: 상단 바"); Assert.AreEqual(4, CountNamed(pv, "Card:"), "특권 카드 4"); Assert.IsTrue(HasText(s => s == "특권") && HasText(s => s == "전체 받기"), "특권: 제목 · 전체 받기");
+            Assert.IsNull(UiKit.Find(pv, "ui.tabBar"), "특권: 탭 바 없음"); Assert.IsFalse(HasText(s => s == "START"), "로비는 숨겨져 있다");
+            // T63-lobbypopups — 특권: 잘림 0 · 부제 40 안 줄어듦(문구 «활성화해») · 제목 «특권» 은 제목 종류 60
+            AssertNoTextClip("특권 페이지", pv); AssertUsedAtLeast("특권 부제", pv, "Sub", TextSize.Body);
+            { TMP_Text pt = null; foreach (var t in pv.GetComponentsInChildren<TMP_Text>(false)) if (t.text == "특권") pt = t; Assert.IsNotNull(pt, "«특권» 글자"); Assert.AreEqual(TextKind.Title, TextAudit.KindOf(pt), "«특권» = 제목 종류"); Assert.GreaterOrEqual(TextAudit.BestFitSize(pt), TextSize.Title, "«특권» 실제 크기 ≥ 60");
+              // T170 회차 3 — 위 한 줄이 55 로 빨개졌을 때 «왜» 를 바로 말해 주는 자(결정 490): 60 이 들어가려면 칸이 한 줄(≈66px)보다 커야 하고
+              // 그 칸을 세운 것은 Label(…, -10, …, 120) 이다. 가운데 정렬 함수가 세로를 0/100 으로 덮으면 70px 이 되어 bestFit 이 글자를 줄인다.
+              float ptH = pt.rectTransform.rect.height;   // 앵커 비율이 아니라 «놓이고 난 실제 px» 를 잰다(부모가 줄이라 비율만 보면 헛값이다)
+              Assert.GreaterOrEqual(ptH, TextSize.Title * 1.2f, "«특권» 글자 칸 세로(px) — 가운데 정렬은 가로만 옮긴다(세로를 덮으면 여기서 먼저 빨개진다)"); }
+            Check("특권 페이지");
+            Assert.IsTrue(ClickNamed(pv, "BackBtn"), "특권 뒤로"); yield return Frames(2); Assert.AreEqual("lobby", _app.Current.Name, "뒤로 → 로비");
+            // T266 — 시즌 패스 페이지가 **되살아났다**(주인 2026-09-09). 로비 배너로 들어가고, 지금은 «디자인만» 이라
+            //   버튼 셋은 아무것도 지급하지 않고 «준비 중» 토스트만 띄운다(T268 ⓑ). 그 «안 준다» 가 이 자의 요점이다 —
+            //   수치가 오기 전에 조용히 지급하기 시작하면 세이브가 지어낸 값으로 더러워지고 되돌릴 수 없다.
+            Assert.IsTrue(ClickNamed(lobby, "PassBanner"), "로비 이벤트 배너 → 시즌 패스"); yield return Frames(2);
+            Assert.AreEqual("seasonPass", _app.Current.Name, "시즌 패스 페이지가 열린다(T266)");
+            var sp = _app.Current.Root;
+            foreach (var n in new[] { "Banner", "PassName", "SeasonEnds", "ProgressBar", "LevelBadge", "Notice", "Track",
+                                      "Col:free", "Col:paid1", "Col:paid2", "Line",
+                                      "ClaimAllBtn", "BuyBtn:1", "BuyBtn:2", "BackBtn" })   // T304 — «방랑자의 보상» 탭 · T322 — 구간 띠·«💎100» 배지는 주인이 지웠다
+                Assert.IsNotNull(UiKit.Find(sp, n), "시즌 패스 조각 «" + n + "»(표 ㊼)");
+            // T322(주인 «다이아 100 이라고 써 있는 부분 없애기») — 지운 것이 **정말 없는지**도 잰다.
+            //   목록에서 이름만 빼면 «안 그린다» 가 아니라 «안 본다» 다(T184 가 값을 치른 자리).
+            foreach (var n in new[] { "SegBand", "SegBadge" })
+                Assert.IsNull(UiKit.Find(sp, n), "구간 조각 «" + n + "» 은 지웠다(주인 T322)");
+            // 3열 전부 실측 그라데이션이 깔려 있다 — 주인이 «그 그라데이션도 잘 해서» 라고 못 박은 자리다
+            foreach (var n in new[] { "Col:free", "Col:paid1", "Col:paid2" })
+                Assert.IsTrue(UiKit.HasGradient(UiKit.Find(sp, n)), "«" + n + "» 에 그라데이션이 없다(주인 지시 · 표 ㊼ 실측값)");
+            // 레벨 배지·보상 칸은 행마다 선다(레퍼런스에 보이는 다섯 줄).
+            //   ⚑ 여기 오래 { 29,…,33 } 이 자리로 박혀 있었다 — 화면이 «지금 레벨» 을 const 32 로 들던 시절의 TopLevel~+4 다.
+            //   T322 ⓓ 가 그 수를 세이브로 옮기자 새 세이브(1레벨)에서는 1~5 줄이 서서 이 다섯이 통째로 null 이 됐다(런 940·941 · 결정 1079).
+            //   그래서 «어느 줄이 보이는가» 를 자리로 박지 않고 **화면이 스스로 말하는 지금 레벨**(머리 배지 글자)에서 센다.
+            //   ⚠ SeasonPassScreen.TopLevel 을 부르지 않는다 — 화면의 셈을 자에 옮겨 적으면 그 셈이 틀어지는 날 자도 같이 틀어져 아무것도 못 잡는다(결정 1078).
+            var lvT = UiKit.Find(sp, "LevelBadge")?.Find("LevelText")?.GetComponent<TMPro.TMP_Text>();
+            Assert.IsNotNull(lvT, "머리 배지가 지금 레벨을 글자로 말한다");
+            Assert.IsTrue(int.TryParse(lvT.text, out int curLv) && curLv >= 1, "배지 글자 «" + lvT.text + "» 가 레벨(1 이상의 수)이 아니다");
+            //   그리고 그 글자가 **세이브가 말하는 레벨**이어야 한다 — 이 한 줄이 «배지에 수를 다시 박는 손» 을 잡는다(이번 빨강의 뿌리).
+            Assert.AreEqual(Pass.Lv(_app.Save, _app.Data != null ? _app.Data.Pass : null), curLv,
+                "머리 배지가 세이브의 패스 레벨과 다른 수를 말한다(그림에서 베낀 수가 남았는가)");
+            int top = Mathf.Max(1, curLv - 3);                 // 레퍼런스 19 의 구도 = 지금 레벨에서 셋 위가 맨 윗줄
+            for (int lv = top; lv <= top + 4; lv++)
+            {
+                Assert.IsNotNull(UiKit.Find(sp, "Badge:" + lv), "레벨 배지 " + lv + "(지금 레벨 " + curLv + ")");
+                Assert.IsNotNull(UiKit.Find(sp, "Cell:free:" + lv), "무료 칸 " + lv);
+                Assert.IsNotNull(UiKit.Find(sp, "Cell:paid2:" + lv), "유료 2 칸 " + lv);
+            }
+            { // «디자인만» — 눌러도 재화가 한 톨도 안 는다
+                double g0 = _app.Save.Gold, m0 = _app.Save.Gem;
+                Assert.IsTrue(ClickNamed(sp, "ClaimAllBtn"), "«모두 받기»"); yield return Frames(2);
+                Assert.IsTrue(ClickNamed(sp, "BuyBtn:1"), "«₩9,900»"); yield return Frames(2);
+                Assert.AreEqual(g0, _app.Save.Gold, 1e-9, "시즌 패스는 아직 아무것도 안 준다(T268 ⓑ «디자인만»)");
+                Assert.AreEqual(m0, _app.Save.Gem, 1e-9, "시즌 패스는 아직 아무것도 안 준다(T268 ⓑ «디자인만»)");
+            }
+            {   // [T266] «시즌 종료까지 20일 8시간» 행이 §5 에서 ✗ 인 까닭을 **수로 닫았다**(6단계 · 결정 아래).
+                //   run 613 실측: 놓인 크기 40.0 · 칸 폭 648px · **글자가 먹는 폭 395px** ↔ **표 ref 폭 360px**.
+                //   ⇒ ref 폭으로 좁히면 bestFit 이 40 → 약 36 으로 눌러 **Body 하한(40) 아래**로 내려간다(T63) —
+                //     점수 한 행보다 글자 크기가 먼저라 표 ㊼ 의 ⚑ 대로 **안 좁힌다**. 물음은 끝났으므로 로그를 «지키는 자» 로 바꾼다.
+                var endsT = UiKit.Find(sp, "SeasonEnds")?.GetComponent<TMPro.TMP_Text>();
+                Assert.IsNotNull(endsT, "시즌 종료 줄");
+                // ⓐ 지금 상태를 지킨다 — 누가 칸을 좁히면(그것이 §5 한 행을 얻는 가장 쉬운 길이다) 이 줄이 먼저 빨개진다.
+                Assert.GreaterOrEqual(endsT.fontSize, TextSize.Body,
+                    "시즌 종료 줄이 Body 하한(40) 아래로 눌렸다 — 칸을 좁혔다면 되돌려라(표 ㊼ ⚑ · 우리말은 ref 폭 360px 에 안 들어간다)");
+                // ⓑ 반대 방향의 자백 자리 — 글자가 짧아져 ref 폭에 들어가게 되면 그때는 좁혀서 §5 10.0 을 받는 것이 옳다.
+                //    그 판정을 다음 사람이 다시 재지 않게 두 수를 그대로 남긴다(단언으로 막지는 않는다 · 결정 493 사다리).
+                Debug.Log("[T266] 시즌 종료 줄 — 글자 «" + endsT.text + "» · 놓인 크기 " + endsT.fontSize.ToString("0.0")
+                    + "(Body 하한 " + TextSize.Body + ") · 칸 폭 " + endsT.rectTransform.rect.width.ToString("0")
+                    + "px · 글자가 먹는 폭 " + endsT.GetPreferredValues().x.ToString("0")
+                    + "px · 표 ref 폭 " + (UiKit.FrameW * 0.333f).ToString("0")
+                    + "px → 먹는 폭이 ref 폭보다 작아지면 그때 좁혀서 §5 10.0 을 받는다");
+            }
+            Check("시즌 패스 페이지");
+            Assert.IsTrue(ClickNamed(sp, "BackBtn"), "시즌 패스 뒤로"); yield return Frames(2);
+            Assert.AreEqual("lobby", _app.Current.Name, "뒤로 → 로비");
+            Check("로비 복귀");
 
             // 챕터 ◀▶ (최고 챕터 1 이라 그대로) · 탭 라벨
             Assert.IsTrue(ClickNamed(lobby, "ArrowR"), "챕터 ▶"); Assert.IsTrue(ClickNamed(lobby, "ArrowL"), "챕터 ◀"); yield return Frames(1);
             Check("로비 챕터 이동");
-
             yield return Shutdown();
         }
 
         // ───────────────────────── ①-c 설정 팝업 · 데이터 삭제 (T379 셋째 조각 · 옛 LobbySettingsTalentPetToast :895~960) ─────────────────────────
         /// <summary>
-        /// T379 셋째 조각 — <see cref="LobbySettingsTalentPetToast"/> 의 «설정 팝업(12) · 데이터 삭제(T29)» 블록을 제 이름으로. 단언 0줄 삭제.
+        /// T379 셋째 조각 — <c>LobbySettingsTalentPetToast</c>(지금은 <see cref="LobbyTabsAndSideOverlays"/>) 의 «설정 팝업(12) · 데이터 삭제(T29)» 블록을 제 이름으로. 단언 0줄 삭제.
         /// 상태 물려받기(결정 1100): 이 블록은 앞 블록(로비 탭·사이드 팝업·특권·패스)이 남긴 상태에 기대는 단언이 없다 — 설정은 글자·자리·토글을 재고,
         /// 삭제는 제 값(골드 12345 · 무기 1)을 먼저 넣고 지운 뒤 초기값을 잰다 ⇒ 갓 켠 판(<see cref="Boot"/>)에서 그대로 돈다(<c>ResetSave</c> 불필요 · 이 블록 자신이 지우는 쪽이다).
         /// 옛 줄 번호 → 이 자: <c>:897</c> «설정 팝업» · <c>:938</c> «설정 닫힘» · <c>:946</c> «데이터 삭제 확인 팝업» · <c>:949</c> «취소 → 설정» · <c>:959</c> «데이터 삭제 뒤 로비».
@@ -978,7 +994,7 @@ namespace KkomaKnight.Tests.Play
 
         // ───────────────────────── ①-d 이벤트 탭 · 탤런트 팝업 (T379 둘째 조각 · 옛 LobbySettingsTalentPetToast :962~981) ─────────────────────────
         /// <summary>
-        /// T379 둘째 조각 — <see cref="LobbySettingsTalentPetToast"/> 의 «이벤트 탭 = 던전 페이지 · 탤런트 팝업(입구 없음 · 조각만)» 블록을 제 이름으로. 단언 0줄 삭제.
+        /// T379 둘째 조각 — <c>LobbySettingsTalentPetToast</c>(지금은 <see cref="LobbyTabsAndSideOverlays"/>) 의 «이벤트 탭 = 던전 페이지 · 탤런트 팝업(입구 없음 · 조각만)» 블록을 제 이름으로. 단언 0줄 삭제.
         /// ⚠ 상태 물려받기(결정 1100 ④): 원래 «데이터 삭제» 뒤의 <b>지워진 판</b> 위에서 돌았다 ⇒ <see cref="PetTabAndToast"/> 와 같이 <see cref="App.ResetSave"/> 를 먼저 탄다.
         /// 옛 줄 번호 → 이 자: <c>:967~973</c> 이벤트 탭 · <c>:975~979</c> 탤런트 팝업 «탤런트 팝업(입구 없음 · 조각만 확인)».
         /// </summary>
@@ -1014,7 +1030,7 @@ namespace KkomaKnight.Tests.Play
 
         // ───────────────────────── ①-e 펫 탭 · 세부 팝업 · 토스트 (T379 첫 조각 · 옛 LobbySettingsTalentPetToast :983~1158) ─────────────────────────
         /// <summary>
-        /// T379 — «한 자가 화면 아홉을 훑으면 CI 한 회전에 결함이 하나만 나온다» 의 첫 조각. <see cref="LobbySettingsTalentPetToast"/> 에서 <b>펫 탭 · 세부 팝업 · 토스트</b> 블록을
+        /// T379 — «한 자가 화면 아홉을 훑으면 CI 한 회전에 결함이 하나만 나온다» 의 첫 조각. <c>LobbySettingsTalentPetToast</c>(지금은 <see cref="LobbyTabsAndSideOverlays"/>) 에서 <b>펫 탭 · 세부 팝업 · 토스트</b> 블록을
         /// 제 이름으로 떼어 냈다(검수 Q ④ 표의 다섯째 · 오늘 절 셋(T293 ⓘ·T378·T322)이 다투던 바로 그 자리). 단언은 <b>하나도 안 지웠다 — 옮기기만 했다</b>.
         /// <para>
         /// ⚠ <b>상태 물려받기(결정 1100)</b> — 이 블록은 원래 «데이터 삭제»(옛 :952 «삭제» → <see cref="App.ResetSave"/>) 뒤의 <b>지워진 판</b> 위에서 돌았다.
