@@ -623,9 +623,11 @@ namespace KkomaKnight.Game
                 bool anyClaim = false;
                 for (int k = 0; k < _qt.Steps.Count; k++) if (QuestRun.CanClaim(_qs, _qd, _qDaily, k)) { anyClaim = true; break; }
                 bool dailyAll = _qDaily;
-                // 못 받을 때는 회색이고 **아무 일도 안 하는 손잡이를 안 건다**(결정 771 · 눌리는데 아무 일 없는 것이 제일 나쁘다).
+                // 못 받을 때는 회색 + **안 눌리게**(결정 771 · 눌리는데 아무 일 없는 것이 제일 나쁘다).
+                //   ⚠ 손잡이를 `null` 로 주는 길은 안 된다 — `UiKit.Clickable` 이 `Ensure<Button>` 이라 **null 이어도 Button 이 붙는다**
+                //     (곧 «눌리는데 아무 일 없는» 바로 그 버튼이 된다). 업적 줄의 «받기» 와 같은 꼴로 **`SetInteractable(false)`** 를 쓴다.
                 var allBtn = UiKit.Button(box, anyClaim ? "ui.btnOrange" : "ui.btnGray", "전부 받기",
-                    anyClaim ? (Action)(() =>
+                    (Action)(() =>
                     {
                         var d2 = app.Data != null ? app.Data.Quest : null; if (d2 == null) return;
                         var t2 = dailyAll ? d2.Daily : d2.Weekly; if (t2 == null) return;
@@ -637,10 +639,11 @@ namespace KkomaKnight.Game
                         if (n == 0) return;
                         app.Persist(); app.Current?.Refresh();
                         RewardPopup.Show(got, () => Quest(app, dailyAll));   // 한 번에 받은 것을 **한 팝업**으로 보여 준다
-                    }) : null, Layout.QsClaimAll);
+                    }), Layout.QsClaimAll.Within(B));   // ⚠ 부모가 상자이므로 프레임 % 를 `Within(B)` 로 옮긴다(안 옮기면 칸이 5px 로 눌린다)
                 if (allBtn != null)
                 {
                     allBtn.name = "QuestClaimAll";
+                    if (!anyClaim) UiKit.SetInteractable(allBtn.GetComponent<UnityEngine.UI.Button>(), false);
                     // T364 ⓒ(주인 «받기 버튼에도 빨간점 알림 떠야 함») — 받을 수 있을 때만 점. 판정은 위의 `anyClaim` 하나뿐이다.
                     if (anyClaim) UiKit.AlertDot(allBtn, "ClaimAllDot", new Vector2(1, 1), new Vector2(-2, 2), UiKit.PxSize(Layout.QsTrackIcon).y * 0.34f);
                 }

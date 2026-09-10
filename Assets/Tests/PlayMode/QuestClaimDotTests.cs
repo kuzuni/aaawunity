@@ -250,7 +250,11 @@ namespace KkomaKnight.Tests.Play
             var btn0 = UiKit.Find(root0, "QuestClaimAll");
             Assert.IsNotNull(btn0, "«전부 받기» 단추는 일일 판에 서 있어야 한다(T391)");
             Assert.IsFalse(QuestRun.AnyClaimable(_app.Save, q, true), "새 판은 받을 것이 없다(전제)");
-            Assert.IsNull(btn0.GetComponent<Button>(), "받을 것이 없으면 손잡이를 안 건다(결정 771)");
+            // ⚠ «손잡이가 없다» 로 재면 안 된다 — `UiKit.Clickable` 이 `Ensure<Button>` 이라 **늘 붙는다**.
+            //   재야 하는 것은 «눌리는가» 다(결정 771 · 업적 줄의 «받기» 와 같은 꼴 · CI 런 996 이 이것을 잡았다).
+            var b0 = btn0.GetComponent<Button>();
+            Assert.IsNotNull(b0, "버튼 조각에는 Button 이 붙어 있다(UiKit.Clickable 의 계약)");
+            Assert.IsFalse(b0.interactable, "받을 것이 없으면 안 눌린다(결정 771)");
             Assert.IsFalse(HasDot(btn0, "ClaimAllDot"), "받을 것이 없으면 점도 없다(T364 ⓒ)");
             _app.Overlay.Close(); yield return Frames(1);
 
@@ -267,7 +271,8 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(btn, "«전부 받기» 단추");
             Assert.IsTrue(HasDot(btn, "ClaimAllDot"), "받을 것이 있으면 빨간 점(T364 ⓒ)");
             var click = btn.GetComponent<Button>();
-            Assert.IsNotNull(click, "받을 것이 있으면 눌린다");
+            Assert.IsNotNull(click, "«전부 받기» 에 손잡이");
+            Assert.IsTrue(click.interactable, "받을 것이 있으면 눌린다");
 
             // ── ⓒ 눌러 본다 — 받을 수 있던 칸이 **하나도 안 남아야** 한다.
             click.onClick.Invoke(); yield return Frames(2);

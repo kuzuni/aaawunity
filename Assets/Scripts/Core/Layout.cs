@@ -564,7 +564,11 @@ namespace KkomaKnight.Core
         /// <summary>퀘스트 «전부 받기»(T391 · 주인 2026-09-10) — 새로고침 줄 <b>오른쪽 빈 자리</b>.
         /// 레퍼런스 15 에서 그 줄은 가운데 39%(x28.5~67.5)뿐이고 양옆이 비어 있다 · 목록 상자 오른쪽 끝은 91.4 다.
         /// 세로는 트랙 숫자(끝 32.4)와 목록 상자(시작 37.1) 사이의 빈 띠 안이라 <b>기존 요소를 한 칸도 안 민다</b>.</summary>
-        public static readonly R QsClaimAll = new R(71.4f, 33.6f, 20.0f, 3.0f);
+        /// ⚑ 높이는 <b>글자 하한이 정했다</b>(T63 · 버튼 글자 44) — 조각의 글자 칸은 버튼보다 세로로 <b>30px 작다</b>
+        /// (런 996 실측: 버튼 188×35 일 때 글자 칸 166×5) ⇒ 44 를 담으려면 버튼이 <b>96px(4.1%)</b> 은 돼야 한다.
+        /// 빈 띠는 트랙 숫자 끝(32.4)과 목록 상자 시작(37.1) 사이 4.7%p 뿐이라 <b>32.6~36.7</b> 로 딱 맞춘다.
+        /// 오른쪽 끝(91.4)은 목록 상자와 같아 줄이 맞는다.
+        public static readonly R QsClaimAll = new R(71.4f, 32.6f, 20.0f, 4.1f);
         public static readonly R QsListBox = new R(8.6f, 37.1f, 82.8f, 37.8f);
         public static readonly R QsRow1 = new R(12.0f, 38.3f, 76.0f, 5.9f);
         public static readonly R QsRow2 = new R(12.0f, 45.1f, 76.0f, 5.9f);
