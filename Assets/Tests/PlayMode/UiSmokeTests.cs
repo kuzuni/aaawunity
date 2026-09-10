@@ -892,6 +892,21 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(ClickNamed(lobby, "ArrowR"), "챕터 ▶"); Assert.IsTrue(ClickNamed(lobby, "ArrowL"), "챕터 ◀"); yield return Frames(1);
             Check("로비 챕터 이동");
 
+            yield return Shutdown();
+        }
+
+        // ───────────────────────── ①-c 설정 팝업 · 데이터 삭제 (T379 셋째 조각 · 옛 LobbySettingsTalentPetToast :895~960) ─────────────────────────
+        /// <summary>
+        /// T379 셋째 조각 — <see cref="LobbySettingsTalentPetToast"/> 의 «설정 팝업(12) · 데이터 삭제(T29)» 블록을 제 이름으로. 단언 0줄 삭제.
+        /// 상태 물려받기(결정 1100): 이 블록은 앞 블록(로비 탭·사이드 팝업·특권·패스)이 남긴 상태에 기대는 단언이 없다 — 설정은 글자·자리·토글을 재고,
+        /// 삭제는 제 값(골드 12345 · 무기 1)을 먼저 넣고 지운 뒤 초기값을 잰다 ⇒ 갓 켠 판(<see cref="Boot"/>)에서 그대로 돈다(<c>ResetSave</c> 불필요 · 이 블록 자신이 지우는 쪽이다).
+        /// 옛 줄 번호 → 이 자: <c>:897</c> «설정 팝업» · <c>:938</c> «설정 닫힘» · <c>:946</c> «데이터 삭제 확인 팝업» · <c>:949</c> «취소 → 설정» · <c>:959</c> «데이터 삭제 뒤 로비».
+        /// </summary>
+        [UnityTest]
+        public IEnumerator LobbySettingsAndDataWipe()
+        {
+            yield return Boot();
+
             // 설정 — T41 레퍼런스 12_settings.jpg 구도: 작은 패널 · 명판 «설정» · 음악/효과음 토글(Swich_01) · 언어 버튼 «한국어» · 패널 아래 링크 2 · «데이터 삭제» · «탭하여 닫기»(닫기 X 없음 · 배경 탭)
             _app.Overlay.Settings(); yield return Frames(2);
             Check("설정 팝업", expectOverlay: true);
@@ -958,7 +973,6 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(HasText(s => s == "데이터를 삭제했습니다"), "토스트");
                 Check("데이터 삭제 뒤 로비");
             }
-
             yield return Shutdown();
         }
 
