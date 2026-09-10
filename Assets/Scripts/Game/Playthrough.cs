@@ -301,14 +301,15 @@ namespace KkomaKnight.Game
                 TapDeep(app.Overlay.Root, "Day:1", "출석 1일차 칸");
                 yield return Frames(3);
             }
-            yield return CloseByX(app, "출석 팝업");
+            // ⚠ 받고 나면 «결과 팝업 → (닫으면) 출석 팝업» 두 겹이 선다(ClaimAttendance 의 onClose) — 그래서 한 번이 아니라 다 닫는다.
+            yield return CloseAll(app, "출석 팝업");
 
             // ⓑ 데일리 기프트 — «받기» 글자가 있을 때만 누른다(광고로 여는 칸은 «광고 보기» 다 · 결정 979)
             Tap(app, "Side:" + LobbyScreen.SideDailyGift); yield return Frames(2);
             yield return UntilOpen(app, "데일리 기프트 팝업");
             if (UiKit.Find(app.Overlay.Root, "DailyGiftBox") == null) throw new MissingException("기프트 상자(DailyGiftBox)");
             if (TapLabel(app.Overlay.Root, "받기")) yield return Frames(3);
-            yield return CloseByX(app, "데일리 기프트 팝업");
+            yield return CloseAll(app, "데일리 기프트 팝업");
 
             // ⓒ 우편 — ≡ 메뉴 줄로 연다(사이드 칸이 없는 유일한 자리라 이 갈래가 메뉴 배선도 같이 잰다)
             Tap(app, "Button_Menu"); yield return Frames(2);
@@ -320,7 +321,7 @@ namespace KkomaKnight.Game
             else if (!TapLabel(app.Overlay.Root, "받기")) throw new MissingException("우편의 «전체 받기»·«받기»(이 단계가 넣은 한 통이 있는데 받을 자리가 없다)");
             yield return Frames(3);
             if (Mailbox.Any(app)) throw new MissingException("받고 나면 비는 우편함(아직 그 통이 남아 있다)");
-            if (app.Overlay.IsOpen) yield return CloseByX(app, "우편함");
+            if (app.Overlay.IsOpen) yield return CloseAll(app, "우편함");
 
             app.ShowScreen("lobby"); yield return null;
         }
@@ -334,19 +335,41 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>
-        /// 닫기 <b>X</b> 로 닫고, X 가 없는 팝업이면 어둠으로 닫는다 — 사람이 닫는 두 길이 그 둘뿐이다.
-        /// <para>⚠ <c>Overlay.Close()</c> 를 손으로 부르지 않는다 — 그러면 «X 가 아무 데도 안 이어져 있어도» 봇이 «닫았다» 고 적는다(T280 이 부활 버튼에서 세운 규칙).</para>
-        /// <para>⚠ 닫기 X 는 <b>앞머리</b>로 고른다 — 조각마다 이름이 다르다(<c>Button_Close_01</c> ↔ <c>Button_Close_Square_01</c>).
-        /// 꺼진 X 는 «안 쓰는 것»(출석·퀘스트 팝업이 <c>UiKit.Hide</c> 로 끈다 · 결정 168)이라 <b>켜진 것만</b> 센다.</para>
+        /// 사람이 닫는 길(닫기 <b>X</b> → 없으면 <b>어둠</b>)로 <b>겹쳐 선 팝업을 다 닫는다</b>.
+        /// <para>
+        /// ⚑ <b>«한 번 닫으면 끝» 이 아니다</b> — 이 게임에는 <b>닫히면서 다른 팝업을 여는</b> 자리가 있다:
+        /// 출석 보상 팝업의 <c>onClose</c> 가 출석 팝업을 <b>다시 그리고</b>(<see cref="LobbyPopups"/> · «✅ 가 붙은 채로»),
+        /// 빠른 탐험 상자도 같은 꼴이다(결정 997). 게다가 결과 팝업의 첫 탭은 연출 «건너뛰기» 라 <b>닫는 탭이 아니다</b>(T202).
+        /// ⇒ <c>IsOpen</c> 이 거짓이 됐는가를 <b>한 번만</b> 보면 그 자리에서 «안 닫힌다» 로 잘못 운다 — 배포 갈래 P8 1회차가 정확히 그렇게 빨갰다(결정 1150 뒤).
+        /// </para>
+        /// <para>⚠ <c>Overlay.Close()</c> 를 손으로 부르지 않는다 — 그러면 «X 도 어둠도 아무 데도 안 이어져 있어도» 봇이 «닫았다» 고 적는다(T280).</para>
+        /// <para>⚠ 닫기 X 는 <b>앞머리</b>로 고른다(<c>Button_Close_01</c> ↔ <c>Button_Close_Square_01</c>). 꺼진 X 는 «안 쓰는 것» 이라 <b>켜진 것만</b> 센다(결정 168).</para>
         /// </summary>
-        static System.Collections.IEnumerator CloseByX(App app, string what)
+        static System.Collections.IEnumerator CloseAll(App app, string what)
         {
-            if (!app.Overlay.IsOpen) yield break;
-            UnityEngine.UI.Button close = null;
-            foreach (var b in app.Overlay.Root.GetComponentsInChildren<UnityEngine.UI.Button>(false))
-                if (b.name.StartsWith("Button_Close", StringComparison.Ordinal) && b.interactable) { close = b; break; }
-            if (close != null) { close.onClick.Invoke(); yield return Frames(2); }
-            if (app.Overlay.IsOpen) yield return CloseByDim(app, what);
+            for (int i = 0; i < CloseTaps && app.Overlay.IsOpen; i++)
+            {
+                var b = CloseHandle(app);
+                if (b == null) throw new MissingException(what + " 를 닫을 것(켜진 닫기 X·눌리는 어둠)");
+                b.onClick.Invoke();
+                yield return Frames(2);
+            }
+            if (app.Overlay.IsOpen) throw new MissingException(what + " 닫힘(" + CloseTaps + "번 눌러도 팝업이 서 있다)");
+        }
+
+        /// <summary>겹쳐 선 팝업을 다 닫는 데 쓸 탭 수의 상한 — 지금 가장 긴 사슬은 «결과 팝업(건너뛰기 + 닫기) → 다시 선 팝업(닫기)» 셋이다. 봇의 인내심이라 표에 두지 않는다.</summary>
+        const int CloseTaps = 8;
+
+        /// <summary>지금 선 팝업을 닫는 손잡이 — 켜진 <c>Button_Close*</c> 가 먼저고, 없으면 눌리는 어둠(<c>Dimmed</c> → <c>Background</c>)이다.</summary>
+        static UnityEngine.UI.Button CloseHandle(App app)
+        {
+            var root = app.Overlay.Root;
+            foreach (var b in root.GetComponentsInChildren<UnityEngine.UI.Button>(false))
+                if (b.name.StartsWith("Button_Close", StringComparison.Ordinal) && b.interactable) return b;
+            var dim = UiKit.Find(root, "Dimmed");
+            if (dim == null) dim = UiKit.Find(root, "Background");
+            var db = dim != null ? dim.GetComponent<UnityEngine.UI.Button>() : null;
+            return db != null && db.interactable ? db : null;
         }
 
         /// <summary>이름으로 찾은 자리 «안»의 첫 손잡이를 누른다 — 칸 자신이 아니라 자식이 눌리는 자리(출석 칸 <c>Day:N</c>)에 쓴다.</summary>
