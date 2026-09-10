@@ -10772,9 +10772,11 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/BattleWorld.cs` · `Tests/PlayMode/BattleWorldTests.cs`. lock `T397`. T368(흡수 중 안 멈춤)과 같은 파일이라 한 사람이 같이 잡아도 된다.
 
-### T401 🔄 — ⚑ 주인: **퀘스트(15) «업적» 탭에도 «전부 받기»** (주인 2026-09-10 «퀘스트 업적 부분에 전부 받기 버튼 좀 있어야 함» · T391 의 뒤)
+### T401 ✅ — ⚑ 주인: **퀘스트(15) «업적» 탭에도 «전부 받기»** (주인 2026-09-10 «퀘스트 업적 부분에 전부 받기 버튼 좀 있어야 함» · T391 의 뒤)
 
 > **▸ 🔄 1회차 push · CI 확인 전(2026-09-10 12:3X · sess-1216-40617 · 워커 M · 결정 1166 · lock `T401`)** — 1항의 «같은 자리(`Layout.QsClaimAll`)» 는 이 판에서 **줄 1·2 와 겹친다**(목록이 26.0 까지 올라와 있다 · T258 4항) ⇒ 같은 x·폭·높이로 **올라온 목록의 맨 위(y 26.0)** · 줄은 그 아래로 4.1 내림. 반복 지급은 **Core `Achievement.ClaimAll`**(줄 차례 · `CanClaim` 동안 `Claim` 반복 · 담기만 · 지갑은 화면의 `Mail.Give`) — 그래서 2항 EditMode 자가 선다. 리워드는 **물건별 합** 한 칸. 이름 `QuestClaimAll`(퀘스트 판과 같다) · 회색 = `SetInteractable(false)` + 점 없음. 자 둘: EditMode `AchievementTests.전부_받기는_줄_차례로_쌓인_단계를_다_받고_합이_줄별_합과_같다` · PlayMode `QuestClaimDotTests.업적_전부_받기가_쌓인_단계를_다_받고_점이_꺼진다`(«단추 밑변 ≥ 줄 1 윗변» 포함). 표 Ⓐ 여섯 행 y +4.1(행 추가 없음 · T391 ⓔ). **확인** = 다음 완주 런 두 자 Passed + `screens` 15b + 표 Ⓐ 대조.
+>
+> **▸ ✅ 종결(2026-09-10 13:1X · sess-1314-40617 · 워커 M · lock 반납)** — 런 1015(`3211674c` · `7ced10a1` 포함) success · `screens` 15b 에 «전부 받기» 가 줄 1 위 오른쪽에 주황+점으로 서 있다(겹침 없음) · `layout.json` Ⓐ 여섯 행 = 표 예측값(31.3 · 38.1 · 32.1 · 31.9 · 34.3 · 32.2) 그대로. 3항 «주인 폰» 은 주인 몫.
 
 0. **실측** — T391 이 세운 `QuestClaimAll`(`LobbyPopups.cs:629`)은 일일·주간 탭의 **메달 트랙 칸**을 받는 버튼이다. 업적 탭(`tab == 2`)은 트랙·새로고침 줄이 없고(T258 4항) 버튼도 없다. 업적 줄(`Ach:i`)은 줄마다 «받기» 뿐.
 1. **고침** — 업적 탭에도 같은 자리(`Layout.QsClaimAll`)·같은 두 옷(받을 것 있으면 주황 + 점 / 없으면 회색 `SetInteractable(false)`)으로 «전부 받기». 누르면 줄 순서대로 `Core.Achievement.CanClaim` 인 동안 `Claim` 을 **반복**(단계가 쌓여 있으면 다 받는다 · 줄마다 받던 그 함수를 부른다 · 셈을 새로 쓰지 않는다) → 합계를 리워드 팝업 한 번 → 닫으면 업적 탭 다시(정렬·점 갱신). 판정은 `Achievement.AnyClaimable` 하나.
