@@ -114,6 +114,29 @@ namespace KkomaKnight.Tests.Play
         IEnumerable<TMP_Text> ActiveTexts() => _app.UiCanvas.GetComponentsInChildren<TMP_Text>(false);
         bool HasText(Func<string, bool> pred) { foreach (var t in ActiveTexts()) if (pred(t.text ?? "")) return true; return false; }
         /// <summary>
+        /// 글자가 «<paramref name="label"/>» 이거나 «<paramref name="label"/> + 공백 + <b>수</b>» 인가 (T378).
+        /// <para>
+        /// 까닭 — <c>PetScreen.Count()</c>(<c>:450</c>)는 <b>할 것이 있으면 라벨 뒤에 개수를 붙인다</b>:
+        /// <c>n &gt; 0 ? label + " " + n : label</c>. 부르는 자리는 «전체 강화»·«빠른 장착» 둘뿐이다.
+        /// 그래서 <c>s == "전체 강화"</c> 는 «할 것이 하나도 없을 때만» 참인 자였고, T293 ⓘ 4회차가
+        /// 재기 전에 펫을 다 가지게 하자 런 932·935 에서 빨개졌다 — <b>화면이 옳고 자가 낡았다</b>(T184 · 결정 425).
+        /// </para>
+        /// <para>
+        /// ⚠ <c>StartsWith(label + " ")</c> 만으로는 «전체 강화 <i>아무말</i>» 도 통과한다.
+        /// 뒤가 <b>숫자뿐</b>임을 같이 재서, 이 자가 여전히 «라벨이 우리말인가» 를 지키면서
+        /// «뒤에 붙는 것은 개수다» 까지 말하게 한다 — <b>기댓값을 낮춰 초록을 만들지 않는다</b>(결정 778·930·1007).
+        /// </para>
+        /// </summary>
+        static bool LabelOrCount(string s, string label)
+        {
+            if (s == label) return true;
+            if (!s.StartsWith(label + " ", StringComparison.Ordinal)) return false;
+            var rest = s.Substring(label.Length + 1);
+            if (rest.Length == 0) return false;
+            foreach (var c in rest) if (c < '0' || c > '9') return false;
+            return true;
+        }
+        /// <summary>
         /// 같은 글자가 <paramref name="root"/> 아래 <b>몇 군데</b> 있는가 — «중복이니 빼라»(T168) 처럼 «하나만 있어야 한다» 를 재는 자리에 쓴다.
         /// <para>
         /// <b>꺼진 것도 센다.</b> 탭 바는 «켜진 탭만 글자»(조각의 Focus/Normal 전환)라 다른 탭의 라벨은 꺼져 있다 —
@@ -978,7 +1001,9 @@ namespace KkomaKnight.Tests.Play
                 var bar0Rt = (RectTransform)UiKit.Find(pet, "Pet:0/Bar"); Assert.AreEqual(Layout.PetBarH / 100f * _app.Frame.rect.height, bar0Rt.rect.height, 1.5f, "진행바 높이 = Layout.PetBarH(프레임 %)");
                 var petClip = TextAudit.Collect("13_pet", pet).FindAll(r => r.Clipped);
                 Assert.AreEqual(0, petClip.Count, "펫 탭 잘림/넘침 0(T63-pet) — " + string.Join(" · ", petClip.ConvertAll(r => r.ToString())));
-                Assert.IsTrue(HasText(s => s == "장착중") && HasText(s => s == "전체 강화") && HasText(s => s == "빠른 장착") && HasText(s => s == "소환") && HasText(s => s == "소환 x10"), "라벨 우리말");
+                // ⛑ T378 — «전체 강화»·«빠른 장착» 은 할 것이 있으면 «전체 강화 6» 이 된다(`PetScreen.Count()` :450 · 부르는 자리는 이 둘뿐).
+                //   나머지 셋(«장착중»·«소환»·«소환 x10»)에는 수가 안 붙으므로 그대로 «같다» 로 둔다 — 안 깨진 단언을 미리 풀지 않는다.
+                Assert.IsTrue(HasText(s => s == "장착중") && HasText(s => LabelOrCount(s, "전체 강화")) && HasText(s => LabelOrCount(s, "빠른 장착")) && HasText(s => s == "소환") && HasText(s => s == "소환 x10"), "라벨 우리말(«전체 강화»·«빠른 장착» 은 뒤에 개수가 붙을 수 있다 · T378)");
                 var tabs2 = UiKit.Find(pet, "ui.tabBar"); Assert.IsNotNull(tabs2, "펫 탭 바"); Assert.GreaterOrEqual(tabs2.childCount, NavBar.Keys.Length, "탭 5");
                 // 배치 = 표 ⑩(±0.5%p) — 첫 칸 · 슬롯 줄 · 버튼 2줄 · 탭 바
                 var c0 = (RectTransform)UiKit.Find(pet, "Pet:0"); Assert.AreEqual(Layout.PetCell.X, c0.anchorMin.x * 100f, 0.5f, "첫 칸 x"); Assert.AreEqual(1f - Layout.PetCell.Y / 100f, c0.anchorMax.y, 1e-3f, "첫 칸 y");

@@ -9761,6 +9761,12 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 4. ⚠ **같이 안 고친 것 — 워커 A 가 기계로 뽑아 준 나머지 둘**(`:1033` «모자» · `:1044` «패시브:»·«강화»·«장착»·«탭하여 닫기»). `Count()` 를 부르는 자리는 위 둘뿐이라 **그 줄들에는 수가 안 붙는다** — 지금 빨갛지도, 이 고침으로 빨개지지도 않는다. 안 깨진 단언을 미리 무르게 푸는 것은 «기댓값을 낮춰 초록을 만드는» 쪽이다(결정 930 이 값을 치른 자리). **깨지는 날 그 회차가 같은 꼴로 옮기면 된다** — 그때 볼 것은 «그 글자를 짓는 코드가 뒤에 무엇을 붙이는가» 다.
 5. **확인** = 다음 완주 런 `[CI실패]` 에 `LobbySettingsTalentPetToast` 없음 + `[CI명부] UiSmokeTests(5)` 에 ✗ 없음(T278 대로 «초록» 이 아니라 명부로) + `gh-pages` 가 `1763455e` 에서 전진.
 
+> **🔄 1회차 push · 확인 전(2026-09-10 01:5X · sess-1842-31994 · 워커 G · 결정 1073 · lock 쥔 채)** — 3항 그대로. `LabelOrCount(s, 라벨)` 헬퍼 하나(`HasText` 옆)를 세우고 «전체 강화»·«빠른 장착» **두 자리만** 갈아 끼웠다.
+> · **왜 헬퍼인가** — 두 자리에 같은 식을 손으로 두 번 쓰면 다음 사람이 셋째 자리에서 **다른 꼴**로 쓴다. 까닭(«`Count()` 가 뒤에 수를 붙인다»)은 헬퍼의 주석 한 곳에만 있으면 된다.
+> · **넘어온 처방을 그대로 안 썼다** — 결정 1073 ②③. `StartsWith(라벨 + " ")` 는 «전체 강화 아무말» 도 통과시킨다. 남이 넘겨 준 것에서 **까닭은 받고 꼴은 내가 짠다**.
+> · **나머지 셋은 그대로 «같다» 다** — «장착중»(슬롯 줄 띠 · 실측: 펫과 무관한 붙박이 글자)·«소환»·«소환 x10» 에는 `Count()` 가 안 닿는다.
+> **게이트**: build 0 Error/0 Warning · `dotnet test` **524/524** · PlayMode 임시 csproj `-t:Rebuild` **0 오류** · gen_meta·gen_catalog·catalog_keys·asmdef·test_usings·stale_asserts·font_glyphs·task_rows·task_state·split_push·table_tags·decisions·docs_intact·claim_scope rc=0 · unity_null·data_sync rc=0. C# 자 한 파일 · 게임 코드 0줄 · `data/*.json` 0줄 · aaaw 0줄 · 밸런스 0줄.
+
 순서 — `Tests/PlayMode/UiSmokeTests.cs`(펫 라벨 두 줄만 · 게임 코드 0줄). lock `T378`. **T293 의 몫이 아니다** — 그 절이 한 일은 옳고(주인 5항 ⓙ), 남은 것은 낡은 자 하나다.
 
 ### T372 ✅ — ⛑ 런 914·915 빨강: **T293 ⓘ 가 되살린 소환 버튼을 PlayMode 단언 넷이 아직 «껍데기» 로 요구한다**(배포가 또 막혔다 · **런 927 초록으로 닫음 · gh-pages 3시간 33분 만에 전진**) (워커 판단 · 화면 0줄 · 자만)
