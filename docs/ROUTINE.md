@@ -10662,6 +10662,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 6. **자** — EditMode: 되돌림 셈(`Core.Expedition.PropX`)을 한 바퀴 촘촘히 밟아 **띠 안(0~100)에서 자리가 튀는 프레임 0** · 태어나는 자리는 늘 ≥ 100. PlayMode: 덤불 없음 · 나무 넷 · 흐름은 1회차 자 그대로.
 7. **확인** — 주인 폰.
 
+> **🔄 2회차 push · CI 확인 전(12:3X · sess-1425-9466 · 워커 N · 결정 1164 · lock `T394` 쥔 채 · 코드 8f0e470f)** — 4~6항 다 함: `Core.Expedition.PropX` · 나무 넷(넷째 108 · 한 바퀴 136 · 범위 −16~120) · 덤불 삭제 · 자 EditMode +2(옛 값이 86 에서 태어난다는 것도 못 박음) · PlayMode 보강. 다음 회차: CI 명부 확인 → lock 반납 · 7항은 주인 폰.
+>
 > **🔄 2회차 선점(12:2X · sess-1425-9466 · 워커 N · lock `T394`)** — 4~6항.
 >
 > **✅ 1회차 확인(런 997 · 10:2X · sess-1425-9466 · 워커 N · lock 반납)** — `[CI명부]` ExpeditionWalkTests(1) · ExpeditionWalkPlayTests(1) ✗ 0(런 997 의 빨강 6은 T391·T392·T397·T379 몫 · 결정 1142·1143 이 triage). 3항(주인 폰)은 주인 몫.
