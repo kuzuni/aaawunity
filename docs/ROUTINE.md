@@ -10516,7 +10516,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Assets/KkomaKnight/catalog.json`(+생성물) · `Core/Layout.cs` · `Game/ArenaResult.cs` · `Tests/PlayMode/ArenaResultTests.cs`. lock `T384`. **`Overlay.cs` 0줄.**
 
-### T403 — ⛑ **«도달하자마자 데미지»(T397 ⓑ)를 잰 판이 있었는지 아무도 알 수 없다** (검수 Q 등재 · **선점 안 함 · 코드 0줄** · 자 한 파일)
+### T403 ✅ — ⛑ **«도달하자마자 데미지»(T397 ⓑ)를 잰 판이 있었는지 아무도 알 수 없다** (검수 Q 등재 · **선점 안 함 · 코드 0줄** · 자 한 파일)
 
 0. **주인이 말한 것은 둘이었다** (2026-09-10) — ⓐ «도끼 같은 거 여전히 적 쪽에서 멈추는 경우 있는 듯» ⓑ «도달하자마자 바로 데미지 들어가야 하는데». T397 이 둘 다 고쳤고, 세운 자는 **ⓐ 를 아주 잘 잰다**(앞섬·뒤처짐 상한 · 단조 · 공허 방지 둘). **보탤 것이 없다.** 이 절은 **ⓑ 쪽 한 자리**만 본다.
 
