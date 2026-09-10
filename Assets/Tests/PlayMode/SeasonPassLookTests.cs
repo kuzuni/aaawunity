@@ -158,10 +158,11 @@ namespace KkomaKnight.Tests.Play
                 //   ⓓ 가 «지금 레벨» 을 세이브로 옮기며 그 수를 지워, 주인 폰에서 이 화면이 표가 아는 줄(29~33)에서
                 //   스물여덟 줄 아래에 서서 «?» 만 보이는 상태였다. 그 사실을 자가 아무도 안 재고 있었고,
                 //   사진(19_pass)은 내가 찍기 직전에 세이브를 세워 둔 탓에 멀쩡해 보였다 — 사진이 게임을 가렸다.
-                //   ⇒ 이제 여기서 잰다: 세이브가 아직 아무 말도 안 하면(PassLv 0) **표**(startLevel)가 답한다.
+                //   ⚑ T322 ⛑3 로 답이 바뀌었다 — 한때 «세이브가 말이 없으면 **표**(startLevel)가 답한다» 였고 그 수가 32 였다.
+                //     주인 값이 100줄을 채우자 그 32 가 «갓 시작한 세이브에 32칸 = 다이아 5,600» 이 됐다(실측) ⇒ 표에서 걷어냈다.
+                //     이제 화면이 1레벨에 서도 «?» 가 아니다 — 표가 1레벨부터 값을 알기 때문이다. 그것이 여기서 재는 것이다.
                 Assert.AreEqual(0, _app.Save.PassLv, "이 자는 갓 시작한 세이브로 돈다(패스 레벨을 올린 적이 없다)");
-                Assert.AreEqual(pass.StartLevel, SeasonPassScreen.CurLevel,
-                    "세이브가 말이 없으면 화면은 표의 시작 레벨에 선다 — 그래야 주인이 폰에서 레퍼런스 구도를 본다");
+                Assert.AreEqual(1, SeasonPassScreen.CurLevel, "말 없는 세이브는 1 레벨 — 표가 이 수를 올려 주면 그 레벨까지가 공짜가 된다");
                 Assert.IsTrue(pass.Known(SeasonPassScreen.CurLevel), "그 자리는 표가 값을 아는 줄이어야 한다(아니면 «?» 만 보인다)");
                 var lvT0 = UiKit.Find(sp, "LevelBadge")?.Find("LevelText")?.GetComponent<TMPro.TMP_Text>();
                 Assert.IsNotNull(lvT0, "머리 배지 글자");

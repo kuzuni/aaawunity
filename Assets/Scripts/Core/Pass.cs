@@ -21,18 +21,17 @@ namespace KkomaKnight.Core
         public static int Bit(int col) => col < 0 || col >= PassData.Cols ? 0 : 1 << col;
 
         /// <summary>
-        /// 지금 레벨 — <b>세이브가 말하고, 아직 아무 말도 안 하면(<see cref="SaveData.PassLv"/> 이 0) 표가 답한다</b>(<see cref="PassData.StartLevel"/>).
-        /// 어느 쪽이든 <b>표의 상한으로 자른다</b>(세이브에 상한을 안 박는다 · 표가 100 → 50 으로 줄면 저절로 따라간다).
+        /// 지금 레벨 — <b>세이브만 말한다</b>(<see cref="SaveData.PassLv"/> 이 0 이면 1). <b>표의 상한으로 자른다</b>(세이브에 상한을 안 박는다 · 표가 100 → 50 으로 줄면 저절로 따라간다).
         /// <para>
-        /// ⚑ 표에 물어보는 갈래가 있는 까닭: 무엇으로 패스 레벨이 오르는지가 <b>아직 주인 몫</b>이라(T377) 세이브는 영영 0 일 수 있다.
-        /// 그때 «1 레벨» 로 답하면 화면은 표가 아는 줄(29~33)에서 스물여덟 줄 아래에 서서 «?» 만 보여 준다 —
-        /// 주인이 «레퍼런스 그대로» 를 시킨 화면이 <b>빈 화면</b>이 된다. 그 수를 지우지 않고 표로 옮긴 자리가 <c>StartLevel</c> 이다.
+        /// ⚑ <b>한때 «세이브가 말이 없으면 표가 답한다»(<c>startLevel</c>) 갈래가 있었다 — 걷어냈다</b>(T322 ⛑3).
+        /// 표가 비어 있던 동안 화면이 «?» 만 보여 주지 않게 둔 자리였고, 무해했던 까닭은 <see cref="CanClaim"/> 의 넷째 조건 하나뿐이었다.
+        /// 주인 값이 100줄을 채우자 그 문이 열렸고 «모두 받기» 가 <b>갓 시작한 세이브에 다이아 5,600 을 줬다</b>(실측 · 32칸).
+        /// ⇒ <b>표는 «무엇을 주나» 만 말하고 «어디까지 왔나» 는 못 말한다</b> — 그 둘을 한 곳이 말하면 표에 한 줄 적는 것이 곧 재화 지급이 된다.
         /// </para>
         /// </summary>
         public static int Lv(SaveData s, PassData d)
         {
-            int start = d != null ? d.StartLevel : 1;
-            int lv = s != null && s.PassLv >= 1 ? s.PassLv : start;   // 세이브가 말했으면 세이브가 이긴다
+            int lv = s != null && s.PassLv >= 1 ? s.PassLv : 1;
             int max = d != null ? d.MaxLevel : int.MaxValue;
             return Math.Max(1, Math.Min(max, lv));
         }

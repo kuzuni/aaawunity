@@ -25,16 +25,7 @@ namespace KkomaKnight.Core
         public int MaxLevel = 100;
         /// <summary>레벨 → 세 열(무료·유료 1·유료 2). <b>표에 없는 레벨은 아예 안 들어 있다</b>(빈 칸을 채워 두지 않는다).</summary>
         public readonly Dictionary<int, Reward[]> Levels = new Dictionary<int, Reward[]>();
-        /// <summary>
-        /// <b>세이브가 아직 아무 말도 안 할 때 화면이 서는 자리</b>(<see cref="Pass.Lv"/> 가 읽는다).
-        /// <para>
-        /// ⚑ 이 수는 <b>레퍼런스 그림이 보여 주는 레벨</b>이고, 오래 <c>SeasonPassScreen</c> 안에 <c>const int CurLevel = 32</c> 로 박혀 있던 바로 그 수다.
-        /// T322 ⓓ 가 «지금 레벨» 을 세이브로 옮기면서 그 수를 <b>어디에도 안 남겨</b> 주인 폰의 패스 화면이 «?» 다섯 줄이 됐다 —
-        /// <b>지우지 않고 옮겼어야 했다.</b> 그래서 여기(표)로 옮겼다: 화면은 여전히 «지금 레벨» 을 짐작하지 않고 <b>물어보기만</b> 한다.
-        /// </para>
-        /// <para>⚠ <b>게임 수치가 아니다</b> — 무엇으로 패스 레벨이 오르는지는 아직 주인 몫이고(T377 표), 그 규칙이 서면 세이브가 답하기 시작하며 이 수는 <b>안 쓰이게 된다</b>(줄을 지우면 1 이다).</para>
-        /// </summary>
-        public int StartLevel = 1;
+
 
         /// <summary>열 차례 — 화면의 세 열과 같은 순서다.</summary>
         public const int ColFree = 0, ColPaid1 = 1, ColPaid2 = 2, Cols = 3;
@@ -46,9 +37,14 @@ namespace KkomaKnight.Core
         {
             var d = new PassData { MaxLevel = (int)j["maxLevel"].Num(100) };
             if (d.MaxLevel < 1) throw new FormatException("pass.json: maxLevel 은 1 이상이어야 한다");
-            d.StartLevel = (int)j["startLevel"].Num(1);                                  // 없으면 1(줄을 지우면 «맨 아래부터»)
-            if (d.StartLevel < 1 || d.StartLevel > d.MaxLevel)
-                throw new FormatException("pass.json: startLevel " + d.StartLevel + " 이 1~" + d.MaxLevel + " 밖이다");
+            // ⚑ T322 ⛑3 — «startLevel»(세이브가 말이 없을 때 화면이 설 레벨)은 **없애고 다시 못 들어오게 막았다.**
+            //   잠깐 32 였다: 표가 비어 있던 동안 화면이 «?» 다섯 줄로 뜨지 않게 둔 자리였고, 무해했던 까닭은
+            //   «표가 그 칸을 모르면 못 받는다»(Pass.CanClaim ⓓ) 하나뿐이었다. 주인 값이 100줄을 채우자 그 문이 열렸고
+            //   «모두 받기»(T392)가 **갓 시작한 세이브에 다이아 5,600 을 줬다**(실측 · 32칸).
+            //   ⇒ «지금 레벨» 은 세이브만 말한다. 표는 «무엇을 주나» 만 말하고 «어디까지 왔나» 는 못 말한다 —
+            //     그 둘을 표가 같이 말하면, 표에 한 줄 적는 것으로 재화를 주게 된다.
+            if (j.Has("startLevel"))
+                throw new FormatException("pass.json: «startLevel» 은 못 쓴다 — 그 레벨까지의 모든 칸이 공짜가 된다(T322 ⛑3). 지금 레벨은 세이브(passLv)가 말한다");
             var lv = j["levels"];
             foreach (var k in lv.Keys)
             {
