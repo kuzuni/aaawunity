@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using KkomaKnight.Core;
 using TMPro;
 using UnityEngine;
@@ -11,8 +12,10 @@ namespace KkomaKnight.Game
     /// 그 레퍼런스 이미지 그대로 만들고, 그 그라데이션도 잘 해서 만들기»). T78(2026-09-07 «시즌 패스도 삭제»)을 뒤집는 지시다.
     /// <para>
     /// ⚠ <b>이 화면은 «디자인만» 이다</b>(T268 ⓑ · 주인 2026-09-09 «시즌 패스 수치는 뭐 말하는 거지? 일단 걍 디자인만 해놔 걍»).
-    /// 레벨 수·보상 내용·가격은 주인이 나중에 준다 — 그래서 여기 보이는 수(레벨 29~33 · 수량 5·20·60 · ₩9,900·₩49,000 · «15/45»)는
-    /// <b>레퍼런스에 그렇게 그려져 있다는 기록</b>이지 게임 수치가 아니다. 세이브에 아무것도 안 쌓고, 버튼은 «준비 중» 토스트만 띄운다.
+    /// 보상 내용·가격은 주인이 나중에 준다 — 그래서 여기 보이는 수(수량 5·20·60 · ₩9,900·₩49,000 · «15/45»)는
+    /// <b>레퍼런스에 그렇게 그려져 있다는 기록</b>이지 게임 수치가 아니다. 버튼은 «준비 중» 토스트만 띄운다.
+    /// <b>다만 «지금 레벨» 은 이제 그림이 아니라 세이브에서 온다</b>(T322 ⓓ · <see cref="CurLevel"/> — 배지 글자도 그 수다).
+    /// ⚠ <b>무엇으로 그 레벨이 오르는가는 아직 주인 몫</b>이라 «15/45»(레벨 안 진행)는 그림 그대로 남겨 뒀다 — 오르는 규칙이 없는데 진행도를 지어내면 그것이 곧 밸런스 수치다.
     /// 수치가 오면 <b>표(<c>Assets/KkomaKnight/pass.json</c>)에 줄을 채우면 된다</b>(T322 ⓒ) — 그 표가 모르는 줄은 화면이 «?» 로 그리고 <b>지어내지 않는다</b>(§1).
     /// </para>
     /// 구도(표 ㊼): 상단 재화 바 → <b>머리 배너</b>(패스 이름 · 시즌 종료 줄 · 메달 + 진행 바 + 육각 레벨 배지) → 안내 띠 →
@@ -119,7 +122,10 @@ namespace KkomaKnight.Game
 
             var badge = UiKit.Panel(Root, "LevelBadge", "fr.r12", Palette.A(Palette.Ink, 0.85f)).rectTransform;
             UiKit.Pct(badge, RBadge); UiKit.Bordered(badge);
-            UiKit.Label(badge, 0, 0, 100, 100, "32", TextSize.Body, Palette.White).name = "LevelText";
+            // ⚑ 여기도 «32» 가 글자로 박혀 있었다 — `const int CurLevel = 32` 와 같은 집안이다(T322 ⓓ 가 그 상수만 세이브로 옮겼다).
+            //   줄은 세이브를 보고 배지는 그림을 보면 **화면이 저 혼자 어긋난 말을 한다**(1레벨인데 머리에는 32).
+            //   «지금 레벨» 을 말하는 자리는 하나여야 한다.
+            UiKit.Label(badge, 0, 0, 100, 100, CurLevel.ToString(CultureInfo.InvariantCulture), TextSize.Body, Palette.White).name = "LevelText";
 
             UiKit.Tag(banner, "머리 배너(그림)"); UiKit.Tag(name.rectTransform, "패스 이름");
             UiKit.Tag(ends.rectTransform, "«시즌 종료까지 20일 8시간»"); UiKit.Tag(medal.rectTransform, "메달 아이콘(진행 바 왼쪽)");

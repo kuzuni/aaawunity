@@ -840,10 +840,21 @@ namespace KkomaKnight.Tests.Play
                 // 3열 전부 실측 그라데이션이 깔려 있다 — 주인이 «그 그라데이션도 잘 해서» 라고 못 박은 자리다
                 foreach (var n in new[] { "Col:free", "Col:paid1", "Col:paid2" })
                     Assert.IsTrue(UiKit.HasGradient(UiKit.Find(sp, n)), "«" + n + "» 에 그라데이션이 없다(주인 지시 · 표 ㊼ 실측값)");
-                // 레벨 배지·보상 칸은 행마다 선다(레퍼런스에 보이는 다섯 줄)
-                foreach (var lv in new[] { 29, 30, 31, 32, 33 })
+                // 레벨 배지·보상 칸은 행마다 선다(레퍼런스에 보이는 다섯 줄).
+                //   ⚑ 여기 오래 { 29,…,33 } 이 자리로 박혀 있었다 — 화면이 «지금 레벨» 을 const 32 로 들던 시절의 TopLevel~+4 다.
+                //   T322 ⓓ 가 그 수를 세이브로 옮기자 새 세이브(1레벨)에서는 1~5 줄이 서서 이 다섯이 통째로 null 이 됐다(런 940·941 · 결정 1079).
+                //   그래서 «어느 줄이 보이는가» 를 자리로 박지 않고 **화면이 스스로 말하는 지금 레벨**(머리 배지 글자)에서 센다.
+                //   ⚠ SeasonPassScreen.TopLevel 을 부르지 않는다 — 화면의 셈을 자에 옮겨 적으면 그 셈이 틀어지는 날 자도 같이 틀어져 아무것도 못 잡는다(결정 1078).
+                var lvT = UiKit.Find(sp, "LevelBadge")?.Find("LevelText")?.GetComponent<TMPro.TMP_Text>();
+                Assert.IsNotNull(lvT, "머리 배지가 지금 레벨을 글자로 말한다");
+                Assert.IsTrue(int.TryParse(lvT.text, out int curLv) && curLv >= 1, "배지 글자 «" + lvT.text + "» 가 레벨(1 이상의 수)이 아니다");
+                //   그리고 그 글자가 **세이브가 말하는 레벨**이어야 한다 — 이 한 줄이 «배지에 수를 다시 박는 손» 을 잡는다(이번 빨강의 뿌리).
+                Assert.AreEqual(Pass.Lv(_app.Save, _app.Data != null ? _app.Data.Pass : null), curLv,
+                    "머리 배지가 세이브의 패스 레벨과 다른 수를 말한다(그림에서 베낀 수가 남았는가)");
+                int top = Mathf.Max(1, curLv - 3);                 // 레퍼런스 19 의 구도 = 지금 레벨에서 셋 위가 맨 윗줄
+                for (int lv = top; lv <= top + 4; lv++)
                 {
-                    Assert.IsNotNull(UiKit.Find(sp, "Badge:" + lv), "레벨 배지 " + lv);
+                    Assert.IsNotNull(UiKit.Find(sp, "Badge:" + lv), "레벨 배지 " + lv + "(지금 레벨 " + curLv + ")");
                     Assert.IsNotNull(UiKit.Find(sp, "Cell:free:" + lv), "무료 칸 " + lv);
                     Assert.IsNotNull(UiKit.Find(sp, "Cell:paid2:" + lv), "유료 2 칸 " + lv);
                 }
