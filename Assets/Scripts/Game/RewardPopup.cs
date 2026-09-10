@@ -39,6 +39,11 @@ namespace KkomaKnight.Game
             /// 글자(<see cref="Qty"/>)는 «×3»·«1,000» 처럼 보여 주려고 다듬은 것이라 세는 데 쓰기엔 약하다 — 아는 쪽이 수를 그대로 넘기는 길을 둔다.
             /// </summary>
             public int Amount;
+            /// <summary>
+            /// 칸 그림을 <b>스프라이트 대신 직접 세우고 싶을 때</b>(T396 «메이커 펫 초상») — 칸의 «Icon» rect 를 받아 그 안에 세운다. <c>null</c> 이면 <see cref="Icon"/> 스프라이트 그대로.
+            /// <para>⚠ 그래도 <see cref="Icon"/> 은 채워 둔다 — 흡수 구슬(<see cref="RewardOrbs"/>)이 날아갈 때 쓰는 그림이 그 키이고, 초상은 날 수 없다.</para>
+            /// </summary>
+            public Action<RectTransform> Face;
             public static Item Of(string icon, string qty = null, string frame = null, int amount = 0) => new Item { Icon = icon, Qty = qty, Frame = frame, Amount = amount };
         }
 
@@ -338,6 +343,9 @@ namespace KkomaKnight.Game
                 bool qty = !string.IsNullOrEmpty(it.Qty);
                 var ic = UiKit.Icon(cell, "Icon", it.Icon);
                 UiKit.Pct(ic.rectTransform, qty ? 22 : 16, qty ? 4 : 16, qty ? 56 : 68, qty ? 56 : 68);
+                // T396 — 부르는 쪽이 «그림을 직접 세우겠다» 고 하면(메이커 펫 초상) 스프라이트는 끄고 그 자리를 내준다.
+                //   자리·크기는 위에서 이미 잡혔으므로 초상은 그 rect 를 그대로 쓴다(칸 문법을 두 벌로 만들지 않는다).
+                if (it.Face != null) { ic.enabled = false; it.Face(ic.rectTransform); }
                 if (qty) UiKit.Label(cell, 0, 58, 100, 42, it.Qty, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyles.Bold;
                 res.Add(cell);
             }

@@ -250,7 +250,12 @@ namespace KkomaKnight.Game
             foreach (var id in order)
             {
                 var p = d.Of(id); if (p == null) continue;
-                items.Add(RewardPopup.Item.Of(PetIcon(d, id), p.Name + (count[id] > 1 ? " x" + count[id] : ""), amount: count[id]));
+                // T396 — 뽑은 펫을 **처음 보는 자리**가 여기다. 칸 그림도 메이커 펫으로(등급색 프레임도 같이).
+                //   ⚠ `Icon` 은 그대로 채운다 — 흡수 구슬이 날아갈 때 쓰는 그림이 그 키이고, 초상은 날 수 없다(`RewardPopup.Item.Face` 주석).
+                var pet = p;
+                var it = RewardPopup.Item.Of(PetIcon(d, id), p.Name + (count[id] > 1 ? " x" + count[id] : ""), FrameKeyOf(d, pet), count[id]);
+                it.Face = rt => PetFaceIn(rt, d, pet);
+                items.Add(it);
             }
             if (items.Count > 0) RewardPopup.Show(items, null);
         }
@@ -402,20 +407,30 @@ namespace KkomaKnight.Game
             if (frame == null) return;
             var item = UiKit.Find(frame, "Item"); if (item == null) return;
             var im = item.GetComponent<Image>();
-            var view = item.GetComponentInChildren<HeroView>(true);
-            if (p == null) { if (view != null) view.gameObject.SetActive(false); return; }
-            // ⚠ 조각(`cm.character`)이 없으면 초상은 **빈 그림**이다 — 그때는 조각 아이콘으로 되돌아간다(그림이 통째로 사라지는 자리를 안 만든다 · T96-loading 의 «부팅은 안 막힌다» 와 같은 결).
+            bool ok = PetFaceIn((RectTransform)item, d, p);
+            if (im != null) im.enabled = !ok;   // 초상이 서면 조각 아이콘 자리를 비우고, 못 서면 옛 그림으로 되돌아간다
+        }
+
+        /// <summary>
+        /// <paramref name="host"/> 안에 메이커 펫 초상을 세운다(섰으면 true) — <see cref="PetFace"/> 와 **보상 팝업**(T396 · <see cref="RewardPopup.Item.Face"/>)이 같이 쓴다.
+        /// <para>⚠ 조각(<c>cm.character</c>)이 없으면 <b>아무것도 안 세우고 false</b> — 부르는 쪽이 옛 그림으로 되돌아갈 수 있게(그림이 통째로 사라지는 자리를 안 만든다).</para>
+        /// </summary>
+        public static bool PetFaceIn(RectTransform host, PetData d, PetData.Pet p)
+        {
+            if (host == null) return false;
+            var view = host.GetComponentInChildren<HeroView>(true);
+            if (p == null) { if (view != null) view.gameObject.SetActive(false); return false; }
             var cat = App.I != null ? App.I.Assets : null;
-            if (cat == null || cat.Prefab("cm.character") == null) { if (im != null) im.enabled = true; return; }
+            if (cat == null || cat.Prefab("cm.character") == null) return false;
             var skin = CharacterRig.PetSkin(d, p);
             if (view == null)
             {
-                view = HeroView.Attach((RectTransform)item, skin, FaceTex);
+                view = HeroView.Attach(host, skin, FaceTex);
                 view.name = FaceName;
                 view.SetStill(true);
             }
             else { view.gameObject.SetActive(true); if (view.Skin == null || view.Skin.Helmet != skin.Helmet || view.Skin.Chest != skin.Chest) view.SetSkin(skin); }
-            if (im != null) im.enabled = false;   // 초상이 섰으니 조각 아이콘 자리는 비운다
+            return true;
         }
 
         static string PetIcon(PetData d, string id)

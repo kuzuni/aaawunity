@@ -76,6 +76,15 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(achBefore + 3, Achievement.Count(_app.Save, Quests.AchPetGacha),
                             "업적 petGacha 는 뽑은 횟수로 오른다(T258 이 기다린 훅)");
 
+            // T396 — **뽑은 펫을 처음 보는 자리**가 이 결과 팝업이다: 칸 그림도 메이커 펫이어야 한다(조각 아이콘이 아니라).
+            var cell0 = UiKit.Find(_app.Overlay.Root, "RewardCell:0");
+            Assert.IsNotNull(cell0, "소환 결과 팝업의 첫 칸");
+            Assert.IsNotNull(cell0.GetComponentInChildren<HeroView>(true), "결과 팝업 칸 그림 = 메이커 펫 초상");
+            var rIcon = UiKit.Find(cell0, "Icon");
+            Assert.IsNotNull(rIcon, "«Icon» 자리는 그대로 남는다 — 흡수 구슬이 그 키로 난다(초상은 날 수 없다 · RewardPopup.Item.Face 주석)");
+            var rIm = rIcon.GetComponent<UnityEngine.UI.Image>();
+            Assert.IsFalse(rIm != null && rIm.enabled, "조각 아이콘은 꺼진다 — 안 끄면 옛 그림과 초상이 겹쳐 그려진다");
+
             yield return Shutdown();
         }
 
