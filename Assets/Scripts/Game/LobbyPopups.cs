@@ -1577,16 +1577,20 @@ namespace KkomaKnight.Game
 
         /// <summary>T394 — 흐르는 풀 띠(RawImage)의 이름 · 흐름 트윈의 id(자가 «닫히면 멈춘다» 를 이걸로 센다).</summary>
         public const string ExGroundName = "RoadUp", ExWalkTweenId = "T394.ExWalk";
-        /// <summary>T394 — 띠 위 소품(나무 셋 · 덤불)의 표 자리(띠 안 %). 흐를 때 이 x 에서 왼쪽으로 밀리며 <see cref="ExPropSpan"/> 마다 되돌아온다.</summary>
-        static readonly Layout.R[] ExProps = { new Layout.R(6, 12, 16, 46), new Layout.R(40, 12, 16, 46), new Layout.R(74, 12, 16, 46), new Layout.R(78, 66, 12, 22) };
-        /// <summary>소품 한 바퀴(띠 폭 %) — 나무 간격 34 × 3 이라 세 그루가 같은 간격으로 계속 이어진다 · 여유 16 = 가장 넓은 소품 폭(왼쪽 밖으로 다 나간 뒤 오른쪽 밖에서 들어온다).</summary>
-        const float ExPropSpan = 102f, ExPropMargin = 16f;
+        /// <summary>
+        /// T394 — 띠 위 소품(나무 넷)의 표 자리(띠 안 %). 흐를 때 이 x 에서 왼쪽으로 밀리며 <see cref="ExPropSpan"/> 마다 되돌아온다(<see cref="Core.Expedition.PropX"/>).
+        /// 2회차(주인 «나무가 생성되는 장면들 보이는데 그러면 안 됨 · 부시도 없애셈 · 길에 부쉬가 있네»): 1회차는 나무 셋 + 한 바퀴 102 라 되돌아오는 자리가 <b>띠 안 86%</b> 였다 — 그게 «생성되는 장면» 이다.
+        /// 넷째 나무를 띠 밖(108)에 세우고 한 바퀴를 136(= 4 × 간격 34)으로 → 범위 −16 ~ 120 · 태어나는 자리는 언제나 마스크 밖. 길 위 덤불은 없앴다(옮기지 않는다).
+        /// </summary>
+        public static readonly Layout.R[] ExProps = { new Layout.R(6, 12, 16, 46), new Layout.R(40, 12, 16, 46), new Layout.R(74, 12, 16, 46), new Layout.R(108, 12, 16, 46) };
+        /// <summary>소품 한 바퀴(띠 폭 %) = 나무 간격 34 × 4 · 여유 16 = 나무 폭(왼쪽 밖으로 다 나간 뒤에야 되돌아온다). <c>span − margin = 120 ≥ 100</c> 이 «밖에서 태어난다» 의 조건이다.</summary>
+        public const float ExPropSpan = 136f, ExPropMargin = 16f;
 
         /// <summary>
         /// T394 — 띠가 <b>오른쪽→왼쪽으로 흐른다</b>(주인 «탐험 쪽은 오른쪽으로 계속 이동하는 것처럼 해 줘 플레이어가»). 기사는 제자리 걷기(<see cref="HeroView.SetWalking"/>)고, 걷는 «느낌» 은 배경이 낸다:
         /// ⓐ 풀 띠(<c>env.roadUp</c> · 물결 경계)는 <see cref="RawImage"/> 로 바꿔 <c>uvRect.x</c> 를 늘린다 — <see cref="UiKit.PatternBg"/> 와 같은 기술(uvRect 가 «사각형 왼쪽이 텍스처의 어느 점을 보이나» 라 값이 <b>늘어야</b> 그림이 왼쪽으로 간다 · 결정 157 의 반대 방향).
         ///   들판·길(<c>env.field</c>/<c>env.road</c>)은 한 색 판이라(128×128 · 색 1개 실측) 흘려도 안 보인다 → 그대로 Image.
-        /// ⓑ 소품(나무·덤불)은 표 자리에서 왼쪽으로 밀리며 한 바퀴(<see cref="ExPropSpan"/>)마다 되돌아온다 — 풀 띠만 흐르면 «땅만 미끄러지는» 꼴이라 소품이 같이 가야 걷는 것처럼 보인다.
+        /// ⓑ 소품(나무 넷)은 표 자리에서 왼쪽으로 밀리며 한 바퀴(<see cref="ExPropSpan"/>)마다 **띠 밖에서** 되돌아온다 — 풀 띠만 흐르면 «땅만 미끄러지는» 꼴이라 소품이 같이 가야 걷는 것처럼 보인다.
         /// 속도는 <b>전투 걷기 속도</b>(<see cref="Core.Expedition.WalkSpeedUi"/> · combat.json playerSpeed × ui.json zoom · 표 값). 한 트윈(unscaled · 무한 · Linear)이 둘을 같이 민다 —
         /// 풀 띠의 타일 폭은 «한 바퀴가 타일의 정수 배» 가 되게 살짝 맞춰(반올림) 바퀴 경계에서 튀지 않는다. 팝업이 닫히면(<see cref="Overlay.Close"/> = 상자 파괴) <c>SetLink</c> 가 트윈을 죽인다.
         /// </summary>
@@ -1594,7 +1598,7 @@ namespace KkomaKnight.Game
         {
             if (pic == null || ground == null || pxPerSec <= 0f) return;
             float aspect = ground.texture != null && ground.texture.height > 0 ? (float)ground.texture.width / ground.texture.height : 1f;
-            float spanPx = UiKit.FrameW * Layout.ExPic.W / 100f * ExPropSpan / 100f;   // 한 바퀴 = 띠 폭 × 102% (프레임 px · 폭은 세로비 늘림의 영향이 없다)
+            float spanPx = UiKit.FrameW * Layout.ExPic.W / 100f * ExPropSpan / 100f;   // 한 바퀴 = 띠 폭 × 136% (프레임 px · 폭은 세로비 늘림의 영향이 없다)
             var gr = ground.rectTransform;
             float phase = 0f;
             void Apply(float v)
@@ -1613,7 +1617,7 @@ namespace KkomaKnight.Game
                 {
                     if (props[i] == null) continue;
                     var r = ExProps[i];
-                    float x = Mathf.Repeat(r.X - v * ExPropSpan + ExPropMargin, ExPropSpan) - ExPropMargin;
+                    float x = (float)Core.Expedition.PropX(r.X, v * ExPropSpan, ExPropSpan, ExPropMargin);
                     UiKit.Pct(props[i].rectTransform, x, r.Y, r.W, r.H);
                 }
             }
@@ -1642,8 +1646,8 @@ namespace KkomaKnight.Game
                 edge.texture = edgeSp.texture; edge.raycastTarget = false; UiKit.Pct(ert, 0, 57, 100, 8);
             }
             var props = new Image[ExProps.Length];
-            for (int i = 0; i < 3; i++) { var t = UiKit.Icon(pic, "Tree" + i, "env.tree"); UiKit.Pct(t.rectTransform, ExProps[i]); props[i] = t; }
-            var bush = UiKit.Icon(pic, "Bush", "env.bush"); UiKit.Pct(bush.rectTransform, ExProps[3]); props[3] = bush;
+            for (int i = 0; i < ExProps.Length; i++) { var t = UiKit.Icon(pic, "Tree" + i, "env.tree"); UiKit.Pct(t.rectTransform, ExProps[i]); props[i] = t; }
+            // T394 2회차 — 길 위 덤불(env.bush · 78,66)은 없앴다(주인 «부시도 없애셈 · 길에 부쉬가 있네»).
             // T146 ⓑ — 레퍼런스 30 의 띠에는 기사와 적이 길 위를 걸어간다. 우리 띠는 나무·길뿐이었다(screens run 257 실측).
             // 조각은 이미 있는 것뿐이다 — 기사는 장착 외형(HeroView.PlayerSkin = 전투·장비 화면과 같은 표), 적은 전투의 «곤봉 적» 외형.
             if (app != null)

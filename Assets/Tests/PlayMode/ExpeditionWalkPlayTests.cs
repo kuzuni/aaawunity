@@ -71,6 +71,11 @@ namespace KkomaKnight.Tests.Play
             Assert.Greater(x1, x0, "두 프레임 사이에 uvRect.x 가 늘어야 한다(흐름)");
             Assert.Less(tx1, tx0, "나무가 왼쪽으로 밀려야 한다(소품도 같이 간다)");
             Assert.Greater(ground.uvRect.width, 1f, "띠 폭이 타일 하나보다 넓다 — 타일이 이어져 보이려면 uvRect 폭이 1 을 넘는다");
+            // 2회차(주인 «부시도 없애셈 · 길에 부쉬가 있네 · 나무가 생성되는 장면») — 덤불 없음 · 나무 넷(넷째는 띠 밖 108 에서 시작) · 되돌림 셈은 EditMode 자가 밟는다
+            Assert.IsNull(UiKit.Find(pic, "Bush"), "길 위 덤불은 없다");
+            Assert.AreEqual(4, LobbyPopups.ExProps.Length, "나무 넷");
+            for (int i = 0; i < 4; i++) Assert.IsNotNull(UiKit.Find(pic, "Tree" + i), "나무 " + i);
+            Assert.GreaterOrEqual(LobbyPopups.ExPropSpan - LobbyPopups.ExPropMargin, 100f, "되돌아오는 자리(span − margin)가 띠 밖이어야 «생성되는 장면» 이 없다");
 
             // ⓑ 기사는 걷기 상태 · 오른쪽 보기 · 적은 Idle 그대로
             var knight = UiKit.Find(pic, "Knight"); Assert.IsNotNull(knight, "기사 칸");

@@ -105,6 +105,19 @@ namespace KkomaKnight.Core
         public static double WalkSpeedUi(double playerSpeed, double zoom, double frameW, double layoutW)
             => layoutW > 0 ? playerSpeed * zoom * frameW / layoutW : 0;
 
+        /// <summary>
+        /// T394 2회차 — 띠 위 소품(나무)의 자리(띠 안 % · 왼쪽 변). 표 자리 <paramref name="baseX"/> 에서 <paramref name="dist"/>(띠 폭 %)만큼 왼쪽으로 밀리고,
+        /// 한 바퀴 <paramref name="span"/> 마다 되돌아온다. 범위는 <c>[−margin, span − margin)</c> — 소품 폭 = margin 이면 왼쪽 밖으로 <b>다 나간 뒤</b> 되돌아오고,
+        /// <c>span − margin ≥ 100</c> 이면 되돌아오는 자리가 <b>띠 밖(≥ 100)</b>이라 «화면 안에서 태어나는 장면» 이 없다(주인 2026-09-10 «나무가 생성되는 장면들 보이는데 그러면 안 됨»).
+        /// 1회차는 span 102 · margin 16 이라 범위가 −16~86 이었다 — 86% 에서 태어났다.
+        /// </summary>
+        public static double PropX(double baseX, double dist, double span, double margin)
+        {
+            if (span <= 0) return baseX;
+            double v = (baseX - dist + margin) % span; if (v < 0) v += span;
+            return v - margin;
+        }
+
         /// <summary>세이브의 «마지막 정산 시각» 이 아직 없으면 지금으로, 미래면 지금으로 당긴다(시계 되돌림 방어).
         /// 빠른 탐험은 <b>충전</b>을 굴린다(T265) — 지난 시간만큼 채우고 상한에서 멈춘다.</summary>
         public static void Roll(SaveData s, ExpeditionData d, double nowSec, string today)
