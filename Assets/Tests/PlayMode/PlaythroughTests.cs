@@ -1588,5 +1588,27 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("배포 갈래 P9");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T410 — P2(전투)의 <b>배포 갈래</b>. 꼴은 위 일곱과 같다(결정 1101).
+        /// <para>
+        /// ⚑ 이 갈래만 <b>«판» 을 굴린다</b> — 나머지는 팝업을 열고 닫는다. 그래서 여기서만 잡히는 것이 있다:
+        /// START 배선 · 전투 화면이 서는가 · 배속 단추 · <b>레벨업이 3택을 열고 그 선택이 엔진에 닿는가</b> · 결과 팝업에서 로비로 오는 길.
+        /// </para>
+        /// <para>
+        /// ⚠ 이벤트(천사·악마·휴식·광고)는 <b>단언하지 않는다</b> — 난수라 시드가 다른 날 애먼 빨강이 뜬다(각본 주석).
+        /// 대신 «막히지 않는가» 만 잰다. 오래 걸리는 단계이므로 예산은 <c>Playthrough.BattleFrames</c> 하나로 따로 둔다.
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 배포_갈래_P2_도_자에서_한_번_돈다()
+        {
+            yield return Boot();
+            Assert.IsTrue(Playthrough.HasStep("P2"), "P2 의 배포 갈래가 등록돼 있다");
+            yield return Playthrough.RunOne(_app, "P2");
+            Assert.AreEqual("lobby", _app.Current.Name, "각본이 끝나면 로비에 서 있다");
+            _log.AssertNoRed("배포 갈래 P2");
+            yield return Shutdown();
+        }
     }
 }

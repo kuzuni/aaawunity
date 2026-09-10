@@ -82,7 +82,7 @@ namespace KkomaKnight.Game
         public delegate System.Collections.IEnumerator Step(App app);
 
         static readonly System.Collections.Generic.Dictionary<string, Step> Steps =
-            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P3", P3Gear }, { "P4", P4Shop }, { "P6", P6Arena }, { "P7", P7Quest }, { "P8", P8Boxes }, { "P9", P9Expedition }, { "P10", P10Pet } };
+            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P2", P2Battle }, { "P3", P3Gear }, { "P4", P4Shop }, { "P6", P6Arena }, { "P7", P7Quest }, { "P8", P8Boxes }, { "P9", P9Expedition }, { "P10", P10Pet } };
 
         /// <summary>
         /// 단계 하나만 돌린다 — <b>자가 «배포 갈래도 실제로 도는가» 를 재는 입구</b>(T300 2항 · 결정 1101).
@@ -411,6 +411,100 @@ namespace KkomaKnight.Game
         /// 그래서 여기서는 <b>그 단추가 서 있고 눌리는가</b> 까지만 보고 닫는다 — 끊기면 그것으로 빨개진다.
         /// </para>
         /// </summary>
+        /// <summary>
+        /// P2 전투가 <b>한 판이 끝나기를</b> 기다리는 프레임 예산 — <see cref="WaitFrames"/>(팝업 하나를 기다리는 값)와 <b>따로 둔다</b>.
+        /// <para>⚠ 공통값을 이만큼 올리면 «팝업이 안 뜬다» 같은 진짜 고장이 열 배 느리게 드러난다 — 오래 걸리는 것은 이 한 단계뿐이다.</para>
+        /// <para>60fps 로 90초쯤. 판이 그보다 길면 «못 찾았다» 가 아니라 <b>예산을 다시 정해야 한다</b>는 뜻이라 메시지에 그렇게 적는다.</para>
+        /// </summary>
+        public const int BattleFrames = 5400;
+
+        /// <summary>
+        /// P2 전투(T300 1항 표 · 배포 갈래 · T410) — 로비 START → 배속 → 판이 끝날 때까지 돌리며 <b>레벨업 특전 팝업이 뜨면 하나 고른다</b> → 결과 팝업 → 로비.
+        /// <b>단언은 하나도 없다</b>(3항 ⓐ): 봇은 «죽지 않고 지나가는가» 만 본다.
+        /// <para>
+        /// ⚑ <b>이 각본이 유일하게 «판» 을 굴린다</b> — 다른 갈래는 전부 팝업을 열고 닫는다. 그래서 여기서만 잡히는 것이 있다:
+        /// START 배선 · 전투 화면이 서는가 · 배속 단추 · <b>레벨업이 실제로 3택을 열고 그 선택이 엔진에 닿는가</b> · 판이 끝나고 로비로 돌아오는 길.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>배속은 <c>Time.timeScale</c> 을 손으로 안 만진다</b> — 사람이 누르는 그 단추(<c>SpeedBtn</c>)를 누른다.
+        /// 손으로 만지면 «단추가 끊겨도 각본은 빨라진다» 가 되어 그 배선을 못 잰다(T280 이 값을 치른 자리).
+        /// </para>
+        /// <para>
+        /// ⚠ <b>그리고 끝에서 되돌린다</b>(결정 1177 · 워커 C 가 P6 에서 값을 치른 자리) — 이 단추는 <c>Time.timeScale</c> 이 아니라
+        /// <b><see cref="SaveData.Speed"/> 를 쓰고 저장한다</b>. 안 되돌리면 <b>뒤 단계와 그 뒤의 판이 전부 그 배속으로 흐르고</b>,
+        /// T406 이 만든 «몇 초» 눈금까지 거짓이 된다 — 그런데 각 단계는 여전히 <c>ok</c> 를 찍으므로 <b>어느 자도 안 잡는다</b>.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>이벤트(천사·악마·휴식·광고)는 «지나가면 지나가는» 것으로 둔다</b> — T300 1항 표는 «하나 이상 지난다» 라고 적었지만
+        /// 그것은 <b>난수</b>다. 각본이 그것을 <b>단언</b>하면 시드가 다른 날 애먼 빨강이 뜨고, 그 빨강에 이 갈래가 잡으려는 진짜 고장이 묻힌다
+        /// (T278·결정 930 이 값을 치른 그 손). 이벤트 팝업이 뜨면 <see cref="CloseAll"/> 로 닫고 계속 논다 — 곧 <b>막히지 않는가</b>만 잰다.
+        /// </para>
+        /// </summary>
+        static System.Collections.IEnumerator P2Battle(App app)
+        {
+            app.ShowScreen("lobby"); yield return Frames(3);
+            Reach(app, "lobby");
+
+            Tap(app, "Start"); yield return Frames(4);
+            Reach(app, "battle");
+            var bs = app.Current as BattleScreen;
+            if (bs == null) throw new MissingException("전투 화면(BattleScreen)");
+
+            // 배속 — 사람이 누르는 그 단추로 올린다(위 ⚠). 끝에서 되돌리려고 «원래 값» 을 쥐고 간다.
+            int speed0 = app.Save.Speed;
+            Tap(app, "SpeedBtn"); yield return Frames(2);
+
+            int picked = 0, closed = 0;
+            for (int i = 0; ; i++)
+            {
+                var G = bs.G;
+                if (G == null) throw new MissingException("전투 상태(BattleScreen.G)");
+                if (G.Over) break;
+                if (app.Current != bs) break;                      // 화면이 스스로 로비로 갔다(결과 팝업을 닫은 뒤)
+
+                if (app.Overlay.IsOpen)
+                {
+                    // 레벨업 3택이면 카드 하나를 «누른다» — 카드는 프리팹 조각이라 제 이름이 없다.
+                    // 그 대신 담는 자리(`Group_Card`)가 계약이다(팝업을 세우는 쪽이 프리팹에서 찾는 그 이름).
+                    var group = UiKit.Find(app.Overlay.Root, "Group_Card");
+                    if (group != null && TapFirstButtonIn(group)) { picked++; yield return Frames(3); continue; }
+                    // 그 밖의 팝업(이벤트·악마의 거래 …)은 닫고 계속 논다(위 ⚠).
+                    yield return CloseAll(app, "전투 중 팝업"); closed++;
+                    continue;
+                }
+
+                if (i >= BattleFrames)
+                    throw new MissingException("한 판이 " + BattleFrames + "프레임 안에 안 끝났다 — 각본이 막힌 것이 아니라 «예산» 을 다시 정해야 하는 자리일 수도 있다(P2 주석)");
+                yield return null;
+            }
+
+            // 결과 팝업(승리 `ui.resultWin` · 사망 `Dead`) — 둘 다 «어둠 탭 = 연출 스킵 → 로비로» 라 CloseAll 이 두 단을 다 민다.
+            // ⚠ 판이 끝난 «그 프레임» 에는 아직 안 서 있다(화면이 다음 틱에 스스로 연다 · T280) — 잠깐 기다렸다가 닫아야
+            //   이 갈래가 «결과 팝업 → 로비» 배선까지 잰다. 안 뜨면 그냥 넘어간다(화면이 스스로 로비로 갔을 수도 있다).
+            if (!app.Overlay.IsOpen && app.Current == bs)
+                for (int k = 0; k < WaitFrames && !app.Overlay.IsOpen && app.Current == bs; k++) yield return null;
+            if (app.Overlay.IsOpen) yield return CloseAll(app, "전투 결과 팝업");
+            if (app.Current == null || app.Current.Name != "lobby") { app.ShowScreen("lobby"); yield return Frames(2); }
+            Reach(app, "lobby");
+            // 배속 되돌림(위 ⚠ · 결정 1177) — 화면을 나온 뒤라 단추가 없으므로 세이브를 원래대로 돌린다.
+            if (app.Save.Speed != speed0) { app.Save.Speed = speed0; app.Persist(); }
+            if (picked == 0 && closed == 0)
+            {
+                // 아무 팝업도 안 떴다 = 레벨업이 한 번도 안 났다. 1챕터에서도 경험치는 오르므로 이것은 «배선이 끊겼다» 쪽이 훨씬 그럴듯하다.
+                throw new MissingException("판이 끝나도록 팝업이 한 번도 안 떴다(레벨업 3택이 안 열렸다 — 특전 배선을 보라)");
+            }
+            yield return null;
+        }
+
+        /// <summary>담는 자리 안에서 <b>처음으로 눌리는</b> 버튼 하나를 누른다 — 조각이 프리팹에서 와 제 이름이 없을 때(특전 카드) 쓴다.</summary>
+        static bool TapFirstButtonIn(UnityEngine.Transform group)
+        {
+            if (group == null) return false;
+            foreach (var b in group.GetComponentsInChildren<UnityEngine.UI.Button>(false))
+                if (b.interactable && b.gameObject.activeInHierarchy) { b.onClick.Invoke(); return true; }
+            return false;
+        }
+
         static System.Collections.IEnumerator P9Expedition(App app)
         {
             var D = app.Data; var S = app.Save;
