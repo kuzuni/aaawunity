@@ -1440,5 +1440,38 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("배포 갈래 P10");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T387 — P1(로비)의 <b>배포 갈래</b>도 CI 가 한 번 돌린다. 까닭·꼴은 위 P10 자와 같다(결정 1101).
+        /// <para>P1 은 탭 다섯 왕복 + 챕터 ◀▶ 라 각본 중 가장 짧다 — 그런데 «가장 짧아서 안 낡는다» 는 근거가 아니다:
+        /// 낡는 것은 길이가 아니라 <b>이름 계약</b>이고(탭 이름 · 챕터 화살표), 그것은 한 줄짜리 각본에도 똑같이 있다.</para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 배포_갈래_P1_도_자에서_한_번_돈다()
+        {
+            yield return Boot();
+            Assert.IsTrue(Playthrough.HasStep("P1"), "P1 의 배포 갈래가 등록돼 있다");
+            yield return Playthrough.RunOne(_app, "P1");
+            _log.AssertNoRed("배포 갈래 P1");
+            yield return Shutdown();
+        }
+
+        /// <summary>
+        /// T387 — P4(상점)의 <b>배포 갈래</b>도 CI 가 한 번 돌린다(결정 1101 의 꼴 그대로).
+        /// <para>
+        /// ⚠ P4 는 각본 중 가장 길고 <b>겹쳐 둔 두 옷</b>(다이아/열쇠)을 «켜진 것만» 눌러 가른다(결정 941 ①) —
+        /// 그 갈래가 낡으면 봇은 «사람 눈에 없는 버튼» 을 누르고도 <c>ok</c> 를 찍으므로, 자로 한 번 돌려 두는 값이 가장 큰 단계이기도 하다.
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 배포_갈래_P4_도_자에서_한_번_돈다()
+        {
+            yield return Boot();
+            Assert.IsTrue(Playthrough.HasStep("P4"), "P4 의 배포 갈래가 등록돼 있다");
+            yield return Playthrough.RunOne(_app, "P4");
+            Assert.AreEqual("lobby", _app.Current.Name, "각본이 끝나면 로비에 서 있다");
+            _log.AssertNoRed("배포 갈래 P4");
+            yield return Shutdown();
+        }
     }
 }
