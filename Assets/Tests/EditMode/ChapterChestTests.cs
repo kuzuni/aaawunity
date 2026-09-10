@@ -250,8 +250,13 @@ namespace KkomaKnight.Tests
         {
             var d = Load(); var t = d.ChapterChest;
             Assert.AreEqual(100, t.TableMax, "표가 덮는 마지막 챕터(주인 «챕터 100까지»)");
-            // 게임 데이터의 챕터는 420 까지 있다(T1) — 표 밖이 반드시 있고, 그 자리는 100챕터 값을 그대로 쓴다.
-            Assert.Greater(d.Tune.MaxChapter, t.TableMax, "표 밖 챕터가 실제로 있다(없으면 이 규칙이 죽은 코드다)");
+            // ⚑ «표 밖 챕터가 실제로 있다» 로는 안 잰다(T325) — 챕터 수는 주인이 420 → 100 으로 줄이기로 한 값이라
+            //   그 문장은 밸런스가 바뀌는 날 거짓이 되고, 그때 이 자는 «규칙이 깨졌다» 가 아니라 «수가 바뀌었다» 로 운다.
+            //   대신 표 밖이 있든 없든 늘 참인 것을 잰다 — **게임의 모든 챕터가 보상 값을 받는다**:
+            //   표가 게임보다 좁으면 마지막 칸이 그 뒤를 다 답하고, 게임 전체를 덮으면 표가 직접 답한다.
+            for (int c = 1; c <= d.Tune.MaxChapter; c += 7)
+                Assert.Greater(t.GemAt(c), 0.0, "챕터 " + c + " 가 보상 없는 칸이다");
+            Assert.AreEqual(t.GemAt(t.TableMax), t.GemAt(d.Tune.MaxChapter), 1e-9, "마지막 챕터는 표의 마지막 칸이 답한다");
             foreach (var c in new[] { 101, 200, 420 })
             {
                 Assert.AreEqual(t.GemAt(t.TableMax), t.GemAt(c), 1e-9, "챕터 " + c + " 다이아 = 100챕터 값 그대로");

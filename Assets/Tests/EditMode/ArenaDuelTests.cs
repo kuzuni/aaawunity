@@ -61,7 +61,9 @@ namespace KkomaKnight.Tests
             // ⓓ — 이 자가 빨개지면 «PvP 를 붙이다가 챕터 전투를 건드렸다» 는 뜻이다.
             // 값은 BattleTests 의 시드 골든과 **같은 수**다(sim.js 실측) — 여기서 다시 적는 까닭은
             // 그쪽 자는 «이식이 맞나» 를 보고, 이쪽 자는 «내 갈래가 그것을 안 흔들었나» 를 보기 때문이다.
-            var d = TestData.Load(); var rng = new Mulberry32(11); var b = GearSystem.MkBuild(d, -1, 0, 0);
+            // ⚑ 그래서 표도 그쪽과 **같은 것**을 봐야 한다 — `PreBalance()`(T325 밸런스 넷을 뺀 표 · 결정 1033).
+            //   `Load()` 로 두면 주인이 밸런스를 고치는 날 이 골든이 «PvP 가 챕터 전투를 건드렸다» 고 거짓말한다.
+            var d = TestData.PreBalance(); var rng = new Mulberry32(11); var b = GearSystem.MkBuild(d, -1, 0, 0);
             var opt = new RunOptions { LadderPerkMode = true, BaseStatsLegacy20 = true, GearOpts = false };
             Assert.IsFalse(opt.IsArenaDuel, "기본값은 «아레나 아님» 이다 — 이것이 골든의 안전장치다");
 

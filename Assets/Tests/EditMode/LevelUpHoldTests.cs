@@ -92,7 +92,9 @@ namespace KkomaKnight.Tests
         [Test]
         public void HoldLevelUp_기본값은_꺼짐이라_헤드리스는_그대로다()
         {
-            var d = TestData.Load(); var rng = new Mulberry32(11); var b = GearSystem.MkBuild(d, -1, 0, 0);
+            // ⚑ 표는 `PreBalance()` 다 — 아래 골든이 `BattleTests` 의 그 수이고 그쪽도 같은 표로 잰다(T325 · 결정 1033).
+            //   `Load()` 로 두면 밸런스가 바뀌는 날 이 자가 «이 절이 골든을 흔들었다» 고 거짓말한다 — 흔든 것은 밸런스다.
+            var d = TestData.PreBalance(); var rng = new Mulberry32(11); var b = GearSystem.MkBuild(d, -1, 0, 0);
             var G = new BattleState(d, 3, b, rng, new SimPolicy(), new RunOptions { LadderPerkMode = true, BaseStatsLegacy20 = true, GearOpts = false });
             Assert.That(G.HoldLevelUp, Is.False, "기본은 꺼짐 — 화면만 세운다");
 

@@ -50,13 +50,17 @@ namespace KkomaKnight.Tests
         public void ASaveWithNoRarNAtAllIsTreatedAsTheOldTable()
         {
             var D = Canon();
-            int oldLegend = D.Gear.RarLegend, oldMyth = D.Gear.RarMyth;
-            var s = WithGear(D, oldLegend, oldMyth);      // 옛 표의 전설 · 신화
+            // ⚑ «칸이 없는 세이브» 는 **옛 표**(RarNLegacy 칸)로 적힌 것이다 — 그러니 그 안의 등급도 옛 표의 칸이어야 한다.
+            //   지금 표에서 끌어오면(예전 판) 표가 이미 다섯인 날 «옛 세이브에 없던 등급» 을 넣게 되고, 재는 것이 뜻을 잃는다.
+            int oldLegend = SaveData.RarNLegacy - 2, oldMyth = SaveData.RarNLegacy - 1;   // 옛 표의 끝 두 칸 = 전설 · 신화
+            var s = WithGear(D, oldLegend, oldMyth);
             var json = s.ToJson().Replace("\"rarN\":", "\"_rarN\":");
             Assert.IsFalse(json.Contains("\"rarN\":"), "이 자가 재려는 «칸이 없는 세이브» 를 실제로 만들었는지부터 본다");
 
-            // 읽는 쪽의 표를 한 칸 넓혀 둔다 — FromJson 이 그 표로 Normalize 를 돌린다(넓히는 표는 지금 표에서 낸다)
-            D.ApplyGearOverride(TestData.WidenByOneGrade(D));
+            // 읽는 쪽의 표를 «옛 표보다 정확히 한 칸 넓게» 맞춘다 — 그래야 «없음» 을 옛 표로 읽는지 지금 표로 읽는지가 갈린다.
+            // (오늘은 정본이 옛 표와 같은 넷이라 한 번 넓히고, 주인 값이 든 뒤에는 이미 다섯이라 안 넓힌다.)
+            while (D.Gear.RarName.Length < SaveData.RarNLegacy + 1) D.ApplyGearOverride(TestData.WidenByOneGrade(D));
+            Assert.AreEqual(SaveData.RarNLegacy + 1, D.Gear.RarName.Length, "읽는 표가 옛 표보다 정확히 한 칸 넓어야 이 자가 뜻을 갖는다");
 
             var back = SaveData.FromJson(json, D);
             Assert.AreEqual(new[] { oldLegend + 1, oldMyth + 1 }, new[] { back.Inv[0].Rar, back.Inv[1].Rar },
