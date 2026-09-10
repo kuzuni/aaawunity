@@ -10793,7 +10793,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/LobbyPopups.cs` · `Core/Achievement.cs` · 자. lock `T401`.
 
-### T402 — ⚑⚑ 주인: **장비 등급 색 — 희귀 초록 · 영웅 파랑 · 전설 보라 · 신화 노랑** (주인 2026-09-10 «희귀 초록 영웅 파랑 전설 보라 신화 노랑으로 해 줘» · T325·T316 의 뒤)
+### T402 ✅ — ⚑⚑ 주인: **장비 등급 색 — 희귀 초록 · 영웅 파랑 · 전설 보라 · 신화 노랑** (주인 2026-09-10 «희귀 초록 영웅 파랑 전설 보라 신화 노랑으로 해 줘» · T325·T316 의 뒤)
 
 0. **실측** — 등급 색은 `Palette.RarColors` 배열 한 줄이 정본(조각 `ui.itemFrame.<색>`·글자·배지·pill 13곳이 부른다). 여섯 색 조각(gray·blue·green·plum·red·yellow)이 다 있다.
 1. **고침** — `{ gray, blue, red, yellow, plum }` → `{ gray, green, blue, plum, yellow }`. 표시 등급(T316 갓·초월·불멸·무한)은 `gearTier.json` 그대로(red·pink·brown·redGreen).
