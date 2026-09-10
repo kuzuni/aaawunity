@@ -10256,7 +10256,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 >
 > **▸ 🔄 3회차 push · CI 확인 전(2026-09-10 08:2X · sess-0811-40617 · 워커 M · 결정 1120)** — 2회차 확인 끝(런 971 초록 · 일곱 자 ✗ 0). 셋째 조각 = **`LobbySettingsAndDataWipe`**(옛 `:895~960` · 앞 블록에 기대는 단언 0 ⇒ `Boot` 만 · 단언 0줄 삭제). 남은 것 = 로비 탭·사이드 팝업(`:389~811`) + 특권/패스(`:812~893`) 를 마지막 회차에 둘로. 다음: `[CI명부]` `UiSmokeTests(8)` ✗ 0.
 >
-> **▸ 🔄 4회차(마지막 조각) push · CI 확인 전(2026-09-10 09:2X · sess-0911-40617 · 워커 M · 결정 1130)** — 3회차 확인 끝(런 983 초록). 옛 `:812~893` → **`LobbyPrivilegeAndSeasonPass`**(`Boot` 만) · 남은 몸통 → **`LobbyTabsAndSideOverlays`** 로 개명. ④ 표의 다섯이 다 섰다(741줄 한 자 → 다섯 자). 다음: `[CI명부]` `UiSmokeTests(9)` ✗ 0 → ✅ · lock 반납.
+> **▸ 🔄 4회차(마지막 조각) push · CI 확인 전(2026-09-10 09:2X · sess-0911-40617 · 워커 M · 결정 1133)** — 3회차 확인 끝(런 983 초록). 옛 `:812~893` → **`LobbyPrivilegeAndSeasonPass`**(`Boot` 만) · 남은 몸통 → **`LobbyTabsAndSideOverlays`** 로 개명. ④ 표의 다섯이 다 섰다(741줄 한 자 → 다섯 자). 다음: `[CI명부]` `UiSmokeTests(9)` ✗ 0 → ✅ · lock 반납.
 
 ### T378 ✅ — ⛑ 런 932·935 빨강: **«전체 강화» 는 할 것이 있으면 «전체 강화 2» 다 — 라벨을 `==` 로 못 박은 자가 낡았다**(배포가 한 시간째 옛 커밋에 멈춰 있다) (워커 판단 · 화면 0줄 · 자만)
 

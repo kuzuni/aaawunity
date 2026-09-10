@@ -130,7 +130,7 @@ namespace KkomaKnight.Tests.Play
             var world = bs.World; Assert.IsNotNull(world, "BattleWorld");
             yield return RealSeconds(0.3f);
 
-            Assert.AreEqual(0, world.PetRigs.Count, "아무것도 안 꼈으면 펫 리그가 한 개도 없다(세이브 배선 전의 기본값)");
+            Assert.AreEqual(0, world.PetRigs.Count, "아무것도 안 꼈으면 펫 리그가 한 개도 없다(새 세이브 · 낀 펫 0)");
 
             // T293 ⓗ — 이제 표는 부팅이 들고 있다(GameData.Pet). 여기서 파일을 다시 읽지 않는다 —
             //   자가 제 손으로 파싱하면 «부팅이 표를 안 들어도» 초록이라, 로더가 죽은 것을 못 본다.
@@ -161,6 +161,17 @@ namespace KkomaKnight.Tests.Play
             world.SetPets(d, null);
             yield return Frames(2);
             Assert.AreEqual(0, world.PetRigs.Count, "빈 목록이면 세워 둔 것을 지운다");
+
+            // ⛑ T390 — 여기까지는 **자가 손으로** `SetPets` 를 불렀다. 그래서 이 자는 «세이브에 낀 펫 → 화면» 배선이 **통째로 없어도** 초록이었다
+            //   (실제로 여덟 시간 동안 부르는 자리가 0 이었다 · 검수 Q 실측). 아래가 그 배선을 재는 자리다 —
+            //   `SetPets` 를 한 번도 안 부르고, **판을 새로 열기만** 해서 낀 펫이 서는지 본다.
+            var id = d.Pets[0].Id;
+            Pets.Gain(_app.Save, id);
+            Assert.IsTrue(Pets.Equip(d, _app.Save, id, 0), "새 세이브의 첫 장착 칸은 열려 있다(이게 거짓이면 아래가 뜻이 없다)");
+            _app.StartBattle(1);
+            yield return RealSeconds(0.3f);
+            var world2 = _app.GetScreen<BattleScreen>().World; Assert.IsNotNull(world2, "새 판의 BattleWorld");
+            Assert.AreEqual(1, world2.PetRigs.Count, "낀 펫은 판을 열 때 화면에도 선다 — `BattleScreen` 이 `SetPets` 를 부른다(T390)");
 
             yield return Shutdown();
         }

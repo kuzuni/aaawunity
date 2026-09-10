@@ -195,6 +195,10 @@ namespace KkomaKnight.Game
             _world?.Dispose(); UiKit.Clear(_pops);   // 팝 층은 새 월드를 만들기 «전에» 비운다(발밑 숫자 글자가 팝 층에 산다 · T35)
             _world = new BattleWorld(App, G, _pops);
             _world.KillShown = OnKillShown;   // T85 — 시체가 쓰러지는 순간 그 자리에서 보상 구슬이 튀어나온다
+            // T390 — 낀 펫이 **화면에도** 선다(T293 9항). ⓔ 가 `SetPets` 를 세우며 «`Opt.Pets` 를 잇는 회차가 이 함수도 같이 부른다» 고 적어 뒀는데
+            //   ⓖ 가 위 두 줄(엔진 쪽)만 이어서 여덟 시간 동안 **부르는 자리가 0** 이었다 — 도끼·번개는 날아가는데 펫은 안 보이는 «반쯤 도는» 꼴이다(검수 Q 실측).
+            //   ⚑ 목록은 판에 들려 보낸 것과 **같은 규칙**(`Pets.Equipped`)에서 나온다 — 화면과 판이 다른 펫을 세면 그 어긋남은 아무 자도 안 잡는다.
+            _world.SetPets(D.Pet, Pets.Equipped(D.Pet, App.Save).ConvertAll(id => D.Pet.Of(id)));
             SnapShown();                      // 새 판은 표시값 = 엔진 값(0)에서 시작
             _questKills = 0;   // T257 — 새 판은 «넘긴 처치» 도 0 부터(부활은 판을 잇는 것이라 여기 안 온다)
             _acc = 0; _speed = App.Save.Speed; _paused = false; _ended = false; _revivesUsed = 0; _perkStripKey = ""; _buffKey = ""; _lastReal = 0;   // 배속은 세이브에서(T18 · 클리어 뒤 다음 챕터도 그대로) · 새 판 첫 프레임이 «공백» 으로 잡히지 않게
