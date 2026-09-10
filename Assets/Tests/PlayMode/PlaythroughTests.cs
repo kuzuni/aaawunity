@@ -184,10 +184,14 @@ namespace KkomaKnight.Tests.Play
             }
             Time.timeScale = 1f;
             Assert.Greater(G.T, 0.0, "엔진이 실제로 돌았다 — 이 한 줄이 없으면 아래 전부가 «판을 안 굴린 채» 통과한다");
-            if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(1); }
+            // ⛑ T424 — **비우는 줄이 닫는 줄보다 먼저다.** `Overlay.Close()` 는 **UI 만** 내리고(`Clear(Root)` + `SetActive(false)`)
+            //    `G.Pending` 은 살아 있다 — 팝업이 닫히면 전투 시간이 다시 흘러 `BattleScreen` 의 `if (G.Pending != null) … OpenPending()` 이
+            //    **그 `Frames(1)` 안에 3택을 도로 연다.** 그 뒤에 비우면 «엔진은 비었는데 UI 는 열린 채» 가 남고, 다음 각본이 그것을 «처음 열린 것» 으로 읽는다.
+            //    ⇒ 순서를 뒤집으면 되열 것이 없어 **경주 자체가 사라진다**(검수 Q 결정 1206 · 실측으로 갈음했다).
             // ⚠ 엔진이 쌓아 둔 레벨업(`PendingLevelUps`)까지 비운다 — 안 비우면 아래 각본 «사이»에 팝업 하나가 저 혼자 끼어들고,
             //    그러면 봇이 «어느 팝업의 버튼을 눌렀는지» 가 흐려진다. 봇은 각본 순서대로 놀아야 잡은 고장을 이름으로 말할 수 있다.
             G.Pending = null; G.PendingLevelUps = 0;
+            if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(1); }
             // 짧은 챕터라 그 사이에 판이 끝났으면 새 판으로 이어 간다 — «끝난 판» 위에 아래 각본을 얹으면 재는 것이 달라진다.
             if (G.Over)
             {
@@ -221,8 +225,9 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(Click(_app.Overlay.Root, s => s == "광고 보고 둘 다 얻기"), "쉼터 «광고 보고 둘 다 얻기»");
             yield return Frames(2);
             yield return UntilClosed(8f, "쉼터 광고");   // AdCountdown 3초 — 봇이 지나가는 유일한 «광고» 자리다
-            if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(1); }   // 쉼터 뒤에 레벨업이 이어 뜰 수 있다
+            // ⛑ T424 — 비우기가 먼저다(까닭은 위 P2 블록의 ⛑ 주석) — 안 그러면 닫는 그 프레임에 3택이 도로 열린다.
             G.Pending = null; G.PendingLevelUps = 0;
+            if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(1); }   // 쉼터 뒤에 레벨업이 이어 뜰 수 있다
             _log.AssertNoRed("P2 쉼터+광고");
 
             G.Pending = new PendingDecision { Kind = PendingKind.Angel };
@@ -504,8 +509,9 @@ namespace KkomaKnight.Tests.Play
             Assert.Greater(G.T, 0.0, "엔진이 실제로 돌았다");
             if (!G.Over)
             {
-                if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(1); }   // 엔진이 스스로 연 레벨업이면 여기서 정리한다(P2 와 같은 이유)
+                // ⛑ T424 — 비우기가 먼저다(까닭은 위 P2 블록의 ⛑ 주석) — 안 그러면 닫는 그 프레임에 3택이 도로 열린다.
                 G.Pending = null; G.PendingLevelUps = 0;
+                if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(1); }   // 엔진이 스스로 연 레벨업이면 여기서 정리한다(P2 와 같은 이유)
                 G.Cleared = true;
             }
             else Assert.IsTrue(G.Cleared, "체력을 받쳐 준 0.5초 안에 판이 끝났다면 이긴 쪽이어야 한다");
@@ -728,8 +734,9 @@ namespace KkomaKnight.Tests.Play
             Assert.Greater(G.T, 0.0, "엔진이 실제로 돌았다");
             if (!G.Over)
             {
-                if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(1); }
+                // ⛑ T424 — 비우기가 먼저다(까닭은 위 P2 블록의 ⛑ 주석) — 안 그러면 닫는 그 프레임에 3택이 도로 열린다.
                 G.Pending = null; G.PendingLevelUps = 0;
+                if (_app.Overlay.IsOpen) { _app.Overlay.Close(); yield return Frames(1); }
                 G.Cleared = true;
             }
             else Assert.IsTrue(G.Cleared, "체력을 받쳐 준 1초 안에 판이 끝났다면 이긴 쪽이어야 한다");

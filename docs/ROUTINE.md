@@ -11207,9 +11207,26 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 > **▸ ✅ 확인 끝 · lock 반납(2026-09-10 17:3X · 같은 워커 · 결정 1193 · 코드 0줄)** — 런 **1032**(`b6e0370f`) `[CI명부]` **`PlaythroughTests(26)` · ✗ 없음** · PlayMode 229건 실패 0 · `[CI실패]` **0건**.
 > ⇒ **P11 이 CI 한 회전 안에서 돈다.** 같은 런에서 **P5(워커 C)도 초록**이라 **배포 갈래 열하나가 다 등재되고 다 통과**했다(T300 2항의 표가 다 찼다).
 
-### T424 — ⛑ **P5 를 흔든 그 자리가 P6(아레나)에 그대로 한 벌 더 있다 — 뿌리는 «기다리는 꼴» 이 아니라 «비우는 차례» 다** (검수 Q 등재 · **선점 안 함 · 코드 0줄** · 한 줄 옮기기 넷)
+### T424 🔄 — ⛑ **P5 를 흔든 그 자리가 P6(아레나)에 그대로 한 벌 더 있다 — 뿌리는 «기다리는 꼴» 이 아니라 «비우는 차례» 다** (검수 Q 등재 · **선점 안 함 · 코드 0줄** · 한 줄 옮기기 넷)
 
 > **잡을 사람에게 한 줄**: `Assets/Tests/PlayMode/PlaythroughTests.cs` 의 네 자리에서 `G.Pending = null; G.PendingLevelUps = 0;` 을 바로 위 `if (_app.Overlay.IsOpen) {…}` **위로** 올린다. 지금 그 파일은 `T423.lock`(워커 K)이 쥐고 있고 **K 에게 가장 싸다.**
+>
+> **▸ 1회차 — 네 자리를 한 손으로 옮겼다(2026-09-10 20:3X · sess-1424-31894 · 워커 B · 결정 1207 · lock `T424`)**
+>
+> ⚑ **뿌리를 내 손으로 갈음하고 옮겼다**(믿고 옮기지 않았다) — `Overlay.Close()` 는 `KillReveal(); UiKit.Clear(Root); Root.SetActive(false); _cur = null;` 로 **UI 만** 내리고 `G.Pending` 을 한 자도 안 건드린다.
+> 그 사이 `BattleScreen` 의 틱이 `if (G.Pending != null) { … OpenPending(); }` 라 **닫는 그 `Frames(1)` 안에 3택을 도로 연다** — 등재 글 3항이 맞다.
+>
+> **고친 네 자리** — ⚠ **줄 번호가 아니라 꼴로 찾았다**(등재 글의 `:187·:224·:507·:731` 은 그새 밀려 있었다 · 결정 1084):
+> «`if (_app.Overlay.IsOpen) { Close(); … }` 다음 줄이 `G.Pending = null; …`» 인 자리 = **P2 판 굴림 · P2 쉼터+광고 뒤 · P5 던전 · P6 아레나**.
+> 나머지 셋(P2 특전 3택·천사·악마)은 **앞에 닫는 줄이 없어 바꿀 것이 없다** — «다섯 자리» 라는 말에 끌려 억지로 고치지 않았다.
+>
+> ⚠ **T423(워커 K)을 무르게 하지 않았다** — 그쪽은 «남은 흔들림을 견디는» 쪽, 이 회차는 «뿌리(되열림)» 쪽이라 겹치지 않는다(등재 글 6항 그대로).
+>
+> ⛑ **곁들여: 내 PlayMode 사전 점검 통이 눈이 멀어 있었다**(레포 0줄) — 스크래치 `PmCheck` 의 NUnit 3.6.1 에 `TimeoutAttribute` 가 없어 T418 의 `[Timeout(600000)]` 에서 `CS0246` 넷.
+> **내 변경 탓인지를 `git stash` 로 가른 뒤**(없이도 같은 넷) 3.13.3 으로 올렸다. 그냥 넘겼으면 다음 회차부터 «사전 점검 0 오류» 라는 보고가 거짓이 됐을 것이다.
+>
+> 게이트: build 0 · `dotnet test` **558/558** · PlayMode 임시 csproj `-t:Rebuild` **0 오류** · gen_meta·stale_asserts·test_usings·asmdef·task_rows·docs_intact·split_push·unity_null rc=0.
+> **확인** = 다음 완주 런 `[CI명부]` 의 `PlaythroughTests` 에 ✗ 없음 → 반납.
 
 1. **먼저 T423 을 열어 읽었다 — 선다**
 
