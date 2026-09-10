@@ -397,6 +397,30 @@ namespace KkomaKnight.Game
             UiKit.Tag(back, "뒤로 버튼");
         }
 
-        public override void Refresh() => _top?.Refresh();
+        /// <summary>
+        /// 화면에 들어올 때마다 — 재화 바 + <b>트랙을 «지금 레벨» 자리로 되돌리고 줄을 다시 그린다</b>.
+        /// <para>
+        /// ⚑ 둘 다 «처음 열 때만» 하던 일이었다(<see cref="Build"/> → <see cref="BuildTrack"/> ④). 화면은 한 번 서면 살아 남으므로
+        /// <b>두 번째로 열면 지난번에 굴려 둔 자리에 그대로 서 있었다</b> — 표 ㊼ 이 «열자마자 맨 위 = <see cref="TopLevel"/>» 을 계약으로 적어 두었는데
+        /// 그 계약이 <b>첫 번째 열 때만</b> 참이었다. 자도 첫 열림만 재고 있어 아무도 몰랐다.
+        /// </para>
+        /// <para>
+        /// ⚑ 줄은 «세이브가 무엇을 말하는가»(지금 레벨 · 받은 칸)를 <b>태어날 때 한 번</b> 그린다.
+        /// 그래서 다시 그리지 않으면 <b>세이브가 바뀌어도 화면은 옛 그림을 들고 있다</b> —
+        /// 지금은 아무도 세이브를 안 바꿔서 안 보였고, 값이 서서 «받기» 가 붙는 날 «눌렀는데 체크가 안 뜬다» 로 나타난다
+        /// (그리고 그때는 «받기가 안 먹는다» 로 읽혀 엉뚱한 자리를 파게 된다). 이 자리를 지금 닫는다.
+        /// </para>
+        /// <para>⚠ <b>먼저 트리에서 떼고 지운다</b> — <c>Destroy</c> 는 프레임 끝에 치우므로, 떼지 않으면 같은 프레임에 «옛 줄 · 새 줄» 이 같은 이름으로 둘 서 있다(이름으로 찾는 자·화면이 옛것을 문다).</para>
+        /// </summary>
+        public override void Refresh()
+        {
+            _top?.Refresh();
+            if (_content == null) return;
+            _content.anchoredPosition = new Vector2(0, (TopLevel - 1) * PitchPx);   // ④ 와 같은 자리 — «열자마자 레퍼런스 구도» 는 두 번째 열 때도 참이어야 한다
+            foreach (var kv in _rows)
+                if (kv.Value != null) { kv.Value.SetParent(null, false); Object.Destroy(kv.Value.gameObject); }
+            _rows.Clear();
+            RefreshRows();
+        }
     }
 }

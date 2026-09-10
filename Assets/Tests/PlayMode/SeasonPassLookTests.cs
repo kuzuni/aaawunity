@@ -169,16 +169,25 @@ namespace KkomaKnight.Tests.Play
             }
 
             // ── T322 ⛑ — «받았다» 표시는 세이브가 말한다(전에는 사진 셋업이 이 갈래를 대신 보여 줬다)
+            //   ⚑ 이 갈래가 런 962 에서 빨갰고, 그 빨강이 **화면 고장 둘**을 드러냈다(둘 다 «두 번째로 열 때» 만 난다):
+            //     ⓐ 앞 갈래가 트랙을 맨 아래로 굴려 뒀는데 **다시 열어도 그 자리에 그대로 섰다** —
+            //        표 ㊼ 의 계약 «열자마자 맨 위 = TopLevel» 이 **첫 열림에만** 참이었다(자도 첫 열림만 재고 있었다).
+            //     ⓑ 줄은 세이브를 **태어날 때 한 번** 그리므로, 다시 그리지 않으면 세이브가 바뀌어도 옛 그림이 남는다 —
+            //        값이 서서 «받기» 가 붙는 날 «눌렀는데 체크가 안 뜬다» 로 나타났을 자리다.
+            //   ⇒ 고침은 화면 쪽(Refresh 가 자리를 되돌리고 줄을 다시 그린다). 이 갈래는 그 둘을 **동시에** 잰다.
             {
                 int lv = SeasonPassScreen.CurLevel;
                 var claimed0 = new System.Collections.Generic.Dictionary<int, int>(_app.Save.PassClaimed);
-                SeasonPassScreen.Open(_app); yield return Frames(2);        // 앞 갈래가 트랙을 맨 아래로 굴려 뒀다 — 새로 열어 그 줄을 다시 세운다
+                SeasonPassScreen.Open(_app); yield return Frames(2);
+                Assert.IsNotNull(UiKit.Find(_app.Current.Root, "Badge:" + SeasonPassScreen.TopLevel),
+                    "다시 열면 트랙이 «지금 레벨» 자리로 돌아온다 — 앞 갈래가 맨 아래로 굴려 뒀다(ⓐ)");
                 Assert.IsNull(UiKit.Find(UiKit.Find(_app.Current.Root, "Cell:free:" + lv), "Check"), "안 받은 칸에는 체크가 없다");
                 _app.Save.PassClaimed[lv] = Pass.Bit(PassData.ColFree);
                 SeasonPassScreen.Open(_app); yield return Frames(2);
-                Assert.IsNotNull(UiKit.Find(UiKit.Find(_app.Current.Root, "Cell:free:" + lv), "Check"), "세이브가 «받았다» 면 그 칸에 체크가 선다");
+                Assert.IsNotNull(UiKit.Find(UiKit.Find(_app.Current.Root, "Cell:free:" + lv), "Check"), "세이브가 «받았다» 면 그 칸에 체크가 선다(ⓑ)");
                 _app.Save.PassClaimed.Clear(); foreach (var kv in claimed0) _app.Save.PassClaimed[kv.Key] = kv.Value;
                 SeasonPassScreen.Open(_app); yield return Frames(2);        // 뒤 갈래들이 읽으므로 되돌린다(T299 ⓑ)
+                Assert.IsNull(UiKit.Find(UiKit.Find(_app.Current.Root, "Cell:free:" + lv), "Check"), "되돌리면 체크도 사라진다(옛 줄이 남지 않는다)");
             }
 
             // ── T328(주인 «그것들도 다 패턴 효과 있어야 하는데 없네») — 열마다 흐르는 무늬 한 장
