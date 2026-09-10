@@ -9896,6 +9896,16 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/Overlay.cs`(`PlaceRibbonGlow`·`TitleGlowMask` · 악마의 거래 662) · `Game/RewardPopup.cs` · `Game/RibbonGlowFollow.cs` · 자. lock `T369`. **T361(상자 위 변을 리본까지)과 같은 자리**라 한 사람이 같이 잡으면 좋다.
 
+### T380 ✅ — ⚑⚑ 주인: **펫(13) — «전체 강화»·«빠른 장착» 둘 다 주황 + 할 것이 있으면 빨간 점 · 소환 버튼은 상점 신화 상자 버튼 꼴(«1회» / [💎 100])** (주인 2026-09-10 «펫꺼 전체강화·빠른장착 둘다 주황으로 · 강화할거리 있으면 빨간점 · 빠른장착 할만한거 있으면 빨간점» + «펫부분도 뽑기 버튼 내부 디자인 신화상자부분의 버튼 디자인처럼 · 1회 / 다이아 아이콘 100») (주인 자리 로컬 세션이 바로 고침 · 코드 들어감 · CI 확인 대기)
+
+0. **지시 셋을 한 회차에** — ⓐ 보조 버튼 둘의 옷을 **늘 주황**(`ui.btnOrange`)으로. T293 ⓗ 때 적어 둔 «옷을 상태로 바꾸려면 두 벌을 겹쳐야 한다» 걱정은 **주인이 색을 고정해서 사라졌다** — 갈아입힐 것이 없으니 겹칠 것도 없다. ⓑ «지금 할 것이 있나» 는 **빨간 점**이 말한다(`UpgradeDot`·`QuickEquipDot` · 버튼 오른쪽 위 안쪽 · 특권 카드 «받기» 점과 같은 눈금 34) — 켜고 끄는 값은 글자 뒤 수와 **같은 한 값**(`UpgradableCount`·`QuickEquipCount` · `RefreshHelpers` 하나뿐). ⓒ 소환 버튼 = 상점 큰 카드 `PriceButton(twoLine)` 꼴 — 윗줄 «**N회**»(수는 `Pets.Offer` 의 `Count` · 펫알 3개면 «3회» · «1회» 라 적고 3회가 나가면 거짓말 · T255 열쇠 버튼과 같은 까닭) / 아랫줄 [아이콘][값] 한 줄.
+1. **PriceRow 를 UiKit 로 올렸다** — 상점 `ShopScreen.PriceRow` 의 몸을 `UiKit.PriceRow`(줄·값 글자 이름을 인자로 · 상점 = Price/Cost · 펫 = Cost/Qty) 로 옮기고 상점은 위임만 한다. 같은 함수라 간격(10)·아이콘 한 변(44)이 두 화면에서 같다 — «값 줄» 이 화면마다 다른 꼴이면 사람이 두 번 배운다.
+2. **자** — `PetSummonTests`: 점이 올릴 것이 있을 때 켜지고 다 올린 뒤 꺼진다 · 빠른 장착도 같은 꼴 · 펫알 3개면 윗줄 «3회». `UiSmokeTests` 펫 블록: «소환»·«소환 x10» 글자 단언을 «N회» 꼴 단언으로 옮겼다(T378 의 «계약을 옮긴다» 그대로 · 기댓값을 낮추지 않았다).
+3. **게이트(로컬)** — `dotnet build` 0 오류 · `dotnet test` **531/532** — ⚠ 빨강 1 = `PetTests.조용히_어긋나는_표는_읽는_순간_운다`(EditMode · `pet.json` 의 «legend_hit» 줄 · **이 회차가 만진 파일이 아니다** · HEAD 에서도 같은 빨강 — T293 임자 몫). `check_stale_asserts` 6건 전부 우연히 같은 글자(«ui.btnGray» 는 자가 제 손으로 세우는 조각 키 · «소환 x» 는 단언 메시지 · 수 넷은 남의 화면). test_usings·asmdef·font_glyphs·catalog_keys·split_push·gen_meta rc=0. PlayMode 자는 유니티 csproj 로 컴파일 확인.
+4. **확인** — CI 유니티 잡 초록(`PetSummonTests`·`UiSmokeTests` 펫 블록) + 주인 폰 눈 확인(주황 둘 · 점 · «1회 / 💎 값»).
+
+순서 — `Game/PetScreen.cs` · `Game/UiKit.cs`(`PriceRow`) · `Game/ShopScreen.cs`(위임 3줄) · `Tests/PlayMode/PetSummonTests.cs`·`UiSmokeTests.cs`(펫 블록). lock 없음(주인 자리 세션 · 바로 고침).
+
 ### T379 — **`UiSmokeTests.LobbySettingsTalentPetToast` 하나가 화면 아홉을 훑는다 — CI 한 회전에 결함이 하나씩만 나온다** (검수 Q 등재 · **선점 안 함 · 코드 0줄** · 값은 여섯 회전으로 실측됐다)
 
 0. **왜 지금 등재하나** — 이것은 «자가 틀렸다» 가 아니라 **«자를 어떻게 묶어 놨나» 문제**다. 그래서 회차 33 에 한 번 접어 두고 «이 자가 또 이런 꼴로 물면 그때 등재한다» 고 적었다(검수 Q). **또 물었다 — 다섯 번째다.** 접어 둘 근거가 없어졌으므로 재는 것을 여기 적는다.

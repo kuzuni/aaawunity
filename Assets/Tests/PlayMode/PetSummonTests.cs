@@ -5,6 +5,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using TMPro;
 using UnityEngine.UI;
 
 namespace KkomaKnight.Tests.Play
@@ -62,6 +63,8 @@ namespace KkomaKnight.Tests.Play
             _app.ShowScreen("pet"); yield return Frames(1);
             var btn = UiKit.Find(_app.Current.Root, "SummonBtn");
             Assert.IsNotNull(btn, "소환 버튼");
+            // T380 — 윗줄 «N회» 는 Offer 의 Count 다(펫알 3개 ⇒ «3회» · «1회» 라 적고 3회가 나가면 거짓말).
+            Assert.AreEqual(PetScreen.CountLabel(3), UiKit.Find(btn, "Label").GetComponent<TMP_Text>().text, "펫알 3개면 윗줄이 «3회» 다(T380)");
 
             int achBefore = Achievement.Count(_app.Save, Quests.AchPetGacha);
             btn.GetComponent<Button>().onClick.Invoke();
@@ -209,9 +212,13 @@ namespace KkomaKnight.Tests.Play
             int questBefore = QuestRun.Count(_app.Save, true, Quests.PetUpgrade);
 
             var up = UiKit.Find(root, "UpgradeAllBtn"); Assert.IsNotNull(up, "전체 강화 버튼");
+            // T380(주인 «강화할 거리 있으면 빨간점») — 올릴 것이 있으면 점이 켜져 있고, 다 올린 뒤에는 꺼진다. 판정은 화면과 같은 한 값(UpgradableCount)이다.
+            var upDot = UiKit.Find(up, PetScreen.UpgradeDotName); Assert.IsNotNull(upDot, "전체 강화 버튼의 빨간 점(이름 계약)");
+            Assert.IsTrue(upDot.gameObject.activeSelf, "올릴 펫이 있으면 «전체 강화» 점이 켜진다(T380)");
             up.GetComponent<Button>().onClick.Invoke(); yield return Frames(1);
             foreach (var p in d.Pets)
                 Assert.IsFalse(Pets.CanLevelUp(d, _app.Save, p.Id), "«전체» 는 더 못 올릴 때까지 올린다 — " + p.Name);
+            Assert.IsFalse(upDot.gameObject.activeSelf, "다 올린 뒤에는 «전체 강화» 점이 꺼진다(T380)");
             Assert.AreEqual(questBefore + upsWanted, QuestRun.Count(_app.Save, true, Quests.PetUpgrade),
                             "퀘스트 카운터는 «올린 횟수만큼» 오른다(세부 팝업의 강화와 같은 수)");
 
@@ -219,7 +226,10 @@ namespace KkomaKnight.Tests.Play
             int open = Pets.SlotsOpen(d, _app.Save);
             Assert.Greater(open, 0, "전제 — 첫 칸은 0회부터 열려 있다");
             var qe = UiKit.Find(root, "QuickEquipBtn"); Assert.IsNotNull(qe, "빠른 장착 버튼");
+            var qeDot = UiKit.Find(qe, PetScreen.QuickEquipDotName); Assert.IsNotNull(qeDot, "빠른 장착 버튼의 빨간 점(이름 계약)");
+            Assert.IsTrue(qeDot.gameObject.activeSelf, "빈 칸 + 안 낀 펫이 있으면 «빠른 장착» 점이 켜진다(T380)");
             qe.GetComponent<Button>().onClick.Invoke(); yield return Frames(1);
+            Assert.IsFalse(qeDot.gameObject.activeSelf, "채운 뒤(빈 칸이 없거나 남은 펫이 없으면) «빠른 장착» 점이 꺼진다(T380)");
             var worn = Pets.Equipped(d, _app.Save);
             Assert.AreEqual(Mathf.Min(open, 2), worn.Count, "열린 칸만큼(가진 만큼) 채운다");
             var g0 = d.GradeOfPet(d.Of(worn[0]));

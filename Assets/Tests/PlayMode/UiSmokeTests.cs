@@ -1014,7 +1014,14 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(0, petClip.Count, "펫 탭 잘림/넘침 0(T63-pet) — " + string.Join(" · ", petClip.ConvertAll(r => r.ToString())));
                 // ⛑ T378 — «전체 강화»·«빠른 장착» 은 할 것이 있으면 «전체 강화 6» 이 된다(`PetScreen.Count()` :450 · 부르는 자리는 이 둘뿐).
                 //   나머지 셋(«장착중»·«소환»·«소환 x10»)에는 수가 안 붙으므로 그대로 «같다» 로 둔다 — 안 깨진 단언을 미리 풀지 않는다.
-                Assert.IsTrue(HasText(s => s == "장착중") && HasText(s => LabelOrCount(s, "전체 강화")) && HasText(s => LabelOrCount(s, "빠른 장착")) && HasText(s => s == "소환") && HasText(s => s == "소환 x10"), "라벨 우리말(«전체 강화»·«빠른 장착» 은 뒤에 개수가 붙을 수 있다 · T378)");
+                // T380(주인 «신화상자 버튼처럼 · 1회 / 다이아 100») — 소환 버튼 윗줄은 «소환» 이 아니라 «N회» 다(`PetScreen.CountLabel` · 수는 Pets.Offer 의 Count).
+                Assert.IsTrue(HasText(s => s == "장착중") && HasText(s => LabelOrCount(s, "전체 강화")) && HasText(s => LabelOrCount(s, "빠른 장착")), "라벨 우리말(«전체 강화»·«빠른 장착» 은 뒤에 개수가 붙을 수 있다 · T378)");
+                foreach (var n in new[] { "SummonBtn", "Summon10Btn" })
+                {
+                    var lab = UiKit.Find(UiKit.Find(pet, n), "Label"); Assert.IsNotNull(lab, n + " 윗줄 «N회» 글자(T380)");
+                    var ls = (lab.GetComponent<TMP_Text>().text ?? "").Trim();
+                    Assert.IsTrue(ls.EndsWith("회") && ls.Length > 1 && int.TryParse(ls.Substring(0, ls.Length - 1), out var cnt) && cnt > 0, n + " 윗줄은 «N회» 꼴이어야 한다(T380 · 상점 «1회»·«10회» 와 같은 낱말) — 실제: «" + ls + "»");
+                }
                 var tabs2 = UiKit.Find(pet, "ui.tabBar"); Assert.IsNotNull(tabs2, "펫 탭 바"); Assert.GreaterOrEqual(tabs2.childCount, NavBar.Keys.Length, "탭 5");
                 // 배치 = 표 ⑩(±0.5%p) — 첫 칸 · 슬롯 줄 · 버튼 2줄 · 탭 바
                 var c0 = (RectTransform)UiKit.Find(pet, "Pet:0"); Assert.AreEqual(Layout.PetCell.X, c0.anchorMin.x * 100f, 0.5f, "첫 칸 x"); Assert.AreEqual(1f - Layout.PetCell.Y / 100f, c0.anchorMax.y, 1e-3f, "첫 칸 y");
