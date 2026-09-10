@@ -90,6 +90,15 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNotNull(layer, "구슬 층(" + RewardPopup.OrbLayerName + ")은 프레임 밑에 선다(T354)");
                 Assert.AreEqual(_app.Frame, layer.parent, "구슬 층의 부모 = 프레임(화면 루트가 아니다 · T354)");
                 Assert.Greater(layer.GetSiblingIndex(), _app.Overlay.Root.GetSiblingIndex(), "구슬 층은 오버레이보다 앞에 그려진다(T354)");
+                // T428 — 형제 순서는 앞 팝업이 다시 열리면(onClose) 뒤집힌다 → 층은 제 Canvas(overrideSorting · sortingOrder 100)로 늘 위여야 한다.
+                var cv = layer.GetComponent<Canvas>();
+                Assert.IsNotNull(cv, "구슬 층에 제 Canvas 가 있다(T428 · 주인 «캔버스를 따로»)");
+                Assert.IsTrue(cv.overrideSorting, "구슬 층 Canvas 는 overrideSorting(T428)");
+                Assert.AreEqual(RewardPopup.OrbSortingOrder, cv.sortingOrder, "구슬 층 sortingOrder = 최상위(T428)");
+                // 앞 팝업이 다시 열려 오버레이가 맨 위로 가도(형제 순서로는 구슬이 뒤) Canvas 정렬로 이긴다 — 그 상황을 만들어 재확인
+                _app.Overlay.Root.SetAsLastSibling();
+                Assert.Less(layer.GetSiblingIndex(), _app.Overlay.Root.GetSiblingIndex(), "(상황 재현) 형제 순서로는 오버레이가 위");
+                Assert.IsTrue(layer.GetComponent<Canvas>().overrideSorting && layer.GetComponent<Canvas>().sortingOrder > 0, "그래도 Canvas 정렬로 구슬이 위(T428)");
             }
             // T367(주인 2026-09-10 «다이아는 다이아 쪽, 골드는 골드 쪽으로 흡수») — 보상 칸이 실제로 쓰는 키(ui.gemRed · ui.coin)가 제 pill 로 간다.
             //   옛 판정은 다이아 키 셋만 알아 `ui.gemRed`(출석·데일리·챕터 상자·퀘스트 트랙)가 가운데 아래 «자리 없음» 으로 빨려 들어갔다.

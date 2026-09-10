@@ -284,6 +284,9 @@ namespace KkomaKnight.Game
         /// (좌표는 둘 다 프레임 stretch 라 <see cref="RewardOrbs.TargetPos"/> 는 그대로 · 화면이 바뀌어도 층이 살아남는다).
         /// </para>
         /// </summary>
+        /// <summary>구슬 층의 정렬 순서 — 같은 루트 캔버스 안에서 <b>무엇보다 위</b>(오버레이·팝업은 캔버스 정렬을 안 쓰고 형제 순서만 쓴다 · 그래서 이 하나면 이긴다).</summary>
+        public const int OrbSortingOrder = 100;
+
         static RectTransform Layer(App app)
         {
             var host = app.Frame != null ? app.Frame : (app.Current != null ? app.Current.Root : null);
@@ -295,6 +298,13 @@ namespace KkomaKnight.Game
                 _orbSink = null;
             }
             _orbLayer.SetAsLastSibling();
+            // T428(주인 2026-09-11 «리워드 보상 받을 때 뜨는 화폐 흡수 이펙트가 안 보임 · 캔버스를 따로 하던지 · 쨌든 팝업 뒤에 가려져서 안 보인다») — T354 가 층을 프레임 밑 «맨 위» 로 올렸는데도 가려졌다. 까닭: 리워드 팝업을 닫는 손잡이가
+            //   `Absorb → ov.Close → onClose` 순서이고, onClose 가 **앞 팝업을 다시 연다**(퀘스트·출석·탐험 …) → `Overlay.Root.SetAsLastSibling()` 이
+            //   구슬이 아직 날아가는 동안 오버레이를 다시 맨 위로 올린다. 형제 순서 싸움은 «나중에 올린 쪽» 이 늘 이기므로 순서로는 못 막는다.
+            //   ⇒ 층에 **제 Canvas** 를 달아 `overrideSorting` + 큰 `sortingOrder` 로 그린다(같은 루트 캔버스 안 · 좌표 불변 · 주인 «캔버스를 따로 하던지»).
+            //   오버레이·팝업은 Canvas 정렬을 안 쓰니(형제 순서뿐) 이 하나로 늘 위다. raycast 는 층이 안 받으므로 GraphicRaycaster 는 안 단다.
+            var cv = UiKit.Ensure<Canvas>(_orbLayer.gameObject);
+            cv.overrideSorting = true; cv.sortingOrder = OrbSortingOrder;
             return _orbLayer;
         }
 
