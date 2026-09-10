@@ -139,8 +139,15 @@ namespace KkomaKnight.Game
         void PlayIdle()
         {
             if (_rig == null || _stage == null || !_stage.gameObject.activeInHierarchy) return;
-            _rig.Play(CharacterRig.Idle, true); _rig.SetSpeed(Still ? 0f : 1f);
+            _rig.Play(Walking ? CharacterRig.Walk : CharacterRig.Idle, true); _rig.SetSpeed(Still ? 0f : 1f);
         }
+
+        /// <summary>
+        /// T394 — 제자리 걷기(주인 «탐험 쪽은 오른쪽으로 계속 이동하는 것처럼»): Idle 대신 전투 <see cref="CharacterRig.Walk"/> 상태를 튼다(오른쪽 보기는 <see cref="SetSkin"/> 의 <c>Face(true)</c> 그대로).
+        /// 걷는 «느낌» 의 나머지 반(발밑 배경이 오른쪽→왼쪽으로 흐름)은 부르는 쪽(<c>LobbyPopups.Picture</c>)의 몫이다. <see cref="Still"/> 이면 걷기 첫 프레임에서 멈춘다.
+        /// </summary>
+        public bool Walking { get; private set; }
+        public void SetWalking(bool walking) { Walking = walking; PlayIdle(); }
 
         /// <summary>정지 초상(T68 ② · 주인 «로비 상단 주인공이 계속 움직인다») — Idle 첫 프레임에서 Animator 속도 0. 장비 화면의 큰 캐릭터는 false(움직임 유지).</summary>
         public bool Still { get; private set; }

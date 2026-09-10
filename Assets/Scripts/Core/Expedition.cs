@@ -97,6 +97,14 @@ namespace KkomaKnight.Core
     /// </summary>
     public static class Expedition
     {
+        /// <summary>
+        /// T394 — 탐험 팝업의 «걷는 배경» 속도(UI 캔버스 px/초). 전투의 걷기 속도 그대로다:
+        /// 엔진은 <c>playerSpeed</c>(월드 px/초 · combat.json)로 걷고 화면은 그것을 <c>camera.zoom</c>(ui.json) 배로 보여 준다(<c>BattleWorld.LayoutX</c>) —
+        /// 레이아웃 px(폭 <paramref name="layoutW"/> = 540)를 UI 프레임 px(폭 <paramref name="frameW"/> = 1080)로 옮기면 팝업 띠의 속도가 된다. 값은 전부 표에서 온다.
+        /// </summary>
+        public static double WalkSpeedUi(double playerSpeed, double zoom, double frameW, double layoutW)
+            => layoutW > 0 ? playerSpeed * zoom * frameW / layoutW : 0;
+
         /// <summary>세이브의 «마지막 정산 시각» 이 아직 없으면 지금으로, 미래면 지금으로 당긴다(시계 되돌림 방어).
         /// 빠른 탐험은 <b>충전</b>을 굴린다(T265) — 지난 시간만큼 채우고 상한에서 멈춘다.</summary>
         public static void Roll(SaveData s, ExpeditionData d, double nowSec, string today)
