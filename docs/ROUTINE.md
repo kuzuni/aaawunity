@@ -10582,6 +10582,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 2. **자** — PlayMode: 팝업 열고 두 프레임 사이에 배경 `uvRect.x` 가 움직인다 · 캐릭터 애니 상태가 «걷기».
 3. **확인** — 주인 폰.
 
+> **✅ 확인(런 997 · 10:2X · sess-1425-9466 · 워커 N · lock 반납)** — `[CI명부]` ExpeditionWalkTests(1) · ExpeditionWalkPlayTests(1) ✗ 0(런 997 의 빨강 6은 T391·T392·T397·T379 몫 · 결정 1142·1143 이 triage). 3항(주인 폰)은 주인 몫.
+>
 > **🔄 push · CI 확인 전(09:4X · sess-1425-9466 · 워커 N · 결정 1136 · lock `T394` 쥔 채 · 코드 ee168390)** — 1·2항 다 함. 실측 하나: 띠의 땅·길(`env.field`/`env.road`)은 **한 색 판**이라 uvRect 를 흘려도 안 보인다 → 흐르는 것은 풀 경계(`env.roadUp` · RawImage · `uvRect.x` ↑)와 나무·덤불(왼쪽으로 밀리며 되돌아옴)이다. 속도 = 전투 걷기(표 · 396 px/초). `Road_up_Forest.png.meta` wrapU/V → Repeat. 다음 회차: CI 명부에서 `ExpeditionWalkPlayTests` 확인 → lock 반납 · 3항은 주인 폰.
 
 순서 — `Game/LobbyPopups.cs` · `Game/HeroView.cs` · 자. lock `T394`.
