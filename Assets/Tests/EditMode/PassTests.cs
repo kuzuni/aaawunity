@@ -30,8 +30,17 @@ namespace KkomaKnight.Tests
         public void 아는_줄만_표에_있고_나머지는_모르는_채로_남는다()
         {
             var d = Load();
-            Assert.Greater(d.Levels.Count, 0, "레퍼런스에 그려진 줄은 들어 있다");
-            Assert.Less(d.Levels.Count, d.MaxLevel, "⚠ 100줄이 다 차 있으면 누군가 수를 지어낸 것이다(주인 미제공 · T266 ⓑ)");
+            // T266 ⓑ — 주인이 2026-09-10 값을 줬다(«전부 100 다이아 · 5번째마다 500 · 9,900원은 같고 비싼 것은 2배») → 100줄이 다 차 있어야 한다.
+            //   (이력) 그 전에는 «100줄이 다 차 있으면 누군가 수를 지어낸 것» 을 걸었다 — 주인 미제공 시절의 자였다.
+            Assert.AreEqual(d.MaxLevel, d.Levels.Count, "주인 규칙으로 1~100 이 전부 찬다(T266 ⓑ)");
+            for (int lv = 1; lv <= d.MaxLevel; lv++)
+            {
+                int baseQty = lv % 5 == 0 ? 500 : 100;
+                Assert.AreEqual(baseQty.ToString(), d.At(lv, PassData.ColFree).Qty, "무료 " + lv + " = 100 · 5의 배수는 500");
+                Assert.AreEqual(baseQty.ToString(), d.At(lv, PassData.ColPaid1).Qty, "유료1(₩9,900) " + lv + " = 무료와 같다(주인 «9900원짜리는 똑같고»)");
+                Assert.AreEqual((baseQty * 2).ToString(), d.At(lv, PassData.ColPaid2).Qty, "유료2 " + lv + " = 2배(주인 «더 비싼 거는 2배»)");
+                for (int c = 0; c < PassData.Cols; c++) Assert.AreEqual("ui.gemRed", d.At(lv, c).Icon, "세 열 전부 다이아 " + lv);
+            }
 
             foreach (var kv in d.Levels)
             {

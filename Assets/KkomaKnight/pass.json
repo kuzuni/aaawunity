@@ -1,13 +1,1415 @@
 {
-  "_note": "시즌 패스 보상 표 — 이 레포 전용(aaaw data/ 에 없다 · T322). ⚠ **주인이 아직 값을 안 줬다**(T266 ⓑ 그대로): 여기 적힌 다섯 줄(29~33)은 주인 레퍼런스 그림 19_pass.jpg 에 «그려져 있는» 것을 옮긴 것이고 게임 수치가 아니다. 나머지 95줄은 비워 둔다 — 화면은 빈 줄을 «?» 두루마리 + 자물쇠로 그리고 **수를 지어내지 않는다**(없는 수를 그리면 주인이 그것을 값으로 읽는다).",
+  "_note": "시즌 패스 보상 표 — 이 레포 전용(aaaw data/ 에 없다 · T322). **값은 주인이 줬다(T266 ⓑ · 주인 2026-09-10 «패스 걍 전부 100다이아로 하다가 5번째마다 500다이아로 하기 · 9900원짜리는 똑같고 더 비싼 거는 2배로 다이아 주는 식으로»)**: 세 열 전부 다이아(ui.gemRed) · 무료 = 레벨마다 100, 5의 배수 레벨은 500 · 유료1(₩9,900) = 무료와 같음 · 유료2(₩49,000) = 2배(200 / 1000). 규칙이 한 줄이라 표를 손으로 고치지 말고 규칙을 고친 뒤 다시 편다(자 PassTests 가 규칙 그대로 100줄을 잰다). (이력) 이전 다섯 줄(29~33)은 레퍼런스 그림 19_pass.jpg 를 옮긴 것이었고 게임 수치가 아니어서 이 값으로 덮였다.",
   "_startNote": "startLevel = 세이브가 아직 «지금 레벨» 을 모를 때 화면이 서는 자리. ⚑ 이 32 는 지어낸 수가 아니라 **레퍼런스 그림 19_pass.jpg 가 보여 주는 레벨**이고, 오래 SeasonPassScreen 안에 const int CurLevel = 32 로 박혀 있던 바로 그 수다 — T322 ⓓ 가 «지금 레벨» 을 세이브로 옮기면서 그 수를 어디에도 안 남겨 주인 폰의 패스 화면이 «?» 다섯 줄이 됐다(지우지 않고 옮긴다). ⚠ 게임 수치가 아니다: 무엇으로 패스 레벨이 오르는지 주인 지시가 서면 세이브가 답하기 시작하고 이 줄은 지운다(지우면 1).",
   "startLevel": 32,
   "maxLevel": 100,
   "levels": {
-    "29": { "free": { "icon": "ui.coin",   "qty": "5"  }, "paid1": { "icon": "ui.iconScroll",     "qty": "20"  }, "paid2": { "icon": "ui.iconScroll",     "qty": "60"  } },
-    "30": { "free": { "icon": "ui.gemRed", "qty": "65" }, "paid1": { "icon": "ui.gemRed",         "qty": "260" }, "paid2": { "icon": "ui.gemRed",         "qty": "660" } },
-    "31": { "free": { "icon": "ui.coin",   "qty": "5"  }, "paid1": { "icon": "ui.iconScroll",     "qty": "20"  }, "paid2": { "icon": "ui.iconScroll",     "qty": "60"  } },
-    "32": { "free": { "icon": "ui.coin",   "qty": "5"  }, "paid1": { "icon": "ui.iconTicketBlue", "qty": "2"   }, "paid2": { "icon": "ui.iconTicketBlue", "qty": "4"   } },
-    "33": { "free": { "icon": "ui.coin",   "qty": "5"  }, "paid1": { "icon": "ui.iconScroll",     "qty": "20"  }, "paid2": { "icon": "ui.iconScroll",     "qty": "60"  } }
+    "1": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "2": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "3": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "4": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "5": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "6": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "7": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "8": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "9": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "10": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "11": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "12": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "13": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "14": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "15": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "16": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "17": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "18": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "19": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "20": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "21": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "22": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "23": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "24": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "25": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "26": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "27": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "28": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "29": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "30": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "31": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "32": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "33": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "34": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "35": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "36": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "37": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "38": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "39": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "40": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "41": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "42": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "43": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "44": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "45": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "46": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "47": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "48": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "49": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "50": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "51": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "52": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "53": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "54": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "55": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "56": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "57": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "58": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "59": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "60": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "61": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "62": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "63": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "64": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "65": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "66": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "67": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "68": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "69": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "70": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "71": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "72": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "73": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "74": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "75": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "76": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "77": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "78": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "79": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "80": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "81": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "82": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "83": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "84": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "85": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "86": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "87": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "88": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "89": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "90": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "91": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "92": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "93": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "94": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "95": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    },
+    "96": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "97": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "98": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "99": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "100"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "200"
+      }
+    },
+    "100": {
+      "free": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid1": {
+        "icon": "ui.gemRed",
+        "qty": "500"
+      },
+      "paid2": {
+        "icon": "ui.gemRed",
+        "qty": "1000"
+      }
+    }
+  },
+  "_rule": {
+    "icon": "ui.gemRed",
+    "base": 100,
+    "every5": 500,
+    "paid1Mul": 1,
+    "paid2Mul": 2
   }
 }
