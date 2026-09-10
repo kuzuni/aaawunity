@@ -77,8 +77,11 @@ namespace KkomaKnight.Tests
                     Assert.That(b.Cum[i], Is.EqualTo(acc).Within(1e-9), b.Key);
                 }
                 Assert.That(b.Cum[0], Is.EqualTo(100).Within(1e-9));
-                Assert.That(b.RarRoll(0), Is.EqualTo(Array.FindLastIndex(b.Rate, r => r > 0)));
-                Assert.That(b.RarRoll(99.999), Is.EqualTo(0));
+                // 양 끝 굴림은 «확률이 0 이 아닌 첫 칸 · 마지막 칸» 을 돌려준다 — 위아래가 짝이다.
+                // ⚠ 아래를 «0» 으로 박으면 안 된다: 주인의 전설 상자는 일반이 0% 라(66% 희귀 · 30% 영웅 · 4% 전설)
+                //   제일 흔한 등급이 0번 칸이 아니다. 재야 할 것은 자리가 아니라 **규칙**이다.
+                Assert.That(b.RarRoll(0), Is.EqualTo(Array.FindLastIndex(b.Rate, r => r > 0)), b.Key + ": 0 은 나올 수 있는 가장 높은 등급");
+                Assert.That(b.RarRoll(99.999), Is.EqualTo(Array.FindIndex(b.Rate, r => r > 0)), b.Key + ": 끝은 나올 수 있는 가장 낮은 등급");
             }
         }
 

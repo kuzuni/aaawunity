@@ -93,7 +93,10 @@ namespace KkomaKnight.Tests
         [TestCaseSource(nameof(PowerGolden))]
         public void BuildPowerIsUnchangedByTheRoleSplit(uint seed, double atk, double hp, double sh)
         {
-            var D = TestData.Load();
+            // ⚑ 표는 `PreBalance()` — 위 골든은 «T88 이전 코드에서 뜬 값» 이라 **그 시절 표**로만 뜻이 있다.
+            //   이 자가 재는 것은 «역할 분리가 BuildPower 를 흔들었나» 이지 «밸런스가 얼마인가» 가 아니다.
+            //   `Load()` 로 두면 주인이 값을 고치는 날 이 자가 «재편이 BuildPower 를 건드렸다» 고 거짓말한다(T325 · 결정 1033).
+            var D = TestData.PreBalance();
             var pw = GearSystem.BuildPower(D, RandomBuild(D, new Mulberry32(seed)));
             Assert.That(pw.Atk, Is.EqualTo(atk).Within(1e-6).Percent, "총 공격력 불변");
             Assert.That(pw.Hp, Is.EqualTo(hp).Within(1e-6).Percent, "총 체력 불변");

@@ -21,7 +21,10 @@ namespace KkomaKnight.Tests
         [TestCaseSource(nameof(Ladder))]
         public void BuildPowerMatchesLadderTable(int rar, int plus, int slot, double atk, double hp, double sh)
         {
-            var d = TestData.Load();
+            // ⚑ 표는 `PreBalance()` — 위 사다리는 **aaaw sim.js 실측**(T2 이식 동일성 골든)이고 `rar` 칸의 −1·0·1·2·3 도
+            //   그 시절 네 등급 표의 자리다. `Load()` 로 두면 주인이 밸런스를 고치는 날 «이식이 틀어졌다» 고 거짓말한다 —
+            //   틀어진 것은 이식이 아니라 값이고, 그 값은 `BattleTests` 와 같은 손으로 갈라 둔다(T325 · 결정 1033).
+            var d = TestData.PreBalance();
             var pw = GearSystem.BuildPower(d, GearSystem.MkBuild(d, rar, plus, slot));
             Assert.That(pw.Atk, Is.EqualTo(atk).Within(0.5).Percent);
             Assert.That(pw.Hp, Is.EqualTo(hp).Within(0.5).Percent);
@@ -39,10 +42,14 @@ namespace KkomaKnight.Tests
         public void FuseRules()
         {
             var d = TestData.Load(); var G = d.Gear;
-            var common = new GearItem { Part = "weapon", Type = "crit_weapon", Rar = 0 };
-            Assert.That(GearSystem.FuseMake(d, common).Rar, Is.EqualTo(1));
-            var rare = new GearItem { Part = "weapon", Type = "crit_weapon", Rar = 1 };
-            Assert.That(GearSystem.FuseMake(d, rare).Rar, Is.EqualTo(G.RarLegend));
+            // 전설 아래 등급은 «한 등급 위» 가 나온다 — 표가 넷이든 다섯이든(영웅이 끼어도) 같은 규칙이다.
+            // ⚠ 옛 줄은 «희귀를 합치면 전설» 이라고 적혀 있었는데, 그것은 규칙이 아니라 **네 등급 표에서만 참인 우연**이다
+            //   (영웅이 끼면 희귀 위는 영웅이다). 규칙으로 적으면 표가 넓어져도 뜻이 산다.
+            for (int r = 0; r < G.RarLegend; r++)
+            {
+                var it = new GearItem { Part = "weapon", Type = "crit_weapon", Rar = r };
+                Assert.That(GearSystem.FuseMake(d, it).Rar, Is.EqualTo(r + 1), "«" + G.RarName[r] + "» 를 합치면 한 칸 위가 나온다");
+            }
             var leg = new GearItem { Part = "weapon", Type = "crit_weapon", Rar = G.RarLegend, Plus = 0 };
             var l1 = GearSystem.FuseMake(d, leg);
             Assert.That(l1.Rar, Is.EqualTo(G.RarLegend)); Assert.That(l1.Plus, Is.EqualTo(1));
@@ -51,9 +58,17 @@ namespace KkomaKnight.Tests
             Assert.That(m0.Rar, Is.EqualTo(G.RarMyth)); Assert.That(m0.Plus, Is.EqualTo(0));
             var myth = new GearItem { Part = "weapon", Type = "crit_weapon", Rar = G.RarMyth, Plus = 4 };
             Assert.That(GearSystem.FuseMake(d, myth).Plus, Is.EqualTo(5));
-            // 주인 확정 제약: 신화 0강 > 전설 최대강 (부위당 공격력)
-            double legMaxAtk = G.Atk[G.RarLegend] * (1 + G.PlusStep * (G.LegendToMythPlus - 1));
-            Assert.That(G.Atk[G.RarMyth], Is.GreaterThan(legMaxAtk));
+            // 등급이 오르면 노강 공격이 오른다 — 표가 몇 칸이든 이것은 서야 한다.
+            Assert.That(G.Atk[G.RarMyth], Is.GreaterThan(G.Atk[G.RarLegend]), "신화 노강 > 전설 노강");
+            //
+            // ⚑⚑ 여기 있던 «주인 확정 제약: 신화 0강 > 전설 최대강» 은 **주인의 새 표에서 못 선다**(T325 · 결정 아래).
+            //   실측(주인 값 30·60·90·120·150 · plusStep 2.111 · legendToMythPlus 3):
+            //     전설 최대강(+2) 공 = 626.7  vs  신화 노강 공 = 150.0
+            //     **일반 +2(156.7)조차 신화 노강(150)을 넘는다** — 강화가 등급을 통째로 덮는다.
+            //   정본은 등급마다 공이 ×3~×6 으로 뛰어서(4.167 → 12.5 → 62.5 → 395.8) 그 제약이 섰다.
+            //   주인의 새 표는 **등차(+30)** 라 같은 강화 배율에서는 설 수가 없다 — 살리려면 plusStep 을
+            //   2.111 → 0.125 이하로 줄여야 하고, 그것은 «신화 +9 가 ×20 → ×2.1» 이 되는 **훨씬 큰, 주인이 안 시킨 변경**이다.
+            //   ⇒ 주인이 명시한 새 값을 그대로 넣고, 이 제약은 «노강끼리» 로만 남긴다. 주인에게 알릴 것은 §2 T325 에 적어 뒀다.
         }
 
         [Test]
@@ -95,13 +110,14 @@ namespace KkomaKnight.Tests
         public void FuseAllChainKeepsTheSlotOnTheFinalProduct()
         {
             var d = TestData.Load();
-            var S = SaveWith(9, "helm", "hpsh_helm", 0);                                         // 9×일반 → 3×희귀 → 1×전설
+            var S = SaveWith(9, "helm", "hpsh_helm", 0);                                         // 9×일반 → 3×(한 칸 위) → 1×(두 칸 위)
             S.Eq["helm"] = S.Inv[4].Uid;
             int n = GearSystem.FuseAll(d, S.Inv, null, g => S.Uid++, (mats, made) => GearSystem.ReEquipAfterFuse(S, mats, made));
             Assert.That(n, Is.EqualTo(4));
             Assert.That(S.Inv.Count, Is.EqualTo(1));
             var eq = S.EquippedGear("helm");
-            Assert.That(eq, Is.Not.Null); Assert.That(eq.Rar, Is.EqualTo(d.Gear.RarLegend)); Assert.That(eq, Is.SameAs(S.Inv[0]));
+            // 일반(0)에서 두 번 합쳐 올라간 자리 — «전설» 이라고 적으면 영웅이 끼는 날 틀린다(합성은 «한 칸씩» 이다).
+            Assert.That(eq, Is.Not.Null); Assert.That(eq.Rar, Is.EqualTo(2)); Assert.That(eq, Is.SameAs(S.Inv[0]));
         }
 
         [Test]
@@ -228,7 +244,10 @@ namespace KkomaKnight.Tests
             // 다른 상자는 안 건드린다 — 얹는 자리가 «rare 한 곳» 인지 확인한다.
             Assert.That(d.Gacha.Box("legend").PityRare, Is.EqualTo(0), "전설 상자에는 희귀 천장을 안 얹는다");
             Assert.That(d.Gacha.Box("myth").PityRare, Is.EqualTo(0), "신화 상자에도 안 얹는다");
-            Assert.That(d.Gear.RarRare, Is.EqualTo(d.Gear.RarLegend - 1), "«희귀» 는 전설 바로 아래 등급이다(표에서 온다)");
+            // ⚑ «전설 바로 아래» 로 적으면 안 된다 — 영웅이 끼는 날 그 자리가 영웅이 되어
+            //   T261 의 «희귀 확정» 천장이 조용히 «영웅 확정» 이 된다(그래서 GearData.RarRare 의 유도식을 바꿨다 · 결정 969).
+            //   재야 할 것은 자리가 아니라 **그 자리가 가리키는 등급**이다.
+            Assert.That(d.Gear.RarName[d.Gear.RarRare], Is.EqualTo("희귀"), "«희귀 확정» 천장이 가리키는 등급은 희귀여야 한다");
         }
 
         [Test]
