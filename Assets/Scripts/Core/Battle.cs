@@ -69,9 +69,9 @@ namespace KkomaKnight.Core
         PlayerState MkPlayer(Build build)
         {
             var T_ = D.Tune; var G = D.Gear;
-            var pw = GearSystem.BuildPower(D, build);
             // T293 ⓖ — 장착 펫의 공·체·실을 여기서 더한다. 기본값이 0 이라 펫 없는 판은 종전과 완전히 같다(시드 골든 T2).
-            pw.Atk += Opt.PetPower.Atk; pw.Hp += Opt.PetPower.Hp; pw.Sh += Opt.PetPower.Sh;
+            //   더하는 셈은 화면 쪽(`Pets.TotalPower`)과 **같은 함수**를 쓴다 — «판에서는 세는데 화면에서는 안 보이는» 자리를 안 만든다(주인 2026-09-10).
+            var pw = GearSystem.Plus(GearSystem.BuildPower(D, build), Opt.PetPower);
             var p = new PlayerState
             {
                 Dmg = pw.Atk, Aspd = T_.PAspd0, CritR = T_.PCrit0, CritF = T_.PCritF0, Def = T_.PDef0, Counter = T_.PCounter0, Evade = T_.PEvade0,

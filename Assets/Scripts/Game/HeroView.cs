@@ -65,7 +65,10 @@ namespace KkomaKnight.Game
         public static CharacterRig.Skin PlayerSkin(App app)
         {
             if (app == null || app.Data == null || app.Save == null) return DefaultKnightSkin();
-            bool shield = KkomaKnight.Core.GearSystem.BuildPower(app.Data, app.Save.CurBuild(app.Data)).Sh > 0;
+            // T293 ⓖ — «실드가 있으면 방패» 의 실드는 **장비 + 낀 펫**이다(`Pets.TotalPower`).
+            //   전투 쪽은 이미 그렇게 서 있다(`BattleWorld:674` 가 `G.P.MaxSh > 0` 으로 고르는데 그 값에 펫 몫이 들어간다) —
+            //   여기만 장비만 보면 **같은 세이브인데 장비 화면의 기사는 방패가 없고 전투의 기사는 든다**(T7 «둘은 같은 함수» 가 깨진다).
+            bool shield = KkomaKnight.Core.Pets.TotalPower(app.Data, app.Save).Sh > 0;
             return CharacterRig.PlayerSkin(app.Data, app.Save, shield);
         }
 

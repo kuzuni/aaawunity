@@ -502,6 +502,20 @@ namespace KkomaKnight.Core
             return sum;
         }
 
+        /// <summary>
+        /// <b>보여 주는 힘 = 장비 + 장착 펫</b>(주인 2026-09-10 «펫 전투력 숫자에 들어가야지 · 장착할 때 공체실 늘어나게»).
+        /// <para>
+        /// ⚑ <see cref="GearSystem.BuildPower"/> 는 <b>손대지 않는다</b> — 그 함수는 «장비만으로 나오는 힘» 이고 시뮬·재적합 자·시드 골든(T2)이 전부 그 뜻으로 부른다(<see cref="RunOptions.PetPower"/> 주석과 같은 까닭).
+        /// 펫은 <b>여기서 더한다</b>. 그래서 화면(전투력 숫자 · 장비 화면 스탯 3칸)과 판(<see cref="RunOptions.PetPower"/>)이 **같은 두 함수의 합**이 되어 갈릴 자리가 없다.
+        /// </para>
+        /// <para>표(<c>D.Pet</c>)가 없거나 낀 펫이 없으면 <see cref="EquipPower"/> 가 0 을 주므로 값은 장비 그대로다.</para>
+        /// </summary>
+        public static Power TotalPower(GameData D, SaveData s)
+        {
+            if (D == null || s == null) return new Power();
+            return GearSystem.Plus(GearSystem.BuildPower(D, s.CurBuild(D)), EquipPower(D, D.Pet, s));
+        }
+
         /// <summary>엔진에 들려 보낼 발동 목록 — 지금 장착한 것들로 만든다(<see cref="Procs(PetData, IEnumerable{string})"/> 의 짧은 길).</summary>
         public static List<RunOptions.PetProc> Procs(PetData d, SaveData s) => Procs(d, Equipped(d, s));
 

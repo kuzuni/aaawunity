@@ -47,6 +47,9 @@ namespace KkomaKnight.Core
             return 1 + D.Gear.EvenStep * Math.Floor((double)mn / D.Gear.EvenPer);
         }
 
+        /// <summary>공·체·실을 자리마다 더한다 — «장비 + 펫» 을 더하는 자리가 화면(<see cref="Pets.TotalPower"/>)과 판(<see cref="Battle"/>) 둘이라 셈을 한 함수로 묶어 둔다.</summary>
+        public static Power Plus(Power a, Power b) => new Power { Atk = a.Atk + b.Atk, Hp = a.Hp + b.Hp, Sh = a.Sh + b.Sh };
+
         /// <summary>sim.js `buildPower(b)` — 부위 기여 = 등급 기여 × (1 + plusStep×강화) × 슬롯 배수, 마지막에 균등 보너스.</summary>
         public static Power BuildPower(GameData D, Build b)
         {

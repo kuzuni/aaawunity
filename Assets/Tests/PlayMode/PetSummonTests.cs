@@ -286,6 +286,58 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
+        [UnityTest]
+        public IEnumerator 펫을_끼면_전투력_숫자와_장비_스탯_셋이_같이_오른다()
+        {
+            // T293 ⓖ 마지막 어긋남 — 주인 2026-09-10 «펫 전투력 숫자에 들어가야지 · 장착할 때 공체실 늘어나게».
+            //   판은 이미 펫을 세고 있었는데(`RunOptions.PetPower`) 화면은 안 셌다. 이 자는 **화면 쪽**을 잰다:
+            //   ⓐ 전투력 숫자(`App.Power()` · 상단 바가 찍는 그 값) · ⓑ 장비 화면 스탯 3칸.
+            //   ⚑ 기댓값을 자가 다시 세지 않는다 — 화면이 읽는 그 함수(`Pets.TotalPower`)로 되짚는다(값이 바뀌면 자도 같이 움직인다).
+            yield return Boot();
+            var d = _app.Data != null ? _app.Data.Pet : null;
+            if (d == null) { yield return Shutdown(); Assert.Ignore("펫 표가 없다 — 부팅이 안 들었다(T293 ⓗ)"); }
+
+            _app.ShowScreen("gear"); yield return Frames(2);
+            var gear = _app.Current.Root;
+            double power0 = _app.Power();
+            string atk0 = StatText(gear, "atk"), hp0 = StatText(gear, "hp"), sh0 = StatText(gear, "sh");
+
+            // 전설 한 마리를 얻어 첫 칸에 끼운다(새 세이브에서 첫 칸은 열려 있다 · 등급이 높을수록 더하는 몫이 커서 숫자가 확실히 움직인다)
+            var id = d.Pets[d.Pets.Count - 1].Id;
+            Pets.Gain(_app.Save, id);
+            Assert.IsTrue(Pets.Equip(d, _app.Save, id, 0), "새 세이브의 첫 장착 칸은 열려 있다");
+            _app.Persist();
+            var add = Pets.EquipPower(_app.Data, d, _app.Save);
+            Assert.Greater(add.Atk + add.Hp + add.Sh, 0, "낀 펫이 더하는 몫이 0 이면 아래 단언들이 뜻이 없다");
+
+            _app.Current.Refresh(); yield return Frames(1);
+            Assert.Greater(_app.Power(), power0, "펫을 끼면 전투력 숫자가 오른다(주인 «전투력 숫자에 들어가야지»)");
+
+            var pw = Pets.TotalPower(_app.Data, _app.Save);
+            Assert.AreEqual(UiKit.Fmt(System.Math.Round(pw.Atk)), StatText(gear, "atk"), "장비 화면 공격력 = 장비 + 낀 펫");
+            Assert.AreEqual(UiKit.Fmt(System.Math.Round(pw.Hp)), StatText(gear, "hp"), "체력도 같은 값");
+            Assert.AreEqual(UiKit.Fmt(System.Math.Round(pw.Sh)), StatText(gear, "sh"), "실드도 같은 값");
+            Assert.AreNotEqual(atk0 + "/" + hp0 + "/" + sh0,
+                               StatText(gear, "atk") + "/" + StatText(gear, "hp") + "/" + StatText(gear, "sh"),
+                               "세 칸이 하나도 안 움직였으면 펫 몫이 화면에 안 들어온 것이다(주인 «장착할 때 공체실 늘어나게»)");
+
+            // 빼면 되돌아온다 — 더하기만 붙고 «끼는 동안만» 이 안 지켜지면 여기서 운다.
+            Assert.IsTrue(Pets.Unequip(_app.Save, 0), "칸을 비운다"); _app.Persist();
+            _app.Current.Refresh(); yield return Frames(1);
+            Assert.AreEqual(power0, _app.Power(), 1e-6, "빼면 전투력이 원래대로");
+            Assert.AreEqual(atk0, StatText(gear, "atk"), "빼면 스탯도 원래대로");
+
+            yield return Shutdown();
+        }
+
+        /// <summary>장비 화면 스탯 칸의 숫자 글자(<c>Stat:atk</c>·<c>Stat:hp</c>·<c>Stat:sh</c>).</summary>
+        static string StatText(Transform gear, string key)
+        {
+            var cell = UiKit.Find(gear, "Stat:" + key); Assert.IsNotNull(cell, "스탯 칸 " + key);
+            var t = cell.GetComponentInChildren<TMP_Text>(true); Assert.IsNotNull(t, "스탯 칸 " + key + " 숫자");
+            return t.text;
+        }
+
         /// <summary>지금 켜져 있는 격자 칸 수 — 꺼진 칸은 «안 그린 것» 이다(이름·자리는 그대로 살아 있다).</summary>
         static int ShownCells(Transform root)
         {

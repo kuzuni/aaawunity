@@ -232,10 +232,11 @@ namespace KkomaKnight.Game
             _battleLoading.Hide(); _battleLoading = null; _battleLoadFrames = 0;
         }
 
-        /// <summary>전투력 표시식 (index.html `power()` · 주인 확정 2026-09-03) = 공×8 + (체+실)×1.5 — 표시 전용.</summary>
+        /// <summary>전투력 표시식 (index.html `power()` · 주인 확정 2026-09-03) = 공×8 + (체+실)×1.5 — 표시 전용.
+        /// <para>세는 것은 <b>장비 + 장착 펫</b>이다(주인 2026-09-10 «펫 전투력 숫자에 들어가야지» · <see cref="Pets.TotalPower"/> — 판이 더하는 그 값과 같은 함수).</para></summary>
         public double Power()
         {
-            var pw = GearSystem.BuildPower(Data, Save.CurBuild(Data));
+            var pw = Pets.TotalPower(Data, Save);
             return Math.Round(pw.Atk * 8 + (pw.Hp + pw.Sh) * 1.5);
         }
     }

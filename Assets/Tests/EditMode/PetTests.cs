@@ -18,6 +18,10 @@ namespace KkomaKnight.Tests
     {
         static PetData Load() => PetData.Parse(File.ReadAllText(TestData.RepoFile(Path.Combine("Assets", "KkomaKnight", "pet.json"))));
 
+        /// <summary>펫 표까지 실은 표 — 게임에서는 <c>Bootstrap</c> 이 <c>D.Pet</c> 을 따로 싣는다(<c>data/</c> 밖의 이 레포 전용 표라 <see cref="TestData.Load"/> 는 안 싣는다).
+        /// <para>⚠ <see cref="TestData.Load"/> 가 돌려주는 것은 <b>모든 자가 나눠 쓰는 한 채</b>라 거기에 <c>Pet</c> 을 꽂으면 남의 자가 모르는 사이에 펫을 가진 판을 재게 된다 — 그래서 여기서 <b>따로 싣는다</b>.</para></summary>
+        static GameData WithPetTable(PetData pd) { var D = GameData.LoadFromDirectory(TestData.Dir); D.Pet = pd; return D; }
+
         /// <summary>돌려주는 값이 정해진 자 — 분포를 재는 데 쓴다(게임 <see cref="IRng"/> 계약 그대로 [0,1)).</summary>
         sealed class FixedRng : IRng
         {
@@ -256,6 +260,57 @@ namespace KkomaKnight.Tests
             var o = Ladder(); o.PetPower = new Power { Atk = 500, Hp = 3000, Sh = 300 };
             var a2 = new BattleState(d, 3, b, new Mulberry32(23), new SimPolicy(), o).RunToEnd();
             Assert.AreNotEqual(a1.Time, a2.Time, "장착 스탯을 주면 판이 달라져야 한다 — 같으면 더하는 줄이 안 붙은 것이다");
+        }
+
+        [Test]
+        public void 보여_주는_힘은_장비와_낀_펫을_같이_센다()
+        {
+            // T293 ⓖ 마지막 어긋남(주인 2026-09-10 «펫 전투력 숫자에 들어가야지 · 장착할 때 공체실 늘어나게»).
+            //   판은 이미 `RunOptions.PetPower` 로 세고 있었는데 **화면은 안 셌다** — 그 둘을 `Pets.TotalPower` 한 곳으로 묶었다.
+            //   ⚑ 이 자가 지키는 것은 «수가 얼마인가» 가 아니라 «두 자리가 같은 데서 나오는가» 다: 기댓값을 여기서 다시 안 적고
+            //     `BuildPower + EquipPower` 로 되짚는다(값이 바뀌면 자도 같이 움직인다).
+            var pd = Load(); var D = WithPetTable(pd);
+            Assert.IsNotNull(D.Pet, "표(D.Pet)가 실려 있어야 이 자가 뜻이 있다 — 안 실리면 펫 몫이 늘 0 이라 늘 통과한다");
+            var s = SaveData.NewSave(D);
+
+            var gearOnly = GearSystem.BuildPower(D, s.CurBuild(D));
+            var before = Pets.TotalPower(D, s);
+            Assert.AreEqual(gearOnly.Atk, before.Atk, 1e-9, "낀 펫이 없으면 장비 그대로");
+            Assert.AreEqual(gearOnly.Hp, before.Hp, 1e-9); Assert.AreEqual(gearOnly.Sh, before.Sh, 1e-9);
+
+            var id = pd.Pets[0].Id;
+            Pets.Gain(s, id);
+            var owned = Pets.TotalPower(D, s);
+            Assert.AreEqual(before.Atk, owned.Atk, 1e-9, "가지고만 있고 안 끼면 힘은 안 오른다(주인 «장착할 때»)");
+            Assert.AreEqual(before.Hp, owned.Hp, 1e-9); Assert.AreEqual(before.Sh, owned.Sh, 1e-9);
+
+            Assert.IsTrue(Pets.Equip(D.Pet, s, id, 0), "새 세이브에서 첫 칸은 열려 있다");
+            var withPet = Pets.TotalPower(D, s);
+            var add = Pets.EquipPower(D, D.Pet, s);
+            Assert.Greater(add.Atk + add.Hp + add.Sh, 0, "낀 펫은 공·체·실 중 무엇이든 실제로 더해야 한다 — 0 이면 아래 셋이 늘 통과한다");
+            Assert.AreEqual(gearOnly.Atk + add.Atk, withPet.Atk, 1e-9, "보여 주는 공격력 = 장비 + 낀 펫");
+            Assert.AreEqual(gearOnly.Hp + add.Hp, withPet.Hp, 1e-9, "체력도 같은 셈");
+            Assert.AreEqual(gearOnly.Sh + add.Sh, withPet.Sh, 1e-9, "실드도 같은 셈");
+        }
+
+        [Test]
+        public void 화면이_더하는_값과_판이_더하는_값이_같다()
+        {
+            // «갈리지 않는다» 를 말로만 두지 않고 잰다 — 화면은 `Pets.TotalPower`, 판은 `RunOptions.PetPower` 로 더하는데
+            //   그 둘의 **펫 몫이 같은 함수(`Pets.EquipPower`)에서 나오는가**를 확인한다(BattleScreen 이 옵션에 담는 그 값).
+            var pd = Load(); var D = WithPetTable(pd); var s = SaveData.NewSave(D);
+            Pets.Gain(s, pd.Pets[0].Id); Pets.Equip(D.Pet, s, pd.Pets[0].Id, 0);
+
+            var shownAdd = GearSystem.Plus(GearSystem.BuildPower(D, s.CurBuild(D)), Pets.EquipPower(D, D.Pet, s));
+            var total = Pets.TotalPower(D, s);
+            Assert.AreEqual(shownAdd.Atk, total.Atk, 1e-9, "화면 쪽 합");
+            Assert.AreEqual(shownAdd.Hp, total.Hp, 1e-9); Assert.AreEqual(shownAdd.Sh, total.Sh, 1e-9);
+
+            // 판 쪽 — 같은 세이브로 만든 `PetPower` 를 들려 보내면 플레이어가 그만큼 세진다(0 이 아니라는 것까지).
+            var opt = Ladder(); opt.PetPower = Pets.EquipPower(D, D.Pet, s);
+            Assert.Greater(opt.PetPower.Atk + opt.PetPower.Hp + opt.PetPower.Sh, 0, "판에 들려 보내는 펫 몫이 0 이면 아래가 뜻이 없다");
+            Assert.AreEqual(total.Atk - GearSystem.BuildPower(D, s.CurBuild(D)).Atk, opt.PetPower.Atk, 1e-9,
+                            "화면이 더한 몫 = 판에 들려 보내는 몫 — 여기가 갈리면 «전투력은 100인데 판은 80» 이 된다");
         }
 
         [Test]
