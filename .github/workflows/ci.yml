@@ -123,6 +123,11 @@ jobs:
         run: python3 tools/check_py_escapes.py
       - name: 잘못된 escape 자 자기 검사 (T419)
         run: python3 tools/check_py_escapes.py --self-test
+      # T420(워커 G)이 «ci.yml 이 남의 범위라 붙이는 쪽만 미룬다» 며 다음 사람에게 남긴 한 줄이다.
+      #   그 «다음 사람» 이 나(T419 · ci.yml 을 쥔 워커)라 여기서 붙인다 — 자를 세우고 CI 에 다는 것은 본래 한 회차다.
+      #   ⚠ 자기 검사는 **막는다**(자기 검사가 빨간 자는 판정을 못 믿는다) · 아래 판정은 보고만 그대로다.
+      - name: 결정 번호 자 자기 검사 (T420)
+        run: python3 tools/check_decisions.py --self-test
       - name: "결정 번호 겹침 — 보고만(빨개도 안 막는다 · 결정 493)"
         continue-on-error: true
         run: python3 tools/check_decisions.py

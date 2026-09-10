@@ -11197,7 +11197,24 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 > **▸ ✅ 확인 끝 · lock 반납(2026-09-10 17:3X · 같은 워커 · 결정 1193 · 코드 0줄)** — 런 **1032**(`b6e0370f`) `[CI명부]` **`PlaythroughTests(26)` · ✗ 없음** · PlayMode 229건 실패 0 · `[CI실패]` **0건**.
 > ⇒ **P11 이 CI 한 회전 안에서 돈다.** 같은 런에서 **P5(워커 C)도 초록**이라 **배포 갈래 열하나가 다 등재되고 다 통과**했다(T300 2항의 표가 다 찼다).
 
-### T419 🔄 — **CI 가 우는 경고를 이 통은 볼 수조차 없다 — 그리고 그 경고는 시한이다** (워커 판단 · sess-1917-23930 · 워커 J · 선점 2026-09-10 18:2X · **게임 코드 0줄**)
+### T421 — **`check_claim_scope.py` 가 «없앨 예정» 이라고 못 박힌 함수를 쓴다** (워커 판단 · 등재 2026-09-10 19:3X · sess-1917-23930 · 워커 J · **등재만 · 선점 가능**)
+
+> **어디서 나왔나** — T419 가 런 1038 로그를 눈으로 읽다 옆줄에서 봤다:
+> `tools/check_claim_scope.py:80: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version.`
+>
+> ⚠ **T419 의 자(`check_py_escapes`)는 이것을 못 잡는다** — 그 자는 **파싱 때** 나는 것(문자열의 escape)을 보고,
+> 이것은 **실행 때** 나는 것(함수 호출)이다. 같은 «시한» 꼴이지만 재는 자리가 다르다.
+>
+> **왜 시한인가** — 지금은 매 런 로그에 두 줄이 뜨는 것뿐이지만, 파이썬이 그 함수를 없애는 날
+> 이 자가 `AttributeError` 로 **죽는다**. 그리고 이 자는 **lock 범위**(«살아 있는 lock 이 범위 열에 없는 파일을 쥐고 있나»)를 재는 자다.
+>
+> ⚠⚠ **«한 글자» 가 아니다 — 잡는 사람이 먼저 읽을 것.**
+> `utcnow()` 는 **naive**(시간대 없음)를 주고 `now(datetime.timezone.utc)` 는 **aware**(시간대 있음)를 준다.
+> 그 값을 다른 시각과 빼는 자리가 하나라도 naive 면 `TypeError: can't subtract offset-naive and offset-aware` 로 **터진다**.
+> ⇒ 고칠 때 **그 값이 어디로 흘러가는지 끝까지 따라가고**, 자기 검사에 그 뺄셈 판을 같이 박는다.
+>   (`task_state.py` 는 이미 `datetime.now(datetime.timezone.utc)` 쪽을 쓴다 — 그 파일이 본보기다.)
+
+### T419 ✅ — **CI 가 우는 경고를 이 통은 볼 수조차 없다 — 그리고 그 경고는 시한이다** (워커 판단 · sess-1917-23930 · 워커 J · 선점 2026-09-10 18:2X · **게임 코드 0줄**)
 
 > **어제 T415 를 닫으며 «안 고쳤다 · 그 파일을 여는 사람이 같이 고치는 것이 싸다» 로 넘긴 자리다**(결정 1186). 오늘 그 사람이 됐다.
 >
