@@ -10870,3 +10870,24 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 5. **확인** — 다음 완주 런 `[CI명부]` 의 `PlaythroughTests(N)` 에 ✗ 없음 (배포 스모크 `play done 7/7` 은 덤 · 그것을 기다리지 않는 까닭은 결정 1101).
 
 순서 — `Game/Playthrough.cs` · `Tests/PlayMode/PlaythroughTests.cs`. lock `T407`.
+
+> **▸ 1회차 — 각본 둘을 세웠다 · 등재된 갈래가 다섯 → 일곱(2026-09-10 13:5X · sess-1424-31894 · 워커 B · 결정 1171 · lock 쥔 채)**
+>
+> `Playthrough.P7Quest`·`P9Expedition` + `Steps` 등재 + 자 두 줄. **단언 0줄 추가 · 게임 화면 코드 0줄.**
+> · **P7** — 사이드 «퀘스트» → 일일 `QuestClaimAll` → 닫기 → (다시 열어) **탭 `Tab:1`** 주간 `QuestClaimAll` → 닫기 → (다시 열어) **탭 `Tab:2`** 업적 → 닫기 → 로비.
+> · **P9** — 보조 버튼 «탐험»(`Side:explore` · 사이드 열이 아니라 `SubRow` 다) → `ClaimBtn` → 닫기 → (다시 열어) `QuickBtn` → 빠른 탐험 팝업 → 닫기 → 로비.
+>
+> ⚑ **조건을 각본이 만든다**(P8 의 우편 한 통과 같은 자리) — 갓 켠 세이브에는 받을 칸이 없어 그 단추들이 **회색**이고(결정 771 의 문법), 그러면 이 갈래가 **아무것도 안 누르고 초록**이 된다.
+> P7 은 `QuestRun.Bump` 로 표의 `Goal` 만큼 채우고(일일·주간에 같이 쌓인다), P9 는 `S.ExpSettle` 을 표의 `MaxSeconds` 만큼 뒤로 돌린다. **수는 안 적고 표에서 읽는다.**
+>
+> ⚑ **그 조건이 참인지 밀기 전에 실측했다** — `QuestRun`·`Expedition` 은 순수 C# 이라 하니스에서 돈다(PlayMode 는 워커가 못 돌린다).
+> 스크래치 한 통: **일일 메달 130/5칸 · 주간 210/5칸 → 둘 다 `AnyClaimable=True`** · **탐험 8시간 = 골드 940 · 다이아 80 · 레시피 8 → `CanClaim=True` · `QuickLeft=3`**.
+>
+> ⚠ **안 한 것 둘** — ① «광고 보고 무료»(`QxFreeBtn`)는 **누르지 않는다**: `Overlay.AdCountdown` 이 초를 세고 서 있어 2항 시간 예산을 그냥 먹는다. **서 있고 눌리는가** 까지만 본다.
+> ② **업적 탭은 조건을 안 만든다** — 누적이라 초기화되지 않고 «켠 것만으로 하나가 열려 있기도» 하다(`QuestClaimDotTests` 가 치른 값). 억지로 만들면 그 자가 표의 우연에 매인다.
+>
+> 게이트: build 0 · `dotnet test` **552/552** · PlayMode 임시 csproj `-t:Rebuild` 0 오류 · gen_meta·gen_catalog·catalog_keys·stale_asserts·test_usings·asmdef·task_rows·docs_intact·split_push·font_glyphs·ach_hooks·unity_null rc=0 · `webgl_smoke --self-test` 21/21.
+> **확인** = 다음 완주 런 `[CI명부]` 의 **`PlaythroughTests(22)`** 에 ✗ 없음 → 반납(배포 스모크 `play done 7/7` 은 덤 · 결정 1101).
+>
+> **잡을 사람이 볼 것 — 남은 갈래 넷**: **P2**(전투 · `BattleWorld` 가 잠잠해진 뒤 — 지금 T404) · **P5**(던전) · **P6**(아레나) · **P11 은 마지막**(«데이터 삭제» 로 끝나 뒤 단계의 세이브를 지운다).
+> P5·P6 는 판을 굴리므로 T406 이 찍게 한 **꼬리의 초**(`play done N/N … Xs` · 예산 300s)를 보고 붙인다 — 이 회차 뒤의 수가 그 판단의 시작점이다.

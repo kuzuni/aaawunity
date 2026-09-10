@@ -82,7 +82,7 @@ namespace KkomaKnight.Game
         public delegate System.Collections.IEnumerator Step(App app);
 
         static readonly System.Collections.Generic.Dictionary<string, Step> Steps =
-            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P3", P3Gear }, { "P4", P4Shop }, { "P8", P8Boxes }, { "P10", P10Pet } };
+            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P3", P3Gear }, { "P4", P4Shop }, { "P7", P7Quest }, { "P8", P8Boxes }, { "P9", P9Expedition }, { "P10", P10Pet } };
 
         /// <summary>
         /// 단계 하나만 돌린다 — <b>자가 «배포 갈래도 실제로 도는가» 를 재는 입구</b>(T300 2항 · 결정 1101).
@@ -338,6 +338,131 @@ namespace KkomaKnight.Game
             if (app.Overlay.IsOpen) yield return CloseAll(app, "우편함");
 
             app.ShowScreen("lobby"); yield return null;
+        }
+
+        /// <summary>
+        /// P7 퀘스트·업적(T300 1항 표 · 배포 갈래 · T407) — 사이드 «퀘스트» → 일일 «전부 받기» → 주간 탭 → 업적 탭.
+        /// <b>단언은 하나도 없다</b>(3항 ⓐ): 재는 것은 «배선이 이어져 있는가» 뿐이고, 못 찾은 자리만 <see cref="MissingException"/> 로 알린다.
+        /// <para>
+        /// ⚑ <b>팝업 안 «탭» 이 이 갈래의 값이다</b> — 세 판(일일·주간·업적)은 <see cref="LobbyPopups.Quest"/>·<see cref="LobbyPopups.Achievements"/> 로
+        /// <b>팝업을 통째로 다시 여는</b> 배선이라(T257·T258 4항), 화면 자들은 판마다 제 손으로 열어 재므로 그 탭이 끊겨도 아무도 안 운다(T280).
+        /// </para>
+        /// <para>
+        /// ⚠ <b>조건은 이 단계가 만든다</b>(P8 우편 한 통과 같은 자리) — 갓 켠 세이브에는 받을 칸이 없어 «전부 받기» 가 회색이고,
+        /// 그러면 이 갈래가 <b>아무것도 안 누르고 초록</b>이 된다(결정 771 이 미워하는 그 꼴의 자 판). <b>수는 표에서 읽는다</b>
+        /// (<c>quest.Goal</c>) — 표가 바뀌어도 이 각본은 안 낡는다. <see cref="QuestRun.Bump"/> 는 일일·주간에 같이 쌓으므로 두 판이 함께 열린다.
+        /// </para>
+        /// </summary>
+        static System.Collections.IEnumerator P7Quest(App app)
+        {
+            var D = app.Data; var S = app.Save;
+            var q = D != null ? D.Quest : null;
+            if (q == null) throw new MissingException("퀘스트 표(data.quest)");
+
+            QuestRun.Roll(S, q, System.DateTime.Now);                     // 날·주를 먼저 민다(민 뒤에 쌓아야 그 셈이 안 지워진다)
+            foreach (var quest in q.Daily.Quests) QuestRun.Bump(S, quest.Counter, quest.Goal);
+            foreach (var quest in q.Weekly.Quests) QuestRun.Bump(S, quest.Counter, quest.Goal);
+            app.Persist();
+
+            app.ShowScreen("lobby"); yield return Frames(3);
+            Reach(app, "lobby");
+
+            // ⓐ 일일 — 사이드 «퀘스트» 칸으로 연다
+            Tap(app, "Side:" + LobbyScreen.SideQuest); yield return Frames(2);
+            yield return UntilOpen(app, "퀘스트 팝업(일일)");
+            if (!TapIfLive(app.Overlay.Root, "QuestClaimAll"))
+                throw new MissingException("일일 «전부 받기»(칸을 다 채웠는데 눌리지 않는다)");
+            yield return Frames(3);
+            // 받으면 «리워드 팝업 → (닫으면) 퀘스트 팝업» 두 겹이 선다(결정 671) — 그래서 한 번이 아니라 다 닫는다.
+            yield return CloseAll(app, "퀘스트 팝업(일일)");
+
+            // ⓑ 주간 — **탭으로** 판을 갈아탄다(팝업을 새로 여는 것이 아니라 그 배선을 잰다)
+            Tap(app, "Side:" + LobbyScreen.SideQuest); yield return Frames(2);
+            yield return UntilOpen(app, "퀘스트 팝업");
+            TapIn(app.Overlay.Root, "Tab:1", true); yield return Frames(3);
+            if (!TapIfLive(app.Overlay.Root, "QuestClaimAll"))
+                throw new MissingException("주간 «전부 받기»(칸을 다 채웠는데 눌리지 않는다)");
+            yield return Frames(3);
+            yield return CloseAll(app, "퀘스트 팝업(주간)");
+
+            // ⓒ 업적 — 셋째 탭. ⚠ 여기는 «받을 것이 있을 때만» 누른다: 업적은 이 각본이 조건을 만들지 않는다
+            //   (누적이라 초기화되지 않고, 켠 것만으로 하나가 열려 있기도 하다 · QuestClaimDotTests 가 그 값을 치렀다).
+            //   그래서 «상자가 섰는가» 를 자리로 잡고, 단추는 살아 있으면 누른다(T401 이 그 판에 같은 이름의 단추를 세웠다).
+            Tap(app, "Side:" + LobbyScreen.SideQuest); yield return Frames(2);
+            yield return UntilOpen(app, "퀘스트 팝업");
+            TapIn(app.Overlay.Root, "Tab:2", true); yield return Frames(3);
+            if (UiKit.Find(app.Overlay.Root, "QuestBox") == null) throw new MissingException("업적 판의 상자(QuestBox)");
+            if (TapIfLive(app.Overlay.Root, "QuestClaimAll")) yield return Frames(3);
+            yield return CloseAll(app, "퀘스트 팝업(업적)");
+
+            app.ShowScreen("lobby"); yield return null;
+        }
+
+        /// <summary>
+        /// P9 탐험(T300 1항 표 · 배포 갈래 · T407) — 보조 버튼 «탐험» → «받기» → «빠른 탐험» 팝업.
+        /// <b>단언은 하나도 없다</b>(3항 ⓐ).
+        /// <para>
+        /// ⚠ <b>조건은 이 단계가 만든다</b> — 갓 켠 세이브는 쌓인 것이 0 이라 «받기» 가 회색이다. 시계(<see cref="SaveData.ExpSettle"/>)를
+        /// 표가 말하는 <b>최대 시간</b>만큼 뒤로 돌려 «가득 쌓인» 자리를 만든다(수를 안 적는다 · <c>d.MaxSeconds</c> 를 읽는다).
+        /// </para>
+        /// <para>
+        /// ⚑ <b>«광고 보고 무료» 는 누르지 않는다</b> — 그 길은 <see cref="Overlay.AdCountdown"/> 로 <b>몇 초를 세고 서 있다</b>.
+        /// T300 2항의 시간 예산(전부 합쳐 5분)에서 한 단계가 초를 그냥 먹는 것은 값이 안 맞는다(T406 이 그 예산을 재게 해 두었다).
+        /// 그래서 여기서는 <b>그 단추가 서 있고 눌리는가</b> 까지만 보고 닫는다 — 끊기면 그것으로 빨개진다.
+        /// </para>
+        /// </summary>
+        static System.Collections.IEnumerator P9Expedition(App app)
+        {
+            var D = app.Data; var S = app.Save;
+            var ex = D != null ? D.Expedition : null;
+            if (ex == null) throw new MissingException("탐험 표(data.expedition)");
+
+            S.ExpSettle = LobbyPopups.NowSec() - ex.MaxSeconds;           // 가득 쌓인 자리(표가 말하는 최대 시간)
+            app.Persist();
+
+            app.ShowScreen("lobby"); yield return Frames(3);
+            Reach(app, "lobby");
+
+            // ⓐ 탐험 — 보조 버튼 줄(사이드 열이 아니라 «SubRow» 다 · 이 갈래가 그 줄의 배선도 같이 잰다)
+            Tap(app, "Side:" + LobbyScreen.SideExplore); yield return Frames(2);
+            yield return UntilOpen(app, "탐험 팝업");
+            if (UiKit.Find(app.Overlay.Root, "ExpCellGold") == null) throw new MissingException("탐험의 쌓인 골드 칸(ExpCellGold)");
+            if (!TapIfLive(app.Overlay.Root, "ClaimBtn"))
+                throw new MissingException("탐험 «받기»(시계를 최대까지 돌렸는데 눌리지 않는다)");
+            yield return Frames(3);
+            // 받으면 «리워드 팝업 → (닫으면) 탐험 팝업» 두 겹이다(결정 671·997 · 출석과 같은 꼴)
+            yield return CloseAll(app, "탐험 팝업(받기 뒤)");
+
+            // ⓑ 빠른 탐험 — 파란 단추로 그 팝업을 열고, 안의 «광고 보고 무료» 가 눌리는 자리인지만 본다(위 ⚑).
+            Tap(app, "Side:" + LobbyScreen.SideExplore); yield return Frames(2);
+            yield return UntilOpen(app, "탐험 팝업");
+            if (!TapIfLive(app.Overlay.Root, "QuickBtn"))
+                throw new MissingException("«빠른 탐험» 단추(횟수가 남았는데 눌리지 않는다)");
+            yield return Frames(3);
+            if (UiKit.Find(app.Overlay.Root, "QuickExploreBox") == null) throw new MissingException("빠른 탐험 팝업(QuickExploreBox)");
+            var free = UiKit.Find(app.Overlay.Root, "QxFreeBtn");
+            if (free == null) throw new MissingException("«광고 보고 무료» 단추(QxFreeBtn)");
+            var freeBtn = free.GetComponent<UnityEngine.UI.Button>();
+            if (freeBtn == null || !freeBtn.interactable)
+                throw new MissingException("«광고 보고 무료»(횟수가 남았는데 눌리지 않는다)");
+            yield return CloseAll(app, "빠른 탐험 팝업");
+
+            app.ShowScreen("lobby"); yield return null;
+        }
+
+        /// <summary>
+        /// 이름으로 찾아 <b>켜져 있고 눌리는</b> 것만 누른다 — 없거나 회색이면 <b>던지지 않고</b> false.
+        /// <para><see cref="TapIn"/> 과 갈리는 자리: «받을 것이 없으면 회색» 이 정상인 단추(«전부 받기»·«받기»)에서 쓴다.
+        /// 부르는 쪽이 «없어도 되는 자리» 인지 «있어야 하는 자리» 인지를 정한다 — 뒤엣것은 false 를 받아 제 말로 던진다.</para>
+        /// </summary>
+        static bool TapIfLive(UnityEngine.Transform root, string name)
+        {
+            var t = root != null ? UiKit.Find(root, name) : null;
+            if (t == null || !t.gameObject.activeInHierarchy) return false;
+            var b = t.GetComponent<UnityEngine.UI.Button>();
+            if (b == null || !b.interactable) return false;
+            b.onClick.Invoke();
+            return true;
         }
 
         /// <summary>팝업이 설 때까지 기다린다 — <see cref="WaitFrames"/> 를 넘기면 «무엇을 기다리다 죽었나» 를 남긴다.</summary>

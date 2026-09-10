@@ -1533,5 +1533,41 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("배포 갈래 P8");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T407 — P7(퀘스트·업적)의 <b>배포 갈래</b>. 꼴은 위 다섯과 같다(결정 1101).
+        /// <para>
+        /// ⚑ 이 각본이 잡는 것: 팝업 <b>안</b>의 탭 셋(일일·주간·업적)이 판을 갈아타는 배선이다. 그 셋은 팝업을 <b>통째로 다시 여는</b> 길이라
+        /// (<c>LobbyPopups.Quest</c>·<c>Achievements</c>), 화면 자들이 판마다 제 손으로 열어 재면 탭이 끊겨도 아무도 안 운다(T280).
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 배포_갈래_P7_도_자에서_한_번_돈다()
+        {
+            yield return Boot();
+            Assert.IsTrue(Playthrough.HasStep("P7"), "P7 의 배포 갈래가 등록돼 있다");
+            yield return Playthrough.RunOne(_app, "P7");
+            Assert.AreEqual("lobby", _app.Current.Name, "각본이 끝나면 로비에 서 있다");
+            _log.AssertNoRed("배포 갈래 P7");
+            yield return Shutdown();
+        }
+
+        /// <summary>
+        /// T407 — P9(탐험)의 <b>배포 갈래</b>. 꼴은 위 여섯과 같다(결정 1101).
+        /// <para>
+        /// ⚑ 이 각본이 잡는 것: <b>보조 버튼 줄</b>(사이드 열이 아닌 <c>SubRow</c>)에서 팝업으로 가는 배선과, 탐험 → 빠른 탐험의 두 겹이다.
+        /// ⚠ «광고 보고 무료» 는 <b>누르지 않는다</b> — 그 길은 카운트다운을 세고 서 있어 T300 2항의 시간 예산을 그냥 먹는다(각본 주석 참조).
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 배포_갈래_P9_도_자에서_한_번_돈다()
+        {
+            yield return Boot();
+            Assert.IsTrue(Playthrough.HasStep("P9"), "P9 의 배포 갈래가 등록돼 있다");
+            yield return Playthrough.RunOne(_app, "P9");
+            Assert.AreEqual("lobby", _app.Current.Name, "각본이 끝나면 로비에 서 있다");
+            _log.AssertNoRed("배포 갈래 P9");
+            yield return Shutdown();
+        }
     }
 }
