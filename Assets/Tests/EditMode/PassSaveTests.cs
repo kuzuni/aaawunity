@@ -49,13 +49,33 @@ namespace KkomaKnight.Tests
         }
 
         [Test]
-        public void 패스_칸이_없는_옛_세이브는_1레벨에_아무것도_안_받은_것이다()
+        public void 패스_칸이_없는_옛_세이브는_아무_말도_안_한_것이고_그때는_표가_답한다()
         {
             // 옛 세이브 = 이 절이 서기 전에 저장된 것(패스 칸이 통째로 없다).
-            var back = SaveData.FromJson("{\"gold\":5}", TestData.Load());
-            Assert.AreEqual(1, back.PassLv, "없으면 1 레벨(0 이 아니다 — 패스 레벨은 1부터다)");
+            var d = TestData.Load();
+            var back = SaveData.FromJson("{\"gold\":5}", d);
+            Assert.AreEqual(0, back.PassLv, "없으면 0 — «0레벨» 이 아니라 «아직 아무 말도 안 했다» 는 뜻이다");
             Assert.IsFalse(back.PassPaid1); Assert.IsFalse(back.PassPaid2);
             Assert.AreEqual(0, back.PassClaimed.Count, "받은 칸도 없다");
+            // ⚑ 그리고 그 «말 없음» 을 1 로 읽으면 화면이 빈다(T322 ⛑) — 표가 답한다.
+            Assert.AreEqual(35, Pass.Lv(back, new PassData { MaxLevel = 100, StartLevel = 35 }), "세이브가 말이 없으면 표의 시작 레벨");
+            back.PassLv = 7;
+            Assert.AreEqual(7, Pass.Lv(back, new PassData { MaxLevel = 100, StartLevel = 35 }), "세이브가 말하면 세이브가 이긴다");
+        }
+
+        [Test]
+        public void 표의_시작_레벨은_게임의_표에서_오고_그_자리는_표가_값을_아는_줄이다()
+        {
+            // ⛔ 이 수(지금 32)는 주인 레퍼런스 그림이 보여 주는 자리이고 게임 수치가 아니다 —
+            //    무엇으로 레벨이 오르는지 주인 지시가 서면 세이브가 답하기 시작하고 이 줄은 지워진다(T377).
+            //    그때까지는 **이 자리가 «?» 로 비어 있으면 안 된다**: 주인이 폰에서 여는 화면이 바로 그 줄이다.
+            // ⚠ TestData.Load() 의 GameData 에는 Pass 가 안 실린다(부트가 카탈로그로 꽂는다) — 파일을 그대로 읽는다(PassTests 와 같은 손짓).
+            var d = PassData.Parse(System.IO.File.ReadAllText(
+                TestData.RepoFile(System.IO.Path.Combine("Assets", "KkomaKnight", "pass.json"))));
+            Assert.IsTrue(d.StartLevel >= 1 && d.StartLevel <= d.MaxLevel, "시작 레벨이 표 안에 있다");
+            Assert.IsTrue(d.Known(d.StartLevel), "시작 레벨은 표가 값을 아는 줄이어야 한다 — 아니면 주인이 여는 화면이 «?» 로 빈다");
+            for (int lv = System.Math.Max(1, d.StartLevel - 3); lv <= d.StartLevel; lv++)
+                Assert.IsTrue(d.Known(lv), "레퍼런스 구도(시작 레벨에서 셋 위까지)의 줄 " + lv + " 도 값이 있어야 한다");
         }
 
         [Test]
@@ -96,13 +116,14 @@ namespace KkomaKnight.Tests
             var s = new SaveData(); s.PassLv = 500;
             Assert.AreEqual(100, Pass.Lv(s, new PassData { MaxLevel = 100 }), "표가 100 이면 100");
             Assert.AreEqual(50, Pass.Lv(s, new PassData { MaxLevel = 50 }), "표가 줄면 저절로 따라간다(세이브를 안 고친다)");
+            Assert.AreEqual(50, Pass.Lv(new SaveData(), new PassData { MaxLevel = 50, StartLevel = 90 }), "표의 시작 레벨도 같은 상한으로 잘린다");
             Assert.AreEqual(500, s.PassLv, "자르는 것은 «읽을 때» 다 — 세이브 값은 그대로 남는다");
         }
 
         [Test]
         public void 망가진_세이브를_정리한다()
         {
-            var s = SaveData.NewSave(TestData.Load()); s.PassLv = -3;
+            var s = SaveData.NewSave(TestData.Load()); s.PassLv = -3;   // 음수만 0(«말 없음»)으로 되돌린다 — 1 로 올리면 «표가 답한다» 가 사라진다
             s.PassClaimed[0] = 1;      // 레벨 0 = 없는 줄
             s.PassClaimed[-5] = 1;     // 음수 레벨
             s.PassClaimed[7] = 0;      // 아무 열도 안 든 빈 항목
@@ -110,7 +131,7 @@ namespace KkomaKnight.Tests
 
             s.Normalize(TestData.Load());
 
-            Assert.AreEqual(1, s.PassLv, "레벨은 1 아래로 안 내려간다");
+            Assert.AreEqual(0, s.PassLv, "음수는 0(= 아직 말 안 했다)으로 — 1 로 올리면 «표가 답한다» 를 못 하게 된다");
             Assert.IsFalse(s.PassClaimed.ContainsKey(0), "레벨 0 은 지운다");
             Assert.IsFalse(s.PassClaimed.ContainsKey(-5), "음수 레벨도");
             Assert.IsFalse(s.PassClaimed.ContainsKey(7), "빈 항목도");

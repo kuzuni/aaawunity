@@ -25,6 +25,16 @@ namespace KkomaKnight.Core
         public int MaxLevel = 100;
         /// <summary>레벨 → 세 열(무료·유료 1·유료 2). <b>표에 없는 레벨은 아예 안 들어 있다</b>(빈 칸을 채워 두지 않는다).</summary>
         public readonly Dictionary<int, Reward[]> Levels = new Dictionary<int, Reward[]>();
+        /// <summary>
+        /// <b>세이브가 아직 아무 말도 안 할 때 화면이 서는 자리</b>(<see cref="Pass.Lv"/> 가 읽는다).
+        /// <para>
+        /// ⚑ 이 수는 <b>레퍼런스 그림이 보여 주는 레벨</b>이고, 오래 <c>SeasonPassScreen</c> 안에 <c>const int CurLevel = 32</c> 로 박혀 있던 바로 그 수다.
+        /// T322 ⓓ 가 «지금 레벨» 을 세이브로 옮기면서 그 수를 <b>어디에도 안 남겨</b> 주인 폰의 패스 화면이 «?» 다섯 줄이 됐다 —
+        /// <b>지우지 않고 옮겼어야 했다.</b> 그래서 여기(표)로 옮겼다: 화면은 여전히 «지금 레벨» 을 짐작하지 않고 <b>물어보기만</b> 한다.
+        /// </para>
+        /// <para>⚠ <b>게임 수치가 아니다</b> — 무엇으로 패스 레벨이 오르는지는 아직 주인 몫이고(T377 표), 그 규칙이 서면 세이브가 답하기 시작하며 이 수는 <b>안 쓰이게 된다</b>(줄을 지우면 1 이다).</para>
+        /// </summary>
+        public int StartLevel = 1;
 
         /// <summary>열 차례 — 화면의 세 열과 같은 순서다.</summary>
         public const int ColFree = 0, ColPaid1 = 1, ColPaid2 = 2, Cols = 3;
@@ -36,6 +46,9 @@ namespace KkomaKnight.Core
         {
             var d = new PassData { MaxLevel = (int)j["maxLevel"].Num(100) };
             if (d.MaxLevel < 1) throw new FormatException("pass.json: maxLevel 은 1 이상이어야 한다");
+            d.StartLevel = (int)j["startLevel"].Num(1);                                  // 없으면 1(줄을 지우면 «맨 아래부터»)
+            if (d.StartLevel < 1 || d.StartLevel > d.MaxLevel)
+                throw new FormatException("pass.json: startLevel " + d.StartLevel + " 이 1~" + d.MaxLevel + " 밖이다");
             var lv = j["levels"];
             foreach (var k in lv.Keys)
             {

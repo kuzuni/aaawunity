@@ -144,9 +144,10 @@ namespace KkomaKnight.Core
         /// ⚠ <b>무엇으로 오르는가는 아직 주인 몫이다</b>(패스 점수를 무엇이 주는지 지시가 없다 · T377 표) —
         /// 이 칸은 <b>담는 자리</b>일 뿐이고, 올리는 규칙이 서면 그 절이 여기에 쓴다(<see cref="Pets"/>·<see cref="Ach"/> 와 같은 꼴).
         /// </para>
-        /// index.html 세이브에 없는 이 레포 전용 필드라 «없으면 1»(옛 세이브 호환).
+        /// index.html 세이브에 없는 이 레포 전용 필드라 <b>«없으면 0»</b> 이고, <b>0 은 «아직 아무 말도 안 한다»</b> 는 뜻이다 —
+        /// 그때 <see cref="Pass.Lv"/> 가 <b>표</b>(<see cref="PassData.StartLevel"/>)에 물어본다. 0 을 «0레벨» 로 읽지 말 것(패스 레벨은 1부터다).
         /// </summary>
-        public int PassLv = 1;
+        public int PassLv;
         /// <summary>유료 트랙 둘을 샀는가(₩9,900 · ₩49,000 · T322 화면의 `BuyBtn:1`·`BuyBtn:2`). 안 산 열의 칸은 못 받는다.</summary>
         public bool PassPaid1, PassPaid2;
         /// <summary>
@@ -459,7 +460,7 @@ namespace KkomaKnight.Core
                     foreach (var k in j["petFrag"].Keys) s.PetFrag[k] = j["petFrag"][k].Int();     // T293
                     foreach (var e in j["petEq"].Items()) s.PetEq.Add(e.Str(""));                  // T293 — 빈 글자 = 빈 칸
                     s.PetPulls = j["petPulls"].Int();                                              // T293
-                    s.PassLv = j.Has("passLv") ? j["passLv"].Int() : 1;                            // T322 — 없으면 1(옛 세이브)
+                    s.PassLv = j["passLv"].Int();                                                  // T322 — 없으면 0 = «세이브가 아직 말 안 한다» → Pass.Lv 가 표에 물어본다
                     s.PassPaid1 = j["passPaid1"].Num() != 0; s.PassPaid2 = j["passPaid2"].Num() != 0;
                     foreach (var k in j["passClaimed"].Keys) if (int.TryParse(k, NumberStyles.Integer, CultureInfo.InvariantCulture, out var pl2)) s.PassClaimed[pl2] = j["passClaimed"][k].Int();
                     s.ArenaScore = j["arenaScore"].Num(); s.ArenaBest = j["arenaBest"].Int();   // 없으면 0 = «아직 한 판도 안 했다»(옛 세이브 호환 · T240)

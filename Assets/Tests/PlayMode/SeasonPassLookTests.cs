@@ -153,6 +153,32 @@ namespace KkomaKnight.Tests.Play
                 var qty = UiKit.Find(UiKit.Find(sp, "Cell:free:" + last), "Qty");
                 Assert.IsNotNull(qty, "그 줄 무료 칸의 수량 글자");
                 Assert.AreEqual("?", qty.GetComponent<TMPro.TMP_Text>().text, "표가 모르는 줄은 «?» 로 그린다(수를 지어내지 않는다)");
+
+                // ⚑ T322 ⛑ — «갓 시작한 세이브로 열면 레퍼런스 자리에 선다».
+                //   ⓓ 가 «지금 레벨» 을 세이브로 옮기며 그 수를 지워, 주인 폰에서 이 화면이 표가 아는 줄(29~33)에서
+                //   스물여덟 줄 아래에 서서 «?» 만 보이는 상태였다. 그 사실을 자가 아무도 안 재고 있었고,
+                //   사진(19_pass)은 내가 찍기 직전에 세이브를 세워 둔 탓에 멀쩡해 보였다 — 사진이 게임을 가렸다.
+                //   ⇒ 이제 여기서 잰다: 세이브가 아직 아무 말도 안 하면(PassLv 0) **표**(startLevel)가 답한다.
+                Assert.AreEqual(0, _app.Save.PassLv, "이 자는 갓 시작한 세이브로 돈다(패스 레벨을 올린 적이 없다)");
+                Assert.AreEqual(pass.StartLevel, SeasonPassScreen.CurLevel,
+                    "세이브가 말이 없으면 화면은 표의 시작 레벨에 선다 — 그래야 주인이 폰에서 레퍼런스 구도를 본다");
+                Assert.IsTrue(pass.Known(SeasonPassScreen.CurLevel), "그 자리는 표가 값을 아는 줄이어야 한다(아니면 «?» 만 보인다)");
+                var lvT0 = UiKit.Find(sp, "LevelBadge")?.Find("LevelText")?.GetComponent<TMPro.TMP_Text>();
+                Assert.IsNotNull(lvT0, "머리 배지 글자");
+                Assert.AreEqual(SeasonPassScreen.CurLevel.ToString(), lvT0.text, "머리 배지도 같은 수를 말한다");
+            }
+
+            // ── T322 ⛑ — «받았다» 표시는 세이브가 말한다(전에는 사진 셋업이 이 갈래를 대신 보여 줬다)
+            {
+                int lv = SeasonPassScreen.CurLevel;
+                var claimed0 = new System.Collections.Generic.Dictionary<int, int>(_app.Save.PassClaimed);
+                SeasonPassScreen.Open(_app); yield return Frames(2);        // 앞 갈래가 트랙을 맨 아래로 굴려 뒀다 — 새로 열어 그 줄을 다시 세운다
+                Assert.IsNull(UiKit.Find(UiKit.Find(_app.Current.Root, "Cell:free:" + lv), "Check"), "안 받은 칸에는 체크가 없다");
+                _app.Save.PassClaimed[lv] = Pass.Bit(PassData.ColFree);
+                SeasonPassScreen.Open(_app); yield return Frames(2);
+                Assert.IsNotNull(UiKit.Find(UiKit.Find(_app.Current.Root, "Cell:free:" + lv), "Check"), "세이브가 «받았다» 면 그 칸에 체크가 선다");
+                _app.Save.PassClaimed.Clear(); foreach (var kv in claimed0) _app.Save.PassClaimed[kv.Key] = kv.Value;
+                SeasonPassScreen.Open(_app); yield return Frames(2);        // 뒤 갈래들이 읽으므로 되돌린다(T299 ⓑ)
             }
 
             // ── T328(주인 «그것들도 다 패턴 효과 있어야 하는데 없네») — 열마다 흐르는 무늬 한 장

@@ -20,12 +20,21 @@ namespace KkomaKnight.Core
         /// <summary>열 → 비트(<c>무료 1 · 유료1 2 · 유료2 4</c>). 세이브가 «레벨 → 이 비트들의 합» 을 담는다.</summary>
         public static int Bit(int col) => col < 0 || col >= PassData.Cols ? 0 : 1 << col;
 
-        /// <summary>지금 레벨 — <b>표의 상한으로 자른다</b>(세이브에 상한을 안 박는다 · 표가 100 → 50 으로 줄면 저절로 따라간다).</summary>
+        /// <summary>
+        /// 지금 레벨 — <b>세이브가 말하고, 아직 아무 말도 안 하면(<see cref="SaveData.PassLv"/> 이 0) 표가 답한다</b>(<see cref="PassData.StartLevel"/>).
+        /// 어느 쪽이든 <b>표의 상한으로 자른다</b>(세이브에 상한을 안 박는다 · 표가 100 → 50 으로 줄면 저절로 따라간다).
+        /// <para>
+        /// ⚑ 표에 물어보는 갈래가 있는 까닭: 무엇으로 패스 레벨이 오르는지가 <b>아직 주인 몫</b>이라(T377) 세이브는 영영 0 일 수 있다.
+        /// 그때 «1 레벨» 로 답하면 화면은 표가 아는 줄(29~33)에서 스물여덟 줄 아래에 서서 «?» 만 보여 준다 —
+        /// 주인이 «레퍼런스 그대로» 를 시킨 화면이 <b>빈 화면</b>이 된다. 그 수를 지우지 않고 표로 옮긴 자리가 <c>StartLevel</c> 이다.
+        /// </para>
+        /// </summary>
         public static int Lv(SaveData s, PassData d)
         {
-            if (s == null) return 1;
+            int start = d != null ? d.StartLevel : 1;
+            int lv = s != null && s.PassLv >= 1 ? s.PassLv : start;   // 세이브가 말했으면 세이브가 이긴다
             int max = d != null ? d.MaxLevel : int.MaxValue;
-            return Math.Max(1, Math.Min(max, s.PassLv));
+            return Math.Max(1, Math.Min(max, lv));
         }
 
         /// <summary>그 열을 살 필요가 있고 샀는가 — 무료 열은 늘 참.</summary>
@@ -88,7 +97,7 @@ namespace KkomaKnight.Core
         public static void NormalizeSave(SaveData s)
         {
             if (s == null) return;
-            if (s.PassLv < 1) s.PassLv = 1;
+            if (s.PassLv < 0) s.PassLv = 0;               // 0 = «아직 말 안 했다»(표가 답한다) — 1 로 올리면 그 뜻이 사라진다
             if (s.PassClaimed == null) { s.PassClaimed = new Dictionary<int, int>(); return; }
             var bad = new List<int>();
             int all = 0; for (int c = 0; c < PassData.Cols; c++) all |= Bit(c);
