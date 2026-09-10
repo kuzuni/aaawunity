@@ -313,6 +313,14 @@ namespace KkomaKnight.Tests.Play
             _app.Current.Refresh(); yield return Frames(1);
             Assert.Greater(_app.Power(), power0, "펫을 끼면 전투력 숫자가 오른다(주인 «전투력 숫자에 들어가야지»)");
 
+            // ⓒ 기사 그림 — «실드가 있으면 방패»(`HeroView.PlayerSkin`)의 실드도 **장비 + 낀 펫**이다(전투는 이미 `G.P.MaxSh > 0` 로 고른다 · T7 «둘은 같은 함수»).
+            //   ⚑ 검수 Q(결정 1099)가 짚었다 — 고친 자리 셋 중 이 하나에만 자가 없어서 `HeroView` 를 `BuildPower` 로 되돌려도 전부 초록이었다.
+            //   ⚠ 공허 방지 둘을 같이 박는다: 장비 실드가 0 이어야 이 단언이 «펫 때문» 을 말하고, 펫 실드가 0 이면 애초에 뜻이 없다(결정 953 ③).
+            Assert.AreEqual(0, GearSystem.BuildPower(_app.Data, _app.Save.CurBuild(_app.Data)).Sh, 1e-9,
+                            "새 세이브는 장비 실드가 0 이라 아래가 «펫이 준 실드 때문» 을 말한다 — 0 이 아니면 이 단언은 아무것도 안 가른다");
+            Assert.Greater(add.Sh, 0, "낀 펫이 실드를 줘야 아래가 뜻이 있다");
+            Assert.IsNotNull(HeroView.PlayerSkin(_app).Shield, "펫이 준 실드도 «실드가 있으면 방패» 에 든다(장비 화면 기사 = 전투 기사)");
+
             var pw = Pets.TotalPower(_app.Data, _app.Save);
             Assert.AreEqual(UiKit.Fmt(System.Math.Round(pw.Atk)), StatText(gear, "atk"), "장비 화면 공격력 = 장비 + 낀 펫");
             Assert.AreEqual(UiKit.Fmt(System.Math.Round(pw.Hp)), StatText(gear, "hp"), "체력도 같은 값");
@@ -326,6 +334,7 @@ namespace KkomaKnight.Tests.Play
             _app.Current.Refresh(); yield return Frames(1);
             Assert.AreEqual(power0, _app.Power(), 1e-6, "빼면 전투력이 원래대로");
             Assert.AreEqual(atk0, StatText(gear, "atk"), "빼면 스탯도 원래대로");
+            Assert.IsNull(HeroView.PlayerSkin(_app).Shield, "빼면 방패도 없어진다 — 더하기만 붙고 «끼는 동안만» 이 안 지켜지면 여기서 운다");
 
             yield return Shutdown();
         }

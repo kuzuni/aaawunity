@@ -91,8 +91,14 @@ namespace KkomaKnight.Game
             // T166 ⓐ(주인 09:2X «배경 무늬를 흰색 7/255 로») — 종전 주석의 «레퍼런스 01 은 어두운 칼 무늬 → Ink» 는 주인 지시로 뒤집혔다: 밝은 무늬가 정본이다.
             // 자리는 배경 조각 «바로 위» 형제 = 7항 «패턴은 배경 층에만»(상단 재화 바·사이드 기둥·챕터 카드·START·탭 바는 전부 뒤에 오는 형제라 무늬가 그 안으로 비치지 않는다)
             int bgIdx = bg != null && bg.parent == rt ? bg.GetSiblingIndex() + 1 : 0;
-            UiKit.PatternBg(rt, UiKit.PatternTintLobby, UiKit.PatternTileSeconds, bgIdx);   // 색·알파는 UiKit.PatternTintLobby 한 곳(T166 ⓐ = 흰 7/255 · T94 ⓐ 의 잉크 18/255 를 덮었다)
-            UiKit.Gradient(rt, siblingIndex: bgIdx);   // 위 +12% 밝음 · 아래 −18% 어둠(3항 «화면 배경» · 헬퍼가 패턴 위로 넣는다)
+            // T225(주인 2026-09-10 «로비 별문제는 없는데 최적화는 해봐라 걍») — 뒤 세 겹을 셰이더 한 장으로 합칠 수 있으면 합친다(오버드로 4 → 2).
+            //   합친 그림 = 세 겹 따로 그린 그림과 **같다**(over 결합법칙 · 이 레포 실측 최대 차 0.000000 LSB · 결정 1090).
+            //   ⚑ UiKit.UseMergedBg 한 상수가 스위치다 — false 거나 셰이더·머티리얼이 없으면 아래 옛 세 겹 길로 그대로 간다.
+            if (!UiKit.UseMergedBg || UiKit.MergedBg(rt, UiKit.PatternTintLobby, siblingIndex: bgIdx) == null)
+            {
+                UiKit.PatternBg(rt, UiKit.PatternTintLobby, UiKit.PatternTileSeconds, bgIdx);   // 색·알파는 UiKit.PatternTintLobby 한 곳(T166 ⓐ = 흰 7/255 · T94 ⓐ 의 잉크 18/255 를 덮었다)
+                UiKit.Gradient(rt, siblingIndex: bgIdx);   // 위 +12% 밝음 · 아래 −18% 어둠(3항 «화면 배경» · 헬퍼가 패턴 위로 넣는다)
+            }
 
             // ① 상단 재화 바 (아바타 · 전투력 · 골드 · 보석) — 공용 헬퍼 · 비평 이름표(T46 · ref-layout ① 의 «요소» 이름 그대로)
             _top = TopBar.Build(App, rt);
