@@ -170,6 +170,9 @@ namespace KkomaKnight.Game
         }
         static void Sep(Transform row, float x) => UiKit.Label(row, x, 0, 6, 100, "|", 40, Palette.Cream);
 
+        /// <summary>T404 ⓑ — 세부 팝업 등급 배지의 이름(자·스모크가 이 이름으로 찾는다).</summary>
+        public const string PetGradeBadgeName = "PetGradeBadge";
+
         /// <summary>펫 시스템이 아직 없다는 안내 — 버튼을 눌렀을 때 뜨는 한 줄(T178 · 세부 팝업의 설명과 같은 말이라 한 곳에 둔다).</summary>
         public const string NotReadyMsg = "펫 시스템은 준비 중입니다";
         /// <summary>
@@ -472,6 +475,24 @@ namespace KkomaKnight.Game
                             : petLv >= 1 ? pet.Name + " · Lv " + petLv + "\n" + Pets.Effect(dp, pet)
                                          : pet.Name + " · 아직 없다\n" + Pets.Effect(dp, pet) + "\n소환으로 얻을 수 있습니다.";
             UiKit.Label(desc.transform, 4, 8, 92, 84, descText, 32, Palette.White);
+            // T404 ⓑ(주인 2026-09-10 «세부 팝업에 등급 뭔지 안 써 있음») — 등급 이름 + 등급색 배지.
+            //   ⚑ 자리를 «상자 윗변»(장비 세부 GdBadge 꼴)이 아니라 **설명 박스 안 오른쪽 위**로 잡았다 —
+            //     이 팝업은 레퍼런스 14 대로 명판이 없고 **칸이 윗변에 걸쳐** 있어서(위 PetDetailCell) 그 자리에 배지를 얹으면 칸과 겹친다.
+            //     설명 박스 안은 이미 이 팝업이 쓰는 칸이라 새 자리를 만들지 않고, 글자 줄(왼쪽 정렬)과도 안 부딪친다.
+            //   색은 등급 rar 한 곳에서 온다(격자 칸 프레임과 **같은 자**: Palette.RarName · 결정 1096 이 세운 문법).
+            if (pet != null && dp != null)
+            {
+                var gd = dp.GradeOfPet(pet);
+                if (gd != null && !string.IsNullOrEmpty(gd.Name))
+                {
+                    var rc = Palette.ByName(Palette.RarName(gd.Rar));
+                    var badge = UiKit.Panel(desc.transform, PetGradeBadgeName, "fr.r12", rc);
+                    UiKit.Pct(badge.rectTransform, 62, 4, 34, 22);
+                    UiKit.Bordered(badge.rectTransform);
+                    var bt2 = UiKit.Label(badge.transform, 0, 0, 100, 100, gd.Name, 30, Palette.OnFrame(Palette.RarName(gd.Rar)));
+                    bt2.alignment = TextAlignmentOptions.Center; bt2.fontStyle = FontStyles.Bold; bt2.name = "GradeText";
+                }
+            }
             var pt = UiKit.Label(box, 0, 0, 100, 100, "패시브:", 34, Palette.Cream); pt.name = "PassiveTitle"; pt.fontStyle = FontStyles.Bold; UiKit.Pct(pt.rectTransform, Layout.PdPassiveTitle.Within(Layout.PdBox));
             var pv = UiKit.Rect(box, "PassiveRow"); UiKit.Pct(pv, Layout.PdPassive.Within(Layout.PdBox));
             // 셋을 13 의 합계 줄과 **같은 차례·같은 자리 규칙**으로 세운다(❤ · 🛡 · 🗡) — 한 화면에서 두 차례를 배우게 하지 않는다(격자 차례 = 빠른 장착 차례와 같은 까닭 · 결정 1064).

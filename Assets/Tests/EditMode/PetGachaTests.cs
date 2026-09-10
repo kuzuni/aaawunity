@@ -102,9 +102,15 @@ namespace KkomaKnight.Tests
             Assert.Greater(d.BattleScale, 0, "배율이 0 이면 아무것도 안 보인다");
             Assert.LessOrEqual(d.BattleScale, 1.0, "펫이 플레이어보다 크면 «뒤에 따라오는» 으로 안 읽힌다");
             // 세 마리가 다 화면 안에 서는가 — 플레이어는 화면 왼쪽 16%(ui.json camera.playerX · 레이아웃 540 의 86.4)에 붙어 서고
-            // 뒤쪽은 Spread 가 1배라 레이아웃 거리 = gapDx × zoom(1.5). 셋째까지가 0 보다 커야 «줄지어 따라오는» 그림이 된다.
-            double lastX = 86.4 - d.BattleGapDx * 1.5 * d.Slots;
-            Assert.Greater(lastX, 0, "마지막 펫이 화면 왼쪽 밖으로 나간다 — gapDx 를 줄여야 한다(지금 " + d.BattleGapDx + ")");
+            // 뒤쪽은 Spread 가 1배라 레이아웃 거리 = 간격 × zoom(1.5).
+            // ⚑ T404 로 이 줄의 전제가 둘 다 바뀌었다(고친 사람: 워커 E · 결정 1161).
+            //   ① 화면에 쓰이는 간격은 이제 «표 값» 이 아니라 Layout.PetGap(표 값을 남은 폭으로 죈 것)이다 — 표 값으로 재면 헛것을 잰다.
+            //   ② 문턱 «> 0» 이 무르다: x 는 펫의 **가운데**라 0 보다 커도 반폭이 화면 밖일 수 있다.
+            //      실제로 종전 값(16)이 셋째를 14.4 에 세웠고 그것은 반폭 20 을 못 넘는다 — 이 자는 그 그림을 통과시키고 있었다.
+            //   그래서 재는 자리를 진짜 자리로 옮기고 문턱을 반폭으로 올린다. 자세한 셈은 EditMode PetBattleGapTests.
+            float gap = Layout.PetGap((float)d.BattleGapDx, 86.4f, d.Slots, 1.5f, 540f);
+            double lastX = 86.4 - gap * 1.5 * d.Slots;
+            Assert.GreaterOrEqual(lastX, 40.0 * 0.5, "마지막 펫의 반폭이 화면 왼쪽 밖으로 나간다(가운데 x " + lastX + " · 반폭 20)");
         }
 
         [Test]

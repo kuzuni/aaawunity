@@ -665,10 +665,12 @@ namespace KkomaKnight.Game
             int baseOrder = SortBase(LayoutX(_shownPX));
             string state = _player == null ? CharacterRig.Idle : _player.Current;
             if (state == CharacterRig.Attack || state == CharacterRig.Skill) state = _moving ? CharacterRig.Walk : CharacterRig.Idle;
+            // T404 ⓐ — 표 값을 쓰되 맨 뒤 펫이 화면 왼쪽 밖으로 안 나가게 죈다(셈은 Core/Layout · 까닭도 거기 적었다)
+            float gap = Layout.PetGap((float)_petData.BattleGapDx, LayoutX(_shownPX), _pets.Count, _zoom, WorldCam.LayoutW);
             for (int i = 0; i < _pets.Count; i++)
             {
                 var r = _pets[i]; if (r == null) continue;
-                r.transform.position = Pos(_shownPX - _petData.BattleGapDx * (i + 1), FootY);
+                r.transform.position = Pos(_shownPX - gap * (i + 1), FootY);
                 r.SetSortingBase(baseOrder - PetSortBack * (i + 1));
                 r.Play(state);
             }

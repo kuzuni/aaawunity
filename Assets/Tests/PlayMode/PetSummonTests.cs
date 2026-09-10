@@ -164,6 +164,12 @@ namespace KkomaKnight.Tests.Play
             // 세부 칸도 그 펫의 등급색(주인 5항 ⓘ) — 표의 첫 펫은 일반이라 파랑이면 옛 «파랑 하나» 가 남은 것이다.
             var gd = d.GradeOfPet(pet); Assert.IsNotNull(gd, "표의 등급");
             Assert.IsNotNull(UiKit.Find(UiKit.Find(ov, "PetDetailCell"), "ui.itemFrame." + Palette.RarName(gd.Rar)), "세부 칸 프레임 = 그 펫의 등급색");
+            // T404 ⓑ(주인 2026-09-10 «세부 팝업에 등급 뭔지 안 써 있음») — 등급 «글자» 가 실제로 서 있고 그 글자가 표에서 온다.
+            //   ⚑ 색만 재면 이 지시를 못 지킨다 — 위 줄(프레임 등급색)은 T404 **전에도** 초록이었다. 주인이 없다고 한 것은 «글자» 다.
+            var badge = UiKit.Find(ov, PetScreen.PetGradeBadgeName);
+            Assert.IsNotNull(badge, "세부 팝업에 등급 배지(" + PetScreen.PetGradeBadgeName + ")");
+            var gtx = UiKit.Find(badge, "GradeText"); Assert.IsNotNull(gtx, "배지 안 등급 글자");
+            Assert.AreEqual(gd.Name, gtx.GetComponent<TMP_Text>().text, "등급 글자는 표(pet.json)의 그 등급 이름이다");
 
             var up = UiKit.Find(ov, "PetUpgradeBtn"); Assert.IsNotNull(up, "강화 버튼");
             Assert.IsTrue(up.GetComponent<Button>().interactable, "강화할 수 있으면 눌린다(주인 «가능할 때는 주황»)");

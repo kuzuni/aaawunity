@@ -64,6 +64,40 @@ namespace KkomaKnight.Core
         public const float HpLabelY = 40.5f, HpLabelH = 3.2f;
         public const float PlayerCenterX = 16.0f, FirstEnemyCenterX = 33.4f, EnemyGapX = 16.5f;
         public const float PlayerFootBarW = 10.3f, EnemyFootBarW = 9.7f;
+
+        /// <summary>T404 ⓐ — 맨 뒤 펫이 화면 왼쪽 끝에서 이만큼(화면 폭 %)은 떨어져 선다 = <b>캐릭터 반폭</b>(발자국 폭 <see cref="PlayerFootBarW"/> 10.3% 의 절반 · T47 이 그 폭을 캐릭터 폭의 자로 못 박았다).</summary>
+        public const float PetEdgeMarginPct = PlayerFootBarW * 0.5f;
+        /// <summary>T404 ⓐ — 아무리 좁혀도 이보다 붙이지는 않는다(sim x). 겹쳐 서더라도 «두 마리가 한 마리로 보이는» 자리는 만들지 않는다.</summary>
+        public const float PetGapMin = 8f;
+        /// <summary>
+        /// T404 ⓐ — 전투에서 펫 한 마리 사이 간격(sim x). <paramref name="want"/>(<c>pet.json battle.gapDx</c>)을 쓰되,
+        /// <b>맨 뒤 펫이 화면 왼쪽 밖으로 나가지 않는 만큼</b>으로 줄인다.
+        /// <para>
+        /// ⚑ <b>왜 죄어야 하나 — 재 보니 자리가 원래 모자랐다.</b> 플레이어는 화면 왼쪽 <c>camera.playerX</c> 0.16 자리에 붙어 서므로
+        /// 뒤에 남는 폭이 <b>캐릭터 두 개 조금 넘는 것</b>뿐이다(86.4 ÷ 40 = 2.16개). 종전 값 16 이면 세 마리가 62.4·38.4·<b>14.4</b> px 에 서는데
+        /// 마지막 14.4 는 <b>제 폭의 절반이 이미 화면 밖</b>이다(반폭 20px). 즉 «더 벌리면 셋째가 나간다» 가 아니라 <b>이미 나가 있었다</b>.
+        /// </para>
+        /// <para>
+        /// 그래서 «얼마나 벌릴까» 를 표 한 수로만 두지 않고 <b>남은 폭으로 나눈다</b> — 한 마리면 표 값 그대로(주인이 말한 «너무 붙어 있다» 가 풀리는 자리),
+        /// 둘·셋이면 저절로 좁혀져 <b>아무도 잘리지 않는다</b>. 잘린 채 벌리는 것보다 좁아도 다 보이는 쪽이 낫다.
+        /// </para>
+        /// ⚠ <b>셋을 «주인이 말한 간격» 으로 세우려면 플레이어를 오른쪽으로 옮겨야 한다</b>(<c>camera.playerX</c>) —
+        /// 그 수는 <c>combatOverride.json</c> 의 «칼 닿는 거리» 를 같이 정하므로(그 파일 <c>_calc</c>·<c>_warn</c>) 이 절에서는 안 건드렸다. §2 T404 1항에 재 놓았다.
+        /// <para>⚑ 셈이 <b>Core</b> 에 있는 까닭: 자리 잡기 전체는 PlayMode 라 워커가 못 돌리는데 «얼마나 벌릴까» 는 순수한 셈이라 EditMode 에서 돌릴 수 있다(결정 143).</para>
+        /// </summary>
+        /// <param name="want">표가 준 간격(sim x).</param>
+        /// <param name="playerScreenX">플레이어의 <b>화면</b> x(레이아웃 px).</param>
+        /// <param name="count">이 판에 선 펫 수.</param>
+        /// <param name="zoom">sim x → 화면 px 배율(플레이어 <b>뒤</b>는 1배 사상이라 그대로 곱해진다).</param>
+        /// <param name="layoutW">화면 폭(레이아웃 px).</param>
+        public static float PetGap(float want, float playerScreenX, int count, float zoom, float layoutW)
+        {
+            if (count <= 0 || zoom <= 0f || want <= 0f) return want;
+            float room = playerScreenX - layoutW * (PetEdgeMarginPct / 100f);
+            if (room <= 0f) return PetGapMin;                       // 플레이어가 이미 왼쪽 끝이면 더 나눌 폭이 없다
+            float fit = room / (count * zoom);
+            return fit < PetGapMin ? PetGapMin : (fit > want ? want : fit);
+        }
         /// <summary>
         /// 발밑 2단 숫자 바(T35 · 주인 강조 · `02_battle.jpg`·`03_battle_enemy.jpg`): 체력 라벨 줄(HpLabelY · 높이 HpLabelH 3.2%) 안에 <b>빨강(HP) 위 · 파랑(실드) 아래</b> 같은 높이로 쌓는다 —
         /// 각 단 1.6%(보조 글자 하한 36px 이 안에 들어갈 높이 · T63-battle · 전엔 1.35) · 중심 y = 줄 위에서 0.8 / 2.4 → 두 단이 라벨 줄 3.2% 를 꼭 채운다. 실드 0 이면 파란 단은 숨긴다.
