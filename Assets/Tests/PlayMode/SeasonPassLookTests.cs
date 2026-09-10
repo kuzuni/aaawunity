@@ -146,13 +146,33 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNotNull(UiKit.Find(sp, "Badge:" + last), "끝까지 내리면 마지막 줄 " + last + " 이 선다(주인 «1~100까지»)");
                 Assert.IsNull(UiKit.Find(sp, "Badge:" + (last + 1)), last + " 을 넘는 줄은 없다");
 
-                // 표가 모르는 줄은 «?» — 수를 지어내지 않는다(T322 ⓒ · 주인 값 미제공)
+                // 줄은 표가 말하는 대로 그린다 — 아는 줄은 그 수를, 모르는 줄은 «?»(수를 지어내지 않는다 · T322 ⓒ).
+                //   ⚑ 이 갈래는 «주인이 값을 안 줬다» 를 **전제로** 서 있었다(«마지막 줄은 주인이 값을 안 준 줄이다»).
+                //     오늘 주인이 값을 주자(T266 ⓑ · 100줄) 그 전제가 거짓이 되어 런 996 에서 빨갰다 — 화면이 옳고 자가 낡았다(T184).
+                //     기댓값을 낮추지 않고 **둘 다 실제로 돌게** 바꿨다: 아는 줄은 표의 수로 재고, «?» 는 표에 구멍을 내서 잰다.
+                //     («표에 모르는 줄이 있으면» 같은 조건문으로 두면 표가 꽉 찬 오늘은 그 갈래가 통째로 안 돈다 · 결정 953 ③)
                 var pass = _app.Data != null ? _app.Data.Pass : null;
                 Assert.IsNotNull(pass, "패스 표(pass.json)가 실렸다");
-                Assert.IsFalse(pass.Known(last), "마지막 줄은 주인이 값을 안 준 줄이다");
-                var qty = UiKit.Find(UiKit.Find(sp, "Cell:free:" + last), "Qty");
-                Assert.IsNotNull(qty, "그 줄 무료 칸의 수량 글자");
-                Assert.AreEqual("?", qty.GetComponent<TMPro.TMP_Text>().text, "표가 모르는 줄은 «?» 로 그린다(수를 지어내지 않는다)");
+                Assert.IsTrue(pass.Known(last), "주인이 값을 줬으므로 마지막 줄도 표가 안다(T266 ⓑ)");
+                var qtyT = UiKit.Find(UiKit.Find(sp, "Cell:free:" + last), "Qty")?.GetComponent<TMPro.TMP_Text>();
+                Assert.IsNotNull(qtyT, "그 줄 무료 칸의 수량 글자");
+                Assert.AreEqual(pass.At(last, PassData.ColFree).Qty, qtyT.text, "아는 줄은 **표가 말한 수**를 그대로 그린다(수를 자에 안 박는다)");
+
+                // 그리고 표에 구멍을 내면 그 줄은 «?» 다 — 주인이 표를 줄이는 날 화면이 수를 지어내지 않는 것이 이 줄의 값이다.
+                var kept = pass.Levels[last];
+                pass.Levels.Remove(last);
+                try
+                {
+                    SeasonPassScreen.Open(_app); yield return Frames(2);          // 다시 열면 줄을 다시 그린다(T322 ⛑2)
+                    sp = _app.Current.Root;
+                    var scroll2 = UiKit.Find(sp, "Track").GetComponent<UnityEngine.UI.ScrollRect>();
+                    scroll2.verticalNormalizedPosition = 0f; Canvas.ForceUpdateCanvases(); yield return Frames(2);
+                    var holeT = UiKit.Find(UiKit.Find(sp, "Cell:free:" + last), "Qty")?.GetComponent<TMPro.TMP_Text>();
+                    Assert.IsNotNull(holeT, "구멍 난 줄에도 칸은 선다(줄을 통째로 빼지 않는다)");
+                    Assert.AreEqual("?", holeT.text, "표가 모르는 줄은 «?» 로 그린다(수를 지어내지 않는다 · T322 ⓒ)");
+                }
+                finally { pass.Levels[last] = kept; }                              // ⚠ 뒤 갈래·다음 자가 같은 표를 읽는다 — 반드시 되돌린다
+                SeasonPassScreen.Open(_app); yield return Frames(2); sp = _app.Current.Root;
 
                 // ⚑ T322 ⛑ — «갓 시작한 세이브로 열면 레퍼런스 자리에 선다».
                 //   ⓓ 가 «지금 레벨» 을 세이브로 옮기며 그 수를 지워, 주인 폰에서 이 화면이 표가 아는 줄(29~33)에서
