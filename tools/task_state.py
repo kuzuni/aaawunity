@@ -34,7 +34,15 @@ ROUTINE 제목에는 ✅ 가 없었다. 그러면 **열린 일로 보인다**. l
   python3 tools/task_state.py --check     # 게이트: 번호 중복·제목↔상태 어긋남이 있으면 1 (ROUTINE §3 목록)
   python3 tools/task_state.py T161        # 선점 «직전» 한 줄 — 잡아도 되는지 판정 (0 = 잡아도 된다)
   python3 tools/task_state.py --list      # 전체 표
+  python3 tools/task_state.py --new-id    # 등재 «직전» — 다음 작업 번호(표·이력 둘 다 보여 준다)
   python3 tools/task_state.py --self-test # 이 자가 실제로 잡는지
+
+**T415 로 «표 밖» 을 하나 더 본다 — 행을 지우면 번호가 되살아난다.**
+위 T205 몫(«한 번호가 두 작업»)은 **표 안에서** 같은 ID 가 둘인 것을 본다. 그런데 2026-09-10 에
+워커 L 이 T409 를 접으며 **행을 지웠고**(최대가 409 → 408 로 내려갔다) 30분 뒤 워커 C 가
+규칙대로 «가장 큰 것 +1» 을 따라 **다시 409** 를 발급했다 — 표에는 행이 **하나**라 중복 자는 초록이다.
+깨진 것은 표 안이 아니라 **표와 이력 사이**다. `--new-id` 는 발급을 이력(append-only)에서 뽑고,
+`--check` 는 «이력에는 있는데 표에 행이 없는» 번호를 **알리기만** 한다(rc 는 안 건드린다 · 결정 493).
 """
 import io
 import os
@@ -193,6 +201,73 @@ def _git(args):
                               stderr=subprocess.DEVNULL, text=True, timeout=60).stdout
     except (OSError, subprocess.SubprocessError):
         return ""
+
+
+# «작업ID 처럼 생긴 것» — 커밋 제목에서 T번호를 집는다. 꼬리에 글자가 붙은 갈래(T69-gear)는
+# 이 표의 대상이 아니므로 위 HEAD 와 같은 잣대로 뺀다.
+ID_IN_TEXT = re.compile(r"\bT\d{1,4}(?![\w-])")
+
+
+def history_ids():
+    """**커밋 제목**에 한 번이라도 나온 작업 ID 전부 (T415).
+
+    왜 이력을 보나 — 번호 발급 규칙(«이미 쓰인 번호 중 가장 큰 것 +1»)이 **표**를 읽으면,
+    누가 작업을 접으며 행을 지우는 순간 최대가 **내려가고** 다음 사람이 같은 번호를 다시 뽑는다.
+    2026-09-10 에 실제로 났다: 워커 L 이 T409(라이선스)를 접으며 행을 지워 최대가 409 → 408 이 됐고,
+    30분 뒤 워커 C 가 규칙 그대로 **다시 409** 를 발급했다(결정 1180 ⑥).
+    **커밋 제목은 append-only 라 절대 안 줄어든다** — 그래서 여기를 읽는다.
+
+    ⚠ 이 집합은 «발급된 번호» 보다 **넓다**(«T278 의 자로» 같은 참조도 들어온다).
+      넓은 쪽으로 틀리는 것이 안전하다 — 번호를 **건너뛰는** 것은 값이 0 이고,
+      번호가 **겹치는** 것은 두 워커가 같은 lock 을 서로 다른 일로 잡는 사고다.
+    """
+    out = _git(["log", "--format=%s"])
+    return set(ID_IN_TEXT.findall(out))
+
+
+def next_id(rows_all=None, hist=None):
+    """다음 작업 번호 → (다음, 표 최대, 이력 최대). git 이 없으면 이력 최대는 None."""
+    rows_all = row_ids_all() if rows_all is None else rows_all
+    hist = history_ids() if hist is None else hist
+    n = lambda s: max((int(t[1:]) for t in s), default=0)
+    tmax, hmax = n(rows_all), (n(hist) if hist else None)
+    return max(tmax, hmax or 0) + 1, tmax, hmax
+
+
+def buried_ids(rows_all=None, hist=None):
+    """**이력에는 있는데 표에 행이 없는** ID — 곧 «행이 지워졌다 = 그 번호가 되살아났다» (T415).
+
+    이것이 발급 사고의 **유일한 이른 신호**다. 번호가 지워진 뒤 **다시 발급되기 전**에만 보이고,
+    다시 발급되고 나면 표에는 행이 하나뿐이라 «번호 중복» 자에도 안 걸린다(T205 몫이 못 보는 칸).
+    ⚠ «빠진 번호(구멍)를 센다» 로는 못 잡는다 — 재 봤다: 지금 표의 구멍 여덟(T92 · T333~T339)은
+      **한 번도 발급된 적이 없고**(이력에 없다), 정작 T409 는 곧바로 재발급돼 구멍이 아니었다.
+    """
+    rows_all = row_ids_all() if rows_all is None else rows_all
+    hist = history_ids() if hist is None else hist
+    return sorted(hist - rows_all, key=lambda t: int(t[1:]))
+
+
+def cmd_new_id():
+    """선점 «직전» 한 줄 — 다음 번호를 규칙대로 뽑아 준다(T415).
+
+    규칙에 **재는 길을 같이 준다**: «표에서 가장 큰 것을 눈으로 찾아라» 는 지시는
+    행이 지워진 날 조용히 어긋난다(결정 1166 «조건이 차면 하라» 는 그 조건을 재는 길이 있을 때만 지시다).
+    """
+    rows_all = row_ids_all()
+    hist = history_ids()
+    nxt, tmax, hmax = next_id(rows_all, hist)
+    print("다음 작업 번호 = **T%d**" % nxt)
+    print("  · 표(docs/PROGRESS.md) 최대 = T%d" % tmax)
+    print("  · 이력(커밋 제목) 최대 = %s" % ("T%d" % hmax if hmax is not None else "(git 이 없어 못 셌다)"))
+    buried = buried_ids(rows_all, hist)
+    if buried:
+        print("⚠ 이력에는 있는데 **표에 행이 없는** 번호 %d개 — 행이 지워졌다(= 그 번호가 되살아난다):" % len(buried))
+        print("   %s" % " ".join(buried))
+        print("   접을 때는 행을 지우지 말고 **✂ 로 남겨 번호를 태운다**(T284·T296 의 꼴).")
+    print("⚠ 이 수는 «지금» 의 답이다 — 같은 순간 남도 같은 답을 얻는다.")
+    print("   같은 번호를 동시에 뽑는 갈래는 이 자가 못 막는다(2026-09-10 T414 가 그랬다) —")
+    print("   그것을 가르는 것은 규약의 **push 순서**다(«push 가 먼저 성공한 쪽이 이긴다» · 늦게 민 쪽이 옮긴다).")
+    return 0
 
 
 def footprint(tid):
@@ -385,6 +460,19 @@ def cmd_check(heads, rows, dups=None):
         print("  잡기 전에: 그 SID 의 최근 커밋을 읽어라(`git log --grep <SID>`) — 그 절을 아직 밀고 있으면 다른 일을 잡는다.")
         print("  임자가 할 것: 90분 전에 `date -u +%Y-%m-%dT%H:%M:%SZ` 로 갱신해 push — 그것이 «살아 있다» 는 유일한 신호다(README).")
         notes.append("lock 은 낡았는데 임자는 살아 있음 %s" % " ".join(t[0] for t in alive))
+
+    # T415 — «이력에는 있는데 표에 행이 없는» 번호 = 행이 지워졌다 = 그 번호가 되살아난다.
+    # ⚠ **알리기만 한다(rc 를 안 건드린다)** — 이 자는 막는 게이트이고, 여기 쓰이는 재료는
+    #   «커밋 제목의 낱말» 이라 남의 push 를 막을 만큼 단단하지 않다(결정 493 의 자리).
+    #   그리고 지금 이 수는 0 이라, 울면 그때가 진짜다.
+    buried = buried_ids(rows_all=row_ids_all())
+    if buried:
+        print("· (참고 · 실패 아님) **이력에는 있는데 표에 행이 없는 번호** — 행이 지워져 그 번호가 «안 쓰인 것» 이 됐다:")
+        print("  · %s" % " ".join(buried))
+        print("  왜 나쁜가: 발급 규칙이 «가장 큰 것 +1» 이라 다음 사람이 **같은 번호를 다시 뽑는다**"
+              " — 그러면 `T<번호>.lock` 이 «어느 일» 인지 못 가른다(2026-09-10 T409 가 그랬다 · 결정 1180 ⑥).")
+        print("  고침: 접을 때 행을 지우지 말고 **✂ 로 남겨 번호를 태운다**(T284·T296 의 꼴). 발급은 `--new-id` 로.")
+        notes.append("이력에만 있고 표에 행이 없는 번호 %s" % " ".join(buried))
 
     bad = mismatches(heads, rows)
     if not bad:
@@ -640,9 +728,41 @@ def self_test():
         finally:
             CLAIMS = keep_claims
 
+        # ⓚ **T415 — 행을 지워도 다음 번호가 안 내려간다.** 순수 함수라 진짜 git 없이 잰다.
+        #    재는 것은 «맨 위 행이 지워진 상태에서 발급이 어떻게 되는가» 하나다 — 2026-09-10 T409 가 겪은 그 상황.
+        #    ⚠ 옛 규칙(표만 본다)이 무엇을 냈는지도 같이 박아 둔다 — 안 그러면 이 자가 무엇을 막는지 다음 사람이 모른다.
+        rows_del = {"T1", "T2", "T414"}          # T415 의 행이 지워졌다
+        hist_has = {"T1", "T2", "T414", "T415"}  # 이력에는 남아 있다(append-only)
+        nxt, tmax, hmax = next_id(rows_del, hist_has)
+        if (nxt, tmax, hmax) != (416, 414, 415):
+            print("⛔ 자기 검사 실패 — 행을 지운 뒤 발급이 (다음 %s · 표 %s · 이력 %s) 다 (기대 416·414·415)"
+                  % (nxt, tmax, hmax))
+            return 1
+        if max(int(t[1:]) for t in rows_del) + 1 != 415:
+            print("⛔ 자기 검사 실패 — 이 판이 «옛 규칙이면 415 를 재발급한다» 를 못 보여 준다")
+            return 1
+        if buried_ids(rows_del, hist_has) != ["T415"]:
+            print("⛔ 자기 검사 실패 — 지워진 행(T415)을 «이력에만 있는 번호» 로 못 잡았다: %s"
+                  % (buried_ids(rows_del, hist_has),))
+            return 1
+        if buried_ids(hist_has, hist_has) != []:
+            print("⛔ 자기 검사 실패 — 멀쩡한 표에서 울었다(거짓 경고)")
+            return 1
+        # 구멍(발급된 적 없는 빠진 번호)에는 안 운다 — 지금 표의 T92·T333~T339 가 그 꼴이다.
+        if buried_ids({"T1", "T3"}, {"T1", "T3"}) != []:
+            print("⛔ 자기 검사 실패 — 빠진 번호(구멍)에 울었다 — 그 여덟은 발급된 적이 없다")
+            return 1
+        # git 이 없는 통(얕은 클론·CI)에서는 이력이 비고, 그러면 표만 보고 답한다(아무 말도 안 지어내지 않는다).
+        nxt0, tmax0, hmax0 = next_id(rows_del, set())
+        if (nxt0, tmax0, hmax0) != (415, 414, None):
+            print("⛔ 자기 검사 실패 — 이력이 없을 때 (다음 %s · 표 %s · 이력 %s) 다 (기대 415·414·None)"
+                  % (nxt0, tmax0, hmax0))
+            return 1
+
         print("✓ task_state --self-test: 어긋난 짝을 잡고(T161) · ✅ 를 달면 조용하고 · 빈 번호는 통과하고 ·"
               " 같은 번호 두 제목을 잡고 · «행 없음 ↔ 접힌 행만» 을 가르고 · ⛔ 와 `\\|` 도 읽고 ·"
-              " 참고 줄이 마지막 요약에도 실리고(T231) · «⬜ + 살아 있는 lock» 을 잡되 죽은 lock 은 안 잡고(T238) · **미래로 적힌 lock 을 잡되 1분 차에는 안 울고**(T294) · **본문에 ✂ 를 인용한 살아 있는 줄을 접힘으로 안 센다**(T249) · **«낡은 lock 인데 임자는 살아 있다» 를 잡되 «둘 다 낡음»·«아직 살아 있음»·«판단 못 함» 셋에는 안 울고**(T329)")
+              " 참고 줄이 마지막 요약에도 실리고(T231) · «⬜ + 살아 있는 lock» 을 잡되 죽은 lock 은 안 잡고(T238) · **미래로 적힌 lock 을 잡되 1분 차에는 안 울고**(T294) · **본문에 ✂ 를 인용한 살아 있는 줄을 접힘으로 안 센다**(T249) · **«낡은 lock 인데 임자는 살아 있다» 를 잡되 «둘 다 낡음»·«아직 살아 있음»·«판단 못 함» 셋에는 안 울고**(T329)"
+              " · **맨 위 행을 지워도 발급이 안 내려가고(옛 규칙이면 그 번호를 재발급한다) · 지워진 번호를 잡되 멀쩡한 표·구멍·git 없음 셋에는 안 울고**(T415)")
         return 0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -651,6 +771,8 @@ def self_test():
 def main(argv):
     if "--self-test" in argv:
         return self_test()
+    if "--new-id" in argv:
+        return cmd_new_id()
     dups = {}
     heads, rows = routine_heads(dups=dups), progress_rows()
     if "--check" in argv:

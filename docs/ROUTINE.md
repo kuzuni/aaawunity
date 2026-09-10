@@ -1105,6 +1105,9 @@
 
 ### 신규 작업 등재
 - 버그·후속 작업 발견 시 PROGRESS 표에 **이미 쓰인 번호 중 가장 큰 것 +1** 로 등재 (번호 재사용 금지, 한 번호 = 한 작업).
+  번호는 **`python3 tools/task_state.py --new-id`** 로 뽑는다 — 표와 **커밋 이력** 중 큰 쪽에서 +1 한다.
+  ⚠ 표만 보면 안 된다: 누가 행을 지우면 최대가 **내려가** 다음 사람이 같은 번호를 다시 뽑는다(2026-09-10 T409 · 결정 1180 ⑥ · T415).
+  접을 때는 행을 지우지 말고 **✂ 로 남겨 번호를 태운다**(T284·T296 의 꼴).
 
 ### T49 ✅ — 팝업 등장 연출 = DOTween «순서대로»: 레벨업 3택 특전 카드 · 승리(클리어) 팝업 · 패배(사망) 팝업 (주인 2026-09-06 · T36·T23 코드 뒤 · 제약 없음) ✅ (완료 · `fdb8d35` · CI #76 · 3택 0.77s · 클리어 0.94s · 사망 0.98s · 배경 탭 = 스킵 · PROGRESS 참조)
 범위: `Assets/Scripts/Game/Overlay.cs`(LevelUp · PerkBook · Clear · Dead) · `UiKit.cs`(연출 헬퍼 — 기존 `PopIn(rt, from, dur)`·`FadeIn` 에 <b>delay</b> 인자 또는 `Stagger(items, step)` 추가 · 타이밍 상수는 UiKit 한 곳) · `Assets/Tests/PlayMode/UiSmokeTests.cs`(연출 뒤 단언) · `PlayShot`(T46 스크린샷은 연출이 끝난 뒤)
