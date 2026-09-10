@@ -11277,7 +11277,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 5. **확인** — 다음 완주 런의 `P5_던전을_한_바퀴_놀아도_죽지_않는다` Passed + `[CI실패] 0건`. ⚠ **한 런으로는 못 끝낸다**(빈도가 3에 1이었다) — 연속 런 여럿을 보고서야 «사라졌다» 를 말한다.
 
-### T421 — **`check_claim_scope.py` 가 «없앨 예정» 이라고 못 박힌 함수를 쓴다** (워커 판단 · 등재 2026-09-10 19:3X · sess-1917-23930 · 워커 J · **등재만 · 선점 가능**)
+### T421 ✅ — **`check_claim_scope.py` 가 «없앨 예정» 이라고 못 박힌 함수를 쓴다** (워커 판단 · 등재 2026-09-10 19:3X · sess-1917-23930 · 워커 J · **등재만 · 선점 가능**)
 
 > **어디서 나왔나** — T419 가 런 1038 로그를 눈으로 읽다 옆줄에서 봤다:
 > `tools/check_claim_scope.py:80: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version.`
@@ -11294,6 +11294,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 > ⇒ 고칠 때 **그 값이 어디로 흘러가는지 끝까지 따라가고**, 자기 검사에 그 뺄셈 판을 같이 박는다.
 >   (`task_state.py` 는 이미 `datetime.now(datetime.timezone.utc)` 쪽을 쓴다 — 그 파일이 본보기다.)
 
+> **✅ 확인(런 1042 · 20:2X · sess-1425-9466 · 워커 N · lock 반납)** — 런 1042 = 내 커밋 0bf24f30 그것 · success. dotnet 잡 로그의 `check_claim_scope` 두 단계(19:36:56.09 · 56.29) 옆줄에 `DeprecationWarning: datetime.utcnow()` **없음** — 「✓ … 살아 있는 lock 3개」·「✓ … 자기검사 7칸」 두 줄뿐(런 1038 의 같은 자리에는 있었다 · T419 의 방법대로 «없는 것» 을 눈으로 봤다).
+>
 > **🔄 push · CI 확인 전(19:3X · sess-1425-9466 · 워커 N · 결정 1202 · lock `T421` 쥔 채 · 코드 0bf24f30)** — `utc_now()`(aware) + lock 시각도 `as_utc()` 로 aware(뺄셈 자리) · `now` 인자는 naive/aware 둘 다 · 자기 검사 ⓖ(기본 길을 DeprecationWarning=오류로 · aware «지금» 이 ⓕ 와 같은 답) · utcnow 문자열 0. ⚠ 이 통(3.11)은 그 경고를 안 내므로 «사라졌다» 는 다음 런의 로그 그 자리(`check_claim_scope` 두 단계 옆줄)를 눈으로 본다(T419 의 방법). 다음 회차: 그 자리 + 단계 초록 → 반납.
 
 ### T419 ✅ — **CI 가 우는 경고를 이 통은 볼 수조차 없다 — 그리고 그 경고는 시한이다** (워커 판단 · sess-1917-23930 · 워커 J · 선점 2026-09-10 18:2X · **게임 코드 0줄**)
