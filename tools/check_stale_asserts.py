@@ -17,7 +17,7 @@
   ⓐ 문자열 리터럴("Events" · " (신화)" 같은 것)
   ⓑ 숫자 리터럴(-35f · 0.55f · 200f …)
   ⓒ public 멤버 이름(지워지거나 이름이 바뀐 const·필드·메서드)
-을 모아, 그것이 `Assets/Tests/**` 에 **아직 남아 있으면** 파일·줄로 찍는다.
+을 모아, 그것이 `Assets/Tests/**` **또는 봇 각본(`Game/Playthrough.cs`)** 에 **아직 남아 있으면** 파일·줄로 찍는다.
 그 자리가 «옛 전제를 든 단언» 이면 고치고, 아니면(우연히 같은 글자) 그냥 지나가면 된다.
 
 쓰는 법 (커밋 «직전» · ROUTINE §3 게이트 목록):
@@ -34,6 +34,15 @@ import sys
 
 SRC = "Assets/Scripts/"
 TESTS = "Assets/Tests/"
+# T300 결정 1072 — **자와 같은 일을 하는데 소스 폴더에 사는 파일이 하나 있다.**
+#   `Playthrough.cs` 는 배포 빌드에서 게임을 «놀아 보는» 봇의 각본이고, 화면을 **이름 계약**(`UiKit.Find("SummonBtn")` ·
+#   `TapIn(root, "Pet:0")` …)으로 집는다 — 곧 `Assets/Tests` 의 자와 똑같이 «옛 이름을 박아 둔 채» 낡는다.
+#   그런데 이 자가 `Assets/Tests` 만 훑어서, 2026-09-10 에 화면이 바뀌었을 때
+#   같은 고침이 자 쪽만 옮겨지고 각본은 그대로 남았다(그 각본은 CI 가 아니라 **배포 스모크**에서만 도는데,
+#   꺼진 버튼도 `onClick` 은 돌아서 **빨개지지도 않고 조용히 아무것도 안 누른다**).
+#   ⇒ 훑는 자리에 그 한 파일을 더한다. 「자」의 뜻은 폴더가 아니라 «이름 계약에 기대어 화면을 집는가» 다.
+BOT = "Assets/Scripts/Game/Playthrough.cs"
+SEARCH = (TESTS, BOT)
 
 # 너무 흔해서 찍어 봐야 소음인 것 — 이 자가 노리는 것은 «그 자리에만 있는» 값·이름이다
 NOISE_STRINGS = {"", " ", "\\n", "/", ".", ",", "-", "+", "%", "Text", "Image", "Bg", "Icon", "Content"}
@@ -93,7 +102,7 @@ def tokens(rem_lines, add_text):
 
 
 def hits(needle, literal, at=None):
-    """<at> 트리(없으면 작업 트리)의 Assets/Tests 에서 그 값을 쓰는 줄 — git grep 이라 무시 파일을 안 판다.
+    """<at> 트리(없으면 작업 트리)의 Assets/Tests **와 봇 각본**(<see cref="BOT"/>)에서 그 값을 쓰는 줄 — git grep 이라 무시 파일을 안 판다.
 
     ⚠ <at> 이 중요하다: 과거 커밋을 검증할 때 작업 «트리» 를 뒤지면 이미 고쳐진 뒤라 늘 0 이 나온다
     (이 자를 만들며 T179 로 실제로 겪었다 · 결정 참조)."""
@@ -102,7 +111,7 @@ def hits(needle, literal, at=None):
     cmd = ["git", "grep", "-n", "--fixed-strings" if literal == "str" else "-P", pat]
     if at:
         cmd.append(at)
-    cmd += ["--", TESTS]
+    cmd += ["--"] + list(SEARCH)
     r = subprocess.run(cmd, capture_output=True, text=True)
     return [l for l in r.stdout.split("\n") if l.strip()][:MAX_HITS_TEXT + 1]
 
@@ -134,7 +143,7 @@ def main(argv):
                 found.append((label, v, h))
 
     if not found:
-        print("✓ check_stale_asserts: 지운 값·이름을 아직 가리키는 테스트 자리 0 "
+        print("✓ check_stale_asserts: 지운 값·이름을 아직 가리키는 자리 0 (자 + 봇 각본) "
               "(문자열 %d · 이름 %d · 수 %d 를 훑었다)" % (len(strs), len(names), len(nums)))
         return 0
 
