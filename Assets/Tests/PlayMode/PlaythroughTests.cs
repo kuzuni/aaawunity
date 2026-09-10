@@ -941,6 +941,29 @@ namespace KkomaKnight.Tests.Play
             Assert.IsFalse(Playthrough.TryFind("P12", out _), "없는 번호는 못 찾는다고 말한다");
         }
 
+        /// <summary>
+        /// T406 — 줄 뒤에 붙는 «몇 초» 꼬리의 꼴. <c>webgl_smoke.js</c> 가 <c>(\d+\.\d)s</c> 로 읽으므로 여기서 못 박는다.
+        /// <para>
+        /// ⚑ <b>이 자가 실제로 지키는 것은 소수점이다</b> — 러너의 문화권이 «1,3s» 를 쓰면 스모크의 수 읽기가 <b>조용히</b> 어긋나고
+        /// (꼬리를 못 읽으면 «오래 논 단계» 가 비기만 하므로) <b>아무 자도 안 운다</b>. 오늘 결정 1162 ⑤ 가 옆 파일에서 같은 노출을 미리 막은 그 자리다.
+        /// 그래서 «쉼표를 쓰는 문화권을 지금 켜 놓고» 잰다 — 없는 상태를 기다리지 말고 만들어서 잰다(결정 1146 ⓑ 와 같은 결).
+        /// </para>
+        /// </summary>
+        [Test]
+        public void 초_꼬리는_어느_문화권에서도_마침표로_찍힌다()
+        {
+            Assert.AreEqual(" 1.3s", Playthrough.Secs(1.28), "소수 한 자리로 «N.Ns» 로 찍는다 — ⚠ 1.25 같은 «딱 절반» 은 안 쓴다(반올림 방식이 런타임마다 달라 이 자가 재려는 것과 다른 까닭으로 빨개진다)");
+            Assert.AreEqual("[KkomaKnight] play P1 ok 1.3s", Playthrough.Line("P1", true) + Playthrough.Secs(1.28), "스모크가 읽는 꼴 그대로");
+
+            var was = System.Threading.Thread.CurrentThread.CurrentCulture;
+            try
+            {
+                System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("de-DE");   // 소수점이 쉼표인 문화권
+                Assert.AreEqual(" 1.3s", Playthrough.Secs(1.28), "문화권이 쉼표를 써도 마침표로 찍는다 — 여기가 뚫리면 스모크가 조용히 못 읽는다");
+            }
+            finally { System.Threading.Thread.CurrentThread.CurrentCulture = was; }
+        }
+
         // ─────────────────────────────────────────────────────────────────────────────
         // P3 장비 — 장착 · 슬롯 강화(레시피 있음/없음) · 해제 · 대장간에서 합성 3 → 1.
         // ─────────────────────────────────────────────────────────────────────────────

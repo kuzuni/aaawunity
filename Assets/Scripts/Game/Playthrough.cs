@@ -61,6 +61,20 @@ namespace KkomaKnight.Game
         public const string LogPrefix = "[KkomaKnight] play ";
         public static string Line(string id, bool ok, string why = null)
             => LogPrefix + id + (ok ? " ok" : " fail " + (string.IsNullOrEmpty(why) ? "(까닭 없음)" : why));
+
+        /// <summary>
+        /// 같은 줄 <b>뒤에 «몇 초 놀았는지» 를 붙인다</b>(T406) — <c>[KkomaKnight] play P1 ok 1.3s</c>.
+        /// <para>
+        /// ⚑ <b>왜</b>: T300 1항이 봇에 «5분 이내» 예산을 걸어 뒀고 결정 1148·1165 가 «판을 굴리는 단계(P5·P6)는 그 예산을 <b>재 보고</b> 붙여라» 고 두 번 적었는데,
+        /// <b>재는 길이 없었다</b> — 줄이 «ok» 만 말하니 어느 단계가 몇 초 먹는지 아무 데도 안 남는다. 그러면 다음 사람도 <b>짐작</b>으로 차례를 정한다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>초는 <see cref="System.Globalization.CultureInfo.InvariantCulture"/> 로 찍는다</b> — 러너의 문화권이 «1,3s» 를 쓰면
+        /// <c>webgl_smoke.js</c> 의 수 읽기가 <b>조용히</b> 어긋난다(아무 자도 안 운다). 오늘 결정 1162 ⑤ 가 옆 파일에서 같은 노출을 미리 막은 그 까닭이다.
+        /// </para>
+        /// <para>⚠ <b>꼬리를 붙이는 것이지 꼴을 바꾸는 것이 아니다</b> — 스모크의 정규식은 앵커가 없으므로(결정 1065) 옛 줄도 새 줄도 같이 읽힌다.</para>
+        /// </summary>
+        public static string Secs(double s) => " " + s.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "s";
         // ─────────────────────────────────────────────────────────────────────────────
         // 배포 빌드에서 실제로 «노는» 쪽(T300 2항) — `App.DebugGo("play")` 가 이것을 돌린다.
         // ─────────────────────────────────────────────────────────────────────────────
@@ -528,11 +542,13 @@ namespace KkomaKnight.Game
         public static System.Collections.IEnumerator Run(App app)
         {
             int ok = 0, bad = 0, ran = 0;
+            float t0All = UnityEngine.Time.realtimeSinceStartup;
             foreach (var st in Stages)
             {
                 Step step;
                 if (!Steps.TryGetValue(st.Id, out step)) continue;   // 아직 아무도 안 쓴 단계는 조용히 건너뛴다
                 ran++;
+                float t0 = UnityEngine.Time.realtimeSinceStartup;
                 // 단계 안의 «작은 걸음»(Frames · CloseChest …)은 여기서 손으로 돌린다 — 유니티에 그대로 넘기면(중첩 코루틴) 그 안에서 난
                 //   예외를 이 try 가 못 잡고, 봇이 «fail 한 줄» 대신 조용히 멈춘다(그러면 done 줄이 안 와서 «돌다 죽었다» 만 남는다).
                 var stack = new System.Collections.Generic.Stack<System.Collections.IEnumerator>();
@@ -545,16 +561,16 @@ namespace KkomaKnight.Game
                     try { alive = top.MoveNext(); }
                     catch (System.Exception e)
                     {
-                        UnityEngine.Debug.Log(Line(st.Id, false, e.GetType().Name + " " + e.Message));
+                        UnityEngine.Debug.Log(Line(st.Id, false, e.GetType().Name + " " + e.Message) + Secs(UnityEngine.Time.realtimeSinceStartup - t0));
                         bad++; failed = true; break;
                     }
                     if (!alive) { stack.Pop(); continue; }
                     if (top.Current is System.Collections.IEnumerator sub) stack.Push(sub);
                     else yield return top.Current;
                 }
-                if (!failed) { UnityEngine.Debug.Log(Line(st.Id, true)); ok++; }
+                if (!failed) { UnityEngine.Debug.Log(Line(st.Id, true) + Secs(UnityEngine.Time.realtimeSinceStartup - t0)); ok++; }
             }
-            UnityEngine.Debug.Log(DoneLine(ok, ran, bad));
+            UnityEngine.Debug.Log(DoneLine(ok, ran, bad) + Secs(UnityEngine.Time.realtimeSinceStartup - t0All));
         }
 
         /// <summary>스모크가 꼬리에서 찾는 마지막 한 줄.</summary>

@@ -53,16 +53,21 @@ const AUDIO_RE = /no supported source was found|The element has no supported sou
 function playReport(lines) {
   const ok = [], fail = [];
   let done = null;
+  const secs = {};        // T406 — 단계별 «몇 초» (꼬리가 붙은 줄에서만 · 옛 빌드는 비어 있다)
   for (const t of lines) {
-    let m = t.match(/\[KkomaKnight\] play (P\d+) ok/);      if (m) { ok.push(m[1]); continue; }
+    // T406 — 줄 뒤에 «몇 초 놀았는지» 가 붙는다(`… play P1 ok 1.3s`). 꼬리는 **있을 수도 없을 수도** 있다:
+    //   옛 빌드(gh-pages 에 남아 있는 것)는 안 붙이고 새 빌드는 붙인다 — 그래서 `?` 로 둔다(꼬리가 없다고 «ok» 를 못 세면 안 된다).
+    //   초는 `InvariantCulture` 로 찍힌다(마침표) — 러너 문화권이 쉼표를 쓰면 이 수 읽기가 조용히 어긋나므로 봇 쪽에서 못 박았다.
+    let m = t.match(/\[KkomaKnight\] play (P\d+) ok(?: (\d+\.\d)s)?/);
+    if (m) { ok.push(m[1]); if (m[2] !== undefined) secs[m[1]] = Number(m[2]); continue; }
     // ⚠ `$` 를 안 붙인다 — 유니티 WebGL 은 `Debug.Log` 한 줄에 **스택을 덧붙여** 보낼 때가 있어(여러 줄) `.` 가 줄바꿈을 안 넘는 `$` 앵커면 통째로 안 맞는다.
     //   그러면 «done 줄이 fail 1 이라고 말하는데 까닭 줄은 하나도 없는» 꼴이 된다(배포 런 565 에서 실제로 났다 · 결정 1065) —
     //   세는 곳과 이름 대는 곳이 갈리면, 봇이 잡은 고장을 아무도 못 읽는다. 첫 줄만 까닭으로 쓴다.
     m = t.match(/\[KkomaKnight\] play (P\d+) fail ([^\n]*)/);   if (m) { fail.push({ id: m[1], why: m[2].trim() }); continue; }
-    m = t.match(/\[KkomaKnight\] play done (\d+)\/(\d+) fail (\d+)/);
-    if (m) done = { ok: Number(m[1]), ran: Number(m[2]), fail: Number(m[3]) };
+    m = t.match(/\[KkomaKnight\] play done (\d+)\/(\d+) fail (\d+)(?: (\d+\.\d)s)?/);
+    if (m) done = { ok: Number(m[1]), ran: Number(m[2]), fail: Number(m[3]), secs: m[4] !== undefined ? Number(m[4]) : null };
   }
-  return { ok, fail, done };
+  return { ok, fail, done, secs };
 }
 
 if (flag('self-test')) {
@@ -120,6 +125,12 @@ if (flag('self-test')) {
     // 마지막 줄이 없으면 «돌다 죽었다» 다 — 초록으로 읽으면 안 된다
     ['done 줄이 없다', ['[KkomaKnight] play P1 ok'], r => r.done === null],
     ['봇을 안 돌린 런', ['[KkomaKnight] ready lobby'], r => r.done === null && r.ok.length === 0],
+    // T406 — 초 꼬리가 붙은 새 빌드. 꼬리를 못 읽으면 «오래 논 단계» 가 비고, 꼬리 때문에 ok 를 못 세면 배포가 헛돈다(둘 다 잰다).
+    ['초 꼬리가 붙어 온다', ['[KkomaKnight] play P1 ok 1.3s', '[KkomaKnight] play P5 ok 47.2s', '[KkomaKnight] play done 2/2 fail 0 48.5s'],
+      r => r.ok.length === 2 && r.secs.P5 === 47.2 && r.done && r.done.secs === 48.5],
+    // 옛 빌드(꼬리 없음)도 그대로 읽힌다 — gh-pages 에 남아 있는 빌드를 다시 재는 갈래가 있다(결정 1065 의 «굽기 직후 ↔ 재확인»).
+    ['초 꼬리가 없는 옛 빌드', ['[KkomaKnight] play P1 ok', '[KkomaKnight] play done 1/1 fail 0'],
+      r => r.ok.length === 1 && r.done.secs === null && Object.keys(r.secs).length === 0],
   ];
   for (const [name, lines, ok] of pr) {
     const r = playReport(lines);
@@ -302,6 +313,11 @@ const log = (tag, msg) => { const l = `[${new Date().toISOString().substr(11, 12
       else playBad(`play: 끝 줄(done)이 안 왔다 — 돌다 죽었다(ok ${rep.ok.length} · fail ${rep.fail.length})`);
     } else {
       log('play', `done ${rep.done.ok}/${rep.done.ran} fail ${rep.done.fail}` + (rep.ok.length ? ' · ok=' + rep.ok.join(',') : ''));
+      // T406 — 예산(5분)을 쓴 만큼과 **가장 오래 논 단계**. 다음 사람이 «P5·P6 를 붙여도 드는가» 를 짐작이 아니라 수로 정한다.
+      const slow = Object.entries(rep.secs).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      if (rep.done.secs !== null || slow.length)
+        log('play', `시간 ${rep.done.secs !== null ? rep.done.secs + 's' : '?'}/300s 예산`
+          + (slow.length ? ' · 오래 논 단계 ' + slow.map(([k, v]) => `${k} ${v}s`).join(' · ') : ''));
       for (const f of rep.fail) playBad(`play ${f.id} fail — ${f.why}`);
     }
     inPlay = false;
