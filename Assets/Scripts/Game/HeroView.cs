@@ -142,6 +142,8 @@ namespace KkomaKnight.Game
             _rig.Play(Walking ? CharacterRig.Walk : CharacterRig.Idle, true); _rig.SetSpeed(Still ? 0f : 1f);
         }
 
+        /// <summary>지금 입고 있는 외형 — 자가 «이 초상이 그 펫인가» 를 물을 때 쓴다(T396 · 화면이 스킨을 다시 안 적게).</summary>
+        public CharacterRig.Skin Skin => _skin;
         /// <summary>
         /// T394 — 제자리 걷기(주인 «탐험 쪽은 오른쪽으로 계속 이동하는 것처럼»): Idle 대신 전투 <see cref="CharacterRig.Walk"/> 상태를 튼다(오른쪽 보기는 <see cref="SetSkin"/> 의 <c>Face(true)</c> 그대로).
         /// 걷는 «느낌» 의 나머지 반(발밑 배경이 오른쪽→왼쪽으로 흐름)은 부르는 쪽(<c>LobbyPopups.Picture</c>)의 몫이다. <see cref="Still"/> 이면 걷기 첫 프레임에서 멈춘다.

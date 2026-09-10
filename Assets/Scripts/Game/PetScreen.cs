@@ -381,6 +381,43 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>펫 한 마리의 칸 그림 — 표의 차례가 곧 격자 차례라 그 자리의 아이콘을 쓴다(그림 9벌은 <see cref="PetLook"/> 이 따로 갖는다 · 격자 칸은 아이콘 문법).</summary>
+        /// <summary>펫 초상(RenderTexture)의 한 변 px — 격자 칸이 프레임 168px 이라 256 이면 넉넉하다(정사각 · <see cref="HeroView.CreateTargetTexture"/>).</summary>
+        public const int FaceTex = 256;
+        /// <summary>초상 호스트 이름(자가 이 이름으로 짚는다).</summary>
+        public const string FaceName = "PetFace";
+
+        /// <summary>
+        /// 칸 안의 그림을 <b>메이커 펫</b>으로 세운다(주인 T396 «아이콘에도 해당 메이커로 만든 펫 모양으로 아이콘 · 플레이어 모양 펫인 겨»).
+        /// <para>
+        /// 조각 아이콘(<c>Item</c> 의 <see cref="Image"/>)은 <b>끄고</b> 그 자리에 <see cref="HeroView"/> 를 세운다 —
+        /// 같은 rect 를 쓰므로 자리·크기는 그대로이고, 이름 계약(<c>Item</c>)도 살아 있다(<see cref="BorderAudit"/>·스모크 자가 그 이름을 짚는다).
+        /// </para>
+        /// <para>
+        /// <b>정지 초상</b>(<see cref="HeroView.SetStill"/>)이다 — 칸 아홉이 저마다 걷고 있으면 격자가 시끄럽고, 로비 아바타가 이미 그 규칙을 세웠다(T68 ②).
+        /// 이미 그 펫이 서 있으면 <b>아무것도 안 한다</b>(<c>Refresh</c> 마다 리그를 새로 세우면 카메라가 쌓인다 · 결정 1096 과 같은 자리).
+        /// </para>
+        /// </summary>
+        static void PetFace(Transform frame, PetData d, PetData.Pet p)
+        {
+            if (frame == null) return;
+            var item = UiKit.Find(frame, "Item"); if (item == null) return;
+            var im = item.GetComponent<Image>();
+            var view = item.GetComponentInChildren<HeroView>(true);
+            if (p == null) { if (view != null) view.gameObject.SetActive(false); return; }
+            // ⚠ 조각(`cm.character`)이 없으면 초상은 **빈 그림**이다 — 그때는 조각 아이콘으로 되돌아간다(그림이 통째로 사라지는 자리를 안 만든다 · T96-loading 의 «부팅은 안 막힌다» 와 같은 결).
+            var cat = App.I != null ? App.I.Assets : null;
+            if (cat == null || cat.Prefab("cm.character") == null) { if (im != null) im.enabled = true; return; }
+            var skin = CharacterRig.PetSkin(d, p);
+            if (view == null)
+            {
+                view = HeroView.Attach((RectTransform)item, skin, FaceTex);
+                view.name = FaceName;
+                view.SetStill(true);
+            }
+            else { view.gameObject.SetActive(true); if (view.Skin == null || view.Skin.Helmet != skin.Helmet || view.Skin.Chest != skin.Chest) view.SetSkin(skin); }
+            if (im != null) im.enabled = false;   // 초상이 섰으니 조각 아이콘 자리는 비운다
+        }
+
         static string PetIcon(PetData d, string id)
         {
             int i = d != null ? d.Pets.FindIndex(p => p.Id == id) : -1;
@@ -437,6 +474,7 @@ namespace KkomaKnight.Game
                 if (bt != null) bt.text = frag + "/" + need;   // «Lv N → N+1 : 조각 a/b»(5항) 를 바 안 숫자로
                 // 세부 칸도 그 펫의 **등급색**(격자·장착 칸과 같은 헬퍼 · 주인 5항 ⓘ) — `PetCell` 은 태어날 때 파랑 하나로 서므로 여기서 갈아 끼운다.
                 PaintFrame(UiKit.Find(cell, "ItemFrame_01"), FrameKeyOf(dp, pet), null);
+                PetFace(UiKit.Find(cell, "ItemFrame_01"), dp, pet);   // T396 — 세부 칸 그림도 메이커 펫(격자·장착 칸과 같은 헬퍼)
                 var pw = Pets.Equip(App.Data, dp, pet, petLv < 1 ? 1 : petLv);
                 int k = 0; var vals = new[] { pw.Hp, pw.Sh, pw.Atk };   // 위 SumGroup 차례와 같아야 한다(❤ · 🛡 · 🗡)
                 foreach (var t in pv.GetComponentsInChildren<TMP_Text>(true))
@@ -503,11 +541,8 @@ namespace KkomaKnight.Game
                 // 낀 펫이 있으면 그 그림 + 등급색 · 없으면 «+» 그대로(빈 칸)
                 UiKit.Show(frame, "Add_1", p == null);
                 var item = UiKit.Find(frame, "Item");
-                if (item != null)
-                {
-                    item.gameObject.SetActive(p != null);
-                    if (p != null) UiKit.SetSprite(frame, "Item", PetIcon(d, p.Id), Palette.White);
-                }
+                if (item != null) item.gameObject.SetActive(p != null);
+                PetFace(frame, d, p);   // T396 — 낀 펫도 메이커 모양으로(빈 칸이면 초상을 끈다)
                 // 프레임 색 = 그 펫의 등급색(주인 5항 ⓘ «슬롯 부분 등급마다 색») — 빈 칸은 회색.
                 { string fk = FrameKeyOf(d, p); if (PaintFrame(frame, fk, _slotFrame[i])) _slotFrame[i] = fk; }
             }
@@ -592,7 +627,7 @@ namespace KkomaKnight.Game
                 int lv = Pets.Lv(s, p.Id);
                 bool own = lv >= 1;
                 // 칸 그림도 그 펫의 것으로 — 칸 자리는 «화면의 몇 번째» 이고 무엇이 앉는지는 이 목록이 정한다.
-                UiKit.SetSprite(cell, "ItemFrame_01/Item", PetIcon(d, p.Id), Palette.White);
+                PetFace(UiKit.Find(cell, "ItemFrame_01"), d, p);   // T396 — 칸 그림 = 메이커 펫(조각 아이콘 자리는 끈다)
                 // 칸 프레임 = 그 펫의 등급색(주인 5항 ⓘ «격자 칸도 등급색») — 태어날 때는 파랑 하나로 세우고 여기서 목록대로 갈아 끼운다
                 //   (칸 자리는 고정이고 앉는 펫이 바뀌므로, 색은 «누가 앉았나» 를 따라야 한다 · 장착 칸과 같은 헬퍼를 쓴다).
                 { string fk = FrameKeyOf(d, p); if (PaintFrame(UiKit.Find(cell, "ItemFrame_01"), fk, _cellFrame[i])) _cellFrame[i] = fk; }

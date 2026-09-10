@@ -413,6 +413,65 @@ namespace KkomaKnight.Tests.Play
             return t.text;
         }
 
+        [UnityTest]
+        public IEnumerator 칸_그림은_메이커로_만든_그_펫이다()
+        {
+            // T396(주인 2026-09-10 «아이콘에도 해당 메이커로 만든 펫 모양으로 아이콘 · 플레이어 모양 펫인 겨 걍») —
+            //   칸 그림이 GUI Pro 아이콘 아홉이었다. 이제 `CharacterRig.PetSkin` 으로 세운 **초상**(HeroView)이 선다.
+            //   ⚑ 기댓값을 자가 다시 안 적는다 — 화면이 쓰는 그 함수(`CharacterRig.PetSkin`)로 되짚는다.
+            yield return Boot();
+            var d = _app.Data != null ? _app.Data.Pet : null;
+            if (d == null) { yield return Shutdown(); Assert.Ignore("펫 표가 없다 — 부팅이 안 들었다(T293 ⓗ)"); }
+
+            PetData.Pet low = null, high = null;
+            foreach (var p in d.Pets)
+            {
+                var g = d.GradeOfPet(p); if (g == null) continue;
+                if (low == null || g.Rar < d.GradeOfPet(low).Rar) low = p;
+                if (high == null || g.Rar > d.GradeOfPet(high).Rar) high = p;
+            }
+            Pets.Gain(_app.Save, low.Id); Pets.Gain(_app.Save, high.Id); _app.Persist();
+            _app.ShowScreen("pet"); yield return Frames(2);
+            var root = _app.Current.Root;
+
+            var want = CharacterRig.PetSkin(d, high);
+            Assert.IsNotEmpty(want.Helmet ?? "", "표가 그 펫의 투구 키를 줘야 아래가 뜻이 있다(PetLook)");
+            var face0 = Face(root, "PetGrid/Pet:0");
+            Assert.IsNotNull(face0, "격자 첫 칸 그림 = 메이커 펫 초상");
+            Assert.AreEqual(want.Helmet, face0.Skin.Helmet, "그 펫의 투구");
+            Assert.AreEqual(want.Chest, face0.Skin.Chest, "그 펫의 갑옷");
+            Assert.IsTrue(face0.Still, "격자 초상은 정지다 — 칸 아홉이 저마다 걸으면 격자가 시끄럽다(로비 아바타 T68 ② 와 같은 규칙)");
+            var im0 = UiKit.Find(root, "PetGrid/Pet:0/ItemFrame_01/Item").GetComponent<UnityEngine.UI.Image>();
+            Assert.IsFalse(im0 != null && im0.enabled, "조각 아이콘은 꺼진다 — 안 끄면 옛 그림과 초상이 겹쳐 그려진다");
+
+            // 칸마다 제 펫이 선다(한 벌을 돌려쓰면 둘째 칸이 첫째와 같아진다)
+            var face1 = Face(root, "PetGrid/Pet:1");
+            Assert.IsNotNull(face1, "둘째 칸 초상");
+            Assert.AreNotEqual(face0.Skin.Helmet + "|" + face0.Skin.Chest, face1.Skin.Helmet + "|" + face1.Skin.Chest, "칸마다 제 펫이 선다");
+
+            // 장착 칸·세부 팝업도 같은 그림이다(주인 «장착 시 …» · 한 화면에서 같은 펫이 다른 모습이면 안 된다)
+            Assert.IsTrue(Pets.Equip(d, _app.Save, high.Id, 0), "새 세이브의 첫 칸은 열려 있다");
+            _app.Persist(); _app.Current.Refresh(); yield return Frames(1);
+            var slotFace = Face(root, "Slots/Slot:0/FramePart");
+            Assert.IsNotNull(slotFace, "낀 장착 칸 그림도 메이커 펫");
+            Assert.AreEqual(want.Helmet, slotFace.Skin.Helmet, "장착 칸도 그 펫");
+
+            ((PetScreen)_app.Current).OpenDetail(0); yield return Frames(1);
+            var detFace = Face(_app.Overlay.Root, "PetDetailCell");
+            Assert.IsNotNull(detFace, "세부 팝업 칸 그림도 메이커 펫");
+            Assert.AreEqual(want.Helmet, detFace.Skin.Helmet, "세부 팝업도 그 펫");
+            _app.Overlay.Close(); yield return Frames(1);
+
+            yield return Shutdown();
+        }
+
+        /// <summary>그 칸 안에 선 메이커 초상(<see cref="HeroView"/>) — 없으면 null.</summary>
+        static HeroView Face(Transform root, string path)
+        {
+            var t = UiKit.Find(root, path); if (t == null) return null;
+            return t.GetComponentInChildren<HeroView>(true);
+        }
+
         /// <summary>지금 켜져 있는 격자 칸 수 — 꺼진 칸은 «안 그린 것» 이다(이름·자리는 그대로 살아 있다).</summary>
         static int ShownCells(Transform root)
         {
