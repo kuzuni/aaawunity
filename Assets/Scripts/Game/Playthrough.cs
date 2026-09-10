@@ -533,6 +533,26 @@ namespace KkomaKnight.Game
         }
         static readonly string[] DimNames = { "Dimmed", "Background" };
 
+        /// <summary>
+        /// <b>표식 하나가 사라질 때까지만</b> 민다 — «닫으면 다른 팝업이 서는» 자리에서 쓴다.
+        /// <para>
+        /// ⚠ <see cref="CloseAll"/> 과 갈리는 자리다. <c>CloseAll</c> 은 «아무것도 안 열릴 때까지» 미는데,
+        /// 소탕 리워드 팝업처럼 <c>onClose</c> 가 <b>다음 팝업을 여는</b> 자리에서는 그 다음 것까지 닫아 버린다
+        /// (T409 P5 1회차가 런 1027 에서 그렇게 빨갰다 — 던지는 줄은 «소탕 뒤 다시 서는 세부 팝업» 이라 <b>한 걸음 뒤에서</b> 얼굴을 냈다).
+        /// </para>
+        /// <para>⇒ <b>«무엇이 닫히기를 바라는가» 를 이름으로 대면</b> 그 하나만 닫고 멈춘다. 미는 손은 <see cref="Poke"/> 그대로다(어둠이 <c>Button</c> 이 아닌 팝업도 민다).</para>
+        /// </summary>
+        static System.Collections.IEnumerator PokeUntilGone(App app, string mark, string what)
+        {
+            for (int i = 0; i < CloseTaps; i++)
+            {
+                if (!app.Overlay.IsOpen || UiKit.Find(app.Overlay.Root, mark) == null) yield break;
+                if (!Poke(app)) { yield return null; continue; }   // 등장 연출 중이면 다음 프레임에 다시 본다
+                yield return Frames(2);
+            }
+            throw new MissingException(what + "(" + CloseTaps + "번 밀어도 «" + mark + "» 가 서 있다)");
+        }
+
         /// <summary>담는 자리 안에서 <b>처음으로 눌리는</b> 버튼 하나를 누른다 — 조각이 프리팹에서 와 제 이름이 없을 때(특전 카드) 쓴다.</summary>
         static bool TapFirstButtonIn(UnityEngine.Transform group)
         {
@@ -672,8 +692,15 @@ namespace KkomaKnight.Game
             if (DungeonTickets.Tickets(S, D, "hell", today) < 1) { S.DunTickets["hell"] = 1; app.Persist(); }
             yield return OpenDungeon(app, "hell");
             TapIn(app.Overlay.Root, "SweepBtn", true); yield return Frames(3);
-            if (UiKit.Find(app.Overlay.Root, "RewardTitle") != null) yield return CloseAll(app, "소탕 리워드 팝업");
-            if (UiKit.Find(app.Overlay.Root, "SweepBtn") == null) throw new MissingException("소탕 뒤 다시 서는 세부 팝업");
+            // ⛑ 여기는 CloseAll 을 쓰면 안 된다 — 이 리워드 팝업의 `onClose` 가 **세부 팝업을 다시 연다**(EventsScreen.Sweep · T241).
+            //    CloseAll 은 «아무것도 안 열릴 때까지» 미니까 다시 선 세부 팝업까지 닫아 버린다(런 1027 이 그렇게 빨갰다).
+            //    ⇒ **그 팝업이 사라질 때까지만** 민다.
+            if (UiKit.Find(app.Overlay.Root, "RewardTitle") != null) yield return PokeUntilGone(app, "RewardTitle", "소탕 리워드 팝업");
+            {
+                // 그리고 다시 서는 것을 «기다린다» — 다시 세우는 데 몇 프레임이 든다(즉석에서 물으면 아직 없다).
+                var w = new Waiter("소탕 뒤 다시 서는 세부 팝업");
+                while (UiKit.Find(app.Overlay.Root, "SweepBtn") == null && w.Tick()) yield return null;
+            }
 
             // ⓒ 티켓 0 → 왼쪽이 «광고» 가 된다(T99 3항). 카운트다운이 끝나야 티켓이 들어오므로 «결과» 로 기다린다.
             yield return CloseAll(app, "던전 세부 팝업");
