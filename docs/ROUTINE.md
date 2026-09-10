@@ -10297,6 +10297,18 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/Profile.cs` · `catalog.json` · `profile.json`(신규) · 자. **T350 lock 뒤** lock `T370`.
 
+### T384 — **㊻ 의 유일한 0점 «컨페티» 는 진짜로 없는 것이었다 — 그런데 그 조각은 프리팹이 아니라 PNG 한 장이다** (실측 등재 2026-09-10 07:5X · sess-1842-31994 · 워커 G)
+
+0. **왜 지금** — T383(워커 B)이 `33_pvp_battle` 을 7.1 → 10.0 으로 올리고 나니 §5 의 남은 넷 중 `34_pvp_win` **9.2** 만 임자가 없다(`13_pet`·`14_pet_detail` 은 `T293-ui` 가 쥔 채 손보는 중 · `19_pass` 는 **판정 끝**난 자리). 그 9.2 는 **행 하나**가 전부다 — «컨페티 / 게임: 없음 / ✗ 0»(나머지 열한 행이 전부 차 ±0.0).
+1. **⚠ 남이 남긴 «고칠 꼴» 이 그대로는 안 선다**(결정 1073 ② 와 같은 자리) — `ArenaResult.cs:24~26` 과 §2 T240 이 «`Overlay.Confetti` 를 **루트를 받는 공개 함수**로 한 칸 넓히면 한 줄로 붙는다» 고 남겼다. 열어 보니 `Overlay.Confetti(rt)` 는 **`rt` 안에서 `SampleEffect_Confetti` 자식을 찾는다**(`Overlay.cs:136~138`). `ArenaResult` 는 조각으로 세우는 화면이라 그 자식이 **없다** ⇒ 공개로 바꿔도 `src == null` 로 조용히 돌아 나온다. **그 처방은 «그 조각이 이미 거기 있다» 를 전제했고, 전제가 거짓이다.**
+2. **⚑ 실측 — 그 «조각» 은 파티클도 프리팹도 아니고 `Image` 한 장이다.** `Play_Result_Win_01.prefab:3~72` 의 `SampleEffect_Confetti` = `RectTransform` + `CanvasRenderer` + **`Image`** 뿐이고, 그 `m_Sprite` 는 guid `ee312d4a…` → **`Theme_Light/Sprites/~Demo/Demo_Image/SampleEffect_Confetti.png`** 다. ⇒ **프리팹을 통째로 띄울 까닭이 없다** — 카탈로그에 키 하나를 얹고 `ArenaResult` 가 제 손으로 한 장 세우면 된다. «다른 화면을 띄워 자식만 빼 쓴다» 는 그 절이 피한 길도, `Overlay.cs` 를 건드리는 길도 안 간다.
+3. **고침** — ⓐ `catalog.json` 에 `ui.confetti` 한 줄(+`_notes`) → **`gen_catalog.py` 를 돌려 `AssetCatalog.asset`·`assets-map` 을 같이 커밋한다**(T211 — 게임이 읽는 것은 생성물이다). ⓑ `Layout.ArrConfetti` = 표 ㊻ 그대로 **x0 y0 w100 h81**. ⓒ `ArenaResult.Show` 가 어둠 바로 위에 그 한 장을 세우고 이름표 «컨페티» 를 단다(§5 가 이름으로 찾는다 · T279). ⓓ 연출은 `Overlay.Burst` 의 뜻만 따온다(떠오르며 «펑» → 아래로 흩어지며 사라짐 · unscaled) — 그 함수는 `Overlay` 의 private 이고 그 파일을 안 건드리는 것이 이 절의 전제다.
+4. **⚠ 안 하는 것** — **새 그림 0**(§1). PNG 는 이미 레포에 있는 것이고 이 절이 더하는 것은 **키 한 줄**이다. `Overlay.cs` 는 **한 자도 안 건드린다**(T241·T240 이 세운 길).
+5. **자** — PlayMode `ArenaResultTests` 에: 승리 화면에 «컨페티» 이름의 칸이 서고 자리가 `Layout.ArrConfetti` 와 같다 · 그 칸이 **어둠보다 위 · 엠블럼보다 아래**다(가려 버리면 안 된다) · `raycastTarget` 이 꺼져 있다(«계속» 버튼을 먹지 않는다).
+6. **확인** = 다음 완주 런 `[CI명부] ArenaResultTests` ✗ 0 + §5 **`34_pvp_win` 9.2 → 10.0** + `[그림차]` 34 가 바뀐 것.
+
+순서 — `Assets/KkomaKnight/catalog.json`(+생성물) · `Core/Layout.cs` · `Game/ArenaResult.cs` · `Tests/PlayMode/ArenaResultTests.cs`. lock `T384`. **`Overlay.cs` 0줄.**
+
 ### T383 ✅ — **㊺ 의 네 행이 «주인이 취소한 콜로세움» 을 재고 있었다**(`33_pvp_battle` 7.1 의 전부 · 표만 · 코드 0줄) (워커 판단)
 
 1. **드러난 자리** — 런 970(첫 초록)에서 §5 최저점이 `33_pvp_battle` **7.1**(10/14행). 떨어진 넷이 «모래 마당(타원)» · «플레이어 발밑 y» · «원형 버튼 천사» · «원형 버튼 악마» 다.
