@@ -45,7 +45,11 @@ namespace KkomaKnight.Sim
         {
             var seeds = new List<int> { 11, 12, 13 }; int n = 1000; string mode = "both";
             int oneChapter = 0, oneRar = -1, onePlus = 0, oneSlot = 0; bool trace = false; int trace2 = -1;
-            bool blockTable = Environment.GetEnvironmentVariable("BLOCK_TABLE") == "1"; int maxPlus = 12; bool nGiven = false; bool fitCurve = false;
+            bool blockTable = Environment.GetEnvironmentVariable("BLOCK_TABLE") == "1";
+            // ⚑ 기본값은 «표가 허락하는 끝» 이다(−1) — 예전 기본값 12 는 **사다리의 절반을 조용히 감췄다**:
+            //   주인 표는 신화 +42(챕터 100)까지 가는데 표가 신화 +12(챕터 50)에서 끊겨 찍혔고,
+            //   그것을 «열 줄이 다» 로 읽으면 «과녁이 다 맞는다» 는 말이 절반만 참인 말이 된다(T325 9항 · 결정 아래).
+            int maxPlus = -1; bool nGiven = false; bool fitCurve = false;
             for (int i = 0; i < args.Length; i++)
             {
                 switch (args[i])
@@ -69,7 +73,8 @@ namespace KkomaKnight.Sim
 
             // 막힘 표는 판 수를 적게 쓴다(이분 탐색이 챕터마다 도므로) — 다만 «--n 을 줬는데 조용히 다른 수로 도는» 일은 없게 한다.
             if (fitCurve) return FitCurve(d, seeds.Count > 0 ? seeds[0] : 11, nGiven ? n : 150);
-            if (blockTable) return BlockTable(d, seeds.Count > 0 ? seeds[0] : 11, nGiven ? n : 200, maxPlus);
+            if (blockTable) return BlockTable(d, seeds.Count > 0 ? seeds[0] : 11, nGiven ? n : 200,
+                maxPlus >= 0 ? maxPlus : BalanceLadder.MaxPlusForChapters(d, Math.Min(d.Tune.MaxChapter, d.Enemies.Chapters.Count)));
 
             if (oneChapter > 0 && trace2 >= 0)
             {
@@ -147,53 +152,10 @@ namespace KkomaKnight.Sim
 
         // ───────────────────────── «빌드 표 → 막히는 챕터» (T325 ⓑ 8항) ─────────────────────────
 
-        /// <summary>«막힌다» 의 값 — 그 빌드로 그 챕터의 클리어율이 이만큼(%) 아래로 내려가는 첫 챕터다(주인 «예전에 챕터들 밸런스 맞췄던 식으로» = 실험1 기준 ≈10%).</summary>
-        const double BlockPct = 10.0;
-        /// <summary>과녁 셈(주인 2026-09-09 12:5X) — 노템 5 · 일반 풀 10 · 그 위 등급마다 +5 · 신화 위는 <b>+3강마다 +5</b>(갓 35 · 초월 40 · 불멸 45 · 무한 50 · … · 무한 +42 = 100).</summary>
-        const int TargetNoGear = 5, TargetCommon = 10, TargetStep = 5, MythPlusStep = 3;
-
-        /// <summary>과녁 챕터 — <b>표에서 낸다</b>(등급 수·rarMyth 가 바뀌면 저절로 따라온다 · 인덱스 리터럴 0).</summary>
-        static int TargetChapter(GameData d, int rar, int plus)
-        {
-            if (rar < 0) return TargetNoGear;
-            int baseAt = TargetCommon + TargetStep * rar;
-            if (plus <= 0) return baseAt;
-            return baseAt + TargetStep * (plus / MythPlusStep);
-        }
-
-        /// <summary>재는 빌드 목록 — 전부 <b>노강·슬롯 0</b>(주인 «풀» 의 뜻 · 옛 <see cref="Targets"/> 는 슬롯이 섞여 있어 이 표와 다르다).</summary>
-        static List<(string id, int rar, int plus)> BlockBuilds(GameData d, int maxPlus)
-        {
-            var list = new List<(string, int, int)> { ("노템", -1, 0) };
-            for (int r = 0; r < d.Gear.RarName.Length; r++) list.Add(($"{d.Gear.RarName[r]} 풀", r, 0));
-            for (int p = MythPlusStep; p <= maxPlus; p += MythPlusStep)
-            {
-                string nm = GearTierName(d, p);
-                list.Add(($"{(nm ?? d.Gear.RarName[d.Gear.RarMyth] + " +" + p)} 풀", d.Gear.RarMyth, p));
-            }
-            return list;
-        }
-
-        /// <summary>신화 위 «표시 등급» 이름(갓·초월·…) — 표(<c>gearTier.json</c>)는 Bootstrap 이 싣는 것이라 하니스엔 없다. 없으면 null 이고 «신화 +N» 으로 적는다.</summary>
-        static string GearTierName(GameData d, int plus)
-        {
-            if (d.GearTier == null) return null;
-            var s = GearTier.Of(d.GearTier, d.Gear.RarMyth, plus, d.Gear.RarMyth, d.Gear.RarName[d.Gear.RarMyth], "");
-            return s.IsTier ? s.Name : null;
-        }
-
-        /// <summary>그 빌드로 그 챕터를 <paramref name="n"/> 판 돌아 클리어율(%).</summary>
-        static double ClearPct(GameData d, int rar, int plus, int chapter, int seed, int n)
-        {
-            // ⚠ 판마다 «그 (빌드, 챕터) 만의» 새 스트림을 쓴다 — 이분 탐색은 데이터에 따라 챕터를 다른 차례로 들르므로,
-            //   사다리 모드처럼 스트림 하나를 이어 쓰면 **같은 칸이 탐색 경로에 따라 다른 값**을 낸다(되풀이가 안 된다).
-            //   사다리 모드가 스트림을 잇는 것은 sim.js 와 수를 맞추려는 계약이고, 이 모드는 그 계약 밖이다.
-            var rng = new Mulberry32((uint)(seed * 1000003 + chapter * 1009 + (rar + 1) * 101 + plus));
-            var b = GearSystem.MkBuild(d, rar, plus, 0);
-            int w = 0;
-            for (int i = 0; i < n; i++) if (new BattleState(d, chapter, b, rng, new SimPolicy(), LadderOpts(false)).RunToEnd().Clear) w++;
-            return 100.0 * w / n;
-        }
+        // ⚑ 이 절의 셈(과녁·빌드 목록·클리어율·이분 탐색)은 **Core 의 BalanceLadder 로 옮겼다**(T325 9항).
+        //   까닭: CI 의 `BalanceLadderTests` 가 «주인 과녁이 아직 맞나» 를 같은 셈으로 지켜야 한다 —
+        //   셈을 두 벌 두면 어느 날 둘이 다른 말을 하고, 그때 «어느 쪽이 맞나» 를 가릴 방법이 없다.
+        //   여기 남은 것은 «사람이 읽을 표로 찍는» 일뿐이다.
 
         /// <summary>
         /// 8항이 시킨 자 — <b>«빌드 표 → 막히는 챕터»</b> 를 한 번에 찍는다(<c>BLOCK_TABLE=1</c> 또는 <c>--block-table</c>).
@@ -206,24 +168,17 @@ namespace KkomaKnight.Sim
         static int BlockTable(GameData d, int seed, int n, int maxPlus)
         {
             int maxCh = Math.Min(d.Tune.MaxChapter, d.Enemies.Chapters.Count);
-            var builds = BlockBuilds(d, maxPlus);
-            Console.WriteLine($"\n=== 막히는 챕터 표 · 시드 {seed} · 각 {n}판 · «막힘» = 클리어율 < {BlockPct:F0}% · 챕터 1~{maxCh} ===");
+            var builds = BalanceLadder.Builds(d, maxPlus);
+            Console.WriteLine($"\n=== 막히는 챕터 표 · 시드 {seed} · 각 {n}판 · «막힘» = 클리어율 < {BalanceLadder.BlockPct:F0}% · 챕터 1~{maxCh} ===");
             Console.WriteLine("| 빌드 | 과녁 | 실제 막힘 | 그 챕터 % | 과녁에서 % |");
             Console.WriteLine("|---|---|---|---|---|");
             foreach (var (id, rar, plus) in builds)
             {
-                int want = Math.Min(TargetChapter(d, rar, plus), maxCh);
-                // 이분 탐색 — «lo 는 아직 뚫린다 · hi 는 막힌다» 를 지키며 좁힌다.
-                int lo = 1, hi = maxCh;
-                if (ClearPct(d, rar, plus, hi, seed, n) >= BlockPct) { lo = hi; }        // 끝까지 안 막힌다
-                else
-                {
-                    if (ClearPct(d, rar, plus, lo, seed, n) < BlockPct) hi = lo;         // 1챕터부터 막힌다
-                    else while (hi - lo > 1) { int mid = (lo + hi) / 2; if (ClearPct(d, rar, plus, mid, seed, n) >= BlockPct) lo = mid; else hi = mid; }
-                }
-                int block = hi;
-                string blockTxt = lo == maxCh ? $"> {maxCh}" : block.ToString();
-                Console.WriteLine($"| {id} | {want} | {blockTxt} | {ClearPct(d, rar, plus, Math.Min(block, maxCh), seed, n):F1}% | {ClearPct(d, rar, plus, want, seed, n):F1}% |");
+                int want = Math.Min(BalanceLadder.TargetChapter(d, rar, plus), maxCh);
+                int found = BalanceLadder.BlockChapter(d, rar, plus, seed, n, maxCh);
+                int block = Math.Min(found, maxCh);
+                string blockTxt = found > maxCh ? $"> {maxCh}" : found.ToString();
+                Console.WriteLine($"| {id} | {want} | {blockTxt} | {BalanceLadder.ClearPct(d, rar, plus, Math.Min(block, maxCh), seed, n):F1}% | {BalanceLadder.ClearPct(d, rar, plus, want, seed, n):F1}% |");
             }
             Console.WriteLine("(과녁 = 주인이 준 표에서 낸 값 · 실제 = 지금 이 레포의 수치로 잰 값 · 둘이 벌어진 만큼이 tuneOverride 곡선이 메울 몫이다)");
             return 0;
@@ -261,14 +216,14 @@ namespace KkomaKnight.Sim
         {
             int maxCh = Math.Min(d.Tune.MaxChapter, d.Enemies.Chapters.Count);
             var builds = new List<(string id, int rar, int plus, int at)>();
-            foreach (var (id, rar, plus) in BlockBuilds(d, MaxPlusForChapters(d, maxCh)))
+            foreach (var (id, rar, plus) in BalanceLadder.Builds(d, BalanceLadder.MaxPlusForChapters(d, maxCh)))
             {
-                int at = TargetChapter(d, rar, plus);
+                int at = BalanceLadder.TargetChapter(d, rar, plus);
                 if (at <= maxCh) builds.Add((id, rar, plus, at));
             }
             builds.Sort((a, b) => a.at.CompareTo(b.at));
 
-            Console.WriteLine($"\n=== 적 곡선 맞추기 · 시드 {seed} · 각 {n}판 · 과녁마다 클리어율 {BlockPct:F0}% · 챕터 1~{maxCh} ===");
+            Console.WriteLine($"\n=== 적 곡선 맞추기 · 시드 {seed} · 각 {n}판 · 과녁마다 클리어율 {BalanceLadder.BlockPct:F0}% · 챕터 1~{maxCh} ===");
             Console.WriteLine("| 구간 | 그 구간이 맞추는 빌드 | 과녁 | 찾은 배율 | 그 배율에서 % |");
             Console.WriteLine("|---|---|---|---|---|");
 
@@ -287,12 +242,12 @@ namespace KkomaKnight.Sim
                     double mid = (lo + hi) / 2;
                     seg[idx][1] = mid;
                     ApplySeg(d, seg);
-                    got = ClearPct(d, b.rar, b.plus, b.at, seed, n);
-                    if (got > BlockPct) lo = mid; else hi = mid;           // 너무 쉬우면 더 세게
+                    got = BalanceLadder.ClearPct(d, b.rar, b.plus, b.at, seed, n);
+                    if (got > BalanceLadder.BlockPct) lo = mid; else hi = mid;           // 너무 쉬우면 더 세게
                 }
                 seg[idx][1] = (lo + hi) / 2;
                 ApplySeg(d, seg);
-                got = ClearPct(d, b.rar, b.plus, b.at, seed, n);
+                got = BalanceLadder.ClearPct(d, b.rar, b.plus, b.at, seed, n);
                 // 위·아래 끝에 붙으면 «찾은 값» 이 아니라 «범위가 모자라다» 는 뜻이다 — 조용히 그럴듯한 수를 적지 않는다.
                 string note = seg[idx][1] > RateHi - 1e-3 ? " ⚠ 위 끝(더 세게 못 간다)" : seg[idx][1] < RateLo + 1e-3 ? " ⚠ 아래 끝(더 약하게 못 간다)" : "";
                 Console.WriteLine($"| {from}~{b.at} | {b.id} | {b.at} | {seg[idx][1]:F6}{note} | {got:F1}% |");
@@ -305,14 +260,6 @@ namespace KkomaKnight.Sim
             Console.WriteLine("  (그리고 tuneOverride.json 에 \"maxChapter\": " + maxCh + " — 챕터 수는 tune 쪽 칸이고 그쪽은 실제로 닿는다)");
             Console.WriteLine("⚠ 넣기 전에 `--block-table` 로 한 번 더 재라 — 이 자는 과녁 «한 칸» 만 봤고, 막히는 챕터는 그 옆 칸에서 정해질 수도 있다.");
             return 0;
-        }
-
-        /// <summary>과녁이 <paramref name="maxCh"/> 를 넘지 않는 마지막 신화 강화 단계 — 표에서 낸다(«+3강마다 +5챕터» · 주인).</summary>
-        static int MaxPlusForChapters(GameData d, int maxCh)
-        {
-            int baseAt = TargetCommon + TargetStep * d.Gear.RarMyth, p = 0;
-            while (baseAt + TargetStep * ((p + MythPlusStep) / MythPlusStep) <= maxCh) p += MythPlusStep;
-            return p;
         }
 
         /// <summary>정본 적 수치의 사본 — 배수는 <b>늘 이 사본에서</b> 다시 계산한다(제자리에서 거듭 곱하면 배수가 제곱된다).</summary>
