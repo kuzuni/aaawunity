@@ -18,7 +18,7 @@ namespace KkomaKnight.Tests
     /// </para>
     /// <para>
     /// ⚠ <b>이 자는 «클리어율이 정확히 10%» 를 요구하지 않는다.</b> 판이 유한해서 실측은 과녁에서 3~27% 로 흩어진다
-    /// (2026-09-10 실측 · 시드 11 · 각 100판 · 스물한 빌드). 좁게 조이면 곡선을 손볼 때마다 애먼 빨강이 뜨고,
+    /// (2026-09-10 실측 · 시드 11 · 각 100판 · <b>스무</b> 빌드 = 노템 1 + 등급 풀 5 + 신화 강화 14 · T325 시절 «스물한» 은 셈 실수였다 — 2026-09-10 T405 회차에 <c>--block-table</c> 출력으로 세어 고쳤다). 좁게 조이면 곡선을 손볼 때마다 애먼 빨강이 뜨고,
     /// 그러면 다음 사람이 기댓값을 낮춰서 초록을 만든다(결정 930 이 값을 치른 그 손).
     /// 그래서 <b>«벽이 과녁 언저리에 서 있는가»</b> 만 잰다 — 과녁에서는 반도 못 넘고, 다섯 챕터 아래에서는 넘어간다.
     /// 이 자가 빨개지는 뜻은 «10%가 아니다» 가 아니라 <b>«그 빌드의 벽이 주인이 말한 자리에서 사라졌다»</b> 이다.
@@ -36,7 +36,8 @@ namespace KkomaKnight.Tests
         static GameData Data() => GameData.LoadFromDirectory(TestData.Dir);
 
         /// <summary>
-        /// 주인 표의 <b>모든 줄</b>에서 벽이 과녁 언저리에 서 있는가 — 노템부터 신화 +42(챕터 100)까지 스물한 빌드.
+        /// 주인 표의 <b>모든 줄</b>에서 벽이 과녁 언저리에 서 있는가 — 노템부터 «마지막 챕터에 닿는 신화 강화» 까지 <b>스무</b> 빌드.
+        /// <para>⚠ 그 마지막 강화 수를 여기 적지 않는다 — <see cref="BalanceLadder.MythPlusStepFor"/> 가 배율에서 내므로 배율이 바뀌면 따라 움직인다(T405 에 42 → 882 로 움직였다).</para>
         /// </summary>
         [Test]
         public void EveryBuildHitsItsWallAroundTheChapterTheOwnerAskedFor()
@@ -85,7 +86,7 @@ namespace KkomaKnight.Tests
             // 한 칸의 뜻 — «주인의 +3강이 정본 배율에서 얻던 그 힘» 이다(줄어든 배율에서 같은 힘까지 걸리는 강화 수).
             Assert.That(1 + d.Gear.PlusStep * step,
                         Is.EqualTo(1 + BalanceLadder.OwnerPlusStep * BalanceLadder.OwnerMythPlusStep).Within(2.0).Percent,
-                        "사다리 한 칸이 주인이 말한 «+3강» 과 같은 힘이어야 한다 — 아니면 스물한 줄이 통째로 옮겨간다");
+                        "사다리 한 칸이 주인이 말한 «+3강» 과 같은 힘이어야 한다 — 아니면 스무 줄이 통째로 옮겨간다");
             // 주인 «챕터 수는 100» — 그 끝이 사다리의 마지막 줄과 맞는가
             Assert.That(BalanceLadder.TargetChapter(d, d.Gear.RarMyth, BalanceLadder.MaxPlusForChapters(d, d.Tune.MaxChapter)),
                         Is.EqualTo(d.Tune.MaxChapter), "사다리의 마지막 줄이 마지막 챕터에 닿는다");
