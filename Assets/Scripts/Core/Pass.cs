@@ -79,6 +79,45 @@ namespace KkomaKnight.Core
             return true;
         }
 
+        /// <summary>
+        /// T392 — 칸의 그림 키 → 재화 이름(<see cref="Mail"/> 아이템). 키에 <c>gem</c> 이 들어 있으면 다이아 · <c>coin</c>/<c>gold</c> 면 골드 · 모르면 null(그 칸은 못 주니 <b>안 받는다</b>).
+        /// <para>목록이 아니라 뜻으로 가르는 까닭은 T367 과 같다 — 새 그림이 생겨도 이 줄은 안 바뀐다.</para>
+        /// </summary>
+        public static string ItemOf(string icon)
+        {
+            if (string.IsNullOrEmpty(icon)) return null;
+            var k = icon.ToLowerInvariant();
+            if (k.Contains("gem")) return Mail.ItemGem;
+            if (k.Contains("coin") || k.Contains("gold")) return Mail.ItemGold;
+            return null;
+        }
+
+        /// <summary>
+        /// T392(주인 2026-09-10 «패스도 전부 받기 버튼 있게 하라») — 지금 받을 수 있는 칸을 <b>전부</b> 받는다:
+        /// 레벨 1~지금 · 열 셋(산 열만) · 아직 안 받은 · 표가 아는 칸을 위에서 아래로 <see cref="Claim"/> 하고 <see cref="Mail.Give"/> 로 준다.
+        /// 돌려주는 것 = (그림 키, 수) 목록(빈 목록 = 받은 것 없음). 화면은 이 목록을 리워드 팝업에 넘기면 된다.
+        /// <para>⚠ 순수 C# — 저장(디스크)은 부르는 쪽 몫(<see cref="ShopFree"/> 와 같은 규약). 그림 키를 모르거나 수가 수가 아니면 그 칸은 <b>건너뛰고 받은 것으로 적지 않는다</b>(값이 서면 그때 받힌다).</para>
+        /// </summary>
+        public static System.Collections.Generic.List<(string icon, int qty)> ClaimAll(SaveData s, PassData d)
+        {
+            var got = new System.Collections.Generic.List<(string icon, int qty)>();
+            if (s == null || d == null) return got;
+            int lv = Lv(s, d);
+            for (int level = 1; level <= lv; level++)
+                for (int col = 0; col < PassData.Cols; col++)
+                {
+                    if (!CanClaim(s, d, level, col)) continue;
+                    var r = d.At(level, col);
+                    var item = ItemOf(r.Icon);
+                    if (item == null) continue;
+                    if (!int.TryParse(r.Qty, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int q) || q <= 0) continue;
+                    if (!Claim(s, d, level, col)) continue;
+                    Mail.Give(s, item, q);
+                    got.Add((r.Icon, q));
+                }
+            return got;
+        }
+
         /// <summary>지금 받을 수 있는 칸이 하나라도 있나(«모두 받기» 버튼·빨간 점이 묻는 것).</summary>
         public static bool AnyClaimable(SaveData s, PassData d)
         {

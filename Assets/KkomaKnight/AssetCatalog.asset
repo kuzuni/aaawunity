@@ -1317,9 +1317,9 @@ MonoBehaviour:
   - key: col.topCell
     color: {r: 0.0705882, g: 0.0666667, b: 0.0588235, a: 1}
   - key: col.grad.cardGem.top
-    color: {r: 0.780392, g: 0.54902, b: 1, a: 1}
+    color: {r: 0.662745, g: 0.466667, b: 0.85098, a: 1}
   - key: col.grad.cardGem.bottom
-    color: {r: 0.964706, g: 0.54902, b: 1, a: 1}
+    color: {r: 0.819608, g: 0.466667, b: 0.85098, a: 1}
   - key: col.grad.cardGold.top
     color: {r: 0.207843, g: 0.301961, b: 0.415686, a: 1}
   - key: col.grad.cardGold.bottom

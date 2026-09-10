@@ -42,7 +42,7 @@ namespace KkomaKnight.Game
             {
                 // T341(주인 2026-09-10 «다이아 상단 8200FF · 하단 EA00FF · 골드 상단 183D6A · 하단 14ADFF · 완전 불투명 · 상점 부분만») —
                 //   주인이 직접 준 값이 레퍼런스 실측(#40116D/#AA0CB8 · #183D6A/#1683BE · T116)을 덮는다. 폴백도 카탈로그와 같은 값을 든다(한쪽만 고치면 카탈로그를 못 읽는 자리에서 옛 색이 나온다).
-                case "cardGem": return new Pair(Cat("cardGem.top", "#C78CFF"), Cat("cardGem.bottom", "#F68CFF"));
+                case "cardGem": return new Pair(Cat("cardGem.top", "#A977D9"), Cat("cardGem.bottom", "#D177D9"));
                 case "cardGold": return new Pair(Cat("cardGold.top", "#354D6A"), Cat("cardGold.bottom", "#66CAFF"));
                 // T100 ⓓ(주인 2026-09-07 08:5X «상자들 카드 부분에도 그라디안트 · 레퍼런스랑 같은 색감») — docs/ref/10_shop_2.jpg 의 카드 오른쪽 띠를 tools/ref_color.py 로 5등분해 잰 값
                 case "cardChestLegend": return new Pair(Cat("cardChestLegend.top", "#BA8BFF"), Cat("cardChestLegend.bottom", "#DA15EB"));

@@ -381,9 +381,32 @@ namespace KkomaKnight.Game
         /// <summary>표가 값을 모르는 칸의 그림 — 레퍼런스의 «두루마리» 그대로다(수는 «?» 로 적는다).</summary>
         const string UnknownIcon = "ui.iconScroll";
 
+        /// <summary>마지막 «모두 받기» 가 실제로 받은 칸 수 — 자가 «눌렀더니 받혔다» 를 이걸로 본다(결정 329 꼴).</summary>
+        public static int LastClaimAll;
+
+        /// <summary>
+        /// T392 — «모두 받기»: 받을 수 있는 칸 전부(<see cref="Pass.ClaimAll"/> · 지급까지) → 저장 → 같은 재화는 합쳐 리워드 팝업 한 번 → 닫으면 이 화면을 다시 세운다(칸 ✓ · 버튼 회색).
+        /// 받을 것이 없으면 토스트만.
+        /// </summary>
+        void ClaimAll()
+        {
+            var S = App != null ? App.Save : null;
+            var got = Pass.ClaimAll(S, _pass);
+            LastClaimAll = got.Count;
+            if (got.Count == 0) { App.Toast("받을 보상이 없습니다"); return; }
+            App.Persist(); Audio.Sfx("snd.coin");
+            var merged = new System.Collections.Generic.Dictionary<string, int>();
+            foreach (var g in got) merged[g.icon] = (merged.TryGetValue(g.icon, out var v) ? v : 0) + g.qty;
+            var items = new System.Collections.Generic.List<RewardPopup.Item>();
+            foreach (var kv in merged) items.Add(RewardPopup.Item.Of(kv.Key, UiKit.FmtQty(kv.Value)));
+            RewardPopup.Show(items, () => Open(App));
+        }
+
         void BuildButtons()
         {
-            var all = UiKit.Button(Root, "ui.btnGray", "모두 받기", () => App.Toast(NotReadyToast), RClaimAll); all.name = "ClaimAllBtn";
+            // T392(주인 2026-09-10 «패스도 전부 받기 버튼 있게 하라») — 껍데기(«준비 중») 를 진짜로. 받을 것이 있으면 주황, 없으면 회색(T306 두 옷 규칙).
+            bool canAll = Pass.AnyClaimable(App != null ? App.Save : null, _pass);
+            var all = UiKit.Button(Root, canAll ? "ui.btnOrange" : "ui.btnGray", "모두 받기", ClaimAll, RClaimAll); all.name = "ClaimAllBtn";
             var b1 = UiKit.Button(Root, "ui.btnOrange", "₩9,900", () => App.Toast(NotReadyToast), RBuy1); b1.name = "BuyBtn:1";
             UiKit.GradientCard(b1, "btnPassPaid1", alpha: UiKit.GradientCardSolidAlpha);
             var b2 = UiKit.Button(Root, "ui.btnOrange", "₩49,000", () => App.Toast(NotReadyToast), RBuy2); b2.name = "BuyBtn:2";
