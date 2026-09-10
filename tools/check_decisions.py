@@ -8,7 +8,9 @@
 
 쓰는 법 (커밋 «직전» 에 · ROUTINE §3 게이트 목록):
   python3 tools/check_decisions.py          # 겹치면 1 로 끝난다(겹친 번호와 줄을 찍는다)
-  python3 tools/check_decisions.py --next   # 다음에 쓸 번호 하나만 찍는다(= 지금 제일 큰 것 + 1)
+  python3 tools/check_decisions.py --next   # 다음에 쓸 번호 하나만 찍는다
+        ⚑ 2026-09-10 부터 **문서와 커밋 이력 중 큰 쪽 + 1** 이다(T415 가 작업 번호에서 산 것과 같은 꼴 · 결정 1186·1190).
+          문서의 최대는 줄어들 수 있고 이력은 안 줄어든다 — 아래 `issued_in_history` 주석에 실제 사고가 적혀 있다.
 
 규약(ROUTINE §1) — 겹쳤을 때 **늦게 push 한 쪽이 옮긴다**. 누가 늦었는지는
   git log -1 --format=%cI -S"<번호>. **<그 줄 첫 낱말>" -- docs/PROGRESS.md
@@ -16,6 +18,7 @@
 docs/·Assets/ 의 «결정 N» 참조도 같이 옮긴다(이 자는 참조까지는 못 센다 · 사람이 본다).
 """
 import re
+import subprocess
 import sys
 
 DOC = "docs/PROGRESS.md"
@@ -47,6 +50,39 @@ def entries(path=DOC):
     return out
 
 
+
+def issued_in_history(limit=4000):
+    """커밋 **제목·본문**에 «결정 N» 으로 실린 번호 중 가장 큰 것 — 문서가 아니라 <b>이력</b>에서 읽는다.
+
+    왜 있나 (T415 가 작업 번호에서 산 것과 같은 자리 · 결정 1186) — 문서의 최대는 **줄어들 수 있다**.
+    실제로 한 번 줄었다: `0f3c0e40` 이 `b615d22a` 가 적은 «1149. **같은 «투사체» …»» 한 줄을 지웠고
+    (충돌 정리 사고로 보인다) 그 뒤 `--next` 가 **1149 를 다시 내줬다** — 다른 워커가 그 번호로
+    다른 결정을 적었고, 워커 O 가 산 사실은 문서에서 사라졌다(검수 Q 가 결정 1189 로 되살렸다).
+    커밋 이력은 **append-only 라 안 줄어든다**. 그래서 둘 중 큰 쪽을 쓴다.
+
+    **일부러 그 사고 시점에 대 봤다**(검수 Q · T249 «자가 정말 무는지 부러뜨려 본다») —
+    `0f3c0e40` 에서 문서 최대는 **1148** 인데 이력 최대는 **1150** 이다.
+      옛 규칙(문서만) → **1149** = 이미 쓰인 번호를 다시 준다(그날 실제로 그랬다)
+      새 규칙(둘 중 큰 쪽) → **1151** = 안 겹친다
+    ⚠ 이력에 **아직 안 실린** 번호(= 문서에만 있는 새 줄)는 이 함수가 못 본다 —
+      그것은 «지워진 뒤 재발급» 을 막는 자이지 «동시 발급» 을 막는 자가 아니다.
+
+    ⚠ 이 수는 «지금» 의 답이다 — 같은 순간 남도 같은 답을 얻는다. 동시에 뽑는 갈래는 이 자가 못 막고,
+      그것을 가르는 것은 규약의 push 순서다(늦게 민 쪽이 옮긴다).
+    """
+    try:
+        out = subprocess.run(["git", "log", "--format=%s%n%b", "-%d" % limit],
+                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                             text=True, timeout=60).stdout
+    except (OSError, subprocess.SubprocessError):
+        return 0
+    best = 0
+    for m in re.finditer(r"결정\s*(\d{2,5})", out):
+        v = int(m.group(1))
+        if v > best:
+            best = v
+    return best
+
 def main(argv):
     try:
         rows = entries()
@@ -58,7 +94,12 @@ def main(argv):
         return 2
 
     if "--next" in argv:
-        print(max(n for n, _, _ in rows) + 1)
+        doc = max(n for n, _, _ in rows)
+        hist = issued_in_history()
+        print(max(doc, hist) + 1)
+        if hist > doc:
+            print("  ⚠ 문서 최대 %d < 이력 최대 %d — 지워졌거나 아직 안 실린 번호가 있다(이력을 따랐다)"
+                  % (doc, hist), file=sys.stderr)
         return 0
 
     seen = {}
