@@ -454,7 +454,7 @@ namespace KkomaKnight.Game
             int speed0 = app.Save.Speed;
             Tap(app, "SpeedBtn"); yield return Frames(2);
 
-            int picked = 0, closed = 0;
+            int picked = 0, poked = 0;
             for (int i = 0; ; i++)
             {
                 var G = bs.G;
@@ -468,8 +468,10 @@ namespace KkomaKnight.Game
                     // 그 대신 담는 자리(`Group_Card`)가 계약이다(팝업을 세우는 쪽이 프리팹에서 찾는 그 이름).
                     var group = UiKit.Find(app.Overlay.Root, "Group_Card");
                     if (group != null && TapFirstButtonIn(group)) { picked++; yield return Frames(3); continue; }
-                    // 그 밖의 팝업(이벤트·악마의 거래 …)은 닫고 계속 논다(위 ⚠).
-                    yield return CloseAll(app, "전투 중 팝업"); closed++;
+                    // 그 밖의 팝업(이벤트·악마의 거래 …)은 «사람처럼 민다»(위 ⚠).
+                    if (Poke(app)) { poked++; yield return Frames(3); continue; }
+                    // 아직 누를 것이 없다 = 연출 중이다. 여기서 던지지 않는다 — 다음 프레임에 다시 본다(예산이 아래에서 센다).
+                    yield return null;
                     continue;
                 }
 
@@ -483,18 +485,53 @@ namespace KkomaKnight.Game
             //   이 갈래가 «결과 팝업 → 로비» 배선까지 잰다. 안 뜨면 그냥 넘어간다(화면이 스스로 로비로 갔을 수도 있다).
             if (!app.Overlay.IsOpen && app.Current == bs)
                 for (int k = 0; k < WaitFrames && !app.Overlay.IsOpen && app.Current == bs; k++) yield return null;
-            if (app.Overlay.IsOpen) yield return CloseAll(app, "전투 결과 팝업");
+            for (int k = 0; k < WaitFrames && app.Overlay.IsOpen; k++) { if (!Poke(app)) yield return null; else yield return Frames(2); }
+            if (app.Overlay.IsOpen) throw new MissingException("전투 결과 팝업이 " + WaitFrames + "프레임 동안 안 닫힌다(누를 것이 없다)");
             if (app.Current == null || app.Current.Name != "lobby") { app.ShowScreen("lobby"); yield return Frames(2); }
             Reach(app, "lobby");
             // 배속 되돌림(위 ⚠ · 결정 1177) — 화면을 나온 뒤라 단추가 없으므로 세이브를 원래대로 돌린다.
             if (app.Save.Speed != speed0) { app.Save.Speed = speed0; app.Persist(); }
-            if (picked == 0 && closed == 0)
+            if (picked == 0 && poked == 0)
             {
                 // 아무 팝업도 안 떴다 = 레벨업이 한 번도 안 났다. 1챕터에서도 경험치는 오르므로 이것은 «배선이 끊겼다» 쪽이 훨씬 그럴듯하다.
                 throw new MissingException("판이 끝나도록 팝업이 한 번도 안 떴다(레벨업 3택이 안 열렸다 — 특전 배선을 보라)");
             }
             yield return null;
         }
+
+        /// <summary>
+        /// 지금 선 팝업을 <b>사람처럼 민다</b> — 고를 것이 있으면 고르고, 없으면 어둠을 눌러 연출을 건너뛴다. 누를 것이 없으면 <b>던지지 않고</b> false.
+        /// <para>
+        /// ⚠ <b><see cref="CloseAll"/> 과 갈리는 자리다.</b> 전투 중에 서는 팝업(레벨업 3택 · 이벤트 · 승리 결과)에는 <b>«닫기» 가 없다</b> —
+        /// <b>고르는 것이 곧 닫는 것</b>이고, 그 어둠은 <c>UiKit.Clickable</c> 이 아니라 <c>UiKit.OnTap</c> 으로 걸려 있다.
+        /// </para>
+        /// <para>
+        /// ⚑ <b>그리고 <see cref="UiKit.OnTap"/> 은 <c>Button</c> 을 안 만든다</b>(«소리·눌림 없는 탭 영역» · <c>PressFeedbackTests</c> 의 «모든 Button 은 눌림 표시» 계약 밖) —
+        /// <c>CloseHandle</c> 은 <c>Button</c> 만 보므로 그런 팝업 앞에서 <b>언제나 null</b> 이고, <see cref="CloseAll"/> 은 «닫을 것이 없다» 로 던진다.
+        /// T410 1회차가 실제로 그렇게 빨갰다(런 1023 · 결정 아래). 여기서는 <c>UiKit.Tap</c> 을 직접 집어 <see cref="UiKit.Tap.Fire"/> 로 누른다.
+        /// </para>
+        /// </summary>
+        static bool Poke(App app)
+        {
+            var root = app.Overlay != null ? app.Overlay.Root : null;
+            if (root == null) return false;
+            var group = UiKit.Find(root, "Group_Card");                 // ① 고를 것이 있으면 고른다(특전 3택)
+            if (group != null)
+            {
+                // ⚠ 카드가 아직 안 켜졌으면(등장 연출) **여기서 멈춘다** — 아래 ② 로 흘리면 같은 팝업의 «새로고침 무료»·«보유 특전» 을
+                //   대신 누르게 되고, 그것은 «고른다» 가 아니라 다른 일이다. 다음 프레임에 다시 보면 된다.
+                return TapFirstButtonIn(group);
+            }
+            if (TapFirstButtonIn(root)) return true;                    // ② 그 팝업의 제 단추(«그냥 받기»·«로비로»·«확인» …)
+            foreach (var nm in DimNames)                                // ③ 단추가 없으면 어둠 — 여기는 Button 이 아니라 Tap 이다
+            {
+                var dim = UiKit.Find(root, nm);
+                var tap = dim != null ? dim.GetComponent<UiKit.Tap>() : null;
+                if (tap != null && dim.gameObject.activeInHierarchy) { tap.Fire(); return true; }
+            }
+            return false;
+        }
+        static readonly string[] DimNames = { "Dimmed", "Background" };
 
         /// <summary>담는 자리 안에서 <b>처음으로 눌리는</b> 버튼 하나를 누른다 — 조각이 프리팹에서 와 제 이름이 없을 때(특전 카드) 쓴다.</summary>
         static bool TapFirstButtonIn(UnityEngine.Transform group)
