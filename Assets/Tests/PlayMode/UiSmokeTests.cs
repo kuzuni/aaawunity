@@ -1124,9 +1124,13 @@ namespace KkomaKnight.Tests.Play
                 //     차례가 틀어지는 날 자도 같이 틀어져 아무것도 못 잡는다 — **보이는 것에서 읽는다**(T258 이 남긴 읽는 법).
                 var descTx = UiKit.Find(ov, "Desc").GetComponentInChildren<TMP_Text>(true);
                 Assert.IsNotNull(descTx, "세부 설명 글자");
-                var shownName = (descTx.text ?? "").Split('\n')[0].Split(new[] { " · " }, StringSplitOptions.None)[0];
-                var pet0 = _app.Data.Pet.Pets.Find(p => p.Name == shownName);
-                Assert.IsNotNull(pet0, "세부 팝업 설명은 표에 있는 펫 이름으로 시작해야 한다 — 읽은 이름 «" + shownName + "»");
+                // ⛑ T382 — «보이는 것에서 읽는다» 에는 청구서가 하나 딸려 있다: **보이는 글자는 표의 글자가 아니라 «글꼴 체» 를 지난 글자**다.
+                //   화면에 나가는 모든 글자는 `TextGlyphs.Safe` 를 지나고 그 표 첫 줄이 `·` → `/` 다(Jua 에 가운뎃점 글리프가 없어 폭 0 으로 사라진다 · T63-toast · 결정 142).
+                //   그래서 `PetScreen` 이 지은 «<이름> · Lv N» 은 화면에서 «<이름> / Lv N» 이고, `" · "` 로 가르면 아무것도 안 갈린다(런 944 빨강).
+                //   ⇒ 자른 자리를 손으로 적지 않는다 — **표의 글자를 같은 체에 통과시켜** 맞댄다. 체 표에 글자가 한 줄 더 드는 날에도 이 줄은 안 낡는다.
+                var descFirst = (descTx.text ?? "").Split('\n')[0];
+                var pet0 = _app.Data.Pet.Pets.Find(p => descFirst.StartsWith(TextGlyphs.Safe(p.Name), StringComparison.Ordinal));
+                Assert.IsNotNull(pet0, "세부 팝업 설명은 표에 있는 펫 이름으로 시작해야 한다 — 읽은 첫 줄 «" + descFirst + "»");
                 var upBtn = UiKit.Find(ov, "PetUpgradeBtn"); var eqBtn = UiKit.Find(ov, "PetEquipBtn");
                 Assert.IsNotNull(upBtn, "세부 강화 버튼"); Assert.IsNotNull(eqBtn, "세부 장착 버튼");
                 Assert.AreEqual(Pets.CanLevelUp(_app.Data.Pet, _app.Save, pet0.Id), upBtn.GetComponent<Button>().interactable,
