@@ -283,6 +283,81 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
+        /// <summary>
+        /// T401(주인 2026-09-10 «퀘스트 업적 부분에 전부 받기 버튼 좀 있어야 함») — 업적 판의 «전부 받기».
+        /// <para>
+        /// ⓐ 받을 것이 없으면 회색 + 안 눌림 + 점 없음(결정 771) · ⓑ 단계가 쌓인 줄(×2)과 한 단계 줄(×1)이 있으면 주황 + 점 + 눌림 ·
+        /// ⓒ <b>단추가 줄 위에 서 있다</b>(줄 1 과 겹치지 않는다 — 이 판은 목록이 트랙 자리까지 올라와 있어 퀘스트 판의 자리를 그대로 쓰면 겹친다 · 결정 1161) ·
+        /// ⓓ 실제로 눌러 세 단계가 한 번에 받히고 다이아가 그만큼 늘며 리워드 팝업이 뜬다 · ⓔ 닫으면 업적 판이 다시 서고 단추는 회색·점 꺼짐.
+        /// </para>
+        /// ⚠ 새 판에도 «출석 1회» 가 받을 수 있다(App.Create → Quests.Login) — 그래서 ⓐ 는 먼저 전부 받아 비운 판에서 잰다(«다_받으면_점이_꺼지고…» 와 같은 전제).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 업적_전부_받기가_쌓인_단계를_다_받고_점이_꺼진다()
+        {
+            yield return Boot();
+            var d = _app.Data != null ? _app.Data.Achievement : null;
+            Assert.IsNotNull(d, "업적 표가 실려야 한다");
+
+            // ── ⓐ 비운 판: 회색 + 안 눌림 + 점 없음.
+            foreach (var row in d.List)
+                while (Achievement.CanClaim(_app.Save, d, row.Counter)) Achievement.Claim(_app.Save, d, row.Counter, out _, out _);
+            _app.Persist();
+            LobbyPopups.Achievements(_app); yield return Frames(1);
+            var root0 = _app.Overlay.Root;
+            var btn0 = UiKit.Find(root0, "QuestClaimAll");
+            Assert.IsNotNull(btn0, "«전부 받기» 단추는 업적 판에도 서 있어야 한다(T401)");
+            var b0 = btn0.GetComponent<Button>();
+            Assert.IsNotNull(b0, "버튼 조각에는 Button 이 붙어 있다");
+            Assert.IsFalse(b0.interactable, "받을 것이 없으면 안 눌린다(결정 771)");
+            Assert.IsFalse(HasDot(btn0, "ClaimAllDot"), "받을 것이 없으면 점도 없다");
+            _app.Overlay.Close(); yield return Frames(1);
+
+            // ── ⓑ 마지막 줄에 두 단계 · 첫 줄에 한 단계를 쌓는다(«전부» 와 «반복» 을 둘 다 재려면 둘 이상 · 한 줄은 두 번).
+            var last = d.List[d.List.Count - 1]; var first = d.List[0];
+            Achievement.Add(_app.Save, last.Counter, last.Goal * 2 - Achievement.Count(_app.Save, last.Counter) + Achievement.Claimed(_app.Save, last.Counter) * last.Goal);
+            Achievement.Add(_app.Save, first.Counter, first.Goal);
+            _app.Persist();
+            int pending = 0; foreach (var row in d.List) pending += Achievement.Pending(_app.Save, d, row.Counter);
+            Assert.AreEqual(3, pending, "전제: 밀린 단계 셋(마지막 줄 2 + 첫 줄 1)");
+            double gemWant = 0; foreach (var row in d.List) if (row.Item == Mail.ItemGem) gemWant += row.Amount * Achievement.Pending(_app.Save, d, row.Counter);
+
+            LobbyPopups.Achievements(_app); yield return Frames(1);
+            var root = _app.Overlay.Root;
+            var btn = UiKit.Find(root, "QuestClaimAll");
+            Assert.IsNotNull(btn, "«전부 받기» 단추");
+            var click = btn.GetComponent<Button>();
+            Assert.IsTrue(click.interactable, "받을 것이 있으면 눌린다");
+            Assert.IsTrue(HasDot(btn, "ClaimAllDot"), "받을 것이 있으면 빨간 점(T364 ⓒ 와 같은 점)");
+
+            // ── ⓒ 단추가 줄 1 위에 있다(겹치지 않는다).
+            var row0 = UiKit.Find(root, "Ach:0"); Assert.IsNotNull(row0, "업적 줄 1");
+            var bc = new Vector3[4]; ((RectTransform)btn).GetWorldCorners(bc);
+            var rc = new Vector3[4]; ((RectTransform)row0).GetWorldCorners(rc);
+            Assert.GreaterOrEqual(bc[0].y, rc[1].y - 0.5f, "«전부 받기» 의 밑변(" + bc[0].y.ToString("0.0") + ")이 줄 1 의 윗변(" + rc[1].y.ToString("0.0") + ") 위에 있어야 한다 — 겹치면 줄의 «받기» 를 가린다");
+
+            // ── ⓓ 눌러 본다 — 세 단계가 한 번에 · 다이아가 그만큼 · 리워드 팝업.
+            double gem0 = _app.Save.Gem;
+            click.onClick.Invoke(); yield return Frames(2);
+            Assert.IsFalse(Achievement.AnyClaimable(_app.Save, d), "«전부 받기» 뒤에는 받을 업적이 없다");
+            Assert.AreEqual(2, Achievement.Claimed(_app.Save, last.Counter), "쌓인 두 단계를 한 번에 다 받았다(반복)");
+            Assert.AreEqual(1, Achievement.Claimed(_app.Save, first.Counter), "첫 줄도 받았다(전부)");
+            Assert.AreEqual(gem0 + gemWant, _app.Save.Gem, 1e-6, "다이아가 «보상 × 단계» 합만큼 늘었다(Mail.Give 한 곳)");
+            Assert.IsNotNull(UiKit.Find(_app.Overlay.Root, "RewardTitle"), "받은 것을 리워드 팝업 한 번으로 보여 준다");
+
+            // ── ⓔ 닫으면 업적 판이 다시 서고 단추는 회색 · 점 꺼짐.
+            var dim = UiKit.Find(_app.Overlay.Root, "Dimmed")?.GetComponent<Button>();
+            Assert.IsNotNull(dim, "리워드 팝업의 «탭하여 닫기» 어둠");
+            dim.onClick.Invoke(); yield return Frames(2);
+            Assert.IsTrue(_app.Overlay.IsOpen && UiKit.Find(_app.Overlay.Root, "Ach:0") != null, "닫으면 업적 판이 다시 선다");
+            var btn2 = UiKit.Find(_app.Overlay.Root, "QuestClaimAll");
+            Assert.IsNotNull(btn2, "다시 선 판에도 단추");
+            Assert.IsFalse(btn2.GetComponent<Button>().interactable, "다 받았으니 안 눌린다");
+            Assert.IsFalse(HasDot(btn2, "ClaimAllDot"), "점도 꺼진다");
+            Assert.IsFalse(HasDot(UiKit.Find(_app.Overlay.Root, "Tab:2"), "TabDot"), "업적 탭 점도 같은 수라 꺼진다");
+            yield return Shutdown();
+        }
+
         /// <summary>게이지가 찬 정도 — 없으면 -1(그러면 위 단언이 바로 운다).</summary>
         static float Fill(Transform root)
         {

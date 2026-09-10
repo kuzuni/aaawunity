@@ -160,6 +160,36 @@ namespace KkomaKnight.Core
         }
 
         /// <summary>
+        /// T401(주인 2026-09-10 «퀘스트 업적 부분에 전부 받기 버튼 좀 있어야 함») — <b>받을 수 있는 것을 전부</b> 받는다.
+        /// <para>
+        /// 표 줄 차례로, 줄마다 <see cref="CanClaim"/> 인 동안 <see cref="Claim"/> 을 <b>반복</b>한다 — 단계가 쌓여 있으면
+        /// («20회 상태에서 처음 열면 네 번») 그 줄에서 네 번 다 받는다. 셈은 새로 쓰지 않는다: 판정도 지급도 줄마다 «받기» 가
+        /// 부르던 그 두 함수다(둘로 두면 한쪽만 고쳐지는 날이 온다 · T391 이 트랙에서 한 판단과 같다).
+        /// </para>
+        /// <para>
+        /// 받은 단계마다 <paramref name="got"/> 에 (물건, 수량) 하나를 담는다 — <b>담기만 하고 주지는 않는다</b>(<see cref="Claim"/> 과 같은 규약 ·
+        /// 지갑에 넣는 것은 부르는 쪽의 <c>Mail.Give</c> 한 곳이다). 돌려주는 값 = 받은 단계 수(0 이면 아무것도 안 바뀌었다).
+        /// </para>
+        /// 끝나는 까닭 — 받을 때마다 다음 단계 목표가 «첫 목표 × 단계» 로 오르므로 누적이 그보다 작아지는 순간 <see cref="CanClaim"/> 이 스스로 꺼진다
+        /// (첫 목표가 0 이하인 줄은 처음부터 false · 곱이 넘쳐 음수가 돼도 false). 그래도 <see cref="Claim"/> 이 false 를 주면 그 자리에서 끊는다.
+        /// </summary>
+        public static int ClaimAll(SaveData s, AchievementData d, List<KeyValuePair<string, double>> got)
+        {
+            if (s == null || d == null) return 0;
+            int n = 0;
+            for (int i = 0; i < d.List.Count; i++)
+            {
+                string counter = d.List[i].Counter;
+                while (CanClaim(s, d, counter) && Claim(s, d, counter, out string item, out double amount))
+                {
+                    n++;
+                    if (got != null) got.Add(new KeyValuePair<string, double>(item, amount));
+                }
+            }
+            return n;
+        }
+
+        /// <summary>
         /// 세기 — 이벤트마다 부른다(적 처치는 마릿수라 <paramref name="by"/> 로 여럿). 표에 없는 카운터도 담는다
         /// (표가 늘어날 때 «그 전에 한 것» 이 0 부터 시작하지 않게 · 담아 두는 값은 int 하나라 싸다).
         /// </summary>

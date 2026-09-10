@@ -167,6 +167,40 @@ namespace KkomaKnight.Tests
             Assert.That(Achievement.AnyClaimable(s, d), Is.False, "받고 나면 다시 끈다");
         }
 
+        /// <summary>
+        /// T401 2항 — «전부 받기» 의 Core 몫(<see cref="Achievement.ClaimAll"/>): 세 줄에 단계 1·2·0 이 쌓인 판을 한 번에 받으면
+        /// ⓐ 받은 단계가 셋 ⓑ 담긴 (물건, 수량) 의 합 = 줄별 «보상 × 쌓인 단계» 의 합 ⓒ 그 뒤엔 받을 것이 없다 ⓓ 0 이면 아무 일도 없다.
+        /// 표의 셋째 줄(단계 0)은 **손대지 않았음**까지 잰다 — 반복이 «받을 수 있는 동안» 에서 멈추는가가 이 자의 값이다.
+        /// </summary>
+        [Test]
+        public void 전부_받기는_줄_차례로_쌓인_단계를_다_받고_합이_줄별_합과_같다()
+        {
+            var d = Load(); var s = NewSave();
+            // 갓 만든 판에는 받을 것이 없다 — 0 이면 아무 일도 없고 목록도 빈 채다.
+            var got0 = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, double>>();
+            Assert.That(Achievement.ClaimAll(s, d, got0), Is.EqualTo(0), "받을 것이 없으면 0");
+            Assert.That(got0, Is.Empty, "받은 것이 없으니 담긴 것도 없다");
+
+            var r1 = d.List[0]; var r2 = d.List[1]; var r3 = d.List[2];
+            Achievement.Add(s, r1.Counter, r1.Goal);          // 단계 1
+            Achievement.Add(s, r2.Counter, r2.Goal * 2);      // 단계 2 가 쌓였다(«20회 상태에서 처음 열면» 의 꼴)
+            Achievement.Add(s, r3.Counter, r3.Goal - 1);      // 한 칸 모자라다 — 받으면 안 된다
+            Assert.That(Achievement.Pending(s, d, r1.Counter) + Achievement.Pending(s, d, r2.Counter) + Achievement.Pending(s, d, r3.Counter), Is.EqualTo(3), "전제: 밀린 단계 셋");
+
+            var got = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, double>>();
+            Assert.That(Achievement.ClaimAll(s, d, got), Is.EqualTo(3), "한 번에 세 단계");
+            Assert.That(got.Count, Is.EqualTo(3), "단계마다 하나씩 담는다");
+            double sum = 0; foreach (var p in got) sum += p.Value;
+            Assert.That(sum, Is.EqualTo(r1.Amount * 1 + r2.Amount * 2).Within(1e-9), "합 = 줄별 «보상 × 쌓인 단계» 의 합");
+            Assert.That(got[0].Key, Is.EqualTo(r1.Item), "표 차례 — 첫 줄 것이 먼저");
+            Assert.That(got[1].Key, Is.EqualTo(r2.Item)); Assert.That(got[2].Key, Is.EqualTo(r2.Item), "둘째 줄은 두 번");
+            Assert.That(Achievement.Claimed(s, d.List[0].Counter), Is.EqualTo(1)); Assert.That(Achievement.Claimed(s, r2.Counter), Is.EqualTo(2));
+            Assert.That(Achievement.Claimed(s, r3.Counter), Is.EqualTo(0), "모자란 줄은 손대지 않았다");
+            Assert.That(Achievement.Count(s, r2.Counter), Is.EqualTo(r2.Goal * 2), "누적(평생)은 안 준다(ⓒ 와 같은 규약)");
+            Assert.That(Achievement.AnyClaimable(s, d), Is.False, "다 받으면 받을 것이 없다(탭 점·단추 옷이 보는 그 수)");
+            Assert.That(Achievement.ClaimAll(s, d, null), Is.EqualTo(0), "한 번 더 눌러도 아무 일 없다(목록 없이 불러도 된다)");
+        }
+
         [Test]
         public void 표의_이름과_훅이_대는_이름이_같다()
         {

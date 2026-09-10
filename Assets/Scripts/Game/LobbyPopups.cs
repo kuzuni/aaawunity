@@ -672,9 +672,51 @@ namespace KkomaKnight.Game
                 var c2 = im2.color; c2.a = ListBoxAlpha; im2.color = c2;
             }
 
+            // T401(주인 2026-09-10 «퀘스트 업적 부분에 전부 받기 버튼 좀 있어야 함») — 업적 판에도 «전부 받기».
+            //   ⚑ 자리 — 퀘스트 판의 그 단추(`Layout.QsClaimAll` · y 32.6~36.7)를 **그대로 두면 올라온 목록의 줄 1·2 와 겹친다**
+            //     (이 판은 목록이 트랙 자리 26.0 까지 올라와 있다 · T258 4항). 그래서 **같은 x·폭·높이**로 올라온 목록의 **맨 위**(y = 트랙 상자의 위)에
+            //     두고 줄들을 그 아래로 단추 높이만큼 내린다 — 보이는 줄이 7 → 6.4 로 준다(17줄 목록은 어차피 스크롤이다).
+            //     단추 왼쪽은 비지만 목록 상자 바탕이 1/255(T363)라 «구멍» 이 아니라 그냥 팝업 바탕이다(결정 1161).
+            //   ⚑ 셈 — 판정은 `Achievement.AnyClaimable` 하나(탭 점·로비 점과 같은 수) · 지급은 `Achievement.ClaimAll`(줄마다 «받기» 가 부르던
+            //     `CanClaim`·`Claim` 을 줄 차례로 **반복** · 단계가 쌓인 줄은 다 받는다) · 지갑은 줄 «받기» 와 같은 `Mail.Give` 한 곳.
+            //   ⚑ 리워드 팝업은 **합계 한 번** — 같은 물건은 한 칸으로 모은다(주인은 전부 다이아라 «다이아 ×합» 한 칸이 된다 · 17줄이 17칸으로 서면 못 읽는다).
+            //   ⚑ 이름은 퀘스트 판과 같은 `QuestClaimAll`(자가 «그 자리의 그 단추» 로 찾는다) · 못 받으면 회색 + `SetInteractable(false)`(결정 771 · 줄 «받기» 와 같은 꼴).
+            //   ⚠ 표 Ⓐ 에는 행을 안 넣는다(T391 ⓔ · 표에 없는 것은 «없음» 0 이 된다) — 줄 여섯 행의 y 만 내린 값으로 고쳐 적었다(Ⓐ 는 «어제와 견주는 자» 다).
+            var achClaimR = new Layout.R(Layout.QsClaimAll.X, Layout.QsTrackBox.Y, Layout.QsClaimAll.W, Layout.QsClaimAll.H);
+            if (_qAch && _ad != null && _qs != null)
+            {
+                bool anyClaim = Core.Achievement.AnyClaimable(_qs, _ad);
+                var allBtn = UiKit.Button(box, anyClaim ? "ui.btnOrange" : "ui.btnGray", "전부 받기",
+                    (Action)(() =>
+                    {
+                        var d2 = app.Data != null ? app.Data.Achievement : null; if (d2 == null) return;
+                        var pairs = new List<KeyValuePair<string, double>>();
+                        if (Core.Achievement.ClaimAll(app.Save, d2, pairs) == 0) return;
+                        // 물건별 합 — 처음 나온 차례를 지킨다(사전은 차례를 안 지키므로 목록을 따로 든다).
+                        var order = new List<string>(); var sum = new Dictionary<string, double>();
+                        foreach (var p in pairs)
+                        {
+                            Core.Mail.Give(app.Save, p.Key, p.Value);   // 이름 → 담는 자리는 Mail.Give 한 곳(줄 «받기» 와 같은 규약)
+                            if (!sum.ContainsKey(p.Key)) { order.Add(p.Key); sum[p.Key] = 0; }
+                            sum[p.Key] += p.Value;
+                        }
+                        app.Persist(); app.Current?.Refresh();
+                        var got = new List<RewardPopup.Item>();
+                        foreach (var it in order) { AttendArt(it, out _, out string ic); got.Add(RewardPopup.Item.Of(ic, UiKit.FmtQty(sum[it]), amount: (int)sum[it])); }
+                        RewardPopup.Show(got, () => Achievements(app));   // 닫으면 업적 판 다시(차례·점이 갱신된 채로)
+                    }), achClaimR.Within(B));   // ⚠ 부모가 상자이므로 프레임 % 를 `Within(B)` 로 옮긴다
+                if (allBtn != null)
+                {
+                    allBtn.name = "QuestClaimAll";
+                    if (!anyClaim) UiKit.SetInteractable(allBtn.GetComponent<UnityEngine.UI.Button>(), false);
+                    if (anyClaim) UiKit.AlertDot(allBtn, "ClaimAllDot", new Vector2(1, 1), new Vector2(-2, 2), UiKit.PxSize(Layout.QsTrackIcon).y * 0.34f);   // T364 ⓒ 와 같은 점
+                }
+            }
+
             // 미션 줄 = 프리팹 ScrollView/Content(GridLayoutGroup) — 1열 · 칸 = 표 ⑳ 줄 · 세로 간격 = 피치 − 줄
             var sv = (RectTransform)UiKit.Find(box, "ScrollView");
-            float rowTop = _qAch ? listR.Y + (Layout.QsRow1.Y - Layout.QsListBox.Y) : Layout.QsRow1.Y;   // 상자 안 여백은 그대로 두고 위만 올린다
+            // 상자 안 여백은 그대로 두고 위만 올린다 — 업적 판은 «전부 받기» 단추(T401) 아래부터.
+            float rowTop = _qAch ? achClaimR.Y + achClaimR.H + (Layout.QsRow1.Y - Layout.QsListBox.Y) : Layout.QsRow1.Y;
             var viewR = new Layout.R(Layout.QsRow1.X, rowTop, Layout.QsRow1.W, listR.Y + listR.H - 0.8f - rowTop);
             UiKit.Pct(sv, viewR.Within(B));
             var content = (RectTransform)UiKit.Find(sv, "Content");
