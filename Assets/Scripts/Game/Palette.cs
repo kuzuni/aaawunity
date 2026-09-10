@@ -99,7 +99,7 @@ namespace KkomaKnight.Game
         /// </para>
         /// <para>영웅이 들어오는 회차는 이 배열 가운데에 <c>"green"</c> 한 칸을 넣으면 된다(주인 «영웅 = 초록» · T325 4항 ⓐ).</para>
         /// </summary>
-        public static readonly string[] RarColors = { "gray", "blue", "yellow", "plum" };
+        public static readonly string[] RarColors = { "gray", "blue", "red", "yellow", "plum" };
         /// <summary>등급 색이 몇 칸인가 — 자가 <c>gear.json</c> 의 <c>rarName</c> 수와 맞대 본다(둘이 갈리면 화면이 조용히 틀린다).</summary>
         public static int RarColorCount => RarColors.Length;
         /// <summary>등급 색 이름. 범위 밖은 <b>양쪽으로 물린다</b> — 옛 사슬도 «0 미만이면 회색 · 3 이상이면 자주» 였다(그 뜻을 그대로 옮긴다).</summary>
