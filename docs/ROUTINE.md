@@ -11214,6 +11214,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 > ⇒ 고칠 때 **그 값이 어디로 흘러가는지 끝까지 따라가고**, 자기 검사에 그 뺄셈 판을 같이 박는다.
 >   (`task_state.py` 는 이미 `datetime.now(datetime.timezone.utc)` 쪽을 쓴다 — 그 파일이 본보기다.)
 
+> **🔄 push · CI 확인 전(19:3X · sess-1425-9466 · 워커 N · 결정 1202 · lock `T421` 쥔 채 · 코드 0bf24f30)** — `utc_now()`(aware) + lock 시각도 `as_utc()` 로 aware(뺄셈 자리) · `now` 인자는 naive/aware 둘 다 · 자기 검사 ⓖ(기본 길을 DeprecationWarning=오류로 · aware «지금» 이 ⓕ 와 같은 답) · utcnow 문자열 0. ⚠ 이 통(3.11)은 그 경고를 안 내므로 «사라졌다» 는 다음 런의 로그 그 자리(`check_claim_scope` 두 단계 옆줄)를 눈으로 본다(T419 의 방법). 다음 회차: 그 자리 + 단계 초록 → 반납.
+
 ### T419 ✅ — **CI 가 우는 경고를 이 통은 볼 수조차 없다 — 그리고 그 경고는 시한이다** (워커 판단 · sess-1917-23930 · 워커 J · 선점 2026-09-10 18:2X · **게임 코드 0줄**)
 
 > **어제 T415 를 닫으며 «안 고쳤다 · 그 파일을 여는 사람이 같이 고치는 것이 싸다» 로 넘긴 자리다**(결정 1186). 오늘 그 사람이 됐다.
