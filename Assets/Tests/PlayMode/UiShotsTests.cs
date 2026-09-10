@@ -152,6 +152,17 @@ namespace KkomaKnight.Tests.Play
             _app.ShowScreen("lobby"); yield return Frames(1);
 
             // 13 펫 탭 · 14 펫 세부 (T42 껍데기)
+            // ⛑ T388 — 격자는 T293 ⓘ 4회차부터 **가진 펫만** 그린다(주인 5항 ⓙ «얻은 거만 보이게»).
+            //   여기서 아무것도 안 세우면 새 세이브는 0마리라 **칸 아홉이 다 꺼진 채** 사진이 남고,
+            //   §5 표 ㉔ 의 넷(격자·칸·Lv 라벨·진행바)이 «없음» 으로 읽혀 이 화면이 7.3 에 박힌다.
+            // ⚠ **위 19_pass 자리에서 지운 그 손질과 같은 것이 아니다** — 갈리는 물음은 «이 셋업이 가리는 고장이 있는가» 다.
+            //   19_pass 는 **살아 있는 화면이 비어 있었다**(게임이 지워진 상수를 읽었다) ⇒ 셋업이 고장을 가렸다.
+            //   13_pet 의 빈 격자는 **주인이 시킨 동작**이고, 그 빈 상태를 재는 자가 따로 있다
+            //   (`PetSummonTests.격자는_가진_펫만_그리고_0마리면_한_줄로_말한다`) ⇒ 가릴 고장이 없다.
+            //   그리고 이 파일은 이미 다른 화면에서 같은 일을 한다(바로 위 `S.MaxChapter`) — §5 가 재는 것은 **배치**다.
+            // ⚠ **되돌리지 않는다.** 되돌리는 손질을 두면 그것이 곧 T322 ⛑ 이 지운 그 모양이다.
+            //   뒤 사진들은 펫을 안 보이고 `App.Power()` 도 펫을 안 센다(워커 A 실측 · 결정 1053)라 번지는 자리가 없다.
+            if (_app.Data.Pet != null) { foreach (var p in _app.Data.Pet.Pets) Pets.Gain(S, p.Id); _app.Persist(); }
             _app.ShowScreen("pet"); yield return Frames(3); yield return Shot("13_pet");
             (_app.Current as PetScreen)?.OpenDetail(0); yield return Frames(2); yield return Shot("14_pet_detail"); _app.Overlay.Close(); yield return Frames(1);
 
