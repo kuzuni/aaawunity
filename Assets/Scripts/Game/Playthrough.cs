@@ -793,8 +793,16 @@ namespace KkomaKnight.Game
             if (!g.Over)
             {
                 // 엔진이 스스로 연 레벨업 팝업이면 여기서 정리한다 — 각본 순서대로 놀아야 잡은 고장을 이름으로 말할 수 있다(결정 922).
-                if (app.Overlay.IsOpen) { app.Overlay.Close(); yield return Frames(1); }
+                // ⚑ **비우는 것이 닫는 것보다 먼저다**(T427 · 자 파일 네 자리는 T424 가 같은 손으로 고쳤다).
+                //    `Overlay.Close()` 는 **UI 만** 내리고 `g.Pending` 은 살려 둔다. 팝업이 닫히면 전투 시간이 다시 흐르고
+                //    `BattleScreen:482·496` 의 `if (G.Pending != null) { … OpenPending(); }` 가 **그 `Frames(1)` 안에 3택을 도로 연다** —
+                //    그 뒤에야 비우는 줄이 도니 «엔진은 비었는데 UI 는 열린 채» 가 남는다.
+                //    먼저 비우면 되열 것이 없어 **경주 자체가 사라진다.**
+                //    ⚠ 이 줄들을 아래로 되돌리면 `:646`(P6 아레나)이 곧바로 물린다 — 그쪽은 `UntilOpen` 뒤 `ArenaResult.Open` 을
+                //      곧장 단언하는데, `UntilOpen` 은 **이미 열려 있으면 그대로 통과**하므로 되열린 3택을 결과 화면으로 읽는다.
+                //      (`:751` P5 는 T417 이 ««그냥 받기» 가 나올 때까지 민다» 로 따로 막아 두었다 — 그것은 **다른 층**이라 그대로 둔다.)
                 g.Pending = null; g.PendingLevelUps = 0;
+                if (app.Overlay.IsOpen) { app.Overlay.Close(); yield return Frames(1); }
                 g.Cleared = true;
             }
         }
