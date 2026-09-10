@@ -381,6 +381,33 @@ namespace KkomaKnight.Game
         /// <summary>새로고침 시간 글자의 꼴(자가 읽는 계약) — «새로고침까지 » 뒤에 hh:mm:ss(리치 텍스트 색 태그 안).</summary>
         public static readonly System.Text.RegularExpressions.Regex RefreshClock = new System.Text.RegularExpressions.Regex(@"새로고침까지 <color=#[0-9A-Fa-f]{6}>\d{2,}:\d{2}:\d{2}</color>");
 
+        /// <summary>
+        /// 퀘스트 메달 트랙의 <b>한 칸</b>을 받아 <paramref name="got"/> 에 담는다(지급 한 곳 · T391).
+        /// <para>
+        /// 칸 하나를 누르는 길과 «전부 받기» 가 <b>같은 함수</b>를 쓴다 — 둘로 두면 한쪽만 고쳐지는 날이 온다
+        /// (T292 3항의 «무작위 레시피» 갈래가 바로 그렇게 어긋났던 자리다 · 결정 853).
+        /// </para>
+        /// ⚠ <b>부르기 전에 <see cref="QuestRun.CanClaim"/> 로 물어야 한다</b> — 여기서는 «못 받으면 false» 로만 돌려주고 아무것도 안 바꾼다.
+        /// ⚠ 저장·새로 그리기(<c>Persist</c>·<c>Refresh</c>)와 리워드 팝업은 <b>부르는 쪽</b>이 한다(여러 칸을 받고 <b>한 번만</b> 하려고).
+        /// </summary>
+        static bool ClaimTrackStep(App app, bool daily, int idx, List<RewardPopup.Item> got)
+        {
+            var d2 = app != null && app.Data != null ? app.Data.Quest : null; if (d2 == null) return false;
+            var track = daily ? d2.Daily : d2.Weekly;
+            if (track == null || idx < 0 || idx >= track.Steps.Count) return false;
+            var step = track.Steps[idx];
+            // T292 3항 — 무작위 레시피(recipeRandom)가 든 칸은 **난수·레시피 표를 주는 갈래**로 받는다(옛 4인자 갈래는 그 칸에서 일부러 false 다 · 결정 853).
+            //   리워드 팝업은 «부위별 몇 개»(given)로 보여 준다 — «두루마리 ×20» 한 칸이 아니라 «투구 ×4 · 무기 ×3 …»(주인 «무작위로 20개»가 눈에 보이는 자리).
+            var rng = new Mulberry32((uint)Environment.TickCount ^ 0x7F4A7C15u);
+            if (!QuestRun.Claim(app.Save, d2, daily, idx, rng, app.Data.Recipe, out var given)) return false;
+            if (got != null)
+            {
+                foreach (var rw in step.Rewards) if (rw.Item != QuestRun.ItemRecipeRandom) got.Add(RewardPopup.Item.Of(QuestRewardIcon(rw), UiKit.FmtQty(rw.Amount), amount: (int)rw.Amount));
+                if (given != null) foreach (var kv in given) got.Add(RewardPopup.Item.Of(Recipes.Icon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
+            }
+            return true;
+        }
+
         static string QuestRewardIcon(QuestData.Reward r)
         {
             if (r == null) return "ui.iconMedal";
@@ -577,20 +604,46 @@ namespace KkomaKnight.Game
                     int idx = k; bool dailyNow = _qDaily;
                     UiKit.Clickable(cell, () =>
                     {
-                        var d2 = app.Data != null ? app.Data.Quest : null; if (d2 == null) return;
-                        var step = (dailyNow ? d2.Daily : d2.Weekly).Steps[idx];
                         var got = new List<RewardPopup.Item>();
-                        // T292 3항 — 무작위 레시피(recipeRandom)가 든 칸은 **난수·레시피 표를 주는 갈래**로 받는다(옛 4인자 갈래는 그 칸에서 일부러 false 다 · 결정 853).
-                        //   리워드 팝업은 «부위별 몇 개»(given)로 보여 준다 — «두루마리 ×20» 한 칸이 아니라 «투구 ×4 · 무기 ×3 …»(주인 «무작위로 20개»가 눈에 보이는 자리).
-                        var rng = new Mulberry32((uint)Environment.TickCount ^ 0x7F4A7C15u);
-                        if (!QuestRun.Claim(app.Save, d2, dailyNow, idx, rng, app.Data.Recipe, out var given)) return;
-                        foreach (var rw in step.Rewards) if (rw.Item != QuestRun.ItemRecipeRandom) got.Add(RewardPopup.Item.Of(QuestRewardIcon(rw), UiKit.FmtQty(rw.Amount), amount: (int)rw.Amount));
-                        if (given != null) foreach (var kv in given) got.Add(RewardPopup.Item.Of(Recipes.Icon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
+                        if (!ClaimTrackStep(app, dailyNow, idx, got)) return;
                         app.Persist(); app.Current?.Refresh();
                         RewardPopup.Show(got, () => Quest(app, dailyNow));   // 닫으면 이 팝업을 다시(받은 칸이 꺼진 채로)
                     });
                 }
             refresh = TimerRow(box, B, Layout.QsRefresh, QuestRefreshText(), "Refresh");
+            // T391(주인 2026-09-10 «퀘스트 전부 받는 버튼도 만들어 줘») — 트랙에서 **받을 수 있는 칸을 한 번에** 받는다.
+            //   ⚑ 퀘스트 «줄» 에는 받는 단추가 없다(메달은 깨는 순간 저절로 쌓인다) — 이 판에서 받을 것은 **트랙 칸**뿐이라 그것을 전부 받는다.
+            //   판정은 한 곳(`QuestRun.CanClaim`)이고 지급도 한 곳(`ClaimTrackStep`) — 칸 하나를 누르는 길과 **같은 함수**를 쓴다.
+            //   ⚠ 자리는 새로고침 줄 **오른쪽 빈 자리**다(레퍼런스 15 에서 그 줄은 가운데 39% 뿐이고 양옆이 비어 있다) —
+            //     기존 요소를 한 칸도 안 밀었다. `15_quest` 는 §5 에서 10.0 이고 그 표의 행들이 그대로 서 있어야 한다.
+            //   ⚠ 표(`ref-layout` ⑰)에는 **행을 안 넣는다** — 레퍼런스에 없는 것을 표에 넣으면 «없음» 으로 0 이 찍힌다(T344 의 그 함정).
+            if (!_qAch && _qd != null && _qt != null && _qs != null)
+            {
+                bool anyClaim = false;
+                for (int k = 0; k < _qt.Steps.Count; k++) if (QuestRun.CanClaim(_qs, _qd, _qDaily, k)) { anyClaim = true; break; }
+                bool dailyAll = _qDaily;
+                // 못 받을 때는 회색이고 **아무 일도 안 하는 손잡이를 안 건다**(결정 771 · 눌리는데 아무 일 없는 것이 제일 나쁘다).
+                var allBtn = UiKit.Button(box, anyClaim ? "ui.btnOrange" : "ui.btnGray", "전부 받기",
+                    anyClaim ? (Action)(() =>
+                    {
+                        var d2 = app.Data != null ? app.Data.Quest : null; if (d2 == null) return;
+                        var t2 = dailyAll ? d2.Daily : d2.Weekly; if (t2 == null) return;
+                        var got = new List<RewardPopup.Item>();
+                        int n = 0;
+                        // 앞 칸부터 차례로 — 받으면 «받은 단계» 가 늘어 다음 칸의 CanClaim 이 갱신되므로 **매번 다시 묻는다**.
+                        for (int k = 0; k < t2.Steps.Count; k++)
+                            if (QuestRun.CanClaim(app.Save, d2, dailyAll, k) && ClaimTrackStep(app, dailyAll, k, got)) n++;
+                        if (n == 0) return;
+                        app.Persist(); app.Current?.Refresh();
+                        RewardPopup.Show(got, () => Quest(app, dailyAll));   // 한 번에 받은 것을 **한 팝업**으로 보여 준다
+                    }) : null, Layout.QsClaimAll);
+                if (allBtn != null)
+                {
+                    allBtn.name = "QuestClaimAll";
+                    // T364 ⓒ(주인 «받기 버튼에도 빨간점 알림 떠야 함») — 받을 수 있을 때만 점. 판정은 위의 `anyClaim` 하나뿐이다.
+                    if (anyClaim) UiKit.AlertDot(allBtn, "ClaimAllDot", new Vector2(1, 1), new Vector2(-2, 2), UiKit.PxSize(Layout.QsTrackIcon).y * 0.34f);
+                }
+            }
             // T311 2항(주인 «새로고침 언제 되는지도 써 줘야») — 매초 다시 쓴다(데일리 기프트의 «종료까지» 와 같은 문법 · Overlay.OnTick 은 Close 가 비운다).
             //   초는 Core 시계(QuestRun.SecondsToDailyReset/SecondsToWeeklyReset · 결정 863)가 낸다 — 화면은 hh:mm:ss 로 쓰기만 한다.
             {

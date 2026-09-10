@@ -229,6 +229,55 @@ namespace KkomaKnight.Tests.Play
             var t = nums != null ? nums.GetComponentInChildren<TMP_Text>(true) : null;
             return t != null ? t.text.Trim() : null;
         }
+
+        /// <summary>
+        /// T391(주인 2026-09-10 «퀘스트 전부 받는 버튼도 만들어 줘») — «전부 받기» 가 <b>받을 수 있는 트랙 칸을 하나도 안 남기고</b> 받는다.
+        /// <para>
+        /// ⚑ <b>버튼을 실제로 누른다</b> — `ClaimTrackStep` 을 직접 부르면 «버튼이 그 함수에 이어져 있는가» 를 안 재게 된다(T280 «화면이 스스로 열어야 한다»).
+        /// ⚑ 그리고 <b>못 받을 때는 손잡이가 아예 없어야 한다</b> — 눌리는데 아무 일도 안 나는 것이 제일 나쁘다(결정 771).
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 퀘스트_전부_받기가_받을_수_있는_칸을_다_받는다()
+        {
+            yield return Boot();
+            var q = _app.Data != null ? _app.Data.Quest : null;
+            Assert.IsNotNull(q, "퀘스트 표가 실려야 한다");
+
+            // ── ⓐ 아무것도 못 받는 새 판에서는 회색이고 «눌러도 아무 일 없는» 손잡이가 없다.
+            LobbyPopups.Quest(_app, true); yield return Frames(1);
+            var root0 = _app.Overlay.Root;
+            var btn0 = UiKit.Find(root0, "QuestClaimAll");
+            Assert.IsNotNull(btn0, "«전부 받기» 단추는 일일 판에 서 있어야 한다(T391)");
+            Assert.IsFalse(QuestRun.AnyClaimable(_app.Save, q, true), "새 판은 받을 것이 없다(전제)");
+            Assert.IsNull(btn0.GetComponent<Button>(), "받을 것이 없으면 손잡이를 안 건다(결정 771)");
+            Assert.IsFalse(HasDot(btn0, "ClaimAllDot"), "받을 것이 없으면 점도 없다(T364 ⓒ)");
+            _app.Overlay.Close(); yield return Frames(1);
+
+            // ── ⓑ 일일 줄을 전부 깨면 트랙 칸 여럿이 열린다.
+            foreach (var quest in q.Daily.Quests) QuestRun.Bump(_app.Save, quest.Counter, quest.Goal);
+            _app.Persist();
+            int canBefore = 0;
+            for (int k = 0; k < q.Daily.Steps.Count; k++) if (QuestRun.CanClaim(_app.Save, q, true, k)) canBefore++;
+            Assert.Greater(canBefore, 1, "이 자가 뜻이 있으려면 받을 칸이 둘 이상이어야 한다(전제 · 한 칸이면 «전부» 를 안 재는 셈이다)");
+
+            LobbyPopups.Quest(_app, true); yield return Frames(1);
+            var root = _app.Overlay.Root;
+            var btn = UiKit.Find(root, "QuestClaimAll");
+            Assert.IsNotNull(btn, "«전부 받기» 단추");
+            Assert.IsTrue(HasDot(btn, "ClaimAllDot"), "받을 것이 있으면 빨간 점(T364 ⓒ)");
+            var click = btn.GetComponent<Button>();
+            Assert.IsNotNull(click, "받을 것이 있으면 눌린다");
+
+            // ── ⓒ 눌러 본다 — 받을 수 있던 칸이 **하나도 안 남아야** 한다.
+            click.onClick.Invoke(); yield return Frames(2);
+            for (int k = 0; k < q.Daily.Steps.Count; k++)
+                Assert.IsFalse(QuestRun.CanClaim(_app.Save, q, true, k),
+                               "«전부 받기» 뒤에는 받을 수 있는 칸이 없어야 한다 — 칸 " + k + " 가 남았다");
+            Assert.IsFalse(QuestRun.AnyClaimable(_app.Save, q, true), "그 판에 받을 것이 하나도 없다");
+            yield return Shutdown();
+        }
+
         /// <summary>게이지가 찬 정도 — 없으면 -1(그러면 위 단언이 바로 운다).</summary>
         static float Fill(Transform root)
         {
