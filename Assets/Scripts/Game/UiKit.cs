@@ -550,10 +550,13 @@ namespace KkomaKnight.Game
         /// <para>
         /// ⚑ <b><see cref="UseMergedBg"/> 하나가 되살리는 스위치다</b> — false 면 로비는 옛 세 겹 길(<see cref="PatternBg"/> + <see cref="Gradient"/>) 그대로다.
         /// 되돌릴 일이 생기면 <b>이 상수 하나</b>를 false 로 둔다(코드를 걷어내지 않는다 · 주인 «최적화는 해봐라 걍» 이지 «바꿔라» 가 아니다).
-        /// 지금 false 인 까닭은 §2 T225 6항 ⓓ — 워커는 셰이더를 컴파일해 볼 수 없고 화면도 못 본다. CI 가 한 번 돌아 컴파일이 서는 것을 본 뒤 켠다.
+        /// <b>켠 근거(회차 3 · 2026-09-10 06:2X)</b>: 런 958 이 초록이고 그 명부에 <c>MergedBgShaderTests(3)</c> 가 실제로 들어 있다
+        /// (초록 ≠ 내 자가 돌았다 · T278 — 명부가 «돌았다» 를 따로 말해 준다). 게다가 켜는 일 자체가 이제 <b>안전하다</b>:
+        /// <see cref="MergedBg"/> 가 <c>shader.isSupported</c> 를 직접 묻고 아니면 <c>null</c> 을 돌려 옛 세 겹 길로 떨어진다 —
+        /// 셰이더가 안 서는 기계에서도 최악이 «오늘과 똑같은 그림» 이지 자홍색 화면이 아니다.
         /// </para>
         /// </summary>
-        public const bool UseMergedBg = false;
+        public const bool UseMergedBg = true;
         public const string MergedBgName = "MergedBg", MergedBgMatKey = "mat.uiMergedBg";
         static readonly int MergedTopTexId = Shader.PropertyToID("_TopTex"), MergedBotTexId = Shader.PropertyToID("_BotTex");
         static readonly int MergedTopRectId = Shader.PropertyToID("_TopRect"), MergedBotRectId = Shader.PropertyToID("_BotRect");
@@ -720,6 +723,11 @@ namespace KkomaKnight.Game
             var pat = Cat.Sprite(PatternKey); var spTop = Cat.Sprite(GradTopKey); var spBot = Cat.Sprite(GradBottomKey);
             var src = Cat.Material(MergedBgMatKey);
             if (pat == null || pat.texture == null || spTop == null || spBot == null || src == null) return null;
+            // ⚑ 이 한 줄이 «켜는 일» 을 안전하게 만든다 — 셰이더가 그 기계에서 **안 서면** 유니티는 조각을 자홍색으로 그린다.
+            //    워커도 CI 도 셰이더 컴파일을 막지 못하므로(테스트는 초록인 채 화면만 자홍이 된다) 여기서 직접 묻고,
+            //    아니면 null 을 돌려 **옛 세 겹 길로 떨어뜨린다**. 최악이라도 «오늘과 똑같은 그림» 이지 깨진 화면이 아니다.
+            //    (그래도 «섰는지» 는 알아야 하므로 PlayMode `MergedBgCompileTests` 가 같은 것을 단언한다 — 조용한 폴백은 결함을 숨긴다.)
+            if (src.shader == null || !src.shader.isSupported) return null;
 
             RawImage raw = null;
             for (int i = 0; i < host.childCount; i++) if (host.GetChild(i).name == MergedBgName) { raw = host.GetChild(i).GetComponent<RawImage>(); break; }
@@ -980,7 +988,7 @@ namespace KkomaKnight.Game
             if (host == null) return false;
             for (int i = 0; i < host.childCount; i++)
             {
-                var c = host.GetChild(i); if (c.name != PatternName || !c.gameObject.activeInHierarchy) continue;
+                var c = host.GetChild(i); if ((c.name != PatternName && c.name != MergedBgName) || !c.gameObject.activeInHierarchy) continue;
                 var raw = c.GetComponent<RawImage>(); if (raw != null && raw.enabled && raw.texture != null && raw.texture.name.StartsWith("Pattern_01")) return true;
             }
             return false;
@@ -1078,7 +1086,16 @@ namespace KkomaKnight.Game
             if (rt == null) return false;
             for (int i = 0; i < rt.childCount; i++)
             {
-                var c = rt.GetChild(i); if ((c.name != GradientTopName && c.name != GradientBottomName) || !c.gameObject.activeInHierarchy) continue;
+                var c = rt.GetChild(i); if (!c.gameObject.activeInHierarchy) continue;
+                // T225 — 합친 겹(MergedBg)은 두 곡선을 **머티리얼 안에** 들고 있다. 조각 이름으로만 세면 그 겹이 «그라데이션 없음» 이 된다.
+                if (c.name == MergedBgName)
+                {
+                    var mraw = c.GetComponent<RawImage>();
+                    if (mraw != null && mraw.enabled && mraw.material != null && mraw.material.HasProperty(MergedTopTexId)
+                        && mraw.material.GetTexture(MergedTopTexId) != null && mraw.material.GetTexture(MergedBotTexId) != null) return true;
+                    continue;
+                }
+                if (c.name != GradientTopName && c.name != GradientBottomName) continue;
                 var img = c.GetComponent<Image>(); if (img != null && img.enabled && img.sprite != null && img.sprite.name.IndexOf("Gradient", StringComparison.OrdinalIgnoreCase) >= 0) return true;
             }
             return false;

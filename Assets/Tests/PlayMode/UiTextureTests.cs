@@ -597,6 +597,33 @@ namespace KkomaKnight.Tests.Play
             var bgT = UiKit.Find(_app.Current.Root, "Background"); Assert.IsNotNull(bgT, "로비 프리팹의 배경 조각");
             var lobby = (RectTransform)bgT.parent;
             Assert.IsTrue(UiKit.HasPattern(lobby), "로비 배경에 무늬(T72 ①)");
+            // T225 — 로비의 뒤 세 겹은 셰이더 한 장(«MergedBg»)으로 합쳐질 수 있다(UiKit.UseMergedBg).
+            //   ⚑ 아래 단언들이 재는 **뜻**은 합쳐도 그대로다(«흰 7/255 무늬가 배경 바로 위» · «그라데이션이 무늬 위») —
+            //     달라지는 것은 **어디서 읽느냐** 뿐이다: 세 겹이면 조각의 색, 합친 겹이면 머티리얼의 색.
+            //     그래서 자를 지우지 않고 «읽는 곳» 만 갈래로 나눈다. 켜고 끄는 것은 상수 하나이므로 두 갈래가 다 살아 있어야 한다.
+            var merged = lobby.Find(UiKit.MergedBgName);
+            Transform texTop;   // 질감 층의 **맨 위** 조각 — 아래 «내용은 질감보다 위» 단언이 이것을 기준으로 잰다(세 겹이면 GradientBottom, 합쳤으면 그 한 장)
+            if (merged != null)
+            {
+                Assert.AreEqual(bgT.GetSiblingIndex() + 1, merged.GetSiblingIndex(), "합친 겹은 배경 조각 «바로 위»");
+                var mraw = merged.GetComponent<RawImage>();
+                Assert.IsNotNull(mraw, "합친 겹은 RawImage 다"); Assert.IsFalse(mraw.raycastTarget, "무늬는 클릭을 안 먹는다");
+                Assert.IsNotNull(mraw.material, "합친 겹은 제 머티리얼을 든다");
+                var mcol = mraw.material.GetColor("_PatternColor");
+                Assert.Greater(mcol.r, 0.9f, "로비 무늬는 흰색(T166 ⓐ · 잉크로 되돌아가면 빨강)");
+                Assert.Greater(mcol.g, 0.9f, "로비 무늬는 흰색(g)"); Assert.Greater(mcol.b, 0.9f, "로비 무늬는 흰색(b)");
+                Assert.AreEqual(7f / 255f, mcol.a, 0.001f, "로비 무늬 알파 = 7/255(주인 지정 T166 ⓐ)");
+                Assert.AreEqual(UiKit.PatternAlphaLobby, mcol.a, 0.001f, "그 값은 UiKit.PatternAlphaLobby 한 곳에서 온다");
+                Assert.IsTrue(UiKit.HasGradient(lobby), "로비 배경 그라데이션(T72 ③ · 합친 겹 안 · 두 곡선은 머티리얼이 든다)");
+                Assert.IsNotNull(mraw.material.GetTexture("_TopTex"), "위 곡선"); Assert.IsNotNull(mraw.material.GetTexture("_BotTex"), "아래 곡선");
+                // 합쳤다는 것은 «옛 세 겹이 없다» 는 뜻이다 — 남아 있으면 겹만 늘고 아무것도 안 줄었다(T225 의 판정이 통째로 무의미해진다).
+                Assert.IsNull(lobby.Find(UiKit.PatternName), "합쳤으면 옛 «Pattern» 겹은 없다");
+                Assert.IsNull(lobby.Find(UiKit.GradientTopName), "합쳤으면 옛 «GradientTop» 겹은 없다");
+                Assert.IsNull(lobby.Find(UiKit.GradientBottomName), "합쳤으면 옛 «GradientBottom» 겹은 없다");
+                texTop = merged;
+            }
+            else
+            {
             var pat = lobby.Find(UiKit.PatternName);
             Assert.AreEqual(bgT.GetSiblingIndex() + 1, pat.GetSiblingIndex(), "무늬는 배경 조각 «바로 위»");
             var praw = pat.GetComponent<RawImage>();
@@ -612,6 +639,8 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(gtop, "GradientTop"); Assert.IsNotNull(gbot, "GradientBottom");
             Assert.Less(pat.GetSiblingIndex(), gtop.GetSiblingIndex(), "그라데이션은 무늬 «위»(질감 층 순서 · 결정 171)");
             Assert.Less(gtop.GetSiblingIndex(), gbot.GetSiblingIndex(), "위 밝음 → 아래 어둠 순서");
+            texTop = gbot;
+            }
             // T245(주인 2026-09-08 «shine 이펙트는 START 버튼에 있어야 함») — T166 ⓑ 가 **챕터 카드**에 걸었던 그 빛을 START 로 옮겼다.
             // 재는 것은 그대로 셋이고 «어디에» 만 바뀐다: ⓐ 머티리얼 인스턴스가 매달려 있다(MaterialOwner = 그 자리가 죽으면 인스턴스도 죽는다)
             // ⓑ 그 인스턴스를 겨냥한 트윈이 돈다(= 되풀이가 걸렸다 · 한 번 훑고 끝이면 여기서 빨강)
@@ -632,7 +661,7 @@ namespace KkomaKnight.Tests.Play
             foreach (var n in new[] { "TopBar", "SubRow", "ChapterCard", "Start" })   // T96-menu 로 사이드 기둥 둘은 없다
             {
                 var t = lobby.Find(n); Assert.IsNotNull(t, "로비 " + n);
-                Assert.Greater(t.GetSiblingIndex(), gbot.GetSiblingIndex(), n + " 은 질감 층보다 위 = 무늬 침범 0(T72 7항)");
+                Assert.Greater(t.GetSiblingIndex(), texTop.GetSiblingIndex(), n + " 은 질감 층보다 위 = 무늬 침범 0(T72 7항)");
             }
 
             // ⓒⓓ 특권 페이지(11)
