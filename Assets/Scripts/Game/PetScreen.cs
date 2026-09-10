@@ -97,8 +97,14 @@ namespace KkomaKnight.Game
                     // T69-pet «검은 아웃라인»: 원형 조각은 9-slice 가 없어 multiplier 로 못 굵힌다 → 굵은 조각(Border2 · 선 9.8%)을 슬롯보다 CircleBorderOut px 크게 = 선 ≥ 8px(폰 3px) · Ink α0.9
                     var b = UiKit.Icon(lockPart, UiKit.BorderName, CircleBorderKey, UiKit.BorderInk); UiKit.Stretch(b.rectTransform, -CircleBorderOut, -CircleBorderOut, -CircleBorderOut, -CircleBorderOut);
                     var lk = UiKit.Icon(lockPart, "Lock", "ui.iconLock"); UiKit.Pct(lk.rectTransform, 28, 28, 44, 44);
-                    // 잠긴 칸 밑의 «뽑기 N회 해금» — 수는 표(`slotUnlockPulls`)에서 오고 `Refresh` 가 쓴다(주인 5항).
-                    var need = UiKit.Label(lockPart, -30, 104, 160, 34, "", 28, Palette.Cream, TextAnchor.MiddleCenter); need.name = "LockText";
+                    // 잠긴 칸 밑의 «N회» — 수는 표(`slotUnlockPulls`)에서 오고 `Refresh` 가 쓴다(주인 5항).
+                    // ⛑ 런 951 빨강(T63 하한 · `TextSizeGateTests`·`UiSmokeTests`) — 28 은 하한 밑이었고 «뽑기 100회» 는 칸에서 잘렸다.
+                    //   ⓐ 종류를 바로 적는다: 이것은 본문이 아니라 **보조 라벨**(«남은 횟수» 류)이라 하한 36(`TextSize.Aux`)이다.
+                    //   ⓑ 글자를 «100회» 로 줄였다 — 하한 36 에서 «뽑기 100회» 한 줄은 약 197px 이라 **칸 사이(피치 128px)를 넘어 옆 칸 글자와 겹친다**.
+                    //     두 줄로 접으면 띠 아래로 2.7%p 흘러 «전체 강화» 줄까지 내려간다. 완전한 문장은 **누르면 토스트**가 말한다(«뽑기 N회에 열립니다»).
+                    //   ⓒ 접힘 금지(NoWrap) — 접히면 높이가 두 배가 되어 다시 잘린다.
+                    var need = UiKit.Label(lockPart, -50, 100, 200, 80, "", TextSize.Aux, Palette.Cream, TextAnchor.MiddleCenter); need.name = "LockText";
+                    need.textWrappingMode = TextWrappingModes.NoWrap;
                 }
                 var framePart = UiKit.Rect(s, "FramePart"); UiKit.Stretch(framePart);
                 {
@@ -482,7 +488,7 @@ namespace KkomaKnight.Game
                 if (!unlocked)
                 {
                     var lt = UiKit.Find(slot, "LockPart/LockText"); var ltx = lt != null ? lt.GetComponent<TMP_Text>() : null;
-                    if (ltx != null) ltx.text = TextGlyphs.Safe("뽑기 " + Pets.PullsToOpen(d, i, s.PetPulls) + "회");
+                    if (ltx != null) ltx.text = TextGlyphs.Safe(Pets.PullsToOpen(d, i, s.PetPulls) + "회");
                     continue;
                 }
                 string id = Pets.EquippedAt(d, s, i);
@@ -503,6 +509,9 @@ namespace KkomaKnight.Game
                     var g = p != null ? d.GradeOfPet(p) : null;
                     string key = Palette.FrameKey("ui.itemFrame", g != null ? Palette.RarName(g.Rar) : "gray");
                     UiKit.Clear(area); var v = UiKit.Spawn(key, area); UiKit.Stretch((RectTransform)v.transform);
+                    // ⛑ 런 951 빨강(`BorderGateTests` :160 «Border 는 가운데 비움») — 갈아 끼운 등급 변형이 **제 Border 를 달고 온다**.
+                    //   태어날 때 한 번 손질한 것(`GearUi.DarkFrame`)은 그때 있던 조각에만 걸렸으므로, **바꿔 끼운 자리에서 다시 손질한다**(격자 칸 `PetCell` 이 세운 그 차례 — 갈아 끼우고 → 손질).
+                    GearUi.DarkFrame(frame, frame.localScale.x);
                 }
             }
         }
