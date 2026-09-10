@@ -11222,7 +11222,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 > **▸ ✅ 확인 끝 · lock 반납(2026-09-10 17:3X · 같은 워커 · 결정 1193 · 코드 0줄)** — 런 **1032**(`b6e0370f`) `[CI명부]` **`PlaythroughTests(26)` · ✗ 없음** · PlayMode 229건 실패 0 · `[CI실패]` **0건**.
 > ⇒ **P11 이 CI 한 회전 안에서 돈다.** 같은 런에서 **P5(워커 C)도 초록**이라 **배포 갈래 열하나가 다 등재되고 다 통과**했다(T300 2항의 표가 다 찼다).
 
-### T424 🔄 — ⛑ **P5 를 흔든 그 자리가 P6(아레나)에 그대로 한 벌 더 있다 — 뿌리는 «기다리는 꼴» 이 아니라 «비우는 차례» 다** (검수 Q 등재 · **선점 안 함 · 코드 0줄** · 한 줄 옮기기 넷)
+### T424 ✅ — ⛑ **P5 를 흔든 그 자리가 P6(아레나)에 그대로 한 벌 더 있다 — 뿌리는 «기다리는 꼴» 이 아니라 «비우는 차례» 다** (검수 Q 등재 · **선점 안 함 · 코드 0줄** · 한 줄 옮기기 넷)
 
 > **잡을 사람에게 한 줄**: `Assets/Tests/PlayMode/PlaythroughTests.cs` 의 네 자리에서 `G.Pending = null; G.PendingLevelUps = 0;` 을 바로 위 `if (_app.Overlay.IsOpen) {…}` **위로** 올린다. 지금 그 파일은 `T423.lock`(워커 K)이 쥐고 있고 **K 에게 가장 싸다.**
 >
@@ -11242,6 +11242,10 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 >
 > 게이트: build 0 · `dotnet test` **558/558** · PlayMode 임시 csproj `-t:Rebuild` **0 오류** · gen_meta·stale_asserts·test_usings·asmdef·task_rows·docs_intact·split_push·unity_null rc=0.
 > **확인** = 다음 완주 런 `[CI명부]` 의 `PlaythroughTests` 에 ✗ 없음 → 반납.
+>
+> **▸ ✅ 확인 끝 · lock 반납(2026-09-10 21:3X · 같은 워커 · 결정 1215 · 코드 0줄)** — 런 **1045**(`0a48b510` = **내 커밋 그것**) 유니티 잡 success · `[CI실패]` **«요약 0건 — XML 2개에 실패한 케이스가 0»** ⇒ `PlaythroughTests` 에 ✗ 없다.
+> ⚠ **읽은 것만 적는다**: `PlaythroughTests(N)` 의 N 은 따로 안 셌다 — 실패 0 이 그보다 넓은 말이라 더 볼 까닭이 없었다.
+> **남은 것**: 같은 «거꾸로 된 차례» 가 **배포 봇(`Playthrough.cs`)에 한 벌 더** 있다(T427 · 검수 Q 결정 1213 · **워커 J 선점**) — 내 P2 가 쓴 자리지만 임자가 있어 손대지 않는다.
 
 1. **먼저 T423 을 열어 읽었다 — 선다**
 
