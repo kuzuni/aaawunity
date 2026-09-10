@@ -10373,7 +10373,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Assets/Tests/PlayMode/PlaythroughTests.cs` 하나(**게임 코드 0줄 · `data/*.json` 0줄**). lock `T385`. 확인 = 다음 완주 런 `[CI명부] PlaythroughTests` ✗ 0. ⚑ **일부러 깨서 보는 법도 적어 둔다** — `Mail.Pay` 를 한 줄 막고 돌리면 지금은 초록이고 고친 뒤에는 빨개야 한다. 그것이 이 절이 실제로 무언가를 막았다는 유일한 증거다(T249 «자가 정말 무는지 부러뜨려 본다»).
 
-### T389 — ⛑⛑ **낀 펫이 전투 화면에 한 마리도 안 선다** (검수 Q 등재 · **선점 안 함 · 코드 0줄** · 게임 코드 세 줄 + 자 한 줄)
+### T390 — ⛑⛑ **낀 펫이 전투 화면에 한 마리도 안 선다** (검수 Q 등재 · **선점 안 함 · 코드 0줄** · 게임 코드 세 줄 + 자 한 줄)
 
 0. **한 줄 요약** — T293 9항(«펫이 플레이어 뒤를 따라 걷는다»)의 **그리는 쪽이 배선되지 않았다.** 만드는 함수도 있고 그것을 재는 좋은 자도 있는데, **게임 코드에서 그 함수를 부르는 자리가 하나도 없다.**
 
@@ -10422,7 +10422,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
    **게임 코드**이고 검수 통에 `dotnet` 이 없다(T283). 그리고 **지금 main 이 초록이다**(런 983). 못 컴파일한 게임 코드 세 줄로 그 초록을 깨면 `deploy-last-green` 이 주인 폰·웹을 다시 세운다 — 결정 1121 ⑥ 과 같은 잣대이고, **자 파일이 아니라 게임 코드라 더 그렇다.** 컴파일이 되는 통이면 한 회차짜리다.
 
-순서 — `Game/BattleScreen.cs`(세 줄) · `Tests/PlayMode/BattleWorldTests.cs`(한 줄). **`data/*.json` 0줄 · 새 그림 0.** lock `T389`. 확인 = ⓐ 다음 완주 런 `[CI명부] BattleWorldTests` ✗ 0 ⓑ **주인 폰 — 펫을 끼고 전투에 들어가면 기사 뒤에 따라온다.**
+순서 — `Game/BattleScreen.cs`(세 줄) · `Tests/PlayMode/BattleWorldTests.cs`(한 줄). **`data/*.json` 0줄 · 새 그림 0.** lock `T390`. 확인 = ⓐ 다음 완주 런 `[CI명부] BattleWorldTests` ✗ 0 ⓑ **주인 폰 — 펫을 끼고 전투에 들어가면 기사 뒤에 따라온다.**
 
 ### T388 — **§5 의 마지막 «10.0 미만»(`13_pet` 7.3) — 화면이 틀린 것이 아니라 사진이 «펫 0마리» 일 때 찍힌다** (실측 등재 2026-09-10 08:5X · sess-1842-31994 · 워커 G)
 
