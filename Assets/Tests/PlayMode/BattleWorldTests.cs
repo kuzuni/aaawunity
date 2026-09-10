@@ -379,14 +379,20 @@ namespace KkomaKnight.Tests.Play
             Assert.LessOrEqual(worstLead, 1.0, "도끼 그림이 엔진 x 를 한 틱 걸음보다 " + worstLead.ToString("0.0") + "px 더 앞섰다 — x2 에서 배속을 두 번 곱한 병(T397 ⓐ)");
             Assert.LessOrEqual(worstLag, 0.0, "도끼 그림이 엔진보다 따라잡기 상한 이상 뒤처졌다(" + worstLag.ToString("0.0") + "px)");
             // ⓑ 엔진이 뺀 프레임 — 그림이 «맞는 자리» 에 닿은 채로 지워졌는가(못 본 판이면 건너뛴다 · §1 ⓑ)
-            if (world.ProjGoneAt.TryGetValue(axe, out double goneAt))
+            // ⚑ T403 — «이 판에서 안 잰다» 를 **읽을 수 있게** 내보낸다. 건너뛰는 설계 자체는 옳지만(없는 것을 «잡았다» 고 안 적는다),
+            //   그 «건너뜀» 이 어디에도 안 남으면 «ⓑ 가 매 런 돌고 있다» 와 «ⓑ 가 한 번도 안 돌았다» 를 구별할 수 없다 —
+            //   `Debug.Log` 는 CI 잡 로그에 안 담기고(워커 G 가 두 런을 뒤졌다), `[CI실패]` 목록은 **실패한 자만** 싣고,
+            //   결과 XML 아티팩트는 프록시가 막는다(결정 289). 남은 길은 `ui-screens/`(잡이 빨개도 `screens` 로 배포된다 · T233 이 낸 답).
             {
                 double arrive = far.WorldX - EngineConst.ProjArriveDx;
-                if (axe.X >= arrive)   // 표적이 먼저 죽어 빠진 것이 아니라 «맞혀서» 뺀 것일 때만
+                bool gone = world.ProjGoneAt.TryGetValue(axe, out double goneAt);
+                bool hit = gone && axe.X >= arrive;   // 표적이 먼저 죽어 빠진 것이 아니라 «맞혀서» 뺀 것일 때만 잰다
+                WriteT397Json(hit, gone ? (hit ? "ok" : "target-died") : "no-gone", gone, goneAt, arrive, axe.X, frames);
+                if (hit)
                     Assert.GreaterOrEqual(goneAt + 1.0, arrive, "맞힌 프레임의 도끼 그림 x(" + goneAt.ToString("0") + ")가 맞는 자리(" + arrive.ToString("0") + ") 앞이다 — 닿기 전에 사라졌다(T397 ⓑ)");
-                else Debug.Log("[T397] 표적이 먼저 죽어 도끼가 빠졌다 — ⓑ 는 이 판에서 안 잰다");
+                else if (gone) Debug.Log("[T397] 표적이 먼저 죽어 도끼가 빠졌다 — ⓑ 는 이 판에서 안 잰다");
+                else Debug.Log("[T397] 6초 안에 엔진이 도끼를 빼지 않았다(팝업·판 종료) — ⓑ 는 이 판에서 안 잰다");
             }
-            else Debug.Log("[T397] 6초 안에 엔진이 도끼를 빼지 않았다(팝업·판 종료) — ⓑ 는 이 판에서 안 잰다");
             _log.AssertNoRed("도끼 x2 비행");
             G.Projs.Remove(axe); yield return Frames(2);
             _app.ShowScreen("lobby"); yield return Frames(2);
@@ -736,6 +742,38 @@ namespace KkomaKnight.Tests.Play
         /// </para>
         /// 실패해도 시험을 안 깬다(경고 한 줄) — 이 자는 «재는 것» 이지 «지키는 것» 이 아니다.
         /// </summary>
+        /// <summary>
+        /// T403 — <b>«ⓑ 를 이 판에서 쟀는가» 를 초록·빨강·건너뜀 어느 쪽으로 끝나도 읽을 수 있게 내보낸다</b>(검수 Q 등재 · <c>t397.json</c>).
+        /// <para>
+        /// ⚠ <b>이것을 <c>Assert</c> 로 올리지 마라</b> — «표적이 먼저 죽는 판» 은 <b>진짜로 있다</b>(적을 잡으면 도끼가 그냥 빠진다).
+        /// 빨강으로 만들면 결정 625·627 이 «4시간 25분을 태웠다» 고 적어 둔 그 자리를 다시 밟는다:
+        /// «아직 한 번도 초록인 적 없는 새 물음» 은 로그(여기서는 JSON)로 시작하고, 고침이 든 회차에 <c>Assert</c> 로 올린다.
+        /// </para>
+        /// <para><b>읽는 법</b> — 여러 런의 <c>screens/t397.json</c> 을 모아 <c>measured</c> 가 <b>한 번이라도 true</b> 면 ⓑ 는 살아 있는 자다.
+        /// 계속 <c>"no-gone"</c> 이면 판이 6초 안에 안 끝나는 것이고, 계속 <c>"target-died"</c> 면 표적이 늘 먼저 죽는 자리라
+        /// <b>재는 판을 다시 세워야</b> 한다(그때는 이 수들이 그 판을 어떻게 세울지도 알려 준다 — <c>axeX</c> 가 <c>arrive</c> 에 얼마나 못 미쳤나).</para>
+        /// </summary>
+        static void WriteT397Json(bool measured, string why, bool gone, double goneAt, double arrive, double axeX, int frames)
+        {
+            // ⚠ 소수점은 **반드시 인바리언트**로 — 러너의 문화권이 «812,4» 를 쓰면 이 파일이 JSON 이 아니게 되고,
+            //   아무도 이 파일에 단언을 안 걸어 뒀으므로 **읽는 사람이 파싱에서 넘어질 때까지 아무 자도 안 운다**.
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            string N(double v) => v.ToString("0.0", inv);
+            string json = "{\"_meta\":{\"task\":\"T397 ⓑ\",\"writer\":\"T403\"},"
+                        + "\"measured\":" + (measured ? "true" : "false")
+                        + ",\"why\":\"" + why + "\""
+                        + ",\"goneAt\":" + (gone ? N(goneAt) : "null")
+                        + ",\"arrive\":" + N(arrive)
+                        + ",\"axeX\":" + N(axeX)
+                        + ",\"shortByPx\":" + N(arrive - axeX)
+                        + ",\"frames\":" + frames.ToString(inv) + "}";
+            foreach (var dir in PlayShot.Dirs())
+            {
+                try { System.IO.Directory.CreateDirectory(dir); System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "t397.json"), json); }
+                catch (Exception e) { Debug.LogWarning("[T397] t397.json 저장 실패(" + dir + "): " + e.Message); }
+            }
+        }
+
         static void WriteArrowJson(double dist, int frames, float sumDt, int seen, int standing, int vanished,
                                    double worstOver, double maxStep, double firstGap)
         {
