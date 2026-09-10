@@ -68,7 +68,7 @@ namespace KkomaKnight.Game
         public delegate System.Collections.IEnumerator Step(App app);
 
         static readonly System.Collections.Generic.Dictionary<string, Step> Steps =
-            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P4", P4Shop }, { "P10", P10Pet } };
+            new System.Collections.Generic.Dictionary<string, Step> { { "P1", P1Lobby }, { "P3", P3Gear }, { "P4", P4Shop }, { "P10", P10Pet } };
 
         /// <summary>
         /// 단계 하나만 돌린다 — <b>자가 «배포 갈래도 실제로 도는가» 를 재는 입구</b>(T300 2항 · 결정 1101).
@@ -107,6 +107,113 @@ namespace KkomaKnight.Game
             yield return null;
             for (int i = 0; i < 2; i++) { Tap(app, "ArrowR"); yield return null; }
             for (int i = 0; i < 3; i++) { Tap(app, "ArrowL"); yield return null; }
+        }
+
+        /// <summary>
+        /// P3 장비(T300 1항 · 배포 갈래 · T398) — PlayMode <c>PlaythroughTests.P3_…</c> 와 <b>같은 길</b>을 게임 안에서 누른다. 단언은 없다(3항 ⓐ):
+        /// 탭 «장비» → 인벤 첫 칸 → 세부 팝업 «장착»(<c>BtnL</c>) → 슬롯 칸 → «슬롯 강화»(<c>BtnR</c>) → 어둠으로 닫기 →
+        /// 여섯 슬롯에서 «해제» 를 찾아 누르기 → «대장간» → 재료 셋을 골라 «합성 (3/3)» → «뒤로» → 로비.
+        /// <para>⚠ <b>«해제» 는 글자로 집는다</b> — 그 버튼은 «장착» 과 <b>이름이 같다</b>(<c>BtnL</c> · <see cref="GearUi.OpenDetail"/> 이 한 자리에 둘 중 하나를 세운다).
+        /// 게다가 어느 슬롯이 어느 부위인지는 표(<c>D.Gear.Parts</c>)가 정하고 주인 지시로 바뀌므로 <b>자리로 굳히지 않는다</b>(결정 956 이 자 쪽에 세운 그 규칙).</para>
+        /// <para>⚠ <b>세이브(인벤·골드·레시피)는 봇이 제 조건을 만든다</b>(1항) — 값은 표(<c>AllTypes</c>·<c>Parts</c>)에서 읽는다. 스모크의 브라우저는 일회용이라 누구의 세이브도 아니다.</para>
+        /// <para>⚠ <b>«레시피가 모자라면 안 오른다» 갈래는 안 논다</b> — 그것은 «규칙이 맞는가» 라 <c>PlaythroughTests.P3_…</c> ⓒ 와 <c>GearSystem</c> 자의 몫이다(3항 ⓐ).</para>
+        /// </summary>
+        static System.Collections.IEnumerator P3Gear(App app)
+        {
+            var D = app.Data; var S = app.Save;
+            if (D == null || D.Gear == null || D.Gear.AllTypes.Count == 0) throw new MissingException("장비 표(data.gear)");
+            // 조건은 이 단계가 만든다 — 인벤을 비우고 «같은 종류 넷»(셋은 합성거리 · 하나는 입어 볼 것) · 골드 · 레시피.
+            S.Inv.Clear(); S.Eq.Clear();
+            var t0 = D.Gear.AllTypes[0];
+            for (int i = 0; i < 4; i++) S.Inv.Add(S.NewGear(t0.Part, t0.Type, 0, 0));
+            S.Gold += 1e9;
+            foreach (var pt in D.Gear.Parts) Recipes.Add(S, pt, 999);
+            app.Persist();
+
+            app.ShowScreen("lobby"); yield return Frames(2);
+            Tap(app, "Tab:gear"); yield return Frames(3);
+            Reach(app, "gear");
+
+            // ⓐ 인벤 첫 칸 → 세부 팝업 → «장착»(팝업은 스스로 닫힌다)
+            TapChild(app.Current.Root, "Content", 0, "인벤 첫 칸"); yield return Frames(2);
+            if (!app.Overlay.IsOpen) throw new MissingException("장비 세부 팝업(인벤 칸 뒤)");
+            TapIn(app.Overlay.Root, "BtnL", true); yield return Frames(3);
+            if (app.Overlay.IsOpen) throw new MissingException("«장착» 뒤 팝업 닫힘(아직 열려 있다)");
+
+            // ⓑ 슬롯 칸 → «슬롯 강화». 강화는 팝업을 제 손으로 다시 연다(GearUi.OpenDetail/OpenSlot) → 어둠으로 닫는다.
+            //    MAX 면 그 버튼이 꺼져 있다 — 없는 것을 «눌렀다» 고 적지 않고 지나간다(P10 ⓒ 와 같은 결).
+            var slots = Slots(app); if (slots.Count == 0) throw new MissingException("슬롯 칸(이름 계약 Group_Slot/Slot:<부위>)");
+            TapIn(app.Current.Root, slots[0], true); yield return Frames(2);
+            if (!app.Overlay.IsOpen) throw new MissingException("슬롯 팝업(슬롯 칸 뒤)");
+            var up = UiKit.Find(app.Overlay.Root, "BtnR"); if (up == null) throw new MissingException("«슬롯 강화» 버튼");
+            var upBtn = up.GetComponent<UnityEngine.UI.Button>();
+            if (upBtn != null && upBtn.interactable) { upBtn.onClick.Invoke(); yield return Frames(3); }
+            if (app.Overlay.IsOpen) yield return CloseByDim(app, "슬롯 팝업");
+
+            // ⓒ 해제 — 여섯 칸을 돌며 «해제» 글자를 찾는다(자리로도 이름으로도 못 집는다 · 위 ⚠)
+            bool off = false;
+            for (int i = 0; i < 6 && !off; i++)
+            {
+                var six = Slots(app); if (i >= six.Count) break;
+                TapIn(app.Current.Root, six[i], true); yield return Frames(2);
+                if (!app.Overlay.IsOpen) continue;
+                UiKit.CompleteAllTweens(); yield return Frames(1);
+                if (TapLabel(app.Overlay.Root, "해제")) { yield return Frames(3); off = true; }
+                else yield return CloseByDim(app, "슬롯 팝업(" + six[i] + ")");
+            }
+            if (!off) throw new MissingException("여섯 슬롯 어디에서도 «해제» — 장착한 것이 슬롯에 안 닿았다");
+            if (app.Overlay.IsOpen) yield return CloseByDim(app, "해제 뒤 팝업");
+
+            // ⓓ 대장간 — 재료 셋을 «골라» 합성한다(«자동»(AutoBtn)은 한 번에 다 태워서 «3 → 1» 을 안 논다 · 결정 956)
+            Reach(app, "gear");
+            Tap(app, "ForgeBtn"); yield return Frames(3);
+            Reach(app, "forge");
+            for (int i = 0; i < 3; i++) { TapChild(app.Current.Root, "Content", i, "대장간 재료 " + (i + 1)); yield return Frames(2); }
+            TapIn(app.Current.Root, "FuseBtnOn", true); yield return Frames(3);
+            Tap(app, "BackBtn"); yield return Frames(3);
+            Reach(app, "gear");
+            app.ShowScreen("lobby"); yield return null;
+        }
+
+        /// <summary>슬롯 칸 이름들(<c>Group_Slot</c> 의 <c>Slot:&lt;부위&gt;</c>) — <b>이름 계약으로 센다</b>(T348: 그 묶음에는 비평 이름표 <c>Tag:…</c> 도 자식으로 붙어 있어 <c>childCount</c> 는 6 이 아니다).</summary>
+        static System.Collections.Generic.List<string> Slots(App app)
+        {
+            var list = new System.Collections.Generic.List<string>();
+            var g = app.Current != null ? UiKit.Find(app.Current.Root, "Group_Slot") : null;
+            if (g == null) return list;
+            for (int i = 0; i < g.childCount; i++)
+            {
+                var n = g.GetChild(i).name;
+                if (n.StartsWith("Slot:", StringComparison.Ordinal)) list.Add(n);
+            }
+            return list;
+        }
+
+        /// <summary>격자(<c>Content</c> 류)의 <paramref name="index"/> 번째 칸을 누른다 — 칸 이름이 없는 격자(인벤·대장간)를 집는 유일한 길이다.</summary>
+        static void TapChild(UnityEngine.Transform root, string name, int index, string what)
+        {
+            var grid = root != null ? UiKit.Find(root, name) : null;
+            if (grid == null) throw new MissingException(name);
+            if (grid.childCount <= index) throw new MissingException(what + "(" + name + " 에 " + (index + 1) + "번째 칸이 없다)");
+            var b = grid.GetChild(index).GetComponentInChildren<UnityEngine.UI.Button>();
+            if (b == null || !b.interactable) throw new MissingException(what + "(눌리지 않는다)");
+            b.onClick.Invoke();
+        }
+
+        /// <summary>
+        /// <b>글자로</b> 버튼을 집는다 — 이름이 같은 자리에 글자만 갈리는 버튼(«장착»↔«해제» 가 둘 다 <c>BtnL</c>)이 있을 때만 쓴다.
+        /// <para>못 찾으면 던지지 않고 <c>false</c> 를 준다 — 부르는 쪽이 «여섯 칸 가운데 하나» 처럼 <b>돌면서</b> 찾기 때문이다.</para>
+        /// </summary>
+        static bool TapLabel(UnityEngine.Transform root, string text)
+        {
+            if (root == null) return false;
+            foreach (var b in root.GetComponentsInChildren<UnityEngine.UI.Button>(false))
+            {
+                if (!b.interactable) continue;
+                foreach (var t in b.GetComponentsInChildren<TMPro.TMP_Text>(false))
+                    if ((t.text ?? "") == text) { b.onClick.Invoke(); return true; }
+            }
+            return false;
         }
 
         /// <summary>

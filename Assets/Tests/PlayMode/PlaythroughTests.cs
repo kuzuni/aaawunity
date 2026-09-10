@@ -1473,5 +1473,24 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("배포 갈래 P4");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T398 — P3(장비)의 <b>배포 갈래</b>. 꼴은 위 셋과 같고(결정 1101), 이번에는 <b>각본 자체가 새로 생긴</b> 첫 단계다
+        /// (P1·P4·P10 은 각본이 이미 있었고 자만 붙였다 · 결정 1138 ③ 이 «남은 여덟은 자가 없는 것이 아니라 각본이 없다» 로 적어 둔 그 자리).
+        /// <para>
+        /// ⚠ 이 각본은 <b>«장착» 과 «해제» 가 이름이 같은 자리</b>(<c>BtnL</c>)를 지난다 — 그래서 해제만 <b>글자로</b> 집는다.
+        /// 이름 계약이 아니라 글자에 기대는 유일한 자리라, 주인이 그 글자를 바꾸는 날 이 자가 «못 찾았다: …» 로 먼저 운다. 그것이 이 자의 목적이다.
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 배포_갈래_P3_도_자에서_한_번_돈다()
+        {
+            yield return Boot();
+            Assert.IsTrue(Playthrough.HasStep("P3"), "P3 의 배포 갈래가 등록돼 있다");
+            yield return Playthrough.RunOne(_app, "P3");
+            Assert.AreEqual("lobby", _app.Current.Name, "각본이 끝나면 로비에 서 있다");
+            _log.AssertNoRed("배포 갈래 P3");
+            yield return Shutdown();
+        }
     }
 }
