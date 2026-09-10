@@ -74,10 +74,23 @@ def rows(path):
     return scope, head
 
 
+UTC = datetime.timezone.utc
+
+
+def utc_now():
+    """지금(UTC · aware). `datetime.utcnow()` 는 파이썬이 «없앨 예정» 이라 못 박은 함수라 안 쓴다(T421 · `task_state.py` 와 같은 쪽)."""
+    return datetime.datetime.now(UTC)
+
+
+def as_utc(t):
+    """naive 면 UTC 로 본다(lock 파일의 «…Z» · 자기 검사의 손 시각) · aware 면 UTC 로 맞춘다 — 뺄셈 양쪽이 같은 종류여야 TypeError 가 안 난다."""
+    return t.replace(tzinfo=UTC) if t.tzinfo is None else t.astimezone(UTC)
+
+
 def live_locks(claims_dir=None, now=None):
     """[(작업ID, SID, 나이(분))] — 90분 안에 갱신된 lock 만."""
     d = claims_dir or CLAIMS
-    now = now or datetime.datetime.utcnow()
+    now = as_utc(now) if now is not None else utc_now()
     out = []
     try:
         names = sorted(f for f in os.listdir(d) if f.endswith(".lock"))
@@ -86,7 +99,7 @@ def live_locks(claims_dir=None, now=None):
     for f in names:
         try:
             parts = io.open(os.path.join(d, f), encoding="utf-8").read().split()
-            when = datetime.datetime.strptime(parts[0], "%Y-%m-%dT%H:%M:%SZ")
+            when = as_utc(datetime.datetime.strptime(parts[0], "%Y-%m-%dT%H:%M:%SZ"))
             sid = parts[1] if len(parts) > 1 else "(SID 없음)"
         except (OSError, ValueError, IndexError):
             continue
@@ -260,7 +273,23 @@ def selftest():
         if got != ["T1"]:
             print("✗ 자기검사 ⓕ: " + repr(got)); ok = False
 
-    print(("✓" if ok else "✗") + " check_claim_scope 자기검사 6칸")
+        # ⓖ T421 — «지금» 을 안 주면 aware UTC 로 스스로 재고(utcnow 없음 · DeprecationWarning 을 오류로 올려 잰다),
+        #   aware 로 줘도 naive 로 줘도(ⓕ) lock 시각과의 뺄셈이 TypeError 없이 같은 답을 낸다.
+        import warnings
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", DeprecationWarning)
+                fresh = os.path.join(d, "T3.lock")
+                io.open(fresh, "w", encoding="utf-8").write(utc_now().strftime("%Y-%m-%dT%H:%M:%SZ") + " sess-c\n")
+                got_default = [t for t, _, _ in live_locks(d)]
+                got_aware = [t for t, _, _ in live_locks(d, datetime.datetime(2026, 9, 9, 16, 0, 0, tzinfo=UTC))]
+        except (DeprecationWarning, TypeError) as e:
+            print("✗ 자기검사 ⓖ: " + repr(e)); ok = False
+        else:
+            if got_default != ["T3"] or got_aware != ["T1"]:
+                print("✗ 자기검사 ⓖ: " + repr((got_default, got_aware))); ok = False
+
+    print(("✓" if ok else "✗") + " check_claim_scope 자기검사 7칸")
     return 0 if ok else 1
 
 
