@@ -70,13 +70,59 @@ def read_meta():
         return None
 
 
+def is_doc_path(p):
+    """이 파일 하나가 «문서» 인가 — `ci.yml` 의 `gate.code` 단계와 **같은 잣대**여야 한다(T433).
+
+    두 자리가 갈리면 이 자가 «빚 3개» 라 우는데 CI 는 애초에 돌 생각이 없는 꼴이 난다.
+    바꿀 일이 생기면 **두 곳을 같이** 바꾼다(`.github/workflows/ci.yml` 의 `- id: code`).
+    """
+    return p.startswith("docs/") or ("/" not in p and p.endswith(".md"))
+
+
+def commit_calls_ci(subject, files):
+    """그 커밋이 **유니티 잡을 부르는가** (T433).
+
+    둘 다 있어야 부른다 — ⓐ 제목에 `[skip ci]` 가 없고 ⓑ 문서 아닌 파일을 하나라도 건드렸다.
+    ⓑ 가 T433 으로 새로 생겼다: 2026-09-10 부터 `ci.yml` 의 `unity-test` 가 «코드 0줄인 push» 를 건너뛴다.
+    ⚠ **파일 목록을 못 읽으면 «부른다» 로 본다** — 자와 CI 가 같은 방향(fail-safe)으로 틀리게 둔다.
+    """
+    if "[skip ci]" in subject:
+        return False
+    if files is None:
+        return True
+    if not files:
+        return True
+    return not all(is_doc_path(f) for f in files)
+
+
 def debt(sha):
-    """그 sha 뒤로 main 에 쌓인 «CI 를 부르는» 커밋 수 — `[skip ci]` 는 CI 를 안 부르므로 뺀다."""
-    log = sh("git", "log", "--format=%s", f"{sha}..origin/main")
+    """그 sha 뒤로 main 에 쌓인 «유니티 잡을 부르는» 커밋 수.
+
+    ⚑ T433 이전에는 «`[skip ci]` 아닌 것» 하나로 셌다. 이제는 **문서만 바꾼 커밋도 안 부른다** —
+      안 맞추면 문서만 오가는 조용한 회차마다 이 자가 헛 경보를 낸다(고침을 넣은 회차에 같이 맞췄다).
+    """
+    # ⚑ 커밋마다 `git show` 를 부르지 않는다 — 낡은 `meta.json` 은 빚이 300개까지 간다(T286 실측).
+    #   `git log --name-only` 한 번으로 «제목 + 그 커밋이 건드린 파일» 을 같이 받는다.
+    #   `--format=\x01%s` 로 커밋 경계를 못 박는다(파일 이름에는 그 글자가 못 들어간다).
+    # `--diff-merges=cc` — 머지 커밋도 «충돌을 풀며 손댄 파일» 을 내놓는다(안 주면 머지는 늘 «빚» 으로 센다).
+    #   ⚠ 옛 git 에 그 옵션이 없으면 **빈 답**이 오는데, 그것을 «빚 0» 으로 읽으면 이 자가 눈이 먼다 —
+    #     빈 답이면 옵션 없이 한 번 더 물어본다(그 판에선 머지가 빚으로 세어지지만, 그쪽이 안전하다).
+    rng = f"{sha}..origin/main"
+    log = sh("git", "log", "--name-only", "--diff-merges=cc", "--format=\x01%s", rng)
+    if not log:
+        log = sh("git", "log", "--name-only", "--format=\x01%s", rng)
     if not log:
         return 0, 0
-    lines = log.split("\n")
-    return len(lines), len([x for x in lines if "[skip ci]" not in x])
+    total = calling = 0
+    for chunk in log.split("\x01"):
+        if not chunk.strip():
+            continue
+        rows = chunk.split("\n")
+        subject, files = rows[0], [r for r in rows[1:] if r.strip()]
+        total += 1
+        if commit_calls_ci(subject, files):
+            calling += 1
+    return total, calling
 
 
 def main():
@@ -158,10 +204,31 @@ def self_test():
         ok = got == want
         bad += 0 if ok else 1
         print(f"  {'✔' if ok else '✘'} {got} (기대 {want}) — {why}")
+
+    # T433 — «무엇이 유니티 잡을 부르는가» 도 같이 잰다. 이 잣대가 `ci.yml` 의 `gate.code` 와 갈리면
+    #   자는 «빚 3개» 라 우는데 CI 는 애초에 돌 생각이 없는 꼴이 난다(그래서 갈래를 여기 박아 둔다).
+    calls = [
+        ("docs 만 바꾼 커밋", "T430 ✅ 닫음", ["docs/PROGRESS.md", "docs/ROUTINE.md"], False),
+        ("lock 만 잡은 커밋", "T433 선점", ["docs/claims/T433.lock"], False),
+        ("뿌리 README.md 만", "README 손질", ["README.md"], False),
+        ("코드가 한 줄이라도 있으면", "T433 고침", ["docs/PROGRESS.md", "tools/check_gate_age.py"], True),
+        ("에셋", "T384 컨페티", ["Assets/Scripts/Game/ArenaResult.cs"], True),
+        ("워크플로 자신", "ci.yml", [".github/workflows/ci.yml"], True),
+        ("이름만 docs 로 시작하는 폴더", "x", ["docsgen/Thing.cs"], True),
+        ("[skip ci] 는 코드가 있어도 안 부른다", "T433 문서 [skip ci]", ["Assets/x.cs"], False),
+        ("파일을 못 읽으면 «부른다» 로 (fail-safe)", "머지", [], True),
+        ("파일 목록이 None 이어도 «부른다»", "머지", None, True),
+    ]
+    for why, subject, files, want in calls:
+        got = commit_calls_ci(subject, files)
+        ok = got == want
+        bad += 0 if ok else 1
+        print(f"  {'✔' if ok else '✘'} 부른다={got} (기대 {want}) — {why}")
+
     if bad:
         print(f"✗ check_gate_age --self-test: 갈래 {bad}건이 기대와 다르다 — 위 표의 판정 규칙을 보라")
         return 1
-    print(f"✓ check_gate_age --self-test: 갈래 {len(cases)}개가 전부 기대대로 갈린다")
+    print(f"✓ check_gate_age --self-test: 갈래 {len(cases) + len(calls)}개가 전부 기대대로 갈린다")
     return 0
 
 
