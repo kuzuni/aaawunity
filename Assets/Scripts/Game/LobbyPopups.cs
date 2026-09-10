@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using KkomaKnight.Core;
 using TMPro;
 using UnityEngine;
@@ -1529,23 +1530,84 @@ namespace KkomaKnight.Game
         //     키우면 그림 폭도 늘지만 기사 37.1~50.7% · 적 60.0~67.8% 로 **9.3%p 떨어져** 안 겹친다(레퍼런스는 3.6%p).
         static readonly Layout.R ExKnight = new Layout.R(38.4f, 30.1f, 11.4f, 68.0f), ExFoe = new Layout.R(58.2f, 43.4f, 11.4f, 46.3f);
 
+        /// <summary>T394 — 흐르는 풀 띠(RawImage)의 이름 · 흐름 트윈의 id(자가 «닫히면 멈춘다» 를 이걸로 센다).</summary>
+        public const string ExGroundName = "RoadUp", ExWalkTweenId = "T394.ExWalk";
+        /// <summary>T394 — 띠 위 소품(나무 셋 · 덤불)의 표 자리(띠 안 %). 흐를 때 이 x 에서 왼쪽으로 밀리며 <see cref="ExPropSpan"/> 마다 되돌아온다.</summary>
+        static readonly Layout.R[] ExProps = { new Layout.R(6, 12, 16, 46), new Layout.R(40, 12, 16, 46), new Layout.R(74, 12, 16, 46), new Layout.R(78, 66, 12, 22) };
+        /// <summary>소품 한 바퀴(띠 폭 %) — 나무 간격 34 × 3 이라 세 그루가 같은 간격으로 계속 이어진다 · 여유 16 = 가장 넓은 소품 폭(왼쪽 밖으로 다 나간 뒤 오른쪽 밖에서 들어온다).</summary>
+        const float ExPropSpan = 102f, ExPropMargin = 16f;
+
+        /// <summary>
+        /// T394 — 띠가 <b>오른쪽→왼쪽으로 흐른다</b>(주인 «탐험 쪽은 오른쪽으로 계속 이동하는 것처럼 해 줘 플레이어가»). 기사는 제자리 걷기(<see cref="HeroView.SetWalking"/>)고, 걷는 «느낌» 은 배경이 낸다:
+        /// ⓐ 풀 띠(<c>env.roadUp</c> · 물결 경계)는 <see cref="RawImage"/> 로 바꿔 <c>uvRect.x</c> 를 늘린다 — <see cref="UiKit.PatternBg"/> 와 같은 기술(uvRect 가 «사각형 왼쪽이 텍스처의 어느 점을 보이나» 라 값이 <b>늘어야</b> 그림이 왼쪽으로 간다 · 결정 157 의 반대 방향).
+        ///   들판·길(<c>env.field</c>/<c>env.road</c>)은 한 색 판이라(128×128 · 색 1개 실측) 흘려도 안 보인다 → 그대로 Image.
+        /// ⓑ 소품(나무·덤불)은 표 자리에서 왼쪽으로 밀리며 한 바퀴(<see cref="ExPropSpan"/>)마다 되돌아온다 — 풀 띠만 흐르면 «땅만 미끄러지는» 꼴이라 소품이 같이 가야 걷는 것처럼 보인다.
+        /// 속도는 <b>전투 걷기 속도</b>(<see cref="Core.Expedition.WalkSpeedUi"/> · combat.json playerSpeed × ui.json zoom · 표 값). 한 트윈(unscaled · 무한 · Linear)이 둘을 같이 민다 —
+        /// 풀 띠의 타일 폭은 «한 바퀴가 타일의 정수 배» 가 되게 살짝 맞춰(반올림) 바퀴 경계에서 튀지 않는다. 팝업이 닫히면(<see cref="Overlay.Close"/> = 상자 파괴) <c>SetLink</c> 가 트윈을 죽인다.
+        /// </summary>
+        static void Walk(RectTransform pic, RawImage ground, Image[] props, float pxPerSec)
+        {
+            if (pic == null || ground == null || pxPerSec <= 0f) return;
+            float aspect = ground.texture != null && ground.texture.height > 0 ? (float)ground.texture.width / ground.texture.height : 1f;
+            float spanPx = UiKit.FrameW * Layout.ExPic.W / 100f * ExPropSpan / 100f;   // 한 바퀴 = 띠 폭 × 102% (프레임 px · 폭은 세로비 늘림의 영향이 없다)
+            var gr = ground.rectTransform;
+            float phase = 0f;
+            void Apply(float v)
+            {
+                phase = v;
+                if (ground == null || pic == null) return;
+                float w = gr.rect.width, h = gr.rect.height;
+                if (w > 0f && h > 0f)
+                {
+                    float natural = Mathf.Max(1f, h * aspect);
+                    int tiles = Mathf.Max(1, Mathf.RoundToInt(spanPx / natural));
+                    float tilePx = spanPx / tiles;
+                    ground.uvRect = new Rect(v * tiles, 0f, Mathf.Max(0.01f, w / tilePx), 1f);
+                }
+                for (int i = 0; i < props.Length && i < ExProps.Length; i++)
+                {
+                    if (props[i] == null) continue;
+                    var r = ExProps[i];
+                    float x = Mathf.Repeat(r.X - v * ExPropSpan + ExPropMargin, ExPropSpan) - ExPropMargin;
+                    UiKit.Pct(props[i].rectTransform, x, r.Y, r.W, r.H);
+                }
+            }
+            Apply(0f);
+            DOTween.To(() => phase, Apply, 1f, Mathf.Max(0.1f, spanPx / pxPerSec)).SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart)
+                .SetUpdate(true).SetId(ExWalkTweenId).SetTarget(pic).SetLink(pic.gameObject);
+        }
+
+        /// <summary>T394 — 탐험 띠의 걷기 속도(UI 프레임 px/초 · 표 값). 표가 없으면 0 = 안 흐른다.</summary>
+        public static float ExWalkPxPerSec(GameData G)
+            => G != null && G.Combat != null && G.Ui != null ? (float)Core.Expedition.WalkSpeedUi(G.Combat.PlayerSpeed, G.Ui.CameraZoom, UiKit.FrameW, WorldCam.LayoutW) : 0f;
+
         static RectTransform Picture(Transform parent, Layout.R parentR, Layout.R r, App app = null)
         {
             var pic = UiKit.Rect(parent, "Picture"); UiKit.Pct(pic, r.Within(parentR));
             pic.gameObject.AddComponent<RectMask2D>();
             var field = UiKit.Icon(pic, "Field", "env.field"); field.preserveAspect = false; UiKit.Stretch(field.rectTransform);
             var road = UiKit.Icon(pic, "Road", "env.road"); road.preserveAspect = false; UiKit.Pct(road.rectTransform, 0, 62, 100, 38);
-            var edge = UiKit.Icon(pic, "RoadUp", "env.roadUp"); edge.preserveAspect = false; UiKit.Pct(edge.rectTransform, 0, 57, 100, 8);
-            for (int i = 0; i < 3; i++) { var t = UiKit.Icon(pic, "Tree" + i, "env.tree"); UiKit.Pct(t.rectTransform, 6 + i * 34, 12, 16, 46); }
-            var bush = UiKit.Icon(pic, "Bush", "env.bush"); UiKit.Pct(bush.rectTransform, 78, 66, 12, 22);
+            // T394 — 풀 띠는 흐르는 RawImage(텍스처 Repeat · .meta wrapU/V = 0 · ui.pattern 과 같은 규약). 카탈로그에 없으면 null → 안 흐른다(경고는 카탈로그가).
+            var cat = app != null ? app.Assets : (App.I != null ? App.I.Assets : null);
+            var edgeSp = cat != null ? cat.Sprite("env.roadUp") : null;
+            RawImage edge = null;
+            if (edgeSp != null && edgeSp.texture != null)
+            {
+                var ert = UiKit.Rect(pic, ExGroundName); edge = ert.gameObject.AddComponent<RawImage>();
+                edge.texture = edgeSp.texture; edge.raycastTarget = false; UiKit.Pct(ert, 0, 57, 100, 8);
+            }
+            var props = new Image[ExProps.Length];
+            for (int i = 0; i < 3; i++) { var t = UiKit.Icon(pic, "Tree" + i, "env.tree"); UiKit.Pct(t.rectTransform, ExProps[i]); props[i] = t; }
+            var bush = UiKit.Icon(pic, "Bush", "env.bush"); UiKit.Pct(bush.rectTransform, ExProps[3]); props[3] = bush;
             // T146 ⓑ — 레퍼런스 30 의 띠에는 기사와 적이 길 위를 걸어간다. 우리 띠는 나무·길뿐이었다(screens run 257 실측).
             // 조각은 이미 있는 것뿐이다 — 기사는 장착 외형(HeroView.PlayerSkin = 전투·장비 화면과 같은 표), 적은 전투의 «곤봉 적» 외형.
             if (app != null)
             {
                 var kh = UiKit.Rect(pic, "Knight"); UiKit.Pct(kh, ExKnight);
-                HeroView.Attach(kh, HeroView.PlayerSkin(app), 256);
+                HeroView.Attach(kh, HeroView.PlayerSkin(app), 256).SetWalking(true);   // T394 — 제자리 걷기(오른쪽 보기) · 배경이 흐른다
                 var fh = UiKit.Rect(pic, "Foe"); UiKit.Pct(fh, ExFoe);
                 HeroView.Attach(fh, FoeSkin(), 256);
+                Walk(pic, edge, props, ExWalkPxPerSec(app.Data));
             }
             UiKit.Bordered(pic);
             return pic;
