@@ -10216,7 +10216,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/PetScreen.cs` · `Game/UiKit.cs`(`PriceRow`) · `Game/ShopScreen.cs`(위임 3줄) · `Tests/PlayMode/PetSummonTests.cs`·`UiSmokeTests.cs`(펫 블록). lock 없음(주인 자리 세션 · 바로 고침).
 
-### T379 🔄 — **`UiSmokeTests.LobbySettingsTalentPetToast` 하나가 화면 아홉을 훑는다 — CI 한 회전에 결함이 하나씩만 나온다** (검수 Q 등재 · **선점 안 함 · 코드 0줄** · 값은 여섯 회전으로 실측됐다)
+### T379 ✅ — **`UiSmokeTests.LobbySettingsTalentPetToast` 하나가 화면 아홉을 훑는다 — CI 한 회전에 결함이 하나씩만 나온다** (검수 Q 등재 · **선점 안 함 · 코드 0줄** · 값은 여섯 회전으로 실측됐다)
 
 0. **왜 지금 등재하나** — 이것은 «자가 틀렸다» 가 아니라 **«자를 어떻게 묶어 놨나» 문제**다. 그래서 회차 33 에 한 번 접어 두고 «이 자가 또 이런 꼴로 물면 그때 등재한다» 고 적었다(검수 Q). **또 물었다 — 다섯 번째다.** 접어 둘 근거가 없어졌으므로 재는 것을 여기 적는다.
 
@@ -10285,6 +10285,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 > **▸ 🔄 4회차(마지막 조각) push · CI 확인 전(2026-09-10 09:2X · sess-0911-40617 · 워커 M · 결정 1133)** — 3회차 확인 끝(런 983 초록). 옛 `:812~893` → **`LobbyPrivilegeAndSeasonPass`**(`Boot` 만) · 남은 몸통 → **`LobbyTabsAndSideOverlays`** 로 개명. ④ 표의 다섯이 다 섰다(741줄 한 자 → 다섯 자). 다음: `[CI명부]` `UiSmokeTests(9)` ✗ 0 → ✅ · lock 반납.
 >
 > **▸ 🔄 5회차 push · CI 확인 전(2026-09-10 10:2X · sess-1011-40617 · 워커 M · 결정 1143 · 코드 `93fcd138`)** — 런 996 `UiSmokeTests(9✗2)`: 아홉 자 다 섰고 빨강 둘은 남의 새 회귀가 **조각 이름으로** 잡힌 것(`LobbyPrivilegeAndSeasonPass:884` = T392 가 «모두 받기» 를 진짜로 주게 해 낡은 단언 → 내가 «준다» 로 뒤집음 · `LobbyTabsAndSideOverlays:202` = T391 «전부 받기» 글자 칸 5px · B 몫). 다음: 완주 런 확인 → ✅ · lock 반납(T391 회귀가 남으면 «자 이름이 가른다» 로 적고 닫는다).
+>
+> **▸ ✅ 종결(2026-09-10 11:1X · sess-1112-40617 · 워커 M · lock 반납)** — 런 1004 `[CI명부]` `UiSmokeTests(9)` ✗ 0: 다섯 조각(`LobbyTabsAndSideOverlays`·`LobbyPrivilegeAndSeasonPass`·`LobbySettingsAndDataWipe`·`LobbyTalentPopup`·`PetTabAndToast`)이 전부 제 이름으로 초록. 4항 표 다섯 다 섬 · 단언 0줄 삭제 · 대응표는 PROGRESS 행 이력 + 자 주석. 확인 기준(«빨강이 있으면 어느 화면인지 자 이름이 스스로 말한다»)은 런 967·996 에서 이미 값을 냈다.
 
 ### T378 ✅ — ⛑ 런 932·935 빨강: **«전체 강화» 는 할 것이 있으면 «전체 강화 2» 다 — 라벨을 `==` 로 못 박은 자가 낡았다**(배포가 한 시간째 옛 커밋에 멈춰 있다) (워커 판단 · 화면 0줄 · 자만)
 
