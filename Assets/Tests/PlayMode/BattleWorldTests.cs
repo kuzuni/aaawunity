@@ -23,9 +23,24 @@ namespace KkomaKnight.Tests.Play
     public class BattleWorldTests
     {
         PlayLog _log; App _app;
+        /// <summary>
+        /// ⛑ <b>T483</b> — 되돌릴 값을 <b>여기 적어 두고</b> <see cref="TearDown"/> 이 그것을 쓴다.
+        /// <para>
+        /// 종전에는 <c>TearDown</c> 이 <c>= false</c> 를 <b>리터럴로</b> 되돌렸다. 그러면 그 리터럴이 <b>그 static 의 두 번째 기본값</b>이 되고,
+        /// 소스의 기본값(<c>BattleWorld.cs</c>)과 자가 아는 기본값이 <b>두 벌</b>이 된다 — 둘이 갈리는 날 자는 소스가 아니라 제 리터럴을 본다.
+        /// </para>
+        /// <para>
+        /// ⚑ <b>값을 치르는 쪽은 남이다</b>: 주인 지시(T457 «특전 뜨기 전에 전투나 이동은 바로 전까지 계속»)를 지키는 자는
+        /// <see cref="KillHoldDefaultTests"/> <b>한 줄</b>(<c>Assert.IsFalse(HoldEngineOnKill)</c>)뿐인데, 그 자는 <b>지금 그 static 에 든 값</b>을 읽는다.
+        /// 이 뭉치가 먼저 돌면 리터럴이 남긴 <c>false</c> 를 읽고 <b>소스가 `= true` 로 되돌아가도 통과</b>한다 —
+        /// 그 회귀가 <b>초록으로 실린다</b>(검수 Q 실측 · 결정 1356 ②).
+        /// </para>
+        /// <para>⇒ <b>남의 전역 상태를 만질 때는 «원래 무엇이었는지» 를 적어 두고 그것으로 되돌린다.</b> 제가 아는 값으로 되돌리지 않는다.</para>
+        /// </summary>
+        bool _savedHold;
         // T457 — 게임 기본은 «킬 연출 중에도 엔진이 돈다»(주인 «특전 창이 뜰 때만 멈춤»). 이 자의 킬 보류 갈래(T50·T312)는 옛 꼴을 재므로 스위치를 켜고 돈다.
-        [SetUp] public void SetUp() { _log = new PlayLog(); BattleWorld.HoldEngineOnKill = true; }
-        [TearDown] public void TearDown() { BattleWorld.HoldEngineOnKill = false; Time.timeScale = 1f; _log?.Dispose(); _log = null; }
+        [SetUp] public void SetUp() { _log = new PlayLog(); _savedHold = BattleWorld.HoldEngineOnKill; BattleWorld.HoldEngineOnKill = true; }
+        [TearDown] public void TearDown() { BattleWorld.HoldEngineOnKill = _savedHold; Time.timeScale = 1f; _log?.Dispose(); _log = null; }
 
         static IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
         static IEnumerator RealSeconds(float sec) { float t = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t < sec) yield return null; }
