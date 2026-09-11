@@ -240,3 +240,27 @@ jobs:
           name: webgl-smoke-lastgreen-ghpages
           path: webgl-smoke/ghpages.*
           if-no-files-found: ignore
+      # ⛳ T439 — 봇 성적을 이 잡 로그의 **꼬리**에 한 번 더 찍는다(**보고만 · 판정 0줄** · 결정 1234 ③).
+      #   까닭(T435 를 닫으며 실측): 「굽기 직후」 스모크의 `play done …` 줄은 이 잡 로그 **15,888줄 가운데 끝에서 ~800줄 밖**에 있고,
+      #     워커 통에서는 아티팩트 zip(`*.blob.core.windows.net`)도 런 전체 로그 zip(`results-receiver…`)도 **프록시가 막는다(403 CONNECT)**.
+      #     곧 결정 1209 가 세운 「연속 다섯 번을 세라」 의 표본이 **원리적으로는 남는데 실제로는 안 읽히는** 자리였다 —
+      #     다음 사람이 「보고만」 인 나머지 셋을 올리려면 그 자리에서 다시 다섯 번을 세야 하는데, 그 셈이 여기서 막힌다.
+      #   ⚠ `if: always()` 다 — 스모크가 빨개져 **배포가 멈춘 회차일수록** 이 줄이 필요하다(결정 1233: 막는 자를 세우면 막힘을 알리는 자가 따로 있어야 한다).
+      #   ⚠ 판정은 안 한다. 이 단계는 **무슨 일이 있어도 초록**이어야 한다 — 보는 자가 막는 자를 흉내 내면 그때부터 배포가 이 줄 때문에 선다.
+      - name: "봇 성적 다시 찍기 (꼬리에서 읽히게 · 보고만 · T439)"
+        if: always()
+        run: |
+          for f in webgl-smoke/local.txt webgl-smoke/ghpages.txt; do
+            case "$f" in
+              *local*) echo "── 굽기 직후(--play · 배포를 막는 문) · $f" ;;
+              *)       echo "── 배포 뒤 gh-pages 재확인(--play-report · 보고만 · 옛 빌드일 수 있다) · $f" ;;
+            esac
+            if [ ! -f "$f" ]; then
+              echo "   (로그 없음 — 그 스모크가 안 돌았거나 로그를 남기기 전에 죽었다)"
+              continue
+            fi
+            # ⚠ 「줄이 없다」 와 「안 찍었다」 를 가른다 — 머리만 찍고 아무 줄도 없으면 읽는 사람이 둘을 구별 못 한다.
+            out=$(grep -aE '\] (play|PLAY⚠|ERROR)' "$f" | head -40 || true)
+            if [ -n "$out" ]; then echo "$out"; else echo "   (play 줄 0 — 봇이 한 줄도 안 찍었거나 그 스모크가 --play 없이 돌았다)"; fi
+          done
+          exit 0
