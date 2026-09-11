@@ -99,6 +99,51 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
+        /// <summary>
+        /// T458 3항 — <b>회복·실드</b>도 낸 것을 말한다(주인 «회복 쉴드 뭐 그런 거»). 1·2회차에서 비워 뒀던 자리다.
+        /// <para>⚠ 흡혈(<c>P.Steal</c>)과 쉼터 회복은 <b>일부러 비운다</b> — 하나의 특전이 낸 것이 아니라 모아진 값이라 «어느 것» 이 없다(결정 1304 의 «모르면 null»).</para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator HealAndShieldPopsWearTheIconOfThePerkThatCausedThem()
+        {
+            yield return Boot();
+            _app.StartBattle(1);
+            var bs = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bs, "전투 화면");
+            var world = bs.World; Assert.IsNotNull(world, "BattleWorld");
+            yield return RealSeconds(0.3f);
+
+            var cases = new[]
+            {
+                new { Kind = EvKind.Heal, Src = "p_evadeHeal", What = "회복" },
+                new { Kind = EvKind.Repair, Src = "p_evRepairR", What = "실드 수리" },
+                new { Kind = EvKind.Ward, Src = "p_wardHitN", What = "방어막" },
+            };
+            foreach (var c in cases)
+            {
+                string key = BattleWorld.SrcIcon(c.Src);
+                var want = _app.Assets.Sprite(key);
+                Assert.IsNotNull(want, "카탈로그에 " + key + " 가 있어야 한다(" + c.What + ")");
+
+                var before = PopIcons();
+                world.Handle(new BattleEvent { Kind = c.Kind, Value = 42, Src = c.Src });
+                yield return Frames(2);
+                var made = NewSince(before);
+                Assert.AreEqual(1, made.Count, c.What + " 팝에도 그림 하나가 붙는다(T458 3항)");
+                Assert.AreSame(want, made[0].sprite, c.What + " 는 그것을 낸 특전의 그림을 쓴다");
+            }
+
+            // 흡혈·쉼터처럼 «어느 것» 이 없는 회복은 그림 없이 뜬다 — 종전 그대로
+            {
+                var before = PopIcons();
+                world.Handle(new BattleEvent { Kind = EvKind.Heal, Value = 9 });
+                yield return Frames(2);
+                Assert.IsEmpty(NewSince(before), "출처가 없는 회복(흡혈·쉼터)에는 그림을 안 붙인다");
+            }
+
+            _log.AssertNoRed("회복·실드 출처 아이콘");
+            yield return Shutdown();
+        }
+
         /// <summary>장비·펫이 낸 것도 제 그림을 쓴다 — 특전 id 가 아닌 두 낱말(<c>gear</c>·<c>pet</c>)이 화면에서 안 흘러 떨어지는지 잰다.</summary>
         [UnityTest]
         public IEnumerator GearAndPetSourcesMapToTheirOwnIcons()

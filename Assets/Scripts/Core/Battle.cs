@@ -208,20 +208,20 @@ namespace KkomaKnight.Core
         public double EffSteal() => P.Steal;
 
         // ───────────────────────── 회복 · 수리 ─────────────────────────
-        void Repair(double amt)
+        void Repair(double amt, string src = null)
         {
             if (amt <= 0) return;
             double before = P.Sh;
             P.Sh = Math.Min(P.MaxSh, P.Sh + amt * (1 + P.RepairAmp));
-            Emit(EvKind.Repair, null, P.Sh - before);
+            Emit(EvKind.Repair, null, P.Sh - before, src: src);
         }
-        void Heal(double amt, bool noBoost = false)
+        void Heal(double amt, bool noBoost = false, string src = null)
         {
             if (!noBoost) amt *= 1 + P.HealAmp;
             double before = P.Hp;
             P.Hp = Math.Min(P.MaxHp, P.Hp + amt);
-            if (P.Has("p_healRepair") && P.Hp > before) Repair(P.Hp - before);
-            if (P.Hp > before) Emit(EvKind.Heal, null, P.Hp - before);
+            if (P.Has("p_healRepair") && P.Hp > before) Repair(P.Hp - before, "p_healRepair");
+            if (P.Hp > before) Emit(EvKind.Heal, null, P.Hp - before, src: src);
         }
 
         // ───────────────────────── 적 조회 ─────────────────────────
@@ -255,12 +255,12 @@ namespace KkomaKnight.Core
             if (P.Has("p_killBolt") && Pkk(P.PxGet("p_killBolt"))) FireBoltsAll(e.Wave, "p_killBolt");
             if (P.Has("p_killArrow") && Pkk(P.PxGet("p_killArrow"))) FireArrows(3, "p_killArrow");
             if (P.Has("p_killAxe") && Pkk(P.PxGet("p_killAxe"))) FireAxe(2, "p_killAxe");
-            if (P.Has("p_overkill") && over > 0) Heal(over);
+            if (P.Has("p_overkill") && over > 0) Heal(over, src: "p_overkill");
             if (P.Has("p_killEvBuff")) RefreshBuff("evade", PK.C("PERK_KILLEV_A"), PK.C("PERK_KILLEV_T"), "p_killEvBuff");
             if (P.Has("p_killAtkStk") && Pkk(PK.C("PERK_KSTACK_CH"))) P.Dmg *= 1 + PK.C("PERK_KSTACK_ATK");
             if (P.Has("p_killEvStk") && Pkk(PK.C("PERK_KSTACK_CH"))) P.Evade += PK.C("PERK_KSTACK_EV");
-            if (P.Has("p_killHealN") && Pkk(PK.C("PERK_KHEAL_CH"))) Heal(P.MaxHp * PK.C("PERK_KHEAL_F"));
-            if (P.Has("p_killRepair") && Pkk(PK.C("PERK_KREPAIR_CH"))) Repair(P.MaxSh * PK.C("PERK_KREPAIR_F"));
+            if (P.Has("p_killHealN") && Pkk(PK.C("PERK_KHEAL_CH"))) Heal(P.MaxHp * PK.C("PERK_KHEAL_F"), src: "p_killHealN");
+            if (P.Has("p_killRepair") && Pkk(PK.C("PERK_KREPAIR_CH"))) Repair(P.MaxSh * PK.C("PERK_KREPAIR_F"), "p_killRepair");
             if (P.Has("p_killSureCrit")) P.SureCrit = true;
             if (P.Has("p_berserkStk")) P.BsStk++;
             if (P.Has("p_killDash") && e.Wave != null) { foreach (var x in e.Wave.Enemies) if (x.Hp > 0) { P.Dash = true; break; } }
@@ -375,7 +375,7 @@ namespace KkomaKnight.Core
             Emit(EvKind.Stun, e, s);
         }
         void ProcOnMiss(EnemyState e) { Misses++; Emit(EvKind.Miss, e, 0); }
-        void GainWard(double ch) { if (ch > 0 && Pkk(ch)) { P.Ward++; Emit(EvKind.Ward, null, P.Ward); } }
+        void GainWard(double ch, string src = null) { if (ch > 0 && Pkk(ch)) { P.Ward++; Emit(EvKind.Ward, null, P.Ward, src: src); } }
         void Reflect(EnemyState src, double amt)
         {
             if (src == null || src.Hp <= 0 || amt <= 0) return;
@@ -403,7 +403,7 @@ namespace KkomaKnight.Core
             if (addBonus != 0) d *= 1 + addBonus;
             e.Hp -= d;
             Emit(EvKind.Hit, e, d, crit, src: src);
-            if (P.Steal > 0) Heal(d * P.Steal / 100, true);
+            if (P.Steal > 0) Heal(d * P.Steal / 100, true);   // ⚠ T458 3항 — 흡혈은 «특전 하나» 가 아니라 모아진 값(장비도 준다)이라 출처를 안 적는다(모르면 null · 결정 1304)
             if (crit)
             {
                 if (P.Has("p_stunCritN") && Pkk(PK.C("PERK_STUNC_N"))) ApplyStun(e, PK.C("PERK_STUNC_T"));
@@ -582,17 +582,17 @@ namespace KkomaKnight.Core
                 int gev = (int)P.PxGet("g_evAxe");
                 for (int i = 0; i < gev; i++) if (Pkk(EngineConst.GearAxeCh)) FireAxe(1, SrcGear);
                 int geh = (int)P.PxGet("g_evHeal");
-                if (P.Hp < P.MaxHp * EngineConst.LowHpEvHeal) for (int i = 0; i < geh; i++) if (Pkk(EngineConst.GearEvHealCh)) Heal(P.MaxHp * EngineConst.EvHealF);
-                if (P.Has("p_evadeHeal") && Pkk(PK.C("PERK_EVHEAL_CH"))) Heal(P.MaxHp * PK.C("PERK_EVHEAL_F"));
+                if (P.Hp < P.MaxHp * EngineConst.LowHpEvHeal) for (int i = 0; i < geh; i++) if (Pkk(EngineConst.GearEvHealCh)) Heal(P.MaxHp * EngineConst.EvHealF, src: SrcGear);
+                if (P.Has("p_evadeHeal") && Pkk(PK.C("PERK_EVHEAL_CH"))) Heal(P.MaxHp * PK.C("PERK_EVHEAL_F"), src: "p_evadeHeal");
                 if (P.Has("p_arrowEv") && Pkk(PK.C("PERK_SUMMON_N"))) FireArrows(1, "p_arrowEv");
                 if (P.Has("p_arrowEvR") && Pkk(PK.C("PERK_SUMMON_R"))) FireArrows(1, "p_arrowEvR");
                 if (P.Has("p_arrowEvL") && Pkk(PK.C("PERK_SUMMON_L"))) FireArrows(1, "p_arrowEvL");
                 if (P.Has("p_spearEvL") && Pkk(PK.C("PERK_SUMMON_SP"))) FireSpear(1, "p_spearEvL");
-                if (P.Has("p_evHealR") && Pkk(PK.C("PERK_EVHEAL_R"))) Heal(P.MaxHp * PK.C("PERK_EVHEAL_F"));
+                if (P.Has("p_evHealR") && Pkk(PK.C("PERK_EVHEAL_R"))) Heal(P.MaxHp * PK.C("PERK_EVHEAL_F"), src: "p_evHealR");
                 PetProcs(PetKey.Evade);   // T293 — 있던 줄 «뒤» 에 붙인다(앞에 두면 펫을 낀 판에서 옛 굴림 차례가 밀린다)
-                if (P.Has("p_evHealL") && Pkk(PK.C("PERK_EVHEAL_L"))) Heal(P.MaxHp * PK.C("PERK_EVHEAL_F"));
-                if (P.Has("p_evRepairR") && Pkk(PK.C("PERK_EVREP_R"))) Repair(P.MaxSh * PK.C("PERK_EVREP_F"));
-                if (P.Has("p_evRepairL") && Pkk(PK.C("PERK_EVREP_L"))) Repair(P.MaxSh * PK.C("PERK_EVREP_F"));
+                if (P.Has("p_evHealL") && Pkk(PK.C("PERK_EVHEAL_L"))) Heal(P.MaxHp * PK.C("PERK_EVHEAL_F"), src: "p_evHealL");
+                if (P.Has("p_evRepairR") && Pkk(PK.C("PERK_EVREP_R"))) Repair(P.MaxSh * PK.C("PERK_EVREP_F"), "p_evRepairR");
+                if (P.Has("p_evRepairL") && Pkk(PK.C("PERK_EVREP_L"))) Repair(P.MaxSh * PK.C("PERK_EVREP_F"), "p_evRepairL");
                 if (src != null && src.Hp > 0 && P.Has("p_evadeStun") && Pkk(PK.C("PERK_EVSTUN_CH"))) ApplyStun(src, PK.C("PERK_STUNC_T"));
                 if (src != null && src.Hp > 0 && P.Has("p_execEvN") && Pkk(PK.C("PERK_EXEC_N"))) { src.Hp = 0; OnKill(src, 0); }
                 if (src != null && src.Hp > 0 && P.Has("p_execEvR") && Pkk(PK.C("PERK_EXEC_R"))) { src.Hp = 0; OnKill(src, 0); }
@@ -617,9 +617,9 @@ namespace KkomaKnight.Core
             double thornM = P.PxGet("p_thorns") + (hadSh ? P.PxGet("g_thornSh") : 0);
             if (thornM != 0 && isMelee && src != null) Reflect(src, thornBase * thornM);
             if (P.Has("p_shRefL") && hadSh && src != null && Pkk(PK.C("PERK_SHREF_L"))) Reflect(src, thornBase);
-            GainWard(P.Has("p_wardHitN") ? PK.C("PERK_WARD_N") : 0);
-            GainWard(P.Has("p_wardHitR") ? PK.C("PERK_WARD_R") : 0);
-            GainWard(P.Has("p_wardHitL") ? PK.C("PERK_WARD_L") : 0);
+            GainWard(P.Has("p_wardHitN") ? PK.C("PERK_WARD_N") : 0, "p_wardHitN");
+            GainWard(P.Has("p_wardHitR") ? PK.C("PERK_WARD_R") : 0, "p_wardHitR");
+            GainWard(P.Has("p_wardHitL") ? PK.C("PERK_WARD_L") : 0, "p_wardHitL");
             if (P.Has("p_axeHit") && Pkk(PK.C("PERK_SUMMON_N"))) FireAxe(1, "p_axeHit");
             if (P.Has("p_axeHitR") && Pkk(PK.C("PERK_SUMMON_R"))) FireAxe(1, "p_axeHitR");
             if (P.Has("p_axeHitL") && Pkk(PK.C("PERK_SUMMON_L"))) FireAxe(1, "p_axeHitL");
@@ -664,7 +664,7 @@ namespace KkomaKnight.Core
             else if (id.StartsWith("p_nAxe")) FireAxe(shots, id);
             else if (id.StartsWith("p_nBolt")) FireBolts(shots, id);
             else if (id.StartsWith("p_nSpear")) FireSpear(1, id);
-            else if (id.StartsWith("p_nHeal")) Heal(P.MaxHp * PK.C("PERK_NHEAL_F"));
+            else if (id.StartsWith("p_nHeal")) Heal(P.MaxHp * PK.C("PERK_NHEAL_F"), src: id);
             else throw new InvalidOperationException("nHitPerks 에 모르는 특전: " + id);
         }
 
