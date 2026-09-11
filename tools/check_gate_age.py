@@ -29,6 +29,7 @@
 """
 import datetime
 import json
+import re
 import subprocess
 import sys
 
@@ -55,6 +56,74 @@ def refresh():
     """
     r = subprocess.run(["git", "fetch", "--quiet", "origin", "screens", "main"], capture_output=True, text=True)
     return r.returncode == 0
+
+
+def refresh_deploy():
+    """`gh-pages` 를 따로, **되면 좋고 안 되면 마는** 꼴로 당긴다 (T436).
+
+    ⚠ 위 <see cref="refresh"/> 의 `git fetch origin screens main` 에 `gh-pages` 를 **끼워 넣지 않는다** —
+      끼우면 그 가지가 아직 없는 클론(첫 배포 전 · 포크)에서 `fetch` 가 통째로 실패하고,
+      그러면 이 자가 «지금 갔다 오지 못했다» 를 첫 줄에 찍어 **성한 게이트를 사고처럼 보이게** 만든다.
+      새로 더하는 눈이 원래 있던 눈을 멀게 하면 안 된다.
+    """
+    subprocess.run(["git", "fetch", "--quiet", "origin", "gh-pages"], capture_output=True, text=True)
+
+
+# gh-pages 머리 커밋의 메시지 꼴은 `deploy-last-green.yml` 이 정한다 —
+#   `WebGL 배포 <소스 sha 40자> (마지막 초록 · T187 · 런 N)` 이고, 그 뒤에 액션이 «민 커밋» sha 를 하나 더 붙인다.
+#   그래서 **첫 번째** 40자가 «폰이 지금 돌리는 소스» 다. 그 워크플로의 `pick` 단계도 `... | head -1` 로 같은 규칙을 쓴다.
+SHA40_RE = re.compile(r"\b([0-9a-f]{40})\b")
+
+
+def deploy_source(message):
+    """gh-pages 머리 메시지에서 «이 빌드가 구운 소스 커밋» 을 집는다 — 없으면 None."""
+    m = SHA40_RE.search(message or "")
+    return m.group(1) if m else None
+
+
+def read_deploy():
+    """(소스 sha, 그 배포 커밋의 utc) — `origin/gh-pages` 가 없거나 못 읽으면 None."""
+    out = sh("git", "log", "-1", "--format=%ct%n%B", "origin/gh-pages")
+    if not out:
+        return None
+    head, _, body = out.partition("\n")
+    try:
+        ts = int(head.strip())
+    except ValueError:
+        return None
+    return deploy_source(body), datetime.datetime.fromtimestamp(ts, datetime.timezone.utc)
+
+
+def deploy_phrase(dep_sha, green_sha, behind):
+    """폰에 가 있는 것과 «마지막 초록» 의 사이 — **문턱을 안 쓴다**(사실만 적는다 · 결정 930).
+
+    배포는 원래 «마지막 초록» 을 굽느라 한 커밋쯤 뒤처진다(결정 1193). 그래서 «몇 분이면 늦은 것이다» 를
+    이 자가 정할 수 없다 — 정하면 조용한 새벽마다 헛 경보가 나거나, 문턱을 낮춰 달라는 압력이 생긴다.
+    이 자가 하는 일은 **그 수를 눈앞에 놓는 것**이다(결정 1184 — 자가 옳게 도는데 사실이 안 보이던 자리).
+    """
+    if not dep_sha:
+        return "그 배포가 어느 커밋을 구웠는지 메시지에 안 적혀 있다(꼴이 바뀌었나)"
+    if green_sha and dep_sha[:9] == green_sha[:9]:
+        return "마지막 초록과 **같은 커밋**이다"
+    if behind is None:
+        return "마지막 초록과의 사이를 못 셌다(그 커밋이 이 클론에 없다)"
+    if behind < 0:
+        return "마지막 초록의 조상이 아니다 — 가지가 갈렸거나 되돌린 자리다"
+    return f"마지막 초록보다 **{behind}커밋 뒤**다"
+
+
+def count_between(old, new):
+    """old..new 커밋 수 — old 가 new 의 조상이 아니거나 둘 중 하나가 없으면 None/−1."""
+    if not old or not new:
+        return None
+    if subprocess.run(["git", "merge-base", "--is-ancestor", old, new],
+                      capture_output=True, text=True).returncode != 0:
+        return -1
+    out = sh("git", "rev-list", "--count", f"{old}..{new}")
+    try:
+        return int(out)
+    except ValueError:
+        return None
 
 
 def read_meta():
@@ -177,6 +246,25 @@ def main():
           f"· tests={verdict} · PNG {m.get('shots', '?')}장")
     print(f"· 그 뒤 main 커밋 {total}개(그 중 CI 를 부르는 것 {calling}개)")
 
+    # ⛳ T436 — **폰에 가 있는 것도 같이 적는다.** 위 두 줄은 «CI 게이트» 만 본다(`screens` 는 유니티 잡이 쓴다).
+    #   2026-09-11 00:4X 에 T435 가 배포 스모크를 `--play`(strict)로 올리면서 **새 상태가 생겼다** —
+    #   굽기 직후 봇이 빨개지면 gh-pages 로 안 민다. 그러면 **CI 는 초록·빚 0 인데 폰만 옛 빌드에 묶인다.**
+    #   그 조합은 T435 이전에는 있을 수 없었고(스모크가 보고만이라 늘 밀렸다), 지금은 이 자가 그때도 «✓» 를 찍는다.
+    #   배포 런의 `::warning::` 은 그 런 로그 안에만 있고 워커는 `ci.yml` 런만 본다(T239·T278) ⇒ **아무도 안 본다.**
+    #   ⚠ 판정에는 안 넣는다 — 배포는 원래 한 커밋쯤 뒤처지고(결정 1193) «몇 분이면 늦다» 를 재 본 적이 없다.
+    #     못 재 본 값으로 문턱을 박으면 애먼 빨강이 뜨고 다음 사람이 문턱을 낮춘다(결정 930). 여기서는 **보여 주기만** 한다.
+    if "--no-fetch" not in args:
+        refresh_deploy()
+    dep = read_deploy()
+    if dep is None:
+        print("· 배포(gh-pages) = 못 읽었다 — 아직 첫 배포 전이거나 그 가지를 안 받아 왔다")
+    else:
+        dep_sha, dep_when = dep
+        dep_age = int((datetime.datetime.now(datetime.timezone.utc) - dep_when).total_seconds() // 60)
+        behind = count_between(dep_sha, m["sha"]) if dep_sha else None
+        print(f"· 배포(gh-pages · 주인 폰) = 소스 {(dep_sha or '?')[:9]} · {dep_age}분 전 "
+              f"· {deploy_phrase(dep_sha, m['sha'], behind)} (보고만 · T436)")
+
     bad = []
     if calling > 0 and age > limit:
         bad.append(f"빚 {calling}개가 {age}분째 답을 못 받았다(한계 {limit}분)")
@@ -275,10 +363,51 @@ def self_test():
         bad += 0 if ok else 1
         print(f"  {'✔' if ok else '✘'} 부른다={got} (기대 {want}) — {why}")
 
+    # ⛳ T436 — «폰에 가 있는 것» 을 읽는 눈. 셋이 실제 gh-pages 머리 메시지 그대로다.
+    #   ⚠ 액션이 메시지 꼬리에 «민 커밋» sha 를 하나 더 붙이므로 **첫 번째** 40자를 집어야 한다 —
+    #     둘째를 집으면 «폰이 돌리는 소스» 가 아니라 «그때 main 머리» 를 말하게 되고, 그 둘은 늘 다르다.
+    G1 = "12056fe20bd97e6edab5d462d5bb52ce9bf20c75"
+    G2 = "b64bbdabbdfdfb97519bf69e06a83e6b709f9037"
+    deploys = [
+        ("실제 꼴 — 첫 sha 가 소스다(꼬리의 것은 액션이 붙인 «민 커밋»)",
+         f"WebGL 배포 {G1} (마지막 초록 · T187 · 런 34545756886)\n\n{G2}", G1),
+        ("sha 하나뿐이어도 그것이다", f"WebGL 배포 {G1} (마지막 초록 · T187 · 런 1)", G1),
+        ("sha 가 없으면 None — 꼴이 바뀐 것이라 조용히 틀리지 않고 그렇게 적는다", "Deploy from GitHub Actions", None),
+        ("빈 메시지", "", None),
+        ("None 이어도 안 터진다", None, None),
+        ("짧은 sha 는 안 집는다(40자만이 그 꼴이다)", "WebGL 배포 12056fe2 (짧게 적었다)", None),
+    ]
+    for why, msg, want in deploys:
+        got = deploy_source(msg)
+        ok = got == want
+        bad += 0 if ok else 1
+        print(f"  {'✔' if ok else '✘'} 소스={str(got)[:9]} (기대 {str(want)[:9]}) — {why}")
+
+    # 그 사이를 **말로 옮기는** 자리 — 문턱이 없으므로 갈래는 넷뿐이고, 넷 다 사실이다.
+    phrases = [
+        ("소스를 못 집었으면 그 사실을 말한다", None, G1, 3, "안 적혀"),
+        ("같은 커밋이면 폰이 최신이다", G1, G1, 0, "같은 커밋"),
+        ("뒤처졌으면 몇 커밋인지 말한다", G1, G2, 4, "4커밋 뒤"),
+        ("조상이 아니면(되돌림·가지) 그렇게 말한다", G1, G2, -1, "조상이 아니다"),
+        ("셀 수 없으면 못 셌다고 말한다", G1, G2, None, "못 셌다"),
+    ]
+    for why, dep, green, behind, need in phrases:
+        got = deploy_phrase(dep, green, behind)
+        ok = need in got
+        bad += 0 if ok else 1
+        print(f"  {'✔' if ok else '✘'} «{got}» — {why}")
+
+    # ⚠ 새 눈이 **원래 있던 눈을 멀게 하지 않는가** — `gh-pages` 를 위쪽 fetch 에 끼우면
+    #   그 가지가 없는 클론에서 fetch 가 통째로 실패해 이 자가 «갔다 오지 못했다» 를 찍는다(성한 게이트가 사고로 보인다).
+    body2 = inspect.getsource(refresh).replace(refresh.__doc__ or "", "")
+    apart = "gh-pages" not in body2
+    bad += 0 if apart else 1
+    print(f"  {'✔' if apart else '✘'} refresh 는 gh-pages 를 안 당긴다 — 따로·되면 좋고 식으로 받는다(T436)")
+
     if bad:
         print(f"✗ check_gate_age --self-test: 갈래 {bad}건이 기대와 다르다 — 위 표의 판정 규칙을 보라")
         return 1
-    print(f"✓ check_gate_age --self-test: 갈래 {len(cases) + len(holes) + len(calls)}개가 전부 기대대로 갈린다")
+    print(f"✓ check_gate_age --self-test: 갈래 {len(cases) + len(holes) + len(calls) + len(deploys) + len(phrases) + 2}개가 전부 기대대로 갈린다")
     return 0
 
 
