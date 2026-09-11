@@ -1501,6 +1501,11 @@ namespace KkomaKnight.Tests.Play
                         var tmp = lvl.GetComponentInChildren<TMPro.TMP_Text>(true);
                         Assert.IsNotNull(tmp, "슬롯 " + i + " Text_Level 의 TMP");
                         Assert.AreEqual(GearUi.PlusText(D, eqP).Trim(), tmp.text.Trim(), "슬롯 " + i + " «+N» = 표시 등급의 +N(T310·T316·T356)");
+                        // T460(주인 «장착한 거 +1 표시가 폰트 느낌이 다름») — 슬롯의 «+N» 글꼴·재질 = 인벤 조각의 그것(두께·외곽선까지 같아야 «같은 느낌»).
+                        var pf = GearUi.PlusFont();
+                        Assert.IsNotNull(pf.font, "인벤 조각(ui.equipCell)의 Text_Level 글꼴을 읽을 수 있다(T460)");
+                        Assert.AreEqual(pf.font, tmp.font, "슬롯 " + i + " «+N» 글꼴 = 인벤 글꼴(T460 · 슬롯 조각은 AfacadFlux 였다)");
+                        Assert.AreEqual(pf.mat, tmp.fontSharedMaterial, "슬롯 " + i + " «+N» 재질(외곽선) = 인벤 재질(T460)");
                     }
                     float rot = Mathf.DeltaAngle(0f, rt.localEulerAngles.z);
                     if (GearLook.HasLook(part))

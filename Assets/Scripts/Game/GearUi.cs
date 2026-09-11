@@ -88,6 +88,25 @@ namespace KkomaKnight.Game
             //   값은 인벤이 실제로 그리던 크기(`TextSize.Body` 40)다 — 주인이 정본으로 지목한 쪽이고 새 수가 아니다.
             //   넘칠 걱정은 셈으로 닫았다: «+12» 도 40 에서 ≈72px 라 좁은 쪽 띠(148.98)의 절반이다.
             t.enableAutoSizing = false; t.fontSize = TextSize.Body;
+            // T460(주인 2026-09-12 «장비에 상단에 장착한 거 보면 +1 표시가 폰트 느낌이 다름 · 두께가 다른 건지 뭔지 · 쨌든 수정») — 크기는 T310 이 맞췄는데 **글꼴이 달랐다**(프리팹 YAML 실측): 슬롯 조각 `ItemFrame_01` 의 `Text_Level` 은
+            //   `AfacadFlux-ExtraBold SDF`(외곽선 없음) · 인벤 조각 `ListItem_EquipMent` 의 `Text_Level` 은 `LTAvocado-Bold SDF_OutlineBlack`(검정 외곽선).
+            //   두께·외곽선이 달라 «폰트 느낌이 다르다». 인벤 쪽이 주인 정본(T310 «인벤과 같게»)이라 **인벤 조각의 글꼴·재질을 그대로 씌운다** —
+            //   새 에셋 0 · 조각 원본 불변 · 인벤 조각에서 한 번 읽어 캐시.
+            var pf = PlusFont(); if (pf.font != null) { t.font = pf.font; if (pf.mat != null) t.fontSharedMaterial = pf.mat; }
+        }
+
+        static (TMP_FontAsset font, Material mat) _plusFont; static bool _plusFontTried;
+        /// <summary>T460 — «+N» 글꼴의 정본 = 인벤 조각(<c>ui.equipCell</c>)의 <c>Text_Level</c> 이 쓰는 글꼴·재질(한 번 읽어 캐시 · 조각이 없으면 (null,null)).</summary>
+        public static (TMP_FontAsset font, Material mat) PlusFont()
+        {
+            if (_plusFontTried) return _plusFont;
+            _plusFontTried = true;
+            var cat = App.I != null ? App.I.Assets : null;
+            var prefab = cat != null ? cat.Prefab("ui.equipCell") : null;
+            var lvl = prefab != null ? UiKit.Find(prefab.transform, "Text_Level") : null;
+            var tmp = lvl != null ? lvl.GetComponent<TMP_Text>() : null;
+            if (tmp != null) _plusFont = (tmp.font, tmp.fontSharedMaterial);
+            return _plusFont;
         }
         /// <summary>
         /// 등급 탭(<see cref="Layout.GdBadge"/>)의 <b>세로</b>에만 더하는 여유(px · T214) — 리본 글자가 제목 60 이라 칸이 <see cref="TextSize.BoxHeight"/>(84px) 는 돼야 하는데
