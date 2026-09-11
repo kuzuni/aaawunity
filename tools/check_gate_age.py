@@ -96,12 +96,44 @@ def read_deploy():
     return deploy_source(body), datetime.datetime.fromtimestamp(ts, datetime.timezone.utc)
 
 
+# ⛳ T451 — «평소 폭» 을 **재서 적어 둔다**. 문턱이 아니라 **자**다(아래 deploy_band_line 의 주석에 그 차이).
+#   실측 2026-09-11 11:5X · 표본 = `deploy-last-green.yml` 런 300개(2026-09-09 12:37 ~ 09-11 10:52 · 이틀치).
+#   재는 법: 성공 런 가운데 **실행시간(큐 제외) 15분 이상**만 «실제로 구워 민 것» 으로 세었다 —
+#     분포가 깨끗하게 둘로 갈린다(1분 미만 142개 = pick 이 go=false 로 끊은 것 · 15~30분 68개 = 구운 것).
+#     경계를 5분으로 낮춰도 중앙값 20→19분 · p90 119→96분으로 답이 안 뒤집힌다(그래서 경계가 답을 만들지 않는다).
+DEPLOY_BAND = ("평소 폭(2026-09-11 실측 · 배포런 300개/이틀 · T451): "
+               "배포 간격 중앙값 **20분** · p75 40분 · p90 119분 · 실측 최대 287분(새벽) · 굽기만 19~30분")
+
+
+def deploy_band_line(dep_sha, green_sha):
+    """뒤처져 있을 때만 «그런데 그게 평소인가» 를 같이 놓는다 — 없으면 None.
+
+    ⚠ **이것은 문턱이 아니다.** 문턱은 «N분이 넘으면 빨강» 이라 판정을 바꾸고, 결정 930 이 그것을 막았다.
+    여기 놓는 것은 **자**다 — 판정도 rc 도 안 건드리고, 읽는 사람 눈앞의 수 옆에 «남들은 이쯤이었다» 를 둘 뿐이다.
+    까닭(T451 실측): 이 줄이 없어 **헛 놀람이 실제로 두 번 났다** — «gh-pages 가 13커밋 뒤» · «8커밋·62분 뒤» 가
+    둘 다 정상치였는데(각각 굽는 중 · 빨강이라 건너뜀) 그 자리에서는 그것을 알 길이 없었다.
+    20분마다 한 번 미는 파이프에서 «62분 뒤» 는 p75 언저리다 — 그 사실 한 줄이면 안 놀랐다.
+
+    같은 커밋이면 안 적는다: 폰이 최신인데 «평소 폭» 을 읽을 까닭이 없고, 매 회차 한 줄이 늘면 그것이 소음이다.
+    """
+    if not dep_sha:
+        return None
+    if green_sha and dep_sha[:9] == green_sha[:9]:
+        return None
+    return DEPLOY_BAND
+
+
 def deploy_phrase(dep_sha, green_sha, behind):
     """폰에 가 있는 것과 «마지막 초록» 의 사이 — **문턱을 안 쓴다**(사실만 적는다 · 결정 930).
 
     배포는 원래 «마지막 초록» 을 굽느라 한 커밋쯤 뒤처진다(결정 1193). 그래서 «몇 분이면 늦은 것이다» 를
     이 자가 정할 수 없다 — 정하면 조용한 새벽마다 헛 경보가 나거나, 문턱을 낮춰 달라는 압력이 생긴다.
     이 자가 하는 일은 **그 수를 눈앞에 놓는 것**이다(결정 1184 — 자가 옳게 도는데 사실이 안 보이던 자리).
+
+    ⛳ T451 — 그 «수» 옆에 **잴 자**가 생겼다(<see cref="deploy_band_line"/>). 판정은 여전히 안 한다:
+      T436 ⑤ 가 남긴 물음은 «몇 분이면 늦은가»(문턱)였는데, 재 보니 답할 물음이 아니었다 —
+      간격이 중앙값 20분인데 p90 이 119분이라 **꼬리가 본체의 여섯 배**다(새벽엔 밀 초록이 안 생겨 길어진다).
+      그런 분포에 문턱을 박으면 조용한 시간마다 빨개진다 — 결정 930 이 걱정한 그 꼴 그대로다. 그래서 자만 놓는다.
     """
     if not dep_sha:
         return "그 배포가 어느 커밋을 구웠는지 메시지에 안 적혀 있다(꼴이 바뀌었나)"
@@ -301,8 +333,10 @@ def main():
     #   굽기 직후 봇이 빨개지면 gh-pages 로 안 민다. 그러면 **CI 는 초록·빚 0 인데 폰만 옛 빌드에 묶인다.**
     #   그 조합은 T435 이전에는 있을 수 없었고(스모크가 보고만이라 늘 밀렸다), 지금은 이 자가 그때도 «✓» 를 찍는다.
     #   배포 런의 `::warning::` 은 그 런 로그 안에만 있고 워커는 `ci.yml` 런만 본다(T239·T278) ⇒ **아무도 안 본다.**
-    #   ⚠ 판정에는 안 넣는다 — 배포는 원래 한 커밋쯤 뒤처지고(결정 1193) «몇 분이면 늦다» 를 재 본 적이 없다.
-    #     못 재 본 값으로 문턱을 박으면 애먼 빨강이 뜨고 다음 사람이 문턱을 낮춘다(결정 930). 여기서는 **보여 주기만** 한다.
+    #   ⚠ 판정에는 안 넣는다 — 배포는 원래 한 커밋쯤 뒤처지고(결정 1193), 여기서는 **보여 주기만** 한다.
+    #   ⛳ T451(2026-09-11) — 이 주석이 ««몇 분이면 늦다» 를 재 본 적이 없다» 라고 하던 자리다. **이제 재 봤고,
+    #     그래도 문턱은 안 박는다** — 재 보니 문턱을 박으면 안 되는 분포였기 때문이다(간격 중앙값 20분 · p90 119분).
+    #     대신 뒤처졌을 때만 «평소는 이쯤» 한 줄을 같이 놓는다(DEPLOY_BAND · 판정 0줄 · rc 안 건드림).
     if "--no-fetch" not in args:
         refresh_deploy()
     dep = read_deploy()
@@ -314,6 +348,9 @@ def main():
         behind = count_between(dep_sha, m["sha"]) if dep_sha else None
         print(f"· 배포(gh-pages · 주인 폰) = 소스 {(dep_sha or '?')[:9]} · {dep_age}분 전 "
               f"· {deploy_phrase(dep_sha, m['sha'], behind)} (보고만 · T436)")
+        band = deploy_band_line(dep_sha, m["sha"])
+        if band:
+            print(f"  └ {band}")
 
     bad = []
     if calling > 0 and judged > limit:
@@ -453,6 +490,24 @@ def self_test():
         bad += 0 if ok else 1
         print(f"  {'✔' if ok else '✘'} «{got}» — {why}")
 
+    # ⛳ T451 — «평소 폭» 을 놓는 자리. 재는 것이 아니라 **언제 입을 여는가**를 잰다(소음이 되면 다음 사람이 지운다).
+    bands = [
+        ("폰이 최신이면 안 적는다 — 최신인데 «평소 폭» 을 읽을 까닭이 없다", G1, G1, False),
+        ("뒤처졌으면 적는다 — 놀랄지 말지를 그 줄이 가른다", G1, G2, True),
+        ("소스를 못 집었으면 안 적는다 — 견줄 수가 없다", None, G2, False),
+        ("마지막 초록을 모르면 적는다 — 견줄 것이 없으니 폭이라도 있어야 한다", G1, None, True),
+    ]
+    for why, dep, green, want in bands:
+        got = deploy_band_line(dep, green) is not None
+        ok = got == want
+        bad += 0 if ok else 1
+        print(f"  {'✔' if ok else '✘'} 폭을 적는다={got} (기대 {want}) — {why}")
+
+    # ⚠ 그 줄이 **판정을 안 건드리는가** — 이 자가 문턱으로 굳는 순간 결정 930 이 막은 그 자리가 된다.
+    band_pure = "DEPLOY_BAND" not in inspect.getsource(main).split("bad = []")[1]
+    bad += 0 if band_pure else 1
+    print(f"  {'✔' if band_pure else '✘'} 평소 폭은 판정부(bad) 밖에만 있다 — 자이지 문턱이 아니다(T451)")
+
     # ⚠ 새 눈이 **원래 있던 눈을 멀게 하지 않는가** — `gh-pages` 를 위쪽 fetch 에 끼우면
     #   그 가지가 없는 클론에서 fetch 가 통째로 실패해 이 자가 «갔다 오지 못했다» 를 찍는다(성한 게이트가 사고로 보인다).
     body2 = inspect.getsource(refresh).replace(refresh.__doc__ or "", "")
@@ -528,7 +583,7 @@ def self_test():
     if bad:
         print(f"✗ check_gate_age --self-test: 갈래 {bad}건이 기대와 다르다 — 위 표의 판정 규칙을 보라")
         return 1
-    print(f"✓ check_gate_age --self-test: 갈래 {len(cases) + len(holes) + len(calls) + len(deploys) + len(phrases) + len(stamps) + 5}개가 전부 기대대로 갈린다")
+    print(f"✓ check_gate_age --self-test: 갈래 {len(cases) + len(holes) + len(calls) + len(deploys) + len(phrases) + len(bands) + len(stamps) + 6}개가 전부 기대대로 갈린다")
     return 0
 
 
