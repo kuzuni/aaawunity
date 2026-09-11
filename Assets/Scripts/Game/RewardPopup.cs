@@ -44,7 +44,29 @@ namespace KkomaKnight.Game
             /// <para>⚠ 그래도 <see cref="Icon"/> 은 채워 둔다 — 흡수 구슬(<see cref="RewardOrbs"/>)이 날아갈 때 쓰는 그림이 그 키이고, 초상은 날 수 없다.</para>
             /// </summary>
             public Action<RectTransform> Face;
+            /// <summary>
+            /// <b>이 칸은 흡수 구슬을 안 낸다</b>(T470) — 재화가 아닌 것(장비 한 점)을 위한 갈래다.
+            /// <para>
+            /// ⚑ <b>왜 «구슬 0» 을 따로 말해야 하나</b> — <see cref="TargetFor"/> 는 과녁을 <b>아이콘 키</b>로 찾고, 장비 아이콘은 위 pill 이 없어 <c>_orbSink</c>(가운데 아래)로 떨어진다.
+            /// 곧 아무 말도 안 하면 «장비가 화면 가운데 아래로 빨려 드는» 연출이 나는데, <b>거기엔 장비가 가는 자리가 없다</b>(인벤은 다른 화면이다).
+            /// 구슬은 «재화가 제자리로 돌아간다» 를 그리는 것이므로(T269 · 주인 «해당 재화들 파티클로 돼서 흡수되는 거로») 갈 곳이 없는 것은 <b>안 날린다</b>.
+            /// </para>
+            /// <para>⚠ 기본값 <c>false</c> 라 여태 부르던 자리는 <b>한 곳도 안 바뀐다</b>.</para>
+            /// </summary>
+            public bool NoOrb;
             public static Item Of(string icon, string qty = null, string frame = null, int amount = 0) => new Item { Icon = icon, Qty = qty, Frame = frame, Amount = amount };
+            /// <summary>
+            /// <b>장비 한 점 칸</b>(T470 · 주인 2026-09-12 «장비 합성할 때도 리워드 팝업 떠야 함») — 등급색 프레임 + 부위 아이콘 + «+N» · <b>구슬 없음</b>.
+            /// <para>⚠ 세 조각(아이콘·프레임색·«+N»)을 <b>여기 한 자리에서</b> 고른다 — 부르는 쪽이 저마다 조립하면 «장비 칸» 이 화면마다 달라진다(T443 이 칸 문법으로 겪은 자리).</para>
+            /// </summary>
+            public static Item OfGear(GameData D, GearItem g) => new Item
+            {
+                Icon = GearLook.IconKey(D, g),
+                Qty = GearUi.PlusText(D, g).Trim(),   // PlusText 는 이름 옆에 붙이려고 앞에 빈칸을 둔다 — 칸 글자엔 그 빈칸이 없어야 한다
+                Frame = "ui.itemFrame." + GearUi.FrameColor(D, g),
+                Amount = 1,
+                NoOrb = true,
+            };
         }
 
         /// <summary>
@@ -310,6 +332,7 @@ namespace KkomaKnight.Game
             for (int i = 0; i < n; i++)
             {
                 var cell = cells[i]; if (cell == null) continue;
+                if (items[i].NoOrb) continue;   // T470 — 갈 곳이 없는 칸(장비)은 안 날린다(위 Item.NoOrb 의 까닭)
                 var icon = UiKit.Find(cell, "Icon") as RectTransform;
                 var src = icon != null ? icon : cell;
                 var target = TargetFor(app, items[i].Icon);

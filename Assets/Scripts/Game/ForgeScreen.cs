@@ -210,6 +210,10 @@ namespace KkomaKnight.Game
             Quests.Bump(App, Quests.GearFuse);   // T257 — «장비 합성 2회»(일일)·«30회»(주간)
             GearSystem.ReEquipAfterFuse(S, mats, made);   // 장착분이 재료였으면 산출물을 그 슬롯에(T24 · 승인 대기 29) — 세이브·전투력·외형은 Persist/화면 Refresh 가 S.Eq 에서 다시 읽는다
             App.Persist(); Refresh(); Audio.Sfx("snd.fuse");
+            // T470(주인 2026-09-12 «장비 합성할 때도 리워드 팝업 떠야 함») — 얻은 장비를 다른 «받았다» 자리와 **같은 팝업**으로 보여 준다.
+            //   ⚠ 토스트는 그대로 둔다 — 장착 자리 옮김(T24)까지 말하는 줄이고, 팝업은 «무엇을 얻었나» 만 그린다. 둘은 다른 것을 말한다.
+            //   닫으면 대장간으로 돌아온다(`Refresh` 는 위에서 이미 했으므로 팝업이 닫힐 때 한 번 더 그려 준다 — 그 사이 값이 바뀌지는 않지만 팝업이 덮었던 자리를 다시 세운다).
+            RewardPopup.Show(new System.Collections.Generic.List<RewardPopup.Item> { RewardPopup.Item.OfGear(D, made) }, Refresh);
             App.Toast($"🔨 {GearUi.Tier(D, made).Name} {GearUi.Name(D, made)}{GearUi.PlusText(D, made)} 완성!" + (S.IsEquipped(made) ? " (장착 중이던 재료 자리에 장착)" : ""));
         }
         void OnAuto()
