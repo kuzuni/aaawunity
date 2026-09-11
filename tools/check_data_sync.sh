@@ -37,10 +37,8 @@ for a in "$@"; do
 done
 SRC_DIR="${SRC_DIR:-${AAAW_DIR:-}}"
 # PROV = «이 자리가 어디서 왔는가» · FRESH = «그것이 main 의 끝이라고 말할 수 있는가»(1/0)
-PROV="부른 쪽이 준 자리 — 이 자는 그것이 main 인지 안 본다"; FRESH=0
-# 부른 쪽이 자리를 줬으면 그 쪽 말을 믿는다 — CI 의 datasync 잡은 매 런 actions/checkout(ref: main) 으로
-# 새로 받으므로 참이고, 거기서 «확인 못 함» 을 찍으면 매 런 소음이 된다. 대신 **그 한계를 줄에 적는다**.
-[ -n "$SRC_DIR" ] && FRESH=1
+PROV="부른 쪽 — 자리는 줬는데 git 이 아니라 나이를 못 잰다"; FRESH=0
+GIVEN=0; [ -n "$SRC_DIR" ] && GIVEN=1
 if [ -z "$SRC_DIR" ]; then
   SRC_DIR="$HERE/.aaaw-src"
   if [ ! -d "$SRC_DIR/data" ]; then
@@ -48,15 +46,22 @@ if [ -z "$SRC_DIR" ]; then
     rm -rf "$SRC_DIR"
     git clone --depth 1 --branch main https://github.com/kuzuni/aaaw.git "$SRC_DIR" >/dev/null 2>&1 || { echo "!! aaaw clone 실패"; exit 2; }
     PROV="방금 clone 했다"; FRESH=1
+  fi
+fi
+# ⚑⚑ **3회차(T479 · 결정 1349 · 워커 E 실측)** — 2회차는 «먼저 당긴다» 를 **자리를 제 손으로 고른 갈래에만**
+#   걸어 두고, **부른 쪽이 자리를 주면 당기지 않은 채 `FRESH=1`** 을 줬다. 그 근거로 적어 둔 «CI 는 매 런
+#   checkout 이라 참» 은 **CI 에서만** 참인데, 워커의 스크래치 실행기도 자리를 넘긴다(워커 E 의 `gates.sh` 가
+#   `.aaaw-src` 를 넘겼다) — 그 길로 **거짓 초록이 그대로 살아 있었다.** 곧 «캐물은 적 없이 «그렇다»» 였다.
+#   ⇒ **자리가 어디서 왔든 `.git` 이면 똑같이 당긴다.** aaaw 는 읽기만 하니 잃을 것이 없고(미는 것 0),
+#     CI 에서는 이미 main 의 끝이라 사실상 무동작이다(네트워크 한 번). 못 당기면 **`FRESH=0` 으로 적는다** —
+#     rc 는 안 건드리므로 CI 에 새 빨강이 생기지 않는다. **«안 본다» 를 «봤다» 로 적지 않는 것이 이 절 전체다.**
+if [ -d "$SRC_DIR/.git" ]; then
+  if git -C "$SRC_DIR" fetch --depth 1 origin main >/dev/null 2>&1 \
+     && git -C "$SRC_DIR" reset --hard FETCH_HEAD >/dev/null 2>&1; then
+    [ "$GIVEN" = 1 ] && PROV="부른 쪽이 준 자리 · 방금 당겨서 main 의 끝임을 봤다" || PROV="방금 최신화했다"
+    FRESH=1
   else
-    # ⚑ 남아 있던 클론이다 — 회차를 넘어 살아서 **늙는다**. 견주기 전에 먼저 당긴다(워커 L 의 첫 수).
-    #   aaaw 는 **읽기만** 한다 — fetch + 이 클론의 작업 트리만 옮긴다. 그쪽으로 미는 것은 없다.
-    if git -C "$SRC_DIR" fetch --depth 1 origin main >/dev/null 2>&1 \
-       && git -C "$SRC_DIR" reset --hard FETCH_HEAD >/dev/null 2>&1; then
-      PROV="방금 최신화했다"; FRESH=1
-    else
-      PROV="⚠ 최신화 못 했다(네트워크?) — main 의 끝인지 확인 못 함"; FRESH=0
-    fi
+    PROV="⚠ 못 당겼다(네트워크?) — main 의 끝인지 확인 못 함"; FRESH=0
   fi
 fi
 SRC="$SRC_DIR/data"
@@ -87,7 +92,12 @@ if [ "$drift" = 0 ]; then
     # ⚑ 여기가 결정 1340 이 짚은 «거짓 초록» 자리다 — 견준 것은 이 자리뿐이고 그것이 main 의 끝인지 모른다.
     echo "OK(견준 자리 기준) — data/*.json 이 «$WHERE» 와 같다 ($SRCLINE)"
     echo "   ⚠ 이 자리가 aaaw main 의 끝인지는 **확인 못 했다** — 그러니 이 초록은 «main 과 같다» 가 아니다."
-    echo "      클론을 당긴 뒤 다시 돌린다:  git -C \"$SRC_DIR\" fetch && git -C \"$SRC_DIR\" reset --hard origin/main"
+    if [ -d "$SRC_DIR/.git" ]; then
+      echo "      당긴 뒤 다시 돌린다:  git -C \"$SRC_DIR\" fetch && git -C \"$SRC_DIR\" reset --hard origin/main"
+    else
+      # 처방이 그 자리에서 실제로 듣는 것이어야 한다 — git 이 아닌 자리에 «fetch 하라» 는 안 듣는다(워커 L 의 ⓒ).
+      echo "      그 자리는 git 이 아니라 나이를 잴 수 없다 — 자리를 안 주고 그냥 돌리면(인자 없이) 이 자가 제 클론을 당겨서 본다."
+    fi
   fi
   exit 0
 fi
