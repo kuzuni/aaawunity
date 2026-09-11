@@ -12619,7 +12619,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 >
 > **다음 사람에게** — 이 자가 우는 줄이 또 뜨면 **그 자체가 표본 셋째**다. 셋이 되면 «왜 1회차 커밋이 제 lock 을 지우는가» 를 물을 값이 생긴다(지금은 두 번 다 «닫는 김에 같이 지웠다» 로 보이지만, **그 추측은 안 쟀다**).
 
-### T454 — ⛑ **낱말표가 아직 둘이다 — 읽는 쪽은 `Core.ShortNum` 을 보는데, 출석 칸 글자를 「내는」 쪽(`GearUi.CellQtyText`)은 제 사다리를 따로 적는다** (워커 판단 등재·선점 2026-09-11 13:1X · sess-2005-9317 · 워커 A)
+### T454 ✅ — ⛑ **낱말표가 아직 둘이다 — 읽는 쪽은 `Core.ShortNum` 을 보는데, 출석 칸 글자를 「내는」 쪽(`GearUi.CellQtyText`)은 제 사다리를 따로 적는다** (워커 판단 등재·선점 2026-09-11 13:1X · sess-2005-9317 · 워커 A)
 
 0. **자리** — T452(결정 1271)가 낱말표를 `Assets/Scripts/Core/ShortNum.cs` 한 자리로 내렸다. 다만 그 절이 옮긴 것은 **`UiKit.Fmt`(내는 쪽 하나)와 `RewardPopup.QtyOf`(읽는 쪽)** 둘이다.
    **세 번째 사다리가 그대로 남았다** — `Assets/Scripts/Game/GearUi.cs:290~297` 의 `CellQtyText` 가 `1e9→"B"` · `1e6→"M"` · `1e3→"K"` 를 **제 손으로** 적는다(T443 3회차 · 칸 네 자 한계).
@@ -12657,6 +12657,12 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 >   ⚠ 그 점검이 **이 통에서도** `TimeoutAttribute` **CS0246 으로 먼저 죽었다**(워커 I 가 12:4X 에 겪은 그것 · `PlaythroughTests:1779`) — 스크래치 스텁에 `NUnit.Framework.TimeoutAttribute` 한 줄을 더해 살렸다(레포엔 안 넣는다). **스크래치가 안 도는 것을 «초록» 으로 읽으면 그 회차는 아무것도 안 본 것이다.**
 >
 > **확인** — 다음 완주 런 `[CI명부]` 에 **`ShortNumCellTests`** 가 **이름으로** 서고 ✗ 0(T278 — «✗ 0» 만으로는 «안 실렸다» 와 못 가른다) → lock 반납. PlayMode 쪽은 `RewardAbsorbTests`(「1K」)·`AttendancePlayTests`·`SeasonPassLookTests` 가 이 함수를 밟으므로 그 셋이 초록인 것도 같이 본다.
+
+> **▸ ✅ 확인 끝 · 종결(2026-09-11 14:1X · sess-2005-9317 · 워커 A · 결정 1275 · `T454.lock` 반납)**
+> 런 **1088**(`51d30fe0` · 이 절의 커밋 그 자체)의 `[CI명부]` **editmode 에 `ShortNumCellTests(5)` 가 이름으로 섰다** — 자 뭉치 74 · 케이스 **569** · 실패 0. «✗ 0» 만으로는 «안 실렸다» 와 못 가르므로(T278) **이름을 봤다.**
+> · 이 함수를 밟는 PlayMode 넷도 같이 초록이다 — `RewardAbsorbTests(5)`(「1K」) · `AttendancePlayTests(1)` · `SeasonPassLookTests(1)` · `RewardCellGrammarTests(1)` · `[CI실패] 0건`.
+> · **[그림차]** 가 `16_attendance` **0.5%**(«조금» 무리 · 크게 바뀐 것은 `09_shop_1` 하나로 내 것이 아니다)라 **눈에 보이는 변화가 없다** — «1e12 아래는 글자가 안 바뀐다» 는 자의 말과 그림이 **같은 답**을 냈다.
+> · ⚑ **다음 사람에게 — `Core/ShortNum.cs`·`Game/GearUi.cs` 가 이 반납으로 풀렸다.** 워커 E 가 T455 ⑥ 에 «고침(⑤)은 셋 다 그 두 파일이고 통째로 `T454.lock` 범위라 안 했다 — **⑤ 를 든 사람이 `HighLevelTextGateTests` 의 수를 읽고 `Strict` 를 켠다**» 로 적어 뒀다(그 자도 런 1088 에서 `HighLevelTextGateTests(1)` 초록이다). **이제 그 자리를 막는 lock 은 없다** — 다만 `T455.lock` 은 워커 E 가 쥐고 있으니 그 절은 임자 것이다.
 
 ### T455 ⬜ — ⛑ **짧게 쓴 수의 사다리가 T(1e12)에서 끝나는데 주인 표는 1e33 까지 간다 — 그리고 그것을 볼 수 있는 자가 0개다** (검수 Q 등재 · **선점 안 함 · 코드 0줄** · 2026-09-11 13:1X · sess-1808-28610 · 결정 1273)
 
