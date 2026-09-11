@@ -208,42 +208,54 @@ jobs:
       # 왜 있나 (2026-09-10 23:4X 실측 · 워커 G) — 런 100개(956~1055 · 창 18.0시간) 중 **41개가 cancelled** 이고
       #   그중 **31개가 코드 푸시**였다(코드 런 69개의 45%). 까닭은 파이프가 넘치는 것이다: 런 길이 중앙 16.2분 ×
       #   100 = 21.9시간 = **창의 122%**. `concurrency` 그룹은 «도는 것 1 + 기다리는 것 1» 만 두므로 **셋째가
-      #   오면 기다리던 것을 죽인다** — `cancel-in-progress: false` 가 막는 것은 «**도는** 것을 자르는 것» 뿐이다.
+      #   오면 기다리던 것을 죽인다» — `cancel-in-progress: false` 가 막는 것은 «**도는** 것을 자르는 것» 뿐이다.
       #   그 파이프의 **30%(29개)가 «코드 0줄» 인 푸시**로 돌고 있었다.
-      # ⚠ `[skip ci]` 규약을 대신하는 것이 아니다 — 그 규약은 `dotnet` 잡까지 아끼므로 그대로 지킨다.
-      #   이 자가 받는 것은 **사람이 제목을 못 쓰는 자리**다: 위 50개 중 아홉이 `Merge remote-tracking branch` 였다.
+      # ⚠ 건너뛰기 표식 규약을 대신하는 것이 아니다 — 그 규약은 `dotnet` 잡까지 아끼므로 그대로 지킨다.
+      #   이 자가 받는 것은 **사람이 제목을 못 쓰는 자리**다(머지 커밋 · 실측 아홉).
       # ⚠⚑ **판정은 fail-safe 다 — «전부 문서» 라고 적극적으로 증명될 때만 `false` 를 낸다.**
-      #   push 가 아니면 · 이벤트를 못 읽으면 · 목록이 비었으면 · 커밋이 20개 이상이면(payload `commits` 가
-      #   20개에서 잘린다) 전부 **`true`(= 돈다)**. 「테스트 0개는 빨간 테스트보다 나쁘다」(§1) 쪽으로 틀린다.
+      #   push 가 아니면 · 범위를 못 세우면 · 목록이 비면 전부 **`true`(= 돈다)**.
+      #   「테스트 0개는 빨간 테스트보다 나쁘다」(§1) 쪽으로 틀린다.
+      # ⚑⚑ **3회차 — payload 의 `commits[].modified` 를 쓰다가 갈아엎었다(실측 · 런 1056).**
+      #   2회차까지는 이벤트 JSON 에서 파일 목록을 읽었는데, 실제 런에서 그 목록이 **비어서 왔다**
+      #   (notice: «unity-test 돈다 — 바뀐 파일 목록이 비었다»). fail-safe 가 받아 줘 사고는 안 났지만
+      #   **판정이 늘 «돈다» 라 고침이 아무 일도 안 하고 있었다** — 옳게 틀리는 것과 일하는 것은 다르다.
+      #   그래서 **git 에게 직접 묻는다**: `before..sha`. 그것이 이 물음의 정본이다.
+      - uses: actions/checkout@v4
+        with:
+          # 한 push 안의 커밋을 다 덮을 만큼만(워커 푸시는 1~3개다). `before` 가 이 깊이 밖이면 아래가 fail-safe 로 돈다.
+          fetch-depth: 30
       - id: code
+        env:
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
         run: |
           python3 - <<'PY'
-          import json, os
+          import os, subprocess
           def is_doc(p):
               return p.startswith("docs/") or ("/" not in p and p.endswith(".md"))
+          def git(*a):
+              r = subprocess.run(("git",) + a, capture_output=True, text=True)
+              return r.stdout if r.returncode == 0 else None
           has, why = "true", ""
+          before, sha = os.environ.get("BEFORE", ""), os.environ.get("SHA", "")
           if os.environ.get("GITHUB_EVENT_NAME") != "push":
               why = "push 가 아니다(%s)" % os.environ.get("GITHUB_EVENT_NAME")
+          elif not before or set(before) == {"0"}:
+              why = "앞 커밋이 없다(새 가지·강제 푸시?)"
+          elif git("cat-file", "-e", before + "^{commit}") is None:
+              why = "앞 커밋 %s 가 이 클론에 없다(깊이 밖)" % before[:9]
           else:
-              try:
-                  ev = json.load(open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8"))
-                  commits = list(ev.get("commits") or [])
-                  head = ev.get("head_commit")
-                  if head and not any(c.get("id") == head.get("id") for c in commits):
-                      commits.append(head)
-                  files = [f for c in commits for k in ("added", "removed", "modified") for f in (c.get(k) or [])]
-                  if not commits:
-                      why = "커밋 목록이 비었다(지움·강제 푸시?)"
-                  elif len(commits) >= 20:
-                      why = "커밋 %d개 — payload 가 20개에서 잘리므로 안 믿는다" % len(commits)
-                  elif not files:
-                      why = "바뀐 파일 목록이 비었다"
+              out = git("log", "--name-only", "--diff-merges=cc", "--format=", "%s..%s" % (before, sha))
+              if out is None:
+                  why = "범위를 못 읽었다"
+              else:
+                  files = sorted({ln for ln in out.split("\n") if ln.strip()})
+                  if not files:
+                      why = "바뀐 파일이 0개다"
                   elif all(is_doc(f) for f in files):
                       has, why = "false", "바뀐 파일 %d개가 전부 문서다(docs/** · 뿌리 *.md)" % len(files)
                   else:
-                      why = "코드 파일이 있다(%s …)" % next(f for f in files if not is_doc(f))
-              except Exception as e:
-                  why = "이벤트를 못 읽었다 — 도는 쪽으로 튼다: %r" % (e,)
+                      why = "코드 파일이 있다(%s · 모두 %d개)" % (next(f for f in files if not is_doc(f)), len(files))
           # ⚑ `has=` 는 `$GITHUB_OUTPUT` 파일로, 알림 줄은 **stdout** 으로 — 둘을 한 곳에 쓰면
           #   `::notice::` 가 output 파일에 들어가 판정이 조용히 망가진다(워크플로 명령은 stdout 에서만 읽힌다).
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
