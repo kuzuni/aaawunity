@@ -410,7 +410,19 @@ namespace KkomaKnight.Game
             if (im == null) return;
             var rt = im.rectTransform; var st = UiKit.Ensure<PartIconFit>(im.gameObject); st.Capture(rt);
             var sp = im.sprite;
-            if (!isPart || sp == null) { st.Restore(rt); return; }
+            if (!isPart || sp == null)
+            {
+                st.Restore(rt);
+                // T472(주인 2026-09-12 «상자 확률 부분에 어떤 거는 이미지 존내 크게 · 다 제대로 되게 해») — 프리팹 값(256 × 0.6149 ≈ 157px)은
+                //   **인벤 칸(188px)용**이다. 칸이 그보다 작으면 같은 비율로 줄인다 — 확률 팝업(36)의 칸은 짧은 변 ≈ 120px 라 GUI Pro 아이콘
+                //   (부츠·반지·목걸이)이 131% 로 칸을 넘쳤고, 파츠(투구·무기·갑옷)만 아래 갈래로 72% 에 맞아 «어떤 것만 크다» 가 됐다.
+                //   ⚠ 늘리지는 않는다(큰 칸은 프리팹 그대로) · 장착 슬롯은 FitScale(localScale)이라 rect 가 188 그대로 → 그대로다(결정 1332).
+                var host = rt.parent as RectTransform;
+                float side = host != null ? Mathf.Min(host.rect.width, host.rect.height) : 0f;
+                float cell = CellSize(App.I != null ? App.I.Assets : null);
+                if (side > 0f && cell > 0f && side < cell) rt.sizeDelta = st.Size * (side / cell);
+                return;
+            }
             var rect = sp.rect; float ppu = sp.pixelsPerUnit > 0 ? sp.pixelsPerUnit : 100f; var piv = sp.pivot;
             float x0 = float.MaxValue, y0 = float.MaxValue, x1 = float.MinValue, y1 = float.MinValue;
             var verts = sp.vertices;   // Tight 메시(파츠 .meta spriteMeshType 1) → 정점의 min/max = 불투명 bbox (rect 왼쪽아래 원점 픽셀)
