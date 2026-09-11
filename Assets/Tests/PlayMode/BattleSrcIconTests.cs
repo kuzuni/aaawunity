@@ -87,7 +87,7 @@ namespace KkomaKnight.Tests.Play
             yield return Frames(2);
             Assert.IsEmpty(NewSince(before), "출처도 치명타도 없는 기본 타격에는 아무 그림도 안 붙는다");
 
-            // ⓒ 출처와 치명타가 겹치면 «출처» 가 이긴다 — 치명타는 색(PopCrit)과 크기로도 말한다(결정 1305)
+            // ⓒ 출처와 치명타가 겹치면 «출처» 가 이긴다 — 치명타는 색(PopCrit)과 크기로도 말한다(결정 1304)
             before = PopIcons();
             world.Handle(new BattleEvent { Kind = EvKind.Hit, Value = 999, Crit = true, Src = "p_killBolt" });
             yield return Frames(2);
