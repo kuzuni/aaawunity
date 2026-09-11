@@ -1846,20 +1846,6 @@ namespace KkomaKnight.Tests.Play
                             Assert.IsNotNull(UiKit.Find(t, "Button_Price"), t.name + " 에는 가격 버튼이 있다");
                         }
                         Assert.Greater(packs, 0, "상품 카드가 하나는 있다");
-                        // T471(주인 «상점 카드 클릭해도 결제되던데 · 버튼을 클릭해야») — 상품 카드 몸통(GemPack/GoldPack 칸의 조각 루트)에는 Button 이 없다.
-                        int packs = 0;
-                        foreach (var t in _app.Current.Root.GetComponentsInChildren<Transform>(true))
-                        {
-                            if (!t.name.StartsWith("GemPack:") && !t.name.StartsWith("GoldPack:")) continue;
-                            packs++;
-                            for (int ci = 0; ci < t.childCount; ci++)
-                            {
-                                var cellRoot = t.GetChild(ci);
-                                Assert.IsNull(cellRoot.GetComponent<Button>(), t.name + " 카드 몸통(" + cellRoot.name + ")은 눌리면 안 된다 — 결제는 가격 버튼만(T471)");
-                            }
-                            Assert.IsNotNull(UiKit.Find(t, "Button_Price"), t.name + " 에는 가격 버튼이 있다");
-                        }
-                        Assert.Greater(packs, 0, "상품 카드가 하나는 있다");
                         _app.Save.Gem = gem0; _app.ShowScreen("lobby"); yield return Frames(1); _app.ShowScreen("shop"); yield return Frames(2);
                     }
                 }
