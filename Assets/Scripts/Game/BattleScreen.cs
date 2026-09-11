@@ -471,7 +471,14 @@ namespace KkomaKnight.Game
             //   기다린 시간이 `AbsorbMaxWaitSec` 를 넘으면 흡수가 남았어도 연다(바로 아래 «판 끝» 이 쓰는 그 상한과 같은 값·같은 까닭).
             if ((G.PendingLevelUps > 0 || G.Pending != null) && !App.Overlay.IsOpen) _lvUpWait += dt; else _lvUpWait = 0;
             bool showNow = _lvUpWait >= AbsorbMaxWaitSec;
-            G.HoldLevelUp = (_world.Busy || Absorbing) && !showNow;
+            // T457(주인 2026-09-12 «그 특전 팝업 뜨기 전에 전투나 이동은 바로 전까지 계속 됐어야 함») — T368 이 있어도 멈추던 까닭은 **순서**였다:
+            //   엔진은 킬 틱 안에서 경험치를 주고(`GainExp` → `PendingLevelUps++`) **같은 틱 끝**에서 `!HoldLevelUp` 이면 곧바로 `OpenLevelUp()` 한다.
+            //   그런데 이 줄은 **앞 프레임**의 Busy·Absorbing 을 본다 — 킬 틱 «직전» 엔 칼도 안 내려왔고 구슬도 안 났으니 둘 다 거짓 → HoldLevelUp 거짓 →
+            //   레벨업이 킬 틱에서 그대로 창(`Pending`)이 되고, 아래 루프는 `Pending` 을 보고 매 프레임 `_acc = 0; break` — **킬부터 흡수 끝까지 엔진이 얼어** 걷기가 선다.
+            //   ⇒ «열어도 된다» 는 **줄에 이미 든 레벨업이 있고**(PendingLevelUps > 0) 연출이 다 끝났을 때만 말한다. 줄이 비어 있으면 붙잡는다 —
+            //   그래야 킬 틱에서 생기는 레벨업이 **줄에 들어가고**, 킬 보류(T50)가 풀린 뒤 흡수가 끝날 때까지 엔진이 평소대로 돌아 플레이어가 걷는다.
+            //   붙잡은 값은 줄이 비어 있을 땐 엔진이 읽지 않으므로(그 줄의 조건이 `PendingLevelUps > 0`) 아무 데도 안 닿는다. 원정 시작 특전 다섯(T411)은 줄이 이미 차 있어 첫 틱에 그대로 열린다.
+            G.HoldLevelUp = !(G.PendingLevelUps > 0 && ((!_world.Busy && !Absorbing) || showNow));
             if (!App.Overlay.IsOpen && !_paused && !G.Over)
             {
                 _acc += dt * _speed;
