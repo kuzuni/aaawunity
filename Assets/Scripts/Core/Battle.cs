@@ -251,10 +251,10 @@ namespace KkomaKnight.Core
             Kills++;
             Gold += RngUtil.JsRound(D.Tune.GoldKillBaseAt(Chapter) * Rng.Range(EngineConst.GoldRandMin, EngineConst.GoldRandMax) * P.GoldMul);
             Emit(EvKind.Kill, e, 0);
-            if (P.Has("p_killSpear") && Pkk(P.PxGet("p_killSpear"))) FireSpear(1);
-            if (P.Has("p_killBolt") && Pkk(P.PxGet("p_killBolt"))) FireBoltsAll(e.Wave);
-            if (P.Has("p_killArrow") && Pkk(P.PxGet("p_killArrow"))) FireArrows(3);
-            if (P.Has("p_killAxe") && Pkk(P.PxGet("p_killAxe"))) FireAxe(2);
+            if (P.Has("p_killSpear") && Pkk(P.PxGet("p_killSpear"))) FireSpear(1, "p_killSpear");
+            if (P.Has("p_killBolt") && Pkk(P.PxGet("p_killBolt"))) FireBoltsAll(e.Wave, "p_killBolt");
+            if (P.Has("p_killArrow") && Pkk(P.PxGet("p_killArrow"))) FireArrows(3, "p_killArrow");
+            if (P.Has("p_killAxe") && Pkk(P.PxGet("p_killAxe"))) FireAxe(2, "p_killAxe");
             if (P.Has("p_overkill") && over > 0) Heal(over);
             if (P.Has("p_killEvBuff")) RefreshBuff("evade", PK.C("PERK_KILLEV_A"), PK.C("PERK_KILLEV_T"), "p_killEvBuff");
             if (P.Has("p_killAtkStk") && Pkk(PK.C("PERK_KSTACK_CH"))) P.Dmg *= 1 + PK.C("PERK_KSTACK_ATK");
@@ -384,7 +384,7 @@ namespace KkomaKnight.Core
         }
 
         // ───────────────────────── 데미지 (sim.js dealDmg) ─────────────────────────
-        bool DealDmg(EnemyState e, double ratio, bool fromBasic)
+        bool DealDmg(EnemyState e, double ratio, bool fromBasic, string src = null)
         {
             if (e.Hp <= 0) return false;
             bool full = e.Hp >= e.MaxHp - EngineConst.FullHpEps;
@@ -402,7 +402,7 @@ namespace KkomaKnight.Core
             if (full && P.Has("p_fullHp")) addBonus += PK.C("PERK_FULLHP_A");
             if (addBonus != 0) d *= 1 + addBonus;
             e.Hp -= d;
-            Emit(EvKind.Hit, e, d, crit);
+            Emit(EvKind.Hit, e, d, crit, src: src);
             if (P.Steal > 0) Heal(d * P.Steal / 100, true);
             if (crit)
             {
@@ -412,15 +412,15 @@ namespace KkomaKnight.Core
                 if ((P.Has("p_critSpearR") || P.Has("p_critSpearL") || P.Has("p_critBoltL")) && ProcN < C.ProcTickCap)
                 {
                     ProcN++;
-                    if (P.Has("p_critSpearR") && Pkk(PK.C("PERK_CRITSP_R"))) FireSpear(1);
-                    if (P.Has("p_critSpearL") && Pkk(PK.C("PERK_CRITSP_L"))) FireSpear(1);
-                    if (P.Has("p_critBoltL") && Pkk(PK.C("PERK_CRITBOLT_L"))) FireBoltsAll(e.Wave);
+                    if (P.Has("p_critSpearR") && Pkk(PK.C("PERK_CRITSP_R"))) FireSpear(1, "p_critSpearR");
+                    if (P.Has("p_critSpearL") && Pkk(PK.C("PERK_CRITSP_L"))) FireSpear(1, "p_critSpearL");
+                    if (P.Has("p_critBoltL") && Pkk(PK.C("PERK_CRITBOLT_L"))) FireBoltsAll(e.Wave, "p_critBoltL");
                 }
                 int gca = (int)P.PxGet("g_critAxe");
                 if (gca > 0 && ProcN < C.ProcTickCap)
                 {
                     ProcN++;
-                    for (int i = 0; i < gca; i++) if (Pkk(EngineConst.GearAxeCh)) FireAxe(1);
+                    for (int i = 0; i < gca; i++) if (Pkk(EngineConst.GearAxeCh)) FireAxe(1, SrcGear);
                 }
             }
             if (e.Hp <= 0) OnKill(e, -e.Hp);
@@ -454,12 +454,12 @@ namespace KkomaKnight.Core
         }
 
         // ───────────────────────── 소환 (sim.js fire*) ─────────────────────────
-        void SummonHit(EnemyState e, double ratio)
+        void SummonHit(EnemyState e, double ratio, string src = null)
         {
-            DealDmg(e, ratio, false);
+            DealDmg(e, ratio, false, src);
             if (ProcN < C.ProcTickCap) { ProcN++; ProcOnAttack(e); }
         }
-        void ProjHit(Projectile pr, EnemyState e) => SummonHit(e, pr.Kind == ProjKind.Axe ? C.RAxe : pr.Ratio);
+        void ProjHit(Projectile pr, EnemyState e) => SummonHit(e, pr.Kind == ProjKind.Axe ? C.RAxe : pr.Ratio, pr.Src);
 
         /// <summary>
         /// 관통 상한 — <b>0 이하는 «상한 없음»</b>(T173 · 주인 2026-09-07 «걍 닿으면 다 데미지 주게로 해 주고 관통 8개까지 말고»).
@@ -481,48 +481,48 @@ namespace KkomaKnight.Core
             }
             else if (pr.Target != null && pr.Target.Hp > 0) ProjHit(pr, pr.Target);
         }
-        void FireAxe(int n)
+        void FireAxe(int n, string src = null)
         {
             for (int k = 0; k < n; k++)
             {
                 var t = RandTarget();
-                if (t != null) PushProj(new Projectile { Kind = ProjKind.Axe, X = P.WorldX + EngineConst.ProjSpawnDx, StartX = P.WorldX + EngineConst.ProjSpawnDx, Target = t, TargetX0 = t.WorldX, Ratio = C.RAxe, Spd = C.AxeSpeed });
+                if (t != null) PushProj(new Projectile { Kind = ProjKind.Axe, X = P.WorldX + EngineConst.ProjSpawnDx, StartX = P.WorldX + EngineConst.ProjSpawnDx, Target = t, TargetX0 = t.WorldX, Ratio = C.RAxe, Spd = C.AxeSpeed, Src = src });
             }
         }
-        void FireArrows(int n)
+        void FireArrows(int n, string src = null)
         {
-            if (P.Has("p_spearAvatar")) { FireSpear(n); return; }
+            if (P.Has("p_spearAvatar")) { FireSpear(n, src); return; }
             for (int k = 0; k < n; k++)
             {
                 var t = RandTarget();
-                if (t != null) PushProj(new Projectile { Kind = ProjKind.Arrow, X = P.WorldX + EngineConst.ProjSpawnDx, StartX = P.WorldX + EngineConst.ProjSpawnDx, Target = t, TargetX0 = t.WorldX, Ratio = C.RArrow, Spd = EngineConst.ArrowSpeed });
+                if (t != null) PushProj(new Projectile { Kind = ProjKind.Arrow, X = P.WorldX + EngineConst.ProjSpawnDx, StartX = P.WorldX + EngineConst.ProjSpawnDx, Target = t, TargetX0 = t.WorldX, Ratio = C.RArrow, Spd = EngineConst.ArrowSpeed, Src = src });
             }
         }
-        void FireBolts(int n)
+        void FireBolts(int n, string src = null)
         {
             for (int k = 0; k < n; k++)
             {
                 var t = RandTarget(); if (t == null) continue;
-                Emit(EvKind.Bolt, t, 0);
-                SummonHit(t, C.RBolt);
+                Emit(EvKind.Bolt, t, 0, src: src);
+                SummonHit(t, C.RBolt, src);
             }
         }
-        void FireBoltsAll(BattleNode node)
+        void FireBoltsAll(BattleNode node, string src = null)
         {
             var nd = node ?? FrontNode(); if (nd == null) return;
             var list = new List<EnemyState>();
             foreach (var e in nd.Enemies) if (e.Hp > 0) list.Add(e);
-            foreach (var e in list) if (e.Hp > 0) { Emit(EvKind.Bolt, e, 0); SummonHit(e, C.RBolt); }
+            foreach (var e in list) if (e.Hp > 0) { Emit(EvKind.Bolt, e, 0, src: src); SummonHit(e, C.RBolt, src); }
         }
-        void FireWave(int n)
+        void FireWave(int n, string src = null)
         {
             for (int k = 0; k < n; k++)
-                PushProj(new Projectile { Kind = ProjKind.Wave, X = P.WorldX + EngineConst.ProjSpawnDx, StartX = P.WorldX + EngineConst.ProjSpawnDx, Ratio = C.RWave, Spd = EngineConst.WaveSpeed, MaxX = P.WorldX + C.WaveReach, Hit = new HashSet<EnemyState>(), Pierce = C.PierceWave, Node = FrontNode() });
+                PushProj(new Projectile { Kind = ProjKind.Wave, X = P.WorldX + EngineConst.ProjSpawnDx, StartX = P.WorldX + EngineConst.ProjSpawnDx, Ratio = C.RWave, Spd = EngineConst.WaveSpeed, MaxX = P.WorldX + C.WaveReach, Hit = new HashSet<EnemyState>(), Pierce = C.PierceWave, Node = FrontNode(), Src = src });
         }
-        void FireSpear(int n)
+        void FireSpear(int n, string src = null)
         {
             for (int k = 0; k < n; k++)
-                PushProj(new Projectile { Kind = ProjKind.Spear, X = P.WorldX + EngineConst.ProjSpawnDx, StartX = P.WorldX + EngineConst.ProjSpawnDx, Ratio = C.RSpear, Spd = C.SpearSpeed, MaxX = P.WorldX + C.SpearReach, Hit = new HashSet<EnemyState>(), Pierce = C.PierceSpear, Node = FrontNode() });
+                PushProj(new Projectile { Kind = ProjKind.Spear, X = P.WorldX + EngineConst.ProjSpawnDx, StartX = P.WorldX + EngineConst.ProjSpawnDx, Ratio = C.RSpear, Spd = C.SpearSpeed, MaxX = P.WorldX + C.SpearReach, Hit = new HashSet<EnemyState>(), Pierce = C.PierceSpear, Node = FrontNode(), Src = src });
         }
 
         void ProcOnAttack(EnemyState e)
@@ -552,7 +552,7 @@ namespace KkomaKnight.Core
                 if (ProcN >= C.ProcTickCap) return;
                 if (!(Rng.Next() * 100 < pet.Chance)) continue;
                 ProcN++;
-                if (pet.Shot == PetKey.ShotBolt) FireBolts(pet.Count); else FireAxe(pet.Count);
+                if (pet.Shot == PetKey.ShotBolt) FireBolts(pet.Count, SrcPet); else FireAxe(pet.Count, SrcPet);
             }
         }
 
@@ -570,7 +570,7 @@ namespace KkomaKnight.Core
             if (P.Has("p_ctDmgR")) cd *= PK.C("PERK_CTDMG_R");
             src.Hp -= cd;
             Emit(EvKind.Counter, src, cd, crit);
-            if (P.Has("p_spearCt") && Pkk(PK.C("PERK_SUMMON_CH"))) FireSpear(1);
+            if (P.Has("p_spearCt") && Pkk(PK.C("PERK_SUMMON_CH"))) FireSpear(1, "p_spearCt");
             if (src.Hp <= 0) OnKill(src, -src.Hp);
         }
 
@@ -580,14 +580,14 @@ namespace KkomaKnight.Core
             {
                 Emit(EvKind.PlayerEvade, src, 0);
                 int gev = (int)P.PxGet("g_evAxe");
-                for (int i = 0; i < gev; i++) if (Pkk(EngineConst.GearAxeCh)) FireAxe(1);
+                for (int i = 0; i < gev; i++) if (Pkk(EngineConst.GearAxeCh)) FireAxe(1, SrcGear);
                 int geh = (int)P.PxGet("g_evHeal");
                 if (P.Hp < P.MaxHp * EngineConst.LowHpEvHeal) for (int i = 0; i < geh; i++) if (Pkk(EngineConst.GearEvHealCh)) Heal(P.MaxHp * EngineConst.EvHealF);
                 if (P.Has("p_evadeHeal") && Pkk(PK.C("PERK_EVHEAL_CH"))) Heal(P.MaxHp * PK.C("PERK_EVHEAL_F"));
-                if (P.Has("p_arrowEv") && Pkk(PK.C("PERK_SUMMON_N"))) FireArrows(1);
-                if (P.Has("p_arrowEvR") && Pkk(PK.C("PERK_SUMMON_R"))) FireArrows(1);
-                if (P.Has("p_arrowEvL") && Pkk(PK.C("PERK_SUMMON_L"))) FireArrows(1);
-                if (P.Has("p_spearEvL") && Pkk(PK.C("PERK_SUMMON_SP"))) FireSpear(1);
+                if (P.Has("p_arrowEv") && Pkk(PK.C("PERK_SUMMON_N"))) FireArrows(1, "p_arrowEv");
+                if (P.Has("p_arrowEvR") && Pkk(PK.C("PERK_SUMMON_R"))) FireArrows(1, "p_arrowEvR");
+                if (P.Has("p_arrowEvL") && Pkk(PK.C("PERK_SUMMON_L"))) FireArrows(1, "p_arrowEvL");
+                if (P.Has("p_spearEvL") && Pkk(PK.C("PERK_SUMMON_SP"))) FireSpear(1, "p_spearEvL");
                 if (P.Has("p_evHealR") && Pkk(PK.C("PERK_EVHEAL_R"))) Heal(P.MaxHp * PK.C("PERK_EVHEAL_F"));
                 PetProcs(PetKey.Evade);   // T293 — 있던 줄 «뒤» 에 붙인다(앞에 두면 펫을 낀 판에서 옛 굴림 차례가 밀린다)
                 if (P.Has("p_evHealL") && Pkk(PK.C("PERK_EVHEAL_L"))) Heal(P.MaxHp * PK.C("PERK_EVHEAL_F"));
@@ -620,12 +620,12 @@ namespace KkomaKnight.Core
             GainWard(P.Has("p_wardHitN") ? PK.C("PERK_WARD_N") : 0);
             GainWard(P.Has("p_wardHitR") ? PK.C("PERK_WARD_R") : 0);
             GainWard(P.Has("p_wardHitL") ? PK.C("PERK_WARD_L") : 0);
-            if (P.Has("p_axeHit") && Pkk(PK.C("PERK_SUMMON_N"))) FireAxe(1);
-            if (P.Has("p_axeHitR") && Pkk(PK.C("PERK_SUMMON_R"))) FireAxe(1);
-            if (P.Has("p_axeHitL") && Pkk(PK.C("PERK_SUMMON_L"))) FireAxe(1);
-            if (P.Has("p_spearHitL") && Pkk(PK.C("PERK_SUMMON_SP"))) FireSpear(1);
+            if (P.Has("p_axeHit") && Pkk(PK.C("PERK_SUMMON_N"))) FireAxe(1, "p_axeHit");
+            if (P.Has("p_axeHitR") && Pkk(PK.C("PERK_SUMMON_R"))) FireAxe(1, "p_axeHitR");
+            if (P.Has("p_axeHitL") && Pkk(PK.C("PERK_SUMMON_L"))) FireAxe(1, "p_axeHitL");
+            if (P.Has("p_spearHitL") && Pkk(PK.C("PERK_SUMMON_SP"))) FireSpear(1, "p_spearHitL");
             int gha = (int)P.PxGet("g_hitAxe");
-            for (int i = 0; i < gha; i++) if (Pkk(EngineConst.GearAxeCh)) FireAxe(1);
+            for (int i = 0; i < gha; i++) if (Pkk(EngineConst.GearAxeCh)) FireAxe(1, SrcGear);
             PetProcs(PetKey.Hit);   // T293 — 같은 뜻의 «맞을 때 소환» 들 바로 뒤(반격 굴림보다 앞이라 순서가 특전과 같다)
             if (isMelee && src != null && src.Hp > 0)
             {
@@ -660,10 +660,10 @@ namespace KkomaKnight.Core
         void FireNHit(string id)
         {
             int shots = id.EndsWith("L") ? 3 : id.EndsWith("R") ? 2 : 1;
-            if (id.StartsWith("p_nArrow")) FireArrows(shots);
-            else if (id.StartsWith("p_nAxe")) FireAxe(shots);
-            else if (id.StartsWith("p_nBolt")) FireBolts(shots);
-            else if (id.StartsWith("p_nSpear")) FireSpear(1);
+            if (id.StartsWith("p_nArrow")) FireArrows(shots, id);
+            else if (id.StartsWith("p_nAxe")) FireAxe(shots, id);
+            else if (id.StartsWith("p_nBolt")) FireBolts(shots, id);
+            else if (id.StartsWith("p_nSpear")) FireSpear(1, id);
             else if (id.StartsWith("p_nHeal")) Heal(P.MaxHp * PK.C("PERK_NHEAL_F"));
             else throw new InvalidOperationException("nHitPerks 에 모르는 특전: " + id);
         }
@@ -901,12 +901,17 @@ namespace KkomaKnight.Core
         }
 
         // ───────────────────────── 연출 이벤트 ─────────────────────────
-        void Emit(EvKind k, EnemyState e, double v, bool crit = false, string text = null, Projectile pr = null, double v2 = 0)
+        /// <summary>특전이 아니라 <b>장비</b>가 낸 것(T458 1항 · 치명타·회피 뒤 굴러 나가는 도끼) — 화면은 이 낱말을 보고 장착 무기 아이콘을 쓴다.</summary>
+        public const string SrcGear = "gear";
+        /// <summary>펫이 낸 것(T458 1항) — 화면은 이 낱말을 보고 펫 아이콘을 쓴다.</summary>
+        public const string SrcPet = "pet";
+
+        void Emit(EvKind k, EnemyState e, double v, bool crit = false, string text = null, Projectile pr = null, double v2 = 0, string src = null)
         {
             if (!Opt.EmitEvents) return;
             if (k == EvKind.Hit && e != null) e.HitT = 0.12;
             if (k == EvKind.PlayerHit) P.HitT = 0.12;
-            Events.Add(new BattleEvent { Kind = k, Enemy = e, Value = v, Value2 = v2, Crit = crit, Text = text, Proj = pr });
+            Events.Add(new BattleEvent { Kind = k, Enemy = e, Value = v, Value2 = v2, Crit = crit, Text = text, Proj = pr, Src = src ?? pr?.Src });
         }
     }
 }

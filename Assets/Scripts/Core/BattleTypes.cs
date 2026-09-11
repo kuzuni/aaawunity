@@ -77,6 +77,8 @@ namespace KkomaKnight.Core
     public sealed class Projectile
     {
         public ProjKind Kind; public double X, Ratio, Spd, MaxX, StartX; public EnemyState Target; public int Pierce;
+        /// <summary>이 투사체를 <b>쏜 것</b>(특전 id·«gear»·«pet») — 맞은 뒤 뜨는 글자가 그 아이콘을 쓴다(T458 1항). 모르면 <c>null</c>.</summary>
+        public string Src;
         public HashSet<EnemyState> Hit; public BattleNode Node;
         public double TargetX0; // 연출용(도끼 포물선)
     }
@@ -126,6 +128,9 @@ namespace KkomaKnight.Core
     public struct BattleEvent
     {
         public EvKind Kind; public EnemyState Enemy; public double Value, Value2; public bool Crit; public string Text; public Projectile Proj;
+        /// <summary>이 수를 <b>낸 것</b> — 특전 id(«p_killBolt») 또는 장비·펫(«gear»·«pet») · 기본 공격은 <c>null</c>(T458 1항 · 주인 «왜 이게 떴는지»).
+        /// <para>⚠ <b>칸을 더하기만 한다</b> — 난수도 틱 순서도 안 건드린다(파리티 21칸). 채우는 쪽이 모르면 <c>null</c> 이고, 그때 화면은 아이콘을 안 붙인다.</para></summary>
+        public string Src;
     }
 
     public sealed class RunOptions
