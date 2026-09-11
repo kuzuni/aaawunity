@@ -141,10 +141,37 @@ namespace KkomaKnight.Tests.Play
             G.P.Dmg = 0;   // 이 뒤로는 새 킬이 없다 — 이번 한 벌의 수명만 잰다
             float tOrb = Time.realtimeSinceStartup, limit = OrbLifeMax(peak, 1f);
             int trailPeak = 0;
-            while (bs.OrbCount > 0 && Time.realtimeSinceStartup - tOrb < limit + 1f) { trailPeak = Mathf.Max(trailPeak, TrailCount()); yield return null; }
+            // T461 ⓑ — 꼬리가 «보이는 자리» 에 있는가. 살아 있는 동안 한 번 잡아 둔다(사라진 뒤엔 못 잰다).
+            int trailOrder = int.MinValue;
+            while (bs.OrbCount > 0 && Time.realtimeSinceStartup - tOrb < limit + 1f)
+            {
+                trailPeak = Mathf.Max(trailPeak, TrailCount());
+                if (trailOrder == int.MinValue)
+                {
+                    var tr = UnityEngine.Object.FindFirstObjectByType<TrailRenderer>(FindObjectsInactive.Exclude);
+                    if (tr != null) trailOrder = tr.sortingOrder;
+                }
+                yield return null;
+            }
             Assert.AreEqual(0, bs.OrbCount, "구슬은 " + limit.ToString("0.00") + "초 안에 전부 도착해 사라져야 한다");
             // T144(주인 «흡수될 때 트레일 랜더러로») — 구슬이 도는 동안 월드 꼬리가 떠 있었고, 끝나면 하나도 안 남는다(누수 0).
             Assert.Greater(trailPeak, 0, "흡수 중에는 꼬리(TrailRenderer)가 떠 있어야 한다(T144)");
+            // T461 ⓑ(주인 2026-09-12 «전투 화면에서 화폐 흡수되는 거는 트레일 렌더러 있게 해야 함») —
+            //   «떠 있다» 와 «보인다» 는 다르다. 종전 TrailSortOrder 는 −50 이었고 전투 바닥이 −40 이라
+            //   꼬리가 바닥 그림 뒤에 그려졌다 — 자는 T144 부터 초록인데 주인 눈에는 한 번도 안 보였다.
+            //   ⚠ 이 레포의 정렬 층은 «Default» 하나뿐이라(ProjectSettings/TagManager) 순서 수만으로 앞뒤가 정해진다 —
+            //      층까지 견주는 단언은 늘 참이라 안 쓴다.
+            Assert.AreNotEqual(int.MinValue, trailOrder, "꼬리를 한 번도 못 잡았다 — 아래 두 단언이 공허해진다");
+            Assert.Greater(trailOrder, BattleWorld.OrderNearProp,
+                $"꼬리가 배경(바닥 {BattleWorld.OrderField} · 소품 {BattleWorld.OrderNearProp}) 뒤다 — 전투에서 안 보인다(실제 {trailOrder})");
+            var playerRig = UnityEngine.Object.FindObjectsByType<CharacterRig>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            int charTop = int.MinValue;
+            foreach (var rig in playerRig)
+                foreach (var sr in rig.GetComponentsInChildren<SpriteRenderer>(true))
+                    charTop = Mathf.Max(charTop, sr.sortingOrder);
+            Assert.AreNotEqual(int.MinValue, charTop, "전투에 캐릭터 그림이 하나도 없다 — 아래 단언이 공허해진다");
+            Assert.GreaterOrEqual(trailOrder, charTop,
+                $"꼬리는 캐릭터보다 앞이어야 한다(지시서 T461 3항 · 꼬리 {trailOrder} · 캐릭터 맨 앞 {charTop})");
             float tTrail = Time.realtimeSinceStartup;
             while (TrailCount() > 0 && Time.realtimeSinceStartup - tTrail < RewardOrbs.TrailTime + 1.5f) yield return null;
             Assert.AreEqual(0, TrailCount(), "구슬이 사라지면 꼬리도 남으면 안 된다(T144 · 누수 0)");
