@@ -12726,6 +12726,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 순서 — 없다(끝난 절이다). 다음 사람에게 남는 것은 §3 의 그 줄과 `tools/test_by_name.py --self-test` 뿐이다.
 ### T457 ✅ — ⚑⚑ 주인: **특전 팝업 직전까지 걷기·전투가 계속돼야 하는데 아직 멈춘다** (주인 2026-09-12 «그 특전 팝업 뜨기 전에 전투나 이동은 바로 전까지 계속 됐어야 함» · T368 의 뒤)
 
+> **✅ 확인(런 1124 · 21:2X · sess-1425-9466 · 워커 N · 죽은 lock 인계 · lock 반납 · 결정 1352)** — 주인 로컬 세션의 lock 이 139분(마지막 제목 커밋 19:07). 런 1124(7fccc87c 뒤 첫 완주 런) `[CI명부]` 에 `KillHoldDefaultTests(1)` 이 **이름으로** 섰고 ✗ 0 · `BattleWorldTests(10)`·`LevelUpQueuePlayTests(1)`·`PlaythroughTests(27)` ✗ 0. 그 런의 빨강 둘은 T475(`PetSummonTests`)·T473(`RewardAbsorbTests`)이고 워커 P 가 25c5c9d3 로 고쳐 런 1127 에 걸려 있다. 남은 것은 **주인 폰**(«흡수 시작부터 계속 움직이는가»)뿐이고 그것은 행에 남긴다(결정 1349 꼴).
+>
 > **🔄 push · 확인 전(05:4X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 1323 · lock `T457` 쥔 채)** — 2항의 «프레임 로그» 없이 코드에서 잡았다: 멈춤의 본체 = T50 `HoldEngine`(킬 보류) — 마지막 킬 = 흡수 시작이라 «흡수부터 멈춘다». `BattleWorld.HoldEngineOnKill` 스위치(기본 거짓)로 끄고 화면 원점도 같이 · 옛 꼴 자는 SetUp 에서 켬 · `KillHoldDefaultTests`. ⚠ PlayMode 처음 도는 갈래 — 빨가면 `_shownPX`/`hold`/`BattleWorldTests` 킬 보류 갈래부터.
 
 0. **실측(어디까지 됐나)** — T368: 흡수·킬 연출 동안 `G.HoldLevelUp` 로 «레벨업 창을 아직 안 세운다» → `Pending` 이 안 서니 엔진이 평소대로 돈다(런 897·907 자 초록 · 폰 빌드 `1a196bc5` 가 품는다). 그런데도 주인은 멈춤을 본다.
