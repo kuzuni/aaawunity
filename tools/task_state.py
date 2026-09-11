@@ -346,9 +346,7 @@ def handovers(tid, holder=None, limit=200):
       그래서 이 자는 **막지 않고 알려만 준다**(결정 493): «이미 하나 있다» 를 둘째가 알고 나면
       보탤지 그만둘지는 그가 정한다. 지금 없는 것은 **아는 길**뿐이다.
 
-    세는 법 — 제목에 ⓐ 그 번호가 들어 있고 ⓑ 위 낱말이 하나라도 있고
-      ⓒ (`holder` 를 주면) **그 SID 가 아닌** 커밋. 제목이 그 번호로 **시작**하는 것은
-      임자 자신의 회차 커밋이라 여기서 뺀다(그쪽은 <see cref="footprint"/> 가 센다).
+    세는 법은 <see cref="handover_subject"/> 한 곳에 있다(제목 한 줄만 보는 순수 함수 · T468).
 
     ⚠⚑ **이 셈은 완전하지 않다 — 못 세는 꼴을 알고 쓴다**(T446 실측 · 자기 것에서 걸렸다).
       진단이 **다른 절의 커밋에 얹혀 오면** 이 눈에 안 잡힌다: 2026-09-11 06:4X 에 워커 A 가
@@ -358,23 +356,47 @@ def handovers(tid, holder=None, limit=200):
     """
     out = []
     log = _git(["log", "--format=%h\t%cI\t%s", "-%d" % limit])
-    num = re.compile(r"\b" + tid + r"(?![\w-])")
-    own = re.compile(r"^" + tid + r"(?![\w-])")
     for line in log.split("\n"):
         parts = line.split("\t")
         if len(parts) != 3:
             continue
         h, when, subj = parts
-        if own.match(subj) or not num.search(subj):
-            continue
-        if not any(w in subj for w in HANDOVER_WORDS):
-            continue
-        m = SID_RE.search(subj)
-        sid = m.group(0) if m else "(SID 없음)"
-        if holder and sid == holder:
+        sid = handover_subject(subj, tid, holder)
+        if sid is None:
             continue
         out.append((h, when[:16], sid, subj))
     return out
+
+
+def handover_subject(subj, tid, holder=None):
+    """커밋 **제목 한 줄**이 «남이 이 절에 놓고 간 진단» 인가 — 맞으면 SID 문자열, 아니면 `None` (T468).
+
+    세는 법 — 제목에 ⓐ 그 번호가 들어 있고 ⓑ <see cref="HANDOVER_WORDS"/> 가 하나라도 있고
+      ⓒ (`holder` 를 주면) **그 SID 가 아닌** 것.
+
+    ⚑ **«제목이 그 번호로 시작하면 임자 것» 은 어림이고, 실측(SID)이 있으면 어림을 안 쓴다**(T468).
+      원래 이 자리는 «`T462 …` 로 시작하면 임자 제 회차 커밋이니 뺀다» 였다. 그런데
+      **놓고 가는 사람도 제목을 그렇게 쓴다** — 2026-09-11 18:4X 실측: 임자가 실제로 받아
+      2회차를 민 진단(`e861f232` → `32b12b4c`)이 «놓고 간 진단» 목록에서 **통째로 빠져 있었다**.
+      가릴 재료는 바로 아래 줄에 이미 있다(SID). **어림과 실측이 같은 자리에 있으면 실측이 이긴다.**
+
+    ⚠ **넓힌 것은 «임자가 아님을 SID 로 아는» 자리 하나뿐이다** — `holder` 를 모르거나
+      제목에 SID 가 아예 없으면 가릴 재료가 없으므로 **종전대로** 뺀다(그 꼴은 임자 제 회차
+      커밋이 압도적이고, 여기서 잘못 세면 다음 사람이 «이미 누가 봤다» 로 읽고 안 본다).
+    """
+    if not re.search(r"\b" + tid + r"(?![\w-])", subj):
+        return None
+    if not any(w in subj for w in HANDOVER_WORDS):
+        return None
+    m = SID_RE.search(subj)
+    sid = m.group(0) if m else None
+    if holder and sid == holder:
+        return None
+    starts_with_tid = re.match(r"^" + tid + r"(?![\w-])", subj) is not None
+    known_other = bool(holder) and bool(sid) and sid != holder
+    if starts_with_tid and not known_other:
+        return None
+    return sid or "(SID 없음)"
 
 
 def row_handover_hint(rowtext, holder=None):
@@ -1121,6 +1143,29 @@ def self_test():
             print("⛔ 자기 검사 실패 — 거친 셈의 «헛짚음» 갈래가 사라졌다(설명글을 고쳤으면 출력 문구도 같이 고쳐라)")
             return 1
 
+        # T468 — 커밋 «제목 한 줄» 을 보는 눈. 순수 함수라 git·표와 무관하다.
+        #   ⚑ 첫 갈래가 이 절이 산 것 그 자체다 — 옛 자는 «제목이 그 번호로 시작하면 임자 것» 이라는
+        #     어림으로 **남이 놓고 간 진단을 뺐다**(실물: e861f232 가 T462 목록에서 통째로 빠졌다).
+        subj_cases = [
+            ("⚑ 번호로 시작해도 SID 가 임자가 아니면 센다(T468 이 산 자리)",
+             "T900 런 1 진단 → 놓고 간다 (sess-9999-9 · 워커 G)", HOLDER, "sess-9999-9"),
+            ("번호로 시작하고 SID 가 임자면 안 센다 — 제 회차 커밋이다",
+             "T900 2회차 — 놓고 간다던 진단을 받아 고쳤다 (%s · 워커 K)" % HOLDER, HOLDER, None),
+            ("임자를 모르면 종전대로 «번호로 시작» 을 뺀다 — 가릴 재료가 없다",
+             "T900 런 1 진단 → 놓고 간다 (sess-9999-9 · 워커 G)", None, None),
+            ("번호로 시작하고 제목에 SID 가 없으면 임자를 알아도 안 센다",
+             "T900 런 1 빨강 진단 → 놓고 간다", HOLDER, None),
+            ("번호가 가운데면 종전대로 센다 — SID 가 없어도",
+             "런 1 빨강 진단 → T900 에 놓고 간다", HOLDER, "(SID 없음)"),
+            ("진단 낱말이 없으면 안 센다", "T900 2회차 — 표를 고쳤다 (sess-9999-9 · 워커 G)", HOLDER, None),
+            ("그 번호가 아니면 안 센다", "T901 런 1 진단 → 놓고 간다 (sess-9999-9 · 워커 G)", HOLDER, None),
+        ]
+        for why, subj, hold, want in subj_cases:
+            got = handover_subject(subj, "T900", hold)
+            if got != want:
+                print("⛔ 자기 검사 실패 — 제목 눈(T468): %s → %r (기대 %r)" % (why, got, want))
+                return 1
+
         # T453 — «행은 «쥔 채» 라는데 lock 이 없다» 를 보는 눈. 순수 함수라 표·git 과 무관하다.
         holds = [
             ("머리에 «쥔 채» 면 쥔 것이다", "T900", "🔄 **push · 확인 전(sess-1-1 · `T900.lock` 쥔 채)** — …", True),
@@ -1158,7 +1203,8 @@ def self_test():
               " · **맨 위 행을 지워도 발급이 안 내려가고(옛 규칙이면 그 번호를 재발급한다) · 지워진 번호를 잡되 멀쩡한 표·구멍·git 없음 셋에는 안 울고**(T415)"
               " · **«남이 놓고 간 진단» 을 남의 SID·SID 없는 «워커 X» 둘 다로 세되 임자 자신의 것은 안 세고, 그 셈이 «거친 것» 임을 갈래로 박아 둔다**(T446) · **«낡은 lock 인데 임자는 살아 있다» 를 요약뿐 아니라 `verdict()`(선점 직전 단일 조회)에서도 막고, «둘 다 낡음»·«판단 못 함» 둘에는 종전대로 잡게 둔다(T447)** · **그 막음이 «발자취가 있는» 절 — 곧 인수가 실제로 나는 유일한 꼴 — 에서도 판정 줄에 서고(T465), 임자의 마지막 커밋이 딴 절이면 그 번호까지 말한다**"
               " · **«행은 «lock 쥔 채» 라는데 lock 파일이 없다» 를 칸 «머리» 로만 가려 잡고(뒤 이력의 «반납» 에 안 속는다) · ✅·⬜ 표시에는 안 울고, 판정(rc)은 안 바꾼다**(T453)"
-              " · **«표에 열린 행은 있는데 §2 에 제목이 없다» 를 잡되 닫힌 행·제목이 있는 행에는 안 울고, 그 참고가 끝줄에도 실리고 rc 는 0 이다**(T466)")
+              " · **«표에 열린 행은 있는데 §2 에 제목이 없다» 를 잡되 닫힌 행·제목이 있는 행에는 안 울고, 그 참고가 끝줄에도 실리고 rc 는 0 이다**(T466)"
+              " · **제목이 그 번호로 시작해도 SID 로 «임자가 아니다» 를 가렸으면 놓고 간 진단으로 세고, 임자 것·임자를 모를 때·제목에 SID 가 없을 때 셋에는 종전대로 안 센다**(T468)")
         return 0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
