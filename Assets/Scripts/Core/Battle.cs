@@ -367,7 +367,7 @@ namespace KkomaKnight.Core
         }
 
         // ───────────────────────── 스턴 · 빗맞음 · 방어막 · 반사 ─────────────────────────
-        void ApplyStun(EnemyState e, double sec)
+        void ApplyStun(EnemyState e, double sec, string src = null)
         {
             if (e == null || e.Hp <= 0) return;
             double s = sec; if (e.IsBoss) s *= C.StunBossMul;
@@ -376,10 +376,10 @@ namespace KkomaKnight.Core
         }
         void ProcOnMiss(EnemyState e) { Misses++; Emit(EvKind.Miss, e, 0); }
         void GainWard(double ch, string src = null) { if (ch > 0 && Pkk(ch)) { P.Ward++; Emit(EvKind.Ward, null, P.Ward, src: src); } }
-        void Reflect(EnemyState src, double amt)
+        void Reflect(EnemyState src, double amt, string why = null)
         {
             if (src == null || src.Hp <= 0 || amt <= 0) return;
-            src.Hp -= amt; Emit(EvKind.Reflect, src, amt);
+            src.Hp -= amt; Emit(EvKind.Reflect, src, amt, src: why);
             if (src.Hp <= 0) OnKill(src, -src.Hp);
         }
 
@@ -406,9 +406,9 @@ namespace KkomaKnight.Core
             if (P.Steal > 0) Heal(d * P.Steal / 100, true);   // ⚠ T458 3항 — 흡혈은 «특전 하나» 가 아니라 모아진 값(장비도 준다)이라 출처를 안 적는다(모르면 null · 결정 1304)
             if (crit)
             {
-                if (P.Has("p_stunCritN") && Pkk(PK.C("PERK_STUNC_N"))) ApplyStun(e, PK.C("PERK_STUNC_T"));
-                if (P.Has("p_stunCritR") && Pkk(PK.C("PERK_STUNC_R"))) ApplyStun(e, PK.C("PERK_STUNC_T"));
-                if (P.Has("p_stunCritL") && Pkk(PK.C("PERK_STUNC_L"))) ApplyStun(e, PK.C("PERK_STUNC_T"));
+                if (P.Has("p_stunCritN") && Pkk(PK.C("PERK_STUNC_N"))) ApplyStun(e, PK.C("PERK_STUNC_T"), "p_stunCritN");
+                if (P.Has("p_stunCritR") && Pkk(PK.C("PERK_STUNC_R"))) ApplyStun(e, PK.C("PERK_STUNC_T"), "p_stunCritR");
+                if (P.Has("p_stunCritL") && Pkk(PK.C("PERK_STUNC_L"))) ApplyStun(e, PK.C("PERK_STUNC_T"), "p_stunCritL");
                 if ((P.Has("p_critSpearR") || P.Has("p_critSpearL") || P.Has("p_critBoltL")) && ProcN < C.ProcTickCap)
                 {
                     ProcN++;
@@ -593,7 +593,7 @@ namespace KkomaKnight.Core
                 if (P.Has("p_evHealL") && Pkk(PK.C("PERK_EVHEAL_L"))) Heal(P.MaxHp * PK.C("PERK_EVHEAL_F"), src: "p_evHealL");
                 if (P.Has("p_evRepairR") && Pkk(PK.C("PERK_EVREP_R"))) Repair(P.MaxSh * PK.C("PERK_EVREP_F"), "p_evRepairR");
                 if (P.Has("p_evRepairL") && Pkk(PK.C("PERK_EVREP_L"))) Repair(P.MaxSh * PK.C("PERK_EVREP_F"), "p_evRepairL");
-                if (src != null && src.Hp > 0 && P.Has("p_evadeStun") && Pkk(PK.C("PERK_EVSTUN_CH"))) ApplyStun(src, PK.C("PERK_STUNC_T"));
+                if (src != null && src.Hp > 0 && P.Has("p_evadeStun") && Pkk(PK.C("PERK_EVSTUN_CH"))) ApplyStun(src, PK.C("PERK_STUNC_T"), "p_evadeStun");
                 if (src != null && src.Hp > 0 && P.Has("p_execEvN") && Pkk(PK.C("PERK_EXEC_N"))) { src.Hp = 0; OnKill(src, 0); }
                 if (src != null && src.Hp > 0 && P.Has("p_execEvR") && Pkk(PK.C("PERK_EXEC_R"))) { src.Hp = 0; OnKill(src, 0); }
                 if (src != null && src.Hp > 0 && P.Has("p_execEvL") && Pkk(PK.C("PERK_EXEC_L"))) { src.Hp = 0; OnKill(src, 0); }
@@ -614,9 +614,12 @@ namespace KkomaKnight.Core
                 if (P.Hp <= 0) { P.Hp = 0; Dead = true; Emit(EvKind.PlayerHit, src, shDmg, false, null, null, d); return; }
             }
             Emit(EvKind.PlayerHit, src, shDmg, false, null, null, d);
-            double thornM = P.PxGet("p_thorns") + (hadSh ? P.PxGet("g_thornSh") : 0);
-            if (thornM != 0 && isMelee && src != null) Reflect(src, thornBase * thornM);
-            if (P.Has("p_shRefL") && hadSh && src != null && Pkk(PK.C("PERK_SHREF_L"))) Reflect(src, thornBase);
+            double thornP = P.PxGet("p_thorns"), thornG = hadSh ? P.PxGet("g_thornSh") : 0;
+            double thornM = thornP + thornG;
+            // T485 — 가시는 특전과 장비가 **더해질 수 있다**: 한쪽만이면 그것을 대고, 둘 다면 «어느 것» 이 없으니 비운다(결정 1304 «모르면 null»).
+            string thornSrc = thornP != 0 && thornG != 0 ? null : thornP != 0 ? "p_thorns" : thornG != 0 ? SrcGear : null;
+            if (thornM != 0 && isMelee && src != null) Reflect(src, thornBase * thornM, thornSrc);
+            if (P.Has("p_shRefL") && hadSh && src != null && Pkk(PK.C("PERK_SHREF_L"))) Reflect(src, thornBase, "p_shRefL");
             GainWard(P.Has("p_wardHitN") ? PK.C("PERK_WARD_N") : 0, "p_wardHitN");
             GainWard(P.Has("p_wardHitR") ? PK.C("PERK_WARD_R") : 0, "p_wardHitR");
             GainWard(P.Has("p_wardHitL") ? PK.C("PERK_WARD_L") : 0, "p_wardHitL");

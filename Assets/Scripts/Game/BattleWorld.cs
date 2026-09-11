@@ -1146,9 +1146,9 @@ namespace KkomaKnight.Game
                 case EvKind.Ignore: Pop("무시", PlayerPos(1.1f), Palette.Gray, 32); break;
                 case EvKind.Heal: Pop("+" + UiKit.Fmt(ev.Value), PlayerPos(1.05f), Palette.PopHeal, 36, SrcIcon(ev.Src)); Fx.Spawn("fx.heal", PlayerPos(0.4f), 0.7f, 1.5f); break;
                 case EvKind.Repair: Pop("+" + UiKit.Fmt(ev.Value), PlayerPos(1.2f) + Vector3.left * 0.2f, Palette.Hex(D.Ui.PopShield), 32, SrcIcon(ev.Src)); break;
-                case EvKind.Stun: Pop("스턴", EnemyPos(ev.Enemy, 1.0f), Palette.Yellow, 30); break;
+                case EvKind.Stun: Pop("스턴", EnemyPos(ev.Enemy, 1.0f), Palette.Yellow, 30, SrcIcon(ev.Src)); break;
                 case EvKind.Bolt: Lightning(ev.Enemy); break;
-                case EvKind.Reflect: Pop("반사 " + UiKit.Fmt(ev.Value), EnemyPos(ev.Enemy, 0.95f), Palette.Sky, 32); break;
+                case EvKind.Reflect: Pop("반사 " + UiKit.Fmt(ev.Value), EnemyPos(ev.Enemy, 0.95f), Palette.Sky, 32, SrcIcon(ev.Src)); break;
                 // T152 3항 — 반격 팝도 같은 표기로 맞춘다(같은 «치명타» 를 두 가지로 적지 않는다 · 결정 기록)
                 case EvKind.Counter: Pop("반격 " + UiKit.Fmt(ev.Value), EnemyPos(ev.Enemy, 0.95f), Palette.Orange, 34, SrcIcon(ev.Src) ?? (ev.Crit ? CritIconKey : null)); Fx.Spawn("fx.hit", EnemyPos(ev.Enemy), 0.5f, 1f); break;
                 case EvKind.LevelUp: Pop("LEVEL UP!", PlayerPos(1.3f), Palette.Yellow, 46); Fx.Spawn("fx.levelup", PlayerPos(0.5f), 1f, 2f); Audio.Sfx("snd.levelup"); break;

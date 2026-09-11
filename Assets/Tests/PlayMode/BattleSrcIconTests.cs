@@ -144,6 +144,51 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
+        /// <summary>
+        /// T485 — <b>반사·스턴</b>도 낸 것을 말한다. T458 을 닫은 뒤 «수가 뜨는 팝» 을 세어 보니 여섯 중 <b>반사 하나만</b> 출처가 없었고, 글자 팝의 <b>스턴</b>도 특전이 낸 것이었다.
+        /// <para>⚠ 가시(thorns)는 특전과 장비가 <b>더해질 수 있어</b> 둘 다면 엔진이 출처를 비운다 — 그 갈래는 엔진 쪽 자(<c>BattleEventSourceTests</c>)의 몫이고, 여기서는 «실린 출처가 그림이 되는가» 만 잰다.</para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ReflectAndStunPopsWearTheirSourceIconToo()
+        {
+            yield return Boot();
+            _app.StartBattle(1);
+            var bs = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(bs, "전투 화면");
+            var world = bs.World; Assert.IsNotNull(world, "BattleWorld");
+            yield return RealSeconds(0.3f);
+
+            var cases = new[]
+            {
+                new { Kind = EvKind.Reflect, Src = "p_shRefL", What = "반사" },
+                new { Kind = EvKind.Reflect, Src = "p_thorns", What = "가시 반사" },
+                new { Kind = EvKind.Stun, Src = "p_stunCritN", What = "스턴" },
+            };
+            foreach (var c in cases)
+            {
+                string key = BattleWorld.SrcIcon(c.Src);
+                var want = _app.Assets.Sprite(key);
+                Assert.IsNotNull(want, "카탈로그에 " + key + " 가 있어야 한다(" + c.What + ")");
+
+                var before = PopIcons();
+                world.Handle(new BattleEvent { Kind = c.Kind, Value = 33, Src = c.Src });
+                yield return Frames(2);
+                var made = NewSince(before);
+                Assert.AreEqual(1, made.Count, c.What + " 팝에도 그림 하나가 붙는다(T485)");
+                Assert.AreSame(want, made[0].sprite, c.What + " 는 그것을 낸 특전의 그림을 쓴다");
+            }
+
+            // 출처를 비운 채 오는 반사(가시가 특전 + 장비로 섞인 판)는 그림 없이 뜬다 — 종전 그대로
+            {
+                var before = PopIcons();
+                world.Handle(new BattleEvent { Kind = EvKind.Reflect, Value = 33 });
+                yield return Frames(2);
+                Assert.IsEmpty(NewSince(before), "출처가 없는 반사(특전 + 장비가 섞인 가시)에는 그림을 안 붙인다");
+            }
+
+            _log.AssertNoRed("반사·스턴 출처 아이콘");
+            yield return Shutdown();
+        }
+
         /// <summary>장비·펫이 낸 것도 제 그림을 쓴다 — 특전 id 가 아닌 두 낱말(<c>gear</c>·<c>pet</c>)이 화면에서 안 흘러 떨어지는지 잰다.</summary>
         [UnityTest]
         public IEnumerator GearAndPetSourcesMapToTheirOwnIcons()
