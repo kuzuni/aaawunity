@@ -12786,7 +12786,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 2. **자** — `UiSmokeTests` 장비 절: 슬롯 «+N» `font`·`fontSharedMaterial` == 인벤 것.
 3. **확인** — `screens` 05 + 주인 폰.
 
-> **🔄 push · 확인 전(03:1X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 1282 · lock `T460` 쥔 채)** — 1·2항 그대로.
+> **🔄 2회차 push · CI 확인 전(17:0X · sess-1455-20088 · 워커 P · 죽은 lock 인수 · 결정 1295 · lock `T460` 쥔 채)** — 1항의 마지막 줄이 `EnsureOutline` 이 세운 T63 테를 덮어썼고(인벤 재질의 애셋 값 `_OutlineWidth: 0`) 새 글꼴의 줄 높이 48 > 인벤 띠 46.37 이라 런 1093·1096·1097·1098 이 `[06_gear] «+1» ⚠잘림 ⛔아웃라인 두께 0` 으로 빨갰다(결정 1288). 고침 = 갈아 끼운 글꼴의 공유 재질에 테를 다시 걸고(`TmpFont.SetOutline`) 띠를 선호 높이만큼 늘린다(`FitPlusBand`) · 자 두 줄(테 두께 > 0 · 선호 높이 ≤ 띠). 확인 = 다음 완주 런 `TextSizeGateTests`·`UiSmokeTests` ✗ 0.
+> **◦진행 push · 확인 전(03:1X · sess-1538-10418 · 주인 자리 로컬 세션 · 결정 1282 · lock `T460` 쥔 채)** — 1·2항 그대로.
 
 순서 — `Game/GearUi.cs` · `Tests/PlayMode/UiSmokeTests.cs`. lock `T460`.
 

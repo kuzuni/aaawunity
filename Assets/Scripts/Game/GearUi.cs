@@ -93,6 +93,21 @@ namespace KkomaKnight.Game
             //   두께·외곽선이 달라 «폰트 느낌이 다르다». 인벤 쪽이 주인 정본(T310 «인벤과 같게»)이라 **인벤 조각의 글꼴·재질을 그대로 씌운다** —
             //   새 에셋 0 · 조각 원본 불변 · 인벤 조각에서 한 번 읽어 캐시.
             var pf = PlusFont(); if (pf.font != null) { t.font = pf.font; if (pf.mat != null) t.fontSharedMaterial = pf.mat; }
+            // T460 2회차(런 1093·1096·1097 `[06_gear] Text_Level «+1» ⚠잘림 ⛔아웃라인 두께 0` · 결정 1288 의 진단 그대로) — 위 줄이 `UiKit.SetText → EnsureOutline` 이 세운
+            //   Jua 글꼴·테(`_OutlineWidth` 0.5)를 **그 뒤에** 덮어쓰는데, 인벤 조각의 재질(`LTAvocado-Bold SDF_OutlineBlack` 의 기본 재질)은 애셋 값이 `_OutlineWidth: 0` 이다 —
+            //   «OutlineBlack» 은 이름이지 값이 아니다. 그래서 갈아 끼운 **그 글꼴의 공유 재질**에 우리 테를 다시 건다(T63 · T207 ② «폰트 애셋의 공유 머티리얼 한 장» · 인벤 재질 == 그 글꼴의 `material` 이라 위 단언은 그대로 선다).
+            //   그리고 그 글꼴은 크기 40 에서 줄 높이가 인벤 띠(46.37px)보다 크므로(런 실측 pref 48) 띠를 선호 높이만큼만 늘린다 — 크기(T310 의 40)를 물리면 하한(본문 40)에 걸린다.
+            //   ⚠ `SetPlus` 는 슬롯·인벤 **공용**이라(T310 · 아래 `Cell` 도 부른다) 이 두 줄은 인벤 «+N» 에도 닿는다 — 그 칸이 바로 빨개진 자리였다.
+            if (pf.font != null) { TmpFont.SetOutline(pf.font, UiKit.OutlineColor); FitPlusBand(t); }
+        }
+
+        /// <summary>T460 2회차 — «+N» 글자 띠가 그 글꼴의 선호 높이보다 낮으면 모자란 만큼만 키운다(가운데 피벗이라 위·아래로 반씩 · 자의 «잘림» 자(<c>PrefH &gt; RectH + 1</c>)와 같은 자로 잰다).</summary>
+        static void FitPlusBand(TMP_Text t)
+        {
+            if (t == null || string.IsNullOrEmpty(t.text)) return;
+            t.ForceMeshUpdate();
+            var rt = t.rectTransform; float need = t.preferredHeight - rt.rect.height;
+            if (need > 0f) rt.sizeDelta = new Vector2(rt.sizeDelta.x, rt.sizeDelta.y + need + 1f);
         }
 
         static (TMP_FontAsset font, Material mat) _plusFont; static bool _plusFontTried;

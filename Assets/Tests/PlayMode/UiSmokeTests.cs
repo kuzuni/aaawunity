@@ -1506,6 +1506,9 @@ namespace KkomaKnight.Tests.Play
                         Assert.IsNotNull(pf.font, "인벤 조각(ui.equipCell)의 Text_Level 글꼴을 읽을 수 있다(T460)");
                         Assert.AreEqual(pf.font, tmp.font, "슬롯 " + i + " «+N» 글꼴 = 인벤 글꼴(T460 · 슬롯 조각은 AfacadFlux 였다)");
                         Assert.AreEqual(pf.mat, tmp.fontSharedMaterial, "슬롯 " + i + " «+N» 재질(외곽선) = 인벤 재질(T460)");
+                        // T460 2회차 — 그 재질이 «이름만 OutlineBlack» 이 아니라 실제로 테를 켜고 있는가(애셋 값은 두께 0 이었다 · 런 1093 의 «⛔아웃라인 두께 0»). 이 줄이 없으면 그 회귀는 남의 게이트(TextSizeGate)에서만 운다.
+                        Assert.Greater(tmp.fontSharedMaterial.GetFloat(TmpFont.OutlineWidthProp), 0f, "슬롯 " + i + " «+N» 재질의 테 두께 > 0(T460 2회차 · T63)");
+                        Assert.LessOrEqual(tmp.preferredHeight, ((RectTransform)tmp.transform).rect.height + 1f, "슬롯 " + i + " «+N» 이 띠를 넘치지 않는다(T460 2회차 · 런 1093 의 «⚠잘림»)");
                     }
                     float rot = Mathf.DeltaAngle(0f, rt.localEulerAngles.z);
                     if (GearLook.HasLook(part))
