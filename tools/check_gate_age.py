@@ -105,6 +105,34 @@ DEPLOY_BAND = ("평소 폭(2026-09-11 실측 · 배포런 300개/이틀 · T451)
                "배포 간격 중앙값 **20분** · p75 40분 · p90 119분 · 실측 최대 287분(새벽) · 굽기만 19~30분")
 
 
+def deploy_why_line(dep_sha, green_sha, verdict):
+    """뒤처졌을 때 **왜** 인지 한 줄 — 답에 필요한 두 조각을 이 자가 이미 둘 다 들고 있다. 없으면 None.
+
+    ⛳ T467 — 이 줄이 없어 **한 회차가 통째로 들었다**(2026-09-11 17:5X · 워커 L 실측 · 그 값을 치른 것이 나다).
+    그 회차에 내가 한 일을 그대로 적는다: 위 두 줄에서 «폰 43커밋 뒤 · 116분» 과 «유니티 잡 = failure» 를
+    **따로따로** 읽고, 배포가 고장 났다고 보아 배포 런 12개와 CI 런 14개를 API 로 받아
+    «`pick` 이 초록을 놓치고 있다» 까지 갔다가, 마지막에 **자기가 옳았음**을 확인하고 끝났다.
+    ⇒ 두 조각을 **잇기만** 하면 그 걸음이 통째로 없어진다: 유니티 잡이 빨간 동안 폰이 뒤처지는 것은
+      고장이 아니라 **T187 이 세운 보호가 일하는 모습**이다(폰에는 «유니티 잡이 초록이던 커밋» 만 간다).
+
+    ⚠ 그 회차가 실제로 걸린 함정도 같이 적는다 — **«런 전체가 success» 와 «폰에 갈 수 있는 초록» 은 다르다.**
+      문서만 고친 회차는 `has_code != 'false'` 갈래에서 유니티 잡이 **skipped** 라 런은 success 인데
+      `pick` 은 그것을 안 고른다(옳다 · T187·T433). 그래서 «CI 초록인데 왜 배포가 안 되나» 로 다시 샌다 —
+      이 자가 보는 «유니티 잡» 은 `screens` 가 적은 **실제로 돈 그 잡**이라 애초에 그 헷갈림이 없는 쪽이다.
+
+    판정은 안 한다(rc 0줄) — 결정 930·1184 그대로, 사실만 눈앞에 놓는다.
+    """
+    if not dep_sha:
+        return None
+    if green_sha and dep_sha[:9] == green_sha[:9]:
+        return None
+    if verdict != "success":
+        return ("⤷ **배포가 멈춘 것이 아니라 보낼 초록이 없다** — 유니티 잡이 빨간 동안 폰은 «마지막 초록» 에 "
+                "머문다(T187 의 보호가 일하는 모습이다). 빨강이 풀리면 저절로 흐른다 — 배포 쪽은 볼 것 없다(T467)")
+    return ("⤷ 유니티 잡은 초록이다 — 곧 굽고 있거나(굽기 19~30분) `pick` 이 아직 그 커밋을 안 골랐다. "
+            "아래 폭을 넘기 전에는 배포 쪽을 뒤질 까닭이 없다(T467)")
+
+
 def deploy_band_line(dep_sha, green_sha):
     """뒤처져 있을 때만 «그런데 그게 평소인가» 를 같이 놓는다 — 없으면 None.
 
@@ -348,6 +376,9 @@ def main():
         behind = count_between(dep_sha, m["sha"]) if dep_sha else None
         print(f"· 배포(gh-pages · 주인 폰) = 소스 {(dep_sha or '?')[:9]} · {dep_age}분 전 "
               f"· {deploy_phrase(dep_sha, m['sha'], behind)} (보고만 · T436)")
+        why = deploy_why_line(dep_sha, m["sha"], verdict)
+        if why:
+            print(f"  {why}")
         band = deploy_band_line(dep_sha, m["sha"])
         if band:
             print(f"  └ {band}")
@@ -490,6 +521,25 @@ def self_test():
         bad += 0 if ok else 1
         print(f"  {'✔' if ok else '✘'} «{got}» — {why}")
 
+    # ⛳ T467 — «왜 뒤처졌나» 한 줄. 이 자가 갈라야 하는 것은 **«배포를 뒤져라» 와 «뒤질 것 없다»** 둘뿐이다.
+    whys = [
+        ("폰이 최신이면 안 적는다 — 뒤처지지 않았는데 까닭을 읽을 까닭이 없다", G1, G1, "success", None),
+        ("뒤처졌는데 유니티 잡이 빨갛다 = 보낼 초록이 없는 것이다(뒤질 것 없다)", G1, G2, "failure", "보낼 초록이 없다"),
+        ("유니티 잡이 초록인데 뒤처졌다 = 굽는 중이거나 아직 안 골랐다", G1, G2, "success", "굽고 있거나"),
+        ("답을 못 읽었어도(«?») 초록은 아니므로 빨강 쪽으로 읽는다 — 조용한 것이 제일 나쁘다", G1, G2, "?", "보낼 초록이 없다"),
+        ("소스를 못 집었으면 안 적는다 — 견줄 수가 없다", None, G2, "failure", None),
+    ]
+    for why, dep, green, verd, need in whys:
+        got = deploy_why_line(dep, green, verd)
+        ok = (got is None) if need is None else (got is not None and need in got)
+        bad += 0 if ok else 1
+        print(f"  {'✔' if ok else '✘'} 까닭={'(안 적음)' if got is None else need} — {why}")
+
+    # ⚠ 그 줄도 **판정 밖**이어야 한다 — 이 자는 보는 자이지 막는 자가 아니다(결정 493·627·930).
+    why_pure = "deploy_why_line" not in inspect.getsource(main).split("bad = []")[1]
+    bad += 0 if why_pure else 1
+    print(f"  {'✔' if why_pure else '✘'} 까닭 줄도 판정부(bad) 밖에만 있다 — 보고만이다(T467)")
+
     # ⛳ T451 — «평소 폭» 을 놓는 자리. 재는 것이 아니라 **언제 입을 여는가**를 잰다(소음이 되면 다음 사람이 지운다).
     bands = [
         ("폰이 최신이면 안 적는다 — 최신인데 «평소 폭» 을 읽을 까닭이 없다", G1, G1, False),
@@ -583,7 +633,7 @@ def self_test():
     if bad:
         print(f"✗ check_gate_age --self-test: 갈래 {bad}건이 기대와 다르다 — 위 표의 판정 규칙을 보라")
         return 1
-    print(f"✓ check_gate_age --self-test: 갈래 {len(cases) + len(holes) + len(calls) + len(deploys) + len(phrases) + len(bands) + len(stamps) + 6}개가 전부 기대대로 갈린다")
+    print(f"✓ check_gate_age --self-test: 갈래 {len(cases) + len(holes) + len(calls) + len(deploys) + len(phrases) + len(bands) + len(whys) + len(stamps) + 7}개가 전부 기대대로 갈린다")
     return 0
 
 
