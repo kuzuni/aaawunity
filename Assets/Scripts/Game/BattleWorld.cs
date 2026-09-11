@@ -1116,7 +1116,7 @@ namespace KkomaKnight.Game
                 {
                     var p = EnemyPos(ev.Enemy);
                     // T152 — 치명타는 숫자 뒤 «!» 대신 왼쪽에 치명타 아이콘(주인 «치명타 아이콘+데미지») · 색·크기는 종전 그대로
-                    Pop(UiKit.Fmt(ev.Value), p + Vector3.up * 0.5f, ev.Crit ? Palette.PopCrit : Palette.White, ev.Crit ? 50 : 38, ev.Crit ? CritIconKey : null);
+                    Pop(UiKit.Fmt(ev.Value), p + Vector3.up * 0.5f, ev.Crit ? Palette.PopCrit : Palette.White, ev.Crit ? 50 : 38, SrcIcon(ev.Src) ?? (ev.Crit ? CritIconKey : null));   // T458 2항 — 출처가 있으면 그 그림이 이긴다(치명타는 색·크기로도 말한다)
                     Fx.Spawn(ev.Crit ? "fx.crit" : "fx.hit", p, ev.Crit ? 0.25f : 0.6f, 1.2f);
                     Audio.Sfx(ev.Crit ? "snd.crit" : "snd.hit", ev.Crit ? 1f : 0.8f);
                     if (ev.Enemy != null && _enemies.TryGetValue(ev.Enemy, out var v)) { v.Rig.Flash(flash, CharacterRig.HitFlashSeconds); v.Rig.transform.DOKill(true); v.Rig.transform.DOPunchPosition(new Vector3(0.06f, 0, 0), 0.15f, 1, 0).SetLink(v.Rig.gameObject); }   // SetLink(T56) — 사망 연출 뒤 Remove 로 파괴돼도 경고 0
@@ -1142,7 +1142,7 @@ namespace KkomaKnight.Game
                 case EvKind.Bolt: Lightning(ev.Enemy); break;
                 case EvKind.Reflect: Pop("반사 " + UiKit.Fmt(ev.Value), EnemyPos(ev.Enemy, 0.95f), Palette.Sky, 32); break;
                 // T152 3항 — 반격 팝도 같은 표기로 맞춘다(같은 «치명타» 를 두 가지로 적지 않는다 · 결정 기록)
-                case EvKind.Counter: Pop("반격 " + UiKit.Fmt(ev.Value), EnemyPos(ev.Enemy, 0.95f), Palette.Orange, 34, ev.Crit ? CritIconKey : null); Fx.Spawn("fx.hit", EnemyPos(ev.Enemy), 0.5f, 1f); break;
+                case EvKind.Counter: Pop("반격 " + UiKit.Fmt(ev.Value), EnemyPos(ev.Enemy, 0.95f), Palette.Orange, 34, SrcIcon(ev.Src) ?? (ev.Crit ? CritIconKey : null)); Fx.Spawn("fx.hit", EnemyPos(ev.Enemy), 0.5f, 1f); break;
                 case EvKind.LevelUp: Pop("LEVEL UP!", PlayerPos(1.3f), Palette.Yellow, 46); Fx.Spawn("fx.levelup", PlayerPos(0.5f), 1f, 2f); Audio.Sfx("snd.levelup"); break;
                 case EvKind.Perk:
                 {
@@ -1159,6 +1159,24 @@ namespace KkomaKnight.Game
         /// 스탯 «치명타 확률» 이 쓰는 그림 그대로라 <b>새 그림 0</b>(§1 «에셋은 주인 에셋만»).
         /// </summary>
         public const string CritIconKey = "pi.critical";
+
+        /// <summary>
+        /// T458 2항 — 뜬 글자 왼쪽에 <b>«왜 떴는지»</b> 그림(주인 2026-09-12 «해당 특전이나 해당 장비로 인해 번개 나왔으면 해당 꺼 아이콘이 데미지 텍스트에 떠야 함»).
+        /// 엔진이 실어 준 출처(<see cref="BattleEvent.Src"/> · T458 1항)를 <b>이미 있는 그림</b>으로 옮긴다 — 새 그림 0.
+        /// <para>
+        /// · 특전 = <see cref="Icons.Perk"/>(특전 카드·버프 칸이 쓰는 그 키 그대로 · 계열이 같으면 같은 그림) ·
+        /// <see cref="BattleState.SrcGear"/> = 장비가 굴린 <b>도끼</b>(오늘 장비 소환은 셋 다 도끼다 · 그 낱말이 다른 무기를 뜻하게 되는 날 이 줄이 같이 바뀌어야 한다) ·
+        /// <see cref="BattleState.SrcPet"/> = 펫 뱃지와 같은 그림.
+        /// </para>
+        /// <para>⚠ <b>모르면 <c>null</c></b> — 없는 출처에 아무 그림이나 붙이면 화면이 «아는 척» 을 한다(T458 1항이 엔진에서 지킨 그 규칙을 화면에서도 지킨다).</para>
+        /// </summary>
+        public static string SrcIcon(string src)
+        {
+            if (string.IsNullOrEmpty(src)) return null;
+            if (src == BattleState.SrcGear) return "pi.axe";
+            if (src == BattleState.SrcPet) return "ui.petIcon";
+            return src.StartsWith("p_") ? Icons.Perk(src) : null;
+        }
         /// <summary>팝 아이콘 한 변 = 글자 크기의 이 배(숫자 높이와 눈으로 같아 보이는 비율).</summary>
         public const float PopIconMul = 1f;
         /// <summary>아이콘과 숫자 사이 틈(프레임 px).</summary>
