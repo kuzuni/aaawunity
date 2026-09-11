@@ -8,6 +8,10 @@ layout.json 을 안 주면 ui-screens/layout.json → 없으면 `git show origin
 
 판정(§5 · T46.4): 행마다 x·y·w·h 가 전부 ±3%p 안이면 1점 · 하나라도 3~6%p 면 0.5점 · 그 밖(6%p 초과 · 요소 없음)은 0점.
   표 점수 = 10 × 합 ÷ 행 수 (소수 1자리). «(참고·컨테이너)» 행은 세지 않는다.
+  T464 — 비고에 `⛔` 가 있는 행(«아직 못 만든다»·«주인이 없앴다»)도 세지 않는다 — `check_table_tags` 가 3회차부터 그렇게 읽고 있었는데
+        이 자는 이름의 «(참고·컨테이너)» 만 보고 비고는 안 봐서, **같은 표 같은 행을 자 하나는 빼고 하나는 셌다**(T462 가 패스 요소 셋을
+        없애며 표에 ⛔ 를 적자 `19_pass` 가 10.0 → 8.2 · UI 회귀가 아니었다). 표시 규칙은 여기 `NOT_YET` 한 곳이고 `check_table_tags` 가 빌려 쓴다.
+        ⚠ 비고는 여섯째 칸 하나다(② «플레이어 발밑 y» 처럼 일곱째 칸에 적힌 ⛔ 는 두 자 모두 안 본다 — 그 행은 지금도 센다).
   ref 에 x 나 w 가 없는 «월드·부분 행»(② 지면 띠 · 발밑 y · 캐릭터 높이 · 바 폭 …)은 layout.json 에 값이 있을 때만 센다(없으면 «측정 없음(월드)» 로 표시만 — 하니스가 캔버스 밖을 못 재므로 · T47 이 BattleWorld 에서 잰다).
   ref 값이 «—» 인 축은 비교하지 않는다(있는 축만).
 출력 = 행별 «ref / 게임 / 차 / 판정» 마크다운 표 + 표 점수 + «다음 고칠 것»(0·0.5 행 · 큰 차부터). PROGRESS 점수판에 그대로 붙인다.
@@ -85,6 +89,11 @@ SCREENS = {
     'profile_nick': ('㉟', '이름', None),
 }
 PASS, HALF = 3.0, 6.0
+NOT_YET = '⛔'      # T464 — 표의 «비고»(여섯째 칸)에 이 표가 있으면 «아직 못 만든 · 주인이 없앤 요소» — 안 센다. check_table_tags 도 이 상수를 읽는다.
+
+def skip_row(name, note):
+    """이 행을 채점에서 빼는가 — 이름의 «(참고·컨테이너)» 또는 비고의 `⛔`(T464). 두 자(§5 채점 · 이름표 대조)가 같은 함수를 쓴다."""
+    return '(참고·컨테이너)' in name or NOT_YET in (note or '')
 
 def num(s):
     s = s.strip().strip('*').strip()
@@ -172,16 +181,29 @@ def selfcheck():
     if still:
         sys.exit('✗ [§5자] SCREENS 가 이름을 박아 둔 표인데도 «아무도 안 찍는다» 로 남았다: ' + ' '.join(still))
     print(f'✓ [§5자] 안 찍는 표를 세는 눈 — 빈 layout 이면 {len(none)}개 전부 · SCREENS 를 채우면 {len(some)}개 (T299)')
+    # T464 — «⛔ 안 센다» 를 이 자도 읽는가. 가짜 표 한 장: 성한 행 · 비고에 ⛔ 인 행(화면에 없다) · (참고·컨테이너) 행.
+    #        ⛔ 행이 ✗0 으로 세어지면 점수가 5.0 이 되고, 안 세어지면 10.0 이다 — 그 차이가 이 검사의 눈이다.
+    fake = {'Ⓩ': {'title': '가짜 (`99_fake.jpg`)', 'rows': [('성한 행', [1.0, 1.0, 1.0, 1.0], '보통'),
+                                                            ('없앤 행', [2.0, 2.0, 2.0, 2.0], f'{NOT_YET} 주인이 없앴다'),
+                                                            ('틀 (참고·컨테이너)', [3.0, 3.0, 3.0, 3.0], '')]}}
+    sc, text = score_screen(fake, {'99_fake': {'성한 행': [1.0, 1.0, 1.0, 1.0]}}, '99_fake')
+    tail = text.split('세지 않았다(T464)')
+    if sc != 10.0 or len(tail) < 2 or '없앤 행' not in tail[-1]:
+        sys.exit(f'✗ [§5자] 비고의 {NOT_YET} 를 못 읽는다 — 가짜 표 점수 {sc}(기대 10.0) · 안 센 행 이름이 꼬리에 없다')
+    if skip_row('발밑 y', '보통 비고') or not skip_row('x', f'{NOT_YET} 없다') or not skip_row('틀 (참고·컨테이너)', ''):
+        sys.exit('✗ [§5자] skip_row 가 «(참고·컨테이너)» · 비고 ⛔ 둘 중 하나를 못 가른다')
+    print(f'✓ [§5자] 비고의 {NOT_YET} 행은 안 센다 — 가짜 표 10.0 · 이름은 꼬리에 적힌다 (T464)')
 
 def score_screen(tables, layout, screen):
     sym, table, only, exclude = find_table(tables, screen)
     if table is None: return None, f'«{screen}» 에 맞는 표가 docs/ref-layout.md 에 없다 — ⑨~ 로 표를 추가(§5.5)'
     game = layout.get(screen) or {}
-    rows_out = []; total = 0.0; counted = 0; world_skipped = []
+    rows_out = []; total = 0.0; counted = 0; world_skipped = []; not_yet = []
     for name, ref, note in table['rows']:
         if '(참고·컨테이너)' in name: continue
         if only and not name.startswith(only): continue
         if exclude and name.startswith(exclude): continue
+        if skip_row(name, note): not_yet.append(name); continue   # T464 — 비고의 ⛔ 는 «없는 것이 맞다» 라 ✗0 이 아니다(이름은 아래에 적는다)
         g = game.get(name)
         is_world = ref[0] is None or ref[2] is None   # x 나 w 가 없는 행 = 캔버스 밖(월드)·부분 행 → layout.json 에 있을 때만 센다
         if g is None and is_world:
@@ -207,6 +229,7 @@ def score_screen(tables, layout, screen):
         lines += ['', '**다음 고칠 것**(0 · 0.5 행):']
         for name, d, pt in fix: lines.append(f'- {name}: 차 {d} ({pt:g}점)')
     if world_skipped: lines += ['', f'(월드 행 {len(world_skipped)}개는 layout.json 에 값이 없어 세지 않았다: {" · ".join(world_skipped)})']
+    if not_yet: lines += ['', f'({NOT_YET} 비고에 «안 센다» 표가 붙은 행 {len(not_yet)}개는 세지 않았다(T464): {" · ".join(not_yet)})']
     extra = [k for k in game if k not in {n for n, _, _ in table['rows']}]
     if extra: lines += ['', f'(표에 없는 이름표 {len(extra)}개 — 이름을 표의 «요소» 열과 같게: {" · ".join(extra)})']
     return score, '\n'.join(lines)
