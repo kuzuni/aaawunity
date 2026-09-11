@@ -94,6 +94,35 @@ namespace KkomaKnight.Tests.Play
         /// </summary>
         static string Visible(string s) => string.IsNullOrEmpty(s) ? "" : System.Text.RegularExpressions.Regex.Replace(s, "<[^>]+>", "");
 
+        static string J(string s) => (s ?? "").Replace("\\", "/").Replace("\"", "'").Replace("\n", " ");
+
+        /// <summary>
+        /// 잰 수를 <b>워커가 읽을 수 있는 자리</b>에 쓴다 — <c>ui-screens/highlevel.json</c>(`screens` 브랜치로 같이 올라간다).
+        /// <para>⚑ <see cref="Tap"/>·<see cref="OverdrawAuditTests"/> 가 같은 까닭으로 먼저 밟은 길이다(결정 636).</para>
+        /// </summary>
+        static void WriteReport(int lv, int maxLv, double cost, string shown, TextAudit.Row costRow,
+                                int floor, int fit, int clip, List<string> clipped, List<string> floorBad)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.Append("{\"_meta\":{\"task\":\"T455\",\"strict\":").Append(Strict ? "true" : "false")
+              .Append(",\"slotLv\":").Append(lv).Append(",\"slotLvMax\":").Append(maxLv)
+              .Append(",\"cost\":\"").Append(J(cost.ToString("0.###e+0"))).Append("\"}")
+              .Append(",\"cost_line\":{\"shown\":\"").Append(J(shown)).Append("\",\"shownLen\":").Append(shown.Length)
+              .Append(",\"rawLen\":").Append(costRow != null ? costRow.Text.Length : 0).Append("}")
+              .Append(",\"counts\":{\"floorBad\":").Append(floor).Append(",\"bestFitBad\":").Append(fit).Append(",\"clipped\":").Append(clip).Append("}")
+              .Append(",\"clipped\":[");
+            for (int i = 0; i < clipped.Count; i++) { if (i > 0) sb.Append(','); sb.Append('"').Append(J(clipped[i])).Append('"'); }
+            sb.Append("],\"floorBad\":[");
+            for (int i = 0; i < floorBad.Count; i++) { if (i > 0) sb.Append(','); sb.Append('"').Append(J(floorBad[i])).Append('"'); }
+            sb.Append("]}");
+            string json = sb.ToString();
+            foreach (var dir in PlayShot.Dirs())
+            {
+                try { System.IO.Directory.CreateDirectory(dir); System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "highlevel.json"), json); }
+                catch (System.Exception e) { Debug.LogWarning("[HighLevelTextGate] highlevel.json 저장 실패(" + dir + "): " + e.Message); }
+            }
+        }
+
         GearItem Give(string part, int rar = 0, int plus = 0)
         {
             foreach (var t in _app.Data.Gear.AllTypes) if (t.Part == part) { var g = _app.Save.NewGear(t.Part, t.Type, rar, plus); _app.Save.Inv.Add(g); return g; }
@@ -161,6 +190,15 @@ namespace KkomaKnight.Tests.Play
                       "[HighLevelTextGate] " + costRow);
             foreach (var s in clipped) Debug.Log("[HighLevelTextGate] ⚠넘침 " + s);
             foreach (var s in floorBad) Debug.Log("[HighLevelTextGate] ⛔하한 " + s);
+
+            // ⛑ 3회차 — ⚑⚑ **찍기만 하면 아무도 못 읽는다.**
+            //   1·2회차는 확인 조건을 «잡 로그의 [HighLevelTextGate] 줄을 읽는다» 로 적었는데, 그 줄은 워커 손에 안 닿는다:
+            //   유니티 테스트의 Debug.Log 는 결과 XML(아티팩트) 안에만 남고 그 아티팩트는 프록시가 막으며(블롭 403),
+            //   get_job_logs 는 잡 로그 꼬리만 준다 — 콘솔 출력은 그 창 앞이다(결정 636 · Tap.cs 가 같은 자리에 적어 둔 실측).
+            //   ⇒ 이 절이 «판정이 아니라 수» 로 사는 이상, 그 수가 **읽히는 자리**에 놓여야 산다.
+            //   PlayShot.Dirs 는 CI 가 PNG·layout.json·tap.json·overdraw.json 과 함께 screens 브랜치로 올리는 폴더라
+            //   `git fetch origin screens && git show origin/screens:highlevel.json` 한 번이면 읽힌다(결정 289 — 프록시에 안 막히는 길만).
+            WriteReport(lv, maxLv, cost, shown, costRow, floorBad.Count, fitBad.Count, clipped.Count, clipped, floorBad);
 
             // ⓒ 판정 — 켤 때까지 안 막는다(위 ⚠).
             if (Strict)
