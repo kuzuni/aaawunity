@@ -101,8 +101,18 @@ namespace KkomaKnight.Tests.Play
             Assert.IsNotNull(bs.G, "판(BattleState) — StartBattle 이 세운다");
             Assert.AreEqual(0, bs.G.Taken.Count,
                 "판이 서자마자 특전이 붙어 있으면 «고르는» 것이 아니라 «주는» 것이다 — 주인이 «안 돼 있네» 라 한 그 꼴(T411)");
-            Assert.AreEqual(want, bs.G.PendingLevelUps,
-                "고를 기회가 표의 수(" + want + ")만큼 줄에 서야 화면이 그 수만큼 띄운다");
+            // ⛑ **줄에 남은 것만 세면 하나 모자란다**(런 1062 빨강 · 워커 L 이 뿌리를 짚었다).
+            //    `Battle.cs:683·779·841` 이 `PendingLevelUps--; OpenLevelUp();` 이라, 화면이 첫 3택을 여는 순간
+            //    하나가 **줄에서 빠져 `Pending` 으로 옮겨 간다** — 그래서 두 프레임 뒤에는 «줄 4 + 꺼내 든 것 1» 이다.
+            //    ⚠ «프레임을 0 으로» 로 피하면 안 된다 — 화면이 서려면 프레임이 필요하고, 그러면 이 자가 재려는
+            //      그 배선(`OpenPending` → `Overlay.LevelUp`)을 아예 안 지난다. **세는 자리를 고치는 것이 맞다.**
+            //    ⚑ EditMode 짝이 초록인 채로 이 자만 빨갰던 까닭도 그것이다 — 그 자는 **틱이 한 번도 안 돈** 생성 직후를 본다.
+            //      같은 수를 **다른 시점**에 보면 다른 답이 나온다.
+            int queued = bs.G.PendingLevelUps
+                       + (bs.G.Pending != null && bs.G.Pending.Kind == PendingKind.LevelUp ? 1 : 0);
+            Assert.AreEqual(want, queued,
+                "고를 기회가 표의 수(" + want + ")만큼 있어야 화면이 그 수만큼 띄운다"
+                + " — 줄(PendingLevelUps=" + bs.G.PendingLevelUps + ")과 지금 꺼내 든 것을 **합해서** 센다");
 
             // 다섯을 세는 동안 «진짜 렙업»(판을 돌다 경험치로 오르는 것)이 섞이면 세는 수가 거짓이 된다.
             // 그래서 줄이 빌 때까지만 돌리고, 빈 뒤에는 엔진을 세워 놓고 «더 안 선다» 를 본다.
