@@ -79,6 +79,21 @@ namespace KkomaKnight.Tests.Play
             yield return Frames(1);
         }
 
+        /// <summary>
+        /// 리치 텍스트 태그를 뺀 <b>사람이 보는 글자</b> — 이 자가 «수» 를 말할 때는 반드시 이것으로 말한다.
+        /// <para>
+        /// ⛑ <b>1회차가 여기서 틀렸다</b>(검수 Q · 결정 1278): <see cref="TextAudit.Row.Text"/> 는 <c>t.text</c> 그대로라
+        /// <c>GearUi.CostRow</c> 의 «<c>&lt;color=#RRGGBB&gt;…&lt;/color&gt;/</c>» 마크업 <b>24자가 고정으로</b> 얹힌다 —
+        /// 갓 시작한 세이브의 «600/600» 도 raw 30자다. 길이로 묻는 가드는 그래서 <b>어떤 세이브에서도 참</b>이었다.
+        /// </para>
+        /// <para>
+        /// ⚠ <see cref="TextAudit"/> 쪽은 <b>안 건드린다</b> — <c>Row.Text = t.text</c> 는 모든 게이트가 함께 쓰는 옛 자리라
+        /// 거기를 고치면 남의 자가 흔들린다. 판정(<c>Clipped</c>·<c>FloorBad</c>)은 원래 성하다(TMP 는 태그를 빼고 잰다).
+        /// </para>
+        /// <para>⚠ <c>GetParsedText()</c> 대신 정규식을 쓰는 까닭: 이 통에 유니티가 없어 그 함수가 이 판에서 무엇을 돌려주는지 <b>못 돌려 봤다</b>(결정 143).</para>
+        /// </summary>
+        static string Visible(string s) => string.IsNullOrEmpty(s) ? "" : System.Text.RegularExpressions.Regex.Replace(s, "<[^>]+>", "");
+
         GearItem Give(string part, int rar = 0, int plus = 0)
         {
             foreach (var t in _app.Data.Gear.AllTypes) if (t.Part == part) { var g = _app.Save.NewGear(t.Part, t.Type, rar, plus); _app.Save.Inv.Add(g); return g; }
@@ -114,8 +129,18 @@ namespace KkomaKnight.Tests.Play
             TextAudit.Row costRow = null;
             foreach (var r in _rows) if (r.Path != null && r.Path.EndsWith("CostText")) { costRow = r; break; }
             Assert.IsNotNull(costRow, "비용 줄 글자(«CostText» · GearUi.CostRow)를 못 찾았다 — 이 자가 재려는 그 줄이다");
-            Assert.Greater(costRow.Text.Length, 12,
-                           "비용 줄이 짧다 — 끝까지 키운 세이브를 세운 손이 안 먹혔다(슬롯 Lv " + lv + " · 비용 " + cost + "): " + costRow);
+
+            // ⛑ 2회차(검수 Q · 결정 1278) — 1회차의 가드는 **아무것도 안 물었다**.
+            //   TextAudit.Row.Text 는 t.text 그대로라 «<color=#RRGGBB>…</color>/» 마크업만 24자 고정이고,
+            //   갓 시작한 세이브의 «600/600» 도 raw 30자다 ⇒ «길이 > 12» 는 어떤 세이브에서도 참이었다.
+            //   ⇒ 길이로 묻지 않고 **그 수 자체가 거기 적혀 있는가**로 묻는다. 마크업도 초반 세이브도 이것을 못 만든다.
+            string shown = Visible(costRow.Text);
+            // ⚠ 기댓값도 화면이 지나는 문을 그대로 지나게 한다 — UiKit.Label 이 모든 라벨을 TextGlyphs.Safe 로 거른다(T224).
+            //   날것으로 대면 «글꼴에 없는 글자» 한 자 때문에 성한 화면이 빨개진다(T443 3회차가 «×3» 으로 치른 값).
+            string wantCost = TextGlyphs.Safe(UiKit.Fmt(cost));
+            Assert.IsTrue(shown.EndsWith(wantCost),
+                          "비용 줄 끝이 그 칸의 비용(«" + wantCost + "»)이 아니다 — 끝까지 키운 세이브를 세운 손이 안 먹혔다" +
+                          "(슬롯 Lv " + lv + "/" + maxLv + " · 보이는 글자 «" + shown + "»): " + costRow);
 
             // ⓑ 표를 찍는다 — 이 회차가 사는 것이 이것이다(판정이 아니라 수).
             var floorBad = new List<string>(); var fitBad = new List<string>(); var clipped = new List<string>();
@@ -125,8 +150,11 @@ namespace KkomaKnight.Tests.Play
                 if (r.BestFitBad) fitBad.Add(r.ToString());
                 if (r.Clipped) clipped.Add(r.ToString());
             }
+            // ⛑ 2회차 — 찍는 수도 **사람이 보는 수**여야 한다. raw 로 찍으면 마크업 24자가 얹혀
+            //   Lv149 에서 70 이 놓이는데 주인이 보는 글자는 47 이다. 이 절이 사려는 것이 «판정이 아니라 수» 이므로
+            //   그 수가 부풀면 나중에 Strict 를 켤지 정하는 사람이 틀린 수를 읽는다(결정 1251·1278 ③).
             Debug.Log("[HighLevelTextGate] 슬롯 Lv " + lv + "/" + maxLv + " · 비용 " + cost.ToString("0.###e+0") +
-                      " · 비용 줄 «" + costRow.Text + "» (" + costRow.Text.Length + "자)\n" +
+                      " · 비용 줄 «" + shown + "» (보이는 " + shown.Length + "자 · 마크업 포함 raw " + costRow.Text.Length + "자)\n" +
                       "[HighLevelTextGate] 글자 " + _rows.Count + "개 · 하한 미달 " + floorBad.Count +
                       " · bestFit 최소 미달 " + fitBad.Count + " · 넘침 " + clipped.Count +
                       " (보고만 · Strict=" + Strict + " · T455)\n" +
