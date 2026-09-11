@@ -146,14 +146,46 @@ namespace KkomaKnight.Game
             return null;
         }
 
-        /// <summary>«×3»·«1,000» 같은 글자에서 수를 읽는다 — 숫자가 아니면 1(칸이 하나라도 날아가게).</summary>
+        /// <summary>
+        /// «×3»·«1,000»·«1K» 같은 글자에서 수를 읽는다 — 숫자가 아니면 1(칸이 하나라도 날아가게).
+        /// <para>
+        /// ⛑⛑ <b>«1K» 를 몰라서 백 배가 틀리던 자리다</b>(T449 · 워커 B 실측 · 고친 것은 그 글자를 만든 나다 · T443 3회차).
+        /// 부르는 쪽 다섯이 <b>이미 짧게 쓴 글자</b>를 <c>amount</c> 없이 넘긴다(출석 다이아 1000 → «1K» → 구슬 <b>1개</b> · 골드 10000 → «10K» → 10개 ·
+        /// <c>ChapterChestScreen</c> 둘과 <c>LobbyPopups</c> 셋은 <c>UiKit.Fmt</c> 라 T443 <b>이전부터</b> 그랬다).
+        /// </para>
+        /// <para>
+        /// ⚑ 고칠 길이 둘이었다 — ⓐ 부르는 쪽마다 <c>amount:</c> 를 주거나 ⓑ <b>읽는 쪽이 K·M 을 알거나</b>.
+        /// ⓑ 를 골랐다: 다섯 자리를 한 자리로 고치고, <b>다음에 새로 생기는 부르는 쪽</b>도 저절로 옳다 —
+        /// ⓐ 는 오늘 다섯을 고치고 내일 여섯째가 같은 함정에 빠진다(이 고장이 그렇게 태어났다).
+        /// </para>
+        /// </summary>
         static int QtyOf(Item it)
         {
             if (it.Amount > 0) return it.Amount;
             string s = it.Qty ?? "";
-            long n = 0; bool any = false;
-            foreach (var ch in s) { if (ch >= '0' && ch <= '9') { any = true; n = n * 10 + (ch - '0'); if (n > MaxOrbs) return MaxOrbs; } }
-            return any && n > 0 ? (int)n : 1;
+            long n = 0; long frac = 0, fracDiv = 1; bool any = false, dot = false;
+            foreach (var ch in s)
+            {
+                if (ch >= '0' && ch <= '9')
+                {
+                    any = true;
+                    if (dot) { frac = frac * 10 + (ch - '0'); fracDiv *= 10; }
+                    else { n = n * 10 + (ch - '0'); if (n > MaxOrbs * 1000L) break; }   // 넘치기 전에 멈춘다(아래에서 상한으로 자른다)
+                    continue;
+                }
+                if (ch == '.' && any && !dot) { dot = true; continue; }   // «12.5K» 의 소수점
+                if (ch == ',' || ch == ' ') continue;
+                // K·M·B 는 «짧게 쓴 꼴»(GearUi.CellQtyText·UiKit.Fmt)이다 — 그 배수를 곱하고 끝낸다.
+                long mul = ch == 'K' || ch == 'k' ? 1000L : ch == 'M' || ch == 'm' ? 1000000L : ch == 'B' || ch == 'b' ? 1000000000L : 0L;
+                if (mul > 0L && any)
+                {
+                    double v = (n + (fracDiv > 1 ? (double)frac / fracDiv : 0.0)) * mul;
+                    return v >= MaxOrbs ? MaxOrbs : (int)Math.Max(1, Math.Round(v));
+                }
+            }
+            double baseV = n + (fracDiv > 1 ? (double)frac / fracDiv : 0.0);
+            if (baseV > MaxOrbs) return MaxOrbs;
+            return any && baseV > 0 ? (int)Math.Max(1, Math.Round(baseV)) : 1;
         }
 
         /// <summary>보상 팝업을 띄운다. <paramref name="items"/> 가 비면 아무것도 안 한다(«얻은 게 없는데 뜨는» 팝업 금지).</summary>

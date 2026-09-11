@@ -272,9 +272,9 @@ namespace KkomaKnight.Game
         /// 칸 가운데에 아이콘 하나(<see cref="CellIconPct"/> 정사각 · <c>preserveAspect</c>). 이름은 <c>Icon</c>.
         /// <para>⚠ 수량을 피해 위로 올리지 <b>않는다</b> — 주인 지시가 «겹치는 식» 이다. 읽히게 하는 것은 자리가 아니라 <see cref="CellQty"/> 의 검은 외곽선이다.</para>
         /// </summary>
-        public static Image CellIcon(Transform cell, string iconKey, string name = "Icon")
+        public static Image CellIcon(Transform cell, string iconKey, string name = "Icon", Color? tint = null)
         {
-            var ic = UiKit.Icon(cell, name, iconKey);
+            var ic = UiKit.Icon(cell, name, iconKey, tint);
             float m = (100f - CellIconPct) * 0.5f;
             UiKit.Pct(ic.rectTransform, m, m, CellIconPct, CellIconPct);
             return ic;
@@ -323,12 +323,12 @@ namespace KkomaKnight.Game
         /// 빈 글자면 아무것도 안 세운다 — «0» 과 «없음» 을 가르는 것은 부르는 쪽 몫이다.
         /// </para>
         /// </summary>
-        public static TMP_Text CellQty(Transform cell, string qty, float cellHPct = 0f)
+        public static TMP_Text CellQty(Transform cell, string qty, float cellHPct = 0f, Color? color = null)
         {
             if (cell == null || string.IsNullOrEmpty(qty)) return null;
             int size = cellHPct > 0f ? UiKit.FontForHeight(cellHPct * CellQtyH / 100f) : TextSize.Aux;
             var q = UiKit.Label(cell, 100f - CellQtyW + CellQtyOver, 100f - CellQtyH + CellQtyOver, CellQtyW, CellQtyH,
-                                qty, size, Palette.White, TextAnchor.LowerRight, kind: TextKind.Body);
+                                qty, size, color ?? Palette.White, TextAnchor.LowerRight, kind: TextKind.Body);
             q.name = "Qty"; q.fontStyle = FontStyles.Bold;
             return q;
         }

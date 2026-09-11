@@ -371,9 +371,11 @@ namespace KkomaKnight.Game
             bool claimed = Pass.Claimed(App != null ? App.Save : null, level, col);
             var cell = UiKit.Panel(row, name, "fr.itemBg", Palette.A(Palette.Ink, dim ? 0.75f : 0.5f)).rectTransform;
             PlaceRowIn(cell, row, r, level); UiKit.Bordered(cell);
-            var icon = UiKit.Icon(cell, "Icon", v.Known ? v.Icon : UnknownIcon, dim || !v.Known ? Palette.A(Color.white, 0.45f) : Color.white);
-            UiKit.Pct(icon.rectTransform, 14, 8, 72, 66);
-            UiKit.Label(cell, 45, 66, 52, 30, v.Known ? v.Qty : "?", TextSize.Aux, dim || !v.Known ? Palette.CreamDark : Palette.White).name = "Qty";
+            // T443(주인 2026-09-11 «가운데에 적당히 크게 · 오른쪽 아래에 개수 · 겹치는 식으로 · 모든 UI») —
+            //   여기도 «그림 위 · 숫자 아래» 로 떨어져 있어 둘 다 작았다. 칸 문법 한 자리로 모은다(색만 이 화면의 것을 그대로 넘긴다).
+            GearUi.CellIcon(cell, v.Known ? v.Icon : UnknownIcon, tint: dim || !v.Known ? Palette.A(Color.white, 0.45f) : Color.white);
+            //   ⚠ 표가 모르는 줄의 «?» 는 숫자가 아니라 `CellQtyShorten` 이 손대지 않는다(그 함수는 숫자·콤마뿐일 때만 다시 쓴다).
+            GearUi.CellQty(cell, v.Known ? GearUi.CellQtyShorten(v.Qty) : "?", color: dim || !v.Known ? Palette.CreamDark : Palette.White);
             if (claimed) { var ck = UiKit.Icon(cell, "Check", "pi.check", Palette.Hex("#3FD214")); UiKit.Pct(ck.rectTransform, 18, 18, 64, 64); }
             else if (col != PassData.ColFree) { var lk = UiKit.Icon(cell, "Lock", "pi.lock", dim ? Palette.CreamDark : Color.white); UiKit.Pct(lk.rectTransform, 62, -6, 40, 40); }
             return cell;

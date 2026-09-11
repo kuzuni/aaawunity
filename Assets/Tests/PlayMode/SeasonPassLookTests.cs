@@ -156,7 +156,11 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsTrue(pass.Known(last), "주인이 값을 줬으므로 마지막 줄도 표가 안다(T266 ⓑ)");
                 var qtyT = UiKit.Find(UiKit.Find(sp, "Cell:free:" + last), "Qty")?.GetComponent<TMPro.TMP_Text>();
                 Assert.IsNotNull(qtyT, "그 줄 무료 칸의 수량 글자");
-                Assert.AreEqual(pass.At(last, PassData.ColFree).Qty, qtyT.text, "아는 줄은 **표가 말한 수**를 그대로 그린다(수를 자에 안 박는다)");
+                // T443 — 칸의 수는 이제 **칸 꼴**로 다시 쓰인다(«1000» → «1K» · 숫자·콤마뿐일 때만 · 주인 «오른쪽 아래에 겹쳐서»).
+                //   기댓값을 표의 원문 그대로 두면 이 자는 «표에서 오는가» 가 아니라 «표의 서식 그대로인가» 를 재게 된다 —
+                //   재려는 것은 앞엣것이므로 화면이 쓰는 그 함수로 표의 값을 옮겨 맞댄다(수는 여전히 자에 안 박힌다).
+                Assert.AreEqual(GearUi.CellQtyShorten(pass.At(last, PassData.ColFree).Qty), qtyT.text,
+                                "아는 줄은 **표가 말한 수**를 그대로 그린다(칸 꼴로 다시 쓰되 수는 표에서 온다)");
 
                 // 그리고 표에 구멍을 내면 그 줄은 «?» 다 — 주인이 표를 줄이는 날 화면이 수를 지어내지 않는 것이 이 줄의 값이다.
                 var kept = pass.Levels[last];
