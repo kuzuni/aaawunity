@@ -27,6 +27,14 @@ namespace KkomaKnight.Tests
             return n.ToString("#,0");
         }
 
+        /// <summary>
+        /// 옛 사다리와 <b>바이트가 같은가</b> — ⚠ <b>사다리가 서는 범위 안에서만</b>이다(T463).
+        /// <para>
+        /// T463 이 사다리 끝에 상한을 두었다: <c>|n| ≥ T의 문턱 × <see cref="ShortNum.MantissaCap"/></c>(= 1e15)이면 자리수 꼴로 떨어진다.
+        /// 그 위에서 옛 사다리는 가수가 그대로 자라 <b>23자</b>를 냈고 그것이 고치려던 병이다 — 그러니 <b>거기서는 달라야 옳다</b>.
+        /// 아래 표본을 그 경계 바로 밑까지 채워 두었고, 경계 위의 갈림은 <see cref="TheLadderStopsGrowingAtItsTopWord"/> 가 잰다.
+        /// </para>
+        /// </summary>
         [Test]
         public void FmtIsByteIdenticalToTheLadderItReplaced()
         {
@@ -36,11 +44,75 @@ namespace KkomaKnight.Tests
                 0, 1, 9, 99, 999, 1000, 1234, 9999, 10000, 10001, 12500, 99999,
                 999999, 1000000, 1500000, 999999999, 1000000000, 1500000000,
                 999999999999.0, 1e12, 1.5e12, 2e12, 1.234e13,
-                -1, -9999, -10000, -1.5e12,
+                9.98e14, 9.99e14,                  // 자리수 꼴로 넘어가기 «바로 밑» — 여기까지는 옛 글자 그대로다
+                -1, -9999, -10000, -1.5e12, -9.99e14,
             };
+            double cap = ShortNum.Units[0].From * ShortNum.MantissaCap;
             foreach (var x in xs)
+            {
+                Assert.That(Math.Abs(x), Is.LessThan(cap),
+                    $"«{x}» 는 사다리 밖이다 — 이 표본은 «사다리가 서는 범위» 만 담는다(T463)");
                 Assert.That(ShortNum.Fmt(x), Is.EqualTo(Legacy(x)),
                     $"«{x}» 의 글자가 옛 사다리와 다르다 — 화면 글자가 바뀌는 것은 이 절이 하려던 일이 아니다");
+            }
+        }
+
+        /// <summary>
+        /// T463 — <b>사다리가 끝나는 자리에서 글자가 자라지 않는가</b>.
+        /// <para>
+        /// 실측이 이 자를 불렀다(<c>origin/screens:highlevel.json</c> · 장비 슬롯 149/150 · 비용 <b>1.556e+33</b>):
+        /// 옛 사다리는 끝 낱말 <c>T</c> 에 매달려 <b>«1556000000000000000000T»(23자)</b>를 냈고,
+        /// <c>Cost/CostText</c> 는 rect 337 ↔ pref 1095(<b>3.25배</b>) · 탑바 골드는 241 ↔ 538(<b>2.23배</b>)로 <c>bestFit</c> 바닥에서도 잘렸다.
+        /// </para>
+        /// ⚠ 재는 것은 «어떤 글자인가» 가 아니라 <b>«수가 아무리 커도 글자가 짧게 머무는가»</b> 다 — 꼴을 바꾸고 싶은 다음 사람을 막지 않으려고 그렇게 잡았다.
+        /// </summary>
+        [Test]
+        public void TheLadderStopsGrowingAtItsTopWord()
+        {
+            double cap = ShortNum.Units[0].From * ShortNum.MantissaCap;
+
+            // ⓐ 경계 «바로 밑» 은 아직 사다리다(맨 윗 낱말이 붙는다) — 경계가 조용히 내려오면 여기서 잡힌다.
+            string below = ShortNum.Fmt(cap * 0.999);
+            Assert.That(below, Does.EndWith(ShortNum.Units[0].Suffix.ToString()),
+                $"경계 바로 밑({cap * 0.999})은 아직 사다리여야 한다 — «{below}»");
+
+            // ⓑ 경계부터는 «자리수 꼴» 이고, 그 뒤로는 아무리 커져도 글자가 안 자란다.
+            double[] big = { cap, 1.556e33, 1e60, 1e120, 1e300, -1.556e33, -1e300 };
+            int longest = 0; string worst = null;
+            foreach (var x in big)
+            {
+                string s = ShortNum.Fmt(x);
+                Assert.That(s, Does.Contain("e"), $"«{x}» 는 사다리 밖이라 자리수 꼴이어야 한다 — «{s}»");
+                if (s.Length > longest) { longest = s.Length; worst = s; }
+            }
+            // 옛 꼴이 이 자리에서 낸 것이 23자다. 상한은 «-9.99e308» = 9자.
+            Assert.That(longest, Is.LessThanOrEqualTo(12),
+                $"자리수 꼴이 열두 자를 넘었다(«{worst}») — 길이에 상한이 없으면 이 절이 한 일이 없다(T463)");
+
+            // ⓒ 가수가 «10» 으로 밀려 올라가는 자리 — «10e32» 는 자리수 꼴이 아니다.
+            string round = ShortNum.Fmt(9.999e32);
+            Assert.That(round, Does.StartWith("1"), $"9.999e32 의 가수가 10 으로 밀렸다 — «{round}»");
+
+            // ⓓ 칸 꼴(Cell)도 같은 상한을 쓴다 — 칸이 Fmt 보다 좁으니 여기서 새면 더 크게 샌다.
+            Assert.That(ShortNum.Cell(1.556e33), Does.Contain("e"), "칸 글자도 사다리 끝에서 자리수 꼴이다(T463)");
+            Assert.That(ShortNum.Cell(1.556e33).Length, Is.LessThanOrEqualTo(12), "칸 글자 길이에도 상한이 있다");
+        }
+
+        /// <summary>
+        /// T463 — 자리수 꼴의 «e» 를 <b>읽는 쪽이 배수로 알면 안 된다</b>.
+        /// <para>
+        /// 알게 하면 «e» 가 든 아무 글자나(«best»·«게임») 배수가 된다. 이 꼴이 되읽히는 자리(<c>RewardPopup.QtyOf</c> · 구슬)는 상한이 100이라
+        /// 이만큼 큰 수가 애초에 안 오지만, <b>«안 온다» 를 글로만 두지 않고 여기 박아 둔다</b> — 나중에 되읽기가 필요해지면 표에 «e» 를 더할 것이 아니라 파서를 내야 한다.
+        /// </para>
+        /// </summary>
+        [Test]
+        public void TheExponentFormIsNotAUnitTheReaderCanMistake()
+        {
+            Assert.That(ShortNum.MultiplierOf('e'), Is.EqualTo(0.0), "«e» 는 배수가 아니다");
+            Assert.That(ShortNum.MultiplierOf('E'), Is.EqualTo(0.0), "«E» 도 배수가 아니다");
+            foreach (var u in ShortNum.Units)
+                Assert.That(u.Suffix, Is.Not.EqualTo('e').And.Not.EqualTo('E'),
+                    "표에 «e» 를 낱말로 더하면 자리수 꼴과 부딪힌다 — 그 길은 파서로 간다(T463)");
         }
 
         /// <summary>

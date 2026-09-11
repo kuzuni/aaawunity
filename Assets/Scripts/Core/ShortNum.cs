@@ -45,14 +45,60 @@ namespace KkomaKnight.Core
             new Unit_('K', 1e3,  1e4,  "0.#"),      // ⚠ 문턱만 1e4 다(위 주석)
         };
 
-        /// <summary>«짧게 쓴 꼴» 로 (옛 <c>UiKit.Fmt</c> 과 글자까지 같다).</summary>
+        /// <summary>
+        /// 사다리 <b>맨 윗 낱말의 가수(mantissa)가 이만큼</b>에 닿으면 낱말을 더 쓰지 않고 <see cref="Exp"/> 꼴로 떨어진다 — 곧 사다리의 <b>끝</b>이다(T463).
+        /// <para>
+        /// ⚑ <b>이 수가 «글자가 안 자란다» 를 만든다.</b> 사다리는 유한한데(지금 <c>T</c> = 1e12) 수는 안 그렇다 —
+        /// 끝 낱말에 매달리면 가수가 그대로 자라 <b>«1556000000000000000000T»</b>(23자)가 된다.
+        /// 실측(<c>origin/screens:highlevel.json</c> · 런 1091 뒤 · 장비 슬롯 149/150 · 비용 1.556e+33):
+        /// <c>Cost/CostText</c> rect <b>337×70</b> ↔ pref <b>1095×112</b>(가로 3.25배) · <c>TopBar/…Coin/Text</c> rect <b>241×56</b> ↔ pref <b>538×72</b>(2.23배) ·
+        /// 둘 다 <c>used 32</c> = <c>bestFit</c> 바닥이라 <b>더 줄일 곳도 없이 잘렸다</b>.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>1000 인 까닭</b> — 이 값이 곧 «낱말 하나가 감당하는 자리수» 다. 맨 윗 낱말이 <c>T</c>(1e12)이므로 사다리가 서는 곳은 <b>1e15 미만</b>이고,
+        /// 그 아래에서는 <b>옛 글자가 한 자도 안 바뀐다</b>(<c>ShortNumTests</c> 의 «옛 사다리와 바이트가 같은가» 가 그것을 못 박는다).
+        /// 곧 이 고침은 <b>주인이 지금까지 본 모든 글자를 그대로 두고</b> 아직 아무도 못 본 자리만 바꾼다.
+        /// </para>
+        /// <para>
+        /// ⚑ <b>낱말을 더 늘리는 길(«Aa»·«Ab»…)을 안 골랐다</b> — 그 길은 «어디서 또 끝날지» 를 고르는 일이고, 이름을 짓는 순간 <b>주인 몫</b>이 섞인다.
+        /// 게다가 낱말을 몇 개 더 얹어도 <b>같은 병이 더 뒤에서 다시 난다</b>(이 절이 바로 그 «더 뒤» 다 — <c>T</c> 도 한때는 넉넉했다).
+        /// 자리수 꼴은 사다리가 유한한 채로 <b>글자 길이에 상한</b>을 준다: 최악이 «-9.99e308»(9자)다.
+        /// </para>
+        /// </summary>
+        public const double MantissaCap = 1e3;
+
+        /// <summary>«짧게 쓴 꼴» 로 — 사다리가 닿는 데까지는 옛 <c>UiKit.Fmt</c> 과 글자까지 같고, 그 위는 <see cref="Exp"/> 다(T463).</summary>
         public static string Fmt(double n)
         {
             n = Math.Round(n);
             double a = Math.Abs(n);
+            if (a >= Units[0].From * MantissaCap) return Exp(n);
             foreach (var u in Units)
                 if (a >= u.From) return (n / u.Unit).ToString(u.Format) + u.Suffix;
             return n.ToString("#,0");
+        }
+
+        /// <summary>
+        /// 자리수 꼴 — «1.56e33». 사다리 밖의 수를 <b>길이가 안 자라게</b> 적는 유일한 자리다(T463).
+        /// <para>
+        /// ⚠ <b>문화권을 안 건드린다</b> — 이 파일의 다른 줄과 같은 규칙이다(위 클래스 주석). 여기만 <c>InvariantCulture</c> 를 쓰면
+        /// 같은 화면의 두 수가 서로 다른 소수점을 쓰게 된다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>읽는 쪽(<see cref="MultiplierOf"/>)은 «e» 를 배수로 알지 않는다</b> — 알면 «e» 가 든 아무 글자나 배수가 된다.
+        /// 이 꼴이 되읽히는 자리(<c>RewardPopup.QtyOf</c> · 구슬 개수)는 상한이 100이라 값이 이만큼 큰 것이 애초에 안 온다 —
+        /// 그래도 <b>그 사실을 자로 박아 둔다</b>(<c>ShortNumTests</c>). 나중에 되읽기가 필요해지면 그때 표에 «e» 를 더하는 것이 아니라 <b>파서</b>를 낸다.
+        /// </para>
+        /// </summary>
+        public static string Exp(double n)
+        {
+            double a = Math.Abs(n);
+            if (a <= 0 || double.IsInfinity(a) || double.IsNaN(a)) return n.ToString("#,0");
+            int e = (int)Math.Floor(Math.Log10(a));
+            double m = n / Math.Pow(10, e);
+            // ⚠ 반올림이 가수를 «10» 으로 밀어 올리는 자리(9.999…) — 그대로 두면 «10e32» 가 나온다(자리수 꼴이 아니다).
+            if (Math.Abs(m) >= 9.995) { m /= 10.0; e += 1; }
+            return m.ToString("0.##") + "e" + e;
         }
 
         /// <summary>
@@ -74,6 +120,8 @@ namespace KkomaKnight.Core
             // ⚠ 반올림 자리를 옛 사다리 그대로 둔다 — **가름은 반올림한 값**으로 하고 **나누는 것은 원래 값**이다.
             //   여기서 `n = Math.Round(n)` 을 먼저 하면(그 꼴이 더 깔끔해 보인다) 1049.9 가 «1» → «1.1» 로 바뀐다. 글자를 바꾸는 것은 이 절의 일이 아니다.
             double a = Math.Abs(Math.Round(n));
+            // T463 — 칸은 <see cref="Fmt"/> 보다 **더 좁다**(120px · 네 자). 사다리 끝에서 가수가 자라는 병은 같은 병이라 같은 상한을 쓴다.
+            if (a >= Units[0].Unit * MantissaCap) return Exp(n);
             foreach (var u in Units)
                 if (a >= u.Unit) return (n / u.Unit).ToString("0.#") + u.Suffix;
             return Math.Round(n).ToString("0");
