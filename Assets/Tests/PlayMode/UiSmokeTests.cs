@@ -848,6 +848,14 @@ namespace KkomaKnight.Tests.Play
             // T266 — 시즌 패스 페이지가 **되살아났다**(주인 2026-09-09). 로비 배너로 들어가고, 지금은 «디자인만» 이라
             //   버튼 셋은 아무것도 지급하지 않고 «준비 중» 토스트만 띄운다(T268 ⓑ). 그 «안 준다» 가 이 자의 요점이다 —
             //   수치가 오기 전에 조용히 지급하기 시작하면 세이브가 지어낸 값으로 더러워지고 되돌릴 수 없다.
+            // ⛑ T462 — **이 갈래의 «갓 켠 판» 전제가 주인 지시로 바뀌었다.** 주인 2026-09-12 «챕터 완료한 만큼 열리게 하기» 로
+            //   `Pass.Lv = MaxChapter − 1` 이 됐고, `Boot()` 의 세이브는 `MaxChapter 1` ⇒ **0 레벨 · 받을 것 0** 이다.
+            //   그러면 아래가 재려는 것(«배지 수 ↔ 세이브» · «그 레벨 둘레 다섯 줄» · «모두 받기가 진짜로 준다») 이 **통째로 잴 것이 없어진다**
+            //   — 런 1103 이 그 첫 줄을 «배지 글자 «0» 이 레벨(1 이상)이 아니다» 로 말했다.
+            //   ⇒ 단언을 0 에 맞춰 무르게 하지 않고 **재려는 것이 있는 판**을 세운다(챕터 하나 깼다 = 1레벨).
+            //   «0 레벨 = 공짜 없음» 을 재는 자는 따로 있다(`SeasonPassLookTests` · `PassLevelFromChapterTests`) — 여기서 겹쳐 재지 않는다.
+            int keepMaxChapter = _app.Save.MaxChapter;
+            _app.Save.MaxChapter = 2;
             Assert.IsTrue(ClickNamed(lobby, "PassBanner"), "로비 이벤트 배너 → 시즌 패스"); yield return Frames(2);
             Assert.AreEqual("seasonPass", _app.Current.Name, "시즌 패스 페이지가 열린다(T266)");
             var sp = _app.Current.Root;
@@ -886,7 +894,7 @@ namespace KkomaKnight.Tests.Play
               //   수(100·500)는 여기 안 박는다 — PassClaimAllTests(EditMode)가 표로 잰다. 여기서는 «받을 수 있다 → 누르면 준다 → 다 받았다» 관계와 배선만 잰다.
                 double g0 = _app.Save.Gold, m0 = _app.Save.Gem;
                 var passD = _app.Data != null ? _app.Data.Pass : null;
-                Assert.IsTrue(Pass.AnyClaimable(_app.Save, passD), "갓 켠 판(레벨 1)에는 무료 열 1레벨 칸이 받을 수 있어야 한다 — 아니면 아래 «준다» 가 아무것도 안 가른다(공허 방지)");
+                Assert.IsTrue(Pass.AnyClaimable(_app.Save, passD), "챕터 하나 깬 판(레벨 1 · 위에서 세웠다 · T462)에는 무료 열 1레벨 칸이 받을 수 있어야 한다 — 아니면 아래 «준다» 가 아무것도 안 가른다(공허 방지)");
                 Assert.IsTrue(ClickNamed(sp, "ClaimAllBtn"), "«모두 받기»"); yield return Frames(2);
                 yield return CloseReward("패스 «모두 받기»");   // T241 — 받으면 공통 리워드 팝업이 먼저 뜬다 · 닫으면 패스 화면이 다시 선다(SeasonPassScreen.ClaimAll → Open)
                 Assert.Greater(SeasonPassScreen.LastClaimAll, 0, "화면이 «받았다» 를 기록한다(T392 LastClaimAll)");
@@ -919,6 +927,9 @@ namespace KkomaKnight.Tests.Play
             Check("시즌 패스 페이지");
             Assert.IsTrue(ClickNamed(sp, "BackBtn"), "시즌 패스 뒤로"); yield return Frames(2);
             Assert.AreEqual("lobby", _app.Current.Name, "뒤로 → 로비");
+            // ⛑ T462 — **올린 전제는 쓴 자리에서 되돌린다**(결정 1305 가 같은 회차에 값을 치른 자리 · 바로 아래 주석이 «최고 챕터 1 이라 그대로» 를 전제한다).
+            _app.Save.MaxChapter = keepMaxChapter;
+            Assert.AreEqual(1, _app.Save.MaxChapter, "되돌림이 먹혔는가 — 아래 챕터 ◀▶ 갈래는 «최고 챕터 1» 을 전제한다");
             Check("로비 복귀");
 
             // 챕터 ◀▶ (최고 챕터 1 이라 그대로) · 탭 라벨

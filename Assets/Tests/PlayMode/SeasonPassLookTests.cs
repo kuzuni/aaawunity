@@ -126,6 +126,16 @@ namespace KkomaKnight.Tests.Play
             }
             Object.Destroy(tex);
 
+            // ⛑ T462 2회차 — **올린 전제는 쓴 자리에서 되돌린다**(워커 G · 결정 1305 가 짚은 그 자리).
+            //   위 픽셀 갈래만 «1레벨이 열려 있을 것» 을 요구하고, 아래 T322 갈래는 정반대로 «갓 시작한 세이브 = 0 레벨» 을 잰다.
+            //   1회차에 메서드 **머리**에서 한 줄로 올려 두고 내려놓지 않아, 한 메서드가 같은 값을 `≥1` 과 `==0` 으로 **같이 요구**했다
+            //   — 무엇을 고쳐도 초록이 될 수 없는 꼴이고, 런 1103 이 그것을 «Expected: 0 / But was: 1» 로 말했다.
+            //   ⚑ 이 파일은 그 꼴을 이미 쓰고 있다(아래 `pass.Levels[last]` 의 `try/finally`) — 새 꼴을 들이지 않고 그 꼴에 맞춘다.
+            _app.Save.MaxChapter = 1;                                   // 되돌림: 여기부터 아래는 전부 «갓 시작한 세이브» 전제다
+            SeasonPassScreen.Open(_app); yield return Frames(2);        // 머리 배지 글자도 그 수로 다시 그려야 한다
+            Assert.AreEqual(0, SeasonPassScreen.CurLevel,
+                "되돌림이 먹혔는가 — 아래 갈래는 «갓 시작한 세이브 = 0 레벨» 을 잰다(T462 · 올린 전제를 안 내려놓으면 여기서 먼저 선다)");
+
             // ── T322: 줄 1~100 스크롤 · «💎100» 삭제 · 표가 모르는 줄은 «?»
             {
                 var sp = _app.Current.Root;
