@@ -296,6 +296,26 @@ namespace KkomaKnight.Game
             return System.Math.Round(n).ToString("0");
         }
         /// <summary>
+        /// <b>이미 글자로 된 수</b>를 칸 꼴로 다시 쓴다 — «1,000» → «1K». 숫자와 콤마뿐일 때만 손대고, «×3»·«10%» 처럼 다른 글자가 섞이면 <b>그대로 둔다</b>.
+        /// <para>
+        /// ⚠ <b>원본 글자를 바꾸지 않으려고</b> 이 길을 둔다 — <c>RewardPopup.QtyOf</c> 는 <c>Amount</c> 가 없을 때 <b>그 글자에서 수를 되읽어</b> 구슬 개수를 정한다.
+        /// 부르는 쪽의 문자열을 «1K» 로 갈아 버리면 구슬이 1,000개 대신 <b>1개</b> 난다(<c>Item.Of</c> 호출부 일곱이 <c>amount:</c> 를 안 준다 · 실측).
+        /// ⇒ <b>보여 주는 자리에서만</b> 다시 쓴다.
+        /// </para>
+        /// </summary>
+        public static string CellQtyShorten(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s;
+            double n = 0; bool any = false;
+            foreach (var ch in s)
+            {
+                if (ch >= '0' && ch <= '9') { any = true; n = n * 10 + (ch - '0'); continue; }
+                if (ch == ',' || ch == ' ') continue;
+                return s;   // 숫자·콤마 말고 다른 것이 섞였다 — 부르는 쪽의 뜻이 있는 글자다
+            }
+            return any ? CellQtyText(n) : s;
+        }
+        /// <summary>
         /// 칸 <b>오른쪽 아래</b> 수량 글자 — 아이콘 위로 겹쳐 얹고(그래서 <see cref="CellIcon"/> 뒤에 부른다) 굵게 + 검은 외곽선. 이름은 <c>Qty</c>.
         /// <para>
         /// <paramref name="cellHPct"/>(칸 높이 = <b>프레임 높이의 %</b>)를 주면 그 높이에서 글자 크기를 뽑고(칸이 클수록 숫자도 큰다), 0 이면 보조 크기 그대로.

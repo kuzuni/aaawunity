@@ -373,13 +373,14 @@ namespace KkomaKnight.Game
                 var f = UiKit.Spawn(string.IsNullOrEmpty(it.Frame) ? DefaultFrame : it.Frame, cell);
                 UiKit.Stretch((RectTransform)f.transform);
                 GearUi.DarkFrame(f.transform);   // T115 · 결정 184 — 조각 제 링을 Ink 로 + 가운데 비움 · raycast 끔
-                bool qty = !string.IsNullOrEmpty(it.Qty);
-                var ic = UiKit.Icon(cell, "Icon", it.Icon);
-                UiKit.Pct(ic.rectTransform, qty ? 22 : 16, qty ? 4 : 16, qty ? 56 : 68, qty ? 56 : 68);
+                // T443(주인 2026-09-11 «가운데에 적당히 크게 · 오른쪽 아래에 개수 · 겹치는 식으로 · 모든 UI») —
+                //   여기도 수량이 있으면 아이콘을 56% 로 눌러 위로 올리던 자리였다. 칸 문법 한 자리로 모은다.
+                var ic = GearUi.CellIcon(cell, it.Icon);
                 // T396 — 부르는 쪽이 «그림을 직접 세우겠다» 고 하면(메이커 펫 초상) 스프라이트는 끄고 그 자리를 내준다.
                 //   자리·크기는 위에서 이미 잡혔으므로 초상은 그 rect 를 그대로 쓴다(칸 문법을 두 벌로 만들지 않는다).
                 if (it.Face != null) { ic.enabled = false; it.Face(ic.rectTransform); }
-                if (qty) UiKit.Label(cell, 0, 58, 100, 42, it.Qty, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyles.Bold;
+                // ⚠ 글자는 **보여 줄 때만** 짧게 쓴다(`CellQtyShorten`) — `it.Qty` 자체를 바꾸면 `QtyOf` 가 되읽는 구슬 개수가 틀어진다.
+                GearUi.CellQty(cell, GearUi.CellQtyShorten(it.Qty));
                 res.Add(cell);
             }
             return res;
