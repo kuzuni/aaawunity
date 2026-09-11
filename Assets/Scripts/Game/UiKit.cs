@@ -1864,16 +1864,12 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 숫자 표기 ─────────────────────────
-        public static string Fmt(double n)
-        {
-            n = Math.Round(n);
-            double a = Math.Abs(n);
-            if (a >= 1e12) return (n / 1e12).ToString("0.##") + "T";
-            if (a >= 1e9) return (n / 1e9).ToString("0.##") + "B";
-            if (a >= 1e6) return (n / 1e6).ToString("0.##") + "M";
-            if (a >= 1e4) return (n / 1e3).ToString("0.#") + "K";
-            return n.ToString("#,0");
-        }
+        /// <summary>
+        /// «짧게 쓴 꼴»(12.5K · 3M · 1.5B · 2T). <b>셈과 낱말표는 <see cref="KkomaKnight.Core.ShortNum"/> 한 자리에 있다</b>(T452 · 결정 1271) —
+        /// 되읽는 쪽(<c>RewardPopup.QtyOf</c>)이 <b>같은 표</b>를 보게 하려는 것이고, 그래야 «내는 쪽은 넷인데 읽는 쪽은 셋» 이 다시 안 난다.
+        /// <para>⚠ 글자는 옛 리터럴 사다리와 <b>한 자도 안 다르다</b> — `ShortNumTests` 가 그 동일성을 값으로 못 박는다.</para>
+        /// </summary>
+        public static string Fmt(double n) => KkomaKnight.Core.ShortNum.Fmt(n);
         public static string FmtQty(double n) => Math.Round(n).ToString("0");
         /// <summary>천 단위 콤마만(«11,253») — <see cref="Fmt"/> 처럼 K·M 으로 줄이지 않는다. 레퍼런스가 전체 자릿수를 그대로 보여 주는 자리에 쓴다(아레나 전투력·승점 · T81).</summary>
         public static string FmtComma(double n) => Math.Round(n).ToString("#,0");

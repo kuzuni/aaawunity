@@ -175,9 +175,12 @@ namespace KkomaKnight.Game
                 }
                 if (ch == '.' && any && !dot) { dot = true; continue; }   // «12.5K» 의 소수점
                 if (ch == ',' || ch == ' ') continue;
-                // K·M·B 는 «짧게 쓴 꼴»(GearUi.CellQtyText·UiKit.Fmt)이다 — 그 배수를 곱하고 끝낸다.
-                long mul = ch == 'K' || ch == 'k' ? 1000L : ch == 'M' || ch == 'm' ? 1000000L : ch == 'B' || ch == 'b' ? 1000000000L : 0L;
-                if (mul > 0L && any)
+                // ⚑ 짧게 쓴 꼴의 낱말표는 **Core.ShortNum 한 자리**에서 읽는다(T452 · 결정 1271).
+                //   여기 손으로 적어 두었을 때 «내는 쪽(UiKit.Fmt)은 T·B·M·K 넷인데 읽는 쪽은 K·M·B 셋» 이 되어
+                //   «1.5T» 가 2 로 읽혔다 — 출처를 주석으로 적어 놓고 넷 중 셋만 옮긴 것이다.
+                //   이제 낱말이 늘면 두 쪽이 같이 늘어난다.
+                double mul = KkomaKnight.Core.ShortNum.MultiplierOf(ch);
+                if (mul > 0.0 && any)
                 {
                     double v = (n + (fracDiv > 1 ? (double)frac / fracDiv : 0.0)) * mul;
                     return v >= MaxOrbs ? MaxOrbs : (int)Math.Max(1, Math.Round(v));
