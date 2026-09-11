@@ -150,6 +150,8 @@ namespace KkomaKnight.Game
         /// bestFit 이 rect 안에서 글자를 다시 누르므로 **rect 높이가 곧 글자 크기의 상한**이다 — 하한(T63)이 뜻을 가지려면 rect 가 그만큼 커야 한다.
         /// <para><see cref="QtyOver"/> = 프레임 밖으로 걸치는 양(레퍼런스도 숫자가 칸 모서리를 조금 넘는다).</para>
         /// </summary>
+        /// ⚑ T443 — <b>살아 있는 값은 이제 <see cref="GearUi.CellQtyW"/>·<see cref="GearUi.CellQtyH"/> 다</b>(주인 «모든 UI» · 칸 문법 한 자리).
+        /// 여기 셋은 위 T133 설명이 가리키는 <b>그때의 값</b>으로 남겨 둔다 — 글을 지우면 «왜 오른쪽 아래인가» 의 근거가 같이 사라진다.
         public const float QtyW = 82f, QtyH = 50f, QtyOver = 4f;
         /// <summary>수량 글자가 «너무 작아 그림에 먹히지» 않는 하한 — 칸 높이 대비 비율(게이트가 이 값으로 잰다 · 회차 1 은 30% 라 25px 로 눌렸다).</summary>
         public const float QtyMinHeightPct = 40f;

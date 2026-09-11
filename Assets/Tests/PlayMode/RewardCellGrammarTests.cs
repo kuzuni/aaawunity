@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
 using TMPro;
@@ -100,6 +101,15 @@ namespace KkomaKnight.Tests.Play
                               cell.name + " — 수량 글자가 아이콘과 **겹쳐야** 한다(주인 «겹치는 식으로»). "
                               + "떼어 놓으면 둘 다 작아진다 — 아이콘 " + ir + " · 수량 " + qr);
                 Assert.AreNotEqual(FontStyles.Normal, q.fontStyle & FontStyles.Bold, cell.name + " — 수량은 굵게(겹쳐도 읽히게)");
+
+                // ⛑ **그려지는 크기**(bestFit 결과)가 보조 하한 밑으로 내려가면 안 된다 — 1회차가 여기서 빨갰다(런 1070 · «used 35 < 36»).
+                //    수량 rect 를 칸 안에 가두면 긴 수가 눌리고, 그것은 주인이 말한 병(«너무 안 보임 작아 보임»)을 다른 꼴로 되풀이하는 것이다.
+                //    ⚠ 이 줄이 없으면 같은 고장을 **다른 절의 자**(EventsScreenTests 가독성 게이트)가 대신 잡는다 — 그러면 빨강이 «칸 문법» 이 아니라 «던전 화면» 의 얼굴로 온다.
+                //    자동 크기가 켜져 있든 아니든 `fontSize` 가 곧 «지금 그려지는 크기» 다(자동 크기면 TMP 가 그 값을 눌러 적는다).
+                float used = q.fontSize;
+                Assert.GreaterOrEqual(used, TextSize.Aux,
+                                      cell.name + " — 수량이 실제로 그려지는 크기 " + used + " 가 보조 하한 " + TextSize.Aux + " 밑이다(T63 · 주인 «글씨가 너무 작아 안 읽힌다»). "
+                                      + "rect " + qrt.rect.width + "×" + qrt.rect.height + " · 선호 " + q.preferredWidth + "×" + q.preferredHeight);
 
                 // 외곽선은 **글자마다**가 아니라 폰트 애셋의 공유 머티리얼 한 장에 걸려 있다(T207 ② · `EnsureOutline`).
                 // 그래서 `TMP_Text.outlineWidth`(개체별 덮어쓰기)를 보면 0 이라 늘 빨갛다 — 실제로 칠하는 그 자리를 본다.

@@ -252,8 +252,18 @@ namespace KkomaKnight.Game
         /// </para>
         /// </summary>
         public const float CellIconPct = 80f;
-        /// <summary>수량 글자 칸(칸 %) — 오른쪽 아래 모서리에서 <see cref="CellQtyOver"/> 만큼 밖으로 걸친다(<c>LobbyPopups</c> 의 T133 값과 같은 꼴).</summary>
-        public const float CellQtyW = 82f, CellQtyH = 46f, CellQtyOver = 4f;
+        /// <summary>
+        /// 수량 글자 칸(칸 %) — 오른쪽 아래 모서리에서 <see cref="CellQtyOver"/> 만큼 밖으로 걸친다.
+        /// <para>
+        /// ⛑ <b>폭이 왜 100% 를 넘는가</b>(T443 1회차가 런 1070 에서 값을 치른 자리) — 글자는 <b>오른쪽 정렬</b>이라 rect 가 넓어도 자리를 안 먹고 <b>왼쪽으로 자랄 여지</b>만 준다.
+        /// 82% 로 뒀더니 던전 세부 칸(119px)에서 rect 가 98px 뿐이라 «1,000» 이 <c>bestFit</c> 으로 <b>35 까지 눌렸고</b>, 그러면 T63 가독성 게이트(보조 36)가 운다 —
+        /// 즉 «수량을 작은 칸에 가둔다» 는 주인이 말한 병(«너무 안 보임 작아 보임»)을 <b>다른 꼴로 되풀이하는 것</b>이다.
+        /// 132% 면 rect 가 157px 이라 같은 글자가 <b>≈41</b> 로 그려진다(런 1070 실측 «선호 132px @ 35» ⇒ 글자당 3.77px/pt · 157 ÷ 3.77 ≈ 41.6) — 하한 36 위로 5 포인트 남는다.
+        /// </para>
+        /// <para>⚠ <b>한계</b>: 더 긴 수(여섯 자 이상)는 이 폭으로도 눌린다. 표가 그런 수를 내는 날에는 폭이 아니라 <b>짧게 쓰는 꼴</b>(<c>UiKit.Fmt</c> 의 «10K»)이 답이다 — 레퍼런스 16 도 그 꼴이다.</para>
+        /// <para>높이 50% 는 T133 ⓙ 가 레퍼런스 16 에서 잡은 값 그대로다 — 40 × 1.4 = 56px 이 들어가야 «잘림» 판정을 안 받는다.</para>
+        /// </summary>
+        public const float CellQtyW = 132f, CellQtyH = 50f, CellQtyOver = 4f;
         /// <summary>
         /// 칸 가운데에 아이콘 하나(<see cref="CellIconPct"/> 정사각 · <c>preserveAspect</c>). 이름은 <c>Icon</c>.
         /// <para>⚠ 수량을 피해 위로 올리지 <b>않는다</b> — 주인 지시가 «겹치는 식» 이다. 읽히게 하는 것은 자리가 아니라 <see cref="CellQty"/> 의 검은 외곽선이다.</para>
