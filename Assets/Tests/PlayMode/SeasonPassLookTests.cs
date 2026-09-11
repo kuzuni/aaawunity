@@ -59,11 +59,26 @@ namespace KkomaKnight.Tests.Play
             _app = App.I;
             yield return Frames(2);
 
+            // T462 ⛑ — **갓 시작한 세이브로는 이 자가 그라데이션을 볼 수 없다.**
+            //   주인 «챕터 완료한 만큼 열리게 하기» 로 `Pass.Lv = MaxChapter − 1` 이 됐고(결정 1284),
+            //   `SeasonPassScreen.Dim` 은 `topPx = CurLevel * PitchPx` 부터 어둠을 깐다 ⇒ `CurLevel == 0` 이면 **열 전체**가 덮인다.
+            //   그래서 런 1096~1098 이 «Col:free 위쪽 실제 #0D223B» 로 울었다 — 그 수는 `col.passFreeDim`(#0D233B) 그것이다.
+            //   ⚠ 고침은 «문턱을 넓히는 것» 도 «표본을 옮기는 것» 도 아니다(자리는 한 픽셀도 안 움직였다 — `origin/screens:layout.json` 의
+            //   `무료 열` = y 31.4 · h 53.2 로 이 파일 주석의 수 그대로다). **재려는 것이 보이는 판을 세우는 것**이다.
+            _app.Save.MaxChapter = 2;          // 깬 챕터 1 ⇒ CurLevel 1 ⇒ 1레벨 줄(31.4~42%)은 어둠 밖 — 표본 y 32.6% 가 거기다
+            yield return Frames(1);
+
             SeasonPassScreen.Open(_app);
             yield return Frames(3);
             UiKit.CompleteAllTweens();
             yield return Frames(2);
             Canvas.ForceUpdateCanvases();
+
+            // ⚑ «잰 것이 진짜인가» 를 먼저 묻는다(결정 1276·1279 가 오늘 두 번 값을 치른 자리) —
+            //   이 자가 재는 것은 «열 색» 인데, 어둠이 덮인 판에서는 **어둠 색**을 재고도 «그라데이션이 죽었다» 로 운다.
+            //   위 한 줄이 안 먹히는 날 그 갈래로 떨어지지 않게, 색을 재기 **전에** 여기서 그 까닭을 말하고 선다.
+            Assert.GreaterOrEqual(SeasonPassScreen.CurLevel, 1,
+                "1레벨 줄이 열려 있어야 그라데이션이 보인다 — CurLevel 0 이면 «아직 못 연 줄» 어둠(col.passFreeDim)이 열 전체를 덮는다(T462)");
 
             Assert.IsTrue(PlayShot.Save(_app, "t302_pass_columns", null), "촬영이 PNG 를 만들어야 한다");
             var png = PlayShot.LastPng;
