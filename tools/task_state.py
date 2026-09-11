@@ -286,6 +286,83 @@ def footprint(tid):
     return files, commits
 
 
+# «남이 이 절에 진단만 놓고 갔다» 를 알아보는 낱말 — 실제로 쓰인 제목에서 뽑았다(T446 실측).
+#   «런 1070 빨강 진단 → T443 에 놓고 간다» · «런 1062 빨강의 뿌리를 T437 행에 적었다» · «T418 에 답만 놓는다».
+HANDOVER_WORDS = ("진단", "뿌리를", "놓고 간다", "놓고 감", "답만 놓는다")
+SID_RE = re.compile(r"sess-\d{3,4}-\w+")
+
+
+def handovers(tid, holder=None, limit=200):
+    """**남이 이 절에 놓고 간 진단** 커밋들 — [(해시, 시각, SID, 제목)] (T446).
+
+    왜 있나 (2026-09-11 06:4X 실측) — 최근 200커밋에 이 꼴이 **5건**인데 그중 **네 건이 두 쌍**이었다:
+    런 1062 를 워커 G(02:47)와 워커 L(02:51)이 **4분 차**로, 런 1037 을 두 사람이 **9분 차**로
+    따로 진단했다. 까닭은 규약이다 — §1 이 «빨강이 그 회차의 첫 일» 이라 하고,
+    lock 은 **작업**을 잡지 «남의 작업을 **진단하는** 일» 은 못 잡는다. 그래서
+    «선점할 것이 없다» 회차의 워커가 **모두 같은 빨강을 본다**.
+
+    ⚠ **겹침이 늘 낭비인 것은 아니다** — 워커 L 의 둘째 진단은 첫째에 없던 근거를 보탰다.
+      그래서 이 자는 **막지 않고 알려만 준다**(결정 493): «이미 하나 있다» 를 둘째가 알고 나면
+      보탤지 그만둘지는 그가 정한다. 지금 없는 것은 **아는 길**뿐이다.
+
+    세는 법 — 제목에 ⓐ 그 번호가 들어 있고 ⓑ 위 낱말이 하나라도 있고
+      ⓒ (`holder` 를 주면) **그 SID 가 아닌** 커밋. 제목이 그 번호로 **시작**하는 것은
+      임자 자신의 회차 커밋이라 여기서 뺀다(그쪽은 <see cref="footprint"/> 가 센다).
+
+    ⚠⚑ **이 셈은 완전하지 않다 — 못 세는 꼴을 알고 쓴다**(T446 실측 · 자기 것에서 걸렸다).
+      진단이 **다른 절의 커밋에 얹혀 오면** 이 눈에 안 잡힌다: 2026-09-11 06:4X 에 워커 A 가
+      T443 행에 남긴 진단은 제목이 «**T444** ✅ — 인계 글이 …» 라 여기서 0 으로 센다.
+      그래서 부르는 쪽이 <see cref="row_handover_hint"/> 로 **행 글도 같이** 본다 —
+      한쪽만 믿으면 «없다» 를 «안 세어졌다» 와 못 가른다(결정 1251 의 그 자리다).
+    """
+    out = []
+    log = _git(["log", "--format=%h\t%cI\t%s", "-%d" % limit])
+    num = re.compile(r"\b" + tid + r"(?![\w-])")
+    own = re.compile(r"^" + tid + r"(?![\w-])")
+    for line in log.split("\n"):
+        parts = line.split("\t")
+        if len(parts) != 3:
+            continue
+        h, when, subj = parts
+        if own.match(subj) or not num.search(subj):
+            continue
+        if not any(w in subj for w in HANDOVER_WORDS):
+            continue
+        m = SID_RE.search(subj)
+        sid = m.group(0) if m else "(SID 없음)"
+        if holder and sid == holder:
+            continue
+        out.append((h, when[:16], sid, subj))
+    return out
+
+
+def row_handover_hint(rowtext, holder=None):
+    """그 **행 글 안에** 남이 놓고 간 진단이 몇 군데로 보이는가 — 거친 셈이다 (T446).
+
+    <see cref="handovers"/> 가 커밋 제목만 보아 «다른 절 커밋에 얹혀 온 진단» 을 못 세므로,
+    행 글에서 «진단» 이라는 낱말이 **SID·워커 표시와 같은 조각 안에** 있는 자리를 센다.
+    ⚠ **거친 셈이라고 적어 두고 쓴다** — 임자 자신이 «진단» 이라 쓴 자리도 걸릴 수 있다.
+      그래서 «N군데로 **보인다**» 로 찍지 «N개 있다» 로 안 찍는다(수를 단정하면 다음 사람이 그것을 믿는다).
+    """
+    n = 0
+    for piece in re.split(r"‖|▸", rowtext or ""):
+        if "진단" not in piece:
+            continue
+        sids = set(SID_RE.findall(piece))
+        if sids:
+            # SID 가 적혀 있으면 그것으로 가린다 — 임자 것뿐이면 남이 놓고 간 것이 아니다.
+            if holder:
+                sids.discard(holder)
+            if sids:
+                n += 1
+            continue
+        # ⚑ SID 가 **아예 없는** 조각에서만 «워커 X» 를 본다 — 워커 A 가 «[워커 A · 코드 0줄]» 로
+        #   SID 없이 적은 실측 꼴을 놓치지 않으려는 갈래다(자기 검사에 그 줄이 있다).
+        if re.search(r"워커\s*[A-Q]", piece):
+            n += 1
+    return n
+
+
 def verdict(tid, heads, rows):
     """(잡아도 되나, 한 줄 판정). «잡아도 되나» 가 거짓이면 그 회차에 그 번호를 선점하지 않는다."""
     lk = lock_of(tid)
@@ -512,6 +589,20 @@ def cmd_one(tid, heads, rows):
     print("  코드 자취    : %d곳%s" % (len(files), (" — " + ", ".join(files[:5])) if files else ""))
     for h, when, subj in commits[:3]:
         print("  커밋        : %s %s %s" % (h, when[:16], subj[:70]))
+    # T446 — **남이 이미 놓고 간 진단**. 이 줄이 없어서 최근 빨강 두 건을 워커 둘이 4분·9분 차로
+    #   따로 진단했다. 막지 않고 알려만 준다 — 읽고 보탤지 그만둘지는 보는 사람이 정한다(결정 493).
+    holder = lk[0] if lk else None
+    hos = handovers(tid, holder=holder)
+    hint = row_handover_hint(ptext, holder)
+    if hos or hint:
+        print("  ⚠ 놓고 간 진단: 커밋 **%d개**%s — 여기에 또 내기 전에 먼저 읽어라(T446)"
+              % (len(hos), (" · 행 글에도 **%d군데**로 보인다(거친 셈)" % hint) if hint else ""))
+        for h, when, sid, subj in hos[:3]:
+            print("      · %s %s %s %s" % (h, when, sid, subj[:62]))
+        if hint and not hos:
+            # ⚠ 단정하지 않는다 — 이 거친 셈은 **자기 절에서 먼저 헛짚었다**(T446 실측: 등재 글의 «워커 L» 을 물었다).
+            print("      (커밋 제목으로는 0 이다 — 남의 절 커밋에 **얹혀 왔거나**, 이 거친 셈이 **헛짚었을** 수 있다 · 행을 읽어 가려라)")
+        print("      보탤 것이 있으면 내고, 없으면 내지 않는다 — 겹친 진단이 값진 적도 있다(결정 1253 ②).")
     ok, why = verdict(tid, heads, rows)
     print("  → %s: %s" % ("잡아도 된다" if ok else "잡지 마라", why))
     return 0 if ok else 1
@@ -759,10 +850,37 @@ def self_test():
                   % (nxt0, tmax0, hmax0))
             return 1
 
+        # T446 — «남이 놓고 간 진단» 을 세는 두 눈. 값을 손으로 넣어 갈래를 낸다(git·표와 무관하게 순수 함수다).
+        HOLDER = "sess-0000-1"
+        row_cases = [
+            ("남의 SID 가 적힌 진단 조각을 센다",
+             "🔄 임자가 쥐고 있다 ‖ ⛑ **남이 놓고 간 진단(sess-9999-9 · 워커 G)**: 런 1 빨강은 …", 1),
+            ("SID 가 없어도 «워커 X» 면 센다 — 워커 A 가 그 꼴로 적었다(실측)",
+             "🔄 … ‖ ⛑ **[워커 A · 코드 0줄] 런 1070 빨강 진단은 이 절 것이다**", 1),
+            ("임자 자신의 SID 는 안 센다",
+             "🔄 … ‖ 진단을 내가 적었다(%s · 워커 K)" % HOLDER, 0),
+            ("«진단» 이 없으면 안 센다", "🔄 임자가 쥐고 있다 ‖ 회차 기록만 있다(sess-9999-9)", 0),
+            ("조각이 둘이면 둘로 센다",
+             "🔄 … ‖ 진단(sess-9999-9) … ‖ 진단(sess-8888-8) …", 2),
+        ]
+        for why, txt, want in row_cases:
+            got = row_handover_hint(txt, HOLDER)
+            if got != want:
+                print("⛔ 자기 검사 실패 — 행 진단 셈: %s → %d (기대 %d)" % (why, got, want))
+                return 1
+        # ⚠ 이 셈이 **거친** 것임을 갈래로 박아 둔다 — 자기 절 등재 글의 «워커 L» 을 물어 1 이 나온다(T446 실측).
+        #   고칠 결함이 아니라 **알고 쓰는 한계**다: 그래서 출력이 «N군데로 보인다(거친 셈)» 이고
+        #   커밋이 0 일 때 «얹혀 왔거나 헛짚었을 수 있다» 로 갈래를 열어 둔다.
+        rough = row_handover_hint("… 워커 L 의 둘째 진단은 내 것에 없던 근거를 보탰다 …", HOLDER)
+        if rough != 1:
+            print("⛔ 자기 검사 실패 — 거친 셈의 «헛짚음» 갈래가 사라졌다(설명글을 고쳤으면 출력 문구도 같이 고쳐라)")
+            return 1
+
         print("✓ task_state --self-test: 어긋난 짝을 잡고(T161) · ✅ 를 달면 조용하고 · 빈 번호는 통과하고 ·"
               " 같은 번호 두 제목을 잡고 · «행 없음 ↔ 접힌 행만» 을 가르고 · ⛔ 와 `\\|` 도 읽고 ·"
               " 참고 줄이 마지막 요약에도 실리고(T231) · «⬜ + 살아 있는 lock» 을 잡되 죽은 lock 은 안 잡고(T238) · **미래로 적힌 lock 을 잡되 1분 차에는 안 울고**(T294) · **본문에 ✂ 를 인용한 살아 있는 줄을 접힘으로 안 센다**(T249) · **«낡은 lock 인데 임자는 살아 있다» 를 잡되 «둘 다 낡음»·«아직 살아 있음»·«판단 못 함» 셋에는 안 울고**(T329)"
-              " · **맨 위 행을 지워도 발급이 안 내려가고(옛 규칙이면 그 번호를 재발급한다) · 지워진 번호를 잡되 멀쩡한 표·구멍·git 없음 셋에는 안 울고**(T415)")
+              " · **맨 위 행을 지워도 발급이 안 내려가고(옛 규칙이면 그 번호를 재발급한다) · 지워진 번호를 잡되 멀쩡한 표·구멍·git 없음 셋에는 안 울고**(T415)"
+              " · **«남이 놓고 간 진단» 을 남의 SID·SID 없는 «워커 X» 둘 다로 세되 임자 자신의 것은 안 세고, 그 셈이 «거친 것» 임을 갈래로 박아 둔다**(T446)")
         return 0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
