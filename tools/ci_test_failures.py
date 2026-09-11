@@ -181,6 +181,16 @@ def report(path, echo=print):
         # ⚑ T400 — 이 줄이 «러너·라이선스» 만 가리켜서 런 1005 때 워커가 라이선스를 뒤졌다. 실제 까닭은 그 위 단계의
         #   «game-ci CLI 내려받기 404» 였다(unity-test-runner 가 cliVersion=latest 를 받아 오다 실패 · 0초 만에 죽는다).
         #   이 자는 XML 만 보므로 까닭을 알 수 없다 — 그러니 **어디를 볼지**를 순서대로 적어 준다(값싼 것부터).
+        # ⚑ T482 — «자리는 있는데 비었다» 와 «그런 자리가 아예 없다» 는 전혀 다른 일인데 위 줄이 둘을 같게 말했다.
+        #   앞엣것만 «테스트가 시작조차 못 했다» 이고, 뒤엣것은 **부른 사람이 자리를 잘못 댄 것**이다.
+        #   실제로 그렇게 샜다(2026-09-11 · 워커 H): 행마다 «확인 = 다음 완주 런 [CI명부]» 라고 적혀 있어
+        #   `ci_test_failures.py 1123` 처럼 **런 번호**를 넘겼고, 자는 그것을 CI 갈래로 읽어 라이선스·도커를 가리켰다.
+        #   이 자는 로컬 XML 만 읽는다(런 번호로는 아무것도 못 받는다 · 머리글 «사용:» 줄).
+        if not os.path.exists(path):
+            echo(f"{TAG} 요약 — 그런 자리가 없다: {path}"
+                 "(이 자는 **결과 폴더나 XML 파일**을 받는다 — 런 번호가 아니다. "
+                 "런의 빨강을 워커가 읽는 자리는 그 런 유니티 잡 로그의 «[CI실패] 요약» 줄이다)")
+            return 0
         echo(f"{TAG} 요약 — 결과 XML 을 못 찾았다: {path}"
              "(테스트가 시작조차 못 했다 — 유니티 잡의 «game-ci/unity-test-runner» 단계를 먼저 보라: "
              "0초 만에 죽었으면 CLI 내려받기 실패(404)나 도커 · 몇 분 뒤 죽었으면 라이선스 · 그 뒤면 진짜 고장이다)")
@@ -246,8 +256,17 @@ def self_test():
         lines = []
         report(d, lines.append)
         ok &= any("못 찾았다" in x for x in lines)
+        ok &= not any("그런 자리가 없다" in x for x in lines)   # T482 — 빈 폴더는 «없는 자리» 가 아니다
         lasts["ⓒ"] = lines[-1]
-        print("ⓒ XML 없음 —", "OK" if lines else "실패")
+        print("ⓒ XML 없음(자리는 있다) —", "OK" if lines else "실패")
+    # ⓒ' T482 — 그런 자리가 아예 없을 때. 빈 폴더와 **다른 줄**이어야 한다(둘을 같게 말해 워커가 라이선스를 뒤졌다).
+    lines = []
+    n = report(os.path.join(tempfile.gettempdir(), "_ci_test_failures_no_such_place_"), lines.append)
+    ok &= (n == 0) and any("그런 자리가 없다" in x for x in lines)
+    ok &= not any("시작조차 못 했다" in x for x in lines)
+    ok &= lines[-1].startswith(f"{TAG} 요약")                  # 결정 678 계약은 이 갈래에서도 그대로
+    print("ⓒ' 없는 자리 —", "OK" if any("그런 자리가 없다" in x for x in lines)
+          and not any("시작조차 못 했다" in x for x in lines) else "실패")
     with tempfile.TemporaryDirectory() as d:            # ⓓ 많이 깨진 런 — 목록이 길어져도 요약은 끝에서 한 줄
         cases = "".join(f'<test-case fullname="N.C{i}.M{i}" result="Failed">'
                         f'<failure><message>boom {i}</message></failure></test-case>'
