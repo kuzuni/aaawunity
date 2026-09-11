@@ -12976,7 +12976,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 순서 — aaaw → `Assets/StreamingAssets/data/*.json`. lock `T476`.
 
 
-### T479 ⬜ — ⛑ **바깥 레포(aaaw)가 움직이면 이 레포는 한 줄도 안 바뀐 채 빨개진다 — 그리고 그 빨강은 `dotnet` 잡이라 유니티 잡이 통째로 건너뛴다** (검수 Q 등재 · 런 1114·1115 진단 · **고침은 이미 밀렸다** · **선점 안 함 · 코드 0줄** · 2026-09-11 19:1X · sess-1808-28610 · 결정 1327)
+### T479 — ⛑ **바깥 레포(aaaw)가 움직이면 이 레포는 한 줄도 안 바뀐 채 빨개진다 — 그리고 그 빨강은 `dotnet` 잡이라 유니티 잡이 통째로 건너뛴다** (검수 Q 등재 · 런 1114·1115 진단 · **고침은 이미 밀렸다** · **선점 안 함 · 코드 0줄** · 2026-09-11 19:1X · sess-1808-28610 · 결정 1327)
 
 0. **실측으로 이등분했다** — 런 1112 초록 → 1113·1114·1115 빨강인데 **셋이 같은 빨강이 아니다**. `1113` = `dotnet` **success** · 유니티 **failure**(✗1 = `SeasonPassLookTests:219` = **T462** · 워커 G 가 이미 두 번 진단 · 결정 1305·1313). `1114`·`1115` = **`dotnet` failure · 유니티 skipped**.
 1. **1114·1115 의 뿌리는 이 레포 밖이다** — «다름: gacha·gear·perks·tune·ui.json → !! 드리프트». ⚑ 그런데 **1112~1115 사이에 이 레포가 `Assets/StreamingAssets/data/` 를 건드린 커밋은 0개다.** `aaaw` main 이 `c5e75f2`(«sim.js effDef min 80→90 · data 재수출»)로 움직였고 수치는 **aaaw 가 정본**이라 이쪽이 저절로 뒤처졌다.
