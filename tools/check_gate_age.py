@@ -28,7 +28,9 @@
   당기는 것은 **자가 스스로** 한다(T286) — 못 당기면 «내 ref 로 잰 값» 이라고 첫 줄에 적는다.
 """
 import datetime
+import io
 import json
+import os
 import re
 import subprocess
 import sys
@@ -179,11 +181,39 @@ def commit_calls_ci(message, files):
     return not all(is_doc_path(f) for f in files)
 
 
+def parse_iso(s):
+    """`git log %cI` 의 시각 한 줄 → tz 를 아는 datetime · 못 읽으면 None(터지지 않는다).
+
+    ⚠ 파이썬 3.10 아래의 `fromisoformat` 은 «+00:00» 은 읽고 «Z» 는 못 읽는다 — 그 한 글자만 바꿔 준다.
+    """
+    s = (s or "").strip()
+    if not s:
+        return None
+    try:
+        return datetime.datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def minutes_since(stamp):
+    """그 시각에서 지금까지 몇 분 — 미래로 적힌 시각(시계 어긋남)은 0 으로 본다."""
+    if stamp is None:
+        return None
+    return max(0, int((datetime.datetime.now(datetime.timezone.utc) - stamp).total_seconds() // 60))
+
+
 def debt(sha):
-    """그 sha 뒤로 main 에 쌓인 «유니티 잡을 부르는» 커밋 수.
+    """그 sha 뒤로 main 에 쌓인 «유니티 잡을 부르는» 커밋 수 → (총, 부르는 수, 구멍, **가장 오래 기다린 빚의 시각**).
 
     ⚑ T433 이전에는 «`[skip ci]` 아닌 것» 하나로 셌다. 이제는 **문서만 바꾼 커밋도 안 부른다** —
       안 맞추면 문서만 오가는 조용한 회차마다 이 자가 헛 경보를 낸다(고침을 넣은 회차에 같이 맞췄다).
+
+    ⚑⚑ **네 번째 값이 T438 이다.** 판정이 오래 «마지막 답의 나이» 를 썼는데, T433 이 그 수의 뜻을 갈라 놓았다:
+      전에는 «표식 없는 푸시 = 유니티 답» 이라 답이 늙는 유일한 길이 «빚이 안 풀리는 것» 이었다.
+      지금은 **아무 빚 없이 답만 늙는 구간이 정상**(문서만 오가는 회차)이고,
+      그 뒤 첫 코드 푸시가 그 늙은 나이를 **통째로 물려받아** 곧바로 ✗ 가 된다.
+      2026-09-11 02:3X 실측이 그것이다 — «빚 1개가 61분째 답을 못 받았다» 인데 그 빚은 **7분 전**에 밀렸고
+      런 1062 가 그때 이미 돌고 있었다. 그래서 재야 할 것은 **그 빚이 실제로 기다린 시간**이다.
     """
     # ⚑ 커밋마다 `git show` 를 부르지 않는다 — 낡은 `meta.json` 은 빚이 300개까지 간다(T286 실측).
     #   `git log --name-only` 한 번으로 «메시지 전체 + 그 커밋이 건드린 파일» 을 같이 받는다.
@@ -193,28 +223,36 @@ def debt(sha):
     #   ⚠ 옛 git 에 그 옵션이 없으면 **빈 답**이 오는데, 그것을 «빚 0» 으로 읽으면 이 자가 눈이 먼다 —
     #     빈 답이면 옵션 없이 한 번 더 물어본다(그 판에선 머지가 빚으로 세어지지만, 그쪽이 안전하다).
     rng = f"{sha}..origin/main"
-    fmt = "\x01%B\x02"
+    # `%cI` = 그 커밋의 시각(ISO · 타임존 포함) · `\x03` 이 «메시지 끝» 이다(파일 이름에 못 들어가는 글자).
+    fmt = "\x01%cI\x02%B\x03"
     log = sh("git", "log", "--name-only", "--diff-merges=cc", "--format=" + fmt, rng)
     if not log:
         log = sh("git", "log", "--name-only", "--format=" + fmt, rng)
     if not log:
-        return 0, 0, []
+        return 0, 0, [], None
     total = calling = 0
     silent = []
+    oldest = None                       # 가장 오래 기다린 «부르는» 커밋의 시각 (git log 는 새 것부터 준다)
     for chunk in log.split("\x01"):
         if not chunk.strip():
             continue
-        message, _, rest = chunk.partition("\x02")
+        when, _, rest = chunk.partition("\x02")
+        message, _, rest = rest.partition("\x03")
         files = [r for r in rest.split("\n") if r.strip()]
         total += 1
         if commit_calls_ci(message, files):
             calling += 1
+            stamp = parse_iso(when)
+            # ⚠ 시각을 못 읽으면 **그 커밋을 없는 셈 치지 않는다** — 못 읽은 채로 지나가면
+            #   빚이 있는데 «기다린 적 없다» 가 되어 이 자가 눈이 먼다. 아래 main 이 그 갈래를 받는다.
+            if stamp is not None and (oldest is None or stamp < oldest):
+                oldest = stamp
         elif has_skip_token(message) and files and not all(is_doc_path(f) for f in files):
             # ⚑ 코드를 건드렸는데 표식 때문에 안 돈 커밋 — **구멍**이다(T433 2회차).
             #   대개 «본문에 그 규약을 인용» 한 사고다. 실측 2건 중 하나는 본문이
             #   «이 커밋은 … 없이 민다» 였다 — 그 문장 자신이 CI 를 껐다.
             silent.append(message.split("\n")[0][:70])
-    return total, calling, silent
+    return total, calling, silent, oldest
 
 
 def main():
@@ -239,12 +277,24 @@ def main():
 
     when = datetime.datetime.strptime(m["utc"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc)
     age = int((datetime.datetime.now(datetime.timezone.utc) - when).total_seconds() // 60)
-    total, calling, silent = debt(m["sha"])
+    total, calling, silent, oldest = debt(m["sha"])
     verdict = m.get("tests", "?")
+    # ⛳ T438 — 판정에 쓰는 수는 **빚이 실제로 기다린 시간**이다(위 `debt` 의 설명 참조).
+    #   시각을 못 읽었는데 빚은 있는 갈래에서는 «잴 수 없다» 를 «괜찮다» 로 읽지 않는다 —
+    #   종전 수(마지막 답의 나이)로 되물러 판정한다. 그쪽이 안전하다(놓치는 것보다 헛 경보가 낫다).
+    wait = minutes_since(oldest)
+    fallback = calling > 0 and wait is None
+    judged = age if fallback else wait
 
     print(f"· 마지막 완주 유니티 잡 = 런 {m['run']} ({m['sha'][:9]} · {m['utc']} · {age}분 전) "
           f"· tests={verdict} · PNG {m.get('shots', '?')}장")
-    print(f"· 그 뒤 main 커밋 {total}개(그 중 CI 를 부르는 것 {calling}개)")
+    if calling > 0:
+        waited = (f"{wait}분째 기다린다" if wait is not None
+                  else "기다린 시간을 못 읽었다 — 답의 나이로 대신 잰다")
+        print(f"· 그 뒤 main 커밋 {total}개(그 중 CI 를 부르는 것 {calling}개 · 가장 오래된 빚이 {waited})")
+    else:
+        # 빚 0 이면 답이 아무리 늙어도 기다리는 것이 없다 — T433 뒤로는 문서만 오가는 회차가 정상적으로 이 꼴이다.
+        print(f"· 그 뒤 main 커밋 {total}개(그 중 CI 를 부르는 것 0개 — 기다리는 것이 없다)")
 
     # ⛳ T436 — **폰에 가 있는 것도 같이 적는다.** 위 두 줄은 «CI 게이트» 만 본다(`screens` 는 유니티 잡이 쓴다).
     #   2026-09-11 00:4X 에 T435 가 배포 스모크를 `--play`(strict)로 올리면서 **새 상태가 생겼다** —
@@ -266,8 +316,9 @@ def main():
               f"· {deploy_phrase(dep_sha, m['sha'], behind)} (보고만 · T436)")
 
     bad = []
-    if calling > 0 and age > limit:
-        bad.append(f"빚 {calling}개가 {age}분째 답을 못 받았다(한계 {limit}분)")
+    if calling > 0 and judged > limit:
+        bad.append(f"빚 {calling}개가 {judged}분째 답을 못 받았다(한계 {limit}분"
+                   + (" · 시각을 못 읽어 답의 나이로 잰 값이다)" if fallback else ")"))
     if verdict != "success":
         bad.append(f"마지막 답이 «{verdict}» 다")
     if m.get("shots", 1) == 0:
@@ -285,7 +336,8 @@ def main():
         print("✗ check_gate_age: " + " · ".join(bad) +
               " — 유니티 잡 로그의 **머리**를 보라(라이선스·러너는 꼬리에 안 나온다 · T283/T284) · 보고만(막지 않는다)" + stale)
     else:
-        print(f"✓ check_gate_age: 마지막 답이 {age}분 전 · 빚 {calling}개 · tests=success (보고만 · T285){stale}")
+        waited = f" · 가장 오래된 빚 {judged}분째" if calling > 0 and judged is not None else ""
+        print(f"✓ check_gate_age: 마지막 답이 {age}분 전 · 빚 {calling}개{waited} · tests=success (보고만 · T285){stale}")
     return 0
 
 
@@ -304,10 +356,14 @@ def self_test():
         return "✗" if bad else "✓"
 
     cases = [
-        # (빚, 나이, tests, PNG, 기대) — 이름이 곧 그 갈래의 뜻이다
+        # (빚, **가장 오래된 빚이 기다린 분**, tests, PNG, 기대) — 이름이 곧 그 갈래의 뜻이다
+        # ⛳ T438 — 둘째 칸은 «마지막 답의 나이» 가 아니라 «빚이 기다린 시간» 이다. 그 둘은 T433 뒤로 다른 수다.
         (0, 600, "success", 41, "✓", "아무도 안 밀면 열 시간이 지나도 정상(조용한 새벽)"),
         (17, 115, "success", 41, "✗", "빚이 쌓였는데 답이 없다 = 2026-09-09 그 사고"),
         (3, 10, "success", 41, "✓", "빚이 있어도 방금 답했으면 정상"),
+        # ⚑ 2026-09-11 02:3X 의 그 헛 경보 — 답은 61분 늙었는데 빚은 7분 전에 밀렸고 런이 이미 돌고 있었다.
+        (1, 7, "success", 41, "✓", "⚑ 문서만 오가 답이 늙은 뒤 갓 밀린 코드 푸시 — 빚이 7분째면 정상(T438 이 고친 그 자리)"),
+        (1, 61, "success", 41, "✗", "그 빚이 정말 61분째 기다리면 그때는 운다(고쳐도 잡을 것은 잡는다)"),
         (0, 10, "failure", 41, "✗", "빚이 없어도 마지막 답이 빨강이면 운다"),
         (1, 10, "success", 0, "✗", "완주했는데 PNG 0장 = 테스트가 시작도 못 했다"),
     ]
@@ -404,10 +460,75 @@ def self_test():
     bad += 0 if apart else 1
     print(f"  {'✔' if apart else '✘'} refresh 는 gh-pages 를 안 당긴다 — 따로·되면 좋고 식으로 받는다(T436)")
 
+    # ⛳ T438 — 시각을 읽는 두 조각. 여기서 틀리면 위 표가 아무리 옳아도 판정에 엉뚱한 수가 들어간다.
+    stamps = [
+        ("«Z» 로 끝나는 꼴(파이썬 3.10 아래 fromisoformat 이 못 읽는 그것)", "2026-09-11T02:25:59Z", True),
+        ("«+00:00» 꼴 — git log %cI 가 주는 것", "2026-09-11T02:25:59+00:00", True),
+        ("다른 타임존도 읽는다", "2026-09-11T11:25:59+09:00", True),
+        ("못 읽는 글자는 None — 터지지 않는다", "어제쯤", False),
+        ("빈 줄도 None", "", False),
+        ("None 도 None", None, False),
+    ]
+    for why, s, want in stamps:
+        got = parse_iso(s) is not None
+        ok = got == want
+        bad += 0 if ok else 1
+        print(f"  {'✔' if ok else '✘'} 읽었다={got} (기대 {want}) — {why}")
+    fut = minutes_since(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=3))
+    ok = fut == 0
+    bad += 0 if ok else 1
+    print(f"  {'✔' if ok else '✘'} 미래로 적힌 시각 = {fut}분 (기대 0) — 시계가 어긋난 러너의 커밋이 «-180분째 기다린다» 가 되면 안 된다")
+    ok = minutes_since(None) is None
+    bad += 0 if ok else 1
+    print(f"  {'✔' if ok else '✘'} 시각이 없으면 None — «0분» 이 아니다(0 으로 읽으면 빚이 영원히 안 늙는다)")
+
+    # ⛳⛳ T438 — **진짜 저장소로** 낸다. 위 표는 내가 넣은 수를 내가 읽은 것이라
+    #     «debt() 가 시각을 정말 집는가» 를 못 본다(T433 3회차가 바로 그 자리에서 걸렸다).
+    import tempfile
+    import shutil
+    tmp = tempfile.mkdtemp(prefix="gate_age_selftest_")
+    cwd = os.getcwd()
+    try:
+        os.chdir(tmp)
+        def git(*a, **kw):
+            subprocess.run(("git",) + a, capture_output=True, text=True, env=kw.get("env"))
+        env = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t",
+                   GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t")
+        git("init", "-q", "-b", "main")
+        io.open("README.md", "w", encoding="utf-8").write("x\n")
+        subprocess.run(["git", "add", "-A"], capture_output=True)
+        subprocess.run(["git", "commit", "-q", "-m", "밑동"], capture_output=True, env=env)
+        base = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+        # 문서 커밋 하나를 **두 시간 전**으로, 코드 커밋 하나를 **지금**으로 — 실측 그 꼴이다.
+        old = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        os.makedirs("docs", exist_ok=True)
+        io.open("docs/PROGRESS.md", "w", encoding="utf-8").write("문서\n")
+        subprocess.run(["git", "add", "-A"], capture_output=True)
+        subprocess.run(["git", "commit", "-q", "-m", "문서만"], capture_output=True,
+                       env=dict(env, GIT_AUTHOR_DATE=old, GIT_COMMITTER_DATE=old))
+        io.open("code.cs", "w", encoding="utf-8").write("// 코드\n")
+        subprocess.run(["git", "add", "-A"], capture_output=True)
+        subprocess.run(["git", "commit", "-q", "-m", "코드"], capture_output=True, env=env)
+        git("branch", "-f", "___origin_main")     # debt() 가 보는 이름을 이 판에서 흉내 낸다
+        real_sh = globals()["sh"]
+        globals()["sh"] = lambda *a: real_sh(*[x.replace("origin/main", "___origin_main") for x in a])
+        try:
+            total, calling, silent, oldest = debt(base)
+        finally:
+            globals()["sh"] = real_sh
+        wait = minutes_since(oldest)
+        ok = (total, calling, silent) == (2, 1, []) and wait is not None and wait <= 2
+        bad += 0 if ok else 1
+        print(f"  {'✔' if ok else '✘'} 진짜 저장소: 커밋 {total}개 · 빚 {calling}개 · 가장 오래된 빚 {wait}분째 "
+              f"(기대 2·1·0~2분) — **두 시간 전 문서 커밋이 빚의 나이를 늙히지 않는다**(T438 의 본론)")
+    finally:
+        os.chdir(cwd)
+        shutil.rmtree(tmp, ignore_errors=True)
+
     if bad:
         print(f"✗ check_gate_age --self-test: 갈래 {bad}건이 기대와 다르다 — 위 표의 판정 규칙을 보라")
         return 1
-    print(f"✓ check_gate_age --self-test: 갈래 {len(cases) + len(holes) + len(calls) + len(deploys) + len(phrases) + 2}개가 전부 기대대로 갈린다")
+    print(f"✓ check_gate_age --self-test: 갈래 {len(cases) + len(holes) + len(calls) + len(deploys) + len(phrases) + len(stamps) + 5}개가 전부 기대대로 갈린다")
     return 0
 
 
