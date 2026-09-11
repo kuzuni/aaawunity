@@ -17,9 +17,14 @@ namespace KkomaKnight.Tests.Play
     /// «프레임 내부 가운데에 적당히 크게 재화 아이콘이 표시되게 하고 · 프레임 오른쪽 아래에 개수 표시 ·
     /// 아이콘과 텍스트가 <b>겹치는 식으로</b> · 안 겹치게 떨어뜨려 놓으니까 너무 안 보임 작아 보임 · 던전 보상 같은 거».)
     /// <para>
-    /// ⚑ <b>재는 것은 «가독성» 이 아니라 주인이 말한 그 세 가지다</b> — ⓐ 아이콘이 칸을 충분히 채운다 ⓑ 수량이 오른쪽 아래다
+    /// ⚑ <b>재는 것은 «가독성» 이 아니라 주인이 말한 그 세 가지다</b> — ⓐ 아이콘이 칸을 충분히 채운다 ⓑ 수량이 <b>가운데 아래</b>다(T459 — 주인이 «오른쪽 아래» 를 취소했다)
     /// ⓒ 수량이 아이콘과 <b>겹친다</b>. 밝기·대비를 문턱으로 박지 않는다: 그것은 그림(<c>screens</c> PNG)이 답하는 물음이고,
     /// 못 재 본 값으로 문턱을 박으면 애먼 빨강이 뜬다(결정 930).
+    /// </para>
+    /// <para>
+    /// ⛳ <b>T459(주인 2026-09-12)</b> — «재화 슬롯에 오른쪽 아래에 텍스트 있으라 했는데 <b>중앙 아래</b>가 나은 듯 ·
+    /// 퀘스트 팝업·출석 팝업·데일리 기프트 다 그렇게 해 줘 · 출석 팝업 현재 다르게 나옴».
+    /// 문법 ② 만 뒤집힌다 — 폭·높이·걸침·겹침·외곽선은 T443 이 런 1070·1072·1073 에서 값을 치르고 정한 그대로다.
     /// </para>
     /// <para>
     /// ⚠ <b>공용 함수를 직접 부르지 않고 «진짜 문» 으로 들어간다</b> — 던전 세부 팝업(21)의 보상 칸이 주인이 이름을 대고 말한 자리다.
@@ -60,7 +65,7 @@ namespace KkomaKnight.Tests.Play
         }
 
         [UnityTest]
-        public IEnumerator 재화칸은_아이콘이_가운데_크게_수량은_오른쪽_아래에_겹쳐_얹힌다()
+        public IEnumerator 재화칸은_아이콘이_가운데_크게_수량은_가운데_아래에_겹쳐_얹힌다()
         {
             yield return Boot();
             EventsScreen.Open(_app, EventsScreen.PageDungeon); yield return Frames(3);
@@ -86,14 +91,18 @@ namespace KkomaKnight.Tests.Play
                                       cell.name + " — 아이콘이 칸의 " + (GearUi.CellIconPct - 10f) + "% 는 채워야 한다(지금 "
                                       + Mathf.RoundToInt(fill * 100f) + "%). 수량에 자리를 내주느라 그림이 눌리면 주인이 본 그 화면이다");
 
-                // ⓑ·ⓒ 수량 — 칸 오른쪽 아래 · 아이콘과 겹친다 · 검은 외곽선.
+                // ⓑ·ⓒ 수량 — 칸 **가운데 아래**(T459) · 아이콘과 겹친다 · 검은 외곽선.
                 var qtyT = UiKit.Find(cell, "Qty");
                 if (qtyT == null) continue;   // 수량이 없는 칸(종류만 보여 주는 자리)은 이 문법 밖이다
                 withQty++;
                 var q = qtyT.GetComponent<TMP_Text>();
                 Assert.IsNotNull(q, cell.name + " 의 «Qty» 는 글자여야 한다");
                 var qrt = (RectTransform)qtyT;
-                Assert.GreaterOrEqual(qrt.anchorMax.x, 0.9f, cell.name + " — 수량은 칸 **오른쪽** 끝에 붙는다(anchorMax.x)");
+                // ⛳ T459 — 주인이 «오른쪽 아래» 를 취소하고 «중앙 아래» 로 바꿨다(2026-09-12).
+                //   그래서 재는 것이 «오른쪽 끝에 붙는가» 에서 «가운데에 서는가» 로 바뀐다. 아래 끝은 그대로다.
+                //   ⚠ rect 는 칸보다 넓어(104%) 좌우로 대칭으로 걸치므로 anchorMin.x 는 음수다 — «가운데» 는 두 앵커의 **중점**으로 잰다.
+                float qMidX = (qrt.anchorMin.x + qrt.anchorMax.x) * 0.5f;
+                Assert.AreEqual(0.5f, qMidX, 0.05f, cell.name + " — 수량은 칸 **가운데**에 선다(앵커 중점 " + qMidX + " · T459)");
                 Assert.LessOrEqual(qrt.anchorMin.y, 0.1f, cell.name + " — 수량은 칸 **아래** 끝에 붙는다(anchorMin.y)");
 
                 var qr = World(qrt);
@@ -114,18 +123,24 @@ namespace KkomaKnight.Tests.Play
                 // ⛑ **그리고 이웃 칸을 덮으면 안 된다** — 2회차가 여기서 그림을 망쳤다(런 1072 · 던전 «11 1,000 … 5 1,000» · 출석 «10,0001,000»).
                 //    크기를 지키려고 rect 를 132% 로 넓혔더니 글자가 옆 칸 위로 올라가 **붙어 읽혔다** — 주인이 말한 병의 세 번째 얼굴이다.
                 //    ⚠ 재는 것은 rect 가 아니라 **글자 덩이**(`preferredWidth`)다: rect 는 넓어도 글자가 짧으면 아무 데도 안 닿는다.
-                //       오른쪽 아래 정렬이라 글자는 칸 오른쪽 끝(+걸침)에서 왼쪽으로 자란다.
+                //       (T459 전에는 오른쪽 아래 정렬이라 글자가 칸 오른쪽 끝에서 왼쪽으로만 자랐다.)
                 //    ⛑⛑ **4회차 — 이 줄의 첫 판은 «세계 좌표 − 지역 폭» 이라 단위를 섞었다**(런 1073 빨강 · 검수 Q 가 잡았다):
                 //       `cr` 는 `GetWorldCorners` 라 세계 좌표인데 `preferredWidth` 는 TMP 의 **지역** 폭이다.
                 //       그 둘을 빼면 캔버스 배율만큼 부풀린 값을 보게 되고, 자는 «덮었다» 고 우는데 화면은 멀쩡하다.
                 //       ⚠ **잰 값이 틀리면 그 값 위에 세운 결론도 흔들린다** — 이 자가 그때 우는 것을 보고 «더 줄여야겠다» 로 갔으면
                 //          글자를 까닭 없이 두 번 줄일 뻔했다. 두 수를 뺄 때는 **같은 자로 잰 것인지** 부터 본다.
-                //    ⇒ 글자 덩이를 세계 단위로 옮겨(`lossyScale`) 칸과 같은 공간에서 잰다. 오른쪽 정렬이라 글자의 오른쪽 끝은 곧 수량 rect 의 오른쪽 끝이다.
+                //    ⇒ 글자 덩이를 세계 단위로 옮겨(`lossyScale`) 칸과 같은 공간에서 잰다.
+                //    ⛳ **T459 로 이 셈이 양쪽이 됐다** — 가운데 정렬이라 글자는 rect 한가운데에서 **좌우로** 자란다.
+                //       오른쪽 아래였을 때는 오른쪽 끝이 고정이라 왼쪽 한 번만 보면 됐는데, 이제 두 쪽 다 이웃을 덮을 수 있다.
                 float inkW = q.preferredWidth * qrt.lossyScale.x;
                 float overW = cr.width * GearUi.CellQtyOver / 100f;
-                Assert.GreaterOrEqual(qr.xMax - inkW, cr.xMin - overW - 1f,
-                                      cell.name + " — 수량 글자가 칸 왼쪽으로 넘쳐 이웃 칸을 덮는다(글자 폭 " + inkW + " · 칸 폭 " + cr.width + " · 둘 다 세계 단위). "
+                float inkMid = qr.center.x, inkHalf = inkW * 0.5f;
+                Assert.GreaterOrEqual(inkMid - inkHalf, cr.xMin - overW - 1f,
+                                      cell.name + " — 수량 글자가 칸 **왼쪽**으로 넘쳐 이웃 칸을 덮는다(글자 폭 " + inkW + " · 칸 폭 " + cr.width + " · 둘 다 세계 단위). "
                                       + "칸에 안 들어가는 수는 넓히지 말고 **짧게 쓴다**(GearUi.CellQtyText · 주인 레퍼런스 16 의 «10K» 꼴)");
+                Assert.LessOrEqual(inkMid + inkHalf, cr.xMax + overW + 1f,
+                                      cell.name + " — 수량 글자가 칸 **오른쪽**으로 넘쳐 이웃 칸을 덮는다(글자 폭 " + inkW + " · 칸 폭 " + cr.width + " · 둘 다 세계 단위). "
+                                      + "가운데 정렬이라 이 쪽도 이웃에 닿는다(T459 로 새로 생긴 갈래다)");
 
                 // 외곽선은 **글자마다**가 아니라 폰트 애셋의 공유 머티리얼 한 장에 걸려 있다(T207 ② · `EnsureOutline`).
                 // 그래서 `TMP_Text.outlineWidth`(개체별 덮어쓰기)를 보면 0 이라 늘 빨갛다 — 실제로 칠하는 그 자리를 본다.

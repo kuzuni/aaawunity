@@ -272,7 +272,7 @@ namespace KkomaKnight.Game
         /// </summary>
         public const float CellIconPct = 80f;
         /// <summary>
-        /// 수량 글자 칸(칸 %) — 오른쪽 아래 모서리에서 <see cref="CellQtyOver"/> 만큼 밖으로 걸친다.
+        /// 수량 글자 칸(칸 %) — <b>가운데 아래</b>(T459 · 주인이 «오른쪽 아래» 를 취소했다)에서 <see cref="CellQtyOver"/> 만큼 밖으로 걸친다(아래로 · 좌우 대칭).
         /// <para>
         /// ⛑ <b>폭이 왜 100% 를 넘는가</b>(T443 1회차가 런 1070 에서 값을 치른 자리) — 글자는 <b>오른쪽 정렬</b>이라 rect 가 넓어도 자리를 안 먹고 <b>왼쪽으로 자랄 여지</b>만 준다.
         /// 82% 로 뒀더니 던전 세부 칸(119px)에서 rect 가 98px 뿐이라 «1,000» 이 <c>bestFit</c> 으로 <b>35 까지 눌렸고</b>, 그러면 T63 가독성 게이트(보조 36)가 운다 —
@@ -334,7 +334,7 @@ namespace KkomaKnight.Game
             return any ? CellQtyText(n) : s;
         }
         /// <summary>
-        /// 칸 <b>오른쪽 아래</b> 수량 글자 — 아이콘 위로 겹쳐 얹고(그래서 <see cref="CellIcon"/> 뒤에 부른다) 굵게 + 검은 외곽선. 이름은 <c>Qty</c>.
+        /// 칸 <b>가운데 아래</b> 수량 글자(T459 — 주인 2026-09-12 «중앙 아래가 나은 듯» · 종전은 오른쪽 아래였다) — 아이콘 위로 겹쳐 얹고(그래서 <see cref="CellIcon"/> 뒤에 부른다) 굵게 + 검은 외곽선. 이름은 <c>Qty</c>.
         /// <para>
         /// <paramref name="cellHPct"/>(칸 높이 = <b>프레임 높이의 %</b>)를 주면 그 높이에서 글자 크기를 뽑고(칸이 클수록 숫자도 큰다), 0 이면 보조 크기 그대로.
         /// ⚠ <c>UiKit.FontForHeight</c> 는 <b>px 가 아니라 프레임 %</b> 를 받는다 — px 를 넘기면 글자가 화면만 한 크기로 뽑힌다(T133 ⓙ 가 값을 치른 자리).
@@ -345,13 +345,17 @@ namespace KkomaKnight.Game
         {
             if (cell == null || string.IsNullOrEmpty(qty)) return null;
             int size = cellHPct > 0f ? UiKit.FontForHeight(cellHPct * CellQtyH / 100f) : TextSize.Aux;
-            var q = UiKit.Label(cell, 100f - CellQtyW + CellQtyOver, 100f - CellQtyH + CellQtyOver, CellQtyW, CellQtyH,
-                                qty, size, color ?? Palette.White, TextAnchor.LowerRight, kind: TextKind.Body);
+            // ⛳ T459(주인 2026-09-12 «오른쪽 아래에 텍스트 있으라 했는데 **중앙 아래**가 나은 듯») —
+            //   자리만 바뀐다: 폭(104%)·높이(50%)·걸침(4%)·겹침·외곽선은 T443 이 값을 치르고 정한 그대로다.
+            //   ⚠ 왼쪽 시작점을 «(100 − 폭)/2» 로 두어 **걸침이 좌우 대칭**이 된다(종전은 오른쪽으로만 4% 걸쳤다).
+            //     그래야 가운데 정렬 글자가 칸 한가운데에 서고, 긴 수는 양쪽으로 고르게 자란다.
+            var q = UiKit.Label(cell, (100f - CellQtyW) * 0.5f, 100f - CellQtyH + CellQtyOver, CellQtyW, CellQtyH,
+                                qty, size, color ?? Palette.White, TextAnchor.LowerCenter, kind: TextKind.Body);
             q.name = "Qty"; q.fontStyle = FontStyles.Bold;
             return q;
         }
         /// <summary>
-        /// 재화·아이템 칸 한 장 = 틀(<paramref name="frameKey"/> + <see cref="DarkFrame"/>) + 가운데 아이콘 + 오른쪽 아래 수량.
+        /// 재화·아이템 칸 한 장 = 틀(<paramref name="frameKey"/> + <see cref="DarkFrame"/>) + 가운데 아이콘 + <b>가운데 아래</b> 수량(T459).
         /// <b>모든 UI 의 재화 칸이 이 문법 하나를 쓴다</b>(주인 2026-09-11 «모든 UI 부분 재화 부분 다 바꾸셈»).
         /// </summary>
         public static void CellArt(Transform cell, string frameKey, string iconKey, string qty = null, float cellHPct = 0f)
