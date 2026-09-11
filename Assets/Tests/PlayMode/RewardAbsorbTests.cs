@@ -287,7 +287,12 @@ namespace KkomaKnight.Tests.Play
             var qty = cell != null ? UiKit.Find(cell, "Qty") : null;
             var q = qty != null ? qty.GetComponent<TMP_Text>() : null;
             Assert.IsNotNull(q, "칸 오른쪽 아래 수량 글자");
-            Assert.AreEqual("×3", q.text, "숫자·콤마 말고 다른 글자가 섞이면 부르는 쪽의 뜻이라 손대지 않는다(GearUi.CellQtyShorten)");
+            // ⛑ T448 2회차 — 기댓값이 «×3» 이면 안 된다. 짧게 쓰는 손(`GearUi.CellQtyShorten`)은 이 글자를 **안 건드리는 것이 맞는데**,
+            //    그 아래 `UiKit.Text` 가 모든 라벨을 `TextGlyphs.Safe` 로 거른다(T224) — **Jua 글꼴에 «×» 가 없어 ASCII «x» 로 바뀐다.**
+            //    그 사실은 이미 초록인 자가 박아 뒀다: `TextGlyphsTests.OtherMissingSignsGetAsciiStandIns` 가 «광고 보상 ×2» → «x2» 를 단언한다.
+            //    ⇒ 화면은 «x3» 을 그리고 이 자는 «×3» 을 물어 빨갰다(런 1078·1080 · 워커 P 진단 · 결정 1262).
+            //    ⚠ **이 줄이 재는 것은 기호가 그대로인가가 아니라 «짧게 안 줄였는가» 다** — «x3» 도 그 뜻을 그대로 지킨다(숫자만 남지 않았다).
+            Assert.AreEqual("x3", q.text, "숫자·콤마 말고 다른 글자가 섞이면 부르는 쪽의 뜻이라 손대지 않는다(GearUi.CellQtyShorten) — «×» 는 글꼴에 없어 ASCII «x» 로 그려진다(T224)");
 
             Assert.IsTrue(Close(_app.Overlay), "어둠을 눌러 닫는다"); yield return Frames(2);
 
