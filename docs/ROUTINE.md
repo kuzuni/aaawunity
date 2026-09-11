@@ -12710,7 +12710,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 8. ⚠ **`ci.yml` 에 안 걸었다(일부러)** — 이 자가 지키는 것은 «사람이 확인이라 부르는 낱말» 이지 코드가 아니라, **막을 대상이 없다**(레포가 `--filter` 를 쓰는 곳은 0곳이고 CI 도 안 쓴다). 그래서 `--self-test` 는 이 자를 **고치는 사람이** 돌린다(§3 목록의 그 줄). 나중에 누가 `--filter` 를 CI 스크립트에 넣으면 그때 거는 것이 순서다 — **쓰는 곳이 없는 자를 막는 자로 세우면 매 런 40초를 아무것도 아닌 것에 쓴다**(결정 930 의 반대 방향).
 
 순서 — 없다(끝난 절이다). 다음 사람에게 남는 것은 §3 의 그 줄과 `tools/test_by_name.py --self-test` 뿐이다.
-### T457 — ⚑⚑ 주인: **특전 팝업 직전까지 걷기·전투가 계속돼야 하는데 아직 멈춘다** (주인 2026-09-12 «그 특전 팝업 뜨기 전에 전투나 이동은 바로 전까지 계속 됐어야 함» · T368 의 뒤)
+### T457 ✅ — ⚑⚑ 주인: **특전 팝업 직전까지 걷기·전투가 계속돼야 하는데 아직 멈춘다** (주인 2026-09-12 «그 특전 팝업 뜨기 전에 전투나 이동은 바로 전까지 계속 됐어야 함» · T368 의 뒤)
 
 0. **실측(어디까지 됐나)** — T368: 흡수·킬 연출 동안 `G.HoldLevelUp` 로 «레벨업 창을 아직 안 세운다» → `Pending` 이 안 서니 엔진이 평소대로 돈다(런 897·907 자 초록 · 폰 빌드 `1a196bc5` 가 품는다). 그런데도 주인은 멈춤을 본다.
 1. **남은 후보** — ⓐ **킬 연출 엔진 보류(T50)**: `BattleScreen` 틱 루프 `if (_world.HoldEngine) { G.StepProjectiles(_acc); _acc = 0; break; }` — 칼이 내려오는 순간 엔진 틱을 세운다(투사체만 나아간다 · T312). 마지막 적을 잡는 순간이 곧 «레벨업 직전» 이라 주인 눈에 «팝업 전에 멈춘다». ⓑ `_world.Busy`(사망 연출)가 `HoldLevelUp` 에 들어 있어 흡수 뒤에도 팝업이 늦게 열리며 그 사이 걷기가 서 보이는 경우. ⓒ 흡수(`_flyExp` 바 채움)가 길어 «멈춘 듯» 보이는 것 — 이건 엔진이 도니 아니다.
@@ -12719,7 +12719,9 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 4. **자** — PlayMode 시드 고정: 마지막 킬 → 팝업 사이 프레임에서 «플레이어 x 가 두 프레임 이상 같은 값» 인 구간 0 · 파리티 21칸 그대로.
 5. **확인** — 주인 폰.
 
-> **🔄 push · CI 확인 전(15:4X · sess-1425-9466 · 워커 N · 결정 1286 · lock `T457` 쥔 채 · 코드 7b376a16)** — 2항의 프레임 로그 전에 **순서**로 답이 나왔다: 엔진은 킬 틱 끝(`Battle.cs:841`)에서 `!HoldLevelUp` 이면 곧바로 `OpenLevelUp()` 하는데, 화면(`BattleScreen.cs:474`)의 `HoldLevelUp` 은 **앞 프레임**의 Busy·Absorbing 이라 킬 직전엔 거짓 → 레벨업이 킬 틱에서 `Pending` → 루프가 매 프레임 `_acc = 0; break` → **킬부터 흡수 끝까지 엔진이 얼었다**(후보 ⓐⓑⓒ 가 아니라 T368 붙잡기의 구멍). 고침 한 줄(Core 0줄): `HoldLevelUp = !(PendingLevelUps > 0 && ((!Busy && !Absorbing) || showNow))`. 4항 자 = `Tests/PlayMode/LevelUpQueuePlayTests.cs`(새 파일 · 창은 킬 프레임 뒤 · 줄에 든 프레임 있음 · `G.T` 가 킬 뒤에도 흐름). 킬 보류(T50)는 그대로. 다음 회차: 명부에 `LevelUpQueuePlayTests(1)` 이 서고 ✗ 0 · `BattleWorldTests`·`ExpeditionStartPerkPlayTests`·`PlaythroughTests` ✗ 0 → 반납 · 5항은 주인 폰.
+> **✅ 확인(런 1093 · 16:2X · sess-1425-9466 · 워커 N · lock 반납)** — 런 1093 = 내 커밋 7b376a16 그것. `[CI명부]` 에 `LevelUpQueuePlayTests(1)` 이 **이름으로** 섰고 ✗ 0 · `BattleWorldTests(10)`·`ExpeditionStartPerkPlayTests(1)`·`PlaythroughTests(27)` ✗ 0. 그 런의 빨강 하나는 `TextSizeGateTests`(장비 인벤 «+1» 잘림 · T460 · 주인 자리 로컬)라 이 절이 아니다(워커 A 가 T460 에 진단을 놓았다). 5항(주인 폰)은 주인 몫 — 폰에서 «아직 멈춘다» 면 남은 것은 킬 보류(T50 · 반 초)와 결정 1283 ③ 의 겹침 틱이다.
+>
+> **🔄 push · CI 확인 전(15:4X · sess-1425-9466 · 워커 N · 결정 1283 · lock `T457` 쥔 채 · 코드 7b376a16)** — 2항의 프레임 로그 전에 **순서**로 답이 나왔다: 엔진은 킬 틱 끝(`Battle.cs:841`)에서 `!HoldLevelUp` 이면 곧바로 `OpenLevelUp()` 하는데, 화면(`BattleScreen.cs:474`)의 `HoldLevelUp` 은 **앞 프레임**의 Busy·Absorbing 이라 킬 직전엔 거짓 → 레벨업이 킬 틱에서 `Pending` → 루프가 매 프레임 `_acc = 0; break` → **킬부터 흡수 끝까지 엔진이 얼었다**(후보 ⓐⓑⓒ 가 아니라 T368 붙잡기의 구멍). 고침 한 줄(Core 0줄): `HoldLevelUp = !(PendingLevelUps > 0 && ((!Busy && !Absorbing) || showNow))`. 4항 자 = `Tests/PlayMode/LevelUpQueuePlayTests.cs`(새 파일 · 창은 킬 프레임 뒤 · 줄에 든 프레임 있음 · `G.T` 가 킬 뒤에도 흐름). 킬 보류(T50)는 그대로. 다음 회차: 명부에 `LevelUpQueuePlayTests(1)` 이 서고 ✗ 0 · `BattleWorldTests`·`ExpeditionStartPerkPlayTests`·`PlaythroughTests` ✗ 0 → 반납 · 5항은 주인 폰.
 
 순서 — `Game/BattleScreen.cs` · `Game/BattleWorld.cs` · 자. lock `T457`. T397(투사체 멈춤)과 같은 파일 — 한 사람이 같이 잡는 편이 싸다.
 
