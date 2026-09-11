@@ -243,6 +243,61 @@ namespace KkomaKnight.Game
             }
         }
 
+        // ─────────────────────────── 주인 «칸 문법»(T443) ───────────────────────────
+        /// <summary>
+        /// <b>칸 안 아이콘이 차지하는 비율</b>(칸 %) — 주인 2026-09-11 «프레임 내부 가운데에 <b>적당히 크게</b> 재화 아이콘».
+        /// <para>
+        /// ⚠ 이 수는 «보기 좋은 값» 이 아니라 <b>주인이 꼴을 말한 자리</b>다. 종전 칸들은 56~68% 였고, 수량을 아래에 <b>떼어 놓느라</b>
+        /// 그림이 칸의 절반으로 눌려 있었다 — 주인의 말이 바로 그것이다(«안 겹치게 떨어뜨려 놓으니까 너무 안 보임 작아 보임»).
+        /// </para>
+        /// </summary>
+        public const float CellIconPct = 80f;
+        /// <summary>수량 글자 칸(칸 %) — 오른쪽 아래 모서리에서 <see cref="CellQtyOver"/> 만큼 밖으로 걸친다(<c>LobbyPopups</c> 의 T133 값과 같은 꼴).</summary>
+        public const float CellQtyW = 82f, CellQtyH = 46f, CellQtyOver = 4f;
+        /// <summary>
+        /// 칸 가운데에 아이콘 하나(<see cref="CellIconPct"/> 정사각 · <c>preserveAspect</c>). 이름은 <c>Icon</c>.
+        /// <para>⚠ 수량을 피해 위로 올리지 <b>않는다</b> — 주인 지시가 «겹치는 식» 이다. 읽히게 하는 것은 자리가 아니라 <see cref="CellQty"/> 의 검은 외곽선이다.</para>
+        /// </summary>
+        public static Image CellIcon(Transform cell, string iconKey, string name = "Icon")
+        {
+            var ic = UiKit.Icon(cell, name, iconKey);
+            float m = (100f - CellIconPct) * 0.5f;
+            UiKit.Pct(ic.rectTransform, m, m, CellIconPct, CellIconPct);
+            return ic;
+        }
+        /// <summary>
+        /// 칸 <b>오른쪽 아래</b> 수량 글자 — 아이콘 위로 겹쳐 얹고(그래서 <see cref="CellIcon"/> 뒤에 부른다) 굵게 + 검은 외곽선. 이름은 <c>Qty</c>.
+        /// <para>
+        /// <paramref name="cellHPct"/>(칸 높이 = <b>프레임 높이의 %</b>)를 주면 그 높이에서 글자 크기를 뽑고(칸이 클수록 숫자도 큰다), 0 이면 보조 크기 그대로.
+        /// ⚠ <c>UiKit.FontForHeight</c> 는 <b>px 가 아니라 프레임 %</b> 를 받는다 — px 를 넘기면 글자가 화면만 한 크기로 뽑힌다(T133 ⓙ 가 값을 치른 자리).
+        /// 빈 글자면 아무것도 안 세운다 — «0» 과 «없음» 을 가르는 것은 부르는 쪽 몫이다.
+        /// </para>
+        /// </summary>
+        public static TMP_Text CellQty(Transform cell, string qty, float cellHPct = 0f)
+        {
+            if (cell == null || string.IsNullOrEmpty(qty)) return null;
+            int size = cellHPct > 0f ? UiKit.FontForHeight(cellHPct * CellQtyH / 100f) : TextSize.Aux;
+            var q = UiKit.Label(cell, 100f - CellQtyW + CellQtyOver, 100f - CellQtyH + CellQtyOver, CellQtyW, CellQtyH,
+                                qty, size, Palette.White, TextAnchor.LowerRight, kind: TextKind.Body);
+            q.name = "Qty"; q.fontStyle = FontStyles.Bold;
+            return q;
+        }
+        /// <summary>
+        /// 재화·아이템 칸 한 장 = 틀(<paramref name="frameKey"/> + <see cref="DarkFrame"/>) + 가운데 아이콘 + 오른쪽 아래 수량.
+        /// <b>모든 UI 의 재화 칸이 이 문법 하나를 쓴다</b>(주인 2026-09-11 «모든 UI 부분 재화 부분 다 바꾸셈»).
+        /// </summary>
+        public static void CellArt(Transform cell, string frameKey, string iconKey, string qty = null, float cellHPct = 0f)
+        {
+            if (cell == null) return;
+            if (!string.IsNullOrEmpty(frameKey))
+            {
+                var f = UiKit.Spawn(frameKey, cell); UiKit.Stretch((RectTransform)f.transform);
+                DarkFrame(f.transform);   // T115 · T69 7항 — 조각 제 Border 링을 Ink 로(결정 184 계약)
+            }
+            CellIcon(cell, iconKey);
+            CellQty(cell, qty, cellHPct);
+        }
+
         /// <summary>
         /// 이 칸이 «아이템 칸»(<c>ItemFrame_01</c> 조각을 쓰는 물건 칸)인가 — 켜진 «Border» 링의 스프라이트가 조각의 것(<see cref="ItemBorderSprite"/>)이면 그렇다.
         /// T69 «검은 아웃라인» 감사는 이 칸을 <b>면제</b>한다(T103 3항 ⓐ · 주인 최신 지시가 T69 보다 뒤다) — 조각 제 링이 등급색·밝기 그대로여야 «색깔만 바뀌는 식» 이 성립하기 때문이다.

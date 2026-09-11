@@ -178,7 +178,6 @@ namespace KkomaKnight.Game
             // 수량 글자 칸 — 보조 36 의 한 줄(TextSize.BoxHeight(36) = 50.4px)이 들어가야 한다(T63 · T77 이 처음 쓴다): 칸 4.0%(93.5px)의 56% = 52.4px · 폭 76%(76px)는 «300»(≈54px)의 141%
             if (!string.IsNullOrEmpty(qty))
             {
-                TMP_Text q;
                 if (qtyBand)
                 {
                     // T133 ⓐ 회차 2 — 회차 1(가운데 «띠»)은 실제 화면에서 **안 됐다**(`screens` run 283 의 16_attendance.png 확대 · 결정 403):
@@ -190,11 +189,12 @@ namespace KkomaKnight.Game
                     //     30% 짜리 rect(≈25px)가 bestFit 으로 글자를 다시 눌러 하한 40 이 아무 뜻이 없었다.
                     // 그래서 rect 를 «칸 높이의 절반» 으로 키우고 자리를 레퍼런스대로 오른쪽 아래(살짝 걸침)로 되돌린다.
                     // 읽히게 하는 것은 띠가 아니라 **검은 아웃라인**이다(T63 0항이 모든 글자에 무조건 붙인다 · 레퍼런스도 같은 방식).
-                    q = UiKit.Label(cell, 100f - QtyW + QtyOver, 100f - QtyH + QtyOver, QtyW, QtyH, qty,
-                                    UiKit.FontForHeight(cellR.H * QtyH / 100f), Palette.White, TextAnchor.LowerRight, kind: TextKind.Body);
+                    GearUi.CellQty(cell, qty, cellR.H);   // T133 과 같은 값(칸 높이 = 프레임 %) · 이름(«Qty»)·굵기는 그 함수가 맡는다
                 }
-                else q = UiKit.Label(cell, 20, 44, 76, 56, qty, TextSize.Aux, Palette.White, TextAnchor.LowerRight, kind: TextKind.Aux);
-                q.name = "Qty"; q.fontStyle = FontStyles.Bold;
+                // T443(주인 2026-09-11 «오른쪽 아래에 개수 · 아이콘과 겹치는 식으로 · 모든 UI») —
+                // 종전 이 갈래는 보조 크기로 작게 얹혀 있었다. 위 갈래(T133 이 레퍼런스 16 에서 잡은 그 자리)와
+                // **같은 문법**을 쓰되 글자 크기만 칸 높이에서 뽑는 것을 안 한다(칸 px 를 모르는 부르는 자리가 있다).
+                else GearUi.CellQty(cell, qty);
             }
             if (locked) { var lk = UiKit.Icon(cell, "Lock", "ui.iconLock"); UiKit.Pct(lk.rectTransform, 64, -16, 44, 44); }
             return cell;

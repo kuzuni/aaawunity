@@ -534,7 +534,8 @@ namespace KkomaKnight.Game
             var cellRts = IconRow(cells, Layout.DdRewardCells, Icons(rewardDefs), "ui.itemFrame.green", "RewardCell:", true, gapPct: DdRewardGapPct);
             for (int i = 0; i < cellRts.Count && i < rewardDefs.Count; i++)
             {
-                UiKit.Label(cellRts[i], 0, 58, 100, 42, rewardDefs[i].amount, TextSize.Aux, Palette.White, kind: TextKind.Aux).fontStyle = FontStyles.Bold;
+                // T443 — 수량은 칸 **오른쪽 아래에 겹쳐서**(주인 지시). 종전 «아래 42% 에 가로로 펼친 줄» 은 아이콘을 눌렀다.
+                GearUi.CellQty(cellRts[i], rewardDefs[i].amount, Layout.DdRewardCells.H);   // 칸 높이 = 줄 높이(프레임 %)
                 // T123 — «최초» 배지는 레퍼런스 21 처럼 «칸 안 오른쪽 위»(칸 폭 안 · 위로만 살짝 걸침)다.
                 // 전에는 «첫 클리어» 다섯 글자가 보조 36 으로 칸 폭 119px 에 안 들어가 배지를 114%(136px)로 넓혔고(T74),
                 // 그 바람에 배지가 좌우로 삐져나와 옆 칸 배지와 붙고 위로 34%(40px)나 솟아 «보상» 제목을 덮었다(screens 218 실측).
@@ -1051,8 +1052,11 @@ namespace KkomaKnight.Game
                 var cell = UiKit.Rect(row, namePrefix + i); UiKit.Pct(cell, start + i * (cellW + gap), 0, cellW, 100);
                 var f = UiKit.Spawn(frameByIcon ? RewardFrame(icons[i]) : frameKey, cell); UiKit.Stretch((RectTransform)f.transform);
                 GearUi.DarkFrame(f.transform);   // T115 · T69 7항 — 조각 제 Border 링을 Ink 8px 로 + 결정 184 계약(가운데 비움 · raycast 끔 · 링이 형제 맨 뒤)
-                // 수량 글자가 아래 34% 를 쓰는 칸(던전 세부 보상 · T99)은 아이콘을 위로 올려 겹치지 않게 한다 — 레퍼런스 21 도 «그림 위 · 숫자 아래» 다
-                var ic = UiKit.Icon(cell, "Icon", icons[i]); UiKit.Pct(ic.rectTransform, amountBelow ? 22 : 16, amountBelow ? 4 : 16, amountBelow ? 56 : 68, amountBelow ? 56 : 68);
+                // T443(주인 2026-09-11 «프레임 내부 가운데에 적당히 크게 · 오른쪽 아래에 개수 · 겹치는 식으로») —
+                // 종전에는 수량을 아래 34% 에 **떼어 놓느라** 아이콘을 56% 로 눌러 위로 올렸다(amountBelow).
+                // 주인이 본 그림이 그것이라 자리를 비켜 주지 않는다: 어느 칸이든 아이콘은 가운데 80%,
+                // 수량은 그 **위에 겹쳐** 오른쪽 아래(부르는 쪽이 GearUi.CellQty 로 얹는다).
+                GearUi.CellIcon(cell, icons[i]);
                 res.Add(cell);
             }
             return res;
@@ -1069,10 +1073,11 @@ namespace KkomaKnight.Game
         static RectTransform RewardCell(RectTransform row, Layout.R r, string frameKey, string icon, string amount = "—")
         {
             var cell = UiKit.Rect(row, "Reward"); UiKit.Pct(cell, r);
-            var f = UiKit.Spawn(frameKey, cell); UiKit.Stretch((RectTransform)f.transform);
-            GearUi.DarkFrame(f.transform);   // T115
-            var ic = UiKit.Icon(cell, "Icon", icon); UiKit.Pct(ic.rectTransform, 16, 12, 68, 68);
-            UiKit.Label(cell, 0, 50, 100, 50, amount, TextSize.Aux, Palette.White, kind: TextKind.Aux);
+            // T443 — 칸 문법 하나로(아이콘 가운데 80% · 수량 오른쪽 아래 겹침). 종전에는 아이콘 68% 위 · 글자가 아래 절반이었다.
+            // ⚠ «—» 기본값은 그대로 둔다 — 아레나 등수 줄이 «수량 없는 칸» 을 그 글자로 그린다(수를 여기서 바꾸지 않는다).
+            // ⚠ 글자 크기는 보조 그대로(0) — 여기 `r` 은 **줄 기준 %** 라 칸의 px 높이를 이 자리에서 알 수 없다.
+            //    아는 척 `UiKit.FrameH` 로 곱하면 줄 높이가 아니라 화면 높이를 재게 되어 등수 줄 숫자가 통째로 커진다.
+            GearUi.CellArt(cell, frameKey, icon, amount);
             return cell;
         }
         /// <summary>버튼 오른쪽 위 빨간 알림 점(GUI Pro 조각).</summary>
