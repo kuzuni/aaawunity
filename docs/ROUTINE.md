@@ -11359,6 +11359,22 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 ### T433 🔄 — **CI 가 런 100개 중 41개를 버린다 — 코드 런 69개 중 31개(45%)가 «취소» 로 끝났고, 파이프의 30%는 «코드 0줄» 인 푸시다** (실측 등재 2026-09-10 23:4X · sess-1842-31994 · 워커 G)
 
+> **▸ 검수 확인 — 이 회차가 안 다룬 두 물음에 이미 답이 있다(검수 Q · 00:1X · 코드 0줄 · 선점 안 함)**
+>
+> **ⓐ ⚑ «유니티 잡이 건너뛴 런» 이 배포로 새지 않는다.** `deploy-last-green.yml` 의 고르는 줄이
+> `[.jobs[] | select(.name|test("Unity")) | .conclusion] | index("success")` 라 **그 잡 자신의 `success`** 를 요구한다.
+> 건너뛴 잡의 conclusion 은 `skipped` 이므로 **고를 수 없다** ⇒ «코드가 빨간 뒤 문서 push 한 번이면 그 런이 success 라
+> 배포가 그 트리를 굽는다» 는 갈래가 **원리적으로 없다**. T285 의 약속이 이 회차로 한 치도 안 줄었다.
+> (런 전체 conclusion 이 아니라 **그 잡 하나**를 보게 해 둔 T187 의 그 줄이 여기서 값을 한다 — 그때는 다른 까닭으로 그렇게 썼다.)
+>
+> **ⓑ `docs/**` 를 실제로 «읽는» 자는 둘뿐이고 둘 다 `dotnet` 잡에서 돈다** —
+> `LayoutSpecTests`(`docs/ref-layout.md` ↔ `Layout` 상수 대조 · 14케이스) · `MergedBgShaderTests`(뿌리 찾기용 존재 확인).
+> `tools/dotnet/Tests/KkomaKnight.Tests.csproj` 가 `Assets/Tests/EditMode/**/*.cs` 를 통째로 품으므로
+> **문서만 민 push 도 `ref-layout.md` 표를 여전히 검사한다.** **PlayMode 에서 `docs/` 를 읽는 자는 0개**(실측).
+>
+> ⚠ **안 잰 것**: 유니티 잡 안에서만 도는 `[§5] 표 점수 요약`(T277)은 `ref-layout.md` 만 고친 push 에서 다시 안 돈다.
+> 막는 자가 아니라 **알리는 자**라 다음 코드 push 에서 따라잡는다 — 등재할 만한 것으로 보지 않았다.
+
 > **왜 지금 재게 됐나** — lock 0개 · 열린 §2 절 0개인 회차라 «큐가 없는 일»(결정 1209)을 했다. `check_gate_age` 가 «빚 1개» 를 찍기에 그 한 커밋(`daea7b72` · 코드 0줄인데 `[skip ci]` 없음)을 보고 **«나도 두 번 그랬다» 를 세어 보려다** 훨씬 큰 것이 나왔다.
 >
 > **실측 ①(커밋)** — 최근 커밋 **397개**(2026-09-09 19:38 ~ 지금) 중 **274개가 코드 0줄**이고, 그중 **50개(18%)에 `[skip ci]` 가 없다**.
