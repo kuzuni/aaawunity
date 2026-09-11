@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -216,6 +217,83 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(3, seen, "받은 개수(3)만큼 떠 있다 — 셋 다 재 봤다");
             Assert.AreEqual(2f, RewardPopup.OrbSizeMul, 0.001f, "배율 상수도 주인 말 그대로 2 다(T445)");
             _log.AssertNoRed("구슬 크기");
+            yield return Shutdown();
+        }
+
+        /// <summary>
+        /// T448 — 구슬 개수를 정하는 길은 <b>둘</b>인데(<c>Amount</c> · 없으면 <b>보여 주는 글자 되읽기</b>) 위 셋은 <b>늘 첫째만</b> 밟았다.
+        /// <para>
+        /// 게임이 실제로 쓰는 쪽은 둘째다 — <c>RewardPopup.Item.Of</c> 부름 스물넷 중 <b>열하나</b>가 <c>amount</c> 를 안 준다(검수 Q 실측 · T448 등재).
+        /// 그 열한 자리를 재는 단언이 하나도 없었다.
+        /// </para>
+        /// <para>
+        /// ⚑ <b>이 자가 잡으려는 손은 «글자를 짧게 쓰는 손»</b>이다. 칸은 «1,000» 을 «1K» 로 <b>보여만</b> 주는데(<c>GearUi.CellQtyShorten</c> · T443),
+        /// 누가 그 짧게 쓰기를 <b>부르는 쪽 문자열 자체</b>에 옮기면 <c>QtyOf</c> 가 «1K» 를 되읽어 <b>구슬이 1,000개 대신 1개</b> 난다 — <b>백 배</b>다.
+        /// 그것은 짐작이 아니라 T443 5회차(워커 K · 결정 1257)가 <b>간발로 비켜 간 사고</b>이고, 비켜 갔을 뿐 구멍은 그대로였다.
+        /// 그래서 이 자는 그 둘을 <b>한 판에서 같이</b> 잰다: <b>글자는 짧아져 있고(«1K») 구슬은 원본에서 세어야 한다(100)</b>.
+        /// 한쪽만 재면 그 손이 안 잡힌다 — 글자만 재면 개수가 조용히 무너지고, 개수만 재면 «짧게 보여 주기» 가 사라진 것을 못 본다.
+        /// </para>
+        /// ⚠ <b>«1K» 를 넣어 «구슬 1개» 를 단언하지 않았다</b>(등재 글의 셋째 줄) — 그것은 <b>고장을 계약으로 굳히는</b> 것이다.
+        /// «1K» 가 1개가 되는 것은 옳은 거동이 아니라 지금 <b>살아 있는 고장</b>이고(부르는 쪽 셋이 이미 그 꼴을 넘긴다 · T449),
+        /// 그 자리를 고치는 손이 이 자에서 빨강을 만나면 안 된다(결정 930 의 뒤집힌 꼴).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 수량을_글자로만_준_칸도_짧게_보여_주되_구슬은_원본_수만큼_난다()
+        {
+            yield return Boot();
+            _app.ShowScreen("lobby"); yield return Frames(2);
+
+            // ⚠ amount 를 **일부러 안 준다** — 게임의 열한 자리가 이 꼴이다.
+            var items = new List<RewardPopup.Item> { RewardPopup.Item.Of("ui.coin", "1,000") };
+            RewardPopup.Show(items); yield return Frames(3);
+            Assert.AreEqual(1, RewardPopup.LastCellCount, "칸 하나");
+
+            // ⓐ 보여 주는 글자는 짧아져 있다 — 이것이 이 자가 만드는 «상황» 이다(닫으면 칸이 파괴되므로 먼저 본다).
+            var cell = UiKit.Find(_app.Overlay.Root, "RewardCell:0");
+            Assert.IsNotNull(cell, "보상 칸");
+            var qty = UiKit.Find(cell, "Qty");
+            var q = qty != null ? qty.GetComponent<TMP_Text>() : null;
+            Assert.IsNotNull(q, "칸 오른쪽 아래 수량 글자(이름 «Qty» · T443)");
+            Assert.AreEqual("1K", q.text, "보여 줄 때는 짧게 쓴다(GearUi.CellQtyShorten · 주인 레퍼런스 16 의 «10K» 꼴 · T443)");
+
+            Assert.IsTrue(Close(_app.Overlay), "어둠을 눌러 닫는다"); yield return Frames(2);
+
+            // ⓑ 그런데 구슬은 **원본 글자**(«1,000»)에서 센다 — 1000 은 주인 캡 100 으로 잘린다.
+            Assert.AreEqual(RewardPopup.MaxOrbs, RewardPopup.LastOrbCount,
+                            "구슬은 보여 주는 «1K» 가 아니라 원본 «1,000» 에서 세어야 한다 — 이 줄이 빨가면 누가 짧게 쓰기를 부르는 쪽 문자열로 옮긴 것이고, 그때 구슬은 100개가 아니라 1개다(T448)");
+            Assert.AreEqual(RewardPopup.MaxOrbs, OrbCount(), "그만큼 실제로 떠 있다");
+            _log.AssertNoRed("글자로만 준 수량");
+            yield return Shutdown();
+        }
+
+        /// <summary>
+        /// T448 — 숫자·콤마 말고 <b>다른 글자가 섞인</b> 수량(«×3»)은 짧게 쓰지 않고 그대로 두며, 구슬은 그 안의 수만큼 난다.
+        /// <para>
+        /// ⚠ 이 줄이 값진 까닭: <c>QtyOf</c> 는 글자 안의 <b>모든 숫자를 이어 붙인다</b>(«×3» → 3 · «10%» → 10 · «1.5M» → <b>15</b>).
+        /// 곧 «수를 되읽는다» 는 것은 <b>파싱이 아니라 숫자 줍기</b>이고, 그 성질이 위 <see cref="수량을_글자로만_준_칸도_짧게_보여_주되_구슬은_원본_수만큼_난다"/> 가 막는 사고의 뿌리다.
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator 기호가_섞인_수량은_그대로_두고_그_안의_수만큼_구슬이_난다()
+        {
+            yield return Boot();
+            _app.ShowScreen("lobby"); yield return Frames(2);
+
+            var items = new List<RewardPopup.Item> { RewardPopup.Item.Of("ui.coin", "×3") };
+            RewardPopup.Show(items); yield return Frames(3);
+            Assert.AreEqual(1, RewardPopup.LastCellCount, "칸 하나");
+
+            var cell = UiKit.Find(_app.Overlay.Root, "RewardCell:0");
+            var qty = cell != null ? UiKit.Find(cell, "Qty") : null;
+            var q = qty != null ? qty.GetComponent<TMP_Text>() : null;
+            Assert.IsNotNull(q, "칸 오른쪽 아래 수량 글자");
+            Assert.AreEqual("×3", q.text, "숫자·콤마 말고 다른 글자가 섞이면 부르는 쪽의 뜻이라 손대지 않는다(GearUi.CellQtyShorten)");
+
+            Assert.IsTrue(Close(_app.Overlay), "어둠을 눌러 닫는다"); yield return Frames(2);
+
+            Assert.AreEqual(3, RewardPopup.LastOrbCount, "«×3» 에서 3 을 읽어 구슬 셋(T448)");
+            Assert.AreEqual(3, OrbCount(), "그만큼 실제로 떠 있다");
+            _log.AssertNoRed("기호 섞인 수량");
             yield return Shutdown();
         }
     }
