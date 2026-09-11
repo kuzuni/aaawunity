@@ -93,8 +93,11 @@ namespace KkomaKnight.Tests.Play
             LobbyPopups.Attendance(_app); yield return Frames(2); Canvas.ForceUpdateCanvases();
             var ov = _app.Overlay.Root;
             var day1 = UiKit.Find(ov, "Day:1"); Assert.IsNotNull(day1, "1일차 칸");
-            string q1 = Math.Round(AT.Of(1).Rewards[0].Amount).ToString("#,0");
-            string q2 = Math.Round(AT.Of(2).Rewards[0].Amount).ToString("#,0");
+            // T443 3회차 — 칸의 수는 이제 **짧은 꼴**로 적힌다(«3,000» → «3K»): 다섯 자가 칸 안에 하한 크기로 안 들어가기 때문이다.
+            //   기댓값을 «#,0» 로 손으로 적어 두면 이 자는 «표에서 오는가» 가 아니라 «그 서식인가» 를 재게 된다 —
+            //   재려는 것은 앞엣것이므로, 화면이 쓰는 그 함수(GearUi.CellQtyText)로 표의 값을 옮겨 맞댄다.
+            string q1 = GearUi.CellQtyText(AT.Of(1).Rewards[0].Amount);
+            string q2 = GearUi.CellQtyText(AT.Of(2).Rewards[0].Amount);
             Assert.IsTrue(HasTextIn(day1, q1), "1일차 수량 = 표의 값(" + q1 + ") — 코드에 박힌 «1» 이 아니다");
             Assert.IsTrue(HasTextIn(UiKit.Find(ov, "Day:2"), q2), "2일차 수량 = 표의 값(" + q2 + ")");
             // ⓑ 오늘 칸(= 1일차) 강조 · 아직 받은 칸이 없으니 ✅ 는 하나도 없다

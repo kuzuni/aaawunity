@@ -111,6 +111,16 @@ namespace KkomaKnight.Tests.Play
                                       cell.name + " — 수량이 실제로 그려지는 크기 " + used + " 가 보조 하한 " + TextSize.Aux + " 밑이다(T63 · 주인 «글씨가 너무 작아 안 읽힌다»). "
                                       + "rect " + qrt.rect.width + "×" + qrt.rect.height + " · 선호 " + q.preferredWidth + "×" + q.preferredHeight);
 
+                // ⛑ **그리고 이웃 칸을 덮으면 안 된다** — 2회차가 여기서 그림을 망쳤다(런 1072 · 던전 «11 1,000 … 5 1,000» · 출석 «10,0001,000»).
+                //    크기를 지키려고 rect 를 132% 로 넓혔더니 글자가 옆 칸 위로 올라가 **붙어 읽혔다** — 주인이 말한 병의 세 번째 얼굴이다.
+                //    ⚠ 재는 것은 rect 가 아니라 **글자 덩이**(`preferredWidth`)다: rect 는 넓어도 글자가 짧으면 아무 데도 안 닿는다.
+                //       오른쪽 아래 정렬이라 글자는 칸 오른쪽 끝(+걸침)에서 왼쪽으로 자란다.
+                float over = cr.width * GearUi.CellQtyOver / 100f;
+                float inkLeft = cr.xMax + over - q.preferredWidth;
+                Assert.GreaterOrEqual(inkLeft, cr.xMin - over - 1f,
+                                      cell.name + " — 수량 글자가 칸 왼쪽으로 넘쳐 이웃 칸을 덮는다(글자 폭 " + q.preferredWidth + " · 칸 폭 " + cr.width + "). "
+                                      + "칸에 안 들어가는 수는 넓히지 말고 **짧게 쓴다**(GearUi.CellQtyText · 주인 레퍼런스 16 의 «10K» 꼴)");
+
                 // 외곽선은 **글자마다**가 아니라 폰트 애셋의 공유 머티리얼 한 장에 걸려 있다(T207 ② · `EnsureOutline`).
                 // 그래서 `TMP_Text.outlineWidth`(개체별 덮어쓰기)를 보면 0 이라 늘 빨갛다 — 실제로 칠하는 그 자리를 본다.
                 var mat = q.fontSharedMaterial;

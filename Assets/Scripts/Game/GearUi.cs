@@ -258,12 +258,16 @@ namespace KkomaKnight.Game
         /// ⛑ <b>폭이 왜 100% 를 넘는가</b>(T443 1회차가 런 1070 에서 값을 치른 자리) — 글자는 <b>오른쪽 정렬</b>이라 rect 가 넓어도 자리를 안 먹고 <b>왼쪽으로 자랄 여지</b>만 준다.
         /// 82% 로 뒀더니 던전 세부 칸(119px)에서 rect 가 98px 뿐이라 «1,000» 이 <c>bestFit</c> 으로 <b>35 까지 눌렸고</b>, 그러면 T63 가독성 게이트(보조 36)가 운다 —
         /// 즉 «수량을 작은 칸에 가둔다» 는 주인이 말한 병(«너무 안 보임 작아 보임»)을 <b>다른 꼴로 되풀이하는 것</b>이다.
-        /// 132% 면 rect 가 157px 이라 같은 글자가 <b>≈41</b> 로 그려진다(런 1070 실측 «선호 132px @ 35» ⇒ 글자당 3.77px/pt · 157 ÷ 3.77 ≈ 41.6) — 하한 36 위로 5 포인트 남는다.
+        /// ⛑⛑ <b>그런데 2회차의 132% 는 틀렸다</b>(런 1072 그림 실측 · 3회차가 되돌린다) — 넓힌 rect 가 <b>이웃 칸을 덮었다</b>:
+        /// 던전 세부(21)는 «11 1,000 … 5 1,000» 이 한 줄로 붙어 읽혔고 출석(16) 7일차는 «10,0001,000» 이 됐다.
+        /// «작아서 안 읽힘» 을 «붙어서 안 읽힘» 으로 바꾼 것이라 <b>주인이 말한 병의 세 번째 얼굴</b>이다.
+        /// ⇒ 폭은 <b>104%</b>(칸 + 걸침 4%)로 되돌리고, 다섯 자가 안 들어가는 문제는 <b>글자를 짧게</b> 써서 푼다(<see cref="CellQtyText"/>) —
+        /// 120px 칸에 다섯 자를 하한 크기로 넣는 길은 원리적으로 없다(36 × 3.77px/pt = 136px > 칸).
         /// </para>
         /// <para>⚠ <b>한계</b>: 더 긴 수(여섯 자 이상)는 이 폭으로도 눌린다. 표가 그런 수를 내는 날에는 폭이 아니라 <b>짧게 쓰는 꼴</b>(<c>UiKit.Fmt</c> 의 «10K»)이 답이다 — 레퍼런스 16 도 그 꼴이다.</para>
         /// <para>높이 50% 는 T133 ⓙ 가 레퍼런스 16 에서 잡은 값 그대로다 — 40 × 1.4 = 56px 이 들어가야 «잘림» 판정을 안 받는다.</para>
         /// </summary>
-        public const float CellQtyW = 132f, CellQtyH = 50f, CellQtyOver = 4f;
+        public const float CellQtyW = 104f, CellQtyH = 50f, CellQtyOver = 4f;
         /// <summary>
         /// 칸 가운데에 아이콘 하나(<see cref="CellIconPct"/> 정사각 · <c>preserveAspect</c>). 이름은 <c>Icon</c>.
         /// <para>⚠ 수량을 피해 위로 올리지 <b>않는다</b> — 주인 지시가 «겹치는 식» 이다. 읽히게 하는 것은 자리가 아니라 <see cref="CellQty"/> 의 검은 외곽선이다.</para>
@@ -274,6 +278,22 @@ namespace KkomaKnight.Game
             float m = (100f - CellIconPct) * 0.5f;
             UiKit.Pct(ic.rectTransform, m, m, CellIconPct, CellIconPct);
             return ic;
+        }
+        /// <summary>
+        /// <b>칸에 적는 수 — 짧게 쓴다</b>(T443 3회차). 천 이상은 «1K»·«12.5K»·«3M» 꼴.
+        /// <para>
+        /// ⚠ <c>UiKit.Fmt</c> 를 그냥 못 쓴다 — 그쪽 문턱은 <b>1e4</b> 라 «1,000» 이 다섯 자 그대로 남고, 그 다섯 자가 칸에 안 들어가는 것이 이 절의 문제다.
+        /// 칸은 120px 안팎이고 하한 36 에서 한 글자가 ≈0.75px/pt 를 먹으니 <b>네 자가 한계</b>다(런 1070·1072 실측).
+        /// </para>
+        /// <para>⚑ 주인 레퍼런스 <c>docs/ref/16_attendance.jpg</c> 도 그 자리를 «5000»·<b>«10K»</b> 로 적는다 — 짧게 쓰는 것은 이 게임의 본래 꼴이지 내가 정한 편법이 아니다.</para>
+        /// </summary>
+        public static string CellQtyText(double n)
+        {
+            double a = System.Math.Abs(System.Math.Round(n));
+            if (a >= 1e9) return (n / 1e9).ToString("0.#") + "B";
+            if (a >= 1e6) return (n / 1e6).ToString("0.#") + "M";
+            if (a >= 1e3) return (n / 1e3).ToString("0.#") + "K";
+            return System.Math.Round(n).ToString("0");
         }
         /// <summary>
         /// 칸 <b>오른쪽 아래</b> 수량 글자 — 아이콘 위로 겹쳐 얹고(그래서 <see cref="CellIcon"/> 뒤에 부른다) 굵게 + 검은 외곽선. 이름은 <c>Qty</c>.

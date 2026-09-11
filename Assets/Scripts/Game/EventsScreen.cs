@@ -692,7 +692,7 @@ namespace KkomaKnight.Game
                     {
                         var rw = tier.Rewards[k];
                         RewardArt(rw.Item, out string frameKey, out string iconKey);
-                        PlanLight(RewardCell(row, new Layout.R(RankRewardX + k * 15, 8, 13, 84), frameKey, iconKey, UiKit.FmtComma(rw.Amount)));
+                        PlanLight(RewardCell(row, new Layout.R(RankRewardX + k * 15, 8, 13, 84), frameKey, iconKey, GearUi.CellQtyText(rw.Amount)));
                     }
                 }
                 else
@@ -825,11 +825,11 @@ namespace KkomaKnight.Game
         static void Add(List<RewardCellDef> list, DungeonData.Reward r, bool first)
         {
             if (r == null) return;
-            if (r.PetEgg > 0) list.Add(new RewardCellDef("pet.egg", UiKit.FmtComma(r.PetEgg), first));
-            if (r.Gold > 0) list.Add(new RewardCellDef("ui.coin", UiKit.FmtComma(r.Gold), first));
+            if (r.PetEgg > 0) list.Add(new RewardCellDef("pet.egg", GearUi.CellQtyText(r.PetEgg), first));
+            if (r.Gold > 0) list.Add(new RewardCellDef("ui.coin", GearUi.CellQtyText(r.Gold), first));
             // T291 — 층 보상 두 가지. 아이콘은 각 절이 갖고 있는 것을 그대로 쓴다(여기서 새로 정하지 않는다).
-            if (r.Recipe > 0 && !string.IsNullOrEmpty(r.RecipePart)) list.Add(new RewardCellDef(Recipes.Icon(r.RecipePart), UiKit.FmtComma(r.Recipe), first));
-            if (r.Key > 0 && !string.IsNullOrEmpty(r.KeyItem)) list.Add(new RewardCellDef(GachaKeys.Icon(r.KeyItem), UiKit.FmtComma(r.Key), first));
+            if (r.Recipe > 0 && !string.IsNullOrEmpty(r.RecipePart)) list.Add(new RewardCellDef(Recipes.Icon(r.RecipePart), GearUi.CellQtyText(r.Recipe), first));
+            if (r.Key > 0 && !string.IsNullOrEmpty(r.KeyItem)) list.Add(new RewardCellDef(GachaKeys.Icon(r.KeyItem), GearUi.CellQtyText(r.Key), first));
         }
         /// <summary>
         /// T251 — 던전 <b>카드</b>(20)의 «획득 가능» 줄에 그릴 아이콘. <b>세부 팝업(21)과 같은 원천</b>(<see cref="RewardCells"/>)에서

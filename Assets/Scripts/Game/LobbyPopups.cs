@@ -1033,8 +1033,14 @@ namespace KkomaKnight.Game
             color = "green"; icon = "ui.coin";
         }
 
-        /// <summary>칸의 수량 글자 — «3,000» · «×2» 처럼 표의 값 그대로(지시서 T253 4항).</summary>
-        static string AttendQtyText(double amount) => System.Math.Round(amount).ToString("#,0");
+        /// <summary>
+        /// 칸의 수량 글자 — <b>칸 문법의 짧은 꼴</b>(<see cref="GearUi.CellQtyText"/> · T443 3회차).
+        /// <para>
+        /// ⚠ 여기는 본래 «표의 값 그대로»(«3,000» · 지시서 T253 4항)였다. 바꾼 까닭은 실측이다 — 런 1072 그림에서 7일차 두 칸이 <b>«10,0001,000»</b> 으로 붙어 읽혔다.
+        /// 다섯 자를 칸 안에 하한 크기로 넣는 길이 없다(칸 ≈94px · 하한 36 이면 다섯 자에 136px 필요). <b>주인 레퍼런스 16 도 그 자리를 «10K» 로 적는다.</b>
+        /// </para>
+        /// </summary>
+        static string AttendQtyText(double amount) => GearUi.CellQtyText(amount);
 
         static readonly string[] AttendIcons = { "ui.coin", "ui.potionRed", "ui.gemRed", "ui.bookBlue", "ui.coin", "ui.hourglass" };
         static readonly string[] AttendColors = { "green", "blue", "plum", "green", "green", "plum" };
