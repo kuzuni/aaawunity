@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   dotnet:
-    name: dotnet 컴파일 · 순수 C# 테스트 · 데이터 동기화 · .meta 검사
+    name: dotnet 컴파일 · 순수 C# 테스트 · .meta 검사
     runs-on: ubuntu-latest
     # T276 회차 2 — `timeout-minutes` 가 없으면 기본이 **6시간**이다. 유니티 잡이 한 번 멈추면
     #   `concurrency: ci-<ref>`(cancel-in-progress: false)를 그 6시간 동안 붙들어 **CI 큐 전체가 선다** —
@@ -168,14 +168,6 @@ jobs:
       # 순수 함수라 layout.json 없이 돌고(유니티 잡과 무관) 양쪽을 다 심어 본다 — 여기서 막는다.
       - name: §5 «아무도 안 찍는 표» 자기 검사 (T299)
         run: python3 tools/ui_score.py --selfcheck
-      - name: aaaw main 체크아웃 (수치 정본)
-        uses: actions/checkout@v4
-        with:
-          repository: kuzuni/aaaw
-          ref: main
-          path: .aaaw-src
-      - name: data/*.json 동기화 검사
-        run: tools/check_data_sync.sh .aaaw-src
       - name: 테스트 결과 Artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -189,11 +181,47 @@ jobs:
       #   `check_stale_asserts` 옆에 뒀는데, 그 뒤에 오는 aaaw 체크아웃(git 잡음 ~40줄)·아티팩트
       #   업로드가 이 줄을 **꼬리 96줄 밖으로** 밀어냈다(run 606 실측). 워커는 꼬리로만 로그를 읽으므로
       #   «찍히기는 하는데 아무도 못 읽는» 줄이었다. 여기(뒤처리 ~45줄 앞)면 꼬리 50줄에 들어온다.
+      #   ⚑ T479 — 그 aaaw 체크아웃은 이제 아래 `datasync` 잡으로 갔다. 이 줄의 **자리는 그대로 둔다**:
+      #     밀어내던 40줄이 사라졌으니 여유가 늘었을 뿐이고, 앞으로 이 잡 끝에 무엇이 붙어도
+      #     «마지막 단계» 라는 규약이 이 줄을 꼬리 안에 지킨다.
       # ⚑ `if: always()` — 앞 게이트가 빨개도 이 줄은 찍는다(빨간 런일수록 읽을 값어치가 크다).
       - name: "[표이름] 표 행 이름 ↔ 화면 이름표 어긋남 — 보고만(빨개도 안 막는다 · 결정 493 · 이 잡의 마지막 줄)"
         if: always()
         continue-on-error: true
         run: python3 tools/check_table_tags.py
+
+  # ⚑⚑ T479 — **이 자를 `dotnet` 잡에서 떼어 냈다**(결정 1327 ⑤ⓐ).
+  #   `Assets/StreamingAssets/data/*.json` 은 **aaaw 가 정본**이라, aaaw main 이 움직이면
+  #   이 레포는 **한 줄도 안 바뀐 채** 드리프트로 빨개진다(실측: 런 1114·1115 — 그 창에
+  #   `data/` 를 건드린 커밋이 이 레포에 0개였다 · aaaw `c5e75f2` 가 움직인 것이었다).
+  #   그때 이 자가 `dotnet` 잡 안에 있으면 그 잡이 죽고, `unity-test` 는 `needs: [dotnet, gate]`
+  #   라 **통째로 skipped** 된다 — PlayMode 결과도 `screens` PNG 도 `layout.json` 도 안 나온다.
+  #   곧 **한 사람과 무관한 바깥 변화 하나가 워커 열둘의 확인 표면을 껐다.**
+  # ⚠ **문턱을 낮춘 것이 아니다**(결정 930) — 드리프트는 여전히 **막는 자**다: `check_data_sync.sh`
+  #   가 rc 1 이면 이 잡이 죽고 런 전체가 빨강이다. 보고만 하는 자로 바꾸지 **않았다**(⑤ⓑ 를 안 골랐다).
+  # ⚠⚠ **그런데 한 가지는 실제로 바뀐다 — 적어 두고 고른다.**
+  #   주인 폰(`deploy-last-green.yml`)은 «런이 초록이었나» 가 아니라 **«그 커밋의 유니티 잡이 초록이었나»**
+  #   로 고른다(:86 `.jobs[] | select(.name | test("Unity"))` · T187). 종전에는 드리프트가 그 유니티 잡을
+  #   **skipped** 로 만들어 **덤으로** 배포까지 막고 있었다. 이제는 안 막는다 —
+  #   곧 드리프트만 있는 창에서는 **아직 안 따라온 수치로 폰 빌드가 나갈 수 있다**.
+  #   그래도 이 쪽을 고른 까닭: 그때 나가는 것은 «깨진 수치» 가 아니라 **«어제까지 쓰던 수치»** 이고,
+  #   반대쪽(종전)은 aaaw 가 움직인 동안 **주인이 시킨 UI 고침들까지 폰에 못 올라간다.**
+  #   ⚑ `deploy-last-green.yml` 은 한 글자도 안 건드렸다 — T297 이 그 파일을 고치다 주인 폰 빌드를 껐다.
+  # ⚑ 이 잡은 빌드도 테스트도 안 한다 — 체크아웃 둘과 `cmp` 뿐이라 `dotnet`·유니티와 나란히 돈다.
+  datasync:
+    name: data/*.json ↔ aaaw main 동기화 검사
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: aaaw main 체크아웃 (수치 정본)
+        uses: actions/checkout@v4
+        with:
+          repository: kuzuni/aaaw
+          ref: main
+          path: .aaaw-src
+      - name: data/*.json 동기화 검사
+        run: tools/check_data_sync.sh .aaaw-src
 
   gate:
     name: 유니티 시크릿 확인
