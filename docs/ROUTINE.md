@@ -12370,3 +12370,23 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Game/GearUi.cs` · `Game/EventsScreen.cs` · `Game/LobbyPopups.cs` · `Game/UiKit.cs` · 자. lock `T443`.
 
+
+> **⛑ 런 1070 빨강 진단 — 남이 놓고 간다(sess-1842-31994 · 워커 G · 2026-09-11 05:5X · 결정 1249 · 코드 0줄 · 이 절의 파일은 안 건드렸다).**
+> `T443.lock` 이 살아 있어 고치지 않는다. **확실한 것과 못 가른 것을 갈라 적는다**(결정 1240 이 세운 규약 그대로).
+>
+> **빨강** — `EventsScreenTests.EventsTextsAreReadable`(`:517`) 한 건, 이 절의 커밋 `27565869` 가 머리인 런이다.
+> `[21_dungeon_detail] ui.popup.red/RewardCells/RewardCell:1/Qty «1,000» **Body size 35(min 40)** bestFit 32~ used 35 **rect 98×55 pref 132×35**` (`RewardCell:3` 도 같다).
+> ⇒ **배포가 여기 묶였다** — 그 뒤 8커밋이 전부 문서라 다시 물어보는 런도 안 선다(`check_gate_age`: 빚 0 · 주인 폰 5커밋 뒤 · 빨강이 42분째).
+>
+> **확실한 것 ①(무엇이 바뀌었나)** — 그 커밋의 첫 훅 한 줄이다:
+> `UiKit.Label(cellRts[i], 0, 58, **100**, 42, amount, TextSize.Aux, …, kind: **TextKind.Aux**)` → `GearUi.CellQty(cellRts[i], amount, Layout.DdRewardCells.H)`.
+> 그 한 줄이 **둘을 한꺼번에** 바꿨다: ⓐ **칸 폭 100% → `CellQtyW` 82%**(rect 이 ~120 → **98 px**) ⓑ **`TextKind.Aux`(하한 36) → `TextKind.Body`(하한 40)**.
+> **확실한 것 ②(하한이 왜 40 으로 뜨나)** — `GearUi.CellQty` 가 `kind: TextKind.Body` 를 **인자 없이 고정**한다(`GearUi.cs:280~281`). 부르는 쪽이 못 고른다.
+> **확실한 것 ③(짧게 줄이는 길은 이 값엔 없다)** — `UiKit.Fmt` 는 **1e4 이상에서만** K 로 줄인다(`UiKit.cs:1874`). «1,000» 은 그대로 다섯 글자다.
+>
+> ⚠ **못 가른 것 — 넘기기 전에 적는다.** 로그의 수로 «폭이 모자라 줄었다» 를 세우면 **옛 줄도 같이 걸린다**: pref 가 크기에 비례한다면 36 에서 132×(36/35) ≈ 136 px 라 **옛 100% 폭(~120 px)으로도 36 에 못 닿는다**. 그런데 옛 줄은 통과했다.
+> ⇒ 남은 갈래 둘은 **읽어서는 못 가른다**: ⓐ bestFit 이 폭이 아니라 **높이**(42% → 46%)로 정해진다 ⓑ 줄바꿈·오버플로 설정이 달라 pref 폭이 판정에 안 쓰인다.
+> **가르는 법(임자가 싸게 한다)** — 그 칸에서 **폭만** 100 으로 돌려 한 번 돌려 보라. 36 위로 올라가면 «폭» 이고, 안 올라가면 `CellQtyH`·줄바꿈 쪽이다.
+> ⚠ PlayMode 를 못 돌리므로 위는 전부 **로그와 코드로 읽은 것**이다(결정 1106 ②). **«폭이 줄어서다» 로 단정하지 않는다** — 그 이야기는 증상에 맞지만 옛 줄을 설명하지 못한다.
+>
+> **고칠 방향 — 주인 뜻과 게이트가 같은 쪽을 가리킨다.** 주인은 «**작아 보임**», 게이트도 «너무 작다» 다. 그러니 **하한을 낮춰(`Aux`·`Small`) 통과시키는 길은 주인 지시를 거스른다** — 숫자가 **커지도록** `CellQtyW`·`CellQtyOver` 를 넓히는 쪽이 맞다. 겹침 문법 자체는 주인이 못 박았으니 건드리지 않는다.
