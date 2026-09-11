@@ -195,6 +195,32 @@ def stale_but_alive(lock_age_min, sid_commit_age_min):
     return sid_commit_age_min <= STALE_MIN
 
 
+def sid_commit_age(sid):
+    """그 SID 가 **마지막으로 커밋한 지 몇 분**인가 — 모르면 `None`(T447).
+
+    T329 가 세운 `stale_but_alive` 의 재료를 내는 자리다. 그때는 **요약 갈래 안에만** 있었고,
+    그래서 «낡은 lock 인데 임자는 살아 있다» 를 **요약은 아는데 단일 조회(`task_state.py <ID>`)는 몰랐다** —
+    그런데 워커가 **선점 직전에 실제로 부르는 것은 단일 조회**다(규약 절차 ①). 그 둘이 다른 말을 하고 있었다.
+
+    ⚠ **모르면 `None`** — 얕은 클론(CI `fetch-depth` 없음)에서는 «그 SID 가 최근에 커밋했나» 를 물을 수가 없다.
+    그때 «죽었다» 로 새면 매 런 거짓 경고가 난다(T329 가 적어 둔 그 자리).
+    """
+    try:
+        cnt = int((_git(["rev-list", "--count", "HEAD"]).strip() or "0"))
+    except ValueError:
+        return None
+    if cnt < SHALLOW_MIN:
+        return None
+    when = _git(["log", "-1", "--format=%cI", "--fixed-strings", "--grep", sid]).strip()
+    if not when:
+        return None
+    try:
+        t = datetime.datetime.fromisoformat(when)
+    except ValueError:
+        return None
+    return (datetime.datetime.now(datetime.timezone.utc) - t).total_seconds() / 60.0
+
+
 def _git(args):
     try:
         return subprocess.run(["git"] + args, cwd=ROOT, stdout=subprocess.PIPE,
@@ -382,6 +408,13 @@ def verdict(tid, heads, rows):
         return False, "⚠ **코드가 이 번호를 %d곳에서 가리킨다** — 먼저 읽어라: %s" % (
             len(files), ", ".join(files[:3]))
     if lk:
+        # T447 — 시각으로는 죽었어도 **임자가 아직 밀고 있으면 뺏지 않는다**(T329 가 요약에만 적어 둔 그 갈래).
+        #   규약의 글자는 «90분 지나면 뺏는다» 이고 목적은 «버려진 자리를 되살린다» 인데,
+        #   임자가 26분 전에도 커밋한 자리를 뺏는 것은 그 목적이 아니라 그 반대다.
+        age = sid_commit_age(lk[0])
+        if stale_but_alive(lk[1], age):
+            return False, ("lock 시각은 %d분 전이라 죽었지만 **임자 %s 의 마지막 커밋이 %d분 전**이다 — "
+                           "살아 있다 · 뺏지 마라(T329·T447 · 그가 lock 갱신만 잊은 것이다)" % (lk[1], lk[0], age))
         return True, "lock 이 %d분 지났다(90분 초과) — 인계해서 잡아도 된다" % lk[1]
     return True, "깨끗하다 — 선점해도 된다"
 
@@ -584,8 +617,15 @@ def cmd_one(tid, heads, rows):
     print("== %s ==" % tid)
     print("  ROUTINE §2  : %s" % (htext[:100] or "(없다)"))      # 제목 원문에 이미 ✅ 가 들어 있다
     print("  PROGRESS 상태: %s" % (ptext[:100] or "(없다)"))
-    print("  lock        : %s" % ("%s · %d분 전%s" % (lk[0], lk[1], " (90분 초과 = 죽은 lock)" if lk[1] >= STALE_MIN else "")
-                                  if lk else "없음"))
+    # T447 — «90분 초과» 뒤에 **임자가 살아 있는지**까지 붙인다. 이 줄만 읽고 뺏는 손이 있다.
+    if lk and lk[1] >= STALE_MIN:
+        _age = sid_commit_age(lk[0])
+        _tail = (" (90분 초과 — 그러나 **임자의 마지막 커밋이 %d분 전**이다 = 살아 있다 · 뺏지 마라 · T329·T447)" % _age
+                 if stale_but_alive(lk[1], _age)
+                 else " (90분 초과 = 죽은 lock)")
+    else:
+        _tail = ""
+    print("  lock        : %s" % ("%s · %d분 전%s" % (lk[0], lk[1], _tail) if lk else "없음"))
     print("  코드 자취    : %d곳%s" % (len(files), (" — " + ", ".join(files[:5])) if files else ""))
     for h, when, subj in commits[:3]:
         print("  커밋        : %s %s %s" % (h, when[:16], subj[:70]))
@@ -816,6 +856,32 @@ def self_test():
                     print("⛔ 자기 검사 실패 — stale_but_alive(%s, %s) = %s (기대 %s) · %s"
                           % (lock_age, commit_age, got, want, why))
                     return 1
+
+            # ⓛ **T447 — 그 앎이 «선점 직전 단일 조회» 의 판정까지 닿는가.**
+            #    ⓙ 는 **순수 함수**가 옳다는 것만 재고, ⓖ 의 요약 줄은 사람이 읽는 참고다.
+            #    그런데 워커가 규약 절차 ①에서 실제로 부르는 것은 `verdict()` 다 —
+            #    T329 이래 넉 달 동안 그 자리만 «죽은 lock = 잡아도 된다» 로 남아 있었다.
+            #    ⚠ 발자취(코드·커밋)가 있으면 더 앞선 갈래가 먼저 막으므로, **발자취 0** 으로 재야 이 갈래가 드러난다.
+            _keep = (lock_of, footprint, sid_commit_age)
+            try:
+                for lock_age, commit_age, want_grab, why in [
+                    (STALE_MIN + 30, 20,             False, "낡은 lock + 임자 살아 있음 = 뺏지 마라"),
+                    (STALE_MIN + 30, STALE_MIN + 30, True,  "둘 다 낡았다 = 인계해서 잡아도 된다"),
+                    (STALE_MIN + 30, None,           True,  "판단 못 함(얕은 클론) = 종전대로 잡아도 된다"),
+                ]:
+                    globals()["lock_of"] = lambda _t, _a=lock_age: ("sess-test-0000", _a)
+                    globals()["footprint"] = lambda _t: ([], [])
+                    globals()["sid_commit_age"] = lambda _s, _c=commit_age: _c
+                    grab, line = verdict("T999999", {}, {})
+                    if grab != want_grab:
+                        print("⛔ 자기 검사 실패 — verdict 의 lock 갈래가 %s (기대 %s) · %s\n   판정 줄: %s"
+                              % (grab, want_grab, why, line))
+                        return 1
+                    if not want_grab and "살아 있다" not in line:
+                        print("⛔ 자기 검사 실패 — 막았는데 «살아 있다» 를 안 말한다(다음 사람이 까닭을 모른다): %s" % line)
+                        return 1
+            finally:
+                globals()["lock_of"], globals()["footprint"], globals()["sid_commit_age"] = _keep
         finally:
             CLAIMS = keep_claims
 
@@ -880,7 +946,7 @@ def self_test():
               " 같은 번호 두 제목을 잡고 · «행 없음 ↔ 접힌 행만» 을 가르고 · ⛔ 와 `\\|` 도 읽고 ·"
               " 참고 줄이 마지막 요약에도 실리고(T231) · «⬜ + 살아 있는 lock» 을 잡되 죽은 lock 은 안 잡고(T238) · **미래로 적힌 lock 을 잡되 1분 차에는 안 울고**(T294) · **본문에 ✂ 를 인용한 살아 있는 줄을 접힘으로 안 센다**(T249) · **«낡은 lock 인데 임자는 살아 있다» 를 잡되 «둘 다 낡음»·«아직 살아 있음»·«판단 못 함» 셋에는 안 울고**(T329)"
               " · **맨 위 행을 지워도 발급이 안 내려가고(옛 규칙이면 그 번호를 재발급한다) · 지워진 번호를 잡되 멀쩡한 표·구멍·git 없음 셋에는 안 울고**(T415)"
-              " · **«남이 놓고 간 진단» 을 남의 SID·SID 없는 «워커 X» 둘 다로 세되 임자 자신의 것은 안 세고, 그 셈이 «거친 것» 임을 갈래로 박아 둔다**(T446)")
+              " · **«남이 놓고 간 진단» 을 남의 SID·SID 없는 «워커 X» 둘 다로 세되 임자 자신의 것은 안 세고, 그 셈이 «거친 것» 임을 갈래로 박아 둔다**(T446) · **«낡은 lock 인데 임자는 살아 있다» 를 요약뿐 아니라 `verdict()`(선점 직전 단일 조회)에서도 막고, «둘 다 낡음»·«판단 못 함» 둘에는 종전대로 잡게 둔다(T447)**")
         return 0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
