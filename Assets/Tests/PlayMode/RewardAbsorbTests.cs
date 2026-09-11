@@ -146,6 +146,10 @@ namespace KkomaKnight.Tests.Play
             foreach (var im in _app.UiCanvas.GetComponentsInChildren<Image>(true))
                 if (im.name == RewardOrbs.OrbName && im.sprite == want) same = true;
             Assert.IsTrue(same, "파티클 그림 = 그 칸의 아이콘(3항)");
+            // T473(주인 «펫 부분에서 리워드 팝업 뜨고 나서 흡수 이펙트 아이콘이랑 다른 게 뜨더라») — 구슬은 «키로 다시 찾은 그림» 이 아니라 칸의 스프라이트 그 자체다.
+            //   여기 `want` 는 칸 아이콘의 스프라이트다 — 칸이 런타임 스프라이트(카탈로그에 없는 키)를 써도 같은 참조여야 한다.
+            foreach (var im in _app.UiCanvas.GetComponentsInChildren<Image>(true))
+                if (im.name == RewardOrbs.OrbName) Assert.AreSame(want, im.sprite, "구슬 스프라이트 = 칸 스프라이트(같은 참조 · T473)");
             _log.AssertNoRed("리워드 흡수");
             yield return Shutdown();
         }
@@ -203,19 +207,19 @@ namespace KkomaKnight.Tests.Play
 
             Assert.IsTrue(Close(_app.Overlay), "어둠을 눌러 닫는다"); yield return Frames(2);
 
-            float want = h * 2f;   // ⚠ 주인의 «2배» — 상수를 읽지 않는다
+            float want = h * 2f * 2f / 3f;   // ⚠ 주인의 «2배»(T445) 의 «3분의 2»(T477) = ×4/3 — 상수를 읽지 않고 주인 말로 센다
             int seen = 0;
             foreach (var im in _app.UiCanvas.GetComponentsInChildren<Image>(true))
             {
                 if (im.name != RewardOrbs.OrbName) continue;
                 var rt = im.transform as RectTransform;
                 Assert.IsNotNull(rt, "구슬은 RectTransform 이다");
-                Assert.AreEqual(want, rt.sizeDelta.x, 1f, $"구슬 가로 = 칸 아이콘 높이({h}) × 2 — 주인 «크기 2배로 키워»(T445)");
-                Assert.AreEqual(want, rt.sizeDelta.y, 1f, $"구슬 세로 = 칸 아이콘 높이({h}) × 2 — 주인 «크기 2배로 키워»(T445)");
+                Assert.AreEqual(want, rt.sizeDelta.x, 1f, $"구슬 가로 = 칸 아이콘 높이({h}) × 2 × 2/3 — 주인 «2배»(T445) 의 «3분의 2»(T477)");
+                Assert.AreEqual(want, rt.sizeDelta.y, 1f, $"구슬 세로 = 칸 아이콘 높이({h}) × 2 × 2/3 — 주인 «2배»(T445) 의 «3분의 2»(T477)");
                 seen++;
             }
             Assert.AreEqual(3, seen, "받은 개수(3)만큼 떠 있다 — 셋 다 재 봤다");
-            Assert.AreEqual(2f, RewardPopup.OrbSizeMul, 0.001f, "배율 상수도 주인 말 그대로 2 다(T445)");
+            Assert.AreEqual(2f * 2f / 3f, RewardPopup.OrbSizeMul, 0.001f, "배율 상수도 주인 말 그대로 2 × 2/3 다(T445 → T477)");
             _log.AssertNoRed("구슬 크기");
             yield return Shutdown();
         }

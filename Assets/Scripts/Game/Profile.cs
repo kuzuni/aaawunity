@@ -71,7 +71,8 @@ namespace KkomaKnight.Game
         public static readonly string[] Faces =
         {
             "ui.iconFoe1", "ui.iconFoe2", "ui.iconFoe3", "ui.iconFoe4",
-            "ui.face5", "ui.face6", "ui.face7", "ui.face8", "ui.face9", "ui.face10", "ui.face11", "ui.face12",
+            "ui.face5", "ui.face6", "ui.face7", "ui.face8", "ui.face9",
+            // T474(주인 2026-09-12 «프로필 이미지 9개로 해줘 · 12개 말고 선택권») — 12 → 9. `ui.face10~12` 키는 카탈로그에 남아 있다(되살릴 때 한 줄).
         };
 
         /// <summary>지금 고른 초상 아이콘(세이브에 없거나 모르는 값이면 기본 = 첫 아이콘).</summary>

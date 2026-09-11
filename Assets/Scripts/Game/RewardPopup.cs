@@ -317,7 +317,10 @@ namespace KkomaKnight.Game
                 // 3항은 «팝업 칸 그대로» 였고 T440 주인 «흡수 이펙트 재화 크기 2배로 키워» → 칸 높이 × OrbSizeMul
                 float sizePx = Mathf.Max(16f, src.rect.height) * OrbSizeMul;
                 // T313(주인 «흡수 파티클이 느리다 — 1초 안에 전부 흡수») — 예산을 넘긴다. 개수가 적어 이미 예산 안이면 종전 연출 그대로다.
-                LastOrbCount += _orbs.Fly(_orbs.TargetPos(src), target, items[i].Icon, Color.white, want[i], want[i], sizePx, 1f, null, AbsorbHoldSec, RewardOrbs.PopupBudgetSec);
+                // T473(주인 2026-09-12 «펫 부분에서 리워드 팝업 뜨고 나서 흡수 이펙트 뜨는데 아이콘이랑 다른 게 뜨더라 · 해결해») — 구슬 그림은 키로 다시 찾지 않고 **칸에 실제로 그려진 스프라이트**를 준다.
+                //   펫(13)은 칸 그림이 메이커 썸네일(런타임 스프라이트 · T396)이라 키(`PetIcon`)로 찾으면 옛 GUI 그림(빵·불…)이 떴다.
+                var srcImg = icon != null ? icon.GetComponent<Image>() : null;
+                LastOrbCount += _orbs.Fly(_orbs.TargetPos(src), target, items[i].Icon, Color.white, want[i], want[i], sizePx, 1f, null, AbsorbHoldSec, RewardOrbs.PopupBudgetSec, srcImg != null ? srcImg.sprite : null);
             }
         }
 
@@ -330,7 +333,8 @@ namespace KkomaKnight.Game
         /// </para>
         /// </summary>
         /// <summary>구슬 크기 배율 — T440 주인 «흡수 이펙트 재화 크기 2배로 키워»(팝업 칸 높이 × 이 값 · 전투 구슬은 안 건드린다).</summary>
-        public const float OrbSizeMul = 2f;
+        // T477(주인 2026-09-12 «재화 흡수 이펙트 재화 크기 너무 큼 · 3분의 2로 해») — T440 의 «2배» 에서 그 2/3 = ×4/3(칸 아이콘 높이 기준). 더/덜은 이 수 하나.
+        public const float OrbSizeMul = 4f / 3f;
         /// <summary>구슬 층의 정렬 순서 — 같은 루트 캔버스 안에서 <b>무엇보다 위</b>(오버레이·팝업은 캔버스 정렬을 안 쓰고 형제 순서만 쓴다 · 그래서 이 하나면 이긴다).</summary>
         public const int OrbSortingOrder = 100;
 

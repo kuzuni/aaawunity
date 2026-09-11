@@ -68,7 +68,7 @@ namespace KkomaKnight.Game
 
             // ③ 합계 줄 — «+0 ❤ | +0 🛡 | +0 🗡»(펫 시스템 없음 → 0)
             var sum = UiKit.Rect(Root, "SumRow"); UiKit.Pct(sum, Layout.PetSum);
-            SumGroup(sum, 0, 26, "pi.heart", Palette.Red); Sep(sum, 30); SumGroup(sum, 38, 26, "pi.shield", Palette.Sky); Sep(sum, 66); SumGroup(sum, 74, 26, "pi.attack", Palette.White);
+            SumGroups(sum);
 
             // ④ «장착중» 띠 — 어두운 패널 + 초록 꼬리 라벨(조각을 표 칸에 배율로) + 슬롯 3(열린 칸 1 · 잠금 원 2 · 어느 쪽인지는 세이브가 정한다 · RefreshSlots)
             var band = UiKit.Spawn("ui.frameDark", Root); var brt = (RectTransform)band.transform; brt.name = "EqBand"; UiKit.Pct(brt, Layout.PetEqBand);
@@ -163,6 +163,24 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>합계·패시브 줄의 한 묶음 — «+0» 숫자(오른쪽 정렬) + 아이콘. 부모 % 로 x·w.</summary>
+        /// <summary>
+        /// T475(주인 2026-09-12 «펫 부분도 공체실 순서로 표시해야 함 · 체실공으로 표시돼 있음 지금») — 합계 줄·미리보기 줄의 **차례** = 공·체·실(🗡 · ❤ · 🛡). 세우는 자리 둘과 칠하는 자리 둘이 이 배열 하나를 따른다.
+        /// 종전에는 넷이 각자 «❤·🛡·🗡» 를 적고 주석으로 «위와 같아야 한다» 만 있었다 — 하나만 고치면 숫자가 엉뚱한 아이콘 옆에 선다.
+        /// </summary>
+        public static readonly string[] SumIcons = { "pi.attack", "pi.heart", "pi.shield" };
+        static Color SumTint(string icon) => icon == "pi.heart" ? Palette.Red : icon == "pi.shield" ? Palette.Sky : Palette.White;
+        /// <summary>값을 <see cref="SumIcons"/> 차례로 — 공·체·실.</summary>
+        public static double[] InSumOrder(double atk, double hp, double sh) => new[] { atk, hp, sh };
+        /// <summary>«+수 아이콘» 세 묶음 + 구분자 둘을 <see cref="SumIcons"/> 차례로 세운다(x = 0 · 38 · 74 · 구분자 30 · 66).</summary>
+        static void SumGroups(Transform row)
+        {
+            float[] xs = { 0, 38, 74 };
+            for (int i = 0; i < SumIcons.Length; i++)
+            {
+                if (i > 0) Sep(row, xs[i] - 8);
+                SumGroup(row, xs[i], 26, SumIcons[i], SumTint(SumIcons[i]));
+            }
+        }
         static void SumGroup(Transform row, float x, float w, string icon, Color tint)
         {
             UiKit.Label(row, x, 0, w * 0.66f, 100, "+0", 40, Palette.White, TextAnchor.MiddleRight);
@@ -496,7 +514,7 @@ namespace KkomaKnight.Game
             var pv = UiKit.Rect(box, "PassiveRow"); UiKit.Pct(pv, Layout.PdPassive.Within(Layout.PdBox));
             // 셋을 13 의 합계 줄과 **같은 차례·같은 자리 규칙**으로 세운다(❤ · 🛡 · 🗡) — 한 화면에서 두 차례를 배우게 하지 않는다(격자 차례 = 빠른 장착 차례와 같은 까닭 · 결정 1064).
             //   ⚑ 레퍼런스 14 는 둘(🗡·🛡)뿐이다 — 옛 HTML 판의 펫은 공·실만 줬고, **주인은 «공·체·실» 을 준다고 했다**(슬롯 4 → 3 과 같은 자리: 그림이 아니라 지시를 따른다).
-            SumGroup(pv, 0, 26, "pi.heart", Palette.Red); Sep(pv, 30); SumGroup(pv, 38, 26, "pi.shield", Palette.Sky); Sep(pv, 66); SumGroup(pv, 74, 26, "pi.attack", Palette.White);
+            SumGroups(pv);
             // T293 ⓘ — 세부 칸의 «Lv. N» · 진행바(조각/필요) · 패시브 수치를 세이브에서 칠한다(값은 전부 Core 가 낸다).
             if (pet != null)
             {
@@ -511,7 +529,7 @@ namespace KkomaKnight.Game
                 PaintFrame(UiKit.Find(cell, "ItemFrame_01"), FrameKeyOf(dp, pet), null);
                 PetFace(UiKit.Find(cell, "ItemFrame_01"), dp, pet);   // T396 — 세부 칸 그림도 메이커 펫(격자·장착 칸과 같은 헬퍼)
                 var pw = Pets.Equip(App.Data, dp, pet, petLv < 1 ? 1 : petLv);
-                int k = 0; var vals = new[] { pw.Hp, pw.Sh, pw.Atk };   // 위 SumGroup 차례와 같아야 한다(❤ · 🛡 · 🗡)
+                int k = 0; var vals = InSumOrder(pw.Atk, pw.Hp, pw.Sh);   // 차례는 SumIcons 하나가 정한다(T475)
                 foreach (var t in pv.GetComponentsInChildren<TMP_Text>(true))
                 {
                     if (t == null || t.text == "|") continue;
@@ -712,8 +730,8 @@ namespace KkomaKnight.Game
             var row = UiKit.Find(Root, "SumRow"); if (row == null || d == null || s == null || G == null) return;
             var p = Pets.EquipPower(G, d, s);
             var texts = row.GetComponentsInChildren<TMP_Text>(true);
-            // 줄은 «+수 아이콘» 세 묶음 + 구분자 둘 — 숫자 글자만 골라 순서대로(체·실·공: SumGroup 을 세운 차례 그대로) 칠한다.
-            int k = 0; var vals = new[] { p.Hp, p.Sh, p.Atk };
+            // 줄은 «+수 아이콘» 세 묶음 + 구분자 둘 — 숫자 글자만 골라 순서대로(SumIcons 차례 = 공·체·실 · T475) 칠한다.
+            int k = 0; var vals = InSumOrder(p.Atk, p.Hp, p.Sh);
             foreach (var t in texts)
             {
                 if (t == null || t.text == "|") continue;

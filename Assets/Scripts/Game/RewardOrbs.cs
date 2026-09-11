@@ -122,7 +122,8 @@ namespace KkomaKnight.Game
         /// 값 <paramref name="total"/> 은 개수만큼 나눠 담고(나머지는 마지막 구슬), 도착할 때마다 <paramref name="onArrive"/> 로 그 몫을 넘긴다.
         /// 실제로 띄운 개수를 돌려준다(0 이면 호출자가 값을 바로 반영해야 한다).
         /// </summary>
-        public int Fly(Vector2 from, RectTransform target, string spriteKey, Color tint, int count, double total, float sizePx, float timeScale, Action<double> onArrive, float holdSec = HoldSec, float budgetSec = 0f)
+        /// <param name="sprite">T473 — 구슬 그림을 <b>키가 아니라 스프라이트로</b> 줄 때(칸이 런타임 썸네일(펫 메이커 캡처)처럼 카탈로그에 없는 그림을 쓰면 키로는 못 찾아 엉뚱한 그림이 뜬다). null 이면 <paramref name="spriteKey"/>.</param>
+        public int Fly(Vector2 from, RectTransform target, string spriteKey, Color tint, int count, double total, float sizePx, float timeScale, Action<double> onArrive, float holdSec = HoldSec, float budgetSec = 0f, Sprite sprite = null)
         {
             Prune();
             if (_layer == null || target == null || count <= 0 || total <= 0) return 0;
@@ -135,7 +136,7 @@ namespace KkomaKnight.Game
             for (int i = 0; i < count; i++)
             {
                 double val = i == count - 1 ? total - each * (count - 1) : each;
-                Make(from, to, spriteKey, tint, sizePx, i, count, sc, val, onArrive, Mathf.Max(0f, holdSec), step, flyBase, flyJit);
+                Make(from, to, spriteKey, tint, sizePx, i, count, sc, val, onArrive, Mathf.Max(0f, holdSec), step, flyBase, flyJit, sprite);
             }
             return count;
         }
@@ -178,9 +179,11 @@ namespace KkomaKnight.Game
             return (count - 1) * step + HopSec + holdSec + flyBase + flyJit;
         }
 
-        void Make(Vector2 from, Vector2 to, string spriteKey, Color tint, float sizePx, int i, int count, float sc, double value, Action<double> onArrive, float holdSec, float stepSec, float flyBase, float flyJit)
+        void Make(Vector2 from, Vector2 to, string spriteKey, Color tint, float sizePx, int i, int count, float sc, double value, Action<double> onArrive, float holdSec, float stepSec, float flyBase, float flyJit, Sprite sprite = null)
         {
             var img = UiKit.Icon(_layer, OrbName, spriteKey, tint);
+            // T473 — 칸이 든 «그 그림» 으로(키가 카탈로그에 없어도 · 펫 메이커 썸네일 같은 런타임 스프라이트)
+            if (sprite != null) img.sprite = sprite;
             var rt = img.rectTransform;
             rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f);
             rt.sizeDelta = new Vector2(sizePx, sizePx);

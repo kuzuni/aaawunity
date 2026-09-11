@@ -105,7 +105,14 @@ namespace KkomaKnight.Game
         /// <summary>킬 타격이 나온 뒤 플레이어 공격 모션이 아직 끝나지 않았는가 — 이 동안 화면은 출발하지 않는다(T50 · 대시 특전도 같다 · T51).</summary>
         public bool KillAnimHold => _killAnimHold && _player != null && _player.Attacking;
         /// <summary>엔진 틱을 보류해야 하는가 = 킬 연출 대기(<see cref="KillPending"/>) 또는 킬 뒤 공격 모션(<see cref="KillAnimHold"/>) — BattleScreen.Tick 이 이 동안 틱을 돌리지 않는다(탭 복귀 따라잡기 <see cref="Silent"/> 는 예외).</summary>
-        public bool HoldEngine => !Silent && (KillPending || KillAnimHold);
+        /// <summary>
+        /// T457(주인 2026-09-12 «그 특전 팝업 뜨기 전에 전투나 이동은 바로 전까지 계속 됐어야 함» · «여전히 특전 뜨기 전에 계속 움직이는 거랑 되고 있게 하라니까 · 특전 딱 떴을 때 게임 정지되는 느낌으로» · «경험치 흡수하는 효과 나오면서부터 이미 이동하는 거랑 공격 멈추고 있잖아») — 킬 연출(칼 내려오기 전 · 킬 뒤 공격 모션) 동안 엔진 틱을 세우던 T50 의 보류를 <b>기본으로 끈다</b>.
+        /// 주인이 본 «흡수 효과가 나오면서부터 이동·공격이 멈춘다» 가 바로 이 보류였다 — 마지막 적을 잡는 그 순간부터 특전 창이 뜰 때까지
+        /// 엔진이 서 있었다(T368 은 «창을 늦게 연다» 만 했고 이 보류는 그대로였다). 이제 멈추는 것은 특전 창이 실제로 뜰 때(팝업 timeScale 0 · T3)뿐이다.
+        /// <para>참이면 옛 T50 꼴로 돌아간다 — 그 꼴의 자(<c>BattleWorldTests</c> 의 킬 보류 갈래)가 켜고 잰다. 게임은 늘 거짓.</para>
+        /// </summary>
+        public static bool HoldEngineOnKill = false;
+        public bool HoldEngine => HoldEngineOnKill && !Silent && (KillPending || KillAnimHold);
         /// <summary>플레이어 리그의 현재 애니 상태 이름(테스트·진단용).</summary>
         public string PlayerAnim => _player != null ? _player.Current : null;
         /// <summary>
@@ -797,7 +804,8 @@ namespace KkomaKnight.Game
             // 표시 원점(T20/T50): 킬 연출 대기(칼 내려오기 전) · 킬 뒤 공격 모션 중에는 멈춤 — 그 동안 엔진도 보류(HoldEngine)되므로 풀리면 격차 없이 엔진 걸음 그대로 출발한다(따라잡기 없음 · 원래 걷기 속도)
             _player.Tick(dt);
             if (_killAnimHold && !_player.Attacking) _killAnimHold = false;   // 공격 모션이 끝났다 → 걷기 모션과 함께 출발
-            double gap = P.WorldX - _shownPX; bool hold = KillPending || KillAnimHold;
+            // T457 — 엔진을 안 세우면 화면 원점도 세우지 않는다(세우면 T20 의 «풀리며 2배 걸음» 이 돌아온다). 스위치 하나가 둘을 같이 정한다.
+            double gap = P.WorldX - _shownPX; bool hold = HoldEngineOnKill && (KillPending || KillAnimHold);
             // 멈춤 시작 프레임(!_heldPrevFrame)은 엔진 x 로 맞추고(그 프레임의 걷기 틱은 킬 이전의 접근 걸음이다 · T65), 그다음 프레임부터 얼린다
             if (Silent || !hold || !_heldPrevFrame || gap < 0 || gap > SnapGap) _shownPX = P.WorldX;
             _heldPrevFrame = hold;

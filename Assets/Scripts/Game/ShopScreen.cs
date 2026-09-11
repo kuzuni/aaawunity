@@ -527,7 +527,7 @@ namespace KkomaKnight.Game
         }
 
         // ───────────────────────── 상품 카드 (ListItem_ShopItem 부품 · 수량 → 그림 → 이름 → 가격 띠) ─────────────────────────
-        /// <summary>다이아/골드 카드 1칸 — 09_shop_1.jpg 카드 안 비례: 수량(위 5~19%) · 그림(20~64%) · 이름(66~77%) · 가격 띠(80~97%). 카드 전체와 가격 버튼이 같은 일을 한다. priceIconKey 가 null 이면 가격 아이콘을 끈다(₩).</summary>
+        /// <summary>다이아/골드 카드 1칸 — 09_shop_1.jpg 카드 안 비례: 수량(위 5~19%) · 그림(20~64%) · 이름(66~77%) · 가격 띠(80~97%). 결제는 가격 버튼만 한다(T471 · 카드 몸통은 안 눌린다). priceIconKey 가 null 이면 가격 아이콘을 끈다(₩).</summary>
         List<Button> BuildPack(RectTransform slot, string qty, string iconKey, string name, string priceIconKey, string price, Color tint, Action onClick, string gradName = null)
         {
             var cell = UiKit.Spawn("ui.shopItem", slot); var crt = (RectTransform)cell.transform; UiKit.Stretch(crt);
@@ -559,7 +559,8 @@ namespace KkomaKnight.Game
                 var inner = UiKit.Find(btn, "Button_02_Yellow"); if (inner != null) { var it = inner.Find("Text (TMP)"); if (it != null) it.gameObject.SetActive(false); }   // 버튼 프리팹 자체의 «Button» 글자 — 값은 GroupArea 의 글자가 맡는다
                 btns.Add(UiKit.Clickable(btn, onClick));
             }
-            btns.Add(UiKit.Clickable(crt, onClick, false));
+            // T471(주인 2026-09-12 «상점 카드 클릭해도 결제되던데 · 버튼을 클릭해야 결제되게 해야 함 · 80000원 이런 거 써 있는 부분») — 카드 몸통은 더 이상 안 눌린다. 결제는 **가격 버튼(`Button_Price`)만**.
+            //   여태는 «카드 전체와 가격 버튼이 같은 일» 이었는데(위 요약 주석) 카드를 스치기만 해도 결제가 나갔다.
             // T69-shop — 상품 카드(ListItem_ShopItem 조각)의 제 외곽선은 프레임 2px 남짓이라 폰에서 안 보인다 → 칸 위에 Ink 링 8px(레퍼런스 09 의 카드 검은 외곽선 · 표 «상품 카드» % 불변)
             // 7항 «아이템류 칸 = ItemFrame» 은 여기엔 안 쓴다 — 레퍼런스 09 의 상품 칸은 정사각 아이템 프레임이 아니라 세로 카드(수량·그림·이름·가격 띠)다(결정 196)
             UiKit.Bordered(slot);

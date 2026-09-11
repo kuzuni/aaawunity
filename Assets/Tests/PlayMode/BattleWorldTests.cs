@@ -23,8 +23,9 @@ namespace KkomaKnight.Tests.Play
     public class BattleWorldTests
     {
         PlayLog _log; App _app;
-        [SetUp] public void SetUp() { _log = new PlayLog(); }
-        [TearDown] public void TearDown() { Time.timeScale = 1f; _log?.Dispose(); _log = null; }
+        // T457 — 게임 기본은 «킬 연출 중에도 엔진이 돈다»(주인 «특전 창이 뜰 때만 멈춤»). 이 자의 킬 보류 갈래(T50·T312)는 옛 꼴을 재므로 스위치를 켜고 돈다.
+        [SetUp] public void SetUp() { _log = new PlayLog(); BattleWorld.HoldEngineOnKill = true; }
+        [TearDown] public void TearDown() { BattleWorld.HoldEngineOnKill = false; Time.timeScale = 1f; _log?.Dispose(); _log = null; }
 
         static IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
         static IEnumerator RealSeconds(float sec) { float t = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t < sec) yield return null; }

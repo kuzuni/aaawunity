@@ -216,7 +216,7 @@ namespace KkomaKnight.Tests.Play
         [Test]
         public void FaceListIsLongEnoughAndDoesNotMoveTheArenaFaces()
         {
-            Assert.GreaterOrEqual(Profile.Faces.Length, 8, "고를 수 있는 초상은 여덟 장 이상이다(주인 «4개밖에 없던데 좀 늘려봐라»)");
+            Assert.AreEqual(9, Profile.Faces.Length, "고를 수 있는 초상은 정확히 아홉 장이다(T474 · 주인 «프로필 이미지 9개로 해줘 · 12개 말고» · T370 «4개밖에 없던데 좀 늘려봐라» 의 뒤)");
             var seen = new System.Collections.Generic.HashSet<string>();
             foreach (var k in Profile.Faces)
             {
