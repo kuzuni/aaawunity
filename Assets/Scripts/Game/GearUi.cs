@@ -286,15 +286,14 @@ namespace KkomaKnight.Game
         /// 칸은 120px 안팎이고 하한 36 에서 한 글자가 ≈0.75px/pt 를 먹으니 <b>네 자가 한계</b>다(런 1070·1072 실측).
         /// </para>
         /// <para>⚑ 주인 레퍼런스 <c>docs/ref/16_attendance.jpg</c> 도 그 자리를 «5000»·<b>«10K»</b> 로 적는다 — 짧게 쓰는 것은 이 게임의 본래 꼴이지 내가 정한 편법이 아니다.</para>
+        /// <para>
+        /// ⚑⚑ <b>셈과 낱말표는 <see cref="KkomaKnight.Core.ShortNum.Cell"/> 한 자리다</b>(T454) — 여기 사다리를 따로 적으면 <b>읽는 쪽과 어긋난다.</b>
+        /// 이 글자는 <c>LobbyPopups:1272</c>(출석 · <c>amount:</c> 없음)를 타고 <c>RewardPopup.QtyOf</c> 로 가 <b>다시 숫자로 읽히는데</b>,
+        /// 그쪽은 <c>ShortNum</c> 의 표를 본다. 둘이 다른 표를 보면 «출석 다이아 1000 → 구슬 1개»(결정 1259 · <b>배포까지 갔던 것</b>)가 되살아난다.
+        /// ⚠ <c>Game</c> 은 `dotnet` 하니스가 컴파일조차 안 하므로(결정 143) <b>여기 사다리를 되살려도 로컬 자는 전부 초록이다</b> — 그것을 막는 것은 <c>ShortNumCellTests</c> 의 소스 글자 자 하나뿐이다.
+        /// </para>
         /// </summary>
-        public static string CellQtyText(double n)
-        {
-            double a = System.Math.Abs(System.Math.Round(n));
-            if (a >= 1e9) return (n / 1e9).ToString("0.#") + "B";
-            if (a >= 1e6) return (n / 1e6).ToString("0.#") + "M";
-            if (a >= 1e3) return (n / 1e3).ToString("0.#") + "K";
-            return System.Math.Round(n).ToString("0");
-        }
+        public static string CellQtyText(double n) => KkomaKnight.Core.ShortNum.Cell(n);
         /// <summary>
         /// <b>이미 글자로 된 수</b>를 칸 꼴로 다시 쓴다 — «1,000» → «1K». 숫자와 콤마뿐일 때만 손대고, «×3»·«10%» 처럼 다른 글자가 섞이면 <b>그대로 둔다</b>.
         /// <para>
