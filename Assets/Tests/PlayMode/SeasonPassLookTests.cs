@@ -236,7 +236,11 @@ namespace KkomaKnight.Tests.Play
             //        값이 서서 «받기» 가 붙는 날 «눌렀는데 체크가 안 뜬다» 로 나타났을 자리다.
             //   ⇒ 고침은 화면 쪽(Refresh 가 자리를 되돌리고 줄을 다시 그린다). 이 갈래는 그 둘을 **동시에** 잰다.
             {
-                int lv = SeasonPassScreen.CurLevel;
+                // ⛑ T462 4회차 — **«지금 레벨» 과 «줄 번호» 는 같은 수가 아니다**(워커 O · 결정 1336 이 런 1117 에서 가려 놓고 갔다).
+                //   T462 로 갓 시작한 세이브의 레벨이 **0** 이 됐는데 줄은 `RefreshRows` 의 `first = Max(1, …)` 라 **1부터만** 선다
+                //   ⇒ `Cell:free:0` 은 영영 없고 이 갈래는 «체크가 없다» 를 **아무 칸도 없어서** 통과한 뒤 ⓑ 에서 운다.
+                //   이 갈래가 재는 것은 «세이브가 «받았다» 면 그 칸에 체크가 선다» 이지 «0 레벨» 이 아니므로, **있는 줄**에서 돌린다.
+                int lv = Mathf.Max(1, SeasonPassScreen.CurLevel);
                 var claimed0 = new System.Collections.Generic.Dictionary<int, int>(_app.Save.PassClaimed);
                 SeasonPassScreen.Open(_app); yield return Frames(2);
                 Assert.IsNotNull(UiKit.Find(_app.Current.Root, "Badge:" + SeasonPassScreen.TopLevel),
