@@ -173,7 +173,12 @@ jobs:
           # T352 — «--with-deps» 는 apt 로 시스템 라이브러리까지 깔다가 러너 밖 저장소(dl.google.com)의 «Hash Sum mismatch» 로 죽을 수 있다
           #   (deploy-last-green 런 490 · 스모크가 돌기도 전에 배포가 멈췄다). 그때는 브라우저만 다시 깐다 — ubuntu-latest 에는 chromium 의 라이브러리가 이미 있다.
           npx playwright install --with-deps chromium || npx playwright install chromium
-          tools/webgl_smoke.sh --dir build/WebGL/KkomaKnight --battle --play-report --require-marker --timeout 240 --shot webgl-smoke/local.png --log webgl-smoke/local.txt
+          # ⛳ T435 — 여기만 `--play`(strict) 다. T300 2항의 «fail 0 이 이어진 뒤» 조건을 결정 1209 가 셀 수 있게 바꾼 뒤
+          #   실제로 세어 찼다: 배포 런 697·698·699·700·701 이 연속 다섯 번 `play done 11/11 fail 0`(110.6~139.4s · 예산 300s)이고
+          #   그 구간에 `Assets/Scripts/Game/Playthrough.cs` 커밋이 0 이다(각본이 안 바뀐 채 다섯 번 돌았다).
+          #   ⚠ 이 자리가 **배포를 막는 유일한 문**이다 — 여기서 빨개지면 gh-pages 로 안 밀고 주인 폰은 옛 빌드에 남는다(그것이 목적이다).
+          #   ⚠ 아래 «배포 뒤 gh-pages 재확인» 과 ci.yml 의 둘은 **보고만 그대로** 둔다(결정 1230 ② 에 까닭).
+          tools/webgl_smoke.sh --dir build/WebGL/KkomaKnight --battle --play --require-marker --timeout 240 --shot webgl-smoke/local.png --log webgl-smoke/local.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
