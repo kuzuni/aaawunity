@@ -12719,7 +12719,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 4. **자** — PlayMode 시드 고정: 마지막 킬 → 팝업 사이 프레임에서 «플레이어 x 가 두 프레임 이상 같은 값» 인 구간 0 · 파리티 21칸 그대로.
 5. **확인** — 주인 폰.
 
-> **🔄 push · CI 확인 전(15:4X · sess-1425-9466 · 워커 N · 결정 1283 · lock `T457` 쥔 채 · 코드 7b376a16)** — 2항의 프레임 로그 전에 **순서**로 답이 나왔다: 엔진은 킬 틱 끝(`Battle.cs:841`)에서 `!HoldLevelUp` 이면 곧바로 `OpenLevelUp()` 하는데, 화면(`BattleScreen.cs:474`)의 `HoldLevelUp` 은 **앞 프레임**의 Busy·Absorbing 이라 킬 직전엔 거짓 → 레벨업이 킬 틱에서 `Pending` → 루프가 매 프레임 `_acc = 0; break` → **킬부터 흡수 끝까지 엔진이 얼었다**(후보 ⓐⓑⓒ 가 아니라 T368 붙잡기의 구멍). 고침 한 줄(Core 0줄): `HoldLevelUp = !(PendingLevelUps > 0 && ((!Busy && !Absorbing) || showNow))`. 4항 자 = `Tests/PlayMode/LevelUpQueuePlayTests.cs`(새 파일 · 창은 킬 프레임 뒤 · 줄에 든 프레임 있음 · `G.T` 가 킬 뒤에도 흐름). 킬 보류(T50)는 그대로. 다음 회차: 명부에 `LevelUpQueuePlayTests(1)` 이 서고 ✗ 0 · `BattleWorldTests`·`ExpeditionStartPerkPlayTests`·`PlaythroughTests` ✗ 0 → 반납 · 5항은 주인 폰.
+> **🔄 push · CI 확인 전(15:4X · sess-1425-9466 · 워커 N · 결정 1286 · lock `T457` 쥔 채 · 코드 7b376a16)** — 2항의 프레임 로그 전에 **순서**로 답이 나왔다: 엔진은 킬 틱 끝(`Battle.cs:841`)에서 `!HoldLevelUp` 이면 곧바로 `OpenLevelUp()` 하는데, 화면(`BattleScreen.cs:474`)의 `HoldLevelUp` 은 **앞 프레임**의 Busy·Absorbing 이라 킬 직전엔 거짓 → 레벨업이 킬 틱에서 `Pending` → 루프가 매 프레임 `_acc = 0; break` → **킬부터 흡수 끝까지 엔진이 얼었다**(후보 ⓐⓑⓒ 가 아니라 T368 붙잡기의 구멍). 고침 한 줄(Core 0줄): `HoldLevelUp = !(PendingLevelUps > 0 && ((!Busy && !Absorbing) || showNow))`. 4항 자 = `Tests/PlayMode/LevelUpQueuePlayTests.cs`(새 파일 · 창은 킬 프레임 뒤 · 줄에 든 프레임 있음 · `G.T` 가 킬 뒤에도 흐름). 킬 보류(T50)는 그대로. 다음 회차: 명부에 `LevelUpQueuePlayTests(1)` 이 서고 ✗ 0 · `BattleWorldTests`·`ExpeditionStartPerkPlayTests`·`PlaythroughTests` ✗ 0 → 반납 · 5항은 주인 폰.
 
 순서 — `Game/BattleScreen.cs` · `Game/BattleWorld.cs` · 자. lock `T457`. T397(투사체 멈춤)과 같은 파일 — 한 사람이 같이 잡는 편이 싸다.
 
@@ -12760,6 +12760,8 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 2. **전투 트레일** — 트레일이 실제로 붙는지(`_worldTrails.Count`)와 보이는지(정렬 순서·재질)를 재고, 안 보이면 `TrailSortOrder` 를 캐릭터보다 **위**(예: 350 · 투사체 값)로 · 폭·시간을 눈에 띄게. 리워드 팝업 흡수(UI 층)는 T109 잔상 스프라이트 그대로.
 3. **자** — EditMode `RewardOrbTests`: 궤적 함수(베지어)가 t=0 출발·t=1 과녁·중간에 옆으로 벗어난다 · 예산 안. PlayMode: 전투에서 골드 구슬 하나 날릴 때 `OrbTrailWorld` 오브젝트가 생기고 `TrailRenderer.sortingOrder` ≥ 캐릭터.
 4. **확인** — 주인 폰(전투 흡수에 꼬리가 보인다 · 팝업 흡수가 곡선으로 부드럽게).
+
+> **🔄 1회차 push · 확인 전(15:5X · sess-0132-18539 · 워커 K · 결정 1286 · lock `T461` 쥔 채)** — ⓐ 와 ⓑ 의 **수 한 자리**를 냈다. 0항의 «직선» 은 실측과 달랐다(곡선은 T109 부터 있었다) — 고친 것은 **가속의 방향**이고, 셈은 `Core/OrbPath.cs` 로 내려 `OrbPathTests` 9개가 매 회차 로컬에서 돈다. ⓑ 는 `TrailSortOrder` −50 < 전투 바닥 −40 이라 **꼬리가 바닥 뒤**였던 것 — 350(투사체 자리)으로. `Game/BattleScreen.cs` 는 `T457.lock`(워커 N) 범위라 안 열었고, 다행히 안 열고 끝났다. 남은 것은 **눈**(주인 폰)뿐이다.
 
 순서 — `Game/RewardOrbs.cs` · `Game/BattleScreen.cs` · 자. lock `T461`.
 

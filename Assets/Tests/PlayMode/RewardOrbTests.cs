@@ -214,7 +214,7 @@ namespace KkomaKnight.Tests.Play
             // ⓐ 머무름 — 홉(0.15s)이 끝나고 최소 0.8s 는 그 자리에 떠 있어야 한다(주인 «1초 정도»)
             Assert.GreaterOrEqual(tDepart, RewardOrbs.HopSec + RewardOrbs.HoldSec * 0.8f,
                 $"구슬이 너무 빨리 출발했다 — 홉 뒤 {RewardOrbs.HoldSec}초쯤 머물러야 한다(실측 출발 {tDepart:0.00}s)");
-            // ⓑ 전체 = 홉 + 머무름 + 비행 ≈ 1.95초. «출발» 을 어디로 잡느냐(Ease.InQuad 라 처음이 느리다)에
+            // ⓑ 전체 = 홉 + 머무름 + 비행 ≈ 1.95초. «출발» 을 어디로 잡느냐(T461 뒤로는 OrbPath.Ease = InOutSine 이라 처음도 끝도 느리다)에
             //    흔들리지 않게 «닿은 시각» 으로 잰다 — 옛 값(머무름 0 · 비행 0.35~0.5)이면 0.65초라 크게 떨어진다.
             float whole = RewardOrbs.HopSec + RewardOrbs.HoldSec + RewardOrbs.FlySec;
             Assert.That(tArrive, Is.InRange(whole - 0.3f, whole + 0.5f),
@@ -226,7 +226,7 @@ namespace KkomaKnight.Tests.Play
             Assert.Greater(midAt, 0f, "비행 한가운데를 못 봤다");
             var ab = to - departPos; float abLen = ab.magnitude;
             float off = abLen < 0.001f ? 0f : Mathf.Abs(ab.x * (midPos.y - departPos.y) - ab.y * (midPos.x - departPos.x)) / abLen;
-            Assert.Greater(off, size * 0.8f, $"경로가 직선에 가깝다 — 랜덤 곡선이어야 한다(직선에서 {off:0.0}px 벗어남)");
+            Assert.Greater(off, size * 0.8f, $"경로가 직선에 가깝다 — 활을 그려야 한다(T461 뒤로는 구슬 번호가 좌·우와 곡률을 정한다 · 직선에서 {off:0.0}px 벗어남)");
             // ⓓ 트레일
             Assert.Greater(trailSeenAt, 0f, "구슬 뒤에 꼬리가 남아야 한다(T109 3항 · T144 로 월드 TrailRenderer)");
             // ⓔ 값은 정확히 한 번, 전부

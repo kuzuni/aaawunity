@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using KkomaKnight.Core;
 
 namespace KkomaKnight.Game
 {
@@ -11,7 +12,8 @@ namespace KkomaKnight.Game
     /// 값(엔진)은 킬 순간에 이미 올라 있고(<see cref="KkomaKnight.Core.BattleState"/> 불변 · 시드 골든 불변),
     /// 여기서 옮기는 것은 «표시값이 언제 오르는가» 뿐이다 — 구슬이 목표(EXP 바 · 골드 pill)에 <b>도착할 때마다</b> 그 몫을 <see cref="Fly"/> 의 콜백으로 넘긴다.
     /// 경로(T109 · 주인 «1초 정도 머물렀다가 랜덤 곡선 그리면서 (트레일 있어야 함) 0.8초 동안 흡수») = 짧게 위로 튀었다가(<see cref="HopSec"/>) 그 자리에서 <see cref="HoldSec"/> 머물며 흔들리고,
-    /// 제어점을 진행 방향의 <b>옆(좌·우 랜덤)</b>으로 민 2차 베지어로 <see cref="FlySec"/>(거리 무관 · ±<see cref="FlyJitter"/>) 만에 목표까지 — 구슬마다 <see cref="StepSec"/> 시차 · 지나간 자리에 잔상(<see cref="TrailName"/>)을 떨군다.
+    /// 제어점을 진행 방향의 <b>옆(구슬 번호로 좌·우 번갈아 · T461)</b>으로 민 2차 베지어로 <see cref="FlySec"/>(거리 무관 · ±<see cref="FlyJitter"/>) 만에 목표까지 — 구슬마다 <see cref="StepSec"/> 시차 · 지나간 자리에 잔상(<see cref="TrailName"/>)을 떨군다.
+    /// <para>T461 ⓐ(주인 2026-09-12 «부드럽게 안 가는 느낌») — 길의 셈(제어점·진행률·크기)은 <see cref="OrbPath"/>(Core)에 있고 여기는 붙이기만 한다. 그래야 «부드러운가» 를 이 통에서 매 회차 잰다(결정 143).</para>
     /// 모든 트윈에 <c>SetLink</c>(T56 · 콘솔 노란 줄 0) · <see cref="FinishNow"/> 는 남은 값을 즉시 적립하고 비운다(무한 대기 금지).
     /// </summary>
     public sealed class RewardOrbs
@@ -80,8 +82,22 @@ namespace KkomaKnight.Game
         static readonly int MainTex = Shader.PropertyToID("_MainTex");
         /// <summary>T144 — 꼬리를 월드 <c>TrailRenderer</c> 로 낼 것인가(끄면 T109 의 잔상 스프라이트로 돌아간다 · 되돌리는 스위치).</summary>
         public static bool UseWorldTrail = true;
-        /// <summary>꼬리의 정렬 순서 — 캐릭터(0)보다 뒤에 깔아 그림을 안 가린다.</summary>
-        public const int TrailSortOrder = -50;
+        /// <summary>
+        /// 꼬리의 정렬 순서 — <b>투사체와 같은 자리</b>(<c>BattleWorld</c> 의 도끼·화살이 쓰는 350).
+        /// <para>
+        /// ⚑ <b>T461 ⓑ 실측(2026-09-11 · 소스) — 종전 값 −50 은 전투 마당에서 «꼬리가 아예 안 보이는» 값이었다.</b>
+        /// <c>BattleWorld</c> 의 월드 정렬 층은 바닥 <b>−40</b> · 길 −38 · 납작 −36 · 먼 소품 −35 · 가까운 소품 −12 ·
+        /// 캐릭터 ≤300(<c>Fx.SortingOrder</c> 주석) · 투사체 350 · 앞 소품 381~470 · 이펙트 400 이다
+        /// (<c>BattleWorld.OrderField</c> 줄 · <c>BattleWorld</c>:979·1043 · <c>Fx</c>:9). −50 은 그 <b>전부보다 뒤</b>라
+        /// 꼬리가 <b>바닥 그림 뒤</b>에 그려진다 — 주인 «전투 화면에서 화폐 흡수되는 거는 트레일 렌더러 있게 해야 함» 의 까닭이 이 한 수다.
+        /// </para>
+        /// <para>
+        /// ⚠ 그림을 가리는 값이 아니다 — 앞 소품(381~)은 여전히 꼬리를 덮고, UI(<c>ScreenSpaceOverlay</c>)는 늘 그 위다.
+        /// 투사체와 같은 자리를 고른 것은 «날아가는 것» 끼리 같은 층에 두는 것이 다음 사람에게 읽히기 때문이다.
+        /// </para>
+        /// ⚠ <b>안 잰 것</b>: 이 통은 유니티를 못 돌린다(결정 143) — 위는 <b>소스에서 읽은 수</b>이고 «화면에 보인다» 는 다음 런/주인 폰이 말한다.
+        /// </summary>
+        public const int TrailSortOrder = 350;
 
         /// <summary>이 층이 한 번에 띄울 수 있는 구슬 수 — 전투는 <see cref="MaxAlive"/>(40), 리워드 팝업은 100(T269).</summary>
         readonly int _max;
@@ -175,13 +191,10 @@ namespace KkomaKnight.Game
             var hop = start + new Vector2(UnityEngine.Random.Range(-spread, spread), sizePx * UnityEngine.Random.Range(1.4f, 2.6f));
             // T109 2항 — 비행 시간은 거리와 무관하게 고정(구슬마다 ±FlyJitter 만 흔든다)
             float fly = flyBase + (flyJit > 0f ? UnityEngine.Random.Range(-flyJit, flyJit) : 0f);   // T313 — 값은 Pace 가 정한다(예산이 있으면 줄어든 값)
-            // T109 2항 «랜덤 곡선» — 제어점을 진행 방향의 «옆»(좌·우 랜덤)으로 밀어 구슬마다 다른 활을 그린다.
+            // T109 2항 «랜덤 곡선» — 제어점을 진행 방향의 «옆»으로 밀어 구슬마다 다른 활을 그린다.
             // 옆으로 벌어졌다 목적지에서 다시 모이므로 여러 개가 한꺼번에 날 때 겹쳐 보이지 않는다.
-            var seg = to - hop; float segLen = seg.magnitude;
-            var perp = segLen > 0.001f ? new Vector2(-seg.y, seg.x) / segLen : Vector2.up;
-            float side = UnityEngine.Random.value < 0.5f ? -1f : 1f;
-            float bow = Mathf.Max(sizePx * 2.5f, segLen * UnityEngine.Random.Range(0.22f, 0.45f)) * side;
-            var ctrl = (hop + to) * 0.5f + perp * bow + Vector2.up * UnityEngine.Random.Range(sizePx, sizePx * 3f);
+            // T461 ⓐ — 그 «랜덤» 을 구슬 번호로 바꿨다(좌·우 번갈아 · 곡률 세 갈래). 무작위가 빠지니 Core 의 자가 이 길을 잰다.
+            var ctrl = Vec(OrbPath.Ctrl(Pt(hop), Pt(to), i, sizePx));
             var orb = new Orb { Rt = rt, Value = value, OnArrive = onArrive };
             var seq = DOTween.Sequence().SetLink(rt.gameObject);   // SetLink(T56) — 전투 종료로 층이 먼저 파괴돼도 경고 0
             if (i > 0 && stepSec > 0f) seq.AppendInterval(i * stepSec / sc);
@@ -192,15 +205,20 @@ namespace KkomaKnight.Game
             if (holdSec > 0.001f) seq.Append(rt.DOAnchorPosY(hop.y + sizePx * 0.35f, holdSec * 0.5f / sc).SetEase(Ease.InOutSine).SetLoops(2, LoopType.Yoyo));
             int trailSteps = Mathf.Max(4, Mathf.RoundToInt(fly / TrailStepSec));
             int lastTrail = -1;
+            // T461 ⓐ — 진행률을 트윈의 ease 가 아니라 OrbPath.Ease(InOutSine)가 정한다(그래서 여기는 Linear 다).
+            //   왜 옮겼나: 종전 Ease.InQuad 는 «도착하는 순간이 가장 빠른» 꼴이라(실측 평균의 2.44배) 흡수가 끊기듯 보였다.
+            //   셈을 Core 에 두면 이 통에서 매 회차 돌아 «부드러운가» 가 눈이 아니라 수로 지켜진다(OrbPathTests).
             seq.Append(DOVirtual.Float(0f, 1f, fly / sc, p =>
             {
                 if (rt == null) return;
-                var pos = Bezier(hop, ctrl, to, p);
+                var pos = Bezier(hop, ctrl, to, OrbPath.Ease(p));
                 rt.anchoredPosition = pos;
+                rt.localScale = Vector3.one * OrbPath.Scale(p);      // 도착 직전 0.8배 — 과녁으로 «빨려 들어가는» 꼴
                 // T109 3항 트레일 — 새 그림을 만들지 않고 «같은 스프라이트의 잔상» 을 일정 간격으로 떨군다
+                // ⚠ 잔상 간격은 ease 를 안 먹인 p(=시간)로 센다 — 그래야 감속 구간에서 잔상이 뭉치지 않는다.
                 int k = Mathf.FloorToInt(p * trailSteps);
                 if (k > lastTrail) { lastTrail = k; SpawnTrail(pos, spriteKey, tint, sizePx, sc); }
-            }).SetEase(Ease.InQuad));
+            }).SetEase(Ease.Linear));
             seq.AppendCallback(() => Arrive(orb));
             seq.Append(rt.DOScale(1.15f, PopSec * 0.4f / sc));
             seq.Append(rt.DOScale(0f, PopSec * 0.6f / sc));
@@ -346,11 +364,10 @@ namespace KkomaKnight.Game
             }
         }
 
-        static Vector2 Bezier(Vector2 a, Vector2 c, Vector2 b, float t)
-        {
-            float u = 1f - t;
-            return u * u * a + 2f * u * t * c + t * t * b;
-        }
+        /// <summary>T461 ⓐ — 셈은 <see cref="OrbPath"/>(Core · 자가 매 회차 돈다)가 하고 여기는 <see cref="Vector2"/> 로 바꾸기만 한다.</summary>
+        static Vector2 Bezier(Vector2 a, Vector2 c, Vector2 b, float t) => Vec(OrbPath.Bezier(Pt(a), Pt(c), Pt(b), t));
+        static OrbPath.P Pt(Vector2 v) => new OrbPath.P(v.x, v.y);
+        static Vector2 Vec(OrbPath.P p) => new Vector2(p.X, p.Y);
 
         void Arrive(Orb o)
         {
