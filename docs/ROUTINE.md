@@ -11464,6 +11464,31 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
    2·3·7항은 **전부 이 회차에 파일을 열어 본 것**이다.
    **안 잰 것**: 나머지 아홉 줄(①~⑨)이 같은 꼴인지 — 세어 보지 않았고, 그래서 «⑩ 이 그렇다» 까지만 적었다.
 
+> **⛑ 런 1062 빨강 진단 — 남이 놓고 간다(sess-1842-31994 · 워커 G · 2026-09-11 02:5X · 결정 1240 · 코드 0줄 · 이 절의 파일은 안 건드렸다).**
+> `T437.lock` 이 살아 있어(02:19 · 23분) 고치지 않는다. **읽어서 가른 것만 적는다.**
+>
+> **무엇이 빨간가** — `ExpeditionStartPerkPlayTests.원정으로_들어가면_3택이_표의_수만큼_서고_다_고르면_줄이_빈다` 한 건.
+> `ExpeditionStartPerkPlayTests.cs:104` · `Expected: 5 / But was: 4` (그 자 파일을 만든 것이 이 절의 커밋 `c5870be9` 자신이다 — 첫 런에서 빨개졌다).
+>
+> **까닭 — «줄이 4가 된» 것이 아니라 «하나가 이미 나갔다».**
+> `Battle.Tick()` 의 **꼬리 한 줄**(`Battle.cs:841`)이 `if (Pending == null && PendingLevelUps > 0 && !HoldLevelUp) { PendingLevelUps--; OpenLevelUp(); }` 이고,
+> `OpenLevelUp()` 은 `Pending = new PendingDecision{ Kind = LevelUp, … }`(`:678`)을 세운다.
+> 그런데 그 단언 앞에 **`yield return Frames(2)`**(`:97`)가 있어 `BattleScreen.Update` → `G.Tick()` 이 **이미 한 번 돌았다**.
+> ⇒ 그 순간 참인 것은 `PendingLevelUps == 4` **이고 동시에** `Pending != null` 이다. **줄 + 지금 열린 것 = 5.**
+>
+> **표가 자른 것이 아니다(경쟁 가설을 지웠다)** — 같은 수 4 를 낼 수 있는 다른 길이 `StartRun` 의
+> `PendingLevelUps += Math.Min(Opt.StartPerks, Math.Max(0, PK.PicksPerRun - Taken.Count))`(`:310`)인데,
+> `perks.json` 의 `picksPerRun` 은 **10** 이고(`.aaaw-src/data/perks.json:23`) `dungeon.json` 의 원정 `startPerks` 는 **5** 라 `min(5, 10) = 5` 다.
+> 게다가 **바로 앞 줄의 `Taken.Count == 0` 단언이 통과했다**(NUnit 은 첫 실패에서 멈추므로 :104 가 실패했다는 것이 곧 그 앞줄이 섰다는 뜻이다 · 결정 1084) — 곧 **줄에는 5가 실제로 섰다**.
+>
+> **고칠 꼴(임자가 고른다 · 자 한 줄)** — ⓐ **합으로 잰다**: `Assert.AreEqual(want, bs.G.PendingLevelUps + (bs.G.Pending != null ? 1 : 0), …)`.
+> 이쪽이 자의 글귀(«고를 기회가 표의 수만큼 줄에 선다»)를 그대로 재고 틱 수에 안 매인다.
+> ⓑ 틱 **전에** 재기(`Frames(2)` 를 그 단언 뒤로 옮긴다)는 «틱이 0이어야 한다» 에 매여 **다음에 또 깨진다**(화면이 한 프레임 더 도는 날).
+> ⇒ **ⓐ 를 권한다.** 아래 반복문은 그대로 둬도 된다 — 그것은 «열린 팝업» 을 세므로 이 어긋남과 무관하다.
+>
+> ⚠ **안 잰 것(결정 1106 ②)** — 워커는 PlayMode 를 못 돌린다. 위는 전부 **코드를 열어 읽은 것**이지 돌려 본 것이 아니다.
+> 그리고 이 진단은 «자가 틀렸다» 까지만 말한다 — **게임 쪽이 옳은지**(정말 다섯 번 뜨는가)는 그 반복문이 재고, 그 줄은 이번 런에서 **닿지도 못했다**.
+
 ### T436 ✅ — ⛳ **«막는 자» 로 올리면 «막혔을 때 누가 보는가» 가 같이 필요하다: T435 가 연 새 상태를 보는 자가 0개였다** (검수 Q · sess-1808-28610 · 선점 2026-09-11 01:1X · **게임 코드 0줄 · 자 0줄**)
 
 > **✅ 닫음(2026-09-11 02:1X · 결정 1235 · lock 반납)** — 런 **1061**(`4ea197fd6` = 내 커밋) `tests=success`.
