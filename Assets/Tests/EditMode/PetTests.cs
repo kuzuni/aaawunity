@@ -16,7 +16,8 @@ namespace KkomaKnight.Tests
     /// </summary>
     public class PetTests
     {
-        static PetData Load() => PetData.Parse(File.ReadAllText(TestData.RepoFile(Path.Combine("Assets", "KkomaKnight", "pet.json"))));
+        static string PetJson => Path.Combine("Assets", "KkomaKnight", "pet.json");
+        static PetData Load() => PetData.Parse(TestData.ReadRepo(PetJson));
 
         /// <summary>펫 표까지 실은 표 — 게임에서는 <c>Bootstrap</c> 이 <c>D.Pet</c> 을 따로 싣는다(<c>data/</c> 밖의 이 레포 전용 표라 <see cref="TestData.Load"/> 는 안 싣는다).
         /// <para>⚠ <see cref="TestData.Load"/> 가 돌려주는 것은 <b>모든 자가 나눠 쓰는 한 채</b>라 거기에 <c>Pet</c> 을 꽂으면 남의 자가 모르는 사이에 펫을 가진 판을 재게 된다 — 그래서 여기서 <b>따로 싣는다</b>.</para></summary>
@@ -202,19 +203,80 @@ namespace KkomaKnight.Tests
             Assert.AreEqual(9, seen.Count);
         }
 
+        /// <summary>
+        /// <see cref="Bad"/> 가 표에 꽂는 바늘 넷 — <b>한 곳에만 적는다</b>.
+        /// <para>⚑ 아래 <c>표를_CRLF_로_받아도</c> 가 <b>같은 목록</b>을 쓴다: 바늘이 늘거나 바뀌면 줄 끝 자도 그것을 같이 잰다.
+        /// 두 벌로 적어 두면 새로 꽂은 바늘만 조용히 안 재진다.</para>
+        /// </summary>
+        static readonly string[] BadAnchors =
+        {
+            "\"rate\": [70, 25, 5]",
+            "\"slotUnlockPulls\": [0, 100, 200]",
+            "\"shot\": \"axe\",  \"count\": 1",
+            "    { \"id\": \"legend_hit\",    \"grade\": \"legend\", \"trigger\": \"hit\",    \"name\": \"방패 번개술사\" }\n",
+        };
+
         [Test]
         public void 조용히_어긋나는_표는_읽는_순간_운다()
         {
             // 확률 합이 100 이 아니면 «전설 5%» 가 5% 가 아니게 되는데 화면에는 그대로 «5%» 로 적힌다.
-            Assert.Throws<System.FormatException>(() => PetData.Parse(Bad("\"rate\": [70, 25, 5]", "\"rate\": [70, 25, 10]")));
+            Assert.Throws<System.FormatException>(() => PetData.Parse(Bad(BadAnchors[0], "\"rate\": [70, 25, 10]")));
             // 칸 수와 해금 표의 길이가 다르면 «열리지 않는 칸» 이나 «셀 수 없는 칸» 이 생긴다.
-            Assert.Throws<System.FormatException>(() => PetData.Parse(Bad("\"slotUnlockPulls\": [0, 100, 200]", "\"slotUnlockPulls\": [0, 100]")));
+            Assert.Throws<System.FormatException>(() => PetData.Parse(Bad(BadAnchors[1], "\"slotUnlockPulls\": [0, 100]")));
             // 발수 0 이면 «발동은 하는데 아무 일도 안 일어나는» 펫 — 화면에도 로그에도 안 보인다(결정 818 갈래).
-            Assert.Throws<System.FormatException>(() => PetData.Parse(Bad("\"shot\": \"axe\",  \"count\": 1", "\"shot\": \"axe\",  \"count\": 0")));
+            Assert.Throws<System.FormatException>(() => PetData.Parse(Bad(BadAnchors[2], "\"shot\": \"axe\",  \"count\": 0")));
             // 등급 × 발동 한 짝이 비면 그 등급을 뽑았을 때 줄 것이 모자란다.
-            Assert.Throws<System.FormatException>(() => PetData.Parse(Bad(
-                "    { \"id\": \"legend_hit\",    \"grade\": \"legend\", \"trigger\": \"hit\",    \"name\": \"방패 번개술사\" }\n", "")));
+            Assert.Throws<System.FormatException>(() => PetData.Parse(Bad(BadAnchors[3], "")));
         }
+
+        /// <summary>
+        /// ⛑ <b>T442</b> — 표를 <b>CRLF 로 받은 통</b>에서도 이 절이 똑같이 돈다.
+        /// <para>
+        /// 주인 통의 <c>dotnet test</c> 는 <b>36시간 넘게</b> 꼭 한 건이 빨갰고(첫 줄 2026-09-10 00:43 KST · 커밋 14개에 같은 글)
+        /// CI 도 워커 통도 내내 초록이었다. 까닭은 <b>표의 내용이 아니라 줄 끝</b>이다 —
+        /// 이 레포에 <c>.gitattributes</c> 가 없어 Windows 체크아웃(<c>core.autocrlf=true</c>)은 <c>pet.json</c> 을 CRLF 로 내려받는데,
+        /// 바늘 넷 중 <b>넷째만 문자열 안에 «\n» 을 품어</b> 그 한 줄이 <c>}\r\n</c> 에서 안 박혔다.
+        /// ⇒ <b>딱 한 건</b>이 빨갛고, 그 한 건은 LF 통에서는 원리적으로 안 난다.
+        /// </para>
+        /// <para>
+        /// ⚑ 이 자가 지키는 것은 «펫 표» 가 아니라 <b>«통의 성질로 빨개지지 않는다»</b> 는 것이다.
+        /// 그런 빨강은 고치기 어려워서가 아니라 <b>안 보여서</b> 값이 크다 — 본 사람이 하나뿐이면 그는 그것을 «남의 것» 이라 적고 지나간다.
+        /// </para>
+        /// </summary>
+        [Test]
+        public void 표를_CRLF_로_받아도_자가_똑같이_돈다()
+        {
+            string lf = TestData.ReadRepo(PetJson);
+            string crlf = lf.Replace("\n", "\r\n");
+            Assert.AreNotEqual(lf, crlf, "표에 줄이 없으면 이 자는 아무것도 안 잰다 — 두 꼴이 실제로 달라야 한다");
+            Assert.AreEqual(lf, TestData.Norm(crlf), "줄 끝을 고르면 두 꼴은 같은 글자다");
+
+            // ⓐ 표를 읽는 길 — CRLF 로 받아도 같은 표가 나온다
+            var a = PetData.Parse(lf); var b = PetData.Parse(crlf);
+            Assert.AreEqual(a.Pets.Count, b.Pets.Count, "CRLF 로 받아도 9종 그대로");
+            Assert.AreEqual(a.Rate, b.Rate, "CRLF 로 받아도 70/25/5 그대로");
+            Assert.AreEqual(a.Slots, b.Slots);
+
+            // ⓑ 바늘 — 실제로 부러졌던 자리다. 넷째 바늘이 «\n» 을 품어 CRLF 원문에서 안 박혔다.
+            //   ⚑ 여기서 «Norm 을 미리 걸어 놓고 재면» 이 자는 버그가 있어도 초록이다(내가 한 번 그렇게 썼다).
+            //     그래서 **Bad() 그 문으로** CRLF 원문을 통째로 들여보낸다 — Bad 안의 Norm 을 빼면 이 자가 모든 통에서 운다.
+            for (int i = 0; i < BadAnchors.Length; i++)
+            {
+                string shown = BadAnchors[i].Replace("\r", "\\r").Replace("\n", "\\n");
+                Assert.Throws<System.FormatException>(
+                    () => PetData.Parse(Bad(crlf, BadAnchors[i], Worse[i])),
+                    i + "번 바늘이 CRLF 원문에서 안 박히거나, 망가뜨린 사본이 안 운다 — " + shown);
+            }
+        }
+
+        /// <summary><see cref="BadAnchors"/> 와 짝인 «망가뜨린 값» — 차례가 같다.</summary>
+        static readonly string[] Worse =
+        {
+            "\"rate\": [70, 25, 10]",
+            "\"slotUnlockPulls\": [0, 100]",
+            "\"shot\": \"axe\",  \"count\": 0",
+            "",
+        };
 
         // ───────────────────────── 엔진(T293 ⓑ) — 장착 펫이 실제로 쏘는가 · 안 끼면 난수 열이 한 톨도 안 움직이는가 ─────────────────────────
 
@@ -352,10 +414,15 @@ namespace KkomaKnight.Tests
             Assert.Throws<System.FormatException>(() => PetData.Parse(Bad("\"shot\": \"bolt\", \"count\": 2", "\"shot\": \"lightning\", \"count\": 2")));
         }
 
-        /// <summary>표 한 곳만 망가뜨린 사본 — 자가 «무엇을 막는가» 를 그 자리에서 보여 준다.</summary>
-        static string Bad(string from, string to)
+        /// <summary>표 한 곳만 망가뜨린 사본 — 자가 «무엇을 막는가» 를 그 자리에서 보여 준다.
+        /// <para>⚑ 반드시 <see cref="TestData.ReadRepo"/> 로 읽는다(줄 끝 LF). 날것으로 읽으면 <b>이 통의 줄 끝</b>이 바늘에 섞여
+        /// Windows 체크아웃에서만 바늘이 안 박힌다 — T442 가 36시간 동안 그것이었다.</para></summary>
+        static string Bad(string from, string to) => Bad(TestData.ReadRepo(PetJson), from, to);
+
+        /// <summary>원문을 밖에서 줘서 같은 바늘 길을 태운다 — <b>줄 끝 자가 이 문으로 들어온다</b>(그래서 <c>Norm</c> 이 여기 있다).</summary>
+        static string Bad(string src, string from, string to)
         {
-            string src = File.ReadAllText(TestData.RepoFile(Path.Combine("Assets", "KkomaKnight", "pet.json")));
+            src = TestData.Norm(src);
             Assert.IsTrue(src.Contains(from), "표에서 «" + from + "» 를 못 찾았다 — 표가 바뀌면 이 자도 같이 고친다");
             return src.Replace(from, to);
         }

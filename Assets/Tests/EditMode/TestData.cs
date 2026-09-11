@@ -96,5 +96,17 @@ namespace KkomaKnight.Tests
 
         /// <summary>레포 루트(= data 폴더의 세 단계 위) 기준 파일 경로 — 이 레포 전용 JSON(Assets/KkomaKnight/shop.json 등)을 읽을 때.</summary>
         public static string RepoFile(string relPath) => Path.GetFullPath(Path.Combine(Dir, "..", "..", "..", relPath));
+
+        /// <summary>레포 파일을 <b>줄 끝을 LF 로 고른 뒤</b> 돌려준다 — 자가 <b>글자로 바늘을 꽂을 때</b>는 반드시 이것으로 읽는다.
+        /// <para>
+        /// ⛑ <b>T442</b>: 이 레포에는 <c>.gitattributes</c> 가 없다. 그래서 Windows 체크아웃(<c>core.autocrlf=true</c> · Git for Windows 기본값)은
+        /// 같은 파일을 <b>CRLF</b> 로 내려받는다. <b>줄 끝은 표의 내용이 아니라 통의 성질</b>이라, 그것 때문에 자가 빨개지면
+        /// 그 빨강은 <b>아무에게도 안 보인다</b> — CI·워커 통은 리눅스라 LF 이고 영원히 초록이기 때문이다.
+        /// 실제로 주인 통에서만 <b>36시간 넘게</b> 한 건이 빨갰고, 그 사이 아무도 그것을 못 봤다.
+        /// </para></summary>
+        public static string ReadRepo(string relPath) => Norm(File.ReadAllText(RepoFile(relPath)));
+
+        /// <summary>줄 끝을 LF 하나로 고른다(CRLF · 홀로 선 CR 둘 다).</summary>
+        public static string Norm(string s) => s.Replace("\r\n", "\n").Replace('\r', '\n');
     }
 }
