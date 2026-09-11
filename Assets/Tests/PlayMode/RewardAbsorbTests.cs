@@ -75,10 +75,18 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(0, OrbCount(), "팝업이 떠 있는 동안에는 아무것도 안 날아간다");
 
             // 칸의 아이콘 스프라이트를 닫기 «전에» 잡아 둔다 — 닫으면 칸이 파괴된다(3항 «그림 그대로» 판정용).
-            var cell = UiKit.Find(_app.Overlay.Root, "RewardCell:0");
-            var cellIcon = cell != null ? UiKit.Find(cell, "Icon") : null;
-            var want = cellIcon != null ? cellIcon.GetComponent<Image>().sprite : null;
-            Assert.IsNotNull(want, "보상 칸의 아이콘");
+            //   T473 2회차 — 칸은 **둘**(코인 3 · 다이아 5)이라 0번 칸 하나의 그림으로 모든 구슬을 재면 다이아 구슬이 «제 칸 그림을 옳게 든 채» 빨개진다(런 1117~1123).
+            //     칸마다 제 스프라이트를 모아 두고 구슬마다 «그 집합 안(같은 참조)» + 칸마다 «제 구슬이 하나는 있다» 로 잰다(T445 의 크기 자와 같은 꼴).
+            var cellSprites = new List<Sprite>();
+            for (int ci = 0; ci < RewardPopup.LastCellCount; ci++)
+            {
+                var cell = UiKit.Find(_app.Overlay.Root, "RewardCell:" + ci);
+                var cellIcon = cell != null ? UiKit.Find(cell, "Icon") : null;
+                var sp = cellIcon != null ? cellIcon.GetComponent<Image>().sprite : null;
+                Assert.IsNotNull(sp, "보상 칸 " + ci + " 의 아이콘");
+                cellSprites.Add(sp);
+            }
+            var want = cellSprites[0];
 
             Assert.IsTrue(Close(_app.Overlay), "어둠을 눌러 닫는다"); yield return Frames(2);
 
@@ -147,9 +155,17 @@ namespace KkomaKnight.Tests.Play
                 if (im.name == RewardOrbs.OrbName && im.sprite == want) same = true;
             Assert.IsTrue(same, "파티클 그림 = 그 칸의 아이콘(3항)");
             // T473(주인 «펫 부분에서 리워드 팝업 뜨고 나서 흡수 이펙트 아이콘이랑 다른 게 뜨더라») — 구슬은 «키로 다시 찾은 그림» 이 아니라 칸의 스프라이트 그 자체다.
-            //   여기 `want` 는 칸 아이콘의 스프라이트다 — 칸이 런타임 스프라이트(카탈로그에 없는 키)를 써도 같은 참조여야 한다.
+            //   `cellSprites` 는 칸마다의 아이콘 스프라이트다 — 칸이 런타임 스프라이트(카탈로그에 없는 키)를 써도 같은 참조여야 한다.
+            //   구슬은 «어느 칸의 스프라이트» 여야 하고(집합 밖이면 키로 다시 찾은 그림이다), 칸마다 제 그림의 구슬이 하나는 있어야 한다(한 칸 그림만 온 것이 아니다).
+            var seen = new List<Sprite>();
             foreach (var im in _app.UiCanvas.GetComponentsInChildren<Image>(true))
-                if (im.name == RewardOrbs.OrbName) Assert.AreSame(want, im.sprite, "구슬 스프라이트 = 칸 스프라이트(같은 참조 · T473)");
+            {
+                if (im.name != RewardOrbs.OrbName) continue;
+                Assert.IsTrue(cellSprites.Contains(im.sprite), "구슬 스프라이트 = 어느 칸의 스프라이트(같은 참조 · T473) — 들고 있는 것: " + (im.sprite != null ? im.sprite.name : "null"));
+                if (!seen.Contains(im.sprite)) seen.Add(im.sprite);
+            }
+            foreach (var sp in cellSprites)
+                Assert.IsTrue(seen.Contains(sp), "칸 «" + sp.name + "» 의 그림을 든 구슬이 하나는 있다(T473 2회차)");
             _log.AssertNoRed("리워드 흡수");
             yield return Shutdown();
         }
