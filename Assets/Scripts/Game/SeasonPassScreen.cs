@@ -91,7 +91,7 @@ namespace KkomaKnight.Game
             UiKit.Tag(_top.Root, "상단 재화 바");   // §5 는 이름표를 **이름 그대로** 맞춘다(결정 592) — 표 ㊼ 의 행 이름과 한 글자도 다르면 그 행이 0 점이 된다
 
             BuildBanner();
-            BuildNotice();
+            // T462 — 안내 띠(«일일 퀘스트를 깨면 보상이 열린다»)는 뺐다(BuildNotice 는 남겨 두되 안 부른다 · 레벨이 챕터에서 오므로 문구가 틀리다).
             BuildTrack();
             BuildButtons();
         }
@@ -110,15 +110,8 @@ namespace KkomaKnight.Game
             var ends = UiKit.Label(Root, REnds.X, REnds.Y, REnds.W, REnds.H, "시즌 종료까지 20일 8시간", TextSize.Body, Palette.White);
             ends.name = "SeasonEnds";
 
-            var medal = UiKit.Icon(Root, "Medal", "ui.iconMedal", Color.white); UiKit.Pct(medal.rectTransform, RMedal);
-
-            // 진행 바 — 레퍼런스는 «15/45» 가 바 가운데에 얹힌 꼴이다(채움은 실측 31%)
-            var bar = UiKit.Panel(Root, "ProgressBar", "fr.sliderBg", Palette.A(Palette.Ink, 0.75f)).rectTransform;
-            UiKit.Pct(bar, RBar); UiKit.Bordered(bar);
-            var fill = UiKit.Panel(bar, "Fill", "fr.sliderBg", Palette.Hex("#3FD214")).rectTransform;
-            UiKit.Pct(fill, 0f, 0f, 31f, 100f);
-            UiKit.Tag(fill, "진행 바 채움(초록)");
-            UiKit.Label(bar, 0, 0, 100, 100, "15/45", TextSize.Aux, Palette.White).name = "BarText";
+            // T462(주인 2026-09-12 «패스에 이 부분 없애기(사진: 메달 + 진행 바 15/45 + 안내 띠 «일일 퀘스트를 깨면 보상이 열린다») · 챕터 완료한 만큼 열리게 하기 · 다이아 보급을 1/2 로 줄이기») — 메달 아이콘·진행 바(«15/45»)·안내 띠를 **뺐다**. 레벨은 이제 «깬 챕터 수»(Pass.Lv)라
+            //   «일일 퀘스트를 깨면 열린다» 는 말도 틀리고, 바가 재던 «퀘스트 점수» 도 없다. 남는 머리 = 배너·이름·시즌 종료·레벨 배지.
 
             var badge = UiKit.Panel(Root, "LevelBadge", "fr.r12", Palette.A(Palette.Ink, 0.85f)).rectTransform;
             UiKit.Pct(badge, RBadge); UiKit.Bordered(badge);
@@ -128,8 +121,7 @@ namespace KkomaKnight.Game
             UiKit.Label(badge, 0, 0, 100, 100, CurLevel.ToString(CultureInfo.InvariantCulture), TextSize.Body, Palette.White).name = "LevelText";
 
             UiKit.Tag(banner, "머리 배너(그림)"); UiKit.Tag(name.rectTransform, "패스 이름");
-            UiKit.Tag(ends.rectTransform, "«시즌 종료까지 20일 8시간»"); UiKit.Tag(medal.rectTransform, "메달 아이콘(진행 바 왼쪽)");
-            UiKit.Tag(bar, "진행 바(전체)"); UiKit.Tag(badge, "레벨 육각 배지(머리)");
+            UiKit.Tag(ends.rectTransform, "«시즌 종료까지 20일 8시간»"); UiKit.Tag(badge, "레벨 육각 배지(머리)");
         }
 
         void BuildNotice()
@@ -153,7 +145,7 @@ namespace KkomaKnight.Game
         /// </summary>
         public static int CurLevel => Pass.Lv(App.I != null ? App.I.Save : null, App.I != null && App.I.Data != null ? App.I.Data.Pass : null);
         /// <summary>열었을 때 <b>맨 위에 보이는 줄</b> — 레퍼런스 19 가 29~33 을 보여 주는 상태(= 지금 레벨에서 셋 위)다. §5 표 ㊼ 의 «첫 행» 이 이 줄이다.</summary>
-        public static int TopLevel => Mathf.Max(1, CurLevel - 3);
+        public static int TopLevel => Mathf.Max(1, CurLevel - 3);   // T462 — CurLevel 이 0(아무것도 안 깼다)이어도 맨 위 줄은 1
 
         ScrollRect _scroll;
         RectTransform _content;

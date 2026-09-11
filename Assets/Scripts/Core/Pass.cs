@@ -21,7 +21,7 @@ namespace KkomaKnight.Core
         public static int Bit(int col) => col < 0 || col >= PassData.Cols ? 0 : 1 << col;
 
         /// <summary>
-        /// 지금 레벨 — <b>세이브만 말한다</b>(<see cref="SaveData.PassLv"/> 이 0 이면 1). <b>표의 상한으로 자른다</b>(세이브에 상한을 안 박는다 · 표가 100 → 50 으로 줄면 저절로 따라간다).
+        /// 지금 레벨 — <b>깬 챕터 수</b>(T462 · <see cref="SaveData.MaxChapter"/> − 1 · 0 이면 받을 것 없음). <b>표의 상한으로 자른다</b>(세이브에 상한을 안 박는다 · 표가 100 → 50 으로 줄면 저절로 따라간다).
         /// <para>
         /// ⚑ <b>한때 «세이브가 말이 없으면 표가 답한다»(<c>startLevel</c>) 갈래가 있었다 — 걷어냈다</b>(T322 ⛑3).
         /// 표가 비어 있던 동안 화면이 «?» 만 보여 주지 않게 둔 자리였고, 무해했던 까닭은 <see cref="CanClaim"/> 의 넷째 조건 하나뿐이었다.
@@ -31,9 +31,11 @@ namespace KkomaKnight.Core
         /// </summary>
         public static int Lv(SaveData s, PassData d)
         {
-            int lv = s != null && s.PassLv >= 1 ? s.PassLv : 1;
+            // T462(주인 2026-09-12 «챕터 완료한 만큼 열리게 하기») — 패스 레벨 = **깬 챕터 수**(세이브의 `MaxChapter` 는 «갈 수 있는 가장 높은 챕터» 라 깬 수 = MaxChapter − 1).
+            //   `PassLv` 는 이제 안 본다(옛 세이브 호환으로 칸만 남는다). 0 도 있다 — 아무것도 안 깼으면 받을 것이 없다(T322 ⛑3 «갓 시작한 세이브에 5,600» 갈래가 이걸로 닫힌다).
+            int lv = s != null ? Math.Max(0, s.MaxChapter - 1) : 0;
             int max = d != null ? d.MaxLevel : int.MaxValue;
-            return Math.Max(1, Math.Min(max, lv));
+            return Math.Max(0, Math.Min(max, lv));
         }
 
         /// <summary>그 열을 살 필요가 있고 샀는가 — 무료 열은 늘 참.</summary>

@@ -35,8 +35,9 @@ namespace KkomaKnight.Tests
             Assert.AreEqual(d.MaxLevel, d.Levels.Count, "주인 규칙으로 1~100 이 전부 찬다(T266 ⓑ)");
             for (int lv = 1; lv <= d.MaxLevel; lv++)
             {
-                int baseQty = lv % 5 == 0 ? 500 : 100;
-                Assert.AreEqual(baseQty.ToString(), d.At(lv, PassData.ColFree).Qty, "무료 " + lv + " = 100 · 5의 배수는 500");
+                // T462 — 주인 «다이아 보급을 1/2 로» → 50 · 5의 배수 250(T266 ⓑ 의 절반)
+                int baseQty = lv % 5 == 0 ? 250 : 50;
+                Assert.AreEqual(baseQty.ToString(), d.At(lv, PassData.ColFree).Qty, "무료 " + lv + " = 50 · 5의 배수는 250(T462)");
                 Assert.AreEqual(baseQty.ToString(), d.At(lv, PassData.ColPaid1).Qty, "유료1(₩9,900) " + lv + " = 무료와 같다(주인 «9900원짜리는 똑같고»)");
                 Assert.AreEqual((baseQty * 2).ToString(), d.At(lv, PassData.ColPaid2).Qty, "유료2 " + lv + " = 2배(주인 «더 비싼 거는 2배»)");
                 for (int c = 0; c < PassData.Cols; c++) Assert.AreEqual("ui.gemRed", d.At(lv, c).Icon, "세 열 전부 다이아 " + lv);

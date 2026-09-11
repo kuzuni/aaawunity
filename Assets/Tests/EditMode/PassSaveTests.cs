@@ -60,9 +60,11 @@ namespace KkomaKnight.Tests
             Assert.IsFalse(back.PassPaid1); Assert.IsFalse(back.PassPaid2);
             Assert.AreEqual(0, back.PassClaimed.Count, "받은 칸도 없다");
             // ⚑ 그리고 «말 없음» 은 **1 레벨**이다 — 표가 그것을 올려 주지 않는다(T322 ⛑3 · 아래 자가 그 까닭을 잰다).
-            Assert.AreEqual(1, Pass.Lv(back, new PassData { MaxLevel = 100 }), "세이브가 말이 없으면 1");
+            Assert.AreEqual(0, Pass.Lv(back, new PassData { MaxLevel = 100 }), "T462 — 옛 세이브도 깬 챕터로 센다(MaxChapter 1 → 0 레벨)");
             back.PassLv = 7;
-            Assert.AreEqual(7, Pass.Lv(back, new PassData { MaxLevel = 100 }), "세이브가 말하면 세이브가 이긴다");
+            Assert.AreEqual(0, Pass.Lv(back, new PassData { MaxLevel = 100 }), "T462 — 옛 PassLv 칸은 더 이상 안 본다");
+            back.MaxChapter = 8;
+            Assert.AreEqual(7, Pass.Lv(back, new PassData { MaxLevel = 100 }), "깬 챕터 7 = 7 레벨(T462)");
         }
 
         [Test]
@@ -79,10 +81,13 @@ namespace KkomaKnight.Tests
             var s = SaveData.NewSave(TestData.Load());
 
             Assert.AreEqual(0, s.PassLv, "새 세이브는 패스 레벨을 올린 적이 없다");
-            Assert.AreEqual(1, Pass.Lv(s, d), "그러면 1 레벨이다 — 표가 이 수를 올릴 수 있으면 그 레벨까지가 통째로 공짜가 된다");
+            Assert.AreEqual(0, Pass.Lv(s, d), "T462 — 챕터를 하나도 안 깼으니 0 레벨(공짜 없음)");
 
+            // T462 — 레벨 = 깬 챕터 수: 갓 시작한 세이브(MaxChapter 1)는 **아무것도** 못 받는다. 1챕터를 깨면(MaxChapter 2) 1레벨 무료 칸 하나.
+            Assert.IsEmpty(Pass.ClaimAll(s, d), "챕터를 하나도 안 깬 세이브는 «모두 받기» 로 아무것도 못 받는다(T462)");
+            s.MaxChapter = 2;
             var got = Pass.ClaimAll(s, d);
-            Assert.AreEqual(1, got.Count, "받는 것은 1레벨 무료 칸 하나뿐이다(유료 두 열은 안 샀다) — 여럿이면 어디선가 레벨을 앞질러 준 것이다");
+            Assert.AreEqual(1, got.Count, "1챕터를 깨면 받는 것은 1레벨 무료 칸 하나뿐이다(유료 두 열은 안 샀다) — 여럿이면 어디선가 레벨을 앞질러 준 것이다");
             int expect = int.Parse(d.At(1, PassData.ColFree).Qty, CultureInfo.InvariantCulture);
             Assert.AreEqual(expect, got[0].qty, "그 한 칸의 수는 표가 말한다(수를 안 박는다)");
             Assert.IsEmpty(Pass.ClaimAll(s, d), "두 번째 «모두 받기» 는 아무것도 안 준다");
@@ -102,7 +107,7 @@ namespace KkomaKnight.Tests
         public void 받을_수_있는_칸의_조건은_넷이고_하나만_빠져도_못_받는다()
         {
             var d = Table((10, PassData.ColFree), (10, PassData.ColPaid1), (20, PassData.ColFree));
-            var s = new SaveData(); s.PassLv = 10;
+            var s = new SaveData(); s.MaxChapter = 11;   // T462 — 레벨 = 깬 챕터 수(10)
 
             Assert.IsTrue(Pass.CanClaim(s, d, 10, PassData.ColFree), "ⓐ 레벨에 닿았고 ⓑ 무료 열이고 ⓒ 안 받았고 ⓓ 표가 안다");
             Assert.IsFalse(Pass.CanClaim(s, d, 20, PassData.ColFree), "ⓐ 레벨을 못 넘었다");
@@ -123,7 +128,7 @@ namespace KkomaKnight.Tests
         {
             // 지금 pass.json 이 딱 이 꼴이다 — 주인이 값을 안 줬고 워커는 지어내지 않는다(T266 ⓑ).
             var d = new PassData { MaxLevel = 100 };
-            var s = new SaveData(); s.PassLv = 100; s.PassPaid1 = true; s.PassPaid2 = true;
+            var s = new SaveData(); s.MaxChapter = 101; s.PassPaid1 = true; s.PassPaid2 = true;   // T462
             for (int lv = 1; lv <= 3; lv++)
                 for (int col = 0; col < PassData.Cols; col++)
                     Assert.IsFalse(Pass.CanClaim(s, d, lv, col), $"표가 모르는 칸({lv}:{col})은 못 받는다");
@@ -133,11 +138,11 @@ namespace KkomaKnight.Tests
         [Test]
         public void 레벨은_표의_상한으로_잘리고_세이브는_상한을_모른다()
         {
-            var s = new SaveData(); s.PassLv = 500;
+            var s = new SaveData(); s.MaxChapter = 501;   // T462
             Assert.AreEqual(100, Pass.Lv(s, new PassData { MaxLevel = 100 }), "표가 100 이면 100");
             Assert.AreEqual(50, Pass.Lv(s, new PassData { MaxLevel = 50 }), "표가 줄면 저절로 따라간다(세이브를 안 고친다)");
-            Assert.AreEqual(1, Pass.Lv(new SaveData(), new PassData { MaxLevel = 50 }), "말 없는 세이브는 상한과 무관하게 1 — 표는 «어디까지 왔나» 를 못 말한다(T322 ⛑3)");
-            Assert.AreEqual(500, s.PassLv, "자르는 것은 «읽을 때» 다 — 세이브 값은 그대로 남는다");
+            Assert.AreEqual(0, Pass.Lv(new SaveData(), new PassData { MaxLevel = 50 }), "T462 — 갓 시작한 세이브는 상한과 무관하게 0(깬 챕터 0) — 표는 «어디까지 왔나» 를 못 말한다(T322 ⛑3)");
+            Assert.AreEqual(501, s.MaxChapter, "자르는 것은 «읽을 때» 다 — 세이브 값은 그대로 남는다(T462 · MaxChapter)");
         }
 
         [Test]

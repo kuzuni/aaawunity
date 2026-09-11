@@ -186,8 +186,9 @@ namespace KkomaKnight.Tests.Play
                 //     주인 값이 100줄을 채우자 그 32 가 «갓 시작한 세이브에 32칸 = 다이아 5,600» 이 됐다(실측) ⇒ 표에서 걷어냈다.
                 //     이제 화면이 1레벨에 서도 «?» 가 아니다 — 표가 1레벨부터 값을 알기 때문이다. 그것이 여기서 재는 것이다.
                 Assert.AreEqual(0, _app.Save.PassLv, "이 자는 갓 시작한 세이브로 돈다(패스 레벨을 올린 적이 없다)");
-                Assert.AreEqual(1, SeasonPassScreen.CurLevel, "말 없는 세이브는 1 레벨 — 표가 이 수를 올려 주면 그 레벨까지가 공짜가 된다");
-                Assert.IsTrue(pass.Known(SeasonPassScreen.CurLevel), "그 자리는 표가 값을 아는 줄이어야 한다(아니면 «?» 만 보인다)");
+                // T462 — 레벨 = 깬 챕터 수: 갓 시작한 세이브(MaxChapter 1)는 0 레벨 = 공짜 없음(T322 ⛑3 의 «5,600» 갈래가 이걸로 닫힌다)
+                Assert.AreEqual(0, SeasonPassScreen.CurLevel, "갓 시작한 세이브는 0 레벨(챕터를 하나도 안 깼다 · T462)");
+                Assert.IsTrue(pass.Known(1), "1레벨 줄은 표가 값을 아는 줄이어야 한다(아니면 «?» 만 보인다)");
                 var lvT0 = UiKit.Find(sp, "LevelBadge")?.Find("LevelText")?.GetComponent<TMPro.TMP_Text>();
                 Assert.IsNotNull(lvT0, "머리 배지 글자");
                 Assert.AreEqual(SeasonPassScreen.CurLevel.ToString(), lvT0.text, "머리 배지도 같은 수를 말한다");
