@@ -115,10 +115,16 @@ namespace KkomaKnight.Tests.Play
                 //    크기를 지키려고 rect 를 132% 로 넓혔더니 글자가 옆 칸 위로 올라가 **붙어 읽혔다** — 주인이 말한 병의 세 번째 얼굴이다.
                 //    ⚠ 재는 것은 rect 가 아니라 **글자 덩이**(`preferredWidth`)다: rect 는 넓어도 글자가 짧으면 아무 데도 안 닿는다.
                 //       오른쪽 아래 정렬이라 글자는 칸 오른쪽 끝(+걸침)에서 왼쪽으로 자란다.
-                float over = cr.width * GearUi.CellQtyOver / 100f;
-                float inkLeft = cr.xMax + over - q.preferredWidth;
-                Assert.GreaterOrEqual(inkLeft, cr.xMin - over - 1f,
-                                      cell.name + " — 수량 글자가 칸 왼쪽으로 넘쳐 이웃 칸을 덮는다(글자 폭 " + q.preferredWidth + " · 칸 폭 " + cr.width + "). "
+                //    ⛑⛑ **4회차 — 이 줄의 첫 판은 «세계 좌표 − 지역 폭» 이라 단위를 섞었다**(런 1073 빨강 · 검수 Q 가 잡았다):
+                //       `cr` 는 `GetWorldCorners` 라 세계 좌표인데 `preferredWidth` 는 TMP 의 **지역** 폭이다.
+                //       그 둘을 빼면 캔버스 배율만큼 부풀린 값을 보게 되고, 자는 «덮었다» 고 우는데 화면은 멀쩡하다.
+                //       ⚠ **잰 값이 틀리면 그 값 위에 세운 결론도 흔들린다** — 이 자가 그때 우는 것을 보고 «더 줄여야겠다» 로 갔으면
+                //          글자를 까닭 없이 두 번 줄일 뻔했다. 두 수를 뺄 때는 **같은 자로 잰 것인지** 부터 본다.
+                //    ⇒ 글자 덩이를 세계 단위로 옮겨(`lossyScale`) 칸과 같은 공간에서 잰다. 오른쪽 정렬이라 글자의 오른쪽 끝은 곧 수량 rect 의 오른쪽 끝이다.
+                float inkW = q.preferredWidth * qrt.lossyScale.x;
+                float overW = cr.width * GearUi.CellQtyOver / 100f;
+                Assert.GreaterOrEqual(qr.xMax - inkW, cr.xMin - overW - 1f,
+                                      cell.name + " — 수량 글자가 칸 왼쪽으로 넘쳐 이웃 칸을 덮는다(글자 폭 " + inkW + " · 칸 폭 " + cr.width + " · 둘 다 세계 단위). "
                                       + "칸에 안 들어가는 수는 넓히지 말고 **짧게 쓴다**(GearUi.CellQtyText · 주인 레퍼런스 16 의 «10K» 꼴)");
 
                 // 외곽선은 **글자마다**가 아니라 폰트 애셋의 공유 머티리얼 한 장에 걸려 있다(T207 ② · `EnsureOutline`).
