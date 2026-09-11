@@ -576,8 +576,11 @@ namespace KkomaKnight.Game
                     var rw = _qt.Steps[k].Rewards.Count > 0 ? _qt.Steps[k].Rewards[0] : null;
                     if (rw != null && rw.Amount > 1)
                     {
-                        var q = UiKit.Label(cell, 100f - TrackQtyW + QtyOver, 100f - TrackQtyH + QtyOver, TrackQtyW, TrackQtyH, UiKit.FmtQty(rw.Amount),
-                                            UiKit.FontForHeight(Layout.QsTrackIcon.H * TrackQtyH / 100f), Palette.White, TextAnchor.LowerRight, kind: TextKind.Small);
+                        // ⛑ T459(주인 2026-09-12 «퀘스트 팝업·출석 팝업·데일리 기프트 **다 그렇게 해 줘**») — 이 칸은 공용 문법(`GearUi.CellQty`)을 **안 탄다**.
+                        //   제 상수(TrackQtyW/H)로 직접 얹는 자리라 1회차의 고침이 여기까지 안 왔다. 자리만 같은 규칙으로 옮긴다:
+                        //   왼쪽 시작점 `(100−폭)/2` + `LowerCenter`(폭·높이·글자 크기·`TextKind.Small` 은 그대로 — 주인이 바꾼 것은 자리 하나다).
+                        var q = UiKit.Label(cell, (100f - TrackQtyW) * 0.5f, 100f - TrackQtyH + QtyOver, TrackQtyW, TrackQtyH, UiKit.FmtQty(rw.Amount),
+                                            UiKit.FontForHeight(Layout.QsTrackIcon.H * TrackQtyH / 100f), Palette.White, TextAnchor.LowerCenter, kind: TextKind.Small);
                         q.name = "Qty"; q.fontStyle = FontStyles.Bold;
                     }
                     if (gotList != null && k < gotList.Count && gotList[k])

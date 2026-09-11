@@ -722,7 +722,11 @@ namespace KkomaKnight.Tests.Play
                     // «Expected: LowerRight · But was: BottomRight» 가 났다. `Assert.AreEqual(object, object)` 라 **컴파일이 안 잡는다**.
                     // 화면은 옳다 — 재는 자만 옛 세계에 있었다(결정 595·599). 기댓값을 `UiKit.TmpAlign` 으로 옮겨 **화면 코드와 같은 변환**을 쓴다:
                     // 리터럴 `TextAlignmentOptions.BottomRight` 로 적으면 이 다음 전환 때 또 손으로 고쳐야 하고, 그때 또 컴파일이 안 잡는다.
-                    Assert.AreEqual(UiKit.TmpAlign(TextAnchor.LowerRight), qty.alignment, "수량은 아이콘 오른쪽 아래(레퍼런스 16 · T133 ⓐ)");
+                    // ⛑ T459(주인 2026-09-12 «오른쪽 아래에 텍스트 있으라 했는데 **중앙 아래**가 나은 듯 · 퀘스트·출석·데일리 다 그렇게») —
+                    //   런 1101 이 이 줄로 빨갰다(«Expected: BottomRight · But was: Bottom»). **자가 늦은 것이지 화면이 틀린 것이 아니다.**
+                    //   ⚑ 내가 T459 를 밀면서 `RewardCellGrammarTests` 만 옮기고 **이 줄을 못 찾았다** — 같은 값을 박아 둔 자리가 두 곳이었다(T184 가 말하는 그 훑기).
+                    //     «오른쪽 아래» 라는 낱말로만 찾아서, 낱말이 아니라 **값**(`TextAnchor.LowerRight`)으로 적힌 이 줄이 그물을 빠져나갔다.
+                    Assert.AreEqual(UiKit.TmpAlign(TextAnchor.LowerCenter), qty.alignment, "수량은 아이콘 **가운데 아래**(T459 — 주인이 «오른쪽 아래» 를 취소했다 · 종전 레퍼런스 16 · T133 ⓐ)");
                     Assert.GreaterOrEqual(qty.fontSize, TextSize.Body, $"수량 글자 상한이 본문 하한보다 작다({qty.fontSize} · T133 ⓐ)");
                     var qrt = qty.rectTransform;
                     // 앵커로 잰다 — 「칸 높이의 몇 %인가」가 곧 앵커 차이라, 레이아웃이 언제 잡히든 값이 같다(회차 1 단언이 쓴 방식 그대로).
