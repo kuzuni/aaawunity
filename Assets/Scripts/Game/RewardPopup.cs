@@ -137,6 +137,15 @@ namespace KkomaKnight.Game
             return null;
         }
 
+        /// <summary>이름이 같은 자손 중 <b>켜진</b>(activeInHierarchy) 첫 것 — 꺼진 동명이인을 건너뛴다(T440).</summary>
+        static RectTransform ActiveByName(Transform root, string name)
+        {
+            if (root == null) return null;
+            foreach (var t in root.GetComponentsInChildren<Transform>(false))
+                if (t.name == name && t.gameObject.activeInHierarchy) return t as RectTransform;
+            return null;
+        }
+
         /// <summary>«×3»·«1,000» 같은 글자에서 수를 읽는다 — 숫자가 아니면 1(칸이 하나라도 날아가게).</summary>
         static int QtyOf(Item it)
         {
@@ -270,7 +279,8 @@ namespace KkomaKnight.Game
                 var src = icon != null ? icon : cell;
                 var target = TargetFor(app, items[i].Icon);
                 if (target == null) continue;
-                float sizePx = Mathf.Max(16f, src.rect.height);   // 3항 «크기도 팝업 칸 그대로»
+                // 3항은 «팝업 칸 그대로» 였고 T440 주인 «흡수 이펙트 재화 크기 2배로 키워» → 칸 높이 × OrbSizeMul
+                float sizePx = Mathf.Max(16f, src.rect.height) * OrbSizeMul;
                 // T313(주인 «흡수 파티클이 느리다 — 1초 안에 전부 흡수») — 예산을 넘긴다. 개수가 적어 이미 예산 안이면 종전 연출 그대로다.
                 LastOrbCount += _orbs.Fly(_orbs.TargetPos(src), target, items[i].Icon, Color.white, want[i], want[i], sizePx, 1f, null, AbsorbHoldSec, RewardOrbs.PopupBudgetSec);
             }
@@ -284,6 +294,8 @@ namespace KkomaKnight.Game
         /// (좌표는 둘 다 프레임 stretch 라 <see cref="RewardOrbs.TargetPos"/> 는 그대로 · 화면이 바뀌어도 층이 살아남는다).
         /// </para>
         /// </summary>
+        /// <summary>구슬 크기 배율 — T440 주인 «흡수 이펙트 재화 크기 2배로 키워»(팝업 칸 높이 × 이 값 · 전투 구슬은 안 건드린다).</summary>
+        public const float OrbSizeMul = 2f;
         /// <summary>구슬 층의 정렬 순서 — 같은 루트 캔버스 안에서 <b>무엇보다 위</b>(오버레이·팝업은 캔버스 정렬을 안 쓰고 형제 순서만 쓴다 · 그래서 이 하나면 이긴다).</summary>
         public const int OrbSortingOrder = 100;
 
@@ -309,12 +321,23 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>이 아이콘이 날아갈 곳 — 골드·다이아는 탑바의 그 pill, 그 밖은 화면 가운데 아래로 사라진다(지시서 4항).</summary>
-        static RectTransform TargetFor(App app, string icon)
+        /// <summary>
+        /// T440(주인 2026-09-11 «다이아가 현재 다이아 개수 표시되는 쪽으로 흡수되어야 하는데 안 그리 되네» + «흡수 이펙트 재화 크기 2배로 키워») — 과녁 pill 은 <b>탑바(<c>TopBar</c>) 안의 켜진 것</b>만 집는다.
+        /// <para>
+        /// 여태는 <see cref="UiKit.Find"/>(이름 첫 하나 · 깊이 우선)로 화면 루트 전체에서 찾았다. 그러면 화면 안에 같은 이름의 조각이 <b>먼저</b>(형제 순서상 앞 가지에)
+        /// 하나 더 있을 때 — 조각(프리팹)이 달고 오는 꺼진 <c>ResourceBar_Gem</c> 같은 것 — 그것을 집어 구슬이 엉뚱한 자리(꺼진 조각의 자리)로 간다.
+        /// 골드는 우연히 첫 하나가 진짜였고 다이아는 아니었다 — 그래서 «골드는 가는데 다이아는 안 간다».
+        /// 탑바 밑에서 · <b>켜진</b> 것만 · 없으면 화면 전체에서 켜진 것 · 그래도 없으면 가운데 아래(sink).
+        /// </para>
+        /// </summary>
+        public static RectTransform TargetFor(App app, string icon)
         {
             string pill = PillFor(icon);
             if (pill != null && app.Current != null && app.Current.Root != null)
             {
-                var t = UiKit.Find(app.Current.Root, pill) as RectTransform;
+                var bar = UiKit.Find(app.Current.Root, TopBar.RootName);
+                var t = ActiveByName(bar != null ? bar : app.Current.Root, pill);
+                if (t == null && bar != null) t = ActiveByName(app.Current.Root, pill);
                 if (t != null) return t;
             }
             if (_orbSink == null && _orbLayer != null)

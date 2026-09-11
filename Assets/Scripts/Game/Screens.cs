@@ -380,10 +380,12 @@ namespace KkomaKnight.Game
         }
 
         /// <summary>parent(프레임 크기 화면 루트) 안에 표 ① 자리로 세운다. showPower=false 면 전투력 칸을 뺀다(레퍼런스에 전투력이 없는 화면용).</summary>
+        /// <summary>탑바 루트 오브젝트 이름 — 구슬 과녁(<c>RewardPopup.TargetFor</c>)이 이 밑에서만 pill 을 찾는다(T440).</summary>
+        public const string RootName = "TopBar";
         public static TopBar Build(App app, RectTransform parent, bool showPower = true)
         {
             var tb = new TopBar(app);
-            var root = UiKit.Rect(parent, "TopBar"); UiKit.Pct(root, Layout.LobbyTopBar); tb.Root = root;
+            var root = UiKit.Rect(parent, RootName); UiKit.Pct(root, Layout.LobbyTopBar); tb.Root = root;
             var top = Layout.LobbyTopBar;
             // 아바타 — ProfileFrame_02 조각(색은 프로필에서 고른다 · T96-profile · 기본 노랑) · 조각은 본래 크기 그대로 두고 아바타 칸에 배율로 · 누르면 프로필 팝업
             var slot = UiKit.Rect(root, "Avatar"); UiKit.Pct(slot, Layout.LobbyAvatar.Within(top)); tb.Avatar = slot;

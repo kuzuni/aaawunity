@@ -128,6 +128,17 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual("ResourceBar_Coin", RewardPopup.PillFor("hud.gold"), "hud.gold → 골드 pill");
             Assert.IsNull(RewardPopup.PillFor("ui.bookBlue"), "재화 아닌 것은 pill 없음(가운데 아래로)");
             Assert.IsNull(RewardPopup.PillFor("ui.keyBlue"), "열쇠는 pill 없음");
+            // T440(주인 «다이아가 현재 다이아 개수 표시되는 쪽으로 흡수되어야 하는데 안 그리 되네») — 과녁은 **탑바 안의 켜진** pill 이다(꺼진 동명이인이 아니라).
+            {
+                var gemT = RewardPopup.TargetFor(_app, "ui.gemRed"); var coinT = RewardPopup.TargetFor(_app, "ui.coin");
+                Assert.IsNotNull(gemT, "다이아 과녁"); Assert.IsNotNull(coinT, "골드 과녁");
+                Assert.AreEqual("ResourceBar_Gem", gemT.name, "다이아 과녁 = 다이아 pill(T440)");
+                Assert.IsTrue(gemT.gameObject.activeInHierarchy, "다이아 과녁은 켜진 조각이다 — 꺼진 동명이인이면 구슬이 엉뚱한 자리로 간다(T440)");
+                Assert.IsNotNull(gemT.GetComponentInParent<Transform>().root, "루트");
+                Transform p = gemT; bool underBar = false; while (p != null) { if (p.name == TopBar.RootName) { underBar = true; break; } p = p.parent; }
+                Assert.IsTrue(underBar, "다이아 과녁은 탑바(" + TopBar.RootName + ") 밑의 그 pill 이다(T440)");
+                Assert.AreNotEqual(RewardPopup.OrbSinkName, gemT.name, "다이아는 sink(가운데 아래)로 가면 안 된다(T440)");
+            }
             Assert.IsFalse(_app.Overlay.IsOpen, "팝업은 닫혔다");
 
             bool same = false;
