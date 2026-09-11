@@ -168,5 +168,55 @@ namespace KkomaKnight.Tests.Play
             _log.AssertNoRed("리워드 흡수(캡)");
             yield return Shutdown();
         }
+
+        /// <summary>
+        /// T445 — 주인 «흡수 이펙트 재화 <b>크기 2배</b>로 키워»(2026-09-11 · T440 이 고친 주인 말 <b>둘 중 둘째</b>).
+        /// <para>
+        /// 재는 것: 구슬의 <c>sizeDelta</c> = 그 칸 아이콘 높이 × <b>2</b>. 고침은 T440 이 이미 넣었는데(<c>RewardPopup.OrbSizeMul</c>) <b>재는 자가 없었다</b> —
+        /// 누가 그 상수를 1 로 되돌리거나 <c>sizePx</c> 셈을 손봐도 한 줄도 안 빨개졌다(워커 F 등재 · 결정 1248).
+        /// </para>
+        /// ⚠ <b>기댓값에 <see cref="RewardPopup.OrbSizeMul"/> 을 쓰지 않는다</b> — 그 상수를 되돌리는 손이 바로 이 자가 잡아야 할 손인데,
+        /// 상수로 기대를 세우면 기대가 <b>같이 따라가 조용히 초록</b>이 된다(결정 1220 이 이름 붙인 «자기 값을 자기가 읽는» 자리).
+        /// 그래서 주인의 말 «2배» 를 <b>글자 그대로</b> 박는다 — 이 수를 바꾸려면 주인 말이 바뀌어야 한다.
+        /// <para>
+        /// ⚠ 칸은 닫으면 파괴되므로 높이는 <b>닫기 «전»</b>에 재 둔다. <c>src</c> 차례(아이콘, 없으면 칸 자신)는 <c>RewardPopup</c> 의 그것을 그대로 흉내 낸다.
+        /// 잔상(<see cref="RewardOrbs.TrailName"/>)은 이름이 달라 섞이지 않는다. 구슬 크기는 태어날 때 <c>sizeDelta</c> 에 박히고 뒤 트윈은 자리만 건드린다.
+        /// </para>
+        /// </summary>
+        [UnityTest]
+        public IEnumerator TheOrbIsTwiceTheCellIconHeight()
+        {
+            yield return Boot();
+            _app.ShowScreen("lobby"); yield return Frames(2);
+
+            var items = new List<RewardPopup.Item> { RewardPopup.Item.Of("ui.coin", "3", null, 3) };
+            RewardPopup.Show(items); yield return Frames(3);
+            Assert.AreEqual(1, RewardPopup.LastCellCount, "칸 하나");
+
+            var cell = UiKit.Find(_app.Overlay.Root, "RewardCell:0") as RectTransform;
+            Assert.IsNotNull(cell, "보상 칸");
+            var icon = UiKit.Find(cell, "Icon") as RectTransform;
+            var src = icon != null ? icon : cell;
+            float h = Mathf.Max(16f, src.rect.height);   // 닫기 전에 재 둔다
+            Assert.Greater(h, 0f, "칸(또는 그 아이콘) 높이");
+
+            Assert.IsTrue(Close(_app.Overlay), "어둠을 눌러 닫는다"); yield return Frames(2);
+
+            float want = h * 2f;   // ⚠ 주인의 «2배» — 상수를 읽지 않는다
+            int seen = 0;
+            foreach (var im in _app.UiCanvas.GetComponentsInChildren<Image>(true))
+            {
+                if (im.name != RewardOrbs.OrbName) continue;
+                var rt = im.transform as RectTransform;
+                Assert.IsNotNull(rt, "구슬은 RectTransform 이다");
+                Assert.AreEqual(want, rt.sizeDelta.x, 1f, $"구슬 가로 = 칸 아이콘 높이({h}) × 2 — 주인 «크기 2배로 키워»(T445)");
+                Assert.AreEqual(want, rt.sizeDelta.y, 1f, $"구슬 세로 = 칸 아이콘 높이({h}) × 2 — 주인 «크기 2배로 키워»(T445)");
+                seen++;
+            }
+            Assert.AreEqual(3, seen, "받은 개수(3)만큼 떠 있다 — 셋 다 재 봤다");
+            Assert.AreEqual(2f, RewardPopup.OrbSizeMul, 0.001f, "배율 상수도 주인 말 그대로 2 다(T445)");
+            _log.AssertNoRed("구슬 크기");
+            yield return Shutdown();
+        }
     }
 }
