@@ -432,12 +432,46 @@ namespace KkomaKnight.Game
         public override void Refresh()
         {
             _top?.Refresh();
+            RefreshLevelBits();
             if (_content == null) return;
             _content.anchoredPosition = new Vector2(0, (TopLevel - 1) * PitchPx);   // ④ 와 같은 자리 — «열자마자 레퍼런스 구도» 는 두 번째 열 때도 참이어야 한다
             foreach (var kv in _rows)
                 if (kv.Value != null) { kv.Value.SetParent(null, false); Object.Destroy(kv.Value.gameObject); }
             _rows.Clear();
             RefreshRows();
+        }
+
+        /// <summary>
+        /// <b>«지금 레벨» 을 들고 있는 조각을 다시 쓴다</b> — 머리 배지 글자와 «아직 못 연 줄» 어둠 (T462 3회차 · 결정 1313).
+        /// <para>
+        /// ⚑ <b>왜 있나</b> — 이 둘은 <see cref="BuildBanner"/>·<see cref="Dim"/> 에서 <b>태어날 때 한 번</b> 쓰이고 그대로 남는다.
+        /// <see cref="CurLevel"/> 이 <c>const 32</c> 이던 시절엔 바뀔 일이 없어 안 보였는데, T462 가 그것을 <b>«깬 챕터 수»</b>로 바꾸면서
+        /// <b>노는 사이에 바뀌는 수</b>가 됐다 ⇒ 챕터를 깨고 패스를 다시 열면 <b>줄은 오르고 머리 수·어둠만 옛것</b>이다.
+        /// 바로 이 파일 <c>:118</c> 주석이 «1레벨인데 머리에는 32» 로 이미 한 번 적어 둔 그 꼴이고, 이번엔 상수가 아니라 <b>다시 안 쓰는 것</b>이 까닭이다.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>«지금 레벨» 을 말하는 자리는 하나여야 한다</b>(<see cref="CurLevel"/>) — 여기서도 수를 새로 세지 않고 그 하나를 읽어 쓴다.
+        /// 자가 이것을 잡은 길은 <c>SeasonPassLookTests</c> «머리 배지도 같은 수를 말한다» 한 줄이다(워커 G 가 런 1110 에서 가려 놓고 갔다).
+        /// </para>
+        /// </summary>
+        void RefreshLevelBits()
+        {
+            if (Root == null) return;
+            int lv = CurLevel;
+            var lvT = UiKit.Find(Root, "LevelBadge")?.Find("LevelText")?.GetComponent<TMP_Text>();
+            if (lvT != null) lvT.text = lv.ToString(CultureInfo.InvariantCulture);
+
+            if (_content == null) return;
+            // 어둠은 «레벨 lv+1 줄의 꼭대기» 부터 내용 끝까지다 — Dim() 이 세울 때 쓴 셈 그대로다(수를 두 곳에서 다르게 세지 않는다).
+            float topPx = lv * PitchPx;
+            float hPx = Mathf.Max(0f, MaxLevel * PitchPx - topPx);
+            foreach (var n in new[] { "Dim:free", "Dim:paid1", "Dim:paid2" })
+            {
+                var d = UiKit.Find(_content, n) as RectTransform;
+                if (d == null) continue;
+                d.sizeDelta = new Vector2(0, hPx);
+                d.anchoredPosition = new Vector2(0, -topPx);
+            }
         }
     }
 }

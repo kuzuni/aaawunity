@@ -135,6 +135,15 @@ namespace KkomaKnight.Tests.Play
             SeasonPassScreen.Open(_app); yield return Frames(2);        // 머리 배지 글자도 그 수로 다시 그려야 한다
             Assert.AreEqual(0, SeasonPassScreen.CurLevel,
                 "되돌림이 먹혔는가 — 아래 갈래는 «갓 시작한 세이브 = 0 레벨» 을 잰다(T462 · 올린 전제를 안 내려놓으면 여기서 먼저 선다)");
+            // ⛑ T462 3회차 — **«지금 레벨» 을 든 조각이 다시 열 때 따라오는가**(결정 1313 의 집안 · 머리 배지는 그 아래 :219 가 잰다).
+            //   어둠은 «레벨 lv+1 줄의 꼭대기» 에서 시작하므로 0 레벨이면 **맨 위(0)** 여야 한다. 태어날 때 한 번만 쓰이면 여기서 1레벨 자리에 남는다 —
+            //   그 어긋남은 픽셀로만 보이고(열 위쪽이 밝다) 이 자의 위쪽 갈래는 이미 지나간 뒤라 **아무도 안 운다**.
+            {
+                var dimFree = UiKit.Find(_app.Current.Root, "Dim:free") as RectTransform;
+                Assert.IsNotNull(dimFree, "«아직 못 연 줄» 어둠(무료 열)");
+                Assert.AreEqual(0f, dimFree.anchoredPosition.y, 0.5f,
+                    "0 레벨이면 어둠이 맨 위부터다 — 화면이 «지금 레벨» 을 다시 안 쓰면 여기서 선다(T462 · 결정 1313)");
+            }
 
             // ── T322: 줄 1~100 스크롤 · «💎100» 삭제 · 표가 모르는 줄은 «?»
             {
