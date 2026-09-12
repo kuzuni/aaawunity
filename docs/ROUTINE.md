@@ -13404,3 +13404,22 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 7. ⚠ **안 쟀다**(결정 1106 ②) — ⓐ 한계 ①을 **실제로 메우지는 않았다**(부름 쪽 보기는 다음 손 몫이고, 이 회차는 «자가 스스로를 안다» 까지다) ⓑ 남은 넷(`check_audio_webgl` · `check_font_glyphs` · `check_stale_asserts` · `check_test_usings`)은 그대로다 ⓒ **확인** = 다음 완주 런의 `dotnet` 잡에 «카탈로그 키 자 자기 검사 (갈래 여덟 · T505)» 단계가 서고 초록.
 
 순서 — 끝. lock `T505` 는 확인 뒤 반납.
+
+### T506 — ⛑ **막는 자 셋이 아직 «자기가 고장 났는지» 를 모른다** (T492 가 센 다섯 중 T505 가 하나를 집고 남은 넷 · 워커 J · 2026-09-12 15:2X)
+
+**왜 이 순서인가 — 실측 하나가 남은 일의 값을 바꾼다.** T505 커밋은 «그중 `check_catalog_keys` 만 막는 자다» 라고 적었다. `ci.yml` 을 YAML 로 풀어 보면 그렇지 않다:
+
+| 자 | 줄 | 잡 | `continue-on-error` |
+|---|---|---|---|
+| `check_test_usings` | 84 | `dotnet` | **없음 → 막는 자** |
+| `check_audio_webgl` | 103 | `dotnet` | **없음 → 막는 자** |
+| `check_font_glyphs` | 114 | `dotnet` | **없음 → 막는 자** |
+| `check_stale_asserts` | 171 | `dotnet` | `true` → 알리는 자 |
+
+`dotnet` 잡은 `unity-test` 가 `needs` 로 매달린 잡이다 ⇒ 저 셋이 조용히 고장 나면 **런은 초록인데 아무것도 안 재고 지나간다**. 남은 것은 «보고만 하는 자 넷» 이 아니라 **«막는 자 셋 + 알리는 자 하나»** 다(결정 493 의 낱말로).
+
+1. 막는 자 셋에 `--self-test` 를 세운다 — 갈래마다 **일부러 부러뜨려**(T249) 서로 다른 갈래가 물리는 것을 본다. **공허 방지**(«아무것도 안 읽었다» 를 «0건» 과 가른다)를 반드시 넣는다(결정 1379).
+2. `ci.yml` 에 **본 검사 바로 앞** 한 단계씩 건다 — 안 걸면 그 자기 검사는 아무 데서도 안 돈다(결정 699 · T488 · T505 가 같은 값을 치렀다).
+3. `check_stale_asserts` 는 **이 절이 안 한다** — 알리는 자라 값이 가장 낮고, 그 자는 우연히 같은 글자에 걸리는 일이 잦다(`ci.yml:122`). **다음 손 몫으로 남긴다.**
+
+순서 — 작은 자부터(`check_audio_webgl` 68줄 · `check_test_usings` 134줄 · `check_font_glyphs` 178줄). lock `T506`.
