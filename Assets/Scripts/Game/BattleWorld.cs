@@ -1173,15 +1173,27 @@ namespace KkomaKnight.Game
         /// 엔진이 실어 준 출처(<see cref="BattleEvent.Src"/> · T458 1항)를 <b>이미 있는 그림</b>으로 옮긴다 — 새 그림 0.
         /// <para>
         /// · 특전 = <see cref="Icons.Perk"/>(특전 카드·버프 칸이 쓰는 그 키 그대로 · 계열이 같으면 같은 그림) ·
-        /// <see cref="BattleState.SrcGear"/> = 장비가 굴린 <b>도끼</b>(오늘 장비 소환은 셋 다 도끼다 · 그 낱말이 다른 무기를 뜻하게 되는 날 이 줄이 같이 바뀌어야 한다) ·
+        /// 장비 = <b>무엇이 났는지</b>로 갈린 낱말 셋(<see cref="BattleState.SrcGearAxe"/>·<see cref="BattleState.SrcGearHeal"/>·<see cref="BattleState.SrcGearThorns"/>) ·
         /// <see cref="BattleState.SrcPet"/> = 펫 뱃지와 같은 그림.
+        /// </para>
+        /// <para>
+        /// ⚠ <b>T491 — 여기 «장비» 한 낱말을 두면 안 된다.</b> 전에는 <c>"gear"</c> 하나가 다섯 자리를 겹쳐 썼고 이 줄이 그것을
+        /// 무조건 도끼로 옮겼다 ⇒ 장비가 준 <b>«+회복» 숫자에 도끼가 붙어 떴다</b>. 게다가 그때 내가 바로 이 자리에
+        /// «오늘 장비 소환은 셋 다 도끼다» 라고 적어 둬서, 낱말에 자리를 더 얹은 다음 회차가 <b>그 문장을 믿고 지나갔다</b>.
+        /// </para>
+        /// <para>
+        /// <b>같은 효과면 특전이 줬든 장비가 줬든 같은 그림</b>이다 — 회복은 <c>p_evadeHeal</c> 이 받는 하트,
+        /// 가시는 <c>p_thorns</c> 가 받는 그 그림. 새 그림은 0장이고, 주인이 보는 것은 «무엇 때문에 떴나» 라서
+        /// «어느 장비냐» 보다 «무엇이 났나» 가 그 물음에 곧장 답한다.
         /// </para>
         /// <para>⚠ <b>모르면 <c>null</c></b> — 없는 출처에 아무 그림이나 붙이면 화면이 «아는 척» 을 한다(T458 1항이 엔진에서 지킨 그 규칙을 화면에서도 지킨다).</para>
         /// </summary>
         public static string SrcIcon(string src)
         {
             if (string.IsNullOrEmpty(src)) return null;
-            if (src == BattleState.SrcGear) return "pi.axe";
+            if (src == BattleState.SrcGearAxe) return "pi.axe";
+            if (src == BattleState.SrcGearHeal) return "pi.heart";       // p_evadeHeal 이 받는 그 그림
+            if (src == BattleState.SrcGearThorns) return "pi.damage";    // p_thorns 가 받는 그 그림
             if (src == BattleState.SrcPet) return "ui.petIcon";
             return src.StartsWith("p_") ? Icons.Perk(src) : null;
         }

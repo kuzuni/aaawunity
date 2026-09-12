@@ -40,7 +40,8 @@ namespace KkomaKnight.Tests
         static void AssertLooksLikeSource(string src, string what)
         {
             Assert.That(src, Is.Not.Empty, what + " 의 출처가 빈 글자다 — 모르면 null 이어야 한다(빈 글자는 «있다» 로 읽힌다)");
-            Assert.That(src.StartsWith("p_") || src == BattleState.SrcGear || src == BattleState.SrcPet, Is.True,
+            Assert.That(src.StartsWith("p_") || src == BattleState.SrcGearAxe || src == BattleState.SrcGearHeal
+                        || src == BattleState.SrcGearThorns || src == BattleState.SrcPet, Is.True,
                 $"{what} 의 출처 «{src}» 가 특전 id 도 장비·펫도 아니다 — 화면은 이 낱말로 아이콘을 찾는다(T458 1항)");
         }
 

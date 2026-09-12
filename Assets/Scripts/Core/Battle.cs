@@ -420,7 +420,7 @@ namespace KkomaKnight.Core
                 if (gca > 0 && ProcN < C.ProcTickCap)
                 {
                     ProcN++;
-                    for (int i = 0; i < gca; i++) if (Pkk(EngineConst.GearAxeCh)) FireAxe(1, SrcGear);
+                    for (int i = 0; i < gca; i++) if (Pkk(EngineConst.GearAxeCh)) FireAxe(1, SrcGearAxe);
                 }
             }
             if (e.Hp <= 0) OnKill(e, -e.Hp);
@@ -580,9 +580,9 @@ namespace KkomaKnight.Core
             {
                 Emit(EvKind.PlayerEvade, src, 0);
                 int gev = (int)P.PxGet("g_evAxe");
-                for (int i = 0; i < gev; i++) if (Pkk(EngineConst.GearAxeCh)) FireAxe(1, SrcGear);
+                for (int i = 0; i < gev; i++) if (Pkk(EngineConst.GearAxeCh)) FireAxe(1, SrcGearAxe);
                 int geh = (int)P.PxGet("g_evHeal");
-                if (P.Hp < P.MaxHp * EngineConst.LowHpEvHeal) for (int i = 0; i < geh; i++) if (Pkk(EngineConst.GearEvHealCh)) Heal(P.MaxHp * EngineConst.EvHealF, src: SrcGear);
+                if (P.Hp < P.MaxHp * EngineConst.LowHpEvHeal) for (int i = 0; i < geh; i++) if (Pkk(EngineConst.GearEvHealCh)) Heal(P.MaxHp * EngineConst.EvHealF, src: SrcGearHeal);
                 if (P.Has("p_evadeHeal") && Pkk(PK.C("PERK_EVHEAL_CH"))) Heal(P.MaxHp * PK.C("PERK_EVHEAL_F"), src: "p_evadeHeal");
                 if (P.Has("p_arrowEv") && Pkk(PK.C("PERK_SUMMON_N"))) FireArrows(1, "p_arrowEv");
                 if (P.Has("p_arrowEvR") && Pkk(PK.C("PERK_SUMMON_R"))) FireArrows(1, "p_arrowEvR");
@@ -617,7 +617,7 @@ namespace KkomaKnight.Core
             double thornP = P.PxGet("p_thorns"), thornG = hadSh ? P.PxGet("g_thornSh") : 0;
             double thornM = thornP + thornG;
             // T485 — 가시는 특전과 장비가 **더해질 수 있다**: 한쪽만이면 그것을 대고, 둘 다면 «어느 것» 이 없으니 비운다(결정 1304 «모르면 null»).
-            string thornSrc = thornP != 0 && thornG != 0 ? null : thornP != 0 ? "p_thorns" : thornG != 0 ? SrcGear : null;
+            string thornSrc = thornP != 0 && thornG != 0 ? null : thornP != 0 ? "p_thorns" : thornG != 0 ? SrcGearThorns : null;
             if (thornM != 0 && isMelee && src != null) Reflect(src, thornBase * thornM, thornSrc);
             if (P.Has("p_shRefL") && hadSh && src != null && Pkk(PK.C("PERK_SHREF_L"))) Reflect(src, thornBase, "p_shRefL");
             GainWard(P.Has("p_wardHitN") ? PK.C("PERK_WARD_N") : 0, "p_wardHitN");
@@ -628,7 +628,7 @@ namespace KkomaKnight.Core
             if (P.Has("p_axeHitL") && Pkk(PK.C("PERK_SUMMON_L"))) FireAxe(1, "p_axeHitL");
             if (P.Has("p_spearHitL") && Pkk(PK.C("PERK_SUMMON_SP"))) FireSpear(1, "p_spearHitL");
             int gha = (int)P.PxGet("g_hitAxe");
-            for (int i = 0; i < gha; i++) if (Pkk(EngineConst.GearAxeCh)) FireAxe(1, SrcGear);
+            for (int i = 0; i < gha; i++) if (Pkk(EngineConst.GearAxeCh)) FireAxe(1, SrcGearAxe);
             PetProcs(PetKey.Hit);   // T293 — 같은 뜻의 «맞을 때 소환» 들 바로 뒤(반격 굴림보다 앞이라 순서가 특전과 같다)
             if (isMelee && src != null && src.Hp > 0)
             {
@@ -904,8 +904,17 @@ namespace KkomaKnight.Core
         }
 
         // ───────────────────────── 연출 이벤트 ─────────────────────────
-        /// <summary>특전이 아니라 <b>장비</b>가 낸 것(T458 1항 · 치명타·회피 뒤 굴러 나가는 도끼) — 화면은 이 낱말을 보고 장착 무기 아이콘을 쓴다.</summary>
-        public const string SrcGear = "gear";
+        // 특전이 아니라 **장비**가 낸 것(T458 1항). ⚠ T491 — 여기 «gear» 한 낱말만 두면 안 된다.
+        //   한 낱말이던 때 이 자리는 다섯 곳에서 불렸고 그중 둘(회피 회복·가시 반사)은 도끼가 아닌데,
+        //   화면은 그 낱말을 무조건 도끼 그림으로 옮겼다 ⇒ **«+회복» 숫자에 도끼가 붙어 떴다.**
+        //   낱말은 «누가 줬나»(장비)가 아니라 **«무엇이 났나»** 로 쪼갠다 — 그래야 자리를 하나 더 얹을 때
+        //   쓸 낱말이 없어서 **멈추게** 된다(낡은 낱말에 슬쩍 얹히지 않는다).
+        /// <summary>장비가 굴린 <b>도끼</b>(치명타·회피·N타 뒤) — 화면은 도끼 그림을 쓴다.</summary>
+        public const string SrcGearAxe = "gearAxe";
+        /// <summary>장비가 준 <b>회피 회복</b> — 특전 <c>p_evadeHeal</c> 과 <b>같은 효과</b>라 같은 그림(하트)을 쓴다.</summary>
+        public const string SrcGearHeal = "gearHeal";
+        /// <summary>장비(방패 옵션 <c>g_thornSh</c>)가 준 <b>가시 반사</b> — 특전 <c>p_thorns</c> 와 <b>같은 효과</b>라 같은 그림을 쓴다.</summary>
+        public const string SrcGearThorns = "gearThorns";
         /// <summary>펫이 낸 것(T458 1항) — 화면은 이 낱말을 보고 펫 아이콘을 쓴다.</summary>
         public const string SrcPet = "pet";
 

@@ -199,7 +199,19 @@ namespace KkomaKnight.Tests.Play
             var world = bs.World; Assert.IsNotNull(world, "BattleWorld");
             yield return RealSeconds(0.3f);
 
-            foreach (var src in new[] { BattleState.SrcGear, BattleState.SrcPet })
+            // T491 — 장비 낱말은 «누가 줬나» 가 아니라 «무엇이 났나» 로 갈린다. 한 낱말이던 때 이 셋이 전부 도끼로
+            //   옮겨져 **장비가 준 «+회복» 에 도끼가 붙어 떴다** — 그래서 아래 두 줄이 그 무너짐을 곧장 잡는다.
+            Assert.AreNotEqual(BattleWorld.SrcIcon(BattleState.SrcGearAxe), BattleWorld.SrcIcon(BattleState.SrcGearHeal),
+                "장비 도끼와 장비 회복이 같은 그림을 쓴다 — 낱말이 다시 하나로 뭉쳤다(T491)");
+            Assert.AreNotEqual(BattleWorld.SrcIcon(BattleState.SrcGearAxe), BattleWorld.SrcIcon(BattleState.SrcGearThorns),
+                "장비 도끼와 장비 가시가 같은 그림을 쓴다 — 낱말이 다시 하나로 뭉쳤다(T491)");
+            // 그리고 «같은 효과면 특전이 줬든 장비가 줬든 같은 그림» — 이 자가 그 규칙의 정본이다.
+            Assert.AreEqual(Icons.Perk("p_evadeHeal"), BattleWorld.SrcIcon(BattleState.SrcGearHeal),
+                "장비가 준 회피 회복이 특전 p_evadeHeal 과 다른 그림을 쓴다(T491)");
+            Assert.AreEqual(Icons.Perk("p_thorns"), BattleWorld.SrcIcon(BattleState.SrcGearThorns),
+                "장비가 준 가시가 특전 p_thorns 와 다른 그림을 쓴다(T491)");
+
+            foreach (var src in new[] { BattleState.SrcGearAxe, BattleState.SrcGearHeal, BattleState.SrcGearThorns, BattleState.SrcPet })
             {
                 string key = BattleWorld.SrcIcon(src);
                 Assert.IsNotNull(key, "«" + src + "» 의 그림 키가 없다");
