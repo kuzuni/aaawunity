@@ -285,7 +285,7 @@ namespace KkomaKnight.Tests.Play
             Time.timeScale = 1f;
             Assert.Greater(G.Kills, 0, "30초 안에 적을 한 번은 죽여야 한다");
 
-            bool sawOrbs = false, popupOpened = false; bool prevAbsorbing = bs.Absorbing;
+            bool sawOrbs = false, popupOpened = false;
             t0 = Time.realtimeSinceStartup;
             while (!popupOpened && Time.realtimeSinceStartup - t0 < 15f)
             {
@@ -294,13 +294,21 @@ namespace KkomaKnight.Tests.Play
                 if (_app.Overlay.IsOpen)
                 {
                     popupOpened = true;
-                    // 앞 프레임 끝에서 흡수가 진행 중이었다면 «다 차기 전에» 연 것이다(주인 지시 위반)
-                    Assert.IsFalse(prevAbsorbing, "흡수가 끝나기 전에 팝업이 열렸다 — 바가 다 찬 뒤에 열려야 한다(T85 · 배속 x" + speed + ")");
-                    Assert.AreEqual(0, bs.OrbCount, "팝업이 열릴 때 날아다니는 구슬이 남아 있으면 안 된다");
+                    // ⛑ T495 — **«앞 프레임의 `Absorbing`» 표본을 걷어냈다**(워커 P 가 런 1142 에서 가려 놓고 갔다 · 결정 1376).
+                    //   ⓐ **그 단언은 진짜 어긋남을 잡을 수가 없다** — `BattleScreen.OpenPending`(`:531`)이 `if (Absorbing) return;` 으로
+                    //      **흡수 중에는 아예 안 연다**(`showNow` 상한 갈래도 `OpenPending` 안에서 같은 문을 지난다). 곧 «팝업이 열렸다» 는
+                    //      그 순간 `Absorbing` 이 거짓이었다는 뜻이고, 같은 프레임에서 재면 **늘 참**이다(공허 · 결정 1279).
+                    //   ⓑ **그런데 «앞 프레임» 표본은 낡을 수 있다** — 코루틴은 Update 뒤에 깨어나므로 표본과 다음 프레임의 `OpenPending` 사이에
+                    //      LateUpdate(`RewardOrbs`)·DOTween·`AbsorbTick` 이 낀다. 그 사이에 흡수가 끝나면 **옳게 열린 회차가 빨개진다.**
+                    //      ⇒ 이 단언은 **참을 못 잡고 거짓만 만든다**. 런 1127~1141 열다섯 번 초록 뒤 코드 0줄인 채 뒤집힌 것이 그 꼴이다.
+                    //   ⓒ **대신 «바가 다 찼는가» 를 열린 그 프레임에서 눈에 보이는 값으로 잰다** — 구슬 0 · 표시 경험치 = 엔진 값 ·
+                    //      **표시 골드 = 엔진 값**(골드 쪽은 여태 안 쟀다 · `Absorbing` 이 보던 절반이 여기 있다).
+                    //      누가 `:531` 의 그 한 줄을 지우면 팝업이 흡수 도중 열리고, 그때는 이 셋이 **그 자리에서** 운다 — 계약은 그대로 지켜진다.
+                    Assert.AreEqual(0, bs.OrbCount, "팝업이 열릴 때 날아다니는 구슬이 남아 있으면 안 된다(T85 · 배속 x" + speed + ")");
                     Assert.AreEqual(BattleScreen.ExpTotal(G, _app.Data), bs.ShownExp, 1e-6, "팝업이 열릴 때 표시 경험치는 엔진 값과 같아야 한다(바가 다 찼다)");
+                    Assert.AreEqual(G.Gold, bs.ShownGold, 1e-6, "팝업이 열릴 때 표시 골드도 엔진 값과 같아야 한다(금화 쪽도 다 찼다 · T495)");
                     break;
                 }
-                prevAbsorbing = bs.Absorbing;
             }
             Assert.IsTrue(sawOrbs, "레벨업이 걸린 킬에서도 구슬이 나와야 한다");
             Assert.IsTrue(popupOpened, "레벨업이면 흡수가 끝난 뒤 특전창이 열려야 한다(15초 안)");
