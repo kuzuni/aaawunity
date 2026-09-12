@@ -133,6 +133,12 @@ jobs:
       #   두 곳이 갈리면 자는 «빚 3개» 라 우는데 CI 는 애초에 돌 생각이 없는 꼴이 난다. 그래서 여기서 막는다.
       - name: 게이트 나이 자 자기 검사 (빚 잣대 ↔ gate.code · T285·T433)
         run: python3 tools/check_gate_age.py --self-test
+      # T498 — 그 «같은 잣대» 를 이제 **한 자가 들고** 위 `gate` 잡과 `check_gate_age` 가 같이 부른다.
+      #   그러니 갈릴 자리는 없어졌고, 대신 **그 한 자가 틀리면 둘 다 틀린다** — 그래서 막는 자로 단다.
+      #   ⚑ 이 자가 넓힌 것: «문서냐» → «유니티가 읽는가». `tools/check_*.py` 는 문서가 아니면서도
+      #     유니티가 읽는 나무 밖이라 16분짜리 잡이 답할 것이 없다(실측 36시간 · 코드 커밋 87개 중 25개).
+      - name: 유니티 나무 잣대 자기 검사 (gate.code ↔ check_gate_age 한 벌 · T498)
+        run: python3 tools/ci_unity_paths.py --self-test
       - name: "결정 번호 겹침 — 보고만(빨개도 안 막는다 · 결정 493)"
         continue-on-error: true
         run: python3 tools/check_decisions.py
@@ -285,9 +291,21 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           python3 - <<'PY'
-          import os, subprocess
-          def is_doc(p):
-              return p.startswith("docs/") or ("/" not in p and p.endswith(".md"))
+          import os, subprocess, sys
+          # T498 — 잣대는 `tools/ci_unity_paths.py` 한 자에 있다(여기와 `check_gate_age` 가 같은 함수를 부른다).
+          #   옛 주석의 «두 곳을 같이 바꾸라» 는 이제 필요 없다 — 갈릴 자리가 없어졌다.
+          sys.path.insert(0, "tools")
+          try:
+              from ci_unity_paths import verdict as classify
+          except Exception as e:      # 자를 못 읽으면 옛 잣대로 떨어진다(fail-safe 는 언제나 «돈다» 쪽)
+              print("::notice::[T498] 잣대 자를 못 읽었다(%s) — 옛 잣대(문서만)로 잰다" % e)
+              def classify(files):
+                  doc = lambda p: p.startswith("docs/") or ("/" not in p and p.endswith(".md"))
+                  if not files:
+                      return True, "바뀐 파일이 0개다"
+                  if all(doc(f) for f in files):
+                      return False, "바뀐 파일 %d개가 전부 문서다(docs/** · 뿌리 *.md)" % len(files)
+                  return True, "코드 파일이 있다(%s · 모두 %d개)" % (next(f for f in files if not doc(f)), len(files))
           def git(*a):
               r = subprocess.run(("git",) + a, capture_output=True, text=True)
               return r.stdout if r.returncode == 0 else None
@@ -305,12 +323,8 @@ jobs:
                   why = "범위를 못 읽었다"
               else:
                   files = sorted({ln for ln in out.split("\n") if ln.strip()})
-                  if not files:
-                      why = "바뀐 파일이 0개다"
-                  elif all(is_doc(f) for f in files):
-                      has, why = "false", "바뀐 파일 %d개가 전부 문서다(docs/** · 뿌리 *.md)" % len(files)
-                  else:
-                      why = "코드 파일이 있다(%s · 모두 %d개)" % (next(f for f in files if not is_doc(f)), len(files))
+                  code, why = classify(files)
+                  has = "true" if code else "false"
           # ⚑ `has=` 는 `$GITHUB_OUTPUT` 파일로, 알림 줄은 **stdout** 으로 — 둘을 한 곳에 쓰면
           #   `::notice::` 가 output 파일에 들어가 판정이 조용히 망가진다(워크플로 명령은 stdout 에서만 읽힌다).
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:

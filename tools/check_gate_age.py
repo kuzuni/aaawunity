@@ -203,12 +203,21 @@ def read_meta():
 
 
 def is_doc_path(p):
-    """이 파일 하나가 «문서» 인가 — `ci.yml` 의 `gate.code` 단계와 **같은 잣대**여야 한다(T433).
+    """이 파일 하나에 대해 **유니티 잡이 답할 것이 없는가** — `ci.yml` 의 `gate.code` 와 같은 잣대.
 
-    두 자리가 갈리면 이 자가 «빚 3개» 라 우는데 CI 는 애초에 돌 생각이 없는 꼴이 난다.
-    바꿀 일이 생기면 **두 곳을 같이** 바꾼다(`.github/workflows/ci.yml` 의 `- id: code`).
+    ⚑ **T498 부터 잣대를 한 자에 담았다**(`tools/ci_unity_paths.py`). 여기와 `ci.yml` 이 **같은 함수를
+    부르므로** 이제 둘이 갈릴 수가 없다 — 옛 주석이 «바꿀 일이 생기면 두 곳을 같이 바꾼다» 로 경고하던
+    바로 그 함정을 자리째 없앤 것이다(T433 이 남긴 값).
+
+    이름은 «문서인가» 그대로 두었지만 뜻은 넓어졌다: 문서 + **유니티 쪽 잡이 부르지 않는 `tools/`**.
+    까닭과 실측은 그 자의 머리글에 있다. 못 읽으면 옛 잣대(문서만)로 떨어진다 — fail-safe 는 «돈다» 쪽이다.
     """
-    return p.startswith("docs/") or ("/" not in p and p.endswith(".md"))
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from ci_unity_paths import blind
+    except ImportError:
+        return p.startswith("docs/") or ("/" not in p and p.endswith(".md"))
+    return blind(p)
 
 
 # GitHub 이 «이 push 는 건너뛴다» 로 읽는 표식 전부 — **제목이 아니라 머리 커밋의 «메시지 전체»** 를 본다.
@@ -489,7 +498,11 @@ def self_test():
         ("docs 만 바꾼 커밋", "T430 ✅ 닫음", ["docs/PROGRESS.md", "docs/ROUTINE.md"], False),
         ("lock 만 잡은 커밋", "T433 선점", ["docs/claims/T433.lock"], False),
         ("뿌리 README.md 만", "README 손질", ["README.md"], False),
-        ("코드가 한 줄이라도 있으면", "T433 고침", ["docs/PROGRESS.md", "tools/check_gate_age.py"], True),
+        ("코드가 한 줄이라도 있으면", "T433 고침", ["docs/PROGRESS.md", "Assets/Scripts/Game/X.cs"], True),
+        # ⚑ T498 — 잣대가 «문서냐» 에서 «유니티가 읽는가» 로 넓어졌다. 이 세 줄이 그 경계다.
+        ("dotnet 전용 검사자만 고친 커밋", "T497 고침", ["docs/PROGRESS.md", "tools/check_gate_age.py"], False),
+        ("유니티 잡이 부르는 tools 는 코드다", "촬영 자 고침", ["tools/screens_diff.py"], True),
+        ("배포 스모크도 코드다", "스모크 고침", ["tools/webgl_smoke.sh"], True),
         ("에셋", "T384 컨페티", ["Assets/Scripts/Game/ArenaResult.cs"], True),
         ("워크플로 자신", "ci.yml", [".github/workflows/ci.yml"], True),
         ("이름만 docs 로 시작하는 폴더", "x", ["docsgen/Thing.cs"], True),
@@ -498,9 +511,9 @@ def self_test():
         ("⚑ 표식이 «본문» 에만 있어도 안 부른다(그 사고 그대로)",
          "T433 1회차 — 유니티 잡만 비킨다\n\n  · [skip" + " ci] 규약은 그대로 둔다 — dotnet 잡까지 아낀다.",
          ["Assets/x.cs", ".github/workflows/ci.yml"], False),
-        ("다른 철자도 본다", "고침\n\n[ci" + " skip] 로 적은 사람도 있다", ["tools/x.py"], False),
-        ("대문자로 적어도 본다", "고침\n\n[SKIP" + " CI]", ["tools/x.py"], False),
-        ("비슷하지만 표식이 아닌 말은 안 센다", "skip 규약을 ci 에서 논한다", ["tools/x.py"], True),
+        ("다른 철자도 본다", "고침\n\n[ci" + " skip] 로 적은 사람도 있다", ["Assets/x.cs"], False),
+        ("대문자로 적어도 본다", "고침\n\n[SKIP" + " CI]", ["Assets/x.cs"], False),
+        ("비슷하지만 표식이 아닌 말은 안 센다", "skip 규약을 ci 에서 논한다", ["Assets/x.cs"], True),
         ("파일을 못 읽으면 «부른다» 로 (fail-safe)", "머지", [], True),
         ("파일 목록이 None 이어도 «부른다»", "머지", None, True),
     ]
