@@ -93,20 +93,30 @@ def read_png(data):
     return w, h, ch, out
 
 
-def diff(a, b, tol=8):
-    """두 PNG 바이트 → (바뀐 픽셀 비율 %, 바뀐 자리 y 범위) · 못 읽으면 (None, None).
+STRONG = 16        # T493 — «세기» 문턱. tol(8) 은 이 렌더의 잡음 바닥 **아래**라, 넓고 옅은 그늘이 수를 채운다.
+#   실측 두 표본(회차마다 남겨 둔 PNG 로 전·후를 직접 맞댔다 · T490 2회차의 방법):
+#     09_shop_1 (런 1135↔1136)  tol 8  3.112%  → tol 10  0.011%
+#     27_toast  (런 1138↔1140)  tol 8 15.706%  → tol 16  0.102%  → tol 64 0.070%(진짜 다른 픽셀 439개)
+#   ⚑ tol 자체는 **안 옮긴다** — 이력 열두 칸과 화면별 «평소 폭» 이 전부 tol 8 로 쌓였고, 옮기면 그 수들이 뜻을 잃는다.
+#   그래서 «몇 개가 달라졌나»(tol) 옆에 «얼마나 달라졌나»(STRONG) 를 한 수 더 놓기만 한다. 판정(rc)은 안 건드린다.
+
+
+def diff(a, b, tol=8, strong=STRONG):
+    """두 PNG 바이트 → (바뀐 픽셀 비율 %, 바뀐 자리 y 범위, 세기 비율 %) · 못 읽으면 (None, None, None).
 
     tol = 채널 차가 이보다 커야 «바뀐 픽셀» 로 센다(같은 그림을 두 번 그려도 가장자리 한두 톤은 흔들린다).
+    strong = 그중 «옅은 그늘이 아니다» 로 셀 문턱(T493). 같은 한 바퀴에서 세므로 비용이 거의 없다.
     알파는 보지 않는다 — 화면 캡처는 전부 불투명이고, 알파만 흔들리는 것은 눈에 안 보인다.
     """
     pa, pb = read_png(a), read_png(b)
     if pa is None or pb is None:
-        return None, None
+        return None, None, None
     if pa[:3] != pb[:3]:
-        return -1.0, None                                # 크기·채널이 다르다 = 통째로 바뀐 것
+        return -1.0, None, -1.0                          # 크기·채널이 다르다 = 통째로 바뀐 것
     w, h, ch, A = pa
     B = pb[3]
     n = 0
+    ns = 0
     ymin, ymax = -1, -1
     look = min(ch, 3)                                    # RGB 만 본다
     stride = w * ch
@@ -118,16 +128,24 @@ def diff(a, b, tol=8):
             continue                                     # 줄이 통째로 같으면 픽셀을 안 센다(대개 이쪽이다 — 이 지름길이 없으면 느려서 못 쓴다)
         hit = False
         for x in range(0, stride, ch):
+            d = 0
             for c in range(look):
-                if abs(ra[x + c] - rb[x + c]) > tol:
-                    n += 1
-                    hit = True
-                    break
+                v = abs(ra[x + c] - rb[x + c])
+                if v > d:
+                    d = v
+                    if d > strong:
+                        break                            # 이미 «세다» — 더 볼 것이 없다(옛 판의 지름길을 그대로 둔다)
+            if d > tol:
+                n += 1
+                hit = True
+                if d > strong:
+                    ns += 1
         if hit:
             ymax = y
             if ymin < 0:
                 ymin = y
-    return 100.0 * n / (w * h), (ymin, ymax) if ymin >= 0 else None
+    px = w * h
+    return 100.0 * n / px, (ymin, ymax) if ymin >= 0 else None, 100.0 * ns / px
 
 
 def old_bytes(ref, name):
@@ -145,6 +163,21 @@ def usual_of(hist):
         return None
     s = sorted(hist)
     return s[int(0.8 * (len(s) - 1))]
+
+
+def strength(pct, spct, strong=STRONG):
+    """«그 수가 본론인가 그늘인가» 한 마디 — 크게 바뀐 줄에만 덧붙인다(T493).
+
+    자기 검사가 이 함수를 그대로 부른다(판정을 print 안에 두면 시험이 못 만진다).
+    ⚑ 말은 «세기가 거의 없다» 쪽에만 붙인다 — 진짜로 바뀐 화면에 군더더기를 안 붙이려는 것이다.
+      기준은 «세기가 넓이의 10분의 1 아래» 로, 실측 두 표본(3.112 → 0.011 · 15.706 → 0.102)이
+      100분의 1 쪽이라 넉넉히 잡았다.
+    """
+    if pct is None or spct is None or pct <= 0 or spct < 0:
+        return ''
+    if spct * 10 >= pct:
+        return ''                                        # 세기가 넉넉하다 = 눈에 보이는 변화다. 아무 말도 안 붙인다.
+    return f'(그늘 · 세기 {spct:.2f}% — 채널 {strong} 넘는 픽셀은 이만큼뿐)'
 
 
 def notable(pct, screen, hist, big_min):
@@ -218,13 +251,13 @@ def main(argv):
         if old == cur:
             seen[nm[:-4]] = 0.0
             continue                                     # 바이트가 같으면 그림도 같다 — 여는 값이 없다
-        pct, span = diff(cur, old)
+        pct, span, spct = diff(cur, old)
         if pct is None:
             unread.append(nm)
         else:
-            changed.append((pct, nm, span))
+            changed.append((pct, nm, span, spct))
             if pct >= 0:
-                seen[nm[:-4]] = round(pct, 3)
+                seen[nm[:-4]] = round(pct, 3)            # 이력에 쌓는 값은 **종전 그대로**(tol 8) — 열두 칸의 뜻을 안 바꾼다
 
     changed.sort(reverse=True)
     # «크게» 로 셀지는 두 잣대를 다 넘어야 한다: 절대값(--big) 과 «그 화면의 평소 폭»(있을 때만) — `notable`.
@@ -236,17 +269,17 @@ def main(argv):
           f'{f" · 새 화면 {len(new)}개" if new else ""}'
           f'{f" · 잡음(<{mn:g}%) {tiny}개" if tiny else ""}'
           f'{f" · 못 읽음 {len(unread)}개" if unread else ""}  (옛 그림 = {ref})')
-    for pct, nm, span in big[:top]:
+    for pct, nm, span, spct in big[:top]:
         where = f' · y {span[0]}~{span[1]}' if span else ''
         amount = '크기가 다르다' if pct < 0 else f'{pct:.2f}%'
-        print(f'[그림차]   {nm[:-4]} — {amount}{where}')
+        print(f'[그림차]   {nm[:-4]} — {amount}{strength(pct, spct)}{where}')
     if len(big) > top:
         print(f'[그림차]   … 그 밖 {len(big) - top}개')
     if usualy:
         print('[그림차]   평소 폭(그 화면은 늘 이만큼 흔들린다): '
-              + ' · '.join(f'{nm[:-4]} {pct:.1f}%(평소 {usual_of(hist.get(nm[:-4])):.1f}%)' for pct, nm, _ in usualy[:6]))
+              + ' · '.join(f'{nm[:-4]} {pct:.1f}%(평소 {usual_of(hist.get(nm[:-4])):.1f}%)' for pct, nm, _, _ in usualy[:6]))
     if mid:
-        print('[그림차]   조금: ' + ' · '.join(f'{nm[:-4]} {pct:.1f}%' for pct, nm, _ in mid[:10]))
+        print('[그림차]   조금: ' + ' · '.join(f'{nm[:-4]} {pct:.1f}%' for pct, nm, _, _ in mid[:10]))
     for nm in new[:4]:
         print(f'[그림차]   {nm[:-4]} — **새 화면**(옛 그림에 없다)')
     # T282 회차 2 — «이 런이 그림을 바꿀 수 있었나» 를 같이 말한다. Assets 를 안 건드린 커밋인데도
@@ -306,20 +339,20 @@ def self_test():
     ok &= r1
     print('ⓐ PNG 읽기 —', 'OK' if r1 else '실패')
 
-    p, span = diff(a, _png(20, 10, (10, 20, 30)))
-    r2 = p == 0.0 and span is None
+    p, span, sp = diff(a, _png(20, 10, (10, 20, 30)))
+    r2 = p == 0.0 and span is None and sp == 0.0
     ok &= r2
     print('ⓑ 같은 그림 = 0.00% —', 'OK' if r2 else f'실패({p})')
 
     # 20×10 중 5×4(=20칸)만 바꾸면 정확히 10.00% 여야 한다. y 범위도 그 자리를 집어야 한다.
     b = _png(20, 10, (10, 20, 30), box=(2, 3, 6, 6), color=(200, 200, 200))
-    p, span = diff(a, b)
-    r3 = abs(p - 10.0) < 1e-6 and span == (3, 6)
+    p, span, sp = diff(a, b)
+    r3 = abs(p - 10.0) < 1e-6 and span == (3, 6) and abs(sp - 10.0) < 1e-6
     ok &= r3
     print('ⓒ 아는 크기의 변경 = 10.00% · y 3~6 —', 'OK' if r3 else f'실패({p} {span})')
 
-    p, _ = diff(a, _png(21, 10, (10, 20, 30)))
-    r4 = p == -1.0
+    p, _, sp = diff(a, _png(21, 10, (10, 20, 30)))
+    r4 = p == -1.0 and sp == -1.0
     ok &= r4
     print('ⓓ 크기가 다르면 −1 —', 'OK' if r4 else f'실패({p})')
 
@@ -336,6 +369,24 @@ def self_test():
     r6 = usual_of([1, 2, 3]) is None and notable(4.0, 'new', {'new': [0, 0, 0]}, 3.0)
     ok &= r6                                              # 표본이 모자라면 «평소» 를 말하지 않고 그냥 크게 센다
     print('ⓕ 표본 5런 미만이면 평소를 말하지 않는다 —', 'OK' if r6 else '실패')
+
+    # ⓖ T493 — «넓고 옅은 것» 과 «좁고 진한 것» 을 가른다. 넓이만 보면 앞엣것이 이기는데, 사람이 보는 것은 뒤엣것이다.
+    #    실측을 그대로 넣는다: 09_shop_1(3.112 → 세기 0.011) · 27_toast(15.706 → 세기 0.102).
+    r7 = (strength(3.112, 0.011) and strength(15.706, 0.102)          # 그늘 = 말이 붙는다
+          and not strength(10.0, 5.0)                                 # 세기가 넉넉하면 군더더기를 안 붙인다
+          and not strength(10.0, 1.0)                                 # 딱 10분의 1 도 «넉넉» 쪽이다(경계)
+          and strength(10.0, 0.99)                                    # 그 바로 아래가 그늘이다
+          and not strength(-1.0, -1.0) and not strength(None, None))  # 크기 다름·못 읽음에는 아무 말도 안 붙인다
+    ok &= bool(r7)
+    print('ⓖ 넓고 옅은 것 ↔ 좁고 진한 것 (T493) —', 'OK' if r7 else '실패')
+
+    # ⓗ 같은 그림 두 장을 «한 칸(10/255) 균일 이동» 시키면 tol 8 은 다 세고 세기(16)는 0 이어야 한다 —
+    #    이것이 09_shop_1 에서 실제로 났던 꼴이다(결정 1371).
+    faint = _png(20, 10, (20, 30, 40))
+    p8, _sp8, s8 = diff(_png(20, 10, (10, 20, 30)), faint)
+    r8 = abs(p8 - 100.0) < 1e-6 and s8 == 0.0
+    ok &= r8
+    print('ⓗ 한 칸 균일 이동 = 넓이 100% · 세기 0% —', 'OK' if r8 else f'실패({p8} {s8})')
 
     print('✓ screens_diff 자기 검사 통과' if ok else '✗ 자기 검사 실패')
     return 0 if ok else 1
