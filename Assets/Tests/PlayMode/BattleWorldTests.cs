@@ -110,11 +110,12 @@ namespace KkomaKnight.Tests.Play
                 // T51 ② — 사망 «펑» 이펙트 없음
                 if (GameObject.Find(DeathFxName) != null) st.DeathFxFrames++;
                 // T110 ⓐ — 골드 팝 «글자» 는 뜨지 않는다(데미지 숫자는 그대로 떠야 한다)
-                foreach (var txt in _app.Frame.GetComponentsInChildren<TMP_Text>(false))
+                // T502 — 팝은 이제 월드(«Pops» · 캔버스 밖)에 서므로 프레임이 아니라 장면 전체에서 센다(골드 팝 «글자» 도 어디에 서든 잡는다).
+                foreach (var txt in UnityEngine.Object.FindObjectsByType<TMP_Text>(FindObjectsSortMode.None))
                 {
                     if (txt == null || string.IsNullOrEmpty(txt.text)) continue;
                     if (txt.text.EndsWith(" G", StringComparison.Ordinal)) st.GoldPopFrames++;
-                    else if (txt.text.Length > 0 && char.IsDigit(txt.text[0]) && txt.transform.parent != null && txt.transform.parent.name == "Pops") st.DamagePopFrames++;
+                    else if (txt.text.Length > 0 && char.IsDigit(txt.text[0]) && txt.transform.parent != null && txt.transform.parent.name == BattleWorld.PopsName) st.DamagePopFrames++;
                 }
             }
         }

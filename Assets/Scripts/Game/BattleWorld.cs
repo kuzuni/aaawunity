@@ -19,12 +19,13 @@ namespace KkomaKnight.Game
     ///   킬 뒤에는 «칼이 내려옴 → 적 사망 연출 → 플레이어 공격 모션 끝 → 걷기 모션으로 원래 걷기 속도(PlayerSpeed×WalkMul · 대시 특전이면 ×DashMul)» 순서(주인 2026-09-06 · T50·T51).
     ///   그 동안 엔진 틱을 보류(<see cref="HoldEngine"/> · BattleScreen.Tick)하므로 표시 원점 <see cref="ShownPX"/> 과 엔진 x 의 격차가 생기지 않는다 — T20 의 «멈춤 → 2배 따라잡기» 는 폐지. 엔진 좌표·틱 순서 불변.
     /// ● 발밑 바(T35 · 주인 강조 · `02_battle.jpg`): 빨강(HP) 위에 파랑(실드) 2단 · 각 단 안에 흰 숫자(«현재») · 바 폭 = 캐릭터 폭(2/3 배율) · 실드 0 이면 파란 단 숨김.
-    ///   숫자는 월드가 아니라 팝 층(<c>_pops</c> · 프레임 px)의 uGUI Text 로 그리고 매 프레임 바 위치로 옮긴다(<see cref="FootText"/> · Pop 과 같은 월드→프레임 변환 · 픽셀 크기가 결정적).
+    ///   숫자는 막대의 자식으로 선 <b>월드 TMP</b> 다(T502 · <see cref="FootText"/>) — 글자 크기는 종전대로 프레임 px 로 재고(<see cref="WorldPerPx"/>) 자리는 막대가 정한다. 데미지 팝(<see cref="Pop"/>)도 같은 꼴로 월드에 뜬다.
     /// </summary>
     public sealed class BattleWorld
     {
         readonly App _app; readonly BattleState G; readonly GameData D;
-        readonly Transform _root; readonly RectTransform _pops;
+        readonly Transform _root; readonly RectTransform _pops;   // _pops 는 이제 «팝을 띄우는 화면인가» 표시로만 남았다 — 팝·발밑 숫자는 월드(_root)에 선다(T502)
+        Transform _popRoot;   // 데미지 팝이 모이는 월드 자리(«Pops» · _root 의 자식 · 자가 이 이름으로 팝을 센다)
         readonly float _zoom; readonly float _playerX;             // ui.json camera.zoom · playerX(프레임 폭 비율)
         // ⚑ T319(주인 2026-09-09 11:2X «PvP 뜰 때 중앙에서 두 캐릭터 만나서 싸우는 식 · 내 플레이어가 오른쪽으로 이동 느낌이 아니라») —
         //   챕터 판은 «플레이어를 화면 한 자리(_playerX)에 붙들고 세상을 흘려보내는» 꼴이다(LayoutX 의 원점이 _shownPX 라서).
@@ -280,9 +281,8 @@ namespace KkomaKnight.Game
         public void Dispose()
         {
             if (_root != null) Object.Destroy(_root.gameObject);
-            // 발밑 숫자는 팝 층(uGUI)에 있다 — 월드와 함께 지운다(화면이 Pops 를 통째로 비우기도 하지만 순서에 기대지 않는다)
-            if (_pHpTxt != null) Object.Destroy(_pHpTxt.gameObject); if (_pShTxt != null) Object.Destroy(_pShTxt.gameObject); _pHpTxt = _pShTxt = null;
-            foreach (var kv in _enemies) if (kv.Value.BarTxt != null) Object.Destroy(kv.Value.BarTxt.gameObject);
+            // 발밑 숫자·팝은 월드(_root 아래 · 막대의 자식)에 산다(T502) — 월드와 함께 사라진다. 손잡이만 놓는다.
+            _pHpTxt = _pShTxt = null; _popRoot = null;
         }
 
         // ───────────────────────── 좌표 ─────────────────────────
@@ -541,27 +541,58 @@ namespace KkomaKnight.Game
             fill.size = new Vector2(Mathf.Max(0.001f, w * f), fill.size.y);
             fill.transform.localPosition = new Vector3(-(w - w * f) / 2f, 0, 0);
         }
-        /// <summary>발밑 바 안의 숫자(T35) — 팝 층의 uGUI Text(흰 글자 · 외곽선). 크기는 <see cref="FootFontSize"/>(바 높이에서 잰다 · 픽셀 상수 없음). 글자 칸 높이는 «올린 뒤» 크기로(전엔 올리기 전 크기라 게이트 «잘림»).</summary>
-        TMP_Text FootText(string name)
+        /// <summary>
+        /// 프레임 px 한 칸 = 월드 이만큼(T502). 팝·발밑 숫자는 글자 크기를 종전대로 <b>프레임 px</b> 로 재고(자·하한·실측이 전부 그 단위다)
+        /// transform 배율 하나로 월드에 세운다 — 그러면 <c>fontSize</c>·<c>preferredWidth</c>·rect 는 종전 숫자 그대로이고 화면에서도 같은 크기다(줌 없음 기준).
+        /// </summary>
+        public const float WorldPerPx = WorldCam.LayoutW / UiKit.FrameW / WorldCam.PPU;
+        /// <summary>발밑 숫자의 정렬 순서 = 막대 순서 + 이 값(막대 바탕 = order · 채움 = +1 · 테 = +2 · 숫자는 그 위).</summary>
+        public const int FootTextOrderAdd = 3;
+        /// <summary>데미지 팝의 정렬 순서 — 막대(392~398)·투사체(350) 위. 아이콘은 글자 위.</summary>
+        public const int PopOrder = 400, PopIconOrder = 401;
+        /// <summary>데미지 팝이 모이는 월드 오브젝트 이름(자가 이 이름의 자식을 «데미지 팝» 으로 센다).</summary>
+        public const string PopsName = "Pops";
+
+        /// <summary>
+        /// 월드 글자 하나(T502) — <see cref="UiKit.Text"/> 와 같은 글꼴·테·하한 규칙을 타되 uGUI 가 아니라 <b>3D TextMeshPro</b> 로 <paramref name="parent"/> 아래에 선다.
+        /// <c>isOrthographic</c> 이라 글자 크기 1 = 로컬 1 단위이고, 배율 <see cref="WorldPerPx"/> 가 그것을 «프레임 px 와 화면에서 같은 크기» 로 만든다.
+        /// 카메라·줌과 같이 움직이는 것은 이 글자가 월드 오브젝트이기 때문이지 변환 때문이 아니다(종전 <c>WorldCam.ToFrame</c> 은 이 자리에서 사라졌다).
+        /// </summary>
+        static TMP_Text WorldText(Transform parent, string name, string s, int size, Color color, int order, TextKind kind)
         {
-            if (_pops == null) return null;
+            size = TextSize.Floor(size, kind);
+            var go = new GameObject(name, typeof(RectTransform)); go.transform.SetParent(parent, false);
+            var t = go.AddComponent<TextMeshPro>();
+            t.isOrthographic = true;
+            t.font = TmpFont.Get(); t.text = TextGlyphs.Safe(s); t.fontSize = size; t.color = color; t.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter);
+            t.textWrappingMode = TextWrappingModes.NoWrap; t.overflowMode = TextOverflowModes.Overflow; t.richText = true;
+            t.sortingOrder = order;
+            UiKit.EnsureOutline(t);   // 검은 테 + 주인 글꼴 — uGUI 글자와 같은 공유 머티리얼 한 장(T207 ②)
+            TextAudit.Mark(t, kind);
+            var rt = t.rectTransform; rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f); rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.localScale = Vector3.one * WorldPerPx;
+            return t;
+        }
+        /// <summary>발밑 바 안의 숫자(T35) — 막대의 <b>자식</b>으로 선 월드 TMP(흰 글자 · 외곽선 · T502). 크기는 <see cref="FootFontSize"/>(바 높이에서 잰다 · 픽셀 상수 없음). 글자 칸 높이는 «올린 뒤» 크기로(전엔 올리기 전 크기라 게이트 «잘림»).</summary>
+        TMP_Text FootText(string name, Transform bar, int order)
+        {
+            if (_pops == null || bar == null) return null;
             int size = FootFontSize;
             // TextKind.Small = «정말 작아야 하는 곳»(하한 없음 · 호출부가 명시) — 이 자리만의 T63 예외다. 까닭은 FootFontSize 주석(결정 361).
-            var t = UiKit.Text(_pops, "", size, Palette.White, TextAnchor.MiddleCenter, false, true, TextKind.Small); t.name = name;
+            var t = WorldText(bar, name, "", size, Palette.White, order, TextKind.Small);
             size = Mathf.RoundToInt(t.fontSize);
             // Bold 를 안 준다(T125 회차 4 · 결정 449) — 이 자리는 화면에서 가장 작은 글자라 Bold 면 획이 서로 붙어 숫자가 흰 덩어리가 된다.
             // 실측: 레퍼런스와 글자 bbox 는 사실상 같은데(540 환산 30×10.5 대 27×11) 단 안 흰 픽셀 비율이 0.12 대 0.38 이었다 = 크기가 아니라 굵기.
-            t.textWrappingMode = TextWrappingModes.NoWrap; t.fontStyle = FontStyles.Normal; t.raycastTarget = false;
-            var rt = t.rectTransform; rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f); rt.sizeDelta = new Vector2(400, size * 1.4f);
+            t.fontStyle = FontStyles.Normal;
+            var rt = t.rectTransform; rt.sizeDelta = new Vector2(400, size * 1.4f); rt.localPosition = Vector3.zero;   // 막대 한가운데 — 막대가 움직이면 같이 간다(변환 0)
             return t;
         }
-        /// <summary>숫자 글자를 바(월드 위치)의 한가운데로 — Pop 과 같은 월드 → 레이아웃 → 프레임 px 변환. 글자는 바뀔 때만 다시 쓴다(uGUI 재구성 최소화).</summary>
-        static void PlaceFootText(TMP_Text t, Vector3 worldPos, string s, bool visible, float barPctW)
+        /// <summary>숫자 글자 갱신 — 자리는 막대의 자식이라 저절로 한가운데다(T502 · 종전의 월드 → 프레임 변환이 통째로 없어졌다). 글자는 바뀔 때만 다시 쓴다.</summary>
+        static void PlaceFootText(TMP_Text t, string s, bool visible, float barPctW)
         {
             if (t == null) return;
             if (t.gameObject.activeSelf != visible) t.gameObject.SetActive(visible);
             if (!visible) return;
-            t.rectTransform.anchoredPosition = WorldCam.ToFrame(worldPos);
             if (t.text != s) { t.text = s; FitFootText(t, barPctW); }
         }
 
@@ -701,7 +732,7 @@ namespace KkomaKnight.Game
             // 바 폭 = 표(ref-layout ② «적 발밑 바 폭» 9.7 · 플레이어 10.3 과 거의 같다) × FootBarScale(T63-battle · 플레이어 바와 같은 자) — ui.json enemyBarW(37px = 6.9%) 를 쓰면 플레이어 바의 2/3 폭이 돼 레퍼런스와 어긋났다(T47 회차 2). 보스는 ui.json 의 보스/잡몹 비율만 빌린다.
             float barW = WorldCam.PctW(Layout.EnemyFootBarW) * Layout.FootBarScale * (e.IsBoss && D.Ui.EnemyBarW > 0 ? (float)(D.Ui.BossBarW / D.Ui.EnemyBarW) : 1f);
             MakeBar(_root, barW, WorldCam.PctH(Layout.FootBarH), out v.BarBg, out v.BarFill, e.IsBoss ? Palette.Plum : Palette.Red, 395);
-            v.BarTxt = FootText("FootTxt:Enemy" + e.Id);   // 적은 실드가 없으므로(엔진 EnemyState 에 Sh 없음) 빨간 단 하나 + 숫자(레퍼런스 03 «2555»)
+            v.BarTxt = FootText("FootTxt:Enemy" + e.Id, v.BarBg.transform, 395 + FootTextOrderAdd);   // 적은 실드가 없으므로(엔진 EnemyState 에 Sh 없음) 빨간 단 하나 + 숫자(레퍼런스 03 «2555»)
             _enemies[e] = v;
             return v;
         }
@@ -820,9 +851,9 @@ namespace KkomaKnight.Game
             _pBarBg.gameObject.SetActive(!_pDeadShown);
             _pShBg.transform.position = Pos(_shownPX, Layout.FootShBarY / 100f); SetBar(_pShBg, _pShFill, P.MaxSh > 0 ? ShownSh / P.MaxSh : 0);
             _pShBg.gameObject.SetActive(!_pDeadShown && P.MaxSh > 0);   // 실드 0 이면 파란 단 숨김(T35)
-            if (_pHpTxt == null) { _pHpTxt = FootText("FootTxt:PlayerHp"); _pShTxt = FootText("FootTxt:PlayerSh"); }   // 팝 층은 화면이 새 판마다 비우므로 여기서(첫 Sync) 만든다
-            PlaceFootText(_pHpTxt, _pBarBg.transform.position, FootNum(ShownHp), _pBarBg.gameObject.activeSelf, Layout.PlayerFootBarW * Layout.FootBarScale);
-            PlaceFootText(_pShTxt, _pShBg.transform.position, FootNum(ShownSh), _pShBg.gameObject.activeSelf, Layout.PlayerFootBarW * Layout.FootBarScale);
+            if (_pHpTxt == null) { _pHpTxt = FootText("FootTxt:PlayerHp", _pBarBg.transform, 392 + FootTextOrderAdd); _pShTxt = FootText("FootTxt:PlayerSh", _pShBg.transform, 392 + FootTextOrderAdd); }   // 막대의 자식(T502) — 첫 Sync 에서 만든다(종전 자리 그대로)
+            PlaceFootText(_pHpTxt, FootNum(ShownHp), _pBarBg.gameObject.activeSelf, Layout.PlayerFootBarW * Layout.FootBarScale);
+            PlaceFootText(_pShTxt, FootNum(ShownSh), _pShBg.gameObject.activeSelf, Layout.PlayerFootBarW * Layout.FootBarScale);
             // 적
             var seen = new HashSet<EnemyState>(); bool engaged = false;
             foreach (var n in G.Nodes) foreach (var e in n.Enemies)
@@ -837,7 +868,7 @@ namespace KkomaKnight.Game
                 if (e.Dead && v.Hold == 0)
                 {
                     // 사망 = 모션(Dead1 · 끝에서 정지) + 알파 페이드 + snd.kill — «펑» 이펙트(fx.death Magic Poof)는 주인 지시로 뿌리지 않는다(T51 · 2026-09-06)
-                    if (v.DieT < 0) { v.DieT = 0; v.Rig.Play(CharacterRig.Dead, true); _lastKillPos = v.Rig.transform.position; if (!Silent) Audio.Sfx("snd.kill", 0.9f); v.BarBg.gameObject.SetActive(false); PlaceFootText(v.BarTxt, Vector3.zero, "", false, Layout.EnemyFootBarW * Layout.FootBarScale); if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } if (!Silent && KillShown != null) KillShown(_lastKillPos, e.IsBoss); }
+                    if (v.DieT < 0) { v.DieT = 0; v.Rig.Play(CharacterRig.Dead, true); _lastKillPos = v.Rig.transform.position; if (!Silent) Audio.Sfx("snd.kill", 0.9f); v.BarBg.gameObject.SetActive(false); PlaceFootText(v.BarTxt, "", false, Layout.EnemyFootBarW * Layout.FootBarScale); if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } if (!Silent && KillShown != null) KillShown(_lastKillPos, e.IsBoss); }
                     v.DieT += dt; v.Rig.SetAlpha(Mathf.Clamp01(1.2f - v.DieT * 1.5f));
                     if (v.DieT > 0.85f) Remove(v);
                     continue;
@@ -848,7 +879,7 @@ namespace KkomaKnight.Game
                 else { if (v.StunFx != null) { Object.Destroy(v.StunFx); v.StunFx = null; } if (!v.Rig.Attacking) v.Rig.Play(_fixedOrigin && _moving ? CharacterRig.Walk : CharacterRig.Idle); }
                 v.BarBg.transform.position = FoePos(e.WorldX, Layout.FootHpBarY / 100f);
                 SetBar(v.BarBg, v.BarFill, e.MaxHp > 0 ? v.ShownHp / e.MaxHp : 0);
-                PlaceFootText(v.BarTxt, v.BarBg.transform.position, FootNum(v.ShownHp), v.BarBg.gameObject.activeSelf, Layout.EnemyFootBarW * Layout.FootBarScale);
+                PlaceFootText(v.BarTxt, FootNum(v.ShownHp), v.BarBg.gameObject.activeSelf, Layout.EnemyFootBarW * Layout.FootBarScale);
                 if (!e.Dead && lx < WorldCam.LayoutW) engaged = true;
                 // T235(주인 2026-09-08 09:1X «보스라고 보스 연출 안 떠도 된다») — 경고 띠(Overlay.BossWarn)와 터지는 이펙트(fx.bossWarn)를 뺐다.
                 // 남긴 것은 보스 곡 하나다: 주인이 말한 것은 «연출» 이고 곡은 분위기라 지어내지 않는다(§1). 곡까지 빼려면 주인 한마디면 된다.
@@ -1203,45 +1234,55 @@ namespace KkomaKnight.Game
         public const float PopIconGap = 6f;
         /// <summary>팝 아이콘 오브젝트 이름(게이트가 이 이름으로도 찾는다).</summary>
         public const string PopIconName = "PopIcon";
+        /// <summary>팝이 떠오르는 높이(프레임 px · 종전 값 그대로) — 월드에서는 × <see cref="WorldPerPx"/>.</summary>
+        public const float PopRisePx = 140f;
 
-        /// <summary>데미지 팝 — 프레임(UI) 층에 Text 를 띄우고 DOTween 으로 올라가며 사라진다. 크기는 호출부 값 × <see cref="TextSize.BattleNumberMul"/>(1.3 · T63 «데미지 팝·전투 숫자는 지금보다 1.3배») 뒤 본문 하한.
+        Transform PopRoot()
+        {
+            if (_popRoot == null) { _popRoot = new GameObject(PopsName).transform; _popRoot.SetParent(_root, false); }
+            return _popRoot;
+        }
+
+        /// <summary>데미지 팝 — <b>월드</b>(«Pops» · _root 아래)에 3D TMP 를 띄우고 DOTween 으로 올라가며 사라진다(T502 · 종전엔 프레임 층 uGUI 였다).
+        /// 크기는 호출부 값 × <see cref="TextSize.BattleNumberMul"/>(1.3 · T63 «데미지 팝·전투 숫자는 지금보다 1.3배») 뒤 본문 하한 — 그 값은 프레임 px 이고 <see cref="WorldPerPx"/> 가 화면에서 같은 크기로 만든다.
         /// <paramref name="iconKey"/> 를 주면 숫자 <b>왼쪽</b>에 그 그림이 붙어 «아이콘 + 데미지» 한 덩어리로 뜬다(T152).</summary>
         public void Pop(string s, Vector3 worldPos, Color color, int size, string iconKey = null)
         {
-            if (_pops == null) return;
+            if (_pops == null || _root == null) return;
             size = Mathf.RoundToInt(size * TextSize.BattleNumberMul);
-            var t = UiKit.Text(_pops, s, size, color, TextAnchor.MiddleCenter, false, true);
+            var t = WorldText(PopRoot(), "Pop", s, size, color, PopOrder, TextKind.Body);
             size = Mathf.RoundToInt(t.fontSize);
-            t.textWrappingMode = TextWrappingModes.NoWrap;
-            var rt = t.rectTransform; rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f); rt.sizeDelta = new Vector2(400, size * 1.5f);
-            // 월드 → 프레임 px(WorldCam.ToFrame) + 좌우 흔들기
-            rt.anchoredPosition = WorldCam.ToFrame(worldPos) + new Vector2(Random.Range(-30f, 30f), 0f);
-            rt.localScale = Vector3.one * 0.6f;
-            var icon = PopIcon(t, iconKey, size);   // T152 — 글자 rect 의 자식이라 아래 트윈 하나에 아이콘까지 같이 따라 올라간다
-            var seq = DOTween.Sequence().SetLink(t.gameObject);   // SetLink(T56) — 전투 종료로 팝 층이 먼저 파괴돼도 경고 0
-            seq.Append(rt.DOScale(1f, 0.12f).SetEase(Ease.OutBack));
-            seq.Join(rt.DOAnchorPosY(rt.anchoredPosition.y + 140f, 0.9f).SetEase(Ease.OutCubic));
+            t.rectTransform.sizeDelta = new Vector2(400, size * 1.5f);
+            // 월드 자리 그대로 + 좌우 흔들기(종전 ±30px)
+            var tr = t.transform;
+            tr.position = new Vector3(worldPos.x + Random.Range(-30f, 30f) * WorldPerPx, worldPos.y, worldPos.z);
+            tr.localScale = Vector3.one * (WorldPerPx * 0.6f);
+            var icon = PopIcon(t, iconKey, size);   // T152 — 글자의 자식이라 아래 트윈 하나에 아이콘까지 같이 따라 올라간다
+            var seq = DOTween.Sequence().SetLink(t.gameObject);   // SetLink(T56) — 전투 종료로 월드가 먼저 파괴돼도 경고 0
+            seq.Append(tr.DOScale(WorldPerPx, 0.12f).SetEase(Ease.OutBack));
+            seq.Join(tr.DOLocalMoveY(tr.localPosition.y + PopRisePx * WorldPerPx, 0.9f).SetEase(Ease.OutCubic));
             seq.Insert(0.45f, t.DOFade(0f, 0.45f));
             if (icon != null) seq.Insert(0.45f, icon.DOFade(0f, 0.45f));   // 글자와 같이 사라진다(아이콘만 남지 않게)
             seq.OnComplete(() => { if (t != null) Object.Destroy(t.gameObject); });   // 아이콘은 자식이라 같이 사라진다(누수 0)
         }
 
         /// <summary>
-        /// 팝 숫자 <b>왼쪽</b>에 아이콘 하나(T152). 글자 rect(폭 400 · 가운데 정렬) 안에서 숫자가 실제로 차지하는 폭(<c>preferredWidth</c>)을 재
-        /// 그 왼쪽에 붙이고, «아이콘 + 틈 + 숫자» 덩어리가 원래 자리에 가운데로 남도록 글자 rect 를 그 절반만큼 오른쪽으로 민다.
+        /// 팝 숫자 <b>왼쪽</b>에 아이콘 하나(T152 · T502 부터 SpriteRenderer). 글자 rect(폭 400 · 가운데 정렬) 안에서 숫자가 실제로 차지하는 폭(<c>preferredWidth</c>)을 재
+        /// 그 왼쪽에 붙이고, «아이콘 + 틈 + 숫자» 덩어리가 원래 자리에 가운데로 남도록 글자를 그 절반만큼 오른쪽으로 민다.
+        /// 아이콘은 글자의 자식이라 자리·크기는 글자의 로컬 단위(= 프레임 px)로 적는다 — 한 변 <c>d</c> px 정사각에 비율을 지켜 맞춘다(옛 <c>preserveAspect</c>).
         /// 키가 없으면 아무것도 안 만든다(종전 팝 그대로).
         /// </summary>
-        static Image PopIcon(TMP_Text t, string iconKey, int size)
+        SpriteRenderer PopIcon(TMP_Text t, string iconKey, int size)
         {
             if (string.IsNullOrEmpty(iconKey)) return null;
             float d = size * PopIconMul;
-            var img = UiKit.Icon(t.transform, PopIconName, iconKey);
-            var irt = img.rectTransform;
-            irt.anchorMin = irt.anchorMax = new Vector2(0.5f, 0.5f); irt.pivot = new Vector2(0.5f, 0.5f);
-            irt.sizeDelta = new Vector2(d, d);
-            irt.anchoredPosition = new Vector2(-(t.preferredWidth * 0.5f + PopIconGap + d * 0.5f), 0f);
-            var rt = t.rectTransform; rt.anchoredPosition += new Vector2((d + PopIconGap) * 0.5f, 0f);
-            return img;
+            var go = new GameObject(PopIconName); go.transform.SetParent(t.transform, false);
+            var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = _app.Assets.Sprite(iconKey); sr.sortingOrder = PopIconOrder;
+            float b = sr.sprite != null ? Mathf.Max(sr.sprite.bounds.size.x, sr.sprite.bounds.size.y) : 0f;
+            go.transform.localScale = Vector3.one * (b > 1e-4f ? d / b : 1f);
+            go.transform.localPosition = new Vector3(-(t.preferredWidth * 0.5f + PopIconGap + d * 0.5f), 0f, 0f);
+            t.transform.localPosition += new Vector3((d + PopIconGap) * 0.5f * WorldPerPx, 0f, 0f);
+            return sr;
         }
     }
 }

@@ -44,17 +44,18 @@ namespace KkomaKnight.Tests.Play
             _app = null; yield return Frames(3);
         }
 
-        static List<Image> PopIcons()
+        // T502 — 팝이 월드로 가면서 아이콘도 SpriteRenderer 가 됐다(자리·그림은 그대로).
+        static List<SpriteRenderer> PopIcons()
         {
-            var found = new List<Image>();
-            foreach (var img in Object.FindObjectsByType<Image>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            var found = new List<SpriteRenderer>();
+            foreach (var img in Object.FindObjectsByType<SpriteRenderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
                 if (img != null && img.name == BattleWorld.PopIconName) found.Add(img);
             return found;
         }
-        static List<Image> NewSince(List<Image> before)
+        static List<SpriteRenderer> NewSince(List<SpriteRenderer> before)
         {
             var was = new HashSet<int>(); foreach (var i in before) if (i != null) was.Add(i.GetInstanceID());
-            var news = new List<Image>();
+            var news = new List<SpriteRenderer>();
             foreach (var i in PopIcons()) if (i != null && !was.Contains(i.GetInstanceID())) news.Add(i);
             return news;
         }
@@ -79,7 +80,7 @@ namespace KkomaKnight.Tests.Play
             var made = NewSince(before);
             Assert.AreEqual(1, made.Count, "출처가 실린 타격 팝에는 아이콘이 하나 붙는다(T458 2항)");
             Assert.AreSame(want, made[0].sprite, "번개 특전이 낸 데미지에는 그 특전의 그림이 붙는다(주인 «해당 꺼 아이콘»)");
-            Assert.Less(made[0].rectTransform.anchoredPosition.x, 0f, "그림은 숫자 «왼쪽» 이다(T152 의 자리 그대로)");
+            Assert.Less(made[0].transform.localPosition.x, 0f, "그림은 숫자 «왼쪽» 이다(T152 의 자리 그대로)");
 
             // ⓑ 출처가 없으면 안 붙인다 — «아는 척» 을 막는 갈래
             before = PopIcons();

@@ -73,7 +73,7 @@ namespace KkomaKnight.Tests.Play
 
             // ⓑ 플레이어 발밑 2단 — 빨강 HP(숫자) 위 · 파랑 실드(숫자) 아래 · 실드 0 이면 파란 단 숨김 · 바 폭 = 표 폭 × 2/3
             Assert.IsNotNull(W.PlayerHpBar, "플레이어 HP 바"); Assert.IsTrue(W.PlayerHpBar.gameObject.activeSelf, "HP 단 보임");
-            Assert.IsNotNull(W.PlayerHpText, "HP 단 숫자(팝 층 uGUI)"); Assert.IsTrue(W.PlayerHpText.gameObject.activeSelf, "HP 숫자 보임");
+            Assert.IsNotNull(W.PlayerHpText, "HP 단 숫자(막대의 자식 · 월드 TMP · T502)"); Assert.IsTrue(W.PlayerHpText.gameObject.activeSelf, "HP 숫자 보임");
             // 발밑 숫자는 레퍼런스 02·03 처럼 «천 단위 콤마 없이»(T125 ⓑ 회차 1 · BattleWorld.FootNum) — K/M 꼬리표는 Fmt 그대로 남는다
             Assert.AreEqual(UiKit.Fmt(System.Math.Ceiling(W.ShownHp)).Replace(",", ""), W.PlayerHpText.text, "HP 단 숫자 = 표시 체력(콤마 없이)");
             Assert.AreEqual(P.MaxSh > 0, W.PlayerShBar.gameObject.activeSelf, "실드 단은 실드가 있을 때만");
@@ -93,11 +93,15 @@ namespace KkomaKnight.Tests.Play
             Assert.LessOrEqual(W.PlayerHpText.preferredWidth, W.PlayerHpBar.size.x * WorldCam.PPU * (UiKit.FrameW / WorldCam.LayoutW) + 1f, "발밑 숫자 «" + W.PlayerHpText.text + "» 가 바 폭 안에");
             Assert.AreEqual(W.PlayerHpBar.size.x, W.PlayerShBar.size.x, 1e-3f, "두 단은 같은 폭"); Assert.AreEqual(W.PlayerHpBar.size.y, W.PlayerShBar.size.y, 1e-3f, "두 단은 같은 높이");
             Assert.AreEqual(WorldCam.PctH(Layout.FootBarH), W.PlayerHpBar.size.y, 1e-3f, "단 높이 = FootBarH");
-            // 숫자 글자는 바 한가운데(프레임 px ↔ 월드 변환이 Pop 과 같음)
+            // 숫자 글자는 바 한가운데 — T502 부터 월드 TMP 로 막대의 «자식» 이라 월드 좌표가 막대와 같다(종전의 프레임 px 변환은 사라졌다)
             {
-                var p = W.PlayerHpBar.transform.position; float lx = p.x * WorldCam.PPU + WorldCam.LayoutW / 2f; float yFrac = 0.5f - p.y * WorldCam.PPU / WorldCam.LayoutH;
-                var ap = W.PlayerHpText.rectTransform.anchoredPosition;
-                Assert.AreEqual(lx * (UiKit.FrameW / WorldCam.LayoutW), ap.x, 0.5f, "HP 숫자 x = 바 중심"); Assert.AreEqual((1f - yFrac) * UiKit.FrameH, ap.y, 0.5f, "HP 숫자 y = 바 중심");
+                var txt = W.PlayerHpText;
+                Assert.IsTrue(txt is TextMeshPro, "발밑 숫자는 월드 TMP(TextMeshPro)다 — uGUI 가 아니다(T502)");
+                Assert.AreSame(W.PlayerHpBar.transform, txt.transform.parent, "발밑 숫자는 막대의 자식이다(막대가 움직이면 같이 간다)");
+                Assert.IsFalse(txt.transform.IsChildOf(_app.UiCanvas.transform), "발밑 숫자는 캔버스 밖(월드)에 있다");
+                Assert.Less(Vector3.Distance(W.PlayerHpBar.transform.position, txt.transform.position), 1e-3f, "HP 숫자 = 바 중심(월드)");
+                Assert.AreEqual(BattleWorld.WorldPerPx, txt.transform.lossyScale.y, 1e-5f, "글자 배율 = 프레임 px 한 칸 — 화면에서 종전 크기 그대로");
+                Assert.Greater(((TextMeshPro)txt).sortingOrder, W.PlayerHpBar.sortingOrder + 2, "숫자는 막대(바탕·채움·테) 위에 그린다");
             }
             _log.AssertNoRed("바 3개 · 발밑 2단");
 
@@ -124,10 +128,10 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(G.Kills.ToString(), UiKit.Find(hud, "Pill:kills").GetComponentInChildren<TMP_Text>(true).text, "처치 수 pill 갱신");
             _log.AssertNoRed("적 조우");
 
-            // 로비로 — 월드와 함께 발밑 숫자(팝 층)도 사라진다 · 빨간 줄 0
+            // 로비로 — 월드와 함께 발밑 숫자(막대의 자식 · T502)도 사라진다 · 빨간 줄 0
             _app.Overlay.Close(); _app.ShowScreen("lobby"); yield return Frames(2);
             Assert.AreEqual("lobby", _app.Current.Name);
-            foreach (var t in _app.UiCanvas.GetComponentsInChildren<TMP_Text>(true)) Assert.IsFalse(t.name.StartsWith("FootTxt:"), "발밑 숫자 글자가 남아 있다: " + t.name);
+            foreach (var t in Object.FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None)) Assert.IsFalse(t.name.StartsWith("FootTxt:"), "발밑 숫자 글자가 남아 있다: " + t.name);
             _log.AssertNoRed("로비 복귀");
         }
     }

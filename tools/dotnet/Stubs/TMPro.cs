@@ -73,11 +73,19 @@ namespace TMPro
         public float preferredWidth { get; }                       // ⚠ TMP 에도 있다 — 고칠 필요가 없던 자리(결정 587)
         public float preferredHeight { get; }
         public bool isTextTruncated { get; }
+        // T502 — 월드(3D) 글자가 쓰는 하나: true 면 글자 크기 1 = 로컬 1 단위(uGUI 와 같은 셈) · false(3D 기본)면 ×0.1. 진짜 TMP_Text 의 공개 프로퍼티다.
+        public bool isOrthographic { get; set; }
         public void ForceMeshUpdate(bool ignoreActiveState = false, bool forceTextReparsing = false) { }
         public Vector2 GetPreferredValues() { return Vector2.zero; }
         public Vector2 GetPreferredValues(float width, float height) { return Vector2.zero; }
     }
     public class TextMeshProUGUI : TMP_Text { }
+    // T502 — 월드 공간 글자(데미지 팝 · 발밑 숫자). MeshRenderer 로 그리므로 스프라이트와 같은 정렬 층·순서를 갖는다 — 진짜 TextMeshPro 의 공개 프로퍼티 둘만 옮겼다.
+    public class TextMeshPro : TMP_Text
+    {
+        public int sortingLayerID { get; set; }
+        public int sortingOrder { get; set; }
+    }
     // 프리팹 입력칸 — UiKit.Adopt 가 이것을 떼고 uGUI InputField 로 갈아 끼운다(T96-profile 2단계)
     public class TMP_InputField : Selectable
     {

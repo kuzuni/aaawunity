@@ -45,19 +45,19 @@ namespace KkomaKnight.Tests.Play
             _app = null; yield return Frames(3);
         }
 
-        /// <summary>지금 화면에 떠 있는 팝 아이콘들(이름이 아니라 <b>조각의 그림</b>으로도 확인한다 · T136 383 과 같은 결).</summary>
-        static List<Image> PopIcons()
+        /// <summary>지금 화면에 떠 있는 팝 아이콘들(이름이 아니라 <b>조각의 그림</b>으로도 확인한다 · T136 383 과 같은 결). T502 부터 월드 SpriteRenderer 다(팝이 월드로 갔다).</summary>
+        static List<SpriteRenderer> PopIcons()
         {
-            var found = new List<Image>();
-            foreach (var img in Object.FindObjectsByType<Image>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            var found = new List<SpriteRenderer>();
+            foreach (var img in Object.FindObjectsByType<SpriteRenderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
                 if (img != null && img.name == BattleWorld.PopIconName) found.Add(img);
             return found;
         }
         /// <summary>이벤트 하나가 <b>새로</b> 만든 팝 아이콘만 집는다(전투가 제 이벤트로 띄우는 팝과 섞이지 않게).</summary>
-        static List<Image> NewSince(List<Image> before)
+        static List<SpriteRenderer> NewSince(List<SpriteRenderer> before)
         {
             var was = new HashSet<int>(); foreach (var i in before) if (i != null) was.Add(i.GetInstanceID());
-            var news = new List<Image>();
+            var news = new List<SpriteRenderer>();
             foreach (var i in PopIcons()) if (i != null && !was.Contains(i.GetInstanceID())) news.Add(i);
             return news;
         }
@@ -82,15 +82,28 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(1, made.Count, "치명타 팝 하나에 아이콘도 하나여야 한다(T152)");
             var icon = made[0];
             Assert.AreSame(crit, icon.sprite, "팝 아이콘은 스탯 «치명타 확률» 과 같은 그림(" + BattleWorld.CritIconKey + ")이다");
-            Assert.IsTrue(icon.preserveAspect, "그림이 찌그러지지 않는다");
-            var irt = icon.rectTransform;
-            Assert.AreEqual(irt.rect.width, irt.rect.height, 1f, "아이콘은 정사각(지름 하나)");
-            Assert.Less(irt.anchoredPosition.x, 0f, "아이콘은 숫자 «왼쪽» 이다(주인 «아이콘+데미지» 순서)");
+            var isc = icon.transform.localScale;
+            Assert.AreEqual(isc.x, isc.y, 1e-4f, "그림이 찌그러지지 않는다(한 배율 · 옛 preserveAspect)");
+            Assert.Less(icon.transform.localPosition.x, 0f, "아이콘은 숫자 «왼쪽» 이다(주인 «아이콘+데미지» 순서)");
+            Assert.Greater(icon.sortingOrder, BattleWorld.PopOrder, "아이콘은 글자 위에 그린다");
 
             var label = icon.transform.parent != null ? icon.transform.parent.GetComponent<TMP_Text>() : null;
             Assert.IsNotNull(label, "아이콘은 팝 글자의 자식이다(트윈 하나에 같이 따라 올라간다)");
             Assert.IsFalse(label.text.Contains("!"), "아이콘이 «치명타» 를 말하므로 숫자 뒤 «!» 는 빼야 한다 — 지금 글자: " + label.text);
             StringAssert.Contains(UiKit.Fmt(1234), label.text, "데미지 숫자는 그대로 뜬다");
+
+            // T502 — 팝은 월드 글자다(3D TMP · «Pops» 아래 · 캔버스 밖). 화면에서 보이는 높이는 종전(프레임 px 로 잰 글자 칸)과 ±10% 안이어야 한다 — 줌 없음 기준.
+            Assert.IsTrue(label is TextMeshPro, "팝 글자는 월드 TMP(TextMeshPro)다 — uGUI 가 아니다(T502)");
+            Assert.AreEqual(BattleWorld.PopsName, label.transform.parent != null ? label.transform.parent.name : "", "팝은 월드의 «Pops» 아래에 선다");
+            Assert.IsFalse(label.transform.IsChildOf(_app.UiCanvas.transform), "팝은 캔버스 밖(월드)에 있다");
+            yield return RealSeconds(0.2f);   // 커지는 트윈(0.12초)이 끝난 뒤에 잰다 — 사라지는 트윈(0.45초 뒤)보다는 앞
+            if (label != null)
+            {
+                var c = new Vector3[4]; label.rectTransform.GetWorldCorners(c);
+                float hPx = WorldCam.ToFrame(c[1]).y - WorldCam.ToFrame(c[0]).y;
+                float want = label.rectTransform.rect.height;   // 종전 프레임 px 칸 높이(크기 × 1.5)
+                Assert.AreEqual(want, hPx, want * 0.10f, "팝 글자 칸의 화면 높이(px)는 종전과 ±10% — 월드로 옮기며 크기가 달라지면 안 된다(T502 4항)");
+            }
 
             // ⓑ 보통 타격 — 아이콘이 붙지 않고 «!» 도 없다
             before = PopIcons();
