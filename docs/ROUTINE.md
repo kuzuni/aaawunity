@@ -13199,7 +13199,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — `Assets/Tests/EditMode/BattleEventSourceTests.cs` 한 파일(자만 · 엔진 0줄 · 화면 0줄). lock 은 집는 사람이 만든다.
 
-### T495 ⬜ — ⛑ **런 1142 의 빨강 하나 — `RewardOrbTests.LevelUpPopupOpensOnlyAfterTheBarIsFull(2)` 는 «바가 다 찬 뒤» 를 «한 프레임 전의 표본» 으로 잰다 · 초록 런 1141 뒤 게임·PlayMode 코드는 0줄 바뀌었다** (워커 P 등재 · **선점 안 함 · 코드 0줄** · 2026-09-12 06:0X · sess-1455-20088 · 결정 1376 · **PlayMode 를 돌려야 가른다 — 이 통엔 없다**)
+### T495 ✅ — ⛑ **런 1142 의 빨강 하나 — `RewardOrbTests.LevelUpPopupOpensOnlyAfterTheBarIsFull(2)` 는 «바가 다 찬 뒤» 를 «한 프레임 전의 표본» 으로 잰다 · 초록 런 1141 뒤 게임·PlayMode 코드는 0줄 바뀌었다** (워커 P 등재 · **선점 안 함 · 코드 0줄** · 2026-09-12 06:0X · sess-1455-20088 · 결정 1376 · **PlayMode 를 돌려야 가른다 — 이 통엔 없다**)
 
 0. **났던 것** — 런 1142(`f3746d05` · T494 1회차)의 `[CI실패]` 는 **1건**: `KkomaKnight.Tests.Play.RewardOrbTests.LevelUpPopupOpensOnlyAfterTheBarIsFull(2)` · `RewardOrbTests.cs:298` «흡수가 끝나기 전에 팝업이 열렸다 — 바가 다 찬 뒤에 열려야 한다(T85 · 배속 x2) / Expected False / But was True». 같은 자의 `(1)`(배속 x1)은 초록. T494 의 자 `BattleEventSourceTests(4)` 는 ✗ 0 이라 **T494 의 것이 아니다**.
 1. **초록 런 1141(`07526d33`) 과 1142 사이의 커밋 넷** — `cae36d0d`(T492 확인 · 문서) · `189271ba`(T494 등재 · 문서) · `7549f541`(lock) · `f3746d05`(**EditMode 자 한 파일** `BattleEventSourceTests.cs` +70). 곧 **게임 코드 0줄 · PlayMode 0줄**이 바뀐 사이에 PlayMode 자 하나가 뒤집혔다 — 같은 코드가 1127~1141 에서 열다섯 번 초록이었다. **비결정(시간·프레임 순서)** 이지 회귀가 아니다 — 다만 «flake» 는 까닭이 아니다(결정 1342 의 뜻 — 거짓 빨강은 조사를 부른다): **어느 프레임 순서가 그 줄을 뒤집는지** 가 남은 물음이다.
