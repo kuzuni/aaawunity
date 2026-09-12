@@ -24,13 +24,20 @@
   python3 tools/check_stale_asserts.py                 # 작업 트리(아직 커밋 안 한 것)
   python3 tools/check_stale_asserts.py HEAD~1          # 마지막 커밋이 무엇을 남겼나
   python3 tools/check_stale_asserts.py --strict        # 하나라도 있으면 1 로 끝난다(기본은 찍기만 하고 0)
-  python3 tools/check_stale_asserts.py --self-test     # 이 자가 고장 났는지 (갈래 일곱 · T507)
+  python3 tools/check_stale_asserts.py --self-test     # 이 자가 고장 났는지 (갈래 열하나 · T507)
 
 ⛑ **T507 — «못 봤다» 는 «깨끗하다» 와 딴 줄이다.** 전에는 오타 난 sha(`deadbeef~1..deadbeef`)에도
 `✓ … 바뀐 것이 없다` · rc=0 으로 답했다 — **정직한 «깨끗하다» 와 한 글자도 다르지 않았다.**
 그런데 이 자를 sha 로 돌리는 사람은 위 §1 규약대로 **거의 다 빨강을 쫓는 중**이고 sha 는 손으로 옮겨 적는다.
 지금은 git 의 `returncode`·`stderr` 를 같이 보고 «그 범위를 **못 읽었다** … 이 답은 «깨끗하다» 가 아니라 «모른다» 다»
 로 **딴 줄**을 찍는다(판정 rc 는 안 바꿨다 — 알리는 자다 · 결정 493 · T482 가 `ci_test_failures` 에서 놓은 꼴 그대로).
+
+⛑ **T507 2회차 — 같은 병이 «옆문» 에 하나 더 있었다**(워커 J 가 1회차 뒤에 짚었다 · 결정 1406 ①).
+1회차는 **`git diff` 쪽만** 갈랐다. `hits()` 가 부르는 **`git grep` 은 찾을 경로가 없어도 rc 1 · stdout 빈손 · stderr 도 빈손**이라
+(실측) «안 걸렸다» 와 한 글자도 다르지 않았고, **1회차가 보탠 «훑은 수» 가 그 절반짜리 0 을 더 믿음직해 보이게** 만들었다 —
+그 수는 **diff 쪽**을 증명하지 grep 쪽을 증명하지 않는다. 그래서 **증인이 둘**이다:
+  · diff 쪽 = «문자열 N · 이름 N · 수 N 를 훑어»
+  · grep 쪽 = «**자 파일 M개**에서 찾았다» (`searched_count`) — `M == 0` 이면 «**찾을 자리를 못 봤다**» 로 딴 줄
 
 기본이 «찍기만» 인 까닭 — 같은 글자가 우연히 겹치는 일(흔한 낱말·0.5f 같은 수)이 있어서
 사람이 한 번 보고 넘길 자리가 섞인다. **찾아 주는 것이 일의 9할**이고, 판정은 워커가 한다.
@@ -157,6 +164,28 @@ def hits(needle, literal, at=None):
     return [l for l in r.stdout.split("\n") if l.strip()][:MAX_HITS_TEXT + 1]
 
 
+def searched_count(at=None):
+    """`SEARCH`(자 폴더 + 봇 각본) 아래 파일이 그 트리에 **몇 개 있나** — 0 이면 이 자는 «찾은» 것이 아니다.
+
+    ⛑ **T507 2회차 — 같은 병이 «옆문» 에 그대로 있었다**(워커 J 가 1회차 뒤에 짚었다 · 결정 1406 ①).
+    1회차는 `git diff` 가 죽은 것을 «깨끗하다» 와 갈랐다. 그런데 **`git grep` 쪽은 그대로였다**:
+    `git grep` 은 **찾을 경로가 없으면 rc 1 · stdout 빈손 · stderr 도 빈손**으로 돌아오고(실측),
+    그 빈손은 «안 걸렸다» 와 **한 글자도 다르지 않다**. 자 폴더가 없는 트리에서 실제로
+    `✓ … 가리키는 자리 0 … (문자열 1 · 이름 0 · 수 0 를 훑었다)` · rc 0 이 나왔다.
+    <br>⚠ **그리고 1회차가 보탠 «훑은 수» 가 그 답을 더 믿음직해 보이게 만들었다** —
+    그 수는 **diff 쪽**을 증명하지 **grep 쪽**을 증명하지 않는다. 그래서 이 수를 같이 찍는다:
+    «문자열 N · 이름 N · 수 N 를 훑어 **자 파일 M개**에서 찾았다». `M == 0` 이면 딴 줄로 «못 쟀다» 다.
+    """
+    if at:
+        cmd = ["git", "ls-tree", "-r", "--name-only", at, "--"] + list(SEARCH)
+    else:
+        cmd = ["git", "ls-files", "--"] + list(SEARCH)
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode != 0:
+        return -1                                  # 못 셌다 — 아래에서 «못 쟀다» 로 나간다
+    return len([l for l in r.stdout.split("\n") if l.strip()])
+
+
 def grep_tree(rev):
     """어느 트리에서 테스트를 찾을 것인가 — 「A..B」 면 B, 「HEAD~1」 처럼 한쪽만 주면 작업 트리(None)."""
     if rev and ".." in rev:
@@ -182,6 +211,18 @@ def main(argv):
         print("✓ check_stale_asserts: %s 에 바뀐 것이 없다" % SRC)
         return 0
     strs, nums, names = tokens(removed_lines(d), added_text(d))
+    # ⛑ T507 2회차 — **찾을 자리가 있었나**(위 `searched_count` 의 까닭 · 워커 J 의 보탬 ①).
+    #   이 물음은 위 «지운 값이 있었나»(diff 쪽)와 **딴 물음**이다. 둘 중 하나만 답해 놓고
+    #   «자리 0» 이라 말하면, 그 «0» 은 절반만 증명된 0 이다.
+    seen = searched_count(at)
+    if seen <= 0:
+        where = " · ".join(SEARCH)
+        print("⚠ check_stale_asserts: **찾을 자리를 못 봤다** — `%s` 아래 파일이 %s. "
+              "그래서 이 답은 «안 걸렸다» 가 **아니라** «모른다» 다(`git grep` 은 경로가 없어도 rc 1 · 빈손으로 돌아온다)."
+              % (where, "0개다" if seen == 0 else "몇 개인지 못 셌다"))
+        print("   지운 값은 뽑았다(문자열 %d · 이름 %d · 수 %d) — **그 수는 diff 쪽만 증명한다.** "
+              "과거 트리를 볼 때(`A..B`)는 그 트리에 자 폴더가 있는지부터 보라." % (len(strs), len(names), len(nums)))
+        return 0                                  # 판정은 안 바꾼다(알리는 자 · 결정 493)
 
     found = []
     for group, kind, label in ((strs, "str", "문자열"), (names, "name", "이름"), (nums, "num", "수")):
@@ -192,8 +233,10 @@ def main(argv):
                 found.append((label, v, h))
 
     if not found:
+        # ⛑ T507 2회차 — «자 파일 M개» 를 같이 찍는다. 그것이 **grep 쪽** 증인이다(위 주석).
         print("✓ check_stale_asserts: 지운 값·이름을 아직 가리키는 자리 0 (자 + 봇 각본) "
-              "(문자열 %d · 이름 %d · 수 %d 를 훑었다)" % (len(strs), len(names), len(nums)))
+              "(문자열 %d · 이름 %d · 수 %d 를 훑어 자 파일 %d개에서 찾았다)"
+              % (len(strs), len(names), len(nums), seen))
         return 0
 
     print("⚠ 이 diff 가 지운 값·이름을 «아직» 가리키는 테스트 자리 %d 건 — 옛 전제를 든 단언인지 하나씩 본다"
@@ -346,10 +389,13 @@ def self_test():
         git(d, "add", "-A")
         git(d, "commit", "-qm", "drop lonely")
         out, rc = run(d, "HEAD~1..HEAD")
-        ok &= check("ⓗ «0건» 이 «훑은 수» 를 같이 말한다(공허 방지)",
+        ok &= check("ⓗ «0건» 이 증인 **둘**을 같이 말한다(공허 방지)",
                     **{"0건으로 말한다": "자리 0" in out,
-                       "훑은 수를 같이 찍는다": "훑었다" in out,
-                       "그 수가 0 이 아니다(= 뽑기는 했다)": "문자열 0 · 이름 0 · 수 0" not in out})
+                       "diff 쪽 증인 — 뽑은 수를 찍는다": "를 훑어" in out,
+                       "그 수가 0 이 아니다(= 뽑기는 했다)": "문자열 0 · 이름 0 · 수 0" not in out,
+                       # ⛑ T507 2회차(워커 J ①) — 위 수는 **diff 쪽만** 증명한다. grep 쪽 증인이 따로 있어야 한다.
+                       "grep 쪽 증인 — 찾은 자 파일 수를 찍는다": "자 파일" in out and "개에서 찾았다" in out,
+                       "그 파일 수가 0 이 아니다": "자 파일 0개" not in out})
 
         # ⓘ ⛑ **한계를 못 박는다** — 워커 J 의 ②(«이 자만의 조심 · 오탐이 나는 꼴을 그대로 적어 둔다»).
         #   이 자는 «우연히 같은 글자» 에 잦게 걸린다(문서가 적은 `62bdebb0` 표본이 1적중 1소음이다).
@@ -373,6 +419,54 @@ def self_test():
                            "7654f" not in out,
                        "한 자리에만 걸리면 찍는다(우연이어도)": "8765f" in out,
                        "«판정하지 않는다» 를 말한다": "판정하지 않는다" in out})
+
+    # ⓙ ⛑ **옆문** — `git grep` 은 **찾을 경로가 없어도 rc 1 · stdout 빈손 · stderr 도 빈손**이다(실측).
+    #    그러니 «자 폴더가 통째로 없는 트리» 를 봐도 «안 걸렸다» 와 한 글자도 안 달랐다.
+    #    1회차가 `git diff` 쪽만 갈라 놓고 «고쳤다» 고 적었는데, 워커 J 가 그 회차 뒤에 이 옆문을 짚었다(결정 1406 ①).
+    #    ⚠ 더 나쁜 것은 1회차가 보탠 «훑은 수» 가 그 절반짜리 0을 **더 믿음직해 보이게** 만든 것이다.
+    with tempfile.TemporaryDirectory() as d2:
+        os.makedirs(os.path.join(d2, "Assets", "Scripts", "Game"))
+        s2 = os.path.join(d2, "Assets", "Scripts", "Game", "Foo.cs")
+        open(s2, "w", encoding="utf-8").write('class Foo { const string N = "VvwxyzPanel"; }\n')
+        git(d2, "init", "-q", "-b", "main")
+        git(d2, "add", "-A")
+        git(d2, "commit", "-qm", "a")
+        open(s2, "w", encoding="utf-8").write('class Foo { }\n')
+        git(d2, "add", "-A")
+        git(d2, "commit", "-qm", "b")               # 자 폴더가 **한 번도 없던** 트리다
+        out, rc = run(d2, "HEAD~1..HEAD")
+        ok &= check("ⓙ 찾을 자리가 없으면 «모른다»(옆문 · git grep 은 빈손으로 돌아온다)",
+                    **{"«찾을 자리를 못 봤다» 로 말한다": "찾을 자리를 못 봤다" in out,
+                       "«모른다» 라고 못 박는다": "«모른다»" in out,
+                       "«자리 0» 으로는 안 나간다(이 회차의 고침 그 자체)": "자리 0" not in out,
+                       "diff 쪽은 봤다고 구별해 말한다": "diff 쪽만 증명한다" in out,
+                       "판정 rc 는 안 바뀐다": rc == 0})
+
+    # ⓚ ⛑ **이 자가 원리적으로 못 보는 것을 갈래로 굳힌다**(워커 J ② · 결정 1406 ②).
+    #    머리글이 제 점수를 «1적중 · 1소음 · 3놓침» 으로 적어 뒀는데 ⓘ 가 굳힌 것은 «1소음» 뿐이었다.
+    #    «3놓침» — **이름도 값도 그대로인데 «뜻» 만 바뀐** 자리(열 그라데이션·머리 배지·줄 번호) — 은 아직 **글**이라,
+    #    자가 바뀌면 조용히 거짓이 된다. 그래서 «리터럴은 그대로 두고 뜻만 바꾼 diff → 0건» 을 박아 둔다.
+    #    ⚑ 이 갈래는 **«이 자의 0건은 «옛 단언 없음» 이 아니다» 를 자와 함께 살게 한다** —
+    #      누가 «이 자가 뜻 바뀜도 잡는다» 고 믿고 기대면, 그 믿음이 틀렸다는 것이 여기 적혀 있다.
+    with tempfile.TemporaryDirectory() as d3:
+        os.makedirs(os.path.join(d3, "Assets", "Scripts", "Game"))
+        os.makedirs(os.path.join(d3, "Assets", "Tests", "PlayMode"))
+        s3 = os.path.join(d3, "Assets", "Scripts", "Game", "Foo.cs")
+        open(os.path.join(d3, "Assets", "Tests", "PlayMode", "MeaningTests.cs"), "w", encoding="utf-8").write(
+            'class MeaningTests { void A() { Assert(Rows(), 3); } }\n')
+        open(s3, "w", encoding="utf-8").write('class Foo { int Rows() { return 3; } }   // 줄 수\n')
+        git(d3, "init", "-q", "-b", "main")
+        git(d3, "add", "-A")
+        git(d3, "commit", "-qm", "a")
+        # 값도 이름도 그대로 두고 **뜻만** 바꾼다 — 3 이 «줄 수» 에서 «칸 수» 가 됐다
+        open(s3, "w", encoding="utf-8").write('class Foo { int Rows() { return 3; } }   // 이제는 칸 수다\n')
+        git(d3, "add", "-A")
+        git(d3, "commit", "-qm", "meaning only")
+        out, rc = run(d3, "HEAD~1..HEAD")
+        ok &= check("ⓚ 뜻만 바뀐 자리는 **원리적으로 못 본다**(머리글의 «3놓침» 을 굳힌다)",
+                    **{"0건으로 나간다": "자리 0" in out or "바뀐 것이 없다" in out,
+                       "«모른다» 로 새지 않는다(찾을 자리는 있었다)": "찾을 자리를 못 봤다" not in out,
+                       "판정 rc 는 0": rc == 0})
 
     os.chdir(here)
     dead = [l for l, b in branch if b]
