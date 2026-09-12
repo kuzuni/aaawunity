@@ -8,6 +8,80 @@ namespace KkomaKnight.Game
     {
         public const int SortingOrder = 400;   // 캐릭터(≤ 300) 위
 
+        // ───────────────────────── T504 알갱이 힛 버스트 ─────────────────────────
+        /// <summary>
+        /// T504(주인 2026-09-12 «힛 이펙트가 너무 반짝임 · 너무 글로우임») — 피격 이펙트를 CFXR «Hit A (Red)»/«Impact Glowing HDR» 에서 <b>코드로 세운 알갱이 파티클</b>로 바꾼다.
+        /// 반짝임의 정체는 그 프리팹의 재질(«… add.mat» = 가산 블렌드 · 밝은 맵 위에서 흰빛으로 뜬다)과 «Point Light» 였다.
+        /// 여기 알갱이는 <b>알파 블렌드</b>(`Sprites/Default`) + 라이트 0 — 색이 그 색대로 보이고 겹쳐도 하얘지지 않는다.
+        /// 모양은 T340 의 UI 알갱이(<see cref="UiParticles"/>)와 같은 결(원 안 어디서나 · 튀어나가 잦아들며 · 알파·크기가 준다) · 중력만 조금 준다(«튄다» 느낌).
+        /// </summary>
+        public const string HitBurstName = "HitBurst";
+        /// <summary>적 피격 알갱이 색(붉은 기 — 종전 «Hit A (Red)» 의 자리).</summary>
+        public static readonly Color HitGrain = new Color(1f, 0.42f, 0.32f);
+        static Material _grainMat; static Texture2D _grainTex;
+        /// <summary>알갱이 재질 — 알파 블렌드 스프라이트 기본 셰이더에 둥근 알갱이 텍스처. 한 번 만들어 같이 쓴다.</summary>
+        public static Material GrainMaterial()
+        {
+            if (_grainMat != null) return _grainMat;
+            var sh = Shader.Find("Sprites/Default");
+            _grainMat = new Material(sh) { name = "HitGrain", mainTexture = GrainTexture() };
+            return _grainMat;
+        }
+        static Texture2D GrainTexture()
+        {
+            if (_grainTex != null) return _grainTex;
+            const int N = 16; float c = (N - 1) * 0.5f;
+            var t = new Texture2D(N, N, TextureFormat.RGBA32, false) { name = "HitGrainTex", filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+            var px = new Color[N * N];
+            for (int y = 0; y < N; y++) for (int x = 0; x < N; x++)
+            {
+                float d = Mathf.Sqrt((x - c) * (x - c) + (y - c) * (y - c));
+                // 가장자리 한 픽셀만 부드럽게 — «빛 번짐» 이 아니라 «알갱이» 로 보이게 테두리를 세운다
+                float a = Mathf.Clamp01(7.0f - d);
+                px[y * N + x] = new Color(1f, 1f, 1f, a);
+            }
+            t.SetPixels(px); t.Apply(false, true); _grainTex = t;
+            return t;
+        }
+        /// <summary>
+        /// 알갱이 힛 버스트 — <paramref name="pos"/>(월드)에서 <paramref name="count"/> 알갱이가 사방으로 튀고 0.35초 안에 잦아든다.
+        /// <paramref name="scale"/> 은 크기·속도 배율(치명타 1.4 · 일반 1 · 플레이어 피격 0.8). 다 끝나면 스스로 사라진다.
+        /// </summary>
+        public static GameObject HitBurst(Vector3 pos, Color tint, float scale = 1f, int count = 10, Transform parent = null)
+        {
+            var go = new GameObject(HitBurstName);
+            if (parent != null) go.transform.SetParent(parent, false);
+            go.transform.position = pos;
+            var ps = go.AddComponent<ParticleSystem>();
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);   // T348 — 값을 주기 «전에» 세운다(Assert 회피)
+            var psr = go.GetComponent<ParticleSystemRenderer>();
+            psr.material = GrainMaterial(); psr.sortingOrder = SortingOrder; psr.renderMode = ParticleSystemRenderMode.Billboard;
+            var main = ps.main;
+            main.duration = 0.35f; main.loop = false; main.playOnAwake = false;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.2f, 0.35f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(1.6f * scale, 3.4f * scale);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.07f * scale, 0.13f * scale);
+            main.startColor = tint;
+            main.gravityModifier = 1.2f;
+            main.maxParticles = Mathf.Max(count, 8);
+            var em = ps.emission; em.enabled = true; em.rateOverTime = 0f;
+            em.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)count) });
+            var shp = ps.shape; shp.enabled = true; shp.shapeType = ParticleSystemShapeType.Circle;
+            shp.radius = 0.06f * scale; shp.radiusThickness = 1f; shp.arc = 360f; shp.arcMode = ParticleSystemShapeMultiModeValue.Random;
+            var lim = ps.limitVelocityOverLifetime; lim.enabled = true; lim.dampen = 0.25f;
+            var col = ps.colorOverLifetime; col.enabled = true;
+            var grad = new Gradient();
+            grad.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                         new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 0.55f), new GradientAlphaKey(0f, 1f) });
+            col.color = new ParticleSystem.MinMaxGradient(grad);
+            var sz = ps.sizeOverLifetime; sz.enabled = true;
+            sz.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 1f, 1f, 0.2f));
+            ps.Play(true);
+            Object.Destroy(go, 0.8f);
+            return go;
+        }
+
         public static GameObject Spawn(string key, Vector3 pos, float scale = 1f, float life = 2.5f, Transform parent = null, bool loop = false)
         {
             var prefab = App.I != null && App.I.Assets != null ? App.I.Assets.Prefab(key) : null;

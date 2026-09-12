@@ -1156,7 +1156,8 @@ namespace KkomaKnight.Game
                     var p = EnemyPos(ev.Enemy);
                     // T152 — 치명타는 숫자 뒤 «!» 대신 왼쪽에 치명타 아이콘(주인 «치명타 아이콘+데미지») · 색·크기는 종전 그대로
                     Pop(UiKit.Fmt(ev.Value), p + Vector3.up * 0.5f, ev.Crit ? Palette.PopCrit : Palette.White, ev.Crit ? 50 : 38, SrcIcon(ev.Src) ?? (ev.Crit ? CritIconKey : null));   // T458 2항 — 출처가 있으면 그 그림이 이긴다(치명타는 색·크기로도 말한다)
-                    Fx.Spawn(ev.Crit ? "fx.crit" : "fx.hit", p, ev.Crit ? 0.25f : 0.6f, 1.2f);
+                    // T504(주인 2026-09-12 «힛 이펙트가 너무 반짝임 · 너무 글로우임») — CFXR 가산 프리팹(fx.hit/fx.crit) 대신 알파 블렌드 알갱이 버스트 · 치명타는 더 많이·크게·치명타 색
+                    Fx.HitBurst(p, ev.Crit ? Palette.PopCrit : Fx.HitGrain, ev.Crit ? 1.4f : 1f, ev.Crit ? 16 : 10);
                     Audio.Sfx(ev.Crit ? "snd.crit" : "snd.hit", ev.Crit ? 1f : 0.8f);
                     if (ev.Enemy != null && _enemies.TryGetValue(ev.Enemy, out var v)) { v.Rig.Flash(flash, CharacterRig.HitFlashSeconds); v.Rig.transform.DOKill(true); v.Rig.transform.DOPunchPosition(new Vector3(0.06f, 0, 0), 0.15f, 1, 0).SetLink(v.Rig.gameObject); }   // SetLink(T56) — 사망 연출 뒤 Remove 로 파괴돼도 경고 0
                     break;
@@ -1167,7 +1168,7 @@ namespace KkomaKnight.Game
                 {
                     if (ev.Value > 0.5) Pop("-" + UiKit.Fmt(ev.Value), PlayerPos(1.1f) + new Vector3((float)D.Ui.PopShieldDx / WorldCam.PPU, 0.15f, 0), Palette.Hex(D.Ui.PopShield), 34);
                     if (ev.Value2 > 0.5) Pop("-" + UiKit.Fmt(ev.Value2), PlayerPos(1.0f), Palette.Hex(D.Ui.PopHp), 40);
-                    Fx.Spawn("fx.hit", PlayerPos(0.45f), 0.5f, 1f);
+                    Fx.HitBurst(PlayerPos(0.45f), Fx.HitGrain, 0.8f, 8);   // T504
                     _player.Flash(flash, CharacterRig.HitFlashSeconds);
                     Audio.Sfx("snd.hurt", 0.8f);
                     break;
