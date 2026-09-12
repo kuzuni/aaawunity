@@ -33,6 +33,12 @@ T503 — 명부가 «**무엇을 안 쟀나**» 까지 답한다. `Assert.Ignore
 «건너뛴 것이 없다» 와 «**세는 눈이 안 먹는다**» 를 못 가른다(1회차가 그 꼴이었고 실물 런 1156 에서 드러났다 · 검수 Q).
 **줄**은 그래도 아낀다 — 이름·까닭 상세는 0건이면 한 줄도 안 찍는다. 갈래 **ⓘ** 가 그 둘을 같이 지킨다.
 
+⚑ **둘째 증인** — 위 셈은 `result=` 가 «Skipped»·«Inconclusive» 라는 **낱말을 내가 맞게 안다** 는 데 기댄다.
+유니티가 다른 낱말로 적으면 내 셈은 **영원히 0** 이고 그 «0» 은 **거짓인데 초록**이다. 그래서 NUnit 이 스스로 적은
+`<test-run skipped= inconclusive= >` 와 맞대고, **어긋나거나 그 특성이 아예 없으면** 한 줄 찍는다
+(맞으면 조용하다 ⇒ **조용함은 «증인이 있고 맞았다» 하나만 뜻한다**). 이것이 «건너뜀 0» 이 못 답하는 물음
+— «내가 낱말을 아는가» — 을 **M=0 인 런에서도** 답한다. 갈래 **ⓗ**(맞장구) · **ⓙ**(어긋남) · **ⓚ**(증인 없음).
+
 ⚑ 워커가 읽는 법 — **꼬리 50줄**을 당겨 이 «요약» 줄부터 본다. 목록 본문까지 보려면 `뒤처리 + 1 + 3N` 넘게 넓힌다.
    («30줄» 이면 모자란다 — 뒤처리 줄 수가 런마다 다르다: 캐시 적중 21줄(#512) · **캐시 저장 31줄**(#521).)
 
@@ -154,6 +160,20 @@ def roster(path):
             continue
         counts, fails, total, bad = {}, {}, 0, 0
         skips, skipped = {}, []                    # T503 — 뭉치별 건너뜀 수 · (풀네임, 까닭) 목록
+        # T503 2회차 — **NUnit 이 스스로 적은 수**를 둘째 증인으로 둔다.
+        #   ⚑ 왜 필요한가: 아래 셈은 `result="Skipped"`·`"Inconclusive"` 라는 **낱말을 내가 맞게 안다** 는 데 기댄다.
+        #      유니티가 다른 낱말로 적으면 내 셈은 **영원히 0** 이고, 그 «0» 은 거짓인데 아무도 못 본다 —
+        #      «건너뜀 0» 을 늘 찍기로 한 것(검수 Q)은 «자가 돌았다» 까지만 증명하고 **«낱말을 맞게 안다» 는 증명 못 한다**.
+        #      NUnit 은 `<test-run skipped= inconclusive= >` 에 자기 셈을 적는다 — 그것과 내 셈이 어긋나면
+        #      **M=0 인 런에서도** 그 자리에서 드러난다(M≥1 인 런을 기다릴 필요가 없다).
+        root = tree.getroot()
+
+        def _n(attr):
+            try:
+                return int(root.get(attr) or 0)
+            except ValueError:
+                return 0
+        declared = None if root.get("skipped") is None else _n("skipped") + _n("inconclusive")
         for tc in tree.iter("test-case"):
             fx = _fixture_of(tc)
             counts[fx] = counts.get(fx, 0) + 1
@@ -171,7 +191,7 @@ def roster(path):
         names = {fx: (s if len(v) == 1 else fx) for s, v in short.items() for fx in v}
         rows = sorted(((names[fx], counts[fx], fails.get(fx, 0)) for fx in counts), key=lambda r: r[0])
         skip_rows = sorted(((names[fx], n) for fx, n in skips.items()), key=lambda r: r[0])
-        out.append((os.path.basename(f), rows, total, bad, skip_rows, skipped))
+        out.append((os.path.basename(f), rows, total, bad, skip_rows, skipped, declared))
     return out
 
 
@@ -205,6 +225,29 @@ def _report_skips(skip_rows, skipped, echo):
     return len(skipped)
 
 
+def _report_witness(fname, mine, declared, echo):
+    """**NUnit 자신이 적은 건너뜀 수 ↔ 내 셈** — 맞으면 한 줄도 안 찍고, 어긋나거나 **증인이 없으면** 한 줄 찍는다(T503 2회차).
+
+    ⚑ 이 자가 답하는 물음은 위의 «건너뜀 N» 이 못 답하는 그것이다 — **«내가 유니티의 낱말을 맞게 아는가».**
+       내 셈은 `result="Skipped"`·`"Inconclusive"` 를 찾는데, 유니티가 다른 낱말로 적으면 내 셈은 영원히 0 이고
+       그 «0» 은 **거짓인데 초록**이다. NUnit 은 `<test-run skipped= inconclusive= >` 에 자기 셈을 적으므로
+       그 둘을 맞대면 **M=0 인 런에서도** 그 거짓이 드러난다 — M≥1 인 런을 기다릴 필요가 없다.
+    ⚑ **증인이 없는 것도 찍는다**(`skipped` 특성이 아예 없을 때). 안 찍으면 «증인이 맞장구쳤다» 와
+       «증인이 없다» 가 또 같은 꼴이 된다 — 이 절이 두 번 밟은 바로 그 함정이다.
+       맞장구친 경우에만 조용하므로, **조용함은 «증인이 있고 맞았다» 하나만 뜻한다.**
+    """
+    if declared is None:
+        echo(f"{ROSTER_TAG} ⚠ {fname} — NUnit 이 `<test-run skipped=…>` 를 안 적었다: "
+             f"내 셈 «건너뜀 {mine}» 을 **맞대 볼 증인이 없다**(셈이 틀려도 안 드러난다).")
+        return False
+    if declared != mine:
+        echo(f"{ROSTER_TAG} ⚠⚠ {fname} — **셈이 어긋난다**: NUnit 은 건너뜀 **{declared}건** 이라 적었는데 "
+             f"내 셈은 **{mine}건** 이다. 곧 이 자가 **유니티의 낱말을 모른다**"
+             f"(`result=` 가 «Skipped»·«Inconclusive» 가 아닌 꼴) — «건너뜀 {mine}» 을 믿지 말고 NUnit 의 수를 믿어라.")
+        return False
+    return True
+
+
 def report_roster(path, echo=print):
     """«무엇이 돌았나» 를 `이름(건수)` 로 촘촘히 찍는다 — 실패한 뭉치는 `이름(건수✗실패수)`.
 
@@ -212,7 +255,7 @@ def report_roster(path, echo=print):
        한다는 계약(결정 678)이 있고, 이 명부를 뒤에 붙이면 그 계약이 깨진다.
     """
     made = 0
-    for fname, rows, total, bad, skip_rows, skipped in roster(path):
+    for fname, rows, total, bad, skip_rows, skipped, declared in roster(path):
         # T503 — 건너뜀 수는 **0이어도 늘 찍는다**. 꼴은 옆의 «실패» 와 한 글자도 다르지 않게 맞춘다.
         #   ⛑ 1회차는 이 자리를 «0이면 한 글자도 안 늘린다» 로 했다(꼬리를 아낀다 · 결정 667). **틀렸다**
         #      — 검수 Q 가 그 회차에 그대로 짚었다: 0에 아무것도 안 찍으면 이 꼬리는 T503 이전과 **바이트까지 같아서**
@@ -237,6 +280,7 @@ def report_roster(path, echo=print):
         if line:
             echo(f"{ROSTER_TAG}  {line}")
         _report_skips(skip_rows, skipped, echo)
+        _report_witness(fname, len(skipped), declared, echo)
         made += 1
     if not made:
         echo(f"{ROSTER_TAG} 결과 XML 이 없어 명부를 못 만든다 — 아래 «[CI실패] 요약» 줄을 보라.")
@@ -385,7 +429,7 @@ def self_test():
     #      그 둘이 갈라지지 않던 것이 이 절이 고치는 병이다.
     with tempfile.TemporaryDirectory() as d:
         with open(os.path.join(d, "playmode-results.xml"), "w", encoding="utf-8") as f:
-            f.write('<test-run>'
+            f.write('<test-run total="3" passed="1" failed="0" inconclusive="1" skipped="1">'
                     '<test-case classname="K.Play.ArenaResultTests" fullname="K.Play.ArenaResultTests.A" result="Passed" />'
                     '<test-case classname="K.Play.ArenaResultTests" fullname="K.Play.ArenaResultTests.B" '
                     'result="Skipped" label="Ignored"><reason><message>무대가 마침 사막이라 둘을 못 가른다</message></reason></test-case>'
@@ -403,14 +447,20 @@ def self_test():
         ok &= "1대1 노드가 안 섰다" in joined
         ok &= "ArenaResultTests.B" in joined                # 어느 케이스인지 이름으로 안다
         ok &= lines[-1].startswith(f"{TAG} 요약 0건")        # 결정 678 계약 — 건너뜀을 찍어도 마지막 줄은 그대로
-        print("ⓗ 건너뜀(T503) —", "OK" if "건너뜀 2건" in joined and n == 0 else "실패")
+        # ⚑ **증인이 맞장구쳐 조용한가** — 이 XML 은 NUnit 이 `skipped=1 inconclusive=1`(합 2) 이라 적었고 내 셈도 2 다.
+        #   이 두 줄이 없으면 증인의 셈에서 `inconclusive` 를 빼도 열두 갈래가 전부 통과한다(T249 로 실제로 확인했다) —
+        #   그러면 Inconclusive 가 있는 런마다 «셈이 어긋난다» 를 **거짓으로** 외치고 아무 자도 안 문다.
+        ok &= "셈이 어긋난다" not in joined
+        ok &= "맞대 볼 증인이 없다" not in joined
+        print("ⓗ 건너뜀(T503) · 증인 맞장구 —",
+              "OK" if "건너뜀 2건" in joined and n == 0 and "어긋난다" not in joined else "실패")
     # ⓘ T503 짝 — **0건에도 «건너뜀 0» 은 찍힌다**(안 찍으면 «0» 과 «눈이 안 먹는다» 가 같은 꼴이 된다 · 검수 Q).
     #    ⚑ 1회차의 이 갈래는 거꾸로였다(«건너뜀» 이 한 자도 없어야 통과). 그 갈래가 통과하는 동안
     #      실물 런 1156 의 꼬리는 T503 이전과 바이트까지 같았고, 아무도 그것을 «고쳐졌다» 와 못 갈랐다.
     #      지금 이 갈래가 묻는 것은 **두 가지**다: ⓐ 0이 보이는가 · ⓑ 그러면서 상세는 조용한가(줄은 여전히 아낀다).
     with tempfile.TemporaryDirectory() as d:
         with open(os.path.join(d, "playmode-results.xml"), "w", encoding="utf-8") as f:
-            f.write('<test-run>'
+            f.write('<test-run total="2" passed="1" failed="1" inconclusive="0" skipped="0">'
                     '<test-case classname="K.Play.A" fullname="K.Play.A.x" result="Passed" />'
                     '<test-case classname="K.Play.A" fullname="K.Play.A.y" result="Failed">'
                     '<failure><message>boom</message></failure></test-case>'
@@ -424,6 +474,33 @@ def self_test():
         ok &= len(lines) == 2                                   # 머리글 + 이름 줄 하나 — 줄은 안 늘었다
         print("ⓘ 건너뜀 0 도 보인다 · 상세는 조용 —",
               "OK" if "건너뜀 0 ·" in joined and "돌았지만" not in joined else "실패")
+    # ⓙ T503 2회차 — **둘째 증인**: NUnit 이 적은 수와 내 셈이 어긋나면 그 자리에서 운다.
+    #    ⚑ 이 갈래가 재는 것은 «내가 유니티의 낱말을 맞게 아는가» 다. 아래 XML 은 NUnit 이 «건너뜀 2» 라 적었는데
+    #      케이스의 `result` 는 내가 모르는 낱말(«Ignored»)이다 — 내 셈은 0 이 된다.
+    #      이 갈래가 없으면 그런 런에서 «건너뜀 0» 이 **거짓인데 초록**으로 지나간다(M≥1 런을 기다려야만 알게 된다).
+    with tempfile.TemporaryDirectory() as d:
+        with open(os.path.join(d, "playmode-results.xml"), "w", encoding="utf-8") as f:
+            f.write('<test-run total="2" passed="0" failed="0" inconclusive="0" skipped="2">'
+                    '<test-case classname="K.Play.A" fullname="K.Play.A.x" result="Ignored" />'
+                    '<test-case classname="K.Play.A" fullname="K.Play.A.y" result="Ignored" />'
+                    '</test-run>')
+        lines = []
+        report_roster(d, lines.append)
+        joined = "\n".join(lines)
+        ok &= "셈이 어긋난다" in joined
+        ok &= "NUnit 은 건너뜀 **2건**" in joined and "내 셈은 **0건**" in joined
+        ok &= "유니티의 낱말을 모른다" in joined            # 무엇을 고쳐야 하는지까지 말한다
+        print("ⓙ 둘째 증인 · 셈 어긋남 —", "OK" if "셈이 어긋난다" in joined else "실패")
+    # ⓚ T503 2회차 짝 — **증인이 아예 없을 때도 찍는다.** 안 찍으면 «맞장구쳤다» 와 «증인이 없다» 가 또 같은 꼴이 되고,
+    #    그것이 이 절이 두 번 밟은 함정이다(1회차의 «0이면 침묵» · 그리고 그 고침이 답 못 하던 «낱말을 아는가»).
+    with tempfile.TemporaryDirectory() as d:
+        with open(os.path.join(d, "playmode-results.xml"), "w", encoding="utf-8") as f:
+            f.write('<test-run><test-case classname="K.Play.A" fullname="K.Play.A.x" result="Passed" /></test-run>')
+        lines = []
+        report_roster(d, lines.append)
+        joined = "\n".join(lines)
+        ok &= "맞대 볼 증인이 없다" in joined
+        print("ⓚ 둘째 증인 · 증인 없음 —", "OK" if "맞대 볼 증인이 없다" in joined else "실패")
     print("✓ ci_test_failures 자기 검사 통과" if ok else "✗ 자기 검사 실패")
     return 0 if ok else 1
 
