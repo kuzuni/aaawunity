@@ -62,6 +62,10 @@ namespace KkomaKnight.Tests.Play
 
             int frame = 0, killFrame = -1, pendingFrame = -1; double tKill = -1, tPending = -1;
             bool queuedSeen = false, opened = false;
+            // ⚑ T496 ⓐ — «Pending 이 선 뒤 창이 열릴 때까지» 를 따로 센다(등재 글 ⑦ⓒ 가 «고치기 전에 그 수부터» 로 박아 둔 그 수).
+            //   그 구간은 BattleScreen:489 의 `if (G.Pending != null) { _acc = 0; break; }` 때문에 **엔진이 얼어 있는** 구간이다.
+            //   프레임 수와 그동안 흐른 엔진 시간(G.T) 둘 다 잰다 — «몇 프레임» 만으로는 «얼었는가» 를 못 가른다.
+            int openFrame = -1; double tOpen = -1;
             float t0 = Time.realtimeSinceStartup;
             while (Time.realtimeSinceStartup - t0 < 30f && !G.Over && bs.World == world)
             {
@@ -69,7 +73,7 @@ namespace KkomaKnight.Tests.Play
                 if (killFrame < 0 && G.Kills >= 1) { killFrame = frame; tKill = G.T; }
                 if (killFrame >= 0 && G.PendingLevelUps > 0 && G.Pending == null) queuedSeen = true;
                 if (pendingFrame < 0 && G.Pending != null) { pendingFrame = frame; tPending = G.T; }
-                if (_app.Overlay.IsOpen) { opened = true; break; }
+                if (_app.Overlay.IsOpen) { opened = true; openFrame = frame; tOpen = G.T; break; }
             }
 
             Assert.GreaterOrEqual(killFrame, 0, "30초 안에 첫 킬이 나야 한다 — 안 나면 이 자는 아무것도 못 잰 것이다(판 자체를 보라)");
@@ -81,8 +85,47 @@ namespace KkomaKnight.Tests.Play
             Assert.IsTrue(queuedSeen, "킬 뒤에 «PendingLevelUps > 0 인데 Pending == null» 인 프레임이 있어야 한다(줄에 들어 있다) — 없으면 킬 틱에서 열린 것");
             // ⓒ 엔진 시간이 킬 뒤에도 흘렀다 — 옛 꼴은 Pending 이 선 채라 킬 틱 이후 틱이 0 이다
             Assert.Greater(tPending, tKill, "킬 프레임과 창이 선 프레임 사이에 엔진 시간(G.T)이 흘러야 한다 — 같으면 킬부터 창까지 엔진이 얼어 있던 것(주인이 본 멈춤)");
+            // ⚑⚑ T496 ⓐ — **재기만 한다. 판정은 안 한다**(결정 493 · 등재 글 ⑦ⓒ).
+            //   등재 글 ③ 이 소스로 가른 것: 상한(`AbsorbMaxWaitSec`)이 넘으면 `Pending` 은 서는데 `OpenPending` 의
+            //   첫 줄 `if (Absorbing) return;` 이 여는 것을 도로 막는다 ⇒ 그 사이 엔진이 언다. 그 «언 구간» 의 크기가
+            //   여기서 나온다: `holdFrames`(프레임) · `holdT`(그동안 흐른 엔진 시간 — 얼었으면 0 언저리).
+            //   ⚠ **문턱을 안 박는다** — 몇 프레임이면 «주인 눈에 보이는가» 를 아직 아무도 모른다(등재 글 ⑦ⓑ).
+            //     수를 먼저 쌓고, 켤지는 그 수를 읽는 사람이 정한다(`HighLevelTextGate` 가 지나온 길).
+            //   ⚠ **찍기만 하면 아무도 못 읽는다**(결정 636 · T455 3회차가 값을 치른 자리) — 유니티 테스트의
+            //     `Debug.Log` 는 결과 XML 안에만 남고 그 아티팩트는 프록시가 막는다. 그래서 `PlayShot.Dirs()` 에 쓴다:
+            //     CI 가 `screens` 브랜치로 같이 올리므로 `git show origin/screens:t496_hold.json` 한 번이면 읽힌다.
+            int holdFrames = (openFrame >= 0 && pendingFrame >= 0) ? openFrame - pendingFrame : -1;
+            double holdT = (tOpen >= 0 && tPending >= 0) ? tOpen - tPending : -1;
+            WriteHoldReport(killFrame, pendingFrame, openFrame, tKill, tPending, tOpen, holdFrames, holdT);
+
+            // ⚑ 공허 방지 — 이 수가 «0 이다» 와 «못 쟀다» 를 가른다(T455 2회차가 «가드가 스스로 공허했다» 로 치른 값).
+            Assert.GreaterOrEqual(openFrame, 0, "창이 선 프레임을 못 잡았다 — 그러면 위에 쓴 수는 «잰 것» 이 아니다");
+            Assert.GreaterOrEqual(holdFrames, 0, "Pending 이 선 프레임이 창이 선 프레임보다 뒤다 — 셈이 뒤집혔다(수를 믿지 마라)");
+
             _log.AssertNoRed("T457 레벨업 줄");
             yield return Shutdown();
+        }
+
+        /// <summary>
+        /// T496 ⓐ — 잰 수를 <b>워커가 읽을 수 있는 자리</b>에 쓴다(<c>ui-screens/t496_hold.json</c> → `screens` 브랜치).
+        /// <para>⚑ <see cref="KkomaKnight.Tests.Play.HighLevelTextGateTests"/> 가 같은 까닭으로 먼저 밟은 길이다(결정 636).</para>
+        /// </summary>
+        static void WriteHoldReport(int killFrame, int pendingFrame, int openFrame,
+                                    double tKill, double tPending, double tOpen,
+                                    int holdFrames, double holdT)
+        {
+            string json =
+                "{\"_meta\":{\"task\":\"T496\",\"what\":\"Pending 이 선 뒤 창이 열릴 때까지 — 그 사이 엔진은 언다(BattleScreen:489)\"}"
+              + ",\"frames\":{\"kill\":" + killFrame + ",\"pending\":" + pendingFrame + ",\"open\":" + openFrame
+              + ",\"hold\":" + holdFrames + "}"
+              + ",\"engineTime\":{\"kill\":" + tKill.ToString("0.####") + ",\"pending\":" + tPending.ToString("0.####")
+              + ",\"open\":" + tOpen.ToString("0.####") + ",\"hold\":" + holdT.ToString("0.####") + "}"
+              + ",\"note\":\"holdT 가 0 언저리면 그 구간 동안 엔진이 얼어 있었다는 뜻이다(틱 0). 문턱은 아직 없다 — 수만 쌓는다.\"}";
+            foreach (var dir in PlayShot.Dirs())
+            {
+                try { System.IO.Directory.CreateDirectory(dir); System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "t496_hold.json"), json); }
+                catch (System.Exception e) { Debug.LogWarning("[T496] t496_hold.json 저장 실패(" + dir + "): " + e.Message); }
+            }
         }
     }
 }
