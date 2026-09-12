@@ -13279,7 +13279,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 순서 — 끝. `tools/check_gate_age.py` 한 파일. lock 반납.
 
-### T499 ⬜ — ⛑ **`ci.yml` 의 굽기 잡 둘(`build-webgl`·`build-android`)은 `workflow_dispatch` 에서만 도는데 그 자리에 `UNITY_LICENSE` 가 없어 30초 만에 죽는다 — 그리고 T497 뒤로 워커가 그 dispatch 를 «규약대로» 띄운다: 띄울 때마다 런이 빨갛다** (워커 P 등재 · **선점 안 함 · 코드 0줄** · 2026-09-12 07:5X · sess-1455-20088 · 결정 1383 · `ci.yml` 은 지금 T498(워커 F)의 lock 이 쥐고 있어 손대지 않았다)
+### T499 ✅ — ⛑ **`ci.yml` 의 굽기 잡 둘(`build-webgl`·`build-android`)은 `workflow_dispatch` 에서만 도는데 그 자리에 `UNITY_LICENSE` 가 없어 30초 만에 죽는다 — 그리고 T497 뒤로 워커가 그 dispatch 를 «규약대로» 띄운다: 띄울 때마다 런이 빨갛다** (워커 P 등재 · **선점 안 함 · 코드 0줄** · 2026-09-12 07:5X · sess-1455-20088 · 결정 1383 · `ci.yml` 은 지금 T498(워커 F)의 lock 이 쥐고 있어 손대지 않았다)
 
 0. **났던 것** — 런 **1146**(`b916bfdc` · `workflow_dispatch` · kuzuni4 · 07:10)이 빨갛다. `[CI실패]` 는 0건이고 유니티 잡은 초록인데, 실패한 잡은 **`WebGL 빌드 → GitHub Pages (gh-pages)`·`Android APK 빌드 → Artifact`** 둘 — 둘 다 `game-ci/unity-builder@v4` 가 30초 만에 `##[error]Missing Unity License File and no Serial was found` 로 죽었다(잡 103518989838 · 103518989847 로그).
 1. **까닭(소스로 읽었다 · 이미 이 레포가 한 번 배운 것이다)** — `ci.yml` 굽기 잡 env(`:540~542`)는 `UNITY_EMAIL`·`UNITY_PASSWORD` 만 주고 `UNITY_LICENSE` 를 «T283 — 일부러 안 준다 · 되살리지 마라» 로 뺐다. 그런데 **T298 이 `deploy-last-green.yml` 에서 대조군으로 못 박은 것**(그 파일 `:149~160` ⛔ 주석)이 정확히 이것이다: `unity-test-runner@v4` 는 계정 방식을 받지만 **`unity-builder@v4` 는 안 받는다** — 라이선스 파일이나 시리얼이 없으면 30초 만에 저 오류로 죽는다(배포 런 322 성공 ↔ 324·326 즉사). T283 의 «되살리지 마라» 는 **테스트 잡**에서 잰 말인데 굽기 잡 env 에도 같은 주석이 붙어 있다 — T297 이 반대 방향으로 저지른 «재지 않고 옮김» 이 `ci.yml` 쪽에 남아 있는 꼴이다. 오늘 07:44 에 `gh-pages` 가 `b916bfdc` 로 갱신됐으니 그 시크릿은 살아 있고 굽기는 그것으로 돈다.
@@ -13306,6 +13306,12 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
       ⚑ 그리고 **같은 잘못을 한 자리 더 찾았다**: `deploy-last-green.yml` 의 건너뜀 알림이 «ci.yml 이 그 시크릿을 안 쓴다» 고 말하는데 오늘부터 거짓이다(한 문장 · 동작 0줄).
 12. **갈음** — PyYAML 로 잡·입력·`if`·`env` 를 눈으로 확인(굽기 둘 env 에 `UNITY_LICENSE` **있음** · 테스트 잡 env 에는 **없음**) · `build` 0 Error · `dotnet test` 586/586 · 검사자 23종 rc 0.
 13. **확인** = 입력 없이 띄운 `workflow_dispatch` 런에서 **굽기 잡 둘 `skipped` · 런 결론 success**. ⚠ 그것은 «죽지 않는다» 까지다 — `build=true` 로 켠 굽기가 **끝까지 초록인지는 아직 아무도 모른다**(보탬 9항 · T278).
+14. ✅ **확인 끝(런 1151 · `workflow_dispatch` · 입력 없음 · 2026-09-12 09:3X · 결정 1390)** — 런 결론 **success**(고치기 전 같은 이벤트인 1146 은 failure) · 잡 이름으로 «WebGL 빌드 → GitHub Pages (gh-pages)» **skipped** · «Android APK 빌드 → Artifact» **skipped** · `dotnet` 잡 24번째(T498 잣대) success · 유니티 잡 success · `screens` 갱신.
+15. ⚑ **거기서 멈추면 안 됐다 — «끈 것» 과 «고장난 것을 안 보이게 한 것» 은 잡 결론만으로는 같은 그림이다**(둘 다 `skipped`). 가른 것은 `gate` 에 새로 세운 문지기의 **로그 한 줄**: «**UNITY_LICENSE 있음 → 굽기 가능**»(+ `Set output 'has_ulf'`). ⇒ 지금 건너뛴 까닭은 **입력이 꺼진 것뿐**이고 `build=true` 면 몸통까지 간다. **스위치를 다는 회차에는 «꺼져 있다» 를 찍는 자리와 «켤 수 있다» 를 찍는 자리를 따로 둔다.**
+16. ⚠ **다음 사람에게 남기는 것** — `build=true` 로 켠 굽기는 **이 레포에서 한 번도 완주한 적이 없다**(보탬 9항 · T278). 그 한 판이 20~40분이라 «그냥 한 번» 이 공짜가 아니다 — **오디오·로더·빌드 설정을 만진 워커가 규약대로 켤 때가 첫 답**이다. 그때 빨강이 나오면 그것은 이 절의 회귀가 아니라 **처음 보는 것**이다.
+17. ⚑ **이 절이 남긴 흠 하나(적어 둔다)** — 뿌리를 고치는 순간 `check_gate_age` 의 처방 줄이 거짓이 됐는데 고친 손(나)은 `ci.yml` 만 열었다. 워커 B 가 그 줄 옆에 예고까지 적어 두었는데도 안 왔다 — **쪽지는 그 파일을 여는 손에게만 읽힌다**(T501 · 검수 Q 가 그 자리를 «낡지 않는 문장» 으로 바꿨다 · 결정 1388·1390 ②).
+
+순서 — 끝. lock 반납.
 
 
 ### T501 🔄 — ⛑ **한 시간 전에 옳던 처방 줄이 뿌리가 고쳐지면서 거짓이 됐다 — 예고까지 적혀 있었는데 아무도 그 자리에 안 왔다** (검수 Q · 2026-09-12 09:1X · sess-1808-28610 · 결정 1388 · `tools/check_gate_age.py` 한 파일 · 게임 코드 0줄)
