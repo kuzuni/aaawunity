@@ -131,8 +131,12 @@ def type_positions(src):
         prevc = before[-1] if before else ""
         if pw in ("new", "typeof"):
             hit.add(t)
-        elif prevc in ":<,(" and (nxt[:1] in ">,)." or re.match(r"[A-Za-z_]", nxt or " ")):
-            hit.add(t)                    # : T · <T> · (T x · , T x
+        elif prevc in ":<,(" and (nxt[:1] in ">,).{" or re.match(r"[A-Za-z_]", nxt or " ")):
+            hit.add(t)                    # : T · <T> · (T x · , T x · T { (아래 ⛑)
+            # ⛑ **«{» 를 2026-09-12 에 넣었다**(T492 · 자기 검사가 첫 판에 잡았다). 그 전에는 **뒤가 «{» 인 자리**를
+            #   통째로 놓쳤다 — 하필 이 레포에서 제일 흔한 꼴들이다:
+            #     `class LobbyScreen : GameScreen {`(상속 · 실측 40줄) · `where T : Revive {`(제약) · `public Revive R { get; }`(프로퍼티)
+            #   곧 «화면 하나를 먼저 밀고 그 밑틀을 나중에» 미는 **바로 그 사고**를 이 자가 못 봤다(T270 이 막으려던 것 그 자체다).
         elif nxt.startswith(".") and re.match(r"\.\s*[A-Za-z_]", nxt) and t[0].isupper():
             hit.add(t)                    # T.Static — 소문자는 지역 변수일 수 있어 뺀다
         elif t[0].isupper() and re.match(r"(\[\])?\s+[A-Za-z_][A-Za-z0-9_]*\s*[=;,)]", after):
@@ -162,7 +166,122 @@ def snapshot(sha):
     return defined, namespaces, refs, usings
 
 
+def self_test():
+    """이 자가 **정말 무는지** 스스로 증명한다 (T492 · 검수 Q).
+
+    ⚑ **왜 이제 와서** — 이 자는 만들던 날(T270) 손으로 한 번 부러뜨려 봤다(머리 주석의 «자가 정말 무는가»).
+      그것은 **그날 한 번**이고 다시 못 돌린다. 2026-09-12 에 T488 이 이 자를 `ci.yml` 에 **보고만**으로 걸면서
+      «매 push 마다 도는 자» 가 됐는데, 그러면 조용히 고장 나도 «✓ … 0» 만 찍는다 — 이 레포가 하루에
+      세 번 값을 치른 그 꼴이다(결정 1340 «이 자가 **틀리게 조용할** 수 있나를 먼저 물어라»).
+
+    갈래 열 — 앞 일곱은 **판정하는 순수 함수**(`strip_noise`·`type_positions`)를, 뒤 셋은 **통째로**(임시 git 저장소)
+    잰다. 순수 함수만 재면 `git archive`·tarfile 쪽이 깨져도 조용하다.
+    """
+    fails = []
+
+    def want(cond, why):
+        if not cond:
+            fails.append(why)
+
+    # ── 순수 함수 ─────────────────────────────────────────────────────────────
+    # ⓐ·ⓑ 첫 판의 오탐 **전부**가 이 둘이었다(머리 주석) — 멤버 이름과 문자열 속 낱말.
+    want("Attendance" not in type_positions(strip_noise("class C { void M(){ x.Attendance = 1; } }")),
+         "ⓐ 멤버 이름(`x.Attendance`)을 타입으로 셌다 — 첫 판의 오탐 그대로다")
+    want("Attendance" not in type_positions(strip_noise('class C { string s = "Attendance: 3"; }')),
+         "ⓑ 문자열 속 낱말을 타입으로 셌다")
+    want("Revive" not in type_positions(strip_noise("class C { /* Revive 를 쓴다 */ }")),
+         "ⓒ 주석 속 낱말을 타입으로 셌다")
+    # ⓓ 진짜 타입 자리 — 머리 주석이 세어 둔 여섯 꼴을 그대로 맞댄다.
+    for src, name in [("class C { void M(){ new Revive(); } }", "new T"),
+                      ("class C { void M(){ var t = typeof(Revive); } }", "typeof(T)"),
+                      ("class C : Revive { }", ": T"),
+                      ("class C { void M(){ Revive r = null; } }", "T x"),
+                      ("class C { void M(){ Revive.Reset(); } }", "T.Static"),
+                      ("class C { void M(Revive r){} }", "(T x)")]:
+        want("Revive" in type_positions(strip_noise(src)), "ⓓ «%s» 를 타입 자리로 못 봤다" % name)
+    # ⓔ 길이 보존 — 지운 자리가 줄어들면 뒤의 자리 계산이 통째로 어긋난다.
+    raw = 'class C { string s = "abc"; /* xx */ }'
+    want(len(strip_noise(raw)) == len(raw), "ⓔ `strip_noise` 가 길이를 안 지켰다 — 자리 계산이 어긋난다")
+
+    # ── 통째로 ────────────────────────────────────────────────────────────────
+    import shutil
+    import tempfile
+    tmp = tempfile.mkdtemp()
+    here = os.getcwd()
+    env = dict(os.environ, GIT_AUTHOR_NAME="q", GIT_AUTHOR_EMAIL="q@x", GIT_COMMITTER_NAME="q",
+               GIT_COMMITTER_EMAIL="q@x")
+
+    def git(*a):
+        subprocess.run(["git"] + list(a), cwd=tmp, env=env, capture_output=True, text=True)
+
+    def write(rel, text):
+        p = os.path.join(tmp, rel)
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        io_open(p, text)
+
+    def run_main(argv):
+        old = sys.argv
+        buf = []
+        try:
+            sys.argv = argv
+            os.chdir(tmp)
+            import io as _io
+            cap, keep = _io.StringIO(), sys.stdout
+            try:
+                sys.stdout = cap
+                rc = main()
+            finally:
+                sys.stdout = keep
+            buf.append(cap.getvalue())
+            return rc, buf[0]
+        finally:
+            sys.argv = old
+            os.chdir(here)
+
+    try:
+        git("init", "-q", "-b", "main")
+        # ⓕ **쪼개 민 꼴** — 참조가 먼저 밀리고 정의가 나중에 온다(주인이 에디터에서 집는 그 순간).
+        write("Assets/B.cs", "namespace N { class Bar { void M(){ new Revive(); } } }\n")
+        git("add", "-A"); git("commit", "-q", "-m", "ref only")
+        write("Assets/A.cs", "namespace N { class Revive { } }\n")
+        git("add", "-A"); git("commit", "-q", "-m", "def later")
+        rc, out = run_main(["x", "2"])
+        want(rc == 1, "ⓕ 쪼개 민 커밋을 **안 잡았다**(rc=%s) — 이 자의 존재 이유 그 자체다" % rc)
+        want("Revive" in out, "ⓖ 잡긴 했는데 **이름을 안 댔다** — 이름이 없으면 고칠 자리를 못 찾는다")
+
+        # ⓗ **거짓 경보가 없어야 한다** — 정의와 참조가 한 커밋에 같이 오면 조용하다.
+        shutil.rmtree(os.path.join(tmp, ".git"))
+        for f in ("Assets/A.cs", "Assets/B.cs"):
+            os.remove(os.path.join(tmp, f))
+        git("init", "-q", "-b", "main")
+        write("Assets/A.cs", "namespace N { class Revive { } }\n")
+        write("Assets/B.cs", "namespace N { class Bar { void M(){ new Revive(); } } }\n")
+        git("add", "-A"); git("commit", "-q", "-m", "both together")
+        write("Assets/C.cs", "namespace N { class Cee { } }\n")
+        git("add", "-A"); git("commit", "-q", "-m", "another")
+        rc, out = run_main(["x", "2"])
+        want(rc == 0, "ⓘ 성한 이력에 **거짓 경보**를 냈다(rc=%s)\n%s" % (rc, out))
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+    if fails:
+        print("⛔ check_split_push --self-test: %d갈래가 어긋났다" % len(fails))
+        for f in fails:
+            print("  · " + f)
+        return 1
+    print("✓ check_split_push --self-test: 갈래 열 전부 통과 — 멤버·문자열·주석에 안 속고 · 타입 자리 여섯을 다 보고 · "
+          "길이를 지키고 · **쪼개 민 커밋을 이름까지 대며 잡고** · 성한 이력에는 조용하다")
+    return 0
+
+
+def io_open(path, text):
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+
+
 def main():
+    if "--self-test" in sys.argv or "--selftest" in sys.argv:
+        return self_test()
     n = 20
     ref = "HEAD"
     args = [a for a in sys.argv[1:] if not a.startswith("-")]
