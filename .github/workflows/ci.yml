@@ -80,6 +80,11 @@ jobs:
         run: |
           python3 tools/check_asmdef.py --self-test
           python3 tools/check_asmdef.py
+      # ⚑ T506 — 이 자도 **막는 자**인데 자기 검사가 없었다(T492 가 센 다섯 중 하나).
+      #   세우고 보니 **공허 방지가 아예 없었다**: 길이 어긋나 한 파일도 못 읽어도 «사용 0» 으로 초록이었다.
+      #   그러면 이 자가 막으려던 사고(테스트를 한 개도 못 돌리고 죽은 CI #346~#348)가 조용히 돌아온다.
+      - name: 테스트 using 자 자기 검사 (갈래 열하나 · T506)
+        run: python3 tools/check_test_usings.py --self-test
       - name: 테스트 어셈블리 using 검사 (참조 없는 네임스페이스 · T188)
         run: python3 tools/check_test_usings.py
       # T193 — «PROGRESS 는 ✅ 완료인데 ROUTINE §2 제목에는 ✅ 가 없다» = 다음 워커가 끝난 일을 다시 잡는 덫.
@@ -99,6 +104,10 @@ jobs:
         run: |
           python3 tools/check_webgl_template.py --self-test
           python3 tools/check_webgl_template.py
+      # ⚑ T506 — 자기 검사(갈래 아홉). 이 자가 조용히 고장 나면 주인 폰에서 **소리가 안 난다** —
+      #   실기가 판정 도구인데(headless 는 AAC 코덱이 없다 · 결정 300) CI 는 «전부 AAC» 라고 말한다.
+      - name: 오디오 자 자기 검사 (갈래 아홉 · T506)
+        run: python3 tools/check_audio_webgl.py --self-test
       - name: 오디오 형식 검사 (WebGL 이 읽는 PCM/MP3/AAC 만 · T64)
         run: python3 tools/check_audio_webgl.py
       # T278 — 빨간 런을 읽는 자(T239 실패 목록 + T278 명부)가 **정작 자기 자신은 아무도 안 재고 있었다.**
@@ -110,6 +119,11 @@ jobs:
       # 런타임 자(TextAudit → TextGlyphs.Missing)로는 구조적으로 못 잡는다: `CanRender` 가
       # «한글 음절 영역이면 참» 이라 11,172자를 다 참이라 하는데 Jua 가 가진 것은 2,367자뿐이다.
       # 없는 글자는 빨강 없이 **폭 0 으로 사라진다** — 무뎌지는 쪽이라 여기서 막는다(결정 493 의 기준).
+      # ⚑ T506 — 자기 검사(갈래 열둘). 이 자의 «없는 글자 0» 은 **두 방향**으로 거짓이 될 수 있었고
+      #   둘 다 공허 방지가 없었다: ① 아무것도 안 읽었다 ② cmap 셈이 고장 나 «글꼴이 다 가졌다» 고 답한다.
+      #   둘 다 화면에서는 똑같이 **글자가 폭 0 으로 사라지는** 것으로 나타난다.
+      - name: 글꼴 글리프 자 자기 검사 (갈래 열둘 · T506)
+        run: python3 tools/check_font_glyphs.py --self-test
       - name: 글꼴 글리프 검사 (화면 문자열 ↔ Jua cmap · T224)
         run: python3 tools/check_font_glyphs.py
       # T253 — 아래 셋은 **지시서 §3 이 «게이트» 라 부르면서 CI 어디에서도 안 돌던** 자들이다(실측: ci.yml 0건 · 지시서 4~5곳).

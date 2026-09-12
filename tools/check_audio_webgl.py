@@ -18,7 +18,14 @@ headless 는 AAC/MP4 코덱이 없어 AAC 가 제대로 실려 있어도 «no su
 audio data» 를 찍는다(회차 2 를 «실패» 로 잘못 읽은 원인 · 결정 300). 실기(주인 폰·데스크톱 크롬)가
 판정 도구다. 그래서 이 게이트는 «소리가 나는가» 가 아니라 «주인이 확인한 설정이 유지되는가» 를 지킨다.
 
-사용: python3 tools/check_audio_webgl.py        # 0 = 통과 · 1 = 위반 목록
+**⚠ 이 자가 못 보는 자리 둘** (T506 이 자기 검사를 세우며 글자로 박았다 — 몰라서 못 보는 것과 알고 못 보는 것은 다르다):
+  · **`Assets/Audio/` 밖의 오디오는 한 건도 안 본다.** 실측(2026-09-12): `Assets` 안의 `AudioImporter` meta 20개가
+    전부 `Assets/Audio/`(bgm 3 · sfx 17) 밑이고 그 밖에는 오디오 파일 자체가 0개 ⇒ **지금은 안 샌다.**
+    새 소리를 딴 자리에 두는 날 이 자는 조용히 «전부 AAC» 라고 말한다.
+  · **WebGL 아닌 플랫폼 오버라이드(그룹 13 이 아닌 것)는 일부러 안 본다** — 이 게이트의 물음은 «WebGL 에서 들리나» 다.
+
+사용: python3 tools/check_audio_webgl.py             # 0 = 통과 · 1 = 위반 목록
+     python3 tools/check_audio_webgl.py --self-test # 이 자가 갈래마다 제대로 우는가
 """
 import glob, os, re, sys
 
@@ -36,6 +43,14 @@ def default_format(text):
 
 
 def main():
+    if '--self-test' in sys.argv[1:] or '--selftest' in sys.argv[1:]:
+        return self_test()
+    return run()
+
+
+def run():
+    """실제 검사 한 판 — `main()` 과 나눠 둔 까닭은 자기 검사가 **이것만** 부르기 위해서다
+    (`main()` 을 부르면 `sys.argv` 를 다시 읽어 스스로를 끝없이 부른다 · `check_catalog_keys` 가 세우다 밟은 자리)."""
     bad, checked = [], 0
     for meta in sorted(glob.glob(os.path.join(ROOT, 'Assets', 'Audio', '**', '*.meta'), recursive=True)):
         text = open(meta, encoding='utf-8').read()
@@ -61,6 +76,115 @@ def main():
             print('  - ' + b)
         return 1
     print('✓ check_audio_webgl: 오디오 %d개 전부 AAC(주인 확인 설정 · T64)' % checked)
+    return 0
+
+
+META = """fileFormatVersion: 2
+guid: 0123456789abcdef0123456789abcdef
+AudioImporter:
+  externalObjects: {}
+  serializedVersion: 7
+  defaultSettings:
+    loadType: 0
+    sampleRateSetting: 0
+    sampleRateOverride: 44100
+    compressionFormat: %(fmt)d
+    quality: 1
+    conversionMode: 0
+%(over)s  preloadAudioData: 0
+"""
+
+OVERRIDE = """  platformSettingOverrides:
+    %(group)d:
+      serializedVersion: 3
+      loadType: 0
+      sampleRateSetting: 0
+      sampleRateOverride: 44100
+      compressionFormat: %(fmt)d
+      quality: 1
+      conversionMode: 0
+"""
+
+
+def _meta(fmt=WANT, over_group=None, over_fmt=WANT):
+    over = '' if over_group is None else OVERRIDE % {'group': over_group, 'fmt': over_fmt}
+    return META % {'fmt': fmt, 'over': over}
+
+
+def _run_on(tmp, metas):
+    """가짜 저장소 하나를 세우고 이 자를 그 위에서 돌린다 → (rc, 찍은 글)."""
+    import io as _io, contextlib
+    audio = os.path.join(tmp, 'Assets', 'Audio', 'sfx')
+    os.makedirs(audio, exist_ok=True)
+    for name, text in metas.items():
+        with open(os.path.join(audio, name), 'w', encoding='utf-8') as fh:
+            fh.write(text)
+    g = globals(); old = g['ROOT']
+    g['ROOT'] = tmp
+    buf = _io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            rc = run()
+    finally:
+        g['ROOT'] = old
+    return rc, buf.getvalue()
+
+
+def self_test():
+    """⚑ **이 자에는 자기 검사가 없었다** — T492 가 «자기 검사 없는 자 다섯» 으로 세어 둔 그 하나다.
+
+    이 자는 **막는 자**다(`ci.yml` 의 `dotnet` 잡 · `continue-on-error` 없음 · `unity-test` 가 그 잡에 매달려 있다).
+    조용히 고장 나면 런은 초록인데 **아무것도 안 재고** 지나가고, 그러면 주인 폰에서 소리가 안 난다 —
+    이 게이트가 생긴 까닭이 바로 그 사고였다(회차 3 이 Vorbis 로 되돌린 일 · 결정 300).
+
+    ⚠ 갈래 ⓖ 는 «고쳐야 할 것» 이 아니라 **한계를 못 박는 것**이다 — 머리글의 «못 보는 자리 둘» 과 한 몸이다.
+    """
+    import shutil, tempfile
+    FILL = {'fill%02d.wav.meta' % i: _meta() for i in range(6)}   # 밑동 — 늘 성한 소리 여섯
+
+    def metas(extra):
+        d = dict(FILL); d.update(extra); return d
+
+    cases = [
+        ('ⓐ 전부 AAC 면 조용하다', {}, 0, '전부 AAC'),
+        ('ⓑ 기본값이 Vorbis 면 **파일 이름과 낱말**로 운다',
+         {'bad.wav.meta': _meta(fmt=1)}, 1, 'bad.wav.meta'),
+        ('ⓑ² 그 울음에 «Vorbis» 라는 낱말이 선다(숫자만 찍으면 읽는 사람이 한 번 더 찾는다)',
+         {'bad.wav.meta': _meta(fmt=1)}, 1, 'Vorbis'),
+        ('ⓒ 기본값이 PCM(0)이어도 운다 — 빌드가 반영조차 안 하는 값이다',
+         {'pcm.wav.meta': _meta(fmt=0)}, 1, 'PCM'),
+        ('ⓓ WebGL 오버라이드(그룹 13)가 AAC 아니면 운다 — 기본값이 성해도 그쪽이 이긴다',
+         {'ov.wav.meta': _meta(fmt=WANT, over_group=13, over_fmt=1)}, 1, 'WebGL 오버라이드'),
+        ('ⓔ WebGL 오버라이드가 AAC 면 조용하다',
+         {'ov.wav.meta': _meta(fmt=WANT, over_group=13, over_fmt=WANT)}, 0, '전부 AAC'),
+        ('ⓕ **WebGL 아닌** 플랫폼 오버라이드(그룹 1)가 Vorbis 여도 안 운다 — 이 자의 물음이 아니다',
+         {'ov.wav.meta': _meta(fmt=WANT, over_group=1, over_fmt=1)}, 0, '전부 AAC'),
+        ('ⓖ ⚠ **한계** — `AudioImporter:` 가 없는 meta 는 안 센다(텍스처 meta 가 섞여도 «오디오» 수가 안 부푼다)',
+         {'tex.png.meta': 'fileFormatVersion: 2\nTextureImporter:\n  compressionFormat: 1\n'}, 0, '오디오 6개'),
+    ]
+    bad = 0
+    tmp = tempfile.mkdtemp(prefix='audiowebgl-')
+    try:
+        for i, (name, extra, want_rc, want_in) in enumerate(cases):
+            d = os.path.join(tmp, 'c%02d' % i)
+            rc, out = _run_on(d, metas(extra))
+            ok = (rc == want_rc) and (want_in is None or want_in in out)
+            bad += 0 if ok else 1
+            print("  %s %s (rc %d, 기대 %d)" % ('✔' if ok else '✘', name, rc, want_rc))
+        # ⓗ 공허 방지 — 한 건도 못 읽었으면 «전부 AAC» 가 아니라 «못 찾았다» 다.
+        #   길이 바뀌거나 glob 이 고장 나도 결과는 «위반 0건» 이라, 그 둘을 가르는 줄이 없으면 이 자는 조용한 거짓이 된다
+        #   (결정 1379 가 치른 값 · T505 의 ⓗ 와 같은 손).
+        rc, out = _run_on(os.path.join(tmp, 'empty'), {})
+        ok = rc == 1 and '못 찾았다' in out
+        bad += 0 if ok else 1
+        print("  %s ⓗ 한 건도 못 읽었으면 «전부 AAC» 가 아니라 **«못 찾았다»** 로 운다 (rc %d, 기대 1)" % ('✔' if ok else '✘', rc))
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    if bad:
+        print('✗ check_audio_webgl --self-test: 갈래 %d건이 기대와 다르다' % bad)
+        return 1
+    print('✓ check_audio_webgl --self-test: 갈래 %d개가 전부 기대대로 갈린다 '
+          '(ⓕ·ⓖ 는 «일부러 안 본다» 를 못 박은 갈래다 — 고침이 아니라 한계다)' % (len(cases) + 1))
     return 0
 
 
