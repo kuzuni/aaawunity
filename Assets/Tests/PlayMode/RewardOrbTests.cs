@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
@@ -151,6 +152,16 @@ namespace KkomaKnight.Tests.Play
             int trailPeak = 0;
             // T461 ⓑ — 꼬리가 «보이는 자리» 에 있는가. 살아 있는 동안 한 번 잡아 둔다(사라진 뒤엔 못 잰다).
             int trailOrder = int.MinValue;
+            // T502 ③ «값» 단언(검수 Q 보탬 ②) — 배선(월드에 있다)만이 아니라 «종전만 한 크기로 보이는가 · 알약에 닿는가» 를 화면 px 로 잰다.
+            //   크기: 머무름 구간(마지막 구슬의 홉이 끝난 0.43초 뒤 ~ 첫 구슬의 비행 전 1.15초)은 배율이 정확히 1 이라 그때 «한 변 = OrbSizePx» 를 본다.
+            //   도착: 구슬마다 마지막으로 보인 프레임 px 를 남겨 두고, 사라진 뒤 그것이 과녁(골드 알약 · EXP 바)의 프레임 좌표에 얹혔는지 본다(도착 뒤 «작게 튀는» 0.08초는 과녁 자리에서 돈다).
+            var frame = _app.Frame;
+            Vector2 PxOf(RectTransform t) => (Vector2)frame.InverseTransformPoint(t.TransformPoint(t.rect.center)) - frame.rect.min;
+            var goldPill = UiKit.Find(bs.Root, "Pill:gold") as RectTransform; var expBar = UiKit.Find(bs.Root, "Bar:EXP") as RectTransform;
+            Assert.IsNotNull(goldPill, "골드 알약"); Assert.IsNotNull(expBar, "EXP 바");
+            Vector2 goldPx = PxOf(goldPill), expPx = PxOf(expBar);
+            float sizeMax = -1f; int sizeSamples = 0;
+            var lastPx = new Dictionary<int, Vector2>();
             while (bs.OrbCount > 0 && Time.realtimeSinceStartup - tOrb < limit + 1f)
             {
                 trailPeak = Mathf.Max(trailPeak, TrailCount());
@@ -159,9 +170,32 @@ namespace KkomaKnight.Tests.Play
                     var tr = UnityEngine.Object.FindFirstObjectByType<TrailRenderer>(FindObjectsInactive.Exclude);
                     if (tr != null) trailOrder = tr.sortingOrder;
                 }
+                float since = Time.realtimeSinceStartup - tOrb;
+                foreach (var sr in UnityEngine.Object.FindObjectsByType<SpriteRenderer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+                {
+                    if (sr == null || sr.name != RewardOrbs.OrbName || sr.sprite == null) continue;
+                    var b = sr.bounds;   // 월드 AABB — WorldCam.ToFrame 으로 화면 px 로 되돌린다
+                    lastPx[sr.GetInstanceID()] = WorldCam.ToFrame(b.center);
+                    if (since >= 0.5f && since <= 1.0f)
+                    {
+                        float w = WorldCam.ToFrame(new Vector3(b.max.x, b.center.y, 0f)).x - WorldCam.ToFrame(new Vector3(b.min.x, b.center.y, 0f)).x;
+                        float h = WorldCam.ToFrame(new Vector3(b.center.x, b.max.y, 0f)).y - WorldCam.ToFrame(new Vector3(b.center.x, b.min.y, 0f)).y;
+                        sizeMax = Mathf.Max(sizeMax, Mathf.Max(w, h)); sizeSamples++;
+                    }
+                }
                 yield return null;
             }
             Assert.AreEqual(0, bs.OrbCount, "구슬은 " + limit.ToString("0.00") + "초 안에 전부 도착해 사라져야 한다");
+            // 공허 방지 — 못 쟀으면 초록이 아니라 빨강(T278)
+            Assert.Greater(sizeSamples, 0, "머무름 구간(0.5~1.0초)에 살아 있는 구슬을 한 프레임도 못 봤다 — 크기를 못 쟀다(공허 · T278)");
+            Assert.AreEqual(BattleScreen.OrbSizePx, sizeMax, BattleScreen.OrbSizePx * 0.10f,
+                $"전투 구슬의 화면 한 변(px)은 종전 {BattleScreen.OrbSizePx}px 과 ±10% 안이어야 한다 — 월드로 옮기며 크기가 달라지면 안 된다(T502 ③ · 실측 {sizeMax:0.0})");
+            Assert.Greater(lastPx.Count, 0, "구슬을 한 프레임도 못 봤다 — 도착점을 못 쟀다(공허 · T278)");
+            foreach (var kv in lastPx)
+            {
+                float d = Mathf.Min(Vector2.Distance(kv.Value, goldPx), Vector2.Distance(kv.Value, expPx));
+                Assert.Less(d, BattleScreen.OrbSizePx, $"구슬의 마지막 자리가 과녁(골드 알약 {goldPx} · EXP 바 {expPx})에서 {d:0}px 떨어져 있다 — 도착점은 알약의 프레임 좌표여야 한다(T502 ③ · 마지막 자리 {kv.Value})");
+            }
             // T144(주인 «흡수될 때 트레일 랜더러로») — 구슬이 도는 동안 월드 꼬리가 떠 있었고, 끝나면 하나도 안 남는다(누수 0).
             Assert.Greater(trailPeak, 0, "흡수 중에는 꼬리(TrailRenderer)가 떠 있어야 한다(T144)");
             // T461 ⓑ(주인 2026-09-12 «전투 화면에서 화폐 흡수되는 거는 트레일 렌더러 있게 해야 함») —

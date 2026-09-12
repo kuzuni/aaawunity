@@ -13339,7 +13339,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 6. **확인 ✅ — 런 1151 을 잡 단위로 읽었다**(`74f832a62` · dispatch · 입력 없음 · 09:11~09:30): 잡 여섯 중 **`WebGL 빌드` `skipped` · `Android APK 빌드` `skipped`** · `Unity EditMode + PlayMode` **success** · **런 결론 `success`**. ⇒ ⓐ F 의 T499 확인 조건(«입력 없는 dispatch 에서 굽기 둘 skipped · 런 결론 success»)이 **글자 그대로** 섰고, ⓑ 2항 ①의 문장(«그냥 띄우면 그 둘은 `skipped` 다»)은 이제 **짐작이 아니라 실측**이다. ⚑ 그리고 **이 자의 처방을 따르는 일이 더는 빨강을 안 만든다** — T497 이 만든 규약의 값이 여기서 0이 됐다. ⚠ 그래도 2항 ②의 «빨갛거든 굽기 둘인가부터 보라» 는 **그대로 둔다**: 그 문장은 오늘의 결과가 아니라 **어디를 보라는 규칙**이라 뿌리가 또 움직여도 참이다(이 절의 본론이 그것이다).
 
 순서 — 끝. `tools/check_gate_age.py` 한 파일. lock 반납.
-### T502 — ⚑⚑ 주인: **전투 화면의 남은 프레임(UI) 층 셋을 월드 공간으로 — 데미지 팝 · 발밑 숫자 · 재화 흡수 구슬** (주인 2026-09-12 «전투화면에 데미지 텍스트 · hp바 · 재화 흡수 이펙트 전부 월드스페이스로 됐어야 함 · 도끼 번개 그런 거 소환물도 전부 · 적들이랑 배경도 전부 · 악마·천사·쉼터 전부»)
+### T502 ✅ — ⚑⚑ 주인: **전투 화면의 남은 프레임(UI) 층 셋을 월드 공간으로 — 데미지 팝 · 발밑 숫자 · 재화 흡수 구슬** (주인 2026-09-12 «전투화면에 데미지 텍스트 · hp바 · 재화 흡수 이펙트 전부 월드스페이스로 됐어야 함 · 도끼 번개 그런 거 소환물도 전부 · 적들이랑 배경도 전부 · 악마·천사·쉼터 전부»)
 
 0. **실측(코드 · 이미 월드인 것은 손대지 않는다)** — 배경(`BuildGround`·`BuildProps`) · 악마/천사/쉼터(`BuildNodes`) · 플레이어/적 리그 · HP/실드 **막대**(`MakeBar` = SpriteRenderer) · 투사체(도끼·창·화살 = `_root` 아래 SpriteRenderer + `fx.trail`) · 번개(`Fx.PlaySheet` 월드) · 검기(`fx.wave`) — 전부 `WorldCam` 아래 월드 오브젝트다. 프레임(UI) 층에 남은 것은 **셋뿐**: ① `BattleWorld.Pop`(데미지·회복·아이콘 팝 = `UiKit.Text` in `_pops` · `WorldCam.ToFrame` 변환 · DOTween 앵커 이동) ② `FootText`/`PlaceFootText`(막대 안 숫자 TMP in `_pops`) ③ 전투 재화 구슬(`BattleScreen._orbLayer` 의 `RewardOrbs` · 트레일만 월드(`UseWorldTrail`)).
 1. **① 팝 → 월드 TMP** — `TextMeshPro`(3D) 를 `_root` 아래에 · `sortingOrder` = 막대 위(투사체 350 보다 위) · 크기 = 지금 프레임 px ÷ `WorldCam.PPU` 가 화면에서 **같은 크기**가 되게(자로 잰다) · 트윈은 `transform.DOMoveY` · `PopIcon` 은 SpriteRenderer 자식(`PopIconName` 이름 유지 — 게이트가 이 이름을 찾는다). 좌우 흔들기·OutBack·페이드 그대로.
@@ -13348,11 +13348,13 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 4. **자** — `HudBarsTests`(10 곳 · `PlayerHpText`·`BarTxt` 가 월드 TMP 가 되면 «프레임 좌표» 단언을 «월드 좌표 = 막대 가운데» 로) · `RewardOrbTests`·`RewardOrbQtyPlayTests`(전투 구슬 = `_root` 아래 SpriteRenderer · 과녁 = 알약의 월드 환산) · `BattleWorldTests` 팝 1곳 · `UiSmokeTests` 의 `"Pops"` 이름 · 새 자: 팝 글자의 화면 높이(px) 가 종전과 ±10% (줌 없음 기준).
 5. **확인** — `screens` 전투 컷 나란히(팝·숫자·구슬이 카메라와 같이 움직이는가) + 주인 폰.
 
-순서 — ① → ② → ③ (③ 이 제일 크다 · 회차를 나눠도 된다: ①②를 한 회차 · ③ 을 다음 회차). lock `T502`.
+순서 — 끝. ①② 는 1회차(런 1153) · ③ 은 2회차(런 1154) · 값 단언·종결은 3회차. lock 반납.
 
 > **🔄 ①② push · CI 확인 전(2026-09-12 09:5X · sess-1439-32420 · 워커 O · 결정 1391 · lock `T502` 쥔 채)** — 팝·발밑 숫자를 월드 TMP 로 옮겼다(`WorldText` · `isOrthographic` · 배율 `WorldPerPx` = 프레임 px 한 칸 → 글자 크기·자 단언은 종전 px 그대로). 숫자는 막대의 자식 · 팝은 `_root/Pops` · 아이콘은 SpriteRenderer. 스텁에 `TextMeshPro`·`isOrthographic` 을 더했다. **③ 전투 구슬은 다음 회차** — 다음 워커가 잡는다면 ③ 만 남았다(lock 이 살아 있으면 내 것 · 죽었으면 90분 규약대로).
 
 > **🔄 ③ push · CI 확인 전(2026-09-12 10:5X · sess-1439-32420 · 워커 O · 결정 1392 · lock `T502` 쥔 채)** — 런 1153 이 ①② 를 초록으로 확인했다(유니티 잡 success). ③ 전투 구슬 = `RewardOrbs` 월드 모드(`worldRoot` 손 · 구슬 = `_root` 아래 SpriteRenderer 480 · 길의 셈은 px 그대로 · `SetPos`/`SetScale` 한 자리에서만 갈린다). 리워드 팝업 구슬은 UI 그대로. **다음 회차** — `[CI실패]` 꼬리에 `RewardOrbTests` ✗ 0 이면 ✅ · lock 반납. 빨강이면 처방은 `RewardOrbs.Make` 의 월드 갈래 한 자리다.
+
+> **✅ 닫음(2026-09-12 11:5X · sess-1439-32420 · 워커 O · 결정 1395 · lock 반납)** — 런 1153(①②)·1154(③) 초록. 검수 Q 보탬 ② 대로 ③ 에도 «값» 단언을 얹었다: 전투 구슬의 화면 한 변 = `OrbSizePx` ±10% · 마지막 자리 = 알약의 프레임 좌표(`RewardOrbTests` · 공허 방지 둘 앞세움). ⚠ 그 둘은 이 커밋의 런이 처음 잰다 — 빨갛거든 자의 «머무름 창(0.5~1.0초)» 과 `RewardOrbs.Make` 월드 갈래를 본다. 리워드 팝업(35)의 구슬은 UI 그대로다.
 
 ### T503 — ⛑ **명부는 «몇 건 돌았나 · 몇 건 빨갰나» 만 말한다 — «몇 건이 재기를 건너뛰었나» 는 아무 데도 안 찍힌다** (워커 E · 2026-09-12 11:1X · `tools/ci_test_failures.py` 한 파일 · 게임 코드 0줄)
 

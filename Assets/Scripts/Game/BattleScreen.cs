@@ -67,7 +67,9 @@ namespace KkomaKnight.Game
         float _overWait;                     // 사망·클리어에서 흡수를 기다린 시간(AbsorbMaxWaitSec 넘으면 강제 완료)
         float _lvUpWait;                     // T368 — 레벨업(또는 이벤트) 결정이 «떠야 하는데 아직 못 뜬» 채 기다린 시간
         int _questKills;                     // T257 4항 — 퀘스트에 이미 넘긴 처치 수(이 판) · 판이 끝날 때 «G.Kills - 이것» 만 넘긴다
-        const float CountUpSec = 0.2f, AbsorbMaxWaitSec = 0.6f, OrbSizePx = 64f;
+        const float CountUpSec = 0.2f, AbsorbMaxWaitSec = 0.6f;
+        /// <summary>전투 구슬 한 변(프레임 px) — T502 ③ 부터 월드 SpriteRenderer 지만 크기는 이 px 가 화면에서 그대로 보이게 맞춘다(자가 `WorldCam.ToFrame` 으로 되재어 ±10% 를 본다).</summary>
+        public const float OrbSizePx = 64f;
         const int OrbMinCount = 3, OrbBossCount = 8;
 
         protected override void Build()
