@@ -1,0 +1,1 @@
+{"_meta":{"task":"T496","what":"Pending 이 선 뒤 창이 열릴 때까지 — 그 사이 엔진은 언다(BattleScreen:489)"},"frames":{"kill":84,"pending":118,"open":118,"hold":0},"engineTime":{"kill":1.6,"pending":2.2333,"open":2.2333,"hold":0},"holdRealSec":0,"note":"holdT 가 0 이면 그 구간 동안 엔진이 얼어 있었다(틱 0). holdRealSec 이 사람이 느끼는 멈춤이고 0.5초에서 막는다 — 고치기 전 2.3초(런 1147) · 고친 뒤 한두 프레임."}
