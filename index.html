@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <!-- T196 — 유니티 «Default» 템플릿은 데스크톱 UA 에서 캔버스를 960x600 px 로 **못 박는다**
+         (`canvas.style.width = "960px"`). 그 안에서 9:19.5 프레임이 다시 레터박스되어 화면 한구석의
+         작은 띠가 된다(실측: 창을 540x1170 · 390x844 · 1080x2337 · 768x1024 로 바꿔도 캔버스는 늘 960x600).
+         폰(iPhone|iPad|iPod|Android UA)만 «화면 채우기» 갈래를 타므로 주인 폰은 멀쩡했고,
+         PC 브라우저와 **T60 배포 스모크 스샷**만 깨져 보였다. 이 템플릿은 그 갈래를 없애고 늘 채운다. -->
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes, viewport-fit=cover">
+    <title>KkomaKnight</title>
+    <style>
+      /* 자족 템플릿 — `TemplateData/` 를 안 쓴다(그림·폰트 같은 새 이진 파일을 커밋하지 않기 위해서다 · ROUTINE §1). */
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #2C2B29; }
+      /* 세로 100% 는 모바일 주소창 때문에 흔들린다 — 있으면 dvh 를 쓰고 없으면 100% 로 떨어진다. */
+      #unity-container { position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh; }
+      /* ⚠ 이 세 줄이 이 템플릿의 전부다: 캔버스가 창을 그대로 채운다(고정 px 없음).
+         유니티는 기본값(`matchWebGLToCanvasSize`)으로 렌더 타깃을 이 DOM 크기 × devicePixelRatio 에 맞춘다. */
+      #unity-canvas { display: block; width: 100%; height: 100%; background: #2C2B29; }
+      #unity-loading-bar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 60%; max-width: 320px; display: none; }
+      #unity-progress-bar-empty { width: 100%; height: 12px; background: #00000055; border-radius: 6px; overflow: hidden; }
+      #unity-progress-bar-full { width: 0%; height: 100%; background: #F2A33C; }
+      #unity-warning { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 2; font: 14px/1.4 sans-serif; }
+    </style>
+  </head>
+  <body>
+    <div id="unity-container">
+      <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-progress-bar-empty"><div id="unity-progress-bar-full"></div></div>
+      </div>
+      <div id="unity-warning"> </div>
+    </div>
+    <script>
+      // ⚠ 아래 세 이름(`canvas` · `config` · `createUnityInstance(canvas, config,`)과 `#unity-loading-bar` 의
+      // `style.display = "none"` 은 **배포 스모크(tools/webgl_smoke.js · T60)가 문자열로 찾는 자리**다 — 이름을 바꾸지 말 것.
+      var canvas = document.querySelector("#unity-canvas");
+
+      function unityShowBanner(msg, type) {
+        var warningBanner = document.querySelector("#unity-warning");
+        function updateBannerVisibility() { warningBanner.style.display = warningBanner.children.length ? 'block' : 'none'; }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') div.style = 'background: red; padding: 10px;';
+        else {
+          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          setTimeout(function () { warningBanner.removeChild(div); updateBannerVisibility(); }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/KkomaKnight.loader.js";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/KkomaKnight.data",
+        frameworkUrl: buildUrl + "/KkomaKnight.framework.js",
+        codeUrl: buildUrl + "/KkomaKnight.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        // ⚠ 매크로는 **지금 배포된 index.html 에 실제로 찍혀 나온 것들만** 쓴다(조건부 `#if …` · `JSON.stringify(…)` 같은
+        // 고급 꼴은 유니티 없이 검증할 길이 없어 일부러 피했다 — 이 셋은 값에 따옴표가 없어 문자열 보간으로 충분하다).
+        companyName: "kuzuni",
+        productName: "KkomaKnight",
+        productVersion: "0.0.3098",
+        showBanner: unityShowBanner,
+      };
+
+      document.querySelector("#unity-loading-bar").style.display = "block";
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+        }).then((unityInstance) => {
+          document.querySelector("#unity-loading-bar").style.display = "none";
+          window.unityInstance = unityInstance;
+        }).catch((message) => {
+          unityShowBanner(message, 'error');
+        });
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>
