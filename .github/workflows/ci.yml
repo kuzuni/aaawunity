@@ -58,6 +58,11 @@ jobs:
         run: dotnet test tools/dotnet/Tests/KkomaKnight.Tests.csproj -c Release --no-build --nologo --logger "trx;LogFileName=results.trx"
       - name: .meta 누락/고아 검사
         run: python3 tools/gen_meta.py --check
+      # ⛑ T505 — **자기 검사를 먼저 돌린다.** 이 자는 «막는 자» 인데 조용히 고장 나면 «누락 0건» 만 찍는다
+      #   (T492 가 «자기 검사 없는 자 다섯» 으로 세어 둔 그 하나였다). 자가 도는지를 사람 말이 아니라
+      #   이 단계로 본다 — T488 이 «자의 가동은 손자국으로 본다» 로 치른 값이다.
+      - name: 카탈로그 키 자 자기 검사 (갈래 여덟 · T505)
+        run: python3 tools/check_catalog_keys.py --self-test
       - name: 코드의 카탈로그 키 ↔ catalog.json 대조 (플레이 콘솔 에러 0 게이트 · T12)
         run: python3 tools/check_catalog_keys.py
       # T211 — 게임이 런타임에 읽는 것은 catalog.json 이 아니라 **거기서 생성된** AssetCatalog.asset 이다.
