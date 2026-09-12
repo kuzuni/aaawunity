@@ -71,7 +71,7 @@ jobs:
           LIC: ${{ secrets.UNITY_LICENSE }}
         run: |
           set -euo pipefail
-          if [ -z "$LIC" ]; then echo "go=false" >> "$GITHUB_OUTPUT"; echo "::notice::UNITY_LICENSE 시크릿이 없어 건너뛴다 — 이 워크플로의 unity-builder 는 계정(EMAIL/PASSWORD) 방식을 안 받는다(T298). ci.yml 이 그 시크릿을 안 쓴다고 해서 지우면 폰 빌드만 조용히 멈춘다."; exit 0; fi
+          if [ -z "$LIC" ]; then echo "go=false" >> "$GITHUB_OUTPUT"; echo "::notice::UNITY_LICENSE 시크릿이 없어 건너뛴다 — 이 워크플로의 unity-builder 는 계정(EMAIL/PASSWORD) 방식을 안 받는다(T298). T499 뒤로 ci.yml 의 굽기 잡 둘도 이 시크릿을 쓴다 — 지우면 폰 빌드와 APK 가 같이 조용히 멈춘다."; exit 0; fi
           # 지금 gh-pages 에 올라가 있는 소스 커밋(배포 커밋 메시지에 sha 를 적어 둔다)
           cur=$(gh api "repos/$GITHUB_REPOSITORY/commits/gh-pages" --jq '.commit.message' 2>/dev/null | head -1 | grep -oE '[0-9a-f]{40}' | head -1 || true)
           echo "지금 배포된 커밋: ${cur:-(없음)}"

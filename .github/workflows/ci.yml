@@ -6,7 +6,18 @@ on:
   push:
     branches: ['**']
   pull_request:
+  # T499 — 수동 실행에 **굽기 스위치**를 달았다(기본 꺼짐).
+  #   까닭: T497 뒤로 워커가 «임자 없는 빚» 을 갚으려 `workflow_dispatch` 를 규약대로 띄우는데,
+  #   그 dispatch 는 «유니티 자를 한 번 돌리려는 것» 이지 **굽는 것이 아니다**(굽기는 `deploy-last-green` 이 매시 한다).
+  #   그런데 굽기 잡 둘이 dispatch 전용이라 띄울 때마다 같이 서고, 30초 만에 죽어 **런 결론이 failure** 가 됐다(런 1146).
+  #   그러면 다음 워커가 런 목록의 빨강을 보고 조사를 시작한다 — 규약이 시키는 일이 남의 회차를 먹는다.
+  #   ⇒ 기본은 안 굽고, ROUTINE §2 T250 의 «오디오·로더·빌드 설정을 만진 커밋은 수동으로 한 번» 만 `build=true` 로 띄운다.
   workflow_dispatch:
+    inputs:
+      build:
+        description: "WebGL·Android 를 실제로 굽는다 (기본 꺼짐 — 켜면 런이 20~40분 길어진다)"
+        type: boolean
+        default: false
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -263,6 +274,10 @@ jobs:
     outputs:
       has_license: ${{ steps.check.outputs.has }}
       has_code: ${{ steps.code.outputs.has }}
+      # T499 8항 — 굽기 잡(`unity-builder@v4`)은 **계정 방식을 안 받는다**. 위 `has_license`(계정 둘)만 보고
+      #   굽기를 통과시키면 라이선스 없이 30초 만에 죽는 런을 만든다 — T298 이 `deploy-last-green.yml:71` 에서
+      #   «죽을 런을 20분마다 만든다» 며 막은 그 덫이 이 파일에 새로 생긴 자리다. 그래서 문지기를 하나 더 둔다.
+      has_ulf: ${{ steps.ulf.outputs.has }}
     steps:
       # T433 — **이 푸시가 코드를 건드렸는가.** 16분짜리 `unity-test` 만 이것을 본다(70초짜리 `dotnet` 잡은
       #   문서 푸시에서도 그대로 돈다 — `check_docs_intact` 같은 문서 자가 거기 있고, 문서 푸시야말로 그것이 필요하다).
@@ -336,9 +351,19 @@ jobs:
           EM: ${{ secrets.UNITY_EMAIL }}
           PW: ${{ secrets.UNITY_PASSWORD }}
         run: |
-          # T283 — UNITY_LICENSE 는 더 이상 안 본다(계정 방식 · 위 unity-test 의 주석).
+          # T283 — **테스트 잡**(`unity-test-runner@v4`)은 계정 방식으로 돈다. 이 판정은 그 잡의 것이다.
+          #   ⚠ T499 — 굽기 잡은 이 판정만으로는 못 돈다(바로 아래 `ulf` 단계). 둘을 같은 것으로 읽지 마라.
           if [ -n "$EM" ] && [ -n "$PW" ]; then echo "has=true" >> "$GITHUB_OUTPUT"; echo "유니티 시크릿 있음 → 테스트/빌드 진행";
           else echo "has=false" >> "$GITHUB_OUTPUT"; echo "::notice::UNITY_EMAIL/UNITY_PASSWORD 시크릿이 없어 유니티 단계를 건너뛴다 (README «해야 할 일» 참조)"; fi
+      - id: ulf
+        env:
+          ULF: ${{ secrets.UNITY_LICENSE }}
+        run: |
+          # T499 — 굽기 전용 문지기. `unity-builder@v4` 는 **라이선스 파일(.ulf)이나 시리얼**을 요구한다
+          #   (T298 이 `deploy-last-green.yml:149~160` 에 대조군까지 못 박았다 — 배포 런 322 성공 ↔ 324·326 즉사).
+          #   없으면 굽기 잡을 **skip 시킨다** — 죽이지 않는다. 「죽는 빨강」보다 「안 돌았다는 알림」이 낫다.
+          if [ -n "$ULF" ]; then echo "has=true" >> "$GITHUB_OUTPUT"; echo "UNITY_LICENSE 있음 → 굽기 가능";
+          else echo "has=false" >> "$GITHUB_OUTPUT"; echo "::notice::[T499] UNITY_LICENSE 시크릿이 없어 굽기 잡(WebGL·Android)을 건너뛴다 — unity-builder 는 계정 방식을 안 받는다(T298)"; fi
 
   unity-test:
     name: Unity EditMode + PlayMode 테스트
@@ -365,6 +390,8 @@ jobs:
           # T283 — UNITY_LICENSE(.ulf 파일) 를 일부러 안 준다. 주면 game-ci 가 «file» 방식을 골라 그 파일이
           #   «TimeStamp validation failed» 로 거절되고(2026-09-09 열다섯 판), 빼면 «personal(계정)» 방식으로
           #   런마다 새로 활성화해 통한다(탐침 런 license-probe #1 · 388/388). 되살리지 마라.
+          #   ⚠ T499 — **이 말은 이 잡(`unity-test-runner@v4`)에서만 옳다.** 굽기 잡(`unity-builder@v4`)은 계정 방식을 안 받아
+          #     라이선스가 없으면 30초 만에 죽는다 — 그 둘은 아래에서 `UNITY_LICENSE` 를 받는다(T298·T499).
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
@@ -521,7 +548,10 @@ jobs:
     #   ⚠ 되돌리려면 아래 줄의 `github.event_name == 'workflow_dispatch'` 를
     #     `(github.event_name == 'push' || github.event_name == 'workflow_dispatch')` 로 되돌린다(그 한 곳뿐).
     #   ⚠ 오디오·로더·빌드 설정을 만진 커밋은 워커가 이 잡을 **수동으로 한 번** 돌린다(3항 ⓒ).
-    if: needs.gate.outputs.has_license == 'true' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    # ⚑ T499 — 조건이 둘 늘었다: ⓐ **굽기 스위치**(`inputs.build` · 기본 꺼짐 — 위 `on.workflow_dispatch` 주석)
+    #   ⓑ **굽기용 라이선스가 있는가**(`has_ulf` · 위 `gate` 의 `ulf` 단계) — 없으면 **죽지 않고 skip** 한다.
+    #   ⚠ `type: boolean` 입력이라도 `github.event.inputs.*` 는 **문자열**로 온다 — `== 'true'` 로 읽는다.
+    if: needs.gate.outputs.has_license == 'true' && needs.gate.outputs.has_ulf == 'true' && github.event_name == 'workflow_dispatch' && github.event.inputs.build == 'true' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -535,11 +565,17 @@ jobs:
             Library-
       - uses: game-ci/unity-builder@v4
         env:
-          # T283 — UNITY_LICENSE(.ulf 파일) 를 일부러 안 준다. 주면 game-ci 가 «file» 방식을 골라 그 파일이
-          #   «TimeStamp validation failed» 로 거절되고(2026-09-09 열다섯 판), 빼면 «personal(계정)» 방식으로
-          #   런마다 새로 활성화해 통한다(탐침 런 license-probe #1 · 388/388). 되살리지 마라.
+          # ⛔⚑ T499 — **이 주석이 사흘 동안 거꾸로를 시켰다. 고친 것이 이 자리다.**
+          #   옛 글: «T283 — UNITY_LICENSE 를 일부러 안 준다 … 되살리지 마라».
+          #   그 «되살리지 마라» 는 **테스트 잡(`unity-test-runner@v4`)에서 잰 것**이고 거기서는 지금도 옳다(위 `unity-test`).
+          #   그런데 **굽기(`unity-builder@v4`)는 계정 방식을 안 받는다** — 라이선스도 시리얼도 없으면
+          #   `Missing Unity License File and no Serial was found` 로 **30초 만에 죽는다**(런 1146 · 오늘이 첫 실행이었다).
+          #   같은 것을 T298 이 `deploy-last-green.yml:149~160` 에 대조군까지 적어 두었는데(배포 런 322 성공 ↔ 324·326 즉사),
+          #   **고쳐진 자리가 그 파일뿐이라 이 주석은 살아남았다**(결정 860). ⇒ 되돌림을 적을 때 세는 것은
+          #   «내가 고친 자리» 가 아니라 «같은 잘못이 있는 자리 전부» 다(`grep -n UNITY_LICENSE .github/workflows/*.yml`).
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
           projectPath: .
           targetPlatform: WebGL
@@ -594,7 +630,10 @@ jobs:
     #   ⚠ 되돌리려면 아래 줄의 `github.event_name == 'workflow_dispatch'` 를
     #     `(github.event_name == 'push' || github.event_name == 'workflow_dispatch')` 로 되돌린다(그 한 곳뿐).
     #   ⚠ 오디오·로더·빌드 설정을 만진 커밋은 워커가 이 잡을 **수동으로 한 번** 돌린다(3항 ⓒ).
-    if: needs.gate.outputs.has_license == 'true' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    # ⚑ T499 — 조건이 둘 늘었다: ⓐ **굽기 스위치**(`inputs.build` · 기본 꺼짐 — 위 `on.workflow_dispatch` 주석)
+    #   ⓑ **굽기용 라이선스가 있는가**(`has_ulf` · 위 `gate` 의 `ulf` 단계) — 없으면 **죽지 않고 skip** 한다.
+    #   ⚠ `type: boolean` 입력이라도 `github.event.inputs.*` 는 **문자열**로 온다 — `== 'true'` 로 읽는다.
+    if: needs.gate.outputs.has_license == 'true' && needs.gate.outputs.has_ulf == 'true' && github.event_name == 'workflow_dispatch' && github.event.inputs.build == 'true' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -612,11 +651,17 @@ jobs:
             Library-
       - uses: game-ci/unity-builder@v4
         env:
-          # T283 — UNITY_LICENSE(.ulf 파일) 를 일부러 안 준다. 주면 game-ci 가 «file» 방식을 골라 그 파일이
-          #   «TimeStamp validation failed» 로 거절되고(2026-09-09 열다섯 판), 빼면 «personal(계정)» 방식으로
-          #   런마다 새로 활성화해 통한다(탐침 런 license-probe #1 · 388/388). 되살리지 마라.
+          # ⛔⚑ T499 — **이 주석이 사흘 동안 거꾸로를 시켰다. 고친 것이 이 자리다.**
+          #   옛 글: «T283 — UNITY_LICENSE 를 일부러 안 준다 … 되살리지 마라».
+          #   그 «되살리지 마라» 는 **테스트 잡(`unity-test-runner@v4`)에서 잰 것**이고 거기서는 지금도 옳다(위 `unity-test`).
+          #   그런데 **굽기(`unity-builder@v4`)는 계정 방식을 안 받는다** — 라이선스도 시리얼도 없으면
+          #   `Missing Unity License File and no Serial was found` 로 **30초 만에 죽는다**(런 1146 · 오늘이 첫 실행이었다).
+          #   같은 것을 T298 이 `deploy-last-green.yml:149~160` 에 대조군까지 적어 두었는데(배포 런 322 성공 ↔ 324·326 즉사),
+          #   **고쳐진 자리가 그 파일뿐이라 이 주석은 살아남았다**(결정 860). ⇒ 되돌림을 적을 때 세는 것은
+          #   «내가 고친 자리» 가 아니라 «같은 잘못이 있는 자리 전부» 다(`grep -n UNITY_LICENSE .github/workflows/*.yml`).
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
           projectPath: .
           targetPlatform: Android

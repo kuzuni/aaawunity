@@ -13285,3 +13285,13 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 10. **그리고 위 1항의 주석은 그대로 두면 안 된다** — `ci.yml` 의 두 자리에 박힌 T283 주석(«일부러 안 준다 … **되살리지 마라**»)은 다음 사람에게 **정확히 거꾸로** 를 시킨다. 결정 860 이 «그 근거는 다른 액션에서 잰 것» 이라고 **이미 적었는데 적힌 자리가 고쳐진 쪽**(`deploy-last-green`)이라 안 고쳐진 쪽 주석은 살아남았다. ⇒ **되돌림·정정을 적을 때 세는 것은 «내가 고친 자리» 가 아니라 «같은 잘못이 있는 자리 전부» 다.** `grep -n UNITY_LICENSE .github/workflows/*.yml` 한 줄이면 그때 보였을 것이고, 그것을 안 해서 **사흘 뒤 오늘 T297 과 같은 덫이 그대로 서 있었다.**
 
 순서 — `.github/workflows/ci.yml` 한 파일(`on.workflow_dispatch` · 굽기 잡 둘의 `if:`·`env`) · 게임 코드 0줄. **T498 이 `ci.yml` 을 반납한 뒤** 잡는다. lock 은 집는 사람이 만든다.
+
+11. **1회차 — ⓐ·ⓑ 를 둘 다 했다**(2026-09-12 08:5X · sess-0731-19847 · 워커 F · 결정 1387 · `T499.lock` 쥔 채). 보탬 7항이 «ⓐ 만 하면 APK 는 영영 안 돈다 = 고친 것이 아니라 안 보이게 한 것» 으로 순서를 못 박았다.
+    · ⓐ `on.workflow_dispatch.inputs.build`(boolean · 기본 `false`) + 굽기 잡 둘 `if:` 에 `github.event.inputs.build == 'true'`. ⚠ `type: boolean` 이라도 그 문맥은 **문자열**이라 `== 'true'` 로 읽는다.
+    · ⓑ 굽기 잡 둘 env 에 `UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}` — **테스트 잡은 0줄**(거기선 계정 방식이 옳다 · T283).
+    · ⓒ 보탬 8항의 문지기: `gate` 에 `ulf` 단계 + `has_ulf` 출력 → 굽기 `if:` 에 `has_ulf == 'true'`. 라이선스가 없으면 **죽지 않고 skip** + 알림 한 줄(`deploy-last-green.yml:71` 과 같은 꼴 · 결정 699 ③).
+    · ⓓ 보탬 10항의 주석 둘을 고쳤다. **테스트 잡의 옛 글은 안 지우고** «이 말은 이 잡에서만 옳다» 한 줄만 보탰다 — 거기서는 지금도 참이다.
+      ⚑ 그리고 **같은 잘못을 한 자리 더 찾았다**: `deploy-last-green.yml` 의 건너뜀 알림이 «ci.yml 이 그 시크릿을 안 쓴다» 고 말하는데 오늘부터 거짓이다(한 문장 · 동작 0줄).
+12. **갈음** — PyYAML 로 잡·입력·`if`·`env` 를 눈으로 확인(굽기 둘 env 에 `UNITY_LICENSE` **있음** · 테스트 잡 env 에는 **없음**) · `build` 0 Error · `dotnet test` 586/586 · 검사자 23종 rc 0.
+13. **확인** = 입력 없이 띄운 `workflow_dispatch` 런에서 **굽기 잡 둘 `skipped` · 런 결론 success**. ⚠ 그것은 «죽지 않는다» 까지다 — `build=true` 로 켠 굽기가 **끝까지 초록인지는 아직 아무도 모른다**(보탬 9항 · T278).
+
