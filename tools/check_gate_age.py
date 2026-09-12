@@ -289,10 +289,11 @@ def debt(sha):
     if not log:
         log = sh("git", "log", "--name-only", "--format=" + fmt, rng)
     if not log:
-        return 0, 0, [], None
+        return 0, 0, [], None, None
     total = calling = 0
     silent = []
     oldest = None                       # 가장 오래 기다린 «부르는» 커밋의 시각 (git log 는 새 것부터 준다)
+    tip_calls = None                    # **맨 앞(= 가장 새) 커밋이 CI 를 부르는가** — 아래 T497 이 이것으로 «임자 없는 빚» 을 가른다
     for chunk in log.split("\x01"):
         if not chunk.strip():
             continue
@@ -300,6 +301,8 @@ def debt(sha):
         message, _, rest = rest.partition("\x03")
         files = [r for r in rest.split("\n") if r.strip()]
         total += 1
+        if tip_calls is None:           # git log 는 새 것부터 주므로 첫 조각이 곧 끝 커밋이다
+            tip_calls = commit_calls_ci(message, files)
         if commit_calls_ci(message, files):
             calling += 1
             stamp = parse_iso(when)
@@ -312,7 +315,7 @@ def debt(sha):
             #   대개 «본문에 그 규약을 인용» 한 사고다. 실측 2건 중 하나는 본문이
             #   «이 커밋은 … 없이 민다» 였다 — 그 문장 자신이 CI 를 껐다.
             silent.append(message.split("\n")[0][:70])
-    return total, calling, silent, oldest
+    return total, calling, silent, oldest, tip_calls
 
 
 def main():
@@ -337,7 +340,7 @@ def main():
 
     when = datetime.datetime.strptime(m["utc"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc)
     age = int((datetime.datetime.now(datetime.timezone.utc) - when).total_seconds() // 60)
-    total, calling, silent, oldest = debt(m["sha"])
+    total, calling, silent, oldest, tip_calls = debt(m["sha"])
     verdict = m.get("tests", "?")
     # ⛳ T438 — 판정에 쓰는 수는 **빚이 실제로 기다린 시간**이다(위 `debt` 의 설명 참조).
     #   시각을 못 읽었는데 빚은 있는 갈래에서는 «잴 수 없다» 를 «괜찮다» 로 읽지 않는다 —
@@ -387,6 +390,22 @@ def main():
     if calling > 0 and judged > limit:
         bad.append(f"빚 {calling}개가 {judged}분째 답을 못 받았다(한계 {limit}분"
                    + (" · 시각을 못 읽어 답의 나이로 잰 값이다)" if fallback else ")"))
+        # ⛑ T497 — **«기다리는 빚» 과 «임자 없는 빚» 은 다른 것이고 처방도 다르다.**
+        #   ⓐ 기전: `concurrency` 그룹은 «도는 것 1 + 기다리는 것 1» 만 두므로 **셋째 푸시가 오면 줄 서 있던 런을 죽인다**
+        #      (`cancel-in-progress: false` 가 막는 것은 «도는 것을 자르는 것» 뿐이다 — `ci.yml:11~13` 의 주석 그대로).
+        #   ⓑ ⚑ **T433 뒤로 그 구멍이 스스로 아물지 않는다.** 전에는 뒤따라온 문서 푸시도 유니티를 돌려서
+        #      **밀려 죽은 코드 커밋을 같은 나무로 덮어** 줬다. 지금 문서 푸시는 유니티를 건너뛰므로(T433) 덮지 않는다.
+        #      곧 T433 은 큐를 아끼면서 **«밀려 죽은 런이 저절로 갚아지던 길» 을 같이 닫았다** — 아무도 안 적어 둔 값이다.
+        #   ⓒ 가르는 법(이 통엔 GitHub API 가 없다 · 실측 2026-09-12 런 1144 취소 → 1145 문서라 유니티 건너뜀):
+        #      **빚이 한 런 길이보다 오래됐는데 끝 커밋이 CI 를 안 부른다** = 그 빚을 담을 런은 이미 사라졌다.
+        #      (아직 도는 중이면 그 나이가 한계를 안 넘는다 — 그래서 이 줄은 ✗ 갈래 안에만 선다.)
+        if tip_calls is False:
+            print("· ⚠⚠ **이 빚은 «기다리는 중» 이 아니라 «임자가 없다»** — 그 빚을 담을 런이 이미 사라졌다"
+                  "(줄 서 있다가 뒤 푸시에 밀려 cancelled) · 그리고 **그 뒤 커밋은 CI 를 안 부르므로 대신 갚아 주지 않는다**(T433).")
+            print("  ⤷ 처방: **사람이 런을 한 번 띄운다**(Actions → CI → Run workflow · `main`). "
+                  "안 띄우면 **다음 코드 푸시가 이 빚을 물려받고, 그 사람이 남의 빨강을 받는다**(T497).")
+            print("  ⤷ ⚠ **띄운 직후에도 이 줄은 그대로 선다** — 이 통엔 GitHub API 가 없어 «지금 도는 런» 을 못 본다. "
+                  "판정은 `origin/screens:meta.json` 이 움직여야 바뀐다(≈20분) — **두 번 띄우지 마라**.")
     if verdict != "success":
         bad.append(f"마지막 답이 «{verdict}» 다")
     if m.get("shots", 1) == 0:
@@ -622,7 +641,7 @@ def self_test():
         real_sh = globals()["sh"]
         globals()["sh"] = lambda *a: real_sh(*[x.replace("origin/main", "___origin_main") for x in a])
         try:
-            total, calling, silent, oldest = debt(base)
+            total, calling, silent, oldest, tip_calls = debt(base)
         finally:
             globals()["sh"] = real_sh
         wait = minutes_since(oldest)
@@ -630,6 +649,26 @@ def self_test():
         bad += 0 if ok else 1
         print(f"  {'✔' if ok else '✘'} 진짜 저장소: 커밋 {total}개 · 빚 {calling}개 · 가장 오래된 빚 {wait}분째 "
               f"(기대 2·1·0~2분) — **두 시간 전 문서 커밋이 빚의 나이를 늙히지 않는다**(T438 의 본론)")
+        # ⛑ T497 ⓐ — **끝 커밋이 코드면 «기다리는 빚»** 이다(그 푸시가 제 런을 갖고 있다).
+        ok = tip_calls is True
+        bad += 0 if ok else 1
+        print(f"  {'✔' if ok else '✘'} 끝 커밋이 코드 = 기다리는 빚(tip_calls={tip_calls} · 기대 True) — "
+              f"이 갈래에서는 «임자 없다» 줄이 서면 안 된다")
+        # ⛑ T497 ⓑ — **그 위에 문서 커밋 하나를 얹으면 «임자 없는 빚»** 이다(실측 런 1144→1145 그 꼴).
+        io.open("docs/PROGRESS.md", "a", encoding="utf-8").write("뒤따라온 문서\n")
+        subprocess.run(["git", "add", "-A"], capture_output=True)
+        subprocess.run(["git", "commit", "-q", "-m", "문서만 둘째"], capture_output=True, env=env)
+        git("branch", "-f", "___origin_main")
+        globals()["sh"] = lambda *a: real_sh(*[x.replace("origin/main", "___origin_main") for x in a])
+        try:
+            total2, calling2, _, _, tip2 = debt(base)
+        finally:
+            globals()["sh"] = real_sh
+        # ⚠ **빚 수는 그대로여야 한다** — 문서 커밋은 빚이 아니다. 그것까지 같이 봐야 «tip 만 보고 빚을 잃는» 고장을 잡는다.
+        ok = tip2 is False and (total2, calling2) == (3, 1)
+        bad += 0 if ok else 1
+        print(f"  {'✔' if ok else '✘'} 끝 커밋이 문서 = **임자 없는 빚**(tip_calls={tip2} · 커밋 {total2}개 · 빚 {calling2}개 · "
+              f"기대 False·3·1) — 밀려 죽은 런을 문서 푸시가 **안 갚는다**(T433 뒤 · T497)")
     finally:
         os.chdir(cwd)
         shutil.rmtree(tmp, ignore_errors=True)
