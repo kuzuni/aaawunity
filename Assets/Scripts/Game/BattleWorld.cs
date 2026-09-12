@@ -1182,7 +1182,15 @@ namespace KkomaKnight.Game
                 case EvKind.Bolt: Lightning(ev.Enemy); break;
                 case EvKind.Reflect: Pop("반사 " + UiKit.Fmt(ev.Value), EnemyPos(ev.Enemy, 0.95f), Palette.Sky, 32, SrcIcon(ev.Src)); break;
                 // T152 3항 — 반격 팝도 같은 표기로 맞춘다(같은 «치명타» 를 두 가지로 적지 않는다 · 결정 기록)
-                case EvKind.Counter: Pop("반격 " + UiKit.Fmt(ev.Value), EnemyPos(ev.Enemy, 0.95f), Palette.Orange, 34, SrcIcon(ev.Src) ?? (ev.Crit ? CritIconKey : null)); Fx.Spawn("fx.hit", EnemyPos(ev.Enemy), 0.5f, 1f); break;
+                case EvKind.Counter: Pop("반격 " + UiKit.Fmt(ev.Value), EnemyPos(ev.Enemy, 0.95f), Palette.Orange, 34, SrcIcon(ev.Src) ?? (ev.Crit ? CritIconKey : null));
+                    // ⛑ T504 — **여기 한 자리가 옛 가산 프리팹(`fx.hit`)에 남아 있었다**(검수 Q 실측 · `f2756fbb`).
+                    //   위 `EvKind.Hit`·`EvKind.PlayerHit` 은 옮겼는데 반격만 안 옮겨서, 주인이 말한 «너무 반짝임·글로우» 가
+                    //   **반격에서는 한 글자도 안 바뀌어 있었다**(그 프리팹 = CFXR 가산 재질 + Point Light).
+                    //   ⚑ 새 자(`HitBurstTests`)가 이것을 못 본 까닭 — 그 자는 `Fx.HitBurst(…)` 를 **직접 불러** 산물을 잰다.
+                    //     그 물음은 «만드는 자가 옳은 것을 만드나» 이지 «전투가 그 자를 부르나» 가 아니다(T491 이 남긴 그 꼴).
+                    //   치명타 갈래는 위 `EvKind.Hit`(:1160)과 **같은 손**으로 맞춘다 — 반격에도 `ev.Crit` 이 있다.
+                    Fx.HitBurst(EnemyPos(ev.Enemy), ev.Crit ? Palette.PopCrit : Fx.HitGrain, ev.Crit ? 1.4f : 1f, ev.Crit ? 16 : 10);
+                    break;
                 case EvKind.LevelUp: Pop("LEVEL UP!", PlayerPos(1.3f), Palette.Yellow, 46); Fx.Spawn("fx.levelup", PlayerPos(0.5f), 1f, 2f); Audio.Sfx("snd.levelup"); break;
                 case EvKind.Perk:
                 {
