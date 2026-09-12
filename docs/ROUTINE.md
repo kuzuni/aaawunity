@@ -5,6 +5,8 @@
 
 ## ⚑ 신규 주인 지시 (위 항목이 최신)
 
+- **(2026-09-12 · 주인 · T502 등재)** «전투화면에 데미지 텍스트 · hp바 · 재화 흡수 이펙트 전부 월드스페이스로 · 도끼 번개 소환물 · 적 · 배경 · 악마·천사·쉼터 전부» → 코드 실측: 배경·노드·적·투사체·번개·바 막대는 이미 월드. 남은 UI 층 셋(데미지 팝 · 발밑 숫자 · 전투 구슬)을 월드로 = T502.
+
 - **(2026-09-12 · 주인 · T457·T473·T474·T475·T476 바로 함)** «여전히 특전 뜨기 전에 계속 움직이게 · 특전 딱 떴을 때 정지 · 흡수 효과 나오면서부터 이미 멈춘다» → T50 킬 연출 엔진 보류를 기본 끔(`HoldEngineOnKill = false`) · «펫 리워드 팝업 뒤 흡수 아이콘이 다르다» → 구슬 그림을 칸 스프라이트 그대로(T473) · «프로필 이미지 9개로» → T474 · «펫 부분도 공체실 순서로 · 지금 체실공» → T475 · «최대 회피율 90% · 최대 방어력 90% · 초과 안 되게» → aaaw `c5e75f2`(방어 상한 80→90) + data 동기(T476 → **✅ 닫혔다** · 워커 P · 21:0X · 런 1123 datasync · 결정 1344 · T473·T475 → **✅ 닫혔다** · 워커 P · 21:5X · 런 1127 · 결정 1353 · 폰 확인은 👀 ⑱·⑲).
 
 - **(2026-09-12 · 주인 · T471 바로 함 · T472 등재 → **✅ 둘 다 닫혔다** · T471 워커 M 21:1X 결정 1349 · T472 워커 M 20:1X · 머리 줄의 ✅ 는 워커 P 가 00:5X 에 덧붙임)** «상점 카드 클릭해도 결제되던데 · 버튼을 클릭해야 결제되게 · 80000원 써 있는 부분» → 카드 몸통 클릭 뗌(가격 버튼만) · «상자 확률 부분에 어떤 거는 이미지 존내 크게 되더라 · 다 제대로»(사진: 부츠·장갑) → T472.
@@ -13333,3 +13335,14 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 5. ⚠ **안 쟀다**(결정 1106 ②) — ⓐ 런 1151 의 결과 ⓑ `build=true` 로 켠 굽기가 **끝까지 초록인지**(F 가 «몸통을 한 번도 안 돌려 본 잡» 이라 적어 뒀다 · T278) — 이 절은 그것을 안 켰다 ⓒ «쪽지가 안 읽힌다» 를 **한 표본**으로 말한다(오늘 이 한 번이다 · 다만 그 표본에는 «예고를 적은 사람» 까지 있었다).
 
 순서 — ⓐ 런 1151 을 읽고 닫는다(✅ 또는 ②의 문장 손질). `tools/check_gate_age.py` 한 파일. lock `T501`.
+### T502 — ⚑⚑ 주인: **전투 화면의 남은 프레임(UI) 층 셋을 월드 공간으로 — 데미지 팝 · 발밑 숫자 · 재화 흡수 구슬** (주인 2026-09-12 «전투화면에 데미지 텍스트 · hp바 · 재화 흡수 이펙트 전부 월드스페이스로 됐어야 함 · 도끼 번개 그런 거 소환물도 전부 · 적들이랑 배경도 전부 · 악마·천사·쉼터 전부»)
+
+0. **실측(코드 · 이미 월드인 것은 손대지 않는다)** — 배경(`BuildGround`·`BuildProps`) · 악마/천사/쉼터(`BuildNodes`) · 플레이어/적 리그 · HP/실드 **막대**(`MakeBar` = SpriteRenderer) · 투사체(도끼·창·화살 = `_root` 아래 SpriteRenderer + `fx.trail`) · 번개(`Fx.PlaySheet` 월드) · 검기(`fx.wave`) — 전부 `WorldCam` 아래 월드 오브젝트다. 프레임(UI) 층에 남은 것은 **셋뿐**: ① `BattleWorld.Pop`(데미지·회복·아이콘 팝 = `UiKit.Text` in `_pops` · `WorldCam.ToFrame` 변환 · DOTween 앵커 이동) ② `FootText`/`PlaceFootText`(막대 안 숫자 TMP in `_pops`) ③ 전투 재화 구슬(`BattleScreen._orbLayer` 의 `RewardOrbs` · 트레일만 월드(`UseWorldTrail`)).
+1. **① 팝 → 월드 TMP** — `TextMeshPro`(3D) 를 `_root` 아래에 · `sortingOrder` = 막대 위(투사체 350 보다 위) · 크기 = 지금 프레임 px ÷ `WorldCam.PPU` 가 화면에서 **같은 크기**가 되게(자로 잰다) · 트윈은 `transform.DOMoveY` · `PopIcon` 은 SpriteRenderer 자식(`PopIconName` 이름 유지 — 게이트가 이 이름을 찾는다). 좌우 흔들기·OutBack·페이드 그대로.
+2. **② 발밑 숫자 → 월드 TMP** — 막대 transform 의 자식으로 두면 `PlaceFootText` 의 월드→프레임 변환이 통째로 사라진다. `FitFootText`(막대 폭에 맞춤)는 월드 폭으로. `FootFontSize`·«Bold 안 줌»(결정 449) 은 그대로.
+3. **③ 전투 구슬 → 월드** — `RewardOrbs` 에 월드 모드(생성자에 `Transform worldRoot`): 구슬 = SpriteRenderer(지금의 `AttachWorldTrail` 트레일을 그대로 씀) · 출발 = 적 월드 위치 · 과녁 = **매 프레임** `WorldCam.FromFrame(알약(골드/EXP 바)의 프레임 위치)`(알약은 UI 에 남는다 · 카메라가 움직여도 따라간다) · `Fly/Busy/Alive/FinishNow/Clear/TargetPos` 계약 유지. **로비 리워드 팝업(35)의 구슬은 그대로 UI** — 주인 말은 전투 화면이다.
+4. **자** — `HudBarsTests`(10 곳 · `PlayerHpText`·`BarTxt` 가 월드 TMP 가 되면 «프레임 좌표» 단언을 «월드 좌표 = 막대 가운데» 로) · `RewardOrbTests`·`RewardOrbQtyPlayTests`(전투 구슬 = `_root` 아래 SpriteRenderer · 과녁 = 알약의 월드 환산) · `BattleWorldTests` 팝 1곳 · `UiSmokeTests` 의 `"Pops"` 이름 · 새 자: 팝 글자의 화면 높이(px) 가 종전과 ±10% (줌 없음 기준).
+5. **확인** — `screens` 전투 컷 나란히(팝·숫자·구슬이 카메라와 같이 움직이는가) + 주인 폰.
+
+순서 — ① → ② → ③ (③ 이 제일 크다 · 회차를 나눠도 된다: ①②를 한 회차 · ③ 을 다음 회차). lock `T502`.
+
