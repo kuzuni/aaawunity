@@ -180,6 +180,14 @@ jobs:
       - name: "PROGRESS 표 행 어긋남 — 보고만(빨개도 안 막는다 · 결정 493)"
         continue-on-error: true
         run: python3 tools/check_task_rows.py
+      # T507 — 본 검사 **바로 앞** 한 단계(T505·T506 이 놓은 자리와 같은 꼴 · 결정 699 ③).
+      #   ⚑ 아래 자는 **알리는 자**라 `continue-on-error` 로 부른다 — 조용히 고장 나도 런이 안 막힌다.
+      #     그래서 **자기 검사는 막는 자로 단다**: «알리는 자가 고장 났다» 는 알릴 자리가 그것 말고 없다.
+      #     T492 가 센 «자기 검사 없는 자 다섯» 의 마지막 하나이고, 갈래는 **제 레포 이력에 안 기댄다**
+      #     (임시 git 레포를 세워 돌린다 — `fetch-depth` 가 표본 커밋을 못 담는 날 제 잘못 아닌 까닭으로 빨개지면
+      #      다음 사람이 갈래를 지운다).
+      - name: 옛 단언 자 자기 검사 (갈래 아홉 · T507)
+        run: python3 tools/check_stale_asserts.py --self-test
       - name: "지운 값을 아직 가리키는 테스트 — 보고만(빨개도 안 막는다 · 결정 493)"
         continue-on-error: true
         run: python3 tools/check_stale_asserts.py
