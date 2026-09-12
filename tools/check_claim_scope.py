@@ -20,8 +20,23 @@
   ⓒ 그 중 **다른 행이 제 범위로 적어 둔 파일**은 ⚠ 로 따로 세운다 — 그 자리는 짐작이 아니라
      **지금 누군가 기다리고 있는** 자리다(대기 행이면 몇 개인지도 센다).
 
+ⓓ **살아 있는 lock 둘의 «범위» 칸이 같은 파일을 적었는가** (T509 · 2026-09-12 16:2X 실측)
+  위 ⓐ~ⓒ 는 **«안 적힌» 파일**만 본다. 그래서 **둘 다 정직하게 적으면 아무 갈래도 안 선다** —
+  규약 27행이 가르는 바로 그 꼴(«두 작업이 같은 파일을 만져야 하면 뒤 번호가 기다린다»)이
+  이 자의 눈 밖이었다. 2026-09-12 16:2X 에 실제로 났다: `T507`(워커 E)과 `T508`(워커 J)이
+  **5분 34초 차로 둘 다 살아 있고** 두 행의 범위 칸이 나란히 `tools/check_stale_asserts.py` 를 적었다.
+  **그 20분 내내 이 자는 초록이었다**(«살아 있는 lock 3개 · 범위 열이 실제로 여는 파일을 다 적는다»).
+  규약을 지킨 것은 자가 아니라 **사람의 눈**이었고 — 워커 E 가 알아채 `T508` 을 접고 워커 J 가 제 코드를
+  버렸다 — 그것은 운이다. 회차 하나와 번호 하나가 탔다.
+  ⇒ 이 갈래는 **살아 있는 lock 들의 범위 칸을 서로 맞대어** 같은 파일을 적은 쌍을 이름·시각과 함께 찍는다.
+  **막지는 않는다** — 이 자의 규약 그대로(결정 493·627 · T238).
+
 이 자가 «보는 칸» (T198 규약 — 자를 놓을 때는 사각지대를 적어 둔다)
   · **커밋 제목이 작업 번호로 시작하는 것만** 센다(§6 규약이 그 꼴을 요구한다). 번호를 안 적은 커밋은 못 본다.
+  · ⓓ 는 **확장자를 붙여 적은 이름만** 센다(`tools/x.py` · `Game/GearUi.cs`). `Game/GearUi` 처럼
+    확장자 없이 적은 범위는 ⓐ~ⓒ 가 «덮는다» 로 보지만 ⓓ 는 **안 센다** — 글자만으로는 그것이
+    한 파일인지 한 폴더인지 못 가르고, 뭉뚱그린 범위와도 구별이 안 된다. **알고 못 보는 자리다.**
+  · ⓓ 는 «같은 파일» 까지만 말한다. **같은 줄인지는 안 본다** — 남의 lock 안이라 파일을 열지 않는다.
   · `Tests/` 아래와 `.json`·`.md` 는 안 본다 — 부딪혀도 값이 싼 자리고, 자잘한 경고로 이 자를 죽이면 안 된다.
   · 얕은 클론(`--depth 1`)이면 이력이 없어 ⓐ 가 **빈손**이다. 그때는 «못 봤다» 고 말한다(조용히 초록이 되면 안 된다).
   · 범위 칸을 **글자로** 견준다(`Game/GearUi` 는 `GearUi.cs` 를 덮는다) — «그리는 18곳» 같은
@@ -155,6 +170,67 @@ def undeclared(files, scope_cell):
     return out
 
 
+FILE_TOKEN = re.compile(
+    r"[A-Za-z0-9_][A-Za-z0-9_\-./]*\.(?:cs|py|yml|yaml|json|sh|md|asmdef|prefab|asset)(?![A-Za-z0-9_])")
+
+
+# 범위 칸은 산문이라 «안 연다» 도 그 이름을 적는다 — 그 꼴을 빼지 않으면 첫 실물에서 바로 거짓이 난다.
+#   실측(T507 행 · 2026-09-12): «`tools/check_stale_asserts.py` 한 파일 — **`ci.yml` 0줄**(`T506.lock` 의 범위라 안 연다)».
+#   여기서 `ci.yml` 은 «내 범위다» 가 아니라 **«내 범위가 아니다»** 라는 뜻이다. 뜻이 정반대다.
+NOT_MINE = re.compile(r"^[^A-Za-z0-9가-힣]{0,12}(?:0\s*줄|0\s*파일|안\s*연다|안\s*본다|빼고|제외)")
+
+
+def scope_files(cell):
+    """범위 칸이 «확장자를 붙여» 이름 댄 파일들 — basename 집합 (ⓓ 가 쓰는 눈).
+
+    ⚠ `Game/GearUi` 처럼 **확장자 없이** 적은 범위는 안 센다. `undeclared()` 는 그것을 «덮는다» 로
+       보지만(그 물음은 «이 파일이 그 칸에 있나» 라 한 방향이면 된다), ⓓ 는 **두 칸을 서로 맞대는**
+       물음이라 한 방향으로는 못 푼다 — 확장자 없는 토막은 한 파일일 수도 한 폴더일 수도 있고,
+       그러면 «그리는 18곳» 같은 뭉뚱그린 범위와 글자로 구별이 안 된다. **알고 못 보는 자리다.**
+
+    ⚠ 바로 뒤에 «0줄 · 안 연다» 가 붙은 이름은 **뺀다**(`NOT_MINE`) — 그것은 «내 범위가 아니다» 다.
+       첫 실물(T507 행의 `ci.yml`)이 정확히 그 꼴이었다. 이 걸음이 없으면 이 갈래는
+       **자기가 잡으라고 세워진 그 한 건에서 거짓 이름을 하나 더 붙여** 나온다.
+    """
+    out = set()
+    for m in FILE_TOKEN.finditer(cell):
+        if NOT_MINE.match(cell[m.end():]):
+            continue
+        out.add(os.path.basename(m.group(0)))
+    return out
+
+
+def tid_num(tid):
+    """«T508-b» → 508. 번호가 없으면 0(정렬에서 맨 앞으로 간다)."""
+    m = re.match(r"^T(\d+)", tid)
+    return int(m.group(1)) if m else 0
+
+
+def scope_clashes(locks, scope):
+    """[(앞 번호, 뒤 번호, [겹친 파일 이름])] — 살아 있는 lock 둘의 «범위» 칸이 같은 파일을 적은 쌍.
+
+    규약 `docs/claims/README.md` 27행 — «두 작업이 같은 파일을 만져야 하면 **뒤 번호가 기다린다**».
+    쪼갠 lock(`T293-core`)은 부모(`T293`)와 **한 작업**이라 서로 안 센다(`scope_of` 와 같은 눈).
+    """
+    merged = {}
+    for tid, sid, age in locks:
+        h = tid.split("-", 1)[0]
+        f = scope_files(scope_of(tid, scope))
+        if h in merged:
+            old = merged[h]
+            merged[h] = (old[0], min(old[1], age), old[2] | f)
+        else:
+            merged[h] = (sid, age, f)
+    ids = sorted(merged, key=tid_num)
+    out = []
+    for i, a in enumerate(ids):
+        for b in ids[i + 1:]:
+            both = sorted(merged[a][2] & merged[b][2])
+            if both:
+                out.append((a, b, both))
+    return out
+
+
 def waiters(path_stem, scope, head, holder):
     """그 파일을 제 범위로 적어 둔 **«⬜ 대기» 행들**.
 
@@ -179,6 +255,24 @@ def main():
         print("✓ check_claim_scope: 살아 있는 lock 0개 — 볼 것이 없다")
         return 0
 
+    # ⓓ — 살아 있는 lock 둘이 같은 파일을 제 «범위» 로 적었는가(T509 · README 27행).
+    #     이력을 안 본다: 범위 칸끼리만 맞대므로 얕은 클론에서도 이 갈래는 산다.
+    clashes = scope_clashes(locks, scope)
+    named = sum(len(scope_files(scope_of(t, scope))) for t, _, _ in locks)
+    if len(locks) >= 2 and named == 0:
+        # 공허 방지(결정 1379) — «겹침 0» 과 «한 이름도 못 뽑았다» 는 다른 말이다.
+        print("· ⚠ 못 쟀다(ⓓ) — 살아 있는 lock 이 " + str(len(locks))
+              + "개인데 그 «범위» 칸에서 파일 이름을 **하나도** 못 뽑았다.")
+        print("    «겹침 0» 이 아니다. 범위 칸이 전부 확장자 없이 적혔거나, 이 자의 이름 뽑기가 고장 났다.")
+    for a, b, both in clashes:
+        print("· ⚠ (참고 · 실패 아님) 살아 있는 lock 둘이 **같은 파일**을 제 «범위» 로 적었다 — "
+              + a + " ↔ " + b)
+        print("    겹친 파일: " + " ".join(both))
+        print("    규약(`docs/claims/README.md` 27행) «두 작업이 같은 파일을 만져야 하면 뒤 번호가 기다린다»")
+        print("    ⇒ 기다리는 쪽은 **" + b + "** 이다 — 먼저 민 쪽이 반납한 뒤 남은 것만 집는다,")
+        print("      또는 앞 번호가 제 범위에서 그 파일을 빼고 그 한 줄을 제 절에 적는다.")
+        print("      ⚠ 이 자가 말하는 것은 «같은 파일» 까지다 — 같은 줄인지는 안 본다(남의 lock 은 안 연다).")
+
     blind = []          # (작업ID, SID, 나이, [안 적힌 파일], {안 적힌 파일: [그것을 기다리는 대기 행]})
     no_history = False
     for tid, sid, age in locks:
@@ -200,9 +294,15 @@ def main():
         print("· (참고) 이력이 없어 못 봤다 — 얕은 클론(`--depth 1`)이면 이 자는 아무것도 못 센다.")
         print("    CI 에서 이 줄이 보이면 checkout 단계에 `fetch-depth: 0` 을 준다(안 주면 이 자는 늘 조용하다).")
 
+    # T281 계약 — 마지막 줄이 판정이다. ⓓ 가 잡은 것도 그 한 줄에 실어야
+    # `| tail -1` 로 읽는 워커가 «겹침이 있다» 를 놓치지 않는다.
+    clash_tail = (" · ⚠ 같은 파일을 적은 살아 있는 lock 쌍 " + str(len(clashes)) + "개("
+                  + " ".join(a + "↔" + b for a, b, _ in clashes) + ")") if clashes else ""
+
     if not blind:
         print("✓ check_claim_scope: 살아 있는 lock " + str(len(locks))
-              + "개 · 범위 열이 실제로 여는 파일을 다 적는다")
+              + "개 · 범위 열이 실제로 여는 파일을 다 적는다" + clash_tail
+              + (" — 알리기만 한다(결정 493)" if clashes else ""))
         return 0
 
     # 막힌 사람이 많은 자리부터 — 표를 훑는 워커가 첫 줄에서 오늘의 병목을 본다.
@@ -228,6 +328,7 @@ def main():
           + str(sum(len(b[3]) for b in blind)) + "개"
           + (" · 대기 행 " + str(hot) + "개가 막혀 있다(가장 막힌 자리 = " + blind[0][0] + " 의 "
              + str(len(blind[0][4])) + "개 파일)" if hot else "")
+          + clash_tail
           + " — 알리기만 한다(결정 493)")
     return 0
 
@@ -289,7 +390,54 @@ def selftest():
             if got_default != ["T3"] or got_aware != ["T1"]:
                 print("✗ 자기검사 ⓖ: " + repr((got_default, got_aware))); ok = False
 
-    print(("✓" if ok else "✗") + " check_claim_scope 자기검사 7칸")
+    # ── ⓓ 갈래(T509) — 살아 있는 lock 둘의 «범위» 칸이 같은 파일을 적었는가 ──────────────
+    L = [("T507", "sess-e", 5), ("T508", "sess-j", 0)]
+
+    # ⓗ 2026-09-12 16:2X 에 실제로 난 그 꼴 — 둘 다 «정직하게 적었으므로» ⓐ~ⓒ 는 한 마디도 안 한다.
+    #    뒤 번호가 기다리는 쪽으로 나와야 한다(README 27행).
+    sc = {"T507": "`tools/check_stale_asserts.py` 한 파일 — `ci.yml` 0줄",
+          "T508": "`tools/check_stale_asserts.py` · `.github/workflows/ci.yml`"}
+    got = scope_clashes(L, sc)
+    if got != [("T507", "T508", ["check_stale_asserts.py"])]:
+        print("✗ 자기검사 ⓗ: " + repr(got)); ok = False
+
+    # ⓘ 서로 다른 파일이면 **조용하다** — 알리는 자가 시끄러우면 아무도 안 읽는다.
+    if scope_clashes(L, {"T507": "`tools/a.py`", "T508": "`tools/b.py`"}):
+        print("✗ 자기검사 ⓘ"); ok = False
+
+    # ⓙ 쪼갠 lock 은 제 부모와 **한 작업**이다 — 자기 자신과 부딪혔다고 하면 안 된다.
+    if scope_clashes([("T293", "sess-a", 1), ("T293-core", "sess-a", 0)], {"T293": "`Game/BattleWorld.cs`"}):
+        print("✗ 자기검사 ⓙ"); ok = False
+
+    # ⓚ ⚠ **한계를 못 박는 갈래** — 확장자 없이 적은 범위(`Game/GearUi`)는 ⓓ 가 **안 센다**.
+    #    ⓐ 는 그것을 «덮는다» 로 보므로 두 자의 눈이 여기서 갈린다. 고침이 아니라 한계다.
+    if scope_clashes(L, {"T507": "`Game/GearUi`", "T508": "`Game/GearUi`"}):
+        print("✗ 자기검사 ⓚ: 확장자 없는 범위를 셌다(그 꼴은 한 파일인지 한 폴더인지 모른다)"); ok = False
+    if scope_files("`Game/GearUi.cs` · `그리는 18곳` · `tools/x.py`") != {"GearUi.cs", "x.py"}:
+        print("✗ 자기검사 ⓚ²: " + repr(scope_files("`Game/GearUi.cs` · `그리는 18곳` · `tools/x.py`"))); ok = False
+
+    # ⓛ 셋 이상이면 **쌍마다** 따로 찍고, 늘 앞 번호 → 뒤 번호 차례다(누가 기다리는지가 그 차례에 있다).
+    got = scope_clashes([("T510", "s", 0), ("T507", "s", 0), ("T508", "s", 0)],
+                        {"T507": "`tools/x.py`", "T508": "`tools/x.py`", "T510": "`tools/x.py`"})
+    if got != [("T507", "T508", ["x.py"]), ("T507", "T510", ["x.py"]), ("T508", "T510", ["x.py"])]:
+        print("✗ 자기검사 ⓛ: " + repr(got)); ok = False
+
+    # ⓝ ⚑ «안 연다» 를 «내 범위다» 로 읽지 않는다 — 실물 T507 행이 바로 그 꼴이었다.
+    #    이 걸음이 없으면 이 갈래는 **자기가 잡으라고 세워진 그 한 건에서** `ci.yml` 을 거짓으로 더 붙인다.
+    if scope_files("`tools/check_stale_asserts.py` 한 파일 — **`ci.yml` 0줄**(`T506.lock` 의 범위라 안 연다)") \
+            != {"check_stale_asserts.py"}:
+        print("✗ 자기검사 ⓝ: " + repr(scope_files(
+            "`tools/check_stale_asserts.py` 한 파일 — **`ci.yml` 0줄**(`T506.lock` 의 범위라 안 연다)"))); ok = False
+    # ⓝ² 그러나 **그냥 적힌** `ci.yml` 은 그대로 센다 — 뺄 것은 «부정» 이지 «ci.yml» 이 아니다.
+    if scope_files("`tools/x.py` · `.github/workflows/ci.yml`") != {"x.py", "ci.yml"}:
+        print("✗ 자기검사 ⓝ²"); ok = False
+
+    # ⓜ **공허 방지**(결정 1379) — 범위 칸에서 한 이름도 못 뽑으면 «겹침 0» 이 아니라 «못 쟀다» 다.
+    #    그 갈래가 서는 조건을 그대로 재 본다(main 의 `named == 0`).
+    if sum(len(scope_files(scope_of(t, {"T507": "그리는 18곳", "T508": "여러 자리"}))) for t, _, _ in L) != 0:
+        print("✗ 자기검사 ⓜ"); ok = False
+
+    print(("✓" if ok else "✗") + " check_claim_scope 자기검사 15칸")
     return 0 if ok else 1
 
 
