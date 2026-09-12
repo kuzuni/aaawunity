@@ -97,7 +97,8 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(BattleWorld.PopsName, label.transform.parent != null ? label.transform.parent.name : "", "팝은 월드의 «Pops» 아래에 선다");
             Assert.IsFalse(label.transform.IsChildOf(_app.UiCanvas.transform), "팝은 캔버스 밖(월드)에 있다");
             yield return RealSeconds(0.2f);   // 커지는 트윈(0.12초)이 끝난 뒤에 잰다 — 사라지는 트윈(0.45초 뒤)보다는 앞
-            if (label != null)
+            // 공허 방지(검수 Q · T278) — 팝이 그 사이에 사라졌으면 «못 쟀다» 를 초록이 아니라 빨강으로 말한다.
+            Assert.IsNotNull(label, "0.2초 뒤에 팝이 벌써 사라졌다 — 아래 크기 단언을 못 쟀다(공허 · T278)");
             {
                 var c = new Vector3[4]; label.rectTransform.GetWorldCorners(c);
                 float hPx = WorldCam.ToFrame(c[1]).y - WorldCam.ToFrame(c[0]).y;

@@ -135,7 +135,15 @@ namespace KkomaKnight.Tests.Play
             while (bs.OrbCount == 0 && Time.realtimeSinceStartup - t0 < 5f) yield return null;
             Assert.Greater(bs.OrbCount, 0, "적이 쓰러지는 순간 그 자리에서 보상 구슬이 나와야 한다(주인 지시)");
             int peak = bs.OrbCount;
-            Assert.IsNotNull(GameObject.Find(RewardOrbs.OrbName), "구슬 오브젝트(이름 «" + RewardOrbs.OrbName + "»)가 화면에 있어야 한다");
+            var orbGo = GameObject.Find(RewardOrbs.OrbName);
+            Assert.IsNotNull(orbGo, "구슬 오브젝트(이름 «" + RewardOrbs.OrbName + "»)가 화면에 있어야 한다");
+            // T502 ③(주인 «재화 흡수 이펙트 전부 월드스페이스로») — 전투 구슬은 월드(BattleWorld._root) 아래 SpriteRenderer 다. 캔버스(UI)에는 없다.
+            var orbSr = orbGo.GetComponent<SpriteRenderer>();
+            Assert.IsNotNull(orbSr, "전투 구슬은 월드 SpriteRenderer 다(T502 ③) — uGUI Image 가 아니다");
+            Assert.IsNotNull(orbSr.sprite, "구슬 그림이 있다(카탈로그 키로 찾는다)");
+            Assert.IsNotNull(bs.World, "전투 월드"); Assert.IsTrue(orbGo.transform.IsChildOf(bs.World.Root), "전투 구슬은 월드(_root) 아래에 선다");
+            Assert.IsFalse(orbGo.transform.IsChildOf(_app.UiCanvas.transform), "전투 구슬은 캔버스 밖이다");
+            int orbOrder = orbSr.sortingOrder;
             Assert.Less(bs.ShownGold, G.Gold, "구슬이 도착하기 전에는 표시 골드가 엔진 값보다 작아야 한다(«흡수될 때 차오른다»)");
 
             G.P.Dmg = 0;   // 이 뒤로는 새 킬이 없다 — 이번 한 벌의 수명만 잰다
@@ -172,6 +180,9 @@ namespace KkomaKnight.Tests.Play
             Assert.AreNotEqual(int.MinValue, charTop, "전투에 캐릭터 그림이 하나도 없다 — 아래 단언이 공허해진다");
             Assert.GreaterOrEqual(trailOrder, charTop,
                 $"꼬리는 캐릭터보다 앞이어야 한다(지시서 T461 3항 · 꼬리 {trailOrder} · 캐릭터 맨 앞 {charTop})");
+            // T502 ③ — 구슬(월드)은 제 꼬리보다 앞이고 캐릭터보다도 앞이다(종전 UI 구슬이 «모든 것 위» 였던 것에 가장 가깝다).
+            Assert.Greater(orbOrder, trailOrder, $"구슬은 제 꼬리 위에 그린다(구슬 {orbOrder} · 꼬리 {trailOrder})");
+            Assert.Greater(orbOrder, charTop, $"구슬은 캐릭터보다 앞이다(구슬 {orbOrder} · 캐릭터 맨 앞 {charTop})");
             float tTrail = Time.realtimeSinceStartup;
             while (TrailCount() > 0 && Time.realtimeSinceStartup - tTrail < RewardOrbs.TrailTime + 1.5f) yield return null;
             Assert.AreEqual(0, TrailCount(), "구슬이 사라지면 꼬리도 남으면 안 된다(T144 · 누수 0)");

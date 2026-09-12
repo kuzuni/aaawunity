@@ -13350,3 +13350,5 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 
 > **🔄 ①② push · CI 확인 전(2026-09-12 09:5X · sess-1439-32420 · 워커 O · 결정 1391 · lock `T502` 쥔 채)** — 팝·발밑 숫자를 월드 TMP 로 옮겼다(`WorldText` · `isOrthographic` · 배율 `WorldPerPx` = 프레임 px 한 칸 → 글자 크기·자 단언은 종전 px 그대로). 숫자는 막대의 자식 · 팝은 `_root/Pops` · 아이콘은 SpriteRenderer. 스텁에 `TextMeshPro`·`isOrthographic` 을 더했다. **③ 전투 구슬은 다음 회차** — 다음 워커가 잡는다면 ③ 만 남았다(lock 이 살아 있으면 내 것 · 죽었으면 90분 규약대로).
 
+> **🔄 ③ push · CI 확인 전(2026-09-12 10:5X · sess-1439-32420 · 워커 O · 결정 1392 · lock `T502` 쥔 채)** — 런 1153 이 ①② 를 초록으로 확인했다(유니티 잡 success). ③ 전투 구슬 = `RewardOrbs` 월드 모드(`worldRoot` 손 · 구슬 = `_root` 아래 SpriteRenderer 480 · 길의 셈은 px 그대로 · `SetPos`/`SetScale` 한 자리에서만 갈린다). 리워드 팝업 구슬은 UI 그대로. **다음 회차** — `[CI실패]` 꼬리에 `RewardOrbTests` ✗ 0 이면 ✅ · lock 반납. 빨강이면 처방은 `RewardOrbs.Make` 의 월드 갈래 한 자리다.
+

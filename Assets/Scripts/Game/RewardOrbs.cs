@@ -69,10 +69,30 @@ namespace KkomaKnight.Game
 
         sealed class Orb
         {
-            public RectTransform Rt; public Sequence Seq; public double Value; public Action<double> OnArrive; public bool Done; public GameObject Trail;
+            /// <summary>구슬 오브젝트(두 모드 공통 · 사라졌으면 유니티 null) — 트윈 <c>SetLink</c>·지우기·<see cref="Prune"/> 가 이것만 본다.</summary>
+            public GameObject Go;
+            /// <summary>UI 모드(리워드 팝업)의 그림 — 프레임 px 로 움직인다.</summary>
+            public RectTransform Rt;
+            /// <summary>월드 모드(T502 ③ · 전투)의 그림 — <see cref="Px"/> 를 <see cref="WorldCam.FromFrame"/> 으로 월드에 놓는다. <see cref="Unit"/> = 프레임 px 한 칸이 이 구슬의 로컬 배율로 얼마인가(그림 크기 ÷ sizePx).</summary>
+            public Transform Tr; public float Unit = 1f;
+            /// <summary>지금 자리(프레임 px · 두 모드 공통) · 지금 배율 — 길의 셈은 모드와 무관하게 px 로 하고(<see cref="OrbPath"/>) 마지막에 모드가 놓는다. 꼬리(<see cref="OrbTrail"/>)도 이것을 읽는다.</summary>
+            public Vector2 Px; public float S = 1f;
+            public Sequence Seq; public double Value; public Action<double> OnArrive; public bool Done; public GameObject Trail;
         }
 
         readonly RectTransform _layer;
+        /// <summary>
+        /// T502 ③(주인 «재화 흡수 이펙트 전부 월드스페이스로») — 전투 구슬을 <b>월드 SpriteRenderer</b> 로 띄울 때 그 부모를 돌려주는 손. null 이면 종전대로 UI 모드(리워드 팝업은 그대로 UI · 주인 말은 전투 화면).
+        /// 손으로 받는 까닭 = 전투 월드(<c>BattleWorld._root</c>)는 판마다 새로 서고 이 층은 화면과 함께 한 번만 서기 때문이다 — 띄우는 순간의 월드를 묻는다.
+        /// 길의 셈(<see cref="OrbPath"/> · 홉·머무름·베지어)은 두 모드가 <b>같은 px</b> 로 하고 마지막 한 줄(<see cref="SetPos"/>)에서만 갈린다 — 그래야 자(<c>OrbPathTests</c>·<c>RewardOrbTests</c>)가 모드를 몰라도 된다.
+        /// </summary>
+        readonly Func<Transform> _worldRoot;
+        /// <summary>월드 모드인가(전투) — 아니면 UI 모드(리워드 팝업).</summary>
+        public bool WorldMode => _worldRoot != null;
+        /// <summary>월드 구슬의 정렬 순서 — 꼬리(<see cref="TrailSortOrder"/> 350)·앞 소품(≤470)·팝(400) 위. 종전 UI 구슬이 «모든 것 위» 였던 것에 가장 가깝다(HUD 는 캔버스라 여전히 그 위 = 알약에 «빨려 들어간다»).</summary>
+        public const int OrbSortOrder = 480;
+        /// <summary>월드 구슬의 z — 캐릭터와 같은 평면(정렬은 <see cref="OrbSortOrder"/> 가 정한다).</summary>
+        public const float OrbZ = 0f;
         readonly List<Orb> _alive = new List<Orb>();
         /// <summary>지금 화면에 떠 있는 잔상(T109 3항) — 상한(<see cref="MaxTrail"/>)과 한꺼번에 지우기에 쓴다.</summary>
         readonly List<RectTransform> _trails = new List<RectTransform>();
@@ -102,7 +122,9 @@ namespace KkomaKnight.Game
         /// <summary>이 층이 한 번에 띄울 수 있는 구슬 수 — 전투는 <see cref="MaxAlive"/>(40), 리워드 팝업은 100(T269).</summary>
         readonly int _max;
 
-        public RewardOrbs(RectTransform layer, int maxAlive = MaxAlive) { _layer = layer; _max = Mathf.Max(1, maxAlive); }
+        public RewardOrbs(RectTransform layer, int maxAlive = MaxAlive) : this(layer, null, maxAlive) { }
+        /// <summary>월드 모드(T502 ③) — <paramref name="layer"/> 는 과녁(알약)의 프레임 px 를 재는 자로만 남고, 구슬은 <paramref name="worldRoot"/>() 아래 SpriteRenderer 로 선다.</summary>
+        public RewardOrbs(RectTransform layer, Func<Transform> worldRoot, int maxAlive = MaxAlive) { _layer = layer; _worldRoot = worldRoot; _max = Mathf.Max(1, maxAlive); }
 
         /// <summary>날아가는 중인 구슬 수(테스트·진단용).</summary>
         public int Alive { get { Prune(); return _alive.Count; } }
@@ -127,6 +149,8 @@ namespace KkomaKnight.Game
         {
             Prune();
             if (_layer == null || target == null || count <= 0 || total <= 0) return 0;
+            var root = WorldMode ? _worldRoot() : null;
+            if (WorldMode && root == null) return 0;   // 월드가 없으면(판이 끝난 뒤) 구슬 없이 — 호출자가 값을 바로 반영한다(종전 «화면 밖» 갈래와 같은 손)
             count = Mathf.Min(count, Mathf.Max(0, _max - _alive.Count));
             if (count <= 0) return 0;
             float sc = Mathf.Max(0.5f, timeScale);
@@ -136,9 +160,24 @@ namespace KkomaKnight.Game
             for (int i = 0; i < count; i++)
             {
                 double val = i == count - 1 ? total - each * (count - 1) : each;
-                Make(from, to, spriteKey, tint, sizePx, i, count, sc, val, onArrive, Mathf.Max(0f, holdSec), step, flyBase, flyJit, sprite);
+                Make(root, from, to, spriteKey, tint, sizePx, i, count, sc, val, onArrive, Mathf.Max(0f, holdSec), step, flyBase, flyJit, sprite);
             }
             return count;
+        }
+
+        /// <summary>구슬을 프레임 px 자리에 놓는다 — 모드가 갈리는 유일한 자리(UI 는 anchoredPosition · 월드는 <see cref="WorldCam.FromFrame"/>). 꼬리는 <see cref="Orb.Px"/> 를 읽는다.</summary>
+        static void SetPos(Orb o, Vector2 px)
+        {
+            o.Px = px;
+            if (o.Rt != null) o.Rt.anchoredPosition = px;
+            else if (o.Tr != null) o.Tr.position = WorldCam.FromFrame(px, OrbZ);
+        }
+        /// <summary>구슬 배율(1 = sizePx 한 변) — UI 는 localScale 그대로, 월드는 그림 크기로 맞춘 <see cref="Orb.Unit"/> 을 곱한다.</summary>
+        static void SetScale(Orb o, float s)
+        {
+            o.S = s;
+            if (o.Rt != null) o.Rt.localScale = Vector3.one * s;
+            else if (o.Tr != null) o.Tr.localScale = Vector3.one * (o.Unit * s);
         }
 
         /// <summary>
@@ -179,18 +218,34 @@ namespace KkomaKnight.Game
             return (count - 1) * step + HopSec + holdSec + flyBase + flyJit;
         }
 
-        void Make(Vector2 from, Vector2 to, string spriteKey, Color tint, float sizePx, int i, int count, float sc, double value, Action<double> onArrive, float holdSec, float stepSec, float flyBase, float flyJit, Sprite sprite = null)
+        void Make(Transform root, Vector2 from, Vector2 to, string spriteKey, Color tint, float sizePx, int i, int count, float sc, double value, Action<double> onArrive, float holdSec, float stepSec, float flyBase, float flyJit, Sprite sprite = null)
         {
-            var img = UiKit.Icon(_layer, OrbName, spriteKey, tint);
-            // T473 — 칸이 든 «그 그림» 으로(키가 카탈로그에 없어도 · 펫 메이커 썸네일 같은 런타임 스프라이트)
-            if (sprite != null) img.sprite = sprite;
-            var rt = img.rectTransform;
-            rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = new Vector2(sizePx, sizePx);
+            var orb = new Orb { Value = value, OnArrive = onArrive };
+            if (root != null)
+            {
+                // T502 ③ — 월드 SpriteRenderer. 그림 크기는 «한 변 = sizePx(프레임 px)» 가 화면에서 같게 보이도록 그림의 bounds 로 나눠 맞춘다(BattleWorld.PopIcon 과 같은 셈).
+                var go = new GameObject(OrbName); go.transform.SetParent(root, false);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = sprite != null ? sprite : (App.I != null && App.I.Assets != null ? App.I.Assets.Sprite(spriteKey) : null);
+                sr.color = tint; sr.sortingOrder = OrbSortOrder;
+                float b = sr.sprite != null ? Mathf.Max(sr.sprite.bounds.size.x, sr.sprite.bounds.size.y) : 0f;
+                orb.Unit = b > 1e-4f ? sizePx * BattleWorld.WorldPerPx / b : BattleWorld.WorldPerPx;
+                orb.Go = go; orb.Tr = go.transform;
+            }
+            else
+            {
+                var img = UiKit.Icon(_layer, OrbName, spriteKey, tint);
+                // T473 — 칸이 든 «그 그림» 으로(키가 카탈로그에 없어도 · 펫 메이커 썸네일 같은 런타임 스프라이트)
+                if (sprite != null) img.sprite = sprite;
+                var rt = img.rectTransform;
+                rt.anchorMin = rt.anchorMax = Vector2.zero; rt.pivot = new Vector2(0.5f, 0.5f);
+                rt.sizeDelta = new Vector2(sizePx, sizePx);
+                orb.Go = rt.gameObject; orb.Rt = rt;
+            }
             float spread = sizePx * 1.6f;
             var start = from + new Vector2(UnityEngine.Random.Range(-spread, spread), UnityEngine.Random.Range(-spread * 0.4f, spread * 0.4f));
-            rt.anchoredPosition = start;
-            rt.localScale = Vector3.one * 0.7f;
+            SetPos(orb, start);
+            SetScale(orb, 0.7f);
             var hop = start + new Vector2(UnityEngine.Random.Range(-spread, spread), sizePx * UnityEngine.Random.Range(1.4f, 2.6f));
             // T109 2항 — 비행 시간은 거리와 무관하게 고정(구슬마다 ±FlyJitter 만 흔든다)
             float fly = flyBase + (flyJit > 0f ? UnityEngine.Random.Range(-flyJit, flyJit) : 0f);   // T313 — 값은 Pace 가 정한다(예산이 있으면 줄어든 값)
@@ -198,14 +253,14 @@ namespace KkomaKnight.Game
             // 옆으로 벌어졌다 목적지에서 다시 모이므로 여러 개가 한꺼번에 날 때 겹쳐 보이지 않는다.
             // T461 ⓐ — 그 «랜덤» 을 구슬 번호로 바꿨다(좌·우 번갈아 · 곡률 세 갈래). 무작위가 빠지니 Core 의 자가 이 길을 잰다.
             var ctrl = Vec(OrbPath.Ctrl(Pt(hop), Pt(to), i, sizePx));
-            var orb = new Orb { Rt = rt, Value = value, OnArrive = onArrive };
-            var seq = DOTween.Sequence().SetLink(rt.gameObject);   // SetLink(T56) — 전투 종료로 층이 먼저 파괴돼도 경고 0
+            // 트윈은 전부 «px 자리·배율» 을 돌리고 SetPos/SetScale 이 모드대로 놓는다(T502 ③) — UI 모드에서는 종전 DOAnchorPos/DOScale 과 같은 값이 같은 시간에 간다.
+            var seq = DOTween.Sequence().SetLink(orb.Go);   // SetLink(T56) — 전투 종료로 층·월드가 먼저 파괴돼도 경고 0
             if (i > 0 && stepSec > 0f) seq.AppendInterval(i * stepSec / sc);
-            seq.Append(rt.DOScale(1f, HopSec / sc).SetEase(Ease.OutBack));
-            seq.Join(rt.DOAnchorPos(hop, HopSec / sc).SetEase(Ease.OutQuad));
+            seq.Append(DOTween.To(() => orb.S, v => SetScale(orb, v), 1f, HopSec / sc).SetEase(Ease.OutBack));
+            seq.Join(DOTween.To(() => orb.Px, v => SetPos(orb, v), hop, HopSec / sc).SetEase(Ease.OutQuad));
             // T109 1항 «1초 정도 머물렀다가» — 그 자리에서 살짝 위아래로 흔들며 기다린다(요요라 끝나면 hop 자리로 정확히 돌아온다)
             // (T269) 머무름은 부르는 쪽이 정한다 — 전투는 «죽은 그 자리에 잠깐 남는» 1초이고, 리워드 팝업은 그 자리가 닫히며 사라지므로 거의 0 이다.
-            if (holdSec > 0.001f) seq.Append(rt.DOAnchorPosY(hop.y + sizePx * 0.35f, holdSec * 0.5f / sc).SetEase(Ease.InOutSine).SetLoops(2, LoopType.Yoyo));
+            if (holdSec > 0.001f) seq.Append(DOTween.To(() => orb.Px.y, y => SetPos(orb, new Vector2(orb.Px.x, y)), hop.y + sizePx * 0.35f, holdSec * 0.5f / sc).SetEase(Ease.InOutSine).SetLoops(2, LoopType.Yoyo));
             int trailSteps = Mathf.Max(4, Mathf.RoundToInt(fly / TrailStepSec));
             int lastTrail = -1;
             // T461 ⓐ — 진행률을 트윈의 ease 가 아니라 OrbPath.Ease(InOutSine)가 정한다(그래서 여기는 Linear 다).
@@ -213,18 +268,18 @@ namespace KkomaKnight.Game
             //   셈을 Core 에 두면 이 통에서 매 회차 돌아 «부드러운가» 가 눈이 아니라 수로 지켜진다(OrbPathTests).
             seq.Append(DOVirtual.Float(0f, 1f, fly / sc, p =>
             {
-                if (rt == null) return;
+                if (orb.Go == null) return;
                 var pos = Bezier(hop, ctrl, to, OrbPath.Ease(p));
-                rt.anchoredPosition = pos;
-                rt.localScale = Vector3.one * OrbPath.Scale(p);      // 도착 직전 0.8배 — 과녁으로 «빨려 들어가는» 꼴
+                SetPos(orb, pos);
+                SetScale(orb, OrbPath.Scale(p));      // 도착 직전 0.8배 — 과녁으로 «빨려 들어가는» 꼴
                 // T109 3항 트레일 — 새 그림을 만들지 않고 «같은 스프라이트의 잔상» 을 일정 간격으로 떨군다
                 // ⚠ 잔상 간격은 ease 를 안 먹인 p(=시간)로 센다 — 그래야 감속 구간에서 잔상이 뭉치지 않는다.
                 int k = Mathf.FloorToInt(p * trailSteps);
                 if (k > lastTrail) { lastTrail = k; SpawnTrail(pos, spriteKey, tint, sizePx, sc); }
             }).SetEase(Ease.Linear));
             seq.AppendCallback(() => Arrive(orb));
-            seq.Append(rt.DOScale(1.15f, PopSec * 0.4f / sc));
-            seq.Append(rt.DOScale(0f, PopSec * 0.6f / sc));
+            seq.Append(DOTween.To(() => orb.S, v => SetScale(orb, v), 1.15f, PopSec * 0.4f / sc));
+            seq.Append(DOTween.To(() => orb.S, v => SetScale(orb, v), 0f, PopSec * 0.6f / sc));
             seq.OnComplete(() => Kill(orb));
             AttachWorldTrail(orb, tint);
             orb.Seq = seq;
@@ -274,11 +329,11 @@ namespace KkomaKnight.Game
         /// </summary>
         void AttachWorldTrail(Orb orb, Color tint)
         {
-            if (!UseWorldTrail || orb == null || orb.Rt == null) return;
+            if (!UseWorldTrail || orb == null || orb.Go == null) return;
             var mat = TrailMaterial();
             if (mat == null) return;
             var go = new GameObject(TrailObjName);
-            go.transform.position = WorldCam.FromFrame(orb.Rt.anchoredPosition, TrailZ);
+            go.transform.position = WorldCam.FromFrame(orb.Px, TrailZ);
             var tr = go.AddComponent<TrailRenderer>();
             tr.time = TrailTime; tr.startWidth = TrailStartW; tr.endWidth = TrailEndW;
             tr.numCapVertices = 4; tr.minVertexDistance = 0.02f; tr.autodestruct = false; tr.emitting = true;
@@ -287,7 +342,7 @@ namespace KkomaKnight.Game
             var c0 = tint; var c1 = tint; c1.a = 0f;
             tr.startColor = c0; tr.endColor = c1;
             tr.sortingLayerID = SortLayer(); tr.sortingOrder = TrailSortOrder;
-            var follow = go.AddComponent<OrbTrail>(); follow.Follow = orb.Rt;
+            var follow = go.AddComponent<OrbTrail>(); follow.Target = orb;
             orb.Trail = go;
             _worldTrails.Add(go);
         }
@@ -342,7 +397,7 @@ namespace KkomaKnight.Game
             if (o == null || o.Trail == null) return;
             var go = o.Trail; o.Trail = null;
             _worldTrails.Remove(go);
-            var f = go.GetComponent<OrbTrail>(); if (f != null) f.Follow = null;
+            var f = go.GetComponent<OrbTrail>(); if (f != null) f.Target = null;
             var tr = go.GetComponent<TrailRenderer>(); if (tr != null) tr.emitting = false;
             if (immediate) { if (tr != null) tr.Clear(); UnityEngine.Object.Destroy(go); }
             else UnityEngine.Object.Destroy(go, TrailTime);
@@ -353,17 +408,17 @@ namespace KkomaKnight.Game
         {
             var list = new List<GameObject>(_worldTrails);
             _worldTrails.Clear();
-            foreach (var go in list) { if (go == null) continue; var f = go.GetComponent<OrbTrail>(); if (f != null) f.Follow = null; UnityEngine.Object.Destroy(go); }
+            foreach (var go in list) { if (go == null) continue; var f = go.GetComponent<OrbTrail>(); if (f != null) f.Target = null; UnityEngine.Object.Destroy(go); }
         }
 
-        /// <summary>UI 층에서 도는 구슬을 월드에서 따라다니는 꼬리 — 자기 <c>LateUpdate</c> 로 따라간다(구슬 트윈이 끝난 «뒤» 라 한 프레임도 안 밀린다).</summary>
+        /// <summary>구슬을 월드에서 따라다니는 꼬리 — 자기 <c>LateUpdate</c> 로 따라간다(구슬 트윈이 끝난 «뒤» 라 한 프레임도 안 밀린다). 구슬의 px 자리(<see cref="Orb.Px"/>)를 읽으므로 UI·월드 두 모드가 같다(T502 ③).</summary>
         sealed class OrbTrail : MonoBehaviour
         {
-            public RectTransform Follow;
+            public Orb Target;
             void LateUpdate()
             {
-                if (Follow == null) return;
-                transform.position = WorldCam.FromFrame(Follow.anchoredPosition, TrailZ);
+                if (Target == null || Target.Go == null) return;
+                transform.position = WorldCam.FromFrame(Target.Px, TrailZ);
             }
         }
 
@@ -383,8 +438,14 @@ namespace KkomaKnight.Game
         {
             Arrive(o);
             RetireTrail(o, false);
-            if (o.Rt != null) { UnityEngine.Object.Destroy(o.Rt.gameObject); o.Rt = null; }
+            Drop(o);
             _alive.Remove(o);
+        }
+        /// <summary>구슬 오브젝트를 지운다(두 모드 공통).</summary>
+        static void Drop(Orb o)
+        {
+            if (o.Go != null) UnityEngine.Object.Destroy(o.Go);
+            o.Go = null; o.Rt = null; o.Tr = null;
         }
 
         /// <summary>남은 구슬의 값을 즉시 적립하고 없앤다 — 사망·클리어 팝업이 흡수를 오래 기다리지 않게(0.6초 상한 · 주인 «무한 대기 금지»).</summary>
@@ -392,7 +453,7 @@ namespace KkomaKnight.Game
         {
             var list = new List<Orb>(_alive);
             _alive.Clear();
-            foreach (var o in list) { if (o.Seq != null) { o.Seq.Kill(); o.Seq = null; } Arrive(o); RetireTrail(o, true); if (o.Rt != null) { UnityEngine.Object.Destroy(o.Rt.gameObject); o.Rt = null; } }
+            foreach (var o in list) { if (o.Seq != null) { o.Seq.Kill(); o.Seq = null; } Arrive(o); RetireTrail(o, true); Drop(o); }
             ClearTrails(); ClearWorldTrails();
         }
         /// <summary>값 적립 없이 비운다 — 화면 전환·새 판(호출자가 표시값을 엔진 값으로 맞춘다).</summary>
@@ -400,13 +461,13 @@ namespace KkomaKnight.Game
         {
             var list = new List<Orb>(_alive);
             _alive.Clear();
-            foreach (var o in list) { if (o.Seq != null) { o.Seq.Kill(); o.Seq = null; } o.OnArrive = null; RetireTrail(o, true); if (o.Rt != null) { UnityEngine.Object.Destroy(o.Rt.gameObject); o.Rt = null; } }
+            foreach (var o in list) { if (o.Seq != null) { o.Seq.Kill(); o.Seq = null; } o.OnArrive = null; RetireTrail(o, true); Drop(o); }
             ClearTrails(); ClearWorldTrails();
         }
 
         void Prune()
         {
-            for (int i = _alive.Count - 1; i >= 0; i--) if (_alive[i].Rt == null) _alive.RemoveAt(i);
+            for (int i = _alive.Count - 1; i >= 0; i--) if (_alive[i].Go == null) _alive.RemoveAt(i);
         }
     }
 }

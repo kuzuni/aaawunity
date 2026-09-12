@@ -164,9 +164,10 @@ namespace KkomaKnight.Game
             var hud = new List<RectTransform> { pills, spd, pet, UiKit.Find(Root, "HudPanel") as RectTransform, _exp.Root, _hp.Root, _sh.Root, _perkStrip, info };
             hud.AddRange(cells);
             _chapterHud = hud.ToArray();
-            // T85 — 보상 구슬 층은 HUD «위» (마지막 형제): 구슬이 하단 패널 안의 EXP 바까지 가려지지 않고 날아가야 한다. 글자·이름표 없음(비평 표·게이트 불변).
+            // T85 — 보상 구슬 층(프레임 px 자) · T502 ③ — 구슬 그림은 이제 **월드**(BattleWorld._root 아래 SpriteRenderer)에 뜬다(주인 «재화 흡수 이펙트 전부 월드스페이스로»).
+            //   이 층은 과녁(알약)의 프레임 px 를 재는 자로만 남는다. 글자·이름표 없음(비평 표·게이트 불변). 월드는 판마다 새로 서므로 «띄우는 순간의 월드» 를 손으로 묻는다.
             _orbLayer = UiKit.Rect(Root, "Orbs"); UiKit.Stretch(_orbLayer); _orbLayer.SetAsLastSibling();
-            _orbs = new RewardOrbs(_orbLayer);
+            _orbs = new RewardOrbs(_orbLayer, () => _world != null ? _world.Root : null);
         }
 
         // ───────────────────────── 시작 · 종료 ─────────────────────────
