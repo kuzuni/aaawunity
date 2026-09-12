@@ -13316,7 +13316,7 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 순서 — 끝. lock 반납.
 
 
-### T501 🔄 — ⛑ **한 시간 전에 옳던 처방 줄이 뿌리가 고쳐지면서 거짓이 됐다 — 예고까지 적혀 있었는데 아무도 그 자리에 안 왔다** (검수 Q · 2026-09-12 09:1X · sess-1808-28610 · 결정 1388 · `tools/check_gate_age.py` 한 파일 · 게임 코드 0줄)
+### T501 ✅ — ⛑ **한 시간 전에 옳던 처방 줄이 뿌리가 고쳐지면서 거짓이 됐다 — 예고까지 적혀 있었는데 아무도 그 자리에 안 왔다** (검수 Q · 2026-09-12 09:1X · sess-1808-28610 · 결정 1388 · `tools/check_gate_age.py` 한 파일 · 게임 코드 0줄)
 
 0. **줄거리 — 네 손이 한 시간 안에 같은 줄을 지나갔다**
    · **T497**(검수 Q · 07:1X) — 자에 «임자 없는 빚» 을 가르고 **처방**을 찍게 했다: «사람이 런을 한 번 띄운다».
@@ -13334,7 +13334,9 @@ else if (exitCode !== 0) { setFailed(`Test run failed with exit code ${exitCode}
 4. **그리고 그 처방을 실제로 한 번 더 밟았다** — `workflow_dispatch` 로 `main` 에 CI 를 띄웠다(09:11Z · 런 **1151**). 두 가지를 한 번에 확인하려는 것이다: ⓐ **F 의 T499 확인 조건**(«입력 없는 dispatch 에서 굽기 둘 `skipped` · 런 success») ⓑ **내 자가 시키는 일이 지금 안전한가**. ⚠ 이 회차에 **결과를 못 봤다**(런이 아직 돈다) — 그래서 이 절은 🔄 이고, 위 ②의 문장은 **어느 결과로도 참이게** 적어 두었다.
 5. ⚠ **안 쟀다**(결정 1106 ②) — ⓐ 런 1151 의 결과 ⓑ `build=true` 로 켠 굽기가 **끝까지 초록인지**(F 가 «몸통을 한 번도 안 돌려 본 잡» 이라 적어 뒀다 · T278) — 이 절은 그것을 안 켰다 ⓒ «쪽지가 안 읽힌다» 를 **한 표본**으로 말한다(오늘 이 한 번이다 · 다만 그 표본에는 «예고를 적은 사람» 까지 있었다).
 
-순서 — ⓐ 런 1151 을 읽고 닫는다(✅ 또는 ②의 문장 손질). `tools/check_gate_age.py` 한 파일. lock `T501`.
+6. **확인 ✅ — 런 1151 을 잡 단위로 읽었다**(`74f832a62` · dispatch · 입력 없음 · 09:11~09:30): 잡 여섯 중 **`WebGL 빌드` `skipped` · `Android APK 빌드` `skipped`** · `Unity EditMode + PlayMode` **success** · **런 결론 `success`**. ⇒ ⓐ F 의 T499 확인 조건(«입력 없는 dispatch 에서 굽기 둘 skipped · 런 결론 success»)이 **글자 그대로** 섰고, ⓑ 2항 ①의 문장(«그냥 띄우면 그 둘은 `skipped` 다»)은 이제 **짐작이 아니라 실측**이다. ⚑ 그리고 **이 자의 처방을 따르는 일이 더는 빨강을 안 만든다** — T497 이 만든 규약의 값이 여기서 0이 됐다. ⚠ 그래도 2항 ②의 «빨갛거든 굽기 둘인가부터 보라» 는 **그대로 둔다**: 그 문장은 오늘의 결과가 아니라 **어디를 보라는 규칙**이라 뿌리가 또 움직여도 참이다(이 절의 본론이 그것이다).
+
+순서 — 끝. `tools/check_gate_age.py` 한 파일. lock 반납.
 ### T502 — ⚑⚑ 주인: **전투 화면의 남은 프레임(UI) 층 셋을 월드 공간으로 — 데미지 팝 · 발밑 숫자 · 재화 흡수 구슬** (주인 2026-09-12 «전투화면에 데미지 텍스트 · hp바 · 재화 흡수 이펙트 전부 월드스페이스로 됐어야 함 · 도끼 번개 그런 거 소환물도 전부 · 적들이랑 배경도 전부 · 악마·천사·쉼터 전부»)
 
 0. **실측(코드 · 이미 월드인 것은 손대지 않는다)** — 배경(`BuildGround`·`BuildProps`) · 악마/천사/쉼터(`BuildNodes`) · 플레이어/적 리그 · HP/실드 **막대**(`MakeBar` = SpriteRenderer) · 투사체(도끼·창·화살 = `_root` 아래 SpriteRenderer + `fx.trail`) · 번개(`Fx.PlaySheet` 월드) · 검기(`fx.wave`) — 전부 `WorldCam` 아래 월드 오브젝트다. 프레임(UI) 층에 남은 것은 **셋뿐**: ① `BattleWorld.Pop`(데미지·회복·아이콘 팝 = `UiKit.Text` in `_pops` · `WorldCam.ToFrame` 변환 · DOTween 앵커 이동) ② `FootText`/`PlaceFootText`(막대 안 숫자 TMP in `_pops`) ③ 전투 재화 구슬(`BattleScreen._orbLayer` 의 `RewardOrbs` · 트레일만 월드(`UseWorldTrail`)).
