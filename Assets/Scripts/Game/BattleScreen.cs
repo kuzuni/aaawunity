@@ -469,6 +469,18 @@ namespace KkomaKnight.Game
             // ⚠ **상한을 둔다** — `Absorbing` 은 «엔진이 이미 준 값이 화면에 아직 안 올라온 구간» 도 참이라(그 프로퍼티 끝줄),
             //   쉬지 않고 잡는 구간에서는 계속 참일 수 있고 그러면 특전 창이 영영 안 열려 **주는 것을 안 주는** 회귀가 된다.
             //   기다린 시간이 `AbsorbMaxWaitSec` 를 넘으면 흡수가 남았어도 연다(바로 아래 «판 끝» 이 쓰는 그 상한과 같은 값·같은 까닭).
+            // ⛑⛑ **T496 — 이 글이 하던 말을 코드가 안 하고 있었다**(검수 Q 등재 · 결정 1378).
+            //   `showNow` 는 두 자리에 들어가는데, 아래 `OpenPending()` 의 첫 줄이 `if (Absorbing) return;`(T85) 이라
+            //   **상한은 «열지» 를 못 움직이고 «`Pending` 을 세울지» 만 움직였다.** 그런데 `Pending` 이 서면 아래 루프가
+            //   매 프레임 `_acc = 0; break` 라 **그때부터 엔진이 언다** — 곧 상한이 «영영 안 열림» 을 «멈춤» 으로 바꿔 놓고 있었다.
+            //   ⚑ **그 멈춤을 쟀다**(1회차 · 런 1147 · `origin/screens:t496_hold.json`):
+            //     `frames{kill 85 · pending 119 · open 246 · hold 127}` · `engineTime{hold 0}` — **127프레임 동안 엔진 시간이 0**,
+            //     그 판의 프레임 길이로 **≈2.3초**다. 그리고 킬→`Pending` 이 0.6333초라 **상한(0.6)이 실제로 넘은 것**이다
+            //     ⇒ 이 멈춤은 드문 구석이 아니라 **평범한 판의 레벨업마다** 난다. 주인이 두 번 말한 그 멈춤이다(T368·T457).
+            //   ⇒ **고침은 «T85 를 깨는 것» 이 아니라 «`Absorbing` 을 참이 아니게 만드는 것»** 이다:
+            //     상한이 넘었는데 아직 차는 중이면 `FinishAbsorb()` 로 **남은 값을 즉시 적립**하고(구슬 0 · 표시 = 엔진) 연다.
+            //     그러면 T85 의 «바가 다 찬 뒤에 연다» 는 여전히 참이고(바가 «채워진 채» 열린다) 멈춤만 사라진다.
+            //     ⚑ 바로 아래 «판 끝» 이 이미 같은 꼴이다 — `if (Absorbing) FinishAbsorb(); EndRun();`(같은 상한·같은 손).
             if ((G.PendingLevelUps > 0 || G.Pending != null) && !App.Overlay.IsOpen) _lvUpWait += dt; else _lvUpWait = 0;
             bool showNow = _lvUpWait >= AbsorbMaxWaitSec;
             // T457(주인 2026-09-12 «그 특전 팝업 뜨기 전에 전투나 이동은 바로 전까지 계속 됐어야 함») — T368 이 있어도 멈추던 까닭은 **순서**였다:
@@ -486,7 +498,7 @@ namespace KkomaKnight.Game
                 while (_acc >= EngineConst.Dt && guard++ < maxTicks)
                 {
                     // 팝업(레벨업·이벤트)은 남은 타격 연출(칼이 내려오는 순간)이 끝난 뒤 연다 — 그 동안 엔진 시간은 멈춘 채 애니만 돈다
-                    if (G.Pending != null) { if ((!_world.Busy && !Absorbing) || showNow) OpenPending(); _acc = 0; break; }   // T368 — 상한을 넘으면 흡수가 남았어도 연다(안 그러면 영영 안 열릴 수 있다)
+                    if (G.Pending != null) { if ((!_world.Busy && !Absorbing) || showNow) OpenNow(showNow); _acc = 0; break; }   // T368 — 상한을 넘으면 흡수가 남았어도 연다(T496 — 그 «연다» 를 실제로 하게 고쳤다)
                     // 킬 연출(칼 내려옴 → 적 사망 → 플레이어 공격 모션 끝) 동안 엔진 틱 보류(T50) — 틱 순서 불변 · 풀리면 격차 없이 원래 걷기 속도로 출발.
                     // ⚑ T312 회차 2(주인 «도끼가 적에 닿았는데 바로 안 없어지고 데미지도 늦다») — **보류 중에도 «투사체만» 은 나아가고 맞는다.**
                     //   여태는 보류가 엔진 전체를 세웠는데 투사체 **그림**은 T86 ⓐ 로 계속 날아가서, 도끼가 맞는 자리(`ProjLimit`)에 **닿은 채로 서서**
@@ -500,7 +512,7 @@ namespace KkomaKnight.Game
                     if (_world.HoldEngine) { G.StepProjectiles(_acc); _acc = 0; break; }
                     _world.BeforeTick(); G.Tick(); _world.AfterTick();
                     _acc -= EngineConst.Dt;
-                    if (G.Pending != null) { if ((!_world.Busy && !Absorbing) || showNow) OpenPending(); _acc = 0; break; }   // T368 — 상한을 넘으면 흡수가 남았어도 연다(안 그러면 영영 안 열릴 수 있다)
+                    if (G.Pending != null) { if ((!_world.Busy && !Absorbing) || showNow) OpenNow(showNow); _acc = 0; break; }   // T368 — 상한을 넘으면 흡수가 남았어도 연다(T496 — 그 «연다» 를 실제로 하게 고쳤다)
                     if (G.Over) break;
                 }
                 // 엔진이 다음 틱에 스스로 연다 — 단 T368 의 `HoldLevelUp` 이 서 있는 동안은 줄에 둔 채 계속 돈다(그것이 «안 멈춤» 이다).
@@ -523,6 +535,23 @@ namespace KkomaKnight.Game
                 if (Absorbing && _overWait < AbsorbMaxWaitSec) _overWait += dt;
                 else { if (Absorbing) FinishAbsorb(); EndRun(); }
             }
+        }
+
+        /// <summary>
+        /// T496 — 상한(<see cref="AbsorbMaxWaitSec"/>)으로 여는 자리. <b>`OpenPending` 의 T85 규약은 안 건드린다</b> —
+        /// 대신 남은 흡수를 <see cref="FinishAbsorb"/> 로 즉시 적립해 <see cref="Absorbing"/> 을 거짓으로 만든 뒤 부른다.
+        /// <para>
+        /// ⚑ 왜 «`if (Absorbing &amp;&amp; !showNow) return;`» 이 아닌가 — 그 꼴이면 상한으로 열린 회차마다 **바가 덜 찬 채** 팝업이 서고,
+        /// 그것은 주인 지시 T85(«바가 다 찬 뒤에 연다»)를 깨는 것이다. 실측(결정 1379)이 «상한은 평범한 판에서도 넘는다» 를 말하므로
+        /// 그 꼴은 드문 예외가 아니라 **늘 그런 화면**이 된다. 즉시 적립은 둘 다 지킨다 — 바는 채워진 채 열리고 멈춤은 없다.
+        /// </para>
+        /// <para>⚠ 값은 하나도 안 잃는다 — <see cref="FinishAbsorb"/> 는 표시값을 엔진 값으로 맞추는 것이지 깎는 것이 아니다.
+        /// 잃는 것은 «차오르는 <b>연출</b>» 뿐이고, 그 연출을 지키느라 엔진이 2.3초 얼던 것이 이 절이 고치는 자리다.</para>
+        /// </summary>
+        void OpenNow(bool viaCap)
+        {
+            if (viaCap && Absorbing) FinishAbsorb();   // 바로 아래 «판 끝» 과 같은 꼴 — 남은 값을 즉시 적립하고 연다
+            OpenPending();
         }
 
         void OpenPending()

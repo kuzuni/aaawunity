@@ -65,15 +65,15 @@ namespace KkomaKnight.Tests.Play
             // ⚑ T496 ⓐ — «Pending 이 선 뒤 창이 열릴 때까지» 를 따로 센다(등재 글 ⑦ⓒ 가 «고치기 전에 그 수부터» 로 박아 둔 그 수).
             //   그 구간은 BattleScreen:489 의 `if (G.Pending != null) { _acc = 0; break; }` 때문에 **엔진이 얼어 있는** 구간이다.
             //   프레임 수와 그동안 흐른 엔진 시간(G.T) 둘 다 잰다 — «몇 프레임» 만으로는 «얼었는가» 를 못 가른다.
-            int openFrame = -1; double tOpen = -1;
+            int openFrame = -1; double tOpen = -1; float rtPending = -1f, rtOpen = -1f;
             float t0 = Time.realtimeSinceStartup;
             while (Time.realtimeSinceStartup - t0 < 30f && !G.Over && bs.World == world)
             {
                 yield return null; frame++;
                 if (killFrame < 0 && G.Kills >= 1) { killFrame = frame; tKill = G.T; }
                 if (killFrame >= 0 && G.PendingLevelUps > 0 && G.Pending == null) queuedSeen = true;
-                if (pendingFrame < 0 && G.Pending != null) { pendingFrame = frame; tPending = G.T; }
-                if (_app.Overlay.IsOpen) { opened = true; openFrame = frame; tOpen = G.T; break; }
+                if (pendingFrame < 0 && G.Pending != null) { pendingFrame = frame; tPending = G.T; rtPending = Time.realtimeSinceStartup; }
+                if (_app.Overlay.IsOpen) { opened = true; openFrame = frame; tOpen = G.T; rtOpen = Time.realtimeSinceStartup; break; }
             }
 
             Assert.GreaterOrEqual(killFrame, 0, "30초 안에 첫 킬이 나야 한다 — 안 나면 이 자는 아무것도 못 잰 것이다(판 자체를 보라)");
@@ -96,11 +96,25 @@ namespace KkomaKnight.Tests.Play
             //     CI 가 `screens` 브랜치로 같이 올리므로 `git show origin/screens:t496_hold.json` 한 번이면 읽힌다.
             int holdFrames = (openFrame >= 0 && pendingFrame >= 0) ? openFrame - pendingFrame : -1;
             double holdT = (tOpen >= 0 && tPending >= 0) ? tOpen - tPending : -1;
-            WriteHoldReport(killFrame, pendingFrame, openFrame, tKill, tPending, tOpen, holdFrames, holdT);
+            WriteHoldReport(killFrame, pendingFrame, openFrame, tKill, tPending, tOpen, holdFrames, holdT, (rtOpen >= 0f && rtPending >= 0f) ? rtOpen - rtPending : -1f);
 
             // ⚑ 공허 방지 — 이 수가 «0 이다» 와 «못 쟀다» 를 가른다(T455 2회차가 «가드가 스스로 공허했다» 로 치른 값).
             Assert.GreaterOrEqual(openFrame, 0, "창이 선 프레임을 못 잡았다 — 그러면 위에 쓴 수는 «잰 것» 이 아니다");
             Assert.GreaterOrEqual(holdFrames, 0, "Pending 이 선 프레임이 창이 선 프레임보다 뒤다 — 셈이 뒤집혔다(수를 믿지 마라)");
+
+            // ⛑⛑ **T496 2회차 — 이제 막는다.** 1회차는 «수를 아직 아무도 모른다» 라 판정을 안 박았다. 그 수가 나왔다:
+            //   런 1147 에서 `hold 127프레임 · engineTime 0` = **≈2.3초 동안 엔진이 얼어 있었다**(결정 1379 · 검수 Q 가 fps 를 되짚었다).
+            //   고친 뒤에는 상한이 넘는 순간 `FinishAbsorb()` 로 적립하고 바로 열리므로 그 구간이 **한두 프레임**이다.
+            //   ⚑ 문턱은 **프레임이 아니라 실제 시간**으로 잰다 — 프레임 수는 러너 fps 에 매여 폰으로 이식이 안 되고(결정 1379 ⑤),
+            //     «엔진이 얼었다» 는 사람이 초로 느끼는 것이다. 0.5초는 잰 두 값(2.3초 ↔ 한 프레임 ≈0.02초) **사이의 넓은 자리**다 —
+            //     느린 러너에서도 0.5초면 스물몇 프레임이라 우연히 안 걸린다(결정 930 — 모르는 값으로 문턱을 박지 않는다. 이건 아는 값이다).
+            float holdReal = (rtOpen >= 0f && rtPending >= 0f) ? rtOpen - rtPending : -1f;
+            Assert.GreaterOrEqual(holdReal, 0f, "실제 시간을 못 쟀다 — 그러면 아래 판정은 공허하다");
+            Assert.Less(holdReal, 0.5f,
+                "`Pending` 이 선 뒤 창이 열릴 때까지 " + holdReal.ToString("0.###") + "초 걸렸다(" + holdFrames + "프레임) — "
+                + "그 동안 엔진은 매 프레임 `_acc = 0; break` 로 **얼어 있다**(주인이 두 번 말한 그 멈춤 · T368·T457). "
+                + "T496 이 고친 자리가 되돌아왔는지 보라: 상한(`AbsorbMaxWaitSec`)이 넘으면 `OpenNow(showNow)` 가 "
+                + "`FinishAbsorb()` 로 남은 값을 적립해 `Absorbing` 을 거짓으로 만든 뒤 열어야 한다. 잰 이력: 고치기 전 2.3초 · 고친 뒤 한두 프레임.");
 
             _log.AssertNoRed("T457 레벨업 줄");
             yield return Shutdown();
@@ -112,7 +126,7 @@ namespace KkomaKnight.Tests.Play
         /// </summary>
         static void WriteHoldReport(int killFrame, int pendingFrame, int openFrame,
                                     double tKill, double tPending, double tOpen,
-                                    int holdFrames, double holdT)
+                                    int holdFrames, double holdT, float holdReal)
         {
             string json =
                 "{\"_meta\":{\"task\":\"T496\",\"what\":\"Pending 이 선 뒤 창이 열릴 때까지 — 그 사이 엔진은 언다(BattleScreen:489)\"}"
@@ -120,7 +134,8 @@ namespace KkomaKnight.Tests.Play
               + ",\"hold\":" + holdFrames + "}"
               + ",\"engineTime\":{\"kill\":" + tKill.ToString("0.####") + ",\"pending\":" + tPending.ToString("0.####")
               + ",\"open\":" + tOpen.ToString("0.####") + ",\"hold\":" + holdT.ToString("0.####") + "}"
-              + ",\"note\":\"holdT 가 0 언저리면 그 구간 동안 엔진이 얼어 있었다는 뜻이다(틱 0). 문턱은 아직 없다 — 수만 쌓는다.\"}";
+              + ",\"holdRealSec\":" + holdReal.ToString("0.####")
+              + ",\"note\":\"holdT 가 0 이면 그 구간 동안 엔진이 얼어 있었다(틱 0). holdRealSec 이 사람이 느끼는 멈춤이고 0.5초에서 막는다 — 고치기 전 2.3초(런 1147) · 고친 뒤 한두 프레임.\"}";
             foreach (var dir in PlayShot.Dirs())
             {
                 try { System.IO.Directory.CreateDirectory(dir); System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "t496_hold.json"), json); }
