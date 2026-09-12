@@ -23,6 +23,14 @@ run 579·582·593 실측). 그래서 «내가 이번에 세운 자가 그 런에
 `이름(건수)` 로 촘촘히 붙여 **71개가 11줄**이다(실측). ⚠ 명부는 **실패 보고보다 먼저** 찍는다 —
 «[CI실패] 요약» 이 마지막 줄이어야 한다는 계약(결정 678)이 뒤에 붙이는 순간 깨진다.
 
+T503 — 명부가 «**무엇을 안 쟀나**» 까지 답한다. `Assert.Ignore(...)` 로 끝난 케이스는 **실패가 아니라서**
+«실패 0» 에 안 잡히면서 «케이스 N건» 에는 그대로 세어진다 ⇒ 그전까지 **재고 통과한 자와 아예 안 잰 자가
+이 꼬리에서 똑같이 보였다**. 건너뜀 자체는 허락된 꼴이라(「잴 것이 없는 판은 통과시킨다」 §1 ⓑ) **막지 않고 센다**:
+    [CI명부] playmode-results.xml — 자 뭉치 95개 · 케이스 248건(그중 **건너뜀 2건**) · 실패 0
+    [CI명부] ⚠ **건너뜀 2건** — 돌았지만 «재지 않았다» …
+    [CI명부]   1. ArenaResultTests.StageDiffers — 이 챕터의 무대가 마침 사막이라 …
+⚠ **0건이면 한 글자도 안 늘린다** — 이 꼬리는 사람이 매 회차 읽는 자리라 조용할 때 조용해야 한다(갈래 ⓘ 가 그것을 지킨다).
+
 ⚑ 워커가 읽는 법 — **꼬리 50줄**을 당겨 이 «요약» 줄부터 본다. 목록 본문까지 보려면 `뒤처리 + 1 + 3N` 넘게 넓힌다.
    («30줄» 이면 모자란다 — 뒤처리 줄 수가 런마다 다르다: 캐시 적중 21줄(#512) · **캐시 저장 31줄**(#521).)
 
@@ -96,6 +104,18 @@ def failures(path):
     return out, broken, files
 
 
+SKIP_RESULTS = ("Skipped", "Inconclusive")   # NUnit3: Assert.Ignore → Skipped(label=Ignored) · Assert.Inconclusive → Inconclusive
+
+
+def _skip_why(tc):
+    """건너뛴 까닭 한 줄 — NUnit 은 `<reason><message>` 에 담는다(없으면 label 만이라도)."""
+    for xp in ("reason/message", "failure/message"):
+        el = tc.find(xp)
+        if el is not None and (el.text or "").strip():
+            return _first_lines(el.text, 1)[:160]
+    return tc.get("label") or ""
+
+
 def _fixture_of(tc):
     """그 케이스가 속한 자 뭉치 이름 — `classname` 이 있으면 그것, 없으면 풀네임에서 마지막 마디를 뗀다."""
     cn = tc.get("classname")
@@ -113,6 +133,15 @@ def roster(path):
        결과 XML 의 **알파벳 앞쪽을 자른다**(실측: 682KB 를 당겨도 `M` 앞 픽스처가 안 잡힌다 · run 579·582·593).
        그래서 «내가 이번에 세운 자가 그 런에서 **실제로 실렸는가**» 를 확인할 길이 없었다 — 초록은
        «안 깨졌다» 일 뿐 «돌았다» 가 아니다(asmdef·네임스페이스·글롭이 어긋나면 **조용히 안 실린다**).
+
+    ⚑ **T503 — «돌았다» 의 한 켜 안쪽: 돌았지만 «재지 않았다».**
+       `Assert.Ignore(...)` 로 끝난 케이스는 **실패가 아니다.** 그래서 위 `bad`(실패 수)에 안 잡히고
+       `total`(케이스 수)에는 **그대로 세어진다** ⇒ 꼬리에서 **재고 통과한 자와 아예 안 잰 자가 똑같이 보인다**.
+       건너뜀 자체는 죄가 아니다 — 「잴 것이 없는 판은 통과시킨다(§1 ⓑ)」는 주인이 허락한 꼴이다.
+       탈은 **그것이 안 보이는 것**이다: 어느 날 조건이 굳어 «늘 건너뛰기» 가 되어도 꼬리는 초록이라
+       그 자는 **문서로만 남은 자**가 된다. 실측(2026-09-12): PlayMode 에 `Assert.Ignore` 20곳 이상 ·
+       그중 여럿은 판마다 조건이 변한다(`ArenaResultTests` 의 «무대가 마침 사막이라» 꼴).
+       그래서 센다 — **막지는 않는다**(결정 493 · 이 자는 애초에 알리는 자다).
     """
     _got, _broken, files = failures(path)
     out = []
@@ -122,6 +151,7 @@ def roster(path):
         except Exception:                          # 못 읽는 파일은 위 failures() 가 이미 한 줄로 알린다
             continue
         counts, fails, total, bad = {}, {}, 0, 0
+        skips, skipped = {}, []                    # T503 — 뭉치별 건너뜀 수 · (풀네임, 까닭) 목록
         for tc in tree.iter("test-case"):
             fx = _fixture_of(tc)
             counts[fx] = counts.get(fx, 0) + 1
@@ -129,19 +159,48 @@ def roster(path):
             if tc.get("result") == "Failed":
                 fails[fx] = fails.get(fx, 0) + 1
                 bad += 1
+            elif tc.get("result") in SKIP_RESULTS:
+                skips[fx] = skips.get(fx, 0) + 1
+                skipped.append((tc.get("fullname") or tc.get("name") or "?", _skip_why(tc)))
         # 이름은 마지막 마디(클래스 이름)면 충분하다 — **그 파일 안에서 겹치지 않을 때만** 줄인다.
         short = {}
         for fx in counts:
             short.setdefault(fx.rsplit(".", 1)[-1], []).append(fx)
         names = {fx: (s if len(v) == 1 else fx) for s, v in short.items() for fx in v}
         rows = sorted(((names[fx], counts[fx], fails.get(fx, 0)) for fx in counts), key=lambda r: r[0])
-        out.append((os.path.basename(f), rows, total, bad))
+        skip_rows = sorted(((names[fx], n) for fx, n in skips.items()), key=lambda r: r[0])
+        out.append((os.path.basename(f), rows, total, bad, skip_rows, skipped))
     return out
 
 
 ROSTER_TAG = "[CI명부]"
 ROSTER_WIDTH = 150       # 한 줄에 담는 글자 수 — 꼬리를 아끼려고 여러 자를 한 줄에 붙인다
 ROSTER_MAX = 400         # 이보다 많으면 앞엣것만(목록이 꼬리를 밀어내면 «요약» 이 안 읽힌다)
+
+
+SKIP_MAX = 8             # 건너뜀 상세는 이만큼만 — 꼬리는 «[CI실패] 요약» 몫을 남겨 둬야 한다(결정 678)
+
+
+def _report_skips(skip_rows, skipped, echo):
+    """**돌았지만 재지 않은** 케이스를 이름·까닭으로 찍는다 — 0건이면 **아무 줄도 안 찍는다**(T503).
+
+    ⚑ 왜 여기(명부)이고 «[CI실패]» 가 아닌가 — 건너뜀은 **실패가 아니다**. 실패 쪽에 섞으면
+       «[CI실패] 요약 N건» 이 부풀어 «런의 빨강» 을 잘못 세게 된다(결정 678 의 계약이 그 줄에 걸려 있다).
+       건너뜀이 답하는 물음은 «무엇이 돌았나» 쪽이다 — 정확히는 **«돌았는데 무엇을 안 쟀나»**.
+    """
+    if not skipped:
+        return 0
+    head = " ".join(f"{name}({n})" for name, n in skip_rows[:SKIP_MAX])
+    if len(skip_rows) > SKIP_MAX:
+        head += f" 외 {len(skip_rows) - SKIP_MAX}뭉치"
+    echo(f"{ROSTER_TAG} ⚠ **건너뜀 {len(skipped)}건** — 돌았지만 «재지 않았다»(`Assert.Ignore` 등). "
+         "**실패가 아니라 위 «실패 0» 에 안 잡힌다** — 늘 건너뛰기로 굳으면 그 자는 문서로만 남는다.")
+    echo(f"{ROSTER_TAG}   뭉치: {head}")
+    for i, (name, why) in enumerate(skipped[:SKIP_MAX], 1):
+        echo(f"{ROSTER_TAG}   {i}. {_short(name)}" + (f" — {why}" if why else ""))
+    if len(skipped) > SKIP_MAX:
+        echo(f"{ROSTER_TAG}   … 그 밖 {len(skipped) - SKIP_MAX}건(앞 {SKIP_MAX}건만 찍는다)")
+    return len(skipped)
 
 
 def report_roster(path, echo=print):
@@ -151,8 +210,11 @@ def report_roster(path, echo=print):
        한다는 계약(결정 678)이 있고, 이 명부를 뒤에 붙이면 그 계약이 깨진다.
     """
     made = 0
-    for fname, rows, total, bad in roster(path):
+    for fname, rows, total, bad, skip_rows, skipped in roster(path):
+        # T503 — 건너뜀은 **0건이면 한 글자도 안 늘린다**(이 꼬리는 사람이 매 회차 읽는 자리다 · 결정 667).
+        #   0건이 아닐 때는 «케이스 N건» 바로 옆에 붙인다 — 그 수가 그 N 안에 들어 있기 때문이다.
         echo(f"{ROSTER_TAG} {fname} — 자 뭉치 {len(rows)}개 · 케이스 {total}건"
+             + (f"(그중 **건너뜀 {len(skipped)}건**)" if skipped else "")
              + (f" · **실패 {bad}건**" if bad else " · 실패 0"))
         line = ""
         for i, (name, n, f) in enumerate(rows):
@@ -166,6 +228,7 @@ def report_roster(path, echo=print):
             line = (line + " " + piece).strip()
         if line:
             echo(f"{ROSTER_TAG}  {line}")
+        _report_skips(skip_rows, skipped, echo)
         made += 1
     if not made:
         echo(f"{ROSTER_TAG} 결과 XML 이 없어 명부를 못 만든다 — 아래 «[CI실패] 요약» 줄을 보라.")
@@ -309,6 +372,45 @@ def self_test():
         made = report_roster(d, lines.append)
         ok &= (made == 0) and lines and lines[0].startswith(ROSTER_TAG)
         print("ⓖ 명부 · XML 없음 —", "OK" if made == 0 and lines else "실패")
+    # ⓗ T503 건너뜀 — «돌았지만 재지 않은» 케이스가 이름·까닭으로 읽히는가.
+    #    ⚑ 이 갈래의 핵심은 «실패 0» 과 «건너뜀 2» 가 **한 XML 에 같이** 있는 것이다 —
+    #      그 둘이 갈라지지 않던 것이 이 절이 고치는 병이다.
+    with tempfile.TemporaryDirectory() as d:
+        with open(os.path.join(d, "playmode-results.xml"), "w", encoding="utf-8") as f:
+            f.write('<test-run>'
+                    '<test-case classname="K.Play.ArenaResultTests" fullname="K.Play.ArenaResultTests.A" result="Passed" />'
+                    '<test-case classname="K.Play.ArenaResultTests" fullname="K.Play.ArenaResultTests.B" '
+                    'result="Skipped" label="Ignored"><reason><message>무대가 마침 사막이라 둘을 못 가른다</message></reason></test-case>'
+                    '<test-case classname="K.Play.PvpStageTests" fullname="K.Play.PvpStageTests.C" '
+                    'result="Inconclusive"><reason><message>1대1 노드가 안 섰다</message></reason></test-case>'
+                    '</test-run>')
+        lines = []
+        report_roster(d, lines.append)
+        n = report(d, lines.append)
+        joined = "\n".join(lines)
+        ok &= (n == 0)                                     # 건너뜀은 **실패가 아니다** — 실패 셈에 섞이면 안 된다
+        ok &= "건너뜀 2건" in joined                        # Skipped 와 Inconclusive 둘 다 센다
+        ok &= "케이스 3건(그중 **건너뜀 2건**)" in joined    # 그 수가 케이스 수 안에 들어 있다는 것까지 말한다
+        ok &= "무대가 마침 사막이라" in joined               # 까닭이 읽힌다(reason/message)
+        ok &= "1대1 노드가 안 섰다" in joined
+        ok &= "ArenaResultTests.B" in joined                # 어느 케이스인지 이름으로 안다
+        ok &= lines[-1].startswith(f"{TAG} 요약 0건")        # 결정 678 계약 — 건너뜀을 찍어도 마지막 줄은 그대로
+        print("ⓗ 건너뜀(T503) —", "OK" if "건너뜀 2건" in joined and n == 0 else "실패")
+    # ⓘ T503 짝 — **건너뜀이 0건이면 한 글자도 안 늘린다**. 이 갈래가 없으면 «늘 시끄러운 꼬리» 를 못 막는다.
+    with tempfile.TemporaryDirectory() as d:
+        with open(os.path.join(d, "playmode-results.xml"), "w", encoding="utf-8") as f:
+            f.write('<test-run>'
+                    '<test-case classname="K.Play.A" fullname="K.Play.A.x" result="Passed" />'
+                    '<test-case classname="K.Play.A" fullname="K.Play.A.y" result="Failed">'
+                    '<failure><message>boom</message></failure></test-case>'
+                    '</test-run>')
+        lines = []
+        report_roster(d, lines.append)
+        joined = "\n".join(lines)
+        ok &= "건너뜀" not in joined                        # 조용할 때는 조용하다
+        ok &= "(그중" not in joined                         # 머리글도 안 늘어난다
+        ok &= "케이스 2건 · **실패 1건**" in joined          # 종전 꼴 그대로
+        print("ⓘ 건너뜀 0건 = 조용함 —", "OK" if "건너뜀" not in joined else "실패")
     print("✓ ci_test_failures 자기 검사 통과" if ok else "✗ 자기 검사 실패")
     return 0 if ok else 1
 
