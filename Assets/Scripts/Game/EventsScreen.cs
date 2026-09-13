@@ -109,7 +109,11 @@ namespace KkomaKnight.Game
         /// <summary>아레나 껍데기 표시 이름 — 상대는 «도전자 N» · 내 자리는 <b>내가 지은 이름</b>(T96-profile 2단계 · 기본값이 종전 «꼬마기사» 라 안 고치면 화면 불변).</summary>
         string MeName => Core.Nickname.Of(App != null ? App.Save : null);
         static string FoeName(int rank) => "도전자 " + rank;
-        string ArtKey(string key, string fallback) => App.Assets != null && App.Assets.Has(key) ? key : fallback;
+        static string ArtKey(string key, string fallback)
+        {
+            var assets = App.I != null ? App.I.Assets : null;
+            return assets != null && assets.Has(key) ? key : fallback;
+        }
         /// <summary>껍데기 숫자 자리 — 값을 못 만들 때만 쓴다(계수 JSON 이 없을 때 · 0 을 쓰면 실제 값처럼 보인다).</summary>
         const string Dash = "—";
         /// <summary>도전 팝업(24)에 세우는 상대 5명의 순위 — 내가 1위(시상대 가운데)라 바로 아래 순위들이다(T81).</summary>

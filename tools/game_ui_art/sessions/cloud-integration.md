@@ -11,3 +11,9 @@
 - world/events 코드 diff와 shell의 Screens 챕터 지도 부분만 적용했다. shell의 UiKit/Loading/SeasonPass 전체 patch는 적용하지 않았다.
 - 중앙 catalog에 world·commerce·승인된 identity·Arena 3종·쉼터 키를 연결하고 새 meta만 생성했다. generated `AssetCatalog.asset`과 `assets-map.md`을 갱신했다.
 - 다음 단계: 프로필 복구 묶음을 main에 보존 → GitHub CI의 C#·EditMode·PlayMode·정적 게이트와 screenshots/PlayLog 확인 → 남은 실제 화면 검수 기록.
+
+## CI 수정 기록
+
+- `c3844a84` / run `34778500618`: dotnet build 실패. static helper의 인스턴스 `App` 참조, PrivilegeScreen 범위 밖 helper 호출, Game 테스트 2개의 EditMode/Core 어셈블리 오배치를 수정했다.
+- `444965e8` / run `34779970324`: 잔여 1건(`EventsScreen.Add` static 경로가 instance `ArtKey` 호출)으로 dotnet build 실패. `ArtKey`가 `App.I.Assets`를 읽는 static fallback helper가 되도록 수정했다.
+- 다음 단계: 수정 커밋의 dotnet·정적·Unity CI를 확인한다. 실패 원인이 새로 나오면 해당 원인만 수정하며 같은 실패의 무제한 재시도는 하지 않는다.
