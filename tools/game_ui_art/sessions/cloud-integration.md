@@ -16,4 +16,12 @@
 
 - `c3844a84` / run `34778500618`: dotnet build 실패. static helper의 인스턴스 `App` 참조, PrivilegeScreen 범위 밖 helper 호출, Game 테스트 2개의 EditMode/Core 어셈블리 오배치를 수정했다.
 - `444965e8` / run `34779970324`: 잔여 1건(`EventsScreen.Add` static 경로가 instance `ArtKey` 호출)으로 dotnet build 실패. `ArtKey`가 `App.I.Assets`를 읽는 static fallback helper가 되도록 수정했다.
-- 다음 단계: 수정 커밋의 dotnet·정적·Unity CI를 확인한다. 실패 원인이 새로 나오면 해당 원인만 수정하며 같은 실패의 무제한 재시도는 하지 않는다.
+- `24867201` / run `34780081444`: dotnet build·순수 C# 596개·정적 게이트는 success. Unity runner 단계는 failure이고 결과 artifact가 보존됐으며 후속 배포 단계 완료를 기다리며 실패 테스트/PlayLog를 분석 중이다.
+- 다음 단계: Unity 결과 XML/PlayLog에서 실패 이름·메시지를 확정해 원인만 수정하고, 중복 실행 없이 최신 CI 및 실제 screenshots를 검수한다.
+
+## 클라우드 heartbeat
+
+- 유일 예약: `aaawunity 클라우드 통합 이어서 완료` — 활성, 매시간.
+- 다음 실행 확인: 2026-09-14 06:28 KST.
+- 관리 대화: https://chatgpt.com/c/6aa70785-f894-83e8-87b2-0cbc295dd7c8
+- 기존 이 통합 대화를 우선 재개하며 실행 중 CI/수정을 중복하지 않는다. 로컬 모니터는 중지했고 새 예약·새 작업 번호·승인 우회 담당을 만들지 않는다.
