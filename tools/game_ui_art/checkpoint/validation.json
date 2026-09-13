@@ -1,0 +1,50 @@
+{
+  "task": "ChihuahuaGameUI-handoff",
+  "scope": "Source artwork checkpoint and next-session TODO only; no Assets, catalog or runtime code changes",
+  "status": "incomplete_handoff",
+  "checks": [
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "summary": "pass"
+    },
+    {
+      "command": "python3 tools/task_state.py --check",
+      "exit_code": 0,
+      "summary": "✓ task_state: 번호 중복 0 · ROUTINE §2 제목과 PROGRESS 상태가 어긋나는 작업 0개 (제목 475 · 표 501) · ⚠ 참고 1건 — 접힌 행만 있는 작업 T189 T229 T284 T296 T508(손댈 것 없음)(위 줄에 자세히)"
+    },
+    {
+      "command": "python3 tools/check_task_rows.py",
+      "exit_code": 0,
+      "summary": "✓ check_task_rows: 표 행 541개 · 작업 533개 · «대기 ↔ 진행/완료» 어긋난 중복 0 (중복 ID 8개는 전부 접혀 있거나 상태가 같다)"
+    },
+    {
+      "command": "python3 tools/check_head_list.py",
+      "exit_code": 0,
+      "summary": "✓ check_head_list: 머리 목록 34줄 · 줄의 말과 §2·표가 어긋난 것 0"
+    },
+    {
+      "command": "python3 tools/check_docs_intact.py",
+      "exit_code": 0,
+      "summary": "✓ check_docs_intact: PROGRESS·ROUTINE 성하다 (충돌 표식 0 · 결정 꼬리 이어짐 · 표 행·§2 제목 있음)"
+    },
+    {
+      "command": "python3 tools/check_decisions.py",
+      "exit_code": 0,
+      "summary": "✓ check_decisions: 결정 1406개 · 341 이상 번호 겹침 0 (다음 번호 1415)"
+    },
+    {
+      "check": "PNG files match manifest SHA-256, dimensions, actual alpha classification",
+      "result": "pass",
+      "files": 7,
+      "rgba_candidates": 5,
+      "rgb_drafts_needing_alpha": 2
+    }
+  ],
+  "not_performed": [
+    "New game UI integration",
+    "New UI runtime/PlayMode visual verification",
+    "New art Unity import (checkpoint sources are outside Assets)"
+  ],
+  "task_id_note": "Temporary T515 collided with another session; allocate a new task ID from latest main when resuming."
+}

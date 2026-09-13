@@ -1,0 +1,121 @@
+{
+  "task": "ChihuahuaGameUI-handoff",
+  "checkpoint_date": "2026-09-13",
+  "runtime_integrated": false,
+  "assets": [
+    {
+      "id": "chest_medieval",
+      "path": "tools/game_ui_art/checkpoint/ready/chest_medieval_closed.png",
+      "status": "candidate_rgba_not_integrated",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 731834,
+      "sha256": "120a016abaeb7fbc0f040b2faa8ce8d81f0e999bcee3d48a1557ea264c28a4a6",
+      "git_blob_sha": "69f46fe1808f3c05f20192f0d402847e95e9c2da",
+      "planned_catalog_key": "chest.rare",
+      "runtime_integrated": false
+    },
+    {
+      "id": "chest_modern",
+      "path": "tools/game_ui_art/checkpoint/ready/chest_modern_closed.png",
+      "status": "candidate_rgba_not_integrated",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 691107,
+      "sha256": "04ecbc03fff796ea54a2fa6441e5e3177f35e37119fe02df3b6fc651ea3f738f",
+      "git_blob_sha": "e966dfbecd0620167354bd748f98c0903df69032",
+      "planned_catalog_key": "chest.legend",
+      "runtime_integrated": false
+    },
+    {
+      "id": "chest_cyber",
+      "path": "tools/game_ui_art/checkpoint/ready/chest_cyber_closed.png",
+      "status": "candidate_rgba_not_integrated",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 713309,
+      "sha256": "b9e9183963bb1b1dfb70dff37ccf3835a18b3a37f28c00161528214b8f24070d",
+      "git_blob_sha": "6a11fd588d22786ddfc5d133c0eca0d9aae726cf",
+      "planned_catalog_key": "chest.myth",
+      "runtime_integrated": false
+    },
+    {
+      "id": "diamond",
+      "path": "tools/game_ui_art/checkpoint/ready/diamond_blue.png",
+      "status": "candidate_rgba_not_integrated",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 393998,
+      "sha256": "4eca98d37fa5a3a62f4e9d03dba788384e972a7d207ee8ce5075bd1979384c71",
+      "git_blob_sha": "2d39bbcb662b3d9cb1beba3d2522faaa2ac6bc08",
+      "planned_catalog_key": "hud.gem",
+      "runtime_integrated": false
+    },
+    {
+      "id": "shelter",
+      "path": "tools/game_ui_art/checkpoint/ready/shelter_house.png",
+      "status": "candidate_rgba_not_integrated",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 735954,
+      "sha256": "fc3c29cffa602af30033cec002e5edb4e0184c7412e6afe799929e49971ea6f6",
+      "git_blob_sha": "715e945206e435cddee553305fa35edca224fd15",
+      "planned_catalog_key": null,
+      "runtime_integrated": false
+    },
+    {
+      "id": "devil",
+      "path": "tools/game_ui_art/checkpoint/needs_alpha/devil_draft.png",
+      "status": "draft_rgb_checkerboard_needs_alpha",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGB",
+      "alpha_extrema": null,
+      "bytes": 1710757,
+      "sha256": "856d17e3e6de80055ba6e4509af82e226211e669b6c3a2a071f61620c0c468ce",
+      "git_blob_sha": "bed1d58a65322abaefbf42fda6a9bcfbed564e40",
+      "planned_catalog_key": null,
+      "runtime_integrated": false
+    },
+    {
+      "id": "angel",
+      "path": "tools/game_ui_art/checkpoint/needs_alpha/angel_draft.png",
+      "status": "draft_rgb_checkerboard_needs_alpha",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGB",
+      "alpha_extrema": null,
+      "bytes": 1771012,
+      "sha256": "5b84b4fe2acaea9f956a9b311d8ae3fe76df92de248ad734bb2972e2c835926b",
+      "git_blob_sha": "fc920d95939ee2bb4b77d67bdce85f42ab5a520c",
+      "planned_catalog_key": null,
+      "runtime_integrated": false
+    }
+  ],
+  "task_id_note": "Temporary T515 collided with another session; allocate a new task ID from latest main when resuming."
+}
