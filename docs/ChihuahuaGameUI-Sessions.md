@@ -1,7 +1,7 @@
 # 치와와 UI 작업 세션 분담 및 재개 지점
 
 2026-09-14 시작. 원본 요구사항은 `TODO.md`, `docs/TODO-ChihuahuaGameUI.md`다.
-T519는 전체 통합 작업이며 아직 미완료다. T515~T518과 기존 장비 아트 27세트는 변경하지 않는다.
+T519 전체 통합은 2026-09-14 완료했다. T515~T518과 기존 장비 아트 27세트는 변경하지 않았다.
 
 ## PC 종료 후 통합 실행 — 클라우드 담당 전환
 
@@ -110,3 +110,12 @@ T519는 전체 통합 작업이며 아직 미완료다. T515~T518과 기존 장�
 - 요청 원문은 tools/game_ui_art/sessions/art-*-prompt.txt에 보존한다. 각 작업은 2~3개마다 산출물·알파 검사·SHA256·CHECKPOINT를 기록한다.
 - 공통 코드·카탈로그·main은 부모 통합 세션만 수정한다. 아트 세션은 각 전용 브랜치 또는 다운로드 가능한 ZIP으로 납품한다.
 - ChatGPT Work 작업은 read_thread로 확인한다. Codex cloud CLI 작업 3개와 다른 종류이므로 ID를 섞지 않는다.
+
+## T519 최종 통합 결과
+
+- 최종 코드: `f871456b257b43c93ff3a3cb14f2b491af9ea3c1`.
+- CI `34783274626`: data sync, dotnet build/test, meta/catalog/keys/asmdef/test-usings/stale-asserts, Unity 모두 success. 결과 XML은 EditMode 596/596, PlayMode 258/258, 실패·inconclusive·skip 0.
+- screens branch meta: run 1207, commit `f871456b`, tests success, 58장.
+- 직접 검수: T519 관련 기존 16장과 신규 `lobby_chapter_1..4`, `battle_dungeon_hell`, `battle_dungeon_expedition`. 첫 원정 캡처의 우발 레벨업 팝업을 발견해 촬영 하니스를 고쳤고 최종 두 던전 월드는 가림 없이 다시 확인했다.
+- 런타임 PlayMode는 던전 2종의 field/road/prop 10개와 rest/devil/angel 노드 3개가 실제 `SpriteRenderer`로 생성됨을 검증한다.
+- 유일 heartbeat `aaawunity 클라우드 통합 이어서 완료`는 완료 후 중지 대상이다. 관리 대화: https://chatgpt.com/c/6aa70785-f894-83e8-87b2-0cbc295dd7c8

@@ -28,3 +28,21 @@
 - 다음 실행 확인: 2026-09-14 06:28 KST.
 - 관리 대화: https://chatgpt.com/c/6aa70785-f894-83e8-87b2-0cbc295dd7c8
 - 기존 이 통합 대화를 우선 재개하며 실행 중 CI/수정을 중복하지 않는다. 로컬 모니터는 중지했고 새 예약·새 작업 번호·승인 우회 담당을 만들지 않는다.
+
+## 증거 캡처 보정
+
+- `19ac3f7e` / run `34782251122`: EditMode 596/596, PlayMode 258/258 success, screens 58장. 런타임 던전/노드 SpriteRenderer 검사는 통과했다.
+- 직접 본 신규 6장 중 챕터 지도 4종과 지옥 월드는 정상. 원정 월드는 촬영 순간 열린 레벨업 팝업이 가려 최종 통과로 세지 않았다.
+- 다음 단계: 기존 02_battle과 같은 방식으로 촬영 직전 시간 정지·우발 팝업 닫기를 적용해 원정/지옥 월드 두 장을 다시 확인한다.
+
+## 완료
+
+- 최종 코드 `f871456b`, CI `34783274626`: EditMode 596/596, PlayMode 258/258, 실패·skip 0. meta/catalog/keys/asmdef/test-usings/stale-asserts와 data sync 모두 success.
+- screens run 1207은 tests success, 58장. T519 관련 기존 16장과 챕터 지도 4종·던전 월드 2종을 직접 확인했다. 원정 월드의 첫 가림 캡처는 보정 후 다시 확인했다.
+- 계획한 world 14, commerce 16, identity 13, banners 5, stats 12와 기존 후보/옵션/패턴의 지정 범위를 실제 연결했다. profile 9개 순서·선택 인덱스, 게임 수치·세이브·UI 배치·플레이어 위치는 유지했다.
+- T519 완료 문서를 갱신하고 공통 lock을 반납한다. 유일한 매시간 cloud heartbeat는 완료 상태에서 중지한다.
+
+## heartbeat 종료 확인
+
+- 예약 ID `6aa707bb66bc8191b56f59ee3eb24cec` (`aaawunity 클라우드 통합 이어서 완료`)을 완료 조건에 따라 일시중지했다.
+- 관리 대화 `6aa70785-f894-83e8-87b2-0cbc295dd7c8`, `is_enabled=false`, `next_run_time=null`을 2026-09-14 06:37 KST에 확인했다. 추가 예약은 만들지 않았다.
