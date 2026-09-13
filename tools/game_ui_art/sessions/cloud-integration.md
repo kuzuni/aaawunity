@@ -34,3 +34,10 @@
 - `19ac3f7e` / run `34782251122`: EditMode 596/596, PlayMode 258/258 success, screens 58장. 런타임 던전/노드 SpriteRenderer 검사는 통과했다.
 - 직접 본 신규 6장 중 챕터 지도 4종과 지옥 월드는 정상. 원정 월드는 촬영 순간 열린 레벨업 팝업이 가려 최종 통과로 세지 않았다.
 - 다음 단계: 기존 02_battle과 같은 방식으로 촬영 직전 시간 정지·우발 팝업 닫기를 적용해 원정/지옥 월드 두 장을 다시 확인한다.
+
+## 완료
+
+- 최종 코드 `f871456b`, CI `34783274626`: EditMode 596/596, PlayMode 258/258, 실패·skip 0. meta/catalog/keys/asmdef/test-usings/stale-asserts와 data sync 모두 success.
+- screens run 1207은 tests success, 58장. T519 관련 기존 16장과 챕터 지도 4종·던전 월드 2종을 직접 확인했다. 원정 월드의 첫 가림 캡처는 보정 후 다시 확인했다.
+- 계획한 world 14, commerce 16, identity 13, banners 5, stats 12와 기존 후보/옵션/패턴의 지정 범위를 실제 연결했다. profile 9개 순서·선택 인덱스, 게임 수치·세이브·UI 배치·플레이어 위치는 유지했다.
+- T519 완료 문서를 갱신하고 공통 lock을 반납한다. 유일한 매시간 cloud heartbeat는 완료 상태에서 중지한다.
