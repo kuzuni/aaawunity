@@ -118,7 +118,9 @@ namespace KkomaKnight.Tests.Play
             StringAssert.Contains(ringWord, partT.text, "부위 pill 은 «" + ringWord + "»");
             StringAssert.Contains(ringWord, title.text, "제목도 «" + ringWord + "» 여야 한다(주인 «반지가 장갑으로 이름 되어 있더라»)");
             Assert.IsFalse(title.text.Contains(rawWord), "제목에 정본 부위 이름 «" + rawWord + "» 이 새면 안 된다 — 지금 제목: " + title.text);
-            StringAssert.StartsWith(GearRole.SetDisplayName(D, GearUi.Set(D, ring)), title.text, "제목은 세트 별칭으로 시작한다");
+            // T511 — 제목은 «등급 + 세트 별칭의 부위» 다(등급이 앞에 붙는다 · 주인 2026-09-13). 별칭은 그 바로 뒤에 온다.
+            StringAssert.StartsWith(GearUi.Tier(D, ring).Name + " " + GearRole.SetDisplayName(D, GearUi.Set(D, ring)), title.text,
+                "제목은 «등급 세트별칭…» 으로 시작한다(T161 + T511) — 지금 제목: " + title.text);
 
             _app.Overlay.Close(); yield return Frames(1);
             _log.AssertNoRed("T161 장비 이름");

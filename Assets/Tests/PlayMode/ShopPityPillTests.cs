@@ -46,7 +46,10 @@ namespace KkomaKnight.Tests.Play
         IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
 
         static readonly Regex Tags = new Regex("<[^>]*>");
-        /// <summary>희귀 상자 카드의 pill 글자들 중 «희귀 확정까지» 로 시작하는 줄(태그를 뗀 것) — 없으면 null.</summary>
+        /// <summary>둘째 등급 천장 pill 의 머리말 — «중세 확정까지»(이름은 <c>gearOverride.json rarName</c> 에서 온다 · T511 개명 전엔 «희귀»).
+        /// <para>⚠ 글자로 박으면 주인이 등급 이름을 바꿀 때 이 자가 «pill 이 없다» 고 운다 — 화면은 멀쩡한데 자만 옛 이름을 찾는 꼴이다(T511 실측).</para></summary>
+        string RarePrefix() { var D = _app.Data; return D.Gear.RarName[D.Gear.RarRare] + " 확정까지"; }
+        /// <summary>둘째 등급(중세) 상자 카드의 pill 글자들 중 그 머리말로 시작하는 줄(태그를 뗀 것) — 없으면 null.</summary>
         string RarePillLine()
         {
             var content = UiKit.Find(_app.Current.Root, "Content");
@@ -56,7 +59,7 @@ namespace KkomaKnight.Tests.Play
             foreach (var t in card.GetComponentsInChildren<TMP_Text>(true))
             {
                 string s = Tags.Replace(t.text ?? "", "").Trim();
-                if (s.StartsWith("희귀 확정까지")) return s;
+                if (s.StartsWith(RarePrefix())) return s;
             }
             return null;
         }
@@ -77,7 +80,7 @@ namespace KkomaKnight.Tests.Play
 
             _app.ShowScreen("shop"); yield return Frames(2);
             string line = RarePillLine();
-            Assert.IsNotNull(line, "희귀 상자 카드에 «희귀 확정까지 N회» pill 이 뜬다");
+            Assert.IsNotNull(line, "중세(둘째 등급) 상자 카드에 «" + RarePrefix() + " N회» pill 이 뜬다");
             Assert.AreEqual(box.PityRare, NumberIn(line), "새 세이브에서는 천장 값 그대로다 — 수는 표에서 온다(" + line + ")");
             _log.AssertNoRed("상점(희귀 천장 표기)");
             yield return Shutdown();
