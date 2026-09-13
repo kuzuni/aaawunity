@@ -1,0 +1,61 @@
+{
+  "rows": [
+    { "row": 0, "images": [
+      { "path": "ListFrame_08/Nomal/Bg", "on": true, "color": "F1E2C1FF", "sprite": "-", "w": 820.2, "h": 138.0 },
+      { "path": "ListFrame_08/Nomal/BottomBar", "on": true, "color": "F1E2C1FF", "sprite": "-", "w": 820.2, "h": 101.1 },
+      { "path": "ListFrame_08/Nomal/Border", "on": true, "color": "F1E2C1FF", "sprite": "ListFrame_08_White_BorderNomal", "w": 820.2, "h": 138.0 },
+      { "path": "ListFrame_08/Focus/Bg", "on": false, "color": "FFF88FFF", "sprite": "-", "w": 820.2, "h": 138.0 },
+      { "path": "ListFrame_08/Focus/BottomBar", "on": false, "color": "FFE06BFF", "sprite": "-", "w": 820.2, "h": 101.1 },
+      { "path": "ListFrame_08/Focus/Border", "on": false, "color": "FFE06BFF", "sprite": "ListFrame_08_White_BorderFocus", "w": 820.2, "h": 138.0 },
+      { "path": "Bar/Bg", "on": true, "color": "A67F5DFF", "sprite": "Slider_02_White_Bg", "w": 424.4, "h": 44.4 },
+      { "path": "Bar/Fill Area/Fill", "on": true, "color": "FFD43DFF", "sprite": "-", "w": 0.0, "h": 36.4 },
+      { "path": "Group_Price/Icon", "on": true, "color": "FFFFFFFF", "sprite": "UI_Rewards_Medal_01_Gold", "w": 68.0, "h": 74.8 },
+      { "path": "Group_Price/Border", "on": true, "color": "341B19E6", "sprite": "BasicFrame_Rectangle_01~04_White_Border2", "w": 68.0, "h": 74.8 },
+      { "path": "Check", "on": false, "color": "FFFFFFFF", "sprite": "Toggle_Check_02_On", "w": 102.8, "h": 102.8 },
+      { "path": "GoBtn", "on": true, "color": "FFFFFF00", "sprite": "-", "w": 198.7, "h": 102.8 },
+      { "path": "GoBtn/Bg", "on": true, "color": "FF8612FF", "sprite": "Button_02_White_Bg", "w": 198.7, "h": 102.8 },
+      { "path": "GoBtn/Bg/GradientBottom", "on": true, "color": "341B191F", "sprite": "Button_03_White_Gradient", "w": 198.7, "h": 102.8 },
+      { "path": "GoBtn/Light", "on": true, "color": "FFBB4CFF", "sprite": "Button_02_White_Light", "w": 190.7, "h": 90.8 },
+      { "path": "GoBtn/HighLight", "on": false, "color": "FFFFFFFF", "sprite": "Button_02_White_HighLight", "w": 12.0, "h": 11.0 },
+      { "path": "Border", "on": true, "color": "341B19E6", "sprite": "BasicFrame_Rectangle_01~04_White_Border3", "w": 820.8, "h": 137.9 }
+    ] },
+    { "row": 1, "images": [
+      { "path": "ListFrame_08/Nomal/Bg", "on": true, "color": "F1E2C1FF", "sprite": "-", "w": 820.2, "h": 138.0 },
+      { "path": "ListFrame_08/Nomal/BottomBar", "on": true, "color": "F1E2C1FF", "sprite": "-", "w": 820.2, "h": 101.1 },
+      { "path": "ListFrame_08/Nomal/Border", "on": true, "color": "F1E2C1FF", "sprite": "ListFrame_08_White_BorderNomal", "w": 820.2, "h": 138.0 },
+      { "path": "ListFrame_08/Focus/Bg", "on": false, "color": "FFF88FFF", "sprite": "-", "w": 820.2, "h": 138.0 },
+      { "path": "ListFrame_08/Focus/BottomBar", "on": false, "color": "FFE06BFF", "sprite": "-", "w": 820.2, "h": 101.1 },
+      { "path": "ListFrame_08/Focus/Border", "on": false, "color": "FFE06BFF", "sprite": "ListFrame_08_White_BorderFocus", "w": 820.2, "h": 138.0 },
+      { "path": "Bar/Bg", "on": true, "color": "A67F5DFF", "sprite": "Slider_02_White_Bg", "w": 424.4, "h": 44.4 },
+      { "path": "Bar/Fill Area/Fill", "on": true, "color": "FFD43DFF", "sprite": "-", "w": 0.0, "h": 36.4 },
+      { "path": "Group_Price/Icon", "on": true, "color": "FFFFFFFF", "sprite": "UI_Rewards_Medal_01_Gold", "w": 68.0, "h": 74.8 },
+      { "path": "Group_Price/Border", "on": true, "color": "341B19E6", "sprite": "BasicFrame_Rectangle_01~04_White_Border2", "w": 68.0, "h": 74.8 },
+      { "path": "Check", "on": false, "color": "FFFFFFFF", "sprite": "Toggle_Check_02_On", "w": 102.8, "h": 102.8 },
+      { "path": "GoBtn", "on": true, "color": "FFFFFF00", "sprite": "-", "w": 198.7, "h": 102.8 },
+      { "path": "GoBtn/Bg", "on": true, "color": "FF8612FF", "sprite": "Button_02_White_Bg", "w": 198.7, "h": 102.8 },
+      { "path": "GoBtn/Bg/GradientBottom", "on": true, "color": "341B191F", "sprite": "Button_03_White_Gradient", "w": 198.7, "h": 102.8 },
+      { "path": "GoBtn/Light", "on": true, "color": "FFBB4CFF", "sprite": "Button_02_White_Light", "w": 190.7, "h": 90.8 },
+      { "path": "GoBtn/HighLight", "on": false, "color": "FFFFFFFF", "sprite": "Button_02_White_HighLight", "w": 12.0, "h": 11.0 },
+      { "path": "Border", "on": true, "color": "341B19E6", "sprite": "BasicFrame_Rectangle_01~04_White_Border3", "w": 820.8, "h": 137.9 }
+    ] },
+    { "row": 2, "images": [
+      { "path": "ListFrame_08/Nomal/Bg", "on": true, "color": "F1E2C1FF", "sprite": "-", "w": 820.2, "h": 138.0 },
+      { "path": "ListFrame_08/Nomal/BottomBar", "on": true, "color": "F1E2C1FF", "sprite": "-", "w": 820.2, "h": 101.1 },
+      { "path": "ListFrame_08/Nomal/Border", "on": true, "color": "F1E2C1FF", "sprite": "ListFrame_08_White_BorderNomal", "w": 820.2, "h": 138.0 },
+      { "path": "ListFrame_08/Focus/Bg", "on": false, "color": "FFF88FFF", "sprite": "-", "w": 820.2, "h": 138.0 },
+      { "path": "ListFrame_08/Focus/BottomBar", "on": false, "color": "FFE06BFF", "sprite": "-", "w": 820.2, "h": 101.1 },
+      { "path": "ListFrame_08/Focus/Border", "on": false, "color": "FFE06BFF", "sprite": "ListFrame_08_White_BorderFocus", "w": 820.2, "h": 138.0 },
+      { "path": "Bar/Bg", "on": true, "color": "A67F5DFF", "sprite": "Slider_02_White_Bg", "w": 424.4, "h": 44.4 },
+      { "path": "Bar/Fill Area/Fill", "on": true, "color": "FFD43DFF", "sprite": "-", "w": 0.0, "h": 36.4 },
+      { "path": "Group_Price/Icon", "on": true, "color": "FFFFFFFF", "sprite": "UI_Rewards_Medal_01_Gold", "w": 68.0, "h": 74.8 },
+      { "path": "Group_Price/Border", "on": true, "color": "341B19E6", "sprite": "BasicFrame_Rectangle_01~04_White_Border2", "w": 68.0, "h": 74.8 },
+      { "path": "Check", "on": false, "color": "FFFFFFFF", "sprite": "Toggle_Check_02_On", "w": 102.8, "h": 102.8 },
+      { "path": "GoBtn", "on": true, "color": "FFFFFF00", "sprite": "-", "w": 198.7, "h": 102.8 },
+      { "path": "GoBtn/Bg", "on": true, "color": "FF8612FF", "sprite": "Button_02_White_Bg", "w": 198.7, "h": 102.8 },
+      { "path": "GoBtn/Bg/GradientBottom", "on": true, "color": "341B191F", "sprite": "Button_03_White_Gradient", "w": 198.7, "h": 102.8 },
+      { "path": "GoBtn/Light", "on": true, "color": "FFBB4CFF", "sprite": "Button_02_White_Light", "w": 190.7, "h": 90.8 },
+      { "path": "GoBtn/HighLight", "on": false, "color": "FFFFFFFF", "sprite": "Button_02_White_HighLight", "w": 12.0, "h": 11.0 },
+      { "path": "Border", "on": true, "color": "341B19E6", "sprite": "BasicFrame_Rectangle_01~04_White_Border3", "w": 820.8, "h": 137.9 }
+    ] }
+  ]
+}
