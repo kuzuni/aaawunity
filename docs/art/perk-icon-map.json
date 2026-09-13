@@ -1,0 +1,459 @@
+{
+  "count": 100,
+  "families": {
+    "evHeal": {
+      "ids": [
+        "p_evadeHeal",
+        "p_evHealR",
+        "p_evHealL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/evHeal.png",
+      "prompt": "DODGE TRIGGERS HEALING: a simple white round-headed person leaning aside with one gray afterimage, a prominent red heart and small mint-green healing plus in front."
+    },
+    "atk": {
+      "ids": [
+        "p_atk",
+        "p_atkR"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/atk.png",
+      "prompt": "ATTACK POWER INCREASE: one chunky silver short sword pointing upper right, gold crossguard and red grip, beside one bold red upward arrow."
+    },
+    "evade": {
+      "ids": [
+        "p_evade",
+        "p_evadeR"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/evade.png",
+      "prompt": "EVASION INCREASE: a simple white round-headed person sidestepping, two gray offset afterimages to the left and a small cyan swoosh. No boots."
+    },
+    "arrowEv": {
+      "ids": [
+        "p_arrowEv",
+        "p_arrowEvR",
+        "p_arrowEvL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/arrowEv.png",
+      "prompt": "DODGE TRIGGERS AN ARROW: one prominent wooden arrow with silver point flying diagonally in front of a small white dodging person with gray afterimage."
+    },
+    "axeHit": {
+      "ids": [
+        "p_axeHit",
+        "p_axeHitR",
+        "p_axeHitL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/axeHit.png",
+      "prompt": "GETTING HIT TRIGGERS AN AXE: a chunky single-bladed silver axe with brown handle emerging from a red jagged impact burst."
+    },
+    "counter": {
+      "ids": [
+        "p_counter",
+        "p_counterR"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/counter.png",
+      "prompt": "COUNTERATTACK CHANCE: a silver sword with a bold cyan U-turn arrow wrapping around it to indicate returning an attack."
+    },
+    "spearCt": {
+      "ids": [
+        "p_spearCt"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/spearCt.png",
+      "prompt": "COUNTERATTACK TRIGGERS A SPEAR: one long wooden spear with large silver pointed tip and a bold cyan U-turn arrow around the shaft."
+    },
+    "critR": {
+      "ids": [
+        "p_critR",
+        "p_critRR"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/critR.png",
+      "prompt": "CRITICAL HIT CHANCE: a red circular target with a silver sword tip striking its central bullseye and a small yellow spark."
+    },
+    "critF": {
+      "ids": [
+        "p_critF",
+        "p_critFR"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/critF.png",
+      "prompt": "CRITICAL DAMAGE: an oversized red-orange jagged impact burst split by a chunky silver sword, emphasizing a devastating hit."
+    },
+    "def": {
+      "ids": [
+        "p_def",
+        "p_defR",
+        "p_defL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/def.png",
+      "prompt": "DEFENSE INCREASE: one chunky blue-gray medieval breastplate with a small mint-green upward arrow."
+    },
+    "killSpear": {
+      "ids": [
+        "p_killSpearN",
+        "p_killSpearR",
+        "p_killSpearL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/killSpear.png",
+      "prompt": "KILL TRIGGERS A SPEAR: prominent wooden spear with silver tip launched diagonally from a small ivory skull with X eyes. Non-gory cute skull."
+    },
+    "killBolt": {
+      "ids": [
+        "p_killBoltN",
+        "p_killBoltR",
+        "p_killBoltL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/killBolt.png",
+      "prompt": "A large golden branching lightning bolt spreading toward three small blue target circles. A simple nonviolent fantasy magic ability symbol. No characters, no skulls, no injury."
+    },
+    "killArrow": {
+      "ids": [
+        "p_killArrowN",
+        "p_killArrowR",
+        "p_killArrowL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/killArrow.png",
+      "prompt": "KILL TRIGGERS ARROWS: three wooden arrows with white fletching fanning upwards out of a small ivory skull with X eyes."
+    },
+    "killAxe": {
+      "ids": [
+        "p_killAxeN",
+        "p_killAxeR",
+        "p_killAxeL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/killAxe.png",
+      "prompt": "KILL TRIGGERS AXES: two silver axes with brown handles fanning above a small ivory skull with X eyes."
+    },
+    "thorns": {
+      "ids": [
+        "p_thornsN",
+        "p_thornsR",
+        "p_thornsL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/thorns.png",
+      "prompt": "THORNS ARMOR: a chunky slate-blue medieval breastplate covered in five large silver outward spikes. Very clear spiked armor silhouette."
+    },
+    "killEvBuff": {
+      "ids": [
+        "p_killEvBuff"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/killEvBuff.png",
+      "prompt": "KILL GRANTS TEMPORARY EVASION: white dodging person with cyan motion trail above a small ivory skull, a tiny simple gold hourglass for temporary effect."
+    },
+    "collAtk": {
+      "ids": [
+        "p_collAtk"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/collAtk.png",
+      "prompt": "ATTACK PER COLLECTED PERK: three overlapping cream cards forming a fan behind one prominent silver sword with red grip. No text or card frame around whole icon."
+    },
+    "collCrit": {
+      "ids": [
+        "p_collCrit"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/collCrit.png",
+      "prompt": "CRITICAL CHANCE PER COLLECTED PERK: three overlapping cream cards forming a fan behind one prominent red circular target with a yellow center spark."
+    },
+    "killAtkStk": {
+      "ids": [
+        "p_killAtkStk"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/killAtkStk.png",
+      "prompt": "KILLS STACK ATTACK: one silver sword rising from three red ascending stair blocks, with a tiny ivory skull at the base."
+    },
+    "killEvStk": {
+      "ids": [
+        "p_killEvStk"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/killEvStk.png",
+      "prompt": "KILLS STACK EVASION: white dodging person and cyan afterimage rising above three cyan ascending stair blocks, tiny ivory skull at base."
+    },
+    "killHeal": {
+      "ids": [
+        "p_killHealN"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/killHeal.png",
+      "prompt": "KILL TRIGGERS HEALING: one large red heart with mint-green healing plus, linked by a short curved arrow from one small ivory skull."
+    },
+    "collHp": {
+      "ids": [
+        "p_collHp"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/collHp.png",
+      "prompt": "MAX HEALTH PER COLLECTED PERK: three overlapping cream cards forming a fan behind one large red heart."
+    },
+    "critStack": {
+      "ids": [
+        "p_critStack"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/critStack.png",
+      "prompt": "HITS STACK CRITICAL CHANCE: a red bullseye target above three ascending golden stair blocks, silver sword tip approaching the center."
+    },
+    "aspdAtk": {
+      "ids": [
+        "p_aspdAtk"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/aspdAtk.png",
+      "prompt": "ATTACKS STACK ATTACK SPEED: one silver sword with three cyan trailing copies and one small circular gold clock face without digits."
+    },
+    "execEv": {
+      "ids": [
+        "p_execEvN",
+        "p_execEvR",
+        "p_execEvL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/execEv.png",
+      "prompt": "DODGE EXECUTION: one large cute ivory skull with X eyes crossed by a violet scythe slash; small white dodging person with afterimage beside it. No blood."
+    },
+    "stunCrit": {
+      "ids": [
+        "p_stunCritN",
+        "p_stunCritR",
+        "p_stunCritL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/stunCrit.png",
+      "prompt": "CRITICAL HIT STUNS: one simple gray enemy head with spiraling eyes, three yellow stun stars overhead, red jagged critical-hit burst behind."
+    },
+    "nArrow": {
+      "ids": [
+        "p_nArrowN",
+        "p_nArrowR",
+        "p_nArrowL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/nArrow.png",
+      "prompt": "REPEATED BASIC HITS TRIGGER ARROWS: one prominent wooden arrow encircled by two cyan curved arrows indicating a repeat cycle. Silver arrowhead and white fletching."
+    },
+    "nAxe": {
+      "ids": [
+        "p_nAxeN",
+        "p_nAxeR",
+        "p_nAxeL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/nAxe.png",
+      "prompt": "REPEATED BASIC HITS TRIGGER AXES: one silver axe with brown handle encircled by two cyan curved arrows indicating a repeat cycle."
+    },
+    "nBolt": {
+      "ids": [
+        "p_nBoltN",
+        "p_nBoltR",
+        "p_nBoltL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/nBolt.png",
+      "prompt": "REPEATED BASIC HITS TRIGGER LIGHTNING: one large yellow lightning bolt encircled by two cyan curved arrows indicating a repeat cycle."
+    },
+    "nHeal": {
+      "ids": [
+        "p_nHealN"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/nHeal.png",
+      "prompt": "REPEATED BASIC HITS TRIGGER HEALING: one large red heart with mint plus encircled by two cyan curved arrows indicating a repeat cycle."
+    },
+    "evadeStun": {
+      "ids": [
+        "p_evadeStun"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/evadeStun.png",
+      "prompt": "DODGING STUNS THE ATTACKER: a small white dodging person with gray afterimage beside a larger gray enemy head with yellow stars overhead."
+    },
+    "ctCrit": {
+      "ids": [
+        "p_ctCritN",
+        "p_ctCritR"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/ctCrit.png",
+      "prompt": "COUNTERATTACK CRITICAL CHANCE: a prominent red bullseye target encircled by a bold cyan U-turn return arrow, small yellow critical spark at center."
+    },
+    "ctDmg": {
+      "ids": [
+        "p_ctDmgN",
+        "p_ctDmgR"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/ctDmg.png",
+      "prompt": "COUNTERATTACK DAMAGE INCREASE: a prominent red-orange jagged impact burst and a silver sword encircled by a bold cyan U-turn return arrow."
+    },
+    "killSureCrit": {
+      "ids": [
+        "p_killSureCrit"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/killSureCrit.png",
+      "prompt": "KILL GUARANTEES NEXT CRITICAL HIT: small ivory skull beside a large red bullseye pierced by a gold check mark."
+    },
+    "cleave": {
+      "ids": [
+        "p_cleaveN",
+        "p_cleaveR",
+        "p_cleaveL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/cleave.png",
+      "prompt": "CLEAVE HITS THE ENEMY BEHIND: one sweeping silver blade and large cyan slash crossing two simple gray enemy heads aligned diagonally."
+    },
+    "ignore": {
+      "ids": [
+        "p_ignoreN"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/ignore.png",
+      "prompt": "IGNORE INCOMING DAMAGE: a silver incoming sword stopped by a large cyan crossed-circle cancellation symbol with a small impact spark."
+    },
+    "noShAtk": {
+      "ids": [
+        "p_noShAtk"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/noShAtk.png",
+      "prompt": "ATTACK POWER WITH NO SHIELD: one large silver sword with red upward arrow beside a small shattered blue shield split into two pieces."
+    },
+    "noShAspd": {
+      "ids": [
+        "p_noShAspd"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/noShAspd.png",
+      "prompt": "ATTACK SPEED WITH NO SHIELD: one large silver sword with three cyan speed streaks beside a small shattered blue shield split in two."
+    },
+    "wardHit": {
+      "ids": [
+        "p_wardHitN",
+        "p_wardHitR",
+        "p_wardHitL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/wardHit.png",
+      "prompt": "GETTING HIT GRANTS A BARRIER: a chunky cyan magical dome around a small blue shield with a red impact burst striking outside the dome."
+    },
+    "fullHp": {
+      "ids": [
+        "p_fullHp"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/fullHp.png",
+      "prompt": "BONUS HIT AGAINST FULL-HEALTH ENEMY: a silver sword striking a small gray enemy head beneath one completely filled green health bar. Red impact burst, no numbers."
+    },
+    "repairUp": {
+      "ids": [
+        "p_repairUp"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/repairUp.png",
+      "prompt": "SHIELD REPAIR AMPLIFICATION: one blue shield with a gold repair hammer in front and one mint-green upward arrow."
+    },
+    "healUp": {
+      "ids": [
+        "p_healUp"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/healUp.png",
+      "prompt": "HEALING AMPLIFICATION: one big red heart with mint-green medical plus and a bold green upward arrow."
+    },
+    "healRepair": {
+      "ids": [
+        "p_healRepair"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/healRepair.png",
+      "prompt": "HEALING ALSO REPAIRS SHIELD: large red heart linked to a blue shield by one curved mint-green arrow, tiny gold repair spark on shield."
+    },
+    "killRepair": {
+      "ids": [
+        "p_killRepair"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/killRepair.png",
+      "prompt": "KILL TRIGGERS SHIELD REPAIR: large blue shield and gold repair hammer, with one small ivory skull below."
+    },
+    "killDash": {
+      "ids": [
+        "p_killDash"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/killDash.png",
+      "prompt": "KILL TRIGGERS DASH TO NEXT ENEMY: white round-headed person lunging right with long cyan speed trail, small ivory skull left behind and one tiny gray enemy head ahead."
+    },
+    "berserkStk": {
+      "ids": [
+        "p_berserkStk"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/berserkStk.png",
+      "prompt": "BERSERKER STORES KILL POWER FOR NEXT ATTACK: silver axe with red blade accents above three red stacked tokens, tiny ivory skull on top token. Store-and-spend rage, no flame aura."
+    },
+    "evRepair": {
+      "ids": [
+        "p_evRepairR",
+        "p_evRepairL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/evRepair.png",
+      "prompt": "DODGE TRIGGERS SHIELD REPAIR: a large blue shield with gold repair hammer beside one small white dodging person with gray afterimage."
+    },
+    "critSpear": {
+      "ids": [
+        "p_critSpearR",
+        "p_critSpearL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/critSpear.png",
+      "prompt": "CRITICAL HIT TRIGGERS A SPEAR: one large wooden spear with silver tip bursting through a red critical-hit starburst."
+    },
+    "overkill": {
+      "ids": [
+        "p_overkill"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/overkill.png",
+      "prompt": "EXCESS KILL DAMAGE BECOMES HEALTH: silver sword through a small cute ivory skull, a short green arrow carrying excess force into a large red heart. No gore."
+    },
+    "berserk": {
+      "ids": [
+        "p_berserk"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/berserk.png",
+      "prompt": "BERSERK MASSIVE ATTACK BUT NO CRITICALS: two chunky crossed silver axes with red grips and a red flame behind, small crossed-out bullseye beside them."
+    },
+    "nobleEye": {
+      "ids": [
+        "p_nobleEye"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/nobleEye.png",
+      "prompt": "ONLY RARE OR BETTER PERKS: a large discerning eye wearing a small golden crown, one purple gem reflected in the eye. Thick cartoon outlines, friendly regal expression."
+    },
+    "spearAvatar": {
+      "ids": [
+        "p_spearAvatar"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/spearAvatar.png",
+      "prompt": "ARROWS TRANSFORM INTO SPEARS: a small wooden arrow on the left changing via one curved golden arrow into a much larger silver-tipped wooden spear on right."
+    },
+    "giant": {
+      "ids": [
+        "p_giant"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/giant.png",
+      "prompt": "GIANT STRENGTH SLOW HEAVY ATTACK: an oversized stone-gray clenched fist smashing down with a red impact, tiny golden hourglass beside it."
+    },
+    "nSpear": {
+      "ids": [
+        "p_nSpearL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/nSpear.png",
+      "prompt": "REPEATED BASIC HITS TRIGGER SPEAR: one large silver-tipped wooden spear encircled by two cyan curved arrows indicating a repeat cycle."
+    },
+    "critBolt": {
+      "ids": [
+        "p_critBoltL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/critBolt.png",
+      "prompt": "CRITICAL HIT TRIGGERS SCREEN-WIDE LIGHTNING: yellow branching lightning bolt in front of a large red critical-hit burst, two tiny gray enemy heads below."
+    },
+    "spearEv": {
+      "ids": [
+        "p_spearEvL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/spearEv.png",
+      "prompt": "DODGE TRIGGERS SPEAR: one large silver-tipped wooden spear beside a small white dodging person with gray afterimage."
+    },
+    "spearHit": {
+      "ids": [
+        "p_spearHitL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/spearHit.png",
+      "prompt": "GETTING HIT TRIGGERS SPEAR: a large silver-tipped wooden spear emerging from a red incoming-impact burst against a small gray breastplate."
+    },
+    "shWall": {
+      "ids": [
+        "p_shWallL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/shWall.png",
+      "prompt": "SHIELD WALL BLOCKS DAMAGE WHILE SHIELDED: three chunky blue shields forming a wall, silver incoming arrow visibly stopped outside with a small yellow spark."
+    },
+    "shRef": {
+      "ids": [
+        "p_shRefL"
+      ],
+      "asset": "Assets/KkomaKnight/PerkIcons/shRef.png",
+      "prompt": "SHIELD REFLECTS INCOMING DAMAGE: one large blue shield with one red incoming arrow bouncing back as a curved gold returning arrow."
+    }
+  }
+}
