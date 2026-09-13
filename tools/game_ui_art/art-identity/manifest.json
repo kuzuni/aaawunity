@@ -50,10 +50,11 @@
     },
     {
       "path": "Assets/Art/ChihuahuaGameUI/Profile/profile_07.png",
-      "sha256": "bf35daabf3595cb8d421cd47a6291d5c40893abebfc198e9ad41d7ea837a2a18",
-      "size": [1254, 1254], "mode": "RGBA", "alphaExtrema": [0, 255], "reviewed": false,
-      "integrationAccepted": false,
-      "review": "rejected during parent integration: committed Git blob SHA256 is 21acd3341494def22448571eb51dcaced7eaeb88382c140a76cce468f06a9c45, not the declared SHA256, and Pillow reports a bad IDAT header checksum; omitted from Assets/catalog"
+      "sha256": "95abd0178c5c8f531d0678529cf1d1ba2fdf966645bd6bec91b90541e07b2958",
+      "size": [1254, 1254], "mode": "RGBA", "alphaExtrema": [0, 255], "reviewed": true,
+      "integrationAccepted": true,
+      "sourceRecovery": "ChatGPT Work built-in imagegen replacement after corrupt source-branch blob rejection",
+      "review": "space theme; identity/style/right-facing gaze/full framing/pass; real alpha/pass; visible bbox alpha>8 [95,196,1162,1053]"
     },
     {
       "path": "Assets/Art/ChihuahuaGameUI/Profile/profile_08.png",

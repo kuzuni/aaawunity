@@ -620,7 +620,7 @@ MonoBehaviour:
   - key: ui.face6
     sprite: {fileID: 21300000, guid: faf4d7be5931e3b83f02263ba6c3c3cb, type: 3}
   - key: ui.face7
-    sprite: {fileID: 21300000, guid: 0ce2437d66b9244809735f00c9471931, type: 3}
+    sprite: {fileID: 21300000, guid: c2eb8f053e186992926447e8b9d2918b, type: 3}
   - key: ui.face8
     sprite: {fileID: 21300000, guid: 1c04ef959da0133bea467c65d7f77821, type: 3}
   - key: ui.face9

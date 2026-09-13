@@ -308,7 +308,7 @@
 | sprites | `ui.iconFoe4` | `Assets/Art/ChihuahuaGameUI/Profile/profile_04.png` | fileID 21300000 | T43 아레나 상대 초상 4 |
 | sprites | `ui.face5` | `Assets/Art/ChihuahuaGameUI/Profile/profile_05.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
 | sprites | `ui.face6` | `Assets/Art/ChihuahuaGameUI/Profile/profile_06.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
-| sprites | `ui.face7` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Helmet_03.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
+| sprites | `ui.face7` | `Assets/Art/ChihuahuaGameUI/Profile/profile_07.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
 | sprites | `ui.face8` | `Assets/Art/ChihuahuaGameUI/Profile/profile_08.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
 | sprites | `ui.face9` | `Assets/Art/ChihuahuaGameUI/Profile/profile_09.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
 | sprites | `ui.face10` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Skull_04.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
