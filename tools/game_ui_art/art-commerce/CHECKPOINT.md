@@ -1,6 +1,6 @@
 # T519 commerce art checkpoint
 
-Updated: 2026-09-13 UTC
+Updated: 2026-09-13T18:25:05Z
 
 ## Completed and preserved
 
@@ -19,11 +19,16 @@ The open images retain the theme, camera angle, central body placement, and lowe
 - `chest_cyber_open_failed_checkerboard.png` — RGB with painted checkerboard; rejected.
 - `recipe_weapon_failed_checkerboard.png`, `recipe_armor_failed_checkerboard.png`, `recipe_helmet_failed_checkerboard.png` — RGB with painted checkerboards; rejected. Background-extraction retries also returned painted checkerboards and were not accepted.
 
-## Remaining
+## Delivery status
 
-- Commit the six gem packs and refreshed records.
-- Push the local branch through the connected GitHub write tool; Git CLI itself has no credentials.
-- Create a downloadable ZIP fallback containing both owned folders.
-- Parent session must integrate the catalog fragment and validate in Unity. This session must not mark the overall TODO complete.
+- Scope complete: 16/16 requested individual final PNGs, plus Unity `.meta`, prompts, manifest, and catalog fragment.
+- Pushed non-force to `codex/ui-art-commerce` through the connected GitHub write tool. Remote content tree `52691bc47bf9919db7692ebfb2cb071c7226a520` exactly matched the local content tree after fetch verification.
+- Remote art commits: `d70e4e7d`, `1847fdc3`, `bbc0abaa`; complete large-PNG correction: `03726042`.
+- No ZIP fallback was needed because the remote branch push succeeded.
 
-Do not edit runtime C#, central catalog files, progress/claims/TODO files, or anything outside this session's two owned folders. Current local branch commits are preserved; Git CLI push lacked credentials, so the GitHub connector or final ZIP is required.
+## Remaining outside this session
+
+- Parent integration session must consume `catalog-fragment.json`, connect the assets, and validate them in Unity screens.
+- The overall T519 TODO remains incomplete; this independent art session does not mark it complete.
+
+Do not edit runtime C#, central catalog files, progress/claims/TODO files, or anything outside this session's two owned folders.

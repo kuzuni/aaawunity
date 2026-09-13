@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-09-13T00:00:00Z",
+  "updated_utc": "2026-09-13T18:25:05Z",
   "reference_attached_to_every_imagegen_call": true,
   "accepted": [
     {"file":"chest_medieval_open.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/chest_medieval_open.png","sha256":"85f42293b330fd6cd1881afbfa517a775bfa6678546cd1cddbc9f7b8e1895b3a","bytes":914835,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox_alpha_gt_8":[149,93,1109,1055],"visual_review":"pass","edge_review":"pass"},
