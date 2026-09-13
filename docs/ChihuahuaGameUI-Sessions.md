@@ -3,6 +3,13 @@
 2026-09-14 시작. 원본 요구사항은 `TODO.md`, `docs/TODO-ChihuahuaGameUI.md`다.
 T519는 전체 통합 작업이며 아직 미완료다. T515~T518과 기존 장비 아트 27세트는 변경하지 않는다.
 
+## 상태 확인 — 사용자 질문 후 2026-09-14
+
+- 옵션·패턴 커밋 aa2b5b53 CI34774120379 success 확인.
+- 패스·로딩 커밋954887c1 CI34774345301은 C#/정적 검사 success. Unity는 테스트 실행 전 game-ci CLI release 조회의 GitHub API403으로 실패했다(코드 실패 판정 아님). 실패 job 재실행을 **1회** 요청했고 성공 접수됐다. 다음 회차는 재실행 결과부터 확인한다.
+- 원격 아트 5개 브랜치 모두 존재하며 새 결과가 올라왔다. world9bc8bc21, commerceca65a146, identity9ee4929c, bannersdeff167d, stats080618f2. 최신 ref는 다시 확인한다.
+- identity는 13PNG+메타 납품 완료, main954887c1 병합, 원격32경로 SHA 일치 보고. world/commerce는 read_thread active이므로 추가 메시지 없이 납품 완료를 기다린다.
+
 ## 최신 체크포인트 — 2026-09-14 옵션·패턴 통합
 
 - 기존 다이아 연결 커밋 `896bf79b`의 CI `34771186644`는 success. 다운로드한 XML 확인: Unity EditMode **587/587**, PlayMode **250/250**, 실패·skip 0. 이 결과는 아래 새 옵션 코드의 검사 결과가 아니다.
