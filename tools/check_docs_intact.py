@@ -87,6 +87,18 @@ def check_text(name, text):
 
     if name.endswith("PROGRESS.md"):
         dec = decisions(text)
+        # ⚑ T522 (실측 2026-09-13) — **«절이 아예 없다» 가 이 자의 사각지대였다.**
+        #   `decisions()` 는 절 머리를 못 찾으면 None 을 주고, 아래 갈래가 통째로 건너뛰어졌다
+        #   («판정할 것이 없다» 로 읽었다). 그런데 PROGRESS.md 에서 그 절이 없다는 것은
+        #   **«판정할 것이 없다» 가 아니라 «기록이 통째로 날아갔다» 다** — 이 문서는 늘 그 절을 든다.
+        #   ⚠ 이것은 짐작이 아니라 **실제로 난 사고**다: 2026-09-13 main 의 PROGRESS.md 가
+        #   **4,765줄 → 146줄**(표 행 546 → 14 · 결정 절 통째 소실)로 잘린 채 실렸는데,
+        #   ⓐ 절이 없어 꼬리 갈래가 꺼졌고 ⓑ 표 행이 **14개라도 남아** «0개» 갈래도 안 울었다.
+        #   그래서 **초록이었다**(런 1202). 되살린 것은 자가 아니라 다음 사람의 눈이었다(4,600줄 복구).
+        #   ⇒ 절의 **부재 자체**를 사고로 센다. 줄 수 문턱을 쓰지 않으므로 이 문서의 규약(위 ⚠)을 안 어긴다.
+        if dec is None:
+            bad.append("%s 에 «%s» 절이 통째로 없다 — 이 문서는 늘 그 절을 든다(2026-09-13 에 4,765줄 → 146줄로 잘린 그 꼴)"
+                       % (name, DEC_HEAD))
         if dec is not None:
             if not dec:
                 bad.append("%s «%s» 절이 있는데 그 아래 «N. **…» 줄이 0개다 — 기록이 통째로 날아간 꼴이다"
@@ -156,6 +168,17 @@ def self_test():
     want("결정 꼬리가 잘렸다", len(check_text(PROGRESS, tail)), 1)
     norows = "\n".join(l for l in GOOD_PROGRESS.splitlines() if not ROW.match(l))
     want("표 행 0개", len(check_text(PROGRESS, norows)), 1)
+    # T522 — **그날 그 꼴을 그대로 되풀이한다**: 결정 절이 통째로 없고 표 행은 몇 개 남은 문서.
+    #   옛 자는 여기서 **조용했다**(절이 없으면 꼬리 갈래가 꺼지고 · 표 행이 0 이 아니라 그 갈래도 안 울었다).
+    chopped = "\n".join([
+        "# 진행",
+        "| T1 | 무엇 | ✅ 됨 | — | — | — |",
+        "| T2 | 무엇 | ⬜ 대기 | — | — | — |",
+        "",
+        "## 그 뒤 절",
+        "끝.",
+    ])
+    want("결정 절이 통째로 없다(2026-09-13 그 사고)", len(check_text(PROGRESS, chopped)), 1)
     want("§2 제목 0개", len(check_text(ROUTINE, "# 지시서\n아무 말")), 1)
 
     print("✓ check_docs_intact 자기 검사 통과" if ok else "✗ check_docs_intact 자기 검사 실패")
