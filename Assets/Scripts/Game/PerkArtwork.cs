@@ -1,197 +1,138 @@
 namespace KkomaKnight.Game
 {
-    /// <summary>GPT로 생성한 효과별 특전 그림. 등급 차이는 카드 프레임과 설명이 나타낸다.</summary>
+    /// <summary>특전 100개 각각의 GPT 아이콘. 집계용 별칭은 해당 계열의 기본 그림을 사용한다.</summary>
     public static class PerkArtwork
     {
         public static string Key(string id)
         {
             switch (id)
             {
-                case "p_evadeHeal":
-                case "p_evHealR":
-                case "p_evHealL":
-                case "p_evHeal":
-                    return "perk.evHeal";
-                case "p_atk":
-                case "p_atkR":
-                    return "perk.atk";
-                case "p_evade":
-                case "p_evadeR":
-                    return "perk.evade";
-                case "p_arrowEv":
-                case "p_arrowEvR":
-                case "p_arrowEvL":
-                    return "perk.arrowEv";
-                case "p_axeHit":
-                case "p_axeHitR":
-                case "p_axeHitL":
-                    return "perk.axeHit";
-                case "p_counter":
-                case "p_counterR":
-                    return "perk.counter";
-                case "p_spearCt":
-                    return "perk.spearCt";
-                case "p_critR":
-                case "p_critRR":
-                    return "perk.critR";
-                case "p_critF":
-                case "p_critFR":
-                    return "perk.critF";
-                case "p_def":
-                case "p_defR":
-                case "p_defL":
-                    return "perk.def";
-                case "p_killSpearN":
-                case "p_killSpearR":
-                case "p_killSpearL":
-                case "p_killSpear":
-                    return "perk.killSpear";
-                case "p_killBoltN":
-                case "p_killBoltR":
-                case "p_killBoltL":
-                case "p_killBolt":
-                    return "perk.killBolt";
-                case "p_killArrowN":
-                case "p_killArrowR":
-                case "p_killArrowL":
-                case "p_killArrow":
-                    return "perk.killArrow";
-                case "p_killAxeN":
-                case "p_killAxeR":
-                case "p_killAxeL":
-                case "p_killAxe":
-                    return "perk.killAxe";
-                case "p_thornsN":
-                case "p_thornsR":
-                case "p_thornsL":
-                case "p_thorns":
-                    return "perk.thorns";
-                case "p_killEvBuff":
-                    return "perk.killEvBuff";
-                case "p_collAtk":
-                    return "perk.collAtk";
-                case "p_collCrit":
-                    return "perk.collCrit";
-                case "p_killAtkStk":
-                    return "perk.killAtkStk";
-                case "p_killEvStk":
-                    return "perk.killEvStk";
-                case "p_killHealN":
-                case "p_killHeal":
-                    return "perk.killHeal";
-                case "p_collHp":
-                    return "perk.collHp";
-                case "p_critStack":
-                    return "perk.critStack";
-                case "p_aspdAtk":
-                    return "perk.aspdAtk";
-                case "p_execEvN":
-                case "p_execEvR":
-                case "p_execEvL":
-                case "p_execEv":
-                    return "perk.execEv";
-                case "p_stunCritN":
-                case "p_stunCritR":
-                case "p_stunCritL":
-                case "p_stunCrit":
-                    return "perk.stunCrit";
-                case "p_nArrowN":
-                case "p_nArrowR":
-                case "p_nArrowL":
-                case "p_nArrow":
-                    return "perk.nArrow";
-                case "p_nAxeN":
-                case "p_nAxeR":
-                case "p_nAxeL":
-                case "p_nAxe":
-                    return "perk.nAxe";
-                case "p_nBoltN":
-                case "p_nBoltR":
-                case "p_nBoltL":
-                case "p_nBolt":
-                    return "perk.nBolt";
-                case "p_nHealN":
-                case "p_nHeal":
-                    return "perk.nHeal";
-                case "p_evadeStun":
-                    return "perk.evadeStun";
-                case "p_ctCritN":
-                case "p_ctCritR":
-                case "p_ctCrit":
-                    return "perk.ctCrit";
-                case "p_ctDmgN":
-                case "p_ctDmgR":
-                case "p_ctDmg":
-                    return "perk.ctDmg";
-                case "p_killSureCrit":
-                    return "perk.killSureCrit";
-                case "p_cleaveN":
-                case "p_cleaveR":
-                case "p_cleaveL":
-                case "p_cleave":
-                    return "perk.cleave";
-                case "p_ignoreN":
-                case "p_ignore":
-                    return "perk.ignore";
-                case "p_noShAtk":
-                    return "perk.noShAtk";
-                case "p_noShAspd":
-                    return "perk.noShAspd";
-                case "p_wardHitN":
-                case "p_wardHitR":
-                case "p_wardHitL":
-                case "p_wardHit":
-                    return "perk.wardHit";
-                case "p_fullHp":
-                    return "perk.fullHp";
-                case "p_repairUp":
-                    return "perk.repairUp";
-                case "p_healUp":
-                    return "perk.healUp";
-                case "p_healRepair":
-                    return "perk.healRepair";
-                case "p_killRepair":
-                    return "perk.killRepair";
-                case "p_killDash":
-                    return "perk.killDash";
-                case "p_berserkStk":
-                    return "perk.berserkStk";
-                case "p_evRepairR":
-                case "p_evRepairL":
-                case "p_evRepair":
-                    return "perk.evRepair";
-                case "p_critSpearR":
-                case "p_critSpearL":
-                case "p_critSpear":
-                    return "perk.critSpear";
-                case "p_overkill":
-                    return "perk.overkill";
-                case "p_berserk":
-                    return "perk.berserk";
-                case "p_nobleEye":
-                    return "perk.nobleEye";
-                case "p_spearAvatar":
-                    return "perk.spearAvatar";
-                case "p_giant":
-                    return "perk.giant";
-                case "p_nSpearL":
-                case "p_nSpear":
-                    return "perk.nSpear";
-                case "p_critBoltL":
-                case "p_critBolt":
-                    return "perk.critBolt";
-                case "p_spearEvL":
-                case "p_spearEv":
-                    return "perk.spearEv";
-                case "p_spearHitL":
-                case "p_spearHit":
-                    return "perk.spearHit";
-                case "p_shWallL":
-                case "p_shWall":
-                    return "perk.shWall";
-                case "p_shRefL":
-                case "p_shRef":
-                    return "perk.shRef";
+                case "p_evadeHeal": return "perk.evHeal";
+                case "p_evHealR": return "perk.evHealR";
+                case "p_evHealL": return "perk.evHealL";
+                case "p_atk": return "perk.atk";
+                case "p_atkR": return "perk.atkR";
+                case "p_evade": return "perk.evade";
+                case "p_evadeR": return "perk.evadeR";
+                case "p_arrowEv": return "perk.arrowEv";
+                case "p_arrowEvR": return "perk.arrowEvR";
+                case "p_arrowEvL": return "perk.arrowEvL";
+                case "p_axeHit": return "perk.axeHit";
+                case "p_axeHitR": return "perk.axeHitR";
+                case "p_axeHitL": return "perk.axeHitL";
+                case "p_counter": return "perk.counter";
+                case "p_counterR": return "perk.counterR";
+                case "p_spearCt": return "perk.spearCt";
+                case "p_critR": return "perk.critR";
+                case "p_critRR": return "perk.critRR";
+                case "p_critF": return "perk.critF";
+                case "p_critFR": return "perk.critFR";
+                case "p_def": return "perk.def";
+                case "p_defR": return "perk.defR";
+                case "p_defL": return "perk.defL";
+                case "p_killSpearN": return "perk.killSpear";
+                case "p_killSpearR": return "perk.killSpearR";
+                case "p_killSpearL": return "perk.killSpearL";
+                case "p_killBoltN": return "perk.killBolt";
+                case "p_killBoltR": return "perk.killBoltR";
+                case "p_killBoltL": return "perk.killBoltL";
+                case "p_killArrowN": return "perk.killArrow";
+                case "p_killArrowR": return "perk.killArrowR";
+                case "p_killArrowL": return "perk.killArrowL";
+                case "p_killAxeN": return "perk.killAxe";
+                case "p_killAxeR": return "perk.killAxeR";
+                case "p_killAxeL": return "perk.killAxeL";
+                case "p_thornsN": return "perk.thorns";
+                case "p_thornsR": return "perk.thornsR";
+                case "p_thornsL": return "perk.thornsL";
+                case "p_killEvBuff": return "perk.killEvBuff";
+                case "p_collAtk": return "perk.collAtk";
+                case "p_collCrit": return "perk.collCrit";
+                case "p_killAtkStk": return "perk.killAtkStk";
+                case "p_killEvStk": return "perk.killEvStk";
+                case "p_killHealN": return "perk.killHeal";
+                case "p_collHp": return "perk.collHp";
+                case "p_critStack": return "perk.critStack";
+                case "p_aspdAtk": return "perk.aspdAtk";
+                case "p_execEvN": return "perk.execEv";
+                case "p_execEvR": return "perk.execEvR";
+                case "p_execEvL": return "perk.execEvL";
+                case "p_stunCritN": return "perk.stunCrit";
+                case "p_stunCritR": return "perk.stunCritR";
+                case "p_stunCritL": return "perk.stunCritL";
+                case "p_nArrowN": return "perk.nArrow";
+                case "p_nArrowR": return "perk.nArrowR";
+                case "p_nArrowL": return "perk.nArrowL";
+                case "p_nAxeN": return "perk.nAxe";
+                case "p_nAxeR": return "perk.nAxeR";
+                case "p_nAxeL": return "perk.nAxeL";
+                case "p_nBoltN": return "perk.nBolt";
+                case "p_nBoltR": return "perk.nBoltR";
+                case "p_nBoltL": return "perk.nBoltL";
+                case "p_nHealN": return "perk.nHeal";
+                case "p_evadeStun": return "perk.evadeStun";
+                case "p_ctCritN": return "perk.ctCrit";
+                case "p_ctCritR": return "perk.ctCritR";
+                case "p_ctDmgN": return "perk.ctDmg";
+                case "p_ctDmgR": return "perk.ctDmgR";
+                case "p_killSureCrit": return "perk.killSureCrit";
+                case "p_cleaveN": return "perk.cleave";
+                case "p_cleaveR": return "perk.cleaveR";
+                case "p_cleaveL": return "perk.cleaveL";
+                case "p_ignoreN": return "perk.ignore";
+                case "p_noShAtk": return "perk.noShAtk";
+                case "p_noShAspd": return "perk.noShAspd";
+                case "p_wardHitN": return "perk.wardHit";
+                case "p_wardHitR": return "perk.wardHitR";
+                case "p_wardHitL": return "perk.wardHitL";
+                case "p_fullHp": return "perk.fullHp";
+                case "p_repairUp": return "perk.repairUp";
+                case "p_healUp": return "perk.healUp";
+                case "p_healRepair": return "perk.healRepair";
+                case "p_killRepair": return "perk.killRepair";
+                case "p_killDash": return "perk.killDash";
+                case "p_berserkStk": return "perk.berserkStk";
+                case "p_evRepairR": return "perk.evRepair";
+                case "p_evRepairL": return "perk.evRepairL";
+                case "p_critSpearR": return "perk.critSpear";
+                case "p_critSpearL": return "perk.critSpearL";
+                case "p_overkill": return "perk.overkill";
+                case "p_berserk": return "perk.berserk";
+                case "p_nobleEye": return "perk.nobleEye";
+                case "p_spearAvatar": return "perk.spearAvatar";
+                case "p_giant": return "perk.giant";
+                case "p_nSpearL": return "perk.nSpear";
+                case "p_critBoltL": return "perk.critBolt";
+                case "p_spearEvL": return "perk.spearEv";
+                case "p_spearHitL": return "perk.spearHit";
+                case "p_shWallL": return "perk.shWall";
+                case "p_shRefL": return "perk.shRef";
+                case "p_evHeal": return "perk.evHeal";
+                case "p_killSpear": return "perk.killSpear";
+                case "p_killBolt": return "perk.killBolt";
+                case "p_killArrow": return "perk.killArrow";
+                case "p_killAxe": return "perk.killAxe";
+                case "p_thorns": return "perk.thorns";
+                case "p_killHeal": return "perk.killHeal";
+                case "p_execEv": return "perk.execEv";
+                case "p_stunCrit": return "perk.stunCrit";
+                case "p_nArrow": return "perk.nArrow";
+                case "p_nAxe": return "perk.nAxe";
+                case "p_nBolt": return "perk.nBolt";
+                case "p_nHeal": return "perk.nHeal";
+                case "p_ctCrit": return "perk.ctCrit";
+                case "p_ctDmg": return "perk.ctDmg";
+                case "p_cleave": return "perk.cleave";
+                case "p_ignore": return "perk.ignore";
+                case "p_wardHit": return "perk.wardHit";
+                case "p_evRepair": return "perk.evRepair";
+                case "p_critSpear": return "perk.critSpear";
+                case "p_nSpear": return "perk.nSpear";
+                case "p_critBolt": return "perk.critBolt";
+                case "p_spearEv": return "perk.spearEv";
+                case "p_spearHit": return "perk.spearHit";
+                case "p_shWall": return "perk.shWall";
+                case "p_shRef": return "perk.shRef";
                 default: return null;
             }
         }

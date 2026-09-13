@@ -556,6 +556,47 @@
 | sprites | `perk.spearHit` | `Assets/KkomaKnight/PerkIcons/spearHit.png` | fileID 21300000 |  |
 | sprites | `perk.shWall` | `Assets/KkomaKnight/PerkIcons/shWall.png` | fileID 21300000 |  |
 | sprites | `perk.shRef` | `Assets/KkomaKnight/PerkIcons/shRef.png` | fileID 21300000 |  |
+| sprites | `perk.evHealR` | `Assets/KkomaKnight/PerkIcons/evHealR.png` | fileID 21300000 |  |
+| sprites | `perk.evHealL` | `Assets/KkomaKnight/PerkIcons/evHealL.png` | fileID 21300000 |  |
+| sprites | `perk.atkR` | `Assets/KkomaKnight/PerkIcons/atkR.png` | fileID 21300000 |  |
+| sprites | `perk.evadeR` | `Assets/KkomaKnight/PerkIcons/evadeR.png` | fileID 21300000 |  |
+| sprites | `perk.arrowEvR` | `Assets/KkomaKnight/PerkIcons/arrowEvR.png` | fileID 21300000 |  |
+| sprites | `perk.arrowEvL` | `Assets/KkomaKnight/PerkIcons/arrowEvL.png` | fileID 21300000 |  |
+| sprites | `perk.axeHitR` | `Assets/KkomaKnight/PerkIcons/axeHitR.png` | fileID 21300000 |  |
+| sprites | `perk.axeHitL` | `Assets/KkomaKnight/PerkIcons/axeHitL.png` | fileID 21300000 |  |
+| sprites | `perk.counterR` | `Assets/KkomaKnight/PerkIcons/counterR.png` | fileID 21300000 |  |
+| sprites | `perk.critRR` | `Assets/KkomaKnight/PerkIcons/critRR.png` | fileID 21300000 |  |
+| sprites | `perk.critFR` | `Assets/KkomaKnight/PerkIcons/critFR.png` | fileID 21300000 |  |
+| sprites | `perk.defR` | `Assets/KkomaKnight/PerkIcons/defR.png` | fileID 21300000 |  |
+| sprites | `perk.defL` | `Assets/KkomaKnight/PerkIcons/defL.png` | fileID 21300000 |  |
+| sprites | `perk.killSpearR` | `Assets/KkomaKnight/PerkIcons/killSpearR.png` | fileID 21300000 |  |
+| sprites | `perk.killSpearL` | `Assets/KkomaKnight/PerkIcons/killSpearL.png` | fileID 21300000 |  |
+| sprites | `perk.killBoltR` | `Assets/KkomaKnight/PerkIcons/killBoltR.png` | fileID 21300000 |  |
+| sprites | `perk.killBoltL` | `Assets/KkomaKnight/PerkIcons/killBoltL.png` | fileID 21300000 |  |
+| sprites | `perk.killArrowR` | `Assets/KkomaKnight/PerkIcons/killArrowR.png` | fileID 21300000 |  |
+| sprites | `perk.killArrowL` | `Assets/KkomaKnight/PerkIcons/killArrowL.png` | fileID 21300000 |  |
+| sprites | `perk.killAxeR` | `Assets/KkomaKnight/PerkIcons/killAxeR.png` | fileID 21300000 |  |
+| sprites | `perk.killAxeL` | `Assets/KkomaKnight/PerkIcons/killAxeL.png` | fileID 21300000 |  |
+| sprites | `perk.thornsR` | `Assets/KkomaKnight/PerkIcons/thornsR.png` | fileID 21300000 |  |
+| sprites | `perk.thornsL` | `Assets/KkomaKnight/PerkIcons/thornsL.png` | fileID 21300000 |  |
+| sprites | `perk.execEvR` | `Assets/KkomaKnight/PerkIcons/execEvR.png` | fileID 21300000 |  |
+| sprites | `perk.execEvL` | `Assets/KkomaKnight/PerkIcons/execEvL.png` | fileID 21300000 |  |
+| sprites | `perk.stunCritR` | `Assets/KkomaKnight/PerkIcons/stunCritR.png` | fileID 21300000 |  |
+| sprites | `perk.stunCritL` | `Assets/KkomaKnight/PerkIcons/stunCritL.png` | fileID 21300000 |  |
+| sprites | `perk.nArrowR` | `Assets/KkomaKnight/PerkIcons/nArrowR.png` | fileID 21300000 |  |
+| sprites | `perk.nArrowL` | `Assets/KkomaKnight/PerkIcons/nArrowL.png` | fileID 21300000 |  |
+| sprites | `perk.nAxeR` | `Assets/KkomaKnight/PerkIcons/nAxeR.png` | fileID 21300000 |  |
+| sprites | `perk.nAxeL` | `Assets/KkomaKnight/PerkIcons/nAxeL.png` | fileID 21300000 |  |
+| sprites | `perk.nBoltR` | `Assets/KkomaKnight/PerkIcons/nBoltR.png` | fileID 21300000 |  |
+| sprites | `perk.nBoltL` | `Assets/KkomaKnight/PerkIcons/nBoltL.png` | fileID 21300000 |  |
+| sprites | `perk.ctCritR` | `Assets/KkomaKnight/PerkIcons/ctCritR.png` | fileID 21300000 |  |
+| sprites | `perk.ctDmgR` | `Assets/KkomaKnight/PerkIcons/ctDmgR.png` | fileID 21300000 |  |
+| sprites | `perk.cleaveR` | `Assets/KkomaKnight/PerkIcons/cleaveR.png` | fileID 21300000 |  |
+| sprites | `perk.cleaveL` | `Assets/KkomaKnight/PerkIcons/cleaveL.png` | fileID 21300000 |  |
+| sprites | `perk.wardHitR` | `Assets/KkomaKnight/PerkIcons/wardHitR.png` | fileID 21300000 |  |
+| sprites | `perk.wardHitL` | `Assets/KkomaKnight/PerkIcons/wardHitL.png` | fileID 21300000 |  |
+| sprites | `perk.evRepairL` | `Assets/KkomaKnight/PerkIcons/evRepairL.png` | fileID 21300000 |  |
+| sprites | `perk.critSpearL` | `Assets/KkomaKnight/PerkIcons/critSpearL.png` | fileID 21300000 |  |
 | prefabs | `cm.character` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Common/Prefabs/Character.prefab` | root 1824668350962886144 | CharacterMaker Character 프리팹 — 전투의 플레이어·적(BattleWorld.MakeChar) 과 UI 초상(HeroView · RenderTexture 카메라 · 레이어 30) 이 같은 프리팹을 쓴다 |
 | prefabs | `fx.hit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Hit A (Red).prefab` | root 4021103657954561961 | 적 피격 (CFXR Hit A Red) |
 | prefabs | `fx.crit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Impact Glowing HDR (Blue).prefab` | root 2708598583397607911 | 치명타 피격 (Impact Glowing HDR Blue · 0.2 배) |
