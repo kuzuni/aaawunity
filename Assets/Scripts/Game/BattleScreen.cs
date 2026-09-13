@@ -746,7 +746,10 @@ namespace KkomaKnight.Game
             if (_gold != null) _gold.text = UiKit.Fmt(_shownGold);   // T85 — 표시 골드(구슬이 도착한 만큼) · 은행에 넣는 값은 엔진 G.Gold 그대로
             if (_kills != null) _kills.text = G.Kills.ToString();
             // T516 — 턴제 판은 제목 줄이 «지금 몇 라운드인가» 도 말한다(주인 «1웨이브당 15라운드»). 걷는 중(Round 0)에는 옛 그대로다.
-            if (_chapTitle != null) _chapTitle.text = G.TurnMode && G.Round > 0 ? $"챕터 {G.Chapter} · {G.Round}/{G.RoundLimit}" : $"챕터 {G.Chapter}";
+            // T516 — 턴제면 라운드를 같이 말한다. ⚠ 가운뎃점 «·» 을 쓰면 안 된다: Jua 에 그 글리프가 없어
+            //   유니티가 **폭 0** 으로 흘린다(T75 · `TextSizeGateTests` 가 CI run 1206 에서 이 줄을 잡았다).
+            //   여기는 `.text` 직접 대입이라 `UiKit.Label` 의 `TextGlyphs.Safe` 를 안 거친다 — 괄호(ASCII)로 적는다.
+            if (_chapTitle != null) _chapTitle.text = G.TurnMode && G.Round > 0 ? $"챕터 {G.Chapter} ({G.Round}/{G.RoundLimit})" : $"챕터 {G.Chapter}";
             // 진행바(T35) = 노드(웨이브·이벤트·보스) 진행 — 끝난 노드 수 + 지금 싸우는 웨이브의 처치 비율 → 적을 잡을수록 찬다 · 적 조우 중엔 주황, 걷는 중엔 노랑(레퍼런스 03 «적 발견»)
             _prog.Set(ChapterProgress(G), null);
             if (_progFill != null) _progFill.color = _world != null && _world.Engaged ? Palette.Orange : Palette.Yellow;
