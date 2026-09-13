@@ -1,0 +1,15 @@
+{
+  "ui.iconFoe1": "Assets/Art/ChihuahuaGameUI/Profile/profile_01.png",
+  "ui.iconFoe2": "Assets/Art/ChihuahuaGameUI/Profile/profile_02.png",
+  "ui.iconFoe3": "Assets/Art/ChihuahuaGameUI/Profile/profile_03.png",
+  "ui.iconFoe4": "Assets/Art/ChihuahuaGameUI/Profile/profile_04.png",
+  "ui.face5": "Assets/Art/ChihuahuaGameUI/Profile/profile_05.png",
+  "ui.face6": "Assets/Art/ChihuahuaGameUI/Profile/profile_06.png",
+  "ui.face7": "Assets/Art/ChihuahuaGameUI/Profile/profile_07.png",
+  "ui.face8": "Assets/Art/ChihuahuaGameUI/Profile/profile_08.png",
+  "ui.face9": "Assets/Art/ChihuahuaGameUI/Profile/profile_09.png",
+  "ui.chapter.autumn": "Assets/Art/ChihuahuaGameUI/Lobby/chapter_autumn.png",
+  "ui.chapter.deepForest": "Assets/Art/ChihuahuaGameUI/Lobby/chapter_deepForest.png",
+  "ui.chapter.forest": "Assets/Art/ChihuahuaGameUI/Lobby/chapter_forest.png",
+  "ui.chapter.desert": "Assets/Art/ChihuahuaGameUI/Lobby/chapter_desert.png"
+}
