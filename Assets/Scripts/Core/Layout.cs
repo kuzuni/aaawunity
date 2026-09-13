@@ -113,6 +113,28 @@ namespace KkomaKnight.Core
         /// 그래서 1(= 예전 그대로 · 모든 것이 같은 속도)로 둔다. 진짜 간격 2배는 엔진 좌표(enemies.json enemyGap/nodeGap/nodeGapEvent) 를 바꿔야 하고 그건 밸런스·시드 골든이 바뀌는 일 — 승인 대기 24.</summary>
         public const float WorldSpacing = 1.0f;
         /// <summary>
+        /// <b>전투 카메라 띠의 오른쪽 끝</b>(프레임 폭 %) — 플레이어 그림이 여기까지 «오른쪽으로 걸어간다»(<see cref="BattleCam"/> · T510).
+        /// <para>
+        /// 띠의 <b>왼쪽 끝</b>은 <c>ui.json camera.playerX</c>(16%) 그대로다 — 그 수는 안 건드린다(aaaw 정본 · 펫 자리·칼 닿는 거리가 그 수에 매여 있다).
+        /// 오른쪽 끝만 새로 정한 수이고, 잣대는 둘이다: ⓐ <b>한 걸음이 눈에 보여야 한다</b> — 적 사이 <c>enemyGap</c> 44 월드 px × zoom 1.5 = 66 레이아웃 px = 화면의 12.2%p 라
+        /// 띠가 46%p(16→62)면 한 무리에서 <b>서너 걸음</b>을 온전히 걸어간다(초기 챕터의 3~4마리 무리는 통째로 «맵이 안 흐르는» 채로 끝난다).
+        /// ⓑ <b>싸우는 상대가 화면 안에 남아야 한다</b> — 멈춤 거리 74 월드 px = 111 레이아웃 px = 20.6%p 이므로 62 + 20.6 = <b>82.6%</b> 로 오른쪽 끝(100%) 안이다.
+        /// </para>
+        /// </summary>
+        public const float BattleCamRightPct = 62f;
+        /// <summary>
+        /// 적이 화면에 없는 <b>행군</b>(무리와 무리 사이) 동안 카메라가 플레이어 걸음의 몇 배로 따라붙나(1 = 안 따라붙는다 · <see cref="BattleCam"/> · T510).
+        /// <para>
+        /// 싸우는 동안에는 절대 안 따라붙는다 — 그때 원점이 움직이면 «서 있는데 맵이 흐르는» 꼴이 되어 주인 지적이 그대로 돌아온다.
+        /// 1.5 인 까닭(실측): 무리와 무리 사이가 <c>nodeGap</c> 280 월드 px 라 한 번 행군할 때 되돌리는 거리가 280 × 0.5 = <b>140 월드 px</b>,
+        /// 띠 한 폭(46%p ÷ zoom 1.5 = 165 월드 px)의 <b>85%</b> 다 — 행군 한 번에 거의 한 폭을 되돌려 다음 무리를 늘 왼쪽 끝 가까이에서 맞는다
+        /// (쉼터·천사·악마 노드는 <c>nodeGapEvent</c> 470 이라 넉넉히 넘는다).
+        /// <b>1 을 넘는 몫(0.5)이 곧 «그림이 뒤로 밀리는 속도»</b> 라 걷는 속도의 절반이다 — 카메라가 앞을 비추는 것으로 읽히고, 그 이상 키우면 뒷걸음질처럼 보인다.
+        /// 걸음에 비례하므로 배속(x2)·대시 특전에서도 같은 비율이다.
+        /// </para>
+        /// </summary>
+        public const float BattleCamCatchUp = 1.5f;
+        /// <summary>
         /// 전투 캐릭터 그리기 배율 (주인 지시 2026-09-05 «플레이어·적 크기 2/3» · T14). 표 상수(PlayerHeight·EnemyHeight·보스 ×BossSizeMul)는 ref-layout 표와
         /// LayoutSpecTests 가 대조하므로 그대로 두고, 그리는 쪽(BattleWorld)이 <see cref="CharHeightPct"/> 로 이 배율을 곱한다. 발밑 체력바 폭도 같은 배율(높이는 그대로).
         /// </summary>
