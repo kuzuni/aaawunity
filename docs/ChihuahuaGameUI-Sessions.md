@@ -5,7 +5,7 @@ T519는 전체 통합 작업이며 아직 미완료다. T515~T518과 기존 장�
 
 ## PC 종료 후 통합 실행 — 클라우드 담당 전환
 
-- 사용자는 PC를 꺼도 남은 통합까지 자동 진행되길 요청했다. 로컬 통합 예약 의존성을 없애기 위해 전용 ChatGPT Work cloud 통합 작업으로 넘긴다. 작업 ID는 생성 후 기록한다.
+- 사용자는 PC를 꺼도 남은 통합까지 자동 진행되길 요청했다. 로컬 통합 예약 의존성을 없애기 위해 전용 ChatGPT Work cloud 통합 작업으로 넘긴다. 실행 확인된 작업: https://chatgpt.com/c/6aa6f3fe-0014-83ee-be46-f5cccdb87053 (ChatGPT Work cloud, active).
 - cloud 통합 담당만 T519 런타임/카탈로그/문서를 변경하고 main에 반영한다. 기존 로컬 예약은 상태 확인만 수행하며 담당 실행 중에는 직접 통합하지 않는다.
 - 기존 코드 작업 diff를 `tools/game_ui_art/sessions/cloud-diffs/{world,events,shell}.patch`에 보존했다. shell의 UiKit/Loading/SeasonPass는 부모가 개선해 이미 main에 넣었으므로 전체 patch 적용 금지. 남은 Screens 챕터 맵만 검토한다.
 - cloud 담당은 원격 아트 branch의 지정 소유 경로만 수령하며 브랜치 전체 merge로 main을 되돌리지 않는다. 기존 로컬 PSB27개 변경은 PC에만 있으므로 cloud가 건드릴 대상이 아니다.
