@@ -288,7 +288,14 @@ namespace KkomaKnight.Core
             if (P.Has("p_killRepair") && Pkk(PK.C("PERK_KREPAIR_CH"))) Repair(P.MaxSh * PK.C("PERK_KREPAIR_F"), "p_killRepair");
             if (P.Has("p_killSureCrit")) P.SureCrit = true;
             if (P.Has("p_berserkStk")) P.BsStk++;
-            if (P.Has("p_killDash") && e.Wave != null) { foreach (var x in e.Wave.Enemies) if (x.Hp > 0) { P.Dash = true; break; } }
+            // «처치 시 대시» — 옛 규칙에서는 «같은 웨이브에 남은 적» 이 있어야 켰다(그 웨이브 안에서 다음 적에게 달려가는 특전이라).
+            // ⚑ T516 — 턴제는 **웨이브당 1마리**라 그 조건이 영영 거짓이 된다(특전이 죽는다). 턴제에서는 «판에 남은 적이 있으면» 으로 읽는다
+            //   — 뜻(«다음 적에게 달려간다»)은 그대로이고 달려갈 대상이 다음 웨이브가 될 뿐이다. 옛 규칙 쪽은 한 자도 안 바뀐다(시드 골든 불변).
+            if (P.Has("p_killDash"))
+            {
+                if (TurnMode) { foreach (var n in Nodes) { foreach (var x in n.Enemies) if (x.Hp > 0) { P.Dash = true; break; } if (P.Dash) break; } }
+                else if (e.Wave != null) { foreach (var x in e.Wave.Enemies) if (x.Hp > 0) { P.Dash = true; break; } }
+            }
             // T240 3항 — 아레나 1대1 은 적이 하나뿐이라 «그 하나가 죽으면 이긴 것» 이다(챕터 판은 종전대로 보스가 죽어야 클리어).
             if (e.IsBoss || Opt.IsArenaDuel) Cleared = true;
             GainExp(e.IsBoss ? D.Tune.ExpBoss : D.Tune.ExpKill);
@@ -894,6 +901,9 @@ namespace KkomaKnight.Core
             ProcN = 0;
             P.StrikeT = Math.Max(0, P.StrikeT - dt); P.HitT = Math.Max(0, P.HitT - dt);
             foreach (var k in BuffKeys) { var arr = P.Buffs[k]; for (int i = arr.Count - 1; i >= 0; i--) { arr[i].T -= dt; if (arr[i].T <= 0) arr.RemoveAt(i); } }
+            // 투사체(도끼·창·화살·번개)는 **걷는 중이든 싸우는 중이든** 난다 — 옛 실시간 규칙과 같은 자리에서 같은 속도로 나아간다.
+            //   ⚠ 이 줄이 싸움 갈래 안에만 있었더니 «걸어가며 쏜 창» 이 공중에 서서 기다렸다(자가 잡았다 · BattleWorldTests 거리당 비행 시간).
+            StepProjectiles(dt);
             var alive = AliveList();
             if (alive.Count == 0) return true;
             // 쉼터·악마·천사는 옛 그대로 — 걸어가다 닿으면 팝업이 뜬다(턴과 무관).
@@ -922,9 +932,6 @@ namespace KkomaKnight.Core
             }
             // ── 마주 섰다 ──
             P.Dash = false;
-            // 스킬이 낸 투사체(도끼·창·화살·번개)는 «날아가는 그림» 이 있어야 하므로 실시간처럼 나아가게 둔다 —
-            //   속도가 430~520 px/s 이고 적은 멈춤 거리(74) 앞이라 **같은 반턴 안에** 닿는다(턴을 넘기지 않는다).
-            StepProjectiles(dt);
             if (TurnFoe != tgt) BeginWaveTurns(tgt);                    // 새 웨이브 = 라운드 1부터
             foreach (var e in alive) { e.HitT = Math.Max(0, e.HitT - dt); e.StrikeT = Math.Max(0, e.StrikeT - dt); }
             if (tgt.Stun > 0) tgt.Stun = Math.Max(0, tgt.Stun - dt);
