@@ -291,7 +291,7 @@
 | sprites | `ui.iconMedalBronze` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Medal_01_Bronze.png` | fileID 21300000 | T43 아레나 티어 «브론즈»(카드 티어 줄 · 입장 화면 제목 · 순위 보상 티어 띠) |
 | sprites | `ui.iconMedalSilver` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Medal_01_Silver.png` | fileID 21300000 | T43 순위 보상 티어 띠 «실버» |
 | sprites | `ui.iconGemBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Gem_01_Blue.png` | fileID 21300000 | T43 순위 보상 티어 띠 «플래티넘» |
-| sprites | `ui.iconGemPurple` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Gem_02_Purple.png` | fileID 21300000 | T43 순위 보상 <b>티어 띠</b> «다이아»(<b>등급 이름</b>이지 재화가 아니다) — 재화 다이아는 T513 부터 hud.gem 한 가지다(상인 상품·보상 칸도 그쪽) |
+| sprites | `ui.iconGemPurple` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Gem_02_Purple.png` | fileID 21300000 | T43 순위 보상 <b>티어 띠</b> «다이아»(<b>등급 이름</b>이지 재화가 아니다) — 재화 다이아는 T514 부터 hud.gem 한 가지다(상인 상품·보상 칸도 그쪽) |
 | sprites | `ui.iconCrownGold` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Crown_01_Gold.png` | fileID 21300000 | T43 아레나 1위 왕관(시상대 · 순위 보상 1위 줄) |
 | sprites | `ui.iconCrownSilver` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Crown_01_Silver.png` | fileID 21300000 | T43 아레나 2위 왕관 |
 | sprites | `ui.iconCrownBronze` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Crown_01_Bronze.png` | fileID 21300000 | T43 아레나 3위 왕관 |

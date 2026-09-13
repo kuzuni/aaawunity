@@ -96,7 +96,7 @@ namespace KkomaKnight.Game
         /// </summary>
         static readonly string PodiumFrame2 = Profile.FrameKeyPrefix + "plum", PodiumFrame3 = Profile.FrameKeyPrefix + "blue";
         /// <summary>상인 상품 — <c>key</c> 는 <see cref="Core.ArenaShopData"/>(arenaShop.json)의 줄 이름이다.
-        /// <para>⚑ T513(주인 2026-09-13 «아레나 부분 상점에 다이아 파는 게 메인 상점에서 파는 다이아랑 모양이 다른데 · 통일시켜야지 메인 상점꺼로») —
+        /// <para>⚑ T514(주인 2026-09-13 «아레나 부분 상점에 다이아 파는 게 메인 상점에서 파는 다이아랑 모양이 다른데 · 통일시켜야지 메인 상점꺼로») —
         /// 다이아 칸은 <c>hud.gem</c>(= 상단 바·메인 상점 값 아이콘과 <b>같은 그림</b>)이다. 여기만 <c>ui.iconGemPurple</c> 을 쓰고 있었다.</para></summary> 표에 없는 키는 한도·값이 «—» 로 난다(T209 · 레퍼런스에서 잘린 «전설 열쇠» 가 그렇다).</summary>
         static readonly (string title, string icon, string key)[] Goods =
         {
@@ -1066,7 +1066,7 @@ namespace KkomaKnight.Game
         /// <summary>보상 이름 → 칸의 «틀 + 아이콘»(표는 게임 쪽 이름만 적고 아이콘 짝짓기는 화면 몫이다 · T237 ⓓ).</summary>
         static void RewardArt(string item, out string frameKey, out string icon)
         {
-            if (item == Core.Mail.ItemGem) { frameKey = "ui.itemFrame.plum"; icon = "hud.gem"; return; }   // T513 — 다이아 그림은 메인 상점·상단 바와 한 가지(hud.gem)로 통일(주인 2026-09-13)
+            if (item == Core.Mail.ItemGem) { frameKey = "ui.itemFrame.plum"; icon = "hud.gem"; return; }   // T514 — 다이아 그림은 메인 상점·상단 바와 한 가지(hud.gem)로 통일(주인 2026-09-13)
             if (item == Core.Mail.ItemPetEgg) { frameKey = "ui.itemFrame.green"; icon = "pet.egg"; return; }
             if (item == Core.Mail.ItemGold) { frameKey = "ui.itemFrame.green"; icon = "ui.coin"; return; }
             frameKey = "ui.itemFrame.green"; icon = "ui.iconArenaCoin";   // 아레나 코인 · 모르는 이름도 여기(아이콘 때문에 줄이 안 뜨는 일은 없게)
