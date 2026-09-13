@@ -1,0 +1,198 @@
+{
+  "themes": 27,
+  "rigging_pngs": 27,
+  "psbs": 27,
+  "thumbnails": 162,
+  "status": "passed",
+  "checks": [
+    {
+      "id": "01_Primitive/Thief",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.0009871220815966808
+    },
+    {
+      "id": "01_Primitive/Warrior",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.2224639812903888
+    },
+    {
+      "id": "01_Primitive/Assassin",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 1.1368683772161603e-13
+    },
+    {
+      "id": "02_Medieval/Thief",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.0029613662447900424
+    },
+    {
+      "id": "02_Medieval/Warrior",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.11962252833831144
+    },
+    {
+      "id": "02_Medieval/Assassin",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.11468691793061225
+    },
+    {
+      "id": "03_EarlyModern/Thief",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.12159677250144796
+    },
+    {
+      "id": "03_EarlyModern/Warrior",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.22937383586128135
+    },
+    {
+      "id": "03_EarlyModern/Assassin",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.23134808002441787
+    },
+    {
+      "id": "04_Modern/Thief",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.3470221200365131
+    },
+    {
+      "id": "04_Modern/Warrior",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.10580281919658319
+    },
+    {
+      "id": "04_Modern/Assassin",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.11369979584907242
+    },
+    {
+      "id": "05_Cyber/Thief",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.0019742441631933616
+    },
+    {
+      "id": "05_Cyber/Warrior",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.24516778916608928
+    },
+    {
+      "id": "05_Cyber/Assassin",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.46368328213020504
+    },
+    {
+      "id": "06_Future/Thief",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.001974244163250205
+    },
+    {
+      "id": "06_Future/Warrior",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.004935610407699187
+    },
+    {
+      "id": "06_Future/Assassin",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.002961366244619512
+    },
+    {
+      "id": "07_Space/Thief",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.3529448525258658
+    },
+    {
+      "id": "07_Space/Warrior",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.006909854570835705
+    },
+    {
+      "id": "07_Space/Assassin",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.579357322142414
+    },
+    {
+      "id": "08_Immortal/Thief",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.001974244163250205
+    },
+    {
+      "id": "08_Immortal/Warrior",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.34406075379183676
+    },
+    {
+      "id": "08_Immortal/Assassin",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.11764828417523177
+    },
+    {
+      "id": "09_Infinite/Thief",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.23233520210590086
+    },
+    {
+      "id": "09_Infinite/Warrior",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.2224639812903888
+    },
+    {
+      "id": "09_Infinite/Assassin",
+      "psb_layers": 8,
+      "thumbnails": 6,
+      "composite_max_difference": 0,
+      "weapon_length_error_px": 0.23430944626898054
+    }
+  ]
+}

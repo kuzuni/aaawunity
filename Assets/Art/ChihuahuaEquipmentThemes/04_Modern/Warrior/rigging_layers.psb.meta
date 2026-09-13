@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 9ff1cbc92a92a3c0b7d985915b525e9b
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: T513 ChihuahuaEquipmentThemes
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: b2a9591990af98743ba3ff7cf1000886, type: 3}
+  m_MosaicLayers: 1
+  m_CharacterMode: 1
+  m_ImportHiddenLayers: 0
+  m_LayerMappingOption: 2
+  m_GenerateGOHierarchy: 1
+  m_ResliceFromLayer: 0
