@@ -104,6 +104,15 @@ namespace KkomaKnight.Tests.Play
             // 01 로비 · 12 설정
             Assert.AreEqual("lobby", _app.Current.Name);
             yield return Shot("01_lobby");
+            // T519 — 챕터 선택 카드의 새 지도 4종을 실제 화면으로 남긴다. 선택 인덱스와 해금값은 촬영 뒤 되돌린다.
+            int chapter0 = S.SelChapter, maxChapter0 = S.MaxChapter;
+            S.MaxChapter = Mathf.Max(S.MaxChapter, 4);
+            for (int chapter = 1; chapter <= 4; chapter++)
+            {
+                S.SelChapter = chapter; _app.Current.Refresh(); yield return Frames(2);
+                yield return Shot("lobby_chapter_" + chapter);
+            }
+            S.SelChapter = chapter0; S.MaxChapter = maxChapter0; _app.Current.Refresh(); yield return Frames(2);
             _app.Overlay.Settings(); yield return Frames(2); yield return Shot("12_settings"); _app.Overlay.Close(); yield return Frames(1);
             // T332 — §5 꼬리가 일곱 시간째 «아무도 안 찍는다» 고 부르던 표 셋 중 둘(㉜ 로비 메뉴 · ㉟ 프로필 둘).
             //   셋 다 «프리팹 그대로 · 레퍼런스 그림 없음» = **회귀 자**인데, 찍히지 않는 동안은 그 회귀 자가 **한 번도 안 돈 것과 같다**.
@@ -238,6 +247,17 @@ namespace KkomaKnight.Tests.Play
                 }
                 else _missing.Add("shop_chest_open (큰 상자 카드의 «1회» 버튼을 못 찾았거나 안 눌린다)");
                 _app.Save.Gem = gem0; _app.Current?.Refresh(); yield return Frames(1);
+            }
+
+            // T519 — 던전 전용 field/road/props가 실제 BattleWorld에 놓인 두 화면. 카드 썸네일만 보고 월드 연결을 통과 처리하지 않는다.
+            foreach (var dungeonKey in new[] { "hell", "expedition" })
+            {
+                var dungeon = D.Dungeon.Of(dungeonKey); Assert.IsNotNull(dungeon, dungeonKey + " 던전 표");
+                _app.StartBattle(1, dungeon.Run, dungeonKey); yield return Frames(3);
+                var dungeonBattle = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(dungeonBattle, dungeonKey + " 전투 화면");
+                Assert.AreEqual(dungeonKey, dungeonBattle.World.MapTheme.Name, dungeonKey + " 전용 월드 테마");
+                Time.timeScale = 0f; yield return Shot("battle_dungeon_" + dungeonKey); Time.timeScale = 1f;
+                _app.ShowScreen("lobby"); yield return Frames(2);
             }
 
             // 02 전투(3초) · 03 적 조우(8초 안에 Engaged 가 되면) · 04 레벨업 · 05 보유 특전

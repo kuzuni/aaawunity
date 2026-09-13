@@ -453,23 +453,33 @@ namespace KkomaKnight.Tests.Play
             // (게이트가 구현을 부르면 자가 아니라 거울이 되어 둘 다 틀려도 초록이다 · 결정 555).
             {
                 var bn = UiKit.Find(me, "Banner") as RectTransform; Assert.IsNotNull(bn, "상인 배너");
-                RectTransform In(string n) { var r = UiKit.Find(bn, n) as RectTransform; Assert.IsNotNull(r, "배너 안 " + n); return r; }
-                float TopPct(RectTransform r) => (1f - r.anchorMax.y) * 100f;
-                float BotPct(RectTransform r) => (1f - r.anchorMin.y) * 100f;
-                Assert.AreEqual(82f, TopPct(In("Counter")), 1.5f, "계산대 상판 윗변 = 배너의 82%(레퍼런스 실측 · 종전 74 는 상판이 화면의 1/4 를 먹던 값)");
-                Assert.AreEqual(92f, TopPct(In("Ledge")), 1.5f, "아래 갈색 턱 = 92%~(레퍼런스 표의 «아래 갈색 턱»)");
-                var body = In("Keeper"); var head = In("Head");
-                var bi = body.GetComponent<Image>(); var hi = head.GetComponent<Image>();
-                Assert.IsNotNull(bi != null ? bi.sprite : null, "상인 몸 조각"); Assert.IsNotNull(hi != null ? hi.sprite : null, "상인 머리 조각");
-                Assert.AreNotSame(bi.sprite, hi.sprite, "상인은 머리·몸 두 조각으로 서 있다(한 장짜리 아이콘이 아니다)");
-                var stall = _app.Assets != null ? _app.Assets.Sprite("ui.iconMerchant") : null;
-                Assert.AreNotSame(stall, bi.sprite, "상인 자리에 «가판 아이콘» 을 다시 놓으면 여기서 빨개진다 — 레퍼런스는 사람이다");
-                Assert.AreNotSame(stall, hi.sprite, "머리 자리도 마찬가지");
-                Assert.Less(TopPct(head), TopPct(body), "머리가 몸보다 위");
-                Assert.Greater(BotPct(head), TopPct(body), "머리와 몸이 겹친다(목이 끊겨 보이면 안 된다)");
-                Assert.AreEqual(82f, BotPct(body), 3f, "상인은 계산대 뒤에 «서» 있다 — 몸 아래끝이 상판 줄(82%)에 닿는다");
-                float cx = (body.anchorMin.x + body.anchorMax.x) * 50f;
-                Assert.AreEqual(48.5f, cx, 3f, "상인은 배너 가운데(레퍼런스 x 37~60 의 가운데 48.5%)");
+                var artwork = UiKit.Find(bn, "Artwork") as RectTransform;
+                var merchantArt = _app.Assets != null ? _app.Assets.Sprite("ui.arena.merchant") : null;
+                if (merchantArt != null)
+                {
+                    Assert.IsNotNull(artwork, "T519 완성형 상인 배너 Artwork");
+                    var image = artwork.GetComponent<Image>();
+                    Assert.AreSame(merchantArt, image != null ? image.sprite : null, "상인 배너는 ui.arena.merchant 실제 스프라이트");
+                    Assert.AreEqual(Vector2.zero, artwork.anchorMin, "완성형 배너 왼쪽 위 Stretch");
+                    Assert.AreEqual(Vector2.one, artwork.anchorMax, "완성형 배너 오른쪽 아래 Stretch");
+                    Assert.IsNull(UiKit.Find(bn, "Counter"), "완성형 배너 위에 옛 코드 도형을 중복하지 않는다");
+                    Assert.IsNull(UiKit.Find(bn, "Keeper"), "완성형 배너 위에 옛 조각 상인을 중복하지 않는다");
+                }
+                else
+                {
+                    RectTransform In(string n) { var r = UiKit.Find(bn, n) as RectTransform; Assert.IsNotNull(r, "배너 안 " + n); return r; }
+                    float TopPct(RectTransform r) => (1f - r.anchorMax.y) * 100f;
+                    float BotPct(RectTransform r) => (1f - r.anchorMin.y) * 100f;
+                    Assert.AreEqual(82f, TopPct(In("Counter")), 1.5f, "계산대 상판 윗변 = 배너의 82%(fallback 레퍼런스 실측)");
+                    Assert.AreEqual(92f, TopPct(In("Ledge")), 1.5f, "아래 갈색 턱 = 92%~(fallback 레퍼런스 실측)");
+                    var body = In("Keeper"); var head = In("Head");
+                    var bi = body.GetComponent<Image>(); var hi = head.GetComponent<Image>();
+                    Assert.IsNotNull(bi != null ? bi.sprite : null, "상인 몸 조각"); Assert.IsNotNull(hi != null ? hi.sprite : null, "상인 머리 조각");
+                    Assert.AreNotSame(bi.sprite, hi.sprite, "fallback 상인은 머리·몸 두 조각");
+                    Assert.Less(TopPct(head), TopPct(body), "머리가 몸보다 위");
+                    Assert.Greater(BotPct(head), TopPct(body), "머리와 몸이 겹친다");
+                    Assert.AreEqual(82f, BotPct(body), 3f, "fallback 상인 몸 아래끝은 상판 줄");
+                }
             }
             Check("상인 페이지");
 

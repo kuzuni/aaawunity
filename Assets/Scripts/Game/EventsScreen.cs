@@ -419,6 +419,10 @@ namespace KkomaKnight.Game
                 var r = Layout.AeRow; r.Y += i * Layout.AeRowPitch;
                 var row = Place(content, "RankRow:" + (i + 4), r, Layout.AeList.Y);
                 RankItem(row, i + 4, Profile.DummyIcon(i + 4));
+                // T519 — 완성형 rank-row 아트는 종전 ListFrame_02의 Border1까지 대신하므로,
+                // strict T69 계약의 검은 링은 행 바깥에 다시 명시한다. 그림·글자 위에 마지막으로 얹되
+                // fillCenter=false라 내용은 가리지 않는다.
+                UiKit.Bordered(row);
                 if (i == 0) UiKit.Tag(row, "순위 줄(1칸)");
             }
             // T124 — 승급 안내 띠는 «불투명» 이다: 레퍼런스 23 도 목록 마지막 줄 위에 걸치지만 띠가 꽉 찬 어두운 막대라 뒤 줄이 안 비친다.

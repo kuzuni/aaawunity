@@ -17,7 +17,10 @@
 - `c3844a84` / run `34778500618`: dotnet build 실패. static helper의 인스턴스 `App` 참조, PrivilegeScreen 범위 밖 helper 호출, Game 테스트 2개의 EditMode/Core 어셈블리 오배치를 수정했다.
 - `444965e8` / run `34779970324`: 잔여 1건(`EventsScreen.Add` static 경로가 instance `ArtKey` 호출)으로 dotnet build 실패. `ArtKey`가 `App.I.Assets`를 읽는 static fallback helper가 되도록 수정했다.
 - `24867201` / run `34780081444`: dotnet build·순수 C# 596개·정적 게이트는 success. Unity runner 단계는 failure이고 결과 artifact가 보존됐으며 후속 배포 단계 완료를 기다리며 실패 테스트/PlayLog를 분석 중이다.
-- 다음 단계: Unity 결과 XML/PlayLog에서 실패 이름·메시지를 확정해 원인만 수정하고, 중복 실행 없이 최신 CI 및 실제 screenshots를 검수한다.
+- Unity XML 확정: EditMode 596/596, PlayMode 255/257. 실패는 `BorderGateTests.BattleBarsHaveBordersAndCellTagsAreAudited`(Arena rankRow 3화면의 대체 링 누락)와 `EventsScreenTests.DungeonArenaPagesAndPopups`(완성형 merchant Artwork 뒤에도 옛 fallback Counter를 요구한 stale assertion) 두 건이다.
+- 수정: rankRow 바깥에 `UiKit.Bordered` 링을 추가하고, merchant 테스트는 실제 `ui.arena.merchant` 스프라이트·Stretch·fallback 비중복을 검증한다. 로컬 meta/catalog/keys/asmdef/test-usings/stale-asserts 검사는 모두 통과했다.
+- `9319fbe6` / run `34781230229`: Unity runner success. 결과 XML은 EditMode 596/596, PlayMode 257/257, 실패·skip 0이며 screens 52장을 배포했다. T519 관련 16장(로비·프로필·상점·상자·던전·Arena·이벤트 팝업)을 직접 확인했다.
+- 다음 단계: 챕터 지도 4종과 던전 BattleWorld 2종을 별도 실제 screenshot으로 남기고, Unity가 던전 field/road/props 및 rest/devil/angel 노드 SpriteRenderer를 실제 생성하는지 추가 검증한다.
 
 ## 클라우드 heartbeat
 
