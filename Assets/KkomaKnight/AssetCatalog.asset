@@ -1219,6 +1219,10 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 69fd5a268156624abbb8a3b74fe6a1e4, type: 3}
   - key: ui.option.dodge
     sprite: {fileID: 21300000, guid: 8f5cfb24511dff745029faab7307d786, type: 3}
+  - key: ui.pass.banner
+    sprite: {fileID: 21300000, guid: 4ea5317d544e4d15957e79d091a72110, type: 3}
+  - key: ui.loading.art
+    sprite: {fileID: 21300000, guid: 9a880c3546464417b96091326683ec0d, type: 3}
   prefabs:
   - key: cm.character
     prefab: {fileID: 1824668350962886144, guid: d6c3c650b0b379149a826b54b40b4571, type: 3}

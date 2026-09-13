@@ -603,7 +603,9 @@
     "ui.option.health": "Assets/Art/ChihuahuaGameUI/Stats/stat_health.png",
     "ui.option.shield": "Assets/Art/ChihuahuaGameUI/Stats/stat_shield.png",
     "ui.option.experience": "Assets/Art/ChihuahuaGameUI/Stats/stat_experience.png",
-    "ui.option.dodge": "Assets/Art/ChihuahuaGameUI/Stats/stat_dodge.png"
+    "ui.option.dodge": "Assets/Art/ChihuahuaGameUI/Stats/stat_dodge.png",
+    "ui.pass.banner": "Assets/Art/ChihuahuaGameUI/Pass/adventure_banner.png",
+    "ui.loading.art": "Assets/Art/ChihuahuaGameUI/Loading/chihuahua_loading.png"
   },
   "prefabs": {
     "cm.character": "Assets/Layer Lab/2D Minimal-CharacterMaker/Common/Prefabs/Character.prefab",
@@ -1297,6 +1299,8 @@
     "ui.option.health": "T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; pi.heart와 같은 PNG",
     "ui.option.shield": "T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; pi.shield와 같은 PNG",
     "ui.option.experience": "T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; pi.star와 같은 PNG",
-    "ui.option.dodge": "T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; ui.dodge와 같은 PNG"
+    "ui.option.dodge": "T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; ui.dodge와 같은 PNG",
+    "ui.pass.banner": "T519 치와와 전용 일러스트. 기존 제목·기간·레벨·진행 표시를 유지하고 배경/캐릭터만 교체.",
+    "ui.loading.art": "T519 치와와 전용 일러스트. 기존 제목·기간·레벨·진행 표시를 유지하고 배경/캐릭터만 교체."
   }
 }

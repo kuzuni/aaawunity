@@ -10,9 +10,14 @@ T519는 전체 통합 작업이며 아직 미완료다. T515~T518과 기존 장�
 - stats 브랜치 `080618f29276e72da72b721dc235a6440c3a72bb`에서 옵션 11개+패턴 1개를 수령했다. 부모가 12개 SHA256, 실제 RGBA/투명 알파, 아이콘 형태, 2×2 패턴 이음새를 직접 확인했다.
 - 기존 옵션 키 11개와 `ui.option.*` 별칭을 동일 PNG에 연결하고 RGB 틴트를 제거하되 호출자 알파는 보존한다. 패턴은 Repeat 메타와 실제 texture 동일성으로 연결한다. 실제 Boot 기반 PlayMode 회귀 검사를 추가했다. 로컬 C# 587/587 및 메타·카탈로그·키·asmdef·stale-asserts·문서 검사 통과. 새 커밋의 Unity CI·실제 화면은 아직 대기다.
 - world: 14개 완료 보고+ZIP이 있으나 Git CLI 인증 실패로 원격 미전달. 같은 Work 작업에 GitHub 도구로 업로드를 요청했고, 현재 대화에서 이미 요청된 GitHub 업로드를 허용해 실행 재개를 확인했다. ZIP SHA256 `8e5d8ea027f544558a7d48e880eda2b70eb682324a3d9bd4f21c99d4aa039ba4`.
-- banners: 브라우저에서 5개 제작·검사 완료 및 GitHub Create Blob 승인 대기를 확인했다. aaawunity 아트 업로드 범위를 확인한 뒤 이번 호출을 허용했다. 최종 원격 브랜치는 아직 미확인.
-- identity: 브라우저에서 프로필 9개+지도 4개 제작 보고를 확인했다. 기존 GitHub 대화 중지 후 동일 작업 재개 요청이 실행 중이다. 부모 파일 수령·검수 전이다.
-- commerce: 최종 산출물 아직 미수령. 다른 작업도 read_thread의 idle만으로 완료/실패로 단정하지 말 것. Work UI의 GitHub 도구 승인 대기 때문에 idle일 수 있다.
+- banners: 브라우저에서 5개 제작·검사 완료 및 GitHub Create Blob 승인 대기를 확인했다. aaawunity 아트 업로드 범위를 확인한 뒤 이번 호출을 허용했다. 원격 브랜치 `deff167df6765ece8652b40d22eb75acce6005b2` 업로드 완료를 확인했고 5 PNG를 수령하여 부모 SHA/크기/알파/스타일 검수 통과. 패스·로딩만 이번 연결, Arena 3개는 Events 묶음에서 연결한다.
+- identity: 브라우저에서 프로필 9개+지도 4개 제작 보고를 확인했다. 기존 GitHub 대화 중지 후 동일 작업 재개 요청이 실행 중이다. 재개 작업의 Create Blob 승인 대기도 해소했다. 부모 파일 수령·검수 전이다.
+- commerce: Work UI에서 16개 제작·RGBA 검증 완료 보고 확인. GitHub Create Blob 대기를 해당 작업의 아트 업로드 범위에서 해소해 재개했다. 최종 원격 파일은 아직 미수령. 다른 작업도 read_thread의 idle만으로 완료/실패로 단정하지 말 것. Work UI의 GitHub 도구 승인 대기 때문에 idle일 수 있다.
+- 옵션·패턴 main 커밋 `aa2b5b53`, CI `34774120379` 실행 중(로컬/원격 C#·정적 게이트 초록, Unity 대기).
+- 로딩 cloud diff가 Background를 교체하려 했으나 실제 PNG는 SampleImage_Character(948×350)용이다. 부모 검토에서 수정했다. 패스 PNG는 4.70:1, 배너 영역2.32:1이므로 비율을 보존하고 기존 그라데이션을 유지한다.
+- 코드 diff 재수령은 `codex cloud diff <task ID>`로 가능하다. 현재 로컬 사본은 `C:/Users/user/.codex/tmp/aaawunity-t519/{world,events,shell}.patch`. 이미 적용한 shell UiKit/패스/로딩을 중복 적용하지 않는다.
+- 이번 회차는 패스·로딩 이미지 연결과 기존 PlayMode 검사 보강까지 추가하고 종료한다. 로컬 빌드 0경고/0오류 및 메타·카탈로그·키·test-usings·stale-asserts 검사 통과. Unity/실제 화면은 다음 CI에서 확인한다. 조정 lock은 반납하고 기존 30분 heartbeat로 다음 묶음을 이어간다.
+- world/commerce/identity는 승인 대기 해소 뒤 read_thread에서 active를 확인했다. 클라우드 업로드가 끝나기 전에 중복 재개 메시지를 보내지 않는다.
 - 다음 단계: 원격 전용 브랜치 갱신 확인 → 완성 묶음만 수령/검수 → 해당 cloud diff와 키 연결 → Unity CI 및 화면 검사. 이미 제작한 이미지나 세션을 중복 생성하지 않는다.
 
 ## 실행 환경

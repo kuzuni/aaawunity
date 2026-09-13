@@ -1,0 +1,4 @@
+Use case: illustration-story
+Asset type: Unity mobile game PvP arena entry card artwork, final art only
+Reference: Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png (mandatory identity/style reference)
+Create a wide arena entrance scene with the same yellow Chihuahua hero on the left, facing right toward a welcoming medieval tournament gate. Preserve all character identity and line/color cues. Include a round stone arena doorway, red-and-gold pennants, simple cheering silhouettes, and a sandy path. Keep important shapes inside margins and the lower-right calmer for existing UI. No text, letters, numbers, logos, watermark, UI, realistic texture, painterly rendering, complex anime shading, or excessive glow.

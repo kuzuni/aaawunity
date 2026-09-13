@@ -1,0 +1,4 @@
+Use case: stylized-concept
+Asset type: reusable Unity mobile game arena ranking-row decoration, final art only
+Reference: Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png (mandatory line/color style reference)
+Create one long low rounded tournament ranking-row frame on genuine transparent RGBA. Use a dark navy inner panel, warm gold trim, tiny red ribbon tabs at the far ends, and a small cream-and-gold portrait medallion at far left with a subtle Chihuahua paw motif. Keep the center and right plain for existing name and score overlays. Thick smooth black outline, rounded simple shapes, bright flat colors, restrained shade, small cream highlights. No character, face, text, letters, numbers, logos, watermark, checkerboard, realistic texture, or cropped shape.

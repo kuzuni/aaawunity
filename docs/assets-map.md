@@ -608,6 +608,8 @@
 | sprites | `ui.option.shield` | `Assets/Art/ChihuahuaGameUI/Stats/stat_shield.png` | fileID 21300000 | T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; pi.shield와 같은 PNG |
 | sprites | `ui.option.experience` | `Assets/Art/ChihuahuaGameUI/Stats/stat_experience.png` | fileID 21300000 | T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; pi.star와 같은 PNG |
 | sprites | `ui.option.dodge` | `Assets/Art/ChihuahuaGameUI/Stats/stat_dodge.png` | fileID 21300000 | T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; ui.dodge와 같은 PNG |
+| sprites | `ui.pass.banner` | `Assets/Art/ChihuahuaGameUI/Pass/adventure_banner.png` | fileID 21300000 | T519 치와와 전용 일러스트. 기존 제목·기간·레벨·진행 표시를 유지하고 배경/캐릭터만 교체. |
+| sprites | `ui.loading.art` | `Assets/Art/ChihuahuaGameUI/Loading/chihuahua_loading.png` | fileID 21300000 | T519 치와와 전용 일러스트. 기존 제목·기간·레벨·진행 표시를 유지하고 배경/캐릭터만 교체. |
 | prefabs | `cm.character` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Common/Prefabs/Character.prefab` | root 1824668350962886144 | CharacterMaker Character 프리팹 — 전투의 플레이어·적(BattleWorld.MakeChar) 과 UI 초상(HeroView · RenderTexture 카메라 · 레이어 30) 이 같은 프리팹을 쓴다 |
 | prefabs | `fx.hit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Hit A (Red).prefab` | root 4021103657954561961 | 적 피격 (CFXR Hit A Red) |
 | prefabs | `fx.crit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Impact Glowing HDR (Blue).prefab` | root 2708598583397607911 | 치명타 피격 (Impact Glowing HDR Blue · 0.2 배) |
