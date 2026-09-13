@@ -1,0 +1,34 @@
+{
+  "updated_utc": "2026-09-13T00:00:00Z",
+  "reference_attached_to_every_imagegen_call": true,
+  "accepted": [
+    {"file":"chest_medieval_open.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/chest_medieval_open.png","sha256":"85f42293b330fd6cd1881afbfa517a775bfa6678546cd1cddbc9f7b8e1895b3a","bytes":914835,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox_alpha_gt_8":[149,93,1109,1055],"visual_review":"pass","edge_review":"pass"},
+    {"file":"chest_modern_open.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/chest_modern_open.png","sha256":"cfe19bc46d4fba31c9fe4fa57c452900eb39aa759cbbe354220f5a6493b4557a","bytes":939720,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox_alpha_gt_8":[111,30,1149,1011],"visual_review":"pass","edge_review":"pass"},
+    {"file":"chest_cyber_open.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/chest_cyber_open.png","sha256":"57aac5e68a38cefa6fa99ebabd224820b19dc01295fbedae0f31292ebb9a6b0f","bytes":997675,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox_alpha_gt_8":[129,75,1125,1028],"visual_review":"pass","edge_review":"pass"},
+    {"file":"recipe_weapon.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/recipe_weapon.png","sha256":"eb99758242fd5620f1b7348fdb9c2cbc9635bc44238c23a9a48ca859b09ca0f7","bytes":1016786,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox":[150,76,1130,1178],"visual_review":"pass","edge_review":"pass"},
+    {"file":"recipe_armor.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/recipe_armor.png","sha256":"1b744797c70c17486aae8599ccfae78297b990a64ace7857034aa5e5349a67a1","bytes":833123,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox":[172,145,1082,1104],"visual_review":"pass","edge_review":"pass"},
+    {"file":"recipe_helmet.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/recipe_helmet.png","sha256":"55ffbc68a1d8c46b0f654235e2dcf1ceb64dbe5864cec1a13e51aeb2fde84e3b","bytes":1057561,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox":[125,82,1134,1161],"visual_review":"pass","edge_review":"pass"},
+    {"file":"recipe_shoes.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/recipe_shoes.png","sha256":"215a22a231bee3b35d10e09b72cba992544f83dc9db92cca3d5620d3d1d430ca","bytes":1059055,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox":[105,84,1171,1167],"visual_review":"pass","edge_review":"pass"},
+    {"file":"recipe_ring.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/recipe_ring.png","sha256":"0407be84e40a65a48bec1bf77d43db7de250b0a85a410ac4d2d09b0b654bb154","bytes":999953,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox":[114,92,1157,1170],"visual_review":"pass","edge_review":"pass"},
+    {"file":"recipe_necklace.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/recipe_necklace.png","sha256":"47758cb1d52ec42edade31e620d6294de0568f486a899b14334a04f9e9e435fa","bytes":1053689,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox":[134,77,1125,1175],"visual_review":"pass","edge_review":"pass"},
+    {"file":"recipe_random.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/recipe_random.png","sha256":"278a69c7108f5ecb737e5a6344dcf4d273e44a5ce26c427c843be277f78ee4b1","bytes":525916,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox":[179,117,1120,1113],"visual_review":"pass","edge_review":"pass"},
+    {"file":"gem_pack_1.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_1.png","sha256":"02d295112eb2c77223b0c344949659b15c75c6672f8346a7ca9a939db028a4b5","bytes":358300,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox":[178,323,1075,930],"visual_review":"pass","edge_review":"pass"},
+    {"file":"gem_pack_2.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_2.png","sha256":"8b98e68e863a5c2e683f281e1b6eb652f25fbd8e7cd5c1497202e3d6eb80608f","bytes":577228,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox":[176,234,1077,1019],"visual_review":"pass","edge_review":"pass"},
+    {"file":"gem_pack_3.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_3.png","sha256":"51a8b364d2e8816f502b285e9b1892a2d338db002be98a0cde70028eddba4022","bytes":578108,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox":[134,278,1119,976],"visual_review":"pass","edge_review":"pass"},
+    {"file":"gem_pack_4.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_4.png","sha256":"0ba2e35fac427ca9b76f00e0bc2aaf00cf7fd89c916adc4e30442bd2ff9efa0a","bytes":1067855,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox":[79,77,1174,1176],"visual_review":"pass","edge_review":"pass"},
+    {"file":"gem_pack_5.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_5.png","sha256":"e37ef6e166b7efd7cf2a0bfe8570f403b3de1f2ba510f13ed2849256590be4db","bytes":1058112,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox":[77,112,1177,1142],"visual_review":"pass","edge_review":"pass"},
+    {"file":"gem_pack_6.png","assets_path":"Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_6.png","sha256":"05c73c7a8f5239d09fbc8ad9ceb83b0d4443546940a553f899133fe7168471b3","bytes":1035451,"size":[1254,1254],"mode":"RGBA","alpha_extrema":[0,255],"bbox":[77,165,1177,1088],"visual_review":"pass","edge_review":"pass"}
+  ],
+  "closed_open_alignment": {
+    "medieval":{"closed_bbox_alpha_gt_1":[137,200,1117,1055],"open_bbox_alpha_gt_8":[149,93,1109,1055],"baseline_delta_px":0},
+    "modern":{"closed_bbox_alpha_gt_128":[78,258,1179,1010],"open_bbox_alpha_gt_8":[111,30,1149,1011],"baseline_delta_px":1},
+    "cyber":{"closed_bbox_alpha_gt_128":[128,250,1133,1028],"open_bbox_alpha_gt_8":[129,75,1125,1028],"baseline_delta_px":0}
+  },
+  "rejected": [
+    {"file":"chest_cyber_open_failed_checkerboard.png","mode":"RGB","reason":"painted checkerboard; no alpha"},
+    {"file":"recipe_weapon_failed_checkerboard.png","mode":"RGB","reason":"painted checkerboard; no alpha"},
+    {"file":"recipe_armor_failed_checkerboard.png","mode":"RGB","reason":"painted checkerboard; no alpha"},
+    {"file":"recipe_helmet_failed_checkerboard.png","mode":"RGB","reason":"painted checkerboard; no alpha"},
+    {"file":"recipe_armor_failed_checkerboard_v2.png","mode":"RGB","reason":"painted checkerboard; no alpha"}
+  ]
+}
