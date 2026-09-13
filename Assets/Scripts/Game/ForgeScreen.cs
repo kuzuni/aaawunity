@@ -134,8 +134,9 @@ namespace KkomaKnight.Game
                 var basis = Basis(mats); var made = GearSystem.FuseMake(D, basis);
                 var cell = GearUi.Cell(_result, D, made, new GearUi.CellOpts(), null);
                 bool conv = basis.Rar == D.Gear.RarLegend && made.Rar == D.Gear.RarMyth;
-                _banner.text = $"<b>{GearUi.Tier(D, made).Name} {GearUi.Name(D, made)}</b>{(GearUi.PlusText(D, made).Length > 0 ? $" <b>{GearUi.PlusText(D, made).Trim()}</b>" : "")}\n" +
-                    (conv ? $"<color=#F3A80E>전설 +{D.Gear.LegendToMythPlus}강 대신 <b>신화 0강</b>으로 바뀝니다</color>\n" : "") + "<size=20>재료 3개가 사라지고 위 장비 1개가 됩니다</size>";
+                _banner.text = $"<b>{GearUi.Name(D, made)}</b>{(GearUi.PlusText(D, made).Length > 0 ? $" <b>{GearUi.PlusText(D, made).Trim()}</b>" : "")}\n" +
+                    (conv ? $"<color=#F3A80E>{GearUi.RarName(D, D.Gear.RarLegend)} +{D.Gear.LegendToMythPlus}강 대신 <b>{GearUi.RarName(D, D.Gear.RarMyth)} 0강</b>으로 바뀝니다</color>\n" : "")   // T511 — 등급 이름은 표에서 읽는다
+                    + "<size=20>재료 3개가 사라지고 위 장비 1개가 됩니다</size>";
             }
             else
             {
@@ -154,7 +155,7 @@ namespace KkomaKnight.Game
                 }
                 var ic = UiKit.Icon(empty, "Anvil", "pi.anvil", Palette.A(Palette.Cream, 0.7f)); UiKit.Pct(ic.rectTransform, 22, 22, 56, 56);
                 _banner.text = mats.Count > 0
-                    ? $"같은 <b>{GearUi.PartName(D, mats[0].Part)} · {GearUi.Name(D, mats[0])} · {GearUi.RarName(D, mats[0].Rar)}</b> 을(를)\n<b>{3 - mats.Count}개</b> 더 고르세요"
+                    ? $"같은 <b>{GearUi.PartName(D, mats[0].Part)} · {GearUi.Name(D, mats[0])}</b> 을(를)\n<b>{3 - mats.Count}개</b> 더 고르세요"
                     : "합성할 장비를\n고르세요";
             }
             // 액션바 — 자동(합성 조합이 있으면 빨간 !) · 합성(재료 3개면 주황 버튼으로 교체)
@@ -195,7 +196,7 @@ namespace KkomaKnight.Game
                 bool loose = D != null && D.Gear != null && b.Rar < D.Gear.RarLegend;
                 App.Toast(loose
                     ? $"같은 부위·등급만 재료가 됩니다 ({GearUi.PartName(D, b.Part)} · {GearUi.RarName(D, b.Rar)})"
-                    : $"같은 부위·종류·등급만 재료가 됩니다 ({GearUi.PartName(D, b.Part)} · {GearUi.Name(D, b)} · {GearUi.RarName(D, b.Rar)})");
+                    : $"같은 부위·종류·등급만 재료가 됩니다 ({GearUi.PartName(D, b.Part)} · {GearUi.Name(D, b)})");   // T511 — 이름이 이미 등급을 품는다(꼬리에 또 붙이면 «사이버 … · 사이버»)
                 return;
             }
             if (_sel.Count >= 3) { App.Toast("재료는 3개까지입니다"); return; }
@@ -214,7 +215,7 @@ namespace KkomaKnight.Game
             //   ⚠ 토스트는 그대로 둔다 — 장착 자리 옮김(T24)까지 말하는 줄이고, 팝업은 «무엇을 얻었나» 만 그린다. 둘은 다른 것을 말한다.
             //   닫으면 대장간으로 돌아온다(`Refresh` 는 위에서 이미 했으므로 팝업이 닫힐 때 한 번 더 그려 준다 — 그 사이 값이 바뀌지는 않지만 팝업이 덮었던 자리를 다시 세운다).
             RewardPopup.Show(new System.Collections.Generic.List<RewardPopup.Item> { RewardPopup.Item.OfGear(D, made) }, Refresh);
-            App.Toast($"🔨 {GearUi.Tier(D, made).Name} {GearUi.Name(D, made)}{GearUi.PlusText(D, made)} 완성!" + (S.IsEquipped(made) ? " (장착 중이던 재료 자리에 장착)" : ""));
+            App.Toast($"🔨 {GearUi.Name(D, made)}{GearUi.PlusText(D, made)} 완성!" + (S.IsEquipped(made) ? " (장착 중이던 재료 자리에 장착)" : ""));
         }
         void OnAuto()
         {

@@ -5,6 +5,7 @@ using NUnit.Framework;
 namespace KkomaKnight.Tests
 {
     /// <summary>
+    /// ⚠ <b>이름은 T511(주인 2026-09-13)에서 바뀌었다</b> — 갓 → <b>미래</b> · 초월 → <b>우주</b>(불멸·무한은 그대로) · 밑등급 신화 → <b>사이버</b>. 규칙·칸·색은 그대로라 아래 자들이 재는 것은 안 바뀌었다.
     /// 신화 위 «표시 등급»(T316 · 주인 2026-09-09 10:3X «신화 3강 시 갓 · 6강 초월 · 9강 불멸 · 12강 무한 · 그 뒤 계속 무한 —
     /// 즉 신화 13강은 무한 1강»). 지시서 5항의 EditMode 몫 — <b>경계</b>와 <b>안 바뀌는 것</b>.
     /// <para>
@@ -18,15 +19,15 @@ namespace KkomaKnight.Tests
             File.ReadAllText(TestData.RepoFile(Path.Combine("Assets", "KkomaKnight", "gearTier.json"))));
 
         /// <summary>신화 <paramref name="plus"/> 강 장비를 그린 결과(부르는 쪽이 여태 쓰던 값 = «신화»·«plum»).</summary>
-        static GearTier.Shown Myth(GearTierData d, int plus) => GearTier.Of(d, 3, plus, 3, "신화", "plum");
+        static GearTier.Shown Myth(GearTierData d, int plus) => GearTier.Of(d, 3, plus, 3, "사이버", "plum");
 
         [Test]
         public void Json_IsOwnersTable()
         {
             // 주인이 말로 준 넷 그대로 — 이름·시작 강화·색.
             var d = Load();
-            Assert.That(d.Tiers.Count, Is.EqualTo(4), "갓·초월·불멸·무한");
-            var want = new[] { ("갓", 3, "red"), ("초월", 6, "pink"), ("불멸", 9, "brown"), ("무한", 12, "redGreen") };
+            Assert.That(d.Tiers.Count, Is.EqualTo(4), "미래·우주·불멸·무한(T511 개명 전 이름은 갓·초월·불멸·무한)");
+            var want = new[] { ("미래", 3, "red"), ("우주", 6, "pink"), ("불멸", 9, "brown"), ("무한", 12, "redGreen") };
             for (int i = 0; i < want.Length; i++)
             {
                 Assert.That(d.Tiers[i].Name, Is.EqualTo(want[i].Item1), $"{i}번째 이름");
@@ -45,13 +46,13 @@ namespace KkomaKnight.Tests
             {
                 var s = Myth(d, p);
                 Assert.That(s.IsTier, Is.False, $"신화 +{p} 는 표시 등급이 아니다");
-                Assert.That(s.Name, Is.EqualTo("신화")); Assert.That(s.Color, Is.EqualTo("plum"));
+                Assert.That(s.Name, Is.EqualTo("사이버")); Assert.That(s.Color, Is.EqualTo("plum"));
                 Assert.That(s.Plus, Is.EqualTo(p), "«+N» 도 그대로");
             }
             // 주인 «신화 3강 → 갓 0강 이런 식» — 표시 +N 은 전부 0 부터 다시 센다.
-            Assert.That(Myth(d, 3).Name, Is.EqualTo("갓")); Assert.That(Myth(d, 3).Plus, Is.EqualTo(0));
-            Assert.That(Myth(d, 5).Name, Is.EqualTo("갓")); Assert.That(Myth(d, 5).Plus, Is.EqualTo(2), "갓의 마지막 칸");
-            Assert.That(Myth(d, 6).Name, Is.EqualTo("초월")); Assert.That(Myth(d, 6).Plus, Is.EqualTo(0), "한 칸 더 강화하면 다음 등급 +0");
+            Assert.That(Myth(d, 3).Name, Is.EqualTo("미래")); Assert.That(Myth(d, 3).Plus, Is.EqualTo(0));
+            Assert.That(Myth(d, 5).Name, Is.EqualTo("미래")); Assert.That(Myth(d, 5).Plus, Is.EqualTo(2), "미래의 마지막 칸");
+            Assert.That(Myth(d, 6).Name, Is.EqualTo("우주")); Assert.That(Myth(d, 6).Plus, Is.EqualTo(0), "한 칸 더 강화하면 다음 등급 +0");
             Assert.That(Myth(d, 9).Name, Is.EqualTo("불멸")); Assert.That(Myth(d, 11).Plus, Is.EqualTo(2));
             Assert.That(Myth(d, 12).Name, Is.EqualTo("무한")); Assert.That(Myth(d, 12).Plus, Is.EqualTo(0));
             Assert.That(Myth(d, 13).Plus, Is.EqualTo(1), "주인 «신화 13강은 무한 1강»");
@@ -78,13 +79,13 @@ namespace KkomaKnight.Tests
             // 신화가 아니면 강화가 아무리 높아도 옛 그대로다 — 표는 신화 위만 다룬다.
             foreach (int rar in new[] { 0, 1, 2 })
             {
-                var s = GearTier.Of(d, rar, 20, 3, "전설", "yellow");
+                var s = GearTier.Of(d, rar, 20, 3, "현대", "yellow");
                 Assert.That(s.IsTier, Is.False, $"rar {rar} 는 표시 등급이 아니다");
-                Assert.That(s.Name, Is.EqualTo("전설")); Assert.That(s.Plus, Is.EqualTo(20));
+                Assert.That(s.Name, Is.EqualTo("현대")); Assert.That(s.Plus, Is.EqualTo(20));
             }
             // 표를 못 읽은 판(카탈로그에 없음) — 신화 +100 이어도 옛 그대로여야 한다(화면이 막히지 않는다).
-            var off = GearTier.Of(null, 3, 100, 3, "신화", "plum");
-            Assert.That(off.IsTier, Is.False); Assert.That(off.Name, Is.EqualTo("신화")); Assert.That(off.Plus, Is.EqualTo(100));
+            var off = GearTier.Of(null, 3, 100, 3, "사이버", "plum");
+            Assert.That(off.IsTier, Is.False); Assert.That(off.Name, Is.EqualTo("사이버")); Assert.That(off.Plus, Is.EqualTo(100));
         }
 
         [Test]

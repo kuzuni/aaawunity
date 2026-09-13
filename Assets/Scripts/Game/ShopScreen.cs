@@ -341,15 +341,18 @@ namespace KkomaKnight.Game
             // ⚠ TMP 의 금칙 문자 목록(`LineBreaking Following Characters.txt`)으로는 안 잡힌다 — 그 목록은 «공백에서 끊는 자리» 에 안 걸린다(결정 610).
             return string.Join("\u00A0· ", o);   // \u00A0 = 안 끊기는 빈칸(눈에 안 보이므로 이스케이프로 적는다)
         }
-        /// <summary>천장 줄들 — 신화 확정 · 전설 확정 · 희귀 확정(있는 것만) 뒤에 «누적 N회» 로 채운다(pill 개수만큼).
-        /// 차례는 <b>높은 등급부터</b>이고 pill 이 모자라면 뒤가 잘린다 — 희귀 천장이 붙은 상자(희귀 상자)는
-        /// 위 둘이 0 이라 잘릴 일이 없다(T261 2단계 · `gacha.json` 실측: rare = 신화·전설 천장 0).</summary>
-        static List<string> PityLines(GachaBox box, GachaState st, int count)
+        /// <summary>천장 줄들 — «<b>맨 위 등급</b> 확정 · 그 아래 확정 · 둘째 등급 확정»(있는 것만) 뒤에 «누적 N회» 로 채운다(pill 개수만큼).
+        /// 차례는 <b>높은 등급부터</b>이고 pill 이 모자라면 뒤가 잘린다 — 둘째 등급 천장이 붙은 상자(중세 상자)는
+        /// 위 둘이 0 이라 잘릴 일이 없다(T261 2단계 · `gacha.json` 실측: rare = 위 두 천장 0).
+        /// <para>⚑ T511 — 등급 이름은 <b>표에서 읽는다</b>(<c>gearOverride.json rarName</c>). 예전엔 «신화·전설·희귀» 를 글자로 박아 뒀는데,
+        /// 주인이 이름을 바꾸면(원시·중세·근대·현대·사이버) 여기만 옛 이름으로 남아 <b>상점 안에서 두 이름이 같이 뜬다</b>.</para></summary>
+        static List<string> PityLines(GameData D, GachaBox box, GachaState st, int count)
         {
             var o = new List<string>();
-            if (box.PityMyth > 0) o.Add($"신화 확정까지 <color=#FFCC00>{Math.Max(0, box.PityMyth - st.P50)}</color>회");
-            if (box.PityLegend > 0) o.Add($"전설 확정까지 <color=#FFCC00>{Math.Max(0, box.PityLegend - st.P10)}</color>회");
-            if (box.PityRare > 0) o.Add($"희귀 확정까지 <color=#FFCC00>{Math.Max(0, box.PityRare - st.PRare)}</color>회");
+            string myth = GearUi.RarName(D, D.Gear.RarMyth), legend = GearUi.RarName(D, D.Gear.RarLegend), rare = GearUi.RarName(D, D.Gear.RarRare);
+            if (box.PityMyth > 0) o.Add($"{myth} 확정까지 <color=#FFCC00>{Math.Max(0, box.PityMyth - st.P50)}</color>회");
+            if (box.PityLegend > 0) o.Add($"{legend} 확정까지 <color=#FFCC00>{Math.Max(0, box.PityLegend - st.P10)}</color>회");
+            if (box.PityRare > 0) o.Add($"{rare} 확정까지 <color=#FFCC00>{Math.Max(0, box.PityRare - st.PRare)}</color>회");
             while (o.Count < count) o.Add($"누적 <color=#FFCC00>{st.Pulls}</color>회 열었습니다");
             return o.GetRange(0, count);
         }
@@ -592,7 +595,7 @@ namespace KkomaKnight.Game
             foreach (var box in D.Gacha.Boxes)
             {
                 if (!_box.TryGetValue(box.Key, out var w)) continue;
-                var st = State(box.Key); var lines = PityLines(box, st, w.Pills.Count);
+                var st = State(box.Key); var lines = PityLines(App.Data, box, st, w.Pills.Count);
                 for (int i = 0; i < w.Pills.Count; i++) if (w.Pills[i] != null) w.Pills[i].text = lines[i];
                 // ── T289 «열쇠 먼저 소진» — 버튼이 옷을 갈아입는 자리다(주인 2026-09-09 05:4X) ──────────────────
                 //   K = 보유 열쇠 · 캡 = 표 값(코드에 10 을 안 박는다 · §1)

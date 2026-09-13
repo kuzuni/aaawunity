@@ -137,8 +137,15 @@ namespace KkomaKnight.Game
         /// <c>gear.json</c> 의 <c>typeName</c>(«치명 장갑»)은 <b>더 안 쓴다</b> — 그 표가 두 결함의 뿌리였다:
         /// 세트가 «치명» 으로 나오고, T88 의 «장갑 → 반지» 덮어쓰기(<see cref="GearRole.DisplayName"/>)를 안 거쳐 제목만 «장갑» 으로 남아
         /// 같은 팝업 안의 부위 pill(«반지»)과 어긋났다. 이제 둘 다 <see cref="GearRole"/> 한 곳을 지난다.
+        /// <para>
+        /// ⚑ <b>T511(주인 2026-09-13 «무기 이름도 사이버 등급이면 «사이버 암살자의 무기» 이런 식으로 · 장비 이름 죄다»)</b> —
+        /// 앞에 <b>등급 이름</b>이 붙는다. 붙는 것은 <c>rar</c> 의 이름이 아니라 <b>그 장비가 화면에 띄우는 등급</b>(<see cref="Tier"/>)이다:
+        /// 사이버(신화) +3 짜리는 카드에 «미래» 로 뜨므로 이름도 «미래 암살자의 무기» 가 된다 — 한 화면에서 등급 탭과 이름이 갈리지 않는다(T161 이 부위에서 세운 그 규칙).
+        /// </para>
         /// </summary>
-        public static string Name(GameData D, GearItem g) => GearRole.SetDisplayName(D, Set(D, g)) + "의 " + PartName(D, g.Part);
+        public static string Name(GameData D, GearItem g) => Tier(D, g).Name + " " + BaseName(D, g);
+        /// <summary>등급을 뺀 이름 — «암살자의 무기»(T511 이 앞에 등급을 붙이기 전의 그 이름 · 테스트·진단용).</summary>
+        public static string BaseName(GameData D, GearItem g) => GearRole.SetDisplayName(D, Set(D, g)) + "의 " + PartName(D, g.Part);
         public static string Set(GameData D, GearItem g) => D.Gear.SetOf(g.Type);
         /// <summary>세트 라벨 — 이름과 같은 별칭을 쓴다(«암살자 세트» · T161 결정: 한 화면에서 «암살자의 반지» 와 «치명 세트» 가 나란히 나오지 않게).</summary>
         public static string SetLabel(GameData D, GearItem g) => GearRole.SetDisplayName(D, Set(D, g)) + " 세트";

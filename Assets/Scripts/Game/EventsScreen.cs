@@ -100,7 +100,7 @@ namespace KkomaKnight.Game
         {
             ("다이아", "ui.iconGemPurple", "gem"), ("무기 도안", "ui.iconScroll", "recipeWeapon"), ("갑옷 도안", "ui.iconScroll", "recipeArmor"), ("투구 도안", "ui.iconScroll", "recipeHelmet"),
             ("신발 도안", "ui.iconScroll", "recipeShoes"), ("반지 도안", "ui.iconScroll", "recipeRing"), ("목걸이 도안", "ui.iconScroll", "recipeNecklace"),
-            ("희귀 열쇠", "ui.iconKeyBlue", "rareKey"), ("에픽 열쇠", "ui.iconKeyPurple", "epicKey"), ("전설 열쇠", "ui.iconKeyGold", "legendKey"), ("부활 토큰", "ui.iconRevive", "revive"),
+            ("중세 열쇠", "ui.iconKeyBlue", "rareKey"), ("현대 열쇠", "ui.iconKeyPurple", "epicKey"), ("사이버 열쇠", "ui.iconKeyGold", "legendKey"), ("부활 토큰", "ui.iconRevive", "revive"),
         };
         static readonly (string label, string icon)[] Tiers = { ("브론즈", "ui.iconMedalBronze"), ("실버", "ui.iconMedalSilver"), ("골드", "ui.iconMedal"), ("플래티넘", "ui.iconGemBlue"), ("다이아", "ui.iconGemPurple") };
         const string NoTime = "--:--:--";

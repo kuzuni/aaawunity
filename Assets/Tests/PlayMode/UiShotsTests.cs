@@ -18,7 +18,7 @@ namespace KkomaKnight.Tests.Play
     public class UiShotsTests
     {
         /// <summary>가장 긴 실제 토스트 문구(T161 · 대장간 재료 안내 · 최악의 이름 «암살자의 목걸이») — `TextSizeGateTests` 와 <b>같은 글</b>이라 두 자가 같은 화면을 본다(T216).</summary>
-        const string LongToast = "같은 부위·종류·등급만 재료가 됩니다 (목걸이 · 암살자의 목걸이 · 신화)";
+        const string LongToast = "같은 부위·종류·등급만 재료가 됩니다 (목걸이 · 사이버 암살자의 목걸이)";
 
         /// <summary>
         /// T349 — <c>screens</c> 06·07 셋업이 들고 갈 <b>가장 높은 강화 값</b>. 신화 +13 = 표시 등급 «무한 +1»(T316 표: 3 갓 · 6 초월 · 9 불멸 · 12 무한).

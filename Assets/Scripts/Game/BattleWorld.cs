@@ -9,9 +9,7 @@ namespace KkomaKnight.Game
 {
     /// <summary>
     /// 전투 월드 그리기 — 엔진(<see cref="BattleState"/>)은 숫자만 갖고, 여기서 주인 에셋으로 보여준다.
-    /// ● 좌표: sim.js 월드 x(레이아웃 px) → 프레임 레이아웃 x = <c>ui.json camera.playerX</c> + zoom × <see cref="Spread"/>(worldX − <b>원점</b>) → <see cref="WorldCam.ToWorld"/>.
-    ///   원점은 <b>플레이어가 아니라 카메라</b>(<see cref="BattleCam"/> · T510)다 — 원점이 멈춘 동안 맵·적이 서 있고 <b>플레이어 그림이 오른쪽으로 걸어간다</b>(주인 2026-09-13).
-    ///   옛 꼴(원점 = 플레이어 x)은 그림을 <c>playerX</c> 한 자리에 붙박아 «맵이 왼쪽으로 흐르는» 것으로 보였다. 아레나 판만 원점을 «만나는 점» 에 못 박는다(T319).
+    /// ● 좌표: sim.js 월드 x(레이아웃 px) → 프레임 레이아웃 x = 플레이어 x + zoom × <see cref="Spread"/>(worldX − 플레이어 x) → <see cref="WorldCam.ToWorld"/>.
     ///   Spread 는 멈춤 거리(stopDistance) 안은 1배, 그 밖은 <see cref="Layout.WorldSpacing"/>(2배)로 벌린다(주인 지시 «적·노드 간격 2배» · 엔진 좌표 불변).
     ///   세로는 ref-layout ② 의 % (발 줄 40%).
     /// ● 맵: Layer Lab Environment 데모 씬 4종(Autumn·DeepForest·Forest·Desert)을 챕터 (n−1)%4 로 순환 — 바닥·길 띠는 데모 치수, 소품은 데모 씬 배치 그대로(<see cref="MapLayouts"/> · tools/gen_maps.py) 씬 폭마다 반복.
@@ -30,17 +28,11 @@ namespace KkomaKnight.Game
         Transform _popRoot;   // 데미지 팝이 모이는 월드 자리(«Pops» · _root 의 자식 · 자가 이 이름으로 팝을 센다)
         readonly float _zoom; readonly float _playerX;             // ui.json camera.zoom · playerX(프레임 폭 비율)
         // ⚑ T319(주인 2026-09-09 11:2X «PvP 뜰 때 중앙에서 두 캐릭터 만나서 싸우는 식 · 내 플레이어가 오른쪽으로 이동 느낌이 아니라») —
-        //   그때 챕터 판은 «플레이어를 화면 한 자리(_playerX)에 붙들고 세상을 흘려보내는» 꼴이었다(LayoutX 의 원점이 _shownPX 였다).
-        //   그래서 1대1 판에서도 배경이 흐르고 **내가 오른쪽으로 가는 느낌**이 났다. (그 꼴 자체는 T510 이 챕터 판에서도 걷어냈다 — 아래 _cam.)
+        //   챕터 판은 «플레이어를 화면 한 자리(_playerX)에 붙들고 세상을 흘려보내는» 꼴이다(LayoutX 의 원점이 _shownPX 라서).
+        //   그래서 1대1 판에서도 배경이 흐르고 **내가 오른쪽으로 가는 느낌**이 난다.
         //   아레나 판은 그 반대로 둔다: **원점을 «둘이 만나는 점» 에 못 박고**(배경이 안 흐른다) 화면 가운데를 그 점으로 삼는다 —
         //   그러면 내가 왼쪽에서 걸어 들어와 가운데에서 상대와 마주 선다(엔진 좌표·틱은 한 줄도 안 바뀐다).
         readonly bool _fixedOrigin; readonly double _originPX; readonly float _originScreenX;
-        // ⚑ T510(주인 2026-09-13 «그 플레이어가 실제로 오른쪽으로 가면서 게임이 진행되야하는데 맵이랑 적들이 왼쪽으로 움직이는 방식이더라») —
-        //   챕터 판의 원점을 플레이어 월드 x 에서 떼어 냈다. 규칙은 Core 의 BattleCam 한 곳에 있다(순수 셈이라 EditMode 에서 실제 전투로 잰다 · BattleCamTests).
-        //   원점이 안 움직이는 동안 바닥·소품·노드·적이 한 픽셀도 안 흐르고, 그 대신 플레이어 그림이 화면 오른쪽으로 걸어 나간다.
-        readonly BattleCam _cam;
-        /// <summary>지금 화면이 쓰는 원점(월드 x) — 아레나는 «만나는 점»(T319), 챕터는 <see cref="BattleCam"/> 이 든다.</summary>
-        public double OriginPX => _fixedOrigin ? _originPX : _cam.OriginPX;
         public const float CharBaseHeight = 0.85f;                          // Character.prefab 스케일 1 의 키(유니티 단위 · 조사값)
         const float FootY = Layout.PlayerFootY / 100f;
         const float RoadCenterFrac = 0.41f;                          // 데모 씬의 길 중심(y −0.402)이 놓이는 프레임 비율 — 발 줄 40% 을 품는다(띠는 이 줄을 가운데로 ±RoadBandH/2 = 30.5~51.5% · ref-layout 지면 띠 30~51 과 같은 자리)
@@ -102,7 +94,6 @@ namespace KkomaKnight.Game
         // 틱 순서는 그대로라 시뮬 결과(시드 골든)는 불변이고 실시간 길이만 늘어나며, 원점은 늘 엔진 x 와 같다(격차 0 → 걷는 속도 = 엔진 속도 = PlayerSpeed×WalkMul×(Dash?DashMul:1) 그대로).
         // 탭 복귀(Silent)·역행·SnapGap 초과(세이브 복원 등)만 즉시 맞춘다.
         double _shownPX;
-        double _prevShownPX;                                         // 직전 프레임의 표시 원점 — 카메라(T510)가 «이번에 얼마나 걸었나» 를 여기서 읽는다
         const double SnapGap = 600;
         bool _killAnimHold;                                          // 킬 타격(칼 내려옴)이 나온 뒤 공격 모션이 끝날 때까지 — 출발 금지 + 엔진 보류(T50)
         // T65 — 멈춤이 «시작되는» 프레임은 얼리지 않고 엔진 x 로 맞춘다. 한 프레임에 엔진 틱이 여럿 돌면(배속·낮은 fps) 킬 틱 앞에 걷기 틱이 같은 프레임에 이미 들어 있고,
@@ -282,12 +273,7 @@ namespace KkomaKnight.Game
                 _originPX = D.Enemies.NodeGap - g.C.StopDistance * 0.5;
                 _originScreenX = WorldCam.LayoutW * 0.5f;
             }
-            _shownPX = G.P.WorldX; _heldPrevFrame = false; _prevShownPX = _shownPX;
-            // 띠의 오른쪽 끝(레이아웃 px)까지의 «월드» 거리 — 간격 사상(Spread)의 역이다(지금 WorldSpacing 1 이라 나눗셈 한 번이지만 2 로 켜도 맞는다).
-            _cam = new BattleCam(SpreadInv((Layout.BattleCamRightPct / 100f * WorldCam.LayoutW - _playerX) / _zoom),
-                                 g.C.StopDistance + g.C.EnemyGap * 1.5,   // «행군» 문턱 — 수는 combat.json 에서 온다(BattleCam.MarchDist 에 까닭)
-                                 Layout.BattleCamCatchUp, SnapGap);
-            _cam.Reset(_shownPX);
+            _shownPX = G.P.WorldX; _heldPrevFrame = false;
             _root = new GameObject("World").transform;
             BuildGround(); BuildProps(); BuildNodes(); BuildPlayer();
             _goldPrev = G.Gold; ShownHp = G.P.Hp; ShownSh = G.P.Sh;
@@ -309,26 +295,11 @@ namespace KkomaKnight.Game
             if (u <= SpreadRamp) return stop + u + (mul - 1f) * u * u / (2f * SpreadRamp);
             return stop + SpreadRamp + (mul - 1f) * SpreadRamp / 2f + mul * (u - SpreadRamp);
         }
-        /// <summary>
-        /// 다음(가장 앞) 살아 있는 적까지의 월드 거리 — 없으면 <see cref="double.PositiveInfinity"/>(T510 의 카메라가 «싸움이냐 행군이냐» 를 이 수로 가른다).
-        /// <para>틱 훅이 이미 고른 표적(<see cref="_pTarget"/> · <c>Battle.Tick</c> 의 <c>alive[0]</c> 과 같은 규칙)을 쓴다 — 죽었거나 없으면 «멀다» 로 본다(= 행군).</para>
-        /// </summary>
-        double TargetDist() => _pTarget == null || _pTarget.Dead || _pTarget.Hp <= 0 ? double.PositiveInfinity : _pTarget.WorldX - _shownPX;
-        /// <summary><see cref="Spread"/> 의 역 — «화면에서 이만큼 떨어진 자리» 가 월드로 얼마인가(T510 이 띠의 오른쪽 끝을 월드 거리로 옮길 때 쓴다).</summary>
-        double SpreadInv(double s)
-        {
-            float stop = (float)G.C.StopDistance, mul = Layout.WorldSpacing;
-            if (mul <= 1f || s <= stop) return s;
-            double v = s - stop, ramp = SpreadRamp, knee = ramp + (mul - 1f) * ramp / 2f;   // 램프 끝까지가 화면에서 차지하는 거리
-            if (v <= knee) return stop + ramp * (System.Math.Sqrt(1 + 2 * (mul - 1f) * v / ramp) - 1) / (mul - 1f);
-            return stop + ramp + (v - knee) / mul;
-        }
-        // T319 — 아레나 판은 «만나는 점» 에 못 박는다: 원점이 안 움직이므로 **배경이 안 흐르고** 플레이어 그림이 제 엔진 x 를 따라 걸어 들어온다.
-        // T510 — 챕터 판도 이제 원점이 플레이어 x 가 아니라 **카메라**(BattleCam)다. 원점이 멈춘 동안 맵·적이 서 있고 플레이어 그림이 오른쪽으로 걸어간다.
-        //   (옛 꼴은 `Spread(worldX − _shownPX)` — 원점이 플레이어라 그림이 _playerX 에 붙박였다.)
+        // 원점 = 표시 기준 x(T20) — 킬 연출 중에는 엔진 x 보다 뒤.
+        // T319 — 아레나 판만 «만나는 점» 에 못 박는다: 원점이 안 움직이므로 **배경이 안 흐르고** 플레이어 그림이 제 엔진 x 를 따라 걸어 들어온다.
         float LayoutX(double worldX) => _fixedOrigin
             ? Spread(worldX - _originPX) * _zoom + _originScreenX
-            : Spread(worldX - _cam.OriginPX) * _zoom + _playerX;
+            : Spread(worldX - _shownPX) * _zoom + _playerX;
         Vector3 Pos(double worldX, float yFrac, float z = 0) => WorldCam.ToWorld(LayoutX(worldX), yFrac, z);
         /// <summary>
         /// T319 ⓑ — 아레나 판의 상대가 «오른쪽 밖에서 같은 속도로 가운데를 향해 걸어오는» 그림.
@@ -390,7 +361,7 @@ namespace KkomaKnight.Game
         {
             // T319 ⓒ — 아레나 판은 바닥도 안 흐른다. 땅 타일만 «표시 원점» 이 아니라 _shownPX 를 직접 봤는데(원점은 LayoutX 가 든다)
             //   그대로 두면 소품·노드·사람은 서 있는데 바닥 무늬만 흘러 «내가 오른쪽으로 가는 느낌» 이 그대로 남는다 — 주인이 지적한 그 느낌이다.
-            float scroll = (float)(OriginPX * _zoom / WorldCam.PPU);   // T510 — 원점이 곧 «땅이 얼마나 흘렀나» 다(챕터는 BattleCam · 아레나는 못 박힌 점)
+            float scroll = (float)((_fixedOrigin ? _originPX : _shownPX) * _zoom / WorldCam.PPU);
             float left = WorldCam.ToWorld(0, 0).x - _tileW;
             float off = Mathf.Repeat(scroll, _tileW);
             for (int i = 0; i < _fieldTiles.Count; i++) { var p = _fieldTiles[i].transform.position; p.x = left + (i % _tileCols) * _tileW - off + _tileW * 0.5f; _fieldTiles[i].transform.position = p; }
@@ -733,11 +704,7 @@ namespace KkomaKnight.Game
             string state = _player == null ? CharacterRig.Idle : _player.Current;
             if (state == CharacterRig.Attack || state == CharacterRig.Skill) state = _moving ? CharacterRig.Walk : CharacterRig.Idle;
             // T404 ⓐ — 표 값을 쓰되 맨 뒤 펫이 화면 왼쪽 밖으로 안 나가게 죈다(셈은 Core/Layout · 까닭도 거기 적었다)
-            // ⚠ T510 — 재는 자리는 «지금 플레이어가 선 화면 x» 가 아니라 **띠의 왼쪽 끝**(_playerX)이다.
-            //   지금 자리로 재면 플레이어가 오른쪽으로 갈수록 뒤 폭이 늘어 간격이 매 프레임 벌어지고(펫이 플레이어에게서 떨어져 보인다),
-            //   되돌아올 때 다시 좁아진다. 왼쪽 끝은 이 띠에서 «뒤가 가장 좁은» 자리라 거기서 안 잘리면 어디서도 안 잘린다.
-            //   아레나 판은 플레이어가 화면 밖에서 걸어 들어오므로 종전대로 지금 자리로 잰다(그 판엔 띠가 없다).
-            float gap = Layout.PetGap((float)_petData.BattleGapDx, _fixedOrigin ? LayoutX(_shownPX) : _playerX, _pets.Count, _zoom, WorldCam.LayoutW);
+            float gap = Layout.PetGap((float)_petData.BattleGapDx, LayoutX(_shownPX), _pets.Count, _zoom, WorldCam.LayoutW);
             for (int i = 0; i < _pets.Count; i++)
             {
                 var r = _pets[i]; if (r == null) continue;
@@ -854,6 +821,14 @@ namespace KkomaKnight.Game
         {
             _clock += dt; CharacterRig.TimeScale = TimeScale;
             FlushStrikes(false);
+            ScrollGround();
+            foreach (var p in _props) { var pos = Pos(p.WorldX, p.YFrac, 0); p.Sr.transform.position = pos; p.Sr.enabled = OnScreen(pos, 5.5f); }
+            foreach (var nv in _nodes)
+            {
+                nv.Go.transform.position = Pos(nv.N.X, FootY - 0.005f);
+                nv.Go.SetActive(OnScreen(nv.Go.transform.position));
+                if (nv.N.Done && !nv.Dimmed) { nv.Dimmed = true; foreach (var sr in nv.Go.GetComponentsInChildren<SpriteRenderer>()) sr.color = Palette.A(sr.color, 0.55f); if (nv.FxGo != null) { Object.Destroy(nv.FxGo); nv.FxGo = null; } }
+            }
             // 플레이어 — 표시 체력은 «칼이 내려온 뒤» 에만 엔진 값으로
             var P = G.P;
             if (_holdPlayer == 0) { ShownHp = P.Hp; ShownSh = P.Sh; }
@@ -866,21 +841,6 @@ namespace KkomaKnight.Game
             if (Silent || !hold || !_heldPrevFrame || gap < 0 || gap > SnapGap) _shownPX = P.WorldX;
             _heldPrevFrame = hold;
             _moving = !hold && _engineMoving;
-            // T510 — 원점(카메라)을 옮긴다. 「이번 프레임에 실제로 걸은 거리」를 주는 까닭: 배속(x2)·대시 특전·따라잡기에서도
-            //   되돌리는 비율이 걸음에 그대로 매이게 하려는 것이다(엔진 속도 상수를 여기서 다시 셈하지 않는다).
-            //   ⚠ 싸움과 행군은 「다음 적까지의 거리」로 가른다 — «적이 화면에 보이나» 로 가르면 판이 열리는 첫 접근(280px)이 이미 «싸움» 이라
-            //     띠를 다 써 버리고 정작 첫 무리를 화면 오른쪽 끝에 붙어서 맞는다(실측 · 결정은 §2 T510).
-            if (!_fixedOrigin) _cam.Step(_shownPX, _shownPX - _prevShownPX, TargetDist(), Silent);
-            _prevShownPX = _shownPX;
-            // 땅·소품·노드는 «원점이 정해진 뒤» 에 그린다(원점과 한 프레임 어긋나면 서 있어야 할 것이 1px 떤다)
-            ScrollGround();
-            foreach (var p in _props) { var pos = Pos(p.WorldX, p.YFrac, 0); p.Sr.transform.position = pos; p.Sr.enabled = OnScreen(pos, 5.5f); }
-            foreach (var nv in _nodes)
-            {
-                nv.Go.transform.position = Pos(nv.N.X, FootY - 0.005f);
-                nv.Go.SetActive(OnScreen(nv.Go.transform.position));
-                if (nv.N.Done && !nv.Dimmed) { nv.Dimmed = true; foreach (var sr in nv.Go.GetComponentsInChildren<SpriteRenderer>()) sr.color = Palette.A(sr.color, 0.55f); if (nv.FxGo != null) { Object.Destroy(nv.FxGo); nv.FxGo = null; } }
-            }
             _player.transform.position = Pos(_shownPX, FootY);
             _player.SetSortingBase(SortBase(LayoutX(_shownPX)));
             if (G.Dead) { if (!_pDeadShown && _holdPlayer == 0) { _pDeadShown = true; _player.Play(CharacterRig.Dead, true); } }

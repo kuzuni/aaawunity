@@ -12,7 +12,7 @@ using UnityEngine.UI;
 namespace KkomaKnight.Tests.Play
 {
     /// <summary>
-    /// T161 — 장비 이름이 «<b>세트 별칭</b>의 <b>부위</b>» 꼴이고(주인 2026-09-07 «치명 관련 장비는 암살자의 장갑 이런 식으로»),
+    /// T161 + <b>T511</b>(주인 2026-09-13 «무기 이름도 사이버 등급이면 «사이버 암살자의 무기» 이런 식으로») — 장비 이름이 «<b>등급</b> <b>세트 별칭</b>의 <b>부위</b>» 꼴이고(주인 2026-09-07 «치명 관련 장비는 암살자의 장갑 이런 식으로»),
     /// <b>한 팝업 안에서 부위 이름이 어긋나지 않는다</b>(주인 «반지가 장갑으로 이름 되어 있더라»).
     /// <para>
     /// 어긋남의 뿌리는 «이름은 <c>gear.json</c> 의 <c>typeName</c> · 부위 pill 은 T88 덮어쓰기» 로 <b>두 곳</b>을 보던 것이었다.
@@ -73,8 +73,10 @@ namespace KkomaKnight.Tests.Play
                 {
                     var g = new GearItem { Part = part, Type = type, Rar = 0, Plus = 0 };
                     string got = GearUi.Name(D, g);
-                    string want = GearRole.SetDisplayName(D, D.Gear.SetOf(type)) + "의 " + GearUi.PartName(D, part);
-                    Assert.AreEqual(want, got, "장비 이름은 «별칭의 부위» 꼴이다(T161) — " + type);
+                    // T511(주인 2026-09-13 «사이버 등급이면 사이버 암살자의 무기 이런 식으로») — 앞에 **그 장비가 띄우는 등급 이름**이 붙는다.
+                    string want = GearUi.Tier(D, g).Name + " " + GearRole.SetDisplayName(D, D.Gear.SetOf(type)) + "의 " + GearUi.PartName(D, part);
+                    Assert.AreEqual(want, got, "장비 이름은 «등급 별칭의 부위» 꼴이다(T161 + T511) — " + type);
+                    StringAssert.StartsWith(GearUi.RarName(D, g.Rar) + " ", got, "이름은 등급 이름으로 시작한다(T511)");
                     // gear.json 의 옛 이름(«치명 장갑»)이 그대로 새면 여기서 걸린다
                     if (D.Gear.TypeName.TryGetValue(type, out var old))
                         Assert.AreNotEqual(old, got, "옛 typeName 이 그대로 나온다(T161 이 안 걸린 자리) — " + type);

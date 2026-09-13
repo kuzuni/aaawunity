@@ -148,8 +148,10 @@ namespace KkomaKnight.Game
             // 세이브의 그 상자 상태 — 없으면 «아직 안 연 상자» 로 읽는다(여기서 만들지 않는다 · 보여 주기 팝업이 세이브를 늘리면 안 된다).
             var st = app.Save != null && app.Save.GachaBoxes.TryGetValue(box.Key, out var s0) ? s0 : new GachaState();
             var lines = new System.Collections.Generic.List<string>();
-            if (box.PityMyth > 0) lines.Add("신화 확정: " + box.PityMyth + "회마다 (남은 " + System.Math.Max(0, box.PityMyth - st.P50) + "회)");
-            if (box.PityLegend > 0) lines.Add("전설 확정: " + box.PityLegend + "회마다 (남은 " + System.Math.Max(0, box.PityLegend - st.P10) + "회)");
+            // T511 — 등급 이름은 표에서 읽는다(코드에 등급 글자를 안 박는다 · 주인이 이름을 바꾸면 여기도 같이 간다)
+            var G = app.Data.Gear;
+            if (box.PityMyth > 0) lines.Add(GearUi.RarName(app.Data, G.RarMyth) + " 확정: " + box.PityMyth + "회마다 (남은 " + System.Math.Max(0, box.PityMyth - st.P50) + "회)");
+            if (box.PityLegend > 0) lines.Add(GearUi.RarName(app.Data, G.RarLegend) + " 확정: " + box.PityLegend + "회마다 (남은 " + System.Math.Max(0, box.PityLegend - st.P10) + "회)");
             if (lines.Count == 0) lines.Add("천장 없음");
             lines.Add("누적 " + st.Pulls + "회 열었습니다");
             lines.Add("1회 다이아 " + UiKit.FmtQty(box.Cost) + " · " + app.Data.Gacha.TenPullCount + "회 다이아 " + UiKit.FmtQty(box.Cost * app.Data.Gacha.TenPullCount));

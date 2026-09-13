@@ -14,7 +14,7 @@ namespace KkomaKnight.Tests
     public class AchievementTests
     {
         const string D0 = "2026-09-09", D1 = "2026-09-10";
-        const string Key = "chestOpenRare";   // 표 첫 줄 = «희귀 상자 5회 오픈»
+        const string Key = "chestOpenRare";   // 표 첫 줄 = «중세 상자 5회 오픈»(옛 «희귀 상자» · T511 개명 · 카운터 키는 그대로다)
 
         static AchievementData Load() => AchievementData.Parse(
             File.ReadAllText(TestData.RepoFile(Path.Combine("Assets", "KkomaKnight", "achievement.json"))));
@@ -28,7 +28,7 @@ namespace KkomaKnight.Tests
             Assert.That(d.List.Count, Is.EqualTo(17), "목록 17개(주인)");
             var want = new[]
             {
-                ("희귀 상자 5회 오픈", 5, 5.0), ("전설 상자 5회 오픈", 5, 10.0), ("신화 상자 5회 오픈", 5, 15.0),
+                ("중세 상자 5회 오픈", 5, 5.0), ("현대 상자 5회 오픈", 5, 10.0), ("사이버 상자 5회 오픈", 5, 15.0),
                 ("광고 10회 시청", 10, 5.0), ("적 처치 100명", 100, 10.0), ("장비 합성 10회", 10, 5.0),
                 ("지옥문 던전 도전 5회", 5, 5.0), ("원정 던전 도전 5회", 5, 5.0), ("탐험 5회", 5, 5.0),
                 ("빠른 탐험 5회", 5, 5.0), ("클리어 보상 수령 5회", 5, 5.0), ("출석 1회", 1, 5.0),

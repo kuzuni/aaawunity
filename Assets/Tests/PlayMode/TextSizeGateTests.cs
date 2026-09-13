@@ -19,7 +19,7 @@ namespace KkomaKnight.Tests.Play
     {
         App _app; PlayLog _log;
         /// <summary>가장 긴 실제 토스트(ForgeScreen 재료 안내) — 최악의 이름은 T161 로 «체력실드 목걸이» → <b>«암살자의 목걸이»</b> 가 됐다(별칭 셋 × 부위 여섯 중 가장 긴 조합). 본문 40 으로 두 줄이다.</summary>
-        const string LongToast = "같은 부위·종류·등급만 재료가 됩니다 (목걸이 · 암살자의 목걸이 · 신화)";
+        const string LongToast = "같은 부위·종류·등급만 재료가 됩니다 (목걸이 · 사이버 암살자의 목걸이)";
         readonly List<TextAudit.Row> _rows = new List<TextAudit.Row>();
 
         [SetUp] public void SetUp() { _log = new PlayLog(); _rows.Clear(); }

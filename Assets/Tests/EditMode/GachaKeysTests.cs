@@ -85,7 +85,7 @@ namespace KkomaKnight.Tests
             Assert.IsTrue(Mail.CanPay(GachaKeys.Blue));
             Assert.IsTrue(Mail.CanPay(GachaKeys.Purple));
             Assert.IsTrue(Mail.CanPay(GachaKeys.Yellow));
-            Assert.AreEqual("희귀 열쇠", Mail.Name(GachaKeys.Blue), "말은 아레나 상인 표와 같다");
+            Assert.AreEqual("중세 열쇠", Mail.Name(GachaKeys.Blue), "말은 아레나 상인 표와 같다(T511 개명 — 옛 «희귀 열쇠»)");
 
             var s = new SaveData();
             GachaKeys.Add(s, GachaKeys.Purple, 2);

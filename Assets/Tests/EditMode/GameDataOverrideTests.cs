@@ -80,7 +80,7 @@ namespace KkomaKnight.Tests
             Assert.AreEqual(Want(go, gc, "contribution.sh").NumArray(), D.Gear.Sh, "기여(실)가 적은 것과 다르다");
 
             // T261 천장이 가리키는 등급 — 표가 몇 칸이 되든 «희귀 확정» 은 희귀를 가리켜야 한다(영웅이 끼면 조용히 «영웅 확정» 이 된다)
-            Assert.AreEqual("희귀", D.Gear.RarName[D.Gear.RarRare], "RarRare 가 «희귀» 가 아닌 칸을 가리킨다 — T261 천장의 뜻이 바뀐다");
+            Assert.AreEqual("중세", D.Gear.RarName[D.Gear.RarRare], "RarRare 가 «중세»(옛 «희귀» · T511 개명) 가 아닌 칸을 가리킨다 — T261 천장의 뜻이 바뀐다");
 
             var to = Over(GameData.TuneOverrideFile); if (to.Has("tune")) to = to["tune"];
             var tc = Canon("tune.json")["tune"];
@@ -120,7 +120,7 @@ namespace KkomaKnight.Tests
 
             var known = new System.Collections.Generic.List<string>();
             foreach (var b in Fresh().Gacha.Boxes)
-                foreach (var k in new[] { "rate", "cost", "pityMyth", "pityLegend", "pityRare" })
+                foreach (var k in new[] { "name", "rate", "cost", "pityMyth", "pityLegend", "pityRare" })   // name = 상자 이름(T511 · 상점에 뜨는 글자)
                     known.Add("boxes." + b.Key + "." + k);
             OnlyKnownKeys(GameData.GachaOverrideFile, known.ToArray());
         }
@@ -405,7 +405,7 @@ namespace KkomaKnight.Tests
         {
             var D = Fresh();
             D.ApplyGearOverride(@"{
-              ""rarName"": [""일반"", ""희귀"", ""영웅"", ""전설"", ""신화""],
+              ""rarName"": [""원시"", ""중세"", ""근대"", ""현대"", ""사이버""],
               ""rarLegend"": 3, ""rarMyth"": 4,
               ""contribution"": { ""atk"": [30, 60, 90, 120, 150], ""hp"": [60, 120, 180, 240, 300], ""sh"": [90, 180, 270, 360, 450] },
               ""optionLadder"": { ""optCount"": [0, 1, 2, 3, 4], ""mythPlusAt"": [3, 6] },
@@ -442,7 +442,7 @@ namespace KkomaKnight.Tests
             Assert.AreEqual(2, D.Gear.OptCount(2, 0), "영웅 줄이 가운데에 섰다");
             Assert.AreEqual(4, D.Gear.OptCount(4, 0), "신화 노강");
             Assert.AreEqual(6, D.Gear.OptCount(4, 6), "신화 +6 은 두 단계가 열린다 — mythPlusAt 이 표에서 온다");
-            Assert.AreEqual("영웅", D.Gear.RarName[2], "가운데가 영웅이다");
+            Assert.AreEqual("근대", D.Gear.RarName[2], "가운데가 근대(옛 «영웅» · T511 개명)다");
 
             // 문 ⓑ — «영웅은 어느 그림인가» 에 새 그림 0 으로 답한다(희귀 그림을 같이 쓴다 · 회차 1 이 남긴 답).
             //   그림 칸은 넷뿐인데 등급이 다섯이 되므로, 이 표가 없으면 GearLook 이 조용히 마지막 칸으로 눌러
@@ -452,8 +452,8 @@ namespace KkomaKnight.Tests
             Assert.AreEqual(3, D.Gear.LookRar(4), "신화는 옛 신화 그림 그대로 — 여기가 밀리면 주인 눈에 바로 보인다");
 
             // ⚑ 여기가 이 회차에서 실제로 고친 «자리» 다 — 자세한 까닭은 GearData.RarRare 주석.
-            Assert.AreEqual("희귀", D.Gear.RarName[D.Gear.RarRare],
-                "«희귀 확정» 천장(T261)이 가리키는 등급이 영웅으로 밀리면 안 된다 — 컴파일도 되고 아무 자도 안 우는 자리였다");
+            Assert.AreEqual("중세", D.Gear.RarName[D.Gear.RarRare],
+                "«둘째 등급 확정» 천장(T261)이 가리키는 등급이 한 칸 밀리면 안 된다 — 컴파일도 되고 아무 자도 안 우는 자리였다");
         }
     }
 }

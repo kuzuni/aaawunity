@@ -265,7 +265,7 @@ namespace KkomaKnight.Tests
             // ⚑ «전설 바로 아래» 로 적으면 안 된다 — 영웅이 끼는 날 그 자리가 영웅이 되어
             //   T261 의 «희귀 확정» 천장이 조용히 «영웅 확정» 이 된다(그래서 GearData.RarRare 의 유도식을 바꿨다 · 결정 969).
             //   재야 할 것은 자리가 아니라 **그 자리가 가리키는 등급**이다.
-            Assert.That(d.Gear.RarName[d.Gear.RarRare], Is.EqualTo("희귀"), "«희귀 확정» 천장이 가리키는 등급은 희귀여야 한다");
+            Assert.That(d.Gear.RarName[d.Gear.RarRare], Is.EqualTo("중세"), "«둘째 등급 확정» 천장이 가리키는 등급은 중세(옛 «희귀» · T511 개명)여야 한다");
         }
 
         [Test]

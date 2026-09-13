@@ -18,8 +18,7 @@ namespace KkomaKnight.Tests.Play
     /// <para>
     /// <b>엔진은 한 줄도 안 봤다</b>(거리·속도·판정·시드 그대로) — 그래서 이 자는 «엔진 값» 이 아니라 <b>그려진 자리</b>만 잰다:
     /// 땅이 서 있나 · 플레이어 그림이 만난 뒤 안 움직이나 · 둘이 가운데를 사이에 두고 마주 서 있나.
-    /// 그리고 <b>절반은 챕터 판을 본다</b> — 아레나만 보는 자는 «아레나를 고치다 챕터 쪽을 죽였다» 를 못 잡는다(T240 <see cref="PvpHudTests"/> 와 같은 까닭).
-    /// ⚠ 그 절반이 재는 것은 <b>T510 에서 뒤집혔다</b>: 옛날엔 «챕터는 플레이어를 붙박는다» 였고 지금은 «챕터도 플레이어가 오른쪽으로 걸어간다» 다(주인 2026-09-13).
+    /// 그리고 <b>절반은 «챕터는 옛 그대로» 다</b> — 아레나만 보는 자는 «아레나를 고치다 챕터 스크롤을 죽였다» 를 못 잡는다(T240 <see cref="PvpHudTests"/> 와 같은 까닭).
     /// </para>
     /// </summary>
     public class PvpStageTests
@@ -120,14 +119,9 @@ namespace KkomaKnight.Tests.Play
             yield return Shutdown();
         }
 
-        /// <summary>
-        /// <b>T510</b>(주인 2026-09-13 «그 플레이어가 실제로 오른쪽으로 가면서 게임이 진행되야하는데 맵이랑 적들이 왼쪽으로 움직이는 방식 이더라») —
-        /// 챕터 판의 <b>반대쪽</b> 자다. 옛 자는 여기서 «플레이어 그림이 한 자리에 붙박여 있다» 를 <b>지켰다</b>(T319 가 아레나만 고치느라 챕터를 그대로 못 박아 뒀다).
-        /// 주인이 그 붙박이를 지적했으므로 이 자가 재는 것을 뒤집는다: <b>그림이 오른쪽으로 걸어가고</b>, 그동안 <b>땅이 선다</b>.
-        /// <para>규칙 자체(띠·행군 따라붙기)는 <c>BattleCamTests</c>(EditMode)가 실제 전투를 돌려 가며 잰다 — 여기서는 <b>정말 그렇게 그려지는가</b>만 본다.</para>
-        /// </summary>
+        /// <summary>T319 ⓑ(반대쪽) — 챕터 판은 <b>옛 그대로</b>다: 플레이어는 <c>ui.json playerX</c> 자리에 붙박이고 땅이 흐른다.</summary>
         [UnityTest]
-        public IEnumerator ChapterRunWalksThePlayerRightWhileTheGroundStands()
+        public IEnumerator ChapterRunStillPinsThePlayerAndScrollsTheGround()
         {
             yield return Boot();
 
@@ -139,32 +133,20 @@ namespace KkomaKnight.Tests.Play
             var G = bs.G; Assert.IsNotNull(G, "전투 상태");
 
             var tile = GroundTile(); Assert.IsNotNull(tile, "땅 타일");
-            float minP = float.MaxValue, maxP = float.MinValue;
-            float prevP = PlayerCenter(world.MeasureLayout()), prevTile = tile.position.x;
-            double prevWorld = G.P.WorldX;   // «서 있나» 는 그림이 아니라 **엔진 x** 로 본다 — 행군 중에는 그림이 왼쪽 끝에 붙은 채로 걷는다
-            int walkedWhileGroundStood = 0, groundMovedWhileStanding = 0;
+            float groundX0 = tile.position.x;
+            float pinned = PlayerCenter(world.MeasureLayout());
             bool groundMoved = false;
 
             float t0 = Time.realtimeSinceStartup;
-            while (Time.realtimeSinceStartup - t0 < 8f && !G.Over && !_app.Overlay.IsOpen)
+            while (Time.realtimeSinceStartup - t0 < 6f && !G.Over && !_app.Overlay.IsOpen)
             {
                 yield return null;
-                float p = PlayerCenter(world.MeasureLayout()), tx = tile.position.x;
-                bool tileStill = Mathf.Abs(tx - prevTile) < 1e-4f, walked = G.P.WorldX > prevWorld + 1e-9;
-                if (walked && tileStill && p > prevP + 0.05f) walkedWhileGroundStood++;   // 걸었는데 땅은 섰고 그림이 오른쪽으로 갔다 = 고치려던 그 그림
-                if (!walked && !tileStill) groundMovedWhileStanding++;
-                if (!tileStill) groundMoved = true;
-                if (p < minP) minP = p; if (p > maxP) maxP = p;
-                prevP = p; prevTile = tx; prevWorld = G.P.WorldX;
+                Assert.AreEqual(pinned, PlayerCenter(world.MeasureLayout()), 0.2f, "챕터 판에서 플레이어 그림은 한 자리에 붙박여 있다(옛 그대로)");
+                if (Mathf.Abs(tile.position.x - groundX0) > 1e-3f) groundMoved = true;
             }
+            Assert.IsTrue(groundMoved, "챕터 판에서는 땅이 흘러야 한다 — 아레나를 고치다 이쪽 스크롤을 죽이면 여기서 잡힌다");
 
-            Assert.Greater(walkedWhileGroundStood, 10, "맵이 선 채로 플레이어 그림이 오른쪽으로 가는 프레임이 있어야 한다(T510 의 핵심)");
-            Assert.Greater(maxP - minP, 10f, "플레이어 그림이 화면에서 10%p 넘게 오른쪽으로 걸어가야 한다(옛 꼴은 폭 0 이었다)");
-            Assert.LessOrEqual(maxP, KkomaKnight.Core.Layout.BattleCamRightPct + 3f, "띠의 오른쪽 끝을 넘지 않는다");
-            Assert.IsTrue(groundMoved, "무리와 무리 사이 행군에서는 땅이 흘러야 한다(무한 스크롤 · 그것까지 죽이면 앞으로 못 간다)");
-            Assert.AreEqual(0, groundMovedWhileStanding, "엔진이 안 걸은 프레임에 땅이 흐르면 안 된다(서 있는데 맵만 흐르는 그 꼴)");
-
-            _log.AssertNoRed("챕터 판 카메라");
+            _log.AssertNoRed("챕터 판 스크롤");
             yield return Shutdown();
         }
     }

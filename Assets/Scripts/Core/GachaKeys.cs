@@ -11,7 +11,7 @@ namespace KkomaKnight.Core
     /// </para>
     /// <para>
     /// <b>색 → 상자</b>는 주인이 직접 말한 짝이다(파랑 = 희귀 · 보라 = 전설 · 노랑 = 신화). 열쇠의 <b>이름</b>은 아레나 상인 표가
-    /// 이미 쓰는 것을 그대로 쓴다(«희귀 열쇠»·«에픽 열쇠»·«전설 열쇠» · <c>EventsScreen.Goods</c>) — 두 곳이 다른 말을 쓰면 안 된다(T254 머리말).
+    /// 이미 쓰는 것을 그대로 쓴다(T511 개명 뒤 «중세 열쇠»·«현대 열쇠»·«사이버 열쇠» — 여는 상자 이름을 따른다 · <c>EventsScreen.Goods</c>) — 두 곳이 다른 말을 쓰면 안 된다(T254 머리말).
     /// 즉 <b>이름은 열쇠의 계열</b>이고 <b>여는 상자는 주인이 정한 짝</b>이라 둘이 한 칸씩 어긋나 보이는데, 그것이 주인이 준 규칙이다.
     /// </para>
     /// <para>
@@ -125,9 +125,9 @@ namespace KkomaKnight.Core
         /// <summary>재화 이름 → 우리말(아레나 상인 표와 같은 말 · 화면 문구는 한 곳에서 만든다).</summary>
         public static string Name(string item)
         {
-            if (item == Blue) return "희귀 열쇠";
-            if (item == Purple) return "에픽 열쇠";
-            if (item == Yellow) return "전설 열쇠";
+            if (item == Blue) return "중세 열쇠";
+            if (item == Purple) return "현대 열쇠";
+            if (item == Yellow) return "사이버 열쇠";
             if (item == Egg) return "펫알";
             return item ?? "";
         }

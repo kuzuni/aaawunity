@@ -195,7 +195,7 @@ namespace KkomaKnight.Core
 
         /// <summary>
         /// <c>gacha.json</c>(aaaw 정본 · 불변) 위에 <b>상자 칸</b>만 덮는다 (T325 ⓐ 3항 · 주인 «전설 상자는 66% 희귀 · 30% 영웅 · 4% 전설»).
-        /// <para>덮는 키는 <c>boxes.&lt;상자키&gt;</c> 아래의 <c>rate</c> · <c>cost</c> · <c>pityMyth</c> · <c>pityLegend</c> · <c>pityRare</c>.
+        /// <para>덮는 키는 <c>boxes.&lt;상자키&gt;</c> 아래의 <c>name</c>(T511) · <c>rate</c> · <c>cost</c> · <c>pityMyth</c> · <c>pityLegend</c> · <c>pityRare</c>.
         /// 없는 상자 키는 <b>조용히 넘기지 않고 던진다</b> — 오타 하나로 «확률을 바꿨는데 안 바뀌는» 꼴이 제일 조용한 고장이다.</para>
         /// <para>⚠ <c>cum</c> 은 <b>표에 안 적는다</b> — <c>rate</c> 를 덮으면 여기서 다시 계산한다(<see cref="GachaBox.RarRoll"/> 이 보는 것은 <c>cum</c> 이라
         /// 옛 <c>cum</c> 이 남으면 «표는 새 확률인데 굴림은 옛 확률» 이 되고 아무도 안 운다).</para>
@@ -211,6 +211,10 @@ namespace KkomaKnight.Core
             {
                 var box = Gacha.Box(k);          // 없으면 KeyNotFoundException — 오타를 조용히 안 넘긴다
                 var b = bx[k];
+                // T511(주인 2026-09-13 «상점에도 그거 이름 반영해줘야함») — 상자 이름도 덮는다.
+                //   상점 카드 제목·광고 토스트·뽑기 결과 제목이 전부 이 한 값(box.Name)을 그린다(ShopScreen) —
+                //   그래서 «이름을 바꾸는 곳» 은 여기 한 곳이고 코드에는 상자 이름 글자가 없다.
+                if (b.Has("name")) box.Name = b["name"].Str(box.Name);
                 if (b.Has("rate")) { box.Rate = b["rate"].NumArray(); box.Cum = CumOf(box.Rate); }
                 if (b.Has("cost")) box.Cost = b["cost"].Num(box.Cost);
                 if (b.Has("pityMyth")) box.PityMyth = b["pityMyth"].Int(box.PityMyth);
