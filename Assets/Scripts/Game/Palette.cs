@@ -134,7 +134,7 @@ namespace KkomaKnight.Game
         public static Color A(Color c, float a) { c.a = a; return c; }
     }
 
-    /// <summary>아이콘 키 고르기 — 스탯·특전·장비. 카탈로그 키(pi.* / ui.* / gi.*) 만 돌려준다.</summary>
+    /// <summary>아이콘 키 고르기 — 스탯·특전·장비. 카탈로그 키(perk.* / pi.* / ui.* / gi.*) 만 돌려준다.</summary>
     public static class Icons
     {
         public static string Stat(string k)
@@ -146,9 +146,12 @@ namespace KkomaKnight.Game
                 case "hp": return "pi.heart"; case "sh": return "pi.shield"; case "exp": return "pi.star"; default: return "pi.star";
             }
         }
-        /// <summary>특전 id 의 어근으로 그림을 고른다 (같은 계열 N/R/L 은 같은 그림 · 등급은 색으로 구분).</summary>
+        /// <summary>실제 특전 ID는 효과별 전용 그림, 미등록 ID는 기존 어근 그림을 고른다. 등급은 카드 프레임으로 구분.</summary>
         public static string Perk(string id)
         {
+            var artwork = PerkArtwork.Key(id);
+            if (artwork != null) return artwork;
+            if (string.IsNullOrEmpty(id)) return null;
             string s = id.StartsWith("p_") ? id.Substring(2) : id;
             if (s.StartsWith("noble")) return "pi.crown";
             if (s.StartsWith("berserk")) return "pi.fire";

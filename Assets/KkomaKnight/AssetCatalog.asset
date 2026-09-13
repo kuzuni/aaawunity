@@ -997,6 +997,124 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 60bf2486006834a1bb14473682285362, type: 3}
   - key: fx.lightning
     sprite: {fileID: 21300000, guid: c8a9875596f2877db024030da9dee945, type: 3}
+  - key: perk.evHeal
+    sprite: {fileID: 21300000, guid: 13f2deb599c7266d721893dbef667bb3, type: 3}
+  - key: perk.atk
+    sprite: {fileID: 21300000, guid: 130814dc872d2fc8f05577fd5eff786e, type: 3}
+  - key: perk.evade
+    sprite: {fileID: 21300000, guid: 3b6490391707350180103b1215bd7043, type: 3}
+  - key: perk.arrowEv
+    sprite: {fileID: 21300000, guid: 4f7913119307b34b7b5326e5d6c8b11d, type: 3}
+  - key: perk.axeHit
+    sprite: {fileID: 21300000, guid: d558a28a59fe63a84e093c275c5b5d23, type: 3}
+  - key: perk.counter
+    sprite: {fileID: 21300000, guid: 855efa0596cfd9bc71f058436ca44a77, type: 3}
+  - key: perk.spearCt
+    sprite: {fileID: 21300000, guid: 1a6874dbe313b7172b7fb63e2a5bc64a, type: 3}
+  - key: perk.critR
+    sprite: {fileID: 21300000, guid: 8c3c89b3dd358496576ba5bf93fb3025, type: 3}
+  - key: perk.critF
+    sprite: {fileID: 21300000, guid: 054a10d3fcb824d2dd2ea2c96fa3fdc7, type: 3}
+  - key: perk.def
+    sprite: {fileID: 21300000, guid: 439f0a280c3c794eec50620d58dd5c72, type: 3}
+  - key: perk.killSpear
+    sprite: {fileID: 21300000, guid: 188749499d73aa05e75e06e8fd285b77, type: 3}
+  - key: perk.killBolt
+    sprite: {fileID: 21300000, guid: 89d4a1eacb43ea1f0cb02af74b22dc45, type: 3}
+  - key: perk.killArrow
+    sprite: {fileID: 21300000, guid: 310e4f371cab94c6ecdd2cdd137fbdb0, type: 3}
+  - key: perk.killAxe
+    sprite: {fileID: 21300000, guid: f1133ead5b9348448488ab61187493a2, type: 3}
+  - key: perk.thorns
+    sprite: {fileID: 21300000, guid: e0049acc832a45a10dd0db783be64eab, type: 3}
+  - key: perk.killEvBuff
+    sprite: {fileID: 21300000, guid: 121f40f0a3c96531f486b5ed59ae4d09, type: 3}
+  - key: perk.collAtk
+    sprite: {fileID: 21300000, guid: 544ad19ff68ec30e80de2b59b565c592, type: 3}
+  - key: perk.collCrit
+    sprite: {fileID: 21300000, guid: e4507743da115e41426fe9652b765295, type: 3}
+  - key: perk.killAtkStk
+    sprite: {fileID: 21300000, guid: 5b4bdedf7795057b807e2559c7e149de, type: 3}
+  - key: perk.killEvStk
+    sprite: {fileID: 21300000, guid: a2ea9c576bfcec5be084e32ec3e34bb0, type: 3}
+  - key: perk.killHeal
+    sprite: {fileID: 21300000, guid: 3aa2d02ee00b5c03913f8b2599663e70, type: 3}
+  - key: perk.collHp
+    sprite: {fileID: 21300000, guid: 4f2533681cd471d48d7ff98a7153c948, type: 3}
+  - key: perk.critStack
+    sprite: {fileID: 21300000, guid: a0c1134cf654b0c0e2cf06bfcf91cf3e, type: 3}
+  - key: perk.aspdAtk
+    sprite: {fileID: 21300000, guid: b3762e644cbabc3a7534c7d911054e22, type: 3}
+  - key: perk.execEv
+    sprite: {fileID: 21300000, guid: 1f5d0c7f4cc6d686ea34cc28bdc2ae61, type: 3}
+  - key: perk.stunCrit
+    sprite: {fileID: 21300000, guid: d3cb09de7e9f8438cd3ce5f85afc0058, type: 3}
+  - key: perk.nArrow
+    sprite: {fileID: 21300000, guid: 47192eb380952de134960b5e021ad4eb, type: 3}
+  - key: perk.nAxe
+    sprite: {fileID: 21300000, guid: 3fc0341aff972fbebdd5bbb328554d2d, type: 3}
+  - key: perk.nBolt
+    sprite: {fileID: 21300000, guid: 00ddc7584c9146dd4ff64d6eae55976f, type: 3}
+  - key: perk.nHeal
+    sprite: {fileID: 21300000, guid: 943a53e4af926cc7312bfff25a4a6e10, type: 3}
+  - key: perk.evadeStun
+    sprite: {fileID: 21300000, guid: 3f352f6d02a4ca809db445c1791aff13, type: 3}
+  - key: perk.ctCrit
+    sprite: {fileID: 21300000, guid: e4a4372eb71122249ac35842da587a22, type: 3}
+  - key: perk.ctDmg
+    sprite: {fileID: 21300000, guid: c6b8abdf159d54bc7a9db02efcd37881, type: 3}
+  - key: perk.killSureCrit
+    sprite: {fileID: 21300000, guid: 5c15f6a04662b34e923e98d02343659d, type: 3}
+  - key: perk.cleave
+    sprite: {fileID: 21300000, guid: 0526c43e2f5ef327efb706cfc90714f0, type: 3}
+  - key: perk.ignore
+    sprite: {fileID: 21300000, guid: acaf9c5da2d5da99150945880b3848b3, type: 3}
+  - key: perk.noShAtk
+    sprite: {fileID: 21300000, guid: 0d7021cb142bd768221e2bdd7a9cc650, type: 3}
+  - key: perk.noShAspd
+    sprite: {fileID: 21300000, guid: 9fead6b43cef21d9670c5b66d686436b, type: 3}
+  - key: perk.wardHit
+    sprite: {fileID: 21300000, guid: c9b75d023e8e93b0f621f9149ffc4193, type: 3}
+  - key: perk.fullHp
+    sprite: {fileID: 21300000, guid: 1e4235281d9e9143d8a57af3d7f217da, type: 3}
+  - key: perk.repairUp
+    sprite: {fileID: 21300000, guid: 7ca3401e17e1f24c820d4e4ecfca05e8, type: 3}
+  - key: perk.healUp
+    sprite: {fileID: 21300000, guid: 22a0145b603bd7bf8b01b03e7f22583f, type: 3}
+  - key: perk.healRepair
+    sprite: {fileID: 21300000, guid: 450928ed6b7693b4150422e5ac8fb56d, type: 3}
+  - key: perk.killRepair
+    sprite: {fileID: 21300000, guid: 44a1039afca339ecb893b0cbcb85d77f, type: 3}
+  - key: perk.killDash
+    sprite: {fileID: 21300000, guid: 740449a45d37446688d15d89367b5807, type: 3}
+  - key: perk.berserkStk
+    sprite: {fileID: 21300000, guid: a9ded1abc8fbbeda0aae10f1066f7940, type: 3}
+  - key: perk.evRepair
+    sprite: {fileID: 21300000, guid: 86761f5ed052b5fb9ff68e4c0e9be6cf, type: 3}
+  - key: perk.critSpear
+    sprite: {fileID: 21300000, guid: b8c9c4153b05e59d4360222ea419b282, type: 3}
+  - key: perk.overkill
+    sprite: {fileID: 21300000, guid: d6ab9ec30070d182490ca7d00dd6bd3f, type: 3}
+  - key: perk.berserk
+    sprite: {fileID: 21300000, guid: c7d3e8c0037fa878bbea3331b470451d, type: 3}
+  - key: perk.nobleEye
+    sprite: {fileID: 21300000, guid: 34cf5f31095f63cc611324ee67ac3060, type: 3}
+  - key: perk.spearAvatar
+    sprite: {fileID: 21300000, guid: 4c26436d43d46ac5b175e9c777106f2a, type: 3}
+  - key: perk.giant
+    sprite: {fileID: 21300000, guid: 5ef6cf0a573b1c98ff7517901639cccb, type: 3}
+  - key: perk.nSpear
+    sprite: {fileID: 21300000, guid: 9787ab495d80031beeb594bf81d6949c, type: 3}
+  - key: perk.critBolt
+    sprite: {fileID: 21300000, guid: c8b54bb50d9ada6d1694fc03a19f3494, type: 3}
+  - key: perk.spearEv
+    sprite: {fileID: 21300000, guid: 3dae40edef4e448994c0661303fe25f4, type: 3}
+  - key: perk.spearHit
+    sprite: {fileID: 21300000, guid: 9a3f0f318de5369486a99073d9b9b9fe, type: 3}
+  - key: perk.shWall
+    sprite: {fileID: 21300000, guid: 6ffdf726e5e429644faf1841c8b01b00, type: 3}
+  - key: perk.shRef
+    sprite: {fileID: 21300000, guid: 95e72c076d646b6aae4b0570bb852eb0, type: 3}
   prefabs:
   - key: cm.character
     prefab: {fileID: 1824668350962886144, guid: d6c3c650b0b379149a826b54b40b4571, type: 3}

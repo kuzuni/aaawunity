@@ -1232,8 +1232,8 @@ namespace KkomaKnight.Game
         {
             if (string.IsNullOrEmpty(src)) return null;
             if (src == BattleState.SrcGearAxe) return "pi.axe";
-            if (src == BattleState.SrcGearHeal) return "pi.heart";       // p_evadeHeal 이 받는 그 그림
-            if (src == BattleState.SrcGearThorns) return "pi.damage";    // p_thorns 가 받는 그 그림
+            if (src == BattleState.SrcGearHeal) return Icons.Perk("p_evadeHeal");       // p_evadeHeal 이 받는 그 그림
+            if (src == BattleState.SrcGearThorns) return Icons.Perk("p_thorns");    // p_thorns 가 받는 그 그림
             if (src == BattleState.SrcPet) return "ui.petIcon";
             return src.StartsWith("p_") ? Icons.Perk(src) : null;
         }
