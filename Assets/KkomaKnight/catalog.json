@@ -311,7 +311,7 @@
     "ui.face11": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Eye_01.png",
     "ui.face12": "Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Artifact_01_Gold.png",
     "hud.gold": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/ResourceBar_Icon_Gold.png",
-    "hud.gem": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/ResourceBar_Icon_Gem.png",
+    "hud.gem": "Assets/Art/ChihuahuaGameUI/Commerce/diamond_blue.png",
     "hud.resourceBg": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/ResourceBar_Bg.png",
     "hud.orbBg": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/HUD_Orb_01_Bg_1.png",
     "hud.gradeGem": "Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/Grade_Gem_01.png",

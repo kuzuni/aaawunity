@@ -315,7 +315,7 @@
 | sprites | `ui.face11` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Eye_01.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
 | sprites | `ui.face12` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Artifact_01_Gold.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
 | sprites | `hud.gold` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/ResourceBar_Icon_Gold.png` | fileID 21300000 |  |
-| sprites | `hud.gem` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/ResourceBar_Icon_Gem.png` | fileID 21300000 |  |
+| sprites | `hud.gem` | `Assets/Art/ChihuahuaGameUI/Commerce/diamond_blue.png` | fileID 21300000 |  |
 | sprites | `hud.resourceBg` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/ResourceBar_Bg.png` | fileID 21300000 |  |
 | sprites | `hud.orbBg` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/HUD_Orb_01_Bg_1.png` | fileID 21300000 |  |
 | sprites | `hud.gradeGem` | `Assets/Layer Lab/GUI Pro-MinimalGame/Theme_Light/Sprites/HUD/Grade_Gem_01.png` | fileID 21300000 |  |

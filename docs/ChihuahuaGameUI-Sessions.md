@@ -39,6 +39,10 @@ T519는 전체 통합 작업이며 아직 미완료다. T515~T518과 기존 장�
 
 ## 실행 기록
 
+- 재사용 후보 5개를 `Assets/Art/ChihuahuaGameUI/Commerce`, `Nodes`에 원본 바이트 그대로 복사하고 새 폴더/파일의 메타만 생성했다. **`hud.gem`만 실제 카탈로그 연결**했다. 닫힌 상자는 열림 버전이 준비된 뒤 함께 연결하며 쉼터는 world 결과 통합 때 연결한다.
+- 로컬 검사: 체크포인트 7개 SHA-256 일치, PNG 모드 확인, 메타/카탈로그 생성물/키 검사 통과. C# 빌드 0경고/0오류, 순수 C# 테스트 **587/587 통과**. Unity EditMode/PlayMode와 화면 검증은 아직 미실행.
+- 아트 제작용 ChatGPT Work 클라우드 작업 생성 여부는 사용자에게 질문했으며 아직 응답 전이다. 해당 작업을 만들었다고 가정하지 않는다.
+
 - [월드 코드 작업](https://chatgpt.com/codex/tasks/task_e_6aa6d9c05e408329822cc510138c0f8f): 제출 확인, pending.
 - [이벤트 코드 작업](https://chatgpt.com/codex/tasks/task_e_6aa6d9cddb548329a987c7ba96a950f0): 제출 확인, pending.
 - [로비·공통 UI 코드 작업](https://chatgpt.com/codex/tasks/task_e_6aa6d9d441c08329ab4215fa6e7d1fdd): 제출 확인, pending.

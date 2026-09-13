@@ -634,7 +634,7 @@ MonoBehaviour:
   - key: hud.gold
     sprite: {fileID: 21300000, guid: 1a9ecca12e9da45568bcb8fc473f7c74, type: 3}
   - key: hud.gem
-    sprite: {fileID: 21300000, guid: 625358f17bee143faa9343f79fbccb4d, type: 3}
+    sprite: {fileID: 21300000, guid: fd218eff34197e12617adf3765bbde3b, type: 3}
   - key: hud.resourceBg
     sprite: {fileID: 21300000, guid: 7fc37aaee6c7741608b3d4421b7a38d2, type: 3}
   - key: hud.orbBg
