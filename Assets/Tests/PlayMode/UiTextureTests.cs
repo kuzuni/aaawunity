@@ -55,6 +55,37 @@ namespace KkomaKnight.Tests.Play
         }
 
         [UnityTest]
+        public IEnumerator ChihuahuaStatIconsKeepArtworkRgbAndRequestedAlpha()
+        {
+            yield return Boot();
+            var host = UiKit.Rect(_app.Frame, "T519StatIcons");
+            var tint = new Color(0.2f, 0.4f, 0.6f, 0.37f);
+            var keys = new[] { "pi.attack", "pi.defense", "pi.atk_spd", "pi.fist", "pi.critical", "pi.damage", "pi.drop", "pi.heart", "pi.shield", "pi.star", "ui.dodge" };
+            foreach (var key in keys)
+            {
+                var expected = _app.Assets.Sprite(key);
+                Assert.IsNotNull(expected, key + " 실제 원화 스프라이트");
+                var icon = UiKit.Icon(host, key, key, tint);
+                Assert.AreSame(expected, icon.sprite, key + " 카탈로그의 원화를 그린다");
+                Assert.AreEqual(new Color(1f, 1f, 1f, tint.a), icon.color, key + " RGB는 보존하고 호출자의 투명도만 적용한다");
+                Assert.IsTrue(icon.preserveAspect, key + " 원화 비율 유지");
+                Assert.IsFalse(icon.raycastTarget, key + " 장식 아이콘은 입력을 막지 않는다");
+                icon.sprite = _app.Assets.Sprite("ui.iconClock");
+                icon.color = tint;
+                Assert.AreSame(icon, UiKit.SetSprite(host, key, key), key + " 기존 Image를 갱신한다");
+                Assert.AreSame(expected, icon.sprite, key + " 갱신도 원화로 교체한다");
+                Assert.AreEqual(new Color(1f, 1f, 1f, tint.a), icon.color, key + " 갱신은 기존 알파를 보존하고 RGB 틴트를 해제한다");
+            }
+            var direct = UiKit.Icon(host, "DirectAlias", "ui.option.attack", tint);
+            Assert.AreSame(_app.Assets.Sprite("pi.attack"), direct.sprite, "새 키로 불러도 같은 원화");
+            Assert.AreEqual(new Color(1f, 1f, 1f, tint.a), direct.color, "새 키도 RGB 원화·요청 알파 유지");
+            var legacy = UiKit.Icon(host, "LegacyIcon", "ui.iconClock", tint);
+            Assert.AreEqual(tint, legacy.color, "옵션 외 아이콘은 기존 틴트 계약 유지");
+            _log.AssertNoRed("T519 옵션 원화 색·알파");
+            yield return Shutdown();
+        }
+
+        [UnityTest]
         public IEnumerator PatternLightGradientHelpersFlowSpinAndLayer()
         {
             yield return Boot();
@@ -70,11 +101,21 @@ namespace KkomaKnight.Tests.Play
             Assert.AreEqual(UiKit.PatternName, raw.name); Assert.AreEqual(host, raw.transform.parent, "Pattern 은 host 의 자식");
             Assert.AreEqual(0, raw.transform.GetSiblingIndex(), "Pattern 은 host 배경 바로 위(형제 0) — 아이콘·글자 아래");
             Assert.IsFalse(raw.raycastTarget, "Pattern raycast 끔");
-            Assert.IsNotNull(raw.texture, "Pattern 텍스처"); Assert.IsTrue(raw.texture.name.StartsWith("Pattern_01"), "텍스처 = Pattern_01_256 (" + raw.texture.name + ")");
-            Assert.AreEqual(TextureWrapMode.Repeat, raw.texture.wrapMode, "Pattern_01_256.png.meta 는 wrapU/V = Repeat(타일링) 이어야 한다");
+            var patternSprite = _app.Assets.Sprite(UiKit.PatternKey);
+            Assert.IsNotNull(patternSprite, "ui.pattern 카탈로그 스프라이트");
+            Assert.AreSame(patternSprite.texture, raw.texture, "배경은 현재 카탈로그의 실제 패턴 텍스처를 쓴다(T519)");
+            Assert.AreEqual(TextureWrapMode.Repeat, raw.texture.wrapMode, "패턴 텍스처는 Repeat(타일링) 이어야 한다");
             Assert.AreEqual(3f / 255f, raw.color.a, 0.002f, "패턴 알파 = 주인 확정 «255 중 3»(2026-09-07 · 아주 은은하게)");
             Assert.That(UiKit.PatternTileSeconds, Is.InRange(10f, 15f), "패턴 한 타일 10~15초(주인 확정 «속도 2배»)");
             Assert.IsTrue(UiKit.HasPattern(host), "HasPattern");
+            var actualPatternTexture = raw.texture;
+            raw.texture = _app.Assets.Sprite("ui.iconClock").texture;
+            Assert.IsFalse(UiKit.HasPattern(host), "이름이 Pattern이어도 다른 텍스처는 패턴으로 세지 않는다(T519)");
+            raw.texture = actualPatternTexture;
+            raw.enabled = false;
+            Assert.IsFalse(UiKit.HasPattern(host), "꺼진 패턴은 세지 않는다(T519)");
+            raw.enabled = true;
+            Assert.IsTrue(UiKit.HasPattern(host), "실제 패턴을 다시 켜면 인식한다(T519)");
             Canvas.ForceUpdateCanvases();
             var hr = ((RectTransform)raw.transform).rect;
             Assert.AreEqual(hr.width / UiKit.PatternTilePx, raw.uvRect.width, 0.02f, "uvRect 폭 = 사각형 폭 ÷ 256(타일 한 변 = 프레임 256px)");

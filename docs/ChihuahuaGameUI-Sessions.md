@@ -3,6 +3,18 @@
 2026-09-14 시작. 원본 요구사항은 `TODO.md`, `docs/TODO-ChihuahuaGameUI.md`다.
 T519는 전체 통합 작업이며 아직 미완료다. T515~T518과 기존 장비 아트 27세트는 변경하지 않는다.
 
+## 최신 체크포인트 — 2026-09-14 옵션·패턴 통합
+
+- 기존 다이아 연결 커밋 `896bf79b`의 CI `34771186644`는 success. 다운로드한 XML 확인: Unity EditMode **587/587**, PlayMode **250/250**, 실패·skip 0. 이 결과는 아래 새 옵션 코드의 검사 결과가 아니다.
+- Codex cloud 코드 작업 3개는 모두 ready이며 diff를 확보했다. 이번에는 shell 결과 중 UiKit 옵션 색 보존·패턴 인식만 검토해서 통합했다. world/events 및 나머지 shell 변경은 해당 아트 수령 뒤 통합한다.
+- stats 브랜치 `080618f29276e72da72b721dc235a6440c3a72bb`에서 옵션 11개+패턴 1개를 수령했다. 부모가 12개 SHA256, 실제 RGBA/투명 알파, 아이콘 형태, 2×2 패턴 이음새를 직접 확인했다.
+- 기존 옵션 키 11개와 `ui.option.*` 별칭을 동일 PNG에 연결하고 RGB 틴트를 제거하되 호출자 알파는 보존한다. 패턴은 Repeat 메타와 실제 texture 동일성으로 연결한다. 실제 Boot 기반 PlayMode 회귀 검사를 추가했다. 로컬 C# 587/587 및 메타·카탈로그·키·asmdef·stale-asserts·문서 검사 통과. 새 커밋의 Unity CI·실제 화면은 아직 대기다.
+- world: 14개 완료 보고+ZIP이 있으나 Git CLI 인증 실패로 원격 미전달. 같은 Work 작업에 GitHub 도구로 업로드를 요청했고, 현재 대화에서 이미 요청된 GitHub 업로드를 허용해 실행 재개를 확인했다. ZIP SHA256 `8e5d8ea027f544558a7d48e880eda2b70eb682324a3d9bd4f21c99d4aa039ba4`.
+- banners: 브라우저에서 5개 제작·검사 완료 및 GitHub Create Blob 승인 대기를 확인했다. aaawunity 아트 업로드 범위를 확인한 뒤 이번 호출을 허용했다. 최종 원격 브랜치는 아직 미확인.
+- identity: 브라우저에서 프로필 9개+지도 4개 제작 보고를 확인했다. 기존 GitHub 대화 중지 후 동일 작업 재개 요청이 실행 중이다. 부모 파일 수령·검수 전이다.
+- commerce: 최종 산출물 아직 미수령. 다른 작업도 read_thread의 idle만으로 완료/실패로 단정하지 말 것. Work UI의 GitHub 도구 승인 대기 때문에 idle일 수 있다.
+- 다음 단계: 원격 전용 브랜치 갱신 확인 → 완성 묶음만 수령/검수 → 해당 cloud diff와 키 연결 → Unity CI 및 화면 검사. 이미 제작한 이미지나 세션을 중복 생성하지 않는다.
+
 ## 실행 환경
 
 - Codex 클라우드: `6aa6d9313e808191bf2ed8eafc74a343` (`kuzuni/aaawunity`). PC 종료와 독립적으로 실행한다.

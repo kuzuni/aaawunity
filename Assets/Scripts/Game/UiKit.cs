@@ -237,9 +237,31 @@ namespace KkomaKnight.Game
         {
             var rt = Rect(parent, name);
             var img = rt.gameObject.AddComponent<Image>();
-            img.sprite = Cat != null ? Cat.Sprite(spriteKey) : null; img.preserveAspect = true; img.raycastTarget = false;
+            img.sprite = ResolveIconSprite(Cat, spriteKey, out bool colorArt); img.preserveAspect = true; img.raycastTarget = false;
             if (tint.HasValue) img.color = tint.Value;
+            if (colorArt) img.color = new Color(1f, 1f, 1f, img.color.a);
             return img;
+        }
+        // T519: 새 컬러 원화에는 예전 단색 아이콘의 RGB 틴트를 곱하지 않는다. 숨김·페이드 알파는 유지한다.
+        static readonly Dictionary<string, string> ChihuahuaOptionIcons = new Dictionary<string, string>
+        {
+            { "pi.attack", "ui.option.attack" }, { "pi.defense", "ui.option.defense" }, { "pi.atk_spd", "ui.option.atkSpd" },
+            { "pi.fist", "ui.option.counter" }, { "pi.critical", "ui.option.critical" }, { "pi.damage", "ui.option.criticalDamage" },
+            { "pi.drop", "ui.option.steal" }, { "pi.heart", "ui.option.health" }, { "pi.shield", "ui.option.shield" },
+            { "pi.star", "ui.option.experience" }, { "ui.dodge", "ui.option.dodge" },
+        };
+        static Sprite ResolveIconSprite(AssetCatalog cat, string key, out bool colorArt)
+        {
+            colorArt = false;
+            if (cat == null) return null;
+            if (ChihuahuaOptionIcons.TryGetValue(key, out var replacement) && cat.Has(replacement))
+            {
+                var sprite = cat.Sprite(replacement);
+                if (sprite != null) { colorArt = true; return sprite; }
+            }
+            var original = cat.Sprite(key);
+            colorArt = original != null && ChihuahuaOptionIcons.ContainsValue(key);
+            return original;
         }
         /// <summary>9-slice 스프라이트 패널(카탈로그 키). 색은 GUI Pro 팔레트에서.</summary>
         public static Image Panel(Transform parent, string name, string spriteKey, Color color)
@@ -982,14 +1004,15 @@ namespace KkomaKnight.Game
             var lt = cell != null ? cell.Find(LightMaskName + "/" + LightName) : null; if (lt == null || !lt.gameObject.activeInHierarchy) return false;
             var img = lt.GetComponent<Image>(); return img != null && img.enabled && img.sprite != null && img.sprite.name.StartsWith("Effect_Light");
         }
-        /// <summary>이 사각형 바로 아래에 패턴 배경이 있는가(테스트·감사용) — 자식 «Pattern» RawImage 가 활성이고 텍스처 이름 Pattern_01_256.</summary>
+        /// <summary>이 사각형 바로 아래에 패턴 배경이 있는가 — 현재 카탈로그 패턴의 실제 텍스처와 비교한다.</summary>
         public static bool HasPattern(Transform host)
         {
-            if (host == null) return false;
+            var expected = Cat != null && Cat.Has(PatternKey) ? Cat.Sprite(PatternKey) : null;
+            if (host == null || expected == null || expected.texture == null) return false;
             for (int i = 0; i < host.childCount; i++)
             {
                 var c = host.GetChild(i); if ((c.name != PatternName && c.name != MergedBgName) || !c.gameObject.activeInHierarchy) continue;
-                var raw = c.GetComponent<RawImage>(); if (raw != null && raw.enabled && raw.texture != null && raw.texture.name.StartsWith("Pattern_01")) return true;
+                var raw = c.GetComponent<RawImage>(); if (raw != null && raw.enabled && raw.texture == expected.texture) return true;
             }
             return false;
         }
@@ -1426,8 +1449,10 @@ namespace KkomaKnight.Game
         {
             var t = Find(root, path); var img = t != null ? t.GetComponent<Image>() : null;
             if (img == null) { Debug.LogWarning($"[UiKit] 이미지 없음: {root.name}/{path}"); return null; }
-            if (spriteKey != null && Cat != null) img.sprite = Cat.Sprite(spriteKey);
+            bool colorArt = false;
+            if (spriteKey != null && Cat != null) img.sprite = ResolveIconSprite(Cat, spriteKey, out colorArt);
             if (tint.HasValue) img.color = tint.Value;
+            if (colorArt) img.color = new Color(1f, 1f, 1f, img.color.a);
             return img;
         }
         public static void Hide(Transform root, params string[] paths) { foreach (var p in paths) { var t = Find(root, p); if (t != null) t.gameObject.SetActive(false); } }
