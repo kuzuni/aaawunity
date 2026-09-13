@@ -209,6 +209,9 @@ namespace KkomaKnight.Tests.Play
             //   잡 로그는 끝 30KB 뿐이고 그 창은 `screens` 배포 단계가 차지한다 · `failed_only` 로 오는 68만 자는 **빨간 잡에만** 있다 ·
             //   결과 XML 아티팩트는 프록시가 막는다. 그래서 이 저장소가 이미 세 번 쓴 길(tap.json · overdraw.json · t233.json)을 한 번 더 쓴다.
             WriteTmpFontJson(before, after, white, greyDark, greyBright, asset);
+            // T518 — 주인 «게임내에 텍스트에 네모 너무 많이 있음». CI 그림 52장에는 0건이라 폰에서만 나는 것이고,
+            //   첫 후보가 «아틀라스가 모자라 뒤에 오는 글자가 안 구워진다» 다. 그것을 **여기서 잰다**(짐작을 수로 바꾼다).
+            ProbeAtlas(asset);
 
             // ⓕ 그 «상태» 도 같이 못 박는다 — 픽셀 판정이 먼저이고, 이것은 되돌림을 막는 자다.
             Assert.IsTrue(TmpFont.OutlineDraws(asset.material),
@@ -258,6 +261,61 @@ namespace KkomaKnight.Tests.Play
         /// «절반 밑이면 빨강» 으로 올린다 — 그것이 T246 의 마지막 일이다(T226 규약 ⓑ).
         /// <b>실패해도 시험을 안 깬다</b>(경고 한 줄) — 이 자는 «재는 것» 이지 «지키는 것» 이 아니다.
         /// </summary>
+        /// <summary>
+        /// T518 — <b>두부(네모)의 첫 후보를 잰다</b>: 한글을 많이 구우면 아틀라스가 몇 장이 되고, <b>못 구운 글자가 나오는가</b>.
+        /// <para>
+        /// 이 레포는 <c>TMP_FontAsset.CreateFontAsset(Font)</c> <b>짧은 오버로드</b>를 쓴다 — 그 기본이 표본 90pt · 아틀라스 1024² 다.
+        /// 화면에 나갈 수 있는 서로 다른 한글이 <b>809자</b>인데 90pt 한 칸이 ≈112px 이라 1024² 한 장에 ≈81자뿐이다(⇒ 열 장).
+        /// 다중 아틀라스가 켜져 있어도 그것은 텍스처 열 장·머티리얼 열 벌이고, <b>폰에서 굽기가 막히는 순간 그 뒤 글자가 조용히 두부가 된다</b>.
+        /// </para>
+        /// <para>
+        /// ⚑ <b>reflection 으로 읽는다</b> — <c>atlasTextures</c>·<c>atlasWidth</c> 같은 이름을 코드에 박으면 서명이 다른 날 <b>유니티에서만</b> 컴파일이 죽는다(결정 465·567).
+        /// 이 자는 «재는 것» 이지 «지키는 것» 이 아니므로, 못 읽으면 «-» 를 적고 지나간다.
+        /// </para>
+        /// <para>⚠ <b>막지 않는다</b>(경고·기록만) — 여기서 초록이어도 폰에서 날 수 있다. 이 줄이 답하는 것은 «CI 통에서 몇 장이 되나» 하나다.</para>
+        /// </summary>
+        static void ProbeAtlas(TMP_FontAsset asset)
+        {
+            if (asset == null) return;
+            object Get(string name)
+            {
+                var t = asset.GetType();
+                var pi = t.GetProperty(name); if (pi != null) { try { return pi.GetValue(asset); } catch { return null; } }
+                var fi = t.GetField(name); if (fi != null) { try { return fi.GetValue(asset); } catch { return null; } }
+                return null;
+            }
+            string One(string name) { var v = Get(name); return v == null ? "-" : v.ToString(); }
+            int Pages() { var v = Get("atlasTextures") as System.Array; return v != null ? v.Length : -1; }
+
+            // 한글 음절 영역을 **널찍이 훑어** 굽는다 — 게임이 실제로 쓰는 809자와 같은 규모다(정확히 그 목록일 필요는 없다:
+            //   재려는 것은 «몇 자를 담을 수 있나» 이지 «어느 글자인가» 가 아니다).
+            const int Want = 900;
+            var sb = new System.Text.StringBuilder(Want);
+            for (int i = 0; i < Want; i++) sb.Append((char)(0xAC00 + i * 12));
+            string many = sb.ToString();
+            int pages0 = Pages();
+            asset.TryAddCharacters(many);
+            int missing = 0;
+            foreach (var c in many) if (!asset.HasCharacter(c)) missing++;
+            int pages1 = Pages();
+            Debug.LogWarning($"[T518두부] 아틀라스 {One("atlasWidth")}×{One("atlasHeight")} · "
+                           + $"{Want}자를 구웠더니 장수 {pages0} → {pages1} · **못 구운 글자 {missing}자** · 다중아틀라스 {One("isMultiAtlasTexturesEnabled")}");
+            foreach (var dir in PlayShot.Dirs())
+            {
+                try
+                {
+                    System.IO.Directory.CreateDirectory(dir);
+                    System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "tmpatlas.json"),
+                        "{\"_meta\":{\"task\":\"T518\",\"of\":\"두부(네모) 첫 후보 — 아틀라스 용량\"}"
+                        + ",\"atlasWidth\":\"" + One("atlasWidth") + "\",\"atlasHeight\":\"" + One("atlasHeight") + "\""
+                        + ",\"asked\":" + Want + ",\"pagesBefore\":" + pages0 + ",\"pagesAfter\":" + pages1
+                        + ",\"missing\":" + missing
+                        + ",\"multiAtlas\":\"" + One("isMultiAtlasTexturesEnabled") + "\"}");
+                }
+                catch (System.Exception e) { Debug.LogWarning("[T518두부] tmpatlas.json 저장 실패(" + dir + "): " + e.Message); }
+            }
+        }
+
         static void WriteTmpFontJson(int plateDark, int blackGlyphDark, int whiteGlyphDark, int greyDark, int greyBright, TMP_FontAsset asset)
         {
             var mat = asset != null ? asset.material : null;
