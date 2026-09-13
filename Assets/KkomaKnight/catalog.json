@@ -1233,7 +1233,7 @@
     "ui.iconMedalBronze": "T43 아레나 티어 «브론즈»(카드 티어 줄 · 입장 화면 제목 · 순위 보상 티어 띠)",
     "ui.iconMedalSilver": "T43 순위 보상 티어 띠 «실버»",
     "ui.iconGemBlue": "T43 순위 보상 티어 띠 «플래티넘»",
-    "ui.iconGemPurple": "T43 순위 보상 티어 띠 «다이아» · 보상 줄 보석 칸 · 상인 «다이아» 상품",
+    "ui.iconGemPurple": "T43 순위 보상 <b>티어 띠</b> «다이아»(<b>등급 이름</b>이지 재화가 아니다) — 재화 다이아는 T513 부터 hud.gem 한 가지다(상인 상품·보상 칸도 그쪽)",
     "ui.iconCrownGold": "T43 아레나 1위 왕관(시상대 · 순위 보상 1위 줄)",
     "ui.iconCrownSilver": "T43 아레나 2위 왕관",
     "ui.iconCrownBronze": "T43 아레나 3위 왕관",
