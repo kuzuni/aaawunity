@@ -141,18 +141,18 @@
 | sprites | `env.stoneBig` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Gray1_12.png` | fileID 21300000 | 천사 노드 — 큰 돌 + CFXR3 LightGlow A(Loop) |
 | sprites | `env.deadTree` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Tree/Dead_Tree_Brown_03.png` | fileID 21300000 | 악마 노드 옆 죽은 나무 |
 | sprites | `env.stoneSmall` | `Assets/Layer Lab/2D Minimal-Environment/Environment 1/ResourcesData/Sprites/Stone/Stone_Brown_06.png` | fileID 21300000 | 지면 소품(작은 돌) |
-| sprites | `pi.attack` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/attack.png` | fileID 21300000 | 스탯 «공격력» 아이콘 (HUD 스탯 그리드 · 특전 팝업 상단 줄 · 특전 카드) |
-| sprites | `pi.defense` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/defense.png` | fileID 21300000 | 스탯 «방어력» |
-| sprites | `pi.atk_spd` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/atk_spd.png` | fileID 21300000 | 스탯 «공격속도» |
-| sprites | `pi.fist` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/fist.png` | fileID 21300000 | 스탯 «반격 확률» |
-| sprites | `pi.critical` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/critical.png` | fileID 21300000 | 스탯 «치명타 확률» |
-| sprites | `pi.damage` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/damage.png` | fileID 21300000 | 스탯 «치명타 배율» |
+| sprites | `pi.attack` | `Assets/Art/ChihuahuaGameUI/Stats/stat_attack.png` | fileID 21300000 | T519 치와와 스타일 옵션 아이콘 (투명 RGBA, 원래 색 보존) |
+| sprites | `pi.defense` | `Assets/Art/ChihuahuaGameUI/Stats/stat_defense.png` | fileID 21300000 | T519 치와와 스타일 옵션 아이콘 (투명 RGBA, 원래 색 보존) |
+| sprites | `pi.atk_spd` | `Assets/Art/ChihuahuaGameUI/Stats/stat_attack_speed.png` | fileID 21300000 | T519 치와와 스타일 옵션 아이콘 (투명 RGBA, 원래 색 보존) |
+| sprites | `pi.fist` | `Assets/Art/ChihuahuaGameUI/Stats/stat_counter.png` | fileID 21300000 | T519 치와와 스타일 옵션 아이콘 (투명 RGBA, 원래 색 보존) |
+| sprites | `pi.critical` | `Assets/Art/ChihuahuaGameUI/Stats/stat_crit_chance.png` | fileID 21300000 | T519 치와와 스타일 옵션 아이콘 (투명 RGBA, 원래 색 보존) |
+| sprites | `pi.damage` | `Assets/Art/ChihuahuaGameUI/Stats/stat_crit_damage.png` | fileID 21300000 | T519 치와와 스타일 옵션 아이콘 (투명 RGBA, 원래 색 보존) |
 | sprites | `pi.wing` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/wing.png` | fileID 21300000 | 회피 계열 특전 · 천사 팝업 |
-| sprites | `pi.drop` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/drop.png` | fileID 21300000 | 스탯 «흡혈»(피 한 방울) |
-| sprites | `pi.heart` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/heart_1.png` | fileID 21300000 | 체력 바 캡 · 회복 특전 |
+| sprites | `pi.drop` | `Assets/Art/ChihuahuaGameUI/Stats/stat_lifesteal.png` | fileID 21300000 | T519 치와와 스타일 옵션 아이콘 (투명 RGBA, 원래 색 보존) |
+| sprites | `pi.heart` | `Assets/Art/ChihuahuaGameUI/Stats/stat_health.png` | fileID 21300000 | T519 치와와 스타일 옵션 아이콘 (투명 RGBA, 원래 색 보존) |
 | sprites | `pi.heart_round` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/heart_round.png` | fileID 21300000 |  |
-| sprites | `pi.shield` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/shield.png` | fileID 21300000 | 실드 바 캡 · 수리/방어막 특전 |
-| sprites | `pi.star` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/star_1.png` | fileID 21300000 | 경험치 바 캡 · 수집가 특전 |
+| sprites | `pi.shield` | `Assets/Art/ChihuahuaGameUI/Stats/stat_shield.png` | fileID 21300000 | T519 치와와 스타일 옵션 아이콘 (투명 RGBA, 원래 색 보존) |
+| sprites | `pi.star` | `Assets/Art/ChihuahuaGameUI/Stats/stat_experience.png` | fileID 21300000 | T519 치와와 스타일 옵션 아이콘 (투명 RGBA, 원래 색 보존) |
 | sprites | `pi.thunder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/thunder.png` | fileID 21300000 | 번개 특전 |
 | sprites | `pi.axe` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/axe_1.png` | fileID 21300000 | 도끼 특전 · T39: 대장간 벽에 걸린 연장(망치·도끼 · 반투명) |
 | sprites | `pi.arrowhead` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/arrowhead.png` | fileID 21300000 | 화살 특전 |
@@ -212,7 +212,7 @@
 | sprites | `pi.armor` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/armor.png` | fileID 21300000 |  |
 | sprites | `pi.boots` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/boots.png` | fileID 21300000 |  |
 | sprites | `pi.ring` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/PictoIcon/128/ring.png` | fileID 21300000 |  |
-| sprites | `ui.dodge` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Stat_Dodge_01.png` | fileID 21300000 | 스탯 «회피» (UniqueIcon Stat_Dodge_01) |
+| sprites | `ui.dodge` | `Assets/Art/ChihuahuaGameUI/Stats/stat_dodge.png` | fileID 21300000 | T519 치와와 스타일 옵션 아이콘 (투명 RGBA, 원래 색 보존) |
 | sprites | `ui.speed` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Common_Speed_01_Yellow.png` | fileID 21300000 | HUD 배속 버튼(x1/x2) |
 | sprites | `ui.skull` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Skull_01.png` | fileID 21300000 | 클리어 팝업 «처치 수» |
 | sprites | `ui.coin` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Coin_02_Gold.png` | fileID 21300000 | 골드 보상 아이콘(클리어/사망 팝업 GetItem_Reward) |
@@ -328,7 +328,7 @@
 | sprites | `fr.rectInner7` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_01~04_White_InnerBorder1_Px7.png` | fileID 21300000 | 발밑 HP·실드 바 테두리(T145 · 주인 지목) — 굵은 7px InnerBorder |
 | sprites | `fr.r0Border5` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_R0_Border_Px5.png` | fileID 21300000 | T69 각진 칸(모서리 반지름 0 · 5px) — 예비 |
 | sprites | `fr.pillBorder` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/Frame/BasicFrame/BasicFrame_Rectangle_05_White_Border.png` | fileID 21300000 | T69 pill(캡슐) 칸 테두리 — 상단 재화 pill(골드·보석) · 전투 HUD pill 2개(처치 수·이번 판 골드) · 87×39 9-slice(border 44/20/43/19 = 가운데 0 → 캡슐로 늘어난다) · 선 7px → 프레임 8px |
-| sprites | `ui.pattern` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/~Demo/Demo_Image/Pattern_01_256.png` | fileID 21300000 | T72 ① 배경 패턴(주인 «Pattern_01_256 이 거의 모든 UI 에») — UiKit.PatternBg(host, tint) 가 RawImage «Pattern» 으로 타일링(256×256 · .meta wrapU/V = 0 = Repeat · mipmap 끔 · 흰 알파 그림이라 Ink(밝은 바탕)/White(어두운 바탕) 로 tint) · 오른쪽 위로 한 타일 25s 흐름(unscaled) |
+| sprites | `ui.pattern` | `Assets/Art/ChihuahuaGameUI/Pattern/pattern_paws_bones.png` | fileID 21300000 | T519 치와와 발자국·뼈 반복 패턴 (투명 RGBA, wrapU/V Repeat, mipmap 끔). UiKit 타일링 및 merged background 공통 사용. |
 | sprites | `ui.light1` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/~Demo/Demo_Image/Effect_Light_01_512.png` | fileID 21300000 | T72 ② 아이콘 뒤 빛살(큰 칸 · 512) — UiKit.LightBehind(cell, icon) 가 «LightMask»(RectMask2D)/«Light» 로 아이콘 뒤에 두고 시계방향 16s 한 바퀴(unscaled) · 상점 상품 칸·특별 상품·뽑기 결과·보상 칸·펫 세부 |
 | sprites | `ui.light2` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/~Demo/Demo_Image/Effect_Light_02_512.png` | fileID 21300000 | T72 ② 아이콘 뒤 빛살(작은 칸 · 512 · 가는 살) — LightBehind(cell, icon, "ui.light2") |
 | sprites | `ui.glow1` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Sprite_Common/~Demo/Demo_Image/Glow_Circle_01_512.png` | fileID 21300000 | T155 ⓓ 빛살 «아래» 에 같이 깔리는 글로우 서클(512 · 원이라 돌리지 않는다 = 도는 트윈을 늘리지 않는다 · 결정 456) — UiKit.LightBehind 가 «LightLayer»/«Glow» 로 빛살보다 먼저(아래) 깐다 |
@@ -597,6 +597,19 @@
 | sprites | `perk.wardHitL` | `Assets/KkomaKnight/PerkIcons/wardHitL.png` | fileID 21300000 |  |
 | sprites | `perk.evRepairL` | `Assets/KkomaKnight/PerkIcons/evRepairL.png` | fileID 21300000 |  |
 | sprites | `perk.critSpearL` | `Assets/KkomaKnight/PerkIcons/critSpearL.png` | fileID 21300000 |  |
+| sprites | `ui.option.attack` | `Assets/Art/ChihuahuaGameUI/Stats/stat_attack.png` | fileID 21300000 | T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; pi.attack와 같은 PNG |
+| sprites | `ui.option.defense` | `Assets/Art/ChihuahuaGameUI/Stats/stat_defense.png` | fileID 21300000 | T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; pi.defense와 같은 PNG |
+| sprites | `ui.option.atkSpd` | `Assets/Art/ChihuahuaGameUI/Stats/stat_attack_speed.png` | fileID 21300000 | T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; pi.atk_spd와 같은 PNG |
+| sprites | `ui.option.counter` | `Assets/Art/ChihuahuaGameUI/Stats/stat_counter.png` | fileID 21300000 | T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; pi.fist와 같은 PNG |
+| sprites | `ui.option.critical` | `Assets/Art/ChihuahuaGameUI/Stats/stat_crit_chance.png` | fileID 21300000 | T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; pi.critical와 같은 PNG |
+| sprites | `ui.option.criticalDamage` | `Assets/Art/ChihuahuaGameUI/Stats/stat_crit_damage.png` | fileID 21300000 | T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; pi.damage와 같은 PNG |
+| sprites | `ui.option.steal` | `Assets/Art/ChihuahuaGameUI/Stats/stat_lifesteal.png` | fileID 21300000 | T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; pi.drop와 같은 PNG |
+| sprites | `ui.option.health` | `Assets/Art/ChihuahuaGameUI/Stats/stat_health.png` | fileID 21300000 | T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; pi.heart와 같은 PNG |
+| sprites | `ui.option.shield` | `Assets/Art/ChihuahuaGameUI/Stats/stat_shield.png` | fileID 21300000 | T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; pi.shield와 같은 PNG |
+| sprites | `ui.option.experience` | `Assets/Art/ChihuahuaGameUI/Stats/stat_experience.png` | fileID 21300000 | T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; pi.star와 같은 PNG |
+| sprites | `ui.option.dodge` | `Assets/Art/ChihuahuaGameUI/Stats/stat_dodge.png` | fileID 21300000 | T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; ui.dodge와 같은 PNG |
+| sprites | `ui.pass.banner` | `Assets/Art/ChihuahuaGameUI/Pass/adventure_banner.png` | fileID 21300000 | T519 치와와 전용 일러스트. 기존 제목·기간·레벨·진행 표시를 유지하고 배경/캐릭터만 교체. |
+| sprites | `ui.loading.art` | `Assets/Art/ChihuahuaGameUI/Loading/chihuahua_loading.png` | fileID 21300000 | T519 치와와 전용 일러스트. 기존 제목·기간·레벨·진행 표시를 유지하고 배경/캐릭터만 교체. |
 | prefabs | `cm.character` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Common/Prefabs/Character.prefab` | root 1824668350962886144 | CharacterMaker Character 프리팹 — 전투의 플레이어·적(BattleWorld.MakeChar) 과 UI 초상(HeroView · RenderTexture 카메라 · 레이어 30) 이 같은 프리팹을 쓴다 |
 | prefabs | `fx.hit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Hit A (Red).prefab` | root 4021103657954561961 | 적 피격 (CFXR Hit A Red) |
 | prefabs | `fx.crit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Impact Glowing HDR (Blue).prefab` | root 2708598583397607911 | 치명타 피격 (Impact Glowing HDR Blue · 0.2 배) |

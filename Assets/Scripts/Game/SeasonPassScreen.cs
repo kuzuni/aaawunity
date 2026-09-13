@@ -100,8 +100,14 @@ namespace KkomaKnight.Game
         {
             var banner = UiKit.Panel(Root, "Banner", "fr.rect", Color.white).rectTransform;
             UiKit.Pct(banner, RBanner);
-            // 무지개·성 그림은 주인 에셋에 없다 → 실측한 하늘·풀밭 두 색 판(새 그림 0). 그림 조각이 생기면 이 판만 갈아 끼운다.
+            // T519: 가로 원화의 비율을 유지하고 남는 세로 여백은 기존 하늘·풀밭 바탕으로 채운다.
             UiKit.GradientCard(banner, "passBanner", alpha: UiKit.GradientCardSolidAlpha);
+            var art = App.Assets != null && App.Assets.Has("ui.pass.banner") ? App.Assets.Sprite("ui.pass.banner") : null;
+            if (art != null)
+            {
+                var image = UiKit.Icon(banner, "PassArt", "ui.pass.banner", Color.white);
+                UiKit.Stretch(image.rectTransform);
+            }
 
             var name = UiKit.Label(banner, RName.X, (RName.Y - RBanner.Y) / RBanner.H * 100f, RName.W, RName.H / RBanner.H * 100f,
                 PassTitle, TextSize.Title, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Title);

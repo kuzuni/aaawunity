@@ -1,0 +1,113 @@
+{
+  "task": "T519 stats art",
+  "reference": {
+    "path": "Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png",
+    "sha256": "2452ddade14c0333d4a272a4d28004f346a5c933f1c730906b6a997dbeeedafd",
+    "inspected": true
+  },
+  "generator": "built-in image_gen",
+  "assets": [
+    {
+      "file": "Assets/Art/ChihuahuaGameUI/Stats/stat_attack.png",
+      "catalog_key": "pi.attack",
+      "prompt": "ATTACK: warm golden sword angled upward, broad rounded blade, orange-brown grip, cream highlights; transparent, centered, thick smooth black outline, reference style, no text/frame/character",
+      "sha256": "dc822187773d81f8afa84c02f25aabf110541ba2ea3fe413cff15c1c3fe8d2ad",
+      "size": [1024, 1024],
+      "mode": "RGBA",
+      "alpha_extrema": [0, 255],
+      "visual_inspection": "pass"
+    },
+    {
+      "file": "Assets/Art/ChihuahuaGameUI/Stats/stat_defense.png",
+      "catalog_key": "pi.defense",
+      "prompt": "DEFENSE: compact steel-blue chest armor cuirass with golden trim and cream highlights; transparent, centered, thick smooth black outline, reference style, no text/frame/character",
+      "sha256": "355acc6609bee3728bb98765e8c67ffb5fc663b4d16f5e519628162802b12b3e",
+      "size": [1024, 1024],
+      "mode": "RGBA",
+      "alpha_extrema": [0, 255],
+      "visual_inspection": "pass"
+    },
+    {
+      "file": "Assets/Art/ChihuahuaGameUI/Stats/stat_attack_speed.png",
+      "catalog_key": "pi.atk_spd",
+      "prompt": "ATTACK SPEED: golden sword angled upward with three cyan speed lines; transparent, centered, thick smooth black outline, reference style, no text/frame/character",
+      "sha256": "01f343f52c9201bfeb1766c25259f94b0ceea53916d9ac0be09bea33752c1a05",
+      "size": [1024, 1024],
+      "mode": "RGBA",
+      "alpha_extrema": [0, 255],
+      "visual_inspection": "pass"
+    },
+    {
+      "file": "Assets/Art/ChihuahuaGameUI/Stats/stat_counter.png",
+      "catalog_key": "pi.fist",
+      "prompt": "COUNTER: golden-orange clenched fist with teal curved return arrow; transparent, centered, thick smooth black outline, reference style, no text/frame/character",
+      "sha256": "c2a5db63c1529c613b1e5f3c7103d4a8adf29c676317509e3eeaac62f2abc4f2",
+      "size": [1024, 1024], "mode": "RGBA", "alpha_extrema": [0, 255], "visual_inspection": "pass"
+    },
+    {
+      "file": "Assets/Art/ChihuahuaGameUI/Stats/stat_crit_chance.png",
+      "catalog_key": "pi.critical",
+      "prompt": "CRITICAL CHANCE: red, cream, and golden circular target with dark bullseye and tiny precision sparkle; transparent, centered, thick smooth black outline, reference style, no text/frame/character",
+      "sha256": "4f78709aebc999ef66a180fde010e5026282a81a1b27dc9eb58a5b036971e68c",
+      "size": [1024, 1024], "mode": "RGBA", "alpha_extrema": [0, 255], "visual_inspection": "pass"
+    },
+    {
+      "file": "Assets/Art/ChihuahuaGameUI/Stats/stat_dodge.png",
+      "catalog_key": "ui.dodge",
+      "prompt": "DODGE: cyan-blue lightweight boot angled right with three golden motion lines; transparent, centered, thick smooth black outline, reference style, no text/frame/character",
+      "sha256": "8751a8dacda32822819462b1d79e721b4546e7c1979ff3fbbaade6edce452cb5",
+      "size": [1024, 1024], "mode": "RGBA", "alpha_extrema": [0, 255], "visual_inspection": "pass"
+    },
+    {
+      "file": "Assets/Art/ChihuahuaGameUI/Stats/stat_crit_damage.png",
+      "catalog_key": "pi.damage",
+      "prompt": "CRITICAL DAMAGE: heavy golden sword with orange-red impact starburst and two blue impact shards; transparent, centered, thick smooth black outline, reference style, no text/frame/character",
+      "sha256": "11dccad5d6386ac816b8faa8e6b0bea0f7c338d6dda591872abd07c639cc78f1",
+      "size": [1024, 1024], "mode": "RGBA", "alpha_extrema": [0, 255], "visual_inspection": "pass"
+    },
+    {
+      "file": "Assets/Art/ChihuahuaGameUI/Stats/stat_lifesteal.png",
+      "catalog_key": "pi.drop",
+      "prompt": "LIFESTEAL: glossy deep red blood drop with two small cream-white vampire fangs; cute and non-gory, transparent, centered, thick smooth black outline, reference style, no text/frame/character",
+      "sha256": "de371bed251056df74ca77e8f0363b7e7ad32132b28a6375a13268341378ad46",
+      "size": [1024, 1024], "mode": "RGBA", "alpha_extrema": [0, 255], "visual_inspection": "pass"
+    },
+    {
+      "file": "Assets/Art/ChihuahuaGameUI/Stats/stat_health.png",
+      "catalog_key": "pi.heart",
+      "prompt": "HEALTH: plump bright red heart with coral lower shade and cream highlight; transparent, centered, reference style, no medical cross/text/frame/character; require continuous thick black outer contour",
+      "postprocess": "Rejected generated checkerboard result. Applied an opaque black 12 px dilated-alpha contour behind the accepted transparent generated heart, then centered at 1024 px.",
+      "sha256": "44936523b9c7c35e125d4bc8eb13c27d2535216bb5bb2036ecde732349d76823",
+      "size": [1024, 1024], "mode": "RGBA", "alpha_extrema": [0, 255], "visual_inspection": "pass on transparent and white-composite previews"
+    },
+    {
+      "file": "Assets/Art/ChihuahuaGameUI/Stats/stat_shield.png",
+      "catalog_key": "pi.shield",
+      "prompt": "SHIELD: broad rounded royal-blue shield with cyan inner panel, golden rim accents, and cream highlight; transparent, centered, thick smooth black outline, reference style, no text/frame/character",
+      "sha256": "af81dfc6990070d22b753c0427703881694efed6e886122d04cdc16ef3986c20",
+      "size": [1024, 1024], "mode": "RGBA", "alpha_extrema": [0, 255], "visual_inspection": "pass on transparent and white-composite previews"
+    },
+    {
+      "file": "Assets/Art/ChihuahuaGameUI/Stats/stat_experience.png",
+      "catalog_key": "pi.star",
+      "prompt": "EXPERIENCE: chunky five-point golden star with orange lower shading, rounded tips, and cream highlight; transparent, centered, require thick black outline, reference style, no text/frame/character",
+      "postprocess": "Applied an opaque black 12 px dilated-alpha contour behind the accepted transparent generated star, then centered at 1024 px.",
+      "sha256": "cb04328d1aa9854a718b6e029b82225c472762e62ec5182788e0fadb33aac3d9",
+      "size": [1024, 1024], "mode": "RGBA", "alpha_extrema": [0, 255], "visual_inspection": "pass on transparent and white-composite previews"
+    },
+    {
+      "file": "Assets/Art/ChihuahuaGameUI/Pattern/pattern_paws_bones.png",
+      "catalog_key": "ui.pattern",
+      "prompt": "SEAMLESS PATTERN: alternating golden-yellow dog paw prints and cream bones with generous spacing, softened dark-brown outlines, low contrast, genuine transparent alpha, mathematically seamless edges, reference style, no text/background/checkerboard/frame/character",
+      "postprocess": "Resized to 512 px, reduced alpha to 32%, and normalized the last row/column to the first row/column. Opposite-edge RMSE: horizontal 0, vertical 0.",
+      "sha256": "6e7a0b4125b6b43c1d38fc51cf6a917c81dd0ed8ebda05e420fae1f7e435b3cb",
+      "size": [512, 512], "mode": "RGBA", "alpha_extrema": [0, 82], "visual_inspection": "pass; 2x2 check saved as tools/game_ui_art/art-stats/pattern-2x2-check.png"
+    }
+  ],
+  "parent_integration_requirements": [
+    "Do not tint the new color stat icons away from their authored RGB; preserve existing UI alpha.",
+    "Import pattern_paws_bones.png with Wrap Mode Repeat.",
+    "Apply catalog-fragment.json through the parent-owned central catalog workflow.",
+    "Unity wiring and screen validation remain parent-session work."
+  ]
+}

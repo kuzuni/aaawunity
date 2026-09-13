@@ -58,6 +58,18 @@ namespace KkomaKnight.Game
             if (parent == null || cat == null || cat.Prefab(Key) == null) return null;
             var go = UiKit.SpawnWith(cat, Key, parent);
             var rt = go.transform as RectTransform; if (rt != null) UiKit.Stretch(rt);
+            if (cat.Has("ui.loading.art"))
+            {
+                var art = cat.Sprite("ui.loading.art");
+                var character = UiKit.Find(go.transform, "SampleImage_Character");
+                var image = character != null ? character.GetComponent<Image>() : null;
+                // T519: 948×350 캐릭터 자리만 교체한다. 배경·타이틀·진행 바의 배치는 프리팹 그대로 둔다.
+                if (art != null && image != null)
+                {
+                    image.sprite = art; image.color = new Color(1f, 1f, 1f, image.color.a);
+                    image.preserveAspect = true;
+                }
+            }
             var s = new LoadingScreen { Root = go, _shownAt = Time.realtimeSinceStartup };
             s._bar = go.GetComponentInChildren<Slider>(true);
             if (s._bar != null) { s._bar.minValue = 0f; s._bar.maxValue = 1f; s._bar.value = 0f; s._bar.interactable = false; }

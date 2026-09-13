@@ -2,6 +2,7 @@ using System.Collections;
 using KkomaKnight.Core;
 using KkomaKnight.Game;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -83,10 +84,31 @@ namespace KkomaKnight.Tests.Play
             var host = UiKit.CreateRootCanvas("LoadingTestCanvas");
             var ls = LoadingScreen.Show(host.transform, App.I.Assets);
             Assert.IsNotNull(ls, "카탈로그에 " + LoadingScreen.Key + " 가 있어야 한다");
+            var prefab = App.I.Assets.Prefab(LoadingScreen.Key);
+            var character = UiKit.Find(ls.Root.transform, "SampleImage_Character").GetComponent<Image>();
+            Assert.AreSame(App.I.Assets.Sprite("ui.loading.art"), character.sprite, "T519 새 원화는 캐릭터 자리에만 연결한다");
+            Assert.IsTrue(character.preserveAspect, "캐릭터 원화의 비율 유지");
+            Assert.AreEqual(Color.white, character.color, "캐릭터 원화 RGB 유지");
+            foreach (var part in new[] { "Background", "Image_Title", "SampleImage_Character", LoadingScreen.BarName })
+            {
+                var original = UiKit.Find(prefab.transform, part) as RectTransform;
+                var actual = UiKit.Find(ls.Root.transform, part) as RectTransform;
+                Assert.IsNotNull(original, part + " 프리팹 원본");
+                Assert.IsNotNull(actual, part + " 로딩 인스턴스");
+                Assert.AreEqual(original.anchorMin, actual.anchorMin, part + " 최소 앵커 유지");
+                Assert.AreEqual(original.anchorMax, actual.anchorMax, part + " 최대 앵커 유지");
+                Assert.AreEqual(original.anchoredPosition, actual.anchoredPosition, part + " 위치 유지");
+                Assert.AreEqual(original.sizeDelta, actual.sizeDelta, part + " 크기 유지");
+                if (part == "Background" || part == "Image_Title")
+                    Assert.AreSame(original.GetComponent<Image>().sprite, actual.GetComponent<Image>().sprite, part + " 기존 그림 유지");
+            }
             var bar = ls.Root.GetComponentInChildren<Slider>(true);
             Assert.IsNotNull(bar, "진행 바");
             ls.SetProgress(0.5f); yield return null;
             Assert.AreEqual(0.5f, bar.value, 1e-3f, "진행률 0.5");
+            var label = ls.Root.GetComponentInChildren<TMP_Text>(true);
+            Assert.IsNotNull(label, "프리팹 진행 글자");
+            StringAssert.EndsWith("50%", label.text, "새 원화 연결 뒤에도 실제 진행 글자가 갱신된다");
             ls.SetProgress(2f); yield return null;
             Assert.AreEqual(1f, bar.value, 1e-3f, "1 을 넘지 않는다");
             ls.SetProgress(-1f); yield return null;
