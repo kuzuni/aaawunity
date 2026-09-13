@@ -41,3 +41,8 @@
 - screens run 1207은 tests success, 58장. T519 관련 기존 16장과 챕터 지도 4종·던전 월드 2종을 직접 확인했다. 원정 월드의 첫 가림 캡처는 보정 후 다시 확인했다.
 - 계획한 world 14, commerce 16, identity 13, banners 5, stats 12와 기존 후보/옵션/패턴의 지정 범위를 실제 연결했다. profile 9개 순서·선택 인덱스, 게임 수치·세이브·UI 배치·플레이어 위치는 유지했다.
 - T519 완료 문서를 갱신하고 공통 lock을 반납한다. 유일한 매시간 cloud heartbeat는 완료 상태에서 중지한다.
+
+## heartbeat 종료 확인
+
+- 예약 ID `6aa707bb66bc8191b56f59ee3eb24cec` (`aaawunity 클라우드 통합 이어서 완료`)을 완료 조건에 따라 일시중지했다.
+- 관리 대화 `6aa70785-f894-83e8-87b2-0cbc295dd7c8`, `is_enabled=false`, `next_run_time=null`을 2026-09-14 06:37 KST에 확인했다. 추가 예약은 만들지 않았다.
