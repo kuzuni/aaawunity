@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "updatedUtc": "2026-09-14T02:51:00Z",
+  "referenceSha256": "2452ddade14c0333d4a272a4d28004f346a5c933f1c730906b6a997dbeeedafd",
+  "assets": [
+    {
+      "path": "Assets/Art/ChihuahuaGameUI/Profile/profile_01.png",
+      "sha256": "44ca4880377681e8049c6722aa41eab10c7451203c428a45d4c089d5ea231699",
+      "size": [1254, 1254],
+      "mode": "RGBA",
+      "alphaExtrema": [0, 255],
+      "reviewed": true,
+      "review": "identity/style/right-facing gaze/full framing/pass; real alpha/pass"
+    },
+    {
+      "path": "Assets/Art/ChihuahuaGameUI/Profile/profile_02.png",
+      "sha256": "470c62c9345811869a2d98a50b0d19cf47561bfcad1022e2b59d63277462ebd3",
+      "size": [1254, 1254],
+      "mode": "RGBA",
+      "alphaExtrema": [0, 255],
+      "reviewed": true,
+      "review": "identity/style/right-facing gaze/full framing/pass; real alpha/pass"
+    },
+    {
+      "path": "Assets/Art/ChihuahuaGameUI/Profile/profile_03.png",
+      "sha256": "559c49edd5ca6c27cadaee161101462cbcdbba1d6ccf7d4a5febd733263effbd",
+      "size": [1254, 1254],
+      "mode": "RGBA",
+      "alphaExtrema": [0, 255],
+      "reviewed": true,
+      "review": "identity/style/right-facing gaze/full framing/pass; real alpha/pass"
+    },
+    {
+      "path": "Assets/Art/ChihuahuaGameUI/Profile/profile_04.png",
+      "sha256": "40f698fa1bd47401cedb563c1fc347a458666d513a5425baffaa1db3604c11f8",
+      "size": [1254, 1254], "mode": "RGBA", "alphaExtrema": [0, 255], "reviewed": true,
+      "review": "identity/style/right-facing gaze/full framing/pass; real alpha/pass"
+    },
+    {
+      "path": "Assets/Art/ChihuahuaGameUI/Profile/profile_05.png",
+      "sha256": "3d1c1424ff89d31933fad2432c0179eb596a1a3246b719329127586b2a4b24d6",
+      "size": [1254, 1254], "mode": "RGBA", "alphaExtrema": [0, 255], "reviewed": true,
+      "review": "identity/style/right-facing gaze/full framing/pass; real alpha/pass"
+    },
+    {
+      "path": "Assets/Art/ChihuahuaGameUI/Profile/profile_06.png",
+      "sha256": "376c8b1b3cf6aee6a3c4f19a1b4346c9255bb6452d74e5d81a4f435475b4bdfe",
+      "size": [1254, 1254], "mode": "RGBA", "alphaExtrema": [0, 255], "reviewed": true,
+      "review": "identity/style/right-facing gaze/full framing/pass; real alpha/pass"
+    },
+    {
+      "path": "Assets/Art/ChihuahuaGameUI/Profile/profile_07.png",
+      "sha256": "95abd0178c5c8f531d0678529cf1d1ba2fdf966645bd6bec91b90541e07b2958",
+      "size": [1254, 1254], "mode": "RGBA", "alphaExtrema": [0, 255], "reviewed": true,
+      "integrationAccepted": true,
+      "sourceRecovery": "ChatGPT Work built-in imagegen replacement after corrupt source-branch blob rejection",
+      "review": "space theme; identity/style/right-facing gaze/full framing/pass; real alpha/pass; visible bbox alpha>8 [95,196,1162,1053]"
+    },
+    {
+      "path": "Assets/Art/ChihuahuaGameUI/Profile/profile_08.png",
+      "sha256": "f4e8ecb402e3d03290b0df0c80ac1ec2e9c93c289d7a47b4445ffb6071a2276a",
+      "size": [1254, 1254], "mode": "RGBA", "alphaExtrema": [0, 255], "reviewed": true,
+      "review": "identity/style/right-facing gaze/full framing/pass; real alpha/pass"
+    },
+    {
+      "path": "Assets/Art/ChihuahuaGameUI/Profile/profile_09.png",
+      "sha256": "ec0d236004d26f34a6358df07525e057c2aaa512c8cb4b082dfa007fdd57e4d4",
+      "size": [1254, 1254], "mode": "RGBA", "alphaExtrema": [0, 255], "reviewed": true,
+      "review": "identity/style/right-facing gaze/full framing/pass; real alpha/pass"
+    },
+    {
+      "path": "Assets/Art/ChihuahuaGameUI/Lobby/chapter_autumn.png",
+      "sha256": "c6afbcdcc031916555f99c8e4fd4624207764e5a24a4cb59056755be519aa036",
+      "size": [573, 709], "mode": "RGBA", "alphaExtrema": [255, 255], "reviewed": true,
+      "review": "warm orange autumn forest/readable winding path/no text/pass"
+    },
+    {
+      "path": "Assets/Art/ChihuahuaGameUI/Lobby/chapter_deepForest.png",
+      "sha256": "a20cf9556df13a6756c250dbf3d7b61b6c1e9338cdd7956dad4dad9384babd63",
+      "size": [573, 709], "mode": "RGBA", "alphaExtrema": [255, 255], "reviewed": true,
+      "review": "dark teal mysterious forest/readable winding path/no text/pass"
+    },
+    {
+      "path": "Assets/Art/ChihuahuaGameUI/Lobby/chapter_forest.png",
+      "sha256": "b1a4b631de7dba7b50a1b17b1111671d73f8348d5b60adb9ecb19577b8abdee1",
+      "size": [573, 709], "mode": "RGBA", "alphaExtrema": [255, 255], "reviewed": true,
+      "review": "bright green forest/readable winding path/no text/pass"
+    },
+    {
+      "path": "Assets/Art/ChihuahuaGameUI/Lobby/chapter_desert.png",
+      "sha256": "7d2f1e07b091411c41176890d2b4a644e4c18b83e72ce0d488f7b97759d14f61",
+      "size": [573, 709], "mode": "RGBA", "alphaExtrema": [255, 255], "reviewed": true,
+      "review": "sand desert/red rock/cacti/readable winding path/no text/pass"
+    }
+  ]
+}

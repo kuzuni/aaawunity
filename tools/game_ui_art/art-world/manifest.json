@@ -1,0 +1,202 @@
+{
+  "task": "T519 ui-art-world",
+  "status": "art_complete_parent_integration_pending",
+  "branch": "codex/ui-art-world",
+  "generation_mode": "ChatGPT Work built-in image generation/editing",
+  "reference": "Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png",
+  "shared_prompt": "Match the mandatory Chihuahua reference: thick smooth black outline, rounded simple forms, bright flat color, restrained soft shading, small cream highlights; no text, watermark, realism, painterly texture, complex anime rendering, or excessive glow.",
+  "tile_processing": "Generated tile art was center-mirrored from a 627px half so left/right boundary pixels match exactly for horizontal repetition.",
+  "assets": [
+    {
+      "key": "node.devil",
+      "path": "Assets/Art/ChihuahuaGameUI/Nodes/devil.png",
+      "prompt": "Recreate the devil draft, preserving the same face, pose, red body, cream horns, wings, tail and trident; isolate the whole character on genuine transparency.",
+      "sha256": "40c928e71a6dd41926e3db32fab48b3ca6765d885c08ef05c38290d419fbd097",
+      "bytes": 789166,
+      "size": [1382, 1382],
+      "mode": "RGBA",
+      "alpha_extrema": [0, 255],
+      "transparent_margin_px": [85, 73, 92, 110],
+      "review": "passed visual style/silhouette/edge/alpha inspection"
+    },
+    {
+      "key": "node.angel",
+      "path": "Assets/Art/ChihuahuaGameUI/Nodes/angel.png",
+      "prompt": "Recreate the angel draft, preserving the same face, pose, halo, gold hair, white robe, blue sash and wings; isolate the whole character and halo opening on genuine transparency.",
+      "sha256": "3b6c86aa06378af2addf5ce71d6fd0f9e9cfd9772e534f35c5afc5497608ef5a",
+      "bytes": 771266,
+      "size": [1358, 1406],
+      "mode": "RGBA",
+      "alpha_extrema": [0, 255],
+      "transparent_margin_px": [64, 107, 228, 107],
+      "review": "passed after transparency retry; visual style/silhouette/edge/alpha inspected"
+    },
+    {
+      "key": "env.expedition.field",
+      "path": "Assets/Art/ChihuahuaGameUI/World/Expedition/field.png",
+      "prompt": "Horizontally repeating ancient fitted-stone floor with sandy dust between broad stones; orthographic 2D game ground, not forest or generic desert.",
+      "sha256": "f6c82ba25cdb64c963e36b7eac43c1cea785f5a440a3c4e4e7cb9fe5bbd9f6ac",
+      "bytes": 1428286,
+      "size": [1254, 1254],
+      "mode": "RGB",
+      "alpha_extrema": null,
+      "horizontal_edges_exact": true,
+      "review": "passed visual theme/readability and exact horizontal seam inspection"
+    },
+    {
+      "key": "env.expedition.road",
+      "path": "Assets/Art/ChihuahuaGameUI/World/Expedition/road.png",
+      "prompt": "Horizontally repeating sandy ancient ruins route with worn ochre slabs, cracked carved bands and embedded fragments; distinct from the field.",
+      "sha256": "5608285ff5513f2a6c682e820e63859824a3371b1e3827b170f28d0e306b35f8",
+      "bytes": 1424230,
+      "size": [1254, 1254],
+      "mode": "RGB",
+      "alpha_extrema": null,
+      "horizontal_edges_exact": true,
+      "review": "passed visual theme/readability and exact horizontal seam inspection"
+    },
+    {
+      "key": "env.expedition.prop1",
+      "path": "Assets/Art/ChihuahuaGameUI/World/Expedition/prop1.png",
+      "prompt": "One collapsed ancient stone column with broken drum segments, chipped capital and light sand; isolated 2D side-view transparent prop.",
+      "sha256": "7daaf32362af492f1e84e05c0503b13b3a4ddd1c59c5df6d03a88c9ee5404168",
+      "bytes": 572021,
+      "size": [1502, 1273],
+      "mode": "RGBA",
+      "alpha_extrema": [0, 255],
+      "transparent_margin_px": [146, 85, 145, 90],
+      "pivot_recommendation": [0.5, 0.055],
+      "review": "passed visual silhouette/theme, ground baseline, margin and alpha inspection"
+    },
+    {
+      "key": "env.expedition.prop2",
+      "path": "Assets/Art/ChihuahuaGameUI/World/Expedition/prop2.png",
+      "prompt": "One freestanding chipped ancient stone portal with an empty opening, carved bands and sand at its feet; isolated transparent prop.",
+      "sha256": "57ef6572fa2dc4df0d14636fd88a970a1fcf148f66b34695f2a5482ad23acec2",
+      "bytes": 916041,
+      "size": [1283, 1490],
+      "mode": "RGBA",
+      "alpha_extrema": [0, 255],
+      "transparent_margin_px": [80, 115, 82, 88],
+      "pivot_recommendation": [0.5, 0.045],
+      "review": "passed visual silhouette/theme, empty-opening alpha, ground baseline and margin inspection"
+    },
+    {
+      "key": "env.expedition.prop3",
+      "path": "Assets/Art/ChihuahuaGameUI/World/Expedition/prop3.png",
+      "prompt": "One mystical ruin ornament: cracked low stone pedestal, turquoise rune crystal and two broken tablet fragments; isolated transparent prop.",
+      "sha256": "132b0462a4416095ee35614b7e9868ef4a9fe002fe27c522054930391422f776",
+      "bytes": 682740,
+      "size": [1440, 1327],
+      "mode": "RGBA",
+      "alpha_extrema": [0, 255],
+      "transparent_margin_px": [64, 116, 92, 64],
+      "pivot_recommendation": [0.5, 0.04],
+      "review": "passed visual silhouette/theme, ground baseline, margin and alpha inspection"
+    },
+    {
+      "key": "env.hell.field",
+      "path": "Assets/Art/ChihuahuaGameUI/World/Hell/field.png",
+      "prompt": "Horizontally repeating black volcanic basalt floor of broad cracked plates with restrained ember-red heat in deep seams; unmistakably infernal.",
+      "sha256": "47d204879cccae9b2ad0099ec580b6f42ac439aad54610060eb478b804a5d609",
+      "bytes": 1239493,
+      "size": [1254, 1254],
+      "mode": "RGB",
+      "alpha_extrema": null,
+      "horizontal_edges_exact": true,
+      "review": "passed visual theme/readability and exact horizontal seam inspection"
+    },
+    {
+      "key": "env.hell.road",
+      "path": "Assets/Art/ChihuahuaGameUI/World/Hell/road.png",
+      "prompt": "Horizontally repeating cracked infernal route of charcoal slabs, glowing crimson fissures and a central horn-motif band; distinct from the field.",
+      "sha256": "e4a2c541ae5d2faf3c5d0a6379c3c6fdf2297e26554c7fae6b5ac5d493163af8",
+      "bytes": 1420886,
+      "size": [1254, 1254],
+      "mode": "RGB",
+      "alpha_extrema": null,
+      "horizontal_edges_exact": true,
+      "review": "passed visual theme/readability and exact horizontal seam inspection"
+    },
+    {
+      "key": "env.hell.prop1",
+      "path": "Assets/Art/ChihuahuaGameUI/World/Hell/prop1.png",
+      "prompt": "One squat burning hell gate of horned volcanic rock, ember cracks and contained flames, with an empty arch opening; isolated transparent prop.",
+      "sha256": "06582a8131e3535d37882f208fe8bac12e535d32de581f799cebf60ccff1280b",
+      "bytes": 915020,
+      "size": [1440, 1327],
+      "mode": "RGBA",
+      "alpha_extrema": [0, 255],
+      "transparent_margin_px": [64, 82, 78, 64],
+      "pivot_recommendation": [0.5, 0.04],
+      "review": "passed after transparency retry; empty-opening alpha, baseline and margin inspected"
+    },
+    {
+      "key": "env.hell.prop2",
+      "path": "Assets/Art/ChihuahuaGameUI/World/Hell/prop2.png",
+      "prompt": "One horn-shaped jagged black basalt formation with glowing red cracks and a broad stable base; isolated transparent prop.",
+      "sha256": "c8ba824128d49d238e1cf36811e5f4d46941b6e280e3db019c14fd82effbd533",
+      "bytes": 596486,
+      "size": [1283, 1490],
+      "mode": "RGBA",
+      "alpha_extrema": [0, 255],
+      "transparent_margin_px": [167, 121, 78, 90],
+      "pivot_recommendation": [0.5, 0.05],
+      "review": "passed after transparency retry; silhouette, baseline, margin and alpha inspected"
+    },
+    {
+      "key": "env.hell.prop3",
+      "path": "Assets/Art/ChihuahuaGameUI/World/Hell/prop3.png",
+      "prompt": "One wide low lava fissure prop: broken black basalt plate split by vivid red-orange molten crack with tiny ember chips; isolated transparency.",
+      "sha256": "e191b81b6c951a0413bbcf3ca91794192aaca428c20db69bc7f488b514049b95",
+      "bytes": 472661,
+      "size": [1902, 1015],
+      "mode": "RGBA",
+      "alpha_extrema": [0, 255],
+      "transparent_margin_px": [140, 85, 191, 90],
+      "pivot_recommendation": [0.5, 0.065],
+      "review": "passed visual silhouette/theme, ground baseline, margin and alpha inspection"
+    },
+    {
+      "key": "ui.dungeon.expedition",
+      "path": "Assets/Art/ChihuahuaGameUI/DungeonCards/expedition.png",
+      "prompt": "3:2 Ancient Ruins Expedition card: reference-identical yellow Chihuahua on the left facing right toward sandy ruins, collapsed columns and a turquoise relic portal.",
+      "sha256": "72c52e21bac42f9e2268910288d80fad713df3b609352de2916cda13791172b3",
+      "bytes": 1701894,
+      "size": [1536, 1024],
+      "mode": "RGB",
+      "alpha_extrema": null,
+      "aspect_ratio": "3:2",
+      "review": "passed composition, Chihuahua identity/right-facing pose, theme, cropping and text inspection"
+    },
+    {
+      "key": "ui.dungeon.hell",
+      "path": "Assets/Art/ChihuahuaGameUI/DungeonCards/hell.png",
+      "prompt": "3:2 Gates of Hell card: reference-identical yellow Chihuahua on the left facing right toward a horned volcanic gate, basalt and lava fissures.",
+      "sha256": "96b7deabf6b13b42cb0f321f451cd25c4ed1c4de7dce5cb541dcc2b843c99e24",
+      "bytes": 1709778,
+      "size": [1536, 1024],
+      "mode": "RGB",
+      "alpha_extrema": null,
+      "aspect_ratio": "3:2",
+      "review": "passed composition, Chihuahua identity/right-facing pose, theme, cropping and text inspection"
+    }
+  ],
+  "rejected_attempts": [
+    {
+      "asset": "node.angel",
+      "count": 2,
+      "reason": "RGB checkerboard remained; neither rejected output was copied to final path"
+    },
+    {
+      "asset": "env.hell.prop1",
+      "count": 1,
+      "reason": "RGB checkerboard remained; overwritten only after a verified RGBA retry"
+    },
+    {
+      "asset": "env.hell.prop2",
+      "count": 1,
+      "reason": "RGB checkerboard remained; overwritten only after a verified RGBA retry"
+    }
+  ]
+}

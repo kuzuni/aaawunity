@@ -1,0 +1,14 @@
+{
+  "pi.attack": "Assets/Art/ChihuahuaGameUI/Stats/stat_attack.png",
+  "pi.defense": "Assets/Art/ChihuahuaGameUI/Stats/stat_defense.png",
+  "pi.atk_spd": "Assets/Art/ChihuahuaGameUI/Stats/stat_attack_speed.png",
+  "pi.fist": "Assets/Art/ChihuahuaGameUI/Stats/stat_counter.png",
+  "pi.critical": "Assets/Art/ChihuahuaGameUI/Stats/stat_crit_chance.png",
+  "ui.dodge": "Assets/Art/ChihuahuaGameUI/Stats/stat_dodge.png",
+  "pi.damage": "Assets/Art/ChihuahuaGameUI/Stats/stat_crit_damage.png",
+  "pi.drop": "Assets/Art/ChihuahuaGameUI/Stats/stat_lifesteal.png",
+  "pi.heart": "Assets/Art/ChihuahuaGameUI/Stats/stat_health.png",
+  "pi.shield": "Assets/Art/ChihuahuaGameUI/Stats/stat_shield.png",
+  "pi.star": "Assets/Art/ChihuahuaGameUI/Stats/stat_experience.png",
+  "ui.pattern": "Assets/Art/ChihuahuaGameUI/Pattern/pattern_paws_bones.png"
+}

@@ -697,7 +697,7 @@ namespace KkomaKnight.Game
             UiKit.Tag(box, "팝업 상자");
             var rSub = Sub(box, "모닥불 앞에서 잠시 쉬어갑니다", 9, 7, TextSize.Body, Palette.White);   // T141 ⓑ — 판이 없어졌으니 어두운 글자(InkSoft 기본값)를 흰 글자로
             UiKit.Tag(rSub.rectTransform, "대사");
-            var ic = UiKit.Icon(box, "Fire", "ui.fire"); UiKit.Pct(ic.rectTransform, 37, 17, 26, 24);
+            var ic = UiKit.Icon(box, "Fire", OptionalArt("node.rest", "ui.fire")); UiKit.Pct(ic.rectTransform, 37, 17, 26, 24);
             UiKit.Tag(ic.rectTransform, "모닥불 아이콘");
             string heal = G.C.RestHeal <= 1 ? $"최대 체력 {Math.Round(G.C.RestHeal * 100)}%" : $"체력 {UiKit.Fmt(G.C.RestHeal)}";
             var rHeal = UiKit.Button(box, "ui.btnGreen", $"체력 회복 (+{heal})", () => { Close(); onChoose(true); }, new Layout.R(10, 45, 80, 11));
@@ -725,6 +725,7 @@ namespace KkomaKnight.Game
             UiKit.Tag(box, "(악마) 팝업 상자");
             var dSub = Sub(box, "\"네 생명을 바치면... 이 힘을 주지\"", 9, 6, TextSize.Body, Palette.Yellow);   // T141 ⓑ — 어둠 위 강조는 «밝은 쪽» 으로(Plum 은 안 읽힌다)
             UiKit.Tag(dSub.rectTransform, "(악마) 대사");
+            if (_app.Assets.Has("node.devil")) { var art = UiKit.Icon(box, "DevilArt", "node.devil", Palette.White); UiKit.Pct(art.rectTransform, 76, 4, 15, 14); }
             if (perk != null) { var card = PerkCard(box, perk, "yellow", null); UiKit.Pct(card, 2, 18, 96, 22); UiKit.Tag(card, "(악마) 특전 카드"); }
             double cost = G.C.DevilCostMaxHp > 0 ? G.C.DevilCostMaxHp : G.PK.DevilCostMaxHp;
             var dNote = Sub(box, $"최대 체력이 {Math.Round(cost * 100)}% 줄어든 채 진행 · 위 전설 특전 1개를 획득", 43, 10, TextSize.Body, Palette.White);   // T141 ⓑ
@@ -751,7 +752,8 @@ namespace KkomaKnight.Game
             UiKit.Tag(box, "(천사) 팝업 상자");   // T213 — 아래 이름표들이 §5 하니스가 이 화면을 재는 유일한 손잡이다
             var aSub = Sub(box, "\"용사여, 축복을 내리노라\"", 10, 7, TextSize.Body, Palette.Yellow);   // T141 ⓑ — Orange 는 어둠 위에서 흐리다
             UiKit.Tag(aSub.rectTransform, "(천사) 대사");
-            var ic = UiKit.Icon(box, "Wing", "pi.wing", Palette.Yellow); UiKit.Pct(ic.rectTransform, 35, 20, 30, 26);
+            var angelKey = OptionalArt("node.angel", "pi.wing");
+            var ic = UiKit.Icon(box, "Wing", angelKey, angelKey == "node.angel" ? Palette.White : Palette.Yellow); UiKit.Pct(ic.rectTransform, 35, 20, 30, 26);
             UiKit.Tag(ic.rectTransform, "(천사) 날개 아이콘");
             var aFree = UiKit.Button(box, "ui.btnGreen", $"무료 축복 · 공격력 +{Math.Round((SimPolicy.AngelFree - 1) * 100)}%", () => { Close(); onChoose(SimPolicy.AngelFree); }, new Layout.R(10, 54, 80, 12));
             var ad = UiKit.Button(box, "ui.btnOrange", $"광고 보고 공격력 +{Math.Round((SimPolicy.AngelAd - 1) * 100)}%", () => AdCountdown(3, () => { Quests.Ach(_app, Quests.AchAdWatch); Blessed(onChoose); }), new Layout.R(10, 70, 80, 12));
@@ -760,6 +762,7 @@ namespace KkomaKnight.Game
             var aNote = Sub(box, "더 강한 축복", 85, 6, TextSize.Body, Palette.White);   // T141 ⓑ
             UiKit.Tag(aNote.rectTransform, "(천사) 아래 문구");
         }
+        string OptionalArt(string preferred, string fallback) => _app.Assets.Has(preferred) ? preferred : fallback;
         /// <summary>축복 강화(광고 뒤) — T141 게이트가 직접 열어 «판 없이 어둠 위» 인지 보므로 공개다(여는 곳은 여전히 <see cref="Angel"/> 한 곳).</summary>
         public void Blessed(Action<double> onChoose)
         {

@@ -1,0 +1,18 @@
+{
+  "chest.rare.open": "Assets/Art/ChihuahuaGameUI/Commerce/chest_medieval_open.png",
+  "chest.legend.open": "Assets/Art/ChihuahuaGameUI/Commerce/chest_modern_open.png",
+  "chest.myth.open": "Assets/Art/ChihuahuaGameUI/Commerce/chest_cyber_open.png",
+  "recipe.weapon": "Assets/Art/ChihuahuaGameUI/Commerce/recipe_weapon.png",
+  "recipe.armor": "Assets/Art/ChihuahuaGameUI/Commerce/recipe_armor.png",
+  "recipe.helmet": "Assets/Art/ChihuahuaGameUI/Commerce/recipe_helmet.png",
+  "recipe.shoes": "Assets/Art/ChihuahuaGameUI/Commerce/recipe_shoes.png",
+  "recipe.ring": "Assets/Art/ChihuahuaGameUI/Commerce/recipe_ring.png",
+  "recipe.necklace": "Assets/Art/ChihuahuaGameUI/Commerce/recipe_necklace.png",
+  "ui.iconScroll": "Assets/Art/ChihuahuaGameUI/Commerce/recipe_random.png",
+  "shop.gem.1": "Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_1.png",
+  "shop.gem.2": "Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_2.png",
+  "shop.gem.3": "Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_3.png",
+  "shop.gem.4": "Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_4.png",
+  "shop.gem.5": "Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_5.png",
+  "shop.gem.6": "Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_6.png"
+}

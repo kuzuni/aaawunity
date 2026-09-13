@@ -1,0 +1,667 @@
+diff --git a/Assets/Scripts/Game/BattleWorld.cs b/Assets/Scripts/Game/BattleWorld.cs
+index 7276156831a018d94e5ecf1b62b8560fb765b212..c8b4ad8603ad5c1b45a311ec6ddbe84667fc5b73 100644
+--- a/Assets/Scripts/Game/BattleWorld.cs
++++ b/Assets/Scripts/Game/BattleWorld.cs
+@@ -141,78 +141,89 @@ namespace KkomaKnight.Game
+         /// 엔진이 올 때까지 <b>서 있는다</b> — 주인이 본 «적 앞에서 멈추는 경우» 와 «닿았는데 데미지가 늦다» 가 그것이다(결정 1136). 값은 진단·자(배속 읽기)용으로만 남는다.
+         /// </para>
+         /// </summary>
+         public int Speed = 1;
+         // 투사체
+         readonly Dictionary<Projectile, GameObject> _projs = new Dictionary<Projectile, GameObject>();
+         /// <summary>투사체 표시 x(T86 ⓐ) — 엔진 x 와 «같은 px/s»(pr.Spd)로 매 프레임 전진하고, 엔진이 앞서면 엔진을 따르며, 엔진이 맞히는 자리는 앞지르지 않는다.</summary>
+         readonly Dictionary<Projectile, double> _projX = new Dictionary<Projectile, double>();
+         readonly Dictionary<EnemyArrow, GameObject> _arrows = new Dictionary<EnemyArrow, GameObject>();
+         /// <summary>적 화살의 «표시 x»(T179 ⓑ) — <see cref="_projX"/> 와 같은 구실이다. 엔진 좌표(<c>a.X</c>)를 그대로 그리면 킬 연출로 엔진 틱이 보류된 동안 화살이 공중에 선다.</summary>
+         readonly Dictionary<EnemyArrow, double> _arrowX = new Dictionary<EnemyArrow, double>();
+         // 노드 · 배경
+         sealed class NodeView { public BattleNode N; public GameObject Go; public GameObject FxGo; public bool Dimmed; }
+         readonly List<NodeView> _nodes = new List<NodeView>();
+         readonly List<SpriteRenderer> _fieldTiles = new List<SpriteRenderer>(), _roadTiles = new List<SpriteRenderer>();
+         sealed class Prop { public SpriteRenderer Sr; public double WorldX; public float YFrac; }
+         readonly List<Prop> _props = new List<Prop>();
+         float _tileW; int _tileCols;
+         double _goldPrev; Vector3 _lastKillPos;
+         readonly Theme _theme;
+ 
+         /// <summary>데모 씬 한 벌 — 바닥·길 키(env.&lt;name&gt;.field/road · <see cref="MapLayouts"/> 가 굽는다) · 물결 경계·소품 배치는 <see cref="MapLayouts"/> 표.</summary>
+         public sealed class Theme
+         {
+             public string Name;
+-            public string Field => MapLayouts.FieldOf(Name); public string Road => MapLayouts.RoadOf(Name);
++            public bool IsDungeon => Name == "expedition" || Name == "hell";
++            public string Field => IsDungeon ? "env." + Name + ".field" : MapLayouts.FieldOf(Name);
++            public string Road => IsDungeon ? "env." + Name + ".road" : MapLayouts.RoadOf(Name);
+             public static readonly Theme[] All = { new Theme { Name = "autumn" }, new Theme { Name = "deepForest" }, new Theme { Name = "forest" }, new Theme { Name = "desert" } };
+             /// <summary>챕터 → 테마: 1=Autumn 2=DeepForest 3=Forest 4=Desert, 5=Autumn … (주인 지시 «4개 순환»).</summary>
+             public static Theme ForChapter(int chapter) => All[((chapter - 1) % All.Length + All.Length) % All.Length];
++            /// <summary>Dungeon art wins over chapter cycling; arena remains its dedicated stage.</summary>
++            public static Theme ForRun(int chapter, string dungeonKey, bool arena)
++                => arena ? Arena : dungeonKey == "expedition" || dungeonKey == "hell" ? new Theme { Name = dungeonKey } : ForChapter(chapter);
+             /// <summary>
+             /// T240 1항 — 아레나(PvP) 판의 무대. 주인 레퍼런스 <c>33_pvp_battle.jpg</c> 의 가운데는 <b>모래 마당</b>이고
+             /// 챕터 전투(풀밭·숲)와 한눈에 갈려야 한다 — 그래서 챕터 순환에서 빼고 <b>사막 바닥을 고정</b>으로 쓴다(새 그림 0 · §1).
+             /// <para>⚠ 이것은 «데모 씬 그대로»(T19)를 어기는 것이 아니다 — 고르는 것이 «어느 챕터냐» 에서 «어느 판이냐» 로 바뀔 뿐 바닥·길 조각과 치수는 그 테마 그대로다.</para>
+             /// </summary>
+             public static readonly Theme Arena = All[3];
+         }
+ 
+         /// <summary>
+         /// 지금 만드는 판이 아레나(PvP) 판인가 — <see cref="BattleScreen.IsArena"/> 를 <b>되읽는다</b>.
+         /// <para>
+         /// ⚠ <b>왜 생성자 인자가 아닌가</b>: 인자로 받으려면 <c>BattleScreen.cs</c> 의 생성 줄을 고쳐야 하는데
+         /// 그 파일은 지금 <b>T254(부활권 · 살아 있는 lock)의 범위</b>다. 남의 lock 안 파일을 «편해서» 고치지 않는다(§1 · claims 규약).
+         /// 되읽기가 안전한 까닭은 순서가 이미 못 박혀 있기 때문이다 — <c>BattleScreen.Start</c> 는 <c>_arenaFoe</c> 를 <b>먼저</b> 넣고
+         /// 그 뒤에 <c>new BattleWorld(...)</c> 를 부른다(그 반대면 첫 판만 테마가 틀렸을 것이다).
+         /// </para>
+         /// <para>T254 lock 이 풀리면 <b>생성자 인자 한 개</b>로 바꾸는 것이 맞다(그때는 되읽기도, 이 주석도 지운다).</para>
+         /// </summary>
+         static bool IsArenaRun(App app)
+         {
+             var screen = app != null ? app.GetScreen<BattleScreen>() : null;
+             return screen != null && screen.IsArena;
+         }
+ 
++        static string DungeonKeyOf(App app)
++        {
++            var screen = app != null ? app.GetScreen<BattleScreen>() : null;
++            return screen != null ? screen.DungeonKey : null;
++        }
++
+         /// <summary>월드 루트(Ground·Props·Nodes 의 부모) — 테스트·진단용 읽기(T19 PlayMode 맵 테스트가 바닥·길·소품 스케일을 본다).</summary>
+         public Transform Root => _root;
+         bool _isArena;
+         /// <summary>이 판이 아레나(PvP) 판인가 — 무대와 상대 외형이 이 값으로 갈린다(T240 1·2항). 테스트·진단용 읽기.</summary>
+         public bool IsArena => _isArena;
+         /// <summary>이 판의 맵 테마 — 테스트·진단용 읽기.</summary>
+         public Theme MapTheme => _theme;
+ 
+         // ───────────────────────── 비평 하니스 월드 행(T47 ⓑ · ref-layout ② 의 캔버스 밖 행) ─────────────────────────
+         /// <summary>월드 스프라이트 Bounds → 프레임 %(좌상 0 · 우하 100) [x, y, w, h]. 카메라 = 프레임과 같은 영역(WorldCam · 세로 LayoutH · 가로는 프레임 비율).</summary>
+         static float[] FrameRect(Bounds b)
+         {
+             float halfH = WorldCam.LayoutH / WorldCam.PPU / 2f, halfW = halfH * UiKit.FrameW / UiKit.FrameH;
+             float x = (b.min.x + halfW) / (2f * halfW) * 100f, y = (halfH - b.max.y) / (2f * halfH) * 100f;
+             float w = b.size.x / (2f * halfW) * 100f, h = b.size.y / (2f * halfH) * 100f;
+             return new[] { R1(x), R1(y), R1(w), R1(h) };
+         }
+         static float R1(float v) => Mathf.Round(v * 10f) / 10f;
+         static float PctX(float worldX) { float halfH = WorldCam.LayoutH / WorldCam.PPU / 2f, halfW = halfH * UiKit.FrameW / UiKit.FrameH; return R1((worldX + halfW) / (2f * halfW) * 100f); }
+         static float PctY(float worldY) { float halfH = WorldCam.LayoutH / WorldCam.PPU / 2f; return R1((halfH - worldY) / (2f * halfH) * 100f); }
+         /// <summary>
+         /// 비평 하니스(T46·T47)가 캔버스 이름표(UiTag)로 못 재는 <b>월드 행</b>을 ref-layout ② 표의 «요소» 이름 그대로 프레임 % 로 돌려준다 — 지면(길) 띠 · 플레이어 발밑 y · 적 행 y · 플레이어/적 높이 · 체력 라벨 줄 · 플레이어 중심 x · 발밑 바 폭 2.
+         /// 값은 <b>지금 그려진 것</b>(CharScale 2/3 · 데모 길 띠 × MapScale)이라 표와 다를 수 있다 — 채점이 그 차이를 그대로 보인다(ui_score.py 는 ref 에 값이 있는 축만 비교 · «플레이어 중심 x» 는 x 에 중심을 넣는다).
+         /// 적은 화면 안(LayoutW 안)의 살아 있는 적 중 가장 가까운 것 하나 · 없으면 적 행 3개는 뺀다.
+         /// </summary>
+@@ -241,65 +252,75 @@ namespace KkomaKnight.Game
+                 if (_pShBg != null && _pShBg.gameObject.activeSelf) hb.Encapsulate(_pShBg.bounds);
+                 d["체력 라벨 줄"] = FrameRect(hb);
+             }
+             EnemyView near = null; float nearLx = float.MaxValue;
+             foreach (var kv in _enemies)
+             {
+                 var v = kv.Value; if (v.E.Dead || v.Rig == null || v.DieT >= 0) continue;
+                 float lx = FoeLayoutX(v.E.WorldX); if (lx >= WorldCam.LayoutW || lx >= nearLx) continue;
+                 near = v; nearLx = lx;
+             }
+             if (near != null)
+             {
+                 var eb = FrameRect(near.Rig.Bounds()); float efoot = PctY(near.Rig.transform.position.y);
+                 d["적 높이"] = new[] { eb[0], eb[1], eb[2], R1(efoot - eb[1]) }; d["적 행 y"] = new[] { eb[0], eb[1], eb[2], 0f };
+                 if (near.BarBg != null && near.BarBg.gameObject.activeSelf) d["적 발밑 바 폭"] = FrameRect(near.BarBg.bounds);
+             }
+             return d;
+         }
+ 
+         public BattleWorld(App app, BattleState g, RectTransform popsLayer)
+         {
+             _app = app; G = g; D = g.D; _pops = popsLayer;
+             _zoom = (float)D.Ui.CameraZoom; _playerX = (float)(D.Ui.PlayerX * WorldCam.LayoutW);
+             // T240 1항 — 아레나 판은 챕터와 무관하게 «모래 마당»(레퍼런스 33). 일반 판은 종전대로 챕터가 무대를 정한다.
+             _isArena = IsArenaRun(app);
+-            _theme = _isArena ? Theme.Arena : Theme.ForChapter(g.Chapter);
++            _theme = ResolveTheme(g.Chapter, DungeonKeyOf(app), _isArena);
+             // T319 — 아레나 판의 «만나는 점» = 둘의 한가운데다.
+             //   1대1 판은 상대가 `D.Enemies.NodeGap` 에 서 있고(Battle.BuildDuelNode) 내가 거기서 StopDistance 만큼 앞에 멈춘다.
+             //   즉 만난 뒤 두 사람은 [gap − stop, gap] 에 서므로 그 한가운데(gap − stop/2)를 화면 가운데에 둔다 — 좌우 대칭이다.
+             if (_isArena)
+             {
+                 _fixedOrigin = true;
+                 _originPX = D.Enemies.NodeGap - g.C.StopDistance * 0.5;
+                 _originScreenX = WorldCam.LayoutW * 0.5f;
+             }
+             _shownPX = G.P.WorldX; _heldPrevFrame = false;
+             _root = new GameObject("World").transform;
+             BuildGround(); BuildProps(); BuildNodes(); BuildPlayer();
+             _goldPrev = G.Gold; ShownHp = G.P.Hp; ShownSh = G.P.Sh;
+         }
++        Theme ResolveTheme(int chapter, string dungeonKey, bool arena)
++        {
++            var requested = Theme.ForRun(chapter, dungeonKey, arena);
++            if (!requested.IsDungeon) return requested;
++            if (!_app.Assets.Has(requested.Field) || !_app.Assets.Has(requested.Road)) return Theme.ForChapter(chapter);
++            var props = DungeonMapLayouts.Of(requested.Name);
++            if (props == null) return Theme.ForChapter(chapter);
++            foreach (var p in props) if (!_app.Assets.Has(DungeonMapLayouts.Key(requested.Name, p.Art))) return Theme.ForChapter(chapter);
++            return requested;
++        }
+         public void Dispose()
+         {
+             if (_root != null) Object.Destroy(_root.gameObject);
+             // 발밑 숫자·팝은 월드(_root 아래 · 막대의 자식)에 산다(T502) — 월드와 함께 사라진다. 손잡이만 놓는다.
+             _pHpTxt = _pShTxt = null; _popRoot = null;
+         }
+ 
+         // ───────────────────────── 좌표 ─────────────────────────
+         /// <summary>플레이어 기준 월드 거리 → 화면용 거리. 멈춤 거리 안(칼 닿는 거리)은 1배, SpreadRamp 를 지나며 WorldSpacing 배로. 뒤(음수)는 1배.</summary>
+         float Spread(double d)
+         {
+             float stop = (float)G.C.StopDistance, mul = Layout.WorldSpacing;
+             if (mul <= 1f || d <= stop) return (float)d;   // 배율 1 = 예전과 같은 균일 사상(모든 것이 같은 속도로 흐른다)
+             float u = (float)d - stop;
+             if (u <= SpreadRamp) return stop + u + (mul - 1f) * u * u / (2f * SpreadRamp);
+             return stop + SpreadRamp + (mul - 1f) * SpreadRamp / 2f + mul * (u - SpreadRamp);
+         }
+         // 원점 = 표시 기준 x(T20) — 킬 연출 중에는 엔진 x 보다 뒤.
+         // T319 — 아레나 판만 «만나는 점» 에 못 박는다: 원점이 안 움직이므로 **배경이 안 흐르고** 플레이어 그림이 제 엔진 x 를 따라 걸어 들어온다.
+         float LayoutX(double worldX) => _fixedOrigin
+             ? Spread(worldX - _originPX) * _zoom + _originScreenX
+             : Spread(worldX - _shownPX) * _zoom + _playerX;
+         Vector3 Pos(double worldX, float yFrac, float z = 0) => WorldCam.ToWorld(LayoutX(worldX), yFrac, z);
+         /// <summary>
+         /// T319 ⓑ — 아레나 판의 상대가 «오른쪽 밖에서 같은 속도로 가운데를 향해 걸어오는» 그림.
+@@ -310,172 +331,221 @@ namespace KkomaKnight.Game
+         /// <c>2·가운데 − (−stop/2·zoom + 가운데) = 가운데 + stop/2·zoom = LayoutX(NodeGap)</c>.
+         /// 즉 <b>싸움이 시작된 뒤로는 아무것도 안 바뀐다</b>(투사체·이펙트가 쓰는 자리도 그대로). 다른 판(챕터)에서는 손대지 않는다.
+         /// </para>
+         /// </summary>
+         float FoeLayoutX(double worldX) => _fixedOrigin ? 2f * _originScreenX - LayoutX(_shownPX) : LayoutX(worldX);
+         Vector3 FoePos(double worldX, float yFrac, float z = 0) => WorldCam.ToWorld(FoeLayoutX(worldX), yFrac, z);
+         static float ScaleForHeightPct(float pct) => WorldCam.PctH(pct) / CharBaseHeight;
+         static int SortBase(float layoutX) => 100 + Mathf.Clamp((int)((WorldCam.LayoutW + 200 - layoutX) / 6f), 0, 180);
+         static bool OnScreen(Vector3 p, float margin = 4.5f) => p.x > -margin && p.x < margin;
+ 
+         // ───────────────────────── 배경 (데모 씬 구성: 평면 바닥 · 길 띠 · 물결 경계 · 풀꽃 · 소품) ─────────────────────────
+         SpriteRenderer Sprite(string key, Transform parent, int order, string name = null)
+         {
+             var go = new GameObject(name ?? key); go.transform.SetParent(parent, false);
+             var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = _app.Assets.Sprite(key); sr.sortingOrder = order;
+             return sr;
+         }
+         /// <summary>
+         /// 바닥·길 — 데모 씬의 Field(128px × 스케일 (22.46, 20.35) = 28.7 × 26u 평면 · y −0.4)·Road(× (22.47, 2.4624) = 28.8 × 3.15u 띠 · y −0.402) 인스턴스를 <b>같은 스케일 × MapScale</b> 로 두고 가로로만 이어 붙인다(T19 · «그림 그대로»).
+         /// 데모 씬처럼 바닥이 화면 전체(어둡게 하지 않는다) · 길 띠는 데모 치수 그대로 축소돼 발 줄(40%)을 품는다. 물결 경계(Road_up)는 소품 표에 들어 있다(<see cref="BuildProps"/>).
+         /// </summary>
+         void BuildGround()
+         {
+             var ground = new GameObject("Ground").transform; ground.SetParent(_root, false);
+             var field = _app.Assets.Sprite(_theme.Field) ?? _app.Assets.Sprite("env.field");
+-            var fieldScale = new Vector3(MapLayouts.FieldScaleX * Layout.MapScale, MapLayouts.FieldScaleY * Layout.MapScale, 1f);   // 데모: 128px × (22.46, 20.35) = 28.7 × 26.0u 평면
++            // Dungeon PNGs are independently produced and may be large. Fit their bounds to the
++            // established demo-world footprint instead of inheriting source pixels/PPU.
++            float fieldWorldW = 1.28f * MapLayouts.FieldScaleX * Layout.MapScale;
++            float fieldWorldH = 1.28f * MapLayouts.FieldScaleY * Layout.MapScale;
++            var fieldScale = _theme.IsDungeon && field != null
++                ? new Vector3(fieldWorldW / field.bounds.size.x, fieldWorldH / field.bounds.size.y, 1f)
++                : new Vector3(MapLayouts.FieldScaleX * Layout.MapScale, MapLayouts.FieldScaleY * Layout.MapScale, 1f);   // 데모: 128px × (22.46, 20.35) = 28.7 × 26.0u 평면
+             _tileW = (field != null ? field.bounds.size.x : 1.28f) * fieldScale.x;
+             _tileCols = Mathf.CeilToInt(WorldCam.LayoutW / WorldCam.PPU / _tileW) + 2;
+             float fieldY = WorldCam.ToWorld(0, DemoY(MapLayouts.FieldY)).y;
+             float tileH = (field != null ? field.bounds.size.y : 1.28f) * fieldScale.y;
+             int rows = Mathf.Max(1, Mathf.CeilToInt(WorldCam.LayoutH / WorldCam.PPU / tileH));   // 15.6u 평면 하나가 프레임(11.4u)을 다 덮는다 — 그림이 더 작으면 세로로도 이어 붙인다
+             for (int r = 0; r < rows; r++)
+                 for (int c = 0; c < _tileCols; c++)
+                 {
+                     var sr = Sprite(_theme.Field, ground, OrderField, "field"); if (sr.sprite == null) sr.sprite = field;
+                     sr.transform.localScale = fieldScale;
+                     sr.transform.position = new Vector3(0, fieldY + (r - (rows - 1) * 0.5f) * tileH, 0);
+                     _fieldTiles.Add(sr);
+                 }
+             var road = _app.Assets.Sprite(_theme.Road) ?? _app.Assets.Sprite("env.road");
+             // 세로만 표 높이로 늘린다(T215 · <see cref="RoadStretchY"/>) — 가로·자리는 데모 그대로다. 길 그림이 한 색 판이라 늘려도 그림이 안 상한다.
+-            var roadScale = new Vector3(MapLayouts.RoadScaleX * Layout.MapScale, MapLayouts.RoadScaleY * Layout.MapScale * RoadStretchY, 1f);       // 데모: 128px × (22.47, 2.46) = 28.8 × 3.15u 띠
++            float roadWorldW = 1.28f * MapLayouts.RoadScaleX * Layout.MapScale;
++            float roadWorldH = 1.28f * MapLayouts.RoadScaleY * Layout.MapScale * RoadStretchY;
++            var roadScale = _theme.IsDungeon && road != null
++                ? new Vector3(roadWorldW / road.bounds.size.x, roadWorldH / road.bounds.size.y, 1f)
++                : new Vector3(MapLayouts.RoadScaleX * Layout.MapScale, MapLayouts.RoadScaleY * Layout.MapScale * RoadStretchY, 1f);       // 데모: 128px × (22.47, 2.46) = 28.8 × 3.15u 띠
+             float roadY = WorldCam.ToWorld(0, DemoY(MapLayouts.RoadCenterY)).y;
+             float roadW = (road != null ? road.bounds.size.x : 1.28f) * roadScale.x; int roadCols = Mathf.CeilToInt(WorldCam.LayoutW / WorldCam.PPU / roadW) + 2;
+             for (int c = 0; c < roadCols; c++)
+             {
+                 var sr = Sprite(_theme.Road, ground, OrderRoad, "road"); if (sr.sprite == null) sr.sprite = road;
+                 sr.transform.localScale = roadScale; sr.transform.position = new Vector3(0, roadY, 0); _roadTiles.Add(sr);
+             }
+         }
+         void ScrollGround()
+         {
+             // T319 ⓒ — 아레나 판은 바닥도 안 흐른다. 땅 타일만 «표시 원점» 이 아니라 _shownPX 를 직접 봤는데(원점은 LayoutX 가 든다)
+             //   그대로 두면 소품·노드·사람은 서 있는데 바닥 무늬만 흘러 «내가 오른쪽으로 가는 느낌» 이 그대로 남는다 — 주인이 지적한 그 느낌이다.
+             float scroll = (float)((_fixedOrigin ? _originPX : _shownPX) * _zoom / WorldCam.PPU);
+             float left = WorldCam.ToWorld(0, 0).x - _tileW;
+             float off = Mathf.Repeat(scroll, _tileW);
+             for (int i = 0; i < _fieldTiles.Count; i++) { var p = _fieldTiles[i].transform.position; p.x = left + (i % _tileCols) * _tileW - off + _tileW * 0.5f; _fieldTiles[i].transform.position = p; }
+             float rw = _roadTiles.Count > 0 && _roadTiles[0].sprite != null ? _roadTiles[0].sprite.bounds.size.x * _roadTiles[0].transform.localScale.x : _tileW;
+             float roff = Mathf.Repeat(scroll, rw);
+             for (int i = 0; i < _roadTiles.Count; i++) { var p = _roadTiles[i].transform.position; p.x = left + i * rw - roff + rw * 0.5f; _roadTiles[i].transform.position = p; }
+         }
+         Prop AddProp(Transform parent, string key, double worldX, float yFrac, float scale, int order, bool flip)
+         {
+             var sr = Sprite(key, parent, order, "prop"); sr.flipX = flip; sr.transform.localScale = Vector3.one * scale;
+             var p = new Prop { Sr = sr, WorldX = worldX, YFrac = yFrac }; _props.Add(p); return p;
+         }
+         /// <summary>데모 씬 y(길 중심 −0.402) → 프레임 비율 (× MapScale).</summary>
+         public static float DemoY(float y) => RoadCenterFrac - (y - MapLayouts.RoadCenterY) * UnitFrac;
+         /// <summary>데모 씬 1u → 월드 px(엔진 좌표 단위 · 화면에서 zoom 배가 곱해져 100 × MapScale 레이아웃 px 가 된다).</summary>
+         float UnitPx => WorldCam.PPU * Layout.MapScale / _zoom;
+         /// <summary>
+         /// 소품 · 물결 경계 — 주인 지정 데모 씬(DemoScene_Autumn/DeepForest/Forest/Desert)의 인스턴스를 **그대로**(위치·반전·크기 · 부모 그룹 합성 · <see cref="MapLayouts"/> 표) 씬 폭마다 반복해 깐다
+         /// (주인: «그 씬 배치가 맘에 들어서 그대로 복사해도 된다» · 2026-09-06 «맵 디자인을 데모 씬에 있는 거 그대로»). 전체를 <see cref="Layout.MapScale"/>(0.6) 배로: 위치 × 0.6 · 스프라이트 스케일 × 0.6.
+         /// 물결 경계(Road_up)는 씬처럼 길 위(y ≈ +1.13)·아래 양쪽 — 표에 소품과 똑같이 들어 있다(T19). **아래쪽 것은 y 반전(flipY)** 하고 위쪽 것을 길 중심에 대칭시킨 자리(y = 2·RoadCenterY − 위 y ≈ −1.94)에 둔다(주인 2026-09-06 · T71 ①):
+         /// Road_up 은 위가 평평하고 아래가 물결(길 위로 늘어진 풀)이라 아래쪽 것을 그대로 두면 물결이 길 밖(들판)을 향해 «직선 경계 + 밑에 점선» 으로 보였다 → 뒤집으면 위 경계와 같은 물결이 길 안쪽을 향한다.
+         /// 정렬: 발 줄(40%)보다 위에 뿌리를 둔 소품은 캐릭터 뒤(<see cref="OrderNearProp"/> → 멀수록 뒤 · 하한 <see cref="OrderFarProp"/> = 바닥·길·납작보다 앞), 아래는 앞 · 납작한 것(풀·꽃·물결 경계)은 늘 바닥(길 바로 위 · <see cref="OrderFlat"/>) — 데모 렌더 순서(Field &lt; Road &lt; Road_up &lt; 나머지 y 내림차순)와 같다.
+         /// T71 ② «위쪽에 나무가 적다» 의 원인은 표가 아니라 이 정렬이었다(위쪽 하한이 −60 이라 y ≥ 2.46 소품이 바닥 −20 뒤로 숨음 · 테마마다 5~10개) — 표는 데모 그대로 두고 하한만 바닥 앞으로 올렸다(미러 배치는 안 한다 · PROGRESS 결정 157).
+         /// </summary>
+         void BuildProps()
+         {
+             var props = new GameObject("Props").transform; props.SetParent(_root, false);
++            if (_theme.IsDungeon) { BuildDungeonProps(props); return; }
+             double lastX = G.Nodes.Count > 0 ? G.Nodes[G.Nodes.Count - 1].X : 2000;
+             double from = -700, to = lastX + 1400;
+             float unitPx = UnitPx;
+             float footDemoY = MapLayouts.RoadCenterY + (RoadCenterFrac - FootY) / UnitFrac;   // 발 줄의 데모 y (≈ −0.21)
+             var layout = MapLayouts.Of(_theme.Name); double period = MapLayouts.WidthOf(_theme.Name) * unitPx;
+             double start = System.Math.Floor(from / period) * period;
+             // T215 — 띠를 세로로 늘렸으므로 물결 경계도 같은 폭만큼 위·아래로 옮긴다(경계와 띠 끝의 관계는 데모 그대로 유지된다).
+             float upperEdgeY = UpperRoadEdgeY(layout) + RoadEdgeShift;
+             for (double x0 = start; x0 < to; x0 += period)
+                 foreach (var p in layout)
+                 {
+                     bool roadUp = p.Key.EndsWith(".roadUp"); bool lowerEdge = roadUp && p.Y < MapLayouts.RoadCenterY;
+                     float y = roadUp ? (lowerEdge ? 2f * MapLayouts.RoadCenterY - upperEdgeY : p.Y + RoadEdgeShift) : p.Y;    // 아래 경계 = 위 경계의 길 중심 대칭 자리(T71 ①) · 위 경계는 늘어난 만큼 위로(T215)
+                     float yf = DemoY(y);
+                     if (yf < -0.15f || yf > 0.72f) continue;                        // 화면 위 밖 · HUD 패널 뒤는 만들지 않는다
+                     var sp = _app.Assets.Sprite(p.Key);
+                     bool flat = roadUp || (sp != null && sp.bounds.size.y * Mathf.Abs(p.Sy) < 0.35f);   // 풀·꽃(납작) 은 늘 바닥 — 데모 치수 기준. 물결 경계(roadUp)는 높이와 무관하게 늘 길 바로 위(Road_up_Desert 만 43px = 0.43u 라 문턱을 넘겼다 · T45 · CI #51)
+                     int order = flat ? OrderFlat : p.Y > footDemoY ? Mathf.Max(OrderFarProp, OrderNearProp - (int)((p.Y - footDemoY) * 3f)) : Mathf.Min(470, 381 + (int)((footDemoY - p.Y) * 5f));
+                     var pr = AddProp(props, p.Key, x0 + p.X * unitPx, yf, 1f, order, false);
+                     pr.Sr.transform.localScale = new Vector3(p.Sx * Layout.MapScale, p.Sy * Layout.MapScale, 1f);
+                     pr.Sr.flipY = lowerEdge;                                        // T71 ① — 아래쪽 물결 경계는 y 반전
+                 }
+         }
++
++        bool BuildDungeonProps(Transform parent)
++        {
++            var layout = DungeonMapLayouts.Of(_theme.Name);
++            if (layout == null) return false;
++            // The whole set is optional until integration installs all three sprites. Partial
++            // scenery would be worse than the intact chapter theme, so fall back atomically.
++            foreach (var p in layout) if (!_app.Assets.Has(DungeonMapLayouts.Key(_theme.Name, p.Art))) return false;
++            double lastX = G.Nodes.Count > 0 ? G.Nodes[G.Nodes.Count - 1].X : 2000;
++            double period = DungeonMapLayouts.Period * WorldCam.LayoutW / _zoom;
++            double from = -700, to = lastX + 1400, start = System.Math.Floor(from / period) * period;
++            for (double x0 = start; x0 < to; x0 += period)
++                foreach (var p in layout)
++                {
++                    string key = DungeonMapLayouts.Key(_theme.Name, p.Art);
++                    var sp = _app.Assets.Sprite(key); if (sp == null) return false;
++                    var pr = AddProp(parent, key, x0 + p.X * period, p.Y, 1f, p.Y < FootY ? OrderNearProp : 390, p.Flip);
++                    float targetW = WorldCam.PctW(p.Width * 100f), targetH = WorldCam.PctH(p.Height * 100f);
++                    float scale = Mathf.Min(targetW / sp.bounds.size.x, targetH / sp.bounds.size.y);
++                    pr.Sr.transform.localScale = Vector3.one * scale;
++                }
++            return true;
++        }
+         /// <summary>표에서 길 위쪽 물결 경계(Road_up · y &gt; 길 중심) 행의 y — 아래쪽 경계를 이 값의 길 중심 대칭에 둔다(T71 ①). 표에 없으면 데모 값 1.134.</summary>
+         public static float UpperRoadEdgeY(MapLayouts.P[] layout)
+         {
+             float y = float.MinValue;
+             foreach (var p in layout) if (p.Key.EndsWith(".roadUp") && p.Y > MapLayouts.RoadCenterY) y = Mathf.Max(y, p.Y);
+             return y > float.MinValue ? y : 1.134f;
+         }
+         void BuildNodes()
+         {
+             var parent = new GameObject("Nodes").transform; parent.SetParent(_root, false);
+             foreach (var n in G.Nodes)
+             {
+                 if (n.Type != NodeType.Rest && n.Type != NodeType.Devil && n.Type != NodeType.Angel) continue;
+                 var go = new GameObject("node:" + n.Type); go.transform.SetParent(parent, false);
+                 var nv = new NodeView { N = n, Go = go };
+                 switch (n.Type)
+                 {
+                     case NodeType.Rest:
+-                    {   // 통 + 모닥불 + 버섯 (Environment 팩에 모닥불이 없어 이렇게 조합 — 주인 «알아서»)
++                    {
++                        if (BuildNodeArt("node.rest", go.transform, 92, 0.16f)) break;
++                        // 통 + 모닥불 + 버섯 (새 키가 없는 빌드의 기존 표시)
+                         var b = Sprite("env.barrel", go.transform, 90); b.transform.localPosition = new Vector3(-0.35f, 0, 0); b.transform.localScale = Vector3.one * 0.8f;
+                         var m = Sprite("env.mushroom", go.transform, 91); m.transform.localPosition = new Vector3(0.45f, -0.02f, 0); m.transform.localScale = Vector3.one * 0.7f;
+                         nv.FxGo = Fx.Spawn("fx.fire", Vector3.zero, 0.6f, 0, go.transform, true); if (nv.FxGo != null) nv.FxGo.transform.localPosition = new Vector3(0.1f, 0.05f, -0.5f);
+                         break;
+                     }
+                     case NodeType.Devil:
+-                    {   // 돌기둥 + 죽은 나무 + 영혼 이펙트
++                    {
++                        if (BuildNodeArt("node.devil", go.transform, 92, 0.18f)) break;
++                        // 돌기둥 + 죽은 나무 + 영혼 이펙트 (새 키가 없는 빌드의 기존 표시)
+                         var s = Sprite("env.monolith", go.transform, 88); s.transform.localScale = Vector3.one * 0.75f; s.color = new Color(0.75f, 0.65f, 0.85f);
+                         var t = Sprite("env.deadTree", go.transform, 86); t.transform.localPosition = new Vector3(-0.6f, 0, 0); t.transform.localScale = Vector3.one * 0.8f;
+                         nv.FxGo = Fx.Spawn("fx.devil", Vector3.zero, 0.7f, 0, go.transform, true); if (nv.FxGo != null) nv.FxGo.transform.localPosition = new Vector3(0, 0.6f, -0.5f);
+                         break;
+                     }
+                     case NodeType.Angel:
+-                    {   // 큰 돌 + 빛 이펙트
++                    {
++                        if (BuildNodeArt("node.angel", go.transform, 92, 0.18f)) break;
++                        // 큰 돌 + 빛 이펙트 (새 키가 없는 빌드의 기존 표시)
+                         var s = Sprite("env.stoneBig", go.transform, 88); s.transform.localScale = Vector3.one * 0.6f; s.color = new Color(1f, 0.98f, 0.85f);
+                         nv.FxGo = Fx.Spawn("fx.angel", Vector3.zero, 0.9f, 0, go.transform, true); if (nv.FxGo != null) nv.FxGo.transform.localPosition = new Vector3(0, 0.9f, -0.5f);
+                         break;
+                     }
+                 }
+                 _nodes.Add(nv);
+             }
+         }
+ 
++        bool BuildNodeArt(string key, Transform parent, int order, float heightFrac)
++        {
++            if (!_app.Assets.Has(key)) return false;
++            var sp = _app.Assets.Sprite(key); if (sp == null) return false;
++            var sr = Sprite(key, parent, order);
++            sr.transform.localScale = Vector3.one * (WorldCam.PctH(heightFrac * 100f) / sp.bounds.size.y);
++            return true;
++        }
++
+         // ───────────────────────── 캐릭터 ─────────────────────────
+         /// <summary>캐릭터 한 명 — heightPct 는 ref-layout 표의 키 %(PlayerHeight·EnemyHeight·보스 배수) · 실제 그리는 키는 × <see cref="Layout.CharScale"/>(2/3 · 주인 지시 · T14).</summary>
+         CharacterRig MakeChar(string name, CharacterRig.Skin skin, float heightPct, bool faceRight)
+         {
+             var prefab = _app.Assets.Prefab("cm.character");
+             GameObject go = prefab != null ? Object.Instantiate(prefab, _root) : new GameObject(name);
+             go.name = name;
+             var rig = CharacterRig.Attach(go);
+             rig.Apply(skin);
+             rig.SetScale(ScaleForHeightPct(Layout.CharHeightPct(heightPct))); rig.Face(faceRight);
+             rig.Play(CharacterRig.Idle);
+             return rig;
+         }
+         /// <summary>
+         /// T240 2항 — 이 판의 <b>상대 외형</b>. 챕터 전투는 종전 몹 스킨이고, <b>아레나(PvP) 판은 «플레이어 캐릭터»</b> 다
+         /// (주인 메모: «적도 몹이 아니라 플레이어 캐릭터» · 레퍼런스 <c>33_pvp_battle.jpg</c>).
+         /// <para>
+         /// ⚠ <b>«상대 장비를 입힌 모습» 은 못 만든다</b> — 더미(<c>arenaDummy.json</c>)가 갖는 것은 이름·아바타·전투력뿐이라
+         /// 상대가 무엇을 꼈는지가 <b>어디에도 없다</b>. 그래서 <b>기사 기본 외형</b>(<c>PlayerSkin(D, null, …)</c> = 장비 0)으로 세운다 —
+         /// 없는 장비를 골라 입히면 그 순간 «지어낸 데이터» 가 된다(§1).
+         /// </para>
+         /// <para>
+         /// ⚠ <b>내 캐릭터와 같은 모습이 될 수 있다</b>(내가 장비를 안 꼈을 때). 그래도 <b>자리와 바라보는 쪽</b>이 갈린다 —
+         /// 상대는 화면 오른쪽에서 왼쪽을 본다(<c>faceRight: false</c>). 여기서 색을 섞어 «달라 보이게» 하는 것은
+         /// 주인이 말한 적 없는 연출이라 <b>안 했다</b>. 갈라 보이게 하려면 상대 장비가 데이터로 와야 한다.
+diff --git a/Assets/Scripts/Game/DungeonMapLayouts.cs b/Assets/Scripts/Game/DungeonMapLayouts.cs
+new file mode 100644
+index 0000000000000000000000000000000000000000..c0a575743356c04ec76ed359ecc65f643d139d8b
+--- /dev/null
++++ b/Assets/Scripts/Game/DungeonMapLayouts.cs
+@@ -0,0 +1,35 @@
++namespace KkomaKnight.Game
++{
++    /// <summary>
++    /// Hand-authored layouts for the two dungeon-only art sets.  Unlike
++    /// <see cref="MapLayouts"/>, this file is not generated from the Layer Lab demo
++    /// scenes.  Coordinates are fractions of the battle frame so replacing the
++    /// source PNG resolution/PPU cannot move gameplay objects.
++    /// </summary>
++    public static class DungeonMapLayouts
++    {
++        public readonly struct Prop
++        {
++            public readonly int Art; public readonly float X, Y, Width, Height; public readonly bool Flip;
++            public Prop(int art, float x, float y, float width, float height, bool flip = false)
++            { Art = art; X = x; Y = y; Width = width; Height = height; Flip = flip; }
++        }
++
++        public const float Period = 1.15f;
++        public static readonly Prop[] Expedition =
++        {
++            new Prop(1, 0.08f, 0.25f, 0.16f, 0.18f),
++            new Prop(2, 0.43f, 0.57f, 0.12f, 0.12f, true),
++            new Prop(3, 0.78f, 0.20f, 0.18f, 0.22f),
++        };
++        public static readonly Prop[] Hell =
++        {
++            new Prop(1, 0.10f, 0.23f, 0.18f, 0.21f),
++            new Prop(2, 0.48f, 0.58f, 0.13f, 0.13f),
++            new Prop(3, 0.82f, 0.19f, 0.17f, 0.23f, true),
++        };
++
++        public static Prop[] Of(string dungeonKey) => dungeonKey == "expedition" ? Expedition : dungeonKey == "hell" ? Hell : null;
++        public static string Key(string dungeonKey, int art) => "env." + dungeonKey + ".prop" + art;
++    }
++}
+diff --git a/Assets/Scripts/Game/DungeonMapLayouts.cs.meta b/Assets/Scripts/Game/DungeonMapLayouts.cs.meta
+new file mode 100644
+index 0000000000000000000000000000000000000000..1eebdca591cffb934848efecb5bf17e7154e358f
+--- /dev/null
++++ b/Assets/Scripts/Game/DungeonMapLayouts.cs.meta
+@@ -0,0 +1,11 @@
++fileFormatVersion: 2
++guid: 3aed67ee2c87fce09b04ada5c991f479
++MonoImporter:
++  externalObjects: {}
++  serializedVersion: 2
++  defaultReferences: []
++  executionOrder: 0
++  icon: {instanceID: 0}
++  userData: 
++  assetBundleName: 
++  assetBundleVariant: 
+diff --git a/Assets/Scripts/Game/Overlay.cs b/Assets/Scripts/Game/Overlay.cs
+index e6c14d61fcfeb2df611fb8d436af70eebb1ed2e8..40563d2fb1f8e2df02820778b959f80b6e50e1e5 100644
+--- a/Assets/Scripts/Game/Overlay.cs
++++ b/Assets/Scripts/Game/Overlay.cs
+@@ -675,113 +675,116 @@ namespace KkomaKnight.Game
+                 if (visible > 0)
+                 {
+                     float start = 0.15f, step = Mathf.Min(UiKit.RevealStep, (UiKit.RevealMaxPick - start - UiKit.RevealDur) / Mathf.Max(1, visible - 1));
+                     UiKit.Stagger(Seq(), cards.GetRange(0, visible), start, step);
+                     UiKit.StaggerShine(Seq(), cards.GetRange(0, visible), start, step, _shineStarts);   // T61 — 보이는 카드만 순서대로 shine(스크롤 밖 카드는 즉시 표시 · 빛 없음)
+                 }
+             }
+             foreach (var b in G.Blessings) Sub(box, b, 93, 5, 24, Palette.Orange);
+             var tap = UiKit.Find(Root, "TapToClose");
+             if (onBack != null && tap != null) { var t = tap.GetComponent<TMP_Text>(); if (t != null) t.text = "탭하여 특전 선택으로"; }   // 레벨업에서 열었으면 배경 탭 = 선택으로 복귀
+             // T230 — 이 팝업의 닫기 안내만 표 ⑦ 자리(94.4)로 내린다. 공통 BookClose(91.5)를 옮기면 ⑪(표 90.4)이 대신 어긋난다(T214·AcClose 와 같은 갈래).
+             if (tap != null) UiKit.Pct((RectTransform)tap, Layout.PerkBookClose);
+             // T46 이름표(표 ⑦ «(인포 팝업)» 행)
+             UiKit.Tag(box, "(인포 팝업) 박스"); if (rib != null) UiKit.Tag(rib, "(인포 팝업) 제목 리본"); if (content.childCount > 0) UiKit.Tag(content.GetChild(0), "(인포 팝업) 목록 카드"); if (tap != null) UiKit.Tag(tap, "(인포 팝업) 닫기 안내");
+         }
+ 
+         // ───────────────────────── 쉼터 ─────────────────────────
+         /// <summary>쉼터 — 체력 회복 / 경험치 / (T23) «광고 보고 둘 다 얻기»(광고 카운트다운 = 천사의 <see cref="AdCountdown"/> 재사용 → <paramref name="onBoth"/>).</summary>
+         public void Rest(BattleState G, Action<bool> onChoose, Action onBoth = null)
+         {
+             var box = Box("ui.popup.green", "ui.title.green", "쉼터", Layout.EvBox, boxed: false);   // T141 — 판 없이 어둠 위(주인 «그 쉼터도 … 패널 없게»)
+             // T219 2단계 — 이름표(UiTag)가 없으면 §5 하니스의 layout.json 에 이 화면이 «빈 칸» 으로 남는다(T213 이 (악마)·(천사)에 한 것과 같다).
+             UiKit.Tag(box, "팝업 상자");
+             var rSub = Sub(box, "모닥불 앞에서 잠시 쉬어갑니다", 9, 7, TextSize.Body, Palette.White);   // T141 ⓑ — 판이 없어졌으니 어두운 글자(InkSoft 기본값)를 흰 글자로
+             UiKit.Tag(rSub.rectTransform, "대사");
+-            var ic = UiKit.Icon(box, "Fire", "ui.fire"); UiKit.Pct(ic.rectTransform, 37, 17, 26, 24);
++            var ic = UiKit.Icon(box, "Fire", OptionalArt("node.rest", "ui.fire")); UiKit.Pct(ic.rectTransform, 37, 17, 26, 24);
+             UiKit.Tag(ic.rectTransform, "모닥불 아이콘");
+             string heal = G.C.RestHeal <= 1 ? $"최대 체력 {Math.Round(G.C.RestHeal * 100)}%" : $"체력 {UiKit.Fmt(G.C.RestHeal)}";
+             var rHeal = UiKit.Button(box, "ui.btnGreen", $"체력 회복 (+{heal})", () => { Close(); onChoose(true); }, new Layout.R(10, 45, 80, 11));
+             var rExp = UiKit.Button(box, "ui.btnBlue", $"경험치 +{G.C.RestExp}", () => { Close(); onChoose(false); }, new Layout.R(10, 58, 80, 11));
+             UiKit.Tag(rHeal, "체력 회복 버튼"); UiKit.Tag(rExp, "경험치 버튼");
+             // T258 3항 — 업적 «광고 10회 시청» 은 **광고를 부르는 자리마다** 센다(아래 셋 · `AdCountdown` 안에 걸면 두 번 세는 덫 · 결정 763).
+             //   전투 중 광고 셋(휴식 «둘 다» · 천사 축복 · 클리어 ×2)도 사람이 본 광고라 같이 센다.
+             if (onBoth != null)
+             {
+                 var ad = UiKit.Button(box, "ui.btnOrange", "광고 보고 둘 다 얻기", () => AdCountdown(3, () => { Quests.Ach(_app, Quests.AchAdWatch); Close(); onBoth(); }), new Layout.R(10, 71, 80, 12));
+                 var adIc = UiKit.Icon(ad, "Ad", "hud.alertAd"); UiKit.Pct(adIc.rectTransform, 84, -22, 18, 50);
+                 UiKit.Tag(ad, "광고 버튼");
+             }
+             var rNote = Sub(box, "다음 레벨에 가까워집니다", 86, 6, TextSize.Body, Palette.White);   // T141 ⓑ — 판이 사라져 어둠 위라 흰 글자(T63-perks 의 InkSoft 는 밝은 패널 전제였다)
+             UiKit.Tag(rNote.rectTransform, "아래 문구");
+         }
+ 
+         // ───────────────────────── 악마의 거래 ─────────────────────────
+         public void Devil(BattleState G, Action<bool> onChoose)
+         {
+             var perk = G.Pending?.DevilPerk;
+             var box = Box("ui.popup.plum", "ui.title.plum", "악마의 거래", new Layout.R(4, 24, 92, 52), boxed: false);   // T141 — 판 없이 어둠 위
+             // T213 — 이름표(UiTag)가 없으면 §5 비평 하니스의 layout.json 에 이 화면이 «빈 칸» 으로 남는다(자가 아무것도 못 잰다).
+             // 이름은 ref-layout 표의 행 이름과 **글자 그대로** 같아야 `tools/ui_score.py` 가 짝을 짓는다.
+             UiKit.Tag(box, "(악마) 팝업 상자");
+             var dSub = Sub(box, "\"네 생명을 바치면... 이 힘을 주지\"", 9, 6, TextSize.Body, Palette.Yellow);   // T141 ⓑ — 어둠 위 강조는 «밝은 쪽» 으로(Plum 은 안 읽힌다)
+             UiKit.Tag(dSub.rectTransform, "(악마) 대사");
++            if (_app.Assets.Has("node.devil")) { var art = UiKit.Icon(box, "DevilArt", "node.devil", Palette.White); UiKit.Pct(art.rectTransform, 76, 4, 15, 14); }
+             if (perk != null) { var card = PerkCard(box, perk, "yellow", null); UiKit.Pct(card, 2, 18, 96, 22); UiKit.Tag(card, "(악마) 특전 카드"); }
+             double cost = G.C.DevilCostMaxHp > 0 ? G.C.DevilCostMaxHp : G.PK.DevilCostMaxHp;
+             var dNote = Sub(box, $"최대 체력이 {Math.Round(cost * 100)}% 줄어든 채 진행 · 위 전설 특전 1개를 획득", 43, 10, TextSize.Body, Palette.White);   // T141 ⓑ
+             UiKit.Tag(dNote.rectTransform, "(악마) 안내 문구");
+             var dYes = UiKit.Button(box, "ui.btnRed", "거래 수락", () => { Close(); onChoose(true); }, new Layout.R(8, 60, 40, 13));
+             var dNo = UiKit.Button(box, "ui.btnGray", "거절", () => { Close(); onChoose(false); }, new Layout.R(52, 60, 40, 13));
+             UiKit.Tag(dYes, "(악마) 수락 버튼"); UiKit.Tag(dNo, "(악마) 거절 버튼");
+         }
+         public void DevilGift(PerkDef perk, Action onOk)
+         {
+             var box = Box("ui.popup.plum", "ui.title.plum", "악마의 선물", new Layout.R(6, 30, 88, 40), boxed: false);   // T141 — 같은 흐름의 뒷 팝업도 같이(판이 있었다 없어지면 어색하다)
+             UiKit.Tag(box, "팝업 상자");   // T219 2단계 — 이름표가 없으면 `ev_devil_gift` 가 layout.json 에서 빈 칸이다
+             var gSub = Sub(box, "전설 특전을 얻었습니다", 11, 7, TextSize.Body, Palette.Yellow);   // T141 ⓑ
+             UiKit.Tag(gSub.rectTransform, "대사");
+             if (perk != null) { var card = PerkCard(box, perk, "yellow", null); UiKit.Pct(card, 2, 24, 96, 28); UiKit.Tag(card, "특전 카드"); }
+             var gOk = UiKit.Button(box, "ui.btnOrange", "계속", () => { Close(); onOk?.Invoke(); }, new Layout.R(25, 66, 50, 16));
+             UiKit.Tag(gOk, "계속 버튼");
+         }
+ 
+         // ───────────────────────── 천사의 축복 ─────────────────────────
+         public void Angel(BattleState G, Action<double> onChoose)
+         {
+             var box = Box("ui.popup.yellow", "ui.title.yellow", "천사의 축복", Layout.EvBox, boxed: false);   // T141 — 판 없이 어둠 위
+             UiKit.Tag(box, "(천사) 팝업 상자");   // T213 — 아래 이름표들이 §5 하니스가 이 화면을 재는 유일한 손잡이다
+             var aSub = Sub(box, "\"용사여, 축복을 내리노라\"", 10, 7, TextSize.Body, Palette.Yellow);   // T141 ⓑ — Orange 는 어둠 위에서 흐리다
+             UiKit.Tag(aSub.rectTransform, "(천사) 대사");
+-            var ic = UiKit.Icon(box, "Wing", "pi.wing", Palette.Yellow); UiKit.Pct(ic.rectTransform, 35, 20, 30, 26);
++            var angelKey = OptionalArt("node.angel", "pi.wing");
++            var ic = UiKit.Icon(box, "Wing", angelKey, angelKey == "node.angel" ? Palette.White : Palette.Yellow); UiKit.Pct(ic.rectTransform, 35, 20, 30, 26);
+             UiKit.Tag(ic.rectTransform, "(천사) 날개 아이콘");
+             var aFree = UiKit.Button(box, "ui.btnGreen", $"무료 축복 · 공격력 +{Math.Round((SimPolicy.AngelFree - 1) * 100)}%", () => { Close(); onChoose(SimPolicy.AngelFree); }, new Layout.R(10, 54, 80, 12));
+             var ad = UiKit.Button(box, "ui.btnOrange", $"광고 보고 공격력 +{Math.Round((SimPolicy.AngelAd - 1) * 100)}%", () => AdCountdown(3, () => { Quests.Ach(_app, Quests.AchAdWatch); Blessed(onChoose); }), new Layout.R(10, 70, 80, 12));
+             var adIc = UiKit.Icon(ad, "Ad", "hud.alertAd"); UiKit.Pct(adIc.rectTransform, 84, -22, 18, 50);
+             UiKit.Tag(aFree, "(천사) 무료 버튼"); UiKit.Tag(ad, "(천사) 광고 버튼");
+             var aNote = Sub(box, "더 강한 축복", 85, 6, TextSize.Body, Palette.White);   // T141 ⓑ
+             UiKit.Tag(aNote.rectTransform, "(천사) 아래 문구");
+         }
++        string OptionalArt(string preferred, string fallback) => _app.Assets.Has(preferred) ? preferred : fallback;
+         /// <summary>축복 강화(광고 뒤) — T141 게이트가 직접 열어 «판 없이 어둠 위» 인지 보므로 공개다(여는 곳은 여전히 <see cref="Angel"/> 한 곳).</summary>
+         public void Blessed(Action<double> onChoose)
+         {
+             var box = Box("ui.popup.yellow", "ui.title.yellow", "축복 강화!", new Layout.R(6, 32, 88, 36), boxed: false);   // T141 — 같은 흐름의 뒷 팝업
+             Sub(box, $"공격력이 {Math.Round((SimPolicy.AngelAd - 1) * 100)}% 증가했습니다", 18, 14, TextSize.Body, Palette.Yellow);   // T141 ⓑ
+             UiKit.Button(box, "ui.btnOrange", "계속 전진", () => { Close(); onChoose(SimPolicy.AngelAd); }, new Layout.R(25, 62, 50, 18));
+         }
+         /// <summary>광고 카운트다운 숫자 크기 — 본문 하한(40)보다 «크게» 보여야 뜻이 있는 자리다(칸 30% = 196px 에 한 줄 88px). T63-results.</summary>
+         public const int AdCountSize = 72;
+         /// <summary>광고 자리(모의) — 3초 카운트다운 (T3 결정 «광고는 3초 카운트다운으로 대체»).</summary>
+         public void AdCountdown(int seconds, Action onDone)
+         {
+             var box = Box("ui.popup", "ui.title.tangerine", "광고 시청 중...", new Layout.R(10, 36, 80, 28));
+             UiKit.Tag(box, "팝업 상자");   // T219 2단계 — `ev_ad` 도 이름표가 0 이라 §5 가 «—» 로 지나쳤다
+             var ic = UiKit.Icon(box, "Ad", "ui.ad"); UiKit.Pct(ic.rectTransform, 38, 18, 24, 34);
+             UiKit.Tag(ic.rectTransform, "광고 아이콘");
+             _countText = Sub(box, seconds.ToString(), 56, 30, AdCountSize, Palette.Ink);
+             UiKit.Tag(_countText.rectTransform, "남은 초 숫자");
+             _countdown = seconds; _onCountdown = onDone;
+         }
+ 
+         // ───────────────────────── 클리어 (주인 지정 Play_Result_Win_01) ─────────────────────────
+         /// <summary>
+         /// 클리어 팝업(Play_Result_Win_01 그대로) — T23(주인): 보상 표시는 <b>골드만</b>(프리팹의 나머지 두 보상 칸은 끈다) · 프리팹의 «Get x2»(광고 아이콘) 버튼 = «광고 보고 ×2»(<see cref="ClearAdLabel"/>)
+         /// (광고 카운트다운 뒤 <paramref name="onDouble"/> → 골드 2배 · 로비로) · 프리팹의 «Home» 버튼 = «그냥 받기»(1배 · 로비로 · 승인 대기 28 기본값). «다음 챕터» 진입은 로비의 챕터 화살표로.
+diff --git a/Assets/Tests/EditMode/ChihuahuaWorldArtConnectionTests.cs b/Assets/Tests/EditMode/ChihuahuaWorldArtConnectionTests.cs
+new file mode 100644
+index 0000000000000000000000000000000000000000..7c4f78ed596a83c47869338d3a71d6fbf4a29540
+--- /dev/null
++++ b/Assets/Tests/EditMode/ChihuahuaWorldArtConnectionTests.cs
+@@ -0,0 +1,25 @@
++using NUnit.Framework;
++using KkomaKnight.Game;
++
++public sealed class ChihuahuaWorldArtConnectionTests
++{
++    [TestCase("expedition")]
++    [TestCase("hell")]
++    public void DungeonTheme_UsesContractKeys(string dungeonKey)
++    {
++        var theme = BattleWorld.Theme.ForRun(3, dungeonKey, false);
++        Assert.That(theme.Name, Is.EqualTo(dungeonKey));
++        Assert.That(theme.Field, Is.EqualTo("env." + dungeonKey + ".field"));
++        Assert.That(theme.Road, Is.EqualTo("env." + dungeonKey + ".road"));
++        Assert.That(DungeonMapLayouts.Of(dungeonKey), Has.Length.EqualTo(3));
++        for (int i = 1; i <= 3; i++) Assert.That(DungeonMapLayouts.Key(dungeonKey, i), Is.EqualTo("env." + dungeonKey + ".prop" + i));
++    }
++
++    [Test]
++    public void NonDungeonRuns_KeepExistingThemeSelection()
++    {
++        Assert.That(BattleWorld.Theme.ForRun(2, null, false).Name, Is.EqualTo("deepForest"));
++        Assert.That(BattleWorld.Theme.ForRun(4, "unknown", false).Name, Is.EqualTo("desert"));
++        Assert.That(BattleWorld.Theme.ForRun(2, "hell", true), Is.SameAs(BattleWorld.Theme.Arena));
++    }
++}
+diff --git a/Assets/Tests/EditMode/ChihuahuaWorldArtConnectionTests.cs.meta b/Assets/Tests/EditMode/ChihuahuaWorldArtConnectionTests.cs.meta
+new file mode 100644
+index 0000000000000000000000000000000000000000..234ce7f2a6699c8b635266937e06299423645727
+--- /dev/null
++++ b/Assets/Tests/EditMode/ChihuahuaWorldArtConnectionTests.cs.meta
+@@ -0,0 +1,11 @@
++fileFormatVersion: 2
++guid: ad30a9f10541e1c5b40d76bd85f27257
++MonoImporter:
++  externalObjects: {}
++  serializedVersion: 2
++  defaultReferences: []
++  executionOrder: 0
++  icon: {instanceID: 0}
++  userData: 
++  assetBundleName: 
++  assetBundleVariant: 
+diff --git a/tools/game_ui_art/sessions/world.md b/tools/game_ui_art/sessions/world.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..eaa7544aaa950e2b96326d28026770626ab7cb0c
+--- /dev/null
++++ b/tools/game_ui_art/sessions/world.md
+@@ -0,0 +1,33 @@
++# T519 world 역할 보고서
++
++## 상태
++
++- 완료: `BattleWorld.cs`에 던전 키 `expedition`/`hell` 테마 선택과 새 아트가 모두 있을 때만 켜지는 원자적 fallback을 연결했다.
++- 완료: 생성물 `MapLayouts.cs`를 건드리지 않고 `DungeonMapLayouts.cs`에 고대 유적/지옥 전용 3-prop 반복 배치를 분리했다.
++- 완료: 큰 원본 PNG도 sprite bounds에 맞춰 field/road의 기존 월드 footprint 및 prop/node 목표 화면 높이로 정규화한다.
++- 완료: 월드 노드와 Rest/Devil/Angel 팝업에 `node.rest`, `node.devil`, `node.angel`을 선택적으로 연결했다. 키가 없으면 기존 합성/아이콘 표시를 유지한다.
++- 유지: 노드 엔진 좌표·기능, UI rect, 게임 수치, 저장 데이터, 플레이어 위치는 변경하지 않았다.
++
++## 통합 계약
++
++| 키 | 최종 예상 파일 |
++|---|---|
++| `node.rest` | `Assets/Art/ChihuahuaGameUI/Nodes/rest.png` |
++| `node.devil` | `Assets/Art/ChihuahuaGameUI/Nodes/devil.png` |
++| `node.angel` | `Assets/Art/ChihuahuaGameUI/Nodes/angel.png` |
++| `env.expedition.field` | `Assets/Art/ChihuahuaGameUI/World/Expedition/field.png` |
++| `env.expedition.road` | `Assets/Art/ChihuahuaGameUI/World/Expedition/road.png` |
++| `env.expedition.prop1`~`prop3` | `Assets/Art/ChihuahuaGameUI/World/Expedition/prop1.png`~`prop3.png` |
++| `env.hell.field` | `Assets/Art/ChihuahuaGameUI/World/Hell/field.png` |
++| `env.hell.road` | `Assets/Art/ChihuahuaGameUI/World/Hell/road.png` |
++| `env.hell.prop1`~`prop3` | `Assets/Art/ChihuahuaGameUI/World/Hell/prop1.png`~`prop3.png` |
++
++## 검증 / 이어받기
++
++- 전용 EditMode 계약 테스트 `ChihuahuaWorldArtConnectionTests.cs` 추가.
++- 통과: `git diff --check`, `python3 tools/check_catalog_keys.py`, `python3 tools/check_asmdef.py`, `python3 tools/check_test_usings.py`, `python3 tools/check_stale_asserts.py`.
++- 환경 제한: `dotnet build tools/dotnet/KkomaKnight.sln --no-restore`는 이 격리 환경에 `dotnet` 실행 파일이 없어 실행되지 않았다. Unity 실행 파일도 없어 EditMode/PlayMode는 실행하지 못했으며 통과로 간주하지 않는다.
++- 주의: 현재 카탈로그 검사기는 카탈로그에 아직 존재하지 않는 새 접두(`node.*`) 및 조립 문자열(`env.` + dungeon)을 잡지 못해 통과했다. 아래 키는 중앙 카탈로그에 실제로 아직 없으며 통합 의존성이다.
++- 아직 미검증: Unity EditMode/PlayMode 실행 및 실제 PNG가 들어간 화면의 월드 크기/겹침/알파 육안 검사.
++- 통합 세션 다음 단계: 위 13개 RGBA PNG와 `.meta`를 예상 경로에 추가하고 중앙 `catalog.json`을 연결한 뒤 생성물 재생성. 새 키 리터럴 카탈로그 검사는 그 전까지 예상 의존성으로 실패하며 우회하면 안 된다.
++- 실제 아트가 모두 들어오기 전에는 던전 5개 키 중 하나라도 없으면 해당 던전 전체가 기존 챕터 테마로 돌아간다.

@@ -1,0 +1,72 @@
+{
+  "task": "T519 art-banners",
+  "reference": "Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png",
+  "generator": "built-in image_gen",
+  "assets": [
+    {
+      "key": "ui.pass.banner",
+      "path": "Assets/Art/ChihuahuaGameUI/Pass/adventure_banner.png",
+      "prompt": "tools/game_ui_art/art-banners/prompts/pass_adventure_banner.txt",
+      "sha256": "8b4cc2265932c7fdd0f994bc701767770e4248a6fe4261a53a338531e4344193",
+      "width": 1536,
+      "height": 327,
+      "byte_size": 245642,
+      "mode": "RGB",
+      "alpha_extrema": null,
+      "reviewed": true,
+      "review_notes": "Character faces right; identity and pass text-safe central-left region visually checked. Full-bleed banner intentionally has no alpha."
+    },
+    {
+      "key": "ui.loading.art",
+      "path": "Assets/Art/ChihuahuaGameUI/Loading/chihuahua_loading.png",
+      "prompt": "tools/game_ui_art/art-banners/prompts/loading_chihuahua.txt",
+      "sha256": "e1574ca5a228ff7db9615e86b19381ec2dc8020be6a1b0a02c8a8f3ffcf83eef",
+      "width": 948,
+      "height": 350,
+      "byte_size": 143133,
+      "mode": "RGBA",
+      "alpha_extrema": [0, 255],
+      "reviewed": true,
+      "review_notes": "Right-facing full silhouette, progress bar/text clear below, real transparency and clean margins visually checked."
+    },
+    {
+      "key": "ui.arena.entry",
+      "path": "Assets/Art/ChihuahuaGameUI/Arena/entry.png",
+      "prompt": "tools/game_ui_art/art-banners/prompts/arena_entry.txt",
+      "sha256": "1c1656aceaba3e9aebe14ab9938a2cda64f7492f49417f3e3ea0bc5078daa411",
+      "width": 1536,
+      "height": 463,
+      "byte_size": 435410,
+      "mode": "RGB",
+      "alpha_extrema": null,
+      "reviewed": true,
+      "review_notes": "Right-facing Chihuahua and full arena entrance composition visually checked; full-bleed scene intentionally has no alpha."
+    },
+    {
+      "key": "ui.arena.rankRow",
+      "path": "Assets/Art/ChihuahuaGameUI/Arena/rank_row.png",
+      "prompt": "tools/game_ui_art/art-banners/prompts/arena_rank_row.txt",
+      "sha256": "a57dcc6a25fe1456cd32847bdf2b32f9208192c67bf4e55f65d103952674e458",
+      "width": 1024,
+      "height": 157,
+      "byte_size": 89198,
+      "mode": "RGBA",
+      "alpha_extrema": [0, 255],
+      "reviewed": true,
+      "review_notes": "Continuous uncropped frame, real transparency, clean outer margin, and central/right text-safe fields visually checked."
+    },
+    {
+      "key": "ui.arena.merchant",
+      "path": "Assets/Art/ChihuahuaGameUI/Arena/merchant.png",
+      "prompt": "tools/game_ui_art/art-banners/prompts/arena_merchant.txt",
+      "sha256": "c1594791fc88ad21f3d3b1b6f8289cb3f0fb529acfbe8c0dd59c2754edc2d570",
+      "width": 1536,
+      "height": 439,
+      "byte_size": 289918,
+      "mode": "RGB",
+      "alpha_extrema": null,
+      "reviewed": true,
+      "review_notes": "Fresh unified merchant illustration; right-side merchant and counter, central-title and lower-left season text safe zones visually checked. Full-bleed banner intentionally has no alpha."
+    }
+  ]
+}

@@ -5,6 +5,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 
 namespace KkomaKnight.Tests.Play
 {
@@ -73,6 +74,22 @@ namespace KkomaKnight.Tests.Play
             UiKit.CompleteAllTweens();
             yield return Frames(2);
             Canvas.ForceUpdateCanvases();
+
+            // T519: 1536×327 가로 원화는 1080×465 배너 안에서 비율을 유지한다. 제목·기간·보상 열은 기존 배치다.
+            var banner = _app.Current.Root.Find("Banner") as RectTransform;
+            Assert.IsNotNull(banner, "패스 머리 배너");
+            var art = banner.Find("PassArt")?.GetComponent<Image>();
+            Assert.IsNotNull(art, "패스 원화 Image");
+            Assert.AreSame(_app.Assets.Sprite("ui.pass.banner"), art.sprite, "카탈로그 패스 원화 연결");
+            Assert.IsTrue(art.preserveAspect, "가로 원화를 세로로 늘려 찌그러뜨리지 않는다");
+            Assert.AreEqual(Color.white, art.color, "원화 RGB 유지");
+            Assert.AreEqual(banner.rect.size, art.rectTransform.rect.size, "그림의 담개는 기존 배너 범위 유지");
+            Assert.IsFalse(art.raycastTarget, "장식 그림이 입력을 막지 않는다");
+            var title = banner.Find("PassName");
+            Assert.IsNotNull(title, "기존 패스 제목");
+            Assert.Greater(title.GetSiblingIndex(), art.transform.GetSiblingIndex(), "제목은 원화 위에 그린다");
+            Assert.IsNotNull(_app.Current.Root.Find("SeasonEnds"), "기존 시즌 종료 글자 유지");
+            Assert.IsNotNull(_app.Current.Root.Find("LevelBadge"), "기존 레벨 배지 유지");
 
             // ⚑ «잰 것이 진짜인가» 를 먼저 묻는다(결정 1276·1279 가 오늘 두 번 값을 치른 자리) —
             //   이 자가 재는 것은 «열 색» 인데, 어둠이 덮인 판에서는 **어둠 색**을 재고도 «그라데이션이 죽었다» 로 운다.

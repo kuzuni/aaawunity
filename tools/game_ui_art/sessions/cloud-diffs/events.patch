@@ -1,0 +1,880 @@
+diff --git a/Assets/Scripts/Core/Recipes.cs b/Assets/Scripts/Core/Recipes.cs
+index bc313da22c3c71e357ca84a251fc0504bb5643f1..9cbfe1adcd5c1467204c2b1a7437a3ff34381369 100644
+--- a/Assets/Scripts/Core/Recipes.cs
++++ b/Assets/Scripts/Core/Recipes.cs
+@@ -28,63 +28,70 @@ namespace KkomaKnight.Core
+         {
+             var d = new RecipeData { PerLevel = j["perLevel"].Int(), Parts = j.Req("parts").StrArray() };
+             foreach (var k in j["name"].Keys) d.Name[k] = j["name"][k].Str("");
+             // 음수면 «강화할수록 레시피가 생긴다» 가 되고, 부위가 비면 어떤 강화도 이 표를 못 찾는다.
+             if (d.PerLevel < 0) throw new FormatException("recipe.json: perLevel 은 0 이상이어야 한다");
+             if (d.Parts.Length == 0) throw new FormatException("recipe.json: parts 가 비었다");
+             return d;
+         }
+ 
+         public bool Has(string part) => Array.IndexOf(Parts, part) >= 0;
+     }
+ 
+     /// <summary>
+     /// 레시피 규칙 (T290 · 순수 C# · 저장은 <see cref="SaveData.Recipes"/> 한 표 · <see cref="GachaKeys"/> 와 같은 꼴).
+     /// <list type="bullet">
+     /// <item><b>아이템 이름은 <c>recipe.&lt;부위&gt;</c></b>(<c>recipe.helm</c> …) — 보상 표·우편이 이 글자로 준다(<see cref="Mail.Give"/>).</item>
+     /// <item><b>드는 개수는 슬롯 Lv 이 정한다</b> — Lv L 에서 L+1 로 올릴 때 <c>perLevel × (L+1)</c> 개.</item>
+     /// <item><b>빼는 곳은 <see cref="GearSystem.SlotUp"/> 한 곳</b> — 골드와 레시피를 <b>같이</b> 확인하고 <b>같이</b> 뺀다.</item>
+     /// </list>
+     /// </summary>
+     public static class Recipes
+     {
+         /// <summary>아이템 이름의 밑동 — <c>recipe.helm</c> 처럼 뒤에 부위가 붙는다.</summary>
+         public const string Prefix = "recipe.";
+ 
+-        /// <summary>
+-        /// 레시피 그림 — <b>여섯 부위가 같은 그림</b>을 쓴다(지시서 2항 «6종을 다른 그림으로 지어내지 않는다»).
+-        /// <para>
+-        /// <b>고른 것이 아니라 찾은 것이다</b> — 이 레포는 T43 때 이미 레퍼런스의 «무기 도안·갑옷 도안…» 여섯을
+-        /// <c>ui.iconScroll</c>(<c>Item_Scroll_01_Red</c>) 한 그림으로 그리고 있다(<c>EventsScreen</c> 의 던전 보상 목록).
+-        /// 주인 레퍼런스가 «부위별 도안» 을 그 그림으로 보여 준 자리가 곧 지금의 레시피라, 새 그림을 고르면
+-        /// <b>같은 물건이 화면마다 다르게 생기는</b> 쪽이 된다. 부위는 그림이 아니라 <b>이름</b>이 가른다(<see cref="Name"/>).
+-        /// </para>
+-        /// </summary>
++        /// <summary>랜덤 도안과 아직 알 수 없는 부위가 쓰는 기존 일반 도안 그림.</summary>
+         public const string IconKey = "ui.iconScroll";
+ 
+-        /// <summary>부위별 그림 — 지금은 여섯이 같다(위 <see cref="IconKey"/> 참조). 부르는 쪽이 부위를 넘기게 두는 것은 나중에 갈릴 자리를 여기 한 곳으로 모아 두기 위해서다.</summary>
+-        public static string Icon(string part) => IconKey;
++        /// <summary>
++        /// 실제 저장 부위(<c>weapon/helm/armor/glove/boot/neck</c>)를 부위별 도안 아트 키로 바꾼다.
++        /// 이 순수 Core 규칙은 카탈로그를 참조하지 않으며, 표시 계층은 키가 아직 없으면 <see cref="IconKey"/>로 되돌린다.
++        /// </summary>
++        public static string Icon(string part)
++        {
++            switch (part)
++            {
++                case "weapon": return "recipe.weapon";
++                case "armor": return "recipe.armor";
++                case "helm": return "recipe.helmet";
++                case "boot": return "recipe.shoes";
++                case "glove": return "recipe.ring";
++                case "neck": return "recipe.necklace";
++                default: return IconKey;
++            }
++        }
+ 
+         /// <summary>부위 → 아이템 이름(<c>recipe.helm</c>). 빈 부위면 빈 글자.</summary>
+         public static string Item(string part) => string.IsNullOrEmpty(part) ? "" : Prefix + part;
+ 
+         /// <summary>이 이름이 레시피인가 — <b>표를 안 본다</b>(표가 없어도 «이건 레시피다» 는 알아야 우편이 안 흘린다).</summary>
+         public static bool IsRecipe(string item) => item != null && item.Length > Prefix.Length && item.StartsWith(Prefix, StringComparison.Ordinal);
+ 
+         /// <summary>레시피 이름 → 부위(레시피가 아니면 <c>null</c>).</summary>
+         public static string PartOf(string item) => IsRecipe(item) ? item.Substring(Prefix.Length) : null;
+ 
+         /// <summary>가진 개수(모르는 부위·빈 세이브는 0).</summary>
+         public static int Count(SaveData s, string part)
+         {
+             if (s == null || s.Recipes == null || string.IsNullOrEmpty(part)) return 0;
+             int v; return s.Recipes.TryGetValue(part, out v) ? (v > 0 ? v : 0) : 0;
+         }
+ 
+         /// <summary>
+         /// 지급 — <b>표에 없는 부위도 담는다</b>(<see cref="Achievement.Add"/> 와 같은 뜻 · 표가 늘어날 때 그 전에 받은 것이 사라지지 않게).
+         /// 0 이하는 아무 일도 안 한다(보상 표가 오타를 내도 개수가 줄지 않는다 · <see cref="GachaKeys.Add"/> 규약).
+         /// </summary>
+         public static void Add(SaveData s, string part, int n)
+         {
+             if (s == null || string.IsNullOrEmpty(part) || n <= 0) return;
+             if (s.Recipes == null) s.Recipes = new Dictionary<string, int>();
+diff --git a/Assets/Scripts/Game/EventsScreen.cs b/Assets/Scripts/Game/EventsScreen.cs
+index 6072f2764ea920af87b3fa5a698aca81e210f773..265e45aec5584d4fd978db8e8aeb6ed0ad1125b4 100644
+--- a/Assets/Scripts/Game/EventsScreen.cs
++++ b/Assets/Scripts/Game/EventsScreen.cs
+@@ -78,59 +78,60 @@ namespace KkomaKnight.Game
+         const float MeCounterY = 82f;
+         /// <summary>
+         /// 순위 목록 줄 수 · 도전 팝업 줄 수 · 순위 보상 줄 수.
+         /// <para>
+         /// ⚑ T262 ⓑ·3항 — 더미 초상은 여기서 목록을 들고 있지 않는다. 정본은 <see cref="Profile.Icons"/> 하나이고
+         /// «어느 순위가 어느 얼굴인가» 는 <see cref="Profile.DummyIcon"/> 한 규칙이다(종전에는 <b>줄 번호</b>로 골라서
+         /// 도전 팝업(rank = i+2)과 순위 목록(rank = i+4)이 <b>같은 «도전자 4» 에 다른 얼굴</b>을 냈다).
+         /// </para>
+         /// </summary>
+         const int RankRows = 7, FoeRows = 5, RewardRows = 4;
+         /// <summary>
+         /// 시상대 2·3위 초상의 <b>프로필 프레임 색</b>(T262 ⓑ). 1위는 내 자리라 색도 내가 고른 것을 쓴다(<see cref="Profile.FrameKey"/>).
+         /// <para>
+         /// ⚑ <b>3위가 초록에서 파랑이 됐다 — 조각에 초록이 없다.</b> 레퍼런스 23 의 시상대는 노랑·보라·<b>초록</b>이고 종전 <c>ui.itemFrame.green</c> 이 그 색이었는데,
+         /// <c>ProfileFrame_02</c> 계열은 <b>노랑·파랑·빨강·자주·회색 다섯뿐</b>이다(<c>ProfileFrame_01</c> 에는 초록이 있지만 그것은 <b>다른 꼴의 조각</b>이라
+         /// 그것을 끼우면 주인이 지적한 «디자인이 다르다» 를 그대로 되풀이한다). 그래서 <b>색 한 칸을 잃더라도 꼴을 맞추는 쪽</b>을 골랐다 —
+         /// 주인이 말한 것이 «프레임 디자인» 이기 때문이다. 초록을 되찾고 싶으면 조각을 초록으로 <b>물들이는</b> 길뿐이고, 그것은 이 상수 한 줄이 아니라 새 카탈로그 키의 일이다.
+         /// </para>
+         /// </summary>
+         static readonly string PodiumFrame2 = Profile.FrameKeyPrefix + "plum", PodiumFrame3 = Profile.FrameKeyPrefix + "blue";
+         /// <summary>상인 상품 — <c>key</c> 는 <see cref="Core.ArenaShopData"/>(arenaShop.json)의 줄 이름이다.
+         /// <para>⚑ T514(주인 2026-09-13 «아레나 부분 상점에 다이아 파는 게 메인 상점에서 파는 다이아랑 모양이 다른데 · 통일시켜야지 메인 상점꺼로») —
+         /// 다이아 칸은 <c>hud.gem</c>(= 상단 바·메인 상점 값 아이콘과 <b>같은 그림</b>)이다. 여기만 <c>ui.iconGemPurple</c> 을 쓰고 있었다.</para></summary> 표에 없는 키는 한도·값이 «—» 로 난다(T209 · 레퍼런스에서 잘린 «전설 열쇠» 가 그렇다).</summary>
+         static readonly (string title, string icon, string key)[] Goods =
+         {
+-            ("다이아", "hud.gem", "gem"), ("무기 도안", "ui.iconScroll", "recipeWeapon"), ("갑옷 도안", "ui.iconScroll", "recipeArmor"), ("투구 도안", "ui.iconScroll", "recipeHelmet"),
+-            ("신발 도안", "ui.iconScroll", "recipeShoes"), ("반지 도안", "ui.iconScroll", "recipeRing"), ("목걸이 도안", "ui.iconScroll", "recipeNecklace"),
++            ("다이아", "hud.gem", "gem"), ("무기 도안", "recipe.weapon", "recipeWeapon"), ("갑옷 도안", "recipe.armor", "recipeArmor"), ("투구 도안", "recipe.helmet", "recipeHelmet"),
++            ("신발 도안", "recipe.shoes", "recipeShoes"), ("반지 도안", "recipe.ring", "recipeRing"), ("목걸이 도안", "recipe.necklace", "recipeNecklace"),
+             ("중세 열쇠", "ui.iconKeyBlue", "rareKey"), ("현대 열쇠", "ui.iconKeyPurple", "epicKey"), ("사이버 열쇠", "ui.iconKeyGold", "legendKey"), ("부활 토큰", "ui.iconRevive", "revive"),
+         };
+         static readonly (string label, string icon)[] Tiers = { ("브론즈", "ui.iconMedalBronze"), ("실버", "ui.iconMedalSilver"), ("골드", "ui.iconMedal"), ("플래티넘", "ui.iconGemBlue"), ("다이아", "ui.iconGemPurple") };
+         const string NoTime = "--:--:--";
+         /// <summary>아레나 껍데기 표시 이름 — 상대는 «도전자 N» · 내 자리는 <b>내가 지은 이름</b>(T96-profile 2단계 · 기본값이 종전 «꼬마기사» 라 안 고치면 화면 불변).</summary>
+         string MeName => Core.Nickname.Of(App != null ? App.Save : null);
+         static string FoeName(int rank) => "도전자 " + rank;
++        static string ArtKey(string key, string fallback) => App.Assets != null && App.Assets.Has(key) ? key : fallback;
+         /// <summary>껍데기 숫자 자리 — 값을 못 만들 때만 쓴다(계수 JSON 이 없을 때 · 0 을 쓰면 실제 값처럼 보인다).</summary>
+         const string Dash = "—";
+         /// <summary>도전 팝업(24)에 세우는 상대 5명의 순위 — 내가 1위(시상대 가운데)라 바로 아래 순위들이다(T81).</summary>
+         static int FoeRank(int i) => i + 2;
+ 
+         /// <summary>순위의 더미 전투력 글자(내 순위면 실제 전투력 · 계수 표가 없으면 «—») — T81 · 주인 2026-09-07.</summary>
+         string DummyPower(int rank)
+         {
+             var d = App != null && App.Data != null ? App.Data.ArenaDummy : null;
+             if (d == null) return Dash;
+             return ArenaNum(ArenaDummy.Power(d, App.Power(), rank));
+         }
+         /// <summary>순위의 더미 승점(🏆) 글자 — 계수 표가 없으면 «—».</summary>
+         string DummyScore(int rank)
+         {
+             var d = App != null && App.Data != null ? App.Data.ArenaDummy : null;
+             return d == null ? Dash : ArenaNum(ArenaDummy.Score(d, rank));
+         }
+ 
+         /// <summary>
+         /// 아레나 화면의 수 표기 — <b>콤마를 안 넣는다</b>(레퍼런스 실측: 24 의 «2624»·«976» · 25 의 «4000»).
+         /// <para>
+         /// 우리 기본 표기(<see cref="UiKit.FmtComma"/>)를 그대로 쓰면 «2,342» 가 되는데, 그 콤마 한 자가 상대 줄 pill 을 넘겨
+         /// 자동 크기를 하한 밑(35)으로 눌렀다 — T207 ② 전에는 uGUI 가 크기를 안 되써서 게이트에 안 걸렸을 뿐 <b>글자는 그때도 작았다</b>.
+         /// 그러니 이것은 «TMP 때문에 생긴 결함» 이 아니라 <b>TMP 가 드러낸 옛 결함</b>이고, 고칠 자리는 칸 폭이 아니라 표기다.
+@@ -259,51 +260,56 @@ namespace KkomaKnight.Game
+             }
+             Profile.Frame(_mePortrait, Profile.FrameKey(App.Save), Profile.CurrentIcon(App.Save));   // T262 ⓑ — 아바타를 바꾸면 시상대 1위도 따라간다
+         }
+ 
+         // ───────────────────────── ⑩ 던전 페이지 (20) ─────────────────────────
+         void BuildDungeon(RectTransform pg)
+         {
+             _ticketTexts.Clear(); _ticketDots.Clear();
+             RollTickets();   // T99 1항 — 하루가 바뀌었으면 던전마다 «2 미만이면 2로» 채운다(더하지 않는다)
+             TitleRow(pg, Layout.DgTitle, "ui.iconDungeon", "던전", "제목(Dungeons)");
+             UiKit.Tag(UiKit.Label(pg, Layout.DgSub.X, Layout.DgSub.Y, Layout.DgSub.W, Layout.DgSub.H, "던전 티켓은 매일 충전됩니다", TextSize.Body, Palette.Gray).transform, "부제");
+             for (int i = 0; i < Dungeons.Length; i++)
+             {
+                 var d = Dungeons[i]; float dy = i * Layout.DgCardPitch;
+                 var rect = i == 0 ? Layout.DgCard1 : Layout.DgCard2;
+                 var card = UiKit.Rect(pg, "Card:" + d.key); UiKit.Pct(card, rect);
+                 var body = UiKit.Spawn("ui.frameDarkBorder", card); UiKit.Stretch((RectTransform)body.transform);
+                 var fill = UiKit.Panel(card, "Fill", "fr.r12", CardBody); UiKit.Stretch(fill.rectTransform, 4, 4, 4, 4);
+                 // 제목 띠(카드 1 빨강 · 카드 2 파랑) — 왼쪽 이름 · 오른쪽 🎫 0/2
+                 var head = UiKit.Panel(card, "Head", "fr.r12", i == 0 ? DeepRed : CardBlue); UiKit.Pct(head.rectTransform, Shift(Layout.DgCardHead, dy).Within(rect));
+                 UiKit.Gradient(head.rectTransform, inset: HeadGradientInset);
+                 UiKit.Label(head.transform, 2.5f, 0, 60, 100, d.title, CardTitleSize, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyles.Bold;
+                 _ticketTexts.Add(new KeyValuePair<TMP_Text, string>(TicketPill(head.transform, new Layout.R(84, 12, 14, 76), d.ticket, TicketText(d.key)), d.key));
+                 // 그림(Environment 들판 + 길 + 소품 · 카드 1 = 붉은 사막(지옥) · 카드 2 = 흰 들판(설원))
+                 var pic = UiKit.Rect(card, "Pic"); UiKit.Pct(pic, Shift(Layout.DgCardPic, dy).Within(rect));
+-                Stage(pic, d.field, d.tint, d.props);
++                string dungeonArt = "ui.dungeon." + d.key;
++                if (App.Assets != null && App.Assets.Has(dungeonArt))
++                {
++                    var art = UiKit.Icon(pic, "Artwork", dungeonArt); UiKit.Stretch(art.rectTransform); art.preserveAspect = false;
++                }
++                else Stage(pic, d.field, d.tint, d.props);
+                 // T69-events: 그림 띠도 «칸» 이다 — 레퍼런스 20 의 그림은 위(제목 띠)·아래(카드 몸통)·양옆이 전부 검은 선으로 끊긴다(그림이 카드 안에서 따로 논다)
+                 UiKit.Bordered(pic);
+                 // «획득 가능» + 보상 아이콘(초록 프레임) 줄 · 입장(주황 · 빨간 !)
+                 var fl = Shift(FoundLabel, dy).Within(rect);
+                 UiKit.Label(card, fl.X, fl.Y, fl.W, fl.H, "획득 가능", TextSize.Aux, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Aux);
+                 // T251(주인 «획득 가능 부분에 실제 던전 클리어하면 획득하는 거를 … 세부 팝업에 있는 거 종류로») —
+                 //   여기서 그리던 것은 표에 손으로 박아 둔 «대비용» 배열이라 세부 팝업(21)과 원천이 갈려 있었다.
+                 //   이제 팝업과 같은 자리(RewardCells)에서 «종류만» 받는다.
+                 var icons = CardRewardIcons(d.key, d.rewards);
+                 var rew = UiKit.Rect(card, "Rewards"); var rr = Layout.DgRewards;
+                 // 줄 폭은 «개수 × 한 칸» 이다 — 표의 W(20) 가 **두 칸** 값이라 한 칸은 그 절반이다.
+                 //   옛 줄(`Length == 2 ? W : 40`)은 «둘이냐 아니냐» 로만 갈라서, 개수가 바뀌면 칸이 커지거나 겹쳤다.
+                 //   n=2 → 20(표 그대로 · §5 20 화면의 «보상 아이콘 줄» 행이 이 값을 잰다) · n=4 → 40(옛 값과 같다) · n=1 → 10.
+                 rr.W = Layout.DgRewards.W * 0.5f * Mathf.Max(1, icons.Length);
+                 UiKit.Pct(rew, Shift(rr, dy).Within(rect));
+                 // T72 ② 보상 아이콘 뒤 빛살(작은 칸이라 Effect_Light_02) — 던전 카드는 항상 보이므로 스크롤 제한 없이 돈다
+                 // T128 — 칸 색은 물건마다(레퍼런스 20 · 표에 없으면 초록). 21 세부 팝업의 보상 칸은 레퍼런스도 전부 초록이라 그대로 둔다.
+                 foreach (var cell in IconRow(rew, rr, icons, RewardFrameDefault, frameByIcon: true)) PlanLight(cell);
+                 var enter = UiKit.Button(card, "ui.btnOrange", "입장", Noop, Shift(Layout.DgEnter, dy).Within(rect)); enter.name = "EnterBtn"; ButtonPad(enter);
+                 // T99 6항 — 빨간 점은 «지금 할 일이 있을 때만»(티켓이 있거나 광고로 하나 받을 수 있다) · 상태가 바뀌면 Refresh 가 켜고 끈다
+                 var dot = AlertDot(enter);
+                 if (dot != null) { dot.SetActive(Dun == null || DungeonTickets.Ready(App.Save, Dun, d.key, Today())); _ticketDots.Add(new KeyValuePair<GameObject, string>(dot, d.key)); }
+                 string key = d.key; UiKit.Clickable(enter, () => OpenDungeonDetail(key));
+                 // T101 ⓒ + T149 — 카드 네 변을 감싸는 직사각형 링. 조립이 «끝난 뒤» 걸어야 형제 맨 뒤(= 맨 위)에 서서
+                 // 제목 띠·그림·보상 줄·입장 버튼이 링을 덮지 않는다(주인 계층 스샷의 순서 = Border 가 마지막 자식).
+@@ -311,70 +317,80 @@ namespace KkomaKnight.Game
+                 UiKit.Bordered(card, tint: CardRingInk);
+                 if (i == 0)
+                 {
+                     UiKit.Tag(card, "던전 카드 1"); UiKit.Tag(head.transform, "카드 제목 띠"); UiKit.Tag(pic, "카드 그림"); UiKit.Tag(enter, "입장 버튼"); UiKit.Tag(rew, "보상 아이콘 줄");
+                 }
+                 else UiKit.Tag(card, "던전 카드 2");
+             }
+             Foot(pg, PageDungeon, () => App.ShowScreen("lobby"));
+         }
+ 
+         // ───────────────────────── ⑫ 아레나(PvP) 페이지 (22) ─────────────────────────
+         void BuildPvp(RectTransform pg)
+         {
+             TitleRow(pg, Layout.ArTitle, "ui.iconPvp", "PvP", "제목(PvP)");
+             UiKit.Tag(UiKit.Label(pg, Layout.ArSub.X, Layout.ArSub.Y, Layout.ArSub.W, Layout.ArSub.H, "PvP 티켓은 매일 충전됩니다", TextSize.Body, Palette.Gray).transform, "부제");
+             var rect = Layout.ArCard;
+             var card = UiKit.Rect(pg, "Card:arena"); UiKit.Pct(card, rect);
+             var body = UiKit.Spawn("ui.frameDarkBorder", card); UiKit.Stretch((RectTransform)body.transform);
+             var fill = UiKit.Panel(card, "Fill", "fr.r12", CardBody); UiKit.Stretch(fill.rectTransform, 4, 4, 4, 4);
+             var head = UiKit.Panel(card, "Head", "fr.r12", ArenaRed); UiKit.Pct(head.rectTransform, Layout.ArCardHead.Within(rect));
+             UiKit.Gradient(head.rectTransform, inset: HeadGradientInset);
+             UiKit.Label(head.transform, 2.5f, 0, 60, 100, "아레나", CardTitleSize, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyles.Bold;
+             TicketPill(head.transform, new Layout.R(84, 12, 14, 76), "ui.iconTokenRed", "0/5");
+             // 경기장 그림 = 모래 들판 + 기둥(석주) + 돌
+             var pic = UiKit.Rect(card, "Pic"); UiKit.Pct(pic, Layout.ArCardPic.Within(rect));
+-            Stage(pic, "env.desert.field", new Color(0.93f, 0.82f, 0.55f), new[] { "env.monolith", "env.stoneBig", "env.monolith", "env.desert.Stone_Gray1_05" });
+-            var sky = UiKit.Panel(pic, "Sky", "fr.rect", Palette.Hex("#79C8F2")); UiKit.Pct(sky.rectTransform, 0, 0, 100, 42); sky.transform.SetSiblingIndex(1);
++            if (App.Assets != null && App.Assets.Has("ui.arena.entry"))
++            {
++                var art = UiKit.Icon(pic, "Artwork", "ui.arena.entry"); UiKit.Stretch(art.rectTransform); art.preserveAspect = false;
++            }
++            else
++            {
++                Stage(pic, "env.desert.field", new Color(0.93f, 0.82f, 0.55f), new[] { "env.monolith", "env.stoneBig", "env.monolith", "env.desert.Stone_Gray1_05" });
++                var sky = UiKit.Panel(pic, "Sky", "fr.rect", Palette.Hex("#79C8F2")); UiKit.Pct(sky.rectTransform, 0, 0, 100, 42); sky.transform.SetSiblingIndex(1);
++            }
+             // T69-events: 던전 카드와 같은 그림 띠 테두리(레퍼런스 22 의 경기장 그림도 위·아래가 검은 선으로 끊긴다) — 하늘을 끼운 «뒤»에 걸어 링이 맨 앞에 온다
+             UiKit.Bordered(pic);
+             var season = UiKit.Rect(card, "Season"); UiKit.Pct(season, Layout.ArSeason.Within(rect));
+             UiKit.Label(season, 0, 0, 100, 100, "시즌 종료까지: " + NoTime, TextSize.Aux, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Aux);
+             var enter = UiKit.Button(card, "ui.btnOrange", "입장", () => ShowPage(PageArena), Layout.ArEnter.Within(rect)); enter.name = "EnterBtn"; ButtonPad(enter); AlertDot(enter);
+             var tier = UiKit.Rect(card, "Tier"); UiKit.Pct(tier, Layout.ArTier.Within(rect));
+             var med = UiKit.Icon(tier, "Icon", "ui.iconMedalBronze"); UiKit.Pct(med.rectTransform, 0, 0, 24, 100);
+             UiKit.Label(tier, 28, 0, 72, 100, "브론즈", 34, Palette.White, TextAnchor.MiddleLeft).fontStyle = FontStyles.Bold;
+             UiKit.Bordered(card, tint: CardRingInk);   // T101 ⓒ + T149 — 던전 카드와 같은 규칙(조립 뒤 · 맨 마지막 형제 · 검정 α1)
+             UiKit.Tag(card, "아레나 카드"); UiKit.Tag(head.transform, "카드 제목 띠"); UiKit.Tag(pic, "카드 그림"); UiKit.Tag(season, "시즌 타이머"); UiKit.Tag(enter, "입장 버튼"); UiKit.Tag(tier, "티어 줄");
+             Foot(pg, PagePvp, () => App.ShowScreen("lobby"));
+         }
+ 
+         // ───────────────────────── ⑬ 아레나 입장 화면 (23) ─────────────────────────
+         void BuildArena(RectTransform pg)
+         {
+             // 시상대 무대 = 어두운 성 안(사각 프레임 조각) + 붉은 카펫 + 양쪽 기둥(어두운 상자) + 횃불 + 갈색 턱
+             var stage = UiKit.Panel(pg, "Stage", "fr.rect", Palette.Hex("#262A31")); UiKit.Pct(stage.rectTransform, Layout.AeStage); UiKit.Tag(stage.transform, "시상대 무대");
++            bool hasArenaArt = App.Assets != null && App.Assets.Has("ui.arena.entry");
++            if (hasArenaArt) { var art = UiKit.Icon(stage.transform, "Artwork", "ui.arena.entry"); UiKit.Stretch(art.rectTransform); art.preserveAspect = false; }
++            if (!hasArenaArt)
+             {
+                 var carpet = UiKit.Panel(stage.transform, "Carpet", "fr.rect", Palette.Hex("#5E1220")); UiKit.Pct(carpet.rectTransform, 39, 13, 22, 81);
+                 var pl = UiKit.Spawn("ui.frameDark", stage.transform); UiKit.Pct((RectTransform)pl.transform, 2, 8, 9, 88);
+                 var pr = UiKit.Spawn("ui.frameDark", stage.transform); UiKit.Pct((RectTransform)pr.transform, 89, 8, 9, 88);
+                 var f1 = UiKit.Icon(stage.transform, "Torch", "ui.fire"); UiKit.Pct(f1.rectTransform, 5, 8, 8, 12);
+                 var f2 = UiKit.Icon(stage.transform, "Torch", "ui.fire"); UiKit.Pct(f2.rectTransform, 87, 8, 8, 12);
+                 var ledge = UiKit.Panel(stage.transform, "Ledge", "fr.rect", Palette.Hex("#6B4A2E")); UiKit.Pct(ledge.rectTransform, 0, 94, 100, 6);
+             }
+             // 티어 제목 · 시즌 타이머 · 오른쪽 위 보상/상인
+             var tier = UiKit.Rect(pg, "TierTitle"); UiKit.Pct(tier, Layout.AeTier); UiKit.Tag(tier, "티어 제목");
+             // T170 — 티어 제목도 «아이콘 왼쪽 끝 + 왼쪽 정렬 글자» 라 덩어리가 왼쪽에 쏠려 있었다(던전·PvP 와 같은 꼴)
+             {
+                 var m = UiKit.Icon(tier, "Icon", "ui.iconMedalBronze");
+                 var mt = UiKit.Label(tier, 26, 0, 74, 100, "브론즈", TextSize.Title, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Title);
+                 mt.fontStyle = FontStyles.Bold;
+                 CenterTitle(m.rectTransform, mt, Layout.AeTier.W);
+                 _titlePlan.Add((tier, m.rectTransform, mt, Layout.AeTier.W));
+             }
+             var season = UiKit.Rect(pg, "Season"); UiKit.Pct(season, Layout.AeSeason); UiKit.Tag(season, "시즌 타이머");
+             { var c = UiKit.Icon(season, "Icon", "ui.iconClock"); UiKit.Pct(c.rectTransform, 0, 0, 10, 100); UiKit.Label(season, 12, 0, 88, 100, "시즌 종료까지: " + NoTime, TextSize.Aux, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Aux); }
+             var side = UiKit.Rect(pg, "SideIcons"); UiKit.Pct(side, Layout.AeSideIcons); UiKit.Tag(side, "우측 아이콘 열(2개)");
+             {
+                 var a = UiKit.Rect(side, "RewardsBtn"); UiKit.Pct(a, 0, 0, 100, 50); var ai = UiKit.Icon(a, "Icon", "ui.iconGiftBlue"); UiKit.Pct(ai.rectTransform, 15, 0, 70, 54); UiKit.Label(a, 0, 55, 100, 45, "보상", TextSize.Aux, Palette.White, kind: TextKind.Aux); UiKit.Clickable(a, OpenRankRewards);
+                 var b = UiKit.Rect(side, "MerchantBtn"); UiKit.Pct(b, 0, 50, 100, 50); var bi = UiKit.Icon(b, "Icon", "ui.iconMerchant"); UiKit.Pct(bi.rectTransform, 15, 0, 70, 54); UiKit.Label(b, 0, 55, 100, 45, "상인", TextSize.Aux, Palette.White, kind: TextKind.Aux); UiKit.Clickable(b, () => ShowPage(PageMerchant));
+             }
+@@ -393,90 +409,93 @@ namespace KkomaKnight.Game
+             UiKit.TagGroup(podium, "시상대 배너(3개)", b1, b2, b3);
+             { var you = UiKit.Panel(podium, "You", "fr.r12", Palette.Hex("#C2223B")); UiKit.Pct(you.rectTransform, 44.2f, 26.2f, 11.4f, 2.3f); UiKit.Label(you.transform, 0, 0, 100, 100, "나", 36, Palette.White, kind: TextKind.Aux); }
+             // 순위 목록(4위~ · 세로 스크롤 · 바닥 띠에 가린다)
+             var list = ScrollBox(pg, "RankList", Layout.AeList, RankRows * Layout.AeRowPitch, out var content); UiKit.Tag(list, "순위 목록");
+             for (int i = 0; i < RankRows; i++)
+             {
+                 var r = Layout.AeRow; r.Y += i * Layout.AeRowPitch;
+                 var row = Place(content, "RankRow:" + (i + 4), r, Layout.AeList.Y);
+                 RankItem(row, i + 4, Profile.DummyIcon(i + 4));
+                 if (i == 0) UiKit.Tag(row, "순위 줄(1칸)");
+             }
+             // T124 — 승급 안내 띠는 «불투명» 이다: 레퍼런스 23 도 목록 마지막 줄 위에 걸치지만 띠가 꽉 찬 어두운 막대라 뒤 줄이 안 비친다.
+             // α0.85 이던 동안에는 10위 줄의 흰 이름·트로피 숫자가 안내 글자 사이로 비쳐 두 글자가 서로 먹었다(screens 218 실측 · 게이트가 못 재는 종류).
+             var promo = UiKit.Panel(pg, "Promo", "fr.rect", Palette.Dim); UiKit.Pct(promo.rectTransform, Layout.AePromo); UiKit.Tag(promo.transform, "승급 안내");
+             UiKit.Label(promo.transform, 0, 0, 100, 100, "시즌이 끝나면 상위 순위가 승급합니다", TextSize.Body, Palette.White);
+             // 바닥: 뒤로(→ PvP 페이지) + 도전 🎫x1(→ 도전 팝업)
+             Foot(pg, null, () => ShowPage(PagePvp));
+             var ch = UiKit.Button(pg, "ui.btnOrange", "도전", OpenChallenge, Layout.AeChallenge); ch.name = "ChallengeBtn"; UiKit.Tag(ch, "도전 버튼");
+             TicketCost(ch, "ui.iconTokenRed");
+         }
+ 
+         // ───────────────────────── ⑯ 상인 페이지 (26) ─────────────────────────
+         void BuildMerchant(RectTransform pg)
+         {
+             var banner = UiKit.Panel(pg, "Banner", "fr.rect", Palette.Hex("#3F3532")); UiKit.Pct(banner.rectTransform, Layout.MeBanner); UiKit.Tag(banner.transform, "상인 배너");
++            bool hasMerchantArt = App.Assets != null && App.Assets.Has("ui.arena.merchant");
++            if (hasMerchantArt) { var art = UiKit.Icon(banner.transform, "Artwork", "ui.arena.merchant"); UiKit.Stretch(art.rectTransform); art.preserveAspect = false; }
++            if (!hasMerchantArt)
+             {
+                 // T209 ⓑ — 자리·색은 레퍼런스 `docs/ref/26_arena_shop.jpg` 의 배너(화면 y 8.0~23.9%)에 10% 격자를 얹어 잰 값이다(아래 % 는 전부 «배너 안» %).
+                 //   벽 0~82 rgb(63,52,48) · 계산대 상판 82~92 rgb(76,52,38) · 아래 갈색 턱 92~100 rgb(86,69,53)(표의 «아래 갈색 턱»).
+                 // 전에는 상판이 74 에서 시작하고 소품이 벽 가운데 떠 있었다 — 레퍼런스는 소품이 전부 상판에 «놓여» 있다.
+                 var counter = UiKit.Panel(banner.transform, "Counter", "fr.rect", Palette.Hex("#4C3426")); UiKit.Pct(counter.rectTransform, 0, MeCounterY, 100, 10);
+                 var ledge = UiKit.Panel(banner.transform, "Ledge", "fr.rect", Palette.Hex("#564535")); UiKit.Pct(ledge.rectTransform, 0, 92, 100, 8);
+                 // 금화만 상판(82)이 아니라 **80** 에서 멈춘다 — 레퍼런스 자루도 그렇고(y 45~80),
+                 // 그 아래 2%p 가 시즌 타이머 글자(`Layout.MeSeason` · 배너 76.7~91.2%)가 지나가는 자리다.
+                 // 회차 1 에서 51 로 두었더니 노란 금화가 «시즌 종료까지» 글자를 덮었다(run 431 실측: 금화 56.8~84.8).
+                 var coins = UiKit.Icon(banner.transform, "Coins", "pi.coins", Palette.Yellow); UiKit.Pct(coins.rectTransform, 17, 46, 16, 40);           // 레퍼런스 금화 자루 자리(x 19~31)
+                 var chest = UiKit.Icon(banner.transform, "Chest", "ui.iconChestRed"); UiKit.Pct(chest.rectTransform, 61.5f, 43, 20, 48);                  // 레퍼런스 궤짝 자리(x 64~79)
+                 var bar1 = UiKit.Icon(banner.transform, "Barrel", "env.barrel"); UiKit.Pct(bar1.rectTransform, 78, 55.5f, 10, 36);                        // 레퍼런스 작은 주머니 자리(x 80~86)
+                 // 상인은 «가판 아이콘»(ui.iconMerchant)이 아니라 **사람**이다 — 레퍼런스의 상인은 대머리에 로브를 입고 계산대 뒤에 서 있다.
+                 // 조각 = GUI Pro CharacterParts 05 두 장(머리 163×124 · 몸 152×125 · 둘 다 여백 없이 꽉 찬 그림).
+                 // 칸의 가로:세로는 조각의 가로:세로에 맞춰 잡았다 — preserveAspect 는 남는 쪽에 여백을 만들어 그림을 가운데로 보내므로,
+                 // 칸 비율이 어긋나면 상인이 상판에서 «뜬다»(옛 소품 넷이 그렇게 떠 있었다). 기준 프레임에서 배너 한 칸의 가로:세로는 2.903:1 이다.
+                 var body = UiKit.Icon(banner.transform, "Keeper", "env.keeperBody", Palette.Hex("#CF6585")); UiKit.Pct(body.rectTransform, 41.8f, 52, 13.4f, 32);
+                 var head = UiKit.Icon(banner.transform, "Head", "env.keeperHead"); UiKit.Pct(head.rectTransform, 42.2f, 26, 12.6f, 28);
+                 UiKit.TagGroup(banner.transform, "상인(머리+몸)", body.rectTransform, head.rectTransform);
+             }
+             var title = UiKit.Label(pg, Layout.MeTitle.X, Layout.MeTitle.Y, Layout.MeTitle.W, Layout.MeTitle.H, "상인", TextSize.Title, Palette.White, kind: TextKind.Title); title.fontStyle = FontStyles.Bold; title.gameObject.name = "Title"; UiKit.Tag(title.transform, "제목(Merchant)");
+             var season = UiKit.Rect(pg, "Season"); UiKit.Pct(season, Layout.MeSeason); UiKit.Tag(season, "시즌 타이머");
+             { var c = UiKit.Icon(season, "Icon", "ui.iconClock"); UiKit.Pct(c.rectTransform, 0, 0, 8, 100); UiKit.Label(season, 10, 0, 90, 100, "시즌 종료까지: " + NoTime, TextSize.Aux, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Aux); }
+             int rows = (Goods.Length + 2) / 3;
+             var grid = ScrollBox(pg, "Goods", Layout.MeGrid, (rows - 1) * Layout.MeRowPitch + Layout.MeCard.H + 1.5f, out var content); UiKit.Tag(grid, "상품 격자");
+             // T72 4항 — 상품 11칸의 빛살은 «보이는 칸만» 돈다(스크롤할 때마다 다시 고른다)
+             _goodsScroll = grid.GetComponent<ScrollRect>();
+             if (_goodsScroll != null) _goodsScroll.onValueChanged.AddListener(_ => UpdateGoodsSpin());
+             for (int i = 0; i < Goods.Length; i++)
+             {
+                 var g = Goods[i]; var r = Layout.MeCard; r.X += (i % 3) * Layout.MeColPitch; r.Y += (i / 3) * Layout.MeRowPitch;
+                 var card = Place(content, "Goods:" + i, r, Layout.MeGrid.Y);
+                 UiKit.Ensure<RectMask2D>(card.gameObject);   // CardFrame_04 는 964px 폭 원본이라 고정 폭 자식(제목 띠)이 29% 카드 밖으로 삐져나온다 — 옆 카드가 없는 마지막 칸에서 조각이 보였다(T43 비평 회차 1 · 26 감점 원인)
+                 var frame = UiKit.Spawn("ui.cardFrame.blue", card); UiKit.Stretch((RectTransform)frame.transform);
+                 // 제목 = 프리팹의 Text_Title 자리(원본 CardFrame_04_BasePrefab_LightBg 의 «Text» 글자 · ShopScreen 상자 카드와 같은 식) — 따로 Label 을 얹으면 «Text» 가 활성으로 남아 T50(CI #71·#75 «[상인 페이지] 영문 데모 글자: Text»)
+                 var gt = UiKit.SetText(frame.transform, "Text_Title", g.title, Palette.White, TextSize.Body);
+                 if (gt != null) { UiKit.Pct(gt.rectTransform, 4, 2, 92, 15); gt.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); gt.fontStyle = FontStyles.Bold; gt.enableAutoSizing = true; gt.fontSizeMin = TextSize.BestFitMin; gt.fontSizeMax = TextSize.Body; }
+                 else UiKit.Label(card, 4, 2, 92, 15, g.title, TextSize.Body, Palette.White).fontStyle = FontStyles.Bold;
+                 var ic = UiKit.Rect(card, "IconCell"); UiKit.Pct(ic, 26, 20, 48, 38);
+-                var f = UiKit.Spawn("ui.itemFrame.blue", ic); UiKit.Stretch((RectTransform)f.transform); var im = UiKit.Icon(ic, "Icon", g.icon); UiKit.Pct(im.rectTransform, 15, 15, 70, 70);
++                var f = UiKit.Spawn("ui.itemFrame.blue", ic); UiKit.Stretch((RectTransform)f.transform); var im = UiKit.Icon(ic, "Icon", ArtKey(g.icon, Recipes.IconKey)); UiKit.Pct(im.rectTransform, 15, 15, 70, 70);
+                 GearUi.DarkFrame(f.transform);   // T115 — 워커 I 가 «우연히 통과» 로 지목한 자리(f08a7fe 커밋 메시지)
+                 // T72 ② 상품 아이콘 뒤 빛살(주인 «상점 아이템 … 아이콘 뒤에 Effect_Light» · 상인 페이지도 상점이다)
+                 PlanLight(ic); _goodsCells.Add(ic);
+                 // T209 — 한도·값·개수 배지는 arenaShop.json 에서 온다(코드에 숫자 없음 · 값의 정본은 주인 레퍼런스 26). 표에 없거나 0 인 칸은 종전대로 «—».
+                 var shop = App != null && App.Data != null ? App.Data.ArenaShop : null;
+                 var ge = shop != null ? shop.Of(g.key) : null;
+                 if (ge != null && ge.HasBadge) { var bg = UiKit.Label(ic, 52, 62, 44, 32, ge.Badge.ToString(), TextSize.Aux, Palette.White, TextAnchor.MiddleRight, kind: TextKind.Aux); bg.name = "Badge"; bg.fontStyle = FontStyles.Bold; }
+                 var lim = UiKit.Label(card, 4, 60, 92, 15, shop != null ? shop.Limit(ge, "한도 " + Dash) : "한도 " + Dash, TextSize.Aux, Palette.Ink, kind: TextKind.Aux); lim.name = "Limit";
+                 var price = UiKit.Panel(card, "Price", "fr.r12", Palette.Cream); UiKit.Pct(price.rectTransform, 5, 79, 90, 17);
+                 var coin = UiKit.Icon(price.transform, "Icon", "ui.iconArenaCoin"); UiKit.Pct(coin.rectTransform, 8, 12, 22, 76);
+                 var pl = UiKit.Label(price.transform, 32, 0, 62, 100, shop != null ? shop.Cost(ge, Dash) : Dash, TextSize.Body, Palette.Ink, TextAnchor.MiddleLeft); pl.name = "Cost"; pl.fontStyle = FontStyles.Bold;
+                 UiKit.Clickable(card, Noop);
+                 if (i == 0) UiKit.Tag(card, "상품 카드(1칸)");
+             }
+             Foot(pg, null, () => ShowPage(PageArena));
+         }
+ 
+         // ───────────────────────── ⑪ 던전 세부 팝업 (21) ─────────────────────────
+         /// <summary>
+         /// 던전 세부 팝업(21). <paramref name="view"/> = <b>보고 있는 층</b>(T291 5회차 · 0 이면 «도전 층» = 깬 최고층 + 1).
+         /// <para>
+         /// ◀▶ 는 <b>이 함수를 다시 부른다</b> — 칸만 갈아 끼우지 않는다. 이 파일이 이미 그 길을 쓰고 있고(소탕 뒤 <c>onClose</c> 가 팝업을 다시 연다),
+         /// <c>Overlay.Begin()</c> 이 팝업 층을 통째로 비우므로 <b>반쯤 지운 화면</b>이 생길 자리가 없다. 층은 보기만 바뀌고
+         /// <b>«도전» 은 언제나 도전 층 · «소탕» 은 언제나 최고층</b>이다(§2 T291 2항).
+         /// </para>
+@@ -808,51 +827,51 @@ namespace KkomaKnight.Game
+ 
+         /// <summary>표에서 «세부 팝업 칸» 을 뽑는 규칙(위 <see cref="RewardCells"/> 의 static 짝 · <see cref="CardRewardKinds"/> 가 이것을 쓴다).</summary>
+         /// <param name="floor">T291 — 몇 층의 보상을 그릴 것인가(0 이면 «표의 한 벌» = 층이 없던 시절 그대로).
+         /// 층이 있는 던전(원정)은 층마다 레시피가 갈리고 3의 배수 층엔 키가 붙으므로 <b>이 수가 없으면 칸이 거짓말을 한다</b>.</param>
+         static List<RewardCellDef> CellsOf(DungeonData dun, string key, string[] fallbackIcons, int floor = 0)
+         {
+             var list = new List<RewardCellDef>();
+             var e = dun != null ? dun.Of(key) : null;
+             if (e == null)
+             {
+                 var icons = new List<string>(fallbackIcons);
+                 while (icons.Count < 4) icons.Add(icons.Count == 3 ? "ui.coin" : "ui.bookBlue");
+                 for (int i = 0; i < icons.Count; i++) list.Add(new RewardCellDef(icons[i], "", i < 2));
+                 return list;
+             }
+             Add(list, DungeonSweep.FloorReward(e, floor, true), true);
+             Add(list, DungeonSweep.FloorReward(e, floor, false), false);
+             return list;
+         }
+         static void Add(List<RewardCellDef> list, DungeonData.Reward r, bool first)
+         {
+             if (r == null) return;
+             if (r.PetEgg > 0) list.Add(new RewardCellDef("pet.egg", GearUi.CellQtyText(r.PetEgg), first));
+             if (r.Gold > 0) list.Add(new RewardCellDef("ui.coin", GearUi.CellQtyText(r.Gold), first));
+             // T291 — 층 보상 두 가지. 아이콘은 각 절이 갖고 있는 것을 그대로 쓴다(여기서 새로 정하지 않는다).
+-            if (r.Recipe > 0 && !string.IsNullOrEmpty(r.RecipePart)) list.Add(new RewardCellDef(Recipes.Icon(r.RecipePart), GearUi.CellQtyText(r.Recipe), first));
++            if (r.Recipe > 0 && !string.IsNullOrEmpty(r.RecipePart)) list.Add(new RewardCellDef(ArtKey(Recipes.Icon(r.RecipePart), Recipes.IconKey), GearUi.CellQtyText(r.Recipe), first));
+             if (r.Key > 0 && !string.IsNullOrEmpty(r.KeyItem)) list.Add(new RewardCellDef(GachaKeys.Icon(r.KeyItem), GearUi.CellQtyText(r.Key), first));
+         }
+         /// <summary>
+         /// T251 — 던전 <b>카드</b>(20)의 «획득 가능» 줄에 그릴 아이콘. <b>세부 팝업(21)과 같은 원천</b>(<see cref="RewardCells"/>)에서
+         /// <b>«종류» 만</b> 뽑는다(주인 «세부 팝업에 있는 거 종류로 보여주면 됨»): 같은 종류가 «첫 클리어»·«이후» 로 두 번 나와도 <b>한 번만</b>.
+         /// <para>수량 글자와 «최초» 배지는 <b>안 넣는다</b> — 그것은 세부 팝업의 몫이다(T123). 카드는 «무엇이 나오나» 만 말한다.</para>
+         /// <para>
+         /// ⚠ <b>표가 없으면 지금까지 그리던 배열을 그대로 쓴다</b> — <see cref="RewardCells"/> 의 «네 칸이 될 때까지 채우기» 는
+         /// <b>세부 팝업이 넉 칸을 요구해서</b> 있는 것이라(레퍼런스 21), 그것을 카드에 들이면 <b>없는 보상 두 개</b>를 더 그리게 된다.
+         /// 표가 실린 지금은 이 갈래로 안 오지만, «대비용» 이 대비용답게 남으려면 여기서 갈라야 한다.
+         /// </para>
+         /// </summary>
+         string[] CardRewardIcons(string key, string[] fallbackIcons)
+             => CardRewardKinds(Dun, key, fallbackIcons, DungeonSweep.Challenge(App != null ? App.Save : null, Dun, key));
+ 
+         /// <summary>
+         /// 위 규칙의 <b>static 짝</b> — 자가 «몇 칸이 그려져야 하나» 를 물어보는 자리다(T251 확인 회차 · 워커 J).
+         /// <para>
+         /// <b>왜 냈나</b> — 그 개수를 자에 <b>수로 박아 두었더니</b>(«카드 2 보상 아이콘 4») T251 이 원정을 «골드 1칸» 으로 뜻하고 고친 날
+         /// 자 둘이 같이 빨개졌다(CI run 645). 고칠 때 다시 수를 박으면 표가 바뀌는 날 또 같은 일이 난다.
+         /// 자가 <b>규칙 그 자체</b>에 물어보면 표가 바뀌어도 안 깨지고, 그리는 쪽만 틀어졌을 때는 그대로 빨개진다(결정 704·785 와 같은 결).
+         /// </para>
+         /// </summary>
+         public static string[] CardRewardKinds(DungeonData dun, string key, string[] fallbackIcons, int floor = 0)
+         {
+@@ -1175,79 +1194,94 @@ namespace KkomaKnight.Game
+                 UiKit.Pct(grp, 6, 44, 88, 30);
+                 var h = grp.GetComponent<HorizontalLayoutGroup>(); if (h != null) h.childAlignment = TextAnchor.MiddleCenter;
+             }
+             var nt = UiKit.SetText(piece, "Text_Name", who, Palette.White, 40); if (nt != null) nt.fontStyle = FontStyles.Bold;
+             UiKit.SetText(piece, "Text_Value", DummyScore(rank), Palette.Yellow, 40);
+             return b;
+         }
+ 
+         /// <summary>Social_Ranking 프리팹을 <b>꺼진 채로</b> 한 번 세운다 — 시상대 배너 조각 3개를 떼어 쓰고 바로 버린다(데모 화면 전체를 켜지 않는다 · T62).</summary>
+         static Transform RankProto(RectTransform pg)
+         {
+             var hold = UiKit.Rect(pg, "RankProto"); hold.gameObject.SetActive(false);
+             UiKit.Spawn("ui.socialRanking", hold);
+             return hold;
+         }
+ 
+         /// <summary>
+         /// 순위 줄 = GUI Pro <c>ListItem_Ranking</c> 프리팹 그대로(어두운 줄 프레임 · 등수 · 초상 · 이름 · 아래 배지 줄 · 오른쪽 🏆) —
+         /// 본래 크기 988×158 이 표 ⑮ «순위 줄»(95.1%×6.7% = 1027×157) 과 같아 늘려 넣기만 하면 레퍼런스 23 줄 구성이 그대로 선다(T62).
+         /// 우리 것으로 바꾸는 건 글자 넷과 아이콘 둘뿐 — 길드 배지 자리는 레퍼런스의 «칼 + 전투력» 줄로 쓴다.
+         /// </summary>
+         void RankItem(RectTransform row, int rank, string icon)
+         {
+             var item = UiKit.Spawn("ui.listRanking", row); var irt = (RectTransform)item.transform; UiKit.Stretch(irt);
+             DarkenListFrame(irt);
++            if (App.Assets != null && App.Assets.Has("ui.arena.rankRow"))
++            {
++                var art = UiKit.Icon(row, "Artwork", "ui.arena.rankRow"); UiKit.Stretch(art.rectTransform); art.preserveAspect = false; art.transform.SetAsFirstSibling();
++                HideListFrame(irt);
++            }
+             UiKit.SetText(irt, "Text_RankingNum", rank.ToString(), Palette.Gray, 44, TextKind.Aux);
+             var nt = UiKit.SetText(irt, "Text_Name", FoeName(rank), Palette.White, 44); if (nt != null) nt.fontStyle = FontStyles.Bold;
+             UiKit.SetText(irt, "Text_Value", DummyScore(rank), Palette.Yellow, 40);
+             UiKit.Hide(irt, "Icon_NoGuild", "Text_NoGuild");
+             UiKit.Show(irt, "Icon_GuildBadge", true); UiKit.Show(irt, "Text_GuildName", true);
+             UiKit.SetSprite(irt, "Icon_GuildBadge", "ui.battle", Palette.White);
+             var gt = UiKit.SetText(irt, "Text_GuildName", DummyPower(rank), Palette.Orange, 36, TextKind.Aux);
+             if (gt != null) _dummyPowerTexts.Add(new KeyValuePair<TMP_Text, int>(gt, rank));
+             var face = UiKit.Find(irt, "ProfileArea");
+             if (face != null)
+             {
+                 face.name = "Face";
+                 // T262 ⓑ — 줄 초상도 «프로필과 같은 조각» 이다(주인 지시 2항은 23 의 시상대와 «순위 줄» 을 같이 든다).
+                 // 종전에는 조각(ListItem_Ranking)이 달고 온 제 그림(Character)에 스프라이트만 갈아 끼웠다 — 그러면
+                 // 조각이 바뀌는 날 이 줄만 다른 테두리가 되고, 그것이 주인이 «디자인이 다르네» 라고 짚은 꼴이다.
+                 Profile.Frame(face as RectTransform, Profile.FrameKeyPrefix + Profile.Colors[0], icon);
+             }
+         }
+         /// <summary>
+         /// 줄 프레임 색만 어둡게(T62 회차 1 감점) — <c>ListItem_Ranking</c> 이 물고 오는 <c>ListFrame_02</c> 는 Theme_Light 의 <b>밝은 크림</b> 줄이라
+         /// 레퍼런스 23(어두운 바탕 위 어두운 줄)과 정반대이고 그 위의 흰 이름 글자가 안 읽혔다. 조각(테두리 스프라이트·9-slice)은 그대로 두고 색만 바꾼다.
+         /// </summary>
+         static void DarkenListFrame(Transform root)
+         {
+             var frame = UiKit.Find(root, "ListFrame_02"); if (frame == null) return;
+             var bg = UiKit.Find(frame, "Normal/Bg"); if (bg != null) { var im = bg.GetComponent<Image>(); if (im != null) im.color = RowBody; }
+             var left = UiKit.Find(frame, "Normal/BgLeft"); if (left != null) { var im = left.GetComponent<Image>(); if (im != null) im.color = RowLeft; }
+             var border = UiKit.Find(frame, "Normal/Border1"); if (border != null) { var im = border.GetComponent<Image>(); if (im != null) im.color = RowBorder; }
+         }
++        static void HideListFrame(Transform root)
++        {
++            var frame = UiKit.Find(root, "ListFrame_02");
++            if (frame == null) return;
++            foreach (var path in new[] { "Normal/Bg", "Normal/BgLeft", "Normal/Border1" })
++            {
++                var visual = UiKit.Find(frame, path);
++                if (visual != null) visual.gameObject.SetActive(false);
++            }
++        }
+ 
+         static TMP_Text Pill(RectTransform row, Layout.R r, string icon, string text, Color color)
+         {
+             var p = UiKit.Panel(row, "Pill", "fr.r12", Palette.Hex("#1E1E1E")); UiKit.Pct(p.rectTransform, r);
+             var ic = UiKit.Icon(p.transform, "Icon", icon); UiKit.Pct(ic.rectTransform, 6, 10, 26, 80);
+             // T207 ③ — 글자가 쓰는 폭을 아이콘 바로 뒤(32%)부터 칸 끝까지로 넓혔다. 60% 로는 네 자리 수가 본문 하한(40)에 안 들어간다
+             //   (워커 E 의 셈: 필요 폭 133.7px ↔ 옛 구도의 천장 126.5px · 결정 608). 아이콘은 6~32% 라 겹치지 않는다.
+             var t = UiKit.Label(p.transform, 32, 0, 68, 100, text, TextSize.Body, color, TextAnchor.MiddleLeft); t.fontStyle = FontStyles.Bold;
+             return t;
+         }
+         /// <summary>공통 팝업 위에 레퍼런스의 <b>평평한 제목 띠</b> — 리본(Title 조각)은 끄고 박스 윗변에 색 띠 + 굵은 흰 글자(워커 결정 기록).</summary>
+         static void FlatHead(RectTransform box, Layout.R boxRect, Layout.R headRect, Color color, string title)
+         {
+             foreach (var key in new[] { "ui.title.red", "ui.titleBrown", "ui.title.tangerine" }) { var rb = UiKit.Find(box, key); if (rb != null) rb.gameObject.SetActive(false); }
+             var head = UiKit.Panel(box, "Head", "fr.r12", color); UiKit.Pct(head.rectTransform, headRect.Within(boxRect)); head.raycastTarget = true; UiKit.Tag(head.transform, "제목 띠");
+             // T150 ⓒ — 주인 인스펙터 값: 앵커는 그대로 두고 offset 만 좌·상·우 1px 안쪽(아래 0). 제목 띠가 팝업 테두리 선을 밟지 않는다.
+             var hrt = head.rectTransform; hrt.offsetMin = new Vector2(HeadInsetPx, 0f); hrt.offsetMax = new Vector2(-HeadInsetPx, -HeadInsetPx);
+             UiKit.Gradient(head.rectTransform, inset: HeadGradientInset);
+             UiKit.Label(head.transform, 4, 0, 92, 100, title, TextSize.Title, Palette.White, kind: TextKind.Title).fontStyle = FontStyles.Bold;
+             UiKit.Tag(box, "팝업 박스");
+         }
+         /// <summary>
+         /// 팝업 상자가 달고 온 테두리(«Border» 계열 직계 자식)를 <b>맨 마지막 형제</b>로 올린다 — T150 ⓑ.
+         /// 형제 맨 뒤 = 맨 위에 그려짐이라, 뒤에 붙인 제목 띠·그림·버튼이 네 변의 선을 덮지 않는다.
+         /// <para>
+diff --git a/Assets/Scripts/Game/LobbyPopups.cs b/Assets/Scripts/Game/LobbyPopups.cs
+index 86d5891c2f5a637e85f31bf413ace89e1a364833..958c188e5723f90acd4c9a40abf615b6f9794a1b 100644
+--- a/Assets/Scripts/Game/LobbyPopups.cs
++++ b/Assets/Scripts/Game/LobbyPopups.cs
+@@ -2,50 +2,55 @@ using System;
+ using System.Collections.Generic;
+ using DG.Tweening;
+ using KkomaKnight.Core;
+ using TMPro;
+ using UnityEngine;
+ using UnityEngine.UI;
+ 
+ namespace KkomaKnight.Game
+ {
+     /// <summary>
+     /// 로비 사이드 팝업 껍데기 (T44 · 주인 2026-09-06 «UI 는 무조건 레퍼런스 기준» · ⓔ «시스템이 없는 화면은 레이아웃 껍데기»):
+     /// 퀘스트(<c>docs/ref/15_quest.jpg</c> · 표 ⑳) · 출석(<c>16</c> · ㉑) · 데일리 기프트(<c>17</c> · ㉒) 는 <b>팝업</b>(공통 팝업 문법 <see cref="UiKit.Popup"/> · 배경 탭 = 닫기),
+     /// 특권(<c>11</c> · ⑲ · <see cref="PrivilegeScreen"/>) 은 <b>페이지</b>(상단 재화 바 + 뒤로 ◀ · 탭 바 없음).
+     /// <b>T78(주인 2026-09-07)</b>: 7일 챌린지(18 · ㉓) 팝업과 시즌 패스(19 · ㉔) 페이지는 삭제 · 퀘스트 팝업은 GUI Pro <c>Progression_Mission_02</c> 프리팹으로 교체했다.
+     /// 시스템이 없으므로 <b>전부 표시만</b> — 버튼은 눌러도 아무 일 없음 · 숫자는 0(레퍼런스 숫자를 베끼지 않는다 · 타이머는 «--:--:--») · 글자는 레퍼런스 글자를 우리말로.
+     /// 재료 = GUI Pro 조각만(ui.popup 패널 · Title_01 리본 · ItemFrame_01 칸 · fr.r12/fr.rect 9-slice · 아이콘 · 버튼 · 슬라이더 · Environment 들판/길/나무) · 코드 도형 0 · 새 그림 0.
+     /// 배치 = <see cref="Layout"/> ⑲~㉔ 상수(프레임 % · ±3%p) · 비평 이름표(T46)는 표의 «요소» 글자 그대로.
+     /// 진입 = <see cref="LobbyScreen.OnSide"/>(사이드 아이콘 4 · T78 로 배너·성·스타터팩·7일 챌린지 진입은 사라졌다). 시스템이 생기면 각 함수의 글자·숫자 자리에 데이터를 넣는다(배치는 그대로).
+     /// </summary>
+     public static class LobbyPopups
+     {
+         public const string Dashes = "--:--:--";
+ 
+         // ───────────────────────── 공통 조각 ─────────────────────────
+         static Layout.R Sh(Layout.R r, float dx, float dy) => new Layout.R(r.X + dx, r.Y + dy, r.W, r.H);
++        static string RecipeIcon(string part)
++        {
++            string key = Recipes.Icon(part);
++            return App.Assets != null && App.Assets.Has(key) ? key : Recipes.IconKey;
++        }
+ 
+         /// <summary>리본/명판 조각(Popup 이 상자 윗변 가운데에 세운 것)을 표의 자리·크기로 — 아랫변이 상자 윗변에 닿게(리본은 상자 «위»에 걸친다).</summary>
+         static RectTransform Ribbon(RectTransform box, string key, Layout.R ribbonR, Layout.R boxR)
+         {
+             var rib = UiKit.Find(box, key); if (rib == null) return null;
+             var rr = (RectTransform)rib; rr.sizeDelta = UiKit.PxSize(ribbonR);
+             float cx = (ribbonR.X + ribbonR.W / 2f - (boxR.X + boxR.W / 2f)) / 100f * UiKit.FrameW;
+             float cy = (boxR.Y - (ribbonR.Y + ribbonR.H / 2f)) / 100f * UiKit.FrameH;
+             rr.anchoredPosition = new Vector2(cx, cy);
+             // 명판 글자 = 제목 종류(T63 · 60 · 리본이 좁으면 bestFit 으로 32 까지)
+             // T361 — 상자 그림의 «위쪽만» 리본 몸통 밑까지 늘린다(상자 rect 는 그대로).
+             SealRibbonSeam(box, rr);
+             var t = rr.GetComponentInChildren<TMP_Text>(true); if (t != null) { t.fontSize = TextSize.Title; t.enableAutoSizing = true; t.fontSizeMin = TextSize.BestFitMin; t.fontSizeMax = TextSize.Title; TextAudit.Mark(t, TextKind.Title); RibbonTextFit(t); UiKit.EnsureOutline(t); }
+             return rr;
+         }
+ 
+         /// <summary>
+         /// T361(주인 2026-09-10 «타이틀 감싸는 프레임들이 아래 팝업이랑 거리가 떨어져 있어 거슬림 · 팝업에 상단 부분만 좀 늘려서 이어진 것처럼») —
+         /// 상자 <b>그림</b>(조각의 <c>Bg</c>·<c>Border</c>·<c>DecoLine</c> · 또는 프리팹 팝업이 물고 온 <c>Popup_Box_*</c> 조각)의 <b>위 변만</b>
+         /// «리본 몸통 밑단 + 조각 위 테두리 두께» 까지 올린다 — 상자 위 검은 선이 리본 몸통 <b>아래</b> 로 들어가 숨는다.
+         /// <para>
+         /// <b>왜 «그림» 만인가(3회차 ⚠ · 결정 1015)</b> — 상자 <c>RectTransform</c> 을 키우면 안쪽 내용이 전부 <c>.Within(B)</c> 로 놓여 있어 통째로 아래로 밀린다.
+         /// 조각의 면·테두리는 상자 안에서 <b>전부 stretch(0,0)~(1,1)</b> 인 자식이라(프리팹 실측 · 15·16 의 <c>Popup_Box_01_Basic</c> 도 그렇다)
+         /// 그 <c>offsetMax.y</c> 만 올리면 내용은 한 픽셀도 안 움직이고 그림만 위로 자란다 — 주인이 말한 «상단 부분만 늘려서» 그대로다.
+         /// </para>
+@@ -387,51 +392,51 @@ namespace KkomaKnight.Game
+         /// <summary>새로고침 시간 글자의 꼴(자가 읽는 계약) — «새로고침까지 » 뒤에 hh:mm:ss(리치 텍스트 색 태그 안).</summary>
+         public static readonly System.Text.RegularExpressions.Regex RefreshClock = new System.Text.RegularExpressions.Regex(@"새로고침까지 <color=#[0-9A-Fa-f]{6}>\d{2,}:\d{2}:\d{2}</color>");
+ 
+         /// <summary>
+         /// 퀘스트 메달 트랙의 <b>한 칸</b>을 받아 <paramref name="got"/> 에 담는다(지급 한 곳 · T391).
+         /// <para>
+         /// 칸 하나를 누르는 길과 «전부 받기» 가 <b>같은 함수</b>를 쓴다 — 둘로 두면 한쪽만 고쳐지는 날이 온다
+         /// (T292 3항의 «무작위 레시피» 갈래가 바로 그렇게 어긋났던 자리다 · 결정 853).
+         /// </para>
+         /// ⚠ <b>부르기 전에 <see cref="QuestRun.CanClaim"/> 로 물어야 한다</b> — 여기서는 «못 받으면 false» 로만 돌려주고 아무것도 안 바꾼다.
+         /// ⚠ 저장·새로 그리기(<c>Persist</c>·<c>Refresh</c>)와 리워드 팝업은 <b>부르는 쪽</b>이 한다(여러 칸을 받고 <b>한 번만</b> 하려고).
+         /// </summary>
+         static bool ClaimTrackStep(App app, bool daily, int idx, List<RewardPopup.Item> got)
+         {
+             var d2 = app != null && app.Data != null ? app.Data.Quest : null; if (d2 == null) return false;
+             var track = daily ? d2.Daily : d2.Weekly;
+             if (track == null || idx < 0 || idx >= track.Steps.Count) return false;
+             var step = track.Steps[idx];
+             // T292 3항 — 무작위 레시피(recipeRandom)가 든 칸은 **난수·레시피 표를 주는 갈래**로 받는다(옛 4인자 갈래는 그 칸에서 일부러 false 다 · 결정 853).
+             //   리워드 팝업은 «부위별 몇 개»(given)로 보여 준다 — «두루마리 ×20» 한 칸이 아니라 «투구 ×4 · 무기 ×3 …»(주인 «무작위로 20개»가 눈에 보이는 자리).
+             var rng = new Mulberry32((uint)Environment.TickCount ^ 0x7F4A7C15u);
+             if (!QuestRun.Claim(app.Save, d2, daily, idx, rng, app.Data.Recipe, out var given)) return false;
+             if (got != null)
+             {
+                 foreach (var rw in step.Rewards) if (rw.Item != QuestRun.ItemRecipeRandom) got.Add(RewardPopup.Item.Of(QuestRewardIcon(rw), UiKit.FmtQty(rw.Amount), amount: (int)rw.Amount));
+-                if (given != null) foreach (var kv in given) got.Add(RewardPopup.Item.Of(Recipes.Icon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
++                if (given != null) foreach (var kv in given) got.Add(RewardPopup.Item.Of(RecipeIcon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
+             }
+             return true;
+         }
+ 
+         static string QuestRewardIcon(QuestData.Reward r)
+         {
+             if (r == null) return "ui.iconMedal";
+             if (GachaKeys.IsKey(r.Item)) return GachaKeys.Icon(r.Item);
+             switch (r.Item)
+             {
+                 case Core.Mail.ItemGold: return "ui.coin";
+                 case Core.Mail.ItemGem: return "hud.gem";
+                 case Core.Mail.ItemPetEgg: return "pet.egg";   // 던전 보상 칸(EventsScreen:940)이 쓰는 그 그림
+                 case QuestRun.ItemTicket: return "ui.iconTokenRed";
+                 case QuestRun.ItemRecipeRandom: return Recipes.IconKey;   // T292 3항 — 90점 칸 = 두루마리(부위는 받을 때 뽑힌다 · T290 이 여섯 부위를 이미 이 한 그림으로 그린다)
+                 default: return "ui.iconMedal";
+             }
+         }
+         static readonly string[] QuestNums = { "0", "20", "40", "60", "80", "100" };
+         static readonly string[] TrackIcons = { "ui.iconMedal", "ui.coin", "ui.bookBlue", "ui.gemRed", "pi.magic", "ui.gemRed" };
+ 
+         /// <summary>퀘스트 보상 점수(레퍼런스 15 의 메달 숫자 — 시스템이 없어 표시만).</summary>
+         static readonly string[] QuestScores = { "20", "20", "20", "10", "20", "20" };
+ 
+         /// <summary>
+@@ -1752,51 +1757,51 @@ namespace KkomaKnight.Game
+             int left = D != null ? Core.Expedition.QuickLeft(S, D, now, today) : 0;
+             var qb = UiKit.Button(host, left > 0 ? "ui.btnBlue" : "ui.btnGray", "빠른 탐험",
+                 left > 0 ? (Action)(() => QuickExplore(app, refresh)) : () => { }, Layout.ExQuickBtn.Within(B));
+             qb.name = "QuickBtn";
+             if (left <= 0) UiKit.SetInteractable(qb.GetComponent<Button>(), false); else BtnBadge(qb, left.ToString(), "QuickBadge");
+ 
+             // 받기(초록) — 받을 게 있으면 «!» 배지 · 없으면 회색 + «다음까지 mm:ss»
+             bool can = D != null && Core.Expedition.CanClaim(G, S, D, now, today);
+             var cb = UiKit.Button(host, can ? "ui.btnGreen" : "ui.btnGray",
+                 can ? "받기" : "다음까지 " + (D != null ? Mmss(Core.Expedition.SecondsToClaim(S, D, now, today)) : "--:--"),
+                 can ? (Action)(() =>
+                 {
+                     // T321 ③ — 난수 오버로드로 부른다(옛 4인자 서명은 레시피가 쌓인 판에서 «아무것도 안 주고» 멈춘다 = 1회차의 안전장치 · 결정 875).
+                     //   난수는 퀘스트 90점 칸(T292 · :415)과 같은 꼴 — 시드 있는 Mulberry32 · 부위는 QuestRun.RollRecipes 가 여섯 중 균등하게.
+                     var rng = new Mulberry32((uint)Environment.TickCount ^ 0x3C6EF372u);
+                     Core.Expedition.Claim(G, S, D, NowSec(), today, G.Recipe, rng, out double gg, out double mm, out var recipesGot);
+                     Quests.Bump(app, Quests.ExpeditionClaim);   // T257 4항 — 일일 «탐험 보상 받기» · 주간 «탐험 7번 보상 받기»(빠른 탐험은 주인이 다른 줄로 썼다 = 다른 counter)
+                     app.Persist(); app.Current?.Refresh();
+                     // T241 — 골드·다이아 두 칸을 공통 «리워드» 팝업이 보여 준다(토스트 대신) · 닫으면 탐험 팝업이 다시 뜬다(칸은 0 부터 다시 쌓인다)
+                     // T321 ② — 레시피는 부위별로 묶어 «투구 레시피 ×2 …» 칸(Claim 이 돌려준 부위별 개수 그대로 · 0 인 부위는 안 온다).
+                     var items = new List<RewardPopup.Item>
+                     {
+                         RewardPopup.Item.Of("ui.coin", UiKit.Fmt(gg)),
+                         RewardPopup.Item.Of("ui.gemRed", UiKit.FmtQty(mm)),
+                     };
+-                    foreach (var kv in recipesGot) items.Add(RewardPopup.Item.Of(Recipes.Icon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
++                    foreach (var kv in recipesGot) items.Add(RewardPopup.Item.Of(RecipeIcon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
+                     RewardPopup.Show(items, () => Expedition(app));
+                 }) : () => { }, Layout.ExClaimBtn.Within(B));
+             cb.name = "ClaimBtn";
+             if (!can) UiKit.SetInteractable(cb.GetComponent<Button>(), false); else BtnBadge(cb, "!", "ClaimBadge");
+ 
+             // 1초 갱신 — 경과 시간과 «다음까지» 만 고친다(오브젝트를 다시 만들지 않는다 · 트윈이 아니라 경고 0)
+             var claimTxt = UiKit.ButtonText(cb);
+             float acc = 0f;
+             ov.OnTick = () =>
+             {
+                 acc += Time.unscaledDeltaTime; if (acc < 1f) return; acc = 0f;
+                 if (D == null) return;
+                 double t = NowSec();
+                 if (timeTxt != null) timeTxt.text = "탐험 시간: " + ExClock(Core.Expedition.ElapsedSec(S, D, t, today));
+                 bool nowCan = Core.Expedition.CanClaim(G, S, D, t, today);
+                 if (nowCan != can) { refresh(); return; }                      // 받기가 열리면 버튼 색까지 바뀌므로 그때만 다시 그린다
+                 if (!nowCan && claimTxt != null) claimTxt.text = "다음까지 " + Mmss(Core.Expedition.SecondsToClaim(S, D, t, today));
+             };
+ 
+             UiKit.Tag(timeTxt.rectTransform, "경과 시간"); UiKit.Tag(p1, "시간당 pill ①"); UiKit.Tag(p2, "시간당 pill ②");
+             UiKit.Tag(gridBg.rectTransform, "보상 격자 바탕"); UiKit.Tag(cap.rectTransform, "상한 안내 띠");
+             UiKit.Tag(qb, "빠른 탐험 버튼"); UiKit.Tag(cb, "받기 버튼");
+             var c0 = UiKit.Find(host, "ExpCellGold"); if (c0 != null) UiKit.Tag(c0, "보상 칸(1칸)");
+         }
+ 
+@@ -1835,51 +1840,51 @@ namespace KkomaKnight.Game
+ 
+             var noteR = Layout.QxNote.Within(B);
+             var note = UiKit.Label(box, noteR.X, noteR.Y, noteR.W, noteR.H,
+                 D != null ? $"{UiKit.FmtQty(D.QuickHours)}시간치를 즉시 받습니다" : "--", TextSize.Body, Palette.White, TextAnchor.MiddleCenter);
+             note.name = "QxNote";
+ 
+             int left = D != null ? Core.Expedition.QuickLeft(S, D, now, today) : 0;
+             var fb = UiKit.Button(box, left > 0 ? "ui.btnBlue" : "ui.btnGray", "광고 보고 무료",
+                 left > 0 ? (Action)(() =>
+                 {
+                     ov.AdCountdown(GiftAdSeconds, () =>
+                     {
+                         // T321 ③ — 난수 오버로드(옛 서명은 레시피가 있는 판에서 «충전도 안 쓰고 아무것도 안 준다» · 1회차의 안전장치).
+                         var rng = new Mulberry32((uint)Environment.TickCount ^ 0x9E3779B9u);
+                         Core.Expedition.ClaimQuick(G, S, D, NowSec(), today, G.Recipe, rng, out double gg, out double mm, out var recipesGot);
+                         Quests.Bump(app, Quests.ExpeditionFastClaim);   // T257 4항 — 일일 «빠른 탐험 보상 받기» 만 센다(위 «받기» 와 한 줄로 묶지 않는다 · 결정 705 ⓒ) · T258 업적 `expeditionQuick` 도 이 줄이 잇는다
+                         Quests.Ach(app, Quests.AchAdWatch);             // T258 — 이 길은 광고를 본 길이기도 하다(«광고 10회 시청»)
+                         app.Persist();
+                         // T321 ② — 토스트 한 줄로는 «어느 부위 레시피» 를 못 말한다 → «받기» 와 같은 리워드 팝업(T241 · 골드·다이아 + 부위별 레시피 칸) ·
+                         //   닫으면 탐험 팝업으로 돌아간다(남은 횟수·버튼이 갱신된다 = 옛 흐름의 마지막 줄 그대로).
+                         var items = new List<RewardPopup.Item>
+                         {
+                             RewardPopup.Item.Of("ui.coin", UiKit.Fmt(gg)),
+                             RewardPopup.Item.Of("ui.gemRed", UiKit.FmtQty(mm)),
+                         };
+-                        foreach (var kv in recipesGot) items.Add(RewardPopup.Item.Of(Recipes.Icon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
++                        foreach (var kv in recipesGot) items.Add(RewardPopup.Item.Of(RecipeIcon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
+                         RewardPopup.Show(items, () => LobbyPopups.Expedition(app));
+                     });
+                 }) : () => { }, Layout.QxFreeBtn.Within(B));
+             fb.name = "QxFreeBtn";
+             if (left <= 0) UiKit.SetInteractable(fb.GetComponent<Button>(), false); else BtnBadge(fb, left.ToString(), "QxBadge");
+ 
+             // T265 — 주인 «빠른 탐험 팝업 내에 그렇게 써 주면 됨, 그런 정보».
+             // 규칙과 «다음 충전까지» 를 한 줄로 적는다. 수는 전부 표에서 온다(코드에 3 을 안 박는다).
+             var ruleR = Layout.QxRule.Within(B);
+             string ruleTxt = "--";
+             if (D != null)
+             {
+                 double next = Core.Expedition.NextQuickSec(S, D, now);
+                 // T270 ⓐ — 주인 정정 «2시간마다 3개 전부 리필»(1개씩 충전이 아니다). 수는 전부 표에서 온다.
+                 ruleTxt = $"{UiKit.FmtQty(D.QuickChargeHours)}시간마다 {UiKit.FmtQty(D.QuickMax)}회 전부 충전 · "
+                         + (next > 0 ? "다음 충전까지 " + Hhmmss(next) : "충전 완료");
+             }
+             var rule = UiKit.Label(box, ruleR.X, ruleR.Y, ruleR.W, ruleR.H, ruleTxt,
+                 TextSize.Aux, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Aux);
+             rule.name = "QxRule";
+ 
+             UiKit.Tag(box, "팝업 박스"); UiKit.Tag(plate, "제목 명판"); UiKit.Tag(gridBg.rectTransform, "보상 칸 바탕");
+             UiKit.Tag(note.rectTransform, "안내 문구"); UiKit.Tag(fb, "광고 버튼"); UiKit.Tag(rule.rectTransform, "충전 규칙"); TagClose(app);
+             var qc = UiKit.Find(box, "QxCellGold"); if (qc != null) UiKit.Tag(qc, "보상 칸(1칸)");
+         }
+@@ -2062,51 +2067,51 @@ namespace KkomaKnight.Game
+         {
+             if (rewards == null || rewards.Count == 0) return;
+             var items = new List<RewardPopup.Item>();
+             foreach (var r in rewards) items.Add(RewardPopup.Item.Of(RewardIcon(r.Item), UiKit.FmtQty(r.Amount)));
+             RewardPopup.Show(items);
+         }
+ 
+         /// <summary>
+         /// 보상 이름 → 아이콘 키(특권 표는 지금 전부 다이아지만 표가 바뀌어도 안 깨지게 갈라 둔다).
+         /// <para>
+         /// ⚠ <b>같은 매핑이 이 레포에 벌써 셋이다</b> — <c>Mailbox.cs:47</c> · <c>EventsScreen.cs:939</c> · 여기.
+         /// 하나로 모으는 것이 옳지만 그 셋은 각각 다른 작업의 lock 안이라 여기서 건드리지 않는다(규약 3항).
+         /// 처음에 없는 키(<c>ui.petEgg</c>)를 지어 썼다가 <c>check_catalog_keys</c> 가 잡았다 — 이 레포의 펫알 키는 <c>pet.egg</c> 다.
+         /// </para>
+         /// </summary>
+         static string RewardIcon(string item)
+         {
+             if (item == Mail.ItemGold) return "ui.coin";
+             if (item == Mail.ItemPetEgg) return "pet.egg";
+             // T290 마지막 한 줄 — 레시피는 «부위별 아이템» 이라 `Mail` 이 이미 나르는데(T290 이 `CanPay`·`Held`·`Pay` 에 가지를 넣었다)
+             //   여기만 그것을 몰라서, 특권 표에 레시피가 한 줄이라도 생기면 **조용히 다이아 그림**을 그린다(아래 `return` 이 받아 버린다).
+             //   `Mailbox.cs:244` 가 쓰는 그 한 줄과 같은 꼴이다 — 같은 뜻은 같은 모양으로 적는다.
+             //   ⚑ 오늘은 `privilege.json` 에 레시피가 없어 이 가지가 안 돈다. 그래서 자를 새로 안 세웠다 —
+             //     못 도는 길에 자를 세우면 그 자는 «내가 부른 함수가 내가 준 값을 돌려주는가» 만 재는 거울이 된다(결정 906).
+             //     이 줄의 값은 «주인이 표에 한 줄 넣는 날 화면이 저절로 맞는다» 이고, 그때 거짓이면 눈에 바로 보인다.
+-            if (Recipes.IsRecipe(item)) return Recipes.Icon(Recipes.PartOf(item));
++            if (Recipes.IsRecipe(item)) return RecipeIcon(Recipes.PartOf(item));
+             return "ui.gemRed";
+         }
+ 
+ 
+         protected override void Build()
+         {
+             var bg = UiKit.Ensure<Image>(Root.gameObject); bg.color = Color.Lerp(Palette.Slate, Palette.Dim, 0.6f); bg.raycastTarget = true;
+             // T72 ① 풀스크린 배경 패턴(주인 «특별 상품들도 마찬가지») — 바탕은 Root 자신의 Image 라 형제 0 = 상단 바·제목·카드·바닥 바 아래 · 어두운 바탕이라 흰 무늬(레퍼런스 11 도 어두운 회색 위 밝은 무늬)
+             UiKit.PatternBg(Root, UiKit.PatternTintDark);
+             _top = TopBar.Build(App, Root);
+             // 제목(⭐ 특권) + 밑줄 + 부제
+             var title = UiKit.Rect(Root, "Title"); UiKit.Pct(title, Layout.PrTitle);
+             var star = UiKit.Icon(title, "Icon", "pi.star", Palette.Yellow);
+             // 페이지 제목 = 제목 종류 60(전 52 · 칸 3.0%×120% = 84px ≥ 한 줄 ≈66px)
+             var tt = UiKit.Label(title, 25, -10, 75, 120, "특권", TextSize.Title, Palette.White, TextAnchor.MiddleLeft, kind: TextKind.Title); tt.fontStyle = FontStyles.Bold;
+             // T170(주인 2026-09-07 10:0X «타이틀이 왼쪽으로 치우친다 · 특권·던전·PvP · 모든 타이틀 다 점검») —
+             // 여기는 «아이콘을 줄 왼쪽 끝(x 0)에 못 박고 글자를 25% 부터 왼쪽 정렬» 이라 덩어리가 왼쪽에 쏠려 있었다.
+             // 자리 계산은 UiKit 한 곳(CenterIconTitle)이고 던전·PvP·아레나 티어가 같은 함수를 쓴다.
+             UiKit.CenterIconTitle(star.rectTransform, tt, Layout.PrTitle.W);
+             var line = UiKit.Icon(Root, "Underline", "fr.lineDeco", Palette.A(Palette.White, 0.45f)); line.preserveAspect = false; UiKit.Pct(line.rectTransform, Layout.PrUnderline);
+             // 부제 = 본문 40 · 칸 표 ⑲ 1.8%(42px) → LpLineH 2.2% · 문구는 «활성화하고»→«활성화해»(40 이면 628px 로 칸 폭 58%(626px)를 1~2px 넘겨 두 줄이 되던 것 · T63 2항 ⓒ 문구 줄이기)
+             var sub = UiKit.Label(Root, 0, 0, 100, 100, "특권을 활성화해 놀라운 보상을 받으세요!", TextSize.Body, Palette.CreamDark); sub.name = "Sub"; UiKit.Pct(sub.rectTransform, Layout.PrSub.WithH(Layout.LpLineH));
+             // 카드 4장 — 세로 스크롤(카드 4 는 바닥 바에 잘린다 · 레퍼런스 그대로)
+             float top = Layout.PrCard1.Y, bottom = Layout.PrCard4.Y + Layout.PrCard4.H + 1.5f;
+             var view = UiKit.Rect(Root, "Scroll"); UiKit.Pct(view, new Layout.R(0, top, 100, Layout.PrFootBar.Y - top)); UiKit.Ensure<RectMask2D>(view.gameObject);
+diff --git a/Assets/Tests/EditMode/ChihuahuaEventsArtTests.cs b/Assets/Tests/EditMode/ChihuahuaEventsArtTests.cs
+new file mode 100644
+index 0000000000000000000000000000000000000000..01adb82cbf0c0686049c4b08717c120f26b6bb0b
+--- /dev/null
++++ b/Assets/Tests/EditMode/ChihuahuaEventsArtTests.cs
+@@ -0,0 +1,23 @@
++using KkomaKnight.Core;
++using NUnit.Framework;
++
++namespace KkomaKnight.Tests
++{
++    public class ChihuahuaEventsArtTests
++    {
++        [TestCase("weapon", "recipe.weapon")]
++        [TestCase("armor", "recipe.armor")]
++        [TestCase("helm", "recipe.helmet")]
++        [TestCase("boot", "recipe.shoes")]
++        [TestCase("glove", "recipe.ring")]
++        [TestCase("neck", "recipe.necklace")]
++        public void RecipePartsUseTheirArtworkKey(string part, string expected)
++            => Assert.That(Recipes.Icon(part), Is.EqualTo(expected));
++
++        [TestCase(null)]
++        [TestCase("")]
++        [TestCase("unknown")]
++        public void RandomOrUnknownRecipeKeepsTheScroll(string part)
++            => Assert.That(Recipes.Icon(part), Is.EqualTo(Recipes.IconKey));
++    }
++}
+diff --git a/Assets/Tests/EditMode/ChihuahuaEventsArtTests.cs.meta b/Assets/Tests/EditMode/ChihuahuaEventsArtTests.cs.meta
+new file mode 100644
+index 0000000000000000000000000000000000000000..a5dbfce6a54420122d782eeeb1ecd61a8d2f17d4
+--- /dev/null
++++ b/Assets/Tests/EditMode/ChihuahuaEventsArtTests.cs.meta
+@@ -0,0 +1,3 @@
++fileFormatVersion: 2
++guid: 31b9e36a8d8a47a492a8ac982c6f10e8
++timeCreated: 1789322400
+diff --git a/tools/game_ui_art/sessions/events.md b/tools/game_ui_art/sessions/events.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..869859e9614eaea33fe8cc76df90176ab14a83f4
+--- /dev/null
++++ b/tools/game_ui_art/sessions/events.md
+@@ -0,0 +1,27 @@
++# T519 events 역할 보고서
++
++최종 갱신: 2026-09-13 (격리 작업 브랜치 `work`). 범위는 `EventsScreen.cs`, `Recipes.cs`, `LobbyPopups.cs`와 전용 EditMode 테스트뿐이다. 상점 상자는 `ShopScreen.cs`가 이미 `chest.<rare|legend|myth>` 및 `.open`을 사용하고, 열린 스프라이트가 없으면 닫힌 스프라이트를 계속 표시하므로 코드 변경 없이 보존했다.
++
++## 완료한 코드
++
++- 실제 `gear.json`/`recipe.json` 부위 `weapon, helm, armor, glove, boot, neck`을 각각 `recipe.weapon, recipe.helmet, recipe.armor, recipe.ring, recipe.shoes, recipe.necklace`로 분기했다. 알 수 없는 부위와 랜덤 도안은 기존 `ui.iconScroll`이다. Core에는 UnityEngine 의존성을 추가하지 않았다.
++- 상인 Goods, 던전 보상, 로비의 퀘스트/원정/특권 보상 소비처는 새 부위 키를 사용하되 카탈로그에 없으면 `ui.iconScroll`로 돌아간다. 다이아는 `hud.gem` 그대로다.
++- 던전 카드 `ui.dungeon.hell`/`ui.dungeon.expedition`, 아레나 입구와 무대 `ui.arena.entry`, 순위 행 `ui.arena.rankRow`, 상인 배너 `ui.arena.merchant`를 선택적으로 삽입했다. 키가 없을 때만 기존 합성 UI를 그대로 만들며 기존 사각형, 글자, 수치, 버튼과 플레이어 초상 위치는 바꾸지 않았다.
++- 전용 테스트 `ChihuahuaEventsArtTests`가 실제 여섯 부위 매핑과 랜덤/미지 부위 fallback을 고정한다.
++
++## 통합 입력 / 남은 작업
++
++| 키 | 예상 파일 |
++|---|---|
++| `recipe.weapon`, `recipe.armor`, `recipe.helmet`, `recipe.shoes`, `recipe.ring`, `recipe.necklace` | `Assets/Art/ChihuahuaGameUI/Recipes/{weapon,armor,helmet,shoes,ring,necklace}.png` |
++| `ui.dungeon.expedition`, `ui.dungeon.hell` | `Assets/Art/ChihuahuaGameUI/Dungeons/{expedition,hell}.png` |
++| `ui.arena.entry`, `ui.arena.rankRow`, `ui.arena.merchant` | `Assets/Art/ChihuahuaGameUI/Arena/{entry,rank_row,merchant}.png` |
++| 기존 `chest.rare`, `chest.legend`, `chest.myth`와 각 `.open` | `Assets/Art/ChihuahuaGameUI/Chests/{rare,legend,myth}_{closed,open}.png` |
++
++통합 세션이 실제 PNG/meta를 추가하고 중앙 catalog를 생성해야 한다. 현재 `check_catalog_keys.py`의 신규 키 오류는 이 미완료 통합 의존성이다(우회하지 않음). 닫힘/열림 상자의 동일 몸체 위치·바닥선과 모든 새 이미지의 최종 크기/가독성은 에셋이 없어 검증 미완료다. Unity 실행 파일과 `dotnet`이 이 환경에 없어 EditMode/C# 실행도 미완료다.
++
++## 검증 기록
++
++- `git diff --check`: 통과.
++- `python3 tools/check_catalog_keys.py`: 예상 실패(신규 던전/아레나 키가 중앙 catalog에 아직 없음).
++- `python3 tools/test_by_name.py ChihuahuaEventsArtTests --run`: 실행 불가(`dotnet` 없음). Unity를 실행하지 않았으므로 통과로 기록하지 않는다.

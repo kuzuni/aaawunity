@@ -1,0 +1,7 @@
+{
+  "ui.pass.banner": "Assets/Art/ChihuahuaGameUI/Pass/adventure_banner.png",
+  "ui.loading.art": "Assets/Art/ChihuahuaGameUI/Loading/chihuahua_loading.png",
+  "ui.arena.entry": "Assets/Art/ChihuahuaGameUI/Arena/entry.png",
+  "ui.arena.rankRow": "Assets/Art/ChihuahuaGameUI/Arena/rank_row.png",
+  "ui.arena.merchant": "Assets/Art/ChihuahuaGameUI/Arena/merchant.png"
+}

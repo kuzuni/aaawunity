@@ -1,0 +1,16 @@
+{
+  "node.devil": "Assets/Art/ChihuahuaGameUI/Nodes/devil.png",
+  "node.angel": "Assets/Art/ChihuahuaGameUI/Nodes/angel.png",
+  "env.expedition.field": "Assets/Art/ChihuahuaGameUI/World/Expedition/field.png",
+  "env.expedition.road": "Assets/Art/ChihuahuaGameUI/World/Expedition/road.png",
+  "env.expedition.prop1": "Assets/Art/ChihuahuaGameUI/World/Expedition/prop1.png",
+  "env.expedition.prop2": "Assets/Art/ChihuahuaGameUI/World/Expedition/prop2.png",
+  "env.expedition.prop3": "Assets/Art/ChihuahuaGameUI/World/Expedition/prop3.png",
+  "env.hell.field": "Assets/Art/ChihuahuaGameUI/World/Hell/field.png",
+  "env.hell.road": "Assets/Art/ChihuahuaGameUI/World/Hell/road.png",
+  "env.hell.prop1": "Assets/Art/ChihuahuaGameUI/World/Hell/prop1.png",
+  "env.hell.prop2": "Assets/Art/ChihuahuaGameUI/World/Hell/prop2.png",
+  "env.hell.prop3": "Assets/Art/ChihuahuaGameUI/World/Hell/prop3.png",
+  "ui.dungeon.expedition": "Assets/Art/ChihuahuaGameUI/DungeonCards/expedition.png",
+  "ui.dungeon.hell": "Assets/Art/ChihuahuaGameUI/DungeonCards/hell.png"
+}

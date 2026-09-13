@@ -24,6 +24,12 @@ namespace KkomaKnight.Game
 
         // ───────────────────────── 공통 조각 ─────────────────────────
         static Layout.R Sh(Layout.R r, float dx, float dy) => new Layout.R(r.X + dx, r.Y + dy, r.W, r.H);
+        static string RecipeIcon(string part)
+        {
+            string key = Recipes.Icon(part);
+            var assets = App.I != null ? App.I.Assets : null;
+            return assets != null && assets.Has(key) ? key : Recipes.IconKey;
+        }
 
         /// <summary>리본/명판 조각(Popup 이 상자 윗변 가운데에 세운 것)을 표의 자리·크기로 — 아랫변이 상자 윗변에 닿게(리본은 상자 «위»에 걸친다).</summary>
         static RectTransform Ribbon(RectTransform box, string key, Layout.R ribbonR, Layout.R boxR)
@@ -409,7 +415,7 @@ namespace KkomaKnight.Game
             if (got != null)
             {
                 foreach (var rw in step.Rewards) if (rw.Item != QuestRun.ItemRecipeRandom) got.Add(RewardPopup.Item.Of(QuestRewardIcon(rw), UiKit.FmtQty(rw.Amount), amount: (int)rw.Amount));
-                if (given != null) foreach (var kv in given) got.Add(RewardPopup.Item.Of(Recipes.Icon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
+                if (given != null) foreach (var kv in given) got.Add(RewardPopup.Item.Of(RecipeIcon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
             }
             return true;
         }
@@ -1774,7 +1780,7 @@ namespace KkomaKnight.Game
                         RewardPopup.Item.Of("ui.coin", UiKit.Fmt(gg)),
                         RewardPopup.Item.Of("ui.gemRed", UiKit.FmtQty(mm)),
                     };
-                    foreach (var kv in recipesGot) items.Add(RewardPopup.Item.Of(Recipes.Icon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
+                    foreach (var kv in recipesGot) items.Add(RewardPopup.Item.Of(RecipeIcon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
                     RewardPopup.Show(items, () => Expedition(app));
                 }) : () => { }, Layout.ExClaimBtn.Within(B));
             cb.name = "ClaimBtn";
@@ -1857,7 +1863,7 @@ namespace KkomaKnight.Game
                             RewardPopup.Item.Of("ui.coin", UiKit.Fmt(gg)),
                             RewardPopup.Item.Of("ui.gemRed", UiKit.FmtQty(mm)),
                         };
-                        foreach (var kv in recipesGot) items.Add(RewardPopup.Item.Of(Recipes.Icon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
+                        foreach (var kv in recipesGot) items.Add(RewardPopup.Item.Of(RecipeIcon(kv.Key), UiKit.FmtQty(kv.Value), amount: kv.Value));
                         RewardPopup.Show(items, () => LobbyPopups.Expedition(app));
                     });
                 }) : () => { }, Layout.QxFreeBtn.Within(B));
@@ -2084,7 +2090,12 @@ namespace KkomaKnight.Game
             //   ⚑ 오늘은 `privilege.json` 에 레시피가 없어 이 가지가 안 돈다. 그래서 자를 새로 안 세웠다 —
             //     못 도는 길에 자를 세우면 그 자는 «내가 부른 함수가 내가 준 값을 돌려주는가» 만 재는 거울이 된다(결정 906).
             //     이 줄의 값은 «주인이 표에 한 줄 넣는 날 화면이 저절로 맞는다» 이고, 그때 거짓이면 눈에 바로 보인다.
-            if (Recipes.IsRecipe(item)) return Recipes.Icon(Recipes.PartOf(item));
+            if (Recipes.IsRecipe(item))
+            {
+                string key = Recipes.Icon(Recipes.PartOf(item));
+                var assets = App.I != null ? App.I.Assets : null;
+                return assets != null && assets.Has(key) ? key : Recipes.IconKey;
+            }
             return "ui.gemRed";
         }
 

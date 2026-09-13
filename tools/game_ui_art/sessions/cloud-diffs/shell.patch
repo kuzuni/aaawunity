@@ -1,0 +1,596 @@
+diff --git a/Assets/Scripts/Game/LoadingScreen.cs b/Assets/Scripts/Game/LoadingScreen.cs
+index b6213c329bbce935d454508474bb7a7a109478f2..c731fcb8db0e20ca8314c38ab923d1a941dbd69a 100644
+--- a/Assets/Scripts/Game/LoadingScreen.cs
++++ b/Assets/Scripts/Game/LoadingScreen.cs
+@@ -36,50 +36,57 @@ namespace KkomaKnight.Game
+         /// 로딩 화면은 0.3~수초 만에 사라지는 <b>지나가는</b> 오브젝트라, 테스트가 그 순간을 놓치면
+         /// «안 떴다» 와 «떴는데 못 잡았다» 를 구별할 수 없다 — 그래서 «떴다» 는 사실을 여기 남긴다.
+         /// <see cref="Show"/> 가 조각을 세울 때만 참이 되고, 조각을 못 찾아 <c>null</c> 을 돌려줄 때는 거짓 그대로다.
+         /// </summary>
+         public static bool LastShownWasPrefab { get; private set; }
+         /// <summary>마지막으로 띄운 로딩 화면의 진행 바 범위(같은 까닭 · 없었으면 둘 다 0).</summary>
+         public static float LastBarMin { get; private set; }
+         /// <summary>진행 바 최대(0~1 계약 확인용).</summary>
+         public static float LastBarMax { get; private set; }
+ 
+         /// <summary>
+         /// T358 — 마지막 <see cref="App.StartBattle"/> 이 <b>전투 입장 로딩</b>을 실제로 띄웠는가(같은 까닭 · 지나가는 오브젝트라 «떴다» 를 기록한다).
+         /// <see cref="App"/> 이 조각을 세운 순간 참으로 놓고, 자는 START 를 누르기 전에 거짓으로 되돌려 놓고 잰다.
+         /// </summary>
+         public static bool LastBattleShown { get; set; }
+ 
+         /// <summary>부팅마다 초기화 — 앞 부팅의 흔적을 다음 판정에 쓰지 않는다(<see cref="Bootstrap"/> 가 Show 직전에 부른다).</summary>
+         public static void ResetLastShown() { LastShownWasPrefab = false; LastBarMin = 0f; LastBarMax = 0f; }
+ 
+         /// <summary>로딩 화면을 띄운다 — 조각이 없으면 null(부팅은 계속된다).</summary>
+         public static LoadingScreen Show(Transform parent, AssetCatalog cat)
+         {
+             if (parent == null || cat == null || cat.Prefab(Key) == null) return null;
+             var go = UiKit.SpawnWith(cat, Key, parent);
+             var rt = go.transform as RectTransform; if (rt != null) UiKit.Stretch(rt);
++            if (cat.Has("ui.loading.art"))
++            {
++                var art = cat.Sprite("ui.loading.art");
++                var background = UiKit.Find(go.transform, "Background");
++                var image = background != null ? background.GetComponent<Image>() : null;
++                if (art != null && image != null) { image.sprite = art; image.color = new Color(1f, 1f, 1f, image.color.a); }
++            }
+             var s = new LoadingScreen { Root = go, _shownAt = Time.realtimeSinceStartup };
+             s._bar = go.GetComponentInChildren<Slider>(true);
+             if (s._bar != null) { s._bar.minValue = 0f; s._bar.maxValue = 1f; s._bar.value = 0f; s._bar.interactable = false; }
+             // 프리팹의 버전 글자(«Ver. 1.0.130») 자리를 진행 글자로 쓴다 — 새 글자를 만들지 않는다(프리팹 그대로)
+             foreach (var t in go.GetComponentsInChildren<TMP_Text>(true)) { s._pct = t; break; }
+             s.SetProgress(0f);
+             LastShownWasPrefab = true;
+             LastBarMin = s._bar != null ? s._bar.minValue : 0f;
+             LastBarMax = s._bar != null ? s._bar.maxValue : 0f;
+             return s;
+         }
+ 
+         /// <summary>진행률 0~1 — 바와 글자를 같이 움직인다.</summary>
+         public void SetProgress(float p)
+         {
+             p = Mathf.Clamp01(p);
+             if (_bar != null) _bar.value = p;
+             if (_pct != null) _pct.text = TextGlyphs.Safe($"불러오는 중… {Mathf.RoundToInt(p * 100f)}%");
+         }
+ 
+         /// <summary>로딩 화면을 지운다(부팅 캔버스째 지우는 것은 <see cref="Bootstrap"/> 몫).</summary>
+         public void Hide()
+         {
+             if (Root != null) Object.Destroy(Root);
+             Root = null; _bar = null; _pct = null;
+diff --git a/Assets/Scripts/Game/Screens.cs b/Assets/Scripts/Game/Screens.cs
+index 64ff944f861e57862da57263b84c8997c9cc9968..22f85302488732cfd10209b8adfb8d6eac6dc5f2 100644
+--- a/Assets/Scripts/Game/Screens.cs
++++ b/Assets/Scripts/Game/Screens.cs
+@@ -35,51 +35,53 @@ namespace KkomaKnight.Game
+         /// <summary>
+         /// 아이콘 라벨 칸(사이드·보조·모서리 · <see cref="BuildColumn"/>) 안의 아이콘 자리 / 글자 띠 자리(칸 %) — T68 ①(주인 «아이콘 너무 작음» · 1.5~1.8배 · 칸 폭의 ≥ 75%) + T63-lobby(라벨 보조 36 · 2줄 · 잘림 0).
+         /// 아이콘이 칸 위 82% 를 차지하고 글자 띠(아래 50%)가 아이콘 아랫부분에 겹친다 — 레퍼런스 01 도 «Daily Gifts»·«7-Day Challenge» 가 아이콘 밑단 위에 얹혀 있다(외곽선 글자).
+         /// 2줄 높이 = 36×1.375×(1+<see cref="UiKit.CaptionLineSpacing"/>) ≈ 87px ≤ 글자 띠(사이드 93px · 보조 111px · 모서리 99px) → bestFit 이 줄이지 않는다.
+         /// </summary>
+         static readonly Layout.R CaptionIcon = new Layout.R(12.5f, 0, 75, 82), CaptionLabel = new Layout.R(1, 50, 98, 50);
+         /// <summary>칸 폭 대비 아이콘 최소 비율(T68 ① · 스모크 테스트가 단언).</summary>
+         public const float CaptionIconMinW = 0.75f;
+         /// <summary>
+         /// 챕터 카드 그림 = 프리팹 <c>SampleImage_Map</c>(Image_Map_Forest · 573×709 세로 디오라마 · T68 ④ · 주인 «예전 프리팹 그림이 좋았음» · 결정 34 뒤집음).
+         /// 카드 자리(표 ① 27.9/41.0/44.5/13.7 · 가로 1.5:1)는 이름표·클릭 영역으로 그대로 두고, 그림은 카드 폭의 90% 로 카드 <b>바닥에 맞춰</b> 세워 나무 꼭대기가 카드 위로 넘친다(레퍼런스 01 의 디오라마도 카드 상자 위로 솟는다 · 위 끝 = 프레임 31.8% · 챕터 밑줄 30.9% 아래).
+         /// 카드 % 로: 폭 90 · 높이 90 × 709/573 = 111.4%·(481/320) ≈ 167.5 · 바닥 정렬 → y = 100 − 167.5.
+         /// </summary>
+         static readonly Layout.R CardMapImage = new Layout.R(5, -67.5f, 90, 167.5f);
+ 
+         /// <summary>
+         /// 로비의 빨간 알림 점 둘(T136 · 주인 2026-09-07 «빨간점들이 찌그러져있더라»). 전에는 부모 칸의 % 로 쟀는데
+         /// 보조 줄 칸(212×222)이 가로로 넓어 <c>Pct(…,26,11)</c> 이 55×24 = 2.26:1 타원을 만들었다 — 이제 «모서리 + px · 지름» 으로 잰다.
+         /// 값은 종전 점 «가운데» 자리를 그대로 옮긴 것(보조 줄 40.3/16.6 → 38/22 · ≡ 20.4/18.2 → 20/18)이라 그림만 원이 되고 자리는 안 움직인다.
+         /// </summary>
+         static readonly Vector2 SubDotAnchor = new Vector2(1, 1), SubDotOffset = new Vector2(-38, -22);
+         const float SubDotSize = 44f;
+         static readonly Vector2 MenuDotAnchor = new Vector2(1, 1), MenuDotOffset = new Vector2(-20, -18);
+         const float MenuDotSize = 33f;
+ 
+-        TopBar _top; TMP_Text _chap; Transform _tabs;
++        TopBar _top; TMP_Text _chap; Transform _tabs; Image _mapImage;
++        public static readonly string[] ChapterArtKeys = { "ui.chapter.autumn", "ui.chapter.deepForest", "ui.chapter.forest", "ui.chapter.desert" };
++        public static string ChapterArtKey(int chapter) => ChapterArtKeys[Mathf.Abs(chapter - 1) % ChapterArtKeys.Length];
+         /// <summary>«데일리 기프트» 사이드 아이콘의 빨간 알림 점 — 지금 받을 수 있는 줄이 하나라도 있으면 켠다(T77 · <see cref="Refresh"/>).</summary>
+         GameObject _giftDot;
+         // T366(주인 2026-09-10 «특권에서 받을 수 있는 재화 있으면 특권 부분도 빨간점 알림») — 왼쪽 사이드 «특권» 칸의 빨간 점.
+         //   판정은 Core.Privilege.AnyClaimable 한 곳(오늘 아직 안 받은 «매일 수령» 이 하나라도 · 안 산 카드는 안 센다 · 특권 화면의 카드 «받기» 점도 같은 판정을 카드별로 쓴다).
+         GameObject _privDot;
+         /// <summary>«출석» 칸의 빨간 점(T253 4항) — 오늘 받을 칸이 있을 때만 켠다.</summary>
+         GameObject _attendDot;
+         /// <summary>
+         /// «퀘스트» 칸의 빨간 점(T258 6항) — 퀘스트 트랙이든 <b>업적</b>이든 지금 받을 것이 있으면 켠다(둘이 같은 팝업의 탭이라 점도 하나다).
+         /// <para>⚠ 판정(<see cref="Core.Notify.QuestClaimable"/>)은 T257 이 이미 세웠는데 <b>그것을 켜는 점이 없었다</b> — 판정만 있고 보여 주는 조각이 없으면 사용자에게는 없는 기능이다.</para>
+         /// </summary>
+         GameObject _questDot;
+         /// <summary>«탐험» 보조 버튼의 빨간 알림 점 — 받을 것이 쌓였거나 빠른 탐험 횟수가 남으면 켠다(T97 · <see cref="Refresh"/>).</summary>
+         GameObject _expDot, _chestDot;
+         /// <summary>메뉴(≡) 버튼의 빨간 알림 점 — 메뉴가 품은 항목에 지금 받을 것이 있으면 켠다(T96 ⓔ · <see cref="Core.Notify.MenuAny"/>).</summary>
+         GameObject _menuDot;
+ 
+         protected override void Build()
+         {
+             var root = UiKit.Spawn("ui.lobby", Root); var rt = (RectTransform)root.transform; UiKit.Stretch(rt);
+             // 프리팹은 부품 창고 — 쓰지 않는 조각은 끈다(상단 바·사이드 버튼·빨간 START·채팅·부제) · 샘플 지도(SampleImage_Map)는 T68 ④ 부터 챕터 카드 그림으로 쓴다
+             UiKit.Hide(rt, "ChatBox", "Group_LeftButtons", "Group_RightButtons", "ResourceBar_Group");
+             var oldInfo = UiKit.FindAny(rt, "UserInfo_01", "UserInfo_01_Slider"); if (oldInfo != null) oldInfo.gameObject.SetActive(false);
+             var oldStart = UiKit.FindAny(rt, "Button_03_Red", "Button_03_Convex_Red"); if (oldStart != null) oldStart.gameObject.SetActive(false);
+             var subT = UiKit.Find(rt, "Text (TMP)"); if (subT != null && subT.parent == rt) subT.gameObject.SetActive(false);
+@@ -133,51 +135,51 @@ namespace KkomaKnight.Game
+             // T96-menu 가 «중복된 거는 메뉴 안으로» 로 지웠던 그 넷이다 — 새 지시가 이긴다. 자리(Layout.LobbySideL/R)는 그때 비운 채로 표에 남겨 뒀으므로 그대로 쓴다.
+             // 메뉴(≡)에 남는 것은 우편함 · 설정 둘뿐이다(LobbyMenu.Items) · 데일리 기프트의 빨간 점도 메뉴 줄이 아니라 여기 칸(_giftDot · T77)으로 돌아왔다.
+             UiKit.Tag(BuildColumn(rt, "SideL", Layout.LobbySideL, false, (SidePrivilege, "ui.iconCrown", "특권")), "좌 사이드 아이콘 열(1개)");
+             UiKit.Tag(BuildColumn(rt, "SideR", Layout.LobbySideR, false, (SideAttendance, "ui.iconCalendar", "출석"), (SideDailyGift, "ui.iconBalloon", "데일리 기프트"), (SideQuest, "ui.iconQuest", "퀘스트")), "우 사이드 아이콘 열(3개)");
+ 
+             // ④ 챕터 제목(프리팹 Title_LineDeco 조각 = 글자 + 밑줄 장식 · 표의 제목 행 ∪ 밑줄 행 자리)
+             var title = UiKit.FindAny(rt, "Title_LineDeco_01_Blue", "Title_LineDeco_01_l");
+             if (title != null)
+             {
+                 var trt = (RectTransform)title; trt.SetParent(rt, false);
+                 var t = Layout.LobbyChapTitle; var u = Layout.LobbyChapUnderline;
+                 UiKit.Pct(trt, u.X, t.Y, u.W, u.Y + u.H - t.Y);
+                 _chap = UiKit.SetText(trt, "Text (TMP)", "챕터 1", size: UiKit.FontForHeight(t.H));   // 글자 높이 = 표 2.3%(레퍼런스 «CHAPTER 22» 덩어리 · T47 회차 2 에서 1.5% 로 작았다)
+                 // T111 ⓐ — 주인 2026-09-07 «챕터 아래에 LineDeco 들은 없애줘 · 로비, 전투 화면 둘 다»: 조각 안의 밑줄 장식만 끈다(글자·자리는 그대로 · 이름표도 없앤다 = 채점 행이 사라진다)
+                 UiKit.Show(trt, "LineDeco", false);
+                 if (_chap != null) UiKit.Tag(_chap.transform, "챕터 제목", textBounds: true);   // 글자 덩어리로 잰다(T47 ⓒ · 조각 rect 는 표보다 6%p 넓다)
+             }
+ 
+             // ⑤ 챕터 카드 = 프리팹 SampleImage_Map 그림(T68 ④ · 코드 조립 카드 폐기) + ◀▶ · 카드 자리(표 ①)는 이름표·클릭 영역
+             var card = UiKit.Rect(rt, "ChapterCard"); UiKit.Pct(card, Layout.LobbyCard);
+             {
+                 var map = UiKit.Find(rt, "SampleImage_Map");
+                 if (map != null)
+                 {
+                     var mrt = (RectTransform)map; mrt.SetParent(card, false); map.gameObject.SetActive(true); UiKit.Pct(mrt, CardMapImage);
+-                    var mi = map.GetComponent<Image>(); if (mi != null) { mi.preserveAspect = true; mi.raycastTarget = false; }
++                    _mapImage = map.GetComponent<Image>(); if (_mapImage != null) { _mapImage.preserveAspect = true; _mapImage.raycastTarget = false; }
+                 }
+                 // T245(주인 2026-09-08 12:0X «챕터 카드 … 클릭했더니 시작되는 거 안 되게 하고 그거 shine 이펙트 있는 거도 하지 말기»)
+                 //  ⓐ 여기 있던 `UiKit.Clickable(card, …)`(전투 시작)을 **없앴다** — 카드는 «이번 챕터 그림» 만 보여 준다.
+                 //     ⚠ 지우는 것으로 끝이다: `card` 는 `UiKit.Rect` 라 제 Image 가 없고, 투명 히트 영역을 만들던 것이 바로 그 `Clickable` 이다
+                 //     (`UiKit.cs:1329` — Image 가 없으면 «투명 히트 영역» 을 붙이고 `raycastTarget=true` 를 켠다).
+                 //     그래서 뒤에 raycastTarget 을 끄는 줄이 따로 필요 없다 — 켤 것을 안 켜는 쪽이라 죽은 자리가 안 남는다.
+                 //     카드 그림(`SampleImage_Map`)은 위에서 이미 `raycastTarget = false` 다.
+                 //  ⓑ 여기 있던 `ShineLoop(ShineMaterial(card, card), card)`(T166 ⓑ · 주인 2026-09-07)도 **없앴다** — 같은 지시로 뒤집혔다.
+                 //     `ShineMaterial` 이 `MaterialOwner` 를 붙이던 것도 같이 사라진다(안 부르면 안 붙는다 = 누수 자가 세는 «임자 없는 인스턴스» 도 0 그대로).
+                 //  ⓒ 그 빛은 아래 START 버튼으로 옮겼다(주인 «shine 이펙트는 START 버튼에 있어야 함»).
+                 // T94 ⓑ(주인 2026-09-07 05:3X «메인 로비에 Border 있는 것들은 걍 없애셈») — T69-lobby 가 넣었던 카드 검은 링을 뺀다.
+                 // 로비만 예외이고 다른 화면의 T69 테두리는 그대로다(BorderAudit.StrictScreens 에서 01_lobby 만 뺐다).
+                 UiKit.Tag(card, "챕터 카드(스테이지 그림)");
+             }
+             var left = UiKit.Icon(rt, "ArrowL", "pi.arrow_left", Palette.Cream); UiKit.Pct(left.rectTransform, Layout.LobbyArrowL); UiKit.Clickable(left.rectTransform, () => Shift(-1)); UiKit.Tag(left.transform, "좌 화살표");
+             var right = UiKit.Icon(rt, "ArrowR", "pi.arrow_right", Palette.Cream); UiKit.Pct(right.rectTransform, Layout.LobbyArrowR); UiKit.Clickable(right.rectTransform, () => Shift(1)); UiKit.Tag(right.transform, "우 화살표");
+ 
+             // ⑥ 보조 버튼 2(탐험 · 클리어 보상 — 껍데기) → START(주황 · 카드 폭) → 모서리(이벤트 · T78 로 «성» 삭제)
+             UiKit.Tag(BuildColumn(rt, "SubRow", Layout.LobbySubRow, true, (SideExplore, "ui.iconMap", "탐험"), (SideClearReward, "ui.iconChestRed", "클리어 보상")), "보조 버튼 2개 줄");
+             var start = UiKit.Button(rt, "ui.btnStartOrange", "START", () => { Audio.Wake(); App.StartBattle(App.Save.SelChapter); }, Layout.LobbyStart); start.name = "Start"; UiKit.Tag(start, "START 버튼");   // Wake = WebGL 첫 터치 뒤 잠든 BGM 재개(T28)
+             // T245 ⓒ(주인 2026-09-08 «shine 이펙트는 START 버튼에 있어야 함») — 카드에서 걷어 온 그 빛을 여기에 건다.
+             // 주기·세기는 카드가 쓰던 값 그대로다(`ShinePeriod` 5초 · 재료도 `mat.perkShine` 그대로) — 옮긴 것이지 새로 만든 것이 아니다.
+             // ⚠ 글자는 안 흐려진다: `ShineMaterial` 은 새 조각을 얹지 않고 `ShineTarget` 이 고른 **Image 한 장**의 머티리얼만 바꾸는데(`UiKit.cs:1606`),
+             //   버튼 글자는 `TMP_Text` 라 `Image` 가 아니어서 그 고르기에 아예 안 들어온다. 그래서 마스크를 따로 씌울 것이 없다.
+             // ⚠ 탭도 안 막힌다: 같은 까닭으로 **새 raycast 대상이 안 생긴다** — 그래도 «START 가 눌리는가» 는 T227 이 `AssertTappable` 로 지키고 있어 어긋나면 그 자가 잡는다.
+@@ -257,50 +259,55 @@ namespace KkomaKnight.Game
+             {
+                 // T107 — 주인 «이벤트 열면 무조건 던전부터 뜨게»(아레나·상인은 그 안에서 넘어간다)
+                 case SidePrivilege: App.ShowScreen("privilege"); break;
+                 case SideQuest: LobbyPopups.Quest(App); break;
+                 case SideAttendance: LobbyPopups.Attendance(App); break;
+                 case SideDailyGift: LobbyPopups.DailyGift(App); break;
+                 case SideExplore: LobbyPopups.Expedition(App); break;   // T97 — 방치·오프라인 보상(껍데기 아님)
+                 // T98 — 챕터 보상(Chapter Chest) 페이지(껍데기 아님 · 레퍼런스 32)
+                 case SideClearReward: ChapterChestScreen.Open(App); break;
+                 // T266 — 시즌 패스 페이지(껍데기 · 주인 2026-09-09 «걍 다시 넣기» 가 T78 삭제를 뒤집었다)
+                 case SidePass: SeasonPassScreen.Open(App); break;
+             }
+         }
+ 
+         void Shift(int d)
+         {
+             var s = App.Save; int max = Math.Max(1, s.MaxChapter);
+             s.SelChapter = Mathf.Clamp(s.SelChapter + d, 1, max); App.Persist(); Refresh();
+         }
+ 
+         /// <summary>챕터 카드 그림은 전 챕터 같은 그림(프리팹의 샘플 지도 스프라이트가 하나뿐 · 새 그림 금지 · T68 ④ · 결정 기록) — 바뀌는 것은 «챕터 N» 글자뿐.</summary>
+         public override void Refresh()
+         {
+             var s = App.Save;
+             if (_chap != null) _chap.text = $"챕터 {s.SelChapter}";
++            if (_mapImage != null && App.Assets != null)
++            {
++                string key = ChapterArtKey(s.SelChapter);
++                if (App.Assets.Has(key)) { var sprite = App.Assets.Sprite(key); if (sprite != null) _mapImage.sprite = sprite; }
++            }
+             _top?.Refresh();
+             // T77 — 데일리 기프트에 받을 것이 있으면 사이드 아이콘에 빨간 점
+             if (_giftDot != null) _giftDot.SetActive(Core.DailyGift.AnyClaimable(s, App.Data != null ? App.Data.DailyGift : null, SaveStore.Today()));
+             // T366 — 특권에 오늘 받을 «매일 수령» 이 있으면 «특권» 칸에 빨간 점(판정 = Core.Privilege.AnyClaimable · 데일리 기프트 칸과 같은 꼴)
+             if (_privDot != null) _privDot.SetActive(App.Data != null && App.Data.Privilege != null
+                 && Core.Privilege.AnyClaimable(s, App.Data.Privilege, SaveStore.Today()));
+             // T253 4항 — 오늘 받을 출석 칸이 있으면 «출석» 사이드 아이콘에 빨간 점(다 받았거나 오늘 이미 받았으면 안 켠다)
+             if (_attendDot != null) _attendDot.SetActive(App.Data != null && App.Data.Attendance != null
+                 && Core.Attendance.Can(s, App.Data.Attendance, SaveStore.Today()));
+             // T258 6항 — 퀘스트 트랙(T257)이나 업적에 받을 것이 있으면 «퀘스트» 사이드 아이콘에 빨간 점.
+             //   판정은 둘 다 `Notify` 한 곳이 갖는다(화면이 제 나름으로 세지 않는다 · T96 ⓔ 규약).
+             if (_questDot != null) _questDot.SetActive(Core.Notify.QuestClaimable(App.Data, s, SaveStore.Today())
+                                                     || Core.Notify.AchievementClaimable(App.Data, s));
+             // T97 — 탐험에 쌓인 것이 있거나 빠른 탐험 횟수가 남으면 «탐험» 보조 버튼에 빨간 점
+             if (_expDot != null) _expDot.SetActive(App.Data != null && App.Data.Expedition != null
+                 && Core.Expedition.AnyClaimable(App.Data, s, App.Data.Expedition, LobbyPopups.NowSec(), SaveStore.Today()));
+             // T98 3항 — 받을 수 있는 챕터 보상이 있으면 «클리어 보상» 보조 버튼에 빨간 점
+             if (_chestDot != null) _chestDot.SetActive(Core.ChapterChest.AnyClaimable(App.Data, s));
+             // T96 ⓔ — 메뉴 안(데일리 기프트 · 광고로 받을 재화 …)에 받을 것이 있으면 ≡ 에 빨간 점
+             // T148 — 메뉴에 남은 것은 우편함·설정 둘뿐이라 ≡ 점은 «우편함» 만 본다(데일리 기프트 점은 로비 칸 _giftDot 으로 돌아갔다).
+             if (_menuDot != null) _menuDot.SetActive(Mailbox.Any(App));
+         }
+     }
+ 
+     /// <summary>
+diff --git a/Assets/Scripts/Game/SeasonPassScreen.cs b/Assets/Scripts/Game/SeasonPassScreen.cs
+index dfa34464345ea7792ff2c6c01ac847f14e681578..4ec8843fc03a1fab4bcb33ea6fd634e61b72ac99 100644
+--- a/Assets/Scripts/Game/SeasonPassScreen.cs
++++ b/Assets/Scripts/Game/SeasonPassScreen.cs
+@@ -78,52 +78,56 @@ namespace KkomaKnight.Game
+ 
+         // ───────────────────────── 레퍼런스에 그려진 값(게임 수치 아님) ─────────────────────────
+ 
+         TopBar _top;
+ 
+         /// <summary>페이지를 연다 — 로비 배너(T78 이 비워 둔 자리)와 하단 «패스» 아이콘 버튼이 부른다.</summary>
+         public static void Open(App app) => app?.ShowScreen("seasonPass");
+ 
+         protected override void Build()
+         {
+             var bg = UiKit.Ensure<Image>(Root.gameObject); bg.color = Palette.Hex("#242424"); bg.raycastTarget = true;   // 트랙 밖 바탕 실측
+             UiKit.PatternBg(Root, UiKit.PatternTintDark);
+             _top = TopBar.Build(App, Root);
+             UiKit.Tag(_top.Root, "상단 재화 바");   // §5 는 이름표를 **이름 그대로** 맞춘다(결정 592) — 표 ㊼ 의 행 이름과 한 글자도 다르면 그 행이 0 점이 된다
+ 
+             BuildBanner();
+             // T462 — 안내 띠(«일일 퀘스트를 깨면 보상이 열린다»)는 뺐다(BuildNotice 는 남겨 두되 안 부른다 · 레벨이 챕터에서 오므로 문구가 틀리다).
+             BuildTrack();
+             BuildButtons();
+         }
+ 
+         void BuildBanner()
+         {
+             var banner = UiKit.Panel(Root, "Banner", "fr.rect", Color.white).rectTransform;
+             UiKit.Pct(banner, RBanner);
+-            // 무지개·성 그림은 주인 에셋에 없다 → 실측한 하늘·풀밭 두 색 판(새 그림 0). 그림 조각이 생기면 이 판만 갈아 끼운다.
+-            UiKit.GradientCard(banner, "passBanner", alpha: UiKit.GradientCardSolidAlpha);
++            if (App.Assets != null && App.Assets.Has("ui.pass.banner"))
++            {
++                var art = UiKit.Icon(banner, "PassArt", "ui.pass.banner", Color.white);
++                UiKit.Stretch(art.rectTransform); art.preserveAspect = false;
++            }
++            else UiKit.GradientCard(banner, "passBanner", alpha: UiKit.GradientCardSolidAlpha);
+ 
+             var name = UiKit.Label(banner, RName.X, (RName.Y - RBanner.Y) / RBanner.H * 100f, RName.W, RName.H / RBanner.H * 100f,
+                 PassTitle, TextSize.Title, Palette.White, TextAnchor.MiddleCenter, true, true, TextKind.Title);
+             name.name = "PassName"; name.fontStyle = FontStyles.Bold;
+ 
+             var ends = UiKit.Label(Root, REnds.X, REnds.Y, REnds.W, REnds.H, "시즌 종료까지 20일 8시간", TextSize.Body, Palette.White);
+             ends.name = "SeasonEnds";
+ 
+             // T462(주인 2026-09-12 «패스에 이 부분 없애기(사진: 메달 + 진행 바 15/45 + 안내 띠 «일일 퀘스트를 깨면 보상이 열린다») · 챕터 완료한 만큼 열리게 하기 · 다이아 보급을 1/2 로 줄이기») — 메달 아이콘·진행 바(«15/45»)·안내 띠를 **뺐다**. 레벨은 이제 «깬 챕터 수»(Pass.Lv)라
+             //   «일일 퀘스트를 깨면 열린다» 는 말도 틀리고, 바가 재던 «퀘스트 점수» 도 없다. 남는 머리 = 배너·이름·시즌 종료·레벨 배지.
+ 
+             var badge = UiKit.Panel(Root, "LevelBadge", "fr.r12", Palette.A(Palette.Ink, 0.85f)).rectTransform;
+             UiKit.Pct(badge, RBadge); UiKit.Bordered(badge);
+             // ⚑ 여기도 «32» 가 글자로 박혀 있었다 — `const int CurLevel = 32` 와 같은 집안이다(T322 ⓓ 가 그 상수만 세이브로 옮겼다).
+             //   줄은 세이브를 보고 배지는 그림을 보면 **화면이 저 혼자 어긋난 말을 한다**(1레벨인데 머리에는 32).
+             //   «지금 레벨» 을 말하는 자리는 하나여야 한다.
+             UiKit.Label(badge, 0, 0, 100, 100, CurLevel.ToString(CultureInfo.InvariantCulture), TextSize.Body, Palette.White).name = "LevelText";
+ 
+             UiKit.Tag(banner, "머리 배너(그림)"); UiKit.Tag(name.rectTransform, "패스 이름");
+             UiKit.Tag(ends.rectTransform, "«시즌 종료까지 20일 8시간»"); UiKit.Tag(badge, "레벨 육각 배지(머리)");
+         }
+ 
+         void BuildNotice()
+         {
+             var strip = UiKit.Panel(Root, "Notice", "fr.rect", App.Assets != null ? App.Assets.Color("col.passNotice", Palette.Hex("#182210")) : Palette.Hex("#182210")).rectTransform;
+diff --git a/Assets/Scripts/Game/UiKit.cs b/Assets/Scripts/Game/UiKit.cs
+index 4d2665f527530b5f37647fadec72d1c51def1d4a..8fc6609ee47bc2868366e013ccc7d5b37ff58fa5 100644
+--- a/Assets/Scripts/Game/UiKit.cs
++++ b/Assets/Scripts/Game/UiKit.cs
+@@ -215,54 +215,74 @@ namespace KkomaKnight.Game
+         /// <summary>프레임 좌상 기준 px(1080×2337) 로 고정 크기 배치 — 프리팹 고유 크기를 그대로 둘 때.</summary>
+         public static void Px(RectTransform rt, float cx, float cy, float w, float h)
+         {
+             rt.anchorMin = rt.anchorMax = new Vector2(0, 1); rt.pivot = new Vector2(0.5f, 0.5f);
+             rt.anchoredPosition = new Vector2(cx, -cy); rt.sizeDelta = new Vector2(w, h); rt.localScale = Vector3.one;
+         }
+         /// <summary>표의 % 사각형 → 프레임 px 크기(폭·높이). 프리팹 조각을 «본래 크기 그대로 두고 배율로» 넣을 때의 목표 크기(<see cref="FitScale"/>).</summary>
+         public static Vector2 PxSize(Layout.R r) => new Vector2(r.W / 100f * FrameW, r.H / 100f * FrameH);
+         /// <summary>
+         /// 프리팹 조각을 <b>본래 sizeDelta 그대로</b> 두고 부모 한가운데에 균일 배율로 맞춘다(<see cref="PerkFrame"/> 규약 · T13/T34) — 내부 자식이 고정 크기라 sizeDelta 를 줄이면 그림이 안 줄어드는 GUI Pro 조각용.
+         /// target = 들어갈 px 크기(보통 <see cref="PxSize"/>) · fill = 그 안에서 차지할 비율. 조각 크기를 모르면(빈 Rect) 아무것도 안 한다.
+         /// </summary>
+         public static void FitScale(RectTransform piece, Vector2 target, float fill = 1f)
+         {
+             piece.anchorMin = piece.anchorMax = new Vector2(0.5f, 0.5f); piece.pivot = new Vector2(0.5f, 0.5f); piece.anchoredPosition = Vector2.zero;
+             var sz = piece.sizeDelta; if (sz.x <= 1f || sz.y <= 1f || target.x <= 0f || target.y <= 0f) return;
+             float s = Mathf.Min(target.x / sz.x, target.y / sz.y) * fill;
+             piece.localScale = new Vector3(s, s, 1f);
+         }
+ 
+         // ───────────────────────── 코드 생성 위젯 (글자 · 아이콘 · 게이지) ─────────────────────────
+         public static Image Icon(Transform parent, string name, string spriteKey, Color? tint = null)
+         {
+             var rt = Rect(parent, name);
+             var img = rt.gameObject.AddComponent<Image>();
+-            img.sprite = Cat != null ? Cat.Sprite(spriteKey) : null; img.preserveAspect = true; img.raycastTarget = false;
++            bool colorArt;
++            img.sprite = ResolveIconSprite(Cat, spriteKey, out colorArt); img.preserveAspect = true; img.raycastTarget = false;
+             if (tint.HasValue) img.color = tint.Value;
++            if (colorArt) img.color = new Color(1f, 1f, 1f, img.color.a);
+             return img;
+         }
++        static readonly Dictionary<string, string> ChihuahuaOptionIcons = new Dictionary<string, string>
++        {
++            { "pi.attack", "ui.option.attack" }, { "pi.defense", "ui.option.defense" }, { "pi.atk_spd", "ui.option.atkSpd" },
++            { "pi.fist", "ui.option.counter" }, { "pi.critical", "ui.option.critical" }, { "pi.damage", "ui.option.criticalDamage" },
++            { "pi.drop", "ui.option.steal" }, { "pi.heart", "ui.option.health" }, { "pi.shield", "ui.option.shield" },
++            { "pi.star", "ui.option.experience" }, { "ui.dodge", "ui.option.dodge" },
++        };
++        static Sprite ResolveIconSprite(AssetCatalog cat, string key, out bool colorArt)
++        {
++            colorArt = false;
++            if (cat == null) return null;
++            if (ChihuahuaOptionIcons.TryGetValue(key, out var replacement) && cat.Has(replacement))
++            {
++                var sprite = cat.Sprite(replacement);
++                if (sprite != null) { colorArt = true; return sprite; }
++            }
++            return cat.Sprite(key);
++        }
+         /// <summary>9-slice 스프라이트 패널(카탈로그 키). 색은 GUI Pro 팔레트에서.</summary>
+         public static Image Panel(Transform parent, string name, string spriteKey, Color color)
+         {
+             var rt = Rect(parent, name);
+             var img = rt.gameObject.AddComponent<Image>();
+             img.sprite = Cat != null ? Cat.Sprite(spriteKey) : null; img.type = Image.Type.Sliced; img.color = color; img.raycastTarget = false;
+             return img;
+         }
+ 
+         /// <summary>
+         /// 글자 하나. <paramref name="size"/> 가 종류(<paramref name="kind"/>) 하한(<see cref="TextSize"/> · T63 · 본문 40 · 버튼 44 · 보조 36 · 제목 60)보다 작으면 경고 없이 하한으로 올린다.
+         /// 정말 작아야 하는 곳(아이콘 위 «+1» 배지 등)만 <see cref="TextKind.Small"/> 을 명시한다(= 지시서의 allowSmall:true). bestFit 최소는 <see cref="TextSize.BestFitMin"/>(32) 아래로 못 내려간다.
+         /// </summary>
+         /// <param name="outline">
+         /// <b>더 이상 아무 일도 하지 않는다(T63-outline · 주인 04:4X «모든 글자들 다 검정 아웃라인»).</b> 아웃라인은 이제 <see cref="EnsureOutline"/> 가 무조건 붙인다.
+         /// 인자를 남겨 둔 이유는 이 자리를 <b>위치 인자로</b> 넘기는 호출부가 40여 곳이고 그 파일 대부분이 다른 워커의 살아 있는 lock 안이기 때문이다(결정 227) —
+         /// 지우면 그 파일들을 다 고쳐야 해서 규약(«같은 파일은 뒤 번호가 기다린다»)에 걸린다. lock 이 풀리는 대로 화면 워커가 자기 커밋에서 인자를 지우면 된다.
+         /// </param>
+         public static TMP_Text Text(Transform parent, string s, int size, Color color, TextAnchor anchor = TextAnchor.MiddleCenter, bool bestFit = false, bool outline = true, TextKind kind = TextKind.Body)
+         {
+             size = TextSize.Floor(size, kind);
+             var rt = Rect(parent, "Text");
+             var t = rt.gameObject.AddComponent<TextMeshProUGUI>();
+             t.font = TmpFont.Get(); t.text = TextGlyphs.Safe(s); t.fontSize = size; t.color = color; t.alignment = UiKit.TmpAlign(anchor);
+             t.textWrappingMode = TextWrappingModes.Normal; t.overflowMode = TextOverflowModes.Overflow;
+@@ -960,58 +980,59 @@ namespace KkomaKnight.Game
+             }
+             return n == DustCount;
+         }
+ 
+         /// <summary>이 칸의 빛살 «아래» 에 글로우 서클이 깔려 있는가(테스트·감사용 · T155 ⓓ) — «&lt;담개&gt;/Glow» 가 활성이고 스프라이트가 Glow_Circle.</summary>
+         public static bool HasGlow(Transform cell)
+         {
+             var gt = cell != null ? cell.Find(LightMaskName + "/" + GlowName) : null; if (gt == null || !gt.gameObject.activeInHierarchy) return false;
+             var img = gt.GetComponent<Image>(); return img != null && img.enabled && img.sprite != null && img.sprite.name.StartsWith("Glow_Circle");
+         }
+         /// <summary>빛살 회전 켜기/끄기(스크롤 밖 칸은 끈다 · T72 4항 «보이는 칸만») — 그 칸의 «LightMask/Light» 트윈을 Play/Pause. 없으면 아무 일 없음.</summary>
+         public static void SetLightSpinning(RectTransform cell, bool on)
+         {
+             var lt = cell != null ? cell.Find(LightMaskName + "/" + LightName) : null; if (lt == null) return;
+             if (on) DOTween.Play(lt); else DOTween.Pause(lt);
+             // T174 4항 ⓑ — 알갱이도 «보이는 칸만» 규약에 같이 태운다(스크롤 밖에서는 멈춘다)
+             var dt = cell.Find(LightMaskName + "/" + DustName);
+             if (dt != null) { if (on) DOTween.Play(dt); else DOTween.Pause(dt); }
+         }
+         /// <summary>이 칸에 도는 빛살이 있는가(테스트·감사용) — «LightMask/Light» 가 활성이고 스프라이트 이름에 Effect_Light.</summary>
+         public static bool HasLight(Transform cell)
+         {
+             var lt = cell != null ? cell.Find(LightMaskName + "/" + LightName) : null; if (lt == null || !lt.gameObject.activeInHierarchy) return false;
+             var img = lt.GetComponent<Image>(); return img != null && img.enabled && img.sprite != null && img.sprite.name.StartsWith("Effect_Light");
+         }
+-        /// <summary>이 사각형 바로 아래에 패턴 배경이 있는가(테스트·감사용) — 자식 «Pattern» RawImage 가 활성이고 텍스처 이름 Pattern_01_256.</summary>
++        /// <summary>이 사각형 바로 아래에 패턴 배경이 있는가 — 현재 카탈로그 패턴의 실제 텍스처와 비교한다.</summary>
+         public static bool HasPattern(Transform host)
+         {
+-            if (host == null) return false;
++            var expected = Cat != null && Cat.Has(PatternKey) ? Cat.Sprite(PatternKey) : null;
++            if (host == null || expected == null || expected.texture == null) return false;
+             for (int i = 0; i < host.childCount; i++)
+             {
+                 var c = host.GetChild(i); if ((c.name != PatternName && c.name != MergedBgName) || !c.gameObject.activeInHierarchy) continue;
+-                var raw = c.GetComponent<RawImage>(); if (raw != null && raw.enabled && raw.texture != null && raw.texture.name.StartsWith("Pattern_01")) return true;
++                var raw = c.GetComponent<RawImage>(); if (raw != null && raw.enabled && raw.texture == expected.texture) return true;
+             }
+             return false;
+         }
+ 
+         /// <summary>
+         /// ③ 그라데이션 색감(T72) — <paramref name="rt"/> 안에 «GradientTop»(<paramref name="topKey"/> · tint <paramref name="top"/> 기본 흰 α <see cref="GradientTopAlpha"/> = 위 +12% 밝기) 와 «GradientBottom»(<paramref name="bottomKey"/> · <paramref name="bottom"/> 기본 Ink α <see cref="GradientBottomAlpha"/> = 아래 −18%) 두 장을
+         /// Stretch(안쪽 <paramref name="inset"/> · 둥근 모서리 조각이면 모서리 반지름만큼) · raycast 끔 · 조각에 9-slice border 가 있으면 Sliced 아니면 Simple 로 <paramref name="siblingIndex"/> 자리(기본 0 = rt 자신의 배경 그림 바로 위 · 글자·아이콘 자식은 그 위에 남는다)에 덧댄다.
+         /// 한쪽만 원하면 그 키에 null — 버튼은 (null, "ui.btnGradient") 아래 어둠만, 카드는 ("fr.cardGradient3", …). 이미 있으면 갱신만. 코드 도형 0 — 색은 tint 뿐(색은 점수 밖 · «느낌» 규칙 ⓐ).
+         /// 같은 사각형에 <see cref="PatternBg"/> 가 이미 있으면 그 <b>위</b>로 들어간다(질감 층 순서 = 바탕 → 패턴 → 그라데이션 → 빛살 → 내용 · 결정 171).
+         /// </summary>
+         public static void Gradient(RectTransform rt, Color? top = null, Color? bottom = null, string topKey = GradTopKey, string bottomKey = GradBottomKey, float inset = 0f, int siblingIndex = 0)
+         {
+             if (rt == null) return;
+             int idx = Mathf.Clamp(siblingIndex, 0, Mathf.Max(0, rt.childCount));
+             // 질감 층 순서 = 바탕 → «Pattern» → 그라데이션 → 빛살 → 내용. 패턴이 이미 깔려 있으면 그 위에 덧대야 한다
+             // (그냥 형제 0 으로 넣으면 패턴이 아래로 밀려 «패턴은 형제 0» 계약이 깨진다 — CI #131·#134·#135 의 T72 빨강 · T82 · 결정 171)
+             for (int i = 0; i < rt.childCount; i++) if (rt.GetChild(i).name == PatternName) { idx = Mathf.Max(idx, i + 1); break; }
+             if (!string.IsNullOrEmpty(topKey))
+             {
+                 var g = GradientLayer(rt, GradientTopName, topKey, top ?? Palette.A(Palette.White, GradientTopAlpha), inset);
+                 if (g != null) { g.transform.SetSiblingIndex(idx); idx = g.transform.GetSiblingIndex() + 1; }
+             }
+             if (!string.IsNullOrEmpty(bottomKey))
+             {
+                 var g = GradientLayer(rt, GradientBottomName, bottomKey, bottom ?? Palette.A(Palette.Ink, GradientBottomAlpha), inset);
+@@ -1404,52 +1425,54 @@ namespace KkomaKnight.Game
+         /// <summary>여러 이름 중 먼저 걸리는 것 (프리팹 변형은 인스턴스 이름이 덧씌워질 수 있어 둘 다 시도한다).</summary>
+         public static Transform FindAny(Transform root, params string[] names) { foreach (var n in names) { var t = Find(root, n); if (t != null) return t; } return null; }
+         static Transform FindByName(Transform t, string name, bool deep)
+         {
+             for (int i = 0; i < t.childCount; i++) if (t.GetChild(i).name == name) return t.GetChild(i);
+             if (!deep) return null;
+             for (int i = 0; i < t.childCount; i++) { var r = FindByName(t.GetChild(i), name, true); if (r != null) return r; }
+             return null;
+         }
+         /// <summary>프리팹 안 글자 바꾸기. <paramref name="size"/> 를 주면 종류 하한(T63)으로 올려 넣고, bestFit 이면 최소도 <see cref="TextSize.BestFitMin"/> 으로. <paramref name="kind"/> 는 표식으로 남는다(게이트 판정).</summary>
+         public static TMP_Text SetText(Transform root, string path, string s, Color? color = null, int? size = null, TextKind kind = TextKind.Body)
+         {
+             var t = Find(root, path); TMP_Text txt = null; if (t != null) { txt = t.GetComponent<TMP_Text>(); if (txt == null) txt = t.GetComponentInChildren<TMP_Text>(true); }
+             if (txt == null) { Debug.LogWarning($"[UiKit] 글자 없음: {root.name}/{path}"); return null; }
+             txt.text = TextGlyphs.Safe(s); if (color.HasValue) txt.color = color.Value;
+             if (size.HasValue) { int sz = TextSize.Floor(size.Value, kind); txt.fontSize = sz; txt.fontSizeMax = sz; }
+             if (txt.enableAutoSizing) txt.fontSizeMin = TextSize.BestFitFloor(Mathf.RoundToInt(txt.fontSizeMin), kind);
+             EnsureOutline(txt);
+             TextAudit.Mark(txt, kind);
+             return txt;
+         }
+         public static Image SetSprite(Transform root, string path, string spriteKey, Color? tint = null)
+         {
+             var t = Find(root, path); var img = t != null ? t.GetComponent<Image>() : null;
+             if (img == null) { Debug.LogWarning($"[UiKit] 이미지 없음: {root.name}/{path}"); return null; }
+-            if (spriteKey != null && Cat != null) img.sprite = Cat.Sprite(spriteKey);
++            bool colorArt = false;
++            if (spriteKey != null) img.sprite = ResolveIconSprite(Cat, spriteKey, out colorArt);
+             if (tint.HasValue) img.color = tint.Value;
++            if (colorArt) img.color = new Color(1f, 1f, 1f, img.color.a);
+             return img;
+         }
+         public static void Hide(Transform root, params string[] paths) { foreach (var p in paths) { var t = Find(root, p); if (t != null) t.gameObject.SetActive(false); } }
+         public static void Show(Transform root, string path, bool on) { var t = Find(root, path); if (t != null) t.gameObject.SetActive(on); }
+ 
+         /// <summary>아이콘 밑 라벨처럼 2줄로 접히는 짧은 글자의 줄 간격(<c>Text.lineSpacing</c> · T63) — Jua 의 줄 높이가 크기의 1.375 배라 1.0 이면 2줄이 칸을 넘친다 · 0.75 면 2줄 ≈ 크기 × 2.4.</summary>
+         public const float CaptionLineSpacing = 0.75f;
+         /// <summary>눌림 표시 배율(T22 · 주인 «모든 버튼에 눌림 표시») — 누르는 동안 그림을 이만큼 어둡게(ColorTint pressedColor) · 그림이 없는 히트 영역은 CanvasGroup alpha 를 이만큼.</summary>
+         public const float PressedMul = 0.8f;
+         /// <summary>눌림 지속 시간(초) — 손을 떼면 이 시간 안에 원래 색으로.</summary>
+         public const float PressedFade = 0.05f;
+         /// <summary>모든 버튼 공통 ColorTint 표 — 눌림만 어둡게(×<see cref="PressedMul"/>) · highlighted/selected 는 그대로(마우스 올림·선택 잔상 없음) · disabled 는 흰색(비활성 반투명은 <see cref="SetInteractable"/> 의 CanvasGroup 이 «지금처럼» 맡는다).</summary>
+         public static ColorBlock PressColors
+         {
+             get
+             {
+                 var c = ColorBlock.defaultColorBlock;
+                 c.normalColor = Color.white; c.highlightedColor = Color.white; c.selectedColor = Color.white; c.disabledColor = Color.white;
+                 c.pressedColor = new Color(PressedMul, PressedMul, PressedMul, 1f);
+                 c.colorMultiplier = 1f; c.fadeDuration = PressedFade;
+                 return c;
+             }
+         }
+ 
+         /// <summary>
+diff --git a/Assets/Tests/EditMode/T519ShellTests.cs b/Assets/Tests/EditMode/T519ShellTests.cs
+new file mode 100644
+index 0000000000000000000000000000000000000000..fba7c9572b7ff915d68eb46916c54ec98dabb02c
+--- /dev/null
++++ b/Assets/Tests/EditMode/T519ShellTests.cs
+@@ -0,0 +1,43 @@
++using System.Collections.Generic;
++using System.Reflection;
++using KkomaKnight.Game;
++using NUnit.Framework;
++
++namespace KkomaKnight.Tests
++{
++    public sealed class T519ShellTests
++    {
++        [Test]
++        public void ChapterArtCyclesInSpecifiedOrder()
++        {
++            Assert.AreEqual("ui.chapter.autumn", LobbyScreen.ChapterArtKey(1));
++            Assert.AreEqual("ui.chapter.deepForest", LobbyScreen.ChapterArtKey(2));
++            Assert.AreEqual("ui.chapter.forest", LobbyScreen.ChapterArtKey(3));
++            Assert.AreEqual("ui.chapter.desert", LobbyScreen.ChapterArtKey(4));
++            Assert.AreEqual("ui.chapter.autumn", LobbyScreen.ChapterArtKey(5));
++        }
++
++        [Test]
++        public void OptionArtMapCoversOnlyTheElevenRequestedKeys()
++        {
++            var field = typeof(UiKit).GetField("ChihuahuaOptionIcons", BindingFlags.Static | BindingFlags.NonPublic);
++            var map = (Dictionary<string, string>)field.GetValue(null);
++            CollectionAssert.AreEquivalent(new[]
++            {
++                "pi.attack", "pi.defense", "pi.atk_spd", "pi.fist", "pi.critical", "pi.damage",
++                "pi.drop", "pi.heart", "pi.shield", "pi.star", "ui.dodge",
++            }, map.Keys);
++            Assert.AreEqual(11, map.Count);
++        }
++
++        [Test]
++        public void ProfileFaceSaveKeysRemainNineAndUnchanged()
++        {
++            CollectionAssert.AreEqual(new[]
++            {
++                "ui.iconFoe1", "ui.iconFoe2", "ui.iconFoe3", "ui.iconFoe4",
++                "ui.face5", "ui.face6", "ui.face7", "ui.face8", "ui.face9",
++            }, Profile.Faces);
++        }
++    }
++}
+diff --git a/Assets/Tests/EditMode/T519ShellTests.cs.meta b/Assets/Tests/EditMode/T519ShellTests.cs.meta
+new file mode 100644
+index 0000000000000000000000000000000000000000..5a42d637d4ebbe9cd31b1124b00260ae775c19cb
+--- /dev/null
++++ b/Assets/Tests/EditMode/T519ShellTests.cs.meta
+@@ -0,0 +1,11 @@
++fileFormatVersion: 2
++guid: ccc8a46e88734aa6bc770fef8387c519
++MonoImporter:
++  externalObjects: {}
++  serializedVersion: 2
++  defaultReferences: []
++  executionOrder: 0
++  icon: {instanceID: 0}
++  userData: 
++  assetBundleName: 
++  assetBundleVariant: 
+diff --git a/tools/game_ui_art/sessions/shell.md b/tools/game_ui_art/sessions/shell.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..171222a566b8c966254d4c968b8055ac68e4b9c4
+--- /dev/null
++++ b/tools/game_ui_art/sessions/shell.md
+@@ -0,0 +1,32 @@
++# T519 shell 세션 보고
++
++## 완료한 작은 단위
++
++- `UiKit`: 옵션 컬러 아이콘 11종은 선택적 `ui.option.*` 키가 있을 때만 사용한다. 그 경우 RGB만 white로 하고 호출자가 준 alpha는 유지한다. 키가 없으면 기존 `pi.*`/`ui.dodge` 표시와 다른 UI tint를 그대로 유지한다.
++- `UiKit.HasPattern`: `Pattern_01` 파일명 의존성을 제거하고 `ui.pattern`이 가리키는 실제 카탈로그 텍스처로 RawImage/합성 배경을 판정한다. Repeat UV, 이동 트윈, 합성 경로 수치는 바꾸지 않았다.
++- `LobbyScreen`: 기존 `SampleImage_Map`의 `Image`를 `_mapImage`로 보유하며 선택 챕터를 `autumn → deepForest → forest → desert` 순으로 갱신한다. 새 키가 없으면 현재 프리팹 그림을 유지한다.
++- `Profile`: `Faces` 9개와 저장 키는 변경하지 않았다. 통합 시 기존 9개 키가 새 텍스처를 가리키게 한다.
++- `SeasonPassScreen`: `ui.pass.banner`가 있을 때만 기존 배너 rect 안에 넣고, 없으면 기존 그라데이션을 유지한다. 이름/종료/레벨 UI는 그대로 위에 둔다.
++- `LoadingScreen`: `ui.titleLoading` 프리팹은 그대로 생성하고 전달된 `cat`의 `ui.loading.art`가 있을 때만 `Background` 이미지를 바꾼다. 진행바, 최소 시간, 진행 문구는 변경하지 않았다.
++- 전용 `T519ShellTests`에 챕터 순서, 정확히 11개 옵션 키, Profile 9개 저장 키 불변 검사를 추가했다.
++
++## 통합 세션이 추가할 키 / 예상 파일
++
++- 옵션: `ui.option.attack`, `defense`, `atkSpd`, `counter`, `critical`, `criticalDamage`, `steal`, `health`, `shield`, `experience`, `dodge` → `Assets/Art/ChihuahuaGameUI/Options/*.png` 11개.
++- 챕터: `ui.chapter.autumn`, `deepForest`, `forest`, `desert` → `Assets/Art/ChihuahuaGameUI/Chapters/*.png` 4개.
++- 배너/로딩: `ui.pass.banner` → `Assets/Art/ChihuahuaGameUI/Pass/pass_banner.png`; `ui.loading.art` → `Assets/Art/ChihuahuaGameUI/Loading/loading_art.png`.
++- 프로필: 새 키를 만들지 않고 기존 `ui.iconFoe1`~`4`, `ui.face5`~`9`의 카탈로그 경로만 최종 ChihuahuaGameUI 초상 9개로 교체한다.
++- 패턴: 새 키를 만들지 않고 기존 `ui.pattern` 경로와 importer Repeat 설정을 최종 패턴 텍스처로 교체한다.
++
++## 남은 통합/검증
++
++- 중앙 `catalog.json`, 생성 `AssetCatalog.asset`, `assets-map.md`와 실제 PNG/meta는 integration 세션 소유라 이 사본에서 수정하지 않았다.
++- 따라서 새 키 리터럴 카탈로그 검사는 현재 실패하는 것이 예상 의존성이다. 검사를 우회하지 말고 실제 아트 및 중앙 카탈로그가 합쳐진 뒤 재실행한다.
++- Unity EditMode/PlayMode에서 새 그림이 있는 경우와 없는 경우를 모두 실행하고, 패턴 Repeat/이동/합성, 로비 4테마, 배너 글자 층, 로딩 진행바를 실제 화면으로 확인해야 한다.
++
++## 이 사본의 검증 결과
++
++- 통과: `git diff --check`, `check_test_usings.py`, `check_asmdef.py`, `check_unity_null.sh`, T519 정적 회귀 assertion.
++- 예상 실패: `check_catalog_keys.py`는 위 신규 키 17종을 중앙 카탈로그에 아직 합치지 않아 19개 리터럴 위치를 보고했다(동일 키 중복 사용 포함). 우회하지 않았다.
++- `check_stale_asserts.py`는 기존 `UiTextureTests`의 `Pattern_01` 이름 단언 1건을 인계 대상으로 보고했다. 기존 테스트는 이 역할의 “전용 새 테스트” 소유 범위 밖이므로 integration 세션에서 실제 텍스처 동일성 단언으로 갱신해야 한다.
++- 이 환경에는 Unity 실행 파일과 `dotnet`이 없어 Unity 테스트/C# 컴파일을 실행하지 못했으며 통과로 간주하지 않는다.

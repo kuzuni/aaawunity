@@ -1,0 +1,66 @@
+{
+  "task": "ChihuahuaGameUI-handoff",
+  "assets": [
+    {
+      "id": "chest_medieval",
+      "asset": "tools/game_ui_art/checkpoint/ready/chest_medieval_closed.png",
+      "tool": "built-in image_gen",
+      "style_reference": "Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png",
+      "final_request": "Style-transfer with original yellow chihuahua reference. Medieval chest, thick clean black contours, round simple shapes, broad brown planks, gray iron bands and gold lock; nearly flat colors and tiny cream highlights; transparent background; no realistic texture, grain, painterly shading or anime detail.",
+      "source_generation_filename": "exec-f903fbe8-fc0f-4db6-930b-c752612f937a.png"
+    },
+    {
+      "id": "chest_modern",
+      "asset": "tools/game_ui_art/checkpoint/ready/chest_modern_closed.png",
+      "tool": "built-in image_gen",
+      "style_reference": "Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png",
+      "final_request": "Use case: style-transfer. Input image is the STRICT drawing-style reference, not a subject to include. Match its thick clean BLACK contours, rounded chunky toy-like shapes, very sparse large details, almost flat colors, restrained subtle shading and 1-2 simple cream shine strokes. Same drawing style as the reference brown club and orange shoes. NO texture, realistic materials, painterly shading, 3D rendering, rim light, fine circuitry or tiny details. One CLOSED equipment chest in three-quarter view, isolated on a square genuine transparent-alpha PNG with 12% empty margin on every edge. No character, text, letters, frame, floor shadow, background or checkerboard. Modern rugged equipment case: chunky rectangular olive green hard case with rounded corners, two oversized simple gray metal toggle latches, a black top handle and dark gray corner bumpers. One broad yellow stripe on side. About 12 simple drawn pieces total. Feels like modern industrial army equipment, no futuristic glow.",
+      "source_generation_filename": "exec-4da8a297-26d0-4de8-82fe-5de17747fd8a.png"
+    },
+    {
+      "id": "chest_cyber",
+      "asset": "tools/game_ui_art/checkpoint/ready/chest_cyber_closed.png",
+      "tool": "built-in image_gen",
+      "style_reference": "Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png",
+      "final_request": "Use case: style-transfer. Input image is the STRICT drawing-style reference, not a subject to include. Match its thick clean BLACK contours, rounded chunky toy-like shapes, very sparse large details, almost flat colors, restrained subtle shading and 1-2 simple cream shine strokes. Same drawing style as the reference brown club and orange shoes. NO texture, realistic materials, painterly shading, 3D rendering, rim light, fine circuitry or tiny details. One CLOSED equipment chest in three-quarter view, isolated on a square genuine transparent-alpha PNG with 12% empty margin on every edge. No character, text, letters, frame, floor shadow, background or checkerboard. Cyber chest: chunky rounded dark navy case with 2 large cool-gray armored corners, 2 broad bright cyan illuminated bands and a large central cyan hexagonal electronic latch. One short violet accent bar. Simple toy-like high-tech case, only about 12 clean drawn pieces. No realistic metal, no intricate circuitry or lighting bloom.",
+      "source_generation_filename": "exec-d5ce0b18-6a30-4e26-8999-7490e0112065.png"
+    },
+    {
+      "id": "diamond",
+      "asset": "tools/game_ui_art/checkpoint/ready/diamond_blue.png",
+      "tool": "built-in image_gen",
+      "style_reference": "Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png",
+      "final_request": "Use case: style-transfer. Input image is ONLY the strict drawing-style reference. Every shape MUST match the reference yellow chihuahua's very thick smooth solid BLACK outline, rounded simple shapes, nearly flat cheerful colors, tiny amount of soft shading, and only 1-2 broad cream highlight strokes like its club and shoes. Same artist, same simple cartoon series. NO realistic texture, wood grain, painterly brushwork, material rendering, fine details, 3D lighting, anime style, thin or colored outlines. One isolated subject, square PNG with genuine transparent alpha background, centered with 12% empty margin on ALL four sides. No lettering, text, card frame, watermark or checkerboard. Draw one BLUE DIAMOND currency gem. Chunky simplified diamond silhouette with just 5 broad cyan/blue facets separated with simple lines, sapphire lower tip and pale cyan upper face, one small cream shine. It should be as simple and thickly outlined as the yellow dog's orange shoe. Do not draw the dog.",
+      "source_generation_filename": "exec-52d55228-53ef-472e-8fdd-b2e1bf31d5a6.png"
+    },
+    {
+      "id": "shelter",
+      "asset": "tools/game_ui_art/checkpoint/ready/shelter_house.png",
+      "tool": "built-in image_gen",
+      "style_reference": "Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png",
+      "final_request": "Use case: style-transfer. Input image is ONLY the strict drawing-style reference. Every shape MUST match the reference yellow chihuahua's very thick smooth solid BLACK outline, rounded simple shapes, nearly flat cheerful colors, tiny amount of soft shading, and only 1-2 broad cream highlight strokes like its club and shoes. Same artist, same simple cartoon series. NO realistic texture, wood grain, painterly brushwork, material rendering, fine details, 3D lighting, anime style, thin or colored outlines. One isolated subject, square PNG with genuine transparent alpha background, centered with 12% empty margin on ALL four sides. No lettering, text, card frame, watermark or checkerboard. Draw one tiny welcoming HOUSE shelter. Simple rounded warm brown cabin, red-orange pitched roof, one chimney, one cream window, arched door with a tiny paw mark. Only a few broad pieces, no individual stonework or wood grain. Three-quarter view. The roof is as simple as the reference dog's orange shoe. Do not draw the dog.",
+      "source_generation_filename": "exec-60a25242-e2e8-4339-a443-2d53caacd774.png"
+    },
+    {
+      "id": "devil",
+      "asset": "tools/game_ui_art/checkpoint/needs_alpha/devil_draft.png",
+      "tool": "built-in image_gen",
+      "style_reference": "Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png",
+      "final_request": "Precise background extraction. Keep the supplied cartoon character EXACTLY identical: same pose, face, proportions, thick black outlines, simple flat colors and every foreground detail. Delete the entire gray checked background and deliver this same character as a clean PNG cutout with a REAL TRANSPARENT ALPHA CHANNEL. The pattern is a background to REMOVE, it must not appear in output pixels. Include transparent openings between limbs, wing gaps, tail gaps and inside the halo if present. Keep all foreground whites solid. No redraw, no style changes, no new objects, no shadow, no backdrop. Preserve complete silhouette with clear margin around it.",
+      "source_generation_filename": "exec-49e273fa-301e-4ca9-8743-5343d544a785.png",
+      "initial_generation_prompt": "Use case: style-transfer. Input image is ONLY the strict drawing-style reference. Every shape MUST match the reference yellow chihuahua's very thick smooth solid BLACK outline, rounded simple shapes, nearly flat cheerful colors, tiny amount of soft shading, and only 1-2 broad cream highlight strokes like its club and shoes. Same artist, same simple cartoon series. NO realistic texture, wood grain, painterly brushwork, material rendering, fine details, 3D lighting, anime style, thin or colored outlines. One isolated subject, square PNG with genuine transparent alpha background, centered with 12% empty margin on ALL four sides. No lettering, text, card frame, watermark or checkerboard. Draw one actual little DEVIL character, full body in very simple cartoon chibi proportions. Huge round red head, two simple cream horns, big round dark eyes shaped simply like the reference dog's eyes, round cheeky smile, tiny red body in dark shorts, two small simple bat wings, a short spade tail and a toy-like trident. Rounded feet, very few lines. Creature should be recognizable as a devil, not a skull. Do not draw a dog or anime human.",
+      "background_edit_result": "Failed: result is RGB with baked checkerboard. Repair before runtime use."
+    },
+    {
+      "id": "angel",
+      "asset": "tools/game_ui_art/checkpoint/needs_alpha/angel_draft.png",
+      "tool": "built-in image_gen",
+      "style_reference": "Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png",
+      "final_request": "Precise background extraction. Keep the supplied cartoon character EXACTLY identical: same pose, face, proportions, thick black outlines, simple flat colors and every foreground detail. Delete the entire gray checked background and deliver this same character as a clean PNG cutout with a REAL TRANSPARENT ALPHA CHANNEL. The pattern is a background to REMOVE, it must not appear in output pixels. Include transparent openings between limbs, wing gaps, tail gaps and inside the halo if present. Keep all foreground whites solid. No redraw, no style changes, no new objects, no shadow, no backdrop. Preserve complete silhouette with clear margin around it.",
+      "source_generation_filename": "exec-5c093b9f-093c-4bf0-ad28-a50cdecfcfbb.png",
+      "initial_generation_prompt": "Use case: style-transfer. Input image is ONLY the strict drawing-style reference. Every shape MUST match the reference yellow chihuahua's very thick smooth solid BLACK outline, rounded simple shapes, nearly flat cheerful colors, tiny amount of soft shading, and only 1-2 broad cream highlight strokes like its club and shoes. Same artist, same simple cartoon series. NO realistic texture, wood grain, painterly brushwork, material rendering, fine details, 3D lighting, anime style, thin or colored outlines. One isolated subject, square PNG with genuine transparent alpha background, centered with 12% empty margin on ALL four sides. No lettering, text, card frame, watermark or checkerboard. Draw one actual little ANGEL character, full body in very simple cartoon chibi proportions. Huge round cream face, very simple smooth golden cap of hair with 2 curls only, big round dark eyes shaped simply like the reference dog's eyes, a kind small smile, tiny bell-shaped white robe with a sky-blue belt, small golden halo, two rounded white wings each drawn with just 3 broad feathers. Tiny rounded feet. Recognizably angel, not merely a wing symbol. Do not draw a dog or anime human.",
+      "background_edit_result": "Failed: result is RGB with baked checkerboard. Repair before runtime use."
+    }
+  ],
+  "task_id_note": "Temporary T515 collided with another session; allocate a new task ID from latest main when resuming."
+}

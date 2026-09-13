@@ -57,7 +57,9 @@ namespace KkomaKnight.Game
         static readonly Vector2 MenuDotAnchor = new Vector2(1, 1), MenuDotOffset = new Vector2(-20, -18);
         const float MenuDotSize = 33f;
 
-        TopBar _top; TMP_Text _chap; Transform _tabs;
+        TopBar _top; TMP_Text _chap; Transform _tabs; Image _mapImage;
+        public static readonly string[] ChapterArtKeys = { "ui.chapter.autumn", "ui.chapter.deepForest", "ui.chapter.forest", "ui.chapter.desert" };
+        public static string ChapterArtKey(int chapter) => ChapterArtKeys[Mathf.Abs(chapter - 1) % ChapterArtKeys.Length];
         /// <summary>«데일리 기프트» 사이드 아이콘의 빨간 알림 점 — 지금 받을 수 있는 줄이 하나라도 있으면 켠다(T77 · <see cref="Refresh"/>).</summary>
         GameObject _giftDot;
         // T366(주인 2026-09-10 «특권에서 받을 수 있는 재화 있으면 특권 부분도 빨간점 알림») — 왼쪽 사이드 «특권» 칸의 빨간 점.
@@ -155,7 +157,7 @@ namespace KkomaKnight.Game
                 if (map != null)
                 {
                     var mrt = (RectTransform)map; mrt.SetParent(card, false); map.gameObject.SetActive(true); UiKit.Pct(mrt, CardMapImage);
-                    var mi = map.GetComponent<Image>(); if (mi != null) { mi.preserveAspect = true; mi.raycastTarget = false; }
+                    _mapImage = map.GetComponent<Image>(); if (_mapImage != null) { _mapImage.preserveAspect = true; _mapImage.raycastTarget = false; }
                 }
                 // T245(주인 2026-09-08 12:0X «챕터 카드 … 클릭했더니 시작되는 거 안 되게 하고 그거 shine 이펙트 있는 거도 하지 말기»)
                 //  ⓐ 여기 있던 `UiKit.Clickable(card, …)`(전투 시작)을 **없앴다** — 카드는 «이번 챕터 그림» 만 보여 준다.
@@ -279,6 +281,11 @@ namespace KkomaKnight.Game
         {
             var s = App.Save;
             if (_chap != null) _chap.text = $"챕터 {s.SelChapter}";
+            if (_mapImage != null && App.Assets != null)
+            {
+                string key = ChapterArtKey(s.SelChapter);
+                if (App.Assets.Has(key)) { var sprite = App.Assets.Sprite(key); if (sprite != null) _mapImage.sprite = sprite; }
+            }
             _top?.Refresh();
             // T77 — 데일리 기프트에 받을 것이 있으면 사이드 아이콘에 빨간 점
             if (_giftDot != null) _giftDot.SetActive(Core.DailyGift.AnyClaimable(s, App.Data != null ? App.Data.DailyGift : null, SaveStore.Today()));

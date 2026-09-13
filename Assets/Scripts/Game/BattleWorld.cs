@@ -163,10 +163,15 @@ namespace KkomaKnight.Game
         public sealed class Theme
         {
             public string Name;
-            public string Field => MapLayouts.FieldOf(Name); public string Road => MapLayouts.RoadOf(Name);
+            public bool IsDungeon => Name == "expedition" || Name == "hell";
+            public string Field => IsDungeon ? "env." + Name + ".field" : MapLayouts.FieldOf(Name);
+            public string Road => IsDungeon ? "env." + Name + ".road" : MapLayouts.RoadOf(Name);
             public static readonly Theme[] All = { new Theme { Name = "autumn" }, new Theme { Name = "deepForest" }, new Theme { Name = "forest" }, new Theme { Name = "desert" } };
             /// <summary>챕터 → 테마: 1=Autumn 2=DeepForest 3=Forest 4=Desert, 5=Autumn … (주인 지시 «4개 순환»).</summary>
             public static Theme ForChapter(int chapter) => All[((chapter - 1) % All.Length + All.Length) % All.Length];
+            /// <summary>Dungeon art wins over chapter cycling; arena remains its dedicated stage.</summary>
+            public static Theme ForRun(int chapter, string dungeonKey, bool arena)
+                => arena ? Arena : dungeonKey == "expedition" || dungeonKey == "hell" ? new Theme { Name = dungeonKey } : ForChapter(chapter);
             /// <summary>
             /// T240 1항 — 아레나(PvP) 판의 무대. 주인 레퍼런스 <c>33_pvp_battle.jpg</c> 의 가운데는 <b>모래 마당</b>이고
             /// 챕터 전투(풀밭·숲)와 한눈에 갈려야 한다 — 그래서 챕터 순환에서 빼고 <b>사막 바닥을 고정</b>으로 쓴다(새 그림 0 · §1).
@@ -189,6 +194,12 @@ namespace KkomaKnight.Game
         {
             var screen = app != null ? app.GetScreen<BattleScreen>() : null;
             return screen != null && screen.IsArena;
+        }
+
+        static string DungeonKeyOf(App app)
+        {
+            var screen = app != null ? app.GetScreen<BattleScreen>() : null;
+            return screen != null ? screen.DungeonKey : null;
         }
 
         /// <summary>월드 루트(Ground·Props·Nodes 의 부모) — 테스트·진단용 읽기(T19 PlayMode 맵 테스트가 바닥·길·소품 스케일을 본다).</summary>
@@ -263,7 +274,7 @@ namespace KkomaKnight.Game
             _zoom = (float)D.Ui.CameraZoom; _playerX = (float)(D.Ui.PlayerX * WorldCam.LayoutW);
             // T240 1항 — 아레나 판은 챕터와 무관하게 «모래 마당»(레퍼런스 33). 일반 판은 종전대로 챕터가 무대를 정한다.
             _isArena = IsArenaRun(app);
-            _theme = _isArena ? Theme.Arena : Theme.ForChapter(g.Chapter);
+            _theme = ResolveTheme(g.Chapter, DungeonKeyOf(app), _isArena);
             // T319 — 아레나 판의 «만나는 점» = 둘의 한가운데다.
             //   1대1 판은 상대가 `D.Enemies.NodeGap` 에 서 있고(Battle.BuildDuelNode) 내가 거기서 StopDistance 만큼 앞에 멈춘다.
             //   즉 만난 뒤 두 사람은 [gap − stop, gap] 에 서므로 그 한가운데(gap − stop/2)를 화면 가운데에 둔다 — 좌우 대칭이다.
@@ -277,6 +288,16 @@ namespace KkomaKnight.Game
             _root = new GameObject("World").transform;
             BuildGround(); BuildProps(); BuildNodes(); BuildPlayer();
             _goldPrev = G.Gold; ShownHp = G.P.Hp; ShownSh = G.P.Sh;
+        }
+        Theme ResolveTheme(int chapter, string dungeonKey, bool arena)
+        {
+            var requested = Theme.ForRun(chapter, dungeonKey, arena);
+            if (!requested.IsDungeon) return requested;
+            if (!_app.Assets.Has(requested.Field) || !_app.Assets.Has(requested.Road)) return Theme.ForChapter(chapter);
+            var props = DungeonMapLayouts.Of(requested.Name);
+            if (props == null) return Theme.ForChapter(chapter);
+            foreach (var p in props) if (!_app.Assets.Has(DungeonMapLayouts.Key(requested.Name, p.Art))) return Theme.ForChapter(chapter);
+            return requested;
         }
         public void Dispose()
         {
@@ -332,7 +353,13 @@ namespace KkomaKnight.Game
         {
             var ground = new GameObject("Ground").transform; ground.SetParent(_root, false);
             var field = _app.Assets.Sprite(_theme.Field) ?? _app.Assets.Sprite("env.field");
-            var fieldScale = new Vector3(MapLayouts.FieldScaleX * Layout.MapScale, MapLayouts.FieldScaleY * Layout.MapScale, 1f);   // 데모: 128px × (22.46, 20.35) = 28.7 × 26.0u 평면
+            // Dungeon PNGs are independently produced and may be large. Fit their bounds to the
+            // established demo-world footprint instead of inheriting source pixels/PPU.
+            float fieldWorldW = 1.28f * MapLayouts.FieldScaleX * Layout.MapScale;
+            float fieldWorldH = 1.28f * MapLayouts.FieldScaleY * Layout.MapScale;
+            var fieldScale = _theme.IsDungeon && field != null
+                ? new Vector3(fieldWorldW / field.bounds.size.x, fieldWorldH / field.bounds.size.y, 1f)
+                : new Vector3(MapLayouts.FieldScaleX * Layout.MapScale, MapLayouts.FieldScaleY * Layout.MapScale, 1f);   // 데모: 128px × (22.46, 20.35) = 28.7 × 26.0u 평면
             _tileW = (field != null ? field.bounds.size.x : 1.28f) * fieldScale.x;
             _tileCols = Mathf.CeilToInt(WorldCam.LayoutW / WorldCam.PPU / _tileW) + 2;
             float fieldY = WorldCam.ToWorld(0, DemoY(MapLayouts.FieldY)).y;
@@ -348,7 +375,11 @@ namespace KkomaKnight.Game
                 }
             var road = _app.Assets.Sprite(_theme.Road) ?? _app.Assets.Sprite("env.road");
             // 세로만 표 높이로 늘린다(T215 · <see cref="RoadStretchY"/>) — 가로·자리는 데모 그대로다. 길 그림이 한 색 판이라 늘려도 그림이 안 상한다.
-            var roadScale = new Vector3(MapLayouts.RoadScaleX * Layout.MapScale, MapLayouts.RoadScaleY * Layout.MapScale * RoadStretchY, 1f);       // 데모: 128px × (22.47, 2.46) = 28.8 × 3.15u 띠
+            float roadWorldW = 1.28f * MapLayouts.RoadScaleX * Layout.MapScale;
+            float roadWorldH = 1.28f * MapLayouts.RoadScaleY * Layout.MapScale * RoadStretchY;
+            var roadScale = _theme.IsDungeon && road != null
+                ? new Vector3(roadWorldW / road.bounds.size.x, roadWorldH / road.bounds.size.y, 1f)
+                : new Vector3(MapLayouts.RoadScaleX * Layout.MapScale, MapLayouts.RoadScaleY * Layout.MapScale * RoadStretchY, 1f);       // 데모: 128px × (22.47, 2.46) = 28.8 × 3.15u 띠
             float roadY = WorldCam.ToWorld(0, DemoY(MapLayouts.RoadCenterY)).y;
             float roadW = (road != null ? road.bounds.size.x : 1.28f) * roadScale.x; int roadCols = Mathf.CeilToInt(WorldCam.LayoutW / WorldCam.PPU / roadW) + 2;
             for (int c = 0; c < roadCols; c++)
@@ -389,6 +420,7 @@ namespace KkomaKnight.Game
         void BuildProps()
         {
             var props = new GameObject("Props").transform; props.SetParent(_root, false);
+            if (_theme.IsDungeon) { BuildDungeonProps(props); return; }
             double lastX = G.Nodes.Count > 0 ? G.Nodes[G.Nodes.Count - 1].X : 2000;
             double from = -700, to = lastX + 1400;
             float unitPx = UnitPx;
@@ -412,6 +444,29 @@ namespace KkomaKnight.Game
                     pr.Sr.flipY = lowerEdge;                                        // T71 ① — 아래쪽 물결 경계는 y 반전
                 }
         }
+
+        bool BuildDungeonProps(Transform parent)
+        {
+            var layout = DungeonMapLayouts.Of(_theme.Name);
+            if (layout == null) return false;
+            // The whole set is optional until integration installs all three sprites. Partial
+            // scenery would be worse than the intact chapter theme, so fall back atomically.
+            foreach (var p in layout) if (!_app.Assets.Has(DungeonMapLayouts.Key(_theme.Name, p.Art))) return false;
+            double lastX = G.Nodes.Count > 0 ? G.Nodes[G.Nodes.Count - 1].X : 2000;
+            double period = DungeonMapLayouts.Period * WorldCam.LayoutW / _zoom;
+            double from = -700, to = lastX + 1400, start = System.Math.Floor(from / period) * period;
+            for (double x0 = start; x0 < to; x0 += period)
+                foreach (var p in layout)
+                {
+                    string key = DungeonMapLayouts.Key(_theme.Name, p.Art);
+                    var sp = _app.Assets.Sprite(key); if (sp == null) return false;
+                    var pr = AddProp(parent, key, x0 + p.X * period, p.Y, 1f, p.Y < FootY ? OrderNearProp : 390, p.Flip);
+                    float targetW = WorldCam.PctW(p.Width * 100f), targetH = WorldCam.PctH(p.Height * 100f);
+                    float scale = Mathf.Min(targetW / sp.bounds.size.x, targetH / sp.bounds.size.y);
+                    pr.Sr.transform.localScale = Vector3.one * scale;
+                }
+            return true;
+        }
         /// <summary>표에서 길 위쪽 물결 경계(Road_up · y &gt; 길 중심) 행의 y — 아래쪽 경계를 이 값의 길 중심 대칭에 둔다(T71 ①). 표에 없으면 데모 값 1.134.</summary>
         public static float UpperRoadEdgeY(MapLayouts.P[] layout)
         {
@@ -430,21 +485,27 @@ namespace KkomaKnight.Game
                 switch (n.Type)
                 {
                     case NodeType.Rest:
-                    {   // 통 + 모닥불 + 버섯 (Environment 팩에 모닥불이 없어 이렇게 조합 — 주인 «알아서»)
+                    {
+                        if (BuildNodeArt("node.rest", go.transform, 92, 0.16f)) break;
+                        // 통 + 모닥불 + 버섯 (새 키가 없는 빌드의 기존 표시)
                         var b = Sprite("env.barrel", go.transform, 90); b.transform.localPosition = new Vector3(-0.35f, 0, 0); b.transform.localScale = Vector3.one * 0.8f;
                         var m = Sprite("env.mushroom", go.transform, 91); m.transform.localPosition = new Vector3(0.45f, -0.02f, 0); m.transform.localScale = Vector3.one * 0.7f;
                         nv.FxGo = Fx.Spawn("fx.fire", Vector3.zero, 0.6f, 0, go.transform, true); if (nv.FxGo != null) nv.FxGo.transform.localPosition = new Vector3(0.1f, 0.05f, -0.5f);
                         break;
                     }
                     case NodeType.Devil:
-                    {   // 돌기둥 + 죽은 나무 + 영혼 이펙트
+                    {
+                        if (BuildNodeArt("node.devil", go.transform, 92, 0.18f)) break;
+                        // 돌기둥 + 죽은 나무 + 영혼 이펙트 (새 키가 없는 빌드의 기존 표시)
                         var s = Sprite("env.monolith", go.transform, 88); s.transform.localScale = Vector3.one * 0.75f; s.color = new Color(0.75f, 0.65f, 0.85f);
                         var t = Sprite("env.deadTree", go.transform, 86); t.transform.localPosition = new Vector3(-0.6f, 0, 0); t.transform.localScale = Vector3.one * 0.8f;
                         nv.FxGo = Fx.Spawn("fx.devil", Vector3.zero, 0.7f, 0, go.transform, true); if (nv.FxGo != null) nv.FxGo.transform.localPosition = new Vector3(0, 0.6f, -0.5f);
                         break;
                     }
                     case NodeType.Angel:
-                    {   // 큰 돌 + 빛 이펙트
+                    {
+                        if (BuildNodeArt("node.angel", go.transform, 92, 0.18f)) break;
+                        // 큰 돌 + 빛 이펙트 (새 키가 없는 빌드의 기존 표시)
                         var s = Sprite("env.stoneBig", go.transform, 88); s.transform.localScale = Vector3.one * 0.6f; s.color = new Color(1f, 0.98f, 0.85f);
                         nv.FxGo = Fx.Spawn("fx.angel", Vector3.zero, 0.9f, 0, go.transform, true); if (nv.FxGo != null) nv.FxGo.transform.localPosition = new Vector3(0, 0.9f, -0.5f);
                         break;
@@ -452,6 +513,15 @@ namespace KkomaKnight.Game
                 }
                 _nodes.Add(nv);
             }
+        }
+
+        bool BuildNodeArt(string key, Transform parent, int order, float heightFrac)
+        {
+            if (!_app.Assets.Has(key)) return false;
+            var sp = _app.Assets.Sprite(key); if (sp == null) return false;
+            var sr = Sprite(key, parent, order);
+            sr.transform.localScale = Vector3.one * (WorldCam.PctH(heightFrac * 100f) / sp.bounds.size.y);
+            return true;
         }
 
         // ───────────────────────── 캐릭터 ─────────────────────────
