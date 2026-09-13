@@ -14,7 +14,7 @@ T519는 전체 통합 작업이며 아직 미완료다. T515~T518과 기존 장�
 | 역할 | 소유 파일 | 결과 기록 |
 |---|---|---|
 | world | BattleWorld.cs, Overlay.cs, 해당 신규 전용 테스트 | `tools/game_ui_art/sessions/world.md` |
-| events | EventsScreen.cs, Recipes.cs, LobbyPopups.cs, 해당 신규 전용 테스트 | `tools/game_ui_art/sessions/events.md` |
+| events | EventsScreen.cs, Recipes.cs, LobbyPopups.cs, ShopScreen.cs, 해당 신규 전용 테스트 | `tools/game_ui_art/sessions/events.md` |
 | shell | UiKit.cs, Palette.cs, Screens.cs, Profile.cs, SeasonPassScreen.cs, LoadingScreen.cs, 해당 신규 전용 테스트 | `tools/game_ui_art/sessions/shell.md` |
 | integration | catalog.json, AssetCatalog.asset, assets-map.md, 공통 테스트, PROGRESS/ROUTINE/TODO | 이 문서 및 상세 TODO |
 
@@ -39,5 +39,9 @@ T519는 전체 통합 작업이며 아직 미완료다. T515~T518과 기존 장�
 
 ## 실행 기록
 
-- 클라우드 환경 생성 확인. 코드 세션 제출 준비 중.
+- [월드 코드 작업](https://chatgpt.com/codex/tasks/task_e_6aa6d9c05e408329822cc510138c0f8f): 제출 확인, pending.
+- [이벤트 코드 작업](https://chatgpt.com/codex/tasks/task_e_6aa6d9cddb548329a987c7ba96a950f0): 제출 확인, pending.
+- [로비·공통 UI 코드 작업](https://chatgpt.com/codex/tasks/task_e_6aa6d9d441c08329ab4215fa6e7d1fdd): 제출 확인, pending.
+- 각 작업의 원문 요청은 `tools/game_ui_art/sessions/*-prompt.txt`에 보관한다.
+- 2026-09-14: 원본 치와와와 체크포인트 7개 직접 검수. 악마 배경 제거를 내장 이미지 도구로 재시도했지만 RGB/체크무늬가 반환돼 미통과. 최종 아트로 채택하지 않았다.
 - 기존 로컬 작업 트리의 PSB 메타파일 27개 변경은 이 작업 이전 변경으로 보존한다.
