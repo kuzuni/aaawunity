@@ -256,7 +256,9 @@ namespace KkomaKnight.Tests.Play
                 _app.StartBattle(1, dungeon.Run, dungeonKey); yield return Frames(3);
                 var dungeonBattle = _app.GetScreen<BattleScreen>(); Assert.IsNotNull(dungeonBattle, dungeonKey + " 전투 화면");
                 Assert.AreEqual(dungeonKey, dungeonBattle.World.MapTheme.Name, dungeonKey + " 전용 월드 테마");
-                Time.timeScale = 0f; yield return Shot("battle_dungeon_" + dungeonKey); Time.timeScale = 1f;
+                Time.timeScale = 0f;
+                if (_app.Overlay.IsOpen) { _app.Overlay.Close(); dungeonBattle.G.Pending = null; yield return Frames(1); }
+                yield return Shot("battle_dungeon_" + dungeonKey); Time.timeScale = 1f;
                 _app.ShowScreen("lobby"); yield return Frames(2);
             }
 
