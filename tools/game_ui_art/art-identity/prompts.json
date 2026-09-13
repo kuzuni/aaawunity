@@ -1,0 +1,28 @@
+{
+  "tool": "built-in image_gen",
+  "reference": {
+    "path": "Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png",
+    "sha256": "2452ddade14c0333d4a272a4d28004f346a5c933f1c730906b6a997dbeeedafd"
+  },
+  "common_profile_prompt": "Square mobile game profile portrait. Preserve the exact yellow Chihuahua identity, head proportions, large upright ears, cream eyebrows/muzzle/inner ears, huge brown eyes, brown nose, cute expression and screen-right gaze from the attached mandatory reference. Match its flat 2D cartoon style: thick smooth black outlines, rounded simple shapes, bright flat colors, subtle cel shading and tiny cream highlights. Head-and-ears only, centered, full ears visible, generous transparent padding, genuine RGBA alpha. No body, weapon, gloves, shoes, text, watermark, realism, fur texture, painterly or complex anime rendering, colored outlines or dramatic glow.",
+  "common_map_prompt": "Portrait 573:709 mobile game lobby chapter map. The attached character_base.png is the mandatory drawing-style reference only; do not draw the Chihuahua. Match its cheerful flat 2D cartoon style with thick smooth black outlines, rounded simplified forms, bright clean colors, subtle cel shading and small cream highlights. A broad winding path starts at bottom center and leads upward through layered scenery. No characters, animals, UI frame, text, letters, numbers, icons or watermark. Opaque full-canvas environment.",
+  "assets": {
+    "profile_01.png": "Primitive: small rounded brown hide headband with one tiny cream bone ornament, ears unobstructed.",
+    "profile_02.png": "Medieval: compact royal-blue knight coif/circlet with tiny rounded gold shield emblem, ears unobstructed.",
+    "profile_03.png": "Early modern: small burgundy musketeer cap, short cream feather and simple gold band, ears unobstructed.",
+    "profile_04.png": "Modern: small sky-blue backward baseball cap with cream paw emblem, ears unobstructed.",
+    "profile_05.png": "Cyber: slim cyan/deep-blue headband with one rounded cyan circuit gem, no visor.",
+    "profile_06.png": "Future: compact white/teal pilot crown-band with rounded orange star core and two short fins.",
+    "profile_07.png": "Space: compact lavender/white astronaut helmet rim, clear bubble arc and blue planet badge; ears remain outside.",
+    "profile_08.png": "Immortal: simple warm-gold laurel circlet with rounded leaves and cream gem.",
+    "profile_09.png": "Infinite: violet/gold infinity circlet with rounded infinity emblem and two cream star dots.",
+    "chapter_autumn.png": "Warm orange autumn forest with amber/red crowns, tan path, pumpkins, fallen leaves, peach hills and waterfall.",
+    "chapter_deepForest.png": "Dark mysterious deep forest with deep teal/navy foliage, ancient trunks, cool blue path and mint mushrooms.",
+    "chapter_forest.png": "Bright green daytime forest with lime/emerald crowns, beige path, white flowers, stones and footbridge.",
+    "chapter_desert.png": "Golden desert with orange path, red sandstone, cacti, dry shrubs and distant turquoise oasis."
+  },
+  "notes": [
+    "The first profile_01 generation rendered a checkerboard as RGB and was rejected.",
+    "profile_01 final was produced by a built-in background-extraction edit with both the mandatory reference and draft attached."
+  ]
+}

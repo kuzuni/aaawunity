@@ -50,19 +50,26 @@ namespace KkomaKnight.Core
         /// <summary>아이템 이름의 밑동 — <c>recipe.helm</c> 처럼 뒤에 부위가 붙는다.</summary>
         public const string Prefix = "recipe.";
 
-        /// <summary>
-        /// 레시피 그림 — <b>여섯 부위가 같은 그림</b>을 쓴다(지시서 2항 «6종을 다른 그림으로 지어내지 않는다»).
-        /// <para>
-        /// <b>고른 것이 아니라 찾은 것이다</b> — 이 레포는 T43 때 이미 레퍼런스의 «무기 도안·갑옷 도안…» 여섯을
-        /// <c>ui.iconScroll</c>(<c>Item_Scroll_01_Red</c>) 한 그림으로 그리고 있다(<c>EventsScreen</c> 의 던전 보상 목록).
-        /// 주인 레퍼런스가 «부위별 도안» 을 그 그림으로 보여 준 자리가 곧 지금의 레시피라, 새 그림을 고르면
-        /// <b>같은 물건이 화면마다 다르게 생기는</b> 쪽이 된다. 부위는 그림이 아니라 <b>이름</b>이 가른다(<see cref="Name"/>).
-        /// </para>
-        /// </summary>
+        /// <summary>랜덤 도안과 아직 알 수 없는 부위가 쓰는 기존 일반 도안 그림.</summary>
         public const string IconKey = "ui.iconScroll";
 
-        /// <summary>부위별 그림 — 지금은 여섯이 같다(위 <see cref="IconKey"/> 참조). 부르는 쪽이 부위를 넘기게 두는 것은 나중에 갈릴 자리를 여기 한 곳으로 모아 두기 위해서다.</summary>
-        public static string Icon(string part) => IconKey;
+        /// <summary>
+        /// 실제 저장 부위(<c>weapon/helm/armor/glove/boot/neck</c>)를 부위별 도안 아트 키로 바꾼다.
+        /// 이 순수 Core 규칙은 카탈로그를 참조하지 않으며, 표시 계층은 키가 아직 없으면 <see cref="IconKey"/>로 되돌린다.
+        /// </summary>
+        public static string Icon(string part)
+        {
+            switch (part)
+            {
+                case "weapon": return "recipe.weapon";
+                case "armor": return "recipe.armor";
+                case "helm": return "recipe.helmet";
+                case "boot": return "recipe.shoes";
+                case "glove": return "recipe.ring";
+                case "neck": return "recipe.necklace";
+                default: return IconKey;
+            }
+        }
 
         /// <summary>부위 → 아이템 이름(<c>recipe.helm</c>). 빈 부위면 빈 글자.</summary>
         public static string Item(string part) => string.IsNullOrEmpty(part) ? "" : Prefix + part;

@@ -530,29 +530,29 @@ MonoBehaviour:
   - key: gi.neck.evade
     sprite: {fileID: 21300000, guid: 3fad3d3cdd0a644a99a23f9cfa52c61a, type: 3}
   - key: chest.rare
-    sprite: {fileID: 21300000, guid: cd113652545d44677a284cfd62d2ebd6, type: 3}
+    sprite: {fileID: 21300000, guid: 9397edcfff80c215ab8c30d5c94bc774, type: 3}
   - key: chest.rare.open
-    sprite: {fileID: 21300000, guid: 5628c16ef01b74477b5a85ba7de47163, type: 3}
+    sprite: {fileID: 21300000, guid: c53a9d833685b88cd11093f334184d07, type: 3}
   - key: chest.legend
-    sprite: {fileID: 21300000, guid: 76153c57efc424237bd9c3ca873d1195, type: 3}
+    sprite: {fileID: 21300000, guid: 2580dc97077ae3d13f2998fdc595e931, type: 3}
   - key: chest.legend.open
-    sprite: {fileID: 21300000, guid: 3538d79abdc1e4bac8c45a6134d253eb, type: 3}
+    sprite: {fileID: 21300000, guid: 3c66355a4fb20da6ed3ca536cbfae926, type: 3}
   - key: chest.myth
-    sprite: {fileID: 21300000, guid: 77f35c40f78a7480aa6865d9a5ba6c70, type: 3}
+    sprite: {fileID: 21300000, guid: f1e9aac0ae41c65baf236163b1fc2e41, type: 3}
   - key: chest.myth.open
-    sprite: {fileID: 21300000, guid: 5d2e77ddfca0f40c9a9ae1b0dbe29b72, type: 3}
+    sprite: {fileID: 21300000, guid: bb61dce0f5e6d69204c5f9a9f91bbe26, type: 3}
   - key: shop.gem.1
-    sprite: {fileID: 21300000, guid: 03784746c19fe418481fa634c8981e42, type: 3}
+    sprite: {fileID: 21300000, guid: 9c36cb3f4183b04784499fa2e45a7a55, type: 3}
   - key: shop.gem.2
-    sprite: {fileID: 21300000, guid: 5f72d3abbf1a24082acd17e7f4410efb, type: 3}
+    sprite: {fileID: 21300000, guid: 5d2f9e5a0ce0400bb69650cdd10ebf28, type: 3}
   - key: shop.gem.3
-    sprite: {fileID: 21300000, guid: fcd2f6ea832534e3cb315f5ea0fc8a8a, type: 3}
+    sprite: {fileID: 21300000, guid: 1574650e1f745ad732386092cae42bf1, type: 3}
   - key: shop.gem.4
-    sprite: {fileID: 21300000, guid: 3facfdb09c58a44f2baebbf1be072859, type: 3}
+    sprite: {fileID: 21300000, guid: 24c77fa7c9b37309c878bc387602525a, type: 3}
   - key: shop.gem.5
-    sprite: {fileID: 21300000, guid: 5a21d7d5d7a1e486abcf72c562b9df64, type: 3}
+    sprite: {fileID: 21300000, guid: a404ff0f755c3816024f5da4850cb8a9, type: 3}
   - key: shop.gem.6
-    sprite: {fileID: 21300000, guid: 6f33c289f438f4ebbbf2125936a44e1d, type: 3}
+    sprite: {fileID: 21300000, guid: d0f9546748a9950af652074ca2a155be, type: 3}
   - key: shop.gold.1
     sprite: {fileID: 21300000, guid: d651cbc58b9d6430f8b5f6404488f9ed, type: 3}
   - key: shop.gold.2
@@ -576,7 +576,7 @@ MonoBehaviour:
   - key: ui.iconKeyGold
     sprite: {fileID: 21300000, guid: 473aa97eba7ce41bda0aeb9e3818e9c7, type: 3}
   - key: ui.iconScroll
-    sprite: {fileID: 21300000, guid: 834663af9e43a43228b55b050647daac, type: 3}
+    sprite: {fileID: 21300000, guid: de0aacae34e37f9474b715e2c4e39695, type: 3}
   - key: ui.iconOrb
     sprite: {fileID: 21300000, guid: 3fad3d3cdd0a644a99a23f9cfa52c61a, type: 3}
   - key: ui.iconMedalBronze
@@ -608,23 +608,23 @@ MonoBehaviour:
   - key: ui.iconRevive
     sprite: {fileID: 21300000, guid: 405586064c6764e27a85517f8fd9da8f, type: 3}
   - key: ui.iconFoe1
-    sprite: {fileID: 21300000, guid: 494eaf63a596b4a6397aa8c2de75146e, type: 3}
+    sprite: {fileID: 21300000, guid: 303f546769adae0d51f901a0942cc652, type: 3}
   - key: ui.iconFoe2
-    sprite: {fileID: 21300000, guid: 96e9ef5780baa4cd18be1263775c06b7, type: 3}
+    sprite: {fileID: 21300000, guid: 408df57c5837c05c417f5788527a3f0f, type: 3}
   - key: ui.iconFoe3
-    sprite: {fileID: 21300000, guid: 2f9eae816fd4140108313b73a8071911, type: 3}
+    sprite: {fileID: 21300000, guid: 2e43193bc692a8c2a08e0f6944939cc3, type: 3}
   - key: ui.iconFoe4
-    sprite: {fileID: 21300000, guid: 17c06ffdd50374a5b9e629e61d397e51, type: 3}
+    sprite: {fileID: 21300000, guid: 9e48059c8b04d707a9373fe423295076, type: 3}
   - key: ui.face5
-    sprite: {fileID: 21300000, guid: 6093f621de51a4ea5a6b044665a9613e, type: 3}
+    sprite: {fileID: 21300000, guid: e8d3e510843858006e2b090ab54604f7, type: 3}
   - key: ui.face6
-    sprite: {fileID: 21300000, guid: 98fed2897788549ec8a6719cc76dcbcc, type: 3}
+    sprite: {fileID: 21300000, guid: faf4d7be5931e3b83f02263ba6c3c3cb, type: 3}
   - key: ui.face7
     sprite: {fileID: 21300000, guid: 0ce2437d66b9244809735f00c9471931, type: 3}
   - key: ui.face8
-    sprite: {fileID: 21300000, guid: 160e024c163af4e62a9b4036e9c6ca02, type: 3}
+    sprite: {fileID: 21300000, guid: 1c04ef959da0133bea467c65d7f77821, type: 3}
   - key: ui.face9
-    sprite: {fileID: 21300000, guid: d65167ad98cc548a7be10522652f0a36, type: 3}
+    sprite: {fileID: 21300000, guid: 6c7e6a8aff7474d08ef2f4c22baa1269, type: 3}
   - key: ui.face10
     sprite: {fileID: 21300000, guid: 5894aa6b93ae7405c97996e628477329, type: 3}
   - key: ui.face11
@@ -1223,6 +1223,62 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 4ea5317d544e4d15957e79d091a72110, type: 3}
   - key: ui.loading.art
     sprite: {fileID: 21300000, guid: 9a880c3546464417b96091326683ec0d, type: 3}
+  - key: node.rest
+    sprite: {fileID: 21300000, guid: 1d2d6e90a4467e9d43577f9fc25985ea, type: 3}
+  - key: node.angel
+    sprite: {fileID: 21300000, guid: 5c6470ce75b49280e930f5424e9648a3, type: 3}
+  - key: node.devil
+    sprite: {fileID: 21300000, guid: 0558bd87bb8024ef17e71c7aa426d499, type: 3}
+  - key: ui.arena.entry
+    sprite: {fileID: 21300000, guid: 131298d3a7c149d5ae320174f6437f92, type: 3}
+  - key: ui.arena.rankRow
+    sprite: {fileID: 21300000, guid: 7503247292764a7c80754778af53890e, type: 3}
+  - key: ui.arena.merchant
+    sprite: {fileID: 21300000, guid: bf66cd8538e7421887a84db878878bb0, type: 3}
+  - key: env.expedition.field
+    sprite: {fileID: 21300000, guid: 19567c1bbc7536223d87572dc9f2897e, type: 3}
+  - key: env.expedition.road
+    sprite: {fileID: 21300000, guid: d324d2c6dfaf7c9813f0aadfebfe9f5b, type: 3}
+  - key: env.expedition.prop1
+    sprite: {fileID: 21300000, guid: f04afea7c766a84a17a33fd5905eace0, type: 3}
+  - key: env.expedition.prop2
+    sprite: {fileID: 21300000, guid: 7bb3a29864203088b49e2799f12b3ba7, type: 3}
+  - key: env.expedition.prop3
+    sprite: {fileID: 21300000, guid: b2cf46391d2f908253fc59222fbb7aeb, type: 3}
+  - key: env.hell.field
+    sprite: {fileID: 21300000, guid: 2891f8ea2d426c63bb2eb79429971a67, type: 3}
+  - key: env.hell.road
+    sprite: {fileID: 21300000, guid: 922cffb912d2e50e582d240340909d9f, type: 3}
+  - key: env.hell.prop1
+    sprite: {fileID: 21300000, guid: 8db05be1d189cbd89305878295e8cb0a, type: 3}
+  - key: env.hell.prop2
+    sprite: {fileID: 21300000, guid: c3bf40baf4401289cb5adf204064f554, type: 3}
+  - key: env.hell.prop3
+    sprite: {fileID: 21300000, guid: a6dbc880051ca5d9259baa8a3aa3ee82, type: 3}
+  - key: ui.dungeon.expedition
+    sprite: {fileID: 21300000, guid: 7dafeb468e82f0bf8a5e4b7ef101d3a8, type: 3}
+  - key: ui.dungeon.hell
+    sprite: {fileID: 21300000, guid: 8e4c8328930d8243798ed27fd48b8741, type: 3}
+  - key: recipe.weapon
+    sprite: {fileID: 21300000, guid: 96c56db14150eeb877b82f3480ad6a4a, type: 3}
+  - key: recipe.armor
+    sprite: {fileID: 21300000, guid: a063447293bbf11d0066b825331c4b80, type: 3}
+  - key: recipe.helmet
+    sprite: {fileID: 21300000, guid: b7e432fad3a387061a39f7392e0bf38d, type: 3}
+  - key: recipe.shoes
+    sprite: {fileID: 21300000, guid: 24c398a40fd2d15d5e1c1d81d82a959e, type: 3}
+  - key: recipe.ring
+    sprite: {fileID: 21300000, guid: d8dfbf2ab7aba919243bf4707b9325ce, type: 3}
+  - key: recipe.necklace
+    sprite: {fileID: 21300000, guid: 893803ebf0b9f1157425b3264890ef3c, type: 3}
+  - key: ui.chapter.autumn
+    sprite: {fileID: 21300000, guid: 2d13923e9dcad2e4e254311dc17fc5de, type: 3}
+  - key: ui.chapter.deepForest
+    sprite: {fileID: 21300000, guid: eeb817334e2c768b36c6de01e0c0092e, type: 3}
+  - key: ui.chapter.forest
+    sprite: {fileID: 21300000, guid: fa310910eda31331ad9a608e4d3f2ed7, type: 3}
+  - key: ui.chapter.desert
+    sprite: {fileID: 21300000, guid: 7948e93ecae77215d10b481dcc2dc7d8, type: 3}
   prefabs:
   - key: cm.character
     prefab: {fileID: 1824668350962886144, guid: d6c3c650b0b379149a826b54b40b4571, type: 3}

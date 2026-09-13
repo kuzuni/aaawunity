@@ -1,0 +1,23 @@
+{
+  "reference": "Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png",
+  "common": "Individual 2D mobile game icon; genuine transparent RGBA; thick smooth black outline; rounded simple shapes; bright flat colors; light cel shading; small cream highlights; no text, watermark, checkerboard, photorealism, painterly texture, or cropping.",
+  "assets": {
+    "chest_medieval_open.png": "Edit the referenced medieval closed chest into an open state with the same lower body, camera angle, size, center and baseline; warm gold interior and chunky coins.",
+    "chest_modern_open.png": "Edit the referenced modern olive case into an open state with the same lower body, camera angle, size, center and baseline; yellow interior.",
+    "chest_cyber_open.png": "Edit the referenced navy/cyan cyber chest into an open state with the same lower body, camera angle, size, center and baseline; cyan interior and three chunky blue gems.",
+    "recipe_weapon.png": "Warm parchment recipe with a centered silver-blue short sword, golden guard and red grip.",
+    "recipe_armor.png": "Warm parchment recipe with centered blue-and-gold torso armor.",
+    "recipe_helmet.png": "Warm parchment recipe with centered silver knight helmet and blue plume.",
+    "recipe_shoes.png": "Warm parchment recipe with a centered matched pair of red-orange boots with cream soles.",
+    "recipe_ring.png": "Warm parchment recipe with one chunky gold ring and a round blue gemstone.",
+    "recipe_necklace.png": "Warm parchment recipe with a gold chain and red teardrop pendant.",
+    "recipe_random.png": "General rolled parchment scroll tied with a red ribbon and round blue wax seal; no specific equipment.",
+    "gem_pack_1.png": "Exactly three matching blue diamonds in a compact triangular loose bundle.",
+    "gem_pack_2.png": "Five matching blue diamonds gathered around a small tan drawstring pouch with blue cord.",
+    "gem_pack_3.png": "A neat medium pile of matching blue diamonds on a small golden tray.",
+    "gem_pack_4.png": "An open compact blue-and-gold box filled with matching blue diamonds, with several gems in front.",
+    "gem_pack_5.png": "An open medium royal-blue and gold treasure chest overflowing with matching blue diamonds.",
+    "gem_pack_6.png": "The maximum tier: a large ornate navy-and-gold chest overflowing with a mountain of matching blue diamonds."
+  },
+  "failed_transparency_note": "Recipe generation and background-extraction attempts produced RGB files with a rendered checkerboard. Those attempts are retained only as failed source records and are not cataloged."
+}

@@ -67,6 +67,13 @@ T519는 전체 통합 작업이며 아직 미완료다. T515~T518과 기존 장�
 ## 완료 조건
 
 상세 TODO의 제작 및 실제 연결 체크리스트가 모두 충족되고 새 커밋의 검증 결과가 확인되어야 완료다.
+
+## Work cloud 통합 수령 기록
+
+- CI `34774345301` attempt 2는 success이며 Unity job도 success다.
+- world 14/14와 commerce 16/16은 manifest SHA256·PNG 구조·알파를 재검증해 수령했다. identity는 12/13만 수령했고, `profile_07.png`는 원격 Git blob 자체가 manifest SHA와 다르며 PNG CRC 오류라 Assets·중앙 catalog에서 제외했다. 기존 `ui.face7` 연결은 유지한다.
+- world/events diff와 shell의 Screens 지도 부분만 적용했다. UiKit 옵션 RGB/알파, Pattern 식별, Loading의 `SampleImage_Character`, SeasonPass 비율 보존 변경은 덮지 않았다.
+- 전체 완료가 아니다. 새 main CI·screens/PlayLog 확인과 정상 `profile_07.png` 수령·9번째 선택 화면 검수가 남았다.
 세션 생성, 코드 변경안 작성, 이미지 저장만으로 전체 완료 처리하지 않는다.
 
 ## 실행 기록

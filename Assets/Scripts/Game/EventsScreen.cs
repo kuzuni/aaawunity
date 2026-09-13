@@ -100,8 +100,8 @@ namespace KkomaKnight.Game
         /// 다이아 칸은 <c>hud.gem</c>(= 상단 바·메인 상점 값 아이콘과 <b>같은 그림</b>)이다. 여기만 <c>ui.iconGemPurple</c> 을 쓰고 있었다.</para></summary> 표에 없는 키는 한도·값이 «—» 로 난다(T209 · 레퍼런스에서 잘린 «전설 열쇠» 가 그렇다).</summary>
         static readonly (string title, string icon, string key)[] Goods =
         {
-            ("다이아", "hud.gem", "gem"), ("무기 도안", "ui.iconScroll", "recipeWeapon"), ("갑옷 도안", "ui.iconScroll", "recipeArmor"), ("투구 도안", "ui.iconScroll", "recipeHelmet"),
-            ("신발 도안", "ui.iconScroll", "recipeShoes"), ("반지 도안", "ui.iconScroll", "recipeRing"), ("목걸이 도안", "ui.iconScroll", "recipeNecklace"),
+            ("다이아", "hud.gem", "gem"), ("무기 도안", "recipe.weapon", "recipeWeapon"), ("갑옷 도안", "recipe.armor", "recipeArmor"), ("투구 도안", "recipe.helmet", "recipeHelmet"),
+            ("신발 도안", "recipe.shoes", "recipeShoes"), ("반지 도안", "recipe.ring", "recipeRing"), ("목걸이 도안", "recipe.necklace", "recipeNecklace"),
             ("중세 열쇠", "ui.iconKeyBlue", "rareKey"), ("현대 열쇠", "ui.iconKeyPurple", "epicKey"), ("사이버 열쇠", "ui.iconKeyGold", "legendKey"), ("부활 토큰", "ui.iconRevive", "revive"),
         };
         static readonly (string label, string icon)[] Tiers = { ("브론즈", "ui.iconMedalBronze"), ("실버", "ui.iconMedalSilver"), ("골드", "ui.iconMedal"), ("플래티넘", "ui.iconGemBlue"), ("다이아", "ui.iconGemPurple") };
@@ -109,6 +109,7 @@ namespace KkomaKnight.Game
         /// <summary>아레나 껍데기 표시 이름 — 상대는 «도전자 N» · 내 자리는 <b>내가 지은 이름</b>(T96-profile 2단계 · 기본값이 종전 «꼬마기사» 라 안 고치면 화면 불변).</summary>
         string MeName => Core.Nickname.Of(App != null ? App.Save : null);
         static string FoeName(int rank) => "도전자 " + rank;
+        static string ArtKey(string key, string fallback) => App.Assets != null && App.Assets.Has(key) ? key : fallback;
         /// <summary>껍데기 숫자 자리 — 값을 못 만들 때만 쓴다(계수 JSON 이 없을 때 · 0 을 쓰면 실제 값처럼 보인다).</summary>
         const string Dash = "—";
         /// <summary>도전 팝업(24)에 세우는 상대 5명의 순위 — 내가 1위(시상대 가운데)라 바로 아래 순위들이다(T81).</summary>
@@ -281,7 +282,12 @@ namespace KkomaKnight.Game
                 _ticketTexts.Add(new KeyValuePair<TMP_Text, string>(TicketPill(head.transform, new Layout.R(84, 12, 14, 76), d.ticket, TicketText(d.key)), d.key));
                 // 그림(Environment 들판 + 길 + 소품 · 카드 1 = 붉은 사막(지옥) · 카드 2 = 흰 들판(설원))
                 var pic = UiKit.Rect(card, "Pic"); UiKit.Pct(pic, Shift(Layout.DgCardPic, dy).Within(rect));
-                Stage(pic, d.field, d.tint, d.props);
+                string dungeonArt = "ui.dungeon." + d.key;
+                if (App.Assets != null && App.Assets.Has(dungeonArt))
+                {
+                    var art = UiKit.Icon(pic, "Artwork", dungeonArt); UiKit.Stretch(art.rectTransform); art.preserveAspect = false;
+                }
+                else Stage(pic, d.field, d.tint, d.props);
                 // T69-events: 그림 띠도 «칸» 이다 — 레퍼런스 20 의 그림은 위(제목 띠)·아래(카드 몸통)·양옆이 전부 검은 선으로 끊긴다(그림이 카드 안에서 따로 논다)
                 UiKit.Bordered(pic);
                 // «획득 가능» + 보상 아이콘(초록 프레임) 줄 · 입장(주황 · 빨간 !)
@@ -333,8 +339,15 @@ namespace KkomaKnight.Game
             TicketPill(head.transform, new Layout.R(84, 12, 14, 76), "ui.iconTokenRed", "0/5");
             // 경기장 그림 = 모래 들판 + 기둥(석주) + 돌
             var pic = UiKit.Rect(card, "Pic"); UiKit.Pct(pic, Layout.ArCardPic.Within(rect));
-            Stage(pic, "env.desert.field", new Color(0.93f, 0.82f, 0.55f), new[] { "env.monolith", "env.stoneBig", "env.monolith", "env.desert.Stone_Gray1_05" });
-            var sky = UiKit.Panel(pic, "Sky", "fr.rect", Palette.Hex("#79C8F2")); UiKit.Pct(sky.rectTransform, 0, 0, 100, 42); sky.transform.SetSiblingIndex(1);
+            if (App.Assets != null && App.Assets.Has("ui.arena.entry"))
+            {
+                var art = UiKit.Icon(pic, "Artwork", "ui.arena.entry"); UiKit.Stretch(art.rectTransform); art.preserveAspect = false;
+            }
+            else
+            {
+                Stage(pic, "env.desert.field", new Color(0.93f, 0.82f, 0.55f), new[] { "env.monolith", "env.stoneBig", "env.monolith", "env.desert.Stone_Gray1_05" });
+                var sky = UiKit.Panel(pic, "Sky", "fr.rect", Palette.Hex("#79C8F2")); UiKit.Pct(sky.rectTransform, 0, 0, 100, 42); sky.transform.SetSiblingIndex(1);
+            }
             // T69-events: 던전 카드와 같은 그림 띠 테두리(레퍼런스 22 의 경기장 그림도 위·아래가 검은 선으로 끊긴다) — 하늘을 끼운 «뒤»에 걸어 링이 맨 앞에 온다
             UiKit.Bordered(pic);
             var season = UiKit.Rect(card, "Season"); UiKit.Pct(season, Layout.ArSeason.Within(rect));
@@ -353,6 +366,9 @@ namespace KkomaKnight.Game
         {
             // 시상대 무대 = 어두운 성 안(사각 프레임 조각) + 붉은 카펫 + 양쪽 기둥(어두운 상자) + 횃불 + 갈색 턱
             var stage = UiKit.Panel(pg, "Stage", "fr.rect", Palette.Hex("#262A31")); UiKit.Pct(stage.rectTransform, Layout.AeStage); UiKit.Tag(stage.transform, "시상대 무대");
+            bool hasArenaArt = App.Assets != null && App.Assets.Has("ui.arena.entry");
+            if (hasArenaArt) { var art = UiKit.Icon(stage.transform, "Artwork", "ui.arena.entry"); UiKit.Stretch(art.rectTransform); art.preserveAspect = false; }
+            if (!hasArenaArt)
             {
                 var carpet = UiKit.Panel(stage.transform, "Carpet", "fr.rect", Palette.Hex("#5E1220")); UiKit.Pct(carpet.rectTransform, 39, 13, 22, 81);
                 var pl = UiKit.Spawn("ui.frameDark", stage.transform); UiKit.Pct((RectTransform)pl.transform, 2, 8, 9, 88);
@@ -415,6 +431,9 @@ namespace KkomaKnight.Game
         void BuildMerchant(RectTransform pg)
         {
             var banner = UiKit.Panel(pg, "Banner", "fr.rect", Palette.Hex("#3F3532")); UiKit.Pct(banner.rectTransform, Layout.MeBanner); UiKit.Tag(banner.transform, "상인 배너");
+            bool hasMerchantArt = App.Assets != null && App.Assets.Has("ui.arena.merchant");
+            if (hasMerchantArt) { var art = UiKit.Icon(banner.transform, "Artwork", "ui.arena.merchant"); UiKit.Stretch(art.rectTransform); art.preserveAspect = false; }
+            if (!hasMerchantArt)
             {
                 // T209 ⓑ — 자리·색은 레퍼런스 `docs/ref/26_arena_shop.jpg` 의 배너(화면 y 8.0~23.9%)에 10% 격자를 얹어 잰 값이다(아래 % 는 전부 «배너 안» %).
                 //   벽 0~82 rgb(63,52,48) · 계산대 상판 82~92 rgb(76,52,38) · 아래 갈색 턱 92~100 rgb(86,69,53)(표의 «아래 갈색 턱»).
@@ -454,7 +473,7 @@ namespace KkomaKnight.Game
                 if (gt != null) { UiKit.Pct(gt.rectTransform, 4, 2, 92, 15); gt.alignment = UiKit.TmpAlign(TextAnchor.MiddleCenter); gt.fontStyle = FontStyles.Bold; gt.enableAutoSizing = true; gt.fontSizeMin = TextSize.BestFitMin; gt.fontSizeMax = TextSize.Body; }
                 else UiKit.Label(card, 4, 2, 92, 15, g.title, TextSize.Body, Palette.White).fontStyle = FontStyles.Bold;
                 var ic = UiKit.Rect(card, "IconCell"); UiKit.Pct(ic, 26, 20, 48, 38);
-                var f = UiKit.Spawn("ui.itemFrame.blue", ic); UiKit.Stretch((RectTransform)f.transform); var im = UiKit.Icon(ic, "Icon", g.icon); UiKit.Pct(im.rectTransform, 15, 15, 70, 70);
+                var f = UiKit.Spawn("ui.itemFrame.blue", ic); UiKit.Stretch((RectTransform)f.transform); var im = UiKit.Icon(ic, "Icon", ArtKey(g.icon, Recipes.IconKey)); UiKit.Pct(im.rectTransform, 15, 15, 70, 70);
                 GearUi.DarkFrame(f.transform);   // T115 — 워커 I 가 «우연히 통과» 로 지목한 자리(f08a7fe 커밋 메시지)
                 // T72 ② 상품 아이콘 뒤 빛살(주인 «상점 아이템 … 아이콘 뒤에 Effect_Light» · 상인 페이지도 상점이다)
                 PlanLight(ic); _goodsCells.Add(ic);
@@ -830,7 +849,7 @@ namespace KkomaKnight.Game
             if (r.PetEgg > 0) list.Add(new RewardCellDef("pet.egg", GearUi.CellQtyText(r.PetEgg), first));
             if (r.Gold > 0) list.Add(new RewardCellDef("ui.coin", GearUi.CellQtyText(r.Gold), first));
             // T291 — 층 보상 두 가지. 아이콘은 각 절이 갖고 있는 것을 그대로 쓴다(여기서 새로 정하지 않는다).
-            if (r.Recipe > 0 && !string.IsNullOrEmpty(r.RecipePart)) list.Add(new RewardCellDef(Recipes.Icon(r.RecipePart), GearUi.CellQtyText(r.Recipe), first));
+            if (r.Recipe > 0 && !string.IsNullOrEmpty(r.RecipePart)) list.Add(new RewardCellDef(ArtKey(Recipes.Icon(r.RecipePart), Recipes.IconKey), GearUi.CellQtyText(r.Recipe), first));
             if (r.Key > 0 && !string.IsNullOrEmpty(r.KeyItem)) list.Add(new RewardCellDef(GachaKeys.Icon(r.KeyItem), GearUi.CellQtyText(r.Key), first));
         }
         /// <summary>
@@ -1197,6 +1216,11 @@ namespace KkomaKnight.Game
         {
             var item = UiKit.Spawn("ui.listRanking", row); var irt = (RectTransform)item.transform; UiKit.Stretch(irt);
             DarkenListFrame(irt);
+            if (App.Assets != null && App.Assets.Has("ui.arena.rankRow"))
+            {
+                var art = UiKit.Icon(row, "Artwork", "ui.arena.rankRow"); UiKit.Stretch(art.rectTransform); art.preserveAspect = false; art.transform.SetAsFirstSibling();
+                HideListFrame(irt);
+            }
             UiKit.SetText(irt, "Text_RankingNum", rank.ToString(), Palette.Gray, 44, TextKind.Aux);
             var nt = UiKit.SetText(irt, "Text_Name", FoeName(rank), Palette.White, 44); if (nt != null) nt.fontStyle = FontStyles.Bold;
             UiKit.SetText(irt, "Text_Value", DummyScore(rank), Palette.Yellow, 40);
@@ -1225,6 +1249,16 @@ namespace KkomaKnight.Game
             var bg = UiKit.Find(frame, "Normal/Bg"); if (bg != null) { var im = bg.GetComponent<Image>(); if (im != null) im.color = RowBody; }
             var left = UiKit.Find(frame, "Normal/BgLeft"); if (left != null) { var im = left.GetComponent<Image>(); if (im != null) im.color = RowLeft; }
             var border = UiKit.Find(frame, "Normal/Border1"); if (border != null) { var im = border.GetComponent<Image>(); if (im != null) im.color = RowBorder; }
+        }
+        static void HideListFrame(Transform root)
+        {
+            var frame = UiKit.Find(root, "ListFrame_02");
+            if (frame == null) return;
+            foreach (var path in new[] { "Normal/Bg", "Normal/BgLeft", "Normal/Border1" })
+            {
+                var visual = UiKit.Find(frame, path);
+                if (visual != null) visual.gameObject.SetActive(false);
+            }
         }
 
         static TMP_Text Pill(RectTransform row, Layout.R r, string icon, string text, Color color)

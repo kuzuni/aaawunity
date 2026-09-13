@@ -263,18 +263,18 @@
 | sprites | `gi.neck.crit` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Rune_01.png` | fileID 21300000 | 목걸이 아이콘이 팩에 없어 룬 펜던트(Economy_Rune_01/02)로 대체 — T88 에서 반지(glove)에 반지 그림을 주면서 옮겼다 |
 | sprites | `gi.neck.hpsh` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Rune_02.png` | fileID 21300000 |  |
 | sprites | `gi.neck.evade` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Rune_01.png` | fileID 21300000 |  |
-| sprites | `chest.rare` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/Chest/Chest_01_Silver.Png` | fileID 21300000 | 상점 «중세 상자» = 은 상자 · 현대 = 금 · 사이버 = 프리미엄 (T511 개명 · 옛 이름 희귀·전설·신화 상자) (카드 그림 chest.<key> · 뽑기 결과 팝업엔 *_Open · T40) |
-| sprites | `chest.rare.open` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/Chest/Chest_01_Silver_Open.Png` | fileID 21300000 |  |
-| sprites | `chest.legend` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/Chest/Chest_01_Gold.Png` | fileID 21300000 |  |
-| sprites | `chest.legend.open` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/Chest/Chest_01_Gold_Open.Png` | fileID 21300000 |  |
-| sprites | `chest.myth` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/Chest/Chest_01_Premium.Png` | fileID 21300000 |  |
-| sprites | `chest.myth.open` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/Chest/Chest_01_Premium_Open.Png` | fileID 21300000 |  |
-| sprites | `shop.gem.1` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/ShopItem/2x/Gem_1.Png` | fileID 21300000 | 상점 «다이아» 카드 그림 1~6 (T40 · 레퍼런스 09 처럼 수량이 커질수록 큰 더미 — GUI Pro ShopItem 팩의 Gem_1~6 순서 = shop.json gemPacks 순서) |
-| sprites | `shop.gem.2` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/ShopItem/2x/Gem_2.Png` | fileID 21300000 |  |
-| sprites | `shop.gem.3` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/ShopItem/2x/Gem_3.Png` | fileID 21300000 |  |
-| sprites | `shop.gem.4` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/ShopItem/2x/Gem_4.Png` | fileID 21300000 |  |
-| sprites | `shop.gem.5` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/ShopItem/2x/Gem_5.Png` | fileID 21300000 |  |
-| sprites | `shop.gem.6` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/ShopItem/2x/Gem_6.Png` | fileID 21300000 |  |
+| sprites | `chest.rare` | `Assets/Art/ChihuahuaGameUI/Commerce/chest_medieval_closed.png` | fileID 21300000 | 상점 «중세 상자» = 은 상자 · 현대 = 금 · 사이버 = 프리미엄 (T511 개명 · 옛 이름 희귀·전설·신화 상자) (카드 그림 chest.<key> · 뽑기 결과 팝업엔 *_Open · T40) |
+| sprites | `chest.rare.open` | `Assets/Art/ChihuahuaGameUI/Commerce/chest_medieval_open.png` | fileID 21300000 |  |
+| sprites | `chest.legend` | `Assets/Art/ChihuahuaGameUI/Commerce/chest_modern_closed.png` | fileID 21300000 |  |
+| sprites | `chest.legend.open` | `Assets/Art/ChihuahuaGameUI/Commerce/chest_modern_open.png` | fileID 21300000 |  |
+| sprites | `chest.myth` | `Assets/Art/ChihuahuaGameUI/Commerce/chest_cyber_closed.png` | fileID 21300000 |  |
+| sprites | `chest.myth.open` | `Assets/Art/ChihuahuaGameUI/Commerce/chest_cyber_open.png` | fileID 21300000 |  |
+| sprites | `shop.gem.1` | `Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_1.png` | fileID 21300000 | 상점 «다이아» 카드 그림 1~6 (T40 · 레퍼런스 09 처럼 수량이 커질수록 큰 더미 — GUI Pro ShopItem 팩의 Gem_1~6 순서 = shop.json gemPacks 순서) |
+| sprites | `shop.gem.2` | `Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_2.png` | fileID 21300000 |  |
+| sprites | `shop.gem.3` | `Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_3.png` | fileID 21300000 |  |
+| sprites | `shop.gem.4` | `Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_4.png` | fileID 21300000 |  |
+| sprites | `shop.gem.5` | `Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_5.png` | fileID 21300000 |  |
+| sprites | `shop.gem.6` | `Assets/Art/ChihuahuaGameUI/Commerce/gem_pack_6.png` | fileID 21300000 |  |
 | sprites | `shop.gold.1` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/ShopItem/2x/Gold_1.Png` | fileID 21300000 | 상점 «골드» 카드 그림 1~3 (T40 · GUI Pro ShopItem 팩의 Gold_1~3 순서 = shop.json goldPacks 순서) |
 | sprites | `shop.gold.2` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/ShopItem/2x/Gold_2.Png` | fileID 21300000 |  |
 | sprites | `shop.gold.3` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/ShopItem/2x/Gold_3.Png` | fileID 21300000 |  |
@@ -286,7 +286,7 @@
 | sprites | `ui.iconKeyBlue` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Key_02_Blue.png` | fileID 21300000 | T43 던전 카드 2 보상 «중세 열쇠»(옛 «희귀 열쇠» · T511 개명 — 중세 상자를 연다) · 상인 상품 |
 | sprites | `ui.iconKeyPurple` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Key_02_Purple.png` | fileID 21300000 | T43 «현대 열쇠»(옛 «에픽 열쇠» · T511 — 현대 상자를 연다) |
 | sprites | `ui.iconKeyGold` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Key_02_Gold.png` | fileID 21300000 | T43 «사이버 열쇠»(옛 «전설 열쇠» · T511 — 사이버 상자를 연다) |
-| sprites | `ui.iconScroll` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Scroll_01_Red.png` | fileID 21300000 | T43 «도안»(무기·갑옷·투구·신발·반지·목걸이) · 던전 카드 2 보상 «?» 자리 |
+| sprites | `ui.iconScroll` | `Assets/Art/ChihuahuaGameUI/Commerce/recipe_random.png` | fileID 21300000 | T43 «도안»(무기·갑옷·투구·신발·반지·목걸이) · 던전 카드 2 보상 «?» 자리 |
 | sprites | `ui.iconOrb` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Economy_Rune_01.png` | fileID 21300000 | T43 던전 카드 1 보상(파란 구슬 자리) · 세부 보상 칸 1 |
 | sprites | `ui.iconMedalBronze` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Medal_01_Bronze.png` | fileID 21300000 | T43 아레나 티어 «브론즈»(카드 티어 줄 · 입장 화면 제목 · 순위 보상 티어 띠) |
 | sprites | `ui.iconMedalSilver` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Rewards_Medal_01_Silver.png` | fileID 21300000 | T43 순위 보상 티어 띠 «실버» |
@@ -302,15 +302,15 @@
 | sprites | `env.keeperHead` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/CharacterParts/Large/Characters_05_Head.png` | fileID 21300000 | T209 ⓑ 상인 배너(26)의 상인 머리 — GUI Pro CharacterParts 05(대머리). 레퍼런스 26 의 상인도 대머리라 여섯 조각 중 이것을 골랐다. tint 없음(눈 흰자가 같이 어두워진다) |
 | sprites | `env.keeperBody` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/CharacterParts/Large/Characters_05_Body.png` | fileID 21300000 | T209 ⓑ 상인 배너(26)의 상인 몸(로브) — CharacterParts 05. 화면에서 곱셈 tint #CF6585 를 걸어 조각 rgb(95,108,109) → 레퍼런스 로브 실측 rgb(77,43,57) 이 되게 한다 |
 | sprites | `ui.iconRevive` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Consumable_Potion_03_Red.png` | fileID 21300000 | T43 상인 «부활 토큰» 상품 |
-| sprites | `ui.iconFoe1` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Skull_01.png` | fileID 21300000 | T43 아레나 상대 초상 1(껍데기 · 순위 목록·도전 팝업 줄) |
-| sprites | `ui.iconFoe2` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Consumable_Food_Mushroom_02.png` | fileID 21300000 | T43 아레나 상대 초상 2 |
-| sprites | `ui.iconFoe3` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Egg_02.png` | fileID 21300000 | T43 아레나 상대 초상 3 |
-| sprites | `ui.iconFoe4` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Misc_Fist_01_Gold.png` | fileID 21300000 | T43 아레나 상대 초상 4 |
-| sprites | `ui.face5` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Helmet_01.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
-| sprites | `ui.face6` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Helmet_02.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
+| sprites | `ui.iconFoe1` | `Assets/Art/ChihuahuaGameUI/Profile/profile_01.png` | fileID 21300000 | T43 아레나 상대 초상 1(껍데기 · 순위 목록·도전 팝업 줄) |
+| sprites | `ui.iconFoe2` | `Assets/Art/ChihuahuaGameUI/Profile/profile_02.png` | fileID 21300000 | T43 아레나 상대 초상 2 |
+| sprites | `ui.iconFoe3` | `Assets/Art/ChihuahuaGameUI/Profile/profile_03.png` | fileID 21300000 | T43 아레나 상대 초상 3 |
+| sprites | `ui.iconFoe4` | `Assets/Art/ChihuahuaGameUI/Profile/profile_04.png` | fileID 21300000 | T43 아레나 상대 초상 4 |
+| sprites | `ui.face5` | `Assets/Art/ChihuahuaGameUI/Profile/profile_05.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
+| sprites | `ui.face6` | `Assets/Art/ChihuahuaGameUI/Profile/profile_06.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
 | sprites | `ui.face7` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Helmet_03.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
-| sprites | `ui.face8` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Helmet_04.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
-| sprites | `ui.face9` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Gear_Helmet_05_Purple.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
+| sprites | `ui.face8` | `Assets/Art/ChihuahuaGameUI/Profile/profile_08.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
+| sprites | `ui.face9` | `Assets/Art/ChihuahuaGameUI/Profile/profile_09.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
 | sprites | `ui.face10` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/UI_Play_Skull_04.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
 | sprites | `ui.face11` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Eye_01.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
 | sprites | `ui.face12` | `Assets/Layer Lab/GUI Pro-MinimalGame/Shared/Icons/UniqueIcon/128/Item_Artifact_01_Gold.png` | fileID 21300000 | 프로필 초상 선택지(T370 · 주인 «프로필 이미지 선택 가능한 거 4개밖에 없던데 좀 늘려봐라») — 주인 에셋 안에서만 골랐다(§1 새 그림 0) |
@@ -610,6 +610,34 @@
 | sprites | `ui.option.dodge` | `Assets/Art/ChihuahuaGameUI/Stats/stat_dodge.png` | fileID 21300000 | T519 치와와 옵션 아이콘 — UiKit.Icon 원래 RGB 보존, 요청 alpha 유지; ui.dodge와 같은 PNG |
 | sprites | `ui.pass.banner` | `Assets/Art/ChihuahuaGameUI/Pass/adventure_banner.png` | fileID 21300000 | T519 치와와 전용 일러스트. 기존 제목·기간·레벨·진행 표시를 유지하고 배경/캐릭터만 교체. |
 | sprites | `ui.loading.art` | `Assets/Art/ChihuahuaGameUI/Loading/chihuahua_loading.png` | fileID 21300000 | T519 치와와 전용 일러스트. 기존 제목·기간·레벨·진행 표시를 유지하고 배경/캐릭터만 교체. |
+| sprites | `node.rest` | `Assets/Art/ChihuahuaGameUI/Nodes/shelter_house.png` | fileID 21300000 |  |
+| sprites | `node.angel` | `Assets/Art/ChihuahuaGameUI/Nodes/angel.png` | fileID 21300000 |  |
+| sprites | `node.devil` | `Assets/Art/ChihuahuaGameUI/Nodes/devil.png` | fileID 21300000 |  |
+| sprites | `ui.arena.entry` | `Assets/Art/ChihuahuaGameUI/Arena/entry.png` | fileID 21300000 |  |
+| sprites | `ui.arena.rankRow` | `Assets/Art/ChihuahuaGameUI/Arena/rank_row.png` | fileID 21300000 |  |
+| sprites | `ui.arena.merchant` | `Assets/Art/ChihuahuaGameUI/Arena/merchant.png` | fileID 21300000 |  |
+| sprites | `env.expedition.field` | `Assets/Art/ChihuahuaGameUI/World/Expedition/field.png` | fileID 21300000 |  |
+| sprites | `env.expedition.road` | `Assets/Art/ChihuahuaGameUI/World/Expedition/road.png` | fileID 21300000 |  |
+| sprites | `env.expedition.prop1` | `Assets/Art/ChihuahuaGameUI/World/Expedition/prop1.png` | fileID 21300000 |  |
+| sprites | `env.expedition.prop2` | `Assets/Art/ChihuahuaGameUI/World/Expedition/prop2.png` | fileID 21300000 |  |
+| sprites | `env.expedition.prop3` | `Assets/Art/ChihuahuaGameUI/World/Expedition/prop3.png` | fileID 21300000 |  |
+| sprites | `env.hell.field` | `Assets/Art/ChihuahuaGameUI/World/Hell/field.png` | fileID 21300000 |  |
+| sprites | `env.hell.road` | `Assets/Art/ChihuahuaGameUI/World/Hell/road.png` | fileID 21300000 |  |
+| sprites | `env.hell.prop1` | `Assets/Art/ChihuahuaGameUI/World/Hell/prop1.png` | fileID 21300000 |  |
+| sprites | `env.hell.prop2` | `Assets/Art/ChihuahuaGameUI/World/Hell/prop2.png` | fileID 21300000 |  |
+| sprites | `env.hell.prop3` | `Assets/Art/ChihuahuaGameUI/World/Hell/prop3.png` | fileID 21300000 |  |
+| sprites | `ui.dungeon.expedition` | `Assets/Art/ChihuahuaGameUI/DungeonCards/expedition.png` | fileID 21300000 |  |
+| sprites | `ui.dungeon.hell` | `Assets/Art/ChihuahuaGameUI/DungeonCards/hell.png` | fileID 21300000 |  |
+| sprites | `recipe.weapon` | `Assets/Art/ChihuahuaGameUI/Commerce/recipe_weapon.png` | fileID 21300000 |  |
+| sprites | `recipe.armor` | `Assets/Art/ChihuahuaGameUI/Commerce/recipe_armor.png` | fileID 21300000 |  |
+| sprites | `recipe.helmet` | `Assets/Art/ChihuahuaGameUI/Commerce/recipe_helmet.png` | fileID 21300000 |  |
+| sprites | `recipe.shoes` | `Assets/Art/ChihuahuaGameUI/Commerce/recipe_shoes.png` | fileID 21300000 |  |
+| sprites | `recipe.ring` | `Assets/Art/ChihuahuaGameUI/Commerce/recipe_ring.png` | fileID 21300000 |  |
+| sprites | `recipe.necklace` | `Assets/Art/ChihuahuaGameUI/Commerce/recipe_necklace.png` | fileID 21300000 |  |
+| sprites | `ui.chapter.autumn` | `Assets/Art/ChihuahuaGameUI/Lobby/chapter_autumn.png` | fileID 21300000 |  |
+| sprites | `ui.chapter.deepForest` | `Assets/Art/ChihuahuaGameUI/Lobby/chapter_deepForest.png` | fileID 21300000 |  |
+| sprites | `ui.chapter.forest` | `Assets/Art/ChihuahuaGameUI/Lobby/chapter_forest.png` | fileID 21300000 |  |
+| sprites | `ui.chapter.desert` | `Assets/Art/ChihuahuaGameUI/Lobby/chapter_desert.png` | fileID 21300000 |  |
 | prefabs | `cm.character` | `Assets/Layer Lab/2D Minimal-CharacterMaker/Common/Prefabs/Character.prefab` | root 1824668350962886144 | CharacterMaker Character 프리팹 — 전투의 플레이어·적(BattleWorld.MakeChar) 과 UI 초상(HeroView · RenderTexture 카메라 · 레이어 30) 이 같은 프리팹을 쓴다 |
 | prefabs | `fx.hit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Hit A (Red).prefab` | root 4021103657954561961 | 적 피격 (CFXR Hit A Red) |
 | prefabs | `fx.crit` | `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR Impact Glowing HDR (Blue).prefab` | root 2708598583397607911 | 치명타 피격 (Impact Glowing HDR Blue · 0.2 배) |
