@@ -21,7 +21,7 @@ namespace KkomaKnight.Tests.Play
         }
 
         [UnityTest]
-        public IEnumerator EveryPerkHasImportedEffectArtwork()
+        public IEnumerator EachPerkHasItsOwnImportedArtwork()
         {
             GameData data = null; string err = null;
             yield return DataLoader.Load(d => data = d, e => err = e);
@@ -46,10 +46,10 @@ namespace KkomaKnight.Tests.Play
                 Assert.IsNotNull(sprite, p.Id + " 스프라이트 임포트/카탈로그 연결 누락");
                 Assert.Greater(sprite.rect.width, 0);
                 Assert.AreEqual(sprite.rect.width, sprite.rect.height, 1f, "정사각 아이콘");
-                sprites.Add(sprite);
+                Assert.IsTrue(sprites.Add(sprite), p.Id + " 다른 특전과 같은 스프라이트를 공유하면 안 된다");
             }
             _log.AssertNoRed("특전 그림 전체 연결");
-            Assert.Greater(sprites.Count, 40, "서로 다른 효과가 다시 소수 공용 그림에 합쳐지면 안 된다");
+            Assert.AreEqual(data.Perks.Perks.Count, sprites.Count, "특전 수와 고유 스프라이트 수가 같아야 한다");
         }
 
         [Test]
@@ -60,9 +60,10 @@ namespace KkomaKnight.Tests.Play
             Assert.AreNotEqual(Icons.Perk("p_arrowEv"), Icons.Perk("p_killArrowN"));
             Assert.AreNotEqual(Icons.Perk("p_nArrowN"), Icons.Perk("p_killArrowN"));
             Assert.AreNotEqual(Icons.Perk("p_evadeHeal"), Icons.Perk("p_killHealN"));
-            Assert.AreEqual(Icons.Perk("p_evadeHeal"), Icons.Perk("p_evHealL"));
-            Assert.AreEqual(Icons.Perk("p_critR"), Icons.Perk("p_critRR"));
-            Assert.AreEqual(Icons.Perk("p_thorns"), Icons.Perk("p_thornsL"));
+            Assert.AreNotEqual(Icons.Perk("p_evadeHeal"), Icons.Perk("p_evHealL"));
+            Assert.AreNotEqual(Icons.Perk("p_critR"), Icons.Perk("p_critRR"));
+            Assert.AreEqual(Icons.Perk("p_thorns"), Icons.Perk("p_thornsN"));
+            Assert.AreNotEqual(Icons.Perk("p_thornsN"), Icons.Perk("p_thornsL"));
             Assert.IsNull(PerkArtwork.Key("p_unknown_future_perk"));
         }
     }

@@ -146,7 +146,7 @@ namespace KkomaKnight.Game
                 case "hp": return "pi.heart"; case "sh": return "pi.shield"; case "exp": return "pi.star"; default: return "pi.star";
             }
         }
-        /// <summary>실제 특전 ID는 효과별 전용 그림, 미등록 ID는 기존 어근 그림을 고른다. 등급은 카드 프레임으로 구분.</summary>
+        /// <summary>실제 특전 ID마다 고유 그림을 고른다. 미등록 ID는 기존 어근 그림을 사용한다.</summary>
         public static string Perk(string id)
         {
             var artwork = PerkArtwork.Key(id);
