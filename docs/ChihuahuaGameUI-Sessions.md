@@ -3,6 +3,14 @@
 2026-09-14 시작. 원본 요구사항은 `TODO.md`, `docs/TODO-ChihuahuaGameUI.md`다.
 T519는 전체 통합 작업이며 아직 미완료다. T515~T518과 기존 장비 아트 27세트는 변경하지 않는다.
 
+## PC 종료 후 통합 실행 — 클라우드 담당 전환
+
+- 사용자는 PC를 꺼도 남은 통합까지 자동 진행되길 요청했다. 로컬 통합 예약 의존성을 없애기 위해 전용 ChatGPT Work cloud 통합 작업으로 넘긴다. 작업 ID는 생성 후 기록한다.
+- cloud 통합 담당만 T519 런타임/카탈로그/문서를 변경하고 main에 반영한다. 기존 로컬 예약은 상태 확인만 수행하며 담당 실행 중에는 직접 통합하지 않는다.
+- 기존 코드 작업 diff를 `tools/game_ui_art/sessions/cloud-diffs/{world,events,shell}.patch`에 보존했다. shell의 UiKit/Loading/SeasonPass는 부모가 개선해 이미 main에 넣었으므로 전체 patch 적용 금지. 남은 Screens 챕터 맵만 검토한다.
+- cloud 담당은 원격 아트 branch의 지정 소유 경로만 수령하며 브랜치 전체 merge로 main을 되돌리지 않는다. 기존 로컬 PSB27개 변경은 PC에만 있으므로 cloud가 건드릴 대상이 아니다.
+- PC 종료와 무관하게 cloud 작업 자체는 실행된다. 외부 서비스 오류나 확인 요청으로 중단될 가능성은 남으므로 완료 보장은 하지 않는다. 모든 중단점은 원격 문서에 남긴다.
+
 ## 상태 확인 — 사용자 질문 후 2026-09-14
 
 - 옵션·패턴 커밋 aa2b5b53 CI34774120379 success 확인.
