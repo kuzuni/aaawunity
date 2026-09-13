@@ -41,7 +41,7 @@ T519는 전체 통합 작업이며 아직 미완료다. T515~T518과 기존 장�
 
 - 재사용 후보 5개를 `Assets/Art/ChihuahuaGameUI/Commerce`, `Nodes`에 원본 바이트 그대로 복사하고 새 폴더/파일의 메타만 생성했다. **`hud.gem`만 실제 카탈로그 연결**했다. 닫힌 상자는 열림 버전이 준비된 뒤 함께 연결하며 쉼터는 world 결과 통합 때 연결한다.
 - 로컬 검사: 체크포인트 7개 SHA-256 일치, PNG 모드 확인, 메타/카탈로그 생성물/키 검사 통과. C# 빌드 0경고/0오류, 순수 C# 테스트 **587/587 통과**. Unity EditMode/PlayMode와 화면 검증은 아직 미실행.
-- 아트 제작용 ChatGPT Work 클라우드 작업 생성 여부는 사용자에게 질문했으며 아직 응답 전이다. 해당 작업을 만들었다고 가정하지 않는다.
+- 사용자가 2026-09-14 아트도 Work 클라우드로 진행하라고 승인했다. 아래 5개 작업을 생성했고 모두 active 상태를 확인했다. 실제 이미지 생성 결과는 아직 확인 전이다.
 
 - [월드 코드 작업](https://chatgpt.com/codex/tasks/task_e_6aa6d9c05e408329822cc510138c0f8f): 제출 확인, pending.
 - [이벤트 코드 작업](https://chatgpt.com/codex/tasks/task_e_6aa6d9cddb548329a987c7ba96a950f0): 제출 확인, pending.
@@ -56,3 +56,18 @@ T519는 전체 통합 작업이며 아직 미완료다. T515~T518과 기존 장�
 
 - CI `34771186644` 실행 중: https://github.com/kuzuni/aaawunity/actions/runs/34771186644 . 완료 결과 미확인. 조정 세션은 다음 회차에서 원격 상태를 먼저 확인한다.
 - 조정 lock은 이번 회차 종료 시 반납한다. 클라우드 격리 작업은 공통 파일/main을 수정하지 않는다. 통합을 재개할 때 T519 상태 및 원격 변경을 확인한 뒤 다시 선점한다.
+
+## 아트 Work 클라우드 작업
+
+| 범위 | 작업 링크 | 전용 브랜치 | 계획 수 |
+|---|---|---|---|
+| 상자·다이아 묶음·도안 | https://chatgpt.com/c/6aa6de65-da04-83ee-9b32-02af2ceea9e7 | codex/ui-art-commerce | 16 |
+| 옵션 아이콘·패턴 | https://chatgpt.com/c/6aa6de6c-bc64-83e8-ac05-d7158d2ab9bf | codex/ui-art-stats | 12 |
+| 천사·악마·던전 월드·카드 | https://chatgpt.com/c/6aa6de6c-f668-83e9-ab1f-61bd0baf7101 | codex/ui-art-world | 14 |
+| 프로필·챕터 지도 | https://chatgpt.com/c/6aa6de6d-4af8-83e9-be1d-5006cba63e8b | codex/ui-art-identity | 13 |
+| 패스·로딩·아레나 배너 | https://chatgpt.com/c/6aa6de6d-9820-83e9-9bf5-54da8bed1e43 | codex/ui-art-banners | 5 |
+
+- 총 60개는 제작 계획 수이며 완료 수가 아니다. 원본 치와와 참조를 모든 생성에 첨부하도록 요청했다.
+- 요청 원문은 tools/game_ui_art/sessions/art-*-prompt.txt에 보존한다. 각 작업은 2~3개마다 산출물·알파 검사·SHA256·CHECKPOINT를 기록한다.
+- 공통 코드·카탈로그·main은 부모 통합 세션만 수정한다. 아트 세션은 각 전용 브랜치 또는 다운로드 가능한 ZIP으로 납품한다.
+- ChatGPT Work 작업은 read_thread로 확인한다. Codex cloud CLI 작업 3개와 다른 종류이므로 ID를 섞지 않는다.
