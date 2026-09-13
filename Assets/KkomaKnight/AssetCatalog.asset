@@ -286,29 +286,29 @@ MonoBehaviour:
   - key: env.stoneSmall
     sprite: {fileID: 21300000, guid: 71a6ca1b66908f042986f10564e6a32d, type: 3}
   - key: pi.attack
-    sprite: {fileID: 21300000, guid: 6fbd4e073d11448a5a5e71ab2a9b86d6, type: 3}
+    sprite: {fileID: 21300000, guid: 95bddf9db5068f7eb5be69d4936dd35e, type: 3}
   - key: pi.defense
-    sprite: {fileID: 21300000, guid: 0a48d445b9a6f4b36a0c89ccff8cf38d, type: 3}
+    sprite: {fileID: 21300000, guid: 2d8885ddf5d2e3c668416c0c5852862a, type: 3}
   - key: pi.atk_spd
-    sprite: {fileID: 21300000, guid: bcf5696bde82d478cb7103d3a4c895e1, type: 3}
+    sprite: {fileID: 21300000, guid: 4637a39cb00820bb8689070837279ba0, type: 3}
   - key: pi.fist
-    sprite: {fileID: 21300000, guid: 5b135022e29ef44c3961059a5ea1733c, type: 3}
+    sprite: {fileID: 21300000, guid: 2d76eb49a4f7a6dbfc290e164011340e, type: 3}
   - key: pi.critical
-    sprite: {fileID: 21300000, guid: bbd17631994b44b958f13baea63cd206, type: 3}
+    sprite: {fileID: 21300000, guid: 32c20bd60bdd48d6c436e8339f8b74c3, type: 3}
   - key: pi.damage
-    sprite: {fileID: 21300000, guid: 097abcafe01264d688ca9a7e43e95ab1, type: 3}
+    sprite: {fileID: 21300000, guid: 0cd4f4c757bc9635c8b59ed05f0811d3, type: 3}
   - key: pi.wing
     sprite: {fileID: 21300000, guid: e4ca0fb93130746a8b1913a1a3907693, type: 3}
   - key: pi.drop
-    sprite: {fileID: 21300000, guid: a6511a1c845534fb4be2f332304b5c54, type: 3}
+    sprite: {fileID: 21300000, guid: 3deb5a2a83a155f32b94b26bed55e348, type: 3}
   - key: pi.heart
-    sprite: {fileID: 21300000, guid: e11bc96ef302f4c0991434cba586dc3c, type: 3}
+    sprite: {fileID: 21300000, guid: 6a98d993ed068c1b7f06cd6746cb6d69, type: 3}
   - key: pi.heart_round
     sprite: {fileID: 21300000, guid: edc1cf697192a417c813b8464af9cf9d, type: 3}
   - key: pi.shield
-    sprite: {fileID: 21300000, guid: e41b3025714804572aad0623c94689cd, type: 3}
+    sprite: {fileID: 21300000, guid: de80526eef644fe2fb319ce376470ff2, type: 3}
   - key: pi.star
-    sprite: {fileID: 21300000, guid: ed03379b1d18748c28cbe4372adcf007, type: 3}
+    sprite: {fileID: 21300000, guid: 69fd5a268156624abbb8a3b74fe6a1e4, type: 3}
   - key: pi.thunder
     sprite: {fileID: 21300000, guid: c0658b88952b649ecb11ea82a16ef1ca, type: 3}
   - key: pi.axe
@@ -428,7 +428,7 @@ MonoBehaviour:
   - key: pi.ring
     sprite: {fileID: 21300000, guid: 912a03e8b74374dbeb035a395fcef961, type: 3}
   - key: ui.dodge
-    sprite: {fileID: 21300000, guid: d786f3638267743e7ac31e288eefa895, type: 3}
+    sprite: {fileID: 21300000, guid: 8f5cfb24511dff745029faab7307d786, type: 3}
   - key: ui.speed
     sprite: {fileID: 21300000, guid: 51ab8f606eb5c480c96fd934263fd386, type: 3}
   - key: ui.skull
@@ -660,7 +660,7 @@ MonoBehaviour:
   - key: fr.pillBorder
     sprite: {fileID: 21300000, guid: 3cf89f4959c424b76bee0c14e4c91472, type: 3}
   - key: ui.pattern
-    sprite: {fileID: 21300000, guid: 681031a918d5b41e08799ad7252df563, type: 3}
+    sprite: {fileID: 21300000, guid: 18b6021f031b0381426aa56d2d28fe0c, type: 3}
   - key: ui.light1
     sprite: {fileID: 21300000, guid: 322a6e9ee66794e879b02bdaeef29c00, type: 3}
   - key: ui.light2
@@ -1197,6 +1197,28 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 631546bb101e229f326f6df8c661c5d4, type: 3}
   - key: perk.critSpearL
     sprite: {fileID: 21300000, guid: d645f9e03d7572e80586a7addd78e121, type: 3}
+  - key: ui.option.attack
+    sprite: {fileID: 21300000, guid: 95bddf9db5068f7eb5be69d4936dd35e, type: 3}
+  - key: ui.option.defense
+    sprite: {fileID: 21300000, guid: 2d8885ddf5d2e3c668416c0c5852862a, type: 3}
+  - key: ui.option.atkSpd
+    sprite: {fileID: 21300000, guid: 4637a39cb00820bb8689070837279ba0, type: 3}
+  - key: ui.option.counter
+    sprite: {fileID: 21300000, guid: 2d76eb49a4f7a6dbfc290e164011340e, type: 3}
+  - key: ui.option.critical
+    sprite: {fileID: 21300000, guid: 32c20bd60bdd48d6c436e8339f8b74c3, type: 3}
+  - key: ui.option.criticalDamage
+    sprite: {fileID: 21300000, guid: 0cd4f4c757bc9635c8b59ed05f0811d3, type: 3}
+  - key: ui.option.steal
+    sprite: {fileID: 21300000, guid: 3deb5a2a83a155f32b94b26bed55e348, type: 3}
+  - key: ui.option.health
+    sprite: {fileID: 21300000, guid: 6a98d993ed068c1b7f06cd6746cb6d69, type: 3}
+  - key: ui.option.shield
+    sprite: {fileID: 21300000, guid: de80526eef644fe2fb319ce376470ff2, type: 3}
+  - key: ui.option.experience
+    sprite: {fileID: 21300000, guid: 69fd5a268156624abbb8a3b74fe6a1e4, type: 3}
+  - key: ui.option.dodge
+    sprite: {fileID: 21300000, guid: 8f5cfb24511dff745029faab7307d786, type: 3}
   prefabs:
   - key: cm.character
     prefab: {fileID: 1824668350962886144, guid: d6c3c650b0b379149a826b54b40b4571, type: 3}
