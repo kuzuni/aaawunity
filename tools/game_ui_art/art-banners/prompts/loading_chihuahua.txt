@@ -1,0 +1,4 @@
+Use case: illustration-story
+Asset type: Unity mobile game loading-screen character illustration, final art only
+Reference: Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png (mandatory identity/style reference)
+Create the same original yellow Chihuahua enthusiastically running toward the right while carrying the same simple wooden club. Preserve all identity and style cues. Fit the entire silhouette in a wide 948x350 slot with generous transparent margin and clean edges. Add only a few tiny motion puffs and sparkles. Genuine transparent RGBA background. No text, letters, numbers, logos, watermark, UI, realistic texture, painterly brushwork, complex anime rendering, or excessive glow.

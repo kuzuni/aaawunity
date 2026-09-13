@@ -1,0 +1,4 @@
+Use case: illustration-story
+Asset type: Unity mobile game season pass header banner, final art only
+Reference: Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png (mandatory identity/style reference)
+Create a wide adventure banner featuring the same original yellow Chihuahua moving toward the right through a cheerful fantasy journey landscape. Preserve the huge upright ears, cream inner ears/eyebrows/muzzle, very large brown eyes, brown nose, rounded proportions, thick smooth black outlines, bright flat colors, one restrained soft shade, and tiny cream highlights. Keep the central-left area calm for the existing pass title, season period, and level UI. No text, letters, numbers, logos, watermark, UI buttons, realistic texture, painterly brushwork, complex anime rendering, or excessive glow.

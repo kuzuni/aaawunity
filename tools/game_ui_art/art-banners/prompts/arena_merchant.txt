@@ -1,0 +1,4 @@
+Use case: illustration-story
+Asset type: Unity mobile game arena shop merchant banner, entirely new final artwork
+Reference: Assets/Art/ChihuahuaEquipmentThemes/Reference/character_base.png (mandatory identity/style reference)
+Create a new comic fantasy shop banner starring the same yellow Chihuahua as a friendly merchant, behind a newly designed curved teal-and-gold counter on the far right and facing right/three-quarter right. Keep ears visible and preserve all identity/style cues. Add only a blue gem jar and rolled map at upper-left and a small closed chest at the right edge. Keep central top quiet for the existing title and lower-left quiet for the season timer. This is a fresh unified illustration, not reused existing counter/keeper/coins/chest/barrel parts. No text, letters, numbers, logos, watermark, signs, labels, UI, realistic texture, painterly rendering, complex anime shading, excessive glow, or cropped character.
