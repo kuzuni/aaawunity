@@ -455,5 +455,508 @@
       "asset": "Assets/KkomaKnight/PerkIcons/shRef.png",
       "prompt": "SHIELD REFLECTS INCOMING DAMAGE: one large blue shield with one red incoming arrow bouncing back as a curved gold returning arrow."
     }
-  }
+  },
+  "perks": {
+    "p_evadeHeal": {
+      "family": "evHeal",
+      "key": "perk.evHeal",
+      "asset": "Assets/KkomaKnight/PerkIcons/evHeal.png"
+    },
+    "p_evHealR": {
+      "family": "evHeal",
+      "key": "perk.evHealR",
+      "asset": "Assets/KkomaKnight/PerkIcons/evHealR.png"
+    },
+    "p_evHealL": {
+      "family": "evHeal",
+      "key": "perk.evHealL",
+      "asset": "Assets/KkomaKnight/PerkIcons/evHealL.png"
+    },
+    "p_atk": {
+      "family": "atk",
+      "key": "perk.atk",
+      "asset": "Assets/KkomaKnight/PerkIcons/atk.png"
+    },
+    "p_atkR": {
+      "family": "atk",
+      "key": "perk.atkR",
+      "asset": "Assets/KkomaKnight/PerkIcons/atkR.png"
+    },
+    "p_evade": {
+      "family": "evade",
+      "key": "perk.evade",
+      "asset": "Assets/KkomaKnight/PerkIcons/evade.png"
+    },
+    "p_evadeR": {
+      "family": "evade",
+      "key": "perk.evadeR",
+      "asset": "Assets/KkomaKnight/PerkIcons/evadeR.png"
+    },
+    "p_arrowEv": {
+      "family": "arrowEv",
+      "key": "perk.arrowEv",
+      "asset": "Assets/KkomaKnight/PerkIcons/arrowEv.png"
+    },
+    "p_arrowEvR": {
+      "family": "arrowEv",
+      "key": "perk.arrowEvR",
+      "asset": "Assets/KkomaKnight/PerkIcons/arrowEvR.png"
+    },
+    "p_arrowEvL": {
+      "family": "arrowEv",
+      "key": "perk.arrowEvL",
+      "asset": "Assets/KkomaKnight/PerkIcons/arrowEvL.png"
+    },
+    "p_axeHit": {
+      "family": "axeHit",
+      "key": "perk.axeHit",
+      "asset": "Assets/KkomaKnight/PerkIcons/axeHit.png"
+    },
+    "p_axeHitR": {
+      "family": "axeHit",
+      "key": "perk.axeHitR",
+      "asset": "Assets/KkomaKnight/PerkIcons/axeHitR.png"
+    },
+    "p_axeHitL": {
+      "family": "axeHit",
+      "key": "perk.axeHitL",
+      "asset": "Assets/KkomaKnight/PerkIcons/axeHitL.png"
+    },
+    "p_counter": {
+      "family": "counter",
+      "key": "perk.counter",
+      "asset": "Assets/KkomaKnight/PerkIcons/counter.png"
+    },
+    "p_counterR": {
+      "family": "counter",
+      "key": "perk.counterR",
+      "asset": "Assets/KkomaKnight/PerkIcons/counterR.png"
+    },
+    "p_spearCt": {
+      "family": "spearCt",
+      "key": "perk.spearCt",
+      "asset": "Assets/KkomaKnight/PerkIcons/spearCt.png"
+    },
+    "p_critR": {
+      "family": "critR",
+      "key": "perk.critR",
+      "asset": "Assets/KkomaKnight/PerkIcons/critR.png"
+    },
+    "p_critRR": {
+      "family": "critR",
+      "key": "perk.critRR",
+      "asset": "Assets/KkomaKnight/PerkIcons/critRR.png"
+    },
+    "p_critF": {
+      "family": "critF",
+      "key": "perk.critF",
+      "asset": "Assets/KkomaKnight/PerkIcons/critF.png"
+    },
+    "p_critFR": {
+      "family": "critF",
+      "key": "perk.critFR",
+      "asset": "Assets/KkomaKnight/PerkIcons/critFR.png"
+    },
+    "p_def": {
+      "family": "def",
+      "key": "perk.def",
+      "asset": "Assets/KkomaKnight/PerkIcons/def.png"
+    },
+    "p_defR": {
+      "family": "def",
+      "key": "perk.defR",
+      "asset": "Assets/KkomaKnight/PerkIcons/defR.png"
+    },
+    "p_defL": {
+      "family": "def",
+      "key": "perk.defL",
+      "asset": "Assets/KkomaKnight/PerkIcons/defL.png"
+    },
+    "p_killSpearN": {
+      "family": "killSpear",
+      "key": "perk.killSpear",
+      "asset": "Assets/KkomaKnight/PerkIcons/killSpear.png"
+    },
+    "p_killSpearR": {
+      "family": "killSpear",
+      "key": "perk.killSpearR",
+      "asset": "Assets/KkomaKnight/PerkIcons/killSpearR.png"
+    },
+    "p_killSpearL": {
+      "family": "killSpear",
+      "key": "perk.killSpearL",
+      "asset": "Assets/KkomaKnight/PerkIcons/killSpearL.png"
+    },
+    "p_killBoltN": {
+      "family": "killBolt",
+      "key": "perk.killBolt",
+      "asset": "Assets/KkomaKnight/PerkIcons/killBolt.png"
+    },
+    "p_killBoltR": {
+      "family": "killBolt",
+      "key": "perk.killBoltR",
+      "asset": "Assets/KkomaKnight/PerkIcons/killBoltR.png"
+    },
+    "p_killBoltL": {
+      "family": "killBolt",
+      "key": "perk.killBoltL",
+      "asset": "Assets/KkomaKnight/PerkIcons/killBoltL.png"
+    },
+    "p_killArrowN": {
+      "family": "killArrow",
+      "key": "perk.killArrow",
+      "asset": "Assets/KkomaKnight/PerkIcons/killArrow.png"
+    },
+    "p_killArrowR": {
+      "family": "killArrow",
+      "key": "perk.killArrowR",
+      "asset": "Assets/KkomaKnight/PerkIcons/killArrowR.png"
+    },
+    "p_killArrowL": {
+      "family": "killArrow",
+      "key": "perk.killArrowL",
+      "asset": "Assets/KkomaKnight/PerkIcons/killArrowL.png"
+    },
+    "p_killAxeN": {
+      "family": "killAxe",
+      "key": "perk.killAxe",
+      "asset": "Assets/KkomaKnight/PerkIcons/killAxe.png"
+    },
+    "p_killAxeR": {
+      "family": "killAxe",
+      "key": "perk.killAxeR",
+      "asset": "Assets/KkomaKnight/PerkIcons/killAxeR.png"
+    },
+    "p_killAxeL": {
+      "family": "killAxe",
+      "key": "perk.killAxeL",
+      "asset": "Assets/KkomaKnight/PerkIcons/killAxeL.png"
+    },
+    "p_thornsN": {
+      "family": "thorns",
+      "key": "perk.thorns",
+      "asset": "Assets/KkomaKnight/PerkIcons/thorns.png"
+    },
+    "p_thornsR": {
+      "family": "thorns",
+      "key": "perk.thornsR",
+      "asset": "Assets/KkomaKnight/PerkIcons/thornsR.png"
+    },
+    "p_thornsL": {
+      "family": "thorns",
+      "key": "perk.thornsL",
+      "asset": "Assets/KkomaKnight/PerkIcons/thornsL.png"
+    },
+    "p_killEvBuff": {
+      "family": "killEvBuff",
+      "key": "perk.killEvBuff",
+      "asset": "Assets/KkomaKnight/PerkIcons/killEvBuff.png"
+    },
+    "p_collAtk": {
+      "family": "collAtk",
+      "key": "perk.collAtk",
+      "asset": "Assets/KkomaKnight/PerkIcons/collAtk.png"
+    },
+    "p_collCrit": {
+      "family": "collCrit",
+      "key": "perk.collCrit",
+      "asset": "Assets/KkomaKnight/PerkIcons/collCrit.png"
+    },
+    "p_killAtkStk": {
+      "family": "killAtkStk",
+      "key": "perk.killAtkStk",
+      "asset": "Assets/KkomaKnight/PerkIcons/killAtkStk.png"
+    },
+    "p_killEvStk": {
+      "family": "killEvStk",
+      "key": "perk.killEvStk",
+      "asset": "Assets/KkomaKnight/PerkIcons/killEvStk.png"
+    },
+    "p_killHealN": {
+      "family": "killHeal",
+      "key": "perk.killHeal",
+      "asset": "Assets/KkomaKnight/PerkIcons/killHeal.png"
+    },
+    "p_collHp": {
+      "family": "collHp",
+      "key": "perk.collHp",
+      "asset": "Assets/KkomaKnight/PerkIcons/collHp.png"
+    },
+    "p_critStack": {
+      "family": "critStack",
+      "key": "perk.critStack",
+      "asset": "Assets/KkomaKnight/PerkIcons/critStack.png"
+    },
+    "p_aspdAtk": {
+      "family": "aspdAtk",
+      "key": "perk.aspdAtk",
+      "asset": "Assets/KkomaKnight/PerkIcons/aspdAtk.png"
+    },
+    "p_execEvN": {
+      "family": "execEv",
+      "key": "perk.execEv",
+      "asset": "Assets/KkomaKnight/PerkIcons/execEv.png"
+    },
+    "p_execEvR": {
+      "family": "execEv",
+      "key": "perk.execEvR",
+      "asset": "Assets/KkomaKnight/PerkIcons/execEvR.png"
+    },
+    "p_execEvL": {
+      "family": "execEv",
+      "key": "perk.execEvL",
+      "asset": "Assets/KkomaKnight/PerkIcons/execEvL.png"
+    },
+    "p_stunCritN": {
+      "family": "stunCrit",
+      "key": "perk.stunCrit",
+      "asset": "Assets/KkomaKnight/PerkIcons/stunCrit.png"
+    },
+    "p_stunCritR": {
+      "family": "stunCrit",
+      "key": "perk.stunCritR",
+      "asset": "Assets/KkomaKnight/PerkIcons/stunCritR.png"
+    },
+    "p_stunCritL": {
+      "family": "stunCrit",
+      "key": "perk.stunCritL",
+      "asset": "Assets/KkomaKnight/PerkIcons/stunCritL.png"
+    },
+    "p_nArrowN": {
+      "family": "nArrow",
+      "key": "perk.nArrow",
+      "asset": "Assets/KkomaKnight/PerkIcons/nArrow.png"
+    },
+    "p_nArrowR": {
+      "family": "nArrow",
+      "key": "perk.nArrowR",
+      "asset": "Assets/KkomaKnight/PerkIcons/nArrowR.png"
+    },
+    "p_nArrowL": {
+      "family": "nArrow",
+      "key": "perk.nArrowL",
+      "asset": "Assets/KkomaKnight/PerkIcons/nArrowL.png"
+    },
+    "p_nAxeN": {
+      "family": "nAxe",
+      "key": "perk.nAxe",
+      "asset": "Assets/KkomaKnight/PerkIcons/nAxe.png"
+    },
+    "p_nAxeR": {
+      "family": "nAxe",
+      "key": "perk.nAxeR",
+      "asset": "Assets/KkomaKnight/PerkIcons/nAxeR.png"
+    },
+    "p_nAxeL": {
+      "family": "nAxe",
+      "key": "perk.nAxeL",
+      "asset": "Assets/KkomaKnight/PerkIcons/nAxeL.png"
+    },
+    "p_nBoltN": {
+      "family": "nBolt",
+      "key": "perk.nBolt",
+      "asset": "Assets/KkomaKnight/PerkIcons/nBolt.png"
+    },
+    "p_nBoltR": {
+      "family": "nBolt",
+      "key": "perk.nBoltR",
+      "asset": "Assets/KkomaKnight/PerkIcons/nBoltR.png"
+    },
+    "p_nBoltL": {
+      "family": "nBolt",
+      "key": "perk.nBoltL",
+      "asset": "Assets/KkomaKnight/PerkIcons/nBoltL.png"
+    },
+    "p_nHealN": {
+      "family": "nHeal",
+      "key": "perk.nHeal",
+      "asset": "Assets/KkomaKnight/PerkIcons/nHeal.png"
+    },
+    "p_evadeStun": {
+      "family": "evadeStun",
+      "key": "perk.evadeStun",
+      "asset": "Assets/KkomaKnight/PerkIcons/evadeStun.png"
+    },
+    "p_ctCritN": {
+      "family": "ctCrit",
+      "key": "perk.ctCrit",
+      "asset": "Assets/KkomaKnight/PerkIcons/ctCrit.png"
+    },
+    "p_ctCritR": {
+      "family": "ctCrit",
+      "key": "perk.ctCritR",
+      "asset": "Assets/KkomaKnight/PerkIcons/ctCritR.png"
+    },
+    "p_ctDmgN": {
+      "family": "ctDmg",
+      "key": "perk.ctDmg",
+      "asset": "Assets/KkomaKnight/PerkIcons/ctDmg.png"
+    },
+    "p_ctDmgR": {
+      "family": "ctDmg",
+      "key": "perk.ctDmgR",
+      "asset": "Assets/KkomaKnight/PerkIcons/ctDmgR.png"
+    },
+    "p_killSureCrit": {
+      "family": "killSureCrit",
+      "key": "perk.killSureCrit",
+      "asset": "Assets/KkomaKnight/PerkIcons/killSureCrit.png"
+    },
+    "p_cleaveN": {
+      "family": "cleave",
+      "key": "perk.cleave",
+      "asset": "Assets/KkomaKnight/PerkIcons/cleave.png"
+    },
+    "p_cleaveR": {
+      "family": "cleave",
+      "key": "perk.cleaveR",
+      "asset": "Assets/KkomaKnight/PerkIcons/cleaveR.png"
+    },
+    "p_cleaveL": {
+      "family": "cleave",
+      "key": "perk.cleaveL",
+      "asset": "Assets/KkomaKnight/PerkIcons/cleaveL.png"
+    },
+    "p_ignoreN": {
+      "family": "ignore",
+      "key": "perk.ignore",
+      "asset": "Assets/KkomaKnight/PerkIcons/ignore.png"
+    },
+    "p_noShAtk": {
+      "family": "noShAtk",
+      "key": "perk.noShAtk",
+      "asset": "Assets/KkomaKnight/PerkIcons/noShAtk.png"
+    },
+    "p_noShAspd": {
+      "family": "noShAspd",
+      "key": "perk.noShAspd",
+      "asset": "Assets/KkomaKnight/PerkIcons/noShAspd.png"
+    },
+    "p_wardHitN": {
+      "family": "wardHit",
+      "key": "perk.wardHit",
+      "asset": "Assets/KkomaKnight/PerkIcons/wardHit.png"
+    },
+    "p_wardHitR": {
+      "family": "wardHit",
+      "key": "perk.wardHitR",
+      "asset": "Assets/KkomaKnight/PerkIcons/wardHitR.png"
+    },
+    "p_wardHitL": {
+      "family": "wardHit",
+      "key": "perk.wardHitL",
+      "asset": "Assets/KkomaKnight/PerkIcons/wardHitL.png"
+    },
+    "p_fullHp": {
+      "family": "fullHp",
+      "key": "perk.fullHp",
+      "asset": "Assets/KkomaKnight/PerkIcons/fullHp.png"
+    },
+    "p_repairUp": {
+      "family": "repairUp",
+      "key": "perk.repairUp",
+      "asset": "Assets/KkomaKnight/PerkIcons/repairUp.png"
+    },
+    "p_healUp": {
+      "family": "healUp",
+      "key": "perk.healUp",
+      "asset": "Assets/KkomaKnight/PerkIcons/healUp.png"
+    },
+    "p_healRepair": {
+      "family": "healRepair",
+      "key": "perk.healRepair",
+      "asset": "Assets/KkomaKnight/PerkIcons/healRepair.png"
+    },
+    "p_killRepair": {
+      "family": "killRepair",
+      "key": "perk.killRepair",
+      "asset": "Assets/KkomaKnight/PerkIcons/killRepair.png"
+    },
+    "p_killDash": {
+      "family": "killDash",
+      "key": "perk.killDash",
+      "asset": "Assets/KkomaKnight/PerkIcons/killDash.png"
+    },
+    "p_berserkStk": {
+      "family": "berserkStk",
+      "key": "perk.berserkStk",
+      "asset": "Assets/KkomaKnight/PerkIcons/berserkStk.png"
+    },
+    "p_evRepairR": {
+      "family": "evRepair",
+      "key": "perk.evRepair",
+      "asset": "Assets/KkomaKnight/PerkIcons/evRepair.png"
+    },
+    "p_evRepairL": {
+      "family": "evRepair",
+      "key": "perk.evRepairL",
+      "asset": "Assets/KkomaKnight/PerkIcons/evRepairL.png"
+    },
+    "p_critSpearR": {
+      "family": "critSpear",
+      "key": "perk.critSpear",
+      "asset": "Assets/KkomaKnight/PerkIcons/critSpear.png"
+    },
+    "p_critSpearL": {
+      "family": "critSpear",
+      "key": "perk.critSpearL",
+      "asset": "Assets/KkomaKnight/PerkIcons/critSpearL.png"
+    },
+    "p_overkill": {
+      "family": "overkill",
+      "key": "perk.overkill",
+      "asset": "Assets/KkomaKnight/PerkIcons/overkill.png"
+    },
+    "p_berserk": {
+      "family": "berserk",
+      "key": "perk.berserk",
+      "asset": "Assets/KkomaKnight/PerkIcons/berserk.png"
+    },
+    "p_nobleEye": {
+      "family": "nobleEye",
+      "key": "perk.nobleEye",
+      "asset": "Assets/KkomaKnight/PerkIcons/nobleEye.png"
+    },
+    "p_spearAvatar": {
+      "family": "spearAvatar",
+      "key": "perk.spearAvatar",
+      "asset": "Assets/KkomaKnight/PerkIcons/spearAvatar.png"
+    },
+    "p_giant": {
+      "family": "giant",
+      "key": "perk.giant",
+      "asset": "Assets/KkomaKnight/PerkIcons/giant.png"
+    },
+    "p_nSpearL": {
+      "family": "nSpear",
+      "key": "perk.nSpear",
+      "asset": "Assets/KkomaKnight/PerkIcons/nSpear.png"
+    },
+    "p_critBoltL": {
+      "family": "critBolt",
+      "key": "perk.critBolt",
+      "asset": "Assets/KkomaKnight/PerkIcons/critBolt.png"
+    },
+    "p_spearEvL": {
+      "family": "spearEv",
+      "key": "perk.spearEv",
+      "asset": "Assets/KkomaKnight/PerkIcons/spearEv.png"
+    },
+    "p_spearHitL": {
+      "family": "spearHit",
+      "key": "perk.spearHit",
+      "asset": "Assets/KkomaKnight/PerkIcons/spearHit.png"
+    },
+    "p_shWallL": {
+      "family": "shWall",
+      "key": "perk.shWall",
+      "asset": "Assets/KkomaKnight/PerkIcons/shWall.png"
+    },
+    "p_shRefL": {
+      "family": "shRef",
+      "key": "perk.shRef",
+      "asset": "Assets/KkomaKnight/PerkIcons/shRef.png"
+    }
+  },
+  "artworkCount": 100
 }

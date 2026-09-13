@@ -1,0 +1,421 @@
+{
+  "count": 41,
+  "mode": "built-in imagegen",
+  "variants": {
+    "p_evHealR": {
+      "family": "evHeal",
+      "name": "회피 시 회복 II",
+      "effect": "회피 시 66% 확률로 최대 체력 12% 회복",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/evHealR.png",
+      "key": "perk.evHealR",
+      "reference": "Assets/KkomaKnight/PerkIcons/evHeal.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: DODGE TRIGGERS HEALING: a simple white round-headed person leaning aside with one gray afterimage, a prominent red heart and small mint-green healing plus in front. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_evHealL": {
+      "family": "evHeal",
+      "name": "회피 시 회복 III",
+      "effect": "회피 시 최대 체력 12% 회복",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/evHealL.png",
+      "key": "perk.evHealL",
+      "reference": "Assets/KkomaKnight/PerkIcons/evHeal.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: DODGE TRIGGERS HEALING: a simple white round-headed person leaning aside with one gray afterimage, a prominent red heart and small mint-green healing plus in front. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_atkR": {
+      "family": "atk",
+      "name": "공격력 증가 II",
+      "effect": "공격력 +30%",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/atkR.png",
+      "key": "perk.atkR",
+      "reference": "Assets/KkomaKnight/PerkIcons/atk.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: ATTACK POWER INCREASE: one chunky silver short sword pointing upper right, gold crossguard and red grip, beside one bold red upward arrow. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_evadeR": {
+      "family": "evade",
+      "name": "회피율 증가 II",
+      "effect": "회피율 +16",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/evadeR.png",
+      "key": "perk.evadeR",
+      "reference": "Assets/KkomaKnight/PerkIcons/evade.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: EVASION INCREASE: a simple white round-headed person sidestepping, two gray offset afterimages to the left and a small cyan swoosh. No boots. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_arrowEvR": {
+      "family": "arrowEv",
+      "name": "회피 시 화살 II",
+      "effect": "회피 시 66% 확률로 화살 1개 (공격력의 30%)",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/arrowEvR.png",
+      "key": "perk.arrowEvR",
+      "reference": "Assets/KkomaKnight/PerkIcons/arrowEv.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: DODGE TRIGGERS AN ARROW: one prominent wooden arrow with silver point flying diagonally in front of a small white dodging person with gray afterimage. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_arrowEvL": {
+      "family": "arrowEv",
+      "name": "회피 시 화살 III",
+      "effect": "회피 시 화살 1개 (공격력의 30%)",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/arrowEvL.png",
+      "key": "perk.arrowEvL",
+      "reference": "Assets/KkomaKnight/PerkIcons/arrowEv.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: DODGE TRIGGERS AN ARROW: one prominent wooden arrow with silver point flying diagonally in front of a small white dodging person with gray afterimage. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_axeHitR": {
+      "family": "axeHit",
+      "name": "피격 시 도끼 II",
+      "effect": "피격 시 66% 확률로 도끼 1개 (공격력의 50%)",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/axeHitR.png",
+      "key": "perk.axeHitR",
+      "reference": "Assets/KkomaKnight/PerkIcons/axeHit.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: GETTING HIT TRIGGERS AN AXE: a chunky single-bladed silver axe with brown handle emerging from a red jagged impact burst. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_axeHitL": {
+      "family": "axeHit",
+      "name": "피격 시 도끼 III",
+      "effect": "피격 시 도끼 1개 (공격력의 50%)",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/axeHitL.png",
+      "key": "perk.axeHitL",
+      "reference": "Assets/KkomaKnight/PerkIcons/axeHit.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: GETTING HIT TRIGGERS AN AXE: a chunky single-bladed silver axe with brown handle emerging from a red jagged impact burst. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_counterR": {
+      "family": "counter",
+      "name": "반격률 증가 II",
+      "effect": "반격률 +16",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/counterR.png",
+      "key": "perk.counterR",
+      "reference": "Assets/KkomaKnight/PerkIcons/counter.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: COUNTERATTACK CHANCE: a silver sword with a bold cyan U-turn arrow wrapping around it to indicate returning an attack. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_critRR": {
+      "family": "critR",
+      "name": "치명타 확률 증가 II",
+      "effect": "치명타 확률 +16",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/critRR.png",
+      "key": "perk.critRR",
+      "reference": "Assets/KkomaKnight/PerkIcons/critR.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: CRITICAL HIT CHANCE: a red circular target with a silver sword tip striking its central bullseye and a small yellow spark. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_critFR": {
+      "family": "critF",
+      "name": "치명타 피해 증가 II",
+      "effect": "치명타 피해 +60",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/critFR.png",
+      "key": "perk.critFR",
+      "reference": "Assets/KkomaKnight/PerkIcons/critF.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: CRITICAL DAMAGE: an oversized red-orange jagged impact burst split by a chunky silver sword, emphasizing a devastating hit. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_defR": {
+      "family": "def",
+      "name": "방어력 증가 II",
+      "effect": "방어력 +16%",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/defR.png",
+      "key": "perk.defR",
+      "reference": "Assets/KkomaKnight/PerkIcons/def.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: DEFENSE INCREASE: one chunky blue-gray medieval breastplate with a small mint-green upward arrow. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_defL": {
+      "family": "def",
+      "name": "방어력 증가 III",
+      "effect": "방어력 +24%",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/defL.png",
+      "key": "perk.defL",
+      "reference": "Assets/KkomaKnight/PerkIcons/def.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: DEFENSE INCREASE: one chunky blue-gray medieval breastplate with a small mint-green upward arrow. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_killSpearR": {
+      "family": "killSpear",
+      "name": "처치 시 창",
+      "effect": "처치 시 66% 확률로 창 1개 (공격력의 100% · 8마리 관통)",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/killSpearR.png",
+      "key": "perk.killSpearR",
+      "reference": "Assets/KkomaKnight/PerkIcons/killSpear.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: KILL TRIGGERS A SPEAR: prominent wooden spear with silver tip launched diagonally from a small ivory skull with X eyes. Non-gory cute skull. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_killSpearL": {
+      "family": "killSpear",
+      "name": "처치 시 창",
+      "effect": "처치 시 창 1개 (공격력의 100% · 8마리 관통)",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/killSpearL.png",
+      "key": "perk.killSpearL",
+      "reference": "Assets/KkomaKnight/PerkIcons/killSpear.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: KILL TRIGGERS A SPEAR: prominent wooden spear with silver tip launched diagonally from a small ivory skull with X eyes. Non-gory cute skull. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_killBoltR": {
+      "family": "killBolt",
+      "name": "처치 시 번개",
+      "effect": "처치 시 66% 확률로 보이는 적 전부에게 번개 1회씩 (공격력의 75%)",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/killBoltR.png",
+      "key": "perk.killBoltR",
+      "reference": "Assets/KkomaKnight/PerkIcons/killBolt.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: A large golden branching lightning bolt spreading toward three small blue target circles. A simple nonviolent fantasy magic ability symbol. No characters, no skulls, no injury. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_killBoltL": {
+      "family": "killBolt",
+      "name": "처치 시 번개",
+      "effect": "처치 시 보이는 적 전부에게 번개 1회씩 (공격력의 75%)",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/killBoltL.png",
+      "key": "perk.killBoltL",
+      "reference": "Assets/KkomaKnight/PerkIcons/killBolt.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: A large golden branching lightning bolt spreading toward three small blue target circles. A simple nonviolent fantasy magic ability symbol. No characters, no skulls, no injury. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_killArrowR": {
+      "family": "killArrow",
+      "name": "처치 시 화살",
+      "effect": "처치 시 66% 확률로 화살 3개 (공격력의 30%)",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/killArrowR.png",
+      "key": "perk.killArrowR",
+      "reference": "Assets/KkomaKnight/PerkIcons/killArrow.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: KILL TRIGGERS ARROWS: three wooden arrows with white fletching fanning upwards out of a small ivory skull with X eyes. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_killArrowL": {
+      "family": "killArrow",
+      "name": "처치 시 화살",
+      "effect": "처치 시 화살 3개 (공격력의 30%)",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/killArrowL.png",
+      "key": "perk.killArrowL",
+      "reference": "Assets/KkomaKnight/PerkIcons/killArrow.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: KILL TRIGGERS ARROWS: three wooden arrows with white fletching fanning upwards out of a small ivory skull with X eyes. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_killAxeR": {
+      "family": "killAxe",
+      "name": "처치 시 도끼",
+      "effect": "처치 시 66% 확률로 도끼 2개 (공격력의 50%)",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/killAxeR.png",
+      "key": "perk.killAxeR",
+      "reference": "Assets/KkomaKnight/PerkIcons/killAxe.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: KILL TRIGGERS AXES: two silver axes with brown handles fanning above a small ivory skull with X eyes. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_killAxeL": {
+      "family": "killAxe",
+      "name": "처치 시 도끼",
+      "effect": "처치 시 도끼 2개 (공격력의 50%)",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/killAxeL.png",
+      "key": "perk.killAxeL",
+      "reference": "Assets/KkomaKnight/PerkIcons/killAxe.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: KILL TRIGGERS AXES: two silver axes with brown handles fanning above a small ivory skull with X eyes. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_thornsR": {
+      "family": "thorns",
+      "name": "가시갑옷",
+      "effect": "가시갑옷 +200%",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/thornsR.png",
+      "key": "perk.thornsR",
+      "reference": "Assets/KkomaKnight/PerkIcons/thorns.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: THORNS ARMOR: a chunky slate-blue medieval breastplate covered in five large silver outward spikes. Very clear spiked armor silhouette. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_thornsL": {
+      "family": "thorns",
+      "name": "가시갑옷",
+      "effect": "가시갑옷 +300%",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/thornsL.png",
+      "key": "perk.thornsL",
+      "reference": "Assets/KkomaKnight/PerkIcons/thorns.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: THORNS ARMOR: a chunky slate-blue medieval breastplate covered in five large silver outward spikes. Very clear spiked armor silhouette. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_execEvR": {
+      "family": "execEv",
+      "name": "회피 시 즉사 II",
+      "effect": "회피 시 10% 확률로 그 적 즉사",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/execEvR.png",
+      "key": "perk.execEvR",
+      "reference": "Assets/KkomaKnight/PerkIcons/execEv.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: DODGE EXECUTION: one large cute ivory skull with X eyes crossed by a violet scythe slash; small white dodging person with afterimage beside it. No blood. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_execEvL": {
+      "family": "execEv",
+      "name": "회피 시 즉사 III",
+      "effect": "회피 시 15% 확률로 그 적 즉사",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/execEvL.png",
+      "key": "perk.execEvL",
+      "reference": "Assets/KkomaKnight/PerkIcons/execEv.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: DODGE EXECUTION: one large cute ivory skull with X eyes crossed by a violet scythe slash; small white dodging person with afterimage beside it. No blood. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_stunCritR": {
+      "family": "stunCrit",
+      "name": "치명타 시 스턴 II",
+      "effect": "치명타 시 20% 확률로 3초 스턴",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/stunCritR.png",
+      "key": "perk.stunCritR",
+      "reference": "Assets/KkomaKnight/PerkIcons/stunCrit.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: CRITICAL HIT STUNS: one simple gray enemy head with spiraling eyes, three yellow stun stars overhead, red jagged critical-hit burst behind. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_stunCritL": {
+      "family": "stunCrit",
+      "name": "치명타 시 스턴 III",
+      "effect": "치명타 시 30% 확률로 3초 스턴",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/stunCritL.png",
+      "key": "perk.stunCritL",
+      "reference": "Assets/KkomaKnight/PerkIcons/stunCrit.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: CRITICAL HIT STUNS: one simple gray enemy head with spiraling eyes, three yellow stun stars overhead, red jagged critical-hit burst behind. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_nArrowR": {
+      "family": "nArrow",
+      "name": "2타 화살 II",
+      "effect": "2타마다 무작위 적에게 화살 2개 (공격력의 30%)",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/nArrowR.png",
+      "key": "perk.nArrowR",
+      "reference": "Assets/KkomaKnight/PerkIcons/nArrow.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: Exactly 2 separate wooden arrows with silver arrowheads, fanned apart inside the same two cyan repeat-cycle arrows. Each projectile must be individually readable. No additional projectiles. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the cyan cyclic arrows; change the projectile count exactly as requested."
+    },
+    "p_nArrowL": {
+      "family": "nArrow",
+      "name": "2타 화살 III",
+      "effect": "2타마다 무작위 적에게 화살 3개 (공격력의 30%)",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/nArrowL.png",
+      "key": "perk.nArrowL",
+      "reference": "Assets/KkomaKnight/PerkIcons/nArrow.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: Exactly 3 separate wooden arrows with silver arrowheads, fanned apart inside the same two cyan repeat-cycle arrows. Each projectile must be individually readable. No additional projectiles. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the cyan cyclic arrows; change the projectile count exactly as requested."
+    },
+    "p_nAxeR": {
+      "family": "nAxe",
+      "name": "3타 도끼 II",
+      "effect": "3타마다 무작위 적에게 도끼 2개 (공격력의 50%)",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/nAxeR.png",
+      "key": "perk.nAxeR",
+      "reference": "Assets/KkomaKnight/PerkIcons/nAxe.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: Exactly 2 separate silver axes with wooden handles, fanned apart inside the same two cyan repeat-cycle arrows. Each projectile must be individually readable. No additional projectiles. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the cyan cyclic arrows; change the projectile count exactly as requested."
+    },
+    "p_nAxeL": {
+      "family": "nAxe",
+      "name": "3타 도끼 III",
+      "effect": "3타마다 무작위 적에게 도끼 3개 (공격력의 50%)",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/nAxeL.png",
+      "key": "perk.nAxeL",
+      "reference": "Assets/KkomaKnight/PerkIcons/nAxe.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: Exactly 3 separate silver axes with wooden handles, fanned apart inside the same two cyan repeat-cycle arrows. Each projectile must be individually readable. No additional projectiles. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the cyan cyclic arrows; change the projectile count exactly as requested."
+    },
+    "p_nBoltR": {
+      "family": "nBolt",
+      "name": "3타 번개 II",
+      "effect": "3타마다 무작위 적에게 번개 2회 (공격력의 75%)",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/nBoltR.png",
+      "key": "perk.nBoltR",
+      "reference": "Assets/KkomaKnight/PerkIcons/nBolt.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: Exactly 2 separate yellow lightning bolts, fanned apart inside the same two cyan repeat-cycle arrows. Each projectile must be individually readable. No additional projectiles. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the cyan cyclic arrows; change the projectile count exactly as requested."
+    },
+    "p_nBoltL": {
+      "family": "nBolt",
+      "name": "3타 번개 III",
+      "effect": "3타마다 무작위 적에게 번개 3회 (공격력의 75%)",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/nBoltL.png",
+      "key": "perk.nBoltL",
+      "reference": "Assets/KkomaKnight/PerkIcons/nBolt.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: Exactly 3 separate yellow lightning bolts, fanned apart inside the same two cyan repeat-cycle arrows. Each projectile must be individually readable. No additional projectiles. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the cyan cyclic arrows; change the projectile count exactly as requested."
+    },
+    "p_ctCritR": {
+      "family": "ctCrit",
+      "name": "반격 치명 II",
+      "effect": "반격 시 치명타 확률 +40",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/ctCritR.png",
+      "key": "perk.ctCritR",
+      "reference": "Assets/KkomaKnight/PerkIcons/ctCrit.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: COUNTERATTACK CRITICAL CHANCE: a prominent red bullseye target encircled by a bold cyan U-turn return arrow, small yellow critical spark at center. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_ctDmgR": {
+      "family": "ctDmg",
+      "name": "반격 강화 II",
+      "effect": "반격 데미지 +60%",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/ctDmgR.png",
+      "key": "perk.ctDmgR",
+      "reference": "Assets/KkomaKnight/PerkIcons/ctDmg.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: COUNTERATTACK DAMAGE INCREASE: a prominent red-orange jagged impact burst and a silver sword encircled by a bold cyan U-turn return arrow. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_cleaveR": {
+      "family": "cleave",
+      "name": "관통 베기 II",
+      "effect": "공격 시 66% 확률로 바로 뒤 적도 같은 데미지",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/cleaveR.png",
+      "key": "perk.cleaveR",
+      "reference": "Assets/KkomaKnight/PerkIcons/cleave.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: CLEAVE HITS THE ENEMY BEHIND: one sweeping silver blade and large cyan slash crossing two simple gray enemy heads aligned diagonally. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_cleaveL": {
+      "family": "cleave",
+      "name": "관통 베기 III",
+      "effect": "공격 시 바로 뒤 적도 같은 데미지",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/cleaveL.png",
+      "key": "perk.cleaveL",
+      "reference": "Assets/KkomaKnight/PerkIcons/cleave.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: CLEAVE HITS THE ENEMY BEHIND: one sweeping silver blade and large cyan slash crossing two simple gray enemy heads aligned diagonally. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_wardHitR": {
+      "family": "wardHit",
+      "name": "피격 시 방어막 II",
+      "effect": "피격 시 20% 확률로 방어막 1장",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/wardHitR.png",
+      "key": "perk.wardHitR",
+      "reference": "Assets/KkomaKnight/PerkIcons/wardHit.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: GETTING HIT GRANTS A BARRIER: a chunky cyan magical dome around a small blue shield with a red impact burst striking outside the dome. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_wardHitL": {
+      "family": "wardHit",
+      "name": "피격 시 방어막 III",
+      "effect": "피격 시 30% 확률로 방어막 1장",
+      "rank": 3,
+      "asset": "Assets/KkomaKnight/PerkIcons/wardHitL.png",
+      "key": "perk.wardHitL",
+      "reference": "Assets/KkomaKnight/PerkIcons/wardHit.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: GETTING HIT GRANTS A BARRIER: a chunky cyan magical dome around a small blue shield with a red impact burst striking outside the dome. Variant: Ornate gold and crimson fittings with THREE small ruby diamond rank marks integrated below the main symbol; a bold, clearly distinct highest-tier silhouette. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_evRepairL": {
+      "family": "evRepair",
+      "name": "회피 시 수리 II",
+      "effect": "회피 시 25% 확률로 최대 실드 6% 수리",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/evRepairL.png",
+      "key": "perk.evRepairL",
+      "reference": "Assets/KkomaKnight/PerkIcons/evRepair.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: DODGE TRIGGERS SHIELD REPAIR: a large blue shield with gold repair hammer beside one small white dodging person with gray afterimage. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    },
+    "p_critSpearL": {
+      "family": "critSpear",
+      "name": "치명 시 창",
+      "effect": "치명타 시 66% 확률로 창 1개 (공격력의 100% · 8마리 관통)",
+      "rank": 2,
+      "asset": "Assets/KkomaKnight/PerkIcons/critSpearL.png",
+      "key": "perk.critSpearL",
+      "reference": "Assets/KkomaKnight/PerkIcons/critSpear.png",
+      "prompt": "Use case: stylized-concept. Production Unity mobile RPG perk icon. Generate a NEW higher-tier sibling of the supplied base icon, retaining its recognizable effect and trigger symbols. Match its chunky cartoon shapes, thick smooth near-black outlines, simple flat fills with at most one hard cel shadow. Square canvas, actual transparent RGBA background. Central 80% composition, readable at 64 pixels. No lettering, numbers, frame, background scene, gradients, glow or textures. The supplied image is a visual reference for the same effect family. Subject: CRITICAL HIT TRIGGERS A SPEAR: one large wooden spear with silver tip bursting through a red critical-hit starburst. Variant: Refined gold fittings with TWO small gold diamond rank marks integrated below the main symbol; upgraded silhouette and a stronger central effect, not just a recolor. Constraints: Keep the same number of main weapons, target circles, shields and hearts as in the reference; the upgrade changes probability or strength, not projectile count."
+    }
+  },
+  "alphaCleanup": {
+    "mode": "built-in imagegen edit",
+    "prompt": "Remove the background. Transparent background.",
+    "note": "Applied to generated variants containing an opaque background; all final assets verified RGBA."
+  }
+}
