@@ -7,7 +7,13 @@ namespace KkomaKnight.Core
     public sealed class GearItem
     {
         public int Uid; public string Part, Type; public int Rar, Plus; public bool IsNew;
-        public GearItem Clone() => new GearItem { Uid = Uid, Part = Part, Type = Type, Rar = Rar, Plus = Plus, IsNew = IsNew };
+        /// <summary>
+        /// T517 — <b>이 자루가 들고 있는 옵션</b>(주인 2026-09-13 «옵션은 … 이런식으로 바꿔줘 기존꺼 버리고»).
+        /// 만들 때 굴려 넣고 그 뒤로는 안 바뀐다(강화해도 값은 그대로 · 합성은 새 자루라 새로 굴린다).
+        /// <para>⚠ 비어 있을 수 있다 — 옛 세이브(T517 앞) · 축 표가 없는 판. 그때는 엔진이 옛 «종류마다 7줄» 로 돈다.</para>
+        /// </summary>
+        public List<RolledOpt> Opts = new List<RolledOpt>();
+        public GearItem Clone() => new GearItem { Uid = Uid, Part = Part, Type = Type, Rar = Rar, Plus = Plus, IsNew = IsNew, Opts = new List<RolledOpt>(Opts) };
         // 합성 묶음 키는 등급에 따라 달라지므로(T114) 표를 아는 GearSystem.FuseKey(D, g) 한 곳에 있다 — 여기 있던 GroupKey(부위|종류|등급)는 그 함수가 대신한다.
         public override string ToString() => $"{Type} r{Rar}+{Plus}";
     }
@@ -38,6 +44,77 @@ namespace KkomaKnight.Core
                 b.Slots[pt] = slotLv;
             }
             return b;
+        }
+
+        // ───────────────────────── T517 · 굴리는 옵션(주인 2026-09-13 «기존꺼 버리고») ─────────────────────────
+
+        /// <summary>
+        /// 이 자루가 들고 있는 옵션 — <b>없으면 그 자리에서 굴려 넣고</b> 돌려준다(그 뒤로는 안 바뀐다).
+        /// <para>
+        /// <b>굴림은 아이템 고유번호(<c>Uid</c>)로 결정된다</b> — 같은 자루는 몇 번을 다시 읽어도 같은 값이 나온다.
+        /// 그래서 «언제 굴리나» 를 만드는 자리마다 챙길 필요가 없다(뽑기·합성·자동합성이 저마다 Uid 를 붙이는 자리가 넷이다).
+        /// 굴린 뒤에는 <see cref="GearItem.Opts"/> 에 남고 세이브가 그대로 적으므로, <b>나중에 표를 바꿔도 이미 가진 장비는 안 흔들린다</b>.
+        /// </para>
+        /// <para>⚠ <c>Uid</c> 가 0 이하면(아직 번호를 못 받은 자루 · 시험용 <see cref="MkBuild"/>) <b>굴리지도 담지도 않는다</b> —
+        /// 그때 굴리면 번호를 받은 뒤와 값이 달라지고, 담아 두면 그 틀린 값이 세이브로 굳는다.</para>
+        /// </summary>
+        public static List<RolledOpt> OptsOf(GameData D, GearItem g)
+        {
+            if (g == null) return Empty;
+            if (g.Opts != null && g.Opts.Count > 0) return g.Opts;
+            if (D == null || D.Gear == null || !D.Gear.RolledOpts || g.Uid <= 0) return g.Opts ?? Empty;
+            g.Opts = Roll(D, g.Uid);
+            return g.Opts;
+        }
+        static readonly List<RolledOpt> Empty = new List<RolledOpt>();
+
+        /// <summary>
+        /// 옵션 <paramref name="seed"/> 하나로 <b>줄을 굴린다</b> — 축은 겹치지 않게 고르고 값은 그 축의 <c>Min~Max</c> 에서 정수로.
+        /// <para>
+        /// 굴리는 줄 수는 <see cref="GearData.OptCountOpenMax"/>(이 표로 <b>열릴 수 있는</b> 최대 줄 수 · 지금 2)다 —
+        /// 등급별 줄 수(<see cref="GearData.OptCount"/>)가 아니다. 그래야 강화로 줄이 하나 더 열리는 날
+        /// <b>이미 굴려 둔 값이 드러날 뿐</b>이고, 새 값이 그때 생기지 않는다(그러면 같은 자루가 강화 때마다 달라진다).
+        /// </para>
+        /// <para>씨앗은 번호를 그대로 쓰지 않고 한 번 섞는다 — 안 그러면 이웃한 번호(연속으로 뽑은 열 자루)가 비슷한 값으로 나온다.</para>
+        /// </summary>
+        public static List<RolledOpt> Roll(GameData D, int seed)
+        {
+            var outp = new List<RolledOpt>();
+            var axes = D.Gear.OptAxes;
+            int n = Math.Min(D.Gear.OptCountOpenMax, axes.Count);
+            if (n <= 0) return outp;
+            var rng = new Mulberry32(Mix((uint)seed));
+            var pool = new List<GearOptAxis>(axes);
+            for (int i = 0; i < n; i++)
+            {
+                int pick = (int)Math.Floor(rng.Next() * pool.Count);
+                if (pick >= pool.Count) pick = pool.Count - 1;          // Next() 가 1.0 을 낼 일은 없지만 경계를 코드가 지킨다
+                var ax = pool[pick]; pool.RemoveAt(pick);
+                double lo = Math.Ceiling(ax.Min), hi = Math.Floor(ax.Max);
+                if (hi < lo) hi = lo;
+                double v = lo + Math.Floor(rng.Next() * (hi - lo + 1));
+                if (v > hi) v = hi;
+                outp.Add(new RolledOpt { Key = ax.Key, Val = v });
+            }
+            return outp;
+        }
+        /// <summary>번호를 섞는다(32비트 곱셈 해시) — 이웃한 Uid 가 이웃한 굴림이 되지 않게.</summary>
+        static uint Mix(uint x)
+        {
+            unchecked
+            {
+                x ^= x >> 16; x *= 0x7feb352dU;
+                x ^= x >> 15; x *= 0x846ca68bU;
+                x ^= x >> 16;
+                return x == 0 ? 0x9e3779b9U : x;                          // 씨앗 0 은 Mulberry32 에서 굳는다
+            }
+        }
+
+        /// <summary>이 자루에서 <b>지금 열려 있는</b> 옵션 줄 수 — 등급·강화가 정한다(<see cref="GearData.OptCount"/>). 굴려 둔 줄이 그보다 많으면 앞에서부터 그만큼만 산다.</summary>
+        public static int OpenOptCount(GameData D, GearItem g)
+        {
+            if (D == null || g == null) return 0;
+            return Math.Min(D.Gear.OptCount(g.Rar, g.Plus), OptsOf(D, g).Count);
         }
 
         public static double EvenBonus(GameData D, Build b)

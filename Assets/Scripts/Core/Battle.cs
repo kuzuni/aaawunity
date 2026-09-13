@@ -27,6 +27,8 @@ namespace KkomaKnight.Core
         public readonly List<BattleEvent> Events = new List<BattleEvent>();
         public readonly List<PerkDef> Base10;
         public double T, Gold; public int Kills, ProcN, PerkChances, Stuns, Misses, AtkTries, Miss, TotalEnemies;
+        /// <summary>T517 — 더블어택이 실제로 터진 횟수(자가 «확률이 도는가» 를 재는 자리 · 화면은 안 쓴다).</summary>
+        public int DoubleHits;
         public bool Dead, Cleared;
         public PendingDecision Pending;
         public int PendingLevelUps;
@@ -102,9 +104,18 @@ namespace KkomaKnight.Core
             if (Opt.BaseStatsLegacy20) { p.CritR = 20; p.Def = 20; p.Counter = 20; p.Evade = 20; }
             if (Opt.GearOpts)
             {
+                // T517 — 표에 «굴리는 축»(optionAxes)이 있으면 **아이템이 들고 있는 값**을 먹인다(주인 2026-09-13 «기존꺼 버리고»).
+                //   없으면 옛 꼴(종류마다 정해진 7줄)로 돈다 — T516 과 같은 갈래다(두 규칙이 한 엔진에 산다 · 결정 1416).
                 foreach (var pt in G.Parts)
                 {
                     var g = build.EqAt(pt); if (g == null) continue;
+                    if (G.RolledOpts)
+                    {
+                        var rolled = GearSystem.OptsOf(D, g);
+                        int open = Math.Min(G.OptCount(g.Rar, g.Plus), rolled.Count);
+                        for (int i = 0; i < open; i++) ApplyRolledOpt(p, rolled[i]);
+                        continue;
+                    }
                     if (!G.Options.TryGetValue(g.Type, out var tbl)) continue;
                     int n = G.OptCount(g.Rar, g.Plus);
                     for (int i = 0; i < n && i < tbl.Count; i++) ApplyGearOption(p, tbl[i]);
@@ -113,6 +124,32 @@ namespace KkomaKnight.Core
             p.Dmg *= 1 + p.PxGet("g_atkP") / 100; p.MaxHp *= 1 + p.PxGet("g_hpP") / 100; p.MaxSh *= 1 + p.PxGet("g_shP") / 100;
             p.Hp = p.MaxHp; p.Sh = p.MaxSh = RngUtil.JsRound(p.MaxSh);
             return p;
+        }
+
+        /// <summary>
+        /// T517 — <b>굴린 옵션 한 줄</b>을 먹인다(주인이 준 아홉 축). 값은 표에서 굴려 온 수이고 <b>여기에 수가 하나도 없다</b>.
+        /// <para>
+        /// 축이 가는 자리는 셋이다 — ⓐ 이미 있던 <c>g_*</c> 누산(<c>atkP</c>·<c>hpP</c> · 아래에서 힘·체력에 곱해진다) ·
+        /// ⓑ 이미 있던 스탯 칸(<c>critR</c>·<c>critF</c>·<c>evade</c>·<c>steal</c>) · ⓒ T517 이 새로 세운 라운드 축
+        /// (<c>dbl</c> 더블어택 · <c>skillDmg</c> 스킬 피해 · <c>regen</c> 라운드당 회복 — 셋 다 <b>턴제(T516)가 서야 뜻이 생긴다</b>).
+        /// </para>
+        /// <para>⚠ <b>모르는 축은 던진다</b> — 표에 오타 하나가 나면 «값을 넣었는데 아무 일도 안 나는» 꼴이 되는데, 그것이 제일 조용한 고장이다(<see cref="ApplyGearOption"/> 과 같은 규약).</para>
+        /// </summary>
+        static void ApplyRolledOpt(PlayerState p, RolledOpt o)
+        {
+            switch (o.Key)
+            {
+                case "atkP": p.Px["g_atkP"] = p.PxGet("g_atkP") + o.Val; break;
+                case "hpP": p.Px["g_hpP"] = p.PxGet("g_hpP") + o.Val; break;
+                case "critR": p.CritR += o.Val; break;
+                case "critF": p.CritF += o.Val; break;
+                case "evade": p.Evade += o.Val; break;
+                case "steal": p.Steal += o.Val; break;
+                case "dbl": p.OptDbl += o.Val; break;
+                case "skillDmg": p.OptSkillDmg += o.Val; break;
+                case "regen": p.OptRegen += o.Val; break;
+                default: throw new InvalidOperationException("gearOverride optionAxes: 엔진이 모르는 축 " + o.Key);
+            }
         }
 
         /// <summary>장비 세트 옵션 한 칸 적용 — gear.json effect 그대로: stat 은 가산 델타, px 는 누산(g_* 축).</summary>
@@ -488,6 +525,9 @@ namespace KkomaKnight.Core
         // ───────────────────────── 소환 (sim.js fire*) ─────────────────────────
         void SummonHit(EnemyState e, double ratio, string src = null)
         {
+            // T517 «스킬데미지 +1~10%» — 투사체(도끼·창·화살·번개)와 소환 피해가 **전부 이 한 자리**를 지난다.
+            //   맨손 타격(PlayerStrike)은 여기 안 온다 — 주인이 «스킬» 이라 했으므로 그 갈래만 곱한다.
+            if (P.OptSkillDmg > 0) ratio *= 1 + P.OptSkillDmg / 100;
             DealDmg(e, ratio, false, src);
             if (ProcN < C.ProcTickCap) { ProcN++; ProcOnAttack(e); }
         }
@@ -943,6 +983,9 @@ namespace KkomaKnight.Core
             {
                 if (Round % Math.Max(1, C.TurnSkillEvery) == 0) FireRoundSkills();   // 주인 «3라운드당 한 번»
                 if (tgt.Hp > 0) PlayerStrike(tgt);
+                // T517 «더블어택 확률 1~10% (최대 한번 더블어택하는거임 라운드당)» —
+                //   내 반턴에 **한 번만** 굴리고, 맞으면 그 라운드에 한 대를 더 넣는다(연쇄로 세 대가 되지 않는다).
+                if (P.OptDbl > 0 && tgt.Hp > 0 && Rng.Next() * 100 < P.OptDbl) { PlayerStrike(tgt); DoubleHits++; }
                 PlayerTurn = false;
                 if (tgt.Hp <= 0) { EndWaveTurns(); return true; }       // 이 라운드 안에 잡았다 — 적 차례는 없다
             }
@@ -953,6 +996,8 @@ namespace KkomaKnight.Core
                 if (!Dead)
                 {
                     Round++;
+                    // T517 «라운드당 체력회복 1~3%» — 라운드가 하나 지날 때 최대 체력의 그만큼(넘치면 Heal 이 자른다).
+                    if (P.OptRegen > 0 && P.Hp > 0) Heal(P.MaxHp * P.OptRegen / 100, true);
                     // 주인 «15라운드 넘으면 지는 거임» — 체력은 그대로 두고 판만 끝낸다(결과 화면이 «라운드 초과» 를 가려 쓸 수 있게 LostByRounds 를 남긴다).
                     if (Round > RoundLimit) { LostByRounds = true; Dead = true; }
                 }

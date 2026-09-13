@@ -44,6 +44,15 @@ namespace KkomaKnight.Core
         public double MaxHp, Hp, MaxSh, Sh;
         public int Level = 1, Exp, Ward;
         public int CritStk, BsStk; public bool SureCrit, Dash; public double CollHpF = 1;
+        /// <summary>
+        /// T517 — 굴린 옵션이 세운 <b>라운드 축</b> 셋(주인 2026-09-13). 전부 «퍼센트» 값이고 <b>턴제(T516)가 서야 뜻이 생긴다</b>.
+        /// <para>
+        /// <c>OptDbl</c> 더블어택 확률 — 내 반턴에 한 번 굴려 맞으면 <b>그 라운드에 한 번 더</b> 때린다(주인 «최대 한번 더블어택하는거임 라운드당»).
+        /// <c>OptSkillDmg</c> 스킬(투사체·소환) 피해 — 때리는 배율에 곱한다. <c>OptRegen</c> 라운드마다 최대 체력의 이만큼 회복.
+        /// </para>
+        /// <para>⚠ 실시간 갈래에서는 <b>셋 다 잠자코 있다</b> — «라운드» 가 없는 규칙에 «라운드당» 을 억지로 얹지 않는다(T521 이 그 물음을 든다).</para>
+        /// </summary>
+        public double OptDbl, OptSkillDmg, OptRegen;
         /// <summary>연출용 타이머(공격 런지 · 피격 플래시).</summary>
         public double HitT, StrikeT;
         public readonly Dictionary<string, int> NHit = new Dictionary<string, int>();

@@ -201,6 +201,20 @@ namespace KkomaKnight.Core
             if (en.Has("legendMaxPlus")) Gear.LegendMaxPlus = en["legendMaxPlus"].Int(Gear.LegendMaxPlus);
             var lk = j["look"];
             if (lk.Has("rarSprite")) Gear.LookRarTable = lk["rarSprite"].IntArray();
+            // T517 — 굴리는 옵션 축(주인 아홉 개). 표에 없으면 목록이 비고, 그러면 엔진이 옛 «종류마다 7줄» 로 돈다.
+            if (j.Has("optionAxes"))
+            {
+                var list = new List<GearOptAxis>();
+                foreach (var a in j["optionAxes"].Items())
+                {
+                    var key = a["key"].Str();
+                    if (string.IsNullOrEmpty(key)) throw new FormatException("gearOverride optionAxes: key 가 없다");
+                    double mn = a["min"].Num(), mx = a["max"].Num();
+                    if (mx < mn) throw new FormatException("gearOverride optionAxes: max < min — " + key);
+                    list.Add(new GearOptAxis { Key = key, Name = a["name"].Str(key), Min = mn, Max = mx, Unit = a["unit"].Str("pct") });
+                }
+                Gear.OptAxes = list;
+            }
         }
 
         /// <summary>
@@ -616,6 +630,25 @@ namespace KkomaKnight.Core
         public double SlotStep; public int SlotLvMax; public double SlotCostBase, SlotCostG; public double[] SlotCostTable;
         public double EvenStep; public int EvenPer;
         public int OptMaxCount; public int[] OptCountByRar; public int[] MythPlusOptAt;   // 신화 +3/+6/+9
+        /// <summary>
+        /// T517 — <b>옵션이 무엇을 줄 수 있는가</b>(주인 2026-09-13 «장비,펫,탈것 옵션은 … 이런식으로 바꿔줘 기존꺼 버리고»).
+        /// <para>
+        /// 옛 꼴(<c>gear.json</c> 의 <c>optionLadder.options</c> · <see cref="Options"/>)은 <b>종류마다 정해진 7줄</b>이라
+        /// 같은 «사이버 암살자의 무기» 두 자루가 늘 같았다. 새 꼴은 <b>아이템마다 굴린다</b> —
+        /// 만들 때 축을 골라 <c>Min~Max</c> 에서 정수를 하나 뽑고 그 값을 세이브가 들고 다닌다(<c>GearItem.Opts</c>).
+        /// </para>
+        /// <para>⚠ <b>이 목록이 비면 옛 꼴로 돈다</b>(표에 <c>optionAxes</c> 를 안 적은 세이브·시드 골든) — 두 규칙이 한 엔진에 산다(T516 과 같은 갈래 · 결정 1416).</para>
+        /// </summary>
+        public List<GearOptAxis> OptAxes = new List<GearOptAxis>();
+        /// <summary>굴린 옵션을 쓰는 판인가 — 표에 축이 하나라도 있으면 참(T517).</summary>
+        public bool RolledOpts => OptAxes != null && OptAxes.Count > 0;
+        /// <summary>축을 키로 찾는다 — 없으면 <c>null</c>(모르는 키는 조용히 버리지 말고 부르는 쪽이 판단한다).</summary>
+        public GearOptAxis Axis(string key)
+        {
+            if (OptAxes == null) return null;
+            foreach (var a in OptAxes) if (a.Key == key) return a;
+            return null;
+        }
         public Dictionary<string, List<GearOption>> Options = new Dictionary<string, List<GearOption>>();
         public Dictionary<string, double> SummonRatio = new Dictionary<string, double>();
         public List<GearType> AllTypes = new List<GearType>();
@@ -735,6 +768,19 @@ namespace KkomaKnight.Core
         public Dictionary<string, double> Px = new Dictionary<string, double>();     // 누산 (g_* 축)
         public Dictionary<string, double> Stat = new Dictionary<string, double>();   // 가산 델타 (critR/critF/counter/def/evade/steal)
     }
+    /// <summary>
+    /// T517 — 굴리는 옵션의 <b>한 축</b>(주인이 준 아홉 개 중 하나). 값은 이 축의 <c>Min~Max</c> 에서 정수로 굴린다.
+    /// <para><b>단위가 둘이다</b> — <c>pct</c> 는 곱 배율(공격력 +7% = ×1.07) · <c>pp</c> 는 스탯에 그대로 더하는 «퍼센트 포인트»(치명타 확률 +5 = 20 → 25).
+    /// 주인 표에서 «확률» 계열(치명타확률·회피)이 <c>pp</c> 이고 나머지가 <c>pct</c> 다.</para>
+    /// </summary>
+    public sealed class GearOptAxis
+    {
+        public string Key, Name, Unit;
+        public double Min, Max;
+        public bool IsPoint => Unit == "pp";
+    }
+    /// <summary>T517 — 한 아이템이 <b>실제로 들고 있는</b> 옵션 한 줄(축 + 굴린 값). 세이브가 그대로 지고 다닌다.</summary>
+    public struct RolledOpt { public string Key; public double Val; }
     public struct GearType { public string Part, Type; }
 
     // ───────────────────────── gacha.json ─────────────────────────

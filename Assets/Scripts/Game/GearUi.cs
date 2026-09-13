@@ -639,9 +639,12 @@ namespace KkomaKnight.Game
             // ⚠ 위 <see cref="StatsBox"/> 와 같은 까닭 — 여기서 눌리면 줄 높이까지 같이 눌려 **본문 40 이 잘린다**
             //    (보기 전용 팝업에서 16.0% → 13.25% · 줄 53px → 44px · 결정 809).
             var region = Layout.GdOpts.Within(boxOverride ?? Layout.GdBox);
+            var host = UiKit.Rect(box, "Options"); UiKit.Pct(host, region); UiKit.Tag(host, "옵션 목록");
+            // T517 — 표에 «굴리는 축» 이 있으면 **이 자루가 들고 있는 값**을 그린다(주인 2026-09-13 «기존꺼 버리고»).
+            //   같은 이름의 두 자루가 다른 값을 들 수 있으므로, 여기서는 종류 표가 아니라 아이템을 읽는다.
+            if (D.Gear.RolledOpts) { RolledOptionRows(host, D, g); return; }
             var opts = D.Gear.Options.TryGetValue(g.Type, out var ol) ? ol : new List<GearOption>();
             int n = D.Gear.OptCount(g.Rar, g.Plus);
-            var host = UiKit.Rect(box, "Options"); UiKit.Pct(host, region); UiKit.Tag(host, "옵션 목록");
             if (opts.Count == 0) { UiKit.Label(host, 2, 0, 96, 100, "세트 옵션 없음", TextSize.Body, Palette.CreamDark); return; }
             // T515(주인 2026-09-13 «옵션은 최대 2개») — 표가 열 수 있는 만큼만 그린다.
             //   정본 gear.json 은 종류마다 옵션 7줄을 들고 있지만, 지금 표(gearOverride)로 실제로 열리는 것은 그중 앞 몇 줄뿐이다.
@@ -667,6 +670,44 @@ namespace KkomaKnight.Game
                 if (!on) UiKit.DarkText(t, Palette.OptLocked);
             }
         }
+        /// <summary>
+        /// T517 — <b>굴린 옵션</b> 줄들(주인이 준 아홉 축). 값이 아이템마다 다르므로 «축 이름 +값%» 으로 적는다.
+        /// <para>
+        /// <b>잠긴 줄도 그린다</b> — 등급·강화로 아직 안 열린 줄은 자물쇠와 흐린 글자다(옛 꼴과 같은 규약 · T160 ⓐ 색은 살린다).
+        /// 그리는 줄 수는 <see cref="GearData.OptCountOpenMax"/>(이 표로 열릴 수 있는 최대 · T515 로 2)이고,
+        /// 그중 <see cref="GearSystem.OpenOptCount"/> 개가 켜져 있다.
+        /// </para>
+        /// <para>⚠ <b>줄 수는 아이템마다 안 바뀐다</b> — 0개·1개·2개마다 아래 칸 크기가 달라지던 것을 주인이 짚었다(T518). 늘 상한만큼 그린다.</para>
+        /// </summary>
+        static void RolledOptionRows(RectTransform host, GameData D, GearItem g)
+        {
+            var rolled = GearSystem.OptsOf(D, g);
+            int shown = Mathf.Clamp(D.Gear.OptCountOpenMax, 0, Mathf.Max(rolled.Count, D.Gear.OptAxes.Count));
+            if (shown <= 0) { UiKit.Label(host, 2, 0, 96, 100, "옵션 없음", TextSize.Body, Palette.CreamDark); return; }
+            int open = GearSystem.OpenOptCount(D, g);
+            float pitch = Mathf.Min(Layout.GdOptPitch, Layout.GdOpts.H / shown);
+            float rowPct = pitch / Layout.GdOpts.H * 100f;
+            for (int i = 0; i < shown; i++)
+            {
+                bool on = i < open;
+                // 색은 «그 줄이 열리는 등급» 색 그대로(T160 ⓐ — 잠겨 있어도 색은 안 죽인다).
+                var color = Palette.ByName(Palette.RarName(D.Gear.OptTierRar(i)));
+                var row = Pill(host, "Opt:" + i, new Layout.R(0, i * rowPct, 100, rowPct * OptRowFill), on ? 0.7f : 0.6f);
+                var ic = UiKit.Icon(row, "ic", on ? SetIcon(Set(D, g)) : "ui.iconLock", color); UiKit.Pct(ic.rectTransform, 1.5f, 12, 5, 76);
+                string desc = i < rolled.Count ? OptText(D, rolled[i]) : "";
+                var t = UiKit.Label(row, 7.5f, 0, 91.5f, 100, desc, TextSize.Body, on ? OnDarkPill(color) : Palette.OptLocked, TextAnchor.MiddleLeft, true, true);
+                if (!on) UiKit.DarkText(t, Palette.OptLocked);
+            }
+        }
+
+        /// <summary>굴린 옵션 한 줄의 글 — «공격력 +7%». 이름은 표에서 오고(축 이름) 값은 아이템에서 온다. 모르는 축이면 키를 그대로 적는다(조용히 빈 줄로 두지 않는다).</summary>
+        public static string OptText(GameData D, RolledOpt o)
+        {
+            var ax = D.Gear.Axis(o.Key);
+            string name = ax != null ? ax.Name : o.Key;
+            return name + " +" + UiKit.Fmt(o.Val) + "%";
+        }
+
         /// <summary>옵션 줄이 피치에서 차지하는 비율 — 16% ÷ 7줄 = 53px 피치 × 0.94 = 50px(본문 40 한 줄 49px 이 들어간다 · 줄 사이 3px).</summary>
         public const float OptRowFill = 0.94f;
         /// <summary>

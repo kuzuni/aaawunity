@@ -354,6 +354,14 @@ namespace KkomaKnight.Core
             {
                 var gi = new Dictionary<string, object> { ["u"] = (double)g.Uid, ["part"] = g.Part, ["type"] = g.Type, ["rar"] = (double)g.Rar, ["plus"] = (double)g.Plus };
                 if (g.IsNew) gi["nw"] = 1.0;
+                // T517 — 굴린 옵션은 **아이템에 붙어 있는 값**이라 여기 적는다(«축:값» 두 칸씩).
+                //   ⚠ 안 적으면 다음 판에서 다시 굴려지고, 표를 손대는 날 이미 가진 장비가 통째로 달라진다.
+                if (g.Opts != null && g.Opts.Count > 0)
+                {
+                    var oo = new List<object>();
+                    foreach (var ro in g.Opts) oo.Add(new Dictionary<string, object> { ["k"] = ro.Key, ["v"] = ro.Val });
+                    gi["o"] = oo;
+                }
                 inv.Add(gi);
             }
             o["inv"] = inv;
@@ -445,7 +453,16 @@ namespace KkomaKnight.Core
                     s.ProfileColor = j["profileColor"].Str(""); s.ProfileIcon = j["profileIcon"].Str(""); s.Nick = j["nick"].Str("");   // 없으면 빈 값 = 기본 초상(옛 세이브 호환 · T262 ⓐ)
                     foreach (var c in j["giftClaimed"].Items()) s.GiftClaimed.Add(c.Bool());
                     foreach (var g in j["inv"].Items())
-                        s.Inv.Add(new GearItem { Uid = g["u"].Int(), Part = g["part"].Str(), Type = g["type"].Str(), Rar = g["rar"].Int(), Plus = g["plus"].Int(), IsNew = g["nw"].Num() != 0 });
+                    {
+                        var gi = new GearItem { Uid = g["u"].Int(), Part = g["part"].Str(), Type = g["type"].Str(), Rar = g["rar"].Int(), Plus = g["plus"].Int(), IsNew = g["nw"].Num() != 0 };
+                        // T517 — 없으면 빈 목록이다(옛 세이브). 그 자루는 처음 들여다보는 순간 Uid 로 굴려진다(GearSystem.OptsOf) — 값이 사라지지 않는다.
+                        foreach (var o in g["o"].Items())
+                        {
+                            var k = o["k"].Str();
+                            if (!string.IsNullOrEmpty(k)) gi.Opts.Add(new RolledOpt { Key = k, Val = o["v"].Num() });
+                        }
+                        s.Inv.Add(gi);
+                    }
                     foreach (var k in j["eq"].Keys) s.Eq[k] = j["eq"][k].Int();
                     foreach (var k in j["slots"].Keys) s.Slots[k] = j["slots"][k].Int();
                     s.DunDay = j["dunDay"].Str("");

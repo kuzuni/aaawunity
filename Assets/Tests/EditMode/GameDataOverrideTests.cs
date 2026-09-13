@@ -113,7 +113,8 @@ namespace KkomaKnight.Tests
                 "rarName", "rarLegend", "rarMyth",
                 "contribution.atk", "contribution.hp", "contribution.sh",
                 "optionLadder.optCount", "optionLadder.mythPlusAt", "look.rarSprite",
-                "enhance.plusStep", "enhance.legendToMythPlus", "enhance.legendMaxPlus");
+                "enhance.plusStep", "enhance.legendToMythPlus", "enhance.legendMaxPlus",
+                "optionAxes");   // T517 — 굴리는 옵션 축 아홉(주인 2026-09-13 «기존꺼 버리고») · 목록이라 잎사귀 하나로 센다
             OnlyKnownKeys(GameData.TuneOverrideFile,
                 "maxChapter", "eBaseHp", "eBaseDmg", "eHpSeg", "eDmgSeg",
                 "tune.maxChapter", "tune.eBaseHp", "tune.eBaseDmg", "tune.eHpSeg", "tune.eDmgSeg");
