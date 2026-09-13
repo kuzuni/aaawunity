@@ -142,7 +142,7 @@ namespace KkomaKnight.Core
         }
 
         /// <summary>
-        /// <c>combat.json</c>(aaaw 정본 · 불변) 위에 <b>이 레포가 정한 값만</b> 덮는다 (T173 · 주인 지시로 바뀐 전투 규칙).
+        /// <c>combat.json</c>(aaaw 정본 · 불변) 위에 <b>이 레포가 정한 값만</b> 덮는다 (T173 · 주인 지시로 바뀐 전투 규칙 · T516 이 <c>turn</c> 칸을 더했다).
         /// 적힌 키만 바뀌고 나머지는 정본 그대로다 — 빈 글이거나 못 읽으면 아무 일도 안 한다(부팅은 막히지 않는다).
         /// </summary>
         public void ApplyCombatOverride(string json)
@@ -157,6 +157,16 @@ namespace KkomaKnight.Core
             if (p.Has("spear")) Combat.PierceSpear = p["spear"].Int(Combat.PierceSpear);
             if (p.Has("wave")) Combat.PierceWave = p["wave"].Int(Combat.PierceWave);
             if (p.Has("waveBig")) Combat.PierceWaveBig = p["waveBig"].Int(Combat.PierceWaveBig);
+            // T516 — 턴제 규칙(주인 2026-09-13). 표에 «turn» 이 없으면 아무것도 안 바뀐다 = 옛 실시간 규칙 그대로다.
+            var t = j["turn"];
+            if (t.IsObject)
+            {
+                if (t.Has("on")) Combat.TurnOn = t["on"].Num() != 0;
+                if (t.Has("rounds")) Combat.TurnRounds = t["rounds"].Int(Combat.TurnRounds);
+                if (t.Has("skillEvery")) Combat.TurnSkillEvery = t["skillEvery"].Int(Combat.TurnSkillEvery);
+                if (t.Has("enemiesPerWave")) Combat.TurnEnemiesPerWave = t["enemiesPerWave"].Int(Combat.TurnEnemiesPerWave);
+                if (t.Has("stepSec")) Combat.TurnStepSec = t["stepSec"].Num(Combat.TurnStepSec);
+            }
         }
 
         /// <summary>
@@ -776,6 +786,18 @@ namespace KkomaKnight.Core
     public sealed class CombatData
     {
         public double PlayerSpeed, StopDistance, DashMul;
+        // ⚑ T516(주인 2026-09-13 «싸움을 턴제 게임으로 바꿀래») — 턴제 규칙. 값은 combatOverride.json 의 «turn» 칸에서 온다(코드에 수 0).
+        //   기본값이 «꺼짐» 인 것이 시드 골든(T2)의 안전장치다 — 표가 없으면 엔진이 지나는 길이 한 줄도 안 달라진다(T240·T183 이 같은 자리에 같은 방식으로 붙어 있다).
+        /// <summary>턴제(라운드) 규칙이 켜져 있나 — 표에 «turn.on» 이 참일 때만.</summary>
+        public bool TurnOn;
+        /// <summary>한 웨이브에 쓸 수 있는 라운드 수(주인 15) — 넘기면 진다.</summary>
+        public int TurnRounds = 15;
+        /// <summary>스킬(«N타마다» 발동)이 터지는 주기 — 주인 «3라운드당 한 번».</summary>
+        public int TurnSkillEvery = 3;
+        /// <summary>웨이브 하나에 세우는 적 수(주인 «1웨이브당 1마리»).</summary>
+        public int TurnEnemiesPerWave = 1;
+        /// <summary>반턴 하나(나 한 대 · 적 한 대)에 두는 시간(초) — 연출을 보라고 두는 간격이지 규칙이 아니다.</summary>
+        public double TurnStepSec = 0.7;
         public double MeleeEnemy, RangedEnemyMax, RangedEnemyMin, EnemyGap, NodeGap, NodeGapEvent, SpearReach, WaveReach, WaveReachKing;
         public int PierceWave, PierceWaveBig, PierceSpear;
         public double AxeSpeed, SpearSpeed, EnemyArrowSpeed; public int ProjCap, ProcTickCap;

@@ -33,7 +33,7 @@ namespace KkomaKnight.Tests
         const double HardAtTarget = 50.0;   // 과녁에서 이만큼을 넘으면 «막힌다» 가 아니다 (실측 최대 27%)
         const double EasyBelow = 15.0;      // 과녁 한 칸 아래에서 이만큼도 안 되면 «넘어간다» 가 아니다 (실측 최소 24%)
 
-        static GameData Data() => GameData.LoadFromDirectory(TestData.Dir);
+        static GameData Data() { var d = GameData.LoadFromDirectory(TestData.Dir); d.Combat.TurnOn = false; return d; }   // T516 — 이 사다리는 «옛 실시간 규칙의 밸런스» 를 재는 표다(턴제 밸런스는 주인이 새로 정해야 한다)
 
         /// <summary>
         /// 주인 표의 <b>모든 줄</b>에서 벽이 과녁 언저리에 서 있는가 — 노템부터 «마지막 챕터에 닿는 신화 강화» 까지 <b>스무</b> 빌드.

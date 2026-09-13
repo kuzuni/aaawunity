@@ -614,6 +614,8 @@ namespace KkomaKnight.Game
                 // T254 — 부활권 선택지. «이 판에서 아직 쓸 수 있는가» 는 개수와 따로다 —
                 //   0 개여도 그 자리는 보여 준다(비활성 + 어디서 구하는지). 이미 한 번 썼으면 자리 자체를 안 낸다.
                 bool canRevive = _revivesUsed < KkomaKnight.Core.Revive.PerRun;
+                // T516 — 진 까닭이 «맞아서» 가 아니라 «라운드 초과» 면 그렇게 말해 준다(체력이 남은 채로 지는 판이라 안 적으면 버그로 보인다).
+                if (G.LostByRounds) App.Toast($"{G.RoundLimit}라운드 안에 못 잡았습니다");
                 App.Overlay.Dead(G, () => ExitBattle(), ReviveNow, S.Revive, canRevive);
             }
         }
@@ -743,7 +745,8 @@ namespace KkomaKnight.Game
             var P = G.P; var D = App.Data;
             if (_gold != null) _gold.text = UiKit.Fmt(_shownGold);   // T85 — 표시 골드(구슬이 도착한 만큼) · 은행에 넣는 값은 엔진 G.Gold 그대로
             if (_kills != null) _kills.text = G.Kills.ToString();
-            if (_chapTitle != null) _chapTitle.text = $"챕터 {G.Chapter}";
+            // T516 — 턴제 판은 제목 줄이 «지금 몇 라운드인가» 도 말한다(주인 «1웨이브당 15라운드»). 걷는 중(Round 0)에는 옛 그대로다.
+            if (_chapTitle != null) _chapTitle.text = G.TurnMode && G.Round > 0 ? $"챕터 {G.Chapter} · {G.Round}/{G.RoundLimit}" : $"챕터 {G.Chapter}";
             // 진행바(T35) = 노드(웨이브·이벤트·보스) 진행 — 끝난 노드 수 + 지금 싸우는 웨이브의 처치 비율 → 적을 잡을수록 찬다 · 적 조우 중엔 주황, 걷는 중엔 노랑(레퍼런스 03 «적 발견»)
             _prog.Set(ChapterProgress(G), null);
             if (_progFill != null) _progFill.color = _world != null && _world.Engaged ? Palette.Orange : Palette.Yellow;

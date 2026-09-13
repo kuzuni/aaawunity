@@ -27,6 +27,17 @@ namespace KkomaKnight.Tests
         /// <summary>이 레포가 실제로 도는 표 — 정본 + 덮어쓰기 다섯(<c>Assets/KkomaKnight/*Override.json</c>). 화면·규칙 자는 거의 다 이쪽이다.</summary>
         public static GameData Load() => _cached ?? (_cached = GameData.LoadFromDirectory(Dir));
 
+        /// <summary>
+        /// 지금 표에서 <b>턴제만 끈</b> 것 — «옛 실시간 규칙» 을 재는 자가 쓴다(T516 · 투사체 비행·표적 고르기처럼 <b>시간이 흐르는</b> 자리).
+        /// <para>⚠ 새 자를 여기 붙이지 마라 — 게임은 턴제다. 이 갈래로 오는 것은 «실시간 규칙 자체» 를 재는 자뿐이다.</para>
+        /// </summary>
+        public static GameData RealTime()
+        {
+            var d = GameData.LoadFromDirectory(Dir);
+            d.Combat.TurnOn = false;
+            return d;
+        }
+
         static GameData _preBalance;
         /// <summary>
         /// <b>T325 의 밸런스 개편만 빼고</b> 실은 표 — 곧 «주인이 밸런스를 바꾸기 전의 이 레포» 다
@@ -45,6 +56,10 @@ namespace KkomaKnight.Tests
             var d = GameData.Load(f => File.ReadAllText(Path.Combine(Dir, f)));
             var combat = Path.GetFullPath(Path.Combine(Dir, "..", "..", "KkomaKnight", GameData.CombatOverrideFile));
             if (File.Exists(combat)) d.ApplyCombatOverride(File.ReadAllText(combat));
+            // ⚑ T516 — **턴제는 끈다.** 이 갈래는 «aaaw sim.js 와 같은 수가 나오는가» 를 재는 자리이고(T2 이식 동일성),
+            //   턴제(주인 2026-09-13)는 그 규칙을 통째로 바꾼 **새 게임 규칙**이다. 여기서 켜 두면 골든이 «이식이 틀렸다» 로 빨개진다.
+            //   ⚠ 켜고 재고 싶으면 자 쪽에서 `d.Combat.TurnOn = true` 를 적는다(RealTime/Turn 을 자가 고른다).
+            d.Combat.TurnOn = false;
             d.ValidateOverridden();
             return _preBalance = d;
         }

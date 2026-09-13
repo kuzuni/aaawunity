@@ -107,7 +107,8 @@ namespace KkomaKnight.Tests
         public void NoOverrideFileDeclaresAKeyTheMachineDoesNotRead()
         {
             OnlyKnownKeys(GameData.CombatOverrideFile,
-                "range.spearReach", "range.waveReach", "pierce.spear", "pierce.wave", "pierce.waveBig");
+                "range.spearReach", "range.waveReach", "pierce.spear", "pierce.wave", "pierce.waveBig",
+                "turn.on", "turn.rounds", "turn.skillEvery", "turn.enemiesPerWave", "turn.stepSec");   // T516 — 턴제 규칙(주인 2026-09-13)
             OnlyKnownKeys(GameData.GearOverrideFile,
                 "rarName", "rarLegend", "rarMyth",
                 "contribution.atk", "contribution.hp", "contribution.sh",

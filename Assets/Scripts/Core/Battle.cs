@@ -54,6 +54,28 @@ namespace KkomaKnight.Core
 
         public bool Over => Dead || Cleared || T >= EngineConst.MaxT;
 
+        // ═════════════════════ 턴제(라운드) — T516 (주인 2026-09-13) ═════════════════════
+        /// <summary>
+        /// 이 판이 <b>턴제</b>인가 — 표(<c>combatOverride.json</c> 의 <c>turn.on</c>)가 정한다.
+        /// <para>
+        /// ⚑ <b>기본이 «꺼짐» 인 것이 안전장치다</b> — 표가 없으면 엔진은 옛 실시간 규칙(aaaw <c>sim.js</c> 이식) 그대로 돌고,
+        /// 이식 동일성을 재는 자(<c>BattleTests</c> 시드 골든 · <c>Sim</c> 하니스)가 <b>그 갈래를 계속 잰다</b>.
+        /// 곧 «게임은 턴제 · 이식 대조는 옛 규칙» 이 한 엔진 안에 같이 산다(T240 아레나 · T183 던전이 같은 자리에 같은 방식으로 붙어 있다).
+        /// </para>
+        /// </summary>
+        public bool TurnMode => C.TurnOn;
+        /// <summary>지금 웨이브에서 몇 번째 라운드인가(1부터 · 아직 안 붙었으면 0).</summary>
+        public int Round;
+        /// <summary>한 웨이브에 쓸 수 있는 라운드 수(주인 15) — <see cref="Round"/> 가 이 수를 넘기면 진다.</summary>
+        public int RoundLimit => C.TurnRounds;
+        /// <summary>지금 라운드에서 다음에 때릴 쪽 — 주인 «내가 먼저 떄리고 적이 떄리고».</summary>
+        public bool PlayerTurn { get; private set; } = true;
+        /// <summary>이 웨이브에서 맞붙고 있는 적(없으면 아직 걸어가는 중).</summary>
+        public EnemyState TurnFoe { get; private set; }
+        double _turnT;          // 다음 반턴까지 남은 시간(초)
+        /// <summary>«15라운드를 넘겨서» 졌는가 — 결과 화면이 사망과 가려 쓸 수 있게 남긴다.</summary>
+        public bool LostByRounds { get; private set; }
+
         public BattleState(GameData data, int chapter, Build build, IRng rng, IBattlePolicy policy, RunOptions opt)
         {
             D = data; C = data.Combat; PK = data.Perks; Rng = rng; Policy = policy ?? new SimPolicy(); Opt = opt ?? new RunOptions();
@@ -126,7 +148,10 @@ namespace KkomaKnight.Core
                 if (nd.Type == NodeType.Wave)
                 {
                     var st = ch.Waves[wi];
-                    for (int j = 0; j < nd.Size; j++)
+                    // T516(주인 2026-09-13 «1웨이브당 1마리로 뜨게 바꿔줘야함») — 표(챕터 웨이브 크기)는 그대로 두고 **세우는 수만** 줄인다.
+                    //   ⚠ 표를 고치면 aaaw 정본(enemies.json)을 건드리는 것이고 챕터 진행도(총 적 수)가 통째로 바뀐다 — 여기서 세우는 수만 본다.
+                    int size = TurnMode ? Math.Min(nd.Size, Math.Max(1, C.TurnEnemiesPerWave)) : nd.Size;
+                    for (int j = 0; j < size; j++)
                     {
                         node.Enemies.Add(new EnemyState
                         {
@@ -134,8 +159,8 @@ namespace KkomaKnight.Core
                             AtkTimer = Rng.Range(EngineConst.EnemyMinAtkTimer, EngineConst.EnemyMaxAtkTimer), Wave = node,
                         });
                     }
-                    TotalEnemies += nd.Size;
-                    wi++; x += (nd.Size - 1) * E.EnemyGap + E.NodeGap;
+                    TotalEnemies += size;
+                    wi++; x += (size - 1) * E.EnemyGap + E.NodeGap;
                 }
                 else if (nd.Type == NodeType.Boss)
                 {
@@ -650,6 +675,7 @@ namespace KkomaKnight.Core
 
         void ProcNHit()
         {
+            if (TurnMode) return;   // T516 — 턴제에서는 «몇 대 때렸나» 가 아니라 «몇 라운드째냐» 가 센다(FireRoundSkills)
             foreach (var kv in PK.NHitPerks)
             {
                 string id = kv.Key; int period = kv.Value;
@@ -767,6 +793,7 @@ namespace KkomaKnight.Core
         public bool Tick()
         {
             if (Pending != null || Over) return false;
+            if (TurnMode) return TurnTick();      // T516 — 턴제 판은 라운드 루프로 돈다(아래)
             double dt = EngineConst.Dt;
             T += dt;
             ProcN = 0;
@@ -843,6 +870,125 @@ namespace KkomaKnight.Core
             StepProjectiles(dt);
             if (Pending == null && PendingLevelUps > 0 && !HoldLevelUp) { PendingLevelUps--; OpenLevelUp(); }   // T368 — 화면이 «아직 못 연다» 면 줄에 둔 채 계속 돈다
             return true;
+        }
+
+        // ═════════════════════ 턴제 루프 — T516 ═════════════════════
+        /// <summary>
+        /// 턴제 한 틱 — <b>걸어가는 동안은 예전 그대로</b>이고, 적과 마주 서면 «라운드» 를 센다(주인 2026-09-13).
+        /// <list type="number">
+        /// <item>다음 적까지 멈춤 거리 밖이면 <b>걷는다</b>(맵·걷기 연출은 옛 그대로 · 라운드는 아직 0).</item>
+        /// <item>닿으면 그 웨이브의 <b>1라운드</b>가 시작된다 — <c>stepSec</c> 마다 한 «반턴» 씩: <b>내가 한 대 → 적이 한 대</b>.</item>
+        /// <item>적 반턴이 끝나면 라운드가 1 오른다. <b>주인 «3라운드당 한 번»</b> 은 그 라운드의 <b>내 차례 앞</b>에서 터진다(<see cref="FireRoundSkills"/>).</item>
+        /// <item><see cref="RoundLimit"/>(주인 15)를 넘기면 <b>진다</b> — <see cref="LostByRounds"/> 로 사망과 갈라 적는다.</item>
+        /// </list>
+        /// <para>
+        /// ⚑ <b>때리는 셈 자체는 한 줄도 새로 안 만들었다</b> — <see cref="PlayerStrike"/> · <see cref="HitPlayer"/> · <see cref="DoCounter"/> 를 그대로 부른다.
+        /// 바뀐 것은 «언제 부르나»(공격 타이머 → 라운드)뿐이라 치명타·회피·반격·흡혈·특전은 지금 규칙 그대로 산다.
+        /// </para>
+        /// <para>⚠ 이 갈래는 <see cref="TurnMode"/> 가 참일 때만 돈다 — 거짓이면 <see cref="Tick"/> 의 옛 실시간 길로 간다(시드 골든 불변).</para>
+        /// </summary>
+        bool TurnTick()
+        {
+            double dt = EngineConst.Dt;
+            T += dt;
+            ProcN = 0;
+            P.StrikeT = Math.Max(0, P.StrikeT - dt); P.HitT = Math.Max(0, P.HitT - dt);
+            foreach (var k in BuffKeys) { var arr = P.Buffs[k]; for (int i = arr.Count - 1; i >= 0; i--) { arr[i].T -= dt; if (arr[i].T <= 0) arr.RemoveAt(i); } }
+            var alive = AliveList();
+            if (alive.Count == 0) return true;
+            // 쉼터·악마·천사는 옛 그대로 — 걸어가다 닿으면 팝업이 뜬다(턴과 무관).
+            foreach (var n in Nodes)
+            {
+                if (!n.Done && (n.Type == NodeType.Rest || n.Type == NodeType.Devil || n.Type == NodeType.Angel) && P.WorldX > n.X - EngineConst.EventTriggerDist)
+                {
+                    HandleEvent(n);
+                    if (Pending == null && PendingLevelUps > 0 && !HoldLevelUp) { PendingLevelUps--; OpenLevelUp(); }
+                    return true;
+                }
+            }
+            alive.Sort((a, b) => a.WorldX.CompareTo(b.WorldX));
+            var tgt = alive[0];
+            // ── 걷기 ──
+            if (tgt.WorldX - P.WorldX > C.StopDistance)
+            {
+                if (TurnFoe != null) EndWaveTurns();                    // 앞 웨이브를 끝내고 다음으로 간다
+                P.WorldX += C.PlayerSpeed * P.WalkMul * (P.Dash ? C.DashMul : 1) * dt;
+                P.AtkTimer = Math.Min(P.AtkTimer, EngineConst.WalkAtkTimerCap);
+                foreach (var e in alive) { e.HitT = Math.Max(0, e.HitT - dt); e.StrikeT = Math.Max(0, e.StrikeT - dt); }
+                // ⚠ 걷는 동안에도 «줄에 든 레벨업» 은 열어야 한다 — 옛 Tick 은 갈래마다 돌고 나서 **맨 끝**에서 이 줄을 밟았다.
+                //   여기서 그냥 돌아가면 원정 시작 특전 다섯(StartPerks)이 안 열려 첫 멈춤이 쉼터가 된다(자가 잡았다).
+                if (Pending == null && PendingLevelUps > 0 && !HoldLevelUp) { PendingLevelUps--; OpenLevelUp(); }
+                return true;
+            }
+            // ── 마주 섰다 ──
+            P.Dash = false;
+            // 스킬이 낸 투사체(도끼·창·화살·번개)는 «날아가는 그림» 이 있어야 하므로 실시간처럼 나아가게 둔다 —
+            //   속도가 430~520 px/s 이고 적은 멈춤 거리(74) 앞이라 **같은 반턴 안에** 닿는다(턴을 넘기지 않는다).
+            StepProjectiles(dt);
+            if (TurnFoe != tgt) BeginWaveTurns(tgt);                    // 새 웨이브 = 라운드 1부터
+            foreach (var e in alive) { e.HitT = Math.Max(0, e.HitT - dt); e.StrikeT = Math.Max(0, e.StrikeT - dt); }
+            if (tgt.Stun > 0) tgt.Stun = Math.Max(0, tgt.Stun - dt);
+            if (tgt.Slow > 0) tgt.Slow = Math.Max(0, tgt.Slow - dt);
+            _turnT -= dt;
+            if (_turnT > 0) return true;
+            _turnT += Math.Max(EngineConst.Dt, C.TurnStepSec);
+            if (PlayerTurn)
+            {
+                if (Round % Math.Max(1, C.TurnSkillEvery) == 0) FireRoundSkills();   // 주인 «3라운드당 한 번»
+                if (tgt.Hp > 0) PlayerStrike(tgt);
+                PlayerTurn = false;
+                if (tgt.Hp <= 0) { EndWaveTurns(); return true; }       // 이 라운드 안에 잡았다 — 적 차례는 없다
+            }
+            else
+            {
+                if (tgt.Hp > 0 && tgt.Stun <= 0) EnemyTurnStrike(tgt);
+                PlayerTurn = true;
+                if (!Dead)
+                {
+                    Round++;
+                    // 주인 «15라운드 넘으면 지는 거임» — 체력은 그대로 두고 판만 끝낸다(결과 화면이 «라운드 초과» 를 가려 쓸 수 있게 LostByRounds 를 남긴다).
+                    if (Round > RoundLimit) { LostByRounds = true; Dead = true; }
+                }
+            }
+            if (Pending == null && PendingLevelUps > 0 && !HoldLevelUp) { PendingLevelUps--; OpenLevelUp(); }
+            return true;
+        }
+
+        /// <summary>웨이브가 시작된다 — 라운드 1 · 내 차례부터(주인 «내가 먼저 떄리고»).</summary>
+        void BeginWaveTurns(EnemyState foe)
+        {
+            TurnFoe = foe; Round = 1; PlayerTurn = true; _turnT = Math.Max(EngineConst.Dt, C.TurnStepSec);
+        }
+        /// <summary>웨이브가 끝났다(잡았거나 지나간다) — 다음 웨이브가 다시 1라운드부터 센다.</summary>
+        void EndWaveTurns() { TurnFoe = null; Round = 0; PlayerTurn = true; _turnT = 0; }
+
+        /// <summary>
+        /// 적의 반턴 — 근접이든 원거리든 <b>그 자리에서 한 대</b> 때린다(턴제라 화살이 날아가는 시간이 없다).
+        /// 보스 3연타(<c>bossTripleHitEvery</c>)·둔화는 지금 규칙 그대로다.
+        /// </summary>
+        void EnemyTurnStrike(EnemyState e)
+        {
+            double dm = e.Dmg;
+            if (e.IsBoss) { e.Hits++; if (e.Hits % C.BossTripleHitEvery == 0) dm *= C.BossTripleHitMul; }
+            e.StrikeT = 0.18;
+            HitPlayer(dm, !e.Ranged, e);
+        }
+
+        /// <summary>
+        /// 주인 «스킬들 쿨타임으로 안 하고 <b>3라운드당 한 번</b> 발동» — 그 라운드의 내 차례 앞에서 «N타마다» 특전을 <b>한 번씩</b> 터뜨린다.
+        /// <para>
+        /// 옛 규칙에서 이것들은 «몇 대 때렸나»(<see cref="ProcNHit"/>)로 셌다 — 턴제에서는 그 셈이 라운드가 된다.
+        /// 확률로 터지는 것(피격 시·회피 시 …)은 그대로 둔다: 주인이 바꾸라고 한 것은 «쿨타임/주기» 쪽이다.
+        /// </para>
+        /// </summary>
+        void FireRoundSkills()
+        {
+            foreach (var kv in PK.NHitPerks)
+            {
+                if (!P.Has(kv.Key)) continue;
+                P.NHit[kv.Key] = 0;
+                FireNHit(kv.Key);
+            }
         }
 
         /// <summary>

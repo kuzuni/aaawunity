@@ -17,7 +17,8 @@ namespace KkomaKnight.Tests
         [Test]
         public void RandTargetPicksAnyEnemyInRangeNotOnlyTheFront()
         {
-            var d = TestData.Load(); var rng = new Mulberry32(21); var b = GearSystem.MkBuild(d, -1, 0, 0);
+            // T516 — 실시간 규칙(투사체가 «날아가는» 자리)을 재는 자라 턴제를 끄고 돈다
+            var d = TestData.RealTime(); var rng = new Mulberry32(21); var b = GearSystem.MkBuild(d, -1, 0, 0);
             var G = new BattleState(d, 1, b, rng, new SimPolicy(), Ladder());
             // 첫 웨이브가 사거리(540px) 안에 들어올 때까지 걷는다(멈춤 거리 전 — 아무도 안 죽은 상태)
             int guard = 0;

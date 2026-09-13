@@ -22,7 +22,7 @@ namespace KkomaKnight.Tests
         /// <summary>판을 하나 세우고 살아 있는 적이 설 때까지 돌린다(적이 없으면 잴 것이 없다).</summary>
         static BattleState Battle(out EnemyState foe)
         {
-            var d = TestData.Load();
+            var d = TestData.RealTime();   // T516 — 투사체가 «날아가는 시간» 을 재는 자라 실시간 규칙으로 돈다
             var b = GearSystem.MkBuild(d, -1, 0, 0);
             var g = new BattleState(d, 3, b, new Mulberry32(11), new SimPolicy(), Opts());
             foe = null;
