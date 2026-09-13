@@ -57,11 +57,12 @@ namespace KkomaKnight.Tests
                     Assert.That(opts[i].Px.Count + opts[i].Stat.Count, Is.GreaterThan(0), ty.Type + " slot " + (i + 1) + " 효과가 비었다");
                 }
             }
-            // T89(주인 지시 2026-09-07) — 사다리가 한 칸 뒤로 밀렸다: 일반 0 · 신화 3 · 마지막 줄은 신화 +12강
+            // T89(주인 2026-09-07) 로 사다리가 한 칸 뒤로 밀렸고, T515(주인 2026-09-13 «옵션은 최대 2개») 로 **상한이 2** 가 됐다.
+            //   ⚠ 정본 표(gear.json)의 «종류마다 7줄» 은 그대로다(위 루프가 그것을 잰다) — 바뀐 것은 «그중 몇 줄이 열리는가» 다.
             Assert.That(g.OptCount(0, 0), Is.EqualTo(0));
-            Assert.That(g.OptCount(g.RarMyth, 0), Is.EqualTo(3));
-            Assert.That(g.OptCount(g.RarMyth, 9), Is.EqualTo(g.OptMaxCount - 1));
-            Assert.That(g.OptCount(g.RarMyth, 12), Is.EqualTo(g.OptMaxCount));
+            Assert.That(g.OptCount(g.RarMyth, 0), Is.EqualTo(2));
+            Assert.That(g.OptCount(g.RarMyth, 12), Is.EqualTo(2), "강화로도 안 늘어난다");
+            Assert.That(g.OptCountOpenMax, Is.EqualTo(2));
         }
 
         [Test]

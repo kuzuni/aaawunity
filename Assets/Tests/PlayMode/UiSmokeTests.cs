@@ -1403,7 +1403,7 @@ namespace KkomaKnight.Tests.Play
                 Assert.AreEqual(GearRole.IsAttack(g0.Part) ? 1 : 2, CountNamed(UiKit.Find(bx, "Stats"), "Stat:"), "스탯 줄 = 부위 역할(T88)");
                 Assert.IsTrue(HasText(s => s.StartsWith(GearRole.IsAttack(g0.Part) ? "공격력" : "체력")), "스탯 줄 라벨 = 부위 역할(T88)");
                 if (GearRole.IsAttack(g0.Part)) Assert.IsFalse(HasText(s => s.StartsWith("실드  ")), "공격 부위엔 실드 줄이 없다(T88)");
-                var opts = UiKit.Find(bx, "Options"); Assert.IsNotNull(opts, "옵션 목록"); Assert.AreEqual(D.Gear.Options.TryGetValue(g0.Type, out var ol0) ? ol0.Count : 0, CountNamed(opts, "Opt:"), "옵션 줄 수 = 세트 옵션 수");
+                var opts = UiKit.Find(bx, "Options"); Assert.IsNotNull(opts, "옵션 목록"); Assert.AreEqual(Mathf.Min(D.Gear.OptCountOpenMax, D.Gear.Options.TryGetValue(g0.Type, out var ol0) ? ol0.Count : 0), CountNamed(opts, "Opt:"), "옵션 줄 수 = 열 수 있는 만큼(T515 · 정본 7줄이 아니라 표 상한)");
                 // T63-gear — 스탯 줄 3 · 옵션 줄 전부 본문 40 이 «한 줄» 로(옵션은 긴 잠금 줄만 bestFit 32~40 허용 · 스탯은 40 그대로) · 스탯 상자와 옵션 목록이 안 겹친다(전엔 39.5+9.5 = 49.0 > 48.0)
                 {
                     int statRows = 0, optRows = 0;

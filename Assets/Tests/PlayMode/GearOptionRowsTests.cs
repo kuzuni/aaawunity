@@ -68,7 +68,8 @@ namespace KkomaKnight.Tests.Play
             var opts = UiKit.Find(_app.Overlay.Root, "Options");
             Assert.IsNotNull(opts, "옵션 목록(Options)");
             var rows = new List<string>();
-            for (int i = 0; i < _app.Data.Gear.OptMaxCount; i++)
+            // T515(주인 2026-09-13 «옵션은 최대 2개») — 그리는 줄은 «정본 7줄» 이 아니라 «이 표로 열 수 있는 만큼» 이다.
+            for (int i = 0; i < _app.Data.Gear.OptCountOpenMax; i++)
             {
                 var row = UiKit.Find(opts, "Opt:" + i); Assert.IsNotNull(row, "옵션 줄 Opt:" + i);
                 var t = row.GetComponentInChildren<TMP_Text>(true); Assert.IsNotNull(t, "옵션 줄 글자 Opt:" + i);
@@ -166,12 +167,12 @@ namespace KkomaKnight.Tests.Play
             GearUi.OpenDetail(_app, common, _app.Current.Refresh); yield return Frames(2);
             Assert.IsTrue(_app.Overlay.IsOpen, "세부 팝업이 열린다");
             var rows = OptionRowTexts();
-            Assert.AreEqual(D.Gear.OptMaxCount, rows.Count, "옵션 줄 7");
+            Assert.AreEqual(D.Gear.OptCountOpenMax, rows.Count, "옵션 줄 = 열 수 있는 만큼(T515 · 지금 2줄)");
             for (int i = 0; i < rows.Count; i++) Assert.IsTrue(IsLocked(i), "일반 장비는 " + i + "번 줄이 잠겨 있어야 한다 — " + rows[i]);
             // T160 ⓑ 로 꼬리표를 없앴으므로 «첫 줄 = (희귀)»·«마지막 줄 = (신화 +12강)» 단언은 «꼬리표가 없다» + «자물쇠가 등급색» 으로 바뀐다.
             // «몇 등급에서 열리는가» 는 이제 자물쇠 «색» 이 말한다(주인이 두 지시를 같이 준 까닭).
             for (int i = 0; i < rows.Count; i++) AssertLockedRowLooksRight(i);
-            Assert.AreNotEqual(TierColor(0), TierColor(rows.Count - 1), "첫 줄(희귀)과 마지막 줄(신화 +12강)의 자물쇠 색이 서로 달라야 «등급» 이 읽힌다");
+            Assert.AreNotEqual(TierColor(0), TierColor(rows.Count - 1), "첫 줄(중세)과 마지막 줄(근대)의 자물쇠 색이 서로 달라야 «등급» 이 읽힌다");
             _log.AssertNoRed("일반 장비 세부 팝업");
             ClickNamed(_app.Overlay.Root, "Dimmed"); yield return Frames(2);
             Assert.IsFalse(_app.Overlay.IsOpen, "배경 탭 = 닫기");
@@ -180,49 +181,37 @@ namespace KkomaKnight.Tests.Play
         }
 
         [UnityTest]
-        public IEnumerator MythPlusTwelveOpensEveryRowAndPlusNineLeavesOne()
+        public IEnumerator EnhancingCyberNeverAddsARowAndBothRowsStayOpen()
         {
             yield return Boot();
             var D = _app.Data; string part = D.Gear.Parts[0];
             int myth = D.Gear.RarMyth;
 
-            // ⓓ 신화 +9강 = 6줄(마지막 한 줄만 잠김)
+            // ⚠ 뒤집힌 자다 — T89 때는 «신화 +9 = 6줄 · +12 = 7줄» 을 지켰다.
+            //   T515(주인 2026-09-13 «옵션은 최대 2개») 로 강화는 줄을 열지 않는다.
+            Assert.AreEqual(2, D.Gear.OptCountOpenMax, "이 표로 열 수 있는 줄은 2개다");
             var nine = Give(part, rar: myth, plus: 9);
             _app.ShowScreen("gear"); yield return Frames(2);
             GearUi.OpenDetail(_app, nine, _app.Current.Refresh); yield return Frames(2);
             var rows = OptionRowTexts();
-            Assert.AreEqual(D.Gear.OptMaxCount - 1, D.Gear.OptCount(myth, 9), "신화 +9강 = 6줄");
-            for (int i = 0; i < rows.Count - 1; i++) Assert.IsFalse(IsLocked(i), "신화 +9강에서 " + i + "번 줄은 켜져 있어야 한다 — " + rows[i]);
-            Assert.IsTrue(IsLocked(rows.Count - 1), "마지막 줄만 잠긴다 — " + rows[rows.Count - 1]);
-            AssertLockedRowLooksRight(rows.Count - 1);
-            Assert.IsNull(RowText(0).GetComponent<OwnerDarkTextTag>(), "켜진 줄은 «주인 지정» 표식을 안 단다(T177 · 예전 색 그대로)");
-            _log.AssertNoRed("신화 +9강 세부 팝업");
+            Assert.AreEqual(D.Gear.OptCountOpenMax, rows.Count, "사이버 +9 도 줄은 2개다(더 그리면 영영 안 열리는 자물쇠가 남는다)");
+            for (int i = 0; i < rows.Count; i++) Assert.IsFalse(IsLocked(i), "사이버는 " + i + "번 줄이 켜져 있어야 한다 — " + rows[i]);
+            Assert.AreEqual(2, D.Gear.OptCount(myth, 9), "사이버 +9 = 2개");
+            _log.AssertNoRed("사이버 +9 세부 팝업");
             ClickNamed(_app.Overlay.Root, "Dimmed"); yield return Frames(2);
 
-            // ⓒ 신화 +12강 = 7줄 전부
             var twelve = Give(part, rar: myth, plus: 12);
             GearUi.OpenDetail(_app, twelve, _app.Current.Refresh); yield return Frames(2);
             rows = OptionRowTexts();
-            Assert.AreEqual(D.Gear.OptMaxCount, D.Gear.OptCount(myth, 12), "신화 +12강 = 7줄 전부");
-            for (int i = 0; i < rows.Count; i++) Assert.IsFalse(IsLocked(i), "신화 +12강에서 " + i + "번 줄이 잠기면 안 된다 — " + rows[i]);
-            _log.AssertNoRed("신화 +12강 세부 팝업");
+            Assert.AreEqual(D.Gear.OptCountOpenMax, rows.Count, "사이버 +12(무한) 도 줄은 2개다");
+            Assert.AreEqual(2, D.Gear.OptCount(myth, 12), "강화로 줄이 늘지 않는다(T515)");
+            for (int i = 0; i < rows.Count; i++) Assert.IsFalse(IsLocked(i), "사이버 +12 에서 " + i + "번 줄이 잠기면 안 된다 — " + rows[i]);
+            _log.AssertNoRed("사이버 +12 세부 팝업");
             ClickNamed(_app.Overlay.Root, "Dimmed"); yield return Frames(2);
 
             yield return Shutdown();
         }
 
-        /// <summary>
-        /// T324 — 주인 «일반 부분의 <c>ui.titleBrown</c> 디자인이 맘에 드는데 그 디자인대로 나머지 등급들도 그거로 써 줘. 걍».
-        /// <para>
-        /// 제목 조각은 <b>등급과 무관하게 갈색 하나</b>다(전에는 등급색으로 <c>ui.title.sky/yellow/plum/red/green</c> 을 갈아 끼웠다).
-        /// </para>
-        /// <para>
-        /// ⚑ <b>이 자의 절반은 «등급이 아직 보이는가» 다.</b> «전부 갈색» 만 재면 다음 사람이 «등급색을 다 지우라는 뜻이었나» 로 읽고
-        /// 배지 글자나 이름 색까지 회색으로 만들 수 있는데, 주인이 바꾸라 한 것은 <b>조각 하나</b>다.
-        /// 그래서 같은 자에서 «배지 글자는 등급마다 다르다»·«이름 색은 등급마다 다르다» 를 같이 못 박는다 —
-        /// 한쪽만 재는 자는 «너무 많이 지운 고침» 을 초록으로 통과시킨다(T310 회차 2 에서 배운 자리).
-        /// </para>
-        /// </summary>
         [UnityTest]
         public IEnumerator EveryRarityUsesTheSameBrownTitlePieceButStillShowsItsGrade()
         {

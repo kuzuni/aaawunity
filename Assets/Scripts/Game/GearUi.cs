@@ -643,9 +643,14 @@ namespace KkomaKnight.Game
             int n = D.Gear.OptCount(g.Rar, g.Plus);
             var host = UiKit.Rect(box, "Options"); UiKit.Pct(host, region); UiKit.Tag(host, "옵션 목록");
             if (opts.Count == 0) { UiKit.Label(host, 2, 0, 96, 100, "세트 옵션 없음", TextSize.Body, Palette.CreamDark); return; }
-            float pitch = Mathf.Min(Layout.GdOptPitch, Layout.GdOpts.H / opts.Count);   // 프레임 % → 줄 하나가 차지하는 비율
+            // T515(주인 2026-09-13 «옵션은 최대 2개») — 표가 열 수 있는 만큼만 그린다.
+            //   정본 gear.json 은 종류마다 옵션 7줄을 들고 있지만, 지금 표(gearOverride)로 실제로 열리는 것은 그중 앞 몇 줄뿐이다.
+            //   나머지를 그리면 «영영 안 열리는 자물쇠» 가 팝업에 남는다 — 주인이 본 그 줄들이다.
+            int shown = Mathf.Clamp(D.Gear.OptCountOpenMax, 0, opts.Count);
+            if (shown <= 0) { UiKit.Label(host, 2, 0, 96, 100, "세트 옵션 없음", TextSize.Body, Palette.CreamDark); return; }
+            float pitch = Mathf.Min(Layout.GdOptPitch, Layout.GdOpts.H / shown);   // 프레임 % → 줄 하나가 차지하는 비율
             float rowPct = pitch / Layout.GdOpts.H * 100f;
-            for (int i = 0; i < opts.Count; i++)
+            for (int i = 0; i < shown; i++)
             {
                 bool on = i < n; bool mythPlus = D.Gear.OptNeedsMythPlus(i);
                 var color = mythPlus ? Palette.Plum : Palette.ByName(Palette.RarName(D.Gear.OptTierRar(i)));

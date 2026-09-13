@@ -13,36 +13,33 @@ namespace KkomaKnight.Tests
         static GearData Gear() => TestData.Load().Gear;
 
         [Test]
-        public void OptCountByRarity_IsZeroForCommonAndOpensFromRare()
+        public void OptCountByRarity_IsZeroForCommonAndCapsAtTwo()
         {
             var g = Gear();
-            Assert.That(g.OptCount(0, 0), Is.EqualTo(0), "일반 = 옵션 0개");
-            Assert.That(g.OptCount(1, 0), Is.EqualTo(1), "희귀부터 열린다");
-            Assert.That(g.OptCount(2, 0), Is.EqualTo(2), "전설 = 2개");
-            Assert.That(g.OptCount(g.RarMyth, 0), Is.EqualTo(3), "신화 = 3개");
+            // T515(주인 2026-09-13 «옵션은 최대 2개로 해줘야함 장비들») — 사다리는 그대로 두 칸까지만 오른다.
+            Assert.That(g.OptCount(0, 0), Is.EqualTo(0), "원시 = 옵션 0개");
+            Assert.That(g.OptCount(1, 0), Is.EqualTo(1), "중세부터 열린다");
+            Assert.That(g.OptCount(2, 0), Is.EqualTo(2), "근대 = 2개");
+            Assert.That(g.OptCount(g.RarMyth, 0), Is.EqualTo(2), "사이버도 2개 — 상한이다(T515)");
+            Assert.That(g.OptCountOpenMax, Is.EqualTo(2), "이 표로 열 수 있는 최대 줄 수 = 2");
         }
 
         [Test]
-        public void MythEnhance_OpensOneRowAtEachStepUpToTwelve()
+        public void MythEnhance_NoLongerOpensRows_TheOwnerCappedItAtTwo()
         {
             var g = Gear();
-            Assert.That(g.MythPlusOptAt, Is.EqualTo(new[] { 3, 6, 9, 12 }));
-            Assert.That(g.OptCount(g.RarMyth, 3), Is.EqualTo(4));
-            Assert.That(g.OptCount(g.RarMyth, 6), Is.EqualTo(5));
-            Assert.That(g.OptCount(g.RarMyth, 9), Is.EqualTo(6));
-            Assert.That(g.OptCount(g.RarMyth, 12), Is.EqualTo(7));
-            Assert.That(g.OptCount(g.RarMyth, 12), Is.EqualTo(g.OptMaxCount), "마지막 줄(흡혈 +8%)이 신화 +12강에서 열린다");
+            // ⚠ 이 자는 뒤집힌 자다 — T89 때는 «강화가 줄을 연다» 를 지켰고, T515(주인 2026-09-13)가 그 사다리를 걷었다.
+            Assert.That(g.MythPlusOptAt, Is.Empty, "강화로 열리는 칸이 없다(gearOverride.json mythPlusAt [])");
+            foreach (var plus in new[] { 0, 3, 6, 9, 12, 99 })
+                Assert.That(g.OptCount(g.RarMyth, plus), Is.EqualTo(2), "사이버 +" + plus + " 도 2개다");
         }
 
         [Test]
         public void BetweenSteps_TheCountDoesNotGrow()
         {
             var g = Gear();
-            foreach (var plus in new[] { 1, 2 }) Assert.That(g.OptCount(g.RarMyth, plus), Is.EqualTo(3), "+" + plus);
-            foreach (var plus in new[] { 4, 5 }) Assert.That(g.OptCount(g.RarMyth, plus), Is.EqualTo(4), "+" + plus);
-            foreach (var plus in new[] { 7, 8 }) Assert.That(g.OptCount(g.RarMyth, plus), Is.EqualTo(5), "+" + plus);
-            foreach (var plus in new[] { 10, 11 }) Assert.That(g.OptCount(g.RarMyth, plus), Is.EqualTo(6), "+" + plus);
-            Assert.That(g.OptCount(g.RarMyth, 99), Is.EqualTo(g.OptMaxCount), "표를 넘겨도 최대 줄 수를 넘지 않는다");
+            foreach (var plus in new[] { 1, 2, 4, 5, 7, 8, 10, 11 }) Assert.That(g.OptCount(g.RarMyth, plus), Is.EqualTo(2), "+" + plus);
+            Assert.That(g.OptCount(g.RarMyth, 99), Is.EqualTo(g.OptCountOpenMax), "표를 넘겨도 열 수 있는 최대 줄 수를 넘지 않는다");
         }
 
         [Test]
@@ -57,25 +54,23 @@ namespace KkomaKnight.Tests
         public void TierName_ReadsTheLadderTable_NotAHardCodedTripleStep()
         {
             var g = Gear();
-            Assert.That(g.OptTierName(0), Is.EqualTo(g.RarName[1]));                 // 희귀
-            Assert.That(g.OptTierName(1), Is.EqualTo(g.RarName[2]));                 // 전설
-            Assert.That(g.OptTierName(2), Is.EqualTo(g.RarName[g.RarMyth]));         // 신화
-            Assert.That(g.OptTierName(3), Is.EqualTo(g.RarName[g.RarMyth] + " +3강"));
-            Assert.That(g.OptTierName(6), Is.EqualTo(g.RarName[g.RarMyth] + " +12강"));
-            Assert.That(GearText.LockSuffix(g.OptTierName(6)), Is.EqualTo(" (" + g.RarName[g.RarMyth] + " +12강)"));
+            Assert.That(g.OptTierName(0), Is.EqualTo(g.RarName[1]));                 // 중세
+            Assert.That(g.OptTierName(1), Is.EqualTo(g.RarName[2]));                 // 근대
+            Assert.That(GearText.LockSuffix(g.OptTierName(1)), Is.EqualTo(" (" + g.RarName[2] + ")"));
+            // 상한(2) 위의 줄은 «열리는 등급» 자체가 없다 — 그리는 쪽도 그 줄을 안 그린다(GearUi.OptionRows · T515).
+            Assert.That(g.OptCountOpenMax, Is.EqualTo(2));
         }
 
         [Test]
         public void TierRarAndMythPlusFlag_MatchTheRowThatUnlocks()
         {
             var g = Gear();
-            for (int i = 0; i < g.OptMaxCount; i++)
+            for (int i = 0; i < g.OptCountOpenMax; i++)
             {
-                bool mythPlus = g.OptNeedsMythPlus(i);
-                Assert.That(mythPlus, Is.EqualTo(i >= 3), "줄 " + i);
+                Assert.That(g.OptNeedsMythPlus(i), Is.False, "상한 안의 줄은 강화가 아니라 등급이 연다(T515) — 줄 " + i);
                 int rar = g.OptTierRar(i);
-                Assert.That(g.OptCount(rar, mythPlus ? g.MythPlusOptAt[i - 3] : 0), Is.GreaterThan(i), "줄 " + i + " 은 그 단계에서 켜져야 한다");
-                if (!mythPlus && rar > 0) Assert.That(g.OptCount(rar - 1, 0), Is.LessThanOrEqualTo(i), "줄 " + i + " 은 한 등급 아래에서는 잠겨야 한다");
+                Assert.That(g.OptCount(rar, 0), Is.GreaterThan(i), "줄 " + i + " 은 그 등급에서 켜져야 한다");
+                if (rar > 0) Assert.That(g.OptCount(rar - 1, 0), Is.LessThanOrEqualTo(i), "줄 " + i + " 은 한 등급 아래에서는 잠겨야 한다");
             }
         }
     }

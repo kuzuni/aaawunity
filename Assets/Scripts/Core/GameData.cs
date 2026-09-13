@@ -676,6 +676,24 @@ namespace KkomaKnight.Core
         public double SlotMul(int L) => 1 + SlotStep * Math.Min(L, SlotLvMax);
         public double SlotCost(int L) => L < SlotCostTable.Length ? SlotCostTable[L] : Math.Floor(SlotCostBase * Math.Pow(SlotCostG, L));
         /// <summary>옵션 개수 — 등급별 + 신화 강화 보너스 (optionLadder.optCount 그대로).</summary>
+        /// <summary>
+        /// 이 표에서 <b>열릴 수 있는 최대 옵션 줄 수</b> — 가장 높은 등급의 줄 수 + 강화로 열리는 칸 수(T515 · 주인 2026-09-13 «옵션은 최대 2개»).
+        /// <para>
+        /// ⚠ <c>gear.json</c> 의 <c>optionLadder.maxCount</c>(<see cref="OptMaxCount"/> = 7)와 <b>다르다</b>: 그 수는 «표에 적힌 옵션 줄이 몇 개인가»(정본 · 불변)이고,
+        /// 이 수는 «지금 표로 <b>실제로 열 수 있는</b> 줄이 몇 개인가» 다. 주인이 상한을 2 로 낮추면 정본 7줄 중 2줄만 쓰이고,
+        /// 그리는 쪽(<c>GearUi.OptionRows</c>)은 <b>열 수 없는 줄을 아예 안 그린다</b> — 안 그러면 영영 안 열리는 자물쇠 다섯 줄이 남는다.
+        /// </para>
+        /// </summary>
+        public int OptCountOpenMax
+        {
+            get
+            {
+                int best = 0;
+                if (OptCountByRar != null) foreach (var n in OptCountByRar) if (n > best) best = n;
+                if (MythPlusOptAt != null) best += MythPlusOptAt.Length;
+                return best;
+            }
+        }
         public int OptCount(int rar, int plus)
         {
             int n = OptCountByRar[rar];
