@@ -211,7 +211,7 @@ namespace KkomaKnight.Tests.Play
             WriteTmpFontJson(before, after, white, greyDark, greyBright, asset);
             // T518 — 주인 «게임내에 텍스트에 네모 너무 많이 있음». CI 그림 52장에는 0건이라 폰에서만 나는 것이고,
             //   첫 후보가 «아틀라스가 모자라 뒤에 오는 글자가 안 구워진다» 다. 그것을 **여기서 잰다**(짐작을 수로 바꾼다).
-            ProbeAtlas(asset);
+            ProbeAtlas(asset, ttf);
 
             // ⓕ 그 «상태» 도 같이 못 박는다 — 픽셀 판정이 먼저이고, 이것은 되돌림을 막는 자다.
             Assert.IsTrue(TmpFont.OutlineDraws(asset.material),
@@ -274,7 +274,7 @@ namespace KkomaKnight.Tests.Play
         /// </para>
         /// <para>⚠ <b>막지 않는다</b>(경고·기록만) — 여기서 초록이어도 폰에서 날 수 있다. 이 줄이 답하는 것은 «CI 통에서 몇 장이 되나» 하나다.</para>
         /// </summary>
-        static void ProbeAtlas(TMP_FontAsset asset)
+        static void ProbeAtlas(TMP_FontAsset asset, Font ttf)
         {
             if (asset == null) return;
             object Get(string name)
@@ -287,11 +287,21 @@ namespace KkomaKnight.Tests.Play
             string One(string name) { var v = Get(name); return v == null ? "-" : v.ToString(); }
             int Pages() { var v = Get("atlasTextures") as System.Array; return v != null ? v.Length : -1; }
 
-            // 한글 음절 영역을 **널찍이 훑어** 굽는다 — 게임이 실제로 쓰는 809자와 같은 규모다(정확히 그 목록일 필요는 없다:
-            //   재려는 것은 «몇 자를 담을 수 있나» 이지 «어느 글자인가» 가 아니다).
-            const int Want = 900;
-            var sb = new System.Text.StringBuilder(Want);
-            for (int i = 0; i < Want; i++) sb.Append((char)(0xAC00 + i * 12));
+            // ⚑⚑ **1회차의 이 자는 엉뚱한 것을 쟀다**(2026-09-14 · 결정 1422). 한글 음절 «영역» 을 널찍이 훑어
+            //   0xAC00 + i×12 로 900자를 골랐는데, **Jua 는 그 영역의 21%(2,367/11,172)만 가진 글꼴**이다.
+            //   그래서 «못 구웠다» 로 센 490자는 전부 **글꼴에 아예 없는 글자**였다(오프라인 대조: 그 900자 중
+            //   Jua 가 가진 것이 정확히 **410자** = 구워진 수와 한 자도 안 틀린다). 아틀라스는 애초에 한도가 아니었다 —
+            //   1024² 에서도 2048² 에서도 **가진 글자는 전부 구웠다**(장수만 8장 → 2장으로 줄었다).
+            //   ⇒ **글꼴이 가진 글자만 물어야 «TMP 가 못 구웠나» 를 재는 자가 된다.**
+            var sb = new System.Text.StringBuilder(900);
+            int asked = 0;
+            for (int cp = 0xAC00; cp <= 0xD7A3 && asked < 900; cp++)
+            {
+                char c = (char)cp;
+                if (!FontHasChar(ttf, c)) continue;     // 글꼴에 없는 글자는 물어봐야 뜻이 없다
+                sb.Append(c); asked++;
+            }
+            int Want = asked;
             string many = sb.ToString();
             int pages0 = Pages();
             asset.TryAddCharacters(many);
@@ -308,12 +318,26 @@ namespace KkomaKnight.Tests.Play
                     System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "tmpatlas.json"),
                         "{\"_meta\":{\"task\":\"T518\",\"of\":\"두부(네모) 첫 후보 — 아틀라스 용량\"}"
                         + ",\"atlasWidth\":\"" + One("atlasWidth") + "\",\"atlasHeight\":\"" + One("atlasHeight") + "\""
-                        + ",\"asked\":" + Want + ",\"pagesBefore\":" + pages0 + ",\"pagesAfter\":" + pages1
+                        + ",\"asked\":" + Want + ",\"askedNote\":\"글꼴이 가진 글자만\",\"pagesBefore\":" + pages0 + ",\"pagesAfter\":" + pages1
                         + ",\"missing\":" + missing
                         + ",\"multiAtlas\":\"" + One("isMultiAtlasTexturesEnabled") + "\"}");
                 }
                 catch (System.Exception e) { Debug.LogWarning("[T518두부] tmpatlas.json 저장 실패(" + dir + "): " + e.Message); }
             }
+        }
+
+        /// <summary>글꼴 파일이 그 글자를 <b>가지고 있는가</b> — 없으면 «TMP 가 못 구웠다» 로 세면 안 된다(결정 1422).
+        /// reflection 으로 묻는다(서명이 다른 날 유니티에서만 죽는 것을 피한다 · 결정 465·567) — 못 물으면 <c>true</c> 로 봐서 **덜 걸러진 쪽**으로 틀린다.</summary>
+        static bool FontHasChar(Font f, char c)
+        {
+            if (f == null) return true;
+            try
+            {
+                var mi = typeof(Font).GetMethod("HasCharacter", new[] { typeof(char) });
+                if (mi == null) return true;
+                return (bool)mi.Invoke(f, new object[] { c });
+            }
+            catch { return true; }
         }
 
         static void WriteTmpFontJson(int plateDark, int blackGlyphDark, int whiteGlyphDark, int greyDark, int greyBright, TMP_FontAsset asset)

@@ -134,7 +134,7 @@ namespace KkomaKnight.Game
                 if (!_warned) { _warned = true; Debug.LogWarning("[T207] Jua 글꼴(" + FontKey + ")을 아직 못 찾았다 — 이 글자는 TMP 기본 애셋으로 나온다(다음 호출에서 다시 시도한다)"); }
                 return null;   // 캐시하지 않는다 — 글꼴이 들어온 뒤 다시 부르면 제대로 만든다
             }
-            var made = CreateWithBigAtlas(src) ?? TMP_FontAsset.CreateFontAsset(src);
+            var made = TMP_FontAsset.CreateFontAsset(src);
             if (made == null) { if (!_warned) { _warned = true; Debug.LogWarning("[T207] TMP_FontAsset.CreateFontAsset 이 null 을 돌려줬다(이 플랫폼에서 동적 굽기가 안 된다는 뜻일 수 있다)"); } return null; }
             made.name = "Jua SDF (Runtime)";
             _asset = made;
@@ -142,71 +142,6 @@ namespace KkomaKnight.Game
         }
         static bool _warned;
 
-        /// <summary>
-        /// T518 — <b>아틀라스 한 변</b>(주인 «게임내에 텍스트에 네모 너무 많이 있음»). 기본 1024 로는 한글이 안 들어간다.
-        /// <para>
-        /// ⚑ <b>짐작이 아니라 CI 가 잰 수다</b>(런 1218 · <c>[탐침] tmpatlas.json</c>): 1024² 에 한글 <b>900자</b>를 넣어 보니
-        /// 페이지가 4 → 8장이 되고 <b>490자가 안 구워졌다</b>(54%). 게임이 쓸 수 있는 한글은 <b>809자</b>이므로
-        /// 그 절반 넘게가 화면에서 <b>폭 0</b> 으로 사라지거나 두부가 된다 — 주인이 본 «너무 많다» 가 이것이다.
-        /// 폰만의 일이 아니었다(넉넉한 리눅스 CI 에서도 그대로 난다).
-        /// </para>
-        /// <para>
-        /// <b>한 변만 키운다</b> — 표본(90pt)·여백(9)은 <b>한 자도 안 건드린다</b>. 그 둘이 T224 가 맞춰 놓은 테 두께의 분모다
-        /// (<c>_GradientScale</c> = 여백+1 · <c>_ScaleRatioA</c> 가 표본을 탄다). 넓이는 4배가 되고 테는 그대로다.
-        /// </para>
-        /// </summary>
-        public const int AtlasSide = 2048;
-
-        /// <summary>
-        /// 아틀라스 크기를 <b>직접 주는</b> 긴 오버로드로 폰트 애셋을 만든다 — 못 찾으면 <c>null</c>(그러면 부르는 쪽이 짧은 오버로드로 간다).
-        /// <para>
-        /// ⚑ <b>왜 reflection 인가.</b> 그 오버로드를 코드에 그대로 적으면 <c>GlyphRenderMode</c>·<c>AtlasPopulationMode</c> 까지 스텁에 옮겨야 하고,
-        /// <b>서명이 한 글자라도 다르면 dotnet 은 초록인데 유니티에서만 컴파일이 죽는다</b>(결정 465·567 이 그 자리를 두 번 적어 뒀다 ·
-        /// <c>Stubs/TMPro.cs</c> 21행이 «긴 오버로드는 아직 안 쓴다» 고 미리 못 박아 둔 까닭이 그것이다).
-        /// 이 통에는 유니티가 없어 서명을 확인할 길이 없다 ⇒ <b>런타임에 찾는다</b>. 못 찾으면 옛 길로 가고 게임은 오늘과 같다(더 나빠지지 않는다).
-        /// </para>
-        /// <para>⚠ 찾았는지 못 찾았는지는 <b>한 줄 남긴다</b> — 조용히 옛 길로 가면 «고쳤는데 안 고쳐진» 꼴을 아무도 모른다.</para>
-        /// </summary>
-        static TMP_FontAsset CreateWithBigAtlas(Font src)
-        {
-            try
-            {
-                foreach (var m in typeof(TMP_FontAsset).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static))
-                {
-                    if (m.Name != "CreateFontAsset") continue;
-                    var ps = m.GetParameters();
-                    // 찾는 꼴: (Font, int 표본, int 여백, <렌더모드 enum>, int 가로, int 세로, …)
-                    if (ps.Length < 6) continue;
-                    if (ps[0].ParameterType != typeof(Font)) continue;
-                    if (ps[1].ParameterType != typeof(int) || ps[2].ParameterType != typeof(int)) continue;
-                    if (!ps[3].ParameterType.IsEnum) continue;
-                    if (ps[4].ParameterType != typeof(int) || ps[5].ParameterType != typeof(int)) continue;
-                    var args = new object[ps.Length];
-                    args[0] = src; args[1] = SamplingPointSize; args[2] = AtlasPadding;
-                    args[3] = RenderModeSdfaa(ps[3].ParameterType);
-                    args[4] = AtlasSide; args[5] = AtlasSide;
-                    // 남은 인자는 그 자리의 기본값을 그대로 쓴다(동적 채우기·다중 아틀라스 = TMP 기본 그대로).
-                    for (int i = 6; i < ps.Length; i++)
-                        args[i] = ps[i].HasDefaultValue ? ps[i].DefaultValue
-                               : (ps[i].ParameterType.IsValueType ? System.Activator.CreateInstance(ps[i].ParameterType) : null);
-                    var made = m.Invoke(null, args) as TMP_FontAsset;
-                    if (made != null) { Debug.Log("[T518] 아틀라스 " + AtlasSide + "² 로 글꼴을 구웠다(긴 오버로드 · 인자 " + ps.Length + "개)"); return made; }
-                }
-            }
-            catch (System.Exception e) { Debug.LogWarning("[T518] 긴 오버로드로 못 만들었다(" + e.GetType().Name + ": " + e.Message + ") — 짧은 오버로드로 간다"); return null; }
-            Debug.LogWarning("[T518] 아틀라스 크기를 주는 오버로드를 못 찾았다 — 옛 1024² 로 간다(두부가 그대로면 이 줄을 보라)");
-            return null;
-        }
-
-        /// <summary>TMP 기본과 <b>같은</b> 렌더 모드(SDFAA)를 그 enum 에서 골라 온다 — 이름으로 찾고, 없으면 기본값(0)을 쓴다.</summary>
-        static object RenderModeSdfaa(System.Type enumType)
-        {
-            foreach (var n in System.Enum.GetNames(enumType)) if (n == "SDFAA") return System.Enum.Parse(enumType, n);
-            return System.Enum.ToObject(enumType, 0);
-        }
-
-        /// <summary>TMP 짧은 오버로드가 쓰는 기본값 그대로 — <b>바꾸지 않는다</b>(T224 의 테 두께가 이 둘을 분모로 쓴다).</summary>
-        public const int SamplingPointSize = 90, AtlasPadding = 9;
 
         /// <summary>이 글자들이 실제로 구워졌는가 — 동적 굽기가 되는 플랫폼인지 가르는 유일한 신호다(두부 □ 는 «글리프가 없다» 다).</summary>
         public static bool HasAll(TMP_FontAsset asset, string chars)
