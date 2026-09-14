@@ -539,6 +539,25 @@ jobs:
             echo "[§5] ui-screens/layout.json 이 없다 — 유니티 잡이 화면을 못 찍었다(위 단계를 보라). 점수는 이번 런에서 안 센다."
           fi
 
+      # T523 — **유니티가 잰 수를 워커가 읽을 수 있는 유일한 자리가 여기다.**
+      #   실측(2026-09-13 · T518 두부 탐침): 탐침을 PlayMode 자에 넣고 `Debug.LogWarning` 으로 찍었는데
+      #   **워커에게 한 글자도 안 왔다**. 까닭이 세 겹이다 —
+      #     ⓐ 유니티 `Debug.*` 는 CI 로그에 안 오고 결과 XML 안에만 남는다(결정 675)
+      #     ⓑ 그 아티팩트(그리고 로그 원본)는 **프록시가 막는다**(blob 호스트 403)
+      #     ⓒ 로그 API 는 꼬리 ~700KB 만 준다 — 16분짜리 잡의 **마지막 22초**뿐이다
+      #   그래서 탐침이 `ui-screens/` 에 적어 둔 JSON 을 **꼬리에서 cat 한다**(§5·그림차가 이미 쓰는 길).
+      #   ⚠ `screens` 배포 단계는 main 에서만 도는데 **파일은 가지 런에서도 만들어진다** — 그래서 이 줄은 가지에서도 답을 준다.
+      - name: "[탐침] 유니티가 적어 둔 JSON 을 꼬리에 뱉는다 — 보고만(T523)"
+        if: always()
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" ui-screens 2>/dev/null || true
+          found=0
+          for f in ui-screens/tmpatlas.json ui-screens/tmpfont.json; do
+            if [ -f "$f" ]; then found=1; echo "[탐침] $f — $(cat "$f")"; fi
+          done
+          [ "$found" = "0" ] && echo "[탐침] ui-screens 에 탐침 JSON 이 없다 — 유니티 잡이 그 자를 못 돌렸다(위 단계를 보라)."
+          exit 0
+
       # T282 — 위 «그림차» 는 `screens` 배포보다 **앞**에 서야 해서(force_orphan 이 옛 그림을 지운다) 그 줄이
       #   배포 로그 120여 줄에 밀려 꼬리에서 안 보인다. 그래서 그때 적어 둔 것을 여기서 한 번 더 뱉는다 —
       #   워커가 실제로 읽는 자리가 꼬리이기 때문이다(T239 회차 1 → 2 가 배운 것이 바로 이것이다).
